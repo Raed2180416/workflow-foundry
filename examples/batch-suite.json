@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.0",
+  "id": "batch-summary-diagnostic-v1",
+  "split": "diagnostic",
+  "task": "Generate summary.json with exact batchCount and grandTotal for bounded arrays of numbers; reject missing, extra and incorrectly typed input before artifact creation.",
+  "envelope": ["Local JSON transformations and run-scoped artifacts", "Seven explicit development cases", "No external services or production data"],
+  "cases": [
+    {"id": "positive", "input": {"batches": [[1, 2], [3, 4]]}, "expect": {"statuses": ["succeeded"], "checks": [], "artifacts": [{"name": "summary.json", "json": {"batchCount": 2, "grandTotal": 10}}]}},
+    {"id": "negative-and-empty", "input": {"batches": [[-2, 1], []]}, "expect": {"statuses": ["succeeded"], "checks": [], "artifacts": [{"name": "summary.json", "json": {"batchCount": 2, "grandTotal": -1}}]}},
+    {"id": "empty", "input": {"batches": []}, "expect": {"statuses": ["succeeded"], "checks": [], "artifacts": [{"name": "summary.json", "json": {"batchCount": 0, "grandTotal": 0}}]}},
+    {"id": "fractional", "input": {"batches": [[1.5, 2.5]]}, "expect": {"statuses": ["succeeded"], "checks": [], "artifacts": [{"name": "summary.json", "json": {"batchCount": 1, "grandTotal": 4}}]}},
+    {"id": "string-number", "input": {"batches": [["2"]]}, "expect": {"statuses": ["input-rejected", "failed"], "checks": [], "artifacts": [{"name": "summary.json", "absent": true}]}},
+    {"id": "missing", "input": {}, "expect": {"statuses": ["input-rejected", "failed"], "checks": [], "artifacts": [{"name": "summary.json", "absent": true}]}},
+    {"id": "extra-field", "input": {"batches": [[2]], "unexpected": true}, "expect": {"statuses": ["input-rejected", "failed"], "checks": [], "artifacts": [{"name": "summary.json", "absent": true}]}}
+  ]
+}

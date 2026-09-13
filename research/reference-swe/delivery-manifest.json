@@ -1,0 +1,19 @@
+{
+  "createdAt": "2026-09-13T12:05:29.079Z",
+  "verifiedPromptEquality": true,
+  "architectTaskLeakChecksPassed": true,
+  "hashes": {
+    "research/reference-swe/PROTOCOL.md": "8fddcf9e63a0867de20fe07b76bb010bb01fec9765f774f83401a6de15504661",
+    "research/reference-swe/harness.mjs": "bd5fd7711487e35de39ed1f39bff022ad511c389fe197f01037d1eb9df0b100c",
+    "research/reference-swe/original_agent.py": "7d3a84e5a87a12854427abdb791cf6dc1fbba0803e4ad758467e3c27ce0745f9",
+    "research/reference-swe/oracle_runner.py": "3703399216a470473a600844fde29ba4d095d0ea6a7b8578d51f2236baccfdb2",
+    "research/reference-swe/requirements.txt": "ca69a9584ba53f575232ca159bf71e6778fa73e91e87f25ba6bd57f61a3cd757",
+    "research/reference-swe/summarize.mjs": "2cfcb5b68705244582017fed43a880c52c75bd20c079c5a062ef27765d0e97ef",
+    "research/reference-swe/comparison-evidence.json": "51ae21f3d796925e2d0e5a282bac5926e3003a5667b7f96716d64fe4dc4aa28c",
+    "research/dossiers/reference-swe-comparison.md": "e57cbd87b14a0a7ace0dc83214c8ae30c6ac68ca3df3bfd7eb36fb99f60b0761",
+    "tests/reference-swe-contract.test.mjs": "c2376503feb1670f8ff2d4e54579a11d8e938a56675221703185d772f1a3b093",
+    "research/reference-swe/preflight-final.tap": "d52fa9da7553d448f570f423fcefa51c7786efa23df2df48f87f4f02cda115f4",
+    "research/reference-swe/repository-tests.txt": "69b0d6baf96365c857524bc26f88ca8be63dcdacdc89bc7c7dd7b88ce2d8dfc2",
+    "research/reference-swe/security-after-pin.json": "70968da0d254197424bdb31e114884c8291525f65f653b619be6a7377ea8e440"
+  }
+}

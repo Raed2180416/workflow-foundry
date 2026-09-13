@@ -1,0 +1,837 @@
+{
+  "schemaVersion": "1.0",
+  "id": "protocol-adapter-source-spans-20260913",
+  "author": "worker-7",
+  "inspectionDate": "2026-09-13",
+  "scope": "Representative static source traces in four already-acquired repositories. No upstream import, build, installer, server, model or get-env execution.",
+  "dossier": "research/dossiers/protocol-adapter-deconstruction.md",
+  "verificationScript": "research/verify-protocol-adapter-evidence.mjs",
+  "spanEncoding": "Inclusive 1-based source lines; concatenate original UTF-8 line bytes including their existing LF terminators, without adding a final newline.",
+  "baseline": {
+    "document": "docs/SOURCE-COVERAGE.md",
+    "preservedPrefixBytes": 10866,
+    "preservedPrefixSha256": "aee1927b31d6d6bcea9bbc3b727709086d606df048e92820916780f275fb1659",
+    "receipt": "evals/runs/packaging-evidence-KLljV4/source-coverage.json",
+    "receiptSha256": "90aefdb29e7bfa5a89d29317cdf7c433e76d43cee02e969d943f2722fd4f5b1b",
+    "counts": {
+      "spans": 152,
+      "files": 110,
+      "repositories": 44
+    },
+    "addendumHeading": "## Addendum — 2026-09-13: four representative protocol and adapter traces"
+  },
+  "repositories": {
+    "opencode": {
+      "repository": "anomalyco/opencode",
+      "directory": "corpus/anomalyco--opencode",
+      "commit": "95daf90670b7c039c436c85537da5fbfe2205b41",
+      "acquisitionManifest": "research/manifests/opencode.json",
+      "inspectionDepth": "Catalog discovery/cache/naming, ordinary MCP tool wrapping, permission decision, selected provider-schema lowering and AI SDK repair callback. Native/code-mode/provider backend paths are not fully audited.",
+      "acquisitionIdentity": {
+        "head": "95daf90670b7c039c436c85537da5fbfe2205b41",
+        "trackedClean": true,
+        "acquisitionManifestSha256": "9235d1a59968e59f8d598adb62760ebd4d94c42813b0b9fd74ca7bbb292e82bb",
+        "acquiredAt": "2026-09-13T11:27:14.285Z",
+        "classification": "implementation",
+        "licenses": [
+          {
+            "path": "LICENSE",
+            "sha256": "625f0f619133f89bbbb2abe37369613dfa1885eba1e50d02170deb62bb42cb6b"
+          },
+          {
+            "path": "packages/docs/LICENSE",
+            "sha256": "25b2b8ffd5ed7a8d2b201f215a9ca64d14db709271070d7fb5efa30894655a35"
+          },
+          {
+            "path": "packages/http-recorder/LICENSE",
+            "sha256": "625f0f619133f89bbbb2abe37369613dfa1885eba1e50d02170deb62bb42cb6b"
+          },
+          {
+            "path": "packages/ui/LICENSE",
+            "sha256": "625f0f619133f89bbbb2abe37369613dfa1885eba1e50d02170deb62bb42cb6b"
+          }
+        ]
+      }
+    },
+    "langchain": {
+      "repository": "langchain-ai/langchain-mcp-adapters",
+      "directory": "corpus/langchain-ai--langchain-mcp-adapters",
+      "commit": "52a4535f3eb4b98f386836e4d9b8c4cadf99afca",
+      "acquisitionManifest": "research/manifests/protocols.json",
+      "inspectionDepth": "Tool discovery/conversion, default and explicit session lifetimes, error/content conversion and stdio/session routing. Python MCP SDK and LangChain core dependencies are not deconstructed by these adapter spans.",
+      "acquisitionIdentity": {
+        "head": "52a4535f3eb4b98f386836e4d9b8c4cadf99afca",
+        "trackedClean": true,
+        "acquisitionManifestSha256": "f205edccbb77a264ba026c5111d21254cb0d6d1ef78fa9cc67793d15b7707015",
+        "acquiredAt": "2026-09-13T11:04:19.103Z",
+        "classification": "adapter",
+        "licenses": [
+          {
+            "path": "LICENSE",
+            "sha256": "31499b144b24d8e898681069d3cdb32aa509f4117f39d9b593f56b5a94e2af40"
+          }
+        ]
+      }
+    },
+    "sdk": {
+      "repository": "modelcontextprotocol/typescript-sdk",
+      "directory": "corpus/modelcontextprotocol--typescript-sdk",
+      "commit": "b65426158ed9f29aea8ef3dc09ca22d7d9d6f970",
+      "acquisitionManifest": "research/manifests/protocols.json",
+      "inspectionDepth": "Modular upstream client/server stdio, framing and selected shared-protocol request/cancellation/close paths. This is distinct from the installed monolithic SDK 1.30.0.",
+      "acquisitionIdentity": {
+        "head": "b65426158ed9f29aea8ef3dc09ca22d7d9d6f970",
+        "trackedClean": true,
+        "acquisitionManifestSha256": "f205edccbb77a264ba026c5111d21254cb0d6d1ef78fa9cc67793d15b7707015",
+        "acquiredAt": "2026-09-13T11:04:16.321Z",
+        "classification": "sdk",
+        "licenses": [
+          {
+            "path": "LICENSE",
+            "sha256": "0382b0057770ca05e9c350a50aa3b1c1fea84da0bc81d723bf00b9aa841be58a"
+          }
+        ]
+      }
+    },
+    "servers": {
+      "repository": "modelcontextprotocol/servers",
+      "directory": "corpus/modelcontextprotocol--servers",
+      "commit": "d73f99efbfd40c3aa1b61e88728b3d49fb52608f",
+      "acquisitionManifest": "research/manifests/protocols.json",
+      "inspectionDepth": "Filesystem path validation, roots, selected read/write handlers and everything stdio/default get-env registration. Other reference servers and complete concurrent filesystem safety are not audited.",
+      "acquisitionIdentity": {
+        "head": "d73f99efbfd40c3aa1b61e88728b3d49fb52608f",
+        "trackedClean": true,
+        "acquisitionManifestSha256": "f205edccbb77a264ba026c5111d21254cb0d6d1ef78fa9cc67793d15b7707015",
+        "acquiredAt": "2026-09-13T11:04:17.953Z",
+        "classification": "reference-servers",
+        "licenses": [
+          {
+            "path": "LICENSE",
+            "sha256": "0382b0057770ca05e9c350a50aa3b1c1fea84da0bc81d723bf00b9aa841be58a"
+          },
+          {
+            "path": "src/fetch/LICENSE",
+            "sha256": "8cc7c6e33b24ed4ee8fcccc33eccf102549d04fa4cb9737cecc9770dad1080ff"
+          },
+          {
+            "path": "src/git/LICENSE",
+            "sha256": "8cc7c6e33b24ed4ee8fcccc33eccf102549d04fa4cb9737cecc9770dad1080ff"
+          }
+        ]
+      }
+    }
+  },
+  "evidence": [
+    {
+      "id": "OC-CATALOG",
+      "repo": "opencode",
+      "path": "packages/opencode/src/mcp/catalog.ts",
+      "startLine": 14,
+      "endLine": 40,
+      "observation": "Tolerant listing omits outputSchema; pagination rejects duplicate cursors and caps at 1000 pages; defs converts listing failure to no result.",
+      "fileSha256": "1123ce304cd647e0945aa98743f411a69988f6dde63867aea78b74c72a5abe11",
+      "spanSha256": "04010ceea7e7cf2911614d439bfd4989ed12a0846a49a0cb04468a44f41b3fa9",
+      "url": "https://github.com/anomalyco/opencode/blob/95daf90670b7c039c436c85537da5fbfe2205b41/packages/opencode/src/mcp/catalog.ts#L14-L40"
+    },
+    {
+      "id": "OC-CONVERT",
+      "repo": "opencode",
+      "path": "packages/opencode/src/mcp/catalog.ts",
+      "startLine": 42,
+      "endLine": 82,
+      "observation": "Tool schema is forced to object with properties and additionalProperties=false; dispatch forwards args with progress-reset timeout and abort signal; isError throws; structured-only success gains text content.",
+      "fileSha256": "1123ce304cd647e0945aa98743f411a69988f6dde63867aea78b74c72a5abe11",
+      "spanSha256": "be82a686d96aafb81adc43c4ad634e3c147b0506f0f5eeffbd228799e877218a",
+      "url": "https://github.com/anomalyco/opencode/blob/95daf90670b7c039c436c85537da5fbfe2205b41/packages/opencode/src/mcp/catalog.ts#L42-L82"
+    },
+    {
+      "id": "OC-NAMES-LIST",
+      "repo": "opencode",
+      "path": "packages/opencode/src/mcp/catalog.ts",
+      "startLine": 117,
+      "endLine": 168,
+      "observation": "Tool naming sanitizes characters; tools/list retries selected output-schema validation errors through the tolerant schema.",
+      "fileSha256": "1123ce304cd647e0945aa98743f411a69988f6dde63867aea78b74c72a5abe11",
+      "spanSha256": "08150b72600377ec4f203be356025ad55e2a826486b02bfc92b200b2f0244503",
+      "url": "https://github.com/anomalyco/opencode/blob/95daf90670b7c039c436c85537da5fbfe2205b41/packages/opencode/src/mcp/catalog.ts#L117-L168"
+    },
+    {
+      "id": "OC-DISCOVER",
+      "repo": "opencode",
+      "path": "packages/opencode/src/mcp/index.ts",
+      "startLine": 372,
+      "endLine": 405,
+      "observation": "Enabled connections discover advertised tools; missing discovery fails and closes the connected client.",
+      "fileSha256": "82c459309dfd005d25daecfabc1007d807d4bee23f6078434974277938a1c026",
+      "spanSha256": "3a1673d73820c27d0cb65b7f5d7d14f50ba5c4809657c8f1f3a5821dd25000cc",
+      "url": "https://github.com/anomalyco/opencode/blob/95daf90670b7c039c436c85537da5fbfe2205b41/packages/opencode/src/mcp/index.ts#L372-L405"
+    },
+    {
+      "id": "OC-REFRESH",
+      "repo": "opencode",
+      "path": "packages/opencode/src/mcp/index.ts",
+      "startLine": 442,
+      "endLine": 471,
+      "observation": "Close removes cached client/tool state; successful list-change refresh replaces definitions, while a failed refresh returns without replacing them.",
+      "fileSha256": "82c459309dfd005d25daecfabc1007d807d4bee23f6078434974277938a1c026",
+      "spanSha256": "795d9d6488097c6894f2f35f7095a0648bf1c32e022325972cdbdace831b0581",
+      "url": "https://github.com/anomalyco/opencode/blob/95daf90670b7c039c436c85537da5fbfe2205b41/packages/opencode/src/mcp/index.ts#L442-L471"
+    },
+    {
+      "id": "OC-NAMES",
+      "repo": "opencode",
+      "path": "packages/opencode/src/mcp/index.ts",
+      "startLine": 661,
+      "endLine": 688,
+      "observation": "Only connected cached catalogs are exposed; each definition is assigned into a record keyed by the sanitized server/tool name.",
+      "fileSha256": "82c459309dfd005d25daecfabc1007d807d4bee23f6078434974277938a1c026",
+      "spanSha256": "4a5e2c464958dd053bdad7fd82289677cc25339b69abe41b2d7ab3033d37f1d3",
+      "url": "https://github.com/anomalyco/opencode/blob/95daf90670b7c039c436c85537da5fbfe2205b41/packages/opencode/src/mcp/index.ts#L661-L688"
+    },
+    {
+      "id": "OC-CONTEXT",
+      "repo": "opencode",
+      "path": "packages/opencode/src/session/tools.ts",
+      "startLine": 59,
+      "endLine": 90,
+      "observation": "Execution context carries abort/session/call identity and merges agent/session permission rules for ask.",
+      "fileSha256": "5ad3f44682fc8e2bacb2222157943de8ab7dd663a1e0ddf5e4a213539b1f67d7",
+      "spanSha256": "2a042146687cebbad079beb9fd4be1f05b555d616668467e65fe67efca8f8287",
+      "url": "https://github.com/anomalyco/opencode/blob/95daf90670b7c039c436c85537da5fbfe2205b41/packages/opencode/src/session/tools.ts#L59-L90"
+    },
+    {
+      "id": "OC-DISPATCH",
+      "repo": "opencode",
+      "path": "packages/opencode/src/session/tools.ts",
+      "startLine": 388,
+      "endLine": 489,
+      "observation": "Ordinary MCP tools receive provider schema transformation; plugin-before runs, permission ask precedes MCP execute, plugin-after runs, then content/attachments and truncation are projected.",
+      "fileSha256": "5ad3f44682fc8e2bacb2222157943de8ab7dd663a1e0ddf5e4a213539b1f67d7",
+      "spanSha256": "7525ebdb8f805e202046f3ea16e15dd10ac88e9fda1517aa9b9117fc40e0abca",
+      "url": "https://github.com/anomalyco/opencode/blob/95daf90670b7c039c436c85537da5fbfe2205b41/packages/opencode/src/session/tools.ts#L388-L489"
+    },
+    {
+      "id": "OC-PERMISSION",
+      "repo": "opencode",
+      "path": "packages/opencode/src/permission/index.ts",
+      "startLine": 28,
+      "endLine": 107,
+      "observation": "Last matching wildcard rule wins with ask fallback; deny rejects, allow proceeds, and ask awaits a deferred permission response.",
+      "fileSha256": "5b9e4aa65290a39363722b9fae4c68080188d8ed76896afa0d96cd9dbfd2821d",
+      "spanSha256": "7284d78aed79dca273ae34e6b42c094b8f868598800ede1dcb3bd453acaadd94",
+      "url": "https://github.com/anomalyco/opencode/blob/95daf90670b7c039c436c85537da5fbfe2205b41/packages/opencode/src/permission/index.ts#L28-L107"
+    },
+    {
+      "id": "OC-SCHEMA",
+      "repo": "opencode",
+      "path": "packages/opencode/src/provider/transform.ts",
+      "startLine": 1472,
+      "endLine": 1602,
+      "observation": "Selected JSON-schema keywords survive OpenAI lowering; boolean schemas become string schemas, an empty schema remains empty, and lowering is gated on the exact OpenAI/Azure SDK package route; Moonshot has a separate branch.",
+      "fileSha256": "c07d49e48dd2478ad2813a10805781a72551db2fd847b7df994cc854bf654c16",
+      "spanSha256": "c39209f55d8f7106a82c572d865ea13abb4f4311430e9e0df63c832a50a1a14d",
+      "url": "https://github.com/anomalyco/opencode/blob/95daf90670b7c039c436c85537da5fbfe2205b41/packages/opencode/src/provider/transform.ts#L1472-L1602"
+    },
+    {
+      "id": "OC-REPAIR",
+      "repo": "opencode",
+      "path": "packages/opencode/src/session/llm.ts",
+      "startLine": 271,
+      "endLine": 324,
+      "observation": "AI SDK streamText receives the prepared tools and abort signal; repair only corrects matching lowercase tool names or redirects to invalid with diagnostic JSON.",
+      "fileSha256": "5f1dcfb734853e39760e4dd05470f0c7d8752fc5dcc64e118c065149602e402d",
+      "spanSha256": "4fa4e851df1e7090c2a015dfdbe38595516d822c4741f0a6e74436c7d97a391f",
+      "url": "https://github.com/anomalyco/opencode/blob/95daf90670b7c039c436c85537da5fbfe2205b41/packages/opencode/src/session/llm.ts#L271-L324"
+    },
+    {
+      "id": "LC-LIST",
+      "repo": "langchain",
+      "path": "langchain_mcp_adapters/tools.py",
+      "startLine": 320,
+      "endLine": 354,
+      "observation": "Tool listing follows cursors, treats a false cursor as completion and caps at 1000 iterations.",
+      "fileSha256": "8111a65e5debe4110630989df2e8e572d9eb4ebdfa6e9510cd0dbb6fe7223667",
+      "spanSha256": "ce4e12d10743f831559c757d87dc66bdf1fafdea71a4b9afe62eed8b60afb51d",
+      "url": "https://github.com/langchain-ai/langchain-mcp-adapters/blob/52a4535f3eb4b98f386836e4d9b8c4cadf99afca/langchain_mcp_adapters/tools.py#L320-L354"
+    },
+    {
+      "id": "LC-DISCOVERY",
+      "repo": "langchain",
+      "path": "langchain_mcp_adapters/tools.py",
+      "startLine": 539,
+      "endLine": 610,
+      "observation": "Discovery without a supplied session initializes a temporary session, lists tools, exits it, and converts tools with the original session=None plus connection configuration.",
+      "fileSha256": "8111a65e5debe4110630989df2e8e572d9eb4ebdfa6e9510cd0dbb6fe7223667",
+      "spanSha256": "3aefe96b932ee84683f550414e0a82842089d36814926d108636f0c5459ae818",
+      "url": "https://github.com/langchain-ai/langchain-mcp-adapters/blob/52a4535f3eb4b98f386836e4d9b8c4cadf99afca/langchain_mcp_adapters/tools.py#L539-L610"
+    },
+    {
+      "id": "LC-CALL",
+      "repo": "langchain",
+      "path": "langchain_mcp_adapters/tools.py",
+      "startLine": 395,
+      "endLine": 536,
+      "observation": "Calls without a supplied session open/initialize a new session; explicit sessions are reused. Call exceptions are re-raised outside temporary context teardown. Tool inputSchema becomes StructuredTool args_schema; annotations are metadata.",
+      "fileSha256": "8111a65e5debe4110630989df2e8e572d9eb4ebdfa6e9510cd0dbb6fe7223667",
+      "spanSha256": "93eec6c5c892a6b0dc472f7134f93fd852da706b84d1d7d9bc860af434977c2b",
+      "url": "https://github.com/langchain-ai/langchain-mcp-adapters/blob/52a4535f3eb4b98f386836e4d9b8c4cadf99afca/langchain_mcp_adapters/tools.py#L395-L536"
+    },
+    {
+      "id": "LC-ERROR",
+      "repo": "langchain",
+      "path": "langchain_mcp_adapters/tools.py",
+      "startLine": 70,
+      "endLine": 158,
+      "observation": "A dedicated ToolException subclass carries MCP execution-error content; its handler preserves content or supplies an empty-error placeholder, and rethrows unrelated ToolException instances.",
+      "fileSha256": "8111a65e5debe4110630989df2e8e572d9eb4ebdfa6e9510cd0dbb6fe7223667",
+      "spanSha256": "22f4b36f12f045e51ae4abda97a99b67eecb32b8587f89023c3793321ad20120",
+      "url": "https://github.com/langchain-ai/langchain-mcp-adapters/blob/52a4535f3eb4b98f386836e4d9b8c4cadf99afca/langchain_mcp_adapters/tools.py#L70-L158"
+    },
+    {
+      "id": "LC-CONTENT",
+      "repo": "langchain",
+      "path": "langchain_mcp_adapters/tools.py",
+      "startLine": 175,
+      "endLine": 283,
+      "observation": "Audio and unknown content raise conversion errors; content conversion precedes isError processing. Successful structuredContent becomes a separate artifact; interceptor ToolMessage/Command results can bypass ordinary conversion.",
+      "fileSha256": "8111a65e5debe4110630989df2e8e572d9eb4ebdfa6e9510cd0dbb6fe7223667",
+      "spanSha256": "757de5b1df2f842bd816b81f4187bc4041879c48c24cf67a4181adc0f40d0ffb",
+      "url": "https://github.com/langchain-ai/langchain-mcp-adapters/blob/52a4535f3eb4b98f386836e4d9b8c4cadf99afca/langchain_mcp_adapters/tools.py#L175-L283"
+    },
+    {
+      "id": "LC-INTERCEPT",
+      "repo": "langchain",
+      "path": "langchain_mcp_adapters/tools.py",
+      "startLine": 286,
+      "endLine": 317,
+      "observation": "Configured interceptors wrap dispatch in order, with the first interceptor outermost.",
+      "fileSha256": "8111a65e5debe4110630989df2e8e572d9eb4ebdfa6e9510cd0dbb6fe7223667",
+      "spanSha256": "729f30a3fc0e7ef2fd8857c194c9854bdfd6acddfa7b435687ed84677af0191b",
+      "url": "https://github.com/langchain-ai/langchain-mcp-adapters/blob/52a4535f3eb4b98f386836e4d9b8c4cadf99afca/langchain_mcp_adapters/tools.py#L286-L317"
+    },
+    {
+      "id": "LC-LIFETIME",
+      "repo": "langchain",
+      "path": "langchain_mcp_adapters/client.py",
+      "startLine": 128,
+      "endLine": 216,
+      "observation": "Explicit client.session yields inside a live initialized context; get_tools passes no session and connection configuration, including concurrent discovery across servers.",
+      "fileSha256": "dd706d76529f4fd06891ec3a967a513b3113795155b1b83307d17377bf45831d",
+      "spanSha256": "4df6a6692f09d3f585edadeb3e02c44aeb1be56e5e0f0a06121fc2577e1044b9",
+      "url": "https://github.com/langchain-ai/langchain-mcp-adapters/blob/52a4535f3eb4b98f386836e4d9b8c4cadf99afca/langchain_mcp_adapters/client.py#L128-L216"
+    },
+    {
+      "id": "LC-ENV",
+      "repo": "langchain",
+      "path": "langchain_mcp_adapters/sessions.py",
+      "startLine": 35,
+      "endLine": 45,
+      "observation": "Braced environment references expand from os.environ; unknown references remain literal and bare dollar syntax is not expanded.",
+      "fileSha256": "7d89ddef4402759ad0ddc20b9f87be226e092bd3a994784014e20fe7e3da853e",
+      "spanSha256": "284c31bb63402361520b28c935f36ebd44a97b4e31f911a411fd7e77e899eaa5",
+      "url": "https://github.com/langchain-ai/langchain-mcp-adapters/blob/52a4535f3eb4b98f386836e4d9b8c4cadf99afca/langchain_mcp_adapters/sessions.py#L35-L45"
+    },
+    {
+      "id": "LC-STDIO",
+      "repo": "langchain",
+      "path": "langchain_mcp_adapters/sessions.py",
+      "startLine": 212,
+      "endLine": 271,
+      "observation": "Configured environment values are expanded, then passed with command/args/cwd/encoding to Python MCP stdio_client and ClientSession context managers; Python SDK internals remain a dependency boundary.",
+      "fileSha256": "7d89ddef4402759ad0ddc20b9f87be226e092bd3a994784014e20fe7e3da853e",
+      "spanSha256": "f6922aa20c5b07b9511e140b4c9b97dcc49078f84e4a4e4e827f8df0c9838e89",
+      "url": "https://github.com/langchain-ai/langchain-mcp-adapters/blob/52a4535f3eb4b98f386836e4d9b8c4cadf99afca/langchain_mcp_adapters/sessions.py#L212-L271"
+    },
+    {
+      "id": "LC-TRANSPORT",
+      "repo": "langchain",
+      "path": "langchain_mcp_adapters/sessions.py",
+      "startLine": 405,
+      "endLine": 477,
+      "observation": "Session routing validates transport presence and required command/args or URL fields, wires callbacks and selects the configured transport.",
+      "fileSha256": "7d89ddef4402759ad0ddc20b9f87be226e092bd3a994784014e20fe7e3da853e",
+      "spanSha256": "9c75114cdb1447349499b3b203ce68bc8d8203051cb32ebf3f3593208175d68c",
+      "url": "https://github.com/langchain-ai/langchain-mcp-adapters/blob/52a4535f3eb4b98f386836e4d9b8c4cadf99afca/langchain_mcp_adapters/sessions.py#L405-L477"
+    },
+    {
+      "id": "SDK-ENV",
+      "repo": "sdk",
+      "path": "packages/client/src/client/stdio.ts",
+      "startLine": 54,
+      "endLine": 177,
+      "observation": "The stdio client merges filtered default environment with configured environment, spawns without a shell, wires stdout/errors/close and optionally pipes stderr.",
+      "fileSha256": "a679728fd34d442d2eec400f958675f44d30e175cbbc7e08340be9f55399ba2c",
+      "spanSha256": "c0b75d44642ab774a1f7a96877f97168690a6ee66055e81cea6a4c89f61773c9",
+      "url": "https://github.com/modelcontextprotocol/typescript-sdk/blob/b65426158ed9f29aea8ef3dc09ca22d7d9d6f970/packages/client/src/client/stdio.ts#L54-L177"
+    },
+    {
+      "id": "SDK-CLOSE",
+      "repo": "sdk",
+      "path": "packages/client/src/client/stdio.ts",
+      "startLine": 204,
+      "endLine": 329,
+      "observation": "Private probe disposal awaits exit and destroys pipe handles; public close ends stdin then escalates child signals after two-second races, without awaiting final SIGKILL completion; sends respect write backpressure.",
+      "fileSha256": "a679728fd34d442d2eec400f958675f44d30e175cbbc7e08340be9f55399ba2c",
+      "spanSha256": "6c6e2ed732e46666343db1ecb8fd236a7be01d8212a094edfc6ab4e28a1f4109",
+      "url": "https://github.com/modelcontextprotocol/typescript-sdk/blob/b65426158ed9f29aea8ef3dc09ca22d7d9d6f970/packages/client/src/client/stdio.ts#L204-L329"
+    },
+    {
+      "id": "SDK-SERVER",
+      "repo": "sdk",
+      "path": "packages/server/src/server/stdio.ts",
+      "startLine": 44,
+      "endLine": 154,
+      "observation": "Server transport reads buffered messages, reports errors, removes its listeners and conditionally pauses stdin on close; send rejects closed/error states and handles drain.",
+      "fileSha256": "3a06bb92c6305a91d4aa52f8206c5af36baa16fa3be1a049aaa6bad98e837f1c",
+      "spanSha256": "ecd68703748cea0ae6800f00ec6c22ef53ccab50493853d34becc493cbe2742b",
+      "url": "https://github.com/modelcontextprotocol/typescript-sdk/blob/b65426158ed9f29aea8ef3dc09ca22d7d9d6f970/packages/server/src/server/stdio.ts#L44-L154"
+    },
+    {
+      "id": "SDK-FRAMING",
+      "repo": "sdk",
+      "path": "packages/core-internal/src/shared/stdio.ts",
+      "startLine": 4,
+      "endLine": 62,
+      "observation": "A ten-MiB default buffer cap applies before parsing; newline frames decode UTF-8, non-JSON syntax-error lines are skipped, valid-JSON schema failures surface, and writes append a newline.",
+      "fileSha256": "ccb0b3d7551f0c4306308d1e90f478beb771b8b5961dceb7070deac14313551a",
+      "spanSha256": "78b856432fb4dd481946a40b9ae3b5c242a1fbacb2513c42246846c1ab153e7d",
+      "url": "https://github.com/modelcontextprotocol/typescript-sdk/blob/b65426158ed9f29aea8ef3dc09ca22d7d9d6f970/packages/core-internal/src/shared/stdio.ts#L4-L62"
+    },
+    {
+      "id": "SDK-CANCEL",
+      "repo": "sdk",
+      "path": "packages/core-internal/src/shared/protocol.ts",
+      "startLine": 726,
+      "endLine": 769,
+      "observation": "Cancellation aborts the matching request-handler controller; progress timeout reset can check an optional maximum total timeout.",
+      "fileSha256": "c37c52cc3320375ad9858e678633bf495baf797a9a449c32b50a2373b8306efe",
+      "spanSha256": "517d2e87b1226bd7d569322d3c42c09ed16eaf54cffb62727371f6c8e89ffddd",
+      "url": "https://github.com/modelcontextprotocol/typescript-sdk/blob/b65426158ed9f29aea8ef3dc09ca22d7d9d6f970/packages/core-internal/src/shared/protocol.ts#L726-L769"
+    },
+    {
+      "id": "SDK-TRANSPORT",
+      "repo": "sdk",
+      "path": "packages/core-internal/src/shared/protocol.ts",
+      "startLine": 780,
+      "endLine": 855,
+      "observation": "Protocol connect dispatches transport messages; close settles pending responses with ConnectionClosed, clears timers and aborts active request-handler controllers.",
+      "fileSha256": "c37c52cc3320375ad9858e678633bf495baf797a9a449c32b50a2373b8306efe",
+      "spanSha256": "70c5cfef94a8441623b3970c8a1ceaecf7d35f39e24adf3d568bc900a96a842f",
+      "url": "https://github.com/modelcontextprotocol/typescript-sdk/blob/b65426158ed9f29aea8ef3dc09ca22d7d9d6f970/packages/core-internal/src/shared/protocol.ts#L780-L855"
+    },
+    {
+      "id": "SDK-HANDLER",
+      "repo": "sdk",
+      "path": "packages/core-internal/src/shared/protocol.ts",
+      "startLine": 1044,
+      "endLine": 1161,
+      "observation": "Each handler receives a cancellation signal; replies are suppressed after abort; encoding/handler failures map to protocol error responses and handler state is removed.",
+      "fileSha256": "c37c52cc3320375ad9858e678633bf495baf797a9a449c32b50a2373b8306efe",
+      "spanSha256": "c16b4a968e82f5f32d8e8e3bacd6f85b7b093260cd4509b4254c74707814af21",
+      "url": "https://github.com/modelcontextprotocol/typescript-sdk/blob/b65426158ed9f29aea8ef3dc09ca22d7d9d6f970/packages/core-internal/src/shared/protocol.ts#L1044-L1161"
+    },
+    {
+      "id": "SDK-REQUEST",
+      "repo": "sdk",
+      "path": "packages/core-internal/src/shared/protocol.ts",
+      "startLine": 1373,
+      "endLine": 1588,
+      "observation": "Outbound stdio cancellation sends a best-effort notification except for initialize; modern per-request HTTP streams use a different branch. Local promises reject, returned results are validated, and per-request listeners/maps/timers are cleaned.",
+      "fileSha256": "c37c52cc3320375ad9858e678633bf495baf797a9a449c32b50a2373b8306efe",
+      "spanSha256": "8b8ccf560fbe34e9107c31845cc36e605fab2c42b5c74b9be45a08be481b73e0",
+      "url": "https://github.com/modelcontextprotocol/typescript-sdk/blob/b65426158ed9f29aea8ef3dc09ca22d7d9d6f970/packages/core-internal/src/shared/protocol.ts#L1373-L1588"
+    },
+    {
+      "id": "SDK-VERSION",
+      "repo": "sdk",
+      "path": "packages/client/package.json",
+      "startLine": 1,
+      "endLine": 41,
+      "observation": "The acquired upstream client package identifies itself as @modelcontextprotocol/client 2.0.0 with modular exports, not the installed @modelcontextprotocol/sdk 1.30.0 artifact.",
+      "fileSha256": "8c70dd38c404b5f3f9c1ba153f4dc23adab5cd70fc90edcf13985c1a6a9cfe0f",
+      "spanSha256": "473691fd6bccc409738ab9d4e9ddcd5b793d7dc1a7ac3b10eea28a2a805b909d",
+      "url": "https://github.com/modelcontextprotocol/typescript-sdk/blob/b65426158ed9f29aea8ef3dc09ca22d7d9d6f970/packages/client/package.json#L1-L41"
+    },
+    {
+      "id": "FS-PATH",
+      "repo": "servers",
+      "path": "src/filesystem/lib.ts",
+      "startLine": 76,
+      "endLine": 184,
+      "observation": "Relative resolution uses allowed directories; validation checks lexical and realpath containment, rejects Windows drive syntax on POSIX, and resolves missing/Unicode-equivalent path components with ambiguity checks.",
+      "fileSha256": "d67db7074d9823a306e83326a4362e477e0ff7492fb484e015a15abad761b495",
+      "spanSha256": "af2156578d89d8b5d27cc81135a038f86d248ddaaf0450a2f935108a8e0647ad",
+      "url": "https://github.com/modelcontextprotocol/servers/blob/d73f99efbfd40c3aa1b61e88728b3d49fb52608f/src/filesystem/lib.ts#L76-L184"
+    },
+    {
+      "id": "FS-WRITE",
+      "repo": "servers",
+      "path": "src/filesystem/lib.ts",
+      "startLine": 205,
+      "endLine": 237,
+      "observation": "New files use exclusive creation; existing targets use a random sibling temporary file then rename, with cleanup and best-effort permission restoration. No fsync or expected-content CAS appears in this helper.",
+      "fileSha256": "d67db7074d9823a306e83326a4362e477e0ff7492fb484e015a15abad761b495",
+      "spanSha256": "9cf32f7768aaf06d2542354d161451583a05818856c110d1c7bc4523b5dedbdc",
+      "url": "https://github.com/modelcontextprotocol/servers/blob/d73f99efbfd40c3aa1b61e88728b3d49fb52608f/src/filesystem/lib.ts#L205-L237"
+    },
+    {
+      "id": "FS-START",
+      "repo": "servers",
+      "path": "src/filesystem/index.ts",
+      "startLine": 32,
+      "endLine": 94,
+      "observation": "Command-line roots are normalized, resolved and filtered for accessible directories before setting the library's allowed directories.",
+      "fileSha256": "bff21de612c59d64b351f70615f44563f0efe76666a75aa52450ebe6fae6584a",
+      "spanSha256": "14a6f11bec686a40c5a7b53a56e48cc88ae5049d16b9890db22305fa2f9463ab",
+      "url": "https://github.com/modelcontextprotocol/servers/blob/d73f99efbfd40c3aa1b61e88728b3d49fb52608f/src/filesystem/index.ts#L32-L94"
+    },
+    {
+      "id": "FS-MULTI-WRITE",
+      "repo": "servers",
+      "path": "src/filesystem/index.ts",
+      "startLine": 319,
+      "endLine": 382,
+      "observation": "read_multiple_files embeds each read failure in returned content without setting top-level isError; write_file validates a path then writes and reports success text with destructive/idempotent annotations.",
+      "fileSha256": "bff21de612c59d64b351f70615f44563f0efe76666a75aa52450ebe6fae6584a",
+      "spanSha256": "dcd0e9c68dc0fde0dd0b4e912e87da15609f5892956ee94ff31f6478e73640fc",
+      "url": "https://github.com/modelcontextprotocol/servers/blob/d73f99efbfd40c3aa1b61e88728b3d49fb52608f/src/filesystem/index.ts#L319-L382"
+    },
+    {
+      "id": "FS-ROOTS",
+      "repo": "servers",
+      "path": "src/filesystem/index.ts",
+      "startLine": 724,
+      "endLine": 786,
+      "observation": "Nonempty validated client roots replace allowed directories; empty/invalid roots retain the old set. Startup and roots/list_changed fetch client roots; no intersection with the original CLI roots appears here.",
+      "fileSha256": "bff21de612c59d64b351f70615f44563f0efe76666a75aa52450ebe6fae6584a",
+      "spanSha256": "36baedb9de4a990091b274b3d58f59d37f06c30a0306b92d9d5063fac7ff6650",
+      "url": "https://github.com/modelcontextprotocol/servers/blob/d73f99efbfd40c3aa1b61e88728b3d49fb52608f/src/filesystem/index.ts#L724-L786"
+    },
+    {
+      "id": "FS-ROOTVALID",
+      "repo": "servers",
+      "path": "src/filesystem/roots-utils.ts",
+      "startLine": 13,
+      "endLine": 77,
+      "observation": "Roots are decoded, resolved and checked for directory existence; invalid entries are skipped. This helper has no original-root authorization ceiling.",
+      "fileSha256": "bce7c15a73dc592c23339edcd68603d08fed8d7f3d0f371db29042703f93240d",
+      "spanSha256": "6be3d804934b5be488684e97163c1ac2c78e6fcb6ece1d143f361bf9239c1375",
+      "url": "https://github.com/modelcontextprotocol/servers/blob/d73f99efbfd40c3aa1b61e88728b3d49fb52608f/src/filesystem/roots-utils.ts#L13-L77"
+    },
+    {
+      "id": "FS-CONTAIN",
+      "repo": "servers",
+      "path": "src/filesystem/path-validation.ts",
+      "startLine": 11,
+      "endLine": 85,
+      "observation": "Containment rejects empty/NUL/type errors and checks equality or a directory-separator boundary, with root/drive handling.",
+      "fileSha256": "20833254c044c3d4d0672616ad546d50f09dae8b704c8a3619b86310f2cec3ba",
+      "spanSha256": "17dfa1f94f41dde85c84c37c828ee76bad1f75d309c452a6f5b77fc8edf90968",
+      "url": "https://github.com/modelcontextprotocol/servers/blob/d73f99efbfd40c3aa1b61e88728b3d49fb52608f/src/filesystem/path-validation.ts#L11-L85"
+    },
+    {
+      "id": "FS-NORMALIZE",
+      "repo": "servers",
+      "path": "src/filesystem/path-utils.ts",
+      "startLine": 39,
+      "endLine": 124,
+      "observation": "Path normalization has OS-specific branches and trims surrounding whitespace/quotes; tilde expansion uses the server process home.",
+      "fileSha256": "d8254889f4e58493d52878afdb7ccfc516e2edca13dc0868c08a6c1576c274ce",
+      "spanSha256": "5cfe2a833d52cbcb730d6d95de548d74c54557f25cc4e3d8041002061be867ea",
+      "url": "https://github.com/modelcontextprotocol/servers/blob/d73f99efbfd40c3aa1b61e88728b3d49fb52608f/src/filesystem/path-utils.ts#L39-L124"
+    },
+    {
+      "id": "FS-VERSION",
+      "repo": "servers",
+      "path": "src/filesystem/package.json",
+      "startLine": 1,
+      "endLine": 32,
+      "observation": "The filesystem package declares @modelcontextprotocol/sdk ^1.30.0 and a build prepare script; this manifest is not proof of a resolved dependency set and no script was run.",
+      "fileSha256": "d91000e9d2cb2373b4dcd73027bdeb42e60790c8d7469618bad256770109bbed",
+      "spanSha256": "676f6c06d8e9d21ac3c00356dbd99af5e194d60749f3a785bb077b49b91d0679",
+      "url": "https://github.com/modelcontextprotocol/servers/blob/d73f99efbfd40c3aa1b61e88728b3d49fb52608f/src/filesystem/package.json#L1-L32"
+    },
+    {
+      "id": "ALL-LAUNCH",
+      "repo": "servers",
+      "path": "src/everything/index.ts",
+      "startLine": 1,
+      "endLine": 42,
+      "observation": "Everything selects stdio by default and dynamically imports only the requested transport.",
+      "fileSha256": "75cd112c894b415d5977aac82bee21c08df13e2f8385be2ee953c15435930967",
+      "spanSha256": "75cd112c894b415d5977aac82bee21c08df13e2f8385be2ee953c15435930967",
+      "url": "https://github.com/modelcontextprotocol/servers/blob/d73f99efbfd40c3aa1b61e88728b3d49fb52608f/src/everything/index.ts#L1-L42"
+    },
+    {
+      "id": "ALL-STDIO",
+      "repo": "servers",
+      "path": "src/everything/transports/stdio.ts",
+      "startLine": 1,
+      "endLine": 33,
+      "observation": "The stdio entrypoint creates and connects the server; its explicit SIGINT handler closes, cleans up and exits.",
+      "fileSha256": "f69b2f9d27f66a1a8e1442208d07f12c4f92a7a2e4e86f0f64461bce215b33a6",
+      "spanSha256": "f69b2f9d27f66a1a8e1442208d07f12c4f92a7a2e4e86f0f64461bce215b33a6",
+      "url": "https://github.com/modelcontextprotocol/servers/blob/d73f99efbfd40c3aa1b61e88728b3d49fb52608f/src/everything/transports/stdio.ts#L1-L33"
+    },
+    {
+      "id": "ALL-REGISTER",
+      "repo": "servers",
+      "path": "src/everything/server/index.ts",
+      "startLine": 35,
+      "endLine": 104,
+      "observation": "The factory installs default tools before initialization and capability-conditional tools afterward, with in-memory task storage and delayed root synchronization.",
+      "fileSha256": "1e2f49c08d505148e63cc5420db37f8dda78570abe1af3038b1455be24b699b9",
+      "spanSha256": "1a886abb9104c5c7b1a04b19f86d9dce63c50cf7822cdce9a8808dbccaee5643",
+      "url": "https://github.com/modelcontextprotocol/servers/blob/d73f99efbfd40c3aa1b61e88728b3d49fb52608f/src/everything/server/index.ts#L35-L104"
+    },
+    {
+      "id": "ALL-TOOLS",
+      "repo": "servers",
+      "path": "src/everything/tools/index.ts",
+      "startLine": 22,
+      "endLine": 55,
+      "observation": "get-env is included in unconditional registerTools, separately from capability-conditional registrations.",
+      "fileSha256": "ad80b2b99e58c6c5a8e47fa24c83fd0b3e4adf31c1b851b7c6f9d95e4ce0397d",
+      "spanSha256": "21c86645343fc1224bfe9a9e6b79c456ee3428d657a2e4072e9219786c4cd885",
+      "url": "https://github.com/modelcontextprotocol/servers/blob/d73f99efbfd40c3aa1b61e88728b3d49fb52608f/src/everything/tools/index.ts#L22-L55"
+    },
+    {
+      "id": "ALL-ENV",
+      "repo": "servers",
+      "path": "src/everything/tools/get-env.ts",
+      "startLine": 1,
+      "endLine": 39,
+      "observation": "get-env returns JSON.stringify(process.env) as text with no value filtering in this callback, despite readOnly/non-destructive/idempotent/closed-world annotations.",
+      "fileSha256": "6c8bebe6dd0f4e94335c33da010836361ccc00d1d1b2872e0d520888b09e8519",
+      "spanSha256": "6c8bebe6dd0f4e94335c33da010836361ccc00d1d1b2872e0d520888b09e8519",
+      "url": "https://github.com/modelcontextprotocol/servers/blob/d73f99efbfd40c3aa1b61e88728b3d49fb52608f/src/everything/tools/get-env.ts#L1-L39"
+    }
+  ],
+  "contextEvidence": [
+    {
+      "id": "INSTALLED-SDK-ENV",
+      "path": "node_modules/@modelcontextprotocol/sdk/dist/esm/client/stdio.js",
+      "startLine": 65,
+      "endLine": 75,
+      "expectedFileSha256": "298514feae7875117a119a2598b40f2346ef07c30152fa7ad2ffb6cfb51782bc",
+      "packageManifest": "node_modules/@modelcontextprotocol/sdk/package.json",
+      "expectedPackageVersion": "1.30.0",
+      "observation": "Direct byte inspection independently confirms the installed default-environment merge. Excluded from acquired-repository coverage counts.",
+      "packageManifestSha256": "0690cbe02511a95d1ff199acf20b5a12ac4dfde1bbe30c82a0de73afa92dffc9",
+      "fileSha256": "298514feae7875117a119a2598b40f2346ef07c30152fa7ad2ffb6cfb51782bc",
+      "spanSha256": "bdd5fecc9afdcd7af71008deed700e417fc62117aeef19d8f1511a62495eb63b"
+    },
+    {
+      "id": "FOUNDRY-ENV-POLICY",
+      "path": "src/components.mjs",
+      "startLine": 55,
+      "endLine": 110,
+      "observation": "Prime-owned current code blanks SDK inherited keys, restores PATH plus envAllow, drains stderr and rejects duplicate catalogs/cursors. This is local source observation, not this worker's runtime verification.",
+      "fileSha256": "200310319ed0e9026b02e62c4fe36b9bd1023de21f04d84046a1e5c478d66989",
+      "spanSha256": "eec48d484938d8e74e4085076d3a56c87c31db4e4c774cc83ab916c2d46e51ef"
+    },
+    {
+      "id": "FOUNDRY-ENV-TESTS",
+      "path": "tests/components-environment.test.mjs",
+      "startLine": 9,
+      "endLine": 72,
+      "observation": "Four prime-owned synthetic controls inspect environment key presence, explicit allowlisting, stderr drainage and duplicate/cursor handling. Prime reported four passes; this slice reads the test source and does not rerun or claim authorship of that result.",
+      "fileSha256": "ee8adabb823f9b95d83ae0495334ae316be9f8c020670574b38acee4929a5be9",
+      "spanSha256": "6aedd9ee851c1fa0854708583d406f1241af86822b12756f816e1d5b381bbf1f"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "PA-01",
+      "evidenceIds": [
+        "OC-CONVERT",
+        "OC-SCHEMA",
+        "OC-REPAIR"
+      ],
+      "requirement": "Record original, client-transformed and provider-sent schema identities and validate actual arguments at the host boundary; never infer provider schema from a model's name.",
+      "counterexample": "Present nested {}, boolean false, a numeric minimum and a required object input through the actual selected provider route; reject wrong-type arguments and record each transformation before assigning blame.",
+      "status": "proposed-not-run"
+    },
+    {
+      "id": "PA-02",
+      "evidenceIds": [
+        "OC-NAMES-LIST",
+        "OC-NAMES",
+        "OC-REFRESH",
+        "LC-LIST",
+        "LC-DISCOVERY"
+      ],
+      "requirement": "Bind dispatch to an unambiguous, versioned catalog; reject name collisions and detect stale discovery before effects.",
+      "counterexample": "Use two distinct server/tool names that normalize to the same key, a repeated cursor, and a tool schema changed after discovery; require explicit rejection or a new qualified catalog.",
+      "status": "proposed-not-run"
+    },
+    {
+      "id": "PA-03",
+      "evidenceIds": [
+        "OC-CONTEXT",
+        "OC-DISPATCH",
+        "OC-PERMISSION",
+        "LC-INTERCEPT"
+      ],
+      "requirement": "Keep capability visibility, permission decisions and exact effect admission distinct; trusted interceptors must not silently weaken the host contract.",
+      "counterexample": "Authorize one harmless tool call, change its consequential arguments or interceptor routing, and require a fresh host decision where the deployment contract binds authorization to those arguments.",
+      "status": "proposed-not-run"
+    },
+    {
+      "id": "PA-04",
+      "evidenceIds": [
+        "LC-DISCOVERY",
+        "LC-CALL",
+        "LC-LIFETIME",
+        "LC-STDIO"
+      ],
+      "requirement": "Declare whether tools share a live session, a subprocess or durable server state; execute stateful sequences within the required lifetime.",
+      "counterexample": "Run a synthetic reserve/commit pair whose reservation lives only in server memory; compare default per-call sessions with an explicitly retained session and reject any claim of implicit state continuity.",
+      "status": "proposed-not-run"
+    },
+    {
+      "id": "PA-05",
+      "evidenceIds": [
+        "OC-CONVERT",
+        "LC-ERROR",
+        "LC-CONTENT",
+        "FS-MULTI-WRITE"
+      ],
+      "requirement": "Preserve execution failure, transport failure, conversion failure and per-item partial failure as distinct outcomes; independent task checks must inspect required outputs.",
+      "counterexample": "Return isError text, unsupported audio, a disconnected session and a mixed-success multi-file response; none may become task success merely because a wrapper returned content.",
+      "status": "proposed-not-run"
+    },
+    {
+      "id": "PA-06",
+      "evidenceIds": [
+        "SDK-ENV",
+        "LC-ENV",
+        "LC-STDIO",
+        "ALL-ENV"
+      ],
+      "requirement": "Enforce the effective child environment after adapter/default merging and configuration interpolation; separate key blanking from OS sandbox authority.",
+      "counterexample": "In a synthetic child only, seed harmless allowed and denied markers plus default inherited keys, then assert exact nonempty key names without returning real host values.",
+      "status": "proposed-not-run; related prime-owned installed-SDK controls are separately identified"
+    },
+    {
+      "id": "PA-07",
+      "evidenceIds": [
+        "SDK-CANCEL",
+        "SDK-HANDLER",
+        "SDK-REQUEST",
+        "SDK-CLOSE",
+        "OC-CONVERT"
+      ],
+      "requirement": "Use a host total deadline and explicit cancellation/effect reconciliation; request rejection, server signal and process-tree termination are different receipts.",
+      "counterexample": "Use a synthetic operation that ignores its request signal, emits progress indefinitely, or leaves a pipe-holding helper; verify bounded host settlement separately from actual cessation and committed effects.",
+      "status": "proposed-not-run"
+    },
+    {
+      "id": "PA-08",
+      "evidenceIds": [
+        "SDK-FRAMING",
+        "SDK-SERVER",
+        "SDK-ENV"
+      ],
+      "requirement": "Treat stdout framing and bounded buffers as part of the transport contract, drain stderr, and expose protocol errors without inventing valid responses.",
+      "counterexample": "Send split UTF-8 frames, non-JSON lines, valid-JSON invalid envelopes, an over-limit chunk and large synthetic stderr; verify the intended adapter-specific behavior and timeout result.",
+      "status": "proposed-not-run"
+    },
+    {
+      "id": "PA-09",
+      "evidenceIds": [
+        "FS-START",
+        "FS-ROOTS",
+        "FS-ROOTVALID"
+      ],
+      "requirement": "Declare who may replace filesystem roots and how revocation works; deployments needing a fixed ceiling must intersect dynamic roots with that host-owned ceiling.",
+      "counterexample": "Advertise a second synthetic directory outside initial CLI roots, then publish an empty roots list; distinguish replacement from intersection and explicit revocation from retention.",
+      "status": "proposed-not-run"
+    },
+    {
+      "id": "PA-10",
+      "evidenceIds": [
+        "FS-PATH",
+        "FS-CONTAIN",
+        "FS-NORMALIZE",
+        "FS-WRITE"
+      ],
+      "requirement": "Separate lexical/canonical path checks, leaf replacement, ancestor-race protection, durability and expected-content conflict checks.",
+      "counterexample": "In an isolated fake directory tree, try a sibling-prefix path, POSIX Windows-drive input, ambiguous Unicode names, a changed ancestor between validation and write, and a concurrent content change; assess each promised property independently.",
+      "status": "proposed-not-run"
+    },
+    {
+      "id": "PA-11",
+      "evidenceIds": [
+        "ALL-REGISTER",
+        "ALL-TOOLS",
+        "ALL-ENV"
+      ],
+      "requirement": "Review what data a capability discloses in addition to its effect annotations; do not automatically admit debug tools from an everything catalog.",
+      "counterexample": "Offer a read-only annotated synthetic environment-dump tool whose output contains a harmless secret marker; require host selection/redaction rules independently of readOnlyHint.",
+      "status": "proposed-not-run"
+    },
+    {
+      "id": "PA-12",
+      "evidenceIds": [
+        "SDK-VERSION",
+        "SDK-ENV",
+        "SDK-CLOSE",
+        "FS-VERSION"
+      ],
+      "requirement": "Pin the actually installed transport and its dependency closure separately from source research; require version-specific evidence before transferring guarantees.",
+      "counterexample": "Change only the installed SDK build or select a modular export with different framing/disposal code; prior clone hashes and prior test receipts must not qualify the replacement.",
+      "status": "proposed-not-run"
+    }
+  ],
+  "limitations": [
+    "Source observations and logically derived counterexamples are not executed upstream tests or security exploit reproductions.",
+    "The actual installed OpenCode binary has not been mapped to this checkout; the provider route and transformed wire schema for the failed Ling calls are not established by this trace.",
+    "The installed SDK 1.30.0 byte observation is separate from modular upstream client 2.0.0 metadata and does not transfer its protocol or teardown behavior.",
+    "Python MCP SDK, LangChain core, provider SDKs, OS behavior under races, and full descendant process cleanup remain external dependencies or untested behavior.",
+    "The original SOURCE-COVERAGE snapshot and prior receipts remain historical. The existing packaging coverage aggregator does not automatically consume this new evidence manifest.",
+    "Representative spans close the four zero-citation gaps; they do not establish full-file or full-repository audits, model performance, unseen-domain safety or commercial parity.",
+    "Serena activate_project for the exact project returned PLUGIN_DISABLED; no Serena or CodeGraph semantic verification is claimed."
+  ],
+  "coverage": {
+    "baseline": {
+      "spans": 152,
+      "files": 110,
+      "repositories": 44
+    },
+    "added": {
+      "spans": 44,
+      "files": 25,
+      "repositories": 4
+    },
+    "combined": {
+      "spans": 196,
+      "files": 135,
+      "repositories": 48
+    },
+    "perRepository": {
+      "anomalyco/opencode": {
+        "spans": 11,
+        "files": 6,
+        "repositories": 1
+      },
+      "langchain-ai/langchain-mcp-adapters": {
+        "spans": 10,
+        "files": 3,
+        "repositories": 1
+      },
+      "modelcontextprotocol/typescript-sdk": {
+        "spans": 9,
+        "files": 5,
+        "repositories": 1
+      },
+      "modelcontextprotocol/servers": {
+        "spans": 14,
+        "files": 11,
+        "repositories": 1
+      }
+    }
+  },
+  "sealedAt": "2026-09-13T13:48:41.435Z"
+}

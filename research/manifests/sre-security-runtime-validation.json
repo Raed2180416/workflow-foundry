@@ -1,0 +1,56 @@
+{
+  "kind": "independent-development-runtime-regression",
+  "startedAt": "2026-09-13T11:28:48.424Z",
+  "completedAt": "2026-09-13T11:28:49.259Z",
+  "command": [
+    "/usr/bin/node",
+    "--test",
+    "--test-reporter=tap",
+    "tests/security-audit.test.mjs",
+    "tests/security-audit-authority.test.mjs"
+  ],
+  "scope": "Authored mock tools, local stdio component fixture, temporary filesystem; no corpus execution or external service",
+  "sourceHashesBefore": {
+    "src/runtime.mjs": "609ffce98e13a9b942794b19f2895b301bca0f7710b584ff1c54fadae8a70ee5",
+    "src/store.mjs": "b48af2042a1b9b9524ea9ec011821a89335fe8119c87564fe3d595752013944a",
+    "src/validate.mjs": "9eabd5d7c0bf9082fb40ae565d883485332d0e048af9f12dd25df5c8865499ab",
+    "src/capabilities.mjs": "94c4c3dc039e6edf6574754726f5d861192bd48190ab9bed08b8e3ff7acc3687",
+    "src/data.mjs": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c",
+    "src/components.mjs": "3066bb53d45f627f1d3be6855d4a9df8afa59bd5e294ad363af950e53de94c05",
+    "src/foundry.mjs": "a4fe06ade765695d755e16f01f72820d3ab222741d1ff4df4b2f1e34d6f8b183",
+    "src/mcp.mjs": "585e1f7197efd50f42bf36b96ecaf454837278ff7a18cc5a7b95bad3af269130",
+    "src/http.mjs": "be9e9c498581c20849e6e966545d98a78866daac0cc61c907de28f7b6e9313a3",
+    "src/install.mjs": "10ec710d3f2dfc11c8a3765606983b146e43d5f9dbc54bf77592024a1b0c7ce2",
+    "schemas/workflow.schema.json": "e72b1d4bb1e01f4f21256b042853faa8505859f30741b4093aea59909ac4e1bc",
+    "tests/security-audit.test.mjs": "5d97543f34c141dd6f3d6f041cd02719293f79bcb537559d334e3413d8a34878",
+    "tests/security-audit-authority.test.mjs": "829a3f27468491332a91e6ca04339830d9156ebe73137593d60aaed307d03f59"
+  },
+  "sourceHashesAfter": {
+    "src/runtime.mjs": "609ffce98e13a9b942794b19f2895b301bca0f7710b584ff1c54fadae8a70ee5",
+    "src/store.mjs": "b48af2042a1b9b9524ea9ec011821a89335fe8119c87564fe3d595752013944a",
+    "src/validate.mjs": "9eabd5d7c0bf9082fb40ae565d883485332d0e048af9f12dd25df5c8865499ab",
+    "src/capabilities.mjs": "94c4c3dc039e6edf6574754726f5d861192bd48190ab9bed08b8e3ff7acc3687",
+    "src/data.mjs": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c",
+    "src/components.mjs": "3066bb53d45f627f1d3be6855d4a9df8afa59bd5e294ad363af950e53de94c05",
+    "src/foundry.mjs": "a4fe06ade765695d755e16f01f72820d3ab222741d1ff4df4b2f1e34d6f8b183",
+    "src/mcp.mjs": "585e1f7197efd50f42bf36b96ecaf454837278ff7a18cc5a7b95bad3af269130",
+    "src/http.mjs": "be9e9c498581c20849e6e966545d98a78866daac0cc61c907de28f7b6e9313a3",
+    "src/install.mjs": "10ec710d3f2dfc11c8a3765606983b146e43d5f9dbc54bf77592024a1b0c7ce2",
+    "schemas/workflow.schema.json": "e72b1d4bb1e01f4f21256b042853faa8505859f30741b4093aea59909ac4e1bc",
+    "tests/security-audit.test.mjs": "5d97543f34c141dd6f3d6f041cd02719293f79bcb537559d334e3413d8a34878",
+    "tests/security-audit-authority.test.mjs": "829a3f27468491332a91e6ca04339830d9156ebe73137593d60aaed307d03f59"
+  },
+  "sourceStable": true,
+  "exitCode": 0,
+  "error": null,
+  "summary": {
+    "tests": 16,
+    "pass": 16,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "stdout": "TAP version 13\n# Subtest: security authority: remote read-only annotations cannot replace host approval, including MCP resume\nok 1 - security authority: remote read-only annotations cannot replace host approval, including MCP resume\n  ---\n  duration_ms: 210.054804\n  type: 'test'\n  ...\n# Subtest: security authority: connector retry receives one runtime-owned idempotency key, never the model key\nok 2 - security authority: connector retry receives one runtime-owned idempotency key, never the model key\n  ---\n  duration_ms: 222.608698\n  type: 'test'\n  ...\n# Subtest: security authority: uninstall preserves an edit made after its initial conflict scan\nok 3 - security authority: uninstall preserves an edit made after its initial conflict scan\n  ---\n  duration_ms: 124.110069\n  type: 'test'\n  ...\n# Subtest: security: asynchronous schemas cannot accept invalid input or create an unhandled rejection\nok 4 - security: asynchronous schemas cannot accept invalid input or create an unhandled rejection\n  ---\n  duration_ms: 127.735124\n  type: 'test'\n  ...\n# Subtest: security: equivalent schemas remain usable after JSON persistence despite a repeated $id\nok 5 - security: equivalent schemas remain usable after JSON persistence despite a repeated $id\n  ---\n  duration_ms: 11.708336\n  type: 'test'\n  ...\n# Subtest: security: one task cannot resolve a schema identifier introduced by another task\nok 6 - security: one task cannot resolve a schema identifier introduced by another task\n  ---\n  duration_ms: 7.152495\n  type: 'test'\n  ...\n# Subtest: security: dangling SQLite symlinks are rejected before any outside file is created\nok 7 - security: dangling SQLite symlinks are rejected before any outside file is created\n  ---\n  duration_ms: 1.533589\n  type: 'test'\n  ...\n# Subtest: security: a skipped guard cannot admit its dependent effect\nok 8 - security: a skipped guard cannot admit its dependent effect\n  ---\n  duration_ms: 106.717414\n  type: 'test'\n  ...\n# Subtest: security: cancellation during a final non-cancellable operation cannot become success\nok 9 - security: cancellation during a final non-cancellable operation cannot become success\n  ---\n  duration_ms: 26.560903\n  type: 'test'\n  ...\n# Subtest: security: non-idempotent effects reject automatic retries before execution\nok 10 - security: non-idempotent effects reject automatic retries before execution\n  ---\n  duration_ms: 11.158013\n  type: 'test'\n  ...\n# Subtest: security: lost acknowledgement of a non-idempotent effect remains uncertain and is not repeated\nok 11 - security: lost acknowledgement of a non-idempotent effect remains uncertain and is not repeated\n  ---\n  duration_ms: 19.983679\n  type: 'test'\n  ...\n# Subtest: security: high-risk approval is bound to the exact run and completed effects do not replay\nok 12 - security: high-risk approval is bound to the exact run and completed effects do not replay\n  ---\n  duration_ms: 29.28179\n  type: 'test'\n  ...\n# Subtest: security: an idempotent operation that ignores timeout cancellation blocks further admission\nok 13 - security: an idempotent operation that ignores timeout cancellation blocks further admission\n  ---\n  duration_ms: 227.024466\n  type: 'test'\n  ...\n# Subtest: security: an artifact parent symlink is rejected before creating any outside directory\nok 14 - security: an artifact parent symlink is rejected before creating any outside directory\n  ---\n  duration_ms: 33.423534\n  type: 'test'\n  ...\n# Subtest: security: an artifact target symlink is rejected without creating its absent destination\nok 15 - security: an artifact target symlink is rejected without creating its absent destination\n  ---\n  duration_ms: 21.661908\n  type: 'test'\n  ...\n# Subtest: security: conflicting artifact contents cannot be reported as a successful idempotent replay\nok 16 - security: conflicting artifact contents cannot be reported as a successful idempotent replay\n  ---\n  duration_ms: 29.892187\n  type: 'test'\n  ...\n1..16\n# tests 16\n# suites 0\n# pass 16\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 796.57054\n",
+  "stderr": ""
+}

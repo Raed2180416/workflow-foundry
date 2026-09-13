@@ -1,0 +1,15 @@
+[
+  {
+    "repository": "horizon3ai/h3-cli",
+    "url": "https://github.com/horizon3ai/h3-cli.git",
+    "classification": "public-api-cli-and-mcp-surface",
+    "acquiredAt": "2026-09-13T10:54:46.134Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/horizon3ai--h3-cli",
+    "outcome": "cloned-source-not-executed",
+    "commit": "96326ac46f21e28abee5a0e43bebc94206205964",
+    "fileCount": 142,
+    "licenses": [],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  }
+]

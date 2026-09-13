@@ -1,0 +1,197 @@
+[
+  {
+    "repository": "HolmesGPT/holmesgpt",
+    "url": "https://github.com/HolmesGPT/holmesgpt.git",
+    "classification": "implementation",
+    "acquiredAt": "2026-09-13T10:44:03.329Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/HolmesGPT--holmesgpt",
+    "outcome": "cloned-source-not-executed",
+    "commit": "459f4d7ae463419a095212442ef5f8818dd0abcc",
+    "fileCount": 1804,
+    "licenses": [
+      {
+        "path": "LICENSE",
+        "sha256": "4e8d756a1bc4796e15973df082cf72b91f5e61fec4ec68d6799104670c108d08",
+        "excerpt": "                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity."
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "rootlyhq/rootly-mcp-server",
+    "url": "https://github.com/rootlyhq/rootly-mcp-server.git",
+    "classification": "mcp-server",
+    "acquiredAt": "2026-09-13T10:44:34.667Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/rootlyhq--rootly-mcp-server",
+    "outcome": "cloned-source-not-executed",
+    "commit": "5915e2174bd86e0d653c418d7a1305b82ee8189e",
+    "fileCount": 98,
+    "licenses": [
+      {
+        "path": "LICENSE",
+        "sha256": "73dc3d6591a5d78af9e2db0fe34a1aab969d4d55ff1cc347a333c81f6ca6ce6c",
+        "excerpt": "\n                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity"
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "resolve-ai-oss/resolve-ai-plugins",
+    "url": "https://github.com/resolve-ai-oss/resolve-ai-plugins.git",
+    "classification": "skill-pack",
+    "acquiredAt": "2026-09-13T10:44:36.691Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/resolve-ai-oss--resolve-ai-plugins",
+    "outcome": "cloned-source-not-executed",
+    "commit": "d6627cc32863f8f5f79bab4de1fb886f458b0236",
+    "fileCount": 93,
+    "licenses": [
+      {
+        "path": "LICENSE",
+        "sha256": "613bcf90794f2334d2fdde11d462451cefe7a50f94e0421147e28be2c20351db",
+        "excerpt": "\nCopyright 2026 Resolve AI, Inc.\n\n                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under comm"
+      },
+      {
+        "path": "NOTICE",
+        "sha256": "be9cc3be2dfeeec867dec252c19d616b375c95342c5a769c2f5952b2046667ae",
+        "excerpt": "Resolve Plugin Base\nCopyright 2026 Resolve AI, Inc.\n\nThis product includes software developed by Resolve AI, Inc.\n"
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "KeygraphHQ/shannon",
+    "url": "https://github.com/KeygraphHQ/shannon.git",
+    "classification": "implementation",
+    "acquiredAt": "2026-09-13T10:44:37.718Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/KeygraphHQ--shannon",
+    "outcome": "cloned-source-not-executed",
+    "commit": "25b90b0611f15ab945e051dfee8ae78600d3a002",
+    "fileCount": 369,
+    "licenses": [
+      {
+        "path": "LICENSE",
+        "sha256": "8486a10c4393cee1c25392769ddd3b2d6c242d6ec7928e1414efff7dfb2f07ef",
+        "excerpt": "                    GNU AFFERO GENERAL PUBLIC LICENSE\n                       Version 3, 19 November 2007\n\n Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>\n Everyone is permitted to copy and distribute verbatim copies\n of this license document, but changing it is not allowed.\n\n                            Preamble\n\n  The GNU Affero General Public License is a free, copyleft license for\nsoftware and other kinds of works, specifically designed to ensure\ncooperation with the community in the case of network server software.\n\n  The licenses for most software and other practical works are designed\nto take away your freedom to share and change the works.  By contrast,\nour Genera"
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "xbow-engineering/validation-benchmarks",
+    "url": "https://github.com/xbow-engineering/validation-benchmarks.git",
+    "classification": "benchmark",
+    "acquiredAt": "2026-09-13T10:44:44.260Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/xbow-engineering--validation-benchmarks",
+    "outcome": "cloned-source-not-executed",
+    "commit": "a16cb1ba0701b20d63913846536fc7b0672082af",
+    "fileCount": 6756,
+    "licenses": [
+      {
+        "path": "LICENSE",
+        "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+        "excerpt": "                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity."
+      },
+      {
+        "path": "NOTICE",
+        "sha256": "1be5ad3e311da0e6ffb1d7666a08a91b9d00571dabc5e7dbf4917cdbcf173399",
+        "excerpt": "XBOW Validation BenchmarksU\nCopyright 2024- XBOW USA Inc.\n"
+      },
+      {
+        "path": "benchmarks/XBEN-030-24/wordpress/license.txt",
+        "sha256": "4c92340606eb493659b3dc693850143c63209848e9c401680560bcbb8b096b17",
+        "excerpt": "WordPress - Web publishing software\r\n\r\nCopyright 2011-2024 by the contributors\r\n\r\nThis program is free software; you can redistribute it and/or modify\r\nit under the terms of the GNU General Public License as published by\r\nthe Free Software Foundation; either version 2 of the License, or\r\n(at your option) any later version.\r\n\r\nThis program is distributed in the hope that it will be useful,\r\nbut WITHOUT ANY WARRANTY; without even the implied warranty of\r\nMERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\r\nGNU General Public License for more details.\r\n\r\nYou should have received a copy of the GNU General Public License\r\nalong with this program; if not, write to the Free Software\r\nFoun"
+      },
+      {
+        "path": "benchmarks/XBEN-030-24/wordpress/wp-content/plugins/akismet/LICENSE.txt",
+        "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643",
+        "excerpt": "                    GNU GENERAL PUBLIC LICENSE\n                       Version 2, June 1991\n\n Copyright (C) 1989, 1991 Free Software Foundation, Inc.,\n 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA\n Everyone is permitted to copy and distribute verbatim copies\n of this license document, but changing it is not allowed.\n\n                            Preamble\n\n  The licenses for most software are designed to take away your\nfreedom to share and change it.  By contrast, the GNU General Public\nLicense is intended to guarantee your freedom to share and change free\nsoftware--to make sure the software is free for all its users.  This\nGeneral Public License applies to most of the Free Softwa"
+      },
+      {
+        "path": "benchmarks/XBEN-030-24/wordpress/wp-content/plugins/akismet/views/notice.php",
+        "sha256": "aaea63ab9fc5c93f9a89fd8397a750d6f5fc0d294ab911b2dc38712b7f3237ae",
+        "excerpt": "<?php\n//phpcs:disable VariableAnalysis\n// There are \"undefined\" variables here because they're defined in the code that includes this file as a template.\n$kses_allow_link   = array(\n\t'a' => array(\n\t\t'href'   => true,\n\t\t'target' => true,\n\t),\n);\n$kses_allow_strong = array( 'strong' => true );\n\n/*\n * Some notices (plugin, spam-check, spam-check-cron-disabled, alert and usage-limit) are shown elsewhere in wp-admin,\n * so look different to the standard notices.\n */\n?>\n<?php if ( $type === 'plugin' ) : ?>\n<div class=\"updated\" id=\"akismet_setup_prompt\">\n\t<form name=\"akismet_activate\" action=\"<?php echo esc_url( Akismet_Admin::get_page_url() ); ?>\" method=\"POST\">\n\t\t<div class=\"akismet_activate\">\n\t\t\t"
+      },
+      {
+        "path": "benchmarks/XBEN-030-24/wordpress/wp-content/plugins/backup-backup/analyst/src/Notices/Notice.php",
+        "sha256": "cb3d6db5409dfa847b0ade0cd65db578c773bac9cabbc03ba7d138fbdca01d32",
+        "excerpt": "<?php\n\nnamespace Analyst\\Notices;\n\nclass Notice\n{\n\t/**\n\t * Id of notice\n\t *\n\t * @var string\n\t */\n\tprotected $id;\n\n\t/**\n\t * Body of notice\n\t *\n\t * @var string\n\t */\n\tprotected $body;\n\n\t/**\n\t * Account id\n\t *\n\t * @var string\n\t */\n\tprotected $accountId;\n\n\t/**\n\t * The plugin name\n\t *\n\t * @var string\n\t */\n\tprotected $pluginName;\n\n\t/**\n\t * New notice\n\t *\n\t * @param $id\n\t * @param $accountId\n\t * @param $body\n\t * @param null $pluginName\n\t *\n\t * @return Notice\n\t */\n\tpublic static function make($id, $accountId, $body, $pluginName = null)\n\t{\n\t\treturn new Notice($id, $accountId, $body, $pluginName);\n\t}\n\n\tpublic function __construct($id, $accountId, $body, $pluginName)\n\t{\n\t\t$this->setId($id);\n\t\t$this->set"
+      },
+      {
+        "path": "benchmarks/XBEN-030-24/wordpress/wp-content/plugins/backup-backup/analyst/templates/notice.php",
+        "sha256": "cb0309529b6256724f4da4e26fe62b55445dbbab1555575e0278602c68c47c5b",
+        "excerpt": "<div class=\"notice notice-success analyst-notice\">\n\t<p>\n\t\t<strong class=\"analyst-plugin-name\"><?php echo $notice->getPluginName(); ?></strong>\n\t\t<?php echo $notice->getBody(); ?>\n\t</p>\n\n\t<button type=\"button\" class=\"analyst-notice-dismiss notice-dismiss\" analyst-notice-id=\"<?php echo $notice->getId(); ?>\">\n\t\t<span class=\"screen-reader-text\">Dismiss this notice.</span>\n\t</button>\n</div>\n"
+      },
+      {
+        "path": "benchmarks/XBEN-030-24/wordpress/wp-content/themes/twentytwentyfour/assets/fonts/cardo/LICENSE.txt",
+        "sha256": "8e28b778b6e1a7ff9ca72f4dee2d53120aa2856dc1bfd0be44307e365b0e45bb",
+        "excerpt": "Copyright (c) 2002-2011, David J. Perry (hospes02@scholarsfonts.net)\n\nThis Font Software is licensed under the SIL Open Font License, Version 1.1.\nThis license is copied below, and is also available with a FAQ at:\nhttp://scripts.sil.org/OFL\n\n\n-----------------------------------------------------------\nSIL OPEN FONT LICENSE Version 1.1 - 26 February 2007\n-----------------------------------------------------------\n\nPREAMBLE\nThe goals of the Open Font License (OFL) are to stimulate worldwide\ndevelopment of collaborative font projects, to support the font creation\nefforts of academic and linguistic communities, and to provide a free and\nopen framework in which fonts may be shared and improved in"
+      },
+      {
+        "path": "benchmarks/XBEN-030-24/wordpress/wp-content/themes/twentytwentyfour/assets/fonts/inter/LICENSE.txt",
+        "sha256": "6e6410f2892d61813f54654098dc9654d0a3af2e92172999bee07eec13b0a75a",
+        "excerpt": "Copyright 2020 The Inter Project Authors (https://github.com/rsms/inter)\n\nThis Font Software is licensed under the SIL Open Font License, Version 1.1.\nThis license is copied below, and is also available with a FAQ at:\nhttp://scripts.sil.org/OFL\n\n\n-----------------------------------------------------------\nSIL OPEN FONT LICENSE Version 1.1 - 26 February 2007\n-----------------------------------------------------------\n\nPREAMBLE\nThe goals of the Open Font License (OFL) are to stimulate worldwide\ndevelopment of collaborative font projects, to support the font creation\nefforts of academic and linguistic communities, and to provide a free and\nopen framework in which fonts may be shared and improve"
+      },
+      {
+        "path": "benchmarks/XBEN-030-24/wordpress/wp-content/themes/twentytwentythree/assets/fonts/dm-sans/LICENSE.txt",
+        "sha256": "c619d9700fd6362bfa37cc8ff1a78e3a3c4434649800d21153b90f7719f051b2",
+        "excerpt": "Copyright 2014-2017 Indian Type Foundry (info@indiantypefoundry.com). Copyright 2019 Google LLC.\nCopyright 2014-2018 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'. All Rights Reserved. Source is a trademark of Adobe in the United States and/or other countries. Copyright 2019 Google LLC.\n\nThis Font Software is licensed under the SIL Open Font License, Version 1.1.\nThis license is copied below, and is also available with a FAQ at:\nhttp://scripts.sil.org/OFL\n\n\n-----------------------------------------------------------\nSIL OPEN FONT LICENSE Version 1.1 - 26 February 2007\n-----------------------------------------------------------\n\nPREAMBLE\nThe goals of the Open Font License (O"
+      },
+      {
+        "path": "benchmarks/XBEN-030-24/wordpress/wp-content/themes/twentytwentythree/assets/fonts/inter/LICENSE.txt",
+        "sha256": "6e6410f2892d61813f54654098dc9654d0a3af2e92172999bee07eec13b0a75a",
+        "excerpt": "Copyright 2020 The Inter Project Authors (https://github.com/rsms/inter)\n\nThis Font Software is licensed under the SIL Open Font License, Version 1.1.\nThis license is copied below, and is also available with a FAQ at:\nhttp://scripts.sil.org/OFL\n\n\n-----------------------------------------------------------\nSIL OPEN FONT LICENSE Version 1.1 - 26 February 2007\n-----------------------------------------------------------\n\nPREAMBLE\nThe goals of the Open Font License (OFL) are to stimulate worldwide\ndevelopment of collaborative font projects, to support the font creation\nefforts of academic and linguistic communities, and to provide a free and\nopen framework in which fonts may be shared and improve"
+      },
+      {
+        "path": "benchmarks/XBEN-030-24/wordpress/wp-content/themes/twentytwentythree/assets/fonts/source-serif-pro/LICENSE.md",
+        "sha256": "f7fd0033f4fb28e98a31623269a14daeef2169d52d39c4b6ee3d992388ba6c78",
+        "excerpt": "Copyright 2014 - 2021 Adobe Systems Incorporated (http://www.adobe.com/), with Reserved Font Name 'Source'. All Rights Reserved. Source is a trademark of Adobe Systems Incorporated in the United States and/or other countries.\n\nThis Font Software is licensed under the SIL Open Font License, Version 1.1.\n\nThis license is copied below, and is also available with a FAQ at: http://scripts.sil.org/OFL\n\n\n-----------------------------------------------------------\nSIL OPEN FONT LICENSE Version 1.1 - 26 February 2007\n-----------------------------------------------------------\n\nPREAMBLE\nThe goals of the Open Font License (OFL) are to stimulate worldwide\ndevelopment of collaborative font projects, to s"
+      },
+      {
+        "path": "benchmarks/XBEN-030-24/wordpress/wp-content/themes/twentytwentytwo/assets/fonts/dm-sans/LICENSE.txt",
+        "sha256": "c619d9700fd6362bfa37cc8ff1a78e3a3c4434649800d21153b90f7719f051b2",
+        "excerpt": "Copyright 2014-2017 Indian Type Foundry (info@indiantypefoundry.com). Copyright 2019 Google LLC.\nCopyright 2014-2018 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'. All Rights Reserved. Source is a trademark of Adobe in the United States and/or other countries. Copyright 2019 Google LLC.\n\nThis Font Software is licensed under the SIL Open Font License, Version 1.1.\nThis license is copied below, and is also available with a FAQ at:\nhttp://scripts.sil.org/OFL\n\n\n-----------------------------------------------------------\nSIL OPEN FONT LICENSE Version 1.1 - 26 February 2007\n-----------------------------------------------------------\n\nPREAMBLE\nThe goals of the Open Font License (O"
+      },
+      {
+        "path": "benchmarks/XBEN-030-24/wordpress/wp-content/themes/twentytwentytwo/assets/fonts/ibm-plex/LICENSE.txt",
+        "sha256": "37784b44044a4ffd9256702b7c0982c37e5c8887ba90c6dca0479aea93dc898d",
+        "excerpt": "Copyright © 2017 IBM Corp. with Reserved Font Name \"Plex\"\n\nThis Font Software is licensed under the SIL Open Font License, Version 1.1.\n\nThis license is copied below, and is also available with a FAQ at: http://scripts.sil.org/OFL\n\n\n-----------------------------------------------------------\nSIL OPEN FONT LICENSE Version 1.1 - 26 February 2007\n-----------------------------------------------------------\n\nPREAMBLE\nThe goals of the Open Font License (OFL) are to stimulate worldwide\ndevelopment of collaborative font projects, to support the font creation\nefforts of academic and linguistic communities, and to provide a free and\nopen framework in which fonts may be shared and improved in partnersh"
+      },
+      {
+        "path": "benchmarks/XBEN-030-24/wordpress/wp-content/themes/twentytwentytwo/assets/fonts/inter/LICENSE.txt",
+        "sha256": "4d7d9c95e7d7f2f0ebf76d5e0b344826b74e903a34028ee18ab54bb639e45906",
+        "excerpt": "Copyright (c) 2016-2020 The Inter Project Authors.\n\"Inter\" is trademark of Rasmus Andersson.\nhttps://github.com/rsms/inter\n\nThis Font Software is licensed under the SIL Open Font License, Version 1.1.\nThis license is copied below, and is also available with a FAQ at:\nhttp://scripts.sil.org/OFL\n\n-----------------------------------------------------------\nSIL OPEN FONT LICENSE Version 1.1 - 26 February 2007\n-----------------------------------------------------------\n\nPREAMBLE\nThe goals of the Open Font License (OFL) are to stimulate worldwide\ndevelopment of collaborative font projects, to support the font creation\nefforts of academic and linguistic communities, and to provide a free and\nopen f"
+      },
+      {
+        "path": "benchmarks/XBEN-030-24/wordpress/wp-content/themes/twentytwentytwo/assets/fonts/source-serif-pro/LICENSE.md",
+        "sha256": "f7fd0033f4fb28e98a31623269a14daeef2169d52d39c4b6ee3d992388ba6c78",
+        "excerpt": "Copyright 2014 - 2021 Adobe Systems Incorporated (http://www.adobe.com/), with Reserved Font Name 'Source'. All Rights Reserved. Source is a trademark of Adobe Systems Incorporated in the United States and/or other countries.\n\nThis Font Software is licensed under the SIL Open Font License, Version 1.1.\n\nThis license is copied below, and is also available with a FAQ at: http://scripts.sil.org/OFL\n\n\n-----------------------------------------------------------\nSIL OPEN FONT LICENSE Version 1.1 - 26 February 2007\n-----------------------------------------------------------\n\nPREAMBLE\nThe goals of the Open Font License (OFL) are to stimulate worldwide\ndevelopment of collaborative font projects, to s"
+      },
+      {
+        "path": "benchmarks/XBEN-030-24/wordpress/wp-includes/ID3/license.txt",
+        "sha256": "f45a8e3db72f9de7d596b43b0c71eca219857d732387c7781505c181e97bdec1",
+        "excerpt": "/////////////////////////////////////////////////////////////////\n/// getID3() by James Heinrich <info@getid3.org>               //\n//  available at http://getid3.sourceforge.net                 //\n//            or https://www.getid3.org                        //\n//          also https://github.com/JamesHeinrich/getID3       //\n/////////////////////////////////////////////////////////////////\n\n*****************************************************************\n*****************************************************************\n\n   getID3() is released under multiple licenses. You may choose\n   from the following licenses, and use getID3 according to the\n   terms of the license most suitable to y"
+      },
+      {
+        "path": "benchmarks/XBEN-030-24/wordpress/wp-includes/images/crystal/license.txt",
+        "sha256": "a41e19d4262122efd12bb47d29c2b9bec030f91bf60f7088e74a6a946735a615",
+        "excerpt": "Crystal Project Icons\r\nby Everaldo Coelho\r\nhttp://everaldo.com\r\n\r\nReleased under LGPL\r\n\r\nModified February 2008\r\nfor WordPress\r\nhttps://wordpress.org"
+      },
+      {
+        "path": "benchmarks/XBEN-030-24/wordpress/wp-includes/js/plupload/license.txt",
+        "sha256": "ab15fd526bd8dd18a9e77ebc139656bf4d33e97fc7238cd11bf60e2b9b8666c6",
+        "excerpt": "\t\t    GNU GENERAL PUBLIC LICENSE\n\t\t       Version 2, June 1991\n\n Copyright (C) 1989, 1991 Free Software Foundation, Inc.,\n 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA\n Everyone is permitted to copy and distribute verbatim copies\n of this license document, but changing it is not allowed.\n\n\t\t\t    Preamble\n\n  The licenses for most software are designed to take away your\nfreedom to share and change it.  By contrast, the GNU General Public\nLicense is intended to guarantee your freedom to share and change free\nsoftware--to make sure the software is free for all its users.  This\nGeneral Public License applies to most of the Free Software\nFoundation's software and to any other program"
+      },
+      {
+        "path": "benchmarks/XBEN-030-24/wordpress/wp-includes/js/swfupload/license.txt",
+        "sha256": "fabfe8dccef11ae5e93f8bdcdb807f4e3d342f07cbb24979bccb35668d78c0d2",
+        "excerpt": "/**\n * SWFUpload: http://www.swfupload.org, http://swfupload.googlecode.com\n *\n * mmSWFUpload 1.0: Flash upload dialog - http://profandesign.se/swfupload/,  http://www.vinterwebb.se/\n *\n * SWFUpload is (c) 2006-2007 Lars Huring, Olov Nilzén and Mammon Media and is released under the MIT License:\n * http://www.opensource.org/licenses/mit-license.php\n *\n * SWFUpload 2 is (c) 2007-2008 Jake Roberts and is released under the MIT License:\n * http://www.opensource.org/licenses/mit-license.php\n *\n */\n\nThe MIT License\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without rest"
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  }
+]

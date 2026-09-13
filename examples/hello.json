@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0", "id": "hello-workflow", "version": 1,
+  "title": "Verified local greeting artifact", "goal": "Create a greeting artifact with the requested name.",
+  "domain": "software",
+  "envelope": {"assumptions": ["Local UTF-8 output is sufficient"], "risks": ["Wrong content despite an existing file"], "successCriteria": ["The generated text equals the requested greeting and a content-hashed artifact is written"], "unsupported": ["External publication"]},
+  "inputSchema": {"type": "object", "required": ["name"], "properties": {"name": {"type": "string", "minLength": 1}}, "additionalProperties": false},
+  "budget": {"maxSteps": 10, "maxConcurrency": 2, "maxDurationMs": 60000, "maxCost": 0},
+  "nodes": [
+    {"id": "compose", "kind": "task", "needs": [], "description": "Build text from the supplied name without executing it.", "tool": "core.template", "args": {"text": "Hello, {{name}}!", "variables": {"name": {"$ref": "input.name"}}}, "timeoutMs": 1000, "retry": {"maxAttempts": 2}},
+    {"id": "write", "kind": "task", "needs": ["compose"], "description": "Persist a scoped artifact and return its content hash.", "tool": "core.artifact", "args": {"name": "greeting.txt", "content": {"$ref": "nodes.compose.text"}}, "timeoutMs": 1000, "retry": {"maxAttempts": 2}}
+  ],
+  "acceptance": [{"op": "exists", "value": {"$ref": "nodes.write.sha256"}}, {"op": "gt", "left": {"$ref": "nodes.write.bytes"}, "right": 0}]
+}

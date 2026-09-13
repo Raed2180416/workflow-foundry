@@ -1,0 +1,106 @@
+{
+  "schemaVersion": "1.0",
+  "auditId": "generator-evaluator-worker7-20260913",
+  "project": "/home/raed/Projects/workflow-foundry",
+  "auditor": "worker-7",
+  "evidenceType": "deterministic-development-control",
+  "modelPerformanceEvidence": false,
+  "actualProviderCalls": 0,
+  "actualTuiRuns": 0,
+  "sharedSourceEdits": false,
+  "frozenTests": {
+    "tests/generator-audit.test.mjs": "752b11530387dbfb9e0b669a0e38dd05b060d1fff48615d1b35aff9ea9ced5a8",
+    "tests/evaluator-audit.test.mjs": "8d285cb10230b176ee300312fbc3c41fba030c2b0c0a9578cdf9bf73155a306a"
+  },
+  "initialExecutions": [
+    {
+      "testFile": "tests/generator-audit.test.mjs",
+      "command": ["node", "--test", "--test-concurrency=1", "--test-reporter=tap", "tests/generator-audit.test.mjs"],
+      "exitCode": 1,
+      "tests": 23,
+      "passed": 15,
+      "failed": 8,
+      "cancelled": 0,
+      "skipped": 0,
+      "durationMs": 2014.021044,
+      "failingTestNumbers": [2, 9, 10, 11, 19, 21, 22, 23],
+      "stableSourceAndTestHashes": true,
+      "tap": "research/manifests/generator-evaluator-audit-initial.tap",
+      "stderr": "research/manifests/generator-evaluator-audit-initial.stderr.txt",
+      "hashesBefore": "research/manifests/generator-evaluator-audit-initial.before.sha256",
+      "hashesAfter": "research/manifests/generator-evaluator-audit-initial.after.sha256"
+    },
+    {
+      "testFile": "tests/evaluator-audit.test.mjs",
+      "command": ["node", "--test", "--test-concurrency=1", "--test-reporter=tap", "tests/evaluator-audit.test.mjs"],
+      "exitCode": 1,
+      "tests": 59,
+      "passed": 36,
+      "failed": 23,
+      "cancelled": 0,
+      "skipped": 0,
+      "durationMs": 3268.299548,
+      "failingTestNumbers": [8, 9, 10, 18, 20, 21, 23, 24, 25, 33, 34, 35, 36, 38, 39, 49, 50, 51, 52, 56, 57, 58, 59],
+      "stableSourceAndTestHashes": true,
+      "tap": "research/manifests/generator-evaluator-audit-expanded.tap",
+      "stderr": "research/manifests/generator-evaluator-audit-expanded.stderr.txt",
+      "hashesBefore": "research/manifests/generator-evaluator-audit-expanded.before.sha256",
+      "hashesAfter": "research/manifests/generator-evaluator-audit-expanded.after.sha256"
+    }
+  ],
+  "repositoryChecks": {
+    "doctor": {
+      "command": "npm run check",
+      "exitCode": 0,
+      "stdout": "research/manifests/generator-evaluator-audit-doctor.txt",
+      "stderr": "research/manifests/generator-evaluator-audit-doctor.stderr.txt",
+      "certifiesTaskQuality": false
+    },
+    "ownedTestSyntax": {
+      "commands": ["node --check tests/generator-audit.test.mjs", "node --check tests/evaluator-audit.test.mjs"],
+      "exitCodes": [0, 0]
+    },
+    "formatterScript": null,
+    "linterScript": null,
+    "typecheckerScript": null,
+    "githubRemoteObserved": false,
+    "githubActionsObserved": false,
+    "qualityMap": {
+      "tool": "Chat_On_Steroids_Plugins.project_quality_map",
+      "path": "/home/raed/Projects/workflow-foundry",
+      "outcome": "succeeded",
+      "manifests": ["package-lock.json", "package.json"],
+      "testLocations": ["tests"],
+      "localSemgrepConfigs": [],
+      "codegraphIndexed": false
+    },
+    "serena": {
+      "toolsAttempted": ["initial_instructions", "activate_project"],
+      "activationPath": "/home/raed/Projects/workflow-foundry",
+      "outcome": "PLUGIN_DISABLED"
+    },
+    "fullSecurityGate": "Shared implementation integration gate retained by prime; not claimed by this test-only worker.",
+    "browserVerification": "Owned by separate UI worker; not claimed by this audit."
+  },
+  "nestedControls": {
+    "kind": "hand-authored-generated-program-shaped-fixtures",
+    "runtime": "actual-native-runner",
+    "provider": "deterministic-audit-stub",
+    "humanPauseResume": { "cells": 4, "steps": 22, "frames": 16, "eventCount": 67 },
+    "automaticCases": [
+      { "groups": 2, "cells": 8, "steps": 36, "elapsedMs": 161, "eventCount": 106 },
+      { "groups": 6, "cells": 24, "steps": 100, "elapsedMs": 679, "eventCount": 294 }
+    ],
+    "claimScope": "One-run observations on explicit synthetic inputs; no asymptotic, stress-limit or model-performance inference."
+  },
+  "dossier": "research/dossiers/generator-evaluator-review.md",
+  "postFixExecutions": [],
+  "initialReleaseGatePassed": false,
+  "limitations": [
+    "Finite deterministic controls cannot establish arbitrary workflow or deployment robustness.",
+    "Host-written oracle quality still requires independent mutant review.",
+    "Host job settlement cannot prove termination of arbitrary uncooperative callbacks or external spending.",
+    "Artifact replacement races, PID reuse and multi-transaction crash recovery are not exhaustively covered.",
+    "No actual model or TUI behavior was evaluated by this worker."
+  ]
+}

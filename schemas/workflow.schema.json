@@ -1,0 +1,108 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://contrare.example/schemas/workflow-1.0.json",
+  "title": "Workflow Foundry bounded workflow IR",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "id", "version", "title", "goal", "domain", "envelope", "budget", "nodes", "acceptance"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "id": {"$ref": "#/definitions/id"},
+    "version": {"type": "integer", "minimum": 1, "maximum": 1000000},
+    "title": {"type": "string", "minLength": 1, "maxLength": 200},
+    "goal": {"type": "string", "minLength": 1, "maxLength": 10000},
+    "domain": {"type": "string", "minLength": 1, "maxLength": 80},
+    "envelope": {
+      "type": "object", "additionalProperties": false,
+      "required": ["assumptions", "risks", "successCriteria"],
+      "properties": {
+        "assumptions": {"$ref": "#/definitions/texts"},
+        "risks": {"$ref": "#/definitions/texts"},
+        "successCriteria": {"$ref": "#/definitions/nonemptyTexts"},
+        "unsupported": {"$ref": "#/definitions/texts"}
+      }
+    },
+    "inputSchema": {"type": "object"},
+    "budget": {
+      "type": "object", "additionalProperties": false,
+      "required": ["maxSteps", "maxConcurrency", "maxDurationMs"],
+      "properties": {
+        "maxSteps": {"type": "integer", "minimum": 1, "maximum": 100000},
+        "maxConcurrency": {"type": "integer", "minimum": 1, "maximum": 16},
+        "maxDurationMs": {"type": "integer", "minimum": 1, "maximum": 2592000000},
+        "maxCost": {"type": "number", "minimum": 0, "maximum": 1000000}
+      }
+    },
+    "nodes": {"$ref": "#/definitions/nodes"},
+    "acceptance": {"$ref": "#/definitions/checks"},
+    "metadata": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "sources": {"$ref": "#/definitions/texts"},
+        "rationale": {"type": "string", "maxLength": 20000},
+        "tags": {"$ref": "#/definitions/texts"}
+      }
+    }
+  },
+  "definitions": {
+    "id": {"type": "string", "pattern": "^[a-zA-Z][a-zA-Z0-9_-]{0,63}$"},
+    "texts": {"type": "array", "maxItems": 200, "items": {"type": "string", "maxLength": 10000}},
+    "nonemptyTexts": {"type": "array", "minItems": 1, "maxItems": 200, "items": {"type": "string", "minLength": 1, "maxLength": 10000}},
+    "condition": {
+      "oneOf": [
+        {"type": "object", "additionalProperties": false, "required": ["op", "left", "right"], "properties": {"op": {"enum": ["eq", "ne", "gt", "gte", "lt", "lte", "in", "contains"]}, "left": {}, "right": {}}},
+        {"type": "object", "additionalProperties": false, "required": ["op", "value"], "properties": {"op": {"const": "exists"}, "value": {}}},
+        {"type": "object", "additionalProperties": false, "required": ["op", "conditions"], "properties": {"op": {"enum": ["all", "any"]}, "conditions": {"type": "array", "minItems": 1, "maxItems": 100, "items": {"$ref": "#/definitions/condition"}}}},
+        {"type": "object", "additionalProperties": false, "required": ["op", "condition"], "properties": {"op": {"const": "not"}, "condition": {"$ref": "#/definitions/condition"}}}
+      ]
+    },
+    "checks": {"type": "array", "minItems": 1, "maxItems": 200, "items": {"$ref": "#/definitions/condition"}},
+    "nodes": {"type": "array", "minItems": 1, "maxItems": 500, "items": {"$ref": "#/definitions/node"}},
+    "flow": {
+      "type": "object", "additionalProperties": false, "required": ["nodes", "acceptance"],
+      "properties": {"nodes": {"$ref": "#/definitions/nodes"}, "acceptance": {"$ref": "#/definitions/checks"}}
+    },
+    "node": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "kind", "needs", "description"],
+      "properties": {
+        "id": {"$ref": "#/definitions/id"},
+        "kind": {"enum": ["task", "assert", "human", "map", "loop", "wait"]},
+        "needs": {"type": "array", "uniqueItems": true, "maxItems": 500, "items": {"$ref": "#/definitions/id"}},
+        "join": {"enum": ["all_success", "all_resolved"]},
+        "description": {"type": "string", "minLength": 1, "maxLength": 10000},
+        "when": {"$ref": "#/definitions/condition"},
+        "tool": {"type": "string", "pattern": "^[a-zA-Z][a-zA-Z0-9_.-]{0,127}$"},
+        "args": {},
+        "timeoutMs": {"type": "integer", "minimum": 1, "maximum": 3600000},
+        "retry": {
+          "type": "object", "additionalProperties": false, "required": ["maxAttempts"],
+          "properties": {
+            "maxAttempts": {"type": "integer", "minimum": 1, "maximum": 10},
+            "backoffMs": {"type": "integer", "minimum": 0, "maximum": 60000}
+          }
+        },
+        "onError": {"enum": ["stop", "continue"]},
+        "checks": {"$ref": "#/definitions/checks"},
+        "question": {"type": "string", "minLength": 1, "maxLength": 10000},
+        "answerSchema": {"type": "object"},
+        "body": {"$ref": "#/definitions/flow"},
+        "input": {},
+        "items": {},
+        "maxItems": {"type": "integer", "minimum": 0, "maximum": 1000},
+        "maxIterations": {"type": "integer", "minimum": 1, "maximum": 1000},
+        "initial": {},
+        "until": {"$ref": "#/definitions/condition"},
+        "delayMs": {"type": "integer", "minimum": 0, "maximum": 3600000}
+      },
+      "allOf": [
+        {"if": {"properties": {"kind": {"const": "task"}}}, "then": {"required": ["tool", "args", "timeoutMs", "retry"]}},
+        {"if": {"properties": {"kind": {"const": "assert"}}}, "then": {"required": ["checks"]}},
+        {"if": {"properties": {"kind": {"const": "human"}}}, "then": {"required": ["question", "answerSchema"]}},
+        {"if": {"properties": {"kind": {"const": "map"}}}, "then": {"required": ["items", "maxItems", "body"]}},
+        {"if": {"properties": {"kind": {"const": "loop"}}}, "then": {"required": ["maxIterations", "body", "until", "initial"]}},
+        {"if": {"properties": {"kind": {"const": "wait"}}}, "then": {"required": ["delayMs"]}}
+      ]
+    }
+  }
+}

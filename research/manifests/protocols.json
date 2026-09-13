@@ -1,0 +1,88 @@
+[
+  {
+    "repository": "modelcontextprotocol/typescript-sdk",
+    "url": "https://github.com/modelcontextprotocol/typescript-sdk.git",
+    "classification": "sdk",
+    "acquiredAt": "2026-09-13T11:04:16.321Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/modelcontextprotocol--typescript-sdk",
+    "outcome": "cloned-source-not-executed",
+    "commit": "b65426158ed9f29aea8ef3dc09ca22d7d9d6f970",
+    "fileCount": 1136,
+    "licenses": [
+      {
+        "path": "LICENSE",
+        "sha256": "0382b0057770ca05e9c350a50aa3b1c1fea84da0bc81d723bf00b9aa841be58a",
+        "excerpt": "The MCP project is undergoing a licensing transition from the MIT License to the Apache License, Version 2.0 (\"Apache-2.0\"). All new code and specification contributions to the project are licensed under Apache-2.0. Documentation contributions (excluding specifications) are licensed under CC-BY-4.0.\n\nContributions for which relicensing consent has been obtained are licensed under Apache-2.0. Contributions made by authors who originally licensed their work under the MIT License and who have not yet granted explicit permission to relicense remain licensed under the MIT License.\n\nNo rights beyond those granted by the applicable original license are conveyed for such contributions.\n\n---\n\n       "
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "modelcontextprotocol/servers",
+    "url": "https://github.com/modelcontextprotocol/servers.git",
+    "classification": "reference-servers",
+    "acquiredAt": "2026-09-13T11:04:17.953Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/modelcontextprotocol--servers",
+    "outcome": "cloned-source-not-executed",
+    "commit": "d73f99efbfd40c3aa1b61e88728b3d49fb52608f",
+    "fileCount": 156,
+    "licenses": [
+      {
+        "path": "LICENSE",
+        "sha256": "0382b0057770ca05e9c350a50aa3b1c1fea84da0bc81d723bf00b9aa841be58a",
+        "excerpt": "The MCP project is undergoing a licensing transition from the MIT License to the Apache License, Version 2.0 (\"Apache-2.0\"). All new code and specification contributions to the project are licensed under Apache-2.0. Documentation contributions (excluding specifications) are licensed under CC-BY-4.0.\n\nContributions for which relicensing consent has been obtained are licensed under Apache-2.0. Contributions made by authors who originally licensed their work under the MIT License and who have not yet granted explicit permission to relicense remain licensed under the MIT License.\n\nNo rights beyond those granted by the applicable original license are conveyed for such contributions.\n\n---\n\n       "
+      },
+      {
+        "path": "src/fetch/LICENSE",
+        "sha256": "8cc7c6e33b24ed4ee8fcccc33eccf102549d04fa4cb9737cecc9770dad1080ff",
+        "excerpt": "Copyright (c) 2024 Anthropic, PBC.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT "
+      },
+      {
+        "path": "src/git/LICENSE",
+        "sha256": "8cc7c6e33b24ed4ee8fcccc33eccf102549d04fa4cb9737cecc9770dad1080ff",
+        "excerpt": "Copyright (c) 2024 Anthropic, PBC.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT "
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "modelcontextprotocol/modelcontextprotocol",
+    "url": "https://github.com/modelcontextprotocol/modelcontextprotocol.git",
+    "classification": "specification",
+    "acquiredAt": "2026-09-13T11:04:19.089Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/modelcontextprotocol--modelcontextprotocol",
+    "outcome": "cloned-source-not-executed",
+    "commit": "cc2a84f5ca5404b2949683f7d7876f623344294f",
+    "fileCount": 951,
+    "licenses": [
+      {
+        "path": "LICENSE",
+        "sha256": "0382b0057770ca05e9c350a50aa3b1c1fea84da0bc81d723bf00b9aa841be58a",
+        "excerpt": "The MCP project is undergoing a licensing transition from the MIT License to the Apache License, Version 2.0 (\"Apache-2.0\"). All new code and specification contributions to the project are licensed under Apache-2.0. Documentation contributions (excluding specifications) are licensed under CC-BY-4.0.\n\nContributions for which relicensing consent has been obtained are licensed under Apache-2.0. Contributions made by authors who originally licensed their work under the MIT License and who have not yet granted explicit permission to relicense remain licensed under the MIT License.\n\nNo rights beyond those granted by the applicable original license are conveyed for such contributions.\n\n---\n\n       "
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "langchain-ai/langchain-mcp-adapters",
+    "url": "https://github.com/langchain-ai/langchain-mcp-adapters.git",
+    "classification": "adapter",
+    "acquiredAt": "2026-09-13T11:04:19.103Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/langchain-ai--langchain-mcp-adapters",
+    "outcome": "cloned-source-not-executed",
+    "commit": "52a4535f3eb4b98f386836e4d9b8c4cadf99afca",
+    "fileCount": 47,
+    "licenses": [
+      {
+        "path": "LICENSE",
+        "sha256": "31499b144b24d8e898681069d3cdb32aa509f4117f39d9b593f56b5a94e2af40",
+        "excerpt": "MIT License\n\nCopyright (c) 2025 LangChain, Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLU"
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  }
+]

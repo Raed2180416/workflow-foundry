@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark light">
+    <meta name="description" content="Inspect, run and revise your local Workflow Foundry programs.">
+    <title>Workflow Foundry</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="/style.css">
+    __FOUNDRY_BOOTSTRAP__
+    <script type="module" src="/app.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to workflow</a>
+    <header class="app-header">
+      <a class="brand" href="/" aria-label="Workflow Foundry home"><span class="brand-mark" aria-hidden="true">W</span><span>Workflow <strong>Foundry</strong><small>LOCAL WORKSPACE</small></span></a>
+      <div class="header-actions">
+        <span id="connection" class="connection" role="status">Connecting…</span>
+        <button id="refresh" class="button quiet" type="button">Refresh</button>
+        <button id="theme-toggle" class="button quiet" type="button" aria-label="Switch to light theme">Light theme</button>
+      </div>
+    </header>
+    <div id="notice" class="notice" role="status" hidden></div>
+    <div id="error-notice" class="notice danger" role="alert" hidden></div>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Workspace navigation">
+        <div class="sidebar-heading"><h2>Workflows</h2><span id="workflow-count" class="count">0</span></div>
+        <label class="sr-only" for="workflow-search">Find a workflow</label>
+        <input id="workflow-search" type="search" placeholder="Find a workflow…" autocomplete="off">
+        <div class="sidebar-buttons"><button id="new-workflow" class="button primary" type="button">+ New workflow</button><button id="open-import" class="button quiet" type="button">Import JSON</button></div>
+        <nav id="workflow-list" class="item-list" aria-label="Workflows"><p class="muted">Loading your workspace…</p></nav>
+        <div class="sidebar-heading runs-heading"><h2>Recent runs</h2><span id="run-count" class="count">0</span></div>
+        <nav id="run-list" class="item-list run-list" aria-label="Recent runs"></nav>
+        <div class="sidebar-heading runs-heading"><h2>Draft trials</h2><span id="trial-count" class="count">0</span></div>
+        <form id="trial-lookup" class="trial-lookup"><label for="trial-id">Inspect by trial ID</label><input id="trial-id" type="text" maxlength="128" required autocomplete="off" placeholder="Opaque trial ID"><button id="inspect-trial" class="button quiet" type="submit">Inspect trial</button></form>
+        <nav id="trial-list" class="item-list" aria-label="Draft trials"></nav>
+        <div class="workspace-footer"><span class="eyebrow">WORKSPACE</span><code id="workspace-path">Local connection</code><span id="agent-mode" class="muted">Host agent connection</span></div>
+      </aside>
+      <main id="main" tabindex="-1">
+        <section class="workspace-heading" aria-labelledby="workflow-title">
+          <div class="heading-copy"><div id="workflow-eyebrow" class="eyebrow">YOUR AUTOMATION WORKSPACE</div><h1 id="workflow-title">Make every step inspectable.</h1><p id="workflow-goal">Create a workflow with your host agent, or import an existing program to explore its graph and execution evidence.</p><div id="workflow-meta" class="meta-row"></div></div>
+          <div class="heading-actions"><button id="view-head" class="button quiet" type="button" hidden>View current version</button><button id="open-run" class="button primary" type="button" disabled>▶ Start run</button></div>
+        </section>
+        <div class="tabs" role="tablist" aria-label="Workspace views">
+          <button id="tab-canvas" type="button" role="tab" aria-selected="true" aria-controls="panel-canvas" tabindex="0" data-tab="canvas">Canvas</button>
+          <button id="tab-changes" type="button" role="tab" aria-selected="false" aria-controls="panel-changes" tabindex="-1" data-tab="changes">Requests &amp; changes <span id="change-count" class="count">0</span></button>
+          <button id="tab-evidence" type="button" role="tab" aria-selected="false" aria-controls="panel-evidence" tabindex="-1" data-tab="evidence">Run evidence</button>
+          <button id="tab-catalog" type="button" role="tab" aria-selected="false" aria-controls="panel-catalog" tabindex="-1" data-tab="catalog">Capabilities &amp; skills</button>
+        </div>
+        <section id="panel-canvas" class="tab-panel" role="tabpanel" aria-labelledby="tab-canvas">
+          <section id="trial-inspection" class="panel trial-inspection" aria-label="Selected draft trial" hidden></section>
+          <div class="canvas-layout">
+            <section class="graph-panel" aria-label="Workflow graph">
+              <div class="graph-toolbar"><nav id="breadcrumbs" class="breadcrumbs" aria-label="Nested workflow path"></nav><div class="zoom-controls"><button id="zoom-out" class="button icon" type="button" aria-label="Zoom out">−</button><output id="zoom-label" aria-live="polite">100%</output><button id="zoom-in" class="button icon" type="button" aria-label="Zoom in">+</button><button id="zoom-fit" class="button quiet" type="button">Fit</button></div></div>
+              <div id="frame-controls" class="frame-controls" hidden></div>
+              <div id="graph-viewport" class="graph-viewport" tabindex="0" role="region" aria-label="Scrollable workflow graph. Use Tab to select nodes; arrow keys move between nodes."><div id="graph"></div></div>
+              <div class="graph-footer"><span id="graph-summary">Your workflow will appear here.</span><span>Scroll to pan · Enter to inspect</span></div>
+            </section>
+            <aside class="inspector" aria-label="Node inspector"><div class="inspector-heading"><span class="eyebrow">INSPECTOR</span><button id="inspect-workflow" class="button quiet" type="button">Workflow</button></div><div id="inspector-content"></div></aside>
+          </div>
+          <section id="run-controls" class="run-controls" aria-label="Selected run controls" hidden></section>
+          <section class="composer panel" aria-labelledby="compose-heading">
+            <div class="section-heading"><div><span class="eyebrow">DESCRIBE THE NEXT CHANGE</span><h2 id="compose-heading">Keep the intent. Review the program.</h2></div><span id="composer-agent-mode" class="badge neutral">Host agent</span></div>
+            <p id="composer-provider" class="muted" hidden></p>
+            <form id="request-form">
+              <label for="request-scope">Request target</label><select id="request-scope"><option value="selected">Revise selected workflow</option><option value="new">Create a new workflow</option></select>
+              <label for="request-text" class="sr-only">Describe the workflow or change</label><textarea id="request-text" rows="3" maxlength="30000" required placeholder="Describe the result you need, the constraints, and how success should be checked…"></textarea>
+              <div class="form-footer"><p id="request-hint" class="muted">Requests wait for a real host agent to submit a proposal. Review its changes before applying.</p><button id="rebind-request" class="button quiet" type="button" hidden>Use selected version</button><button id="submit-request" class="button primary" type="submit">Queue request ↗</button></div>
+            </form>
+          </section>
+        </section>
+        <section id="panel-changes" class="tab-panel" role="tabpanel" aria-labelledby="tab-changes" hidden><div class="section-heading"><div><span class="eyebrow">INTENT → PROPOSAL → REVISION</span><h2>Requests &amp; changes</h2><p class="muted">Each revision is bound to the version it was requested against. Existing runs keep their original program.</p></div><button id="compose-request" class="button primary" type="button">Write a request</button></div><section id="agent-status" class="panel agent-status" aria-label="Agent and generation status"></section><div class="changes-layout"><div id="request-list"></div><section id="proposal-review" class="panel" aria-label="Proposal review"></section></div></section>
+        <section id="panel-evidence" class="tab-panel" role="tabpanel" aria-labelledby="tab-evidence" hidden><div id="evidence-content"></div></section>
+        <section id="panel-catalog" class="tab-panel" role="tabpanel" aria-labelledby="tab-catalog" hidden><div id="catalog-content"></div></section>
+        <footer class="main-footer"><span>Workflow Foundry <span id="app-version"></span></span><span>Local runtime acceptance is separate from independent task verification.</span></footer>
+      </main>
+    </div>
+    <dialog id="import-dialog" aria-labelledby="import-title"><form id="import-form"><div class="dialog-heading"><h2 id="import-title">Import a workflow</h2><button class="button quiet" type="button" data-close-dialog="import-dialog" aria-label="Close import">Close</button></div><p class="muted">Import a complete Workflow Foundry JSON program. Existing workflow identities require a version-bound proposal to change.</p><label for="import-file">Choose a JSON file</label><input id="import-file" type="file" accept=".json,application/json"><label for="import-json">Workflow JSON</label><textarea id="import-json" class="code-input" rows="14" required spellcheck="false" placeholder="Paste workflow JSON here"></textarea><div id="import-result" role="status"></div><div class="dialog-actions"><button id="validate-import" class="button quiet" type="button">Validate</button><button class="button primary" type="submit">Import workflow</button></div></form></dialog>
+    <dialog id="run-dialog" aria-labelledby="run-title"><form id="run-form"><div class="dialog-heading"><h2 id="run-title">Start a run</h2><button class="button quiet" type="button" data-close-dialog="run-dialog" aria-label="Close run setup">Close</button></div><p id="run-pin" class="hash-line"></p><div id="run-input-schema"></div><label for="run-input">Input JSON</label><textarea id="run-input" class="code-input" rows="8" required spellcheck="false">{}</textarea><div id="run-form-error" role="alert"></div><div class="dialog-actions"><button class="button primary" type="submit">Start this version</button></div></form></dialog>
+    <noscript><p class="notice danger">JavaScript is required to inspect and operate this local workspace.</p></noscript>
+  </body>
+</html>

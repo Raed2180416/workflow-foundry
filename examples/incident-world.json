@@ -1,0 +1,8 @@
+{
+  "correctAction": "rollback", "healthy": false,
+  "observations": {
+    "metrics": {"errorRate": 0.3, "cpu": 0.45, "capacityExhausted": false},
+    "deployment": {"changed": true, "regressionConfirmed": true},
+    "logs": {"error": "release regression in the local test fixture"}
+  }
+}

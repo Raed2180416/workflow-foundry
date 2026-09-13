@@ -1,0 +1,109 @@
+[
+  {
+    "checkedAt": "2026-09-13T11:39:44.690Z",
+    "scope": "audit-report-links-spans-and-final-source-binding",
+    "report": "research/dossiers/evidence-contract-review.md",
+    "reportSHA256": "7a3a67e0e5c893af2cb81b5b5b0cf723bd2b3d183d0db45a4c4d9b91cfca661c",
+    "links": 3,
+    "spans": 11,
+    "sourceChecks": [
+      {
+        "path": "src/runtime.mjs",
+        "sha256": "182388848e96f6b3f6531e6d279b19360e3de5b4e7052659ebcc3339d46e6538",
+        "matchesFinalRun": true
+      },
+      {
+        "path": "src/store.mjs",
+        "sha256": "e3db035f64e214369cde397061b1925787dc69524af2e37dacacfc7dc0e731e8",
+        "matchesFinalRun": false
+      },
+      {
+        "path": "src/capabilities.mjs",
+        "sha256": "494054f24a1f93aabd163194e40da0298cddaf51f450d298358f05f46bc341b3",
+        "matchesFinalRun": false
+      },
+      {
+        "path": "src/validate.mjs",
+        "sha256": "9eabd5d7c0bf9082fb40ae565d883485332d0e048af9f12dd25df5c8865499ab",
+        "matchesFinalRun": true
+      },
+      {
+        "path": "src/data.mjs",
+        "sha256": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c",
+        "matchesFinalRun": true
+      },
+      {
+        "path": "tests/evidence-contract-audit.test.mjs",
+        "sha256": "98265918840ec64487b37de4afc1241e5c3c68e8c77f337357022bc343e02512",
+        "matchesFinalRun": true
+      },
+      {
+        "path": "tests/control-audit.test.mjs",
+        "sha256": "83105ba083537b78a32efbfa6a75961d1e17423d96c8a3a7b2e812973febe967",
+        "matchesFinalRun": true
+      }
+    ],
+    "failures": [
+      {
+        "kind": "source-changed-after-tested-snapshot",
+        "path": "src/store.mjs"
+      },
+      {
+        "kind": "source-changed-after-tested-snapshot",
+        "path": "src/capabilities.mjs"
+      }
+    ],
+    "originalIndependentRunRetained": true,
+    "finalIndependentRun": 3,
+    "finalIndependentExit": 0
+  },
+  {
+    "checkedAt": "2026-09-13T11:42:02.206Z",
+    "scope": "audit-report-links-spans-and-final-source-binding",
+    "report": "research/dossiers/evidence-contract-review.md",
+    "reportSHA256": "b42e69b5bb02ca7c2c7d8389e9809a63b3761c9cac5497f2c08350c42491a1f0",
+    "links": 4,
+    "spans": 11,
+    "sourceChecks": [
+      {
+        "path": "src/runtime.mjs",
+        "sha256": "182388848e96f6b3f6531e6d279b19360e3de5b4e7052659ebcc3339d46e6538",
+        "matchesFinalRun": true
+      },
+      {
+        "path": "src/store.mjs",
+        "sha256": "e3db035f64e214369cde397061b1925787dc69524af2e37dacacfc7dc0e731e8",
+        "matchesFinalRun": true
+      },
+      {
+        "path": "src/capabilities.mjs",
+        "sha256": "494054f24a1f93aabd163194e40da0298cddaf51f450d298358f05f46bc341b3",
+        "matchesFinalRun": true
+      },
+      {
+        "path": "src/validate.mjs",
+        "sha256": "9eabd5d7c0bf9082fb40ae565d883485332d0e048af9f12dd25df5c8865499ab",
+        "matchesFinalRun": true
+      },
+      {
+        "path": "src/data.mjs",
+        "sha256": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c",
+        "matchesFinalRun": true
+      },
+      {
+        "path": "tests/evidence-contract-audit.test.mjs",
+        "sha256": "98265918840ec64487b37de4afc1241e5c3c68e8c77f337357022bc343e02512",
+        "matchesFinalRun": true
+      },
+      {
+        "path": "tests/control-audit.test.mjs",
+        "sha256": "83105ba083537b78a32efbfa6a75961d1e17423d96c8a3a7b2e812973febe967",
+        "matchesFinalRun": true
+      }
+    ],
+    "failures": [],
+    "originalIndependentRunRetained": true,
+    "finalIndependentRun": 4,
+    "finalIndependentExit": 0
+  }
+]

@@ -1,0 +1,914 @@
+[
+  {
+    "repository": "openai/codex",
+    "url": "https://github.com/openai/codex.git",
+    "classification": "implementation",
+    "acquiredAt": "2026-09-13T10:43:59.572Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/openai--codex",
+    "outcome": "cloned-source-not-executed",
+    "commit": "1715e55076737158ba61d43158ede504de6d4ce1",
+    "fileCount": 7804,
+    "licenses": [
+      {
+        "path": "LICENSE",
+        "sha256": "d17f227e4df5da1600391338865ce0f3055211760a36688f816941d58232d8dc",
+        "excerpt": "                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\nTERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n1.  Definitions.\n\n    \"License\" shall mean the terms and conditions for use, reproduction,\n    and distribution as defined by Sections 1 through 9 of this document.\n\n    \"Licensor\" shall mean the copyright owner or entity authorized by\n    the copyright owner that is granting the License.\n\n    \"Legal Entity\" shall mean the union of the acting entity and all\n    other entities that control, are controlled by, or are under common\n    control with that entity. For the purposes o"
+      },
+      {
+        "path": "NOTICE",
+        "sha256": "9d71575ecfd9a843fc1677b0efb08053c6ba9fd686a0de1a6f5382fd3c220915",
+        "excerpt": "OpenAI Codex\nCopyright 2025 OpenAI\n\nThis project includes code derived from [Ratatui](https://github.com/ratatui/ratatui), licensed under the MIT license.\nCopyright (c) 2016-2022 Florian Dehau\nCopyright (c) 2023-2025 The Ratatui Developers\n"
+      },
+      {
+        "path": "codex-rs/skills/src/assets/samples/imagegen/LICENSE.txt",
+        "sha256": "4dd13869245e356246a5b770723247bbb80a8f07a181d1d3d873a1734297cdb9",
+        "excerpt": "Apache License\nVersion 2.0, January 2004\nhttp://www.apache.org/licenses/\n\nTERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n1. Definitions.\n\n   \"License\" shall mean the terms and conditions for use, reproduction,\n   and distribution as defined by Sections 1 through 9 of this document.\n\n   \"Licensor\" shall mean the copyright owner or entity authorized by\n   the copyright owner that is granting the License.\n\n   \"Legal Entity\" shall mean the union of the acting entity and all\n   other entities that control, are controlled by, or are under common\n   control with that entity. For the purposes of this definition,\n   \"control\" means (i) the power, direct or indirect, to cause the\n   dir"
+      },
+      {
+        "path": "codex-rs/skills/src/assets/samples/openai-docs/LICENSE.txt",
+        "sha256": "4dd13869245e356246a5b770723247bbb80a8f07a181d1d3d873a1734297cdb9",
+        "excerpt": "Apache License\nVersion 2.0, January 2004\nhttp://www.apache.org/licenses/\n\nTERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n1. Definitions.\n\n   \"License\" shall mean the terms and conditions for use, reproduction,\n   and distribution as defined by Sections 1 through 9 of this document.\n\n   \"Licensor\" shall mean the copyright owner or entity authorized by\n   the copyright owner that is granting the License.\n\n   \"Legal Entity\" shall mean the union of the acting entity and all\n   other entities that control, are controlled by, or are under common\n   control with that entity. For the purposes of this definition,\n   \"control\" means (i) the power, direct or indirect, to cause the\n   dir"
+      },
+      {
+        "path": "codex-rs/skills/src/assets/samples/skill-creator/license.txt",
+        "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "excerpt": "\n                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity"
+      },
+      {
+        "path": "codex-rs/skills/src/assets/samples/skill-installer/LICENSE.txt",
+        "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "excerpt": "\n                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity"
+      },
+      {
+        "path": "codex-rs/vendor/bubblewrap/COPYING",
+        "sha256": "b7993225104d90ddd8024fd838faf300bea5e83d91203eab98e29512acebd69c",
+        "excerpt": "                  GNU LIBRARY GENERAL PUBLIC LICENSE\n                       Version 2, June 1991\n\n Copyright (C) 1991 Free Software Foundation, Inc.\n 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA\n Everyone is permitted to copy and distribute verbatim copies\n of this license document, but changing it is not allowed.\n\n[This is the first released version of the library GPL.  It is\n numbered 2 because it goes with version 2 of the ordinary GPL.]\n\n                            Preamble\n\n  The licenses for most software are designed to take away your\nfreedom to share and change it.  By contrast, the GNU General Public\nLicenses are intended to guarantee your freedom to share and change"
+      },
+      {
+        "path": "codex-rs/vendor/bubblewrap/LICENSE",
+        "sha256": "b7993225104d90ddd8024fd838faf300bea5e83d91203eab98e29512acebd69c",
+        "excerpt": "                  GNU LIBRARY GENERAL PUBLIC LICENSE\n                       Version 2, June 1991\n\n Copyright (C) 1991 Free Software Foundation, Inc.\n 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA\n Everyone is permitted to copy and distribute verbatim copies\n of this license document, but changing it is not allowed.\n\n[This is the first released version of the library GPL.  It is\n numbered 2 because it goes with version 2 of the ordinary GPL.]\n\n                            Preamble\n\n  The licenses for most software are designed to take away your\nfreedom to share and change it.  By contrast, the GNU General Public\nLicenses are intended to guarantee your freedom to share and change"
+      },
+      {
+        "path": "docs/license.md",
+        "sha256": "dca51cd27a681f46b17d7867d1e8311c024ec1478a6e12b6463a71a4e2f869ba",
+        "excerpt": "## License\n\nThis repository is licensed under the [Apache-2.0 License](../LICENSE).\n"
+      },
+      {
+        "path": "third_party/voice/NOTICE.md",
+        "sha256": "40097a1799441051aa0b6645cdc819cceb19be73cdd265eb602aa2b15e0b1f48",
+        "excerpt": "# Native voice libraries in Codex releases\n\nCodex release packages with voice include dynamically linked GStreamer and GLib\nlibraries and selected plugins, plus their native library dependencies. These\ncomponents have their own copyrights and licenses. Their notices accompany\nthis file in `licenses/`: `LGPL-2.1.txt` for GStreamer and GLib,\n`proxy-libintl.txt` for libintl, `libffi.txt`, `PCRE2.md` and `sljit.txt`\nfor PCRE2, `Opus.txt`, and `zlib.txt`. GVDB is included with GLib under LGPL.\n\nThe exact upstream versions, source archive URLs and SHA-256 digests are in\n`sources.json` alongside this notice. The corresponding build, runtime\nprojection and package scripts are in the public Codex sou"
+      },
+      {
+        "path": "third_party/wezterm/LICENSE",
+        "sha256": "331312c214f14dc1455a0e45e3a66f4b70bbc73916cffd525570e8cdb9d63bf4",
+        "excerpt": "MIT License\n\nCopyright (c) 2018-Present Wez Furlong\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, I"
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "openai/symphony",
+    "url": "https://github.com/openai/symphony.git",
+    "classification": "reference-implementation",
+    "acquiredAt": "2026-09-13T10:44:03.896Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/openai--symphony",
+    "outcome": "cloned-source-not-executed",
+    "commit": "e0ccc83720a42a600a53b61c5f8d3e518bebe1db",
+    "fileCount": 131,
+    "licenses": [
+      {
+        "path": "LICENSE",
+        "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+        "excerpt": "                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity."
+      },
+      {
+        "path": "NOTICE",
+        "sha256": "38c76eb8701e52953f63154a77b407667a6ee34c3a2a8785c8f8b2cd5494d09d",
+        "excerpt": "Copyright 2025 OpenAI\n\nLicensed under the Apache License, Version 2.0 (the \"License\");\nyou may not use this file except in compliance with the License.\nYou may obtain a copy of the License at\n\n    http://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software\nDistributed under the License is distributed on an “AS IS” BASIS,\nWITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\nSee the License for the specific language governing permissions and\nLimitations under the License.\n"
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "openai/skills",
+    "url": "https://github.com/openai/skills.git",
+    "classification": "skill-pack",
+    "acquiredAt": "2026-09-13T10:44:26.462Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/openai--skills",
+    "outcome": "cloned-source-not-executed",
+    "commit": "49f948faa9258a0c61caceaf225e179651397431",
+    "fileCount": 783,
+    "licenses": [
+      {
+        "path": "skills/.curated/aspnet-core/LICENSE.txt",
+        "sha256": "58d1e17ffe5109a7ae296caafcadfdbe6a7d176f0bc4ab01e12a689b0499d8bd",
+        "excerpt": "\n                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity"
+      },
+      {
+        "path": "skills/.curated/chatgpt-apps/LICENSE.txt",
+        "sha256": "a7f55b2cb68997f729e6199720d4d3cae47633aba0254a84b2d36ab284be9d45",
+        "excerpt": "Apache License\nVersion 2.0, January 2004\nhttp://www.apache.org/licenses/\n\nTERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n1. Definitions.\n\n   \"License\" shall mean the terms and conditions for use, reproduction,\n   and distribution as defined by Sections 1 through 9 of this document.\n\n   \"Licensor\" shall mean the copyright owner or entity authorized by\n   the copyright owner that is granting the License.\n\n   \"Legal Entity\" shall mean the union of the acting entity and all\n   other entities that control, are controlled by, or are under common\n   control with that entity. For the purposes of this definition,\n   \"control\" means (i) the power, direct or indirect, to cause the\n   dir"
+      },
+      {
+        "path": "skills/.curated/cli-creator/LICENSE.txt",
+        "sha256": "4dd13869245e356246a5b770723247bbb80a8f07a181d1d3d873a1734297cdb9",
+        "excerpt": "Apache License\nVersion 2.0, January 2004\nhttp://www.apache.org/licenses/\n\nTERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n1. Definitions.\n\n   \"License\" shall mean the terms and conditions for use, reproduction,\n   and distribution as defined by Sections 1 through 9 of this document.\n\n   \"Licensor\" shall mean the copyright owner or entity authorized by\n   the copyright owner that is granting the License.\n\n   \"Legal Entity\" shall mean the union of the acting entity and all\n   other entities that control, are controlled by, or are under common\n   control with that entity. For the purposes of this definition,\n   \"control\" means (i) the power, direct or indirect, to cause the\n   dir"
+      },
+      {
+        "path": "skills/.curated/cloudflare-deploy/LICENSE.txt",
+        "sha256": "4dd13869245e356246a5b770723247bbb80a8f07a181d1d3d873a1734297cdb9",
+        "excerpt": "Apache License\nVersion 2.0, January 2004\nhttp://www.apache.org/licenses/\n\nTERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n1. Definitions.\n\n   \"License\" shall mean the terms and conditions for use, reproduction,\n   and distribution as defined by Sections 1 through 9 of this document.\n\n   \"Licensor\" shall mean the copyright owner or entity authorized by\n   the copyright owner that is granting the License.\n\n   \"Legal Entity\" shall mean the union of the acting entity and all\n   other entities that control, are controlled by, or are under common\n   control with that entity. For the purposes of this definition,\n   \"control\" means (i) the power, direct or indirect, to cause the\n   dir"
+      },
+      {
+        "path": "skills/.curated/define-goal/LICENSE.txt",
+        "sha256": "4dd13869245e356246a5b770723247bbb80a8f07a181d1d3d873a1734297cdb9",
+        "excerpt": "Apache License\nVersion 2.0, January 2004\nhttp://www.apache.org/licenses/\n\nTERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n1. Definitions.\n\n   \"License\" shall mean the terms and conditions for use, reproduction,\n   and distribution as defined by Sections 1 through 9 of this document.\n\n   \"Licensor\" shall mean the copyright owner or entity authorized by\n   the copyright owner that is granting the License.\n\n   \"Legal Entity\" shall mean the union of the acting entity and all\n   other entities that control, are controlled by, or are under common\n   control with that entity. For the purposes of this definition,\n   \"control\" means (i) the power, direct or indirect, to cause the\n   dir"
+      },
+      {
+        "path": "skills/.curated/figma-code-connect-components/LICENSE.TXT",
+        "sha256": "36bdad8e8a43a282ba3a5af4ac022d8b117c5826b8b473fe6a32622e83856ae3",
+        "excerpt": "Use of these Figma skills and related files (\"Materials\") is governed by the Figma Developer Terms (available at https://www.figma.com/legal/developer-terms/). By accessing, downloading, or using these Materials — including through automated systems or AI agents — you agree to the Figma Developer Terms.\nThese Materials are currently offered as a Beta feature. Figma may modify, suspend, or discontinue them at any time without notice."
+      },
+      {
+        "path": "skills/.curated/figma-create-design-system-rules/LICENSE.TXT",
+        "sha256": "36bdad8e8a43a282ba3a5af4ac022d8b117c5826b8b473fe6a32622e83856ae3",
+        "excerpt": "Use of these Figma skills and related files (\"Materials\") is governed by the Figma Developer Terms (available at https://www.figma.com/legal/developer-terms/). By accessing, downloading, or using these Materials — including through automated systems or AI agents — you agree to the Figma Developer Terms.\nThese Materials are currently offered as a Beta feature. Figma may modify, suspend, or discontinue them at any time without notice."
+      },
+      {
+        "path": "skills/.curated/figma-create-new-file/LICENSE.TXT",
+        "sha256": "36bdad8e8a43a282ba3a5af4ac022d8b117c5826b8b473fe6a32622e83856ae3",
+        "excerpt": "Use of these Figma skills and related files (\"Materials\") is governed by the Figma Developer Terms (available at https://www.figma.com/legal/developer-terms/). By accessing, downloading, or using these Materials — including through automated systems or AI agents — you agree to the Figma Developer Terms.\nThese Materials are currently offered as a Beta feature. Figma may modify, suspend, or discontinue them at any time without notice."
+      },
+      {
+        "path": "skills/.curated/figma-generate-design/LICENSE.TXT",
+        "sha256": "36bdad8e8a43a282ba3a5af4ac022d8b117c5826b8b473fe6a32622e83856ae3",
+        "excerpt": "Use of these Figma skills and related files (\"Materials\") is governed by the Figma Developer Terms (available at https://www.figma.com/legal/developer-terms/). By accessing, downloading, or using these Materials — including through automated systems or AI agents — you agree to the Figma Developer Terms.\nThese Materials are currently offered as a Beta feature. Figma may modify, suspend, or discontinue them at any time without notice."
+      },
+      {
+        "path": "skills/.curated/figma-generate-library/LICENSE.TXT",
+        "sha256": "36bdad8e8a43a282ba3a5af4ac022d8b117c5826b8b473fe6a32622e83856ae3",
+        "excerpt": "Use of these Figma skills and related files (\"Materials\") is governed by the Figma Developer Terms (available at https://www.figma.com/legal/developer-terms/). By accessing, downloading, or using these Materials — including through automated systems or AI agents — you agree to the Figma Developer Terms.\nThese Materials are currently offered as a Beta feature. Figma may modify, suspend, or discontinue them at any time without notice."
+      },
+      {
+        "path": "skills/.curated/figma-implement-design/LICENSE.txt",
+        "sha256": "36bdad8e8a43a282ba3a5af4ac022d8b117c5826b8b473fe6a32622e83856ae3",
+        "excerpt": "Use of these Figma skills and related files (\"Materials\") is governed by the Figma Developer Terms (available at https://www.figma.com/legal/developer-terms/). By accessing, downloading, or using these Materials — including through automated systems or AI agents — you agree to the Figma Developer Terms.\nThese Materials are currently offered as a Beta feature. Figma may modify, suspend, or discontinue them at any time without notice."
+      },
+      {
+        "path": "skills/.curated/figma-use/LICENSE.TXT",
+        "sha256": "36bdad8e8a43a282ba3a5af4ac022d8b117c5826b8b473fe6a32622e83856ae3",
+        "excerpt": "Use of these Figma skills and related files (\"Materials\") is governed by the Figma Developer Terms (available at https://www.figma.com/legal/developer-terms/). By accessing, downloading, or using these Materials — including through automated systems or AI agents — you agree to the Figma Developer Terms.\nThese Materials are currently offered as a Beta feature. Figma may modify, suspend, or discontinue them at any time without notice."
+      },
+      {
+        "path": "skills/.curated/figma/LICENSE.txt",
+        "sha256": "36bdad8e8a43a282ba3a5af4ac022d8b117c5826b8b473fe6a32622e83856ae3",
+        "excerpt": "Use of these Figma skills and related files (\"Materials\") is governed by the Figma Developer Terms (available at https://www.figma.com/legal/developer-terms/). By accessing, downloading, or using these Materials — including through automated systems or AI agents — you agree to the Figma Developer Terms.\nThese Materials are currently offered as a Beta feature. Figma may modify, suspend, or discontinue them at any time without notice."
+      },
+      {
+        "path": "skills/.curated/gh-address-comments/LICENSE.txt",
+        "sha256": "58d1e17ffe5109a7ae296caafcadfdbe6a7d176f0bc4ab01e12a689b0499d8bd",
+        "excerpt": "\n                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity"
+      },
+      {
+        "path": "skills/.curated/gh-fix-ci/LICENSE.txt",
+        "sha256": "4dd13869245e356246a5b770723247bbb80a8f07a181d1d3d873a1734297cdb9",
+        "excerpt": "Apache License\nVersion 2.0, January 2004\nhttp://www.apache.org/licenses/\n\nTERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n1. Definitions.\n\n   \"License\" shall mean the terms and conditions for use, reproduction,\n   and distribution as defined by Sections 1 through 9 of this document.\n\n   \"Licensor\" shall mean the copyright owner or entity authorized by\n   the copyright owner that is granting the License.\n\n   \"Legal Entity\" shall mean the union of the acting entity and all\n   other entities that control, are controlled by, or are under common\n   control with that entity. For the purposes of this definition,\n   \"control\" means (i) the power, direct or indirect, to cause the\n   dir"
+      },
+      {
+        "path": "skills/.curated/hatch-pet/LICENSE.txt",
+        "sha256": "4dd13869245e356246a5b770723247bbb80a8f07a181d1d3d873a1734297cdb9",
+        "excerpt": "Apache License\nVersion 2.0, January 2004\nhttp://www.apache.org/licenses/\n\nTERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n1. Definitions.\n\n   \"License\" shall mean the terms and conditions for use, reproduction,\n   and distribution as defined by Sections 1 through 9 of this document.\n\n   \"Licensor\" shall mean the copyright owner or entity authorized by\n   the copyright owner that is granting the License.\n\n   \"Legal Entity\" shall mean the union of the acting entity and all\n   other entities that control, are controlled by, or are under common\n   control with that entity. For the purposes of this definition,\n   \"control\" means (i) the power, direct or indirect, to cause the\n   dir"
+      },
+      {
+        "path": "skills/.curated/jupyter-notebook/LICENSE.txt",
+        "sha256": "4dd13869245e356246a5b770723247bbb80a8f07a181d1d3d873a1734297cdb9",
+        "excerpt": "Apache License\nVersion 2.0, January 2004\nhttp://www.apache.org/licenses/\n\nTERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n1. Definitions.\n\n   \"License\" shall mean the terms and conditions for use, reproduction,\n   and distribution as defined by Sections 1 through 9 of this document.\n\n   \"Licensor\" shall mean the copyright owner or entity authorized by\n   the copyright owner that is granting the License.\n\n   \"Legal Entity\" shall mean the union of the acting entity and all\n   other entities that control, are controlled by, or are under common\n   control with that entity. For the purposes of this definition,\n   \"control\" means (i) the power, direct or indirect, to cause the\n   dir"
+      },
+      {
+        "path": "skills/.curated/linear/LICENSE.txt",
+        "sha256": "58d1e17ffe5109a7ae296caafcadfdbe6a7d176f0bc4ab01e12a689b0499d8bd",
+        "excerpt": "\n                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity"
+      },
+      {
+        "path": "skills/.curated/migrate-to-codex/LICENSE.txt",
+        "sha256": "58d1e17ffe5109a7ae296caafcadfdbe6a7d176f0bc4ab01e12a689b0499d8bd",
+        "excerpt": "\n                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity"
+      },
+      {
+        "path": "skills/.curated/netlify-deploy/LICENSE.txt",
+        "sha256": "4dd13869245e356246a5b770723247bbb80a8f07a181d1d3d873a1734297cdb9",
+        "excerpt": "Apache License\nVersion 2.0, January 2004\nhttp://www.apache.org/licenses/\n\nTERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n1. Definitions.\n\n   \"License\" shall mean the terms and conditions for use, reproduction,\n   and distribution as defined by Sections 1 through 9 of this document.\n\n   \"Licensor\" shall mean the copyright owner or entity authorized by\n   the copyright owner that is granting the License.\n\n   \"Legal Entity\" shall mean the union of the acting entity and all\n   other entities that control, are controlled by, or are under common\n   control with that entity. For the purposes of this definition,\n   \"control\" means (i) the power, direct or indirect, to cause the\n   dir"
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "SWE-agent/SWE-agent",
+    "url": "https://github.com/SWE-agent/SWE-agent.git",
+    "classification": "implementation",
+    "acquiredAt": "2026-09-13T10:44:28.557Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/SWE-agent--SWE-agent",
+    "outcome": "cloned-source-not-executed",
+    "commit": "3ea751c087f32b16e039a2233dd6eefecef325d5",
+    "fileCount": 409,
+    "licenses": [
+      {
+        "path": "LICENSE",
+        "sha256": "7610ed3916f6674e34b78417894abd57ff538b3cfdda3085e3643d82acbaf31f",
+        "excerpt": "MIT License\n\nCopyright (c) 2024 John Yang, Carlos E. Jimenez, Alexander Wettig, Shunyu Yao, Karthik Narasimhan, Ofir Press\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE I"
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "SWE-agent/mini-swe-agent",
+    "url": "https://github.com/SWE-agent/mini-swe-agent.git",
+    "classification": "implementation",
+    "acquiredAt": "2026-09-13T10:44:35.727Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/SWE-agent--mini-swe-agent",
+    "outcome": "cloned-source-not-executed",
+    "commit": "04d809ceab9df28f9adaed044884180159172930",
+    "fileCount": 221,
+    "licenses": [
+      {
+        "path": "LICENSE.md",
+        "sha256": "0f796e58f91d1c07bb2c1b1d0f8bf3a83017c3a5dec1bdc6fae733b2cd2e875b",
+        "excerpt": "MIT License\n\nCopyright (c) 2025 Kilian A. Lieret and Carlos E. Jimenez\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EX"
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "anthropics/skills",
+    "url": "https://github.com/anthropics/skills.git",
+    "classification": "skill-pack",
+    "acquiredAt": "2026-09-13T10:44:37.122Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/anthropics--skills",
+    "outcome": "cloned-source-not-executed",
+    "commit": "34040c9c568585f6929bedeaad110ad08f079624",
+    "fileCount": 419,
+    "licenses": [
+      {
+        "path": "skills/academy-guide/LICENSE.txt",
+        "sha256": "bc6b3af2f331cbc7fb0da1344efb2cbe5877a31498b4d70dbc7000f3405a1362",
+        "excerpt": "\n                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity"
+      },
+      {
+        "path": "skills/algorithmic-art/LICENSE.txt",
+        "sha256": "bc6b3af2f331cbc7fb0da1344efb2cbe5877a31498b4d70dbc7000f3405a1362",
+        "excerpt": "\n                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity"
+      },
+      {
+        "path": "skills/brand-guidelines/LICENSE.txt",
+        "sha256": "bc6b3af2f331cbc7fb0da1344efb2cbe5877a31498b4d70dbc7000f3405a1362",
+        "excerpt": "\n                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity"
+      },
+      {
+        "path": "skills/canvas-design/LICENSE.txt",
+        "sha256": "bc6b3af2f331cbc7fb0da1344efb2cbe5877a31498b4d70dbc7000f3405a1362",
+        "excerpt": "\n                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity"
+      },
+      {
+        "path": "skills/claude-api/LICENSE.txt",
+        "sha256": "bc6b3af2f331cbc7fb0da1344efb2cbe5877a31498b4d70dbc7000f3405a1362",
+        "excerpt": "\n                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity"
+      },
+      {
+        "path": "skills/discernment-nudge/LICENSE.txt",
+        "sha256": "bc6b3af2f331cbc7fb0da1344efb2cbe5877a31498b4d70dbc7000f3405a1362",
+        "excerpt": "\n                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity"
+      },
+      {
+        "path": "skills/docx/LICENSE.txt",
+        "sha256": "79f6d8f5b427252fa3b1c11ecdbdb6bf610b944f7530b4de78f770f38741cfaa",
+        "excerpt": "© 2025 Anthropic, PBC. All rights reserved.\n\nLICENSE: Use of these materials (including all code, prompts, assets, files,\nand other components of this Skill) is governed by your agreement with\nAnthropic regarding use of Anthropic's services. If no separate agreement\nexists, use is governed by Anthropic's Consumer Terms of Service or\nCommercial Terms of Service, as applicable:\nhttps://www.anthropic.com/legal/consumer-terms\nhttps://www.anthropic.com/legal/commercial-terms\nYour applicable agreement is referred to as the \"Agreement.\" \"Services\" are\nas defined in the Agreement.\n\nADDITIONAL RESTRICTIONS: Notwithstanding anything in the Agreement to the\ncontrary, users may not:\n\n- Extract these mat"
+      },
+      {
+        "path": "skills/frontend-design/LICENSE.txt",
+        "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
+        "excerpt": "\n                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity"
+      },
+      {
+        "path": "skills/internal-comms/LICENSE.txt",
+        "sha256": "bc6b3af2f331cbc7fb0da1344efb2cbe5877a31498b4d70dbc7000f3405a1362",
+        "excerpt": "\n                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity"
+      },
+      {
+        "path": "skills/mcp-builder/LICENSE.txt",
+        "sha256": "bc6b3af2f331cbc7fb0da1344efb2cbe5877a31498b4d70dbc7000f3405a1362",
+        "excerpt": "\n                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity"
+      },
+      {
+        "path": "skills/pdf/LICENSE.txt",
+        "sha256": "79f6d8f5b427252fa3b1c11ecdbdb6bf610b944f7530b4de78f770f38741cfaa",
+        "excerpt": "© 2025 Anthropic, PBC. All rights reserved.\n\nLICENSE: Use of these materials (including all code, prompts, assets, files,\nand other components of this Skill) is governed by your agreement with\nAnthropic regarding use of Anthropic's services. If no separate agreement\nexists, use is governed by Anthropic's Consumer Terms of Service or\nCommercial Terms of Service, as applicable:\nhttps://www.anthropic.com/legal/consumer-terms\nhttps://www.anthropic.com/legal/commercial-terms\nYour applicable agreement is referred to as the \"Agreement.\" \"Services\" are\nas defined in the Agreement.\n\nADDITIONAL RESTRICTIONS: Notwithstanding anything in the Agreement to the\ncontrary, users may not:\n\n- Extract these mat"
+      },
+      {
+        "path": "skills/pptx/LICENSE.txt",
+        "sha256": "79f6d8f5b427252fa3b1c11ecdbdb6bf610b944f7530b4de78f770f38741cfaa",
+        "excerpt": "© 2025 Anthropic, PBC. All rights reserved.\n\nLICENSE: Use of these materials (including all code, prompts, assets, files,\nand other components of this Skill) is governed by your agreement with\nAnthropic regarding use of Anthropic's services. If no separate agreement\nexists, use is governed by Anthropic's Consumer Terms of Service or\nCommercial Terms of Service, as applicable:\nhttps://www.anthropic.com/legal/consumer-terms\nhttps://www.anthropic.com/legal/commercial-terms\nYour applicable agreement is referred to as the \"Agreement.\" \"Services\" are\nas defined in the Agreement.\n\nADDITIONAL RESTRICTIONS: Notwithstanding anything in the Agreement to the\ncontrary, users may not:\n\n- Extract these mat"
+      },
+      {
+        "path": "skills/skill-creator/LICENSE.txt",
+        "sha256": "bc6b3af2f331cbc7fb0da1344efb2cbe5877a31498b4d70dbc7000f3405a1362",
+        "excerpt": "\n                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity"
+      },
+      {
+        "path": "skills/slack-gif-creator/LICENSE.txt",
+        "sha256": "bc6b3af2f331cbc7fb0da1344efb2cbe5877a31498b4d70dbc7000f3405a1362",
+        "excerpt": "\n                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity"
+      },
+      {
+        "path": "skills/theme-factory/LICENSE.txt",
+        "sha256": "bc6b3af2f331cbc7fb0da1344efb2cbe5877a31498b4d70dbc7000f3405a1362",
+        "excerpt": "\n                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity"
+      },
+      {
+        "path": "skills/web-artifacts-builder/LICENSE.txt",
+        "sha256": "bc6b3af2f331cbc7fb0da1344efb2cbe5877a31498b4d70dbc7000f3405a1362",
+        "excerpt": "\n                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity"
+      },
+      {
+        "path": "skills/webapp-testing/LICENSE.txt",
+        "sha256": "bc6b3af2f331cbc7fb0da1344efb2cbe5877a31498b4d70dbc7000f3405a1362",
+        "excerpt": "\n                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity"
+      },
+      {
+        "path": "skills/xlsx/LICENSE.txt",
+        "sha256": "79f6d8f5b427252fa3b1c11ecdbdb6bf610b944f7530b4de78f770f38741cfaa",
+        "excerpt": "© 2025 Anthropic, PBC. All rights reserved.\n\nLICENSE: Use of these materials (including all code, prompts, assets, files,\nand other components of this Skill) is governed by your agreement with\nAnthropic regarding use of Anthropic's services. If no separate agreement\nexists, use is governed by Anthropic's Consumer Terms of Service or\nCommercial Terms of Service, as applicable:\nhttps://www.anthropic.com/legal/consumer-terms\nhttps://www.anthropic.com/legal/commercial-terms\nYour applicable agreement is referred to as the \"Agreement.\" \"Services\" are\nas defined in the Agreement.\n\nADDITIONAL RESTRICTIONS: Notwithstanding anything in the Agreement to the\ncontrary, users may not:\n\n- Extract these mat"
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "anthropics/claude-agent-sdk-python",
+    "url": "https://github.com/anthropics/claude-agent-sdk-python.git",
+    "classification": "partial-sdk",
+    "acquiredAt": "2026-09-13T10:44:38.740Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/anthropics--claude-agent-sdk-python",
+    "outcome": "cloned-source-not-executed",
+    "commit": "37a52c9fb3f0271de017911914b0d42efea6267e",
+    "fileCount": 144,
+    "licenses": [
+      {
+        "path": "LICENSE",
+        "sha256": "cebdde8a8fb9ee59e5eaaed19578bf8085aa7047562259c31f38f225c26f6812",
+        "excerpt": "MIT License\n\nCopyright (c) 2025 Anthropic, PBC\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUD"
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "browser-use/browser-harness",
+    "url": "https://github.com/browser-use/browser-harness.git",
+    "classification": "implementation",
+    "acquiredAt": "2026-09-13T10:44:39.999Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/browser-use--browser-harness",
+    "outcome": "cloned-source-not-executed",
+    "commit": "afbcc381b963040c19627d788e40c7e7663171ee",
+    "fileCount": 190,
+    "licenses": [
+      {
+        "path": "LICENSE",
+        "sha256": "5afa3d97bf1e6f998d587fa101e3fe0d0c416840b7fe77bcd6ae97690a334631",
+        "excerpt": "MIT License\n\nCopyright (c) 2026 Browser Use\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING"
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "browser-use/browser-use",
+    "url": "https://github.com/browser-use/browser-use.git",
+    "classification": "implementation",
+    "acquiredAt": "2026-09-13T10:44:44.124Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/browser-use--browser-use",
+    "outcome": "cloned-source-not-executed",
+    "commit": "50f205533fe10ba35b553d2a3689c77b87bd5d0a",
+    "fileCount": 518,
+    "licenses": [
+      {
+        "path": "LICENSE",
+        "sha256": "135c57671b0ee957669b05a0ca00cc06f645496d351e2e732832c6e276da9a5e",
+        "excerpt": "MIT License\n\nCopyright (c) 2024 Gregor Zunic\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDIN"
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "browserbase/stagehand",
+    "url": "https://github.com/browserbase/stagehand.git",
+    "classification": "implementation",
+    "acquiredAt": "2026-09-13T10:44:45.790Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/browserbase--stagehand",
+    "outcome": "cloned-source-not-executed",
+    "commit": "b771930d2b4d858e5bd9670203c66260b385a8fa",
+    "fileCount": 1236,
+    "licenses": [
+      {
+        "path": "LICENSE",
+        "sha256": "fac7e7cd1cfc504054ee1fc53c38e0f3099d7357917e85a73792f6511fe0ea96",
+        "excerpt": "MIT License\n\nCopyright (c) 2024 Browserbase Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCL"
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "Skyvern-AI/skyvern",
+    "url": "https://github.com/Skyvern-AI/skyvern.git",
+    "classification": "implementation",
+    "acquiredAt": "2026-09-13T10:45:01.105Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/Skyvern-AI--skyvern",
+    "outcome": "cloned-source-not-executed",
+    "commit": "35cfb314f4777ad77130dae087b26aa3ef99c489",
+    "fileCount": 5541,
+    "licenses": [
+      {
+        "path": "LICENSE",
+        "sha256": "8486a10c4393cee1c25392769ddd3b2d6c242d6ec7928e1414efff7dfb2f07ef",
+        "excerpt": "                    GNU AFFERO GENERAL PUBLIC LICENSE\n                       Version 3, 19 November 2007\n\n Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>\n Everyone is permitted to copy and distribute verbatim copies\n of this license document, but changing it is not allowed.\n\n                            Preamble\n\n  The GNU Affero General Public License is a free, copyleft license for\nsoftware and other kinds of works, specifically designed to ensure\ncooperation with the community in the case of network server software.\n\n  The licenses for most software and other practical works are designed\nto take away your freedom to share and change the works.  By contrast,\nour Genera"
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "simular-ai/Agent-S",
+    "url": "https://github.com/simular-ai/Agent-S.git",
+    "classification": "implementation",
+    "acquiredAt": "2026-09-13T10:45:29.029Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/simular-ai--Agent-S",
+    "outcome": "cloned-source-not-executed",
+    "commit": "3aa272d23d2994c7bbde1acbbe0ef8e8d06b8693",
+    "fileCount": 127,
+    "licenses": [
+      {
+        "path": "LICENSE",
+        "sha256": "43070e2d4e532684de521b885f385d0841030efa2b1a20bafb76133a5e1379c1",
+        "excerpt": "                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity."
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "agentskills/agentskills",
+    "url": "https://github.com/agentskills/agentskills.git",
+    "classification": "standard-reference",
+    "acquiredAt": "2026-09-13T10:45:30.747Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/agentskills--agentskills",
+    "outcome": "cloned-source-not-executed",
+    "commit": "69ef37e9424c0a7ea9dd2293b559e43ec8176379",
+    "fileCount": 139,
+    "licenses": [
+      {
+        "path": "LICENSE",
+        "sha256": "993da3f8d330d69108e521636555f7783ef81d46b904394c59ec5ff651331fe5",
+        "excerpt": "\n                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity"
+      },
+      {
+        "path": "docs/LICENSE",
+        "sha256": "9e5f1b3c610b9c2da5c313bf81d577a7d1acec686bdb0384edefa6df0f90cd94",
+        "excerpt": "Attribution 4.0 International\n\n=======================================================================\n\nCreative Commons Corporation (\"Creative Commons\") is not a law firm and\ndoes not provide legal services or legal advice. Distribution of\nCreative Commons public licenses does not create a lawyer-client or\nother relationship. Creative Commons makes its licenses and related\ninformation available on an \"as-is\" basis. Creative Commons gives no\nwarranties regarding its licenses, any material licensed under their\nterms and conditions, or any related information. Creative Commons\ndisclaims all liability for damages resulting from their use to the\nfullest extent possible.\n\nUsing Creative Commons P"
+      },
+      {
+        "path": "skills-ref/LICENSE",
+        "sha256": "58d1e17ffe5109a7ae296caafcadfdbe6a7d176f0bc4ab01e12a689b0499d8bd",
+        "excerpt": "\n                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity"
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "langchain-ai/langgraph",
+    "url": "https://github.com/langchain-ai/langgraph.git",
+    "classification": "framework",
+    "acquiredAt": "2026-09-13T10:45:32.043Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/langchain-ai--langgraph",
+    "outcome": "cloned-source-not-executed",
+    "commit": "e539ac122f4126f6dd850581c1494948cf620e31",
+    "fileCount": 673,
+    "licenses": [
+      {
+        "path": "LICENSE",
+        "sha256": "d9bb52f2e3540d60ff50d8f0f5b6ba649b7fd346948c4c3d086c8afb120763c7",
+        "excerpt": "MIT License\n\nCopyright (c) 2024 LangChain, Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLU"
+      },
+      {
+        "path": "libs/checkpoint-postgres/LICENSE",
+        "sha256": "d9bb52f2e3540d60ff50d8f0f5b6ba649b7fd346948c4c3d086c8afb120763c7",
+        "excerpt": "MIT License\n\nCopyright (c) 2024 LangChain, Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLU"
+      },
+      {
+        "path": "libs/checkpoint-sqlite/LICENSE",
+        "sha256": "d9bb52f2e3540d60ff50d8f0f5b6ba649b7fd346948c4c3d086c8afb120763c7",
+        "excerpt": "MIT License\n\nCopyright (c) 2024 LangChain, Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLU"
+      },
+      {
+        "path": "libs/checkpoint/LICENSE",
+        "sha256": "d9bb52f2e3540d60ff50d8f0f5b6ba649b7fd346948c4c3d086c8afb120763c7",
+        "excerpt": "MIT License\n\nCopyright (c) 2024 LangChain, Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLU"
+      },
+      {
+        "path": "libs/cli/LICENSE",
+        "sha256": "d9bb52f2e3540d60ff50d8f0f5b6ba649b7fd346948c4c3d086c8afb120763c7",
+        "excerpt": "MIT License\n\nCopyright (c) 2024 LangChain, Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLU"
+      },
+      {
+        "path": "libs/cli/js-examples/LICENSE",
+        "sha256": "a01dcffdc1291b4043f2a81d249a9f3e45c9036f2308c9cdfeefe18371371e80",
+        "excerpt": "MIT License\n\nCopyright (c) 2024 LangChain\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING B"
+      },
+      {
+        "path": "libs/langgraph/LICENSE",
+        "sha256": "d9bb52f2e3540d60ff50d8f0f5b6ba649b7fd346948c4c3d086c8afb120763c7",
+        "excerpt": "MIT License\n\nCopyright (c) 2024 LangChain, Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLU"
+      },
+      {
+        "path": "libs/prebuilt/LICENSE",
+        "sha256": "d9bb52f2e3540d60ff50d8f0f5b6ba649b7fd346948c4c3d086c8afb120763c7",
+        "excerpt": "MIT License\n\nCopyright (c) 2024 LangChain, Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLU"
+      },
+      {
+        "path": "libs/sdk-py/LICENSE",
+        "sha256": "d9bb52f2e3540d60ff50d8f0f5b6ba649b7fd346948c4c3d086c8afb120763c7",
+        "excerpt": "MIT License\n\nCopyright (c) 2024 LangChain, Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLU"
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "langchain-ai/langchain",
+    "url": "https://github.com/langchain-ai/langchain.git",
+    "classification": "framework",
+    "acquiredAt": "2026-09-13T10:45:33.622Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/langchain-ai--langchain",
+    "outcome": "cloned-source-not-executed",
+    "commit": "348c9dc572599947d2d7d33d6a5b8b936e92a1d4",
+    "fileCount": 3125,
+    "licenses": [
+      {
+        "path": "LICENSE",
+        "sha256": "4ec67e4ca6e6721dba849b2ca82261597c86a61ee214bbf21416006b7b2d0478",
+        "excerpt": "MIT License\n\nCopyright (c) LangChain, Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING "
+      },
+      {
+        "path": "libs/core/LICENSE",
+        "sha256": "4ec67e4ca6e6721dba849b2ca82261597c86a61ee214bbf21416006b7b2d0478",
+        "excerpt": "MIT License\n\nCopyright (c) LangChain, Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING "
+      },
+      {
+        "path": "libs/langchain/LICENSE",
+        "sha256": "4ec67e4ca6e6721dba849b2ca82261597c86a61ee214bbf21416006b7b2d0478",
+        "excerpt": "MIT License\n\nCopyright (c) LangChain, Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING "
+      },
+      {
+        "path": "libs/langchain_v1/LICENSE",
+        "sha256": "4ec67e4ca6e6721dba849b2ca82261597c86a61ee214bbf21416006b7b2d0478",
+        "excerpt": "MIT License\n\nCopyright (c) LangChain, Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING "
+      },
+      {
+        "path": "libs/model-profiles/LICENSE",
+        "sha256": "4ec67e4ca6e6721dba849b2ca82261597c86a61ee214bbf21416006b7b2d0478",
+        "excerpt": "MIT License\n\nCopyright (c) LangChain, Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING "
+      },
+      {
+        "path": "libs/partners/anthropic/LICENSE",
+        "sha256": "0e9a6675825549cd637746a2a3aa6d9cc527e6d207add021435d927251017c18",
+        "excerpt": "MIT License\n\nCopyright (c) 2023 LangChain, Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLU"
+      },
+      {
+        "path": "libs/partners/chroma/LICENSE",
+        "sha256": "d9bb52f2e3540d60ff50d8f0f5b6ba649b7fd346948c4c3d086c8afb120763c7",
+        "excerpt": "MIT License\n\nCopyright (c) 2024 LangChain, Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLU"
+      },
+      {
+        "path": "libs/partners/deepseek/LICENSE",
+        "sha256": "d9bb52f2e3540d60ff50d8f0f5b6ba649b7fd346948c4c3d086c8afb120763c7",
+        "excerpt": "MIT License\n\nCopyright (c) 2024 LangChain, Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLU"
+      },
+      {
+        "path": "libs/partners/exa/LICENSE",
+        "sha256": "0e9a6675825549cd637746a2a3aa6d9cc527e6d207add021435d927251017c18",
+        "excerpt": "MIT License\n\nCopyright (c) 2023 LangChain, Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLU"
+      },
+      {
+        "path": "libs/partners/fireworks/LICENSE",
+        "sha256": "d9bb52f2e3540d60ff50d8f0f5b6ba649b7fd346948c4c3d086c8afb120763c7",
+        "excerpt": "MIT License\n\nCopyright (c) 2024 LangChain, Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLU"
+      },
+      {
+        "path": "libs/partners/groq/LICENSE",
+        "sha256": "0e9a6675825549cd637746a2a3aa6d9cc527e6d207add021435d927251017c18",
+        "excerpt": "MIT License\n\nCopyright (c) 2023 LangChain, Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLU"
+      },
+      {
+        "path": "libs/partners/huggingface/LICENSE",
+        "sha256": "0e9a6675825549cd637746a2a3aa6d9cc527e6d207add021435d927251017c18",
+        "excerpt": "MIT License\n\nCopyright (c) 2023 LangChain, Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLU"
+      },
+      {
+        "path": "libs/partners/mistralai/LICENSE",
+        "sha256": "0e9a6675825549cd637746a2a3aa6d9cc527e6d207add021435d927251017c18",
+        "excerpt": "MIT License\n\nCopyright (c) 2023 LangChain, Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLU"
+      },
+      {
+        "path": "libs/partners/nomic/LICENSE",
+        "sha256": "0e9a6675825549cd637746a2a3aa6d9cc527e6d207add021435d927251017c18",
+        "excerpt": "MIT License\n\nCopyright (c) 2023 LangChain, Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLU"
+      },
+      {
+        "path": "libs/partners/ollama/LICENSE",
+        "sha256": "d9bb52f2e3540d60ff50d8f0f5b6ba649b7fd346948c4c3d086c8afb120763c7",
+        "excerpt": "MIT License\n\nCopyright (c) 2024 LangChain, Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLU"
+      },
+      {
+        "path": "libs/partners/openai/LICENSE",
+        "sha256": "0e9a6675825549cd637746a2a3aa6d9cc527e6d207add021435d927251017c18",
+        "excerpt": "MIT License\n\nCopyright (c) 2023 LangChain, Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLU"
+      },
+      {
+        "path": "libs/partners/openrouter/LICENSE",
+        "sha256": "31499b144b24d8e898681069d3cdb32aa509f4117f39d9b593f56b5a94e2af40",
+        "excerpt": "MIT License\n\nCopyright (c) 2025 LangChain, Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLU"
+      },
+      {
+        "path": "libs/partners/perplexity/LICENSE",
+        "sha256": "0e9a6675825549cd637746a2a3aa6d9cc527e6d207add021435d927251017c18",
+        "excerpt": "MIT License\n\nCopyright (c) 2023 LangChain, Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLU"
+      },
+      {
+        "path": "libs/partners/qdrant/LICENSE",
+        "sha256": "d9bb52f2e3540d60ff50d8f0f5b6ba649b7fd346948c4c3d086c8afb120763c7",
+        "excerpt": "MIT License\n\nCopyright (c) 2024 LangChain, Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLU"
+      },
+      {
+        "path": "libs/partners/xai/LICENSE",
+        "sha256": "d9bb52f2e3540d60ff50d8f0f5b6ba649b7fd346948c4c3d086c8afb120763c7",
+        "excerpt": "MIT License\n\nCopyright (c) 2024 LangChain, Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLU"
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "n8n-io/n8n",
+    "url": "https://github.com/n8n-io/n8n.git",
+    "classification": "source-available-framework",
+    "acquiredAt": "2026-09-13T10:45:37.257Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/n8n-io--n8n",
+    "outcome": "cloned-source-not-executed",
+    "commit": "4169b55bf3b3e6c255d7361642bc5243bd04345a",
+    "fileCount": 28585,
+    "licenses": [
+      {
+        "path": "LICENSE.md",
+        "sha256": "d2f621f59aa4c10eab79b6333e59d9d3d5b53307dcfd16dbd75e40e679e84965",
+        "excerpt": "# License\n\nPortions of this software are licensed as follows:\n\n- Content of branches other than the main branch (i.e. \"master\") are not licensed.\n- Source code files that contain \".ee.\" in their filename or \".ee\" in their dirname are NOT licensed under\n  the Sustainable Use License.\n  To use source code files that contain \".ee.\" in their filename or \".ee\" in their dirname you must hold a\n\tvalid n8n Enterprise License specifically allowing you access to such source code files and as defined\n\tin \"LICENSE_EE.md\".\n- All third party components incorporated into the n8n Software are licensed under the original license\n  provided by the owner of the applicable component.\n- Content outside of the ab"
+      },
+      {
+        "path": "packages/@n8n/cli/LICENSE.md",
+        "sha256": "d2f621f59aa4c10eab79b6333e59d9d3d5b53307dcfd16dbd75e40e679e84965",
+        "excerpt": "# License\n\nPortions of this software are licensed as follows:\n\n- Content of branches other than the main branch (i.e. \"master\") are not licensed.\n- Source code files that contain \".ee.\" in their filename or \".ee\" in their dirname are NOT licensed under\n  the Sustainable Use License.\n  To use source code files that contain \".ee.\" in their filename or \".ee\" in their dirname you must hold a\n\tvalid n8n Enterprise License specifically allowing you access to such source code files and as defined\n\tin \"LICENSE_EE.md\".\n- All third party components incorporated into the n8n Software are licensed under the original license\n  provided by the owner of the applicable component.\n- Content outside of the ab"
+      },
+      {
+        "path": "packages/@n8n/codemirror-lang-html/LICENSE",
+        "sha256": "aa8f65819a471c1a25fb3c0816c5a75e45f009b7899d292ee3cc70d9dbdd8f7e",
+        "excerpt": "MIT License\n\nCopyright (C) 2018-2021 by Marijn Haverbeke <marijnh@gmail.com> and others\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in\nall copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANT"
+      },
+      {
+        "path": "packages/@n8n/codemirror-lang-sql/LICENSE",
+        "sha256": "05c6130cda97e7600ca91427a41e8a065efcf82365fc0293e7de80faec494c07",
+        "excerpt": "MIT License\n\nCopyright (C) 2018-2021 by Marijn Haverbeke <marijn@haverbeke.berlin> and others\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in\nall copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT W"
+      },
+      {
+        "path": "packages/@n8n/config/src/configs/license.config.ts",
+        "sha256": "4d975e418d3306e5703647fec341f8feea595612a15255dea44d98406a7e1e8e",
+        "excerpt": "import { Config, Env } from '../decorators';\n\n@Config\nexport class LicenseConfig {\n\t/** URL of the license server used to validate and refresh licenses. */\n\t@Env('N8N_LICENSE_SERVER_URL')\n\tserverUrl: string = 'https://license.n8n.io/v1';\n\n\t/** Whether to automatically renew licenses before they expire. */\n\t@Env('N8N_LICENSE_AUTO_RENEW_ENABLED')\n\tautoRenewalEnabled: boolean = true;\n\n\t/** Activation key used to activate or upgrade the instance license. */\n\t@Env('N8N_LICENSE_ACTIVATION_KEY')\n\tactivationKey: string = '';\n\n\t/** Whether to release floating entitlements back to the pool when the instance shuts down. */\n\t@Env('N8N_LICENSE_DETACH_FLOATING_ON_SHUTDOWN')\n\tdetachFloatingOnShutdown: bool"
+      },
+      {
+        "path": "packages/@n8n/decorators/src/controller/__tests__/license.test.ts",
+        "sha256": "911b7d8313d9fe4cc730cefe321a282922989c71ccd197d99dbece66a8d9cf5e",
+        "excerpt": "import type { BooleanLicenseFeature } from '@n8n/constants';\nimport { Container } from '@n8n/di';\n\nimport { ControllerRegistryMetadata } from '../controller-registry-metadata';\nimport { Licensed } from '../licensed';\nimport type { Controller } from '../types';\n\ndescribe('@Licensed Decorator', () => {\n\tlet controllerRegistryMetadata: ControllerRegistryMetadata;\n\n\tbeforeEach(() => {\n\t\tvi.resetAllMocks();\n\n\t\tcontrollerRegistryMetadata = new ControllerRegistryMetadata();\n\t\tContainer.set(ControllerRegistryMetadata, controllerRegistryMetadata);\n\t});\n\n\tit('should set license feature on route metadata', () => {\n\t\tconst licenseFeature: BooleanLicenseFeature = 'feat:variables';\n\n\t\tclass TestController"
+      },
+      {
+        "path": "packages/@n8n/extension-sdk/LICENSE",
+        "sha256": "467efe98b5a6c923f07ab4bbdac4ec273258e45a048b3944292b14bf1e3ce79c",
+        "excerpt": "See LICENSE.md in the root of this repository for more information.\n"
+      },
+      {
+        "path": "packages/@n8n/json-schema-to-zod/LICENSE",
+        "sha256": "c036b7cf5bb20b54047e32949dfba5743c0da67d02d4dc4b48ba839f1af7fe2c",
+        "excerpt": "ISC License\n\nCopyright (c) 2024, n8n\nCopyright (c) 2021, Stefan Terdell\n\nPermission to use, copy, modify, and/or distribute this software for any\npurpose with or without fee is hereby granted, provided that the above\ncopyright notice and this permission notice appear in all copies.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\" AND THE AUTHOR DISCLAIMS ALL WARRANTIES\nWITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF\nMERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR\nANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES\nWHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN\nACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING "
+      },
+      {
+        "path": "packages/@n8n/tournament/LICENSE.md",
+        "sha256": "1185febbe34cabec6b0d891497b6cfc05370c7e4baf2f08a89eebe025707b1d8",
+        "excerpt": "                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity."
+      },
+      {
+        "path": "packages/@n8n/typeorm/LICENSE",
+        "sha256": "4a395143dcb5126a30ac3ef080d6e06d7ba403195999ac8e2d1e830f07fa1b87",
+        "excerpt": "The MIT License\n\nCopyright (c) 2015-2024 TypeORM. http://typeorm.github.io\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in\nall copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND"
+      },
+      {
+        "path": "packages/cli/src/__tests__/license.test.ts",
+        "sha256": "9562efe6fbfaf21974bf23c7c209e56b6f035d074ef3400ef9a23bd9681b523e",
+        "excerpt": "import type { Logger } from '@n8n/backend-common';\nimport { mockLogger } from '@n8n/backend-test-utils';\nimport type { GlobalConfig } from '@n8n/config';\nimport type { SettingsRepository } from '@n8n/db';\nimport { LicenseManager } from '@n8n_io/license-sdk';\nimport type { InstanceSettings } from 'n8n-core';\nimport type { MockedClass } from 'vitest';\nimport { mock } from 'vitest-mock-extended';\n\nimport { N8N_VERSION } from '@/constants';\nimport { License } from '@/license';\n\nvi.mock('@n8n_io/license-sdk');\n\nconst MOCK_SERVER_URL = 'https://server.com/v1';\nconst MOCK_RENEW_OFFSET = 259200;\nconst MOCK_INSTANCE_ID = 'instance-id';\nconst MOCK_ACTIVATION_KEY = 'activation-key';\nconst MOCK_FEATURE_"
+      },
+      {
+        "path": "packages/cli/src/license.ts",
+        "sha256": "29761bbaafdb14b64f293faa885f7e3bcfe59518ceaaa1780747e3fce40b5412",
+        "excerpt": "import type { LicenseProvider } from '@n8n/backend-common';\nimport { Logger } from '@n8n/backend-common';\nimport { GlobalConfig } from '@n8n/config';\nimport {\n\tDEFAULT_WORKFLOW_HISTORY_PRUNE_LIMIT,\n\tLICENSE_FEATURES,\n\tLICENSE_QUOTAS,\n\tTime,\n\tUNLIMITED_LICENSE_QUOTA,\n\ttype BooleanLicenseFeature,\n\ttype NumericLicenseFeature,\n} from '@n8n/constants';\nimport { SettingsRepository } from '@n8n/db';\nimport { OnPubSubEvent, OnShutdown } from '@n8n/decorators';\nimport { Container, Service } from '@n8n/di';\nimport type { TEntitlement, TLicenseBlock } from '@n8n_io/license-sdk';\nimport { LicenseManager } from '@n8n_io/license-sdk';\nimport { InstanceSettings } from 'n8n-core';\n\nimport { LicenseMetricsSe"
+      },
+      {
+        "path": "packages/cli/src/license/__tests__/license.controller.test.ts",
+        "sha256": "8c9334cba827dac81e72e944d8d7031c27ed999e7cc44cdad28fcbaca785fd6b",
+        "excerpt": "import { ControllerRegistryMetadata, type Controller } from '@n8n/decorators';\nimport { Container } from '@n8n/di';\n\nimport { LicenseController } from '../license.controller';\n\ndescribe('LicenseController route access scopes', () => {\n\tconst metadata = Container.get(ControllerRegistryMetadata).getControllerMetadata(\n\t\tLicenseController as Controller,\n\t);\n\n\tit('gates registerCommunityEdition behind license:manage', () => {\n\t\texpect(metadata.routes.get('registerCommunityEdition')?.accessScope).toEqual({\n\t\t\tscope: 'license:manage',\n\t\t\tglobalOnly: true,\n\t\t});\n\t});\n\n\tit.each(['requestEnterpriseTrial', 'activateLicense', 'renewLicense'])(\n\t\t'%s is gated behind license:manage',\n\t\t(handler) => {\n\t\t\t"
+      },
+      {
+        "path": "packages/cli/src/license/__tests__/license.service.test.ts",
+        "sha256": "6d6f56d7a4cc9705a5acd3885d23cd85bc02b5821c94e8d18299d9fca780d064",
+        "excerpt": "import type { LicenseState } from '@n8n/backend-common';\nimport { markHttpRequestError } from '@n8n/backend-network';\nimport type { HttpRequestClient, OutboundHttp } from '@n8n/backend-network';\nimport type { WorkflowRepository } from '@n8n/db';\nimport type { TEntitlement } from '@n8n_io/license-sdk';\nimport { AxiosError } from 'axios';\nimport { mock } from 'vitest-mock-extended';\n\nimport { BadRequestError } from '@/errors/response-errors/bad-request.error';\nimport type { EventService } from '@/events/event.service';\nimport type { License } from '@/license';\nimport { LicenseErrors, LicenseService } from '@/license/license.service';\n\ndescribe('LicenseService', () => {\n\tconst license = mock<Li"
+      },
+      {
+        "path": "packages/cli/src/license/license.controller.ts",
+        "sha256": "48b2c82af0ff79071d93f75d06604886bd1bba1215cb936ee245bf48039a45f4",
+        "excerpt": "import { CommunityRegisteredRequestDto } from '@n8n/api-types';\nimport { AuthenticatedRequest } from '@n8n/db';\nimport { Get, Post, RestController, GlobalScope, Body } from '@n8n/decorators';\nimport type { AxiosError } from 'axios';\nimport { InstanceSettings } from 'n8n-core';\n\nimport { BadRequestError } from '@/errors/response-errors/bad-request.error';\nimport { LicenseRequest } from '@/requests';\nimport { UrlService } from '@/services/url.service';\n\nimport { LicenseService } from './license.service';\n\n@RestController('/license')\nexport class LicenseController {\n\tconstructor(\n\t\tprivate readonly licenseService: LicenseService,\n\t\tprivate readonly instanceSettings: InstanceSettings,\n\t\tprivate "
+      },
+      {
+        "path": "packages/cli/src/license/license.service.ts",
+        "sha256": "6fd2332b7679e3046ad64b34eb2b3aaebd275158e25718d8cf8a076d01d5e5e2",
+        "excerpt": "import { LicenseState, Logger } from '@n8n/backend-common';\nimport { OutboundHttp, type HttpRequestClient, isHttpRequestError } from '@n8n/backend-network';\nimport { Time } from '@n8n/constants';\nimport type { User } from '@n8n/db';\nimport { WorkflowRepository } from '@n8n/db';\nimport { Service } from '@n8n/di';\nimport { ensureError } from '@n8n/utils/errors/ensure-error';\n\nimport { BadRequestError } from '@/errors/response-errors/bad-request.error';\nimport { LicenseEulaRequiredError } from '@/errors/response-errors/license-eula-required.error';\nimport { EventService } from '@/events/event.service';\nimport { License } from '@/license';\nimport { UrlService } from '@/services/url.service';\n\nco"
+      },
+      {
+        "path": "packages/cli/test/integration/commands/license.cmd.test.ts",
+        "sha256": "806f61b4d4c84dc4afb75bfe53e3b39142d5ceaa9b0ec5990effe5bfbc84d408",
+        "excerpt": "import { mockInstance } from '@n8n/backend-test-utils';\nimport { Container } from '@n8n/di';\n\nimport { ClearLicenseCommand } from '@/commands/license/clear';\nimport { License } from '@/license';\nimport { LoadNodesAndCredentials } from '@/load-nodes-and-credentials';\nimport { setupTestCommand } from '@test-integration/utils/test-command';\n\nmockInstance(LoadNodesAndCredentials);\nconst command = setupTestCommand(ClearLicenseCommand);\n\ntest('license:clear invokes clear() to release any floating entitlements and deletes the license cert from the DB', async () => {\n\tconst license = Container.get(License);\n\n\tconst manager = {\n\t\tclear: vi.fn().mockImplementation(async () => {\n\t\t\tawait license.saveCe"
+      },
+      {
+        "path": "packages/cli/test/integration/license.api.test.ts",
+        "sha256": "0cf7029aadf15db3ac0d9cd7f282b3e1e594fe7bdb1db448ef4422e0ace2aa28",
+        "excerpt": "import { testDb } from '@n8n/backend-test-utils';\nimport { GLOBAL_MEMBER_ROLE, GLOBAL_OWNER_ROLE, type User } from '@n8n/db';\nimport nock from 'nock';\n\nimport { RESPONSE_ERROR_MESSAGES } from '@/constants';\nimport type { ILicensePostResponse, ILicenseReadResponse } from '@/interfaces';\nimport { License } from '@/license';\n\nimport { createUserShell } from './shared/db/users';\nimport type { SuperAgentTest } from './shared/types';\nimport * as utils from './shared/utils/';\n\nlet owner: User;\nlet member: User;\nlet authOwnerAgent: SuperAgentTest;\nlet authMemberAgent: SuperAgentTest;\n\nconst testServer = utils.setupTestServer({ endpointGroups: ['license'] });\n\nbeforeAll(async () => {\n\towner = await c"
+      },
+      {
+        "path": "packages/cli/test/integration/shared/license.ts",
+        "sha256": "6299309fbf2d3d3b8b9b866229bc63e15d821b57d809d1c44c1e70415e67df11",
+        "excerpt": "import type { LicenseProvider, LicenseState } from '@n8n/backend-common';\nimport type { BooleanLicenseFeature, NumericLicenseFeature } from '@n8n/constants';\n\nimport type { License } from '@/license';\n\nexport interface LicenseMockDefaults {\n\tfeatures?: BooleanLicenseFeature[];\n\tquotas?: Partial<{ [K in NumericLicenseFeature]: number }>;\n}\n\nexport class LicenseMocker {\n\tprivate _enabledFeatures: Set<BooleanLicenseFeature> = new Set();\n\n\tprivate _defaultFeatures: Set<BooleanLicenseFeature> = new Set();\n\n\tprivate _featureQuotas: Map<NumericLicenseFeature, number> = new Map();\n\n\tprivate _defaultQuotas: Map<NumericLicenseFeature, number> = new Map();\n\n\tmock(license: License) {\n\t\tlicense.isLicense"
+      },
+      {
+        "path": "packages/extensions/insights/LICENSE",
+        "sha256": "467efe98b5a6c923f07ab4bbdac4ec273258e45a048b3944292b14bf1e3ce79c",
+        "excerpt": "See LICENSE.md in the root of this repository for more information.\n"
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "modelcontextprotocol/modelcontextprotocol",
+    "url": "https://github.com/modelcontextprotocol/modelcontextprotocol.git",
+    "classification": "standard-reference",
+    "acquiredAt": "2026-09-13T10:48:27.217Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/modelcontextprotocol--modelcontextprotocol",
+    "outcome": "cloned-source-not-executed",
+    "commit": "cc2a84f5ca5404b2949683f7d7876f623344294f",
+    "fileCount": 951,
+    "licenses": [
+      {
+        "path": "LICENSE",
+        "sha256": "0382b0057770ca05e9c350a50aa3b1c1fea84da0bc81d723bf00b9aa841be58a",
+        "excerpt": "The MCP project is undergoing a licensing transition from the MIT License to the Apache License, Version 2.0 (\"Apache-2.0\"). All new code and specification contributions to the project are licensed under Apache-2.0. Documentation contributions (excluding specifications) are licensed under CC-BY-4.0.\n\nContributions for which relicensing consent has been obtained are licensed under Apache-2.0. Contributions made by authors who originally licensed their work under the MIT License and who have not yet granted explicit permission to relicense remain licensed under the MIT License.\n\nNo rights beyond those granted by the applicable original license are conveyed for such contributions.\n\n---\n\n       "
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "openai/plugins",
+    "url": "https://github.com/openai/plugins.git",
+    "classification": "plugin-pack",
+    "acquiredAt": "2026-09-13T10:58:19.486Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/openai--plugins",
+    "outcome": "cloned-source-not-executed",
+    "commit": "1dc195897af4161d039b80d8471ec0a10c9bbc89",
+    "fileCount": 5386,
+    "licenses": [
+      {
+        "path": "plugins/boltz-api-cli/LICENSE",
+        "sha256": "854aa643d93ea6dec7d5df7c8a3df53d4cc3416772be5a4429e4cb1c276eeaaa",
+        "excerpt": "MIT License\n\nCopyright (c) 2026 Boltz\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT N"
+      },
+      {
+        "path": "plugins/cloudflare/skills/agents-sdk/LICENSE.txt",
+        "sha256": "4dd13869245e356246a5b770723247bbb80a8f07a181d1d3d873a1734297cdb9",
+        "excerpt": "Apache License\nVersion 2.0, January 2004\nhttp://www.apache.org/licenses/\n\nTERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n1. Definitions.\n\n   \"License\" shall mean the terms and conditions for use, reproduction,\n   and distribution as defined by Sections 1 through 9 of this document.\n\n   \"Licensor\" shall mean the copyright owner or entity authorized by\n   the copyright owner that is granting the License.\n\n   \"Legal Entity\" shall mean the union of the acting entity and all\n   other entities that control, are controlled by, or are under common\n   control with that entity. For the purposes of this definition,\n   \"control\" means (i) the power, direct or indirect, to cause the\n   dir"
+      },
+      {
+        "path": "plugins/cloudflare/skills/cloudflare/LICENSE.txt",
+        "sha256": "4dd13869245e356246a5b770723247bbb80a8f07a181d1d3d873a1734297cdb9",
+        "excerpt": "Apache License\nVersion 2.0, January 2004\nhttp://www.apache.org/licenses/\n\nTERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n1. Definitions.\n\n   \"License\" shall mean the terms and conditions for use, reproduction,\n   and distribution as defined by Sections 1 through 9 of this document.\n\n   \"Licensor\" shall mean the copyright owner or entity authorized by\n   the copyright owner that is granting the License.\n\n   \"Legal Entity\" shall mean the union of the acting entity and all\n   other entities that control, are controlled by, or are under common\n   control with that entity. For the purposes of this definition,\n   \"control\" means (i) the power, direct or indirect, to cause the\n   dir"
+      },
+      {
+        "path": "plugins/cloudflare/skills/wrangler/LICENSE.txt",
+        "sha256": "4dd13869245e356246a5b770723247bbb80a8f07a181d1d3d873a1734297cdb9",
+        "excerpt": "Apache License\nVersion 2.0, January 2004\nhttp://www.apache.org/licenses/\n\nTERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n1. Definitions.\n\n   \"License\" shall mean the terms and conditions for use, reproduction,\n   and distribution as defined by Sections 1 through 9 of this document.\n\n   \"Licensor\" shall mean the copyright owner or entity authorized by\n   the copyright owner that is granting the License.\n\n   \"Legal Entity\" shall mean the union of the acting entity and all\n   other entities that control, are controlled by, or are under common\n   control with that entity. For the purposes of this definition,\n   \"control\" means (i) the power, direct or indirect, to cause the\n   dir"
+      },
+      {
+        "path": "plugins/expo/LICENSE",
+        "sha256": "49c5f9c7097c9a940ff663a54c27a4c60e379df6cc2b3052df0d37a09a85df93",
+        "excerpt": "The MIT License (MIT)\n\nCopyright (c) 2025-present 650 Industries, Inc. (aka Expo)\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF A"
+      },
+      {
+        "path": "plugins/figma/LICENSE.txt",
+        "sha256": "b2e18010fb8a4e1396bfca44ff7fdbd35bd528b4cb09abe9f666e7923cca6408",
+        "excerpt": "Use of these Figma skills and related files (\"Materials\") is governed by the Figma Developer Terms (available at https://www.figma.com/legal/developer-terms/). By accessing, downloading, or using these Materials — including through automated systems or AI agents — you agree to the Figma Developer Terms.\nThese Materials are currently offered as a Beta feature. Figma may modify, suspend, or discontinue them at any time without notice.\n"
+      },
+      {
+        "path": "plugins/mixpanel-headless/LICENSE",
+        "sha256": "e68b3689010d9df0664ae23d72078ca36e2df7df704e568bdb09f9b072a4bb9e",
+        "excerpt": "MIT License\n\nCopyright (c) 2025 Jared McFarland\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLU"
+      },
+      {
+        "path": "plugins/notion/skills/notion-knowledge-capture/LICENSE.txt",
+        "sha256": "0f377d9b2a1db642e4b0531ffa126e96d9bc6c085f8d9441f220fb25f723c6f8",
+        "excerpt": "Copyright 2025 Notion Labs, Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LI"
+      },
+      {
+        "path": "plugins/notion/skills/notion-meeting-intelligence/LICENSE.txt",
+        "sha256": "0f377d9b2a1db642e4b0531ffa126e96d9bc6c085f8d9441f220fb25f723c6f8",
+        "excerpt": "Copyright 2025 Notion Labs, Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LI"
+      },
+      {
+        "path": "plugins/notion/skills/notion-research-documentation/LICENSE.txt",
+        "sha256": "0f377d9b2a1db642e4b0531ffa126e96d9bc6c085f8d9441f220fb25f723c6f8",
+        "excerpt": "Copyright 2025 Notion Labs, Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LI"
+      },
+      {
+        "path": "plugins/notion/skills/notion-spec-to-implementation/LICENSE.txt",
+        "sha256": "0f377d9b2a1db642e4b0531ffa126e96d9bc6c085f8d9441f220fb25f723c6f8",
+        "excerpt": "Copyright 2025 Notion Labs, Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LI"
+      },
+      {
+        "path": "plugins/openai-developers/skills/build-chatgpt-app/LICENSE.txt",
+        "sha256": "a7f55b2cb68997f729e6199720d4d3cae47633aba0254a84b2d36ab284be9d45",
+        "excerpt": "Apache License\nVersion 2.0, January 2004\nhttp://www.apache.org/licenses/\n\nTERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n1. Definitions.\n\n   \"License\" shall mean the terms and conditions for use, reproduction,\n   and distribution as defined by Sections 1 through 9 of this document.\n\n   \"Licensor\" shall mean the copyright owner or entity authorized by\n   the copyright owner that is granting the License.\n\n   \"Legal Entity\" shall mean the union of the acting entity and all\n   other entities that control, are controlled by, or are under common\n   control with that entity. For the purposes of this definition,\n   \"control\" means (i) the power, direct or indirect, to cause the\n   dir"
+      },
+      {
+        "path": "plugins/openai-developers/skills/chatgpt-app-submission/LICENSE.txt",
+        "sha256": "a7f55b2cb68997f729e6199720d4d3cae47633aba0254a84b2d36ab284be9d45",
+        "excerpt": "Apache License\nVersion 2.0, January 2004\nhttp://www.apache.org/licenses/\n\nTERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n1. Definitions.\n\n   \"License\" shall mean the terms and conditions for use, reproduction,\n   and distribution as defined by Sections 1 through 9 of this document.\n\n   \"Licensor\" shall mean the copyright owner or entity authorized by\n   the copyright owner that is granting the License.\n\n   \"Legal Entity\" shall mean the union of the acting entity and all\n   other entities that control, are controlled by, or are under common\n   control with that entity. For the purposes of this definition,\n   \"control\" means (i) the power, direct or indirect, to cause the\n   dir"
+      },
+      {
+        "path": "plugins/posthog/skills/posthog/LICENSE.txt",
+        "sha256": "2690c4c87c1ee0753f87ee09a57e333ac66a464c6422fe22add037649ffb860e",
+        "excerpt": "MIT License\n\nCopyright (c) PostHog, Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BU"
+      },
+      {
+        "path": "plugins/public-equity-investing/skills/earnings-preview/LICENSE.txt",
+        "sha256": "10d31cfac9580486d77c1ff0d9fdc30e132a9bb9ad8d2c3c863bb8f2fb719d8e",
+        "excerpt": "Proprietary - Internal Use Only\n\nThis skill package (instructions, templates, and code) is provided for internal use.\nRedistribution outside your organization is not permitted without explicit permission.\n"
+      },
+      {
+        "path": "plugins/sentry/skills/sentry/LICENSE.txt",
+        "sha256": "4dd13869245e356246a5b770723247bbb80a8f07a181d1d3d873a1734297cdb9",
+        "excerpt": "Apache License\nVersion 2.0, January 2004\nhttp://www.apache.org/licenses/\n\nTERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n1. Definitions.\n\n   \"License\" shall mean the terms and conditions for use, reproduction,\n   and distribution as defined by Sections 1 through 9 of this document.\n\n   \"Licensor\" shall mean the copyright owner or entity authorized by\n   the copyright owner that is granting the License.\n\n   \"Legal Entity\" shall mean the union of the acting entity and all\n   other entities that control, are controlled by, or are under common\n   control with that entity. For the purposes of this definition,\n   \"control\" means (i) the power, direct or indirect, to cause the\n   dir"
+      },
+      {
+        "path": "plugins/supabase/LICENSE",
+        "sha256": "e6e972dba808fb9d80863fe90ca222a47710cb850f6e6e2af95cdc0d022f79bd",
+        "excerpt": "MIT License\n\nCopyright (c) 2025 Supabase\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BU"
+      },
+      {
+        "path": "plugins/superpowers/LICENSE",
+        "sha256": "a37e0e9697144819e1d965176ac4ae5bc3fa02d11e7812036bbcadf6dafe2400",
+        "excerpt": "MIT License\n\nCopyright (c) 2025 Jesse Vincent\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDI"
+      },
+      {
+        "path": "plugins/temporal/LICENSE",
+        "sha256": "9a7285d76bcfe865691b02e6a42deb9a6f86ce0a0d87a12b79fc6a996ba187a5",
+        "excerpt": "MIT License\n\nCopyright (c) 2026 Temporal Technologies Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMP"
+      },
+      {
+        "path": "plugins/test-android-apps/skills/android-emulator-qa/LICENSE.txt",
+        "sha256": "4dd13869245e356246a5b770723247bbb80a8f07a181d1d3d873a1734297cdb9",
+        "excerpt": "Apache License\nVersion 2.0, January 2004\nhttp://www.apache.org/licenses/\n\nTERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n1. Definitions.\n\n   \"License\" shall mean the terms and conditions for use, reproduction,\n   and distribution as defined by Sections 1 through 9 of this document.\n\n   \"Licensor\" shall mean the copyright owner or entity authorized by\n   the copyright owner that is granting the License.\n\n   \"Legal Entity\" shall mean the union of the acting entity and all\n   other entities that control, are controlled by, or are under common\n   control with that entity. For the purposes of this definition,\n   \"control\" means (i) the power, direct or indirect, to cause the\n   dir"
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  }
+]

@@ -1,0 +1,17 @@
+node_modules/
+corpus/
+.foundry/
+.venv/
+__pycache__/
+research/acquisition/raw/
+evals/runs/
+*.log
+.DS_Store
+web/artifacts/
+research/reference-swe/runs/
+research/product-demo/runs/
+research/reference-swe/*-console.txt
+research/reference-swe/security*.json
+research/reference-swe/preflight*.tap
+research/reference-swe/repository-*.txt
+*.tgz

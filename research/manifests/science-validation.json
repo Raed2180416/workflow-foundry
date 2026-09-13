@@ -1,0 +1,90 @@
+{
+  "checkedAt": "2026-09-13T11:23:25.727Z",
+  "scope": "source-artifact-structure-and-progressive-read-interface",
+  "repositoryRevisions": 19,
+  "sourceAnchors": 50,
+  "proposedCases": 36,
+  "verifiedSnapshots": 14,
+  "localLinks": 160,
+  "failures": [],
+  "deferred": [
+    {
+      "id": "skild-home",
+      "reason": "web-verified-no-local-bytes"
+    },
+    {
+      "id": "skild-blogs",
+      "reason": "web-verified-no-local-bytes"
+    },
+    {
+      "id": "skild-learning-by-watching",
+      "reason": "web-verified-no-local-bytes"
+    },
+    {
+      "id": "skild-s1",
+      "reason": "web-verified-no-local-bytes"
+    }
+  ],
+  "interfaceChecks": [
+    {
+      "domain": "science",
+      "reference": "SKILL.md",
+      "readable": true,
+      "sha256": "3af561496689b25fb52fc921cfa4e408acb7c9958d02fb49ee45736f1716c66f"
+    },
+    {
+      "domain": "science",
+      "reference": "references/source-map.md",
+      "readable": true,
+      "sha256": "c210d4fa3337e4aa90f5aaadf912fe97076e6f8a288567d92b6334169c9363d9"
+    },
+    {
+      "domain": "science",
+      "reference": "references/requirements.md",
+      "readable": true,
+      "sha256": "195763da99fd40febaea7e2e8f16ef970c9a7c75b16e794536e3d42ad372683e"
+    },
+    {
+      "domain": "robotics",
+      "reference": "SKILL.md",
+      "readable": true,
+      "sha256": "b63a3faaecdaed8de8c60dd47257bfe46c10f9b994976381314209facb55a7f5"
+    },
+    {
+      "domain": "robotics",
+      "reference": "references/source-map.md",
+      "readable": true,
+      "sha256": "d9550a5bd605674da2da9a21f46236177be54bcee153666ad274bac4c4137943"
+    },
+    {
+      "domain": "robotics",
+      "reference": "references/requirements.md",
+      "readable": true,
+      "sha256": "c853b319948e6f45420f33bfebacd44e5ddde3380b7b4d9978b53ad420ae3e02"
+    },
+    {
+      "domain": "healthcare",
+      "reference": "SKILL.md",
+      "readable": true,
+      "sha256": "2a2496b03ffa6dc0eecc615cb613ee0f230a151401e50dea0a7f84a0c6b59909"
+    },
+    {
+      "domain": "healthcare",
+      "reference": "references/source-map.md",
+      "readable": true,
+      "sha256": "2ba6084b6687741ea12247073ff9ef293935343165821fcd49e7b616173f90f2"
+    },
+    {
+      "domain": "healthcare",
+      "reference": "references/requirements.md",
+      "readable": true,
+      "sha256": "afc6beda0aa2a624f43b496cd124459e04ec5bdf49f0e4d784909b4a14f654af"
+    }
+  ],
+  "jsonCompanions": "36 cases rendered with all requirement, enforcement, falsifier, positive-control and tradeoff fields; JSON hashes verified",
+  "upstreamCodeExecuted": false,
+  "upstreamTestsRun": false,
+  "proposedCasesCountedAsRuntimePasses": 0,
+  "runtimeAuditReceipt": "research/manifests/control-runtime-audit.json",
+  "broaderCheckReceipt": "research/manifests/control-repository-checks.json"
+}

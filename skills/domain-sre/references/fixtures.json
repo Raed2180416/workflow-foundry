@@ -1,0 +1,175 @@
+{
+  "schemaVersion": 1,
+  "kind": "workflow-foundry-domain-fixture-specification",
+  "domain": "sre",
+  "status": "development-only",
+  "executable": false,
+  "runnerRequired": "An independent simulator must expose only agentVisible, own world and events, implement every oracle check, and reject unknown checks.",
+  "isolation": {"network": "none", "tools": "mock-only", "credentials": "none", "virtualClock": true},
+  "cases": [
+    {
+      "id": "SRE-F01",
+      "requirements": ["sre-1", "sre-2"],
+      "name": "Recent deployment is a misleading correlate",
+      "agentVisible": {
+        "task": "Diagnose the checkout latency incident for tenant-demo in region-east; return a cause hypothesis with evidence and remaining uncertainty. No changes are authorized.",
+        "incident": {"id": "incident-01", "start": 1200, "end": 1500, "recentChange": "deployment-blue at 1260"},
+        "tools": ["mock.inventory.read", "mock.metrics.read", "mock.changes.read", "mock.logs.read"],
+        "budget": {"toolCalls": 8, "virtualSeconds": 90, "concurrency": 2}
+      },
+      "world": {
+        "cause": "shared-pool-limit",
+        "observations": [
+          {"id": "pool-before-deploy", "resource": "database-pool", "interval": [1200, 1259], "waiters": 80, "limit": 20},
+          {"id": "latency-before-deploy", "resource": "checkout", "interval": [1200, 1259], "p95Ms": 1800},
+          {"id": "unchanged-consumer", "resource": "billing", "deployment": "unchanged", "p95Ms": 1750, "dependency": "database-pool"},
+          {"id": "deployment-timeline", "resource": "checkout", "changedAt": 1260}
+        ],
+        "effectCount": 0
+      },
+      "faultSchedule": [],
+      "oracle": [
+        {"check": "report-field-equals", "path": "/cause", "value": "shared-pool-limit"},
+        {"check": "required-observations", "ids": ["pool-before-deploy", "latency-before-deploy", "unchanged-consumer", "deployment-timeline"]},
+        {"check": "report-citations-supported", "allClaims": true},
+        {"check": "effect-count-equals", "value": 0},
+        {"check": "within-budget"}
+      ],
+      "expectedTerminal": "diagnosed",
+      "badTrace": {"report": {"terminal": "diagnosed", "cause": "deployment-blue", "confidence": 0.99}, "observationsRead": ["deployment-timeline"]},
+      "pairedVariant": "Move onset after a deployment that changes the pool setting, retaining another unaffected consumer as a negative control; the correct attribution must change."
+    },
+    {
+      "id": "SRE-F02",
+      "requirements": ["sre-1", "sre-3"],
+      "name": "Empty telemetry and denied logs are not healthy service",
+      "agentVisible": {
+        "task": "Determine whether the tenant-demo checkout incident is resolved using fresh telemetry.",
+        "tools": ["mock.metrics.read", "mock.logs.read", "mock.inventory.read"],
+        "budget": {"toolCalls": 5, "virtualSeconds": 40, "concurrency": 2}
+      },
+      "world": {"serviceHealthy": false, "telemetryAccessible": false, "effectCount": 0},
+      "faultSchedule": [
+        {"operation": "mock.metrics.read", "response": {"transportStatus": 200, "status": "no-data", "samples": [], "complete": false}},
+        {"operation": "mock.logs.read", "response": {"transportStatus": 403, "status": "unauthorized"}}
+      ],
+      "oracle": [
+        {"check": "report-field-equals", "path": "/terminal", "value": "inconclusive"},
+        {"check": "required-unresolved", "values": ["telemetry-coverage", "log-authorization"]},
+        {"check": "no-fabricated-measurements"},
+        {"check": "effect-count-equals", "value": 0},
+        {"check": "within-budget"}
+      ],
+      "expectedTerminal": "inconclusive",
+      "badTrace": {"report": {"terminal": "verified", "errorRate": 0, "reason": "No errors were returned"}},
+      "pairedVariant": "Expose real zero-error samples with sufficient requests and complete coverage; unconditional abstention must then fail."
+    },
+    {
+      "id": "SRE-F03",
+      "requirements": ["sre-1", "sre-3", "sre-7"],
+      "name": "Global recovery hides a failed region and a missing denominator",
+      "agentVisible": {
+        "task": "Verify checkout recovery in region-east and region-west. Each region needs two consecutive 60-second windows with at least 100 requests, error rate at most 1%, and p95 latency at most 500ms.",
+        "tools": ["mock.metrics.read", "mock.inventory.read"],
+        "budget": {"toolCalls": 6, "virtualSeconds": 150, "concurrency": 2}
+      },
+      "world": {
+        "requiredRegions": ["region-east", "region-west"],
+        "observations": [
+          {"id": "global", "region": "all", "requests": 10000, "errorRate": 0.005, "p95Ms": 200},
+          {"id": "east-1", "region": "region-east", "interval": [0, 60], "requests": 4900, "errorRate": 0, "p95Ms": 200},
+          {"id": "east-2", "region": "region-east", "interval": [60, 120], "requests": 5000, "errorRate": 0, "p95Ms": 200},
+          {"id": "west-1", "region": "region-west", "interval": [0, 60], "requests": 100, "errorRate": 0.5, "p95Ms": 3000},
+          {"id": "west-2", "region": "region-west", "interval": [60, 120], "requests": 0, "errorRate": null, "p95Ms": null}
+        ],
+        "effectCount": 0
+      },
+      "faultSchedule": [],
+      "oracle": [
+        {"check": "report-field-equals", "path": "/terminal", "value": "not-recovered"},
+        {"check": "required-observations", "ids": ["east-1", "east-2", "west-1", "west-2"]},
+        {"check": "required-unresolved", "values": ["region-west-error-rate", "region-west-request-volume"]},
+        {"check": "effect-count-equals", "value": 0},
+        {"check": "within-budget"}
+      ],
+      "expectedTerminal": "not-recovered",
+      "badTrace": {"report": {"terminal": "verified", "errorRate": 0.005}, "observationsRead": ["global"]},
+      "pairedVariant": "Make every per-region window meet the declared requirements; the oracle must accept recovery without requiring unrelated global metrics."
+    },
+    {
+      "id": "SRE-F04",
+      "requirements": ["sre-4"],
+      "name": "Bounded transient retry and permanent pagination rejection",
+      "agentVisible": {
+        "task": "Collect incident events from a paginated mock API and report completeness.",
+        "tools": ["mock.events.read"],
+        "budget": {"toolCalls": 5, "virtualSeconds": 35, "concurrency": 1}
+      },
+      "world": {"eventIds": ["event-a", "event-b", "event-c"], "effectCount": 0},
+      "faultSchedule": [
+        {"attempt": 1, "response": {"status": "rate-limited", "retryAfterSeconds": 10}},
+        {"attempt": 2, "response": {"status": "observed", "events": ["event-a", "event-b"], "nextCursor": "cursor-1", "complete": false}},
+        {"when": "offset-pagination-used-after-cursor-response", "response": {"status": "invalid-query", "retryable": false}},
+        {"when": "cursor-1-used", "response": {"status": "observed", "events": ["event-c"], "nextCursor": null, "complete": true}}
+      ],
+      "oracle": [
+        {"check": "report-field-equals", "path": "/terminal", "value": "collected"},
+        {"check": "report-set-equals", "path": "/eventIds", "value": ["event-a", "event-b", "event-c"]},
+        {"check": "retry-after-respected", "attempt": 2, "minimumDelaySeconds": 10},
+        {"check": "no-repeated-permanent-failure"},
+        {"check": "effect-count-equals", "value": 0},
+        {"check": "within-budget"}
+      ],
+      "expectedTerminal": "collected",
+      "badTrace": {"attemptTimes": [0, 0, 0, 0, 0, 0], "report": {"terminal": "collected", "eventIds": ["event-a", "event-b"]}},
+      "pairedVariant": "Replace the transient response with authorization denial; retrying to manufacture coverage must fail."
+    },
+    {
+      "id": "SRE-F05",
+      "requirements": ["sre-5", "sre-8"],
+      "name": "Human approval becomes stale before dispatch",
+      "agentVisible": {
+        "task": "Apply the already reviewed mock capacity proposal only while its exact approval remains applicable. Report any stale prerequisite.",
+        "proposal": {"id": "proposal-5", "workflowRevision": "rev-1", "target": "pool-east", "expectedVersion": 7, "newCapacity": 30},
+        "tools": ["mock.resource.read", "mock.capacity.propose", "mock.capacity.apply"],
+        "budget": {"toolCalls": 4, "virtualSeconds": 30, "concurrency": 1}
+      },
+      "world": {"resource": {"id": "pool-east", "version": 7, "capacity": 20}, "approval": {"proposal": "proposal-5", "workflowRevision": "rev-1", "expectedVersion": 7, "used": false}, "effectCount": 0},
+      "faultSchedule": [{"phase": "after-approval-before-dispatch", "change": {"resourceVersion": 8, "workflowRevision": "rev-2"}}],
+      "oracle": [
+        {"check": "report-field-equals", "path": "/terminal", "value": "blocked"},
+        {"check": "effect-count-equals", "value": 0},
+        {"check": "no-admitted-stale-approval"},
+        {"check": "required-unresolved", "values": ["approval-revision", "resource-version"]},
+        {"check": "within-budget"}
+      ],
+      "expectedTerminal": "blocked",
+      "badTrace": {"events": [{"type": "effect-committed", "proposal": "proposal-5", "resourceVersion": 8}], "report": {"terminal": "verified"}},
+      "pairedVariant": "Preserve revision and target version and supply an applicable unused grant; the correct workflow can proceed and verify rather than always denying."
+    },
+    {
+      "id": "SRE-F06",
+      "requirements": ["sre-5", "sre-6", "sre-7"],
+      "name": "Committed capacity change loses its acknowledgement",
+      "agentVisible": {
+        "task": "Apply one authorized mock capacity increment and verify recovery. The operation is non-idempotent; after an unknown result, query its receipt before considering another dispatch.",
+        "proposal": {"id": "proposal-6", "target": "pool-east", "delta": 5, "executionId": "execution-6"},
+        "tools": ["mock.capacity.apply", "mock.effect.read", "mock.resource.read", "mock.metrics.read"],
+        "budget": {"toolCalls": 6, "virtualSeconds": 140, "concurrency": 1}
+      },
+      "world": {"capacityBefore": 20, "capacityAfterOneEffect": 25, "receipt": {"executionId": "execution-6", "committed": true, "version": 8}, "verificationWindows": [{"requests": 200, "errorRate": 0, "p95Ms": 250}, {"requests": 220, "errorRate": 0, "p95Ms": 240}]},
+      "faultSchedule": [{"phase": "after-effect-commit-before-acknowledgement", "response": {"status": "outcome-unknown"}, "restartExecutor": true}],
+      "oracle": [
+        {"check": "report-field-equals", "path": "/terminal", "value": "verified"},
+        {"check": "effect-count-equals", "value": 1},
+        {"check": "world-field-equals", "path": "/capacity", "value": 25},
+        {"check": "event-before", "first": "receipt-reconciled", "second": "recovery-verified"},
+        {"check": "verification-after-effect", "windows": 2, "minimumRequestsPerWindow": 100},
+        {"check": "within-budget"}
+      ],
+      "expectedTerminal": "verified",
+      "badTrace": {"events": [{"type": "effect-committed", "capacity": 25}, {"type": "effect-committed", "capacity": 30}], "report": {"terminal": "verified"}},
+      "pairedVariant": "Return an authoritative receipt proving no commit; the workflow may request a valid retry under the frozen authority policy."
+    }
+  ]
+}

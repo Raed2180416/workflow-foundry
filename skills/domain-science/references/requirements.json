@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "domain": "science",
+  "status": "proposed-contract-cases-not-runtime-verification",
+  "fixturePolicy": "Synthetic identifiers and computational data only; no laboratory procedures or physical actions.",
+  "sourceMap": "source-map.md",
+  "cases": [
+    {
+      "id": "science-001",
+      "requirement": "Every required metric is present, finite, unit-compatible and associated with the current evaluation revision before a candidate passes.",
+      "evidence": ["SCI-B1"],
+      "enforcement": "Deterministic artifact validator before a claim or promotion node.",
+      "falsifier": {"given": {"required": ["metric_a", "metric_b"], "scores": {"metric_a": 1}, "criterionRevision": "r1"}, "when": "Evaluate required evidence.", "must": "Return incomplete for missing metric_b, never pass."},
+      "positiveControl": "Both required metrics, compatible units and r1 criteria yield pass only when both predicates pass.",
+      "tradeoff": "Stricter gates increase explicit pending states and may require additional measurements."
+    },
+    {
+      "id": "science-002",
+      "requirement": "A consuming node verifies content identity, producer and input lineage for every required artifact.",
+      "evidence": ["SCI-B1", "SCI-R1"],
+      "enforcement": "Artifact store and node admission.",
+      "falsifier": {"given": {"recordedHash": "hash-a", "currentHash": "hash-b", "path": "results/table.csv"}, "when": "Consume the artifact at its unchanged path.", "must": "Reject stale evidence and invalidate dependent results."},
+      "positiveControl": "Matching content hash and producer/input revisions permit consumption.",
+      "tradeoff": "Hashing and lineage storage add I/O; hashes establish identity rather than truth."
+    },
+    {
+      "id": "science-003",
+      "requirement": "A parallel join requires the declared branch set and artifacts, not a success ratio or majority vote.",
+      "evidence": ["SCI-R1", "SCI-R2"],
+      "enforcement": "Join scheduler and artifact reconciliation.",
+      "falsifier": {"given": {"requiredBranches": ["a", "b", "c"], "remoteSuccess": ["a", "b", "c"], "downloadedArtifacts": ["a", "b"]}, "when": "Enter the consensus node.", "must": "Remain incomplete because branch c lacks its required artifact."},
+      "positiveControl": "All declared branch outputs present and verified permit the join.",
+      "tradeoff": "Tail latency becomes visible; partial analysis must be an explicitly different contract."
+    },
+    {
+      "id": "science-004",
+      "requirement": "Record durable intent before external effects and record failures even when the tool throws.",
+      "evidence": ["SCI-L3"],
+      "enforcement": "Effect adapter and protected journal.",
+      "falsifier": {"given": {"adapter": "fake", "toolBehavior": "accept-then-throw"}, "when": "Dispatch one permitted synthetic operation.", "must": "Retain its intent and unknown-effect/failure evidence; do not report clean success or retry blindly."},
+      "positiveControl": "A fake operation with confirmed outcome produces intent, acceptance and completion records.",
+      "tradeoff": "Durable writes add latency and require reconciliation after crashes."
+    },
+    {
+      "id": "science-005",
+      "requirement": "An unavailable authoritative journal blocks new external effects and cannot be repaired by a success claim from the executor.",
+      "evidence": ["SCI-L2", "SCI-L3"],
+      "enforcement": "Admission boundary outside the agent-writable workspace.",
+      "falsifier": {"given": {"journalWritable": false, "toolWouldReturn": "success"}, "when": "Request a new external effect.", "must": "Block before invoking the fake tool."},
+      "positiveControl": "A durable independent journal accepts the intent and permits the authorized fake operation.",
+      "tradeoff": "Availability decreases when evidence cannot be persisted; this is intentional for this profile."
+    },
+    {
+      "id": "science-006",
+      "requirement": "Validate nested types, finite values, units and configured bounds; unresolvable schemas are not permission to skip validation.",
+      "evidence": ["SCI-L4"],
+      "enforcement": "Trusted adapter schema validator.",
+      "falsifier": {"given": {"schema": "array of finite synthetic scalar readings", "value": [1, "untyped"]}, "when": "Validate a fake instrument input.", "must": "Reject the nested invalid value before invocation."},
+      "positiveControl": "A finite, correctly typed and unit-compatible array passes the same schema.",
+      "tradeoff": "Adapters need domain schemas; automatic type-hint inference alone is insufficient."
+    },
+    {
+      "id": "science-007",
+      "requirement": "Workflow, tool-schema and input revisions bind approvals; a change invalidates affected approvals and evidence.",
+      "evidence": ["SCI-L1", "SCI-B1"],
+      "enforcement": "Proposal store, admission validator and capability broker.",
+      "falsifier": {"given": {"approvedWorkflow": "r1", "currentWorkflow": "r2", "change": "tool-schema"}, "when": "Resume an approved node using the old approval.", "must": "Block until the new revision receives the required authorization and checks."},
+      "positiveControl": "An unchanged revision with valid approval and fresh state can proceed.",
+      "tradeoff": "Revalidation costs increase with the number of affected dependencies."
+    },
+    {
+      "id": "science-008",
+      "requirement": "An await timeout cannot be treated as proof that a synchronous worker or external effect has stopped.",
+      "evidence": ["SCI-A1", "SCI-R1"],
+      "enforcement": "Execution supervisor and adapter reconciliation.",
+      "falsifier": {"given": {"fakeWorker": "continues-after-await-timeout", "accepted": true}, "when": "The node deadline expires.", "must": "Mark the effect unknown and reconcile it before any retry or conflicting operation."},
+      "positiveControl": "A confirmed cancelled pure computation may be retried within budget.",
+      "tradeoff": "Effectful adapters need status queries or acknowledged cancellation."
+    },
+    {
+      "id": "science-009",
+      "requirement": "Notebook re-execution cannot replay an external effect; error outputs are checked independently of process exit.",
+      "evidence": ["SCI-F1"],
+      "enforcement": "Notebook sandbox and effect routing policy.",
+      "falsifier": {"given": {"cells": ["pure-transform", "fake-external-write"], "editTriggersFullRerun": true}, "when": "Edit a later cell.", "must": "Reject or isolate the external-write cell; never duplicate the effect through notebook replay."},
+      "positiveControl": "A pure synthetic transformation reruns reproducibly and produces checked artifacts.",
+      "tradeoff": "Convenient stateful notebooks need restructuring at effect boundaries."
+    },
+    {
+      "id": "science-010",
+      "requirement": "A required execution budget remains enforced when a backend rejects resource limits.",
+      "evidence": ["SCI-L2"],
+      "enforcement": "Sandbox admission and global budget accounting.",
+      "falsifier": {"given": {"strictResourceProfile": true, "backendRejectsLimits": true}, "when": "Create the fake execution environment.", "must": "Fail admission rather than retry without limits."},
+      "positiveControl": "A backend that attests the requested limits permits a bounded computation.",
+      "tradeoff": "Some environments become unsupported instead of silently weaker."
+    },
+    {
+      "id": "science-011",
+      "requirement": "A simulation or benchmark episode cannot grant physical capabilities or establish a physical outcome.",
+      "evidence": ["SCI-F1", "SCI-D1", "SCI-E1", "SCI-P1"],
+      "enforcement": "Capability broker, environment binding and result classification.",
+      "falsifier": {"given": {"mode": "simulation", "episodeDone": true, "requestedCapability": "physical-adapter"}, "when": "Promote the generated workflow.", "must": "Require separate authorized deployment evidence; keep the prior result simulation-only."},
+      "positiveControl": "A simulation remains executable against its fake adapter without physical permissions.",
+      "tradeoff": "Deployment needs a distinct adapter conformance and safety process."
+    },
+    {
+      "id": "science-012",
+      "requirement": "Failure, truncation and answer submission remain distinct from satisfying a scientific postcondition.",
+      "evidence": ["SCI-F1", "SCI-D1"],
+      "enforcement": "Terminal-state reducer and result evaluator.",
+      "falsifier": {"given": {"done": true, "reason": "exception", "postconditionVerified": false}, "when": "Aggregate the run outcome.", "must": "Report failure, not successful scientific completion."},
+      "positiveControl": "A successful execution with independently verified required evidence may satisfy its stated computational claim.",
+      "tradeoff": "Metrics need more outcome categories than a single completion boolean."
+    }
+  ]
+}

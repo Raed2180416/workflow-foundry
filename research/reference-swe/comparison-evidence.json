@@ -1,0 +1,760 @@
+{
+  "resultHash": "3a95f8dd0f72dd445a07287a07ead1f3534a0b67ac9d0646fa1098a888675f02",
+  "manifestHash": "415eb4c70526177350376b3d4e524e2ac0eb83cbc8de09983828f37a07f2a96e",
+  "freezeHash": "c75fd408ee29093f1ef772ba3b668a1e08855a0417480ae2715ff4630a3bc85d",
+  "badHashes": [],
+  "receipts": [
+    {
+      "path": "bucket-foundry/call-1/response.json",
+      "evidence": {
+        "provider": "opencode-free-isolated",
+        "model": "opencode/ling-3.0-flash-fin-free",
+        "transport": "noninteractive-json-events",
+        "binary": "/usr/bin/opencode",
+        "binarySHA256": "cbe7cd781d4987e7224709a9ff6367b0c28b38bbbed05b40a1d434c33a9278a0",
+        "version": "1.18.29",
+        "sessionId": "ses_f655c3eaeffeBxSFayyewdvEOg",
+        "reportedCost": 0,
+        "tokens": {
+          "input": 54,
+          "output": 90,
+          "reasoning": 222,
+          "cache": {
+            "read": 2240,
+            "write": 0
+          }
+        },
+        "modelRecord": {
+          "id": "opencode/ling-3.0-flash-fin-free",
+          "metadata": {
+            "id": "ling-3.0-flash-fin-free",
+            "providerID": "opencode",
+            "name": "Ling 3.0 Flash Fin Free",
+            "family": "ling",
+            "api": {
+              "id": "ling-3.0-flash-fin-free",
+              "url": "https://opencode.ai/zen/v1",
+              "npm": "@ai-sdk/openai-compatible"
+            },
+            "status": "active",
+            "headers": {},
+            "options": {},
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cache": {
+                "read": 0,
+                "write": 0
+              }
+            },
+            "limit": {
+              "context": 262144,
+              "output": 32768
+            },
+            "capabilities": {
+              "temperature": true,
+              "reasoning": true,
+              "attachment": false,
+              "toolcall": true,
+              "input": {
+                "text": true,
+                "audio": false,
+                "image": false,
+                "video": false,
+                "pdf": false
+              },
+              "output": {
+                "text": true,
+                "audio": false,
+                "image": false,
+                "video": false,
+                "pdf": false
+              },
+              "interleaved": false
+            },
+            "release_date": "2026-08-27",
+            "variants": {
+              "low": {
+                "reasoningEffort": "low"
+              },
+              "medium": {
+                "reasoningEffort": "medium"
+              },
+              "high": {
+                "reasoningEffort": "high"
+              }
+            }
+          }
+        },
+        "promptSHA256": "d496d22a0ac1b83ad10d27dd4dd3601f349b56fb086be2604dcf0c028d560064",
+        "rawOutputSHA256": "95e8218be0c4a3243d3eb9c11e900174cf6fc0233d3381a090b810d076aa44fc",
+        "outputSHA256": "bc4b6c43eed08e35b57ef96d9c3926f322458e1b9826ea8a3a4dca4e1f89f8bb",
+        "elapsedMs": 6574,
+        "isolation": "empty host-home view, fresh XDG state, read-only task mount, no credential env, no model tools; host network for free provider",
+        "evaluationMode": "product-bridge-smoke; not TUI comparative evidence"
+      },
+      "exportVerified": true,
+      "exportSessionId": "ses_f655c3eaeffeBxSFayyewdvEOg"
+    },
+    {
+      "path": "bucket-reference/call-1/response.json",
+      "evidence": {
+        "provider": "opencode-free-isolated",
+        "model": "opencode/ling-3.0-flash-fin-free",
+        "transport": "noninteractive-json-events",
+        "binary": "/usr/bin/opencode",
+        "binarySHA256": "cbe7cd781d4987e7224709a9ff6367b0c28b38bbbed05b40a1d434c33a9278a0",
+        "version": "1.18.29",
+        "sessionId": "ses_f655d86e7ffe1hM7VLD8sgJBKR",
+        "reportedCost": 0,
+        "tokens": {
+          "input": 374,
+          "output": 54,
+          "reasoning": 84,
+          "cache": {
+            "read": 1920,
+            "write": 0
+          }
+        },
+        "modelRecord": {
+          "id": "opencode/ling-3.0-flash-fin-free",
+          "metadata": {
+            "id": "ling-3.0-flash-fin-free",
+            "providerID": "opencode",
+            "name": "Ling 3.0 Flash Fin Free",
+            "family": "ling",
+            "api": {
+              "id": "ling-3.0-flash-fin-free",
+              "url": "https://opencode.ai/zen/v1",
+              "npm": "@ai-sdk/openai-compatible"
+            },
+            "status": "active",
+            "headers": {},
+            "options": {},
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cache": {
+                "read": 0,
+                "write": 0
+              }
+            },
+            "limit": {
+              "context": 262144,
+              "output": 32768
+            },
+            "capabilities": {
+              "temperature": true,
+              "reasoning": true,
+              "attachment": false,
+              "toolcall": true,
+              "input": {
+                "text": true,
+                "audio": false,
+                "image": false,
+                "video": false,
+                "pdf": false
+              },
+              "output": {
+                "text": true,
+                "audio": false,
+                "image": false,
+                "video": false,
+                "pdf": false
+              },
+              "interleaved": false
+            },
+            "release_date": "2026-08-27",
+            "variants": {
+              "low": {
+                "reasoningEffort": "low"
+              },
+              "medium": {
+                "reasoningEffort": "medium"
+              },
+              "high": {
+                "reasoningEffort": "high"
+              }
+            }
+          }
+        },
+        "promptSHA256": "d496d22a0ac1b83ad10d27dd4dd3601f349b56fb086be2604dcf0c028d560064",
+        "rawOutputSHA256": "859275b5507707296bcb5b807ad23c94f4f25f5a56810c61dc4f84565aaf57d5",
+        "outputSHA256": "9428b2e7fbe3721b1a6b4669c745fc22b1a32e3ea1f265886340b4d06b12331f",
+        "elapsedMs": 3572,
+        "isolation": "empty host-home view, fresh XDG state, read-only task mount, no credential env, no model tools; host network for free provider",
+        "evaluationMode": "product-bridge-smoke; not TUI comparative evidence"
+      },
+      "exportVerified": true,
+      "exportSessionId": "ses_f655d86e7ffe1hM7VLD8sgJBKR"
+    },
+    {
+      "path": "foundry/.foundry/generation/1a812965-1a81-4d80-8c13-a0b387064148/01/response.json",
+      "evidence": {
+        "provider": "opencode-free-isolated",
+        "model": "opencode/ling-3.0-flash-fin-free",
+        "transport": "noninteractive-json-events",
+        "binary": "/usr/bin/opencode",
+        "binarySHA256": "cbe7cd781d4987e7224709a9ff6367b0c28b38bbbed05b40a1d434c33a9278a0",
+        "version": "1.18.29",
+        "sessionId": "ses_f655e57cfffe6b9L3b059Hu7cG",
+        "reportedCost": 0,
+        "tokens": {
+          "input": 6935,
+          "output": 890,
+          "reasoning": 2805,
+          "cache": {
+            "read": 1856,
+            "write": 0
+          }
+        },
+        "modelRecord": {
+          "id": "opencode/ling-3.0-flash-fin-free",
+          "metadata": {
+            "id": "ling-3.0-flash-fin-free",
+            "providerID": "opencode",
+            "name": "Ling 3.0 Flash Fin Free",
+            "family": "ling",
+            "api": {
+              "id": "ling-3.0-flash-fin-free",
+              "url": "https://opencode.ai/zen/v1",
+              "npm": "@ai-sdk/openai-compatible"
+            },
+            "status": "active",
+            "headers": {},
+            "options": {},
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cache": {
+                "read": 0,
+                "write": 0
+              }
+            },
+            "limit": {
+              "context": 262144,
+              "output": 32768
+            },
+            "capabilities": {
+              "temperature": true,
+              "reasoning": true,
+              "attachment": false,
+              "toolcall": true,
+              "input": {
+                "text": true,
+                "audio": false,
+                "image": false,
+                "video": false,
+                "pdf": false
+              },
+              "output": {
+                "text": true,
+                "audio": false,
+                "image": false,
+                "video": false,
+                "pdf": false
+              },
+              "interleaved": false
+            },
+            "release_date": "2026-08-27",
+            "variants": {
+              "low": {
+                "reasoningEffort": "low"
+              },
+              "medium": {
+                "reasoningEffort": "medium"
+              },
+              "high": {
+                "reasoningEffort": "high"
+              }
+            }
+          }
+        },
+        "promptSHA256": "74f394680766a616b67bd7afa974a614d4e338aa4b6c08edd8a8f1c758e82524",
+        "rawOutputSHA256": "00e94896525a0396d0ded02e1b25b0dc2a3e58884be1309955f34d0b1fc37960",
+        "outputSHA256": "03eda9224513b57e6e2ce793486bc800909f8209225ea2f9db7469ca41dfda5c",
+        "elapsedMs": 50001,
+        "isolation": "empty host-home view, fresh XDG state, read-only task mount, no credential env, no model tools; host network for free provider",
+        "evaluationMode": "product-bridge-smoke; not TUI comparative evidence"
+      },
+      "exportVerified": true,
+      "exportSessionId": "ses_f655e57cfffe6b9L3b059Hu7cG"
+    },
+    {
+      "path": "last-occurrence-foundry/call-1/response.json",
+      "evidence": {
+        "provider": "opencode-free-isolated",
+        "model": "opencode/ling-3.0-flash-fin-free",
+        "transport": "noninteractive-json-events",
+        "binary": "/usr/bin/opencode",
+        "binarySHA256": "cbe7cd781d4987e7224709a9ff6367b0c28b38bbbed05b40a1d434c33a9278a0",
+        "version": "1.18.29",
+        "sessionId": "ses_f655c1a0dffeg07QARwVgpNhdt",
+        "reportedCost": 0,
+        "tokens": {
+          "input": 395,
+          "output": 101,
+          "reasoning": 336,
+          "cache": {
+            "read": 1920,
+            "write": 0
+          }
+        },
+        "modelRecord": {
+          "id": "opencode/ling-3.0-flash-fin-free",
+          "metadata": {
+            "id": "ling-3.0-flash-fin-free",
+            "providerID": "opencode",
+            "name": "Ling 3.0 Flash Fin Free",
+            "family": "ling",
+            "api": {
+              "id": "ling-3.0-flash-fin-free",
+              "url": "https://opencode.ai/zen/v1",
+              "npm": "@ai-sdk/openai-compatible"
+            },
+            "status": "active",
+            "headers": {},
+            "options": {},
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cache": {
+                "read": 0,
+                "write": 0
+              }
+            },
+            "limit": {
+              "context": 262144,
+              "output": 32768
+            },
+            "capabilities": {
+              "temperature": true,
+              "reasoning": true,
+              "attachment": false,
+              "toolcall": true,
+              "input": {
+                "text": true,
+                "audio": false,
+                "image": false,
+                "video": false,
+                "pdf": false
+              },
+              "output": {
+                "text": true,
+                "audio": false,
+                "image": false,
+                "video": false,
+                "pdf": false
+              },
+              "interleaved": false
+            },
+            "release_date": "2026-08-27",
+            "variants": {
+              "low": {
+                "reasoningEffort": "low"
+              },
+              "medium": {
+                "reasoningEffort": "medium"
+              },
+              "high": {
+                "reasoningEffort": "high"
+              }
+            }
+          }
+        },
+        "promptSHA256": "4e1f844716a4a2eabbe3ecb2857bafbe16971a39830a28e9184ea54688ef7d1b",
+        "rawOutputSHA256": "7dfaac20ede63ef62778c3c7b1121382874b1233d3df7f4f7b4f86f99d84c60a",
+        "outputSHA256": "9ca61290e572d757701a4f083a38d9fa061e04d8f9482669c49f05eedae73ca6",
+        "elapsedMs": 21087,
+        "isolation": "empty host-home view, fresh XDG state, read-only task mount, no credential env, no model tools; host network for free provider",
+        "evaluationMode": "product-bridge-smoke; not TUI comparative evidence"
+      },
+      "exportVerified": true,
+      "exportSessionId": "ses_f655c1a0dffeg07QARwVgpNhdt"
+    },
+    {
+      "path": "last-occurrence-reference/call-1/response.json",
+      "evidence": {
+        "provider": "opencode-free-isolated",
+        "model": "opencode/ling-3.0-flash-fin-free",
+        "transport": "noninteractive-json-events",
+        "binary": "/usr/bin/opencode",
+        "binarySHA256": "cbe7cd781d4987e7224709a9ff6367b0c28b38bbbed05b40a1d434c33a9278a0",
+        "version": "1.18.29",
+        "sessionId": "ses_f655bbc62ffeXLN6CcN2vcsv2R",
+        "reportedCost": 0,
+        "tokens": {
+          "input": 11,
+          "output": 130,
+          "reasoning": 344,
+          "cache": {
+            "read": 2304,
+            "write": 0
+          }
+        },
+        "modelRecord": {
+          "id": "opencode/ling-3.0-flash-fin-free",
+          "metadata": {
+            "id": "ling-3.0-flash-fin-free",
+            "providerID": "opencode",
+            "name": "Ling 3.0 Flash Fin Free",
+            "family": "ling",
+            "api": {
+              "id": "ling-3.0-flash-fin-free",
+              "url": "https://opencode.ai/zen/v1",
+              "npm": "@ai-sdk/openai-compatible"
+            },
+            "status": "active",
+            "headers": {},
+            "options": {},
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cache": {
+                "read": 0,
+                "write": 0
+              }
+            },
+            "limit": {
+              "context": 262144,
+              "output": 32768
+            },
+            "capabilities": {
+              "temperature": true,
+              "reasoning": true,
+              "attachment": false,
+              "toolcall": true,
+              "input": {
+                "text": true,
+                "audio": false,
+                "image": false,
+                "video": false,
+                "pdf": false
+              },
+              "output": {
+                "text": true,
+                "audio": false,
+                "image": false,
+                "video": false,
+                "pdf": false
+              },
+              "interleaved": false
+            },
+            "release_date": "2026-08-27",
+            "variants": {
+              "low": {
+                "reasoningEffort": "low"
+              },
+              "medium": {
+                "reasoningEffort": "medium"
+              },
+              "high": {
+                "reasoningEffort": "high"
+              }
+            }
+          }
+        },
+        "promptSHA256": "4e1f844716a4a2eabbe3ecb2857bafbe16971a39830a28e9184ea54688ef7d1b",
+        "rawOutputSHA256": "0c07d63086a5bd5c3f0cd9d21bb49e6e919e1dc8175dd8e1ebac881bbd3d7be6",
+        "outputSHA256": "f68b65050e5a2c717487c86934899b889bb95708bc2323aac54df985b2d04063",
+        "elapsedMs": 4295,
+        "isolation": "empty host-home view, fresh XDG state, read-only task mount, no credential env, no model tools; host network for free provider",
+        "evaluationMode": "product-bridge-smoke; not TUI comparative evidence"
+      },
+      "exportVerified": true,
+      "exportSessionId": "ses_f655bbc62ffeXLN6CcN2vcsv2R"
+    },
+    {
+      "path": "last-occurrence-reference/call-2/response.json",
+      "evidence": {
+        "provider": "opencode-free-isolated",
+        "model": "opencode/ling-3.0-flash-fin-free",
+        "transport": "noninteractive-json-events",
+        "binary": "/usr/bin/opencode",
+        "binarySHA256": "cbe7cd781d4987e7224709a9ff6367b0c28b38bbbed05b40a1d434c33a9278a0",
+        "version": "1.18.29",
+        "sessionId": "ses_f655ba104ffeIzHnJNY3iXN6xI",
+        "reportedCost": 0,
+        "tokens": {
+          "input": 104,
+          "output": 38,
+          "reasoning": 220,
+          "cache": {
+            "read": 2304,
+            "write": 0
+          }
+        },
+        "modelRecord": {
+          "id": "opencode/ling-3.0-flash-fin-free",
+          "metadata": {
+            "id": "ling-3.0-flash-fin-free",
+            "providerID": "opencode",
+            "name": "Ling 3.0 Flash Fin Free",
+            "family": "ling",
+            "api": {
+              "id": "ling-3.0-flash-fin-free",
+              "url": "https://opencode.ai/zen/v1",
+              "npm": "@ai-sdk/openai-compatible"
+            },
+            "status": "active",
+            "headers": {},
+            "options": {},
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cache": {
+                "read": 0,
+                "write": 0
+              }
+            },
+            "limit": {
+              "context": 262144,
+              "output": 32768
+            },
+            "capabilities": {
+              "temperature": true,
+              "reasoning": true,
+              "attachment": false,
+              "toolcall": true,
+              "input": {
+                "text": true,
+                "audio": false,
+                "image": false,
+                "video": false,
+                "pdf": false
+              },
+              "output": {
+                "text": true,
+                "audio": false,
+                "image": false,
+                "video": false,
+                "pdf": false
+              },
+              "interleaved": false
+            },
+            "release_date": "2026-08-27",
+            "variants": {
+              "low": {
+                "reasoningEffort": "low"
+              },
+              "medium": {
+                "reasoningEffort": "medium"
+              },
+              "high": {
+                "reasoningEffort": "high"
+              }
+            }
+          }
+        },
+        "promptSHA256": "f549f4dd4d75eaa6750ec59e298e9297ae752c19cd41cc353b955df4f38954a8",
+        "rawOutputSHA256": "168ec4088efc05848b75721c7abfac4c4ce27b62d509207c8381e7824975ac7f",
+        "outputSHA256": "12ef5d31bdb895221b1fc2a186a213cf73c0d8d63bb43cf33fd3307c7c56295e",
+        "elapsedMs": 3966,
+        "isolation": "empty host-home view, fresh XDG state, read-only task mount, no credential env, no model tools; host network for free provider",
+        "evaluationMode": "product-bridge-smoke; not TUI comparative evidence"
+      },
+      "exportVerified": true,
+      "exportSessionId": "ses_f655ba104ffeIzHnJNY3iXN6xI"
+    },
+    {
+      "path": "last-occurrence-reference/call-3/response.json",
+      "evidence": {
+        "provider": "opencode-free-isolated",
+        "model": "opencode/ling-3.0-flash-fin-free",
+        "transport": "noninteractive-json-events",
+        "binary": "/usr/bin/opencode",
+        "binarySHA256": "cbe7cd781d4987e7224709a9ff6367b0c28b38bbbed05b40a1d434c33a9278a0",
+        "version": "1.18.29",
+        "sessionId": "ses_f655b86b8ffeAXqeiR5tDCppPk",
+        "reportedCost": 0,
+        "tokens": {
+          "input": 128,
+          "output": 2,
+          "reasoning": 34,
+          "cache": {
+            "read": 2368,
+            "write": 0
+          }
+        },
+        "modelRecord": {
+          "id": "opencode/ling-3.0-flash-fin-free",
+          "metadata": {
+            "id": "ling-3.0-flash-fin-free",
+            "providerID": "opencode",
+            "name": "Ling 3.0 Flash Fin Free",
+            "family": "ling",
+            "api": {
+              "id": "ling-3.0-flash-fin-free",
+              "url": "https://opencode.ai/zen/v1",
+              "npm": "@ai-sdk/openai-compatible"
+            },
+            "status": "active",
+            "headers": {},
+            "options": {},
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cache": {
+                "read": 0,
+                "write": 0
+              }
+            },
+            "limit": {
+              "context": 262144,
+              "output": 32768
+            },
+            "capabilities": {
+              "temperature": true,
+              "reasoning": true,
+              "attachment": false,
+              "toolcall": true,
+              "input": {
+                "text": true,
+                "audio": false,
+                "image": false,
+                "video": false,
+                "pdf": false
+              },
+              "output": {
+                "text": true,
+                "audio": false,
+                "image": false,
+                "video": false,
+                "pdf": false
+              },
+              "interleaved": false
+            },
+            "release_date": "2026-08-27",
+            "variants": {
+              "low": {
+                "reasoningEffort": "low"
+              },
+              "medium": {
+                "reasoningEffort": "medium"
+              },
+              "high": {
+                "reasoningEffort": "high"
+              }
+            }
+          }
+        },
+        "promptSHA256": "23a7bc9f7b0de535086beb5eadfb06a69cd4ecdba5fc28fc9a8cad15f186cf5d",
+        "rawOutputSHA256": "079f0e9785ed42361ec1dec8459af7a494f7019b172dac89a4306553cea9cdb1",
+        "outputSHA256": "c941b02d0d5eba4c97756ab739880de400e5dc418644b3ebdc14ca20e2aa1884",
+        "elapsedMs": 21143,
+        "isolation": "empty host-home view, fresh XDG state, read-only task mount, no credential env, no model tools; host network for free provider",
+        "evaluationMode": "product-bridge-smoke; not TUI comparative evidence"
+      },
+      "exportVerified": true,
+      "exportSessionId": "ses_f655b86b8ffeAXqeiR5tDCppPk"
+    }
+  ],
+  "rows": [
+    {
+      "task": "bucket",
+      "arm": "reference",
+      "calls": 2,
+      "operations": 1,
+      "submitted": false,
+      "hiddenPassed": false,
+      "passedCases": 23,
+      "totalCases": 70,
+      "success": false,
+      "runtimeStatus": "/usr/bin/bwrap exited with 1",
+      "candidateHash": "81251512b5831e0182f62f90b3eeaeedaef4ad0e8f90ac7ac54f05021d3606f2",
+      "artifactsComplete": false,
+      "comparisonEligible": false,
+      "modelGenerationMs": 3572,
+      "approximateWallMs": 84479.04833984375,
+      "observedReportedCost": 0
+    },
+    {
+      "task": "bucket",
+      "arm": "foundry",
+      "calls": 1,
+      "operations": 0,
+      "submitted": false,
+      "hiddenPassed": false,
+      "passedCases": 23,
+      "totalCases": 70,
+      "success": false,
+      "runtimeStatus": "uncertain",
+      "candidateHash": "81251512b5831e0182f62f90b3eeaeedaef4ad0e8f90ac7ac54f05021d3606f2",
+      "artifactsComplete": true,
+      "comparisonEligible": false,
+      "modelGenerationMs": 6574,
+      "approximateWallMs": 9296.715087890625,
+      "observedReportedCost": 0
+    },
+    {
+      "task": "last-occurrence",
+      "arm": "foundry",
+      "calls": 1,
+      "operations": 0,
+      "submitted": false,
+      "hiddenPassed": false,
+      "passedCases": 16,
+      "totalCases": 60,
+      "success": false,
+      "runtimeStatus": "uncertain",
+      "candidateHash": "67fd465427df8532b2f1c6995b50e8a82825b9626e14359c32b4e0a43a4bb247",
+      "artifactsComplete": true,
+      "comparisonEligible": false,
+      "modelGenerationMs": 21087,
+      "approximateWallMs": 23754.009765625,
+      "observedReportedCost": 0
+    },
+    {
+      "task": "last-occurrence",
+      "arm": "reference",
+      "calls": 3,
+      "operations": 3,
+      "submitted": true,
+      "hiddenPassed": true,
+      "passedCases": 60,
+      "totalCases": 60,
+      "success": true,
+      "runtimeStatus": "Submitted",
+      "candidateHash": "49a07750c55aedf1073b477ab7c43a37a7b9ec5d51c502bed0b8e2d37ab2685a",
+      "artifactsComplete": true,
+      "comparisonEligible": false,
+      "modelGenerationMs": 29404,
+      "approximateWallMs": 38226.20849609375,
+      "observedReportedCost": 0
+    }
+  ],
+  "promptPairs": {
+    "bucket": {
+      "reference": "d496d22a0ac1b83ad10d27dd4dd3601f349b56fb086be2604dcf0c028d560064",
+      "foundry": "d496d22a0ac1b83ad10d27dd4dd3601f349b56fb086be2604dcf0c028d560064",
+      "identical": true
+    },
+    "last-occurrence": {
+      "foundry": "4e1f844716a4a2eabbe3ecb2857bafbe16971a39830a28e9184ea54688ef7d1b",
+      "reference": "4e1f844716a4a2eabbe3ecb2857bafbe16971a39830a28e9184ea54688ef7d1b",
+      "identical": true
+    }
+  },
+  "taskLeakChecks": [
+    {
+      "task": "bucket",
+      "functionNameAbsent": true,
+      "solutionCasesAbsent": true
+    },
+    {
+      "task": "last-occurrence",
+      "functionNameAbsent": true,
+      "solutionCasesAbsent": true
+    }
+  ],
+  "sourceDrift": [
+    "src/evaluation.mjs",
+    "skills/domain-healthcare/SKILL.md",
+    "skills/domain-robotics/SKILL.md",
+    "skills/domain-science/SKILL.md",
+    "skills/runtime-native/SKILL.md"
+  ],
+  "completedModelCalls": 7,
+  "architectureCalls": 1,
+  "generationCostSum": 0
+}

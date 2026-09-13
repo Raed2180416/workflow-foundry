@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.0", "id": "local-incident", "version": 1,
+  "title": "Evidence-gated incident simulation", "goal": "Restore the local simulated service without making an unsupported intervention.",
+  "domain": "sre",
+  "envelope": {"assumptions": ["Telemetry comes from the explicitly attached local simulator"], "risks": ["A coincidental deployment or high CPU can mislead diagnosis"], "successCriteria": ["Independent health check succeeds and wrongActions is zero"], "unsupported": ["Production infrastructure and real incident diagnosis"]},
+  "budget": {"maxSteps": 20, "maxConcurrency": 2, "maxDurationMs": 60000, "maxCost": 0},
+  "nodes": [
+    {"id": "metrics", "kind": "task", "needs": [], "description": "Read measured load and error signals.", "tool": "fixture.observe", "args": {"probe": "metrics"}, "timeoutMs": 1000, "retry": {"maxAttempts": 2}},
+    {"id": "deployment", "kind": "task", "needs": [], "description": "Read whether a deployment changed, independently of metrics.", "tool": "fixture.observe", "args": {"probe": "deployment"}, "timeoutMs": 1000, "retry": {"maxAttempts": 2}},
+    {"id": "rollback", "kind": "task", "needs": ["metrics", "deployment"], "description": "Roll back only the fixture's explicitly diagnosed deployment condition.", "when": {"op": "all", "conditions": [{"op": "eq", "left": {"$ref": "nodes.deployment.regressionConfirmed", "default": false}, "right": true}, {"op": "gt", "left": {"$ref": "nodes.metrics.errorRate"}, "right": 0.05}]}, "tool": "fixture.remediate", "args": {"action": "rollback"}, "timeoutMs": 1000, "retry": {"maxAttempts": 2}},
+    {"id": "scale", "kind": "task", "needs": ["metrics", "deployment"], "description": "Choose the alternative load intervention only with a verified capacity signal.", "when": {"op": "all", "conditions": [{"op": "eq", "left": {"$ref": "nodes.metrics.capacityExhausted", "default": false}, "right": true}, {"op": "eq", "left": {"$ref": "nodes.deployment.regressionConfirmed", "default": false}, "right": false}]}, "tool": "fixture.remediate", "args": {"action": "scale"}, "timeoutMs": 1000, "retry": {"maxAttempts": 2}},
+    {"id": "verify", "kind": "task", "needs": ["rollback", "scale"], "join": "all_resolved", "description": "Join both alternative paths, allowing the unselected branch to be skipped, before checking actual resulting simulator health.", "tool": "fixture.verify", "args": {}, "timeoutMs": 1000, "retry": {"maxAttempts": 2}}
+  ],
+  "acceptance": [{"op": "eq", "left": {"$ref": "nodes.verify.healthy"}, "right": true}, {"op": "eq", "left": {"$ref": "nodes.verify.wrongActions"}, "right": 0}]
+}

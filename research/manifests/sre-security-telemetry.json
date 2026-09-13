@@ -1,0 +1,116 @@
+[
+  {
+    "repository": "DataDog/datadog-agent",
+    "url": "https://github.com/DataDog/datadog-agent.git",
+    "classification": "telemetry-agent-not-bits-harness",
+    "acquiredAt": "2026-09-13T10:58:57.276Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/DataDog--datadog-agent",
+    "outcome": "cloned-source-not-executed",
+    "commit": "ce94853454777d3d1b68f555fd8d89d49f3be1bf",
+    "fileCount": 26568,
+    "licenses": [
+      {
+        "path": ".agents/skills/allium/LICENSE",
+        "sha256": "6d4b654eaa990b380aa2b6488a9de259265576809d8022f66bed6c243956e531",
+        "excerpt": "MIT License\n\nCopyright (c) 2026 JUXT Ltd\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BU"
+      },
+      {
+        "path": "LICENSE",
+        "sha256": "703767dccb75047a0974d4a74342a1002eec2ec911c1398c1ff9a5f25182e11e",
+        "excerpt": "                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity."
+      },
+      {
+        "path": "NOTICE",
+        "sha256": "89370c123fdd0c7d38ddb4697c9150e3908e889c94370a70ab12c1c42968b3d3",
+        "excerpt": "Datadog datadog-agent\nCopyright 2016-present Datadog, Inc.\n\nThis product includes software developed at Datadog (https://www.datadoghq.com/).\nThis product includes software developed at CoreOS, Inc (http://www.coreos.com/).\n"
+      },
+      {
+        "path": "cmd/secret-generic-connector/LICENSE",
+        "sha256": "257fc81227950512fcd4159c4fb707daaceb4568e68e2b884f7fb4febe6be1f1",
+        "excerpt": "BSD 3-Clause License\n\nCopyright (c) 2021, RapDev.IO\nAll rights reserved.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are met:\n\n1. Redistributions of source code must retain the above copyright notice, this\n   list of conditions and the following disclaimer.\n\n2. Redistributions in binary form must reproduce the above copyright notice,\n   this list of conditions and the following disclaimer in the documentation\n   and/or other materials provided with the distribution.\n\n3. Neither the name of the copyright holder nor the names of its\n   contributors may be used to endorse or promote products derived from\n"
+      },
+      {
+        "path": "deps/compile_policy/LICENSE",
+        "sha256": "7dc0b59325e0a735cbdd089dc802c7e68e3796b36468c72e4b640ac0c0f0557c",
+        "excerpt": "                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity."
+      },
+      {
+        "path": "deps/gstatus/LICENSE",
+        "sha256": "589ed823e9a84c56feb95ac58e7cf384626b9cbf4fda2a907bc36e103de1bad2",
+        "excerpt": "                    GNU GENERAL PUBLIC LICENSE\n                       Version 3, 29 June 2007\n\n Copyright (C) 2007 Free Software Foundation, Inc. <http://fsf.org/>\n Everyone is permitted to copy and distribute verbatim copies\n of this license document, but changing it is not allowed.\n\n                            Preamble\n\n  The GNU General Public License is a free, copyleft license for\nsoftware and other kinds of works.\n\n  The licenses for most software and other practical works are designed\nto take away your freedom to share and change the works.  By contrast,\nthe GNU General Public License is intended to guarantee your freedom to\nshare and change all versions of a program--to make sure it "
+      },
+      {
+        "path": "deps/lua/license",
+        "sha256": "f02ec0f997e23feb654cc04507344c25922ccf032205a5fee08e7ef466a67149",
+        "excerpt": "Copyright © 1994–2025 Lua.org, PUC-Rio.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT"
+      },
+      {
+        "path": "deps/msodbcsql18/LICENSE.txt",
+        "sha256": "a8dee3473e587be3c415146fa196d753238c71aa108e831722e31c4b003c4547",
+        "excerpt": "MICROSOFT SOFTWARE LICENSE TERMS\r\nMICROSOFT ODBC DRIVER 18 FOR SQL SERVER\r\n\r\nThese license terms are an agreement between you and Microsoft Corporation (or one of its affiliates). They apply to the software named above and any Microsoft services or software updates (except to the extent such services or updates are accompanied by new or additional terms, in which case those different terms apply prospectively and do not alter your or Microsoft�s rights relating to pre-updated software or services). IF YOU COMPLY WITH THESE LICENSE TERMS, YOU HAVE THE RIGHTS BELOW.  BY USING THE SOFTWARE, YOU ACCEPT THESE TERMS.\r\n\r\n1. INSTALLATION AND USE RIGHTS.\r\n\r\n   a) General. You may install and use any "
+      },
+      {
+        "path": "internal/third_party/client-go/LICENSE",
+        "sha256": "58d1e17ffe5109a7ae296caafcadfdbe6a7d176f0bc4ab01e12a689b0499d8bd",
+        "excerpt": "\n                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity"
+      },
+      {
+        "path": "internal/third_party/golang/LICENSE",
+        "sha256": "2d36597f7117c38b006835ae7f537487207d8ec407aa9d9980794b2030cbc067",
+        "excerpt": "Copyright (c) 2009 The Go Authors. All rights reserved.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are\nmet:\n\n   * Redistributions of source code must retain the above copyright\nnotice, this list of conditions and the following disclaimer.\n   * Redistributions in binary form must reproduce the above\ncopyright notice, this list of conditions and the following disclaimer\nin the documentation and/or other materials provided with the\ndistribution.\n   * Neither the name of Google Inc. nor the names of its\ncontributors may be used to endorse or promote products derived from\nthis software without specific pri"
+      },
+      {
+        "path": "internal/third_party/kubernetes/LICENSE",
+        "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "excerpt": "\n                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity"
+      },
+      {
+        "path": "omnibus/resources/agent/msi/assets/LICENSE.rtf",
+        "sha256": "0f0f9fc1680b58da066b26ab896a0578f26ea6ab21922073d83f3a9d77fc19bf",
+        "excerpt": "{\\rtf1\\ansi\\ansicpg1252\\deff0\\nouicompat\\deflang1033\\deflangfe2052{\\fonttbl{\\f0\\fswiss\\fprq2\\fcharset0 Arial;}}\r\n{\\colortbl ;\\red0\\green0\\blue0;\\red0\\green0\\blue255;}\r\n{\\*\\generator Riched20 10.0.22621}{\\*\\mmathPr\\mnaryLim0\\mdispDef1\\mwrapIndent1440 }\\viewkind4\\uc1 \r\n\\pard\\nowidctlpar\\sl276\\slmult1\\cf1\\f0\\fs18 WINDOWS DEVICE DRIVER\\par\r\nEND USER LICENSE AGREEMENT\\par\r\n\\tab\\par\r\nPlease read this End-User License Agreement (\\ldblquote Agreement\\rdblquote ) carefully before clicking the \\ldblquote I Agree\\rdblquote  button, downloading or using the Device Driver for the Windows version of the Datadog Agent (\\ldblquote Application\\rdblquote ).\\par\r\n\\par\r\nBy clicking the \\ldblquote I Agree\\rdblqu"
+      },
+      {
+        "path": "omnibus/resources/agent/pkg/license.html.erb",
+        "sha256": "7f7261efa3264044ad3335e0a06dd9306960fa02ddfa19ab54d6286818fa596f",
+        "excerpt": "Copyright 2016-present Datadog, Inc.\nLicensed under the Apache License, Version 2.0 (the \"License\");\nyou may not use this file except in compliance with the License.\nYou may obtain a copy of the License at\n\n   http://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software\ndistributed under the License is distributed on an \"AS IS\" BASIS,\nWITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\nSee the License for the specific language governing permissions and\nlimitations under the License.\n"
+      },
+      {
+        "path": "omnibus/resources/dogstatsd/msi/assets/LICENSE.rtf",
+        "sha256": "53a1625c9e34f696953eada28fba5e3fcd0efc969d3106380a006c83ca9d5e9e",
+        "excerpt": "{\\rtf1\\ansi\\ansicpg1252\\cocoartf1671\\cocoasubrtf100\n{\\fonttbl\\f0\\fmodern\\fcharset0 CourierNewPSMT;}\n{\\colortbl;\\red255\\green255\\blue255;}\n{\\*\\expandedcolortbl;;}\n\\vieww12000\\viewh15840\\viewkind0\n\\deftab720\n\\pard\\pardeftab720\\sl276\\slmult1\\sa200\\partightenfactor0\n\n\\f0\\fs20 \\cf0 Copyright 2016-present Datadog, Inc.\\\nLicensed under the Apache License, Version 2.0 (the \"License\");you may not use this file except in compliance with the License.You may obtain a copy of the License at\\\n   {\\field{\\*\\fldinst{HYPERLINK \"http://www.apache.org/licenses/LICENSE-2.0\"}}{\\fldrslt http://www.apache.org/licenses/LICENSE-2.0}}\\\n\\\nUnless required by applicable law or agreed to in writing, software distributed "
+      },
+      {
+        "path": "omnibus/resources/iot/pkg/license.html.erb",
+        "sha256": "7f7261efa3264044ad3335e0a06dd9306960fa02ddfa19ab54d6286818fa596f",
+        "excerpt": "Copyright 2016-present Datadog, Inc.\nLicensed under the Apache License, Version 2.0 (the \"License\");\nyou may not use this file except in compliance with the License.\nYou may obtain a copy of the License at\n\n   http://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software\ndistributed under the License is distributed on an \"AS IS\" BASIS,\nWITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\nSee the License for the specific language governing permissions and\nlimitations under the License.\n"
+      },
+      {
+        "path": "pkg/collector/corechecks/ebpf/c/COPYING",
+        "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643",
+        "excerpt": "                    GNU GENERAL PUBLIC LICENSE\n                       Version 2, June 1991\n\n Copyright (C) 1989, 1991 Free Software Foundation, Inc.,\n 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA\n Everyone is permitted to copy and distribute verbatim copies\n of this license document, but changing it is not allowed.\n\n                            Preamble\n\n  The licenses for most software are designed to take away your\nfreedom to share and change it.  By contrast, the GNU General Public\nLicense is intended to guarantee your freedom to share and change free\nsoftware--to make sure the software is free for all its users.  This\nGeneral Public License applies to most of the Free Softwa"
+      },
+      {
+        "path": "pkg/ebpf/LICENSE",
+        "sha256": "f03e85e8f47b61f2728857442026ed05c528ea33aa49a4a44d7c9c4df991afb5",
+        "excerpt": "\n                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity"
+      },
+      {
+        "path": "pkg/ebpf/c/COPYING",
+        "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643",
+        "excerpt": "                    GNU GENERAL PUBLIC LICENSE\n                       Version 2, June 1991\n\n Copyright (C) 1989, 1991 Free Software Foundation, Inc.,\n 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA\n Everyone is permitted to copy and distribute verbatim copies\n of this license document, but changing it is not allowed.\n\n                            Preamble\n\n  The licenses for most software are designed to take away your\nfreedom to share and change it.  By contrast, the GNU General Public\nLicense is intended to guarantee your freedom to share and change free\nsoftware--to make sure the software is free for all its users.  This\nGeneral Public License applies to most of the Free Softwa"
+      },
+      {
+        "path": "pkg/gohai/LICENSE",
+        "sha256": "d3f08b1ce448ef159a69f194607771b8ee66d50446a267c97d22bc347b342ba6",
+        "excerpt": "The MIT License (MIT)\nCopyright © 2015 Kentaro Kuribayashi <kentarok@gmail.com>\nCopyright (c) 2014-2015, Datadog <info@datadoghq.com>\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE"
+      },
+      {
+        "path": "pkg/network/ebpf/c/COPYING",
+        "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643",
+        "excerpt": "                    GNU GENERAL PUBLIC LICENSE\n                       Version 2, June 1991\n\n Copyright (C) 1989, 1991 Free Software Foundation, Inc.,\n 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA\n Everyone is permitted to copy and distribute verbatim copies\n of this license document, but changing it is not allowed.\n\n                            Preamble\n\n  The licenses for most software are designed to take away your\nfreedom to share and change it.  By contrast, the GNU General Public\nLicense is intended to guarantee your freedom to share and change free\nsoftware--to make sure the software is free for all its users.  This\nGeneral Public License applies to most of the Free Softwa"
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  }
+]

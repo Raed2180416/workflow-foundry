@@ -1,0 +1,685 @@
+TAP version 13
+# Subtest: evaluator audit: self-attested success is rejected by the real evaluator on an independently wrong output
+ok 1 - evaluator audit: self-attested success is rejected by the real evaluator on an independently wrong output
+  ---
+  duration_ms: 113.993775
+  type: 'test'
+  ...
+# Subtest: evaluator audit: evaluation stages an exact revision without silently changing its version or hash
+ok 2 - evaluator audit: evaluation stages an exact revision without silently changing its version or hash
+  ---
+  duration_ms: 23.831862
+  type: 'test'
+  ...
+# Subtest: evaluator audit: suite snapshot remains unchanged after caller mutation and refuses heldout repair
+ok 3 - evaluator audit: suite snapshot remains unchanged after caller mutation and refuses heldout repair
+  ---
+  duration_ms: 24.602889
+  type: 'test'
+  ...
+# Subtest: evaluator audit: weak oracle is rejected: status only
+ok 4 - evaluator audit: weak oracle is rejected: status only
+  ---
+  duration_ms: 0.432832
+  type: 'test'
+  ...
+# Subtest: evaluator audit: weak oracle is rejected: constants only
+ok 5 - evaluator audit: weak oracle is rejected: constants only
+  ---
+  duration_ms: 0.399099
+  type: 'test'
+  ...
+# Subtest: evaluator audit: weak oracle is rejected: input only
+ok 6 - evaluator audit: weak oracle is rejected: input only
+  ---
+  duration_ms: 0.386306
+  type: 'test'
+  ...
+# Subtest: evaluator audit: weak oracle is rejected: existence-only artifact
+ok 7 - evaluator audit: weak oracle is rejected: existence-only artifact
+  ---
+  duration_ms: 0.417173
+  type: 'test'
+  ...
+# Subtest: evaluator audit: vacuous output reference cannot qualify an independent oracle: same reference on both sides
+not ok 8 - evaluator audit: vacuous output reference cannot qualify an independent oracle: same reference on both sides
+  ---
+  duration_ms: 23.470535
+  type: 'test'
+  location: '/home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:21:29'
+  failureType: 'testCodeFailure'
+  error: |-
+    Merely mentioning a node must not make an unconditional assertion an independent task oracle.
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:88:10)
+    async Test.run (node:internal/test_runner/test:1404:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:969:7)
+  ...
+# Subtest: evaluator audit: vacuous output reference cannot qualify an independent oracle: unconditional true branch
+not ok 9 - evaluator audit: vacuous output reference cannot qualify an independent oracle: unconditional true branch
+  ---
+  duration_ms: 24.206695
+  type: 'test'
+  location: '/home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:21:29'
+  failureType: 'testCodeFailure'
+  error: |-
+    Merely mentioning a node must not make an unconditional assertion an independent task oracle.
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:88:10)
+    async Test.run (node:internal/test_runner/test:1404:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:969:7)
+  ...
+# Subtest: evaluator audit: vacuous output reference cannot qualify an independent oracle: default makes an absent result pass
+not ok 10 - evaluator audit: vacuous output reference cannot qualify an independent oracle: default makes an absent result pass
+  ---
+  duration_ms: 20.833765
+  type: 'test'
+  location: '/home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:21:29'
+  failureType: 'testCodeFailure'
+  error: |-
+    Merely mentioning a node must not make an unconditional assertion an independent task oracle.
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:88:10)
+    async Test.run (node:internal/test_runner/test:1404:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:969:7)
+  ...
+# Subtest: evaluator audit: duplicate case ids, empty cases, malformed checks and traversal basenames are rejected
+ok 11 - evaluator audit: duplicate case ids, empty cases, malformed checks and traversal basenames are rejected
+  ---
+  duration_ms: 3.412576
+  type: 'test'
+  ...
+# Subtest: evaluator audit: a missing or wrong-type result reference cannot become a true evaluator check
+ok 12 - evaluator audit: a missing or wrong-type result reference cannot become a true evaluator check
+  ---
+  duration_ms: 43.841971
+  type: 'test'
+  ...
+# Subtest: evaluator audit: unsafe reference syntax is rejected before evaluation
+ok 13 - evaluator audit: unsafe reference syntax is rejected before evaluation
+  ---
+  duration_ms: 1.788387
+  type: 'test'
+  ...
+# Subtest: evaluator audit: JSON scalar, null, false and hyphenated-key inputs preserve their exact meaning
+ok 14 - evaluator audit: JSON scalar, null, false and hyphenated-key inputs preserve their exact meaning
+  ---
+  duration_ms: 119.172085
+  type: 'test'
+  ...
+# Subtest: evaluator audit: explicit input rejection is evaluated independently without inventing a run or artifact
+ok 15 - evaluator audit: explicit input rejection is evaluated independently without inventing a run or artifact
+  ---
+  duration_ms: 22.721228
+  type: 'test'
+  ...
+# Subtest: evaluator audit: public artifact oracle distinguishes exact bytes from semantic JSON equality
+ok 16 - evaluator audit: public artifact oracle distinguishes exact bytes from semantic JSON equality
+  ---
+  duration_ms: 55.693316
+  type: 'test'
+  ...
+# Subtest: evaluator audit: artifact absence, malformed JSON and UTF-8 content are checked from actual files
+ok 17 - evaluator audit: artifact absence, malformed JSON and UTF-8 content are checked from actual files
+  ---
+  duration_ms: 65.942894
+  type: 'test'
+  ...
+# Subtest: evaluator audit: contradictory artifact content and absence expectations are rejected
+not ok 18 - evaluator audit: contradictory artifact content and absence expectations are rejected
+  ---
+  duration_ms: 0.970321
+  type: 'test'
+  location: '/home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:21:29'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected exception.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  operator: 'throws'
+  stack: |-
+    TestContext.<anonymous> (file:///home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:151:10)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1397:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+    Test.postRun (node:internal/test_runner/test:1537:19)
+    Test.run (node:internal/test_runner/test:1462:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:969:7)
+  ...
+# Subtest: evaluator audit: symlinked artifact file cannot qualify
+ok 19 - evaluator audit: symlinked artifact file cannot qualify
+  ---
+  duration_ms: 21.048958
+  type: 'test'
+  ...
+# Subtest: evaluator audit: symlinked artifact ancestor cannot qualify
+not ok 20 - evaluator audit: symlinked artifact ancestor cannot qualify
+  ---
+  duration_ms: 20.749366
+  type: 'test'
+  location: '/home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:21:29'
+  failureType: 'testCodeFailure'
+  error: |-
+    Artifact containment includes the path ancestors.
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:163:10)
+    async Test.run (node:internal/test_runner/test:1404:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:969:7)
+  ...
+# Subtest: evaluator audit: artifact-inspection errors still charge executed steps to the total evaluation budget
+not ok 21 - evaluator audit: artifact-inspection errors still charge executed steps to the total evaluation budget
+  ---
+  duration_ms: 39.485635
+  type: 'test'
+  location: '/home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:21:29'
+  failureType: 'testCodeFailure'
+  error: |-
+    The first actual dispatch exhausted the shared step budget even though artifact inspection failed.
+    
+    2 !== 1
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1
+  actual: 2
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:174:46)
+    async Test.run (node:internal/test_runner/test:1404:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:969:7)
+  ...
+# Subtest: evaluator audit: total step budget and pre-cancellation prevent unexecuted cases from qualifying
+ok 22 - evaluator audit: total step budget and pre-cancellation prevent unexecuted cases from qualifying
+  ---
+  duration_ms: 25.637863
+  type: 'test'
+  ...
+# Subtest: evaluator audit: Store rejects malformed qualification: numeric evaluator identity
+not ok 23 - evaluator audit: Store rejects malformed qualification: numeric evaluator identity
+  ---
+  duration_ms: 13.078708
+  type: 'test'
+  location: '/home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:21:29'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected exception.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    code: 'QUALIFICATION'
+  operator: 'throws'
+  stack: |-
+    TestContext.<anonymous> (file:///home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:194:16)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1397:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+    Test.postRun (node:internal/test_runner/test:1537:19)
+    Test.run (node:internal/test_runner/test:1462:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:969:7)
+  ...
+# Subtest: evaluator audit: Store rejects malformed qualification: malformed workflow hash
+not ok 24 - evaluator audit: Store rejects malformed qualification: malformed workflow hash
+  ---
+  duration_ms: 12.617964
+  type: 'test'
+  location: '/home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:21:29'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected exception.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    code: 'QUALIFICATION'
+  operator: 'throws'
+  stack: |-
+    TestContext.<anonymous> (file:///home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:194:16)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1397:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+    Test.postRun (node:internal/test_runner/test:1537:19)
+    Test.run (node:internal/test_runner/test:1462:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:969:7)
+  ...
+# Subtest: evaluator audit: Store rejects malformed qualification: missing registry binding
+not ok 25 - evaluator audit: Store rejects malformed qualification: missing registry binding
+  ---
+  duration_ms: 12.06715
+  type: 'test'
+  location: '/home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:21:29'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected exception.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    code: 'QUALIFICATION'
+  operator: 'throws'
+  stack: |-
+    TestContext.<anonymous> (file:///home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:194:16)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1397:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+    Test.postRun (node:internal/test_runner/test:1537:19)
+    Test.run (node:internal/test_runner/test:1462:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:969:7)
+  ...
+# Subtest: evaluator audit: generated-program-shaped nested maps, loops, branch joins and human resume execute independently
+ok 26 - evaluator audit: generated-program-shaped nested maps, loops, branch joins and human resume execute independently
+  ---
+  duration_ms: 149.488849
+  type: 'test'
+  ...
+# {"kind":"synthetic-nested-human-control","cells":4,"steps":22,"frames":16,"eventCount":67}
+# Subtest: evaluator audit: two nested-program scales have independent outputs and measured resource receipts
+ok 27 - evaluator audit: two nested-program scales have independent outputs and measured resource receipts
+  ---
+  duration_ms: 873.367402
+  type: 'test'
+  ...
+# {"kind":"synthetic-nested-scale-control","cases":[{"id":"groups-2","steps":36,"elapsedMs":161,"eventCount":106},{"id":"groups-6","steps":100,"elapsedMs":679,"eventCount":294}],"totalSteps":136,"totalElapsedMs":871}
+# Subtest: evaluator audit: real subprocess uses literal argv and only its deliberately supplied environment
+ok 28 - evaluator audit: real subprocess uses literal argv and only its deliberately supplied environment
+  ---
+  duration_ms: 30.552807
+  type: 'test'
+  ...
+# Subtest: evaluator audit: real subprocess nonzero exit and launch failure retain their correct failure classifications
+ok 29 - evaluator audit: real subprocess nonzero exit and launch failure retain their correct failure classifications
+  ---
+  duration_ms: 27.35207
+  type: 'test'
+  ...
+# Subtest: evaluator audit: real subprocess deadline terminates a child that ignores SIGTERM
+ok 30 - evaluator audit: real subprocess deadline terminates a child that ignores SIGTERM
+  ---
+  duration_ms: 607.969894
+  type: 'test'
+  ...
+# Subtest: evaluator audit: real subprocess cancellation and pre-cancellation are bounded and distinct from success
+ok 31 - evaluator audit: real subprocess cancellation and pre-cancellation are bounded and distinct from success
+  ---
+  duration_ms: 605.185187
+  type: 'test'
+  ...
+# Subtest: evaluator audit: subprocess stdout and stderr share one bounded retained-output budget
+ok 32 - evaluator audit: subprocess stdout and stderr share one bounded retained-output budget
+  ---
+  duration_ms: 26.557157
+  type: 'test'
+  ...
+# Subtest: evaluator audit: invalid subprocess output bound is rejected before launch: NaN
+not ok 33 - evaluator audit: invalid subprocess output bound is rejected before launch: NaN
+  ---
+  duration_ms: 21.550761
+  type: 'test'
+  location: '/home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:21:29'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  stack: |-
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async TestContext.<anonymous> (file:///home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:293:3)
+    async Test.run (node:internal/test_runner/test:1404:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:969:7)
+  ...
+# Subtest: evaluator audit: invalid subprocess output bound is rejected before launch: Infinity
+not ok 34 - evaluator audit: invalid subprocess output bound is rejected before launch: Infinity
+  ---
+  duration_ms: 25.026094
+  type: 'test'
+  location: '/home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:21:29'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  stack: |-
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async TestContext.<anonymous> (file:///home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:293:3)
+    async Test.run (node:internal/test_runner/test:1404:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:969:7)
+  ...
+# Subtest: evaluator audit: invalid subprocess output bound is rejected before launch: -1
+not ok 35 - evaluator audit: invalid subprocess output bound is rejected before launch: -1
+  ---
+  duration_ms: 23.421262
+  type: 'test'
+  location: '/home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:21:29'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  stack: |-
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async TestContext.<anonymous> (file:///home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:293:3)
+    async Test.run (node:internal/test_runner/test:1404:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:969:7)
+  ...
+# Subtest: evaluator audit: subprocess UTF-8 decoding preserves characters split across transport chunks
+not ok 36 - evaluator audit: subprocess UTF-8 decoding preserves characters split across transport chunks
+  ---
+  duration_ms: 2.833448
+  type: 'test'
+  location: '/home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:21:29'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + '�� ��� final'
+    - 'π 😀 final'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'π 😀 final'
+  actual: '�� ��� final'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:321:10)
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async Test.run (node:internal/test_runner/test:1404:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:969:7)
+  ...
+# Subtest: evaluator audit: free model catalog accepts observed zero prices and rejects unknown or nonzero pricing
+ok 37 - evaluator audit: free model catalog accepts observed zero prices and rejects unknown or nonzero pricing
+  ---
+  duration_ms: 0.454453
+  type: 'test'
+  ...
+# Subtest: evaluator audit: conflicting duplicate model IDs cannot cherry-pick the free catalog record
+not ok 38 - evaluator audit: conflicting duplicate model IDs cannot cherry-pick the free catalog record
+  ---
+  duration_ms: 0.1494
+  type: 'test'
+  location: '/home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:21:29'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected exception.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  operator: 'throws'
+  stack: |-
+    TestContext.<anonymous> (file:///home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:345:10)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1397:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+    Test.postRun (node:internal/test_runner/test:1537:19)
+    Test.run (node:internal/test_runner/test:1462:12)
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async Test.processPendingSubtests (node:internal/test_runner/test:969:7)
+  ...
+# Subtest: evaluator audit: an empty nested pricing object does not establish its explicitly zero cost
+not ok 39 - evaluator audit: an empty nested pricing object does not establish its explicitly zero cost
+  ---
+  duration_ms: 0.196799
+  type: 'test'
+  location: '/home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:21:29'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected exception.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    code: 'MODEL_NOT_FREE'
+  operator: 'throws'
+  stack: |-
+    TestContext.<anonymous> (file:///home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:349:10)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1397:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+    Test.postRun (node:internal/test_runner/test:1537:19)
+    Test.run (node:internal/test_runner/test:1462:12)
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async Test.processPendingSubtests (node:internal/test_runner/test:969:7)
+  ...
+# Subtest: evaluator audit: complete zero-cost event stream has one session and exact text
+ok 40 - evaluator audit: complete zero-cost event stream has one session and exact text
+  ---
+  duration_ms: 0.281629
+  type: 'test'
+  ...
+# Subtest: evaluator audit: output protocol rejects missing final event
+ok 41 - evaluator audit: output protocol rejects missing final event
+  ---
+  duration_ms: 0.121017
+  type: 'test'
+  ...
+# Subtest: evaluator audit: output protocol rejects error event
+ok 42 - evaluator audit: output protocol rejects error event
+  ---
+  duration_ms: 0.120326
+  type: 'test'
+  ...
+# Subtest: evaluator audit: output protocol rejects tool attempt
+ok 43 - evaluator audit: output protocol rejects tool attempt
+  ---
+  duration_ms: 0.093526
+  type: 'test'
+  ...
+# Subtest: evaluator audit: output protocol rejects unfinished completion
+ok 44 - evaluator audit: output protocol rejects unfinished completion
+  ---
+  duration_ms: 0.090119
+  type: 'test'
+  ...
+# Subtest: evaluator audit: output protocol rejects unknown cost
+ok 45 - evaluator audit: output protocol rejects unknown cost
+  ---
+  duration_ms: 0.130314
+  type: 'test'
+  ...
+# Subtest: evaluator audit: output protocol rejects nonzero cost
+ok 46 - evaluator audit: output protocol rejects nonzero cost
+  ---
+  duration_ms: 0.085861
+  type: 'test'
+  ...
+# Subtest: evaluator audit: output protocol rejects mixed sessions
+ok 47 - evaluator audit: output protocol rejects mixed sessions
+  ---
+  duration_ms: 0.090039
+  type: 'test'
+  ...
+# Subtest: evaluator audit: output protocol rejects non-JSON lines
+ok 48 - evaluator audit: output protocol rejects non-JSON lines
+  ---
+  duration_ms: 0.126437
+  type: 'test'
+  ...
+# Subtest: evaluator audit: output protocol fails closed on identity omitted from final event
+not ok 49 - evaluator audit: output protocol fails closed on identity omitted from final event
+  ---
+  duration_ms: 0.26118
+  type: 'test'
+  location: '/home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:21:29'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected exception: Malformed protocol needs a structured provider failure.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  stack: |-
+    TestContext.<anonymous> (file:///home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:379:10)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1397:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+    Test.postRun (node:internal/test_runner/test:1537:19)
+    Test.run (node:internal/test_runner/test:1462:12)
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async Test.processPendingSubtests (node:internal/test_runner/test:969:7)
+  ...
+# Subtest: evaluator audit: output protocol fails closed on text after the claimed final stop
+not ok 50 - evaluator audit: output protocol fails closed on text after the claimed final stop
+  ---
+  duration_ms: 0.183174
+  type: 'test'
+  location: '/home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:21:29'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected exception: Malformed protocol needs a structured provider failure.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  stack: |-
+    TestContext.<anonymous> (file:///home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:379:10)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1397:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+    Test.postRun (node:internal/test_runner/test:1537:19)
+    Test.run (node:internal/test_runner/test:1462:12)
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async Test.processPendingSubtests (node:internal/test_runner/test:969:7)
+  ...
+# Subtest: evaluator audit: output protocol fails closed on a null event in an otherwise valid stream
+not ok 51 - evaluator audit: output protocol fails closed on a null event in an otherwise valid stream
+  ---
+  duration_ms: 0.206478
+  type: 'test'
+  location: '/home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:21:29'
+  failureType: 'testCodeFailure'
+  error: 'Malformed protocol needs a structured provider failure.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  stack: |-
+    TestContext.<anonymous> (file:///home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:379:10)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1397:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+    Test.postRun (node:internal/test_runner/test:1537:19)
+    Test.run (node:internal/test_runner/test:1462:12)
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async Test.processPendingSubtests (node:internal/test_runner/test:969:7)
+  ...
+# Subtest: evaluator audit: output protocol fails closed on an array event in an otherwise valid stream
+not ok 52 - evaluator audit: output protocol fails closed on an array event in an otherwise valid stream
+  ---
+  duration_ms: 0.196549
+  type: 'test'
+  location: '/home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:21:29'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected exception: Malformed protocol needs a structured provider failure.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  stack: |-
+    TestContext.<anonymous> (file:///home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:379:10)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1397:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+    Test.postRun (node:internal/test_runner/test:1537:19)
+    Test.run (node:internal/test_runner/test:1462:12)
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async Test.processPendingSubtests (node:internal/test_runner/test:969:7)
+  ...
+# Subtest: evaluator audit: adapter transport simulation accepts internally consistent synthetic export evidence
+ok 53 - evaluator audit: adapter transport simulation accepts internally consistent synthetic export evidence
+  ---
+  duration_ms: 42.049186
+  type: 'test'
+  ...
+# Subtest: evaluator audit: adapter transport simulation rejects session model drift
+ok 54 - evaluator audit: adapter transport simulation rejects session model drift
+  ---
+  duration_ms: 2.896817
+  type: 'test'
+  ...
+# Subtest: evaluator audit: adapter transport simulation rejects session nonzero cost
+ok 55 - evaluator audit: adapter transport simulation rejects session nonzero cost
+  ---
+  duration_ms: 1.773188
+  type: 'test'
+  ...
+# Subtest: evaluator audit: adapter transport simulation rejects assistant model drift
+not ok 56 - evaluator audit: adapter transport simulation rejects assistant model drift
+  ---
+  duration_ms: 2.466229
+  type: 'test'
+  location: '/home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:21:29'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  stack: |-
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async TestContext.<anonymous> (file:///home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:417:3)
+    async Test.run (node:internal/test_runner/test:1404:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:969:7)
+  ...
+# Subtest: evaluator audit: adapter transport simulation rejects assistant nonzero cost
+not ok 57 - evaluator audit: adapter transport simulation rejects assistant nonzero cost
+  ---
+  duration_ms: 2.348538
+  type: 'test'
+  location: '/home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:21:29'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  stack: |-
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async TestContext.<anonymous> (file:///home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:417:3)
+    async Test.run (node:internal/test_runner/test:1404:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:969:7)
+  ...
+# Subtest: evaluator audit: adapter transport simulation rejects exported session identity mismatch
+not ok 58 - evaluator audit: adapter transport simulation rejects exported session identity mismatch
+  ---
+  duration_ms: 1.637193
+  type: 'test'
+  location: '/home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:21:29'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  stack: |-
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async TestContext.<anonymous> (file:///home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:417:3)
+    async Test.run (node:internal/test_runner/test:1404:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:969:7)
+  ...
+# Subtest: evaluator audit: adapter transport simulation rejects exported response mismatch
+not ok 59 - evaluator audit: adapter transport simulation rejects exported response mismatch
+  ---
+  duration_ms: 2.320936
+  type: 'test'
+  location: '/home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:21:29'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  stack: |-
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async TestContext.<anonymous> (file:///home/raed/Projects/workflow-foundry/tests/evaluator-audit.test.mjs:417:3)
+    async Test.run (node:internal/test_runner/test:1404:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:969:7)
+  ...
+1..59
+# tests 59
+# suites 0
+# pass 36
+# fail 23
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3268.299548

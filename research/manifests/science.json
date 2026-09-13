@@ -1,0 +1,427 @@
+[
+  {
+    "repository": "NVIDIA-BioNeMo/bionemo-agent-toolkit",
+    "url": "https://github.com/NVIDIA-BioNeMo/bionemo-agent-toolkit.git",
+    "classification": "skill-pack",
+    "acquiredAt": "2026-09-13T10:44:10.268Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/NVIDIA-BioNeMo--bionemo-agent-toolkit",
+    "outcome": "cloned-source-not-executed",
+    "commit": "0e67a612e4045f007e38fa77adc8f3ebfc5616b6",
+    "fileCount": 569,
+    "licenses": [
+      {
+        "path": "LICENSE",
+        "sha256": "c6f56faa0b56f11c688317652434603d968e98cc60f15002a9a9119c3cd90ec2",
+        "excerpt": "BioNeMo Agent Toolkit is dual-licensed:\n\n- Source code (scripts, tests, build tooling) is licensed under the\n  Apache License, Version 2.0. See LICENSE-APACHE-2.0 for the full text.\n\n- Skills, documentation, and other creative/content files (SKILL.md,\n  workflow definitions, README files) are additionally available under\n  the Creative Commons Attribution 4.0 International License (CC-BY-4.0).\n  See LICENSE-CC-BY-4.0 for the full text.\n\nSPDX-License-Identifier: Apache-2.0 OR CC-BY-4.0\n\nCopyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.\n"
+      },
+      {
+        "path": "NOTICE",
+        "sha256": "4c45a2a32ae39e890bb7c78c89fe57ab911903d8913a8681e1fbc566546ed2bb",
+        "excerpt": "BioNeMo Agent Toolkit\nCopyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.\n\nThis project is dual-licensed:\n\n  - Source code (scripts, tests, build tooling) is licensed under the\n    Apache License, Version 2.0. See LICENSE-APACHE-2.0 for the full text,\n    or visit http://www.apache.org/licenses/LICENSE-2.0\n\n  - Skills, documentation, and content files (SKILL.md, workflow definitions,\n    README files) are additionally available under the Creative Commons\n    Attribution 4.0 International License (CC-BY-4.0). See LICENSE-CC-BY-4.0\n    for the full text, or visit https://creativecommons.org/licenses/by/4.0/\n\nSPDX-License-Identifier: Apache-2.0 OR CC-BY-4.0\n\n==============="
+      },
+      {
+        "path": "skills/bionemo-agent-toolkit/skills/complexa-binder-design/LICENSE",
+        "sha256": "75efa07c4d2afb14d8226cf00b7763dd2ec1c5585a9dfe919881a3a3fef2ddac",
+        "excerpt": "                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity."
+      },
+      {
+        "path": "skills/bionemo-agent-toolkit/skills/complexa-binder-design/NOTICE",
+        "sha256": "8acc9cc317abd4cecf554c0d46fe25dcf643538b8945441507c8ab2bcc74e338",
+        "excerpt": "complexa-binder-design (Agent Skill)\nCopyright (c) 2026 NVIDIA CORPORATION & AFFILIATES\n\nThis product is licensed under the Apache License, Version 2.0 (see LICENSE).\n\nThis skill orchestrates, but does not redistribute, the following third-party\ncomponents. Each is obtained by the user from its own source under its own license:\n\n- Proteina-Complexa (model + code)\n  https://github.com/NVIDIA-Digital-Bio/Proteina-Complexa\n  https://research.nvidia.com/labs/genair/proteina-complexa/\n  Weights via NGC: nvidia/clara/proteina_complexa\n  See the upstream repository for its license and model terms.\n\n- ipSAE (interaction prediction Score from Aligned Errors)\n  https://github.com/dunbracklab/IPSAE  (i"
+      },
+      {
+        "path": "skills/bionemo-agent-toolkit/skills/complexa-binder-design/vendor/science-skills/LICENSE",
+        "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "excerpt": "\n                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity"
+      },
+      {
+        "path": "skills/bionemo-agent-toolkit/skills/protein-binder-design/LICENSE",
+        "sha256": "75efa07c4d2afb14d8226cf00b7763dd2ec1c5585a9dfe919881a3a3fef2ddac",
+        "excerpt": "                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity."
+      },
+      {
+        "path": "workflows/generative-protein-binder-design/complexa-binder-design/LICENSE",
+        "sha256": "75efa07c4d2afb14d8226cf00b7763dd2ec1c5585a9dfe919881a3a3fef2ddac",
+        "excerpt": "                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity."
+      },
+      {
+        "path": "workflows/generative-protein-binder-design/complexa-binder-design/NOTICE",
+        "sha256": "8acc9cc317abd4cecf554c0d46fe25dcf643538b8945441507c8ab2bcc74e338",
+        "excerpt": "complexa-binder-design (Agent Skill)\nCopyright (c) 2026 NVIDIA CORPORATION & AFFILIATES\n\nThis product is licensed under the Apache License, Version 2.0 (see LICENSE).\n\nThis skill orchestrates, but does not redistribute, the following third-party\ncomponents. Each is obtained by the user from its own source under its own license:\n\n- Proteina-Complexa (model + code)\n  https://github.com/NVIDIA-Digital-Bio/Proteina-Complexa\n  https://research.nvidia.com/labs/genair/proteina-complexa/\n  Weights via NGC: nvidia/clara/proteina_complexa\n  See the upstream repository for its license and model terms.\n\n- ipSAE (interaction prediction Score from Aligned Errors)\n  https://github.com/dunbracklab/IPSAE  (i"
+      },
+      {
+        "path": "workflows/generative-protein-binder-design/complexa-binder-design/vendor/science-skills/LICENSE",
+        "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "excerpt": "\n                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity"
+      },
+      {
+        "path": "workflows/generative-protein-binder-design/protein-binder-design/LICENSE",
+        "sha256": "75efa07c4d2afb14d8226cf00b7763dd2ec1c5585a9dfe919881a3a3fef2ddac",
+        "excerpt": "                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity."
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "Future-House/robin",
+    "url": "https://github.com/Future-House/robin.git",
+    "classification": "implementation",
+    "acquiredAt": "2026-09-13T10:44:13.050Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/Future-House--robin",
+    "outcome": "cloned-source-not-executed",
+    "commit": "4a5cce310f3bc7663a67117db88af43b84733ffe",
+    "fileCount": 888,
+    "licenses": [
+      {
+        "path": "LICENSE",
+        "sha256": "a3cc48830cac658c9aa07edfcb5c3c027e1ed9cd6aed2fe54c94744060e80baf",
+        "excerpt": "                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity."
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "Future-House/finch",
+    "url": "https://github.com/Future-House/finch.git",
+    "classification": "implementation",
+    "acquiredAt": "2026-09-13T10:44:32.823Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/Future-House--finch",
+    "outcome": "cloned-source-not-executed",
+    "commit": "aea66fdf2dd2be827727de50a73cae60dff59972",
+    "fileCount": 63,
+    "licenses": [
+      {
+        "path": "LICENSE",
+        "sha256": "68ff053b1f1a393ef7f9f8664973a8055da8e98d172fd332592955ee06afd9b8",
+        "excerpt": " Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity. For the purposes of this defini"
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "Future-House/aviary",
+    "url": "https://github.com/Future-House/aviary.git",
+    "classification": "benchmark-framework",
+    "acquiredAt": "2026-09-13T10:44:35.678Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/Future-House--aviary",
+    "outcome": "cloned-source-not-executed",
+    "commit": "9b420ea6ba39ab1573cffd888c8eff5641c9726a",
+    "fileCount": 111,
+    "licenses": [
+      {
+        "path": "LICENSE",
+        "sha256": "a10f591e3522fbfe867cfde0b35e0594f6f43a51b013540208a1469c9e0b0f62",
+        "excerpt": "                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity."
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "Future-House/ldp",
+    "url": "https://github.com/Future-House/ldp.git",
+    "classification": "implementation",
+    "acquiredAt": "2026-09-13T10:44:37.683Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/Future-House--ldp",
+    "outcome": "cloned-source-not-executed",
+    "commit": "7220ca1e06292b856b1a3f1fe2c94170bc933055",
+    "fileCount": 241,
+    "licenses": [
+      {
+        "path": "LICENSE",
+        "sha256": "a3cc48830cac658c9aa07edfcb5c3c027e1ed9cd6aed2fe54c94744060e80baf",
+        "excerpt": "                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity."
+      },
+      {
+        "path": "packages/lmi/LICENSE",
+        "sha256": "a3cc48830cac658c9aa07edfcb5c3c027e1ed9cd6aed2fe54c94744060e80baf",
+        "excerpt": "                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity."
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "MaxNaeg/safe_lab_agents",
+    "url": "https://github.com/MaxNaeg/safe_lab_agents.git",
+    "classification": "implementation",
+    "acquiredAt": "2026-09-13T10:44:39.213Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/MaxNaeg--safe_lab_agents",
+    "outcome": "cloned-source-not-executed",
+    "commit": "e4a71147c219caf8867a135ab1fbd4c26e35d43b",
+    "fileCount": 167,
+    "licenses": [
+      {
+        "path": "LICENSE",
+        "sha256": "986e18b2b28ed2f7d92a0a8c46155b1eb3043c7cdf057a948e3e4d11808da827",
+        "excerpt": "MIT License\n\nCopyright (c) 2026 Maximilian Nägele and Florian Marquardt\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, E"
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "ajhcs/healthcare-agents",
+    "url": "https://github.com/ajhcs/healthcare-agents.git",
+    "classification": "skill-pack",
+    "acquiredAt": "2026-09-13T10:44:54.626Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/ajhcs--healthcare-agents",
+    "outcome": "cloned-source-not-executed",
+    "commit": "81b239763c06a71f6290d01f2535431c5ae4d89c",
+    "fileCount": 480,
+    "licenses": [
+      {
+        "path": "LICENSE",
+        "sha256": "416a46a1940cf5ee3b7d6d05f76d870523a012b0350788d9dfaf1b39a65f5efb",
+        "excerpt": "                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity."
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "emeraldsci/SymbolicLabLanguage",
+    "url": "https://github.com/emeraldsci/SymbolicLabLanguage.git",
+    "classification": "partial-implementation",
+    "acquiredAt": "2026-09-13T10:45:07.989Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/emeraldsci--SymbolicLabLanguage",
+    "outcome": "cloned-source-not-executed",
+    "commit": "9059baa04c140a66eb869c28cb2bdfd727e9cd77",
+    "fileCount": 4549,
+    "licenses": [
+      {
+        "path": "LICENSE",
+        "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+        "excerpt": "                    GNU GENERAL PUBLIC LICENSE\n                       Version 3, 29 June 2007\n\n Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>\n Everyone is permitted to copy and distribute verbatim copies\n of this license document, but changing it is not allowed.\n\n                            Preamble\n\n  The GNU General Public License is a free, copyleft license for\nsoftware and other kinds of works.\n\n  The licenses for most software and other practical works are designed\nto take away your freedom to share and change the works.  By contrast,\nthe GNU General Public License is intended to guarantee your freedom to\nshare and change all versions of a program--to make sure it"
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "Cloud-Lab-Commons/ecl",
+    "url": "https://github.com/Cloud-Lab-Commons/ecl.git",
+    "classification": "protocol-examples",
+    "acquiredAt": "2026-09-13T10:45:28.210Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/Cloud-Lab-Commons--ecl",
+    "outcome": "cloned-source-not-executed",
+    "commit": "d114998930592245d2841d0c9a35329ab737b9be",
+    "fileCount": 18,
+    "licenses": [
+      {
+        "path": "LICENSE",
+        "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+        "excerpt": "                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity."
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "open-rmf/rmf",
+    "url": "https://github.com/open-rmf/rmf.git",
+    "classification": "repository-manifest",
+    "acquiredAt": "2026-09-13T10:45:29.301Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/open-rmf--rmf",
+    "outcome": "cloned-source-not-executed",
+    "commit": "146c053b61bc6d8db77ed37f6bb6a4a7d448f12f",
+    "fileCount": 16,
+    "licenses": [
+      {
+        "path": "LICENSE",
+        "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+        "excerpt": "                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity."
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "open-rmf/rmf_demos",
+    "url": "https://github.com/open-rmf/rmf_demos.git",
+    "classification": "simulation-integration",
+    "acquiredAt": "2026-09-13T10:45:30.464Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/open-rmf--rmf_demos",
+    "outcome": "cloned-source-not-executed",
+    "commit": "4f8850fd3ff9c214252e4428d2ed03a646e6c839",
+    "fileCount": 231,
+    "licenses": [
+      {
+        "path": "LICENSE",
+        "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+        "excerpt": "                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity."
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "FormantIO/toolkit",
+    "url": "https://github.com/FormantIO/toolkit.git",
+    "classification": "partial-sdk",
+    "acquiredAt": "2026-09-13T10:45:33.088Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/FormantIO--toolkit",
+    "outcome": "cloned-source-not-executed",
+    "commit": "7eccfca24b97953641032e2e952137a0d97a8005",
+    "fileCount": 1927,
+    "licenses": [
+      {
+        "path": "LICENSE.md",
+        "sha256": "93b52603271a114d2a6db655899ed4eb7f7b01bdd9c7e331dada2588ee0ef178",
+        "excerpt": "Copyright 2021 Formant\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO T"
+      },
+      {
+        "path": "packages/data-sdk/LICENSE.txt",
+        "sha256": "85e19fb73a9772f22cd0e1605fe5c624a8647a5dd1942cb6419d4ef04c1d5b6c",
+        "excerpt": "MIT License\n\nCopyright (c) 2023 Formant\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT"
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "FormantIO/formant",
+    "url": "https://github.com/FormantIO/formant.git",
+    "classification": "partial-sdk",
+    "acquiredAt": "2026-09-13T10:45:39.136Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/FormantIO--formant",
+    "outcome": "cloned-source-not-executed",
+    "commit": "c2df919bec01052454254a22d73a418b08b01d41",
+    "fileCount": 202,
+    "licenses": [
+      {
+        "path": "LICENSE",
+        "sha256": "261c5238cc888a7ae35ec54fc9b44f37ab2bec1041f0c45f7202242d464ec117",
+        "excerpt": "  Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity. For the purposes of this defin"
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "FormantIO/ros2-adapter",
+    "url": "https://github.com/FormantIO/ros2-adapter.git",
+    "classification": "adapter",
+    "acquiredAt": "2026-09-13T10:45:40.263Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/FormantIO--ros2-adapter",
+    "outcome": "cloned-source-not-executed",
+    "commit": "55b13fd5cef73b449f440600842cc744ea0103f0",
+    "fileCount": 128,
+    "licenses": [
+      {
+        "path": "LICENSE",
+        "sha256": "1bf763228861f3569f806c759347a80f1fa38300b946c50fe8ac0e928b79ef8a",
+        "excerpt": "MIT License\n\nCopyright (c) 2021 Formant\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT"
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "open-rmf/rmf_ros2",
+    "url": "https://github.com/open-rmf/rmf_ros2.git",
+    "classification": "implementation",
+    "acquiredAt": "2026-09-13T10:48:13.028Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/open-rmf--rmf_ros2",
+    "outcome": "cloned-source-not-executed",
+    "commit": "c16cfee2a80065972e191ecad6ad13c29e156baf",
+    "fileCount": 774,
+    "licenses": [
+      {
+        "path": "LICENSE.md",
+        "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+        "excerpt": "                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity."
+      },
+      {
+        "path": "rmf_fleet_adapter/rmf_rxcpp/RxCpp-4.1.0/Rx/v2/license.txt",
+        "sha256": "d6e3b2775b63d800d10b369d9fa1d9f7147ae61e32a0003cfe318a948baa87ee",
+        "excerpt": "Copyright (c) Microsoft Open Technologies, Inc.  All rights reserved.\nMicrosoft Open Technologies would like to thank its contributors, a list\nof whom are at http://rx.codeplex.com/wikipage?title=Contributors.\n\nLicensed under the Apache License, Version 2.0 (the \"License\"); you\nmay not use this file except in compliance with the License. You may\nobtain a copy of the License at\n\nhttp://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software\ndistributed under the License is distributed on an \"AS IS\" BASIS,\nWITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or\nimplied. See the License for the specific language governing permissions\nand "
+      },
+      {
+        "path": "rmf_websocket/websocketpp/COPYING",
+        "sha256": "5ba81a1ed402517dce2581fa2d4042baf6a9c8ca0fe94fa6a7043ce6ab23064f",
+        "excerpt": "Main Library:\n\nBSD 3-Clause License\n\nCopyright (c) 2014, Peter Thorson. All rights reserved.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are met:\n    * Redistributions of source code must retain the above copyright\n      notice, this list of conditions and the following disclaimer.\n    * Redistributions in binary form must reproduce the above copyright\n      notice, this list of conditions and the following disclaimer in the\n      documentation and/or other materials provided with the distribution.\n    * Neither the name of the WebSocket++ Project nor the\n      names of its contributors may be used to "
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "open-rmf/rmf_task",
+    "url": "https://github.com/open-rmf/rmf_task.git",
+    "classification": "implementation",
+    "acquiredAt": "2026-09-13T10:48:14.505Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/open-rmf--rmf_task",
+    "outcome": "cloned-source-not-executed",
+    "commit": "f0347c15718945bc6f1528ed682708ea9eb573f1",
+    "fileCount": 165,
+    "licenses": [
+      {
+        "path": "LICENSE.md",
+        "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+        "excerpt": "                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity."
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "open-rmf/rmf_traffic",
+    "url": "https://github.com/open-rmf/rmf_traffic.git",
+    "classification": "implementation",
+    "acquiredAt": "2026-09-13T10:48:15.782Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/open-rmf--rmf_traffic",
+    "outcome": "cloned-source-not-executed",
+    "commit": "39f09e7971c8e666e12c8e9b12199014f631c0bb",
+    "fileCount": 692,
+    "licenses": [
+      {
+        "path": "LICENSE.md",
+        "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+        "excerpt": "                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity."
+      },
+      {
+        "path": "rmf_traffic/thirdparty/fcl/LICENSE",
+        "sha256": "899258d09bf54d5d11eee2567e6cf72f7927a81267959db4baa3468a70fd8703",
+        "excerpt": "Software License Agreement (BSD License)\n\n Copyright (c) 2008-2014, Willow Garage, Inc.\n Copyright (c) 2014-2016, Open Source Robotics Foundation\n All rights reserved.\n\n Redistribution and use in source and binary forms, with or without\n modification, are permitted provided that the following conditions\n are met:\n\n  * Redistributions of source code must retain the above copyright\n    notice, this list of conditions and the following disclaimer.\n  * Redistributions in binary form must reproduce the above\n    copyright notice, this list of conditions and the following\n    disclaimer in the documentation and/or other materials provided\n    with the distribution.\n  * Neither the name of Open Sou"
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "open-rmf/rmf_api_msgs",
+    "url": "https://github.com/open-rmf/rmf_api_msgs.git",
+    "classification": "schemas",
+    "acquiredAt": "2026-09-13T10:48:17.151Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/open-rmf--rmf_api_msgs",
+    "outcome": "cloned-source-not-executed",
+    "commit": "f61c13048a2b00063c22cf955f4b279053eccba2",
+    "fileCount": 78,
+    "licenses": [
+      {
+        "path": "LICENSE.md",
+        "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+        "excerpt": "                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity."
+      }
+    ],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  },
+  {
+    "repository": "emeraldsci/ecl-protos",
+    "url": "https://github.com/emeraldsci/ecl-protos.git",
+    "classification": "schemas",
+    "acquiredAt": "2026-09-13T10:59:35.195Z",
+    "directory": "/home/raed/Projects/workflow-foundry/corpus/emeraldsci--ecl-protos",
+    "outcome": "cloned-source-not-executed",
+    "commit": "963bb9ffbb8aa6991dec7d6a682fa7daaa8e0381",
+    "fileCount": 4,
+    "licenses": [],
+    "redistribution": "not-authorized-by-acquisition; review upstream license",
+    "execution": "not-installed-or-run"
+  }
+]

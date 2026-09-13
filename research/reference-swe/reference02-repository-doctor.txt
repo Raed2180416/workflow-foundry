@@ -1,0 +1,22 @@
+npm notice run @contrare-research/workflow-foundry@0.1.0 check
+npm notice run node bin/foundry.mjs doctor
+{
+  "version": "0.1.0",
+  "source": "/home/raed/Projects/workflow-foundry",
+  "node": "v24.20.0",
+  "supportedNode": true,
+  "dependencyPins": {
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "ajv": "8.20.0",
+    "jsonc-parser": "3.3.1"
+  },
+  "skillCount": 14,
+  "interfaces": [
+    "CLI",
+    "MCP stdio",
+    "loopback visual UI",
+    "project-scoped client installer"
+  ],
+  "published": false,
+  "qualification": "Run npm test and read evaluation receipts; doctor does not certify task quality."
+}

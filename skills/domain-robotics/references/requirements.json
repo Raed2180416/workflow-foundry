@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "domain": "robotics",
+  "status": "proposed-contract-cases-not-runtime-verification",
+  "fixturePolicy": "Fake devices, abstract resources and simulator state only; no physical actuation.",
+  "sourceMap": "source-map.md",
+  "cases": [
+    {
+      "id": "robotics-001",
+      "requirement": "Transport acceptance is distinct from independently observed mission completion.",
+      "evidence": ["ROB-D1", "ROB-D2", "ROB-D3"],
+      "enforcement": "Adapter state reducer and mission postcondition.",
+      "falsifier": {"given": {"httpSuccess": true, "commandPublished": true, "completionTelemetry": null}, "when": "Evaluate the mission outcome.", "must": "Remain accepted or executing; never report completed."},
+      "positiveControl": "Fresh matching fake telemetry satisfying the mission postcondition produces observed completion.",
+      "tradeoff": "An adapter must expose outcome evidence beyond request transport."
+    },
+    {
+      "id": "robotics-002",
+      "requirement": "Idempotency binds actor, device epoch, request ID, workflow revision and payload hash durably.",
+      "evidence": ["ROB-C1", "ROB-D2"],
+      "enforcement": "Durable dispatch store.",
+      "falsifier": {"given": {"requestId": "q1", "firstPayload": "hash-a", "secondPayload": "hash-b"}, "when": "Reuse q1 with a different payload.", "must": "Reject the conflicting request rather than replaying a cached success."},
+      "positiveControl": "The same identity and payload after a process restart returns the recorded outcome without duplicating an effect.",
+      "tradeoff": "Persistent deduplication needs retention policy and canonical payload hashing."
+    },
+    {
+      "id": "robotics-003",
+      "requirement": "Completion evidence must match the current device epoch, command and plan revision and satisfy the configured freshness bound.",
+      "evidence": ["ROB-D2", "ROB-D3", "ROB-P1"],
+      "enforcement": "Telemetry validator.",
+      "falsifier": {"given": {"currentEpoch": "boot-b", "telemetryEpoch": "boot-a", "sameNumericCommandId": true}, "when": "Receive a late completion observation.", "must": "Reject it as stale evidence."},
+      "positiveControl": "Current-epoch telemetry within the supplied age limit is eligible for postcondition evaluation.",
+      "tradeoff": "Clock and epoch semantics must be explicit across devices."
+    },
+    {
+      "id": "robotics-004",
+      "requirement": "Timeout after possible acceptance produces an unknown effect until reconciliation.",
+      "evidence": ["ROB-D2", "ROB-F2"],
+      "enforcement": "Command supervisor and adapter status query.",
+      "falsifier": {"given": {"fakeDeviceAccepted": true, "acknowledgementLost": true}, "when": "The response deadline expires.", "must": "Query the prior command outcome before any bounded retry."},
+      "positiveControl": "A proven rejection before acceptance can be retried according to the declared budget.",
+      "tradeoff": "Reconciliation may block progress during an outage."
+    },
+    {
+      "id": "robotics-005",
+      "requirement": "Retry count and overall recovery duration are bounded across nested control structures.",
+      "evidence": ["ROB-D2"],
+      "enforcement": "Global scheduler budget and adapter retry policy.",
+      "falsifier": {"given": {"fakeAdapterAlwaysUnavailable": true, "maxAttempts": 3}, "when": "Execute inside a loop and map combination.", "must": "Stop attempts at the declared shared limit and preserve a non-success terminal reason."},
+      "positiveControl": "Availability restored within the budget permits the same command identity to continue.",
+      "tradeoff": "Global accounting can reduce parallel throughput but makes limits meaningful."
+    },
+    {
+      "id": "robotics-006",
+      "requirement": "Cancellation, interruption, kill and emergency stop have separate ownership and acknowledgement contracts.",
+      "evidence": ["ROB-C2", "ROB-T1", "ROB-D3"],
+      "enforcement": "Task state machine and verified deployment adapter.",
+      "falsifier": {"given": {"cancelRequested": true, "cleanupPending": true, "stopAcknowledged": false}, "when": "Transfer control to another actor.", "must": "Block conflicting control until the required interruption or safe-state acknowledgement exists."},
+      "positiveControl": "An acknowledged interruption and valid lease transfer permit the replacement controller.",
+      "tradeoff": "Stopping semantics depend on device capabilities and cannot be synthesized from a generic prompt."
+    },
+    {
+      "id": "robotics-007",
+      "requirement": "Resource ownership is exclusive across independent agents and persists through relevant recovery transitions.",
+      "evidence": ["ROB-P1", "ROB-T1"],
+      "enforcement": "Authoritative resource scheduler.",
+      "falsifier": {"given": {"actors": ["a", "b"], "exclusiveResource": "fake-robot-1"}, "when": "Both actors request the resource concurrently.", "must": "Grant at most one active lease; the other remains queued or rejected."},
+      "positiveControl": "After confirmed release, the waiting actor can acquire a new lease.",
+      "tradeoff": "Lease expiry alone may not establish that an old physical controller stopped."
+    },
+    {
+      "id": "robotics-008",
+      "requirement": "Map or workflow changes invalidate affected plans, approvals and completion evidence.",
+      "evidence": ["ROB-P1", "ROB-T1"],
+      "enforcement": "Revisioned proposal application and admission.",
+      "falsifier": {"given": {"plannedMap": "m1", "currentMap": "m2", "approvedRevision": "r1"}, "when": "Resume a pending navigation node.", "must": "Replan and obtain required revision-bound authorization before dispatch."},
+      "positiveControl": "An unchanged plan with fresh state and valid authorization can resume.",
+      "tradeoff": "Edits require impact analysis rather than immediate mutation of live commands."
+    },
+    {
+      "id": "robotics-009",
+      "requirement": "A schema-valid state without successful terminal evidence does not satisfy a mission.",
+      "evidence": ["ROB-S1", "ROB-T1"],
+      "enforcement": "Semantic result validator.",
+      "falsifier": {"given": {"booking": {"id": "fake-task"}}, "when": "Evaluate a structurally acceptable task-state document.", "must": "Report unknown or incomplete because the mission postcondition is absent."},
+      "positiveControl": "A completed state plus matching postcondition evidence satisfies the declared mission.",
+      "tradeoff": "Semantic validators are task-specific and cannot be replaced by JSON schema alone."
+    },
+    {
+      "id": "robotics-010",
+      "requirement": "SDK health, queued telemetry and an operator notification are not interchangeable with robot outcome or intervention resolution.",
+      "evidence": ["ROB-F1", "ROB-F2"],
+      "enforcement": "Adapter result typing and handoff state.",
+      "falsifier": {"given": {"agentHealthy": true, "interventionId": "i1", "operatorResponses": []}, "when": "Evaluate the blocked mission.", "must": "Keep the intervention pending and the mission unresolved."},
+      "positiveControl": "A matching authorized operator acknowledgement permits the declared recovery action.",
+      "tradeoff": "An interface needs multiple typed outcomes instead of a generic success flag."
+    },
+    {
+      "id": "robotics-011",
+      "requirement": "Simulation success and software snapshots do not imply physical deployment readiness or physical rollback.",
+      "evidence": ["ROB-D1", "ROB-T1", "ROB-F3"],
+      "enforcement": "Environment binding and promotion policy.",
+      "falsifier": {"given": {"mode": "simulation", "simulationPassed": true, "physicalAdapterVerified": false}, "when": "Request a physical execution capability.", "must": "Reject promotion until deployment-specific authority and evidence are supplied."},
+      "positiveControl": "The same workflow remains usable with its verified simulator adapter.",
+      "tradeoff": "Deployment qualification remains a separate engineering task."
+    },
+    {
+      "id": "robotics-012",
+      "requirement": "The visual inspector and executor identify the same immutable workflow revision and event position.",
+      "evidence": ["ROB-F3", "ROB-S1", "ROB-P1"],
+      "enforcement": "Inspector protocol and revision store.",
+      "falsifier": {"given": {"displayedRevision": "r1", "executingRevision": "r2"}, "when": "An operator submits a change based on the displayed graph.", "must": "Reject the stale proposal or require reconciliation against r2."},
+      "positiveControl": "A proposal against the current revision can be validated and applied under its authority rules.",
+      "tradeoff": "Clients must handle stale views explicitly."
+    }
+  ]
+}

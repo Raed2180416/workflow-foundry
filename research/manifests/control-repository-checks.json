@@ -1,0 +1,111 @@
+{
+  "scope": "repository-tests-and-doctor-current-snapshot",
+  "nodeVersion": "v24.20.0",
+  "results": [
+    {
+      "startedAt": "2026-09-13T11:19:47.292Z",
+      "finishedAt": "2026-09-13T11:19:48.972Z",
+      "command": [
+        "npm",
+        "test"
+      ],
+      "sourceHashesBefore": {
+        "package.json": "0aa9a524d6ca0f8291cd3d388cd6ef76b6f7ab99ebc183f295e58cffcef6296b",
+        "package-lock.json": "7bddd5dfb8cd6e3717d54cd8c184c297b0e166ad4bbdb9645d369290b06a9af9",
+        "src/capabilities.mjs": "943b712cf58ce2feedc08ce0b3100f9108bca869a867df7c8f388f3efc9ce365",
+        "src/components.mjs": "3066bb53d45f627f1d3be6855d4a9df8afa59bd5e294ad363af950e53de94c05",
+        "src/data.mjs": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c",
+        "src/foundry.mjs": "a4fe06ade765695d755e16f01f72820d3ab222741d1ff4df4b2f1e34d6f8b183",
+        "src/hooks.mjs": "cc541bc91d3f8fadcbd91a885ab6151afbc991b53c88903ebcfe18b3d9028140",
+        "src/http.mjs": "be9e9c498581c20849e6e966545d98a78866daac0cc61c907de28f7b6e9313a3",
+        "src/install.mjs": "10d033fd87806de89635b1b0f91f517a8c33df675da7783d583ec9ccf2af9d68",
+        "src/mcp.mjs": "585e1f7197efd50f42bf36b96ecaf454837278ff7a18cc5a7b95bad3af269130",
+        "src/runtime.mjs": "2dc6b4c11d14e014c333c72ae8efe28401611a51cb24bbbf1ee1797f314b8e07",
+        "src/store.mjs": "b48af2042a1b9b9524ea9ec011821a89335fe8119c87564fe3d595752013944a",
+        "src/validate.mjs": "9eabd5d7c0bf9082fb40ae565d883485332d0e048af9f12dd25df5c8865499ab",
+        "tests/control-audit.test.mjs": "83105ba083537b78a32efbfa6a75961d1e17423d96c8a3a7b2e812973febe967",
+        "tests/evaluation-evidence.test.mjs": "274d22366ca20f593609dc1c0e052b4f87f0a6652a7318900cfd2332223ef456",
+        "tests/evaluation-incident.test.mjs": "952758365f4d067a5b635b162b01e70ff03ef7ec843fb4bc5aa0a031df991425",
+        "tests/evaluation-runtime.test.mjs": "e26450fe496afa9dd054f3cba27f0283e84aa07fc26db9f79c3b05afcbaf6398",
+        "tests/security-audit.test.mjs": "5d97543f34c141dd6f3d6f041cd02719293f79bcb537559d334e3413d8a34878"
+      },
+      "sourceHashesAfter": {
+        "package.json": "0aa9a524d6ca0f8291cd3d388cd6ef76b6f7ab99ebc183f295e58cffcef6296b",
+        "package-lock.json": "7bddd5dfb8cd6e3717d54cd8c184c297b0e166ad4bbdb9645d369290b06a9af9",
+        "src/capabilities.mjs": "943b712cf58ce2feedc08ce0b3100f9108bca869a867df7c8f388f3efc9ce365",
+        "src/components.mjs": "3066bb53d45f627f1d3be6855d4a9df8afa59bd5e294ad363af950e53de94c05",
+        "src/data.mjs": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c",
+        "src/foundry.mjs": "a4fe06ade765695d755e16f01f72820d3ab222741d1ff4df4b2f1e34d6f8b183",
+        "src/hooks.mjs": "cc541bc91d3f8fadcbd91a885ab6151afbc991b53c88903ebcfe18b3d9028140",
+        "src/http.mjs": "be9e9c498581c20849e6e966545d98a78866daac0cc61c907de28f7b6e9313a3",
+        "src/install.mjs": "10d033fd87806de89635b1b0f91f517a8c33df675da7783d583ec9ccf2af9d68",
+        "src/mcp.mjs": "585e1f7197efd50f42bf36b96ecaf454837278ff7a18cc5a7b95bad3af269130",
+        "src/runtime.mjs": "2dc6b4c11d14e014c333c72ae8efe28401611a51cb24bbbf1ee1797f314b8e07",
+        "src/store.mjs": "b48af2042a1b9b9524ea9ec011821a89335fe8119c87564fe3d595752013944a",
+        "src/validate.mjs": "9eabd5d7c0bf9082fb40ae565d883485332d0e048af9f12dd25df5c8865499ab",
+        "tests/control-audit.test.mjs": "83105ba083537b78a32efbfa6a75961d1e17423d96c8a3a7b2e812973febe967",
+        "tests/evaluation-evidence.test.mjs": "274d22366ca20f593609dc1c0e052b4f87f0a6652a7318900cfd2332223ef456",
+        "tests/evaluation-incident.test.mjs": "952758365f4d067a5b635b162b01e70ff03ef7ec843fb4bc5aa0a031df991425",
+        "tests/evaluation-runtime.test.mjs": "e26450fe496afa9dd054f3cba27f0283e84aa07fc26db9f79c3b05afcbaf6398",
+        "tests/security-audit.test.mjs": "5d97543f34c141dd6f3d6f041cd02719293f79bcb537559d334e3413d8a34878"
+      },
+      "exitCode": 1,
+      "signal": null,
+      "stdout": "✔ control audit: nested map/loop dataflow is namespaced, charged and not replayed on completed resume (215.928975ms)\n✔ control audit: the shared step budget covers nested map and loop work (34.858386ms)\n✔ control audit: exhausting a loop without its until predicate is failure (30.627785ms)\n✔ control audit: map input cardinality is enforced before child tool dispatch (22.319792ms)\n✔ control audit: nested and top-level undeclared data dependencies are rejected (0.764495ms)\n✔ control audit: skipped branches resolve ordering but cannot invent outputs (22.73973ms)\n✔ control audit: an explicit default makes an intentionally skipped branch usable (21.725897ms)\n✔ control audit: a skipped prerequisite cannot admit a downstream synthetic effect by default (22.049214ms)\n✔ control audit: handled errors remain distinct and cannot satisfy a successful prerequisite (36.266198ms)\n✔ control audit: nested human answers survive store reopen without replaying prior tasks (66.778255ms)\n✔ control audit: concurrent nested flows obey the run-wide capability concurrency limit (74.668354ms)\n✔ control audit: cost reservations prevent excess dispatch under concurrency (24.469537ms)\n✔ control audit: tool output schemas reject fabricated success-shaped results (30.787224ms)\n✔ control audit: non-idempotent errors preserve intent and uncertainty and never auto-retry (31.172207ms)\n✔ control audit: unconfirmed timeout stays uncertain even when the handler later returns (138.723929ms)\n✔ control audit: actual worker process loss does not duplicate an idempotent simulator effect (263.107413ms)\n✔ control audit: a live runner excludes a second invocation of the same run (29.852299ms)\n✔ control audit: workflow revisions preserve active run pins and cannot reuse another run approval (58.304421ms)\n✔ control audit: stale proposals cannot replace a newer workflow head (30.557062ms)\n✔ control audit: a capability change blocks resuming an existing human-paused run (34.591414ms)\n✔ control audit: cancellation requested before a late pure result is not reported as success (36.354773ms)\n✔ control audit: cancellation during retry backoff is cancellation, not ordinary failure (44.638181ms)\n✔ control audit: a pure handler confirming abort is cancellation without another dispatch (42.44251ms)\n✔ control audit: a real failure remains the cause when it cancels an earlier sibling (52.93892ms)\n✔ control audit: caller cancellation cannot downgrade an ambiguous effect to confirmed cancellation (46.120012ms)\n✔ smoke oracle rejects DONE when the file tool was denied (2.012527ms)\n✔ smoke oracle rejects a missing file and operator-substituted output (0.265809ms)\n✔ smoke oracle requires exact expected semantics, not self-attested success (1.340085ms)\n✔ provenance fails on a changed prompt, model or frozen hash (0.427853ms)\n✔ successful edits are reconstructed and mismatched edits fail closed (0.196789ms)\n✔ model guard rejects absent IDs, nonzero nested prices and unknown pricing (0.498556ms)\n✔ run IDs reject path traversal and shell arguments preserve metacharacters (0.26109ms)\n✔ pair gate rejects unequal controls, skill contamination and unsealed heldout claims (0.312046ms)\n✔ independent incident oracle rejects no-op self-attestation and duplicate/wrong effects (1.571429ms)\n✔ independent incident oracle rejects omitted probes and early/absent verification (0.377729ms)\n✔ fail-closed cases reject any remediation or false success and accept safe failure (0.192331ms)\n✔ real runtime self-attestation passes local acceptance but fails independent task oracle (82.467031ms)\n✔ real rollback fixture passes; duplicate effect mutant is rejected despite healthy final state (104.661288ms)\n✔ real runtime recovery without independent verification cannot pass external oracle (29.687279ms)\n✔ security: asynchronous schemas cannot accept invalid input or create an unhandled rejection (119.76221ms)\n✔ security: equivalent schemas remain usable after JSON persistence despite a repeated $id (11.217334ms)\n✔ security: one task cannot resolve a schema identifier introduced by another task (6.939445ms)\n✔ security: dangling SQLite symlinks are rejected before any outside file is created (1.708597ms)\n✔ security: a skipped guard cannot admit its dependent effect (29.816813ms)\n✔ security: cancellation during a final non-cancellable operation cannot become success (30.571139ms)\n✔ security: non-idempotent effects reject automatic retries before execution (12.383332ms)\n✔ security: lost acknowledgement of a non-idempotent effect remains uncertain and is not repeated (21.411056ms)\n✔ security: high-risk approval is bound to the exact run and completed effects do not replay (31.771652ms)\n✔ security: an idempotent operation that ignores timeout cancellation blocks further admission (238.413246ms)\n✖ security: an artifact parent symlink is rejected before creating any outside directory (83.882058ms)\n✔ security: an artifact target symlink is rejected without creating its absent destination (34.167028ms)\n✔ security: conflicting artifact contents cannot be reported as a successful idempotent replay (50.039108ms)\nℹ tests 52\nℹ suites 0\nℹ pass 51\nℹ fail 1\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 1544.678151\n\n✖ failing tests:\n\ntest at tests/security-audit.test.mjs:187:1\n✖ security: an artifact parent symlink is rejected before creating any outside directory (83.882058ms)\n  AssertionError [ERR_ASSERTION]: Rejecting the path after recursive mkdir still created a directory outside the permitted tree\n  \n  true !== false\n  \n      at TestContext.<anonymous> (file:///home/raed/Projects/workflow-foundry/tests/security-audit.test.mjs:197:10)\n      at async Test.run (node:internal/test_runner/test:1404:7)\n      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7) {\n    generatedMessage: false,\n    code: 'ERR_ASSERTION',\n    actual: true,\n    expected: false,\n    operator: 'strictEqual',\n    diff: 'simple'\n  }\n",
+      "stderr": "npm notice run @contrare-research/workflow-foundry@0.1.0 test\nnpm notice run node --test --test-concurrency=2 tests/*.test.mjs\n"
+    },
+    {
+      "startedAt": "2026-09-13T11:19:48.974Z",
+      "finishedAt": "2026-09-13T11:19:49.280Z",
+      "command": [
+        "npm",
+        "run",
+        "check"
+      ],
+      "sourceHashesBefore": {
+        "package.json": "0aa9a524d6ca0f8291cd3d388cd6ef76b6f7ab99ebc183f295e58cffcef6296b",
+        "package-lock.json": "7bddd5dfb8cd6e3717d54cd8c184c297b0e166ad4bbdb9645d369290b06a9af9",
+        "src/capabilities.mjs": "943b712cf58ce2feedc08ce0b3100f9108bca869a867df7c8f388f3efc9ce365",
+        "src/components.mjs": "3066bb53d45f627f1d3be6855d4a9df8afa59bd5e294ad363af950e53de94c05",
+        "src/data.mjs": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c",
+        "src/foundry.mjs": "a4fe06ade765695d755e16f01f72820d3ab222741d1ff4df4b2f1e34d6f8b183",
+        "src/hooks.mjs": "cc541bc91d3f8fadcbd91a885ab6151afbc991b53c88903ebcfe18b3d9028140",
+        "src/http.mjs": "be9e9c498581c20849e6e966545d98a78866daac0cc61c907de28f7b6e9313a3",
+        "src/install.mjs": "10d033fd87806de89635b1b0f91f517a8c33df675da7783d583ec9ccf2af9d68",
+        "src/mcp.mjs": "585e1f7197efd50f42bf36b96ecaf454837278ff7a18cc5a7b95bad3af269130",
+        "src/runtime.mjs": "2dc6b4c11d14e014c333c72ae8efe28401611a51cb24bbbf1ee1797f314b8e07",
+        "src/store.mjs": "b48af2042a1b9b9524ea9ec011821a89335fe8119c87564fe3d595752013944a",
+        "src/validate.mjs": "9eabd5d7c0bf9082fb40ae565d883485332d0e048af9f12dd25df5c8865499ab",
+        "tests/control-audit.test.mjs": "83105ba083537b78a32efbfa6a75961d1e17423d96c8a3a7b2e812973febe967",
+        "tests/evaluation-evidence.test.mjs": "274d22366ca20f593609dc1c0e052b4f87f0a6652a7318900cfd2332223ef456",
+        "tests/evaluation-incident.test.mjs": "952758365f4d067a5b635b162b01e70ff03ef7ec843fb4bc5aa0a031df991425",
+        "tests/evaluation-runtime.test.mjs": "e26450fe496afa9dd054f3cba27f0283e84aa07fc26db9f79c3b05afcbaf6398",
+        "tests/security-audit.test.mjs": "5d97543f34c141dd6f3d6f041cd02719293f79bcb537559d334e3413d8a34878"
+      },
+      "sourceHashesAfter": {
+        "package.json": "0aa9a524d6ca0f8291cd3d388cd6ef76b6f7ab99ebc183f295e58cffcef6296b",
+        "package-lock.json": "7bddd5dfb8cd6e3717d54cd8c184c297b0e166ad4bbdb9645d369290b06a9af9",
+        "src/capabilities.mjs": "943b712cf58ce2feedc08ce0b3100f9108bca869a867df7c8f388f3efc9ce365",
+        "src/components.mjs": "3066bb53d45f627f1d3be6855d4a9df8afa59bd5e294ad363af950e53de94c05",
+        "src/data.mjs": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c",
+        "src/foundry.mjs": "a4fe06ade765695d755e16f01f72820d3ab222741d1ff4df4b2f1e34d6f8b183",
+        "src/hooks.mjs": "cc541bc91d3f8fadcbd91a885ab6151afbc991b53c88903ebcfe18b3d9028140",
+        "src/http.mjs": "be9e9c498581c20849e6e966545d98a78866daac0cc61c907de28f7b6e9313a3",
+        "src/install.mjs": "10d033fd87806de89635b1b0f91f517a8c33df675da7783d583ec9ccf2af9d68",
+        "src/mcp.mjs": "585e1f7197efd50f42bf36b96ecaf454837278ff7a18cc5a7b95bad3af269130",
+        "src/runtime.mjs": "2dc6b4c11d14e014c333c72ae8efe28401611a51cb24bbbf1ee1797f314b8e07",
+        "src/store.mjs": "b48af2042a1b9b9524ea9ec011821a89335fe8119c87564fe3d595752013944a",
+        "src/validate.mjs": "9eabd5d7c0bf9082fb40ae565d883485332d0e048af9f12dd25df5c8865499ab",
+        "tests/control-audit.test.mjs": "83105ba083537b78a32efbfa6a75961d1e17423d96c8a3a7b2e812973febe967",
+        "tests/evaluation-evidence.test.mjs": "274d22366ca20f593609dc1c0e052b4f87f0a6652a7318900cfd2332223ef456",
+        "tests/evaluation-incident.test.mjs": "952758365f4d067a5b635b162b01e70ff03ef7ec843fb4bc5aa0a031df991425",
+        "tests/evaluation-runtime.test.mjs": "e26450fe496afa9dd054f3cba27f0283e84aa07fc26db9f79c3b05afcbaf6398",
+        "tests/security-audit.test.mjs": "5d97543f34c141dd6f3d6f041cd02719293f79bcb537559d334e3413d8a34878"
+      },
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "{\n  \"version\": \"0.1.0\",\n  \"source\": \"/home/raed/Projects/workflow-foundry\",\n  \"node\": \"v24.20.0\",\n  \"supportedNode\": true,\n  \"dependencyPins\": {\n    \"@modelcontextprotocol/sdk\": \"1.30.0\",\n    \"ajv\": \"8.20.0\",\n    \"jsonc-parser\": \"3.3.1\"\n  },\n  \"skillCount\": 12,\n  \"interfaces\": [\n    \"CLI\",\n    \"MCP stdio\",\n    \"loopback visual UI\",\n    \"project-scoped client installer\"\n  ],\n  \"published\": false,\n  \"qualification\": \"Run npm test and read evaluation receipts; doctor does not certify task quality.\"\n}\n",
+      "stderr": "npm notice run @contrare-research/workflow-foundry@0.1.0 check\nnpm notice run node bin/foundry.mjs doctor\n"
+    }
+  ]
+}
