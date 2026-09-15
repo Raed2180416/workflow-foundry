@@ -1243,6 +1243,8 @@ https://github.com/Raed2180416/workflow-foundry
 
 The branch in this section is the continuation branch being published with this document. The repository remains private so this handoff does not silently make a license/public-release decision.
 
+All three handoff repositories (`workflow-foundry`, `agentic-os`, and `hippocampus`) are private at this checkpoint. The friend taking over will need collaborator/access permission from the owner’s GitHub account before these URLs and branches are visible to them.
+
 Package metadata currently says:
 
 ```text
@@ -1291,12 +1293,20 @@ Publication performed during this handoff preserved the **committed** local hist
 
 - all 78 local branches other than `main` were pushed non-force to the existing private remote;
 - repository tags were pushed;
-- the remote now has 79 branch heads, matching the local branch-count total;
 - `codex/semantic-v2-product-splice-20260811`, `codex/amp-arc-port-20260908`, and `codex/amp-client-mcp-20260908` are all present remotely at `4059ac32606acadf22e7c9e21480a6aaf48c65dc`;
 - local `main` was **not** pushed because remote `main` is ahead/non-fast-forward. No force push, reset or merge was performed merely to make the counts line up;
 - the primary checkout still has 137 `git status --porcelain` entries. Those uncommitted/machine-local bytes are intentionally not represented as committed GitHub history.
 
-This means the remote now preserves the committed branch history needed for continuation while the unresolved primary working tree remains exactly where it was for later review.
+The visible-source portion of that dirty primary tree was also preserved without touching the active index/worktree. An alternate Git index produced the dedicated snapshot branch:
+
+```text
+handoff/wip-primary-visible-source-20260915
+f2a9173dc4a95a70b268835647c8a635ba2f7914
+```
+
+That snapshot contains the exact 129-file relocation from `.agents/skills/` to `.agents/skills.disabled.20260913/`—Git detects every file as a 100% rename—plus the untracked Hippocampus canon finding. It deliberately excludes the machine-local `.codex/config.toml`, `.mcp.json`, `.serena/project.yml`, two backup config files, and roughly 21 MiB of generated `tmp/appschema*` material. The snapshot delta passed a high-confidence Betterleaks scan with zero findings. The original checkout retained all 137 status entries unchanged.
+
+After adding this snapshot branch the private remote reports 80 branch heads. This means the remote preserves both the committed branch history and a safe point-in-time copy of the meaningful visible-source WIP while the unresolved primary working tree itself remains exactly where it was for later review.
 
 ### AMP
 
@@ -1339,7 +1349,7 @@ Head observed during this handoff inventory:
 
 That branch contains a large history beyond `main`, including context/cognition/capture/learning/desktop/source-discovery work. The inventory found **53 local branches** in the Hippocampus repository, including roughly fifty AMP-related branches/worktrees rather than only the three older paths originally known from chat context.
 
-During this handoff, all 53 committed local branches were pushed non-force to the existing private `Raed2180416/hippocampus` remote, along with the local tag `codex/amp-operating-context-pre-compiler-20260908`. The remote now reports 53 branch heads, matching the local branch count. The source-discovery branch is present remotely at the exact hash above.
+During this handoff, all 53 pre-existing committed local branches were pushed non-force to the existing private `Raed2180416/hippocampus` remote, along with the local tag `codex/amp-operating-context-pre-compiler-20260908`. The source-discovery branch is present remotely at the exact hash above.
 
 Three AMP worktrees have additional **uncommitted** work which was deliberately left untouched rather than silently folded into a publication commit:
 
@@ -1357,7 +1367,22 @@ Three AMP worktrees have additional **uncommitted** work which was deliberately 
   64 status entries
 ```
 
-The last worktree in particular contains substantial active September 15 cognition/integration work. Its committed branch head is remotely preserved, but its uncommitted working-tree delta remains local and must be reviewed by the owner of that work before any preservation commit is made.
+The last worktree in particular contains substantial active September 15 cognition/integration work. To preserve all three point-in-time WIP states **without committing onto or modifying their active branches**, alternate indexes were used to create three explicitly labeled handoff snapshots:
+
+```text
+handoff/wip-amp-internal-operating-packet-20260915
+  b55d0fe41f655a2e7d4727c53b2430227b80dadb
+
+handoff/wip-cos-amp-integration-20260915
+  fd16f08b1ef2f63587ebee8ac9ddfe4f35ad7804
+
+handoff/wip-amp-grok-cognition-20260915
+  7164d9dab21860436f5f1185a9590fcd0f8fe70a
+```
+
+All three snapshot deltas passed high-confidence Betterleaks scans with zero findings before being pushed. Each original worktree had the same `git status` hash before and after snapshot creation and therefore remains dirty/active exactly as before. With these three snapshot branches, the private Hippocampus remote reports **56 branch heads**.
+
+Treat the `handoff/wip-*` refs as preservation points, not as new canonical development branches. Continue normal work from the actual AMP branch/worktree after understanding its ownership and current state; use the snapshot if the live worktree is later lost, changed incompatibly, or needs forensic comparison.
 
 Therefore, if somebody says “push AMP,” the safe interpretation remains:
 
