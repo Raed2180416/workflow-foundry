@@ -10,6 +10,11 @@ It is **not a claim that an agent can safely automate every domain**, or that a
 generated workflow matches a commercial specialist product. A passing JSON schema,
 a successful model response and a verified task outcome are different results.
 
+For the complete continuation context—research thesis, ARC/AMP/Neural Core
+relationship, implementation state, model failures, evidence boundaries and exact
+next experiments—start with
+[the friend handoff](docs/FRIEND-HANDOFF-DYNAMIC-WORKFLOWS.md).
+
 ## Start from this checkout
 
 Requirements: Node 24 or newer. The optional free-model bridge additionally needs
