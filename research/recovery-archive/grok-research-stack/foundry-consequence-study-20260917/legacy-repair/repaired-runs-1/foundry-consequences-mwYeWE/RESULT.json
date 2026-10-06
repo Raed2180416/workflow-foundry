@@ -1,0 +1,364 @@
+{
+  "approvals": {},
+  "cost": 0,
+  "createdAt": 1789614074703,
+  "deadline": 1789617674703,
+  "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+  "error": null,
+  "eventHead": {
+    "seq": 35,
+    "hash": "18fe5299af047371276bd0c5f99b6f65d1442fb0d527ca61933d72ee4ea20300"
+  },
+  "frames": {
+    "root/matches:0": {
+      "contextHash": "f5403b21734c0e6048127b042ed15d57d141a14b568898ada4dc9dba28ff6940",
+      "nodes": {
+        "errPath": {
+          "attempts": 0,
+          "kind": "task",
+          "status": "skipped"
+        },
+        "fetch": {
+          "argsHash": "d6da2f9fe0ff54f458e1423b724cced0ab78bf1d0697d3defe1cb6e4d59fb283",
+          "attempts": 1,
+          "completedAt": 1789614074709,
+          "completedSequence": 6,
+          "effects": "none",
+          "idempotencyKey": "1927d6f796f3d6c09d14d248e0238227bd78b2e912529a472c7737bf79dfd637",
+          "kind": "task",
+          "outputHash": "d6da2f9fe0ff54f458e1423b724cced0ab78bf1d0697d3defe1cb6e4d59fb283",
+          "startedAt": 1789614074708,
+          "startedSequence": 5,
+          "status": "completed",
+          "tool": "core.identity"
+        },
+        "join": {
+          "argsHash": "a2fcf46205ce4a52945bacb64577ef64de4a6b844fab3f2c6db802f18ac89259",
+          "attempts": 1,
+          "completedAt": 1789614074715,
+          "completedSequence": 11,
+          "effects": "none",
+          "idempotencyKey": "0da7f6c5c66f273cdf2bc73410db9b142b7b7be9ec6efd26d7b5f3d9dfb657ad",
+          "kind": "task",
+          "outputHash": "b086cbcb43254016d75354402911e6a4fed762ebedc3cd806d9d34a225fb7d11",
+          "startedAt": 1789614074714,
+          "startedSequence": 10,
+          "status": "completed",
+          "tool": "core.collect"
+        },
+        "okPath": {
+          "argsHash": "855af9de868afdf124aef47cd65125e2282261d87c1aacc4653bbe0cac94eadc",
+          "attempts": 1,
+          "completedAt": 1789614074713,
+          "completedSequence": 9,
+          "effects": "none",
+          "idempotencyKey": "d5b732ebd759caedfc7b058e7f2b92d37ad902bf039f857fa891073cba652496",
+          "kind": "task",
+          "outputHash": "855af9de868afdf124aef47cd65125e2282261d87c1aacc4653bbe0cac94eadc",
+          "startedAt": 1789614074712,
+          "startedSequence": 8,
+          "status": "completed",
+          "tool": "core.identity"
+        }
+      },
+      "outputs": {
+        "fetch": {
+          "id": "a",
+          "ok": true
+        },
+        "join": {
+          "count": 2,
+          "items": [
+            "ok",
+            null
+          ]
+        },
+        "okPath": {
+          "branch": "ok"
+        }
+      }
+    },
+    "root/matches:1": {
+      "contextHash": "b90063f1c45b662ea80da442d450cfc393a5856a2d0b49fecc84ffe67ef22245",
+      "nodes": {
+        "errPath": {
+          "argsHash": "99279d29d1b497eeb18ae64ecf458c4f2ad2418328803a5e17f3f3c5e577e044",
+          "attempts": 1,
+          "completedAt": 1789614074720,
+          "completedSequence": 17,
+          "effects": "none",
+          "idempotencyKey": "412cf3b8b1e67f42e0927b398893eb80d569dfc441b84a1a0b8107a299c45db6",
+          "kind": "task",
+          "outputHash": "99279d29d1b497eeb18ae64ecf458c4f2ad2418328803a5e17f3f3c5e577e044",
+          "startedAt": 1789614074719,
+          "startedSequence": 16,
+          "status": "completed",
+          "tool": "core.identity"
+        },
+        "fetch": {
+          "argsHash": "2c0db323e442622c8887b3997fa555f2065abe7e41ad4e52ee10eeb7b4f8de32",
+          "attempts": 1,
+          "completedAt": 1789614074718,
+          "completedSequence": 14,
+          "effects": "none",
+          "idempotencyKey": "5e8e6ed949b6c45a229f7e1d6cb663c8e6918752a99459fb9436e5ee98198ffe",
+          "kind": "task",
+          "outputHash": "2c0db323e442622c8887b3997fa555f2065abe7e41ad4e52ee10eeb7b4f8de32",
+          "startedAt": 1789614074717,
+          "startedSequence": 13,
+          "status": "completed",
+          "tool": "core.identity"
+        },
+        "join": {
+          "argsHash": "3ed7bc86debfcc9dc8791fec4c5f743610206001e5f593c86c9bcdbb1967dfc3",
+          "attempts": 1,
+          "completedAt": 1789614074723,
+          "completedSequence": 19,
+          "effects": "none",
+          "idempotencyKey": "404127c7f20e6e2df917706598b802036839a56d2f0771c4d31f99d0a2cf2caf",
+          "kind": "task",
+          "outputHash": "b05bfd7c70a20e92e124e4db10f9d868c24327ccb3728c79cf062923d5d69f41",
+          "startedAt": 1789614074722,
+          "startedSequence": 18,
+          "status": "completed",
+          "tool": "core.collect"
+        },
+        "okPath": {
+          "attempts": 0,
+          "kind": "task",
+          "status": "skipped"
+        }
+      },
+      "outputs": {
+        "errPath": {
+          "branch": "error"
+        },
+        "fetch": {
+          "id": "b",
+          "ok": false
+        },
+        "join": {
+          "count": 2,
+          "items": [
+            null,
+            "error"
+          ]
+        }
+      }
+    },
+    "root/matches:2": {
+      "contextHash": "4619a694bd53b4a6c6eb30af701280aa4125517e4505a5081a2c884d863b7551",
+      "nodes": {
+        "errPath": {
+          "attempts": 0,
+          "kind": "task",
+          "status": "skipped"
+        },
+        "fetch": {
+          "argsHash": "656aad0d598127cf85c31f6b36caf39772821cb9c53fdf8a3672f388a991af42",
+          "attempts": 1,
+          "completedAt": 1789614074726,
+          "completedSequence": 22,
+          "effects": "none",
+          "idempotencyKey": "2cc8775bf9771e60984c330a59d5691ab15c3ff344e789761e8b9349adc607ac",
+          "kind": "task",
+          "outputHash": "656aad0d598127cf85c31f6b36caf39772821cb9c53fdf8a3672f388a991af42",
+          "startedAt": 1789614074725,
+          "startedSequence": 21,
+          "status": "completed",
+          "tool": "core.identity"
+        },
+        "join": {
+          "argsHash": "a2fcf46205ce4a52945bacb64577ef64de4a6b844fab3f2c6db802f18ac89259",
+          "attempts": 1,
+          "completedAt": 1789614074732,
+          "completedSequence": 27,
+          "effects": "none",
+          "idempotencyKey": "5336cf83dd1a7f9abf6c96528cd84a5021cf5532ed413b81f4d9189bb6710075",
+          "kind": "task",
+          "outputHash": "b086cbcb43254016d75354402911e6a4fed762ebedc3cd806d9d34a225fb7d11",
+          "startedAt": 1789614074731,
+          "startedSequence": 26,
+          "status": "completed",
+          "tool": "core.collect"
+        },
+        "okPath": {
+          "argsHash": "855af9de868afdf124aef47cd65125e2282261d87c1aacc4653bbe0cac94eadc",
+          "attempts": 1,
+          "completedAt": 1789614074730,
+          "completedSequence": 25,
+          "effects": "none",
+          "idempotencyKey": "ce806415a6baf38105457fd3f4b0bbcedbe5b0a99de96895525b4c517b9ca603",
+          "kind": "task",
+          "outputHash": "855af9de868afdf124aef47cd65125e2282261d87c1aacc4653bbe0cac94eadc",
+          "startedAt": 1789614074729,
+          "startedSequence": 24,
+          "status": "completed",
+          "tool": "core.identity"
+        }
+      },
+      "outputs": {
+        "fetch": {
+          "id": "c",
+          "ok": true
+        },
+        "join": {
+          "count": 2,
+          "items": [
+            "ok",
+            null
+          ]
+        },
+        "okPath": {
+          "branch": "ok"
+        }
+      }
+    }
+  },
+  "id": "0d0c5c1d-ac49-44de-9c95-436cfee72ce5",
+  "input": {
+    "claim": {
+      "grounded": true
+    },
+    "matches": [
+      {
+        "id": "a",
+        "ok": true
+      },
+      {
+        "id": "b",
+        "ok": false
+      },
+      {
+        "id": "c",
+        "ok": true
+      }
+    ]
+  },
+  "nodes": {
+    "artifact": {
+      "argsHash": "f44964cfb4a032af59b6c6b356a0f46b39e03edc03d6fc184ed1db04d5ef39a1",
+      "attempts": 1,
+      "completedAt": 1789614074742,
+      "completedSequence": 34,
+      "effects": "idempotent",
+      "idempotencyKey": "a274094ec629176036c0371c8e786d8db64e88e137176ce139ed8bfb0ed6c27f",
+      "kind": "task",
+      "outputHash": "dec95d7694bd2d6f40a4cf815e52fc320724401aff0cade0092d168c868e6e94",
+      "startedAt": 1789614074740,
+      "startedSequence": 33,
+      "status": "completed",
+      "tool": "core.artifact"
+    },
+    "matches": {
+      "attempts": 1,
+      "completedAt": 1789614074733,
+      "completedSequence": 28,
+      "kind": "map",
+      "outputHash": "f5b07ad23e9c90b5b0e277c5d61b3ddc23d6718e196d5d4278d2bd3bf3766424",
+      "startedAt": 1789614074706,
+      "startedSequence": 3,
+      "status": "completed"
+    },
+    "validate": {
+      "argsHash": "a623f40da9df05645b22589bb511647e4ab80fe3ee0b1a0d52ec75564d36a065",
+      "attempts": 1,
+      "completedAt": 1789614074736,
+      "completedSequence": 30,
+      "effects": "none",
+      "idempotencyKey": "fde06d27ef686faa73559efe11b791433727d88656f0376a0c158eea21c6502e",
+      "kind": "task",
+      "outputHash": "f2e6221bac7112ea123f706c89500b263e72f0f9bc7068fb74bdbaf8c51fbc38",
+      "startedAt": 1789614074735,
+      "startedSequence": 29,
+      "status": "completed",
+      "tool": "core.validate"
+    },
+    "verify": {
+      "attempts": 1,
+      "completedAt": 1789614074738,
+      "completedSequence": 32,
+      "kind": "assert",
+      "outputHash": "11c11db30f4b3f6c758722ba3e27eea08145b7d212f6a157451e364b48475280",
+      "startedAt": 1789614074737,
+      "startedSequence": 31,
+      "status": "completed"
+    }
+  },
+  "outputs": {
+    "artifact": {
+      "bytes": 21,
+      "name": "receipt.json",
+      "sha256": "c3f7120e8218a8208459015dd0edda53d195d6ff7fa2bea0f42eefea1d0fb6a8"
+    },
+    "matches": {
+      "count": 3,
+      "items": [
+        {
+          "fetch": {
+            "id": "a",
+            "ok": true
+          },
+          "join": {
+            "count": 2,
+            "items": [
+              "ok",
+              null
+            ]
+          },
+          "okPath": {
+            "branch": "ok"
+          }
+        },
+        {
+          "errPath": {
+            "branch": "error"
+          },
+          "fetch": {
+            "id": "b",
+            "ok": false
+          },
+          "join": {
+            "count": 2,
+            "items": [
+              null,
+              "error"
+            ]
+          }
+        },
+        {
+          "fetch": {
+            "id": "c",
+            "ok": true
+          },
+          "join": {
+            "count": 2,
+            "items": [
+              "ok",
+              null
+            ]
+          },
+          "okPath": {
+            "branch": "ok"
+          }
+        }
+      ]
+    },
+    "validate": {
+      "errors": [],
+      "valid": true
+    },
+    "verify": {
+      "passed": true
+    }
+  },
+  "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+  "resumeCount": 1,
+  "status": "succeeded",
+  "steps": 13,
+  "updatedAt": 1789614074744,
+  "workflowHash": "b33df9adf9d0e2bbeb33a36b6c207087a220854f7446d729e9d08602295a22ba",
+  "workflowId": "Objc91eb70135e0",
+  "executionActive": false,
+  "independentTaskVerified": false
+}

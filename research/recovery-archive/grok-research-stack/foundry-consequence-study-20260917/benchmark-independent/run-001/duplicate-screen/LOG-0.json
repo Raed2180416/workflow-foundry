@@ -1,0 +1,32 @@
+[
+  {
+    "ordinal": 1,
+    "instrument": "screen",
+    "sampleId": "independent-a",
+    "nodeKey": "root/screening",
+    "idempotencyKey": "cd178e6ce1b5030c53fc98f18e41930c071f10ca5e31f03fca1ee2a741b455c0",
+    "syntheticCost": 1,
+    "outcome": "returned",
+    "observation": {
+      "claim": "Untrusted claim text",
+      "ok": true,
+      "sampleId": "independent-a",
+      "suspicious": false
+    }
+  },
+  {
+    "ordinal": 2,
+    "instrument": "screen",
+    "sampleId": "independent-a",
+    "nodeKey": "root/duplicate",
+    "idempotencyKey": "a336a185249a7cd1fae34246a5af90faeef5e1462927777ae2d73b4cf80f8d89",
+    "syntheticCost": 1,
+    "outcome": "returned",
+    "observation": {
+      "claim": "Untrusted claim text",
+      "ok": true,
+      "sampleId": "independent-a",
+      "suspicious": false
+    }
+  }
+]

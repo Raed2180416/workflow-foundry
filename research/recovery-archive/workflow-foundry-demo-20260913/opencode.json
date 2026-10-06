@@ -1,0 +1,16 @@
+{
+  "mcp": {
+    "workflow-foundry": {
+      "type": "local",
+      "command": [
+        "/usr/bin/node",
+        "/home/raed/Projects/workflow-foundry/bin/foundry.mjs",
+        "mcp",
+        "--workspace",
+        "/home/raed/Projects/workflow-foundry-demo-20260913"
+      ],
+      "enabled": true,
+      "timeout": 30000
+    }
+  }
+}

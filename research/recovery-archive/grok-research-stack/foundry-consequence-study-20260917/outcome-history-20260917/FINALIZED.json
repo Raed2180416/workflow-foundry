@@ -1,0 +1,104 @@
+{
+  "status": "source-frozen",
+  "date": "2026-09-17",
+  "worker": "worker-4",
+  "repository": "/home/raed/Projects/workflow-foundry",
+  "api": "inspectOutcomeHistory(store, { receiptId, currentRegistryHash })",
+  "implementationLines": 151,
+  "sourceHashes": {
+    "src/outcome-history.mjs": "023921bb5bd99982c821b9fc9ec28e68763f8344ea53e57c824e6e0608f75610",
+    "tests/outcome-history.test.mjs": "0df3b1d6fa34edf3b6279a9b8385f303102a625813c3cb7a3d5be9d6e68a7523",
+    "docs/OUTCOME-HISTORY.md": "3922fa4bfbfe7a69510509eefbaa6398663f74f47615105fc9fe98a0238fc541"
+  },
+  "sourceSnapshots": "source-final/",
+  "supportedObserver": {
+    "kind": "exact-json-artifact/2",
+    "sourceSha256": "8de15af4b6ce842c3e54039531c651472a9079a231bf31390f4a8f95b924f1fd",
+    "dataSha256": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c",
+    "testedNode": "v24.21.0",
+    "matchingReceiptNodeRequired": true
+  },
+  "validation": {
+    "initialFocused": {
+      "command": "node --test --test-reporter=tap tests/outcome-history.test.mjs",
+      "exitCode": 0,
+      "tests": 54,
+      "passed": 54,
+      "failed": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "stdout": "tests-01.stdout",
+      "stdoutSha256": "ae4e1bf7d00ac3b35d5c54d82c0feada8e60b56a0327cd03717704a882e1e548",
+      "testSourceSnapshot": "tests-01.source.mjs"
+    },
+    "finalFocused": {
+      "command": "node --test --test-reporter=tap tests/outcome-history.test.mjs",
+      "exitCode": 0,
+      "tests": 55,
+      "passed": 55,
+      "failed": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "stdout": "tests-02.stdout",
+      "stdoutSha256": "13e921d68bfc5e2f82e0a5c76f6cf558e3ce803438d045d51a5cb1dd5d9536cc",
+      "evidence": "evidence-02/"
+    },
+    "earlierFullRepository": {
+      "command": "npm test",
+      "exitCode": 0,
+      "tests": 616,
+      "passed": 612,
+      "failed": 0,
+      "skipped": 4,
+      "cancelled": 0,
+      "stdout": "repository-tests-01.stdout",
+      "stdoutSha256": "0606d30e87803c85c89dedfc1e797932f01771294a9aa274a838d9e1eea87d1b",
+      "scope": "Before the extra query_only test and prime-owned history CLI. Final combined regression belongs to prime."
+    },
+    "syntax": { "command": "node --check src/outcome-history.mjs", "exitCode": 0 },
+    "doctor": { "command": "npm run check", "exitCode": 0 },
+    "whitespace": { "command": "git diff --check", "exitCode": 0 },
+    "actualReadOnlySQLite": true,
+    "queryOnlyWithWriteRefusalControl": true,
+    "selectOnlyAndNoSchemaWrites": true,
+    "noLogicalDatabaseChanges": true,
+    "liveArtifactReadsByInspector": false,
+    "historyResultRejectedByExistingRepair": true,
+    "oldRepairStillRejectsRegistryDrift": true
+  },
+  "nativeWitness": {
+    "file": "evidence-02/foundry-history-EMUrzQ/HISTORY.json",
+    "runId": "5fa4aa90-9973-47af-9767-4a05f5dab6d9",
+    "runStatus": "succeeded",
+    "historicalOutcome": "unsatisfied",
+    "historyId": "outcome-history:5022cf4311cf2f9052e81558a5571f9212ffba2ece4990b7943c210ee8968c55",
+    "currentEvidenceStatus": "unverified",
+    "matchesRecordedRegistry": false,
+    "currentWorldQualification": false
+  },
+  "originalSourceEvidence": {
+    "baseline": "SOURCE-BEFORE.sha256",
+    "initialMatchingFiles": 14,
+    "finalMatchingFilesExcludingPrimeCLI": 13,
+    "workerEditsToPreExistingProductFiles": 0,
+    "expectedPrimeOwnedChange": {
+      "file": "bin/foundry.mjs",
+      "before": "d23b59d8d181f9d954463094a9e36bde2d4e7af859b629bf2b34ea4ae21816fb",
+      "observedAfter": "450fad505fbc3c77176eb4bb9880343e169c71e402f319e38e3ff6f8182c906b",
+      "reason": "Prime added the read-only history CLI; worker-4 only updated its owned history documentation."
+    }
+  },
+  "review": {
+    "sourceSentBeforeCompletion": true,
+    "primeInitialSourceReview": "Prime reported reading all 151 lines and initial structure/scope appropriate.",
+    "independentReview": "Worker-6 commissioned by prime; completed review not claimed here."
+  },
+  "pluginChecks": {
+    "status": "unverified",
+    "attempted": ["Serena activate_project exact repository", "project_quality_map", "security_scan full with registry rules disabled"],
+    "error": "HTTP 404 tunnel_client_not_seen"
+  },
+  "liveModelCalls": 0,
+  "hiddenBenchmarkReads": 0,
+  "qualification": "Historical inspection of retained evidence with supplied development controls; not current-world qualification, capability compatibility, repair authority, or general intent proof."
+}

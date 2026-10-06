@@ -1,0 +1,46 @@
+✔ objective composition is not a fifth intent class or named-harness family (1.98316ms)
+✔ empty unknown and ungrounded objectives fail closed (0.327755ms)
+✔ objective split keeps builder pack disjoint from held-out inspect summaries (3.488925ms)
+✔ objective construction rejects held-out target bytes paths markers and serialized summaries (5.278571ms)
+✔ schema-valid self-attested objective candidate missing motifs fails closeness (2.397467ms)
+✔ claimedMotifs cannot paper a naive objective graph (2.16967ms)
+✔ compiler-as-oracle is close; naive is not; constraint re-injection is independent (5.292978ms)
+✔ every objective gold compose is close and naive is not (20.926853ms)
+✖ paraphrases that hit the same cues compose without a new intent class (6.313723ms)
+✔ composed workflows save on the Foundry product path (26.540443ms)
+✔ objective program constructs without cheating and reports misses plus a constraint ledger (43.761455ms)
+✔ CLI construct-objective emits objectives no-cheat misses and constraint ledger twice (444.680011ms)
+✔ CLI construct-objective --text composes a savable workflow (227.050797ms)
+✔ weak oracles and months-scale waits cannot pass (1.655675ms)
+✔ FoundryError remains the fail-closed type on objective leakage (0.802866ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 14
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 947.559798
+
+✖ failing tests:
+
+test at ../workflow-foundry/tests/construction-objective.test.mjs:131:1
+✖ paraphrases that hit the same cues compose without a new intent class (6.313723ms)
+  AssertionError [ERR_ASSERTION]: [{"familyId":"objective-composition","motif":"unsupported","kind":"behavioral","scenarioId":"unsupported","detail":"Held-out scenario unsupported diverged"}]
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///home/raed/Projects/workflow-foundry/tests/construction-objective.test.mjs:145:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1397:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+      at Test.postRun (node:internal/test_runner/test:1537:19)
+      at Test.run (node:internal/test_runner/test:1462:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

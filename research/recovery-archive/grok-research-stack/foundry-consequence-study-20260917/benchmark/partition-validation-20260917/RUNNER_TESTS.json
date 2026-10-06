@@ -1,0 +1,32 @@
+{
+  "checkedAt": "2026-09-17T08:50:30.718Z",
+  "candidateExecutions": 0,
+  "syntax": [
+    {
+      "file": "run-v2.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "runner-replay.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "runner-v2.test.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "runner-addendum.mjs",
+      "exitCode": 0
+    }
+  ],
+  "command": [
+    "/usr/bin/node",
+    "--test",
+    "--test-reporter=tap",
+    "runner-v2.test.mjs"
+  ],
+  "exitCode": 0,
+  "stdout": "TAP version 13\n# Subtest: workspace root resolves the supplied artifact inside .foundry rather than the decoy path\nok 1 - workspace root resolves the supplied artifact inside .foundry rather than the decoy path\n  ---\n  duration_ms: 1.059619\n  type: 'test'\n  ...\n# Subtest: public v2 interval fields require completion strictly before publication start\nok 2 - public v2 interval fields require completion strictly before publication start\n  ---\n  duration_ms: 0.626957\n  type: 'test'\n  ...\n# Subtest: missing, duplicate, and invalid attempt completions remain incomplete\nok 3 - missing, duplicate, and invalid attempt completions remain incomplete\n  ---\n  duration_ms: 0.155262\n  type: 'test'\n  ...\n# Subtest: empty batches still require a publication; no publication is not a successful diagnostic\nok 4 - empty batches still require a publication; no publication is not a successful diagnostic\n  ---\n  duration_ms: 0.089067\n  type: 'test'\n  ...\n1..4\n# tests 4\n# suites 0\n# pass 4\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 45.068596\n",
+  "stderr": "",
+  "fixtureOrigin": "Supplied artifact and event-interval fixtures; no workflow candidate."
+}

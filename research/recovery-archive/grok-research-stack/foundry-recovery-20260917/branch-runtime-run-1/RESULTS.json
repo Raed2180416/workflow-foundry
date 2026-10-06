@@ -1,0 +1,14 @@
+{
+  "checkedAt": "2026-09-17T02:11:44.975Z",
+  "scope": "source-informed development witness, not held-out evaluation",
+  "scriptSha256": "dafb2c94a2b8a720df25596df59229af30c6b4988e0dd30b122400d0c4e589ab",
+  "inheritedSourceReceipt": "../counterexample-run-1/RESULTS.json",
+  "sourceUnchanged": true,
+  "comparisonClose": true,
+  "runtimeStatus": "failed",
+  "independentTaskVerified": false,
+  "missingReferenceObserved": true,
+  "externalFetchOccurred": false,
+  "modelCalls": 0,
+  "explanation": "The canned fetch returns a fixed success value. Its skipped error branch supplies no output, while the join references that output without a default. Structural closeness does not test this runtime consequence."
+}

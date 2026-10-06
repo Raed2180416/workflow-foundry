@@ -1,0 +1,23 @@
+{
+  "at": "2026-09-17T09:08:01.397Z",
+  "command": [
+    "--test",
+    "--test-reporter=tap",
+    "--test-concurrency=2",
+    "tests/outcome-history-cli.test.mjs",
+    "tests/outcome-cli.test.mjs"
+  ],
+  "exitCode": 0,
+  "signal": null,
+  "error": null,
+  "elapsedMs": 35801,
+  "counts": {
+    "tests": 36,
+    "pass": 36,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "sourceHash": "450fad505fbc3c77176eb4bb9880343e169c71e402f319e38e3ff6f8182c906b",
+  "stdoutSHA256": "af878e37e59398d087adc7f37bc150df621cf93eda3382fd0d63225523a3a226"
+}

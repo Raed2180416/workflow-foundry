@@ -1,0 +1,168 @@
+{
+  "schemaVersion": "independent-evaluator-v2-review-v1",
+  "completedAt": "2026-09-17T03:29:18.133Z",
+  "verdict": "F1/F2 correction substantiated at the reviewed frozen source; bounded evaluator review only",
+  "reviewedSource": {
+    "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/oracle-v2.mjs",
+    "sha256": "517b7e60d3e674f7fc1189dac8f468dd19d9f6800467a5998fde6a38fbd66e15"
+  },
+  "freeze": {
+    "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/FREEZE_V2.json",
+    "sha256": "5e4af4f2d1b3e90e65373cc40b4e8857d9248e769ee47b8dd79fa9d72e4595d2",
+    "filesMatched": 87
+  },
+  "witnessHandoff": {
+    "path": "WITNESS_PATHS.json",
+    "sha256": "442dbae1c53f847c52a469e001cf6d1bf86809129e4877d6465889c5651edad8",
+    "candidateBasename": "WORKFLOW.json",
+    "verifiedPairs": 5
+  },
+  "reviewerValidation": {
+    "passed": true,
+    "preservedCasesReaudited": 5,
+    "newWorkflowExecutions": 0,
+    "modelsCalled": 0,
+    "fullPreviousAuditRerun": false,
+    "wrapperInvoked": false,
+    "sourceRangesChecked": 15,
+    "noteHashesChecked": 6
+  },
+  "findings": [
+    {
+      "name": "early-confirmation",
+      "fixtureRejected": false,
+      "fixtureErrorCode": null,
+      "nativePassed": true,
+      "v2GatePassed": false,
+      "problems": [
+        "confirmation_before_completed_validated_reproduction"
+      ]
+    },
+    {
+      "name": "raw-invalid-reproduction-confirmed",
+      "fixtureRejected": true,
+      "fixtureErrorCode": "BENCHMARK_FIXTURE_SCHEMA",
+      "nativePassed": true,
+      "v2GatePassed": false,
+      "problems": [
+        "instrument_native_completion_invalid",
+        "confirmation_before_completed_validated_reproduction"
+      ]
+    },
+    {
+      "name": "raw-invalid-screen",
+      "fixtureRejected": true,
+      "fixtureErrorCode": "BENCHMARK_FIXTURE_SCHEMA",
+      "nativePassed": true,
+      "v2GatePassed": false,
+      "problems": [
+        "instrument_native_completion_invalid"
+      ]
+    },
+    {
+      "name": "observed-positive-control",
+      "fixtureRejected": false,
+      "fixtureErrorCode": null,
+      "nativePassed": true,
+      "v2GatePassed": true,
+      "problems": []
+    },
+    {
+      "name": "early-confirmation-counterfactual",
+      "fixtureRejected": false,
+      "fixtureErrorCode": null,
+      "nativePassed": false,
+      "v2GatePassed": false,
+      "problems": [
+        "confirmation_before_completed_validated_reproduction"
+      ]
+    }
+  ],
+  "authorCalibration": {
+    "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/calibration-v2-001/run-001/AUDIT.json",
+    "sha256": "46291fabed3f205f6c05ab955b82615af41927d9a0766a85450ea925040ddef8",
+    "checks": 18,
+    "checksPassed": 18,
+    "reviewerRerun": false,
+    "aggregateRowsVerified": 8,
+    "suppliedPositives": 2,
+    "positiveDevelopmentCaseCounts": [
+      5,
+      5
+    ],
+    "positiveSealedCaseCounts": [
+      8,
+      8
+    ],
+    "mutantsRejectedByEachWholeSuite": 6,
+    "exposedWrapperReportsReviewed": 2
+  },
+  "distinctions": {
+    "invalidFixtures": "Evaluator-input errors excluded from candidate-success denominators",
+    "temporalFence": "Validated same-sample positive reproduction completes before successful confirmed publication begins",
+    "causalUse": "Temporal availability and exact output bytes do not establish causal derivation; delayed constants can pass finite matching cases",
+    "counterfactuals": "Evidence-swap diagnostics cover only their finite tested changes",
+    "allDispositionCompletion": "Non-gating prospective diagnostic, with early non-confirmed publication still accepted under the declared v2 policy"
+  },
+  "limitations": [
+    "No general causal-use or population claim",
+    "No real provider visibility/isolation verification",
+    "No independent physical instrument calibration",
+    "No hostile-host attestation",
+    "No exhaustive graph or asynchronous-instrument proof",
+    "Wrapper remains confined to benchmark directory",
+    "Helper without actual artifact requires separate native exact-JSON check"
+  ],
+  "preserved": {
+    "originalIndependentNoteSHA256": "23ae4819819121c526694e130fe8c8e83f53f2b4b562025d6c09500a5c1d6639",
+    "originalIndependentAuditSHA256": "820e8667a838ed04948a60fdecc0883ccdf28ffa2eeea3b5e137cc10f9a25350",
+    "originalV1FreezeSHA256": "191da6649ceaa22087636059b241de2fd758768aabdfde0aa9d480cb27246f62",
+    "frozenFilesUnchanged": 87,
+    "preReviewProtectedFilesUnchanged": 31
+  },
+  "tooling": {
+    "serenaActivation": {
+      "attempted": true,
+      "project": "/home/raed/Projects/grok-research-stack",
+      "status": "HTTP404 tunnel_client_not_seen"
+    },
+    "coreSyntaxCheckPassed": true
+  },
+  "artifacts": [
+    {
+      "relative": "WITNESS_PATHS.json",
+      "bytes": 2479,
+      "sha256": "442dbae1c53f847c52a469e001cf6d1bf86809129e4877d6465889c5651edad8"
+    },
+    {
+      "relative": "check-v2.mjs",
+      "bytes": 8124,
+      "sha256": "66c68faad29e77e4c4f90005ddc76cf2cd3afacc774049fb765ac7ac00da70dc"
+    },
+    {
+      "relative": "NOTE_V2.md",
+      "bytes": 10427,
+      "sha256": "40898e281f24903f3335ba98435a08406bff8dcfef661b9903536537ca2e7ee1"
+    },
+    {
+      "relative": "receipt-v2-001/AUDIT.json",
+      "bytes": 18529,
+      "sha256": "f71f83a1ec461c8d5b1636903b5c9caab550193cea0b405271f16ed67ccbf726"
+    },
+    {
+      "relative": "receipt-v2-001/SOURCE_BEFORE.json",
+      "bytes": 5794,
+      "sha256": "6b6b84ee9e8671e13fe3eaa2d931bb3a457bc80283ae266e9fc7144073ad5769"
+    },
+    {
+      "relative": "receipt-v2-001/FREEZE_VERIFICATION.json",
+      "bytes": 1399,
+      "sha256": "abe6f8196ca690411b1f2006b43fc8c8fb0193dc1cd195f78d9a357792ddbe44"
+    },
+    {
+      "relative": "receipt-v2-001/CALIBRATION_REVIEW.json",
+      "bytes": 7952,
+      "sha256": "1c04d1e25fc11bdef4f3f6a847284122be1610f49dafbbc6ecc2c4bfc4f3ed2b"
+    }
+  ]
+}

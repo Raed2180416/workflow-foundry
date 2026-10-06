@@ -1,0 +1,28 @@
+{
+  "samples": [
+    {
+      "disposition": "error",
+      "sampleId": "w7_4d2379ebd20fe3b63f21ef7e"
+    },
+    {
+      "disposition": "error",
+      "sampleId": "w7_7e1aba58e2046f6a7dbd8cca"
+    },
+    {
+      "disposition": "error",
+      "sampleId": "w7_a7d1f068e1e7dbd0402ab3aa"
+    },
+    {
+      "disposition": "error",
+      "sampleId": "w7_8dbe8cf3e943144fe3d40eda"
+    },
+    {
+      "disposition": "error",
+      "sampleId": "w7_4779708d3184334221f74949"
+    },
+    {
+      "disposition": "error",
+      "sampleId": "w7_fecbb94288677afb22b46374"
+    }
+  ]
+}

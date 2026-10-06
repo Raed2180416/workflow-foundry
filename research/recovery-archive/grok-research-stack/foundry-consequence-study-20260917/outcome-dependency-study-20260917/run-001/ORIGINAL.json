@@ -1,0 +1,1020 @@
+{
+  "request": {
+    "baseHash": null,
+    "createdAt": 1789635423501,
+    "id": "f62bc610-82ac-4cec-999b-28d4fb171838",
+    "source": "research-supplied-control",
+    "status": "applied",
+    "text": "Write record.json containing exactly input.record.",
+    "workflowId": null
+  },
+  "proposal": {
+    "appliedAt": 1789635423522,
+    "baseHash": null,
+    "createdAt": 1789635423519,
+    "id": "0ea4ff04-3d09-4528-8148-c9fa3f2cd36f",
+    "impact": {
+      "acceptanceChanged": true,
+      "activeRunsMigrated": false,
+      "added": [
+        "encode",
+        "file"
+      ],
+      "budgetChanged": true,
+      "changed": [],
+      "removed": []
+    },
+    "rationale": "Deliberately wrong control to study historical-versus-current registry dependency.",
+    "requestId": "f62bc610-82ac-4cec-999b-28d4fb171838",
+    "status": "applied",
+    "validation": {
+      "errors": [],
+      "hash": "6b485e8387320e5d48f1d1662090ac23d981456ac1c2221f52607e4ea4743d6f",
+      "nodeCount": 2,
+      "valid": true,
+      "warnings": []
+    },
+    "workflow": {
+      "acceptance": [
+        {
+          "op": "exists",
+          "value": {
+            "$ref": "nodes.file.sha256"
+          }
+        }
+      ],
+      "budget": {
+        "maxConcurrency": 1,
+        "maxCost": 0,
+        "maxDurationMs": 10000,
+        "maxSteps": 5
+      },
+      "domain": "software",
+      "envelope": {
+        "assumptions": [
+          "One bounded local JSON artifact"
+        ],
+        "risks": [
+          "Wrong content"
+        ],
+        "successCriteria": [
+          "Write record.json containing exactly input.record."
+        ],
+        "unsupported": [
+          "General business intent"
+        ]
+      },
+      "goal": "Write record.json containing exactly input.record.",
+      "id": "dependency-separation-witness",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "record": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "record"
+        ],
+        "type": "object"
+      },
+      "nodes": [
+        {
+          "args": {
+            "value": {
+              "label": "wrong"
+            }
+          },
+          "description": "Encode supplied wrong control.",
+          "id": "encode",
+          "kind": "task",
+          "needs": [],
+          "retry": {
+            "maxAttempts": 1
+          },
+          "timeoutMs": 1000,
+          "tool": "core.json"
+        },
+        {
+          "args": {
+            "content": {
+              "$ref": "nodes.encode.text"
+            },
+            "name": "record.json"
+          },
+          "description": "Write local artifact.",
+          "id": "file",
+          "kind": "task",
+          "needs": [
+            "encode"
+          ],
+          "retry": {
+            "maxAttempts": 1
+          },
+          "timeoutMs": 1000,
+          "tool": "core.artifact"
+        }
+      ],
+      "schemaVersion": "1.0",
+      "title": "Supplied local dependency witness",
+      "version": 1
+    },
+    "workflowHash": "6b485e8387320e5d48f1d1662090ac23d981456ac1c2221f52607e4ea4743d6f"
+  },
+  "workflow": {
+    "schemaVersion": "1.0",
+    "id": "dependency-separation-witness",
+    "version": 1,
+    "title": "Supplied local dependency witness",
+    "domain": "software",
+    "goal": "Write record.json containing exactly input.record.",
+    "envelope": {
+      "assumptions": [
+        "One bounded local JSON artifact"
+      ],
+      "risks": [
+        "Wrong content"
+      ],
+      "successCriteria": [
+        "Write record.json containing exactly input.record."
+      ],
+      "unsupported": [
+        "General business intent"
+      ]
+    },
+    "inputSchema": {
+      "type": "object",
+      "required": [
+        "record"
+      ],
+      "properties": {
+        "record": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    "budget": {
+      "maxSteps": 5,
+      "maxConcurrency": 1,
+      "maxDurationMs": 10000,
+      "maxCost": 0
+    },
+    "nodes": [
+      {
+        "id": "encode",
+        "kind": "task",
+        "needs": [],
+        "description": "Encode supplied wrong control.",
+        "tool": "core.json",
+        "args": {
+          "value": {
+            "label": "wrong"
+          }
+        },
+        "timeoutMs": 1000,
+        "retry": {
+          "maxAttempts": 1
+        }
+      },
+      {
+        "id": "file",
+        "kind": "task",
+        "needs": [
+          "encode"
+        ],
+        "description": "Write local artifact.",
+        "tool": "core.artifact",
+        "args": {
+          "name": "record.json",
+          "content": {
+            "$ref": "nodes.encode.text"
+          }
+        },
+        "timeoutMs": 1000,
+        "retry": {
+          "maxAttempts": 1
+        }
+      }
+    ],
+    "acceptance": [
+      {
+        "op": "exists",
+        "value": {
+          "$ref": "nodes.file.sha256"
+        }
+      }
+    ]
+  },
+  "input": {
+    "record": {
+      "label": "requested"
+    }
+  },
+  "contract": {
+    "id": "a81273fc94476b2f1fd162325a68b51e59e9b20513fcbef2ff41020990194ca2",
+    "schemaVersion": "outcome-contract/1",
+    "rootRequestId": "f62bc610-82ac-4cec-999b-28d4fb171838",
+    "rootTextHash": "ef25fc1f355dfab9b96a1555b8afe8af09da63593fc73217c1fc453310c908a9",
+    "inputHash": "01e1fef7a86867a14a60cd723c4f2f1617bbfaef8f3981e89201f43d4417897c",
+    "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+    "artifactName": "record.json",
+    "expected": {
+      "label": "requested"
+    },
+    "evaluator": {
+      "id": "supplied-local-exact-json",
+      "kind": "exact-json-artifact/2",
+      "implementationHash": "8de15af4b6ce842c3e54039531c651472a9079a231bf31390f4a8f95b924f1fd",
+      "dataImplementationHash": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c",
+      "node": "v24.21.0",
+      "comparison": "Foundry canonical JSON: object order ignored, array order retained; bounded finite JS numbers"
+    },
+    "maxBytes": 524288,
+    "provenance": "Expected JSON supplied through host contract registration; registration does not establish independent correctness."
+  },
+  "run": {
+    "approvals": {},
+    "cost": 0,
+    "createdAt": 1789635423523,
+    "deadline": 1789635433523,
+    "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+    "error": null,
+    "eventHead": {
+      "hash": "01da483ae445e1ed5db821af573f51aa75d5242e8707b1e80acb065a7875e7aa",
+      "seq": 7
+    },
+    "extra": {},
+    "frames": {},
+    "id": "8f166339-046c-41ae-8bc1-fba9161db0d1",
+    "input": {
+      "record": {
+        "label": "requested"
+      }
+    },
+    "nodes": {
+      "encode": {
+        "argsHash": "a028505cb54e4759b6dcbdd8bfd9845c611835a4dee5a2c6fd7be93759625478",
+        "attempts": 1,
+        "completedAt": 1789635423540,
+        "completedSequence": 4,
+        "effects": "none",
+        "idempotencyKey": "e76f49ca4e8a8e19da6d9d9c6fccbfe608a47c6d88ea9796b7357031d4567f35",
+        "kind": "task",
+        "outputHash": "6e01ee9b4aad4123138eccf10f3f8b709a6b0b5057279a0088e3187d9a752a6f",
+        "startedAt": 1789635423534,
+        "startedSequence": 3,
+        "status": "completed",
+        "tool": "core.json"
+      },
+      "file": {
+        "argsHash": "c2664f6754c0c936ecd1fdc58cb61dae024cc10544518c134f64c1e0167bad79",
+        "attempts": 1,
+        "completedAt": 1789635423552,
+        "completedSequence": 6,
+        "effects": "idempotent",
+        "idempotencyKey": "9f2dc59912b80dd24a05cf9f7a00c98e132607d3726271587b411a4aaaf9d00d",
+        "kind": "task",
+        "outputHash": "c743c5e3fa923b09c71ea9ac5124e068c2b220db66532825d762c8d8ec769fe1",
+        "startedAt": 1789635423546,
+        "startedSequence": 5,
+        "status": "completed",
+        "tool": "core.artifact"
+      }
+    },
+    "outputs": {
+      "encode": {
+        "text": "{\"label\":\"wrong\"}"
+      },
+      "file": {
+        "bytes": 17,
+        "name": "record.json",
+        "sha256": "d702efcb58423280e926c7dea03591780a6290f3c5cd6f2e2f99a64197d23879"
+      }
+    },
+    "owner": null,
+    "policy": {
+      "allowedCapabilities": [
+        "core.identity",
+        "core.validate",
+        "core.json",
+        "core.pluck",
+        "core.aggregate",
+        "core.template",
+        "core.collect",
+        "core.artifact",
+        "core.fail",
+        "core.sleep",
+        "fixture.observe",
+        "fixture.diagnose",
+        "fixture.remediate",
+        "fixture.verify"
+      ],
+      "maxConcurrency": 4,
+      "maxCost": 0,
+      "maxDurationMs": 3600000,
+      "maxResumes": 1000,
+      "maxSteps": 5000
+    },
+    "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+    "resumeCount": 1,
+    "status": "succeeded",
+    "steps": 2,
+    "updatedAt": 1789635423553,
+    "workflowHash": "6b485e8387320e5d48f1d1662090ac23d981456ac1c2221f52607e4ea4743d6f",
+    "workflowId": "dependency-separation-witness"
+  },
+  "events": [
+    {
+      "at": 1789635423524,
+      "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+      "inputHash": "01e1fef7a86867a14a60cd723c4f2f1617bbfaef8f3981e89201f43d4417897c",
+      "policyHash": "743874dc59bcbd3e3257926a739c866813d6604f924f906342983b4bb871caa7",
+      "previousHash": null,
+      "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+      "seq": 1,
+      "type": "run.created",
+      "workflowHash": "6b485e8387320e5d48f1d1662090ac23d981456ac1c2221f52607e4ea4743d6f",
+      "hash": "5a0e6bbfca81e06cb548ec960f4b570f6c2b76dc5e251cb285cb7d083ee9b755"
+    },
+    {
+      "at": 1789635423526,
+      "previousHash": "5a0e6bbfca81e06cb548ec960f4b570f6c2b76dc5e251cb285cb7d083ee9b755",
+      "seq": 2,
+      "token": "df935e33-a23d-4243-a0b4-4a9cfb12fe5f",
+      "type": "runner.acquired",
+      "hash": "a1cc14aaee1e9874ba468f2cbd1bd987b5ac85bd49c0b3332abcb41d44038a7d"
+    },
+    {
+      "argsHash": "a028505cb54e4759b6dcbdd8bfd9845c611835a4dee5a2c6fd7be93759625478",
+      "at": 1789635423534,
+      "effects": "none",
+      "idempotencyKey": "e76f49ca4e8a8e19da6d9d9c6fccbfe608a47c6d88ea9796b7357031d4567f35",
+      "kind": "task",
+      "nodeKey": "root/encode",
+      "previousHash": "a1cc14aaee1e9874ba468f2cbd1bd987b5ac85bd49c0b3332abcb41d44038a7d",
+      "reservedCost": 0,
+      "seq": 3,
+      "tool": "core.json",
+      "type": "tool.intent",
+      "hash": "d98225f244d4b5a9b151cf70448498502ec23f33d899d370843d6cc82f5ec3fc"
+    },
+    {
+      "at": 1789635423540,
+      "nodeKey": "root/encode",
+      "output": {
+        "text": "{\"label\":\"wrong\"}"
+      },
+      "outputHash": "6e01ee9b4aad4123138eccf10f3f8b709a6b0b5057279a0088e3187d9a752a6f",
+      "previousHash": "d98225f244d4b5a9b151cf70448498502ec23f33d899d370843d6cc82f5ec3fc",
+      "seq": 4,
+      "type": "node.completed",
+      "hash": "54f19cfb84f946edd008d17829d9f58d7264c3e13f2dd71ead48210b8d57b233"
+    },
+    {
+      "argsHash": "c2664f6754c0c936ecd1fdc58cb61dae024cc10544518c134f64c1e0167bad79",
+      "at": 1789635423546,
+      "effects": "idempotent",
+      "idempotencyKey": "9f2dc59912b80dd24a05cf9f7a00c98e132607d3726271587b411a4aaaf9d00d",
+      "kind": "task",
+      "nodeKey": "root/file",
+      "previousHash": "54f19cfb84f946edd008d17829d9f58d7264c3e13f2dd71ead48210b8d57b233",
+      "reservedCost": 0,
+      "seq": 5,
+      "tool": "core.artifact",
+      "type": "tool.intent",
+      "hash": "be5b3c8807131cc40334342a0515b28c810bc27a392e0fd8dbe878ac5bc40ccf"
+    },
+    {
+      "at": 1789635423552,
+      "nodeKey": "root/file",
+      "output": {
+        "bytes": 17,
+        "name": "record.json",
+        "sha256": "d702efcb58423280e926c7dea03591780a6290f3c5cd6f2e2f99a64197d23879"
+      },
+      "outputHash": "c743c5e3fa923b09c71ea9ac5124e068c2b220db66532825d762c8d8ec769fe1",
+      "previousHash": "be5b3c8807131cc40334342a0515b28c810bc27a392e0fd8dbe878ac5bc40ccf",
+      "seq": 6,
+      "type": "node.completed",
+      "hash": "450357cef26249cb5d98b70071e2d01ffc5eee7e6e93f450b0c14df90baf2554"
+    },
+    {
+      "at": 1789635423553,
+      "previousHash": "450357cef26249cb5d98b70071e2d01ffc5eee7e6e93f450b0c14df90baf2554",
+      "seq": 7,
+      "type": "run.succeeded",
+      "hash": "01da483ae445e1ed5db821af573f51aa75d5242e8707b1e80acb065a7875e7aa"
+    }
+  ],
+  "receipt": {
+    "id": "4f8de1f33d09b380d79d785fa8c4179550a10c16968ff681c21db0e31153e881",
+    "schemaVersion": "outcome-observation/2",
+    "contractId": "a81273fc94476b2f1fd162325a68b51e59e9b20513fcbef2ff41020990194ca2",
+    "binding": {
+      "requestId": "f62bc610-82ac-4cec-999b-28d4fb171838",
+      "proposalId": "0ea4ff04-3d09-4528-8148-c9fa3f2cd36f",
+      "runId": "8f166339-046c-41ae-8bc1-fba9161db0d1",
+      "rootRequestId": "f62bc610-82ac-4cec-999b-28d4fb171838",
+      "requestHash": "8d774c829685b8eda237494a44915d5c8ec4dd7663eee614928a8c3a4a97e4ce",
+      "proposalHash": "c3c00bee74b68ffe6de187a3b13d9a8534e1cc3479ebcf4d7e7b95c4539f134f",
+      "rootRequestHash": "8d774c829685b8eda237494a44915d5c8ec4dd7663eee614928a8c3a4a97e4ce",
+      "workflowId": "dependency-separation-witness",
+      "workflowHash": "6b485e8387320e5d48f1d1662090ac23d981456ac1c2221f52607e4ea4743d6f",
+      "workflowVersion": 1,
+      "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+      "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+      "inputHash": "01e1fef7a86867a14a60cd723c4f2f1617bbfaef8f3981e89201f43d4417897c",
+      "policyHash": "743874dc59bcbd3e3257926a739c866813d6604f924f906342983b4bb871caa7",
+      "eventHead": {
+        "hash": "01da483ae445e1ed5db821af573f51aa75d5242e8707b1e80acb065a7875e7aa",
+        "seq": 7
+      },
+      "eventCount": 7,
+      "runStatus": "succeeded",
+      "runHash": "1ac459e694285f3424820557f984327a5a45c268ac19ee9ea75b1610cd636768"
+    },
+    "artifact": {
+      "name": "record.json",
+      "state": "present",
+      "bytes": 17,
+      "sha256": "d702efcb58423280e926c7dea03591780a6290f3c5cd6f2e2f99a64197d23879",
+      "base64": "eyJsYWJlbCI6Indyb25nIn0=",
+      "producers": [
+        {
+          "nodeKey": "root/file",
+          "sequence": 6,
+          "eventHash": "450357cef26249cb5d98b70071e2d01ffc5eee7e6e93f450b0c14df90baf2554"
+        }
+      ]
+    },
+    "outcome": "unsatisfied",
+    "reason": "json-content-mismatch",
+    "observedJsonHash": "d702efcb58423280e926c7dea03591780a6290f3c5cd6f2e2f99a64197d23879",
+    "observedAt": 1789635423556,
+    "qualification": "One host-bound JSON artifact observation; no general intent or deployment qualification"
+  },
+  "artifactSHA256": "d702efcb58423280e926c7dea03591780a6290f3c5cd6f2e2f99a64197d23879",
+  "registry": [
+    {
+      "name": "core.identity",
+      "description": "Return JSON unchanged. Useful for explicit data bindings, not an external correctness oracle.",
+      "version": "1",
+      "implementation": "workflow-foundry/0.1.0/core.identity",
+      "inputSchema": {},
+      "outputSchema": {},
+      "effects": "none",
+      "risk": "low",
+      "requiresApproval": false,
+      "maxTimeoutMs": 60000,
+      "cost": 0,
+      "cancellation": "cooperative",
+      "handlerHash": "4a1d9bbc7bdec87bddef4e198526f98bedf2b2c76b99ceda8fee683927013252"
+    },
+    {
+      "name": "core.validate",
+      "description": "Check JSON against the supported strict schema profile. Returns real type/required-field validation; not merely field existence. Untrusted regex, async or external schemas are rejected.",
+      "version": "1",
+      "implementation": "workflow-foundry/0.1.0/core.validate",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "value",
+          "schema"
+        ],
+        "properties": {
+          "value": {},
+          "schema": {
+            "type": "object"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "valid",
+          "errors"
+        ],
+        "properties": {
+          "valid": {
+            "type": "boolean"
+          },
+          "errors": {
+            "type": "array"
+          }
+        }
+      },
+      "effects": "none",
+      "risk": "low",
+      "requiresApproval": false,
+      "maxTimeoutMs": 60000,
+      "cost": 0,
+      "cancellation": "cooperative",
+      "handlerHash": "ca41ff6bfe06c5a34eac68bb2137957a55ec64690e9516a379383948577a2edc"
+    },
+    {
+      "name": "core.json",
+      "description": "Serialize a JSON value without code execution. Useful for structured artifact content.",
+      "version": "1",
+      "implementation": "workflow-foundry/0.1.0/core.json",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "value"
+        ],
+        "properties": {
+          "value": {},
+          "pretty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "text"
+        ],
+        "properties": {
+          "text": {
+            "type": "string"
+          }
+        }
+      },
+      "effects": "none",
+      "risk": "low",
+      "requiresApproval": false,
+      "maxTimeoutMs": 60000,
+      "cost": 0,
+      "cancellation": "cooperative",
+      "handlerHash": "4e570236becf7d47c67aa0bc905f10a40abde07a0b32d9a2843416ecd1b40101"
+    },
+    {
+      "name": "core.pluck",
+      "description": "Project one own-property path from each JSON item. Missing paths fail; no executable expressions or prototype traversal.",
+      "version": "1",
+      "implementation": "workflow-foundry/0.1.0/core.pluck",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "items",
+          "field"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "maxItems": 1000
+          },
+          "field": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "items",
+          "count"
+        ],
+        "properties": {
+          "items": {
+            "type": "array"
+          },
+          "count": {
+            "type": "integer"
+          }
+        }
+      },
+      "effects": "none",
+      "risk": "low",
+      "requiresApproval": false,
+      "maxTimeoutMs": 60000,
+      "cost": 0,
+      "cancellation": "cooperative",
+      "handlerHash": "fdd79615ef98b6d1c1316086997259d5d4eeb0af36fa828adcaaa2d592e04087"
+    },
+    {
+      "name": "core.aggregate",
+      "description": "Compute one bounded numeric/boolean aggregate from values or an explicitly selected field. No coercion, expressions, shell or arbitrary code.",
+      "version": "1",
+      "implementation": "workflow-foundry/0.1.0/core.aggregate",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "operation",
+          "values"
+        ],
+        "properties": {
+          "operation": {
+            "enum": [
+              "sum",
+              "count",
+              "min",
+              "max",
+              "all",
+              "any"
+            ]
+          },
+          "values": {
+            "type": "array",
+            "maxItems": 1000
+          },
+          "field": {
+            "type": "string",
+            "maxLength": 512
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "value"
+        ],
+        "properties": {
+          "value": {
+            "type": [
+              "number",
+              "boolean"
+            ]
+          }
+        }
+      },
+      "effects": "none",
+      "risk": "low",
+      "requiresApproval": false,
+      "maxTimeoutMs": 60000,
+      "cost": 0,
+      "cancellation": "cooperative",
+      "handlerHash": "8599f27aff7dbb3e0c48b8d15afd47b062181a5969a5c6d9681b847db61e59e4"
+    },
+    {
+      "name": "core.template",
+      "description": "Interpolate named string variables into {{name}} markers, without executing code.",
+      "version": "1",
+      "implementation": "workflow-foundry/0.1.0/core.template",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "text",
+          "variables"
+        ],
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 200000
+          },
+          "variables": {
+            "type": "object",
+            "additionalProperties": {
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
+            }
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "properties": {
+          "text": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "effects": "none",
+      "risk": "low",
+      "requiresApproval": false,
+      "maxTimeoutMs": 60000,
+      "cost": 0,
+      "cancellation": "cooperative",
+      "handlerHash": "98b68a332df66ecd1b4c0b32b6030604d27b8c4aea6a30419329541f38b51509"
+    },
+    {
+      "name": "core.collect",
+      "description": "Collect explicitly supplied dependency values into a named JSON result.",
+      "version": "1",
+      "implementation": "workflow-foundry/0.1.0/core.collect",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "maxItems": 1000
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "items",
+          "count"
+        ],
+        "properties": {
+          "items": {
+            "type": "array"
+          },
+          "count": {
+            "type": "integer"
+          }
+        }
+      },
+      "effects": "none",
+      "risk": "low",
+      "requiresApproval": false,
+      "maxTimeoutMs": 60000,
+      "cost": 0,
+      "cancellation": "cooperative",
+      "handlerHash": "03bae083bf6ff7875a79f776031dfd3719f29cb6e0a349c560f7eff8414b8521"
+    },
+    {
+      "name": "core.artifact",
+      "description": "Write a UTF-8 artifact only inside the current run artifact directory; never a host path.",
+      "version": "1",
+      "implementation": "workflow-foundry/0.1.0/core.artifact",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "content"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "content": {
+            "type": "string",
+            "maxLength": 400000
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "sha256",
+          "bytes"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string"
+          },
+          "bytes": {
+            "type": "integer"
+          }
+        }
+      },
+      "effects": "idempotent",
+      "risk": "low",
+      "requiresApproval": false,
+      "maxTimeoutMs": 60000,
+      "cost": 0,
+      "cancellation": "cooperative",
+      "handlerHash": "c45343a44f23538cadb621d24ffaf5fae76e9890803da1624e9aba433fb2fe50"
+    },
+    {
+      "name": "core.fail",
+      "description": "Deliberately fail a diagnostic workflow. Not a production recovery strategy.",
+      "version": "1",
+      "implementation": "workflow-foundry/0.1.0/core.fail",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "message": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        }
+      },
+      "outputSchema": {},
+      "effects": "none",
+      "risk": "low",
+      "requiresApproval": false,
+      "maxTimeoutMs": 60000,
+      "cost": 0,
+      "cancellation": "cooperative",
+      "handlerHash": "157ffb7e0b50bb23b04ea11c97c49b6c8449ed9974d9ab0a170947d4aa7878d1"
+    },
+    {
+      "name": "core.sleep",
+      "description": "Bounded cancellable delay for local execution tests; use wait nodes for durable sleeping.",
+      "version": "1",
+      "implementation": "workflow-foundry/0.1.0/core.sleep",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "ms"
+        ],
+        "properties": {
+          "ms": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 60000
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "sleptMs"
+        ],
+        "properties": {
+          "sleptMs": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false
+      },
+      "effects": "none",
+      "risk": "low",
+      "requiresApproval": false,
+      "maxTimeoutMs": 60000,
+      "cost": 0,
+      "cancellation": "cooperative",
+      "handlerHash": "e7145e4af7920a410550e776d845bda843192c7993f627da6fe78529084a668c"
+    },
+    {
+      "name": "fixture.observe",
+      "description": "Read one instrument from the sealed local incident simulator. This is not production telemetry.",
+      "version": "1",
+      "implementation": "workflow-foundry/0.1.0/fixture.observe",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "probe"
+        ],
+        "properties": {
+          "probe": {
+            "enum": [
+              "metrics",
+              "deployment",
+              "logs",
+              "health"
+            ]
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "effects": "none",
+      "risk": "low",
+      "requiresApproval": false,
+      "maxTimeoutMs": 60000,
+      "cost": 0,
+      "cancellation": "cooperative",
+      "handlerHash": "a2a133a017169bc8f6ec2f641e85a3c5b0adee98a580ba9db3c70904843488d6"
+    },
+    {
+      "name": "fixture.diagnose",
+      "description": "Return supplied hypotheses unchanged for explicit tracking; does not reveal simulator ground truth.",
+      "version": "1",
+      "implementation": "workflow-foundry/0.1.0/fixture.diagnose",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "hypotheses"
+        ],
+        "properties": {
+          "hypotheses": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 100
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "hypotheses"
+        ],
+        "properties": {
+          "hypotheses": {
+            "type": "array"
+          }
+        },
+        "additionalProperties": false
+      },
+      "effects": "none",
+      "risk": "low",
+      "requiresApproval": false,
+      "maxTimeoutMs": 60000,
+      "cost": 0,
+      "cancellation": "cooperative",
+      "handlerHash": "4a1d9bbc7bdec87bddef4e198526f98bedf2b2c76b99ceda8fee683927013252"
+    },
+    {
+      "name": "fixture.remediate",
+      "description": "Attempt one remediation only in the local simulator. Idempotency is backed by its transaction ledger.",
+      "version": "1",
+      "implementation": "workflow-foundry/0.1.0/fixture.remediate",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "action"
+        ],
+        "properties": {
+          "action": {
+            "enum": [
+              "rollback",
+              "scale",
+              "restart",
+              "none"
+            ]
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "attempted"
+        ],
+        "properties": {
+          "attempted": {
+            "type": "string"
+          }
+        }
+      },
+      "effects": "idempotent",
+      "risk": "low",
+      "requiresApproval": false,
+      "maxTimeoutMs": 60000,
+      "cost": 0,
+      "cancellation": "cooperative",
+      "handlerHash": "d15d4f2d36eedd7b72f7bd88a5c41c0692a8db094168dc62bce3244d58d75b23"
+    },
+    {
+      "name": "fixture.verify",
+      "description": "Independently observe simulated health and incorrect actions after remediation.",
+      "version": "1",
+      "implementation": "workflow-foundry/0.1.0/fixture.verify",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {}
+      },
+      "outputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "healthy",
+          "wrongActions",
+          "actionCount"
+        ],
+        "properties": {
+          "healthy": {
+            "type": "boolean"
+          },
+          "wrongActions": {
+            "type": "integer"
+          },
+          "actionCount": {
+            "type": "integer"
+          }
+        }
+      },
+      "effects": "none",
+      "risk": "low",
+      "requiresApproval": false,
+      "maxTimeoutMs": 60000,
+      "cost": 0,
+      "cancellation": "cooperative",
+      "handlerHash": "ff13f0505211bf40be513b807c1380df6f68da279cfd08d3d242df86ecd5b076"
+    }
+  ]
+}

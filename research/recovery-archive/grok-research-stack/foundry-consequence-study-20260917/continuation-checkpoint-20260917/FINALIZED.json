@@ -1,0 +1,60 @@
+{
+  "at": "2026-09-17T09:17:51.877Z",
+  "status": "FINALIZED_BOUNDED_CHECKPOINT",
+  "files": [
+    {
+      "path": "REPORT.md",
+      "sha256": "9638f7b5e7269d3caac607b7aa3668b9cd6c5f2dc01fd0640e40bf6578400d4e",
+      "bytes": 17777
+    },
+    {
+      "path": "EVIDENCE.json",
+      "sha256": "89b226284c2b5745229143a495908744f702c41715d1876e049e0910da220b52",
+      "bytes": 65426
+    },
+    {
+      "path": "FINAL_REGRESSION.json",
+      "sha256": "30367c99f3bea5ac3ef38d176874e98aed173fd9c3705b8697a2699ca2c652f6",
+      "bytes": 17288
+    },
+    {
+      "path": "OPT_IN_REGRESSION.json",
+      "sha256": "a4bab742fd84beb974c3f7fbd1b8ae555a16a87300b5fb9b4284a97777b15c39",
+      "bytes": 8451
+    },
+    {
+      "path": "HISTORY_CLI_CHECK_V2.json",
+      "sha256": "0b0130090ef5038c55d396dc42e8cf551f73794e2bef4eeec7ec081b411c3023",
+      "bytes": 2504
+    },
+    {
+      "path": "collect.mjs",
+      "sha256": "b90631ccef7dee7877c9b72b053bf4acb5a8df57e798bce640ad3b4ff035fe06",
+      "bytes": 8166
+    },
+    {
+      "path": "regression.mjs",
+      "sha256": "d02bc89e78d37e18c8f4f6c665f4146f6aa90a2fb21df6c38cde37610e556fba",
+      "bytes": 3226
+    },
+    {
+      "path": "opt-in-regression.mjs",
+      "sha256": "3d73793d09587cf8ac65ccd438d65a0bed478b7bf479184a39e7e0b117655055",
+      "bytes": 3418
+    },
+    {
+      "path": "inspect-saved.mjs",
+      "sha256": "23ca848a474306d532037472eca553f961f74ae3a33f81c12d4f58485360b0b0",
+      "bytes": 3240
+    }
+  ],
+  "nativeEvaluatorFreeze": {
+    "passed": true,
+    "frozenAt": "2026-09-17T03:23:09.470Z"
+  },
+  "currentPointer": {
+    "path": "../../FOUNDRY-CURRENT.md",
+    "sha256": "400f1bf3bc40df2c070c156a5c2bf5dc5153cc2f654a2c7cf07fe8e69ea18d5a"
+  },
+  "scope": "Completed and verified bounded construction/outcome/repair plus historical inspection and provider termination correction; broader program goals remain explicit in report."
+}

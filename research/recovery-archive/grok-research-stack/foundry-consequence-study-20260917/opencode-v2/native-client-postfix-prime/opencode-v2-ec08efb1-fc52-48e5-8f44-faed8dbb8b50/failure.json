@@ -1,0 +1,5 @@
+{
+  "code": "PROCESS_FAILED",
+  "message": "/usr/bin/bwrap exited with 1",
+  "receipts": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/opencode-v2/native-client-postfix-prime/opencode-v2-ec08efb1-fc52-48e5-8f44-faed8dbb8b50"
+}

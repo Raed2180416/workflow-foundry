@@ -1,0 +1,10 @@
+{
+  "test": "30 days is explicitly named unsupported while the bounded wait only pauses",
+  "input": {
+    "claim": {
+      "grounded": true
+    }
+  },
+  "workflowHash": "f8cda6791b8e2a11fec640fcb730be89fa71195c41ebda1c19d01f1e2c775f74",
+  "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77"
+}

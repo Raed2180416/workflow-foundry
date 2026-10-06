@@ -1,0 +1,18 @@
+{
+  "attempts": 1,
+  "forwarded": 1,
+  "completed": 0,
+  "requests": [
+    {
+      "number": 1,
+      "method": "POST",
+      "path": "/zen/v1/chat/completions",
+      "forwarded": true,
+      "requestSHA256": "7e99022999f5b341d604e08868da5c42bd15867ce1d3dfbc2957834eda3e302b",
+      "statusCode": 403,
+      "retryAfter": null,
+      "responseSHA256": "705fae6dc40dd516c1a1a30e8b6b24891c953baf5bab1d097547c067432214f2",
+      "responseBytes": 151
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+[
+  {
+    "at": 1789614775701,
+    "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+    "inputHash": "459702367cbe62b54262b350823a86b7875ef5798bba4936c3b25c8a575fe6ba",
+    "policyHash": "24f7bf6d1ec413ebed06b162c2a10a6da204d42e6d5a9e921e32e3f850bd8c6c",
+    "previousHash": null,
+    "registryHash": "bb3f73d712e174d3084248c8d199a620b7eeb2a7b2655d64b6286ab3af536d0e",
+    "seq": 1,
+    "type": "run.created",
+    "workflowHash": "3c63e7f7713b5b86868df9095b8d1417d089a734d81989c9c4ba5257f6597aaf",
+    "hash": "91ed2e7b23a49427dc767383d3c80ebf1c5034dc66d8e823783f75c059e3a1fe"
+  },
+  {
+    "at": 1789614775702,
+    "previousHash": "91ed2e7b23a49427dc767383d3c80ebf1c5034dc66d8e823783f75c059e3a1fe",
+    "seq": 2,
+    "token": "28904e51-f8af-4e26-8028-2591436e2df6",
+    "type": "runner.acquired",
+    "hash": "a1b3a01a4551aae501f6dec68f21d0ccebf66dbeb8db174493162ec0339f2b92"
+  },
+  {
+    "argsHash": "c5a71788ca66d677bdf45cd80a482e33ae4a4488f227c0097b15e8ae7acb520d",
+    "at": 1789614775703,
+    "effects": "idempotent",
+    "idempotencyKey": "611605dcede62c1838e3f3235c582cd0005360d9893461fd1fc44f32d6381dfc",
+    "kind": "task",
+    "nodeKey": "root/publish",
+    "previousHash": "a1b3a01a4551aae501f6dec68f21d0ccebf66dbeb8db174493162ec0339f2b92",
+    "reservedCost": 0,
+    "seq": 3,
+    "tool": "core.artifact",
+    "type": "tool.intent",
+    "hash": "16cbf72aa4d88f01b7c97d3001bab7e4cb9502790228cb4acd49ab2fe638fc8e"
+  },
+  {
+    "at": 1789614775705,
+    "nodeKey": "root/publish",
+    "output": {
+      "bytes": 14,
+      "name": "manifest.json",
+      "sha256": "459702367cbe62b54262b350823a86b7875ef5798bba4936c3b25c8a575fe6ba"
+    },
+    "outputHash": "6b973a6ee5fe2c6564577f3a9fae5af94adc9f9efc3561611f84b8ad50af5326",
+    "previousHash": "16cbf72aa4d88f01b7c97d3001bab7e4cb9502790228cb4acd49ab2fe638fc8e",
+    "seq": 4,
+    "type": "node.completed",
+    "hash": "20840e7b135b318acd869a927ab399022d909c03ffe8faec9614f5b5669ef1b3"
+  },
+  {
+    "at": 1789614775706,
+    "previousHash": "20840e7b135b318acd869a927ab399022d909c03ffe8faec9614f5b5669ef1b3",
+    "seq": 5,
+    "type": "run.succeeded",
+    "hash": "1ffe3be028e80c83585963ad0fc9dbbcdfd1e40df6f5958287a4494c65160c22"
+  }
+]

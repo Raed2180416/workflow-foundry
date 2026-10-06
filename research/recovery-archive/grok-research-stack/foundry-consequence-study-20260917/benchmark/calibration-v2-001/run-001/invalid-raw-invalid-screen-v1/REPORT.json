@@ -1,0 +1,120 @@
+{
+  "evaluatorId": "sample-consequences-v1:7c1505ba4d66a7b0686125f8e3c16b321441caade19d17752b4adc77209bd414:ebbdf190674414c29ec2fc7632e8f72b6e3c305c5abd20b322cc8a077304f732",
+  "workflowHash": "f32a244088d1875620de7afb5e0f4d2acf465146818a1b568526f1d70dd989a1",
+  "registryHash": "bb3f73d712e174d3084248c8d199a620b7eeb2a7b2655d64b6286ab3af536d0e",
+  "suiteHash": "7c1505ba4d66a7b0686125f8e3c16b321441caade19d17752b4adc77209bd414",
+  "split": "diagnostic",
+  "qualificationLevel": "task-outcome",
+  "passed": true,
+  "metrics": {
+    "passedCount": 1,
+    "caseCount": 1,
+    "successFraction": 1,
+    "falseSuccessCount": 0,
+    "totalSteps": 2,
+    "totalCost": 0,
+    "elapsedMs": 23,
+    "missingCalls": 0,
+    "forbiddenCalls": 0,
+    "duplicateCalls": 0,
+    "syntheticCost": 1
+  },
+  "envelope": [
+    "Independent finite exposed evaluator review, not frozen-suite evaluation."
+  ],
+  "cases": [
+    {
+      "id": "own-invalid-screen",
+      "passed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "checks": [],
+      "artifacts": [
+        {
+          "name": "manifest.json",
+          "passed": true,
+          "sha256": "6ebc10b49057e8bed32de8b46671c0e8474cc0e513ffa53a20190c8747015c0f"
+        }
+      ],
+      "steps": 2,
+      "cost": 0,
+      "elapsedMs": 9,
+      "runId": "96eef2f5-f710-434b-a2a6-1b9c8566b8b6",
+      "workspace": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/calibration-v2-001/run-001/invalid-raw-invalid-screen-v1/case-7GwSuj",
+      "exception": null,
+      "runError": null,
+      "failedNodes": [
+        {
+          "nodeKey": "root/screening",
+          "status": "handled_error",
+          "tool": "lab.screen",
+          "error": {
+            "code": "SCHEMA_MISMATCH",
+            "message": "lab.screen output does not satisfy its schema"
+          }
+        }
+      ],
+      "eventCount": 8,
+      "diagnostic": {
+        "input": {
+          "samples": [
+            {
+              "id": "independent-a"
+            }
+          ]
+        },
+        "expected": {
+          "statuses": [
+            "succeeded"
+          ],
+          "checks": [],
+          "artifacts": [
+            {
+              "name": "manifest.json",
+              "json": {
+                "samples": [
+                  {
+                    "sampleId": "independent-a",
+                    "disposition": "inconclusive"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "nativePassed": true,
+      "instrumentAudit": {
+        "passed": true,
+        "problems": [],
+        "missingCalls": 0,
+        "forbiddenCalls": 0,
+        "duplicateCalls": 0,
+        "wrongOrder": 0,
+        "invalidObservations": 0,
+        "screenCalls": 1,
+        "reproduceCalls": 0,
+        "syntheticCost": 1,
+        "expectedSyntheticCost": 1
+      },
+      "instrumentLog": [
+        {
+          "ordinal": 1,
+          "instrument": "screen",
+          "sampleId": "independent-a",
+          "nodeKey": "root/screening",
+          "idempotencyKey": "28a424e16dd65c4aed90b515c79f68b44980c23b013d14ef243f5e49e84e6bae",
+          "syntheticCost": 1,
+          "outcome": "returned",
+          "observation": {
+            "ok": true,
+            "sampleId": "independent-a",
+            "suspicious": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "qualification": "Fixed source-informed synthetic scenarios. Provider-hidden split only when withheld from synthesis; no population, autonomous discovery, production, or independent instrument calibration claim.",
+  "nativeEvaluatorId": "suite:own-invalid-screen:7c1505ba4d66a7b0686125f8e3c16b321441caade19d17752b4adc77209bd414"
+}

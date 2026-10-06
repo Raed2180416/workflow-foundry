@@ -1,0 +1,256 @@
+{
+  "schemaVersion": "1.0",
+  "id": "Obj48ab79fe8449",
+  "version": 1,
+  "title": "HTTP fetch then branch on error with a separate error path",
+  "goal": "HTTP fetch then branch on error with a separate error path",
+  "domain": "automation",
+  "envelope": {
+    "assumptions": [
+      "Local Foundry IR only",
+      "Capabilities are the default registry",
+      "Claim input is caller-supplied and requires independent verification",
+      "Fetch uses a fixed local identity result; no HTTP request is performed"
+    ],
+    "risks": [
+      "Named IR limits are not vendor protocols"
+    ],
+    "successCriteria": [
+      "Local acceptance checks pass on supplied data",
+      "Unsupported IR requests stay named and unexecuted"
+    ],
+    "unsupported": [
+      "delayMsMax:3600000",
+      "compensateKind:false",
+      "continueAsNew:false",
+      "timerDispatch:persisted-wake-reinvoke",
+      "waitCrashRestartsDeadline:true",
+      "budgetPolicyCapMs:3600000",
+      "singleWriterPerKey:false",
+      "eventCronTrigger:false",
+      "constructionDrivesGenerator:false"
+    ]
+  },
+  "inputSchema": {
+    "type": "object"
+  },
+  "budget": {
+    "maxSteps": 80,
+    "maxConcurrency": 2,
+    "maxDurationMs": 3600000,
+    "maxCost": 0
+  },
+  "nodes": [
+    {
+      "id": "fetch",
+      "kind": "task",
+      "needs": [],
+      "description": "Local fetch-result placeholder",
+      "tool": "core.fail",
+      "args": {
+        "message": "upstream failure witness"
+      },
+      "timeoutMs": 5000,
+      "retry": {
+        "maxAttempts": 2,
+        "backoffMs": 100
+      },
+      "onError": "continue"
+    },
+    {
+      "id": "okPath",
+      "kind": "task",
+      "needs": [
+        "fetch"
+      ],
+      "description": "Continue when fetch succeeded",
+      "tool": "core.identity",
+      "args": {
+        "branch": "ok"
+      },
+      "timeoutMs": 5000,
+      "retry": {
+        "maxAttempts": 2,
+        "backoffMs": 100
+      },
+      "when": {
+        "op": "eq",
+        "left": {
+          "$ref": "nodes.fetch.ok",
+          "default": false
+        },
+        "right": true
+      },
+      "join": "all_resolved"
+    },
+    {
+      "id": "errPath",
+      "kind": "task",
+      "needs": [
+        "fetch"
+      ],
+      "description": "Handle fetch failure within this scope",
+      "tool": "core.identity",
+      "args": {
+        "branch": "error"
+      },
+      "timeoutMs": 5000,
+      "retry": {
+        "maxAttempts": 2,
+        "backoffMs": 100
+      },
+      "when": {
+        "op": "ne",
+        "left": {
+          "$ref": "nodes.fetch.ok",
+          "default": false
+        },
+        "right": true
+      },
+      "join": "all_resolved"
+    },
+    {
+      "id": "join",
+      "kind": "task",
+      "needs": [
+        "okPath",
+        "errPath"
+      ],
+      "description": "Join success and error paths with explicit absent slots",
+      "tool": "core.collect",
+      "args": {
+        "items": [
+          {
+            "$ref": "nodes.okPath.branch",
+            "default": null
+          },
+          {
+            "$ref": "nodes.errPath.branch",
+            "default": null
+          }
+        ]
+      },
+      "timeoutMs": 5000,
+      "retry": {
+        "maxAttempts": 2,
+        "backoffMs": 100
+      },
+      "join": "all_resolved"
+    },
+    {
+      "id": "validate",
+      "kind": "task",
+      "needs": [
+        "join"
+      ],
+      "description": "Require the supplied claim to be explicitly marked grounded",
+      "tool": "core.validate",
+      "args": {
+        "value": {
+          "$ref": "input.claim",
+          "default": null
+        },
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "grounded"
+          ],
+          "properties": {
+            "grounded": {
+              "type": "boolean",
+              "const": true
+            }
+          }
+        }
+      },
+      "timeoutMs": 5000,
+      "retry": {
+        "maxAttempts": 2,
+        "backoffMs": 100
+      }
+    },
+    {
+      "id": "verify",
+      "kind": "assert",
+      "needs": [
+        "validate"
+      ],
+      "description": "Fail closed on acceptance evidence",
+      "checks": [
+        {
+          "op": "eq",
+          "left": {
+            "$ref": "nodes.validate.valid"
+          },
+          "right": true
+        },
+        {
+          "op": "any",
+          "conditions": [
+            {
+              "op": "eq",
+              "left": {
+                "$ref": "nodes.join.items",
+                "default": []
+              },
+              "right": [
+                "ok",
+                null
+              ]
+            },
+            {
+              "op": "eq",
+              "left": {
+                "$ref": "nodes.join.items",
+                "default": []
+              },
+              "right": [
+                null,
+                "error"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "artifact",
+      "kind": "task",
+      "needs": [
+        "verify"
+      ],
+      "description": "Write an inspectable receipt",
+      "tool": "core.artifact",
+      "args": {
+        "name": "receipt.json",
+        "content": "{\"status\":\"composed\"}"
+      },
+      "timeoutMs": 5000,
+      "retry": {
+        "maxAttempts": 2,
+        "backoffMs": 100
+      }
+    }
+  ],
+  "acceptance": [
+    {
+      "op": "eq",
+      "left": {
+        "$ref": "nodes.verify.passed",
+        "default": false
+      },
+      "right": true
+    }
+  ],
+  "metadata": {
+    "sources": [
+      "construction-objective"
+    ],
+    "rationale": "Keyword-based composition of local Foundry IR with supplied values; requires independent task verification.",
+    "tags": [
+      "branching",
+      "verification"
+    ]
+  }
+}

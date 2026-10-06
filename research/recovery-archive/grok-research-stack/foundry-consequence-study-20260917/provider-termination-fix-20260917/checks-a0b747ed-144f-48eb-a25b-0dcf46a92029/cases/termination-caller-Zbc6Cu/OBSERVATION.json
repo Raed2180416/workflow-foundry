@@ -1,0 +1,77 @@
+{
+  "name": "caller",
+  "expectedCode": "CANCELLED",
+  "code": "CANCELLED",
+  "receipts": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/provider-termination-fix-20260917/checks-a0b747ed-144f-48eb-a25b-0dcf46a92029/cases/termination-caller-Zbc6Cu/opencode-v2-d9cd5f2b-a9dd-4565-aab4-11cce69e9547",
+  "catalogCalls": 1,
+  "inferenceCalls": 1,
+  "externalNetworkCalls": 0,
+  "modelCalls": 0,
+  "termination": {
+    "startedAt": 1789636088316,
+    "deadlineAt": 1789636092316,
+    "abortAt": 1789636089263,
+    "first": {
+      "kind": "caller",
+      "at": 1789636089263,
+      "code": "CANCELLED",
+      "error": {
+        "name": "FoundryError",
+        "code": "CANCELLED",
+        "message": "Generation cancelled"
+      }
+    },
+    "secondary": [
+      {
+        "kind": "abort-observation",
+        "at": 1789636089264,
+        "code": "MODEL_TRANSPORT",
+        "error": {
+          "name": "AbortError",
+          "code": 20,
+          "message": "This operation was aborted"
+        }
+      },
+      {
+        "kind": "process",
+        "at": 1789636089268,
+        "code": "CANCELLED",
+        "error": {
+          "name": "FoundryError",
+          "code": "CANCELLED",
+          "message": "Subprocess cancelled"
+        }
+      }
+    ],
+    "finishedAt": 1789636089268,
+    "callerAborted": true
+  },
+  "transport": {
+    "attempts": 1,
+    "forwarded": 1,
+    "completed": 0,
+    "requests": [
+      {
+        "number": 1,
+        "method": "POST",
+        "path": "/zen/v1/chat/completions",
+        "forwarded": true,
+        "requestSHA256": "78b03ab938c671813e669d4522cecf1946fdc9ad3892b67de1fc5991247976f6",
+        "forwardedAt": 1789636089233,
+        "statusCode": 200,
+        "headersAt": 1789636089233,
+        "retryAfter": null,
+        "firstBodyByteAt": 1789636089233,
+        "lastBodyByteAt": 1789636089233,
+        "responseSHA256": "be984db6b02fa2cef9efc48e177c90ea840b5355a49f21a6faa9165784d0cc0b",
+        "responseBytes": 265,
+        "responsePartial": true,
+        "error": {
+          "name": "AbortError",
+          "code": 20,
+          "message": "This operation was aborted"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "startedAt": 1789636102370,
+  "deadlineAt": 1789636106370,
+  "abortAt": 1789636103299,
+  "first": {
+    "kind": "transport",
+    "at": 1789636103299,
+    "code": "MODEL_TRANSPORT",
+    "error": {
+      "name": "TypeError",
+      "code": null,
+      "message": "SUPPLIED network read failed",
+      "cause": {
+        "name": "Error",
+        "code": "ECONNRESET",
+        "message": "SUPPLIED reset"
+      }
+    }
+  },
+  "secondary": [
+    {
+      "kind": "deadline",
+      "at": 1789636103299,
+      "code": "TIMEOUT",
+      "error": {
+        "name": "FoundryError",
+        "code": "TIMEOUT",
+        "message": "Generation exceeded its total deadline"
+      }
+    },
+    {
+      "kind": "process",
+      "at": 1789636103302,
+      "code": "CANCELLED",
+      "error": {
+        "name": "FoundryError",
+        "code": "CANCELLED",
+        "message": "Subprocess cancelled"
+      }
+    }
+  ],
+  "finishedAt": 1789636103303,
+  "callerAborted": false
+}

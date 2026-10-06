@@ -1,0 +1,87 @@
+{
+  "preserved": [
+    {
+      "name": "before-adapter.mjs",
+      "source": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/opencode-v2/tiny-probe-dee7958b-8b95-4dc7-9686-63a7c45ba3d0/opencode-v2-1c89f0f5-dc66-4e69-bf68-afa2f124565e/task/runtime/opencode-v2-free.mjs",
+      "sha256": "d3919151c6452a3d19e8047eda6277892d6e2f694f1e2f62ae678dfdc508ce03",
+      "bytes": 29889
+    },
+    {
+      "name": "after-adapter.mjs",
+      "source": "/home/raed/Projects/workflow-foundry/src/opencode-v2-free.mjs",
+      "sha256": "a4ba3a46724ead16d7a9b57304183f22fec0fffdc2315d44568df983e1e2fdda",
+      "bytes": 33405
+    },
+    {
+      "name": "after-tests.mjs",
+      "source": "/home/raed/Projects/workflow-foundry/tests/opencode-v2-free.test.mjs",
+      "sha256": "1f5d4526c59d00ee77a694f8c40df359422552bef834930934da9a9ab780871d",
+      "bytes": 11509
+    },
+    {
+      "name": "native-model-request.ts",
+      "source": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/opencode-v2/upstream/packages/core/src/session/model-request.ts",
+      "sha256": "a9642ef93635e6af641f7adda23db34faff20945469573c4a1ca7d2f48fec81d",
+      "bytes": 16453
+    },
+    {
+      "name": "native-model-request.receipt.json",
+      "source": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/opencode-v2/upstream/packages/core/src/session/model-request.ts.receipt.json",
+      "sha256": "5d03151d738ba378558c837d0a7e8471c8534c2694e5a4cadbf4c299431e0ff9",
+      "bytes": 441
+    },
+    {
+      "name": "before-transport.json",
+      "source": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/opencode-v2/tiny-probe-dee7958b-8b95-4dc7-9686-63a7c45ba3d0/opencode-v2-1c89f0f5-dc66-4e69-bf68-afa2f124565e/transport.json",
+      "sha256": "0d7b8ba5a5046f07b572beba1740b5454943a0bab509ddfc3e96aa31e2f9596a",
+      "bytes": 460
+    },
+    {
+      "name": "before-wire-request.json",
+      "source": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/opencode-v2/tiny-probe-dee7958b-8b95-4dc7-9686-63a7c45ba3d0/opencode-v2-1c89f0f5-dc66-4e69-bf68-afa2f124565e/wire-request.json",
+      "sha256": "7e99022999f5b341d604e08868da5c42bd15867ce1d3dfbc2957834eda3e302b",
+      "bytes": 818
+    },
+    {
+      "name": "before-wire-response.txt",
+      "source": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/opencode-v2/tiny-probe-dee7958b-8b95-4dc7-9686-63a7c45ba3d0/opencode-v2-1c89f0f5-dc66-4e69-bf68-afa2f124565e/wire-response.txt",
+      "sha256": "705fae6dc40dd516c1a1a30e8b6b24891c953baf5bab1d097547c067432214f2",
+      "bytes": 151
+    },
+    {
+      "name": "previous-NOTE.md",
+      "source": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/opencode-v2/NOTE.md",
+      "sha256": "16184d5e656a5cef6794aea5e56f590f16bca7ca568bfeb5fbe6fb7d4491612c",
+      "bytes": 10698
+    },
+    {
+      "name": "previous-AUDIT.json",
+      "source": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/opencode-v2/AUDIT.json",
+      "sha256": "f62a3b47bce04e1281f21ff460c5cb4fb47a87a965665fc77baa77a034956f1e",
+      "bytes": 2926
+    },
+    {
+      "name": "runner.mjs",
+      "source": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/opencode-v2/native-header-recheck.mjs",
+      "sha256": "e7cdc3aa3c62a521e3dad6886790f8a15700d1ff32bd7a2fddccc6b0061982d1",
+      "bytes": 6029
+    }
+  ],
+  "nativeSourceRevision": "79169fe966d58fb0e0a5e41133716184a0ab4ca6",
+  "nativeSourceLines": [
+    232,
+    244
+  ],
+  "headers": [
+    "user-agent",
+    "x-opencode-project",
+    "x-opencode-session",
+    "x-opencode-client",
+    "x-session-id",
+    "x-session-affinity"
+  ],
+  "provenance": "Pinned source declares these headers; actual installed CLI emits them into the private bridge. nativeV2Headers copies the received values at both bridge hops; it generates none of their values.",
+  "beforeWireHeaderCapture": "Unavailable: the original relay discarded native headers and did not record them. Before-adapter source and refusal are preserved; no historical header values are invented.",
+  "afterWireHeaderCapture": "The adapter saves the actual received allowlisted values in wire-native-headers.json before the only forward.",
+  "binarySourceLimit": "Installed binary hash is pinned separately; this is not a reproducible source-to-binary attestation."
+}

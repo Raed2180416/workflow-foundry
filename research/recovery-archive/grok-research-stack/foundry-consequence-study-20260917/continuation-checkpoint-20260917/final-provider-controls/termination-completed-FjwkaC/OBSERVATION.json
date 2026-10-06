@@ -1,0 +1,42 @@
+{
+  "name": "completed",
+  "expectedCode": null,
+  "code": null,
+  "receipts": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/continuation-checkpoint-20260917/final-provider-controls/termination-completed-FjwkaC/opencode-v2-4b0c99fa-5c33-4ddc-bd48-0943a099009c",
+  "catalogCalls": 1,
+  "inferenceCalls": 1,
+  "externalNetworkCalls": 0,
+  "modelCalls": 0,
+  "termination": {
+    "startedAt": 1789636411270,
+    "deadlineAt": 1789636415270,
+    "abortAt": null,
+    "first": null,
+    "secondary": [],
+    "finishedAt": 1789636412518,
+    "callerAborted": false
+  },
+  "transport": {
+    "attempts": 1,
+    "forwarded": 1,
+    "completed": 1,
+    "requests": [
+      {
+        "number": 1,
+        "method": "POST",
+        "path": "/zen/v1/chat/completions",
+        "forwarded": true,
+        "requestSHA256": "ec989a70cd8b9f5f8a2667e04a13cb442f0d610f9548154a889a0543444b636f",
+        "forwardedAt": 1789636412300,
+        "statusCode": 200,
+        "headersAt": 1789636412300,
+        "retryAfter": null,
+        "firstBodyByteAt": 1789636412300,
+        "lastBodyByteAt": 1789636412300,
+        "responseSHA256": "7133c7686fd7cbcb0597d3bd930f024ac46b1d76d26fd40f72a1b3c35e82a5be",
+        "responseBytes": 463,
+        "completedAt": 1789636412300
+      }
+    ]
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "command": "/usr/bin/npm",
+  "args": [
+    "run",
+    "check"
+  ],
+  "code": 0,
+  "signal": null,
+  "stdout": "{\n  \"version\": \"0.1.0\",\n  \"source\": \"/home/raed/Projects/workflow-foundry\",\n  \"node\": \"v24.21.0\",\n  \"supportedNode\": true,\n  \"dependencyPins\": {\n    \"@modelcontextprotocol/sdk\": \"1.30.0\",\n    \"ajv\": \"8.20.0\",\n    \"jsonc-parser\": \"3.3.1\"\n  },\n  \"skillCount\": 14,\n  \"interfaces\": [\n    \"CLI\",\n    \"MCP stdio\",\n    \"loopback visual UI\",\n    \"project-scoped client installer\"\n  ],\n  \"published\": false,\n  \"qualification\": \"Run npm test and read evaluation receipts; doctor does not certify task quality.\"\n}\n",
+  "stderr": "npm notice run @contrare-research/workflow-foundry@0.1.0 check\nnpm notice run node bin/foundry.mjs doctor\n",
+  "elapsedMs": 212
+}

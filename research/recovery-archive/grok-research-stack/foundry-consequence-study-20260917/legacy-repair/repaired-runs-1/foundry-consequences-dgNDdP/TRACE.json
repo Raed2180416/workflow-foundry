@@ -1,0 +1,129 @@
+[
+  {
+    "at": 1789614077167,
+    "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+    "inputHash": "0859b895f86b2b0afe1c16be7f800c4928a733e3a95ff628dd0abbdf6398c93b",
+    "policyHash": "743874dc59bcbd3e3257926a739c866813d6604f924f906342983b4bb871caa7",
+    "previousHash": null,
+    "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+    "seq": 1,
+    "type": "run.created",
+    "workflowHash": "b33df9adf9d0e2bbeb33a36b6c207087a220854f7446d729e9d08602295a22ba",
+    "hash": "a367ff321d695a9a1ff6a1bf07a2bfc00724801f46fa0d33b260f16121d09214"
+  },
+  {
+    "at": 1789614077169,
+    "previousHash": "a367ff321d695a9a1ff6a1bf07a2bfc00724801f46fa0d33b260f16121d09214",
+    "seq": 2,
+    "token": "d567c016-2864-4c96-b970-1e52de1b668c",
+    "type": "runner.acquired",
+    "hash": "54bd5a62405aeaef7a3540d847722e55461e62caf03e559df2869c74241fe69a"
+  },
+  {
+    "at": 1789614077171,
+    "kind": "map",
+    "nodeKey": "root/matches",
+    "previousHash": "54bd5a62405aeaef7a3540d847722e55461e62caf03e559df2869c74241fe69a",
+    "reservedCost": 0,
+    "seq": 3,
+    "type": "node.started",
+    "hash": "43bfc771902deb85e72c6a0d1c85982f8a7b31eabc27218bb9698ef8396302c3"
+  },
+  {
+    "at": 1789614077172,
+    "nodeKey": "root/matches",
+    "output": {
+      "count": 0,
+      "items": []
+    },
+    "outputHash": "c0da23c453e9762b163be9bd1d5ef930755b46dc31d2cc8b3aed2b166874cf37",
+    "previousHash": "43bfc771902deb85e72c6a0d1c85982f8a7b31eabc27218bb9698ef8396302c3",
+    "seq": 4,
+    "type": "node.completed",
+    "hash": "abcc20dee6dbc79a61216c7598bd55a492801db45a37d9e7f2d391a0eb15fd37"
+  },
+  {
+    "argsHash": "a623f40da9df05645b22589bb511647e4ab80fe3ee0b1a0d52ec75564d36a065",
+    "at": 1789614077173,
+    "effects": "none",
+    "idempotencyKey": "06d7d8dcc751653d45ac8da73b84bbc9dde45a75e53b4c8abb70f9c85dd16ac3",
+    "kind": "task",
+    "nodeKey": "root/validate",
+    "previousHash": "abcc20dee6dbc79a61216c7598bd55a492801db45a37d9e7f2d391a0eb15fd37",
+    "reservedCost": 0,
+    "seq": 5,
+    "tool": "core.validate",
+    "type": "tool.intent",
+    "hash": "c3b58f4b502e0c7d1eba120d359300656c58c1a5cff4a9d3aa09716b597b2b6f"
+  },
+  {
+    "at": 1789614077174,
+    "nodeKey": "root/validate",
+    "output": {
+      "errors": [],
+      "valid": true
+    },
+    "outputHash": "f2e6221bac7112ea123f706c89500b263e72f0f9bc7068fb74bdbaf8c51fbc38",
+    "previousHash": "c3b58f4b502e0c7d1eba120d359300656c58c1a5cff4a9d3aa09716b597b2b6f",
+    "seq": 6,
+    "type": "node.completed",
+    "hash": "307b10aedf964250cdf0da8da315bfcdef28e433c9dab95bab6fa8ea1edb179d"
+  },
+  {
+    "at": 1789614077175,
+    "kind": "assert",
+    "nodeKey": "root/verify",
+    "previousHash": "307b10aedf964250cdf0da8da315bfcdef28e433c9dab95bab6fa8ea1edb179d",
+    "reservedCost": 0,
+    "seq": 7,
+    "type": "node.started",
+    "hash": "e8a03432ed50a4d43a8694a677a7ebc9370d83c3bd1507b5e03db7e87c882027"
+  },
+  {
+    "at": 1789614077177,
+    "nodeKey": "root/verify",
+    "output": {
+      "passed": true
+    },
+    "outputHash": "11c11db30f4b3f6c758722ba3e27eea08145b7d212f6a157451e364b48475280",
+    "previousHash": "e8a03432ed50a4d43a8694a677a7ebc9370d83c3bd1507b5e03db7e87c882027",
+    "seq": 8,
+    "type": "node.completed",
+    "hash": "0616ca948326079ded2de748b332c41bd935a4bd8dca8af8e2238f941e614e2f"
+  },
+  {
+    "argsHash": "f44964cfb4a032af59b6c6b356a0f46b39e03edc03d6fc184ed1db04d5ef39a1",
+    "at": 1789614077178,
+    "effects": "idempotent",
+    "idempotencyKey": "a87ed60bddc18cf4c1d7975c76b3ab5b0a5fd6d1f0a6880ca708ab6ea260e803",
+    "kind": "task",
+    "nodeKey": "root/artifact",
+    "previousHash": "0616ca948326079ded2de748b332c41bd935a4bd8dca8af8e2238f941e614e2f",
+    "reservedCost": 0,
+    "seq": 9,
+    "tool": "core.artifact",
+    "type": "tool.intent",
+    "hash": "22c678cf95389eb597520a9396ce2f5e2d6edeb0c97873f93c6b293b7e4f37be"
+  },
+  {
+    "at": 1789614077182,
+    "nodeKey": "root/artifact",
+    "output": {
+      "bytes": 21,
+      "name": "receipt.json",
+      "sha256": "c3f7120e8218a8208459015dd0edda53d195d6ff7fa2bea0f42eefea1d0fb6a8"
+    },
+    "outputHash": "dec95d7694bd2d6f40a4cf815e52fc320724401aff0cade0092d168c868e6e94",
+    "previousHash": "22c678cf95389eb597520a9396ce2f5e2d6edeb0c97873f93c6b293b7e4f37be",
+    "seq": 10,
+    "type": "node.completed",
+    "hash": "b76a26cfe98313346e2c82b35663f7b19fc69382243682ccca48e64a079968ed"
+  },
+  {
+    "at": 1789614077183,
+    "previousHash": "b76a26cfe98313346e2c82b35663f7b19fc69382243682ccca48e64a079968ed",
+    "seq": 11,
+    "type": "run.succeeded",
+    "hash": "82b08eea89f1e7fc8f38b65dbd1fd6c699de91b14b5e3d9b2f1d42d5b998380b"
+  }
+]

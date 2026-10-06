@@ -1,0 +1,91 @@
+{
+  "approvals": {},
+  "cost": 0,
+  "createdAt": 1789613952409,
+  "deadline": 1789617552409,
+  "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+  "error": {
+    "code": "ASSERTION_FAILED",
+    "message": "Assertion verify failed"
+  },
+  "eventHead": {
+    "seq": 9,
+    "hash": "5b4b9f6cc72e5d6c97fe6b76be15d9ba4cfbeb61526285e91ed26c534a68c375"
+  },
+  "frames": {},
+  "id": "ad7a5c9e-d242-41c2-8e88-20123833274f",
+  "input": {
+    "claim": {
+      "grounded": null
+    }
+  },
+  "nodes": {
+    "validate": {
+      "argsHash": "26d9e332639015c0bd098c54d7fcb098b5e1842752744e66e8b16c91d64dbcbe",
+      "attempts": 1,
+      "completedAt": 1789613952475,
+      "completedSequence": 6,
+      "effects": "none",
+      "idempotencyKey": "04b0fa784c05dc081197297e8ee5c95e8ca0b2d0c4323eddac511dec7735ecba",
+      "kind": "task",
+      "outputHash": "c77ea752e2039c93ccfe35310aac034439857e7e057bd84bb8bd7b5712940490",
+      "startedAt": 1789613952463,
+      "startedSequence": 5,
+      "status": "completed",
+      "tool": "core.validate"
+    },
+    "verify": {
+      "attempts": 1,
+      "error": {
+        "code": "ASSERTION_FAILED",
+        "message": "Assertion verify failed"
+      },
+      "kind": "assert",
+      "startedAt": 1789613952482,
+      "startedSequence": 7,
+      "status": "failed"
+    },
+    "work": {
+      "argsHash": "ace9288a3ff79a9132b9ddf621bc19354ffb04b3eacb17486ad6dc4d51303961",
+      "attempts": 1,
+      "completedAt": 1789613952454,
+      "completedSequence": 4,
+      "effects": "none",
+      "idempotencyKey": "d85840a30027947908d661f16cbb2ea902396a6f3d5b28719c6293ee7653860a",
+      "kind": "task",
+      "outputHash": "ace9288a3ff79a9132b9ddf621bc19354ffb04b3eacb17486ad6dc4d51303961",
+      "startedAt": 1789613952446,
+      "startedSequence": 3,
+      "status": "completed",
+      "tool": "core.identity"
+    }
+  },
+  "outputs": {
+    "validate": {
+      "errors": [
+        {
+          "instancePath": "/grounded",
+          "keyword": "type",
+          "message": "must be boolean",
+          "params": {
+            "type": "boolean"
+          },
+          "schemaPath": "#/properties/grounded/type"
+        }
+      ],
+      "valid": false
+    },
+    "work": {
+      "done": true
+    }
+  },
+  "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+  "resumeCount": 1,
+  "status": "failed",
+  "steps": 3,
+  "updatedAt": 1789613952496,
+  "workflowHash": "4e3bb350e77d1b090eccdbf84b6eb9d4452b8931c0f819a7cdc4ffd9a72124cd",
+  "workflowId": "Obj08b07d57899e",
+  "executionActive": false,
+  "independentTaskVerified": false
+}

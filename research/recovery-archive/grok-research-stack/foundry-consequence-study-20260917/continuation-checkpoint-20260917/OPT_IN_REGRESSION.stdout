@@ -1,0 +1,510 @@
+TAP version 13
+# Subtest: offline MCP draft and diagnostic repair lifecycle through actual stdio
+    # Subtest: catalog exposes explicit diagnostic APIs without task or authority override fields
+    ok 1 - catalog exposes explicit diagnostic APIs without task or authority override fields
+      ---
+      duration_ms: 1.023731
+      type: 'test'
+      ...
+    # Subtest: agent-relayed designs preserve provenance, version binding and excluded automatic dispatch
+    ok 2 - agent-relayed designs preserve provenance, version binding and excluded automatic dispatch
+      ---
+      duration_ms: 423.284796
+      type: 'test'
+      ...
+    # Subtest: failed draft then changed draft at the same version preserve the pending request and main store
+    ok 3 - failed draft then changed draft at the same version preserve the pending request and main store
+      ---
+      duration_ms: 638.387494
+      type: 'test'
+      ...
+    # Subtest: draft schema rejects serialized input and caller authority/task overrides before state changes
+    ok 4 - draft schema rejects serialized input and caller authority/task overrides before state changes
+      ---
+      duration_ms: 342.598048
+      type: 'test'
+      ...
+    # Subtest: explicit JSON trial transport preserves root types and records invalid input without effects
+    ok 5 - explicit JSON trial transport preserves root types and records invalid input without effects
+      ---
+      duration_ms: 556.561528
+      type: 'test'
+      ...
+    # Subtest: closed trial inspection rejects changed artifact bytes and truncated events
+    ok 6 - closed trial inspection rejects changed artifact bytes and truncated events
+      ---
+      duration_ms: 631.903087
+      type: 'test'
+      ...
+    # Subtest: per-request trial quota rejects excess work without reserving another trial or changing the request
+    ok 7 - per-request trial quota rejects excess work without reserving another trial or changing the request
+      ---
+      duration_ms: 611.365785
+      type: 'test'
+      ...
+    # Subtest: trial validates request identity and required next version without consuming the request
+    ok 8 - trial validates request identity and required next version without consuming the request
+      ---
+      duration_ms: 566.673906
+      type: 'test'
+      ...
+    # Subtest: trial does not dispatch a custom external effect at top level or in a nested body
+    ok 9 - trial does not dispatch a custom external effect at top level or in a nested body
+      ---
+      duration_ms: 490.154057
+      type: 'test'
+      ...
+    # Subtest: trial cannot increase existing host capability or execution budgets
+    ok 10 - trial cannot increase existing host capability or execution budgets
+      ---
+      duration_ms: 509.489562
+      type: 'test'
+      ...
+    # Subtest: applied failure creates an agent diagnostic request while preserving original evidence and exact task
+    ok 11 - applied failure creates an agent diagnostic request while preserving original evidence and exact task
+      ---
+      duration_ms: 487.333805
+      type: 'test'
+      ...
+    # Subtest: delivery rejects mixed versions and reports host task evidence separately from linked local execution
+    ok 12 - delivery rejects mixed versions and reports host task evidence separately from linked local execution
+      ---
+      duration_ms: 717.629515
+      type: 'test'
+      ...
+    # Subtest: repeated and concurrent same-failure repair requests are idempotent
+    ok 13 - repeated and concurrent same-failure repair requests are idempotent
+      ---
+      duration_ms: 606.606827
+      type: 'test'
+      ...
+    # Subtest: diagnostic proposals retain declared goal and success criteria and enforce CAS at application
+    ok 14 - diagnostic proposals retain declared goal and success criteria and enforce CAS at application
+      ---
+      duration_ms: 425.658975
+      type: 'test'
+      ...
+    # Subtest: unchanged requirement text and successful local acceptance remain insufficient for task qualification
+    ok 15 - unchanged requirement text and successful local acceptance remain insufficient for task qualification
+      ---
+      duration_ms: 445.130675
+      type: 'test'
+      ...
+    # Subtest: a subsequent failed diagnostic version retains the original root task and full parent lineage
+    ok 16 - a subsequent failed diagnostic version retains the original root task and full parent lineage
+      ---
+      duration_ms: 477.492568
+      type: 'test'
+      ...
+    # Subtest: repair rejects stale/cross-request/fabricated evidence and provenance overrides
+    ok 17 - repair rejects stale/cross-request/fabricated evidence and provenance overrides
+      ---
+      duration_ms: 562.935152
+      type: 'test'
+      ...
+    # Subtest: successful or merely paused runs are not forged into failed-run repair requests
+    ok 18 - successful or merely paused runs are not forged into failed-run repair requests
+      ---
+      duration_ms: 776.043127
+      type: 'test'
+      ...
+    # Subtest: corrupted failure history cannot authorize a diagnostic repair
+    ok 19 - corrupted failure history cannot authorize a diagnostic repair
+      ---
+      duration_ms: 576.259887
+      type: 'test'
+      ...
+    # Subtest: agent-created diagnostic request cannot silently dispatch the automatic generator queue
+    ok 20 - agent-created diagnostic request cannot silently dispatch the automatic generator queue
+      ---
+      duration_ms: 533.437666
+      type: 'test'
+      ...
+    1..20
+ok 1 - offline MCP draft and diagnostic repair lifecycle through actual stdio
+  ---
+  duration_ms: 11269.14534
+  type: 'test'
+  ...
+# Preserved offline receipt directory: /home/raed/Projects/workflow-foundry/.foundry/verification/mcp-repair-lifecycle-audit-WsvaH3
+# Subtest: packaging reference checker detects missing files, anchors and escaped bundle paths
+ok 2 - packaging reference checker detects missing files, anchors and escaped bundle paths
+  ---
+  duration_ms: 7.110594
+  type: 'test'
+  ...
+# Subtest: packaging all shipped skill Markdown references stay within the portable bundle
+ok 3 - packaging all shipped skill Markdown references stay within the portable bundle
+  ---
+  duration_ms: 6.122079
+  type: 'test'
+  ...
+# {"markdownFiles":30,"localReferences":106,"failures":[]}
+# Subtest: packaging source-map headers preserve repository-only provenance and pinned public sources
+ok 4 - packaging source-map headers preserve repository-only provenance and pinned public sources
+  ---
+  duration_ms: 0.279204
+  type: 'test'
+  ...
+# Subtest: packaging inventory gate rejects private state and evidence even under otherwise published roots
+ok 5 - packaging inventory gate rejects private state and evidence even under otherwise published roots
+  ---
+  duration_ms: 0.408937
+  type: 'test'
+  ...
+# Subtest: packaging actual tarball, project installers and generated stdio MCP commands
+    # Subtest: private package excludes corpus, receipts, caches and upstream license payloads
+    ok 1 - private package excludes corpus, receipts, caches and upstream license payloads
+      ---
+      duration_ms: 2.361522
+      type: 'test'
+      ...
+    # Subtest: actual extracted archive matches the npm inventory and permitted source bytes
+    ok 2 - actual extracted archive matches the npm inventory and permitted source bytes
+      ---
+      duration_ms: 2.36624
+      type: 'test'
+      ...
+    # Subtest: tarball contains actual runtime assets and exact installed dependency versions
+    ok 3 - tarball contains actual runtime assets and exact installed dependency versions
+      ---
+      duration_ms: 191.244586
+      type: 'test'
+      ...
+    # Subtest: packed CLI runs an example, verifies its artifact and initializes both adapter exports
+    ok 4 - packed CLI runs an example, verifies its artifact and initializes both adapter exports
+      ---
+      duration_ms: 1868.164912
+      type: 'test'
+      ...
+    # Subtest: generic: actual copied skill files and Markdown references
+    ok 5 - generic: actual copied skill files and Markdown references
+      ---
+      duration_ms: 5.871017
+      type: 'test'
+      ...
+    # Subtest: generic: existing project comments, dummy servers and advisory hooks are preserved
+    ok 6 - generic: existing project comments, dummy servers and advisory hooks are preserved
+      ---
+      duration_ms: 0.238528
+      type: 'test'
+      ...
+    # Subtest: generic: generated configuration launches the packed MCP and reads every skill Markdown
+    ok 7 - generic: generated configuration launches the packed MCP and reads every skill Markdown
+      ---
+      duration_ms: 271.090177
+      type: 'test'
+      ...
+    # Subtest: generic: installer is idempotent and rollback restores only installed files
+    ok 8 - generic: installer is idempotent and rollback restores only installed files
+      ---
+      duration_ms: 599.786881
+      type: 'test'
+      ...
+    # Subtest: opencode: actual copied skill files and Markdown references
+    ok 9 - opencode: actual copied skill files and Markdown references
+      ---
+      duration_ms: 6.125635
+      type: 'test'
+      ...
+    # Subtest: opencode: existing project comments, dummy servers and advisory hooks are preserved
+    ok 10 - opencode: existing project comments, dummy servers and advisory hooks are preserved
+      ---
+      duration_ms: 0.201358
+      type: 'test'
+      ...
+    # Subtest: opencode: generated configuration launches the packed MCP and reads every skill Markdown
+    ok 11 - opencode: generated configuration launches the packed MCP and reads every skill Markdown
+      ---
+      duration_ms: 252.108896
+      type: 'test'
+      ...
+    # Subtest: opencode: installer is idempotent and rollback restores only installed files
+    ok 12 - opencode: installer is idempotent and rollback restores only installed files
+      ---
+      duration_ms: 604.719548
+      type: 'test'
+      ...
+    # Subtest: claude: actual copied skill files and Markdown references
+    ok 13 - claude: actual copied skill files and Markdown references
+      ---
+      duration_ms: 5.515471
+      type: 'test'
+      ...
+    # Subtest: claude: existing project comments, dummy servers and advisory hooks are preserved
+    ok 14 - claude: existing project comments, dummy servers and advisory hooks are preserved
+      ---
+      duration_ms: 0.254077
+      type: 'test'
+      ...
+    # Subtest: claude: generated configuration launches the packed MCP and reads every skill Markdown
+    ok 15 - claude: generated configuration launches the packed MCP and reads every skill Markdown
+      ---
+      duration_ms: 305.682285
+      type: 'test'
+      ...
+    # Subtest: claude: installer is idempotent and rollback restores only installed files
+    ok 16 - claude: installer is idempotent and rollback restores only installed files
+      ---
+      duration_ms: 722.018136
+      type: 'test'
+      ...
+    # Subtest: cursor: actual copied skill files and Markdown references
+    ok 17 - cursor: actual copied skill files and Markdown references
+      ---
+      duration_ms: 5.537051
+      type: 'test'
+      ...
+    # Subtest: cursor: existing project comments, dummy servers and advisory hooks are preserved
+    ok 18 - cursor: existing project comments, dummy servers and advisory hooks are preserved
+      ---
+      duration_ms: 0.13839
+      type: 'test'
+      ...
+    # Subtest: cursor: generated configuration launches the packed MCP and reads every skill Markdown
+    ok 19 - cursor: generated configuration launches the packed MCP and reads every skill Markdown
+      ---
+      duration_ms: 287.462162
+      type: 'test'
+      ...
+    # Subtest: cursor: installer is idempotent and rollback restores only installed files
+    ok 20 - cursor: installer is idempotent and rollback restores only installed files
+      ---
+      duration_ms: 686.302161
+      type: 'test'
+      ...
+    # Subtest: codex: actual copied skill files and Markdown references
+    ok 21 - codex: actual copied skill files and Markdown references
+      ---
+      duration_ms: 5.145376
+      type: 'test'
+      ...
+    # Subtest: codex: existing project comments, dummy servers and advisory hooks are preserved
+    ok 22 - codex: existing project comments, dummy servers and advisory hooks are preserved
+      ---
+      duration_ms: 0.117391
+      type: 'test'
+      ...
+    # Subtest: codex: generated configuration launches the packed MCP and reads every skill Markdown
+    ok 23 - codex: generated configuration launches the packed MCP and reads every skill Markdown
+      ---
+      duration_ms: 247.151785
+      type: 'test'
+      ...
+    # Subtest: codex: installer is idempotent and rollback restores only installed files
+    ok 24 - codex: installer is idempotent and rollback restores only installed files
+      ---
+      duration_ms: 580.579919
+      type: 'test'
+      ...
+    # Subtest: packed installer rejects conflicting configs and symlink ancestors without partial writes
+    ok 25 - packed installer rejects conflicting configs and symlink ancestors without partial writes
+      ---
+      duration_ms: 323.074805
+      type: 'test'
+      ...
+    # Subtest: packed uninstall preserves user edits on conflict and then restores the original installation
+    ok 26 - packed uninstall preserves user edits on conflict and then restores the original installation
+      ---
+      duration_ms: 476.076494
+      type: 'test'
+      ...
+    # Subtest: source files remained stable during package/install verification
+    ok 27 - source files remained stable during package/install verification
+      ---
+      duration_ms: 2.528776
+      type: 'test'
+      ...
+    1..27
+ok 6 - packaging actual tarball, project installers and generated stdio MCP commands
+  ---
+  duration_ms: 9958.7285
+  type: 'test'
+  ...
+# Packaging evidence: evals/runs/packaging-evidence-Tsqm50/packaging-report.json
+# Subtest: UI browser: real local HTTP workflows, revision pins and human controls
+    # Subtest: loads the strict-CSP graph, safe text and keyboard node inspection
+    ok 1 - loads the strict-CSP graph, safe text and keyboard node inspection
+      ---
+      duration_ms: 303.02005
+      type: 'test'
+      ...
+    # Subtest: queues actual version-bound agent requests and leaves pending state explicit
+    ok 2 - queues actual version-bound agent requests and leaves pending state explicit
+      ---
+      duration_ms: 269.00174
+      type: 'test'
+      ...
+    # Subtest: starts a pinned run and answers full nested map/loop node paths
+    ok 3 - starts a pinned run and answers full nested map/loop node paths
+      ---
+      duration_ms: 2811.68234
+      type: 'test'
+      ...
+    # Subtest: applies CAS proposals, keeps historical run source pinned and blocks stale proposals
+    ok 4 - applies CAS proposals, keeps historical run source pinned and blocks stale proposals
+      ---
+      duration_ms: 530.490341
+      type: 'test'
+      ...
+    # Subtest: renders root/nested outputs and event evidence with dark and light screenshots
+    ok 5 - renders root/nested outputs and event evidence with dark and light screenshots
+      ---
+      duration_ms: 897.832781
+      type: 'test'
+      ...
+    # Subtest: validates and imports JSON; rejects an explicit operation without inventing success
+    ok 6 - validates and imports JSON; rejects an explicit operation without inventing success
+      ---
+      duration_ms: 575.455725
+      type: 'test'
+      ...
+    # Subtest: keeps validation errors visible; resumes waits and cancels active execution
+    ok 7 - keeps validation errors visible; resumes waits and cancels active execution
+      ---
+      duration_ms: 738.396317
+      type: 'test'
+      ...
+    # Subtest: catalogs installed contracts, keeps all mutations authenticated and records no CSP or script errors
+    ok 8 - catalogs installed contracts, keeps all mutations authenticated and records no CSP or script errors
+      ---
+      duration_ms: 48.33091
+      type: 'test'
+      ...
+    # Subtest: automatic bridge processes real UI requests and proposes without silently applying
+    ok 9 - automatic bridge processes real UI requests and proposes without silently applying
+      ---
+      duration_ms: 6509.178679
+      type: 'test'
+      ...
+    # Subtest: automatic apply is explicit and retains old generation settings and pinned run source
+    ok 10 - automatic apply is explicit and retains old generation settings and pinned run source
+      ---
+      duration_ms: 480.931961
+      type: 'test'
+      ...
+    # Subtest: bounded repair preserves a malformed candidate attempt and its actual host feedback
+    ok 11 - bounded repair preserves a malformed candidate attempt and its actual host feedback
+      ---
+      duration_ms: 2450.369276
+      type: 'test'
+      ...
+    # Subtest: provider errors render as safe text and failed jobs never silently retry or create proposals
+    ok 12 - provider errors render as safe text and failed jobs never silently retry or create proposals
+      ---
+      duration_ms: 2683.528029
+      type: 'test'
+      ...
+    # Subtest: generation cancellation uses the real token route and waits for a recorded terminal result
+    ok 13 - generation cancellation uses the real token route and waits for a recorded terminal result
+      ---
+      duration_ms: 513.453665
+      type: 'test'
+      ...
+    # Subtest: automatic-apply conflicts show failed job evidence and the unapplied source diff
+    ok 14 - automatic-apply conflicts show failed job evidence and the unapplied source diff
+      ---
+      duration_ms: 5849.417509
+      type: 'test'
+      ...
+    # Subtest: an inactive generation cancellation reports the backend error without falsifying status
+    ok 15 - an inactive generation cancellation reports the backend error without falsifying status
+      ---
+      duration_ms: 230.415962
+      type: 'test'
+      ...
+    # Subtest: automatic UI integration has no external requests, unauthed writes, inline styles or script/CSP failures
+    ok 16 - automatic UI integration has no external requests, unauthed writes, inline styles or script/CSP failures
+      ---
+      duration_ms: 1.447927
+      type: 'test'
+      ...
+    1..16
+ok 7 - UI browser: real local HTTP workflows, revision pins and human controls
+  ---
+  duration_ms: 25646.43203
+  type: 'test'
+  ...
+# Subtest: UI linkage selection refuses unrelated, unapplied and missing request identities
+ok 8 - UI linkage selection refuses unrelated, unapplied and missing request identities
+  ---
+  duration_ms: 0.939032
+  type: 'test'
+  ...
+# Subtest: UI draft trials and diagnostic repair through real local HTTP
+    # Subtest: successful draft graph and nested execution stay bound to exact trial hash
+    ok 1 - successful draft graph and nested execution stay bound to exact trial hash
+      ---
+      duration_ms: 371.662854
+      type: 'test'
+      ...
+    # Subtest: opaque-ID lookup and returned artifact receipts preserve sibling failure evidence
+    ok 2 - opaque-ID lookup and returned artifact receipts preserve sibling failure evidence
+      ---
+      duration_ms: 218.512884
+      type: 'test'
+      ...
+    # Subtest: input rejection keeps a no-run receipt and never substitutes a saved graph
+    ok 3 - input rejection keeps a no-run receipt and never substitutes a saved graph
+      ---
+      duration_ms: 88.42312
+      type: 'test'
+      ...
+    # Subtest: paused draft exposes inspection without human answers, approvals or resume
+    ok 4 - paused draft exposes inspection without human answers, approvals or resume
+      ---
+      duration_ms: 200.151797
+      type: 'test'
+      ...
+    # Subtest: failed applied run opens diagnostic lineage and loads its real host context
+    ok 5 - failed applied run opens diagnostic lineage and loads its real host context
+      ---
+      duration_ms: 370.654682
+      type: 'test'
+      ...
+    # Subtest: global automatic configuration cannot relabel diagnostic requests as a spending queue
+    ok 6 - global automatic configuration cannot relabel diagnostic requests as a spending queue
+      ---
+      duration_ms: 188.854876
+      type: 'test'
+      ...
+    # Subtest: delivery inspection keeps exact IDs and separately scoped suite evidence unqualified for the run
+    ok 7 - delivery inspection keeps exact IDs and separately scoped suite evidence unqualified for the run
+      ---
+      duration_ms: 104.977718
+      type: 'test'
+      ...
+    # Subtest: current-head race returns a visible stale error without creating or rebinding a repair
+    ok 8 - current-head race returns a visible stale error without creating or rebinding a repair
+      ---
+      duration_ms: 145.587678
+      type: 'test'
+      ...
+    # Subtest: artifact verification error and missing opaque ID retain an explicitly historical snapshot
+    ok 9 - artifact verification error and missing opaque ID retain an explicitly historical snapshot
+      ---
+      duration_ms: 202.886629
+      type: 'test'
+      ...
+# UI trial evidence: /home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/continuation-checkpoint-20260917/opt-in-browser-artifacts/ui-trials-lALSEy
+    # Subtest: responsive UI uses authenticated local actions and records no browser or external errors
+    ok 10 - responsive UI uses authenticated local actions and records no browser or external errors
+      ---
+      duration_ms: 197.725653
+      type: 'test'
+      ...
+    1..10
+ok 9 - UI draft trials and diagnostic repair through real local HTTP
+  ---
+  duration_ms: 2939.096811
+  type: 'test'
+  ...
+1..9
+# tests 82
+# suites 0
+# pass 82
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 50218.250323

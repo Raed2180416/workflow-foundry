@@ -1,0 +1,112 @@
+{
+  "appliedAt": 1789615875387,
+  "baseHash": "f99bea48d7493ead3f9f343c20cba294eca413ccfeac3d2871763cc0991b55d6",
+  "createdAt": 1789615875385,
+  "id": "1ad07a4e-c3d3-4dc9-a335-1030d767a120",
+  "impact": {
+    "acceptanceChanged": false,
+    "activeRunsMigrated": false,
+    "added": [],
+    "budgetChanged": false,
+    "changed": [
+      "encode"
+    ],
+    "removed": []
+  },
+  "rationale": "Supplied development fix: serialize the input record and write the required basename.",
+  "requestId": "6bf498c2-9cc2-4ccd-91a1-fa494be08aae",
+  "status": "applied",
+  "validation": {
+    "errors": [],
+    "hash": "9d9341f5d6f24273303763801e2158270f5903784e02a51265a2ad631492572c",
+    "nodeCount": 2,
+    "valid": true,
+    "warnings": []
+  },
+  "workflow": {
+    "acceptance": [
+      {
+        "op": "exists",
+        "value": {
+          "$ref": "nodes.file.sha256"
+        }
+      }
+    ],
+    "budget": {
+      "maxConcurrency": 1,
+      "maxCost": 0,
+      "maxDurationMs": 10000,
+      "maxSteps": 5
+    },
+    "domain": "software",
+    "envelope": {
+      "assumptions": [
+        "A bounded local JSON artifact is the requested result."
+      ],
+      "risks": [
+        "Existing bytes can contain incorrect data."
+      ],
+      "successCriteria": [
+        "Write record.json containing exactly the record supplied in the input."
+      ],
+      "unsupported": [
+        "External effects and general intent inference"
+      ]
+    },
+    "goal": "Write record.json containing exactly the record supplied in the input.",
+    "id": "outcome-repair-witness",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "record": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "record"
+      ],
+      "type": "object"
+    },
+    "nodes": [
+      {
+        "args": {
+          "value": {
+            "$ref": "input.record"
+          }
+        },
+        "description": "Serialize the chosen record.",
+        "id": "encode",
+        "kind": "task",
+        "needs": [],
+        "retry": {
+          "maxAttempts": 1
+        },
+        "timeoutMs": 1000,
+        "tool": "core.json"
+      },
+      {
+        "args": {
+          "content": {
+            "$ref": "nodes.encode.text"
+          },
+          "name": "record.json"
+        },
+        "description": "Write the run artifact.",
+        "id": "file",
+        "kind": "task",
+        "needs": [
+          "encode"
+        ],
+        "retry": {
+          "maxAttempts": 1
+        },
+        "timeoutMs": 1000,
+        "tool": "core.artifact"
+      }
+    ],
+    "schemaVersion": "1.0",
+    "title": "Supplied JSON outcome repair control",
+    "version": 2
+  },
+  "workflowHash": "9d9341f5d6f24273303763801e2158270f5903784e02a51265a2ad631492572c"
+}

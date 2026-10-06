@@ -1,0 +1,37 @@
+{
+  "checkedAt": "2026-09-17T03:05:28.831Z",
+  "passed": true,
+  "sourceSHA256": "d3283d8df7230231db26efdd80305453eed1f0056ab71a4513ca133a297ea536",
+  "newTestSHA256": "310c9ce34c26ac21f6fff0603952927b0aa53c4077a7ef6b90e1d11e3ca4f9cd",
+  "preservedOtherFiles": 26,
+  "preservedEarlierReceipts": 6,
+  "checkedCases": 43,
+  "checkedEvents": 758,
+  "observedTools": [
+    "core.artifact",
+    "core.collect",
+    "core.fail",
+    "core.identity",
+    "core.validate",
+    "diagnostic.item-fetch"
+  ],
+  "mixed32": {
+    "actualSteps": 116,
+    "budgetMaxSteps": 262,
+    "frames": 32,
+    "fetchCalls": 48,
+    "handledFetchErrors": 16
+  },
+  "artifactSHA256": {
+    "NOTE.md": "f387f31e4df752a52a41d1af00296081f283be160fcf1e96d0c3728cefa08a14",
+    "PRE_EDIT.json": "bb6195e8f08ca992fadd9626f4d95b1f65aee1ac810a8b76d857447b958693e8",
+    "POST_EDIT.json": "5d3da56e037c7927f530d708cf01e50996d74da74031fa988b81921ee2a7847e",
+    "REPAIR.patch": "7ffe48e001cc455a0b81b51a18cd47d5a500802f9e104ab23d88da39facd7ee2",
+    "RUNTIME_COMPARISON.json": "19ac91eabf685988b06ade48fbe06f7bcdf1d768bb4c584c0d52be673b41fd2a",
+    "BASELINE_TESTS.json": "70a7a892014a21546e073261e79c82694954408a959f2cefc092b12abb0f4b62",
+    "BASELINE_TESTS.tap": "455ee7146ec7052771c7b9d35a45fa91de3822873ef7a13451e89606a1308735",
+    "REPAIRED_TESTS_1.json": "c1b3c84dac35181e475a5ba909ae6e32cd2271df3859f19ab0e750a410b187b3",
+    "REPAIRED_TESTS_1.tap": "4f4599165f682cb5a983735ead90e0f17f22cf8fb8d8f2a301b1e7a528305772",
+    "STATIC_CHECKS.json": "ed8380c8f0dc2e0cead185e35c1ff41b47abfd41d15ec7b9aac677a00a572c7f"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "samples": [
+    {
+      "disposition": "error",
+      "sampleId": "dev-d"
+    },
+    {
+      "disposition": "error",
+      "sampleId": "dev-e"
+    },
+    {
+      "disposition": "inconclusive",
+      "sampleId": "dev-f"
+    }
+  ]
+}

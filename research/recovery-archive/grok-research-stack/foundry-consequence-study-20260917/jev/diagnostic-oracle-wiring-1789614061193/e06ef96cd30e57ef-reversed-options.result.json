@@ -1,0 +1,41 @@
+{
+  "caseId": "e06ef96cd30e57ef",
+  "variant": "reversed-options",
+  "requestHash": "32e354fa0884704f4de947bb79fd87cce67e8cdf118315c7bb779b3fca15f31d",
+  "mode": "oracle-wiring",
+  "status": "received",
+  "elapsedMs": 0,
+  "result": {
+    "answers": {
+      "decision": {
+        "type": "choice",
+        "choice": "cancel",
+        "probabilities": {
+          "clarify": 0,
+          "cancel": 1,
+          "preserve": 0
+        }
+      }
+    },
+    "usage": {
+      "inputTokens": 0,
+      "outputTokens": 0
+    },
+    "providerMetadata": {
+      "supplied": {
+        "oracle": true
+      }
+    },
+    "warnings": [],
+    "response": {
+      "modelId": "researcher-supplied-oracle"
+    }
+  },
+  "recommendation": {
+    "next": "parent_cancelled",
+    "choice": "cancel",
+    "authorityGranted": false,
+    "evidenceHash": "993b339271331fa73cc34ad2a5ac5a64488e60be4505420581bbbef44b00af20",
+    "requestHash": "32e354fa0884704f4de947bb79fd87cce67e8cdf118315c7bb779b3fca15f31d"
+  }
+}

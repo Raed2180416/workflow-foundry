@@ -1,0 +1,131 @@
+[
+  {
+    "at": 1789613950709,
+    "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+    "inputHash": "c59d85e4bf52354cf9a49a2bf1f3342e2da9f0fc1d5cb19f69f77810f9170cd0",
+    "policyHash": "743874dc59bcbd3e3257926a739c866813d6604f924f906342983b4bb871caa7",
+    "previousHash": null,
+    "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+    "seq": 1,
+    "type": "run.created",
+    "workflowHash": "5fc98829dbc35cf389bf921b3a2dc044852afe927ffbeb8980d2425e1004a714",
+    "hash": "8f80a6e3119180b7017c9b5e08adaf2f1becafaebce2317f2ae3da9f2ad39a46"
+  },
+  {
+    "at": 1789613950714,
+    "previousHash": "8f80a6e3119180b7017c9b5e08adaf2f1becafaebce2317f2ae3da9f2ad39a46",
+    "seq": 2,
+    "token": "9f64f57b-dc38-484b-8a8e-dd139cd6b280",
+    "type": "runner.acquired",
+    "hash": "0e115b69476511084468b723ae1bd6ce623563f90a6f66921660280447d70458"
+  },
+  {
+    "argsHash": "c4ccfc1a1b3d4cc55f4327a37e05e37c8ece701bf895c90d7a8edbaec7597771",
+    "at": 1789613950724,
+    "effects": "none",
+    "idempotencyKey": "3ca5a28a146e97769458bb4186d1a537885531c909dac67cf99db5d78164a554",
+    "kind": "task",
+    "nodeKey": "root/fetch",
+    "previousHash": "0e115b69476511084468b723ae1bd6ce623563f90a6f66921660280447d70458",
+    "reservedCost": 0,
+    "seq": 3,
+    "tool": "core.fail",
+    "type": "tool.intent",
+    "hash": "38b27315b909c0c7ee5596deeda654ebe60392676fa3f25b523bbd89efbfc45e"
+  },
+  {
+    "at": 1789613950728,
+    "error": {
+      "code": "INJECTED_FAILURE",
+      "message": "upstream failure witness"
+    },
+    "nodeKey": "root/fetch",
+    "previousHash": "38b27315b909c0c7ee5596deeda654ebe60392676fa3f25b523bbd89efbfc45e",
+    "seq": 4,
+    "type": "tool.failed",
+    "hash": "4b7df09aa4b653e34ec3744bb6ae52c001cfda86f0d7e265639296ad934c93ee"
+  },
+  {
+    "argsHash": "c4ccfc1a1b3d4cc55f4327a37e05e37c8ece701bf895c90d7a8edbaec7597771",
+    "at": 1789613950832,
+    "effects": "none",
+    "idempotencyKey": "3ca5a28a146e97769458bb4186d1a537885531c909dac67cf99db5d78164a554",
+    "kind": "task",
+    "nodeKey": "root/fetch",
+    "previousHash": "4b7df09aa4b653e34ec3744bb6ae52c001cfda86f0d7e265639296ad934c93ee",
+    "reservedCost": 0,
+    "seq": 5,
+    "tool": "core.fail",
+    "type": "tool.intent",
+    "hash": "5b99d6600ba84b94f442dee33eefb5966ac367c5ea3c2c9db9ed0d0d3ca8818f"
+  },
+  {
+    "at": 1789613950838,
+    "error": {
+      "code": "INJECTED_FAILURE",
+      "message": "upstream failure witness"
+    },
+    "nodeKey": "root/fetch",
+    "previousHash": "5b99d6600ba84b94f442dee33eefb5966ac367c5ea3c2c9db9ed0d0d3ca8818f",
+    "seq": 6,
+    "type": "tool.failed",
+    "hash": "67f04b2218940e0c9929164fce3a24ece3465a9bfcde4cf03a33e7610af33285"
+  },
+  {
+    "at": 1789613950846,
+    "nodeKey": "root/fetch",
+    "output": {
+      "error": {
+        "code": "INJECTED_FAILURE",
+        "message": "upstream failure witness"
+      },
+      "ok": false
+    },
+    "outputHash": "18339ecaff0386a79bf0ea89b5a1b4b25e49f621efa7a04de01bd5b94d65d79e",
+    "previousHash": "67f04b2218940e0c9929164fce3a24ece3465a9bfcde4cf03a33e7610af33285",
+    "seq": 7,
+    "type": "node.handled_error",
+    "hash": "bf3a5607f2d1b8d12010c74fac59e72f16b826d17af9cfe118fd288c281796bc"
+  },
+  {
+    "at": 1789613950851,
+    "nodeKey": "root/okPath",
+    "previousHash": "bf3a5607f2d1b8d12010c74fac59e72f16b826d17af9cfe118fd288c281796bc",
+    "reason": "required predecessor did not succeed",
+    "seq": 8,
+    "type": "node.skipped",
+    "hash": "dcb93aeca08c78a86517330a617118f4efd31ce89c763463ccb2566d9ee64158"
+  },
+  {
+    "at": 1789613950856,
+    "nodeKey": "root/errPath",
+    "previousHash": "dcb93aeca08c78a86517330a617118f4efd31ce89c763463ccb2566d9ee64158",
+    "reason": "required predecessor did not succeed",
+    "seq": 9,
+    "type": "node.skipped",
+    "hash": "d8de1f82d1c39ccabfddec4b897d2412a906b798f3290b0c217b4e01d011934a"
+  },
+  {
+    "at": 1789613950860,
+    "error": {
+      "code": "MISSING_REFERENCE",
+      "message": "Missing value at nodes.okPath.branch"
+    },
+    "nodeKey": "root/join",
+    "previousHash": "d8de1f82d1c39ccabfddec4b897d2412a906b798f3290b0c217b4e01d011934a",
+    "seq": 10,
+    "type": "node.failed",
+    "hash": "4b41b4aff4cb0745804b5c1536edf5a62d401df22118f08482d9d0c0e6fc1fbf"
+  },
+  {
+    "at": 1789613950864,
+    "error": {
+      "code": "MISSING_REFERENCE",
+      "message": "Missing value at nodes.okPath.branch"
+    },
+    "previousHash": "4b41b4aff4cb0745804b5c1536edf5a62d401df22118f08482d9d0c0e6fc1fbf",
+    "seq": 11,
+    "type": "run.stopped",
+    "hash": "c65501dd191689ec61a29e13761369a43ed96ba41f1ab445247f802ad910f67b"
+  }
+]

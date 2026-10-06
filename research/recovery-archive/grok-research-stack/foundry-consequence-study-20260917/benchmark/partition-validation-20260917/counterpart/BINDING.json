@@ -1,0 +1,13 @@
+{
+  "label": "counterpart",
+  "candidateReadAt": "2026-09-17T08:56:10.227Z",
+  "frozenAt": "2026-09-17T08:47:36.589Z",
+  "runnerFrozenAt": "2026-09-17T08:50:30.718Z",
+  "freezeSha256": "f885328ae2675d3b69fe8e5e77d618368f5ea7fb248978792eab813c76148a83",
+  "addendumSha256": "34990b01b5725d745cd5967f26abddc60dc2c29537875a66df2119e767d99a7b",
+  "candidateFileSha256": "71ea0afbb20153bc11bd158bf76d4889c31071caedbd94c02323d1f3ccf69ac2",
+  "candidateSourcePath": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/outcome-model-001/FAULTY_CANDIDATE.json",
+  "suiteFileSha256": "70ae8b3bbeb572f14c2b14a057bb8b454dea7ff57b6a28e480ce2242f27ab44c",
+  "nativeMaxStepsPerRun": 160,
+  "reservedCases": 98
+}

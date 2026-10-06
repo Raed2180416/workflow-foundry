@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "workspace": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/continuation-checkpoint-20260917/tmp.ZrUdX1obw3",
+  "source": "Exact first bash block of current docs/OUTCOME-REPAIR.md; only TMPDIR set to keep evidence under research root.",
+  "oldRuntime": "succeeded",
+  "oldOutcome": "unsatisfied",
+  "newRuntime": "succeeded",
+  "newOutcome": "satisfied",
+  "modelCalls": 0,
+  "attribution": "Supplied offline demonstration, separate from actual model repair campaign."
+}

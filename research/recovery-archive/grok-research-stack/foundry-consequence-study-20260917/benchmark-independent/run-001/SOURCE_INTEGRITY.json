@@ -1,0 +1,127 @@
+[
+  {
+    "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/contract.mjs",
+    "before": "3a5df633eb0031ac06b2dbf42cb189d12c0707ee4569589a616e1c8bf2dbd16b",
+    "after": "3a5df633eb0031ac06b2dbf42cb189d12c0707ee4569589a616e1c8bf2dbd16b"
+  },
+  {
+    "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/capabilities.mjs",
+    "before": "2697b0ede7cef9a3b5b99df2841113f3ad68b743ff463f50993a77afcb6003fa",
+    "after": "2697b0ede7cef9a3b5b99df2841113f3ad68b743ff463f50993a77afcb6003fa"
+  },
+  {
+    "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/oracle.mjs",
+    "before": "ebbdf190674414c29ec2fc7632e8f72b6e3c305c5abd20b322cc8a077304f732",
+    "after": "ebbdf190674414c29ec2fc7632e8f72b6e3c305c5abd20b322cc8a077304f732"
+  },
+  {
+    "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/freeze-public.mjs",
+    "before": "38630cd438723a3c610f6ac47b7cadc9d69c24a70761bc143455c161119f8fdb",
+    "after": "38630cd438723a3c610f6ac47b7cadc9d69c24a70761bc143455c161119f8fdb"
+  },
+  {
+    "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/PUBLIC.json",
+    "before": "1b5d70353084eafc8e3a981729e66717e82e899d2dab8b09098c586a4b9dbcc3",
+    "after": "1b5d70353084eafc8e3a981729e66717e82e899d2dab8b09098c586a4b9dbcc3"
+  },
+  {
+    "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/development/SUITE.json",
+    "before": "e3176d5a7727eae412f65b7fc53f5ec8857b937200401651cd012b962f4016b1",
+    "after": "e3176d5a7727eae412f65b7fc53f5ec8857b937200401651cd012b962f4016b1"
+  },
+  {
+    "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/development/TRUTH.json",
+    "before": "dbcd9aad1582e52dab15bce297244656dd0960599d811e7a0463cfd359dfd806",
+    "after": "dbcd9aad1582e52dab15bce297244656dd0960599d811e7a0463cfd359dfd806"
+  },
+  {
+    "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/sealed/SUITE.json",
+    "before": "3963e87b530118f38686633c0fc202431d48281b9dc917a41965a444764ce2e3",
+    "after": "3963e87b530118f38686633c0fc202431d48281b9dc917a41965a444764ce2e3"
+  },
+  {
+    "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/sealed/TRUTH.json",
+    "before": "102f2ea3594ec686fb7d888a46791b88d8b24b2cd587f73e53ac82e679216fd1",
+    "after": "102f2ea3594ec686fb7d888a46791b88d8b24b2cd587f73e53ac82e679216fd1"
+  },
+  {
+    "path": "/home/raed/Projects/workflow-foundry/src/runtime.mjs",
+    "before": "af9fcabde20f706fac8ce2e09c0e646c0f100b301b64d1f6e1e4eb77e0b213db",
+    "after": "af9fcabde20f706fac8ce2e09c0e646c0f100b301b64d1f6e1e4eb77e0b213db"
+  },
+  {
+    "path": "/home/raed/Projects/workflow-foundry/src/evaluation.mjs",
+    "before": "64d42f9120e36b90bc7d194d5550773f00c1bb19d96c03f10ea8d194e6dd3d6f",
+    "after": "64d42f9120e36b90bc7d194d5550773f00c1bb19d96c03f10ea8d194e6dd3d6f"
+  },
+  {
+    "path": "/home/raed/Projects/workflow-foundry/src/capabilities.mjs",
+    "before": "1707d4506f50e86498fa471dc3c8714615e6c06a1240014f2515aab58cc3ac49",
+    "after": "1707d4506f50e86498fa471dc3c8714615e6c06a1240014f2515aab58cc3ac49"
+  },
+  {
+    "path": "/home/raed/Projects/workflow-foundry/src/data.mjs",
+    "before": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c",
+    "after": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c"
+  },
+  {
+    "path": "/home/raed/Projects/workflow-foundry/src/store.mjs",
+    "before": "61288a25c85a8dd1e1e076ca5059aedf80c35dc26bf0ab613c31030743a34732",
+    "after": "61288a25c85a8dd1e1e076ca5059aedf80c35dc26bf0ab613c31030743a34732"
+  },
+  {
+    "path": "/home/raed/Projects/workflow-foundry/src/validate.mjs",
+    "before": "8b698d552e151f3380af58cbce5675b0a94c48601c9acd427be71281a3696c33",
+    "after": "8b698d552e151f3380af58cbce5675b0a94c48601c9acd427be71281a3696c33"
+  },
+  {
+    "path": "/home/raed/Projects/workflow-foundry/src/dataflow.mjs",
+    "before": "7f3c4894b32f5dbe691ba3c871e088da8b083f42e7b653404972b647c9e9d41e",
+    "after": "7f3c4894b32f5dbe691ba3c871e088da8b083f42e7b653404972b647c9e9d41e"
+  },
+  {
+    "path": "/home/raed/Projects/workflow-foundry/src/engine.mjs",
+    "before": "6872eecabd6e4ccce58b7db25df82b1a97a292e530e0c38090e15844d5d7ed52",
+    "after": "6872eecabd6e4ccce58b7db25df82b1a97a292e530e0c38090e15844d5d7ed52"
+  },
+  {
+    "path": "/home/raed/Projects/workflow-foundry/src/foundry.mjs",
+    "before": "95f102573760ef92cd352813f66b30cd9f83bda05afb97a4cbe1069c8527a878",
+    "after": "95f102573760ef92cd352813f66b30cd9f83bda05afb97a4cbe1069c8527a878"
+  },
+  {
+    "path": "/home/raed/Projects/workflow-foundry/src/generator.mjs",
+    "before": "3d86d95eaf4a2b6ee83d5fb50696a689926075adae4eeb4d8c25450c442fb11a",
+    "after": "3d86d95eaf4a2b6ee83d5fb50696a689926075adae4eeb4d8c25450c442fb11a"
+  },
+  {
+    "path": "/home/raed/Projects/workflow-foundry/src/trials.mjs",
+    "before": "4ab066bb285245ae70ead081fa8de88e728dfc8f58eef77f50bf2a667117f437",
+    "after": "4ab066bb285245ae70ead081fa8de88e728dfc8f58eef77f50bf2a667117f437"
+  },
+  {
+    "path": "/home/raed/Projects/workflow-foundry/schemas/workflow.schema.json",
+    "before": "e72b1d4bb1e01f4f21256b042853faa8505859f30741b4093aea59909ac4e1bc",
+    "after": "e72b1d4bb1e01f4f21256b042853faa8505859f30741b4093aea59909ac4e1bc"
+  },
+  {
+    "path": "/home/raed/Projects/workflow-foundry/package.json",
+    "before": "cb314fd60e0b59c2fed9782c66d8ddc889ce64b4add93ed499eb3e6de139cf5a",
+    "after": "cb314fd60e0b59c2fed9782c66d8ddc889ce64b4add93ed499eb3e6de139cf5a"
+  },
+  {
+    "path": "/home/raed/Projects/workflow-foundry/package-lock.json",
+    "before": "7bddd5dfb8cd6e3717d54cd8c184c297b0e166ad4bbdb9645d369290b06a9af9",
+    "after": "7bddd5dfb8cd6e3717d54cd8c184c297b0e166ad4bbdb9645d369290b06a9af9"
+  },
+  {
+    "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/FREEZE.json",
+    "before": "191da6649ceaa22087636059b241de2fd758768aabdfde0aa9d480cb27246f62",
+    "after": "191da6649ceaa22087636059b241de2fd758768aabdfde0aa9d480cb27246f62"
+  },
+  {
+    "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/calibration-001/AUDIT.json",
+    "before": "a77f5dfb1341a28a91e3f056c5fc76c4581844be857a5a41ac437221632887bd",
+    "after": "a77f5dfb1341a28a91e3f056c5fc76c4581844be857a5a41ac437221632887bd"
+  }
+]

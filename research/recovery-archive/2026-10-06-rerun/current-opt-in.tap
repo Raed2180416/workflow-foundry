@@ -1,0 +1,90 @@
+▶ offline MCP draft and diagnostic repair lifecycle through actual stdio
+  ✔ catalog exposes explicit diagnostic APIs without task or authority override fields (1.289379ms)
+  ✔ agent-relayed designs preserve provenance, version binding and excluded automatic dispatch (1055.352745ms)
+  ✔ failed draft then changed draft at the same version preserve the pending request and main store (1249.942929ms)
+  ✔ draft schema rejects serialized input and caller authority/task overrides before state changes (514.382099ms)
+  ✔ explicit JSON trial transport preserves root types and records invalid input without effects (1557.838133ms)
+  ✔ closed trial inspection rejects changed artifact bytes and truncated events (1135.922206ms)
+  ✔ per-request trial quota rejects excess work without reserving another trial or changing the request (8164.413148ms)
+  ✔ trial validates request identity and required next version without consuming the request (1436.616319ms)
+  ✔ trial does not dispatch a custom external effect at top level or in a nested body (1011.3046ms)
+  ✔ trial cannot increase existing host capability or execution budgets (957.799169ms)
+  ✔ applied failure creates an agent diagnostic request while preserving original evidence and exact task (1624.767563ms)
+  ✔ delivery rejects mixed versions and reports host task evidence separately from linked local execution (1894.040631ms)
+  ✔ repeated and concurrent same-failure repair requests are idempotent (1653.053174ms)
+  ✔ diagnostic proposals retain declared goal and success criteria and enforce CAS at application (1202.589513ms)
+  ✔ unchanged requirement text and successful local acceptance remain insufficient for task qualification (1734.508937ms)
+  ✔ a subsequent failed diagnostic version retains the original root task and full parent lineage (1253.295441ms)
+  ✔ repair rejects stale/cross-request/fabricated evidence and provenance overrides (1466.480063ms)
+  ✔ successful or merely paused runs are not forged into failed-run repair requests (1993.195453ms)
+  ✔ corrupted failure history cannot authorize a diagnostic repair (1435.862947ms)
+  ✔ agent-created diagnostic request cannot silently dispatch the automatic generator queue (1360.138397ms)
+✔ offline MCP draft and diagnostic repair lifecycle through actual stdio (37625.250022ms)
+ℹ Preserved offline receipt directory: /home/raed/Documents/Codex/2026-10-06/i-x20/work/foundry-recovery/.foundry/verification/mcp-repair-lifecycle-audit-TcXxV5
+✔ packaging reference checker detects missing files, anchors and escaped bundle paths (10.707861ms)
+✔ packaging all shipped skill Markdown references stay within the portable bundle (11.950522ms)
+ℹ {"markdownFiles":30,"localReferences":106,"failures":[]}
+✔ packaging source-map headers preserve repository-only provenance and pinned public sources (0.440807ms)
+✔ packaging inventory gate rejects private state and evidence even under otherwise published roots (0.823755ms)
+✖ packaging actual tarball, project installers and generated stdio MCP commands (49.013161ms)
+ℹ Packaging evidence: evals/runs/packaging-evidence-H4Cpok/packaging-report.json
+▶ UI browser: real local HTTP workflows, revision pins and human controls
+  ✔ loads the strict-CSP graph, safe text and keyboard node inspection (684.684845ms)
+  ✔ queues actual version-bound agent requests and leaves pending state explicit (404.277013ms)
+  ✔ starts a pinned run and answers full nested map/loop node paths (2662.981545ms)
+  ✔ applies CAS proposals, keeps historical run source pinned and blocks stale proposals (796.23853ms)
+  ✔ renders root/nested outputs and event evidence with dark and light screenshots (1834.064211ms)
+  ✔ validates and imports JSON; rejects an explicit operation without inventing success (1082.613846ms)
+  ✔ keeps validation errors visible; resumes waits and cancels active execution (1371.903623ms)
+  ✔ catalogs installed contracts, keeps all mutations authenticated and records no CSP or script errors (81.619891ms)
+  ✔ automatic bridge processes real UI requests and proposes without silently applying (4177.517726ms)
+  ✔ automatic apply is explicit and retains old generation settings and pinned run source (660.829886ms)
+  ✔ bounded repair preserves a malformed candidate attempt and its actual host feedback (256.361845ms)
+  ✔ provider errors render as safe text and failed jobs never silently retry or create proposals (1635.78704ms)
+  ✔ generation cancellation uses the real token route and waits for a recorded terminal result (676.384391ms)
+  ✔ automatic-apply conflicts show failed job evidence and the unapplied source diff (5414.912276ms)
+  ✔ an inactive generation cancellation reports the backend error without falsifying status (342.083361ms)
+  ✔ automatic UI integration has no external requests, unauthed writes, inline styles or script/CSP failures (4.314205ms)
+✔ UI browser: real local HTTP workflows, revision pins and human controls (24746.238745ms)
+✔ UI linkage selection refuses unrelated, unapplied and missing request identities (2.391958ms)
+▶ UI draft trials and diagnostic repair through real local HTTP
+  ✔ successful draft graph and nested execution stay bound to exact trial hash (516.309537ms)
+  ✔ opaque-ID lookup and returned artifact receipts preserve sibling failure evidence (273.069011ms)
+  ✔ input rejection keeps a no-run receipt and never substitutes a saved graph (117.458544ms)
+  ✔ paused draft exposes inspection without human answers, approvals or resume (217.687561ms)
+  ✔ failed applied run opens diagnostic lineage and loads its real host context (520.84655ms)
+  ✔ global automatic configuration cannot relabel diagnostic requests as a spending queue (267.850821ms)
+  ✔ delivery inspection keeps exact IDs and separately scoped suite evidence unqualified for the run (127.488483ms)
+  ✔ current-head race returns a visible stale error without creating or rebinding a repair (151.138838ms)
+  ✔ artifact verification error and missing opaque ID retain an explicitly historical snapshot (270.146868ms)
+UI trial evidence: /home/raed/Documents/Codex/2026-10-06/i-x20/work/browser-evidence/ui-trials-yGpAV6
+  ✔ responsive UI uses authenticated local actions and records no browser or external errors (221.618517ms)
+✔ UI draft trials and diagnostic repair through real local HTTP (4720.508438ms)
+ℹ tests 55
+ℹ suites 0
+ℹ pass 54
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 68056.899374
+
+✖ failing tests:
+
+test at tests/packaging.test.mjs:213:1
+✖ packaging actual tarball, project installers and generated stdio MCP commands (49.013161ms)
+  Error: ENOENT: no such file or directory, scandir '/home/raed/Documents/Codex/2026-10-06/i-x20/work/foundry-recovery/corpus'
+      at readdirSync (node:fs:1630:26)
+      at corpusCoverage (file:///home/raed/Documents/Codex/2026-10-06/i-x20/work/foundry-recovery/tests/packaging.test.mjs:171:31)
+      at TestContext.<anonymous> (file:///home/raed/Documents/Codex/2026-10-06/i-x20/work/foundry-recovery/tests/packaging.test.mjs:253:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'scandir',
+    path: '/home/raed/Documents/Codex/2026-10-06/i-x20/work/foundry-recovery/corpus'
+  }

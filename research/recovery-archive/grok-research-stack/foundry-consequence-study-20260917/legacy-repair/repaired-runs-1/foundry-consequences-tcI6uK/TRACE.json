@@ -1,0 +1,127 @@
+[
+  {
+    "at": 1789614074186,
+    "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+    "inputHash": "4aeaec5e7be9044572abe67f21a2624ea64f222cc8f29116e411a04020f50b3b",
+    "policyHash": "743874dc59bcbd3e3257926a739c866813d6604f924f906342983b4bb871caa7",
+    "previousHash": null,
+    "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+    "seq": 1,
+    "type": "run.created",
+    "workflowHash": "181064ea82a139d24315d7fd2ffe7041dbee905ba6d63c1669c92d5678d92f3e",
+    "hash": "78cab7144a79576f4f67d67a5c75dd63037ab84019128576c413218c5493374b"
+  },
+  {
+    "at": 1789614074197,
+    "previousHash": "78cab7144a79576f4f67d67a5c75dd63037ab84019128576c413218c5493374b",
+    "seq": 2,
+    "token": "01d72f16-7a8d-40dd-ac86-62d12873c01d",
+    "type": "runner.acquired",
+    "hash": "f34e03388acae01f26dc4f7b3e0f319b6bde5991e6aedf7a9ccfb2d34968947b"
+  },
+  {
+    "argsHash": "ace9288a3ff79a9132b9ddf621bc19354ffb04b3eacb17486ad6dc4d51303961",
+    "at": 1789614074208,
+    "effects": "none",
+    "idempotencyKey": "bcd79a1be763cebf0e82e933264b1a75e87758e13ffb4bf9bfc35073b187d2c6",
+    "kind": "task",
+    "nodeKey": "root/work",
+    "previousHash": "f34e03388acae01f26dc4f7b3e0f319b6bde5991e6aedf7a9ccfb2d34968947b",
+    "reservedCost": 0,
+    "seq": 3,
+    "tool": "core.identity",
+    "type": "tool.intent",
+    "hash": "0ad398523c136b1b8ca32b7c9da77a04d9c370e66c7f4b81a9615fb3885b6d1c"
+  },
+  {
+    "at": 1789614074217,
+    "nodeKey": "root/work",
+    "output": {
+      "done": true
+    },
+    "outputHash": "ace9288a3ff79a9132b9ddf621bc19354ffb04b3eacb17486ad6dc4d51303961",
+    "previousHash": "0ad398523c136b1b8ca32b7c9da77a04d9c370e66c7f4b81a9615fb3885b6d1c",
+    "seq": 4,
+    "type": "node.completed",
+    "hash": "cf742b7018a416a8d04b7b49ae20f4b9bf7c8c60cc436bb663b9a6a414a79d11"
+  },
+  {
+    "argsHash": "cf12c420eeafa0ff4c749fdec584d2784f731c2111a00d57d6649773eb3d9e67",
+    "at": 1789614074234,
+    "effects": "none",
+    "idempotencyKey": "e165ab3491913ad1acc2bfe882b47043baa0d0fa3fa840cbbe57f2705eaf6e96",
+    "kind": "task",
+    "nodeKey": "root/validate",
+    "previousHash": "cf742b7018a416a8d04b7b49ae20f4b9bf7c8c60cc436bb663b9a6a414a79d11",
+    "reservedCost": 0,
+    "seq": 5,
+    "tool": "core.validate",
+    "type": "tool.intent",
+    "hash": "bfadaf22f0032026f4d6180b597d1cb7030bd2cc9a4668995448c56eac1671aa"
+  },
+  {
+    "at": 1789614074241,
+    "nodeKey": "root/validate",
+    "output": {
+      "errors": [
+        {
+          "instancePath": "/grounded",
+          "keyword": "type",
+          "message": "must be boolean",
+          "params": {
+            "type": "boolean"
+          },
+          "schemaPath": "#/properties/grounded/type"
+        },
+        {
+          "instancePath": "/grounded",
+          "keyword": "const",
+          "message": "must be equal to constant",
+          "params": {
+            "allowedValue": true
+          },
+          "schemaPath": "#/properties/grounded/const"
+        }
+      ],
+      "valid": false
+    },
+    "outputHash": "92274420dd29f71770aa1d7f4cdb107d9642deaaad4fb4abd594fab9198e2b13",
+    "previousHash": "bfadaf22f0032026f4d6180b597d1cb7030bd2cc9a4668995448c56eac1671aa",
+    "seq": 6,
+    "type": "node.completed",
+    "hash": "8ff62ceb770f976037f1123ba54a09544d0d78ff2c8c9591e58653180bfb1eb4"
+  },
+  {
+    "at": 1789614074254,
+    "kind": "assert",
+    "nodeKey": "root/verify",
+    "previousHash": "8ff62ceb770f976037f1123ba54a09544d0d78ff2c8c9591e58653180bfb1eb4",
+    "reservedCost": 0,
+    "seq": 7,
+    "type": "node.started",
+    "hash": "ac2ab6b80ce26b99764653d1976bb5e26a4349c4f57a68cd565c8b76a84bd4f6"
+  },
+  {
+    "at": 1789614074266,
+    "error": {
+      "code": "ASSERTION_FAILED",
+      "message": "Assertion verify failed"
+    },
+    "nodeKey": "root/verify",
+    "previousHash": "ac2ab6b80ce26b99764653d1976bb5e26a4349c4f57a68cd565c8b76a84bd4f6",
+    "seq": 8,
+    "type": "node.failed",
+    "hash": "55faff2a10d80c27c02dc32aa2d69c6749044e9f6dcc463eeb85311b96f1f0a0"
+  },
+  {
+    "at": 1789614074275,
+    "error": {
+      "code": "ASSERTION_FAILED",
+      "message": "Assertion verify failed"
+    },
+    "previousHash": "55faff2a10d80c27c02dc32aa2d69c6749044e9f6dcc463eeb85311b96f1f0a0",
+    "seq": 9,
+    "type": "run.stopped",
+    "hash": "237655023853d8cccd51c88fcd0ff2cec40829385e4cd1dd3893e71db184b578"
+  }
+]

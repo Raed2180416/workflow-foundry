@@ -1,0 +1,59 @@
+[
+  {
+    "at": 1791274332924,
+    "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+    "inputHash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+    "policyHash": "743874dc59bcbd3e3257926a739c866813d6604f924f906342983b4bb871caa7",
+    "previousHash": null,
+    "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+    "seq": 1,
+    "type": "run.created",
+    "workflowHash": "be548e190b4c0efa4ee7ced43afd9cb2fec634a181ee9cb4e9a70ae5559821de",
+    "hash": "35618df615e385dc611c11a2a84e9ab35e070401c6b587e0a903f0fedda96f05"
+  },
+  {
+    "at": 1791274332929,
+    "previousHash": "35618df615e385dc611c11a2a84e9ab35e070401c6b587e0a903f0fedda96f05",
+    "seq": 2,
+    "token": "51e91e28-d8e4-4e6a-9d1a-79cf0040dedf",
+    "type": "runner.acquired",
+    "hash": "0c3f366c575bed2fb4475dbd04c4044b15d4e9995f41f5298706060f25cda569"
+  },
+  {
+    "argsHash": "fc669fdcdeb1979289d271976047a9ad992b33ba7184c1d8fd1671a9c3bf8f22",
+    "at": 1791274332934,
+    "effects": "none",
+    "idempotencyKey": "481ed87f2909026395620f312dc81f06eb03f3f2cdf872965eff82b291fb47aa",
+    "kind": "task",
+    "nodeKey": "root/echo",
+    "previousHash": "0c3f366c575bed2fb4475dbd04c4044b15d4e9995f41f5298706060f25cda569",
+    "reservedCost": 0,
+    "seq": 3,
+    "tool": "core.identity",
+    "type": "tool.intent",
+    "hash": "61dcac17e783f1db05ec3184dd5d4666ee99b7f6dbc730c4efed5cf6dd8f7a6e"
+  },
+  {
+    "at": 1791274332939,
+    "nodeKey": "root/echo",
+    "output": {
+      "value": "observed"
+    },
+    "outputHash": "fc669fdcdeb1979289d271976047a9ad992b33ba7184c1d8fd1671a9c3bf8f22",
+    "previousHash": "61dcac17e783f1db05ec3184dd5d4666ee99b7f6dbc730c4efed5cf6dd8f7a6e",
+    "seq": 4,
+    "type": "node.completed",
+    "hash": "8c8c4ec2083919c19c7b79a60fabd7b5ed5cd699e51110f2405848553334916f"
+  },
+  {
+    "at": 1791274332943,
+    "error": {
+      "code": "ACCEPTANCE_FAILED",
+      "message": "Acceptance failed for root"
+    },
+    "previousHash": "8c8c4ec2083919c19c7b79a60fabd7b5ed5cd699e51110f2405848553334916f",
+    "seq": 5,
+    "type": "run.stopped",
+    "hash": "4f8c3da1b0a2f3739c76caa07f64054ea4833747402160ede13c2be45a56baad"
+  }
+]

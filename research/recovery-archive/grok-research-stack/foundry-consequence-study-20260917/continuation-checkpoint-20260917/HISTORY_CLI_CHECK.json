@@ -1,0 +1,50 @@
+{
+  "passed": true,
+  "at": "2026-09-17T09:08:28.429Z",
+  "commands": [
+    {
+      "command": [
+        "bin/foundry.mjs",
+        "outcome-history",
+        "--receipt",
+        "dadf02f676ab22bee8b2afa0a37409c767c002dcc59a055a6a0fc40f5c589a1f",
+        "--workspace",
+        "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/outcome-model-001/workspace"
+      ],
+      "receiptId": "dadf02f676ab22bee8b2afa0a37409c767c002dcc59a055a6a0fc40f5c589a1f",
+      "historyId": "outcome-history:ff8a88a155c65826e3186d0eec14baabdfa9c2acab83b405b36891dfd91c9c24",
+      "outcome": "unsatisfied",
+      "output": "HISTORY_WRONG.json",
+      "sha256": "fe10dec56c7575164566a8f28ce9e64b79968809cd8f90dbb686629fc502ce72",
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "bin/foundry.mjs",
+        "outcome-history",
+        "--receipt",
+        "93c0f90949b07205481681179213f44f3ffd976020164459e22da9c0436b5a18",
+        "--workspace",
+        "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/outcome-model-001/workspace"
+      ],
+      "receiptId": "93c0f90949b07205481681179213f44f3ffd976020164459e22da9c0436b5a18",
+      "historyId": "outcome-history:f5763fbdc7bd8713fa2629cc47b5117f7f699812063e250b669274db2405ecbd",
+      "outcome": "satisfied",
+      "output": "HISTORY_SATISFIED.json",
+      "sha256": "1fa5da50ba3f7c9f8d3d7107adb9557ac74bae94ff1da3e37866d8294876e6ef",
+      "exitCode": 0
+    }
+  ],
+  "dbSHA256Before": "87067ea81936d633f258469bf22e8b32262b3543b6f1b14e65d6a534eb0c08a3",
+  "dbSHA256After": "87067ea81936d633f258469bf22e8b32262b3543b6f1b14e65d6a534eb0c08a3",
+  "unchangedMainDatabase": true,
+  "observedRegistryContext": "Built-in catalog only differs from the synthetic instrument registry used by the historical runs; no external components are loaded.",
+  "currentWorldQualification": false,
+  "currentEvidenceCheck": "unverified; no live artifact reads",
+  "newRuntimeExecutions": 0,
+  "modelCalls": 0,
+  "sourceHashes": {
+    "bin/foundry.mjs": "450fad505fbc3c77176eb4bb9880343e169c71e402f319e38e3ff6f8182c906b",
+    "src/outcome-history.mjs": "023921bb5bd99982c821b9fc9ec28e68763f8344ea53e57c824e6e0608f75610"
+  }
+}

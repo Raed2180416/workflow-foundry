@@ -1,0 +1,91 @@
+{
+  "registryBefore": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+  "registryAfter": "d34e3c826d12bc1c7017bb76be229c018c153714b51f38c47933e49251cfb23b",
+  "existingDescriptorsUnchanged": true,
+  "usedCapabilities": [
+    "core.json",
+    "core.artifact"
+  ],
+  "addedCapabilities": [
+    "research.unused"
+  ],
+  "unchangedArtifact": true,
+  "unchangedHistoricalRunAndEvents": true,
+  "observations": [
+    {
+      "name": "historical-receipt-readable",
+      "accepted": true,
+      "value": {
+        "id": "4f8de1f33d09b380d79d785fa8c4179550a10c16968ff681c21db0e31153e881",
+        "artifact": {
+          "base64": "eyJsYWJlbCI6Indyb25nIn0=",
+          "bytes": 17,
+          "name": "record.json",
+          "producers": [
+            {
+              "eventHash": "450357cef26249cb5d98b70071e2d01ffc5eee7e6e93f450b0c14df90baf2554",
+              "nodeKey": "root/file",
+              "sequence": 6
+            }
+          ],
+          "sha256": "d702efcb58423280e926c7dea03591780a6290f3c5cd6f2e2f99a64197d23879",
+          "state": "present"
+        },
+        "binding": {
+          "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+          "eventCount": 7,
+          "eventHead": {
+            "hash": "01da483ae445e1ed5db821af573f51aa75d5242e8707b1e80acb065a7875e7aa",
+            "seq": 7
+          },
+          "inputHash": "01e1fef7a86867a14a60cd723c4f2f1617bbfaef8f3981e89201f43d4417897c",
+          "policyHash": "743874dc59bcbd3e3257926a739c866813d6604f924f906342983b4bb871caa7",
+          "proposalHash": "c3c00bee74b68ffe6de187a3b13d9a8534e1cc3479ebcf4d7e7b95c4539f134f",
+          "proposalId": "0ea4ff04-3d09-4528-8148-c9fa3f2cd36f",
+          "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+          "requestHash": "8d774c829685b8eda237494a44915d5c8ec4dd7663eee614928a8c3a4a97e4ce",
+          "requestId": "f62bc610-82ac-4cec-999b-28d4fb171838",
+          "rootRequestHash": "8d774c829685b8eda237494a44915d5c8ec4dd7663eee614928a8c3a4a97e4ce",
+          "rootRequestId": "f62bc610-82ac-4cec-999b-28d4fb171838",
+          "runHash": "1ac459e694285f3424820557f984327a5a45c268ac19ee9ea75b1610cd636768",
+          "runId": "8f166339-046c-41ae-8bc1-fba9161db0d1",
+          "runStatus": "succeeded",
+          "workflowHash": "6b485e8387320e5d48f1d1662090ac23d981456ac1c2221f52607e4ea4743d6f",
+          "workflowId": "dependency-separation-witness",
+          "workflowVersion": 1
+        },
+        "contractId": "a81273fc94476b2f1fd162325a68b51e59e9b20513fcbef2ff41020990194ca2",
+        "observedAt": 1789635423556,
+        "observedJsonHash": "d702efcb58423280e926c7dea03591780a6290f3c5cd6f2e2f99a64197d23879",
+        "outcome": "unsatisfied",
+        "qualification": "One host-bound JSON artifact observation; no general intent or deployment qualification",
+        "reason": "json-content-mismatch",
+        "schemaVersion": "outcome-observation/2"
+      }
+    },
+    {
+      "name": "current-verification-after-unused-addition",
+      "accepted": false,
+      "error": {
+        "code": "OUTCOME_CONTRACT_BINDING",
+        "message": "The frozen oracle belongs to a different root, input or registry"
+      }
+    },
+    {
+      "name": "new-repair-after-unused-addition",
+      "accepted": false,
+      "error": {
+        "code": "OUTCOME_CONTRACT_BINDING",
+        "message": "The frozen oracle belongs to a different root, input or registry"
+      }
+    },
+    {
+      "name": "unchanged-expectation-new-world-registration",
+      "accepted": false,
+      "error": {
+        "code": "OUTCOME_CONTRACT_CONFLICT",
+        "message": "This root/input/artifact already has a different frozen host oracle"
+      }
+    }
+  ]
+}

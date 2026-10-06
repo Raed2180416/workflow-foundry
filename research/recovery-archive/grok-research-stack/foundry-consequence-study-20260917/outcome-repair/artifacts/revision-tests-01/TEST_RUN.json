@@ -1,0 +1,15 @@
+{
+  "command": [
+    "node",
+    "--test",
+    "tests/outcome-repair.test.mjs"
+  ],
+  "exitCode": 0,
+  "durationSeconds": 1.706,
+  "sources": {
+    "src/outcome-repair.mjs": "8de15af4b6ce842c3e54039531c651472a9079a231bf31390f4a8f95b924f1fd",
+    "tests/outcome-repair.test.mjs": "216692223b1f7c081e2a2909f5e28bac94f62a94898731887e5d94b8878e65f3"
+  },
+  "stdout": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/outcome-repair/artifacts/revision-tests-01/tests.tap",
+  "stderr": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/outcome-repair/artifacts/revision-tests-01/tests.stderr"
+}

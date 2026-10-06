@@ -1,0 +1,23 @@
+{
+  "valid": true,
+  "errors": [],
+  "warnings": [
+    {
+      "code": "ERROR_CONTINUATION",
+      "path": "workflow.screening",
+      "message": "Independent acceptance must detect failures hidden by continuation"
+    },
+    {
+      "code": "ERROR_CONTINUATION",
+      "path": "workflow.reproduction",
+      "message": "Independent acceptance must detect failures hidden by continuation"
+    },
+    {
+      "code": "EFFECT_AFTER_RESOLVED_JOIN",
+      "path": "workflow.publish",
+      "message": "This effect may follow a skipped/handled-error predecessor. Require an explicit evidence guard for the intended branch."
+    }
+  ],
+  "nodeCount": 3,
+  "hash": "5f868aa9b6cb16bfebe67642d85faeab00bb378051212f9bcd9d40e9d422a5a7"
+}

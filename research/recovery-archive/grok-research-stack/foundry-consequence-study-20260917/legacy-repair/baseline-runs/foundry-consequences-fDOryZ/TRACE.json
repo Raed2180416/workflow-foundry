@@ -1,0 +1,74 @@
+[
+  {
+    "at": 1789613955076,
+    "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+    "inputHash": "c59d85e4bf52354cf9a49a2bf1f3342e2da9f0fc1d5cb19f69f77810f9170cd0",
+    "policyHash": "743874dc59bcbd3e3257926a739c866813d6604f924f906342983b4bb871caa7",
+    "previousHash": null,
+    "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+    "seq": 1,
+    "type": "run.created",
+    "workflowHash": "443bc80a9e879b531e98cf9fa76dcc367dd3f89c09272fa0af12c8f9f072bdd0",
+    "hash": "d10c982706123dab18d4813d10716efd2350f8567de5c67508e085371bdcf017"
+  },
+  {
+    "at": 1789613955096,
+    "previousHash": "d10c982706123dab18d4813d10716efd2350f8567de5c67508e085371bdcf017",
+    "seq": 2,
+    "token": "6c827dc9-a8f7-43af-82a7-0d393746c820",
+    "type": "runner.acquired",
+    "hash": "884e7d40c926c5269d08998403aff8666fe26831dd3363203c081b60797702b7"
+  },
+  {
+    "argsHash": "a2af987a163f4f45e9a349097cfa9df8f7b71f7982edd1627e18ae14ef28fa2f",
+    "at": 1789613955107,
+    "effects": "none",
+    "idempotencyKey": "60df5bb8da93d5b45937eb324e112f94fc371714abf8e2286d49c066ca664ab7",
+    "kind": "task",
+    "nodeKey": "root/pay",
+    "previousHash": "884e7d40c926c5269d08998403aff8666fe26831dd3363203c081b60797702b7",
+    "reservedCost": 0,
+    "seq": 3,
+    "tool": "core.identity",
+    "type": "tool.intent",
+    "hash": "8f867524839628a00d550d1f3fd7d7a95c3176ab35117d5c596527a8737ac714"
+  },
+  {
+    "at": 1789613955114,
+    "nodeKey": "root/pay",
+    "output": {
+      "paid": true
+    },
+    "outputHash": "a2af987a163f4f45e9a349097cfa9df8f7b71f7982edd1627e18ae14ef28fa2f",
+    "previousHash": "8f867524839628a00d550d1f3fd7d7a95c3176ab35117d5c596527a8737ac714",
+    "seq": 4,
+    "type": "node.completed",
+    "hash": "600f4a082120f16fa1164d6f280dec2be84bc4050464d1b547a20df4ae5065f8"
+  },
+  {
+    "at": 1789613955120,
+    "kind": "wait",
+    "nodeKey": "root/pause",
+    "previousHash": "600f4a082120f16fa1164d6f280dec2be84bc4050464d1b547a20df4ae5065f8",
+    "reservedCost": 0,
+    "seq": 5,
+    "type": "node.started",
+    "hash": "3fdb17c1920cb111f12ad720664da9e9e841f927e36cf1a895faa398ed2cbfcb"
+  },
+  {
+    "at": 1789613955126,
+    "nodeKey": "root/pause",
+    "previousHash": "3fdb17c1920cb111f12ad720664da9e9e841f927e36cf1a895faa398ed2cbfcb",
+    "seq": 6,
+    "type": "node.waiting",
+    "wakeAt": 1789617555126,
+    "hash": "03285ed475f8697438ab8eff18f4a12a60c47472351db76dee986c753b1e2491"
+  },
+  {
+    "at": 1789613955137,
+    "previousHash": "03285ed475f8697438ab8eff18f4a12a60c47472351db76dee986c753b1e2491",
+    "seq": 7,
+    "type": "run.waiting",
+    "hash": "f3154d911fc2854a0ea94449d0182da028ead7729fa76b707eafa5220312a703"
+  }
+]

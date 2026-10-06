@@ -1,0 +1,18 @@
+{
+  "provider": "cos-artifact-relay",
+  "model": "6",
+  "reasoningEffort": "pro",
+  "authorAgent": "worker-5",
+  "modelIdentityBasis": "Observed COS agents spawn receipt",
+  "usage": null,
+  "billedCost": null,
+  "isolation": "procedural file restriction; not an OS sandbox",
+  "round": 1,
+  "promptSha256": "5666f633cf69d4c9fc4d4ccc3748eb73f37def5dc835e2cda8144286436d761b",
+  "responseSha256": "3cbacb276917a005e866432568e6bd77441ef9613e7142f404da1b48b1fc603d",
+  "authorReceiptSha256": "9b376056bd3d764d5cbced13d7786cf77d73f3c3c32ebd04a06c0b1f6a35a0d5",
+  "responseFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/outcome-model-001/packet/RESPONSE_1.json",
+  "authorFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/outcome-model-001/packet/AUTHOR_1.json",
+  "receivedAt": "2026-09-17T08:48:32.832Z",
+  "inferenceAccounting": "One upstream authored candidate; relay read is not a new inference; token usage and billed cost unobserved."
+}

@@ -1,0 +1,14 @@
+{
+  "test": "the existing map and loop fixture still executes through the local claim gate",
+  "input": {
+    "matches": [
+      "a",
+      "b"
+    ],
+    "claim": {
+      "grounded": true
+    }
+  },
+  "workflowHash": "72633b3cdb602cda7a1d5792f7fc19d842a73d59dff4ee859b939c40cf33e4c0",
+  "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77"
+}

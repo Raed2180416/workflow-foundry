@@ -1,0 +1,4562 @@
+{
+  "label": "counterpart",
+  "finishedAt": "2026-09-17T08:56:19.859Z",
+  "freezeSha256": "f885328ae2675d3b69fe8e5e77d618368f5ea7fb248978792eab813c76148a83",
+  "addendumSha256": "34990b01b5725d745cd5967f26abddc60dc2c29537875a66df2119e767d99a7b",
+  "candidateFileSha256": "71ea0afbb20153bc11bd158bf76d4889c31071caedbd94c02323d1f3ccf69ac2",
+  "suiteFileSha256": "70ae8b3bbeb572f14c2b14a057bb8b454dea7ff57b6a28e480ce2242f27ab44c",
+  "workflowHash": "ace61076c1694141ff04e4ab29e7cf8713af7087755e646e4476fb559a21ccd8",
+  "suiteHash": "0b6d50250f23a424564fd75e7a0dfb814c21a76f66d61263304f7229c6f0b172",
+  "evaluatorId": "sample-consequences-v2:0b6d50250f23a424564fd75e7a0dfb814c21a76f66d61263304f7229c6f0b172:517b7e60d3e674f7fc1189dac8f468dd19d9f6800467a5998fde6a38fbd66e15",
+  "registryHash": "bb3f73d712e174d3084248c8d199a620b7eeb2a7b2655d64b6286ab3af536d0e",
+  "nativeMaxStepsPerRun": 160,
+  "caseCount": 98,
+  "nativePassedCount": 80,
+  "exactIndependentManifestCount": 80,
+  "permittedAttemptMultisetCount": 98,
+  "falseSuccessCount": 18,
+  "allProcessingBeforePublication": {
+    "enforced": false,
+    "passedCount": 98,
+    "diagnosticAgreementCount": 98,
+    "incompleteAtPublication": 0,
+    "basis": "Independent required-attempt sets compared against v2 audited native attempt/publication intervals."
+  },
+  "nativeMetrics": {
+    "passedCount": 80,
+    "caseCount": 98,
+    "successFraction": 0.8163265306122449,
+    "falseSuccessCount": 18,
+    "totalSteps": 1799,
+    "totalCost": 0,
+    "elapsedMs": 9247,
+    "missingCalls": 0,
+    "forbiddenCalls": 0,
+    "duplicateCalls": 0,
+    "syntheticCost": 1477,
+    "v1PassedCount": 80,
+    "logBindingErrors": 0,
+    "completionErrors": 0,
+    "evidenceOrderErrors": 0,
+    "prematureConfirmations": 0,
+    "allProcessingDiagnosticFailures": 0
+  },
+  "cases": [
+    {
+      "id": "p7-001-tensor",
+      "runId": "cedbdbc2-7c75-410c-bf86-1b786f530a80",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-GSWLM9/.foundry/artifacts/cedbdbc2-7c75-410c-bf86-1b786f530a80/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_f361d4d79dcb22224da484bf",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_f361d4d79dcb22224da484bf"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-002-tensor",
+      "runId": "70039b8e-a81c-4c56-a0d3-675626849211",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-gsiMFz/.foundry/artifacts/70039b8e-a81c-4c56-a0d3-675626849211/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_cbf7364ed2da3c7f3687ff07",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_cbf7364ed2da3c7f3687ff07"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-003-tensor",
+      "runId": "b940da9f-091c-4520-bdab-9c3098f3ea9f",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-kZikkS/.foundry/artifacts/b940da9f-091c-4520-bdab-9c3098f3ea9f/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_14e6bdcad080ce5cfb79c1b6",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_14e6bdcad080ce5cfb79c1b6"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-004-tensor",
+      "runId": "b86029af-457d-4d9c-8df5-82070a22ca6d",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-SuSmqW/.foundry/artifacts/b86029af-457d-4d9c-8df5-82070a22ca6d/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_2e625a2dfdafa661776dcebf",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_2e625a2dfdafa661776dcebf"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-005-tensor",
+      "runId": "cece47ec-5b19-4adc-a83e-ddf045b5e4f3",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-nAgCpp/.foundry/artifacts/cece47ec-5b19-4adc-a83e-ddf045b5e4f3/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_09bbab84ba3d8748bee3636d",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_09bbab84ba3d8748bee3636d"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-006-tensor",
+      "runId": "50a89f7b-d07c-49b7-8434-1d6d2ebd38f2",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-9IxbV6/.foundry/artifacts/50a89f7b-d07c-49b7-8434-1d6d2ebd38f2/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_d3ace204038b8ad93ce5c59d",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_d3ace204038b8ad93ce5c59d"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-007-tensor",
+      "runId": "64a041c7-f3d7-4b37-9d38-265da6cc073f",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-jzPGQm/.foundry/artifacts/64a041c7-f3d7-4b37-9d38-265da6cc073f/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_210e486b06d377566793e5f2",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_210e486b06d377566793e5f2"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-008-tensor",
+      "runId": "0532d22a-70f7-44b8-9603-14290fd0c56d",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-JRJfcD/.foundry/artifacts/0532d22a-70f7-44b8-9603-14290fd0c56d/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_849a89d92f96865881991c5a",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_849a89d92f96865881991c5a"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-009-tensor",
+      "runId": "5771976e-36f6-497f-98da-f217a5e485e7",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-3zCO3y/.foundry/artifacts/5771976e-36f6-497f-98da-f217a5e485e7/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_01acd025336a9c9c16fef103",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_01acd025336a9c9c16fef103"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-010-tensor",
+      "runId": "8a492f55-2c16-4217-b3a8-859f916a6345",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-xe0Xeq/.foundry/artifacts/8a492f55-2c16-4217-b3a8-859f916a6345/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_22c7a5a75462de20050b7893",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_22c7a5a75462de20050b7893"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-011-tensor",
+      "runId": "445afab1-7990-4896-9b63-abdf147b996f",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-UQ6H5d/.foundry/artifacts/445afab1-7990-4896-9b63-abdf147b996f/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_02240a7d0b7f478747349bac",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_02240a7d0b7f478747349bac"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-012-tensor",
+      "runId": "f1ca369a-8599-4f7d-b581-3f968825b78d",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-fQgNND/.foundry/artifacts/f1ca369a-8599-4f7d-b581-3f968825b78d/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_f43f8e9e8fb8de347adc1f7d",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_f43f8e9e8fb8de347adc1f7d"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-013-tensor",
+      "runId": "7a2edd71-2248-4791-8042-6d585084475a",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-lgmYbL/.foundry/artifacts/7a2edd71-2248-4791-8042-6d585084475a/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_3d7e8f1a5c98d248c3926be6",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_3d7e8f1a5c98d248c3926be6"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-014-tensor",
+      "runId": "1adbc629-de1f-4e2c-8c46-5b359b153170",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-ymnDG0/.foundry/artifacts/1adbc629-de1f-4e2c-8c46-5b359b153170/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_f69bbf9af88de6f93b372f49",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_f69bbf9af88de6f93b372f49"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-015-tensor",
+      "runId": "10550934-5194-48b6-a4b3-bc6932ac13a4",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-RA1Tym/.foundry/artifacts/10550934-5194-48b6-a4b3-bc6932ac13a4/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_83eb3890526c3905ca52bfca",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_83eb3890526c3905ca52bfca"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-016-tensor",
+      "runId": "7d967c28-666a-4cbd-9147-f220d7fcf615",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-qLva95/.foundry/artifacts/7d967c28-666a-4cbd-9147-f220d7fcf615/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_ede2b3589033befabc3a0191",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_ede2b3589033befabc3a0191"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-017-tensor",
+      "runId": "8147da30-9ee1-4c58-8e46-36f1b9028c11",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-BoRH2q/.foundry/artifacts/8147da30-9ee1-4c58-8e46-36f1b9028c11/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_dc2782854c584800b5c62e3c",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_dc2782854c584800b5c62e3c"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-018-tensor",
+      "runId": "028e6bff-3a7e-4eda-81da-803fc6a6d38e",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-UsGVPJ/.foundry/artifacts/028e6bff-3a7e-4eda-81da-803fc6a6d38e/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_78a85ccb48ae015a4510005d",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_78a85ccb48ae015a4510005d"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-019-tensor",
+      "runId": "1743779c-296b-4915-a3cc-33e956652c6d",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-AhxkPm/.foundry/artifacts/1743779c-296b-4915-a3cc-33e956652c6d/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_1d817fc07bdfe0e25bae990e",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_1d817fc07bdfe0e25bae990e"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-020-tensor",
+      "runId": "b6bbaefd-37fd-457a-a6f3-1f9bf42742dc",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-kOGe2I/.foundry/artifacts/b6bbaefd-37fd-457a-a6f3-1f9bf42742dc/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_d9b3814708dbcbb7ec37013a",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_d9b3814708dbcbb7ec37013a"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-021-tensor",
+      "runId": "5830c15d-2973-4834-a7bb-d921abe7312b",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-40Nbwb/.foundry/artifacts/5830c15d-2973-4834-a7bb-d921abe7312b/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_a0bebe91520f262bc1a8360a",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_a0bebe91520f262bc1a8360a"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-022-tensor",
+      "runId": "63d72c86-792a-45ad-8cda-12bca4be6f20",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-hzx9Uo/.foundry/artifacts/63d72c86-792a-45ad-8cda-12bca4be6f20/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_4ff79e181d1b788385413e53",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_4ff79e181d1b788385413e53"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-023-tensor",
+      "runId": "d282d35c-a70a-45a9-ac4f-89824419dc1a",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-PX81c5/.foundry/artifacts/d282d35c-a70a-45a9-ac4f-89824419dc1a/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_c88d510d614bcd861901406a",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_c88d510d614bcd861901406a"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-024-tensor",
+      "runId": "abfa7890-6c73-4f15-bcd7-8463588b5b23",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-4651VD/.foundry/artifacts/abfa7890-6c73-4f15-bcd7-8463588b5b23/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_3e4438cc0865f8256a5bc096",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_3e4438cc0865f8256a5bc096"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-025-tensor",
+      "runId": "363398f3-1f10-4e16-8cc0-bd9457c43d8d",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-lOWRpk/.foundry/artifacts/363398f3-1f10-4e16-8cc0-bd9457c43d8d/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_5db30ecc27b6411dc07b306e",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_5db30ecc27b6411dc07b306e"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-026-tensor",
+      "runId": "b7b19f01-160d-4dce-aed7-5a0bc3480477",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-Yw93CP/.foundry/artifacts/b7b19f01-160d-4dce-aed7-5a0bc3480477/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_3205324c449ad3d81f5f5d70",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_3205324c449ad3d81f5f5d70"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-027-tensor",
+      "runId": "2db503e1-9d15-49a3-b46b-290a8fb81191",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-SHWtgV/.foundry/artifacts/2db503e1-9d15-49a3-b46b-290a8fb81191/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_06d231b95dc2e21d877cf0d7",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_06d231b95dc2e21d877cf0d7"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-028-tensor",
+      "runId": "c8dd086a-70ac-42be-bf80-936286a3df26",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-fjHCJd/.foundry/artifacts/c8dd086a-70ac-42be-bf80-936286a3df26/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_17534a7a1c3997e9628ffcc1",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_17534a7a1c3997e9628ffcc1"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-029-tensor",
+      "runId": "a94b69c8-0345-4415-8dce-a8d63de9eaa4",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-DhQVKb/.foundry/artifacts/a94b69c8-0345-4415-8dce-a8d63de9eaa4/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_7ae5d0278ab54602c35b8c92",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_7ae5d0278ab54602c35b8c92"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-030-tensor",
+      "runId": "dc0bd3f3-67a7-4754-ace1-dbdc54fbd00a",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-UjWf6P/.foundry/artifacts/dc0bd3f3-67a7-4754-ace1-dbdc54fbd00a/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_39855a588ff4dd309b8799d8",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_39855a588ff4dd309b8799d8"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-031-tensor",
+      "runId": "630af31d-da6a-41ad-9bdb-f3500f1ab04c",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-LY9PdP/.foundry/artifacts/630af31d-da6a-41ad-9bdb-f3500f1ab04c/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_c8306b415b465ba875e1cc43",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_c8306b415b465ba875e1cc43"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-032-tensor",
+      "runId": "296863dc-b2d3-43dc-8ea7-d0a630f1efd0",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-rstPif/.foundry/artifacts/296863dc-b2d3-43dc-8ea7-d0a630f1efd0/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_01f4a5b1055114f0d399f733",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_01f4a5b1055114f0d399f733"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-033-tensor",
+      "runId": "621a1b89-2e9c-4fe0-9f0f-416a93d59e26",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-Nzymmg/.foundry/artifacts/621a1b89-2e9c-4fe0-9f0f-416a93d59e26/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_89229906001047bc8d585dbf",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_89229906001047bc8d585dbf"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-034-tensor",
+      "runId": "a6f58340-ab43-4bed-96b7-74e47d4c272a",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-CGdogj/.foundry/artifacts/a6f58340-ab43-4bed-96b7-74e47d4c272a/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_c3357881b171d40a8f596606",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_c3357881b171d40a8f596606"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-035-tensor",
+      "runId": "51479059-0fe7-4a24-afda-fabe3a2d32da",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-Im6Ivz/.foundry/artifacts/51479059-0fe7-4a24-afda-fabe3a2d32da/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_1432166f7cb265581d585897",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_1432166f7cb265581d585897"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-036-tensor",
+      "runId": "12150ebd-739f-49bb-8415-aa022389865a",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-9FRCPd/.foundry/artifacts/12150ebd-739f-49bb-8415-aa022389865a/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_62c02760286dab1bb482f08e",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_62c02760286dab1bb482f08e"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-037-tensor",
+      "runId": "cd12ef37-2fe9-47ab-8c92-ffc84796bc45",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-zjmV5L/.foundry/artifacts/cd12ef37-2fe9-47ab-8c92-ffc84796bc45/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_6cb9abcf7c1fc55c50430b54",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_6cb9abcf7c1fc55c50430b54"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-038-tensor",
+      "runId": "9fe7886f-dff4-4297-8788-624eb63bd945",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-TkEBW1/.foundry/artifacts/9fe7886f-dff4-4297-8788-624eb63bd945/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_d3844b4224fb85d92cbdaabf",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_d3844b4224fb85d92cbdaabf"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-039-tensor",
+      "runId": "af2518f6-a5be-4841-bf50-b83bc70088f7",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-JpLj2f/.foundry/artifacts/af2518f6-a5be-4841-bf50-b83bc70088f7/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_147f795b44d5ce93e42873bc",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_147f795b44d5ce93e42873bc"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-040-tensor",
+      "runId": "ff19ad66-62c0-46cb-b0ce-79a7d9642490",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-371B9C/.foundry/artifacts/ff19ad66-62c0-46cb-b0ce-79a7d9642490/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_9c9dc770fefe89961b49c0da",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_9c9dc770fefe89961b49c0da"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-041-tensor",
+      "runId": "da4b422a-6903-4f9e-8d9a-abc163b4ab6e",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-SeABP8/.foundry/artifacts/da4b422a-6903-4f9e-8d9a-abc163b4ab6e/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_a40b91e35d8c7876cbabd7f2",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_a40b91e35d8c7876cbabd7f2"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-042-tensor",
+      "runId": "387cc64f-e6a5-49f7-9815-1d21f2b56fc4",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-VYRfQb/.foundry/artifacts/387cc64f-e6a5-49f7-9815-1d21f2b56fc4/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_fa0d44600792aa4baf1890d3",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_fa0d44600792aa4baf1890d3"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-043-tensor",
+      "runId": "229b0dd7-366b-4fbf-9f0d-56efc1edcd8b",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-RQQs9t/.foundry/artifacts/229b0dd7-366b-4fbf-9f0d-56efc1edcd8b/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_e78e1319a02ab371e9f990b7",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_e78e1319a02ab371e9f990b7"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-044-tensor",
+      "runId": "12a579ec-b933-4d8d-bb40-c20347cb0106",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-xQo1vb/.foundry/artifacts/12a579ec-b933-4d8d-bb40-c20347cb0106/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_61ca9fdf6dd91447fbc47224",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_61ca9fdf6dd91447fbc47224"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-045-tensor",
+      "runId": "9c1147ee-5d7e-4bce-b27b-fcc43b3318e0",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-8w6wWW/.foundry/artifacts/9c1147ee-5d7e-4bce-b27b-fcc43b3318e0/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_794752ebd02498aa21769226",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_794752ebd02498aa21769226"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-046-tensor",
+      "runId": "b4bf4de1-401c-4ba0-8115-69bb10da0462",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-PDXNhq/.foundry/artifacts/b4bf4de1-401c-4ba0-8115-69bb10da0462/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_157e8d7c43dd936e27395aef",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_157e8d7c43dd936e27395aef"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-047-tensor",
+      "runId": "87fd2caf-fda1-44b0-8789-d98287e30e19",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-wffADF/.foundry/artifacts/87fd2caf-fda1-44b0-8789-d98287e30e19/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_ac805cf227eb7fec982b4ab9",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_ac805cf227eb7fec982b4ab9"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-048-tensor",
+      "runId": "87529cbc-68ac-47c0-a203-a6d15d1bd97e",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-35wa8c/.foundry/artifacts/87529cbc-68ac-47c0-a203-a6d15d1bd97e/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_5511a0d3ac501f4986461341",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_5511a0d3ac501f4986461341"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-049-tensor",
+      "runId": "686d0f7a-6d0f-4913-af32-5e13682d66c9",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-M80EEC/.foundry/artifacts/686d0f7a-6d0f-4913-af32-5e13682d66c9/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_600a5b0cea224ca0f50194cf",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_600a5b0cea224ca0f50194cf"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-050-tensor",
+      "runId": "564fda1f-9552-4bca-9cdf-2e0029fab290",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-xOa0rO/.foundry/artifacts/564fda1f-9552-4bca-9cdf-2e0029fab290/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_0806acfa1b4322afc3633c79",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_0806acfa1b4322afc3633c79"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-051-tensor",
+      "runId": "eccbe2ff-2e66-4f51-96e2-8f378c8fcffe",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-w2Wcfj/.foundry/artifacts/eccbe2ff-2e66-4f51-96e2-8f378c8fcffe/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_6233533d0df65a9f7e069397",
+            "disposition": "not_reproduced"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "not_reproduced",
+            "sampleId": "w7_6233533d0df65a9f7e069397"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-052-tensor",
+      "runId": "7edc8205-1a26-4ed6-bb03-59565140a04a",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-Vb7vPN/.foundry/artifacts/7edc8205-1a26-4ed6-bb03-59565140a04a/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_a0b3582e4a4b760142195ea2",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_a0b3582e4a4b760142195ea2"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-053-tensor",
+      "runId": "2c560edd-1365-428e-a9a3-1984e41a49bc",
+      "nativePassed": false,
+      "status": "succeeded",
+      "falseSuccess": true,
+      "exactIndependentManifest": false,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-LQp9fG/.foundry/artifacts/2c560edd-1365-428e-a9a3-1984e41a49bc/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_4badcc2519a80f69ccbda569",
+            "disposition": "confirmed"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_4badcc2519a80f69ccbda569"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-054-tensor",
+      "runId": "e913fbdf-5d0c-41cb-9877-58b7cf1ba597",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-uAGNLu/.foundry/artifacts/e913fbdf-5d0c-41cb-9877-58b7cf1ba597/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_5113f4824353816f5aeca5f0",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_5113f4824353816f5aeca5f0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-055-screening",
+      "runId": "a4a83b97-64e3-4140-85f6-b3c90e4f6a6b",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 1,
+      "syntheticCostExpected": 1,
+      "syntheticCostObserved": 1,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 1,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-ICwo8W/.foundry/artifacts/a4a83b97-64e3-4140-85f6-b3c90e4f6a6b/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_a7c64d4add050ecdab1d174b",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_a7c64d4add050ecdab1d174b"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-056-screening",
+      "runId": "e4083942-63fe-437e-8441-fe8bac1fd601",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 1,
+      "syntheticCostExpected": 1,
+      "syntheticCostObserved": 1,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 1,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-yxk60z/.foundry/artifacts/e4083942-63fe-437e-8441-fe8bac1fd601/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_601e32574b793f145746bf1d",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_601e32574b793f145746bf1d"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-057-screening",
+      "runId": "a76dc932-6ce2-49c7-8c05-6d07f5b83f3d",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 1,
+      "syntheticCostExpected": 1,
+      "syntheticCostObserved": 1,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 1,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-yFUvwE/.foundry/artifacts/a76dc932-6ce2-49c7-8c05-6d07f5b83f3d/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_1403212641ff8aac2ea0ebfe",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_1403212641ff8aac2ea0ebfe"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-058-screening",
+      "runId": "c7dffe43-fbc0-44cd-ab8e-a2f2b663b7c3",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 1,
+      "syntheticCostExpected": 1,
+      "syntheticCostObserved": 1,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 1,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-8hR6FY/.foundry/artifacts/c7dffe43-fbc0-44cd-ab8e-a2f2b663b7c3/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_89e0231befc2d829736e2247",
+            "disposition": "clear"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "clear",
+            "sampleId": "w7_89e0231befc2d829736e2247"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-059-screening",
+      "runId": "fddb6de9-a55a-4d80-a971-6968a2944844",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 1,
+      "syntheticCostExpected": 1,
+      "syntheticCostObserved": 1,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 1,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-DTIMCc/.foundry/artifacts/fddb6de9-a55a-4d80-a971-6968a2944844/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_f921b60f696e64f450c9a13e",
+            "disposition": "clear"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "clear",
+            "sampleId": "w7_f921b60f696e64f450c9a13e"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-060-screening",
+      "runId": "84508c3a-1f28-4a50-96a5-303d40659a2e",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 1,
+      "syntheticCostExpected": 1,
+      "syntheticCostObserved": 1,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 1,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-Vgnq2C/.foundry/artifacts/84508c3a-1f28-4a50-96a5-303d40659a2e/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_84d14cd3e2df919d5d07506a",
+            "disposition": "clear"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "clear",
+            "sampleId": "w7_84d14cd3e2df919d5d07506a"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-061-screening",
+      "runId": "d06541bd-3ebc-4a06-aade-fdc5e578771b",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 1,
+      "syntheticCostExpected": 1,
+      "syntheticCostObserved": 1,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 1,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-xrLLVY/.foundry/artifacts/d06541bd-3ebc-4a06-aade-fdc5e578771b/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_f221d2e2213296a7482e0030",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_f221d2e2213296a7482e0030"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-062-screening",
+      "runId": "cb6c40c1-f353-431c-9485-8b15e483e147",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 1,
+      "syntheticCostExpected": 1,
+      "syntheticCostObserved": 1,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 1,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-Vcf74q/.foundry/artifacts/cb6c40c1-f353-431c-9485-8b15e483e147/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_04672b6bd82396a484c7095e",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_04672b6bd82396a484c7095e"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-063-screening",
+      "runId": "7751e67b-26e5-4dde-b508-ce783df2740a",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 1,
+      "syntheticCostExpected": 1,
+      "syntheticCostObserved": 1,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 1,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-yGOWtx/.foundry/artifacts/7751e67b-26e5-4dde-b508-ce783df2740a/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_5492e3838d48901f3af42eaf",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_5492e3838d48901f3af42eaf"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-064-screening",
+      "runId": "1e5d44e3-c27f-4109-ac7d-2b7db4a852f3",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 1,
+      "syntheticCostExpected": 1,
+      "syntheticCostObserved": 1,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 1,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-lHWqrR/.foundry/artifacts/1e5d44e3-c27f-4109-ac7d-2b7db4a852f3/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_dcf6d72302020fa3dedff8c1",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_dcf6d72302020fa3dedff8c1"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-065-screening",
+      "runId": "3cf3947a-6634-4ea6-819d-c1695cb4c39b",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 1,
+      "syntheticCostExpected": 1,
+      "syntheticCostObserved": 1,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 1,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-vkXZDK/.foundry/artifacts/3cf3947a-6634-4ea6-819d-c1695cb4c39b/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_22a6a276263b9149e1e9740b",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_22a6a276263b9149e1e9740b"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-066-screening",
+      "runId": "2198fbd4-cb8e-4080-9fec-1670957553f8",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 1,
+      "syntheticCostExpected": 1,
+      "syntheticCostObserved": 1,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 1,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-rvi6e1/.foundry/artifacts/2198fbd4-cb8e-4080-9fec-1670957553f8/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_d09dac9e1571fd86d492ccce",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_d09dac9e1571fd86d492ccce"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-067-screening",
+      "runId": "d3a10844-b8cb-4078-9e2c-95f8badf89b3",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 1,
+      "syntheticCostExpected": 1,
+      "syntheticCostObserved": 1,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 1,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-VqAa6s/.foundry/artifacts/d3a10844-b8cb-4078-9e2c-95f8badf89b3/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_914d15809beb015ecf464bea",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_914d15809beb015ecf464bea"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-068-screening",
+      "runId": "51743c95-96aa-4643-a123-bf0246f5543b",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 1,
+      "syntheticCostExpected": 1,
+      "syntheticCostObserved": 1,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 1,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-ouKtzg/.foundry/artifacts/51743c95-96aa-4643-a123-bf0246f5543b/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_5073aff29b5099e44707b9ea",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_5073aff29b5099e44707b9ea"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-069-screening",
+      "runId": "b27c3486-13cc-4d89-8b1d-0f6c92553c5f",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 1,
+      "syntheticCostExpected": 1,
+      "syntheticCostObserved": 1,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 1,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-qtjEZu/.foundry/artifacts/b27c3486-13cc-4d89-8b1d-0f6c92553c5f/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_680ef0162693d56e58e142ec",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_680ef0162693d56e58e142ec"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-070-screening",
+      "runId": "2ef2b04f-1d13-405b-903c-217860e6d8fc",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 1,
+      "syntheticCostExpected": 1,
+      "syntheticCostObserved": 1,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 1,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-NTgp1Q/.foundry/artifacts/2ef2b04f-1d13-405b-903c-217860e6d8fc/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_c186720b7be0105543afd5c7",
+            "disposition": "error"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "error",
+            "sampleId": "w7_c186720b7be0105543afd5c7"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-071-screening",
+      "runId": "d6f58f6e-e0d1-400e-b989-02fedb7cfa50",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 1,
+      "syntheticCostExpected": 1,
+      "syntheticCostObserved": 1,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 1,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-3J1PsB/.foundry/artifacts/d6f58f6e-e0d1-400e-b989-02fedb7cfa50/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_3eeb96773f85a13dacd79d71",
+            "disposition": "error"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "error",
+            "sampleId": "w7_3eeb96773f85a13dacd79d71"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-072-screening",
+      "runId": "6e682006-2fd6-4fe3-8e4d-4a8c5ec74389",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 1,
+      "syntheticCostExpected": 1,
+      "syntheticCostObserved": 1,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 1,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-hykzmt/.foundry/artifacts/6e682006-2fd6-4fe3-8e4d-4a8c5ec74389/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_1b93f6199a0dbde78f638207",
+            "disposition": "error"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "error",
+            "sampleId": "w7_1b93f6199a0dbde78f638207"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-073-reproduction-error",
+      "runId": "a60d0248-681b-4678-b8f6-9aa6c816cae7",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-t3tgwB/.foundry/artifacts/a60d0248-681b-4678-b8f6-9aa6c816cae7/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_19b3ae865ef1f544a8ba88c8",
+            "disposition": "error"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "error",
+            "sampleId": "w7_19b3ae865ef1f544a8ba88c8"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-074-whitespace",
+      "runId": "dcd3c383-e233-4878-b660-6d3bd97e2d33",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-Lj1R5v/.foundry/artifacts/dcd3c383-e233-4878-b660-6d3bd97e2d33/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_979ce60daf2d6474e945f590",
+            "disposition": "not_reproduced"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "not_reproduced",
+            "sampleId": "w7_979ce60daf2d6474e945f590"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-075-whitespace",
+      "runId": "d1c782b1-76da-49d0-97b8-5677388b7071",
+      "nativePassed": false,
+      "status": "succeeded",
+      "falseSuccess": true,
+      "exactIndependentManifest": false,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 2,
+      "syntheticCostExpected": 11,
+      "syntheticCostObserved": 11,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-POhGB9/.foundry/artifacts/d1c782b1-76da-49d0-97b8-5677388b7071/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_4877288b81fce781501e6e63",
+            "disposition": "confirmed"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_4877288b81fce781501e6e63"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-076-empty",
+      "runId": "6e75627f-4f33-417c-a7d4-22e0757e1102",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 0,
+      "syntheticCostExpected": 0,
+      "syntheticCostObserved": 0,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 0,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-a0r0W2/.foundry/artifacts/6e75627f-4f33-417c-a7d4-22e0757e1102/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": []
+      },
+      "actualManifest": {
+        "samples": []
+      }
+    },
+    {
+      "id": "p7-077-length2",
+      "runId": "23c5a005-0bb2-4cf6-ae18-33b7196ddd90",
+      "nativePassed": false,
+      "status": "succeeded",
+      "falseSuccess": true,
+      "exactIndependentManifest": false,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 3,
+      "syntheticCostExpected": 12,
+      "syntheticCostObserved": 12,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 3,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-YIK2BQ/.foundry/artifacts/23c5a005-0bb2-4cf6-ae18-33b7196ddd90/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_129d45ef2ddfc96fc4dbecba",
+            "disposition": "clear"
+          },
+          {
+            "sampleId": "w7_5c8a3eab50c9d5ef44542709",
+            "disposition": "confirmed"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "clear",
+            "sampleId": "w7_129d45ef2ddfc96fc4dbecba"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_5c8a3eab50c9d5ef44542709"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-078-length3",
+      "runId": "cfb54ce7-a56e-414b-8b1b-487cb37b82ed",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 4,
+      "syntheticCostExpected": 13,
+      "syntheticCostObserved": 13,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 4,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-AaTAh2/.foundry/artifacts/cfb54ce7-a56e-414b-8b1b-487cb37b82ed/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_2c0024ca9ef28af0c1edf4da",
+            "disposition": "error"
+          },
+          {
+            "sampleId": "w7_2f6aa53c6a870f570f523771",
+            "disposition": "inconclusive"
+          },
+          {
+            "sampleId": "w7_5b1260cfd21a89943a3c8004",
+            "disposition": "not_reproduced"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "error",
+            "sampleId": "w7_2c0024ca9ef28af0c1edf4da"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_2f6aa53c6a870f570f523771"
+          },
+          {
+            "disposition": "not_reproduced",
+            "sampleId": "w7_5b1260cfd21a89943a3c8004"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-079-length4",
+      "runId": "73054d48-564f-4bd9-8bd5-c98e8ff41c89",
+      "nativePassed": false,
+      "status": "succeeded",
+      "falseSuccess": true,
+      "exactIndependentManifest": false,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 7,
+      "syntheticCostExpected": 34,
+      "syntheticCostObserved": 34,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 7,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-WXOBBU/.foundry/artifacts/73054d48-564f-4bd9-8bd5-c98e8ff41c89/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_f296e78975714e65ff6a138b",
+            "disposition": "confirmed"
+          },
+          {
+            "sampleId": "w7_49fa23a4a0ce6030437273d3",
+            "disposition": "error"
+          },
+          {
+            "sampleId": "w7_12749826b54efa5372c2d585",
+            "disposition": "clear"
+          },
+          {
+            "sampleId": "w7_95c7c8ae61213f0e87003fb7",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_f296e78975714e65ff6a138b"
+          },
+          {
+            "disposition": "error",
+            "sampleId": "w7_49fa23a4a0ce6030437273d3"
+          },
+          {
+            "disposition": "clear",
+            "sampleId": "w7_12749826b54efa5372c2d585"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_95c7c8ae61213f0e87003fb7"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-080-length5",
+      "runId": "af88ed0b-8282-4a25-a499-85614adc08ab",
+      "nativePassed": false,
+      "status": "succeeded",
+      "falseSuccess": true,
+      "exactIndependentManifest": false,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 8,
+      "syntheticCostExpected": 35,
+      "syntheticCostObserved": 35,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 8,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-Emgjcw/.foundry/artifacts/af88ed0b-8282-4a25-a499-85614adc08ab/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_ffc2c9b7ee571879e186bee8",
+            "disposition": "error"
+          },
+          {
+            "sampleId": "w7_72dd3d6f116e38fa9b59fbb0",
+            "disposition": "clear"
+          },
+          {
+            "sampleId": "w7_65ff70c88cec1fd17399e8de",
+            "disposition": "confirmed"
+          },
+          {
+            "sampleId": "w7_f4bd9f1a6a97fabe7a621b1b",
+            "disposition": "not_reproduced"
+          },
+          {
+            "sampleId": "w7_797de6aef3f2c58905730190",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "error",
+            "sampleId": "w7_ffc2c9b7ee571879e186bee8"
+          },
+          {
+            "disposition": "clear",
+            "sampleId": "w7_72dd3d6f116e38fa9b59fbb0"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_65ff70c88cec1fd17399e8de"
+          },
+          {
+            "disposition": "not_reproduced",
+            "sampleId": "w7_f4bd9f1a6a97fabe7a621b1b"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_797de6aef3f2c58905730190"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-081-order0",
+      "runId": "a8f95889-cc0d-411d-ab2a-633e30561fed",
+      "nativePassed": false,
+      "status": "succeeded",
+      "falseSuccess": true,
+      "exactIndependentManifest": false,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 9,
+      "syntheticCostExpected": 36,
+      "syntheticCostObserved": 36,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 9,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-eeoF1Z/.foundry/artifacts/a8f95889-cc0d-411d-ab2a-633e30561fed/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_a0fee21d1086b04cbede9777",
+            "disposition": "clear"
+          },
+          {
+            "sampleId": "w7_3b0b10ef7f84567744c66d04",
+            "disposition": "confirmed"
+          },
+          {
+            "sampleId": "w7_b2e8710a921c0c7fe99a9fdb",
+            "disposition": "not_reproduced"
+          },
+          {
+            "sampleId": "w7_73ed9f50d0e78b6d6a50104a",
+            "disposition": "inconclusive"
+          },
+          {
+            "sampleId": "w7_4ba7ddf6ca537091e4dc40bb",
+            "disposition": "error"
+          },
+          {
+            "sampleId": "w7_7347b87641cbbf0b3448f8cf",
+            "disposition": "error"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "clear",
+            "sampleId": "w7_a0fee21d1086b04cbede9777"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_3b0b10ef7f84567744c66d04"
+          },
+          {
+            "disposition": "not_reproduced",
+            "sampleId": "w7_b2e8710a921c0c7fe99a9fdb"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_73ed9f50d0e78b6d6a50104a"
+          },
+          {
+            "disposition": "error",
+            "sampleId": "w7_4ba7ddf6ca537091e4dc40bb"
+          },
+          {
+            "disposition": "error",
+            "sampleId": "w7_7347b87641cbbf0b3448f8cf"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-082-order1",
+      "runId": "00e55dae-2b4e-46a2-af47-0dcbc5bed1b4",
+      "nativePassed": false,
+      "status": "succeeded",
+      "falseSuccess": true,
+      "exactIndependentManifest": false,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 9,
+      "syntheticCostExpected": 36,
+      "syntheticCostObserved": 36,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 9,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-Af1zP1/.foundry/artifacts/00e55dae-2b4e-46a2-af47-0dcbc5bed1b4/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_7347b87641cbbf0b3448f8cf",
+            "disposition": "error"
+          },
+          {
+            "sampleId": "w7_4ba7ddf6ca537091e4dc40bb",
+            "disposition": "error"
+          },
+          {
+            "sampleId": "w7_73ed9f50d0e78b6d6a50104a",
+            "disposition": "inconclusive"
+          },
+          {
+            "sampleId": "w7_b2e8710a921c0c7fe99a9fdb",
+            "disposition": "not_reproduced"
+          },
+          {
+            "sampleId": "w7_3b0b10ef7f84567744c66d04",
+            "disposition": "confirmed"
+          },
+          {
+            "sampleId": "w7_a0fee21d1086b04cbede9777",
+            "disposition": "clear"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "error",
+            "sampleId": "w7_7347b87641cbbf0b3448f8cf"
+          },
+          {
+            "disposition": "error",
+            "sampleId": "w7_4ba7ddf6ca537091e4dc40bb"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_73ed9f50d0e78b6d6a50104a"
+          },
+          {
+            "disposition": "not_reproduced",
+            "sampleId": "w7_b2e8710a921c0c7fe99a9fdb"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_3b0b10ef7f84567744c66d04"
+          },
+          {
+            "disposition": "clear",
+            "sampleId": "w7_a0fee21d1086b04cbede9777"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-083-order2",
+      "runId": "54a4f8ab-799d-4cf3-937b-a520565e4cb2",
+      "nativePassed": false,
+      "status": "succeeded",
+      "falseSuccess": true,
+      "exactIndependentManifest": false,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 9,
+      "syntheticCostExpected": 36,
+      "syntheticCostObserved": 36,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 9,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-m58YAC/.foundry/artifacts/54a4f8ab-799d-4cf3-937b-a520565e4cb2/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_b2e8710a921c0c7fe99a9fdb",
+            "disposition": "not_reproduced"
+          },
+          {
+            "sampleId": "w7_73ed9f50d0e78b6d6a50104a",
+            "disposition": "inconclusive"
+          },
+          {
+            "sampleId": "w7_4ba7ddf6ca537091e4dc40bb",
+            "disposition": "error"
+          },
+          {
+            "sampleId": "w7_7347b87641cbbf0b3448f8cf",
+            "disposition": "error"
+          },
+          {
+            "sampleId": "w7_a0fee21d1086b04cbede9777",
+            "disposition": "clear"
+          },
+          {
+            "sampleId": "w7_3b0b10ef7f84567744c66d04",
+            "disposition": "confirmed"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "not_reproduced",
+            "sampleId": "w7_b2e8710a921c0c7fe99a9fdb"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_73ed9f50d0e78b6d6a50104a"
+          },
+          {
+            "disposition": "error",
+            "sampleId": "w7_4ba7ddf6ca537091e4dc40bb"
+          },
+          {
+            "disposition": "error",
+            "sampleId": "w7_7347b87641cbbf0b3448f8cf"
+          },
+          {
+            "disposition": "clear",
+            "sampleId": "w7_a0fee21d1086b04cbede9777"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_3b0b10ef7f84567744c66d04"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-084-order3",
+      "runId": "14fe7a9f-12b5-455d-964f-247d1fc69bb4",
+      "nativePassed": false,
+      "status": "succeeded",
+      "falseSuccess": true,
+      "exactIndependentManifest": false,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 9,
+      "syntheticCostExpected": 36,
+      "syntheticCostObserved": 36,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 9,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-etcASD/.foundry/artifacts/14fe7a9f-12b5-455d-964f-247d1fc69bb4/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_3b0b10ef7f84567744c66d04",
+            "disposition": "confirmed"
+          },
+          {
+            "sampleId": "w7_73ed9f50d0e78b6d6a50104a",
+            "disposition": "inconclusive"
+          },
+          {
+            "sampleId": "w7_7347b87641cbbf0b3448f8cf",
+            "disposition": "error"
+          },
+          {
+            "sampleId": "w7_a0fee21d1086b04cbede9777",
+            "disposition": "clear"
+          },
+          {
+            "sampleId": "w7_b2e8710a921c0c7fe99a9fdb",
+            "disposition": "not_reproduced"
+          },
+          {
+            "sampleId": "w7_4ba7ddf6ca537091e4dc40bb",
+            "disposition": "error"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_3b0b10ef7f84567744c66d04"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_73ed9f50d0e78b6d6a50104a"
+          },
+          {
+            "disposition": "error",
+            "sampleId": "w7_7347b87641cbbf0b3448f8cf"
+          },
+          {
+            "disposition": "clear",
+            "sampleId": "w7_a0fee21d1086b04cbede9777"
+          },
+          {
+            "disposition": "not_reproduced",
+            "sampleId": "w7_b2e8710a921c0c7fe99a9fdb"
+          },
+          {
+            "disposition": "error",
+            "sampleId": "w7_4ba7ddf6ca537091e4dc40bb"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-085-stress-confirmed",
+      "runId": "2afdb177-969d-4fe3-b98b-194c43d94ee9",
+      "nativePassed": false,
+      "status": "succeeded",
+      "falseSuccess": true,
+      "exactIndependentManifest": false,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 12,
+      "syntheticCostExpected": 66,
+      "syntheticCostObserved": 66,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 12,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-vMWLrj/.foundry/artifacts/2afdb177-969d-4fe3-b98b-194c43d94ee9/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_8cb4dfe6d5016cc921accaf5",
+            "disposition": "confirmed"
+          },
+          {
+            "sampleId": "w7_80f99283b27fc9c9a828487d",
+            "disposition": "confirmed"
+          },
+          {
+            "sampleId": "w7_a28f98df0be7c4eff56d9ad9",
+            "disposition": "confirmed"
+          },
+          {
+            "sampleId": "w7_66efc9a2ecaf0ddbba4eb064",
+            "disposition": "confirmed"
+          },
+          {
+            "sampleId": "w7_a36784323a4e56a8947432ae",
+            "disposition": "confirmed"
+          },
+          {
+            "sampleId": "w7_b479241a84e6e60206ea3b8e",
+            "disposition": "confirmed"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_8cb4dfe6d5016cc921accaf5"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_80f99283b27fc9c9a828487d"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_a28f98df0be7c4eff56d9ad9"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_66efc9a2ecaf0ddbba4eb064"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_a36784323a4e56a8947432ae"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_b479241a84e6e60206ea3b8e"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-086-stress-not_reproduced",
+      "runId": "a0c93c2c-05b7-4bf6-b114-718e851e99cc",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 12,
+      "syntheticCostExpected": 66,
+      "syntheticCostObserved": 66,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 12,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-RgYsT5/.foundry/artifacts/a0c93c2c-05b7-4bf6-b114-718e851e99cc/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_ff712b184036d1e4f7550f11",
+            "disposition": "not_reproduced"
+          },
+          {
+            "sampleId": "w7_2e06c3f547686db08f7e050d",
+            "disposition": "not_reproduced"
+          },
+          {
+            "sampleId": "w7_fb616ca1992ce05f792e403a",
+            "disposition": "not_reproduced"
+          },
+          {
+            "sampleId": "w7_3236f33d3702c19ac04b8dc7",
+            "disposition": "not_reproduced"
+          },
+          {
+            "sampleId": "w7_2fd3d8fc7c870316196d6829",
+            "disposition": "not_reproduced"
+          },
+          {
+            "sampleId": "w7_5a8a1da41fb48bb548ebd467",
+            "disposition": "not_reproduced"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "not_reproduced",
+            "sampleId": "w7_ff712b184036d1e4f7550f11"
+          },
+          {
+            "disposition": "not_reproduced",
+            "sampleId": "w7_2e06c3f547686db08f7e050d"
+          },
+          {
+            "disposition": "not_reproduced",
+            "sampleId": "w7_fb616ca1992ce05f792e403a"
+          },
+          {
+            "disposition": "not_reproduced",
+            "sampleId": "w7_3236f33d3702c19ac04b8dc7"
+          },
+          {
+            "disposition": "not_reproduced",
+            "sampleId": "w7_2fd3d8fc7c870316196d6829"
+          },
+          {
+            "disposition": "not_reproduced",
+            "sampleId": "w7_5a8a1da41fb48bb548ebd467"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-087-stress-reproduction_missing",
+      "runId": "ce7f63cc-1036-4141-a768-b29213a4a999",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 12,
+      "syntheticCostExpected": 66,
+      "syntheticCostObserved": 66,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 12,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-w8uGab/.foundry/artifacts/ce7f63cc-1036-4141-a768-b29213a4a999/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_59c7b9355812b426571ba704",
+            "disposition": "inconclusive"
+          },
+          {
+            "sampleId": "w7_a636d5f4ecb6ff365ba0f8d3",
+            "disposition": "inconclusive"
+          },
+          {
+            "sampleId": "w7_5708a5879dc6357899734420",
+            "disposition": "inconclusive"
+          },
+          {
+            "sampleId": "w7_2618ce1141a28e1c35fed97a",
+            "disposition": "inconclusive"
+          },
+          {
+            "sampleId": "w7_733111227b69ad0337999354",
+            "disposition": "inconclusive"
+          },
+          {
+            "sampleId": "w7_38a579f9b1425b04b830f4cc",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_59c7b9355812b426571ba704"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_a636d5f4ecb6ff365ba0f8d3"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_5708a5879dc6357899734420"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_2618ce1141a28e1c35fed97a"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_733111227b69ad0337999354"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_38a579f9b1425b04b830f4cc"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-088-stress-clear",
+      "runId": "e3d9f8db-15d4-4882-b5ff-5e647ddb4d02",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 6,
+      "syntheticCostExpected": 6,
+      "syntheticCostObserved": 6,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 6,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-bNPq35/.foundry/artifacts/e3d9f8db-15d4-4882-b5ff-5e647ddb4d02/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_b91a96b1fb72ada8b07268e8",
+            "disposition": "clear"
+          },
+          {
+            "sampleId": "w7_7fa69cc14167121d83f7912e",
+            "disposition": "clear"
+          },
+          {
+            "sampleId": "w7_da397317eaf7b3b7f791c098",
+            "disposition": "clear"
+          },
+          {
+            "sampleId": "w7_cb4a6f14d06b0746bbfb31d3",
+            "disposition": "clear"
+          },
+          {
+            "sampleId": "w7_0a28d0e663a5f148f5422f13",
+            "disposition": "clear"
+          },
+          {
+            "sampleId": "w7_b270b9abd0cbbc800d805091",
+            "disposition": "clear"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "clear",
+            "sampleId": "w7_b91a96b1fb72ada8b07268e8"
+          },
+          {
+            "disposition": "clear",
+            "sampleId": "w7_7fa69cc14167121d83f7912e"
+          },
+          {
+            "disposition": "clear",
+            "sampleId": "w7_da397317eaf7b3b7f791c098"
+          },
+          {
+            "disposition": "clear",
+            "sampleId": "w7_cb4a6f14d06b0746bbfb31d3"
+          },
+          {
+            "disposition": "clear",
+            "sampleId": "w7_0a28d0e663a5f148f5422f13"
+          },
+          {
+            "disposition": "clear",
+            "sampleId": "w7_b270b9abd0cbbc800d805091"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-089-stress-screen_error",
+      "runId": "59907709-191f-4019-8e44-712f0c18b1a2",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 6,
+      "syntheticCostExpected": 6,
+      "syntheticCostObserved": 6,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 6,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-s157tf/.foundry/artifacts/59907709-191f-4019-8e44-712f0c18b1a2/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_4d2379ebd20fe3b63f21ef7e",
+            "disposition": "error"
+          },
+          {
+            "sampleId": "w7_7e1aba58e2046f6a7dbd8cca",
+            "disposition": "error"
+          },
+          {
+            "sampleId": "w7_a7d1f068e1e7dbd0402ab3aa",
+            "disposition": "error"
+          },
+          {
+            "sampleId": "w7_8dbe8cf3e943144fe3d40eda",
+            "disposition": "error"
+          },
+          {
+            "sampleId": "w7_4779708d3184334221f74949",
+            "disposition": "error"
+          },
+          {
+            "sampleId": "w7_fecbb94288677afb22b46374",
+            "disposition": "error"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "error",
+            "sampleId": "w7_4d2379ebd20fe3b63f21ef7e"
+          },
+          {
+            "disposition": "error",
+            "sampleId": "w7_7e1aba58e2046f6a7dbd8cca"
+          },
+          {
+            "disposition": "error",
+            "sampleId": "w7_a7d1f068e1e7dbd0402ab3aa"
+          },
+          {
+            "disposition": "error",
+            "sampleId": "w7_8dbe8cf3e943144fe3d40eda"
+          },
+          {
+            "disposition": "error",
+            "sampleId": "w7_4779708d3184334221f74949"
+          },
+          {
+            "disposition": "error",
+            "sampleId": "w7_fecbb94288677afb22b46374"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-090-stress-reproduction_error",
+      "runId": "3bfe92cb-e552-469e-9d76-4f960aeb7a57",
+      "nativePassed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "exactIndependentManifest": true,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 12,
+      "syntheticCostExpected": 66,
+      "syntheticCostObserved": 66,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 12,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-ue7lZU/.foundry/artifacts/3bfe92cb-e552-469e-9d76-4f960aeb7a57/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_ce70862a612bdf5742c26bb5",
+            "disposition": "error"
+          },
+          {
+            "sampleId": "w7_d85f75ede6e71a4b7251b044",
+            "disposition": "error"
+          },
+          {
+            "sampleId": "w7_c3931eca3cd809a0d6b9592f",
+            "disposition": "error"
+          },
+          {
+            "sampleId": "w7_1a649183c2e3e80266fdfbfd",
+            "disposition": "error"
+          },
+          {
+            "sampleId": "w7_5a76daa55052b25fb8c86d53",
+            "disposition": "error"
+          },
+          {
+            "sampleId": "w7_e0508022b16c848572db509e",
+            "disposition": "error"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "error",
+            "sampleId": "w7_ce70862a612bdf5742c26bb5"
+          },
+          {
+            "disposition": "error",
+            "sampleId": "w7_d85f75ede6e71a4b7251b044"
+          },
+          {
+            "disposition": "error",
+            "sampleId": "w7_c3931eca3cd809a0d6b9592f"
+          },
+          {
+            "disposition": "error",
+            "sampleId": "w7_1a649183c2e3e80266fdfbfd"
+          },
+          {
+            "disposition": "error",
+            "sampleId": "w7_5a76daa55052b25fb8c86d53"
+          },
+          {
+            "disposition": "error",
+            "sampleId": "w7_e0508022b16c848572db509e"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-091-swap0",
+      "runId": "ca510fb1-1e00-4421-9bdf-0e6aaf0e5df0",
+      "nativePassed": false,
+      "status": "succeeded",
+      "falseSuccess": true,
+      "exactIndependentManifest": false,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 9,
+      "syntheticCostExpected": 36,
+      "syntheticCostObserved": 36,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 9,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-HqdAxy/.foundry/artifacts/ca510fb1-1e00-4421-9bdf-0e6aaf0e5df0/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_e0f0ac75ea14521c2ad5598e",
+            "disposition": "clear"
+          },
+          {
+            "sampleId": "w7_e9a8d8bae9973b77986a80d0",
+            "disposition": "confirmed"
+          },
+          {
+            "sampleId": "w7_5250666038711dad67997ce7",
+            "disposition": "not_reproduced"
+          },
+          {
+            "sampleId": "w7_580816399e34862b0ea4c3c3",
+            "disposition": "inconclusive"
+          },
+          {
+            "sampleId": "w7_ecee265cef0fd20b1aab9462",
+            "disposition": "inconclusive"
+          },
+          {
+            "sampleId": "w7_18c466521352303245788795",
+            "disposition": "error"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "clear",
+            "sampleId": "w7_e0f0ac75ea14521c2ad5598e"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_e9a8d8bae9973b77986a80d0"
+          },
+          {
+            "disposition": "not_reproduced",
+            "sampleId": "w7_5250666038711dad67997ce7"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_580816399e34862b0ea4c3c3"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_ecee265cef0fd20b1aab9462"
+          },
+          {
+            "disposition": "error",
+            "sampleId": "w7_18c466521352303245788795"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-092-swap1",
+      "runId": "579cc108-adf0-4ed5-abcc-157a91f67a25",
+      "nativePassed": false,
+      "status": "succeeded",
+      "falseSuccess": true,
+      "exactIndependentManifest": false,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 9,
+      "syntheticCostExpected": 36,
+      "syntheticCostObserved": 36,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 9,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-wtCeA3/.foundry/artifacts/579cc108-adf0-4ed5-abcc-157a91f67a25/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_e0f0ac75ea14521c2ad5598e",
+            "disposition": "confirmed"
+          },
+          {
+            "sampleId": "w7_e9a8d8bae9973b77986a80d0",
+            "disposition": "not_reproduced"
+          },
+          {
+            "sampleId": "w7_5250666038711dad67997ce7",
+            "disposition": "inconclusive"
+          },
+          {
+            "sampleId": "w7_580816399e34862b0ea4c3c3",
+            "disposition": "inconclusive"
+          },
+          {
+            "sampleId": "w7_ecee265cef0fd20b1aab9462",
+            "disposition": "error"
+          },
+          {
+            "sampleId": "w7_18c466521352303245788795",
+            "disposition": "clear"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_e0f0ac75ea14521c2ad5598e"
+          },
+          {
+            "disposition": "not_reproduced",
+            "sampleId": "w7_e9a8d8bae9973b77986a80d0"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_5250666038711dad67997ce7"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_580816399e34862b0ea4c3c3"
+          },
+          {
+            "disposition": "error",
+            "sampleId": "w7_ecee265cef0fd20b1aab9462"
+          },
+          {
+            "disposition": "clear",
+            "sampleId": "w7_18c466521352303245788795"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-093-swap2",
+      "runId": "ccdce03f-63c4-45f4-a4b1-48fc47fa247e",
+      "nativePassed": false,
+      "status": "succeeded",
+      "falseSuccess": true,
+      "exactIndependentManifest": false,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 9,
+      "syntheticCostExpected": 36,
+      "syntheticCostObserved": 36,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 9,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-iRY1qX/.foundry/artifacts/ccdce03f-63c4-45f4-a4b1-48fc47fa247e/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_e0f0ac75ea14521c2ad5598e",
+            "disposition": "not_reproduced"
+          },
+          {
+            "sampleId": "w7_e9a8d8bae9973b77986a80d0",
+            "disposition": "inconclusive"
+          },
+          {
+            "sampleId": "w7_5250666038711dad67997ce7",
+            "disposition": "inconclusive"
+          },
+          {
+            "sampleId": "w7_580816399e34862b0ea4c3c3",
+            "disposition": "error"
+          },
+          {
+            "sampleId": "w7_ecee265cef0fd20b1aab9462",
+            "disposition": "clear"
+          },
+          {
+            "sampleId": "w7_18c466521352303245788795",
+            "disposition": "confirmed"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "not_reproduced",
+            "sampleId": "w7_e0f0ac75ea14521c2ad5598e"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_e9a8d8bae9973b77986a80d0"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_5250666038711dad67997ce7"
+          },
+          {
+            "disposition": "error",
+            "sampleId": "w7_580816399e34862b0ea4c3c3"
+          },
+          {
+            "disposition": "clear",
+            "sampleId": "w7_ecee265cef0fd20b1aab9462"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_18c466521352303245788795"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-094-swap3",
+      "runId": "10be8040-1d4e-46d3-a7dc-2d3dd1354cd1",
+      "nativePassed": false,
+      "status": "succeeded",
+      "falseSuccess": true,
+      "exactIndependentManifest": false,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 9,
+      "syntheticCostExpected": 36,
+      "syntheticCostObserved": 36,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 9,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-Jzzg51/.foundry/artifacts/10be8040-1d4e-46d3-a7dc-2d3dd1354cd1/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_e0f0ac75ea14521c2ad5598e",
+            "disposition": "inconclusive"
+          },
+          {
+            "sampleId": "w7_e9a8d8bae9973b77986a80d0",
+            "disposition": "inconclusive"
+          },
+          {
+            "sampleId": "w7_5250666038711dad67997ce7",
+            "disposition": "error"
+          },
+          {
+            "sampleId": "w7_580816399e34862b0ea4c3c3",
+            "disposition": "clear"
+          },
+          {
+            "sampleId": "w7_ecee265cef0fd20b1aab9462",
+            "disposition": "confirmed"
+          },
+          {
+            "sampleId": "w7_18c466521352303245788795",
+            "disposition": "not_reproduced"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_e0f0ac75ea14521c2ad5598e"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_e9a8d8bae9973b77986a80d0"
+          },
+          {
+            "disposition": "error",
+            "sampleId": "w7_5250666038711dad67997ce7"
+          },
+          {
+            "disposition": "clear",
+            "sampleId": "w7_580816399e34862b0ea4c3c3"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_ecee265cef0fd20b1aab9462"
+          },
+          {
+            "disposition": "not_reproduced",
+            "sampleId": "w7_18c466521352303245788795"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-095-swap4",
+      "runId": "fbc53258-fecc-4d0d-a2f4-737817cef937",
+      "nativePassed": false,
+      "status": "succeeded",
+      "falseSuccess": true,
+      "exactIndependentManifest": false,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 9,
+      "syntheticCostExpected": 36,
+      "syntheticCostObserved": 36,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 9,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-Vnf62y/.foundry/artifacts/fbc53258-fecc-4d0d-a2f4-737817cef937/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_e0f0ac75ea14521c2ad5598e",
+            "disposition": "inconclusive"
+          },
+          {
+            "sampleId": "w7_e9a8d8bae9973b77986a80d0",
+            "disposition": "error"
+          },
+          {
+            "sampleId": "w7_5250666038711dad67997ce7",
+            "disposition": "clear"
+          },
+          {
+            "sampleId": "w7_580816399e34862b0ea4c3c3",
+            "disposition": "confirmed"
+          },
+          {
+            "sampleId": "w7_ecee265cef0fd20b1aab9462",
+            "disposition": "not_reproduced"
+          },
+          {
+            "sampleId": "w7_18c466521352303245788795",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_e0f0ac75ea14521c2ad5598e"
+          },
+          {
+            "disposition": "error",
+            "sampleId": "w7_e9a8d8bae9973b77986a80d0"
+          },
+          {
+            "disposition": "clear",
+            "sampleId": "w7_5250666038711dad67997ce7"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_580816399e34862b0ea4c3c3"
+          },
+          {
+            "disposition": "not_reproduced",
+            "sampleId": "w7_ecee265cef0fd20b1aab9462"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_18c466521352303245788795"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-096-swap5",
+      "runId": "89b93508-968e-4978-b3c6-4ab8b64ebbb3",
+      "nativePassed": false,
+      "status": "succeeded",
+      "falseSuccess": true,
+      "exactIndependentManifest": false,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 9,
+      "syntheticCostExpected": 36,
+      "syntheticCostObserved": 36,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 9,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-ixY4OI/.foundry/artifacts/89b93508-968e-4978-b3c6-4ab8b64ebbb3/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_e0f0ac75ea14521c2ad5598e",
+            "disposition": "error"
+          },
+          {
+            "sampleId": "w7_e9a8d8bae9973b77986a80d0",
+            "disposition": "clear"
+          },
+          {
+            "sampleId": "w7_5250666038711dad67997ce7",
+            "disposition": "confirmed"
+          },
+          {
+            "sampleId": "w7_580816399e34862b0ea4c3c3",
+            "disposition": "not_reproduced"
+          },
+          {
+            "sampleId": "w7_ecee265cef0fd20b1aab9462",
+            "disposition": "inconclusive"
+          },
+          {
+            "sampleId": "w7_18c466521352303245788795",
+            "disposition": "inconclusive"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "error",
+            "sampleId": "w7_e0f0ac75ea14521c2ad5598e"
+          },
+          {
+            "disposition": "clear",
+            "sampleId": "w7_e9a8d8bae9973b77986a80d0"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_5250666038711dad67997ce7"
+          },
+          {
+            "disposition": "not_reproduced",
+            "sampleId": "w7_580816399e34862b0ea4c3c3"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_ecee265cef0fd20b1aab9462"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_18c466521352303245788795"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-097-claim-only",
+      "runId": "4b6cb592-661a-4adf-8b5a-9c7f0ba865c2",
+      "nativePassed": false,
+      "status": "succeeded",
+      "falseSuccess": true,
+      "exactIndependentManifest": false,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 9,
+      "syntheticCostExpected": 36,
+      "syntheticCostObserved": 36,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 9,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-71c0P9/.foundry/artifacts/4b6cb592-661a-4adf-8b5a-9c7f0ba865c2/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_e0f0ac75ea14521c2ad5598e",
+            "disposition": "clear"
+          },
+          {
+            "sampleId": "w7_e9a8d8bae9973b77986a80d0",
+            "disposition": "confirmed"
+          },
+          {
+            "sampleId": "w7_5250666038711dad67997ce7",
+            "disposition": "not_reproduced"
+          },
+          {
+            "sampleId": "w7_580816399e34862b0ea4c3c3",
+            "disposition": "inconclusive"
+          },
+          {
+            "sampleId": "w7_ecee265cef0fd20b1aab9462",
+            "disposition": "inconclusive"
+          },
+          {
+            "sampleId": "w7_18c466521352303245788795",
+            "disposition": "error"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "clear",
+            "sampleId": "w7_e0f0ac75ea14521c2ad5598e"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_e9a8d8bae9973b77986a80d0"
+          },
+          {
+            "disposition": "not_reproduced",
+            "sampleId": "w7_5250666038711dad67997ce7"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_580816399e34862b0ea4c3c3"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_ecee265cef0fd20b1aab9462"
+          },
+          {
+            "disposition": "error",
+            "sampleId": "w7_18c466521352303245788795"
+          }
+        ]
+      }
+    },
+    {
+      "id": "p7-098-swap-all-positive",
+      "runId": "a45f6b88-4d9e-4af4-927a-723116ff9d03",
+      "nativePassed": false,
+      "status": "succeeded",
+      "falseSuccess": true,
+      "exactIndependentManifest": false,
+      "permittedAttemptMultiset": true,
+      "requiredAttempts": 12,
+      "syntheticCostExpected": 66,
+      "syntheticCostObserved": 66,
+      "allProcessingBeforePublication": {
+        "passed": true,
+        "enforced": false,
+        "requiredAttempts": 12,
+        "incompleteAtPublication": 0,
+        "agreesWithNativeDiagnostic": true
+      },
+      "nativeProblems": [],
+      "artifactFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/counterpart/evaluation/v1/case-GL6Sn2/.foundry/artifacts/a45f6b88-4d9e-4af4-927a-723116ff9d03/manifest.json",
+      "artifactError": null,
+      "expectedManifest": {
+        "samples": [
+          {
+            "sampleId": "w7_e0f0ac75ea14521c2ad5598e",
+            "disposition": "confirmed"
+          },
+          {
+            "sampleId": "w7_e9a8d8bae9973b77986a80d0",
+            "disposition": "confirmed"
+          },
+          {
+            "sampleId": "w7_5250666038711dad67997ce7",
+            "disposition": "confirmed"
+          },
+          {
+            "sampleId": "w7_580816399e34862b0ea4c3c3",
+            "disposition": "confirmed"
+          },
+          {
+            "sampleId": "w7_ecee265cef0fd20b1aab9462",
+            "disposition": "confirmed"
+          },
+          {
+            "sampleId": "w7_18c466521352303245788795",
+            "disposition": "confirmed"
+          }
+        ]
+      },
+      "actualManifest": {
+        "samples": [
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_e0f0ac75ea14521c2ad5598e"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_e9a8d8bae9973b77986a80d0"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_5250666038711dad67997ce7"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_580816399e34862b0ea4c3c3"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_ecee265cef0fd20b1aab9462"
+          },
+          {
+            "disposition": "inconclusive",
+            "sampleId": "w7_18c466521352303245788795"
+          }
+        ]
+      }
+    }
+  ],
+  "passed": false,
+  "qualification": "Only the frozen 98 cases; all-status completion is a separately reported diagnostic. Finite swaps and temporal order do not prove general causal use or universal correctness."
+}

@@ -1,0 +1,17 @@
+{
+  "at": "2026-09-17T08:44:57.255Z",
+  "round": 1,
+  "promptSha256": "5666f633cf69d4c9fc4d4ccc3748eb73f37def5dc835e2cda8144286436d761b",
+  "promptFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/outcome-model-001/packet/PROMPT_1.txt",
+  "provider": {
+    "provider": "cos-artifact-relay",
+    "model": "6",
+    "reasoningEffort": "pro",
+    "authorAgent": "worker-5",
+    "modelIdentityBasis": "Observed COS agents spawn receipt",
+    "usage": null,
+    "billedCost": null,
+    "isolation": "procedural file restriction; not an OS sandbox"
+  },
+  "disclosure": "Upstream model author sees only this prompt; no hidden evaluator files are relayed."
+}

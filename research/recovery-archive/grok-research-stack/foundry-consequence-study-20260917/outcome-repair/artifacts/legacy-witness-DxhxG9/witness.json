@@ -1,0 +1,28 @@
+{
+  "qualification": "Supplied deterministic development witness; no model calls.",
+  "workspace": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/outcome-repair/artifacts/legacy-witness-DxhxG9",
+  "requestId": "cfd07e71-474d-4fcb-bd9a-2f792a77a657",
+  "proposalId": "ed2038e7-d4d0-4592-af91-f07cfb96042f",
+  "runId": "2859bfd5-6a55-4154-9ecd-0edf1311b8ce",
+  "workflowHash": "f99bea48d7493ead3f9f343c20cba294eca413ccfeac3d2871763cc0991b55d6",
+  "runStatus": "succeeded",
+  "eventHead": {
+    "seq": 7,
+    "hash": "674e3dceeab6e0d3b09684e305c1147803f360d331d609b9545995762d624323"
+  },
+  "expected": {
+    "label": "requested",
+    "active": true
+  },
+  "actual": {
+    "active": false,
+    "label": "wrong"
+  },
+  "independentlySatisfied": false,
+  "artifactPath": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/outcome-repair/artifacts/legacy-witness-DxhxG9/.foundry/artifacts/2859bfd5-6a55-4154-9ecd-0edf1311b8ce/record.json",
+  "artifactSha256": "8be864159d11b26915e3a0064632e51945f4e89670118553a528eb1caf682f37",
+  "legacyError": {
+    "code": "REPAIR_RUN_STATE",
+    "message": "Only a terminal failed run can open an automatic diagnostic repair; paused, cancelled or uncertain effects need explicit reconciliation"
+  }
+}

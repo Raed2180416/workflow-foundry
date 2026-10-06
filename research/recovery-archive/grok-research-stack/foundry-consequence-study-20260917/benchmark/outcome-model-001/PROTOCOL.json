@@ -1,0 +1,57 @@
+{
+  "frozenAt": "2026-09-17T08:40:29.081Z",
+  "configuration": {
+    "schemaVersion": "outcome-model-repair-control/1",
+    "author": "worker-5",
+    "model": "6",
+    "reasoningEffort": "pro",
+    "maxRounds": 2,
+    "maxDurationMs": 900000,
+    "runtimePolicy": {
+      "maxSteps": 160,
+      "maxConcurrency": 2,
+      "maxDurationMs": 30000,
+      "maxCost": 0
+    },
+    "artifactName": "manifest.json",
+    "developmentObservation": "dev-basic",
+    "candidateOrigin": "Exact actual COS-authored candidate from campaign-cos-001; original bytes retained.",
+    "fault": {
+      "path": "/nodes/0/body/nodes/6/args/disposition",
+      "before": "confirmed",
+      "after": "inconclusive",
+      "origin": "Researcher-injected single-leaf defect. No claim of a natural model error."
+    },
+    "feedback": "Host-registered development expected JSON, preserved observed bytes, bounded differences and current faulty workflow. No sealed scenarios.",
+    "modelContinuity": "Same original builder retains its prior construction context. Restoration may use that memory; this is not evidence-only novel diagnosis.",
+    "authority": "Explicit host execution of local synthetic instruments and isolated artifact writes. No external effects or deployment.",
+    "qualification": "One actual model repair plus fixed development and provider-withheld regression scenarios, not population generalization, learning, or cheap-model performance.",
+    "sourceHashes": [
+      {
+        "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/outcome-campaign.mjs",
+        "sha256": "f8511ee1b4b763c6b7c45fa2016bfbc1d3dd0118adc7791595ab1a09bcaad0e6"
+      },
+      {
+        "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/relay-provider.mjs",
+        "sha256": "73c148299c37cfbe2c8e5fdef60bb264e8c3968555df3c5e55c9842e96410db7"
+      },
+      {
+        "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/campaign-cos-001/CANDIDATE.json",
+        "sha256": "7b51b07412abd66ea0af9fb10d129beb64ba4c31c52f126820151ebf85746c55"
+      },
+      {
+        "path": "/home/raed/Projects/workflow-foundry/src/outcome-repair.mjs",
+        "sha256": "8de15af4b6ce842c3e54039531c651472a9079a231bf31390f4a8f95b924f1fd"
+      },
+      {
+        "path": "/home/raed/Projects/workflow-foundry/skills/human-steering/SKILL.md",
+        "sha256": "d11e1053b8a7bb3de227aa59f664655c3265452e5c0d7ad4eda4a36918110b02"
+      },
+      {
+        "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/FREEZE_V2.json",
+        "sha256": "5e4af4f2d1b3e90e65373cc40b4e8857d9248e769ee47b8dd79fa9d72e4595d2"
+      }
+    ]
+  },
+  "configurationSha256": "2ff139b58bc279fa82cbf1ba4066b5f3a164a121d889c362264a894852964e6c"
+}

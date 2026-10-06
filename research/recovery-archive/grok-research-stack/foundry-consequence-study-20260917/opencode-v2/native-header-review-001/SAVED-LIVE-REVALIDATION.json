@@ -1,0 +1,43 @@
+{
+  "status": "PASS_SAVED_LIVE_COMPLETION",
+  "receipt": "native-header-recheck-001/opencode-v2-4f4c8d87-5755-426b-91db-c6d78cb166d1",
+  "verified": {
+    "text": "{\"ok\":true}",
+    "sessionID": "ses_f5298768fffedEVWokZ0ySzIu7",
+    "reportedCost": 0,
+    "tokens": {
+      "input": 235,
+      "output": 33,
+      "reasoning": 0,
+      "cache": {
+        "read": 0,
+        "write": 0
+      }
+    }
+  },
+  "originalInvocationStatus": "Preserved HOLD/PROCESS_FAILED: old adapter required a finish event missing from the native event projection.",
+  "sourceSHA256": "5772e2d2d7ae60de702cce310af5124f8331e4c3f0c4a2ccc44d5762bafcb9c6",
+  "streamedEvents": [
+    "step_start",
+    "text"
+  ],
+  "completionWitness": "Actual native session export: exact prompt/model/text/tokens, finish stop, zero cost and terminal succeeded.",
+  "nativeSource": {
+    "file": "upstream/packages/cli/src/run/noninteractive.ts",
+    "lines": [
+      [
+        224,
+        247
+      ],
+      [
+        526,
+        552
+      ],
+      [
+        719,
+        743
+      ]
+    ]
+  },
+  "newModelCalls": 0
+}

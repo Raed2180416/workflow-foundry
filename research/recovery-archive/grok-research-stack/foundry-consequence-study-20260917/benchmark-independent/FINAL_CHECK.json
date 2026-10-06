@@ -1,0 +1,30 @@
+{
+  "checkedAt": "2026-09-17T03:15:49.030Z",
+  "passed": true,
+  "probes": 26,
+  "runtimeCases": 25,
+  "eventCount": 219,
+  "accepted": 8,
+  "rejected": 18,
+  "sourceFilesUnchanged": 25,
+  "sourceMismatches": [],
+  "artifacts": {
+    "check.mjs": {
+      "sha256": "8cd369c3bb3b914ef9954268f5bbc1c776d833ad5f974bf95e0593a78d271f5e",
+      "bytes": 18686
+    },
+    "NOTE.md": {
+      "sha256": "23ae4819819121c526694e130fe8c8e83f53f2b4b562025d6c09500a5c1d6639",
+      "bytes": 13595
+    },
+    "AUDIT.json": {
+      "sha256": "820e8667a838ed04948a60fdecc0883ccdf28ffa2eeea3b5e137cc10f9a25350",
+      "bytes": 35198
+    },
+    "PRE_REVIEW.json": {
+      "sha256": "2b9018fec98e34d18d35013630dfeff68e8aa6fd5a5625934dd744891092f4e0",
+      "bytes": 8266
+    }
+  },
+  "conclusion": "Evidence integrity verified. Accepted causal and out-of-contract witnesses are preserved; evaluator is not declared fully validated."
+}

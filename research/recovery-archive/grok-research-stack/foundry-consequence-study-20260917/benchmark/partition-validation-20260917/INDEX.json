@@ -1,0 +1,966 @@
+[
+  {
+    "id": "p7-001-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": "absent",
+      "evidence": "absent",
+      "reproduced": "absent",
+      "identity": "matched"
+    }
+  },
+  {
+    "id": "p7-002-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": "absent",
+      "evidence": "absent",
+      "reproduced": "absent",
+      "identity": "wrong"
+    }
+  },
+  {
+    "id": "p7-003-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": "absent",
+      "evidence": "absent",
+      "reproduced": false,
+      "identity": "matched"
+    }
+  },
+  {
+    "id": "p7-004-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": "absent",
+      "evidence": "absent",
+      "reproduced": false,
+      "identity": "wrong"
+    }
+  },
+  {
+    "id": "p7-005-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": "absent",
+      "evidence": "absent",
+      "reproduced": true,
+      "identity": "matched"
+    }
+  },
+  {
+    "id": "p7-006-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": "absent",
+      "evidence": "absent",
+      "reproduced": true,
+      "identity": "wrong"
+    }
+  },
+  {
+    "id": "p7-007-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": "absent",
+      "evidence": "empty",
+      "reproduced": "absent",
+      "identity": "matched"
+    }
+  },
+  {
+    "id": "p7-008-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": "absent",
+      "evidence": "empty",
+      "reproduced": "absent",
+      "identity": "wrong"
+    }
+  },
+  {
+    "id": "p7-009-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": "absent",
+      "evidence": "empty",
+      "reproduced": false,
+      "identity": "matched"
+    }
+  },
+  {
+    "id": "p7-010-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": "absent",
+      "evidence": "empty",
+      "reproduced": false,
+      "identity": "wrong"
+    }
+  },
+  {
+    "id": "p7-011-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": "absent",
+      "evidence": "empty",
+      "reproduced": true,
+      "identity": "matched"
+    }
+  },
+  {
+    "id": "p7-012-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": "absent",
+      "evidence": "empty",
+      "reproduced": true,
+      "identity": "wrong"
+    }
+  },
+  {
+    "id": "p7-013-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": "absent",
+      "evidence": "nonempty",
+      "reproduced": "absent",
+      "identity": "matched"
+    }
+  },
+  {
+    "id": "p7-014-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": "absent",
+      "evidence": "nonempty",
+      "reproduced": "absent",
+      "identity": "wrong"
+    }
+  },
+  {
+    "id": "p7-015-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": "absent",
+      "evidence": "nonempty",
+      "reproduced": false,
+      "identity": "matched"
+    }
+  },
+  {
+    "id": "p7-016-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": "absent",
+      "evidence": "nonempty",
+      "reproduced": false,
+      "identity": "wrong"
+    }
+  },
+  {
+    "id": "p7-017-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": "absent",
+      "evidence": "nonempty",
+      "reproduced": true,
+      "identity": "matched"
+    }
+  },
+  {
+    "id": "p7-018-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": "absent",
+      "evidence": "nonempty",
+      "reproduced": true,
+      "identity": "wrong"
+    }
+  },
+  {
+    "id": "p7-019-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": false,
+      "evidence": "absent",
+      "reproduced": "absent",
+      "identity": "matched"
+    }
+  },
+  {
+    "id": "p7-020-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": false,
+      "evidence": "absent",
+      "reproduced": "absent",
+      "identity": "wrong"
+    }
+  },
+  {
+    "id": "p7-021-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": false,
+      "evidence": "absent",
+      "reproduced": false,
+      "identity": "matched"
+    }
+  },
+  {
+    "id": "p7-022-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": false,
+      "evidence": "absent",
+      "reproduced": false,
+      "identity": "wrong"
+    }
+  },
+  {
+    "id": "p7-023-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": false,
+      "evidence": "absent",
+      "reproduced": true,
+      "identity": "matched"
+    }
+  },
+  {
+    "id": "p7-024-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": false,
+      "evidence": "absent",
+      "reproduced": true,
+      "identity": "wrong"
+    }
+  },
+  {
+    "id": "p7-025-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": false,
+      "evidence": "empty",
+      "reproduced": "absent",
+      "identity": "matched"
+    }
+  },
+  {
+    "id": "p7-026-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": false,
+      "evidence": "empty",
+      "reproduced": "absent",
+      "identity": "wrong"
+    }
+  },
+  {
+    "id": "p7-027-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": false,
+      "evidence": "empty",
+      "reproduced": false,
+      "identity": "matched"
+    }
+  },
+  {
+    "id": "p7-028-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": false,
+      "evidence": "empty",
+      "reproduced": false,
+      "identity": "wrong"
+    }
+  },
+  {
+    "id": "p7-029-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": false,
+      "evidence": "empty",
+      "reproduced": true,
+      "identity": "matched"
+    }
+  },
+  {
+    "id": "p7-030-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": false,
+      "evidence": "empty",
+      "reproduced": true,
+      "identity": "wrong"
+    }
+  },
+  {
+    "id": "p7-031-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": false,
+      "evidence": "nonempty",
+      "reproduced": "absent",
+      "identity": "matched"
+    }
+  },
+  {
+    "id": "p7-032-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": false,
+      "evidence": "nonempty",
+      "reproduced": "absent",
+      "identity": "wrong"
+    }
+  },
+  {
+    "id": "p7-033-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": false,
+      "evidence": "nonempty",
+      "reproduced": false,
+      "identity": "matched"
+    }
+  },
+  {
+    "id": "p7-034-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": false,
+      "evidence": "nonempty",
+      "reproduced": false,
+      "identity": "wrong"
+    }
+  },
+  {
+    "id": "p7-035-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": false,
+      "evidence": "nonempty",
+      "reproduced": true,
+      "identity": "matched"
+    }
+  },
+  {
+    "id": "p7-036-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": false,
+      "evidence": "nonempty",
+      "reproduced": true,
+      "identity": "wrong"
+    }
+  },
+  {
+    "id": "p7-037-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": true,
+      "evidence": "absent",
+      "reproduced": "absent",
+      "identity": "matched"
+    }
+  },
+  {
+    "id": "p7-038-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": true,
+      "evidence": "absent",
+      "reproduced": "absent",
+      "identity": "wrong"
+    }
+  },
+  {
+    "id": "p7-039-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": true,
+      "evidence": "absent",
+      "reproduced": false,
+      "identity": "matched"
+    }
+  },
+  {
+    "id": "p7-040-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": true,
+      "evidence": "absent",
+      "reproduced": false,
+      "identity": "wrong"
+    }
+  },
+  {
+    "id": "p7-041-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": true,
+      "evidence": "absent",
+      "reproduced": true,
+      "identity": "matched"
+    }
+  },
+  {
+    "id": "p7-042-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": true,
+      "evidence": "absent",
+      "reproduced": true,
+      "identity": "wrong"
+    }
+  },
+  {
+    "id": "p7-043-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": true,
+      "evidence": "empty",
+      "reproduced": "absent",
+      "identity": "matched"
+    }
+  },
+  {
+    "id": "p7-044-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": true,
+      "evidence": "empty",
+      "reproduced": "absent",
+      "identity": "wrong"
+    }
+  },
+  {
+    "id": "p7-045-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": true,
+      "evidence": "empty",
+      "reproduced": false,
+      "identity": "matched"
+    }
+  },
+  {
+    "id": "p7-046-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": true,
+      "evidence": "empty",
+      "reproduced": false,
+      "identity": "wrong"
+    }
+  },
+  {
+    "id": "p7-047-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": true,
+      "evidence": "empty",
+      "reproduced": true,
+      "identity": "matched"
+    }
+  },
+  {
+    "id": "p7-048-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": true,
+      "evidence": "empty",
+      "reproduced": true,
+      "identity": "wrong"
+    }
+  },
+  {
+    "id": "p7-049-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": true,
+      "evidence": "nonempty",
+      "reproduced": "absent",
+      "identity": "matched"
+    }
+  },
+  {
+    "id": "p7-050-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": true,
+      "evidence": "nonempty",
+      "reproduced": "absent",
+      "identity": "wrong"
+    }
+  },
+  {
+    "id": "p7-051-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": true,
+      "evidence": "nonempty",
+      "reproduced": false,
+      "identity": "matched"
+    }
+  },
+  {
+    "id": "p7-052-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": true,
+      "evidence": "nonempty",
+      "reproduced": false,
+      "identity": "wrong"
+    }
+  },
+  {
+    "id": "p7-053-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": true,
+      "evidence": "nonempty",
+      "reproduced": true,
+      "identity": "matched"
+    }
+  },
+  {
+    "id": "p7-054-tensor",
+    "group": "reproduction-tensor",
+    "axes": {
+      "independent": true,
+      "evidence": "nonempty",
+      "reproduced": true,
+      "identity": "wrong"
+    }
+  },
+  {
+    "id": "p7-055-screening",
+    "group": "screening-gate",
+    "screening": "absent-matched",
+    "unused": "positive"
+  },
+  {
+    "id": "p7-056-screening",
+    "group": "screening-gate",
+    "screening": "absent-matched",
+    "unused": "incomplete"
+  },
+  {
+    "id": "p7-057-screening",
+    "group": "screening-gate",
+    "screening": "absent-matched",
+    "unused": "throw"
+  },
+  {
+    "id": "p7-058-screening",
+    "group": "screening-gate",
+    "screening": "false-matched",
+    "unused": "positive"
+  },
+  {
+    "id": "p7-059-screening",
+    "group": "screening-gate",
+    "screening": "false-matched",
+    "unused": "incomplete"
+  },
+  {
+    "id": "p7-060-screening",
+    "group": "screening-gate",
+    "screening": "false-matched",
+    "unused": "throw"
+  },
+  {
+    "id": "p7-061-screening",
+    "group": "screening-gate",
+    "screening": "absent-wrong",
+    "unused": "positive"
+  },
+  {
+    "id": "p7-062-screening",
+    "group": "screening-gate",
+    "screening": "absent-wrong",
+    "unused": "incomplete"
+  },
+  {
+    "id": "p7-063-screening",
+    "group": "screening-gate",
+    "screening": "absent-wrong",
+    "unused": "throw"
+  },
+  {
+    "id": "p7-064-screening",
+    "group": "screening-gate",
+    "screening": "false-wrong",
+    "unused": "positive"
+  },
+  {
+    "id": "p7-065-screening",
+    "group": "screening-gate",
+    "screening": "false-wrong",
+    "unused": "incomplete"
+  },
+  {
+    "id": "p7-066-screening",
+    "group": "screening-gate",
+    "screening": "false-wrong",
+    "unused": "throw"
+  },
+  {
+    "id": "p7-067-screening",
+    "group": "screening-gate",
+    "screening": "true-wrong",
+    "unused": "positive"
+  },
+  {
+    "id": "p7-068-screening",
+    "group": "screening-gate",
+    "screening": "true-wrong",
+    "unused": "incomplete"
+  },
+  {
+    "id": "p7-069-screening",
+    "group": "screening-gate",
+    "screening": "true-wrong",
+    "unused": "throw"
+  },
+  {
+    "id": "p7-070-screening",
+    "group": "screening-gate",
+    "screening": "throw",
+    "unused": "positive"
+  },
+  {
+    "id": "p7-071-screening",
+    "group": "screening-gate",
+    "screening": "throw",
+    "unused": "incomplete"
+  },
+  {
+    "id": "p7-072-screening",
+    "group": "screening-gate",
+    "screening": "throw",
+    "unused": "throw"
+  },
+  {
+    "id": "p7-073-reproduction-error",
+    "group": "reproduction-error",
+    "kinds": [
+      "reproduction_error"
+    ]
+  },
+  {
+    "id": "p7-074-whitespace",
+    "group": "whitespace-evidence",
+    "reproduced": false
+  },
+  {
+    "id": "p7-075-whitespace",
+    "group": "whitespace-evidence",
+    "reproduced": true
+  },
+  {
+    "id": "p7-076-empty",
+    "group": "batch-length",
+    "kinds": []
+  },
+  {
+    "id": "p7-077-length2",
+    "group": "batch-length",
+    "kinds": [
+      "clear",
+      "confirmed"
+    ]
+  },
+  {
+    "id": "p7-078-length3",
+    "group": "batch-length",
+    "kinds": [
+      "screen_error",
+      "screen_missing",
+      "not_reproduced"
+    ]
+  },
+  {
+    "id": "p7-079-length4",
+    "group": "batch-length",
+    "kinds": [
+      "confirmed",
+      "reproduction_error",
+      "clear",
+      "wrong_reproduction_id"
+    ]
+  },
+  {
+    "id": "p7-080-length5",
+    "group": "batch-length",
+    "kinds": [
+      "screen_error",
+      "clear",
+      "confirmed",
+      "not_reproduced",
+      "reproduction_missing"
+    ]
+  },
+  {
+    "id": "p7-081-order0",
+    "group": "input-order",
+    "kinds": [
+      "clear",
+      "confirmed",
+      "not_reproduced",
+      "screen_missing",
+      "screen_error",
+      "reproduction_error"
+    ],
+    "permutation": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ]
+  },
+  {
+    "id": "p7-082-order1",
+    "group": "input-order",
+    "kinds": [
+      "reproduction_error",
+      "screen_error",
+      "screen_missing",
+      "not_reproduced",
+      "confirmed",
+      "clear"
+    ],
+    "permutation": [
+      5,
+      4,
+      3,
+      2,
+      1,
+      0
+    ]
+  },
+  {
+    "id": "p7-083-order2",
+    "group": "input-order",
+    "kinds": [
+      "not_reproduced",
+      "screen_missing",
+      "screen_error",
+      "reproduction_error",
+      "clear",
+      "confirmed"
+    ],
+    "permutation": [
+      2,
+      3,
+      4,
+      5,
+      0,
+      1
+    ]
+  },
+  {
+    "id": "p7-084-order3",
+    "group": "input-order",
+    "kinds": [
+      "confirmed",
+      "screen_missing",
+      "reproduction_error",
+      "clear",
+      "not_reproduced",
+      "screen_error"
+    ],
+    "permutation": [
+      1,
+      3,
+      5,
+      0,
+      2,
+      4
+    ]
+  },
+  {
+    "id": "p7-085-stress-confirmed",
+    "group": "length6-stress",
+    "kinds": [
+      "confirmed",
+      "confirmed",
+      "confirmed",
+      "confirmed",
+      "confirmed",
+      "confirmed"
+    ]
+  },
+  {
+    "id": "p7-086-stress-not_reproduced",
+    "group": "length6-stress",
+    "kinds": [
+      "not_reproduced",
+      "not_reproduced",
+      "not_reproduced",
+      "not_reproduced",
+      "not_reproduced",
+      "not_reproduced"
+    ]
+  },
+  {
+    "id": "p7-087-stress-reproduction_missing",
+    "group": "length6-stress",
+    "kinds": [
+      "reproduction_missing",
+      "reproduction_missing",
+      "reproduction_missing",
+      "reproduction_missing",
+      "reproduction_missing",
+      "reproduction_missing"
+    ]
+  },
+  {
+    "id": "p7-088-stress-clear",
+    "group": "length6-stress",
+    "kinds": [
+      "clear",
+      "clear",
+      "clear",
+      "clear",
+      "clear",
+      "clear"
+    ]
+  },
+  {
+    "id": "p7-089-stress-screen_error",
+    "group": "length6-stress",
+    "kinds": [
+      "screen_error",
+      "screen_error",
+      "screen_error",
+      "screen_error",
+      "screen_error",
+      "screen_error"
+    ]
+  },
+  {
+    "id": "p7-090-stress-reproduction_error",
+    "group": "length6-stress",
+    "kinds": [
+      "reproduction_error",
+      "reproduction_error",
+      "reproduction_error",
+      "reproduction_error",
+      "reproduction_error",
+      "reproduction_error"
+    ]
+  },
+  {
+    "id": "p7-091-swap0",
+    "group": "same-input-swap",
+    "kinds": [
+      "clear",
+      "confirmed",
+      "not_reproduced",
+      "screen_missing",
+      "reproduction_missing",
+      "screen_error"
+    ],
+    "variant": "rotation-0"
+  },
+  {
+    "id": "p7-092-swap1",
+    "group": "same-input-swap",
+    "kinds": [
+      "confirmed",
+      "not_reproduced",
+      "screen_missing",
+      "reproduction_missing",
+      "screen_error",
+      "clear"
+    ],
+    "variant": "rotation-1"
+  },
+  {
+    "id": "p7-093-swap2",
+    "group": "same-input-swap",
+    "kinds": [
+      "not_reproduced",
+      "screen_missing",
+      "reproduction_missing",
+      "screen_error",
+      "clear",
+      "confirmed"
+    ],
+    "variant": "rotation-2"
+  },
+  {
+    "id": "p7-094-swap3",
+    "group": "same-input-swap",
+    "kinds": [
+      "screen_missing",
+      "reproduction_missing",
+      "screen_error",
+      "clear",
+      "confirmed",
+      "not_reproduced"
+    ],
+    "variant": "rotation-3"
+  },
+  {
+    "id": "p7-095-swap4",
+    "group": "same-input-swap",
+    "kinds": [
+      "reproduction_missing",
+      "screen_error",
+      "clear",
+      "confirmed",
+      "not_reproduced",
+      "screen_missing"
+    ],
+    "variant": "rotation-4"
+  },
+  {
+    "id": "p7-096-swap5",
+    "group": "same-input-swap",
+    "kinds": [
+      "screen_error",
+      "clear",
+      "confirmed",
+      "not_reproduced",
+      "screen_missing",
+      "reproduction_missing"
+    ],
+    "variant": "rotation-5"
+  },
+  {
+    "id": "p7-097-claim-only",
+    "group": "same-input-swap",
+    "kinds": [
+      "clear",
+      "confirmed",
+      "not_reproduced",
+      "screen_missing",
+      "reproduction_missing",
+      "screen_error"
+    ],
+    "variant": "claims-only"
+  },
+  {
+    "id": "p7-098-swap-all-positive",
+    "group": "same-input-swap",
+    "kinds": [
+      "confirmed",
+      "confirmed",
+      "confirmed",
+      "confirmed",
+      "confirmed",
+      "confirmed"
+    ],
+    "variant": "all-positive"
+  }
+]

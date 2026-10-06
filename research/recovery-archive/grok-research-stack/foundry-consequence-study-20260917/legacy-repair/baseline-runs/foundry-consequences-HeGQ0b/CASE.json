@@ -1,0 +1,11 @@
+{
+  "test": "an empty map is empty and does not run a root-level fetch",
+  "input": {
+    "matches": [],
+    "claim": {
+      "grounded": true
+    }
+  },
+  "workflowHash": "a61d435ea91bbc360a476157b4415f7a0751b75cdaf80e320599786f73098444",
+  "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77"
+}

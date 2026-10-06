@@ -1,0 +1,76 @@
+{
+  "schemaVersion": "partition-validation-worker7-freeze-v1",
+  "createdAt": "2026-09-17T08:47:36.589Z",
+  "author": "worker-7",
+  "nodeVersion": "v24.21.0",
+  "caseCount": 98,
+  "nativeMaxStepsPerRun": 160,
+  "totalCandidateExecutionCap": 200,
+  "reservation": {
+    "primary": 98,
+    "counterpart": 98,
+    "sum": 196
+  },
+  "construction": "Public prose decision rules; no model candidate, builder packet, prior suite/result, or oracle.mjs implementation inspected during construction.",
+  "expectationAuthority": "expectations.mjs; existing expectedFromObservations was not imported or called for authoring or preflight.",
+  "files": [
+    {
+      "name": "expectations.mjs",
+      "sha256": "4cab460582eb188c084b8a1b056ff9d33724ff9da9259ee3b6b06514de7e004d"
+    },
+    {
+      "name": "suite.mjs",
+      "sha256": "f31b334d7fb6b085f2ae2ae42352508fb9fea9d444d5651071d7f8812df3ab22"
+    },
+    {
+      "name": "preflight.mjs",
+      "sha256": "b70e7329143e45f2f4b265bf52dbfa955b7fba03955b89706362348b42cc5574"
+    },
+    {
+      "name": "preflight.test.mjs",
+      "sha256": "4b00fbe9daae0ea040864ce7454e5956b29ed89acfd3aca552a550d01b6d26c5"
+    },
+    {
+      "name": "freeze.mjs",
+      "sha256": "1f573c4938d13be7f091ce7aca87ba0334d357aab1c5ea94f6b8b80034af576c"
+    },
+    {
+      "name": "run.mjs",
+      "sha256": "28ad5baf35081462b1f5b17e791189d74107531896165b6f75fc112e02f15eba"
+    },
+    {
+      "name": "NOTE.md",
+      "sha256": "24d19a5c7c63ef57d4ada608592ca53198f056d436a89c50be28301daf6959be"
+    },
+    {
+      "name": "SUITE.json",
+      "sha256": "70ae8b3bbeb572f14c2b14a057bb8b454dea7ff57b6a28e480ce2242f27ab44c"
+    },
+    {
+      "name": "EXPECTATIONS.json",
+      "sha256": "58cba00bc8f980c9e7bc34b6d4475b0ce69af9ef36ecb0f6f1633c51a389624b"
+    },
+    {
+      "name": "INDEX.json",
+      "sha256": "47f51841a22de84710e4ca0c98217128480d56424ad89f2d5123dae97f4acdc5"
+    },
+    {
+      "name": "PREFLIGHT.json",
+      "sha256": "b9fc10664100079ed1613d98bc06a6062fafc55389c903116dc325a9a7f4c932"
+    }
+  ],
+  "interfaces": [
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/contract.mjs",
+      "sha256": "3a5df633eb0031ac06b2dbf42cb189d12c0707ee4569589a616e1c8bf2dbd16b"
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/PUBLIC.json",
+      "sha256": "1b5d70353084eafc8e3a981729e66717e82e899d2dab8b09098c586a4b9dbcc3"
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/oracle-v2.mjs",
+      "sha256": "517b7e60d3e674f7fc1189dac8f468dd19d9f6800467a5998fde6a38fbd66e15"
+    }
+  ]
+}

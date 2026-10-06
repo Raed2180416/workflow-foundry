@@ -1,0 +1,36 @@
+{
+  "name": "failure-isolation",
+  "accepted": true,
+  "anticipatedPass": true,
+  "expectationMet": true,
+  "claim": "One failed sample does not block the other sample.",
+  "cases": [
+    {
+      "accepted": true,
+      "nativePassed": true,
+      "status": "succeeded",
+      "runId": "2e32c6bc-1f86-43f5-960e-3b9f5da9cf5f",
+      "workflowHash": "82092f90b8d5a92550a88a89cf4bd9ba29b235d66e02c0974211aecf7b173248",
+      "registryHash": "bb3f73d712e174d3084248c8d199a620b7eeb2a7b2655d64b6286ab3af536d0e",
+      "instruments": {
+        "passed": true,
+        "problems": [],
+        "missingCalls": 0,
+        "forbiddenCalls": 0,
+        "duplicateCalls": 0,
+        "wrongOrder": 0,
+        "invalidObservations": 0,
+        "screenCalls": 2,
+        "reproduceCalls": 0,
+        "syntheticCost": 2,
+        "expectedSyntheticCost": 2
+      },
+      "publicationSequence": 9,
+      "screenIntentSequence": 3,
+      "reproductionIntentSequence": null,
+      "rejectedOutputs": [],
+      "eventCount": 10,
+      "runError": null
+    }
+  ]
+}

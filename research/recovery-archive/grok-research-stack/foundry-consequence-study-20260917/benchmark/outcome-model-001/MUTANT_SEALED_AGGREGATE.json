@@ -1,0 +1,44 @@
+{
+  "evaluatorId": "sample-consequences-v2:7327fd9175b4609f7a0e0cd6cb798dcbb0212b923826ecbbb916df7f19ceb01e:517b7e60d3e674f7fc1189dac8f468dd19d9f6800467a5998fde6a38fbd66e15",
+  "v1EvaluatorId": "sample-consequences-v1:7327fd9175b4609f7a0e0cd6cb798dcbb0212b923826ecbbb916df7f19ceb01e:ebbdf190674414c29ec2fc7632e8f72b6e3c305c5abd20b322cc8a077304f732",
+  "workflowHash": "ace61076c1694141ff04e4ab29e7cf8713af7087755e646e4476fb559a21ccd8",
+  "registryHash": "bb3f73d712e174d3084248c8d199a620b7eeb2a7b2655d64b6286ab3af536d0e",
+  "suiteHash": "7327fd9175b4609f7a0e0cd6cb798dcbb0212b923826ecbbb916df7f19ceb01e",
+  "split": "heldout",
+  "passed": false,
+  "v1Passed": false,
+  "metrics": {
+    "passedCount": 4,
+    "caseCount": 8,
+    "successFraction": 0.5,
+    "falseSuccessCount": 4,
+    "totalSteps": 181,
+    "totalCost": 0,
+    "elapsedMs": 983,
+    "missingCalls": 0,
+    "forbiddenCalls": 0,
+    "duplicateCalls": 0,
+    "syntheticCost": 172,
+    "v1PassedCount": 4,
+    "logBindingErrors": 0,
+    "completionErrors": 0,
+    "evidenceOrderErrors": 0,
+    "prematureConfirmations": 0,
+    "allProcessingDiagnosticFailures": 0
+  },
+  "fixtureValidation": {
+    "passed": true,
+    "caseCount": 8,
+    "instrumentFixtures": 44,
+    "returnedFixtures": 40,
+    "errorFixtures": 4
+  },
+  "publicationPolicy": {
+    "id": "confirmed-evidence-before-publication-v2",
+    "enforced": "Completed, validated positive reproduction precedes each successful publication attempt containing a confirmed row.",
+    "timing": "Native tool.intent is the conservative start fence; node.completed proves publication succeeded. An overlapping reproduction/publication interval is not certified.",
+    "allProcessing": "Requiring every permitted instrument attempt to settle before any manifest, for every disposition, is a prospective strengthening. V2 measures it as a non-gating diagnostic; v1 PUBLIC.json is unchanged.",
+    "causalLimit": "Order, binding and content are checked. A constant written after matching evidence can still pass a finite case; causal use, arbitrary asynchronous instruments and population generalization are not proven."
+  },
+  "qualification": "Fixed source-informed synthetic scenarios. Provider-hidden split only when withheld from synthesis; no population, autonomous discovery, production, or independent instrument calibration claim. V2 adds validated completion/event binding and confirmation-before-publication checks. All-item completion before publication is a non-gating diagnostic; temporal order alone does not prove causal use."
+}

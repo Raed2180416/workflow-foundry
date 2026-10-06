@@ -1,0 +1,203 @@
+{
+  "acceptance": [
+    {
+      "left": {
+        "$ref": "nodes.write_artifact.name"
+      },
+      "op": "eq",
+      "right": "totals.json"
+    },
+    {
+      "op": "exists",
+      "value": {
+        "$ref": "nodes.write_artifact.sha256"
+      }
+    }
+  ],
+  "budget": {
+    "maxConcurrency": 3,
+    "maxCost": 0,
+    "maxDurationMs": 5000,
+    "maxSteps": 12
+  },
+  "domain": "software",
+  "envelope": {
+    "assumptions": [
+      "Input is a JSON object with a values array of at most 100 numbers",
+      "Values are actual numeric types"
+    ],
+    "risks": [
+      "Non-numeric values in array",
+      "Array exceeds 100 items",
+      "Missing input.values"
+    ],
+    "successCriteria": [
+      "totals.json artifact exists with total and count",
+      "Empty input produces total 0 and count 0",
+      "Invalid input fails without writing artifact"
+    ],
+    "unsupported": [
+      "Non-array input"
+    ]
+  },
+  "goal": "Compute total and count from an array of numbers and write totals.json artifact",
+  "id": "NumericRollup",
+  "inputSchema": {
+    "properties": {
+      "values": {
+        "items": {
+          "type": "number"
+        },
+        "maxItems": 100,
+        "type": "array"
+      }
+    },
+    "required": [
+      "values"
+    ],
+    "type": "object"
+  },
+  "nodes": [
+    {
+      "args": {
+        "schema": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 100,
+          "type": "array"
+        },
+        "value": {
+          "$ref": "input.values"
+        }
+      },
+      "description": "Validate input.values is an array of at most 100 numbers using core.validate",
+      "id": "validate_input",
+      "kind": "task",
+      "needs": [],
+      "retry": {
+        "maxAttempts": 1
+      },
+      "timeoutMs": 1000,
+      "tool": "core.validate"
+    },
+    {
+      "checks": [
+        {
+          "left": {
+            "$ref": "nodes.validate_input.valid"
+          },
+          "op": "eq",
+          "right": true
+        }
+      ],
+      "description": "Assert that input validation passed before computing",
+      "id": "assert_valid",
+      "kind": "assert",
+      "needs": [
+        "validate_input"
+      ]
+    },
+    {
+      "args": {
+        "operation": "sum",
+        "values": {
+          "$ref": "input.values"
+        }
+      },
+      "description": "Compute the sum of all values using core.aggregate",
+      "id": "compute_sum",
+      "kind": "task",
+      "needs": [
+        "assert_valid"
+      ],
+      "retry": {
+        "maxAttempts": 1
+      },
+      "timeoutMs": 1000,
+      "tool": "core.aggregate"
+    },
+    {
+      "args": {
+        "operation": "count",
+        "values": {
+          "$ref": "input.values"
+        }
+      },
+      "description": "Count the number of values using core.aggregate",
+      "id": "compute_count",
+      "kind": "task",
+      "needs": [
+        "assert_valid"
+      ],
+      "retry": {
+        "maxAttempts": 1
+      },
+      "timeoutMs": 1000,
+      "tool": "core.aggregate"
+    },
+    {
+      "args": {
+        "pretty": true,
+        "value": {
+          "count": {
+            "$ref": "nodes.compute_count.value"
+          },
+          "total": {
+            "$ref": "nodes.compute_sum.value"
+          }
+        }
+      },
+      "description": "Serialize the result object as JSON using core.json",
+      "id": "serialize",
+      "kind": "task",
+      "needs": [
+        "compute_sum",
+        "compute_count"
+      ],
+      "retry": {
+        "maxAttempts": 1
+      },
+      "timeoutMs": 1000,
+      "tool": "core.json"
+    },
+    {
+      "args": {
+        "content": {
+          "$ref": "nodes.serialize.text"
+        },
+        "name": "totals.json"
+      },
+      "description": "Write the totals.json artifact using core.artifact",
+      "id": "write_artifact",
+      "kind": "task",
+      "needs": [
+        "serialize"
+      ],
+      "retry": {
+        "maxAttempts": 1
+      },
+      "timeoutMs": 1000,
+      "tool": "core.artifact"
+    },
+    {
+      "checks": [
+        {
+          "op": "exists",
+          "value": {
+            "$ref": "nodes.write_artifact.name"
+          }
+        }
+      ],
+      "description": "Verify the artifact was created with correct name",
+      "id": "verify",
+      "kind": "assert",
+      "needs": [
+        "write_artifact"
+      ]
+    }
+  ],
+  "schemaVersion": "1.0",
+  "title": "NumericRollup",
+  "version": 1
+}

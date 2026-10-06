@@ -1,0 +1,9 @@
+{
+  "label": "primary",
+  "reservedAt": "2026-09-17T08:53:40.904Z",
+  "reservedCases": 98,
+  "totalReservedCases": 98,
+  "freezeSha256": "f885328ae2675d3b69fe8e5e77d618368f5ea7fb248978792eab813c76148a83",
+  "addendumSha256": "34990b01b5725d745cd5967f26abddc60dc2c29537875a66df2119e767d99a7b",
+  "suppliedPath": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/outcome-model-001/REPAIRED_CANDIDATE.json"
+}

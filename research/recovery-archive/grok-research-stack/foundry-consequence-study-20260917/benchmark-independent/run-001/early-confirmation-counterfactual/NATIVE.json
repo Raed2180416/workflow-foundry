@@ -1,0 +1,75 @@
+{
+  "evaluatorId": "suite:own-negative:9531f07ebc1be8c15c2b3f27abc693a898f6fdabfd91ca93984c0bb4ec557762",
+  "workflowHash": "3f0b1e7ff9e8073611ad87985201c7f37fc3e39b229e812c971ccce432e35195",
+  "registryHash": "bb3f73d712e174d3084248c8d199a620b7eeb2a7b2655d64b6286ab3af536d0e",
+  "suiteHash": "9531f07ebc1be8c15c2b3f27abc693a898f6fdabfd91ca93984c0bb4ec557762",
+  "split": "diagnostic",
+  "qualificationLevel": "task-outcome",
+  "passed": false,
+  "metrics": {
+    "passedCount": 0,
+    "caseCount": 1,
+    "successFraction": 0,
+    "falseSuccessCount": 1,
+    "totalSteps": 3,
+    "totalCost": 0,
+    "elapsedMs": 23
+  },
+  "envelope": [
+    "Independent finite exposed evaluator review, not frozen-suite evaluation."
+  ],
+  "cases": [
+    {
+      "id": "own-negative",
+      "passed": false,
+      "status": "succeeded",
+      "falseSuccess": true,
+      "checks": [],
+      "artifacts": [
+        {
+          "name": "manifest.json",
+          "passed": false,
+          "sha256": "12597e52f6c2f089295825d8fe5bd9451aa07017c384bf88a8e2b64025782a87"
+        }
+      ],
+      "steps": 3,
+      "cost": 0,
+      "elapsedMs": 11,
+      "runId": "d51f20ef-c95b-44be-8059-4c38e3f5ca73",
+      "workspace": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/early-confirmation-counterfactual/case-Nh1hpa",
+      "exception": null,
+      "runError": null,
+      "failedNodes": [],
+      "eventCount": 9,
+      "diagnostic": {
+        "input": {
+          "samples": [
+            {
+              "id": "independent-a"
+            }
+          ]
+        },
+        "expected": {
+          "statuses": [
+            "succeeded"
+          ],
+          "checks": [],
+          "artifacts": [
+            {
+              "name": "manifest.json",
+              "json": {
+                "samples": [
+                  {
+                    "sampleId": "independent-a",
+                    "disposition": "not_reproduced"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "qualification": "Only this explicitly enumerated suite, capability registry and budget; not arbitrary deployment or commercial parity"
+}

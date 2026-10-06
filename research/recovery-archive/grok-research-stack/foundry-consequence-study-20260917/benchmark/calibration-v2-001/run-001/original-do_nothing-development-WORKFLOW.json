@@ -1,0 +1,85 @@
+{
+  "schemaVersion": "1.0",
+  "id": "Supplied_do_nothing",
+  "version": 1,
+  "title": "Supplied do_nothing",
+  "goal": "Process the supplied batch of samples. Give every sample one cheap screening attempt. Spend one independent reproduction attempt only on each sample whose screening observation explicitly says it is suspicious. Do not retry instruments. Report every input sample exactly once, in input order, in manifest.json, including failures and inconclusive observations. Call a defect confirmed only when its own independent reproduction returned complete positive evidence. A successful call, a reassuring claim, or a suspicious screening result alone is insufficient. A failed instrument must not prevent the other samples from being reported. Use only the supplied local capabilities; there is no network, external action or human approval to request.",
+  "domain": "synthetic-sample-processing",
+  "envelope": {
+    "assumptions": [
+      "Evaluator-author supplied executable upper bound; zero learned construction claim."
+    ],
+    "risks": [
+      "Missing evidence and instrument errors require explicit dispositions."
+    ],
+    "successCriteria": [
+      "Every sample reported with the observed disposition and exact permitted instrument attempts."
+    ]
+  },
+  "inputSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "samples"
+    ],
+    "properties": {
+      "samples": {
+        "type": "array",
+        "maxItems": 6,
+        "uniqueItems": true,
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            }
+          }
+        }
+      }
+    }
+  },
+  "budget": {
+    "maxSteps": 160,
+    "maxConcurrency": 2,
+    "maxDurationMs": 30000,
+    "maxCost": 0
+  },
+  "nodes": [
+    {
+      "id": "claim",
+      "kind": "task",
+      "description": "Supplied claim operation",
+      "needs": [],
+      "tool": "core.identity",
+      "args": {
+        "successful": true
+      },
+      "timeoutMs": 3000,
+      "retry": {
+        "maxAttempts": 1
+      }
+    }
+  ],
+  "acceptance": [
+    {
+      "op": "eq",
+      "left": {
+        "$ref": "nodes.claim.successful",
+        "default": null
+      },
+      "right": true
+    }
+  ],
+  "metadata": {
+    "tags": [
+      "supplied-control"
+    ],
+    "rationale": "Authored from the public contract by the evaluator author. Not model synthesis."
+  }
+}

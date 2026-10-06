@@ -1,0 +1,10 @@
+{
+  "test": "failure in the selected error handler does not produce a success receipt",
+  "input": {
+    "claim": {
+      "grounded": true
+    }
+  },
+  "workflowHash": "cc7b8dce3ac9c0d9dc382ddbdccba0663fcd55dda573088cae1908395af6adf1",
+  "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77"
+}

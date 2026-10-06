@@ -1,0 +1,45 @@
+{
+  "name": "raw-invalid-screen",
+  "accepted": true,
+  "anticipatedPass": true,
+  "expectationMet": true,
+  "claim": "Raw oracle accepts inconclusive despite actual SCHEMA_MISMATCH; out-of-contract fixture.",
+  "cases": [
+    {
+      "accepted": true,
+      "nativePassed": true,
+      "status": "succeeded",
+      "runId": "cbfd626f-e67a-44e7-bfd9-88bcf489b7df",
+      "workflowHash": "f32a244088d1875620de7afb5e0f4d2acf465146818a1b568526f1d70dd989a1",
+      "registryHash": "bb3f73d712e174d3084248c8d199a620b7eeb2a7b2655d64b6286ab3af536d0e",
+      "instruments": {
+        "passed": true,
+        "problems": [],
+        "missingCalls": 0,
+        "forbiddenCalls": 0,
+        "duplicateCalls": 0,
+        "wrongOrder": 0,
+        "invalidObservations": 0,
+        "screenCalls": 1,
+        "reproduceCalls": 0,
+        "syntheticCost": 1,
+        "expectedSyntheticCost": 1
+      },
+      "publicationSequence": 7,
+      "screenIntentSequence": 3,
+      "reproductionIntentSequence": null,
+      "rejectedOutputs": [
+        {
+          "seq": 4,
+          "nodeKey": "root/screening",
+          "error": {
+            "code": "SCHEMA_MISMATCH",
+            "message": "lab.screen output does not satisfy its schema"
+          }
+        }
+      ],
+      "eventCount": 8,
+      "runError": null
+    }
+  ]
+}

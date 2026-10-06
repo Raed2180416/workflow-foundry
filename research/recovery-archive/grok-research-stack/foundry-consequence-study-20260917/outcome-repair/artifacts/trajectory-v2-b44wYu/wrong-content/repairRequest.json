@@ -1,0 +1,41 @@
+{
+  "id": "6bf498c2-9cc2-4ccd-91a1-fa494be08aae",
+  "workflowId": "outcome-repair-witness",
+  "baseHash": "f99bea48d7493ead3f9f343c20cba294eca413ccfeac3d2871763cc0991b55d6",
+  "text": "Write record.json containing exactly the record supplied in the input.",
+  "source": "agent-diagnostic",
+  "status": "diagnostic",
+  "createdAt": 1789615875376,
+  "parentRequestId": "45a82009-8900-4dd1-af6c-5410fa569fda",
+  "rootRequestId": "45a82009-8900-4dd1-af6c-5410fa569fda",
+  "repairDepth": 1,
+  "appliedProposalId": "d079fc04-528f-455e-ae0d-5520b8498e6e",
+  "observedRunId": "ff78cd39-c858-471f-a8ee-433f663f4ead",
+  "observedRunStatus": "succeeded",
+  "observationEventHead": {
+    "hash": "5e07ea73618223d8cdb7c92831489cd6f265d04f8aa628ed910643c93bdca8cf",
+    "seq": 7
+  },
+  "outcomeReceiptId": "f4e099a8788676bb392870ae6a09f8baef308d03c60f61021f179230023119df",
+  "outcomeContractId": "838f5c51fb9d9ed07009058c38c89fe15100ca332bd229b9086dd3f3797ede2c",
+  "repairCause": "observed-outcome",
+  "goal": "Write record.json containing exactly the record supplied in the input.",
+  "successCriteria": [
+    "Write record.json containing exactly the record supplied in the input."
+  ],
+  "localization": {
+    "artifactName": "record.json",
+    "producers": [
+      {
+        "eventHash": "e61aec778d746decbf9ba1bdb1f06e604c3a8a2adc1352d1998a1180a5884ab0",
+        "nodeKey": "root/file",
+        "sequence": 6
+      }
+    ],
+    "reason": "json-content-mismatch"
+  },
+  "diagnostic": "Repair the defect evidenced by the frozen local JSON comparison.",
+  "diagnosticAuthority": "Untrusted commentary; not a new requirement, consent, policy or success oracle",
+  "automaticGeneration": false,
+  "reused": false
+}

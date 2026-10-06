@@ -1,0 +1,238 @@
+[
+  {
+    "at": 1789614066388,
+    "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+    "inputHash": "c59d85e4bf52354cf9a49a2bf1f3342e2da9f0fc1d5cb19f69f77810f9170cd0",
+    "policyHash": "743874dc59bcbd3e3257926a739c866813d6604f924f906342983b4bb871caa7",
+    "previousHash": null,
+    "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+    "seq": 1,
+    "type": "run.created",
+    "workflowHash": "e99c570babade0da7b41dd8cd64eaf11384440478109387b26fdc9525fdae8f5",
+    "hash": "49e1dc82a46f4c82593fce196b47a48d80088f29095f4ca5a9b1b0eca830edd0"
+  },
+  {
+    "at": 1789614066397,
+    "previousHash": "49e1dc82a46f4c82593fce196b47a48d80088f29095f4ca5a9b1b0eca830edd0",
+    "seq": 2,
+    "token": "183e2fc9-b008-4860-b01c-911fcc843b75",
+    "type": "runner.acquired",
+    "hash": "d7483cf0ebfff5926401447db3fa48eb7ff66f25892e00bc488aeee0dcec5f93"
+  },
+  {
+    "argsHash": "c4ccfc1a1b3d4cc55f4327a37e05e37c8ece701bf895c90d7a8edbaec7597771",
+    "at": 1789614066413,
+    "effects": "none",
+    "idempotencyKey": "e6217042b7167f0867bcd024432a0cf50ca6e2abeffbb293b5cd05ccd7e83a37",
+    "kind": "task",
+    "nodeKey": "root/fetch",
+    "previousHash": "d7483cf0ebfff5926401447db3fa48eb7ff66f25892e00bc488aeee0dcec5f93",
+    "reservedCost": 0,
+    "seq": 3,
+    "tool": "core.fail",
+    "type": "tool.intent",
+    "hash": "4057392157e6dc1c54ed631cab0cdb2b30b45d853d9dd29319fb9c21a66045e7"
+  },
+  {
+    "at": 1789614066422,
+    "error": {
+      "code": "INJECTED_FAILURE",
+      "message": "upstream failure witness"
+    },
+    "nodeKey": "root/fetch",
+    "previousHash": "4057392157e6dc1c54ed631cab0cdb2b30b45d853d9dd29319fb9c21a66045e7",
+    "seq": 4,
+    "type": "tool.failed",
+    "hash": "744180c89c1dcea8bc12bf953fd32197192b92fcce4be96181bea9fb6cbd0525"
+  },
+  {
+    "argsHash": "c4ccfc1a1b3d4cc55f4327a37e05e37c8ece701bf895c90d7a8edbaec7597771",
+    "at": 1789614066531,
+    "effects": "none",
+    "idempotencyKey": "e6217042b7167f0867bcd024432a0cf50ca6e2abeffbb293b5cd05ccd7e83a37",
+    "kind": "task",
+    "nodeKey": "root/fetch",
+    "previousHash": "744180c89c1dcea8bc12bf953fd32197192b92fcce4be96181bea9fb6cbd0525",
+    "reservedCost": 0,
+    "seq": 5,
+    "tool": "core.fail",
+    "type": "tool.intent",
+    "hash": "53042d79796e2b99156e1428ce293958e1faae2a1780b7a1e00f85cdc2c53b5a"
+  },
+  {
+    "at": 1789614066542,
+    "error": {
+      "code": "INJECTED_FAILURE",
+      "message": "upstream failure witness"
+    },
+    "nodeKey": "root/fetch",
+    "previousHash": "53042d79796e2b99156e1428ce293958e1faae2a1780b7a1e00f85cdc2c53b5a",
+    "seq": 6,
+    "type": "tool.failed",
+    "hash": "3ecf5ee0041768ef111928cc0cff86d3f275d6c8a95417b9744a574d9007d81b"
+  },
+  {
+    "at": 1789614066549,
+    "nodeKey": "root/fetch",
+    "output": {
+      "error": {
+        "code": "INJECTED_FAILURE",
+        "message": "upstream failure witness"
+      },
+      "ok": false
+    },
+    "outputHash": "18339ecaff0386a79bf0ea89b5a1b4b25e49f621efa7a04de01bd5b94d65d79e",
+    "previousHash": "3ecf5ee0041768ef111928cc0cff86d3f275d6c8a95417b9744a574d9007d81b",
+    "seq": 7,
+    "type": "node.handled_error",
+    "hash": "9ac486d8bb9e4c40c89febd39bc4709e08a380ebbca2556c924157763bef79f1"
+  },
+  {
+    "at": 1789614066557,
+    "nodeKey": "root/okPath",
+    "previousHash": "9ac486d8bb9e4c40c89febd39bc4709e08a380ebbca2556c924157763bef79f1",
+    "seq": 8,
+    "type": "node.skipped",
+    "hash": "e1b2036d44623ceea86d592dd9a2f8f9ff54903fe7aebb84b97825948a4f3c38"
+  },
+  {
+    "argsHash": "99279d29d1b497eeb18ae64ecf458c4f2ad2418328803a5e17f3f3c5e577e044",
+    "at": 1789614066569,
+    "effects": "none",
+    "idempotencyKey": "6690aeed5b3f6695e2a9fd3cba58261fb6909c1cba10e7b724d083cb76b692b3",
+    "kind": "task",
+    "nodeKey": "root/errPath",
+    "previousHash": "e1b2036d44623ceea86d592dd9a2f8f9ff54903fe7aebb84b97825948a4f3c38",
+    "reservedCost": 0,
+    "seq": 9,
+    "tool": "core.identity",
+    "type": "tool.intent",
+    "hash": "6ef214d72973f350dc1b7148984c0577d73871c49ba7016acd7b553bddef182e"
+  },
+  {
+    "at": 1789614066583,
+    "nodeKey": "root/errPath",
+    "output": {
+      "branch": "error"
+    },
+    "outputHash": "99279d29d1b497eeb18ae64ecf458c4f2ad2418328803a5e17f3f3c5e577e044",
+    "previousHash": "6ef214d72973f350dc1b7148984c0577d73871c49ba7016acd7b553bddef182e",
+    "seq": 10,
+    "type": "node.completed",
+    "hash": "4f4e9a83ea4e734fc78d2383cae0ef13be6dccd97a1ed7313f0ed6a36c2016bd"
+  },
+  {
+    "argsHash": "3ed7bc86debfcc9dc8791fec4c5f743610206001e5f593c86c9bcdbb1967dfc3",
+    "at": 1789614066599,
+    "effects": "none",
+    "idempotencyKey": "89290bc27be8e869429d9e66a9df9386b51dd6d6e0dad51145cabe82b7e2ab16",
+    "kind": "task",
+    "nodeKey": "root/join",
+    "previousHash": "4f4e9a83ea4e734fc78d2383cae0ef13be6dccd97a1ed7313f0ed6a36c2016bd",
+    "reservedCost": 0,
+    "seq": 11,
+    "tool": "core.collect",
+    "type": "tool.intent",
+    "hash": "c4e104cfd04f8f4104971836e7f54af51873ed261a6df10d64c845d1d436586c"
+  },
+  {
+    "at": 1789614066610,
+    "nodeKey": "root/join",
+    "output": {
+      "count": 2,
+      "items": [
+        null,
+        "error"
+      ]
+    },
+    "outputHash": "b05bfd7c70a20e92e124e4db10f9d868c24327ccb3728c79cf062923d5d69f41",
+    "previousHash": "c4e104cfd04f8f4104971836e7f54af51873ed261a6df10d64c845d1d436586c",
+    "seq": 12,
+    "type": "node.completed",
+    "hash": "aaf0f1959a75c5c658326030ee7d624c9c4155c314ac2e5b71e9ea4c0760ace3"
+  },
+  {
+    "argsHash": "a623f40da9df05645b22589bb511647e4ab80fe3ee0b1a0d52ec75564d36a065",
+    "at": 1789614066624,
+    "effects": "none",
+    "idempotencyKey": "3b5b4975a056bda37085e5dc2fd07147a342b9b42649b9ac076daec51a8dd891",
+    "kind": "task",
+    "nodeKey": "root/validate",
+    "previousHash": "aaf0f1959a75c5c658326030ee7d624c9c4155c314ac2e5b71e9ea4c0760ace3",
+    "reservedCost": 0,
+    "seq": 13,
+    "tool": "core.validate",
+    "type": "tool.intent",
+    "hash": "44b65a45902fead0234b2735f095b3747e136540fc02fbc0a1fc3fb62899bef6"
+  },
+  {
+    "at": 1789614066639,
+    "nodeKey": "root/validate",
+    "output": {
+      "errors": [],
+      "valid": true
+    },
+    "outputHash": "f2e6221bac7112ea123f706c89500b263e72f0f9bc7068fb74bdbaf8c51fbc38",
+    "previousHash": "44b65a45902fead0234b2735f095b3747e136540fc02fbc0a1fc3fb62899bef6",
+    "seq": 14,
+    "type": "node.completed",
+    "hash": "c9ca87e58dd41e15a5a2edd44b58c2d26e510033e6ae0dd358b193cb1db1b00f"
+  },
+  {
+    "at": 1789614066651,
+    "kind": "assert",
+    "nodeKey": "root/verify",
+    "previousHash": "c9ca87e58dd41e15a5a2edd44b58c2d26e510033e6ae0dd358b193cb1db1b00f",
+    "reservedCost": 0,
+    "seq": 15,
+    "type": "node.started",
+    "hash": "2a5c64668b2cccf88a09eea8dc2cac44a87b59b88510ae1ff6aeef00abed9336"
+  },
+  {
+    "at": 1789614066666,
+    "nodeKey": "root/verify",
+    "output": {
+      "passed": true
+    },
+    "outputHash": "11c11db30f4b3f6c758722ba3e27eea08145b7d212f6a157451e364b48475280",
+    "previousHash": "2a5c64668b2cccf88a09eea8dc2cac44a87b59b88510ae1ff6aeef00abed9336",
+    "seq": 16,
+    "type": "node.completed",
+    "hash": "339db7999e98538b8c7d06a7e340ae3245804e4d6bd995835d573b1eacae2663"
+  },
+  {
+    "argsHash": "f44964cfb4a032af59b6c6b356a0f46b39e03edc03d6fc184ed1db04d5ef39a1",
+    "at": 1789614066674,
+    "effects": "idempotent",
+    "idempotencyKey": "b4278a55a3e5e054144e9537fde7b428b8b28b6be3b4bc17e54cf280a405bdb2",
+    "kind": "task",
+    "nodeKey": "root/artifact",
+    "previousHash": "339db7999e98538b8c7d06a7e340ae3245804e4d6bd995835d573b1eacae2663",
+    "reservedCost": 0,
+    "seq": 17,
+    "tool": "core.artifact",
+    "type": "tool.intent",
+    "hash": "1bfb22302d19bfd183292d9e2143b9fcbb28d29c9194eee4e5ae7be2f93a0b65"
+  },
+  {
+    "at": 1789614066948,
+    "nodeKey": "root/artifact",
+    "output": {
+      "bytes": 21,
+      "name": "receipt.json",
+      "sha256": "c3f7120e8218a8208459015dd0edda53d195d6ff7fa2bea0f42eefea1d0fb6a8"
+    },
+    "outputHash": "dec95d7694bd2d6f40a4cf815e52fc320724401aff0cade0092d168c868e6e94",
+    "previousHash": "1bfb22302d19bfd183292d9e2143b9fcbb28d29c9194eee4e5ae7be2f93a0b65",
+    "seq": 18,
+    "type": "node.completed",
+    "hash": "9839a30546707856f0b4ec2126ebbd79698dafc151d48ced947061514372489d"
+  },
+  {
+    "at": 1789614066956,
+    "previousHash": "9839a30546707856f0b4ec2126ebbd79698dafc151d48ced947061514372489d",
+    "seq": 19,
+    "type": "run.succeeded",
+    "hash": "f1b3d10a24b6960347673dec1675bf78a4922fa8061680941d68de44afa39901"
+  }
+]

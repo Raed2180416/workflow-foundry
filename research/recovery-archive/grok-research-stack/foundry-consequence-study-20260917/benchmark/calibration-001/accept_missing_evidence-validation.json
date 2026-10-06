@@ -1,0 +1,18 @@
+{
+  "valid": true,
+  "errors": [],
+  "warnings": [
+    {
+      "code": "ERROR_CONTINUATION",
+      "path": "workflow.samples.body.screen",
+      "message": "Independent acceptance must detect failures hidden by continuation"
+    },
+    {
+      "code": "ERROR_CONTINUATION",
+      "path": "workflow.samples.body.reproduce",
+      "message": "Independent acceptance must detect failures hidden by continuation"
+    }
+  ],
+  "nodeCount": 14,
+  "hash": "ed980e61ace14c025f67eca673c76a1a0c0ac9cf8158c17eaf9ea6be2a946ab6"
+}

@@ -1,0 +1,66 @@
+{
+  "name": "@contrare-research/workflow-foundry",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Evidence-driven workflow construction, inspection and execution research",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "bin": {
+    "workflow-foundry": "bin/foundry.mjs"
+  },
+  "files": [
+    "bin/foundry.mjs",
+    "src/*.mjs",
+    "schemas/workflow.schema.json",
+    "skills/**/*.md",
+    "skills/**/*.json",
+    "skills/**/*.txt",
+    "web/index.html",
+    "web/app.js",
+    "web/style.css",
+    "adapters/index.mjs",
+    "adapters/langgraph/*.mjs",
+    "adapters/langgraph/*.py",
+    "adapters/langgraph/*.md",
+    "adapters/langgraph/requirements.in",
+    "adapters/langgraph/requirements.txt",
+    "adapters/n8n/*.mjs",
+    "adapters/n8n/*.md",
+    "docs/ARCHITECTURE.md",
+    "docs/IMPLEMENTATION-PLAN.md",
+    "docs/PACKAGING.md",
+    "docs/REPAIR-LIFECYCLE.md",
+    "docs/UI-TRIALS.md",
+    "docs/PRODUCT-DEMO-PROTOCOL.md",
+    "docs/SOURCE-COVERAGE.md",
+    "examples/hello.json",
+    "examples/incident.json",
+    "examples/incident-world.json",
+    "examples/batch-suite.json",
+    "examples/batch-task.md",
+    "README.md"
+  ],
+  "exports": {
+    ".": "./src/foundry.mjs",
+    "./runtime": "./src/runtime.mjs",
+    "./capabilities": "./src/capabilities.mjs",
+    "./components": "./src/components.mjs",
+    "./schema": "./schemas/workflow.schema.json"
+  },
+  "scripts": {
+    "test": "node --test --test-concurrency=2 tests/*.test.mjs",
+    "check": "node bin/foundry.mjs doctor",
+    "start": "node bin/foundry.mjs serve",
+    "mcp": "node bin/foundry.mjs mcp"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "ajv": "8.20.0",
+    "jsonc-parser": "3.3.1"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "code": "MODEL_RATE_LIMIT",
+  "message": "The free provider returned HTTP 429; this attempt is stopped without retry or fallback",
+  "details": {
+    "observedStatusCode": 429,
+    "automaticRetry": false,
+    "completedResponse": false,
+    "retryAfterSeconds": 600
+  },
+  "termination": {
+    "kind": "http",
+    "at": 1789636094532,
+    "code": "MODEL_RATE_LIMIT",
+    "error": {
+      "name": "FoundryError",
+      "code": "MODEL_RATE_LIMIT",
+      "message": "The free provider returned HTTP 429; this attempt is stopped without retry or fallback"
+    }
+  },
+  "receipts": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/provider-termination-fix-20260917/checks-a0b747ed-144f-48eb-a25b-0dcf46a92029/cases/termination-http-before-deadline-xVhzQw/opencode-v2-3dd48666-40d7-4a1f-a048-dc737e8d20de"
+}

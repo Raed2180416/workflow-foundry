@@ -1,0 +1,141 @@
+{
+  "initial": {
+    "id": "4af9509664b814bd03efd52cd83c38c0b06e2ba8091a46ef8e819102bb89649e",
+    "schemaVersion": "outcome-observation/2",
+    "contractId": "74947cecc716b3ceca808568401ab7fcb0543c68b42e978c86e11bb8a51cedbc",
+    "binding": {
+      "requestId": "5006efaf-1d6d-4e9e-8c75-cc998dc65266",
+      "proposalId": "7e5014b2-6c57-4846-9faa-106d71cd0c4c",
+      "runId": "7f258107-cfcc-4b56-867e-e84c8daaa4d4",
+      "rootRequestId": "5006efaf-1d6d-4e9e-8c75-cc998dc65266",
+      "requestHash": "ac9a98b0a3bf1851deb044bf9d7779529719d421bef0ad6a17492ecddcfb3111",
+      "proposalHash": "e0290ed20c04c14f5b26d51561d9bd4e598b23f11396acd7cac5ce50c99a2d24",
+      "rootRequestHash": "ac9a98b0a3bf1851deb044bf9d7779529719d421bef0ad6a17492ecddcfb3111",
+      "workflowId": "outcome-cli-control",
+      "workflowHash": "4fd0247fca0ecb98db895fc89e13428eddfc3ff99328a3dc51a63e86dee1072e",
+      "workflowVersion": 1,
+      "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+      "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+      "inputHash": "1cabf47a1b363e0b17402ae0789cbd07eb7a05fc31c84d7c602ad3cff7233fd1",
+      "policyHash": "743874dc59bcbd3e3257926a739c866813d6604f924f906342983b4bb871caa7",
+      "eventHead": {
+        "hash": "df4dfcdbab4240d7540c24078122c601d65ebec26f7745e371818508b19d1396",
+        "seq": 7
+      },
+      "eventCount": 7,
+      "runStatus": "succeeded",
+      "runHash": "f224f05f6014f6fa2c7178240610ac669d84f998ddbda1c348c905c74c26bb16"
+    },
+    "artifact": {
+      "name": "record.json",
+      "state": "present",
+      "bytes": 42,
+      "sha256": "82cb6955614fb8cf304aa2f59b86abc0c51d51dcd0629572dfc491605f235d8f",
+      "base64": "eyJhY3RpdmUiOmZhbHNlLCJjb3VudCI6MCwibGFiZWwiOiJ3cm9uZyJ9",
+      "producers": [
+        {
+          "nodeKey": "root/file",
+          "sequence": 6,
+          "eventHash": "830aa826c379c2198fde95a85606dbe21707e63e63f368c763aa0f035d0fc070"
+        }
+      ]
+    },
+    "outcome": "unsatisfied",
+    "reason": "json-content-mismatch",
+    "observedJsonHash": "82cb6955614fb8cf304aa2f59b86abc0c51d51dcd0629572dfc491605f235d8f",
+    "observedAt": 1789634647975,
+    "qualification": "One host-bound JSON artifact observation; no general intent or deployment qualification"
+  },
+  "repairRequest": {
+    "id": "f7326a9c-a184-49d9-a9dc-3d41842d5263",
+    "workflowId": "outcome-cli-control",
+    "baseHash": "4fd0247fca0ecb98db895fc89e13428eddfc3ff99328a3dc51a63e86dee1072e",
+    "text": "Write record.json containing exactly input.record, preserving every key and value.",
+    "source": "agent-diagnostic",
+    "status": "diagnostic",
+    "createdAt": 1789634648513,
+    "parentRequestId": "5006efaf-1d6d-4e9e-8c75-cc998dc65266",
+    "rootRequestId": "5006efaf-1d6d-4e9e-8c75-cc998dc65266",
+    "repairDepth": 1,
+    "appliedProposalId": "7e5014b2-6c57-4846-9faa-106d71cd0c4c",
+    "observedRunId": "7f258107-cfcc-4b56-867e-e84c8daaa4d4",
+    "observedRunStatus": "succeeded",
+    "observationEventHead": {
+      "hash": "df4dfcdbab4240d7540c24078122c601d65ebec26f7745e371818508b19d1396",
+      "seq": 7
+    },
+    "outcomeReceiptId": "4af9509664b814bd03efd52cd83c38c0b06e2ba8091a46ef8e819102bb89649e",
+    "outcomeContractId": "74947cecc716b3ceca808568401ab7fcb0543c68b42e978c86e11bb8a51cedbc",
+    "repairCause": "observed-outcome",
+    "goal": "Write record.json containing exactly input.record, preserving every key and value.",
+    "successCriteria": [
+      "Write record.json containing exactly input.record, preserving every key and value."
+    ],
+    "localization": {
+      "artifactName": "record.json",
+      "producers": [
+        {
+          "eventHash": "830aa826c379c2198fde95a85606dbe21707e63e63f368c763aa0f035d0fc070",
+          "nodeKey": "root/file",
+          "sequence": 6
+        }
+      ],
+      "reason": "json-content-mismatch"
+    },
+    "diagnostic": "",
+    "diagnosticAuthority": "Untrusted commentary; not a new requirement, consent, policy or success oracle",
+    "automaticGeneration": false,
+    "reused": false
+  },
+  "appliedProposal": "832edf3d-e0d1-4388-805f-0a7772d72057",
+  "final": {
+    "id": "a865faca712c4de3a3bb376e0c17bf319c8c4a9c615badc6a3e78d87175ac0fc",
+    "schemaVersion": "outcome-observation/2",
+    "contractId": "74947cecc716b3ceca808568401ab7fcb0543c68b42e978c86e11bb8a51cedbc",
+    "binding": {
+      "requestId": "f7326a9c-a184-49d9-a9dc-3d41842d5263",
+      "proposalId": "832edf3d-e0d1-4388-805f-0a7772d72057",
+      "runId": "004f67da-1665-4ded-9706-08954006f7a0",
+      "rootRequestId": "5006efaf-1d6d-4e9e-8c75-cc998dc65266",
+      "requestHash": "c4fdae9ed9b6182fe47d095dabbd00ff60b6aaecf09bcdc2c84eb7c83cc9e26a",
+      "proposalHash": "a5efdcb911fec13056c3beb96657b89927ef401c17eaca53f39e0810b62128e8",
+      "rootRequestHash": "ac9a98b0a3bf1851deb044bf9d7779529719d421bef0ad6a17492ecddcfb3111",
+      "workflowId": "outcome-cli-control",
+      "workflowHash": "10b58305b9b35f6a17bbcd70d7d329796f8b3233534f786a601f4d80319cd700",
+      "workflowVersion": 2,
+      "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+      "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+      "inputHash": "1cabf47a1b363e0b17402ae0789cbd07eb7a05fc31c84d7c602ad3cff7233fd1",
+      "policyHash": "743874dc59bcbd3e3257926a739c866813d6604f924f906342983b4bb871caa7",
+      "eventHead": {
+        "hash": "51e90e143319a2be755344f9512dfd2d8a906ca9ffbe9e788b62318a53a6c9be",
+        "seq": 7
+      },
+      "eventCount": 7,
+      "runStatus": "succeeded",
+      "runHash": "3d023c4d1d273b7b99da74a35a8f3146bee57754bc9981b483e3d3dc2c7f8d80"
+    },
+    "artifact": {
+      "name": "record.json",
+      "state": "present",
+      "bytes": 45,
+      "sha256": "9ef2b7daee9a488f2495d5dbd29d2c84aa9fb299f9119d01fcd49993c36ee2be",
+      "base64": "eyJhY3RpdmUiOnRydWUsImNvdW50IjozLCJsYWJlbCI6InJlcXVlc3RlZCJ9",
+      "producers": [
+        {
+          "nodeKey": "root/file",
+          "sequence": 6,
+          "eventHash": "3a9fb706716430871fdea55ad533b04af209e01db48fbfb756ce5d68ef3edab6"
+        }
+      ]
+    },
+    "outcome": "satisfied",
+    "reason": "exact-json-match",
+    "observedJsonHash": "9ef2b7daee9a488f2495d5dbd29d2c84aa9fb299f9119d01fcd49993c36ee2be",
+    "observedAt": 1789634649915,
+    "qualification": "One host-bound JSON artifact observation; no general intent or deployment qualification"
+  },
+  "originalBytesRetained": true,
+  "suppliedCandidate": true,
+  "liveModelCalls": 0
+}

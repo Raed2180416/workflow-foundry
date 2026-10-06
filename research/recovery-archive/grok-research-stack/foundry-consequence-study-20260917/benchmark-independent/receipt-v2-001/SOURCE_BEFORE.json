@@ -1,0 +1,126 @@
+[
+  {
+    "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/NOTE.md",
+    "sha256": "23ae4819819121c526694e130fe8c8e83f53f2b4b562025d6c09500a5c1d6639"
+  },
+  {
+    "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/AUDIT.json",
+    "sha256": "820e8667a838ed04948a60fdecc0883ccdf28ffa2eeea3b5e137cc10f9a25350"
+  },
+  {
+    "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/check.mjs",
+    "sha256": "8cd369c3bb3b914ef9954268f5bbc1c776d833ad5f974bf95e0593a78d271f5e"
+  },
+  {
+    "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/FINAL_CHECK.json",
+    "sha256": "afa7340ea466ade54fd6865f2ff05cadbb5c0b6fdd429c059367d31036c96eb1"
+  },
+  {
+    "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/PRE_REVIEW.json",
+    "sha256": "2b9018fec98e34d18d35013630dfeff68e8aa6fd5a5625934dd744891092f4e0"
+  },
+  {
+    "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/WITNESS_PATHS.json",
+    "sha256": "442dbae1c53f847c52a469e001cf6d1bf86809129e4877d6465889c5651edad8"
+  },
+  {
+    "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/FREEZE.json",
+    "sha256": "191da6649ceaa22087636059b241de2fd758768aabdfde0aa9d480cb27246f62"
+  },
+  {
+    "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/oracle-v2.mjs",
+    "sha256": "517b7e60d3e674f7fc1189dac8f468dd19d9f6800467a5998fde6a38fbd66e15"
+  },
+  {
+    "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/contract.mjs",
+    "sha256": "3a5df633eb0031ac06b2dbf42cb189d12c0707ee4569589a616e1c8bf2dbd16b"
+  },
+  {
+    "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/capabilities.mjs",
+    "sha256": "2697b0ede7cef9a3b5b99df2841113f3ad68b743ff463f50993a77afcb6003fa"
+  },
+  {
+    "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/oracle.mjs",
+    "sha256": "ebbdf190674414c29ec2fc7632e8f72b6e3c305c5abd20b322cc8a077304f732"
+  },
+  {
+    "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/freeze-public.mjs",
+    "sha256": "38630cd438723a3c610f6ac47b7cadc9d69c24a70761bc143455c161119f8fdb"
+  },
+  {
+    "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/PUBLIC.json",
+    "sha256": "1b5d70353084eafc8e3a981729e66717e82e899d2dab8b09098c586a4b9dbcc3"
+  },
+  {
+    "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/development/SUITE.json",
+    "sha256": "e3176d5a7727eae412f65b7fc53f5ec8857b937200401651cd012b962f4016b1"
+  },
+  {
+    "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/development/TRUTH.json",
+    "sha256": "dbcd9aad1582e52dab15bce297244656dd0960599d811e7a0463cfd359dfd806"
+  },
+  {
+    "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/sealed/SUITE.json",
+    "sha256": "3963e87b530118f38686633c0fc202431d48281b9dc917a41965a444764ce2e3"
+  },
+  {
+    "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/sealed/TRUTH.json",
+    "sha256": "102f2ea3594ec686fb7d888a46791b88d8b24b2cd587f73e53ac82e679216fd1"
+  },
+  {
+    "path": "/home/raed/Projects/workflow-foundry/src/runtime.mjs",
+    "sha256": "af9fcabde20f706fac8ce2e09c0e646c0f100b301b64d1f6e1e4eb77e0b213db"
+  },
+  {
+    "path": "/home/raed/Projects/workflow-foundry/src/evaluation.mjs",
+    "sha256": "64d42f9120e36b90bc7d194d5550773f00c1bb19d96c03f10ea8d194e6dd3d6f"
+  },
+  {
+    "path": "/home/raed/Projects/workflow-foundry/src/capabilities.mjs",
+    "sha256": "1707d4506f50e86498fa471dc3c8714615e6c06a1240014f2515aab58cc3ac49"
+  },
+  {
+    "path": "/home/raed/Projects/workflow-foundry/src/data.mjs",
+    "sha256": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c"
+  },
+  {
+    "path": "/home/raed/Projects/workflow-foundry/src/store.mjs",
+    "sha256": "61288a25c85a8dd1e1e076ca5059aedf80c35dc26bf0ab613c31030743a34732"
+  },
+  {
+    "path": "/home/raed/Projects/workflow-foundry/src/validate.mjs",
+    "sha256": "8b698d552e151f3380af58cbce5675b0a94c48601c9acd427be71281a3696c33"
+  },
+  {
+    "path": "/home/raed/Projects/workflow-foundry/src/dataflow.mjs",
+    "sha256": "7f3c4894b32f5dbe691ba3c871e088da8b083f42e7b653404972b647c9e9d41e"
+  },
+  {
+    "path": "/home/raed/Projects/workflow-foundry/src/engine.mjs",
+    "sha256": "6872eecabd6e4ccce58b7db25df82b1a97a292e530e0c38090e15844d5d7ed52"
+  },
+  {
+    "path": "/home/raed/Projects/workflow-foundry/src/foundry.mjs",
+    "sha256": "95f102573760ef92cd352813f66b30cd9f83bda05afb97a4cbe1069c8527a878"
+  },
+  {
+    "path": "/home/raed/Projects/workflow-foundry/src/generator.mjs",
+    "sha256": "3d86d95eaf4a2b6ee83d5fb50696a689926075adae4eeb4d8c25450c442fb11a"
+  },
+  {
+    "path": "/home/raed/Projects/workflow-foundry/src/trials.mjs",
+    "sha256": "4ab066bb285245ae70ead081fa8de88e728dfc8f58eef77f50bf2a667117f437"
+  },
+  {
+    "path": "/home/raed/Projects/workflow-foundry/schemas/workflow.schema.json",
+    "sha256": "e72b1d4bb1e01f4f21256b042853faa8505859f30741b4093aea59909ac4e1bc"
+  },
+  {
+    "path": "/home/raed/Projects/workflow-foundry/package.json",
+    "sha256": "cb314fd60e0b59c2fed9782c66d8ddc889ce64b4add93ed499eb3e6de139cf5a"
+  },
+  {
+    "path": "/home/raed/Projects/workflow-foundry/package-lock.json",
+    "sha256": "7bddd5dfb8cd6e3717d54cd8c184c297b0e166ad4bbdb9645d369290b06a9af9"
+  }
+]

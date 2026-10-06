@@ -1,0 +1,6 @@
+{
+  "model": "opencode/big-pickle",
+  "maxOutputTokens": 64,
+  "timeoutMs": 90000,
+  "promptSHA256": "178d47b3c16601a69cfde5b5f47581295aead3ad0b084aa3058e9dc4a3be8701"
+}

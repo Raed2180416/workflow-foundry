@@ -1,0 +1,681 @@
+{
+  "evaluatorId": "sample-consequences-v1:0edadddb1f94f88cdbaebdfbc382d3f18d7c6faac720bc066ba3fb79ccf0e005:ebbdf190674414c29ec2fc7632e8f72b6e3c305c5abd20b322cc8a077304f732",
+  "workflowHash": "414c24926f418e4be614fe03a6e09793db8b22f80ba36afd207e715ae6f3952b",
+  "registryHash": "bb3f73d712e174d3084248c8d199a620b7eeb2a7b2655d64b6286ab3af536d0e",
+  "suiteHash": "0edadddb1f94f88cdbaebdfbc382d3f18d7c6faac720bc066ba3fb79ccf0e005",
+  "split": "development",
+  "qualificationLevel": "task-outcome",
+  "passed": true,
+  "metrics": {
+    "passedCount": 5,
+    "caseCount": 5,
+    "successFraction": 1,
+    "falseSuccessCount": 0,
+    "totalSteps": 82,
+    "totalCost": 0,
+    "elapsedMs": 529,
+    "missingCalls": 0,
+    "forbiddenCalls": 0,
+    "duplicateCalls": 0,
+    "syntheticCost": 81
+  },
+  "envelope": [
+    "Source-informed fixed synthetic scenarios; not a population sample.",
+    "Exact manifest JSON plus independent call accounting; no expected node IDs.",
+    "Instrument observations and evaluator truth are separate; no network or paid execution."
+  ],
+  "cases": [
+    {
+      "id": "dev-empty",
+      "passed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "checks": [],
+      "artifacts": [
+        {
+          "name": "manifest.json",
+          "passed": true,
+          "sha256": "459702367cbe62b54262b350823a86b7875ef5798bba4936c3b25c8a575fe6ba"
+        }
+      ],
+      "steps": 4,
+      "cost": 0,
+      "elapsedMs": 52,
+      "runId": "645707f0-8f94-40d7-8e8a-9e35c980e1f1",
+      "workspace": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/cli-smoke-001/execution/case-JNyp7h",
+      "exception": null,
+      "runError": null,
+      "failedNodes": [],
+      "eventCount": 11,
+      "diagnostic": {
+        "input": {
+          "samples": []
+        },
+        "expected": {
+          "statuses": [
+            "succeeded"
+          ],
+          "checks": [],
+          "artifacts": [
+            {
+              "name": "manifest.json",
+              "json": {
+                "samples": []
+              }
+            }
+          ]
+        }
+      },
+      "nativePassed": true,
+      "instrumentAudit": {
+        "passed": true,
+        "problems": [],
+        "missingCalls": 0,
+        "forbiddenCalls": 0,
+        "duplicateCalls": 0,
+        "wrongOrder": 0,
+        "invalidObservations": 0,
+        "screenCalls": 0,
+        "reproduceCalls": 0,
+        "syntheticCost": 0,
+        "expectedSyntheticCost": 0
+      },
+      "instrumentLog": []
+    },
+    {
+      "id": "dev-basic",
+      "passed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "checks": [],
+      "artifacts": [
+        {
+          "name": "manifest.json",
+          "passed": true,
+          "sha256": "ff3d53c751d4db3bcfbf6bc9c54d91433ee7038c00221573db56a6ff7ddb6f9c"
+        }
+      ],
+      "steps": 21,
+      "cost": 0,
+      "elapsedMs": 150,
+      "runId": "32e8d4d2-855c-4728-bc0a-a539703bc8c9",
+      "workspace": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/cli-smoke-001/execution/case-pDxVKO",
+      "exception": null,
+      "runError": null,
+      "failedNodes": [],
+      "eventCount": 61,
+      "diagnostic": {
+        "input": {
+          "samples": [
+            {
+              "id": "dev-a"
+            },
+            {
+              "id": "dev-b"
+            },
+            {
+              "id": "dev-c"
+            }
+          ]
+        },
+        "expected": {
+          "statuses": [
+            "succeeded"
+          ],
+          "checks": [],
+          "artifacts": [
+            {
+              "name": "manifest.json",
+              "json": {
+                "samples": [
+                  {
+                    "sampleId": "dev-a",
+                    "disposition": "clear"
+                  },
+                  {
+                    "sampleId": "dev-b",
+                    "disposition": "confirmed"
+                  },
+                  {
+                    "sampleId": "dev-c",
+                    "disposition": "not_reproduced"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "nativePassed": true,
+      "instrumentAudit": {
+        "passed": true,
+        "problems": [],
+        "missingCalls": 0,
+        "forbiddenCalls": 0,
+        "duplicateCalls": 0,
+        "wrongOrder": 0,
+        "invalidObservations": 0,
+        "screenCalls": 3,
+        "reproduceCalls": 2,
+        "syntheticCost": 23,
+        "expectedSyntheticCost": 23
+      },
+      "instrumentLog": [
+        {
+          "ordinal": 1,
+          "instrument": "screen",
+          "sampleId": "dev-a",
+          "nodeKey": "root/samples:0/screen",
+          "idempotencyKey": "6c7287387d1042052454263f9494b61ea76c8e96c0df23c6c5bd9706af4e1db0",
+          "syntheticCost": 1,
+          "outcome": "returned",
+          "observation": {
+            "claim": "confirmed",
+            "ok": true,
+            "sampleId": "dev-a",
+            "suspicious": false
+          }
+        },
+        {
+          "ordinal": 2,
+          "instrument": "screen",
+          "sampleId": "dev-b",
+          "nodeKey": "root/samples:1/screen",
+          "idempotencyKey": "bf1d6525fea747436a8fa6dc4c2327f38f4c4a5c1607280f5a8679ae5260a888",
+          "syntheticCost": 1,
+          "outcome": "returned",
+          "observation": {
+            "ok": true,
+            "sampleId": "dev-b",
+            "suspicious": true
+          }
+        },
+        {
+          "ordinal": 3,
+          "instrument": "reproduce",
+          "sampleId": "dev-b",
+          "nodeKey": "root/samples:1/reproduce",
+          "idempotencyKey": "f546242a8ca0f6c66760b4635cdf2c1837a993c6820437fb14714ae7eaeb527e",
+          "syntheticCost": 10,
+          "outcome": "returned",
+          "observation": {
+            "evidenceId": "observation-dev-b",
+            "independent": true,
+            "ok": true,
+            "reproduced": true,
+            "sampleId": "dev-b"
+          }
+        },
+        {
+          "ordinal": 4,
+          "instrument": "screen",
+          "sampleId": "dev-c",
+          "nodeKey": "root/samples:2/screen",
+          "idempotencyKey": "dcb05128a17b8db58e60375ad11d54b8f8806c02c9125071a02434f529eb2063",
+          "syntheticCost": 1,
+          "outcome": "returned",
+          "observation": {
+            "ok": true,
+            "sampleId": "dev-c",
+            "suspicious": true
+          }
+        },
+        {
+          "ordinal": 5,
+          "instrument": "reproduce",
+          "sampleId": "dev-c",
+          "nodeKey": "root/samples:2/reproduce",
+          "idempotencyKey": "f1e75604ae2b2b3b57b9b0458d94b9bfff61b758a0d27e9630fa7d231883b554",
+          "syntheticCost": 10,
+          "outcome": "returned",
+          "observation": {
+            "claim": "confirmed",
+            "evidenceId": "observation-dev-c",
+            "independent": true,
+            "ok": true,
+            "reproduced": false,
+            "sampleId": "dev-c"
+          }
+        }
+      ]
+    },
+    {
+      "id": "dev-outages",
+      "passed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "checks": [],
+      "artifacts": [
+        {
+          "name": "manifest.json",
+          "passed": true,
+          "sha256": "f5424e29aff237664acae3e655f96fa718b3fcea927e3e98cb76c63caf5274ac"
+        }
+      ],
+      "steps": 20,
+      "cost": 0,
+      "elapsedMs": 92,
+      "runId": "074d6fcd-b85d-4a7e-8f61-7ffb9ce02359",
+      "workspace": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/cli-smoke-001/execution/case-77CDfc",
+      "exception": null,
+      "runError": null,
+      "failedNodes": [
+        {
+          "nodeKey": "root/samples:0/screen",
+          "status": "handled_error",
+          "tool": "lab.screen",
+          "error": {
+            "code": "SCREEN_ERROR",
+            "message": "Synthetic instrument unavailable"
+          }
+        },
+        {
+          "nodeKey": "root/samples:1/reproduce",
+          "status": "handled_error",
+          "tool": "lab.reproduce",
+          "error": {
+            "code": "REPRODUCTION_ERROR",
+            "message": "Synthetic instrument unavailable"
+          }
+        }
+      ],
+      "eventCount": 62,
+      "diagnostic": {
+        "input": {
+          "samples": [
+            {
+              "id": "dev-d"
+            },
+            {
+              "id": "dev-e"
+            },
+            {
+              "id": "dev-f"
+            }
+          ]
+        },
+        "expected": {
+          "statuses": [
+            "succeeded"
+          ],
+          "checks": [],
+          "artifacts": [
+            {
+              "name": "manifest.json",
+              "json": {
+                "samples": [
+                  {
+                    "sampleId": "dev-d",
+                    "disposition": "error"
+                  },
+                  {
+                    "sampleId": "dev-e",
+                    "disposition": "error"
+                  },
+                  {
+                    "sampleId": "dev-f",
+                    "disposition": "inconclusive"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "nativePassed": true,
+      "instrumentAudit": {
+        "passed": true,
+        "problems": [],
+        "missingCalls": 0,
+        "forbiddenCalls": 0,
+        "duplicateCalls": 0,
+        "wrongOrder": 0,
+        "invalidObservations": 0,
+        "screenCalls": 3,
+        "reproduceCalls": 1,
+        "syntheticCost": 13,
+        "expectedSyntheticCost": 13
+      },
+      "instrumentLog": [
+        {
+          "ordinal": 1,
+          "instrument": "screen",
+          "sampleId": "dev-d",
+          "nodeKey": "root/samples:0/screen",
+          "idempotencyKey": "3d65a1dff593d3fbc3694210348a01ef6d11ede00e7b6a780c443360b3a47cf7",
+          "syntheticCost": 1,
+          "outcome": "threw",
+          "errorCode": "SCREEN_ERROR"
+        },
+        {
+          "ordinal": 2,
+          "instrument": "screen",
+          "sampleId": "dev-e",
+          "nodeKey": "root/samples:1/screen",
+          "idempotencyKey": "e6e3fa3e58b72ac82c4e50ae76fd91ed75ed1d6864faafc23db1ee82a45743d9",
+          "syntheticCost": 1,
+          "outcome": "returned",
+          "observation": {
+            "ok": true,
+            "sampleId": "dev-e",
+            "suspicious": true
+          }
+        },
+        {
+          "ordinal": 3,
+          "instrument": "reproduce",
+          "sampleId": "dev-e",
+          "nodeKey": "root/samples:1/reproduce",
+          "idempotencyKey": "8d38a6d9257857fcb2572de0698fc939f44b682649145fbfb26c9cd568601888",
+          "syntheticCost": 10,
+          "outcome": "threw",
+          "errorCode": "REPRODUCTION_ERROR"
+        },
+        {
+          "ordinal": 4,
+          "instrument": "screen",
+          "sampleId": "dev-f",
+          "nodeKey": "root/samples:2/screen",
+          "idempotencyKey": "8b9dfb5ffea4c4dc9eff2be6b52d759433be876620295004484988b897c8c74d",
+          "syntheticCost": 1,
+          "outcome": "returned",
+          "observation": {
+            "claim": "confirmed",
+            "ok": true,
+            "sampleId": "dev-f"
+          }
+        }
+      ]
+    },
+    {
+      "id": "dev-partial",
+      "passed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "checks": [],
+      "artifacts": [
+        {
+          "name": "manifest.json",
+          "passed": true,
+          "sha256": "a8d02a2fba1a12f86f109c802610ba4b493aca06792320b45557704e44ca7e6c"
+        }
+      ],
+      "steps": 22,
+      "cost": 0,
+      "elapsedMs": 90,
+      "runId": "aff97d82-45a8-4433-894b-1dcc10a7fc88",
+      "workspace": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/cli-smoke-001/execution/case-vEeSgv",
+      "exception": null,
+      "runError": null,
+      "failedNodes": [],
+      "eventCount": 62,
+      "diagnostic": {
+        "input": {
+          "samples": [
+            {
+              "id": "dev-g"
+            },
+            {
+              "id": "dev-h"
+            },
+            {
+              "id": "dev-i"
+            }
+          ]
+        },
+        "expected": {
+          "statuses": [
+            "succeeded"
+          ],
+          "checks": [],
+          "artifacts": [
+            {
+              "name": "manifest.json",
+              "json": {
+                "samples": [
+                  {
+                    "sampleId": "dev-g",
+                    "disposition": "inconclusive"
+                  },
+                  {
+                    "sampleId": "dev-h",
+                    "disposition": "inconclusive"
+                  },
+                  {
+                    "sampleId": "dev-i",
+                    "disposition": "inconclusive"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "nativePassed": true,
+      "instrumentAudit": {
+        "passed": true,
+        "problems": [],
+        "missingCalls": 0,
+        "forbiddenCalls": 0,
+        "duplicateCalls": 0,
+        "wrongOrder": 0,
+        "invalidObservations": 0,
+        "screenCalls": 3,
+        "reproduceCalls": 3,
+        "syntheticCost": 33,
+        "expectedSyntheticCost": 33
+      },
+      "instrumentLog": [
+        {
+          "ordinal": 1,
+          "instrument": "screen",
+          "sampleId": "dev-g",
+          "nodeKey": "root/samples:0/screen",
+          "idempotencyKey": "ce3a62e23bd932598fc07571b65b3f8edc5482d213da2bc4610da8f99f4105de",
+          "syntheticCost": 1,
+          "outcome": "returned",
+          "observation": {
+            "ok": true,
+            "sampleId": "dev-g",
+            "suspicious": true
+          }
+        },
+        {
+          "ordinal": 2,
+          "instrument": "reproduce",
+          "sampleId": "dev-g",
+          "nodeKey": "root/samples:0/reproduce",
+          "idempotencyKey": "7cd36b2d4b75e4e889260817613bba70c8c08fb36d8f15084554de2156d3078a",
+          "syntheticCost": 10,
+          "outcome": "returned",
+          "observation": {
+            "independent": true,
+            "ok": true,
+            "reproduced": true,
+            "sampleId": "dev-g"
+          }
+        },
+        {
+          "ordinal": 3,
+          "instrument": "screen",
+          "sampleId": "dev-h",
+          "nodeKey": "root/samples:1/screen",
+          "idempotencyKey": "347369aa202b7bcec438fe7a5f31f0339f235878a4e5c6424c5942237fa95929",
+          "syntheticCost": 1,
+          "outcome": "returned",
+          "observation": {
+            "ok": true,
+            "sampleId": "dev-h",
+            "suspicious": true
+          }
+        },
+        {
+          "ordinal": 4,
+          "instrument": "reproduce",
+          "sampleId": "dev-h",
+          "nodeKey": "root/samples:1/reproduce",
+          "idempotencyKey": "f07ce1f8e8feafcfb4cd5b7eb4d880c577d1a4d0701eda358b0446940c7abf48",
+          "syntheticCost": 10,
+          "outcome": "returned",
+          "observation": {
+            "claim": "confirmed",
+            "evidenceId": "observation-dev-h",
+            "independent": true,
+            "ok": true,
+            "sampleId": "dev-h"
+          }
+        },
+        {
+          "ordinal": 5,
+          "instrument": "screen",
+          "sampleId": "dev-i",
+          "nodeKey": "root/samples:2/screen",
+          "idempotencyKey": "646c65ef6c284a20cf822e13f9dc5abdb451f78e4cfced70b7195fb550b29435",
+          "syntheticCost": 1,
+          "outcome": "returned",
+          "observation": {
+            "ok": true,
+            "sampleId": "dev-i",
+            "suspicious": true
+          }
+        },
+        {
+          "ordinal": 6,
+          "instrument": "reproduce",
+          "sampleId": "dev-i",
+          "nodeKey": "root/samples:2/reproduce",
+          "idempotencyKey": "48bd556dd212a4a724d68716b8c31ea563136908b8bc8a8ecb02e258a666ecd6",
+          "syntheticCost": 10,
+          "outcome": "returned",
+          "observation": {
+            "evidenceId": "observation-dev-i",
+            "independent": false,
+            "ok": true,
+            "reproduced": true,
+            "sampleId": "dev-i"
+          }
+        }
+      ]
+    },
+    {
+      "id": "dev-identity",
+      "passed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "checks": [],
+      "artifacts": [
+        {
+          "name": "manifest.json",
+          "passed": true,
+          "sha256": "cad7faccb88ec8a2a423d796b64d881d50a3045269cfeb61af46c3b08c2926d9"
+        }
+      ],
+      "steps": 15,
+      "cost": 0,
+      "elapsedMs": 63,
+      "runId": "1c01b3d2-0c5f-4f0e-b938-cacfe415cc5e",
+      "workspace": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/cli-smoke-001/execution/case-znBBN8",
+      "exception": null,
+      "runError": null,
+      "failedNodes": [],
+      "eventCount": 44,
+      "diagnostic": {
+        "input": {
+          "samples": [
+            {
+              "id": "dev-j"
+            },
+            {
+              "id": "dev-k"
+            }
+          ]
+        },
+        "expected": {
+          "statuses": [
+            "succeeded"
+          ],
+          "checks": [],
+          "artifacts": [
+            {
+              "name": "manifest.json",
+              "json": {
+                "samples": [
+                  {
+                    "sampleId": "dev-j",
+                    "disposition": "inconclusive"
+                  },
+                  {
+                    "sampleId": "dev-k",
+                    "disposition": "inconclusive"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "nativePassed": true,
+      "instrumentAudit": {
+        "passed": true,
+        "problems": [],
+        "missingCalls": 0,
+        "forbiddenCalls": 0,
+        "duplicateCalls": 0,
+        "wrongOrder": 0,
+        "invalidObservations": 0,
+        "screenCalls": 2,
+        "reproduceCalls": 1,
+        "syntheticCost": 12,
+        "expectedSyntheticCost": 12
+      },
+      "instrumentLog": [
+        {
+          "ordinal": 1,
+          "instrument": "screen",
+          "sampleId": "dev-j",
+          "nodeKey": "root/samples:0/screen",
+          "idempotencyKey": "7673f401940a2614985d535e7c93d3438aca5cc2d2ffa95639deb4e2b4b36708",
+          "syntheticCost": 1,
+          "outcome": "returned",
+          "observation": {
+            "ok": true,
+            "sampleId": "other-sample",
+            "suspicious": true
+          }
+        },
+        {
+          "ordinal": 2,
+          "instrument": "screen",
+          "sampleId": "dev-k",
+          "nodeKey": "root/samples:1/screen",
+          "idempotencyKey": "2a1668dadb0fc003cb438049cf0885f3a1a6c5f4999aeeb93a6d00c55e1d87e4",
+          "syntheticCost": 1,
+          "outcome": "returned",
+          "observation": {
+            "ok": true,
+            "sampleId": "dev-k",
+            "suspicious": true
+          }
+        },
+        {
+          "ordinal": 3,
+          "instrument": "reproduce",
+          "sampleId": "dev-k",
+          "nodeKey": "root/samples:1/reproduce",
+          "idempotencyKey": "4e97a3074b5199aafffb5f6d8a50dc4adc849e1ef1ffbe11161ae3b0bc389260",
+          "syntheticCost": 10,
+          "outcome": "returned",
+          "observation": {
+            "evidenceId": "observation-dev-k",
+            "independent": true,
+            "ok": true,
+            "reproduced": true,
+            "sampleId": "other-sample"
+          }
+        }
+      ]
+    }
+  ],
+  "qualification": "Fixed source-informed synthetic scenarios. Provider-hidden split only when withheld from synthesis; no population, autonomous discovery, production, or independent instrument calibration claim.",
+  "nativeEvaluatorId": "suite:sample-consequence-development-v1:0edadddb1f94f88cdbaebdfbc382d3f18d7c6faac720bc066ba3fb79ccf0e005"
+}

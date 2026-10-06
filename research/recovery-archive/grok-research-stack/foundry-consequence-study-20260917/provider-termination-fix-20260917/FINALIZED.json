@@ -1,0 +1,162 @@
+{
+  "schemaVersion": "provider-termination-fix-final-v1",
+  "status": "FINALIZED_PASS_OFFLINE",
+  "at": "2026-09-17T09:11:17.091Z",
+  "sources": [
+    {
+      "source": "/home/raed/Projects/workflow-foundry/src/opencode-v2-free.mjs",
+      "copy": "after/opencode-v2-free.mjs",
+      "sha256": "f8c4ad5fbdb6bf4ad41e16b0417f27836890931e997731e888c1fa11f4e3ee84",
+      "bytes": 35419
+    },
+    {
+      "source": "/home/raed/Projects/workflow-foundry/tests/provider-termination.test.mjs",
+      "copy": "after/provider-termination.test.mjs",
+      "sha256": "e7e4673b633f1302933d6f1cb09bc2bc2ad748c54487a9efb10c711e0bf25462",
+      "bytes": 10958
+    }
+  ],
+  "validation": {
+    "runner": "prime session64977; worker read saved process/per-case receipts",
+    "focusedTests": {
+      "passed": 23,
+      "failed": 0,
+      "skipped": 0,
+      "newActualAdapterControls": 10
+    },
+    "syntax": "PASS",
+    "doctor": "PASS",
+    "sourceStable": true,
+    "receipt": "checks-a0b747ed-144f-48eb-a25b-0dcf46a92029/RESULT.json"
+  },
+  "preservation": {
+    "priorCampaignUnchanged": true,
+    "verifiedPriorCampaignReceipts": 23,
+    "unchangedOldProtocolSources": 40,
+    "intentionalChangedOldProtocolSources": [
+      {
+        "file": "/home/raed/Projects/workflow-foundry/src/opencode-v2-free.mjs",
+        "before": "5772e2d2d7ae60de702cce310af5124f8331e4c3f0c4a2ccc44d5762bafcb9c6",
+        "after": "f8c4ad5fbdb6bf4ad41e16b0417f27836890931e997731e888c1fa11f4e3ee84"
+      }
+    ],
+    "oldProtocolCheckExpectedExit": 1,
+    "oldProtocolCheckActualExit": 1,
+    "evaluatorFreezesUnchanged": true,
+    "historicalSourceStableFieldUnchanged": true
+  },
+  "scope": {
+    "firstCause": "First locally observed terminal cause recorded before abort; not remote causal attestation",
+    "newSourceFiles": [
+      "tests/provider-termination.test.mjs"
+    ],
+    "changedSourceFiles": [
+      "src/opencode-v2-free.mjs"
+    ],
+    "liveModelCalls": 0,
+    "externalProviderRequests": 0,
+    "fullRepositoryRegression": "Owned separately by prime; not included in this focused receipt"
+  },
+  "unavailableEvidence": {
+    "serena": "HTTP404 tunnel_client_not_seen",
+    "projectQualityMap": "network_error Connection failed",
+    "fullSecurityScan": "HTTP404 tunnel_client_not_seen"
+  },
+  "files": [
+    {
+      "file": "BEFORE.json",
+      "sha256": "f765fe7603563349a546c05a172b24507bd8f3ddaa6137e3c3b8820afd54deaa",
+      "bytes": 16320
+    },
+    {
+      "file": "before/opencode-v2-free.mjs",
+      "sha256": "5772e2d2d7ae60de702cce310af5124f8331e4c3f0c4a2ccc44d5762bafcb9c6",
+      "bytes": 33490
+    },
+    {
+      "file": "before/opencode-v2-free.test.mjs",
+      "sha256": "b6ab1e50173501254a267c9f7b151de5e0b3c3e0699359c131f13a14ae7954ee",
+      "bytes": 13051
+    },
+    {
+      "file": "before/provider-quota.test.mjs",
+      "sha256": "9d2f99a7d235d6ca7f65c4a7d266cd1c5283762b986a4d5dd1537d791976244f",
+      "bytes": 3932
+    },
+    {
+      "file": "SOURCE-FREEZE.json",
+      "sha256": "a9ca4950fcc0bdf55d26a3f7a7bcbdf374b46de804b46081e67f5bf7dd266cc3",
+      "bytes": 887
+    },
+    {
+      "file": "after/opencode-v2-free.mjs",
+      "sha256": "f8c4ad5fbdb6bf4ad41e16b0417f27836890931e997731e888c1fa11f4e3ee84",
+      "bytes": 35419
+    },
+    {
+      "file": "after/provider-termination.test.mjs",
+      "sha256": "e7e4673b633f1302933d6f1cb09bc2bc2ad748c54487a9efb10c711e0bf25462",
+      "bytes": 10958
+    },
+    {
+      "file": "ADAPTER.diff",
+      "sha256": "d9f5227e83919811caf2af7e5332591eb536ff75c440906bff795a01f9c12d26",
+      "bytes": 9601
+    },
+    {
+      "file": "CHANGE-RECEIPT.json",
+      "sha256": "9668ffb5d6f9fcdf5c1d155a5f039aa26401cfa11e9e3e6eacdf118d2b0e2425",
+      "bytes": 2422
+    },
+    {
+      "file": "TEST-REVIEW.json",
+      "sha256": "85c6afa5970818a2f0f4ce137ed48229ee75c20dee2b2aecd7d6f60e824dfed3",
+      "bytes": 7398
+    },
+    {
+      "file": "BLOCKED-ATTEMPTS.json",
+      "sha256": "957ea4d9203e28c5f753e994ed66ba1b9b73e332c89b4abdf892d0b86fb3ff79",
+      "bytes": 2084
+    },
+    {
+      "file": "NOTE.md",
+      "sha256": "adc8f182ed2784352cf73c351abff73941ed6339287d93ae8404699623cb2843",
+      "bytes": 9541
+    },
+    {
+      "file": "verify.mjs",
+      "sha256": "65266c946770830fb463d968b3c6b0b813b96f16a714d7b7ee08b572a7c297f9",
+      "bytes": 2636
+    },
+    {
+      "file": "inspect-change.mjs",
+      "sha256": "6cf3e90398f28c8353af628a7b552b77e12240d14f5e81aeb3c91a168a78d7bd",
+      "bytes": 3221
+    },
+    {
+      "file": "checks-a0b747ed-144f-48eb-a25b-0dcf46a92029/RESULT.json",
+      "sha256": "0005bc2f61497ca6be64012922ae46002534d42f42959eeb5d3bbf94d26a7649",
+      "bytes": 1324
+    },
+    {
+      "file": "checks-a0b747ed-144f-48eb-a25b-0dcf46a92029/focused-tests.json",
+      "sha256": "532953ab1a10e7322b0de8c7a9d48cb7aedf6f831136a3215e691fe06ddf1509",
+      "bytes": 3025
+    },
+    {
+      "file": "checks-a0b747ed-144f-48eb-a25b-0dcf46a92029/syntax-provider.json",
+      "sha256": "7c86e59bdc521bbb4542db3205310e9947217cd7c7989edbc6820ecb3d04b251",
+      "bytes": 198
+    },
+    {
+      "file": "checks-a0b747ed-144f-48eb-a25b-0dcf46a92029/syntax-tests.json",
+      "sha256": "c56b155b8e2f7de347f9668a54291746dc4f00b52721082b741600aa69067740",
+      "bytes": 209
+    },
+    {
+      "file": "checks-a0b747ed-144f-48eb-a25b-0dcf46a92029/doctor.json",
+      "sha256": "bdfb9d245da2a82f3f89563b21a6a2de2abcb3f90d8a5d5f33bed52b930a1fb7",
+      "bytes": 852
+    }
+  ]
+}

@@ -1,0 +1,163 @@
+{
+  "schemaVersion": "1.0",
+  "id": "OverlappingInstruments",
+  "version": 1,
+  "title": "ObservedPositiveControl",
+  "goal": "Independently handcrafted evaluator attack; no construction quality claim",
+  "domain": "diagnostic",
+  "inputSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "samples"
+    ],
+    "properties": {
+      "samples": {
+        "type": "array",
+        "maxItems": 6,
+        "uniqueItems": true,
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            }
+          }
+        }
+      }
+    }
+  },
+  "envelope": {
+    "assumptions": [
+      "Independently supplied audit graph"
+    ],
+    "risks": [
+      "May deliberately violate public constraints"
+    ],
+    "successCriteria": [
+      "Record real evaluator result and trace"
+    ]
+  },
+  "budget": {
+    "maxSteps": 40,
+    "maxConcurrency": 2,
+    "maxDurationMs": 5000,
+    "maxCost": 0
+  },
+  "nodes": [
+    {
+      "id": "screening",
+      "kind": "task",
+      "description": "Independent audit screening",
+      "tool": "lab.screen",
+      "args": {
+        "sampleId": {
+          "$ref": "input.samples.0.id"
+        }
+      },
+      "needs": [],
+      "timeoutMs": 1000,
+      "retry": {
+        "maxAttempts": 1
+      },
+      "onError": "continue"
+    },
+    {
+      "id": "reproduction",
+      "kind": "task",
+      "description": "Independent audit reproduction",
+      "tool": "lab.reproduce",
+      "args": {
+        "sampleId": {
+          "$ref": "input.samples.0.id"
+        }
+      },
+      "needs": [],
+      "timeoutMs": 1000,
+      "retry": {
+        "maxAttempts": 1
+      },
+      "onError": "continue"
+    },
+    {
+      "id": "evidence",
+      "kind": "assert",
+      "needs": [
+        "reproduction",
+        "screening"
+      ],
+      "description": "Check evidence for one-sample supplied control",
+      "checks": [
+        {
+          "op": "eq",
+          "left": {
+            "$ref": "nodes.screening.suspicious"
+          },
+          "right": true
+        },
+        {
+          "op": "eq",
+          "left": {
+            "$ref": "nodes.reproduction.sampleId"
+          },
+          "right": {
+            "$ref": "input.samples.0.id"
+          }
+        },
+        {
+          "op": "eq",
+          "left": {
+            "$ref": "nodes.reproduction.independent"
+          },
+          "right": true
+        },
+        {
+          "op": "eq",
+          "left": {
+            "$ref": "nodes.reproduction.reproduced"
+          },
+          "right": true
+        },
+        {
+          "op": "ne",
+          "left": {
+            "$ref": "nodes.reproduction.evidenceId"
+          },
+          "right": ""
+        }
+      ]
+    },
+    {
+      "id": "publish",
+      "kind": "task",
+      "description": "Independent audit publish",
+      "tool": "core.artifact",
+      "args": {
+        "name": "manifest.json",
+        "content": "{\"samples\":[{\"sampleId\":\"independent-a\",\"disposition\":\"confirmed\"}]}"
+      },
+      "needs": [
+        "evidence"
+      ],
+      "timeoutMs": 1000,
+      "retry": {
+        "maxAttempts": 1
+      },
+      "join": "all_resolved"
+    }
+  ],
+  "acceptance": [
+    {
+      "op": "exists",
+      "value": {
+        "$ref": "nodes.publish.sha256"
+      }
+    }
+  ]
+}

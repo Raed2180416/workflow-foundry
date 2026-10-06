@@ -1,0 +1,82 @@
+{
+  "evaluatorId": "suite:own-two-clear:f0c699503a663c6f2fb0834b547beeabcc20c0b0b944b7008cceb660c9f62da0",
+  "workflowHash": "fc283251441403b17b6f539d6b9aeb65b3308ae4261fa920ddc327f757305216",
+  "registryHash": "bb3f73d712e174d3084248c8d199a620b7eeb2a7b2655d64b6286ab3af536d0e",
+  "suiteHash": "f0c699503a663c6f2fb0834b547beeabcc20c0b0b944b7008cceb660c9f62da0",
+  "split": "diagnostic",
+  "qualificationLevel": "task-outcome",
+  "passed": false,
+  "metrics": {
+    "passedCount": 0,
+    "caseCount": 1,
+    "successFraction": 0,
+    "falseSuccessCount": 1,
+    "totalSteps": 3,
+    "totalCost": 0,
+    "elapsedMs": 22
+  },
+  "envelope": [
+    "Independent finite exposed evaluator review, not frozen-suite evaluation."
+  ],
+  "cases": [
+    {
+      "id": "own-two-clear",
+      "passed": false,
+      "status": "succeeded",
+      "falseSuccess": true,
+      "checks": [],
+      "artifacts": [
+        {
+          "name": "manifest.json",
+          "passed": false,
+          "sha256": "5617efa400aa925a10d2eb052ece9887b697f95b997d0b7661e070a9f35d5ee9"
+        }
+      ],
+      "steps": 3,
+      "cost": 0,
+      "elapsedMs": 11,
+      "runId": "bb18abaa-c90b-4df1-a774-14e50dcf96ec",
+      "workspace": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/report-extra-field/case-nfnCAm",
+      "exception": null,
+      "runError": null,
+      "failedNodes": [],
+      "eventCount": 9,
+      "diagnostic": {
+        "input": {
+          "samples": [
+            {
+              "id": "independent-a"
+            },
+            {
+              "id": "independent-b"
+            }
+          ]
+        },
+        "expected": {
+          "statuses": [
+            "succeeded"
+          ],
+          "checks": [],
+          "artifacts": [
+            {
+              "name": "manifest.json",
+              "json": {
+                "samples": [
+                  {
+                    "sampleId": "independent-a",
+                    "disposition": "clear"
+                  },
+                  {
+                    "sampleId": "independent-b",
+                    "disposition": "clear"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "qualification": "Only this explicitly enumerated suite, capability registry and budget; not arbitrary deployment or commercial parity"
+}

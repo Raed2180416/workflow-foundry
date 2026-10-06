@@ -1,0 +1,98 @@
+{
+  "status": "source-frozen-after-ancestor-fix",
+  "date": "2026-09-17",
+  "worker": "worker-4",
+  "repository": "/home/raed/Projects/workflow-foundry",
+  "api": "inspectOutcomeHistory(store, { receiptId, currentRegistryHash })",
+  "implementationLines": 153,
+  "supersedes": {
+    "file": "FINALIZED.json",
+    "sha256": "0323ee7b8cd0aefcddec506199efeb6084bc8427f1ae5edac48b6e252d93ea1c",
+    "preservedAtOriginalPath": true,
+    "reason": "Independent review identified missing ancestor proposal base and repair intent checks. Original source and passing-but-insufficient tests are retained."
+  },
+  "sourceHashes": {
+    "src/outcome-history.mjs": "4caa2bce1e7b55226367ac0b5178d51af92ac1d145b48b5b820e584476b08b8a",
+    "tests/outcome-history.test.mjs": "da0c63da47850ff40e11a2e6fd515f9388ecdac4cb3aa7b2b31f7b618a1c8c27",
+    "docs/OUTCOME-HISTORY.md": "0743ef392c17cad661e03b7ce632bb4bf785d83af7948b902fff111025d5ac16"
+  },
+  "sourceSnapshots": "lineage-fix/final-source/",
+  "supportedObserver": {
+    "kind": "exact-json-artifact/2",
+    "sourceSha256": "8de15af4b6ce842c3e54039531c651472a9079a231bf31390f4a8f95b924f1fd",
+    "dataSha256": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c",
+    "testedNode": "v24.21.0",
+    "matchingReceiptNodeRequired": true
+  },
+  "independentFindingAndReproduction": {
+    "reviewOrigin": "Independent worker-6 findings relayed by prime; reproduced by worker-4 before patching.",
+    "originalSourceSha256": "023921bb5bd99982c821b9fc9ec28e68763f8344ea53e57c824e6e0608f75610",
+    "originalSource": "lineage-fix/outcome-history.mjs",
+    "original55TestSource": "lineage-fix/outcome-history.test.mjs",
+    "regressionTestSourceSha256BeforeAndAfterFix": "da0c63da47850ff40e11a2e6fd515f9388ecdac4cb3aa7b2b31f7b618a1c8c27",
+    "preFixCommand": "node --test --test-reporter=tap --test-name-pattern=ancestor tests/outcome-history.test.mjs",
+    "preFixExitCode": 1,
+    "preFixTests": 3,
+    "preFixPassed": 0,
+    "preFixFailed": 3,
+    "preFixFailure": "Missing expected exception: original inspector accepted each deliberate depth-two fixture inconsistency.",
+    "preFixStdout": "lineage-fix/pre-fix.stdout",
+    "preFixStdoutSha256": "3956258a4b2e176cc68895a66c7fc5094e01acf66568cc2013bc8e72d63dc6f7",
+    "counterexamples": [
+      "lineage-fix/pre-fix-evidence/foundry-history-r9HvNt/UNEXPECTED-HISTORY.json",
+      "lineage-fix/pre-fix-evidence/foundry-history-QOjQb1/UNEXPECTED-HISTORY.json",
+      "lineage-fix/pre-fix-evidence/foundry-history-ukOZeE/UNEXPECTED-HISTORY.json"
+    ],
+    "qualification": "Deliberate corruption of fresh disposable native fixtures; not a claim that real saved work was corrupted."
+  },
+  "fix": [
+    "Require prior.baseHash === parent.baseHash for every ancestor proposal/request pair.",
+    "When parent.parentRequestId exists, require parent goal and successCriteria to equal its own applied proposal workflow goal and criteria."
+  ],
+  "validation": {
+    "command": "node --test --test-reporter=tap tests/outcome-history.test.mjs",
+    "exitCode": 0,
+    "tests": 58,
+    "passed": 58,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "durationMs": 2138.039982,
+    "stdout": "lineage-fix/post-fix.stdout",
+    "stdoutSha256": "daa66ca467bcbe8136d547b752d7ae36e0e5b571fc98ea4e6b0d2df76ec4b29b",
+    "evidence": "lineage-fix/post-fix-evidence/",
+    "syntaxExitCode": 0,
+    "diffCheckExitCode": 0,
+    "actualReadOnlySQLite": true,
+    "queryOnlyWithWriteRefusalControl": true,
+    "selectOnlyAndNoSchemaWrites": true,
+    "noLogicalDatabaseChanges": true,
+    "liveArtifactReadsByInspector": false,
+    "historyResultRejectedByExistingRepair": true,
+    "oldRepairStillRejectsRegistryDrift": true,
+    "earlierFullRegression": "612 passed, 0 failed, 4 skipped of 616 on the superseded 151-line source; retained in FINALIZED.json, not claimed for this correction.",
+    "finalCombinedRegressionOwner": "prime; no duplicate full npm test run by worker-4 after this fix"
+  },
+  "originalSourceEvidence": {
+    "baseline": "SOURCE-BEFORE.sha256",
+    "matchingOriginalFilesExcludingPrimeCLI": 13,
+    "workerEditsToPreExistingProductFiles": 0,
+    "expectedPrimeOwnedChange": {
+      "file": "bin/foundry.mjs",
+      "observedSha256": "450fad505fbc3c77176eb4bb9880343e169c71e402f319e38e3ff6f8182c906b",
+      "reason": "Prime added the read-only history CLI; worker-4 documented the actual route."
+    }
+  },
+  "review": {
+    "originalAndFixedSourceSentBeforeCompletion": true,
+    "postFixIndependentDisposition": "Fixed source sent to prime for worker-6 replay; completed post-fix review not yet received at this finalization."
+  },
+  "pluginChecks": {
+    "status": "unverified",
+    "attempted": ["Serena activate_project exact repository", "project_quality_map", "security_scan full with registry rules disabled"],
+    "error": "HTTP 404 tunnel_client_not_seen"
+  },
+  "liveModelCalls": 0,
+  "hiddenBenchmarkReads": 0,
+  "qualification": "Read-only historical evidence inspection; currentEvidenceCheck remains unverified and currentWorldQualification remains false. No compatibility certificate, repair permission, or general intent proof."
+}

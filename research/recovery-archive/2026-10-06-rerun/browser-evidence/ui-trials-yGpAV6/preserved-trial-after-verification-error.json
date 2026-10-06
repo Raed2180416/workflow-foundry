@@ -1,0 +1,38 @@
+{
+  "artifactReceipts": [
+    {
+      "bytes": 33,
+      "name": "neutral.txt",
+      "sha256": "7bf33505c0f808d0176695bf7c972967da1a57abce2bb87c08079a8692737265"
+    }
+  ],
+  "baseHash": null,
+  "cost": 0,
+  "createdAt": 1791274332480,
+  "error": null,
+  "eventHead": {
+    "hash": "4e0d8736543c4892cbb150d1cc5d6c8694913056c8f3662ba5f1e7d8d4c1796e",
+    "seq": 13
+  },
+  "finishedAt": 1791274332675,
+  "id": "2939bd4f-8b2a-42ad-975c-885c77769636",
+  "inputHash": "dc9eb06d34678c51646ff351f87f265f5425aaed03f0a9d147b14e4b379c0d43",
+  "localAcceptancePassed": true,
+  "ordinal": 2,
+  "outputHash": "f94c3c23960a29436fb7c61f1721dc3c31dbd9ac73fc74eadf216113c877297a",
+  "pid": 1910544,
+  "policyHash": "fcd24fa36c355427c704e57450e66d721afeed2f19367c577c89ba8ec2abaeca",
+  "processStart": "8481913",
+  "qualification": "Isolated diagnostic execution only. Local acceptance is model-authored; no independent outcome qualification.",
+  "qualificationLevel": "construction",
+  "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+  "requestId": "6d77c25f-be87-4ad8-9c29-ad0abbd03518",
+  "runId": "0e969d5f-613e-4f93-8f03-21f74be6e54d",
+  "runStatus": "succeeded",
+  "status": "finished",
+  "steps": 4,
+  "taskOutcomeQualified": false,
+  "workflowHash": "158f263ad6e967cab015576f74a33f6a815fb3bd6897ef296c241e9e60018408",
+  "workflowId": "UITrialNested",
+  "workflowVersion": 1
+}

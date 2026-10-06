@@ -1,0 +1,31 @@
+{
+  "requestId": "b22dcdae-afd6-4d67-9243-b73f71dd0c1b",
+  "proposalId": "5b3b82c7-12f8-4d3f-b402-a478787ca7c2",
+  "runId": "45fe08ea-ae80-448f-b3da-398633c160ea",
+  "workflowId": "UIRepairObserved",
+  "workflowHash": "be548e190b4c0efa4ee7ced43afd9cb2fec634a181ee9cb4e9a70ae5559821de",
+  "workflowVersion": 1,
+  "inputHash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+  "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+  "eventHead": {
+    "hash": "bbfe1db4d7fe287202d46d81cb5fd5b67e906e2d2a82fc6ac4c9c22217a646eb",
+    "seq": 5
+  },
+  "eventCount": 5,
+  "status": "failed",
+  "localExecutionSucceeded": false,
+  "independentTaskVerified": false,
+  "matchedTaskEvidence": [
+    {
+      "id": "22c5e37e459951abc12fd09ce73d903385badacc17e9d6da928bd433c3938cc9",
+      "evaluatorId": "handwritten-local-suite-control",
+      "passed": true,
+      "split": "development",
+      "envelope": [
+        "A separate neutral suite; not this run input"
+      ],
+      "qualification": null
+    }
+  ],
+  "qualification": "Exact request/proposal/run linkage is checked. Local success and separately scoped task-suite evidence are distinct; this receipt does not infer arbitrary deployment readiness."
+}

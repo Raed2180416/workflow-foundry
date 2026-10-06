@@ -1,0 +1,112 @@
+{
+  "id": "a7b5a8a3-4784-4c00-914e-a0d8dc6852bd",
+  "requestId": "833651f1-0a71-448a-817b-f1e77d064ece",
+  "baseHash": null,
+  "workflow": {
+    "schemaVersion": "1.0",
+    "id": "outcome-example",
+    "version": 1,
+    "title": "Supplied outcome example",
+    "goal": "Write record.json containing exactly input.record.",
+    "domain": "software",
+    "envelope": {
+      "assumptions": [
+        "One local JSON artifact is sufficient."
+      ],
+      "risks": [
+        "Wrong content."
+      ],
+      "successCriteria": [
+        "Write record.json containing exactly input.record."
+      ],
+      "unsupported": [
+        "General intent inference"
+      ]
+    },
+    "inputSchema": {
+      "type": "object",
+      "required": [
+        "record"
+      ],
+      "properties": {
+        "record": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    "budget": {
+      "maxSteps": 5,
+      "maxConcurrency": 1,
+      "maxDurationMs": 10000,
+      "maxCost": 0
+    },
+    "nodes": [
+      {
+        "id": "encode",
+        "kind": "task",
+        "needs": [],
+        "description": "Encode record.",
+        "tool": "core.json",
+        "args": {
+          "value": {
+            "label": "wrong"
+          }
+        },
+        "timeoutMs": 1000,
+        "retry": {
+          "maxAttempts": 1
+        }
+      },
+      {
+        "id": "file",
+        "kind": "task",
+        "needs": [
+          "encode"
+        ],
+        "description": "Write artifact.",
+        "tool": "core.artifact",
+        "args": {
+          "name": "record.json",
+          "content": {
+            "$ref": "nodes.encode.text"
+          }
+        },
+        "timeoutMs": 1000,
+        "retry": {
+          "maxAttempts": 1
+        }
+      }
+    ],
+    "acceptance": [
+      {
+        "op": "exists",
+        "value": {
+          "$ref": "nodes.file.sha256"
+        }
+      }
+    ]
+  },
+  "workflowHash": "24e27824a49c8d30b457c9cdfe15af96d06889443c60e11e40e08b3d27e27225",
+  "rationale": "Supplied deliberately incorrect development control.",
+  "impact": {
+    "added": [
+      "encode",
+      "file"
+    ],
+    "removed": [],
+    "changed": [],
+    "acceptanceChanged": true,
+    "budgetChanged": true,
+    "activeRunsMigrated": false
+  },
+  "validation": {
+    "valid": true,
+    "errors": [],
+    "warnings": [],
+    "nodeCount": 2,
+    "hash": "24e27824a49c8d30b457c9cdfe15af96d06889443c60e11e40e08b3d27e27225"
+  },
+  "status": "proposed",
+  "createdAt": 1789634908034
+}

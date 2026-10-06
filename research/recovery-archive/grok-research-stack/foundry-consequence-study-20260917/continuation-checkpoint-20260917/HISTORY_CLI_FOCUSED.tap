@@ -1,0 +1,230 @@
+TAP version 13
+# Subtest: CLI performs green-but-wrong -> observed repair -> v2 apply/run -> satisfied and retains original bytes
+ok 1 - CLI performs green-but-wrong -> observed repair -> v2 apply/run -> satisfied and retains original bytes
+  ---
+  duration_ms: 3547.213193
+  type: 'test'
+  ...
+# Subtest: CLI distinguishes confirmed required-file absence from loss of recorded producer bytes
+    # Subtest: wrong filename supports explicit repair
+    ok 1 - wrong filename supports explicit repair
+      ---
+      duration_ms: 2206.149016
+      type: 'test'
+      ...
+    # Subtest: missing recorded bytes remain unknown and do not open repair
+    ok 2 - missing recorded bytes remain unknown and do not open repair
+      ---
+      duration_ms: 1453.475066
+      type: 'test'
+      ...
+    1..2
+ok 2 - CLI distinguishes confirmed required-file absence from loss of recorded producer bytes
+  ---
+  duration_ms: 3660.22518
+  type: 'test'
+  ...
+# Subtest: CLI rejects stale repair creation and stale context/proposal/apply after a competing ordinary revision
+    # Subtest: repair creation
+    ok 1 - repair creation
+      ---
+      duration_ms: 1760.648224
+      type: 'test'
+      ...
+    # Subtest: existing repair and pending proposal
+    ok 2 - existing repair and pending proposal
+      ---
+      duration_ms: 2670.302507
+      type: 'test'
+      ...
+    1..2
+ok 3 - CLI rejects stale repair creation and stale context/proposal/apply after a competing ordinary revision
+  ---
+  duration_ms: 4431.368976
+  type: 'test'
+  ...
+# Subtest: CLI refuses tampered artifact evidence at observe, repair, context, propose and apply
+ok 4 - CLI refuses tampered artifact evidence at observe, repair, context, propose and apply
+  ---
+  duration_ms: 3173.48522
+  type: 'test'
+  ...
+# Subtest: CLI rejects cross-run receipts, frozen expectation changes and goal/success-criteria drift
+ok 5 - CLI rejects cross-run receipts, frozen expectation changes and goal/success-criteria drift
+  ---
+  duration_ms: 2275.525028
+  type: 'test'
+  ...
+# Subtest: CLI ordinary propose/apply still accepts explicit user revisions and creates no outcome ledger
+ok 6 - CLI ordinary propose/apply still accepts explicit user revisions and creates no outcome ledger
+  ---
+  duration_ms: 1107.752228
+  type: 'test'
+  ...
+# Subtest: CLI outcome entry points require coordinator-created requests and cannot treat an ordinary proposal as a repair
+ok 7 - CLI outcome entry points require coordinator-created requests and cannot treat an ordinary proposal as a repair
+  ---
+  duration_ms: 1589.05291
+  type: 'test'
+  ...
+# Subtest: CLI outcome argument validation prevents implicit input, provider setup, mixed task and service dispatch
+ok 8 - CLI outcome argument validation prevents implicit input, provider setup, mixed task and service dispatch
+  ---
+  duration_ms: 2788.040562
+  type: 'test'
+  ...
+# Subtest: CLI contract accepts explicitly supplied null and preserves the default repair depth bound
+ok 9 - CLI contract accepts explicitly supplied null and preserves the default repair depth bound
+  ---
+  duration_ms: 1837.180086
+  type: 'test'
+  ...
+# Subtest: CLI generate --outcome-repair uses the real generator and facade with isolated supplied provider doubles
+    # Subtest: opencode-free
+    ok 1 - opencode-free
+      ---
+      duration_ms: 1822.827473
+      type: 'test'
+      ...
+    # Subtest: opencode-v2-free
+    ok 2 - opencode-v2-free
+      ---
+      duration_ms: 1802.552931
+      type: 'test'
+      ...
+    1..2
+ok 10 - CLI generate --outcome-repair uses the real generator and facade with isolated supplied provider doubles
+  ---
+  duration_ms: 3625.779252
+  type: 'test'
+  ...
+# Subtest: CLI outcome generation refuses stale context before provider dispatch and rechecks changed evidence before proposal
+    # Subtest: stale before dispatch
+    ok 1 - stale before dispatch
+      ---
+      duration_ms: 1940.521087
+      type: 'test'
+      ...
+    # Subtest: evidence changes during supplied callback
+    ok 2 - evidence changes during supplied callback
+      ---
+      duration_ms: 1630.417267
+      type: 'test'
+      ...
+    1..2
+ok 11 - CLI outcome generation refuses stale context before provider dispatch and rechecks changed evidence before proposal
+  ---
+  duration_ms: 3571.307486
+  type: 'test'
+  ...
+# Subtest: CLI uses the immutable repair ledger to prevent ordinary-route bypass after request markers are removed
+ok 12 - CLI uses the immutable repair ledger to prevent ordinary-route bypass after request markers are removed
+  ---
+  duration_ms: 1886.216664
+  type: 'test'
+  ...
+# Subtest: documented offline shell example executes the supplied repair and retains both artifact versions
+ok 13 - documented offline shell example executes the supplied repair and retains both artifact versions
+  ---
+  duration_ms: 2228.625456
+  type: 'test'
+  ...
+# Subtest: history CLI is read-only with unsatisfied preserved bytes
+ok 14 - history CLI is read-only with unsatisfied preserved bytes
+  ---
+  duration_ms: 195.178977
+  type: 'test'
+  ...
+# Subtest: history CLI is read-only with satisfied preserved bytes
+ok 15 - history CLI is read-only with satisfied preserved bytes
+  ---
+  duration_ms: 143.41363
+  type: 'test'
+  ...
+# Subtest: changed or deleted live bytes do not become a current evidence check
+ok 16 - changed or deleted live bytes do not become a current evidence check
+  ---
+  duration_ms: 550.916872
+  type: 'test'
+  ...
+# Subtest: recorded producer loss stays unknown in the CLI
+ok 17 - recorded producer loss stays unknown in the CLI
+  ---
+  duration_ms: 208.555413
+  type: 'test'
+  ...
+# Subtest: historical report cannot open an outcome repair
+ok 18 - historical report cannot open an outcome repair
+  ---
+  duration_ms: 386.220353
+  type: 'test'
+  ...
+# Subtest: history CLI rejects operational arguments --components before opening a workspace
+ok 19 - history CLI rejects operational arguments --components before opening a workspace
+  ---
+  duration_ms: 158.973272
+  type: 'test'
+  ...
+# Subtest: history CLI rejects operational arguments --agent before opening a workspace
+ok 20 - history CLI rejects operational arguments --agent before opening a workspace
+  ---
+  duration_ms: 161.353357
+  type: 'test'
+  ...
+# Subtest: history CLI rejects operational arguments --auto-apply before opening a workspace
+ok 21 - history CLI rejects operational arguments --auto-apply before opening a workspace
+  ---
+  duration_ms: 161.239253
+  type: 'test'
+  ...
+# Subtest: history CLI rejects operational arguments --request before opening a workspace
+ok 22 - history CLI rejects operational arguments --request before opening a workspace
+  ---
+  duration_ms: 160.289761
+  type: 'test'
+  ...
+# Subtest: history CLI rejects operational arguments extra-position before opening a workspace
+ok 23 - history CLI rejects operational arguments extra-position before opening a workspace
+  ---
+  duration_ms: 175.020508
+  type: 'test'
+  ...
+# Subtest: history CLI cannot create an absent workspace
+ok 24 - history CLI cannot create an absent workspace
+  ---
+  duration_ms: 166.154906
+  type: 'test'
+  ...
+# Subtest: history CLI never initializes missing outcome tables
+ok 25 - history CLI never initializes missing outcome tables
+  ---
+  duration_ms: 176.453938
+  type: 'test'
+  ...
+# Subtest: history CLI rejects symlinked directory
+ok 26 - history CLI rejects symlinked directory
+  ---
+  duration_ms: 193.81575
+  type: 'test'
+  ...
+# Subtest: history CLI rejects symlinked database
+ok 27 - history CLI rejects symlinked database
+  ---
+  duration_ms: 202.561168
+  type: 'test'
+  ...
+# Subtest: history CLI rejects symlinked wal
+ok 28 - history CLI rejects symlinked wal
+  ---
+  duration_ms: 192.368205
+  type: 'test'
+  ...
+1..28
+# tests 36
+# suites 0
+# pass 36
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 35772.085877

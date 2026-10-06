@@ -1,0 +1,42 @@
+{
+  "status": "PASS_INTENTIONAL_SOURCE_EVOLUTION",
+  "at": "2026-09-17T09:09:06.329Z",
+  "differences": [
+    {
+      "file": "/home/raed/Projects/workflow-foundry/src/opencode-v2-free.mjs",
+      "before": "5772e2d2d7ae60de702cce310af5124f8331e4c3f0c4a2ccc44d5762bafcb9c6",
+      "after": "f8c4ad5fbdb6bf4ad41e16b0417f27836890931e997731e888c1fa11f4e3ee84"
+    }
+  ],
+  "oldProtocolCheck": {
+    "command": [
+      "/usr/bin/node",
+      "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/provider-continuation-20260917/driver.mjs",
+      "check",
+      "0ddea4e6e18e524e0f843bb55b002e702b4b9e79838d37789d47f7c1fb762ae3"
+    ],
+    "expectedExitCode": 1,
+    "exitCode": 1,
+    "stdout": "",
+    "stderr": "{\"code\":\"ERR_ASSERTION\",\"message\":\"Complete frozen configuration/source identity differs\\n+ actual - expected\\n... Skipped lines\\n\\n  {\\n    architecture: 'x64',\\n    authorization: 'Await prime review and separate run instruction. Protocol hash binds bytes; it is not authentication of the operator.',\\n    calibration: {\\n      checks: 18,\\n...\\n        file: '/home/raed/Projects/workflow-foundry/src/opencode-v2-free.mjs',\\n+       sha256: '5772e2d2d7ae60de702cce310af5124f8331e4c3f0c4a2ccc44d5762bafcb9c6'\\n-       sha256: 'f8c4ad5fbdb6bf4ad41e16b0417f27836890931e997731e888c1fa11f4e3ee84'\\n      },\\n      {\\n        file: '/home/raed/Projects/workflow-foundry/package.json',\\n        sha256: 'cb314fd60e0b59c2fed9782c66d8ddc889ce64b4add93ed499eb3e6de139cf5a'\\n      },\\n\"}\n"
+  },
+  "unchangedOldProtocolSources": 40,
+  "unchangedFailedCampaignReceipts": 23,
+  "unchangedEvaluatorFreezes": [
+    {
+      "file": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/FREEZE.json",
+      "sha256": "191da6649ceaa22087636059b241de2fd758768aabdfde0aa9d480cb27246f62",
+      "includesProvider": false
+    },
+    {
+      "file": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/FREEZE_V2.json",
+      "sha256": "5e4af4f2d1b3e90e65373cc40b4e8857d9248e769ee47b8dd79fa9d72e4595d2",
+      "includesProvider": false
+    }
+  ],
+  "priorCampaignSourceStableFieldPreserved": true,
+  "newTestsSHA256": "e7e4673b633f1302933d6f1cb09bc2bc2ad748c54487a9efb10c711e0bf25462",
+  "diffSHA256": "d9f5227e83919811caf2af7e5332591eb536ff75c440906bff795a01f9c12d26",
+  "liveModelCalls": 0,
+  "externalRequests": 0
+}

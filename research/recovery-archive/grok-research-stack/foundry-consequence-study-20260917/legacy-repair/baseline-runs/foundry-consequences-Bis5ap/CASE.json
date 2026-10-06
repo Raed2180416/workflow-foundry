@@ -1,0 +1,10 @@
+{
+  "test": "composed success branch executes and joins the skipped error output as null",
+  "input": {
+    "claim": {
+      "grounded": true
+    }
+  },
+  "workflowHash": "22770ae01389a606bc4eb6a138be456257aef4cb1857566a98d8dafb3c25e4ef",
+  "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77"
+}

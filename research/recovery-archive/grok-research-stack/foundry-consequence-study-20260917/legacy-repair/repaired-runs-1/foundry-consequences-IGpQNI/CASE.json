@@ -1,0 +1,10 @@
+{
+  "test": "a skipped verification node cannot satisfy workflow acceptance by fallback",
+  "input": {
+    "claim": {
+      "grounded": true
+    }
+  },
+  "workflowHash": "09d6379dc9bbcb56388cb3ff1ed94c65307c080f8bf97fc64f8ea5808ff51021",
+  "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77"
+}

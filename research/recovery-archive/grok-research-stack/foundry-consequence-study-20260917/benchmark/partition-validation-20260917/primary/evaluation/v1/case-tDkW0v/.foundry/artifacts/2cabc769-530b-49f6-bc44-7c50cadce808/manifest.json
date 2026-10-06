@@ -1,0 +1,24 @@
+{
+  "samples": [
+    {
+      "disposition": "error",
+      "sampleId": "w7_ffc2c9b7ee571879e186bee8"
+    },
+    {
+      "disposition": "clear",
+      "sampleId": "w7_72dd3d6f116e38fa9b59fbb0"
+    },
+    {
+      "disposition": "confirmed",
+      "sampleId": "w7_65ff70c88cec1fd17399e8de"
+    },
+    {
+      "disposition": "not_reproduced",
+      "sampleId": "w7_f4bd9f1a6a97fabe7a621b1b"
+    },
+    {
+      "disposition": "inconclusive",
+      "sampleId": "w7_797de6aef3f2c58905730190"
+    }
+  ]
+}

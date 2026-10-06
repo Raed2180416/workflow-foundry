@@ -1,0 +1,27 @@
+{
+  "defect": "wrong-filename",
+  "legacyError": {
+    "code": "REPAIR_RUN_STATE",
+    "message": "Only a terminal failed run can open an automatic diagnostic repair; paused, cancelled or uncertain effects need explicit reconciliation"
+  },
+  "initialRunId": "48ca6cfc-c75d-42b1-a8ac-1fbedaa3102c",
+  "initialStatus": "succeeded",
+  "initialObservation": "unsatisfied",
+  "reason": "required-artifact-absent",
+  "contractId": "7601eb5f67f0d2c4abf423c3055d556c63a023c27e5e3de47575f5f6e6aafa8c",
+  "receiptId": "94af1d01e07f5c1915d6567736ea1e2d59c8ae4cc51cf8b0be1f601431014cc1",
+  "repairRequestId": "2913f580-9d6a-4433-bbcd-1ee0d1bf828d",
+  "repairedProposalId": "014e6ded-0561-4e8c-a7f6-d1d1b160ceeb",
+  "repairedRunId": "46f01adf-abb2-4d8c-831c-3794ce2750b6",
+  "repairedStatus": "succeeded",
+  "repairedObservation": "satisfied",
+  "repairedReceiptId": "c580cee9b0c7c6267e3dfcde5e3d17ed44bc87a618905f17a332f98dc52e1ec8",
+  "originalPath": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/outcome-repair/artifacts/trajectory-v2-b44wYu/wrong-filename/workspace/.foundry/artifacts/48ca6cfc-c75d-42b1-a8ac-1fbedaa3102c/different.json",
+  "originalSha256": "ba1763d175a0000a451951cc5937587d23f089458c8c77d4f6a644bb113f8edb",
+  "originalBytesRetained": true,
+  "repairedPath": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/outcome-repair/artifacts/trajectory-v2-b44wYu/wrong-filename/workspace/.foundry/artifacts/46f01adf-abb2-4d8c-831c-3794ce2750b6/record.json",
+  "repairedSha256": "ba1763d175a0000a451951cc5937587d23f089458c8c77d4f6a644bb113f8edb",
+  "parentAndRootPreserved": true,
+  "workflowVersion": 2,
+  "generationJobs": 0
+}

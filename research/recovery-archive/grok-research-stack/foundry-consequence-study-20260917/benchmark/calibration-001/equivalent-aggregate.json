@@ -1,0 +1,49 @@
+{
+  "name": "equivalent",
+  "supplied": true,
+  "graphValid": true,
+  "development": {
+    "evaluatorId": "sample-consequences-v1:0edadddb1f94f88cdbaebdfbc382d3f18d7c6faac720bc066ba3fb79ccf0e005:ebbdf190674414c29ec2fc7632e8f72b6e3c305c5abd20b322cc8a077304f732",
+    "workflowHash": "e3099734a8fed520992d02bd3943e089c47fefb725fece1835a12557f78411a2",
+    "registryHash": "bb3f73d712e174d3084248c8d199a620b7eeb2a7b2655d64b6286ab3af536d0e",
+    "suiteHash": "0edadddb1f94f88cdbaebdfbc382d3f18d7c6faac720bc066ba3fb79ccf0e005",
+    "split": "development",
+    "passed": true,
+    "metrics": {
+      "passedCount": 5,
+      "caseCount": 5,
+      "successFraction": 1,
+      "falseSuccessCount": 0,
+      "totalSteps": 82,
+      "totalCost": 0,
+      "elapsedMs": 390,
+      "missingCalls": 0,
+      "forbiddenCalls": 0,
+      "duplicateCalls": 0,
+      "syntheticCost": 81
+    },
+    "qualification": "Fixed source-informed synthetic scenarios. Provider-hidden split only when withheld from synthesis; no population, autonomous discovery, production, or independent instrument calibration claim."
+  },
+  "sealed": {
+    "evaluatorId": "sample-consequences-v1:7327fd9175b4609f7a0e0cd6cb798dcbb0212b923826ecbbb916df7f19ceb01e:ebbdf190674414c29ec2fc7632e8f72b6e3c305c5abd20b322cc8a077304f732",
+    "workflowHash": "e3099734a8fed520992d02bd3943e089c47fefb725fece1835a12557f78411a2",
+    "registryHash": "bb3f73d712e174d3084248c8d199a620b7eeb2a7b2655d64b6286ab3af536d0e",
+    "suiteHash": "7327fd9175b4609f7a0e0cd6cb798dcbb0212b923826ecbbb916df7f19ceb01e",
+    "split": "heldout",
+    "passed": true,
+    "metrics": {
+      "passedCount": 8,
+      "caseCount": 8,
+      "successFraction": 1,
+      "falseSuccessCount": 0,
+      "totalSteps": 157,
+      "totalCost": 0,
+      "elapsedMs": 914,
+      "missingCalls": 0,
+      "forbiddenCalls": 0,
+      "duplicateCalls": 0,
+      "syntheticCost": 172
+    },
+    "qualification": "Fixed source-informed synthetic scenarios. Provider-hidden split only when withheld from synthesis; no population, autonomous discovery, production, or independent instrument calibration claim."
+  }
+}

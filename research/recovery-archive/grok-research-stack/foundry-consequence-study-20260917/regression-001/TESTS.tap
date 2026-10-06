@@ -1,0 +1,2785 @@
+TAP version 13
+# Subtest: qualified exports declare missing bindings and preserve workflow identity
+ok 1 - qualified exports declare missing bindings and preserve workflow identity
+  ---
+  duration_ms: 19.597658
+  type: 'test'
+  ...
+# Subtest: unsupported or unsafe export contracts are rejected instead of flattened
+ok 2 - unsupported or unsafe export contracts are rejected instead of flattened
+  ---
+  duration_ms: 34.569501
+  type: 'test'
+  ...
+# Subtest: human exports reject partial orders and n8n export rejects human semantics
+ok 3 - human exports reject partial orders and n8n export rejects human semantics
+  ---
+  duration_ms: 6.907018
+  type: 'test'
+  ...
+# Subtest: n8n topology and bindings remain explicit and versioned
+ok 4 - n8n topology and bindings remain explicit and versioned
+  ---
+  duration_ms: 0.789325
+  type: 'test'
+  ...
+# Subtest: n8n generated code executes acceptance and rejects a plausible wrong result
+ok 5 - n8n generated code executes acceptance and rejects a plausible wrong result
+  ---
+  duration_ms: 17.792802
+  type: 'test'
+  ...
+# Subtest: default joins propagate skip while explicit all_resolved joins admit fallback
+ok 6 - default joins propagate skip while explicit all_resolved joins admit fallback
+  ---
+  duration_ms: 14.120171
+  type: 'test'
+  ...
+# Subtest: n8n result correlation, cardinality, output schemas and deadlines fail closed
+ok 7 - n8n result correlation, cardinality, output schemas and deadlines fail closed
+  ---
+  duration_ms: 19.99771
+  type: 'test'
+  ...
+# Subtest: template-like text stays data through code generation
+ok 8 - template-like text stays data through code generation
+  ---
+  duration_ms: 7.286852
+  type: 'test'
+  ...
+# Subtest: portable references and conditions agree with native JSON semantics
+ok 9 - portable references and conditions agree with native JSON semantics
+  ---
+  duration_ms: 0.879595
+  type: 'test'
+  ...
+# Subtest: portable schema checks agree with native validators on discriminating cases
+ok 10 - portable schema checks agree with native validators on discriminating cases
+  ---
+  duration_ms: 48.03532
+  type: 'test'
+  ...
+# Subtest: real LangGraph fixtures: execution, human resume, timeout and tamper rejection
+ok 11 - real LangGraph fixtures: execution, human resume, timeout and tamper rejection
+  ---
+  duration_ms: 3265.553261
+  type: 'test'
+  ...
+# Subtest: Component environment: actual stdio child receives only explicit environment values, not SDK default HOME/USER
+ok 12 - Component environment: actual stdio child receives only explicit environment values, not SDK default HOME/USER
+  ---
+  duration_ms: 165.158276
+  type: 'test'
+  ...
+# Subtest: Component environment: explicitly authorized inherited key remains available without default widening
+ok 13 - Component environment: explicitly authorized inherited key remains available without default widening
+  ---
+  duration_ms: 148.455566
+  type: 'test'
+  ...
+# Subtest: Component environment: a noisy authored server cannot block on undrained stderr
+ok 14 - Component environment: a noisy authored server cannot block on undrained stderr
+  ---
+  duration_ms: 128.771656
+  type: 'test'
+  ...
+# Subtest: Component catalog: duplicate names and repeated cursors fail explicitly rather than choosing an ambiguous first tool
+ok 15 - Component catalog: duplicate names and repeated cursors fail explicitly rather than choosing an ambiguous first tool
+  ---
+  duration_ms: 238.951647
+  type: 'test'
+  ...
+# Subtest: frozen split keeps builder pack disjoint from held-out target bytes for two families
+ok 16 - frozen split keeps builder pack disjoint from held-out target bytes for two families
+  ---
+  duration_ms: 8.581237
+  type: 'test'
+  ...
+# Subtest: builder context with held-out target bytes or paths is rejected as HOLDOUT_LEAKAGE
+ok 17 - builder context with held-out target bytes or paths is rejected as HOLDOUT_LEAKAGE
+  ---
+  duration_ms: 3.55496
+  type: 'test'
+  ...
+# Subtest: held-out suite used as generator or repair feedback fails closed
+ok 18 - held-out suite used as generator or repair feedback fails closed
+  ---
+  duration_ms: 0.555906
+  type: 'test'
+  ...
+# Subtest: scripted provider receives only the builder-visible pack and can still emit a candidate
+ok 19 - scripted provider receives only the builder-visible pack and can still emit a candidate
+  ---
+  duration_ms: 2.024379
+  type: 'test'
+  ...
+# Subtest: skill contamination of held-out bytes in builder skills fails closed
+ok 20 - skill contamination of held-out bytes in builder skills fails closed
+  ---
+  duration_ms: 0.746134
+  type: 'test'
+  ...
+# Subtest: inspectConstructionPair and inspectPair agree on unequal controls, skill contamination and unsealed heldout
+ok 21 - inspectConstructionPair and inspectPair agree on unequal controls, skill contamination and unsealed heldout
+  ---
+  duration_ms: 0.337285
+  type: 'test'
+  ...
+# Subtest: construction program with unequal pair controls is not comparable
+ok 22 - construction program with unequal pair controls is not comparable
+  ---
+  duration_ms: 14.029631
+  type: 'test'
+  ...
+# Subtest: unsealed held-out claims are not comparable
+ok 23 - unsealed held-out claims are not comparable
+  ---
+  duration_ms: 0.630386
+  type: 'test'
+  ...
+# Subtest: schema-valid self-attested candidate missing defining motifs fails closeness and records gaps
+ok 24 - schema-valid self-attested candidate missing defining motifs fails closeness and records gaps
+  ---
+  duration_ms: 1.802412
+  type: 'test'
+  ...
+# Subtest: held-out gold harness is close; that does not make a naive candidate close
+ok 25 - held-out gold harness is close; that does not make a naive candidate close
+  ---
+  duration_ms: 1.1691
+  type: 'test'
+  ...
+# Subtest: weak closeness oracles are rejected
+ok 26 - weak closeness oracles are rejected
+  ---
+  duration_ms: 1.498751
+  type: 'test'
+  ...
+# Subtest: recorded ideological gap becomes a constraint the next construction must respect independently
+ok 27 - recorded ideological gap becomes a constraint the next construction must respect independently
+  ---
+  duration_ms: 5.04345
+  type: 'test'
+  ...
+# Subtest: multi-family program constructs without cheating and reports misses plus a constraint ledger
+ok 28 - multi-family program constructs without cheating and reports misses plus a constraint ledger
+  ---
+  duration_ms: 80.410903
+  type: 'test'
+  ...
+# Subtest: detectLeakage is the shipped gate, not a test double
+ok 29 - detectLeakage is the shipped gate, not a test double
+  ---
+  duration_ms: 0.964775
+  type: 'test'
+  ...
+# Subtest: every family gold is close and naive is not; claimedMotifs are ignored
+ok 30 - every family gold is close and naive is not; claimedMotifs are ignored
+  ---
+  duration_ms: 24.035248
+  type: 'test'
+  ...
+# Subtest: closed-source families leak-fail and record distinctive ideological gaps
+ok 31 - closed-source families leak-fail and record distinctive ideological gaps
+  ---
+  duration_ms: 5.238778
+  type: 'test'
+  ...
+# Subtest: industry families leak-fail and record domain-specific ideological gaps
+ok 32 - industry families leak-fail and record domain-specific ideological gaps
+  ---
+  duration_ms: 5.193824
+  type: 'test'
+  ...
+# Subtest: durable families leak-fail and record distinctive ideological gaps
+ok 33 - durable families leak-fail and record distinctive ideological gaps
+  ---
+  duration_ms: 7.130969
+  type: 'test'
+  ...
+# Subtest: public catalog encoded ids are frozen families; not-encoded stay honest negatives
+ok 34 - public catalog encoded ids are frozen families; not-encoded stay honest negatives
+  ---
+  duration_ms: 0.225885
+  type: 'test'
+  ...
+# Subtest: OpenHands gold treats three action-obs pairs as not stuck and context-window as unimplemented
+ok 35 - OpenHands gold treats three action-obs pairs as not stuck and context-window as unimplemented
+  ---
+  duration_ms: 1.983362
+  type: 'test'
+  ...
+# Subtest: held-out gold harness bytes without the unique marker still fail closed
+ok 36 - held-out gold harness bytes without the unique marker still fail closed
+  ---
+  duration_ms: 4.347381
+  type: 'test'
+  ...
+# Subtest: serialized gold source and held-out scenarios fail closed as HOLDOUT_LEAKAGE
+ok 37 - serialized gold source and held-out scenarios fail closed as HOLDOUT_LEAKAGE
+  ---
+  duration_ms: 6.088577
+  type: 'test'
+  ...
+# Subtest: cross-family closeness still records target-family ideological gaps
+ok 38 - cross-family closeness still records target-family ideological gaps
+  ---
+  duration_ms: 0.694548
+  type: 'test'
+  ...
+# Subtest: scripted-respecting is labeled oracle, not a live constructor
+ok 39 - scripted-respecting is labeled oracle, not a live constructor
+  ---
+  duration_ms: 0.066365
+  type: 'test'
+  ...
+# Subtest: CLI construct-compare emits families, no-cheat, misses and constraint ledger
+ok 40 - CLI construct-compare emits families, no-cheat, misses and constraint ledger
+  ---
+  duration_ms: 316.407199
+  type: 'test'
+  ...
+# Subtest: composed success branch executes and joins the skipped error output as null
+ok 41 - composed success branch executes and joins the skipped error output as null
+  ---
+  duration_ms: 213.677798
+  type: 'test'
+  ...
+# Subtest: an actual failed fetch executes the error branch after its bounded retries
+ok 42 - an actual failed fetch executes the error branch after its bounded retries
+  ---
+  duration_ms: 312.225902
+  type: 'test'
+  ...
+# Subtest: failure in the selected error handler does not produce a success receipt
+ok 43 - failure in the selected error handler does not produce a success receipt
+  ---
+  duration_ms: 408.896943
+  type: 'test'
+  ...
+# Subtest: explicit true passes the local claim gate without independent qualification
+ok 44 - explicit true passes the local claim gate without independent qualification
+  ---
+  duration_ms: 129.750127
+  type: 'test'
+  ...
+# Subtest: claim gate rejects false before writing a receipt
+ok 45 - claim gate rejects false before writing a receipt
+  ---
+  duration_ms: 102.705927
+  type: 'test'
+  ...
+# Subtest: claim gate rejects absent claim before writing a receipt
+ok 46 - claim gate rejects absent claim before writing a receipt
+  ---
+  duration_ms: 96.502194
+  type: 'test'
+  ...
+# Subtest: claim gate rejects absent grounded field before writing a receipt
+ok 47 - claim gate rejects absent grounded field before writing a receipt
+  ---
+  duration_ms: 129.327753
+  type: 'test'
+  ...
+# Subtest: claim gate rejects string true before writing a receipt
+ok 48 - claim gate rejects string true before writing a receipt
+  ---
+  duration_ms: 116.211461
+  type: 'test'
+  ...
+# Subtest: claim gate rejects numeric one before writing a receipt
+ok 49 - claim gate rejects numeric one before writing a receipt
+  ---
+  duration_ms: 99.33824
+  type: 'test'
+  ...
+# Subtest: claim gate rejects null grounded field before writing a receipt
+ok 50 - claim gate rejects null grounded field before writing a receipt
+  ---
+  duration_ms: 120.417917
+  type: 'test'
+  ...
+# Subtest: claim gate rejects null claim before writing a receipt
+ok 51 - claim gate rejects null claim before writing a receipt
+  ---
+  duration_ms: 102.737306
+  type: 'test'
+  ...
+# Subtest: a skipped verification node cannot satisfy workflow acceptance by fallback
+ok 52 - a skipped verification node cannot satisfy workflow acceptance by fallback
+  ---
+  duration_ms: 129.016628
+  type: 'test'
+  ...
+# Subtest: each map item selects its own branch and retains its own input and output
+ok 53 - each map item selects its own branch and retains its own input and output
+  ---
+  duration_ms: 231.072273
+  type: 'test'
+  ...
+# Subtest: all 32 map items can execute with mixed real fetch failures and scoped recovery
+ok 54 - all 32 map items can execute with mixed real fetch failures and scoped recovery
+  ---
+  duration_ms: 3654.237347
+  type: 'test'
+  ...
+# Subtest: an empty map is empty and does not run a root-level fetch
+ok 55 - an empty map is empty and does not run a root-level fetch
+  ---
+  duration_ms: 121.211742
+  type: 'test'
+  ...
+# Subtest: map rejects missing item array before producing a receipt
+ok 56 - map rejects missing item array before producing a receipt
+  ---
+  duration_ms: 123.404559
+  type: 'test'
+  ...
+# Subtest: map rejects 33 items before producing a receipt
+ok 57 - map rejects 33 items before producing a receipt
+  ---
+  duration_ms: 101.679267
+  type: 'test'
+  ...
+# Subtest: the existing map and loop fixture still executes through the local claim gate
+ok 58 - the existing map and loop fixture still executes through the local claim gate
+  ---
+  duration_ms: 194.24292
+  type: 'test'
+  ...
+# Subtest: 30 days is explicitly named unsupported while the bounded wait only pauses
+ok 59 - 30 days is explicitly named unsupported while the bounded wait only pauses
+  ---
+  duration_ms: 130.750893
+  type: 'test'
+  ...
+# Subtest: 30-days is explicitly named unsupported while the bounded wait only pauses
+ok 60 - 30-days is explicitly named unsupported while the bounded wait only pauses
+  ---
+  duration_ms: 138.307392
+  type: 'test'
+  ...
+# Subtest: thirty days is explicitly named unsupported while the bounded wait only pauses
+ok 61 - thirty days is explicitly named unsupported while the bounded wait only pauses
+  ---
+  duration_ms: 118.81407
+  type: 'test'
+  ...
+# Subtest: thirty-days is explicitly named unsupported while the bounded wait only pauses
+ok 62 - thirty-days is explicitly named unsupported while the bounded wait only pauses
+  ---
+  duration_ms: 136.40881
+  type: 'test'
+  ...
+# Subtest: intent classes are not named-harness families
+ok 63 - intent classes are not named-harness families
+  ---
+  duration_ms: 1.462141
+  type: 'test'
+  ...
+# Subtest: intent split keeps builder pack disjoint from held-out gold
+ok 64 - intent split keeps builder pack disjoint from held-out gold
+  ---
+  duration_ms: 1.253709
+  type: 'test'
+  ...
+# Subtest: intent construction rejects held-out target bytes and held-out repair
+ok 65 - intent construction rejects held-out target bytes and held-out repair
+  ---
+  duration_ms: 3.450022
+  type: 'test'
+  ...
+# Subtest: schema-valid self-attested intent candidate missing motifs fails closeness
+ok 66 - schema-valid self-attested intent candidate missing motifs fails closeness
+  ---
+  duration_ms: 2.355603
+  type: 'test'
+  ...
+# Subtest: respecting intent gold is close; naive is not; constraint re-injection is independent
+ok 67 - respecting intent gold is close; naive is not; constraint re-injection is independent
+  ---
+  duration_ms: 7.424502
+  type: 'test'
+  ...
+# Subtest: coding-agent-shaped candidates fail durable-business-process even when they are gold SWE harnesses
+ok 68 - coding-agent-shaped candidates fail durable-business-process even when they are gold SWE harnesses
+  ---
+  duration_ms: 3.931498
+  type: 'test'
+  ...
+# Subtest: every intent gold is close and naive is not; production lattice covers all classes
+ok 69 - every intent gold is close and naive is not; production lattice covers all classes
+  ---
+  duration_ms: 5.745952
+  type: 'test'
+  ...
+# Subtest: intent program constructs without cheating and reports misses plus a constraint ledger
+ok 70 - intent program constructs without cheating and reports misses plus a constraint ledger
+  ---
+  duration_ms: 12.453234
+  type: 'test'
+  ...
+# Subtest: catalog encodes Fin and durable runtimes; coding families stay encoded separately
+ok 71 - catalog encodes Fin and durable runtimes; coding families stay encoded separately
+  ---
+  duration_ms: 0.205657
+  type: 'test'
+  ...
+# Subtest: family program bound rejects more than 32 families; intent bound rejects more than 8 classes
+ok 72 - family program bound rejects more than 32 families; intent bound rejects more than 8 classes
+  ---
+  duration_ms: 0.412816
+  type: 'test'
+  ...
+# Subtest: CLI construct-intent emits intent classes, no-cheat, misses and constraint ledger
+ok 73 - CLI construct-intent emits intent classes, no-cheat, misses and constraint ledger
+  ---
+  duration_ms: 212.727101
+  type: 'test'
+  ...
+# Subtest: FoundryError remains the fail-closed type on intent leakage
+ok 74 - FoundryError remains the fail-closed type on intent leakage
+  ---
+  duration_ms: 0.556748
+  type: 'test'
+  ...
+# Subtest: unknown intent classes fail closed; the lattice is not any-intent
+ok 75 - unknown intent classes fail closed; the lattice is not any-intent
+  ---
+  duration_ms: 0.270799
+  type: 'test'
+  ...
+# Subtest: omitted or mismatched intentClass is not fail-open and becomes a constraint
+ok 76 - omitted or mismatched intentClass is not fail-open and becomes a constraint
+  ---
+  duration_ms: 1.318641
+  type: 'test'
+  ...
+# Subtest: intent gold harness bytes without the unique marker still fail closed
+ok 77 - intent gold harness bytes without the unique marker still fail closed
+  ---
+  duration_ms: 2.694
+  type: 'test'
+  ...
+# Subtest: serialized intent gold and held-out scenarios fail closed as HOLDOUT_LEAKAGE
+ok 78 - serialized intent gold and held-out scenarios fail closed as HOLDOUT_LEAKAGE
+  ---
+  duration_ms: 5.184636
+  type: 'test'
+  ...
+# Subtest: Foundry IR honestly rejects delayMs above 1 hour and compensate nodes
+ok 79 - Foundry IR honestly rejects delayMs above 1 hour and compensate nodes
+  ---
+  duration_ms: 0.42509
+  type: 'test'
+  ...
+# Subtest: createRun caps a 30-day workflow budget at the 1-hour policy default
+ok 80 - createRun caps a 30-day workflow budget at the 1-hour policy default
+  ---
+  duration_ms: 84.275196
+  type: 'test'
+  ...
+# Subtest: wait crash between charge and waiting restarts wakeAt rather than restoring a timer-service deadline
+ok 81 - wait crash between charge and waiting restarts wakeAt rather than restoring a timer-service deadline
+  ---
+  duration_ms: 156.156549
+  type: 'test'
+  ...
+# Subtest: objective composition is not a fifth intent class or named-harness family
+ok 82 - objective composition is not a fifth intent class or named-harness family
+  ---
+  duration_ms: 1.468443
+  type: 'test'
+  ...
+# Subtest: empty unknown and ungrounded objectives fail closed
+ok 83 - empty unknown and ungrounded objectives fail closed
+  ---
+  duration_ms: 0.309382
+  type: 'test'
+  ...
+# Subtest: objective split keeps builder pack disjoint from held-out inspect summaries
+ok 84 - objective split keeps builder pack disjoint from held-out inspect summaries
+  ---
+  duration_ms: 2.001436
+  type: 'test'
+  ...
+# Subtest: objective construction rejects held-out target bytes paths markers and serialized summaries
+ok 85 - objective construction rejects held-out target bytes paths markers and serialized summaries
+  ---
+  duration_ms: 7.598589
+  type: 'test'
+  ...
+# Subtest: schema-valid self-attested objective candidate missing motifs fails closeness
+ok 86 - schema-valid self-attested objective candidate missing motifs fails closeness
+  ---
+  duration_ms: 2.781103
+  type: 'test'
+  ...
+# Subtest: claimedMotifs cannot paper a naive objective graph
+ok 87 - claimedMotifs cannot paper a naive objective graph
+  ---
+  duration_ms: 2.058614
+  type: 'test'
+  ...
+# Subtest: compiler-as-oracle is close; naive is not; constraint re-injection is independent
+ok 88 - compiler-as-oracle is close; naive is not; constraint re-injection is independent
+  ---
+  duration_ms: 6.228981
+  type: 'test'
+  ...
+# Subtest: every objective gold compose is close and naive is not
+ok 89 - every objective gold compose is close and naive is not
+  ---
+  duration_ms: 20.624049
+  type: 'test'
+  ...
+# Subtest: paraphrases that hit the same cues compose without a new intent class
+ok 90 - paraphrases that hit the same cues compose without a new intent class
+  ---
+  duration_ms: 3.592691
+  type: 'test'
+  ...
+# Subtest: composed workflows save on the Foundry product path
+ok 91 - composed workflows save on the Foundry product path
+  ---
+  duration_ms: 70.869098
+  type: 'test'
+  ...
+# Subtest: objective program constructs without cheating and reports misses plus a constraint ledger
+ok 92 - objective program constructs without cheating and reports misses plus a constraint ledger
+  ---
+  duration_ms: 43.798208
+  type: 'test'
+  ...
+# Subtest: CLI construct-objective emits objectives no-cheat misses and constraint ledger twice
+ok 93 - CLI construct-objective emits objectives no-cheat misses and constraint ledger twice
+  ---
+  duration_ms: 467.285088
+  type: 'test'
+  ...
+# Subtest: CLI construct-objective --text composes a savable workflow
+ok 94 - CLI construct-objective --text composes a savable workflow
+  ---
+  duration_ms: 288.938544
+  type: 'test'
+  ...
+# Subtest: weak oracles and months-scale waits cannot pass
+ok 95 - weak oracles and months-scale waits cannot pass
+  ---
+  duration_ms: 1.85998
+  type: 'test'
+  ...
+# Subtest: FoundryError remains the fail-closed type on objective leakage
+ok 96 - FoundryError remains the fail-closed type on objective leakage
+  ---
+  duration_ms: 0.645695
+  type: 'test'
+  ...
+# Subtest: control audit: nested map/loop dataflow is namespaced, charged and not replayed on completed resume
+ok 97 - control audit: nested map/loop dataflow is namespaced, charged and not replayed on completed resume
+  ---
+  duration_ms: 214.309009
+  type: 'test'
+  ...
+# Subtest: control audit: the shared step budget covers nested map and loop work
+ok 98 - control audit: the shared step budget covers nested map and loop work
+  ---
+  duration_ms: 192.262974
+  type: 'test'
+  ...
+# Subtest: control audit: exhausting a loop without its until predicate is failure
+ok 99 - control audit: exhausting a loop without its until predicate is failure
+  ---
+  duration_ms: 149.443006
+  type: 'test'
+  ...
+# Subtest: control audit: map input cardinality is enforced before child tool dispatch
+ok 100 - control audit: map input cardinality is enforced before child tool dispatch
+  ---
+  duration_ms: 91.28674
+  type: 'test'
+  ...
+# Subtest: control audit: nested and top-level undeclared data dependencies are rejected
+ok 101 - control audit: nested and top-level undeclared data dependencies are rejected
+  ---
+  duration_ms: 0.86627
+  type: 'test'
+  ...
+# Subtest: control audit: skipped branches resolve ordering but cannot invent outputs
+ok 102 - control audit: skipped branches resolve ordering but cannot invent outputs
+  ---
+  duration_ms: 115.79588
+  type: 'test'
+  ...
+# Subtest: control audit: an explicit default makes an intentionally skipped branch usable
+ok 103 - control audit: an explicit default makes an intentionally skipped branch usable
+  ---
+  duration_ms: 101.995542
+  type: 'test'
+  ...
+# Subtest: control audit: a skipped prerequisite cannot admit a downstream synthetic effect by default
+ok 104 - control audit: a skipped prerequisite cannot admit a downstream synthetic effect by default
+  ---
+  duration_ms: 136.537451
+  type: 'test'
+  ...
+# Subtest: control audit: handled errors remain distinct and cannot satisfy a successful prerequisite
+ok 105 - control audit: handled errors remain distinct and cannot satisfy a successful prerequisite
+  ---
+  duration_ms: 129.969091
+  type: 'test'
+  ...
+# Subtest: control audit: nested human answers survive store reopen without replaying prior tasks
+ok 106 - control audit: nested human answers survive store reopen without replaying prior tasks
+  ---
+  duration_ms: 230.06593
+  type: 'test'
+  ...
+# Subtest: control audit: concurrent nested flows obey the run-wide capability concurrency limit
+ok 107 - control audit: concurrent nested flows obey the run-wide capability concurrency limit
+  ---
+  duration_ms: 301.498561
+  type: 'test'
+  ...
+# Subtest: control audit: cost reservations prevent excess dispatch under concurrency
+ok 108 - control audit: cost reservations prevent excess dispatch under concurrency
+  ---
+  duration_ms: 101.986264
+  type: 'test'
+  ...
+# Subtest: control audit: tool output schemas reject fabricated success-shaped results
+ok 109 - control audit: tool output schemas reject fabricated success-shaped results
+  ---
+  duration_ms: 160.647962
+  type: 'test'
+  ...
+# Subtest: control audit: non-idempotent errors preserve intent and uncertainty and never auto-retry
+ok 110 - control audit: non-idempotent errors preserve intent and uncertainty and never auto-retry
+  ---
+  duration_ms: 119.599989
+  type: 'test'
+  ...
+# Subtest: control audit: unconfirmed timeout stays uncertain even when the handler later returns
+ok 111 - control audit: unconfirmed timeout stays uncertain even when the handler later returns
+  ---
+  duration_ms: 248.247804
+  type: 'test'
+  ...
+# Subtest: control audit: actual worker process loss does not duplicate an idempotent simulator effect
+ok 112 - control audit: actual worker process loss does not duplicate an idempotent simulator effect
+  ---
+  duration_ms: 298.97889
+  type: 'test'
+  ...
+# Subtest: control audit: a live runner excludes a second invocation of the same run
+ok 113 - control audit: a live runner excludes a second invocation of the same run
+  ---
+  duration_ms: 125.278876
+  type: 'test'
+  ...
+# Subtest: control audit: workflow revisions preserve active run pins and cannot reuse another run approval
+ok 114 - control audit: workflow revisions preserve active run pins and cannot reuse another run approval
+  ---
+  duration_ms: 180.096089
+  type: 'test'
+  ...
+# Subtest: control audit: stale proposals cannot replace a newer workflow head
+ok 115 - control audit: stale proposals cannot replace a newer workflow head
+  ---
+  duration_ms: 119.208133
+  type: 'test'
+  ...
+# Subtest: control audit: a capability change blocks resuming an existing human-paused run
+ok 116 - control audit: a capability change blocks resuming an existing human-paused run
+  ---
+  duration_ms: 152.613624
+  type: 'test'
+  ...
+# Subtest: control audit: cancellation requested before a late pure result is not reported as success
+ok 117 - control audit: cancellation requested before a late pure result is not reported as success
+  ---
+  duration_ms: 101.970044
+  type: 'test'
+  ...
+# Subtest: control audit: cancellation during retry backoff is cancellation, not ordinary failure
+ok 118 - control audit: cancellation during retry backoff is cancellation, not ordinary failure
+  ---
+  duration_ms: 111.109984
+  type: 'test'
+  ...
+# Subtest: control audit: a pure handler confirming abort is cancellation without another dispatch
+ok 119 - control audit: a pure handler confirming abort is cancellation without another dispatch
+  ---
+  duration_ms: 104.508872
+  type: 'test'
+  ...
+# Subtest: control audit: a real failure remains the cause when it cancels an earlier sibling
+ok 120 - control audit: a real failure remains the cause when it cancels an earlier sibling
+  ---
+  duration_ms: 143.705291
+  type: 'test'
+  ...
+# Subtest: control audit: caller cancellation cannot downgrade an ambiguous effect to confirmed cancellation
+ok 121 - control audit: caller cancellation cannot downgrade an ambiguous effect to confirmed cancellation
+  ---
+  duration_ms: 141.181081
+  type: 'test'
+  ...
+# Subtest: historical reference-01 graph with its actual open capability catalog
+ok 122 - historical reference-01 graph with its actual open capability catalog
+  ---
+  duration_ms: 6.245262
+  type: 'test'
+  ...
+# Subtest: historical reference-02 graph with its actual open capability catalog
+ok 123 - historical reference-02 graph with its actual open capability catalog
+  ---
+  duration_ms: 1.647961
+  type: 'test'
+  ...
+# Subtest: closed capability object rejects an undeclared top-level property
+ok 124 - closed capability object rejects an undeclared top-level property
+  ---
+  duration_ms: 0.625718
+  type: 'test'
+  ...
+# Subtest: closed nested capability object rejects a missing descendant
+ok 125 - closed nested capability object rejects a missing descendant
+  ---
+  duration_ms: 0.296999
+  type: 'test'
+  ...
+# Subtest: declared optional properties remain possible, not guaranteed
+ok 126 - declared optional properties remain possible, not guaranteed
+  ---
+  duration_ms: 0.304854
+  type: 'test'
+  ...
+# Subtest: unconstrained schema does not prove an undeclared path absent
+ok 127 - unconstrained schema does not prove an undeclared path absent
+  ---
+  duration_ms: 0.280447
+  type: 'test'
+  ...
+# Subtest: boolean true schema does not prove an undeclared path absent
+ok 128 - boolean true schema does not prove an undeclared path absent
+  ---
+  duration_ms: 0.273054
+  type: 'test'
+  ...
+# Subtest: object with omitted additionalProperties does not prove an undeclared path absent
+ok 129 - object with omitted additionalProperties does not prove an undeclared path absent
+  ---
+  duration_ms: 0.216728
+  type: 'test'
+  ...
+# Subtest: declared properties on an open object does not prove an undeclared path absent
+ok 130 - declared properties on an open object does not prove an undeclared path absent
+  ---
+  duration_ms: 0.371459
+  type: 'test'
+  ...
+# Subtest: explicitly open object does not prove an undeclared path absent
+ok 131 - explicitly open object does not prove an undeclared path absent
+  ---
+  duration_ms: 0.330461
+  type: 'test'
+  ...
+# Subtest: closed parent preserves an intentionally unknown descendant schema
+ok 132 - closed parent preserves an intentionally unknown descendant schema
+  ---
+  duration_ms: 0.235654
+  type: 'test'
+  ...
+# Subtest: schema-valued additionalProperties preserves dynamic keys and known descendants
+ok 133 - schema-valued additionalProperties preserves dynamic keys and known descendants
+  ---
+  duration_ms: 0.206568
+  type: 'test'
+  ...
+# Subtest: union containing an open branch cannot prove a field absent
+ok 134 - union containing an open branch cannot prove a field absent
+  ---
+  duration_ms: 0.227278
+  type: 'test'
+  ...
+# Subtest: union containing a branch that declares the field must remain possible
+ok 135 - union containing a branch that declares the field must remain possible
+  ---
+  duration_ms: 0.203643
+  type: 'test'
+  ...
+# Subtest: patternProperties prevents falsely closing all undeclared names
+ok 136 - patternProperties prevents falsely closing all undeclared names
+  ---
+  duration_ms: 0.187412
+  type: 'test'
+  ...
+# Subtest: schema local refs are not runtime refs or proof that a payload field is absent
+ok 137 - schema local refs are not runtime refs or proof that a payload field is absent
+  ---
+  duration_ms: 0.25519
+  type: 'test'
+  ...
+# Subtest: independent capability schemas retain their own local reference roots
+ok 138 - independent capability schemas retain their own local reference roots
+  ---
+  duration_ms: 0.36629
+  type: 'test'
+  ...
+# Subtest: allOf preserves a field admitted by its constraints and excludes a closed-object typo
+ok 139 - allOf preserves a field admitted by its constraints and excludes a closed-object typo
+  ---
+  duration_ms: 0.289936
+  type: 'test'
+  ...
+# Subtest: array length is an own property but is not an object to descend through
+ok 140 - array length is an own property but is not an object to descend through
+  ---
+  duration_ms: 0.227558
+  type: 'test'
+  ...
+# Subtest: explicit defaults preserve supported missing-path behavior
+ok 141 - explicit defaults preserve supported missing-path behavior
+  ---
+  duration_ms: 0.269116
+  type: 'test'
+  ...
+# Subtest: nested reference-looking default data stays literal during actual execution
+ok 142 - nested reference-looking default data stays literal during actual execution
+  ---
+  duration_ms: 148.545689
+  type: 'test'
+  ...
+# Subtest: exists can intentionally observe a known-absent field without an exception
+ok 143 - exists can intentionally observe a known-absent field without an exception
+  ---
+  duration_ms: 0.375436
+  type: 'test'
+  ...
+# Subtest: operation-looking capability data does not acquire condition short-circuit semantics
+ok 144 - operation-looking capability data does not acquire condition short-circuit semantics
+  ---
+  duration_ms: 0.32436
+  type: 'test'
+  ...
+# Subtest: continued-error output is an alternative to the nominal capability shape
+ok 145 - continued-error output is an alternative to the nominal capability shape
+  ---
+  duration_ms: 0.234041
+  type: 'test'
+  ...
+# Subtest: loop previous binding preserves the initializer and recurrence node wrapper
+ok 146 - loop previous binding preserves the initializer and recurrence node wrapper
+  ---
+  duration_ms: 0.411274
+  type: 'test'
+  ...
+# Subtest: initializer success must not conceal an absent recurrence path
+ok 147 - initializer success must not conceal an absent recurrence path
+  ---
+  duration_ms: 0.44092
+  type: 'test'
+  ...
+# Subtest: recurrence success must not conceal an absent initializer path
+ok 148 - recurrence success must not conceal an absent initializer path
+  ---
+  duration_ms: 0.609116
+  type: 'test'
+  ...
+# Subtest: a single-iteration loop has no recurrence obligation
+ok 149 - a single-iteration loop has no recurrence obligation
+  ---
+  duration_ms: 0.32399
+  type: 'test'
+  ...
+# Subtest: a loop that provably stops after its first iteration has no reached recurrence read
+ok 150 - a loop that provably stops after its first iteration has no reached recurrence read
+  ---
+  duration_ms: 129.189315
+  type: 'test'
+  ...
+# Subtest: initializer-only read guarded by iteration zero is a valid executable loop
+ok 151 - initializer-only read guarded by iteration zero is a valid executable loop
+  ---
+  duration_ms: 161.588753
+  type: 'test'
+  ...
+# Subtest: recurrence-only read guarded by positive iteration is a valid executable loop
+ok 152 - recurrence-only read guarded by positive iteration is a valid executable loop
+  ---
+  duration_ms: 128.083815
+  type: 'test'
+  ...
+# Subtest: loop until checks previous in the current iteration context
+ok 153 - loop until checks previous in the current iteration context
+  ---
+  duration_ms: 0.330502
+  type: 'test'
+  ...
+# Subtest: loop body acceptance checks previous paths too
+ok 154 - loop body acceptance checks previous paths too
+  ---
+  duration_ms: 0.22297
+  type: 'test'
+  ...
+# Subtest: loop last output preserves the body-node wrapper
+ok 155 - loop last output preserves the body-node wrapper
+  ---
+  duration_ms: 0.216186
+  type: 'test'
+  ...
+# Subtest: control wrappers remain closed even when body capability schemas are open
+ok 156 - control wrappers remain closed even when body capability schemas are open
+  ---
+  duration_ms: 0.205527
+  type: 'test'
+  ...
+# Subtest: map items preserve each iteration body wrapper
+ok 157 - map items preserve each iteration body wrapper
+  ---
+  duration_ms: 0.753398
+  type: 'test'
+  ...
+# Subtest: map extraction rejects omitting its body-node name
+ok 158 - map extraction rejects omitting its body-node name
+  ---
+  duration_ms: 0.341994
+  type: 'test'
+  ...
+# Subtest: map does not have the loop-only last output
+ok 159 - map does not have the loop-only last output
+  ---
+  duration_ms: 0.192352
+  type: 'test'
+  ...
+# Subtest: nested map and loop preserve both output wrappers
+ok 160 - nested map and loop preserve both output wrappers
+  ---
+  duration_ms: 0.259198
+  type: 'test'
+  ...
+# Subtest: a skipped parent control does not make unreachable child reads unconditional
+ok 161 - a skipped parent control does not make unreachable child reads unconditional
+  ---
+  duration_ms: 105.482535
+  type: 'test'
+  ...
+# Subtest: map item fields follow the declared item schema
+ok 162 - map item fields follow the declared item schema
+  ---
+  duration_ms: 6.366801
+  type: 'test'
+  ...
+# Subtest: unknown map items do not acquire a closed invented schema
+ok 163 - unknown map items do not acquire a closed invented schema
+  ---
+  duration_ms: 0.381648
+  type: 'test'
+  ...
+# Subtest: human output preserves answer while applying the nested answer schema
+ok 164 - human output preserves answer while applying the nested answer schema
+  ---
+  duration_ms: 5.22933
+  type: 'test'
+  ...
+# Subtest: human answer can remain intentionally unknown within its closed wrapper
+ok 165 - human answer can remain intentionally unknown within its closed wrapper
+  ---
+  duration_ms: 0.220785
+  type: 'test'
+  ...
+# Subtest: wait and assertion output wrappers are structurally known
+ok 166 - wait and assertion output wrappers are structurally known
+  ---
+  duration_ms: 0.48909
+  type: 'test'
+  ...
+# Subtest: control input rebinding changes the child input shape
+ok 167 - control input rebinding changes the child input shape
+  ---
+  duration_ms: 5.883912
+  type: 'test'
+  ...
+# Subtest: control nodes without explicit input inherit the parent input schema
+ok 168 - control nodes without explicit input inherit the parent input schema
+  ---
+  duration_ms: 0.310595
+  type: 'test'
+  ...
+# Subtest: static acceptance of an unknown field is not successful execution evidence
+ok 169 - static acceptance of an unknown field is not successful execution evidence
+  ---
+  duration_ms: 129.645523
+  type: 'test'
+  ...
+# Subtest: Engine binding: native creation records the loaded source identity in both run and event
+ok 170 - Engine binding: native creation records the loaded source identity in both run and event
+  ---
+  duration_ms: 146.089777
+  type: 'test'
+  ...
+# Subtest: Engine binding: historical unbound and corrupted bindings fail without dispatch or journal mutation
+ok 171 - Engine binding: historical unbound and corrupted bindings fail without dispatch or journal mutation
+  ---
+  duration_ms: 108.970227
+  type: 'test'
+  ...
+# Subtest: Engine binding: an actual second process with changed engine source rejects a pending run while identical source resumes
+ok 172 - Engine binding: an actual second process with changed engine source rejects a pending run while identical source resumes
+  ---
+  duration_ms: 335.142333
+  type: 'test'
+  ...
+# Subtest: campaign gate requires a passing latest independent source-bound audit
+ok 173 - campaign gate requires a passing latest independent source-bound audit
+  ---
+  duration_ms: 1.826196
+  type: 'test'
+  ...
+# Subtest: campaign metrics distinguish safe no-op failure from useful recovery and retain missing cases
+ok 174 - campaign metrics distinguish safe no-op failure from useful recovery and retain missing cases
+  ---
+  duration_ms: 0.717621
+  type: 'test'
+  ...
+# Subtest: current audit replay retains author attribution and rejects edited independent tests
+ok 175 - current audit replay retains author attribution and rejects edited independent tests
+  ---
+  duration_ms: 0.261061
+  type: 'test'
+  ...
+# Subtest: smoke oracle rejects DONE when the file tool was denied
+ok 176 - smoke oracle rejects DONE when the file tool was denied
+  ---
+  duration_ms: 1.504151
+  type: 'test'
+  ...
+# Subtest: smoke oracle rejects a missing file and operator-substituted output
+ok 177 - smoke oracle rejects a missing file and operator-substituted output
+  ---
+  duration_ms: 0.736817
+  type: 'test'
+  ...
+# Subtest: smoke oracle requires exact expected semantics, not self-attested success
+ok 178 - smoke oracle requires exact expected semantics, not self-attested success
+  ---
+  duration_ms: 0.24952
+  type: 'test'
+  ...
+# Subtest: provenance fails on a changed prompt, model or frozen hash
+ok 179 - provenance fails on a changed prompt, model or frozen hash
+  ---
+  duration_ms: 0.324902
+  type: 'test'
+  ...
+# Subtest: successful edits are reconstructed and mismatched edits fail closed
+ok 180 - successful edits are reconstructed and mismatched edits fail closed
+  ---
+  duration_ms: 0.182834
+  type: 'test'
+  ...
+# Subtest: model guard rejects absent IDs, nonzero nested prices and unknown pricing
+ok 181 - model guard rejects absent IDs, nonzero nested prices and unknown pricing
+  ---
+  duration_ms: 0.445729
+  type: 'test'
+  ...
+# Subtest: run IDs reject path traversal and shell arguments preserve metacharacters
+ok 182 - run IDs reject path traversal and shell arguments preserve metacharacters
+  ---
+  duration_ms: 0.396305
+  type: 'test'
+  ...
+# Subtest: pair gate rejects unequal controls, skill contamination and unsealed heldout claims
+ok 183 - pair gate rejects unequal controls, skill contamination and unsealed heldout claims
+  ---
+  duration_ms: 0.231285
+  type: 'test'
+  ...
+# Subtest: hostcontract wrapper changes only remediation requirements and leaves defaults unchanged
+ok 184 - hostcontract wrapper changes only remediation requirements and leaves defaults unchanged
+  ---
+  duration_ms: 24.550869
+  type: 'test'
+  ...
+# Subtest: hostcontract blocks metrics.cpuSaturated malformed/absent case 0
+ok 185 - hostcontract blocks metrics.cpuSaturated malformed/absent case 0
+  ---
+  duration_ms: 128.645762
+  type: 'test'
+  ...
+# Subtest: hostcontract blocks metrics.cpuSaturated malformed/absent case 1
+ok 186 - hostcontract blocks metrics.cpuSaturated malformed/absent case 1
+  ---
+  duration_ms: 104.399927
+  type: 'test'
+  ...
+# Subtest: hostcontract blocks metrics.cpuSaturated malformed/absent case 2
+ok 187 - hostcontract blocks metrics.cpuSaturated malformed/absent case 2
+  ---
+  duration_ms: 130.063631
+  type: 'test'
+  ...
+# Subtest: hostcontract blocks metrics.cpuSaturated malformed/absent case 3
+ok 188 - hostcontract blocks metrics.cpuSaturated malformed/absent case 3
+  ---
+  duration_ms: 156.093583
+  type: 'test'
+  ...
+# Subtest: hostcontract blocks metrics.cpuSaturated malformed/absent case 4
+ok 189 - hostcontract blocks metrics.cpuSaturated malformed/absent case 4
+  ---
+  duration_ms: 132.676367
+  type: 'test'
+  ...
+# Subtest: hostcontract blocks metrics.cpuSaturated malformed/absent case 5
+ok 190 - hostcontract blocks metrics.cpuSaturated malformed/absent case 5
+  ---
+  duration_ms: 135.004388
+  type: 'test'
+  ...
+# Subtest: hostcontract blocks metrics.cpuSaturated malformed/absent case 6
+ok 191 - hostcontract blocks metrics.cpuSaturated malformed/absent case 6
+  ---
+  duration_ms: 176.63631
+  type: 'test'
+  ...
+# Subtest: hostcontract blocks metrics.cpuSaturated malformed/absent case 7
+ok 192 - hostcontract blocks metrics.cpuSaturated malformed/absent case 7
+  ---
+  duration_ms: 106.693493
+  type: 'test'
+  ...
+# Subtest: hostcontract keeps exact probe scope for metrics
+ok 193 - hostcontract keeps exact probe scope for metrics
+  ---
+  duration_ms: 114.092667
+  type: 'test'
+  ...
+# Subtest: hostcontract preserves unavailable metrics diagnostics
+ok 194 - hostcontract preserves unavailable metrics diagnostics
+  ---
+  duration_ms: 113.139523
+  type: 'test'
+  ...
+# Subtest: hostcontract blocks deployment.recentChange malformed/absent case 0
+ok 195 - hostcontract blocks deployment.recentChange malformed/absent case 0
+  ---
+  duration_ms: 159.580355
+  type: 'test'
+  ...
+# Subtest: hostcontract blocks deployment.recentChange malformed/absent case 1
+ok 196 - hostcontract blocks deployment.recentChange malformed/absent case 1
+  ---
+  duration_ms: 137.944641
+  type: 'test'
+  ...
+# Subtest: hostcontract blocks deployment.recentChange malformed/absent case 2
+ok 197 - hostcontract blocks deployment.recentChange malformed/absent case 2
+  ---
+  duration_ms: 144.319728
+  type: 'test'
+  ...
+# Subtest: hostcontract blocks deployment.recentChange malformed/absent case 3
+ok 198 - hostcontract blocks deployment.recentChange malformed/absent case 3
+  ---
+  duration_ms: 154.51892
+  type: 'test'
+  ...
+# Subtest: hostcontract blocks deployment.recentChange malformed/absent case 4
+ok 199 - hostcontract blocks deployment.recentChange malformed/absent case 4
+  ---
+  duration_ms: 140.531118
+  type: 'test'
+  ...
+# Subtest: hostcontract blocks deployment.recentChange malformed/absent case 5
+ok 200 - hostcontract blocks deployment.recentChange malformed/absent case 5
+  ---
+  duration_ms: 154.062782
+  type: 'test'
+  ...
+# Subtest: hostcontract blocks deployment.recentChange malformed/absent case 6
+ok 201 - hostcontract blocks deployment.recentChange malformed/absent case 6
+  ---
+  duration_ms: 140.97801
+  type: 'test'
+  ...
+# Subtest: hostcontract blocks deployment.recentChange malformed/absent case 7
+ok 202 - hostcontract blocks deployment.recentChange malformed/absent case 7
+  ---
+  duration_ms: 143.915607
+  type: 'test'
+  ...
+# Subtest: hostcontract keeps exact probe scope for deployment
+ok 203 - hostcontract keeps exact probe scope for deployment
+  ---
+  duration_ms: 157.252124
+  type: 'test'
+  ...
+# Subtest: hostcontract preserves unavailable deployment diagnostics
+ok 204 - hostcontract preserves unavailable deployment diagnostics
+  ---
+  duration_ms: 139.953712
+  type: 'test'
+  ...
+# Subtest: hostcontract blocks logs.crashLoop malformed/absent case 0
+ok 205 - hostcontract blocks logs.crashLoop malformed/absent case 0
+  ---
+  duration_ms: 160.764083
+  type: 'test'
+  ...
+# Subtest: hostcontract blocks logs.crashLoop malformed/absent case 1
+ok 206 - hostcontract blocks logs.crashLoop malformed/absent case 1
+  ---
+  duration_ms: 156.252884
+  type: 'test'
+  ...
+# Subtest: hostcontract blocks logs.crashLoop malformed/absent case 2
+ok 207 - hostcontract blocks logs.crashLoop malformed/absent case 2
+  ---
+  duration_ms: 143.453518
+  type: 'test'
+  ...
+# Subtest: hostcontract blocks logs.crashLoop malformed/absent case 3
+ok 208 - hostcontract blocks logs.crashLoop malformed/absent case 3
+  ---
+  duration_ms: 165.20994
+  type: 'test'
+  ...
+# Subtest: hostcontract blocks logs.crashLoop malformed/absent case 4
+ok 209 - hostcontract blocks logs.crashLoop malformed/absent case 4
+  ---
+  duration_ms: 155.659588
+  type: 'test'
+  ...
+# Subtest: hostcontract blocks logs.crashLoop malformed/absent case 5
+ok 210 - hostcontract blocks logs.crashLoop malformed/absent case 5
+  ---
+  duration_ms: 142.387683
+  type: 'test'
+  ...
+# Subtest: hostcontract blocks logs.crashLoop malformed/absent case 6
+ok 211 - hostcontract blocks logs.crashLoop malformed/absent case 6
+  ---
+  duration_ms: 154.476882
+  type: 'test'
+  ...
+# Subtest: hostcontract blocks logs.crashLoop malformed/absent case 7
+ok 212 - hostcontract blocks logs.crashLoop malformed/absent case 7
+  ---
+  duration_ms: 164.574965
+  type: 'test'
+  ...
+# Subtest: hostcontract keeps exact probe scope for logs
+ok 213 - hostcontract keeps exact probe scope for logs
+  ---
+  duration_ms: 146.56843
+  type: 'test'
+  ...
+# Subtest: hostcontract preserves unavailable logs diagnostics
+ok 214 - hostcontract preserves unavailable logs diagnostics
+  ---
+  duration_ms: 182.705663
+  type: 'test'
+  ...
+# Subtest: hostcontract applies to rollback, including the explicit none action
+ok 215 - hostcontract applies to rollback, including the explicit none action
+  ---
+  duration_ms: 146.624807
+  type: 'test'
+  ...
+# Subtest: hostcontract applies to scale, including the explicit none action
+ok 216 - hostcontract applies to scale, including the explicit none action
+  ---
+  duration_ms: 148.207926
+  type: 'test'
+  ...
+# Subtest: hostcontract applies to restart, including the explicit none action
+ok 217 - hostcontract applies to restart, including the explicit none action
+  ---
+  duration_ms: 178.197029
+  type: 'test'
+  ...
+# Subtest: hostcontract applies to none, including the explicit none action
+ok 218 - hostcontract applies to none, including the explicit none action
+  ---
+  duration_ms: 141.746959
+  type: 'test'
+  ...
+# Subtest: hostcontract accepts false booleans and additional untrusted log text without coercion
+ok 219 - hostcontract accepts false booleans and additional untrusted log text without coercion
+  ---
+  duration_ms: 162.636097
+  type: 'test'
+  ...
+# Subtest: default toy registry still admits malformed evidence; profile blocks the identical authored fixture
+ok 220 - default toy registry still admits malformed evidence; profile blocks the identical authored fixture
+  ---
+  duration_ms: 317.52181
+  type: 'test'
+  ...
+# Subtest: hostcontract rechecks every remediation after a 60000ms human pause
+ok 221 - hostcontract rechecks every remediation after a 60000ms human pause
+  ---
+  duration_ms: 209.734196
+  type: 'test'
+  ...
+# Subtest: hostcontract rechecks every remediation after a 60001ms human pause
+ok 222 - hostcontract rechecks every remediation after a 60001ms human pause
+  ---
+  duration_ms: 188.733948
+  type: 'test'
+  ...
+# Subtest: hostcontract permits fresh observations after an expired human pause
+ok 223 - hostcontract permits fresh observations after an expired human pause
+  ---
+  duration_ms: 214.253741
+  type: 'test'
+  ...
+# Subtest: unsupported and missing-dependency diagnostics remain explicit
+ok 224 - unsupported and missing-dependency diagnostics remain explicit
+  ---
+  duration_ms: 0.94589
+  type: 'test'
+  ...
+# Subtest: host evidence enforcement does not choose correct actions or establish recovery
+ok 225 - host evidence enforcement does not choose correct actions or establish recovery
+  ---
+  duration_ms: 183.413346
+  type: 'test'
+  ...
+# Subtest: current diagnostic case inventory retains originals, 21 wrong types and full boolean priority cube
+ok 226 - current diagnostic case inventory retains originals, 21 wrong types and full boolean priority cube
+  ---
+  duration_ms: 0.887349
+  type: 'test'
+  ...
+# Subtest: independent incident oracle rejects no-op self-attestation and duplicate/wrong effects
+ok 227 - independent incident oracle rejects no-op self-attestation and duplicate/wrong effects
+  ---
+  duration_ms: 1.507016
+  type: 'test'
+  ...
+# Subtest: independent incident oracle rejects omitted probes and early/absent verification
+ok 228 - independent incident oracle rejects omitted probes and early/absent verification
+  ---
+  duration_ms: 0.364406
+  type: 'test'
+  ...
+# Subtest: fail-closed cases reject any remediation or false success and accept safe failure
+ok 229 - fail-closed cases reject any remediation or false success and accept safe failure
+  ---
+  duration_ms: 0.141466
+  type: 'test'
+  ...
+# Subtest: MCP artifact oracle accepts reordered JSON with real matching event receipt
+ok 230 - MCP artifact oracle accepts reordered JSON with real matching event receipt
+  ---
+  duration_ms: 1.914733
+  type: 'test'
+  ...
+# Subtest: MCP oracle rejects self-attestation, mismatched bytes, wrong workflow and truncated/corrupt events
+ok 231 - MCP oracle rejects self-attestation, mismatched bytes, wrong workflow and truncated/corrupt events
+  ---
+  duration_ms: 0.392969
+  type: 'test'
+  ...
+# Subtest: MCP invalid-input oracle requires failure and no actual artifact completion
+ok 232 - MCP invalid-input oracle requires failure and no actual artifact completion
+  ---
+  duration_ms: 0.223701
+  type: 'test'
+  ...
+# Subtest: real runtime self-attestation passes local acceptance but fails independent task oracle
+ok 233 - real runtime self-attestation passes local acceptance but fails independent task oracle
+  ---
+  duration_ms: 131.77472
+  type: 'test'
+  ...
+# Subtest: real rollback fixture passes; duplicate effect mutant is rejected despite healthy final state
+ok 234 - real rollback fixture passes; duplicate effect mutant is rejected despite healthy final state
+  ---
+  duration_ms: 389.943827
+  type: 'test'
+  ...
+# Subtest: real runtime recovery without independent verification cannot pass external oracle
+ok 235 - real runtime recovery without independent verification cannot pass external oracle
+  ---
+  duration_ms: 182.052433
+  type: 'test'
+  ...
+# Subtest: typed campaign chain distinguishes exact object and explicit JSON-text routes
+ok 236 - typed campaign chain distinguishes exact object and explicit JSON-text routes
+  ---
+  duration_ms: 1.847636
+  type: 'test'
+  ...
+# Subtest: successful unrelated tool responses cannot qualify the model chain
+ok 237 - successful unrelated tool responses cannot qualify the model chain
+  ---
+  duration_ms: 0.836464
+  type: 'test'
+  ...
+# Subtest: explicit text path rejects double-encoded sample despite success prose
+ok 238 - explicit text path rejects double-encoded sample despite success prose
+  ---
+  duration_ms: 0.151545
+  type: 'test'
+  ...
+# Subtest: incomplete locator still reports successful partial calls without whole-path success
+ok 239 - incomplete locator still reports successful partial calls without whole-path success
+  ---
+  duration_ms: 0.126699
+  type: 'test'
+  ...
+# Subtest: transport catalog gate rejects unconstrained input, optional input and authority tools
+ok 240 - transport catalog gate rejects unconstrained input, optional input and authority tools
+  ---
+  duration_ms: 0.463332
+  type: 'test'
+  ...
+# Subtest: frozen inventory detects dependency byte changes and rejects external symlinks
+ok 241 - frozen inventory detects dependency byte changes and rejects external symlinks
+  ---
+  duration_ms: 1.982571
+  type: 'test'
+  ...
+# Subtest: original task retains numeric validation, actual artifact and execution budget constraints
+ok 242 - original task retains numeric validation, actual artifact and execution budget constraints
+  ---
+  duration_ms: 0.165962
+  type: 'test'
+  ...
+# Subtest: global-worktree aliases preserve narrow read/write boundaries and original rules
+ok 243 - global-worktree aliases preserve narrow read/write boundaries and original rules
+  ---
+  duration_ms: 0.206869
+  type: 'test'
+  ...
+# Subtest: evaluator audit: self-attested success is rejected by the real evaluator on an independently wrong output
+ok 244 - evaluator audit: self-attested success is rejected by the real evaluator on an independently wrong output
+  ---
+  duration_ms: 150.413645
+  type: 'test'
+  ...
+# Subtest: evaluator audit: evaluation stages an exact revision without silently changing its version or hash
+ok 245 - evaluator audit: evaluation stages an exact revision without silently changing its version or hash
+  ---
+  duration_ms: 137.190161
+  type: 'test'
+  ...
+# Subtest: evaluator audit: suite snapshot remains unchanged after caller mutation and refuses heldout repair
+ok 246 - evaluator audit: suite snapshot remains unchanged after caller mutation and refuses heldout repair
+  ---
+  duration_ms: 125.19573
+  type: 'test'
+  ...
+# Subtest: evaluator audit: weak oracle is rejected: status only
+ok 247 - evaluator audit: weak oracle is rejected: status only
+  ---
+  duration_ms: 0.418778
+  type: 'test'
+  ...
+# Subtest: evaluator audit: weak oracle is rejected: constants only
+ok 248 - evaluator audit: weak oracle is rejected: constants only
+  ---
+  duration_ms: 0.351832
+  type: 'test'
+  ...
+# Subtest: evaluator audit: weak oracle is rejected: input only
+ok 249 - evaluator audit: weak oracle is rejected: input only
+  ---
+  duration_ms: 0.354768
+  type: 'test'
+  ...
+# Subtest: evaluator audit: weak oracle is rejected: existence-only artifact
+ok 250 - evaluator audit: weak oracle is rejected: existence-only artifact
+  ---
+  duration_ms: 0.617683
+  type: 'test'
+  ...
+# Subtest: evaluator audit: vacuous output reference cannot qualify an independent oracle: same reference on both sides
+ok 251 - evaluator audit: vacuous output reference cannot qualify an independent oracle: same reference on both sides
+  ---
+  duration_ms: 0.657657
+  type: 'test'
+  ...
+# Subtest: evaluator audit: vacuous output reference cannot qualify an independent oracle: unconditional true branch
+ok 252 - evaluator audit: vacuous output reference cannot qualify an independent oracle: unconditional true branch
+  ---
+  duration_ms: 1.263959
+  type: 'test'
+  ...
+# Subtest: evaluator audit: vacuous output reference cannot qualify an independent oracle: default makes an absent result pass
+ok 253 - evaluator audit: vacuous output reference cannot qualify an independent oracle: default makes an absent result pass
+  ---
+  duration_ms: 0.552079
+  type: 'test'
+  ...
+# Subtest: evaluator audit: duplicate case ids, empty cases, malformed checks and traversal basenames are rejected
+ok 254 - evaluator audit: duplicate case ids, empty cases, malformed checks and traversal basenames are rejected
+  ---
+  duration_ms: 2.176756
+  type: 'test'
+  ...
+# Subtest: evaluator audit: a missing or wrong-type result reference cannot become a true evaluator check
+ok 255 - evaluator audit: a missing or wrong-type result reference cannot become a true evaluator check
+  ---
+  duration_ms: 246.694174
+  type: 'test'
+  ...
+# Subtest: evaluator audit: unsafe reference syntax is rejected before evaluation
+ok 256 - evaluator audit: unsafe reference syntax is rejected before evaluation
+  ---
+  duration_ms: 1.43471
+  type: 'test'
+  ...
+# Subtest: evaluator audit: JSON scalar, null, false and hyphenated-key inputs preserve their exact meaning
+ok 257 - evaluator audit: JSON scalar, null, false and hyphenated-key inputs preserve their exact meaning
+  ---
+  duration_ms: 729.944686
+  type: 'test'
+  ...
+# Subtest: evaluator audit: explicit input rejection is evaluated independently without inventing a run or artifact
+ok 258 - evaluator audit: explicit input rejection is evaluated independently without inventing a run or artifact
+  ---
+  duration_ms: 124.077407
+  type: 'test'
+  ...
+# Subtest: evaluator audit: public artifact oracle distinguishes exact bytes from semantic JSON equality
+ok 259 - evaluator audit: public artifact oracle distinguishes exact bytes from semantic JSON equality
+  ---
+  duration_ms: 279.072624
+  type: 'test'
+  ...
+# Subtest: evaluator audit: artifact absence, malformed JSON and UTF-8 content are checked from actual files
+ok 260 - evaluator audit: artifact absence, malformed JSON and UTF-8 content are checked from actual files
+  ---
+  duration_ms: 395.527878
+  type: 'test'
+  ...
+# Subtest: evaluator audit: contradictory artifact content and absence expectations are rejected
+ok 261 - evaluator audit: contradictory artifact content and absence expectations are rejected
+  ---
+  duration_ms: 0.962782
+  type: 'test'
+  ...
+# Subtest: evaluator audit: symlinked artifact file cannot qualify
+ok 262 - evaluator audit: symlinked artifact file cannot qualify
+  ---
+  duration_ms: 130.351494
+  type: 'test'
+  ...
+# Subtest: evaluator audit: symlinked artifact ancestor cannot qualify
+ok 263 - evaluator audit: symlinked artifact ancestor cannot qualify
+  ---
+  duration_ms: 137.668102
+  type: 'test'
+  ...
+# Subtest: evaluator audit: artifact-inspection errors still charge executed steps to the total evaluation budget
+ok 264 - evaluator audit: artifact-inspection errors still charge executed steps to the total evaluation budget
+  ---
+  duration_ms: 120.845325
+  type: 'test'
+  ...
+# Subtest: evaluator audit: total step budget and pre-cancellation prevent unexecuted cases from qualifying
+ok 265 - evaluator audit: total step budget and pre-cancellation prevent unexecuted cases from qualifying
+  ---
+  duration_ms: 134.751092
+  type: 'test'
+  ...
+# Subtest: evaluator audit: Store rejects malformed qualification: numeric evaluator identity
+ok 266 - evaluator audit: Store rejects malformed qualification: numeric evaluator identity
+  ---
+  duration_ms: 104.497632
+  type: 'test'
+  ...
+# Subtest: evaluator audit: Store rejects malformed qualification: malformed workflow hash
+ok 267 - evaluator audit: Store rejects malformed qualification: malformed workflow hash
+  ---
+  duration_ms: 87.984368
+  type: 'test'
+  ...
+# Subtest: evaluator audit: Store rejects malformed qualification: missing registry binding
+ok 268 - evaluator audit: Store rejects malformed qualification: missing registry binding
+  ---
+  duration_ms: 93.877037
+  type: 'test'
+  ...
+# Subtest: evaluator audit: generated-program-shaped nested maps, loops, branch joins and human resume execute independently
+ok 269 - evaluator audit: generated-program-shaped nested maps, loops, branch joins and human resume execute independently
+  ---
+  duration_ms: 539.702645
+  type: 'test'
+  ...
+# {"kind":"synthetic-nested-human-control","cells":4,"steps":22,"frames":16,"eventCount":67}
+# Subtest: evaluator audit: two nested-program scales have independent outputs and measured resource receipts
+ok 270 - evaluator audit: two nested-program scales have independent outputs and measured resource receipts
+  ---
+  duration_ms: 2581.07285
+  type: 'test'
+  ...
+# {"kind":"synthetic-nested-scale-control","cases":[{"id":"groups-2","steps":36,"elapsedMs":574,"eventCount":106},{"id":"groups-6","steps":100,"elapsedMs":1800,"eventCount":294}],"totalSteps":136,"totalElapsedMs":2579}
+# Subtest: evaluator audit: real subprocess uses literal argv and only its deliberately supplied environment
+ok 271 - evaluator audit: real subprocess uses literal argv and only its deliberately supplied environment
+  ---
+  duration_ms: 25.395008
+  type: 'test'
+  ...
+# Subtest: evaluator audit: real subprocess nonzero exit and launch failure retain their correct failure classifications
+ok 272 - evaluator audit: real subprocess nonzero exit and launch failure retain their correct failure classifications
+  ---
+  duration_ms: 25.50743
+  type: 'test'
+  ...
+# Subtest: evaluator audit: real subprocess deadline terminates a child that ignores SIGTERM
+ok 273 - evaluator audit: real subprocess deadline terminates a child that ignores SIGTERM
+  ---
+  duration_ms: 606.610817
+  type: 'test'
+  ...
+# Subtest: evaluator audit: real subprocess cancellation and pre-cancellation are bounded and distinct from success
+ok 274 - evaluator audit: real subprocess cancellation and pre-cancellation are bounded and distinct from success
+  ---
+  duration_ms: 604.816652
+  type: 'test'
+  ...
+# Subtest: evaluator audit: subprocess stdout and stderr share one bounded retained-output budget
+ok 275 - evaluator audit: subprocess stdout and stderr share one bounded retained-output budget
+  ---
+  duration_ms: 20.827142
+  type: 'test'
+  ...
+# Subtest: evaluator audit: invalid subprocess output bound is rejected before launch: NaN
+ok 276 - evaluator audit: invalid subprocess output bound is rejected before launch: NaN
+  ---
+  duration_ms: 0.259969
+  type: 'test'
+  ...
+# Subtest: evaluator audit: invalid subprocess output bound is rejected before launch: Infinity
+ok 277 - evaluator audit: invalid subprocess output bound is rejected before launch: Infinity
+  ---
+  duration_ms: 0.104226
+  type: 'test'
+  ...
+# Subtest: evaluator audit: invalid subprocess output bound is rejected before launch: -1
+ok 278 - evaluator audit: invalid subprocess output bound is rejected before launch: -1
+  ---
+  duration_ms: 0.09
+  type: 'test'
+  ...
+# Subtest: evaluator audit: subprocess UTF-8 decoding preserves characters split across transport chunks
+ok 279 - evaluator audit: subprocess UTF-8 decoding preserves characters split across transport chunks
+  ---
+  duration_ms: 1.24327
+  type: 'test'
+  ...
+# Subtest: evaluator audit: free model catalog accepts observed zero prices and rejects unknown or nonzero pricing
+ok 280 - evaluator audit: free model catalog accepts observed zero prices and rejects unknown or nonzero pricing
+  ---
+  duration_ms: 0.453403
+  type: 'test'
+  ...
+# Subtest: evaluator audit: conflicting duplicate model IDs cannot cherry-pick the free catalog record
+ok 281 - evaluator audit: conflicting duplicate model IDs cannot cherry-pick the free catalog record
+  ---
+  duration_ms: 0.13325
+  type: 'test'
+  ...
+# Subtest: evaluator audit: an empty nested pricing object does not establish its explicitly zero cost
+ok 282 - evaluator audit: an empty nested pricing object does not establish its explicitly zero cost
+  ---
+  duration_ms: 0.092223
+  type: 'test'
+  ...
+# Subtest: evaluator audit: complete zero-cost event stream has one session and exact text
+ok 283 - evaluator audit: complete zero-cost event stream has one session and exact text
+  ---
+  duration_ms: 0.33473
+  type: 'test'
+  ...
+# Subtest: evaluator audit: output protocol rejects missing final event
+ok 284 - evaluator audit: output protocol rejects missing final event
+  ---
+  duration_ms: 0.135766
+  type: 'test'
+  ...
+# Subtest: evaluator audit: output protocol rejects error event
+ok 285 - evaluator audit: output protocol rejects error event
+  ---
+  duration_ms: 0.262454
+  type: 'test'
+  ...
+# Subtest: evaluator audit: output protocol rejects tool attempt
+ok 286 - evaluator audit: output protocol rejects tool attempt
+  ---
+  duration_ms: 0.147939
+  type: 'test'
+  ...
+# Subtest: evaluator audit: output protocol rejects unfinished completion
+ok 287 - evaluator audit: output protocol rejects unfinished completion
+  ---
+  duration_ms: 0.094127
+  type: 'test'
+  ...
+# Subtest: evaluator audit: output protocol rejects unknown cost
+ok 288 - evaluator audit: output protocol rejects unknown cost
+  ---
+  duration_ms: 0.087094
+  type: 'test'
+  ...
+# Subtest: evaluator audit: output protocol rejects nonzero cost
+ok 289 - evaluator audit: output protocol rejects nonzero cost
+  ---
+  duration_ms: 0.073789
+  type: 'test'
+  ...
+# Subtest: evaluator audit: output protocol rejects mixed sessions
+ok 290 - evaluator audit: output protocol rejects mixed sessions
+  ---
+  duration_ms: 0.075612
+  type: 'test'
+  ...
+# Subtest: evaluator audit: output protocol rejects non-JSON lines
+ok 291 - evaluator audit: output protocol rejects non-JSON lines
+  ---
+  duration_ms: 0.117421
+  type: 'test'
+  ...
+# Subtest: evaluator audit: output protocol fails closed on identity omitted from final event
+ok 292 - evaluator audit: output protocol fails closed on identity omitted from final event
+  ---
+  duration_ms: 0.116129
+  type: 'test'
+  ...
+# Subtest: evaluator audit: output protocol fails closed on text after the claimed final stop
+ok 293 - evaluator audit: output protocol fails closed on text after the claimed final stop
+  ---
+  duration_ms: 0.077526
+  type: 'test'
+  ...
+# Subtest: evaluator audit: output protocol fails closed on a null event in an otherwise valid stream
+ok 294 - evaluator audit: output protocol fails closed on a null event in an otherwise valid stream
+  ---
+  duration_ms: 0.063539
+  type: 'test'
+  ...
+# Subtest: evaluator audit: output protocol fails closed on an array event in an otherwise valid stream
+ok 295 - evaluator audit: output protocol fails closed on an array event in an otherwise valid stream
+  ---
+  duration_ms: 0.062557
+  type: 'test'
+  ...
+# Subtest: evaluator audit: adapter transport simulation accepts internally consistent synthetic export evidence
+ok 296 - evaluator audit: adapter transport simulation accepts internally consistent synthetic export evidence
+  ---
+  duration_ms: 3.128688
+  type: 'test'
+  ...
+# Subtest: evaluator audit: adapter transport simulation rejects session model drift
+ok 297 - evaluator audit: adapter transport simulation rejects session model drift
+  ---
+  duration_ms: 2.044778
+  type: 'test'
+  ...
+# Subtest: evaluator audit: adapter transport simulation rejects session nonzero cost
+ok 298 - evaluator audit: adapter transport simulation rejects session nonzero cost
+  ---
+  duration_ms: 1.578189
+  type: 'test'
+  ...
+# Subtest: evaluator audit: adapter transport simulation rejects assistant model drift
+ok 299 - evaluator audit: adapter transport simulation rejects assistant model drift
+  ---
+  duration_ms: 1.672457
+  type: 'test'
+  ...
+# Subtest: evaluator audit: adapter transport simulation rejects assistant nonzero cost
+ok 300 - evaluator audit: adapter transport simulation rejects assistant nonzero cost
+  ---
+  duration_ms: 1.72705
+  type: 'test'
+  ...
+# Subtest: evaluator audit: adapter transport simulation rejects exported session identity mismatch
+ok 301 - evaluator audit: adapter transport simulation rejects exported session identity mismatch
+  ---
+  duration_ms: 1.880108
+  type: 'test'
+  ...
+# Subtest: evaluator audit: adapter transport simulation rejects exported response mismatch
+ok 302 - evaluator audit: adapter transport simulation rejects exported response mismatch
+  ---
+  duration_ms: 1.595953
+  type: 'test'
+  ...
+# Subtest: evidence contract: valid scope-bound evidence admits exactly one effect and persists its completion sequence
+ok 303 - evidence contract: valid scope-bound evidence admits exactly one effect and persists its completion sequence
+  ---
+  duration_ms: 165.179233
+  type: 'test'
+  ...
+# Subtest: evidence contract: missing source dependency is rejected before creating an executable run
+ok 304 - evidence contract: missing source dependency is rejected before creating an executable run
+  ---
+  duration_ms: 0.543243
+  type: 'test'
+  ...
+# Subtest: evidence contract: a skipped source is absent evidence even with an all-resolved join
+ok 305 - evidence contract: a skipped source is absent evidence even with an all-resolved join
+  ---
+  duration_ms: 138.679486
+  type: 'test'
+  ...
+# Subtest: evidence contract: whole null cannot pass the host evidence schema
+ok 306 - evidence contract: whole null cannot pass the host evidence schema
+  ---
+  duration_ms: 138.921501
+  type: 'test'
+  ...
+# Subtest: evidence contract: whole string cannot pass the host evidence schema
+ok 307 - evidence contract: whole string cannot pass the host evidence schema
+  ---
+  duration_ms: 135.054885
+  type: 'test'
+  ...
+# Subtest: evidence contract: whole array cannot pass the host evidence schema
+ok 308 - evidence contract: whole array cannot pass the host evidence schema
+  ---
+  duration_ms: 118.978964
+  type: 'test'
+  ...
+# Subtest: evidence contract: absent selected path cannot pass the host evidence schema
+ok 309 - evidence contract: absent selected path cannot pass the host evidence schema
+  ---
+  duration_ms: 143.351288
+  type: 'test'
+  ...
+# Subtest: evidence contract: null selected path cannot pass the host evidence schema
+ok 310 - evidence contract: null selected path cannot pass the host evidence schema
+  ---
+  duration_ms: 100.858926
+  type: 'test'
+  ...
+# Subtest: evidence contract: wrong selected-path type cannot pass the host evidence schema
+ok 311 - evidence contract: wrong selected-path type cannot pass the host evidence schema
+  ---
+  duration_ms: 103.850205
+  type: 'test'
+  ...
+# Subtest: evidence contract: missing required approval cannot pass the host evidence schema
+ok 312 - evidence contract: missing required approval cannot pass the host evidence schema
+  ---
+  duration_ms: 87.959381
+  type: 'test'
+  ...
+# Subtest: evidence contract: missing required measurement cannot pass the host evidence schema
+ok 313 - evidence contract: missing required measurement cannot pass the host evidence schema
+  ---
+  duration_ms: 97.907281
+  type: 'test'
+  ...
+# Subtest: evidence contract: string approval cannot pass the host evidence schema
+ok 314 - evidence contract: string approval cannot pass the host evidence schema
+  ---
+  duration_ms: 102.913663
+  type: 'test'
+  ...
+# Subtest: evidence contract: numeric approval cannot pass the host evidence schema
+ok 315 - evidence contract: numeric approval cannot pass the host evidence schema
+  ---
+  duration_ms: 85.39208
+  type: 'test'
+  ...
+# Subtest: evidence contract: string measurement cannot pass the host evidence schema
+ok 316 - evidence contract: string measurement cannot pass the host evidence schema
+  ---
+  duration_ms: 75.021364
+  type: 'test'
+  ...
+# Subtest: evidence contract: null measurement cannot pass the host evidence schema
+ok 317 - evidence contract: null measurement cannot pass the host evidence schema
+  ---
+  duration_ms: 79.924542
+  type: 'test'
+  ...
+# Subtest: evidence contract: negative approval cannot pass the host evidence schema
+ok 318 - evidence contract: negative approval cannot pass the host evidence schema
+  ---
+  duration_ms: 93.356749
+  type: 'test'
+  ...
+# Subtest: evidence contract: extra disallowed field cannot pass the host evidence schema
+ok 319 - evidence contract: extra disallowed field cannot pass the host evidence schema
+  ---
+  duration_ms: 88.18138
+  type: 'test'
+  ...
+# Subtest: evidence contract: omitting path validates the entire source output
+ok 320 - evidence contract: omitting path validates the entire source output
+  ---
+  duration_ms: 76.64503
+  type: 'test'
+  ...
+# Subtest: evidence contract: sourceArgs resolves input from effect arguments rather than workflow input
+ok 321 - evidence contract: sourceArgs resolves input from effect arguments rather than workflow input
+  ---
+  duration_ms: 82.419056
+  type: 'test'
+  ...
+# Subtest: evidence contract: workflow-scoped evidence cannot authorize different effect arguments
+ok 322 - evidence contract: workflow-scoped evidence cannot authorize different effect arguments
+  ---
+  duration_ms: 87.769724
+  type: 'test'
+  ...
+# Subtest: evidence contract: nested effect-argument bindings and canonical source-argument ordering match
+ok 323 - evidence contract: nested effect-argument bindings and canonical source-argument ordering match
+  ---
+  duration_ms: 94.740503
+  type: 'test'
+  ...
+# Subtest: evidence contract: partial source-argument equality cannot authorize a differently scoped receipt
+ok 324 - evidence contract: partial source-argument equality cannot authorize a differently scoped receipt
+  ---
+  duration_ms: 99.20322
+  type: 'test'
+  ...
+# Subtest: evidence contract: an absent effect-argument binding cannot borrow the workflow scope
+ok 325 - evidence contract: an absent effect-argument binding cannot borrow the workflow scope
+  ---
+  duration_ms: 84.230816
+  type: 'test'
+  ...
+# Subtest: evidence contract: a transitive source ancestor qualifies through a data-only bridge
+ok 326 - evidence contract: a transitive source ancestor qualifies through a data-only bridge
+  ---
+  duration_ms: 135.346394
+  type: 'test'
+  ...
+# Subtest: evidence contract: a completed nonancestor cannot rescue a wrong-scope ancestor
+ok 327 - evidence contract: a completed nonancestor cannot rescue a wrong-scope ancestor
+  ---
+  duration_ms: 164.376494
+  type: 'test'
+  ...
+# Subtest: evidence contract: a human answer or copied output cannot replace an executed source receipt
+ok 328 - evidence contract: a human answer or copied output cannot replace an executed source receipt
+  ---
+  duration_ms: 159.012791
+  type: 'test'
+  ...
+# Subtest: evidence contract: receipts from another run cannot authorize this run
+ok 329 - evidence contract: receipts from another run cannot authorize this run
+  ---
+  duration_ms: 166.35144
+  type: 'test'
+  ...
+# Subtest: evidence contract: newest malformed completed receipt wins even when completion timestamps tie
+ok 330 - evidence contract: newest malformed completed receipt wins even when completion timestamps tie
+  ---
+  duration_ms: 156.731097
+  type: 'test'
+  ...
+# Subtest: evidence contract: newest valid receipt supersedes an older malformed observation
+ok 331 - evidence contract: newest valid receipt supersedes an older malformed observation
+  ---
+  duration_ms: 157.002638
+  type: 'test'
+  ...
+# Subtest: evidence contract: a newer failed observation cannot silently fall back to older valid evidence
+ok 332 - evidence contract: a newer failed observation cannot silently fall back to older valid evidence
+  ---
+  duration_ms: 128.520209
+  type: 'test'
+  ...
+# Subtest: evidence contract: a newer malformed receipt in another scope does not invalidate the requested scope
+ok 333 - evidence contract: a newer malformed receipt in another scope does not invalidate the requested scope
+  ---
+  duration_ms: 25.372406
+  type: 'test'
+  ...
+# Subtest: evidence contract: a successful explicit refresh after a handled source failure can qualify
+ok 334 - evidence contract: a successful explicit refresh after a handled source failure can qualify
+  ---
+  duration_ms: 28.549976
+  type: 'test'
+  ...
+# Subtest: evidence contract: a late older valid observation cannot replace a newer invalid attempt
+ok 335 - evidence contract: a late older valid observation cannot replace a newer invalid attempt
+  ---
+  duration_ms: 37.654257
+  type: 'test'
+  ...
+# Subtest: evidence contract: a late older invalid observation does not replace a newer valid attempt
+ok 336 - evidence contract: a late older invalid observation does not replace a newer valid attempt
+  ---
+  duration_ms: 25.383887
+  type: 'test'
+  ...
+# Subtest: evidence contract: exact maximum age is checked after human pause and store reopen
+ok 337 - evidence contract: exact maximum age is checked after human pause and store reopen
+  ---
+  duration_ms: 38.949796
+  type: 'test'
+  ...
+# Subtest: evidence contract: past maximum age is checked after human pause and store reopen
+ok 338 - evidence contract: past maximum age is checked after human pause and store reopen
+  ---
+  duration_ms: 34.857495
+  type: 'test'
+  ...
+# Subtest: evidence contract: receipt timestamp in the future is checked after human pause and store reopen
+ok 339 - evidence contract: receipt timestamp in the future is checked after human pause and store reopen
+  ---
+  duration_ms: 31.335608
+  type: 'test'
+  ...
+# Subtest: evidence contract: an explicit observation after a human pause refreshes expired evidence
+ok 340 - evidence contract: an explicit observation after a human pause refreshes expired evidence
+  ---
+  duration_ms: 32.073907
+  type: 'test'
+  ...
+# Subtest: evidence contract: approval does not preserve evidence freshness indefinitely
+ok 341 - evidence contract: approval does not preserve evidence freshness indefinitely
+  ---
+  duration_ms: 26.464481
+  type: 'test'
+  ...
+# Subtest: evidence contract: changing only a host evidence requirement invalidates an existing paused run registry pin
+ok 342 - evidence contract: changing only a host evidence requirement invalidates an existing paused run registry pin
+  ---
+  duration_ms: 26.640241
+  type: 'test'
+  ...
+# Subtest: evidence contract: every required source must qualify, not merely one successful observation
+ok 343 - evidence contract: every required source must qualify, not merely one successful observation
+  ---
+  duration_ms: 18.655516
+  type: 'test'
+  ...
+# Subtest: evidence contract: retry within freshness reuses the same idempotency key without duplicating the effect
+ok 344 - evidence contract: retry within freshness reuses the same idempotency key without duplicating the effect
+  ---
+  duration_ms: 28.163709
+  type: 'test'
+  ...
+# Subtest: evidence contract: expiry before retry blocks a second effect-handler dispatch
+ok 345 - evidence contract: expiry before retry blocks a second effect-handler dispatch
+  ---
+  duration_ms: 29.295268
+  type: 'test'
+  ...
+# Subtest: evidence contract: a bounded loop refreshes evidence before a new attempt instead of reusing an earlier frame
+ok 346 - evidence contract: a bounded loop refreshes evidence before a new attempt instead of reusing an earlier frame
+  ---
+  duration_ms: 39.564071
+  type: 'test'
+  ...
+# Subtest: evidence contract: each map item obtains evidence in its own frame and scope
+ok 347 - evidence contract: each map item obtains evidence in its own frame and scope
+  ---
+  duration_ms: 35.019309
+  type: 'test'
+  ...
+# Subtest: evidence contract: an earlier map frame cannot satisfy a skipped source in the next frame
+ok 348 - evidence contract: an earlier map frame cannot satisfy a skipped source in the next frame
+  ---
+  duration_ms: 31.682891
+  type: 'test'
+  ...
+# Subtest: evidence contract: tampering with checkpoint output without its receipt hash blocks dispatch
+ok 349 - evidence contract: tampering with checkpoint output without its receipt hash blocks dispatch
+  ---
+  duration_ms: 27.559552
+  type: 'test'
+  ...
+# Subtest: evidence contract: deleting checkpoint output cannot turn a missing value into valid evidence
+ok 350 - evidence contract: deleting checkpoint output cannot turn a missing value into valid evidence
+  ---
+  duration_ms: 28.764238
+  type: 'test'
+  ...
+# Subtest: evidence contract: missing or malformed evidence is not bypassed by onError continuation
+ok 351 - evidence contract: missing or malformed evidence is not bypassed by onError continuation
+  ---
+  duration_ms: 20.844816
+  type: 'test'
+  ...
+# Subtest: evidence contract: event-tail truncation is rejected before a paused run can execute
+ok 352 - evidence contract: event-tail truncation is rejected before a paused run can execute
+  ---
+  duration_ms: 25.185695
+  type: 'test'
+  ...
+# Subtest: evidence contract: deleting the entire event history cannot leave an executable checkpoint
+ok 353 - evidence contract: deleting the entire event history cannot leave an executable checkpoint
+  ---
+  duration_ms: 23.247026
+  type: 'test'
+  ...
+# Subtest: evidence contract: editing an event body without its hash is detected independently of tail length
+ok 354 - evidence contract: editing an event body without its hash is detected independently of tail length
+  ---
+  duration_ms: 29.233682
+  type: 'test'
+  ...
+# Subtest: evidence contract: an event-bearing Store update must not repair a truncated history by replacing eventHead
+ok 355 - evidence contract: an event-bearing Store update must not repair a truncated history by replacing eventHead
+  ---
+  duration_ms: 24.013318
+  type: 'test'
+  ...
+# Subtest: evidence contract: a human answer cannot conceal deleted evidence completion events and authorize an effect
+ok 356 - evidence contract: a human answer cannot conceal deleted evidence completion events and authorize an effect
+  ---
+  duration_ms: 31.248984
+  type: 'test'
+  ...
+# Subtest: evidence contract: an approval cannot conceal event-tail truncation before effect admission
+ok 357 - evidence contract: an approval cannot conceal event-tail truncation before effect admission
+  ---
+  duration_ms: 34.044465
+  type: 'test'
+  ...
+# Subtest: generator audit: malformed JSON is repaired within the explicit round budget and raw response is retained
+ok 358 - generator audit: malformed JSON is repaired within the explicit round budget and raw response is retained
+  ---
+  duration_ms: 157.340553
+  type: 'test'
+  ...
+# Subtest: generator audit: schema-invalid candidate is repaired with an independent evaluator configured
+ok 359 - generator audit: schema-invalid candidate is repaired with an independent evaluator configured
+  ---
+  duration_ms: 447.395839
+  type: 'test'
+  ...
+# Subtest: generator audit: real native counterexamples repair a constant-output impostor
+ok 360 - generator audit: real native counterexamples repair a constant-output impostor
+  ---
+  duration_ms: 490.706972
+  type: 'test'
+  ...
+# Subtest: generator audit: exhaustion never requeues a failed request or exceeds the configured rounds
+ok 361 - generator audit: exhaustion never requeues a failed request or exceeds the configured rounds
+  ---
+  duration_ms: 29.101634
+  type: 'test'
+  ...
+# Subtest: generator audit: a provider failure is terminal instead of consuming repair rounds
+ok 362 - generator audit: a provider failure is terminal instead of consuming repair rounds
+  ---
+  duration_ms: 22.193674
+  type: 'test'
+  ...
+# Subtest: generator audit: duplicate jobs across two generators are excluded before a second provider dispatch
+ok 363 - generator audit: duplicate jobs across two generators are excluded before a second provider dispatch
+  ---
+  duration_ms: 26.602601
+  type: 'test'
+  ...
+# Subtest: generator audit: a stale generation cannot overwrite a concurrently advanced workflow head
+ok 364 - generator audit: a stale generation cannot overwrite a concurrently advanced workflow head
+  ---
+  duration_ms: 31.186006
+  type: 'test'
+  ...
+# Subtest: generator audit: pre-cancelled generation never invokes the provider
+ok 365 - generator audit: pre-cancelled generation never invokes the provider
+  ---
+  duration_ms: 24.02489
+  type: 'test'
+  ...
+# Subtest: generator audit: cancellation while evaluation is pending cannot publish or qualify its late receipt
+ok 366 - generator audit: cancellation while evaluation is pending cannot publish or qualify its late receipt
+  ---
+  duration_ms: 25.950244
+  type: 'test'
+  ...
+# Subtest: generator audit: generation deadline also covers the evaluator await
+ok 367 - generator audit: generation deadline also covers the evaluator await
+  ---
+  duration_ms: 80.334194
+  type: 'test'
+  ...
+# Subtest: generator audit: an uncooperative provider cannot hold generation open beyond its host deadline
+ok 368 - generator audit: an uncooperative provider cannot hold generation open beyond its host deadline
+  ---
+  duration_ms: 57.542594
+  type: 'test'
+  ...
+# Subtest: generator audit: rejects malformed evaluator receipt: missing receipt
+ok 369 - generator audit: rejects malformed evaluator receipt: missing receipt
+  ---
+  duration_ms: 24.141279
+  type: 'test'
+  ...
+# Subtest: generator audit: rejects malformed evaluator receipt: non-boolean passed
+ok 370 - generator audit: rejects malformed evaluator receipt: non-boolean passed
+  ---
+  duration_ms: 23.859079
+  type: 'test'
+  ...
+# Subtest: generator audit: rejects malformed evaluator receipt: wrong evaluator identity
+ok 371 - generator audit: rejects malformed evaluator receipt: wrong evaluator identity
+  ---
+  duration_ms: 30.07755
+  type: 'test'
+  ...
+# Subtest: generator audit: rejects malformed evaluator receipt: missing workflow binding
+ok 372 - generator audit: rejects malformed evaluator receipt: missing workflow binding
+  ---
+  duration_ms: 25.465962
+  type: 'test'
+  ...
+# Subtest: generator audit: rejects malformed evaluator receipt: wrong workflow binding
+ok 373 - generator audit: rejects malformed evaluator receipt: wrong workflow binding
+  ---
+  duration_ms: 22.705979
+  type: 'test'
+  ...
+# Subtest: generator audit: rejects malformed evaluator receipt: wrong registry binding
+ok 374 - generator audit: rejects malformed evaluator receipt: wrong registry binding
+  ---
+  duration_ms: 23.864087
+  type: 'test'
+  ...
+# Subtest: generator audit: auto-applied syntax-only candidates remain independently unqualified
+ok 375 - generator audit: auto-applied syntax-only candidates remain independently unqualified
+  ---
+  duration_ms: 34.441322
+  type: 'test'
+  ...
+# Subtest: generator audit: a configured evaluator is not qualification before it has run
+ok 376 - generator audit: a configured evaluator is not qualification before it has run
+  ---
+  duration_ms: 18.049606
+  type: 'test'
+  ...
+# Subtest: generator audit: qualification for a previous version never migrates to a revised workflow hash
+ok 377 - generator audit: qualification for a previous version never migrates to a revised workflow hash
+  ---
+  duration_ms: 76.797357
+  type: 'test'
+  ...
+# Subtest: generator audit: receipt-directory failure leaves a failed job instead of a permanently processing request
+ok 378 - generator audit: receipt-directory failure leaves a failed job instead of a permanently processing request
+  ---
+  duration_ms: 23.754331
+  type: 'test'
+  ...
+# Subtest: generator audit: jobs left by an exited process are surfaced as interrupted
+ok 379 - generator audit: jobs left by an exited process are surfaced as interrupted
+  ---
+  duration_ms: 61.81345
+  type: 'test'
+  ...
+# Subtest: generator audit: the processor reaches pending requests older than the public 100-row display window
+ok 380 - generator audit: the processor reaches pending requests older than the public 100-row display window
+  ---
+  duration_ms: 366.444066
+  type: 'test'
+  ...
+# Subtest: MCP hints do not promise closed-world/additive execution for configurable adapters
+ok 381 - MCP hints do not promise closed-world/additive execution for configurable adapters
+  ---
+  duration_ms: 25.064527
+  type: 'test'
+  ...
+# Subtest: MCP input: object contract is explicit and rejects serialized, missing or scalar inputs before dispatch
+ok 382 - MCP input: object contract is explicit and rejects serialized, missing or scalar inputs before dispatch
+  ---
+  duration_ms: 33.341953
+  type: 'test'
+  ...
+# Subtest: MCP input: explicitly serialized alternative parses once and retains exact JSON roots
+ok 383 - MCP input: explicitly serialized alternative parses once and retains exact JSON roots
+  ---
+  duration_ms: 0.801438
+  type: 'test'
+  ...
+# Subtest: MCP input: actual stdio server preserves object/null/array values and rejects incorrect wire arguments
+ok 384 - MCP input: actual stdio server preserves object/null/array values and rejects incorrect wire arguments
+  ---
+  duration_ms: 397.841421
+  type: 'test'
+  ...
+# Subtest: offline MCP draft and diagnostic repair lifecycle through actual stdio
+ok 385 - offline MCP draft and diagnostic repair lifecycle through actual stdio # SKIP
+  ---
+  duration_ms: 0.572227
+  type: 'test'
+  ...
+# Subtest: packaging reference checker detects missing files, anchors and escaped bundle paths
+ok 386 - packaging reference checker detects missing files, anchors and escaped bundle paths
+  ---
+  duration_ms: 9.190215
+  type: 'test'
+  ...
+# Subtest: packaging all shipped skill Markdown references stay within the portable bundle
+ok 387 - packaging all shipped skill Markdown references stay within the portable bundle
+  ---
+  duration_ms: 8.229046
+  type: 'test'
+  ...
+# {"markdownFiles":30,"localReferences":106,"failures":[]}
+# Subtest: packaging source-map headers preserve repository-only provenance and pinned public sources
+ok 388 - packaging source-map headers preserve repository-only provenance and pinned public sources
+  ---
+  duration_ms: 0.394272
+  type: 'test'
+  ...
+# Subtest: packaging inventory gate rejects private state and evidence even under otherwise published roots
+ok 389 - packaging inventory gate rejects private state and evidence even under otherwise published roots
+  ---
+  duration_ms: 0.462321
+  type: 'test'
+  ...
+# Subtest: packaging actual tarball, project installers and generated stdio MCP commands
+ok 390 - packaging actual tarball, project installers and generated stdio MCP commands # SKIP
+  ---
+  duration_ms: 0.121879
+  type: 'test'
+  ...
+# Subtest: Provider quota: structured 429 is distinguished from unavailable/auth and no error text becomes executable feedback
+ok 391 - Provider quota: structured 429 is distinguished from unavailable/auth and no error text becomes executable feedback
+  ---
+  duration_ms: 1.713325
+  type: 'test'
+  ...
+# Subtest: Provider quota: one recorded limit suspends a serial request queue without dispatching or consuming later requests
+ok 392 - Provider quota: one recorded limit suspends a serial request queue without dispatching or consuming later requests
+  ---
+  duration_ms: 121.82975
+  type: 'test'
+  ...
+# Subtest: Qualification: a passing unclassified check cannot qualify task outcomes
+ok 393 - Qualification: a passing unclassified check cannot qualify task outcomes
+  ---
+  duration_ms: 42.026115
+  type: 'test'
+  ...
+# Subtest: Qualification: a passing construction check cannot qualify task outcomes
+ok 394 - Qualification: a passing construction check cannot qualify task outcomes
+  ---
+  duration_ms: 27.764938
+  type: 'test'
+  ...
+# Subtest: Qualification: the real independent suite explicitly qualifies only its named task-outcome envelope
+ok 395 - Qualification: the real independent suite explicitly qualifies only its named task-outcome envelope
+  ---
+  duration_ms: 87.88903
+  type: 'test'
+  ...
+# Subtest: Qualification: an invalid declared level is a host-evaluator error, not a model-repair round
+ok 396 - Qualification: an invalid declared level is a host-evaluator error, not a model-repair round
+  ---
+  duration_ms: 24.660486
+  type: 'test'
+  ...
+# Subtest: action contract accepts only one narrow operation and exact keys
+ok 397 - action contract accepts only one narrow operation and exact keys
+  ---
+  duration_ms: 6.214374
+  type: 'test'
+  ...
+# Subtest: candidate command has network namespace, read-only files and fixed resource ceilings
+ok 398 - candidate command has network namespace, read-only files and fixed resource ceilings
+  ---
+  duration_ms: 0.700558
+  type: 'test'
+  ...
+# Subtest: independent oracle rejects both initial bugs and wrong constant fixes
+ok 399 - independent oracle rejects both initial bugs and wrong constant fixes
+  ---
+  duration_ms: 105.171362
+  type: 'test'
+  ...
+# Subtest: correct controls pass all fixed hidden cases inside bubblewrap
+ok 400 - correct controls pass all fixed hidden cases inside bubblewrap
+  ---
+  duration_ms: 56.155844
+  type: 'test'
+  ...
+# Subtest: oracle tampering and successful early process exit cannot create a pass
+ok 401 - oracle tampering and successful early process exit cannot create a pass
+  ---
+  duration_ms: 102.466722
+  type: 'test'
+  ...
+# Subtest: infinite candidate loop is stopped by CPU/wall limits
+ok 402 - infinite candidate loop is stopped by CPU/wall limits
+  ---
+  duration_ms: 2039.227328
+  type: 'test'
+  ...
+# Subtest: input mutation is independently rejected even with correct returned values
+ok 403 - input mutation is independently rejected even with correct returned values
+  ---
+  duration_ms: 31.009213
+  type: 'test'
+  ...
+# Subtest: candidate sees empty home and a different network namespace
+ok 404 - candidate sees empty home and a different network namespace
+  ---
+  duration_ms: 25.46978
+  type: 'test'
+  ...
+# Subtest: original DefaultAgent owns actual loop/history/stopping with custom interfaces
+ok 405 - original DefaultAgent owns actual loop/history/stopping with custom interfaces
+  ---
+  duration_ms: 395.764835
+  type: 'test'
+  ...
+# Subtest: original DefaultAgent itself enforces the fifth-call stopping budget
+ok 406 - original DefaultAgent itself enforces the fifth-call stopping budget
+  ---
+  duration_ms: 367.104633
+  type: 'test'
+  ...
+# Subtest: malformed executor action consumes one original-agent call and remains visible
+ok 407 - malformed executor action consumes one original-agent call and remains visible
+  ---
+  duration_ms: 344.203297
+  type: 'test'
+  ...
+# Subtest: native capability history rejects erased observations and fabricated actions
+ok 408 - native capability history rejects erased observations and fabricated actions
+  ---
+  duration_ms: 27.37784
+  type: 'test'
+  ...
+# Subtest: structure evaluator rejects hidden whole-agent capability and excess budgets
+ok 409 - structure evaluator rejects hidden whole-agent capability and excess budgets
+  ---
+  duration_ms: 0.187172
+  type: 'test'
+  ...
+# Subtest: neutral execution gate proves five control cases but remains explicitly partial
+ok 410 - neutral execution gate proves five control cases but remains explicitly partial
+  ---
+  duration_ms: 288.822531
+  type: 'test'
+  ...
+# Subtest: counterexample gate rejects all six message-wrapper and stopping mutations
+ok 411 - counterexample gate rejects all six message-wrapper and stopping mutations
+  ---
+  duration_ms: 754.623263
+  type: 'test'
+  ...
+# Subtest: original generated reference-01 graph still fails the neutral executable gate
+ok 412 - original generated reference-01 graph still fails the neutral executable gate
+  ---
+  duration_ms: 67.340382
+  type: 'test'
+  ...
+# Subtest: frozen-closure verifier detects modifications and additions independently of live files
+ok 413 - frozen-closure verifier detects modifications and additions independently of live files
+  ---
+  duration_ms: 1.42938
+  type: 'test'
+  ...
+# Subtest: security authority: remote read-only annotations cannot replace host approval, including MCP resume
+ok 414 - security authority: remote read-only annotations cannot replace host approval, including MCP resume
+  ---
+  duration_ms: 266.20694
+  type: 'test'
+  ...
+# Subtest: security authority: connector retry receives one runtime-owned idempotency key, never the model key
+ok 415 - security authority: connector retry receives one runtime-owned idempotency key, never the model key
+  ---
+  duration_ms: 204.503045
+  type: 'test'
+  ...
+# Subtest: security authority: uninstall preserves an edit made after its initial conflict scan
+ok 416 - security authority: uninstall preserves an edit made after its initial conflict scan
+  ---
+  duration_ms: 143.872931
+  type: 'test'
+  ...
+# Subtest: security: asynchronous schemas cannot accept invalid input or create an unhandled rejection
+ok 417 - security: asynchronous schemas cannot accept invalid input or create an unhandled rejection
+  ---
+  duration_ms: 110.347523
+  type: 'test'
+  ...
+# Subtest: security: equivalent schemas remain usable after JSON persistence despite a repeated $id
+ok 418 - security: equivalent schemas remain usable after JSON persistence despite a repeated $id
+  ---
+  duration_ms: 10.074599
+  type: 'test'
+  ...
+# Subtest: security: one task cannot resolve a schema identifier introduced by another task
+ok 419 - security: one task cannot resolve a schema identifier introduced by another task
+  ---
+  duration_ms: 5.507193
+  type: 'test'
+  ...
+# Subtest: security: dangling SQLite symlinks are rejected before any outside file is created
+ok 420 - security: dangling SQLite symlinks are rejected before any outside file is created
+  ---
+  duration_ms: 1.006144
+  type: 'test'
+  ...
+# Subtest: security: a skipped guard cannot admit its dependent effect
+ok 421 - security: a skipped guard cannot admit its dependent effect
+  ---
+  duration_ms: 46.08868
+  type: 'test'
+  ...
+# Subtest: security: cancellation during a final non-cancellable operation cannot become success
+ok 422 - security: cancellation during a final non-cancellable operation cannot become success
+  ---
+  duration_ms: 24.549027
+  type: 'test'
+  ...
+# Subtest: security: non-idempotent effects reject automatic retries before execution
+ok 423 - security: non-idempotent effects reject automatic retries before execution
+  ---
+  duration_ms: 11.934508
+  type: 'test'
+  ...
+# Subtest: security: lost acknowledgement of a non-idempotent effect remains uncertain and is not repeated
+ok 424 - security: lost acknowledgement of a non-idempotent effect remains uncertain and is not repeated
+  ---
+  duration_ms: 20.578385
+  type: 'test'
+  ...
+# Subtest: security: high-risk approval is bound to the exact run and completed effects do not replay
+ok 425 - security: high-risk approval is bound to the exact run and completed effects do not replay
+  ---
+  duration_ms: 27.734211
+  type: 'test'
+  ...
+# Subtest: security: an idempotent operation that ignores timeout cancellation blocks further admission
+ok 426 - security: an idempotent operation that ignores timeout cancellation blocks further admission
+  ---
+  duration_ms: 226.254027
+  type: 'test'
+  ...
+# Subtest: security: an artifact parent symlink is rejected before creating any outside directory
+ok 427 - security: an artifact parent symlink is rejected before creating any outside directory
+  ---
+  duration_ms: 35.392622
+  type: 'test'
+  ...
+# Subtest: security: an artifact target symlink is rejected without creating its absent destination
+ok 428 - security: an artifact target symlink is rejected without creating its absent destination
+  ---
+  duration_ms: 26.788712
+  type: 'test'
+  ...
+# Subtest: security: conflicting artifact contents cannot be reported as a successful idempotent replay
+ok 429 - security: conflicting artifact contents cannot be reported as a successful idempotent replay
+  ---
+  duration_ms: 31.512421
+  type: 'test'
+  ...
+# Subtest: Store atomicity: failed request-state write cannot leave a detached proposal
+ok 430 - Store atomicity: failed request-state write cannot leave a detached proposal
+  ---
+  duration_ms: 25.290081
+  type: 'test'
+  ...
+# Subtest: Store atomicity: application metadata failure rolls back the workflow head and inserted version
+ok 431 - Store atomicity: application metadata failure rolls back the workflow head and inserted version
+  ---
+  duration_ms: 20.032438
+  type: 'test'
+  ...
+# Subtest: Store atomicity: actual process death before application commit leaves all prior state recoverable
+ok 432 - Store atomicity: actual process death before application commit leaves all prior state recoverable
+  ---
+  duration_ms: 48.78303
+  type: 'test'
+  ...
+# Subtest: Store atomicity: two competing proposals cannot both consume one request
+ok 433 - Store atomicity: two competing proposals cannot both consume one request
+  ---
+  duration_ms: 17.859398
+  type: 'test'
+  ...
+# Subtest: trial isolates divergent drafts at the same requested version and leaves reusable state untouched
+ok 434 - trial isolates divergent drafts at the same requested version and leaves reusable state untouched
+  ---
+  duration_ms: 114.344375
+  type: 'test'
+  ...
+# Subtest: invalid trial input is preserved as rejection without creating a run or consuming the request
+ok 435 - invalid trial input is preserved as rejection without creating a run or consuming the request
+  ---
+  duration_ms: 31.043879
+  type: 'test'
+  ...
+# Subtest: input-rejected trial source remains exact and a missing draft cannot fall back to a reusable head
+ok 436 - input-rejected trial source remains exact and a missing draft cannot fall back to a reusable head
+  ---
+  duration_ms: 36.201685
+  type: 'test'
+  ...
+# Subtest: trial capability policy cannot widen normal host authority or trust custom names
+ok 437 - trial capability policy cannot widen normal host authority or trust custom names
+  ---
+  duration_ms: 32.541687
+  type: 'test'
+  ...
+# Subtest: trial budget counts failures and survives reopening the workspace
+ok 438 - trial budget counts failures and survives reopening the workspace
+  ---
+  duration_ms: 43.500941
+  type: 'test'
+  ...
+# Subtest: trial inspection detects changed artifact bytes and preserves the original receipt
+ok 439 - trial inspection detects changed artifact bytes and preserves the original receipt
+  ---
+  duration_ms: 59.971936
+  type: 'test'
+  ...
+# Subtest: repair creates an idempotent non-spending diagnostic lineage and preserves historical failure evidence
+ok 440 - repair creates an idempotent non-spending diagnostic lineage and preserves historical failure evidence
+  ---
+  duration_ms: 54.8836
+  type: 'test'
+  ...
+# Subtest: diagnostic repair rejects changed intent, stale heads and non-failed runs
+ok 441 - diagnostic repair rejects changed intent, stale heads and non-failed runs
+  ---
+  duration_ms: 38.157936
+  type: 'test'
+  ...
+# Subtest: agent task relay cannot impersonate direct user input or dispatch the background generator
+ok 442 - agent task relay cannot impersonate direct user input or dispatch the background generator
+  ---
+  duration_ms: 17.053161
+  type: 'test'
+  ...
+# Subtest: UI browser: real local HTTP workflows, revision pins and human controls
+ok 443 - UI browser: real local HTTP workflows, revision pins and human controls # SKIP
+  ---
+  duration_ms: 0.566265
+  type: 'test'
+  ...
+# Subtest: UI layout handles unordered branches and joins without inventing edges
+ok 444 - UI layout handles unordered branches and joins without inventing edges
+  ---
+  duration_ms: 2.548385
+  type: 'test'
+  ...
+# Subtest: UI layout reports malformed graph evidence and terminates on cycles
+ok 445 - UI layout reports malformed graph evidence and terminates on cycles
+  ---
+  duration_ms: 0.184707
+  type: 'test'
+  ...
+# Subtest: nested UI views select only the exact recorded frame and preserve answer node paths
+ok 446 - nested UI views select only the exact recorded frame and preserve answer node paths
+  ---
+  duration_ms: 0.363504
+  type: 'test'
+  ...
+# Subtest: nested iteration choices do not include grandchildren or similarly prefixed maps
+ok 447 - nested iteration choices do not include grandchildren or similarly prefixed maps
+  ---
+  duration_ms: 0.242316
+  type: 'test'
+  ...
+# Subtest: proposal diff includes acceptance, budget, additions and removals with JSON pointer escaping
+ok 448 - proposal diff includes acceptance, budget, additions and removals with JSON pointer escaping
+  ---
+  duration_ms: 0.356361
+  type: 'test'
+  ...
+# Subtest: uncertain, handled-error and skipped states are never colored as success
+ok 449 - uncertain, handled-error and skipped states are never colored as success
+  ---
+  duration_ms: 0.139172
+  type: 'test'
+  ...
+# Subtest: automatic-provider configuration does not imply human review or task qualification
+ok 450 - automatic-provider configuration does not imply human review or task qualification
+  ---
+  duration_ms: 0.258276
+  type: 'test'
+  ...
+# Subtest: generation labels preserve historical application and pending cancellation evidence
+ok 451 - generation labels preserve historical application and pending cancellation evidence
+  ---
+  duration_ms: 0.124064
+  type: 'test'
+  ...
+# Subtest: UI assets require no CDN, unsafe HTML rendering, dynamic code or inline styles
+ok 452 - UI assets require no CDN, unsafe HTML rendering, dynamic code or inline styles
+  ---
+  duration_ms: 1.069953
+  type: 'test'
+  ...
+# Subtest: product demo contract rejects incomplete, static-only, over-budget and mismatched evidence
+ok 453 - product demo contract rejects incomplete, static-only, over-budget and mismatched evidence
+  ---
+  duration_ms: 2.207975
+  type: 'test'
+  ...
+# Subtest: revision oracle retains old rejection cases and ordered totals without changing the original
+ok 454 - revision oracle retains old rejection cases and ordered totals without changing the original
+  ---
+  duration_ms: 0.764518
+  type: 'test'
+  ...
+# Subtest: source closure detects executable changes but allows unrelated evidence files
+ok 455 - source closure detects executable changes but allows unrelated evidence files
+  ---
+  duration_ms: 0.94563
+  type: 'test'
+  ...
+# Subtest: strict syntax feedback retains a bounded location in the exact JSON body without repairing it
+ok 456 - strict syntax feedback retains a bounded location in the exact JSON body without repairing it
+  ---
+  duration_ms: 1.35995
+  type: 'test'
+  ...
+# Subtest: each nested map or loop requires nonempty runtime acceptance even when the root and until have checks
+ok 457 - each nested map or loop requires nonempty runtime acceptance even when the root and until have checks
+  ---
+  duration_ms: 6.78033
+  type: 'test'
+  ...
+# Subtest: real generator carries parser locations into the next offline callback and never evaluates rejected candidates
+ok 458 - real generator carries parser locations into the next offline callback and never evaluates rejected candidates
+  ---
+  duration_ms: 35.684722
+  type: 'test'
+  ...
+# Subtest: nonempty neutral map exposes a flattened extraction error while an empty map cannot expose that path error
+ok 459 - nonempty neutral map exposes a flattened extraction error while an empty map cannot expose that path error
+  ---
+  duration_ms: 109.967058
+  type: 'test'
+  ...
+# Subtest: UI linkage selection refuses unrelated, unapplied and missing request identities
+ok 460 - UI linkage selection refuses unrelated, unapplied and missing request identities
+  ---
+  duration_ms: 1.383223
+  type: 'test'
+  ...
+# Subtest: UI draft trials and diagnostic repair through real local HTTP
+ok 461 - UI draft trials and diagnostic repair through real local HTTP # SKIP
+  ---
+  duration_ms: 0.1328
+  type: 'test'
+  ...
+# Subtest: a generated workflow id cannot shadow an existing immutable workflow hash
+ok 462 - a generated workflow id cannot shadow an existing immutable workflow hash
+  ---
+  duration_ms: 76.740631
+  type: 'test'
+  ...
+1..462
+# tests 462
+# suites 0
+# pass 458
+# fail 0
+# cancelled 0
+# skipped 4
+# todo 0
+# duration_ms 25783.767989

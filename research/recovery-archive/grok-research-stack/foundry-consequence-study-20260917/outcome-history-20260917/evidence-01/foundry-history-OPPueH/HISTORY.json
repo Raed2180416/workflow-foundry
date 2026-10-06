@@ -1,0 +1,92 @@
+{
+  "id": "outcome-history:9bfea70b32dd3aeb26d00b12605770ac3c4dbef13fb27dc4e1e504e497e625c1",
+  "schemaVersion": "outcome-history/1",
+  "inspector": {
+    "implementationHash": "023921bb5bd99982c821b9fc9ec28e68763f8344ea53e57c824e6e0608f75610",
+    "node": "v24.21.0"
+  },
+  "source": {
+    "observationId": "db8d56e366ce55dcc493ddcf7dad931ca6b3c2414b31966cfb819a57fc616b6b",
+    "contractId": "21870fe59ab8f42dc858cbe55e25505a5a916dfcd48046c0bc881501f0681e37"
+  },
+  "binding": {
+    "requestId": "1d4c423b-afb3-48ad-9976-f45c1b72333f",
+    "proposalId": "9768ed5c-229b-4fcc-82f8-985aa79444e7",
+    "runId": "e97ba9e8-9576-4ddf-8ada-6f651f6332a6",
+    "rootRequestId": "1d4c423b-afb3-48ad-9976-f45c1b72333f",
+    "requestHash": "88f60a58b31d732a761dbe95d8232398c57b9d3c8be4e298315c4fdde582b64d",
+    "proposalHash": "9e27315d1fb72234251ee20953eee0ab2d51e86f008d5753b414e2514d79586c",
+    "rootRequestHash": "88f60a58b31d732a761dbe95d8232398c57b9d3c8be4e298315c4fdde582b64d",
+    "workflowId": "history-control",
+    "workflowHash": "cd2519ef1df28b5ed9a09213d24a4cd6512e864908ec3c2362f63873a01fbbc6",
+    "workflowVersion": 1,
+    "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+    "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+    "inputHash": "2047953d6714b34ef8fe5afb10acc1ed8b89f90675d0d3679eb963901051afa6",
+    "policyHash": "743874dc59bcbd3e3257926a739c866813d6604f924f906342983b4bb871caa7",
+    "eventHead": {
+      "hash": "d023872b4ec26fbd9d733768d14c74c3068602eceb1599083100a3f065f236e8",
+      "seq": 7
+    },
+    "eventCount": 7,
+    "runStatus": "succeeded",
+    "runHash": "d39ac19a046c744e9a1f157df3469fa0b9038fc8d5a6087ea5475310484d1931"
+  },
+  "lineage": [
+    {
+      "requestId": "1d4c423b-afb3-48ad-9976-f45c1b72333f",
+      "requestHash": "88f60a58b31d732a761dbe95d8232398c57b9d3c8be4e298315c4fdde582b64d",
+      "parentRequestId": null
+    }
+  ],
+  "historicalAssessment": {
+    "outcome": "unsatisfied",
+    "reason": "json-content-mismatch",
+    "observedJsonHash": "45e8402e4e38c386bbb42cf27305da5d460495b5d9d1474d585cd1ed5e409ac3",
+    "basis": "recomputed-from-preserved-bytes",
+    "observedAt": 1789635830167,
+    "evaluator": {
+      "comparison": "Foundry canonical JSON: object order ignored, array order retained; bounded finite JS numbers",
+      "dataImplementationHash": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c",
+      "id": "supplied-history-control",
+      "implementationHash": "8de15af4b6ce842c3e54039531c651472a9079a231bf31390f4a8f95b924f1fd",
+      "kind": "exact-json-artifact/2",
+      "node": "v24.21.0"
+    },
+    "expectedJsonHash": "4567021d96b62afb4adbda272684016e3be059dfa09843ca3bbd2d53c8f97d5d",
+    "goal": "Write record.json containing the exact input record.",
+    "successCriteria": [
+      "Write record.json containing the exact input record."
+    ],
+    "artifact": {
+      "name": "record.json",
+      "state": "present",
+      "bytes": 27,
+      "sha256": "45e8402e4e38c386bbb42cf27305da5d460495b5d9d1474d585cd1ed5e409ac3"
+    },
+    "completedArtifacts": [
+      {
+        "nodeKey": "root/file",
+        "sequence": 6,
+        "eventHash": "1d4773e0347d2d68fa729ea23c7756d68d2ecbf187185b38c0f90bc00d63275a",
+        "intentSequence": 5,
+        "intentHash": "5bab0bbcdf05f2f9efc9b2dff6701d64a9b95430106599a416975c3376b40056",
+        "output": {
+          "bytes": 27,
+          "name": "record.json",
+          "sha256": "45e8402e4e38c386bbb42cf27305da5d460495b5d9d1474d585cd1ed5e409ac3"
+        },
+        "outputHash": "6f0d7916a047b6ca94b8e2218405750a9541d5adc95cd3699f68de3b8ba16362"
+      }
+    ]
+  },
+  "currentEvidenceCheck": {
+    "status": "unverified",
+    "liveArtifactRead": false,
+    "suppliedRegistryHash": "765ec7eb34fba50ae50f92203c367d72ca9aa54effabc7fa480b574b8bc3bd48",
+    "matchesRecordedRegistry": false,
+    "qualification": "Registry hash comparison only; no current artifact, policy, capability compatibility or execution check."
+  },
+  "currentWorldQualification": false,
+  "purpose": "Historical inspection only; not an outcome receipt, repair request, or promotion permission."
+}

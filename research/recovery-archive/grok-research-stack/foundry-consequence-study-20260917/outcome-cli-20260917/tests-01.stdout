@@ -1,0 +1,225 @@
+TAP version 13
+# Subtest: CLI performs green-but-wrong -> observed repair -> v2 apply/run -> satisfied and retains original bytes
+ok 1 - CLI performs green-but-wrong -> observed repair -> v2 apply/run -> satisfied and retains original bytes
+  ---
+  duration_ms: 3687.275531
+  type: 'test'
+  ...
+# Subtest: CLI distinguishes confirmed required-file absence from loss of recorded producer bytes
+    # Subtest: wrong filename supports explicit repair
+    ok 1 - wrong filename supports explicit repair
+      ---
+      duration_ms: 2362.314102
+      type: 'test'
+      ...
+    # Subtest: missing recorded bytes remain unknown and do not open repair
+    ok 2 - missing recorded bytes remain unknown and do not open repair
+      ---
+      duration_ms: 1573.377919
+      type: 'test'
+      ...
+    1..2
+ok 2 - CLI distinguishes confirmed required-file absence from loss of recorded producer bytes
+  ---
+  duration_ms: 3936.2718
+  type: 'test'
+  ...
+# Subtest: CLI rejects stale repair creation and stale context/proposal/apply after a competing ordinary revision
+    # Subtest: repair creation
+    ok 1 - repair creation
+      ---
+      duration_ms: 1968.286435
+      type: 'test'
+      ...
+    # Subtest: existing repair and pending proposal
+    ok 2 - existing repair and pending proposal
+      ---
+      duration_ms: 2876.270657
+      type: 'test'
+      ...
+    1..2
+ok 3 - CLI rejects stale repair creation and stale context/proposal/apply after a competing ordinary revision
+  ---
+  duration_ms: 4845.107675
+  type: 'test'
+  ...
+# Subtest: CLI refuses tampered artifact evidence at observe, repair, context, propose and apply
+ok 4 - CLI refuses tampered artifact evidence at observe, repair, context, propose and apply
+  ---
+  duration_ms: 2734.091297
+  type: 'test'
+  ...
+# Subtest: CLI rejects cross-run receipts, frozen expectation changes and goal/success-criteria drift
+ok 5 - CLI rejects cross-run receipts, frozen expectation changes and goal/success-criteria drift
+  ---
+  duration_ms: 2507.029811
+  type: 'test'
+  ...
+# Subtest: CLI ordinary propose/apply still accepts explicit user revisions and creates no outcome ledger
+ok 6 - CLI ordinary propose/apply still accepts explicit user revisions and creates no outcome ledger
+  ---
+  duration_ms: 1151.046984
+  type: 'test'
+  ...
+# Subtest: CLI outcome entry points require coordinator-created requests and cannot treat an ordinary proposal as a repair
+ok 7 - CLI outcome entry points require coordinator-created requests and cannot treat an ordinary proposal as a repair
+  ---
+  duration_ms: 1685.47235
+  type: 'test'
+  ...
+# Subtest: CLI outcome argument validation prevents implicit input, provider setup, mixed task and service dispatch
+ok 8 - CLI outcome argument validation prevents implicit input, provider setup, mixed task and service dispatch
+  ---
+  duration_ms: 2706.933415
+  type: 'test'
+  ...
+# Subtest: CLI contract accepts explicitly supplied null and preserves the default repair depth bound
+ok 9 - CLI contract accepts explicitly supplied null and preserves the default repair depth bound
+  ---
+  duration_ms: 1927.499587
+  type: 'test'
+  ...
+# Subtest: CLI generate --outcome-repair uses the real generator and facade with isolated supplied provider doubles
+    # Subtest: opencode-free
+    not ok 1 - opencode-free
+      ---
+      duration_ms: 1614.512602
+      type: 'test'
+      location: '/home/raed/Projects/workflow-foundry/tests/outcome-cli.test.mjs:311:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        generate: {"error":{"code":"ERROR","message":"Invalid or unexpected token"}}
+        
+        
+        
+        1 !== 0
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 0
+      actual: 1
+      operator: 'strictEqual'
+      stack: |-
+        invoke (file:///home/raed/Projects/workflow-foundry/tests/outcome-cli.test.mjs:56:12)
+        Object.ok (file:///home/raed/Projects/workflow-foundry/tests/outcome-cli.test.mjs:66:28)
+        TestContext.<anonymous> (file:///home/raed/Projects/workflow-foundry/tests/outcome-cli.test.mjs:314:21)
+        Test.runInAsyncScope (node:async_hooks:227:14)
+        Test.run (node:internal/test_runner/test:1402:25)
+        Test.start (node:internal/test_runner/test:1262:17)
+        TestContext.test (node:internal/test_runner/test:400:20)
+        TestContext.<anonymous> (file:///home/raed/Projects/workflow-foundry/tests/outcome-cli.test.mjs:311:13)
+        Test.runInAsyncScope (node:async_hooks:227:14)
+        Test.run (node:internal/test_runner/test:1402:25)
+      ...
+    # Subtest: opencode-v2-free
+    not ok 2 - opencode-v2-free
+      ---
+      duration_ms: 1564.020611
+      type: 'test'
+      location: '/home/raed/Projects/workflow-foundry/tests/outcome-cli.test.mjs:311:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        generate: {"error":{"code":"ERROR","message":"Invalid or unexpected token"}}
+        
+        
+        
+        1 !== 0
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 0
+      actual: 1
+      operator: 'strictEqual'
+      stack: |-
+        invoke (file:///home/raed/Projects/workflow-foundry/tests/outcome-cli.test.mjs:56:12)
+        Object.ok (file:///home/raed/Projects/workflow-foundry/tests/outcome-cli.test.mjs:66:28)
+        TestContext.<anonymous> (file:///home/raed/Projects/workflow-foundry/tests/outcome-cli.test.mjs:314:21)
+        Test.runInAsyncScope (node:async_hooks:227:14)
+        Test.run (node:internal/test_runner/test:1402:25)
+        Test.start (node:internal/test_runner/test:1262:17)
+        TestContext.test (node:internal/test_runner/test:400:20)
+        TestContext.<anonymous> (file:///home/raed/Projects/workflow-foundry/tests/outcome-cli.test.mjs:311:13)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+      ...
+    1..2
+not ok 10 - CLI generate --outcome-repair uses the real generator and facade with isolated supplied provider doubles
+  ---
+  duration_ms: 3179.015497
+  type: 'test'
+  location: '/home/raed/Projects/workflow-foundry/tests/outcome-cli.test.mjs:309:1'
+  failureType: 'subtestsFailed'
+  error: '2 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: CLI outcome generation refuses stale context before provider dispatch and rechecks changed evidence before proposal
+    # Subtest: stale before dispatch
+    not ok 1 - stale before dispatch
+      ---
+      duration_ms: 2099.924053
+      type: 'test'
+      location: '/home/raed/Projects/workflow-foundry/tests/outcome-cli.test.mjs:331:11'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly equal:
+        + actual - expected
+        
+        + 'ERROR'
+        - 'STALE_WORKFLOW'
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 'STALE_WORKFLOW'
+      actual: 'ERROR'
+      operator: 'strictEqual'
+      stack: |-
+        invoke (file:///home/raed/Projects/workflow-foundry/tests/outcome-cli.test.mjs:57:27)
+        Object.refuse (file:///home/raed/Projects/workflow-foundry/tests/outcome-cli.test.mjs:67:43)
+        TestContext.<anonymous> (file:///home/raed/Projects/workflow-foundry/tests/outcome-cli.test.mjs:334:7)
+        Test.runInAsyncScope (node:async_hooks:227:14)
+        Test.run (node:internal/test_runner/test:1402:25)
+        Test.start (node:internal/test_runner/test:1262:17)
+        TestContext.test (node:internal/test_runner/test:400:20)
+        TestContext.<anonymous> (file:///home/raed/Projects/workflow-foundry/tests/outcome-cli.test.mjs:331:11)
+        Test.runInAsyncScope (node:async_hooks:227:14)
+        Test.run (node:internal/test_runner/test:1402:25)
+      ...
+    # Subtest: evidence changes during supplied callback
+    not ok 2 - evidence changes during supplied callback
+      ---
+      duration_ms: 1537.269337
+      type: 'test'
+      location: '/home/raed/Projects/workflow-foundry/tests/outcome-cli.test.mjs:337:11'
+      failureType: 'testCodeFailure'
+      error: "Cannot read properties of null (reading 'status')"
+      code: 'ERR_TEST_FAILURE'
+      name: 'TypeError'
+      stack: |-
+        TestContext.<anonymous> (file:///home/raed/Projects/workflow-foundry/tests/outcome-cli.test.mjs:341:22)
+        Test.runInAsyncScope (node:async_hooks:227:14)
+        Test.run (node:internal/test_runner/test:1402:25)
+        Test.start (node:internal/test_runner/test:1262:17)
+        TestContext.test (node:internal/test_runner/test:400:20)
+        TestContext.<anonymous> (file:///home/raed/Projects/workflow-foundry/tests/outcome-cli.test.mjs:337:11)
+        async Test.run (node:internal/test_runner/test:1409:7)
+        async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+      ...
+    1..2
+not ok 11 - CLI outcome generation refuses stale context before provider dispatch and rechecks changed evidence before proposal
+  ---
+  duration_ms: 3637.599282
+  type: 'test'
+  location: '/home/raed/Projects/workflow-foundry/tests/outcome-cli.test.mjs:330:1'
+  failureType: 'subtestsFailed'
+  error: '2 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..11
+# tests 19
+# suites 0
+# pass 13
+# fail 6
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 32048.230493

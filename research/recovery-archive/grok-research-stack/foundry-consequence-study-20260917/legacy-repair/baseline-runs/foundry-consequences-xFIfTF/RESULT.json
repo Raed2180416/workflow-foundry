@@ -1,0 +1,202 @@
+{
+  "approvals": {},
+  "cost": 0,
+  "createdAt": 1789613954142,
+  "deadline": 1789617554142,
+  "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+  "error": null,
+  "eventHead": {
+    "seq": 22,
+    "hash": "2a11ff7b6f3c77e2b828a2cb7f3409e051d8e5abbd1bed25c828780c0f03735a"
+  },
+  "frames": {
+    "root/matches:0": {
+      "contextHash": "831d8bcab4e0035314e2e2f550cfe068cfb0bb00d5d01bb97aeca3365a8658b8",
+      "nodes": {
+        "score": {
+          "argsHash": "0911340d0bd34ce514a269d91290538d0921ed2d79008e7e30b919435f180614",
+          "attempts": 1,
+          "completedAt": 1789613954182,
+          "completedSequence": 6,
+          "effects": "none",
+          "idempotencyKey": "a20b8d0a641d010a3d463457790fe3b090bc114e86ecb33246e175bf21f566f0",
+          "kind": "task",
+          "outputHash": "0911340d0bd34ce514a269d91290538d0921ed2d79008e7e30b919435f180614",
+          "startedAt": 1789613954175,
+          "startedSequence": 5,
+          "status": "completed",
+          "tool": "core.identity"
+        }
+      },
+      "outputs": {
+        "score": {
+          "scored": true
+        }
+      }
+    },
+    "root/matches:1": {
+      "contextHash": "a315ffe926e1098055bf69444c60effb7988307f6f19a2c047d9ba6e5b245bad",
+      "nodes": {
+        "score": {
+          "argsHash": "0911340d0bd34ce514a269d91290538d0921ed2d79008e7e30b919435f180614",
+          "attempts": 1,
+          "completedAt": 1789613954202,
+          "completedSequence": 9,
+          "effects": "none",
+          "idempotencyKey": "1fe248406097db710ddbde35b08239e36bcfb311c7b0b7a75db6edf16aca899c",
+          "kind": "task",
+          "outputHash": "0911340d0bd34ce514a269d91290538d0921ed2d79008e7e30b919435f180614",
+          "startedAt": 1789613954197,
+          "startedSequence": 8,
+          "status": "completed",
+          "tool": "core.identity"
+        }
+      },
+      "outputs": {
+        "score": {
+          "scored": true
+        }
+      }
+    },
+    "root/retryFlaky:0": {
+      "contextHash": "926abbc857c0cf5a7a4802d622895cb16f9bdccccf0fc14b3bfc6d3dbee316a2",
+      "nodes": {
+        "probe": {
+          "argsHash": "4062edaf750fb8074e7e83e0c9028c94e32468a8b6f1614774328ef045150f93",
+          "attempts": 1,
+          "completedAt": 1789613954239,
+          "completedSequence": 14,
+          "effects": "none",
+          "idempotencyKey": "2c9f6b2499682adf04cc5fe9a95fedc26ef5e178e7e9981c35e82afd76a44fb9",
+          "kind": "task",
+          "outputHash": "4062edaf750fb8074e7e83e0c9028c94e32468a8b6f1614774328ef045150f93",
+          "startedAt": 1789613954223,
+          "startedSequence": 13,
+          "status": "completed",
+          "tool": "core.identity"
+        }
+      },
+      "outputs": {
+        "probe": {
+          "ok": true
+        }
+      }
+    }
+  },
+  "id": "7ea36e68-638a-49bd-874d-0f75fe058eee",
+  "input": {
+    "claim": {
+      "grounded": true
+    },
+    "matches": [
+      "a",
+      "b"
+    ]
+  },
+  "nodes": {
+    "artifact": {
+      "argsHash": "f44964cfb4a032af59b6c6b356a0f46b39e03edc03d6fc184ed1db04d5ef39a1",
+      "attempts": 1,
+      "completedAt": 1789613954295,
+      "completedSequence": 21,
+      "effects": "idempotent",
+      "idempotencyKey": "81ef22d72edfb7ab28fcea21ae663fee593b3cb000a1eccceacfac14889ca2fb",
+      "kind": "task",
+      "outputHash": "dec95d7694bd2d6f40a4cf815e52fc320724401aff0cade0092d168c868e6e94",
+      "startedAt": 1789613954284,
+      "startedSequence": 20,
+      "status": "completed",
+      "tool": "core.artifact"
+    },
+    "matches": {
+      "attempts": 1,
+      "completedAt": 1789613954208,
+      "completedSequence": 10,
+      "kind": "map",
+      "outputHash": "2ce89d9e6fd0ef63397d8683bb03e0aa61a92604214221e0b4e8378ecf1ead06",
+      "startedAt": 1789613954157,
+      "startedSequence": 3,
+      "status": "completed"
+    },
+    "retryFlaky": {
+      "attempts": 1,
+      "completedAt": 1789613954251,
+      "completedSequence": 15,
+      "kind": "loop",
+      "outputHash": "42203aac2705dd6c3631002325f867ad357d398788bf4f84c52cd0141c9dc6c0",
+      "startedAt": 1789613954215,
+      "startedSequence": 11,
+      "status": "completed"
+    },
+    "validate": {
+      "argsHash": "ce6949ad0a9463f40be0fcae07e3d34405bd734c0b3a2218f00999f3b2b893cb",
+      "attempts": 1,
+      "completedAt": 1789613954264,
+      "completedSequence": 17,
+      "effects": "none",
+      "idempotencyKey": "44d5cd582a76eafdaf3316783d3171e8b9247309837a4e208fd74b99c2c5cc84",
+      "kind": "task",
+      "outputHash": "f2e6221bac7112ea123f706c89500b263e72f0f9bc7068fb74bdbaf8c51fbc38",
+      "startedAt": 1789613954257,
+      "startedSequence": 16,
+      "status": "completed",
+      "tool": "core.validate"
+    },
+    "verify": {
+      "attempts": 1,
+      "completedAt": 1789613954273,
+      "completedSequence": 19,
+      "kind": "assert",
+      "outputHash": "11c11db30f4b3f6c758722ba3e27eea08145b7d212f6a157451e364b48475280",
+      "startedAt": 1789613954268,
+      "startedSequence": 18,
+      "status": "completed"
+    }
+  },
+  "outputs": {
+    "artifact": {
+      "bytes": 21,
+      "name": "receipt.json",
+      "sha256": "c3f7120e8218a8208459015dd0edda53d195d6ff7fa2bea0f42eefea1d0fb6a8"
+    },
+    "matches": {
+      "count": 2,
+      "items": [
+        {
+          "score": {
+            "scored": true
+          }
+        },
+        {
+          "score": {
+            "scored": true
+          }
+        }
+      ]
+    },
+    "retryFlaky": {
+      "iterations": 1,
+      "last": {
+        "probe": {
+          "ok": true
+        }
+      }
+    },
+    "validate": {
+      "errors": [],
+      "valid": true
+    },
+    "verify": {
+      "passed": true
+    }
+  },
+  "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+  "resumeCount": 1,
+  "status": "succeeded",
+  "steps": 8,
+  "updatedAt": 1789613954299,
+  "workflowHash": "72633b3cdb602cda7a1d5792f7fc19d842a73d59dff4ee859b939c40cf33e4c0",
+  "workflowId": "Objcdb582e85aad",
+  "executionActive": false,
+  "independentTaskVerified": false
+}

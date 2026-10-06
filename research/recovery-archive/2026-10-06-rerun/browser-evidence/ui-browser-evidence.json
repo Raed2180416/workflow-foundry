@@ -1,0 +1,123 @@
+{
+  "kind": "local development UI evidence; actual HTTP/Store/generator/processor with scripted host proposals and identified deterministic fake provider; no model quality evaluation",
+  "recordedAt": "2026-10-06T08:12:11.413Z",
+  "sources": [
+    {
+      "path": "web/app.js",
+      "sha256": "6f503de9b25928f442caaceff4edf0f557bf8b558942024e4edb4e051ad229d6"
+    },
+    {
+      "path": "web/index.html",
+      "sha256": "9daccc58d2284054a2e63133cca21cfae1154ac1a31abf0de00b903a344ce229"
+    },
+    {
+      "path": "web/style.css",
+      "sha256": "c22f39aeea9f3e542236b22a16fdd2bf051b8cb4b2c67bdd25d3ec7c9ab76baa"
+    },
+    {
+      "path": "tests/ui-browser.test.mjs",
+      "sha256": "5cbf91a29e63ac72cac8958e942d4706b12d522dab3cf16cf9cea6d021f63253"
+    },
+    {
+      "path": "tests/ui-contract.test.mjs",
+      "sha256": "657cd7e9f4867974a27c7a047e8c2fad964fd3642ed29a4ebb93ce2c69a26814"
+    },
+    {
+      "path": "src/generator.mjs",
+      "sha256": "3d86d95eaf4a2b6ee83d5fb50696a689926075adae4eeb4d8c25450c442fb11a"
+    },
+    {
+      "path": "src/foundry.mjs",
+      "sha256": "95f102573760ef92cd352813f66b30cd9f83bda05afb97a4cbe1069c8527a878"
+    },
+    {
+      "path": "src/http.mjs",
+      "sha256": "6638061fe87105ef1fa838565e1f42ced19e31e6bc62ccfe6594128e6b4ce97b"
+    },
+    {
+      "path": "src/store.mjs",
+      "sha256": "61288a25c85a8dd1e1e076ca5059aedf80c35dc26bf0ab613c31030743a34732"
+    }
+  ],
+  "browser": "153.0.8010.52",
+  "origin": "ephemeral loopback server",
+  "provider": {
+    "name": "Synthetic UI provider",
+    "kind": "deterministic-local-fixture",
+    "model": "ui-fixture/1",
+    "externalCalls": false
+  },
+  "providerCalls": 7,
+  "checks": [
+    {
+      "name": "loads the strict-CSP graph, safe text and keyboard node inspection",
+      "passed": true
+    },
+    {
+      "name": "queues actual version-bound agent requests and leaves pending state explicit",
+      "passed": true
+    },
+    {
+      "name": "starts a pinned run and answers full nested map/loop node paths",
+      "passed": true
+    },
+    {
+      "name": "applies CAS proposals, keeps historical run source pinned and blocks stale proposals",
+      "passed": true
+    },
+    {
+      "name": "renders root/nested outputs and event evidence with dark and light screenshots",
+      "passed": true
+    },
+    {
+      "name": "validates and imports JSON; rejects an explicit operation without inventing success",
+      "passed": true
+    },
+    {
+      "name": "keeps validation errors visible; resumes waits and cancels active execution",
+      "passed": true
+    },
+    {
+      "name": "catalogs installed contracts, keeps all mutations authenticated and records no CSP or script errors",
+      "passed": true
+    },
+    {
+      "name": "automatic bridge processes real UI requests and proposes without silently applying",
+      "passed": true
+    },
+    {
+      "name": "automatic apply is explicit and retains old generation settings and pinned run source",
+      "passed": true
+    },
+    {
+      "name": "bounded repair preserves a malformed candidate attempt and its actual host feedback",
+      "passed": true
+    },
+    {
+      "name": "provider errors render as safe text and failed jobs never silently retry or create proposals",
+      "passed": true
+    },
+    {
+      "name": "generation cancellation uses the real token route and waits for a recorded terminal result",
+      "passed": true
+    },
+    {
+      "name": "automatic-apply conflicts show failed job evidence and the unapplied source diff",
+      "passed": true
+    },
+    {
+      "name": "an inactive generation cancellation reports the backend error without falsifying status",
+      "passed": true
+    },
+    {
+      "name": "automatic UI integration has no external requests, unauthed writes, inline styles or script/CSP failures",
+      "passed": true
+    }
+  ],
+  "allChecksPassed": true,
+  "mutationCount": 26,
+  "generationCancellationRequests": 2,
+  "processorErrors": [],
+  "scriptOrCspErrors": [],
+  "blockedExternalRequestCount": 0
+}

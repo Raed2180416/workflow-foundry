@@ -1,0 +1,106 @@
+{
+  "control": "intermediate request goal differs from its own applied proposal while earlier hashes and bases agree",
+  "qualification": "Deliberate corruption in a disposable depth-two fixture; not corruption of real saved work.",
+  "history": {
+    "id": "outcome-history:fcb30e8b8a0d62fe7a32f4bf9c5e2363a0789945139e8860c83ff5b4d9b33f78",
+    "schemaVersion": "outcome-history/1",
+    "inspector": {
+      "implementationHash": "023921bb5bd99982c821b9fc9ec28e68763f8344ea53e57c824e6e0608f75610",
+      "node": "v24.21.0"
+    },
+    "source": {
+      "observationId": "1f6e82768f42631f1ec1c323e4d2b71b3ff711c96a0ab2517da00db980180dc7",
+      "contractId": "fcf2661ff1782bd2a6183f447b07a730449fd101a4ff59283efffe21c8d49de9"
+    },
+    "binding": {
+      "requestId": "7da3cb79-e341-4621-935f-72816d38f3eb",
+      "proposalId": "8417322a-186e-4a69-8739-88cc2052cbce",
+      "runId": "0ae83172-6d8e-48a3-9b1d-5eba509326f9",
+      "rootRequestId": "7648e8f1-1820-4e32-8cf3-0e5723c1392e",
+      "requestHash": "ef49260a138bf5fcebadda4fb7261edc596521068a04c84ae388d1619bbe9ab1",
+      "proposalHash": "446dbc217076a5c6bcb98f9d6f3266e8e34a3a83567ebb6aa42a15ec2a95bc36",
+      "rootRequestHash": "e974f685ec448f5219734132221d5eedf37e8ee9f9b152732def2c6bb0957fdc",
+      "workflowId": "history-control",
+      "workflowHash": "7c89714833b6a3cb869566b1319fb5897019dc3162a93ccbfafa68c2d5e51aad",
+      "workflowVersion": 3,
+      "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+      "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+      "inputHash": "2047953d6714b34ef8fe5afb10acc1ed8b89f90675d0d3679eb963901051afa6",
+      "policyHash": "743874dc59bcbd3e3257926a739c866813d6604f924f906342983b4bb871caa7",
+      "eventHead": {
+        "hash": "aa34cb960930cf7836d52948a0730962b6499fe43e1a704d47de6a444508d5b1",
+        "seq": 7
+      },
+      "eventCount": 7,
+      "runStatus": "succeeded",
+      "runHash": "6e5badedc161b9b184aa52b01c4d0de8a20ea2aa76ddf0d6bc0d9caf6fc23ea1"
+    },
+    "lineage": [
+      {
+        "requestId": "7da3cb79-e341-4621-935f-72816d38f3eb",
+        "requestHash": "ef49260a138bf5fcebadda4fb7261edc596521068a04c84ae388d1619bbe9ab1",
+        "parentRequestId": "4de17f18-855a-4409-b23d-9b4bce144a4a"
+      },
+      {
+        "requestId": "4de17f18-855a-4409-b23d-9b4bce144a4a",
+        "requestHash": "db3482d12e4d69c3e25cbdcfdf9f1267f8bd61e635108f6db7756b68f5522279",
+        "parentRequestId": "7648e8f1-1820-4e32-8cf3-0e5723c1392e"
+      },
+      {
+        "requestId": "7648e8f1-1820-4e32-8cf3-0e5723c1392e",
+        "requestHash": "e974f685ec448f5219734132221d5eedf37e8ee9f9b152732def2c6bb0957fdc",
+        "parentRequestId": null
+      }
+    ],
+    "historicalAssessment": {
+      "outcome": "unsatisfied",
+      "reason": "json-content-mismatch",
+      "observedJsonHash": "45e8402e4e38c386bbb42cf27305da5d460495b5d9d1474d585cd1ed5e409ac3",
+      "basis": "recomputed-from-preserved-bytes",
+      "observedAt": 1789636281184,
+      "evaluator": {
+        "comparison": "Foundry canonical JSON: object order ignored, array order retained; bounded finite JS numbers",
+        "dataImplementationHash": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c",
+        "id": "supplied-history-control",
+        "implementationHash": "8de15af4b6ce842c3e54039531c651472a9079a231bf31390f4a8f95b924f1fd",
+        "kind": "exact-json-artifact/2",
+        "node": "v24.21.0"
+      },
+      "expectedJsonHash": "4567021d96b62afb4adbda272684016e3be059dfa09843ca3bbd2d53c8f97d5d",
+      "goal": "Write record.json containing the exact input record.",
+      "successCriteria": [
+        "Write record.json containing the exact input record."
+      ],
+      "artifact": {
+        "name": "record.json",
+        "state": "present",
+        "bytes": 27,
+        "sha256": "45e8402e4e38c386bbb42cf27305da5d460495b5d9d1474d585cd1ed5e409ac3"
+      },
+      "completedArtifacts": [
+        {
+          "nodeKey": "root/file",
+          "sequence": 6,
+          "eventHash": "e4d2048718438c8b200d93b58873d83d671e5840f1a9e4450ede97d7a00f6bf0",
+          "intentSequence": 5,
+          "intentHash": "af95b57c9000950e09c4d6956d6407cd76fb8c09a06877795e7979c2f1adf7a5",
+          "output": {
+            "bytes": 27,
+            "name": "record.json",
+            "sha256": "45e8402e4e38c386bbb42cf27305da5d460495b5d9d1474d585cd1ed5e409ac3"
+          },
+          "outputHash": "6f0d7916a047b6ca94b8e2218405750a9541d5adc95cd3699f68de3b8ba16362"
+        }
+      ]
+    },
+    "currentEvidenceCheck": {
+      "status": "unverified",
+      "liveArtifactRead": false,
+      "suppliedRegistryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+      "matchesRecordedRegistry": true,
+      "qualification": "Registry hash comparison only; no current artifact, policy, capability compatibility or execution check."
+    },
+    "currentWorldQualification": false,
+    "purpose": "Historical inspection only; not an outcome receipt, repair request, or promotion permission."
+  }
+}

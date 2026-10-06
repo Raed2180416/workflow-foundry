@@ -1,0 +1,23 @@
+{
+  "code": "MODEL_TRANSPORT",
+  "message": "Provider transport failed",
+  "details": {
+    "cause": "SUPPLIED network read failed"
+  },
+  "termination": {
+    "kind": "transport",
+    "at": 1789636103299,
+    "code": "MODEL_TRANSPORT",
+    "error": {
+      "name": "TypeError",
+      "code": null,
+      "message": "SUPPLIED network read failed",
+      "cause": {
+        "name": "Error",
+        "code": "ECONNRESET",
+        "message": "SUPPLIED reset"
+      }
+    }
+  },
+  "receipts": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/provider-termination-fix-20260917/checks-a0b747ed-144f-48eb-a25b-0dcf46a92029/cases/termination-transport-before-injected-deadline-gLdXRj/opencode-v2-79d7cfc9-fd8d-45fe-9b42-506f96967e65"
+}

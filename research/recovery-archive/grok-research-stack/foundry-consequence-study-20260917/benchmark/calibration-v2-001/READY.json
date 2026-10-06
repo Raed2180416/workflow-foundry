@@ -1,0 +1,69 @@
+{
+  "schemaVersion": "sample-consequence-v2-ready",
+  "createdAt": "2026-09-17T03:25:12.212Z",
+  "ready": true,
+  "externalModelCalls": 0,
+  "checks": {
+    "passed": 18,
+    "total": 18
+  },
+  "frozenFilesChecked": 87,
+  "publicationPolicy": {
+    "id": "confirmed-evidence-before-publication-v2",
+    "enforced": "Completed, validated positive reproduction precedes each successful publication attempt containing a confirmed row.",
+    "timing": "Native tool.intent is the conservative start fence; node.completed proves publication succeeded. An overlapping reproduction/publication interval is not certified.",
+    "allProcessing": "Requiring every permitted instrument attempt to settle before any manifest, for every disposition, is a prospective strengthening. V2 measures it as a non-gating diagnostic; v1 PUBLIC.json is unchanged.",
+    "causalLimit": "Order, binding and content are checked. A constant written after matching evidence can still pass a finite case; causal use, arbitrary asynchronous instruments and population generalization are not proven."
+  },
+  "publicClarification": [
+    "A confirmed row requires the same sample's complete positive reproduction to have finished native output validation before the successful manifest publication attempt begins. Screening must likewise have completed with a usable suspicious observation before reproduction begins.",
+    "Instrument handler logs alone do not establish completed evidence. The evaluator binds each logged attempt and ordinal to the native event chain and its matching completed output or recorded error.",
+    "Fixture returns outside the advertised instrument output schemas invalidate the evaluator input before workflow execution. Schema-valid incomplete observations remain valid benchmark cases and mean inconclusive under the original public rules."
+  ],
+  "api": {
+    "oracle": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/oracle-v2.mjs",
+    "exports": [
+      "makeEvaluator",
+      "evaluateCandidate",
+      "aggregate",
+      "loadSuite",
+      "verifyFreeze",
+      "auditInstruments"
+    ],
+    "registryFactory": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/capabilities.mjs",
+    "directories": "benchmark/campaign-* remain owned by prime"
+  },
+  "sourceAndReceipts": [
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/oracle-v2.mjs",
+      "sha256": "517b7e60d3e674f7fc1189dac8f468dd19d9f6800467a5998fde6a38fbd66e15"
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/FREEZE_V2.json",
+      "sha256": "5e4af4f2d1b3e90e65373cc40b4e8857d9248e769ee47b8dd79fa9d72e4595d2"
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/calibration-v2-001/run-001/AUDIT.json",
+      "sha256": "46291fabed3f205f6c05ab955b82615af41927d9a0766a85450ea925040ddef8"
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/calibration-v2-001/NOTE.md",
+      "sha256": "2e5019b7810bf947bbc87884a4935f00c49aaa58a2197680e8de3959b4a6c6db"
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/calibration-v2-001/VALIDATION.json",
+      "sha256": "82c8e05b03ba6d2db94c81660c7e83ebfcf65c8061f836e9adea3aa5a28b4b0c"
+    }
+  ],
+  "independentReview": {
+    "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/NOTE.md",
+    "sha256": "23ae4819819121c526694e130fe8c8e83f53f2b4b562025d6c09500a5c1d6639"
+  },
+  "disclosure": "Only paths/hashes and aggregate results should enter prime handoff. No sealed concrete cases or supplied solution enter generation context.",
+  "limits": [
+    "Evidence order does not prove causal use.",
+    "All-processing-before-publication remains a non-gating diagnostic.",
+    "F2 rejects invalid evaluator inputs before runtime; it does not relabel them as candidate failures.",
+    "Serena and scoped deterministic security gate returned HTTP 404 tunnel_client_not_seen."
+  ]
+}

@@ -1,0 +1,146 @@
+{
+  "schemaVersion": "1.0",
+  "id": "Obj08b07d57899e",
+  "version": 1,
+  "title": "Research a claim and refuse to send ungrounded citations",
+  "goal": "Research a claim and refuse to send ungrounded citations",
+  "domain": "research",
+  "envelope": {
+    "assumptions": [
+      "Local Foundry IR only",
+      "Capabilities are the default registry"
+    ],
+    "risks": [
+      "Named IR limits are not vendor protocols"
+    ],
+    "successCriteria": [
+      "Independent acceptance checks pass",
+      "Unsupported IR requests stay named and unexecuted"
+    ],
+    "unsupported": [
+      "delayMsMax:3600000",
+      "compensateKind:false",
+      "continueAsNew:false",
+      "timerDispatch:persisted-wake-reinvoke",
+      "waitCrashRestartsDeadline:true",
+      "budgetPolicyCapMs:3600000",
+      "singleWriterPerKey:false",
+      "eventCronTrigger:false",
+      "constructionDrivesGenerator:false"
+    ]
+  },
+  "inputSchema": {
+    "type": "object"
+  },
+  "budget": {
+    "maxSteps": 80,
+    "maxConcurrency": 2,
+    "maxDurationMs": 3600000,
+    "maxCost": 0
+  },
+  "nodes": [
+    {
+      "id": "work",
+      "kind": "task",
+      "needs": [],
+      "description": "Grounded work step",
+      "tool": "core.identity",
+      "args": {
+        "done": true
+      },
+      "timeoutMs": 5000,
+      "retry": {
+        "maxAttempts": 2,
+        "backoffMs": 100
+      }
+    },
+    {
+      "id": "validate",
+      "kind": "task",
+      "needs": [
+        "work"
+      ],
+      "description": "Validate grounding before send",
+      "tool": "core.validate",
+      "args": {
+        "value": {
+          "$ref": "input.claim",
+          "default": {
+            "grounded": true
+          }
+        },
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "grounded"
+          ],
+          "properties": {
+            "grounded": {
+              "type": "boolean"
+            }
+          }
+        }
+      },
+      "timeoutMs": 5000,
+      "retry": {
+        "maxAttempts": 2,
+        "backoffMs": 100
+      }
+    },
+    {
+      "id": "verify",
+      "kind": "assert",
+      "needs": [
+        "validate"
+      ],
+      "description": "Fail closed on acceptance evidence",
+      "checks": [
+        {
+          "op": "eq",
+          "left": {
+            "$ref": "nodes.validate.valid"
+          },
+          "right": true
+        }
+      ]
+    },
+    {
+      "id": "artifact",
+      "kind": "task",
+      "needs": [
+        "verify"
+      ],
+      "description": "Write an inspectable receipt",
+      "tool": "core.artifact",
+      "args": {
+        "name": "receipt.json",
+        "content": "{\"status\":\"composed\"}"
+      },
+      "timeoutMs": 5000,
+      "retry": {
+        "maxAttempts": 2,
+        "backoffMs": 100
+      }
+    }
+  ],
+  "acceptance": [
+    {
+      "op": "exists",
+      "value": {
+        "$ref": "nodes.verify.id",
+        "default": "verify"
+      }
+    }
+  ],
+  "metadata": {
+    "sources": [
+      "construction-objective"
+    ],
+    "rationale": "Composed from grounded requirement cues onto Foundry IR; named limits are not vendor protocols.",
+    "tags": [
+      "research-grounding",
+      "verification"
+    ]
+  }
+}

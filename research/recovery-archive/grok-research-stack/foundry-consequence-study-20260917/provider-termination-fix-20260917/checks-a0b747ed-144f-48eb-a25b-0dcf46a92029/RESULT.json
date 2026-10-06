@@ -1,0 +1,37 @@
+{
+  "status": "PASS",
+  "at": "2026-09-17T09:08:26.470Z",
+  "root": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/provider-termination-fix-20260917/checks-a0b747ed-144f-48eb-a25b-0dcf46a92029",
+  "results": [
+    {
+      "name": "syntax-provider",
+      "status": "PASS",
+      "receipt": "syntax-provider.json"
+    },
+    {
+      "name": "syntax-tests",
+      "status": "PASS",
+      "receipt": "syntax-tests.json"
+    },
+    {
+      "name": "focused-tests",
+      "status": "PASS",
+      "receipt": "focused-tests.json"
+    },
+    {
+      "name": "doctor",
+      "status": "PASS",
+      "receipt": "doctor.json"
+    }
+  ],
+  "sourceStable": true,
+  "sources": {
+    "src/opencode-v2-free.mjs": "f8c4ad5fbdb6bf4ad41e16b0417f27836890931e997731e888c1fa11f4e3ee84",
+    "tests/provider-termination.test.mjs": "e7e4673b633f1302933d6f1cb09bc2bc2ad748c54487a9efb10c711e0bf25462",
+    "tests/opencode-v2-free.test.mjs": "b6ab1e50173501254a267c9f7b151de5e0b3c3e0699359c131f13a14ae7954ee",
+    "tests/provider-quota.test.mjs": "9d2f99a7d235d6ca7f65c4a7d266cd1c5283762b986a4d5dd1537d791976244f"
+  },
+  "scope": "Supplied provider responses through actual installed CLI/server and production adapter; provider/quota regression tests and doctor.",
+  "liveModelCalls": 0,
+  "externalProviderRequests": 0
+}

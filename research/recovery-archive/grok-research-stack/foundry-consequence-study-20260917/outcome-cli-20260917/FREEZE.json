@@ -1,0 +1,142 @@
+{
+  "createdAt": "2026-09-17T08:50:58.059Z",
+  "root": "/home/raed/Projects/workflow-foundry",
+  "study": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/outcome-cli-20260917",
+  "qualification": "Product CLI integration with supplied subprocess development controls; no live model/API calls or independent security qualification.",
+  "sourceHashes": {
+    "bin/foundry.mjs": "d23b59d8d181f9d954463094a9e36bde2d4e7af859b629bf2b34ea4ae21816fb",
+    "tests/outcome-cli.test.mjs": "4f3cc76c49e6665b5f88f7dc17daa1835abd02d79747b1cf54f936b6f6e469ac",
+    "docs/OUTCOME-REPAIR.md": "ebbda86e7c6d86641fe330574aac3e4e509515187aca03b58701e15ed155f56a"
+  },
+  "frozenOutcomeHash": "8de15af4b6ce842c3e54039531c651472a9079a231bf31390f4a8f95b924f1fd",
+  "evidence": {
+    "NOTE.md": "3c19d6e54de507b19405f36d4dfb253da199f3a58a1b44d305bd994b6d90de8e",
+    "verify.mjs": "5c80b84a045e585a1c5b1e0f448ce6d859fc6fff97548630c01d12bf9712a933",
+    "pre-edit/foundry.mjs": "27cf24865c9e6f30437cda0980e2f6e03928ca40521ddb61f2837433b64495dd",
+    "pre-edit/source.sha256": "dba197376726799d6a306304c983a5b69fc258cc4220a9182a2a3939d0ded07b",
+    "tests-01.stdout": "55ab7fa5fd58ea6c7bd1936a4510bb6828a6fb77adfa1fcee7812260b90c0fcf",
+    "tests-01.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "tests-01.source.mjs": "817aa5ed3e92c12a1769099df992e7937d64d89bec5b72d368337bfbed389b78",
+    "verification-Eubfvm/REPORT.json": "bb96412e9681a9166c8df47159c49ad2f64be70b8ffd37a3a7409d6954c99e9f",
+    "verification-Eubfvm/SOURCE-BEFORE.json": "5d6a9b3b8a8809bf1f20d0b37e552a0f53fe5e9837cd46b3e209cf89d3a72783",
+    "verification-Eubfvm/focused-tests.stdout": "c0fdac00720efeba642188922ab978c193f13095cff5ffb3d65bb1539957fef6",
+    "verification-Eubfvm/repository-tests.stdout": "1650c4778eacf1d4bace1c762e49ce8234a02fed26408a74bac0ca08486d0277",
+    "verification-Eubfvm/doctor.stdout": "cbe11c006648a5f4997899cb2f74ba0bb84ba24a4ab69c6eac6d635b7fa602e0"
+  },
+  "transcriptHashes": {
+    "verification-Eubfvm/cli-evidence/foundry-outcome-cli-2bjQy9/CLI-TRANSCRIPT.json": "85a4d088315149277e5297bdc9af3ead502d3b065606e369996b3bd980ba21a4",
+    "verification-Eubfvm/cli-evidence/foundry-outcome-cli-3A8On0/CLI-TRANSCRIPT.json": "e8da3fcfc48b553d8049ae64c5fd9932dbc73962b2a394fcd3e9529a2a63f364",
+    "verification-Eubfvm/cli-evidence/foundry-outcome-cli-3L6iC4/CLI-TRANSCRIPT.json": "273b86e85353713df20ffe66742404e9c650b62123c8c8032f072a408fa56f88",
+    "verification-Eubfvm/cli-evidence/foundry-outcome-cli-8QGXLN/CLI-TRANSCRIPT.json": "fc8572b5f79d4815bbcf4d113df5df48be172eaffe8430ca179f95865766145b",
+    "verification-Eubfvm/cli-evidence/foundry-outcome-cli-LVwH4L/CLI-TRANSCRIPT.json": "6f81a69b276f2c3f4fc7a17e24b3fd18915e479dbe5361c334366413cb1d2aa1",
+    "verification-Eubfvm/cli-evidence/foundry-outcome-cli-NO9u5a/CLI-TRANSCRIPT.json": "60c4f9b917e337a714f086e30521622bfbcea958086387d15cb9aca0471c6d6b",
+    "verification-Eubfvm/cli-evidence/foundry-outcome-cli-Nvs6up/CLI-TRANSCRIPT.json": "ee6df877e797c6dfbb1aa6b9aa706e66bee6b09efb2091836d09edc8652b9aab",
+    "verification-Eubfvm/cli-evidence/foundry-outcome-cli-OsvIDT/CLI-TRANSCRIPT.json": "dd18592d92f3a2530b8007757f9fb9064e67808d669b952f2ad80218062668e6",
+    "verification-Eubfvm/cli-evidence/foundry-outcome-cli-PhjLfR/CLI-TRANSCRIPT.json": "9949ba40e5ff6b3d190496d0d19c540fadbe4fc9ad3bed12144296ab5f0d9421",
+    "verification-Eubfvm/cli-evidence/foundry-outcome-cli-UY0Slg/CLI-TRANSCRIPT.json": "fa7c1c3b900f595ae3f2b865aea78fc0f65e760674f7cab911f9eb3635054e6f",
+    "verification-Eubfvm/cli-evidence/foundry-outcome-cli-WyTxHR/CLI-TRANSCRIPT.json": "187b402098d995de849a77197ff5e6da5c080778664fbe78ef10bc842fb8902c",
+    "verification-Eubfvm/cli-evidence/foundry-outcome-cli-XLuw88/CLI-TRANSCRIPT.json": "7d655b6292565e927f2cbd93d1a1a7d76e86293fab2c661b1792e797fa0d71a4",
+    "verification-Eubfvm/cli-evidence/foundry-outcome-cli-XzUDma/CLI-TRANSCRIPT.json": "2c2aee4698417417021316c0273b730bd39c3ad69107ee82145f515021d3213c",
+    "verification-Eubfvm/cli-evidence/foundry-outcome-cli-YF7Cy4/CLI-TRANSCRIPT.json": "078bc61c1b0737443b80e5e7fae4bddf2db3ab8803620261ca77b86a662c9344",
+    "verification-Eubfvm/cli-evidence/foundry-outcome-cli-aAuUHH/CLI-TRANSCRIPT.json": "7686f254febd6fa048860cef42922c91a39932ab670dde65afbe2cbe9ed00d0e",
+    "verification-Eubfvm/cli-evidence/foundry-outcome-cli-cudsDn/CLI-TRANSCRIPT.json": "d6a12971d89dc761ce917ee3614529b2852db3b93aa88a577b12ed36e7cdae43",
+    "verification-Eubfvm/cli-evidence/foundry-outcome-cli-d1bzKw/CLI-TRANSCRIPT.json": "8070f85f3dbe18c5d70934cfa139dc5a122d952df4f7d9c316c1d8e4334a8740",
+    "verification-Eubfvm/cli-evidence/foundry-outcome-cli-dVFflL/CLI-TRANSCRIPT.json": "4cd80ddc5136564c34316bfa840f44aae4f5e939ae23b898f6c8326eb72f2dac",
+    "verification-Eubfvm/cli-evidence/foundry-outcome-cli-djxee0/CLI-TRANSCRIPT.json": "22ec9363076210c43eadfd0db8813c9a048fb415defe7ae7781ead7adf4c890b",
+    "verification-Eubfvm/cli-evidence/foundry-outcome-cli-eXZN32/CLI-TRANSCRIPT.json": "4792bdcef55042736a0f04718b91f8a69d79d711c542b3ceb374cba836345b29",
+    "verification-Eubfvm/cli-evidence/foundry-outcome-cli-iF2OiR/CLI-TRANSCRIPT.json": "1bf89db6c65ae17dd2ba1a346b41338c8ede9163720b5fefe9519f5e67a415f2",
+    "verification-Eubfvm/cli-evidence/foundry-outcome-cli-iepLb2/CLI-TRANSCRIPT.json": "72f93889ab519fd0772c31adc69a8d4c6eeb1eea980a03ca2d2427aca512c799",
+    "verification-Eubfvm/cli-evidence/foundry-outcome-cli-lQYrTC/CLI-TRANSCRIPT.json": "789e8d294876587e6b3e9c97b1580c2095af68b39a275c9705df634849de0142",
+    "verification-Eubfvm/cli-evidence/foundry-outcome-cli-mDcuH2/CLI-TRANSCRIPT.json": "b1976318bd54f139ac0b5eb37b82bb128be938e34c51ba1cbeb1453e7b86f5a5",
+    "verification-Eubfvm/cli-evidence/foundry-outcome-cli-mQBDFl/CLI-TRANSCRIPT.json": "638948e474830fad0b119a1c6d7044e3e1d2ce95084e6626896288dd128c4ce1",
+    "verification-Eubfvm/cli-evidence/foundry-outcome-cli-oOjyf0/CLI-TRANSCRIPT.json": "16ad2d3d14b46ea3165890f32f85a072784aab1da42378de3029d92cadcf1270",
+    "verification-Eubfvm/cli-evidence/foundry-outcome-cli-pHiiNc/CLI-TRANSCRIPT.json": "5667d3c64c310abc7397671259f9885eb32be9407a795542056a10aac15b0898",
+    "verification-Eubfvm/cli-evidence/foundry-outcome-cli-u2vg7s/CLI-TRANSCRIPT.json": "36234ac006247a85c1db6bf45216459e209c80acb197d30aad45422d7b1ef536",
+    "verification-Eubfvm/cli-evidence/foundry-outcome-cli-u9Nn86/CLI-TRANSCRIPT.json": "099ea9893dfeb3c7b245d66f06ab32910cc57d4ebdc68e69943617e12a593c94",
+    "verification-Eubfvm/cli-evidence/foundry-outcome-cli-vB7xnS/CLI-TRANSCRIPT.json": "ced162a268c12b4331b9d47f1b292ed9f56ee3c623a3ccf22e9219cd5d4fa173",
+    "verification-Eubfvm/cli-evidence/foundry-outcome-cli-w0hJ4C/CLI-TRANSCRIPT.json": "5fa1f7f2fc9e35d46d85f88a6015bcfe6d978fb0ea519e730f7832bb097b79f1",
+    "verification-Eubfvm/cli-evidence/foundry-outcome-cli-wpmz2d/CLI-TRANSCRIPT.json": "cfa3d6f68e24abe5262306c8b778bec46d62ff0c67a81dc631004e44efba23e8",
+    "verification-Eubfvm/cli-evidence/foundry-outcome-cli-yVhUQ9/CLI-TRANSCRIPT.json": "ee89d170e57aaf4ad1570a4769c06fa824e975aa858520a027d4411c58eaa131",
+    "verification-Eubfvm/cli-evidence/foundry-outcome-cli-zo2hQS/CLI-TRANSCRIPT.json": "187b402098d995de849a77197ff5e6da5c080778664fbe78ef10bc842fb8902c"
+  },
+  "trajectories": [
+    {
+      "file": "verification-Eubfvm/cli-evidence/foundry-outcome-cli-XLuw88/TRAJECTORY.json",
+      "sha256": "da8c13a6cb8dc495dc3b88b18a0c37e464e85c0a433da0ea6d7f5f70a1b0b67d",
+      "initialRunId": "5413a48b-6c6c-473d-a779-e4d7c9ea1993",
+      "initialRunStatus": "succeeded",
+      "initialOutcome": "unsatisfied",
+      "finalRunId": "7dfcd416-2144-4d81-8bd1-de768dc36e7a",
+      "finalRunStatus": "succeeded",
+      "finalOutcome": "satisfied",
+      "contractId": "4a8698f2b3c59e5491ef10c9771d99bde268d2db1fea29bb51495755cbd8a3a0",
+      "originalBytesRetained": true
+    },
+    {
+      "file": "verification-Eubfvm/cli-evidence/foundry-outcome-cli-eXZN32/TRAJECTORY.json",
+      "sha256": "40a57af49f8ceb0f8c39d8bef23215a759cd18c608bb0c033436e6e0176c8664",
+      "initialRunId": "da71a439-0c00-4654-933d-d3e83a0d6765",
+      "initialRunStatus": "succeeded",
+      "initialOutcome": "unsatisfied",
+      "finalRunId": "530b9475-a4fe-4301-ac95-7255b8c43ffb",
+      "finalRunStatus": "succeeded",
+      "finalOutcome": "satisfied",
+      "contractId": "e6292d81fc37bb9e66585794dd9d1cd522034dcceebea2bf7285531f03985ac1",
+      "originalBytesRetained": true
+    }
+  ],
+  "subprocesses": 374,
+  "offlineProviderCallbacks": 6,
+  "liveModelCalls": 0,
+  "checks": [
+    {
+      "name": "syntax-cli",
+      "exitCode": 0
+    },
+    {
+      "name": "syntax-tests",
+      "exitCode": 0
+    },
+    {
+      "name": "focused-tests",
+      "exitCode": 0,
+      "tests": {
+        "tests": 66,
+        "pass": 66,
+        "fail": 0,
+        "skipped": 0,
+        "cancelled": 0
+      }
+    },
+    {
+      "name": "doctor",
+      "exitCode": 0
+    },
+    {
+      "name": "repository-tests",
+      "exitCode": 0,
+      "tests": {
+        "tests": 562,
+        "pass": 558,
+        "fail": 0,
+        "skipped": 4,
+        "cancelled": 0
+      }
+    },
+    {
+      "name": "diff-check",
+      "exitCode": 0
+    }
+  ],
+  "changedDuringVerification": [],
+  "unexpectedPreEditChanges": [],
+  "pluginChecks": {
+    "status": "unverified",
+    "observedError": "HTTP 404 tunnel_client_not_seen",
+    "attempted": [
+      "Serena initial_instructions",
+      "project_quality_map",
+      "security_scan full, registry disabled"
+    ]
+  }
+}

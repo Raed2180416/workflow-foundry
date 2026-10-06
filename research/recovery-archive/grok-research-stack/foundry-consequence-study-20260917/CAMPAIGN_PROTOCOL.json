@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "foundry-synthesis-consequences-v1",
+  "model": "opencode/big-pickle",
+  "createdAt": "2026-09-17T03:04:21.782Z",
+  "maxRounds": 3,
+  "maxGenerationDurationMs": 600000,
+  "providerTimeoutMs": 150000,
+  "autoApply": false,
+  "taskSha256": "f5eb99642468d90583162ac60539f808f074083ace570da0178509bad4b1f650",
+  "publicContractSha256": "1b5d70353084eafc8e3a981729e66717e82e899d2dab8b09098c586a4b9dbcc3",
+  "driverSha256": "5742620ee6d71d98f30a1f083f5618dddfadbf487c818609fd0b56c10e706a5c",
+  "calibrationReceiptSha256": "a77f5dfb1341a28a91e3f056c5fc76c4581844be857a5a41ac437221632887bd",
+  "evaluation": "Native runtime, exact manifest JSON, instrument attempt ledger, frozen researcher-authored scenarios.",
+  "constructionEvidence": "Model supplies workflow JSON and rationale. Task semantics, capabilities, schema, skills and independent evaluator are supplied by researchers.",
+  "qualification": "Single source-informed synthetic domain, not general goal identification, calibration or architecture invention.",
+  "providerVisibility": [
+    "original objective",
+    "public contracts",
+    "actual capability descriptors",
+    "generic Foundry schema and skills",
+    "previous candidate and development evaluation only"
+  ],
+  "excludedFromProvider": [
+    "sealed cases",
+    "sealed fixture truth",
+    "supplied positive workflow",
+    "mutants",
+    "oracle implementation"
+  ],
+  "controls": "Evaluator independently calibrated using supplied positive and renamed/reordered equivalent graphs plus six mutants. No treatment-effect or model-scale conclusion from a single generation trajectory.",
+  "authority": "Only isolated synthetic executions and run-scoped artifacts. No production deployment, external effect, account change, or automatic promotion."
+}

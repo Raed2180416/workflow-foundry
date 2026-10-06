@@ -1,0 +1,99 @@
+{
+  "responseKeys": [
+    "modelfile",
+    "parameters",
+    "template",
+    "details",
+    "model_info",
+    "tensors",
+    "capabilities",
+    "modified_at"
+  ],
+  "details": {
+    "parent_model": "",
+    "format": "gguf",
+    "family": "qwen35",
+    "families": [
+      "qwen35"
+    ],
+    "parameter_size": "9.0B",
+    "quantization_level": "Q4_K_M"
+  },
+  "capabilities": [
+    "tools",
+    "thinking",
+    "completion"
+  ],
+  "architecture": "qwen35",
+  "parameterCount": 8953803264,
+  "contextLength": 262144,
+  "embeddingLength": 4096,
+  "metadata": {
+    "general.architecture": "qwen35",
+    "general.base_model.0.name": "Qwen3.5 9B",
+    "general.base_model.0.organization": "Qwen",
+    "general.base_model.0.repo_url": "https://huggingface.co/Qwen/Qwen3.5-9B",
+    "general.base_model.count": 1,
+    "general.basename": "Qwen3.5-9B",
+    "general.file_type": 15,
+    "general.license": "apache-2.0",
+    "general.license.link": "https://huggingface.co/Qwen/Qwen3.5-9B/blob/main/LICENSE",
+    "general.parameter_count": 8953803264,
+    "general.quantization_version": 2,
+    "general.quantized_by": "Unsloth",
+    "general.repo_url": "https://huggingface.co/unsloth",
+    "general.size_label": "9B",
+    "general.tags": null,
+    "general.type": "model",
+    "quantize.imatrix.chunks_count": 80,
+    "quantize.imatrix.dataset": "unsloth_calibration_Qwen3.5-9B.txt",
+    "quantize.imatrix.entries_count": 248,
+    "quantize.imatrix.file": "Qwen3.5-9B-GGUF/imatrix_unsloth.gguf",
+    "qwen35.attention.head_count": 16,
+    "qwen35.attention.head_count_kv": 4,
+    "qwen35.attention.key_length": 256,
+    "qwen35.attention.layer_norm_rms_epsilon": 0.000001,
+    "qwen35.attention.value_length": 256,
+    "qwen35.block_count": 32,
+    "qwen35.context_length": 262144,
+    "qwen35.embedding_length": 4096,
+    "qwen35.feed_forward_length": 12288,
+    "qwen35.full_attention_interval": 4,
+    "qwen35.rope.dimension_count": 64,
+    "qwen35.rope.dimension_sections": null,
+    "qwen35.rope.freq_base": 10000000,
+    "qwen35.ssm.conv_kernel": 4,
+    "qwen35.ssm.group_count": 16,
+    "qwen35.ssm.inner_size": 4096,
+    "qwen35.ssm.state_size": 128,
+    "qwen35.ssm.time_step_rank": 32,
+    "tokenizer.ggml.eos_token_id": 248046,
+    "tokenizer.ggml.merges": null,
+    "tokenizer.ggml.model": "gpt2",
+    "tokenizer.ggml.padding_token_id": 248055,
+    "tokenizer.ggml.pre": "qwen35",
+    "tokenizer.ggml.token_type": null,
+    "tokenizer.ggml.tokens": null
+  },
+  "digest": null,
+  "system": {
+    "present": false,
+    "bytes": null,
+    "sha256": null
+  },
+  "template": {
+    "present": true,
+    "bytes": 7816,
+    "sha256": "7f0e529032c25183bcd66c7f238da2d377f43be754a94e2725a58c4e16d2ed67"
+  },
+  "modelfile": {
+    "present": true,
+    "bytes": 309,
+    "sha256": "02ea6a5bbd5f779b16ece3e1b497d7996b2acd2a3c0b19523b635a25ad93d322"
+  },
+  "parameters": "num_ctx                        8192\ntemperature                    0",
+  "messages": {
+    "count": 0,
+    "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  }
+}

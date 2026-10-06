@@ -1,0 +1,87 @@
+{
+  "name": "caller-before-injected-deadline",
+  "expectedCode": "CANCELLED",
+  "code": "CANCELLED",
+  "receipts": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/continuation-checkpoint-20260917/final-provider-controls/termination-caller-before-injected-deadline-boBXug/opencode-v2-010ed954-6ad9-4f29-b183-29bda38247b6",
+  "catalogCalls": 1,
+  "inferenceCalls": 1,
+  "externalNetworkCalls": 0,
+  "modelCalls": 0,
+  "termination": {
+    "startedAt": 1789636409895,
+    "deadlineAt": 1789636413895,
+    "abortAt": 1789636410897,
+    "first": {
+      "kind": "caller",
+      "at": 1789636410897,
+      "code": "CANCELLED",
+      "error": {
+        "name": "FoundryError",
+        "code": "CANCELLED",
+        "message": "Generation cancelled"
+      }
+    },
+    "secondary": [
+      {
+        "kind": "deadline",
+        "at": 1789636410897,
+        "code": "TIMEOUT",
+        "error": {
+          "name": "FoundryError",
+          "code": "TIMEOUT",
+          "message": "Generation exceeded its total deadline"
+        }
+      },
+      {
+        "kind": "abort-observation",
+        "at": 1789636410898,
+        "code": "MODEL_TRANSPORT",
+        "error": {
+          "name": "AbortError",
+          "code": 20,
+          "message": "This operation was aborted"
+        }
+      },
+      {
+        "kind": "process",
+        "at": 1789636410901,
+        "code": "CANCELLED",
+        "error": {
+          "name": "FoundryError",
+          "code": "CANCELLED",
+          "message": "Subprocess cancelled"
+        }
+      }
+    ],
+    "finishedAt": 1789636410901,
+    "callerAborted": true
+  },
+  "transport": {
+    "attempts": 1,
+    "forwarded": 1,
+    "completed": 0,
+    "requests": [
+      {
+        "number": 1,
+        "method": "POST",
+        "path": "/zen/v1/chat/completions",
+        "forwarded": true,
+        "requestSHA256": "cccdf20eb7985691f69de44da01a466b12202d03b1127478cb312ed4a78010b3",
+        "forwardedAt": 1789636410867,
+        "statusCode": 200,
+        "headersAt": 1789636410867,
+        "retryAfter": null,
+        "firstBodyByteAt": 1789636410868,
+        "lastBodyByteAt": 1789636410868,
+        "responseSHA256": "be984db6b02fa2cef9efc48e177c90ea840b5355a49f21a6faa9165784d0cc0b",
+        "responseBytes": 265,
+        "responsePartial": true,
+        "error": {
+          "name": "AbortError",
+          "code": 20,
+          "message": "This operation was aborted"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "code": "MODEL_AUTH_REQUIRED",
+  "message": "The public provider refused access; no credentials were substituted",
+  "details": {
+    "observedStatusCode": 403,
+    "automaticRetry": false,
+    "completedResponse": false,
+    "retryAfterSeconds": null
+  },
+  "receipts": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/opencode-v2/tiny-probe-dee7958b-8b95-4dc7-9686-63a7c45ba3d0/opencode-v2-1c89f0f5-dc66-4e69-bf68-afa2f124565e"
+}

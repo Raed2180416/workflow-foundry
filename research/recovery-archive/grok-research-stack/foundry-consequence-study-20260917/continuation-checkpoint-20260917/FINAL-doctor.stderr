@@ -1,0 +1,2 @@
+npm notice run @contrare-research/workflow-foundry@0.1.0 check
+npm notice run node bin/foundry.mjs doctor

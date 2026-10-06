@@ -1,0 +1,53 @@
+{
+  "checkedAt": "2026-09-17T03:29:18.133Z",
+  "passed": true,
+  "newWorkflowExecutions": 0,
+  "modelsCalled": 0,
+  "sourceSHA256": "517b7e60d3e674f7fc1189dac8f468dd19d9f6800467a5998fde6a38fbd66e15",
+  "freezeSHA256": "5e4af4f2d1b3e90e65373cc40b4e8857d9248e769ee47b8dd79fa9d72e4595d2",
+  "frozenFilesMatched": 87,
+  "sourceRangesChecked": 15,
+  "noteHashesChecked": 6,
+  "artifacts": [
+    {
+      "relative": "WITNESS_PATHS.json",
+      "bytes": 2479,
+      "sha256": "442dbae1c53f847c52a469e001cf6d1bf86809129e4877d6465889c5651edad8"
+    },
+    {
+      "relative": "check-v2.mjs",
+      "bytes": 8124,
+      "sha256": "66c68faad29e77e4c4f90005ddc76cf2cd3afacc774049fb765ac7ac00da70dc"
+    },
+    {
+      "relative": "NOTE_V2.md",
+      "bytes": 10427,
+      "sha256": "40898e281f24903f3335ba98435a08406bff8dcfef661b9903536537ca2e7ee1"
+    },
+    {
+      "relative": "receipt-v2-001/AUDIT.json",
+      "bytes": 18529,
+      "sha256": "f71f83a1ec461c8d5b1636903b5c9caab550193cea0b405271f16ed67ccbf726"
+    },
+    {
+      "relative": "receipt-v2-001/SOURCE_BEFORE.json",
+      "bytes": 5794,
+      "sha256": "6b6b84ee9e8671e13fe3eaa2d931bb3a457bc80283ae266e9fc7144073ad5769"
+    },
+    {
+      "relative": "receipt-v2-001/FREEZE_VERIFICATION.json",
+      "bytes": 1399,
+      "sha256": "abe6f8196ca690411b1f2006b43fc8c8fb0193dc1cd195f78d9a357792ddbe44"
+    },
+    {
+      "relative": "receipt-v2-001/CALIBRATION_REVIEW.json",
+      "bytes": 7952,
+      "sha256": "1c04d1e25fc11bdef4f3f6a847284122be1610f49dafbbc6ecc2c4bfc4f3ed2b"
+    },
+    {
+      "relative": "AUDIT_V2.json",
+      "bytes": 5942,
+      "sha256": "7356ddf9ab41e8da879423be32046518ff7d6b7dfdbd429ac22ddea5696677e5"
+    }
+  ]
+}

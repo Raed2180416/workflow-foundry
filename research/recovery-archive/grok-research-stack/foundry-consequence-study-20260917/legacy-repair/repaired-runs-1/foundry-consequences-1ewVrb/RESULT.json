@@ -1,0 +1,99 @@
+{
+  "approvals": {},
+  "cost": 0,
+  "createdAt": 1789614072449,
+  "deadline": 1789617672449,
+  "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+  "error": null,
+  "eventHead": {
+    "seq": 11,
+    "hash": "249d80e6a293acd0ff781e066dde851991d708af090d866814e1cbfe93d299ee"
+  },
+  "frames": {},
+  "id": "4ad3ae73-e602-4c7e-953b-69bf5d653756",
+  "input": {
+    "claim": {
+      "grounded": true
+    }
+  },
+  "nodes": {
+    "artifact": {
+      "argsHash": "f44964cfb4a032af59b6c6b356a0f46b39e03edc03d6fc184ed1db04d5ef39a1",
+      "attempts": 1,
+      "completedAt": 1789614072519,
+      "completedSequence": 10,
+      "effects": "idempotent",
+      "idempotencyKey": "70d804a0378ae9f7cf66b859dcecc5e1b5ce3a3390b3c77c658e1652a48d14c5",
+      "kind": "task",
+      "outputHash": "dec95d7694bd2d6f40a4cf815e52fc320724401aff0cade0092d168c868e6e94",
+      "startedAt": 1789614072502,
+      "startedSequence": 9,
+      "status": "completed",
+      "tool": "core.artifact"
+    },
+    "validate": {
+      "argsHash": "a623f40da9df05645b22589bb511647e4ab80fe3ee0b1a0d52ec75564d36a065",
+      "attempts": 1,
+      "completedAt": 1789614072483,
+      "completedSequence": 6,
+      "effects": "none",
+      "idempotencyKey": "373083bb3141cc74dc5c5b6a75bcf390bb8b223b38716d794cf356e3073ebf8c",
+      "kind": "task",
+      "outputHash": "f2e6221bac7112ea123f706c89500b263e72f0f9bc7068fb74bdbaf8c51fbc38",
+      "startedAt": 1789614072476,
+      "startedSequence": 5,
+      "status": "completed",
+      "tool": "core.validate"
+    },
+    "verify": {
+      "attempts": 1,
+      "completedAt": 1789614072492,
+      "completedSequence": 8,
+      "kind": "assert",
+      "outputHash": "11c11db30f4b3f6c758722ba3e27eea08145b7d212f6a157451e364b48475280",
+      "startedAt": 1789614072487,
+      "startedSequence": 7,
+      "status": "completed"
+    },
+    "work": {
+      "argsHash": "ace9288a3ff79a9132b9ddf621bc19354ffb04b3eacb17486ad6dc4d51303961",
+      "attempts": 1,
+      "completedAt": 1789614072471,
+      "completedSequence": 4,
+      "effects": "none",
+      "idempotencyKey": "0468988f01dab43946a86edc691d3592a67274a4c73abad0d5dd17b2b749a325",
+      "kind": "task",
+      "outputHash": "ace9288a3ff79a9132b9ddf621bc19354ffb04b3eacb17486ad6dc4d51303961",
+      "startedAt": 1789614072465,
+      "startedSequence": 3,
+      "status": "completed",
+      "tool": "core.identity"
+    }
+  },
+  "outputs": {
+    "artifact": {
+      "bytes": 21,
+      "name": "receipt.json",
+      "sha256": "c3f7120e8218a8208459015dd0edda53d195d6ff7fa2bea0f42eefea1d0fb6a8"
+    },
+    "validate": {
+      "errors": [],
+      "valid": true
+    },
+    "verify": {
+      "passed": true
+    },
+    "work": {
+      "done": true
+    }
+  },
+  "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+  "resumeCount": 1,
+  "status": "succeeded",
+  "steps": 4,
+  "updatedAt": 1789614072530,
+  "workflowHash": "181064ea82a139d24315d7fd2ffe7041dbee905ba6d63c1669c92d5678d92f3e",
+  "workflowId": "Obj08b07d57899e",
+  "executionActive": false,
+  "independentTaskVerified": false
+}

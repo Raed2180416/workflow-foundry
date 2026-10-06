@@ -1,0 +1,89 @@
+{
+  "approvals": {},
+  "cost": 0,
+  "createdAt": 1789613952652,
+  "deadline": 1789617552652,
+  "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+  "error": {
+    "code": "ASSERTION_FAILED",
+    "message": "Assertion verify failed"
+  },
+  "eventHead": {
+    "seq": 9,
+    "hash": "bb1804b8707dc5d5766745ba78173e9f8d93a0ed1dd9e1b3753194075fe81c8e"
+  },
+  "frames": {},
+  "id": "813378eb-e2c9-4435-8f0a-ed8413c2c2d5",
+  "input": {
+    "claim": null
+  },
+  "nodes": {
+    "validate": {
+      "argsHash": "dddfcbe5254e35ca4fd98dd9fa068faf7a7fbaf7e5c927afbd612567ff431db7",
+      "attempts": 1,
+      "completedAt": 1789613952684,
+      "completedSequence": 6,
+      "effects": "none",
+      "idempotencyKey": "7cc836fe13eb94c6230c38e43ec040927f5714719936c344e69bbb03ff1c25a6",
+      "kind": "task",
+      "outputHash": "293fca4854bdc60b2d87d14a7f35e930e34c51136a20210817a6cc275733b34a",
+      "startedAt": 1789613952679,
+      "startedSequence": 5,
+      "status": "completed",
+      "tool": "core.validate"
+    },
+    "verify": {
+      "attempts": 1,
+      "error": {
+        "code": "ASSERTION_FAILED",
+        "message": "Assertion verify failed"
+      },
+      "kind": "assert",
+      "startedAt": 1789613952693,
+      "startedSequence": 7,
+      "status": "failed"
+    },
+    "work": {
+      "argsHash": "ace9288a3ff79a9132b9ddf621bc19354ffb04b3eacb17486ad6dc4d51303961",
+      "attempts": 1,
+      "completedAt": 1789613952673,
+      "completedSequence": 4,
+      "effects": "none",
+      "idempotencyKey": "865e84eab37f03e7b28d9bc720837e1ee56cf85c73d8b2a432ac5cbae308bc9b",
+      "kind": "task",
+      "outputHash": "ace9288a3ff79a9132b9ddf621bc19354ffb04b3eacb17486ad6dc4d51303961",
+      "startedAt": 1789613952667,
+      "startedSequence": 3,
+      "status": "completed",
+      "tool": "core.identity"
+    }
+  },
+  "outputs": {
+    "validate": {
+      "errors": [
+        {
+          "instancePath": "",
+          "keyword": "type",
+          "message": "must be object",
+          "params": {
+            "type": "object"
+          },
+          "schemaPath": "#/type"
+        }
+      ],
+      "valid": false
+    },
+    "work": {
+      "done": true
+    }
+  },
+  "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+  "resumeCount": 1,
+  "status": "failed",
+  "steps": 3,
+  "updatedAt": 1789613952704,
+  "workflowHash": "4e3bb350e77d1b090eccdbf84b6eb9d4452b8931c0f819a7cdc4ffd9a72124cd",
+  "workflowId": "Obj08b07d57899e",
+  "executionActive": false,
+  "independentTaskVerified": false
+}

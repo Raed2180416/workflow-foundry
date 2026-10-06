@@ -1,0 +1,15 @@
+{
+  "code": "CANCELLED",
+  "message": "Generation cancelled",
+  "termination": {
+    "kind": "caller",
+    "at": 1789636089263,
+    "code": "CANCELLED",
+    "error": {
+      "name": "FoundryError",
+      "code": "CANCELLED",
+      "message": "Generation cancelled"
+    }
+  },
+  "receipts": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/provider-termination-fix-20260917/checks-a0b747ed-144f-48eb-a25b-0dcf46a92029/cases/termination-caller-Zbc6Cu/opencode-v2-d9cd5f2b-a9dd-4565-aab4-11cce69e9547"
+}

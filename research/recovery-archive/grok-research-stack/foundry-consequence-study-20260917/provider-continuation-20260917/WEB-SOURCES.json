@@ -1,0 +1,17 @@
+{
+  "inspectedDate": "2026-09-17",
+  "sources": [
+    {
+      "url": "https://vercel.com/docs/ai-gateway/authentication-and-byok",
+      "kind": "official authentication documentation; not a local availability test",
+      "finding": "Supported API-key and Vercel OIDC authentication paths; no machine credential discovery follows from documentation."
+    },
+    {
+      "url": "https://opencode.ai/docs/zen/",
+      "pageLastUpdated": "2026-09-16",
+      "sections": ["Endpoints", "Pricing", "Privacy"],
+      "finding": "Big Pickle is listed free and described as stealth. Its free-period data may be used to improve the model; no zero-retention or parameter-scale claim is warranted."
+    }
+  ],
+  "modelInferenceCalls": 0
+}

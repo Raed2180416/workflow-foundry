@@ -1,0 +1,847 @@
+{
+  "request": {
+    "id": "6d77c25f-be87-4ad8-9c29-ad0abbd03518",
+    "workflowId": null,
+    "baseHash": null,
+    "text": "Relay a neutral request to preserve the ordered input values.",
+    "source": "agent-request",
+    "status": "diagnostic",
+    "createdAt": 1791274332231,
+    "automaticGeneration": false,
+    "provenance": "Task relayed or composed by the host agent; not direct user consent or an authority grant"
+  },
+  "failedTrial": {
+    "baseHash": null,
+    "createdAt": 1791274332259,
+    "id": "7298fc47-d3c0-4cc1-b33a-c576866f7d2e",
+    "inputHash": "dc9eb06d34678c51646ff351f87f265f5425aaed03f0a9d147b14e4b379c0d43",
+    "ordinal": 1,
+    "pid": 1910544,
+    "policyHash": "fcd24fa36c355427c704e57450e66d721afeed2f19367c577c89ba8ec2abaeca",
+    "processStart": "8481913",
+    "qualification": "Isolated diagnostic execution only. Local acceptance is model-authored; no independent outcome qualification.",
+    "qualificationLevel": "construction",
+    "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+    "requestId": "6d77c25f-be87-4ad8-9c29-ad0abbd03518",
+    "runId": "08e1625b-fb8f-4ae5-82f5-58da4a4400e4",
+    "status": "finished",
+    "taskOutcomeQualified": false,
+    "workflowHash": "a2ca8ca54dadae7e9d3cd22b8d0e8d0c0b4c3d7f08925054aec7b241c5fcccf0",
+    "workflowId": "UITrialNested",
+    "workflowVersion": 1,
+    "runStatus": "failed",
+    "error": {
+      "code": "ACCEPTANCE_FAILED",
+      "message": "Acceptance failed for root"
+    },
+    "eventHead": {
+      "seq": 13,
+      "hash": "36a485982a8a6d990d3db37fff38d50930dbcdd544d1acc4e5bd690e765b0cda"
+    },
+    "outputHash": "f94c3c23960a29436fb7c61f1721dc3c31dbd9ac73fc74eadf216113c877297a",
+    "steps": 4,
+    "cost": 0,
+    "localAcceptancePassed": false,
+    "artifactReceipts": [
+      {
+        "name": "neutral.txt",
+        "bytes": 33,
+        "sha256": "7bf33505c0f808d0176695bf7c972967da1a57abce2bb87c08079a8692737265"
+      }
+    ],
+    "finishedAt": 1791274332468,
+    "outputs": {
+      "each": {
+        "count": 2,
+        "items": [
+          {
+            "echo": {
+              "value": "violet"
+            }
+          },
+          {
+            "echo": {
+              "value": "indigo"
+            }
+          }
+        ]
+      },
+      "receipt": {
+        "bytes": 33,
+        "name": "neutral.txt",
+        "sha256": "7bf33505c0f808d0176695bf7c972967da1a57abce2bb87c08079a8692737265"
+      }
+    }
+  },
+  "passedTrial": {
+    "baseHash": null,
+    "createdAt": 1791274332480,
+    "id": "2939bd4f-8b2a-42ad-975c-885c77769636",
+    "inputHash": "dc9eb06d34678c51646ff351f87f265f5425aaed03f0a9d147b14e4b379c0d43",
+    "ordinal": 2,
+    "pid": 1910544,
+    "policyHash": "fcd24fa36c355427c704e57450e66d721afeed2f19367c577c89ba8ec2abaeca",
+    "processStart": "8481913",
+    "qualification": "Isolated diagnostic execution only. Local acceptance is model-authored; no independent outcome qualification.",
+    "qualificationLevel": "construction",
+    "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+    "requestId": "6d77c25f-be87-4ad8-9c29-ad0abbd03518",
+    "runId": "0e969d5f-613e-4f93-8f03-21f74be6e54d",
+    "status": "finished",
+    "taskOutcomeQualified": false,
+    "workflowHash": "158f263ad6e967cab015576f74a33f6a815fb3bd6897ef296c241e9e60018408",
+    "workflowId": "UITrialNested",
+    "workflowVersion": 1,
+    "runStatus": "succeeded",
+    "error": null,
+    "eventHead": {
+      "seq": 13,
+      "hash": "4e0d8736543c4892cbb150d1cc5d6c8694913056c8f3662ba5f1e7d8d4c1796e"
+    },
+    "outputHash": "f94c3c23960a29436fb7c61f1721dc3c31dbd9ac73fc74eadf216113c877297a",
+    "steps": 4,
+    "cost": 0,
+    "localAcceptancePassed": true,
+    "artifactReceipts": [
+      {
+        "name": "neutral.txt",
+        "bytes": 33,
+        "sha256": "7bf33505c0f808d0176695bf7c972967da1a57abce2bb87c08079a8692737265"
+      }
+    ],
+    "finishedAt": 1791274332675,
+    "outputs": {
+      "each": {
+        "count": 2,
+        "items": [
+          {
+            "echo": {
+              "value": "violet"
+            }
+          },
+          {
+            "echo": {
+              "value": "indigo"
+            }
+          }
+        ]
+      },
+      "receipt": {
+        "bytes": 33,
+        "name": "neutral.txt",
+        "sha256": "7bf33505c0f808d0176695bf7c972967da1a57abce2bb87c08079a8692737265"
+      }
+    }
+  },
+  "rejectedTrial": {
+    "baseHash": null,
+    "createdAt": 1791274332686,
+    "id": "5fbe490a-32d2-45a8-b07f-ac43ad3b4bf5",
+    "inputHash": "6d088480a77f052b06d281c02ebac09b7eb896e036fa09911ab039cae87dd45b",
+    "ordinal": 3,
+    "pid": 1910544,
+    "policyHash": "fcd24fa36c355427c704e57450e66d721afeed2f19367c577c89ba8ec2abaeca",
+    "processStart": "8481913",
+    "qualification": "Isolated diagnostic execution only. Local acceptance is model-authored; no independent outcome qualification.",
+    "qualificationLevel": "construction",
+    "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+    "requestId": "6d77c25f-be87-4ad8-9c29-ad0abbd03518",
+    "runId": null,
+    "status": "finished",
+    "taskOutcomeQualified": false,
+    "workflowHash": "158f263ad6e967cab015576f74a33f6a815fb3bd6897ef296c241e9e60018408",
+    "workflowId": "UITrialNested",
+    "workflowVersion": 1,
+    "runStatus": "input-rejected",
+    "error": {
+      "code": "SCHEMA_MISMATCH",
+      "message": "workflow input does not satisfy its schema"
+    },
+    "localAcceptancePassed": false,
+    "steps": 0,
+    "cost": 0,
+    "artifactReceipts": [],
+    "finishedAt": 1791274332754
+  },
+  "pausedTrial": {
+    "baseHash": null,
+    "createdAt": 1791274332794,
+    "id": "964649b3-5b79-49cc-a927-8d4ef13647ed",
+    "inputHash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+    "ordinal": 1,
+    "pid": 1910544,
+    "policyHash": "fcd24fa36c355427c704e57450e66d721afeed2f19367c577c89ba8ec2abaeca",
+    "processStart": "8481913",
+    "qualification": "Isolated diagnostic execution only. Local acceptance is model-authored; no independent outcome qualification.",
+    "qualificationLevel": "construction",
+    "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+    "requestId": "0a079d60-dcd2-4a11-a087-a1dad33ba46f",
+    "runId": "c19e8e97-e1cd-4046-98f9-6a96a97eef81",
+    "status": "finished",
+    "taskOutcomeQualified": false,
+    "workflowHash": "2ad64c2cc9711a328e6b21da9819061701a49e51f350a19902211bfea0480615",
+    "workflowId": "UITrialQuestion",
+    "workflowVersion": 1,
+    "runStatus": "awaiting_human",
+    "error": null,
+    "eventHead": {
+      "seq": 5,
+      "hash": "f1d48ba8eb498c6e7cc672303204309b0584009414f042a484bc46d7ffab7963"
+    },
+    "outputHash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+    "steps": 1,
+    "cost": 0,
+    "localAcceptancePassed": false,
+    "artifactReceipts": [],
+    "finishedAt": 1791274332899,
+    "outputs": {}
+  },
+  "actualFailure": {
+    "request": {
+      "baseHash": null,
+      "createdAt": 1791274332910,
+      "id": "5cb579f4-ff5a-4b33-aaf8-666d4808bc52",
+      "source": "user",
+      "status": "applied",
+      "text": "Preserve neutral values for UIRepairObserved; this is a handwritten integration fixture.",
+      "workflowId": null
+    },
+    "proposal": {
+      "appliedAt": 1791274332920,
+      "baseHash": null,
+      "createdAt": 1791274332915,
+      "id": "21e78988-88e9-4e1f-bc22-be7c3476c425",
+      "impact": {
+        "acceptanceChanged": true,
+        "activeRunsMigrated": false,
+        "added": [
+          "echo"
+        ],
+        "budgetChanged": true,
+        "changed": [],
+        "removed": []
+      },
+      "rationale": "Handwritten failing acceptance control for diagnostic UI verification.",
+      "requestId": "5cb579f4-ff5a-4b33-aaf8-666d4808bc52",
+      "status": "applied",
+      "validation": {
+        "errors": [],
+        "hash": "be548e190b4c0efa4ee7ced43afd9cb2fec634a181ee9cb4e9a70ae5559821de",
+        "nodeCount": 1,
+        "valid": true,
+        "warnings": []
+      },
+      "workflow": {
+        "acceptance": [
+          {
+            "left": {
+              "$ref": "nodes.echo.value"
+            },
+            "op": "eq",
+            "right": "different"
+          }
+        ],
+        "budget": {
+          "maxConcurrency": 1,
+          "maxCost": 0,
+          "maxDurationMs": 5000,
+          "maxSteps": 30
+        },
+        "domain": "general",
+        "envelope": {
+          "assumptions": [
+            "Handwritten local integration controls"
+          ],
+          "risks": [
+            "Mixing trial and applied workflow evidence"
+          ],
+          "successCriteria": [
+            "The output preserves the supplied values."
+          ]
+        },
+        "goal": "Preserve the supplied values and inspect their actual execution.",
+        "id": "UIRepairObserved",
+        "nodes": [
+          {
+            "args": {
+              "value": "observed"
+            },
+            "description": "Neutral echo control",
+            "id": "echo",
+            "kind": "task",
+            "needs": [],
+            "retry": {
+              "maxAttempts": 1
+            },
+            "timeoutMs": 1000,
+            "tool": "core.identity"
+          }
+        ],
+        "schemaVersion": "1.0",
+        "title": "Neutral UIRepairObserved workflow",
+        "version": 1
+      },
+      "workflowHash": "be548e190b4c0efa4ee7ced43afd9cb2fec634a181ee9cb4e9a70ae5559821de"
+    },
+    "workflow": {
+      "schemaVersion": "1.0",
+      "id": "UIRepairObserved",
+      "version": 1,
+      "title": "Neutral UIRepairObserved workflow",
+      "domain": "general",
+      "goal": "Preserve the supplied values and inspect their actual execution.",
+      "envelope": {
+        "assumptions": [
+          "Handwritten local integration controls"
+        ],
+        "risks": [
+          "Mixing trial and applied workflow evidence"
+        ],
+        "successCriteria": [
+          "The output preserves the supplied values."
+        ]
+      },
+      "budget": {
+        "maxSteps": 30,
+        "maxConcurrency": 1,
+        "maxDurationMs": 5000,
+        "maxCost": 0
+      },
+      "nodes": [
+        {
+          "id": "echo",
+          "kind": "task",
+          "description": "Neutral echo control",
+          "needs": [],
+          "tool": "core.identity",
+          "args": {
+            "value": "observed"
+          },
+          "timeoutMs": 1000,
+          "retry": {
+            "maxAttempts": 1
+          }
+        }
+      ],
+      "acceptance": [
+        {
+          "op": "eq",
+          "left": {
+            "$ref": "nodes.echo.value"
+          },
+          "right": "different"
+        }
+      ]
+    },
+    "saved": {
+      "baseHash": null,
+      "createdAt": 1791274332915,
+      "id": "21e78988-88e9-4e1f-bc22-be7c3476c425",
+      "impact": {
+        "acceptanceChanged": true,
+        "activeRunsMigrated": false,
+        "added": [
+          "echo"
+        ],
+        "budgetChanged": true,
+        "changed": [],
+        "removed": []
+      },
+      "rationale": "Handwritten failing acceptance control for diagnostic UI verification.",
+      "requestId": "5cb579f4-ff5a-4b33-aaf8-666d4808bc52",
+      "status": "applied",
+      "validation": {
+        "errors": [],
+        "hash": "be548e190b4c0efa4ee7ced43afd9cb2fec634a181ee9cb4e9a70ae5559821de",
+        "nodeCount": 1,
+        "valid": true,
+        "warnings": []
+      },
+      "workflow": {
+        "acceptance": [
+          {
+            "left": {
+              "$ref": "nodes.echo.value"
+            },
+            "op": "eq",
+            "right": "different"
+          }
+        ],
+        "budget": {
+          "maxConcurrency": 1,
+          "maxCost": 0,
+          "maxDurationMs": 5000,
+          "maxSteps": 30
+        },
+        "domain": "general",
+        "envelope": {
+          "assumptions": [
+            "Handwritten local integration controls"
+          ],
+          "risks": [
+            "Mixing trial and applied workflow evidence"
+          ],
+          "successCriteria": [
+            "The output preserves the supplied values."
+          ]
+        },
+        "goal": "Preserve the supplied values and inspect their actual execution.",
+        "id": "UIRepairObserved",
+        "nodes": [
+          {
+            "args": {
+              "value": "observed"
+            },
+            "description": "Neutral echo control",
+            "id": "echo",
+            "kind": "task",
+            "needs": [],
+            "retry": {
+              "maxAttempts": 1
+            },
+            "timeoutMs": 1000,
+            "tool": "core.identity"
+          }
+        ],
+        "schemaVersion": "1.0",
+        "title": "Neutral UIRepairObserved workflow",
+        "version": 1
+      },
+      "workflowHash": "be548e190b4c0efa4ee7ced43afd9cb2fec634a181ee9cb4e9a70ae5559821de",
+      "hash": "be548e190b4c0efa4ee7ced43afd9cb2fec634a181ee9cb4e9a70ae5559821de",
+      "unchanged": false
+    },
+    "run": {
+      "approvals": {},
+      "cost": 0,
+      "createdAt": 1791274332924,
+      "deadline": 1791274337924,
+      "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+      "error": {
+        "code": "ACCEPTANCE_FAILED",
+        "message": "Acceptance failed for root"
+      },
+      "eventHead": {
+        "hash": "4f8c3da1b0a2f3739c76caa07f64054ea4833747402160ede13c2be45a56baad",
+        "seq": 5
+      },
+      "frames": {},
+      "id": "62355077-79c6-479d-9a8b-da47ca097a35",
+      "input": {},
+      "nodes": {
+        "echo": {
+          "argsHash": "fc669fdcdeb1979289d271976047a9ad992b33ba7184c1d8fd1671a9c3bf8f22",
+          "attempts": 1,
+          "completedAt": 1791274332939,
+          "completedSequence": 4,
+          "effects": "none",
+          "idempotencyKey": "481ed87f2909026395620f312dc81f06eb03f3f2cdf872965eff82b291fb47aa",
+          "kind": "task",
+          "outputHash": "fc669fdcdeb1979289d271976047a9ad992b33ba7184c1d8fd1671a9c3bf8f22",
+          "startedAt": 1791274332934,
+          "startedSequence": 3,
+          "status": "completed",
+          "tool": "core.identity"
+        }
+      },
+      "outputs": {
+        "echo": {
+          "value": "observed"
+        }
+      },
+      "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+      "resumeCount": 1,
+      "status": "failed",
+      "steps": 1,
+      "updatedAt": 1791274332943,
+      "workflowHash": "be548e190b4c0efa4ee7ced43afd9cb2fec634a181ee9cb4e9a70ae5559821de",
+      "workflowId": "UIRepairObserved",
+      "executionActive": false,
+      "independentTaskVerified": false,
+      "events": [
+        {
+          "at": 1791274332924,
+          "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+          "inputHash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "policyHash": "743874dc59bcbd3e3257926a739c866813d6604f924f906342983b4bb871caa7",
+          "previousHash": null,
+          "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+          "seq": 1,
+          "type": "run.created",
+          "workflowHash": "be548e190b4c0efa4ee7ced43afd9cb2fec634a181ee9cb4e9a70ae5559821de",
+          "hash": "35618df615e385dc611c11a2a84e9ab35e070401c6b587e0a903f0fedda96f05"
+        },
+        {
+          "at": 1791274332929,
+          "previousHash": "35618df615e385dc611c11a2a84e9ab35e070401c6b587e0a903f0fedda96f05",
+          "seq": 2,
+          "token": "51e91e28-d8e4-4e6a-9d1a-79cf0040dedf",
+          "type": "runner.acquired",
+          "hash": "0c3f366c575bed2fb4475dbd04c4044b15d4e9995f41f5298706060f25cda569"
+        },
+        {
+          "argsHash": "fc669fdcdeb1979289d271976047a9ad992b33ba7184c1d8fd1671a9c3bf8f22",
+          "at": 1791274332934,
+          "effects": "none",
+          "idempotencyKey": "481ed87f2909026395620f312dc81f06eb03f3f2cdf872965eff82b291fb47aa",
+          "kind": "task",
+          "nodeKey": "root/echo",
+          "previousHash": "0c3f366c575bed2fb4475dbd04c4044b15d4e9995f41f5298706060f25cda569",
+          "reservedCost": 0,
+          "seq": 3,
+          "tool": "core.identity",
+          "type": "tool.intent",
+          "hash": "61dcac17e783f1db05ec3184dd5d4666ee99b7f6dbc730c4efed5cf6dd8f7a6e"
+        },
+        {
+          "at": 1791274332939,
+          "nodeKey": "root/echo",
+          "output": {
+            "value": "observed"
+          },
+          "outputHash": "fc669fdcdeb1979289d271976047a9ad992b33ba7184c1d8fd1671a9c3bf8f22",
+          "previousHash": "61dcac17e783f1db05ec3184dd5d4666ee99b7f6dbc730c4efed5cf6dd8f7a6e",
+          "seq": 4,
+          "type": "node.completed",
+          "hash": "8c8c4ec2083919c19c7b79a60fabd7b5ed5cd699e51110f2405848553334916f"
+        },
+        {
+          "at": 1791274332943,
+          "error": {
+            "code": "ACCEPTANCE_FAILED",
+            "message": "Acceptance failed for root"
+          },
+          "previousHash": "8c8c4ec2083919c19c7b79a60fabd7b5ed5cd699e51110f2405848553334916f",
+          "seq": 5,
+          "type": "run.stopped",
+          "hash": "4f8c3da1b0a2f3739c76caa07f64054ea4833747402160ede13c2be45a56baad"
+        }
+      ]
+    }
+  },
+  "staleFailure": {
+    "request": {
+      "baseHash": null,
+      "createdAt": 1791274332947,
+      "id": "8303ef62-333e-4069-8190-450a90246f1b",
+      "source": "user",
+      "status": "applied",
+      "text": "Preserve neutral values for UIRepairStale; this is a handwritten integration fixture.",
+      "workflowId": null
+    },
+    "proposal": {
+      "appliedAt": 1791274332956,
+      "baseHash": null,
+      "createdAt": 1791274332951,
+      "id": "9865d5c6-a324-4be9-9aec-66495d63d71b",
+      "impact": {
+        "acceptanceChanged": true,
+        "activeRunsMigrated": false,
+        "added": [
+          "echo"
+        ],
+        "budgetChanged": true,
+        "changed": [],
+        "removed": []
+      },
+      "rationale": "Handwritten failing acceptance control for diagnostic UI verification.",
+      "requestId": "8303ef62-333e-4069-8190-450a90246f1b",
+      "status": "applied",
+      "validation": {
+        "errors": [],
+        "hash": "de8b8067c5d51cedfd3e75cbdb82a9d91bb0bc48799232b84af4269d4f6378ce",
+        "nodeCount": 1,
+        "valid": true,
+        "warnings": []
+      },
+      "workflow": {
+        "acceptance": [
+          {
+            "left": {
+              "$ref": "nodes.echo.value"
+            },
+            "op": "eq",
+            "right": "different"
+          }
+        ],
+        "budget": {
+          "maxConcurrency": 1,
+          "maxCost": 0,
+          "maxDurationMs": 5000,
+          "maxSteps": 30
+        },
+        "domain": "general",
+        "envelope": {
+          "assumptions": [
+            "Handwritten local integration controls"
+          ],
+          "risks": [
+            "Mixing trial and applied workflow evidence"
+          ],
+          "successCriteria": [
+            "The output preserves the supplied values."
+          ]
+        },
+        "goal": "Preserve the supplied values and inspect their actual execution.",
+        "id": "UIRepairStale",
+        "nodes": [
+          {
+            "args": {
+              "value": "observed"
+            },
+            "description": "Neutral echo control",
+            "id": "echo",
+            "kind": "task",
+            "needs": [],
+            "retry": {
+              "maxAttempts": 1
+            },
+            "timeoutMs": 1000,
+            "tool": "core.identity"
+          }
+        ],
+        "schemaVersion": "1.0",
+        "title": "Neutral UIRepairStale workflow",
+        "version": 1
+      },
+      "workflowHash": "de8b8067c5d51cedfd3e75cbdb82a9d91bb0bc48799232b84af4269d4f6378ce"
+    },
+    "workflow": {
+      "schemaVersion": "1.0",
+      "id": "UIRepairStale",
+      "version": 1,
+      "title": "Neutral UIRepairStale workflow",
+      "domain": "general",
+      "goal": "Preserve the supplied values and inspect their actual execution.",
+      "envelope": {
+        "assumptions": [
+          "Handwritten local integration controls"
+        ],
+        "risks": [
+          "Mixing trial and applied workflow evidence"
+        ],
+        "successCriteria": [
+          "The output preserves the supplied values."
+        ]
+      },
+      "budget": {
+        "maxSteps": 30,
+        "maxConcurrency": 1,
+        "maxDurationMs": 5000,
+        "maxCost": 0
+      },
+      "nodes": [
+        {
+          "id": "echo",
+          "kind": "task",
+          "description": "Neutral echo control",
+          "needs": [],
+          "tool": "core.identity",
+          "args": {
+            "value": "observed"
+          },
+          "timeoutMs": 1000,
+          "retry": {
+            "maxAttempts": 1
+          }
+        }
+      ],
+      "acceptance": [
+        {
+          "op": "eq",
+          "left": {
+            "$ref": "nodes.echo.value"
+          },
+          "right": "different"
+        }
+      ]
+    },
+    "saved": {
+      "baseHash": null,
+      "createdAt": 1791274332951,
+      "id": "9865d5c6-a324-4be9-9aec-66495d63d71b",
+      "impact": {
+        "acceptanceChanged": true,
+        "activeRunsMigrated": false,
+        "added": [
+          "echo"
+        ],
+        "budgetChanged": true,
+        "changed": [],
+        "removed": []
+      },
+      "rationale": "Handwritten failing acceptance control for diagnostic UI verification.",
+      "requestId": "8303ef62-333e-4069-8190-450a90246f1b",
+      "status": "applied",
+      "validation": {
+        "errors": [],
+        "hash": "de8b8067c5d51cedfd3e75cbdb82a9d91bb0bc48799232b84af4269d4f6378ce",
+        "nodeCount": 1,
+        "valid": true,
+        "warnings": []
+      },
+      "workflow": {
+        "acceptance": [
+          {
+            "left": {
+              "$ref": "nodes.echo.value"
+            },
+            "op": "eq",
+            "right": "different"
+          }
+        ],
+        "budget": {
+          "maxConcurrency": 1,
+          "maxCost": 0,
+          "maxDurationMs": 5000,
+          "maxSteps": 30
+        },
+        "domain": "general",
+        "envelope": {
+          "assumptions": [
+            "Handwritten local integration controls"
+          ],
+          "risks": [
+            "Mixing trial and applied workflow evidence"
+          ],
+          "successCriteria": [
+            "The output preserves the supplied values."
+          ]
+        },
+        "goal": "Preserve the supplied values and inspect their actual execution.",
+        "id": "UIRepairStale",
+        "nodes": [
+          {
+            "args": {
+              "value": "observed"
+            },
+            "description": "Neutral echo control",
+            "id": "echo",
+            "kind": "task",
+            "needs": [],
+            "retry": {
+              "maxAttempts": 1
+            },
+            "timeoutMs": 1000,
+            "tool": "core.identity"
+          }
+        ],
+        "schemaVersion": "1.0",
+        "title": "Neutral UIRepairStale workflow",
+        "version": 1
+      },
+      "workflowHash": "de8b8067c5d51cedfd3e75cbdb82a9d91bb0bc48799232b84af4269d4f6378ce",
+      "hash": "de8b8067c5d51cedfd3e75cbdb82a9d91bb0bc48799232b84af4269d4f6378ce",
+      "unchanged": false
+    },
+    "run": {
+      "approvals": {},
+      "cost": 0,
+      "createdAt": 1791274332961,
+      "deadline": 1791274337961,
+      "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+      "error": {
+        "code": "ACCEPTANCE_FAILED",
+        "message": "Acceptance failed for root"
+      },
+      "eventHead": {
+        "hash": "2e4e36faf6d431376a46aef486ad300d38223e7e76766959384d399302f4f716",
+        "seq": 5
+      },
+      "frames": {},
+      "id": "1af792ba-403e-4ad8-a852-1abdce164c81",
+      "input": {},
+      "nodes": {
+        "echo": {
+          "argsHash": "fc669fdcdeb1979289d271976047a9ad992b33ba7184c1d8fd1671a9c3bf8f22",
+          "attempts": 1,
+          "completedAt": 1791274332975,
+          "completedSequence": 4,
+          "effects": "none",
+          "idempotencyKey": "463890fe5dae0e2736ba66dbd212d71490edcea1c189abe5e9852fea596ab636",
+          "kind": "task",
+          "outputHash": "fc669fdcdeb1979289d271976047a9ad992b33ba7184c1d8fd1671a9c3bf8f22",
+          "startedAt": 1791274332971,
+          "startedSequence": 3,
+          "status": "completed",
+          "tool": "core.identity"
+        }
+      },
+      "outputs": {
+        "echo": {
+          "value": "observed"
+        }
+      },
+      "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+      "resumeCount": 1,
+      "status": "failed",
+      "steps": 1,
+      "updatedAt": 1791274332979,
+      "workflowHash": "de8b8067c5d51cedfd3e75cbdb82a9d91bb0bc48799232b84af4269d4f6378ce",
+      "workflowId": "UIRepairStale",
+      "executionActive": false,
+      "independentTaskVerified": false,
+      "events": [
+        {
+          "at": 1791274332961,
+          "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+          "inputHash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "policyHash": "743874dc59bcbd3e3257926a739c866813d6604f924f906342983b4bb871caa7",
+          "previousHash": null,
+          "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+          "seq": 1,
+          "type": "run.created",
+          "workflowHash": "de8b8067c5d51cedfd3e75cbdb82a9d91bb0bc48799232b84af4269d4f6378ce",
+          "hash": "b4f11617872a64845368abf637a7488583d0f5595270f54289d78f4c2eedcfad"
+        },
+        {
+          "at": 1791274332966,
+          "previousHash": "b4f11617872a64845368abf637a7488583d0f5595270f54289d78f4c2eedcfad",
+          "seq": 2,
+          "token": "a330cc93-aa1e-45ab-aa9d-685247a0e33e",
+          "type": "runner.acquired",
+          "hash": "0c3e62ffefe1742e1f34972f4e19fa7dbdd3aa7ff7da9bec08ad866680e1216a"
+        },
+        {
+          "argsHash": "fc669fdcdeb1979289d271976047a9ad992b33ba7184c1d8fd1671a9c3bf8f22",
+          "at": 1791274332971,
+          "effects": "none",
+          "idempotencyKey": "463890fe5dae0e2736ba66dbd212d71490edcea1c189abe5e9852fea596ab636",
+          "kind": "task",
+          "nodeKey": "root/echo",
+          "previousHash": "0c3e62ffefe1742e1f34972f4e19fa7dbdd3aa7ff7da9bec08ad866680e1216a",
+          "reservedCost": 0,
+          "seq": 3,
+          "tool": "core.identity",
+          "type": "tool.intent",
+          "hash": "19863dc2f09523274e95353fd88033ad3be821a7c24dd607b923772561d533ed"
+        },
+        {
+          "at": 1791274332975,
+          "nodeKey": "root/echo",
+          "output": {
+            "value": "observed"
+          },
+          "outputHash": "fc669fdcdeb1979289d271976047a9ad992b33ba7184c1d8fd1671a9c3bf8f22",
+          "previousHash": "19863dc2f09523274e95353fd88033ad3be821a7c24dd607b923772561d533ed",
+          "seq": 4,
+          "type": "node.completed",
+          "hash": "5b2184678563e5dbc68e06f0d808ea0d3c92cf7232608da70cdef870c04bd20b"
+        },
+        {
+          "at": 1791274332979,
+          "error": {
+            "code": "ACCEPTANCE_FAILED",
+            "message": "Acceptance failed for root"
+          },
+          "previousHash": "5b2184678563e5dbc68e06f0d808ea0d3c92cf7232608da70cdef870c04bd20b",
+          "seq": 5,
+          "type": "run.stopped",
+          "hash": "2e4e36faf6d431376a46aef486ad300d38223e7e76766959384d399302f4f716"
+        }
+      ]
+    }
+  },
+  "originalRun": "619bcea60e085677346634651d38645fbb391b626efd05ec317a90efc8c2d8db",
+  "originalEvents": "4c7ddd0d98434f4dc91ae34b51df57ec42daaa09c2cdecb12901c33abd4d3de9"
+}

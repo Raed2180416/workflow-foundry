@@ -1,0 +1,138 @@
+[
+  {
+    "at": 1789614775651,
+    "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+    "inputHash": "c728477678a42a99470f87f5912463b010c55f2ec68268b9c3d87c17dbc1f34b",
+    "policyHash": "24f7bf6d1ec413ebed06b162c2a10a6da204d42e6d5a9e921e32e3f850bd8c6c",
+    "previousHash": null,
+    "registryHash": "bb3f73d712e174d3084248c8d199a620b7eeb2a7b2655d64b6286ab3af536d0e",
+    "seq": 1,
+    "type": "run.created",
+    "workflowHash": "7f57baec709fe62c3850a7d7d8110ec11e57a63cb178cf5aa12579d29e0d7cc3",
+    "hash": "e8e2b4898173e5c9c9a9737ad1be79589dfc0ba3c065ee43759443df2197fc96"
+  },
+  {
+    "at": 1789614775653,
+    "previousHash": "e8e2b4898173e5c9c9a9737ad1be79589dfc0ba3c065ee43759443df2197fc96",
+    "seq": 2,
+    "token": "5477bb4b-eee8-4a84-a689-e48a87ed5e2b",
+    "type": "runner.acquired",
+    "hash": "d6533404794a624a3b905ce0b5bcfc5e0c55a552abac5c642bb7141424aa3618"
+  },
+  {
+    "argsHash": "b53b7a7f5c03218f508ea7c11db2d4d5470b652405143d8657c301fc0c3c944d",
+    "at": 1789614775654,
+    "effects": "none",
+    "idempotencyKey": "9f1a65bea66ec312619e82cc967669082ada7e54e7fcff635e44918c8a11d2fe",
+    "kind": "task",
+    "nodeKey": "root/screening",
+    "previousHash": "d6533404794a624a3b905ce0b5bcfc5e0c55a552abac5c642bb7141424aa3618",
+    "reservedCost": 0,
+    "seq": 3,
+    "tool": "lab.screen",
+    "type": "tool.intent",
+    "hash": "fcf552c68954aa2785de41214d22c2a997cb0179031fe0b8f01ca37723a1140b"
+  },
+  {
+    "at": 1789614775655,
+    "nodeKey": "root/screening",
+    "output": {
+      "claim": "Untrusted claim text",
+      "ok": true,
+      "sampleId": "independent-a",
+      "suspicious": true
+    },
+    "outputHash": "8af342e7f421415fda5b42a467fc74c5b8a23a5199e83a3bd5f467bc012a6666",
+    "previousHash": "fcf552c68954aa2785de41214d22c2a997cb0179031fe0b8f01ca37723a1140b",
+    "seq": 4,
+    "type": "node.completed",
+    "hash": "abb1464e1da2325e32f4f4cf4e9a764bbb2cbbda48e27ca01b3debdfc8d9cb50"
+  },
+  {
+    "argsHash": "b53b7a7f5c03218f508ea7c11db2d4d5470b652405143d8657c301fc0c3c944d",
+    "at": 1789614775656,
+    "effects": "none",
+    "idempotencyKey": "97ce7f0741b5278fe0e115d973d47ac9f71f1a308e652c5e645ca506596c50ec",
+    "kind": "task",
+    "nodeKey": "root/reproduction",
+    "previousHash": "abb1464e1da2325e32f4f4cf4e9a764bbb2cbbda48e27ca01b3debdfc8d9cb50",
+    "reservedCost": 0,
+    "seq": 5,
+    "tool": "lab.reproduce",
+    "type": "tool.intent",
+    "hash": "b7e932eea9a045123d2440d13b23cef52b287de230f45eb5d82770e98be6e7e9"
+  },
+  {
+    "at": 1789614775657,
+    "nodeKey": "root/reproduction",
+    "output": {
+      "evidenceId": "independent-evidence",
+      "independent": true,
+      "ok": true,
+      "reproduced": true,
+      "sampleId": "independent-a"
+    },
+    "outputHash": "244fad11a09556d8b2e22c7d6174cbf9121e9e4bec55080f82c36f46d29d8a6a",
+    "previousHash": "b7e932eea9a045123d2440d13b23cef52b287de230f45eb5d82770e98be6e7e9",
+    "seq": 6,
+    "type": "node.completed",
+    "hash": "3a778b2cf98712d81f2ad7bad0d2daf9d043bed50b3b7f15df1b041ff78689b6"
+  },
+  {
+    "at": 1789614775657,
+    "kind": "assert",
+    "nodeKey": "root/evidence",
+    "previousHash": "3a778b2cf98712d81f2ad7bad0d2daf9d043bed50b3b7f15df1b041ff78689b6",
+    "reservedCost": 0,
+    "seq": 7,
+    "type": "node.started",
+    "hash": "4eeaf29c4f4711cb5054433b09c68515d581467b4a6762631f35a380ffad3ed5"
+  },
+  {
+    "at": 1789614775658,
+    "nodeKey": "root/evidence",
+    "output": {
+      "passed": true
+    },
+    "outputHash": "11c11db30f4b3f6c758722ba3e27eea08145b7d212f6a157451e364b48475280",
+    "previousHash": "4eeaf29c4f4711cb5054433b09c68515d581467b4a6762631f35a380ffad3ed5",
+    "seq": 8,
+    "type": "node.completed",
+    "hash": "063ed3fffea772592e14eeac9070b0efa3f657771edb8d5d4ecdd01022bb1fb8"
+  },
+  {
+    "argsHash": "ad7a942c5eaffa3d99ea34b632f99d2e8fc85d6333c2c124873b1d70a51cb101",
+    "at": 1789614775659,
+    "effects": "idempotent",
+    "idempotencyKey": "8238e530dc7815712838e49d3835d55446142e6c96f62bef47761545d53b13c7",
+    "kind": "task",
+    "nodeKey": "root/publish",
+    "previousHash": "063ed3fffea772592e14eeac9070b0efa3f657771edb8d5d4ecdd01022bb1fb8",
+    "reservedCost": 0,
+    "seq": 9,
+    "tool": "core.artifact",
+    "type": "tool.intent",
+    "hash": "c8b76e205029c06317da0d8a87d5079ceff55ca0f6397d19392c478645f1babd"
+  },
+  {
+    "at": 1789614775661,
+    "nodeKey": "root/publish",
+    "output": {
+      "bytes": 68,
+      "name": "manifest.json",
+      "sha256": "12597e52f6c2f089295825d8fe5bd9451aa07017c384bf88a8e2b64025782a87"
+    },
+    "outputHash": "e15425e7edb5f0b53788b64d3ccc4421b2e56621f3d3458ae589428405a5d7c0",
+    "previousHash": "c8b76e205029c06317da0d8a87d5079ceff55ca0f6397d19392c478645f1babd",
+    "seq": 10,
+    "type": "node.completed",
+    "hash": "a6c2fc8711324bfe5ba19decbc8ddc33568057fb38f0899bed9222960ee9b1c3"
+  },
+  {
+    "at": 1789614775662,
+    "previousHash": "a6c2fc8711324bfe5ba19decbc8ddc33568057fb38f0899bed9222960ee9b1c3",
+    "seq": 11,
+    "type": "run.succeeded",
+    "hash": "7292dc51dbf2e5f74f91d9f7f483cbbcebb88974b5b27cf91c3bdd1f81a6a6e1"
+  }
+]

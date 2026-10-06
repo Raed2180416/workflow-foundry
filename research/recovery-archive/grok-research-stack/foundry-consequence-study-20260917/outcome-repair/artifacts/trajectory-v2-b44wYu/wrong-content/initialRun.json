@@ -1,0 +1,92 @@
+{
+  "approvals": {},
+  "cost": 0,
+  "createdAt": 1789615875340,
+  "deadline": 1789615885340,
+  "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+  "error": null,
+  "eventHead": {
+    "seq": 7,
+    "hash": "5e07ea73618223d8cdb7c92831489cd6f265d04f8aa628ed910643c93bdca8cf"
+  },
+  "extra": {},
+  "frames": {},
+  "id": "ff78cd39-c858-471f-a8ee-433f663f4ead",
+  "input": {
+    "record": {
+      "active": true,
+      "label": "requested"
+    }
+  },
+  "nodes": {
+    "encode": {
+      "argsHash": "ba7866f960a41fc62b9d73d25da91fad437c3f8c6c2607146f41682ddc0eb166",
+      "attempts": 1,
+      "completedAt": 1789615875356,
+      "completedSequence": 4,
+      "effects": "none",
+      "idempotencyKey": "819aef4bdc2e67a832602376fe023195a21f14a54f05f6156e7017b746dfb301",
+      "kind": "task",
+      "outputHash": "a92576d5ece54afa2a7c857c62f232595bccb6127a0439904457b4c6b2a506ee",
+      "startedAt": 1789615875350,
+      "startedSequence": 3,
+      "status": "completed",
+      "tool": "core.json"
+    },
+    "file": {
+      "argsHash": "bce6498dcd23534ad6ccb0ef4d8881086a09e5c15855dd698cd4f257acdcdf2e",
+      "attempts": 1,
+      "completedAt": 1789615875369,
+      "completedSequence": 6,
+      "effects": "idempotent",
+      "idempotencyKey": "e06dafe76b94210b285d37a0346b7cf366adfd2912b8a035928c1d0579cfa8a8",
+      "kind": "task",
+      "outputHash": "edd41cad8f856dc5565a048e77b4f225d6ecd7b2e5de60013d0b9112bc4f2c3e",
+      "startedAt": 1789615875362,
+      "startedSequence": 5,
+      "status": "completed",
+      "tool": "core.artifact"
+    }
+  },
+  "outputs": {
+    "encode": {
+      "text": "{\"active\":false,\"label\":\"wrong\"}"
+    },
+    "file": {
+      "bytes": 32,
+      "name": "record.json",
+      "sha256": "8be864159d11b26915e3a0064632e51945f4e89670118553a528eb1caf682f37"
+    }
+  },
+  "owner": null,
+  "policy": {
+    "allowedCapabilities": [
+      "core.identity",
+      "core.validate",
+      "core.json",
+      "core.pluck",
+      "core.aggregate",
+      "core.template",
+      "core.collect",
+      "core.artifact",
+      "core.fail",
+      "core.sleep",
+      "fixture.observe",
+      "fixture.diagnose",
+      "fixture.remediate",
+      "fixture.verify"
+    ],
+    "maxConcurrency": 4,
+    "maxCost": 0,
+    "maxDurationMs": 3600000,
+    "maxResumes": 1000,
+    "maxSteps": 5000
+  },
+  "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+  "resumeCount": 1,
+  "status": "succeeded",
+  "steps": 2,
+  "updatedAt": 1789615875371,
+  "workflowHash": "f99bea48d7493ead3f9f343c20cba294eca413ccfeac3d2871763cc0991b55d6",
+  "workflowId": "outcome-repair-witness"
+}

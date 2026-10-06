@@ -1,0 +1,17 @@
+{
+  "status": "READY",
+  "frozenAt": "2026-09-17T08:47:36.589Z",
+  "freezeSha256": "f885328ae2675d3b69fe8e5e77d618368f5ea7fb248978792eab813c76148a83",
+  "suitePath": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/SUITE.json",
+  "sourcePath": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/suite.mjs",
+  "expectationsPath": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/EXPECTATIONS.json",
+  "notePath": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/partition-validation-20260917/NOTE.md",
+  "caseCount": 98,
+  "candidateExecutionsSoFar": 0,
+  "reservation": {
+    "primary": 98,
+    "counterpart": 98,
+    "sum": 196
+  },
+  "blocker": "Candidate file must be explicitly supplied by prime after this freeze."
+}

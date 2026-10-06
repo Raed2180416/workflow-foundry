@@ -1,0 +1,36 @@
+{
+  "name": "report-extra-field",
+  "accepted": false,
+  "anticipatedPass": false,
+  "expectationMet": true,
+  "claim": "Wrong identity/order/count or extra fields must fail exact JSON.",
+  "cases": [
+    {
+      "accepted": false,
+      "nativePassed": false,
+      "status": "succeeded",
+      "runId": "bb18abaa-c90b-4df1-a774-14e50dcf96ec",
+      "workflowHash": "fc283251441403b17b6f539d6b9aeb65b3308ae4261fa920ddc327f757305216",
+      "registryHash": "bb3f73d712e174d3084248c8d199a620b7eeb2a7b2655d64b6286ab3af536d0e",
+      "instruments": {
+        "passed": true,
+        "problems": [],
+        "missingCalls": 0,
+        "forbiddenCalls": 0,
+        "duplicateCalls": 0,
+        "wrongOrder": 0,
+        "invalidObservations": 0,
+        "screenCalls": 2,
+        "reproduceCalls": 0,
+        "syntheticCost": 2,
+        "expectedSyntheticCost": 2
+      },
+      "publicationSequence": 8,
+      "screenIntentSequence": 3,
+      "reproductionIntentSequence": null,
+      "rejectedOutputs": [],
+      "eventCount": 9,
+      "runError": null
+    }
+  ]
+}

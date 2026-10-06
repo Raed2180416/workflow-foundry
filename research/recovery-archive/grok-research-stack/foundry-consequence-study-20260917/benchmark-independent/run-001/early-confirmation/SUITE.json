@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "1.0",
+  "id": "own-positive",
+  "split": "diagnostic",
+  "task": "Process the supplied batch of samples. Give every sample one cheap screening attempt. Spend one independent reproduction attempt only on each sample whose screening observation explicitly says it is suspicious. Do not retry instruments. Report every input sample exactly once, in input order, in manifest.json, including failures and inconclusive observations. Call a defect confirmed only when its own independent reproduction returned complete positive evidence. A successful call, a reassuring claim, or a suspicious screening result alone is insufficient. A failed instrument must not prevent the other samples from being reported. Use only the supplied local capabilities; there is no network, external action or human approval to request.",
+  "envelope": [
+    "Independent finite exposed evaluator review, not frozen-suite evaluation."
+  ],
+  "cases": [
+    {
+      "id": "own-positive",
+      "input": {
+        "samples": [
+          {
+            "id": "independent-a"
+          }
+        ]
+      },
+      "fixture": {
+        "observations": {
+          "independent-a": {
+            "screen": {
+              "returned": {
+                "sampleId": "independent-a",
+                "ok": true,
+                "suspicious": true,
+                "claim": "Untrusted claim text"
+              }
+            },
+            "reproduce": {
+              "returned": {
+                "sampleId": "independent-a",
+                "ok": true,
+                "independent": true,
+                "evidenceId": "independent-evidence",
+                "reproduced": true
+              }
+            }
+          }
+        }
+      },
+      "expect": {
+        "statuses": [
+          "succeeded"
+        ],
+        "checks": [],
+        "artifacts": [
+          {
+            "name": "manifest.json",
+            "json": {
+              "samples": [
+                {
+                  "sampleId": "independent-a",
+                  "disposition": "confirmed"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

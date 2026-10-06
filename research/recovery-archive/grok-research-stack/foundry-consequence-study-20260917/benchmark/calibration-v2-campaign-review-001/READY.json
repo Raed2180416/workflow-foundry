@@ -1,0 +1,34 @@
+{
+  "at": "2026-09-17T03:31:55.167315+00:00",
+  "passed": true,
+  "checkGroupsPassed": 7,
+  "savedRunsInspected": 14,
+  "savedNativeEventsInspected": 844,
+  "runtimeExecutions": 0,
+  "modelProviderCalls": 0,
+  "stableV2SourceUnchanged": true,
+  "appliedRunAudit": "original v1 receipt preserved; additive saved-evidence v2 recomputation passed",
+  "chronology": "v2 commissioned before candidate authorship, source frozen after authorship and before evaluation",
+  "files": [
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/calibration-v2-campaign-review-001/check.mjs",
+      "sha256": "35f95c90b797016cb7e3d644a900b6e04e4826329c05a8f554112a65ede613fb"
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/calibration-v2-campaign-review-001/NOTE.md",
+      "sha256": "62b1bb514b0247b44c95e2cc42eff637355c8e875a7c7661cdc97f03aec14a24"
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/calibration-v2-campaign-review-001/run-001/AUDIT.json",
+      "sha256": "caad42d94659da4a5cdd25e6a276147730bb1982e7a95dcd46328b276a1f3edf"
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/calibration-v2-campaign-review-001/run-001/APPLIED_V2_AUDIT.json",
+      "sha256": "9f411989a83b11dc6d9a6c6054bcc76bbbba37139864ec078f9f3af7966e2209"
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/calibration-v2-campaign-review-001/run-001/SOURCE_INTEGRITY.json",
+      "sha256": "f9585d404fa4445cabc664b8f8b1822ff9e066d5047c7b947190531bc472dc1a"
+    }
+  ]
+}

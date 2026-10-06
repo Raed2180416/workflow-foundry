@@ -1,0 +1,57 @@
+{
+  "approvals": {},
+  "cost": 0,
+  "createdAt": 1789613954420,
+  "deadline": 1789617554420,
+  "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+  "error": null,
+  "eventHead": {
+    "seq": 7,
+    "hash": "46040dc89584b5b6b361eeaf148f96aa7f26d7648db394ad986b1cf93d14d00d"
+  },
+  "frames": {},
+  "id": "8c7ecb2c-4f7b-4ace-a8a9-294299de8727",
+  "input": {
+    "claim": {
+      "grounded": true
+    }
+  },
+  "nodes": {
+    "pause": {
+      "attempts": 1,
+      "kind": "wait",
+      "startedAt": 1789613954445,
+      "startedSequence": 5,
+      "status": "waiting",
+      "wakeAt": 1789617554452
+    },
+    "pay": {
+      "argsHash": "a2af987a163f4f45e9a349097cfa9df8f7b71f7982edd1627e18ae14ef28fa2f",
+      "attempts": 1,
+      "completedAt": 1789613954441,
+      "completedSequence": 4,
+      "effects": "none",
+      "idempotencyKey": "be2000866a25b09445806a5f66e9e391f27b2cebf21edb5c25755d4c60af7f75",
+      "kind": "task",
+      "outputHash": "a2af987a163f4f45e9a349097cfa9df8f7b71f7982edd1627e18ae14ef28fa2f",
+      "startedAt": 1789613954433,
+      "startedSequence": 3,
+      "status": "completed",
+      "tool": "core.identity"
+    }
+  },
+  "outputs": {
+    "pay": {
+      "paid": true
+    }
+  },
+  "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+  "resumeCount": 1,
+  "status": "waiting",
+  "steps": 2,
+  "updatedAt": 1789613954458,
+  "workflowHash": "f8cda6791b8e2a11fec640fcb730be89fa71195c41ebda1c19d01f1e2c775f74",
+  "workflowId": "Obj8f4cd3cfcb65",
+  "executionActive": false,
+  "independentTaskVerified": false
+}

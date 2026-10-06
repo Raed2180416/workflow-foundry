@@ -1,0 +1,1269 @@
+{
+  "evaluatorId": "sample-consequences-v2:0edadddb1f94f88cdbaebdfbc382d3f18d7c6faac720bc066ba3fb79ccf0e005:517b7e60d3e674f7fc1189dac8f468dd19d9f6800467a5998fde6a38fbd66e15",
+  "workflowHash": "1c88cfc1168d192c8e8e1d0f498f84bc64ceeedfa1c5f73492421c0facc239ac",
+  "registryHash": "bb3f73d712e174d3084248c8d199a620b7eeb2a7b2655d64b6286ab3af536d0e",
+  "suiteHash": "0edadddb1f94f88cdbaebdfbc382d3f18d7c6faac720bc066ba3fb79ccf0e005",
+  "split": "development",
+  "qualificationLevel": "task-outcome",
+  "passed": true,
+  "metrics": {
+    "passedCount": 5,
+    "caseCount": 5,
+    "successFraction": 1,
+    "falseSuccessCount": 0,
+    "totalSteps": 97,
+    "totalCost": 0,
+    "elapsedMs": 604,
+    "missingCalls": 0,
+    "forbiddenCalls": 0,
+    "duplicateCalls": 0,
+    "syntheticCost": 81,
+    "v1PassedCount": 5,
+    "logBindingErrors": 0,
+    "completionErrors": 0,
+    "evidenceOrderErrors": 0,
+    "prematureConfirmations": 0,
+    "allProcessingDiagnosticFailures": 0
+  },
+  "envelope": [
+    "Source-informed fixed synthetic scenarios; not a population sample.",
+    "Exact manifest JSON plus independent call accounting; no expected node IDs.",
+    "Instrument observations and evaluator truth are separate; no network or paid execution."
+  ],
+  "cases": [
+    {
+      "id": "dev-empty",
+      "passed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "checks": [],
+      "artifacts": [
+        {
+          "name": "manifest.json",
+          "passed": true,
+          "sha256": "ab0abccf9fb1df285dc5e0c09e2669743076c1564323845685be3617c8b79514"
+        }
+      ],
+      "steps": 7,
+      "cost": 0,
+      "elapsedMs": 87,
+      "runId": "db299012-df4f-4ae8-a7ea-d06e375a2f40",
+      "workspace": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/outcome-model-001/workspace/.foundry/generation/daf33606-ccfe-42fe-b246-3b42591075eb/01/evaluation/v1/case-cCztfT",
+      "exception": null,
+      "runError": null,
+      "failedNodes": [],
+      "eventCount": 17,
+      "diagnostic": {
+        "input": {
+          "samples": []
+        },
+        "expected": {
+          "statuses": [
+            "succeeded"
+          ],
+          "checks": [],
+          "artifacts": [
+            {
+              "name": "manifest.json",
+              "json": {
+                "samples": []
+              }
+            }
+          ]
+        }
+      },
+      "nativePassed": true,
+      "instrumentAudit": {
+        "passed": true,
+        "problems": [],
+        "missingCalls": 0,
+        "forbiddenCalls": 0,
+        "duplicateCalls": 0,
+        "wrongOrder": 0,
+        "invalidObservations": 0,
+        "screenCalls": 0,
+        "reproduceCalls": 0,
+        "syntheticCost": 0,
+        "expectedSyntheticCost": 0,
+        "v1Passed": true,
+        "logBindingErrors": 0,
+        "completionErrors": 0,
+        "evidenceOrderErrors": 0,
+        "prematureConfirmations": 0,
+        "publicationBindingErrors": 0,
+        "completedAttempts": 0,
+        "attempts": [],
+        "publications": [
+          {
+            "nodeKey": "root/publishManifest",
+            "startedSequence": 15,
+            "completedSequence": 16,
+            "valid": true,
+            "sha256": "ab0abccf9fb1df285dc5e0c09e2669743076c1564323845685be3617c8b79514"
+          }
+        ],
+        "publicationContentBasis": "independently-read-actual-artifact",
+        "allProcessingBeforePublication": {
+          "enforced": false,
+          "passed": true,
+          "requiredAttempts": 0,
+          "incompleteAtPublication": 0,
+          "qualification": "Requiring every permitted instrument attempt to settle before any manifest, for every disposition, is a prospective strengthening. V2 measures it as a non-gating diagnostic; v1 PUBLIC.json is unchanged."
+        }
+      },
+      "instrumentLog": [],
+      "v1Passed": true,
+      "v1InstrumentAudit": {
+        "passed": true,
+        "problems": [],
+        "missingCalls": 0,
+        "forbiddenCalls": 0,
+        "duplicateCalls": 0,
+        "wrongOrder": 0,
+        "invalidObservations": 0,
+        "screenCalls": 0,
+        "reproduceCalls": 0,
+        "syntheticCost": 0,
+        "expectedSyntheticCost": 0
+      },
+      "artifactError": null,
+      "evidenceBinding": {
+        "passed": true,
+        "eventHead": {
+          "hash": "b39e389c808f549d6c46b5dd76fbacc7db41636034cc135e5bc6e06bdfeddbe5",
+          "seq": 17
+        },
+        "eventsHash": "c456191111a540d159dc561349d878658df7159c6edd90731a3befe4e09108fc",
+        "instrumentLogHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "manifestSha256": "ab0abccf9fb1df285dc5e0c09e2669743076c1564323845685be3617c8b79514"
+      }
+    },
+    {
+      "id": "dev-basic",
+      "passed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "checks": [],
+      "artifacts": [
+        {
+          "name": "manifest.json",
+          "passed": true,
+          "sha256": "f45ac6e6a678ef2767b82545e25a26df7f24908983c00292af2c1e50c4d647aa"
+        }
+      ],
+      "steps": 24,
+      "cost": 0,
+      "elapsedMs": 137,
+      "runId": "7cce8c1d-b340-4c07-921b-26f9adb3235d",
+      "workspace": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/outcome-model-001/workspace/.foundry/generation/daf33606-ccfe-42fe-b246-3b42591075eb/01/evaluation/v1/case-T5dIo2",
+      "exception": null,
+      "runError": null,
+      "failedNodes": [],
+      "eventCount": 67,
+      "diagnostic": {
+        "input": {
+          "samples": [
+            {
+              "id": "dev-a"
+            },
+            {
+              "id": "dev-b"
+            },
+            {
+              "id": "dev-c"
+            }
+          ]
+        },
+        "expected": {
+          "statuses": [
+            "succeeded"
+          ],
+          "checks": [],
+          "artifacts": [
+            {
+              "name": "manifest.json",
+              "json": {
+                "samples": [
+                  {
+                    "sampleId": "dev-a",
+                    "disposition": "clear"
+                  },
+                  {
+                    "sampleId": "dev-b",
+                    "disposition": "confirmed"
+                  },
+                  {
+                    "sampleId": "dev-c",
+                    "disposition": "not_reproduced"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "nativePassed": true,
+      "instrumentAudit": {
+        "passed": true,
+        "problems": [],
+        "missingCalls": 0,
+        "forbiddenCalls": 0,
+        "duplicateCalls": 0,
+        "wrongOrder": 0,
+        "invalidObservations": 0,
+        "screenCalls": 3,
+        "reproduceCalls": 2,
+        "syntheticCost": 23,
+        "expectedSyntheticCost": 23,
+        "v1Passed": true,
+        "logBindingErrors": 0,
+        "completionErrors": 0,
+        "evidenceOrderErrors": 0,
+        "prematureConfirmations": 0,
+        "publicationBindingErrors": 0,
+        "completedAttempts": 5,
+        "attempts": [
+          {
+            "ordinal": 1,
+            "instrument": "screen",
+            "sampleId": "dev-a",
+            "nodeKey": "root/processBatch:0/screen",
+            "intentSequence": 5,
+            "completedSequence": 6,
+            "validatedReturn": true,
+            "valid": true,
+            "output": {
+              "claim": "confirmed",
+              "ok": true,
+              "sampleId": "dev-a",
+              "suspicious": false
+            },
+            "outcome": "returned",
+            "eventHash": "eefb4c7c52eaaca3cd1ef50004553cceeca82be8fe859ab1ea2b639cfb7c4e45"
+          },
+          {
+            "ordinal": 2,
+            "instrument": "screen",
+            "sampleId": "dev-b",
+            "nodeKey": "root/processBatch:1/screen",
+            "intentSequence": 21,
+            "completedSequence": 22,
+            "validatedReturn": true,
+            "valid": true,
+            "output": {
+              "ok": true,
+              "sampleId": "dev-b",
+              "suspicious": true
+            },
+            "outcome": "returned",
+            "eventHash": "7e6def7dd579fe67b4ced82a66b5f0b284b609b97695d549e67013b0db69e6da"
+          },
+          {
+            "ordinal": 3,
+            "instrument": "reproduce",
+            "sampleId": "dev-b",
+            "nodeKey": "root/processBatch:1/reproduce",
+            "intentSequence": 25,
+            "completedSequence": 26,
+            "validatedReturn": true,
+            "valid": true,
+            "output": {
+              "evidenceId": "observation-dev-b",
+              "independent": true,
+              "ok": true,
+              "reproduced": true,
+              "sampleId": "dev-b"
+            },
+            "outcome": "returned",
+            "eventHash": "e1859e1e40766e0994b82a19cf85a3aaa39b40f532ef35c0feaf0e10554ac4e1"
+          },
+          {
+            "ordinal": 4,
+            "instrument": "screen",
+            "sampleId": "dev-c",
+            "nodeKey": "root/processBatch:2/screen",
+            "intentSequence": 38,
+            "completedSequence": 39,
+            "validatedReturn": true,
+            "valid": true,
+            "output": {
+              "ok": true,
+              "sampleId": "dev-c",
+              "suspicious": true
+            },
+            "outcome": "returned",
+            "eventHash": "9527ac58f609f6e29a6ac914f2b27ca9b5b6d5282a5adccc8f2c268f4cdcd2c8"
+          },
+          {
+            "ordinal": 5,
+            "instrument": "reproduce",
+            "sampleId": "dev-c",
+            "nodeKey": "root/processBatch:2/reproduce",
+            "intentSequence": 42,
+            "completedSequence": 43,
+            "validatedReturn": true,
+            "valid": true,
+            "output": {
+              "claim": "confirmed",
+              "evidenceId": "observation-dev-c",
+              "independent": true,
+              "ok": true,
+              "reproduced": false,
+              "sampleId": "dev-c"
+            },
+            "outcome": "returned",
+            "eventHash": "d8f4d30aa1255beabfd2bc0f09209afec026486b39ab64443f45b8d8743dcc49"
+          }
+        ],
+        "publications": [
+          {
+            "nodeKey": "root/publishManifest",
+            "startedSequence": 65,
+            "completedSequence": 66,
+            "valid": true,
+            "sha256": "f45ac6e6a678ef2767b82545e25a26df7f24908983c00292af2c1e50c4d647aa"
+          }
+        ],
+        "publicationContentBasis": "independently-read-actual-artifact",
+        "allProcessingBeforePublication": {
+          "enforced": false,
+          "passed": true,
+          "requiredAttempts": 5,
+          "incompleteAtPublication": 0,
+          "qualification": "Requiring every permitted instrument attempt to settle before any manifest, for every disposition, is a prospective strengthening. V2 measures it as a non-gating diagnostic; v1 PUBLIC.json is unchanged."
+        }
+      },
+      "instrumentLog": [
+        {
+          "ordinal": 1,
+          "instrument": "screen",
+          "sampleId": "dev-a",
+          "nodeKey": "root/processBatch:0/screen",
+          "idempotencyKey": "7fb115ebae38741342e08d20b00d4ccbe867f03e6c4aac7c2b4d3989b5a2c5f2",
+          "syntheticCost": 1,
+          "outcome": "returned",
+          "observation": {
+            "claim": "confirmed",
+            "ok": true,
+            "sampleId": "dev-a",
+            "suspicious": false
+          }
+        },
+        {
+          "ordinal": 2,
+          "instrument": "screen",
+          "sampleId": "dev-b",
+          "nodeKey": "root/processBatch:1/screen",
+          "idempotencyKey": "b8d1832b73e952ab8040f112abfd11dc27e46ed1380c69495f5030a91f3da852",
+          "syntheticCost": 1,
+          "outcome": "returned",
+          "observation": {
+            "ok": true,
+            "sampleId": "dev-b",
+            "suspicious": true
+          }
+        },
+        {
+          "ordinal": 3,
+          "instrument": "reproduce",
+          "sampleId": "dev-b",
+          "nodeKey": "root/processBatch:1/reproduce",
+          "idempotencyKey": "e13ee0624871e7249674245090caed6331b575eccde3c86ed95383f28bf65609",
+          "syntheticCost": 10,
+          "outcome": "returned",
+          "observation": {
+            "evidenceId": "observation-dev-b",
+            "independent": true,
+            "ok": true,
+            "reproduced": true,
+            "sampleId": "dev-b"
+          }
+        },
+        {
+          "ordinal": 4,
+          "instrument": "screen",
+          "sampleId": "dev-c",
+          "nodeKey": "root/processBatch:2/screen",
+          "idempotencyKey": "bef40638892674523af6dcc9b536f54480a37c3a23dc585ad7fa15720050a989",
+          "syntheticCost": 1,
+          "outcome": "returned",
+          "observation": {
+            "ok": true,
+            "sampleId": "dev-c",
+            "suspicious": true
+          }
+        },
+        {
+          "ordinal": 5,
+          "instrument": "reproduce",
+          "sampleId": "dev-c",
+          "nodeKey": "root/processBatch:2/reproduce",
+          "idempotencyKey": "daed3644cb0e257704c1776e6e16e8c60fadad843e9f131e15b806648493b96f",
+          "syntheticCost": 10,
+          "outcome": "returned",
+          "observation": {
+            "claim": "confirmed",
+            "evidenceId": "observation-dev-c",
+            "independent": true,
+            "ok": true,
+            "reproduced": false,
+            "sampleId": "dev-c"
+          }
+        }
+      ],
+      "v1Passed": true,
+      "v1InstrumentAudit": {
+        "passed": true,
+        "problems": [],
+        "missingCalls": 0,
+        "forbiddenCalls": 0,
+        "duplicateCalls": 0,
+        "wrongOrder": 0,
+        "invalidObservations": 0,
+        "screenCalls": 3,
+        "reproduceCalls": 2,
+        "syntheticCost": 23,
+        "expectedSyntheticCost": 23
+      },
+      "artifactError": null,
+      "evidenceBinding": {
+        "passed": true,
+        "eventHead": {
+          "hash": "0ad8d308faae0ea6d649d439a9274b8516b050552861407bd0695104ac221a7a",
+          "seq": 67
+        },
+        "eventsHash": "9eec78593dca8456fb3c868599f99f206cff37d123cf5a2a7ce517832e2b84d2",
+        "instrumentLogHash": "9f664bee07db4dd14d2f09e207ada537d390938ee299b4f9703d737a7d86a494",
+        "manifestSha256": "f45ac6e6a678ef2767b82545e25a26df7f24908983c00292af2c1e50c4d647aa"
+      }
+    },
+    {
+      "id": "dev-outages",
+      "passed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "checks": [],
+      "artifacts": [
+        {
+          "name": "manifest.json",
+          "passed": true,
+          "sha256": "0410c5f7ee2b257a468fb2fa125b70b8467b09a1da1fef1dd3b1384582916e0d"
+        }
+      ],
+      "steps": 23,
+      "cost": 0,
+      "elapsedMs": 122,
+      "runId": "20ddeda0-e3cb-433e-b090-fccc2cb69e5e",
+      "workspace": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/outcome-model-001/workspace/.foundry/generation/daf33606-ccfe-42fe-b246-3b42591075eb/01/evaluation/v1/case-wqLGfx",
+      "exception": null,
+      "runError": null,
+      "failedNodes": [
+        {
+          "nodeKey": "root/processBatch:0/screen",
+          "status": "handled_error",
+          "tool": "lab.screen",
+          "error": {
+            "code": "SCREEN_ERROR",
+            "message": "Synthetic instrument unavailable"
+          }
+        },
+        {
+          "nodeKey": "root/processBatch:1/reproduce",
+          "status": "handled_error",
+          "tool": "lab.reproduce",
+          "error": {
+            "code": "REPRODUCTION_ERROR",
+            "message": "Synthetic instrument unavailable"
+          }
+        }
+      ],
+      "eventCount": 68,
+      "diagnostic": {
+        "input": {
+          "samples": [
+            {
+              "id": "dev-d"
+            },
+            {
+              "id": "dev-e"
+            },
+            {
+              "id": "dev-f"
+            }
+          ]
+        },
+        "expected": {
+          "statuses": [
+            "succeeded"
+          ],
+          "checks": [],
+          "artifacts": [
+            {
+              "name": "manifest.json",
+              "json": {
+                "samples": [
+                  {
+                    "sampleId": "dev-d",
+                    "disposition": "error"
+                  },
+                  {
+                    "sampleId": "dev-e",
+                    "disposition": "error"
+                  },
+                  {
+                    "sampleId": "dev-f",
+                    "disposition": "inconclusive"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "nativePassed": true,
+      "instrumentAudit": {
+        "passed": true,
+        "problems": [],
+        "missingCalls": 0,
+        "forbiddenCalls": 0,
+        "duplicateCalls": 0,
+        "wrongOrder": 0,
+        "invalidObservations": 0,
+        "screenCalls": 3,
+        "reproduceCalls": 1,
+        "syntheticCost": 13,
+        "expectedSyntheticCost": 13,
+        "v1Passed": true,
+        "logBindingErrors": 0,
+        "completionErrors": 0,
+        "evidenceOrderErrors": 0,
+        "prematureConfirmations": 0,
+        "publicationBindingErrors": 0,
+        "completedAttempts": 4,
+        "attempts": [
+          {
+            "ordinal": 1,
+            "instrument": "screen",
+            "sampleId": "dev-d",
+            "nodeKey": "root/processBatch:0/screen",
+            "intentSequence": 5,
+            "completedSequence": 7,
+            "validatedReturn": false,
+            "valid": true,
+            "output": null,
+            "outcome": "threw",
+            "eventHash": "3a34a70d875eb486aae6151ca25d3146896a95e6e1a9081ed15189a0dd02b05f"
+          },
+          {
+            "ordinal": 2,
+            "instrument": "screen",
+            "sampleId": "dev-e",
+            "nodeKey": "root/processBatch:1/screen",
+            "intentSequence": 22,
+            "completedSequence": 23,
+            "validatedReturn": true,
+            "valid": true,
+            "output": {
+              "ok": true,
+              "sampleId": "dev-e",
+              "suspicious": true
+            },
+            "outcome": "returned",
+            "eventHash": "7ef141a7d3b268e4b1a9cab2c39a67d26d2a22948520a771ff416d9148624456"
+          },
+          {
+            "ordinal": 3,
+            "instrument": "reproduce",
+            "sampleId": "dev-e",
+            "nodeKey": "root/processBatch:1/reproduce",
+            "intentSequence": 26,
+            "completedSequence": 28,
+            "validatedReturn": false,
+            "valid": true,
+            "output": null,
+            "outcome": "threw",
+            "eventHash": "1a07e16fc386362872c7e0ff9126a0456e96d646f6f70e7f1d5077ee3114f759"
+          },
+          {
+            "ordinal": 4,
+            "instrument": "screen",
+            "sampleId": "dev-f",
+            "nodeKey": "root/processBatch:2/screen",
+            "intentSequence": 40,
+            "completedSequence": 41,
+            "validatedReturn": true,
+            "valid": true,
+            "output": {
+              "claim": "confirmed",
+              "ok": true,
+              "sampleId": "dev-f"
+            },
+            "outcome": "returned",
+            "eventHash": "2977d22b94efdcd7b2578d142184f519048552a134ed426d2cb3d97d648a3c8e"
+          }
+        ],
+        "publications": [
+          {
+            "nodeKey": "root/publishManifest",
+            "startedSequence": 66,
+            "completedSequence": 67,
+            "valid": true,
+            "sha256": "0410c5f7ee2b257a468fb2fa125b70b8467b09a1da1fef1dd3b1384582916e0d"
+          }
+        ],
+        "publicationContentBasis": "independently-read-actual-artifact",
+        "allProcessingBeforePublication": {
+          "enforced": false,
+          "passed": true,
+          "requiredAttempts": 4,
+          "incompleteAtPublication": 0,
+          "qualification": "Requiring every permitted instrument attempt to settle before any manifest, for every disposition, is a prospective strengthening. V2 measures it as a non-gating diagnostic; v1 PUBLIC.json is unchanged."
+        }
+      },
+      "instrumentLog": [
+        {
+          "ordinal": 1,
+          "instrument": "screen",
+          "sampleId": "dev-d",
+          "nodeKey": "root/processBatch:0/screen",
+          "idempotencyKey": "20c59ebf7c0d33996fa5b111aad9f17d6ca86d8a034d65f4c59a2277387f3548",
+          "syntheticCost": 1,
+          "outcome": "threw",
+          "errorCode": "SCREEN_ERROR"
+        },
+        {
+          "ordinal": 2,
+          "instrument": "screen",
+          "sampleId": "dev-e",
+          "nodeKey": "root/processBatch:1/screen",
+          "idempotencyKey": "5633e2f7198889b5b20a1f57824a922ccfb4c254bdaca93513589eb7da769671",
+          "syntheticCost": 1,
+          "outcome": "returned",
+          "observation": {
+            "ok": true,
+            "sampleId": "dev-e",
+            "suspicious": true
+          }
+        },
+        {
+          "ordinal": 3,
+          "instrument": "reproduce",
+          "sampleId": "dev-e",
+          "nodeKey": "root/processBatch:1/reproduce",
+          "idempotencyKey": "f7360d4ae89329ba1a6941ef5ecd41da0fc1759a639485b3adf8d3c17703f5c5",
+          "syntheticCost": 10,
+          "outcome": "threw",
+          "errorCode": "REPRODUCTION_ERROR"
+        },
+        {
+          "ordinal": 4,
+          "instrument": "screen",
+          "sampleId": "dev-f",
+          "nodeKey": "root/processBatch:2/screen",
+          "idempotencyKey": "5398cb2beed9d69c3f1918892325252f2523236bda0e62208ef8bda9f6a37915",
+          "syntheticCost": 1,
+          "outcome": "returned",
+          "observation": {
+            "claim": "confirmed",
+            "ok": true,
+            "sampleId": "dev-f"
+          }
+        }
+      ],
+      "v1Passed": true,
+      "v1InstrumentAudit": {
+        "passed": true,
+        "problems": [],
+        "missingCalls": 0,
+        "forbiddenCalls": 0,
+        "duplicateCalls": 0,
+        "wrongOrder": 0,
+        "invalidObservations": 0,
+        "screenCalls": 3,
+        "reproduceCalls": 1,
+        "syntheticCost": 13,
+        "expectedSyntheticCost": 13
+      },
+      "artifactError": null,
+      "evidenceBinding": {
+        "passed": true,
+        "eventHead": {
+          "hash": "5fa33545597fa58ee61e5bd16d7b7b0256751364df3e0dbf42c378cb04cdd7c3",
+          "seq": 68
+        },
+        "eventsHash": "b5f61a2a2893e2e6a8a90fc54be9b73d159edde7b9342687a206d1caf26f6950",
+        "instrumentLogHash": "136b6b873debebe956b05cc894d2a3f74b1f62881156e960516c9e5617511452",
+        "manifestSha256": "0410c5f7ee2b257a468fb2fa125b70b8467b09a1da1fef1dd3b1384582916e0d"
+      }
+    },
+    {
+      "id": "dev-partial",
+      "passed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "checks": [],
+      "artifacts": [
+        {
+          "name": "manifest.json",
+          "passed": true,
+          "sha256": "629300d7aef2f47a1e0b697171d7b2b42184d339bf8ec880ddf175f8dad17731"
+        }
+      ],
+      "steps": 25,
+      "cost": 0,
+      "elapsedMs": 113,
+      "runId": "c544b564-124a-49bb-8fee-78c75c6ea4e8",
+      "workspace": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/outcome-model-001/workspace/.foundry/generation/daf33606-ccfe-42fe-b246-3b42591075eb/01/evaluation/v1/case-4LRzbZ",
+      "exception": null,
+      "runError": null,
+      "failedNodes": [],
+      "eventCount": 68,
+      "diagnostic": {
+        "input": {
+          "samples": [
+            {
+              "id": "dev-g"
+            },
+            {
+              "id": "dev-h"
+            },
+            {
+              "id": "dev-i"
+            }
+          ]
+        },
+        "expected": {
+          "statuses": [
+            "succeeded"
+          ],
+          "checks": [],
+          "artifacts": [
+            {
+              "name": "manifest.json",
+              "json": {
+                "samples": [
+                  {
+                    "sampleId": "dev-g",
+                    "disposition": "inconclusive"
+                  },
+                  {
+                    "sampleId": "dev-h",
+                    "disposition": "inconclusive"
+                  },
+                  {
+                    "sampleId": "dev-i",
+                    "disposition": "inconclusive"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "nativePassed": true,
+      "instrumentAudit": {
+        "passed": true,
+        "problems": [],
+        "missingCalls": 0,
+        "forbiddenCalls": 0,
+        "duplicateCalls": 0,
+        "wrongOrder": 0,
+        "invalidObservations": 0,
+        "screenCalls": 3,
+        "reproduceCalls": 3,
+        "syntheticCost": 33,
+        "expectedSyntheticCost": 33,
+        "v1Passed": true,
+        "logBindingErrors": 0,
+        "completionErrors": 0,
+        "evidenceOrderErrors": 0,
+        "prematureConfirmations": 0,
+        "publicationBindingErrors": 0,
+        "completedAttempts": 6,
+        "attempts": [
+          {
+            "ordinal": 1,
+            "instrument": "screen",
+            "sampleId": "dev-g",
+            "nodeKey": "root/processBatch:0/screen",
+            "intentSequence": 5,
+            "completedSequence": 6,
+            "validatedReturn": true,
+            "valid": true,
+            "output": {
+              "ok": true,
+              "sampleId": "dev-g",
+              "suspicious": true
+            },
+            "outcome": "returned",
+            "eventHash": "9e7f292072b44339683e64bbc4d5eb044b05017348049cec73076b30bea7fb34"
+          },
+          {
+            "ordinal": 2,
+            "instrument": "reproduce",
+            "sampleId": "dev-g",
+            "nodeKey": "root/processBatch:0/reproduce",
+            "intentSequence": 9,
+            "completedSequence": 10,
+            "validatedReturn": true,
+            "valid": true,
+            "output": {
+              "independent": true,
+              "ok": true,
+              "reproduced": true,
+              "sampleId": "dev-g"
+            },
+            "outcome": "returned",
+            "eventHash": "366eb214117e8b925792e7d3e84036056418fbebf4f55fb12b5b0c65beba2a5f"
+          },
+          {
+            "ordinal": 3,
+            "instrument": "screen",
+            "sampleId": "dev-h",
+            "nodeKey": "root/processBatch:1/screen",
+            "intentSequence": 22,
+            "completedSequence": 23,
+            "validatedReturn": true,
+            "valid": true,
+            "output": {
+              "ok": true,
+              "sampleId": "dev-h",
+              "suspicious": true
+            },
+            "outcome": "returned",
+            "eventHash": "4a05b1107c39f78d78687ae419be2f208017c83bb09638bdc912a397e587510e"
+          },
+          {
+            "ordinal": 4,
+            "instrument": "reproduce",
+            "sampleId": "dev-h",
+            "nodeKey": "root/processBatch:1/reproduce",
+            "intentSequence": 26,
+            "completedSequence": 27,
+            "validatedReturn": true,
+            "valid": true,
+            "output": {
+              "claim": "confirmed",
+              "evidenceId": "observation-dev-h",
+              "independent": true,
+              "ok": true,
+              "sampleId": "dev-h"
+            },
+            "outcome": "returned",
+            "eventHash": "0f889e7a22a972f707c7e1dec026449e0677e33a859f527f2312abe44712dd0d"
+          },
+          {
+            "ordinal": 5,
+            "instrument": "screen",
+            "sampleId": "dev-i",
+            "nodeKey": "root/processBatch:2/screen",
+            "intentSequence": 39,
+            "completedSequence": 40,
+            "validatedReturn": true,
+            "valid": true,
+            "output": {
+              "ok": true,
+              "sampleId": "dev-i",
+              "suspicious": true
+            },
+            "outcome": "returned",
+            "eventHash": "8aa2d21c7f402871e601b42bdf3d389f1d391406c6566ad4a557f3d2064a176e"
+          },
+          {
+            "ordinal": 6,
+            "instrument": "reproduce",
+            "sampleId": "dev-i",
+            "nodeKey": "root/processBatch:2/reproduce",
+            "intentSequence": 43,
+            "completedSequence": 44,
+            "validatedReturn": true,
+            "valid": true,
+            "output": {
+              "evidenceId": "observation-dev-i",
+              "independent": false,
+              "ok": true,
+              "reproduced": true,
+              "sampleId": "dev-i"
+            },
+            "outcome": "returned",
+            "eventHash": "f965bdea4dd5cb02adcd4bcd8a3c57d37eea5a6ab91ce9b6774fd6727484ddcd"
+          }
+        ],
+        "publications": [
+          {
+            "nodeKey": "root/publishManifest",
+            "startedSequence": 66,
+            "completedSequence": 67,
+            "valid": true,
+            "sha256": "629300d7aef2f47a1e0b697171d7b2b42184d339bf8ec880ddf175f8dad17731"
+          }
+        ],
+        "publicationContentBasis": "independently-read-actual-artifact",
+        "allProcessingBeforePublication": {
+          "enforced": false,
+          "passed": true,
+          "requiredAttempts": 6,
+          "incompleteAtPublication": 0,
+          "qualification": "Requiring every permitted instrument attempt to settle before any manifest, for every disposition, is a prospective strengthening. V2 measures it as a non-gating diagnostic; v1 PUBLIC.json is unchanged."
+        }
+      },
+      "instrumentLog": [
+        {
+          "ordinal": 1,
+          "instrument": "screen",
+          "sampleId": "dev-g",
+          "nodeKey": "root/processBatch:0/screen",
+          "idempotencyKey": "3ab61551c7b0384e75aacbfcfe4651d4de0076458717640117ef4cf54320ff20",
+          "syntheticCost": 1,
+          "outcome": "returned",
+          "observation": {
+            "ok": true,
+            "sampleId": "dev-g",
+            "suspicious": true
+          }
+        },
+        {
+          "ordinal": 2,
+          "instrument": "reproduce",
+          "sampleId": "dev-g",
+          "nodeKey": "root/processBatch:0/reproduce",
+          "idempotencyKey": "960933fa3f7e696fb799b17aec38502a75e0740a6924b7ef3bbd6e86949da642",
+          "syntheticCost": 10,
+          "outcome": "returned",
+          "observation": {
+            "independent": true,
+            "ok": true,
+            "reproduced": true,
+            "sampleId": "dev-g"
+          }
+        },
+        {
+          "ordinal": 3,
+          "instrument": "screen",
+          "sampleId": "dev-h",
+          "nodeKey": "root/processBatch:1/screen",
+          "idempotencyKey": "ec4e2ce621a89e653c0d930af08625229fb6f67685f29c19d2e492454c933c19",
+          "syntheticCost": 1,
+          "outcome": "returned",
+          "observation": {
+            "ok": true,
+            "sampleId": "dev-h",
+            "suspicious": true
+          }
+        },
+        {
+          "ordinal": 4,
+          "instrument": "reproduce",
+          "sampleId": "dev-h",
+          "nodeKey": "root/processBatch:1/reproduce",
+          "idempotencyKey": "b030206def021e0e4098e0ccec8fd561764318679d2daf1a4483a52963ea8292",
+          "syntheticCost": 10,
+          "outcome": "returned",
+          "observation": {
+            "claim": "confirmed",
+            "evidenceId": "observation-dev-h",
+            "independent": true,
+            "ok": true,
+            "sampleId": "dev-h"
+          }
+        },
+        {
+          "ordinal": 5,
+          "instrument": "screen",
+          "sampleId": "dev-i",
+          "nodeKey": "root/processBatch:2/screen",
+          "idempotencyKey": "c91a8ec2b127fe9dfaabead3e825dcad6143f72f7cfc58490af177e8f2b7da73",
+          "syntheticCost": 1,
+          "outcome": "returned",
+          "observation": {
+            "ok": true,
+            "sampleId": "dev-i",
+            "suspicious": true
+          }
+        },
+        {
+          "ordinal": 6,
+          "instrument": "reproduce",
+          "sampleId": "dev-i",
+          "nodeKey": "root/processBatch:2/reproduce",
+          "idempotencyKey": "1f559598ce0be7c166a3662ea675c9a7b8e4814d2d8edd9b56d0e63ba2bf7c76",
+          "syntheticCost": 10,
+          "outcome": "returned",
+          "observation": {
+            "evidenceId": "observation-dev-i",
+            "independent": false,
+            "ok": true,
+            "reproduced": true,
+            "sampleId": "dev-i"
+          }
+        }
+      ],
+      "v1Passed": true,
+      "v1InstrumentAudit": {
+        "passed": true,
+        "problems": [],
+        "missingCalls": 0,
+        "forbiddenCalls": 0,
+        "duplicateCalls": 0,
+        "wrongOrder": 0,
+        "invalidObservations": 0,
+        "screenCalls": 3,
+        "reproduceCalls": 3,
+        "syntheticCost": 33,
+        "expectedSyntheticCost": 33
+      },
+      "artifactError": null,
+      "evidenceBinding": {
+        "passed": true,
+        "eventHead": {
+          "hash": "9e1086e3b1d59aacb769004be65da7ad1350f156ded43eedaaac54628cbd8de6",
+          "seq": 68
+        },
+        "eventsHash": "39a2efd4983459ca2ccedce36b7221b26f231830e5f4a225736853e641a48fdf",
+        "instrumentLogHash": "9128fd4c66a5d8ef58fbbc9c1a31e85621393c94b3adeaeaa99d52643ba3b128",
+        "manifestSha256": "629300d7aef2f47a1e0b697171d7b2b42184d339bf8ec880ddf175f8dad17731"
+      }
+    },
+    {
+      "id": "dev-identity",
+      "passed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "checks": [],
+      "artifacts": [
+        {
+          "name": "manifest.json",
+          "passed": true,
+          "sha256": "89d9915941feb456039d6b78c196251c0e301a1f05d37345be75669d3030776a"
+        }
+      ],
+      "steps": 18,
+      "cost": 0,
+      "elapsedMs": 79,
+      "runId": "fa2c26d5-2340-46db-ae0f-8343134661c1",
+      "workspace": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/outcome-model-001/workspace/.foundry/generation/daf33606-ccfe-42fe-b246-3b42591075eb/01/evaluation/v1/case-vh8ZX9",
+      "exception": null,
+      "runError": null,
+      "failedNodes": [],
+      "eventCount": 50,
+      "diagnostic": {
+        "input": {
+          "samples": [
+            {
+              "id": "dev-j"
+            },
+            {
+              "id": "dev-k"
+            }
+          ]
+        },
+        "expected": {
+          "statuses": [
+            "succeeded"
+          ],
+          "checks": [],
+          "artifacts": [
+            {
+              "name": "manifest.json",
+              "json": {
+                "samples": [
+                  {
+                    "sampleId": "dev-j",
+                    "disposition": "inconclusive"
+                  },
+                  {
+                    "sampleId": "dev-k",
+                    "disposition": "inconclusive"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "nativePassed": true,
+      "instrumentAudit": {
+        "passed": true,
+        "problems": [],
+        "missingCalls": 0,
+        "forbiddenCalls": 0,
+        "duplicateCalls": 0,
+        "wrongOrder": 0,
+        "invalidObservations": 0,
+        "screenCalls": 2,
+        "reproduceCalls": 1,
+        "syntheticCost": 12,
+        "expectedSyntheticCost": 12,
+        "v1Passed": true,
+        "logBindingErrors": 0,
+        "completionErrors": 0,
+        "evidenceOrderErrors": 0,
+        "prematureConfirmations": 0,
+        "publicationBindingErrors": 0,
+        "completedAttempts": 3,
+        "attempts": [
+          {
+            "ordinal": 1,
+            "instrument": "screen",
+            "sampleId": "dev-j",
+            "nodeKey": "root/processBatch:0/screen",
+            "intentSequence": 5,
+            "completedSequence": 6,
+            "validatedReturn": true,
+            "valid": true,
+            "output": {
+              "ok": true,
+              "sampleId": "other-sample",
+              "suspicious": true
+            },
+            "outcome": "returned",
+            "eventHash": "57403118521ce8e766d0771dc1744302d0b0c0a0d5dd4f8df0be5036d656cbf0"
+          },
+          {
+            "ordinal": 2,
+            "instrument": "screen",
+            "sampleId": "dev-k",
+            "nodeKey": "root/processBatch:1/screen",
+            "intentSequence": 21,
+            "completedSequence": 22,
+            "validatedReturn": true,
+            "valid": true,
+            "output": {
+              "ok": true,
+              "sampleId": "dev-k",
+              "suspicious": true
+            },
+            "outcome": "returned",
+            "eventHash": "e9b1673a28e392025088c7c4ba862141f142d0ddda169678ca2c8f4c4a2fc410"
+          },
+          {
+            "ordinal": 3,
+            "instrument": "reproduce",
+            "sampleId": "dev-k",
+            "nodeKey": "root/processBatch:1/reproduce",
+            "intentSequence": 25,
+            "completedSequence": 26,
+            "validatedReturn": true,
+            "valid": true,
+            "output": {
+              "evidenceId": "observation-dev-k",
+              "independent": true,
+              "ok": true,
+              "reproduced": true,
+              "sampleId": "other-sample"
+            },
+            "outcome": "returned",
+            "eventHash": "a9defbd7e7c6bf37f9d244c3f4b1b4aa670adbcf290415cbe6c22c116b257904"
+          }
+        ],
+        "publications": [
+          {
+            "nodeKey": "root/publishManifest",
+            "startedSequence": 48,
+            "completedSequence": 49,
+            "valid": true,
+            "sha256": "89d9915941feb456039d6b78c196251c0e301a1f05d37345be75669d3030776a"
+          }
+        ],
+        "publicationContentBasis": "independently-read-actual-artifact",
+        "allProcessingBeforePublication": {
+          "enforced": false,
+          "passed": true,
+          "requiredAttempts": 3,
+          "incompleteAtPublication": 0,
+          "qualification": "Requiring every permitted instrument attempt to settle before any manifest, for every disposition, is a prospective strengthening. V2 measures it as a non-gating diagnostic; v1 PUBLIC.json is unchanged."
+        }
+      },
+      "instrumentLog": [
+        {
+          "ordinal": 1,
+          "instrument": "screen",
+          "sampleId": "dev-j",
+          "nodeKey": "root/processBatch:0/screen",
+          "idempotencyKey": "3d648ba71f7faa0bea427bb4188b6730e1938f43b8f87053f545ba629815ff52",
+          "syntheticCost": 1,
+          "outcome": "returned",
+          "observation": {
+            "ok": true,
+            "sampleId": "other-sample",
+            "suspicious": true
+          }
+        },
+        {
+          "ordinal": 2,
+          "instrument": "screen",
+          "sampleId": "dev-k",
+          "nodeKey": "root/processBatch:1/screen",
+          "idempotencyKey": "a1aec878f18870bce33dba59cbf241c84857e22a8b7c5397f9f3b4ece0e69717",
+          "syntheticCost": 1,
+          "outcome": "returned",
+          "observation": {
+            "ok": true,
+            "sampleId": "dev-k",
+            "suspicious": true
+          }
+        },
+        {
+          "ordinal": 3,
+          "instrument": "reproduce",
+          "sampleId": "dev-k",
+          "nodeKey": "root/processBatch:1/reproduce",
+          "idempotencyKey": "a7f29aa9b93fc12e706ca0defd2867da1bf294819a4e3aa99bc26a9b3995b911",
+          "syntheticCost": 10,
+          "outcome": "returned",
+          "observation": {
+            "evidenceId": "observation-dev-k",
+            "independent": true,
+            "ok": true,
+            "reproduced": true,
+            "sampleId": "other-sample"
+          }
+        }
+      ],
+      "v1Passed": true,
+      "v1InstrumentAudit": {
+        "passed": true,
+        "problems": [],
+        "missingCalls": 0,
+        "forbiddenCalls": 0,
+        "duplicateCalls": 0,
+        "wrongOrder": 0,
+        "invalidObservations": 0,
+        "screenCalls": 2,
+        "reproduceCalls": 1,
+        "syntheticCost": 12,
+        "expectedSyntheticCost": 12
+      },
+      "artifactError": null,
+      "evidenceBinding": {
+        "passed": true,
+        "eventHead": {
+          "hash": "e719b7073c88a96691236ab99c312399e208d69d69590f8d1584e563e1ccb060",
+          "seq": 50
+        },
+        "eventsHash": "df97485ca30dfdb938ac81501367165aa0353c9e1203f359edaed11471650830",
+        "instrumentLogHash": "9f0b14a201ea0c07fa78e28285212d6177e3cdc1fdd28210ddcfc8b79dc5bd33",
+        "manifestSha256": "89d9915941feb456039d6b78c196251c0e301a1f05d37345be75669d3030776a"
+      }
+    }
+  ],
+  "qualification": "Fixed source-informed synthetic scenarios. Provider-hidden split only when withheld from synthesis; no population, autonomous discovery, production, or independent instrument calibration claim. V2 adds validated completion/event binding and confirmation-before-publication checks. All-item completion before publication is a non-gating diagnostic; temporal order alone does not prove causal use.",
+  "nativeEvaluatorId": "suite:sample-consequence-development-v1:0edadddb1f94f88cdbaebdfbc382d3f18d7c6faac720bc066ba3fb79ccf0e005",
+  "v1EvaluatorId": "sample-consequences-v1:0edadddb1f94f88cdbaebdfbc382d3f18d7c6faac720bc066ba3fb79ccf0e005:ebbdf190674414c29ec2fc7632e8f72b6e3c305c5abd20b322cc8a077304f732",
+  "v1Passed": true,
+  "fixtureValidation": {
+    "passed": true,
+    "caseCount": 5,
+    "instrumentFixtures": 22,
+    "returnedFixtures": 20,
+    "errorFixtures": 2
+  },
+  "publicationPolicy": {
+    "id": "confirmed-evidence-before-publication-v2",
+    "enforced": "Completed, validated positive reproduction precedes each successful publication attempt containing a confirmed row.",
+    "timing": "Native tool.intent is the conservative start fence; node.completed proves publication succeeded. An overlapping reproduction/publication interval is not certified.",
+    "allProcessing": "Requiring every permitted instrument attempt to settle before any manifest, for every disposition, is a prospective strengthening. V2 measures it as a non-gating diagnostic; v1 PUBLIC.json is unchanged.",
+    "causalLimit": "Order, binding and content are checked. A constant written after matching evidence can still pass a finite case; causal use, arbitrary asynchronous instruments and population generalization are not proven."
+  },
+  "v1ReportPath": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/outcome-model-001/workspace/.foundry/generation/daf33606-ccfe-42fe-b246-3b42591075eb/01/evaluation/v1/REPORT.json"
+}

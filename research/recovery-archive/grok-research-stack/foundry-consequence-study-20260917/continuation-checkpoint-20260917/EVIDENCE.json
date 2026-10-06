@@ -1,0 +1,1238 @@
+{
+  "schemaVersion": "foundry-continuation-checkpoint/1",
+  "collectedAt": "2026-09-17T09:16:11.321Z",
+  "scope": "Evidence aggregation from actual saved runs; not an additional independent experiment.",
+  "coreEvaluatorFreeze": {
+    "passed": true,
+    "at": "2026-09-17T03:23:09.470Z"
+  },
+  "modelRepair": {
+    "completed": true,
+    "configuredModel": "COS model 6 / pro",
+    "attempts": 1,
+    "workflowHash": "1c88cfc1168d192c8e8e1d0f498f84bc64ceeedfa1c5f73492421c0facc239ac",
+    "development": "5/5",
+    "withheldRegression": "8/8",
+    "nativeBefore": "succeeded",
+    "observedBefore": "unsatisfied",
+    "nativeAfter": "succeeded",
+    "observedAfter": "satisfied",
+    "independentSavedAudit": {
+      "passed": 19,
+      "failed": 0
+    },
+    "limit": "Same builder restores a researcher-injected single-field fault; expected development feedback and prior solution memory are available. Not natural-error or novel-diagnosis discovery."
+  },
+  "independentlyAuthoredPartitions": {
+    "casesPerArm": 98,
+    "actualExecutions": 196,
+    "repaired": 98,
+    "faulty": 80,
+    "faultyGreenButWrongCases": 18,
+    "faultyWrongRows": 28,
+    "unchangedAttemptAndIntervalPairs": 98,
+    "limit": "Finite valid-schema partitions for one fixed objective. Outcome rejection is exercised; this mutation does not test rejection of bad guards or ordering."
+  },
+  "product": {
+    "explicitOutcomeCLI": "tested and installed",
+    "originalFullSuite": {
+      "tests": 562,
+      "pass": 558,
+      "fail": 0,
+      "skipped": 4,
+      "cancelled": 0
+    },
+    "documentedOfflineExample": "literal bash block independently executed and observed wrong v1 to right v2",
+    "exampleModelCalls": 0
+  },
+  "freeProvider": {
+    "model": "opencode/big-pickle",
+    "completed": false,
+    "httpStatus": 200,
+    "providerCalls": 1,
+    "finalAnswerBytes": 0,
+    "terminalUsageRecords": 0,
+    "observedCode": "MODEL_TRANSPORT",
+    "diagnosis": "The adapter's own 150-second total-call deadline aborted an unfinished HTTP 200 stream and terminated its sandbox.",
+    "diagnosisQualification": "Strong inference from exact source, local timing, error identity and saved generator status; the original receipt lacks an explicit abort cause/time field.",
+    "billedUsage": "unobserved",
+    "modelScale": "unknown",
+    "retries": 0,
+    "paidFallbacks": 0,
+    "sourceStatus": "The historical campaign retains its original sourceStable result. Any later adapter patch is a separate source revision, not retroactive success."
+  },
+  "jev": {
+    "calls": 0,
+    "reason": "Supported current execution context has no gateway key/OIDC; no credential exposure or invented calibration."
+  },
+  "dependencyWitness": {
+    "nativeRuns": 1,
+    "modelCalls": 0,
+    "historicalReceiptPreserved": true,
+    "currentVerifyAndRepairAfterUnusedCatalogAddition": "rejected",
+    "identicalOracleRebinding": "rejected",
+    "restoringCatalogRestoresVerify": true
+  },
+  "additionalEvidence": {
+    "outcome-history-20260917/FINALIZED.json": {
+      "status": "source-frozen",
+      "date": "2026-09-17",
+      "worker": "worker-4",
+      "repository": "/home/raed/Projects/workflow-foundry",
+      "api": "inspectOutcomeHistory(store, { receiptId, currentRegistryHash })",
+      "implementationLines": 151,
+      "sourceHashes": {
+        "src/outcome-history.mjs": "023921bb5bd99982c821b9fc9ec28e68763f8344ea53e57c824e6e0608f75610",
+        "tests/outcome-history.test.mjs": "0df3b1d6fa34edf3b6279a9b8385f303102a625813c3cb7a3d5be9d6e68a7523",
+        "docs/OUTCOME-HISTORY.md": "3922fa4bfbfe7a69510509eefbaa6398663f74f47615105fc9fe98a0238fc541"
+      },
+      "sourceSnapshots": "source-final/",
+      "supportedObserver": {
+        "kind": "exact-json-artifact/2",
+        "sourceSha256": "8de15af4b6ce842c3e54039531c651472a9079a231bf31390f4a8f95b924f1fd",
+        "dataSha256": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c",
+        "testedNode": "v24.21.0",
+        "matchingReceiptNodeRequired": true
+      },
+      "validation": {
+        "initialFocused": {
+          "command": "node --test --test-reporter=tap tests/outcome-history.test.mjs",
+          "exitCode": 0,
+          "tests": 54,
+          "passed": 54,
+          "failed": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "stdout": "tests-01.stdout",
+          "stdoutSha256": "ae4e1bf7d00ac3b35d5c54d82c0feada8e60b56a0327cd03717704a882e1e548",
+          "testSourceSnapshot": "tests-01.source.mjs"
+        },
+        "finalFocused": {
+          "command": "node --test --test-reporter=tap tests/outcome-history.test.mjs",
+          "exitCode": 0,
+          "tests": 55,
+          "passed": 55,
+          "failed": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "stdout": "tests-02.stdout",
+          "stdoutSha256": "13e921d68bfc5e2f82e0a5c76f6cf558e3ce803438d045d51a5cb1dd5d9536cc",
+          "evidence": "evidence-02/"
+        },
+        "earlierFullRepository": {
+          "command": "npm test",
+          "exitCode": 0,
+          "tests": 616,
+          "passed": 612,
+          "failed": 0,
+          "skipped": 4,
+          "cancelled": 0,
+          "stdout": "repository-tests-01.stdout",
+          "stdoutSha256": "0606d30e87803c85c89dedfc1e797932f01771294a9aa274a838d9e1eea87d1b",
+          "scope": "Before the extra query_only test and prime-owned history CLI. Final combined regression belongs to prime."
+        },
+        "syntax": {
+          "command": "node --check src/outcome-history.mjs",
+          "exitCode": 0
+        },
+        "doctor": {
+          "command": "npm run check",
+          "exitCode": 0
+        },
+        "whitespace": {
+          "command": "git diff --check",
+          "exitCode": 0
+        },
+        "actualReadOnlySQLite": true,
+        "queryOnlyWithWriteRefusalControl": true,
+        "selectOnlyAndNoSchemaWrites": true,
+        "noLogicalDatabaseChanges": true,
+        "liveArtifactReadsByInspector": false,
+        "historyResultRejectedByExistingRepair": true,
+        "oldRepairStillRejectsRegistryDrift": true
+      },
+      "nativeWitness": {
+        "file": "evidence-02/foundry-history-EMUrzQ/HISTORY.json",
+        "runId": "5fa4aa90-9973-47af-9767-4a05f5dab6d9",
+        "runStatus": "succeeded",
+        "historicalOutcome": "unsatisfied",
+        "historyId": "outcome-history:5022cf4311cf2f9052e81558a5571f9212ffba2ece4990b7943c210ee8968c55",
+        "currentEvidenceStatus": "unverified",
+        "matchesRecordedRegistry": false,
+        "currentWorldQualification": false
+      },
+      "originalSourceEvidence": {
+        "baseline": "SOURCE-BEFORE.sha256",
+        "initialMatchingFiles": 14,
+        "finalMatchingFilesExcludingPrimeCLI": 13,
+        "workerEditsToPreExistingProductFiles": 0,
+        "expectedPrimeOwnedChange": {
+          "file": "bin/foundry.mjs",
+          "before": "d23b59d8d181f9d954463094a9e36bde2d4e7af859b629bf2b34ea4ae21816fb",
+          "observedAfter": "450fad505fbc3c77176eb4bb9880343e169c71e402f319e38e3ff6f8182c906b",
+          "reason": "Prime added the read-only history CLI; worker-4 only updated its owned history documentation."
+        }
+      },
+      "review": {
+        "sourceSentBeforeCompletion": true,
+        "primeInitialSourceReview": "Prime reported reading all 151 lines and initial structure/scope appropriate.",
+        "independentReview": "Worker-6 commissioned by prime; completed review not claimed here."
+      },
+      "pluginChecks": {
+        "status": "unverified",
+        "attempted": [
+          "Serena activate_project exact repository",
+          "project_quality_map",
+          "security_scan full with registry rules disabled"
+        ],
+        "error": "HTTP 404 tunnel_client_not_seen"
+      },
+      "liveModelCalls": 0,
+      "hiddenBenchmarkReads": 0,
+      "qualification": "Historical inspection of retained evidence with supplied development controls; not current-world qualification, capability compatibility, repair authority, or general intent proof."
+    },
+    "outcome-history-20260917/FINALIZED_V2.json": {
+      "status": "source-frozen-after-ancestor-fix",
+      "date": "2026-09-17",
+      "worker": "worker-4",
+      "repository": "/home/raed/Projects/workflow-foundry",
+      "api": "inspectOutcomeHistory(store, { receiptId, currentRegistryHash })",
+      "implementationLines": 153,
+      "supersedes": {
+        "file": "FINALIZED.json",
+        "sha256": "0323ee7b8cd0aefcddec506199efeb6084bc8427f1ae5edac48b6e252d93ea1c",
+        "preservedAtOriginalPath": true,
+        "reason": "Independent review identified missing ancestor proposal base and repair intent checks. Original source and passing-but-insufficient tests are retained."
+      },
+      "sourceHashes": {
+        "src/outcome-history.mjs": "4caa2bce1e7b55226367ac0b5178d51af92ac1d145b48b5b820e584476b08b8a",
+        "tests/outcome-history.test.mjs": "da0c63da47850ff40e11a2e6fd515f9388ecdac4cb3aa7b2b31f7b618a1c8c27",
+        "docs/OUTCOME-HISTORY.md": "0743ef392c17cad661e03b7ce632bb4bf785d83af7948b902fff111025d5ac16"
+      },
+      "sourceSnapshots": "lineage-fix/final-source/",
+      "supportedObserver": {
+        "kind": "exact-json-artifact/2",
+        "sourceSha256": "8de15af4b6ce842c3e54039531c651472a9079a231bf31390f4a8f95b924f1fd",
+        "dataSha256": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c",
+        "testedNode": "v24.21.0",
+        "matchingReceiptNodeRequired": true
+      },
+      "independentFindingAndReproduction": {
+        "reviewOrigin": "Independent worker-6 findings relayed by prime; reproduced by worker-4 before patching.",
+        "originalSourceSha256": "023921bb5bd99982c821b9fc9ec28e68763f8344ea53e57c824e6e0608f75610",
+        "originalSource": "lineage-fix/outcome-history.mjs",
+        "original55TestSource": "lineage-fix/outcome-history.test.mjs",
+        "regressionTestSourceSha256BeforeAndAfterFix": "da0c63da47850ff40e11a2e6fd515f9388ecdac4cb3aa7b2b31f7b618a1c8c27",
+        "preFixCommand": "node --test --test-reporter=tap --test-name-pattern=ancestor tests/outcome-history.test.mjs",
+        "preFixExitCode": 1,
+        "preFixTests": 3,
+        "preFixPassed": 0,
+        "preFixFailed": 3,
+        "preFixFailure": "Missing expected exception: original inspector accepted each deliberate depth-two fixture inconsistency.",
+        "preFixStdout": "lineage-fix/pre-fix.stdout",
+        "preFixStdoutSha256": "3956258a4b2e176cc68895a66c7fc5094e01acf66568cc2013bc8e72d63dc6f7",
+        "counterexamples": [
+          "lineage-fix/pre-fix-evidence/foundry-history-r9HvNt/UNEXPECTED-HISTORY.json",
+          "lineage-fix/pre-fix-evidence/foundry-history-QOjQb1/UNEXPECTED-HISTORY.json",
+          "lineage-fix/pre-fix-evidence/foundry-history-ukOZeE/UNEXPECTED-HISTORY.json"
+        ],
+        "qualification": "Deliberate corruption of fresh disposable native fixtures; not a claim that real saved work was corrupted."
+      },
+      "fix": [
+        "Require prior.baseHash === parent.baseHash for every ancestor proposal/request pair.",
+        "When parent.parentRequestId exists, require parent goal and successCriteria to equal its own applied proposal workflow goal and criteria."
+      ],
+      "validation": {
+        "command": "node --test --test-reporter=tap tests/outcome-history.test.mjs",
+        "exitCode": 0,
+        "tests": 58,
+        "passed": 58,
+        "failed": 0,
+        "skipped": 0,
+        "cancelled": 0,
+        "durationMs": 2138.039982,
+        "stdout": "lineage-fix/post-fix.stdout",
+        "stdoutSha256": "daa66ca467bcbe8136d547b752d7ae36e0e5b571fc98ea4e6b0d2df76ec4b29b",
+        "evidence": "lineage-fix/post-fix-evidence/",
+        "syntaxExitCode": 0,
+        "diffCheckExitCode": 0,
+        "actualReadOnlySQLite": true,
+        "queryOnlyWithWriteRefusalControl": true,
+        "selectOnlyAndNoSchemaWrites": true,
+        "noLogicalDatabaseChanges": true,
+        "liveArtifactReadsByInspector": false,
+        "historyResultRejectedByExistingRepair": true,
+        "oldRepairStillRejectsRegistryDrift": true,
+        "earlierFullRegression": "612 passed, 0 failed, 4 skipped of 616 on the superseded 151-line source; retained in FINALIZED.json, not claimed for this correction.",
+        "finalCombinedRegressionOwner": "prime; no duplicate full npm test run by worker-4 after this fix"
+      },
+      "originalSourceEvidence": {
+        "baseline": "SOURCE-BEFORE.sha256",
+        "matchingOriginalFilesExcludingPrimeCLI": 13,
+        "workerEditsToPreExistingProductFiles": 0,
+        "expectedPrimeOwnedChange": {
+          "file": "bin/foundry.mjs",
+          "observedSha256": "450fad505fbc3c77176eb4bb9880343e169c71e402f319e38e3ff6f8182c906b",
+          "reason": "Prime added the read-only history CLI; worker-4 documented the actual route."
+        }
+      },
+      "review": {
+        "originalAndFixedSourceSentBeforeCompletion": true,
+        "postFixIndependentDisposition": "Fixed source sent to prime for worker-6 replay; completed post-fix review not yet received at this finalization."
+      },
+      "pluginChecks": {
+        "status": "unverified",
+        "attempted": [
+          "Serena activate_project exact repository",
+          "project_quality_map",
+          "security_scan full with registry rules disabled"
+        ],
+        "error": "HTTP 404 tunnel_client_not_seen"
+      },
+      "liveModelCalls": 0,
+      "hiddenBenchmarkReads": 0,
+      "qualification": "Read-only historical evidence inspection; currentEvidenceCheck remains unverified and currentWorldQualification remains false. No compatibility certificate, repair permission, or general intent proof."
+    },
+    "provider-termination-fix-20260917/FINALIZED.json": {
+      "schemaVersion": "provider-termination-fix-final-v1",
+      "status": "FINALIZED_PASS_OFFLINE",
+      "at": "2026-09-17T09:11:17.091Z",
+      "sources": [
+        {
+          "source": "/home/raed/Projects/workflow-foundry/src/opencode-v2-free.mjs",
+          "copy": "after/opencode-v2-free.mjs",
+          "sha256": "f8c4ad5fbdb6bf4ad41e16b0417f27836890931e997731e888c1fa11f4e3ee84",
+          "bytes": 35419
+        },
+        {
+          "source": "/home/raed/Projects/workflow-foundry/tests/provider-termination.test.mjs",
+          "copy": "after/provider-termination.test.mjs",
+          "sha256": "e7e4673b633f1302933d6f1cb09bc2bc2ad748c54487a9efb10c711e0bf25462",
+          "bytes": 10958
+        }
+      ],
+      "validation": {
+        "runner": "prime session64977; worker read saved process/per-case receipts",
+        "focusedTests": {
+          "passed": 23,
+          "failed": 0,
+          "skipped": 0,
+          "newActualAdapterControls": 10
+        },
+        "syntax": "PASS",
+        "doctor": "PASS",
+        "sourceStable": true,
+        "receipt": "checks-a0b747ed-144f-48eb-a25b-0dcf46a92029/RESULT.json"
+      },
+      "preservation": {
+        "priorCampaignUnchanged": true,
+        "verifiedPriorCampaignReceipts": 23,
+        "unchangedOldProtocolSources": 40,
+        "intentionalChangedOldProtocolSources": [
+          {
+            "file": "/home/raed/Projects/workflow-foundry/src/opencode-v2-free.mjs",
+            "before": "5772e2d2d7ae60de702cce310af5124f8331e4c3f0c4a2ccc44d5762bafcb9c6",
+            "after": "f8c4ad5fbdb6bf4ad41e16b0417f27836890931e997731e888c1fa11f4e3ee84"
+          }
+        ],
+        "oldProtocolCheckExpectedExit": 1,
+        "oldProtocolCheckActualExit": 1,
+        "evaluatorFreezesUnchanged": true,
+        "historicalSourceStableFieldUnchanged": true
+      },
+      "scope": {
+        "firstCause": "First locally observed terminal cause recorded before abort; not remote causal attestation",
+        "newSourceFiles": [
+          "tests/provider-termination.test.mjs"
+        ],
+        "changedSourceFiles": [
+          "src/opencode-v2-free.mjs"
+        ],
+        "liveModelCalls": 0,
+        "externalProviderRequests": 0,
+        "fullRepositoryRegression": "Owned separately by prime; not included in this focused receipt"
+      },
+      "unavailableEvidence": {
+        "serena": "HTTP404 tunnel_client_not_seen",
+        "projectQualityMap": "network_error Connection failed",
+        "fullSecurityScan": "HTTP404 tunnel_client_not_seen"
+      },
+      "files": [
+        {
+          "file": "BEFORE.json",
+          "sha256": "f765fe7603563349a546c05a172b24507bd8f3ddaa6137e3c3b8820afd54deaa",
+          "bytes": 16320
+        },
+        {
+          "file": "before/opencode-v2-free.mjs",
+          "sha256": "5772e2d2d7ae60de702cce310af5124f8331e4c3f0c4a2ccc44d5762bafcb9c6",
+          "bytes": 33490
+        },
+        {
+          "file": "before/opencode-v2-free.test.mjs",
+          "sha256": "b6ab1e50173501254a267c9f7b151de5e0b3c3e0699359c131f13a14ae7954ee",
+          "bytes": 13051
+        },
+        {
+          "file": "before/provider-quota.test.mjs",
+          "sha256": "9d2f99a7d235d6ca7f65c4a7d266cd1c5283762b986a4d5dd1537d791976244f",
+          "bytes": 3932
+        },
+        {
+          "file": "SOURCE-FREEZE.json",
+          "sha256": "a9ca4950fcc0bdf55d26a3f7a7bcbdf374b46de804b46081e67f5bf7dd266cc3",
+          "bytes": 887
+        },
+        {
+          "file": "after/opencode-v2-free.mjs",
+          "sha256": "f8c4ad5fbdb6bf4ad41e16b0417f27836890931e997731e888c1fa11f4e3ee84",
+          "bytes": 35419
+        },
+        {
+          "file": "after/provider-termination.test.mjs",
+          "sha256": "e7e4673b633f1302933d6f1cb09bc2bc2ad748c54487a9efb10c711e0bf25462",
+          "bytes": 10958
+        },
+        {
+          "file": "ADAPTER.diff",
+          "sha256": "d9f5227e83919811caf2af7e5332591eb536ff75c440906bff795a01f9c12d26",
+          "bytes": 9601
+        },
+        {
+          "file": "CHANGE-RECEIPT.json",
+          "sha256": "9668ffb5d6f9fcdf5c1d155a5f039aa26401cfa11e9e3e6eacdf118d2b0e2425",
+          "bytes": 2422
+        },
+        {
+          "file": "TEST-REVIEW.json",
+          "sha256": "85c6afa5970818a2f0f4ce137ed48229ee75c20dee2b2aecd7d6f60e824dfed3",
+          "bytes": 7398
+        },
+        {
+          "file": "BLOCKED-ATTEMPTS.json",
+          "sha256": "957ea4d9203e28c5f753e994ed66ba1b9b73e332c89b4abdf892d0b86fb3ff79",
+          "bytes": 2084
+        },
+        {
+          "file": "NOTE.md",
+          "sha256": "adc8f182ed2784352cf73c351abff73941ed6339287d93ae8404699623cb2843",
+          "bytes": 9541
+        },
+        {
+          "file": "verify.mjs",
+          "sha256": "65266c946770830fb463d968b3c6b0b813b96f16a714d7b7ee08b572a7c297f9",
+          "bytes": 2636
+        },
+        {
+          "file": "inspect-change.mjs",
+          "sha256": "6cf3e90398f28c8353af628a7b552b77e12240d14f5e81aeb3c91a168a78d7bd",
+          "bytes": 3221
+        },
+        {
+          "file": "checks-a0b747ed-144f-48eb-a25b-0dcf46a92029/RESULT.json",
+          "sha256": "0005bc2f61497ca6be64012922ae46002534d42f42959eeb5d3bbf94d26a7649",
+          "bytes": 1324
+        },
+        {
+          "file": "checks-a0b747ed-144f-48eb-a25b-0dcf46a92029/focused-tests.json",
+          "sha256": "532953ab1a10e7322b0de8c7a9d48cb7aedf6f831136a3215e691fe06ddf1509",
+          "bytes": 3025
+        },
+        {
+          "file": "checks-a0b747ed-144f-48eb-a25b-0dcf46a92029/syntax-provider.json",
+          "sha256": "7c86e59bdc521bbb4542db3205310e9947217cd7c7989edbc6820ecb3d04b251",
+          "bytes": 198
+        },
+        {
+          "file": "checks-a0b747ed-144f-48eb-a25b-0dcf46a92029/syntax-tests.json",
+          "sha256": "c56b155b8e2f7de347f9668a54291746dc4f00b52721082b741600aa69067740",
+          "bytes": 209
+        },
+        {
+          "file": "checks-a0b747ed-144f-48eb-a25b-0dcf46a92029/doctor.json",
+          "sha256": "bdfb9d245da2a82f3f89563b21a6a2de2abcb3f90d8a5d5f33bed52b930a1fb7",
+          "bytes": 852
+        }
+      ]
+    },
+    "history-independent-review-20260917/AUDIT.json": {
+      "schemaVersion": "independent-outcome-history-review/1",
+      "reviewer": "worker-6",
+      "startedAt": "2026-09-17T09:13:02.151Z",
+      "finishedAt": "2026-09-17T09:13:02.181Z",
+      "verdict": "PASS_BOUNDED_HISTORY_REVIEW",
+      "source": {
+        "path": "/home/raed/Projects/workflow-foundry/src/outcome-history.mjs",
+        "sha256": "4caa2bce1e7b55226367ac0b5178d51af92ac1d145b48b5b820e584476b08b8a"
+      },
+      "node": "v24.21.0",
+      "checks": [
+        {
+          "name": "finite-three-request-lineage-positive-and-registry-scope",
+          "passed": true,
+          "detail": {
+            "eventsPerInvocation": 4,
+            "recordOrigin": "supplied in memory; never executed"
+          }
+        },
+        {
+          "name": "ancestor-proposal-base-mismatch-must-be-rejected",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "name": "current-proposal-base-mismatch-is-rejected",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "name": "ancestor-applied-workflow-must-preserve-its-own-request-intent",
+          "passed": true,
+          "detail": [
+            {
+              "field": "goal",
+              "rejected": true
+            },
+            {
+              "field": "successCriteria",
+              "rejected": true
+            }
+          ]
+        },
+        {
+          "name": "history-id-is-rejected-by-existing-receipt-reader",
+          "passed": true,
+          "detail": {
+            "scope": "Existing receipt identifier gate; no coordinator constructor or repair operation invoked"
+          }
+        },
+        {
+          "name": "repeated-and-different-filename-producers-are-retained",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "name": "absent-target-with-other-producer-is-recorded-only",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "name": "lost-directory-after-other-producer-stays-unknown",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "name": "lost-target-and-observer-access-error-stay-unknown",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "name": "rehashed-preserved-bytes-contradiction-is-rejected",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "name": "rehashed-evaluator-source-data-node-and-kind-drift-is-rejected",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "name": "truncated-event-chain-is-rejected",
+          "passed": true,
+          "detail": null
+        },
+        {
+          "name": "two-existing-wrong-right-observations-read-only",
+          "passed": true,
+          "detail": {
+            "observations": [
+              {
+                "filename": "WRONG_OBSERVATION.json",
+                "observationId": "dadf02f676ab22bee8b2afa0a37409c767c002dcc59a055a6a0fc40f5c589a1f",
+                "resultId": "outcome-history:beb8bb844ed295786848bae3cf1feb5c4e2106b561ae7e12fe174132327ea2a5",
+                "outcome": "unsatisfied",
+                "eventCount": 67,
+                "lineageLength": 1,
+                "resultDigest": "a98d784c41d6b3db5d27c560effd5887e845a35605d1c4d5a5c0c6e06dbf0273",
+                "currentRegistryChangedOnlyAsSuppliedMetadata": true
+              },
+              {
+                "filename": "SATISFIED_OBSERVATION.json",
+                "observationId": "93c0f90949b07205481681179213f44f3ffd976020164459e22da9c0436b5a18",
+                "resultId": "outcome-history:e633291066afbe9eb3963b6fe15e84a8ce75c2baa924303ee8da28136643102a",
+                "outcome": "satisfied",
+                "eventCount": 67,
+                "lineageLength": 2,
+                "resultDigest": "09646228df43bd09e0a67be8d9c0eea2dfadf276eaa1be6fa84ac711f8609a2d",
+                "currentRegistryChangedOnlyAsSuppliedMetadata": false
+              }
+            ],
+            "inspectorSelects": 17,
+            "readOnly": true,
+            "liveArtifactReads": 0,
+            "newWorkflowRuns": 0
+          }
+        },
+        {
+          "name": "reviewed-source-and-inputs-still-identical",
+          "passed": true,
+          "detail": null
+        }
+      ],
+      "checkCount": 14,
+      "passedChecks": 14,
+      "failedChecks": 0,
+      "actual": [
+        {
+          "filename": "WRONG_OBSERVATION.json",
+          "observationId": "dadf02f676ab22bee8b2afa0a37409c767c002dcc59a055a6a0fc40f5c589a1f",
+          "resultId": "outcome-history:beb8bb844ed295786848bae3cf1feb5c4e2106b561ae7e12fe174132327ea2a5",
+          "outcome": "unsatisfied",
+          "eventCount": 67,
+          "lineageLength": 1,
+          "resultDigest": "a98d784c41d6b3db5d27c560effd5887e845a35605d1c4d5a5c0c6e06dbf0273",
+          "currentRegistryChangedOnlyAsSuppliedMetadata": true
+        },
+        {
+          "filename": "SATISFIED_OBSERVATION.json",
+          "observationId": "93c0f90949b07205481681179213f44f3ffd976020164459e22da9c0436b5a18",
+          "resultId": "outcome-history:e633291066afbe9eb3963b6fe15e84a8ce75c2baa924303ee8da28136643102a",
+          "outcome": "satisfied",
+          "eventCount": 67,
+          "lineageLength": 2,
+          "resultDigest": "09646228df43bd09e0a67be8d9c0eea2dfadf276eaa1be6fa84ac711f8609a2d",
+          "currentRegistryChangedOnlyAsSuppliedMetadata": false
+        }
+      ],
+      "originalReleaseFindings": {
+        "sourceSha256": "023921bb5bd99982c821b9fc9ec28e68763f8344ea53e57c824e6e0608f75610",
+        "lines": 151,
+        "provenance": "Observed checker output before the source-author correction; not inferred from the revised source.",
+        "firstRun": {
+          "checkCount": 12,
+          "passedChecks": 10,
+          "sourceFailure": "ancestor-proposal-base-mismatch-must-be-rejected: Missing expected exception.",
+          "harnessFailure": "History ID reached receipt SQL: the independent checker incorrectly prohibited prepare, rather than get execution."
+        },
+        "correctedOriginalRun": {
+          "checkCount": 13,
+          "passedChecks": 11,
+          "failures": [
+            {
+              "id": "H1",
+              "check": "ancestor-proposal-base-mismatch-must-be-rejected",
+              "observed": "Missing expected exception."
+            },
+            {
+              "id": "H2",
+              "check": "ancestor-applied-workflow-must-preserve-its-own-request-intent",
+              "observed": [
+                {
+                  "field": "goal",
+                  "rejected": false
+                },
+                {
+                  "field": "successCriteria",
+                  "rejected": false
+                }
+              ]
+            }
+          ]
+        },
+        "claimBoundary": "Supplied in-memory relational counterexamples. No actual campaign corruption or repair-authority bypass is asserted."
+      },
+      "operations": {
+        "nativeRuns": 0,
+        "modelCalls": 0,
+        "trainingUpdates": 0,
+        "oldEdits": 0,
+        "artifactFilesystemReads": 0,
+        "database": "SELECT-only through readOnly connection when saved observations are enabled",
+        "finiteFixtures": "Supplied relational records in memory; not observations of executed workflows"
+      },
+      "limitations": [
+        "The host, database and source loader remain trusted.",
+        "Current evidence and qualification remain unverified.",
+        "Finite checks do not prove arbitrary record correctness or DB-administrator resistance."
+      ],
+      "tooling": {
+        "serena": "initial_instructions failed HTTP 404 tunnel_client_not_seen",
+        "initialInlineProbe": "Two dispatches blocked before execution: tool could not determine safety status"
+      },
+      "inputHashes": [
+        {
+          "path": "/home/raed/Projects/workflow-foundry/src/outcome-history.mjs",
+          "sha256": "4caa2bce1e7b55226367ac0b5178d51af92ac1d145b48b5b820e584476b08b8a"
+        },
+        {
+          "path": "/home/raed/Projects/workflow-foundry/src/outcome-repair.mjs",
+          "sha256": "8de15af4b6ce842c3e54039531c651472a9079a231bf31390f4a8f95b924f1fd"
+        },
+        {
+          "path": "/home/raed/Projects/workflow-foundry/src/data.mjs",
+          "sha256": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c"
+        },
+        {
+          "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/outcome-model-001/WRONG_OBSERVATION.json",
+          "sha256": "2c237e4a165686e6cdfacad82274ed5af2f3a60aa6bd6912628fdeef0033bc69"
+        },
+        {
+          "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/outcome-model-001/SATISFIED_OBSERVATION.json",
+          "sha256": "5342a2e6b5fdfed8f9e3dbaf4fcfed7d9401cb40386a3d81618c8e947fa73ada"
+        }
+      ],
+      "checkerSha256": "4834747e5530dd2b4eb0959ececcc479ab63d06da0bdda70957217eddf48645d"
+    },
+    "continuation-checkpoint-20260917/HISTORY_CLI_CHECK.json": {
+      "passed": true,
+      "at": "2026-09-17T09:08:28.429Z",
+      "commands": [
+        {
+          "command": [
+            "bin/foundry.mjs",
+            "outcome-history",
+            "--receipt",
+            "dadf02f676ab22bee8b2afa0a37409c767c002dcc59a055a6a0fc40f5c589a1f",
+            "--workspace",
+            "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/outcome-model-001/workspace"
+          ],
+          "receiptId": "dadf02f676ab22bee8b2afa0a37409c767c002dcc59a055a6a0fc40f5c589a1f",
+          "historyId": "outcome-history:ff8a88a155c65826e3186d0eec14baabdfa9c2acab83b405b36891dfd91c9c24",
+          "outcome": "unsatisfied",
+          "output": "HISTORY_WRONG.json",
+          "sha256": "fe10dec56c7575164566a8f28ce9e64b79968809cd8f90dbb686629fc502ce72",
+          "exitCode": 0
+        },
+        {
+          "command": [
+            "bin/foundry.mjs",
+            "outcome-history",
+            "--receipt",
+            "93c0f90949b07205481681179213f44f3ffd976020164459e22da9c0436b5a18",
+            "--workspace",
+            "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/outcome-model-001/workspace"
+          ],
+          "receiptId": "93c0f90949b07205481681179213f44f3ffd976020164459e22da9c0436b5a18",
+          "historyId": "outcome-history:f5763fbdc7bd8713fa2629cc47b5117f7f699812063e250b669274db2405ecbd",
+          "outcome": "satisfied",
+          "output": "HISTORY_SATISFIED.json",
+          "sha256": "1fa5da50ba3f7c9f8d3d7107adb9557ac74bae94ff1da3e37866d8294876e6ef",
+          "exitCode": 0
+        }
+      ],
+      "dbSHA256Before": "87067ea81936d633f258469bf22e8b32262b3543b6f1b14e65d6a534eb0c08a3",
+      "dbSHA256After": "87067ea81936d633f258469bf22e8b32262b3543b6f1b14e65d6a534eb0c08a3",
+      "unchangedMainDatabase": true,
+      "observedRegistryContext": "Built-in catalog only differs from the synthetic instrument registry used by the historical runs; no external components are loaded.",
+      "currentWorldQualification": false,
+      "currentEvidenceCheck": "unverified; no live artifact reads",
+      "newRuntimeExecutions": 0,
+      "modelCalls": 0,
+      "sourceHashes": {
+        "bin/foundry.mjs": "450fad505fbc3c77176eb4bb9880343e169c71e402f319e38e3ff6f8182c906b",
+        "src/outcome-history.mjs": "023921bb5bd99982c821b9fc9ec28e68763f8344ea53e57c824e6e0608f75610"
+      }
+    },
+    "continuation-checkpoint-20260917/HISTORY_CLI_CHECK_V2.json": {
+      "passed": true,
+      "at": "2026-09-17T09:13:32.067Z",
+      "commands": [
+        {
+          "command": [
+            "bin/foundry.mjs",
+            "outcome-history",
+            "--receipt",
+            "dadf02f676ab22bee8b2afa0a37409c767c002dcc59a055a6a0fc40f5c589a1f",
+            "--workspace",
+            "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/outcome-model-001/workspace"
+          ],
+          "observationId": "dadf02f676ab22bee8b2afa0a37409c767c002dcc59a055a6a0fc40f5c589a1f",
+          "historyId": "outcome-history:d3a1f788fd7a6472972fc23af146d6b91b1bffc7b02941d4d969d7df249208d4",
+          "output": "HISTORY_WRONG_V2.json",
+          "outcome": "unsatisfied",
+          "outputSHA256": "c27e301dc792b97e3ab5e69df5f5b91ebbd9e0df7d7cd8cf2bf6cb2c231f1de9",
+          "exitCode": 0
+        },
+        {
+          "command": [
+            "bin/foundry.mjs",
+            "outcome-history",
+            "--receipt",
+            "93c0f90949b07205481681179213f44f3ffd976020164459e22da9c0436b5a18",
+            "--workspace",
+            "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/outcome-model-001/workspace"
+          ],
+          "observationId": "93c0f90949b07205481681179213f44f3ffd976020164459e22da9c0436b5a18",
+          "historyId": "outcome-history:09870217e8b08c181c35c9509b38c3114df17289a50ace6d3d322902a7304858",
+          "output": "HISTORY_SATISFIED_V2.json",
+          "outcome": "satisfied",
+          "outputSHA256": "7d23c91733daf6b901cfd8d2a8aa8fb098b3afc6e8ce53cedec2a13680d34eb9",
+          "exitCode": 0
+        }
+      ],
+      "dbSHA256Before": "87067ea81936d633f258469bf22e8b32262b3543b6f1b14e65d6a534eb0c08a3",
+      "dbSHA256After": "87067ea81936d633f258469bf22e8b32262b3543b6f1b14e65d6a534eb0c08a3",
+      "unchangedMainDatabase": true,
+      "currentRegistryScope": "Only built-in capability descriptors; historical synthetic instrument catalog differs. No external components were loaded.",
+      "currentWorldQualification": false,
+      "currentEvidenceCheck": "unverified; no live artifact reads",
+      "newRuntimeExecutions": 0,
+      "modelCalls": 0,
+      "previousReceipt": {
+        "path": "HISTORY_CLI_CHECK.json",
+        "sha256": "2221ceb8a24d8cae60783f923ab41012c9fff9c3cc9b83dae08ad9871eb804cb",
+        "meaning": "Preserved earlier inspection using the pre-ancestry-fix inspector; not overwritten or silently relabeled."
+      },
+      "sourceHashes": {
+        "bin/foundry.mjs": "450fad505fbc3c77176eb4bb9880343e169c71e402f319e38e3ff6f8182c906b",
+        "src/outcome-history.mjs": "4caa2bce1e7b55226367ac0b5178d51af92ac1d145b48b5b820e584476b08b8a"
+      }
+    },
+    "continuation-checkpoint-20260917/OPT_IN_REGRESSION.json": {
+      "passed": true,
+      "at": "2026-09-17T09:15:38.669Z",
+      "command": [
+        "/usr/bin/node",
+        "--test",
+        "--test-reporter=tap",
+        "--test-concurrency=1",
+        "tests/mcp-repair-lifecycle-audit.test.mjs",
+        "tests/packaging.test.mjs",
+        "tests/ui-browser.test.mjs",
+        "tests/ui-trials-browser.test.mjs"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 50247,
+      "counts": {
+        "tests": 82,
+        "pass": 82,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "stdoutSHA256": "231c7aadab54667341d8fc6164537d71b2a85cbaae436fae0aa5b1b20433bf00",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sourceBefore": {
+        "bin/foundry.mjs": "450fad505fbc3c77176eb4bb9880343e169c71e402f319e38e3ff6f8182c906b",
+        "package.json": "cb314fd60e0b59c2fed9782c66d8ddc889ce64b4add93ed499eb3e6de139cf5a",
+        "package-lock.json": "7bddd5dfb8cd6e3717d54cd8c184c297b0e166ad4bbdb9645d369290b06a9af9",
+        "tests/mcp-repair-lifecycle-audit.test.mjs": "7e49cc724cebdb9cb2207800b0b1cc2b1d60d4ace9d17e3976b06fd90a49cfd7",
+        "tests/packaging.test.mjs": "e5b4c7cfecdc38abe47b61f1f63322a52887e13f614528d2efc123c5135c92cf",
+        "tests/ui-browser.test.mjs": "5cbf91a29e63ac72cac8958e942d4706b12d522dab3cf16cf9cea6d021f63253",
+        "tests/ui-trials-browser.test.mjs": "f6b7e0804f63a09358e688e9fc1cff7bd9329a369e9cc99764068884bd999221",
+        "src/capabilities.mjs": "1707d4506f50e86498fa471dc3c8714615e6c06a1240014f2515aab58cc3ac49",
+        "src/components.mjs": "200310319ed0e9026b02e62c4fe36b9bd1023de21f04d84046a1e5c478d66989",
+        "src/construction-closed.mjs": "db0cd1fe34388ee1e05cd99bbef01571f993755c727bbb80cb913e7231711c62",
+        "src/construction-durable.mjs": "7ac436cf9afdca9e8d226cf5170de065e426238f7f7bd595e9e0475968bc9510",
+        "src/construction-families.mjs": "2f64daf4277068b585411d74ff3cb1d674ff869873baed9a7e8e87bdd897cf75",
+        "src/construction-industry.mjs": "a3cdd25176bbd4153b7c3651f97f5f856b88c38e10d9f42e71e8a7eb2a1e96d0",
+        "src/construction-objective.mjs": "d3283d8df7230231db26efdd80305453eed1f0056ab71a4513ca133a297ea536",
+        "src/construction.mjs": "d8e9b6cde807a7361ed7a7e0df814a7da3adb6a20326aaa34633d1cca1095dca",
+        "src/data.mjs": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c",
+        "src/dataflow.mjs": "7f3c4894b32f5dbe691ba3c871e088da8b083f42e7b653404972b647c9e9d41e",
+        "src/engine.mjs": "6872eecabd6e4ccce58b7db25df82b1a97a292e530e0c38090e15844d5d7ed52",
+        "src/evaluation.mjs": "64d42f9120e36b90bc7d194d5550773f00c1bb19d96c03f10ea8d194e6dd3d6f",
+        "src/foundry.mjs": "95f102573760ef92cd352813f66b30cd9f83bda05afb97a4cbe1069c8527a878",
+        "src/generator.mjs": "3d86d95eaf4a2b6ee83d5fb50696a689926075adae4eeb4d8c25450c442fb11a",
+        "src/hooks.mjs": "cc541bc91d3f8fadcbd91a885ab6151afbc991b53c88903ebcfe18b3d9028140",
+        "src/http.mjs": "6638061fe87105ef1fa838565e1f42ced19e31e6bc62ccfe6594128e6b4ce97b",
+        "src/install.mjs": "10ec710d3f2dfc11c8a3765606983b146e43d5f9dbc54bf77592024a1b0c7ce2",
+        "src/mcp.mjs": "405df38215116761e1c16e4b40df2aafa0aa6afe2913e79a1d60ad6447e9d16b",
+        "src/ollama-local.mjs": "7193fbacbce7bfcc065e5db8be3a3d98b68063b20b25642c7ba732b7d11f50e9",
+        "src/opencode-free.mjs": "6848bfcba60945d1dfebf8fbf7e2461590f1c33eb85f5e2dc3bce84a347eeeca",
+        "src/opencode-v2-free.mjs": "f8c4ad5fbdb6bf4ad41e16b0417f27836890931e997731e888c1fa11f4e3ee84",
+        "src/outcome-history.mjs": "4caa2bce1e7b55226367ac0b5178d51af92ac1d145b48b5b820e584476b08b8a",
+        "src/outcome-repair.mjs": "8de15af4b6ce842c3e54039531c651472a9079a231bf31390f4a8f95b924f1fd",
+        "src/process.mjs": "bfc97e88bb73bc8f15ba2d174ab1d97c615c3fd097e57c57964bd8bc4196bb7a",
+        "src/runtime.mjs": "af9fcabde20f706fac8ce2e09c0e646c0f100b301b64d1f6e1e4eb77e0b213db",
+        "src/store.mjs": "61288a25c85a8dd1e1e076ca5059aedf80c35dc26bf0ab613c31030743a34732",
+        "src/trials.mjs": "4ab066bb285245ae70ead081fa8de88e728dfc8f58eef77f50bf2a667117f437",
+        "src/validate.mjs": "8b698d552e151f3380af58cbce5675b0a94c48601c9acd427be71281a3696c33",
+        "web/app.js": "6f503de9b25928f442caaceff4edf0f557bf8b558942024e4edb4e051ad229d6",
+        "web/index.html": "9daccc58d2284054a2e63133cca21cfae1154ac1a31abf0de00b903a344ce229",
+        "web/style.css": "c22f39aeea9f3e542236b22a16fdd2bf051b8cb4b2c67bdd25d3ec7c9ab76baa"
+      },
+      "sourceAfter": {
+        "bin/foundry.mjs": "450fad505fbc3c77176eb4bb9880343e169c71e402f319e38e3ff6f8182c906b",
+        "package.json": "cb314fd60e0b59c2fed9782c66d8ddc889ce64b4add93ed499eb3e6de139cf5a",
+        "package-lock.json": "7bddd5dfb8cd6e3717d54cd8c184c297b0e166ad4bbdb9645d369290b06a9af9",
+        "tests/mcp-repair-lifecycle-audit.test.mjs": "7e49cc724cebdb9cb2207800b0b1cc2b1d60d4ace9d17e3976b06fd90a49cfd7",
+        "tests/packaging.test.mjs": "e5b4c7cfecdc38abe47b61f1f63322a52887e13f614528d2efc123c5135c92cf",
+        "tests/ui-browser.test.mjs": "5cbf91a29e63ac72cac8958e942d4706b12d522dab3cf16cf9cea6d021f63253",
+        "tests/ui-trials-browser.test.mjs": "f6b7e0804f63a09358e688e9fc1cff7bd9329a369e9cc99764068884bd999221",
+        "src/capabilities.mjs": "1707d4506f50e86498fa471dc3c8714615e6c06a1240014f2515aab58cc3ac49",
+        "src/components.mjs": "200310319ed0e9026b02e62c4fe36b9bd1023de21f04d84046a1e5c478d66989",
+        "src/construction-closed.mjs": "db0cd1fe34388ee1e05cd99bbef01571f993755c727bbb80cb913e7231711c62",
+        "src/construction-durable.mjs": "7ac436cf9afdca9e8d226cf5170de065e426238f7f7bd595e9e0475968bc9510",
+        "src/construction-families.mjs": "2f64daf4277068b585411d74ff3cb1d674ff869873baed9a7e8e87bdd897cf75",
+        "src/construction-industry.mjs": "a3cdd25176bbd4153b7c3651f97f5f856b88c38e10d9f42e71e8a7eb2a1e96d0",
+        "src/construction-objective.mjs": "d3283d8df7230231db26efdd80305453eed1f0056ab71a4513ca133a297ea536",
+        "src/construction.mjs": "d8e9b6cde807a7361ed7a7e0df814a7da3adb6a20326aaa34633d1cca1095dca",
+        "src/data.mjs": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c",
+        "src/dataflow.mjs": "7f3c4894b32f5dbe691ba3c871e088da8b083f42e7b653404972b647c9e9d41e",
+        "src/engine.mjs": "6872eecabd6e4ccce58b7db25df82b1a97a292e530e0c38090e15844d5d7ed52",
+        "src/evaluation.mjs": "64d42f9120e36b90bc7d194d5550773f00c1bb19d96c03f10ea8d194e6dd3d6f",
+        "src/foundry.mjs": "95f102573760ef92cd352813f66b30cd9f83bda05afb97a4cbe1069c8527a878",
+        "src/generator.mjs": "3d86d95eaf4a2b6ee83d5fb50696a689926075adae4eeb4d8c25450c442fb11a",
+        "src/hooks.mjs": "cc541bc91d3f8fadcbd91a885ab6151afbc991b53c88903ebcfe18b3d9028140",
+        "src/http.mjs": "6638061fe87105ef1fa838565e1f42ced19e31e6bc62ccfe6594128e6b4ce97b",
+        "src/install.mjs": "10ec710d3f2dfc11c8a3765606983b146e43d5f9dbc54bf77592024a1b0c7ce2",
+        "src/mcp.mjs": "405df38215116761e1c16e4b40df2aafa0aa6afe2913e79a1d60ad6447e9d16b",
+        "src/ollama-local.mjs": "7193fbacbce7bfcc065e5db8be3a3d98b68063b20b25642c7ba732b7d11f50e9",
+        "src/opencode-free.mjs": "6848bfcba60945d1dfebf8fbf7e2461590f1c33eb85f5e2dc3bce84a347eeeca",
+        "src/opencode-v2-free.mjs": "f8c4ad5fbdb6bf4ad41e16b0417f27836890931e997731e888c1fa11f4e3ee84",
+        "src/outcome-history.mjs": "4caa2bce1e7b55226367ac0b5178d51af92ac1d145b48b5b820e584476b08b8a",
+        "src/outcome-repair.mjs": "8de15af4b6ce842c3e54039531c651472a9079a231bf31390f4a8f95b924f1fd",
+        "src/process.mjs": "bfc97e88bb73bc8f15ba2d174ab1d97c615c3fd097e57c57964bd8bc4196bb7a",
+        "src/runtime.mjs": "af9fcabde20f706fac8ce2e09c0e646c0f100b301b64d1f6e1e4eb77e0b213db",
+        "src/store.mjs": "61288a25c85a8dd1e1e076ca5059aedf80c35dc26bf0ab613c31030743a34732",
+        "src/trials.mjs": "4ab066bb285245ae70ead081fa8de88e728dfc8f58eef77f50bf2a667117f437",
+        "src/validate.mjs": "8b698d552e151f3380af58cbce5675b0a94c48601c9acd427be71281a3696c33",
+        "web/app.js": "6f503de9b25928f442caaceff4edf0f557bf8b558942024e4edb4e051ad229d6",
+        "web/index.html": "9daccc58d2284054a2e63133cca21cfae1154ac1a31abf0de00b903a344ce229",
+        "web/style.css": "c22f39aeea9f3e542236b22a16fdd2bf051b8cb4b2c67bdd25d3ec7c9ab76baa"
+      },
+      "changedDuringVerification": [],
+      "modelCalls": 0,
+      "publicRelease": false,
+      "scope": "Existing opt-in suites: actual local MCP stdio, local tarball/project installation using existing pinned dependencies, and real Chromium/local HTTP. Scripted workflow/provider controls; not real-model generation or upstream client qualification.",
+      "browserArtifacts": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/continuation-checkpoint-20260917/opt-in-browser-artifacts"
+    },
+    "continuation-checkpoint-20260917/FINAL_REGRESSION.json": {
+      "passed": true,
+      "at": "2026-09-17T09:13:39.931Z",
+      "scope": "Actual complete product regression after intentional provider/history CLI revisions; supplied offline inference fixtures only.",
+      "results": [
+        {
+          "name": "repository-tests",
+          "command": [
+            "npm",
+            "test"
+          ],
+          "exitCode": 0,
+          "signal": null,
+          "error": null,
+          "elapsedMs": 48242,
+          "counts": {
+            "tests": 645,
+            "pass": 641,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 4
+          },
+          "stdoutSHA256": "4e9350bceb5264a4daf801e9012e351d7cf05f8c7186f3703ec1ed9eb283f26d",
+          "stderrSHA256": "d802c8e7a3daea05309c8bfc4e9e8fc5cfd5bac9672bd96a8cff752c0da6782f"
+        },
+        {
+          "name": "doctor",
+          "command": [
+            "npm",
+            "run",
+            "check"
+          ],
+          "exitCode": 0,
+          "signal": null,
+          "error": null,
+          "elapsedMs": 232,
+          "counts": {},
+          "stdoutSHA256": "cbe11c006648a5f4997899cb2f74ba0bb84ba24a4ab69c6eac6d635b7fa602e0",
+          "stderrSHA256": "8d54519185f585a22764b58b3ae1f829d27e4c41dd7e0e36f0dc27a7a572014d"
+        },
+        {
+          "name": "tracked-diff-check",
+          "command": [
+            "git",
+            "diff",
+            "--check"
+          ],
+          "exitCode": 0,
+          "signal": null,
+          "error": null,
+          "elapsedMs": 3,
+          "counts": {},
+          "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "counts": {
+        "tests": 645,
+        "pass": 641,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 4
+      },
+      "sourceBefore": {
+        "bin/foundry.mjs": "450fad505fbc3c77176eb4bb9880343e169c71e402f319e38e3ff6f8182c906b",
+        "package.json": "cb314fd60e0b59c2fed9782c66d8ddc889ce64b4add93ed499eb3e6de139cf5a",
+        "package-lock.json": "7bddd5dfb8cd6e3717d54cd8c184c297b0e166ad4bbdb9645d369290b06a9af9",
+        "schemas/workflow.schema.json": "e72b1d4bb1e01f4f21256b042853faa8505859f30741b4093aea59909ac4e1bc",
+        "src/capabilities.mjs": "1707d4506f50e86498fa471dc3c8714615e6c06a1240014f2515aab58cc3ac49",
+        "src/components.mjs": "200310319ed0e9026b02e62c4fe36b9bd1023de21f04d84046a1e5c478d66989",
+        "src/construction-closed.mjs": "db0cd1fe34388ee1e05cd99bbef01571f993755c727bbb80cb913e7231711c62",
+        "src/construction-durable.mjs": "7ac436cf9afdca9e8d226cf5170de065e426238f7f7bd595e9e0475968bc9510",
+        "src/construction-families.mjs": "2f64daf4277068b585411d74ff3cb1d674ff869873baed9a7e8e87bdd897cf75",
+        "src/construction-industry.mjs": "a3cdd25176bbd4153b7c3651f97f5f856b88c38e10d9f42e71e8a7eb2a1e96d0",
+        "src/construction-objective.mjs": "d3283d8df7230231db26efdd80305453eed1f0056ab71a4513ca133a297ea536",
+        "src/construction.mjs": "d8e9b6cde807a7361ed7a7e0df814a7da3adb6a20326aaa34633d1cca1095dca",
+        "src/data.mjs": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c",
+        "src/dataflow.mjs": "7f3c4894b32f5dbe691ba3c871e088da8b083f42e7b653404972b647c9e9d41e",
+        "src/engine.mjs": "6872eecabd6e4ccce58b7db25df82b1a97a292e530e0c38090e15844d5d7ed52",
+        "src/evaluation.mjs": "64d42f9120e36b90bc7d194d5550773f00c1bb19d96c03f10ea8d194e6dd3d6f",
+        "src/foundry.mjs": "95f102573760ef92cd352813f66b30cd9f83bda05afb97a4cbe1069c8527a878",
+        "src/generator.mjs": "3d86d95eaf4a2b6ee83d5fb50696a689926075adae4eeb4d8c25450c442fb11a",
+        "src/hooks.mjs": "cc541bc91d3f8fadcbd91a885ab6151afbc991b53c88903ebcfe18b3d9028140",
+        "src/http.mjs": "6638061fe87105ef1fa838565e1f42ced19e31e6bc62ccfe6594128e6b4ce97b",
+        "src/install.mjs": "10ec710d3f2dfc11c8a3765606983b146e43d5f9dbc54bf77592024a1b0c7ce2",
+        "src/mcp.mjs": "405df38215116761e1c16e4b40df2aafa0aa6afe2913e79a1d60ad6447e9d16b",
+        "src/ollama-local.mjs": "7193fbacbce7bfcc065e5db8be3a3d98b68063b20b25642c7ba732b7d11f50e9",
+        "src/opencode-free.mjs": "6848bfcba60945d1dfebf8fbf7e2461590f1c33eb85f5e2dc3bce84a347eeeca",
+        "src/opencode-v2-free.mjs": "f8c4ad5fbdb6bf4ad41e16b0417f27836890931e997731e888c1fa11f4e3ee84",
+        "src/outcome-history.mjs": "4caa2bce1e7b55226367ac0b5178d51af92ac1d145b48b5b820e584476b08b8a",
+        "src/outcome-repair.mjs": "8de15af4b6ce842c3e54039531c651472a9079a231bf31390f4a8f95b924f1fd",
+        "src/process.mjs": "bfc97e88bb73bc8f15ba2d174ab1d97c615c3fd097e57c57964bd8bc4196bb7a",
+        "src/runtime.mjs": "af9fcabde20f706fac8ce2e09c0e646c0f100b301b64d1f6e1e4eb77e0b213db",
+        "src/store.mjs": "61288a25c85a8dd1e1e076ca5059aedf80c35dc26bf0ab613c31030743a34732",
+        "src/trials.mjs": "4ab066bb285245ae70ead081fa8de88e728dfc8f58eef77f50bf2a667117f437",
+        "src/validate.mjs": "8b698d552e151f3380af58cbce5675b0a94c48601c9acd427be71281a3696c33",
+        "tests/adapters.test.mjs": "27bbd706df12948a195c05f17d35a7d0e85ac17f7b6434f98646bf47c9e0cba2",
+        "tests/cli-provider-selection.test.mjs": "6aa8cf15be0b4bef74ebb100de7053e545cc2a89472555d17af3a615076ea491",
+        "tests/components-environment.test.mjs": "ee8adabb823f9b95d83ae0495334ae316be9f8c020670574b38acee4929a5be9",
+        "tests/construction-closeness.test.mjs": "30083729b7d0ce526abde8b95224e1f01a2377d79a13f15a6bb20c7552a5ccd5",
+        "tests/construction-consequences.test.mjs": "310c9ce34c26ac21f6fff0603952927b0aa53c4077a7ef6b90e1d11e3ca4f9cd",
+        "tests/construction-intent.test.mjs": "3ee5b536bf892377289c54664f786b08bb25215db4ba6ac3e03afeddf3c848e5",
+        "tests/construction-objective.test.mjs": "fa0a2a0750309bfa0339a62e2514059c82a6c1815039dc3aadbcc9d2bae45742",
+        "tests/control-audit.test.mjs": "73cd4a2fd29857e0c0500b200e5294ab92a3232bf951d393e1bfc77d071237af",
+        "tests/dataflow-audit.test.mjs": "8b1fc5aaf9347fefe11f28323f5d1b79445823bdeaa2f665b242c64cbefb29d6",
+        "tests/engine-binding.test.mjs": "c75db6f27d0f4722ae178f663cfa7d6ffa713038491abe9e41694ae912a9f73c",
+        "tests/evaluation-campaign.test.mjs": "f1c593224238641d7df31e5440ab14496c60a10af101c13d1e03b2bb9f514974",
+        "tests/evaluation-evidence.test.mjs": "274d22366ca20f593609dc1c0e052b4f87f0a6652a7318900cfd2332223ef456",
+        "tests/evaluation-hostcontract.test.mjs": "495f4ba3441b575a2f0d40cde3a247ead06ad40061704ade73dd3b486e327047",
+        "tests/evaluation-incident.test.mjs": "952758365f4d067a5b635b162b01e70ff03ef7ec843fb4bc5aa0a031df991425",
+        "tests/evaluation-mcp.test.mjs": "ae30df1895cdceb3edc9909f43b00f234bb0c0776e6c119d296742eeb560bb90",
+        "tests/evaluation-runtime.test.mjs": "e26450fe496afa9dd054f3cba27f0283e84aa07fc26db9f79c3b05afcbaf6398",
+        "tests/evaluation-typed-mcp.test.mjs": "c506f6f3c3bd32e4a824e7a4d74d4b747a5449f47ba3ba01e7dd1a6a5a55c71f",
+        "tests/evaluator-audit.test.mjs": "8d285cb10230b176ee300312fbc3c41fba030c2b0c0a9578cdf9bf73155a306a",
+        "tests/evidence-contract-audit.test.mjs": "98265918840ec64487b37de4afc1241e5c3c68e8c77f337357022bc343e02512",
+        "tests/generator-audit.test.mjs": "752b11530387dbfb9e0b669a0e38dd05b060d1fff48615d1b35aff9ea9ced5a8",
+        "tests/mcp-annotations.test.mjs": "d5f77b2dd4001283144c51dc9cb0842ba1eb1e588e7e2d88ef263cc2d39a3b8e",
+        "tests/mcp-input.test.mjs": "965b6c3610ae14e8d5d9105e756020763d76c17182be370d7c9af518f71fa2cc",
+        "tests/mcp-repair-lifecycle-audit.test.mjs": "7e49cc724cebdb9cb2207800b0b1cc2b1d60d4ace9d17e3976b06fd90a49cfd7",
+        "tests/ollama-local.test.mjs": "41d2a4b93cdcd133d1aca189e805781dc73b487ae5720e3d678811a110368e2f",
+        "tests/opencode-v2-free.test.mjs": "b6ab1e50173501254a267c9f7b151de5e0b3c3e0699359c131f13a14ae7954ee",
+        "tests/outcome-cli.test.mjs": "4f3cc76c49e6665b5f88f7dc17daa1835abd02d79747b1cf54f936b6f6e469ac",
+        "tests/outcome-history-cli.test.mjs": "eaedef26d672f26c588b5279558ac04625912f193ef7131d4c7baa1b18bd89fe",
+        "tests/outcome-history.test.mjs": "da0c63da47850ff40e11a2e6fd515f9388ecdac4cb3aa7b2b31f7b618a1c8c27",
+        "tests/outcome-repair.test.mjs": "216692223b1f7c081e2a2909f5e28bac94f62a94898731887e5d94b8878e65f3",
+        "tests/packaging.test.mjs": "e5b4c7cfecdc38abe47b61f1f63322a52887e13f614528d2efc123c5135c92cf",
+        "tests/provider-quota.test.mjs": "9d2f99a7d235d6ca7f65c4a7d266cd1c5283762b986a4d5dd1537d791976244f",
+        "tests/provider-termination.test.mjs": "e7e4673b633f1302933d6f1cb09bc2bc2ad748c54487a9efb10c711e0bf25462",
+        "tests/qualification-level.test.mjs": "d4356b65799d4f8133fac6d5025c3f06b20a0821bd6de0f8d64012fc198858e4",
+        "tests/reference-swe-contract.test.mjs": "977c8e45f279c1f0da8ad662d4d32699707cd7539b8b7cbddcf6ab1a5f8f07d0",
+        "tests/security-audit-authority.test.mjs": "829a3f27468491332a91e6ca04339830d9156ebe73137593d60aaed307d03f59",
+        "tests/security-audit.test.mjs": "5d97543f34c141dd6f3d6f041cd02719293f79bcb537559d334e3413d8a34878",
+        "tests/store-atomic.test.mjs": "070b010880ee4d7c3bc6a8eb6d2f6be3225546ba1086d0a5ccb0db58daf17982",
+        "tests/trials.test.mjs": "5851ad8b8eb9be9c7710ff7d71e503f08f91b04fab19796be5c22ff446f1e103",
+        "tests/ui-browser.test.mjs": "5cbf91a29e63ac72cac8958e942d4706b12d522dab3cf16cf9cea6d021f63253",
+        "tests/ui-contract.test.mjs": "657cd7e9f4867974a27c7a047e8c2fad964fd3642ed29a4ebb93ce2c69a26814",
+        "tests/ui-live-contract.test.mjs": "c4e2e4f602793e2843d2ee5b2c54baafa07ad4b9119238b2cca9bf6e741bee63",
+        "tests/ui-trials-browser.test.mjs": "f6b7e0804f63a09358e688e9fc1cff7bd9329a369e9cc99764068884bd999221",
+        "tests/workflow-addressing.test.mjs": "f7b5df289f23f14e2a158a0b68014a62e9f172cf89f0d94415c6cb34a9e255cb"
+      },
+      "sourceAfter": {
+        "bin/foundry.mjs": "450fad505fbc3c77176eb4bb9880343e169c71e402f319e38e3ff6f8182c906b",
+        "package.json": "cb314fd60e0b59c2fed9782c66d8ddc889ce64b4add93ed499eb3e6de139cf5a",
+        "package-lock.json": "7bddd5dfb8cd6e3717d54cd8c184c297b0e166ad4bbdb9645d369290b06a9af9",
+        "schemas/workflow.schema.json": "e72b1d4bb1e01f4f21256b042853faa8505859f30741b4093aea59909ac4e1bc",
+        "src/capabilities.mjs": "1707d4506f50e86498fa471dc3c8714615e6c06a1240014f2515aab58cc3ac49",
+        "src/components.mjs": "200310319ed0e9026b02e62c4fe36b9bd1023de21f04d84046a1e5c478d66989",
+        "src/construction-closed.mjs": "db0cd1fe34388ee1e05cd99bbef01571f993755c727bbb80cb913e7231711c62",
+        "src/construction-durable.mjs": "7ac436cf9afdca9e8d226cf5170de065e426238f7f7bd595e9e0475968bc9510",
+        "src/construction-families.mjs": "2f64daf4277068b585411d74ff3cb1d674ff869873baed9a7e8e87bdd897cf75",
+        "src/construction-industry.mjs": "a3cdd25176bbd4153b7c3651f97f5f856b88c38e10d9f42e71e8a7eb2a1e96d0",
+        "src/construction-objective.mjs": "d3283d8df7230231db26efdd80305453eed1f0056ab71a4513ca133a297ea536",
+        "src/construction.mjs": "d8e9b6cde807a7361ed7a7e0df814a7da3adb6a20326aaa34633d1cca1095dca",
+        "src/data.mjs": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c",
+        "src/dataflow.mjs": "7f3c4894b32f5dbe691ba3c871e088da8b083f42e7b653404972b647c9e9d41e",
+        "src/engine.mjs": "6872eecabd6e4ccce58b7db25df82b1a97a292e530e0c38090e15844d5d7ed52",
+        "src/evaluation.mjs": "64d42f9120e36b90bc7d194d5550773f00c1bb19d96c03f10ea8d194e6dd3d6f",
+        "src/foundry.mjs": "95f102573760ef92cd352813f66b30cd9f83bda05afb97a4cbe1069c8527a878",
+        "src/generator.mjs": "3d86d95eaf4a2b6ee83d5fb50696a689926075adae4eeb4d8c25450c442fb11a",
+        "src/hooks.mjs": "cc541bc91d3f8fadcbd91a885ab6151afbc991b53c88903ebcfe18b3d9028140",
+        "src/http.mjs": "6638061fe87105ef1fa838565e1f42ced19e31e6bc62ccfe6594128e6b4ce97b",
+        "src/install.mjs": "10ec710d3f2dfc11c8a3765606983b146e43d5f9dbc54bf77592024a1b0c7ce2",
+        "src/mcp.mjs": "405df38215116761e1c16e4b40df2aafa0aa6afe2913e79a1d60ad6447e9d16b",
+        "src/ollama-local.mjs": "7193fbacbce7bfcc065e5db8be3a3d98b68063b20b25642c7ba732b7d11f50e9",
+        "src/opencode-free.mjs": "6848bfcba60945d1dfebf8fbf7e2461590f1c33eb85f5e2dc3bce84a347eeeca",
+        "src/opencode-v2-free.mjs": "f8c4ad5fbdb6bf4ad41e16b0417f27836890931e997731e888c1fa11f4e3ee84",
+        "src/outcome-history.mjs": "4caa2bce1e7b55226367ac0b5178d51af92ac1d145b48b5b820e584476b08b8a",
+        "src/outcome-repair.mjs": "8de15af4b6ce842c3e54039531c651472a9079a231bf31390f4a8f95b924f1fd",
+        "src/process.mjs": "bfc97e88bb73bc8f15ba2d174ab1d97c615c3fd097e57c57964bd8bc4196bb7a",
+        "src/runtime.mjs": "af9fcabde20f706fac8ce2e09c0e646c0f100b301b64d1f6e1e4eb77e0b213db",
+        "src/store.mjs": "61288a25c85a8dd1e1e076ca5059aedf80c35dc26bf0ab613c31030743a34732",
+        "src/trials.mjs": "4ab066bb285245ae70ead081fa8de88e728dfc8f58eef77f50bf2a667117f437",
+        "src/validate.mjs": "8b698d552e151f3380af58cbce5675b0a94c48601c9acd427be71281a3696c33",
+        "tests/adapters.test.mjs": "27bbd706df12948a195c05f17d35a7d0e85ac17f7b6434f98646bf47c9e0cba2",
+        "tests/cli-provider-selection.test.mjs": "6aa8cf15be0b4bef74ebb100de7053e545cc2a89472555d17af3a615076ea491",
+        "tests/components-environment.test.mjs": "ee8adabb823f9b95d83ae0495334ae316be9f8c020670574b38acee4929a5be9",
+        "tests/construction-closeness.test.mjs": "30083729b7d0ce526abde8b95224e1f01a2377d79a13f15a6bb20c7552a5ccd5",
+        "tests/construction-consequences.test.mjs": "310c9ce34c26ac21f6fff0603952927b0aa53c4077a7ef6b90e1d11e3ca4f9cd",
+        "tests/construction-intent.test.mjs": "3ee5b536bf892377289c54664f786b08bb25215db4ba6ac3e03afeddf3c848e5",
+        "tests/construction-objective.test.mjs": "fa0a2a0750309bfa0339a62e2514059c82a6c1815039dc3aadbcc9d2bae45742",
+        "tests/control-audit.test.mjs": "73cd4a2fd29857e0c0500b200e5294ab92a3232bf951d393e1bfc77d071237af",
+        "tests/dataflow-audit.test.mjs": "8b1fc5aaf9347fefe11f28323f5d1b79445823bdeaa2f665b242c64cbefb29d6",
+        "tests/engine-binding.test.mjs": "c75db6f27d0f4722ae178f663cfa7d6ffa713038491abe9e41694ae912a9f73c",
+        "tests/evaluation-campaign.test.mjs": "f1c593224238641d7df31e5440ab14496c60a10af101c13d1e03b2bb9f514974",
+        "tests/evaluation-evidence.test.mjs": "274d22366ca20f593609dc1c0e052b4f87f0a6652a7318900cfd2332223ef456",
+        "tests/evaluation-hostcontract.test.mjs": "495f4ba3441b575a2f0d40cde3a247ead06ad40061704ade73dd3b486e327047",
+        "tests/evaluation-incident.test.mjs": "952758365f4d067a5b635b162b01e70ff03ef7ec843fb4bc5aa0a031df991425",
+        "tests/evaluation-mcp.test.mjs": "ae30df1895cdceb3edc9909f43b00f234bb0c0776e6c119d296742eeb560bb90",
+        "tests/evaluation-runtime.test.mjs": "e26450fe496afa9dd054f3cba27f0283e84aa07fc26db9f79c3b05afcbaf6398",
+        "tests/evaluation-typed-mcp.test.mjs": "c506f6f3c3bd32e4a824e7a4d74d4b747a5449f47ba3ba01e7dd1a6a5a55c71f",
+        "tests/evaluator-audit.test.mjs": "8d285cb10230b176ee300312fbc3c41fba030c2b0c0a9578cdf9bf73155a306a",
+        "tests/evidence-contract-audit.test.mjs": "98265918840ec64487b37de4afc1241e5c3c68e8c77f337357022bc343e02512",
+        "tests/generator-audit.test.mjs": "752b11530387dbfb9e0b669a0e38dd05b060d1fff48615d1b35aff9ea9ced5a8",
+        "tests/mcp-annotations.test.mjs": "d5f77b2dd4001283144c51dc9cb0842ba1eb1e588e7e2d88ef263cc2d39a3b8e",
+        "tests/mcp-input.test.mjs": "965b6c3610ae14e8d5d9105e756020763d76c17182be370d7c9af518f71fa2cc",
+        "tests/mcp-repair-lifecycle-audit.test.mjs": "7e49cc724cebdb9cb2207800b0b1cc2b1d60d4ace9d17e3976b06fd90a49cfd7",
+        "tests/ollama-local.test.mjs": "41d2a4b93cdcd133d1aca189e805781dc73b487ae5720e3d678811a110368e2f",
+        "tests/opencode-v2-free.test.mjs": "b6ab1e50173501254a267c9f7b151de5e0b3c3e0699359c131f13a14ae7954ee",
+        "tests/outcome-cli.test.mjs": "4f3cc76c49e6665b5f88f7dc17daa1835abd02d79747b1cf54f936b6f6e469ac",
+        "tests/outcome-history-cli.test.mjs": "eaedef26d672f26c588b5279558ac04625912f193ef7131d4c7baa1b18bd89fe",
+        "tests/outcome-history.test.mjs": "da0c63da47850ff40e11a2e6fd515f9388ecdac4cb3aa7b2b31f7b618a1c8c27",
+        "tests/outcome-repair.test.mjs": "216692223b1f7c081e2a2909f5e28bac94f62a94898731887e5d94b8878e65f3",
+        "tests/packaging.test.mjs": "e5b4c7cfecdc38abe47b61f1f63322a52887e13f614528d2efc123c5135c92cf",
+        "tests/provider-quota.test.mjs": "9d2f99a7d235d6ca7f65c4a7d266cd1c5283762b986a4d5dd1537d791976244f",
+        "tests/provider-termination.test.mjs": "e7e4673b633f1302933d6f1cb09bc2bc2ad748c54487a9efb10c711e0bf25462",
+        "tests/qualification-level.test.mjs": "d4356b65799d4f8133fac6d5025c3f06b20a0821bd6de0f8d64012fc198858e4",
+        "tests/reference-swe-contract.test.mjs": "977c8e45f279c1f0da8ad662d4d32699707cd7539b8b7cbddcf6ab1a5f8f07d0",
+        "tests/security-audit-authority.test.mjs": "829a3f27468491332a91e6ca04339830d9156ebe73137593d60aaed307d03f59",
+        "tests/security-audit.test.mjs": "5d97543f34c141dd6f3d6f041cd02719293f79bcb537559d334e3413d8a34878",
+        "tests/store-atomic.test.mjs": "070b010880ee4d7c3bc6a8eb6d2f6be3225546ba1086d0a5ccb0db58daf17982",
+        "tests/trials.test.mjs": "5851ad8b8eb9be9c7710ff7d71e503f08f91b04fab19796be5c22ff446f1e103",
+        "tests/ui-browser.test.mjs": "5cbf91a29e63ac72cac8958e942d4706b12d522dab3cf16cf9cea6d021f63253",
+        "tests/ui-contract.test.mjs": "657cd7e9f4867974a27c7a047e8c2fad964fd3642ed29a4ebb93ce2c69a26814",
+        "tests/ui-live-contract.test.mjs": "c4e2e4f602793e2843d2ee5b2c54baafa07ad4b9119238b2cca9bf6e741bee63",
+        "tests/ui-trials-browser.test.mjs": "f6b7e0804f63a09358e688e9fc1cff7bd9329a369e9cc99764068884bd999221",
+        "tests/workflow-addressing.test.mjs": "f7b5df289f23f14e2a158a0b68014a62e9f172cf89f0d94415c6cb34a9e255cb"
+      },
+      "changedDuringVerification": [],
+      "nativeEvaluatorFreeze": "unchanged",
+      "modelCalls": 0,
+      "providerFixtureScope": "New termination tests run the installed CLI/private server and production adapter, but all parent fetches are supplied and the child has no external network."
+    }
+  },
+  "excludedClaims": [
+    "General process invention",
+    "Autonomous intent formalization",
+    "General business outcome verification",
+    "Jev accuracy/calibration",
+    "Known-scale cheap-model success",
+    "Learning",
+    "Production deployment readiness",
+    "Cross-registry repair/promotion is implemented"
+  ],
+  "evidence": [
+    {
+      "path": "benchmark/outcome-model-001/RESULTS.json",
+      "bytes": 9356,
+      "sha256": "01a73bb5060bccc3f91afc7864b46527b8b2d004904e3eb10f9a54fa523eec00"
+    },
+    {
+      "path": "benchmark/outcome-model-001/GENERATION_JOB.json",
+      "bytes": 56500,
+      "sha256": "2adff06536c44a9609bc5e9bc22a7a90294dba4559c6804caaf346cca85eee27"
+    },
+    {
+      "path": "outcome-model-independent-20260917/RESULT_AUDIT.json",
+      "bytes": 99430,
+      "sha256": "caa881c8744982decc4dcec6be0b0927f3c1d54d8afda7120247fb8dbea610aa"
+    },
+    {
+      "path": "benchmark/partition-validation-20260917/COMPARISON.json",
+      "bytes": 103256,
+      "sha256": "85cd2171fd53a6b175a768ede5e4751fc2c6a9f3b102ed43882be1bb1973cfb1"
+    },
+    {
+      "path": "benchmark/partition-validation-20260917/primary/RESULTS.json",
+      "bytes": 148106,
+      "sha256": "38530fce107366e42f5ac580c4fd09fffc3a5e18b326123df9755b4808960e4d"
+    },
+    {
+      "path": "benchmark/partition-validation-20260917/counterpart/RESULTS.json",
+      "bytes": 148624,
+      "sha256": "9d6ed0628577386801681d0bd76cd4bbe6a25c1340e3cae2ab43e5a6e5802402"
+    },
+    {
+      "path": "outcome-cli-20260917/verification-Eubfvm/REPORT.json",
+      "bytes": 20558,
+      "sha256": "bb96412e9681a9166c8df47159c49ad2f64be70b8ffd37a3a7409d6954c99e9f"
+    },
+    {
+      "path": "continuation-checkpoint-20260917/DOCUMENTED_EXAMPLE_CHECK.json",
+      "bytes": 522,
+      "sha256": "0a0f7404e454bab71cd0d0e061e6cdf2bd417deeab26ee3d19528cf7f47e2d1d"
+    },
+    {
+      "path": "benchmark/campaign-opencode-v2-continuation-001/RESULTS.json",
+      "bytes": 10853,
+      "sha256": "3afc152531528b06b20f519cb47a44f79e4324d1ad4c9b219ad79c8f3eec6e8f"
+    },
+    {
+      "path": "benchmark/campaign-opencode-v2-continuation-001/FINALIZED.json",
+      "bytes": 236,
+      "sha256": "c32ce9bf1b84c6e66986c37ea987a2b857adb891c864b76199231cafc0b8945e"
+    },
+    {
+      "path": "provider-continuation-20260917/RESULT_REVIEW.json",
+      "bytes": 12624,
+      "sha256": "bad9654d9d2b7a5ec32dd2db74ec362f9dfa426c7d900085a3dc14bc7f730128"
+    },
+    {
+      "path": "outcome-dependency-study-20260917/run-001/RESULTS.json",
+      "bytes": 632,
+      "sha256": "cd5e203c11275ccdd337719d06b126427808bc506dacdcec3e58cedca7ffb2e9"
+    },
+    {
+      "path": "outcome-history-20260917/FINALIZED.json",
+      "bytes": 4458,
+      "sha256": "0323ee7b8cd0aefcddec506199efeb6084bc8427f1ae5edac48b6e252d93ea1c"
+    },
+    {
+      "path": "outcome-history-20260917/FINALIZED_V2.json",
+      "bytes": 5160,
+      "sha256": "432262433c415224459db919cfa5d854b6af9876551cf6dcbd55ba3a186dff56"
+    },
+    {
+      "path": "provider-termination-fix-20260917/FINALIZED.json",
+      "bytes": 5445,
+      "sha256": "683b973f893ea5e0c11153885bcb28e5a156b5e2e53740dac790fab01b27ba54"
+    },
+    {
+      "path": "history-independent-review-20260917/AUDIT.json",
+      "bytes": 8081,
+      "sha256": "191f7399571b8824f794a60ba70c451069aaba081847e0f4cb38134bdae525bd"
+    },
+    {
+      "path": "continuation-checkpoint-20260917/HISTORY_CLI_CHECK.json",
+      "bytes": 2220,
+      "sha256": "2221ceb8a24d8cae60783f923ab41012c9fff9c3cc9b83dae08ad9871eb804cb"
+    },
+    {
+      "path": "continuation-checkpoint-20260917/HISTORY_CLI_CHECK_V2.json",
+      "bytes": 2504,
+      "sha256": "0b0130090ef5038c55d396dc42e8cf551f73794e2bef4eeec7ec081b411c3023"
+    },
+    {
+      "path": "continuation-checkpoint-20260917/OPT_IN_REGRESSION.json",
+      "bytes": 8451,
+      "sha256": "a4bab742fd84beb974c3f7fbd1b8ae555a16a87300b5fb9b4284a97777b15c39"
+    },
+    {
+      "path": "continuation-checkpoint-20260917/FINAL_REGRESSION.json",
+      "bytes": 17288,
+      "sha256": "30367c99f3bea5ac3ef38d176874e98aed173fd9c3705b8697a2699ca2c652f6"
+    }
+  ]
+}

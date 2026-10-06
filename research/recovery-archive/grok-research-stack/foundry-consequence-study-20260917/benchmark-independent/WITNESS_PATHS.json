@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "independent-witness-paths-v1",
+  "relativeTo": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917",
+  "candidateFilename": "WORKFLOW.json",
+  "qualification": "Paths and file-byte hashes only. These are previously exposed independent diagnostics, not sealed cases. No experiment was rerun to create this handoff.",
+  "causalBoundary": "Completed validated reproduction before publication establishes temporal availability. It does not establish causal data use. Existing evidence-swap cases test only finite counterfactuals.",
+  "witnesses": [
+    {
+      "finding": "F1",
+      "directory": "benchmark-independent/run-001/early-confirmation",
+      "candidate": "WORKFLOW.json",
+      "candidateSHA256": "07f2ad9718c9fff16564fb02dd26328fdba35d97abb0bb61a73acf0cc6cc2c2a",
+      "suite": "SUITE.json",
+      "suiteSHA256": "a58ea7d3f14b46688e78a06c04de154f7780606f6768d89322520270863426cd"
+    },
+    {
+      "finding": "F2",
+      "directory": "benchmark-independent/run-001/raw-invalid-reproduction-confirmed",
+      "candidate": "WORKFLOW.json",
+      "candidateSHA256": "5ced335258d5e7b3759855185e4f29c3470f5e670544c5a7cac51adf3e56662e",
+      "suite": "SUITE.json",
+      "suiteSHA256": "262f08c2ccd81178c571f5f5d944616406f00718bcc628ebe7172d034f2efe27"
+    },
+    {
+      "finding": "F2-screen-companion",
+      "directory": "benchmark-independent/run-001/raw-invalid-screen",
+      "candidate": "WORKFLOW.json",
+      "candidateSHA256": "0ff9c7b1e19da5c614732895bdce8cda8ff3504e328dd2e3a3981180523dfbca",
+      "suite": "SUITE.json",
+      "suiteSHA256": "4677a4b3ae78e528a77836b9988abc0d2ff41ed36594e1ec2d957ce5a848a21c"
+    },
+    {
+      "finding": "existing-independent-positive-control",
+      "directory": "benchmark-independent/run-001/observed-positive-control",
+      "candidate": "WORKFLOW.json",
+      "candidateSHA256": "af482308cd6abb7aaf52b9d429cd473fc2b5236d6d73eea92ed9f7518aa1abe8",
+      "suite": "SUITE.json",
+      "suiteSHA256": "a58ea7d3f14b46688e78a06c04de154f7780606f6768d89322520270863426cd"
+    },
+    {
+      "finding": "existing-finite-counterfactual",
+      "directory": "benchmark-independent/run-001/early-confirmation-counterfactual",
+      "candidate": "WORKFLOW.json",
+      "candidateSHA256": "07f2ad9718c9fff16564fb02dd26328fdba35d97abb0bb61a73acf0cc6cc2c2a",
+      "suite": "SUITE.json",
+      "suiteSHA256": "bf02c8b6200ba9dc2a943ad974d45975e7b03f3a5d9fa340394170b510c69477"
+    }
+  ]
+}

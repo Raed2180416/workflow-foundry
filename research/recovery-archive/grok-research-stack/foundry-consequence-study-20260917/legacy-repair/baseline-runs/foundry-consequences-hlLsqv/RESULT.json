@@ -1,0 +1,83 @@
+{
+  "approvals": {},
+  "cost": 0,
+  "createdAt": 1789613953663,
+  "deadline": 1789617553663,
+  "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+  "error": {
+    "code": "MISSING_REFERENCE",
+    "message": "Missing value at nodes.errPath.branch"
+  },
+  "eventHead": {
+    "seq": 9,
+    "hash": "839719faec82cee508fcdcd97bf33af48038b1a389e8d5536a78ba9528649578"
+  },
+  "frames": {},
+  "id": "634e9d54-74f5-4bd1-a080-74e3ed38f2ef",
+  "input": {
+    "claim": {
+      "grounded": true
+    }
+  },
+  "nodes": {
+    "errPath": {
+      "attempts": 0,
+      "kind": "task",
+      "status": "skipped"
+    },
+    "fetch": {
+      "argsHash": "4062edaf750fb8074e7e83e0c9028c94e32468a8b6f1614774328ef045150f93",
+      "attempts": 1,
+      "completedAt": 1789613953695,
+      "completedSequence": 4,
+      "effects": "none",
+      "idempotencyKey": "48f328be8f17d9276ce2801dd5332aed49b85d60800b334e4df5cc178cfb2941",
+      "kind": "task",
+      "outputHash": "4062edaf750fb8074e7e83e0c9028c94e32468a8b6f1614774328ef045150f93",
+      "startedAt": 1789613953690,
+      "startedSequence": 3,
+      "status": "completed",
+      "tool": "core.identity"
+    },
+    "join": {
+      "attempts": 0,
+      "error": {
+        "code": "MISSING_REFERENCE",
+        "message": "Missing value at nodes.errPath.branch"
+      },
+      "kind": "task",
+      "status": "failed"
+    },
+    "okPath": {
+      "argsHash": "855af9de868afdf124aef47cd65125e2282261d87c1aacc4653bbe0cac94eadc",
+      "attempts": 1,
+      "completedAt": 1789613953711,
+      "completedSequence": 7,
+      "effects": "none",
+      "idempotencyKey": "b88407f6d9bc5e86d072f2d3ec5930a342f3c7d2c8fee4b1e94a4b1c2bbeb95f",
+      "kind": "task",
+      "outputHash": "855af9de868afdf124aef47cd65125e2282261d87c1aacc4653bbe0cac94eadc",
+      "startedAt": 1789613953706,
+      "startedSequence": 6,
+      "status": "completed",
+      "tool": "core.identity"
+    }
+  },
+  "outputs": {
+    "fetch": {
+      "ok": true
+    },
+    "okPath": {
+      "branch": "ok"
+    }
+  },
+  "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+  "resumeCount": 1,
+  "status": "failed",
+  "steps": 2,
+  "updatedAt": 1789613953726,
+  "workflowHash": "a61d435ea91bbc360a476157b4415f7a0751b75cdaf80e320599786f73098444",
+  "workflowId": "Objc91eb70135e0",
+  "executionActive": false,
+  "independentTaskVerified": false
+}

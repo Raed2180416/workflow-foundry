@@ -1,0 +1,61 @@
+{
+  "name": "http-403",
+  "expectedCode": "MODEL_AUTH_REQUIRED",
+  "code": "MODEL_AUTH_REQUIRED",
+  "receipts": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/provider-termination-fix-20260917/checks-a0b747ed-144f-48eb-a25b-0dcf46a92029/cases/termination-http-403-2eMGvS/opencode-v2-a4e845ab-374b-4208-91a7-4a018dc8de90",
+  "catalogCalls": 1,
+  "inferenceCalls": 1,
+  "externalNetworkCalls": 0,
+  "modelCalls": 0,
+  "termination": {
+    "startedAt": 1789636092276,
+    "deadlineAt": 1789636096276,
+    "abortAt": 1789636093259,
+    "first": {
+      "kind": "http",
+      "at": 1789636093259,
+      "code": "MODEL_AUTH_REQUIRED",
+      "error": {
+        "name": "FoundryError",
+        "code": "MODEL_AUTH_REQUIRED",
+        "message": "The public provider refused access; no credentials were substituted"
+      }
+    },
+    "secondary": [
+      {
+        "kind": "process",
+        "at": 1789636093262,
+        "code": "CANCELLED",
+        "error": {
+          "name": "FoundryError",
+          "code": "CANCELLED",
+          "message": "Subprocess cancelled"
+        }
+      }
+    ],
+    "finishedAt": 1789636093262,
+    "callerAborted": false
+  },
+  "transport": {
+    "attempts": 1,
+    "forwarded": 1,
+    "completed": 0,
+    "requests": [
+      {
+        "number": 1,
+        "method": "POST",
+        "path": "/zen/v1/chat/completions",
+        "forwarded": true,
+        "requestSHA256": "2bbd0c77fa7841a4424b80532d913bac86e22e287ce1d3637827f29f93b174b8",
+        "forwardedAt": 1789636093258,
+        "statusCode": 403,
+        "headersAt": 1789636093259,
+        "retryAfter": null,
+        "firstBodyByteAt": 1789636093259,
+        "lastBodyByteAt": 1789636093259,
+        "responseSHA256": "4870d79fdfd37f6f60a1beb4428eccf70460c9e4ce685032b68883f9023dc8cb",
+        "responseBytes": 28
+      }
+    ]
+  }
+}

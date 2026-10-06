@@ -1,0 +1,74 @@
+[
+  {
+    "at": 1789614775772,
+    "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+    "inputHash": "c728477678a42a99470f87f5912463b010c55f2ec68268b9c3d87c17dbc1f34b",
+    "policyHash": "24f7bf6d1ec413ebed06b162c2a10a6da204d42e6d5a9e921e32e3f850bd8c6c",
+    "previousHash": null,
+    "registryHash": "bb3f73d712e174d3084248c8d199a620b7eeb2a7b2655d64b6286ab3af536d0e",
+    "seq": 1,
+    "type": "run.created",
+    "workflowHash": "2a19723d39eafb7a9fb7fa1b9be7bfcdc81ccee7b6cc33e2a9781dee6c784748",
+    "hash": "c4909746360246c26867699654fed10caeee10a06545a38acb66581246306c30"
+  },
+  {
+    "at": 1789614775773,
+    "previousHash": "c4909746360246c26867699654fed10caeee10a06545a38acb66581246306c30",
+    "seq": 2,
+    "token": "d338d567-9e9e-4543-8c66-23455b115b0c",
+    "type": "runner.acquired",
+    "hash": "4d4b3c090f9fd3ff4c5203496fe8cdd4dc0ee0a4870e3a4d27933e310aecebab"
+  },
+  {
+    "argsHash": "b53b7a7f5c03218f508ea7c11db2d4d5470b652405143d8657c301fc0c3c944d",
+    "at": 1789614775774,
+    "effects": "none",
+    "idempotencyKey": "b8cb436ae2942c74618ff9fc6834abc94f8774a28c1da80d56d7977e584a5d2e",
+    "kind": "task",
+    "nodeKey": "root/screening",
+    "previousHash": "4d4b3c090f9fd3ff4c5203496fe8cdd4dc0ee0a4870e3a4d27933e310aecebab",
+    "reservedCost": 0,
+    "seq": 3,
+    "tool": "lab.screen",
+    "type": "tool.intent",
+    "hash": "2b5804519fcb4c2a722f2585cd5fd8c832f80a289be89ceba9ed5ea3fe034e32"
+  },
+  {
+    "at": 1789614775775,
+    "nodeKey": "root/screening",
+    "output": {
+      "claim": "Untrusted claim text",
+      "ok": true,
+      "sampleId": "independent-a",
+      "suspicious": false
+    },
+    "outputHash": "14fd13b850635db9025502296fc7d86f345a3e68cb56d101c790117940681c50",
+    "previousHash": "2b5804519fcb4c2a722f2585cd5fd8c832f80a289be89ceba9ed5ea3fe034e32",
+    "seq": 4,
+    "type": "node.completed",
+    "hash": "8889ff8b6d7b40d54748f4c70cbf2740b292b7bee944027f33e965b52ee80172"
+  },
+  {
+    "at": 1789614775776,
+    "error": {
+      "code": "SCHEMA_MISMATCH",
+      "message": "lab.screen input does not satisfy its schema"
+    },
+    "nodeKey": "root/badarg",
+    "previousHash": "8889ff8b6d7b40d54748f4c70cbf2740b292b7bee944027f33e965b52ee80172",
+    "seq": 5,
+    "type": "node.failed",
+    "hash": "ee943c02bbd4841647f0f80391f336159c6984aae911d3bcf7a3c0c072ee483a"
+  },
+  {
+    "at": 1789614775777,
+    "error": {
+      "code": "SCHEMA_MISMATCH",
+      "message": "lab.screen input does not satisfy its schema"
+    },
+    "previousHash": "ee943c02bbd4841647f0f80391f336159c6984aae911d3bcf7a3c0c072ee483a",
+    "seq": 6,
+    "type": "run.stopped",
+    "hash": "c1394aced36585f0ee40baf0079d993cf047740faed847a261bbda913e79001f"
+  }
+]

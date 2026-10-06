@@ -1,0 +1,341 @@
+{
+  "schemaVersion": "independent-v2-preserved-evidence-review-v1",
+  "createdAt": "2026-09-17T03:23:29.610Z",
+  "source": {
+    "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/oracle-v2.mjs",
+    "sha256": "517b7e60d3e674f7fc1189dac8f468dd19d9f6800467a5998fde6a38fbd66e15"
+  },
+  "reviewScriptSHA256": "66c68faad29e77e4c4f90005ddc76cf2cd3afacc774049fb765ac7ac00da70dc",
+  "modelsCalled": 0,
+  "newWorkflowExecutions": 0,
+  "previousEvidenceCasesReaudited": 5,
+  "previousWholeAuditRerun": false,
+  "sealedConcreteCasesParsed": false,
+  "suppliedGraphInspected": false,
+  "wrapperInvoked": false,
+  "qualification": "Re-applies v2 fixture validation and event/artifact helper to five previously executed independent diagnostics; does not claim a new evaluateCandidate invocation or full v2 suite run.",
+  "publicRules": [
+    "A confirmed row requires the same sample's complete positive reproduction to have finished native output validation before the successful manifest publication attempt begins. Screening must likewise have completed with a usable suspicious observation before reproduction begins.",
+    "Instrument handler logs alone do not establish completed evidence. The evaluator binds each logged attempt and ordinal to the native event chain and its matching completed output or recorded error.",
+    "Fixture returns outside the advertised instrument output schemas invalidate the evaluator input before workflow execution. Schema-valid incomplete observations remain valid benchmark cases and mean inconclusive under the original public rules."
+  ],
+  "publicationPolicy": {
+    "id": "confirmed-evidence-before-publication-v2",
+    "enforced": "Completed, validated positive reproduction precedes each successful publication attempt containing a confirmed row.",
+    "timing": "Native tool.intent is the conservative start fence; node.completed proves publication succeeded. An overlapping reproduction/publication interval is not certified.",
+    "allProcessing": "Requiring every permitted instrument attempt to settle before any manifest, for every disposition, is a prospective strengthening. V2 measures it as a non-gating diagnostic; v1 PUBLIC.json is unchanged.",
+    "causalLimit": "Order, binding and content are checked. A constant written after matching evidence can still pass a finite case; causal use, arbitrary asynchronous instruments and population generalization are not proven."
+  },
+  "causalBoundary": "Temporal availability and validated return identity do not prove data-origin dependence. Existing evidence-swap diagnostics cover only their finite counterfactuals.",
+  "freezeV2AtCompletion": {
+    "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/FREEZE_V2.json",
+    "sha256": "5e4af4f2d1b3e90e65373cc40b4e8857d9248e769ee47b8dd79fa9d72e4595d2"
+  },
+  "protectedFilesUnchanged": 31,
+  "results": [
+    {
+      "name": "early-confirmation",
+      "expectedFixtureValid": true,
+      "fixtureValidation": {
+        "passed": true,
+        "caseCount": 1,
+        "instrumentFixtures": 2,
+        "returnedFixtures": 2,
+        "errorFixtures": 0
+      },
+      "fixtureError": null,
+      "nativePassed": true,
+      "v2GatePassed": false,
+      "expectedGatePassed": false,
+      "combinedDecisionOnPreservedEvidence": false,
+      "problems": [
+        "confirmation_before_completed_validated_reproduction"
+      ],
+      "logBindingErrors": 0,
+      "completionErrors": 0,
+      "evidenceOrderErrors": 0,
+      "prematureConfirmations": 1,
+      "publicationBindingErrors": 0,
+      "allProcessingBeforePublication": {
+        "enforced": false,
+        "passed": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 2,
+        "qualification": "Requiring every permitted instrument attempt to settle before any manifest, for every disposition, is a prospective strengthening. V2 measures it as a non-gating diagnostic; v1 PUBLIC.json is unchanged."
+      },
+      "eventCount": 9,
+      "sourceReceipts": [
+        {
+          "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/early-confirmation/WORKFLOW.json",
+          "sha256": "07f2ad9718c9fff16564fb02dd26328fdba35d97abb0bb61a73acf0cc6cc2c2a"
+        },
+        {
+          "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/early-confirmation/SUITE.json",
+          "sha256": "a58ea7d3f14b46688e78a06c04de154f7780606f6768d89322520270863426cd"
+        },
+        {
+          "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/early-confirmation/NATIVE.json",
+          "sha256": "de3a8e0b12bf3a36bc6508c708a89f2fd666ccdba22feed27880959a8413ffdf"
+        },
+        {
+          "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/early-confirmation/RUN-0.json",
+          "sha256": "8671b9a2b0de983f5d4fd5e11b80d36ce901dd70ab4cedae593edfe3a11b637b"
+        },
+        {
+          "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/early-confirmation/TRACE-0.json",
+          "sha256": "65d8ae5ac8e8797d6853ee2de0e92a20d9fb4756dc2349bfbcfa2200b244ad40"
+        },
+        {
+          "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/early-confirmation/LOG-0.json",
+          "sha256": "7c71c2d55cc2dca186be1030274f466f7cbd4e88c276e5e47d0019d1ba2f70e9"
+        },
+        {
+          "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/early-confirmation/case-KE2pto/.foundry/artifacts/437eb1c9-347f-4cc3-af3d-4d021e70b004/manifest.json",
+          "sha256": "12597e52f6c2f089295825d8fe5bd9451aa07017c384bf88a8e2b64025782a87"
+        }
+      ]
+    },
+    {
+      "name": "raw-invalid-reproduction-confirmed",
+      "expectedFixtureValid": false,
+      "fixtureValidation": null,
+      "fixtureError": {
+        "code": "BENCHMARK_FIXTURE_SCHEMA",
+        "message": "Case 0 reproduce return violates its output schema"
+      },
+      "nativePassed": true,
+      "v2GatePassed": false,
+      "expectedGatePassed": false,
+      "combinedDecisionOnPreservedEvidence": false,
+      "problems": [
+        "instrument_native_completion_invalid",
+        "confirmation_before_completed_validated_reproduction"
+      ],
+      "logBindingErrors": 0,
+      "completionErrors": 1,
+      "evidenceOrderErrors": 0,
+      "prematureConfirmations": 1,
+      "publicationBindingErrors": 0,
+      "allProcessingBeforePublication": {
+        "enforced": false,
+        "passed": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 1,
+        "qualification": "Requiring every permitted instrument attempt to settle before any manifest, for every disposition, is a prospective strengthening. V2 measures it as a non-gating diagnostic; v1 PUBLIC.json is unchanged."
+      },
+      "eventCount": 10,
+      "sourceReceipts": [
+        {
+          "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/raw-invalid-reproduction-confirmed/WORKFLOW.json",
+          "sha256": "5ced335258d5e7b3759855185e4f29c3470f5e670544c5a7cac51adf3e56662e"
+        },
+        {
+          "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/raw-invalid-reproduction-confirmed/SUITE.json",
+          "sha256": "262f08c2ccd81178c571f5f5d944616406f00718bcc628ebe7172d034f2efe27"
+        },
+        {
+          "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/raw-invalid-reproduction-confirmed/NATIVE.json",
+          "sha256": "dd28a08af4c41cdb7f1470e6ceca56b28602dd13b6378457b8b54c6ea2035c33"
+        },
+        {
+          "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/raw-invalid-reproduction-confirmed/RUN-0.json",
+          "sha256": "fb22af18037e6a4a07b508e2b60026685a6a589c14cec1be6beff1efa3fa4a70"
+        },
+        {
+          "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/raw-invalid-reproduction-confirmed/TRACE-0.json",
+          "sha256": "8fda89baf60b8c00048677fdcc11fa6ede181f25faaef5e4a5209e956a7a9e39"
+        },
+        {
+          "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/raw-invalid-reproduction-confirmed/LOG-0.json",
+          "sha256": "2182fdc05f3e6c0c33bbbac896546c454f490dbce3226da50d6d51a5627c6340"
+        },
+        {
+          "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/raw-invalid-reproduction-confirmed/case-3E0oNK/.foundry/artifacts/de69c58f-6015-4bdb-95bf-affaa7a81539/manifest.json",
+          "sha256": "12597e52f6c2f089295825d8fe5bd9451aa07017c384bf88a8e2b64025782a87"
+        }
+      ]
+    },
+    {
+      "name": "raw-invalid-screen",
+      "expectedFixtureValid": false,
+      "fixtureValidation": null,
+      "fixtureError": {
+        "code": "BENCHMARK_FIXTURE_SCHEMA",
+        "message": "Case 0 screen return violates its output schema"
+      },
+      "nativePassed": true,
+      "v2GatePassed": false,
+      "expectedGatePassed": false,
+      "combinedDecisionOnPreservedEvidence": false,
+      "problems": [
+        "instrument_native_completion_invalid"
+      ],
+      "logBindingErrors": 0,
+      "completionErrors": 1,
+      "evidenceOrderErrors": 0,
+      "prematureConfirmations": 0,
+      "publicationBindingErrors": 0,
+      "allProcessingBeforePublication": {
+        "enforced": false,
+        "passed": false,
+        "requiredAttempts": 1,
+        "incompleteAtPublication": 1,
+        "qualification": "Requiring every permitted instrument attempt to settle before any manifest, for every disposition, is a prospective strengthening. V2 measures it as a non-gating diagnostic; v1 PUBLIC.json is unchanged."
+      },
+      "eventCount": 8,
+      "sourceReceipts": [
+        {
+          "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/raw-invalid-screen/WORKFLOW.json",
+          "sha256": "0ff9c7b1e19da5c614732895bdce8cda8ff3504e328dd2e3a3981180523dfbca"
+        },
+        {
+          "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/raw-invalid-screen/SUITE.json",
+          "sha256": "4677a4b3ae78e528a77836b9988abc0d2ff41ed36594e1ec2d957ce5a848a21c"
+        },
+        {
+          "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/raw-invalid-screen/NATIVE.json",
+          "sha256": "cc29a7cface6e6fb534241aca0262aeae3d7ca1a536ef9934880f6971c820ff2"
+        },
+        {
+          "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/raw-invalid-screen/RUN-0.json",
+          "sha256": "dd1535bd40c48068e289c139e2caf239372128ac4def38522cea9d3535a59d4f"
+        },
+        {
+          "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/raw-invalid-screen/TRACE-0.json",
+          "sha256": "cbcf2a12c6ec5e054d0310910d523345bcd933bc68f78cbfed5bbcf3e8fea4d9"
+        },
+        {
+          "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/raw-invalid-screen/LOG-0.json",
+          "sha256": "c929a8cd5d3f3f75753be4eadf10c53764f4486ead00a76857e6e06c9859812a"
+        },
+        {
+          "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/raw-invalid-screen/case-jQU3Dl/.foundry/artifacts/cbfd626f-e67a-44e7-bfd9-88bcf489b7df/manifest.json",
+          "sha256": "6ebc10b49057e8bed32de8b46671c0e8474cc0e513ffa53a20190c8747015c0f"
+        }
+      ]
+    },
+    {
+      "name": "observed-positive-control",
+      "expectedFixtureValid": true,
+      "fixtureValidation": {
+        "passed": true,
+        "caseCount": 1,
+        "instrumentFixtures": 2,
+        "returnedFixtures": 2,
+        "errorFixtures": 0
+      },
+      "fixtureError": null,
+      "nativePassed": true,
+      "v2GatePassed": true,
+      "expectedGatePassed": true,
+      "combinedDecisionOnPreservedEvidence": true,
+      "problems": [],
+      "logBindingErrors": 0,
+      "completionErrors": 0,
+      "evidenceOrderErrors": 0,
+      "prematureConfirmations": 0,
+      "publicationBindingErrors": 0,
+      "allProcessingBeforePublication": {
+        "enforced": false,
+        "passed": true,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 0,
+        "qualification": "Requiring every permitted instrument attempt to settle before any manifest, for every disposition, is a prospective strengthening. V2 measures it as a non-gating diagnostic; v1 PUBLIC.json is unchanged."
+      },
+      "eventCount": 11,
+      "sourceReceipts": [
+        {
+          "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/observed-positive-control/WORKFLOW.json",
+          "sha256": "af482308cd6abb7aaf52b9d429cd473fc2b5236d6d73eea92ed9f7518aa1abe8"
+        },
+        {
+          "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/observed-positive-control/SUITE.json",
+          "sha256": "a58ea7d3f14b46688e78a06c04de154f7780606f6768d89322520270863426cd"
+        },
+        {
+          "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/observed-positive-control/NATIVE.json",
+          "sha256": "57ee81b78d20b91fa3c974649a9593ad6d6a8b8010ddf9c2c90984c98d95c1c2"
+        },
+        {
+          "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/observed-positive-control/RUN-0.json",
+          "sha256": "801d0a840bb8ce02b210b81195c9fb0937aa22f2c09646b3c7c466fede1056ae"
+        },
+        {
+          "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/observed-positive-control/TRACE-0.json",
+          "sha256": "e6b1d496b85fc55adb7de9ca21fd3df13dad276dc23a2763ea89522df91720f2"
+        },
+        {
+          "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/observed-positive-control/LOG-0.json",
+          "sha256": "b0657a1bd3ccddb05f1d5bc8260076ecbe7d7675cf6acdac81fe27595845c9a5"
+        },
+        {
+          "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/observed-positive-control/case-hPhN0u/.foundry/artifacts/b088083e-8e12-484a-8977-a46ee7fdba69/manifest.json",
+          "sha256": "12597e52f6c2f089295825d8fe5bd9451aa07017c384bf88a8e2b64025782a87"
+        }
+      ]
+    },
+    {
+      "name": "early-confirmation-counterfactual",
+      "expectedFixtureValid": true,
+      "fixtureValidation": {
+        "passed": true,
+        "caseCount": 1,
+        "instrumentFixtures": 2,
+        "returnedFixtures": 2,
+        "errorFixtures": 0
+      },
+      "fixtureError": null,
+      "nativePassed": false,
+      "v2GatePassed": false,
+      "expectedGatePassed": false,
+      "combinedDecisionOnPreservedEvidence": false,
+      "problems": [
+        "confirmation_before_completed_validated_reproduction"
+      ],
+      "logBindingErrors": 0,
+      "completionErrors": 0,
+      "evidenceOrderErrors": 0,
+      "prematureConfirmations": 1,
+      "publicationBindingErrors": 0,
+      "allProcessingBeforePublication": {
+        "enforced": false,
+        "passed": false,
+        "requiredAttempts": 2,
+        "incompleteAtPublication": 2,
+        "qualification": "Requiring every permitted instrument attempt to settle before any manifest, for every disposition, is a prospective strengthening. V2 measures it as a non-gating diagnostic; v1 PUBLIC.json is unchanged."
+      },
+      "eventCount": 9,
+      "sourceReceipts": [
+        {
+          "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/early-confirmation-counterfactual/WORKFLOW.json",
+          "sha256": "07f2ad9718c9fff16564fb02dd26328fdba35d97abb0bb61a73acf0cc6cc2c2a"
+        },
+        {
+          "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/early-confirmation-counterfactual/SUITE.json",
+          "sha256": "bf02c8b6200ba9dc2a943ad974d45975e7b03f3a5d9fa340394170b510c69477"
+        },
+        {
+          "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/early-confirmation-counterfactual/NATIVE.json",
+          "sha256": "1605a5e10b60bdf43d0b4e28394d96a974028e99d5bb11686714d535d882b3eb"
+        },
+        {
+          "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/early-confirmation-counterfactual/RUN-0.json",
+          "sha256": "e4e58d4524ef141b08af6cd23f57303dbeb384d673c9a633e65d44f60b727c4a"
+        },
+        {
+          "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/early-confirmation-counterfactual/TRACE-0.json",
+          "sha256": "730aa17d8f8c952ff8f1aca2894db9054f9c25b2a482f6cebe102ec9a2b8b603"
+        },
+        {
+          "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/early-confirmation-counterfactual/LOG-0.json",
+          "sha256": "e697f2f5529e81c5e4b93c2caecb9970fac8b89e6f02ef0a3d2492f47c39806f"
+        },
+        {
+          "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/early-confirmation-counterfactual/case-Nh1hpa/.foundry/artifacts/d51f20ef-c95b-44be-8059-4c38e3f5ca73/manifest.json",
+          "sha256": "12597e52f6c2f089295825d8fe5bd9451aa07017c384bf88a8e2b64025782a87"
+        }
+      ]
+    }
+  ],
+  "passed": true
+}

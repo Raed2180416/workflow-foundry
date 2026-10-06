@@ -1,0 +1,1920 @@
+{
+  "mode": "oracle-wiring",
+  "inputTokens": 0,
+  "records": [
+    {
+      "caseId": "c5b24a974f52338e",
+      "variant": "original",
+      "requestHash": "18a203406d8c34a476c5e6a57447274c1fdb0006b1dac9e62e51a726d026aa72",
+      "mode": "oracle-wiring",
+      "status": "received",
+      "elapsedMs": 0,
+      "result": {
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "hold",
+            "probabilities": {
+              "hold": 1,
+              "proceed": 0,
+              "clarify": 0
+            }
+          }
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0
+        },
+        "providerMetadata": {
+          "supplied": {
+            "oracle": true
+          }
+        },
+        "warnings": [],
+        "response": {
+          "modelId": "researcher-supplied-oracle"
+        }
+      },
+      "recommendation": {
+        "next": "waiting",
+        "choice": "hold",
+        "authorityGranted": false,
+        "evidenceHash": "f1a75fcdd76cab07989c18f6eddd6c9292f39c385712fc41dc31386ab2e35024",
+        "requestHash": "18a203406d8c34a476c5e6a57447274c1fdb0006b1dac9e62e51a726d026aa72"
+      }
+    },
+    {
+      "caseId": "31563cd58623aa1a",
+      "variant": "original",
+      "requestHash": "16914c15c351456bab9aee15e4326733272f74ccd3537d9df4340ec33a4190c3",
+      "mode": "oracle-wiring",
+      "status": "received",
+      "elapsedMs": 0,
+      "result": {
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "proceed",
+            "probabilities": {
+              "hold": 0,
+              "proceed": 1,
+              "clarify": 0
+            }
+          }
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0
+        },
+        "providerMetadata": {
+          "supplied": {
+            "oracle": true
+          }
+        },
+        "warnings": [],
+        "response": {
+          "modelId": "researcher-supplied-oracle"
+        }
+      },
+      "recommendation": {
+        "next": "formatting",
+        "choice": "proceed",
+        "authorityGranted": false,
+        "evidenceHash": "5fff38994d9e28e8fb1a73ab4280e02cfb5302b3957253ae3b2b66f743d6dc49",
+        "requestHash": "16914c15c351456bab9aee15e4326733272f74ccd3537d9df4340ec33a4190c3"
+      }
+    },
+    {
+      "caseId": "3688ab6e90a4d494",
+      "variant": "original",
+      "requestHash": "85afcbab1f62f03551865de28fec11c11bb657cb737ba2df48d9560e4cfd705f",
+      "mode": "oracle-wiring",
+      "status": "received",
+      "elapsedMs": 0,
+      "result": {
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "clarify",
+            "probabilities": {
+              "hold": 0,
+              "proceed": 0,
+              "clarify": 1
+            }
+          }
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0
+        },
+        "providerMetadata": {
+          "supplied": {
+            "oracle": true
+          }
+        },
+        "warnings": [],
+        "response": {
+          "modelId": "researcher-supplied-oracle"
+        }
+      },
+      "recommendation": {
+        "next": "needs_evidence",
+        "choice": "clarify",
+        "authorityGranted": false,
+        "evidenceHash": "4dd28d392818c1c5094d13de39cde113ca8881d20f7f75bcfd03ac174ee2980f",
+        "requestHash": "85afcbab1f62f03551865de28fec11c11bb657cb737ba2df48d9560e4cfd705f"
+      }
+    },
+    {
+      "caseId": "7a1cc530450c2c78",
+      "variant": "original",
+      "requestHash": "5d355a282fc8175b7d644d7fb3921eac8c86119b1262137ccebe88a88bb20983",
+      "mode": "oracle-wiring",
+      "status": "received",
+      "elapsedMs": 1,
+      "result": {
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "proceed",
+            "probabilities": {
+              "proceed": 1,
+              "hold": 0,
+              "clarify": 0
+            }
+          }
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0
+        },
+        "providerMetadata": {
+          "supplied": {
+            "oracle": true
+          }
+        },
+        "warnings": [],
+        "response": {
+          "modelId": "researcher-supplied-oracle"
+        }
+      },
+      "recommendation": {
+        "next": "formatting",
+        "choice": "proceed",
+        "authorityGranted": false,
+        "evidenceHash": "a2798eb84739d99e493c2e1ac20fe84c27f154854d9e229493cabee64eec80bf",
+        "requestHash": "5d355a282fc8175b7d644d7fb3921eac8c86119b1262137ccebe88a88bb20983"
+      }
+    },
+    {
+      "caseId": "202c437f26c25524",
+      "variant": "original",
+      "requestHash": "af91d93fb49b9f0f5b2c25d10f7bb30c5f169ade9ee94fdf480410e4e4c2c9a9",
+      "mode": "oracle-wiring",
+      "status": "received",
+      "elapsedMs": 0,
+      "result": {
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "hold",
+            "probabilities": {
+              "proceed": 0,
+              "hold": 1,
+              "clarify": 0
+            }
+          }
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0
+        },
+        "providerMetadata": {
+          "supplied": {
+            "oracle": true
+          }
+        },
+        "warnings": [],
+        "response": {
+          "modelId": "researcher-supplied-oracle"
+        }
+      },
+      "recommendation": {
+        "next": "review_required",
+        "choice": "hold",
+        "authorityGranted": false,
+        "evidenceHash": "1c4a6910b46ab2dab2161cf9d16eaa166d6a4b3c068fb61120f8620528e90b0c",
+        "requestHash": "af91d93fb49b9f0f5b2c25d10f7bb30c5f169ade9ee94fdf480410e4e4c2c9a9"
+      }
+    },
+    {
+      "caseId": "afab343a365bd83c",
+      "variant": "original",
+      "requestHash": "564ab39f3205fe81f69d269d823829ac3423e4e38d09f21e8e117f0e47a44f67",
+      "mode": "oracle-wiring",
+      "status": "received",
+      "elapsedMs": 0,
+      "result": {
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "clarify",
+            "probabilities": {
+              "proceed": 0,
+              "hold": 0,
+              "clarify": 1
+            }
+          }
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0
+        },
+        "providerMetadata": {
+          "supplied": {
+            "oracle": true
+          }
+        },
+        "warnings": [],
+        "response": {
+          "modelId": "researcher-supplied-oracle"
+        }
+      },
+      "recommendation": {
+        "next": "needs_evidence",
+        "choice": "clarify",
+        "authorityGranted": false,
+        "evidenceHash": "1ab29a70a9e395497975f324216a6fd5d482f51fb8717504061cbe0a2fcae67e",
+        "requestHash": "564ab39f3205fe81f69d269d823829ac3423e4e38d09f21e8e117f0e47a44f67"
+      }
+    },
+    {
+      "caseId": "cd7f236ae2460884",
+      "variant": "original",
+      "requestHash": "3f362f92f727ce697e47f9e48a8a7cec5dd20a3411aa23b5e56b025a2c61061e",
+      "mode": "oracle-wiring",
+      "status": "received",
+      "elapsedMs": 0,
+      "result": {
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "reconcile",
+            "probabilities": {
+              "retry": 0,
+              "reconcile": 1,
+              "clarify": 0
+            }
+          }
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0
+        },
+        "providerMetadata": {
+          "supplied": {
+            "oracle": true
+          }
+        },
+        "warnings": [],
+        "response": {
+          "modelId": "researcher-supplied-oracle"
+        }
+      },
+      "recommendation": {
+        "next": "read_receipt",
+        "choice": "reconcile",
+        "authorityGranted": false,
+        "evidenceHash": "647e15ec6fbc6869da3aafd309b9157efdee08373c71e8061008cdad94be369b",
+        "requestHash": "3f362f92f727ce697e47f9e48a8a7cec5dd20a3411aa23b5e56b025a2c61061e"
+      }
+    },
+    {
+      "caseId": "dfeb232d69df77b2",
+      "variant": "original",
+      "requestHash": "3503e2929a7affa8598a6745d505c48dc1487ead6ddd98e69a63caa1a3910265",
+      "mode": "oracle-wiring",
+      "status": "received",
+      "elapsedMs": 0,
+      "result": {
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "retry",
+            "probabilities": {
+              "retry": 1,
+              "reconcile": 0,
+              "clarify": 0
+            }
+          }
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0
+        },
+        "providerMetadata": {
+          "supplied": {
+            "oracle": true
+          }
+        },
+        "warnings": [],
+        "response": {
+          "modelId": "researcher-supplied-oracle"
+        }
+      },
+      "recommendation": {
+        "next": "dispatch_again",
+        "choice": "retry",
+        "authorityGranted": false,
+        "evidenceHash": "bdce59669f2ee5120cdef5efc93a531eead3bb50e01b8b56583b7565eececdd7",
+        "requestHash": "3503e2929a7affa8598a6745d505c48dc1487ead6ddd98e69a63caa1a3910265"
+      }
+    },
+    {
+      "caseId": "2fa811b008de5d83",
+      "variant": "original",
+      "requestHash": "b9940d496bc21fc571e07dc43dd3a665c68757274c02dca1b30c1c6fbd9a59ed",
+      "mode": "oracle-wiring",
+      "status": "received",
+      "elapsedMs": 0,
+      "result": {
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "clarify",
+            "probabilities": {
+              "retry": 0,
+              "reconcile": 0,
+              "clarify": 1
+            }
+          }
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0
+        },
+        "providerMetadata": {
+          "supplied": {
+            "oracle": true
+          }
+        },
+        "warnings": [],
+        "response": {
+          "modelId": "researcher-supplied-oracle"
+        }
+      },
+      "recommendation": {
+        "next": "needs_evidence",
+        "choice": "clarify",
+        "authorityGranted": false,
+        "evidenceHash": "9784dbb8f74663dd3848c24a3295d396fd04c9e2575854fe5b0fa1fcb06a56fb",
+        "requestHash": "b9940d496bc21fc571e07dc43dd3a665c68757274c02dca1b30c1c6fbd9a59ed"
+      }
+    },
+    {
+      "caseId": "7f730d95798b8401",
+      "variant": "original",
+      "requestHash": "8c3cba58d37dd2a0a0233469f65e31adf104e72c78219a7698b71acf13099816",
+      "mode": "oracle-wiring",
+      "status": "received",
+      "elapsedMs": 0,
+      "result": {
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "relevant",
+            "probabilities": {
+              "relevant": 1,
+              "adjacent": 0,
+              "clarify": 0
+            }
+          }
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0
+        },
+        "providerMetadata": {
+          "supplied": {
+            "oracle": true
+          }
+        },
+        "warnings": [],
+        "response": {
+          "modelId": "researcher-supplied-oracle"
+        }
+      },
+      "recommendation": {
+        "next": "bounded_support",
+        "choice": "relevant",
+        "authorityGranted": false,
+        "evidenceHash": "986eeb8b8e1ca6cf7920ce9e5eacbfeb8b8d7c719dd49a7c201cf169c53a0d46",
+        "requestHash": "8c3cba58d37dd2a0a0233469f65e31adf104e72c78219a7698b71acf13099816"
+      }
+    },
+    {
+      "caseId": "64b59bbc22cddb2f",
+      "variant": "original",
+      "requestHash": "32f7e30d8f77e8f6b2452d9c6c05437cf86072c6a0e53a07dddd48f9b4cdff7d",
+      "mode": "oracle-wiring",
+      "status": "received",
+      "elapsedMs": 0,
+      "result": {
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "adjacent",
+            "probabilities": {
+              "relevant": 0,
+              "adjacent": 1,
+              "clarify": 0
+            }
+          }
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0
+        },
+        "providerMetadata": {
+          "supplied": {
+            "oracle": true
+          }
+        },
+        "warnings": [],
+        "response": {
+          "modelId": "researcher-supplied-oracle"
+        }
+      },
+      "recommendation": {
+        "next": "claim_unverified",
+        "choice": "adjacent",
+        "authorityGranted": false,
+        "evidenceHash": "dd81b10001c0597e9fa7c49b9848b115ec1b6676553af9aeacccfeaf1ad7c5a6",
+        "requestHash": "32f7e30d8f77e8f6b2452d9c6c05437cf86072c6a0e53a07dddd48f9b4cdff7d"
+      }
+    },
+    {
+      "caseId": "6d83be1410f33f0e",
+      "variant": "original",
+      "requestHash": "b3aa712a91ec09bd4a36b72df969ff5b7f3e0c2a7f19d711b3eecc41ce489b41",
+      "mode": "oracle-wiring",
+      "status": "received",
+      "elapsedMs": 0,
+      "result": {
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "clarify",
+            "probabilities": {
+              "relevant": 0,
+              "adjacent": 0,
+              "clarify": 1
+            }
+          }
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0
+        },
+        "providerMetadata": {
+          "supplied": {
+            "oracle": true
+          }
+        },
+        "warnings": [],
+        "response": {
+          "modelId": "researcher-supplied-oracle"
+        }
+      },
+      "recommendation": {
+        "next": "needs_evidence",
+        "choice": "clarify",
+        "authorityGranted": false,
+        "evidenceHash": "20164fce5f41f53360bd03df47c32f8101d705abf569673502ee9cbd529f318a",
+        "requestHash": "b3aa712a91ec09bd4a36b72df969ff5b7f3e0c2a7f19d711b3eecc41ce489b41"
+      }
+    },
+    {
+      "caseId": "93b3831e7c7f06c3",
+      "variant": "original",
+      "requestHash": "6538ab49015e03b73121af4e5da7866d25e2c7c7982bbbc15599bf162fa63126",
+      "mode": "oracle-wiring",
+      "status": "received",
+      "elapsedMs": 0,
+      "result": {
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "close",
+            "probabilities": {
+              "close": 1,
+              "repair": 0,
+              "clarify": 0
+            }
+          }
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0
+        },
+        "providerMetadata": {
+          "supplied": {
+            "oracle": true
+          }
+        },
+        "warnings": [],
+        "response": {
+          "modelId": "researcher-supplied-oracle"
+        }
+      },
+      "recommendation": {
+        "next": "closed",
+        "choice": "close",
+        "authorityGranted": false,
+        "evidenceHash": "8a459633f7681f1478048094be5821ca89e727aefd52bb49f1ecb339ffe25dfe",
+        "requestHash": "6538ab49015e03b73121af4e5da7866d25e2c7c7982bbbc15599bf162fa63126"
+      }
+    },
+    {
+      "caseId": "1aa92a6d317e11fc",
+      "variant": "original",
+      "requestHash": "dfc010660616ecce17ac6cc841009d5ba4793915c5a37920fd47f9ede2607be3",
+      "mode": "oracle-wiring",
+      "status": "received",
+      "elapsedMs": 0,
+      "result": {
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "repair",
+            "probabilities": {
+              "close": 0,
+              "repair": 1,
+              "clarify": 0
+            }
+          }
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0
+        },
+        "providerMetadata": {
+          "supplied": {
+            "oracle": true
+          }
+        },
+        "warnings": [],
+        "response": {
+          "modelId": "researcher-supplied-oracle"
+        }
+      },
+      "recommendation": {
+        "next": "repair_pending",
+        "choice": "repair",
+        "authorityGranted": false,
+        "evidenceHash": "d8516c1ca177e8f10c6243d2d4688dff8fcb8e0eca3cfb56e882deab22837614",
+        "requestHash": "dfc010660616ecce17ac6cc841009d5ba4793915c5a37920fd47f9ede2607be3"
+      }
+    },
+    {
+      "caseId": "6af1d70a403bf01f",
+      "variant": "original",
+      "requestHash": "128bf3103d5b8a302dcfccf87bbf2abd231d8f61fc868e0b243a41d971904304",
+      "mode": "oracle-wiring",
+      "status": "received",
+      "elapsedMs": 0,
+      "result": {
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "clarify",
+            "probabilities": {
+              "close": 0,
+              "repair": 0,
+              "clarify": 1
+            }
+          }
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0
+        },
+        "providerMetadata": {
+          "supplied": {
+            "oracle": true
+          }
+        },
+        "warnings": [],
+        "response": {
+          "modelId": "researcher-supplied-oracle"
+        }
+      },
+      "recommendation": {
+        "next": "needs_evidence",
+        "choice": "clarify",
+        "authorityGranted": false,
+        "evidenceHash": "c92b28e39d3b9520103b6e6b472cbfeef97bc0055ff1f89759aef7b3ae1c6f90",
+        "requestHash": "128bf3103d5b8a302dcfccf87bbf2abd231d8f61fc868e0b243a41d971904304"
+      }
+    },
+    {
+      "caseId": "6839521490cfe2bf",
+      "variant": "original",
+      "requestHash": "dec799dcec670996332f7d7b48262df96b3846348674476d596f71c130fc507c",
+      "mode": "oracle-wiring",
+      "status": "received",
+      "elapsedMs": 0,
+      "result": {
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "preserve",
+            "probabilities": {
+              "preserve": 1,
+              "cancel": 0,
+              "clarify": 0
+            }
+          }
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0
+        },
+        "providerMetadata": {
+          "supplied": {
+            "oracle": true
+          }
+        },
+        "warnings": [],
+        "response": {
+          "modelId": "researcher-supplied-oracle"
+        }
+      },
+      "recommendation": {
+        "next": "parent_active",
+        "choice": "preserve",
+        "authorityGranted": false,
+        "evidenceHash": "3b659fe7bb6c556ae19ca23d07055b69f95319799fa159556034042e75fddf73",
+        "requestHash": "dec799dcec670996332f7d7b48262df96b3846348674476d596f71c130fc507c"
+      }
+    },
+    {
+      "caseId": "e06ef96cd30e57ef",
+      "variant": "original",
+      "requestHash": "d9d83c3dad692fcbc5cb0a27bd0ef77de5b6b06d16c60a006cd0c74d3c1cf730",
+      "mode": "oracle-wiring",
+      "status": "received",
+      "elapsedMs": 0,
+      "result": {
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "cancel",
+            "probabilities": {
+              "preserve": 0,
+              "cancel": 1,
+              "clarify": 0
+            }
+          }
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0
+        },
+        "providerMetadata": {
+          "supplied": {
+            "oracle": true
+          }
+        },
+        "warnings": [],
+        "response": {
+          "modelId": "researcher-supplied-oracle"
+        }
+      },
+      "recommendation": {
+        "next": "parent_cancelled",
+        "choice": "cancel",
+        "authorityGranted": false,
+        "evidenceHash": "993b339271331fa73cc34ad2a5ac5a64488e60be4505420581bbbef44b00af20",
+        "requestHash": "d9d83c3dad692fcbc5cb0a27bd0ef77de5b6b06d16c60a006cd0c74d3c1cf730"
+      }
+    },
+    {
+      "caseId": "94de538a7fdfb466",
+      "variant": "original",
+      "requestHash": "685c961d45193013dd9f68ecf5525a35d8594edf5c2c2171acdebcd9eefdcee7",
+      "mode": "oracle-wiring",
+      "status": "received",
+      "elapsedMs": 0,
+      "result": {
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "clarify",
+            "probabilities": {
+              "preserve": 0,
+              "cancel": 0,
+              "clarify": 1
+            }
+          }
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0
+        },
+        "providerMetadata": {
+          "supplied": {
+            "oracle": true
+          }
+        },
+        "warnings": [],
+        "response": {
+          "modelId": "researcher-supplied-oracle"
+        }
+      },
+      "recommendation": {
+        "next": "needs_evidence",
+        "choice": "clarify",
+        "authorityGranted": false,
+        "evidenceHash": "0937d4440b0ac010813736fb93c93b87ee15f038ab6906418cd3673e5cc36291",
+        "requestHash": "685c961d45193013dd9f68ecf5525a35d8594edf5c2c2171acdebcd9eefdcee7"
+      }
+    },
+    {
+      "caseId": "c5b24a974f52338e",
+      "variant": "reversed-options",
+      "requestHash": "8e07d0a8853b4a312fc4dd72b16ae77500689847acf0f4152c664324e943607d",
+      "mode": "oracle-wiring",
+      "status": "received",
+      "elapsedMs": 0,
+      "result": {
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "hold",
+            "probabilities": {
+              "clarify": 0,
+              "proceed": 0,
+              "hold": 1
+            }
+          }
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0
+        },
+        "providerMetadata": {
+          "supplied": {
+            "oracle": true
+          }
+        },
+        "warnings": [],
+        "response": {
+          "modelId": "researcher-supplied-oracle"
+        }
+      },
+      "recommendation": {
+        "next": "waiting",
+        "choice": "hold",
+        "authorityGranted": false,
+        "evidenceHash": "f1a75fcdd76cab07989c18f6eddd6c9292f39c385712fc41dc31386ab2e35024",
+        "requestHash": "8e07d0a8853b4a312fc4dd72b16ae77500689847acf0f4152c664324e943607d"
+      }
+    },
+    {
+      "caseId": "31563cd58623aa1a",
+      "variant": "reversed-options",
+      "requestHash": "73033f4e974cb3b3ae6f06389b2f60549ba37a3a19205e749c7ea709580b1762",
+      "mode": "oracle-wiring",
+      "status": "received",
+      "elapsedMs": 0,
+      "result": {
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "proceed",
+            "probabilities": {
+              "clarify": 0,
+              "proceed": 1,
+              "hold": 0
+            }
+          }
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0
+        },
+        "providerMetadata": {
+          "supplied": {
+            "oracle": true
+          }
+        },
+        "warnings": [],
+        "response": {
+          "modelId": "researcher-supplied-oracle"
+        }
+      },
+      "recommendation": {
+        "next": "formatting",
+        "choice": "proceed",
+        "authorityGranted": false,
+        "evidenceHash": "5fff38994d9e28e8fb1a73ab4280e02cfb5302b3957253ae3b2b66f743d6dc49",
+        "requestHash": "73033f4e974cb3b3ae6f06389b2f60549ba37a3a19205e749c7ea709580b1762"
+      }
+    },
+    {
+      "caseId": "3688ab6e90a4d494",
+      "variant": "reversed-options",
+      "requestHash": "7cccbb89b805a80b6917eaa560a5e0dc2bab91f561583fa2e7181d08b4160fa2",
+      "mode": "oracle-wiring",
+      "status": "received",
+      "elapsedMs": 0,
+      "result": {
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "clarify",
+            "probabilities": {
+              "clarify": 1,
+              "proceed": 0,
+              "hold": 0
+            }
+          }
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0
+        },
+        "providerMetadata": {
+          "supplied": {
+            "oracle": true
+          }
+        },
+        "warnings": [],
+        "response": {
+          "modelId": "researcher-supplied-oracle"
+        }
+      },
+      "recommendation": {
+        "next": "needs_evidence",
+        "choice": "clarify",
+        "authorityGranted": false,
+        "evidenceHash": "4dd28d392818c1c5094d13de39cde113ca8881d20f7f75bcfd03ac174ee2980f",
+        "requestHash": "7cccbb89b805a80b6917eaa560a5e0dc2bab91f561583fa2e7181d08b4160fa2"
+      }
+    },
+    {
+      "caseId": "7a1cc530450c2c78",
+      "variant": "reversed-options",
+      "requestHash": "e42c4b086cea49586566f7bc17dde3bc3ffa8653217a5729efcb387eddce181e",
+      "mode": "oracle-wiring",
+      "status": "received",
+      "elapsedMs": 0,
+      "result": {
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "proceed",
+            "probabilities": {
+              "clarify": 0,
+              "hold": 0,
+              "proceed": 1
+            }
+          }
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0
+        },
+        "providerMetadata": {
+          "supplied": {
+            "oracle": true
+          }
+        },
+        "warnings": [],
+        "response": {
+          "modelId": "researcher-supplied-oracle"
+        }
+      },
+      "recommendation": {
+        "next": "formatting",
+        "choice": "proceed",
+        "authorityGranted": false,
+        "evidenceHash": "a2798eb84739d99e493c2e1ac20fe84c27f154854d9e229493cabee64eec80bf",
+        "requestHash": "e42c4b086cea49586566f7bc17dde3bc3ffa8653217a5729efcb387eddce181e"
+      }
+    },
+    {
+      "caseId": "202c437f26c25524",
+      "variant": "reversed-options",
+      "requestHash": "9a07d10c0edc60118b4f158af52ab4d17db829e55f02c6db2c0fed5f47dfcdab",
+      "mode": "oracle-wiring",
+      "status": "received",
+      "elapsedMs": 0,
+      "result": {
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "hold",
+            "probabilities": {
+              "clarify": 0,
+              "hold": 1,
+              "proceed": 0
+            }
+          }
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0
+        },
+        "providerMetadata": {
+          "supplied": {
+            "oracle": true
+          }
+        },
+        "warnings": [],
+        "response": {
+          "modelId": "researcher-supplied-oracle"
+        }
+      },
+      "recommendation": {
+        "next": "review_required",
+        "choice": "hold",
+        "authorityGranted": false,
+        "evidenceHash": "1c4a6910b46ab2dab2161cf9d16eaa166d6a4b3c068fb61120f8620528e90b0c",
+        "requestHash": "9a07d10c0edc60118b4f158af52ab4d17db829e55f02c6db2c0fed5f47dfcdab"
+      }
+    },
+    {
+      "caseId": "afab343a365bd83c",
+      "variant": "reversed-options",
+      "requestHash": "457febece9f862fb52c51e4285a3c40a1c2bce48d88ca9333de04a5a57bdb4b9",
+      "mode": "oracle-wiring",
+      "status": "received",
+      "elapsedMs": 0,
+      "result": {
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "clarify",
+            "probabilities": {
+              "clarify": 1,
+              "hold": 0,
+              "proceed": 0
+            }
+          }
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0
+        },
+        "providerMetadata": {
+          "supplied": {
+            "oracle": true
+          }
+        },
+        "warnings": [],
+        "response": {
+          "modelId": "researcher-supplied-oracle"
+        }
+      },
+      "recommendation": {
+        "next": "needs_evidence",
+        "choice": "clarify",
+        "authorityGranted": false,
+        "evidenceHash": "1ab29a70a9e395497975f324216a6fd5d482f51fb8717504061cbe0a2fcae67e",
+        "requestHash": "457febece9f862fb52c51e4285a3c40a1c2bce48d88ca9333de04a5a57bdb4b9"
+      }
+    },
+    {
+      "caseId": "cd7f236ae2460884",
+      "variant": "reversed-options",
+      "requestHash": "825077ab9adca72af6bf82cacd605e4c59806c3da3c79fef441c1fd5e4c423b6",
+      "mode": "oracle-wiring",
+      "status": "received",
+      "elapsedMs": 1,
+      "result": {
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "reconcile",
+            "probabilities": {
+              "clarify": 0,
+              "reconcile": 1,
+              "retry": 0
+            }
+          }
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0
+        },
+        "providerMetadata": {
+          "supplied": {
+            "oracle": true
+          }
+        },
+        "warnings": [],
+        "response": {
+          "modelId": "researcher-supplied-oracle"
+        }
+      },
+      "recommendation": {
+        "next": "read_receipt",
+        "choice": "reconcile",
+        "authorityGranted": false,
+        "evidenceHash": "647e15ec6fbc6869da3aafd309b9157efdee08373c71e8061008cdad94be369b",
+        "requestHash": "825077ab9adca72af6bf82cacd605e4c59806c3da3c79fef441c1fd5e4c423b6"
+      }
+    },
+    {
+      "caseId": "dfeb232d69df77b2",
+      "variant": "reversed-options",
+      "requestHash": "a41f982666034f8ed9da6af2d6ce1d0f85cd22430cc941a9422710c55452cbc5",
+      "mode": "oracle-wiring",
+      "status": "received",
+      "elapsedMs": 0,
+      "result": {
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "retry",
+            "probabilities": {
+              "clarify": 0,
+              "reconcile": 0,
+              "retry": 1
+            }
+          }
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0
+        },
+        "providerMetadata": {
+          "supplied": {
+            "oracle": true
+          }
+        },
+        "warnings": [],
+        "response": {
+          "modelId": "researcher-supplied-oracle"
+        }
+      },
+      "recommendation": {
+        "next": "dispatch_again",
+        "choice": "retry",
+        "authorityGranted": false,
+        "evidenceHash": "bdce59669f2ee5120cdef5efc93a531eead3bb50e01b8b56583b7565eececdd7",
+        "requestHash": "a41f982666034f8ed9da6af2d6ce1d0f85cd22430cc941a9422710c55452cbc5"
+      }
+    },
+    {
+      "caseId": "2fa811b008de5d83",
+      "variant": "reversed-options",
+      "requestHash": "5b83d1b317a1049a515d5d5bcfbec3b79b636ea5143bd5d06fabf548fcce0953",
+      "mode": "oracle-wiring",
+      "status": "received",
+      "elapsedMs": 0,
+      "result": {
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "clarify",
+            "probabilities": {
+              "clarify": 1,
+              "reconcile": 0,
+              "retry": 0
+            }
+          }
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0
+        },
+        "providerMetadata": {
+          "supplied": {
+            "oracle": true
+          }
+        },
+        "warnings": [],
+        "response": {
+          "modelId": "researcher-supplied-oracle"
+        }
+      },
+      "recommendation": {
+        "next": "needs_evidence",
+        "choice": "clarify",
+        "authorityGranted": false,
+        "evidenceHash": "9784dbb8f74663dd3848c24a3295d396fd04c9e2575854fe5b0fa1fcb06a56fb",
+        "requestHash": "5b83d1b317a1049a515d5d5bcfbec3b79b636ea5143bd5d06fabf548fcce0953"
+      }
+    },
+    {
+      "caseId": "7f730d95798b8401",
+      "variant": "reversed-options",
+      "requestHash": "56fa1e28050ac139f8eb256ad44b85b2c9ecb627a31f808250ae35904391d791",
+      "mode": "oracle-wiring",
+      "status": "received",
+      "elapsedMs": 0,
+      "result": {
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "relevant",
+            "probabilities": {
+              "clarify": 0,
+              "adjacent": 0,
+              "relevant": 1
+            }
+          }
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0
+        },
+        "providerMetadata": {
+          "supplied": {
+            "oracle": true
+          }
+        },
+        "warnings": [],
+        "response": {
+          "modelId": "researcher-supplied-oracle"
+        }
+      },
+      "recommendation": {
+        "next": "bounded_support",
+        "choice": "relevant",
+        "authorityGranted": false,
+        "evidenceHash": "986eeb8b8e1ca6cf7920ce9e5eacbfeb8b8d7c719dd49a7c201cf169c53a0d46",
+        "requestHash": "56fa1e28050ac139f8eb256ad44b85b2c9ecb627a31f808250ae35904391d791"
+      }
+    },
+    {
+      "caseId": "64b59bbc22cddb2f",
+      "variant": "reversed-options",
+      "requestHash": "08e3a2e78fc793e78de089bec0ac2c2ee834f9559bb197932a7ec6f6c09998da",
+      "mode": "oracle-wiring",
+      "status": "received",
+      "elapsedMs": 0,
+      "result": {
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "adjacent",
+            "probabilities": {
+              "clarify": 0,
+              "adjacent": 1,
+              "relevant": 0
+            }
+          }
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0
+        },
+        "providerMetadata": {
+          "supplied": {
+            "oracle": true
+          }
+        },
+        "warnings": [],
+        "response": {
+          "modelId": "researcher-supplied-oracle"
+        }
+      },
+      "recommendation": {
+        "next": "claim_unverified",
+        "choice": "adjacent",
+        "authorityGranted": false,
+        "evidenceHash": "dd81b10001c0597e9fa7c49b9848b115ec1b6676553af9aeacccfeaf1ad7c5a6",
+        "requestHash": "08e3a2e78fc793e78de089bec0ac2c2ee834f9559bb197932a7ec6f6c09998da"
+      }
+    },
+    {
+      "caseId": "6d83be1410f33f0e",
+      "variant": "reversed-options",
+      "requestHash": "d537fe149951de5a81ea2b407800014ea23764ed5c33a7e7c24c39e0c027d49d",
+      "mode": "oracle-wiring",
+      "status": "received",
+      "elapsedMs": 0,
+      "result": {
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "clarify",
+            "probabilities": {
+              "clarify": 1,
+              "adjacent": 0,
+              "relevant": 0
+            }
+          }
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0
+        },
+        "providerMetadata": {
+          "supplied": {
+            "oracle": true
+          }
+        },
+        "warnings": [],
+        "response": {
+          "modelId": "researcher-supplied-oracle"
+        }
+      },
+      "recommendation": {
+        "next": "needs_evidence",
+        "choice": "clarify",
+        "authorityGranted": false,
+        "evidenceHash": "20164fce5f41f53360bd03df47c32f8101d705abf569673502ee9cbd529f318a",
+        "requestHash": "d537fe149951de5a81ea2b407800014ea23764ed5c33a7e7c24c39e0c027d49d"
+      }
+    },
+    {
+      "caseId": "93b3831e7c7f06c3",
+      "variant": "reversed-options",
+      "requestHash": "8bbe3418ea94fc680c03fbe825a4266e311534fe9414515d21fc522166cf0360",
+      "mode": "oracle-wiring",
+      "status": "received",
+      "elapsedMs": 0,
+      "result": {
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "close",
+            "probabilities": {
+              "clarify": 0,
+              "repair": 0,
+              "close": 1
+            }
+          }
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0
+        },
+        "providerMetadata": {
+          "supplied": {
+            "oracle": true
+          }
+        },
+        "warnings": [],
+        "response": {
+          "modelId": "researcher-supplied-oracle"
+        }
+      },
+      "recommendation": {
+        "next": "closed",
+        "choice": "close",
+        "authorityGranted": false,
+        "evidenceHash": "8a459633f7681f1478048094be5821ca89e727aefd52bb49f1ecb339ffe25dfe",
+        "requestHash": "8bbe3418ea94fc680c03fbe825a4266e311534fe9414515d21fc522166cf0360"
+      }
+    },
+    {
+      "caseId": "1aa92a6d317e11fc",
+      "variant": "reversed-options",
+      "requestHash": "9dab60ceb2ff7a5dda4f3aadcfd8e41b99853b095bab1737e2bc8ef2100243c0",
+      "mode": "oracle-wiring",
+      "status": "received",
+      "elapsedMs": 0,
+      "result": {
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "repair",
+            "probabilities": {
+              "clarify": 0,
+              "repair": 1,
+              "close": 0
+            }
+          }
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0
+        },
+        "providerMetadata": {
+          "supplied": {
+            "oracle": true
+          }
+        },
+        "warnings": [],
+        "response": {
+          "modelId": "researcher-supplied-oracle"
+        }
+      },
+      "recommendation": {
+        "next": "repair_pending",
+        "choice": "repair",
+        "authorityGranted": false,
+        "evidenceHash": "d8516c1ca177e8f10c6243d2d4688dff8fcb8e0eca3cfb56e882deab22837614",
+        "requestHash": "9dab60ceb2ff7a5dda4f3aadcfd8e41b99853b095bab1737e2bc8ef2100243c0"
+      }
+    },
+    {
+      "caseId": "6af1d70a403bf01f",
+      "variant": "reversed-options",
+      "requestHash": "054fff4c3beb71b546a9ccd235ea9efa4e71f82fedbe21382339243e45e819f7",
+      "mode": "oracle-wiring",
+      "status": "received",
+      "elapsedMs": 0,
+      "result": {
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "clarify",
+            "probabilities": {
+              "clarify": 1,
+              "repair": 0,
+              "close": 0
+            }
+          }
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0
+        },
+        "providerMetadata": {
+          "supplied": {
+            "oracle": true
+          }
+        },
+        "warnings": [],
+        "response": {
+          "modelId": "researcher-supplied-oracle"
+        }
+      },
+      "recommendation": {
+        "next": "needs_evidence",
+        "choice": "clarify",
+        "authorityGranted": false,
+        "evidenceHash": "c92b28e39d3b9520103b6e6b472cbfeef97bc0055ff1f89759aef7b3ae1c6f90",
+        "requestHash": "054fff4c3beb71b546a9ccd235ea9efa4e71f82fedbe21382339243e45e819f7"
+      }
+    },
+    {
+      "caseId": "6839521490cfe2bf",
+      "variant": "reversed-options",
+      "requestHash": "2f258c8caa6de93a209554160f3672cbd1f9464a5eebdab03db1140dc2488f35",
+      "mode": "oracle-wiring",
+      "status": "received",
+      "elapsedMs": 0,
+      "result": {
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "preserve",
+            "probabilities": {
+              "clarify": 0,
+              "cancel": 0,
+              "preserve": 1
+            }
+          }
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0
+        },
+        "providerMetadata": {
+          "supplied": {
+            "oracle": true
+          }
+        },
+        "warnings": [],
+        "response": {
+          "modelId": "researcher-supplied-oracle"
+        }
+      },
+      "recommendation": {
+        "next": "parent_active",
+        "choice": "preserve",
+        "authorityGranted": false,
+        "evidenceHash": "3b659fe7bb6c556ae19ca23d07055b69f95319799fa159556034042e75fddf73",
+        "requestHash": "2f258c8caa6de93a209554160f3672cbd1f9464a5eebdab03db1140dc2488f35"
+      }
+    },
+    {
+      "caseId": "e06ef96cd30e57ef",
+      "variant": "reversed-options",
+      "requestHash": "32e354fa0884704f4de947bb79fd87cce67e8cdf118315c7bb779b3fca15f31d",
+      "mode": "oracle-wiring",
+      "status": "received",
+      "elapsedMs": 0,
+      "result": {
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "cancel",
+            "probabilities": {
+              "clarify": 0,
+              "cancel": 1,
+              "preserve": 0
+            }
+          }
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0
+        },
+        "providerMetadata": {
+          "supplied": {
+            "oracle": true
+          }
+        },
+        "warnings": [],
+        "response": {
+          "modelId": "researcher-supplied-oracle"
+        }
+      },
+      "recommendation": {
+        "next": "parent_cancelled",
+        "choice": "cancel",
+        "authorityGranted": false,
+        "evidenceHash": "993b339271331fa73cc34ad2a5ac5a64488e60be4505420581bbbef44b00af20",
+        "requestHash": "32e354fa0884704f4de947bb79fd87cce67e8cdf118315c7bb779b3fca15f31d"
+      }
+    },
+    {
+      "caseId": "94de538a7fdfb466",
+      "variant": "reversed-options",
+      "requestHash": "83fa55416f3f71e387fdd46b6308fb91d103e74482371f4922fd46be5f6b159e",
+      "mode": "oracle-wiring",
+      "status": "received",
+      "elapsedMs": 0,
+      "result": {
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "clarify",
+            "probabilities": {
+              "clarify": 1,
+              "cancel": 0,
+              "preserve": 0
+            }
+          }
+        },
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0
+        },
+        "providerMetadata": {
+          "supplied": {
+            "oracle": true
+          }
+        },
+        "warnings": [],
+        "response": {
+          "modelId": "researcher-supplied-oracle"
+        }
+      },
+      "recommendation": {
+        "next": "needs_evidence",
+        "choice": "clarify",
+        "authorityGranted": false,
+        "evidenceHash": "0937d4440b0ac010813736fb93c93b87ee15f038ab6906418cd3673e5cc36291",
+        "requestHash": "83fa55416f3f71e387fdd46b6308fb91d103e74482371f4922fd46be5f6b159e"
+      }
+    }
+  ],
+  "metrics": {
+    "received": 36,
+    "failures": 0,
+    "correct": 36,
+    "unsupportedCommitments": 0,
+    "pairs": [
+      {
+        "role": "adoption",
+        "evaluated": true,
+        "bothCorrect": true
+      },
+      {
+        "role": "source-revocation",
+        "evaluated": true,
+        "bothCorrect": true
+      },
+      {
+        "role": "retry-applicability",
+        "evaluated": true,
+        "bothCorrect": true
+      },
+      {
+        "role": "research-relevance",
+        "evaluated": true,
+        "bothCorrect": true
+      },
+      {
+        "role": "outcome",
+        "evaluated": true,
+        "bothCorrect": true
+      },
+      {
+        "role": "goal-method",
+        "evaluated": true,
+        "bothCorrect": true
+      }
+    ],
+    "rows": [
+      {
+        "caseId": "c5b24a974f52338e",
+        "role": "adoption",
+        "variant": "original",
+        "choice": "hold",
+        "expected": "hold",
+        "correct": true,
+        "brier": 0,
+        "logLoss": 0,
+        "unsupportedCommitment": false
+      },
+      {
+        "caseId": "31563cd58623aa1a",
+        "role": "adoption",
+        "variant": "original",
+        "choice": "proceed",
+        "expected": "proceed",
+        "correct": true,
+        "brier": 0,
+        "logLoss": 0,
+        "unsupportedCommitment": false
+      },
+      {
+        "caseId": "3688ab6e90a4d494",
+        "role": "adoption",
+        "variant": "original",
+        "choice": "clarify",
+        "expected": "clarify",
+        "correct": true,
+        "brier": 0,
+        "logLoss": 0,
+        "unsupportedCommitment": false
+      },
+      {
+        "caseId": "7a1cc530450c2c78",
+        "role": "source-revocation",
+        "variant": "original",
+        "choice": "proceed",
+        "expected": "proceed",
+        "correct": true,
+        "brier": 0,
+        "logLoss": 0,
+        "unsupportedCommitment": false
+      },
+      {
+        "caseId": "202c437f26c25524",
+        "role": "source-revocation",
+        "variant": "original",
+        "choice": "hold",
+        "expected": "hold",
+        "correct": true,
+        "brier": 0,
+        "logLoss": 0,
+        "unsupportedCommitment": false
+      },
+      {
+        "caseId": "afab343a365bd83c",
+        "role": "source-revocation",
+        "variant": "original",
+        "choice": "clarify",
+        "expected": "clarify",
+        "correct": true,
+        "brier": 0,
+        "logLoss": 0,
+        "unsupportedCommitment": false
+      },
+      {
+        "caseId": "cd7f236ae2460884",
+        "role": "retry-applicability",
+        "variant": "original",
+        "choice": "reconcile",
+        "expected": "reconcile",
+        "correct": true,
+        "brier": 0,
+        "logLoss": 0,
+        "unsupportedCommitment": false
+      },
+      {
+        "caseId": "dfeb232d69df77b2",
+        "role": "retry-applicability",
+        "variant": "original",
+        "choice": "retry",
+        "expected": "retry",
+        "correct": true,
+        "brier": 0,
+        "logLoss": 0,
+        "unsupportedCommitment": false
+      },
+      {
+        "caseId": "2fa811b008de5d83",
+        "role": "retry-applicability",
+        "variant": "original",
+        "choice": "clarify",
+        "expected": "clarify",
+        "correct": true,
+        "brier": 0,
+        "logLoss": 0,
+        "unsupportedCommitment": false
+      },
+      {
+        "caseId": "7f730d95798b8401",
+        "role": "research-relevance",
+        "variant": "original",
+        "choice": "relevant",
+        "expected": "relevant",
+        "correct": true,
+        "brier": 0,
+        "logLoss": 0,
+        "unsupportedCommitment": false
+      },
+      {
+        "caseId": "64b59bbc22cddb2f",
+        "role": "research-relevance",
+        "variant": "original",
+        "choice": "adjacent",
+        "expected": "adjacent",
+        "correct": true,
+        "brier": 0,
+        "logLoss": 0,
+        "unsupportedCommitment": false
+      },
+      {
+        "caseId": "6d83be1410f33f0e",
+        "role": "research-relevance",
+        "variant": "original",
+        "choice": "clarify",
+        "expected": "clarify",
+        "correct": true,
+        "brier": 0,
+        "logLoss": 0,
+        "unsupportedCommitment": false
+      },
+      {
+        "caseId": "93b3831e7c7f06c3",
+        "role": "outcome",
+        "variant": "original",
+        "choice": "close",
+        "expected": "close",
+        "correct": true,
+        "brier": 0,
+        "logLoss": 0,
+        "unsupportedCommitment": false
+      },
+      {
+        "caseId": "1aa92a6d317e11fc",
+        "role": "outcome",
+        "variant": "original",
+        "choice": "repair",
+        "expected": "repair",
+        "correct": true,
+        "brier": 0,
+        "logLoss": 0,
+        "unsupportedCommitment": false
+      },
+      {
+        "caseId": "6af1d70a403bf01f",
+        "role": "outcome",
+        "variant": "original",
+        "choice": "clarify",
+        "expected": "clarify",
+        "correct": true,
+        "brier": 0,
+        "logLoss": 0,
+        "unsupportedCommitment": false
+      },
+      {
+        "caseId": "6839521490cfe2bf",
+        "role": "goal-method",
+        "variant": "original",
+        "choice": "preserve",
+        "expected": "preserve",
+        "correct": true,
+        "brier": 0,
+        "logLoss": 0,
+        "unsupportedCommitment": false
+      },
+      {
+        "caseId": "e06ef96cd30e57ef",
+        "role": "goal-method",
+        "variant": "original",
+        "choice": "cancel",
+        "expected": "cancel",
+        "correct": true,
+        "brier": 0,
+        "logLoss": 0,
+        "unsupportedCommitment": false
+      },
+      {
+        "caseId": "94de538a7fdfb466",
+        "role": "goal-method",
+        "variant": "original",
+        "choice": "clarify",
+        "expected": "clarify",
+        "correct": true,
+        "brier": 0,
+        "logLoss": 0,
+        "unsupportedCommitment": false
+      },
+      {
+        "caseId": "c5b24a974f52338e",
+        "role": "adoption",
+        "variant": "reversed-options",
+        "choice": "hold",
+        "expected": "hold",
+        "correct": true,
+        "brier": 0,
+        "logLoss": 0,
+        "unsupportedCommitment": false
+      },
+      {
+        "caseId": "31563cd58623aa1a",
+        "role": "adoption",
+        "variant": "reversed-options",
+        "choice": "proceed",
+        "expected": "proceed",
+        "correct": true,
+        "brier": 0,
+        "logLoss": 0,
+        "unsupportedCommitment": false
+      },
+      {
+        "caseId": "3688ab6e90a4d494",
+        "role": "adoption",
+        "variant": "reversed-options",
+        "choice": "clarify",
+        "expected": "clarify",
+        "correct": true,
+        "brier": 0,
+        "logLoss": 0,
+        "unsupportedCommitment": false
+      },
+      {
+        "caseId": "7a1cc530450c2c78",
+        "role": "source-revocation",
+        "variant": "reversed-options",
+        "choice": "proceed",
+        "expected": "proceed",
+        "correct": true,
+        "brier": 0,
+        "logLoss": 0,
+        "unsupportedCommitment": false
+      },
+      {
+        "caseId": "202c437f26c25524",
+        "role": "source-revocation",
+        "variant": "reversed-options",
+        "choice": "hold",
+        "expected": "hold",
+        "correct": true,
+        "brier": 0,
+        "logLoss": 0,
+        "unsupportedCommitment": false
+      },
+      {
+        "caseId": "afab343a365bd83c",
+        "role": "source-revocation",
+        "variant": "reversed-options",
+        "choice": "clarify",
+        "expected": "clarify",
+        "correct": true,
+        "brier": 0,
+        "logLoss": 0,
+        "unsupportedCommitment": false
+      },
+      {
+        "caseId": "cd7f236ae2460884",
+        "role": "retry-applicability",
+        "variant": "reversed-options",
+        "choice": "reconcile",
+        "expected": "reconcile",
+        "correct": true,
+        "brier": 0,
+        "logLoss": 0,
+        "unsupportedCommitment": false
+      },
+      {
+        "caseId": "dfeb232d69df77b2",
+        "role": "retry-applicability",
+        "variant": "reversed-options",
+        "choice": "retry",
+        "expected": "retry",
+        "correct": true,
+        "brier": 0,
+        "logLoss": 0,
+        "unsupportedCommitment": false
+      },
+      {
+        "caseId": "2fa811b008de5d83",
+        "role": "retry-applicability",
+        "variant": "reversed-options",
+        "choice": "clarify",
+        "expected": "clarify",
+        "correct": true,
+        "brier": 0,
+        "logLoss": 0,
+        "unsupportedCommitment": false
+      },
+      {
+        "caseId": "7f730d95798b8401",
+        "role": "research-relevance",
+        "variant": "reversed-options",
+        "choice": "relevant",
+        "expected": "relevant",
+        "correct": true,
+        "brier": 0,
+        "logLoss": 0,
+        "unsupportedCommitment": false
+      },
+      {
+        "caseId": "64b59bbc22cddb2f",
+        "role": "research-relevance",
+        "variant": "reversed-options",
+        "choice": "adjacent",
+        "expected": "adjacent",
+        "correct": true,
+        "brier": 0,
+        "logLoss": 0,
+        "unsupportedCommitment": false
+      },
+      {
+        "caseId": "6d83be1410f33f0e",
+        "role": "research-relevance",
+        "variant": "reversed-options",
+        "choice": "clarify",
+        "expected": "clarify",
+        "correct": true,
+        "brier": 0,
+        "logLoss": 0,
+        "unsupportedCommitment": false
+      },
+      {
+        "caseId": "93b3831e7c7f06c3",
+        "role": "outcome",
+        "variant": "reversed-options",
+        "choice": "close",
+        "expected": "close",
+        "correct": true,
+        "brier": 0,
+        "logLoss": 0,
+        "unsupportedCommitment": false
+      },
+      {
+        "caseId": "1aa92a6d317e11fc",
+        "role": "outcome",
+        "variant": "reversed-options",
+        "choice": "repair",
+        "expected": "repair",
+        "correct": true,
+        "brier": 0,
+        "logLoss": 0,
+        "unsupportedCommitment": false
+      },
+      {
+        "caseId": "6af1d70a403bf01f",
+        "role": "outcome",
+        "variant": "reversed-options",
+        "choice": "clarify",
+        "expected": "clarify",
+        "correct": true,
+        "brier": 0,
+        "logLoss": 0,
+        "unsupportedCommitment": false
+      },
+      {
+        "caseId": "6839521490cfe2bf",
+        "role": "goal-method",
+        "variant": "reversed-options",
+        "choice": "preserve",
+        "expected": "preserve",
+        "correct": true,
+        "brier": 0,
+        "logLoss": 0,
+        "unsupportedCommitment": false
+      },
+      {
+        "caseId": "e06ef96cd30e57ef",
+        "role": "goal-method",
+        "variant": "reversed-options",
+        "choice": "cancel",
+        "expected": "cancel",
+        "correct": true,
+        "brier": 0,
+        "logLoss": 0,
+        "unsupportedCommitment": false
+      },
+      {
+        "caseId": "94de538a7fdfb466",
+        "role": "goal-method",
+        "variant": "reversed-options",
+        "choice": "clarify",
+        "expected": "clarify",
+        "correct": true,
+        "brier": 0,
+        "logLoss": 0,
+        "unsupportedCommitment": false
+      }
+    ],
+    "scope": "Researcher-authored 18-case development assay with option-order controls; not population calibration, architecture synthesis, or autonomous authority."
+  },
+  "intelligenceClaim": "None: supplied-label plumbing control only; no Jev call."
+}

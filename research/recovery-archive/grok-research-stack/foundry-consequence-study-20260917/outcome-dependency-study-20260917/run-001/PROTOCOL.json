@@ -1,0 +1,17 @@
+{
+  "at": "2026-09-17T08:57:03.471Z",
+  "sourceHashes": {
+    "/home/raed/Projects/workflow-foundry/src/foundry.mjs": "95f102573760ef92cd352813f66b30cd9f83bda05afb97a4cbe1069c8527a878",
+    "/home/raed/Projects/workflow-foundry/src/outcome-repair.mjs": "8de15af4b6ce842c3e54039531c651472a9079a231bf31390f4a8f95b924f1fd",
+    "/home/raed/Projects/workflow-foundry/src/store.mjs": "61288a25c85a8dd1e1e076ca5059aedf80c35dc26bf0ab613c31030743a34732",
+    "/home/raed/Projects/workflow-foundry/src/runtime.mjs": "af9fcabde20f706fac8ce2e09c0e646c0f100b301b64d1f6e1e4eb77e0b213db",
+    "/home/raed/Projects/workflow-foundry/src/capabilities.mjs": "1707d4506f50e86498fa471dc3c8714615e6c06a1240014f2515aab58cc3ac49",
+    "/home/raed/Projects/workflow-foundry/src/data.mjs": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c"
+  },
+  "sourceSHA256": "489a2e095837aaafdd3c10a70348f9ccc19db7700aa0a3af767bec92978c9fd0",
+  "nativeRuns": 1,
+  "modelCalls": 0,
+  "intervention": "Add a pure, unused local capability after a terminal green-but-wrong run; no existing descriptor or implementation changes.",
+  "preregisteredPrediction": "Raw historical receipt remains readable; verify and repair are blocked by live catalog identity; identical root/input/artifact expectation cannot be re-registered under new catalog; reverting catalog restores verify.",
+  "distinction": "Historical content mismatch can remain established while current-world execution remains unqualified."
+}

@@ -1,0 +1,78 @@
+{
+  "approvals": {},
+  "cost": 0,
+  "createdAt": 1789613952891,
+  "deadline": 1789617552891,
+  "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+  "error": null,
+  "eventHead": {
+    "seq": 9,
+    "hash": "9b973679b97ab04cd60d813d93580947b71a27dec7943d9746ee4232b6874a98"
+  },
+  "frames": {},
+  "id": "f1adf7d0-2a31-474c-95fa-19b77dbf7a60",
+  "input": {
+    "claim": {
+      "grounded": true
+    }
+  },
+  "nodes": {
+    "artifact": {
+      "attempts": 0,
+      "kind": "task",
+      "reason": "required predecessor did not succeed",
+      "status": "skipped"
+    },
+    "validate": {
+      "argsHash": "ce6949ad0a9463f40be0fcae07e3d34405bd734c0b3a2218f00999f3b2b893cb",
+      "attempts": 1,
+      "completedAt": 1789613952935,
+      "completedSequence": 6,
+      "effects": "none",
+      "idempotencyKey": "038bba8159b9844a70cc9b5af7048467d1d14b1fb3e63d42acd351bc0dad606a",
+      "kind": "task",
+      "outputHash": "f2e6221bac7112ea123f706c89500b263e72f0f9bc7068fb74bdbaf8c51fbc38",
+      "startedAt": 1789613952925,
+      "startedSequence": 5,
+      "status": "completed",
+      "tool": "core.validate"
+    },
+    "verify": {
+      "attempts": 0,
+      "kind": "assert",
+      "status": "skipped"
+    },
+    "work": {
+      "argsHash": "ace9288a3ff79a9132b9ddf621bc19354ffb04b3eacb17486ad6dc4d51303961",
+      "attempts": 1,
+      "completedAt": 1789613952909,
+      "completedSequence": 4,
+      "effects": "none",
+      "idempotencyKey": "7c5f6a3f49c4d5ca8900cabc8985ff605b63b2178cd754b784241762aa772a5a",
+      "kind": "task",
+      "outputHash": "ace9288a3ff79a9132b9ddf621bc19354ffb04b3eacb17486ad6dc4d51303961",
+      "startedAt": 1789613952903,
+      "startedSequence": 3,
+      "status": "completed",
+      "tool": "core.identity"
+    }
+  },
+  "outputs": {
+    "validate": {
+      "errors": [],
+      "valid": true
+    },
+    "work": {
+      "done": true
+    }
+  },
+  "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+  "resumeCount": 1,
+  "status": "succeeded",
+  "steps": 2,
+  "updatedAt": 1789613952961,
+  "workflowHash": "224262e0e1192ba41f9b1873356aa53109ab6820ca30ffeb35c871a87aec5c95",
+  "workflowId": "Obj08b07d57899e",
+  "executionActive": false,
+  "independentTaskVerified": false
+}

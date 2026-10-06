@@ -1,0 +1,245 @@
+{
+  "startedAt": "2026-09-17T08:52:25.135Z",
+  "success": false,
+  "stage": "generation",
+  "protocolSHA256": "0ddea4e6e18e524e0f843bb55b002e702b4b9e79838d37789d47f7c1fb762ae3",
+  "protocol": {
+    "schemaVersion": "opencode-consequence-continuation-v1",
+    "frozenAt": "2026-09-17T08:49:51.103Z",
+    "nodeVersion": "v24.21.0",
+    "platform": "linux",
+    "architecture": "x64",
+    "configuration": {
+      "model": "opencode/big-pickle",
+      "providerTimeoutMs": 150000,
+      "maxOutputTokens": 8192,
+      "maxRounds": 2,
+      "maxDurationMs": 360000,
+      "autoApply": false,
+      "domain": "general",
+      "policy": {
+        "maxSteps": 160,
+        "maxConcurrency": 2,
+        "maxDurationMs": 30000,
+        "maxCost": 0
+      },
+      "evaluation": {
+        "revision": "v2",
+        "developmentCases": 5,
+        "withheldCases": 8,
+        "appliedCase": "first-nonempty-development",
+        "publicTask": "unchanged-v1-public-contract",
+        "allProcessingBeforePublication": "non-gating-diagnostic"
+      },
+      "providerErrors": "stop; no retry or paid/model fallback",
+      "tools": "output-only provider; native synthetic runtime",
+      "authority": "explicit research-only apply after both suites pass",
+      "visibility": "public task/schema/capabilities/skills and development feedback only; withheld outcomes never repair input",
+      "qualification": "one bounded construction trajectory; unknown model scale; no matched model comparison or general task-success claim"
+    },
+    "directory": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/campaign-opencode-v2-continuation-001",
+    "taskSHA256": "f5eb99642468d90583162ac60539f808f074083ace570da0178509bad4b1f650",
+    "calibration": {
+      "checks": 18,
+      "passed": 18
+    },
+    "sources": [
+      {
+        "file": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/provider-continuation-20260917/driver.mjs",
+        "sha256": "fd0395d1a60fee4a1407411dcb748089bc7af966988b2422aabbcdb06074c272"
+      },
+      {
+        "file": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/provider-continuation-20260917/driver.test.mjs",
+        "sha256": "84c24d508f6e06a3f69256a4eec8c7881a38e9b3e44507cb1f0a66c03dfb2cda"
+      },
+      {
+        "file": "/home/raed/Projects/workflow-foundry/src/foundry.mjs",
+        "sha256": "95f102573760ef92cd352813f66b30cd9f83bda05afb97a4cbe1069c8527a878"
+      },
+      {
+        "file": "/home/raed/Projects/workflow-foundry/src/generator.mjs",
+        "sha256": "3d86d95eaf4a2b6ee83d5fb50696a689926075adae4eeb4d8c25450c442fb11a"
+      },
+      {
+        "file": "/home/raed/Projects/workflow-foundry/src/data.mjs",
+        "sha256": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c"
+      },
+      {
+        "file": "/home/raed/Projects/workflow-foundry/src/dataflow.mjs",
+        "sha256": "7f3c4894b32f5dbe691ba3c871e088da8b083f42e7b653404972b647c9e9d41e"
+      },
+      {
+        "file": "/home/raed/Projects/workflow-foundry/src/engine.mjs",
+        "sha256": "6872eecabd6e4ccce58b7db25df82b1a97a292e530e0c38090e15844d5d7ed52"
+      },
+      {
+        "file": "/home/raed/Projects/workflow-foundry/src/evaluation.mjs",
+        "sha256": "64d42f9120e36b90bc7d194d5550773f00c1bb19d96c03f10ea8d194e6dd3d6f"
+      },
+      {
+        "file": "/home/raed/Projects/workflow-foundry/src/runtime.mjs",
+        "sha256": "af9fcabde20f706fac8ce2e09c0e646c0f100b301b64d1f6e1e4eb77e0b213db"
+      },
+      {
+        "file": "/home/raed/Projects/workflow-foundry/src/store.mjs",
+        "sha256": "61288a25c85a8dd1e1e076ca5059aedf80c35dc26bf0ab613c31030743a34732"
+      },
+      {
+        "file": "/home/raed/Projects/workflow-foundry/src/trials.mjs",
+        "sha256": "4ab066bb285245ae70ead081fa8de88e728dfc8f58eef77f50bf2a667117f437"
+      },
+      {
+        "file": "/home/raed/Projects/workflow-foundry/src/validate.mjs",
+        "sha256": "8b698d552e151f3380af58cbce5675b0a94c48601c9acd427be71281a3696c33"
+      },
+      {
+        "file": "/home/raed/Projects/workflow-foundry/src/capabilities.mjs",
+        "sha256": "1707d4506f50e86498fa471dc3c8714615e6c06a1240014f2515aab58cc3ac49"
+      },
+      {
+        "file": "/home/raed/Projects/workflow-foundry/src/process.mjs",
+        "sha256": "bfc97e88bb73bc8f15ba2d174ab1d97c615c3fd097e57c57964bd8bc4196bb7a"
+      },
+      {
+        "file": "/home/raed/Projects/workflow-foundry/src/opencode-v2-free.mjs",
+        "sha256": "5772e2d2d7ae60de702cce310af5124f8331e4c3f0c4a2ccc44d5762bafcb9c6"
+      },
+      {
+        "file": "/home/raed/Projects/workflow-foundry/package.json",
+        "sha256": "cb314fd60e0b59c2fed9782c66d8ddc889ce64b4add93ed499eb3e6de139cf5a"
+      },
+      {
+        "file": "/home/raed/Projects/workflow-foundry/package-lock.json",
+        "sha256": "7bddd5dfb8cd6e3717d54cd8c184c297b0e166ad4bbdb9645d369290b06a9af9"
+      },
+      {
+        "file": "/home/raed/Projects/workflow-foundry/schemas/workflow.schema.json",
+        "sha256": "e72b1d4bb1e01f4f21256b042853faa8505859f30741b4093aea59909ac4e1bc"
+      },
+      {
+        "file": "/home/raed/Projects/workflow-foundry/skills/component-integration/SKILL.md",
+        "sha256": "e3f19f12f56ce843d3cf1225abd2d780f3a76a51141e8b3f2dbfc55a57552141"
+      },
+      {
+        "file": "/home/raed/Projects/workflow-foundry/skills/domain-browser/SKILL.md",
+        "sha256": "aa14fdb6d71e70fa5d9ccdb7ba5be48e2629164db00dfaf6a11182c49a69b6a6"
+      },
+      {
+        "file": "/home/raed/Projects/workflow-foundry/skills/domain-healthcare/SKILL.md",
+        "sha256": "b99196895dd3c28171b0cd83d02b5718aee0c90c26969dc758993f69b99d0af7"
+      },
+      {
+        "file": "/home/raed/Projects/workflow-foundry/skills/domain-robotics/SKILL.md",
+        "sha256": "78bd423b9ed9ea7dff24dfac1d8f6555fa70d6b6fc20aa28ac4d9597bfd77213"
+      },
+      {
+        "file": "/home/raed/Projects/workflow-foundry/skills/domain-science/SKILL.md",
+        "sha256": "2f710f8e2918b1b6b36da25a2094a70a4efec97252a1313250463451f00e01bd"
+      },
+      {
+        "file": "/home/raed/Projects/workflow-foundry/skills/domain-security/SKILL.md",
+        "sha256": "cdb9cb6a45872fb1d78505518bb92047d5e5f566f6679d0953a53e09447163f2"
+      },
+      {
+        "file": "/home/raed/Projects/workflow-foundry/skills/domain-software/SKILL.md",
+        "sha256": "e806dc180ddebd15c62820a93641e4c94ded28e3b3f6692b5e6cf8d558552df5"
+      },
+      {
+        "file": "/home/raed/Projects/workflow-foundry/skills/domain-sre/SKILL.md",
+        "sha256": "9511a7f75875e861ca5422889170fe2601d441d5e5e4f842bb7130e97fab60f9"
+      },
+      {
+        "file": "/home/raed/Projects/workflow-foundry/skills/human-steering/SKILL.md",
+        "sha256": "d11e1053b8a7bb3de227aa59f664655c3265452e5c0d7ad4eda4a36918110b02"
+      },
+      {
+        "file": "/home/raed/Projects/workflow-foundry/skills/runtime-langgraph/SKILL.md",
+        "sha256": "7eaebaaa9347fd53fc5a1dabbb86e325bbfa0255f1eadee44a1c96aff9db68ec"
+      },
+      {
+        "file": "/home/raed/Projects/workflow-foundry/skills/runtime-n8n/SKILL.md",
+        "sha256": "3cf142e8ddf5ac765622b0ca496d341e64b9a1644859e9fccaea304cf9208fc8"
+      },
+      {
+        "file": "/home/raed/Projects/workflow-foundry/skills/runtime-native/SKILL.md",
+        "sha256": "a1b1598e663218bc36247d2641119858f9cb4204b3c4a44086640cbb54db4f16"
+      },
+      {
+        "file": "/home/raed/Projects/workflow-foundry/skills/workflow-evaluation/SKILL.md",
+        "sha256": "0132ae7c8713361148d2f7d9f4f376a8c5c8ee930af44cb7658fd6b6a1067ed3"
+      },
+      {
+        "file": "/home/raed/Projects/workflow-foundry/skills/workflow-foundry/SKILL.md",
+        "sha256": "1441e8eb44a5b55bacd30f5a09ddd51b3243bf28cba07ae30b2debd224deaba0"
+      },
+      {
+        "file": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/PUBLIC.json",
+        "sha256": "1b5d70353084eafc8e3a981729e66717e82e899d2dab8b09098c586a4b9dbcc3"
+      },
+      {
+        "file": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/contract.mjs",
+        "sha256": "3a5df633eb0031ac06b2dbf42cb189d12c0707ee4569589a616e1c8bf2dbd16b"
+      },
+      {
+        "file": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/capabilities.mjs",
+        "sha256": "2697b0ede7cef9a3b5b99df2841113f3ad68b743ff463f50993a77afcb6003fa"
+      },
+      {
+        "file": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/oracle.mjs",
+        "sha256": "ebbdf190674414c29ec2fc7632e8f72b6e3c305c5abd20b322cc8a077304f732"
+      },
+      {
+        "file": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/oracle-v2.mjs",
+        "sha256": "517b7e60d3e674f7fc1189dac8f468dd19d9f6800467a5998fde6a38fbd66e15"
+      },
+      {
+        "file": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/FREEZE.json",
+        "sha256": "191da6649ceaa22087636059b241de2fd758768aabdfde0aa9d480cb27246f62"
+      },
+      {
+        "file": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/FREEZE_V2.json",
+        "sha256": "5e4af4f2d1b3e90e65373cc40b4e8857d9248e769ee47b8dd79fa9d72e4595d2"
+      },
+      {
+        "file": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/calibration-v2-001/run-001/AUDIT.json",
+        "sha256": "46291fabed3f205f6c05ab955b82615af41927d9a0766a85450ea925040ddef8"
+      },
+      {
+        "file": "/usr/bin/opencode",
+        "sha256": "a7568b505c1fce84d329c709b5661da11a778b0e06959e34147a916111cc5be4"
+      }
+    ],
+    "authorization": "Await prime review and separate run instruction. Protocol hash binds bytes; it is not authentication of the operator."
+  },
+  "provider": {
+    "provider": "opencode-v2-free-isolated",
+    "model": "opencode/big-pickle",
+    "version": "opencode v2.0.5",
+    "binary": "/usr/bin/opencode",
+    "binarySHA256": "a7568b505c1fce84d329c709b5661da11a778b0e06959e34147a916111cc5be4",
+    "transport": "private-v2-server-one-request-gateway"
+  },
+  "job": {
+    "id": "a5d847b9-f12a-4d1b-b8dc-0ce894452d30",
+    "status": "failed",
+    "attempts": 1,
+    "error": {
+      "code": "MODEL_TRANSPORT",
+      "message": "Provider transport failed"
+    }
+  },
+  "error": {
+    "code": "MODEL_TRANSPORT",
+    "message": "Provider transport failed"
+  },
+  "sourceStable": true,
+  "accounting": {
+    "providerInvocations": 1,
+    "completedResponses": 0,
+    "usageUnknownCalls": 1,
+    "observedCompletedTokens": [],
+    "completedReportedCostSum": 0,
+    "scope": "Native provider receipts, not independent billing; failed-call usage remains unknown. No parameter-scale inference."
+  },
+  "finishedAt": "2026-09-17T08:54:55.973Z"
+}

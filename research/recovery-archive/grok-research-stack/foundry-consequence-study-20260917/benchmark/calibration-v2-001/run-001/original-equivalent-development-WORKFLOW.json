@@ -1,0 +1,980 @@
+{
+  "schemaVersion": "1.0",
+  "id": "SuppliedEquivalent",
+  "version": 1,
+  "title": "Supplied positive",
+  "goal": "Process the supplied batch of samples. Give every sample one cheap screening attempt. Spend one independent reproduction attempt only on each sample whose screening observation explicitly says it is suspicious. Do not retry instruments. Report every input sample exactly once, in input order, in manifest.json, including failures and inconclusive observations. Call a defect confirmed only when its own independent reproduction returned complete positive evidence. A successful call, a reassuring claim, or a suspicious screening result alone is insufficient. A failed instrument must not prevent the other samples from being reported. Use only the supplied local capabilities; there is no network, external action or human approval to request.",
+  "domain": "synthetic-sample-processing",
+  "envelope": {
+    "assumptions": [
+      "Evaluator-author supplied executable upper bound; zero learned construction claim."
+    ],
+    "risks": [
+      "Missing evidence and instrument errors require explicit dispositions."
+    ],
+    "successCriteria": [
+      "Every sample reported with the observed disposition and exact permitted instrument attempts."
+    ]
+  },
+  "inputSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "samples"
+    ],
+    "properties": {
+      "samples": {
+        "type": "array",
+        "maxItems": 6,
+        "uniqueItems": true,
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            }
+          }
+        }
+      }
+    }
+  },
+  "budget": {
+    "maxSteps": 160,
+    "maxConcurrency": 2,
+    "maxDurationMs": 30000,
+    "maxCost": 0
+  },
+  "nodes": [
+    {
+      "id": "u13",
+      "kind": "task",
+      "description": "Supplied manifest operation",
+      "needs": [
+        "u12"
+      ],
+      "tool": "core.artifact",
+      "args": {
+        "name": "manifest.json",
+        "content": {
+          "$ref": "nodes.u12.text",
+          "default": ""
+        }
+      },
+      "timeoutMs": 3000,
+      "retry": {
+        "maxAttempts": 1
+      }
+    },
+    {
+      "id": "u12",
+      "kind": "task",
+      "description": "Supplied serialized operation",
+      "needs": [
+        "u11"
+      ],
+      "tool": "core.json",
+      "args": {
+        "value": {
+          "samples": {
+            "$ref": "nodes.u11.items",
+            "default": []
+          }
+        }
+      },
+      "timeoutMs": 3000,
+      "retry": {
+        "maxAttempts": 1
+      }
+    },
+    {
+      "id": "u11",
+      "kind": "task",
+      "description": "Supplied rows operation",
+      "needs": [
+        "u0"
+      ],
+      "tool": "core.pluck",
+      "args": {
+        "items": {
+          "$ref": "nodes.u0.items",
+          "default": []
+        },
+        "field": "u10.value"
+      },
+      "timeoutMs": 3000,
+      "retry": {
+        "maxAttempts": 1
+      },
+      "join": "all_resolved"
+    },
+    {
+      "id": "u0",
+      "kind": "map",
+      "needs": [],
+      "description": "Supplied per-sample computation",
+      "items": {
+        "$ref": "input.samples",
+        "default": []
+      },
+      "maxItems": 6,
+      "body": {
+        "nodes": [
+          {
+            "id": "u10",
+            "kind": "task",
+            "description": "Supplied selected operation",
+            "needs": [
+              "u5",
+              "u6",
+              "u7",
+              "u8",
+              "u9"
+            ],
+            "tool": "data.one",
+            "args": {
+              "values": [
+                {
+                  "$ref": "nodes.u5",
+                  "default": null
+                },
+                {
+                  "$ref": "nodes.u6",
+                  "default": null
+                },
+                {
+                  "$ref": "nodes.u7",
+                  "default": null
+                },
+                {
+                  "$ref": "nodes.u8",
+                  "default": null
+                },
+                {
+                  "$ref": "nodes.u9",
+                  "default": null
+                }
+              ]
+            },
+            "timeoutMs": 3000,
+            "retry": {
+              "maxAttempts": 1
+            },
+            "join": "all_resolved"
+          },
+          {
+            "id": "u9",
+            "kind": "task",
+            "description": "Supplied row_inconclusive operation",
+            "needs": [
+              "u2",
+              "u4"
+            ],
+            "tool": "core.identity",
+            "args": {
+              "sampleId": {
+                "$ref": "item.id",
+                "default": null
+              },
+              "disposition": "inconclusive"
+            },
+            "timeoutMs": 3000,
+            "retry": {
+              "maxAttempts": 1
+            },
+            "when": {
+              "op": "not",
+              "condition": {
+                "op": "any",
+                "conditions": [
+                  {
+                    "op": "all",
+                    "conditions": [
+                      {
+                        "op": "all",
+                        "conditions": [
+                          {
+                            "op": "eq",
+                            "left": {
+                              "$ref": "nodes.u2.valid",
+                              "default": null
+                            },
+                            "right": true
+                          },
+                          {
+                            "op": "eq",
+                            "left": {
+                              "$ref": "nodes.u1.sampleId",
+                              "default": null
+                            },
+                            "right": {
+                              "$ref": "item.id",
+                              "default": null
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "op": "eq",
+                        "left": {
+                          "$ref": "nodes.u1.suspicious",
+                          "default": null
+                        },
+                        "right": false
+                      }
+                    ]
+                  },
+                  {
+                    "op": "all",
+                    "conditions": [
+                      {
+                        "op": "all",
+                        "conditions": [
+                          {
+                            "op": "all",
+                            "conditions": [
+                              {
+                                "op": "all",
+                                "conditions": [
+                                  {
+                                    "op": "eq",
+                                    "left": {
+                                      "$ref": "nodes.u2.valid",
+                                      "default": null
+                                    },
+                                    "right": true
+                                  },
+                                  {
+                                    "op": "eq",
+                                    "left": {
+                                      "$ref": "nodes.u1.sampleId",
+                                      "default": null
+                                    },
+                                    "right": {
+                                      "$ref": "item.id",
+                                      "default": null
+                                    }
+                                  }
+                                ]
+                              },
+                              {
+                                "op": "eq",
+                                "left": {
+                                  "$ref": "nodes.u1.suspicious",
+                                  "default": null
+                                },
+                                "right": true
+                              }
+                            ]
+                          },
+                          {
+                            "op": "eq",
+                            "left": {
+                              "$ref": "nodes.u4.valid",
+                              "default": null
+                            },
+                            "right": true
+                          },
+                          {
+                            "op": "eq",
+                            "left": {
+                              "$ref": "nodes.u3.sampleId",
+                              "default": null
+                            },
+                            "right": {
+                              "$ref": "item.id",
+                              "default": null
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "op": "eq",
+                        "left": {
+                          "$ref": "nodes.u3.reproduced",
+                          "default": null
+                        },
+                        "right": true
+                      }
+                    ]
+                  },
+                  {
+                    "op": "all",
+                    "conditions": [
+                      {
+                        "op": "all",
+                        "conditions": [
+                          {
+                            "op": "all",
+                            "conditions": [
+                              {
+                                "op": "all",
+                                "conditions": [
+                                  {
+                                    "op": "eq",
+                                    "left": {
+                                      "$ref": "nodes.u2.valid",
+                                      "default": null
+                                    },
+                                    "right": true
+                                  },
+                                  {
+                                    "op": "eq",
+                                    "left": {
+                                      "$ref": "nodes.u1.sampleId",
+                                      "default": null
+                                    },
+                                    "right": {
+                                      "$ref": "item.id",
+                                      "default": null
+                                    }
+                                  }
+                                ]
+                              },
+                              {
+                                "op": "eq",
+                                "left": {
+                                  "$ref": "nodes.u1.suspicious",
+                                  "default": null
+                                },
+                                "right": true
+                              }
+                            ]
+                          },
+                          {
+                            "op": "eq",
+                            "left": {
+                              "$ref": "nodes.u4.valid",
+                              "default": null
+                            },
+                            "right": true
+                          },
+                          {
+                            "op": "eq",
+                            "left": {
+                              "$ref": "nodes.u3.sampleId",
+                              "default": null
+                            },
+                            "right": {
+                              "$ref": "item.id",
+                              "default": null
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "op": "eq",
+                        "left": {
+                          "$ref": "nodes.u3.reproduced",
+                          "default": null
+                        },
+                        "right": false
+                      }
+                    ]
+                  },
+                  {
+                    "op": "any",
+                    "conditions": [
+                      {
+                        "op": "eq",
+                        "left": {
+                          "$ref": "nodes.u1.ok",
+                          "default": null
+                        },
+                        "right": false
+                      },
+                      {
+                        "op": "all",
+                        "conditions": [
+                          {
+                            "op": "all",
+                            "conditions": [
+                              {
+                                "op": "all",
+                                "conditions": [
+                                  {
+                                    "op": "eq",
+                                    "left": {
+                                      "$ref": "nodes.u2.valid",
+                                      "default": null
+                                    },
+                                    "right": true
+                                  },
+                                  {
+                                    "op": "eq",
+                                    "left": {
+                                      "$ref": "nodes.u1.sampleId",
+                                      "default": null
+                                    },
+                                    "right": {
+                                      "$ref": "item.id",
+                                      "default": null
+                                    }
+                                  }
+                                ]
+                              },
+                              {
+                                "op": "eq",
+                                "left": {
+                                  "$ref": "nodes.u1.suspicious",
+                                  "default": null
+                                },
+                                "right": true
+                              }
+                            ]
+                          },
+                          {
+                            "op": "eq",
+                            "left": {
+                              "$ref": "nodes.u3.ok",
+                              "default": null
+                            },
+                            "right": false
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            "join": "all_resolved"
+          },
+          {
+            "id": "u8",
+            "kind": "task",
+            "description": "Supplied row_error operation",
+            "needs": [
+              "u2",
+              "u4"
+            ],
+            "tool": "core.identity",
+            "args": {
+              "sampleId": {
+                "$ref": "item.id",
+                "default": null
+              },
+              "disposition": "error"
+            },
+            "timeoutMs": 3000,
+            "retry": {
+              "maxAttempts": 1
+            },
+            "when": {
+              "op": "any",
+              "conditions": [
+                {
+                  "op": "eq",
+                  "left": {
+                    "$ref": "nodes.u1.ok",
+                    "default": null
+                  },
+                  "right": false
+                },
+                {
+                  "op": "all",
+                  "conditions": [
+                    {
+                      "op": "all",
+                      "conditions": [
+                        {
+                          "op": "all",
+                          "conditions": [
+                            {
+                              "op": "eq",
+                              "left": {
+                                "$ref": "nodes.u2.valid",
+                                "default": null
+                              },
+                              "right": true
+                            },
+                            {
+                              "op": "eq",
+                              "left": {
+                                "$ref": "nodes.u1.sampleId",
+                                "default": null
+                              },
+                              "right": {
+                                "$ref": "item.id",
+                                "default": null
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "op": "eq",
+                          "left": {
+                            "$ref": "nodes.u1.suspicious",
+                            "default": null
+                          },
+                          "right": true
+                        }
+                      ]
+                    },
+                    {
+                      "op": "eq",
+                      "left": {
+                        "$ref": "nodes.u3.ok",
+                        "default": null
+                      },
+                      "right": false
+                    }
+                  ]
+                }
+              ]
+            },
+            "join": "all_resolved"
+          },
+          {
+            "id": "u7",
+            "kind": "task",
+            "description": "Supplied row_not_reproduced operation",
+            "needs": [
+              "u2",
+              "u4"
+            ],
+            "tool": "core.identity",
+            "args": {
+              "sampleId": {
+                "$ref": "item.id",
+                "default": null
+              },
+              "disposition": "not_reproduced"
+            },
+            "timeoutMs": 3000,
+            "retry": {
+              "maxAttempts": 1
+            },
+            "when": {
+              "op": "all",
+              "conditions": [
+                {
+                  "op": "all",
+                  "conditions": [
+                    {
+                      "op": "all",
+                      "conditions": [
+                        {
+                          "op": "all",
+                          "conditions": [
+                            {
+                              "op": "eq",
+                              "left": {
+                                "$ref": "nodes.u2.valid",
+                                "default": null
+                              },
+                              "right": true
+                            },
+                            {
+                              "op": "eq",
+                              "left": {
+                                "$ref": "nodes.u1.sampleId",
+                                "default": null
+                              },
+                              "right": {
+                                "$ref": "item.id",
+                                "default": null
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "op": "eq",
+                          "left": {
+                            "$ref": "nodes.u1.suspicious",
+                            "default": null
+                          },
+                          "right": true
+                        }
+                      ]
+                    },
+                    {
+                      "op": "eq",
+                      "left": {
+                        "$ref": "nodes.u4.valid",
+                        "default": null
+                      },
+                      "right": true
+                    },
+                    {
+                      "op": "eq",
+                      "left": {
+                        "$ref": "nodes.u3.sampleId",
+                        "default": null
+                      },
+                      "right": {
+                        "$ref": "item.id",
+                        "default": null
+                      }
+                    }
+                  ]
+                },
+                {
+                  "op": "eq",
+                  "left": {
+                    "$ref": "nodes.u3.reproduced",
+                    "default": null
+                  },
+                  "right": false
+                }
+              ]
+            },
+            "join": "all_resolved"
+          },
+          {
+            "id": "u6",
+            "kind": "task",
+            "description": "Supplied row_confirmed operation",
+            "needs": [
+              "u2",
+              "u4"
+            ],
+            "tool": "core.identity",
+            "args": {
+              "sampleId": {
+                "$ref": "item.id",
+                "default": null
+              },
+              "disposition": "confirmed"
+            },
+            "timeoutMs": 3000,
+            "retry": {
+              "maxAttempts": 1
+            },
+            "when": {
+              "op": "all",
+              "conditions": [
+                {
+                  "op": "all",
+                  "conditions": [
+                    {
+                      "op": "all",
+                      "conditions": [
+                        {
+                          "op": "all",
+                          "conditions": [
+                            {
+                              "op": "eq",
+                              "left": {
+                                "$ref": "nodes.u2.valid",
+                                "default": null
+                              },
+                              "right": true
+                            },
+                            {
+                              "op": "eq",
+                              "left": {
+                                "$ref": "nodes.u1.sampleId",
+                                "default": null
+                              },
+                              "right": {
+                                "$ref": "item.id",
+                                "default": null
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "op": "eq",
+                          "left": {
+                            "$ref": "nodes.u1.suspicious",
+                            "default": null
+                          },
+                          "right": true
+                        }
+                      ]
+                    },
+                    {
+                      "op": "eq",
+                      "left": {
+                        "$ref": "nodes.u4.valid",
+                        "default": null
+                      },
+                      "right": true
+                    },
+                    {
+                      "op": "eq",
+                      "left": {
+                        "$ref": "nodes.u3.sampleId",
+                        "default": null
+                      },
+                      "right": {
+                        "$ref": "item.id",
+                        "default": null
+                      }
+                    }
+                  ]
+                },
+                {
+                  "op": "eq",
+                  "left": {
+                    "$ref": "nodes.u3.reproduced",
+                    "default": null
+                  },
+                  "right": true
+                }
+              ]
+            },
+            "join": "all_resolved"
+          },
+          {
+            "id": "u5",
+            "kind": "task",
+            "description": "Supplied row_clear operation",
+            "needs": [
+              "u2",
+              "u4"
+            ],
+            "tool": "core.identity",
+            "args": {
+              "sampleId": {
+                "$ref": "item.id",
+                "default": null
+              },
+              "disposition": "clear"
+            },
+            "timeoutMs": 3000,
+            "retry": {
+              "maxAttempts": 1
+            },
+            "when": {
+              "op": "all",
+              "conditions": [
+                {
+                  "op": "all",
+                  "conditions": [
+                    {
+                      "op": "eq",
+                      "left": {
+                        "$ref": "nodes.u2.valid",
+                        "default": null
+                      },
+                      "right": true
+                    },
+                    {
+                      "op": "eq",
+                      "left": {
+                        "$ref": "nodes.u1.sampleId",
+                        "default": null
+                      },
+                      "right": {
+                        "$ref": "item.id",
+                        "default": null
+                      }
+                    }
+                  ]
+                },
+                {
+                  "op": "eq",
+                  "left": {
+                    "$ref": "nodes.u1.suspicious",
+                    "default": null
+                  },
+                  "right": false
+                }
+              ]
+            },
+            "join": "all_resolved"
+          },
+          {
+            "id": "u4",
+            "kind": "task",
+            "description": "Supplied reproShape operation",
+            "needs": [
+              "u3"
+            ],
+            "tool": "core.validate",
+            "args": {
+              "value": {
+                "$ref": "nodes.u3",
+                "default": {}
+              },
+              "schema": {
+                "type": "object",
+                "required": [
+                  "ok",
+                  "sampleId",
+                  "independent",
+                  "evidenceId",
+                  "reproduced"
+                ],
+                "properties": {
+                  "ok": {
+                    "const": true
+                  },
+                  "sampleId": {
+                    "type": "string"
+                  },
+                  "independent": {
+                    "const": true
+                  },
+                  "evidenceId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "reproduced": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            },
+            "timeoutMs": 3000,
+            "retry": {
+              "maxAttempts": 1
+            },
+            "join": "all_resolved"
+          },
+          {
+            "id": "u3",
+            "kind": "task",
+            "description": "Supplied reproduce operation",
+            "needs": [
+              "u2"
+            ],
+            "tool": "lab.reproduce",
+            "args": {
+              "sampleId": {
+                "$ref": "item.id",
+                "default": null
+              }
+            },
+            "timeoutMs": 3000,
+            "retry": {
+              "maxAttempts": 1
+            },
+            "join": "all_resolved",
+            "onError": "continue",
+            "when": {
+              "op": "all",
+              "conditions": [
+                {
+                  "op": "all",
+                  "conditions": [
+                    {
+                      "op": "eq",
+                      "left": {
+                        "$ref": "nodes.u2.valid",
+                        "default": null
+                      },
+                      "right": true
+                    },
+                    {
+                      "op": "eq",
+                      "left": {
+                        "$ref": "nodes.u1.sampleId",
+                        "default": null
+                      },
+                      "right": {
+                        "$ref": "item.id",
+                        "default": null
+                      }
+                    }
+                  ]
+                },
+                {
+                  "op": "eq",
+                  "left": {
+                    "$ref": "nodes.u1.suspicious",
+                    "default": null
+                  },
+                  "right": true
+                }
+              ]
+            }
+          },
+          {
+            "id": "u2",
+            "kind": "task",
+            "description": "Supplied screenShape operation",
+            "needs": [
+              "u1"
+            ],
+            "tool": "core.validate",
+            "args": {
+              "value": {
+                "$ref": "nodes.u1",
+                "default": {}
+              },
+              "schema": {
+                "type": "object",
+                "required": [
+                  "ok",
+                  "sampleId",
+                  "suspicious"
+                ],
+                "properties": {
+                  "ok": {
+                    "const": true
+                  },
+                  "sampleId": {
+                    "type": "string"
+                  },
+                  "suspicious": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            },
+            "timeoutMs": 3000,
+            "retry": {
+              "maxAttempts": 1
+            },
+            "join": "all_resolved"
+          },
+          {
+            "id": "u1",
+            "kind": "task",
+            "description": "Supplied screen operation",
+            "needs": [],
+            "tool": "lab.screen",
+            "args": {
+              "sampleId": {
+                "$ref": "item.id",
+                "default": null
+              }
+            },
+            "timeoutMs": 3000,
+            "retry": {
+              "maxAttempts": 1
+            },
+            "onError": "continue"
+          }
+        ],
+        "acceptance": [
+          {
+            "op": "eq",
+            "left": {
+              "$ref": "nodes.u10.value.sampleId",
+              "default": null
+            },
+            "right": {
+              "$ref": "item.id",
+              "default": null
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "acceptance": [
+    {
+      "op": "eq",
+      "left": {
+        "$ref": "nodes.u13.name",
+        "default": null
+      },
+      "right": "manifest.json"
+    }
+  ],
+  "metadata": {
+    "tags": [
+      "supplied-control"
+    ],
+    "rationale": "Authored from the public contract by the evaluator author. Not model synthesis."
+  }
+}

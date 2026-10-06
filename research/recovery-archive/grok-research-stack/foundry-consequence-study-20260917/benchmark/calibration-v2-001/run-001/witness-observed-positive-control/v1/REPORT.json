@@ -1,0 +1,127 @@
+{
+  "evaluatorId": "sample-consequences-v1:4f8ca2ad29bfa2dfe8c453c3f97f6bb4f6780ab3579148204888d73bfec28941:ebbdf190674414c29ec2fc7632e8f72b6e3c305c5abd20b322cc8a077304f732",
+  "workflowHash": "7f57baec709fe62c3850a7d7d8110ec11e57a63cb178cf5aa12579d29e0d7cc3",
+  "registryHash": "bb3f73d712e174d3084248c8d199a620b7eeb2a7b2655d64b6286ab3af536d0e",
+  "suiteHash": "4f8ca2ad29bfa2dfe8c453c3f97f6bb4f6780ab3579148204888d73bfec28941",
+  "split": "diagnostic",
+  "qualificationLevel": "task-outcome",
+  "passed": true,
+  "metrics": {
+    "passedCount": 1,
+    "caseCount": 1,
+    "successFraction": 1,
+    "falseSuccessCount": 0,
+    "totalSteps": 4,
+    "totalCost": 0,
+    "elapsedMs": 24,
+    "missingCalls": 0,
+    "forbiddenCalls": 0,
+    "duplicateCalls": 0,
+    "syntheticCost": 11
+  },
+  "envelope": [
+    "Independent finite exposed evaluator review, not frozen-suite evaluation."
+  ],
+  "cases": [
+    {
+      "id": "own-positive",
+      "passed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "checks": [],
+      "artifacts": [
+        {
+          "name": "manifest.json",
+          "passed": true,
+          "sha256": "12597e52f6c2f089295825d8fe5bd9451aa07017c384bf88a8e2b64025782a87"
+        }
+      ],
+      "steps": 4,
+      "cost": 0,
+      "elapsedMs": 12,
+      "runId": "ca5962e2-9579-449d-83ef-94695be2d886",
+      "workspace": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/calibration-v2-001/run-001/witness-observed-positive-control/v1/case-0IFY6V",
+      "exception": null,
+      "runError": null,
+      "failedNodes": [],
+      "eventCount": 11,
+      "diagnostic": {
+        "input": {
+          "samples": [
+            {
+              "id": "independent-a"
+            }
+          ]
+        },
+        "expected": {
+          "statuses": [
+            "succeeded"
+          ],
+          "checks": [],
+          "artifacts": [
+            {
+              "name": "manifest.json",
+              "json": {
+                "samples": [
+                  {
+                    "sampleId": "independent-a",
+                    "disposition": "confirmed"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "nativePassed": true,
+      "instrumentAudit": {
+        "passed": true,
+        "problems": [],
+        "missingCalls": 0,
+        "forbiddenCalls": 0,
+        "duplicateCalls": 0,
+        "wrongOrder": 0,
+        "invalidObservations": 0,
+        "screenCalls": 1,
+        "reproduceCalls": 1,
+        "syntheticCost": 11,
+        "expectedSyntheticCost": 11
+      },
+      "instrumentLog": [
+        {
+          "ordinal": 1,
+          "instrument": "screen",
+          "sampleId": "independent-a",
+          "nodeKey": "root/screening",
+          "idempotencyKey": "74379951995f3f9832cc95a7476d4117298c1dfe01db4be8f963d1ada0e2275e",
+          "syntheticCost": 1,
+          "outcome": "returned",
+          "observation": {
+            "claim": "Untrusted claim text",
+            "ok": true,
+            "sampleId": "independent-a",
+            "suspicious": true
+          }
+        },
+        {
+          "ordinal": 2,
+          "instrument": "reproduce",
+          "sampleId": "independent-a",
+          "nodeKey": "root/reproduction",
+          "idempotencyKey": "df14dc8e84119780183431df9d647096e1fc37c12d50c019e7c82f68543b8d0f",
+          "syntheticCost": 10,
+          "outcome": "returned",
+          "observation": {
+            "evidenceId": "independent-evidence",
+            "independent": true,
+            "ok": true,
+            "reproduced": true,
+            "sampleId": "independent-a"
+          }
+        }
+      ]
+    }
+  ],
+  "qualification": "Fixed source-informed synthetic scenarios. Provider-hidden split only when withheld from synthesis; no population, autonomous discovery, production, or independent instrument calibration claim.",
+  "nativeEvaluatorId": "suite:own-positive:4f8ca2ad29bfa2dfe8c453c3f97f6bb4f6780ab3579148204888d73bfec28941"
+}

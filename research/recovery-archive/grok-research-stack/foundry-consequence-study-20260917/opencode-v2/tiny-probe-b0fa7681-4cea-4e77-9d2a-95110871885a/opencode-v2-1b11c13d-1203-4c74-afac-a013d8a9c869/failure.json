@@ -1,0 +1,5 @@
+{
+  "code": "PROCESS_FAILED",
+  "message": "/usr/bin/bwrap exited with 1",
+  "receipts": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/opencode-v2/tiny-probe-b0fa7681-4cea-4e77-9d2a-95110871885a/opencode-v2-1b11c13d-1203-4c74-afac-a013d8a9c869"
+}

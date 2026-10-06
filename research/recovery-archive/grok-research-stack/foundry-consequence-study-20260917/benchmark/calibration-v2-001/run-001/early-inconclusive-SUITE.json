@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "1.0",
+  "id": "v2-early-inconclusive",
+  "split": "diagnostic",
+  "task": "Process the supplied batch of samples. Give every sample one cheap screening attempt. Spend one independent reproduction attempt only on each sample whose screening observation explicitly says it is suspicious. Do not retry instruments. Report every input sample exactly once, in input order, in manifest.json, including failures and inconclusive observations. Call a defect confirmed only when its own independent reproduction returned complete positive evidence. A successful call, a reassuring claim, or a suspicious screening result alone is insufficient. A failed instrument must not prevent the other samples from being reported. Use only the supplied local capabilities; there is no network, external action or human approval to request.",
+  "cases": [
+    {
+      "id": "public-case",
+      "input": {
+        "samples": [
+          {
+            "id": "v2-public-sample"
+          }
+        ]
+      },
+      "fixture": {
+        "observations": {
+          "v2-public-sample": {
+            "screen": {
+              "returned": {
+                "sampleId": "v2-public-sample",
+                "ok": true
+              }
+            },
+            "reproduce": {
+              "returned": {
+                "sampleId": "v2-public-sample",
+                "ok": true,
+                "independent": true,
+                "evidenceId": "v2-public-evidence",
+                "reproduced": false
+              }
+            }
+          }
+        }
+      },
+      "expect": {
+        "statuses": [
+          "succeeded"
+        ],
+        "checks": [],
+        "artifacts": [
+          {
+            "name": "manifest.json",
+            "json": {
+              "samples": [
+                {
+                  "sampleId": "v2-public-sample",
+                  "disposition": "inconclusive"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

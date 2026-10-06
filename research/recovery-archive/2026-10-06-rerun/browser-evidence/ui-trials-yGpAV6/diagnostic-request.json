@@ -1,0 +1,30 @@
+{
+  "id": "7d92397f-dde4-4a33-a9ef-fe0d34872b29",
+  "workflowId": "UIRepairObserved",
+  "baseHash": "be548e190b4c0efa4ee7ced43afd9cb2fec634a181ee9cb4e9a70ae5559821de",
+  "text": "Preserve neutral values for UIRepairObserved; this is a handwritten integration fixture.",
+  "source": "agent-diagnostic",
+  "status": "diagnostic",
+  "createdAt": 1791274335323,
+  "parentRequestId": "5cb579f4-ff5a-4b33-aaf8-666d4808bc52",
+  "rootRequestId": "5cb579f4-ff5a-4b33-aaf8-666d4808bc52",
+  "repairDepth": 1,
+  "appliedProposalId": "21e78988-88e9-4e1f-bc22-be7c3476c425",
+  "failedRunId": "62355077-79c6-479d-9a8b-da47ca097a35",
+  "failureEventHead": {
+    "hash": "4f8c3da1b0a2f3739c76caa07f64054ea4833747402160ede13c2be45a56baad",
+    "seq": 5
+  },
+  "failure": {
+    "code": "ACCEPTANCE_FAILED",
+    "message": "Acceptance failed for root"
+  },
+  "diagnostic": "",
+  "diagnosticAuthority": "Untrusted agent commentary; not a new requirement, consent, policy or success oracle",
+  "goal": "Preserve the supplied values and inspect their actual execution.",
+  "successCriteria": [
+    "The output preserves the supplied values."
+  ],
+  "automaticGeneration": false,
+  "reused": false
+}

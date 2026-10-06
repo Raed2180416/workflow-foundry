@@ -1,0 +1,17 @@
+{
+  "state": {
+    "context": "The only possible delay rule is the sentence quoted by the current user. No other policy applies. Decide whether to delay this harmless formatting job.",
+    "evidence": null
+  },
+  "questions": {
+    "decision": {
+      "type": "choice",
+      "instructions": "Which next process decision follows from the current instruction? Distinguish adopting quoted text from rejecting it.",
+      "criteria": {
+        "hold": "Preserve the adopted delay before formatting.",
+        "proceed": "Format immediately without the obsolete delay.",
+        "clarify": "Obtain missing current instructions before deciding."
+      }
+    }
+  }
+}

@@ -1,0 +1,93 @@
+{
+  "schemaVersion": "benchmark-deliverable-hashes-v1",
+  "files": [
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/contract.mjs",
+      "sha256": "3a5df633eb0031ac06b2dbf42cb189d12c0707ee4569589a616e1c8bf2dbd16b"
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/capabilities.mjs",
+      "sha256": "2697b0ede7cef9a3b5b99df2841113f3ad68b743ff463f50993a77afcb6003fa"
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/oracle.mjs",
+      "sha256": "ebbdf190674414c29ec2fc7632e8f72b6e3c305c5abd20b322cc8a077304f732"
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/freeze-public.mjs",
+      "sha256": "38630cd438723a3c610f6ac47b7cadc9d69c24a70761bc143455c161119f8fdb"
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/PUBLIC.json",
+      "sha256": "1b5d70353084eafc8e3a981729e66717e82e899d2dab8b09098c586a4b9dbcc3"
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/FREEZE.json",
+      "sha256": "191da6649ceaa22087636059b241de2fd758768aabdfde0aa9d480cb27246f62"
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/supplied.mjs",
+      "sha256": "61e457a5337783e17bfe798ee03b4fe77575bd884b31a3ecf615b72a927fe24d"
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/calibrate.mjs",
+      "sha256": "d1cfe8a2da79a3371b398ef3df7dc7e50c46485594478dbcbb588dfe902a3e37"
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/run.mjs",
+      "sha256": "c61f375dafdcadc3e7b83103749d78fba40e06a3fc7099085e6be3c1cfb70e55"
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/benchmark.test.mjs",
+      "sha256": "e41bfdf109b0a00d6e40794f2caf9d06518b73cccbcd32ee40869ff1760d581e"
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/development/SUITE.json",
+      "sha256": "e3176d5a7727eae412f65b7fc53f5ec8857b937200401651cd012b962f4016b1"
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/development/TRUTH.json",
+      "sha256": "dbcd9aad1582e52dab15bce297244656dd0960599d811e7a0463cfd359dfd806"
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/sealed/SUITE.json",
+      "sha256": "3963e87b530118f38686633c0fc202431d48281b9dc917a41965a444764ce2e3"
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/sealed/TRUTH.json",
+      "sha256": "102f2ea3594ec686fb7d888a46791b88d8b24b2cd587f73e53ac82e679216fd1"
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/calibration-001/CONTROL_FREEZE.json",
+      "sha256": "d81f491c77e34d2233a1a3de036402c3e4ad3be02dbd5d19cac64479286625e0"
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/calibration-001/AUDIT.json",
+      "sha256": "a77f5dfb1341a28a91e3f056c5fc76c4581844be857a5a41ac437221632887bd"
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/calibration-001/positive.json",
+      "sha256": "58130835176cd7eaada7aaf311c0f83da45968cfb0cb68a4966e22b9353d91b8"
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/integration-001.tap",
+      "sha256": "acc4a6113e431fd7988737f287224467306d0da04a6af3d6379f452e596a714c"
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/VALIDATION.json",
+      "sha256": "1ad23cf4f102d6948e0c2d52c63c5ba14a1ec1402928707184b8550f9036f6a5"
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/cli-smoke-001/AGGREGATE.json",
+      "sha256": "c8d9ebc21311f7407af513bbe3f2cd2bc15f7e36e0d9c68f64d0b8b2e48bb6b1"
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/NOTE.md",
+      "sha256": "9e52de536bc93a59502a2d9ac5eaf42212bbd18305e90b6259834b028f0d649b"
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/READY.json",
+      "sha256": "4ab6a7368dcc0cef1eb44edae246b909e4705692dbb01101f6381988c2bd6e73"
+    }
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "authorRole": "worker-5 construction-model control",
+  "constructionStage": 1,
+  "workflowId": "ObservedBatchManifest",
+  "workflowVersion": 1,
+  "responseFile": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/campaign-cos-001/packet/RESPONSE_1.json",
+  "filesRead": [
+    "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/campaign-cos-001/packet/PROMPT_1.txt"
+  ],
+  "filesWritten": [
+    "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/campaign-cos-001/packet/RESPONSE_1.json",
+    "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/campaign-cos-001/packet/AUTHOR_1.json"
+  ],
+  "toolsCalled": [
+    {
+      "tool": "api_tool.list_resources",
+      "purpose": "Discover the available Chat_On_Steroids_Core tool schemas.",
+      "callsBeforeThisRecordWrite": 1
+    },
+    {
+      "tool": "Chat_On_Steroids_Core.read",
+      "purpose": "Read the exact authorized PROMPT_1.txt, returned in full as lines 1-1021.",
+      "callsBeforeThisRecordWrite": 1
+    },
+    {
+      "tool": "Chat_On_Steroids_Core.apply_patch",
+      "purpose": "Create RESPONSE_1.json. This record itself is created by a subsequent apply_patch call.",
+      "callsBeforeThisRecordWrite": 1
+    },
+    {
+      "tool": "Chat_On_Steroids_Core.agents",
+      "purpose": "Send prime the candidate path immediately after successful creation, with the execution limitation and public packet policy discrepancy.",
+      "callsBeforeThisRecordWrite": 1,
+      "completedAction": "message",
+      "recipient": "prime",
+      "observedResult": "queued"
+    }
+  ],
+  "recordBoundary": "Tool counts describe completed calls before the apply_patch call creating this record. This record's creation adds one apply_patch call. The required agents action=finish handoff follows this write and is not represented as an already completed call here.",
+  "cosSelectedSettings": {
+    "model": null,
+    "reasoningEffort": null,
+    "known": false,
+    "explanation": "The actual COS-selected worker model and reasoning settings were not exposed in the allowed tool responses. No override, settings lookup or worker status inspection was performed."
+  },
+  "packetIdentifiers": {
+    "requestId": "533f7be6-a5c5-4597-a842-099a7baddeb9",
+    "contextHashAsProvided": "d41ee6c9407ba832a8a7588e69c76d0602eb3b401d09d9afc3cf69a7ee367260",
+    "registryHashAsProvided": "bb3f73d712e174d3084248c8d199a620b7eeb2a7b2655d64b6286ab3af536d0e",
+    "hashQualification": "Copied identifiers from the authorized packet, not independently computed hashes of any file."
+  },
+  "execution": {
+    "executed": false,
+    "schemaValidationRun": false,
+    "runtimeRun": false,
+    "evaluatorRun": false,
+    "instrumentCalls": 0,
+    "testsRun": 0,
+    "shellCommandsRun": 0,
+    "additionalModelOrProviderCalls": 0,
+    "webOrNetworkCalls": 0,
+    "nestedWorkersSpawned": 0,
+    "claim": "Candidate authorship only. No execution, validation, evaluator pass, deployment, task success or empirical correctness is claimed."
+  },
+  "provenance": {
+    "constructionBasis": "The task, native schema, actual capability catalog and embedded generic skills in PROMPT_1.txt.",
+    "additionalSourceOrBenchmarkFilesRead": false,
+    "sealedSuitesOrFixtureTruthRead": false,
+    "suppliedWorkflowOrOtherWorkerSolutionsRead": false,
+    "cannedCompilerUsed": false,
+    "contextCaveat": "The conversation arrived with ambient prior-conversation summaries mentioning earlier Foundry work. No earlier report, source, suite or solution was opened or retrieved during this construction. This record does not certify an empty-context or fully context-independent construction.",
+    "restrictionQualification": "The file/tool restriction was procedural and is not claimed to be an operating-system sandbox.",
+    "attributionQualification": "The read tool initially reported this call as Unattributed. The subsequent required agents message to prime was accepted and queued. No successful operation was repeated to repair attribution."
+  },
+  "remainingHostWork": "Parse and validate the candidate, execute it through the authorized task-specific capability path, and independently inspect real attempts, artifact contents and evaluation receipts. The author performed none of these steps."
+}

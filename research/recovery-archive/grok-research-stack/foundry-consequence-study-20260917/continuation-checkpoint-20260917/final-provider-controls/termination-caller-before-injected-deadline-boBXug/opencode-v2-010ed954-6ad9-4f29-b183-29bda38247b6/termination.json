@@ -1,0 +1,49 @@
+{
+  "startedAt": 1789636409895,
+  "deadlineAt": 1789636413895,
+  "abortAt": 1789636410897,
+  "first": {
+    "kind": "caller",
+    "at": 1789636410897,
+    "code": "CANCELLED",
+    "error": {
+      "name": "FoundryError",
+      "code": "CANCELLED",
+      "message": "Generation cancelled"
+    }
+  },
+  "secondary": [
+    {
+      "kind": "deadline",
+      "at": 1789636410897,
+      "code": "TIMEOUT",
+      "error": {
+        "name": "FoundryError",
+        "code": "TIMEOUT",
+        "message": "Generation exceeded its total deadline"
+      }
+    },
+    {
+      "kind": "abort-observation",
+      "at": 1789636410898,
+      "code": "MODEL_TRANSPORT",
+      "error": {
+        "name": "AbortError",
+        "code": 20,
+        "message": "This operation was aborted"
+      }
+    },
+    {
+      "kind": "process",
+      "at": 1789636410901,
+      "code": "CANCELLED",
+      "error": {
+        "name": "FoundryError",
+        "code": "CANCELLED",
+        "message": "Subprocess cancelled"
+      }
+    }
+  ],
+  "finishedAt": 1789636410901,
+  "callerAborted": true
+}

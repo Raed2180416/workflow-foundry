@@ -1,0 +1,138 @@
+{
+  "evaluatorId": "sample-consequences-v1:f49db347a1e83375d1951bbfa845ac8aff0d35f556f297e14cd962d2767c2c58:ebbdf190674414c29ec2fc7632e8f72b6e3c305c5abd20b322cc8a077304f732",
+  "workflowHash": "842a30b73bfec6cc29ff4bc96e34dbad933b78a338aca87526880448efee75d7",
+  "registryHash": "bb3f73d712e174d3084248c8d199a620b7eeb2a7b2655d64b6286ab3af536d0e",
+  "suiteHash": "f49db347a1e83375d1951bbfa845ac8aff0d35f556f297e14cd962d2767c2c58",
+  "split": "diagnostic",
+  "qualificationLevel": "task-outcome",
+  "passed": true,
+  "metrics": {
+    "passedCount": 1,
+    "caseCount": 1,
+    "successFraction": 1,
+    "falseSuccessCount": 0,
+    "totalSteps": 3,
+    "totalCost": 0,
+    "elapsedMs": 23,
+    "missingCalls": 0,
+    "forbiddenCalls": 0,
+    "duplicateCalls": 0,
+    "syntheticCost": 11
+  },
+  "envelope": [
+    "Independent finite exposed evaluator review, not frozen-suite evaluation."
+  ],
+  "cases": [
+    {
+      "id": "own-invalid-repro",
+      "passed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "checks": [],
+      "artifacts": [
+        {
+          "name": "manifest.json",
+          "passed": true,
+          "sha256": "12597e52f6c2f089295825d8fe5bd9451aa07017c384bf88a8e2b64025782a87"
+        }
+      ],
+      "steps": 3,
+      "cost": 0,
+      "elapsedMs": 11,
+      "runId": "a91965ff-58ba-4f74-8c4f-50f15cc76857",
+      "workspace": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/calibration-v2-001/run-001/invalid-raw-invalid-reproduction-confirmed-v1/case-iUdcih",
+      "exception": null,
+      "runError": null,
+      "failedNodes": [
+        {
+          "nodeKey": "root/reproduction",
+          "status": "handled_error",
+          "tool": "lab.reproduce",
+          "error": {
+            "code": "SCHEMA_MISMATCH",
+            "message": "lab.reproduce output does not satisfy its schema"
+          }
+        }
+      ],
+      "eventCount": 10,
+      "diagnostic": {
+        "input": {
+          "samples": [
+            {
+              "id": "independent-a"
+            }
+          ]
+        },
+        "expected": {
+          "statuses": [
+            "succeeded"
+          ],
+          "checks": [],
+          "artifacts": [
+            {
+              "name": "manifest.json",
+              "json": {
+                "samples": [
+                  {
+                    "sampleId": "independent-a",
+                    "disposition": "confirmed"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "nativePassed": true,
+      "instrumentAudit": {
+        "passed": true,
+        "problems": [],
+        "missingCalls": 0,
+        "forbiddenCalls": 0,
+        "duplicateCalls": 0,
+        "wrongOrder": 0,
+        "invalidObservations": 0,
+        "screenCalls": 1,
+        "reproduceCalls": 1,
+        "syntheticCost": 11,
+        "expectedSyntheticCost": 11
+      },
+      "instrumentLog": [
+        {
+          "ordinal": 1,
+          "instrument": "screen",
+          "sampleId": "independent-a",
+          "nodeKey": "root/screening",
+          "idempotencyKey": "d74cc76797dab3335eaf1312c9f4290ba963cd058fa18c80a0b97115f8864d25",
+          "syntheticCost": 1,
+          "outcome": "returned",
+          "observation": {
+            "claim": "Untrusted claim text",
+            "ok": true,
+            "sampleId": "independent-a",
+            "suspicious": true
+          }
+        },
+        {
+          "ordinal": 2,
+          "instrument": "reproduce",
+          "sampleId": "independent-a",
+          "nodeKey": "root/reproduction",
+          "idempotencyKey": "49ccecd9ec27e9cd2ddd2a5bcaa6b056b541645e483bd6be55b3571a3f45d8c1",
+          "syntheticCost": 10,
+          "outcome": "returned",
+          "observation": {
+            "evidenceId": "independent-evidence",
+            "independent": true,
+            "ok": true,
+            "reproduced": true,
+            "sampleId": "independent-a",
+            "undeclared": "invalid output"
+          }
+        }
+      ]
+    }
+  ],
+  "qualification": "Fixed source-informed synthetic scenarios. Provider-hidden split only when withheld from synthesis; no population, autonomous discovery, production, or independent instrument calibration claim.",
+  "nativeEvaluatorId": "suite:own-invalid-repro:f49db347a1e83375d1951bbfa845ac8aff0d35f556f297e14cd962d2767c2c58"
+}

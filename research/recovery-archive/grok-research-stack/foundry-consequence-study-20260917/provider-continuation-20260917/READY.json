@@ -1,0 +1,83 @@
+{
+  "status": "READY_FOR_PRIME_REVIEW_NO_DISPATCH",
+  "at": "2026-09-17T08:51:21.461Z",
+  "protocolSHA256": "0ddea4e6e18e524e0f843bb55b002e702b4b9e79838d37789d47f7c1fb762ae3",
+  "driverSHA256": "fd0395d1a60fee4a1407411dcb748089bc7af966988b2422aabbcdb06074c272",
+  "testSHA256": "84c24d508f6e06a3f69256a4eec8c7881a38e9b3e44507cb1f0a66c03dfb2cda",
+  "sourceCount": 41,
+  "configuration": {
+    "model": "opencode/big-pickle",
+    "providerTimeoutMs": 150000,
+    "maxOutputTokens": 8192,
+    "maxRounds": 2,
+    "maxDurationMs": 360000,
+    "autoApply": false,
+    "domain": "general",
+    "policy": {
+      "maxSteps": 160,
+      "maxConcurrency": 2,
+      "maxDurationMs": 30000,
+      "maxCost": 0
+    },
+    "evaluation": {
+      "revision": "v2",
+      "developmentCases": 5,
+      "withheldCases": 8,
+      "appliedCase": "first-nonempty-development",
+      "publicTask": "unchanged-v1-public-contract",
+      "allProcessingBeforePublication": "non-gating-diagnostic"
+    },
+    "providerErrors": "stop; no retry or paid/model fallback",
+    "tools": "output-only provider; native synthetic runtime",
+    "authority": "explicit research-only apply after both suites pass",
+    "visibility": "public task/schema/capabilities/skills and development feedback only; withheld outcomes never repair input",
+    "qualification": "one bounded construction trajectory; unknown model scale; no matched model comparison or general task-success claim"
+  },
+  "verification": {
+    "receipt": "checks-ac2400b7-40c7-4609-bf72-50e1f3f0bde5/RESULT.json",
+    "passed": 23,
+    "failed": 0,
+    "sourceStable": true
+  },
+  "nativeSetup": {
+    "receipt": "offline-fixtures-mC1rsO/NATIVE_SETUP.json",
+    "passed": true,
+    "requestStatusBeforeCapture": "diagnostic",
+    "requestStatusAfterCapture": "failed",
+    "automaticGeneration": false,
+    "taskSHA256": "f5eb99642468d90583162ac60539f808f074083ace570da0178509bad4b1f650",
+    "registryHash": "bb3f73d712e174d3084248c8d199a620b7eeb2a7b2655d64b6286ab3af536d0e",
+    "selectedSkills": [
+      "workflow-foundry",
+      "runtime-native"
+    ],
+    "promptBytes": 48508,
+    "promptSHA256": "8a155570a83b8e3fe69877daddd0b86cf8a0d587c28c227bac43cd04d6b2b274",
+    "providerCallback": "supplied capture-only failure",
+    "jobStatus": "failed",
+    "expectedStop": "PREFLIGHT_CAPTURE_ONLY",
+    "modelCalls": 0,
+    "suiteLoads": 0,
+    "runtimeExecutions": 0,
+    "priorCOSPromptByteEqualityClaimed": false
+  },
+  "jevAccess": "No key/OIDC in command/default-login context and no supported source launcher; explicit /bin/fish unavailable",
+  "outputsNotCreatedByWorker": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/campaign-opencode-v2-continuation-001",
+  "outputDirectoryCurrentlyExists": false,
+  "modelCalls": 0,
+  "fullCampaignRuns": 0,
+  "suitesLoaded": 0,
+  "reportHashes": {
+    "NOTE.md": "5597d5e5ea59fc8ae28ffebe80a2eda709507a257b90dc8d67cb5351f159ce5c",
+    "ACCESS.json": "0383457d91d2b520c034fdbc32f7e1ae24b72f2e3d4cc5652bfdb232b11cb669",
+    "LOGIN_ACCESS.json": "878dd9e0dd62cba4f595a21f7ec14fd1dc189c31b6db48f151c3813e28270585",
+    "LOGIN_SHELL_ATTEMPT.json": "01c28e5e8c70007bbf0bfefd91493ae5a1ca0e5385c7bbcfe3ab0b37c11b42ac",
+    "WEB-SOURCES.json": "51b07522700c45078c379dfd0f64641503b1efa71f609b68654fa253a2856870"
+  },
+  "limits": [
+    "Long-task model generation remains untested.",
+    "Provider data retention is not zero-retention for free Big Pickle.",
+    "Plugin evidence blocked HTTP404 tunnel_client_not_seen.",
+    "No model parameter scale or matched-model comparison claimed."
+  ]
+}

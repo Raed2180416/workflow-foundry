@@ -1,0 +1,929 @@
+{
+  "schemaVersion": "outcome-model-independent-initial-review/1",
+  "reviewer": "worker-6",
+  "startedAt": "2026-09-17T08:46:52.538Z",
+  "finishedAt": "2026-09-17T08:46:52.555Z",
+  "phase": "initial-prepared-evidence-and-released-first-prompt",
+  "verdict": "PREPARED_WITNESS_AND_FIRST_PROMPT_VALID_MODEL_ATTRIBUTION_PENDING",
+  "evidenceChecksPassed": true,
+  "checkCount": 18,
+  "passedChecks": 18,
+  "failedChecks": 0,
+  "actualModelRepairAudited": false,
+  "finalizedResultsReleaseReceived": false,
+  "operations": {
+    "newWorkflowRuns": 0,
+    "generationCalls": 0,
+    "modelCalls": 0,
+    "trainingUpdates": 0,
+    "databaseMode": "readOnly; SELECT of original preparation records only",
+    "sealedSuites": "raw freeze hashes only; hidden cases not parsed or emitted",
+    "existingFileEdits": 0,
+    "responseOrResultsReads": 0
+  },
+  "tooling": {
+    "serena": "initial_instructions failed: HTTP 404 tunnel_client_not_seen; no Serena verification claimed",
+    "core": "reads and commands succeeded; chat identity recovered and messages to prime queued"
+  },
+  "protocol": {
+    "sha256": "2ff139b58bc279fa82cbf1ba4066b5f3a164a121d889c362264a894852964e6c",
+    "frozenAt": "2026-09-17T08:40:29.081Z",
+    "sourceHash": "f8511ee1b4b763c6b7c45fa2016bfbc1d3dd0118adc7791595ab1a09bcaad0e6"
+  },
+  "witness": {
+    "originalWorkflowHash": "5cc364ca2bd741330968016c582f6f6c2f4464aff5e3a75a99d2c9b908f62510",
+    "faultyWorkflowHash": "ace61076c1694141ff04e4ab29e7cf8713af7087755e646e4476fb559a21ccd8",
+    "runId": "7ba1aaee-dae6-43da-9752-8897539ed594",
+    "status": "succeeded",
+    "outcome": "unsatisfied",
+    "contractId": "da28a44ea33ba76cbb38a9f4ed0a2ef9a9f978b0f9dbab2e1fa607f15c0ccf88",
+    "observationId": "dadf02f676ab22bee8b2afa0a37409c767c002dcc59a055a6a0fc40f5c589a1f",
+    "artifactSha256": "d5d09b605d535b6070b95ed81aaf6a30948edc3fb737b32c57fa515a9b9b2417",
+    "contextHash": "b4e909c3a8860f9d5bfb9a118be11b35d641b11b87c1ffece8e794c53ebc82ec"
+  },
+  "checks": [
+    {
+      "name": "protocol-content-digest",
+      "passed": true,
+      "detail": {
+        "configurationSha256": "2ff139b58bc279fa82cbf1ba4066b5f3a164a121d889c362264a894852964e6c",
+        "identityStatus": "declaration; not model attestation"
+      }
+    },
+    {
+      "name": "all-declared-source-and-freeze-file-hashes",
+      "passed": true,
+      "detail": {
+        "entries": 116,
+        "uniqueFiles": 93,
+        "node": "v24.21.0"
+      }
+    },
+    {
+      "name": "original-candidate-preserved",
+      "passed": true,
+      "detail": {
+        "workflowHash": "5cc364ca2bd741330968016c582f6f6c2f4464aff5e3a75a99d2c9b908f62510",
+        "originalFileSha256": "7b51b07412abd66ea0af9fb10d129beb64ba4c31c52f126820151ebf85746c55",
+        "preparedCopyByteIdentical": true
+      }
+    },
+    {
+      "name": "exactly-one-fault-scalar",
+      "passed": true,
+      "detail": [
+        {
+          "path": "/nodes/0/body/nodes/6/args/disposition",
+          "before": "confirmed",
+          "after": "inconclusive"
+        }
+      ]
+    },
+    {
+      "name": "prepared-case-is-frozen-development-case",
+      "passed": true,
+      "detail": {
+        "caseId": "dev-basic",
+        "suiteSha256": "0edadddb1f94f88cdbaebdfbc382d3f18d7c6faac720bc066ba3fb79ccf0e005",
+        "caseCount": 5
+      }
+    },
+    {
+      "name": "frozen-expectation-and-contract-identifier",
+      "passed": true,
+      "detail": {
+        "expected": {
+          "samples": [
+            {
+              "sampleId": "dev-a",
+              "disposition": "clear"
+            },
+            {
+              "sampleId": "dev-b",
+              "disposition": "confirmed"
+            },
+            {
+              "sampleId": "dev-c",
+              "disposition": "not_reproduced"
+            }
+          ]
+        },
+        "evaluator": {
+          "id": "frozen-development-manifest/1",
+          "kind": "exact-json-artifact/2",
+          "implementationHash": "8de15af4b6ce842c3e54039531c651472a9079a231bf31390f4a8f95b924f1fd",
+          "dataImplementationHash": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c",
+          "node": "v24.21.0",
+          "comparison": "Foundry canonical JSON: object order ignored, array order retained; bounded finite JS numbers"
+        }
+      }
+    },
+    {
+      "name": "recorded-local-chronology",
+      "passed": true,
+      "detail": {
+        "v2Freeze": 1789615389470,
+        "protocolFreeze": 1789634429081,
+        "requestCreated": 1789634429104,
+        "contractFileMtime": 1789634429112.337,
+        "proposalCreated": 1789634429115,
+        "runCreated": 1789634429124,
+        "runFinished": 1789634429330,
+        "observed": 1789634429338,
+        "repairRequested": 1789634429345,
+        "ready": 1789634429355,
+        "qualification": "Local timestamps and frozen source control flow; no remote timestamp attestation. Contract registration has no embedded creation timestamp."
+      }
+    },
+    {
+      "name": "native-run-and-67-event-chain",
+      "passed": true,
+      "detail": {
+        "eventCount": 67,
+        "eventHead": {
+          "seq": 67,
+          "hash": "e3157f63c89161a0a0acf52727e13dc2c252c8980014b563fe515512eea1ad71"
+        },
+        "eventsHash": "baf107dbfe7d6505a45a5b8efd3d6ba5ccb7b019eeb9adfbfb533ca6864e2e2f"
+      }
+    },
+    {
+      "name": "instrument-logs-completed-outputs-and-required-attempts",
+      "passed": true,
+      "detail": {
+        "screen": 3,
+        "reproduce": 2,
+        "syntheticCost": 23,
+        "instrumentLogHash": "ff274bd680bbfbd5f24ef679d036932167a3b778ad3702e22f4787f041fb91c5",
+        "attempts": [
+          {
+            "sampleId": "dev-a",
+            "instrument": "screen",
+            "intent": 5,
+            "completed": 6
+          },
+          {
+            "sampleId": "dev-b",
+            "instrument": "screen",
+            "intent": 21,
+            "completed": 22
+          },
+          {
+            "sampleId": "dev-b",
+            "instrument": "reproduce",
+            "intent": 25,
+            "completed": 26
+          },
+          {
+            "sampleId": "dev-c",
+            "instrument": "screen",
+            "intent": 38,
+            "completed": 39
+          },
+          {
+            "sampleId": "dev-c",
+            "instrument": "reproduce",
+            "intent": 42,
+            "completed": 43
+          }
+        ]
+      }
+    },
+    {
+      "name": "actual-artifact-bytes-publication-and-wrong-content",
+      "passed": true,
+      "detail": {
+        "bytes": 244,
+        "sha256": "d5d09b605d535b6070b95ed81aaf6a30948edc3fb737b32c57fa515a9b9b2417",
+        "publicationStart": 65,
+        "publicationCompleted": 66,
+        "mismatch": [
+          {
+            "path": "/samples/1/disposition",
+            "before": "confirmed",
+            "after": "inconclusive"
+          }
+        ]
+      }
+    },
+    {
+      "name": "observation-identifier-and-run-bindings",
+      "passed": true,
+      "detail": {
+        "receiptId": "dadf02f676ab22bee8b2afa0a37409c767c002dcc59a055a6a0fc40f5c589a1f",
+        "runStatus": "succeeded",
+        "outcome": "unsatisfied"
+      }
+    },
+    {
+      "name": "live-database-original-applied-state-and-receipts-read-only",
+      "passed": true,
+      "detail": {
+        "originalRequestStatus": "applied",
+        "originalProposalStatus": "applied",
+        "proposalAppliedAt": 1789634429119,
+        "initialSnapshotStatuses": [
+          "pending",
+          "proposed"
+        ],
+        "qualification": "Only original prepare records read; no generation jobs or repaired proposals inspected."
+      }
+    },
+    {
+      "name": "repair-lineage-fixed-intent-and-no-failed-run-relabel",
+      "passed": true,
+      "detail": {
+        "requestId": "6621f9e3-5cf6-4f01-a04b-539ef84828f7",
+        "baseHash": "ace61076c1694141ff04e4ab29e7cf8713af7087755e646e4476fb559a21ccd8",
+        "repairDepth": 1
+      }
+    },
+    {
+      "name": "prepared-context-and-bounded-comparison-bindings",
+      "passed": true,
+      "detail": {
+        "contextHash": "b4e909c3a8860f9d5bfb9a118be11b35d641b11b87c1ffece8e794c53ebc82ec",
+        "comparisonEntries": 1,
+        "scope": "Prepared context only; actual generator context/prompt requires a later equality check."
+      }
+    },
+    {
+      "name": "prepared-selected-skills-match-current-bytes",
+      "passed": true,
+      "detail": [
+        {
+          "name": "workflow-foundry",
+          "sha256": "1441e8eb44a5b55bacd30f5a09ddd51b3243bf28cba07ae30b2debd224deaba0",
+          "coveredByFreeze": false
+        },
+        {
+          "name": "runtime-native",
+          "sha256": "a1b1598e663218bc36247d2641119858f9cb4204b3c4a44086640cbb54db4f16",
+          "coveredByFreeze": false
+        },
+        {
+          "name": "human-steering",
+          "sha256": "d11e1053b8a7bb3de227aa59f664655c3265452e5c0d7ad4eda4a36918110b02",
+          "coveredByFreeze": true
+        }
+      ]
+    },
+    {
+      "name": "released-native-first-prompt-exactly-matches-prepared-context",
+      "passed": true,
+      "detail": {
+        "callAt": "2026-09-17T08:44:57.255Z",
+        "checkedAt": "2026-09-17T08:46:52.553Z",
+        "promptSha256": "5666f633cf69d4c9fc4d4ccc3748eb73f37def5dc835e2cda8144286436d761b",
+        "preparedContextHash": "b4e909c3a8860f9d5bfb9a118be11b35d641b11b87c1ffece8e794c53ebc82ec",
+        "protocolConfigurationSha256": "2ff139b58bc279fa82cbf1ba4066b5f3a164a121d889c362264a894852964e6c",
+        "responseFileAlreadyExists": false,
+        "authorFileAlreadyExists": false,
+        "sourceGapDisposition": "Run-specific first-prompt equality established independently. Generic missing enforcement remains in the frozen driver.",
+        "modelIdentity": "CALL fields agree with protocol declarations; this is not trusted model attestation."
+      }
+    },
+    {
+      "name": "known-native-engine-identity-recomputed",
+      "passed": true,
+      "detail": {
+        "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+        "node": "v24.21.0",
+        "validator": "ajv@8.20.0"
+      }
+    },
+    {
+      "name": "prepared-and-frozen-inputs-still-byte-identical-after-checks",
+      "passed": true,
+      "detail": {
+        "files": 111
+      }
+    }
+  ],
+  "findings": [
+    {
+      "id": "B1",
+      "severity": "claim-blocking",
+      "category": "authorship-binding",
+      "status": "open-in-frozen-source",
+      "source": "relay-provider.mjs:13-19,21-45; outcome-campaign.mjs:30-40,125-134",
+      "finding": "Relay hashes arbitrary AUTHOR bytes without parsing or validating them. Static provider identity and file presence do not verify the author, model, reasoning, round, request, protocol, prompt or response claims.",
+      "consequence": "A passing campaign does not alone prove exact actual-model authorship. No wrong-author event is asserted to have occurred.",
+      "closure": "Independently verify a trusted COS execution/spawn record plus exact AUTHOR/PROMPT/RESPONSE/CALL/RECEIVED/job binding; retain an additive receipt. Do not edit the frozen source to erase this finding."
+    },
+    {
+      "id": "B2",
+      "severity": "source-gap",
+      "category": "prepared-context-freeze",
+      "status": "generic-enforcement-gap; first-prompt-equality-independently-checked",
+      "source": "outcome-campaign.mjs:26-46,107-117,125-131; src/generator.mjs:37-55; src/foundry.mjs:120-135",
+      "finding": "The generator regenerates its context without comparison with saved REPAIR_CONTEXT. Two selected skills are outside all declared freeze lists; prepared sidecars are not hashed by PROTOCOL.",
+      "missingSkills": [
+        "workflow-foundry",
+        "runtime-native"
+      ],
+      "runSpecificCheck": "released-native-first-prompt-exactly-matches-prepared-context",
+      "consequence": "checkProtocol alone cannot establish the exact prepared prompt. Current selected-skill bytes are separately checked here; no drift is asserted.",
+      "closure": "Bind an additive pre-dispatch packet/skill/context receipt to the protocol, then compare actual generation context and exact prompt bytes before treating the run as the frozen prepared experiment."
+    },
+    {
+      "id": "L1",
+      "severity": "claim-limit",
+      "category": "repair-attribution",
+      "finding": "The researcher injected a one-field defect into the same builder's earlier solution and supplied explicit expected development output. Restoration may use retained construction context. This cannot establish novel diagnosis from outcome evidence alone, autonomous fault discovery, learning, or unseen-task generalization."
+    },
+    {
+      "id": "L2",
+      "severity": "claim-limit",
+      "category": "withheld-regression",
+      "finding": "The source freezes the repaired candidate before the eight fixed provider-withheld cases, aborts on failure, and keeps sealed evaluation out of generator feedback. These are previously existing finite regression cases, with procedural withholding, not a fresh distribution or an OS sandbox."
+    },
+    {
+      "id": "L3",
+      "severity": "claim-limit",
+      "category": "publication",
+      "finding": "V2 gates complete positive reproduction before confirmed-row publication. All-status completion is a non-gating diagnostic; temporal order does not establish causal use. The saved wrong run independently satisfies the stronger ordering as an observed fact."
+    },
+    {
+      "id": "N1",
+      "severity": "note",
+      "category": "snapshot-semantics",
+      "finding": "INITIAL_REQUEST and FAULT_PROPOSAL are pending/proposed return-value snapshots. Applied request/proposal hashes in WRONG_OBSERVATION must be checked against the live original database records, as this audit does."
+    }
+  ],
+  "selectedSkillFreezeCoverage": [
+    {
+      "name": "workflow-foundry",
+      "sha256": "1441e8eb44a5b55bacd30f5a09ddd51b3243bf28cba07ae30b2debd224deaba0",
+      "coveredByFreeze": false
+    },
+    {
+      "name": "runtime-native",
+      "sha256": "a1b1598e663218bc36247d2641119858f9cb4204b3c4a44086640cbb54db4f16",
+      "coveredByFreeze": false
+    },
+    {
+      "name": "human-steering",
+      "sha256": "d11e1053b8a7bb3de227aa59f664655c3265452e5c0d7ad4eda4a36918110b02",
+      "coveredByFreeze": true
+    }
+  ],
+  "inputHashes": [
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/outcome-model-001/PROTOCOL.json",
+      "sha256": "7b27715e4004b9e6ee630bf55d26d4e022fa61a6234f6eadba75147dab49ef89",
+      "bytes": 2826
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/outcome-model-001/READY.json",
+      "sha256": "6d943cefe54d53a0c863757192c15dbb27a0a94262d463c8f9cd80308765367d",
+      "bytes": 763
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/outcome-model-001/ORIGINAL_MODEL_CANDIDATE.json",
+      "sha256": "7b51b07412abd66ea0af9fb10d129beb64ba4c31c52f126820151ebf85746c55",
+      "bytes": 21961
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/outcome-model-001/FAULTY_CANDIDATE.json",
+      "sha256": "71ea0afbb20153bc11bd158bf76d4889c31071caedbd94c02323d1f3ccf69ac2",
+      "bytes": 21964
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/outcome-model-001/INITIAL_REQUEST.json",
+      "sha256": "c9cf599f5fb9168f87b48f23db9f62901f914ef66eaf08a856201b835ff973c8",
+      "bytes": 4207
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/outcome-model-001/FAULT_PROPOSAL.json",
+      "sha256": "5092e7f771e61eb6b92f7a08de1cae61dc8ea1e3f1a15eca87411935b99ec3c7",
+      "bytes": 24769
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/outcome-model-001/DEVELOPMENT_CASE.json",
+      "sha256": "d6e6bc16b7e7b669290ea0fbc006e8d7083d4c2fde486da0b9e5824e66542225",
+      "bytes": 2085
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/outcome-model-001/CONTRACT.json",
+      "sha256": "8f1897a63a9fbe9dbff81094a00701cb390bbd6fca7c316f2fa6c007a5bb8414",
+      "bytes": 1345
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/outcome-model-001/WRONG_EXECUTION.json",
+      "sha256": "ad9afeb44a5ec00d7b5030fb410c4bb4e6f8a2c05389eebc1b42c40bee134163",
+      "bytes": 66865
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/outcome-model-001/WRONG_OBSERVATION.json",
+      "sha256": "2c237e4a165686e6cdfacad82274ed5af2f3a60aa6bd6912628fdeef0033bc69",
+      "bytes": 2494
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/outcome-model-001/REPAIR_REQUEST.json",
+      "sha256": "fdb6f4e943abc90b798b91c4f231ace0a2e454ac9bf5b66541b82eb5038cebc3",
+      "bytes": 6667
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/outcome-model-001/REPAIR_CONTEXT.json",
+      "sha256": "0d0eee0d57dee326b3919090ba9aac849b598223b3b2e9c1e8019b8c6c52aa58",
+      "bytes": 81707
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/FREEZE.json",
+      "sha256": "191da6649ceaa22087636059b241de2fd758768aabdfde0aa9d480cb27246f62",
+      "bytes": 4985
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/FREEZE_V2.json",
+      "sha256": "5e4af4f2d1b3e90e65373cc40b4e8857d9248e769ee47b8dd79fa9d72e4595d2",
+      "bytes": 23851
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/campaign-cos-001/CANDIDATE.json",
+      "sha256": "7b51b07412abd66ea0af9fb10d129beb64ba4c31c52f126820151ebf85746c55",
+      "bytes": 21961
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/outcome-campaign.mjs",
+      "sha256": "f8511ee1b4b763c6b7c45fa2016bfbc1d3dd0118adc7791595ab1a09bcaad0e6",
+      "bytes": 13750
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/relay-provider.mjs",
+      "sha256": "73c148299c37cfbe2c8e5fdef60bb264e8c3968555df3c5e55c9842e96410db7",
+      "bytes": 3355
+    },
+    {
+      "path": "/home/raed/Projects/workflow-foundry/src/outcome-repair.mjs",
+      "sha256": "8de15af4b6ce842c3e54039531c651472a9079a231bf31390f4a8f95b924f1fd",
+      "bytes": 27837
+    },
+    {
+      "path": "/home/raed/Projects/workflow-foundry/skills/human-steering/SKILL.md",
+      "sha256": "d11e1053b8a7bb3de227aa59f664655c3265452e5c0d7ad4eda4a36918110b02",
+      "bytes": 3754
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/contract.mjs",
+      "sha256": "3a5df633eb0031ac06b2dbf42cb189d12c0707ee4569589a616e1c8bf2dbd16b",
+      "bytes": 5813
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/capabilities.mjs",
+      "sha256": "2697b0ede7cef9a3b5b99df2841113f3ad68b743ff463f50993a77afcb6003fa",
+      "bytes": 3758
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/oracle.mjs",
+      "sha256": "ebbdf190674414c29ec2fc7632e8f72b6e3c305c5abd20b322cc8a077304f732",
+      "bytes": 10070
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/freeze-public.mjs",
+      "sha256": "38630cd438723a3c610f6ac47b7cadc9d69c24a70761bc143455c161119f8fdb",
+      "bytes": 4378
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/PUBLIC.json",
+      "sha256": "1b5d70353084eafc8e3a981729e66717e82e899d2dab8b09098c586a4b9dbcc3",
+      "bytes": 17975
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/development/SUITE.json",
+      "sha256": "e3176d5a7727eae412f65b7fc53f5ec8857b937200401651cd012b962f4016b1",
+      "bytes": 10331
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/development/TRUTH.json",
+      "sha256": "dbcd9aad1582e52dab15bce297244656dd0960599d811e7a0463cfd359dfd806",
+      "bytes": 696
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/sealed/SUITE.json",
+      "sha256": "3963e87b530118f38686633c0fc202431d48281b9dc917a41965a444764ce2e3",
+      "bytes": 18290
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/sealed/TRUTH.json",
+      "sha256": "102f2ea3594ec686fb7d888a46791b88d8b24b2cd587f73e53ac82e679216fd1",
+      "bytes": 1091
+    },
+    {
+      "path": "/home/raed/Projects/workflow-foundry/src/runtime.mjs",
+      "sha256": "af9fcabde20f706fac8ce2e09c0e646c0f100b301b64d1f6e1e4eb77e0b213db",
+      "bytes": 26521
+    },
+    {
+      "path": "/home/raed/Projects/workflow-foundry/src/evaluation.mjs",
+      "sha256": "64d42f9120e36b90bc7d194d5550773f00c1bb19d96c03f10ea8d194e6dd3d6f",
+      "bytes": 12598
+    },
+    {
+      "path": "/home/raed/Projects/workflow-foundry/src/capabilities.mjs",
+      "sha256": "1707d4506f50e86498fa471dc3c8714615e6c06a1240014f2515aab58cc3ac49",
+      "bytes": 14870
+    },
+    {
+      "path": "/home/raed/Projects/workflow-foundry/src/data.mjs",
+      "sha256": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c",
+      "bytes": 5496
+    },
+    {
+      "path": "/home/raed/Projects/workflow-foundry/src/store.mjs",
+      "sha256": "61288a25c85a8dd1e1e076ca5059aedf80c35dc26bf0ab613c31030743a34732",
+      "bytes": 28407
+    },
+    {
+      "path": "/home/raed/Projects/workflow-foundry/src/validate.mjs",
+      "sha256": "8b698d552e151f3380af58cbce5675b0a94c48601c9acd427be71281a3696c33",
+      "bytes": 10911
+    },
+    {
+      "path": "/home/raed/Projects/workflow-foundry/src/dataflow.mjs",
+      "sha256": "7f3c4894b32f5dbe691ba3c871e088da8b083f42e7b653404972b647c9e9d41e",
+      "bytes": 15365
+    },
+    {
+      "path": "/home/raed/Projects/workflow-foundry/src/engine.mjs",
+      "sha256": "6872eecabd6e4ccce58b7db25df82b1a97a292e530e0c38090e15844d5d7ed52",
+      "bytes": 1480
+    },
+    {
+      "path": "/home/raed/Projects/workflow-foundry/src/foundry.mjs",
+      "sha256": "95f102573760ef92cd352813f66b30cd9f83bda05afb97a4cbe1069c8527a878",
+      "bytes": 13295
+    },
+    {
+      "path": "/home/raed/Projects/workflow-foundry/src/generator.mjs",
+      "sha256": "3d86d95eaf4a2b6ee83d5fb50696a689926075adae4eeb4d8c25450c442fb11a",
+      "bytes": 12541
+    },
+    {
+      "path": "/home/raed/Projects/workflow-foundry/src/trials.mjs",
+      "sha256": "4ab066bb285245ae70ead081fa8de88e728dfc8f58eef77f50bf2a667117f437",
+      "bytes": 9794
+    },
+    {
+      "path": "/home/raed/Projects/workflow-foundry/schemas/workflow.schema.json",
+      "sha256": "e72b1d4bb1e01f4f21256b042853faa8505859f30741b4093aea59909ac4e1bc",
+      "bytes": 6010
+    },
+    {
+      "path": "/home/raed/Projects/workflow-foundry/package.json",
+      "sha256": "cb314fd60e0b59c2fed9782c66d8ddc889ce64b4add93ed499eb3e6de139cf5a",
+      "bytes": 1779
+    },
+    {
+      "path": "/home/raed/Projects/workflow-foundry/package-lock.json",
+      "sha256": "7bddd5dfb8cd6e3717d54cd8c184c297b0e166ad4bbdb9645d369290b06a9af9",
+      "bytes": 43727
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/oracle-v2.mjs",
+      "sha256": "517b7e60d3e674f7fc1189dac8f468dd19d9f6800467a5998fde6a38fbd66e15",
+      "bytes": 22749
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/supplied.mjs",
+      "sha256": "61e457a5337783e17bfe798ee03b4fe77575bd884b31a3ecf615b72a927fe24d",
+      "bytes": 6694
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/calibration-001/AUDIT.json",
+      "sha256": "a77f5dfb1341a28a91e3f056c5fc76c4581844be857a5a41ac437221632887bd",
+      "bytes": 19034
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/calibration-v2-001/prepare.mjs",
+      "sha256": "1a3d912da0e6f84e8af311cf25fb26d49237e918e09b4082ee57426fe1147dea",
+      "bytes": 3308
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/calibration-v2-001/check.mjs",
+      "sha256": "f9c2ae4a11e868f2d9e1aadb5e3bd038e4459dc05abdc0d8dd36c22c44958cde",
+      "bytes": 14622
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/NOTE.md",
+      "sha256": "23ae4819819121c526694e130fe8c8e83f53f2b4b562025d6c09500a5c1d6639",
+      "bytes": 13595
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/AUDIT.json",
+      "sha256": "820e8667a838ed04948a60fdecc0883ccdf28ffa2eeea3b5e137cc10f9a25350",
+      "bytes": 35198
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/check.mjs",
+      "sha256": "8cd369c3bb3b914ef9954268f5bbc1c776d833ad5f974bf95e0593a78d271f5e",
+      "bytes": 18686
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/PRE_REVIEW.json",
+      "sha256": "2b9018fec98e34d18d35013630dfeff68e8aa6fd5a5625934dd744891092f4e0",
+      "bytes": 8266
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/early-confirmation/WORKFLOW.json",
+      "sha256": "07f2ad9718c9fff16564fb02dd26328fdba35d97abb0bb61a73acf0cc6cc2c2a",
+      "bytes": 2489
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/early-confirmation/SUITE.json",
+      "sha256": "a58ea7d3f14b46688e78a06c04de154f7780606f6768d89322520270863426cd",
+      "bytes": 2143
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/early-confirmation/RESULT.json",
+      "sha256": "13f2b8ac8c77e5671ce5da5f39723e6fa53f7fd67557e40b6ae07b4b6a11d2df",
+      "bytes": 1117
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/early-confirmation/TRACE-0.json",
+      "sha256": "65d8ae5ac8e8797d6853ee2de0e92a20d9fb4756dc2349bfbcfa2200b244ad40",
+      "bytes": 4356
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/early-confirmation/LOG-0.json",
+      "sha256": "7c71c2d55cc2dca186be1030274f466f7cbd4e88c276e5e47d0019d1ba2f70e9",
+      "bytes": 854
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/early-confirmation/RUN-0.json",
+      "sha256": "8671b9a2b0de983f5d4fd5e11b80d36ce901dd70ab4cedae593edfe3a11b637b",
+      "bytes": 3363
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/early-confirmation-counterfactual/WORKFLOW.json",
+      "sha256": "07f2ad9718c9fff16564fb02dd26328fdba35d97abb0bb61a73acf0cc6cc2c2a",
+      "bytes": 2489
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/early-confirmation-counterfactual/SUITE.json",
+      "sha256": "bf02c8b6200ba9dc2a943ad974d45975e7b03f3a5d9fa340394170b510c69477",
+      "bytes": 2149
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/early-confirmation-counterfactual/RESULT.json",
+      "sha256": "ad020d3533edb729a57197bec9cd6dbd3dbef4f4034df5254131a82c7054cdfb",
+      "bytes": 1081
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/early-confirmation-counterfactual/TRACE-0.json",
+      "sha256": "730aa17d8f8c952ff8f1aca2894db9054f9c25b2a482f6cebe102ec9a2b8b603",
+      "bytes": 4357
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/early-confirmation-counterfactual/LOG-0.json",
+      "sha256": "e697f2f5529e81c5e4b93c2caecb9970fac8b89e6f02ef0a3d2492f47c39806f",
+      "bytes": 855
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/early-confirmation-counterfactual/RUN-0.json",
+      "sha256": "e4e58d4524ef141b08af6cd23f57303dbeb384d673c9a633e65d44f60b727c4a",
+      "bytes": 3364
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/observed-positive-control/WORKFLOW.json",
+      "sha256": "af482308cd6abb7aaf52b9d429cd473fc2b5236d6d73eea92ed9f7518aa1abe8",
+      "bytes": 3500
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/observed-positive-control/SUITE.json",
+      "sha256": "a58ea7d3f14b46688e78a06c04de154f7780606f6768d89322520270863426cd",
+      "bytes": 2143
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/observed-positive-control/RESULT.json",
+      "sha256": "09eb5a0d742821ac324ad9b57819e64bc96ac97c48dd241293108b13002c3e8c",
+      "bytes": 1071
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/observed-positive-control/TRACE-0.json",
+      "sha256": "e6b1d496b85fc55adb7de9ca21fd3df13dad276dc23a2763ea89522df91720f2",
+      "bytes": 5085
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/observed-positive-control/LOG-0.json",
+      "sha256": "b0657a1bd3ccddb05f1d5bc8260076ecbe7d7675cf6acdac81fe27595845c9a5",
+      "bytes": 854
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/observed-positive-control/RUN-0.json",
+      "sha256": "801d0a840bb8ce02b210b81195c9fb0937aa22f2c09646b3c7c466fede1056ae",
+      "bytes": 3725
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/raw-invalid-reproduction-confirmed/WORKFLOW.json",
+      "sha256": "5ced335258d5e7b3759855185e4f29c3470f5e670544c5a7cac51adf3e56662e",
+      "bytes": 2534
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/raw-invalid-reproduction-confirmed/SUITE.json",
+      "sha256": "262f08c2ccd81178c571f5f5d944616406f00718bcc628ebe7172d034f2efe27",
+      "bytes": 2201
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/raw-invalid-reproduction-confirmed/RESULT.json",
+      "sha256": "df844da46e00396567c7c3c135c7a30fd147eec790ef9acdb31cb875553439ff",
+      "bytes": 1356
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/raw-invalid-reproduction-confirmed/TRACE-0.json",
+      "sha256": "8fda89baf60b8c00048677fdcc11fa6ede181f25faaef5e4a5209e956a7a9e39",
+      "bytes": 4762
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/raw-invalid-reproduction-confirmed/LOG-0.json",
+      "sha256": "2182fdc05f3e6c0c33bbbac896546c454f490dbce3226da50d6d51a5627c6340",
+      "bytes": 892
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/raw-invalid-reproduction-confirmed/RUN-0.json",
+      "sha256": "fb22af18037e6a4a07b508e2b60026685a6a589c14cec1be6beff1efa3fa4a70",
+      "bytes": 3504
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/raw-invalid-screen/WORKFLOW.json",
+      "sha256": "0ff9c7b1e19da5c614732895bdce8cda8ff3504e328dd2e3a3981180523dfbca",
+      "bytes": 2097
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/raw-invalid-screen/SUITE.json",
+      "sha256": "4677a4b3ae78e528a77836b9988abc0d2ff41ed36594e1ec2d957ce5a848a21c",
+      "bytes": 2111
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/raw-invalid-screen/RESULT.json",
+      "sha256": "83aae6c08cd9c0baf3c72f13010535174f652a4dc80adb2c612baa347dddcdd9",
+      "bytes": 1310
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/raw-invalid-screen/TRACE-0.json",
+      "sha256": "cbcf2a12c6ec5e054d0310910d523345bcd933bc68f78cbfed5bbcf3e8fea4d9",
+      "bytes": 3698
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/raw-invalid-screen/LOG-0.json",
+      "sha256": "c929a8cd5d3f3f75753be4eadf10c53764f4486ead00a76857e6e06c9859812a",
+      "bytes": 372
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/raw-invalid-screen/RUN-0.json",
+      "sha256": "dd1535bd40c48068e289c139e2caf239372128ac4def38522cea9d3535a59d4f",
+      "bytes": 2795
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/reproduction-before-screen/WORKFLOW.json",
+      "sha256": "3f8b47387b06b4e67dc05624159335977f548036a86a42df287dfdc26a912de5",
+      "bytes": 2484
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/reproduction-before-screen/SUITE.json",
+      "sha256": "a58ea7d3f14b46688e78a06c04de154f7780606f6768d89322520270863426cd",
+      "bytes": 2143
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/reproduction-before-screen/RESULT.json",
+      "sha256": "590ef0bb8b5c2250f4039d84b1e49beb196b2d1eab601781bb6b135c46f8f40b",
+      "bytes": 1099
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/reproduction-before-screen/TRACE-0.json",
+      "sha256": "25b4fde20a072919c5eec086075d352f6021b48808ba4b08686b5e774f130f3e",
+      "bytes": 4356
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/reproduction-before-screen/LOG-0.json",
+      "sha256": "2840267bafbfd52f553755d9266f6a65916de15f526404d8f970bd4cf8cbf154",
+      "bytes": 854
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/reproduction-before-screen/RUN-0.json",
+      "sha256": "967223b7a91efac50554d9a2e09bbe5fd017045555b69d2cd310bdcb1d0b8c36",
+      "bytes": 3358
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/single-screen-error/WORKFLOW.json",
+      "sha256": "5e00d8e24974dbae42da1d3cf1f8bd9ef9fdc34112a9216dbbad5ed5b41f42f1",
+      "bytes": 2080
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/single-screen-error/SUITE.json",
+      "sha256": "fc42c13c907656fa05a16211f06a94739d4d01e3a6c030cbec20ee144e203c76",
+      "bytes": 1984
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/single-screen-error/RESULT.json",
+      "sha256": "c98c290925c7620cf897f5e184fbfc074c27fa82e6950b20c3a1f7e857f1281f",
+      "bytes": 1043
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/single-screen-error/TRACE-0.json",
+      "sha256": "3d2773e4c08c392e2b950ec215e41a25ab5a7e478d68b37e9b4d5592d81ae7a3",
+      "bytes": 3666
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/single-screen-error/LOG-0.json",
+      "sha256": "1064bcedff10f9546aeb673dd941f75569a42ccb8767b3a055615114b96292fe",
+      "bytes": 294
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/single-screen-error/RUN-0.json",
+      "sha256": "20f85f4e6425a8a183bb6682f2cafc8a6ed4509d2b985218e5d5c876e7790c57",
+      "bytes": 2758
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/failure-isolation/WORKFLOW.json",
+      "sha256": "b2aaa016619c853d3332fcea6f6c2f7d9338bc83e86ea043411c18ca6fb7d9e2",
+      "bytes": 2497
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/failure-isolation/SUITE.json",
+      "sha256": "1abe6af8a404e041eec9a9aed4393e16e06b7012753902ca655bb9649f654227",
+      "bytes": 2741
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/failure-isolation/RESULT.json",
+      "sha256": "0f5a86bdff55a8ba1599bc2fdea7bd180ecec26ff2f1cfb4fb0a79213292469f",
+      "bytes": 1043
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/failure-isolation/TRACE-0.json",
+      "sha256": "af6f6aa5353659be3e927484cc1ce43b5a2eed4f277daae225a43f31d2c6de7d",
+      "bytes": 4696
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/failure-isolation/LOG-0.json",
+      "sha256": "836fa6b256af16223440702b839fb04df66058c3ccebdc0b84cb9a246c4e92d8",
+      "bytes": 694
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/failure-isolation/RUN-0.json",
+      "sha256": "908e16fa55fd0edd157e6ca8253680599238a26236615c68de3b9e50e0979fdf",
+      "bytes": 3480
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/missing-evidence-inconclusive/WORKFLOW.json",
+      "sha256": "013b5b7be84e7b0553d1ed9a1fec2cccbc2ea40fc1901268b9ce11e9d65d2371",
+      "bytes": 2535
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/missing-evidence-inconclusive/SUITE.json",
+      "sha256": "9f4d14c85bd87a4445f196f183ec3708e9953cbf40eb4eaf6fbd19d0e9d7674c",
+      "bytes": 2096
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/missing-evidence-inconclusive/RESULT.json",
+      "sha256": "23f3885cb90e031dc7965f3cb97c7e79da673128f0174ee0753d5e22d464afb1",
+      "bytes": 1052
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/missing-evidence-inconclusive/TRACE-0.json",
+      "sha256": "95eafce1c008a2eab62d0d320c57c89ce23a5eda26b888cb3217256375ea3069",
+      "bytes": 4312
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/missing-evidence-inconclusive/LOG-0.json",
+      "sha256": "7ec09943baa8285dde849922cf666cd035d1a424955bca08c8646dc9e3f4c42e",
+      "bytes": 810
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/missing-evidence-inconclusive/RUN-0.json",
+      "sha256": "d2ed5ccff3f1568c90ca0591f3f5254ea6d8a4c99f07a75cfb45e24610f10e9d",
+      "bytes": 3323
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/outcome-model-001/workspace/.foundry/artifacts/7ba1aaee-dae6-43da-9752-8897539ed594/manifest.json",
+      "sha256": "d5d09b605d535b6070b95ed81aaf6a30948edc3fb737b32c57fa515a9b9b2417",
+      "bytes": 244
+    },
+    {
+      "path": "/home/raed/Projects/workflow-foundry/skills/workflow-foundry/SKILL.md",
+      "sha256": "1441e8eb44a5b55bacd30f5a09ddd51b3243bf28cba07ae30b2debd224deaba0",
+      "bytes": 7975
+    },
+    {
+      "path": "/home/raed/Projects/workflow-foundry/skills/runtime-native/SKILL.md",
+      "sha256": "a1b1598e663218bc36247d2641119858f9cb4204b3c4a44086640cbb54db4f16",
+      "bytes": 9901
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/outcome-model-001/packet/PROMPT_1.txt",
+      "sha256": "5666f633cf69d4c9fc4d4ccc3748eb73f37def5dc835e2cda8144286436d761b",
+      "bytes": 82191
+    },
+    {
+      "path": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/outcome-model-001/packet/CALL_1.json",
+      "sha256": "82e71d774bbc1060c41fa8d416a64e120dca24d9bc98e498887a9fd4db7fb013",
+      "bytes": 693
+    },
+    {
+      "path": "/home/raed/Projects/workflow-foundry/node_modules/ajv/package.json",
+      "sha256": "1f9033ee5a6515e7d76938b7072941862d1ed228a6879cc7fe10cdeb75107989",
+      "bytes": 4405
+    }
+  ],
+  "checkerSha256": "e92b2241a896c7bc1266541d012e2be5eab50fc7f69ed5c614e81d04d68cbede"
+}

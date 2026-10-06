@@ -1,0 +1,1821 @@
+{
+  "run": {
+    "approvals": {},
+    "cost": 0,
+    "createdAt": 1789615485000,
+    "deadline": 1789615515000,
+    "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+    "error": null,
+    "eventHead": {
+      "seq": 67,
+      "hash": "c7702ea4c0b9e6e1e4cc455f9a496049d933d050d97627b26ee1fc309a50f2b9"
+    },
+    "extra": {},
+    "frames": {
+      "root/processBatch:0": {
+        "contextHash": "2f9db059140512280b07f8c4a46dc0d6ec1d775e8a3c6a4b937d2f4068e78ee9",
+        "nodes": {
+          "checkReproduction": {
+            "argsHash": "b27c7d888d334637353e39eff60cf873cd7ac5e7e82adf4c4dcb0ca9a96bfd4d",
+            "attempts": 1,
+            "completedAt": 1789615485009,
+            "completedSequence": 11,
+            "effects": "none",
+            "idempotencyKey": "37902c639c7ddfdf3d6d3ef7871caf05e201fb6814582560b497ef8fce9952d6",
+            "kind": "task",
+            "outputHash": "293fca4854bdc60b2d87d14a7f35e930e34c51136a20210817a6cc275733b34a",
+            "startedAt": 1789615485008,
+            "startedSequence": 10,
+            "status": "completed",
+            "tool": "core.validate"
+          },
+          "checkScreen": {
+            "argsHash": "51da229fb4fbb002aead083dfd176964b7a1a8b9754bafdf5238ce2daea8007b",
+            "attempts": 1,
+            "completedAt": 1789615485007,
+            "completedSequence": 8,
+            "effects": "none",
+            "idempotencyKey": "261e3f01cf69d1e51eca9bf81cf77086b6d6eb4ffe12c0c43a25368b4f61b0d5",
+            "kind": "task",
+            "outputHash": "f2e6221bac7112ea123f706c89500b263e72f0f9bc7068fb74bdbaf8c51fbc38",
+            "startedAt": 1789615485006,
+            "startedSequence": 7,
+            "status": "completed",
+            "tool": "core.validate"
+          },
+          "chooseRow": {
+            "argsHash": "60f521488d0e0317e97f1dd40b3e282b5ae81a9152eb713b5bc91fae1f3bbc5d",
+            "attempts": 1,
+            "completedAt": 1789615485018,
+            "completedSequence": 19,
+            "effects": "none",
+            "idempotencyKey": "b303fdd177f640d299a9c545fa2c5faa04de51dc0a98dbc6b32f07490e2b12c9",
+            "kind": "task",
+            "outputHash": "2c16d5e0875ff7d3bc601a772b09f6ea6693a8dd18e9d5fd8cffb052e4c0aeae",
+            "startedAt": 1789615485017,
+            "startedSequence": 18,
+            "status": "completed",
+            "tool": "data.one"
+          },
+          "clearRow": {
+            "argsHash": "7cdeb09b503132c8327874e245f0a39927e333112ff1be1749a7e1254b1b0cd3",
+            "attempts": 1,
+            "completedAt": 1789615485013,
+            "completedSequence": 14,
+            "effects": "none",
+            "idempotencyKey": "4a7b56f8b384d4c5b03d4df2082b54ae0f104d63c8b8f6ca73808b10a8c75a91",
+            "kind": "task",
+            "outputHash": "7cdeb09b503132c8327874e245f0a39927e333112ff1be1749a7e1254b1b0cd3",
+            "startedAt": 1789615485012,
+            "startedSequence": 13,
+            "status": "completed",
+            "tool": "core.identity"
+          },
+          "confirmedRow": {
+            "attempts": 0,
+            "kind": "task",
+            "status": "skipped"
+          },
+          "errorRow": {
+            "attempts": 0,
+            "kind": "task",
+            "status": "skipped"
+          },
+          "inconclusiveRow": {
+            "attempts": 0,
+            "kind": "task",
+            "status": "skipped"
+          },
+          "notReproducedRow": {
+            "attempts": 0,
+            "kind": "task",
+            "status": "skipped"
+          },
+          "reproduce": {
+            "attempts": 0,
+            "kind": "task",
+            "status": "skipped"
+          },
+          "screen": {
+            "argsHash": "10eda749c46914dde13882dcc8d23f36cccf9aa4c9e56848279c6a05a306d371",
+            "attempts": 1,
+            "completedAt": 1789615485005,
+            "completedSequence": 6,
+            "effects": "none",
+            "idempotencyKey": "4bcb00da5e50fadb758ca987a25873ee964347847e3e421c39c3c6f06497de83",
+            "kind": "task",
+            "outputHash": "b2c137b65f0e3983da310b02ff97a191934e3347c8196c6ff73318350ab4820a",
+            "startedAt": 1789615485004,
+            "startedSequence": 5,
+            "status": "completed",
+            "tool": "lab.screen"
+          }
+        },
+        "outputs": {
+          "checkReproduction": {
+            "errors": [
+              {
+                "instancePath": "",
+                "keyword": "type",
+                "message": "must be object",
+                "params": {
+                  "type": "object"
+                },
+                "schemaPath": "#/type"
+              }
+            ],
+            "valid": false
+          },
+          "checkScreen": {
+            "errors": [],
+            "valid": true
+          },
+          "chooseRow": {
+            "value": {
+              "disposition": "clear",
+              "sampleId": "dev-a"
+            }
+          },
+          "clearRow": {
+            "disposition": "clear",
+            "sampleId": "dev-a"
+          },
+          "screen": {
+            "claim": "confirmed",
+            "ok": true,
+            "sampleId": "dev-a",
+            "suspicious": false
+          }
+        }
+      },
+      "root/processBatch:1": {
+        "contextHash": "9b44a10a88fac6ce93f515ce797a60a918f30fcb07288c1c96c5d9ca826c46ec",
+        "nodes": {
+          "checkReproduction": {
+            "argsHash": "41c1a7644a9080cdaff6dbf886563fe2a0f79385388ee47709be7527f53609bc",
+            "attempts": 1,
+            "completedAt": 1789615485028,
+            "completedSequence": 28,
+            "effects": "none",
+            "idempotencyKey": "72d45812d412241afc2991330b959a628d9f9a3c24546ab975125dc22e69f474",
+            "kind": "task",
+            "outputHash": "f2e6221bac7112ea123f706c89500b263e72f0f9bc7068fb74bdbaf8c51fbc38",
+            "startedAt": 1789615485027,
+            "startedSequence": 27,
+            "status": "completed",
+            "tool": "core.validate"
+          },
+          "checkScreen": {
+            "argsHash": "aeb6ec399c571e0afcb9ec524d105da1ea42371b4d8749ea051abc8d127da137",
+            "attempts": 1,
+            "completedAt": 1789615485023,
+            "completedSequence": 24,
+            "effects": "none",
+            "idempotencyKey": "000833c29a683a490c5f34a50f73d7449727c086e2d2df82c2aa985d8f7960b3",
+            "kind": "task",
+            "outputHash": "f2e6221bac7112ea123f706c89500b263e72f0f9bc7068fb74bdbaf8c51fbc38",
+            "startedAt": 1789615485022,
+            "startedSequence": 23,
+            "status": "completed",
+            "tool": "core.validate"
+          },
+          "chooseRow": {
+            "argsHash": "c6f1f7980b23db14a9de96688fa71211bdc6b4774c670fa6abb6b848b741fba7",
+            "attempts": 1,
+            "completedAt": 1789615485036,
+            "completedSequence": 36,
+            "effects": "none",
+            "idempotencyKey": "d36f8fdf9d8fa79f1d116f7d865c7d33495db77d6e0ed90ce492a8e639aeecda",
+            "kind": "task",
+            "outputHash": "3e4bdef9a2333ac24af92ea6062909f87015ff2c1cd0126b465820bfce48bb8d",
+            "startedAt": 1789615485035,
+            "startedSequence": 35,
+            "status": "completed",
+            "tool": "data.one"
+          },
+          "clearRow": {
+            "attempts": 0,
+            "kind": "task",
+            "status": "skipped"
+          },
+          "confirmedRow": {
+            "argsHash": "ca29bebdaecaa9daf7a853b3660f509f5e7393636d1d74edd6d934dd477a5251",
+            "attempts": 1,
+            "completedAt": 1789615485032,
+            "completedSequence": 32,
+            "effects": "none",
+            "idempotencyKey": "d703db0b503cee41335dbd8197cb9a0d465589ae14bc948635d21fbc65d1dd00",
+            "kind": "task",
+            "outputHash": "ca29bebdaecaa9daf7a853b3660f509f5e7393636d1d74edd6d934dd477a5251",
+            "startedAt": 1789615485031,
+            "startedSequence": 31,
+            "status": "completed",
+            "tool": "core.identity"
+          },
+          "errorRow": {
+            "attempts": 0,
+            "kind": "task",
+            "status": "skipped"
+          },
+          "inconclusiveRow": {
+            "attempts": 0,
+            "kind": "task",
+            "status": "skipped"
+          },
+          "notReproducedRow": {
+            "attempts": 0,
+            "kind": "task",
+            "status": "skipped"
+          },
+          "reproduce": {
+            "argsHash": "375554debd9f5bff6be6b1035ff4da1daa98c4b1d92eb73dd6c9c4e70c49213b",
+            "attempts": 1,
+            "completedAt": 1789615485026,
+            "completedSequence": 26,
+            "effects": "none",
+            "idempotencyKey": "6178837ea66ae501bbc1bd74a6e530c7f7100a81334449ef46f216fb94d8ed2c",
+            "kind": "task",
+            "outputHash": "94c020840594f609b739849bde8b452ebd3518a76e5bb49d22c0992a11d36fad",
+            "startedAt": 1789615485024,
+            "startedSequence": 25,
+            "status": "completed",
+            "tool": "lab.reproduce"
+          },
+          "screen": {
+            "argsHash": "375554debd9f5bff6be6b1035ff4da1daa98c4b1d92eb73dd6c9c4e70c49213b",
+            "attempts": 1,
+            "completedAt": 1789615485021,
+            "completedSequence": 22,
+            "effects": "none",
+            "idempotencyKey": "c4461d975501e2777a82c86483ea5b75d87760cf5ed41bcaa3dc34938ff056f0",
+            "kind": "task",
+            "outputHash": "113b78eb80c0343a8a2a69b6a2aee1d46f76bcfdf3464966be41d88d1dcf23e5",
+            "startedAt": 1789615485020,
+            "startedSequence": 21,
+            "status": "completed",
+            "tool": "lab.screen"
+          }
+        },
+        "outputs": {
+          "checkReproduction": {
+            "errors": [],
+            "valid": true
+          },
+          "checkScreen": {
+            "errors": [],
+            "valid": true
+          },
+          "chooseRow": {
+            "value": {
+              "disposition": "confirmed",
+              "sampleId": "dev-b"
+            }
+          },
+          "confirmedRow": {
+            "disposition": "confirmed",
+            "sampleId": "dev-b"
+          },
+          "reproduce": {
+            "evidenceId": "observation-dev-b",
+            "independent": true,
+            "ok": true,
+            "reproduced": true,
+            "sampleId": "dev-b"
+          },
+          "screen": {
+            "ok": true,
+            "sampleId": "dev-b",
+            "suspicious": true
+          }
+        }
+      },
+      "root/processBatch:2": {
+        "contextHash": "98183e50d97bb0fc94d3ba075629b8d82952c429a6d801f76188e19235950cf9",
+        "nodes": {
+          "checkReproduction": {
+            "argsHash": "2a8960eadd712c3466faa900cef0b55cfe494214af48b11a19e3abdd786ee372",
+            "attempts": 1,
+            "completedAt": 1789615485048,
+            "completedSequence": 45,
+            "effects": "none",
+            "idempotencyKey": "ee982f98cb68949dcb82c54d0fa2f898bdcbb733aef9c4b2d2501576ea2712b0",
+            "kind": "task",
+            "outputHash": "f2e6221bac7112ea123f706c89500b263e72f0f9bc7068fb74bdbaf8c51fbc38",
+            "startedAt": 1789615485047,
+            "startedSequence": 44,
+            "status": "completed",
+            "tool": "core.validate"
+          },
+          "checkScreen": {
+            "argsHash": "15264fc81e98675d3db8790943e087ea4cbd8323abf49efcd9a021590c7b4dc8",
+            "attempts": 1,
+            "completedAt": 1789615485042,
+            "completedSequence": 41,
+            "effects": "none",
+            "idempotencyKey": "ce83dad705ea006e2647c40a42975b02a8577ba2dce1b5d5405505113fea2b24",
+            "kind": "task",
+            "outputHash": "f2e6221bac7112ea123f706c89500b263e72f0f9bc7068fb74bdbaf8c51fbc38",
+            "startedAt": 1789615485041,
+            "startedSequence": 40,
+            "status": "completed",
+            "tool": "core.validate"
+          },
+          "chooseRow": {
+            "argsHash": "15c46d1e179a3864346b5b2faadee41ba8df2565e26b5ec195a98b4d65adb07c",
+            "attempts": 1,
+            "completedAt": 1789615485057,
+            "completedSequence": 53,
+            "effects": "none",
+            "idempotencyKey": "67bc0b6cf9650a68cec5fc11665ca02f7a541019f55f44e0f487a8a5d94bedea",
+            "kind": "task",
+            "outputHash": "8748a9bab28ce4ae2bfa5a8efa606d7985015c7668580c1a8fbe2a595170195c",
+            "startedAt": 1789615485056,
+            "startedSequence": 52,
+            "status": "completed",
+            "tool": "data.one"
+          },
+          "clearRow": {
+            "attempts": 0,
+            "kind": "task",
+            "status": "skipped"
+          },
+          "confirmedRow": {
+            "attempts": 0,
+            "kind": "task",
+            "status": "skipped"
+          },
+          "errorRow": {
+            "attempts": 0,
+            "kind": "task",
+            "status": "skipped"
+          },
+          "inconclusiveRow": {
+            "attempts": 0,
+            "kind": "task",
+            "status": "skipped"
+          },
+          "notReproducedRow": {
+            "argsHash": "5f0061f7ddbca999916c76ffc7c2d0a32e9869c9dcfb3ddab14847f2dd17af86",
+            "attempts": 1,
+            "completedAt": 1789615485054,
+            "completedSequence": 50,
+            "effects": "none",
+            "idempotencyKey": "76155922bc414d205271850b50252d28d34cf7745c8d978085c2f1f1626cec4b",
+            "kind": "task",
+            "outputHash": "5f0061f7ddbca999916c76ffc7c2d0a32e9869c9dcfb3ddab14847f2dd17af86",
+            "startedAt": 1789615485053,
+            "startedSequence": 49,
+            "status": "completed",
+            "tool": "core.identity"
+          },
+          "reproduce": {
+            "argsHash": "d9cd2c55eebce5becf670808dae352d7af027a0d293881bd3f720e671f778887",
+            "attempts": 1,
+            "completedAt": 1789615485046,
+            "completedSequence": 43,
+            "effects": "none",
+            "idempotencyKey": "503d0f37b47cb4e7f832fd22d3d2c4b9f6c02ec9f33509a9ab4656e6d9ad8419",
+            "kind": "task",
+            "outputHash": "468763c557277a62f5f92d820481e681f09c4d6c4b14eceeb11ecfc002670afd",
+            "startedAt": 1789615485044,
+            "startedSequence": 42,
+            "status": "completed",
+            "tool": "lab.reproduce"
+          },
+          "screen": {
+            "argsHash": "d9cd2c55eebce5becf670808dae352d7af027a0d293881bd3f720e671f778887",
+            "attempts": 1,
+            "completedAt": 1789615485039,
+            "completedSequence": 39,
+            "effects": "none",
+            "idempotencyKey": "cc5fd2ca375e33f22cc62278898ac73e58b3f8596f4d4f4ee93b22b980272571",
+            "kind": "task",
+            "outputHash": "22b8bdb4ab2580b61b53c99c4f43249d738b1765ea3b3e025ad5123ad3c8a650",
+            "startedAt": 1789615485038,
+            "startedSequence": 38,
+            "status": "completed",
+            "tool": "lab.screen"
+          }
+        },
+        "outputs": {
+          "checkReproduction": {
+            "errors": [],
+            "valid": true
+          },
+          "checkScreen": {
+            "errors": [],
+            "valid": true
+          },
+          "chooseRow": {
+            "value": {
+              "disposition": "not_reproduced",
+              "sampleId": "dev-c"
+            }
+          },
+          "notReproducedRow": {
+            "disposition": "not_reproduced",
+            "sampleId": "dev-c"
+          },
+          "reproduce": {
+            "claim": "confirmed",
+            "evidenceId": "observation-dev-c",
+            "independent": true,
+            "ok": true,
+            "reproduced": false,
+            "sampleId": "dev-c"
+          },
+          "screen": {
+            "ok": true,
+            "sampleId": "dev-c",
+            "suspicious": true
+          }
+        }
+      }
+    },
+    "id": "b087eab6-78f6-4938-860e-42acd715c8f2",
+    "input": {
+      "samples": [
+        {
+          "id": "dev-a"
+        },
+        {
+          "id": "dev-b"
+        },
+        {
+          "id": "dev-c"
+        }
+      ]
+    },
+    "nodes": {
+      "checkManifest": {
+        "attempts": 1,
+        "completedAt": 1789615485069,
+        "completedSequence": 62,
+        "kind": "assert",
+        "outputHash": "11c11db30f4b3f6c758722ba3e27eea08145b7d212f6a157451e364b48475280",
+        "startedAt": 1789615485068,
+        "startedSequence": 61,
+        "status": "completed"
+      },
+      "countInputs": {
+        "argsHash": "6152ce69c5ec7f3163131cec337ef8d3ad14bd3136d5719d99e2d37364945d69",
+        "attempts": 1,
+        "completedAt": 1789615485061,
+        "completedSequence": 56,
+        "effects": "none",
+        "idempotencyKey": "1e54f8f774543199f70b5a75881e7954ad2cc6d9d549c11057083e0aac4240f9",
+        "kind": "task",
+        "outputHash": "d428e15b36ff064e22b6f8db60bd7a59bcfc07a04ccd0f15d9a96dc060c72e3c",
+        "startedAt": 1789615485060,
+        "startedSequence": 55,
+        "status": "completed",
+        "tool": "core.aggregate"
+      },
+      "extractRows": {
+        "argsHash": "b6e65a5c1df023eea87f9bbf52469a1c572b7900c9c9c5de411f579fb6c737d4",
+        "attempts": 1,
+        "completedAt": 1789615485064,
+        "completedSequence": 58,
+        "effects": "none",
+        "idempotencyKey": "f19a37b21fe630b6d3844ed167c7b78668bb935dcaa2fb730b4d42484d50cdc0",
+        "kind": "task",
+        "outputHash": "a75e743f4d282ef52d88645c78456198b148392ca9be41f89d839ac7dabd6c91",
+        "startedAt": 1789615485063,
+        "startedSequence": 57,
+        "status": "completed",
+        "tool": "core.pluck"
+      },
+      "processBatch": {
+        "attempts": 1,
+        "completedAt": 1789615485059,
+        "completedSequence": 54,
+        "kind": "map",
+        "outputHash": "3594b98f4834ed93e529078565c108f56dbe430e4c607212d3c0e6b7a6a703a5",
+        "startedAt": 1789615485002,
+        "startedSequence": 3,
+        "status": "completed"
+      },
+      "publishManifest": {
+        "argsHash": "54ebb407d4644e498817f3af8c13dd8f253cdf0194c5db6be1dea18b17693838",
+        "attempts": 1,
+        "completedAt": 1789615485077,
+        "completedSequence": 66,
+        "effects": "idempotent",
+        "idempotencyKey": "f76214c05a5c87500d2ecd8aba0ea71d0b530bcfe203295af898064ad236fac2",
+        "kind": "task",
+        "outputHash": "b1ec9c2cad5c1a1f8d05128e57b550d6aef2ad30f21db1ede6ac3757191b7867",
+        "startedAt": 1789615485075,
+        "startedSequence": 65,
+        "status": "completed",
+        "tool": "core.artifact"
+      },
+      "serializeManifest": {
+        "argsHash": "e8c690f79557d4bf1b574f79b9f8344dedec4db7d03437a5594e394a10eba240",
+        "attempts": 1,
+        "completedAt": 1789615485073,
+        "completedSequence": 64,
+        "effects": "none",
+        "idempotencyKey": "e12722027e135c7989c9444aab7f52380a60d4d8fa33609b991a6ad44aa31878",
+        "kind": "task",
+        "outputHash": "2044a217e09333a8545a8cca4c0fe07f507f7b6319d595949d195a62d77a4256",
+        "startedAt": 1789615485071,
+        "startedSequence": 63,
+        "status": "completed",
+        "tool": "core.json"
+      },
+      "validateManifest": {
+        "argsHash": "61c711acf2eda22e178ed18443a486b3f5810c0cc3736b62962540bc2bc8a2ca",
+        "attempts": 1,
+        "completedAt": 1789615485067,
+        "completedSequence": 60,
+        "effects": "none",
+        "idempotencyKey": "1acdd56c2f3dcb24b792c8fdd7a62bda92e21748b1a2db93e2adbbb2f0daef1a",
+        "kind": "task",
+        "outputHash": "f2e6221bac7112ea123f706c89500b263e72f0f9bc7068fb74bdbaf8c51fbc38",
+        "startedAt": 1789615485065,
+        "startedSequence": 59,
+        "status": "completed",
+        "tool": "core.validate"
+      }
+    },
+    "outputs": {
+      "checkManifest": {
+        "passed": true
+      },
+      "countInputs": {
+        "value": 3
+      },
+      "extractRows": {
+        "count": 3,
+        "items": [
+          {
+            "disposition": "clear",
+            "sampleId": "dev-a"
+          },
+          {
+            "disposition": "confirmed",
+            "sampleId": "dev-b"
+          },
+          {
+            "disposition": "not_reproduced",
+            "sampleId": "dev-c"
+          }
+        ]
+      },
+      "processBatch": {
+        "count": 3,
+        "items": [
+          {
+            "checkReproduction": {
+              "errors": [
+                {
+                  "instancePath": "",
+                  "keyword": "type",
+                  "message": "must be object",
+                  "params": {
+                    "type": "object"
+                  },
+                  "schemaPath": "#/type"
+                }
+              ],
+              "valid": false
+            },
+            "checkScreen": {
+              "errors": [],
+              "valid": true
+            },
+            "chooseRow": {
+              "value": {
+                "disposition": "clear",
+                "sampleId": "dev-a"
+              }
+            },
+            "clearRow": {
+              "disposition": "clear",
+              "sampleId": "dev-a"
+            },
+            "screen": {
+              "claim": "confirmed",
+              "ok": true,
+              "sampleId": "dev-a",
+              "suspicious": false
+            }
+          },
+          {
+            "checkReproduction": {
+              "errors": [],
+              "valid": true
+            },
+            "checkScreen": {
+              "errors": [],
+              "valid": true
+            },
+            "chooseRow": {
+              "value": {
+                "disposition": "confirmed",
+                "sampleId": "dev-b"
+              }
+            },
+            "confirmedRow": {
+              "disposition": "confirmed",
+              "sampleId": "dev-b"
+            },
+            "reproduce": {
+              "evidenceId": "observation-dev-b",
+              "independent": true,
+              "ok": true,
+              "reproduced": true,
+              "sampleId": "dev-b"
+            },
+            "screen": {
+              "ok": true,
+              "sampleId": "dev-b",
+              "suspicious": true
+            }
+          },
+          {
+            "checkReproduction": {
+              "errors": [],
+              "valid": true
+            },
+            "checkScreen": {
+              "errors": [],
+              "valid": true
+            },
+            "chooseRow": {
+              "value": {
+                "disposition": "not_reproduced",
+                "sampleId": "dev-c"
+              }
+            },
+            "notReproducedRow": {
+              "disposition": "not_reproduced",
+              "sampleId": "dev-c"
+            },
+            "reproduce": {
+              "claim": "confirmed",
+              "evidenceId": "observation-dev-c",
+              "independent": true,
+              "ok": true,
+              "reproduced": false,
+              "sampleId": "dev-c"
+            },
+            "screen": {
+              "ok": true,
+              "sampleId": "dev-c",
+              "suspicious": true
+            }
+          }
+        ]
+      },
+      "publishManifest": {
+        "bytes": 241,
+        "name": "manifest.json",
+        "sha256": "f45ac6e6a678ef2767b82545e25a26df7f24908983c00292af2c1e50c4d647aa"
+      },
+      "serializeManifest": {
+        "text": "{\n  \"samples\": [\n    {\n      \"disposition\": \"clear\",\n      \"sampleId\": \"dev-a\"\n    },\n    {\n      \"disposition\": \"confirmed\",\n      \"sampleId\": \"dev-b\"\n    },\n    {\n      \"disposition\": \"not_reproduced\",\n      \"sampleId\": \"dev-c\"\n    }\n  ]\n}"
+      },
+      "validateManifest": {
+        "errors": [],
+        "valid": true
+      }
+    },
+    "owner": null,
+    "policy": {
+      "allowedCapabilities": [
+        "core.identity",
+        "core.validate",
+        "core.json",
+        "core.pluck",
+        "core.aggregate",
+        "core.template",
+        "core.collect",
+        "core.artifact",
+        "lab.screen",
+        "lab.reproduce",
+        "data.one"
+      ],
+      "maxConcurrency": 2,
+      "maxCost": 0,
+      "maxDurationMs": 30000,
+      "maxResumes": 1000,
+      "maxSteps": 160
+    },
+    "registryHash": "bb3f73d712e174d3084248c8d199a620b7eeb2a7b2655d64b6286ab3af536d0e",
+    "resumeCount": 1,
+    "status": "succeeded",
+    "steps": 24,
+    "updatedAt": 1789615485078,
+    "workflowHash": "5cc364ca2bd741330968016c582f6f6c2f4464aff5e3a75a99d2c9b908f62510",
+    "workflowId": "ObservedBatchManifest"
+  },
+  "events": [
+    {
+      "at": 1789615485000,
+      "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+      "inputHash": "951fdae63dd5e3d2d56272a9902ecce1313873959d3ec5f856bad5f8770d9c4c",
+      "policyHash": "24f7bf6d1ec413ebed06b162c2a10a6da204d42e6d5a9e921e32e3f850bd8c6c",
+      "previousHash": null,
+      "registryHash": "bb3f73d712e174d3084248c8d199a620b7eeb2a7b2655d64b6286ab3af536d0e",
+      "seq": 1,
+      "type": "run.created",
+      "workflowHash": "5cc364ca2bd741330968016c582f6f6c2f4464aff5e3a75a99d2c9b908f62510",
+      "hash": "6a01d1e952a8d61b230c7fbe301afccba686a1fa04742b912cc56b8bde9762ed"
+    },
+    {
+      "at": 1789615485002,
+      "previousHash": "6a01d1e952a8d61b230c7fbe301afccba686a1fa04742b912cc56b8bde9762ed",
+      "seq": 2,
+      "token": "9b40098e-c749-47cd-ae23-3688ecde5726",
+      "type": "runner.acquired",
+      "hash": "e441e029b56a58d0d0f5b64b98ccdd20f7b149fa3b14444857e73103678f83fd"
+    },
+    {
+      "at": 1789615485002,
+      "kind": "map",
+      "nodeKey": "root/processBatch",
+      "previousHash": "e441e029b56a58d0d0f5b64b98ccdd20f7b149fa3b14444857e73103678f83fd",
+      "reservedCost": 0,
+      "seq": 3,
+      "type": "node.started",
+      "hash": "999db700ecf53ab85a9692d5877137d51eba3b7325a9662be85e3bea066cdb5d"
+    },
+    {
+      "at": 1789615485003,
+      "contextHash": "2f9db059140512280b07f8c4a46dc0d6ec1d775e8a3c6a4b937d2f4068e78ee9",
+      "frameKey": "root/processBatch:0",
+      "previousHash": "999db700ecf53ab85a9692d5877137d51eba3b7325a9662be85e3bea066cdb5d",
+      "seq": 4,
+      "type": "frame.created",
+      "hash": "1a1ad63cbf04dc78649b3c9cbfc13970fd75715289247f619bde5f4af794f01c"
+    },
+    {
+      "argsHash": "10eda749c46914dde13882dcc8d23f36cccf9aa4c9e56848279c6a05a306d371",
+      "at": 1789615485004,
+      "effects": "none",
+      "idempotencyKey": "4bcb00da5e50fadb758ca987a25873ee964347847e3e421c39c3c6f06497de83",
+      "kind": "task",
+      "nodeKey": "root/processBatch:0/screen",
+      "previousHash": "1a1ad63cbf04dc78649b3c9cbfc13970fd75715289247f619bde5f4af794f01c",
+      "reservedCost": 0,
+      "seq": 5,
+      "tool": "lab.screen",
+      "type": "tool.intent",
+      "hash": "1f71d9b4a388b265d2aa22106429d0042d412310c71c12407dce04914ff81bb4"
+    },
+    {
+      "at": 1789615485005,
+      "nodeKey": "root/processBatch:0/screen",
+      "output": {
+        "claim": "confirmed",
+        "ok": true,
+        "sampleId": "dev-a",
+        "suspicious": false
+      },
+      "outputHash": "b2c137b65f0e3983da310b02ff97a191934e3347c8196c6ff73318350ab4820a",
+      "previousHash": "1f71d9b4a388b265d2aa22106429d0042d412310c71c12407dce04914ff81bb4",
+      "seq": 6,
+      "type": "node.completed",
+      "hash": "619d1e87b5eee55739a69cffda7892c6640b18efc14d3bc1f2eade07818c2cc5"
+    },
+    {
+      "argsHash": "51da229fb4fbb002aead083dfd176964b7a1a8b9754bafdf5238ce2daea8007b",
+      "at": 1789615485006,
+      "effects": "none",
+      "idempotencyKey": "261e3f01cf69d1e51eca9bf81cf77086b6d6eb4ffe12c0c43a25368b4f61b0d5",
+      "kind": "task",
+      "nodeKey": "root/processBatch:0/checkScreen",
+      "previousHash": "619d1e87b5eee55739a69cffda7892c6640b18efc14d3bc1f2eade07818c2cc5",
+      "reservedCost": 0,
+      "seq": 7,
+      "tool": "core.validate",
+      "type": "tool.intent",
+      "hash": "a7754874bf32b7a2a8e663a54f3c616ad71b76caf402f2834e43904d24b0f634"
+    },
+    {
+      "at": 1789615485007,
+      "nodeKey": "root/processBatch:0/checkScreen",
+      "output": {
+        "errors": [],
+        "valid": true
+      },
+      "outputHash": "f2e6221bac7112ea123f706c89500b263e72f0f9bc7068fb74bdbaf8c51fbc38",
+      "previousHash": "a7754874bf32b7a2a8e663a54f3c616ad71b76caf402f2834e43904d24b0f634",
+      "seq": 8,
+      "type": "node.completed",
+      "hash": "feed44e345e969437795e7f7150f407a1ebacd6d58ec5fa4058c83acef88e270"
+    },
+    {
+      "at": 1789615485007,
+      "nodeKey": "root/processBatch:0/reproduce",
+      "previousHash": "feed44e345e969437795e7f7150f407a1ebacd6d58ec5fa4058c83acef88e270",
+      "seq": 9,
+      "type": "node.skipped",
+      "hash": "22ef683b751f563ab2e26fa974baf612f1f8fb2a91dcb6a93bd8a50a4aba8c00"
+    },
+    {
+      "argsHash": "b27c7d888d334637353e39eff60cf873cd7ac5e7e82adf4c4dcb0ca9a96bfd4d",
+      "at": 1789615485008,
+      "effects": "none",
+      "idempotencyKey": "37902c639c7ddfdf3d6d3ef7871caf05e201fb6814582560b497ef8fce9952d6",
+      "kind": "task",
+      "nodeKey": "root/processBatch:0/checkReproduction",
+      "previousHash": "22ef683b751f563ab2e26fa974baf612f1f8fb2a91dcb6a93bd8a50a4aba8c00",
+      "reservedCost": 0,
+      "seq": 10,
+      "tool": "core.validate",
+      "type": "tool.intent",
+      "hash": "36da8cf55c33ee23a42c49a6587cb2c7fd00056d049e01cd8b5af4c6cdaacf60"
+    },
+    {
+      "at": 1789615485009,
+      "nodeKey": "root/processBatch:0/checkReproduction",
+      "output": {
+        "errors": [
+          {
+            "instancePath": "",
+            "keyword": "type",
+            "message": "must be object",
+            "params": {
+              "type": "object"
+            },
+            "schemaPath": "#/type"
+          }
+        ],
+        "valid": false
+      },
+      "outputHash": "293fca4854bdc60b2d87d14a7f35e930e34c51136a20210817a6cc275733b34a",
+      "previousHash": "36da8cf55c33ee23a42c49a6587cb2c7fd00056d049e01cd8b5af4c6cdaacf60",
+      "seq": 11,
+      "type": "node.completed",
+      "hash": "01087a977b076ab8be792dcf0b6a762e680023b010242cd3c682070a66e8d95f"
+    },
+    {
+      "at": 1789615485012,
+      "nodeKey": "root/processBatch:0/errorRow",
+      "previousHash": "01087a977b076ab8be792dcf0b6a762e680023b010242cd3c682070a66e8d95f",
+      "seq": 12,
+      "type": "node.skipped",
+      "hash": "5f04d96ade0f65a7ee1960ef7a509d348923a1d3dc9a5da548968b5d4fc87670"
+    },
+    {
+      "argsHash": "7cdeb09b503132c8327874e245f0a39927e333112ff1be1749a7e1254b1b0cd3",
+      "at": 1789615485012,
+      "effects": "none",
+      "idempotencyKey": "4a7b56f8b384d4c5b03d4df2082b54ae0f104d63c8b8f6ca73808b10a8c75a91",
+      "kind": "task",
+      "nodeKey": "root/processBatch:0/clearRow",
+      "previousHash": "5f04d96ade0f65a7ee1960ef7a509d348923a1d3dc9a5da548968b5d4fc87670",
+      "reservedCost": 0,
+      "seq": 13,
+      "tool": "core.identity",
+      "type": "tool.intent",
+      "hash": "75416f8a9fc03aec43a3fc5c18e7e1790546d181ce7133391ae17c73ccaeb10c"
+    },
+    {
+      "at": 1789615485013,
+      "nodeKey": "root/processBatch:0/clearRow",
+      "output": {
+        "disposition": "clear",
+        "sampleId": "dev-a"
+      },
+      "outputHash": "7cdeb09b503132c8327874e245f0a39927e333112ff1be1749a7e1254b1b0cd3",
+      "previousHash": "75416f8a9fc03aec43a3fc5c18e7e1790546d181ce7133391ae17c73ccaeb10c",
+      "seq": 14,
+      "type": "node.completed",
+      "hash": "da950a33bf56a02136c14a2c1ac5253e3975026c43ffa2fbd5c8841ab576b210"
+    },
+    {
+      "at": 1789615485014,
+      "nodeKey": "root/processBatch:0/confirmedRow",
+      "previousHash": "da950a33bf56a02136c14a2c1ac5253e3975026c43ffa2fbd5c8841ab576b210",
+      "seq": 15,
+      "type": "node.skipped",
+      "hash": "2fdeb1b4074b238f10a767db5fb6c77d6394481ec1b2885e749550e0c4eb491e"
+    },
+    {
+      "at": 1789615485015,
+      "nodeKey": "root/processBatch:0/notReproducedRow",
+      "previousHash": "2fdeb1b4074b238f10a767db5fb6c77d6394481ec1b2885e749550e0c4eb491e",
+      "seq": 16,
+      "type": "node.skipped",
+      "hash": "efff7837ca8af67646826977f9c8b835d1dd03be0d25bea2fcd0847d597db1bc"
+    },
+    {
+      "at": 1789615485016,
+      "nodeKey": "root/processBatch:0/inconclusiveRow",
+      "previousHash": "efff7837ca8af67646826977f9c8b835d1dd03be0d25bea2fcd0847d597db1bc",
+      "seq": 17,
+      "type": "node.skipped",
+      "hash": "fba12610a18310fd6b7b87fad885443e66833e46c9d142f1d7b7b3e0569d6b9b"
+    },
+    {
+      "argsHash": "60f521488d0e0317e97f1dd40b3e282b5ae81a9152eb713b5bc91fae1f3bbc5d",
+      "at": 1789615485017,
+      "effects": "none",
+      "idempotencyKey": "b303fdd177f640d299a9c545fa2c5faa04de51dc0a98dbc6b32f07490e2b12c9",
+      "kind": "task",
+      "nodeKey": "root/processBatch:0/chooseRow",
+      "previousHash": "fba12610a18310fd6b7b87fad885443e66833e46c9d142f1d7b7b3e0569d6b9b",
+      "reservedCost": 0,
+      "seq": 18,
+      "tool": "data.one",
+      "type": "tool.intent",
+      "hash": "8d3f3ad56b821f303c56bd3ef6653d29084f5601a6e2e6de5a24c596c1438d5e"
+    },
+    {
+      "at": 1789615485018,
+      "nodeKey": "root/processBatch:0/chooseRow",
+      "output": {
+        "value": {
+          "disposition": "clear",
+          "sampleId": "dev-a"
+        }
+      },
+      "outputHash": "2c16d5e0875ff7d3bc601a772b09f6ea6693a8dd18e9d5fd8cffb052e4c0aeae",
+      "previousHash": "8d3f3ad56b821f303c56bd3ef6653d29084f5601a6e2e6de5a24c596c1438d5e",
+      "seq": 19,
+      "type": "node.completed",
+      "hash": "bd7335c8ba80f23e45b5fc028286fa75d43b3f90a3ae9ff9fe19bee1f6ba1a8c"
+    },
+    {
+      "at": 1789615485019,
+      "contextHash": "9b44a10a88fac6ce93f515ce797a60a918f30fcb07288c1c96c5d9ca826c46ec",
+      "frameKey": "root/processBatch:1",
+      "previousHash": "bd7335c8ba80f23e45b5fc028286fa75d43b3f90a3ae9ff9fe19bee1f6ba1a8c",
+      "seq": 20,
+      "type": "frame.created",
+      "hash": "f4db3db4fcf4602e115be466329694e235c2ea12ac7d8e50ee70379e2f64ba87"
+    },
+    {
+      "argsHash": "375554debd9f5bff6be6b1035ff4da1daa98c4b1d92eb73dd6c9c4e70c49213b",
+      "at": 1789615485020,
+      "effects": "none",
+      "idempotencyKey": "c4461d975501e2777a82c86483ea5b75d87760cf5ed41bcaa3dc34938ff056f0",
+      "kind": "task",
+      "nodeKey": "root/processBatch:1/screen",
+      "previousHash": "f4db3db4fcf4602e115be466329694e235c2ea12ac7d8e50ee70379e2f64ba87",
+      "reservedCost": 0,
+      "seq": 21,
+      "tool": "lab.screen",
+      "type": "tool.intent",
+      "hash": "5cf222545ffd2d83fb04cd74c575f847168d2cf83e4c979468c1bceb54fe9937"
+    },
+    {
+      "at": 1789615485021,
+      "nodeKey": "root/processBatch:1/screen",
+      "output": {
+        "ok": true,
+        "sampleId": "dev-b",
+        "suspicious": true
+      },
+      "outputHash": "113b78eb80c0343a8a2a69b6a2aee1d46f76bcfdf3464966be41d88d1dcf23e5",
+      "previousHash": "5cf222545ffd2d83fb04cd74c575f847168d2cf83e4c979468c1bceb54fe9937",
+      "seq": 22,
+      "type": "node.completed",
+      "hash": "50a1fe7b1528dee441248832169ff3967ccbbbbd441c11ae2496d9ce1b35e3fb"
+    },
+    {
+      "argsHash": "aeb6ec399c571e0afcb9ec524d105da1ea42371b4d8749ea051abc8d127da137",
+      "at": 1789615485022,
+      "effects": "none",
+      "idempotencyKey": "000833c29a683a490c5f34a50f73d7449727c086e2d2df82c2aa985d8f7960b3",
+      "kind": "task",
+      "nodeKey": "root/processBatch:1/checkScreen",
+      "previousHash": "50a1fe7b1528dee441248832169ff3967ccbbbbd441c11ae2496d9ce1b35e3fb",
+      "reservedCost": 0,
+      "seq": 23,
+      "tool": "core.validate",
+      "type": "tool.intent",
+      "hash": "ad0c638e92d88b94f4d8fcbf3c20e67ef560304d4e6cacab1fba5379bd51a628"
+    },
+    {
+      "at": 1789615485023,
+      "nodeKey": "root/processBatch:1/checkScreen",
+      "output": {
+        "errors": [],
+        "valid": true
+      },
+      "outputHash": "f2e6221bac7112ea123f706c89500b263e72f0f9bc7068fb74bdbaf8c51fbc38",
+      "previousHash": "ad0c638e92d88b94f4d8fcbf3c20e67ef560304d4e6cacab1fba5379bd51a628",
+      "seq": 24,
+      "type": "node.completed",
+      "hash": "50ff995a50673b7749dba8187f0f5e7fb60eb40ed1daed09ad3652e830f282b7"
+    },
+    {
+      "argsHash": "375554debd9f5bff6be6b1035ff4da1daa98c4b1d92eb73dd6c9c4e70c49213b",
+      "at": 1789615485024,
+      "effects": "none",
+      "idempotencyKey": "6178837ea66ae501bbc1bd74a6e530c7f7100a81334449ef46f216fb94d8ed2c",
+      "kind": "task",
+      "nodeKey": "root/processBatch:1/reproduce",
+      "previousHash": "50ff995a50673b7749dba8187f0f5e7fb60eb40ed1daed09ad3652e830f282b7",
+      "reservedCost": 0,
+      "seq": 25,
+      "tool": "lab.reproduce",
+      "type": "tool.intent",
+      "hash": "3ec90101f76eee3c3e0fdc41a501634a9aa772ed6d7b5ae6dc7fe22bbad08723"
+    },
+    {
+      "at": 1789615485026,
+      "nodeKey": "root/processBatch:1/reproduce",
+      "output": {
+        "evidenceId": "observation-dev-b",
+        "independent": true,
+        "ok": true,
+        "reproduced": true,
+        "sampleId": "dev-b"
+      },
+      "outputHash": "94c020840594f609b739849bde8b452ebd3518a76e5bb49d22c0992a11d36fad",
+      "previousHash": "3ec90101f76eee3c3e0fdc41a501634a9aa772ed6d7b5ae6dc7fe22bbad08723",
+      "seq": 26,
+      "type": "node.completed",
+      "hash": "b0790f487ffb38d7c76a1e4023f79b8d7e2cabc74dd7bcebc661fd6e21e72861"
+    },
+    {
+      "argsHash": "41c1a7644a9080cdaff6dbf886563fe2a0f79385388ee47709be7527f53609bc",
+      "at": 1789615485027,
+      "effects": "none",
+      "idempotencyKey": "72d45812d412241afc2991330b959a628d9f9a3c24546ab975125dc22e69f474",
+      "kind": "task",
+      "nodeKey": "root/processBatch:1/checkReproduction",
+      "previousHash": "b0790f487ffb38d7c76a1e4023f79b8d7e2cabc74dd7bcebc661fd6e21e72861",
+      "reservedCost": 0,
+      "seq": 27,
+      "tool": "core.validate",
+      "type": "tool.intent",
+      "hash": "07339e0d19c2aa828bd91cc4d9a200c58c92315d5e7e0d33480e569c67b6194b"
+    },
+    {
+      "at": 1789615485028,
+      "nodeKey": "root/processBatch:1/checkReproduction",
+      "output": {
+        "errors": [],
+        "valid": true
+      },
+      "outputHash": "f2e6221bac7112ea123f706c89500b263e72f0f9bc7068fb74bdbaf8c51fbc38",
+      "previousHash": "07339e0d19c2aa828bd91cc4d9a200c58c92315d5e7e0d33480e569c67b6194b",
+      "seq": 28,
+      "type": "node.completed",
+      "hash": "aa6715ec44161aa60985a42bda05fd85c0107ba3171cc3d097fcd64dfcf52918"
+    },
+    {
+      "at": 1789615485029,
+      "nodeKey": "root/processBatch:1/errorRow",
+      "previousHash": "aa6715ec44161aa60985a42bda05fd85c0107ba3171cc3d097fcd64dfcf52918",
+      "seq": 29,
+      "type": "node.skipped",
+      "hash": "a99ac1c81a8f18958855a15115a61be785ea231f621f02cdc13e50516b34bf88"
+    },
+    {
+      "at": 1789615485030,
+      "nodeKey": "root/processBatch:1/clearRow",
+      "previousHash": "a99ac1c81a8f18958855a15115a61be785ea231f621f02cdc13e50516b34bf88",
+      "seq": 30,
+      "type": "node.skipped",
+      "hash": "6ab39ba0d50565db51497728b6a1d9f52ea4c280483297d99d97f9d95eb1fe54"
+    },
+    {
+      "argsHash": "ca29bebdaecaa9daf7a853b3660f509f5e7393636d1d74edd6d934dd477a5251",
+      "at": 1789615485031,
+      "effects": "none",
+      "idempotencyKey": "d703db0b503cee41335dbd8197cb9a0d465589ae14bc948635d21fbc65d1dd00",
+      "kind": "task",
+      "nodeKey": "root/processBatch:1/confirmedRow",
+      "previousHash": "6ab39ba0d50565db51497728b6a1d9f52ea4c280483297d99d97f9d95eb1fe54",
+      "reservedCost": 0,
+      "seq": 31,
+      "tool": "core.identity",
+      "type": "tool.intent",
+      "hash": "46c3ed10693c9138ba8ad6f1a534eed576fa01b24248e56fd8abc448d4612df1"
+    },
+    {
+      "at": 1789615485032,
+      "nodeKey": "root/processBatch:1/confirmedRow",
+      "output": {
+        "disposition": "confirmed",
+        "sampleId": "dev-b"
+      },
+      "outputHash": "ca29bebdaecaa9daf7a853b3660f509f5e7393636d1d74edd6d934dd477a5251",
+      "previousHash": "46c3ed10693c9138ba8ad6f1a534eed576fa01b24248e56fd8abc448d4612df1",
+      "seq": 32,
+      "type": "node.completed",
+      "hash": "d92ca400aa76342cd2368905ed4cc2cb8a7005f58ff1bb0c384c5be922a6f8de"
+    },
+    {
+      "at": 1789615485033,
+      "nodeKey": "root/processBatch:1/notReproducedRow",
+      "previousHash": "d92ca400aa76342cd2368905ed4cc2cb8a7005f58ff1bb0c384c5be922a6f8de",
+      "seq": 33,
+      "type": "node.skipped",
+      "hash": "44e34d8f79866bc3e6da7a99eaee8efd486ca0914ff20a5d2b38a72339036ff1"
+    },
+    {
+      "at": 1789615485034,
+      "nodeKey": "root/processBatch:1/inconclusiveRow",
+      "previousHash": "44e34d8f79866bc3e6da7a99eaee8efd486ca0914ff20a5d2b38a72339036ff1",
+      "seq": 34,
+      "type": "node.skipped",
+      "hash": "90fb256107290febc74aea47f5771dd94786f7b5f8d53bf389d4ba38a3110513"
+    },
+    {
+      "argsHash": "c6f1f7980b23db14a9de96688fa71211bdc6b4774c670fa6abb6b848b741fba7",
+      "at": 1789615485035,
+      "effects": "none",
+      "idempotencyKey": "d36f8fdf9d8fa79f1d116f7d865c7d33495db77d6e0ed90ce492a8e639aeecda",
+      "kind": "task",
+      "nodeKey": "root/processBatch:1/chooseRow",
+      "previousHash": "90fb256107290febc74aea47f5771dd94786f7b5f8d53bf389d4ba38a3110513",
+      "reservedCost": 0,
+      "seq": 35,
+      "tool": "data.one",
+      "type": "tool.intent",
+      "hash": "a49526f146d6e24b7fda4bd2af61f7e733ffb06fcf01db5c2feec56066dc377b"
+    },
+    {
+      "at": 1789615485036,
+      "nodeKey": "root/processBatch:1/chooseRow",
+      "output": {
+        "value": {
+          "disposition": "confirmed",
+          "sampleId": "dev-b"
+        }
+      },
+      "outputHash": "3e4bdef9a2333ac24af92ea6062909f87015ff2c1cd0126b465820bfce48bb8d",
+      "previousHash": "a49526f146d6e24b7fda4bd2af61f7e733ffb06fcf01db5c2feec56066dc377b",
+      "seq": 36,
+      "type": "node.completed",
+      "hash": "9f313a7d286c1e371ee4ec1ae40bf16c87f7d195dd65bf781e5babae73e95f52"
+    },
+    {
+      "at": 1789615485037,
+      "contextHash": "98183e50d97bb0fc94d3ba075629b8d82952c429a6d801f76188e19235950cf9",
+      "frameKey": "root/processBatch:2",
+      "previousHash": "9f313a7d286c1e371ee4ec1ae40bf16c87f7d195dd65bf781e5babae73e95f52",
+      "seq": 37,
+      "type": "frame.created",
+      "hash": "c117f133cf3c13b7b54aa679a1085d8acb910ee5a9c2d72b55d3bbba2982a739"
+    },
+    {
+      "argsHash": "d9cd2c55eebce5becf670808dae352d7af027a0d293881bd3f720e671f778887",
+      "at": 1789615485038,
+      "effects": "none",
+      "idempotencyKey": "cc5fd2ca375e33f22cc62278898ac73e58b3f8596f4d4f4ee93b22b980272571",
+      "kind": "task",
+      "nodeKey": "root/processBatch:2/screen",
+      "previousHash": "c117f133cf3c13b7b54aa679a1085d8acb910ee5a9c2d72b55d3bbba2982a739",
+      "reservedCost": 0,
+      "seq": 38,
+      "tool": "lab.screen",
+      "type": "tool.intent",
+      "hash": "4771ad7dd0e50d1fa9e8548d8adfde4ee3edace3c7a384906317f11bcc93d631"
+    },
+    {
+      "at": 1789615485039,
+      "nodeKey": "root/processBatch:2/screen",
+      "output": {
+        "ok": true,
+        "sampleId": "dev-c",
+        "suspicious": true
+      },
+      "outputHash": "22b8bdb4ab2580b61b53c99c4f43249d738b1765ea3b3e025ad5123ad3c8a650",
+      "previousHash": "4771ad7dd0e50d1fa9e8548d8adfde4ee3edace3c7a384906317f11bcc93d631",
+      "seq": 39,
+      "type": "node.completed",
+      "hash": "db0d5f2dcdbf28b712216d5318886994ea4b73c580fc18a0e13d4e59b7213fa8"
+    },
+    {
+      "argsHash": "15264fc81e98675d3db8790943e087ea4cbd8323abf49efcd9a021590c7b4dc8",
+      "at": 1789615485041,
+      "effects": "none",
+      "idempotencyKey": "ce83dad705ea006e2647c40a42975b02a8577ba2dce1b5d5405505113fea2b24",
+      "kind": "task",
+      "nodeKey": "root/processBatch:2/checkScreen",
+      "previousHash": "db0d5f2dcdbf28b712216d5318886994ea4b73c580fc18a0e13d4e59b7213fa8",
+      "reservedCost": 0,
+      "seq": 40,
+      "tool": "core.validate",
+      "type": "tool.intent",
+      "hash": "18e79a5881fc4e99971906b1e1a334f3036763ec2da675f35ab1f3cedd545766"
+    },
+    {
+      "at": 1789615485043,
+      "nodeKey": "root/processBatch:2/checkScreen",
+      "output": {
+        "errors": [],
+        "valid": true
+      },
+      "outputHash": "f2e6221bac7112ea123f706c89500b263e72f0f9bc7068fb74bdbaf8c51fbc38",
+      "previousHash": "18e79a5881fc4e99971906b1e1a334f3036763ec2da675f35ab1f3cedd545766",
+      "seq": 41,
+      "type": "node.completed",
+      "hash": "de357ef50bbdad984a22ac5cb1e3f9f95c4d3c78b407a5002095ff8c18be372a"
+    },
+    {
+      "argsHash": "d9cd2c55eebce5becf670808dae352d7af027a0d293881bd3f720e671f778887",
+      "at": 1789615485044,
+      "effects": "none",
+      "idempotencyKey": "503d0f37b47cb4e7f832fd22d3d2c4b9f6c02ec9f33509a9ab4656e6d9ad8419",
+      "kind": "task",
+      "nodeKey": "root/processBatch:2/reproduce",
+      "previousHash": "de357ef50bbdad984a22ac5cb1e3f9f95c4d3c78b407a5002095ff8c18be372a",
+      "reservedCost": 0,
+      "seq": 42,
+      "tool": "lab.reproduce",
+      "type": "tool.intent",
+      "hash": "c7b163d95c4f006a7bca4ba4482cb2adc6d14956805959d122715d394871045b"
+    },
+    {
+      "at": 1789615485046,
+      "nodeKey": "root/processBatch:2/reproduce",
+      "output": {
+        "claim": "confirmed",
+        "evidenceId": "observation-dev-c",
+        "independent": true,
+        "ok": true,
+        "reproduced": false,
+        "sampleId": "dev-c"
+      },
+      "outputHash": "468763c557277a62f5f92d820481e681f09c4d6c4b14eceeb11ecfc002670afd",
+      "previousHash": "c7b163d95c4f006a7bca4ba4482cb2adc6d14956805959d122715d394871045b",
+      "seq": 43,
+      "type": "node.completed",
+      "hash": "bba2eb01835e2ef971e336e3eba53977450b34a2445f955b15d42c34a6f30398"
+    },
+    {
+      "argsHash": "2a8960eadd712c3466faa900cef0b55cfe494214af48b11a19e3abdd786ee372",
+      "at": 1789615485047,
+      "effects": "none",
+      "idempotencyKey": "ee982f98cb68949dcb82c54d0fa2f898bdcbb733aef9c4b2d2501576ea2712b0",
+      "kind": "task",
+      "nodeKey": "root/processBatch:2/checkReproduction",
+      "previousHash": "bba2eb01835e2ef971e336e3eba53977450b34a2445f955b15d42c34a6f30398",
+      "reservedCost": 0,
+      "seq": 44,
+      "tool": "core.validate",
+      "type": "tool.intent",
+      "hash": "ee5921ed38ed097558f65b764182b82156662f3e9661923abba304c063975ec5"
+    },
+    {
+      "at": 1789615485048,
+      "nodeKey": "root/processBatch:2/checkReproduction",
+      "output": {
+        "errors": [],
+        "valid": true
+      },
+      "outputHash": "f2e6221bac7112ea123f706c89500b263e72f0f9bc7068fb74bdbaf8c51fbc38",
+      "previousHash": "ee5921ed38ed097558f65b764182b82156662f3e9661923abba304c063975ec5",
+      "seq": 45,
+      "type": "node.completed",
+      "hash": "216bef17b6a2de17570b95ed4423ebfe54eee315de75d44671f0233c4de2b848"
+    },
+    {
+      "at": 1789615485049,
+      "nodeKey": "root/processBatch:2/errorRow",
+      "previousHash": "216bef17b6a2de17570b95ed4423ebfe54eee315de75d44671f0233c4de2b848",
+      "seq": 46,
+      "type": "node.skipped",
+      "hash": "2089cb72f9d36cc0f74e503a7890dbb82ee4742d2e91a85e6ec255bb340195f9"
+    },
+    {
+      "at": 1789615485051,
+      "nodeKey": "root/processBatch:2/clearRow",
+      "previousHash": "2089cb72f9d36cc0f74e503a7890dbb82ee4742d2e91a85e6ec255bb340195f9",
+      "seq": 47,
+      "type": "node.skipped",
+      "hash": "b5861d0f1ee447969ac781430315ab930f446090b5225bc5b6b694786444c8f6"
+    },
+    {
+      "at": 1789615485052,
+      "nodeKey": "root/processBatch:2/confirmedRow",
+      "previousHash": "b5861d0f1ee447969ac781430315ab930f446090b5225bc5b6b694786444c8f6",
+      "seq": 48,
+      "type": "node.skipped",
+      "hash": "878cbe3e2611c167df2a979102eef2c3c54494c78d4d3f51776fc7f183e4743d"
+    },
+    {
+      "argsHash": "5f0061f7ddbca999916c76ffc7c2d0a32e9869c9dcfb3ddab14847f2dd17af86",
+      "at": 1789615485053,
+      "effects": "none",
+      "idempotencyKey": "76155922bc414d205271850b50252d28d34cf7745c8d978085c2f1f1626cec4b",
+      "kind": "task",
+      "nodeKey": "root/processBatch:2/notReproducedRow",
+      "previousHash": "878cbe3e2611c167df2a979102eef2c3c54494c78d4d3f51776fc7f183e4743d",
+      "reservedCost": 0,
+      "seq": 49,
+      "tool": "core.identity",
+      "type": "tool.intent",
+      "hash": "7b88debf65432438d5cfadf0d27e4cab22ce94b2db7f4547e797fd1f955de363"
+    },
+    {
+      "at": 1789615485054,
+      "nodeKey": "root/processBatch:2/notReproducedRow",
+      "output": {
+        "disposition": "not_reproduced",
+        "sampleId": "dev-c"
+      },
+      "outputHash": "5f0061f7ddbca999916c76ffc7c2d0a32e9869c9dcfb3ddab14847f2dd17af86",
+      "previousHash": "7b88debf65432438d5cfadf0d27e4cab22ce94b2db7f4547e797fd1f955de363",
+      "seq": 50,
+      "type": "node.completed",
+      "hash": "1a8fb7650126b70fefacdf50ee2eb2f4d2e5846718568a22e830b55106fd9707"
+    },
+    {
+      "at": 1789615485055,
+      "nodeKey": "root/processBatch:2/inconclusiveRow",
+      "previousHash": "1a8fb7650126b70fefacdf50ee2eb2f4d2e5846718568a22e830b55106fd9707",
+      "seq": 51,
+      "type": "node.skipped",
+      "hash": "5869c4497c58db0bbff6665341d263abd5726a6d84d1565102e7cdb7fb056031"
+    },
+    {
+      "argsHash": "15c46d1e179a3864346b5b2faadee41ba8df2565e26b5ec195a98b4d65adb07c",
+      "at": 1789615485056,
+      "effects": "none",
+      "idempotencyKey": "67bc0b6cf9650a68cec5fc11665ca02f7a541019f55f44e0f487a8a5d94bedea",
+      "kind": "task",
+      "nodeKey": "root/processBatch:2/chooseRow",
+      "previousHash": "5869c4497c58db0bbff6665341d263abd5726a6d84d1565102e7cdb7fb056031",
+      "reservedCost": 0,
+      "seq": 52,
+      "tool": "data.one",
+      "type": "tool.intent",
+      "hash": "98ba68228553c845b419be43162ae5666fb16ee4410fc25f38df91e34089afb2"
+    },
+    {
+      "at": 1789615485058,
+      "nodeKey": "root/processBatch:2/chooseRow",
+      "output": {
+        "value": {
+          "disposition": "not_reproduced",
+          "sampleId": "dev-c"
+        }
+      },
+      "outputHash": "8748a9bab28ce4ae2bfa5a8efa606d7985015c7668580c1a8fbe2a595170195c",
+      "previousHash": "98ba68228553c845b419be43162ae5666fb16ee4410fc25f38df91e34089afb2",
+      "seq": 53,
+      "type": "node.completed",
+      "hash": "b90b987149b2c62d1a408e60df11347463c8eb11130ab5454470734ca780c10f"
+    },
+    {
+      "at": 1789615485059,
+      "nodeKey": "root/processBatch",
+      "output": {
+        "count": 3,
+        "items": [
+          {
+            "checkReproduction": {
+              "errors": [
+                {
+                  "instancePath": "",
+                  "keyword": "type",
+                  "message": "must be object",
+                  "params": {
+                    "type": "object"
+                  },
+                  "schemaPath": "#/type"
+                }
+              ],
+              "valid": false
+            },
+            "checkScreen": {
+              "errors": [],
+              "valid": true
+            },
+            "chooseRow": {
+              "value": {
+                "disposition": "clear",
+                "sampleId": "dev-a"
+              }
+            },
+            "clearRow": {
+              "disposition": "clear",
+              "sampleId": "dev-a"
+            },
+            "screen": {
+              "claim": "confirmed",
+              "ok": true,
+              "sampleId": "dev-a",
+              "suspicious": false
+            }
+          },
+          {
+            "checkReproduction": {
+              "errors": [],
+              "valid": true
+            },
+            "checkScreen": {
+              "errors": [],
+              "valid": true
+            },
+            "chooseRow": {
+              "value": {
+                "disposition": "confirmed",
+                "sampleId": "dev-b"
+              }
+            },
+            "confirmedRow": {
+              "disposition": "confirmed",
+              "sampleId": "dev-b"
+            },
+            "reproduce": {
+              "evidenceId": "observation-dev-b",
+              "independent": true,
+              "ok": true,
+              "reproduced": true,
+              "sampleId": "dev-b"
+            },
+            "screen": {
+              "ok": true,
+              "sampleId": "dev-b",
+              "suspicious": true
+            }
+          },
+          {
+            "checkReproduction": {
+              "errors": [],
+              "valid": true
+            },
+            "checkScreen": {
+              "errors": [],
+              "valid": true
+            },
+            "chooseRow": {
+              "value": {
+                "disposition": "not_reproduced",
+                "sampleId": "dev-c"
+              }
+            },
+            "notReproducedRow": {
+              "disposition": "not_reproduced",
+              "sampleId": "dev-c"
+            },
+            "reproduce": {
+              "claim": "confirmed",
+              "evidenceId": "observation-dev-c",
+              "independent": true,
+              "ok": true,
+              "reproduced": false,
+              "sampleId": "dev-c"
+            },
+            "screen": {
+              "ok": true,
+              "sampleId": "dev-c",
+              "suspicious": true
+            }
+          }
+        ]
+      },
+      "outputHash": "3594b98f4834ed93e529078565c108f56dbe430e4c607212d3c0e6b7a6a703a5",
+      "previousHash": "b90b987149b2c62d1a408e60df11347463c8eb11130ab5454470734ca780c10f",
+      "seq": 54,
+      "type": "node.completed",
+      "hash": "9cf640967ff866caa34b9d01021fe50e2e054ead66310d4a1d4e4a00e8ac6df6"
+    },
+    {
+      "argsHash": "6152ce69c5ec7f3163131cec337ef8d3ad14bd3136d5719d99e2d37364945d69",
+      "at": 1789615485060,
+      "effects": "none",
+      "idempotencyKey": "1e54f8f774543199f70b5a75881e7954ad2cc6d9d549c11057083e0aac4240f9",
+      "kind": "task",
+      "nodeKey": "root/countInputs",
+      "previousHash": "9cf640967ff866caa34b9d01021fe50e2e054ead66310d4a1d4e4a00e8ac6df6",
+      "reservedCost": 0,
+      "seq": 55,
+      "tool": "core.aggregate",
+      "type": "tool.intent",
+      "hash": "48834ed5118af3caab13221d01a7da4e3ac80421aefeec5e822b16deb5aba0a9"
+    },
+    {
+      "at": 1789615485061,
+      "nodeKey": "root/countInputs",
+      "output": {
+        "value": 3
+      },
+      "outputHash": "d428e15b36ff064e22b6f8db60bd7a59bcfc07a04ccd0f15d9a96dc060c72e3c",
+      "previousHash": "48834ed5118af3caab13221d01a7da4e3ac80421aefeec5e822b16deb5aba0a9",
+      "seq": 56,
+      "type": "node.completed",
+      "hash": "259a30198073454cd49ce6b245f08ee1f384ebee13f8e685e8165261cf9b2355"
+    },
+    {
+      "argsHash": "b6e65a5c1df023eea87f9bbf52469a1c572b7900c9c9c5de411f579fb6c737d4",
+      "at": 1789615485063,
+      "effects": "none",
+      "idempotencyKey": "f19a37b21fe630b6d3844ed167c7b78668bb935dcaa2fb730b4d42484d50cdc0",
+      "kind": "task",
+      "nodeKey": "root/extractRows",
+      "previousHash": "259a30198073454cd49ce6b245f08ee1f384ebee13f8e685e8165261cf9b2355",
+      "reservedCost": 0,
+      "seq": 57,
+      "tool": "core.pluck",
+      "type": "tool.intent",
+      "hash": "4d2d5d098e07c1b546ad108483baf2c7aa71f5f819e957d319ad895baa4a5d84"
+    },
+    {
+      "at": 1789615485064,
+      "nodeKey": "root/extractRows",
+      "output": {
+        "count": 3,
+        "items": [
+          {
+            "disposition": "clear",
+            "sampleId": "dev-a"
+          },
+          {
+            "disposition": "confirmed",
+            "sampleId": "dev-b"
+          },
+          {
+            "disposition": "not_reproduced",
+            "sampleId": "dev-c"
+          }
+        ]
+      },
+      "outputHash": "a75e743f4d282ef52d88645c78456198b148392ca9be41f89d839ac7dabd6c91",
+      "previousHash": "4d2d5d098e07c1b546ad108483baf2c7aa71f5f819e957d319ad895baa4a5d84",
+      "seq": 58,
+      "type": "node.completed",
+      "hash": "9f7a1c36de2288b6f11752cbe97cfc3fdf00ee02fc5587e6b92dc4b73cc54525"
+    },
+    {
+      "argsHash": "61c711acf2eda22e178ed18443a486b3f5810c0cc3736b62962540bc2bc8a2ca",
+      "at": 1789615485066,
+      "effects": "none",
+      "idempotencyKey": "1acdd56c2f3dcb24b792c8fdd7a62bda92e21748b1a2db93e2adbbb2f0daef1a",
+      "kind": "task",
+      "nodeKey": "root/validateManifest",
+      "previousHash": "9f7a1c36de2288b6f11752cbe97cfc3fdf00ee02fc5587e6b92dc4b73cc54525",
+      "reservedCost": 0,
+      "seq": 59,
+      "tool": "core.validate",
+      "type": "tool.intent",
+      "hash": "e5068198dc01daa6c674e004b2f7c004f95ac73bf161e7f74086f0571ce00a4a"
+    },
+    {
+      "at": 1789615485067,
+      "nodeKey": "root/validateManifest",
+      "output": {
+        "errors": [],
+        "valid": true
+      },
+      "outputHash": "f2e6221bac7112ea123f706c89500b263e72f0f9bc7068fb74bdbaf8c51fbc38",
+      "previousHash": "e5068198dc01daa6c674e004b2f7c004f95ac73bf161e7f74086f0571ce00a4a",
+      "seq": 60,
+      "type": "node.completed",
+      "hash": "a002fbc5120a4ae9f8e5eeb18bdd23a0d5d8038400367136756fa67145b2b35d"
+    },
+    {
+      "at": 1789615485068,
+      "kind": "assert",
+      "nodeKey": "root/checkManifest",
+      "previousHash": "a002fbc5120a4ae9f8e5eeb18bdd23a0d5d8038400367136756fa67145b2b35d",
+      "reservedCost": 0,
+      "seq": 61,
+      "type": "node.started",
+      "hash": "a93bb4e82f1a1154e30f19ea12ca1e2c7c77b825f6060cbdcda454e5290794e6"
+    },
+    {
+      "at": 1789615485069,
+      "nodeKey": "root/checkManifest",
+      "output": {
+        "passed": true
+      },
+      "outputHash": "11c11db30f4b3f6c758722ba3e27eea08145b7d212f6a157451e364b48475280",
+      "previousHash": "a93bb4e82f1a1154e30f19ea12ca1e2c7c77b825f6060cbdcda454e5290794e6",
+      "seq": 62,
+      "type": "node.completed",
+      "hash": "9644c9fc2b89a441178dc15f154ae4ccaa95f4e4d2d8800f04710a268467c03b"
+    },
+    {
+      "argsHash": "e8c690f79557d4bf1b574f79b9f8344dedec4db7d03437a5594e394a10eba240",
+      "at": 1789615485071,
+      "effects": "none",
+      "idempotencyKey": "e12722027e135c7989c9444aab7f52380a60d4d8fa33609b991a6ad44aa31878",
+      "kind": "task",
+      "nodeKey": "root/serializeManifest",
+      "previousHash": "9644c9fc2b89a441178dc15f154ae4ccaa95f4e4d2d8800f04710a268467c03b",
+      "reservedCost": 0,
+      "seq": 63,
+      "tool": "core.json",
+      "type": "tool.intent",
+      "hash": "e1cd7cb25bb8cd1edc3f3b8e3f040382190348b348dd501bfc1a23abd1677577"
+    },
+    {
+      "at": 1789615485073,
+      "nodeKey": "root/serializeManifest",
+      "output": {
+        "text": "{\n  \"samples\": [\n    {\n      \"disposition\": \"clear\",\n      \"sampleId\": \"dev-a\"\n    },\n    {\n      \"disposition\": \"confirmed\",\n      \"sampleId\": \"dev-b\"\n    },\n    {\n      \"disposition\": \"not_reproduced\",\n      \"sampleId\": \"dev-c\"\n    }\n  ]\n}"
+      },
+      "outputHash": "2044a217e09333a8545a8cca4c0fe07f507f7b6319d595949d195a62d77a4256",
+      "previousHash": "e1cd7cb25bb8cd1edc3f3b8e3f040382190348b348dd501bfc1a23abd1677577",
+      "seq": 64,
+      "type": "node.completed",
+      "hash": "89532afb551257d17e081bfb0556a4e4bc4b603b985a717dc8f7cdaab399bbd6"
+    },
+    {
+      "argsHash": "54ebb407d4644e498817f3af8c13dd8f253cdf0194c5db6be1dea18b17693838",
+      "at": 1789615485075,
+      "effects": "idempotent",
+      "idempotencyKey": "f76214c05a5c87500d2ecd8aba0ea71d0b530bcfe203295af898064ad236fac2",
+      "kind": "task",
+      "nodeKey": "root/publishManifest",
+      "previousHash": "89532afb551257d17e081bfb0556a4e4bc4b603b985a717dc8f7cdaab399bbd6",
+      "reservedCost": 0,
+      "seq": 65,
+      "tool": "core.artifact",
+      "type": "tool.intent",
+      "hash": "91cefe6548b42ea8a93e8ff0ed67fbd36e5c42d8b7da24e218a7c8480b3dc114"
+    },
+    {
+      "at": 1789615485077,
+      "nodeKey": "root/publishManifest",
+      "output": {
+        "bytes": 241,
+        "name": "manifest.json",
+        "sha256": "f45ac6e6a678ef2767b82545e25a26df7f24908983c00292af2c1e50c4d647aa"
+      },
+      "outputHash": "b1ec9c2cad5c1a1f8d05128e57b550d6aef2ad30f21db1ede6ac3757191b7867",
+      "previousHash": "91cefe6548b42ea8a93e8ff0ed67fbd36e5c42d8b7da24e218a7c8480b3dc114",
+      "seq": 66,
+      "type": "node.completed",
+      "hash": "d1ed1f2e720e7696e19e46ab25a45984e13966910f1c57cdf40fa38f200bbe83"
+    },
+    {
+      "at": 1789615485078,
+      "previousHash": "d1ed1f2e720e7696e19e46ab25a45984e13966910f1c57cdf40fa38f200bbe83",
+      "seq": 67,
+      "type": "run.succeeded",
+      "hash": "c7702ea4c0b9e6e1e4cc455f9a496049d933d050d97627b26ee1fc309a50f2b9"
+    }
+  ],
+  "actual": {
+    "samples": [
+      {
+        "disposition": "clear",
+        "sampleId": "dev-a"
+      },
+      {
+        "disposition": "confirmed",
+        "sampleId": "dev-b"
+      },
+      {
+        "disposition": "not_reproduced",
+        "sampleId": "dev-c"
+      }
+    ]
+  },
+  "expected": {
+    "samples": [
+      {
+        "sampleId": "dev-a",
+        "disposition": "clear"
+      },
+      {
+        "sampleId": "dev-b",
+        "disposition": "confirmed"
+      },
+      {
+        "sampleId": "dev-c",
+        "disposition": "not_reproduced"
+      }
+    ]
+  },
+  "calls": [
+    {
+      "ordinal": 1,
+      "instrument": "screen",
+      "sampleId": "dev-a",
+      "nodeKey": "root/processBatch:0/screen",
+      "idempotencyKey": "4bcb00da5e50fadb758ca987a25873ee964347847e3e421c39c3c6f06497de83",
+      "syntheticCost": 1,
+      "outcome": "returned",
+      "observation": {
+        "claim": "confirmed",
+        "ok": true,
+        "sampleId": "dev-a",
+        "suspicious": false
+      }
+    },
+    {
+      "ordinal": 2,
+      "instrument": "screen",
+      "sampleId": "dev-b",
+      "nodeKey": "root/processBatch:1/screen",
+      "idempotencyKey": "c4461d975501e2777a82c86483ea5b75d87760cf5ed41bcaa3dc34938ff056f0",
+      "syntheticCost": 1,
+      "outcome": "returned",
+      "observation": {
+        "ok": true,
+        "sampleId": "dev-b",
+        "suspicious": true
+      }
+    },
+    {
+      "ordinal": 3,
+      "instrument": "reproduce",
+      "sampleId": "dev-b",
+      "nodeKey": "root/processBatch:1/reproduce",
+      "idempotencyKey": "6178837ea66ae501bbc1bd74a6e530c7f7100a81334449ef46f216fb94d8ed2c",
+      "syntheticCost": 10,
+      "outcome": "returned",
+      "observation": {
+        "evidenceId": "observation-dev-b",
+        "independent": true,
+        "ok": true,
+        "reproduced": true,
+        "sampleId": "dev-b"
+      }
+    },
+    {
+      "ordinal": 4,
+      "instrument": "screen",
+      "sampleId": "dev-c",
+      "nodeKey": "root/processBatch:2/screen",
+      "idempotencyKey": "cc5fd2ca375e33f22cc62278898ac73e58b3f8596f4d4f4ee93b22b980272571",
+      "syntheticCost": 1,
+      "outcome": "returned",
+      "observation": {
+        "ok": true,
+        "sampleId": "dev-c",
+        "suspicious": true
+      }
+    },
+    {
+      "ordinal": 5,
+      "instrument": "reproduce",
+      "sampleId": "dev-c",
+      "nodeKey": "root/processBatch:2/reproduce",
+      "idempotencyKey": "503d0f37b47cb4e7f832fd22d3d2c4b9f6c02ec9f33509a9ab4656e6d9ad8419",
+      "syntheticCost": 10,
+      "outcome": "returned",
+      "observation": {
+        "claim": "confirmed",
+        "evidenceId": "observation-dev-c",
+        "independent": true,
+        "ok": true,
+        "reproduced": false,
+        "sampleId": "dev-c"
+      }
+    }
+  ],
+  "audit": {
+    "passed": true,
+    "problems": [],
+    "missingCalls": 0,
+    "forbiddenCalls": 0,
+    "duplicateCalls": 0,
+    "wrongOrder": 0,
+    "invalidObservations": 0,
+    "screenCalls": 3,
+    "reproduceCalls": 2,
+    "syntheticCost": 23,
+    "expectedSyntheticCost": 23
+  },
+  "delivery": {
+    "requestId": "533f7be6-a5c5-4597-a842-099a7baddeb9",
+    "proposalId": "b3173bea-060f-412c-9ae0-0b58bc9f036b",
+    "runId": "b087eab6-78f6-4938-860e-42acd715c8f2",
+    "workflowId": "ObservedBatchManifest",
+    "workflowHash": "5cc364ca2bd741330968016c582f6f6c2f4464aff5e3a75a99d2c9b908f62510",
+    "workflowVersion": 1,
+    "inputHash": "951fdae63dd5e3d2d56272a9902ecce1313873959d3ec5f856bad5f8770d9c4c",
+    "registryHash": "bb3f73d712e174d3084248c8d199a620b7eeb2a7b2655d64b6286ab3af536d0e",
+    "eventHead": {
+      "hash": "c7702ea4c0b9e6e1e4cc455f9a496049d933d050d97627b26ee1fc309a50f2b9",
+      "seq": 67
+    },
+    "eventCount": 67,
+    "status": "succeeded",
+    "localExecutionSucceeded": true,
+    "independentTaskVerified": false,
+    "matchedTaskEvidence": [
+      {
+        "id": "373da01f8a13b5050ac9fb17a6d2bcfa064b504ee9fe5e8e398629a794c9b8d0",
+        "evaluatorId": "sample-consequences-v2:7327fd9175b4609f7a0e0cd6cb798dcbb0212b923826ecbbb916df7f19ceb01e:517b7e60d3e674f7fc1189dac8f468dd19d9f6800467a5998fde6a38fbd66e15",
+        "passed": true,
+        "split": "heldout",
+        "envelope": [
+          "Source-informed fixed synthetic scenarios; not a population sample.",
+          "Exact manifest JSON plus independent call accounting; no expected node IDs.",
+          "Instrument observations and evaluator truth are separate; no network or paid execution."
+        ],
+        "qualification": "Fixed source-informed synthetic scenarios. Provider-hidden split only when withheld from synthesis; no population, autonomous discovery, production, or independent instrument calibration claim. V2 adds validated completion/event binding and confirmation-before-publication checks. All-item completion before publication is a non-gating diagnostic; temporal order alone does not prove causal use."
+      },
+      {
+        "id": "62455a60bcf3e384c8ce3e2a28ebc1e9996b231b1a5de3b6b0ddf27908fc1d8f",
+        "evaluatorId": "sample-consequences-v2:0edadddb1f94f88cdbaebdfbc382d3f18d7c6faac720bc066ba3fb79ccf0e005:517b7e60d3e674f7fc1189dac8f468dd19d9f6800467a5998fde6a38fbd66e15",
+        "passed": true,
+        "split": "development",
+        "envelope": [
+          "Source-informed fixed synthetic scenarios; not a population sample.",
+          "Exact manifest JSON plus independent call accounting; no expected node IDs.",
+          "Instrument observations and evaluator truth are separate; no network or paid execution."
+        ],
+        "qualification": "Fixed source-informed synthetic scenarios. Provider-hidden split only when withheld from synthesis; no population, autonomous discovery, production, or independent instrument calibration claim. V2 adds validated completion/event binding and confirmation-before-publication checks. All-item completion before publication is a non-gating diagnostic; temporal order alone does not prove causal use."
+      }
+    ],
+    "qualification": "Exact request/proposal/run linkage is checked. Local success and separately scoped task-suite evidence are distinct; this receipt does not infer arbitrary deployment readiness."
+  }
+}

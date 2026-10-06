@@ -1,0 +1,356 @@
+{
+  "evaluatorId": "sample-consequences-v1:7327fd9175b4609f7a0e0cd6cb798dcbb0212b923826ecbbb916df7f19ceb01e:ebbdf190674414c29ec2fc7632e8f72b6e3c305c5abd20b322cc8a077304f732",
+  "workflowHash": "f3548b4b2c394e6cbe46bef68b5ffcb86ec1cf1ed6b168dda2abae38f2b12960",
+  "registryHash": "bb3f73d712e174d3084248c8d199a620b7eeb2a7b2655d64b6286ab3af536d0e",
+  "suiteHash": "7327fd9175b4609f7a0e0cd6cb798dcbb0212b923826ecbbb916df7f19ceb01e",
+  "split": "heldout",
+  "qualificationLevel": "task-outcome",
+  "passed": false,
+  "metrics": {
+    "passedCount": 0,
+    "caseCount": 8,
+    "successFraction": 0,
+    "falseSuccessCount": 8,
+    "totalSteps": 8,
+    "totalCost": 0,
+    "elapsedMs": 316,
+    "missingCalls": 37,
+    "forbiddenCalls": 0,
+    "duplicateCalls": 0,
+    "syntheticCost": 0
+  },
+  "envelope": [
+    "Source-informed fixed synthetic scenarios; not a population sample.",
+    "Exact manifest JSON plus independent call accounting; no expected node IDs.",
+    "Instrument observations and evaluator truth are separate; no network or paid execution."
+  ],
+  "cases": [
+    {
+      "id": "held-01",
+      "passed": false,
+      "status": "succeeded",
+      "falseSuccess": true,
+      "checks": [],
+      "artifacts": [
+        {
+          "name": "manifest.json",
+          "passed": false,
+          "reason": "Artifact absent"
+        }
+      ],
+      "steps": 1,
+      "cost": 0,
+      "elapsedMs": 15,
+      "runId": "7315b996-7329-485d-933f-476add4a1806",
+      "workspace": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/calibration-001/do_nothing-sealed/case-zQ9iIB",
+      "exception": null,
+      "runError": null,
+      "failedNodes": [],
+      "eventCount": 5,
+      "nativePassed": false,
+      "instrumentAudit": {
+        "passed": false,
+        "problems": [
+          "missing_instrument_calls",
+          "synthetic_work_budget_mismatch"
+        ],
+        "missingCalls": 6,
+        "forbiddenCalls": 0,
+        "duplicateCalls": 0,
+        "wrongOrder": 0,
+        "invalidObservations": 0,
+        "screenCalls": 0,
+        "reproduceCalls": 0,
+        "syntheticCost": 0,
+        "expectedSyntheticCost": 24
+      },
+      "instrumentLog": []
+    },
+    {
+      "id": "held-02",
+      "passed": false,
+      "status": "succeeded",
+      "falseSuccess": true,
+      "checks": [],
+      "artifacts": [
+        {
+          "name": "manifest.json",
+          "passed": false,
+          "reason": "Artifact absent"
+        }
+      ],
+      "steps": 1,
+      "cost": 0,
+      "elapsedMs": 12,
+      "runId": "79b1b095-a43a-4079-8113-b3d830155915",
+      "workspace": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/calibration-001/do_nothing-sealed/case-NWycMq",
+      "exception": null,
+      "runError": null,
+      "failedNodes": [],
+      "eventCount": 5,
+      "nativePassed": false,
+      "instrumentAudit": {
+        "passed": false,
+        "problems": [
+          "missing_instrument_calls",
+          "synthetic_work_budget_mismatch"
+        ],
+        "missingCalls": 7,
+        "forbiddenCalls": 0,
+        "duplicateCalls": 0,
+        "wrongOrder": 0,
+        "invalidObservations": 0,
+        "screenCalls": 0,
+        "reproduceCalls": 0,
+        "syntheticCost": 0,
+        "expectedSyntheticCost": 34
+      },
+      "instrumentLog": []
+    },
+    {
+      "id": "held-03",
+      "passed": false,
+      "status": "succeeded",
+      "falseSuccess": true,
+      "checks": [],
+      "artifacts": [
+        {
+          "name": "manifest.json",
+          "passed": false,
+          "reason": "Artifact absent"
+        }
+      ],
+      "steps": 1,
+      "cost": 0,
+      "elapsedMs": 15,
+      "runId": "24e5dd34-2248-44e0-b58d-45538604e1c2",
+      "workspace": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/calibration-001/do_nothing-sealed/case-bYlJRO",
+      "exception": null,
+      "runError": null,
+      "failedNodes": [],
+      "eventCount": 5,
+      "nativePassed": false,
+      "instrumentAudit": {
+        "passed": false,
+        "problems": [
+          "missing_instrument_calls",
+          "synthetic_work_budget_mismatch"
+        ],
+        "missingCalls": 6,
+        "forbiddenCalls": 0,
+        "duplicateCalls": 0,
+        "wrongOrder": 0,
+        "invalidObservations": 0,
+        "screenCalls": 0,
+        "reproduceCalls": 0,
+        "syntheticCost": 0,
+        "expectedSyntheticCost": 33
+      },
+      "instrumentLog": []
+    },
+    {
+      "id": "held-04",
+      "passed": false,
+      "status": "succeeded",
+      "falseSuccess": true,
+      "checks": [],
+      "artifacts": [
+        {
+          "name": "manifest.json",
+          "passed": false,
+          "reason": "Artifact absent"
+        }
+      ],
+      "steps": 1,
+      "cost": 0,
+      "elapsedMs": 14,
+      "runId": "34b6cb0a-ea0f-4f01-a062-df1b2b18c66e",
+      "workspace": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/calibration-001/do_nothing-sealed/case-QitIuR",
+      "exception": null,
+      "runError": null,
+      "failedNodes": [],
+      "eventCount": 5,
+      "nativePassed": false,
+      "instrumentAudit": {
+        "passed": false,
+        "problems": [
+          "missing_instrument_calls",
+          "synthetic_work_budget_mismatch"
+        ],
+        "missingCalls": 6,
+        "forbiddenCalls": 0,
+        "duplicateCalls": 0,
+        "wrongOrder": 0,
+        "invalidObservations": 0,
+        "screenCalls": 0,
+        "reproduceCalls": 0,
+        "syntheticCost": 0,
+        "expectedSyntheticCost": 33
+      },
+      "instrumentLog": []
+    },
+    {
+      "id": "held-05",
+      "passed": false,
+      "status": "succeeded",
+      "falseSuccess": true,
+      "checks": [],
+      "artifacts": [
+        {
+          "name": "manifest.json",
+          "passed": false,
+          "reason": "Artifact absent"
+        }
+      ],
+      "steps": 1,
+      "cost": 0,
+      "elapsedMs": 14,
+      "runId": "0a9c88e7-79e0-4d0c-9600-9c87cd04058a",
+      "workspace": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/calibration-001/do_nothing-sealed/case-QapsRF",
+      "exception": null,
+      "runError": null,
+      "failedNodes": [],
+      "eventCount": 5,
+      "nativePassed": false,
+      "instrumentAudit": {
+        "passed": false,
+        "problems": [
+          "missing_instrument_calls",
+          "synthetic_work_budget_mismatch"
+        ],
+        "missingCalls": 9,
+        "forbiddenCalls": 0,
+        "duplicateCalls": 0,
+        "wrongOrder": 0,
+        "invalidObservations": 0,
+        "screenCalls": 0,
+        "reproduceCalls": 0,
+        "syntheticCost": 0,
+        "expectedSyntheticCost": 36
+      },
+      "instrumentLog": []
+    },
+    {
+      "id": "held-06",
+      "passed": false,
+      "status": "succeeded",
+      "falseSuccess": true,
+      "checks": [],
+      "artifacts": [
+        {
+          "name": "manifest.json",
+          "passed": false,
+          "reason": "Artifact absent"
+        }
+      ],
+      "steps": 1,
+      "cost": 0,
+      "elapsedMs": 14,
+      "runId": "31740607-2ce7-400c-b6f4-9828f751d522",
+      "workspace": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/calibration-001/do_nothing-sealed/case-JMsjm7",
+      "exception": null,
+      "runError": null,
+      "failedNodes": [],
+      "eventCount": 5,
+      "nativePassed": false,
+      "instrumentAudit": {
+        "passed": true,
+        "problems": [],
+        "missingCalls": 0,
+        "forbiddenCalls": 0,
+        "duplicateCalls": 0,
+        "wrongOrder": 0,
+        "invalidObservations": 0,
+        "screenCalls": 0,
+        "reproduceCalls": 0,
+        "syntheticCost": 0,
+        "expectedSyntheticCost": 0
+      },
+      "instrumentLog": []
+    },
+    {
+      "id": "held-07",
+      "passed": false,
+      "status": "succeeded",
+      "falseSuccess": true,
+      "checks": [],
+      "artifacts": [
+        {
+          "name": "manifest.json",
+          "passed": false,
+          "reason": "Artifact absent"
+        }
+      ],
+      "steps": 1,
+      "cost": 0,
+      "elapsedMs": 13,
+      "runId": "22663cb2-165f-40b2-8dc9-b2803645ec40",
+      "workspace": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/calibration-001/do_nothing-sealed/case-8oi1kD",
+      "exception": null,
+      "runError": null,
+      "failedNodes": [],
+      "eventCount": 5,
+      "nativePassed": false,
+      "instrumentAudit": {
+        "passed": false,
+        "problems": [
+          "missing_instrument_calls",
+          "synthetic_work_budget_mismatch"
+        ],
+        "missingCalls": 1,
+        "forbiddenCalls": 0,
+        "duplicateCalls": 0,
+        "wrongOrder": 0,
+        "invalidObservations": 0,
+        "screenCalls": 0,
+        "reproduceCalls": 0,
+        "syntheticCost": 0,
+        "expectedSyntheticCost": 1
+      },
+      "instrumentLog": []
+    },
+    {
+      "id": "held-08",
+      "passed": false,
+      "status": "succeeded",
+      "falseSuccess": true,
+      "checks": [],
+      "artifacts": [
+        {
+          "name": "manifest.json",
+          "passed": false,
+          "reason": "Artifact absent"
+        }
+      ],
+      "steps": 1,
+      "cost": 0,
+      "elapsedMs": 13,
+      "runId": "ef98457d-2222-4c55-92cd-8ac52255aebf",
+      "workspace": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/calibration-001/do_nothing-sealed/case-r5T88O",
+      "exception": null,
+      "runError": null,
+      "failedNodes": [],
+      "eventCount": 5,
+      "nativePassed": false,
+      "instrumentAudit": {
+        "passed": false,
+        "problems": [
+          "missing_instrument_calls",
+          "synthetic_work_budget_mismatch"
+        ],
+        "missingCalls": 2,
+        "forbiddenCalls": 0,
+        "duplicateCalls": 0,
+        "wrongOrder": 0,
+        "invalidObservations": 0,
+        "screenCalls": 0,
+        "reproduceCalls": 0,
+        "syntheticCost": 0,
+        "expectedSyntheticCost": 11
+      },
+      "instrumentLog": []
+    }
+  ],
+  "qualification": "Fixed source-informed synthetic scenarios. Provider-hidden split only when withheld from synthesis; no population, autonomous discovery, production, or independent instrument calibration claim.",
+  "nativeEvaluatorId": "suite:sample-consequence-sealed-v1:7327fd9175b4609f7a0e0cd6cb798dcbb0212b923826ecbbb916df7f19ceb01e"
+}

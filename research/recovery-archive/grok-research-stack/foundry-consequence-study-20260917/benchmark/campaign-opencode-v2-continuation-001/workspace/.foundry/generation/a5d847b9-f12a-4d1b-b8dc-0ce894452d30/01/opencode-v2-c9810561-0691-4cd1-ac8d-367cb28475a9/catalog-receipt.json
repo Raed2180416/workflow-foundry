@@ -1,0 +1,44 @@
+{
+  "url": "https://models.opencode.ai/api.json",
+  "fetchedAt": "2026-09-17T08:52:25.994Z",
+  "sha256": "5bd419e2c3e53e0e06a03be4d555cd90d9ab6866be8c26d20e2bd698c2e829ec",
+  "model": "opencode/big-pickle",
+  "rawModel": {
+    "id": "big-pickle",
+    "name": "Big Pickle",
+    "description": "Reasoning model for deliberate analysis, multi-step problem solving, and tool use",
+    "family": "big-pickle",
+    "attachment": false,
+    "reasoning": true,
+    "reasoning_options": [],
+    "tool_call": true,
+    "interleaved": {
+      "field": "reasoning_content"
+    },
+    "structured_output": true,
+    "temperature": true,
+    "knowledge": "2025-01",
+    "release_date": "2025-10-17",
+    "last_updated": "2025-10-17",
+    "modalities": {
+      "input": [
+        "text"
+      ],
+      "output": [
+        "text"
+      ]
+    },
+    "open_weights": false,
+    "limit": {
+      "context": 200000,
+      "input": 160000,
+      "output": 32000
+    },
+    "cost": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0
+    }
+  }
+}

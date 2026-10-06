@@ -1,0 +1,751 @@
+{
+  "schemaVersion": "1.0",
+  "id": "sample-consequence-sealed-v1",
+  "split": "heldout",
+  "task": "Process the supplied batch of samples. Give every sample one cheap screening attempt. Spend one independent reproduction attempt only on each sample whose screening observation explicitly says it is suspicious. Do not retry instruments. Report every input sample exactly once, in input order, in manifest.json, including failures and inconclusive observations. Call a defect confirmed only when its own independent reproduction returned complete positive evidence. A successful call, a reassuring claim, or a suspicious screening result alone is insufficient. A failed instrument must not prevent the other samples from being reported. Use only the supplied local capabilities; there is no network, external action or human approval to request.",
+  "envelope": [
+    "Source-informed fixed synthetic scenarios; not a population sample.",
+    "Exact manifest JSON plus independent call accounting; no expected node IDs.",
+    "Instrument observations and evaluator truth are separate; no network or paid execution."
+  ],
+  "cases": [
+    {
+      "id": "held-01",
+      "input": {
+        "samples": [
+          {
+            "id": "m7"
+          },
+          {
+            "id": "p4"
+          },
+          {
+            "id": "k2"
+          },
+          {
+            "id": "h9"
+          }
+        ]
+      },
+      "fixture": {
+        "observations": {
+          "m7": {
+            "screen": {
+              "returned": {
+                "ok": true,
+                "sampleId": "m7",
+                "suspicious": false,
+                "claim": "confirmed"
+              }
+            },
+            "reproduce": {
+              "returned": {
+                "ok": true,
+                "sampleId": "m7",
+                "independent": true,
+                "evidenceId": "observation-m7",
+                "reproduced": false
+              }
+            }
+          },
+          "p4": {
+            "screen": {
+              "returned": {
+                "ok": true,
+                "sampleId": "p4",
+                "suspicious": true
+              }
+            },
+            "reproduce": {
+              "returned": {
+                "ok": true,
+                "sampleId": "p4",
+                "independent": true,
+                "evidenceId": "observation-p4",
+                "reproduced": true
+              }
+            }
+          },
+          "k2": {
+            "screen": {
+              "returned": {
+                "ok": true,
+                "sampleId": "k2",
+                "suspicious": true
+              }
+            },
+            "reproduce": {
+              "returned": {
+                "ok": true,
+                "sampleId": "k2",
+                "independent": true,
+                "evidenceId": "observation-k2",
+                "reproduced": false,
+                "claim": "confirmed"
+              }
+            }
+          },
+          "h9": {
+            "screen": {
+              "error": "SCREEN_ERROR"
+            },
+            "reproduce": {
+              "returned": {
+                "ok": true,
+                "sampleId": "h9",
+                "independent": true,
+                "evidenceId": "observation-h9",
+                "reproduced": true
+              }
+            }
+          }
+        }
+      },
+      "expect": {
+        "statuses": [
+          "succeeded"
+        ],
+        "checks": [],
+        "artifacts": [
+          {
+            "name": "manifest.json",
+            "json": {
+              "samples": [
+                {
+                  "sampleId": "m7",
+                  "disposition": "clear"
+                },
+                {
+                  "sampleId": "p4",
+                  "disposition": "confirmed"
+                },
+                {
+                  "sampleId": "k2",
+                  "disposition": "not_reproduced"
+                },
+                {
+                  "sampleId": "h9",
+                  "disposition": "error"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "held-02",
+      "input": {
+        "samples": [
+          {
+            "id": "m7"
+          },
+          {
+            "id": "p4"
+          },
+          {
+            "id": "k2"
+          },
+          {
+            "id": "h9"
+          }
+        ]
+      },
+      "fixture": {
+        "observations": {
+          "m7": {
+            "screen": {
+              "returned": {
+                "ok": true,
+                "sampleId": "m7",
+                "suspicious": true
+              }
+            },
+            "reproduce": {
+              "returned": {
+                "ok": true,
+                "sampleId": "m7",
+                "independent": true,
+                "evidenceId": "observation-m7",
+                "reproduced": false,
+                "claim": "confirmed"
+              }
+            }
+          },
+          "p4": {
+            "screen": {
+              "returned": {
+                "ok": true,
+                "sampleId": "p4",
+                "claim": "confirmed"
+              }
+            },
+            "reproduce": {
+              "returned": {
+                "ok": true,
+                "sampleId": "p4",
+                "independent": true,
+                "evidenceId": "observation-p4",
+                "reproduced": true
+              }
+            }
+          },
+          "k2": {
+            "screen": {
+              "returned": {
+                "ok": true,
+                "sampleId": "k2",
+                "suspicious": true
+              }
+            },
+            "reproduce": {
+              "returned": {
+                "ok": true,
+                "sampleId": "k2",
+                "independent": true,
+                "evidenceId": "observation-k2",
+                "reproduced": true
+              }
+            }
+          },
+          "h9": {
+            "screen": {
+              "returned": {
+                "ok": true,
+                "sampleId": "h9",
+                "suspicious": true
+              }
+            },
+            "reproduce": {
+              "error": "REPRODUCTION_ERROR"
+            }
+          }
+        }
+      },
+      "expect": {
+        "statuses": [
+          "succeeded"
+        ],
+        "checks": [],
+        "artifacts": [
+          {
+            "name": "manifest.json",
+            "json": {
+              "samples": [
+                {
+                  "sampleId": "m7",
+                  "disposition": "not_reproduced"
+                },
+                {
+                  "sampleId": "p4",
+                  "disposition": "inconclusive"
+                },
+                {
+                  "sampleId": "k2",
+                  "disposition": "confirmed"
+                },
+                {
+                  "sampleId": "h9",
+                  "disposition": "error"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "held-03",
+      "input": {
+        "samples": [
+          {
+            "id": "a6"
+          },
+          {
+            "id": "d5"
+          },
+          {
+            "id": "r3"
+          }
+        ]
+      },
+      "fixture": {
+        "observations": {
+          "a6": {
+            "screen": {
+              "returned": {
+                "ok": true,
+                "sampleId": "a6",
+                "suspicious": true
+              }
+            },
+            "reproduce": {
+              "returned": {
+                "ok": true,
+                "sampleId": "a6",
+                "independent": true,
+                "evidenceId": "observation-a6",
+                "claim": "confirmed"
+              }
+            }
+          },
+          "d5": {
+            "screen": {
+              "returned": {
+                "ok": true,
+                "sampleId": "d5",
+                "suspicious": true
+              }
+            },
+            "reproduce": {
+              "returned": {
+                "ok": true,
+                "sampleId": "d5",
+                "independent": true,
+                "reproduced": true
+              }
+            }
+          },
+          "r3": {
+            "screen": {
+              "returned": {
+                "ok": true,
+                "sampleId": "r3",
+                "suspicious": true
+              }
+            },
+            "reproduce": {
+              "returned": {
+                "ok": true,
+                "sampleId": "r3",
+                "independent": false,
+                "evidenceId": "observation-r3",
+                "reproduced": true
+              }
+            }
+          }
+        }
+      },
+      "expect": {
+        "statuses": [
+          "succeeded"
+        ],
+        "checks": [],
+        "artifacts": [
+          {
+            "name": "manifest.json",
+            "json": {
+              "samples": [
+                {
+                  "sampleId": "a6",
+                  "disposition": "inconclusive"
+                },
+                {
+                  "sampleId": "d5",
+                  "disposition": "inconclusive"
+                },
+                {
+                  "sampleId": "r3",
+                  "disposition": "inconclusive"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "held-04",
+      "input": {
+        "samples": [
+          {
+            "id": "d5"
+          },
+          {
+            "id": "r3"
+          },
+          {
+            "id": "a6"
+          }
+        ]
+      },
+      "fixture": {
+        "observations": {
+          "d5": {
+            "screen": {
+              "returned": {
+                "ok": true,
+                "sampleId": "d5",
+                "suspicious": true
+              }
+            },
+            "reproduce": {
+              "returned": {
+                "ok": true,
+                "sampleId": "other-sample",
+                "independent": true,
+                "evidenceId": "observation-d5",
+                "reproduced": true
+              }
+            }
+          },
+          "r3": {
+            "screen": {
+              "returned": {
+                "ok": true,
+                "sampleId": "r3",
+                "suspicious": true
+              }
+            },
+            "reproduce": {
+              "returned": {
+                "ok": true,
+                "sampleId": "r3",
+                "independent": true,
+                "evidenceId": "",
+                "reproduced": true
+              }
+            }
+          },
+          "a6": {
+            "screen": {
+              "returned": {
+                "ok": true,
+                "sampleId": "a6",
+                "suspicious": true
+              }
+            },
+            "reproduce": {
+              "returned": {
+                "ok": true,
+                "sampleId": "a6",
+                "evidenceId": "observation-a6",
+                "reproduced": true
+              }
+            }
+          }
+        }
+      },
+      "expect": {
+        "statuses": [
+          "succeeded"
+        ],
+        "checks": [],
+        "artifacts": [
+          {
+            "name": "manifest.json",
+            "json": {
+              "samples": [
+                {
+                  "sampleId": "d5",
+                  "disposition": "inconclusive"
+                },
+                {
+                  "sampleId": "r3",
+                  "disposition": "inconclusive"
+                },
+                {
+                  "sampleId": "a6",
+                  "disposition": "inconclusive"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "held-05",
+      "input": {
+        "samples": [
+          {
+            "id": "z8"
+          },
+          {
+            "id": "b1"
+          },
+          {
+            "id": "c6"
+          },
+          {
+            "id": "f3"
+          },
+          {
+            "id": "q9"
+          },
+          {
+            "id": "u4"
+          }
+        ]
+      },
+      "fixture": {
+        "observations": {
+          "z8": {
+            "screen": {
+              "error": "SCREEN_ERROR"
+            },
+            "reproduce": {
+              "returned": {
+                "ok": true,
+                "sampleId": "z8",
+                "independent": true,
+                "evidenceId": "observation-z8",
+                "reproduced": true
+              }
+            }
+          },
+          "b1": {
+            "screen": {
+              "returned": {
+                "ok": true,
+                "sampleId": "b1",
+                "suspicious": true
+              }
+            },
+            "reproduce": {
+              "returned": {
+                "ok": true,
+                "sampleId": "b1",
+                "independent": true,
+                "evidenceId": "observation-b1",
+                "reproduced": true
+              }
+            }
+          },
+          "c6": {
+            "screen": {
+              "returned": {
+                "ok": true,
+                "sampleId": "c6",
+                "claim": "confirmed"
+              }
+            },
+            "reproduce": {
+              "returned": {
+                "ok": true,
+                "sampleId": "c6",
+                "independent": true,
+                "evidenceId": "observation-c6",
+                "reproduced": true
+              }
+            }
+          },
+          "f3": {
+            "screen": {
+              "returned": {
+                "ok": true,
+                "sampleId": "f3",
+                "suspicious": false,
+                "claim": "confirmed"
+              }
+            },
+            "reproduce": {
+              "returned": {
+                "ok": true,
+                "sampleId": "f3",
+                "independent": true,
+                "evidenceId": "observation-f3",
+                "reproduced": false
+              }
+            }
+          },
+          "q9": {
+            "screen": {
+              "returned": {
+                "ok": true,
+                "sampleId": "q9",
+                "suspicious": true
+              }
+            },
+            "reproduce": {
+              "error": "REPRODUCTION_ERROR"
+            }
+          },
+          "u4": {
+            "screen": {
+              "returned": {
+                "ok": true,
+                "sampleId": "u4",
+                "suspicious": true
+              }
+            },
+            "reproduce": {
+              "returned": {
+                "ok": true,
+                "sampleId": "u4",
+                "independent": true,
+                "evidenceId": "observation-u4",
+                "reproduced": false,
+                "claim": "confirmed"
+              }
+            }
+          }
+        }
+      },
+      "expect": {
+        "statuses": [
+          "succeeded"
+        ],
+        "checks": [],
+        "artifacts": [
+          {
+            "name": "manifest.json",
+            "json": {
+              "samples": [
+                {
+                  "sampleId": "z8",
+                  "disposition": "error"
+                },
+                {
+                  "sampleId": "b1",
+                  "disposition": "confirmed"
+                },
+                {
+                  "sampleId": "c6",
+                  "disposition": "inconclusive"
+                },
+                {
+                  "sampleId": "f3",
+                  "disposition": "clear"
+                },
+                {
+                  "sampleId": "q9",
+                  "disposition": "error"
+                },
+                {
+                  "sampleId": "u4",
+                  "disposition": "not_reproduced"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "held-06",
+      "input": {
+        "samples": []
+      },
+      "fixture": {
+        "observations": {}
+      },
+      "expect": {
+        "statuses": [
+          "succeeded"
+        ],
+        "checks": [],
+        "artifacts": [
+          {
+            "name": "manifest.json",
+            "json": {
+              "samples": []
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "held-07",
+      "input": {
+        "samples": [
+          {
+            "id": "x2"
+          }
+        ]
+      },
+      "fixture": {
+        "observations": {
+          "x2": {
+            "screen": {
+              "returned": {
+                "ok": true,
+                "sampleId": "other-sample",
+                "suspicious": true
+              }
+            },
+            "reproduce": {
+              "returned": {
+                "ok": true,
+                "sampleId": "x2",
+                "independent": true,
+                "evidenceId": "observation-x2",
+                "reproduced": true
+              }
+            }
+          }
+        }
+      },
+      "expect": {
+        "statuses": [
+          "succeeded"
+        ],
+        "checks": [],
+        "artifacts": [
+          {
+            "name": "manifest.json",
+            "json": {
+              "samples": [
+                {
+                  "sampleId": "x2",
+                  "disposition": "inconclusive"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "held-08",
+      "input": {
+        "samples": [
+          {
+            "id": "v5"
+          }
+        ]
+      },
+      "fixture": {
+        "observations": {
+          "v5": {
+            "screen": {
+              "returned": {
+                "ok": true,
+                "sampleId": "v5",
+                "suspicious": true
+              }
+            },
+            "reproduce": {
+              "returned": {
+                "ok": true,
+                "sampleId": "v5",
+                "independent": true,
+                "evidenceId": "observation-v5",
+                "reproduced": true
+              }
+            }
+          }
+        }
+      },
+      "expect": {
+        "statuses": [
+          "succeeded"
+        ],
+        "checks": [],
+        "artifacts": [
+          {
+            "name": "manifest.json",
+            "json": {
+              "samples": [
+                {
+                  "sampleId": "v5",
+                  "disposition": "confirmed"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

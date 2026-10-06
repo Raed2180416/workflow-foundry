@@ -1,0 +1,7 @@
+{
+  "classification": "host demonstration setup error, not model failure",
+  "error": "The first host script supplied evaluateWorkflow arguments as one object instead of its documented positional workflow,suite,options arguments.",
+  "effects": "Origin, unchanged candidate, suite and reusable head were saved; no evaluation or run was dispatched.",
+  "manualCandidateEdits": 0,
+  "modelCalls": 0
+}

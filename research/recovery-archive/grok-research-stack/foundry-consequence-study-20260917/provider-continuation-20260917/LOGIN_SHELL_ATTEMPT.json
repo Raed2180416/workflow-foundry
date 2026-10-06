@@ -1,0 +1,9 @@
+{
+  "requestedShell": "/bin/fish",
+  "login": true,
+  "command": "node login-access-check.mjs",
+  "toolResult": "SHELL_NOT_FOUND: the explicitly requested shell /bin/fish could not be resolved. No command was run.",
+  "commandExecuted": false,
+  "inferenceCalls": 0,
+  "interpretation": "The normal default-login receipt separately shows absent key/OIDC and configured SHELL=/bin/fish. Actual explicit Fish-shell injection remains untested."
+}

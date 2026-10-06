@@ -1,0 +1,47 @@
+{
+  "id": "c18e3ca1c9a1ce6f51b45512590bd24577f82e86eb8dffd2900f45544510ecc0",
+  "schemaVersion": "outcome-observation/2",
+  "contractId": "7f195c8c44a4580e6e143c6c823f6649ac82ba19a64e817361f63238b95fe9d3",
+  "binding": {
+    "requestId": "aeef2644-f70b-4b1d-ab7e-d00e4fdf3754",
+    "proposalId": "89905a64-fce8-44fc-a84c-47587aed0e23",
+    "runId": "485ea75d-ec24-4dd2-ab78-45563fecd183",
+    "rootRequestId": "aeef2644-f70b-4b1d-ab7e-d00e4fdf3754",
+    "requestHash": "0e56b411f30a1249ac56bd073fc97dfd3223a877b41f64839630470b5abab06d",
+    "proposalHash": "aa06640a948e6209c3fecc1676b8b4145667de8a789157df7d87153d78ca23d3",
+    "rootRequestHash": "0e56b411f30a1249ac56bd073fc97dfd3223a877b41f64839630470b5abab06d",
+    "workflowId": "outcome-example",
+    "workflowHash": "24e27824a49c8d30b457c9cdfe15af96d06889443c60e11e40e08b3d27e27225",
+    "workflowVersion": 1,
+    "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+    "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+    "inputHash": "01e1fef7a86867a14a60cd723c4f2f1617bbfaef8f3981e89201f43d4417897c",
+    "policyHash": "743874dc59bcbd3e3257926a739c866813d6604f924f906342983b4bb871caa7",
+    "eventHead": {
+      "hash": "f3b9a0ff207e7fe2a9a3ddd7fe53b135e05b42e0f1f50a835b64fdba3b726543",
+      "seq": 7
+    },
+    "eventCount": 7,
+    "runStatus": "succeeded",
+    "runHash": "74dd69f84ca27eb30aedfe13667c12ea1aea273d0bdfe9bcaf40cdf5a4c70ec7"
+  },
+  "artifact": {
+    "name": "record.json",
+    "state": "present",
+    "bytes": 17,
+    "sha256": "d702efcb58423280e926c7dea03591780a6290f3c5cd6f2e2f99a64197d23879",
+    "base64": "eyJsYWJlbCI6Indyb25nIn0=",
+    "producers": [
+      {
+        "nodeKey": "root/file",
+        "sequence": 6,
+        "eventHash": "07814a2799e26103026f24883b544055df650a06722981446e87639a2e9692fa"
+      }
+    ]
+  },
+  "outcome": "unsatisfied",
+  "reason": "json-content-mismatch",
+  "observedJsonHash": "d702efcb58423280e926c7dea03591780a6290f3c5cd6f2e2f99a64197d23879",
+  "observedAt": 1789635028534,
+  "qualification": "One host-bound JSON artifact observation; no general intent or deployment qualification"
+}

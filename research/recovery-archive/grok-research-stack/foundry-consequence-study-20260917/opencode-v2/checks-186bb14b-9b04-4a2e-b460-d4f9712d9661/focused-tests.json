@@ -1,0 +1,13 @@
+{
+  "command": "/usr/bin/node",
+  "args": [
+    "--test",
+    "tests/opencode-v2-free.test.mjs",
+    "tests/provider-quota.test.mjs"
+  ],
+  "code": 0,
+  "signal": null,
+  "stdout": "✔ v2 catalog: raw explicit zero prices are mandatory before normalized local prices are accepted (1.561449ms)\n✔ v2 event parser accepts a complete native step and independently agrees with native export (0.599178ms)\n✔ v2 fast-response reconciliation requires a terminal native export when step events were not delivered (0.270429ms)\n✔ v2 event parser rejects incomplete, duplicate, mixed-session, tool, nonzero/unknown-cost and legacy evidence (0.490052ms)\n✔ v2 export rejects self-claims without matching prompt/model/terminal/cost/text/token evidence and rejects retries (0.377921ms)\n✔ v2 wire admission requires the selected model, exact prompt, bounded tokens and no tools or prior conversation (0.347674ms)\n✔ v2 configuration disables all tool plugins; sandbox has no host-network, home or caller-directory mounts (0.262133ms)\n✔ v2 structured HTTP failures distinguish limits/auth/unavailable and never promote provider error text to instructions (0.192212ms)\n✔ v2 constructor rejects an unsupported model and unbounded budgets before any external call (0.197111ms)\n✔ v2 bridge preserves native client identity while discarding authorization, cookies and unrelated headers (0.282311ms)\n✔ Provider quota: structured 429 is distinguished from unavailable/auth and no error text becomes executable feedback (1.372423ms)\n✔ Provider quota: one recorded limit suspends a serial request queue without dispatching or consuming later requests (49.152639ms)\nℹ tests 12\nℹ suites 0\nℹ pass 12\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 147.94993\n",
+  "stderr": "",
+  "elapsedMs": 174
+}

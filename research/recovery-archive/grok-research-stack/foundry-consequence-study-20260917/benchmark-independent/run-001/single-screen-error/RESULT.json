@@ -1,0 +1,36 @@
+{
+  "name": "single-screen-error",
+  "accepted": true,
+  "anticipatedPass": true,
+  "expectationMet": true,
+  "claim": "Single thrown screen error is correctly reported.",
+  "cases": [
+    {
+      "accepted": true,
+      "nativePassed": true,
+      "status": "succeeded",
+      "runId": "8519452f-f9d7-4ba6-ba4b-7cb95d6aa59e",
+      "workflowHash": "1e50fce1f6403b950b0950c3fcae0d9147bd5987ac7b08503fed217b6598cae1",
+      "registryHash": "bb3f73d712e174d3084248c8d199a620b7eeb2a7b2655d64b6286ab3af536d0e",
+      "instruments": {
+        "passed": true,
+        "problems": [],
+        "missingCalls": 0,
+        "forbiddenCalls": 0,
+        "duplicateCalls": 0,
+        "wrongOrder": 0,
+        "invalidObservations": 0,
+        "screenCalls": 1,
+        "reproduceCalls": 0,
+        "syntheticCost": 1,
+        "expectedSyntheticCost": 1
+      },
+      "publicationSequence": 7,
+      "screenIntentSequence": 3,
+      "reproductionIntentSequence": null,
+      "rejectedOutputs": [],
+      "eventCount": 8,
+      "runError": null
+    }
+  ]
+}

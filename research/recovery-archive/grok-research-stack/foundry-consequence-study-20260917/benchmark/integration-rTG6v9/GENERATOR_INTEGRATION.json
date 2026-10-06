@@ -1,0 +1,8 @@
+{
+  "passed": true,
+  "jobId": "3cc4c31b-31be-4535-a72b-54377e39e5d1",
+  "workflowHash": "414c24926f418e4be614fe03a6e09793db8b22f80ba36afd207e715ae6f3952b",
+  "fixtureCallbacks": 1,
+  "externalModelCalls": 0,
+  "qualification": "Plumbing test with supplied candidate, not model synthesis."
+}

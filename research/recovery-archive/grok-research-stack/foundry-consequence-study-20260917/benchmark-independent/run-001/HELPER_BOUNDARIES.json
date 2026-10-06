@@ -1,0 +1,51 @@
+{
+  "ordinalForging": {
+    "audit": {
+      "passed": true,
+      "problems": [],
+      "missingCalls": 0,
+      "forbiddenCalls": 0,
+      "duplicateCalls": 0,
+      "wrongOrder": 0,
+      "invalidObservations": 0,
+      "screenCalls": 1,
+      "reproduceCalls": 1,
+      "syntheticCost": 11,
+      "expectedSyntheticCost": 11
+    },
+    "authorityRequired": "Trusted host replacing private-log copy; unavailable to workflow JSON"
+  },
+  "observationCorruption": {
+    "passed": false,
+    "problems": [
+      "instrument_observation_disagreement"
+    ],
+    "missingCalls": 0,
+    "forbiddenCalls": 0,
+    "duplicateCalls": 0,
+    "wrongOrder": 0,
+    "invalidObservations": 1,
+    "screenCalls": 1,
+    "reproduceCalls": 1,
+    "syntheticCost": 11,
+    "expectedSyntheticCost": 11
+  },
+  "detachedCopyPreserved": true,
+  "wrongRegistryLogLength": 0,
+  "wrongRunLogLength": 0,
+  "actualCapabilityNames": [
+    "core.identity",
+    "core.validate",
+    "core.json",
+    "core.pluck",
+    "core.aggregate",
+    "core.template",
+    "core.collect",
+    "core.artifact",
+    "lab.screen",
+    "lab.reproduce",
+    "data.one"
+  ],
+  "forbiddenNamesPresent": [],
+  "registryMatchesPublic": true
+}

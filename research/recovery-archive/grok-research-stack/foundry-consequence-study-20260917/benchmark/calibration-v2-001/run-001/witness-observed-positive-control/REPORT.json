@@ -1,0 +1,238 @@
+{
+  "evaluatorId": "sample-consequences-v2:4f8ca2ad29bfa2dfe8c453c3f97f6bb4f6780ab3579148204888d73bfec28941:517b7e60d3e674f7fc1189dac8f468dd19d9f6800467a5998fde6a38fbd66e15",
+  "workflowHash": "7f57baec709fe62c3850a7d7d8110ec11e57a63cb178cf5aa12579d29e0d7cc3",
+  "registryHash": "bb3f73d712e174d3084248c8d199a620b7eeb2a7b2655d64b6286ab3af536d0e",
+  "suiteHash": "4f8ca2ad29bfa2dfe8c453c3f97f6bb4f6780ab3579148204888d73bfec28941",
+  "split": "diagnostic",
+  "qualificationLevel": "task-outcome",
+  "passed": true,
+  "metrics": {
+    "passedCount": 1,
+    "caseCount": 1,
+    "successFraction": 1,
+    "falseSuccessCount": 0,
+    "totalSteps": 4,
+    "totalCost": 0,
+    "elapsedMs": 24,
+    "missingCalls": 0,
+    "forbiddenCalls": 0,
+    "duplicateCalls": 0,
+    "syntheticCost": 11,
+    "v1PassedCount": 1,
+    "logBindingErrors": 0,
+    "completionErrors": 0,
+    "evidenceOrderErrors": 0,
+    "prematureConfirmations": 0,
+    "allProcessingDiagnosticFailures": 0
+  },
+  "envelope": [
+    "Independent finite exposed evaluator review, not frozen-suite evaluation."
+  ],
+  "cases": [
+    {
+      "id": "own-positive",
+      "passed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "checks": [],
+      "artifacts": [
+        {
+          "name": "manifest.json",
+          "passed": true,
+          "sha256": "12597e52f6c2f089295825d8fe5bd9451aa07017c384bf88a8e2b64025782a87"
+        }
+      ],
+      "steps": 4,
+      "cost": 0,
+      "elapsedMs": 12,
+      "runId": "ca5962e2-9579-449d-83ef-94695be2d886",
+      "workspace": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/calibration-v2-001/run-001/witness-observed-positive-control/v1/case-0IFY6V",
+      "exception": null,
+      "runError": null,
+      "failedNodes": [],
+      "eventCount": 11,
+      "diagnostic": {
+        "input": {
+          "samples": [
+            {
+              "id": "independent-a"
+            }
+          ]
+        },
+        "expected": {
+          "statuses": [
+            "succeeded"
+          ],
+          "checks": [],
+          "artifacts": [
+            {
+              "name": "manifest.json",
+              "json": {
+                "samples": [
+                  {
+                    "sampleId": "independent-a",
+                    "disposition": "confirmed"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "nativePassed": true,
+      "instrumentAudit": {
+        "passed": true,
+        "problems": [],
+        "missingCalls": 0,
+        "forbiddenCalls": 0,
+        "duplicateCalls": 0,
+        "wrongOrder": 0,
+        "invalidObservations": 0,
+        "screenCalls": 1,
+        "reproduceCalls": 1,
+        "syntheticCost": 11,
+        "expectedSyntheticCost": 11,
+        "v1Passed": true,
+        "logBindingErrors": 0,
+        "completionErrors": 0,
+        "evidenceOrderErrors": 0,
+        "prematureConfirmations": 0,
+        "publicationBindingErrors": 0,
+        "completedAttempts": 2,
+        "attempts": [
+          {
+            "ordinal": 1,
+            "instrument": "screen",
+            "sampleId": "independent-a",
+            "nodeKey": "root/screening",
+            "intentSequence": 3,
+            "completedSequence": 4,
+            "validatedReturn": true,
+            "valid": true,
+            "output": {
+              "claim": "Untrusted claim text",
+              "ok": true,
+              "sampleId": "independent-a",
+              "suspicious": true
+            },
+            "outcome": "returned",
+            "eventHash": "d15dac3e199ccbf64035113a9fa67407845c8b744121dd822674127f12115455"
+          },
+          {
+            "ordinal": 2,
+            "instrument": "reproduce",
+            "sampleId": "independent-a",
+            "nodeKey": "root/reproduction",
+            "intentSequence": 5,
+            "completedSequence": 6,
+            "validatedReturn": true,
+            "valid": true,
+            "output": {
+              "evidenceId": "independent-evidence",
+              "independent": true,
+              "ok": true,
+              "reproduced": true,
+              "sampleId": "independent-a"
+            },
+            "outcome": "returned",
+            "eventHash": "ad5b06d9954ddd7f391e61028125aaa471fd98eeb6646cb577c3c7b90c9043e5"
+          }
+        ],
+        "publications": [
+          {
+            "nodeKey": "root/publish",
+            "startedSequence": 9,
+            "completedSequence": 10,
+            "valid": true,
+            "sha256": "12597e52f6c2f089295825d8fe5bd9451aa07017c384bf88a8e2b64025782a87"
+          }
+        ],
+        "publicationContentBasis": "independently-read-actual-artifact",
+        "allProcessingBeforePublication": {
+          "enforced": false,
+          "passed": true,
+          "requiredAttempts": 2,
+          "incompleteAtPublication": 0,
+          "qualification": "Requiring every permitted instrument attempt to settle before any manifest, for every disposition, is a prospective strengthening. V2 measures it as a non-gating diagnostic; v1 PUBLIC.json is unchanged."
+        }
+      },
+      "instrumentLog": [
+        {
+          "ordinal": 1,
+          "instrument": "screen",
+          "sampleId": "independent-a",
+          "nodeKey": "root/screening",
+          "idempotencyKey": "74379951995f3f9832cc95a7476d4117298c1dfe01db4be8f963d1ada0e2275e",
+          "syntheticCost": 1,
+          "outcome": "returned",
+          "observation": {
+            "claim": "Untrusted claim text",
+            "ok": true,
+            "sampleId": "independent-a",
+            "suspicious": true
+          }
+        },
+        {
+          "ordinal": 2,
+          "instrument": "reproduce",
+          "sampleId": "independent-a",
+          "nodeKey": "root/reproduction",
+          "idempotencyKey": "df14dc8e84119780183431df9d647096e1fc37c12d50c019e7c82f68543b8d0f",
+          "syntheticCost": 10,
+          "outcome": "returned",
+          "observation": {
+            "evidenceId": "independent-evidence",
+            "independent": true,
+            "ok": true,
+            "reproduced": true,
+            "sampleId": "independent-a"
+          }
+        }
+      ],
+      "v1Passed": true,
+      "v1InstrumentAudit": {
+        "passed": true,
+        "problems": [],
+        "missingCalls": 0,
+        "forbiddenCalls": 0,
+        "duplicateCalls": 0,
+        "wrongOrder": 0,
+        "invalidObservations": 0,
+        "screenCalls": 1,
+        "reproduceCalls": 1,
+        "syntheticCost": 11,
+        "expectedSyntheticCost": 11
+      },
+      "artifactError": null,
+      "evidenceBinding": {
+        "passed": true,
+        "eventHead": {
+          "hash": "135b9d9540f3aa96b51f66dece0ead6d054456608fecb0f92b7f217322e03e0f",
+          "seq": 11
+        },
+        "eventsHash": "236bf15444c1fb7e0d8a619082702f3c392324356974cba8d0216158d319d064",
+        "instrumentLogHash": "f8cb7a32452a88958ac1d35661a957c744aaa19f30ef32dde7cf0d2969d3b2fc",
+        "manifestSha256": "12597e52f6c2f089295825d8fe5bd9451aa07017c384bf88a8e2b64025782a87"
+      }
+    }
+  ],
+  "qualification": "Fixed source-informed synthetic scenarios. Provider-hidden split only when withheld from synthesis; no population, autonomous discovery, production, or independent instrument calibration claim. V2 adds validated completion/event binding and confirmation-before-publication checks. All-item completion before publication is a non-gating diagnostic; temporal order alone does not prove causal use.",
+  "nativeEvaluatorId": "suite:own-positive:4f8ca2ad29bfa2dfe8c453c3f97f6bb4f6780ab3579148204888d73bfec28941",
+  "v1EvaluatorId": "sample-consequences-v1:4f8ca2ad29bfa2dfe8c453c3f97f6bb4f6780ab3579148204888d73bfec28941:ebbdf190674414c29ec2fc7632e8f72b6e3c305c5abd20b322cc8a077304f732",
+  "v1Passed": true,
+  "fixtureValidation": {
+    "passed": true,
+    "caseCount": 1,
+    "instrumentFixtures": 2,
+    "returnedFixtures": 2,
+    "errorFixtures": 0
+  },
+  "publicationPolicy": {
+    "id": "confirmed-evidence-before-publication-v2",
+    "enforced": "Completed, validated positive reproduction precedes each successful publication attempt containing a confirmed row.",
+    "timing": "Native tool.intent is the conservative start fence; node.completed proves publication succeeded. An overlapping reproduction/publication interval is not certified.",
+    "allProcessing": "Requiring every permitted instrument attempt to settle before any manifest, for every disposition, is a prospective strengthening. V2 measures it as a non-gating diagnostic; v1 PUBLIC.json is unchanged.",
+    "causalLimit": "Order, binding and content are checked. A constant written after matching evidence can still pass a finite case; causal use, arbitrary asynchronous instruments and population generalization are not proven."
+  },
+  "v1ReportPath": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/calibration-v2-001/run-001/witness-observed-positive-control/v1/REPORT.json"
+}

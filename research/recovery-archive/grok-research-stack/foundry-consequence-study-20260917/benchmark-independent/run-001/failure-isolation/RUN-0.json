@@ -1,0 +1,121 @@
+{
+  "approvals": {},
+  "cost": 0,
+  "createdAt": 1789614776141,
+  "deadline": 1789614781141,
+  "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+  "error": null,
+  "eventHead": {
+    "hash": "749806bef38a10773de9eba72965fa1c8659bbf6e1e81445e75b77e2c63c4298",
+    "seq": 10
+  },
+  "extra": {},
+  "frames": {},
+  "id": "2e32c6bc-1f86-43f5-960e-3b9f5da9cf5f",
+  "input": {
+    "samples": [
+      {
+        "id": "independent-a"
+      },
+      {
+        "id": "independent-b"
+      }
+    ]
+  },
+  "nodes": {
+    "first": {
+      "argsHash": "b53b7a7f5c03218f508ea7c11db2d4d5470b652405143d8657c301fc0c3c944d",
+      "attempts": 1,
+      "completedAt": 1789614776145,
+      "completedSequence": 5,
+      "effects": "none",
+      "error": {
+        "code": "SCREEN_ERROR",
+        "message": "Synthetic instrument unavailable"
+      },
+      "idempotencyKey": "85dab2b03828e78dac007225849b898364eb0b4ce1c378f5a7d548302ee50dca",
+      "kind": "task",
+      "outputHash": "3a3fd61e1fa7c8ca61ce736fd220c9b4dfd490a829e08dcd9f65093251df1bb7",
+      "startedAt": 1789614776143,
+      "startedSequence": 3,
+      "status": "handled_error",
+      "tool": "lab.screen"
+    },
+    "publish": {
+      "argsHash": "8f9a6ab74b3f63136da3a3fbf713b6734c6dba2138f84ec3f4ed79a57b340f45",
+      "attempts": 1,
+      "completedAt": 1789614776149,
+      "completedSequence": 9,
+      "effects": "idempotent",
+      "idempotencyKey": "ed0f9a028f5cbfd35a4d7de440ab4c3f6983ab724fd1aa08e72fcc042c5bbb64",
+      "kind": "task",
+      "outputHash": "937f92261333341f7e3af486ded061074437ce8410f97eec341f549f17ea2dea",
+      "startedAt": 1789614776148,
+      "startedSequence": 8,
+      "status": "completed",
+      "tool": "core.artifact"
+    },
+    "second": {
+      "argsHash": "b1cdf8598fa862728493e79f3823e55637a3f01a290a706ddde1ef8c6fa13ec6",
+      "attempts": 1,
+      "completedAt": 1789614776147,
+      "completedSequence": 7,
+      "effects": "none",
+      "idempotencyKey": "6d5cc6b91de90f89d9b8c66b01249301ec9df8e13d7350cea1722d2984e1514d",
+      "kind": "task",
+      "outputHash": "443d8c98cc7fbc257be0cfde05e1ed742a50cf1a620e45555270d20b76b6a55b",
+      "startedAt": 1789614776146,
+      "startedSequence": 6,
+      "status": "completed",
+      "tool": "lab.screen"
+    }
+  },
+  "outputs": {
+    "first": {
+      "error": {
+        "code": "SCREEN_ERROR",
+        "message": "Synthetic instrument unavailable"
+      },
+      "ok": false
+    },
+    "publish": {
+      "bytes": 115,
+      "name": "manifest.json",
+      "sha256": "0709f6ef1f5cbe143839e6c3fe86ef58e4b60eff2415a77a282ce0d041c2bd8b"
+    },
+    "second": {
+      "claim": "Untrusted claim text",
+      "ok": true,
+      "sampleId": "independent-b",
+      "suspicious": false
+    }
+  },
+  "owner": null,
+  "policy": {
+    "allowedCapabilities": [
+      "core.identity",
+      "core.validate",
+      "core.json",
+      "core.pluck",
+      "core.aggregate",
+      "core.template",
+      "core.collect",
+      "core.artifact",
+      "lab.screen",
+      "lab.reproduce",
+      "data.one"
+    ],
+    "maxConcurrency": 2,
+    "maxCost": 0,
+    "maxDurationMs": 30000,
+    "maxResumes": 1000,
+    "maxSteps": 160
+  },
+  "registryHash": "bb3f73d712e174d3084248c8d199a620b7eeb2a7b2655d64b6286ab3af536d0e",
+  "resumeCount": 1,
+  "status": "succeeded",
+  "steps": 3,
+  "updatedAt": 1789614776150,
+  "workflowHash": "82092f90b8d5a92550a88a89cf4bd9ba29b235d66e02c0974211aecf7b173248",
+  "workflowId": "FailureIsolation"
+}

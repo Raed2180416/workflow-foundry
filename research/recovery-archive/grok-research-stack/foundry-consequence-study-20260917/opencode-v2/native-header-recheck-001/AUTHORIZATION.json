@@ -1,0 +1,15 @@
+{
+  "authorizedAt": "2026-09-17T03:24:53Z",
+  "reservedAt": "2026-09-17T03:27:17.390Z",
+  "callsAuthorized": 1,
+  "callsPreviouslyForwarded": 1,
+  "prompt": "Return exactly this JSON object and nothing else: {\"ok\":true}",
+  "promptSHA256": "fb88bc2256d56a680d6c1bb8fc24276f00b498285bb411ce6f0f4ad4e9eea858",
+  "permittedChange": "Preserve only the six originally emitted native headers through the existing bridge; patch already present and tested offline.",
+  "noFurtherRetry": true,
+  "noTaskSynthesis": true,
+  "noFallback": true,
+  "provider": "opencode/big-pickle",
+  "timeoutMs": 90000,
+  "maxOutputTokens": 512
+}

@@ -1,0 +1,45 @@
+{
+  "attempts": [
+    {
+      "details": {
+        "cause": "This operation was aborted"
+      },
+      "error": {
+        "code": "MODEL_TRANSPORT",
+        "message": "Provider transport failed"
+      },
+      "finishedAt": 1789635295783,
+      "promptHash": "b0a489fc73e3f59e2344f5265ed621994123394fcb48832f5fecb32b38c49660",
+      "round": 1,
+      "startedAt": 1789635145442,
+      "status": "failed-attempt"
+    }
+  ],
+  "createdAt": 1789635145440,
+  "error": {
+    "code": "MODEL_TRANSPORT",
+    "message": "Provider transport failed"
+  },
+  "id": "a5d847b9-f12a-4d1b-b8dc-0ce894452d30",
+  "limits": {
+    "autoApply": false,
+    "evaluator": "sample-consequences-v2:0edadddb1f94f88cdbaebdfbc382d3f18d7c6faac720bc066ba3fb79ccf0e005:517b7e60d3e674f7fc1189dac8f468dd19d9f6800467a5998fde6a38fbd66e15",
+    "maxDurationMs": 360000,
+    "maxRounds": 2
+  },
+  "pid": 3183534,
+  "processStart": "3143311",
+  "proposalId": null,
+  "provider": {
+    "binary": "/usr/bin/opencode",
+    "binarySHA256": "a7568b505c1fce84d329c709b5661da11a778b0e06959e34147a916111cc5be4",
+    "model": "opencode/big-pickle",
+    "provider": "opencode-v2-free-isolated",
+    "transport": "private-v2-server-one-request-gateway",
+    "version": "opencode v2.0.5"
+  },
+  "requestId": "0b0dd687-a3e0-4a26-b47a-a7b83efd0810",
+  "status": "failed",
+  "updatedAt": 1789635295790,
+  "finishedAt": 1789635295790
+}

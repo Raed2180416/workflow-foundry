@@ -1,0 +1,9 @@
+{
+  "at": "2026-09-17T03:17:12.511Z",
+  "requestId": "533f7be6-a5c5-4597-a842-099a7baddeb9",
+  "contextHash": "d41ee6c9407ba832a8a7588e69c76d0602eb3b401d09d9afc3cf69a7ee367260",
+  "promptSha256": "b206c8661870cf5eae98b7f1539271f626f9ee39aea22c23dfd0ebeb81a35033",
+  "promptBytes": 48508,
+  "provider": "COS relayed default model; exact worker metadata recorded separately",
+  "claim": "Model construction control; not cheap-model or Jev result; host supplies task semantics and capabilities; procedural file exclusion, not OS-isolated worker"
+}

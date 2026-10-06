@@ -1,0 +1,15 @@
+{
+  "code": "CANCELLED",
+  "message": "Generation cancelled",
+  "termination": {
+    "kind": "caller",
+    "at": 1789636395205,
+    "code": "CANCELLED",
+    "error": {
+      "name": "FoundryError",
+      "code": "CANCELLED",
+      "message": "Generation cancelled"
+    }
+  },
+  "receipts": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/continuation-checkpoint-20260917/final-provider-controls/termination-caller-GsHmvK/opencode-v2-c93b53d5-e173-4c61-a1cc-575320a2e80f"
+}

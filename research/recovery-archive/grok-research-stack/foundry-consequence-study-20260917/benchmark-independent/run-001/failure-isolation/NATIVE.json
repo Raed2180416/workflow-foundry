@@ -1,0 +1,92 @@
+{
+  "evaluatorId": "suite:own-error-isolation:64ea19463926148f64d949d446eeb89ee4953181645369cd221dca8243ba48fc",
+  "workflowHash": "82092f90b8d5a92550a88a89cf4bd9ba29b235d66e02c0974211aecf7b173248",
+  "registryHash": "bb3f73d712e174d3084248c8d199a620b7eeb2a7b2655d64b6286ab3af536d0e",
+  "suiteHash": "64ea19463926148f64d949d446eeb89ee4953181645369cd221dca8243ba48fc",
+  "split": "diagnostic",
+  "qualificationLevel": "task-outcome",
+  "passed": true,
+  "metrics": {
+    "passedCount": 1,
+    "caseCount": 1,
+    "successFraction": 1,
+    "falseSuccessCount": 0,
+    "totalSteps": 3,
+    "totalCost": 0,
+    "elapsedMs": 23
+  },
+  "envelope": [
+    "Independent finite exposed evaluator review, not frozen-suite evaluation."
+  ],
+  "cases": [
+    {
+      "id": "own-error-isolation",
+      "passed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "checks": [],
+      "artifacts": [
+        {
+          "name": "manifest.json",
+          "passed": true,
+          "sha256": "0709f6ef1f5cbe143839e6c3fe86ef58e4b60eff2415a77a282ce0d041c2bd8b"
+        }
+      ],
+      "steps": 3,
+      "cost": 0,
+      "elapsedMs": 12,
+      "runId": "2e32c6bc-1f86-43f5-960e-3b9f5da9cf5f",
+      "workspace": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark-independent/run-001/failure-isolation/case-BMTynp",
+      "exception": null,
+      "runError": null,
+      "failedNodes": [
+        {
+          "nodeKey": "root/first",
+          "status": "handled_error",
+          "tool": "lab.screen",
+          "error": {
+            "code": "SCREEN_ERROR",
+            "message": "Synthetic instrument unavailable"
+          }
+        }
+      ],
+      "eventCount": 10,
+      "diagnostic": {
+        "input": {
+          "samples": [
+            {
+              "id": "independent-a"
+            },
+            {
+              "id": "independent-b"
+            }
+          ]
+        },
+        "expected": {
+          "statuses": [
+            "succeeded"
+          ],
+          "checks": [],
+          "artifacts": [
+            {
+              "name": "manifest.json",
+              "json": {
+                "samples": [
+                  {
+                    "sampleId": "independent-a",
+                    "disposition": "error"
+                  },
+                  {
+                    "sampleId": "independent-b",
+                    "disposition": "clear"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "qualification": "Only this explicitly enumerated suite, capability registry and budget; not arbitrary deployment or commercial parity"
+}

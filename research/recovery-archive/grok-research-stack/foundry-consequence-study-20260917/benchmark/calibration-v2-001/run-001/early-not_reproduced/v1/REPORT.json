@@ -1,0 +1,124 @@
+{
+  "evaluatorId": "sample-consequences-v1:fb74b237edcbe834f90346c12d51a80372be527b2bd0da4e8a4ada9067a2b535:ebbdf190674414c29ec2fc7632e8f72b6e3c305c5abd20b322cc8a077304f732",
+  "workflowHash": "202600fbce30bbf8b3c1f206205602dca4f38ee55f49ce4b1f0c515222c19d91",
+  "registryHash": "bb3f73d712e174d3084248c8d199a620b7eeb2a7b2655d64b6286ab3af536d0e",
+  "suiteHash": "fb74b237edcbe834f90346c12d51a80372be527b2bd0da4e8a4ada9067a2b535",
+  "split": "diagnostic",
+  "qualificationLevel": "task-outcome",
+  "passed": true,
+  "metrics": {
+    "passedCount": 1,
+    "caseCount": 1,
+    "successFraction": 1,
+    "falseSuccessCount": 0,
+    "totalSteps": 3,
+    "totalCost": 0,
+    "elapsedMs": 22,
+    "missingCalls": 0,
+    "forbiddenCalls": 0,
+    "duplicateCalls": 0,
+    "syntheticCost": 11
+  },
+  "envelope": [],
+  "cases": [
+    {
+      "id": "public-case",
+      "passed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "checks": [],
+      "artifacts": [
+        {
+          "name": "manifest.json",
+          "passed": true,
+          "sha256": "938168016914caac97e3fd634f5c97d7ff431b7f211547b9ec55c8ba4342dbf7"
+        }
+      ],
+      "steps": 3,
+      "cost": 0,
+      "elapsedMs": 10,
+      "runId": "21e81ff3-b83b-43da-87b2-767528e92c4d",
+      "workspace": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/calibration-v2-001/run-001/early-not_reproduced/v1/case-eMYNHd",
+      "exception": null,
+      "runError": null,
+      "failedNodes": [],
+      "eventCount": 9,
+      "diagnostic": {
+        "input": {
+          "samples": [
+            {
+              "id": "v2-public-sample"
+            }
+          ]
+        },
+        "expected": {
+          "statuses": [
+            "succeeded"
+          ],
+          "checks": [],
+          "artifacts": [
+            {
+              "name": "manifest.json",
+              "json": {
+                "samples": [
+                  {
+                    "sampleId": "v2-public-sample",
+                    "disposition": "not_reproduced"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "nativePassed": true,
+      "instrumentAudit": {
+        "passed": true,
+        "problems": [],
+        "missingCalls": 0,
+        "forbiddenCalls": 0,
+        "duplicateCalls": 0,
+        "wrongOrder": 0,
+        "invalidObservations": 0,
+        "screenCalls": 1,
+        "reproduceCalls": 1,
+        "syntheticCost": 11,
+        "expectedSyntheticCost": 11
+      },
+      "instrumentLog": [
+        {
+          "ordinal": 1,
+          "instrument": "screen",
+          "sampleId": "v2-public-sample",
+          "nodeKey": "root/screen",
+          "idempotencyKey": "c58db924c1dd0559ffd643a7b0f274cfcc04b097b6ac1d1ef2375c0d018985ad",
+          "syntheticCost": 1,
+          "outcome": "returned",
+          "observation": {
+            "ok": true,
+            "sampleId": "v2-public-sample",
+            "suspicious": true
+          }
+        },
+        {
+          "ordinal": 2,
+          "instrument": "reproduce",
+          "sampleId": "v2-public-sample",
+          "nodeKey": "root/reproduce",
+          "idempotencyKey": "e2aa4047793e0f784cbab003ab79c0782e6c1d0d1ffa201f3371ae7c6879eedb",
+          "syntheticCost": 10,
+          "outcome": "returned",
+          "observation": {
+            "evidenceId": "v2-public-evidence",
+            "independent": true,
+            "ok": true,
+            "reproduced": false,
+            "sampleId": "v2-public-sample"
+          }
+        }
+      ]
+    }
+  ],
+  "qualification": "Fixed source-informed synthetic scenarios. Provider-hidden split only when withheld from synthesis; no population, autonomous discovery, production, or independent instrument calibration claim.",
+  "nativeEvaluatorId": "suite:v2-early-not_reproduced:fb74b237edcbe834f90346c12d51a80372be527b2bd0da4e8a4ada9067a2b535"
+}

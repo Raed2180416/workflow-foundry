@@ -1,0 +1,93 @@
+{
+  "output": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/outcome-repair/artifacts/verification-v2-R9ZwN9",
+  "modelCalls": 0,
+  "results": [
+    {
+      "name": "syntax-module",
+      "command": [
+        "/usr/bin/node",
+        "--check",
+        "src/outcome-repair.mjs"
+      ],
+      "cwd": "/home/raed/Projects/workflow-foundry",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 19,
+      "stdout": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/outcome-repair/artifacts/verification-v2-R9ZwN9/syntax-module.stdout",
+      "stderr": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/outcome-repair/artifacts/verification-v2-R9ZwN9/syntax-module.stderr",
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "syntax-tests",
+      "command": [
+        "/usr/bin/node",
+        "--check",
+        "tests/outcome-repair.test.mjs"
+      ],
+      "cwd": "/home/raed/Projects/workflow-foundry",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 22,
+      "stdout": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/outcome-repair/artifacts/verification-v2-R9ZwN9/syntax-tests.stdout",
+      "stderr": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/outcome-repair/artifacts/verification-v2-R9ZwN9/syntax-tests.stderr",
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "native-trajectory",
+      "command": [
+        "/usr/bin/node",
+        "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/outcome-repair/trajectory.mjs"
+      ],
+      "cwd": "/home/raed/Projects/workflow-foundry",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 254,
+      "stdout": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/outcome-repair/artifacts/verification-v2-R9ZwN9/native-trajectory.stdout",
+      "stderr": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/outcome-repair/artifacts/verification-v2-R9ZwN9/native-trajectory.stderr",
+      "stdoutSha256": "43a6ed2814665440b083e6e7a9f7ba681e68e3c5ffd6c6fd1e96c92dfa48d559",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "doctor",
+      "command": [
+        "npm",
+        "run",
+        "check"
+      ],
+      "cwd": "/home/raed/Projects/workflow-foundry",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 430,
+      "stdout": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/outcome-repair/artifacts/verification-v2-R9ZwN9/doctor.stdout",
+      "stderr": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/outcome-repair/artifacts/verification-v2-R9ZwN9/doctor.stderr",
+      "stdoutSha256": "cbe11c006648a5f4997899cb2f74ba0bb84ba24a4ab69c6eac6d635b7fa602e0",
+      "stderrSha256": "8d54519185f585a22764b58b3ae1f829d27e4c41dd7e0e36f0dc27a7a572014d"
+    },
+    {
+      "name": "repository-tests",
+      "command": [
+        "npm",
+        "test"
+      ],
+      "cwd": "/home/raed/Projects/workflow-foundry",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 16663,
+      "stdout": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/outcome-repair/artifacts/verification-v2-R9ZwN9/repository-tests.stdout",
+      "stderr": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/outcome-repair/artifacts/verification-v2-R9ZwN9/repository-tests.stderr",
+      "stdoutSha256": "c8873f5642a6eeb474d638a9d510e71251af06520cba2645caf5fb0ddcdcc26e",
+      "stderrSha256": "d802c8e7a3daea05309c8bfc4e9e8fc5cfd5bac9672bd96a8cff752c0da6782f"
+    }
+  ],
+  "sourceChanges": [],
+  "passed": true,
+  "qualification": "Local supplied development and repository regression checks only. Optional browser/packaging/MCP integration tests use repository defaults. No linter/formatter/typechecker scripts are declared.",
+  "pluginEvidence": "Serena initial_instructions, project_quality_map and security_scan(full) each failed HTTP 404 tunnel_client_not_seen; none are claimed as passing scans."
+}

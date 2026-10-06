@@ -1,0 +1,16 @@
+{
+  "name": "native-trajectory",
+  "command": [
+    "/usr/bin/node",
+    "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/outcome-repair/trajectory.mjs"
+  ],
+  "cwd": "/home/raed/Projects/workflow-foundry",
+  "exitCode": 0,
+  "signal": null,
+  "error": null,
+  "durationMs": 254,
+  "stdout": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/outcome-repair/artifacts/verification-v2-R9ZwN9/native-trajectory.stdout",
+  "stderr": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/outcome-repair/artifacts/verification-v2-R9ZwN9/native-trajectory.stderr",
+  "stdoutSha256": "43a6ed2814665440b083e6e7a9f7ba681e68e3c5ffd6c6fd1e96c92dfa48d559",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

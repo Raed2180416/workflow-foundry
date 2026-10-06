@@ -1,0 +1,10 @@
+{
+  "test": "map rejects missing item array before producing a receipt",
+  "input": {
+    "claim": {
+      "grounded": true
+    }
+  },
+  "workflowHash": "b33df9adf9d0e2bbeb33a36b6c207087a220854f7446d729e9d08602295a22ba",
+  "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77"
+}

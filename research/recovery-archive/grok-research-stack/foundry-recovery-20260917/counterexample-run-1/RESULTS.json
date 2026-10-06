@@ -1,0 +1,235 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-09-17T02:05:35.644Z",
+  "node": "v24.20.0",
+  "scope": "source-informed deterministic diagnostics; not a benchmark or Jev evaluation",
+  "foundryRoot": "/home/raed/Projects/workflow-foundry",
+  "gitHead": "3954dce4563708a9edff16762f521e247b38592b",
+  "gitStatusBefore": " M bin/foundry.mjs\n?? src/construction-closed.mjs\n?? src/construction-durable.mjs\n?? src/construction-families.mjs\n?? src/construction-industry.mjs\n?? src/construction-objective.mjs\n?? src/construction.mjs\n?? tests/construction-closeness.test.mjs\n?? tests/construction-intent.test.mjs\n?? tests/construction-objective.test.mjs\n",
+  "scriptSha256": "a1c59ddd04b667d4bf87e6f5b195e1ccdb5e4d462391e71de86ee828d7272b8e",
+  "sourceSha256": {
+    "bin/foundry.mjs": "40ef04eb524c2cff1d1880086ff231154f6e279dd19874f2cd1dbea2887a47cb",
+    "package-lock.json": "7bddd5dfb8cd6e3717d54cd8c184c297b0e166ad4bbdb9645d369290b06a9af9",
+    "package.json": "cb314fd60e0b59c2fed9782c66d8ddc889ce64b4add93ed499eb3e6de139cf5a",
+    "schemas/workflow.schema.json": "e72b1d4bb1e01f4f21256b042853faa8505859f30741b4093aea59909ac4e1bc",
+    "src/capabilities.mjs": "1707d4506f50e86498fa471dc3c8714615e6c06a1240014f2515aab58cc3ac49",
+    "src/components.mjs": "200310319ed0e9026b02e62c4fe36b9bd1023de21f04d84046a1e5c478d66989",
+    "src/construction-closed.mjs": "db0cd1fe34388ee1e05cd99bbef01571f993755c727bbb80cb913e7231711c62",
+    "src/construction-durable.mjs": "7ac436cf9afdca9e8d226cf5170de065e426238f7f7bd595e9e0475968bc9510",
+    "src/construction-families.mjs": "2f64daf4277068b585411d74ff3cb1d674ff869873baed9a7e8e87bdd897cf75",
+    "src/construction-industry.mjs": "a3cdd25176bbd4153b7c3651f97f5f856b88c38e10d9f42e71e8a7eb2a1e96d0",
+    "src/construction-objective.mjs": "b71b08e1cf44720f4c0324b960ce3744c80a02890a95bd32efb3bb06d1011884",
+    "src/construction.mjs": "d8e9b6cde807a7361ed7a7e0df814a7da3adb6a20326aaa34633d1cca1095dca",
+    "src/data.mjs": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c",
+    "src/dataflow.mjs": "7f3c4894b32f5dbe691ba3c871e088da8b083f42e7b653404972b647c9e9d41e",
+    "src/engine.mjs": "6872eecabd6e4ccce58b7db25df82b1a97a292e530e0c38090e15844d5d7ed52",
+    "src/evaluation.mjs": "64d42f9120e36b90bc7d194d5550773f00c1bb19d96c03f10ea8d194e6dd3d6f",
+    "src/foundry.mjs": "95f102573760ef92cd352813f66b30cd9f83bda05afb97a4cbe1069c8527a878",
+    "src/generator.mjs": "3d86d95eaf4a2b6ee83d5fb50696a689926075adae4eeb4d8c25450c442fb11a",
+    "src/hooks.mjs": "cc541bc91d3f8fadcbd91a885ab6151afbc991b53c88903ebcfe18b3d9028140",
+    "src/http.mjs": "6638061fe87105ef1fa838565e1f42ced19e31e6bc62ccfe6594128e6b4ce97b",
+    "src/install.mjs": "10ec710d3f2dfc11c8a3765606983b146e43d5f9dbc54bf77592024a1b0c7ce2",
+    "src/mcp.mjs": "405df38215116761e1c16e4b40df2aafa0aa6afe2913e79a1d60ad6447e9d16b",
+    "src/opencode-free.mjs": "6848bfcba60945d1dfebf8fbf7e2461590f1c33eb85f5e2dc3bce84a347eeeca",
+    "src/process.mjs": "bfc97e88bb73bc8f15ba2d174ab1d97c615c3fd097e57c57964bd8bc4196bb7a",
+    "src/runtime.mjs": "af9fcabde20f706fac8ce2e09c0e646c0f100b301b64d1f6e1e4eb77e0b213db",
+    "src/store.mjs": "61288a25c85a8dd1e1e076ca5059aedf80c35dc26bf0ab613c31030743a34732",
+    "src/trials.mjs": "4ab066bb285245ae70ead081fa8de88e728dfc8f58eef77f50bf2a667117f437",
+    "src/validate.mjs": "8b698d552e151f3380af58cbce5675b0a94c48601c9acd427be71281a3696c33",
+    "tests/construction-objective.test.mjs": "fa0a2a0750309bfa0339a62e2514059c82a6c1815039dc3aadbcc9d2bae45742"
+  },
+  "modelCalls": 0,
+  "sourceEdits": 0,
+  "semanticWitnesses": [
+    {
+      "id": "approval-negation",
+      "a": "For this harmless formatting task, use human approval before returning the result.",
+      "b": "For this harmless formatting task, do not use human approval before returning the result.",
+      "requiredDistinction": "An explicit required method and its prohibition are different obligations.",
+      "extractionA": {
+        "requirements": [
+          "human-gate",
+          "verification"
+        ],
+        "ungrounded": [],
+        "requestedBeyondIr": [],
+        "text": "For this harmless formatting task, use human approval before returning the result."
+      },
+      "extractionB": {
+        "requirements": [
+          "human-gate",
+          "verification"
+        ],
+        "ungrounded": [],
+        "requestedBeyondIr": [],
+        "text": "For this harmless formatting task, do not use human approval before returning the result."
+      },
+      "sameRequirements": true,
+      "sameExecutableNodes": true,
+      "limitation": "Full candidate text/id retain the wording; the collapse is in requirement extraction and executable composition."
+    },
+    {
+      "id": "obsolete-quoted-wait",
+      "a": "The current instruction is: \"wait 30 days\" before returning the result.",
+      "b": "The archived instruction was: \"wait 30 days\". That instruction is obsolete. Return the result now.",
+      "requiredDistinction": "An adopted current instruction and explicitly obsolete quoted material are different obligations.",
+      "extractionA": {
+        "requirements": [
+          "durable-wait",
+          "verification"
+        ],
+        "ungrounded": [],
+        "requestedBeyondIr": [
+          {
+            "limit": "delayMsMax",
+            "requested": "days-or-months-scale"
+          }
+        ],
+        "text": "The current instruction is: \"wait 30 days\" before returning the result."
+      },
+      "extractionB": {
+        "requirements": [
+          "durable-wait",
+          "verification"
+        ],
+        "ungrounded": [],
+        "requestedBeyondIr": [
+          {
+            "limit": "delayMsMax",
+            "requested": "days-or-months-scale"
+          }
+        ],
+        "text": "The archived instruction was: \"wait 30 days\". That instruction is obsolete. Return the result now."
+      },
+      "sameRequirements": true,
+      "sameExecutableNodes": true,
+      "limitation": "Full candidate text/id retain the wording; the collapse is in requirement extraction and executable composition."
+    }
+  ],
+  "runtimeWitnesses": [
+    {
+      "id": "grounded-true-control",
+      "input": {
+        "claim": {
+          "grounded": true
+        }
+      },
+      "expectedLocalStatus": "succeeded",
+      "runId": "df2a08db-7347-48aa-9423-6892cf570e46",
+      "workflowHash": "4e3bb350e77d1b090eccdbf84b6eb9d4452b8931c0f819a7cdc4ffd9a72124cd",
+      "localStatus": "succeeded",
+      "independentTaskVerified": false,
+      "traceFile": "grounded-true-control.trace.json",
+      "thrown": null
+    },
+    {
+      "id": "explicitly-ungrounded",
+      "input": {
+        "claim": {
+          "grounded": false
+        }
+      },
+      "expectedLocalStatus": "succeeded",
+      "runId": "de45ec50-4632-4214-81ec-c57673b27c11",
+      "workflowHash": "4e3bb350e77d1b090eccdbf84b6eb9d4452b8931c0f819a7cdc4ffd9a72124cd",
+      "localStatus": "succeeded",
+      "independentTaskVerified": false,
+      "traceFile": "explicitly-ungrounded.trace.json",
+      "thrown": null
+    },
+    {
+      "id": "missing-grounding-evidence",
+      "input": {},
+      "expectedLocalStatus": "succeeded",
+      "runId": "44401812-e597-4483-8db6-0217bf32b292",
+      "workflowHash": "4e3bb350e77d1b090eccdbf84b6eb9d4452b8931c0f819a7cdc4ffd9a72124cd",
+      "localStatus": "succeeded",
+      "independentTaskVerified": false,
+      "traceFile": "missing-grounding-evidence.trace.json",
+      "thrown": null
+    },
+    {
+      "id": "malformed-type-control",
+      "input": {
+        "claim": {
+          "grounded": "no"
+        }
+      },
+      "expectedLocalStatus": "failed",
+      "runId": "29afe4fd-9343-4bb8-9386-4a15619c9bfe",
+      "workflowHash": "4e3bb350e77d1b090eccdbf84b6eb9d4452b8931c0f819a7cdc4ffd9a72124cd",
+      "localStatus": "failed",
+      "independentTaskVerified": false,
+      "traceFile": "malformed-type-control.trace.json",
+      "thrown": null
+    }
+  ],
+  "durationWitness": {
+    "numerical": {
+      "requirements": [
+        "human-gate",
+        "high-risk-not-model-owned",
+        "durable-wait",
+        "compensation-named-limit",
+        "verification"
+      ],
+      "ungrounded": [],
+      "requestedBeyondIr": [
+        {
+          "limit": "delayMsMax",
+          "requested": "days-or-months-scale"
+        },
+        {
+          "limit": "compensateKind",
+          "requested": "saga-compensate"
+        }
+      ],
+      "text": "Approve invoice then pay, wait 30 days, compensate on cancel"
+    },
+    "spelled": {
+      "requirements": [
+        "human-gate",
+        "high-risk-not-model-owned",
+        "durable-wait",
+        "compensation-named-limit",
+        "branching",
+        "verification"
+      ],
+      "ungrounded": [],
+      "requestedBeyondIr": [
+        {
+          "limit": "compensateKind",
+          "requested": "saga-compensate"
+        }
+      ],
+      "text": "Have a reviewer sign off the invoice, pay it, wait thirty days, then compensate if cancelled"
+    },
+    "missingSpelledDurationLimit": true,
+    "numericalDurationLimit": true
+  },
+  "compositionWitness": {
+    "objective": "For every match, check the score; if scoring fails, use a separate error path.",
+    "requirements": [
+      "branching",
+      "map-fanout",
+      "verification"
+    ],
+    "nodeKinds": [
+      "assert",
+      "task"
+    ],
+    "failedMotifs": [
+      "map-or-loop-when-required"
+    ]
+  },
+  "sourceUnchanged": true,
+  "gitStatusAfter": " M bin/foundry.mjs\n?? src/construction-closed.mjs\n?? src/construction-durable.mjs\n?? src/construction-families.mjs\n?? src/construction-industry.mjs\n?? src/construction-objective.mjs\n?? src/construction.mjs\n?? tests/construction-closeness.test.mjs\n?? tests/construction-intent.test.mjs\n?? tests/construction-objective.test.mjs\n",
+  "finishedAt": "2026-09-17T02:05:35.761Z",
+  "interpretation": [
+    "A well-typed grounded:false flag is accepted; the compiler checks its type, not semantic grounding.",
+    "Missing claim data uses the supplied grounded:true default. This is not independent evidence.",
+    "No actual citation lookup or sending capability runs. These witnesses show false local completion for the intended task, not unauthorized external sending.",
+    "The runtime separately retains independentTaskVerified:false; do not attribute the compiler acceptance weakness to a claim of externally verified task success.",
+    "Assertions passing reproduce known failure modes. They do not qualify the product or establish any Jev capability."
+  ]
+}

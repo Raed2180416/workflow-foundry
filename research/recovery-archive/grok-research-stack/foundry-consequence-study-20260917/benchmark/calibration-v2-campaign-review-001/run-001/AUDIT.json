@@ -1,0 +1,312 @@
+{
+  "schemaVersion": "saved-cos-campaign-independent-review-v1",
+  "at": "2026-09-17T03:30:17.998Z",
+  "campaign": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/campaign-cos-001",
+  "workflowHash": "5cc364ca2bd741330968016c582f6f6c2f4464aff5e3a75a99d2c9b908f62510",
+  "passed": true,
+  "checks": [
+    {
+      "name": "frozen-sources-and-calibration",
+      "passed": true
+    },
+    {
+      "name": "candidate-relay-and-prompt",
+      "passed": true
+    },
+    {
+      "name": "request-proposal-job-qualification-database",
+      "passed": true
+    },
+    {
+      "name": "development-and-sealed-saved-evidence",
+      "passed": true
+    },
+    {
+      "name": "applied-run-v2-recomputation",
+      "passed": true
+    },
+    {
+      "name": "chronology",
+      "passed": true
+    },
+    {
+      "name": "inputs-unchanged-through-review",
+      "passed": true,
+      "changedPaths": []
+    }
+  ],
+  "sections": {
+    "frozen-sources-and-calibration": {
+      "files": 87,
+      "oracleV2Sha256": "517b7e60d3e674f7fc1189dac8f468dd19d9f6800467a5998fde6a38fbd66e15",
+      "freezeSha256": "5e4af4f2d1b3e90e65373cc40b4e8857d9248e769ee47b8dd79fa9d72e4595d2"
+    },
+    "candidate-relay-and-prompt": {
+      "workflowHash": "5cc364ca2bd741330968016c582f6f6c2f4464aff5e3a75a99d2c9b908f62510",
+      "responseBytesSha256": "f36751ebbfa5d489b393250185c98b9387390b0fadf604a62e708add2f9cc978",
+      "promptSha256": "b206c8661870cf5eae98b7f1539271f626f9ee39aea22c23dfd0ebeb81a35033",
+      "promptBytes": 48508,
+      "attemptCount": 1,
+      "selectedSkills": [
+        "workflow-foundry",
+        "runtime-native"
+      ],
+      "explicitPriorFeedback": false,
+      "v2AddendumInOriginalPacket": false,
+      "hiddenness": "Exact packet reconstructed from public contract, generic schema/skills and registry; ambient context and unrecorded filesystem access are not established by this check.",
+      "modelIdentity": "6/pro is host/relay-reported; author receipt says settings unobserved. Upstream spawn metadata was not inspected."
+    },
+    "request-proposal-job-qualification-database": {
+      "requestId": "533f7be6-a5c5-4597-a842-099a7baddeb9",
+      "proposalId": "b3173bea-060f-412c-9ae0-0b58bc9f036b",
+      "generationJobId": "dcc57bfd-af23-464c-8f2b-0881fcf99d5c",
+      "qualifications": 2,
+      "proposalCreatedAt": 1789615484136,
+      "proposalAppliedAt": 1789615484997,
+      "jobCreatedAt": 1789615483562,
+      "jobFinishedAt": 1789615484137
+    },
+    "development-and-sealed-saved-evidence": [
+      {
+        "split": "development",
+        "casesChecked": 5,
+        "reportSha256": "d612724e57db60bdaf74e0ea5d2f872f7efb4a36d5ccda93868431659bb29317",
+        "passed": true,
+        "totalSteps": 97,
+        "permittedAttempts": 18,
+        "eventsChecked": 270,
+        "allProcessingBeforePublication": true,
+        "firstRunAt": 1789615483605,
+        "lastRunEventAt": 1789615484110,
+        "caseFingerprints": [
+          {
+            "ordinal": 1,
+            "runId": "36e1e564-5a6c-4566-885d-f4e5dbc73b93",
+            "eventsHash": "1b15f78d6cdd9940705763dc5101adeaad4f06b750ab307dd7767dfc08da7c14",
+            "manifestSha256": "ab0abccf9fb1df285dc5e0c09e2669743076c1564323845685be3617c8b79514"
+          },
+          {
+            "ordinal": 2,
+            "runId": "16185a7d-6d7c-4e69-bca1-28a0f682a85a",
+            "eventsHash": "ad12530c453574f280db358e5943699ac3360fa08e1d2a76bb310358a30064db",
+            "manifestSha256": "f45ac6e6a678ef2767b82545e25a26df7f24908983c00292af2c1e50c4d647aa"
+          },
+          {
+            "ordinal": 3,
+            "runId": "50b23146-be99-46bc-b825-818fb6d93d65",
+            "eventsHash": "6b3dcb9044c7a52722c6d62a592fe9c0f6acc70bd87499c0fb877e6c37afd116",
+            "manifestSha256": "0410c5f7ee2b257a468fb2fa125b70b8467b09a1da1fef1dd3b1384582916e0d"
+          },
+          {
+            "ordinal": 4,
+            "runId": "a4342303-00e7-423f-b4c1-eaed7b5888ea",
+            "eventsHash": "ff8184848eb4f59a056ad3d6f57c24e0f078621efddedd37f441440f5e42c36b",
+            "manifestSha256": "629300d7aef2f47a1e0b697171d7b2b42184d339bf8ec880ddf175f8dad17731"
+          },
+          {
+            "ordinal": 5,
+            "runId": "f89c3599-c5bc-4490-ac0c-fd4d35b0a642",
+            "eventsHash": "6e25551af19455416b0db1dcd1c0de276fd1453d3c967986498c6078d8a0e33a",
+            "manifestSha256": "89d9915941feb456039d6b78c196251c0e301a1f05d37345be75669d3030776a"
+          }
+        ]
+      },
+      {
+        "split": "sealed",
+        "casesChecked": 8,
+        "reportSha256": "d5e244847e479a641d9a56f3941e5df7631b1a19090aadd0af700d44d6167042",
+        "passed": true,
+        "totalSteps": 181,
+        "permittedAttempts": 37,
+        "eventsChecked": 507,
+        "allProcessingBeforePublication": true,
+        "firstRunAt": 1789615484162,
+        "lastRunEventAt": 1789615484968,
+        "caseFingerprints": [
+          {
+            "ordinal": 1,
+            "runId": "8a582cc1-80c1-4ab1-aa77-9c365c6299cf",
+            "eventsHash": "e0aa8081686a8839a7e78527ef87b199cdc8a46af899074c1a3057195b93c513",
+            "manifestSha256": "90d088a1f11df5426ebccf3899c9f002e38ce985f919cb3d57fe626c6018ec45"
+          },
+          {
+            "ordinal": 2,
+            "runId": "dac92b93-2bce-4678-b31c-64f881f8865a",
+            "eventsHash": "62bfab975ea8f61d880d42b0849e2e34424d9be7dafb6f848c85990e2a5ab98a",
+            "manifestSha256": "3df5c8c0abb60bdb52004d7cc5018a97dc52f16209c76b701ad139b8ca180ec5"
+          },
+          {
+            "ordinal": 3,
+            "runId": "97dfb540-0add-4144-82df-60feffecfea4",
+            "eventsHash": "18f0aef9739050642df3960b96eda493d71dd2bf48d6df828456cd5875d3d7ad",
+            "manifestSha256": "9294a95deee581e586c5e24f4c4aa00341444e9646532c2aac098666395cc88a"
+          },
+          {
+            "ordinal": 4,
+            "runId": "a2982c25-054d-4b62-b28b-aca381752288",
+            "eventsHash": "1b1ebb4f054ea78116ffacfef8f5a5fddb924a14e4fff421eb561bec9f387c59",
+            "manifestSha256": "a8a0cf01f1df26966ebc79221d27800eb76ec42c547bd111a5824febed4219f3"
+          },
+          {
+            "ordinal": 5,
+            "runId": "3fba505d-d15f-477f-8225-b2fb0fcab855",
+            "eventsHash": "acd55e1864f49bc06e6ef8d66329d04c98c7df46398e2a1f1a2e9134ea9e880c",
+            "manifestSha256": "8508d47be6df3ebbaa92093d535cc089d179988f10ef98b95c88f65a1cc5d108"
+          },
+          {
+            "ordinal": 6,
+            "runId": "d370eeb1-acef-48d3-af1b-460deb72a276",
+            "eventsHash": "cfb41efb4722a3316f575b581101d776a6fc4c405f8a46b24ccb1cbecd5bb3e7",
+            "manifestSha256": "ab0abccf9fb1df285dc5e0c09e2669743076c1564323845685be3617c8b79514"
+          },
+          {
+            "ordinal": 7,
+            "runId": "e5d02f21-ab2a-4047-82bc-47d9edea826b",
+            "eventsHash": "f1372aa92710d6ff5213d81f9793b7e488044653198a088a27a77d3e66a207b5",
+            "manifestSha256": "9a9303feb064edde0663f1442804dd17c44db1ff3332b352d2aaf746084152f6"
+          },
+          {
+            "ordinal": 8,
+            "runId": "472d14be-2e97-4ea0-a93f-b9879438b265",
+            "eventsHash": "e6d31a7fc7f4e150ceb3c7f7c3725b75711db2164f2a81c2177da439dc1f979b",
+            "manifestSha256": "50f3f66f279e5b66326c3ac5d011697df652e89094816195c9f69a7338d7f101"
+          }
+        ]
+      }
+    ],
+    "applied-run-v2-recomputation": {
+      "passed": true,
+      "status": "succeeded",
+      "permittedAttempts": 5,
+      "publicationCount": 1,
+      "allProcessingFinished": true,
+      "eventCount": 67,
+      "firstEventAt": 1789615485000,
+      "lastEventAt": 1789615485078,
+      "priorAuditVersion": "v1",
+      "nowCheckedWith": "v2",
+      "eventHead": {
+        "hash": "c7702ea4c0b9e6e1e4cc455f9a496049d933d050d97627b26ee1fc309a50f2b9",
+        "seq": 67
+      },
+      "manifestSha256": "f45ac6e6a678ef2767b82545e25a26df7f24908983c00292af2c1e50c4d647aa",
+      "v2AuditReceipt": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/calibration-v2-campaign-review-001/run-001/APPLIED_V2_AUDIT.json"
+    },
+    "chronology": {
+      "milestones": [
+        {
+          "name": "original v1 freeze",
+          "time": "2026-09-17T02:59:21.313Z",
+          "basis": "receipt field"
+        },
+        {
+          "name": "public packet freeze",
+          "time": "2026-09-17T03:17:12.511Z",
+          "basis": "receipt field"
+        },
+        {
+          "name": "v2 commissioned",
+          "time": "2026-09-17T03:17:15Z",
+          "basis": "prime message timestamp in this conversation"
+        },
+        {
+          "name": "campaign protocol",
+          "time": "2026-09-17T03:19:24.740Z",
+          "basis": "receipt field"
+        },
+        {
+          "name": "candidate response authored",
+          "time": "2026-09-17T03:20:16.546Z",
+          "basis": "filesystem mtime; no embedded author timestamp"
+        },
+        {
+          "name": "authorship receipt written",
+          "time": "2026-09-17T03:20:51.361Z",
+          "basis": "filesystem mtime"
+        },
+        {
+          "name": "v2 source freeze",
+          "time": "2026-09-17T03:23:09.470Z",
+          "basis": "receipt field"
+        },
+        {
+          "name": "evaluator readiness",
+          "time": "2026-09-17T03:24:43.443Z",
+          "basis": "receipt field"
+        },
+        {
+          "name": "saved response consumed by relay",
+          "time": "2026-09-17T03:24:43.575Z",
+          "basis": "receipt field; not a new model inference"
+        },
+        {
+          "name": "development first run",
+          "time": "2026-09-17T03:24:43.605Z",
+          "basis": "verified native event time"
+        },
+        {
+          "name": "development last run complete",
+          "time": "2026-09-17T03:24:44.110Z",
+          "basis": "verified native event time"
+        },
+        {
+          "name": "candidate frozen for sealed evaluation",
+          "time": "2026-09-17T03:24:44.139Z",
+          "basis": "receipt field"
+        },
+        {
+          "name": "sealed first run",
+          "time": "2026-09-17T03:24:44.162Z",
+          "basis": "verified native event time"
+        },
+        {
+          "name": "sealed last run complete",
+          "time": "2026-09-17T03:24:44.968Z",
+          "basis": "verified native event time"
+        },
+        {
+          "name": "explicit local promotion",
+          "time": "2026-09-17T03:24:44.995Z",
+          "basis": "receipt field"
+        },
+        {
+          "name": "proposal applied",
+          "time": "2026-09-17T03:24:44.997Z",
+          "basis": "database record"
+        },
+        {
+          "name": "applied run starts",
+          "time": "2026-09-17T03:24:45.000Z",
+          "basis": "verified native event time"
+        },
+        {
+          "name": "applied run completes",
+          "time": "2026-09-17T03:24:45.078Z",
+          "basis": "verified native event time"
+        },
+        {
+          "name": "campaign finished",
+          "time": "2026-09-17T03:24:45.083Z",
+          "basis": "receipt field"
+        }
+      ],
+      "v2FrozenBeforeAuthorship": false,
+      "v2FrozenBeforeEvaluation": true,
+      "candidateFrozenBeforeSealed": true,
+      "authorReceiptModelSettingsKnown": false,
+      "evaluatorAuthorAttestation": "This evaluator author first read this actual candidate during this saved-campaign review, after the v2 freeze. The v2 repair used independent F1/F2 witnesses and supplied calibration controls.",
+      "limit": "Local receipt times and file mtimes are not independently notarized. This is a pre-evaluation, post-authorship evaluator amendment; not a fully pre-authorship v2 precommit."
+    }
+  },
+  "runtimeExecutions": 0,
+  "modelProviderCalls": 0,
+  "existingFileWrites": 0,
+  "sourceHash": "35f95c90b797016cb7e3d644a900b6e04e4826329c05a8f554112a65ede613fb",
+  "limitations": [
+    "The reviewer authored evaluator v2; independence here is from the campaign constructor and executor, not from v2 implementation.",
+    "Model 6/pro is host-reported; saved author receipt does not independently identify settings. No upstream session/spawn audit was performed.",
+    "Prompt equality and public-source reconstruction do not prove absence of ambient conversation context or out-of-band reads.",
+    "Temporal consistency and observed dataflow do not prove population performance or independent physical instruments.",
+    "Original campaign driver uses v1 for the applied audit, omits an explicit applied-run success gate, and does not compare every protocol field. Its actual saved run succeeds; this additive review checks v2 without modifying that history."
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "code": "MODEL_RATE_LIMIT",
+  "message": "The free provider returned HTTP 429; this attempt is stopped without retry or fallback",
+  "details": {
+    "observedStatusCode": 429,
+    "automaticRetry": false,
+    "completedResponse": false,
+    "retryAfterSeconds": 600
+  },
+  "receipts": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/opencode-v2/offline-provider-check-e5142695-d8f5-4362-a05a-bb2d26d243f6/rate-limit/opencode-v2-27d06163-4c38-4ee8-948c-8e1119a9fc63"
+}

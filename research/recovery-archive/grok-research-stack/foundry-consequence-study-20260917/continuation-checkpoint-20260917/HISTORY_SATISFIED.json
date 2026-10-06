@@ -1,0 +1,101 @@
+{
+  "id": "outcome-history:f5763fbdc7bd8713fa2629cc47b5117f7f699812063e250b669274db2405ecbd",
+  "schemaVersion": "outcome-history/1",
+  "inspector": {
+    "implementationHash": "023921bb5bd99982c821b9fc9ec28e68763f8344ea53e57c824e6e0608f75610",
+    "node": "v24.21.0"
+  },
+  "source": {
+    "observationId": "93c0f90949b07205481681179213f44f3ffd976020164459e22da9c0436b5a18",
+    "contractId": "da28a44ea33ba76cbb38a9f4ed0a2ef9a9f978b0f9dbab2e1fa607f15c0ccf88"
+  },
+  "binding": {
+    "requestId": "6621f9e3-5cf6-4f01-a04b-539ef84828f7",
+    "proposalId": "091855cd-2ba2-4190-838a-705e6e4ff78a",
+    "runId": "a5964850-cb86-41f3-857f-5f485e957318",
+    "rootRequestId": "4275ad39-3c06-4216-b279-c3233ff91732",
+    "requestHash": "ae003188b34264610ddbb4a6428ac90f1ede42a7cb7b1f51fef2ad291c0daec5",
+    "proposalHash": "3e9a146b8279f1ac9718d9a628ea681084ff6886e737187d1d90d1242dece62e",
+    "rootRequestHash": "3a2257f7297ced54a7df413262665b1f5965e04558836046a926d9d5626694f7",
+    "workflowId": "ObservedBatchManifest",
+    "workflowHash": "1c88cfc1168d192c8e8e1d0f498f84bc64ceeedfa1c5f73492421c0facc239ac",
+    "workflowVersion": 2,
+    "registryHash": "bb3f73d712e174d3084248c8d199a620b7eeb2a7b2655d64b6286ab3af536d0e",
+    "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+    "inputHash": "951fdae63dd5e3d2d56272a9902ecce1313873959d3ec5f856bad5f8770d9c4c",
+    "policyHash": "24f7bf6d1ec413ebed06b162c2a10a6da204d42e6d5a9e921e32e3f850bd8c6c",
+    "eventHead": {
+      "hash": "0e1c4c160ea2a507734b3320b274e289866ea2b89413b78623b8a5100e80081c",
+      "seq": 67
+    },
+    "eventCount": 67,
+    "runStatus": "succeeded",
+    "runHash": "641fdd9cd80cddd7f986649aa4854c7c70279baa32594ae2f5d08832ddc4e8d4"
+  },
+  "lineage": [
+    {
+      "requestId": "6621f9e3-5cf6-4f01-a04b-539ef84828f7",
+      "requestHash": "ae003188b34264610ddbb4a6428ac90f1ede42a7cb7b1f51fef2ad291c0daec5",
+      "parentRequestId": "4275ad39-3c06-4216-b279-c3233ff91732"
+    },
+    {
+      "requestId": "4275ad39-3c06-4216-b279-c3233ff91732",
+      "requestHash": "3a2257f7297ced54a7df413262665b1f5965e04558836046a926d9d5626694f7",
+      "parentRequestId": null
+    }
+  ],
+  "historicalAssessment": {
+    "outcome": "satisfied",
+    "reason": "exact-json-match",
+    "observedJsonHash": "ff3d53c751d4db3bcfbf6bc9c54d91433ee7038c00221573db56a6ff7ddb6f9c",
+    "basis": "recomputed-from-preserved-bytes",
+    "observedAt": 1789634916044,
+    "evaluator": {
+      "comparison": "Foundry canonical JSON: object order ignored, array order retained; bounded finite JS numbers",
+      "dataImplementationHash": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c",
+      "id": "frozen-development-manifest/1",
+      "implementationHash": "8de15af4b6ce842c3e54039531c651472a9079a231bf31390f4a8f95b924f1fd",
+      "kind": "exact-json-artifact/2",
+      "node": "v24.21.0"
+    },
+    "expectedJsonHash": "ff3d53c751d4db3bcfbf6bc9c54d91433ee7038c00221573db56a6ff7ddb6f9c",
+    "goal": "Attempt screening exactly once for every input sample, attempt independent reproduction exactly once only after that sample's usable suspicious screening observation, and publish one correctly classified row per sample in input order in manifest.json after processing the entire batch.",
+    "successCriteria": [
+      "Each input sample receives one screening attempt without retries, including samples whose instruments fail.",
+      "Exactly those samples with an identity-matched, ok:true, boolean suspicious:true screen receive one reproduction attempt without retries.",
+      "Confirmation requires identity-matched, ok:true, independent:true reproduction with a nonempty string evidenceId and boolean reproduced:true.",
+      "Completed negative reproduction means not_reproduced, usable negative screening means clear, incomplete returned evidence means inconclusive, and a thrown instrument failure means error.",
+      "The artifact contains only the required samples array, with one sampleId/disposition row per input sample in input order, and is published after all sample processing finishes."
+    ],
+    "artifact": {
+      "name": "manifest.json",
+      "state": "present",
+      "bytes": 241,
+      "sha256": "f45ac6e6a678ef2767b82545e25a26df7f24908983c00292af2c1e50c4d647aa"
+    },
+    "completedArtifacts": [
+      {
+        "nodeKey": "root/publishManifest",
+        "sequence": 66,
+        "eventHash": "d63634fb9424fec194075c915b011f8d81d9a794fec80d619a787476050d8eb4",
+        "intentSequence": 65,
+        "intentHash": "3b1df1e166a744e52dc4edef3587c11387c4ec1515880804db8c58dcf932de95",
+        "output": {
+          "bytes": 241,
+          "name": "manifest.json",
+          "sha256": "f45ac6e6a678ef2767b82545e25a26df7f24908983c00292af2c1e50c4d647aa"
+        },
+        "outputHash": "b1ec9c2cad5c1a1f8d05128e57b550d6aef2ad30f21db1ede6ac3757191b7867"
+      }
+    ]
+  },
+  "currentEvidenceCheck": {
+    "status": "unverified",
+    "liveArtifactRead": false,
+    "suppliedRegistryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+    "matchesRecordedRegistry": false,
+    "qualification": "Registry hash comparison only; no current artifact, policy, capability compatibility or execution check."
+  },
+  "currentWorldQualification": false,
+  "purpose": "Historical inspection only; not an outcome receipt, repair request, or promotion permission."
+}

@@ -1,0 +1,15 @@
+{
+  "code": "TIMEOUT",
+  "message": "Generation exceeded its total deadline",
+  "termination": {
+    "kind": "deadline",
+    "at": 1789636393854,
+    "code": "TIMEOUT",
+    "error": {
+      "name": "FoundryError",
+      "code": "TIMEOUT",
+      "message": "Generation exceeded its total deadline"
+    }
+  },
+  "receipts": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/continuation-checkpoint-20260917/final-provider-controls/termination-deadline-snTMYy/opencode-v2-5e9dd998-a7fd-4ae3-9be1-dd13a35abc69"
+}

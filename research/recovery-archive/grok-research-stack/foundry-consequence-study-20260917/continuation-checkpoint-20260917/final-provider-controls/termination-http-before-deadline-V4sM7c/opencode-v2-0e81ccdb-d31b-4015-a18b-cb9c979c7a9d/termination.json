@@ -1,0 +1,49 @@
+{
+  "startedAt": 1789636399778,
+  "deadlineAt": 1789636403778,
+  "abortAt": 1789636403791,
+  "first": {
+    "kind": "http",
+    "at": 1789636400783,
+    "code": "MODEL_RATE_LIMIT",
+    "error": {
+      "name": "FoundryError",
+      "code": "MODEL_RATE_LIMIT",
+      "message": "The free provider returned HTTP 429; this attempt is stopped without retry or fallback"
+    }
+  },
+  "secondary": [
+    {
+      "kind": "deadline",
+      "at": 1789636403791,
+      "code": "TIMEOUT",
+      "error": {
+        "name": "FoundryError",
+        "code": "TIMEOUT",
+        "message": "Generation exceeded its total deadline"
+      }
+    },
+    {
+      "kind": "abort-observation",
+      "at": 1789636403791,
+      "code": "MODEL_TRANSPORT",
+      "error": {
+        "name": "AbortError",
+        "code": 20,
+        "message": "This operation was aborted"
+      }
+    },
+    {
+      "kind": "process",
+      "at": 1789636403794,
+      "code": "CANCELLED",
+      "error": {
+        "name": "FoundryError",
+        "code": "CANCELLED",
+        "message": "Subprocess cancelled"
+      }
+    }
+  ],
+  "finishedAt": 1789636403794,
+  "callerAborted": false
+}

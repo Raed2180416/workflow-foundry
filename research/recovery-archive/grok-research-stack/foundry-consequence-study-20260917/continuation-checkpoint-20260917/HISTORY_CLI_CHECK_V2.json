@@ -1,0 +1,55 @@
+{
+  "passed": true,
+  "at": "2026-09-17T09:13:32.067Z",
+  "commands": [
+    {
+      "command": [
+        "bin/foundry.mjs",
+        "outcome-history",
+        "--receipt",
+        "dadf02f676ab22bee8b2afa0a37409c767c002dcc59a055a6a0fc40f5c589a1f",
+        "--workspace",
+        "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/outcome-model-001/workspace"
+      ],
+      "observationId": "dadf02f676ab22bee8b2afa0a37409c767c002dcc59a055a6a0fc40f5c589a1f",
+      "historyId": "outcome-history:d3a1f788fd7a6472972fc23af146d6b91b1bffc7b02941d4d969d7df249208d4",
+      "output": "HISTORY_WRONG_V2.json",
+      "outcome": "unsatisfied",
+      "outputSHA256": "c27e301dc792b97e3ab5e69df5f5b91ebbd9e0df7d7cd8cf2bf6cb2c231f1de9",
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "bin/foundry.mjs",
+        "outcome-history",
+        "--receipt",
+        "93c0f90949b07205481681179213f44f3ffd976020164459e22da9c0436b5a18",
+        "--workspace",
+        "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/outcome-model-001/workspace"
+      ],
+      "observationId": "93c0f90949b07205481681179213f44f3ffd976020164459e22da9c0436b5a18",
+      "historyId": "outcome-history:09870217e8b08c181c35c9509b38c3114df17289a50ace6d3d322902a7304858",
+      "output": "HISTORY_SATISFIED_V2.json",
+      "outcome": "satisfied",
+      "outputSHA256": "7d23c91733daf6b901cfd8d2a8aa8fb098b3afc6e8ce53cedec2a13680d34eb9",
+      "exitCode": 0
+    }
+  ],
+  "dbSHA256Before": "87067ea81936d633f258469bf22e8b32262b3543b6f1b14e65d6a534eb0c08a3",
+  "dbSHA256After": "87067ea81936d633f258469bf22e8b32262b3543b6f1b14e65d6a534eb0c08a3",
+  "unchangedMainDatabase": true,
+  "currentRegistryScope": "Only built-in capability descriptors; historical synthetic instrument catalog differs. No external components were loaded.",
+  "currentWorldQualification": false,
+  "currentEvidenceCheck": "unverified; no live artifact reads",
+  "newRuntimeExecutions": 0,
+  "modelCalls": 0,
+  "previousReceipt": {
+    "path": "HISTORY_CLI_CHECK.json",
+    "sha256": "2221ceb8a24d8cae60783f923ab41012c9fff9c3cc9b83dae08ad9871eb804cb",
+    "meaning": "Preserved earlier inspection using the pre-ancestry-fix inspector; not overwritten or silently relabeled."
+  },
+  "sourceHashes": {
+    "bin/foundry.mjs": "450fad505fbc3c77176eb4bb9880343e169c71e402f319e38e3ff6f8182c906b",
+    "src/outcome-history.mjs": "4caa2bce1e7b55226367ac0b5178d51af92ac1d145b48b5b820e584476b08b8a"
+  }
+}

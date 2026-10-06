@@ -1,0 +1,201 @@
+{
+  "evaluatorId": "sample-consequences-v2:37b774bb875bdc5bbb005ef27053c80d14a5eeb4e6fb4f24afab0b8f1ae2b45d:517b7e60d3e674f7fc1189dac8f468dd19d9f6800467a5998fde6a38fbd66e15",
+  "workflowHash": "d573c2e35dc27ecccc7d3900492cd3f48c4e030c7e49d55f782c92d934cc8119",
+  "registryHash": "bb3f73d712e174d3084248c8d199a620b7eeb2a7b2655d64b6286ab3af536d0e",
+  "suiteHash": "37b774bb875bdc5bbb005ef27053c80d14a5eeb4e6fb4f24afab0b8f1ae2b45d",
+  "split": "diagnostic",
+  "qualificationLevel": "task-outcome",
+  "passed": true,
+  "metrics": {
+    "passedCount": 1,
+    "caseCount": 1,
+    "successFraction": 1,
+    "falseSuccessCount": 0,
+    "totalSteps": 2,
+    "totalCost": 0,
+    "elapsedMs": 21,
+    "missingCalls": 0,
+    "forbiddenCalls": 0,
+    "duplicateCalls": 0,
+    "syntheticCost": 1,
+    "v1PassedCount": 1,
+    "logBindingErrors": 0,
+    "completionErrors": 0,
+    "evidenceOrderErrors": 0,
+    "prematureConfirmations": 0,
+    "allProcessingDiagnosticFailures": 1
+  },
+  "envelope": [],
+  "cases": [
+    {
+      "id": "public-case",
+      "passed": true,
+      "status": "succeeded",
+      "falseSuccess": false,
+      "checks": [],
+      "artifacts": [
+        {
+          "name": "manifest.json",
+          "passed": true,
+          "sha256": "10b4c55fb592c1517e85719b30c1377dfa3ae2040e74107677ff3de191675e89"
+        }
+      ],
+      "steps": 2,
+      "cost": 0,
+      "elapsedMs": 9,
+      "runId": "90641049-e64c-4bd1-b37c-7af1fae3a24d",
+      "workspace": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/calibration-v2-001/run-001/early-error/v1/case-qqeYP9",
+      "exception": null,
+      "runError": null,
+      "failedNodes": [
+        {
+          "nodeKey": "root/screen",
+          "status": "handled_error",
+          "tool": "lab.screen",
+          "error": {
+            "code": "SCREEN_ERROR",
+            "message": "Synthetic instrument unavailable"
+          }
+        }
+      ],
+      "eventCount": 8,
+      "diagnostic": {
+        "input": {
+          "samples": [
+            {
+              "id": "v2-public-sample"
+            }
+          ]
+        },
+        "expected": {
+          "statuses": [
+            "succeeded"
+          ],
+          "checks": [],
+          "artifacts": [
+            {
+              "name": "manifest.json",
+              "json": {
+                "samples": [
+                  {
+                    "sampleId": "v2-public-sample",
+                    "disposition": "error"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "nativePassed": true,
+      "instrumentAudit": {
+        "passed": true,
+        "problems": [],
+        "missingCalls": 0,
+        "forbiddenCalls": 0,
+        "duplicateCalls": 0,
+        "wrongOrder": 0,
+        "invalidObservations": 0,
+        "screenCalls": 1,
+        "reproduceCalls": 0,
+        "syntheticCost": 1,
+        "expectedSyntheticCost": 1,
+        "v1Passed": true,
+        "logBindingErrors": 0,
+        "completionErrors": 0,
+        "evidenceOrderErrors": 0,
+        "prematureConfirmations": 0,
+        "publicationBindingErrors": 0,
+        "completedAttempts": 1,
+        "attempts": [
+          {
+            "ordinal": 1,
+            "instrument": "screen",
+            "sampleId": "v2-public-sample",
+            "nodeKey": "root/screen",
+            "intentSequence": 5,
+            "completedSequence": 7,
+            "validatedReturn": false,
+            "valid": true,
+            "output": null,
+            "outcome": "threw",
+            "eventHash": "5084489af884e08bc2bdb6dafad5e5f9c65e71ecedc1e574f0a823794655ae7d"
+          }
+        ],
+        "publications": [
+          {
+            "nodeKey": "root/publish",
+            "startedSequence": 3,
+            "completedSequence": 4,
+            "valid": true,
+            "sha256": "10b4c55fb592c1517e85719b30c1377dfa3ae2040e74107677ff3de191675e89"
+          }
+        ],
+        "publicationContentBasis": "independently-read-actual-artifact",
+        "allProcessingBeforePublication": {
+          "enforced": false,
+          "passed": false,
+          "requiredAttempts": 1,
+          "incompleteAtPublication": 1,
+          "qualification": "Requiring every permitted instrument attempt to settle before any manifest, for every disposition, is a prospective strengthening. V2 measures it as a non-gating diagnostic; v1 PUBLIC.json is unchanged."
+        }
+      },
+      "instrumentLog": [
+        {
+          "ordinal": 1,
+          "instrument": "screen",
+          "sampleId": "v2-public-sample",
+          "nodeKey": "root/screen",
+          "idempotencyKey": "70c3d45eb092500f5e94b90c8b5ce59cecd16d99ae6fbec550aad8a13ae10820",
+          "syntheticCost": 1,
+          "outcome": "threw",
+          "errorCode": "SCREEN_ERROR"
+        }
+      ],
+      "v1Passed": true,
+      "v1InstrumentAudit": {
+        "passed": true,
+        "problems": [],
+        "missingCalls": 0,
+        "forbiddenCalls": 0,
+        "duplicateCalls": 0,
+        "wrongOrder": 0,
+        "invalidObservations": 0,
+        "screenCalls": 1,
+        "reproduceCalls": 0,
+        "syntheticCost": 1,
+        "expectedSyntheticCost": 1
+      },
+      "artifactError": null,
+      "evidenceBinding": {
+        "passed": true,
+        "eventHead": {
+          "hash": "edb4abf03afed310109938cbee3c91cf68d247e3ef96e7fb3f1fa3485e6c5d09",
+          "seq": 8
+        },
+        "eventsHash": "79e64a4d9d4009531f3f37dcd83d8ae18be6f7364f1b958d35fb35d4d854cb63",
+        "instrumentLogHash": "5e6da865c0dedfc8b2453471af16d18f73deed764ba8622b051bc626d25b043e",
+        "manifestSha256": "10b4c55fb592c1517e85719b30c1377dfa3ae2040e74107677ff3de191675e89"
+      }
+    }
+  ],
+  "qualification": "Fixed source-informed synthetic scenarios. Provider-hidden split only when withheld from synthesis; no population, autonomous discovery, production, or independent instrument calibration claim. V2 adds validated completion/event binding and confirmation-before-publication checks. All-item completion before publication is a non-gating diagnostic; temporal order alone does not prove causal use.",
+  "nativeEvaluatorId": "suite:v2-early-error:37b774bb875bdc5bbb005ef27053c80d14a5eeb4e6fb4f24afab0b8f1ae2b45d",
+  "v1EvaluatorId": "sample-consequences-v1:37b774bb875bdc5bbb005ef27053c80d14a5eeb4e6fb4f24afab0b8f1ae2b45d:ebbdf190674414c29ec2fc7632e8f72b6e3c305c5abd20b322cc8a077304f732",
+  "v1Passed": true,
+  "fixtureValidation": {
+    "passed": true,
+    "caseCount": 1,
+    "instrumentFixtures": 2,
+    "returnedFixtures": 1,
+    "errorFixtures": 1
+  },
+  "publicationPolicy": {
+    "id": "confirmed-evidence-before-publication-v2",
+    "enforced": "Completed, validated positive reproduction precedes each successful publication attempt containing a confirmed row.",
+    "timing": "Native tool.intent is the conservative start fence; node.completed proves publication succeeded. An overlapping reproduction/publication interval is not certified.",
+    "allProcessing": "Requiring every permitted instrument attempt to settle before any manifest, for every disposition, is a prospective strengthening. V2 measures it as a non-gating diagnostic; v1 PUBLIC.json is unchanged.",
+    "causalLimit": "Order, binding and content are checked. A constant written after matching evidence can still pass a finite case; causal use, arbitrary asynchronous instruments and population generalization are not proven."
+  },
+  "v1ReportPath": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/calibration-v2-001/run-001/early-error/v1/REPORT.json"
+}

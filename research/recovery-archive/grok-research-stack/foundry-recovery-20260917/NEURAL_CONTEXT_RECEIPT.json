@@ -1,0 +1,717 @@
+{
+  "checkedAt": "2026-09-17T02:09:07.041766+00:00",
+  "scope": "Read-only byte hash verification of existing v3 final manifest; no tensor loading or forecast/metric replay in this Foundry session",
+  "manifestSha256": "53df745e7bab3ad79a613183689fbb2f8df89a0031512d75585541fe66ea5530",
+  "auditNoteSha256": "62d785b1538aab93d05d91fb8da85da0003ff097dcc90775ccfd4b335c7c2852",
+  "checks": [
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1901-TRAINING.json",
+      "expected": "613618b6d69d98d60ca25df439df6910f41b219c3de9a9f61ad08d0b305ead43",
+      "observed": "613618b6d69d98d60ca25df439df6910f41b219c3de9a9f61ad08d0b305ead43",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1901-code_only-1024.pt",
+      "expected": "41931190b21e4c2fde92dc3d04afb568ae79e7a1a88c6761da60cce5ad477f9b",
+      "observed": "41931190b21e4c2fde92dc3d04afb568ae79e7a1a88c6761da60cce5ad477f9b",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1901-code_only-1536.pt",
+      "expected": "103e4298d2766cc3de13c3e0905c694fde2ef3af6c68ff74ce851a8e90034f8d",
+      "observed": "103e4298d2766cc3de13c3e0905c694fde2ef3af6c68ff74ce851a8e90034f8d",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1901-code_only-2048.pt",
+      "expected": "a67d1823333af4fc2f94f1cdc96e8c4873982c701eda3ade12a22344e4a141fe",
+      "observed": "a67d1823333af4fc2f94f1cdc96e8c4873982c701eda3ade12a22344e4a141fe",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1901-code_only-512.pt",
+      "expected": "f00a76868e74f29bfc1f3496add77d1c7a3bec1af4b220d63f891f699ac2b133",
+      "observed": "f00a76868e74f29bfc1f3496add77d1c7a3bec1af4b220d63f891f699ac2b133",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1901-code_only-final.pt",
+      "expected": "a67d1823333af4fc2f94f1cdc96e8c4873982c701eda3ade12a22344e4a141fe",
+      "observed": "a67d1823333af4fc2f94f1cdc96e8c4873982c701eda3ade12a22344e4a141fe",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1901-code_only-initial.pt",
+      "expected": "0094421c97ebbf076c784d43d9852400c46e02870326e91ea486532c82180794",
+      "observed": "0094421c97ebbf076c784d43d9852400c46e02870326e91ea486532c82180794",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1901-id-1024.pt",
+      "expected": "a90e76a36654786685ebf9064b64c27a89bc0067bd92db129f3b8a0e1ee18b3f",
+      "observed": "a90e76a36654786685ebf9064b64c27a89bc0067bd92db129f3b8a0e1ee18b3f",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1901-id-1536.pt",
+      "expected": "d41cace2726f68709bf283336cfdb882f48801d03186a54f28da07cbee854127",
+      "observed": "d41cace2726f68709bf283336cfdb882f48801d03186a54f28da07cbee854127",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1901-id-2048.pt",
+      "expected": "cb63da8bb33a06d189ab07f9f284c08672ce81d756547557a56ee0b4fc373791",
+      "observed": "cb63da8bb33a06d189ab07f9f284c08672ce81d756547557a56ee0b4fc373791",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1901-id-512.pt",
+      "expected": "48c0cc236dbe48806d7e3b072c27de74d09202c8c066fac76d9dd41e56c90dc1",
+      "observed": "48c0cc236dbe48806d7e3b072c27de74d09202c8c066fac76d9dd41e56c90dc1",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1901-id-final.pt",
+      "expected": "cb63da8bb33a06d189ab07f9f284c08672ce81d756547557a56ee0b4fc373791",
+      "observed": "cb63da8bb33a06d189ab07f9f284c08672ce81d756547557a56ee0b4fc373791",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1901-id-initial.pt",
+      "expected": "f19ce3cbde4f5525c57c31e3ffdd4f5d4c3d57314d246cd4265b08769c234091",
+      "observed": "f19ce3cbde4f5525c57c31e3ffdd4f5d4c3d57314d246cd4265b08769c234091",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1901-real-1024.pt",
+      "expected": "1e6cbf7f42eff26f79326f47287b5468f450c2883c3e7aea03419c03b11f2cc8",
+      "observed": "1e6cbf7f42eff26f79326f47287b5468f450c2883c3e7aea03419c03b11f2cc8",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1901-real-1536.pt",
+      "expected": "be8052df89fa6c15242e51e5df83525356f64d50e2882ba6b2a1766616d5cfc3",
+      "observed": "be8052df89fa6c15242e51e5df83525356f64d50e2882ba6b2a1766616d5cfc3",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1901-real-2048.pt",
+      "expected": "0dc211bdbe38c40a8e79f28cd27702a004efa5152153bdde82c8af6cf08bc62f",
+      "observed": "0dc211bdbe38c40a8e79f28cd27702a004efa5152153bdde82c8af6cf08bc62f",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1901-real-512.pt",
+      "expected": "ebf0d923bf254859068333ac30966f09342d14db86a9bf555f9d359f32b58b3c",
+      "observed": "ebf0d923bf254859068333ac30966f09342d14db86a9bf555f9d359f32b58b3c",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1901-real-final.pt",
+      "expected": "0dc211bdbe38c40a8e79f28cd27702a004efa5152153bdde82c8af6cf08bc62f",
+      "observed": "0dc211bdbe38c40a8e79f28cd27702a004efa5152153bdde82c8af6cf08bc62f",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1901-real-initial.pt",
+      "expected": "0094421c97ebbf076c784d43d9852400c46e02870326e91ea486532c82180794",
+      "observed": "0094421c97ebbf076c784d43d9852400c46e02870326e91ea486532c82180794",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1901-schedule.pt",
+      "expected": "74574aa556e4051e5fe9e241012c64cab436ff7e3beb7b2cdd82fc54ed389ae2",
+      "observed": "74574aa556e4051e5fe9e241012c64cab436ff7e3beb7b2cdd82fc54ed389ae2",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1901-shuffled-1024.pt",
+      "expected": "b1019491108960d2b88bc85f57037722b0a06efb55c1be31070af34a66599fef",
+      "observed": "b1019491108960d2b88bc85f57037722b0a06efb55c1be31070af34a66599fef",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1901-shuffled-1536.pt",
+      "expected": "63d97c28cc528369d0e26a55ca0895fdb8863295c1d017b7e24c48afbf934605",
+      "observed": "63d97c28cc528369d0e26a55ca0895fdb8863295c1d017b7e24c48afbf934605",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1901-shuffled-2048.pt",
+      "expected": "154913a6441f3d2a266807fff63db53ec6d416f472284a7da4baab34528a083d",
+      "observed": "154913a6441f3d2a266807fff63db53ec6d416f472284a7da4baab34528a083d",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1901-shuffled-512.pt",
+      "expected": "6205f46256e29a769868f3d781262f9bc4abab5f477396eecc803646996454be",
+      "observed": "6205f46256e29a769868f3d781262f9bc4abab5f477396eecc803646996454be",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1901-shuffled-final.pt",
+      "expected": "154913a6441f3d2a266807fff63db53ec6d416f472284a7da4baab34528a083d",
+      "observed": "154913a6441f3d2a266807fff63db53ec6d416f472284a7da4baab34528a083d",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1901-shuffled-initial.pt",
+      "expected": "0094421c97ebbf076c784d43d9852400c46e02870326e91ea486532c82180794",
+      "observed": "0094421c97ebbf076c784d43d9852400c46e02870326e91ea486532c82180794",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1901-supervision.pt",
+      "expected": "17bb9a7b5ef138569f4be13c3752ff6bd64f9d4468c565632f2b7556ab3c9080",
+      "observed": "17bb9a7b5ef138569f4be13c3752ff6bd64f9d4468c565632f2b7556ab3c9080",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1907-TRAINING.json",
+      "expected": "f892271dbee020f4a28b20a09077218108934e103382da1e76bfc03cdc2f6c05",
+      "observed": "f892271dbee020f4a28b20a09077218108934e103382da1e76bfc03cdc2f6c05",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1907-code_only-1024.pt",
+      "expected": "8beaa15668ad30f2238e4e3591dac5234b1cebf71d0998f2d815d9de5cf6324b",
+      "observed": "8beaa15668ad30f2238e4e3591dac5234b1cebf71d0998f2d815d9de5cf6324b",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1907-code_only-1536.pt",
+      "expected": "ebbe808cfd5f41eb7e7b08a7ae5ccd08d54e2f8f3030f82ce1f4a42e0245b6b4",
+      "observed": "ebbe808cfd5f41eb7e7b08a7ae5ccd08d54e2f8f3030f82ce1f4a42e0245b6b4",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1907-code_only-2048.pt",
+      "expected": "86c3eef046b5f1298d5349389bf18296e42892e42bd9212e60d0d23e11a91e49",
+      "observed": "86c3eef046b5f1298d5349389bf18296e42892e42bd9212e60d0d23e11a91e49",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1907-code_only-512.pt",
+      "expected": "e2142a7be1775b421b9120499605f02cead2e934191f963da6315f2a1fb8aac8",
+      "observed": "e2142a7be1775b421b9120499605f02cead2e934191f963da6315f2a1fb8aac8",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1907-code_only-final.pt",
+      "expected": "86c3eef046b5f1298d5349389bf18296e42892e42bd9212e60d0d23e11a91e49",
+      "observed": "86c3eef046b5f1298d5349389bf18296e42892e42bd9212e60d0d23e11a91e49",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1907-code_only-initial.pt",
+      "expected": "e92bbde6a7023433ae5bf413a8a0d4b54ce4894727dc8ee9a1a1c6707f14e023",
+      "observed": "e92bbde6a7023433ae5bf413a8a0d4b54ce4894727dc8ee9a1a1c6707f14e023",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1907-id-1024.pt",
+      "expected": "10d7c7d3b33b5b4ffd177e987eb89c33d574bf57572568f288568aeb615dafba",
+      "observed": "10d7c7d3b33b5b4ffd177e987eb89c33d574bf57572568f288568aeb615dafba",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1907-id-1536.pt",
+      "expected": "fd9af4e5e2339daa4a2bd50b7637c258089832903e50553141a519c70e4c191e",
+      "observed": "fd9af4e5e2339daa4a2bd50b7637c258089832903e50553141a519c70e4c191e",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1907-id-2048.pt",
+      "expected": "15d400ae9ed71ecdc45b0ce417231f5af60cfaacfe9b835e98b95fe6853ebecb",
+      "observed": "15d400ae9ed71ecdc45b0ce417231f5af60cfaacfe9b835e98b95fe6853ebecb",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1907-id-512.pt",
+      "expected": "3e5e3148f2334621e1394da48ae0a8a56c791f35336d68712f18ae5f8c187dd6",
+      "observed": "3e5e3148f2334621e1394da48ae0a8a56c791f35336d68712f18ae5f8c187dd6",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1907-id-final.pt",
+      "expected": "15d400ae9ed71ecdc45b0ce417231f5af60cfaacfe9b835e98b95fe6853ebecb",
+      "observed": "15d400ae9ed71ecdc45b0ce417231f5af60cfaacfe9b835e98b95fe6853ebecb",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1907-id-initial.pt",
+      "expected": "8a9a83bcb7a246b511c4194d2131070b684181687348c14b8ef2532a134c6ee7",
+      "observed": "8a9a83bcb7a246b511c4194d2131070b684181687348c14b8ef2532a134c6ee7",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1907-real-1024.pt",
+      "expected": "c4e51aab822319a94efe5a378681ff6aacb7ac473f7657b247fbdb4a7937aad7",
+      "observed": "c4e51aab822319a94efe5a378681ff6aacb7ac473f7657b247fbdb4a7937aad7",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1907-real-1536.pt",
+      "expected": "fc90bbefce4b0f428213b1ca28c6d3a621b4cfb78b700a4e9d277f6b564840d9",
+      "observed": "fc90bbefce4b0f428213b1ca28c6d3a621b4cfb78b700a4e9d277f6b564840d9",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1907-real-2048.pt",
+      "expected": "28df1c710e818aeb2ca5b7a11e50667e29c61613172d3603dc14fb91addf71dc",
+      "observed": "28df1c710e818aeb2ca5b7a11e50667e29c61613172d3603dc14fb91addf71dc",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1907-real-512.pt",
+      "expected": "f5b63b70e172641120a1844dabb69c4af7377890c0dd842444c0003d14e643d7",
+      "observed": "f5b63b70e172641120a1844dabb69c4af7377890c0dd842444c0003d14e643d7",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1907-real-final.pt",
+      "expected": "28df1c710e818aeb2ca5b7a11e50667e29c61613172d3603dc14fb91addf71dc",
+      "observed": "28df1c710e818aeb2ca5b7a11e50667e29c61613172d3603dc14fb91addf71dc",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1907-real-initial.pt",
+      "expected": "e92bbde6a7023433ae5bf413a8a0d4b54ce4894727dc8ee9a1a1c6707f14e023",
+      "observed": "e92bbde6a7023433ae5bf413a8a0d4b54ce4894727dc8ee9a1a1c6707f14e023",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1907-schedule.pt",
+      "expected": "c875e920d264ef86c93ec406ac66ee0ce3b8f8631238870adbb3753926a186cc",
+      "observed": "c875e920d264ef86c93ec406ac66ee0ce3b8f8631238870adbb3753926a186cc",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1907-shuffled-1024.pt",
+      "expected": "0a0c3c0f6584b6d9470cbf7aad21ff7c36cd76e33ffd763dceb785edc057f83b",
+      "observed": "0a0c3c0f6584b6d9470cbf7aad21ff7c36cd76e33ffd763dceb785edc057f83b",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1907-shuffled-1536.pt",
+      "expected": "5f5ffe75c7c540d73330f617f4800673381c664e059e2bdb5d4439ecbc2c6d4a",
+      "observed": "5f5ffe75c7c540d73330f617f4800673381c664e059e2bdb5d4439ecbc2c6d4a",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1907-shuffled-2048.pt",
+      "expected": "eef926c17256fdeea474d0e72af0e119c43f82cad3425b09f7ab4e5f07d6179c",
+      "observed": "eef926c17256fdeea474d0e72af0e119c43f82cad3425b09f7ab4e5f07d6179c",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1907-shuffled-512.pt",
+      "expected": "2965284f9e5fd85d03a96a1c93f303f547bb74c3a60cdd576187e0b520b4ec83",
+      "observed": "2965284f9e5fd85d03a96a1c93f303f547bb74c3a60cdd576187e0b520b4ec83",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1907-shuffled-final.pt",
+      "expected": "eef926c17256fdeea474d0e72af0e119c43f82cad3425b09f7ab4e5f07d6179c",
+      "observed": "eef926c17256fdeea474d0e72af0e119c43f82cad3425b09f7ab4e5f07d6179c",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1907-shuffled-initial.pt",
+      "expected": "e92bbde6a7023433ae5bf413a8a0d4b54ce4894727dc8ee9a1a1c6707f14e023",
+      "observed": "e92bbde6a7023433ae5bf413a8a0d4b54ce4894727dc8ee9a1a1c6707f14e023",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1907-supervision.pt",
+      "expected": "168bcba195de4b90041562d64f97c285bd44df9aa861e3fb42d224a36a2fadc8",
+      "observed": "168bcba195de4b90041562d64f97c285bd44df9aa861e3fb42d224a36a2fadc8",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1913-TRAINING.json",
+      "expected": "d814982aba80bbef4108a64401faf0a974b25dd36c26609a1d0e736c2d01bab1",
+      "observed": "d814982aba80bbef4108a64401faf0a974b25dd36c26609a1d0e736c2d01bab1",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1913-code_only-1024.pt",
+      "expected": "e07699d3f6762b949f6ba9ffe21c77ff9045fd54abf3f8b799b5599b15b5eb4e",
+      "observed": "e07699d3f6762b949f6ba9ffe21c77ff9045fd54abf3f8b799b5599b15b5eb4e",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1913-code_only-1536.pt",
+      "expected": "a16ae4525d99f75758ccbb7f63d3bc68899cfaf70b59fea26f690cb385c46952",
+      "observed": "a16ae4525d99f75758ccbb7f63d3bc68899cfaf70b59fea26f690cb385c46952",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1913-code_only-2048.pt",
+      "expected": "9f8c7ba56ac7c0d3df589a6a0a58914a3e5307ae6d51bf73468ceafe86cee580",
+      "observed": "9f8c7ba56ac7c0d3df589a6a0a58914a3e5307ae6d51bf73468ceafe86cee580",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1913-code_only-512.pt",
+      "expected": "d33b11ee3754b8fd10462f388d45af2f01db40bb385bdb02e2e24a926b020ffb",
+      "observed": "d33b11ee3754b8fd10462f388d45af2f01db40bb385bdb02e2e24a926b020ffb",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1913-code_only-final.pt",
+      "expected": "9f8c7ba56ac7c0d3df589a6a0a58914a3e5307ae6d51bf73468ceafe86cee580",
+      "observed": "9f8c7ba56ac7c0d3df589a6a0a58914a3e5307ae6d51bf73468ceafe86cee580",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1913-code_only-initial.pt",
+      "expected": "91ddbb74ab07b471a9b7ff30cec074de54a28dd04546faa6c6d23b56f0b1516b",
+      "observed": "91ddbb74ab07b471a9b7ff30cec074de54a28dd04546faa6c6d23b56f0b1516b",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1913-id-1024.pt",
+      "expected": "678481c4c5e1a6f2e54d37f878f3bb110d68cfa82d17fb143e3ba49b85d67c22",
+      "observed": "678481c4c5e1a6f2e54d37f878f3bb110d68cfa82d17fb143e3ba49b85d67c22",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1913-id-1536.pt",
+      "expected": "7f2f452ba90301ef738a49892d52386bdf11dca9af303bb1df2d4a1b5fef6658",
+      "observed": "7f2f452ba90301ef738a49892d52386bdf11dca9af303bb1df2d4a1b5fef6658",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1913-id-2048.pt",
+      "expected": "4df833a0cde814af973c192959cf6a07a3ebae71acff8529c0b6295a231108dc",
+      "observed": "4df833a0cde814af973c192959cf6a07a3ebae71acff8529c0b6295a231108dc",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1913-id-512.pt",
+      "expected": "2d09f53ae906afa699be23c73b8e33a4e1ff0010624b98b011a81cc2cdc09f1c",
+      "observed": "2d09f53ae906afa699be23c73b8e33a4e1ff0010624b98b011a81cc2cdc09f1c",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1913-id-final.pt",
+      "expected": "4df833a0cde814af973c192959cf6a07a3ebae71acff8529c0b6295a231108dc",
+      "observed": "4df833a0cde814af973c192959cf6a07a3ebae71acff8529c0b6295a231108dc",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1913-id-initial.pt",
+      "expected": "4a98c4e8013adc6769ae1b7c62ab363dcdf8cc5f38f27f6c342d8b23c761cbdf",
+      "observed": "4a98c4e8013adc6769ae1b7c62ab363dcdf8cc5f38f27f6c342d8b23c761cbdf",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1913-real-1024.pt",
+      "expected": "20dd744636d27a51ade5f6f22ea6b79079ef7bb05b99be320370e4ffd4c5c0e1",
+      "observed": "20dd744636d27a51ade5f6f22ea6b79079ef7bb05b99be320370e4ffd4c5c0e1",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1913-real-1536.pt",
+      "expected": "5a84eecb5b704f2c3a66ee37eaf9a063b52c8ec2c356ad7a8f23154d2d5395e3",
+      "observed": "5a84eecb5b704f2c3a66ee37eaf9a063b52c8ec2c356ad7a8f23154d2d5395e3",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1913-real-2048.pt",
+      "expected": "5416e12fe519f5f1faa5a374d976eba3b6feeb6022eb657995a6ac034878c958",
+      "observed": "5416e12fe519f5f1faa5a374d976eba3b6feeb6022eb657995a6ac034878c958",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1913-real-512.pt",
+      "expected": "0c5f0dc1485b12b2502e40c068153423fcd5a283feb8f9765cb14f2079dc20ea",
+      "observed": "0c5f0dc1485b12b2502e40c068153423fcd5a283feb8f9765cb14f2079dc20ea",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1913-real-final.pt",
+      "expected": "5416e12fe519f5f1faa5a374d976eba3b6feeb6022eb657995a6ac034878c958",
+      "observed": "5416e12fe519f5f1faa5a374d976eba3b6feeb6022eb657995a6ac034878c958",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1913-real-initial.pt",
+      "expected": "91ddbb74ab07b471a9b7ff30cec074de54a28dd04546faa6c6d23b56f0b1516b",
+      "observed": "91ddbb74ab07b471a9b7ff30cec074de54a28dd04546faa6c6d23b56f0b1516b",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1913-schedule.pt",
+      "expected": "0db206e9f8501816f20b0a1b607785d76ffca3cd3eb75006768759993cd2d194",
+      "observed": "0db206e9f8501816f20b0a1b607785d76ffca3cd3eb75006768759993cd2d194",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1913-shuffled-1024.pt",
+      "expected": "47cb5abda0e2a13b3d4bbee9947f1d2bf3c30b0e2dc5189be080d71a1f0a07f5",
+      "observed": "47cb5abda0e2a13b3d4bbee9947f1d2bf3c30b0e2dc5189be080d71a1f0a07f5",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1913-shuffled-1536.pt",
+      "expected": "6fb0c11fa029c993552acc6087ec32bf53448bd86a33f8dd46ba047c850ae405",
+      "observed": "6fb0c11fa029c993552acc6087ec32bf53448bd86a33f8dd46ba047c850ae405",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1913-shuffled-2048.pt",
+      "expected": "5938a3e66da39bb8466a0b18485b9adb250496d2968ba961a71624107ddc87d3",
+      "observed": "5938a3e66da39bb8466a0b18485b9adb250496d2968ba961a71624107ddc87d3",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1913-shuffled-512.pt",
+      "expected": "7bf38bd25b57a65c257f512520040dff8b2f64bdc3f3d621e8689aacf669c2ad",
+      "observed": "7bf38bd25b57a65c257f512520040dff8b2f64bdc3f3d621e8689aacf669c2ad",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1913-shuffled-final.pt",
+      "expected": "5938a3e66da39bb8466a0b18485b9adb250496d2968ba961a71624107ddc87d3",
+      "observed": "5938a3e66da39bb8466a0b18485b9adb250496d2968ba961a71624107ddc87d3",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1913-shuffled-initial.pt",
+      "expected": "91ddbb74ab07b471a9b7ff30cec074de54a28dd04546faa6c6d23b56f0b1516b",
+      "observed": "91ddbb74ab07b471a9b7ff30cec074de54a28dd04546faa6c6d23b56f0b1516b",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/1913-supervision.pt",
+      "expected": "68d281bef08081d86ad0567cd9289e84a52ff8f924cd8f19e93cfdfd34d775dc",
+      "observed": "68d281bef08081d86ad0567cd9289e84a52ff8f924cd8f19e93cfdfd34d775dc",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/ALL_WEIGHTS_FROZEN.json",
+      "expected": "4dd1421c2bab5d63e49cd78f35ca53d7637d433901c5ed0c6a8cbbae0c2c24ee",
+      "observed": "4dd1421c2bab5d63e49cd78f35ca53d7637d433901c5ed0c6a8cbbae0c2c24ee",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/FREE_TABLE.json",
+      "expected": "33f8a0cbaa01e4b682f1e7630c3436bee95560250498a0280a32281170e1e4f8",
+      "observed": "33f8a0cbaa01e4b682f1e7630c3436bee95560250498a0280a32281170e1e4f8",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/HOLD_COMMITMENT.json",
+      "expected": "6a49e67bbd6e4d6c637406d16207d65f680aa90c5c9a386a174acaf682dba2b3",
+      "observed": "6a49e67bbd6e4d6c637406d16207d65f680aa90c5c9a386a174acaf682dba2b3",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/HOLD_FORECASTS.pt",
+      "expected": "e8e56589567ce9b9f1c243c2d05168657dbacb0918a29c66fa58896c56e975d0",
+      "observed": "e8e56589567ce9b9f1c243c2d05168657dbacb0918a29c66fa58896c56e975d0",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/HOLD_PUBLIC.pt",
+      "expected": "4469e6b4fb590bf017561b6d4c3d0081710da786ff912f695cbb0baed7f4829e",
+      "observed": "4469e6b4fb590bf017561b6d4c3d0081710da786ff912f695cbb0baed7f4829e",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/HOLD_TARGETS.pt",
+      "expected": "dd92eeee223aca326624726ddcf28d004fe1e4ebb830f0f07b0bdd88bdb24354",
+      "observed": "dd92eeee223aca326624726ddcf28d004fe1e4ebb830f0f07b0bdd88bdb24354",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/RESULTS.json",
+      "expected": "ff58783e876531d7e4c985a0b27c698bacc6a721e3e2be5a54ab787a00acbf51",
+      "observed": "ff58783e876531d7e4c985a0b27c698bacc6a721e3e2be5a54ab787a00acbf51",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/SOURCE_FREEZE.json",
+      "expected": "150dbdd3ea23a334246bd77e475273ccc40fdf3a74eb7b135a542bc73777551f",
+      "observed": "150dbdd3ea23a334246bd77e475273ccc40fdf3a74eb7b135a542bc73777551f",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/TARGET_SCALE.json",
+      "expected": "7433f48467c2190fcd2bc3b452d3b6a06466ef1945b5069c03cd3edbf7765361",
+      "observed": "7433f48467c2190fcd2bc3b452d3b6a06466ef1945b5069c03cd3edbf7765361",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/TRAIN_COMMITMENT.json",
+      "expected": "9f7e4add08766a23fad01c2f00d2f5d9e473a6311403a560e8171f79a78e77a8",
+      "observed": "9f7e4add08766a23fad01c2f00d2f5d9e473a6311403a560e8171f79a78e77a8",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/TRAIN_CORPUS.pt",
+      "expected": "4aa956afb9033e2ff8e86166d816405564ef3a69f3732b71b1d3530e763a8079",
+      "observed": "4aa956afb9033e2ff8e86166d816405564ef3a69f3732b71b1d3530e763a8079",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/TRAIN_FORECASTS.pt",
+      "expected": "7f91b53a9e81aec7822442fef972f99100e88b6ceb572556424ff257cb368367",
+      "observed": "7f91b53a9e81aec7822442fef972f99100e88b6ceb572556424ff257cb368367",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/free-final.pt",
+      "expected": "1a53d0b2f518976768e8b5c0506f4ffe67f89cc923191fde28d8bbdd9012c400",
+      "observed": "1a53d0b2f518976768e8b5c0506f4ffe67f89cc923191fde28d8bbdd9012c400",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/free-forecast.pt",
+      "expected": "f5c7e27b15753e63c84b4a4207b651895dfa727057c444885cd46f4478d42986",
+      "observed": "f5c7e27b15753e63c84b4a4207b651895dfa727057c444885cd46f4478d42986",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/free-initial.pt",
+      "expected": "a76286b551774e08b65065a651769cf6e421f971c702012e0426e4ff879f0a85",
+      "observed": "a76286b551774e08b65065a651769cf6e421f971c702012e0426e4ff879f0a85",
+      "matches": true
+    },
+    {
+      "group": "files",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/artifacts/progress.jsonl",
+      "expected": "104452f16d263339423d8f6b0811f3814d0dbd40ab0ec419397f3c5b5d79440f",
+      "observed": "104452f16d263339423d8f6b0811f3814d0dbd40ab0ec419397f3c5b5d79440f",
+      "matches": true
+    },
+    {
+      "group": "source",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/PROTOCOL.md",
+      "expected": "0676f8e7882a4d7a0b971307c7d868b550466cbc1bd5d42249520516b31ad14a",
+      "observed": "0676f8e7882a4d7a0b971307c7d868b550466cbc1bd5d42249520516b31ad14a",
+      "matches": true
+    },
+    {
+      "group": "source",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/core.py",
+      "expected": "c73dfce76debecff474439ca4dd105670c9557fefabb607237e6200ca62d5a02",
+      "observed": "c73dfce76debecff474439ca4dd105670c9557fefabb607237e6200ca62d5a02",
+      "matches": true
+    },
+    {
+      "group": "source",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/run.py",
+      "expected": "a231f8642be958224aef5413d6aa8af37b7e268364f85ab5f351e8810701c73f",
+      "observed": "a231f8642be958224aef5413d6aa8af37b7e268364f85ab5f351e8810701c73f",
+      "matches": true
+    },
+    {
+      "group": "source",
+      "path": "/home/raed/AgenticShared/arc-mnc-lab-20260910/contrast-credit-qualification-v3-20260917/test_core.py",
+      "expected": "754219f25d07b903436d9f675cec59404c09e0346eb2f1196af84129af6a1ea6",
+      "observed": "754219f25d07b903436d9f675cec59404c09e0346eb2f1196af84129af6a1ea6",
+      "matches": true
+    }
+  ],
+  "allMatch": true,
+  "trainingOrModelCalls": 0
+}

@@ -1,0 +1,114 @@
+{
+  "evaluatorId": "sample-consequences-v1:0a0140b3b87b43364dc840d95d3bd55e2ddaf4c99d68b725832568716944c229:ebbdf190674414c29ec2fc7632e8f72b6e3c305c5abd20b322cc8a077304f732",
+  "workflowHash": "80d6aed53579b362e695d4d70345d4b2b9151b85b33bc870df2f957237961ecc",
+  "registryHash": "bb3f73d712e174d3084248c8d199a620b7eeb2a7b2655d64b6286ab3af536d0e",
+  "suiteHash": "0a0140b3b87b43364dc840d95d3bd55e2ddaf4c99d68b725832568716944c229",
+  "split": "development",
+  "qualificationLevel": "task-outcome",
+  "passed": false,
+  "metrics": {
+    "passedCount": 0,
+    "caseCount": 1,
+    "successFraction": 0,
+    "falseSuccessCount": 1,
+    "totalSteps": 2,
+    "totalCost": 0,
+    "elapsedMs": 20,
+    "missingCalls": 5,
+    "forbiddenCalls": 0,
+    "duplicateCalls": 0,
+    "syntheticCost": 0
+  },
+  "envelope": [
+    "Source-informed fixed synthetic scenarios; not a population sample.",
+    "Exact manifest JSON plus independent call accounting; no expected node IDs.",
+    "Instrument observations and evaluator truth are separate; no network or paid execution."
+  ],
+  "cases": [
+    {
+      "id": "dev-basic",
+      "passed": false,
+      "status": "succeeded",
+      "falseSuccess": true,
+      "checks": [],
+      "artifacts": [
+        {
+          "name": "manifest.json",
+          "passed": true,
+          "sha256": "ff3d53c751d4db3bcfbf6bc9c54d91433ee7038c00221573db56a6ff7ddb6f9c"
+        }
+      ],
+      "steps": 2,
+      "cost": 0,
+      "elapsedMs": 9,
+      "runId": "b4670876-bcdb-4f20-a1c4-eaf7a867c512",
+      "workspace": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/integration-rTG6v9/forged-manifest/case-Y9r9L7",
+      "exception": null,
+      "runError": null,
+      "failedNodes": [],
+      "eventCount": 7,
+      "diagnostic": {
+        "input": {
+          "samples": [
+            {
+              "id": "dev-a"
+            },
+            {
+              "id": "dev-b"
+            },
+            {
+              "id": "dev-c"
+            }
+          ]
+        },
+        "expected": {
+          "statuses": [
+            "succeeded"
+          ],
+          "checks": [],
+          "artifacts": [
+            {
+              "name": "manifest.json",
+              "json": {
+                "samples": [
+                  {
+                    "sampleId": "dev-a",
+                    "disposition": "clear"
+                  },
+                  {
+                    "sampleId": "dev-b",
+                    "disposition": "confirmed"
+                  },
+                  {
+                    "sampleId": "dev-c",
+                    "disposition": "not_reproduced"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "nativePassed": true,
+      "instrumentAudit": {
+        "passed": false,
+        "problems": [
+          "missing_instrument_calls",
+          "synthetic_work_budget_mismatch"
+        ],
+        "missingCalls": 5,
+        "forbiddenCalls": 0,
+        "duplicateCalls": 0,
+        "wrongOrder": 0,
+        "invalidObservations": 0,
+        "screenCalls": 0,
+        "reproduceCalls": 0,
+        "syntheticCost": 0,
+        "expectedSyntheticCost": 23
+      },
+      "instrumentLog": []
+    }
+  ],
+  "qualification": "Fixed source-informed synthetic scenarios. Provider-hidden split only when withheld from synthesis; no population, autonomous discovery, production, or independent instrument calibration claim.",
+  "nativeEvaluatorId": "suite:public-forged-manifest-control:0a0140b3b87b43364dc840d95d3bd55e2ddaf4c99d68b725832568716944c229"
+}

@@ -1,0 +1,731 @@
+{
+  "acceptance": [
+    {
+      "left": {
+        "$ref": "nodes.checkManifest.passed"
+      },
+      "op": "eq",
+      "right": true
+    },
+    {
+      "left": {
+        "$ref": "nodes.publishManifest.name"
+      },
+      "op": "eq",
+      "right": "manifest.json"
+    },
+    {
+      "op": "exists",
+      "value": {
+        "$ref": "nodes.publishManifest.sha256"
+      }
+    },
+    {
+      "left": {
+        "$ref": "nodes.publishManifest.bytes"
+      },
+      "op": "gt",
+      "right": 0
+    }
+  ],
+  "budget": {
+    "maxConcurrency": 1,
+    "maxCost": 0,
+    "maxDurationMs": 30000,
+    "maxSteps": 160
+  },
+  "domain": "general",
+  "envelope": {
+    "assumptions": [
+      "Inputs satisfy the supplied schema, contain distinct opaque sample IDs, and may contain zero samples.",
+      "The supplied native runtime and catalog implement the documented reference, map, conditional, handled-error, schema-validation and artifact semantics.",
+      "Instrument observations are accepted only through their declared runtime output schemas. A continued instrument failure produces the documented ok:false error output."
+    ],
+    "risks": [
+      "A process interruption, exhausted run deadline, or failure of a local data/artifact capability can prevent publication; this candidate has not been executed.",
+      "The packet's generic diagnostic trialPolicy excludes lab.screen, lab.reproduce and data.one and has a shorter duration ceiling. Execution requires the host's appropriately authorized task-specific path; catalog inclusion alone does not amend that policy."
+    ],
+    "successCriteria": [
+      "Each input sample receives one screening attempt without retries, including samples whose instruments fail.",
+      "Exactly those samples with an identity-matched, ok:true, boolean suspicious:true screen receive one reproduction attempt without retries.",
+      "Confirmation requires identity-matched, ok:true, independent:true reproduction with a nonempty string evidenceId and boolean reproduced:true.",
+      "Completed negative reproduction means not_reproduced, usable negative screening means clear, incomplete returned evidence means inconclusive, and a thrown instrument failure means error.",
+      "The artifact contains only the required samples array, with one sampleId/disposition row per input sample in input order, and is published after all sample processing finishes."
+    ],
+    "unsupported": [
+      "Network access, external actions, human approvals, instrument retries, and classification inferred from sample IDs or claim text.",
+      "A claim of independent correctness or task completion before host execution and independent artifact/attempt evaluation."
+    ]
+  },
+  "goal": "Attempt screening exactly once for every input sample, attempt independent reproduction exactly once only after that sample's usable suspicious screening observation, and publish one correctly classified row per sample in input order in manifest.json after processing the entire batch.",
+  "id": "ObservedBatchManifest",
+  "inputSchema": {
+    "additionalProperties": false,
+    "properties": {
+      "samples": {
+        "items": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "maxLength": 64,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "type": "object"
+        },
+        "maxItems": 6,
+        "type": "array",
+        "uniqueItems": true
+      }
+    },
+    "required": [
+      "samples"
+    ],
+    "type": "object"
+  },
+  "nodes": [
+    {
+      "body": {
+        "acceptance": [
+          {
+            "left": {
+              "$ref": "nodes.chooseRow.value.sampleId"
+            },
+            "op": "eq",
+            "right": {
+              "$ref": "item.id"
+            }
+          },
+          {
+            "left": {
+              "$ref": "nodes.chooseRow.value.disposition"
+            },
+            "op": "in",
+            "right": [
+              "clear",
+              "confirmed",
+              "not_reproduced",
+              "inconclusive",
+              "error"
+            ]
+          }
+        ],
+        "nodes": [
+          {
+            "args": {
+              "sampleId": {
+                "$ref": "item.id"
+              }
+            },
+            "description": "Spend the single cheap screening attempt on this exact sample; retain a handled failure for reporting.",
+            "id": "screen",
+            "kind": "task",
+            "needs": [],
+            "onError": "continue",
+            "retry": {
+              "maxAttempts": 1
+            },
+            "timeoutMs": 5000,
+            "tool": "lab.screen"
+          },
+          {
+            "args": {
+              "schema": {
+                "additionalProperties": true,
+                "properties": {
+                  "ok": {
+                    "const": true
+                  },
+                  "sampleId": {
+                    "const": {
+                      "$ref": "item.id"
+                    },
+                    "type": "string"
+                  },
+                  "suspicious": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "ok",
+                  "sampleId",
+                  "suspicious"
+                ],
+                "type": "object"
+              },
+              "value": {
+                "$ref": "nodes.screen",
+                "default": null
+              }
+            },
+            "description": "Check actual screening evidence for true ok, exact requested identity, and a real boolean suspicious field; ignore descriptive claims.",
+            "id": "checkScreen",
+            "join": "all_resolved",
+            "kind": "task",
+            "needs": [
+              "screen"
+            ],
+            "retry": {
+              "maxAttempts": 1
+            },
+            "timeoutMs": 1000,
+            "tool": "core.validate"
+          },
+          {
+            "args": {
+              "sampleId": {
+                "$ref": "item.id"
+              }
+            },
+            "description": "Spend exactly one reproduction attempt only after this sample's completed screening passes validation and explicitly reports suspicious:true.",
+            "id": "reproduce",
+            "kind": "task",
+            "needs": [
+              "checkScreen"
+            ],
+            "onError": "continue",
+            "retry": {
+              "maxAttempts": 1
+            },
+            "timeoutMs": 5000,
+            "tool": "lab.reproduce",
+            "when": {
+              "conditions": [
+                {
+                  "left": {
+                    "$ref": "nodes.checkScreen.valid"
+                  },
+                  "op": "eq",
+                  "right": true
+                },
+                {
+                  "left": {
+                    "$ref": "nodes.screen.suspicious",
+                    "default": null
+                  },
+                  "op": "eq",
+                  "right": true
+                }
+              ],
+              "op": "all"
+            }
+          },
+          {
+            "args": {
+              "schema": {
+                "additionalProperties": true,
+                "properties": {
+                  "evidenceId": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "independent": {
+                    "const": true
+                  },
+                  "ok": {
+                    "const": true
+                  },
+                  "reproduced": {
+                    "type": "boolean"
+                  },
+                  "sampleId": {
+                    "const": {
+                      "$ref": "item.id"
+                    },
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "ok",
+                  "sampleId",
+                  "independent",
+                  "evidenceId",
+                  "reproduced"
+                ],
+                "type": "object"
+              },
+              "value": {
+                "$ref": "nodes.reproduce",
+                "default": null
+              }
+            },
+            "description": "Check the completed reproduction for exact identity, positive independence, nonempty evidence identity and an actual boolean result; skipped or incomplete evidence validates false.",
+            "id": "checkReproduction",
+            "join": "all_resolved",
+            "kind": "task",
+            "needs": [
+              "reproduce"
+            ],
+            "retry": {
+              "maxAttempts": 1
+            },
+            "timeoutMs": 1000,
+            "tool": "core.validate"
+          },
+          {
+            "args": {
+              "disposition": "error",
+              "sampleId": {
+                "$ref": "item.id"
+              }
+            },
+            "description": "Report a handled screening or reproduction failure as error for this sample while allowing other samples to proceed.",
+            "id": "errorRow",
+            "kind": "task",
+            "needs": [
+              "checkReproduction"
+            ],
+            "retry": {
+              "maxAttempts": 1
+            },
+            "timeoutMs": 1000,
+            "tool": "core.identity",
+            "when": {
+              "conditions": [
+                {
+                  "left": {
+                    "$ref": "nodes.screen.ok",
+                    "default": null
+                  },
+                  "op": "eq",
+                  "right": false
+                },
+                {
+                  "left": {
+                    "$ref": "nodes.reproduce.ok",
+                    "default": null
+                  },
+                  "op": "eq",
+                  "right": false
+                }
+              ],
+              "op": "any"
+            }
+          },
+          {
+            "args": {
+              "disposition": "clear",
+              "sampleId": {
+                "$ref": "item.id"
+              }
+            },
+            "description": "Report clear only for a usable screening observation with boolean suspicious:false.",
+            "id": "clearRow",
+            "kind": "task",
+            "needs": [
+              "checkReproduction"
+            ],
+            "retry": {
+              "maxAttempts": 1
+            },
+            "timeoutMs": 1000,
+            "tool": "core.identity",
+            "when": {
+              "conditions": [
+                {
+                  "left": {
+                    "$ref": "nodes.checkScreen.valid"
+                  },
+                  "op": "eq",
+                  "right": true
+                },
+                {
+                  "left": {
+                    "$ref": "nodes.screen.suspicious",
+                    "default": null
+                  },
+                  "op": "eq",
+                  "right": false
+                }
+              ],
+              "op": "all"
+            }
+          },
+          {
+            "args": {
+              "disposition": "confirmed",
+              "sampleId": {
+                "$ref": "item.id"
+              }
+            },
+            "description": "Report confirmed only after this sample's independent reproduction has returned complete, validated positive evidence.",
+            "id": "confirmedRow",
+            "kind": "task",
+            "needs": [
+              "checkReproduction"
+            ],
+            "retry": {
+              "maxAttempts": 1
+            },
+            "timeoutMs": 1000,
+            "tool": "core.identity",
+            "when": {
+              "conditions": [
+                {
+                  "left": {
+                    "$ref": "nodes.checkReproduction.valid"
+                  },
+                  "op": "eq",
+                  "right": true
+                },
+                {
+                  "left": {
+                    "$ref": "nodes.reproduce.reproduced",
+                    "default": null
+                  },
+                  "op": "eq",
+                  "right": true
+                }
+              ],
+              "op": "all"
+            }
+          },
+          {
+            "args": {
+              "disposition": "not_reproduced",
+              "sampleId": {
+                "$ref": "item.id"
+              }
+            },
+            "description": "Report not_reproduced only when otherwise complete independent evidence carries boolean reproduced:false.",
+            "id": "notReproducedRow",
+            "kind": "task",
+            "needs": [
+              "checkReproduction"
+            ],
+            "retry": {
+              "maxAttempts": 1
+            },
+            "timeoutMs": 1000,
+            "tool": "core.identity",
+            "when": {
+              "conditions": [
+                {
+                  "left": {
+                    "$ref": "nodes.checkReproduction.valid"
+                  },
+                  "op": "eq",
+                  "right": true
+                },
+                {
+                  "left": {
+                    "$ref": "nodes.reproduce.reproduced",
+                    "default": null
+                  },
+                  "op": "eq",
+                  "right": false
+                }
+              ],
+              "op": "all"
+            }
+          },
+          {
+            "args": {
+              "disposition": "inconclusive",
+              "sampleId": {
+                "$ref": "item.id"
+              }
+            },
+            "description": "Report an unusable returned screen or incomplete returned reproduction as inconclusive, excluding handled instrument failures.",
+            "id": "inconclusiveRow",
+            "kind": "task",
+            "needs": [
+              "checkReproduction"
+            ],
+            "retry": {
+              "maxAttempts": 1
+            },
+            "timeoutMs": 1000,
+            "tool": "core.identity",
+            "when": {
+              "conditions": [
+                {
+                  "left": {
+                    "$ref": "nodes.screen.ok",
+                    "default": null
+                  },
+                  "op": "ne",
+                  "right": false
+                },
+                {
+                  "left": {
+                    "$ref": "nodes.reproduce.ok",
+                    "default": null
+                  },
+                  "op": "ne",
+                  "right": false
+                },
+                {
+                  "conditions": [
+                    {
+                      "left": {
+                        "$ref": "nodes.checkScreen.valid"
+                      },
+                      "op": "eq",
+                      "right": false
+                    },
+                    {
+                      "conditions": [
+                        {
+                          "left": {
+                            "$ref": "nodes.checkScreen.valid"
+                          },
+                          "op": "eq",
+                          "right": true
+                        },
+                        {
+                          "left": {
+                            "$ref": "nodes.screen.suspicious",
+                            "default": null
+                          },
+                          "op": "eq",
+                          "right": true
+                        },
+                        {
+                          "left": {
+                            "$ref": "nodes.checkReproduction.valid"
+                          },
+                          "op": "eq",
+                          "right": false
+                        }
+                      ],
+                      "op": "all"
+                    }
+                  ],
+                  "op": "any"
+                }
+              ],
+              "op": "all"
+            }
+          },
+          {
+            "args": {
+              "values": [
+                {
+                  "$ref": "nodes.errorRow",
+                  "default": null
+                },
+                {
+                  "$ref": "nodes.clearRow",
+                  "default": null
+                },
+                {
+                  "$ref": "nodes.confirmedRow",
+                  "default": null
+                },
+                {
+                  "$ref": "nodes.notReproducedRow",
+                  "default": null
+                },
+                {
+                  "$ref": "nodes.inconclusiveRow",
+                  "default": null
+                }
+              ]
+            },
+            "description": "Require exactly one completed disposition alternative, treating skipped alternatives as null and rejecting zero or multiple rows.",
+            "id": "chooseRow",
+            "join": "all_resolved",
+            "kind": "task",
+            "needs": [
+              "errorRow",
+              "clearRow",
+              "confirmedRow",
+              "notReproducedRow",
+              "inconclusiveRow"
+            ],
+            "retry": {
+              "maxAttempts": 1
+            },
+            "timeoutMs": 1000,
+            "tool": "data.one"
+          }
+        ]
+      },
+      "description": "Process every input sample through its own observation and recovery scope, preserving the input sequence in the returned items.",
+      "id": "processBatch",
+      "items": {
+        "$ref": "input.samples"
+      },
+      "kind": "map",
+      "maxItems": 6,
+      "needs": []
+    },
+    {
+      "args": {
+        "operation": "count",
+        "values": {
+          "$ref": "input.samples"
+        }
+      },
+      "description": "Measure the actual input batch size, including the valid empty batch, for the publication check.",
+      "id": "countInputs",
+      "kind": "task",
+      "needs": [],
+      "retry": {
+        "maxAttempts": 1
+      },
+      "timeoutMs": 1000,
+      "tool": "core.aggregate"
+    },
+    {
+      "args": {
+        "field": "chooseRow.value",
+        "items": {
+          "$ref": "nodes.processBatch.items"
+        }
+      },
+      "description": "Extract each completed body's chosen row in input order using the native body-node wrapper path.",
+      "id": "extractRows",
+      "kind": "task",
+      "needs": [
+        "processBatch"
+      ],
+      "retry": {
+        "maxAttempts": 1
+      },
+      "timeoutMs": 1000,
+      "tool": "core.pluck"
+    },
+    {
+      "args": {
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "samples": {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "disposition": {
+                    "enum": [
+                      "clear",
+                      "confirmed",
+                      "not_reproduced",
+                      "inconclusive",
+                      "error"
+                    ]
+                  },
+                  "sampleId": {
+                    "maxLength": 64,
+                    "minLength": 1,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "sampleId",
+                  "disposition"
+                ],
+                "type": "object"
+              },
+              "maxItems": 6,
+              "type": "array"
+            }
+          },
+          "required": [
+            "samples"
+          ],
+          "type": "object"
+        },
+        "value": {
+          "samples": {
+            "$ref": "nodes.extractRows.items"
+          }
+        }
+      },
+      "description": "Validate the exact prospective artifact object against the public manifest schema, excluding extra fields.",
+      "id": "validateManifest",
+      "kind": "task",
+      "needs": [
+        "extractRows"
+      ],
+      "retry": {
+        "maxAttempts": 1
+      },
+      "timeoutMs": 1000,
+      "tool": "core.validate"
+    },
+    {
+      "checks": [
+        {
+          "left": {
+            "$ref": "nodes.validateManifest.valid"
+          },
+          "op": "eq",
+          "right": true
+        },
+        {
+          "left": {
+            "$ref": "nodes.processBatch.count"
+          },
+          "op": "eq",
+          "right": {
+            "$ref": "nodes.countInputs.value"
+          }
+        },
+        {
+          "left": {
+            "$ref": "nodes.extractRows.count"
+          },
+          "op": "eq",
+          "right": {
+            "$ref": "nodes.countInputs.value"
+          }
+        }
+      ],
+      "description": "Require successful manifest validation and exactly as many completed sample bodies and extracted rows as input samples before publication.",
+      "id": "checkManifest",
+      "kind": "assert",
+      "needs": [
+        "validateManifest",
+        "countInputs"
+      ]
+    },
+    {
+      "args": {
+        "pretty": true,
+        "value": {
+          "samples": {
+            "$ref": "nodes.extractRows.items"
+          }
+        }
+      },
+      "description": "Serialize precisely the checked samples object as JSON after every sample's processing and row selection has completed.",
+      "id": "serializeManifest",
+      "kind": "task",
+      "needs": [
+        "checkManifest"
+      ],
+      "retry": {
+        "maxAttempts": 1
+      },
+      "timeoutMs": 1000,
+      "tool": "core.json"
+    },
+    {
+      "args": {
+        "content": {
+          "$ref": "nodes.serializeManifest.text"
+        },
+        "name": "manifest.json"
+      },
+      "description": "Write the sole final manifest.json artifact from the completed, checked and serialized observations.",
+      "id": "publishManifest",
+      "kind": "task",
+      "needs": [
+        "serializeManifest"
+      ],
+      "retry": {
+        "maxAttempts": 1
+      },
+      "timeoutMs": 1000,
+      "tool": "core.artifact"
+    }
+  ],
+  "schemaVersion": "1.0",
+  "title": "Screen every sample and report independent reproduction evidence",
+  "version": 2
+}

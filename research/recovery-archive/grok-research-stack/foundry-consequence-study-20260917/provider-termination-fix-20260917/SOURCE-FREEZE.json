@@ -1,0 +1,23 @@
+{
+  "status": "FROZEN_AFTER_PRIME_OFFLINE_VERIFICATION",
+  "at": "2026-09-17T09:10:00.268Z",
+  "sources": [
+    {
+      "source": "/home/raed/Projects/workflow-foundry/src/opencode-v2-free.mjs",
+      "copy": "after/opencode-v2-free.mjs",
+      "sha256": "f8c4ad5fbdb6bf4ad41e16b0417f27836890931e997731e888c1fa11f4e3ee84",
+      "bytes": 35419
+    },
+    {
+      "source": "/home/raed/Projects/workflow-foundry/tests/provider-termination.test.mjs",
+      "copy": "after/provider-termination.test.mjs",
+      "sha256": "e7e4673b633f1302933d6f1cb09bc2bc2ad748c54487a9efb10c711e0bf25462",
+      "bytes": 10958
+    }
+  ],
+  "validationReceipt": "checks-a0b747ed-144f-48eb-a25b-0dcf46a92029/RESULT.json",
+  "validationSHA256": "0005bc2f61497ca6be64012922ae46002534d42f42959eeb5d3bbf94d26a7649",
+  "sourceStableDuringValidation": true,
+  "liveModelCalls": 0,
+  "externalProviderRequests": 0
+}

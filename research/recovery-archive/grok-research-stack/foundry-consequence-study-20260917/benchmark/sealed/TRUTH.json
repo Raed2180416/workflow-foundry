@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "physical-truth-v1",
+  "cases": [
+    {
+      "caseId": "held-01",
+      "physicalDefects": {
+        "m7": false,
+        "p4": true,
+        "k2": false,
+        "h9": true
+      }
+    },
+    {
+      "caseId": "held-02",
+      "physicalDefects": {
+        "m7": false,
+        "p4": true,
+        "k2": true,
+        "h9": true
+      }
+    },
+    {
+      "caseId": "held-03",
+      "physicalDefects": {
+        "a6": true,
+        "d5": true,
+        "r3": true
+      }
+    },
+    {
+      "caseId": "held-04",
+      "physicalDefects": {
+        "d5": true,
+        "r3": true,
+        "a6": true
+      }
+    },
+    {
+      "caseId": "held-05",
+      "physicalDefects": {
+        "z8": true,
+        "b1": true,
+        "c6": true,
+        "f3": false,
+        "q9": true,
+        "u4": false
+      }
+    },
+    {
+      "caseId": "held-06",
+      "physicalDefects": {}
+    },
+    {
+      "caseId": "held-07",
+      "physicalDefects": {
+        "x2": true
+      }
+    },
+    {
+      "caseId": "held-08",
+      "physicalDefects": {
+        "v5": true
+      }
+    }
+  ]
+}

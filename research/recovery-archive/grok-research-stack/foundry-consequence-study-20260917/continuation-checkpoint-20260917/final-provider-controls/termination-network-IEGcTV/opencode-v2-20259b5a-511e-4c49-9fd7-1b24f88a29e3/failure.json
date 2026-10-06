@@ -1,0 +1,23 @@
+{
+  "code": "MODEL_TRANSPORT",
+  "message": "Provider transport failed",
+  "details": {
+    "cause": "SUPPLIED network read failed"
+  },
+  "termination": {
+    "kind": "transport",
+    "at": 1789636396593,
+    "code": "MODEL_TRANSPORT",
+    "error": {
+      "name": "TypeError",
+      "code": null,
+      "message": "SUPPLIED network read failed",
+      "cause": {
+        "name": "Error",
+        "code": "ECONNRESET",
+        "message": "SUPPLIED reset"
+      }
+    }
+  },
+  "receipts": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/continuation-checkpoint-20260917/final-provider-controls/termination-network-IEGcTV/opencode-v2-20259b5a-511e-4c49-9fd7-1b24f88a29e3"
+}

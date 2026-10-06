@@ -1,0 +1,7 @@
+{
+  "frozenAt": "2026-09-17T03:04:46.956Z",
+  "sourcePath": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/calibration-001/positive.json",
+  "sourceSha256": "58130835176cd7eaada7aaf311c0f83da45968cfb0cb68a4966e22b9353d91b8",
+  "split": "development",
+  "note": "Candidate bytes frozen before this evaluation. No provider is invoked."
+}

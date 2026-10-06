@@ -1,0 +1,114 @@
+{
+  "approvals": {},
+  "cost": 0,
+  "createdAt": 1789614775992,
+  "deadline": 1789614780992,
+  "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+  "error": null,
+  "eventHead": {
+    "hash": "502d38fa5d2da73056b3c7186060465ddf21cb3f97241112620675a1875159b5",
+    "seq": 9
+  },
+  "extra": {},
+  "frames": {},
+  "id": "cf58fee8-5c3c-45be-aa9e-915a1d629407",
+  "input": {
+    "samples": [
+      {
+        "id": "independent-a"
+      }
+    ]
+  },
+  "nodes": {
+    "publish": {
+      "argsHash": "ad7a942c5eaffa3d99ea34b632f99d2e8fc85d6333c2c124873b1d70a51cb101",
+      "attempts": 1,
+      "completedAt": 1789614775999,
+      "completedSequence": 8,
+      "effects": "idempotent",
+      "idempotencyKey": "f64ba34ccd511af4a0b0958af167415f4a081698b2634280bb5c4c9f57f5c923",
+      "kind": "task",
+      "outputHash": "e15425e7edb5f0b53788b64d3ccc4421b2e56621f3d3458ae589428405a5d7c0",
+      "startedAt": 1789614775997,
+      "startedSequence": 7,
+      "status": "completed",
+      "tool": "core.artifact"
+    },
+    "reproduction": {
+      "argsHash": "b53b7a7f5c03218f508ea7c11db2d4d5470b652405143d8657c301fc0c3c944d",
+      "attempts": 1,
+      "completedAt": 1789614775996,
+      "completedSequence": 6,
+      "effects": "none",
+      "idempotencyKey": "828536db9b7e13213feefc0ec534205d1b51822c49a5d6764c62c768367208eb",
+      "kind": "task",
+      "outputHash": "b6f11a36813a01c19f652065f894391e5082d7c719bc2aca6a868ad726b4262f",
+      "startedAt": 1789614775995,
+      "startedSequence": 5,
+      "status": "completed",
+      "tool": "lab.reproduce"
+    },
+    "screening": {
+      "argsHash": "b53b7a7f5c03218f508ea7c11db2d4d5470b652405143d8657c301fc0c3c944d",
+      "attempts": 1,
+      "completedAt": 1789614775994,
+      "completedSequence": 4,
+      "effects": "none",
+      "idempotencyKey": "d936219d0ab95ccb689377b88a13f819063ef048053fa27afaacedc8e428f8ef",
+      "kind": "task",
+      "outputHash": "8af342e7f421415fda5b42a467fc74c5b8a23a5199e83a3bd5f467bc012a6666",
+      "startedAt": 1789614775994,
+      "startedSequence": 3,
+      "status": "completed",
+      "tool": "lab.screen"
+    }
+  },
+  "outputs": {
+    "publish": {
+      "bytes": 68,
+      "name": "manifest.json",
+      "sha256": "12597e52f6c2f089295825d8fe5bd9451aa07017c384bf88a8e2b64025782a87"
+    },
+    "reproduction": {
+      "evidenceId": "independent-evidence",
+      "independent": true,
+      "ok": true,
+      "reproduced": true,
+      "sampleId": "independent-b"
+    },
+    "screening": {
+      "claim": "Untrusted claim text",
+      "ok": true,
+      "sampleId": "independent-a",
+      "suspicious": true
+    }
+  },
+  "owner": null,
+  "policy": {
+    "allowedCapabilities": [
+      "core.identity",
+      "core.validate",
+      "core.json",
+      "core.pluck",
+      "core.aggregate",
+      "core.template",
+      "core.collect",
+      "core.artifact",
+      "lab.screen",
+      "lab.reproduce",
+      "data.one"
+    ],
+    "maxConcurrency": 2,
+    "maxCost": 0,
+    "maxDurationMs": 30000,
+    "maxResumes": 1000,
+    "maxSteps": 160
+  },
+  "registryHash": "bb3f73d712e174d3084248c8d199a620b7eeb2a7b2655d64b6286ab3af536d0e",
+  "resumeCount": 1,
+  "status": "succeeded",
+  "steps": 3,
+  "updatedAt": 1789614775999,
+  "workflowHash": "52319b412147da00af6bd41c4db00c5e8c36c29dbb258e504f893c7f22e9d61f",
+  "workflowId": "WrongEvidenceIdentity"
+}

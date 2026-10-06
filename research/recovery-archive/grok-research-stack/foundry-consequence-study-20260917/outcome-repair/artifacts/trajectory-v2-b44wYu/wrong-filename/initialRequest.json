@@ -1,0 +1,9 @@
+{
+  "baseHash": null,
+  "createdAt": 1789615875422,
+  "id": "6b336327-5357-4104-afc3-6a2b79f1b53c",
+  "source": "user",
+  "status": "applied",
+  "text": "Write record.json containing exactly the record supplied in the input.",
+  "workflowId": null
+}

@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "at": "2026-09-17T08:57:03.566Z",
+  "nativeRuns": 1,
+  "modelCalls": 0,
+  "historicalOutcome": "unsatisfied",
+  "currentVerificationRejected": true,
+  "newRepairRejected": true,
+  "identicalContractRebindingRejected": true,
+  "originalRegistryRestoresVerification": true,
+  "dataAndSourceUnchanged": true,
+  "interpretation": "Conservative current-world verification blocks cross-world continuation even after an unused pure capability addition. Raw history is retained. This is a missing history/current-world distinction and continuation protocol, not authorization to remove promotion or runtime checks."
+}

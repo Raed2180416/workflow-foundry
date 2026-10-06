@@ -1,0 +1,86 @@
+{
+  "approvals": {},
+  "cost": 0,
+  "createdAt": 1789614775772,
+  "deadline": 1789614780772,
+  "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+  "error": {
+    "code": "SCHEMA_MISMATCH",
+    "message": "lab.screen input does not satisfy its schema"
+  },
+  "eventHead": {
+    "hash": "c1394aced36585f0ee40baf0079d993cf047740faed847a261bbda913e79001f",
+    "seq": 6
+  },
+  "extra": {},
+  "frames": {},
+  "id": "17b5d1a6-0a46-4891-bc60-ea9cd748d071",
+  "input": {
+    "samples": [
+      {
+        "id": "independent-a"
+      }
+    ]
+  },
+  "nodes": {
+    "badarg": {
+      "attempts": 0,
+      "error": {
+        "code": "SCHEMA_MISMATCH",
+        "message": "lab.screen input does not satisfy its schema"
+      },
+      "kind": "task",
+      "status": "failed"
+    },
+    "screening": {
+      "argsHash": "b53b7a7f5c03218f508ea7c11db2d4d5470b652405143d8657c301fc0c3c944d",
+      "attempts": 1,
+      "completedAt": 1789614775775,
+      "completedSequence": 4,
+      "effects": "none",
+      "idempotencyKey": "b8cb436ae2942c74618ff9fc6834abc94f8774a28c1da80d56d7977e584a5d2e",
+      "kind": "task",
+      "outputHash": "14fd13b850635db9025502296fc7d86f345a3e68cb56d101c790117940681c50",
+      "startedAt": 1789614775774,
+      "startedSequence": 3,
+      "status": "completed",
+      "tool": "lab.screen"
+    }
+  },
+  "outputs": {
+    "screening": {
+      "claim": "Untrusted claim text",
+      "ok": true,
+      "sampleId": "independent-a",
+      "suspicious": false
+    }
+  },
+  "owner": null,
+  "policy": {
+    "allowedCapabilities": [
+      "core.identity",
+      "core.validate",
+      "core.json",
+      "core.pluck",
+      "core.aggregate",
+      "core.template",
+      "core.collect",
+      "core.artifact",
+      "lab.screen",
+      "lab.reproduce",
+      "data.one"
+    ],
+    "maxConcurrency": 2,
+    "maxCost": 0,
+    "maxDurationMs": 30000,
+    "maxResumes": 1000,
+    "maxSteps": 160
+  },
+  "registryHash": "bb3f73d712e174d3084248c8d199a620b7eeb2a7b2655d64b6286ab3af536d0e",
+  "resumeCount": 1,
+  "status": "failed",
+  "steps": 1,
+  "updatedAt": 1789614775777,
+  "workflowHash": "2a19723d39eafb7a9fb7fa1b9be7bfcdc81ccee7b6cc33e2a9781dee6c784748",
+  "workflowId": "InvalidArgument"
+}

@@ -1,0 +1,24 @@
+{
+  "test": "each map item selects its own branch and retains its own input and output",
+  "input": {
+    "matches": [
+      {
+        "id": "a",
+        "ok": true
+      },
+      {
+        "id": "b",
+        "ok": false
+      },
+      {
+        "id": "c",
+        "ok": true
+      }
+    ],
+    "claim": {
+      "grounded": true
+    }
+  },
+  "workflowHash": "a61d435ea91bbc360a476157b4415f7a0751b75cdaf80e320599786f73098444",
+  "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77"
+}

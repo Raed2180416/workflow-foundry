@@ -1,0 +1,9 @@
+{
+  "error": {
+    "code": "MODEL_TRANSPORT",
+    "message": "Provider transport failed"
+  },
+  "details": {
+    "cause": "This operation was aborted"
+  }
+}

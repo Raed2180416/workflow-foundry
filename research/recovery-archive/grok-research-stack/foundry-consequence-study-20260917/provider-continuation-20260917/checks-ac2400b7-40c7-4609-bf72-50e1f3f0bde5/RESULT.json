@@ -1,0 +1,73 @@
+{
+  "status": "PASS",
+  "at": "2026-09-17T08:49:17.617Z",
+  "root": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/provider-continuation-20260917/checks-ac2400b7-40c7-4609-bf72-50e1f3f0bde5",
+  "commands": [
+    {
+      "name": "syntax-driver.mjs",
+      "status": "PASS",
+      "receipt": "syntax-driver.mjs.json"
+    },
+    {
+      "name": "syntax-driver.test.mjs",
+      "status": "PASS",
+      "receipt": "syntax-driver.test.mjs.json"
+    },
+    {
+      "name": "syntax-access-check.mjs",
+      "status": "PASS",
+      "receipt": "syntax-access-check.mjs.json"
+    },
+    {
+      "name": "syntax-verify.mjs",
+      "status": "PASS",
+      "receipt": "syntax-verify.mjs.json"
+    },
+    {
+      "name": "focused-tests",
+      "status": "PASS",
+      "receipt": "focused-tests.json"
+    },
+    {
+      "name": "doctor",
+      "status": "PASS",
+      "receipt": "doctor.json"
+    }
+  ],
+  "sourceHashes": {
+    "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/provider-continuation-20260917/driver.mjs": "fd0395d1a60fee4a1407411dcb748089bc7af966988b2422aabbcdb06074c272",
+    "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/provider-continuation-20260917/driver.test.mjs": "84c24d508f6e06a3f69256a4eec8c7881a38e9b3e44507cb1f0a66c03dfb2cda",
+    "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/provider-continuation-20260917/access-check.mjs": "a93b5b590475db0fda5048739df1e24474b8ee6c8fde6481f0a9330bba843756",
+    "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/provider-continuation-20260917/verify.mjs": "cd4af013c6694fab3b337ba767f613b18011af8eff8ceed605b256f5c12c15cc",
+    "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/campaign.mjs": "5742620ee6d71d98f30a1f083f5618dddfadbf487c818609fd0b56c10e706a5c",
+    "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/cos-campaign.mjs": "174ab20c7b2794968b4ca6452128386d5187ccd3708ae0243362f7f0476f28cc",
+    "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/CAMPAIGN_PROTOCOL.json": "0f1446d3ec993f04509363f760fe46cb2469d09e9611d132b544b37ff408bce4",
+    "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/oracle.mjs": "ebbdf190674414c29ec2fc7632e8f72b6e3c305c5abd20b322cc8a077304f732",
+    "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/oracle-v2.mjs": "517b7e60d3e674f7fc1189dac8f468dd19d9f6800467a5998fde6a38fbd66e15",
+    "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/FREEZE.json": "191da6649ceaa22087636059b241de2fd758768aabdfde0aa9d480cb27246f62",
+    "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/FREEZE_V2.json": "5e4af4f2d1b3e90e65373cc40b4e8857d9248e769ee47b8dd79fa9d72e4595d2",
+    "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/calibration-v2-campaign-review-001/NOTE.md": "62b1bb514b0247b44c95e2cc42eff637355c8e875a7c7661cdc97f03aec14a24",
+    "/home/raed/Projects/workflow-foundry/src/opencode-v2-free.mjs": "5772e2d2d7ae60de702cce310af5124f8331e4c3f0c4a2ccc44d5762bafcb9c6",
+    "/home/raed/Projects/workflow-foundry/tests/opencode-v2-free.test.mjs": "b6ab1e50173501254a267c9f7b151de5e0b3c3e0699359c131f13a14ae7954ee",
+    "/home/raed/Projects/workflow-foundry/src/opencode-free.mjs": "6848bfcba60945d1dfebf8fbf7e2461590f1c33eb85f5e2dc3bce84a347eeeca",
+    "/home/raed/Projects/workflow-foundry/src/ollama-local.mjs": "7193fbacbce7bfcc065e5db8be3a3d98b68063b20b25642c7ba732b7d11f50e9",
+    "/home/raed/Projects/workflow-foundry/src/process.mjs": "bfc97e88bb73bc8f15ba2d174ab1d97c615c3fd097e57c57964bd8bc4196bb7a"
+  },
+  "changed": [],
+  "sourceStable": true,
+  "modelCalls": 0,
+  "suitesLoaded": 0,
+  "fullCampaignRuns": 0,
+  "scope": "Supplied callbacks, real public setup and empty-batch native apply/v2 artifact audit; no hidden suites or model construction.",
+  "pluginEvidence": {
+    "SerenaManual": "HTTP404 tunnel_client_not_seen",
+    "projectQualityMap": "HTTP404 tunnel_client_not_seen",
+    "securityScanFast": "HTTP404 tunnel_client_not_seen"
+  },
+  "packageScripts": {
+    "test": "node --test --test-concurrency=2 tests/*.test.mjs",
+    "check": "node bin/foundry.mjs doctor",
+    "start": "node bin/foundry.mjs serve",
+    "mcp": "node bin/foundry.mjs mcp"
+  }
+}

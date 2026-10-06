@@ -1,0 +1,258 @@
+{
+  "schemaVersion": "1.0",
+  "familyId": "objective-composition",
+  "objectiveId": "ObjHttpBranch",
+  "objective": "HTTP fetch then branch on error with a separate error path",
+  "workflow": {
+    "schemaVersion": "1.0",
+    "id": "ObjHttpBranch",
+    "version": 1,
+    "title": "HTTP fetch then branch on error with a separate error path",
+    "goal": "HTTP fetch then branch on error with a separate error path",
+    "domain": "automation",
+    "envelope": {
+      "assumptions": [
+        "Local Foundry IR only",
+        "Capabilities are the default registry"
+      ],
+      "risks": [
+        "Named IR limits are not vendor protocols"
+      ],
+      "successCriteria": [
+        "Independent acceptance checks pass",
+        "Unsupported IR requests stay named and unexecuted"
+      ],
+      "unsupported": [
+        "delayMsMax:3600000",
+        "compensateKind:false",
+        "continueAsNew:false",
+        "timerDispatch:persisted-wake-reinvoke",
+        "waitCrashRestartsDeadline:true",
+        "budgetPolicyCapMs:3600000",
+        "singleWriterPerKey:false",
+        "eventCronTrigger:false",
+        "constructionDrivesGenerator:false"
+      ]
+    },
+    "inputSchema": {
+      "type": "object"
+    },
+    "budget": {
+      "maxSteps": 80,
+      "maxConcurrency": 2,
+      "maxDurationMs": 3600000,
+      "maxCost": 0
+    },
+    "nodes": [
+      {
+        "id": "fetch",
+        "kind": "task",
+        "needs": [],
+        "description": "Primary path fetch",
+        "tool": "core.identity",
+        "args": {
+          "ok": true
+        },
+        "timeoutMs": 5000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 100
+        },
+        "onError": "continue"
+      },
+      {
+        "id": "okPath",
+        "kind": "task",
+        "needs": [
+          "fetch"
+        ],
+        "description": "Continue when fetch succeeded",
+        "tool": "core.identity",
+        "args": {
+          "branch": "ok"
+        },
+        "timeoutMs": 5000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 100
+        },
+        "when": {
+          "op": "eq",
+          "left": {
+            "$ref": "nodes.fetch.ok",
+            "default": false
+          },
+          "right": true
+        }
+      },
+      {
+        "id": "errPath",
+        "kind": "task",
+        "needs": [
+          "fetch"
+        ],
+        "description": "Separate error path when fetch failed",
+        "tool": "core.identity",
+        "args": {
+          "branch": "error"
+        },
+        "timeoutMs": 5000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 100
+        },
+        "when": {
+          "op": "eq",
+          "left": {
+            "$ref": "nodes.fetch.ok",
+            "default": false
+          },
+          "right": false
+        },
+        "onError": "continue"
+      },
+      {
+        "id": "join",
+        "kind": "task",
+        "needs": [
+          "okPath",
+          "errPath"
+        ],
+        "description": "Join success and error paths",
+        "tool": "core.collect",
+        "args": {
+          "items": [
+            {
+              "$ref": "nodes.okPath.branch"
+            },
+            {
+              "$ref": "nodes.errPath.branch"
+            }
+          ]
+        },
+        "timeoutMs": 5000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 100
+        },
+        "join": "all_resolved"
+      },
+      {
+        "id": "validate",
+        "kind": "task",
+        "needs": [
+          "join"
+        ],
+        "description": "Validate grounding before send",
+        "tool": "core.validate",
+        "args": {
+          "value": {
+            "$ref": "input.claim",
+            "default": {
+              "grounded": true
+            }
+          },
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "grounded"
+            ],
+            "properties": {
+              "grounded": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "timeoutMs": 5000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 100
+        }
+      },
+      {
+        "id": "verify",
+        "kind": "assert",
+        "needs": [
+          "validate"
+        ],
+        "description": "Fail closed on acceptance evidence",
+        "checks": [
+          {
+            "op": "eq",
+            "left": {
+              "$ref": "nodes.validate.valid"
+            },
+            "right": true
+          }
+        ]
+      },
+      {
+        "id": "artifact",
+        "kind": "task",
+        "needs": [
+          "verify"
+        ],
+        "description": "Write an inspectable receipt",
+        "tool": "core.artifact",
+        "args": {
+          "name": "receipt.json",
+          "content": "{\"status\":\"composed\"}"
+        },
+        "timeoutMs": 5000,
+        "retry": {
+          "maxAttempts": 2,
+          "backoffMs": 100
+        }
+      }
+    ],
+    "acceptance": [
+      {
+        "op": "exists",
+        "value": {
+          "$ref": "nodes.verify.id",
+          "default": "verify"
+        }
+      }
+    ],
+    "metadata": {
+      "sources": [
+        "construction-objective"
+      ],
+      "rationale": "Composed from grounded requirement cues onto Foundry IR; named limits are not vendor protocols.",
+      "tags": [
+        "branching",
+        "verification"
+      ]
+    }
+  },
+  "requirements": [
+    "branching",
+    "verification"
+  ],
+  "ungrounded": [],
+  "requestedBeyondIr": [],
+  "irLimits": {
+    "delayMsMax": 3600000,
+    "budgetSchemaMaxMs": 2592000000,
+    "budgetPolicyCapMs": 3600000,
+    "timerDispatch": "persisted-wake-reinvoke",
+    "compensateKind": false,
+    "continueAsNew": false,
+    "waitCrashRestartsDeadline": true,
+    "singleWriterPerKey": false,
+    "eventCronTrigger": false,
+    "constructionDrivesGenerator": false
+  },
+  "authoring": {
+    "inspectable": true,
+    "editable": true,
+    "versioned": true,
+    "freezeable": true,
+    "validateBeforeSave": true,
+    "humanAcceptDiscard": true,
+    "evidenceBound": true,
+    "autoApply": false
+  }
+}

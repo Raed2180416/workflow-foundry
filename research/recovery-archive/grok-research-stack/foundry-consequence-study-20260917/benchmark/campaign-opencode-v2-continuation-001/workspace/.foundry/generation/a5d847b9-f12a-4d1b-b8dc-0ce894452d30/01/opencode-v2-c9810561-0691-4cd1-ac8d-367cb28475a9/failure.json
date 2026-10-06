@@ -1,0 +1,8 @@
+{
+  "code": "MODEL_TRANSPORT",
+  "message": "Provider transport failed",
+  "details": {
+    "cause": "This operation was aborted"
+  },
+  "receipts": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/campaign-opencode-v2-continuation-001/workspace/.foundry/generation/a5d847b9-f12a-4d1b-b8dc-0ce894452d30/01/opencode-v2-c9810561-0691-4cd1-ac8d-367cb28475a9"
+}

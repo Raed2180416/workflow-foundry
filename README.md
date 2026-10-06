@@ -1,5 +1,7 @@
 # Workflow Foundry
 
+> **Resuming?** Start with [docs/WHERE-WE-STOPPED.md](docs/WHERE-WE-STOPPED.md): the current state, the last checkpoint (2026-09-17), today's re-verification and the exact next steps.
+
 An experimental, local-first system for teaching an existing agent to **design,
 test, inspect, revise and reuse executable workflows**. The workflow-construction
 process lives in portable skills and domain references. The host runtime owns

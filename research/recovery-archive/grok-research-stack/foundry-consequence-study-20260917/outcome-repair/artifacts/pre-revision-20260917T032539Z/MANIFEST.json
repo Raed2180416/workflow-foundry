@@ -1,0 +1,17 @@
+{
+  "/home/raed/Projects/workflow-foundry/src/outcome-repair.mjs": {
+    "sha256": "5529cb827f844dd657fc34b996ced0cc2e32b4166d422306d6192f80eaab4d70",
+    "copy": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/outcome-repair/artifacts/pre-revision-20260917T032539Z/outcome-repair.mjs",
+    "bytes": 21949
+  },
+  "/home/raed/Projects/workflow-foundry/tests/outcome-repair.test.mjs": {
+    "sha256": "1dfaf194bb59d42f2c9415a17839ae3eb2f029d462a2eb21ed460c0a5bdf9956",
+    "copy": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/outcome-repair/artifacts/pre-revision-20260917T032539Z/outcome-repair.test.mjs",
+    "bytes": 22232
+  },
+  "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/outcome-repair/API.md": {
+    "sha256": "67971d84d23e9886ffdd3f634175b8ae41902892c43d845dd26165d2bef6de8e",
+    "copy": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/outcome-repair/artifacts/pre-revision-20260917T032539Z/API.md",
+    "bytes": 3235
+  }
+}

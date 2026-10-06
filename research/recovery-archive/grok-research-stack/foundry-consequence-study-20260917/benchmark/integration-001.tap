@@ -1,0 +1,15 @@
+✔ frozen public contracts and registry identity remain exact (15.709623ms)
+✔ sealed suite cannot become generator feedback (0.353655ms)
+✔ changing fixture truth cannot change an instrument observation (13.923343ms)
+✔ actual TrialRunner supports instrument fixtures without exposing fixture truth (336.302668ms)
+✔ actual WorkflowGenerator accepts the independent evaluator with a supplied fixture callback (439.528851ms)
+✔ even an exact forged manifest fails without the required instrument attempts (23.040524ms)
+✔ calibration receipts show two equivalent positive controls and six rejected mutants (0.302339ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 935.169808

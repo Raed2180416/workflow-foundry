@@ -1,0 +1,6 @@
+{
+  "at": "2026-09-17T08:48:35.926Z",
+  "proposalId": "091855cd-2ba2-4190-838a-705e6e4ff78a",
+  "workflowHash": "1c88cfc1168d192c8e8e1d0f498f84bc64ceeedfa1c5f73492421c0facc239ac",
+  "authority": "Explicit host execution of local synthetic instruments and isolated artifact writes. No external effects or deployment."
+}

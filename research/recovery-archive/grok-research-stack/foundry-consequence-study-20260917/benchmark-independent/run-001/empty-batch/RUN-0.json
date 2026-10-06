@@ -1,0 +1,69 @@
+{
+  "approvals": {},
+  "cost": 0,
+  "createdAt": 1789614775701,
+  "deadline": 1789614780701,
+  "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+  "error": null,
+  "eventHead": {
+    "hash": "1ffe3be028e80c83585963ad0fc9dbbcdfd1e40df6f5958287a4494c65160c22",
+    "seq": 5
+  },
+  "extra": {},
+  "frames": {},
+  "id": "1b729f85-09ef-4ac0-8197-366259f6f20d",
+  "input": {
+    "samples": []
+  },
+  "nodes": {
+    "publish": {
+      "argsHash": "c5a71788ca66d677bdf45cd80a482e33ae4a4488f227c0097b15e8ae7acb520d",
+      "attempts": 1,
+      "completedAt": 1789614775705,
+      "completedSequence": 4,
+      "effects": "idempotent",
+      "idempotencyKey": "611605dcede62c1838e3f3235c582cd0005360d9893461fd1fc44f32d6381dfc",
+      "kind": "task",
+      "outputHash": "6b973a6ee5fe2c6564577f3a9fae5af94adc9f9efc3561611f84b8ad50af5326",
+      "startedAt": 1789614775703,
+      "startedSequence": 3,
+      "status": "completed",
+      "tool": "core.artifact"
+    }
+  },
+  "outputs": {
+    "publish": {
+      "bytes": 14,
+      "name": "manifest.json",
+      "sha256": "459702367cbe62b54262b350823a86b7875ef5798bba4936c3b25c8a575fe6ba"
+    }
+  },
+  "owner": null,
+  "policy": {
+    "allowedCapabilities": [
+      "core.identity",
+      "core.validate",
+      "core.json",
+      "core.pluck",
+      "core.aggregate",
+      "core.template",
+      "core.collect",
+      "core.artifact",
+      "lab.screen",
+      "lab.reproduce",
+      "data.one"
+    ],
+    "maxConcurrency": 2,
+    "maxCost": 0,
+    "maxDurationMs": 30000,
+    "maxResumes": 1000,
+    "maxSteps": 160
+  },
+  "registryHash": "bb3f73d712e174d3084248c8d199a620b7eeb2a7b2655d64b6286ab3af536d0e",
+  "resumeCount": 1,
+  "status": "succeeded",
+  "steps": 1,
+  "updatedAt": 1789614775706,
+  "workflowHash": "3c63e7f7713b5b86868df9095b8d1417d089a734d81989c9c4ba5257f6597aaf",
+  "workflowId": "EmptyBatch"
+}

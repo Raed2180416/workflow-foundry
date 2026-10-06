@@ -1,0 +1,11 @@
+{
+  "command": [
+    "node",
+    "--test",
+    "tests/outcome-repair.test.mjs"
+  ],
+  "exitCode": 0,
+  "durationSeconds": 1.193,
+  "stdout": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/outcome-repair/artifacts/pre-revision-20260917T032539Z/tests.tap",
+  "stderr": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/outcome-repair/artifacts/pre-revision-20260917T032539Z/tests.stderr"
+}

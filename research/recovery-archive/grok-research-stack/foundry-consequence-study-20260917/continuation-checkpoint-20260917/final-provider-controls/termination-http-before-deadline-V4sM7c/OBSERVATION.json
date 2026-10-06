@@ -1,0 +1,87 @@
+{
+  "name": "http-before-deadline",
+  "expectedCode": "MODEL_RATE_LIMIT",
+  "code": "MODEL_RATE_LIMIT",
+  "receipts": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/continuation-checkpoint-20260917/final-provider-controls/termination-http-before-deadline-V4sM7c/opencode-v2-0e81ccdb-d31b-4015-a18b-cb9c979c7a9d",
+  "catalogCalls": 1,
+  "inferenceCalls": 1,
+  "externalNetworkCalls": 0,
+  "modelCalls": 0,
+  "termination": {
+    "startedAt": 1789636399778,
+    "deadlineAt": 1789636403778,
+    "abortAt": 1789636403791,
+    "first": {
+      "kind": "http",
+      "at": 1789636400783,
+      "code": "MODEL_RATE_LIMIT",
+      "error": {
+        "name": "FoundryError",
+        "code": "MODEL_RATE_LIMIT",
+        "message": "The free provider returned HTTP 429; this attempt is stopped without retry or fallback"
+      }
+    },
+    "secondary": [
+      {
+        "kind": "deadline",
+        "at": 1789636403791,
+        "code": "TIMEOUT",
+        "error": {
+          "name": "FoundryError",
+          "code": "TIMEOUT",
+          "message": "Generation exceeded its total deadline"
+        }
+      },
+      {
+        "kind": "abort-observation",
+        "at": 1789636403791,
+        "code": "MODEL_TRANSPORT",
+        "error": {
+          "name": "AbortError",
+          "code": 20,
+          "message": "This operation was aborted"
+        }
+      },
+      {
+        "kind": "process",
+        "at": 1789636403794,
+        "code": "CANCELLED",
+        "error": {
+          "name": "FoundryError",
+          "code": "CANCELLED",
+          "message": "Subprocess cancelled"
+        }
+      }
+    ],
+    "finishedAt": 1789636403794,
+    "callerAborted": false
+  },
+  "transport": {
+    "attempts": 1,
+    "forwarded": 1,
+    "completed": 0,
+    "requests": [
+      {
+        "number": 1,
+        "method": "POST",
+        "path": "/zen/v1/chat/completions",
+        "forwarded": true,
+        "requestSHA256": "8a63ba3dd24ede4c3834d9b67cae87fde45ca4b4c6f2e61e5b9d3c819429b9f2",
+        "forwardedAt": 1789636400782,
+        "statusCode": 429,
+        "headersAt": 1789636400782,
+        "retryAfter": "600",
+        "firstBodyByteAt": 1789636400783,
+        "lastBodyByteAt": 1789636400783,
+        "responseSHA256": "be984db6b02fa2cef9efc48e177c90ea840b5355a49f21a6faa9165784d0cc0b",
+        "responseBytes": 265,
+        "responsePartial": true,
+        "error": {
+          "name": "AbortError",
+          "code": 20,
+          "message": "This operation was aborted"
+        }
+      }
+    ]
+  }
+}

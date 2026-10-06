@@ -1,0 +1,342 @@
+{
+  "checkedAt": "2026-09-17T02:15:19.185538+00:00",
+  "scope": "First bounded Foundry recovery, source reconciliation and deterministic diagnostics; not product/Jev qualification",
+  "files": {
+    "ARC_AMP_RECONCILIATION.md": "5578417862ca7d357ceb93babfa6cafd50968fee29dbcb2ed1d245d402a01d23",
+    "CROSS_SYSTEM_RECONCILIATION.md": "8554d534d288ded636f162fa95401961e79680d8464f083bfced058bcf1a395c",
+    "FOUNDRY_SOURCE_AUDIT.md": "8bc9534c7b253fa173d93e7d0298bfc4a109d51fda5e65df1895ac64ff865ff7",
+    "JEV_DIAGNOSTIC_PROTOCOL.md": "d391b17a42bc3dc657e0f9a5779dda01ffca377d72b3d09b9463f1a2ebcfc695",
+    "NEURAL_CONTEXT_RECEIPT.json": "a23d5cee360e347da8076a093c24c4fc5b0719872a762babb7e4219dc1e6546a",
+    "branch-runtime-run-1/CANDIDATE.json": "7d40fddfa1f5b37a52a7f82b8a0e7f1e26a552015f4b2cce112be50ab7524406",
+    "branch-runtime-run-1/COMPARISON.json": "1ad5526413a2b074fec9834c139eda48ce5eb1647cfeae64bbb35a6579617fc0",
+    "branch-runtime-run-1/RESULTS.json": "3dd658ad44f6f0b66bb409c4d66ffb2fd91738290af6e7edbebd5bb8cea58036",
+    "branch-runtime-run-1/TRACE.json": "16cff20303ac6b0429366b134a85ca373c786f1a0d87e45de6bb4fbc5f6729bd",
+    "branch-runtime-witness.mjs": "dafb2c94a2b8a720df25596df59229af30c6b4988e0dd30b122400d0c4e589ab",
+    "construction-family-intent-tests.log": "0a61800e922217f5c3babdee6102a81def365289ead480550c99eecb15912bcd",
+    "construction-objective-tests.tap": "6344005eef5fb525444c6c4423a68f013f04cdec5d3866aae88777250884cd77",
+    "counterexample-run-1/RESULTS.json": "54116b4e5bb2c6a3555ca5647b096365c5b77878aadcc81b3be70c3838643e41",
+    "counterexample-run-1/candidate.json": "e98a129ced14f711eb47da8b9d85ffcdb4bad9a5791b82dab8db89e0224b29d3",
+    "counterexample-run-1/explicitly-ungrounded.trace.json": "2d5d35ea48cbf5509c8dd08cd00e119de9fffb3e0d04ae7f5a12a35eb58b9f5b",
+    "counterexample-run-1/grounded-true-control.trace.json": "cdd270051518b0d3efade66bc45748f8c1dfcc93efbebae715e566f277c8d769",
+    "counterexample-run-1/malformed-type-control.trace.json": "5c13482bcbe2905122603d6de0d899a3dc68dd1b7197d39053626db32be3210d",
+    "counterexample-run-1/missing-grounding-evidence.trace.json": "c4898d0195510f591ca8c3e054dbf84da280cf7e0108958c0c53df235007545d",
+    "counterexamples.mjs": "a1c59ddd04b667d4bf87e6f5b195e1ccdb5e4d462391e71de86ee828d7272b8e"
+  },
+  "workspaceDatabasesExcluded": true,
+  "foundrySourceMatchesInitialReceipt": {
+    "bin/foundry.mjs": true,
+    "package-lock.json": true,
+    "package.json": true,
+    "schemas/workflow.schema.json": true,
+    "src/capabilities.mjs": true,
+    "src/components.mjs": true,
+    "src/construction-closed.mjs": true,
+    "src/construction-durable.mjs": true,
+    "src/construction-families.mjs": true,
+    "src/construction-industry.mjs": true,
+    "src/construction-objective.mjs": true,
+    "src/construction.mjs": true,
+    "src/data.mjs": true,
+    "src/dataflow.mjs": true,
+    "src/engine.mjs": true,
+    "src/evaluation.mjs": true,
+    "src/foundry.mjs": true,
+    "src/generator.mjs": true,
+    "src/hooks.mjs": true,
+    "src/http.mjs": true,
+    "src/install.mjs": true,
+    "src/mcp.mjs": true,
+    "src/opencode-free.mjs": true,
+    "src/process.mjs": true,
+    "src/runtime.mjs": true,
+    "src/store.mjs": true,
+    "src/trials.mjs": true,
+    "src/validate.mjs": true,
+    "tests/construction-objective.test.mjs": true
+  },
+  "foundryStatusUnchanged": true,
+  "sourceReviewAnchors": [
+    {
+      "report": "FOUNDRY_SOURCE_AUDIT.md",
+      "path": "/home/raed/Projects/workflow-foundry/src/construction-closed.mjs",
+      "expected": "db0cd1fe34388ee1e05cd99bbef01571f993755c727bbb80cb913e7231711c62",
+      "matches": true
+    },
+    {
+      "report": "FOUNDRY_SOURCE_AUDIT.md",
+      "path": "/home/raed/Projects/workflow-foundry/src/construction-durable.mjs",
+      "expected": "7ac436cf9afdca9e8d226cf5170de065e426238f7f7bd595e9e0475968bc9510",
+      "matches": true
+    },
+    {
+      "report": "FOUNDRY_SOURCE_AUDIT.md",
+      "path": "/home/raed/Projects/workflow-foundry/src/construction-families.mjs",
+      "expected": "2f64daf4277068b585411d74ff3cb1d674ff869873baed9a7e8e87bdd897cf75",
+      "matches": true
+    },
+    {
+      "report": "FOUNDRY_SOURCE_AUDIT.md",
+      "path": "/home/raed/Projects/workflow-foundry/src/construction-industry.mjs",
+      "expected": "a3cdd25176bbd4153b7c3651f97f5f856b88c38e10d9f42e71e8a7eb2a1e96d0",
+      "matches": true
+    },
+    {
+      "report": "FOUNDRY_SOURCE_AUDIT.md",
+      "path": "/home/raed/Projects/workflow-foundry/src/construction-objective.mjs",
+      "expected": "b71b08e1cf44720f4c0324b960ce3744c80a02890a95bd32efb3bb06d1011884",
+      "matches": true
+    },
+    {
+      "report": "FOUNDRY_SOURCE_AUDIT.md",
+      "path": "/home/raed/Projects/workflow-foundry/src/construction.mjs",
+      "expected": "d8e9b6cde807a7361ed7a7e0df814a7da3adb6a20326aaa34633d1cca1095dca",
+      "matches": true
+    },
+    {
+      "report": "FOUNDRY_SOURCE_AUDIT.md",
+      "path": "/home/raed/Projects/workflow-foundry/tests/construction-closeness.test.mjs",
+      "expected": "30083729b7d0ce526abde8b95224e1f01a2377d79a13f15a6bb20c7552a5ccd5",
+      "matches": true
+    },
+    {
+      "report": "FOUNDRY_SOURCE_AUDIT.md",
+      "path": "/home/raed/Projects/workflow-foundry/tests/construction-intent.test.mjs",
+      "expected": "3ee5b536bf892377289c54664f786b08bb25215db4ba6ac3e03afeddf3c848e5",
+      "matches": true
+    },
+    {
+      "report": "FOUNDRY_SOURCE_AUDIT.md",
+      "path": "/home/raed/Projects/workflow-foundry/tests/construction-objective.test.mjs",
+      "expected": "fa0a2a0750309bfa0339a62e2514059c82a6c1815039dc3aadbcc9d2bae45742",
+      "matches": true
+    },
+    {
+      "report": "FOUNDRY_SOURCE_AUDIT.md",
+      "path": "/home/raed/Projects/workflow-foundry/bin/foundry.mjs",
+      "expected": "40ef04eb524c2cff1d1880086ff231154f6e279dd19874f2cd1dbea2887a47cb",
+      "matches": true
+    },
+    {
+      "report": "FOUNDRY_SOURCE_AUDIT.md",
+      "path": "/home/raed/Projects/workflow-foundry/src/foundry.mjs",
+      "expected": "95f102573760ef92cd352813f66b30cd9f83bda05afb97a4cbe1069c8527a878",
+      "matches": true
+    },
+    {
+      "report": "FOUNDRY_SOURCE_AUDIT.md",
+      "path": "/home/raed/Projects/workflow-foundry/src/generator.mjs",
+      "expected": "3d86d95eaf4a2b6ee83d5fb50696a689926075adae4eeb4d8c25450c442fb11a",
+      "matches": true
+    },
+    {
+      "report": "FOUNDRY_SOURCE_AUDIT.md",
+      "path": "/home/raed/Projects/workflow-foundry/src/evaluation.mjs",
+      "expected": "64d42f9120e36b90bc7d194d5550773f00c1bb19d96c03f10ea8d194e6dd3d6f",
+      "matches": true
+    },
+    {
+      "report": "FOUNDRY_SOURCE_AUDIT.md",
+      "path": "/home/raed/Projects/workflow-foundry/src/runtime.mjs",
+      "expected": "af9fcabde20f706fac8ce2e09c0e646c0f100b301b64d1f6e1e4eb77e0b213db",
+      "matches": true
+    },
+    {
+      "report": "FOUNDRY_SOURCE_AUDIT.md",
+      "path": "/home/raed/Projects/workflow-foundry/src/store.mjs",
+      "expected": "61288a25c85a8dd1e1e076ca5059aedf80c35dc26bf0ab613c31030743a34732",
+      "matches": true
+    },
+    {
+      "report": "FOUNDRY_SOURCE_AUDIT.md",
+      "path": "/home/raed/Projects/workflow-foundry/src/trials.mjs",
+      "expected": "4ab066bb285245ae70ead081fa8de88e728dfc8f58eef77f50bf2a667117f437",
+      "matches": true
+    },
+    {
+      "report": "FOUNDRY_SOURCE_AUDIT.md",
+      "path": "/home/raed/Projects/workflow-foundry/src/capabilities.mjs",
+      "expected": "1707d4506f50e86498fa471dc3c8714615e6c06a1240014f2515aab58cc3ac49",
+      "matches": true
+    },
+    {
+      "report": "FOUNDRY_SOURCE_AUDIT.md",
+      "path": "/home/raed/Projects/workflow-foundry/src/validate.mjs",
+      "expected": "8b698d552e151f3380af58cbce5675b0a94c48601c9acd427be71281a3696c33",
+      "matches": true
+    },
+    {
+      "report": "FOUNDRY_SOURCE_AUDIT.md",
+      "path": "/home/raed/Projects/workflow-foundry/src/data.mjs",
+      "expected": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c",
+      "matches": true
+    },
+    {
+      "report": "FOUNDRY_SOURCE_AUDIT.md",
+      "path": "/home/raed/Projects/workflow-foundry/src/engine.mjs",
+      "expected": "6872eecabd6e4ccce58b7db25df82b1a97a292e530e0c38090e15844d5d7ed52",
+      "matches": true
+    },
+    {
+      "report": "FOUNDRY_SOURCE_AUDIT.md",
+      "path": "/home/raed/Projects/workflow-foundry/src/mcp.mjs",
+      "expected": "405df38215116761e1c16e4b40df2aafa0aa6afe2913e79a1d60ad6447e9d16b",
+      "matches": true
+    },
+    {
+      "report": "FOUNDRY_SOURCE_AUDIT.md",
+      "path": "/home/raed/Projects/workflow-foundry/src/opencode-free.mjs",
+      "expected": "6848bfcba60945d1dfebf8fbf7e2461590f1c33eb85f5e2dc3bce84a347eeeca",
+      "matches": true
+    },
+    {
+      "report": "ARC_AMP_RECONCILIATION.md",
+      "path": "/home/raed/.agentic-os/scripts/task-conditioned-workflow-v1.mjs",
+      "expected": "72916e99b447bdd8335fd7ad45c8d151c3e90757e6f7085cb33bd1fd288c25e8",
+      "matches": true
+    },
+    {
+      "report": "ARC_AMP_RECONCILIATION.md",
+      "path": "/home/raed/.agentic-os/scripts/intent-program-v1.mjs",
+      "expected": "e82fd02551aa65f34d47a016a68bdb317fc46d4a5567bf15fc60dff8f551549b",
+      "matches": true
+    },
+    {
+      "report": "ARC_AMP_RECONCILIATION.md",
+      "path": "/home/raed/.agentic-os/scripts/intent-compiler.mjs",
+      "expected": "a10b44ec405d2249fefd4cff42fabb4ac90ab14310a34def9e40c74297eaca5b",
+      "matches": true
+    },
+    {
+      "report": "ARC_AMP_RECONCILIATION.md",
+      "path": "/home/raed/.agentic-os/scripts/task-delta-v2.mjs",
+      "expected": "e976d8778bbebd0f55189daf0610977f95a44680f223294cddefdd6acd4ac942",
+      "matches": true
+    },
+    {
+      "report": "ARC_AMP_RECONCILIATION.md",
+      "path": "/home/raed/.agentic-os/scripts/event-kernel.mjs",
+      "expected": "9ed3fdf8e99ed101af50fe94cdbb2f05160d15e8ee908f7771f788b4ad2927c4",
+      "matches": true
+    },
+    {
+      "report": "ARC_AMP_RECONCILIATION.md",
+      "path": "/home/raed/.agentic-os/scripts/graph-control-kernel-v2.mjs",
+      "expected": "a232a1f77a6d7f8652e2d3faa3c24d5a93de070e2702399b24bead21899abe72",
+      "matches": true
+    },
+    {
+      "report": "ARC_AMP_RECONCILIATION.md",
+      "path": "/home/raed/.agentic-os/scripts/task-runtime.mjs",
+      "expected": "b327473d79a986921187d3c160a5cdb853a25c99e11acc02dfb174fb9e095704",
+      "matches": true
+    },
+    {
+      "report": "ARC_AMP_RECONCILIATION.md",
+      "path": "/home/raed/.agentic-os/scripts/arc-daemon.mjs",
+      "expected": "bc1fa0528935d3eb27868e9e315e58fe2c579c330647cea793684fa194d670ac",
+      "matches": true
+    },
+    {
+      "report": "ARC_AMP_RECONCILIATION.md",
+      "path": "/home/raed/Projects/amp-grok-cognition-20260915/crates/hippocampus-core/src/intent_reconciliation.rs",
+      "expected": "4e524d23f99d23491556f650842d1a3194ccabc40348c0288805ee57fc27b8c3",
+      "matches": true
+    },
+    {
+      "report": "ARC_AMP_RECONCILIATION.md",
+      "path": "/home/raed/Projects/amp-grok-cognition-20260915/crates/hippocampus-core/src/task_state.rs",
+      "expected": "d47377e866dc72ec0ed9d63b3d1f2b05a5432f11d3d04e3ec7946170d5d262e0",
+      "matches": true
+    },
+    {
+      "report": "ARC_AMP_RECONCILIATION.md",
+      "path": "/home/raed/Projects/amp-grok-cognition-20260915/crates/hippocampus-core/src/task_context.rs",
+      "expected": "3338b01b281f4f56c2083a8e8a56ca7620fa93947b32bce50a3ef454982cf89f",
+      "matches": true
+    },
+    {
+      "report": "ARC_AMP_RECONCILIATION.md",
+      "path": "/home/raed/Projects/amp-grok-cognition-20260915/crates/hippocampus-core/src/active_plan.rs",
+      "expected": "c4692ba00fbebb113a076e00d8d1fd4e33942eeb23d6b6bd9ff08b9644ef04f4",
+      "matches": true
+    },
+    {
+      "report": "ARC_AMP_RECONCILIATION.md",
+      "path": "/home/raed/Projects/amp-grok-cognition-20260915/crates/hippocampus-core/src/cognitive_visibility.rs",
+      "expected": "7d9e1991ef69db64234bf8736950a187511d80f345c0f7c3972c3b5ec1561fd5",
+      "matches": true
+    },
+    {
+      "report": "ARC_AMP_RECONCILIATION.md",
+      "path": "/home/raed/Projects/amp-grok-cognition-20260915/crates/hippocampus-core/src/correction_lineage.rs",
+      "expected": "5609f20b653a0a087f978497346c76be8bcdbc240ffe20cc03765246e9fbfa83",
+      "matches": true
+    },
+    {
+      "report": "ARC_AMP_RECONCILIATION.md",
+      "path": "/home/raed/Projects/amp-grok-cognition-20260915/crates/hippocampus-core/src/cognition.rs",
+      "expected": "75ffa7346aeef057f31c3af73993a192b3419b685447a05fec556cdcfff0f39d",
+      "matches": true
+    },
+    {
+      "report": "ARC_AMP_RECONCILIATION.md",
+      "path": "/home/raed/Projects/amp-grok-cognition-20260915/crates/hippocampusd/src/task_api.rs",
+      "expected": "97f1d035273db26b9bed9d6658dddf856aa42c131e79cab1fe4229b32720c075",
+      "matches": true
+    },
+    {
+      "report": "ARC_AMP_RECONCILIATION.md",
+      "path": "/home/raed/Projects/amp-grok-cognition-20260915/clients/python/src/hippocampus_client/intent_reconciliation.py",
+      "expected": "a020f734b7c2b62c05dba2c7fa2b3310348ff344334d5da2e184cebb9e4199ca",
+      "matches": true
+    },
+    {
+      "report": "ARC_AMP_RECONCILIATION.md",
+      "path": "/home/raed/Projects/amp-grok-intent-journey-20260915/followup-103227/installed_check_02.py",
+      "expected": "b0088874f397ab09d146e03930fc7ba65ca7664f0dd4d81a7c3098999d9cca0b",
+      "matches": true
+    },
+    {
+      "report": "ARC_AMP_RECONCILIATION.md",
+      "path": "/home/raed/Projects/amp-grok-intent-journey-20260915/followup-103227/installed-02/result.json",
+      "expected": "0235fe98e0bd93b7a84a34563fec77a18c794de9bde75a3af71cec6b2fcd054d",
+      "matches": true
+    },
+    {
+      "report": "ARC_AMP_RECONCILIATION.md",
+      "path": "/home/raed/Projects/amp-grok-intent-journey-20260915/followup-103227/legacy-mcp-result.json",
+      "expected": "20cac499212d6be6968da4a41f1a20f24cb15adf4bb6d0d045c3732efae34f95",
+      "matches": true
+    },
+    {
+      "report": "ARC_AMP_RECONCILIATION.md",
+      "path": "/home/raed/Projects/amp-grok-intent-journey-20260915/final-integrity.json",
+      "expected": "06553c01e1ab550f81069370b017fd910c8a9f0dccd9da1fa5b48afe62f80e28",
+      "matches": true
+    },
+    {
+      "report": "ARC_AMP_RECONCILIATION.md",
+      "path": "/home/raed/Projects/amp-grok-intent-journey-20260915/ready-for-prime.json",
+      "expected": "0f46fca24d2ffc1adcdd8015556af8cae296f78eaccf7dd0ce9821bc278f1e99",
+      "matches": true
+    }
+  ],
+  "testCounts": {
+    "construction-objective-tests.tap": {
+      "tests": 15,
+      "pass": 14,
+      "fail": 1
+    },
+    "construction-family-intent-tests.log": {
+      "tests": 44,
+      "pass": 44,
+      "fail": 0
+    }
+  },
+  "neuralManifestChecks": 101,
+  "neuralForwardOrMetricReplayPerformed": false,
+  "liveJevCalls": 0,
+  "sourceEdits": 0,
+  "knownFailureRetained": true,
+  "nextExperimentStatus": "Protocol prepared; cases/provider interface not instantiated or run"
+}

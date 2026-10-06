@@ -1,0 +1,84 @@
+{
+  "checkedAt": "2026-09-17T03:17:17.135Z",
+  "endpoint": "http://127.0.0.1:11434/api/tags",
+  "opencodeService": "stopped; not started or queried via auto-start",
+  "inferenceCalls": 0,
+  "models": [
+    {
+      "name": "ornith:9b",
+      "model": "ornith:9b",
+      "digest": "7a0ce1e415904bc95ddfc44adc6b2a1038d858814a304750be4915e6bfa63deb",
+      "size": 5629109310,
+      "modified_at": "2026-08-23T03:01:05.652952425+05:30",
+      "details": {
+        "parent_model": "",
+        "format": "gguf",
+        "family": "qwen35",
+        "families": [
+          "qwen35"
+        ],
+        "parameter_size": "9.0B",
+        "quantization_level": "Q4_K_M",
+        "context_length": 262144,
+        "embedding_length": 4096
+      }
+    },
+    {
+      "name": "contrare/tmax-9b:q5_k_m",
+      "model": "contrare/tmax-9b:q5_k_m",
+      "digest": "56a6f380399f3e1e74eedd498265e01a999377bd6d109f96e6de98d87fc1eba9",
+      "size": 6467970537,
+      "modified_at": "2026-08-12T18:34:16.219605207+05:30",
+      "details": {
+        "parent_model": "",
+        "format": "gguf",
+        "family": "qwen35",
+        "families": [
+          "qwen35"
+        ],
+        "parameter_size": "9.0B",
+        "quantization_level": "Q5_K_M",
+        "context_length": 262144,
+        "embedding_length": 4096
+      }
+    },
+    {
+      "name": "qwen3.5-9b:itb",
+      "model": "qwen3.5-9b:itb",
+      "digest": "2afe0596021d6625b47a72567b3ce6692c2afa73a686d8bda8bd820c0b1710fb",
+      "size": 5680522838,
+      "modified_at": "2026-08-09T04:59:22.960074015+05:30",
+      "details": {
+        "parent_model": "",
+        "format": "gguf",
+        "family": "qwen35",
+        "families": [
+          "qwen35"
+        ],
+        "parameter_size": "9.0B",
+        "quantization_level": "Q4_K_M",
+        "context_length": 262144,
+        "embedding_length": 4096
+      }
+    },
+    {
+      "name": "itb-qwen3.5:9b",
+      "model": "itb-qwen3.5:9b",
+      "digest": "2afe0596021d6625b47a72567b3ce6692c2afa73a686d8bda8bd820c0b1710fb",
+      "size": 5680522838,
+      "modified_at": "2026-08-09T04:56:37.808053066+05:30",
+      "details": {
+        "parent_model": "",
+        "format": "gguf",
+        "family": "qwen35",
+        "families": [
+          "qwen35"
+        ],
+        "parameter_size": "9.0B",
+        "quantization_level": "Q4_K_M",
+        "context_length": 262144,
+        "embedding_length": 4096
+      }
+    }
+  ]
+}

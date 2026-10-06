@@ -1,0 +1,251 @@
+{
+  "status": "PASS_SAVED_TEST_REVIEW",
+  "at": "2026-09-17T09:10:00.268Z",
+  "runner": "prime session64977; reviewed from saved process receipt",
+  "tests": 23,
+  "passed": 23,
+  "failed": 0,
+  "skipped": 0,
+  "actualAdapterControls": 10,
+  "observations": [
+    {
+      "name": "caller",
+      "code": "CANCELLED",
+      "statusCode": 200,
+      "firstKind": "caller",
+      "secondary": [
+        {
+          "kind": "abort-observation",
+          "code": "MODEL_TRANSPORT",
+          "name": "AbortError",
+          "observedCode": 20
+        },
+        {
+          "kind": "process",
+          "code": "CANCELLED",
+          "name": "FoundryError",
+          "observedCode": "CANCELLED"
+        }
+      ],
+      "forwarded": 1,
+      "completed": 0,
+      "partial": true,
+      "receipt": "checks-a0b747ed-144f-48eb-a25b-0dcf46a92029/cases/termination-caller-Zbc6Cu/OBSERVATION.json",
+      "sha256": "164fabf91d037a6a59b8dee0f8de225e6242b00c0704b3cd9d9588787c46300a"
+    },
+    {
+      "name": "caller-before-injected-deadline",
+      "code": "CANCELLED",
+      "statusCode": 200,
+      "firstKind": "caller",
+      "secondary": [
+        {
+          "kind": "deadline",
+          "code": "TIMEOUT",
+          "name": "FoundryError",
+          "observedCode": "TIMEOUT"
+        },
+        {
+          "kind": "abort-observation",
+          "code": "MODEL_TRANSPORT",
+          "name": "AbortError",
+          "observedCode": 20
+        },
+        {
+          "kind": "process",
+          "code": "CANCELLED",
+          "name": "FoundryError",
+          "observedCode": "CANCELLED"
+        }
+      ],
+      "forwarded": 1,
+      "completed": 0,
+      "partial": true,
+      "receipt": "checks-a0b747ed-144f-48eb-a25b-0dcf46a92029/cases/termination-caller-before-injected-deadline-6AGm31/OBSERVATION.json",
+      "sha256": "a103f754c21c431e293bb1655c815af4e9476e48573a10bb715a2a642beebdb9"
+    },
+    {
+      "name": "completed",
+      "code": null,
+      "statusCode": 200,
+      "firstKind": null,
+      "secondary": [],
+      "forwarded": 1,
+      "completed": 1,
+      "partial": false,
+      "receipt": "checks-a0b747ed-144f-48eb-a25b-0dcf46a92029/cases/termination-completed-2PFkbI/OBSERVATION.json",
+      "sha256": "300bdeb59678a75c9fdc9fcc7256ef9de343d3360668f3278d47d9c0f310dc4f"
+    },
+    {
+      "name": "deadline-before-caller",
+      "code": "TIMEOUT",
+      "statusCode": 200,
+      "firstKind": "deadline",
+      "secondary": [
+        {
+          "kind": "caller",
+          "code": "CANCELLED",
+          "name": "FoundryError",
+          "observedCode": "CANCELLED"
+        },
+        {
+          "kind": "abort-observation",
+          "code": "MODEL_TRANSPORT",
+          "name": "AbortError",
+          "observedCode": 20
+        },
+        {
+          "kind": "process",
+          "code": "CANCELLED",
+          "name": "FoundryError",
+          "observedCode": "CANCELLED"
+        }
+      ],
+      "forwarded": 1,
+      "completed": 0,
+      "partial": true,
+      "receipt": "checks-a0b747ed-144f-48eb-a25b-0dcf46a92029/cases/termination-deadline-before-caller-iIzdle/OBSERVATION.json",
+      "sha256": "7fb5b1d994b33240e09957f7f4449292c0d20b4a89d2dbc5431961d28604838d"
+    },
+    {
+      "name": "deadline",
+      "code": "TIMEOUT",
+      "statusCode": 200,
+      "firstKind": "deadline",
+      "secondary": [
+        {
+          "kind": "abort-observation",
+          "code": "MODEL_TRANSPORT",
+          "name": "AbortError",
+          "observedCode": 20
+        },
+        {
+          "kind": "process",
+          "code": "CANCELLED",
+          "name": "FoundryError",
+          "observedCode": "CANCELLED"
+        }
+      ],
+      "forwarded": 1,
+      "completed": 0,
+      "partial": true,
+      "receipt": "checks-a0b747ed-144f-48eb-a25b-0dcf46a92029/cases/termination-deadline-oKFn6w/OBSERVATION.json",
+      "sha256": "01bd13a23507291418c8f579938aecbfe0820e01b109b3546554a74d4d2500b9"
+    },
+    {
+      "name": "http-403",
+      "code": "MODEL_AUTH_REQUIRED",
+      "statusCode": 403,
+      "firstKind": "http",
+      "secondary": [
+        {
+          "kind": "process",
+          "code": "CANCELLED",
+          "name": "FoundryError",
+          "observedCode": "CANCELLED"
+        }
+      ],
+      "forwarded": 1,
+      "completed": 0,
+      "partial": false,
+      "receipt": "checks-a0b747ed-144f-48eb-a25b-0dcf46a92029/cases/termination-http-403-2eMGvS/OBSERVATION.json",
+      "sha256": "6cdf72ba76570bb165dbce747a988a2423985994811336453f33e610f2f66f82"
+    },
+    {
+      "name": "http-429",
+      "code": "MODEL_RATE_LIMIT",
+      "statusCode": 429,
+      "firstKind": "http",
+      "secondary": [
+        {
+          "kind": "process",
+          "code": "CANCELLED",
+          "name": "FoundryError",
+          "observedCode": "CANCELLED"
+        }
+      ],
+      "forwarded": 1,
+      "completed": 0,
+      "partial": false,
+      "receipt": "checks-a0b747ed-144f-48eb-a25b-0dcf46a92029/cases/termination-http-429-cSan0w/OBSERVATION.json",
+      "sha256": "1cc61a7a87f4033874969093b74a576244831f697e1460c01cd715bb4af911fa"
+    },
+    {
+      "name": "http-before-deadline",
+      "code": "MODEL_RATE_LIMIT",
+      "statusCode": 429,
+      "firstKind": "http",
+      "secondary": [
+        {
+          "kind": "deadline",
+          "code": "TIMEOUT",
+          "name": "FoundryError",
+          "observedCode": "TIMEOUT"
+        },
+        {
+          "kind": "abort-observation",
+          "code": "MODEL_TRANSPORT",
+          "name": "AbortError",
+          "observedCode": 20
+        },
+        {
+          "kind": "process",
+          "code": "CANCELLED",
+          "name": "FoundryError",
+          "observedCode": "CANCELLED"
+        }
+      ],
+      "forwarded": 1,
+      "completed": 0,
+      "partial": true,
+      "receipt": "checks-a0b747ed-144f-48eb-a25b-0dcf46a92029/cases/termination-http-before-deadline-xVhzQw/OBSERVATION.json",
+      "sha256": "2e4b73b5c54222239adfd72d8b9ac7d45f52880e9f7c02be131eaf36fe0d1903"
+    },
+    {
+      "name": "network",
+      "code": "MODEL_TRANSPORT",
+      "statusCode": 200,
+      "firstKind": "transport",
+      "secondary": [
+        {
+          "kind": "process",
+          "code": "CANCELLED",
+          "name": "FoundryError",
+          "observedCode": "CANCELLED"
+        }
+      ],
+      "forwarded": 1,
+      "completed": 0,
+      "partial": true,
+      "receipt": "checks-a0b747ed-144f-48eb-a25b-0dcf46a92029/cases/termination-network-ZlIxdD/OBSERVATION.json",
+      "sha256": "c8c64638d6121ebaa37e024d1b1953e46ef37591c2b42b23181a8e8f45532682"
+    },
+    {
+      "name": "transport-before-injected-deadline",
+      "code": "MODEL_TRANSPORT",
+      "statusCode": 200,
+      "firstKind": "transport",
+      "secondary": [
+        {
+          "kind": "deadline",
+          "code": "TIMEOUT",
+          "name": "FoundryError",
+          "observedCode": "TIMEOUT"
+        },
+        {
+          "kind": "process",
+          "code": "CANCELLED",
+          "name": "FoundryError",
+          "observedCode": "CANCELLED"
+        }
+      ],
+      "forwarded": 1,
+      "completed": 0,
+      "partial": true,
+      "receipt": "checks-a0b747ed-144f-48eb-a25b-0dcf46a92029/cases/termination-transport-before-injected-deadline-gLdXRj/OBSERVATION.json",
+      "sha256": "41fff5aff84dc29a3e38bf901078fed4b4a1bc12bbb90c37584c56011a20eed4"
+    }
+  ],
+  "liveModelCalls": 0,
+  "externalProviderRequests": 0
+}

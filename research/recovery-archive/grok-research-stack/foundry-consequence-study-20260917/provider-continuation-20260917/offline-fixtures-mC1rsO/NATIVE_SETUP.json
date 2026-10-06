@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "requestStatusBeforeCapture": "diagnostic",
+  "requestStatusAfterCapture": "failed",
+  "automaticGeneration": false,
+  "taskSHA256": "f5eb99642468d90583162ac60539f808f074083ace570da0178509bad4b1f650",
+  "registryHash": "bb3f73d712e174d3084248c8d199a620b7eeb2a7b2655d64b6286ab3af536d0e",
+  "selectedSkills": [
+    "workflow-foundry",
+    "runtime-native"
+  ],
+  "promptBytes": 48508,
+  "promptSHA256": "8a155570a83b8e3fe69877daddd0b86cf8a0d587c28c227bac43cd04d6b2b274",
+  "providerCallback": "supplied capture-only failure",
+  "jobStatus": "failed",
+  "expectedStop": "PREFLIGHT_CAPTURE_ONLY",
+  "modelCalls": 0,
+  "suiteLoads": 0,
+  "runtimeExecutions": 0,
+  "priorCOSPromptByteEqualityClaimed": false
+}

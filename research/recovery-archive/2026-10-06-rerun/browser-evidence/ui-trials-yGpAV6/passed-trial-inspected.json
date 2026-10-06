@@ -1,0 +1,442 @@
+{
+  "artifactReceipts": [
+    {
+      "name": "neutral.txt",
+      "bytes": 33,
+      "sha256": "7bf33505c0f808d0176695bf7c972967da1a57abce2bb87c08079a8692737265"
+    }
+  ],
+  "baseHash": null,
+  "cost": 0,
+  "createdAt": 1791274332480,
+  "error": null,
+  "eventHead": {
+    "hash": "4e0d8736543c4892cbb150d1cc5d6c8694913056c8f3662ba5f1e7d8d4c1796e",
+    "seq": 13
+  },
+  "finishedAt": 1791274332675,
+  "id": "2939bd4f-8b2a-42ad-975c-885c77769636",
+  "inputHash": "dc9eb06d34678c51646ff351f87f265f5425aaed03f0a9d147b14e4b379c0d43",
+  "localAcceptancePassed": true,
+  "ordinal": 2,
+  "outputHash": "f94c3c23960a29436fb7c61f1721dc3c31dbd9ac73fc74eadf216113c877297a",
+  "pid": 1910544,
+  "policyHash": "fcd24fa36c355427c704e57450e66d721afeed2f19367c577c89ba8ec2abaeca",
+  "processStart": "8481913",
+  "qualification": "Isolated diagnostic execution only. Local acceptance is model-authored; no independent outcome qualification.",
+  "qualificationLevel": "construction",
+  "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+  "requestId": "6d77c25f-be87-4ad8-9c29-ad0abbd03518",
+  "runId": "0e969d5f-613e-4f93-8f03-21f74be6e54d",
+  "runStatus": "succeeded",
+  "status": "finished",
+  "steps": 4,
+  "taskOutcomeQualified": false,
+  "workflowHash": "158f263ad6e967cab015576f74a33f6a815fb3bd6897ef296c241e9e60018408",
+  "workflowId": "UITrialNested",
+  "workflowVersion": 1,
+  "workflow": {
+    "acceptance": [
+      {
+        "left": {
+          "$ref": "nodes.each.count"
+        },
+        "op": "eq",
+        "right": {
+          "$ref": "input.count"
+        }
+      }
+    ],
+    "budget": {
+      "maxConcurrency": 1,
+      "maxCost": 0,
+      "maxDurationMs": 5000,
+      "maxSteps": 30
+    },
+    "domain": "general",
+    "envelope": {
+      "assumptions": [
+        "Handwritten local integration controls"
+      ],
+      "risks": [
+        "Mixing trial and applied workflow evidence"
+      ],
+      "successCriteria": [
+        "The output preserves the supplied values."
+      ]
+    },
+    "goal": "Preserve the supplied values and inspect their actual execution.",
+    "id": "UITrialNested",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "count": {
+          "type": "integer"
+        },
+        "items": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 2,
+          "type": "array"
+        }
+      },
+      "required": [
+        "items",
+        "count"
+      ],
+      "type": "object"
+    },
+    "nodes": [
+      {
+        "body": {
+          "acceptance": [
+            {
+              "left": {
+                "$ref": "nodes.echo.value"
+              },
+              "op": "eq",
+              "right": {
+                "$ref": "item"
+              }
+            }
+          ],
+          "nodes": [
+            {
+              "args": {
+                "value": {
+                  "$ref": "item"
+                }
+              },
+              "description": "Neutral echo control",
+              "id": "echo",
+              "kind": "task",
+              "needs": [],
+              "retry": {
+                "maxAttempts": 1
+              },
+              "timeoutMs": 1000,
+              "tool": "core.identity"
+            }
+          ]
+        },
+        "description": "Inspect each neutral input",
+        "id": "each",
+        "items": {
+          "$ref": "input.items"
+        },
+        "kind": "map",
+        "maxItems": 2,
+        "needs": []
+      },
+      {
+        "args": {
+          "content": "Handwritten local trial evidence.",
+          "name": "neutral.txt"
+        },
+        "description": "Neutral receipt control",
+        "id": "receipt",
+        "kind": "task",
+        "needs": [
+          "each"
+        ],
+        "retry": {
+          "maxAttempts": 1
+        },
+        "timeoutMs": 1000,
+        "tool": "core.artifact"
+      }
+    ],
+    "schemaVersion": "1.0",
+    "title": "Neutral UITrialNested workflow",
+    "version": 1
+  },
+  "run": {
+    "approvals": {},
+    "cost": 0,
+    "createdAt": 1791274332596,
+    "deadline": 1791274337596,
+    "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+    "error": null,
+    "eventHead": {
+      "hash": "4e0d8736543c4892cbb150d1cc5d6c8694913056c8f3662ba5f1e7d8d4c1796e",
+      "seq": 13
+    },
+    "frames": {
+      "root/each:0": {
+        "contextHash": "9d6318e1dc937b7d3fdbb4db43c4042f4fe8445c5d006ea5c56768741aa766ec",
+        "nodes": {
+          "echo": {
+            "argsHash": "e23653a1686d403a9853773edd674a458123692265548359c94983d6376d8e2f",
+            "attempts": 1,
+            "completedAt": 1791274332629,
+            "completedSequence": 6,
+            "effects": "none",
+            "idempotencyKey": "2c18cc1544bc59cbdb177098b9237fc324bbf0f466be8ab1402f66c47c126ee9",
+            "kind": "task",
+            "outputHash": "e23653a1686d403a9853773edd674a458123692265548359c94983d6376d8e2f",
+            "startedAt": 1791274332625,
+            "startedSequence": 5,
+            "status": "completed",
+            "tool": "core.identity"
+          }
+        },
+        "outputs": {
+          "echo": {
+            "value": "violet"
+          }
+        }
+      },
+      "root/each:1": {
+        "contextHash": "620d8831cc905b216d512ad8102a5b5e009c6f1ebdebc82cda51f5d95d072b06",
+        "nodes": {
+          "echo": {
+            "argsHash": "efedba69c818e2a6e94b125052b4fd44c6962e28a13e5c40b6c8ba0acf5745e8",
+            "attempts": 1,
+            "completedAt": 1791274332644,
+            "completedSequence": 9,
+            "effects": "none",
+            "idempotencyKey": "b693c8393c90b5bbbba3f9efdd7232fac57222f3453510268aff4d6f177a3262",
+            "kind": "task",
+            "outputHash": "efedba69c818e2a6e94b125052b4fd44c6962e28a13e5c40b6c8ba0acf5745e8",
+            "startedAt": 1791274332639,
+            "startedSequence": 8,
+            "status": "completed",
+            "tool": "core.identity"
+          }
+        },
+        "outputs": {
+          "echo": {
+            "value": "indigo"
+          }
+        }
+      }
+    },
+    "id": "0e969d5f-613e-4f93-8f03-21f74be6e54d",
+    "input": {
+      "count": 2,
+      "items": [
+        "violet",
+        "indigo"
+      ]
+    },
+    "nodes": {
+      "each": {
+        "attempts": 1,
+        "completedAt": 1791274332649,
+        "completedSequence": 10,
+        "kind": "map",
+        "outputHash": "5b7ce8aaf2a5e86f3e764179a70b3fba2e1e8201b996c2807e94562742fc19c0",
+        "startedAt": 1791274332610,
+        "startedSequence": 3,
+        "status": "completed"
+      },
+      "receipt": {
+        "argsHash": "44467a9977095480b304bb216340a60a0b98675b6d0e1ca4c29072cc466eef60",
+        "attempts": 1,
+        "completedAt": 1791274332665,
+        "completedSequence": 12,
+        "effects": "idempotent",
+        "idempotencyKey": "84f4ebb0601c32586ec8d0482daf8a80a05d8c77d269c395f5aa152e38cc210e",
+        "kind": "task",
+        "outputHash": "02e19827e0f54b6fb6d9bd6452df1d6be82a906ce1d0382de3fe0bb726d99d16",
+        "startedAt": 1791274332655,
+        "startedSequence": 11,
+        "status": "completed",
+        "tool": "core.artifact"
+      }
+    },
+    "outputs": {
+      "each": {
+        "count": 2,
+        "items": [
+          {
+            "echo": {
+              "value": "violet"
+            }
+          },
+          {
+            "echo": {
+              "value": "indigo"
+            }
+          }
+        ]
+      },
+      "receipt": {
+        "bytes": 33,
+        "name": "neutral.txt",
+        "sha256": "7bf33505c0f808d0176695bf7c972967da1a57abce2bb87c08079a8692737265"
+      }
+    },
+    "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+    "resumeCount": 1,
+    "status": "succeeded",
+    "steps": 4,
+    "updatedAt": 1791274332670,
+    "workflowHash": "158f263ad6e967cab015576f74a33f6a815fb3bd6897ef296c241e9e60018408",
+    "workflowId": "UITrialNested",
+    "executionActive": false,
+    "independentTaskVerified": false
+  },
+  "events": [
+    {
+      "at": 1791274332596,
+      "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+      "inputHash": "dc9eb06d34678c51646ff351f87f265f5425aaed03f0a9d147b14e4b379c0d43",
+      "policyHash": "fcd24fa36c355427c704e57450e66d721afeed2f19367c577c89ba8ec2abaeca",
+      "previousHash": null,
+      "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77",
+      "seq": 1,
+      "type": "run.created",
+      "workflowHash": "158f263ad6e967cab015576f74a33f6a815fb3bd6897ef296c241e9e60018408",
+      "hash": "7c69d569b7ddfe5c3743d076a8b6a1e47ff71ead960f0012b2b3523745f506b5"
+    },
+    {
+      "at": 1791274332604,
+      "previousHash": "7c69d569b7ddfe5c3743d076a8b6a1e47ff71ead960f0012b2b3523745f506b5",
+      "seq": 2,
+      "token": "bd9f5dd8-a455-4e2c-aedb-dc5e2df384ab",
+      "type": "runner.acquired",
+      "hash": "1808a62d4c537df2187bf0a5d08da944f0ff7692b9e0b1d4767fe1369cbd810f"
+    },
+    {
+      "at": 1791274332610,
+      "kind": "map",
+      "nodeKey": "root/each",
+      "previousHash": "1808a62d4c537df2187bf0a5d08da944f0ff7692b9e0b1d4767fe1369cbd810f",
+      "reservedCost": 0,
+      "seq": 3,
+      "type": "node.started",
+      "hash": "efec2763a8bc2dd78a69a019b3e4db1069316752d257246b9124ef0c16f8ee4d"
+    },
+    {
+      "at": 1791274332620,
+      "contextHash": "9d6318e1dc937b7d3fdbb4db43c4042f4fe8445c5d006ea5c56768741aa766ec",
+      "frameKey": "root/each:0",
+      "previousHash": "efec2763a8bc2dd78a69a019b3e4db1069316752d257246b9124ef0c16f8ee4d",
+      "seq": 4,
+      "type": "frame.created",
+      "hash": "a310cb7404f49cc9e4e9653ba54bb38d3b5d9c426496c800b2564127e774f9a8"
+    },
+    {
+      "argsHash": "e23653a1686d403a9853773edd674a458123692265548359c94983d6376d8e2f",
+      "at": 1791274332625,
+      "effects": "none",
+      "idempotencyKey": "2c18cc1544bc59cbdb177098b9237fc324bbf0f466be8ab1402f66c47c126ee9",
+      "kind": "task",
+      "nodeKey": "root/each:0/echo",
+      "previousHash": "a310cb7404f49cc9e4e9653ba54bb38d3b5d9c426496c800b2564127e774f9a8",
+      "reservedCost": 0,
+      "seq": 5,
+      "tool": "core.identity",
+      "type": "tool.intent",
+      "hash": "27419219642d8bc73209e1d0a3790b5c4fa6a857c82014938c96cba448843214"
+    },
+    {
+      "at": 1791274332629,
+      "nodeKey": "root/each:0/echo",
+      "output": {
+        "value": "violet"
+      },
+      "outputHash": "e23653a1686d403a9853773edd674a458123692265548359c94983d6376d8e2f",
+      "previousHash": "27419219642d8bc73209e1d0a3790b5c4fa6a857c82014938c96cba448843214",
+      "seq": 6,
+      "type": "node.completed",
+      "hash": "bb5fa93858bffb07ba45a4f45a84d2d7c7f45964f368da06338d279455cfb1a0"
+    },
+    {
+      "at": 1791274332634,
+      "contextHash": "620d8831cc905b216d512ad8102a5b5e009c6f1ebdebc82cda51f5d95d072b06",
+      "frameKey": "root/each:1",
+      "previousHash": "bb5fa93858bffb07ba45a4f45a84d2d7c7f45964f368da06338d279455cfb1a0",
+      "seq": 7,
+      "type": "frame.created",
+      "hash": "088fb13f5470d69b6f5078a473352c11a02e3f103bcaea57d9c6d9ab73772e26"
+    },
+    {
+      "argsHash": "efedba69c818e2a6e94b125052b4fd44c6962e28a13e5c40b6c8ba0acf5745e8",
+      "at": 1791274332639,
+      "effects": "none",
+      "idempotencyKey": "b693c8393c90b5bbbba3f9efdd7232fac57222f3453510268aff4d6f177a3262",
+      "kind": "task",
+      "nodeKey": "root/each:1/echo",
+      "previousHash": "088fb13f5470d69b6f5078a473352c11a02e3f103bcaea57d9c6d9ab73772e26",
+      "reservedCost": 0,
+      "seq": 8,
+      "tool": "core.identity",
+      "type": "tool.intent",
+      "hash": "caab76d7e2dcf86eba159145c7c25804d4dcb852db582501b1e5ebe3a9c1179b"
+    },
+    {
+      "at": 1791274332644,
+      "nodeKey": "root/each:1/echo",
+      "output": {
+        "value": "indigo"
+      },
+      "outputHash": "efedba69c818e2a6e94b125052b4fd44c6962e28a13e5c40b6c8ba0acf5745e8",
+      "previousHash": "caab76d7e2dcf86eba159145c7c25804d4dcb852db582501b1e5ebe3a9c1179b",
+      "seq": 9,
+      "type": "node.completed",
+      "hash": "3902f2358bee94af4e2d9e37852e2ce9c3ebaa3b6bd9620ad64a26dbb94af1b8"
+    },
+    {
+      "at": 1791274332649,
+      "nodeKey": "root/each",
+      "output": {
+        "count": 2,
+        "items": [
+          {
+            "echo": {
+              "value": "violet"
+            }
+          },
+          {
+            "echo": {
+              "value": "indigo"
+            }
+          }
+        ]
+      },
+      "outputHash": "5b7ce8aaf2a5e86f3e764179a70b3fba2e1e8201b996c2807e94562742fc19c0",
+      "previousHash": "3902f2358bee94af4e2d9e37852e2ce9c3ebaa3b6bd9620ad64a26dbb94af1b8",
+      "seq": 10,
+      "type": "node.completed",
+      "hash": "4f951de1cc881297981bab9fd272486c7384a30ea1d75eb29c2fba30848e6e56"
+    },
+    {
+      "argsHash": "44467a9977095480b304bb216340a60a0b98675b6d0e1ca4c29072cc466eef60",
+      "at": 1791274332655,
+      "effects": "idempotent",
+      "idempotencyKey": "84f4ebb0601c32586ec8d0482daf8a80a05d8c77d269c395f5aa152e38cc210e",
+      "kind": "task",
+      "nodeKey": "root/receipt",
+      "previousHash": "4f951de1cc881297981bab9fd272486c7384a30ea1d75eb29c2fba30848e6e56",
+      "reservedCost": 0,
+      "seq": 11,
+      "tool": "core.artifact",
+      "type": "tool.intent",
+      "hash": "ac3232b05b1852ceb619ba7624f6f362b5eabad155bbb3941f1262cb50ed538c"
+    },
+    {
+      "at": 1791274332665,
+      "nodeKey": "root/receipt",
+      "output": {
+        "bytes": 33,
+        "name": "neutral.txt",
+        "sha256": "7bf33505c0f808d0176695bf7c972967da1a57abce2bb87c08079a8692737265"
+      },
+      "outputHash": "02e19827e0f54b6fb6d9bd6452df1d6be82a906ce1d0382de3fe0bb726d99d16",
+      "previousHash": "ac3232b05b1852ceb619ba7624f6f362b5eabad155bbb3941f1262cb50ed538c",
+      "seq": 12,
+      "type": "node.completed",
+      "hash": "379e692ece57b2b9e164c8d72260a19137164ecba237dd8569f091747f375756"
+    },
+    {
+      "at": 1791274332670,
+      "previousHash": "379e692ece57b2b9e164c8d72260a19137164ecba237dd8569f091747f375756",
+      "seq": 13,
+      "type": "run.succeeded",
+      "hash": "4e0d8736543c4892cbb150d1cc5d6c8694913056c8f3662ba5f1e7d8d4c1796e"
+    }
+  ]
+}

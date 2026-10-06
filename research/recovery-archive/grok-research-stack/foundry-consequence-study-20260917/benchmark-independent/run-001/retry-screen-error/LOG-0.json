@@ -1,0 +1,22 @@
+[
+  {
+    "ordinal": 1,
+    "instrument": "screen",
+    "sampleId": "independent-a",
+    "nodeKey": "root/screening",
+    "idempotencyKey": "7b7a6adff04c8e973c207bdbe44f5fd8076959a15b355ef9b66b4baf84827cbb",
+    "syntheticCost": 1,
+    "outcome": "threw",
+    "errorCode": "SCREEN_ERROR"
+  },
+  {
+    "ordinal": 2,
+    "instrument": "screen",
+    "sampleId": "independent-a",
+    "nodeKey": "root/screening",
+    "idempotencyKey": "7b7a6adff04c8e973c207bdbe44f5fd8076959a15b355ef9b66b4baf84827cbb",
+    "syntheticCost": 1,
+    "outcome": "threw",
+    "errorCode": "SCREEN_ERROR"
+  }
+]

@@ -1,0 +1,51 @@
+✔ native green-but-wrong witness: host observation fails while legacy repair rejects REPAIR_RUN_STATE (82.425936ms)
+✔ native full trajectory: wrong bytes -> observed repair -> proposal v2 -> apply -> execution -> independently matching bytes (54.228365ms)
+✔ completed run with no producer and a proven absent required file opens observed-outcome repair (29.514461ms)
+✔ native wrong filename -> observed required-file absence -> repair v2 -> validated required file; original bytes retained (49.617224ms)
+✔ missing bytes after a completed producer are unknown and cannot open repair (33.275151ms)
+✔ lost artifact namespace after another successful producer is unknown, not required-file absence (32.645044ms)
+✔ fault-injected unavailable filesystem observer records unknown and dispatches no repair (34.7305ms)
+✔ deleting already observed bytes preserves historical evidence and blocks subsequent repair (35.034372ms)
+✔ matching JSON is satisfied, including reordered keys; no repair authority follows (33.596335ms)
+✔ observed malformed JSON is unsatisfied, distinct from unknown (32.054573ms)
+✔ frozen oracle cannot be replaced by changed expectation or evaluator; returned objects are copies (31.689214ms)
+✔ same-root later requests cannot supersede their frozen contract (32.539515ms)
+✔ historical observer implementation cannot qualify a new run through a stale contract (37.404714ms)
+✔ stale observed version cannot create a new repair (31.025796ms)
+✔ stale repair cannot propose, and existing apply CAS rejects a competing head (39.228688ms)
+✔ cross-run and cross-request repair bindings cannot reuse an unrelated receipt (44.574983ms)
+✔ observation rejects input and root contract substitution (43.130723ms)
+✔ tampered live artifact is rejected; original byte receipt remains inspectable (38.632326ms)
+✔ pre-observation artifact tampering cannot turn a false success into host evidence (30.808127ms)
+✔ a manually planted artifact with no completed producer evidence is rejected (26.140148ms)
+▶ tampered event chain and silent checkpoint edits fail independently
+  ✔ event chain (31.27725ms)
+  ✔ checkpoint (33.058302ms)
+✔ tampered event chain and silent checkpoint edits fail independently (64.66969ms)
+✔ immutable ledger rejects updates/deletes, and receipt hash detects deliberately corrupted stored evidence (38.127345ms)
+✔ model-supplied receipt objects and made-up passing receipt IDs confer no authority (32.39855ms)
+✔ goal and success-criteria changes are rejected by adapter and the unchanged Store path (38.396482ms)
+✔ repair idempotence persists across independent Store connections with no new provider or runtime work (38.361045ms)
+✔ further outcome repair preserves root/parent continuity and enforces bounded depth (50.955543ms)
+▶ cancelled, waiting, uncertain and owned run states cannot qualify as observed terminal outcomes
+  ✔ cancelled (106.454481ms)
+  ✔ waiting (36.662517ms)
+  ✔ uncertain (35.766591ms)
+  ✔ owned (33.396149ms)
+✔ cancelled, waiting, uncertain and owned run states cannot qualify as observed terminal outcomes (213.06293ms)
+✔ registry implementation drift invalidates observation bindings (34.949282ms)
+✔ artifact symlinks, traversal basenames and oversize files are rejected (31.620215ms)
+✔ outcome-aware design context and generation facade retain exact task and current version without failedRunId (40.72222ms)
+✔ bounded comparison keeps actionable differences when full JSON values require truncation (41.071276ms)
+✔ comparison encodes missing keys and array differences with bounded escaped JSON pointers (77.658843ms)
+✔ malformed observed JSON is exposed as bounded data while the expected value stays explicit (33.468404ms)
+✔ existing generator works only when explicitly invoked, with a supplied offline candidate and no model service (43.173143ms)
+✔ tampered repair metadata is rejected before candidate acceptance (32.839431ms)
+ℹ tests 41
+ℹ suites 0
+ℹ pass 41
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1681.690791

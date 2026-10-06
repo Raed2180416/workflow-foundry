@@ -1,0 +1,6 @@
+{
+  "evidenceDirectory": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/benchmark/integration-rTG6v9",
+  "calibrationPassed": true,
+  "modelsCalled": 0,
+  "note": "See TAP exit status for full integration test result."
+}

@@ -1,0 +1,36 @@
+{
+  "name": "empty-missing-artifact",
+  "accepted": false,
+  "anticipatedPass": false,
+  "expectationMet": true,
+  "claim": "Empty input still requires manifest.",
+  "cases": [
+    {
+      "accepted": false,
+      "nativePassed": false,
+      "status": "succeeded",
+      "runId": "f84a17c8-ba8c-40ef-abd8-8b7c29f58f62",
+      "workflowHash": "ae144dd998a9869ba743a5fa8b29ccfe5a7297ee36be6f3d000adff379c7c37f",
+      "registryHash": "bb3f73d712e174d3084248c8d199a620b7eeb2a7b2655d64b6286ab3af536d0e",
+      "instruments": {
+        "passed": true,
+        "problems": [],
+        "missingCalls": 0,
+        "forbiddenCalls": 0,
+        "duplicateCalls": 0,
+        "wrongOrder": 0,
+        "invalidObservations": 0,
+        "screenCalls": 0,
+        "reproduceCalls": 0,
+        "syntheticCost": 0,
+        "expectedSyntheticCost": 0
+      },
+      "publicationSequence": null,
+      "screenIntentSequence": null,
+      "reproductionIntentSequence": null,
+      "rejectedOutputs": [],
+      "eventCount": 5,
+      "runError": null
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "checkedAt": "2026-09-17T03:18:59.951Z",
+  "status": "PASS",
+  "root": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/opencode-v2/checks-186bb14b-9b04-4a2e-b460-d4f9712d9661",
+  "records": [
+    {
+      "name": "syntax-source",
+      "status": "PASS",
+      "command": "/usr/bin/node",
+      "args": [
+        "--check",
+        "src/opencode-v2-free.mjs"
+      ],
+      "receipt": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/opencode-v2/checks-186bb14b-9b04-4a2e-b460-d4f9712d9661/syntax-source.json"
+    },
+    {
+      "name": "syntax-test",
+      "status": "PASS",
+      "command": "/usr/bin/node",
+      "args": [
+        "--check",
+        "tests/opencode-v2-free.test.mjs"
+      ],
+      "receipt": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/opencode-v2/checks-186bb14b-9b04-4a2e-b460-d4f9712d9661/syntax-test.json"
+    },
+    {
+      "name": "focused-tests",
+      "status": "PASS",
+      "command": "/usr/bin/node",
+      "args": [
+        "--test",
+        "tests/opencode-v2-free.test.mjs",
+        "tests/provider-quota.test.mjs"
+      ],
+      "receipt": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/opencode-v2/checks-186bb14b-9b04-4a2e-b460-d4f9712d9661/focused-tests.json"
+    },
+    {
+      "name": "doctor",
+      "status": "PASS",
+      "command": "/usr/bin/npm",
+      "args": [
+        "run",
+        "check"
+      ],
+      "receipt": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/opencode-v2/checks-186bb14b-9b04-4a2e-b460-d4f9712d9661/doctor.json"
+    }
+  ],
+  "sourceHashes": {
+    "src/opencode-v2-free.mjs": "a4ba3a46724ead16d7a9b57304183f22fec0fffdc2315d44568df983e1e2fdda",
+    "tests/opencode-v2-free.test.mjs": "1f5d4526c59d00ee77a694f8c40df359422552bef834930934da9a9ab780871d",
+    "src/opencode-free.mjs": "6848bfcba60945d1dfebf8fbf7e2461590f1c33eb85f5e2dc3bce84a347eeeca",
+    "src/process.mjs": "bfc97e88bb73bc8f15ba2d174ab1d97c615c3fd097e57c57964bd8bc4196bb7a"
+  },
+  "legacyAdapterAndProcessHelperPreserved": true,
+  "packageScripts": {
+    "test": "node --test --test-concurrency=2 tests/*.test.mjs",
+    "check": "node bin/foundry.mjs doctor",
+    "start": "node bin/foundry.mjs serve",
+    "mcp": "node bin/foundry.mjs mcp"
+  },
+  "unavailableEvidence": {
+    "Serena": "HTTP404 tunnel_client_not_seen",
+    "projectQualityMap": "HTTP404 tunnel_client_not_seen",
+    "fullSecurityScan": "HTTP404 tunnel_client_not_seen",
+    "GitHubCodeScanning": "HTTP404 tunnel_client_not_seen"
+  }
+}

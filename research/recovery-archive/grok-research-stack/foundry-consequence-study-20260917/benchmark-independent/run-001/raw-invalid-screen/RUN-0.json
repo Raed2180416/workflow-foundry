@@ -1,0 +1,98 @@
+{
+  "approvals": {},
+  "cost": 0,
+  "createdAt": 1789614776166,
+  "deadline": 1789614781166,
+  "engineHash": "06fe5e7add427360be431730170c3aaffa7a58fed443052bf702134569fdf8e1",
+  "error": null,
+  "eventHead": {
+    "hash": "edf8348e126ede4e8162487fd4808b139db89ddf9dbebd67d31442f4795500d9",
+    "seq": 8
+  },
+  "extra": {},
+  "frames": {},
+  "id": "cbfd626f-e67a-44e7-bfd9-88bcf489b7df",
+  "input": {
+    "samples": [
+      {
+        "id": "independent-a"
+      }
+    ]
+  },
+  "nodes": {
+    "publish": {
+      "argsHash": "40657f6656bbfa029faef0034446236d55effa8d053d082b82b2b59dd9aaf43a",
+      "attempts": 1,
+      "completedAt": 1789614776173,
+      "completedSequence": 7,
+      "effects": "idempotent",
+      "idempotencyKey": "056eae229cd0b3d189a0603f9245de4d20ec42549f3c3f702c4e0f4ea325adcf",
+      "kind": "task",
+      "outputHash": "68cb6e528a587ed15f3787269a853b818e5a97dc482416f85c828db86168a2f6",
+      "startedAt": 1789614776171,
+      "startedSequence": 6,
+      "status": "completed",
+      "tool": "core.artifact"
+    },
+    "screening": {
+      "argsHash": "b53b7a7f5c03218f508ea7c11db2d4d5470b652405143d8657c301fc0c3c944d",
+      "attempts": 1,
+      "completedAt": 1789614776170,
+      "completedSequence": 5,
+      "effects": "none",
+      "error": {
+        "code": "SCHEMA_MISMATCH",
+        "message": "lab.screen output does not satisfy its schema"
+      },
+      "idempotencyKey": "2db2a1b870c3adad11cf4f35aa96030ed13e52bd17603adf6ea243399157215c",
+      "kind": "task",
+      "outputHash": "1a465691851d503d9ace22e7c5ef233698380160df9e92f3b08f69466783fe6b",
+      "startedAt": 1789614776168,
+      "startedSequence": 3,
+      "status": "handled_error",
+      "tool": "lab.screen"
+    }
+  },
+  "outputs": {
+    "publish": {
+      "bytes": 71,
+      "name": "manifest.json",
+      "sha256": "6ebc10b49057e8bed32de8b46671c0e8474cc0e513ffa53a20190c8747015c0f"
+    },
+    "screening": {
+      "error": {
+        "code": "SCHEMA_MISMATCH",
+        "message": "lab.screen output does not satisfy its schema"
+      },
+      "ok": false
+    }
+  },
+  "owner": null,
+  "policy": {
+    "allowedCapabilities": [
+      "core.identity",
+      "core.validate",
+      "core.json",
+      "core.pluck",
+      "core.aggregate",
+      "core.template",
+      "core.collect",
+      "core.artifact",
+      "lab.screen",
+      "lab.reproduce",
+      "data.one"
+    ],
+    "maxConcurrency": 2,
+    "maxCost": 0,
+    "maxDurationMs": 30000,
+    "maxResumes": 1000,
+    "maxSteps": 160
+  },
+  "registryHash": "bb3f73d712e174d3084248c8d199a620b7eeb2a7b2655d64b6286ab3af536d0e",
+  "resumeCount": 1,
+  "status": "succeeded",
+  "steps": 2,
+  "updatedAt": 1789614776174,
+  "workflowHash": "f32a244088d1875620de7afb5e0f4d2acf465146818a1b568526f1d70dd989a1",
+  "workflowId": "InvalidScreenLaundered"
+}

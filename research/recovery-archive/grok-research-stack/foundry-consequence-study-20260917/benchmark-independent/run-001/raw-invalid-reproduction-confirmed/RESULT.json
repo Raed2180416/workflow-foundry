@@ -1,0 +1,45 @@
+{
+  "name": "raw-invalid-reproduction-confirmed",
+  "accepted": true,
+  "anticipatedPass": true,
+  "expectationMet": true,
+  "claim": "Confirms after actual reproduction SCHEMA_MISMATCH because raw positive log is trusted; out-of-contract fixture.",
+  "cases": [
+    {
+      "accepted": true,
+      "nativePassed": true,
+      "status": "succeeded",
+      "runId": "de69c58f-6015-4bdb-95bf-affaa7a81539",
+      "workflowHash": "842a30b73bfec6cc29ff4bc96e34dbad933b78a338aca87526880448efee75d7",
+      "registryHash": "bb3f73d712e174d3084248c8d199a620b7eeb2a7b2655d64b6286ab3af536d0e",
+      "instruments": {
+        "passed": true,
+        "problems": [],
+        "missingCalls": 0,
+        "forbiddenCalls": 0,
+        "duplicateCalls": 0,
+        "wrongOrder": 0,
+        "invalidObservations": 0,
+        "screenCalls": 1,
+        "reproduceCalls": 1,
+        "syntheticCost": 11,
+        "expectedSyntheticCost": 11
+      },
+      "publicationSequence": 9,
+      "screenIntentSequence": 3,
+      "reproductionIntentSequence": 5,
+      "rejectedOutputs": [
+        {
+          "seq": 6,
+          "nodeKey": "root/reproduction",
+          "error": {
+            "code": "SCHEMA_MISMATCH",
+            "message": "lab.reproduce output does not satisfy its schema"
+          }
+        }
+      ],
+      "eventCount": 10,
+      "runError": null
+    }
+  ]
+}

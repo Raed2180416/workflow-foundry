@@ -1,0 +1,33 @@
+[
+  {
+    "ordinal": 1,
+    "instrument": "reproduce",
+    "sampleId": "independent-a",
+    "nodeKey": "root/reproduction",
+    "idempotencyKey": "dfe515d3719ab664eca771992ba67f982c5001632c5907d52fdc1ce6f1fff9e3",
+    "syntheticCost": 10,
+    "outcome": "returned",
+    "observation": {
+      "evidenceId": "independent-evidence",
+      "independent": true,
+      "ok": true,
+      "reproduced": true,
+      "sampleId": "independent-a"
+    }
+  },
+  {
+    "ordinal": 2,
+    "instrument": "screen",
+    "sampleId": "independent-a",
+    "nodeKey": "root/screening",
+    "idempotencyKey": "6b086fa4000006eba631265e969910ccf4923ae12cac1d18dae68e220b1a1a1c",
+    "syntheticCost": 1,
+    "outcome": "returned",
+    "observation": {
+      "claim": "Untrusted claim text",
+      "ok": true,
+      "sampleId": "independent-a",
+      "suspicious": true
+    }
+  }
+]

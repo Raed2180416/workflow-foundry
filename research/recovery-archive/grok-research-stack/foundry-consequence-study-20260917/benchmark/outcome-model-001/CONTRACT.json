@@ -1,0 +1,35 @@
+{
+  "id": "da28a44ea33ba76cbb38a9f4ed0a2ef9a9f978b0f9dbab2e1fa607f15c0ccf88",
+  "schemaVersion": "outcome-contract/1",
+  "rootRequestId": "4275ad39-3c06-4216-b279-c3233ff91732",
+  "rootTextHash": "b1fd3d5056ad42e810c8a3d5d61617b7240255453ca4a25d98be0716675fe041",
+  "inputHash": "951fdae63dd5e3d2d56272a9902ecce1313873959d3ec5f856bad5f8770d9c4c",
+  "registryHash": "bb3f73d712e174d3084248c8d199a620b7eeb2a7b2655d64b6286ab3af536d0e",
+  "artifactName": "manifest.json",
+  "expected": {
+    "samples": [
+      {
+        "sampleId": "dev-a",
+        "disposition": "clear"
+      },
+      {
+        "sampleId": "dev-b",
+        "disposition": "confirmed"
+      },
+      {
+        "sampleId": "dev-c",
+        "disposition": "not_reproduced"
+      }
+    ]
+  },
+  "evaluator": {
+    "id": "frozen-development-manifest/1",
+    "kind": "exact-json-artifact/2",
+    "implementationHash": "8de15af4b6ce842c3e54039531c651472a9079a231bf31390f4a8f95b924f1fd",
+    "dataImplementationHash": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c",
+    "node": "v24.21.0",
+    "comparison": "Foundry canonical JSON: object order ignored, array order retained; bounded finite JS numbers"
+  },
+  "maxBytes": 524288,
+  "provenance": "Expected JSON supplied through host contract registration; registration does not establish independent correctness."
+}

@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "command": "/usr/bin/node",
+  "args": [
+    "--test",
+    "--test-concurrency=1",
+    "tests/provider-termination.test.mjs",
+    "tests/opencode-v2-free.test.mjs",
+    "tests/provider-quota.test.mjs"
+  ],
+  "code": 0,
+  "signal": null,
+  "stdout": "✔ v2 catalog: raw explicit zero prices are mandatory before normalized local prices are accepted (1.509131ms)\n✔ v2 event parser accepts a complete native step and independently agrees with native export (0.63438ms)\n✔ v2 fast-response reconciliation requires a terminal native export when step events were not delivered (0.262312ms)\n✔ v2 native start plus reconciled text still requires matching durable finish, usage and zero cost (0.489428ms)\n✔ v2 event parser rejects incomplete, duplicate, mixed-session, tool, nonzero/unknown-cost and legacy evidence (0.460243ms)\n✔ v2 export rejects self-claims without matching prompt/model/terminal/cost/text/token evidence and rejects retries (0.327735ms)\n✔ v2 wire admission requires the selected model, exact prompt, bounded tokens and no tools or prior conversation (0.312647ms)\n✔ v2 configuration disables all tool plugins; sandbox has no host-network, home or caller-directory mounts (0.246983ms)\n✔ v2 structured HTTP failures distinguish limits/auth/unavailable and never promote provider error text to instructions (0.205285ms)\n✔ v2 constructor rejects an unsupported model and unbounded budgets before any external call (0.22892ms)\n✔ v2 bridge preserves native client identity while discarding authorization, cookies and unrelated headers (0.213681ms)\n✔ Provider quota: structured 429 is distinguished from unavailable/auth and no error text becomes executable feedback (1.568984ms)\n✔ Provider quota: one recorded limit suspends a serial request queue without dispatching or consuming later requests (51.251006ms)\n✔ actual adapter: hanging HTTP200 SSE reaches its own TIMEOUT and retains secondary AbortError (4372.245146ms)\n✔ actual adapter: caller cancellation stays CANCELLED after body AbortError (1308.232381ms)\n✔ actual adapter: an earlier network read failure retains its cause and partial bytes (1344.659539ms)\n✔ actual adapter: HTTP429 remains classified without retry (1300.848744ms)\n✔ actual adapter: HTTP403 remains classified without retry (1348.338417ms)\n✔ actual adapter: known HTTP429 precedes a deadline while its body is unfinished (4367.410483ms)\n✔ actual adapter: a caller abort after the deadline cause cannot relabel TIMEOUT (4374.470689ms)\n✔ actual adapter: injected later deadline cannot replace first transport cause (1305.373677ms)\n✔ actual adapter: injected later deadline cannot replace first caller cause (1335.174041ms)\n✔ actual adapter: complete supplied response still requires native successful export and zero cost (1558.027604ms)\nℹ tests 23\nℹ suites 0\nℹ pass 23\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 22898.532942\n",
+  "stderr": "",
+  "elapsedMs": 22923
+}
