@@ -610,7 +610,7 @@ returns a ranked advisory.
   - signals, timers, child workflows.
 
   n8n and MCP-exposed workflows can be called as capabilities and imported into the
-  dataset (§4.4). The existing export adapters: owner decision D6.
+  dataset (§4.4). The existing export adapters were deleted under D6 (2026-10-06).
 
 ---
 

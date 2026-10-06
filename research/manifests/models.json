@@ -49,6 +49,25 @@
       "url": "https://files.pythonhosted.org/packages/source/l/llama_cpp_python/llama_cpp_python-0.3.36.tar.gz",
       "localPath": "/opt/llamacpp/src",
       "outcome": "acquired; only vendor/llama.cpp built (cmake, GGML_NATIVE=ON, targets llama-server llama-cli); no install hooks run; llama-server --version: 0.5.0-dev commit 0c1e570"
+    },
+    {
+      "repo": "github:jaredpalmer/kev",
+      "revision": "5e42a7a03f28134853dd3ff77461457e921e5ec1",
+      "license": "Apache-2.0",
+      "licenseEvidence": "LICENSE in the clone; pyproject license field",
+      "retrievedAt": "2026-10-06",
+      "url": "https://github.com/jaredpalmer/kev",
+      "localPath": "/home/user/jaredpalmer/kev",
+      "outcome": "shallow clone via the session git proxy; used from source (PYTHONPATH), never pip-installed; dependencies in /opt/kev-venv: torch 2.8.0+cpu (download.pytorch.org/whl/cpu), transformers 5.17.0, peft 0.21.0, wheels only (--only-binary :all:)"
+    },
+    {
+      "repo": "hf:jaredpalmer/kev-0.8b",
+      "revision": "v1.0 (card: main revision 9a45d25e, published 2026-09-24)",
+      "license": "apache-2.0",
+      "base": "Qwen/Qwen3.5-0.8B-Base (Apache-2.0)",
+      "retrievedAt": "2026-10-06",
+      "localPath": "/opt/hf-cache",
+      "outcome": "served on CPU by kev.serve (KEV_DTYPE=fp32) on 127.0.0.1:8008; smoke: 3 typed questions in 1.4 s"
     }
   ]
 }

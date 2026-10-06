@@ -6,7 +6,7 @@ import path from 'node:path';
 
 // Reproducible LOCAL qualification. No model/provider request, registry fallback,
 // publishing or global installation. Test fixtures explicitly exercise actual
-// stdio/HTTP/Chromium and the restricted LangGraph adapter where installed.
+// stdio/HTTP/Chromium where installed. (The LangGraph/n8n adapters were deleted under D6.)
 const root = path.resolve(import.meta.dirname, '..');
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const base = path.join(root, '.foundry/release-qualification'); mkdirSync(base, { recursive: true });

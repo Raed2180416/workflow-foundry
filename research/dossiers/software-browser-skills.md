@@ -1,6 +1,6 @@
 # Software, browser, skill and framework deconstruction
 
-Observed on **2026-09-13**. This dossier reports source inspection and design deductions. The corpus checkouts were not installed or executed. A separate adapter-validation pass ran pinned PyPI LangGraph wheels in an isolated environment; see the [LangGraph validation record](../../adapters/langgraph/VALIDATION.md) and [n8n validation limits](../../adapters/n8n/VALIDATION.md). No provider benchmarks, hosted services, model comparisons or commercial parity were verified by this worker's research pass.
+Observed on **2026-09-13**. This dossier reports source inspection and design deductions. The corpus checkouts were not installed or executed. A separate adapter-validation pass ran pinned PyPI LangGraph wheels in an isolated environment; see `adapters/langgraph/VALIDATION.md` and `adapters/n8n/VALIDATION.md` in git history before commit aa73169 (the adapters were deleted under D6). No provider benchmarks, hosted services, model comparisons or commercial parity were verified by this worker's research pass.
 
 ## Provenance and inspection depth
 

@@ -20,7 +20,7 @@ The deliverable is a valid program plus evidence about its operating limits.
    invent a tool, endpoint, field, permission or model. Missing capabilities are
    explicit blockers or adapter requirements, not imaginary successful nodes.
 3. Read only the relevant `domain-*` skill, `human-steering` when intent or choices
-   matter, and the selected `runtime-*` skill. Load a reference only for the current
+   matter, and the `runtime-native` skill. Load a reference only for the current
    design issue. Do not stuff the entire corpus into the prompt.
 4. Separate known requirements, assumptions and unknowns. An assumption about
    consent, safety, deployment state or available evidence is not a fact. Ask a

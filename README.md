@@ -82,6 +82,7 @@ reported separately. Orchestration by this session and its subagents is not item
 | D1-aws | `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` exist in the environment with no stated purpose. They are not used as a model route. | Say whether they are meant for Bedrock; otherwise leave unused. | No |
 | OpenCode | Verify OpenCode v2.0.23 locally and add its (version, sha256, evidence) to `OPENCODE_V2_ALLOWLIST`. | Do it when convenient; cloud runs skip those tests. | No |
 | D7 | No `TYPESAFE_API_KEY`: hosted Jev is unavailable. Kev (open weights on Hugging Face) will be used for the typed-judgment engine on CPU. | Provision the key if hosted Jev should be compared. | No |
+| PR #1 | Phase 0 is in [PR #1](https://github.com/Raed2180416/workflow-foundry/pull/1). The session's permission policy does not let the agent merge without review, so later phases stack on the same branch as separate commits. | Review and merge when convenient. | No |
 | Remote compute | No Modal/Harbor credentials: Tier B/C container beds (SWE-bench Pro, Terminal-Bench) cannot run from here. | Provision if Tier B is wanted. | Only for Tier B/C |
 
 ## Quickstart and commands
