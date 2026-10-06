@@ -1,7 +1,0 @@
-{
-  "status": "FAIL",
-  "directory": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/opencode-v2/tiny-probe-201bc29b-1445-47b1-8653-1b54a20225e2",
-  "code": "MODEL_DRIFT",
-  "message": "Unexpected conversation history in the wire request",
-  "receipts": "/home/raed/Projects/grok-research-stack/foundry-consequence-study-20260917/opencode-v2/tiny-probe-201bc29b-1445-47b1-8653-1b54a20225e2/opencode-v2-21c0d607-604f-4429-8004-07a0b9bc8953"
-}

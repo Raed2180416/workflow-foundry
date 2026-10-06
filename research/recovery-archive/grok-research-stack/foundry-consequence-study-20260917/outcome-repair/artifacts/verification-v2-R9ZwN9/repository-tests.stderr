@@ -1,2 +1,0 @@
-npm notice run @contrare-research/workflow-foundry@0.1.0 test
-npm notice run node --test --test-concurrency=2 tests/*.test.mjs

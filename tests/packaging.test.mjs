@@ -23,7 +23,7 @@ const tree = directory => readdirSync(directory, { withFileTypes: true }).sort((
 });
 const webFiles = ['web/index.html', 'web/app.js', 'web/style.css'];
 const exampleFiles = ['examples/hello.json', 'examples/incident.json', 'examples/incident-world.json', 'examples/batch-suite.json', 'examples/batch-task.md'];
-const documentationFiles = ['docs/ARCHITECTURE.md', 'docs/IMPLEMENTATION-PLAN.md', 'docs/PACKAGING.md', 'docs/REPAIR-LIFECYCLE.md', 'docs/UI-TRIALS.md', 'docs/PRODUCT-DEMO-PROTOCOL.md', 'docs/SOURCE-COVERAGE.md'];
+const documentationFiles = ['docs/ARCHITECTURE.md', 'docs/OUTCOME-REPAIR.md', 'docs/PACKAGING.md', 'docs/REPAIR-LIFECYCLE.md', 'docs/SOURCE-COVERAGE.md'];
 const publicationPath = relative => {
   if (/(?:^|\/)(?:\.[^/]+|private|credentials|corpus|research|evals|tests|artifacts|__pycache__|node_modules)(?:\/|$)/i.test(relative)) return false;
   if (['package.json', 'README.md', 'bin/foundry.mjs', 'schemas/workflow.schema.json', 'adapters/index.mjs', ...webFiles, ...exampleFiles, ...documentationFiles].includes(relative)) return true;

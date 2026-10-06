@@ -1,8 +1,0 @@
-{
-  "test": "claim gate rejects absent grounded field before writing a receipt",
-  "input": {
-    "claim": {}
-  },
-  "workflowHash": "4e3bb350e77d1b090eccdbf84b6eb9d4452b8931c0f819a7cdc4ffd9a72124cd",
-  "registryHash": "2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77"
-}

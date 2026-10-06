@@ -514,5 +514,5 @@ The Datadog telemetry clone is not Bits. Harvey and Hebbia remain documentation
 comparisons. None of these materials supports a current commercial-parity claim.
 
 The independent review of the newly created Foundry runtime, including actual
-local regression results and unresolved enforcement limits, is recorded separately
-in [runtime-security-review.md](runtime-security-review.md).
+local regression results and unresolved enforcement limits, is now carried by
+`tests/security-audit*.test.mjs`; its one-line conclusion is in `docs/RESEARCH.md`.

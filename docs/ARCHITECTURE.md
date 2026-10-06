@@ -168,3 +168,32 @@ An applied program's terminal failure can open an evidence-bound diagnostic
 descendant preserving the original task, goal and criteria. Such descendants are
 not auto-dispatched by the background processor. Changing the goal is a separate
 user action, and declared intent preservation alone cannot prove semantic fidelity.
+
+## Construction and outcome modules — 2026-09-17
+
+These modules were added during the consequence study. They are library and CLI
+features. Live model campaigns using them are recorded separately.
+
+- `src/construction.mjs` is the facade for construction experiments, behind
+  `foundry construct-compare | construct-intent | construct-objective`. It freezes a
+  harness family, intent class or objective, builds the builder-visible pack, detects
+  held-out leakage, compares a candidate's closeness to a sealed target, and turns
+  gaps into a constraint ledger. Providers are scripted unless a host supplies one.
+- `src/construction-families.mjs`, `construction-industry.mjs`,
+  `construction-durable.mjs` and `construction-closed.mjs` hold source-derived harness
+  motifs and sealed held-out targets. These cover open-source agents, public industry
+  products, durable-execution engines and closed products, and include
+  `FOUNDRY_IR_LIMITS`. Each target is checked against its own scenarios at load time.
+- `src/construction-objective.mjs` extracts requirements from a free-text objective
+  and composes a native candidate. Constructs the IR cannot express are listed in
+  `IR_UNSUPPORTED` rather than approximated.
+- `src/outcome-repair.mjs` registers a frozen host expectation for one required
+  JSON artifact (`exact-json-artifact/2`). It observes a run as
+  satisfied, unsatisfied or unknown, and opens a goal-preserving repair request from an
+  unsatisfied receipt. It never dispatches a provider, applies a proposal or runs a
+  workflow by itself. See [OUTCOME-REPAIR.md](OUTCOME-REPAIR.md).
+- `src/outcome-history.mjs` is the read-only historical inspector. It re-evaluates
+  retained evidence after the registry changes and always reports
+  `currentWorldQualification: false`.
+- `src/ollama-local.mjs` is a library-only local Ollama provider. It is not wired into
+  the CLI.

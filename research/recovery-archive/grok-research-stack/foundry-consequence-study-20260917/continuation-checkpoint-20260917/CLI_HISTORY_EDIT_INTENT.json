@@ -1,7 +1,0 @@
-{
-  "at": "2026-09-17T09:06:23.170Z",
-  "file": "/home/raed/Projects/workflow-foundry/bin/foundry.mjs",
-  "sha256": "d23b59d8d181f9d954463094a9e36bde2d4e7af859b629bf2b34ea4ae21816fb",
-  "intent": "Add explicit read-only outcome-history before component loading and Store/schema initialization; preserve all prior CLI outcome routes and old frozen CLI receipt.",
-  "preserveCore": true
-}

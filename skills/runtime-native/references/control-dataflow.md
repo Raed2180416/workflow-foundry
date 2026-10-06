@@ -53,5 +53,6 @@ Mutate each handoff and require the construction oracle to reject the mutation.
 
 These are conformance tests, not model reasoning outcomes or hidden task answers.
 Keep construction and task-outcome qualification separate. The rule is derived
-from the project's preserved `research/reference-swe/` diagnostic comparisons
-(repository-only provenance) and the installed native runtime's body semantics.
+from the project's earlier mini-SWE-agent diagnostic comparisons (summarized in
+the development repository's research log; repository-only provenance) and the
+installed native runtime's body semantics.

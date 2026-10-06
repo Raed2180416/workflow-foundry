@@ -5,70 +5,24 @@ actual installer and the local packaging checks. It does not select a project
 license, authorize redistribution of the research corpus, or establish that a
 particular agent application's trust and discovery flows have been exercised.
 
-## Integrity history and repaired boundary
+## Skill reference boundary
 
-The original failed audit is preserved at the repository-only path
-`evals/runs/packaging-evidence-giqvWb/packaging-report.json`. It found six
-source-map links that escaped the installed skills directory, 21 UI evidence
-files in the archive and four Python bytecode files. Its results have not been
-overwritten or reclassified as passing.
-
-The first repaired archive passed 30 tests on 2026-09-13, including five actual
-MCP workflow executions, in 8.27 seconds. That exact candidate has 79 packed
-files, 231,718 compressed bytes and no forbidden-path or recorded upstream-license
-payload matches. Its receipt is the repository-only path
-`evals/runs/packaging-evidence-XvfdMB/packaging-report.json`; it predates the final
-documentation update and any subsequent README. These counts identify that
-archive, not all later revisions. Current tests additionally check install and
-uninstall conflicts, symlink refusal, and the packed evaluation command.
-
-The repair handoff and final source-bound receipt are recorded under
-`evals/runs/packaging-repair-xKMLxE/`. Each integration invocation retains its own
-archive, file hashes and report. Only an invocation with `allChecksPassed: true`
-and `sourceStable: true` qualifies its recorded source snapshot. A later source
-or README change requires a fresh run.
-
-The three original entrypoint links in
-`skills/domain-science/SKILL.md`, `skills/domain-robotics/SKILL.md` and
-`skills/domain-healthcare/SKILL.md` now target their existing
-`references/source-map.md`. Their pinned public citations are retained.
-
-The repaired provenance headers are at line 3 of each of these files:
-
-```text
-skills/domain-science/references/source-map.md
-skills/domain-robotics/references/source-map.md
-skills/domain-healthcare/references/source-map.md
-```
-
-Each header now names `research/manifests/science.json` and
+Installed skills must resolve every local link inside the installed skills
+directory; the packaging test enforces this. The science, robotics and healthcare
+source maps name `research/manifests/science.json` and
 `research/manifests/docs-public-science.json` as repository-only provenance in
-plain code text. The installed skill does not contain those acquisition ledgers.
-The original dates, public revision URLs, source identifiers, observations and
-inspection limits remain intact; only the header changed. The tests require both
-ledger paths, the inspection date, pinned public citations and resolvable local
-links. No replacement research ledger or private ARC material is bundled.
-
-Some skills also use repository paths as plain code text rather than attachments:
-`src/components.mjs` in `component-integration`, and
-`research/dossiers/software-browser-skills.md` in the LangGraph/n8n entrypoints.
-Those paths are not clickable local references and are not installed beneath
-either skills destination. A consumer needing the runtime source can locate the
-package through the CLI path in its generated MCP configuration. Research dossiers
-remain development-only context. The reference checker reports actual links and
-explicit `references/...` code paths; it does not interpret every filename in
-prose as an attachment.
+plain code text; those ledgers are not bundled. Likewise `src/components.mjs`
+(in `component-integration`) and `research/dossiers/software-browser-skills.md`
+(in the LangGraph/n8n entrypoints) appear as plain code paths, not attachments.
+Research dossiers and ledgers are development-only context and must never be
+bundled to repair a broken link.
 
 ## Package boundary
 
 The authority for what enters the archive is the npm file inventory, not the Git
-ignore file. At the initial audit, npm 12.0.2 returned 96 entries, about 2.58 MB
-compressed and 3.25 MB unpacked. Four files were under
-`adapters/langgraph/__pycache__/`; 21 were under `web/artifacts/`. None belonged in
-the distributable. Later documentation additions change the exact count, so use
-the source-bound receipt for the current candidate.
-
-`package.json` now selects the three runtime UI assets explicitly:
+ignore file. The first audit found Python bytecode under
+`adapters/langgraph/__pycache__/` and UI evidence under `web/artifacts/` in the
+archive, so `package.json` selects the three runtime UI assets explicitly:
 
 ```json
 ["web/index.html", "web/app.js", "web/style.css"]
@@ -106,14 +60,12 @@ hashes against the 218 deduplicated license-file records in the acquisition
 ledgers; this is a bounded payload check, not a license audit or general copied-code
 detector. The existing `private: true` value remains unchanged.
 
-`README.md` was absent at the initial inspection and was subsequently supplied by
-prime. It is included only when present, and the integrity test requires the
-packed bytes to match the source README. This guide and
+`README.md` is included, and the integrity test requires the packed bytes to match
+the source README. This guide and
 [ARCHITECTURE.md](ARCHITECTURE.md) document the available local interfaces.
 The repository has a lockfile; npm's package inventory did not include
 `package-lock.json` or an npm shrinkwrap. Exact direct pins therefore do not by
-themselves freeze a consumer's transitive package-manager resolution. No lockfile
-or licensing policy was changed in this task.
+themselves freeze a consumer's transitive package-manager resolution.
 
 ## Run the integrity checks
 
@@ -327,9 +279,7 @@ It then checks exact product bytes and direct dependency versions, installs the
 project-local OpenCode MCP configuration and executes its generated command through
 an actual SDK client. The greeting artifact and event chain are checked independently.
 
-Each invocation preserves its archive and commands under
-`.foundry/qualification-resume-20260913/fresh-install-<id>/`. Failed setup attempts
-remain failed; only a source-stable passing report qualifies its own archive.
-This closes the source-only dependency-symlink limitation for the observed cached
-resolution. It is still not a clean machine, registry availability check, universal
-transitive-resolution guarantee or full OpenCode application discovery/trust test.
+Each invocation preserves its archive and commands under an ignored `.foundry/`
+directory. Only a source-stable passing report qualifies its own archive. It is
+not a clean machine, registry availability check, universal transitive-resolution
+guarantee or full OpenCode application discovery/trust test.

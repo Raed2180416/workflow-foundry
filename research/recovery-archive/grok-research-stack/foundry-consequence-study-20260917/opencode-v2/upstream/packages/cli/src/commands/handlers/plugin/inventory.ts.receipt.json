@@ -1,9 +1,0 @@
-{
-  "url": "https://raw.githubusercontent.com/anomalyco/opencode/79169fe966d58fb0e0a5e41133716184a0ab4ca6/packages/cli/src/commands/handlers/plugin/inventory.ts",
-  "revision": "79169fe966d58fb0e0a5e41133716184a0ab4ca6",
-  "date": "2026-09-17T03:01:53.800Z",
-  "gitBlob": "5c19e1ee1d8678aee8bf3b43feb030bdff803a43",
-  "sha256": "c3470878f3e62a60b8eb28bc89f93a351a532e56d131d2f34c545e5fe9ef0a39",
-  "bytes": 4013,
-  "outcome": "acquired-inert-source"
-}

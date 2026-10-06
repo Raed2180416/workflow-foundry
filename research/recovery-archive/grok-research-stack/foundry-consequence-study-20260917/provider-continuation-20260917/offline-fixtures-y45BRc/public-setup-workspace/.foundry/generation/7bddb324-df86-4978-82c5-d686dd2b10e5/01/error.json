@@ -1,6 +1,0 @@
-{
-  "error": {
-    "code": "PREFLIGHT_CAPTURE_ONLY",
-    "message": "Stopped before any provider dispatch"
-  }
-}

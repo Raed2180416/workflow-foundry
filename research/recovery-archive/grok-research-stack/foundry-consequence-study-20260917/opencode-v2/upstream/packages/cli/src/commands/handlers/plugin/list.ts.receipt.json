@@ -1,9 +1,0 @@
-{
-  "url": "https://raw.githubusercontent.com/anomalyco/opencode/79169fe966d58fb0e0a5e41133716184a0ab4ca6/packages/cli/src/commands/handlers/plugin/list.ts",
-  "revision": "79169fe966d58fb0e0a5e41133716184a0ab4ca6",
-  "date": "2026-09-17T03:01:54.151Z",
-  "gitBlob": "f35c2898182487ae44c4935f706367e4bf47ffff",
-  "sha256": "1f1dd7bf6cfb96a906ad6813946af68a69e10ed15498c9262b739e06c3cc7c18",
-  "bytes": 4369,
-  "outcome": "acquired-inert-source"
-}

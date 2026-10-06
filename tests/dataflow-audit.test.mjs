@@ -1,10 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
-import { createHash } from 'node:crypto';
+import { mkdtempSync, rmSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { validateWorkflow } from '../src/validate.mjs';
 import { CapabilityRegistry } from '../src/capabilities.mjs';
 import { Foundry } from '../src/foundry.mjs';
@@ -12,7 +10,6 @@ import { condition, resolve } from '../src/data.mjs';
 
 // Independent offline contract tests. No provider import, candidate editing,
 // external process, coding answer, or historical run execution is needed.
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const ref = ($ref, ...fallback) => ({ $ref, ...(fallback.length ? { default: fallback[0] } : {}) });
 const eq = (left, right) => ({ op: 'eq', left, right });
 const exists = value => ({ op: 'exists', value });
@@ -78,37 +75,6 @@ async function runNeutral(t, workflow, r = registry()) {
     const run = foundry.createRun(workflow.id);
     return await foundry.startRun(run.id);
   } finally { await foundry.close(); }
-}
-
-const HISTORICAL = [
-  { id: '01', job: '1a812965-1a81-4d80-8c13-a0b387064148', fileHash: 'b34efdc97bdee8d23a2469cac5bfb9ade3c178da2500281601ca6621c26abaec' },
-  { id: '02', job: '70d2aca0-dab9-4b20-8bde-92c8378a0169', fileHash: '152f8e25b22db8f5f84975221343fb2d4628065eba636d6af3074bb2d52daf15' }
-].map(item => {
-  const directory = path.join(ROOT, `research/reference-swe/runs/20260913-reference-${item.id}`);
-  return { ...item, candidate: path.join(directory, 'candidate-workflow.json'),
-    context: path.join(directory, `foundry/.foundry/generation/${item.job}/context.json`) };
-});
-function historical(item) {
-  const bytes = readFileSync(item.candidate);
-  assert.equal(createHash('sha256').update(bytes).digest('hex'), item.fileHash, 'Frozen graph bytes changed');
-  const context = JSON.parse(readFileSync(item.context, 'utf8'));
-  const capabilities = new Map(context.capabilities.map(cap => [cap.name, cap]));
-  return { workflow: JSON.parse(bytes), registry: { get: name => capabilities.get(name) } };
-}
-for (const item of HISTORICAL) {
-  test(`historical reference-${item.id} graph with its actual open capability catalog`,
-    { skip: !existsSync(item.candidate) || !existsSync(item.context) }, () => {
-      const fixture = historical(item);
-      assert.deepEqual(fixture.registry.get('reference.act').outputSchema, { type: 'object' });
-      if (item.id === '01') {
-        const result = rejectedPath(fixture.workflow, 'nodes.repair-loop.last.done', fixture.registry);
-        // The historical until reads an unknown capability field and might stop
-        // first. Its recurrence gap must be diagnosed, but is not proved reached.
-        assert.ok([...result.errors, ...result.warnings].some(error =>
-          error.code === 'RECURRENCE_PATH_GAP' && JSON.stringify(error).includes('previous.messages')));
-      } else accepted(fixture.workflow, fixture.registry);
-      assert.equal(createHash('sha256').update(readFileSync(item.candidate)).digest('hex'), item.fileHash);
-    });
 }
 
 test('closed capability object rejects an undeclared top-level property', () => {

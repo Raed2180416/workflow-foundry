@@ -1,9 +1,0 @@
-{
-  "url": "https://raw.githubusercontent.com/anomalyco/opencode/79169fe966d58fb0e0a5e41133716184a0ab4ca6/packages/cli/src/server-process.ts",
-  "revision": "79169fe966d58fb0e0a5e41133716184a0ab4ca6",
-  "date": "2026-09-17T03:01:52.430Z",
-  "gitBlob": "409ced0eceeb37928f9d63a5a25a15ae46c6ea76",
-  "sha256": "829d71358bd9015febaaeae2b28d62d87d7b6e9c20a3f49b7e46438637326454",
-  "bytes": 8921,
-  "outcome": "acquired-inert-source"
-}

@@ -1,9 +1,0 @@
-{
-  "at": "2026-09-17T03:24:44.139Z",
-  "workflowHash": "5cc364ca2bd741330968016c582f6f6c2f4464aff5e3a75a99d2c9b908f62510",
-  "candidateBytesSha256": "7b51b07412abd66ea0af9fb10d129beb64ba4c31c52f126820151ebf85746c55",
-  "proposalId": "b3173bea-060f-412c-9ae0-0b58bc9f036b",
-  "requestId": "533f7be6-a5c5-4597-a842-099a7baddeb9",
-  "generationJobId": "dcc57bfd-af23-464c-8f2b-0881fcf99d5c",
-  "beforeSealedEvaluation": true
-}

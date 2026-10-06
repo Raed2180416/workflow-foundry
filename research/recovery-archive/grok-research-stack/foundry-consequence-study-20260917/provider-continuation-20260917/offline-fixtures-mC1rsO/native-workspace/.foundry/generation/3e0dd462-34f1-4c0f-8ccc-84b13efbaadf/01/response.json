@@ -1,6 +1,0 @@
-{
-  "text": "{\"workflow\":{\"schemaVersion\":\"1.0\",\"id\":\"provider-driver-fixture\",\"version\":1,\"title\":\"Supplied empty-batch transport fixture\",\"domain\":\"general\",\"goal\":\"Write an empty manifest for the explicitly supplied empty input.\",\"envelope\":{\"assumptions\":[\"Empty input only\"],\"risks\":[\"A file alone can outlive failed acceptance\"],\"successCriteria\":[\"Exact empty manifest\"],\"unsupported\":[\"Nonempty batches\"]},\"inputSchema\":{\"type\":\"object\",\"required\":[\"samples\"],\"properties\":{\"samples\":{\"type\":\"array\",\"maxItems\":0}},\"additionalProperties\":false},\"budget\":{\"maxSteps\":160,\"maxConcurrency\":2,\"maxDurationMs\":30000,\"maxCost\":0},\"nodes\":[{\"id\":\"write\",\"kind\":\"task\",\"needs\":[],\"description\":\"Write supplied fixture bytes.\",\"tool\":\"core.artifact\",\"args\":{\"name\":\"manifest.json\",\"content\":\"{\\\"samples\\\":[]}\"},\"timeoutMs\":1000,\"retry\":{\"maxAttempts\":1}}],\"acceptance\":[{\"op\":\"exists\",\"value\":{\"$ref\":\"nodes.write.sha256\"}}]},\"rationale\":\"Supplied fixture, not model construction.\"}",
-  "evidence": {
-    "supplied": true
-  }
-}

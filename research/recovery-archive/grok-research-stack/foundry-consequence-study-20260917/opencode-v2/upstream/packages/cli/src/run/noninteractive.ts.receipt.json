@@ -1,9 +1,0 @@
-{
-  "url": "https://raw.githubusercontent.com/anomalyco/opencode/79169fe966d58fb0e0a5e41133716184a0ab4ca6/packages/cli/src/run/noninteractive.ts",
-  "revision": "79169fe966d58fb0e0a5e41133716184a0ab4ca6",
-  "date": "2026-09-17T02:58:45.670Z",
-  "gitBlob": "df9bc81ad8913b5954525e020a4bd2c9562635cc",
-  "sha256": "6498254d0b17c0ac01f91d1e3654321a2fbcc73d6195ec6eaa8c8e3fba1a4100",
-  "bytes": 28810,
-  "outcome": "acquired-inert-source"
-}

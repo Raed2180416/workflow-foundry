@@ -1,5 +1,8 @@
 # Workflow Foundry research and implementation
 
+Start at [README.md](README.md): status, next steps, commands and a map of the repository.
+The research history and negative results are in [docs/RESEARCH.md](docs/RESEARCH.md).
+
 ## Objective
 Build and measure a portable, model-independent system that helps agents construct,
 inspect, execute, revise and reuse domain-specific workflows. Skills carry explicit
@@ -7,11 +10,8 @@ design expertise; executable contracts and independent evidence govern release.
 Do not substitute a template demo or schema-valid output for task success.
 
 ## Working boundaries
-- This is an isolated project. `/home/raed/.agentic-os` and all existing sibling
-  projects/worktrees are READ ONLY in this session. Preserve existing work.
-- At most five workers, no nested workers. Prime owns integration. Workers own
-  disjoint files; do not commit another worker's work or modify shared contracts
-  without coordinating with prime.
+- This is an isolated project. Sibling projects and worktrees are read-only unless
+  the user says otherwise. Preserve existing work.
 - No purchased services, paid model calls, account changes, publishing, real-world
   pentesting, patient/lab operations, or production interventions. Clone source as
   inert research material; never run its install hooks automatically.
@@ -38,11 +38,12 @@ Do not substitute a template demo or schema-valid output for task success.
 - Use real source paths and line spans in dossiers, pinned revisions in manifests.
 
 ## Layout
-`corpus/` contains ignored upstream clones. `research/` contains acquisition
-manifests, evidence-linked dossiers and extracted requirements. `skills/` contains
-original portable skills; `src/` the runtime and interfaces; `schemas/` contracts;
-`evals/` comparison protocols; `tests/` executable regression and failure probes.
-Mutable run data is `.foundry/` in an explicit task workspace, never upstream repos.
+See the repository map in README.md. In short: `src/` runtime and interfaces,
+`bin/` CLI, `schemas/` contracts, `skills/` portable skills, `adapters/` LangGraph/n8n
+exports, `web/` UI, `tests/` regression and failure probes, `evals/` TUI harness and
+oracles, `research/` acquisition manifests, dossiers and checkpoints, `docs/` reference
+docs. `corpus/` (upstream clones) and `.foundry/` (mutable run data in an explicit task
+workspace) are ignored and never committed.
 
 ## Build discipline
 Node >=24, ESM, built-in node:test; minimal exact-pinned dependencies. Core output is

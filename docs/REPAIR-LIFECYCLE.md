@@ -76,9 +76,67 @@ world. Annotations are only descriptive hints; actual permissions remain enforce
 by the host registry/runtime. Source: the official MCP ToolAnnotations schema at
 `https://modelcontextprotocol.io/specification/2025-11-25/schema` (checked 2026-09-13).
 
+## Draft trials and repair in the UI
+
+The Canvas, inspector, Requests & changes, and Run evidence views include the
+draft trial lifecycle.
+
+Use **Draft trials** in the sidebar, or paste the opaque trial ID returned by the
+host into **Inspect by trial ID**. Inspection loads `GET /api/trials/:id` directly.
+The returned source hash stays attached to the root graph and every nested view;
+polling never replaces it with a reusable workflow head. Trial source is kept
+outside the saved-workflow cache. A missing exact source is shown as unavailable.
+
+The trial view shows local acceptance and **Independent task unqualified**.
+Run evidence includes the trial receipt, returned artifact receipts, events and
+recorded node outputs. Rejected input shows `run: null` without invented node
+execution. Paused trials remain inspectable without start, answer, approval,
+resume, cancellation or repair controls. A failed reinspection marks the prior
+snapshot explicitly and preserves its displayed source identity.
+
+For a terminal failed saved run, **Open diagnostic repair** appears only when
+loaded records connect an applied request and applied proposal to that run's
+exact hash and current head. The action sends those actual IDs and hash to
+`POST /api/repair-requests`, then loads the returned request's actual host context.
+The server remains responsible for provenance, verified failure, depth and stale
+head checks. A concurrent head change is displayed as an error without rebinding.
+Existing diagnostic requests remain inspectable through the failed run.
+
+Requests from `agent-request` and `agent-diagnostic` retain their source labels,
+lineage, preserved intent and automatic-generation-off message even when the
+workspace is configured for automatic handling of user requests. Creating a
+diagnostic record does not start generation or grant execution authority.
+
+**Inspect delivery linkage** calls `POST /api/delivery` with the actual request,
+proposal and run IDs. Its receipt and separately scoped task-suite evidence are
+displayed without promoting suite passes to independent verification of this run.
+If the recent state page lacks a matching applied request/proposal, the UI shows
+that linkage is unavailable instead of guessing identifiers.
+
+Run the browser audit with:
+
+```sh
+FOUNDRY_UI_TRIALS_E2E=1 node --test tests/ui-trials-browser.test.mjs
+```
+
+The audit reuses one installed Chromium at `/usr/bin/chromium` and blocks external
+browser requests. Fixtures use real local HTTP, Store and Runtime with handwritten
+neutral workflows; there are zero model calls. Each invocation preserves a new
+`ui-trials-*` directory under `FOUNDRY_UI_ARTIFACTS`, or the system temporary
+directory, containing screenshots, receipts, failure evidence, a synthetic
+workspace and source identities. `inputRejectedSourceAvailable` records whether
+the host returned the exact source for a rejected-input receipt. Missing source
+is tested as a visible limitation, never substituted with the current saved head.
+
+The normal test suite includes the pure linkage regression and skips the browser
+unless explicitly enabled. No repository formatter, linter or typechecker is
+configured in `package.json`; JavaScript syntax and repository test commands
+provide the available native checks.
+
 ## Evidence boundary
 
-The historical TUI failures are in `evals/MCP-TYPED-TUI-RESULTS-20260913.md`.
+The historical TUI failures (typed MCP R1–R3) are summarized in the repository's
+`docs/RESEARCH.md` (experiment ledger; not part of the installed package).
 New default regressions are `tests/trials.test.mjs`; independent actual-stdio
 controls are `tests/mcp-repair-lifecycle-audit.test.mjs`. Read their dated receipts
 for observed results. No new free-model run is claimed while the provider reports

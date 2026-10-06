@@ -1,6 +1,0 @@
-{
-  "error": {
-    "code": "OUTCOME_EVIDENCE",
-    "message": "Observed artifact bytes contradict their completed runtime receipt"
-  }
-}

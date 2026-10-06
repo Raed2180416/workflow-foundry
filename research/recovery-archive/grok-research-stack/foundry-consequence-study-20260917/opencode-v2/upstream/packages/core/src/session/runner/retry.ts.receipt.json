@@ -1,9 +1,0 @@
-{
-  "url": "https://raw.githubusercontent.com/anomalyco/opencode/79169fe966d58fb0e0a5e41133716184a0ab4ca6/packages/core/src/session/runner/retry.ts",
-  "revision": "79169fe966d58fb0e0a5e41133716184a0ab4ca6",
-  "date": "2026-09-17T02:58:20.365Z",
-  "gitBlob": "860c97bd1554de9b61937791817db026b0935199",
-  "sha256": "7652039a2bd20715245cdb0ef05afb999bed2b435f53740d1e0cba2744f50431",
-  "bytes": 5947,
-  "outcome": "acquired-inert-source"
-}

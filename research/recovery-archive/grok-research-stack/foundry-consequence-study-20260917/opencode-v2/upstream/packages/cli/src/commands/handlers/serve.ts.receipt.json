@@ -1,9 +1,0 @@
-{
-  "url": "https://raw.githubusercontent.com/anomalyco/opencode/79169fe966d58fb0e0a5e41133716184a0ab4ca6/packages/cli/src/commands/handlers/serve.ts",
-  "revision": "79169fe966d58fb0e0a5e41133716184a0ab4ca6",
-  "date": "2026-09-17T03:01:52.035Z",
-  "gitBlob": "5e1337a16aef4157c0f08e59d5b79609ea6eb40b",
-  "sha256": "b136a083952d0b281f068183e2886652e3fe6271473a1b50b0ddf3fdbd86dc55",
-  "bytes": 691,
-  "outcome": "acquired-inert-source"
-}

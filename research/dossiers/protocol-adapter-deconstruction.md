@@ -85,7 +85,7 @@ repair callback lowercases a matching tool name or redirects an invalid call to
 an `invalid` tool with diagnostic JSON. That diagnostic serialization is not proof
 that the original Foundry input was converted into a string by this callback.
 
-`research/dossiers/opencode-environment.md` separately records installed OpenCode
+A separate (since retired) OpenCode environment dossier recorded installed OpenCode
 1.18.29 behavior and the unresolved object-versus-string TUI result. The installed
 binary has not been mapped to this checkout. Missing causal evidence includes its
 exact provider package route, original and provider-sent schema bytes, raw
