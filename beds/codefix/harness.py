@@ -1,6 +1,7 @@
 # codefix harness: reads one JSON request on stdin, writes one marked JSON line on stdout.
 # Request: {"inspect": [source, ...], "jobs": [{"source": str, "cases": [case, ...]}, ...],
-#           "case_seconds": float}
+#           "case_seconds": float, "nonce": str}
+# The result line is MARK + nonce + JSON. "inspect" only parses (ast), it never executes.
 # A case is {"title": str, "steps": [step, ...]}; steps are
 #   ["new", var, cls, args, kwargs]          construct mod.cls(*args, **kwargs) into env[var]
 #   ["call", var, meth, args, kwargs, as?]   record env[var].meth(*args, **kwargs)
@@ -212,7 +213,7 @@ def main():
         "jobs": [run_job(job, i, seconds) for i, job in enumerate(request.get("jobs", []))],
     }
     sys.stdout = real_stdout
-    real_stdout.write(MARK + json.dumps(response) + "\n")
+    real_stdout.write(MARK + str(request.get("nonce", "")) + json.dumps(response) + "\n")
     real_stdout.flush()
 
 

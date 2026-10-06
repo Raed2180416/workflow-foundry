@@ -107,7 +107,7 @@ function referenceInspect(source) {
 const sigEq = (a, b) => hashOf(a) === hashOf(b);
 
 // Diff guard: public API unchanged, no test-detection/introspection tricks, size within 2x.
-export function guard(reference, buggy, cand) {
+export function guard(reference, cand) {
   const v = [];
   if (cand.syntaxError) return [`syntax error: ${cand.syntaxError}`];
   for (const [name, def] of Object.entries(reference.defs)) {
@@ -151,10 +151,18 @@ export function oracle(task, output) {
   if (src.length > 2 * base || src.length < base / 2) {
     return fail('diff guard: source size outside [0.5x, 2x] of the original', { size: src.length, original: base });
   }
+  // 1) Diff guard from a parse-only pass (no candidate code runs; a separate process, so nothing
+  //    the candidate prints at run time can influence it).
   const refInfo = referenceInspect(b.reference);
-  const run = runSandboxed({ inspect: [src], jobs: [{ source: src, cases: b.hidden, module: b.p.mod }], case_seconds: 0.5 });
+  const parsed = runTrusted({ inspect: [src] });
+  if (!parsed.ok) return fail('could not inspect patched_source (fail closed)', { error: parsed.error });
+  const violations = guard(refInfo, parsed.value.inspect[0]);
+  if (violations.length) {
+    return { pass: false, score: 0, details: { reason: 'diff guard violated', guard: { ok: false, violations }, loadError: null, hidden: null } };
+  }
+  // 2) Hidden tests: the candidate runs only inside the namespace sandbox.
+  const run = runSandboxed({ jobs: [{ source: src, cases: b.hidden, module: b.p.mod }], case_seconds: 0.5 });
   if (!run.ok) return fail('sandbox run failed (fail closed)', { error: run.error });
-  const violations = guard(refInfo, null, run.value.inspect[0]);
   const job = run.value.jobs[0];
   const total = b.hidden.length;
   let passed = 0;
@@ -165,14 +173,13 @@ export function oracle(task, output) {
       else failed.push(c.title);
     });
   }
-  const guardOk = violations.length === 0;
   const allPass = !job.loadError && passed === total;
   return {
-    pass: guardOk && allPass,
-    score: guardOk && !job.loadError ? passed / total : 0,
+    pass: allPass,
+    score: job.loadError ? 0 : passed / total,
     details: {
-      reason: !guardOk ? 'diff guard violated' : job.loadError ? 'module failed to import' : allPass ? 'all hidden tests pass' : 'hidden tests failed',
-      guard: { ok: guardOk, violations },
+      reason: job.loadError ? 'module failed to import' : allPass ? 'all hidden tests pass' : 'hidden tests failed',
+      guard: { ok: true, violations: [] },
       loadError: job.loadError || null,
       hidden: { total, passed, failed: failed.slice(0, 10) },
     },
@@ -231,7 +238,7 @@ export const badControls = [
     make: task => {
       const b = build(taskKey(task));
       const { preferred, any } = regressionSites(b);
-      return { patched_source: variant(task, [...b.bugs.filter(() => false), preferred[0] ?? any[0]]) };
+      return { patched_source: variant(task, [preferred[0] ?? any[0]]) };
     },
   },
   {

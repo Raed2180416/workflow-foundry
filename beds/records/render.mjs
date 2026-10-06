@@ -1,6 +1,6 @@
 // Text rendering for the `records` bed: one line per source row in the dialect of its legacy
 // system, plus the prose source notes, the canonical spec and the task prompt.
-import { COUNTRIES, COUNTRY_NAME, CURRENCIES, NICKNAMES, MONTHS, MONTHS_SHORT, numberWords, ordinal } from './pools.mjs';
+import { COUNTRIES, COUNTRY_NAME, CURRENCIES, CITIES, NICKNAMES, MONTHS, MONTHS_SHORT, numberWords, ordinal } from './pools.mjs';
 
 const p2 = n => String(n).padStart(2, '0');
 const DAY = 86400000;
@@ -22,6 +22,13 @@ export function rateText(micro) {
   const units = Math.floor(micro / 1e6), frac = String(micro % 1e6).padStart(6, '0');
   return micro < 50000 ? `${units}.${frac}` : `${units}.${frac.slice(0, 4)}`;
 }
+const q4Text = q4 => `${Math.floor(q4 / 1e4)}.${String(q4 % 1e4).padStart(4, '0')}`;
+// One line of the rate table: legacy "XXX  rate" (USD per unit) or a market pair.
+function rateLine(cur, rate, pairs) {
+  if (!pairs) return `     ${cur}  ${rateText(rate.num)}`;
+  return rate.perUsd ? `     USD/${cur}  ${q4Text(rate.den)}` : `     ${cur}/USD  ${rateText(rate.num)}`;
+}
+const rateLines = (table, pairs) => Object.entries(table).filter(([cur]) => !(pairs && cur === 'USD')).map(([cur, rate]) => rateLine(cur, rate, pairs));
 
 // ---------------------------------------------------------------------------------------
 // Phones
@@ -70,9 +77,11 @@ function eraDate({ y, m, d }) {
   if (n >= dayNum(1989, 1, 8)) return `H${y - 1988}.${p2(m)}.${p2(d)}`;
   return `S${y - 1925}.${p2(m)}.${p2(d)}`;
 }
+// VENDEX is a US team: numeric dates are month/day/year (a two-digit birth year means 19xx).
 function vendexDob({ y, m, d }, rr) {
-  const opts = [`${MONTHS[m - 1]} ${ordinal(d)}, ${y}`, `${d} ${MONTHS[m - 1]} ${y}`, `the ${ordinal(d)} of ${MONTHS[m - 1]} ${y}`];
-  if (y < 2000) opts.push(`${p2(d)}-${MONTHS_SHORT[m - 1]}-${String(y).slice(2)}`);
+  const opts = [`${MONTHS[m - 1]} ${ordinal(d)}, ${y}`, `${d} ${MONTHS[m - 1]} ${y}`, `the ${ordinal(d)} of ${MONTHS[m - 1]} ${y}`,
+    `${p2(m)}/${p2(d)}/${y}`, `${m}/${d}/${y}`];
+  if (y < 2000) opts.push(`${p2(d)}-${MONTHS_SHORT[m - 1]}-${String(y).slice(2)}`, `${m}/${d}/${String(y).slice(2)}`);
   return rr.pick(opts);
 }
 function dobText(rec, rr, ctx) {
@@ -103,7 +112,7 @@ function updatedText(rec, rr) {
     case 'LEDGR': return `${p2(d)}.${p2(m)}.${y}`;
     case 'ATLAS': return `${d} ${MONTHS_SHORT[m - 1]} ${y}`;
     case 'KOBO': return `${y}/${p2(m)}/${p2(d)}`;
-    case 'VENDEX': return rr.chance(0.5) ? `${d} ${MONTHS[m - 1]} ${y}` : `${MONTHS[m - 1]} ${d}, ${y}`;
+    case 'VENDEX': return rr.pick([`${d} ${MONTHS[m - 1]} ${y}`, `${MONTHS[m - 1]} ${d}, ${y}`, `${p2(m)}/${p2(d)}/${y}`]);
     default: return `${y}-${p2(m)}-${p2(d)}T${p2(rr.int(6, 21))}:${p2(rr.int(0, 59))}:${p2(rr.int(0, 59))}Z`;
   }
 }
@@ -154,7 +163,7 @@ function amountText(rec, rr, ctx) {
         const sub = cur === 'GBP' ? (cents === 1 ? 'penny' : 'pence') : (cents === 1 ? 'cent' : 'cents');
         s = `${numberWords(units, rr.chance(0.7) ? 'hundreds' : 'plain')} ${unitWord}${cents ? ` and ${numberWords(cents)} ${sub}` : ''}`;
       } else s = `${cur} ${us}`;
-      return neg ? (rr.chance(0.5) ? `in credit by ${s}` : `holding a credit of ${s}`) : s;
+      return s; // the sign is carried by the sentence ("in credit by", "we owe them", ...)
     }
     default: return `${neg ? '-' : ''}${fmtAmount(abs, md, { group: false })}`;
   }
@@ -212,31 +221,57 @@ export function renderLine(rec, rr, ctx) {
   }
 }
 
+const an = word => (/^[AEIOU]/.test(word) ? 'an' : 'a');
+// VENDEX vocabulary (also documented in the source notes).
+export const VX = {
+  dob: ['born', 'date of birth', 'DOB', 'b.'], noDob: ['birth date not on file', 'DOB unknown'],
+  phone: ['phone', 'reach at', 'tel.', 'mobile', 'best number'], noPhone: ['no phone on file', 'phone not on file'],
+  owes: ['owes us', 'open balance', 'outstanding', 'balance due'],
+  credit: ['in credit by', 'holding a credit of', 'credit balance of', 'we owe them'],
+  noAmount: ['balance not recorded', 'no balance recorded'],
+};
+export const VENDEX_VOID = ' (Application withdrawn — never onboarded.)';
 function vendexLine(rec, rr, ctx) {
   const name = nameText(rec);
-  const dob = rec.dobPresent ? rr.pick([`born ${dobText(rec, rr, ctx)}`, `date of birth ${dobText(rec, rr, ctx)}`]) : 'birth date not on file';
   const c = rec.countryPresent ? COUNTRIES[rec.country] : null;
-  const phone = rec.phonePresent ? rr.pick([`phone ${phoneText(rec, rr, ctx)}`, `reach at ${phoneText(rec, rr, ctx)}`, `tel. ${phoneText(rec, rr, ctx)}`]) : 'no phone on file';
+  // Country: named, a nationality adjective, or a city it is based in.
+  const kind = c ? weighted(rr, [['named', 4], ['demonym', 3], ['city', 3]]) : null;
+  const placeIn = kind === 'named' ? rr.pick(c.prose) : kind === 'city' ? rr.pick(CITIES[rec.country]) : null;
+  const dem = kind === 'demonym' ? c.demonym : null;
+  const t = rr.int(0, 4);
+  const dobKw = t === 3 ? rr.pick(['Born', 'Date of birth', 'DOB']) : rr.pick(VX.dob);
+  const dob = rec.dobPresent ? `${dobKw} ${dobText(rec, rr, ctx)}` : rr.pick(VX.noDob);
+  const phone = rec.phonePresent ? `${rr.pick(VX.phone)} ${phoneText(rec, rr, ctx)}` : rr.pick(VX.noPhone);
   const amt = rec.amountPresent
-    ? (rec.amountMinor < 0 ? amountText(rec, rr, ctx) : rr.pick([`open balance ${amountText(rec, rr, ctx)}`, `owes us ${amountText(rec, rr, ctx)}`]))
-    : 'balance not recorded';
-  const revised = updatedText(rec, rr);
+    ? `${rr.pick(rec.amountMinor < 0 ? VX.credit : VX.owes)} ${amountText(rec, rr, ctx)}`
+    : rr.pick(VX.noAmount);
+  const rev = updatedText(rec, rr);
+  const cap = x => x[0].toUpperCase() + x.slice(1);
   let s;
-  const t = rr.int(0, 2);
   if (t === 0) {
-    s = `Vendex ${rec.rowId} — Supplier contact ${name} (${dob})${c ? `, based in ${rr.pick(c.prose)}` : ''}; ${phone}; ${amt}. Entry revised ${revised}.`;
+    s = `Supplier contact ${name} (${dob})${placeIn ? `, based in ${placeIn}` : dem ? `, ${an(dem)} ${dem} supplier` : ''}; ${phone}; ${amt}. Entry revised ${rev}.`;
   } else if (t === 1) {
-    s = `Vendex ${rec.rowId} — ${name}${c ? `, a ${c.demonym} supplier,` : ''} ${dob}; ${phone}; ${amt}. Revised on ${revised}.`;
+    s = `${name}${dem ? `, ${an(dem)} ${dem} supplier,` : placeIn ? `, based in ${placeIn},` : ''} ${dob}; ${phone}; ${amt}. Revised on ${rev}.`;
+  } else if (t === 2) {
+    s = `Entry revised ${rev}: ${name}${placeIn ? ` (${placeIn})` : dem ? ` (${dem})` : ''}, ${dob}, ${phone}, ${amt}.`;
+  } else if (t === 3) {
+    s = `Spoke with ${name} on ${rev}${dem ? ` (${an(dem)} ${dem} contact)` : placeIn ? ` (based in ${placeIn})` : ''}. ${dob}. ${cap(phone)}. ${cap(amt)}.`;
   } else {
-    s = `Vendex ${rec.rowId} — Entry revised ${revised}: ${name}${c ? ` (${rr.pick(c.prose)})` : ''}, ${dob}, ${phone}, ${amt}.`;
+    s = `${name} — ${placeIn ?? (dem ? `${dem} supplier` : 'location not stated')} — ${dob} — ${phone} — ${amt} — last revised ${rev}.`;
   }
   if (rec.memo) s += ` Remark: ${rec.memo}`;
-  if (rec.void) s += ' (Application withdrawn — never onboarded.)';
-  return s;
+  if (rec.void) s += VENDEX_VOID;
+  return `Vendex ${rec.rowId} — ${s}`;
 }
 
 // ---------------------------------------------------------------------------------------
 // Prose: source notes, spec, prompt
+// Paraphrases of the ATLAS locale switch (same rule, different wording).
+const ATLAS_CUTOFF_NOTE = [
+  d => `On ${d}, ATLAS moved to a new hosting vendor whose default locale is US; every row whose last change is on or after ${d} stores its birth date as month/day/year, while rows last changed before that date still hold day/month/year.`,
+  d => `Since its migration to a US-hosted vendor on ${d}, ATLAS writes birth dates month first (month/day/year) in every row whose last change falls on or after that day; rows last changed earlier keep the UK order.`,
+  d => `Caution: rows last changed on or after ${d} (the day ATLAS switched to its new US hosting vendor) hold month/day/year birth dates; earlier rows still hold day/month/year.`,
+];
 const SYSTEM_BLURB = {
   BRIGHTDESK: 'US sales CRM',
   LEDGR: 'German ERP for customers and suppliers across Europe and beyond',
@@ -260,9 +295,9 @@ export function buildNotes(ctx) {
     } else if (s === 'LEDGR') {
       out.push(`LEDGR. Semicolon-separated positional fields: LEDGR; Satz-Nr (row id); Name as "Nachname, Vorname" (family name, given name); Anrede (salutation and academic title, may be empty); Geburtsdatum (birth date, day.month.year); Land (country, written in German); Telefon; Saldo (balance, German number format: "." groups thousands and "," is the decimal separator; currency EUR${k.chf ? ', or CHF for Swiss accounts' : ''}); Status; Geändert (date of last change, day.month.year). Status "aktiv" is a live account${k.blocked ? ', "gesperrt" is a blocked but real account that must still be migrated' : ''}; "storniert" marks a cancelled entry, which is void.${k.credits ? ' A minus sign after the number ("250,00- EUR") or before it marks a credit (negative balance).' : ''}`);
     } else if (s === 'ATLAS') {
-      out.push(`ATLAS. Lines look like "ATLAS #<id> :: <name> :: born <birth date> :: <country> :: tel <phone> :: owed <amount in GBP> :: last change <date>", optionally with ":: note: ...". Names are "FAMILY, Given (Title)" or "Title Given Family". ATLAS was configured in UK locale: birth dates are day/month/year.${ctx.cutoff !== null ? ` On ${ctx.cutoffText}, ATLAS moved to a new hosting vendor whose default locale is US; every row whose last change is on or after ${ctx.cutoffText} stores its birth date as month/day/year, while rows last changed before that date still hold day/month/year.` : ''} Unknown birth dates appear as "n/k" or "?".${k.credits ? ' "CR" after an amount means the supplier is in credit (a negative balance).' : ''} A line ending ":: DO NOT MIGRATE" is void.`);
+      out.push(`ATLAS. Lines look like "ATLAS #<id> :: <name> :: born <birth date> :: <country> :: tel <phone> :: owed <amount in GBP> :: last change <date>", optionally with ":: note: ...". Names are "FAMILY, Given (Title)" or "Title Given Family". ATLAS was configured in UK locale: birth dates are day/month/year.${ctx.cutoff !== null ? ` ${ATLAS_CUTOFF_NOTE[ctx.atlasNoteStyle](ctx.cutoffText)}` : ''} Unknown birth dates appear as "n/k" or "?".${k.credits ? ' "CR" after an amount means the supplier is in credit (a negative balance).' : ''} A line ending ":: DO NOT MIGRATE" is void.`);
     } else if (s === 'VENDEX') {
-      out.push(`VENDEX. Free-text English entries ("Vendex <id> — ...") written by a US-based procurement team. Names are written given name first (with an optional title and middle initial). Birth dates and revision dates are written out; a two-digit year in a birth date means 19xx. Balances may be written in words: "dollars" are US dollars, "euros" EUR and "pounds" GBP (pence are hundredths of a pound).${k.credits ? ' "In credit by" or "holding a credit of" means a negative balance.' : ''} The country is either named or implied by a nationality adjective ("a Dutch supplier" is in the Netherlands). An entry saying the application was withdrawn (never onboarded) is void.`);
+      out.push(`VENDEX. Free-text English entries ("Vendex <id> — ...") written by a US-based procurement team; the phrasing varies from entry to entry. Names are written given name first (with an optional title and middle initial). Dates — birth dates and the date the entry was revised — are written out in words or numerically in the team's US convention, month/day/year; a two-digit year in a birth date means 19xx. For a call note ("Spoke with <name> on <date>") the call date is the revision date. Balances may be written in words: "dollars" are US dollars, "euros" EUR and "pounds" GBP (pence are hundredths of a pound). "Owes us", "open balance", "outstanding" and "balance due" introduce what the supplier owes us; "in credit by", "holding a credit of", "credit balance of" and "we owe them" introduce a credit, that is a negative balance. The country is named, implied by a nationality adjective ("a Dutch supplier" is in the Netherlands), or implied by the city the supplier is based in. An entry that ends with "(Application withdrawn — never onboarded.)" is void.`);
     } else if (s === 'KOBO') {
       out.push(`KOBO. Lines look like "KOBO/<id> member: <name> | birth: <date> | tel: <phone> | balance: <yen> | upd: YYYY/MM/DD", optionally with "| note: ...". KOBO serves customers resident in Japan only, so its rows have no country field (the country is Japan) and its phone numbers are Japanese local numbers. Names are written family name first without a comma ("TANAKA Hiroshi" or "Tanaka Hiroshi"); KOBO cannot store accented letters. Birth dates are year/month/day${k.era ? ' or Japanese era notation: "S" is Shōwa (S1 = 1926, so S62 = 1987; Shōwa ended on 7 January 1989) and "H" is Heisei (H1 = 1989, starting 8 January 1989); for example H3.11.20 is 1991-11-20' : ''}. Balances are in yen ("¥" or "円")${k.credits ? '; "▲" in front of an amount marks it negative, as does a minus sign' : ''}. A row with "flag: SAMPLE" is a demo account and void.`);
     } else if (s === 'VERITAS') {
@@ -313,14 +348,19 @@ export function buildSpec(ctx) {
     L.push(`     ${COUNTRY_NAME[iso].padEnd(15)} ${iso}  +${c.cc.padEnd(4)} trunk prefix: ${trunk}`);
   }
   L.push('');
-  L.push(`7. Balances. amount_usd = the winning row's balance × the USD rate of that row's currency${k.datedFx ? ' in force on that row\'s update date' : ''}, rounded half away from zero to two decimals (round once, after multiplying; never round the rate). A credit stays negative. Rates (USD per 1 unit of currency):`);
+  const when = k.datedFx ? ' in force on that row\'s update date' : '';
+  if (ctx.fx.pairs) {
+    L.push(`7. Balances. amount_usd = the winning row's balance converted to US dollars at the rate of that row's currency${when}, computed exactly and rounded half away from zero to two decimals (round once, at the end; never round the rate). A credit stays negative. USD balances are not converted. Rates are market quotes: "BASE/QUOTE x" means 1 unit of BASE = x units of QUOTE.`);
+  } else {
+    L.push(`7. Balances. amount_usd = the winning row's balance × the USD rate of that row's currency${when}, rounded half away from zero to two decimals (round once, after multiplying; never round the rate). A credit stays negative. Rates (USD per 1 unit of currency):`);
+  }
   if (k.datedFx) {
     L.push(`   Table B1, for rows updated up to and including ${ctx.fxCutoverPrevText}:`);
-    for (const [cur, micro] of Object.entries(ctx.fx.old)) L.push(`     ${cur}  ${rateText(micro)}`);
+    L.push(...rateLines(ctx.fx.old, ctx.fx.pairs));
     L.push(`   Table B2, for rows updated on or after ${ctx.fxCutoverText}:`);
-    for (const [cur, micro] of Object.entries(ctx.fx.cur)) L.push(`     ${cur}  ${rateText(micro)}`);
+    L.push(...rateLines(ctx.fx.cur, ctx.fx.pairs));
   } else {
-    for (const [cur, micro] of Object.entries(ctx.fx.cur)) L.push(`     ${cur}  ${rateText(micro)}`);
+    L.push(...rateLines(ctx.fx.cur, ctx.fx.pairs));
   }
   L.push('');
   L.push('Appendix A — nicknames and the formal given name they stand for:');

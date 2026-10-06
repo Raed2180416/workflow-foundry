@@ -256,6 +256,22 @@ function preambleUnits(text) {
   if (m) return { cu: m[1], ru: m[2] };
   return null;
 }
+// units stated in a sheet's own header line(s), in the same { cu, ru } shape as preambleUnits
+function headerUnits(text) {
+  let m = text.match(/\| \[S\] \((.+?)\) \| v0 \((.+?)\) \|/); if (m) return { cu: m[1], ru: m[2] };
+  m = text.match(/# units: S in (.+?), rate in (.+)/); if (m) return { cu: m[1], ru: m[2].trim() };
+  m = text.match(/S_(uM|mM|nM)[,;]rate_(\w+)_per_(s|min)/); if (m) return { cu: m[1], ru: `${m[2]}/${m[3]}` };
+  m = text.match(/Units on this sheet: rates in (.+?), \[S\] in (.+?)\./); if (m) return { cu: m[2], ru: m[1] };
+  return null;
+}
+// "Same reader template as <author>'s <date> sheet": the units are those stated on that sheet
+function refUnits(text, docs) {
+  const m = text.match(/template as (.+?)'s (\d{4}-\d\d-\d\d) sheet|Units: as on (.+?)'s export of (\d{4}-\d\d-\d\d)|those of the (\d{4}-\d\d-\d\d) sheet by (.+?)\./);
+  if (!m) return null;
+  const author = m[1] ?? m[3] ?? m[6], date = m[2] ?? m[4] ?? m[5];
+  const src = docs.find(d => d.kind === 'notebook' && d.author === author && d.date === date);
+  return src ? (headerUnits(src.text) ?? preambleUnits(src.text)) : null;
+}
 function csvSplit(line) {
   const out = []; let cur = '', q = false;
   for (let i = 0; i < line.length; i++) {
@@ -265,11 +281,11 @@ function csvSplit(line) {
   }
   out.push(cur); return out;
 }
-function parseDoc(doc, prefix, reader) {
+function parseDoc(doc, prefix, reader, docs) {
   const ID = `${prefix}-\\d{4}`;
   const rows = []; // { id, S (µM), rate (µM/s) }
   const text = doc.text, lines = text.split('\n');
-  const pre = preambleUnits(text);
+  const pre = preambleUnits(text) ?? refUnits(text, docs);
   if (doc.kind === 'instrument') {
     const ru = text.match(/Rate\((.+?)\)/)[1];
     for (const l of lines) { const m = l.match(new RegExp(`^\\d+\\s+\\w\\d\\d\\s+(${ID})\\s+(\\S+)`)); if (m) rows.push({ id: m[1], rate: rateOf(m[2], ru), src: 'export' }); }
@@ -326,14 +342,14 @@ test('documents support the reference data: parsed numbers x stated units == val
       const seen = new Map();
       let exportRows = 0;
       for (const doc of t.inputs.documents.filter(x => x.kind === 'notebook' || x.kind === 'instrument')) {
-        for (const row of parseDoc(doc, world.meta.prefix, world.meta.reader)) {
+        for (const row of parseDoc(doc, world.meta.prefix, world.meta.reader, t.inputs.documents)) {
           const w = world.wellById[row.id], s = shown[row.id];
           assert.ok(w, `unknown id ${row.id}`);
           if (row.src === 'export') { exportRows++; assert.ok(relErr(row.rate, s.rate) < 1e-9, `export ${row.id}`); continue; }
           assert.ok(!seen.has(row.id), `${row.id} transcribed twice`);
           seen.set(row.id, row);
           assert.ok(relErr(row.S, s.rowS) < 1e-9, `d${d} s${seed} ${row.id} S ${row.S} vs ${s.rowS} (${doc.title})`);
-          if (w.status === 'reread') { if (row.reread != null) assert.ok(relErr(row.reread, s.rate) < 1e-9); continue; }
+          if (w.status === 'reread') { if (row.reread != null) assert.ok(relErr(row.reread, s.rateHeader) < 1e-9, `reread ${row.id}`); continue; }
           const expect = s.rateHeaderTranscribed ?? s.rateHeader;
           assert.ok(relErr(row.rate, expect) < 1e-9, `d${d} s${seed} ${row.id} rate ${row.rate} vs ${expect} (${doc.title})`);
         }

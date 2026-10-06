@@ -211,7 +211,8 @@ function tryLevel(r, L, cfg, feats, names) {
   };
   const firstLock = seps.find(s => s.type === 'locked').i;
   for (const s of seps) if (s.type === 'locked' && !place('key', range(0, s.i), { color: s.color })) return null;
-  const spare = L === 0 || (cfg.bone && r.chance(0.5));
+  const spare = unusedColors.length > 0 && (L === 0 || (cfg.bone && r.chance(0.5)));
+  if (L === 0 && !spare) return null;
   if (spare && !place('key', range(0, firstLock), { color: unusedColors[0], spare: true })) return null;
   const bone = seps.find(s => s.type === 'bone');
   if (bone) { for (let i = 0; i < 3; i++) if (!place('gem', range(0, bone.i))) return null; }

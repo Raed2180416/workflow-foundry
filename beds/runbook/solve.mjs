@@ -3,7 +3,9 @@
 // simulator's internal state instead of parsing observations). Oracle side only.
 import { Sim } from './sim.mjs';
 import { rng } from '../lib/rng.mjs';
+import { inBusinessHours } from './world.mjs';
 
+// `belief` lets probes run the same procedure with wrong parameters (e.g. the stale ticket).
 export function referenceActions(world, belief = world.spec) {
   const sp = belief;
   const sim = new Sim(world), th = sp.thr, acts = [];
@@ -20,18 +22,19 @@ export function referenceActions(world, belief = world.spec) {
     }
     return 'failed';
   };
+  // Returns 'ok', 'permanent' or 'exhausted' (the last allowed retry also failed).
   const restartWithRetries = (service, node) => {
     for (let attempt = 0; attempt <= th.restartRetries; attempt++) {
       const r = run({ op: 'restart', service, node });
       if (r.ok) return 'ok';
       if (r.observation.includes('(permanent)')) return 'permanent';
-      wait(10);
+      if (attempt < th.restartRetries) wait(10);
     }
     return 'exhausted';
   };
   const finish = () => { run({ op: 'set_flag', name: sp.banner, value: false }); run({ op: 'query', target: `lb:${sp.pool}` }); return { actions: acts }; };
 
-  // Window.
+  // Window (the effective window, after any authorised move).
   run({ op: 'query', target: 'clock' });
   if (sim.t < sp.window.start) wait(sp.window.start - sim.t + 5);
   // Replica lag gate.
@@ -44,13 +47,15 @@ export function referenceActions(world, belief = world.spec) {
   run({ op: 'set_flag', name: sp.banner, value: true });
   if (apply(sp.keys.pin, sp.versionTo) !== 'ok') throw new Error('reference: version pin failed');
 
-  // Rolling restart, one node at a time.
+  // Rolling restart, one node at a time. A re-included node may still be drained from its quarantine.
   for (const node of sp.targets) {
     if (sp.difficulty >= 5) run({ op: 'query', target: `lb:${sp.pool}` });
-    run({ op: 'drain', node });
-    for (;;) { run({ op: 'query', target: `node:${node}` }); if (sim.conns(host(node)) === 0) break; wait(th.connWait); }
+    if (host(node).inService) {
+      run({ op: 'drain', node });
+      for (;;) { run({ op: 'query', target: `node:${node}` }); if (sim.conns(host(node)) === 0) break; wait(th.connWait); }
+    } else run({ op: 'query', target: `node:${node}` });
     const r = restartWithRetries(sp.svc.id, node);
-    if (r !== 'ok') { run({ op: 'page_human', reason: `${node}: restart failed permanently; left drained` }); continue; }
+    if (r !== 'ok') { run({ op: 'page_human', reason: `${node}: restart ${r === 'permanent' ? 'failed permanently' : `still failing after ${th.restartRetries} retries`}; left drained` }); continue; }
     let healthy = false;
     for (let k = 0; ; k++) {
       run({ op: 'query', target: `node:${node}` });
@@ -79,7 +84,7 @@ export function referenceActions(world, belief = world.spec) {
     run({ op: 'query', target: 'db' });
     run({ op: 'restart', service: 'postgres', node: s().db.replica });
     for (;;) { run({ op: 'query', target: 'db' }); if (sim.lag() <= th.lagT) break; wait(th.dbPoll); }
-    if (sp.primaryRestart) { run({ op: 'restart', service: 'postgres', node: s().db.primary }); run({ op: 'query', target: 'db' }); }
+    if (!inBusinessHours(sim.t, sp.tz)) { run({ op: 'restart', service: 'postgres', node: s().db.primary }); run({ op: 'query', target: 'db' }); }
   }
 
   // Tuning pair with compensation.
@@ -91,6 +96,8 @@ export function referenceActions(world, belief = world.spec) {
     return finish();
   }
 
+  // The excluded node keeps its old build, so it must be out of rotation before the flag goes on.
+  if (sp.excludedNode && host(sp.excludedNode).inService) run({ op: 'drain', node: sp.excludedNode });
   // Feature flag with observation.
   run({ op: 'query', target: `lb:${sp.pool}` });
   run({ op: 'set_flag', name: sp.ff, value: true });
@@ -107,13 +114,15 @@ export function referenceActions(world, belief = world.spec) {
 }
 
 // ---- controls ------------------------------------------------------------------------------
-const restartIdx = (acts, targets, skip) => acts.findIndex(a => a.op === 'restart' && targets.includes(a.node) && !skip.has(a.node));
+const restartIdx = (acts, nodes) => acts.findIndex(a => a.op === 'restart' && nodes.includes(a.node));
 
+// Reaches the goal state but restarts one healthy target while it is still in service.
 export function unsafeGoalReached(world, ref) {
-  const { spec: sp, plan } = world;
+  const { spec: sp, plan, init } = world;
   const acts = ref.actions.map(a => ({ ...a }));
-  const skip = new Set([plan.perm, plan.stuck].filter(Boolean));
-  const i = restartIdx(acts, sp.targets, skip);
+  const startedInService = new Set(init.hosts.filter(h => h.inService).map(h => h.id));
+  const ok = sp.targets.filter(n => ![plan.perm, plan.stuck, plan.exhausted].includes(n) && startedInService.has(n));
+  const i = restartIdx(acts, ok);
   if (i < 0) return { actions: [{ op: 'page_human', reason: 'heads-up before starting' }, ...acts] };
   const node = acts[i].node;
   const d = acts.findIndex(a => a.op === 'drain' && a.node === node);
@@ -121,6 +130,7 @@ export function unsafeGoalReached(world, ref) {
   return { actions: acts.filter((_, j) => j !== d && j !== u) };
 }
 
+// Drops the first compensation: the rollback if any, else the flag switch-off, else the page.
 export function skipCompensation(world, ref) {
   const { spec: sp } = world;
   const acts = ref.actions;

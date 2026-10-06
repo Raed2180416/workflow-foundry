@@ -43,7 +43,7 @@ function herringExpectation(c, ref, wanted) {
   return `For \`${stepExpr(c.steps[i])}\` I would expect ${describe(wanted[i])}, but ${describeGot(ref[i])}.`;
 }
 
-export function writeReport({ domain, p, bugs, herring, knobs, repro, sections, siteIds, r }) {
+export function writeReport({ domain, p, bugs, herring, knobs, version, repro, siteIds, r }) {
   const people = r.shuffle(PEOPLE);
   let who = 0;
   const person = () => `${people[who++ % people.length]} (${r.pick(ROLES)})`;
@@ -64,7 +64,6 @@ export function writeReport({ domain, p, bugs, herring, knobs, repro, sections, 
     return `${r.pick(['My guess is that', 'I am fairly sure', 'I suspect'])} the problem is in ${site(r.pick(wrong)).fn(p)}; ${r.pick(['the numbers coming out of it look stale', 'it was touched in the last release', 'that is where the stack trace pointed last time'])}.`;
   };
 
-  const version = `${r.int(1, 3)}.${r.int(2, 9)}.${r.int(0, 5)}`;
   const parts = [];
   const [first, ...rest] = bugs;
   parts.push(`# Issue #${r.int(120, 980)}: ${site(first).title(p)}\n\n**Reporter:** ${person()}  \n**Component:** ${p.mod}.py  \n**Version:** ${version}\n\n${domain.context(p)}\n\n${block(first)}${knobs.misattribute ? `\n\n${misattribution(first)}` : ''}`);

@@ -40,7 +40,7 @@ dedupe_edges = oc.dedupe_edges
 classify_license_text = oc.classify_license_text
 write_jsonl = oc.write_jsonl
 complexity = oc.complexity
-PERMISSIVE = set(oc.PERMISSIVE) | {"CC-BY-3.0", "AFL-3.0"}  # share-alike/copyleft/NC stay non-redistributable
+PERMISSIVE = set(oc.PERMISSIVE) | {"CC-BY-3.0", "AFL-3.0", "LicenseRef-US-Government-Public-Domain"}  # share-alike/copyleft/NC stay non-redistributable
 RETRIEVED = "2026-10-06"
 WORK = "/opt/corpus/science-work"
 

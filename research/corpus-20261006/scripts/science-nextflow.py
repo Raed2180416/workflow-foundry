@@ -634,8 +634,8 @@ def _script_tool(body):
     return ""
 
 
-def analyze_dsl1(repo, classify):
-    path = os.path.join(repo, "main.nf")
+def analyze_dsl1(repo, classify, entry="main.nf"):
+    path = os.path.join(repo, entry)
     if not os.path.isfile(path):
         return None
     nf = NfFile(path)

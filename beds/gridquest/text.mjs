@@ -98,6 +98,29 @@ export const EMPTY_CONTAINER = [
 ];
 
 export const SWITCH_NOUNS = ['lever', 'wheel', 'crank', 'winch', 'handle', 'chain'];
+
+// Other names for fixed objects. Landmark references (difficulty >= 2) often use one of these
+// instead of the noun the object's own sentence uses ("beside the wall hanging" for a
+// tapestry), so locating an exit needs the reader to know they are the same thing. The parser
+// accepts them as names too. Every alias is unique across this table and is never equal to an
+// object noun, an item name or a direction (tested).
+export const ALIASES = {
+  tapestry: ['wall hanging', 'woven hunting scene'], painting: ['portrait', 'framed picture'], mosaic: ['tilework', 'tiled picture'],
+  fountain: ['dry basin', 'stone basin'], statue: ['robed figure', 'carved figure'], skeleton: ['remains', 'bones'],
+  harp: ['stringed instrument', 'snapped strings'], loom: ['weaving frame', 'half-woven cloth'], globe: ['painted sphere', 'world-sphere'],
+  telescope: ['spyglass', 'brass tube'], mirror: ['looking-glass', 'clouded glass'], candelabrum: ['candlestand', 'branched candlestick'],
+  rug: ['carpet', 'floor covering'], bench: ['long seat', 'wooden seat'], anvil: ["smith's block", 'iron block'],
+  mannequin: ["dressmaker's dummy", 'tailor dummy'], clock: ['timepiece', 'tall clockcase'], birdcage: ['cage', 'gilded cage'],
+  throne: ['chair of state', 'great chair'], brazier: ['fire-basket', 'fire-bowl'], lectern: ['reading stand', 'book stand'],
+  bust: ['carved head', 'sculpted head'], hourglass: ['sand-glass', 'sand timer'], organ: ['bank of pipes', 'pipework'],
+  tomb: ['sarcophagus', 'stone coffin'], shelf: ['shelving', 'row of shelves'],
+  urn: ['funerary vessel', 'tall vessel'], chest: ['trunk', 'strongbox'], coffer: ['jewel box', 'little box'],
+  vase: ['glazed pot', 'flower pot'], barrel: ['cask', 'keg'], crate: ['packing case', 'wooden case'],
+  satchel: ['shoulder bag', 'leather bag'], jar: ['crock', 'storage crock'], cauldron: ['kettle', 'great kettle'],
+  boot: ['footwear', 'cast-off shoe'], cushion: ['pillow', 'bolster'], nest: ['tangle of straw', 'straw bundle'],
+  lever: ['pull-bar', 'iron arm'], wheel: ['spoked ring', 'turning ring'], crank: ['winding arm', 'turning bar'],
+  winch: ['windlass', 'rope drum'], handle: ['grip', 'pull-grip'], chain: ['length of links', 'hanging links'],
+};
 export const SWITCH_ADJS = ['rusted', 'brass', 'iron', 'heavy', 'stiff', 'greasy', 'long', 'notched'];
 export const SWITCH_PLACES = [
   w => `juts from the ${w} wall`,
@@ -150,19 +173,22 @@ export const ATMOS = [
 ];
 
 // Purely decorative noise. `w` is a wall adjective (direction decoy), `c` a colour word.
+// `closed: true` entries claim there is no way through that wall, so they are only ever
+// placed on a wall without an exit (a false "no way through" next to a real exit would make
+// the prose contradict the world).
 export const NOISE = [
-  (w) => `The ${w} wall is bare stone, streaked with damp.`,
-  (w) => `A faded banner hangs limply on the ${w} wall.`,
-  (w) => `You hear running water somewhere beyond the ${w} wall, though you see no way through.`,
-  () => 'A draught stirs the ashes in a cold hearth.',
-  () => 'Someone has chalked tally marks on the floor, forty or so, then stopped.',
-  () => 'Faint music, or perhaps only wind, drifts from somewhere far off.',
-  (w, c) => `A ${c} stain spreads across the flagstones near the ${w} wall.`,
-  () => 'A rat watches you from a crack, unimpressed.',
-  (w) => `Iron rings are set into the ${w} wall, though nothing is chained to them.`,
-  (w, c) => `Strips of ${c} cloth have been nailed over a window slit in the ${w} wall.`,
-  () => 'Broken crockery crunches underfoot.',
-  (w) => `The ${w} wall bears a painted compass rose, its needle pointing nowhere useful.`,
+  { closed: true, f: (w) => `The ${w} wall is bare stone, streaked with damp.` },
+  { f: (w) => `A faded banner hangs limply on the ${w} wall.` },
+  { closed: true, f: (w) => `You hear running water somewhere beyond the ${w} wall, though you see no way through.` },
+  { f: () => 'A draught stirs the ashes in a cold hearth.' },
+  { f: () => 'Someone has chalked tally marks on the floor, forty or so, then stopped.' },
+  { f: () => 'Faint music, or perhaps only wind, drifts from somewhere far off.' },
+  { f: (w, c) => `${capFirst(an(c))} stain spreads across the flagstones near the ${w} wall.` },
+  { f: () => 'A rat watches you from a crack, unimpressed.' },
+  { f: (w) => `Iron rings are set into the ${w} wall, though nothing is chained to them.` },
+  { f: (w, c) => `Strips of ${c} cloth have been nailed over a window slit in the ${w} wall.` },
+  { f: () => 'Broken crockery crunches underfoot.' },
+  { f: (w) => `The ${w} wall bears a painted compass rose, its needle pointing nowhere useful.` },
 ];
 
 // In-world inscriptions that are wrong or adversarial. They are data, never rules.
@@ -182,30 +208,67 @@ export const AUTHORS = [
 ];
 
 // ---- direction phrasing ----
+// A location phrase p = { to, cap, wall } places an exit: `to` is an adverbial ("to the north",
+// "beside the faded tapestry"), `cap` its sentence-initial form, `wall` a noun phrase naming
+// the wall ("the northern wall", "the wall opposite the faded tapestry"). Templates use only
+// these three fields, so every template works with compass, sky and landmark frames.
 const DIR_FORMS = {
-  north: { to: ['to the north', 'northward', 'toward the north'], adj: ['northern', 'north'], cap: ['To the north', 'Northward', 'On the north side'], skyTo: 'toward the pole star', skyCap: 'Toward the pole star', skyAdj: 'pole-star' },
-  south: { to: ['to the south', 'southward', 'toward the south'], adj: ['southern', 'south'], cap: ['To the south', 'Southward', 'On the south side'], skyTo: 'toward the noonday sun', skyCap: 'Toward the noonday sun', skyAdj: 'noon-sun' },
-  east: { to: ['to the east', 'eastward', 'toward the east'], adj: ['eastern', 'east'], cap: ['To the east', 'Eastward', 'On the east side'], skyTo: 'toward the sunrise', skyCap: 'Toward the sunrise', skyAdj: 'sunrise' },
-  west: { to: ['to the west', 'westward', 'toward the west'], adj: ['western', 'west'], cap: ['To the west', 'Westward', 'On the west side'], skyTo: 'toward the sunset', skyCap: 'Toward the sunset', skyAdj: 'sunset' },
+  north: { to: ['to the north', 'northward', 'toward the north'], cap: ['To the north', 'Northward', 'On the north side'], wall: ['the northern wall', 'the north wall'], sky: 'the pole star' },
+  south: { to: ['to the south', 'southward', 'toward the south'], cap: ['To the south', 'Southward', 'On the south side'], wall: ['the southern wall', 'the south wall'], sky: 'the noonday sun' },
+  east: { to: ['to the east', 'eastward', 'toward the east'], cap: ['To the east', 'Eastward', 'On the east side'], wall: ['the eastern wall', 'the east wall'], sky: 'the sunrise' },
+  west: { to: ['to the west', 'westward', 'toward the west'], cap: ['To the west', 'Westward', 'On the west side'], wall: ['the western wall', 'the west wall'], sky: 'the sunset' },
 };
 export function dirPhrase(dir, form, sky) {
   const f = DIR_FORMS[dir];
-  if (sky) return { to: f.skyTo, cap: f.skyCap, adj: f.skyAdj };
-  return { to: f.to[form % 3], cap: f.cap[form % 3], adj: f.adj[form % 2] };
+  if (sky) return { to: `toward ${f.sky}`, cap: `Toward ${f.sky}`, wall: `the wall toward ${f.sky}` };
+  return { to: f.to[form % 3], cap: f.cap[form % 3], wall: f.wall[form % 2] };
+}
+// Landmark frames: the exit is in the same wall as a named object in the room ('same'), or in
+// the wall across the room from it ('opp'). The object's own sentence states its wall.
+const LAND_FORMS = {
+  same: { to: ['beside X', 'next to X', 'right beside X'], cap: ['Beside X', 'Next to X', 'Right beside X'], wall: ['the same wall as X', 'the wall behind X'] },
+  opp: { to: ['across the room from X', 'opposite X', 'directly across from X'], cap: ['Across the room from X', 'Opposite X', 'Directly across from X'], wall: ['the wall opposite X', 'the wall across the room from X'] },
+};
+export function landPhrase(rel, form, ref) {
+  const f = LAND_FORMS[rel], sub = t => t.replace('X', ref);
+  return { to: sub(f.to[form % 3]), cap: sub(f.cap[form % 3]), wall: sub(f.wall[form % 2]) };
 }
 
-// ---- exit templates (p = { to, cap, adj, color, mat }) ----
+// ---- exit templates (p = { to, cap, wall }; q adds { color, mat }) ----
 export const OPEN_T = [
   p => `An archway opens ${p.to}.`,
   p => `${p.cap}, a low passage ducks under a sagging beam.`,
-  p => `A corridor leads off ${p.to}, its flagstones worn smooth.`,
-  p => `There is a doorless gap in the ${p.adj} wall.`,
-  p => `A few shallow steps lead ${p.to} into the next chamber.`,
+  p => `A corridor leads away ${p.to}, its flagstones worn smooth.`,
+  p => `There is a doorless gap in ${p.wall}.`,
+  p => `A few shallow steps ${p.to} lead up into the next chamber.`,
   p => `A curtain of wooden beads hangs across an opening ${p.to}.`,
-  p => `${p.cap} the room carries on through a broad arch.`,
+  p => `${p.cap}, the room carries on through a broad arch.`,
   p => `A draught blows in through an open doorway ${p.to}.`,
-  p => `You could squeeze through a wide crack in the ${p.adj} wall.`,
-  p => `The ${p.adj} doorway lost its door long ago; nothing bars the way.`,
+  p => `You could squeeze through a wide crack in ${p.wall}.`,
+  p => `The doorway in ${p.wall} lost its door long ago; nothing bars the way.`,
+];
+// Real, open exits phrased with the vocabulary of blocked ones (difficulty >= 2).
+export const REOPENED_T = [
+  p => `${p.cap}, an archway was bricked up once, but the bricks have since been knocked out; you could step through.`,
+  p => `A corridor ${p.to} was choked with fallen masonry, but someone has cleared a path through the rubble.`,
+  p => `A doorway in ${p.wall} was walled up long ago, but the bricks have since crumbled away, leaving it open.`,
+  p => `What looks at first like an arch painted on ${p.wall} is real: there is an open passage behind it.`,
+  p => `Steps lead down ${p.to}; the stairwell was flooded once, but the water has drained away and the way is passable.`,
+  p => `${p.cap}, an archway stood bricked up for centuries, but it has since been opened again.`,
+  p => `A doorway in ${p.wall} was blocked by a fallen beam until recently; the beam has been dragged aside and the way is open.`,
+];
+// Things that look like exits but are not, always on a wall with no exit (difficulty >= 2).
+export const FAKE_EXIT_T = [
+  p => `${p.cap}, an archway has been bricked up; the mortar is newer than the stone around it.`,
+  p => `A doorway in ${p.wall} was walled up long ago and has stayed that way.`,
+  p => `An arch is painted on ${p.wall}, a trompe-l'oeil so convincing that you nearly walk into the stone.`,
+  p => `A corridor ${p.to} ends after two paces in a solid heap of fallen masonry.`,
+  p => `Through a barred window in ${p.wall} you can see a passage on the far side, well out of reach.`,
+  p => `A crack in ${p.wall} is barely a hand's width across; nothing larger than a mouse could get through.`,
+  p => `Steps once led down ${p.to}, but the stairwell is flooded to the ceiling with black water.`,
+  p => `An empty door frame is set into ${p.wall}, but behind it there is only solid stone.`,
+  p => `${p.cap}, an archway stood open for centuries, but it has since been bricked up.`,
+  p => `A corridor ${p.to} was cleared of rubble once, but the roof has since come down and filled it again.`,
 ];
 export const OPEN_GROUP_T = [
   list => `Open archways lead ${list}.`,
@@ -214,47 +277,47 @@ export const OPEN_GROUP_T = [
   list => `Doorless openings face ${list}.`,
 ];
 export const DOOR_LOCKED_T = [
-  p => `A heavy ${p.mat} door bound with ${p.color} iron bars the way ${p.to}. It is locked.`,
-  p => `${p.cap} stands a ${p.mat} door whose keyhole is ringed with ${p.color} enamel; it will not budge.`,
-  p => `The ${p.adj} exit is sealed by a locked door, its panels painted ${p.color} long ago.`,
-  p => `A locked, ${p.color}-lacquered door is set into the ${p.adj} wall.`,
-  p => `Set in the ${p.adj} wall is a stout ${p.mat} door with a ${p.color} lock plate. It is shut fast.`,
+  q => `A heavy ${q.mat} door bound with ${q.color} iron bars the way ${q.to}. It is locked.`,
+  q => `${q.cap} stands ${an(q.mat)} door whose keyhole is ringed with ${q.color} enamel; it will not budge.`,
+  q => `The exit in ${q.wall} is sealed by a locked door, its panels painted ${q.color} long ago.`,
+  q => `A locked, ${q.color}-lacquered door is set into ${q.wall}.`,
+  q => `Set in ${q.wall} is a stout ${q.mat} door with a ${q.color} lock plate. It is shut fast.`,
 ];
 export const DOOR_OPEN_T = [
-  p => `The ${p.color} door ${p.to} stands unlocked and ajar.`,
-  p => `${p.cap}, the ${p.color}-banded door hangs open, unlocked.`,
+  q => `The ${q.color} door ${q.to} stands unlocked and ajar.`,
+  q => `${q.cap}, the ${q.color}-banded door hangs open, unlocked.`,
 ];
 export const BRIDGE_UP_T = [
   p => `${p.cap}, the floor ends at the lip of a chasm; across it, a drawbridge is hauled up out of reach.`,
   p => `A deep rift cuts across the way ${p.to}; its bridge is folded up against the far side.`,
-  p => `The ${p.adj} side of the room drops into a black gorge too wide to jump. Its bridge is raised.`,
+  p => `Through an opening in ${p.wall} the floor drops into a black gorge too wide to jump. Its bridge is raised.`,
 ];
 export const BRIDGE_DOWN_T = [
   p => `A narrow bridge now spans the chasm ${p.to}.`,
   p => `${p.cap}, a lowered drawbridge crosses the gorge.`,
 ];
 export const GATE_DOWN_T = [
-  p => `An iron portcullis is down across the ${p.adj} arch.`,
+  p => `An iron portcullis is down across the arch in ${p.wall}.`,
   p => `${p.cap}, a rusted portcullis has been dropped across the passage, blocking it.`,
   p => `The way ${p.to} is barred by a lowered portcullis of black iron.`,
 ];
 export const GATE_UP_T = [
-  p => `The portcullis over the ${p.adj} arch is raised; the way is clear.`,
+  p => `The portcullis over the arch in ${p.wall} is raised; the way is clear.`,
   p => `${p.cap}, a portcullis stands winched up out of the way.`,
 ];
 // One-way styles: [exit side (you can go), entry side (you cannot go back)].
 export const ONEWAY_STYLES = [
   { name: 'chute',
     out: p => `A smooth chute slopes steeply down ${p.to}. You could slide down it, but there would be no climbing back.`,
-    in: p => `High in the ${p.adj} wall gapes the mouth of a chute, far too slick to climb.`,
+    in: p => `High in ${p.wall} gapes the mouth of a chute, far too slick to climb.`,
     blocked: 'The chute is far too slick to climb.' },
   { name: 'ledge',
     out: p => `${p.cap}, the floor ends at a ledge above the next room: an easy drop down, but no way back up.`,
     in: p => `${p.cap}, a ledge looms well above your head; there is no way up.`,
     blocked: 'The ledge is well out of reach; you cannot climb up.' },
   { name: 'turnstile',
-    out: p => `An iron turnstile in the ${p.adj} wall turns only one way: out of this room.`,
-    in: p => `A turnstile in the ${p.adj} wall is locked against you from this side.`,
+    out: p => `An iron turnstile in ${p.wall} turns only one way: out of this room.`,
+    in: p => `A turnstile in ${p.wall} is locked against you from this side.`,
     blocked: 'The turnstile will not turn this way.' },
   { name: 'hatch',
     out: p => `A one-way hatch ${p.to} swings outward; it has no handle on the far side.`,
@@ -269,6 +332,20 @@ export const OBJ_T = [
   (o, w) => `${capFirst(an(o))} sits beside the ${w} wall.`,
   (o, w) => `In the middle of the room is ${an(o)}.`,
   (o, w) => `There is ${an(o)} near the ${w} wall.`,
+  (o, w) => `Against the ${w} wall leans ${an(o)}.`,
+  (o, w) => `Pushed up against the ${w} wall is ${an(o)}.`,
+  (o, w) => `Close against the ${w} wall stands ${an(o)}.`,
+  (o, w) => `Along the ${w} wall you make out ${an(o)}.`,
+];
+// OBJ_T / SWITCH_PLACES variants that state a wall (an object used as a landmark needs one).
+export const OBJ_WALL_V = [1, 3, 5, 6, 7, 8, 9];
+export const SWITCH_WALL_V = [0, 3];
+// An object placed relative to another landmark (difficulty >= 4): rel 'same' or 'opp'.
+export const OBJ_REL_T = [
+  { rel: 'same', f: (o, ref) => `${capFirst(an(o))} stands beside ${ref}, against the same wall.` },
+  { rel: 'same', f: (o, ref) => `${capFirst(an(o))} has been pushed right up next to ${ref}.` },
+  { rel: 'opp', f: (o, ref) => `${capFirst(an(o))} stands across the room from ${ref}.` },
+  { rel: 'opp', f: (o, ref) => `${capFirst(an(o))} faces ${ref} from the opposite wall.` },
 ];
 export const ITEM_T = [
   i => `${capFirst(an(i))} lies on the floor.`,
@@ -289,7 +366,7 @@ export const FAKE_TREASURE = [
 ];
 
 export const capFirst = s => s.charAt(0).toUpperCase() + s.slice(1);
-export const an = word => (/^[aeiou]/i.test(word) ? `an ${word}` : `a ${word}`);
+export const an = word => (/^[aeiou]/i.test(word) && !/^one\b/i.test(word) ? `an ${word}` : `a ${word}`);
 export function joinList(words) {
   if (words.length <= 1) return words.join('');
   if (words.length === 2) return `${words[0]} and ${words[1]}`;

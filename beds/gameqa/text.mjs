@@ -32,13 +32,14 @@ const AUTHORS = ['mossbadger', 'quietkettle', 'Lune_V', 'tinpot_tess', 'Harrow99
 const DEVS = ['Ines (design)', 'Tomas (engine)', 'Prue (community)', 'Aldo (gameplay)'];
 
 // ------------------------------------------------------------------ world description helpers
+const isHoriz = e => e.route[0][1] === e.route[1][1];
 export const roomOf = (lv, x) => lv.rooms.findIndex(rm => x >= rm.x0 && x <= rm.x1);
 const openingName = (lv, sep) => sep.type === 'gap' ? 'archway' : sep.type === 'bone' ? 'bone door' : `${COLOR_NAME[sep.color]} door`;
 const between = (lv, sep) => `the wall between the ${lv.rooms[sep.i].name} and the ${lv.rooms[sep.i + 1].name}`;
 export function wallDesc(lv, x, y) {
   const sep = lv.seps.find(s => s.x === x);
   const k = Math.abs(y - sep.oy);
-  return `in ${between(lv, sep)}, the stone ${plural(k, 'tile')} ${y > sep.oy ? 'south' : 'north'} of the ${openingName(lv, sep)}`;
+  return `the stone ${plural(k, 'tile')} ${y > sep.oy ? 'south' : 'north'} of the ${openingName(lv, sep)} in ${between(lv, sep)}`;
 }
 function anchors(lv) {
   const out = lv.landmarks.map(l => ({ x: l.x, y: l.y, name: `the ${l.name}` }));
@@ -52,8 +53,13 @@ function nearAnchor(lv, x, y) {
   for (const a of anchors(lv)) { const d = Math.abs(a.x - x) + Math.abs(a.y - y); if (d < bd) { bd = d; best = a; } }
   return best.name;
 }
-const enemyWhere = (lv, e) => `${e.kind} in the ${lv.rooms[roomOf(lv, e.route[0][0])].name}`;
-const isHoriz = e => e.route[0][1] === e.route[1][1];
+function enemyWhere(lv, e) {
+  const ri = roomOf(lv, e.route[0][0]);
+  const twins = lv.enemies.filter(o => o.kind === e.kind && o.route && roomOf(lv, o.route[0][0]) === ri);
+  const room = lv.rooms[ri].name;
+  if (twins.length < 2) return `${e.kind} in the ${room}`;
+  return isHoriz(e) ? `${e.kind} that patrols row ${e.route[0][1]} of the ${room}` : `${e.kind} that patrols column ${e.route[0][0]} of the ${room}`;
+}
 
 export function floorMap(lv) {
   const rows = lv.grid.map(r => r.split(''));
@@ -153,12 +159,13 @@ export function floorNotes(world) {
     lines.push(`Landmarks: ${lv.landmarks.map(l => `${l.glyph} is the ${l.name} (in the ${lv.rooms[l.room].name})`).join('; ')}.`);
     if (lv.shop) lines.push(`The shop counter (S) in the ${lv.rooms[roomOf(lv, lv.shop.x)].name} is kept by ${lv.shop.keeper}. Posted base prices: potion ${lv.shop.stock.potion}, sword ${lv.shop.stock.sword}, lantern ${lv.shop.stock.lantern}.`);
     for (const sp of lv.secrets) lines.push(`Secret passage: ${wallDesc(lv, sp.x, sp.y)} is loose and can be walked through in either direction.`);
+    lines.push(lv.secrets.length ? 'Every other wall stone on this floor is solid.' : 'This floor has no secret passage: every wall stone on it is solid.');
     if (lv.alcove) lines.push(`A small treasure nook with a chest opens off the ${lv.alcove.y === 1 ? 'north' : 'south'} wall of the ${lv.rooms[roomOf(lv, lv.alcove.x)].name}.`);
     const spare = lv.items.find(i => i.kind === 'key' && i.spare);
     if (spare) lines.push(`The ${COLOR_NAME[spare.color]} key on this floor is a spare: no door here takes it.`);
     const ens = lv.enemies.map(e => e.kind === 'wisp'
       ? `a wisp blinks between the two braziers (^)`
-      : `a ${e.kind} ${e.kind === 'crawler' ? 'paces' : e.kind === 'moth' ? 'flutters' : 'drifts'} ${isHoriz(e) ? 'east-west' : 'north-south'} in the ${lv.rooms[roomOf(lv, e.route[0][0])].name}`);
+      : `the ${enemyWhere(lv, e)} ${e.kind === 'crawler' ? 'paces' : e.kind === 'moth' ? 'flutters' : 'drifts'} ${isHoriz(e) ? 'east-west' : 'north-south'}`);
     lines.push(`Enemies: ${ens.join('; ')}.`);
     return { floor: lv.index + 1, name: lv.name, width: lv.w, height: lv.h, map: floorMap(lv), notes: lines.join(' ') };
   });
@@ -230,7 +237,7 @@ function hint(world, b, clarity, r) {
       const lv = world.levels[b.level];
       const cp = COND_PHRASE[b.cond](b.n);
       return [
-        [`Walked through a wall on ${F(b.level)}`, `On ${F(b.level)}, walking ${DIRW[b.dir]} into the wall ${wallDesc(lv, b.x, b.y)}${cp ? ' ' + cp : ''} puts me straight through to the other side.`],
+        [`Walked through a wall on ${F(b.level)}`, `On ${F(b.level)}, walking ${DIRW[b.dir]} into ${wallDesc(lv, b.x, b.y)}${cp ? ' ' + cp : ''} puts me straight through to the other side.`],
         [`Clipping near ${nearAnchor(lv, b.x, b.y)}`, `Clipped through a wall somewhere near ${nearAnchor(lv, b.x, b.y)} on ${F(b.level)}. I think I was heading ${DIRW[b.dir]}. ${COND_VAGUE[b.cond]}`],
         [`${F(b.level)} walls are leaky`, `I ended up in the next room on ${F(b.level)} without using the door. Not the listed secret passage, I checked.`],
       ][2 - clarity];
@@ -469,7 +476,8 @@ export function evidence(world, bugs, r) {
   const older = ['0.9.1', '0.9.2', '0.9.3'];
   const add = (o) => {
     const rep = { source: 'forum', author: r.pick(AUTHORS), build: cur, status: 'open', ...o };
-    if (rep.source !== 'telemetry' && rep.source !== 'tracker-bot') rep.body = narrate(r, d, rep.body);
+    rep.body = rep.body.trim();
+    if (rep.source !== 'telemetry') rep.body = narrate(r, d, rep.body);
     reports.push(rep);
     return rep;
   };

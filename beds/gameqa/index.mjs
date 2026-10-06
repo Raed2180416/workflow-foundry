@@ -8,6 +8,7 @@ import { caseFor, evaluateRepro, replay, MAX_REPRO, MAX_REPORTS } from './case.m
 import { BUG_CLASSES, SIBLING } from './bugs.mjs';
 import { designDoc, floorNotes, evidence, prompt, hintText, communityWiki } from './text.mjs';
 import { decoyReports } from './decoys.mjs';
+import { sessionLogs } from './sessions.mjs';
 
 export const family = {
   id: 'gameqa',
@@ -37,6 +38,7 @@ export const outputSchema = {
   },
 };
 
+const TESTERS = ['K. Abernathy (QA)', 'R. Okafor (QA)', 'M. Lindqvist (QA)', 'playtest-group-3', 'J. Ferreira (QA)'];
 const BUDGET = { 1: 800, 2: 1200, 3: 2000, 4: 3000, 5: 4000 };
 
 export function generate({ seed, split = 'dev', difficulty = 3 }) {
@@ -58,6 +60,7 @@ export function generate({ seed, split = 'dev', difficulty = 3 }) {
       changelog: ev.changelog,
       reports: ev.reports,
       ...(difficulty >= 3 ? { community_wiki: communityWiki(world, r.fork('wiki')) } : {}),
+      ...(difficulty >= 2 ? { qa_sessions: sessionLogs(world, c.bugs, r.fork('sessions'), [0, 0, 1, 3, 4, 5][difficulty], TESTERS) } : {}),
       environment: {
         actions: [...ACTIONS],
         observation: 'step(action) returns { observation: { frame, state, events, status, error? }, done, reward, info }. frame = ASCII map rows plus a HUD line; state = JSON instrumentation (floor, turn, player {x,y,hp,max_hp}, gold, score, inventory, enemies, items, doors, shop when standing on a counter, save_slot); status = playing | won | game_over | crashed.',

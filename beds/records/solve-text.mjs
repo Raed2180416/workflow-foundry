@@ -3,8 +3,8 @@
 // rules via the shared rule functions. If it scores 1.0, the hidden truth is derivable from the
 // rendered text alone. It is NOT the reference solver and is never shown to arms.
 import * as P from './pools.mjs';
-import { ruleSolve, rowsLink, sameDay } from './world.mjs';
-import { dayNum } from './render.mjs';
+import { ruleSolve, rowsLink, sameDay, mulRate, divRate } from './world.mjs';
+import { dayNum, VENDEX_VOID } from './render.mjs';
 
 const MONTH = {};
 P.MONTHS.forEach((m, i) => { MONTH[m.toLowerCase()] = i + 1; MONTH[m.slice(0, 3).toLowerCase()] = i + 1; });
@@ -14,6 +14,7 @@ for (const [iso, c] of Object.entries(P.COUNTRIES)) {
 }
 COUNTRY_ALIAS.set('uk', 'GB');
 const DEMONYM = new Map(Object.entries(P.COUNTRIES).map(([iso, c]) => [c.demonym.toLowerCase(), iso]));
+const CITY = new Map(Object.entries(P.CITIES).flatMap(([iso, list]) => list.map(c => [c.toLowerCase(), iso])));
 const CCS = [...new Set(Object.values(P.COUNTRIES).map(c => c.cc))].sort((a, b) => b.length - a.length);
 const TITLE_TOKENS = new Set(['mr', 'mr.', 'ms', 'ms.', 'mrs', 'mrs.', 'dr', 'dr.', 'prof.', 'prof']);
 const MISSING = new Set(['', 'n/a', '—', 'tbd', '?', 'n/k']);
@@ -27,7 +28,14 @@ function longDate(s) { // "10 September 2022" | "March 5, 2021" | "3 Mar 2021"
   if (m) return ymd(m[3], MONTH[m[1].toLowerCase()], m[2]);
   throw new Error(`date? ${s}`);
 }
+function usNumeric(s, twoDigitCentury = 1900) { // month/day/year
+  const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/);
+  if (!m) return null;
+  return ymd(m[3].length === 2 ? twoDigitCentury + Number(m[3]) : m[3], m[1], m[2]);
+}
 function vendexDob(s) {
+  const num = usNumeric(s);
+  if (num) return num;
   let m = s.match(/^([A-Za-z]+) (\d{1,2})(?:st|nd|rd|th), (\d{4})$/);
   if (m) return ymd(m[3], MONTH[m[1].toLowerCase()], m[2]);
   m = s.match(/^the (\d{1,2})(?:st|nd|rd|th) of ([A-Za-z]+) (\d{4})$/);
@@ -112,9 +120,13 @@ function parseFx(spec) {
     if (m) { table = 'old'; continue; }
     m = line.match(/Table B2, for rows updated on or after (.+):$/);
     if (m) { table = 'cur'; fx.cutover = dayOf(longDate(m[1])); continue; }
-    m = line.match(/^\s+([A-Z]{3})\s+(\d+)\.(\d+)$/);
-    if (m && P.CURRENCIES[m[1]]) fx[table][m[1]] = Number(m[2]) * 1e6 + Number(m[3].padEnd(6, '0'));
+    m = line.match(/^\s+([A-Z]{3})(?:\/USD)?\s+(\d+)\.(\d+)$/);
+    if (m && P.CURRENCIES[m[1]]) fx[table][m[1]] = mulRate(Number(m[2]) * 1e6 + Number(m[3].padEnd(6, '0')));
+    m = line.match(/^\s+USD\/([A-Z]{3})\s+(\d+)\.(\d{4})$/);
+    if (m && P.CURRENCIES[m[1]]) fx[table][m[1]] = divRate(Number(m[2]) * 1e4 + Number(m[3]));
   }
+  fx.cur.USD ??= mulRate(1000000);
+  if (fx.cutover !== null) fx.old.USD ??= mulRate(1000000);
   return fx;
 }
 
@@ -208,38 +220,54 @@ function parseLine(line, ctx) {
   throw new Error(`unparsed line: ${line.slice(0, 60)}`);
 }
 
-const DOB_RE = '(?:born|date of birth) (?:[A-Z][a-z]+ \\d{1,2}(?:st|nd|rd|th), \\d{4}|\\d{1,2} [A-Z][a-z]+ \\d{4}|the \\d{1,2}(?:st|nd|rd|th) of [A-Z][a-z]+ \\d{4}|\\d{2}-[A-Z][a-z]{2}-\\d{2})|birth date not on file';
-const PHONE_RE = '(?:phone|reach at|tel\\.) [^,;]+|no phone on file';
-const T0 = new RegExp(`^Supplier contact (.+?) \\((${DOB_RE})\\)(?:, based in (.+?))?; (${PHONE_RE}); (.+)\\. Entry revised (.+?)\\.$`);
-const T1 = new RegExp(`^(.+?)(?:, a ([A-Za-z]+) supplier,)? (${DOB_RE}); (${PHONE_RE}); (.+)\\. Revised on (.+?)\\.$`);
-const T2 = new RegExp(`^Entry revised (.+?): (.+?)(?: \\((.+?)\\))?, (${DOB_RE}), (${PHONE_RE}), (.+)\\.$`);
+const DATE_RE = '(?:[A-Z][a-z]+ \\d{1,2}(?:st|nd|rd|th)?, \\d{4}|\\d{1,2} [A-Z][a-z]+ \\d{4}|the \\d{1,2}(?:st|nd|rd|th) of [A-Z][a-z]+ \\d{4}|\\d{2}-[A-Z][a-z]{2}-\\d{2}|\\d{1,2}/\\d{1,2}/(?:\\d{4}|\\d{2}))';
+const DOB_RE = `(?:(?:born|date of birth|DOB|b\\.|Born|Date of birth) ${DATE_RE}|birth date not on file|DOB unknown)`;
+const PHONE_RE = '(?:(?:[Pp]hone|[Rr]each at|[Tt]el\\.|[Mm]obile|[Bb]est number) [^,;—]+?|[Nn]o phone on file|[Pp]hone not on file)';
+const AMT_RE = '(?:(?:[Oo]wes us|[Oo]pen balance|[Oo]utstanding|[Bb]alance due|[Ii]n credit by|[Hh]olding a credit of|[Cc]redit balance of|[Ww]e owe them) .+?|[Bb]alance not recorded|[Nn]o balance recorded)';
+const NAME_RE = '([^,;()—]+?)';
+const VT = [
+  // [regex, field order]
+  [new RegExp(`^Supplier contact ${NAME_RE} \\((${DOB_RE})\\)(?:, based in ([^;]+)|, an? ([A-Za-z]+) supplier)?; (${PHONE_RE}); (${AMT_RE})\\. Entry revised (.+?)\\.$`), ['name', 'dob', 'place', 'dem', 'phone', 'amt', 'rev']],
+  [new RegExp(`^${NAME_RE}(?:, an? ([A-Za-z]+) supplier,|, based in ([^,]+),)? (${DOB_RE}); (${PHONE_RE}); (${AMT_RE})\\. Revised on (.+?)\\.$`), ['name', 'dem', 'place', 'dob', 'phone', 'amt', 'rev']],
+  [new RegExp(`^Entry revised (.+?): ${NAME_RE}(?: \\(([^)]+)\\))?, (${DOB_RE}), (${PHONE_RE}), (${AMT_RE})\\.$`), ['rev', 'name', 'any', 'dob', 'phone', 'amt']],
+  [new RegExp(`^Spoke with ${NAME_RE} on (.+?)(?: \\(an? ([A-Za-z]+) contact\\)| \\(based in ([^)]+)\\))?\\. (${DOB_RE})\\. (${PHONE_RE})\\. (${AMT_RE})\\.$`), ['name', 'rev', 'dem', 'place', 'dob', 'phone', 'amt']],
+  [new RegExp(`^${NAME_RE} — (.+?) — (${DOB_RE}) — (${PHONE_RE}) — (${AMT_RE}) — last revised (.+?)\\.$`), ['name', 'loc', 'dob', 'phone', 'amt', 'rev']],
+];
+function vendexPlace(s) {
+  if (!s) return null;
+  const t = s.trim().toLowerCase();
+  if (t === 'location not stated') return null;
+  const iso = COUNTRY_ALIAS.get(t) ?? DEMONYM.get(t) ?? DEMONYM.get(t.replace(/ supplier$/, '')) ?? CITY.get(t);
+  if (!iso) throw new Error(`place? ${s}`);
+  return iso;
+}
 function parseVendex(line) {
   let s = line;
-  const W = ' (Application withdrawn — never onboarded.)';
-  const isVoid = s.endsWith(W);
-  if (isVoid) s = s.slice(0, -W.length);
+  const isVoid = s.endsWith(VENDEX_VOID);
+  if (isVoid) s = s.slice(0, -VENDEX_VOID.length);
   const ri = s.indexOf(' Remark: ');
   const memo = ri >= 0 ? s.slice(ri + 9) : null;
   if (ri >= 0) s = s.slice(0, ri);
   const m = s.match(/^Vendex (\d+) — (.*)$/);
-  const body = m[2];
-  let name, dobS, iso = null, phoneS, amtS, revised, x;
-  if ((x = body.match(T0))) { [, name, dobS, , phoneS, amtS, revised] = x; iso = x[3] ? country(x[3]) : null; }
-  else if ((x = body.match(T2))) { [, revised, name, , dobS, phoneS, amtS] = x; iso = x[3] ? country(x[3]) : null; }
-  else if ((x = body.match(T1))) {
-    [, name, , dobS, phoneS, amtS, revised] = x;
-    if (x[2]) { iso = DEMONYM.get(x[2].toLowerCase()); if (!iso) throw new Error(`demonym? ${x[2]}`); }
-  } else throw new Error(`vendex? ${line}`);
-  const dob = dobS === 'birth date not on file' ? null : vendexDob(dobS.replace(/^(born|date of birth) /, ''));
-  const ph = phoneS === 'no phone on file' ? null : phone(phoneS.replace(/^(phone|reach at|tel\.) /, ''), iso, false);
-  return { rowId: Number(m[1]), void: isVoid, date: dayOf(longDate(revised)), np: givenFirst(name), dob, country: iso, phone: ph,
-    amount: vendexAmount(amtS), memo };
+  let f = null;
+  for (const [re, keys] of VT) {
+    const x = m[2].match(re);
+    if (x) { f = Object.fromEntries(keys.map((k, i) => [k, x[i + 1]])); break; }
+  }
+  if (!f) throw new Error(`vendex? ${line}`);
+  const iso = vendexPlace(f.place ?? f.dem ?? f.any ?? f.loc);
+  const dobS = f.dob.replace(/^(born|date of birth|DOB|b\.|Born|Date of birth) /, '');
+  const dob = /not on file|unknown/.test(f.dob) ? null : vendexDob(dobS);
+  const ph = /not on file/i.test(f.phone) ? null : phone(f.phone.replace(/^([Pp]hone|[Rr]each at|[Tt]el\.|[Mm]obile|[Bb]est number) /, ''), iso, false);
+  const rev = usNumeric(f.rev, 2000) ?? longDate(f.rev);
+  return { rowId: Number(m[1]), void: isVoid, date: dayOf(rev), np: givenFirst(f.name), dob, country: iso, phone: ph,
+    amount: vendexAmount(f.amt), memo };
 }
 function vendexAmount(s) {
-  if (s === 'balance not recorded') return null;
+  if (/^(?:[Bb]alance not recorded|[Nn]o balance recorded)$/.test(s)) return null;
   let neg = false, t = s;
-  const cm = t.match(/^(?:in credit by|holding a credit of) (.*)$/);
-  if (cm) { neg = true; t = cm[1]; } else t = t.replace(/^(?:open balance|owes us) /, '');
+  const cm = t.match(/^(?:[Ii]n credit by|[Hh]olding a credit of|[Cc]redit balance of|[Ww]e owe them) (.*)$/);
+  if (cm) { neg = true; t = cm[1]; } else t = t.replace(/^(?:[Oo]pen balance|[Oo]wes us|[Oo]utstanding|[Bb]alance due) /, '');
   let m = t.match(/^(USD|EUR|GBP) ([\d,]+\.\d{2})$/);
   if (m) return { minor: (neg ? -1 : 1) * decimalToMinor(m[2].replace(/,/g, ''), m[1]), currency: m[1] };
   m = t.match(/^(.+?) (US dollars?|dollars?|euros?|pounds? sterling|pounds?)(?: and (.+?) (cents?|pence|penny))?$/);
@@ -270,13 +298,14 @@ export function solveText(task, { ablate = null } = {}) {
   AB = ablate;
   try {
     const { export: exp, source_notes: notes, spec } = task.inputs;
-    const cm = notes.match(/On (\d{1,2} [A-Za-z]+ \d{4}), ATLAS moved/);
+    const atlasNote = notes.split('\n').find(l => l.startsWith('ATLAS.')) ?? '';
+    const cm = atlasNote.match(/(\d{1,2} [A-Z][a-z]+ \d{4})/);
     const ctx = { atlasCutoff: cm ? dayOf(longDate(cm[1])) : null };
     let rows = exp.split('\n').filter(Boolean).map(line => parseLine(line, ctx));
     if (ablate !== 'keep-void') rows = rows.filter(r => !r.void);
     let fx = parseFx(spec);
     if (ablate === 'single-fx-table') fx = { ...fx, cutover: null };
-    if (ablate === 'no-fx') fx = { cur: Object.fromEntries(Object.keys(fx.cur).map(c => [c, 1000000])), old: {}, cutover: null };
+    if (ablate === 'no-fx') fx = { cur: Object.fromEntries(Object.keys(fx.cur).map(c => [c, { num: 1, den: 1 }])), old: {}, cutover: null };
     const opts = {};
     if (LINKS[ablate]) opts.link = LINKS[ablate];
     if (ablate === 'oldest-wins') opts.order = (a, b) => (a.date - b.date) || (a.rowId - b.rowId);

@@ -7,7 +7,7 @@ import * as P from './pools.mjs';
 export const family = {
   id: 'records',
   domain: 'data repair / entity resolution',
-  version: '1.0.0',
+  version: '2.0.0',
   description: 'Merge a messy export of customer/supplier rows from several legacy systems (mixed locales, '
     + 'nicknames, transliterations, typos, void markers, adversarial staff memos) into one canonical record '
     + 'per real person, following a prose spec for identity, conflict resolution, phone normalisation and USD conversion.',
@@ -243,7 +243,7 @@ export const badControls = [
     make: task => {
       const w = worldOf(task);
       const flat = { cur: {}, old: {}, cutover: null };
-      for (const cur of Object.keys(w.fx.cur)) flat.cur[cur] = 1000000;
+      for (const cur of Object.keys(w.fx.cur)) flat.cur[cur] = { num: 1, den: 1 };
       return ruleSolve(w.rows.map(x => x.s), flat);
     },
   },

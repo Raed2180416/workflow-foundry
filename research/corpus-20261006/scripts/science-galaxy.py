@@ -4,8 +4,9 @@ Pure function over parsed JSON/YAML. Embedded sub-workflows are inlined: the sub
 steps are bound to the parent step's input_connections (by input label, else by order), and parent
 consumers of `output_name` are wired to the inner step whose workflow_outputs carries that label
 (else to every inner sink). Steps:
-  data_input / data_collection_input / parameter_input -> category other (collection inputs count
-  as one runtime fan-out each: Galaxy maps tools over collection elements implicitly)
+  data_input / data_collection_input / parameter_input -> no node (workflow interface; counted in
+  notes; each top-level collection input counts as one runtime fan-out because Galaxy maps tools
+  over collection elements implicitly)
   tool -> action (curated Galaxy tool) / transform (collection ops, text utilities) /
           model (ML inference tools) / error-handler (__FILTER_FAILED_DATASETS__, __KEEP_SUCCESS_DATASETS__) /
           condition (__FILTER_EMPTY_DATASETS__, __FILTER_FROM_FILE__) / merge (pick_value, __MERGE_COLLECTION__) /
@@ -46,6 +47,7 @@ class GxGraph:
         self.pja = {}
         self.notes = set()
         self.max_depth = 0
+        self.inputs = {}
 
     def add(self, nid, typ, cat, eff, summary):
         k, n = nid, 2
@@ -78,33 +80,26 @@ def run(ga, classify, g=None, prefix="", bound=None, depth=0):
     out_labels = {}    # workflow output label -> set(node ids)
     order = sorted(steps.items(), key=lambda kv: int(kv[0]) if str(kv[0]).isdigit() else 0)
     sub_out = {}       # step id -> {"outputs":..., "sinks":...}
+    input_ids = {}     # input step id -> guard key
     for sid, st in order:
         sid = str(sid)
         typ = st.get("type")
         label = st.get("label") or st.get("name") or ""
         nid_base = f"{prefix}s{sid}"
         if typ in ("data_input", "data_collection_input", "parameter_input"):
+            # workflow inputs are interface, not processing steps: no node; consumers are wired to
+            # whatever the parent bound to this input (inlined sub-workflow) or to nothing (top level)
             if bound is not None:
                 b = bound.get(label)
                 if b is None:
                     b = bound.get(sid)
-                if b is None:
-                    # parameter inputs of an embedded sub-workflow may be unconnected (defaults)
-                    b = set()
-                produced[sid] = set(b)
-                continue
-            ptype = ""
-            try:
-                ts = st.get("tool_state")
-                ts = __import__("json").loads(ts) if isinstance(ts, str) else (ts or {})
-                ptype = ts.get("parameter_type") or ts.get("collection_type") or ""
-            except Exception:
-                pass
-            nid = g.add(nid_base, f"galaxy.{typ}" + (f":{ptype}" if ptype else ""), "other", "none",
-                        f"workflow input ({typ.replace('_', ' ')}{', ' + ptype if ptype else ''}): {label}")
-            if typ == "data_collection_input":
-                g.fanout += 1
-            produced[sid] = {nid}
+                produced[sid] = set(b or set())
+            else:
+                produced[sid] = set()
+                g.inputs[typ] = g.inputs.get(typ, 0) + 1
+                if typ == "data_collection_input":
+                    g.fanout += 1
+            input_ids[sid] = f"{prefix}input:{label}"
             continue
         if typ == "subworkflow":
             sub = st.get("subworkflow")
@@ -172,7 +167,7 @@ def run(ga, classify, g=None, prefix="", bound=None, depth=0):
             for x in srcs:
                 g.edge(x, nid, kind)
             if name == "when":
-                g.guards.update(srcs or {f"{nid}:when"})
+                g.guards.update(srcs or {input_ids.get(src, f"{nid}:when")})
         if st.get("when") and not any(n == "when" for n, _, _ in _conns(st)):
             g.guards.add(f"{nid}:when")
         for a in (st.get("post_job_actions") or {}).values():

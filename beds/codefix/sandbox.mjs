@@ -6,6 +6,7 @@
 //   kernel allows it, rlimits, a wall timeout, and JSON over stdin/stdout. If the sandbox
 //   cannot be set up, the call fails closed ({ ok: false }).
 import { spawnSync } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
@@ -30,16 +31,17 @@ const SANDBOX_SCRIPT = [
   'exec timeout -s KILL "$2" /usr/bin/python3 -P -s -S -B -c "$1"',
 ].join('\n');
 
-function parse(proc, label) {
+function parse(proc, label, nonce) {
   if (proc.error) return { ok: false, error: `${label}: ${proc.error.code || proc.error.message}` };
   const out = String(proc.stdout || '');
-  const idx = out.lastIndexOf(MARK);
+  const mark = MARK + nonce;
+  const idx = out.lastIndexOf(mark);
   if (idx < 0) {
     const why = proc.signal ? `killed by ${proc.signal}` : `exit ${proc.status}`;
     return { ok: false, error: `${label}: no result (${why}); stderr: ${String(proc.stderr || '').slice(-400)}` };
   }
   try {
-    return { ok: true, value: JSON.parse(out.slice(idx + MARK.length).split('\n')[0]) };
+    return { ok: true, value: JSON.parse(out.slice(idx + mark.length).split('\n')[0]) };
   } catch (e) {
     return { ok: false, error: `${label}: unparseable result (${e.message})` };
   }
@@ -47,20 +49,24 @@ function parse(proc, label) {
 
 export function pythonAvailable() { return existsSync(PYTHON); }
 
+// Trusted runs execute only bed-generated modules, or merely parse (ast) untrusted source.
 export function runTrusted(request, { timeoutMs = 20000 } = {}) {
   const proc = spawnSync(PYTHON, ['-P', '-s', '-S', '-B', '-c', HARNESS], {
     input: JSON.stringify(request), env: MIN_ENV, cwd: '/', timeout: timeoutMs, killSignal: 'SIGKILL',
     maxBuffer: 64 * 1024 * 1024, encoding: 'utf8',
   });
-  return parse(proc, 'trusted python');
+  return parse(proc, 'trusted python', '');
 }
 
+// The result marker carries a per-call random nonce, so text printed by the candidate cannot be
+// mistaken for the harness result (the nonce never influences the result values).
 export function runSandboxed(request, { timeoutMs = 1800 } = {}) {
   const seconds = Math.max(1, Math.ceil(timeoutMs / 1000));
+  const nonce = randomBytes(12).toString('hex');
   const proc = spawnSync('unshare', ['--user', '--map-root-user', '--net', '--mount', '--fork', '--kill-child',
     'sh', '-c', SANDBOX_SCRIPT, 'codefix-sandbox', HARNESS, String(seconds)], {
-    input: JSON.stringify(request), env: MIN_ENV, cwd: '/', timeout: timeoutMs + 400, killSignal: 'SIGKILL',
+    input: JSON.stringify({ ...request, nonce }), env: MIN_ENV, cwd: '/', timeout: timeoutMs + 400, killSignal: 'SIGKILL',
     maxBuffer: 16 * 1024 * 1024, encoding: 'utf8',
   });
-  return parse(proc, 'sandboxed python');
+  return parse(proc, 'sandboxed python', nonce);
 }

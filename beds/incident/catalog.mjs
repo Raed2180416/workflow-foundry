@@ -259,7 +259,7 @@ export const FAULTS = {
       (c, r) => ['WARN', `disk usage ${r.int(95, 98)}% on ${c.vol}`],
       (c, r) => ['WARN', `free space on ${c.vol} below ${r.pick([3, 4, 5])}%`],
     ],
-    recover: (c, r) => ['INFO', `log rotation freed ${r.int(8, 40)} GiB on ${c.vol}; usage back to ${r.int(55, 70)}%`],
+    recover: (c, r) => ['INFO', `log rotation freed ${r.int(8, 40)} GiB on ${c.vol}; usage back to ${c.u0 ?? r.int(55, 70)}%`],
     phrases: ['a full disk', 'a full data volume', 'storage running out of space'],
   },
 
@@ -641,3 +641,274 @@ export const CHRONIC = {
     (c, r) => ['WARN', `evicted ${r.int(3, 20)} expired entries from '${c.ns}' on read`],
   ],
 };
+
+// ================================================================ v2 additions (audit fixes)
+// Everything below was added by the adversarial audit (see AUDIT.md). It exists to make short
+// scripts fail where a careful reader still succeeds: sibling vocabulary inside the root, callee
+// names in the root's own errors, irrelevant-but-loud trouble below the root, plain ERROR lines from
+// callers that actually fall back, paraphrased notes, and gradual onsets with same-vocabulary
+// baselines before T.
+
+// Root lines that use a sibling class's vocabulary while describing a consequence of the true
+// fault. They start after the onset; the onset line itself always shows the true fault.
+export const SECONDARY = {
+  connection_pool_exhaustion: [
+    (c, r) => ['WARN', `request queue full (${r.int(200, 900)}/${r.pick([256, 512, 1024])}) while waiting for ${c.db} connections; answering 429 Too Many Requests`],
+    (c, r) => ['WARN', `load shedding: ${r.int(20, 300)} requests rejected with 429 in the last 10s (every connection to ${c.db} busy)`],
+    (c, r) => ['ERROR', `admission control: concurrency limit reached on ${c.route}; throttling callers`],
+    (c, r) => ['WARN', `retry budget exhausted for ${c.route}: no database connection became free in time`],
+  ],
+  certificate_expiry: [
+    (c, r) => ['WARN', `peer ${c.callerHost} reports that our certificate is not valid at its current time`],
+    (c, r) => ['INFO', `local clock in sync (offset ${r.int(1, 9)}ms); served certificate notAfter ${c.expIso} has passed`],
+    (c, r) => ['WARN', `time-based validity check of the served chain for ${c.host} failed on ${r.int(3, 40)} new connections`],
+    (c, r) => ['WARN', `token endpoint unreachable for clients: ${r.int(5, 90)} sessions could not refresh before expiry`],
+  ],
+  bad_config_deploy: [
+    (c, r) => ['WARN', `response cache '${c.ns}' disabled by the new settings (cache.enabled=false); every request goes to origin`],
+    (c, r) => ['ERROR', `connection pool '${c.pool}' sized to 0 by release ${c.newVer}; acquire failed for ${c.route}`],
+    (c, r) => ['WARN', `cache TTL for '${c.ns}' is now 0s after reload; hit ratio 0.00`],
+    (c, r) => ['ERROR', `payload schema '${r.pick(['quote-v4', 'item-next', 'reply-beta'])}' named in the ${c.newVer} settings does not exist; rejecting ${c.route}`],
+  ],
+  disk_full: [
+    (c, r) => ['ERROR', `cannot allocate ${r.int(8, 512)} blocks for ${r.pick(['a sort spill', 'a temp segment', 'the merge buffer'])} on ${c.vol}`],
+    (c, r) => ['WARN', `buffer pool cannot spill to ${c.vol}; holding ${r.int(200, 1800)} MiB of dirty pages in memory`],
+    (c, r) => ['ERROR', `out of space while extending a temp file; query on ${c.table} cancelled`],
+    (c, r) => ['WARN', `memory-mapped segment flush failed on ${c.vol}; will retry`],
+  ],
+  dns_resolution_failure: [
+    (c, r) => ['WARN', `connection pool for ${c.calleeHost}: 0 of ${r.pick([8, 10, 16])} connections established (address unknown)`],
+    (c, r) => ['ERROR', `could not open a connection to ${c.calleeHost}: no address to dial`],
+    (c, r) => ['WARN', `${r.int(20, 300)} requests waiting for a connection to ${c.calleeHost}; none can be opened`],
+    (c, r) => ['ERROR', `timed out after ${r.pick([2000, 5000])}ms waiting for a connection to ${c.calleeHost}`],
+  ],
+  memory_leak_oom: [
+    (c, r) => ['ERROR', `${c.db} connection checkout timed out during a ${r.int(1200, 4800)}ms GC stall`],
+    (c, r) => ['WARN', `worker threads blocked for ${r.int(800, 3000)}ms by a stop-the-world collection; request queue ${r.int(40, 400)}`],
+    (c, r) => ['ERROR', `cannot allocate ${r.int(1, 64)} MiB for a response buffer`],
+    (c, r) => ['WARN', `heap dump skipped: ${r.int(900, 2400)} MiB exceeds the free space on ${c.vol}`],
+  ],
+  clock_skew: [
+    (c, r) => ['ERROR', `TLS to ${c.calleeHost} failed: x509: certificate has expired or is not yet valid (local clock reads ${c.skewIso})`],
+    (c, r) => ['WARN', `certificate validation for ${c.calleeHost} failed at local time ${c.skewIso}`],
+    (c, r) => ['WARN', `session tickets expiring immediately; ${r.int(10, 200)} TLS resumptions refused`],
+    (c, r) => ['ERROR', `signed URL for ${c.route} rejected as expired ${r.int(5, 60)}s after minting`],
+  ],
+  upstream_rate_limiting: [
+    (c, r) => ['WARN', `worker pool saturated: ${r.pick([32, 64, 128])} threads waiting on ${c.ext} backoff`],
+    (c, r) => ['WARN', `outbound connection pool to ${c.extHost} exhausted by requests waiting for quota`],
+    (c, r) => ['ERROR', `request ${rid(r)} timed out waiting for a free ${c.ext} slot`],
+    (c, r) => ['WARN', `${r.int(40, 400)} callers queued behind the ${c.ext} limiter`],
+  ],
+  poisoned_cache: [
+    (c, r) => ['WARN', `entry ${c.key} was written by build ${c.otherVer}; field layout differs from what readers expect`],
+    (c, r) => ['WARN', `settings check: validate_on_read=false for '${c.ns}', serving unverified entries`],
+    (c, r) => ['WARN', `schema mismatch for ${c.key}: field '${c.field}' absent (expected by the running release ${c.oldVer})`],
+    (c, r) => ['WARN', `${r.int(5, 90)} responses for ${c.route} carried a stale config version tag`],
+  ],
+};
+
+// Onset alternatives in a sibling vocabulary: the first visible sign of the fault happens to be
+// worded like the sibling class (the discriminating detail is in the line).
+export const ONSET_ALT = {
+  clock_skew: [
+    (c, r) => ['ERROR', `x509: certificate for ${c.calleeHost} has expired or is not yet valid: current time ${c.skewIso} is outside its validity window`],
+    (c, r) => ['WARN', `token from ${c.callerHost} rejected as expired: local time ${c.skewIso} is past its exp claim`],
+  ],
+  dns_resolution_failure: [
+    (c, r) => ['WARN', `connection pool for ${c.calleeHost} cannot refill: lookup returned no addresses`],
+  ],
+};
+
+// Root lines that name one of its own callees although the trouble is the root's own fault.
+export const CALLEE_LINES = {
+  bad_config_deploy: [
+    (c, r) => ['ERROR', `call to ${c.dep} failed: base URL from the ${c.newVer} settings is malformed ('${r.pick(['http//', 'https://:8443', 'tcp://undefined'])}')`],
+    (c, r) => ['ERROR', `request to ${c.dep} aborted: timeout configured as 0ms`],
+  ],
+  clock_skew: [
+    (c, r) => ['ERROR', `${c.dep} rejected our signed request: timestamp outside the allowed window`],
+    (c, r) => ['ERROR', `call to ${c.dep} failed with 401: request signature expired on arrival`],
+  ],
+  disk_full: [
+    (c, r) => ['ERROR', `could not spool the response from ${c.dep}: local buffer on ${c.vol} is full`],
+  ],
+  memory_leak_oom: [
+    (c, r) => ['ERROR', `in-flight call to ${c.dep} aborted: worker killed by the memory limit`],
+    (c, r) => ['WARN', `call to ${c.dep} took ${r.int(2200, 7800)}ms (GC stall on our side)`],
+  ],
+};
+
+// Lines a healthy callee logs about the root's bad requests (clock skew, bad config). They are
+// rejections, not failures: the callee keeps serving everyone else.
+export const CALLEE_REJECT = {
+  clock_skew: [
+    (c, r) => ['WARN', `rejected request from ${c.peer}: request timestamp ${c.skew}s ahead of server time`],
+    (c, r) => ['WARN', `signature check failed for client ${c.peer}: clock difference ${c.skew}s exceeds 30s`],
+  ],
+  bad_config_deploy: [
+    (c, r) => ['WARN', `400 Bad Request from ${c.peer}: missing header 'x-${r.pick(['tenant', 'request-id', 'api-version'])}'`],
+    (c, r) => ['WARN', `client ${c.peer} sent an unsupported API version (${r.pick(['v0', 'v9', 'none'])}); rejected`],
+  ],
+};
+
+// Same-vocabulary lines the root logs before T at normal values (baselines), so the onset is the
+// first line where the values become abnormal, not the first line with the right words.
+export const BASELINE = {
+  connection_pool_exhaustion: (c, r, v) => ['INFO', `pool '${c.pool}' stats: active=${v}/${c.max} idle=${c.max - v} pending=0`],
+  certificate_expiry: (c, r) => ['INFO', `TLS listener :${c.port} ok (${r.int(40, 900)} handshakes/min)`],
+  bad_config_deploy: (c, r) => ['INFO', `config watch: no changes (release ${c.oldVer})`],
+  disk_full: (c, r, v) => [v >= 80 ? 'WARN' : 'INFO', `disk usage ${v}% on ${c.vol}${v >= 80 ? ' (warning threshold 80%)' : ''}`],
+  dns_resolution_failure: (c, r) => ['INFO', `resolver ${c.resolver}: ${r.int(200, 4000)} lookups/min, cache hit ${r.int(80, 98)}%`],
+  memory_leak_oom: (c, r, v) => [v >= 60 ? 'WARN' : 'INFO', `heap after gc ${v}% (pause ${r.int(20, 140)}ms)`],
+  clock_skew: (c, r) => ['INFO', `ntp offset ${r.int(1, 30)}ms (ok)`],
+  upstream_rate_limiting: (c, r) => ['INFO', `${c.ext} quota usage ${r.int(15, 60)}% of ${c.quota}/min`],
+  poisoned_cache: (c, r) => ['INFO', `cache '${c.ns}' hit ratio 0.${r.int(85, 97)}, ${r.int(8000, 90000)} entries`],
+};
+
+// Gradual onsets (difficulty >= 3): the fault starts at T as a trend and turns fatal minutes later.
+export const TREND = {
+  disk_full: {
+    onset: [
+      (c, r, v) => ['WARN', `disk usage on ${c.vol} jumped to ${v}% (was ${c.u0}% a few minutes ago); ${c.writer} is writing ${r.int(80, 400)} MB/s`],
+      (c, r, v) => ['WARN', `free space on ${c.vol} shrinking fast: ${c.free(v)} GiB left`],
+      (c, r, v) => ['WARN', `volume ${c.vol} at ${v}% and climbing; largest writer is ${c.writer}`],
+    ],
+    step: [
+      (c, r, v) => ['WARN', `disk usage ${v}% on ${c.vol}`],
+      (c, r, v) => ['WARN', `free space on ${c.vol}: ${c.free(v)} GiB`],
+      (c, r, v) => ['WARN', `${c.writer} has written ${r.int(4, 40)} GiB since the last check; ${c.vol} at ${v}%`],
+    ],
+  },
+  connection_pool_exhaustion: {
+    onset: [
+      (c, r, v) => ['WARN', `connection checked out by ${c.route} ${r.int(31, 90)}s ago has not been returned (leak suspected)`],
+      (c, r, v) => ['WARN', `pool '${c.pool}' in use ${v}/${c.max} and rising while the request rate is flat`],
+      (c, r, v) => ['WARN', `active connections on '${c.pool}' up from ${c.a0} to ${v} without matching load`],
+    ],
+    step: [
+      (c, r, v) => ['INFO', `pool '${c.pool}' stats: active=${v}/${c.max} idle=${c.max - v} pending=0`],
+      (c, r, v) => ['WARN', `connection held ${r.int(40, 300)}s by ${c.route} still not returned`],
+      (c, r, v) => ['WARN', `pool '${c.pool}' active=${v}/${c.max}; ${r.int(2, 9)} connections idle in transaction`],
+    ],
+  },
+};
+export const WRITERS = ['the access-log appender', 'a debug trace dump', 'the audit spool', 'an export job', 'the WAL archiver'];
+
+// Irrelevant-but-loud trouble (decoys): a healthy service near the root starts logging errors that
+// have nothing to do with serving, shortly before T. Keyed by service kind.
+export const DECOY = {
+  db: [
+    (c, r) => ['ERROR', `could not send data to the standby: connection reset; replica ${c.svc}-standby lagging ${r.int(3, 40)}s`],
+    (c, r) => ['WARN', `replication lag on standby is ${r.int(6, 90)}s (threshold 5s)`],
+    (c, r) => ['ERROR', `scheduled logical backup to object storage failed: access denied (bucket backups-${c.ns}); will retry in 5 min`],
+    (c, r) => ['WARN', `autovacuum: table "${c.table}" has ${r.int(2, 90)}M dead tuples; aggressive vacuum running`],
+  ],
+  kv: [
+    (c, r) => ['ERROR', 'background AOF rewrite failed: child exited with status 1; will retry'],
+    (c, r) => ['WARN', `replica link down for ${r.int(5, 120)}s; partial resync pending`],
+    (c, r) => ['WARN', `latency monitor: fork took ${r.int(200, 1400)}ms`],
+  ],
+  index: [
+    (c, r) => ['ERROR', `snapshot [nightly-${r.int(100, 999)}] to repository failed: repository_exception (access denied)`],
+    (c, r) => ['WARN', `cluster health YELLOW: ${r.int(1, 12)} replica shards unassigned (all primaries active)`],
+  ],
+  broker: [
+    (c, r) => ['WARN', `under-replicated partitions: ${r.int(1, 9)} (a follower is catching up)`],
+    (c, r) => ['ERROR', 'mirror task to the DR cluster failed: authentication error; retrying'],
+  ],
+  blob: [
+    (c, r) => ['ERROR', `cross-region replication of ${r.int(10, 900)} objects failed: destination bucket policy denies write`],
+    (c, r) => ['WARN', `lifecycle job behind schedule by ${r.int(5, 90)} min`],
+  ],
+  svc: [
+    (c, r) => ['ERROR', `trace exporter: export to the collector failed (HTTP 503); dropped ${r.int(50, 900)} spans`],
+    (c, r) => ['ERROR', `license heartbeat to licensing.vendor.example failed; grace period active (${r.int(2, 70)}h left)`],
+    (c, r) => ['WARN', `log shipper backpressure: ${r.int(100, 9000)} lines dropped`],
+    (c, r) => ['ERROR', `audit sink unreachable; buffering ${r.int(100, 5000)} events locally`],
+    (c, r) => ['WARN', `background job 'reindex-${r.pick(['labels', 'slugs', 'synonyms'])}' running ${r.int(60, 900)}s over its schedule`],
+  ],
+};
+
+// Benign lines that name a callee (any time, any caller). The ERROR ones are client-side 4xx.
+export const MENTION = [
+  (c, r) => ['WARN', `slow response from ${c.callee}: ${r.int(700, 990)}ms (budget 1000ms)`],
+  (c, r) => ['WARN', `connection to ${c.callee} reset by peer; reconnected after ${r.int(5, 300)}ms`],
+  (c, r) => ['INFO', `retry 1/3 calling ${c.callee} succeeded`],
+  (c, r) => ['WARN', `${c.callee} answered with a deprecated API version header`],
+];
+export const MENTION_ERR = [
+  (c, r) => ['ERROR', `${c.callee} returned 400 Bad Request for ${c.route}: field '${r.pick(['sku', 'postcode', 'quantity', 'currency'])}' invalid`],
+  (c, r) => ['ERROR', `${c.callee} returned 409 Conflict for ${rid(r)} (stale version); retrying with a fresh copy`],
+  (c, r) => ['ERROR', `${c.callee} returned 404 for ${c.key}; treating as missing`],
+];
+
+// What a caller with a fallback logs about a failing callee when it does not mention the fallback
+// on the same line. The caller's own requests keep succeeding.
+export const SOFT_ERR = [
+  (c, r) => ['ERROR', `call to ${c.callee} timed out after ${r.pick([150, 250, 400])}ms`],
+  (c, r) => ['ERROR', `error calling ${c.callee}: context deadline exceeded`],
+  (c, r) => ['ERROR', `upstream ${c.callee} returned 503 Service Unavailable`],
+  (c, r) => ['WARN', `circuit breaker for ${c.callee} OPEN (error ratio 0.${r.int(35, 95)})`],
+  (c, r) => ['ERROR', `retries exhausted (2/2) calling ${c.callee}`],
+];
+
+// Paraphrased notes for the service map (difficulty >= 3 samples among them).
+export const NOTES = {
+  added: [
+    (a, b, x) => `Not yet in the table: since the ${x.month} refactor, ${a} also calls ${b} directly (for ${x.what}).`,
+    (a, b, x) => `${a} started fetching ${x.what} straight from ${b} in ${x.month}; the table predates that change.`,
+    (a, b, x) => `The ${x.month} refactor gave ${a} a direct dependency on ${b} (${x.what}), which the table does not show yet.`,
+    (a, b, x) => `Since ${x.month}, handling a request in ${a} can involve a call to ${b} for ${x.what}; table update pending.`,
+  ],
+  stale: [
+    (a, b, x) => `${a} no longer calls ${b}: the call was removed in ${x.ver}, but the table row has not been updated.`,
+    (a, b, x) => `The ${a} -> ${b} entry in the table is outdated; ${a} stopped using ${b} in ${x.ver}.`,
+    (a, b, x) => `Since release ${x.ver}, ${a} gets that data elsewhere and does not talk to ${b} any more (the table still lists it).`,
+  ],
+  optional: [
+    (a, b, x) => `${a} treats ${b} as optional: when it misbehaves, ${a} falls back to ${x.fallback} and keeps serving.`,
+    (a, b, x) => `If ${b} is slow or down, ${a} serves ${x.fallback} instead; its customers do not see an error.`,
+    (a, b, x) => `${a} wraps its calls to ${b} in a fallback (${x.fallback}), so trouble in ${b} only degrades ${a}.`,
+    (a, b, x) => `${b} is a soft dependency of ${a}: on errors ${a} uses ${x.fallback}.`,
+  ],
+  hard: [
+    (a, b, x) => `${a} has no fallback for ${b}: if ${b} fails, requests to ${a} fail too.`,
+    (a, b, x) => `Calls from ${a} to ${b} are not optional; there is no degraded mode for ${x.what}.`,
+    (a, b, x) => `A cached fallback for ${b} inside ${a} was proposed but never built, so ${a} cannot serve without it.`,
+  ],
+  alias: [
+    (n, l) => `Older services still refer to ${n} by its pre-migration name '${l}'.`,
+    (n, l) => `'${l}' is the old name of ${n}; some clients still use it in their logs.`,
+    (n, l) => `${n} was called '${l}' before the platform migration, and older callers still log that name.`,
+  ],
+  legacySource: [
+    (n, l) => `${n} still ships its logs under its old application name '${l}' instead of a pod name.`,
+    (n, l) => `Log lines from ${n} carry the source '${l}' (its old application name), not a pod name.`,
+  ],
+};
+
+// Herring for certificate expiry: another service's certificate was about to expire inside the
+// window and was renewed in time.
+export const CERT_RENEWED = {
+  warn: (c, r, minutes) => ['WARN', `certificate for ${c.host} expires in ${minutes} minutes (notAfter ${c.expIso}); renewal not confirmed`],
+  done: (c, r) => ['INFO', `renewed certificate for ${c.host}; new notAfter ${c.newExp}`],
+};
+
+// Failure lines that do not name the dependency (some services only log their own route and
+// status). Used for at most one impacted service per task from difficulty 3; its table edges and
+// timing are then the only link to the fault.
+export const ANON_FAIL = [
+  (c, r) => ['ERROR', `${c.route} failed: upstream dependency error (${r.pick([502, 503, 504])})`],
+  (c, r) => ['ERROR', `request ${rid(r)} failed after 3 retries: deadline exceeded`],
+  (c, r) => ['ERROR', `${c.route} -> ${r.pick([500, 502, 503])} after ${r.int(900, 5100)}ms`],
+  (c, r) => ['WARN', `degraded: ${r.int(20, 90)}% of ${c.route} calls failing in the last minute`],
+  (c, r) => ['ERROR', `handler ${c.route} gave up: dependency call did not complete`],
+];
+
+// One sentence covering two dependencies of the same caller: one optional, one not.
+export const NOTE_MIXED = [
+  (a, soft, hard, x) => `${a} treats ${soft} as optional (it falls back to ${x.fallback}), but it has no fallback for ${hard}.`,
+  (a, soft, hard, x) => `Of the services ${a} calls, only ${soft} is optional (${x.fallback} is used instead); a failure of ${hard} fails ${a}.`,
+  (a, soft, hard, x) => `${a} keeps serving when ${soft} is down (using ${x.fallback}), unlike when ${hard} is down.`,
+];

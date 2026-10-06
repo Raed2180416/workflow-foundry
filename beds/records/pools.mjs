@@ -11,7 +11,7 @@ export const CULTURES = {
       ['Katherine', 'f'], ['Jennifer', 'f'], ['Michael', 'm'], ['Thomas', 'm'], ['Patricia', 'f'], ['Christopher', 'm'],
       ['Daniel', 'm'], ['Susan', 'f'], ['Edward', 'm'], ['Anthony', 'm'], ['Rebecca', 'f'], ['Victoria', 'f'],
       ['Nathaniel', 'm'], ['Abigail', 'f'], ['Theodore', 'm'], ['Gwendolyn', 'f'], ['Harriet', 'f'], ['Malcolm', 'm'],
-      ['Rupert', 'm'], ['Ophelia', 'f']],
+      ['Rupert', 'm'], ['Ophelia', 'f'], ['Evan', 'm'], ['Ethan', 'm'], ['Lily', 'f'], ['Lucy', 'f']],
     family: ['Hartwell', 'Whitcombe', 'Calloway', 'Brennan', 'Ashby', 'Delaney', 'Pruitt', 'Holloway', 'Marsh',
       'Kendrick', 'Sutton', 'Fairbanks', 'Lowell', 'Prescott', 'Rowntree', "O'Malley", 'McAllister', 'Thornbury',
       'Pemberton', 'Garrick', 'Ellsworth', 'Haverford', 'Quimby', 'Radcliffe', 'Stanhope', 'Winslow'],
@@ -20,7 +20,7 @@ export const CULTURES = {
     countries: ['DE', 'AT', 'CH'],
     given: [['Jürgen', 'm'], ['Jörg', 'm'], ['Günter', 'm'], ['Klaus', 'm'], ['Ute', 'f'], ['Dieter', 'm'], ['Heike', 'f'],
       ['Matthias', 'm'], ['Sabine', 'f'], ['Wolfgang', 'm'], ['Johannes', 'm'], ['Katharina', 'f'], ['Friedrich', 'm'],
-      ['Josef', 'm'], ['Stefanie', 'f'], ['Bärbel', 'f'], ['Käthe', 'f'], ['Sönke', 'm'], ['Gisela', 'f'], ['Rüdiger', 'm']],
+      ['Josef', 'm'], ['Stefanie', 'f'], ['Bärbel', 'f'], ['Käthe', 'f'], ['Sönke', 'm'], ['Gisela', 'f'], ['Rüdiger', 'm'], ['Anja', 'f'], ['Anke', 'f'], ['Elke', 'f'], ['Silke', 'f']],
     family: ['Müller', 'Schröder', 'Weiß', 'Köhler', 'Böhm', 'Krüger', 'Fuchs', 'Becker', 'Hoffmann', 'Lehmann',
       'Strauß', 'Wörner', 'Gärtner', 'Jäger', 'Brandt', 'Vogt', 'Kühn', 'Dreßler', 'Löffler', 'Großmann', 'Bäumer',
       'Hüttner'],
@@ -29,42 +29,45 @@ export const CULTURES = {
     countries: ['FR', 'BE', 'CH'],
     given: [['Hélène', 'f'], ['Émile', 'm'], ['François', 'm'], ['Gaëlle', 'f'], ['Jérôme', 'm'], ['Céline', 'f'],
       ['Benoît', 'm'], ['Léa', 'f'], ['Noël', 'm'], ['Stéphane', 'm'], ['Thérèse', 'f'], ['Amélie', 'f'], ['Rémi', 'm'],
-      ['Agnès', 'f']],
+      ['Agnès', 'f'], ['Jules', 'm'], ['Julie', 'f'], ['Manon', 'f'], ['Marion', 'f']],
     family: ['Lefèvre', 'Bérard', 'Garnier', 'Rousseau', 'Dubois', 'Chevrier', 'Fournier', 'Mercier', 'Lemaître',
       'Boucher', 'Gauthier', 'Lagacé', 'Béliveau', 'Ménard'],
   },
   es: {
     countries: ['ES', 'MX'],
     given: [['José', 'm'], ['Francisco', 'm'], ['Ignacio', 'm'], ['Dolores', 'f'], ['Concepción', 'f'], ['Andrés', 'm'],
-      ['Begoña', 'f'], ['Rocío', 'f'], ['Iñaki', 'm'], ['Ramón', 'm'], ['Inés', 'f'], ['Óscar', 'm']],
+      ['Begoña', 'f'], ['Rocío', 'f'], ['Iñaki', 'm'], ['Ramón', 'm'], ['Inés', 'f'], ['Óscar', 'm'],
+      ['Lucas', 'm'], ['Lucía', 'f'], ['Pablo', 'm'], ['Paula', 'f']],
     family: ['Muñoz', 'Peña', 'Ibáñez', 'Núñez', 'Ortega', 'Serrano', 'Castaño', 'Fernández', 'Delgado', 'Cortés',
       'Valdés', 'Echeverría'],
   },
   it: {
     countries: ['IT'],
     given: [['Giuseppe', 'm'], ['Niccolò', 'm'], ['Lucrezia', 'f'], ['Giovanni', 'm'], ['Domenico', 'm'], ['Caterina', 'f'],
-      ['Raffaele', 'm'], ['Ilaria', 'f'], ['Beatrice', 'f'], ['Leonardo', 'm']],
+      ['Raffaele', 'm'], ['Ilaria', 'f'], ['Beatrice', 'f'], ['Leonardo', 'm'], ['Matteo', 'm'], ['Mattia', 'm'],
+      ['Elena', 'f'], ['Elisa', 'f']],
     family: ['Ferraro', 'Galli', 'Pellegrini', 'Benedetti', 'Mancuso', 'Lombardi', 'Esposito', "D'Angelo", 'Santoro',
       'Caruso', 'Fabbri', 'Barbieri'],
   },
   nl: {
     countries: ['NL', 'BE'],
     given: [['Pieter', 'm'], ['Maarten', 'm'], ['Sanne', 'f'], ['Joost', 'm'], ['Femke', 'f'], ['Wouter', 'm'],
-      ['Anouk', 'f'], ['Geert', 'm'], ['Lieke', 'f'], ['Abraham', 'm']],
+      ['Anouk', 'f'], ['Geert', 'm'], ['Lieke', 'f'], ['Abraham', 'm'], ['Ruben', 'm'], ['Robin', 'm'], ['Noor', 'f'],
+      ['Nora', 'f']],
     family: ['van Dijk', 'de Vries', 'van den Berg', 'Bakker', 'Visser', 'Smit', 'de Jong', 'Mulder', 'Jansen',
       'van Leeuwen', 'Hoekstra', 'Kuipers', 'van der Meer'],
   },
   ja: {
     countries: ['JP'],
     given: [['Hiroshi', 'm'], ['Yūki', 'f'], ['Kenji', 'm'], ['Akiko', 'f'], ['Haruto', 'm'], ['Sakura', 'f'],
-      ['Takeshi', 'm'], ['Yōko', 'f'], ['Shōta', 'm'], ['Kōji', 'm'], ['Megumi', 'f'], ['Daisuke', 'm'], ['Ryōta', 'm']],
+      ['Takeshi', 'm'], ['Yōko', 'f'], ['Shōta', 'm'], ['Kōji', 'm'], ['Megumi', 'f'], ['Daisuke', 'm'], ['Ryōta', 'm'], ['Haruka', 'f']],
     family: ['Tanaka', 'Satō', 'Itō', 'Katō', 'Yamamoto', 'Nakamura', 'Kobayashi', 'Ōta', 'Inoue', 'Shimizu', 'Kōno',
       'Saitō', 'Mori'],
   },
   nordic: {
     countries: ['SE', 'DK', 'NO'],
     given: [['Björn', 'm'], ['Åsa', 'f'], ['Søren', 'm'], ['Jørgen', 'm'], ['Märta', 'f'], ['Ingrid', 'f'], ['Lars', 'm'],
-      ['Øystein', 'm'], ['Kristoffer', 'm'], ['Astrid', 'f'], ['Sigrún', 'f']],
+      ['Øystein', 'm'], ['Kristoffer', 'm'], ['Astrid', 'f'], ['Sigrún', 'f'], ['Erik', 'm'], ['Elin', 'f']],
     family: ['Lindqvist', 'Sjöberg', 'Ødegaard', 'Åberg', 'Bergström', 'Nyström', 'Halvorsen', 'Kjær', 'Sørensen',
       'Ekström', 'Dahlgren'],
   },
@@ -192,6 +195,20 @@ export const COUNTRIES = {
   NO: { en: ['Norway', 'Norge', 'NOR'], de: ['Norwegen'], typo: ['Norwya'], prose: ['Norway'], demonym: 'Norwegian',
     cc: '47', trunk: '', currency: 'NOK' },
 };
+// Cities used by VENDEX to imply a country ("based in Lyon"). Large, unambiguous cities only.
+export const CITIES = {
+  US: ['Chicago', 'Houston', 'Denver', 'Seattle', 'Atlanta', 'Boston', 'Phoenix', 'Minneapolis', 'Pittsburgh'],
+  CA: ['Toronto', 'Vancouver', 'Montreal', 'Calgary', 'Ottawa', 'Winnipeg', 'Edmonton'],
+  GB: ['Manchester', 'Leeds', 'Bristol', 'Liverpool', 'Edinburgh', 'Glasgow', 'Sheffield', 'Nottingham'],
+  IE: ['Dublin', 'Cork', 'Galway', 'Limerick', 'Waterford'], AU: ['Sydney', 'Melbourne', 'Brisbane', 'Adelaide', 'Canberra', 'Hobart'],
+  DE: ['Munich', 'Hamburg', 'Cologne', 'Stuttgart', 'Düsseldorf', 'Leipzig', 'Dresden', 'Hanover'],
+  AT: ['Vienna', 'Graz', 'Salzburg', 'Innsbruck', 'Linz'], CH: ['Zurich', 'Geneva', 'Basel', 'Lausanne', 'Lucerne'],
+  FR: ['Lyon', 'Marseille', 'Toulouse', 'Bordeaux', 'Nantes', 'Strasbourg', 'Lille'], BE: ['Brussels', 'Antwerp', 'Ghent', 'Liège', 'Bruges'],
+  ES: ['Madrid', 'Barcelona', 'Seville', 'Bilbao', 'Zaragoza', 'Málaga'], MX: ['Guadalajara', 'Monterrey', 'Puebla', 'Tijuana'],
+  IT: ['Milan', 'Turin', 'Naples', 'Genoa', 'Bologna', 'Palermo', 'Verona'], NL: ['Rotterdam', 'Utrecht', 'Eindhoven', 'Amsterdam', 'Groningen'],
+  JP: ['Osaka', 'Kyoto', 'Nagoya', 'Sapporo', 'Yokohama', 'Fukuoka', 'Kobe'], SE: ['Stockholm', 'Gothenburg', 'Malmö', 'Uppsala'],
+  DK: ['Copenhagen', 'Aarhus', 'Odense', 'Aalborg'], NO: ['Oslo', 'Trondheim', 'Stavanger', 'Tromsø'],
+};
 export const COUNTRY_NAME = {
   US: 'United States', CA: 'Canada', GB: 'United Kingdom', IE: 'Ireland', AU: 'Australia', DE: 'Germany', AT: 'Austria',
   CH: 'Switzerland', FR: 'France', BE: 'Belgium', ES: 'Spain', MX: 'Mexico', IT: 'Italy', NL: 'Netherlands', JP: 'Japan',
@@ -242,6 +259,8 @@ export const CURRENCIES = {
   CHF: { minor: 2, rate: 1.124 }, CAD: { minor: 2, rate: 0.736 }, AUD: { minor: 2, rate: 0.659 }, SEK: { minor: 2, rate: 0.0952 },
   DKK: { minor: 2, rate: 0.1455 }, NOK: { minor: 2, rate: 0.0931 }, MXN: { minor: 2, rate: 0.0584 },
 };
+// Market convention: these are quoted as XXX/USD (USD per unit); all others as USD/XXX (units per USD).
+export const USD_PER_UNIT_QUOTED = new Set(['EUR', 'GBP', 'AUD']);
 // Earlier-period multipliers used when the FX table is dated (difficulty 5).
 export const OLD_RATE_FACTOR = { EUR: 1.09, GBP: 1.083, JPY: 1.354, CHF: 0.972, CAD: 1.084, AUD: 1.14, SEK: 1.223, DKK: 1.093, NOK: 1.22, MXN: 0.844 };
 

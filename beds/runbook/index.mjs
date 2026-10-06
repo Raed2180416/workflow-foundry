@@ -44,13 +44,14 @@ export const outputSchema = {
 };
 
 // Minimal validator for the portable subset used by outputSchema.
-const typeOf = v => v === null ? 'null' : Array.isArray(v) ? 'array' : Number.isInteger(v) ? 'integer' : typeof v;
+// Non-finite numbers (NaN, Infinity) are not JSON values and never match a number type (audit fix F3).
+const typeOf = v => v === null ? 'null' : Array.isArray(v) ? 'array' : Number.isInteger(v) ? 'integer' : typeof v === 'number' && !Number.isFinite(v) ? 'non-finite number' : typeof v;
 export function schemaErrors(schema, value, path = '$', out = []) {
   if (out.length > 20) return out;
   if (schema.type) {
     const types = Array.isArray(schema.type) ? schema.type : [schema.type];
     const t = typeOf(value);
-    const ok = types.some(x => x === t || (x === 'number' && (t === 'integer' || (t === 'number' && Number.isFinite(value)))));
+    const ok = types.some(x => x === t || (x === 'number' && t === 'integer'));
     if (!ok) { out.push(`${path}: expected ${types.join('|')}, got ${t}`); return out; }
   }
   if (schema.enum && !schema.enum.includes(value)) out.push(`${path}: not one of the allowed values`);
@@ -134,13 +135,12 @@ export const badControls = [
 export const judgmentProbes = [
   {
     name: 'stale-ticket', minDifficulty: 2,
-    description: 'follows the ticket description literally, ignoring authorised amendments',
+    description: 'follows the ticket description and header window literally, ignoring authorised amendments',
     make: task => {
       const w = worldOf(task), sp = w.spec;
       const belief = { ...sp,
-        versionTo: sp.versionBase,
-        targets: sp.poolMembers.filter(id => id !== sp.canary && !sp.descQuarantined.includes(id)).sort(),
-        maxInflight: sp.maxInflightDesc, workMem: sp.dbStep ? sp.workMemDesc : null };
+        versionTo: sp.versionBase, targets: sp.descTargets, excludedNode: null, window: sp.headerWindow,
+        maxInflight: sp.maxInflightDesc, slowStart: sp.slowDesc, workMem: sp.dbStep ? sp.workMemDesc : null };
       return referenceActions(w, belief);
     },
   },

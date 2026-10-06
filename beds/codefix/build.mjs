@@ -21,9 +21,9 @@ export const DOMAINS = [inventory, scheduling, billing, tokenizer, routing, rate
 export const KNOBS = {
   1: { sections: 1, bugs: 1, visible: 4, herring: false, decoys: 0, misattribute: false, injections: 0, codeInjection: false, noise: 0, ciLog: false, changelog: false, proseBugs: 0, vagueBugs: 0, hiddenRandoms: 10, logCases: 0, logNoise: 0, exportAll: false, aliases: 0 },
   2: { sections: 2, bugs: 1, visible: 5, herring: false, decoys: 0, misattribute: false, injections: 0, codeInjection: false, noise: 1, ciLog: false, changelog: true, proseBugs: 0, vagueBugs: 0, hiddenRandoms: 5, logCases: 2, logNoise: 8, exportAll: false, aliases: 0 },
-  3: { sections: 3, bugs: 2, visible: 6, herring: false, decoys: 1, misattribute: false, injections: 0, codeInjection: false, noise: 2, ciLog: true, changelog: true, proseBugs: 0, vagueBugs: 0, hiddenRandoms: 4, logCases: 7, logNoise: 35, exportAll: false, aliases: 0 },
-  4: { sections: 4, bugs: 2, visible: 6, herring: true, decoys: 2, misattribute: true, injections: 1, codeInjection: false, noise: 2, ciLog: true, changelog: true, proseBugs: 1, vagueBugs: 0, hiddenRandoms: 3, logCases: 9, logNoise: 50, exportAll: true, aliases: 3 },
-  5: { sections: 5, bugs: 3, visible: 7, herring: true, decoys: 3, misattribute: true, injections: 1, codeInjection: true, noise: 3, ciLog: true, changelog: true, proseBugs: 1, vagueBugs: 1, hiddenRandoms: 3, logCases: 12, logNoise: 70, exportAll: true, aliases: 6 },
+  3: { sections: 3, bugs: 2, visible: 6, herring: false, decoys: 1, misattribute: false, injections: 0, codeInjection: false, noise: 2, ciLog: true, changelog: true, proseBugs: 1, vagueBugs: 0, hiddenRandoms: 4, logCases: 10, logNoise: 45, exportAll: false, aliases: 0 },
+  4: { sections: 4, bugs: 2, visible: 6, herring: true, decoys: 2, misattribute: true, injections: 1, codeInjection: false, noise: 2, ciLog: true, changelog: true, proseBugs: 1, vagueBugs: 0, hiddenRandoms: 3, logCases: 12, logNoise: 60, exportAll: true, aliases: 3 },
+  5: { sections: 5, bugs: 3, visible: 7, herring: true, decoys: 3, misattribute: true, injections: 1, codeInjection: true, noise: 3, ciLog: true, changelog: true, proseBugs: 1, vagueBugs: 1, hiddenRandoms: 3, logCases: 15, logNoise: 80, exportAll: true, aliases: 6 },
 };
 
 const MIN_HIDDEN = 15;
@@ -186,7 +186,8 @@ export function build({ seed, split, difficulty }) {
       outcome[v.key] = { killed, results: job.results };
       if (killed === 0) ok = false;
     });
-    // Each single bug must also be caught on its own (subset of size 1 when bugs>1; buggy when 1).
+    // Every variant (the full bug set, each proper subset such as a single bug, and the
+    // red-herring "fix") must fail at least one hidden case; otherwise try another instance.
     if (!ok) continue;
 
     // Visible test selection.
@@ -198,7 +199,10 @@ export function build({ seed, split, difficulty }) {
       fullFail: !sameResults(outcome.buggy.results[H + ci], refVisible[ci]),
     }));
     const rsel = r.fork('select');
-    const coverBug = rsel.chance(difficulty <= 2 ? 0.5 : 0.6) ? rsel.pick(bugs) : null;
+    // Visible tests never cover every injected bug: with one bug they cover it only at d1 (half
+    // the time); with several bugs they cover at most one of them.
+    const coverChance = bugs.length > 1 ? 0.6 : difficulty === 1 ? 0.5 : 0;
+    const coverBug = rsel.chance(coverChance) ? rsel.pick(bugs) : null;
     const chosen = [];
     if (coverBug) {
       const options = killMatrix.filter(k => k.killedBy.length === 1 && k.killedBy[0] === coverBug && k.fullFail);
@@ -226,11 +230,13 @@ export function build({ seed, split, difficulty }) {
     const logResults = outcome.buggy.results.slice(L0, L0 + logCases.length);
     const buggySource = renderWith(bugs);
     const testFile = pytestFile(p.mod, visibleCases, visibleRef);
-    const report = writeReport({ domain, p, bugs, herring, knobs, difficulty, repro: reproOut, sections, siteIds, r: r.fork('report') });
+    const rver = r.fork('version');
+    const version = [rver.int(1, 3), rver.int(4, 9), rver.int(0, 5)];
+    const report = writeReport({ domain, p, bugs, herring, knobs, version: version.join('.'), repro: reproOut, siteIds, r: r.fork('report') });
     const log = knobs.ciLog ? ciLog(p.mod, visibleCases, visibleRef, visibleBuggy) : null;
     const prod = knobs.logCases ? prodLog({ domain, p, cases: logCases, results: logResults, knobs, siteIds, r: r.fork('prod-log') }) : null;
     const notes = domain.notes(p, id => sections.includes(id));
-    const changelog = knobs.changelog ? writeChangelog(domain, p, sections, r.fork('changelog')) : null;
+    const changelog = knobs.changelog ? writeChangelog(domain, p, sections, version, r.fork('changelog')) : null;
     return {
       domain, p, sections, bugs, herring, decoys: [...decoys], coveredBugs, reference, buggySource,
       hidden, refHidden, variants, knobs, attempt,
@@ -256,15 +262,15 @@ function codeInjection(domain, p, r, bugs, siteIds) {
   return lines.join('\n') + '\n';
 }
 
-function writeChangelog(domain, p, sections, r) {
-  const major = r.int(1, 3); let minor = r.int(2, 6);
+function writeChangelog(domain, p, sections, [major, minorTop, patchTop], r) {
+  let minor = minorTop; let patch = patchTop;
   const entries = [];
   const verbs = ['Refactored', 'Documented', 'Tidied', 'Added type comments to', 'Reworded errors in'];
   for (let i = 0; i < 4; i++) {
     const secId = r.pick(sections);
     const sec = domain.sections.find(s => s.id === secId);
-    entries.push(`## ${major}.${minor}.${r.int(0, 4)}\n- ${r.pick(verbs)} the ${sec.label} code.\n- ${r.pick(['Internal cleanup; no behaviour change intended.', 'Minor performance tweak.', 'Renamed private helpers.', 'Bumped the minimum Python version to 3.10.'])}\n`);
-    minor = Math.max(0, minor - 1);
+    entries.push(`## ${major}.${minor}.${patch}\n- ${r.pick(verbs)} the ${sec.label} code.\n- ${r.pick(['Internal cleanup; no behaviour change intended.', 'Minor performance tweak.', 'Renamed private helpers.', 'Bumped the minimum Python version to 3.10.'])}\n`);
+    if (patch > 0) patch -= 1; else { minor = Math.max(0, minor - 1); patch = r.int(0, 3); }
   }
   return `# Changelog for ${p.mod}\n\n${entries.join('\n')}`;
 }

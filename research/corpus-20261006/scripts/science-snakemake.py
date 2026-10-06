@@ -40,6 +40,45 @@ def read(path):
         return ""
 
 
+def normalize_joins(text):
+    """os.path.join("a", X, "b") -> "a/{X}/b" so that joined paths become single patterns."""
+    out, i = [], 0
+    while True:
+        m = re.search(r"os\.path\.join\s*\(", text[i:])
+        if not m:
+            out.append(text[i:])
+            break
+        st = i + m.start()
+        p = i + m.end() - 1
+        d, e = 0, p
+        for e in range(p, len(text)):
+            if text[e] == "(":
+                d += 1
+            elif text[e] == ")":
+                d -= 1
+                if d == 0:
+                    break
+        args, cur, dd = [], [], 0
+        for ch in text[p + 1:e]:
+            if ch in "([{":
+                dd += 1
+            elif ch in ")]}":
+                dd -= 1
+            if ch == "," and dd == 0:
+                args.append("".join(cur)); cur = []
+            else:
+                cur.append(ch)
+        if "".join(cur).strip():
+            args.append("".join(cur))
+        parts = []
+        for a in args:
+            ss = strings_in(a)
+            parts.append(ss[0] if len(ss) == 1 and re.fullmatch(r"\s*[fFrR]?(\"|')[^\"']*(\"|')\s*", a) else "{" + re.sub(r"\W+", "_", a.strip())[:20] + "}")
+        out.append(text[i:st] + '"' + "/".join(parts) + '"')
+        i = e + 1
+    return "".join(out)
+
+
 def strip_py_comments(src):
     out = []
     for line in src.split("\n"):
@@ -71,9 +110,11 @@ def parse_files(entry, max_files=200):
         files[p] = src
         order.append(p)
         for m in re.finditer(r"(?m)^\s*include\s*:\s*(.+)$", src):
-            for s in strings_in(m.group(1)):
-                cand = os.path.join(os.path.dirname(p), s)
-                stack.append(cand)
+            parts = strings_in(m.group(1))
+            if not parts:
+                continue
+            rel = "/".join(parts) if "join" in m.group(1) else parts[0]
+            stack.append(os.path.join(os.path.dirname(p), rel))
     return files, order
 
 
@@ -98,12 +139,24 @@ def parse_rules(src, path):
         if m or u or h or mod:
             j = i + 1
             body = []
+            tq = None
             while j < len(lines):
                 l2 = lines[j]
-                if l2.strip() and (len(l2) - len(l2.lstrip())) <= ind:
+                if tq is None and l2.strip() and (len(l2) - len(l2.lstrip())) <= ind:
                     break
+                for q in ('"""', "'''"):
+                    if tq in (None, q) and l2.count(q) % 2 == 1:
+                        tq = q if tq is None else None
                 body.append(l2)
                 j += 1
+            # drop a leading docstring (it may contain `input:`/`output:` prose)
+            k = 0
+            while k < len(body) and not body[k].strip():
+                k += 1
+            if k < len(body) and body[k].strip().startswith(('"""', "'''")):
+                q = body[k].strip()[:3]
+                e = k if body[k].strip().count(q) >= 2 and len(body[k].strip()) > 3 else next((x for x in range(k + 1, len(body)) if q in body[x]), k)
+                body = body[:k] + body[e + 1:]
             text = "\n".join(body)
             if m:
                 r = Rule(m.group(2) or f"anon{len(rules)}", m.group(1), path)
@@ -240,6 +293,8 @@ def analyze(repo, classify, entry=None):
     outs, ins = {}, {}
     for r in rules:
         d = r.d
+        d["output"] = normalize_joins(d.get("output", ""))
+        d["input"] = normalize_joins(d.get("input", ""))
         o_strs = [s for s in strings_in(d.get("output", "")) if path_like(s)]
         i_text = d.get("input", "")
         i_strs = [s for s in strings_in(i_text) if path_like(s)]
@@ -285,7 +340,8 @@ def analyze(repo, classify, entry=None):
             curated = True
         text = " ".join([r.name, wrapper, shell[:1500], script, i_text[:500]])
         if re.search(r"storage\.\w+\(|storage\(|\.remote\(|HTTP\.|S3\.|FTP\.|GS\.|NCBI\.", i_text + d.get("output", "")):
-            stats["storage"].add(re.findall(r"storage\.(\w+)|(\w+)\.remote", i_text + d.get("output", ""))[0][0] or "remote")
+            sm_ = re.findall(r"storage\.(\w+)|(\w+)\.remote", i_text + d.get("output", ""))
+            stats["storage"].add((sm_[0][0] or sm_[0][1]) if sm_ else "remote")
             text += " download"
         cat, eff, svcs = classify(text, pkg, curated=curated)
         if cat == "action" and not curated:
@@ -313,27 +369,30 @@ def analyze(repo, classify, entry=None):
                 edges.append({"from": ref, "to": n, "kind": "data"}); stats["explicit_edges"] += 1
         for s in istrs:
             ph = placeholder(s)
-            irx = None
-            hit = False
+            try:
+                irx = re.compile(pattern_regex(s))
+            except re.error:
+                irx = None
+            lit_in = len(re.sub(r"[/._-]", "", re.sub(r"\{[^{}]*\}", "", s)))
+            best, cands_ = -1, []
             for m, lst in out_rx.items():
                 if m == n:
                     continue
                 for rx, pph, p in lst:
-                    if rx.match(ph):
-                        hit = True
-                    else:
-                        if irx is None:
-                            try:
-                                irx = re.compile(pattern_regex(s))
-                            except re.error:
-                                irx = re.compile("^$")
-                        hit = bool(irx.match(pph))
-                    if hit:
-                        edges.append({"from": m, "to": n, "kind": "data"}); stats["pattern_edges"] += 1
+                    lit_out = len(re.sub(r"[/._-]", "", re.sub(r"\{[^{}]*\}", "", p)))
+                    ok = (lit_out >= 3 and rx.match(ph)) or (lit_in >= 3 and irx is not None and irx.match(pph))
+                    if ok:
+                        score = min(lit_out, lit_in) * 2 + lit_out
+                        if score > best:
+                            best, cands_ = score, [m]
+                        elif score == best and m not in cands_:
+                            cands_.append(m)
                         break
-                hit = False
-            # basename fallback only when no full-pattern producer was found for this input string
-            if not any(e["to"] == n for e in edges[-len(out_rx):] if e) and "." in os.path.basename(s):
+            found = bool(cands_)
+            for m in cands_:
+                edges.append({"from": m, "to": n, "kind": "data"}); stats["pattern_edges"] += 1
+            # basename fallback (may-flow) only when no full-pattern producer was found for this input string
+            if not found and "." in os.path.basename(s):
                 bn = placeholder(os.path.basename(s))
                 for m, lst in out_base.items():
                     if m == n:
@@ -342,9 +401,6 @@ def analyze(repo, classify, entry=None):
                         if rx.match(bn) and not os.path.basename(p).startswith("{"):
                             edges.append({"from": m, "to": n, "kind": "data"}); stats["fallback_edges"] += 1
                             break
-    # checkpoint consumers (checkpoints.X.get) are dynamic: mark loop edges
-    for n, (istrs, refs) in ins.items():
-        pass
     for hname, body in handlers.items():
         hid = f"__{hname}__"
         if hname == "onerror":

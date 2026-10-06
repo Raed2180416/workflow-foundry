@@ -11,7 +11,8 @@ const BUILDERS = [
     name: 'secret-passage', cls: 'wall_clip', description: 'The player walks through a wall stone (the documented secret passage).',
     run(D) {
       const sp = D.g.world.levels[0].secrets[0];
-      return D.gotoTile(sp.x - 1, sp.y) && D.act('E') && D.act('E') && D.s.player.x === sp.x + 1;
+      D.avoid = new Set(D.items(() => true).map(i => `${i.x},${i.y}`));
+      return D.goto(sp.x - 1, sp.y, { softAvoid: true }) && D.act('E') && D.act('E') && D.s.player.x === sp.x + 1;
     },
   },
   {
@@ -47,6 +48,19 @@ const BUILDERS = [
       return D.openTo(door.sep + 1) && door.open;
     },
   },
+  {
+    name: 'potion-wasted', cls: 'item_duplication', description: 'A potion drunk at full health is used up with no effect.',
+    run(D) { return D.pickNearest('potion') && D.act('USE:potion'); },
+  },
+  // Fallbacks: what stale tickets (fixed in earlier builds) claim, which this build does not do.
+  {
+    name: 'stale-load-on-first-turn', cls: 'crash', description: 'LOAD on the first turn with an empty slot crashes (ticket from an older build).',
+    run(D) { return D.act('LOAD'); },
+  },
+  {
+    name: 'stale-wall-bump', cls: 'wall_clip', description: 'Walking into the outer wall next to the entrance lets the player through (forum claim).',
+    run(D) { return D.act('W') && D.act('W'); },
+  },
 ];
 
 // Decoy reports whose replay fires no planted detector at all (so they are certainly false).
@@ -62,5 +76,8 @@ export function decoyReports(c, max = 2) {
     if (rep.invalid || rep.fired.length) continue;
     out.push({ bug_class: b.cls, repro_actions: D.actions, description: b.description, decoy: b.name });
   }
+  // Last resort (never needed in a 3,000-task sweep): a claim of a class that is not planted.
+  const unplanted = ['crash', 'wall_clip', 'enemy_ai', 'item_duplication', 'shop_rounding', 'softlock'].filter(k => !c.bugs.some(b => b.cls === k));
+  while (out.length < max) out.push({ bug_class: unplanted[out.length % unplanted.length], repro_actions: ['WAIT'], description: 'Claim copied from an unverified ticket.', decoy: 'unverified-claim' });
   return out;
 }

@@ -1,13 +1,18 @@
 // gridquest: an interactive, procedurally generated text adventure on a grid of rooms.
 // Bed contract v1 (beds/CONTRACT.md). Trusted host code: solvers never see world.mjs,
 // solver.mjs, the oracle or referenceSolve.
+import { createCipheriv, createDecipheriv, createHash, createHmac } from 'node:crypto';
 import { rng } from '../lib/rng.mjs';
+import { canonical } from '../lib/canonical.mjs';
 import { makeWorld, LEVELS } from './world.mjs';
 import { decorate } from './render.mjs';
 import { makeEnv } from './engine.mjs';
 import { simulate } from './solver.mjs';
 
-const VERSION = '1.0.0';
+// 2.0.0: landmark-relative exits, fake/reopened exits, sealed snapshots with a lifetime action
+// ledger, syntactic sorted actions(), JSON-normalised oracle input (see AUDIT.md).
+const VERSION = '2.0.0';
+const MAX_ACTIONS = 2000, MAX_ACTION_LEN = 200;
 
 export const family = {
   id: 'gridquest',
@@ -24,17 +29,34 @@ export const outputSchema = {
   required: ['actions'],
   additionalProperties: false,
   properties: {
-    actions: { type: 'array', maxItems: 2000, items: { type: 'string', maxLength: 200 } },
+    actions: { type: 'array', maxItems: MAX_ACTIONS, items: { type: 'string', maxLength: MAX_ACTION_LEN } },
   },
 };
 
+// The oracle judges the output as JSON data: it is serialised once (so getters, proxies,
+// inherited properties, holes and toJSON tricks cannot show validation one value and the
+// replay another), size-checked before serialisation, then validated against outputSchema.
+function normalizeOutput(output) {
+  try {
+    const raw = output !== null && typeof output === 'object' ? output.actions : undefined;
+    if (Array.isArray(raw)) {
+      if (raw.length > MAX_ACTIONS) return { error: 'too many actions' };
+      for (let i = 0; i < raw.length; i++) if (typeof raw[i] === 'string' && raw[i].length > MAX_ACTION_LEN) return { error: `every action must be a string of at most ${MAX_ACTION_LEN} characters` };
+    }
+    const text = JSON.stringify(output);
+    if (typeof text !== 'string') return { error: 'output is not JSON' };
+    return { value: JSON.parse(text) };
+  } catch {
+    return { error: 'output is not JSON-serialisable' };
+  }
+}
 function validOutput(output) {
   if (!output || typeof output !== 'object' || Array.isArray(output)) return 'output must be an object';
   const keys = Object.keys(output);
   if (keys.some(k => k !== 'actions')) return 'unexpected property';
   if (!Array.isArray(output.actions)) return 'actions must be an array';
-  if (output.actions.length > 2000) return 'too many actions';
-  if (output.actions.some(a => typeof a !== 'string' || a.length > 200)) return 'every action must be a string of at most 200 characters';
+  if (output.actions.length > MAX_ACTIONS) return 'too many actions';
+  if (output.actions.some(a => typeof a !== 'string' || a.length > MAX_ACTION_LEN)) return `every action must be a string of at most ${MAX_ACTION_LEN} characters`;
   return null;
 }
 
@@ -70,6 +92,8 @@ function promptFor(W, difficulty) {
     '- You play one action at a time. Actions: go <direction> (north, south, east or west), take <item>, use <item> on <thing>, toggle <thing>, examine <thing>, look.',
     '- After each action you see the current room\'s description, what you are carrying and the result of your last action. There is no map: you only ever see the room you are in, so keep track of where you have been.',
     '- Exits, objects and items are described in ordinary prose, not as lists. A wall, a window, a sound or a picture is not an exit. Many objects are pure decoration.',
+    '- Some exits are placed by a landmark instead of a compass direction. An exit (or an object) "beside", "next to" or "behind" something is in the same wall as that thing; one "opposite" or "across the room from" something is in the opposite wall. A landmark is sometimes called by another name than in its own sentence (a chest may be called a trunk, a tapestry a wall hanging). Work out the compass direction from the landmark\'s own description before you move: "go" only accepts north, south, east and west.',
+    '- An opening that is bricked up, walled up, painted on, collapsed, flooded, too narrow for a person, an empty frame, or only seen through a window is not an exit. If the description says it has since been knocked through, cleared, drained or turns out to be real, it is an exit.',
     '- A locked door opens with the key of the same colour: use <colour> key on <direction> door (for example "use amber key on west door"). Unlocked doors stay unlocked and keys are not used up.',
     '- Levers, wheels, cranks and similar mechanisms raise or lower bridges and portcullises elsewhere in the keep. The message you get when you toggle one says which rooms are affected. Toggling it again reverses everything it did.',
     '- Some passages (chutes, ledges, turnstiles, hatches) only go one way. Take one only when you are sure you will not need to come back.',
@@ -79,7 +103,7 @@ function promptFor(W, difficulty) {
   ];
   if (difficulty >= 4) lines.push('- Some old descriptions give directions by the sky. The keep is in the northern hemisphere: the pole star is due north, the noonday sun due south, the sunrise east and the sunset west.');
   if (w.journal.length) lines.push('', 'A salvaged expedition journal is included in the inputs. Its writers were often wrong.');
-  lines.push('', `Your answer is the episode record {"actions": [...]}: every action you issued, in order. It is replayed from the start in a fresh copy of the keep, and you pass if "take treasure" succeeds within ${budget} moves.`);
+  lines.push('', `Your answer is the episode record {"actions": [...]}: every action you issued, in order. It is replayed from the start in a fresh copy of the keep, and you pass if "take treasure" succeeds within ${budget} moves. If your tools let you restart or rewind, moves are not refunded: the keep accepts at most ${budget} actions in total, across every restart and rewind.`);
   return lines.join('\n');
 }
 
@@ -105,23 +129,84 @@ export function generate({ seed, split, difficulty }) {
   };
 }
 
-export function createEnv(task) {
+// Snapshots are sealed: an AES-256-GCM token whose key is derived from the generated world, so a
+// solver can neither read its position out of a snapshot nor forge one (teleporting, refunding
+// moves). Deterministic (same state -> same token), serialisable, and valid in any env of the
+// same task. Restoring rewinds the game and the episode record, never the lifetime ledger.
+const sealKeys = new WeakMap();
+function sealKey(W) {
+  if (!sealKeys.has(W)) sealKeys.set(W, createHash('sha256').update(`gridquest-snapshot\u0000${VERSION}\u0000${canonical({ edges: W.w.edges, keys: W.w.keys, start: W.w.start, treasure: W.w.treasure, rooms: W.w.rooms.map(r => r.name) })}`).digest());
+  return sealKeys.get(W);
+}
+const SNAP_PREFIX = 'gqsnap2.';
+function seal(W, value) {
+  const key = sealKey(W), plain = Buffer.from(JSON.stringify(value));
+  const iv = createHmac('sha256', key).update(plain).digest().subarray(0, 12);
+  const c = createCipheriv('aes-256-gcm', key, iv);
+  const body = Buffer.concat([c.update(plain), c.final()]);
+  return SNAP_PREFIX + Buffer.concat([iv, c.getAuthTag(), body]).toString('base64url');
+}
+function unseal(W, token) {
+  const bad = () => new Error('gridquest env: not a valid snapshot of this task');
+  if (typeof token !== 'string' || !token.startsWith(SNAP_PREFIX) || token.length > 1_000_000) throw bad();
+  const buf = Buffer.from(token.slice(SNAP_PREFIX.length), 'base64url');
+  if (buf.length < 29) throw bad();
+  try {
+    const d = createDecipheriv('aes-256-gcm', sealKey(W), buf.subarray(0, 12));
+    d.setAuthTag(buf.subarray(12, 28));
+    return JSON.parse(Buffer.concat([d.update(buf.subarray(28)), d.final()]).toString());
+  } catch { throw bad(); }
+}
+
+// The env counts every action it executes in a lifetime ledger that reset() and restore() never
+// refund; once `lifetimeActions` (default: the task budget) actions have been spent, step()
+// refuses. Without this, snapshot/restore or reset would let a script with no language
+// understanding search the keep blindly (AUDIT.md finding 1). A harness that wants to grant
+// extra exploration must say so explicitly via the option, and log it.
+export function createEnv(task, { lifetimeActions } = {}) {
   const W = world(task);
+  const limit = lifetimeActions === undefined ? W.budget : lifetimeActions;
+  if (!(Number.isInteger(limit) && limit >= 0) && limit !== Infinity) throw new Error('gridquest env: lifetimeActions must be a non-negative integer or Infinity');
   const env = makeEnv(W.w, W.budget);
+  let spent = 0, record = [];
+  const ledger = info => ({ ...info, spent, lifetimeLimit: limit });
   return {
     determinism: 'D0',
-    reset() { const observation = env.reset(); return { observation, done: false, reward: 0, info: { steps: 0, budget: W.budget } }; },
-    step: action => env.step(action),
+    reset() {
+      const observation = env.reset();
+      record = [];
+      return { observation, done: spent >= limit, reward: 0, info: ledger({ steps: 0, budget: W.budget }) };
+    },
+    step(action) {
+      if (spent >= limit) {
+        const st = env._state();
+        return { observation: env.observe(), done: true, reward: st.won ? 1 : 0, info: ledger({ ignored: true, outcome: 'ignored', reason: 'lifetime action limit reached', steps: st.steps, budget: W.budget }) };
+      }
+      const r = env.step(action);
+      if (r.info.outcome === 'ignored') return { ...r, info: ledger(r.info) };
+      spent++;
+      record.push(typeof action === 'string' ? action : String(action));
+      return { ...r, done: r.done || spent >= limit, info: ledger(r.info) };
+    },
     observe: () => env.observe(),
-    snapshot: () => env.snapshot(),
-    restore: snap => env.restore(snap),
-    actions: () => env.actions(),
+    snapshot: () => seal(W, { s: env.snapshot(), record }),
+    restore(token) {
+      const v = unseal(W, token);
+      env.restore(v.s);
+      record = [...v.record];
+    },
+    actions: () => (spent >= limit ? [] : env.actions()),
+    // The episode record of the current branch (what the oracle replays) and the ledger.
+    record: () => ({ actions: [...record] }),
+    spent: () => spent,
   };
 }
 
-export function oracle(task, output) {
+export function oracle(task, rawOutput) {
   const W = world(task);
-  const bad = validOutput(output);
+  const norm = normalizeOutput(rawOutput);
+  const output = norm.value;
+  const bad = norm.error || validOutput(output);
   if (bad) return { pass: false, score: 0, details: { reason: `schema: ${bad}`, optimal: W.optimal, budget: W.budget } };
   const env = makeEnv(W.w, W.budget);
   let invalid = 0, failed = 0, executed = 0;

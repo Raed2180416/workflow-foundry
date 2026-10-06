@@ -5,10 +5,10 @@
 import { rng } from '../lib/rng.mjs';
 import {
   PROPS, KIND_PROPS, SYL, ALT_VOWEL, SUFFIX, DENY, SURNAMES, INITIALS, JOURNALS, PREPRINT_SERVERS,
-  INSTITUTES, COMPANIES, VARIANTS, ENTITY_CLASS, ENTITY_ORIGIN,
+  INSTITUTES, COMPANIES, VARIANTS, ENTITY_CLASS, ENTITY_ORIGIN, condFor,
 } from './catalog.mjs';
 
-export const VERSION = '1.0.0';
+export const VERSION = '2.0.0';
 
 // Ranking policies. `order` is the lexicographic ranking key; `tiers` is 2 (journal above
 // preprint = lab note) or 3 (journal > preprint > lab note). Press releases are tier 0.
@@ -19,52 +19,80 @@ export const POLICIES = {
   P4: { id: 'P4', order: ['venue', 'n', 'date'], tiers: 3 },
 };
 
-// Cell features (traps): retracted, erratum, press, conditions, superseded, unit, rank, loser,
-// pressOnly, concern, quoted, distractor, variant, predicted, aliasOnly, nonstdSameDoc.
+// Cell features (traps and red herrings):
+//   retracted, erratum, press, conditions, superseded, unit, rank, loser, pressOnly, concern, quoted,
+//   distractor, variant, predicted, aliasOnly, nonstdSameDoc,
+//   grossN        a same-rank competitor whose text gives a gross count ("20 prepared, 7 failed QC")
+//                 that exceeds the winner's n although its net n is smaller,
+//   nErratum      an erratum corrects a sample size, which flips the ranking,
+//   erratumDecoy  an erratum on the winner corrects its NON-standard value (the standard value stands),
+//   loserErratum  an erratum corrects a losing document (erratum targets are not always winners),
+//   supersededLoser a losing document that has an earlier (void) version.
 
 // Difficulty knobs. `mandatory` features are spread over the requested cells of every task;
 // `extras` are per-cell probabilities on top. See README for the measured token sizes.
+//   condLevel 1: short fixed condition lists; 2: parametric conditions (temperatures in °C/K/°F).
+//   anaphora: probability that a later mention of a document's own entity is "the compound" etc.
+//   nVariety: probability that a research document states its n as a gross count minus exclusions.
+//   decoyP: probability that a notice target shares first author and venue with another document.
+//   refStyles: how notices cite their target ('id' adds [document Dxx]; 'title', 'topic', 'date').
+//   redHerrings: probability of status-like red herrings (version labels on single versions, banners
+//                about journal submission, preprint mentions of out-of-corpus versions, measured-claim
+//                sentences that cite other work or say "as expected", explicitly unmodified forms).
 export const KNOBS = {
   1: {
-    entities: 2, cells: 4, policies: ['P1'], aliasInPrompt: true, refById: true, nInMeta: true, mixedLabels: false, mixedDates: false,
-    unitLevel: 1, plusMinus: false, fancyNumbers: false, spelledN: false, background: 1, entityFiller: 0,
+    entities: 2, cells: 4, policies: ['P1'], aliasInPrompt: true, nInMeta: true, mixedLabels: false, mixedDates: false,
+    unitLevel: 1, plusMinus: false, fancyNumbers: false, pairs: 0, spelledN: false, background: 1, entityFiller: 0, condLevel: 1,
+    anaphora: 0, nVariety: 0, decoyP: 0, refStyles: ['id'], redHerrings: 0, otherErrata: 0, oocCollide: false,
     filler: { retract: 0, errata: 0, press: 0, supersede: 0 }, ooc: 0, erratumOnVoid: false, unitErratum: false, injection: false,
     mandatory: ['retracted', 'erratum', 'press', 'conditions', 'superseded', 'unit', 'rank'],
     extras: { loser: 0.3 }, attachP: 0.2,
   },
   2: {
-    entities: 3, cells: 6, policies: ['P1'], aliasInPrompt: true, refById: true, nInMeta: true, mixedLabels: false, mixedDates: false,
-    unitLevel: 2, plusMinus: false, fancyNumbers: false, spelledN: false, background: 1, entityFiller: 1,
+    entities: 3, cells: 6, policies: ['P1'], aliasInPrompt: true, nInMeta: true, mixedLabels: false, mixedDates: false,
+    unitLevel: 2, plusMinus: false, fancyNumbers: false, pairs: 0, spelledN: false, background: 1, entityFiller: 1, condLevel: 2,
+    anaphora: 0.25, nVariety: 0.15, decoyP: 0.2, refStyles: ['id'], redHerrings: 0.1, otherErrata: 0, oocCollide: false,
     filler: { retract: 1, errata: 1, press: 0, supersede: 0 }, ooc: 0, erratumOnVoid: false, unitErratum: false, injection: false,
     mandatory: ['pressOnly', 'retracted', 'erratum', 'press', 'conditions', 'superseded', 'unit', 'rank'],
-    extras: { loser: 0.3, press: 0.15, conditions: 0.15, nonstdSameDoc: 0.25 }, attachP: 0.25,
+    extras: { loser: 0.3, press: 0.15, conditions: 0.15, nonstdSameDoc: 0.25, loserErratum: 0.1 }, attachP: 0.25,
   },
   3: {
-    entities: 4, cells: 9, policies: ['P1', 'P2', 'P3', 'P4'], aliasInPrompt: false, refById: false, nInMeta: false, mixedLabels: true, mixedDates: true,
-    unitLevel: 2, plusMinus: true, fancyNumbers: false, spelledN: false, background: 1, entityFiller: 1,
-    filler: { retract: 1, errata: 1, press: 1, supersede: 1 }, ooc: 0, erratumOnVoid: false, unitErratum: false, injection: false,
-    mandatory: ['pressOnly', 'retracted', 'erratum', 'press', 'conditions', 'superseded', 'unit', 'rank', 'concern', 'quoted', 'distractor', 'aliasOnly'],
-    extras: { loser: 0.2, press: 0.1, conditions: 0.1, retracted: 0.1, rank: 0.15, quoted: 0.1, aliasOnly: 0.3, nonstdSameDoc: 0.3, erratum: 0.08 }, attachP: 0.3,
+    entities: 4, cells: 9, policies: ['P1', 'P2', 'P3', 'P4'], aliasInPrompt: false, nInMeta: false, mixedLabels: true, mixedDates: true,
+    unitLevel: 2, plusMinus: true, fancyNumbers: false, pairs: 0.5, spelledN: false, background: 1, entityFiller: 1, condLevel: 2,
+    anaphora: 0.4, nVariety: 0.35, decoyP: 0.6, refStyles: ['title', 'topic', 'date'], redHerrings: 0.3, otherErrata: 1, oocCollide: false,
+    filler: { retract: 1, errata: 1, press: 1, supersede: 1 }, ooc: 1, erratumOnVoid: false, unitErratum: false, injection: false,
+    mandatory: ['pressOnly', 'retracted', 'erratum', 'press', 'conditions', 'superseded', 'unit', 'rank', 'concern', 'quoted', 'distractor', 'aliasOnly',
+      'grossN', 'erratumDecoy'],
+    extras: { loser: 0.2, press: 0.1, conditions: 0.1, retracted: 0.1, rank: 0.15, quoted: 0.1, aliasOnly: 0.3, nonstdSameDoc: 0.3, erratum: 0.08,
+      nErratum: 0.1, loserErratum: 0.12, supersededLoser: 0.12 },
+    attachP: 0.3,
   },
   4: {
-    entities: 5, cells: 12, policies: ['P1', 'P2', 'P3', 'P4'], aliasInPrompt: false, refById: false, nInMeta: false, mixedLabels: true, mixedDates: true,
-    unitLevel: 3, plusMinus: true, fancyNumbers: true, spelledN: true, background: 2, entityFiller: 1,
+    entities: 5, cells: 12, policies: ['P1', 'P2', 'P3', 'P4'], aliasInPrompt: false, nInMeta: false, mixedLabels: true, mixedDates: true,
+    unitLevel: 3, plusMinus: true, fancyNumbers: true, pairs: 0.6, spelledN: true, background: 2, entityFiller: 1, condLevel: 2,
+    anaphora: 0.45, nVariety: 0.4, decoyP: 0.7, refStyles: ['title', 'topic', 'date'], redHerrings: 0.35, otherErrata: 1, oocCollide: true,
     filler: { retract: 2, errata: 1, press: 1, supersede: 1 }, ooc: 1, erratumOnVoid: true, unitErratum: true, injection: false,
     mandatory: ['pressOnly', 'retracted', 'erratum', 'press', 'conditions', 'superseded', 'unit', 'rank', 'concern', 'quoted', 'distractor',
-      'aliasOnly', 'variant', 'predicted', 'distractor'],
-    extras: { loser: 0.15, press: 0.08, conditions: 0.08, retracted: 0.08, rank: 0.12, quoted: 0.08, aliasOnly: 0.35, variant: 0.05, predicted: 0.05, nonstdSameDoc: 0.3, erratum: 0.08 },
+      'aliasOnly', 'variant', 'predicted', 'distractor', 'grossN', 'erratumDecoy', 'nErratum'],
+    extras: { loser: 0.1, press: 0.06, conditions: 0.06, retracted: 0.05, rank: 0.12, quoted: 0.06, aliasOnly: 0.35, variant: 0.04, predicted: 0.04,
+      nonstdSameDoc: 0.3, erratum: 0.06, loserErratum: 0.06, supersededLoser: 0.06 },
     attachP: 0.3,
   },
   5: {
-    entities: 6, cells: 16, policies: ['P1', 'P2', 'P3', 'P4'], aliasInPrompt: false, refById: false, nInMeta: false, mixedLabels: true, mixedDates: true,
-    unitLevel: 3, plusMinus: true, fancyNumbers: true, spelledN: true, background: 2, entityFiller: 1,
-    filler: { retract: 2, errata: 2, press: 1, supersede: 1 }, ooc: 1, erratumOnVoid: true, unitErratum: true, injection: true,
+    entities: 6, cells: 16, policies: ['P1', 'P2', 'P3', 'P4'], aliasInPrompt: false, nInMeta: false, mixedLabels: true, mixedDates: true,
+    unitLevel: 3, plusMinus: true, fancyNumbers: true, pairs: 0.6, spelledN: true, background: 1, entityFiller: 1, condLevel: 2,
+    anaphora: 0.5, nVariety: 0.4, decoyP: 0.7, refStyles: ['title', 'topic', 'date'], redHerrings: 0.35, otherErrata: 1, oocCollide: true,
+    filler: { retract: 2, errata: 1, press: 1, supersede: 1 }, ooc: 1, erratumOnVoid: true, unitErratum: true, injection: true,
     mandatory: ['pressOnly', 'retracted', 'erratum', 'press', 'conditions', 'superseded', 'unit', 'rank', 'concern', 'quoted', 'distractor',
-      'aliasOnly', 'variant', 'predicted', 'distractor', 'retracted', 'erratum'],
-    extras: { loser: 0.12, press: 0.06, conditions: 0.06, retracted: 0.05, rank: 0.1, quoted: 0.06, aliasOnly: 0.4, variant: 0.04, predicted: 0.04, nonstdSameDoc: 0.3, erratum: 0.05 },
+      'aliasOnly', 'variant', 'predicted', 'distractor', 'retracted', 'erratum', 'grossN', 'erratumDecoy', 'nErratum'],
+    extras: { loser: 0.08, press: 0.05, conditions: 0.05, retracted: 0.03, rank: 0.1, quoted: 0.05, aliasOnly: 0.4, variant: 0.03, predicted: 0.03,
+      nonstdSameDoc: 0.3, erratum: 0.04, loserErratum: 0.05, supersededLoser: 0.05 },
     attachP: 0.3,
   },
 };
+
+// Features that need a sample-size comparison; meaningless under P2 (n only breaks date ties).
+const N_FEATURES = new Set(['grossN', 'nErratum']);
 
 // ---------------------------------------------------------------------------------------
 // Units and numbers
@@ -101,12 +129,14 @@ export function tierOf(kind, policy) {
   return 0; // press
 }
 const tier3 = kind => ({ journal: 3, preprint: 2, labnote: 1, press: 0 })[kind];
-export function rankKey(doc, policy) {
-  return policy.order.map(k => (k === 'venue' ? tierOf(doc.kind, policy) : k === 'n' ? (doc.n ?? 0) : doc.date));
+// `nOf` lets the near-miss controls read a wrong sample size (gross or misprinted).
+export function rankKey(doc, policy, nOf = d => d.n) {
+  return policy.order.map(k => (k === 'venue' ? tierOf(doc.kind, policy) : k === 'n' ? (nOf(doc) ?? 0) : doc.date));
 }
 export function cmpKeys(a, b) { for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return a[i] - b[i]; return 0; }
 
 export const SOURCE_KINDS = new Set(['journal', 'preprint', 'labnote', 'press']);
+export const isResearch = d => ['journal', 'preprint', 'labnote'].includes(d.kind);
 
 // ---------------------------------------------------------------------------------------
 // Resolver. `o` switches individual judgment steps off; it is used by the reference solver
@@ -114,17 +144,29 @@ export const SOURCE_KINDS = new Set(['journal', 'preprint', 'labnote', 'press'])
 export function resolve(world, o = {}) {
   const docs = world.docMap;
   const retracted = new Set(world.retractions.filter(x => x.target).map(x => x.target));
+  if (o.concernVoids) for (const c of world.concerns) retracted.add(c.target);
+  if (o.phantomApplied) for (const x of world.retractions) if (x.phantom && x.phantom.collide) retracted.add(x.phantom.collide);
   const superseded = new Set(world.supersessions.map(x => x.old));
   const voidSet = new Set([...(o.keepRetracted ? [] : retracted), ...(o.keepSuperseded ? [] : superseded)]);
-  const corr = new Map();
-  if (!o.skipErrata) for (const e of world.errata) corr.set(`${e.target}|${e.ent}|${e.prop}`, e);
+  // Errata correct one specific claim (identified by cid). `erratumByDoc` is the near miss that
+  // applies a correction to the standard claim of the same document, entity and property.
+  const corr = new Map(), byDoc = new Map();
+  if (!o.skipErrata) {
+    for (const e of world.errata) {
+      if (e.kind !== 'value' && e.kind !== 'unit') continue;
+      corr.set(e.cid, e);
+      byDoc.set(`${e.target}|${e.ent}|${e.prop}`, e);
+    }
+  }
+  const nOf = d => (o.printedN ? (d.nPrinted ?? d.n) : o.grossN ? (d.nGross ?? d.n) : d.n);
   const policy = o.policy || world.policy;
   const cells = world.requested.map(cell => {
     let cands = world.claims.filter(c => c.prop === cell.prop && c.ent === cell.ent
       && (o.anyMode || c.mode === 'measured') && (o.ignoreConditions || c.cond === 'std') && (o.allowVariants || !c.variant)
       && SOURCE_KINDS.has(docs.get(c.doc).kind) && !voidSet.has(c.doc));
     cands = cands.map(c => {
-      const e = c.mode === 'measured' && c.cond === 'std' && !c.variant ? corr.get(`${c.doc}|${c.ent}|${c.prop}`) : null;
+      if (c.mode !== 'measured' || c.cond !== 'std' || c.variant) return c;
+      const e = corr.get(c.cid) || (o.erratumByDoc ? byDoc.get(`${c.doc}|${c.ent}|${c.prop}`) : null);
       return e ? { ...c, value: e.value, unit: e.unit, corrected: e.doc } : c;
     });
     if (o.pressTrusted) {
@@ -133,7 +175,7 @@ export function resolve(world, o = {}) {
     } else if (!o.noPressRule && cands.some(c => docs.get(c.doc).kind !== 'press')) {
       cands = cands.filter(c => docs.get(c.doc).kind !== 'press');
     }
-    const key = c => (o.recencyOnly ? [docs.get(c.doc).date] : rankKey(docs.get(c.doc), policy));
+    const key = c => (o.recencyOnly ? [docs.get(c.doc).date] : rankKey(docs.get(c.doc), policy, nOf));
     const sorted = [...cands].sort((a, b) => cmpKeys(key(b), key(a)) || (docs.get(a.doc).id < docs.get(b.doc).id ? -1 : 1));
     const win = sorted[0] || null;
     const vals = sorted.map(c => toCanon(c.prop, c.value, c.unit));
@@ -147,8 +189,9 @@ export function resolve(world, o = {}) {
       conflict: conflict && new Set(sorted.map(c => c.doc)).size >= 2,
     };
   });
-  const excluded = [...new Set([...retracted, ...superseded])];
-  return { cells, excluded, retracted: [...retracted], superseded: [...superseded] };
+  const realRetracted = new Set(world.retractions.filter(x => x.target).map(x => x.target));
+  const excluded = [...new Set([...realRetracted, ...superseded])];
+  return { cells, excluded, retracted: [...realRetracted], superseded: [...superseded], voided: [...new Set([...retracted, ...superseded])] };
 }
 
 // Turn a resolution into the answer JSON (doc keys -> public ids, entity keys -> names).
@@ -201,22 +244,29 @@ export function buildWorld(seed, split, difficulty, attempt = 0) {
   world.requested = r.shuffle(world.requested);
 
   // --- feature assignment -----------------------------------------------------------
-  const P3 = world.policy.id === 'P3';
+  const pol = world.policy;
+  const P3 = pol.id === 'P3';
+  const JOURNAL_W = ['erratum', 'concern', 'erratumDecoy', 'loserErratum'];
   const compatible = (cell, f) => {
     const fs = cell.feats;
-    if (f === 'aliasOnly' && fs.has(f)) return false;
-    if (['pressOnly', 'distractor'].includes(f) && fs.has(f)) return false;
-    if (fs.has('pressOnly') && ['erratum', 'superseded', 'rank', 'press', 'loser', 'concern', 'nonstdSameDoc'].includes(f)) return false;
+    if (['aliasOnly', 'pressOnly', 'distractor'].includes(f) && fs.has(f)) return false;
+    if (fs.has('pressOnly') && ['erratum', 'superseded', 'rank', 'press', 'loser', 'concern', 'nonstdSameDoc', 'grossN', 'nErratum', 'erratumDecoy',
+      'loserErratum', 'supersededLoser'].includes(f)) return false;
     if (f === 'pressOnly' && fs.size) return false;
-    if (P3 && f === 'rank' && (fs.has('erratum') || fs.has('concern'))) return false;
-    if (P3 && (f === 'erratum' || f === 'concern') && fs.has('rank')) return false;
+    if (N_FEATURES.has(f) && (pol.id === 'P2' || [...N_FEATURES].some(x => fs.has(x)))) return false;
+    // under P3 a 'rank' cell has a non-journal winner; features that need a journal winner clash
+    if (P3 && f === 'rank' && JOURNAL_W.some(x => fs.has(x))) return false;
+    if (P3 && JOURNAL_W.includes(f) && fs.has('rank')) return false;
+    if ((f === 'erratumDecoy' && fs.has('erratum')) || (f === 'erratum' && fs.has('erratumDecoy'))) return false;
     if (f === 'distractor' && world.requested.some(c => c !== cell && c.ent === cell.ent && c.feats.has('distractor'))) return false;
     return true;
   };
   const cells = world.requested;
   const off = r.int(0, cells.length - 1);
+  const repeatable = new Set(['retracted', 'erratum', 'grossN']);
   for (const f of K.mandatory) {
-    const cands = cells.map((c, i) => cells[(i + off) % cells.length]).filter(c => compatible(c, f) && (!c.feats.has(f) || f === 'retracted' || f === 'erratum'));
+    if (N_FEATURES.has(f) && pol.id === 'P2') continue; // n never decides under P2
+    const cands = cells.map((c, i) => cells[(i + off) % cells.length]).filter(c => compatible(c, f) && (!c.feats.has(f) || repeatable.has(f)));
     const pool = cands.filter(c => !c.feats.has(f));
     const choose = (pool.length ? pool : cands).sort((a, b) => a.feats.size - b.feats.size)[0];
     if (!choose) throw new Error(`cannot place feature ${f}`);
@@ -244,6 +294,7 @@ export function buildWorld(seed, split, difficulty, attempt = 0) {
     world.docs.push(d);
     return d;
   };
+  const docOf = key => world.docs.find(d => d.key === key);
   const base = () => r.int(dayNum(2017, 3, 1), dayNum(2023, 9, 30));
   const after = (d, lo = 20, hi = 420) => d.date + r.int(lo, hi);
   const before = (d, lo = 20, hi = 420) => d.date - r.int(lo, hi);
@@ -265,22 +316,68 @@ export function buildWorld(seed, split, difficulty, attempt = 0) {
     return r.pick(pool).id;
   };
   const addClaim = (doc, ent, prop, canon, unit, extra = {}) => {
-    const P = PROPS[prop];
     const c = {
-      doc: doc.key, ent: ent.key, prop, value: fromCanon(prop, canon, unit), unit, cond: 'std', condText: r.pick(P.std), mode: 'measured', variant: null,
+      cid: world.claims.length, doc: doc.key, ent: ent.key, prop, value: fromCanon(prop, canon, unit), unit, cond: 'std', condText: null, mode: 'measured', variant: null,
       sd: r.float(0.015, 0.07), ...extra,
     };
-    if (extra.cond === 'non') c.condText = r.pick(P.nonstd);
+    if (c.condText == null) c.condText = condFor(prop, c.cond !== 'non', r, K.condLevel);
     world.claims.push(c);
     return c;
   };
+  const stdClaimOf = (doc, ent, prop) => world.claims.find(c => c.doc === doc.key && c.ent === ent.key && c.prop === prop && c.mode === 'measured' && c.cond === 'std' && !c.variant);
+  const addValueErratum = (T, claim, newValue, extra = {}) => {
+    const ent = world.entities.find(e => e.key === claim.ent);
+    const E = newDoc('erratum', ent, { role: 'notice', venue: T.venue, authors: T.authors });
+    E.date = after(T, 15, 300); order(T, E);
+    world.errata.push({
+      doc: E.key, target: T.key, kind: 'value', cid: claim.cid, ent: claim.ent, prop: claim.prop, oldValue: claim.value, oldUnit: claim.unit,
+      value: newValue, unit: claim.unit, condText: claim.condText, ...extra,
+    });
+    return E;
+  };
+  // A trap document that would beat W under the policy if its claim were (wrongly) accepted.
+  // Its date is before or after W unless the policy needs recency to make it win.
   const beater = (W, ent, kinds = null) => {
     const allowed = (kinds || ['journal', 'preprint', 'labnote']).filter(k => tier3(k) >= tier3(W.kind));
-    const d = newDoc(r.pick(allowed.length ? allowed : ['journal']), ent, { role: 'trap' });
-    d.n = (W.n ?? 0) + r.int(2, 22);
-    d.date = after(W);
-    order(W, d);
+    const kind = r.pick(allowed.length ? allowed : ['journal']);
+    const d = newDoc(kind, ent, { role: 'trap' });
+    const higher = tierOf(kind, pol) > tierOf(W.kind, pol);
+    d.n = P3 || (!higher && pol.id !== 'P2') ? (W.n ?? 0) + r.int(2, 22) : r.int(3, 40);
+    if ((pol.id === 'P2' && !higher) || r.chance(0.5)) { d.date = after(W); order(W, d); } else { d.date = before(W); order(d, W); }
     return d;
+  };
+  // A document that loses to W under every policy (no higher tier, smaller n, older).
+  const mkLoser = (W, ent, prop, truth, kinds = null) => {
+    const ks = (kinds || ['journal', 'preprint', 'labnote']).filter(k => tier3(k) <= tier3(W.kind));
+    if (!ks.length || W.n == null || W.n < 4) return null;
+    const L = newDoc(r.pick(ks), ent, { role: 'loser' });
+    L.n = r.int(3, W.n - 1);
+    L.date = before(W, 20, 500); order(L, W);
+    addClaim(L, ent, prop, perturb(prop, truth), pickUnit(prop));
+    return L;
+  };
+  // An earlier version of X (void once X exists): journal <- preprint, or preprint/memo v1 <- v2.
+  const addOldVersion = (X, ent, prop, near) => {
+    let S;
+    if (X.kind === 'journal') { S = newDoc('preprint', ent, { role: 'superseded', authors: X.authors }); S.date = before(X, 60, 420); }
+    else { S = newDoc(X.kind, ent, { role: 'superseded', venue: X.venue, inst: X.inst, authors: X.authors }); S.date = before(X, 30, 300); S.version = 1; X.version = 2; }
+    S.n = Math.max(3, (X.n ?? 10) + r.int(-4, 8));
+    S.naming = X.naming === 'alias' ? 'alias' : r.pick(['name', 'both']);
+    order(S, X);
+    addClaim(S, ent, prop, perturb(prop, near, 0.08, 0.25), pickUnit(prop));
+    world.supersessions.push({ old: S.key, new: X.key, style: X.kind === 'journal' ? r.pick(['new-says', 'banner']) : 'version' });
+    return S;
+  };
+  // A competitor of the same rank level as W (any level under P3) with a smaller true n.
+  const mkCompetitor = (W, ent, prop, truth, journalOnly, nMin = 3) => {
+    let kinds = P3 ? ['journal', 'preprint', 'labnote'] : pol.tiers === 3 ? [W.kind] : W.kind === 'journal' ? ['journal'] : ['preprint', 'labnote'];
+    if (journalOnly) kinds = kinds.filter(k => k === 'journal');
+    if (!kinds.length || W.n == null || W.n <= nMin) return null;
+    const C = newDoc(r.pick(kinds), ent, { role: 'ntrap' });
+    C.n = r.int(nMin, W.n - 1);
+    C.date = r.chance(0.5) ? after(W) : before(W);
+    addClaim(C, ent, prop, perturb(prop, truth), pickUnit(prop));
+    return C;
   };
   const distractorFor = ent => {
     if (ent.distractor) return world.entMapTmp.get(ent.distractor);
@@ -291,6 +388,8 @@ export function buildWorld(seed, split, difficulty, attempt = 0) {
     return d;
   };
   world.entMapTmp = new Map();
+  const isVoidRole = d => ['retracted', 'superseded'].includes(d.role);
+  const cellDocsOf = (ent, prop) => world.docs.filter(d => isResearch(d) && world.claims.some(c => c.doc === d.key && c.ent === ent.key && c.prop === prop));
 
   // --- per-cell construction ------------------------------------------------------------
   for (const cell of cells) {
@@ -300,18 +399,16 @@ export function buildWorld(seed, split, difficulty, attempt = 0) {
     let wKind;
     if (f.has('pressOnly')) wKind = 'press';
     else if (f.has('rank') && P3) wKind = r.chance(0.6) ? 'preprint' : 'labnote';
-    else if (f.has('rank') || f.has('erratum') || f.has('concern')) wKind = 'journal';
+    else if (f.has('rank') || JOURNAL_W.some(x => f.has(x)) || (f.has('nErratum') && !P3)) wKind = 'journal';
     else wKind = r.chance(0.55) ? 'journal' : r.chance(0.65) ? 'preprint' : 'labnote';
     const W = newDoc(wKind, ent, { role: 'winner' });
     W.date = base();
-    W.n = wKind === 'press' ? null : (f.has('rank') && P3 ? r.int(16, 40) : r.int(4, 30));
+    W.n = wKind === 'press' ? null : (f.has('rank') && P3 ? r.int(16, 40) : r.int(5, 30));
     if (f.has('aliasOnly')) W.naming = 'alias';
     cell.W = W.key;
     const unit = f.has('unit') ? pickNontrivial(prop, truth) : pickUnit(prop, difficulty === 1 ? 0.7 : 0.5);
     let wClaim;
     if (f.has('erratum')) {
-      const E = newDoc('erratum', ent, { role: 'notice', venue: W.venue });
-      E.date = after(W, 15, 300); order(W, E);
       const unitErr = K.unitErratum && r.chance(0.4)
         && unitPool(prop, K.unitLevel).some(u => u.id !== unit && relDiff(toCanon(prop, fromCanon(prop, truth, unit), u.id), truth) > 0.08);
       if (unitErr) {
@@ -319,31 +416,17 @@ export function buildWorld(seed, split, difficulty, attempt = 0) {
         const wrong = r.pick(unitPool(prop, K.unitLevel).filter(u => u.id !== unit && relDiff(toCanon(prop, x, u.id), truth) > 0.08)).id;
         wClaim = addClaim(W, ent, prop, truth, unit);
         wClaim.value = x; wClaim.unit = wrong;
-        world.errata.push({ doc: E.key, target: W.key, ent: ent.key, prop, oldValue: x, oldUnit: wrong, value: x, unit, condText: wClaim.condText, unitOnly: true });
+        addValueErratum(W, wClaim, x, { kind: 'unit', unit });
       } else {
-        let printed = perturb(prop, truth, 0.09, 0.4);
-        wClaim = addClaim(W, ent, prop, printed, unit);
-        const newVal = fromCanon(prop, truth, unit);
-        world.errata.push({ doc: E.key, target: W.key, ent: ent.key, prop, oldValue: wClaim.value, oldUnit: unit, value: newVal, unit, condText: wClaim.condText, unitOnly: false });
+        wClaim = addClaim(W, ent, prop, perturb(prop, truth, 0.09, 0.4), unit);
+        addValueErratum(W, wClaim, fromCanon(prop, truth, unit));
       }
-      E.authors = W.authors;
     } else {
       wClaim = addClaim(W, ent, prop, truth, unit);
     }
-    if (f.has('nonstdSameDoc')) addClaim(W, ent, prop, perturb(prop, truth), pickUnit(prop), { cond: 'non' });
-    if (f.has('superseded')) {
-      let S;
-      if (W.kind === 'journal') { S = newDoc('preprint', ent, { role: 'superseded' }); S.date = before(W, 60, 420); }
-      else { S = newDoc(W.kind, ent, { role: 'superseded', venue: W.venue, inst: W.inst, authors: W.authors }); S.date = before(W, 30, 300); S.version = 1; W.version = 2; }
-      S.n = Math.max(3, (W.n ?? 10) + r.int(-4, 8));
-      if (W.kind === 'journal') S.authors = W.authors;
-      S.naming = W.naming === 'alias' ? 'alias' : r.pick(['name', 'both']);
-      order(S, W);
-      addClaim(S, ent, prop, perturb(prop, truth, 0.08, 0.25), pickUnit(prop));
-      world.supersessions.push({ old: S.key, new: W.key, style: W.kind === 'journal' ? r.pick(['new-says', 'banner']) : 'version' });
-    }
-    const nRetract = f.has('retracted') ? 1 : 0;
-    for (let i = 0; i < nRetract; i++) {
+    if (f.has('nonstdSameDoc') || f.has('erratumDecoy')) addClaim(W, ent, prop, perturb(prop, truth), pickUnit(prop), { cond: 'non' });
+    if (f.has('superseded')) addOldVersion(W, ent, prop, truth);
+    if (f.has('retracted')) {
       const R = beater(W, ent, ['journal', 'preprint']);
       R.role = 'retracted';
       addClaim(R, ent, prop, perturb(prop, truth), pickUnit(prop));
@@ -357,26 +440,50 @@ export function buildWorld(seed, split, difficulty, attempt = 0) {
     }
     if (f.has('rank')) {
       let L;
-      const pol = world.policy;
-      if (pol.id === 'P3') { L = newDoc('journal', ent); L.n = r.int(3, Math.max(3, W.n - 3)); }
+      if (P3) { L = newDoc('journal', ent); L.n = r.int(3, Math.max(3, W.n - 3)); }
       else if (W.kind === 'journal') { L = newDoc(r.pick(['preprint', 'labnote']), ent); L.n = pol.id === 'P2' ? r.int(3, 45) : W.n + r.int(2, 25); }
       else { L = newDoc('labnote', ent); L.n = W.n + r.int(2, 25); }
       L.date = after(W); order(W, L);
       L.role = 'rank';
       addClaim(L, ent, prop, perturb(prop, truth), pickUnit(prop));
     }
-    if (f.has('loser') && W.kind !== 'press' && W.n > 3) {
-      const kinds = ['journal', 'preprint', 'labnote'].filter(k => tier3(k) <= tier3(W.kind));
-      const L = newDoc(r.pick(kinds), ent, { role: 'loser' });
-      L.n = r.int(2, W.n - 1);
-      L.date = before(W, 20, 500); order(L, W);
-      addClaim(L, ent, prop, perturb(prop, truth), pickUnit(prop));
+    if (f.has('loser')) mkLoser(W, ent, prop, truth);
+    if (f.has('grossN')) {
+      const C = mkCompetitor(W, ent, prop, truth, false);
+      if (C) C.nGross = W.n + r.int(1, 12);
+    }
+    if (f.has('nErratum')) {
+      // (a) a competitor's printed n is too large, or (b) the winner's printed n is too small.
+      const deflateW = W.kind === 'journal' && W.n >= 6 && r.chance(0.5);
+      const C = mkCompetitor(W, ent, prop, truth, !deflateW, deflateW ? 4 : 3);
+      if (C) {
+        const T = deflateW ? W : C;
+        T.nPrinted = deflateW ? r.int(3, C.n - 1) : W.n + r.int(1, 12);
+        const E = newDoc('erratum', ent, { role: 'notice', venue: T.venue, authors: T.authors });
+        E.date = after(T, 15, 300); order(T, E);
+        world.errata.push({ doc: E.key, target: T.key, kind: 'n', ent: ent.key, prop, nOld: T.nPrinted, nNew: T.n });
+      }
+    }
+    if (f.has('erratumDecoy')) {
+      const nc = world.claims.find(c => c.doc === W.key && c.ent === ent.key && c.prop === prop && c.cond === 'non' && c.mode === 'measured');
+      addValueErratum(W, nc, fromCanon(prop, perturb(prop, toCanon(prop, nc.value, nc.unit), 0.08, 0.3), nc.unit));
+    }
+    if (f.has('loserErratum')) {
+      const L = mkLoser(W, ent, prop, truth, ['journal']);
+      if (L) { const lc = stdClaimOf(L, ent, prop); addValueErratum(L, lc, fromCanon(prop, perturb(prop, toCanon(prop, lc.value, lc.unit), 0.08, 0.3), lc.unit)); }
+    }
+    if (f.has('supersededLoser')) {
+      const L = mkLoser(W, ent, prop, truth);
+      if (L) { const lc = stdClaimOf(L, ent, prop); addOldVersion(L, ent, prop, toCanon(prop, lc.value, lc.unit)); }
     }
     if (f.has('quoted')) {
       const Q = beater(W, ent);
-      const echo = r.chance(0.5);
-      const qv = echo ? toCanon(prop, wClaim.value, wClaim.unit) : perturb(prop, truth);
-      addClaim(Q, ent, prop, qv, echo ? wClaim.unit : pickUnit(prop), { mode: 'quoted', quoteOf: echo ? W.authors[0] : r.pick(SURNAMES), quoteYear: fromDay(W.date).y });
+      // the quoted value echoes some document of this cell (any role) or an unseen paper
+      const echo = world.claims.filter(c => c.ent === ent.key && c.prop === prop && c.mode === 'measured' && c.cond === 'std' && !c.variant
+        && isResearch(docOf(c.doc)) && docOf(c.doc).date < Q.date - 30);
+      const src = echo.length && r.chance(0.65) ? r.pick(echo) : null;
+      addClaim(Q, ent, prop, src ? toCanon(prop, src.value, src.unit) : perturb(prop, truth), src ? src.unit : pickUnit(prop),
+        { mode: 'quoted', quoteDoc: src ? src.doc : null, quoteOf: src ? null : `${r.pick(INITIALS)}. ${r.pick(SURNAMES)}`, quoteYearsBack: r.int(1, 4) });
       addClaim(Q, ent, prop, perturb(prop, truth), pickUnit(prop), { cond: 'non' });
     }
     if (f.has('predicted')) {
@@ -385,7 +492,7 @@ export function buildWorld(seed, split, difficulty, attempt = 0) {
     }
     if (f.has('variant')) {
       const V = beater(W, ent);
-      addClaim(V, ent, prop, perturb(prop, truth), pickUnit(prop), { variant: r.int(0, 2) + 1 });
+      addClaim(V, ent, prop, perturb(prop, truth), pickUnit(prop), { variant: r.int(1, VARIANTS[ent.kind].length) });
     }
     if (f.has('distractor')) {
       const D = distractorFor(ent);
@@ -394,13 +501,16 @@ export function buildWorld(seed, split, difficulty, attempt = 0) {
       addClaim(Dd, D, prop, perturb(prop, truth), pickUnit(prop));
     }
     if (f.has('concern')) {
-      const C = newDoc('concern', ent, { role: 'notice', venue: W.venue });
-      C.date = after(W, 30, 400); order(W, C);
-      world.concerns.push({ doc: C.key, target: W.key, reason: r.int(0, 99) });
+      const pool = cellDocsOf(ent, prop).filter(d => d.kind === 'journal' && !isVoidRole(d));
+      const T = r.chance(0.5) || !pool.length ? W : r.pick(pool);
+      const C = newDoc('concern', ent, { role: 'notice', venue: T.venue });
+      C.date = after(T, 30, 400); order(T, C);
+      world.concerns.push({ doc: C.key, target: T.key, reason: r.int(0, 99) });
     }
     if (f.has('press')) {
       const cellDocs = world.docs.filter(d => d.ent === ent.key && SOURCE_KINDS.has(d.kind));
-      const PR = newDoc('press', ent, { role: 'press', about: W.key });
+      const about = cellDocsOf(ent, prop);
+      const PR = newDoc('press', ent, { role: 'press', about: about.length && r.chance(0.7) ? r.pick(about).key : null });
       PR.date = Math.max(...cellDocs.map(d => d.date)) + r.int(3, 90);
       for (const d of cellDocs) order(d, PR);
       const u = r.float(0.2, 0.7);
@@ -420,7 +530,7 @@ export function buildWorld(seed, split, difficulty, attempt = 0) {
     return addClaim(doc, e, prop, truthFor(PROPS[prop]), pickUnit(prop), std ? {} : { cond: 'non' });
   };
   for (const d of [...world.docs]) {
-    if (!['journal', 'preprint', 'labnote'].includes(d.kind) || !d.ent) continue;
+    if (!isResearch(d) || !d.ent) continue;
     const e = world.entities.find(x => x.key === d.ent);
     if (r.chance(K.attachP)) fillerClaim(d, e, r.chance(0.75));
   }
@@ -445,9 +555,8 @@ export function buildWorld(seed, split, difficulty, attempt = 0) {
   for (const e of world.entities.filter(x => x.distractorOf)) if (r.chance(0.5)) mkFillerDoc(e);
 
   // filler status events (they count for excluded_doc_ids, which covers the whole corpus)
-  const research = d => ['journal', 'preprint', 'labnote'].includes(d.kind);
   const hasClaims = d => world.claims.some(c => c.doc === d.key);
-  const fillerPool = () => r.shuffle(fillerDocs.filter(d => research(d) && d.role === 'filler' && hasClaims(d)));
+  const fillerPool = () => r.shuffle(fillerDocs.filter(d => isResearch(d) && d.role === 'filler' && hasClaims(d)));
   for (let i = 0; i < K.filler.retract; i++) {
     const d = fillerPool().find(x => x.kind !== 'labnote');
     if (!d) break;
@@ -459,13 +568,10 @@ export function buildWorld(seed, split, difficulty, attempt = 0) {
   for (let i = 0; i < K.filler.errata; i++) {
     const d = fillerPool().find(x => x.kind === 'journal');
     if (!d) break;
-    const c = world.claims.find(x => x.doc === d.key && x.mode === 'measured' && x.cond === 'std' && !x.variant);
+    const c = world.claims.find(x => x.doc === d.key && x.mode === 'measured' && !x.variant);
     if (!c) continue;
     d.role = 'corrected';
-    const E = newDoc('erratum', world.entities.find(e => e.key === d.ent), { role: 'notice', venue: d.venue, authors: d.authors });
-    E.date = after(d, 15, 300); order(d, E);
-    const canon = toCanon(c.prop, c.value, c.unit);
-    world.errata.push({ doc: E.key, target: d.key, ent: c.ent, prop: c.prop, oldValue: c.value, oldUnit: c.unit, value: fromCanon(c.prop, perturb(c.prop, canon, 0.09, 0.3), c.unit), unit: c.unit, condText: c.condText, unitOnly: false });
+    addValueErratum(d, c, fromCanon(c.prop, perturb(c.prop, toCanon(c.prop, c.value, c.unit), 0.09, 0.3), c.unit));
   }
   for (let i = 0; i < K.filler.supersede; i++) {
     const d = fillerPool().find(x => x.kind === 'journal' || x.kind === 'preprint');
@@ -494,32 +600,46 @@ export function buildWorld(seed, split, difficulty, attempt = 0) {
   if (K.erratumOnVoid) {
     const R = r.shuffle(world.docs.filter(d => d.role === 'retracted' && d.kind === 'journal'))[0];
     const c = R && world.claims.find(x => x.doc === R.key && x.mode === 'measured' && x.cond === 'std' && !x.variant);
-    if (c) {
-      const E = newDoc('erratum', world.entities.find(e => e.key === R.ent), { role: 'notice', venue: R.venue, authors: R.authors });
-      E.date = after(R, 5, 200); order(R, E);
-      const canon = toCanon(c.prop, c.value, c.unit);
-      world.errata.push({ doc: E.key, target: R.key, ent: c.ent, prop: c.prop, oldValue: c.value, oldUnit: c.unit, value: fromCanon(c.prop, perturb(c.prop, canon, 0.1, 0.3), c.unit), unit: c.unit, condText: c.condText, unitOnly: false });
-    }
+    if (c) addValueErratum(R, c, fromCanon(c.prop, perturb(c.prop, toCanon(c.prop, c.value, c.unit), 0.1, 0.3), c.unit));
   }
-  // retraction notices whose article is not in the corpus (must not cause any exclusion)
+  // errata that correct something other than a value (an affiliation, a figure label): no effect
+  for (let i = 0; i < K.otherErrata; i++) {
+    const pool = world.docs.filter(d => d.kind === 'journal' && !isVoidRole(d));
+    if (!pool.length) break;
+    const T = r.pick(pool);
+    const E = newDoc('erratum', world.entities.find(e => e.key === T.ent), { role: 'notice', venue: T.venue, authors: T.authors });
+    E.date = after(T, 15, 300); order(T, E);
+    world.errata.push({ doc: E.key, target: T.key, kind: 'other', ent: T.ent, what: r.int(0, 99) });
+  }
+  // retraction notices whose article is not in the corpus (must not cause any exclusion). From
+  // level 4 on, the missing article can share its title with a corpus document (different
+  // authors, venue and year): only the full reference tells them apart.
   for (let i = 0; i < K.ooc; i++) {
-    const e = mkEntity(kindsCycle[r.int(0, 2)], { background: true, phantom: true });
-    const RN = newDoc('retraction', e, { role: 'notice' });
-    RN.venue = r.pick(JOURNALS[e.kind]);
-    const phantom = { authors: authorsFor(), date: base(), venue: RN.venue, ent: e.key, prop: r.pick(KIND_PROPS[e.kind]) };
-    RN.date = phantom.date + r.int(30, 400);
+    const collideWith = K.oocCollide ? r.pick(world.docs.filter(d => isResearch(d) && ['journal', 'preprint'].includes(d.kind) && !isVoidRole(d))) : null;
+    const host = collideWith ? world.entities.find(e => e.key === collideWith.ent)
+      : r.chance(0.5) ? r.pick(reqEnts) : mkEntity(kindsCycle[r.int(0, 2)], { background: true, phantom: true });
+    const venue = r.pick(JOURNALS[host.kind].filter(j => !collideWith || j !== collideWith.venue));
+    const RN = newDoc('retraction', host, { role: 'notice', venue });
+    const surnames = new Set(collideWith ? collideWith.authors.map(a => a.split(' ').pop()) : []);
+    let authors = authorsFor();
+    while (authors.some(a => surnames.has(a.split(' ').pop()))) authors = authorsFor();
+    const phantom = { authors, venue, ent: host.key, prop: r.pick(KIND_PROPS[host.kind]), collide: collideWith ? collideWith.key : null };
+    phantom.date = collideWith ? collideWith.date + (r.chance(0.5) ? 1 : -1) * r.int(400, 900) : base();
+    RN.date = Math.max(phantom.date, collideWith ? collideWith.date : 0) + r.int(30, 400);
+    if (collideWith) order(collideWith, RN);
     world.retractions.push({ doc: RN.key, target: null, phantom, reason: r.int(0, 99) });
   }
   // injection (d5): an instruction-like sentence inside an otherwise ordinary document
   if (K.injection) {
     const voidish = new Set([...world.retractions.map(x => x.target), ...world.supersessions.map(x => x.old)]);
     const cell = r.pick(world.requested.filter(c => !c.feats.has('pressOnly')));
-    const hosts = world.docs.filter(d => research(d) && !voidish.has(d.key) && d.role !== 'winner');
+    const hosts = world.docs.filter(d => isResearch(d) && !voidish.has(d.key) && d.role !== 'winner');
     const host = r.pick(hosts.filter(d => d.kind !== 'journal').length ? hosts.filter(d => d.kind !== 'journal') : hosts);
     const ent = world.entities.find(e => e.key === cell.ent);
     const W = world.claims.find(c => c.doc === cell.W && c.ent === cell.ent && c.prop === cell.prop && c.mode === 'measured' && c.cond === 'std');
     const inj = addClaim(host, ent, cell.prop, perturb(cell.prop, toCanon(cell.prop, W.value, W.unit), 0.15, 0.5), PROPS[cell.prop].unit, { mode: 'injection', style: r.int(0, 2) });
     world.injection = { doc: host.key, ent: ent.key, prop: cell.prop, claim: inj };
+    host.hostsInjection = true;
   }
 
   // --- naming (aliases) ---------------------------------------------------------------------
@@ -534,9 +654,9 @@ export function buildWorld(seed, split, difficulty, attempt = 0) {
     if (e.phantom) continue;
     const eDocs = world.docs.filter(d => d.ent === e.key);
     if (!eDocs.some(d => d.naming === 'alias' || d.naming === 'both')) continue;
-    const ok = eDocs.some(d => d.naming === 'both' && !voidKeys.has(d.key) && research(d));
+    const ok = eDocs.some(d => d.naming === 'both' && !voidKeys.has(d.key) && isResearch(d));
     if (ok) continue;
-    const cand = eDocs.find(d => research(d) && !voidKeys.has(d.key) && !(d.role === 'winner' && world.requested.some(c => c.W === d.key && c.feats.has('aliasOnly'))));
+    const cand = eDocs.find(d => isResearch(d) && !voidKeys.has(d.key) && !(d.role === 'winner' && world.requested.some(c => c.W === d.key && c.feats.has('aliasOnly'))));
     if (cand) cand.naming = 'both';
     else {
       const M = newDoc('labnote', e, { role: 'nomenclature', naming: 'both' });
@@ -546,12 +666,27 @@ export function buildWorld(seed, split, difficulty, attempt = 0) {
     }
   }
 
+  // --- sample sizes stated as gross counts minus exclusions (variety; truth unchanged) ----------
+  for (const d of world.docs) if (isResearch(d) && d.n != null && d.nGross == null && d.nPrinted == null && r.chance(K.nVariety)) d.nGross = d.n + r.int(1, 8);
+
+  // --- decoys: the same first author publishes another document in the same venue -------------
+  // (a notice must then be matched by more than "first author + venue")
+  const noticeTargets = new Set([...world.retractions.map(x => x.target), ...world.errata.map(x => x.target), ...world.concerns.map(x => x.target),
+    ...world.supersessions.flatMap(x => [x.old, x.new])].filter(Boolean));
+  for (const T of world.docs.filter(d => noticeTargets.has(d.key))) {
+    if (!r.chance(K.decoyP)) continue;
+    const pool = world.docs.filter(X => X !== T && X.kind === T.kind && X.venue === T.venue && isResearch(X) && X.authors !== T.authors
+      && X.authors[0] !== T.authors[0] && !X.authors.slice(1).some(a => a.split(' ').pop() === T.authors[0].split(' ').pop()));
+    if (pool.length) r.pick(pool).authors[0] = T.authors[0];
+  }
+
   // --- dates: make unique, then check ordering constraints -----------------------------------
   const seen = new Set();
   for (const d of [...world.docs].sort((a, b) => a.date - b.date || (a.key < b.key ? -1 : 1))) {
     while (seen.has(d.date)) d.date += 1;
     seen.add(d.date);
   }
+  for (const x of world.retractions) if (x.phantom) while (seen.has(x.phantom.date)) x.phantom.date += 1;
   world.docMap = new Map(world.docs.map(d => [d.key, d]));
   world.entMap = new Map(world.entities.map(e => [e.key, e]));
   world.constraintsOk = world.constraints.every(([a, b]) => world.docMap.get(a).date < world.docMap.get(b).date);

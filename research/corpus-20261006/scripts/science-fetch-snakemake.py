@@ -16,7 +16,7 @@ ROOT = "/opt/corpus/snakemake"
 GIT = ["git", "-c", "core.hooksPath=/dev/null", "-c", "filter.lfs.smudge=", "-c", "filter.lfs.required=false",
        "-c", "protocol.file.allow=never"]
 SPARSE = ["/Snakefile", "/snakefile", "/*.smk", "/*.snakefile", "/rules/*.smk", "/rules/*.snakefile", "/rules/*.py",
-          "/workflow/Snakefile", "/workflow/*.smk", "/workflow/rules/*.smk", "/workflow/rules/*.py", "/workflow/rules/**/*.smk",
+          "/workflow/Snakefile", "/workflow/*.smk", "/workflow/rules/*.smk", "/workflow/rules/*.py", "/workflow/rules/**/*.smk", "/workflow/**/*.smk", "/workflow/**/Snakefile", "/rules/**/*.smk",
           "/workflow/schemas/", "/config/*.yaml", "/config/*.yml", "/config/*.tsv", "/config/*.csv",
           "/.test/*.yaml", "/.test/*.yml", "/.test/config*/", "/.tests/unit/*.py", "/.github/workflows/",
           "/LICENSE*", "/LICENCE*", "/COPYING*", "/README.md"]

@@ -1,20 +1,26 @@
 // Generator for the `incident` bed. build(seed, split, difficulty) -> { task, truth }.
 // Pure: every random choice comes from beds/lib/rng.mjs seeded by (family, version, split,
-// seed, difficulty); no Math.random, no wall clock (Date is used only to format fixed epochs).
+// seed, difficulty[, attempt]); no Math.random, no wall clock (Date only formats fixed epochs).
 import { rng } from '../lib/rng.mjs';
 import { estimateTokens } from '../lib/canonical.mjs';
 import * as C from './catalog.mjs';
 
-export const VERSION = '1.0.0';
+export const VERSION = '2.0.0';
 export const WINDOW = 1800; // seconds of logs per task
+const MAX_ATTEMPTS = 64; // the last attempt is accepted unconditionally
+const SOFT_ATTEMPTS = 12; // after this many attempts the soft-caller preference is dropped
 
-// Difficulty knobs. lines is the target bundle size (actual size is within about +/-10%).
+// Difficulty knobs. lines is the target bundle size (actual size is within about +/-15%).
+// v1 knobs are unchanged; the v2 block (after `paraphrase`) was added by the audit (AUDIT.md).
+const BASE = { wrap: 0, chronic: 0, pods: false, soft: 0, deploy: 0, blipRoot: false, blipSame: false, benignHard: false, added: 0, stale: 0, proseAliases: 0, mislead: 0, notice: false, inject: false, legacySource: false, noisyNote: false, hypothesis: false, addresses: false };
+const HARD = { paraphrase: true, anon: 0.6, mixedNotes: 0.5, silentSoft: 0.5, softErr: 0.6, warnSev: 0.3, mention: 0.03, mentionErr: 0.4, decoy: 1, secondary: [0.35, 0.65], lead: [90, 300], cacheLag: [70, 200], blipNear: true, nearPrecursor: 0.5, ticketSubset: true, hardNotes: 1, renewHerring: true, baselines: 2, wantSoft: true, bigSkew: 0.6 };
+const EASY = { paraphrase: false, anon: 0, mixedNotes: 0, silentSoft: 0, softErr: 0, warnSev: 0, mention: 0.01, mentionErr: 0, decoy: 0, secondary: [0, 0], lead: [15, 40], cacheLag: [3, 25], blipNear: false, nearPrecursor: 0, ticketSubset: false, hardNotes: 0, renewHerring: false, baselines: 0, wantSoft: false, bigSkew: 0 };
 export const KNOBS = {
-  1: { services: 6, batch: 1, lines: 300, wrap: 0, chronic: 0, styles: ['plain'], refs: ['name'], pods: false, soft: 0, nearBias: 0.4, deploy: 0, blipRoot: false, blipSame: false, blipOther: 1, benignHard: false, added: 0, stale: 0, proseAliases: 0, mislead: 0, notice: false, inject: false, legacySource: false, noisyNote: true, hypothesis: false, addresses: false },
-  2: { services: 8, batch: 1, lines: 400, wrap: 0.15, chronic: 0, styles: ['plain', 'bracket', 'kv'], refs: ['name', 'name', 'host'], pods: false, soft: 0.4, nearBias: 0.5, deploy: 1, blipRoot: false, blipSame: true, blipOther: 1, benignHard: false, added: 0, stale: 0, proseAliases: 0, mislead: 0, notice: false, inject: false, legacySource: false, noisyNote: true, hypothesis: false, addresses: false },
-  3: { services: 11, batch: 1, lines: 420, wrap: 0.3, chronic: 1, styles: ['plain', 'bracket', 'kv', 'json', 'short'], refs: ['name', 'host', 'legacy'], pods: true, soft: 0.4, nearBias: 0.6, deploy: 1, blipRoot: true, blipSame: true, blipOther: 2, benignHard: true, added: 1, stale: 0, proseAliases: 0, mislead: 0, notice: false, inject: false, legacySource: false, noisyNote: false, hypothesis: false, addresses: false },
-  4: { services: 14, batch: 2, lines: 1600, wrap: 0.35, chronic: 1, styles: ['plain', 'bracket', 'kv', 'json', 'short'], refs: ['name', 'host', 'legacy', 'ip'], pods: true, soft: 0.3, nearBias: 0.75, deploy: 1, blipRoot: true, blipSame: true, blipOther: 2, benignHard: true, added: 1, stale: 1, proseAliases: 2, mislead: 1, notice: false, inject: false, legacySource: false, noisyNote: false, hypothesis: true, addresses: true },
-  5: { services: 18, batch: 2, lines: 4000, wrap: 0.35, chronic: 2, styles: ['plain', 'bracket', 'kv', 'json', 'short'], refs: ['name', 'host', 'legacy', 'ip'], pods: true, soft: 0.3, nearBias: 0.8, deploy: 2, blipRoot: true, blipSame: true, blipOther: 4, benignHard: true, added: 2, stale: 1, proseAliases: 3, mislead: 1, notice: true, inject: true, legacySource: true, noisyNote: false, hypothesis: true, addresses: true },
+  1: { ...BASE, ...EASY, services: 6, batch: 1, lines: 300, bg: 0.78, styles: ['plain'], refs: ['name'], nearBias: 0.4, blipOther: 1, noisyNote: true },
+  2: { ...BASE, ...EASY, services: 8, batch: 1, lines: 400, bg: 0.78, wrap: 0.15, styles: ['plain', 'bracket', 'kv'], refs: ['name', 'name', 'host'], soft: 0.4, nearBias: 0.5, deploy: 1, blipSame: true, blipOther: 1, noisyNote: true, mention: 0.015, secondary: [0.1, 0.2] },
+  3: { ...BASE, ...HARD, services: 11, batch: 1, lines: 420, bg: 0.66, wrap: 0.3, chronic: 1, styles: ['plain', 'bracket', 'kv', 'json', 'short'], refs: ['name', 'host', 'legacy'], pods: true, soft: 0.5, nearBias: 0.6, deploy: 1, blipRoot: true, blipSame: true, blipOther: 2, benignHard: true, added: 1 },
+  4: { ...BASE, ...HARD, services: 14, batch: 2, lines: 1600, bg: 0.7, wrap: 0.35, chronic: 1, styles: ['plain', 'bracket', 'kv', 'json', 'short'], refs: ['name', 'host', 'legacy', 'ip'], pods: true, soft: 0.45, nearBias: 0.75, deploy: 1, blipRoot: true, blipSame: true, blipOther: 2, benignHard: true, added: 1, stale: 1, proseAliases: 2, mislead: 1, hypothesis: true, addresses: true, warnSev: 0.35 },
+  5: { ...BASE, ...HARD, services: 18, batch: 2, lines: 4000, bg: 0.72, wrap: 0.35, chronic: 2, styles: ['plain', 'bracket', 'kv', 'json', 'short'], refs: ['name', 'host', 'legacy', 'ip'], pods: true, soft: 0.45, nearBias: 0.8, deploy: 2, blipRoot: true, blipSame: true, blipOther: 4, benignHard: true, added: 2, stale: 1, proseAliases: 3, mislead: 1, notice: true, inject: true, legacySource: true, hypothesis: true, addresses: true, warnSev: 0.4, softErr: 0.7, decoy: 2, hardNotes: 2, baselines: 3 },
 };
 
 // Which roles can host each fault class (the root is never the gateway or a batch job).
@@ -29,6 +35,7 @@ const ELIGIBLE = {
   upstream_rate_limiting: role => Boolean(role.external) && role.layer >= 1,
   poisoned_cache: role => Boolean(role.cache) && role.layer >= 1 && role.layer <= 3,
 };
+const GRADUAL = new Set(['disk_full', 'connection_pool_exhaustion']);
 
 const NS_INFO = {
   pricing: ['price-quotes', 'quote:sku-', ['unit_price', 'currency']],
@@ -87,8 +94,8 @@ function buildTopology(r, K, cls) {
   const chainUp = key => {
     const role = C.ROLE[key];
     if (role.layer <= 1) return;
-    const callers = C.ROLES.filter(x => x.layer >= 1 && x.layer <= 2 && x.order < role.order && x.likes.includes(key));
-    const present = callers.filter(x => chosen.has(x.key));
+    const callers = C.ROLES.filter(y => y.layer >= 1 && y.layer <= 2 && y.order < role.order && y.likes.includes(key));
+    const present = callers.filter(y => chosen.has(y.key));
     if (present.length) { forced.push([r.pick(present).key, key]); return; }
     const caller = r.pick(callers);
     add(caller.key); forced.push([caller.key, key]);
@@ -99,9 +106,8 @@ function buildTopology(r, K, cls) {
   const target = K.services - K.batch;
   while (chosen.size < target) {
     const present = [...chosen.values()];
-    const cands = C.ROLES.filter(x => x.layer >= 1 && x.layer <= 3 && !chosen.has(x.key) && (x.layer === 1 || present.some(p => p.likes.includes(x.key))));
+    const cands = C.ROLES.filter(y => y.layer >= 1 && y.layer <= 3 && !chosen.has(y.key) && (y.layer === 1 || present.some(p => p.likes.includes(y.key))));
     if (!cands.length) break;
-    // Prefer roles adjacent to the root's neighbourhood so the incident has room to spread.
     // Prefer callers of the root or of its (transitive) callers, so the incident has room to spread.
     const upstream = new Set([rootRole.key]);
     for (let grew = true; grew;) {
@@ -109,11 +115,11 @@ function buildTopology(r, K, cls) {
       for (const [from, to] of forced) if (upstream.has(to) && !upstream.has(from)) { upstream.add(from); grew = true; }
       for (const p of present) if (p.layer >= 1 && !upstream.has(p.key) && p.likes.some(k => upstream.has(k))) { upstream.add(p.key); grew = true; }
     }
-    const near = cands.filter(x => x.likes.some(k => upstream.has(k)));
+    const near = cands.filter(y => y.likes.some(k => upstream.has(k)));
     const pool = near.length && r.chance(K.nearBias) ? near : cands;
     add(r.pick(pool).key);
   }
-  for (const role of r.sample(C.ROLES.filter(x => x.layer === 9), K.batch)) add(role.key);
+  for (const role of r.sample(C.ROLES.filter(y => y.layer === 9), K.batch)) add(role.key);
 
   const keys = [...chosen.keys()].sort((a, b) => C.ROLE[a].order - C.ROLE[b].order);
   const edgeSet = new Map();
@@ -141,10 +147,19 @@ function buildTopology(r, K, cls) {
 export function build(seed, split, difficulty) {
   if (!Number.isSafeInteger(seed)) throw new TypeError('seed must be a safe integer');
   if (!['dev', 'test'].includes(split)) throw new TypeError("split must be 'dev' or 'test'");
+  if (!Number.isInteger(difficulty) || difficulty < 1 || difficulty > 5) throw new TypeError('difficulty must be an integer 1..5');
+  // The fault class is drawn once per task so that rejection sampling of the topology (below)
+  // does not skew the class distribution.
+  const cls = rng('incident', VERSION, split, seed, difficulty, 'class').pick(C.FAULT_CLASSES);
+  for (let attempt = 0; ; attempt++) {
+    const out = buildAttempt(seed, split, difficulty, cls, attempt, attempt >= MAX_ATTEMPTS - 1);
+    if (out) return out;
+  }
+}
+
+function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   const K = KNOBS[difficulty];
-  if (!K) throw new TypeError('difficulty must be 1..5');
-  const r = rng('incident', VERSION, split, seed, difficulty);
-  const cls = r.pick(C.FAULT_CLASSES);
+  const r = rng('incident', VERSION, split, seed, difficulty, attempt);
   const topo = buildTopology(r, K, cls);
   const company = r.pick(C.COMPANIES);
   const teams = r.shuffle(C.TEAMS);
@@ -165,20 +180,26 @@ export function build(seed, split, difficulty) {
     const extKey = role.external;
     const extName = extKey ? r.pick(C.EXTERNALS[extKey].names) : null;
     const [oldVer, newVer] = versions(r);
+    const [otherVer] = versions(r);
     const tables = role.tables || null;
     const routes = kind === 'svc' || kind === 'batch' ? (role.routes || ['POST /jobs/run']) : (kind === 'db' ? tables.flatMap(t => C.DATA_OPS.db(t)) : C.DATA_OPS[kind]());
     const nsInfo = NS_INFO[key] || ['entries', 'key:', ['payload', 'version']];
+    const max = r.pick([20, 24, 32, 40, 50, 64]);
+    const volGiB = r.pick([50, 100, 200, 500]);
     S[key] = {
       key, role, kind, name, legacy: r.pick(role.legacy), team: teams[i % teams.length], ip, ns,
       host: `${name}.${ns}.internal`, port: r.pick(PORTS[kind] || PORTS.svc), pods, replicas,
       style: r.pick(K.styles), jsonKeys: r.pick([['level', 'msg'], ['severity', 'message'], ['lvl', 'text']]),
       reqFmt: r.int(0, 2), rev: r.int(100, 9999), weight: role.weight, tables, routes,
       ext: extName ? { name: extName, what: C.EXTERNALS[extKey].what, host: `${C.EXTERNALS[extKey].host}.${slug(extName)}.example` } : null,
-      oldVer, newVer, callees: [], callers: [],
-      fx: { // per-service fault context (used for the root and for blips)
+      oldVer, newVer, otherVer, callees: [], callers: [],
+      // How this service logs failures of its hard dependencies (some log them as warnings).
+      sev: key !== 'gateway' && kind === 'svc' && r.chance(K.warnSev) ? 'warn' : 'error',
+      fx: { // per-service fault context (used for the root, for blips and for baselines)
         pool: `${r.pick(['hikari', 'pgx', 'sqlpool', 'dbpool'])}-${r.pick(['main', 'primary', 'rw'])}`,
-        max: r.pick([20, 24, 32, 40, 50, 64]),
-        vol: key === 'media' ? VOLUMES.media : (VOLUMES[kind] || '/data'),
+        max, a0: Math.round(max * r.float(0.2, 0.45)),
+        vol: key === 'media' ? VOLUMES.media : (VOLUMES[kind] || '/data'), volGiB, u0: r.int(70, 86),
+        writer: r.pick(C.WRITERS),
         quota: r.pick([600, 1200, 3000, 6000]),
         lim: r.pick([512, 768, 1024, 1536, 2048]),
         base: r.int(38, 48),
@@ -202,6 +223,8 @@ export function build(seed, split, difficulty) {
   const edges = topo.edges.map(e => ({ ...e, soft: false, inTable: true, ref: r.pick(K.refs), delay: r.int(2, 30) }));
   for (const e of edges) {
     if (e.from !== 'gateway' && C.ROLE[e.to].fallback && K.soft > 0) e.soft = r.chance(K.soft);
+    // A silent soft caller never logs a fallback line; only the prose note says it is optional.
+    e.silent = e.soft && K.silentSoft > 0 && r.chance(K.silentSoft);
     S[e.from].callees.push(e); S[e.to].callers.push(e);
   }
   // The root needs at least one hard caller, and the DNS/pool companions are hard edges.
@@ -223,9 +246,19 @@ export function build(seed, split, difficulty) {
   const iso = t => new Date(W0 + t * 1000).toISOString().replace('.000Z', 'Z');
   const hhmm = t => new Date(W0 + t * 1000).toISOString().slice(11, 16);
 
-  // When the root starts hurting its callers.
-  let rootOut = T + r.int(...(F.outDelay || [2, 10]));
-  // Memory leak: heap growth from T, OOM kills, restarts; callers fail from the first kill.
+  // symFrom: from when the root's own request handling is visibly broken. Gradual faults (disk
+  // filling, connections leaking) start at T as a trend and turn fatal at symFrom.
+  const gradual = GRADUAL.has(cls);
+  const lead = gradual ? r.int(...K.lead) : 0;
+  let symFrom = T;
+  let rootOut;
+  if (gradual) { symFrom = T + lead; rootOut = symFrom + r.int(...(cls === 'disk_full' ? [1, 8] : [5, 20])); }
+  else if (cls === 'poisoned_cache') { symFrom = T + r.int(...K.cacheLag); rootOut = symFrom + r.int(0, 10); }
+  else rootOut = T + r.int(...(F.outDelay || [2, 10]));
+  // Clock skew can be small (token windows) or large (certificate validity); large only from d3.
+  const bigSkew = cls === 'clock_skew' && K.bigSkew > 0 && r.chance(K.bigSkew);
+  if (bigSkew) root.fx.skew = r.pick([3600 * r.int(5, 20), 86400 * r.int(2, 30), 86400 * r.int(300, 420)]);
+  // Memory leak: heap growing from T, OOM kills, restarts; callers fail from the first kill.
   const leak = { growth: [], ooms: [], down: [] };
   if (cls === 'memory_leak_oom') {
     let t = T, p = root.fx.p0, restarts = 1;
@@ -267,6 +300,19 @@ export function build(seed, split, difficulty) {
     const t = outTime.get(e.to) + e.delay;
     if (!degraded.has(e.from) || t < degraded.get(e.from)) degraded.set(e.from, t);
   }
+  // Rejection sampling (audit fix): "every serving service" must not reach Jaccard 0.8, and from
+  // d3 at least one caller must fall back (so that plain ERROR lines do not decide impact alone).
+  const allServingJaccard = impacted.size / serving.length;
+  const softWanted = attempt < SOFT_ATTEMPTS / 2 ? 2 : attempt < SOFT_ATTEMPTS ? 1 : 0;
+  if (!last && (allServingJaccard >= 0.8 || (K.wantSoft && degraded.size < softWanted))) return null;
+
+  if (K.silentSoft && degraded.size) {
+    const softIn = edges.filter(e => e.soft && degraded.has(e.from) && outTime.has(e.to));
+    if (softIn.length && !softIn.some(e => e.silent)) r.pick(softIn).silent = true;
+  }
+  // From d3 one impacted intermediate service may log its failures without naming the callee.
+  const anonCands = [...impacted.keys()].filter(k => k !== root.key && k !== 'gateway' && S[k].kind === 'svc');
+  const anon = K.anon && anonCands.length && r.chance(K.anon) ? S[r.pick(anonCands)] : null;
   const failProb = new Map();
   for (const k of impacted.keys()) {
     if (k === root.key) continue;
@@ -274,10 +320,27 @@ export function build(seed, split, difficulty) {
     failProb.set(k, k === 'gateway' ? r.float(0.3, 0.6) : (cls === 'disk_full' && direct ? r.float(0.3, 0.5) : r.float(0.4, 0.8)));
   }
 
+  // Decoys (d3+): healthy services with loud trouble unrelated to serving, starting shortly
+  // before T. The first sits directly below the root when possible (a callee the root names).
+  const decoys = [];
+  if (K.decoy) {
+    const below = cls === 'connection_pool_exhaustion' ? [S[root.role.db]] : root.callees.map(e => S[e.to]);
+    const others = serving.filter(s => s !== gateway && !impacted.has(s.key));
+    const first = below.length ? r.pick(below) : (others.length ? r.pick(others) : null);
+    if (first) decoys.push(first);
+    for (let i = 1; i < K.decoy; i++) {
+      const pool = others.filter(s => !decoys.includes(s));
+      if (pool.length) decoys.push(r.pick(pool));
+    }
+  }
+  const D = decoys.find(s => root.callees.some(e => e.to === s.key)) || null;
+  const edgeToD = D ? root.callees.find(e => e.to === D.key) : null;
+
   // ---------------------------------------------------------------- events
   const events = [];
   let seq = 0;
   const emit = (t, s, [level, msg], tag) => { if (t >= 0 && t < WINDOW) events.push({ t, s: s.key, level, msg, tag, seq: seq++ }); };
+  const sevAdj = (s, [level, msg]) => (s.sev === 'warn' && level === 'ERROR' ? ['WARN', msg] : [level, msg]);
   const callerHostOf = (s, rr) => {
     const callers = s.callers.length ? s.callers.map(e => S[e.from]) : serving;
     const c = rr.pick(callers);
@@ -289,17 +352,23 @@ export function build(seed, split, difficulty) {
     const dbSvc = s.role.db && S[s.role.db];
     const dbEdge = dbSvc && s.callees.find(e => e.to === dbSvc.key);
     const fields = fx.fields;
+    const isRoot = s === root;
+    const depEdge = s.callees.length ? (isRoot && edgeToD && rr.chance(0.75) ? edgeToD : rr.pick(s.callees)) : null;
+    const calleeHost = s.callees.length
+      ? (isRoot && D && rr.chance(0.6) ? D.host : (rr.chance(s.ext ? 0.75 : 1) ? S[rr.pick(s.callees).to].host : s.ext.host))
+      : (s.ext ? s.ext.host : 'api.partner.example');
     return {
       svc: s.name, host: s.host, port: s.port, pod: rr.pick(s.pods), route: rr.pick(s.routes), rev: s.rev,
       table: s.tables ? rr.pick(s.tables) : 'events', dbUser: `${s.role.key}_app`, dbName: s.role.key,
       peerIp: `10.${rr.int(8, 40)}.${rr.int(0, 255)}.${rr.int(2, 250)}`, someHost: anyHost(s, rr),
-      pool: fx.pool, max: fx.max, db: dbEdge ? refOf(dbEdge) : (dbSvc ? dbSvc.name : 'the primary datastore'),
-      vol: fx.vol, ext: s.ext ? s.ext.name : 'partner API', extHost: s.ext ? s.ext.host : 'api.partner.example', quota: fx.quota,
+      pool: fx.pool, max: fx.max, a0: fx.a0, db: dbEdge ? refOf(dbEdge) : (dbSvc ? dbSvc.name : 'the primary datastore'),
+      vol: fx.vol, u0: fx.u0, writer: fx.writer, free: v => Math.max(0, Math.round(fx.volGiB * (100 - v) / 100)),
+      ext: s.ext ? s.ext.name : 'partner API', extHost: s.ext ? s.ext.host : 'api.partner.example', quota: fx.quota,
       lim: fx.lim, base: fx.base, p0: fx.p0, mb0: fx.mb0, cacheName: fx.ns, ns: fx.ns,
       key: `${fx.keyPrefix}${rr.int(10000, 99999)}`, field: rr.pick(fields), va: fx.va, vb: fx.vb, snap: fx.snap,
-      skew: fx.skew, resolver: fx.resolver, oldVer: s.oldVer, newVer: s.newVer, expIso: iso(T), nowIso: iso(t),
-      callerHost: callerHostOf(s, rr), calleeHost: s.callees.length ? (rr.chance(s.ext ? 0.75 : 1) ? S[rr.pick(s.callees).to].host : s.ext.host) : (s.ext ? s.ext.host : 'api.partner.example'),
-      dep: s.callees.length ? refOf(rr.pick(s.callees)) : null, restarts: 1, partnerHost: rr.pick(C.PARTNER_HOSTS),
+      skew: fx.skew, skewIso: iso(t + fx.skew), resolver: fx.resolver, oldVer: s.oldVer, newVer: s.newVer, otherVer: s.otherVer,
+      expIso: iso(T), nowIso: iso(t), callerHost: callerHostOf(s, rr), calleeHost,
+      dep: depEdge ? refOf(depEdge) : null, restarts: 1, partnerHost: rr.pick(C.PARTNER_HOSTS),
       ...extra,
     };
   };
@@ -326,14 +395,21 @@ export function build(seed, split, difficulty) {
   };
   // Per-task phrasing subsets so that wording varies across seeds.
   const pickSubset = (list, lo, hi) => r.sample(list, clamp(r.int(lo, hi), 1, list.length));
-  const onsetT = r.pick(F.onset);
+  const altOnset = (C.ONSET_ALT[cls] || []).filter((_, i) => cls !== 'clock_skew' || i > 0 || bigSkew);
+  const onsetT = gradual ? r.pick(C.TREND[cls].onset) : (altOnset.length && K.paraphrase && r.chance(0.4) ? r.pick(altOnset) : r.pick(F.onset));
   const directT = F.direct ? pickSubset(F.direct, 2, 4) : null;
   const indirectT = F.indirect ? pickSubset(F.indirect, 1, 3) : null;
   const growthT = F.growth ? pickSubset(F.growth, 2, 4) : null;
   const firstHopT = F.firstHop ? pickSubset(F.firstHop, 1, 3) : null;
   const depFailT = pickSubset(C.DEP_FAIL, 4, 7);
+  const secShare = K.secondary[1] > 0 ? r.float(...K.secondary) : 0;
+  const secPool = (C.SECONDARY[cls] || []).filter((_, i) => cls !== 'clock_skew' || i >= 2 || bigSkew);
+  const secT = secShare > 0 && secPool.length ? pickSubset(secPool, 2, 3) : null;
+  const calleeT = K.decoy && C.CALLEE_LINES[cls] && root.callees.length ? C.CALLEE_LINES[cls] : null;
   const symptom = (t, rr) => {
     const c = ctxFor(root, t, rr);
+    if (secT && rr.chance(secShare)) return rr.pick(secT)(c, rr);
+    if (calleeT && rr.chance(0.25)) return rr.pick(calleeT)(c, rr);
     return rr.chance(0.65) ? rr.pick(directT)(c, rr) : rr.pick(indirectT)(c, rr);
   };
 
@@ -343,29 +419,33 @@ export function build(seed, split, difficulty) {
   // the error text it received (the root's own message, or the callee's relayed message).
   const depFailure = (s, t, rr, e, depth = 0) => {
     const c = ctxFor(s, t, rr, { callee: refOf(e), route: rr.pick(s.key === 'gateway' ? S[e.to].role.public : s.routes) });
+    if (s === anon) return sevAdj(s, rr.pick(C.ANON_FAIL)(c, rr));
     if (K.wrap && depth < 3 && rr.chance(K.wrap)) {
       let inner = null;
-      if (e.to === root.key) { if (C.WRAPPABLE.has(cls) && t > T) inner = symptom(t, rr)[1]; }
+      if (e.to === root.key) { if (C.WRAPPABLE.has(cls) && t > symFrom) inner = symptom(t, rr)[1]; }
       else { const next = failingCallees(S[e.to], t); if (next.length) inner = depFailure(S[e.to], t, rr, rr.pick(next), depth + 1)[1]; }
-      if (inner) return rr.pick(C.WRAP)({ ...c, inner: inner.replace(/'/g, '') }, rr);
+      if (inner) return sevAdj(s, rr.pick(C.WRAP)({ ...c, inner: inner.replace(/'/g, '') }, rr));
     }
     if (e.to === root.key && firstHopT && rr.chance(F.firstHopP)) {
       const rc = ctxFor(root, t, rr);
-      return rr.pick(firstHopT)({ ...c, key: rc.key, field: rc.field, expIso: rc.expIso }, rr);
+      return sevAdj(s, rr.pick(firstHopT)({ ...c, key: rc.key, field: rc.field, expIso: rc.expIso }, rr));
     }
     if (s.key === 'gateway' && rr.chance(0.6)) return C.EDGE_FAIL(c, rr);
-    return rr.pick(depFailT)(c, rr);
+    return sevAdj(s, rr.pick(depFailT)(c, rr));
   };
+  // A caller with a fallback: either a fallback line, or (d3+) a plain call failure that does
+  // not mention the fallback on the same line.
   const softLine = (s, t, rr, e) => {
     const callee = S[e.to];
-    return rr.pick(C.SOFT_FALLBACK)(ctxFor(s, t, rr, { callee: refOf(e), fallback: callee.role.fallback, what: callee.role.what, route: rr.pick(s.routes) }), rr);
+    const c = ctxFor(s, t, rr, { callee: refOf(e), fallback: callee.role.fallback, what: callee.role.what, route: rr.pick(s.routes) });
+    if (e.silent || (K.softErr && rr.chance(K.softErr))) return sevAdj(s, rr.pick(C.SOFT_ERR)(c, rr));
+    return rr.pick(C.SOFT_FALLBACK)(c, rr);
   };
 
   // Background traffic with incident-dependent rendering.
   const rb = r.fork('background');
   const totalWeight = serving.reduce((a, s) => a + s.weight, 0);
-  const bgTotal = 0.78 * K.lines;
-  const rootFault = [], depFault = [];
+  const bgTotal = K.bg * K.lines;
   for (const s of serving) {
     const n = Math.round(bgTotal * s.weight / totalWeight);
     const lambda = n / WINDOW;
@@ -375,7 +455,7 @@ export function build(seed, split, difficulty) {
       const roll = rb.next();
       if (s.kind !== 'svc') {
         // Data-tier services.
-        if (s === root && t > T) {
+        if (s === root && t > symFrom) {
           if (cls === 'memory_leak_oom' && inDown(t)) continue;
           if (cls === 'disk_full' && rb.chance(F.rootReqP)) { emit(t, s, symptom(t, rb), 'root'); continue; }
           if (cls === 'poisoned_cache' && rb.chance(0.25)) { emit(t, s, rb.pick(indirectT)(ctxFor(s, t, rb), rb), 'root'); continue; }
@@ -398,7 +478,7 @@ export function build(seed, split, difficulty) {
         if (s === root && t > T && cls === 'dns_resolution_failure') {
           emit(t, s, rb.pick(directT)(ctxFor(s, t, rb, { calleeHost: S[e.to].host }), rb), 'root'); continue;
         }
-        if (s === root && t > T && cls === 'connection_pool_exhaustion' && e.to === s.role.db && rb.chance(0.7)) {
+        if (s === root && t > symFrom && cls === 'connection_pool_exhaustion' && e.to === s.role.db && rb.chance(0.7)) {
           emit(t, s, symptom(t, rb), 'root'); continue;
         }
         if (outTime.has(e.to) && t >= outTime.get(e.to) + e.delay) {
@@ -416,7 +496,7 @@ export function build(seed, split, difficulty) {
         else emit(t, s, normalReq(s, t, rb, e), 'bg');
         continue;
       }
-      if (s === root && t > T) {
+      if (s === root && t > symFrom) {
         if (F.rootTrafficKeep !== undefined && !rb.chance(F.rootTrafficKeep)) continue;
         if (rb.chance(F.rootReqP)) { emit(t, s, rootReqLine(t, rb), 'root'); continue; }
       } else if (impacted.has(s.key) && s !== root && t >= impacted.get(s.key) && rb.chance(failProb.get(s.key))) {
@@ -433,7 +513,17 @@ export function build(seed, split, difficulty) {
   // Root fault lines.
   const rf = r.fork('root-fault');
   const rootCtx = t => ctxFor(root, t, rf);
-  emit(T, root, onsetT(rootCtx(T), rf), 'onset');
+  if (gradual) {
+    // Trend from T (the onset) to symFrom (fatal), then sustained symptoms.
+    const start = cls === 'disk_full' ? root.fx.u0 + rf.int(3, 6) : Math.min(root.fx.max - 2, root.fx.a0 + rf.int(3, 6));
+    const end = cls === 'disk_full' ? 99 : root.fx.max - 1;
+    const valueAt = t => Math.round(start + (end - start) * (t - T) / Math.max(1, lead));
+    emit(T, root, onsetT(rootCtx(T), rf, start), 'onset');
+    for (let t = T + rf.int(15, 40); t < symFrom - 5; t += rf.int(15, 40)) emit(t, root, rf.pick(C.TREND[cls].step)(rootCtx(t), rf, valueAt(t)), 'root');
+    emit(symFrom, root, rf.pick(F.onset)(rootCtx(symFrom), rf), 'root');
+  } else {
+    emit(T, root, onsetT(rootCtx(T), rf), 'onset');
+  }
   if (cls === 'memory_leak_oom') {
     for (const g of leak.growth) emit(g.t, root, rf.pick(growthT)(rootCtx(g.t), rf, clamp(g.p, 0, 99)), 'root');
     for (const o of leak.ooms) {
@@ -442,14 +532,22 @@ export function build(seed, split, difficulty) {
       emit(up - 2, root, F.restart[0](rootCtx(up), rf), 'root');
       emit(up, root, F.restart[1](rootCtx(up), rf), 'root');
     }
+    // Consequences after the first kill: sibling-vocabulary and callee-naming lines.
+    const extra = [...(secT || []), ...(calleeT || [])];
+    if (extra.length && leak.ooms.length) {
+      const n = Math.round((0.25 * root.lambda * (WINDOW - leak.ooms[0].t)) * (secShare + 0.4)) + 2;
+      for (let i = 0; i < n; i++) { const t = rf.int(leak.ooms[0].t + 1, WINDOW - 1); if (!inDown(t)) emit(t, root, rf.pick(extra)(rootCtx(t), rf), 'root'); }
+    }
   } else {
-    const nSym = Math.round(0.4 * root.lambda * (WINDOW - T)) + 5;
-    const symStart = cls === 'poisoned_cache' ? r.int(3, 25) : 2;
-    emit(T + symStart, root, rf.pick(directT)(rootCtx(T + symStart), rf), 'root');
-    for (let i = 0; i < nSym; i++) { const t = rf.int(T + symStart, WINDOW - 1); emit(t, root, symptom(t, rf), 'root'); }
+    const nSym = Math.round(0.4 * root.lambda * (WINDOW - symFrom)) + 5;
+    const first = symFrom + (cls === 'poisoned_cache' || gradual ? 0 : 2);
+    emit(first + (gradual ? 1 : 0), root, rf.pick(directT)(rootCtx(first), rf), 'root');
+    for (let i = 0; i < nSym; i++) { const t = rf.int(first, WINDOW - 1); emit(t, root, symptom(t, rf), 'root'); }
   }
   if (cls === 'certificate_expiry') {
-    for (const m of rf.sample([20, 12, 6], rf.int(1, 2))) if (T - m * 60 > 0) emit(T - m * 60, root, F.precursor(rootCtx(T - m * 60), rf, m), 'precursor');
+    const mins = rf.sample([20, 12, 6], rf.int(1, 2));
+    if (K.nearPrecursor && rf.chance(K.nearPrecursor)) mins.push(rf.pick([2, 3]));
+    for (const m of mins) if (T - m * 60 > 0) emit(T - m * 60, root, F.precursor(rootCtx(T - m * 60), rf, m), 'precursor');
   }
   if (cls === 'bad_config_deploy') {
     const c = rootCtx(T);
@@ -478,6 +576,8 @@ export function build(seed, split, difficulty) {
     const s = S[k];
     const softs = s.callees.filter(e => e.soft && outTime.has(e.to) && t0 >= outTime.get(e.to) + e.delay);
     emit(t0, s, softLine(s, t0, rd, softs[0]), 'soft');
+    // From d3 a degraded caller also logs a few plain errors about the callee it falls back from.
+    if (K.softErr) for (let i = 0, n = rd.int(2, 4); i < n; i++) { const t = rd.int(t0, WINDOW - 1); emit(t, s, sevAdj(s, rd.pick(C.SOFT_ERR)(ctxFor(s, t, rd, { callee: refOf(rd.pick(softs)) }), rd)), 'soft'); }
   }
 
   // Noise: chronic batch failures, benign warnings, sporadic unrelated errors.
@@ -496,10 +596,11 @@ export function build(seed, split, difficulty) {
     for (let i = 0; i < Math.round(n / 4); i++) { const t = rn.int(0, WINDOW - 1); emit(t, s, C.BG_DATA.batch[0](ctxFor(s, t, rn), rn), 'bg'); }
   });
   const benignPool = K.benignHard ? [...C.BENIGN, ...C.BENIGN_HARD] : C.BENIGN;
-  const pickWeighted = rr => {
-    let x = rr.next() * totalWeight;
-    for (const s of serving) { x -= s.weight; if (x <= 0) return s; }
-    return serving[serving.length - 1];
+  const pickWeighted = (rr, list = serving) => {
+    const total = list.reduce((a, s) => a + s.weight, 0);
+    let x = rr.next() * total;
+    for (const s of list) { x -= s.weight; if (x <= 0) return s; }
+    return list[list.length - 1];
   };
   for (let i = 0; i < Math.round(0.04 * K.lines); i++) {
     const t = rn.int(0, WINDOW - 1), s = pickWeighted(rn), b = rn.pick(benignPool);
@@ -511,20 +612,58 @@ export function build(seed, split, difficulty) {
     if (s.kind !== 'svc' || (s === root && t > T)) continue;
     emit(t, s, rn.pick(C.SPORADIC)(ctxFor(s, t, rn), rn), 'sporadic');
   }
+  // Benign lines naming a callee (slow but fine, reconnects, client-side 4xx at ERROR level).
+  const callersOnly = serving.filter(s => s.callees.length);
+  for (let i = 0; i < Math.round(K.mention * K.lines) && callersOnly.length; i++) {
+    const t = rn.int(0, WINDOW - 1), s = pickWeighted(rn, callersOnly), e = rn.pick(s.callees);
+    const pool = K.mentionErr && rn.chance(K.mentionErr) ? C.MENTION_ERR : C.MENTION;
+    emit(t, s, rn.pick(pool)(ctxFor(s, t, rn, { callee: refOf(e), route: rn.pick(s.routes) }), rn), 'mention');
+  }
+  // Same-vocabulary baselines at normal values: the root's own class (so its onset is the first
+  // abnormal value, not the first matching word) and random classes in a few other services.
+  const baselineFor = (s, klass) => {
+    const step = rn.int(90, 180);
+    for (let t = rn.int(5, 120); t < (s === root ? T - 20 : WINDOW); t += step + rn.int(-20, 20)) {
+      const v = klass === 'disk_full' ? s.fx.u0 + rn.int(-1, 1) : klass === 'connection_pool_exhaustion' ? clamp(s.fx.a0 + rn.int(-2, 2), 1, s.fx.max - 1) : s.fx.base + rn.int(-2, 2);
+      emit(t, s, C.BASELINE[klass](ctxFor(s, t, rn), rn, v), 'baseline');
+    }
+  };
+  if (K.baselines) {
+    baselineFor(root, cls);
+    // Benign warnings in the root from the start of the window (true or sibling vocabulary), so
+    // that "first warning with the right words" lands before T.
+    const chronicCls = rn.chance(0.5) ? cls : C.SIBLING_CLASS[cls];
+    for (let t = rn.int(5, 150); t < WINDOW; t += rn.int(100, 220)) emit(t, root, rn.pick(C.CHRONIC[chronicCls])(ctxFor(root, t, rn), rn), 'baseline');
+    const pool = serving.filter(s => s !== root && s !== gateway);
+    for (const s of rn.sample(pool, Math.min(pool.length, K.baselines - 1))) {
+      const klass = rn.pick(C.FAULT_CLASSES.filter(x => (x !== 'connection_pool_exhaustion' || s.role.db) && (x !== 'upstream_rate_limiting' || s.ext)));
+      baselineFor(s, klass);
+    }
+  }
 
   // Red herrings.
   const rh = r.fork('herrings');
   const nonRoot = serving.filter(s => s !== root && s.key !== 'gateway');
-  const blip = (s, klass, t0, tag) => {
+  // A short anomaly that recovers on its own; returns its start time.
+  const blip = (s, klass, t0, tag, offsets = null) => {
     const P = C.FAULTS[klass];
-    const n = rh.int(2, 3);
-    let t = t0;
-    for (let i = 0; i < n; i++) { emit(t, s, rh.pick(P.blip)(ctxFor(s, t, rh), rh), tag); t += rh.int(5, 40); }
-    emit(t + rh.int(30, 120), s, P.recover(ctxFor(s, t, rh), rh), tag);
+    const offs = offsets || blipOffsets();
+    offs.lines.forEach(dt => emit(t0 + dt, s, rh.pick(P.blip)(ctxFor(s, t0 + dt, rh), rh), tag));
+    emit(t0 + offs.end, s, P.recover(ctxFor(s, t0 + offs.end, rh), rh), tag);
     return t0;
   };
+  const blipOffsets = () => {
+    const lines = [0];
+    for (let i = 1, n = rh.int(2, 3); i < n; i++) lines.push(lines[i - 1] + rh.int(5, 40));
+    return { lines, end: lines[lines.length - 1] + rh.int(30, 120) };
+  };
   const herrings = { blips: [] };
-  if (K.blipRoot) herrings.blips.push({ svc: root.name, cls, t: blip(root, cls, rh.int(Math.max(30, T - 720), T - 330), 'blip-root') });
+  if (K.blipRoot) {
+    // d3+: close to T (recovers at least 60 s before it); otherwise 5.5 to 12 minutes before.
+    const offs = blipOffsets();
+    const t0 = K.blipNear ? rh.int(Math.max(30, T - 480), T - 60 - offs.end) : rh.int(Math.max(30, T - 720), T - 330);
+    herrings.blips.push({ svc: root.name, cls, t: blip(root, cls, t0, 'blip-root', offs), end: t0 + offs.end });
+  }
   const sameHosts = nonRoot.filter(s => cls !== 'upstream_rate_limiting' || s.ext);
   if (K.blipSame && sameHosts.length) {
     const s = rh.pick(sameHosts);
@@ -546,6 +685,38 @@ export function build(seed, split, difficulty) {
     const n = Math.max(6, Math.round(nRootSym * rh.float(0.8, 1.4)));
     for (let j = 0; j < n; j++) { const t = rh.int(0, WINDOW - 1); emit(t, s, rh.pick(C.CHRONIC[klass])(ctxFor(s, t, rh), rh), 'chronic'); }
     herrings.chronic.push({ key: s.key, svc: s.name, cls: klass, n });
+  }
+  // Decoys: loud, irrelevant trouble from shortly before T onwards; the services keep serving.
+  herrings.decoys = [];
+  for (const s of decoys) {
+    const tD = Math.max(5, T - rh.int(30, 300));
+    const n = Math.round(rh.int(14, 22) * Math.max(1, K.lines / 600));
+    const pool = C.DECOY[s.kind] || C.DECOY.svc;
+    // Half of the decoy lines are benign-valued warnings in another class's vocabulary, so the
+    // decoy also "looks like" a fault class to keyword matching.
+    const vocab = rh.pick(C.FAULT_CLASSES.filter(x => x !== cls));
+    for (let i = 0; i < n; i++) {
+      const t = i === 0 ? tD : rh.int(tD, WINDOW - 1);
+      emit(t, s, (i % 2 ? rh.pick(C.CHRONIC[vocab]) : rh.pick(pool))(ctxFor(s, t, rh), rh), 'decoy');
+    }
+    herrings.decoys.push({ key: s.key, svc: s.name, t: tD, n, vocab });
+  }
+  // A healthy callee rejecting the root's bad requests (clock skew, bad config): not a failure.
+  if (D && C.CALLEE_REJECT[cls]) {
+    const peer = K.addresses && rh.chance(0.5) ? root.ip : root.host;
+    for (let i = 0, n = rh.int(4, 9); i < n; i++) { const t = rh.int(rootOut, WINDOW - 1); emit(t, D, rh.pick(C.CALLEE_REJECT[cls])(ctxFor(D, t, rh, { peer, skew: root.fx.skew }), rh), 'consequence'); }
+  }
+  // Another service's certificate nearly expires inside the window and is renewed in time.
+  if (K.renewHerring && (cls === 'certificate_expiry' || rh.chance(0.3))) {
+    const s = rh.pick(nonRoot.filter(x => x.kind === 'svc').length ? nonRoot.filter(x => x.kind === 'svc') : nonRoot);
+    if (s) {
+      const tExp = rh.int(Math.max(400, T - 200), Math.min(WINDOW - 60, T + 500));
+      const m = rh.pick([6, 9, 12]);
+      const c = ctxFor(s, tExp, rh, { expIso: iso(tExp), newExp: iso(tExp + 86400 * 90) });
+      emit(tExp - m * 60, s, C.CERT_RENEWED.warn(c, rh, m), 'renew');
+      emit(tExp - rh.int(40, 200), s, C.CERT_RENEWED.done(c, rh), 'renew');
+      herrings.renewed = { svc: s.name, t: tExp };
+    }
   }
   // Routine deploys elsewhere: version changes that break nothing.
   herrings.deploys = [];
@@ -622,6 +793,7 @@ export function build(seed, split, difficulty) {
 
   // ---------------------------------------------------------------- system description
   const rs = r.fork('system');
+  const note = (pool, ...args) => (K.paraphrase ? rs.pick(pool) : pool[0])(...args);
   const tableEdges = edges.map(e => ({ ...e }));
   const notes = [];
   // Edges that exist but are missing from the table (described in prose instead).
@@ -631,7 +803,7 @@ export function build(seed, split, difficulty) {
   const monthName = rs.pick(['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September']);
   for (const e of added) {
     tableEdges.find(x => x.from === e.from && x.to === e.to).inTable = false;
-    notes.push(`Not yet in the table: since the ${monthName} refactor, ${S[e.from].name} also calls ${S[e.to].name} directly (for ${S[e.to].role.what}).`);
+    notes.push(note(C.NOTES.added, S[e.from].name, S[e.to].name, { month: monthName, what: S[e.to].role.what }));
   }
   // Stale table rows: listed calls that no longer happen.
   const stale = [];
@@ -647,18 +819,31 @@ export function build(seed, split, difficulty) {
     if (!best.length) break;
     const pick = rs.pick(best);
     stale.push(pick);
-    notes.push(`${S[pick.from].name} no longer calls ${S[pick.to].name}: the call was removed in ${S[pick.from].oldVer}, but the table row has not been updated.`);
+    notes.push(note(C.NOTES.stale, S[pick.from].name, S[pick.to].name, { ver: S[pick.from].oldVer }));
   }
-  // Soft (optional) dependencies.
+  // Soft (optional) dependencies; from d3 some share a sentence with a hard dependency of the same
+  // caller (so a sentence does not map to exactly one edge).
+  const mixedUsed = new Set();
   for (const e of edges.filter(x => x.soft)) {
     if (difficulty <= 2) continue;
-    notes.push(`${S[e.from].name} treats ${S[e.to].name} as optional: when it misbehaves, ${S[e.from].name} falls back to ${S[e.to].role.fallback} and keeps serving.`);
+    const hardSib = edges.filter(x => x.from === e.from && !x.soft && !added.includes(x) && !mixedUsed.has(x));
+    if (K.mixedNotes && hardSib.length && rs.chance(K.mixedNotes)) {
+      const h = rs.pick(hardSib);
+      mixedUsed.add(h);
+      notes.push(rs.pick(C.NOTE_MIXED)(S[e.from].name, S[e.to].name, S[h.to].name, { fallback: S[e.to].role.fallback }));
+      continue;
+    }
+    notes.push(note(C.NOTES.optional, S[e.from].name, S[e.to].name, { fallback: S[e.to].role.fallback }));
   }
+  // Hard dependencies stated explicitly (prefer callees that could have had a fallback).
+  const hardCands = edges.filter(e => !e.soft && e.from !== 'gateway' && !added.includes(e) && !mixedUsed.has(e));
+  const hardPicked = rs.sample([...hardCands.filter(e => C.ROLE[e.to].fallback), ...hardCands.filter(e => !C.ROLE[e.to].fallback)].slice(0, Math.max(K.hardNotes, 3)), K.hardNotes);
+  for (const e of hardPicked) notes.push(note(C.NOTES.hard, S[e.from].name, S[e.to].name, { what: S[e.to].role.what }));
   // Aliases that only appear in prose.
   const legacyRefd = [...new Set(edges.filter(e => e.ref === 'legacy').map(e => e.to))];
   const proseAliasKeys = rs.sample(legacyRefd.length >= K.proseAliases ? legacyRefd : [...legacyRefd, ...serving.map(s => s.key).filter(k => !legacyRefd.includes(k))], K.proseAliases);
-  for (const k of proseAliasKeys) notes.push(`Older services still refer to ${S[k].name} by its pre-migration name '${S[k].legacy}'.`);
-  if (legacySourceSvc) notes.push(`${legacySourceSvc.name} still ships its logs under its old application name '${legacySourceSvc.legacy}' instead of a pod name.`);
+  for (const k of proseAliasKeys) notes.push(note(C.NOTES.alias, S[k].name, S[k].legacy));
+  if (legacySourceSvc) notes.push(note(C.NOTES.legacySource, legacySourceSvc.name, legacySourceSvc.legacy));
   if (K.noisyNote) for (const s of noisy) notes.push(`Known issue: ${s.name} (${s.role.what}) has been failing against its partner all week; it is unrelated to customer traffic.`);
   const shuffledNotes = rs.shuffle(notes);
 
@@ -713,13 +898,18 @@ export function build(seed, split, difficulty) {
     `- Each log line is \`<line id> <UTC timestamp> <source> <message>\`. The collector stamps the time when it receives the line; lines are in timestamp order.`,
     K.pods ? '- The source is the emitting pod, named `<service>-<replica-set>-<suffix>` (data stores: `<service>-<suffix>`).' : '- The source is the emitting service.',
     difficulty >= 2 ? '- Services use different message formats and level labels (e.g. `ERROR`, `[WARN]`, `level=error`, JSON, or a single-letter prefix).' : '- Every message starts with its level.',
+    difficulty >= 3 ? '- Teams choose their own log levels: some log failed calls to their dependencies as warnings, and some log errors for calls whose failure they absorb.' : null,
     '- When a caller logs about a service it talks to, it may use any of that service\'s names or addresses.',
     '');
-  const system = sys.join('\n');
+  const system = sys.filter(x => x !== null).join('\n');
 
   // ---------------------------------------------------------------- ticket
   const rt = r.fork('ticket');
-  const features = gateway.callees.filter(e => impacted.has(e.to)).map(e => S[e.to].role.feature).filter(Boolean);
+  let features = gateway.callees.filter(e => impacted.has(e.to)).map(e => S[e.to].role.feature).filter(Boolean);
+  // d3+: support only relays some of the affected features (audit fix: the full list leaked the
+  // impacted layer-1 services), and sometimes an unrelated complaint.
+  if (K.ticketSubset && features.length > 1) features = rt.sample(features, rt.int(1, features.length - 1));
+  const unrelated = gateway.callees.filter(e => !impacted.has(e.to) && !degraded.has(e.to)).map(e => S[e.to].role.feature).filter(Boolean);
   const ticketNo = rt.int(1000, 9999);
   const tk = [`INC-${ticketNo}`];
   if (impacted.has('gateway') && features.length) {
@@ -732,6 +922,7 @@ export function build(seed, split, difficulty) {
     const tAlert = Math.floor((outTime.get(loud) + rt.int(180, 420)) / 60) * 60;
     tk.push(`Opened ${hhmm(tAlert)} UTC by the alerting system: "error rate on ${S[loud].name} above 5% for 3 minutes".`);
   }
+  if (K.ticketSubset && unrelated.length && rt.chance(0.5)) tk.push(`Support added later: "one customer also says ${rt.pick(unrelated)} felt slow today."`);
   tk.push(`Attached: collector export ${hhmm(0)}-${hhmm(WINDOW)} UTC, all services.`);
   if (K.hypothesis && herrings.deploys.length) {
     const d = S[herrings.deploys[0]];
@@ -751,21 +942,33 @@ export function build(seed, split, difficulty) {
     budget: { actions: 10 + 6 * difficulty, inputTokens: estimateTokens(prompt) + estimateTokens(inputs) },
   };
 
+  // Documented ways to name each service (table, prose aliases, addresses, legacy log source).
+  const aliasDoc = {};
+  for (const s of order) {
+    aliasDoc[s.name] = s.name; aliasDoc[s.host] = s.name;
+    if (K.refs.includes('legacy')) aliasDoc[s.legacy] = s.name;
+    if (K.addresses) aliasDoc[`${s.ip}:${s.port}`] = s.name;
+  }
   const truth = {
     root_service: root.name,
     fault_class: cls,
     first_bad_timestamp: iso(T),
     impacted_services: [...impacted.keys()].map(k => S[k].name).sort(),
-    T, rootOut, onsetId,
+    T, rootOut, symFrom, onsetId, attempt, bigSkew,
     rootIds: [...(idsByTag.onset || []), ...(idsByTag.root || []), ...(idsByTag.precursor || [])],
     depIds: idsByTag.dep || [],
     degraded: [...degraded.keys()].map(k => S[k].name).sort(),
     noisy: noisy.map(s => s.name),
     services: order.map(s => s.name),
     firstHopCallers: root.callers.filter(e => !e.soft).map(e => S[e.from].name),
-    herrings: { ...herrings, deploys: herrings.deploys.map(k => S[k].name), chronic: herrings.chronic.map(h => ({ svc: h.svc, cls: h.cls, n: h.n })) },
+    softEdges: edges.filter(e => e.soft).map(e => [S[e.from].name, S[e.to].name, e.silent ? 'silent' : 'mixed']),
+    warnSev: serving.filter(s => s.sev === 'warn').map(s => s.name),
+    herrings: { ...herrings, deploys: herrings.deploys.map(k => S[k].name), chronic: herrings.chronic.map(h => ({ svc: h.svc, cls: h.cls, n: h.n })), decoys: herrings.decoys.map(d => ({ svc: d.svc, t: d.t, n: d.n })) },
+    decoyBelowRoot: D ? D.name : null,
+    anonymous: anon ? anon.name : null,
     added: added.map(e => [S[e.from].name, S[e.to].name]),
     stale: stale.map(x => [S[x.from].name, S[x.to].name]),
+    aliasDoc,
     idsByTag,
     linesBySvc: Object.fromEntries(Object.entries(linesBySvc).map(([k, v]) => [S[k].name, v])),
     lineCount: lines.length,

@@ -52,7 +52,7 @@ export function validate(schema, v, path = '$') {
               : t === 'null' ? v === null : true;
   if (!typeOk) return [`${path}: expected ${t}`];
   if (t === 'object') {
-    for (const k of schema.required || []) if (!(k in v)) errs.push(`${path}: missing ${k}`);
+    for (const k of schema.required || []) if (!Object.hasOwn(v, k)) errs.push(`${path}: missing ${k}`);
     for (const [k, val] of Object.entries(v)) {
       if (schema.properties && schema.properties[k]) errs.push(...validate(schema.properties[k], val, `${path}.${k}`));
       else if (schema.additionalProperties === false) errs.push(`${path}: unexpected property ${k}`);
@@ -64,8 +64,10 @@ export function validate(schema, v, path = '$') {
 
 // ---------------------------------------------------------------------------------------
 // Controls computed from the hidden world. `minDifficulty` gates controls whose trap only
-// exists from that level on; the generator guarantees every applicable control fails.
+// exists from that level on; `applies(world)` gates controls whose trap depends on the drawn
+// policy or features. The generator guarantees every applicable control fails.
 const resolved = (o, excl) => w => { const res = resolve(w, o); return toOutput(w, res, excl ? { excluded: excl(w, res) } : {}); };
+const hasFeat = f => w => w.requested.some(c => c.feats.includes(f));
 const WORLD_CONTROLS = [
   { name: 'empty', minDifficulty: 1, fromWorld: () => ({ table: [], conflicts: [], excluded_doc_ids: [] }) },
   {
@@ -95,9 +97,18 @@ const WORLD_CONTROLS = [
   },
   { name: 'plausible-but-wrong:quotes-counted', minDifficulty: 3, fromWorld: resolved({ anyMode: true }) },
   { name: 'plausible-but-wrong:near-name-merged', minDifficulty: 3, fromWorld: w => toOutput(w, resolve(mergeDistractors(w))) },
+  { name: 'plausible-but-wrong:concern-as-retraction', minDifficulty: 3, fromWorld: w => { const res = resolve(w, { concernVoids: true }); return toOutput(w, res, { excluded: res.voided }); } },
+  { name: 'plausible-but-wrong:erratum-applied-by-document', minDifficulty: 3, fromWorld: resolved({ erratumByDoc: true }) },
+  { name: 'plausible-but-wrong:gross-n', minDifficulty: 3, applies: hasFeat('grossN'), fromWorld: resolved({ grossN: true }) },
   { name: 'plausible-but-wrong:variants-counted', minDifficulty: 4, fromWorld: resolved({ allowVariants: true }) },
+  { name: 'plausible-but-wrong:printed-n', minDifficulty: 4, applies: hasFeat('nErratum'), fromWorld: resolved({ printedN: true }) },
+  {
+    name: 'plausible-but-wrong:phantom-retraction-applied', minDifficulty: 4,
+    fromWorld: w => { const res = resolve(w, { phantomApplied: true }); return toOutput(w, res, { excluded: res.voided }); },
+  },
   { name: 'plausible-but-wrong:injection-followed', minDifficulty: 5, fromWorld: followInjection },
 ];
+const controlApplies = (c, w) => c.minDifficulty <= w.difficulty && (!c.applies || c.applies(w));
 
 // Treat every near-name distractor's claims as claims about the entity it imitates.
 function mergeDistractors(w) {
@@ -142,7 +153,7 @@ function checkWorld(world, rendered) {
   if (res.cells.some(c => !c.win)) return 'empty-cell';
   if (!res.excluded.length) return 'no-excluded';
   for (const c of WORLD_CONTROLS) {
-    if (c.minDifficulty > world.difficulty) continue;
+    if (!controlApplies(c, world)) continue;
     if (oracleCore(world, c.fromWorld(world)).pass) return `control-passes:${c.name}`;
   }
   return null;
@@ -189,9 +200,12 @@ export function referenceSolve(task) {
   return toOutput(world, resolve(world));
 }
 
-export const badControls = WORLD_CONTROLS.filter(c => c.minDifficulty === 1).map(c => ({ name: c.name, make: task => c.fromWorld(hidden(task).world) }));
-// Controls whose trap exists only from `minDifficulty` on (they equal the reference below it).
-export const gatedControls = WORLD_CONTROLS.filter(c => c.minDifficulty > 1).map(c => ({ name: c.name, minDifficulty: c.minDifficulty, make: task => c.fromWorld(hidden(task).world) }));
+export const badControls = WORLD_CONTROLS.filter(c => c.minDifficulty === 1 && !c.applies).map(c => ({ name: c.name, make: task => c.fromWorld(hidden(task).world) }));
+// Controls whose trap exists only from `minDifficulty` on, or only for some policies/features
+// (`applies(task)`); where they do not apply they can coincide with the reference answer.
+export const gatedControls = WORLD_CONTROLS.filter(c => c.minDifficulty > 1 || c.applies).map(c => ({
+  name: c.name, minDifficulty: c.minDifficulty, applies: task => controlApplies(c, hidden(task).world), make: task => c.fromWorld(hidden(task).world),
+}));
 
 const norm = s => String(s).trim().toLowerCase().replace(/\s+/g, ' ');
 const normId = s => String(s).trim().toUpperCase();

@@ -1,6 +1,6 @@
 // Concrete game engine for `gridquest`: parser, state transitions, observations and the
 // interactive env API. Deterministic (D0): no randomness after generation, no clock.
-import { DIRS, ONEWAY_STYLES, SWITCH_VERB, EMPTY_CONTAINER, an, capFirst } from './text.mjs';
+import { DIRS, ONEWAY_STYLES, SWITCH_VERB, EMPTY_CONTAINER, ALIASES, an, capFirst } from './text.mjs';
 import { observationText, itemName, exitsOf } from './render.mjs';
 
 const DIR_ALIASES = {
@@ -52,8 +52,8 @@ function visibleItems(w, st, cell) {
 // Things in the room addressable by name. Each entry: { names: [...], type, ref, dir? }.
 function thingsIn(w, st, cell) {
   const things = [];
-  w.objects.forEach((o, i) => { if (o.room === cell) things.push({ names: [o.noun, `${o.adj} ${o.noun}`], type: 'object', ref: i }); });
-  w.switches.forEach((s, i) => { if (s.room === cell) things.push({ names: [s.noun, `${s.adj} ${s.noun}`], type: 'switch', ref: i }); });
+  w.objects.forEach((o, i) => { if (o.room === cell) things.push({ names: [o.noun, `${o.adj} ${o.noun}`, ...ALIASES[o.noun]], type: 'object', ref: i }); });
+  w.switches.forEach((s, i) => { if (s.room === cell) things.push({ names: [s.noun, `${s.adj} ${s.noun}`, ...ALIASES[s.noun]], type: 'switch', ref: i }); });
   const ex = exitsOf(w, cell);
   const doorCount = DIRS.filter(d => ex[d] !== undefined && w.edges[ex[d]].kind === 'door').length;
   for (const d of DIRS) {
@@ -230,20 +230,23 @@ function examineThing(w, st, th) {
   return e.from === st.pos ? `It only goes one way: away from here, ${th.dir}.` : 'It only goes one way, and not from this side.';
 }
 
+// Syntactically legal actions for the current room, sorted and de-duplicated so that neither
+// the order nor the membership reveals what anything is: every fixed object and switch gets
+// take/examine/toggle, doors are offered in all four directions whether or not a door exists,
+// and "take treasure" is always offered while the game is running. Visible and held items are
+// listed by name (they are named in the prose too).
 export function legalActions(w, st) {
   if (st.won) return [];
   const here = st.pos;
-  const out = ['look', ...DIRS.map(d => `go ${d}`)];
-  const things = thingsIn(w, st, here);
-  const named = things.filter(t => t.type === 'object' || t.type === 'switch' || t.type === 'door');
-  const nameOf = t => t.canonical || t.names[0];
-  for (const id of visibleItems(w, st, here)) out.push(`take ${itemName(w, id)}`);
-  for (const t of named) if (t.type !== 'door') out.push(`take ${nameOf(t)}`);
-  for (const t of named) out.push(`examine ${nameOf(t)}`);
-  for (const id of st.inv) out.push(`examine ${itemName(w, id)}`);
-  for (const t of named) if (t.type !== 'door') out.push(`toggle ${nameOf(t)}`);
-  for (const id of st.inv) for (const t of named) out.push(`use ${itemName(w, id)} on ${nameOf(t)}`);
-  return out;
+  const fixed = [...w.objects.filter(o => o.room === here).map(o => o.noun), ...w.switches.filter(s => s.room === here).map(s => s.noun)];
+  const visible = visibleItems(w, st, here).filter(id => id !== 'treasure').map(id => itemName(w, id));
+  const held = st.inv.map(id => itemName(w, id));
+  const doors = DIRS.map(d => `${d} door`);
+  const out = new Set(['look', 'take treasure', ...DIRS.map(d => `go ${d}`), ...doors.map(d => `examine ${d}`)]);
+  for (const n of fixed) for (const v of ['examine', 'take', 'toggle']) out.add(`${v} ${n}`);
+  for (const n of visible) { out.add(`take ${n}`); out.add(`examine ${n}`); }
+  for (const n of held) { out.add(`examine ${n}`); for (const t of [...fixed, ...doors]) out.add(`use ${n} on ${t}`); }
+  return [...out].sort();
 }
 
 export function makeEnv(w, budget) {
@@ -267,10 +270,11 @@ export function makeEnv(w, budget) {
       return { observation: observe(), done: fin, reward: st.won ? 1 : 0, info: { steps: st.steps, budget, outcome } };
     },
     observe,
+    // Host-side only: plain, readable state copies. The public env (index.mjs createEnv) seals
+    // them; never hand these to a solver.
     snapshot: () => clone({ st, last }),
     restore(snap) { const s = clone(snap); st = s.st; last = s.last; },
     actions: () => (done() ? [] : legalActions(w, st)),
-    // Host-side accessors (not part of the observation): used by the oracle.
     _state: () => clone(st),
   };
   env.reset();

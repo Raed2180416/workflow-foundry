@@ -52,7 +52,7 @@ const inputLabels = scope => Object.fromEntries(Object.entries(scope).filter(([k
 // The run verdict (DESIGN §5.2) is sealed in the same commit as the terminal status, with its decision record.
 // Its run.verdict event precedes the terminal event, so the chain tail stays run.succeeded/run.stopped.
 function seal(run, workflow, store) {
-  if (!terminal.has(run.status)) { delete run.verdict; return []; }
+  if (!terminal.has(run.status)) { delete run.verdict; return; }
   run.verdict = verdictOf(run, { workflow });
   if (run.identity) {
     const decision = { schema: 'foundry-decision/1', id: `${run.id}:verdict:${run.eventHead?.seq ?? 0}`, at: Date.now(), kind: 'verdict', identity: run.identity,
@@ -608,7 +608,10 @@ class Invocation {
     const subject = resolve(node.subject, ctx), subjectLabel = labelOf(node.subject, this.labelScope(frameKey));
     let verdict, label = subjectLabel, meta = {};
     if (node.method === 'code') verdict = this.verdictShape(await this.sandboxed({ lang: node.lang, source: node.source, input: { subject }, timeoutMs: node.timeoutMs ?? 60000 }), 'CODE_OUTPUT');
-    else if (node.method === 'capability') verdict = this.verdictShape(await this.oracle(node, frameKey, ctx), 'VERIFY_PROTOCOL');
+    else if (node.method === 'capability') {
+      verdict = this.verdictShape(await this.oracle(node, frameKey, ctx), 'VERIFY_PROTOCOL');
+      label = joinLabels([subjectLabel, labelOf(node.args, this.labelScope(frameKey))]);
+    }
     else {
       const excludeFamily = node.independence === 'different-model' ? this.producerFamilies(node, frameKey) : new Set();
       const sourceRef = node.subject && typeof node.subject === 'object' && Object.keys(node.subject).length === 1 && typeof node.subject.$ref === 'string' ? node.subject.$ref : null;

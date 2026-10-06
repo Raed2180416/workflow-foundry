@@ -2,13 +2,16 @@
 // episode record through a fresh Sim, and the pass rule / partial score documented in README.md.
 import { Sim } from './sim.mjs';
 
-export function expectation(world) {
+// `aborted` is observational: true when the replay raised the lag-stall condition (lagRetries + 1
+// in-window readings above the threshold, lagWait apart, before any change). A solver that starts
+// the gate late and legitimately sees the lag recover is held to the normal end state instead.
+export function expectation(world, { aborted = world.plan.lag.mode === 'stall' } = {}) {
   const { spec: sp, plan } = world;
   const init = new Sim(world).stateMap();
   const exp = { ...init };
   const ev = plan.events;
-  if (ev.includes('stall')) return { init, exp, conds: [{ type: 'lag-stall', subject: sp.cluster }], verify: [] };
-  const failed = new Set([plan.perm, plan.stuck].filter(Boolean));
+  if (aborted) return { init, exp, conds: [{ type: 'lag-stall', subject: sp.cluster }], verify: [] };
+  const failed = new Set([plan.perm, plan.stuck, plan.exhausted].filter(Boolean));
   for (const id of sp.targets) {
     exp[`node:${id}.in_service`] = !failed.has(id);
     exp[`node:${id}.version`] = failed.has(id) ? undefined : sp.versionTo;
@@ -16,6 +19,9 @@ export function expectation(world) {
   }
   for (const w of sp.workers) { exp[`node:${w}.version`] = sp.versionTo; exp[`node:${w}.health`] = 'ok'; }
   const k = sp.keys, reject = ev.includes('reject');
+  // The excluded node must be out of rotation before the flag goes on; under a policy rejection
+  // the flag step is skipped, so its rotation state is a don't-care there.
+  if (sp.excludedNode) exp[`node:${sp.excludedNode}.in_service`] = reject ? undefined : false;
   exp[`config:${k.pin}`] = sp.versionTo;
   if (!reject) {
     if (sp.maxInflight !== null) exp[`config:${k.maxInflight}`] = sp.maxInflight;
@@ -31,6 +37,7 @@ export function expectation(world) {
   exp[`flag:${sp.paused}`] = false;
   const conds = [];
   if (plan.perm) conds.push({ type: 'restart-permanent', subject: plan.perm });
+  if (plan.exhausted) conds.push({ type: 'restart-exhausted', subject: plan.exhausted });
   if (plan.stuck) conds.push({ type: 'health-stuck', subject: plan.stuck });
   if (reject) conds.push({ type: 'config-rejected', subject: k.slowStart });
   if (ev.includes('spike')) conds.push({ type: 'error-spike', subject: sp.ff });
@@ -49,9 +56,10 @@ export function replay(world, actions) {
 
 export function judge(world, actions) {
   const sp = world.spec;
-  const { init, exp, conds, verify } = expectation(world);
   const sim = replay(world, actions);
   const fin = sim.stateMap(), s = sim.s;
+  const aborted = s.conditions.some(c => c.type === 'lag-stall') || world.plan.lag.mode === 'stall';
+  const { init, exp, conds, verify } = expectation(world, { aborted });
   const mismatches = [], collateral = [], clauses = [];
   for (const [field, want] of Object.entries(exp)) {
     if (want === undefined) continue;
@@ -87,7 +95,7 @@ export function judge(world, actions) {
   return {
     pass, score,
     details: {
-      actions: actions.length, goalClauses: clauses.length, goalClausesMet: clauses.filter(c => c.ok).length,
+      actions: actions.length, aborted, goalClauses: clauses.length, goalClausesMet: clauses.filter(c => c.ok).length,
       mismatches: mismatches.slice(0, 40), mismatchCount: mismatches.length, collateral: collateral.length,
       violations: violations.slice(0, 40), violationCount: violations.length, compensations, verification,
       conditions: s.conditions.map(c => ({ action: c.i, type: c.type, subject: c.subject, paged: c.paged })),

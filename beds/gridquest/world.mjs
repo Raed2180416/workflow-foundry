@@ -203,12 +203,14 @@ function check(w, L) {
   return { m, sol, mm };
 }
 
-// Build, certify and return a structural world. Attempts are salted deterministically.
-export function makeWorld(R0, d) {
-  const L = LEVELS[d];
-  let last = null;
+// Build, certify and return a structural world. Attempts are salted deterministically. Only a
+// world that passed every check (solvable, mechanism requirement, minimum length, explorer
+// certificate within budget) is ever returned; if none is found the generator throws rather
+// than emit an uncertified world. In practice at most 6 attempts are used (see README).
+export const MAX_ATTEMPTS = 200;
+export function makeWorld(R0, d, L = LEVELS[d]) {
   const rejected = { layout: 0, requirement: 0, short: 0, explorer: 0 };
-  for (let attempt = 0; attempt < 80; attempt++) {
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     const R = R0.fork(`attempt-${attempt}`);
     const built = buildStructure(R, L);
     if (!built) { rejected.layout++; continue; }
@@ -249,11 +251,9 @@ export function makeWorld(R0, d) {
     if (ok.sol.length < L.minOpt) { rejected.short++; continue; }
     const budget = Math.ceil(L.budgetF * ok.sol.length);
     const ex = explore(ok.m, budget);
-    last = { w, model: ok.m, solution: ok.sol.actions, optimal: ok.sol.length, minMech: ok.mm, budget, explorer: ex, attempt, rejected };
-    if (ex.won) return last;
+    if (ex.won) return { w, model: ok.m, solution: ok.sol.actions, optimal: ok.sol.length, minMech: ok.mm, budget, explorer: ex, attempt, rejected };
     rejected.explorer++;
     if (ex.steps < budget) rejected.explorerStuck = (rejected.explorerStuck || 0) + 1;
   }
-  if (!last) throw new Error(`gridquest: no solvable world for difficulty ${d}`);
-  return last;
+  throw new Error(`gridquest: no certified world for difficulty ${d} after ${MAX_ATTEMPTS} attempts (${JSON.stringify(rejected)})`);
 }

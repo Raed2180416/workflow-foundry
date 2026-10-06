@@ -76,7 +76,7 @@ def build_item(ga, *, platform, sid, url, revision, license, license_evidence, r
     notes = (f"Galaxy native workflow; {g.subworkflow_calls} embedded sub-workflow(s) inlined (max depth {g.max_depth}). "
              f"Implicit mapping over dataset collections -> IR map; conditional steps (`when` on boolean params) -> when guards; "
              f"pick_value -> merge; tools are pinned ToolShed versions -> task over a galaxy-tool capability. "
-             f"Post-job actions: {pja or 'none'}. {extra_notes}")
+             f"Workflow inputs (not nodes): {g.inputs or 'none'}. Post-job actions: {pja or 'none'}. {extra_notes}")
     ir = sc.ir_verdict(feats, needs=needs, notes=notes)
     spdx = sc.norm_spdx(license)
     red = sc.redistributable_license(spdx)

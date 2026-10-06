@@ -93,7 +93,7 @@ export class Foundry {
     const { policy, extra, owner, ...visible } = run;
     return { ...visible, executionActive: !!owner, independentTaskVerified: false };
   }
-  inspectRun(id) { return { ...this.publicRun(this.store.run(id)), events: this.store.events(id), decisions: this.store.decisions(id) }; }
+  inspectRun(id) { return { ...this.publicRun(this.store.run(id)), events: this.store.events(id) }; }
   // Only the documented run options pass through; fault injection (extra) stays a trusted test-only path.
   createRun(workflowId, input = {}, { modelMode, sampleSalt, assignment, identity } = {}) {
     const { workflow } = this.store.workflow(workflowId);

@@ -59,14 +59,16 @@ function knownRepro(world, bugs, b) {
 
 const sig = g => `${g.frame()}\u0001${canonical(g.observation().state)}\u0001${g.s.status}\u0001${g.s.crash ?? ''}`;
 
-export function replay(world, bugs, actions) {
+// Replays actions from a fresh start. Observation signatures are recorded from step index
+// `sigFrom` on (earlier entries are null), which keeps the oracle cheap.
+export function replay(world, bugs, actions, sigFrom = 0) {
   const g = new Game(world, bugs);
   const trace = [];
   for (let i = 0; i < actions.length; i++) {
     if (g.s.status !== 'playing') break;
     const r = g.step(actions[i]);
     if (!r.ok) return { invalid: `action ${i} (${JSON.stringify(actions[i])}): ${r.error.split('.')[0]}`, trace, fired: g.fired, game: g };
-    trace.push(sig(g));
+    trace.push(i >= sigFrom ? sig(g) : null);
   }
   return { trace, fired: g.fired, game: g };
 }
@@ -75,17 +77,23 @@ export function replay(world, bugs, actions) {
 export function evaluateRepro(world, bugs, cls, actions) {
   if (!Array.isArray(actions) || !actions.length) return { verdict: 'invalid', reason: 'empty repro' };
   if (actions.length > MAX_REPRO) return { verdict: 'invalid', reason: `repro longer than ${MAX_REPRO} actions` };
-  const buggy = replay(world, bugs, actions);
-  if (buggy.invalid) return { verdict: 'invalid', reason: buggy.invalid };
-  const control = replay(world, [], actions);
-  const firedClasses = [...new Set(buggy.fired.map(f => bugs.find(b => b.id === f.bug).cls))];
+  const probe = replay(world, bugs, actions, Infinity);
+  if (probe.invalid) return { verdict: 'invalid', reason: probe.invalid };
+  const firedClasses = [...new Set(probe.fired.map(f => bugs.find(b => b.id === f.bug).cls))];
   const b = bugs.find(x => x.cls === cls);
-  if (!b) return { verdict: 'false', reason: 'no defect of this class reproduces with these actions', firedClasses };
-  const f = buggy.fired.find(x => x.bug === b.id);
+  const f = b && probe.fired.find(x => x.bug === b.id);
   if (!f) return { verdict: 'false', reason: 'no defect of this class reproduces with these actions', firedClasses };
   const from = f.step - 1;
-  let differs = buggy.trace.length !== control.trace.length;
-  for (let i = from; !differs && i < buggy.trace.length; i++) if (buggy.trace[i] !== control.trace[i]) differs = true;
+  // Lockstep replay of both builds; stop at the first observable difference at or after `from`.
+  const gb = new Game(world, bugs), gc = new Game(world, []);
+  let differs = false;
+  for (let i = 0; i < actions.length && !differs; i++) {
+    const pb = gb.s.status === 'playing', pc = gc.s.status === 'playing';
+    if (!pb && !pc) break;
+    if (pb) gb.step(actions[i]);
+    if (pc) gc.step(actions[i]);
+    if (i >= from && (pb !== pc || sig(gb) !== sig(gc))) differs = true;
+  }
   if (!differs) return { verdict: 'false', reason: 'control build behaves identically', firedClasses };
-  return { verdict: 'match', bug: b.id, executed: buggy.trace.length, firedClasses };
+  return { verdict: 'match', bug: b.id, firedClasses };
 }

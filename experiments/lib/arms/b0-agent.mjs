@@ -3,7 +3,23 @@
 import path from 'node:path';
 import { mkdirSync, readFileSync, existsSync } from 'node:fs';
 import { runClaudeCode, readJsonFile } from '../../../src/executors/claude-code.mjs';
-import { solverView } from '../beds.mjs';
+import { solverView, loadFamily } from '../beds.mjs';
+import { startServices, Ledger } from '../services.mjs';
+
+// Client the agent runs inside its sandbox to drive an interactive bed through the host env service.
+export const ENV_CLIENT = `#!/usr/bin/env node
+// Usage: node env.mjs create | observe | actions | step "<action>" | snapshot | restore <id> | reset
+import { readFileSync, appendFileSync } from 'node:fs';
+const { url, token } = JSON.parse(readFileSync(new URL('./.env-service.json', import.meta.url)));
+const [op, ...rest] = process.argv.slice(2);
+const state = (() => { try { return JSON.parse(readFileSync(new URL('./.env-episode.json', import.meta.url))); } catch { return {}; } })();
+const body = op === 'create' ? { probe: 0 } : op === 'step' ? { episode: state.episode, action: rest.join(' ') } : op === 'restore' ? { episode: state.episode, snapshot: rest[0] } : { episode: state.episode };
+const res = await fetch(url + '/env/' + op, { method: 'POST', headers: { authorization: 'Bearer ' + token, 'content-type': 'application/json' }, body: JSON.stringify(body) });
+const out = await res.json();
+if (op === 'create' && out.episode) (await import('node:fs')).writeFileSync(new URL('./.env-episode.json', import.meta.url), JSON.stringify({ episode: out.episode }));
+if (op === 'step') appendFileSync(new URL('./.env-actions.log', import.meta.url), rest.join(' ') + '\\n');
+console.log(JSON.stringify(out, null, 1));
+`;
 
 const instructions = schema => [
   '',
@@ -17,15 +33,25 @@ export function b0Agent({ id, model, budgetUsd = 1, timeoutMs = 15 * 60 * 1000, 
   const def = { kind: notes ? 'b0n-agent' : 'b0-agent', model, budgetUsd, timeoutMs, effort, tools: 'default', notesWords: notes ? 200 : 0 };
   return {
     id, def, stateful: notes,
-    async run({ task, outputSchema, workdir, state }) {
+    async run({ task, familyId, outputSchema, workdir, state }) {
       const view = solverView(task);
       const files = { ...view.files };
       let prompt = view.prompt + instructions(outputSchema);
+      const fam = await loadFamily(familyId);
+      let svc = null;
+      if (fam.family.kind === 'interactive') {
+        svc = await startServices({ modelPort: null, ledger: new Ledger({ capUsd: 0 }), familyId, probes: [task], scoreLimit: 0 });
+        files['env.mjs'] = ENV_CLIENT;
+        files['.env-service.json'] = JSON.stringify({ url: svc.url, token: svc.token });
+        prompt += '\n\nThis task is interactive. Drive the environment with `node env.mjs create` (once), then `node env.mjs observe|actions|step "<action>"|snapshot|restore <id>|reset`. Only the actions you list in answer.json are replayed by the checker from a fresh start, so answer.json must contain the complete action sequence of your final successful play.';
+      }
       if (notes && state.notes) {
         files['notes.md'] = state.notes;
         prompt += '\n\n./notes.md holds lessons you wrote after earlier tasks of this same kind. Read it first.';
       }
-      const r = await runClaudeCode({ model, prompt, workdir, files, budgetUsd, timeoutMs, effort });
+      let r;
+      try { r = await runClaudeCode({ model, prompt, workdir, files, budgetUsd, timeoutMs, effort }); }
+      finally { await svc?.close(); }
       return { output: readJsonFile(workdir, 'answer.json'), costUsd: r.costUsd, latencyMs: r.durationMs, error: r.error, meta: { turns: r.turns, tools: r.toolUses.length } };
     },
     // B0+N: after the oracle, the same model appends lessons given only the outcome bit.

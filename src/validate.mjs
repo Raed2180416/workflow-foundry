@@ -2,10 +2,11 @@ import Ajv from 'ajv';
 import { readFileSync } from 'node:fs';
 import { checkData, FoundryError, digest, references } from './data.mjs';
 import { analyzeDataflow, bindOutput, OUTPUT_KEY } from './dataflow.mjs';
-export { bindOutput, OUTPUT_KEY };
 import { portableSchemaViolations, quarantinedSchemaViolations } from './schema-subset.mjs';
 import { inheritedLabel, joinLabels } from './context.mjs';
 import { classIndex, modelById, modelsForClass } from './models/policy.mjs';
+
+export { bindOutput, OUTPUT_KEY };
 
 const readSchema = name => JSON.parse(readFileSync(new URL(`../schemas/${name}`, import.meta.url), 'utf8'));
 export const workflowSchema = readSchema('workflow.schema.json');
