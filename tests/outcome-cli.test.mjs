@@ -372,7 +372,11 @@ test('documented offline shell example executes the supplied repair and retains 
   const text = readFileSync(path.join(root, 'docs/OUTCOME-REPAIR.md'), 'utf8');
   const script = text.match(/```bash\n([\s\S]*?)\n```/)?.[1];
   assert.ok(script, 'The runnable offline example is present.');
-  const result = spawnSync('/bin/bash', ['-s'], { input: script, cwd: root, env: { ...h.env, TMPDIR: h.workspace },
+  // The documented example invokes `node` by name. The harness PATH is the
+  // minimal /usr/bin:/bin, so prepend the directory of the Node running this
+  // test (e.g. a non-system Node 24) instead of depending on a system node.
+  const shellPath = [path.dirname(process.execPath), h.env.PATH].join(path.delimiter);
+  const result = spawnSync('/bin/bash', ['-s'], { input: script, cwd: root, env: { ...h.env, PATH: shellPath, TMPDIR: h.workspace },
     encoding: 'utf8', timeout: 15000, maxBuffer: 2 * 1024 * 1024 });
   h.save('DOCUMENTATION-RUN.json', { exitCode: result.status, signal: result.signal, stdout: result.stdout, stderr: result.stderr });
   assert.equal(result.error, undefined); assert.equal(result.status, 0, result.stderr);

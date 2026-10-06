@@ -15,6 +15,8 @@ import { PassThrough } from 'node:stream';
 import { syncBuiltinESMExports } from 'node:module';
 import { runProcess } from '../src/process.mjs';
 import { OpenCodeFreeProvider, parseFreeCatalog, requireFreeModel, parseOpenCodeEvents } from '../src/opencode-free.mjs';
+import fs from 'node:fs';
+import { linux } from './support/gates.mjs';
 
 // Independent, hand-authored CONTROL cases and synthetic local host tools.
 // These are evaluator/runtime regressions, not generated-model or TUI results.
@@ -385,8 +387,19 @@ function syntheticSession() {
     { info: { role: 'assistant', providerID: 'opencode', modelID: 'audit-free', cost: 0, finish: 'stop' }, parts: [{ type: 'text', text: 'synthetic-response' }] }
   ] };
 }
+// The adapter's constructor preflight requires /usr/bin/bwrap to exist. This is
+// a pure transport simulation: every subprocess (bwrap included) is replaced by
+// syntheticSpawn and nothing is executed, so only that existence check is
+// supplied here. All other filesystem paths are observed unchanged.
+function syntheticSandboxHost(t) {
+  const { existsSync } = fs;
+  const replacement = t.mock.method(fs, 'existsSync', file => file === '/usr/bin/bwrap' || existsSync(file));
+  syncBuiltinESMExports();
+  t.after(() => { replacement.mock.restore(); syncBuiltinESMExports(); });
+}
 async function simulatedProvider(t, mutate = () => {}) {
   const session = syntheticSession(); mutate(session);
+  syntheticSandboxHost(t);
   const calls = syntheticSpawn(t, ({ command, args }) => {
     assert.equal(command, '/usr/bin/bwrap', 'Unexpected subprocess in synthetic adapter control');
     if (args.includes('--version')) return 'synthetic-version\n';
@@ -400,7 +413,10 @@ async function simulatedProvider(t, mutate = () => {}) {
   assert.ok(calls.length >= 4); return result;
 }
 
-audit('adapter transport simulation accepts internally consistent synthetic export evidence', async t => {
+// The constructor itself requires Linux (process.platform); that is the only
+// host prerequisite of this simulation.
+const simulation = (name, fn) => test(`evaluator audit: ${name}`, { timeout: 20000, skip: linux() }, fn);
+simulation('adapter transport simulation accepts internally consistent synthetic export evidence', async t => {
   const result = await simulatedProvider(t);
   assert.equal(result.text, 'synthetic-response'); assert.equal(result.evidence.reportedCost, 0);
   assert.equal(result.evidence.sessionId, 'synthetic-session');
@@ -413,6 +429,8 @@ for (const [label, mutate] of [
   ['assistant nonzero cost', session => { session.messages[1].info.cost = 1; }],
   ['exported session identity mismatch', session => { session.info.id = 'different-session'; }],
   ['exported response mismatch', session => { session.messages[1].parts[0].text = 'different-output'; }]
-]) audit(`adapter transport simulation rejects ${label}`, async t => {
-  await assert.rejects(simulatedProvider(t, mutate), error => /^MODEL_/.test(error.code));
+]) simulation(`adapter transport simulation rejects ${label}`, async t => {
+  // Every mutation is an export/stream disagreement, so it must be MODEL_DRIFT;
+  // a preflight failure such as MODEL_SANDBOX must never satisfy this control.
+  await assert.rejects(simulatedProvider(t, mutate), error => /^MODEL_/.test(error.code) && error.code === 'MODEL_DRIFT');
 });

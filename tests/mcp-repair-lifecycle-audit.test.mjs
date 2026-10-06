@@ -82,7 +82,7 @@ function verifyEvents(run) {
   assert.deepEqual(run.eventHead, { seq: run.events.length, hash: previousHash });
 }
 
-test('offline MCP draft and diagnostic repair lifecycle through actual stdio', { skip: !enabled, timeout: 120000 }, async t => {
+test('offline MCP draft and diagnostic repair lifecycle through actual stdio', { skip: enabled ? false : 'opt-in lane: set FOUNDRY_MCP_REPAIR_AUDIT=1', timeout: 120000 }, async t => {
   assert.equal(process.platform, 'linux', 'This opt-in audit requires Linux bubblewrap');
   assert.ok(existsSync('/usr/bin/bwrap'), 'Networking-disabled actual subprocess controls require bubblewrap');
   const evidenceRoot = path.join(root, '.foundry/verification'); mkdirSync(evidenceRoot, { recursive: true });

@@ -1,0 +1,54 @@
+{
+  "schema": "foundry-acquisition/1",
+  "purpose": "local open-weight model serving (policy class S)",
+  "items": [
+    {
+      "repo": "unsloth/Qwen3.5-2B-GGUF",
+      "revision": "f6d5376be1edb4d416d56da11e5397a961aca8ae",
+      "file": "Qwen3.5-2B-Q4_K_M.gguf",
+      "sha256": "aaf42c8b7c3cab2bf3d69c355048d4a0ee9973d48f16c731c0520ee914699223",
+      "license": "apache-2.0",
+      "licenseEvidence": "https://huggingface.co/api/models/unsloth/Qwen3.5-2B-GGUF (tags: license:apache-2.0)",
+      "retrievedAt": "2026-10-06",
+      "localPath": "/opt/models/Qwen3.5-2B-Q4_K_M.gguf",
+      "url": "https://huggingface.co/unsloth/Qwen3.5-2B-GGUF/resolve/f6d5376be1edb4d416d56da11e5397a961aca8ae/Qwen3.5-2B-Q4_K_M.gguf",
+      "outcome": "acquired, sha256 verified"
+    },
+    {
+      "repo": "unsloth/Qwen3.5-4B-GGUF",
+      "revision": "e87f176479d0855a907a41277aca2f8ee7a09523",
+      "file": "Qwen3.5-4B-Q4_K_M.gguf",
+      "sha256": "00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4",
+      "license": "apache-2.0",
+      "licenseEvidence": "https://huggingface.co/api/models/unsloth/Qwen3.5-4B-GGUF (tags: license:apache-2.0)",
+      "retrievedAt": "2026-10-06",
+      "localPath": "/opt/models/Qwen3.5-4B-Q4_K_M.gguf",
+      "url": "https://huggingface.co/unsloth/Qwen3.5-4B-GGUF/resolve/e87f176479d0855a907a41277aca2f8ee7a09523/Qwen3.5-4B-Q4_K_M.gguf",
+      "outcome": "acquired, sha256 verified"
+    },
+    {
+      "repo": "ibm-granite/granite-4.2-3b-GGUF",
+      "revision": "c40945d71cd90f249a56985e8155551a9188dc30",
+      "file": "granite-4.2-3b-Q4_K_M.gguf",
+      "sha256": "e0406663965846ae22a403456eb826ccce5f450840491f71952f18a7cb78e7d5",
+      "license": "apache-2.0",
+      "licenseEvidence": "https://huggingface.co/api/models/ibm-granite/granite-4.2-3b-GGUF (tags: license:apache-2.0)",
+      "retrievedAt": "2026-10-06",
+      "localPath": "/opt/models/granite-4.2-3b-Q4_K_M.gguf",
+      "url": "https://huggingface.co/ibm-granite/granite-4.2-3b-GGUF/resolve/c40945d71cd90f249a56985e8155551a9188dc30/granite-4.2-3b-Q4_K_M.gguf",
+      "outcome": "acquired, sha256 verified"
+    },
+    {
+      "repo": "pypi:llama-cpp-python",
+      "revision": "0.3.36",
+      "file": "llama_cpp_python-0.3.36.tar.gz",
+      "sha256": "832db0699007f1be95a7e41ef12e88926b02ba836461e36a36372db2760c1a2e",
+      "license": "MIT (llama-cpp-python and vendored llama.cpp: 'Copyright (c) 2023-2026 The ggml authors')",
+      "licenseEvidence": "vendor/llama.cpp/LICENSE in the sdist",
+      "retrievedAt": "2026-10-06",
+      "url": "https://files.pythonhosted.org/packages/source/l/llama_cpp_python/llama_cpp_python-0.3.36.tar.gz",
+      "localPath": "/opt/llamacpp/src",
+      "outcome": "acquired; only vendor/llama.cpp built (cmake, GGML_NATIVE=ON, targets llama-server llama-cli); no install hooks run; llama-server --version: 0.5.0-dev commit 0c1e570"
+    }
+  ]
+}

@@ -5,10 +5,14 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { OpenCodeV2FreeProvider } from '../src/opencode-v2-free.mjs';
+import { actualOpenCodeV2Adapter } from './support/gates.mjs';
 
 // Run the actual adapter, bubblewrap, installed CLI and its private server.
 // Every parent fetch is supplied here; the child has no external network.
-const supported = process.platform === 'linux' && ['/usr/bin/bwrap', '/usr/bin/opencode', '/usr/bin/node'].every(existsSync);
+// Genuine prerequisites: Linux, /usr/bin/bwrap with user namespaces, /usr/bin/node
+// and an installed /usr/bin/opencode whose digest is on OPENCODE_V2_ALLOWLIST.
+// Otherwise every test below is skipped with that precise, recorded reason.
+const unsupported = actualOpenCodeV2Adapter();
 const prompt = 'Return exactly this JSON object and nothing else: {"ok":true}';
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const catalog = JSON.stringify({ opencode: { id: 'opencode', name: 'OpenCode Zen', env: [],
@@ -119,7 +123,7 @@ async function exercise(t, name, options = {}) {
   return observation;
 }
 
-const opts = { skip: !supported, timeout: 20000 };
+const opts = { skip: unsupported, timeout: 20000 };
 test('actual adapter: hanging HTTP200 SSE reaches its own TIMEOUT and retains secondary AbortError', opts, async t => {
   const result = await exercise(t, 'deadline', { expectedCode: 'TIMEOUT', expectedKind: 'deadline' });
   assert.equal(result.transport.requests[0].statusCode, 200);

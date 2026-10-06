@@ -52,7 +52,7 @@ test('UI linkage selection refuses unrelated, unapplied and missing request iden
   assert.deepEqual(appliedRunLinks({}, null), []);
 });
 
-test('UI draft trials and diagnostic repair through real local HTTP', { skip: !enabled, timeout: 120000 }, async t => {
+test('UI draft trials and diagnostic repair through real local HTTP', { skip: enabled ? false : 'opt-in lane: set FOUNDRY_UI_TRIALS_E2E=1 (needs a Chromium matching playwright 1.63)', timeout: 120000 }, async t => {
   const artifactRoot = path.resolve(process.env.FOUNDRY_UI_ARTIFACTS ?? tmpdir());
   mkdirSync(artifactRoot, { recursive: true });
   const artifacts = mkdtempSync(path.join(artifactRoot, 'ui-trials-'));

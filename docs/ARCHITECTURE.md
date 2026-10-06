@@ -100,8 +100,10 @@ changes invalidate incompatible execution rather than silently changing meaning.
   conditions, dependencies, failures and evidence. Natural-language edits enqueue
   requests handled by the host agent. A model-backed bridge must identify its
   provider and preserve raw output; a canned parser is not called an agent.
-- Runtime adapters: native first; LangGraph/n8n mappings are qualified against
-  fixtures and reject unsupported features. Export is not proof of deployment.
+- Runtime: native only. The LangGraph/n8n export adapters and the `export`
+  command were deleted under owner decision D6 (Git history keeps them); their
+  interrupt, join and retry semantics remain research motifs, not export
+  targets. Typed workflow JSON is the portable output.
 - Installation: project-scoped, explicit client adapters, backups and conflict
   checks; do not overwrite existing global configs or silently elevate trust.
 

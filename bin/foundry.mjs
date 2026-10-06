@@ -19,7 +19,7 @@ const definitions = {
   rationale: { type: 'string' }, out: { type: 'string' }, port: { type: 'string' },
   components: { type: 'string' }, node: { type: 'string' }, answer: { type: 'string' },
   approved: { type: 'boolean' }, rejected: { type: 'boolean' },
-  target: { type: 'string' }, 'no-skills': { type: 'boolean' }, help: { type: 'boolean', short: 'h' }
+  'no-skills': { type: 'boolean' }, help: { type: 'boolean', short: 'h' }
   , agent: { type: 'string' }, model: { type: 'string' }, rounds: { type: 'string' }, 'generation-timeout': { type: 'string' }, 'auto-apply': { type: 'boolean' }
   , suite: { type: 'string' }
   , 'failed-run': { type: 'string' }, diagnostic: { type: 'string' }, proposal: { type: 'string' }
@@ -91,7 +91,6 @@ const usage = `Workflow Foundry 0.1.0 — experimental, source/evidence qualifie
 `  foundry inspect RUN_ID | resume RUN_ID --workspace PATH\n` +
 `  foundry answer RUN_ID --node root/NODE --answer JSON --workspace PATH\n` +
 `  foundry approve RUN_ID APPROVAL_ID --approved|--rejected --workspace PATH\n` +
-`  foundry export WORKFLOW_ID_OR_FILE --target langgraph|n8n [--out DIRECTORY]\n` +
 `  foundry serve --workspace PATH [--port 4177] [--agent opencode-free|opencode-v2-free --model OBSERVED_FREE_ID --auto-apply]\n` +
 `  foundry mcp --workspace PATH\n\n` +
 `Models construct candidates using skills/MCP. This CLI does not pretend a template\n` +
@@ -307,22 +306,6 @@ async function main() {
       const result = await foundry.startRun(run.id); print({ ...foundry.publicRun(result), events: foundry.store.events(run.id) });
       if (result.status === 'failed') process.exitCode = 1;
       else if (result.status === 'uncertain') process.exitCode = 2;
-      return;
-    }
-    if (command === 'export') {
-      const { exportWorkflow } = await import('../adapters/index.mjs');
-      const workflow = existsSync(item ?? '') ? readJson(item) : foundry.store.workflow(item).workflow;
-      const result = exportWorkflow(workflow, args.target);
-      if (args.out) {
-        const { mkdirSync } = await import('node:fs');
-        mkdirSync(args.out, { recursive: true });
-        for (const file of result.files) {
-          if (path.isAbsolute(file.path) || file.path.split(/[\\/]/).includes('..')) throw new FoundryError('EXPORT_PATH', 'Adapter returned an unsafe path');
-          const destination = path.join(args.out, file.path); mkdirSync(path.dirname(destination), { recursive: true });
-          writeFileSync(destination, file.content, { flag: 'wx', mode: 0o600 });
-        }
-        print({ ...result, files: result.files.map(f => ({ path: path.join(args.out, f.path), bytes: Buffer.byteLength(f.content) })) });
-      } else print(result);
       return;
     }
     throw new FoundryError('COMMAND', `Unknown command: ${command}. Use --help.`);

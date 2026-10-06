@@ -16,88 +16,89 @@ workflow layer inside it.** The full argument, including what is and isn't novel
 What exists today is a local-first research system:
 - a typed workflow IR and a persistent SQLite runtime;
 - an MCP server, a CLI and a visual web UI;
-- portable skills and LangGraph/n8n exports;
+- portable skills;
 - a large adversarial test suite.
 
 It has no model node, no async wake-ups and no reuse layer yet. A valid schema, a
 successful model response and a verified task outcome are three different results.
 
-## Status: where we stopped
+## Status
 
-**Last research checkpoint: 2026-09-17** ([report](research/checkpoint-20260917/REPORT.md),
-[one-page summary](research/checkpoint-20260917/FOUNDRY-CURRENT.md),
-[hashes](research/checkpoint-20260917/EVIDENCE.json)).
+**Current phase: 1 (core nodes).** Phase 0 finished 2026-10-06 in the cloud session that took
+over from the 2026-10-06 plan rewrite (start HEAD `6e1c06c`). Every phase ends with a
+capability number against a simple baseline and a `research/<topic>-<date>/REPORT.md`.
 
-What worked:
-- **End-to-end model-in-the-loop outcome repair.** A run "succeeded" but wrote the
-  wrong artifact. The system recorded an unsatisfied outcome and the same builder
-  model produced a goal-preserving repair, which passed 5 dev and 8 withheld cases.
-  v2 was then applied explicitly, re-run natively, and the outcome was satisfied. On
-  independent partitions the repaired version scored 98/98 and the faulty one 80/98.
-- The suite at that point was 645 tests: 641 pass and 4 opt-in skips. The opt-in
-  run had 82 checks pass.
-- New surface: the `outcome-*` CLI commands, a model facade for outcome repair, and
-  a read-only outcome-history inspector.
-
-What failed or did not run:
-- The free-provider construction campaign (`opencode/big-pickle`) returned one 150 s
-  stream of reasoning with no answer. The error-precedence bug it exposed was fixed
-  offline. There has been no successful hosted rerun.
-- Jev calibration was not run because no authentication was available.
-- The repair covered **one synthetic objective**. The fault and expected outcome
-  were supplied. This is a working mechanism, not general intent satisfaction.
-
-**Re-verification on 2026-10-06** ([raw output](research/recheck-20261006/)), on a
-fresh checkout of the recovered source:
-- Before cleanup: 645 tests, 624 pass, 14 fail, 7 skip.
-- After this cleanup: 609 tests, 595 pass, 10 fail, 4 skip. The 36 removed tests
-  belonged to deleted campaign and reference-SWE tooling.
-- The remaining failures are the 10 `actual adapter:` tests in
-  `tests/provider-termination.test.mjs`. `src/opencode-v2-free.mjs` refuses any
-  binary other than the verified OpenCode v2.0.5, and this machine has v2.0.23.
-  This is environment drift, not a code regression.
-- The 4 reference-SWE failures disappeared because those tests read run data that
-  git ignores, and they were removed together with `research/reference-swe/`.
-- The opt-in packaging E2E needs the ignored `corpus/` directory.
-
-**First thing to do when resuming:** make `provider-termination` pass against the
-installed OpenCode, either by re-verifying the adapter against v2.0.23 or by
-pinning v2.0.5 again. Do this without weakening the tests. Then get a clean
-`npm test`.
-
-## Next steps
-
-The plan is in [docs/ROADMAP.md](docs/ROADMAP.md). It covers the system spec, the
-verification program, a capability-first phased plan, and a ready-to-paste kickoff prompt
-for a cloud session. Each phase has to beat a simple baseline before the next one starts:
-
-| Phase | Work | Claim it must show |
+| Phase | State | Evidence |
 |---|---|---|
-| 0 | Unblock: environment probe, provider-pin allowlist, budget decision | — |
-| 1 | Core nodes: model node with record/replay, context contracts and receipts, model policy and escalation, verdicts, parallel map, timers | — |
-| 2 | Construction | Agents build working workflows for complex tasks (C0) |
-| 3 | Cheap-model execution | Frontier models author, open-weight models run, at non-inferior verified success (C1) |
-| 4 | Typed judgments (Jev) and failure handling | Diagnosis before repair, proven by replay (C3, C4) |
-| 5 | Selective reuse | Only where it pays, with the wrong-reuse rate as a headline metric (C2) |
-| 6 | Async and composition at scale | Game-loop exploration (C5) |
-| 7 | ARC/AMP adapters, run as A/B experiments | — |
+| 0 Unblock | **done** | [env probe](research/env-20261006/ENV.md), suite 605 tests: 590 pass, 0 fail, 15 skip (all with recorded reasons: `node research/list-skips.mjs`) |
+| 1 Core nodes | in progress | [design](research/core-20261006/DESIGN.md) |
+| 2–6 | not started | see [ROADMAP §5](docs/ROADMAP.md) |
 
-Decisions waiting on the owner (D1–D7, with recommendations) are in
-[docs/THESIS.md §10](docs/THESIS.md#10-decisions-for-the-owner).
+What Phase 0 changed:
+- **Node 24.21.0** from the pinned official tarball (`scripts/setup-node24.sh`, sha256-checked).
+- **Model access** without any API key: the headless `claude -p` CLI uses this cloud
+  session's own login. With the stripped-down flags in `policy/models.json` a narrow
+  structured call costs about $0.001–0.003 on Haiku 4.5; the default CLI context would cost
+  about $0.31 per call. Haiku 4.5, Sonnet 5.5 and Opus 5.5 all return schema-valid output.
+- **Open-weight models on CPU**: llama.cpp `llama-server` built from the vendored source in
+  the sha256-pinned `llama_cpp_python-0.3.36` sdist (GitHub release downloads are blocked by
+  the egress proxy), plus Qwen3.5-2B, Qwen3.5-4B and Granite-4.2-3B GGUF (Q4_K_M, Apache-2.0,
+  pinned HF revisions and sha256 in `research/manifests/models.json`). Measured: about
+  100 tok/s prompt and 12 tok/s generation for the 2B model on the 4 vCPUs.
+- **`policy/models.json`** is the only source of model ids (classes S = local ≤4B, M = Haiku,
+  L = Sonnet, F = Opus), with prices and the spend rule.
+- **OpenCode pin → allowlist** of verified (version, sha256) pairs with evidence
+  (`OPENCODE_V2_ALLOWLIST` in `src/opencode-v2-free.mjs`). Only v2.0.5 is listed; the owner
+  adds v2.0.23 after verifying it locally. No open-ended detection.
+- **Recorded skips**: tests needing bubblewrap, OpenCode, Chromium 1243 or `corpus/` skip with
+  a precise reason (`tests/support/gates.mjs`). Fixed one test that spawned a shell without
+  `node` on PATH.
+- **D6 decided: deleted** the LangGraph/n8n export adapters and their runtime skills. They
+  were serial subsets with no role in the thesis (THESIS §10); git history keeps them.
+- [Pre-registration template](research/PREREGISTRATION-TEMPLATE.md) for every comparative
+  experiment.
+
+Earlier history (the 2026-09-17 checkpoint: one model-in-the-loop outcome repair on one
+synthetic objective, 98/98 vs 80/98 on independent partitions) is in
+[research/checkpoint-20260917/REPORT.md](research/checkpoint-20260917/REPORT.md) and
+[docs/RESEARCH.md](docs/RESEARCH.md).
+
+## Cost ledger
+
+List-price USD as reported by the provider (`claude` CLI `total_cost_usd`, costBasis=list;
+billing goes through the session's subscription). Local CPU models: $0 API, imputed compute
+reported separately. Orchestration by this session and its subagents is not itemized.
+
+| Date | Item | Models | Calls | USD |
+|---|---|---|---|---|
+| 2026-10-06 | Phase 0 access probes (one default-context call, then minimal-context structured calls) | Haiku, Sonnet, Opus | 8 | 0.37 |
+| | **Total** | | | **0.37** |
+
+## Owner decisions needed
+
+| # | Question | Recommendation | Blocking? |
+|---|---|---|---|
+| D1-cap | The spend cap is blank. Current rule: pause before any single experiment estimated over $500; self-imposed session soft cap $1,500 (list price). | Confirm or set a cap. | No (work continues under the rule) |
+| D1-aws | `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` exist in the environment with no stated purpose. They are not used as a model route. | Say whether they are meant for Bedrock; otherwise leave unused. | No |
+| OpenCode | Verify OpenCode v2.0.23 locally and add its (version, sha256, evidence) to `OPENCODE_V2_ALLOWLIST`. | Do it when convenient; cloud runs skip those tests. | No |
+| D7 | No `TYPESAFE_API_KEY`: hosted Jev is unavailable. Kev (open weights on Hugging Face) will be used for the typed-judgment engine on CPU. | Provision the key if hosted Jev should be compared. | No |
+| Remote compute | No Modal/Harbor credentials: Tier B/C container beds (SWE-bench Pro, Terminal-Bench) cannot run from here. | Provision if Tier B is wanted. | Only for Tier B/C |
 
 ## Quickstart and commands
 
-Requires Node 24+. The optional free-model bridge also needs Linux, bubblewrap and
-an installed OpenCode under `/usr`.
+Requires Node 24+ (`sh scripts/setup-node24.sh` installs the pinned 24.21.0). The
+optional free-model bridge also needs Linux, bubblewrap and an installed OpenCode under `/usr`.
 
 ```sh
 npm ci --ignore-scripts --no-audit --no-fund
 node bin/foundry.mjs doctor          # or: npm run check
 npm test                             # default suite; integration lanes skip
+node research/list-skips.mjs         # every skipped test with its recorded reason
+node research/env-probe.mjs          # writes research/env-<date>/ (Node, sandbox, network, models)
 
 # opt-in integration lanes
 FOUNDRY_PACKAGING_E2E=1 node --test tests/packaging.test.mjs        # needs corpus/
-FOUNDRY_UI_E2E=1 node --test tests/ui-browser.test.mjs              # needs /usr/bin/chromium
+FOUNDRY_UI_E2E=1 node --test tests/ui-browser.test.mjs              # needs Chromium matching playwright 1.63
 FOUNDRY_UI_TRIALS_E2E=1 node --test tests/ui-trials-browser.test.mjs
 FOUNDRY_MCP_REPAIR_AUDIT=1 node --test tests/mcp-repair-lifecycle-audit.test.mjs
 node research/qualify-release.mjs    # all of the above + fresh-install + provenance
@@ -137,8 +138,9 @@ propose/apply and export. The repair walkthrough is in
 | `bin/foundry.mjs` | CLI entry point (`doctor`, `run`, `serve`, `mcp`, `install`, `generate`, `outcome-*`, …). |
 | `src/` | Runtime, store, validator, capabilities, MCP and HTTP servers, generator, providers, construction and outcome modules. Overview: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). |
 | `schemas/workflow.schema.json` | The workflow IR contract. |
+| `policy/models.json` | Owner model policy: the only source of model ids, classes, prices and the spend rule. |
+| `scripts/setup-node24.sh` | Idempotent, sha256-checked install of the pinned Node 24.21.0. |
 | `skills/` | Portable `SKILL.md` packs: construction, runtime, steering, evaluation, components, domains (software, browser, SRE, security, science, robotics, healthcare). |
-| `adapters/` | LangGraph and n8n exports, each with its own README and VALIDATION notes. |
 | `web/` | Visual workflow UI served by `foundry serve`. |
 | `examples/` | Hand-authored example workflows and the batch task/suite. |
 | `tests/` | `node:test` suite: regressions, adversarial audits, opt-in integration lanes. |
@@ -146,6 +148,8 @@ propose/apply and export. The repair walkthrough is in
 | `research/manifests/` | Pinned corpus acquisition ledgers and protocol-adapter evidence. |
 | `research/dossiers/` | Source-bound deconstruction dossiers (software/browser, SRE/security, science/robotics/healthcare, protocol adapters, existing ARC). |
 | `research/*.mjs` | Acquisition, evidence builders/verifiers, release and fresh-install qualification. |
+| `research/env-20261006/` | Environment probe (`research/env-probe.mjs`): Node, sandboxing, Docker, browsers, network, credential names, models. |
+| `research/PREREGISTRATION-TEMPLATE.md` | Template every comparative experiment fills and commits before its first run. |
 | `research/checkpoint-20260917/` | Last research checkpoint: report, one-page summary, evidence hashes. |
 | `research/recheck-20261006/` | Raw test output from the 2026-10-06 re-verification. |
 | [docs/THESIS.md](docs/THESIS.md) | **Why and what**: the problem in Oct 2026, design principles, what is and isn't novel, typed judgments (Jev), fit with ARC/AMP, owner decisions. |

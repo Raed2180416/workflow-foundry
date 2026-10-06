@@ -47,8 +47,7 @@ comes first: every phase must produce a capability number against a simple basel
 
 ## Layout
 See the repository map in README.md. In short: `src/` runtime and interfaces,
-`bin/` CLI, `schemas/` contracts, `skills/` portable skills, `adapters/` LangGraph/n8n
-exports (out of the core; deletion pending decision D6), `web/` UI, `tests/` regression and failure probes, `evals/` TUI harness and
+`bin/` CLI, `schemas/` contracts, `policy/` the owner model policy, `skills/` portable skills, `web/` UI, `tests/` regression and failure probes, `evals/` TUI harness and
 oracles, `research/` acquisition manifests, dossiers and checkpoints, `docs/` reference
 docs. `corpus/` (upstream clones) and `.foundry/` (mutable run data in an explicit task
 workspace) are ignored and never committed.

@@ -26,18 +26,16 @@ const exampleFiles = ['examples/hello.json', 'examples/incident.json', 'examples
 const documentationFiles = ['docs/ARCHITECTURE.md', 'docs/OUTCOME-REPAIR.md', 'docs/PACKAGING.md', 'docs/REPAIR-LIFECYCLE.md', 'docs/SOURCE-COVERAGE.md'];
 const publicationPath = relative => {
   if (/(?:^|\/)(?:\.[^/]+|private|credentials|corpus|research|evals|tests|artifacts|__pycache__|node_modules)(?:\/|$)/i.test(relative)) return false;
-  if (['package.json', 'README.md', 'bin/foundry.mjs', 'schemas/workflow.schema.json', 'adapters/index.mjs', ...webFiles, ...exampleFiles, ...documentationFiles].includes(relative)) return true;
+  if (['package.json', 'README.md', 'bin/foundry.mjs', 'schemas/workflow.schema.json', ...webFiles, ...exampleFiles, ...documentationFiles].includes(relative)) return true;
   return /^src\/[a-z][a-z0-9-]*\.mjs$/.test(relative)
-    || /^skills\/[a-z][a-z0-9-]*\/(?:SKILL\.md|references\/[A-Za-z0-9_./-]+\.(?:md|json|txt))$/.test(relative)
-    || /^adapters\/(?:langgraph|n8n)\/[A-Za-z0-9_-]+\.(?:mjs|md)$/.test(relative)
-    || /^adapters\/langgraph\/(?:[A-Za-z0-9_-]+\.py|requirements\.(?:in|txt))$/.test(relative);
+    || /^skills\/[a-z][a-z0-9-]*\/(?:SKILL\.md|references\/[A-Za-z0-9_./-]+\.(?:md|json|txt))$/.test(relative);
 };
 // Snapshot every product source, including newly added files between snapshots.
 // Evidence folders are deliberately excluded from this source inventory.
 const sourceHashes = () => {
   const candidates = ['package.json', 'package-lock.json', 'tests/packaging.test.mjs', ...webFiles,
     ...['README.md', '.npmignore'].filter(file => existsSync(path.join(root, file))),
-    ...['bin', 'src', 'schemas', 'skills', 'adapters', 'docs', 'examples'].flatMap(directory => tree(path.join(root, directory))
+    ...['bin', 'src', 'schemas', 'skills', 'docs', 'examples'].flatMap(directory => tree(path.join(root, directory))
       .map(file => path.relative(root, file)).filter(file => !file.split(path.sep).includes('__pycache__') && /\.(?:mjs|py|md|json|txt|in)$/.test(file)))];
   return [...new Set(candidates)].sort().map(relative => ({ path: relative, sha256: sha256(readFileSync(path.join(root, relative))) }));
 };
@@ -206,11 +204,13 @@ test('packaging source-map headers preserve repository-only provenance and pinne
 });
 
 test('packaging inventory gate rejects private state and evidence even under otherwise published roots', () => {
-  for (const relative of ['web/artifacts/screenshot.png', 'adapters/langgraph/__pycache__/runtime.pyc', 'src/.env', 'src/private/key.mjs', 'skills/workflow-foundry/references/private/token.txt', 'docs/private.md', 'corpus/vendor/LICENSE', 'evals/runs/receipt.json', '.npmrc']) assert.equal(publicationPath(relative), false, relative);
-  for (const relative of [...webFiles, ...exampleFiles, 'src/generator.mjs', 'adapters/langgraph/runtime.py', 'adapters/langgraph/requirements.txt', 'skills/domain-science/references/source-map.md']) assert.equal(publicationPath(relative), true, relative);
+  for (const relative of ['web/artifacts/screenshot.png', 'adapters/langgraph/__pycache__/runtime.pyc', 'src/__pycache__/module.pyc', 'src/.env', 'src/private/key.mjs', 'skills/workflow-foundry/references/private/token.txt', 'docs/private.md', 'corpus/vendor/LICENSE', 'evals/runs/receipt.json', '.npmrc']) assert.equal(publicationPath(relative), false, relative);
+  // Decision D6 removed the LangGraph/n8n export adapters; their former paths must not re-enter the archive.
+  for (const relative of ['adapters/index.mjs', 'adapters/langgraph/export.mjs', 'adapters/langgraph/runtime.py', 'adapters/langgraph/requirements.txt', 'adapters/n8n/export.mjs', 'adapters/n8n/portable.mjs']) assert.equal(publicationPath(relative), false, relative);
+  for (const relative of [...webFiles, ...exampleFiles, 'src/generator.mjs', 'skills/domain-science/references/source-map.md']) assert.equal(publicationPath(relative), true, relative);
 });
 
-test('packaging actual tarball, project installers and generated stdio MCP commands', { skip: !enabled, timeout: 90000 }, async t => {
+test('packaging actual tarball, project installers and generated stdio MCP commands', { skip: enabled ? false : 'opt-in lane: set FOUNDRY_PACKAGING_E2E=1 (needs corpus/ from release archive-20261006)', timeout: 90000 }, async t => {
   const evidenceRoot = path.join(root, 'evals/runs'); mkdirSync(evidenceRoot, { recursive: true });
   const evidence = mkdtempSync(path.join(evidenceRoot, 'packaging-evidence-'));
   const stage = mkdtempSync(path.join(evidenceRoot, 'packaging-stage-'));
@@ -291,7 +291,6 @@ test('packaging actual tarball, project installers and generated stdio MCP comma
   await check('tarball contains actual runtime assets and exact installed dependency versions', () => {
     assert.deepEqual(packed.files.map(item => item.path).sort(), dry.files.map(item => item.path).sort());
     const required = ['src/install.mjs', 'src/mcp.mjs', 'src/http.mjs', 'src/generator.mjs', 'src/opencode-free.mjs', 'src/process.mjs', 'src/evaluation.mjs', 'schemas/workflow.schema.json', ...webFiles, ...exampleFiles, ...documentationFiles,
-      ...tree(path.join(root, 'adapters')).filter(file => /\.(?:mjs|py|md|txt|in)$/.test(file) && !file.split(path.sep).includes('__pycache__')).map(file => path.relative(root, file)),
       ...[...Object.values(pkg.exports), ...Object.values(pkg.bin)].map(file => file.replace(/^\.\//, '')),
       ...['README.md'].filter(file => existsSync(path.join(root, file)))];
     for (const relative of required) assert.ok(existsSync(path.join(distribution, relative)), relative);
@@ -301,7 +300,7 @@ test('packaging actual tarball, project installers and generated stdio MCP comma
     assert.equal(doctor.source, distribution); assert.equal(doctor.supportedNode, true); assert.equal(doctor.published, false);
     report.doctor = doctor;
   });
-  await check('packed CLI runs an example, verifies its artifact and initializes both adapter exports', () => {
+  await check('packed CLI runs an example, verifies its artifact and rejects the removed export command', () => {
     const workspace = path.join(stage, 'cli workspace'); mkdirSync(workspace);
     const helloFile = path.join(distribution, 'examples/hello.json');
     assert.deepEqual(JSON.parse(run(process.execPath, [cli, 'schema'], workspace)), json(path.join(distribution, 'schemas/workflow.schema.json')));
@@ -325,19 +324,13 @@ test('packaging actual tarball, project installers and generated stdio MCP comma
     const evaluation = JSON.parse(run(process.execPath, [cli, 'evaluate', helloFile, '--suite', suiteFile, '--workspace', workspace], workspace));
     assert.equal(evaluation.passed, true); assert.equal(evaluation.workflowHash, execution.workflowHash);
     report.cliEvaluation = { id: evaluation.id, evaluatorId: evaluation.evaluatorId, workflowHash: evaluation.workflowHash, passed: evaluation.passed, scope: 'One diagnostic greeting case, no model performance or deployment qualification' };
-    // Hand-authored export-only fixture. No Python, n8n or model execution.
-    const portable = json(helloFile); portable.budget.maxConcurrency = 1; portable.nodes = [portable.nodes[0]];
-    portable.nodes[0].retry = { maxAttempts: 1 };
-    portable.acceptance = [{ op: 'exists', value: { $ref: 'nodes.compose.text' } }];
-    const portableFile = path.join(workspace, 'portable.json'); writeFileSync(portableFile, JSON.stringify(portable));
-    report.adapterExports = [];
-    for (const target of ['langgraph', 'n8n']) {
-      const exported = JSON.parse(run(process.execPath, [cli, 'export', portableFile, '--target', target, '--workspace', workspace], workspace));
-      assert.equal(exported.supported.ready, false, 'Trusted target bindings were deliberately not supplied.');
-      assert.ok(exported.files.length >= 4);
-      assert.ok(exported.files.every(file => typeof file.content === 'string' && file.content.length > 0));
-      report.adapterExports.push({ target, ready: exported.supported.ready, files: exported.files.map(file => file.path) });
-    }
+    // Decision D6: the LangGraph/n8n export adapters were deleted. The packed CLI
+    // must fail closed on the former command rather than emit partial output.
+    const removed = run(process.execPath, [cli, 'export', helloFile, '--workspace', workspace], workspace, { expectedExit: 1 });
+    assert.equal(removed, '');
+    assert.match(report.commands.at(-1).stderr, /Unknown command: export/);
+    assert.ok(!existsSync(path.join(distribution, 'adapters')), 'Removed adapters must not be packed');
+    report.removedCommands = [{ command: 'export', exit: report.commands.at(-1).exit }];
   });
   const sourceSkillFiles = tree(path.join(root, 'skills')).map(file => path.relative(path.join(root, 'skills'), file)).sort();
   const { Client } = await import('@modelcontextprotocol/sdk/client/index.js');

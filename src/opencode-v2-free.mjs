@@ -10,8 +10,29 @@ import { runProcess } from './process.mjs';
 import { FoundryError } from './data.mjs';
 
 export const OPENCODE_V2_MODEL = 'opencode/big-pickle';
-export const OPENCODE_V2_VERSION = 'opencode v2.0.5';
-export const OPENCODE_V2_BINARY_SHA256 = 'a7568b505c1fce84d329c709b5661da11a778b0e06959e34147a916111cc5be4';
+/** Owner-verified OpenCode v2 binaries ("provider pin", ROADMAP §5.0).
+ * A binary is accepted only when its SHA-256 AND its reported `--version` both
+ * equal the SAME entry. There is deliberately no version-range, prefix, "newest"
+ * or other open-ended detection: anything else fails with MODEL_BINARY_DRIFT.
+ * Owners add a {version, sha256, evidence} pair only after verifying that exact
+ * binary locally with this adapter and committing an evidence receipt that
+ * records both values. For example, the v2.0.23 installation must be verified by
+ * the owner (and its receipt committed) before it may be listed here.
+ * `evidence` is a `git show`-able `<commit>:<path>` to that receipt. */
+export const OPENCODE_V2_ALLOWLIST = Object.freeze([
+  Object.freeze({
+    version: 'opencode v2.0.5',
+    sha256: 'a7568b505c1fce84d329c709b5661da11a778b0e06959e34147a916111cc5be4',
+    // AUDIT.json fields `version` and `binarySHA256` (also recorded in NOTE.md next
+    // to it, package opencode 2.0.5-1.1). Removed from the working tree by c0cbd40;
+    // the full archive is published as release evidence-20261006.
+    evidence: '80bf2f840b38d6532536318cd1e03cf7642cab0a:research/recovery-archive/grok-research-stack/foundry-consequence-study-20260917/opencode-v2/AUDIT.json',
+  }),
+]);
+/** Backward-compatible names for the first (originally the only) verified pin.
+ * Acceptance never compares against these alone; it uses the allowlist. */
+export const OPENCODE_V2_VERSION = OPENCODE_V2_ALLOWLIST[0].version;
+export const OPENCODE_V2_BINARY_SHA256 = OPENCODE_V2_ALLOWLIST[0].sha256;
 const CATALOG_URL = 'https://models.opencode.ai/api.json';
 const PROVIDER_URL = 'https://opencode.ai/zen/v1/chat/completions';
 const PLUGINS = ['opencode.models.dev', 'opencode.provider.opencode', 'opencode.config.agent', 'opencode.config.provider', 'opencode.config.policy'];
@@ -24,6 +45,43 @@ const parseJSON = (text, code = 'MODEL_PROTOCOL') => {
 const ref = model => `${model?.providerID}/${model?.id}`;
 const validUsage = tokens => [tokens?.input, tokens?.output, tokens?.reasoning, tokens?.cache?.read, tokens?.cache?.write]
   .every(value => Number.isSafeInteger(value) && value >= 0);
+
+/** Structural check of an allowlist: exact digests, exact reported versions,
+ * an evidence pointer for every pair, and no digest listed twice. */
+export function validateOpenCodeV2Allowlist(allowlist) {
+  if (!Array.isArray(allowlist) || !allowlist.length) fail('MODEL_BINARY_ALLOWLIST', 'OPENCODE_V2_ALLOWLIST must list at least one verified binary');
+  for (const entry of allowlist) {
+    if (!entry || typeof entry !== 'object' || !/^[0-9a-f]{64}$/.test(entry.sha256 ?? '') || !/^opencode v\d+\.\d+\.\d+$/.test(entry.version ?? '') ||
+      typeof entry.evidence !== 'string' || !/^[0-9a-f]{40}:\S+$/.test(entry.evidence))
+      fail('MODEL_BINARY_ALLOWLIST', 'Every OPENCODE_V2_ALLOWLIST entry needs an exact sha256, exact reported version and a <commit>:<path> evidence receipt');
+  }
+  if (new Set(allowlist.map(entry => entry.sha256)).size !== allowlist.length) fail('MODEL_BINARY_ALLOWLIST', 'A binary digest is listed more than once in OPENCODE_V2_ALLOWLIST');
+  return allowlist;
+}
+validateOpenCodeV2Allowlist(OPENCODE_V2_ALLOWLIST);
+
+const listed = allowlist => allowlist.map(entry => `${entry.version} sha256:${entry.sha256}`).join(', ');
+const allowlistDetails = allowlist => allowlist.map(({ version, sha256, evidence }) => ({ version, sha256, evidence }));
+
+/** Digest stage, used before any execution: the observed binary must be one
+ * listed pair. Its reported version is then held to the SAME entry by
+ * requireOpenCodeV2Pin once the sandbox has observed it. */
+export function requireOpenCodeV2Binary(sha256, allowlist = OPENCODE_V2_ALLOWLIST) {
+  const entry = allowlist.find(item => item.sha256 === sha256);
+  if (typeof sha256 !== 'string' || !entry)
+    fail('MODEL_BINARY_DRIFT', `Installed OpenCode (sha256:${sha256}) is not on OPENCODE_V2_ALLOWLIST [${listed(allowlist)}]; an owner must verify a binary locally and record an evidence receipt before listing it`,
+      { observedSHA256: sha256 ?? null, allowlist: allowlistDetails(allowlist) });
+  return entry;
+}
+
+/** Full pin: digest and reported `--version` must both match one entry. */
+export function requireOpenCodeV2Pin({ sha256, version } = {}, allowlist = OPENCODE_V2_ALLOWLIST) {
+  const entry = requireOpenCodeV2Binary(sha256, allowlist);
+  if (typeof version !== 'string' || version !== entry.version)
+    fail('MODEL_BINARY_DRIFT', `OpenCode reported version ${JSON.stringify(version)}, but OPENCODE_V2_ALLOWLIST pairs sha256:${sha256} only with ${entry.version} [${listed(allowlist)}]`,
+      { observedSHA256: sha256, observedVersion: typeof version === 'string' ? version : null, allowlist: allowlistDetails(allowlist) });
+  return entry;
+}
 
 /** Raw catalog proof is required: v2 normalizes missing prices to zero. */
 export function requireV2RawFreeModel(catalog, model = OPENCODE_V2_MODEL) {
@@ -186,21 +244,26 @@ export class OpenCodeV2FreeProvider {
     if (model !== OPENCODE_V2_MODEL) fail('MODEL_ID', 'Provide the verified opencode/big-pickle model');
     if (!Number.isInteger(timeoutMs) || timeoutMs < 1000 || timeoutMs > 600000 || !Number.isInteger(maxOutputTokens) || maxOutputTokens < 16 || maxOutputTokens > 16384) fail('MODEL_BUDGET', 'Timeout must be 1–600 seconds; output bound must be 16–16384 tokens');
     if (process.platform !== 'linux' || !['/usr/bin/bwrap', '/usr/bin/opencode', '/usr/bin/node'].every(existsSync)) fail('MODEL_SANDBOX', 'Linux, bubblewrap, Node and installed OpenCode are required');
-    if (realpathSync('/usr/bin/opencode') !== '/usr/bin/opencode' || sha(readFileSync('/usr/bin/opencode')) !== OPENCODE_V2_BINARY_SHA256) fail('MODEL_BINARY_DRIFT', 'Installed OpenCode differs from the verified v2.0.5 binary');
-    this.model = model; this.timeoutMs = timeoutMs; this.maxOutputTokens = maxOutputTokens;
-    this.identity = Object.freeze({ provider: 'opencode-v2-free-isolated', model, version: OPENCODE_V2_VERSION,
-      binary: '/usr/bin/opencode', binarySHA256: OPENCODE_V2_BINARY_SHA256, transport: 'private-v2-server-one-request-gateway' });
+    if (realpathSync('/usr/bin/opencode') !== '/usr/bin/opencode') fail('MODEL_BINARY_DRIFT', `/usr/bin/opencode must be the installed binary itself, not a link; only OPENCODE_V2_ALLOWLIST binaries are accepted [${listed(OPENCODE_V2_ALLOWLIST)}]`,
+      { observedSHA256: null, allowlist: allowlistDetails(OPENCODE_V2_ALLOWLIST) });
+    // Digest stage here; the sandbox driver and the post-run check hold the
+    // reported --version to this SAME entry before any result is accepted.
+    const pin = requireOpenCodeV2Binary(sha(readFileSync('/usr/bin/opencode')));
+    this.model = model; this.timeoutMs = timeoutMs; this.maxOutputTokens = maxOutputTokens; this.pin = pin;
+    this.identity = Object.freeze({ provider: 'opencode-v2-free-isolated', model, version: pin.version,
+      binary: '/usr/bin/opencode', binarySHA256: pin.sha256, pinEvidence: pin.evidence, transport: 'private-v2-server-one-request-gateway' });
   }
 
   async generate({ prompt, directory, signal } = {}) {
     if (typeof prompt !== 'string' || !prompt.trim() || Buffer.byteLength(prompt) > 400000 || typeof directory !== 'string') fail('MODEL_INPUT_LIMIT', 'A nonempty prompt up to 400000 bytes and receipt directory are required');
     if (signal?.aborted) fail('CANCELLED', 'Generation cancelled before launch');
-    if (sha(readFileSync('/usr/bin/opencode')) !== OPENCODE_V2_BINARY_SHA256) fail('MODEL_BINARY_DRIFT', 'OpenCode changed since provider construction');
+    if (sha(readFileSync('/usr/bin/opencode')) !== this.pin.sha256) fail('MODEL_BINARY_DRIFT', 'OpenCode changed since provider construction');
     mkdirSync(directory, { recursive: true, mode: 0o700 });
     const root = path.join(realpathSync(directory), `opencode-v2-${randomUUID()}`);
     for (const rel of ['task/runtime', 'state/config/opencode', 'state/data', 'state/cache', 'state/state', 'bridge']) mkdirSync(path.join(root, rel), { recursive: true, mode: 0o700 });
     writeFileSync(path.join(root, 'task/prompt.txt'), prompt, { mode: 0o600, flag: 'wx' });
-    receipt(path.join(root, 'task/input.json'), { model: this.model, maxOutputTokens: this.maxOutputTokens, timeoutMs: this.timeoutMs, promptSHA256: sha(prompt) });
+    receipt(path.join(root, 'task/input.json'), { model: this.model, maxOutputTokens: this.maxOutputTokens, timeoutMs: this.timeoutMs, promptSHA256: sha(prompt),
+      binarySHA256: this.pin.sha256, binaryVersion: this.pin.version });
     for (const file of ['opencode-v2-free.mjs', 'process.mjs', 'data.mjs']) writeFileSync(path.join(root, 'task/runtime', file), readFileSync(new URL(file, import.meta.url)), { mode: 0o600, flag: 'wx' });
     const controller = new AbortController();
     const startedAt = Date.now();
@@ -295,7 +358,7 @@ export class OpenCodeV2FreeProvider {
       if (transport.attempts !== 1 || transport.forwarded !== 1 || transport.completed !== 1) fail('MODEL_TRANSPORT', 'One completed provider request was not established');
       const read = name => parseJSON(readFileSync(path.join(root, 'state', name), 'utf8'));
       const version = read('version.json').stdout.trim();
-      if (version !== OPENCODE_V2_VERSION) fail('MODEL_BINARY_DRIFT', 'Executed OpenCode version differs');
+      if (requireOpenCodeV2Pin({ sha256: this.pin.sha256, version }) !== this.pin) fail('MODEL_BINARY_DRIFT', 'Executed OpenCode resolved to a different allowlist entry');
       const driver = read('driver.json');
       const localModel = requireV2LocalFreeModel(read('model-catalog.json'), driver.providerBaseURL);
       const generation = read('generation.json');
@@ -336,7 +399,11 @@ async function sandboxDriver() {
   if (sha(prompt) !== input.promptSHA256 || input.model !== OPENCODE_V2_MODEL) fail('MODEL_INPUT', 'Sandbox input binding failed');
   const version = await runProcess('/usr/bin/opencode', ['--version'], { env: { ...process.env }, timeoutMs: 10000 });
   receipt('/state/version.json', version);
-  if (version.stdout.trim() !== OPENCODE_V2_VERSION) fail('MODEL_BINARY_DRIFT', 'Sandbox version changed');
+  // The parent hashed this read-only /usr/bin/opencode immediately before launch
+  // (and again at construction). The version reported here must belong to that
+  // SAME allowlist entry; the parent re-checks the pair after the run.
+  const pin = requireOpenCodeV2Pin({ sha256: input.binarySHA256, version: version.stdout.trim() });
+  if (pin.version !== input.binaryVersion) fail('MODEL_BINARY_DRIFT', 'Sandbox binary differs from the pin resolved at construction');
   const bridge = createServer((request, response) => {
     let headers;
     try { headers = nativeV2Headers(request.headers); }

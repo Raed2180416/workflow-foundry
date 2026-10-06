@@ -85,6 +85,7 @@ A scalar rating or a model's confidence cannot override these gates.
 | 2026-09-15 to 09-17 | Local only (`~/Projects/grok-research-stack`) | Consequence study: construction modules, outcome repair, outcome history, free/local provider adapters. Not pushed until 10-06. |
 | 2026-09-17 09:16 UTC | `continuation-checkpoint-20260917` | **Last real research checkpoint.** No campaign left running. See [research/checkpoint-20260917/](../research/checkpoint-20260917/). |
 | 2026-10-06 | Codex recovery, finished in Claude Code | Recovered the unpushed source, reran the tests, published the evidence release, cleaned up the repository. |
+| 2026-10-06 | Cloud session (Phase 0) | Node 24, environment probe, model policy file, OpenCode (version, sha256) allowlist, recorded skips, D6 decided (LangGraph/n8n adapters deleted), local CPU models via llama.cpp, Claude models via the session's `claude -p`. Suite: 605 tests, 590 pass, 0 fail, 15 recorded skips. |
 
 ## Experiment ledger
 

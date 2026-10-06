@@ -316,7 +316,7 @@ These failure patterns recur across ARC, AMP, Neural Core and the Foundry repo i
 | D3 | Procedural split (§8) | Approve as written |
 | D4 | ARC integration branch; AMP connector profile (`foundry` vs `arc`) | Defer until a Phase 7 A/B |
 | D5 | Container image pulls and local model downloads in the cloud and locally | Allow, within a disk/size cap |
-| D6 | Delete the LangGraph/n8n export adapters (serial subsets, no role in the vision) | Delete; git history keeps them |
+| D6 | Delete the LangGraph/n8n export adapters (serial subsets, no role in the vision) | **Decided 2026-10-06: deleted** (owner delegated the call); git history keeps them |
 | D7 | Jev access for the cloud session (API key via env), and permission to fine-tune a judge | Provision; fine-tuning after Phase 4 data exists |
 
 ## Sources

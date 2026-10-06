@@ -39,7 +39,7 @@ function reviewWorkflow() {
   ], [eq(ref('nodes.record.count'), 2)]);
 }
 
-test('UI browser: real local HTTP workflows, revision pins and human controls', { skip: !enabled, timeout: 180000 }, async t => {
+test('UI browser: real local HTTP workflows, revision pins and human controls', { skip: enabled ? false : 'opt-in lane: set FOUNDRY_UI_E2E=1 (needs a Chromium matching playwright 1.63)', timeout: 180000 }, async t => {
   const { chromium } = await import('playwright');
   const workspace = mkdtempSync(path.join(tmpdir(), 'foundry-ui-'));
   const registry = createDefaultRegistry();

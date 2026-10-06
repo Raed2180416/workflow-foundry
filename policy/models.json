@@ -1,0 +1,59 @@
+{
+  "policyVersion": "2026-10-06.1",
+  "owner": "Raed2180416 (decision D1, granted 2026-10-06: free choice of Haiku 4.5 / Sonnet 5.5 / Opus 5.5 plus open-weight models for any role)",
+  "notes": [
+    "This file is the ONLY source of model ids for the Foundry runtime. Any id not listed here is rejected (tests/model-policy.test.mjs).",
+    "Classes are capability/cost tiers. For open-weight models they follow ROADMAP §2.3 parameter bands; hosted Anthropic models have no public parameter count, so they are placed by price tier and must be justified by measurement (research/*/REPORT.md).",
+    "No silent fallback: the runtime never substitutes a model. Escalation moves up the class order only through logged events (rules E1-E7).",
+    "Costs: hosted calls record the provider-reported list-price USD (claude CLI total_cost_usd, costBasis=list). Local CPU calls record API cost 0 plus an imputed compute cost = wall seconds x imputedComputeUsdPerHour/3600."
+  ],
+  "classOrder": ["S", "M", "L", "F"],
+  "spend": {
+    "capUsd": null,
+    "perExperimentPauseAboveUsd": 500,
+    "sessionSoftCapUsd": 1500,
+    "rule": "Owner cap is blank: pause and ask in README before any single experiment estimated over $500 (owner brief 2026-10-06). sessionSoftCapUsd is a self-imposed brake, not an owner grant."
+  },
+  "providers": {
+    "claude-cli": {
+      "kind": "claude-cli",
+      "binary": "claude",
+      "auth": "the cloud session's own managed Claude Code login; no API key is read or stored",
+      "invocation": ["-p", "--output-format", "json", "--no-session-persistence", "--safe-mode", "--strict-mcp-config", "--mcp-config", "{\"mcpServers\":{}}", "--disable-slash-commands", "--tools", ""],
+      "features": { "jsonSchema": true, "toolChoiceRequired": false, "reasoningThenFormat": true }
+    },
+    "llama-server": {
+      "kind": "openai-compatible-http",
+      "engine": "llama.cpp llama-server (built from llama_cpp_python-0.3.36 sdist vendor/, sha256 832db0699007f1be95a7e41ef12e88926b02ba836461e36a36372db2760c1a2e)",
+      "baseUrlTemplate": "http://127.0.0.1:{port}/v1",
+      "features": { "jsonSchema": true, "toolChoiceRequired": false, "reasoningThenFormat": false },
+      "imputedComputeUsdPerHour": 0.2,
+      "knownGaps": ["llama.cpp silently drops unsupported JSON Schema keywords: keep output schemas to the portable subset (no pattern, oneOf, uniqueItems, nested $ref)"]
+    }
+  },
+  "models": [
+    { "id": "qwen3.5-2b-q4km", "class": "S", "family": "qwen", "provider": "llama-server", "port": 8402,
+      "weights": { "repo": "unsloth/Qwen3.5-2B-GGUF", "file": "Qwen3.5-2B-Q4_K_M.gguf", "license": "apache-2.0" },
+      "price": { "inputPerMTok": 0, "outputPerMTok": 0 } },
+    { "id": "granite-4.2-3b-q4km", "class": "S", "family": "granite", "provider": "llama-server", "port": 8403,
+      "weights": { "repo": "ibm-granite/granite-4.2-3b-GGUF", "file": "granite-4.2-3b-Q4_K_M.gguf", "license": "apache-2.0" },
+      "price": { "inputPerMTok": 0, "outputPerMTok": 0 } },
+    { "id": "qwen3.5-4b-q4km", "class": "S", "family": "qwen", "provider": "llama-server", "port": 8404,
+      "weights": { "repo": "unsloth/Qwen3.5-4B-GGUF", "file": "Qwen3.5-4B-Q4_K_M.gguf", "license": "apache-2.0" },
+      "price": { "inputPerMTok": 0, "outputPerMTok": 0 } },
+    { "id": "claude-haiku-4-5-20251001", "class": "M", "family": "claude", "provider": "claude-cli",
+      "price": { "inputPerMTok": 1, "outputPerMTok": 5, "source": "R05 S38, platform.claude.com pricing, fetched 2026-10-06" } },
+    { "id": "claude-sonnet-5-5", "class": "L", "family": "claude", "provider": "claude-cli",
+      "price": { "inputPerMTok": 2, "outputPerMTok": 10, "source": "R05 S38" } },
+    { "id": "claude-opus-5-5", "class": "F", "family": "claude", "provider": "claude-cli",
+      "price": { "inputPerMTok": 4, "outputPerMTok": 20, "source": "R05 S38" } }
+  ],
+  "defaultsByRole": {
+    "classify": "S", "route": "S", "extract": "S",
+    "tool_call": "M", "synthesis": "L", "code_edit": "L",
+    "verifier": "same-or-higher class, different family",
+    "construct": "F", "plan_expand": "F"
+  },
+  "inputBudgetTokensByClass": { "S": 4000, "M": 8000, "L": 16000, "XL": 32000, "F": 32000 },
+  "escalation": { "maxEscalationsPerNode": 2, "schemaRetriesBeforeEscalation": 1 }
+}
