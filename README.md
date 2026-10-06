@@ -64,6 +64,8 @@ pinning v2.0.5 again. Do this without weakening the tests. Then get a clean
 
 ## Next steps
 
+The full plan for the next phase is in [docs/ROADMAP.md](docs/ROADMAP.md): north star, gap analysis, place in ARC/AMP, the state of the art, target architecture, falsifiable research questions, a real-world verification program, a phased plan and a ready-to-paste kickoff prompt for a cloud session. The short version:
+
 1. **Grounded outcome-contract identification.** Derive an adequate, revisable
    success condition from an *unseen* objective. Today the host authors it. This
    is the largest gap.
@@ -144,6 +146,7 @@ propose/apply and export. The repair walkthrough is in
 | `research/*.mjs` | Acquisition, evidence builders/verifiers, release and fresh-install qualification. |
 | `research/checkpoint-20260917/` | Last research checkpoint: report, one-page summary, evidence hashes. |
 | `research/recheck-20261006/` | Raw test output from the 2026-10-06 re-verification. |
+| [docs/ROADMAP.md](docs/ROADMAP.md) | **Where this goes next**: vision, target architecture, experiments, phased plan, cloud kickoff prompt. |
 | [docs/RESEARCH.md](docs/RESEARCH.md) | **Research log**: thesis, ARC/AMP/Neural Core relation, experiment ledger, failure→fix chains, unproven claims. |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Working architecture contract and module overview. |
 | [docs/REPAIR-LIFECYCLE.md](docs/REPAIR-LIFECYCLE.md) | Draft trials, version-bound repairs, exact delivery, and their UI. |
