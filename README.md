@@ -5,19 +5,22 @@ Everything else is linked from it.
 
 ## What this is
 
-The goal is to give agents tools to build **micro workflows**: small, task-specific
-sub-harnesses they can design, test, inspect, revise and reuse, instead of
-improvising every step. The split of responsibility is strict:
+Foundry lets agents **construct small, bounded, typed workflows for a specific task**
+(micro harnesses), run them durably, adapt them while they run, judge them against
+contracts they cannot game, and keep only the few that earn reuse. Code owns procedure
+and models make narrow judgments, so these workflows let **cheap open-weight models do
+work that today needs a frontier agent**. **ARC and AMP are the harness; Foundry is the
+workflow layer inside it.** The full argument, including what is and isn't novel, is in
+[docs/THESIS.md](docs/THESIS.md).
 
-- **The host owns** capabilities, evidence checks, state, budgets and approvals.
-- **The agent owns** construction of the process: a typed workflow program, not prose.
+What exists today is a local-first research system:
+- a typed workflow IR and a persistent SQLite runtime;
+- an MCP server, a CLI and a visual web UI;
+- portable skills and LangGraph/n8n exports;
+- a large adversarial test suite.
 
-What exists is a local-first research system. It has a typed workflow IR, a
-persistent SQLite runtime, an MCP server, a CLI, a visual web UI, portable skills,
-LangGraph/n8n exports and a large adversarial test suite. It is **not** a claim that
-a modest model can reliably build specialist harnesses across domains; that is still
-the open research question. A valid schema, a successful model response and a
-verified task outcome are three different results.
+It has no model node, no async wake-ups and no reuse layer yet. A valid schema, a
+successful model response and a verified task outcome are three different results.
 
 ## Status: where we stopped
 
@@ -64,24 +67,23 @@ pinning v2.0.5 again. Do this without weakening the tests. Then get a clean
 
 ## Next steps
 
-The full plan for the next phase is in [docs/ROADMAP.md](docs/ROADMAP.md): north star, gap analysis, place in ARC/AMP, the state of the art, target architecture, falsifiable research questions, a real-world verification program, a phased plan and a ready-to-paste kickoff prompt for a cloud session. The short version:
+The plan is in [docs/ROADMAP.md](docs/ROADMAP.md). It covers the system spec, the
+verification program, a capability-first phased plan, and a ready-to-paste kickoff prompt
+for a cloud session. Each phase has to beat a simple baseline before the next one starts:
 
-1. **Grounded outcome-contract identification.** Derive an adequate, revisable
-   success condition from an *unseen* objective. Today the host authors it. This
-   is the largest gap.
-2. **Detect consequential ambiguity** and acquire evidence instead of
-   manufacturing certainty.
-3. **Cross-world continuation.** Preserve goal lineage and requalify freshly when
-   the capability registry changes. Historical inspection deliberately does not
-   do this.
-4. **Controlled construction with an ordinary or local model.** Use a fresh
-   source/config freeze, and never silently retry the old failed campaign.
-   `src/ollama-local.mjs` is a library-only local provider for this. It is not
-   wired into the CLI yet.
-5. **Calibrated, bounded Jev judgments** once supported authentication is available.
+| Phase | Work | Claim it must show |
+|---|---|---|
+| 0 | Unblock: environment probe, provider-pin allowlist, budget decision | — |
+| 1 | Core nodes: model node with record/replay, context contracts and receipts, model policy and escalation, verdicts, parallel map, timers | — |
+| 2 | Construction | Agents build working workflows for complex tasks (C0) |
+| 3 | Cheap-model execution | Frontier models author, open-weight models run, at non-inferior verified success (C1) |
+| 4 | Typed judgments (Jev) and failure handling | Diagnosis before repair, proven by replay (C3, C4) |
+| 5 | Selective reuse | Only where it pays, with the wrong-reuse rate as a headline metric (C2) |
+| 6 | Async and composition at scale | Game-loop exploration (C5) |
+| 7 | ARC/AMP adapters, run as A/B experiments | — |
 
-Don't spend another campaign re-proving the fixed manifest contract. Keep all
-negative results.
+Decisions waiting on the owner (D1–D7, with recommendations) are in
+[docs/THESIS.md §10](docs/THESIS.md#10-decisions-for-the-owner).
 
 ## Quickstart and commands
 
@@ -146,7 +148,9 @@ propose/apply and export. The repair walkthrough is in
 | `research/*.mjs` | Acquisition, evidence builders/verifiers, release and fresh-install qualification. |
 | `research/checkpoint-20260917/` | Last research checkpoint: report, one-page summary, evidence hashes. |
 | `research/recheck-20261006/` | Raw test output from the 2026-10-06 re-verification. |
-| [docs/ROADMAP.md](docs/ROADMAP.md) | **Where this goes next**: vision, target architecture, experiments, phased plan, cloud kickoff prompt. |
+| [docs/THESIS.md](docs/THESIS.md) | **Why and what**: the problem in Oct 2026, design principles, what is and isn't novel, typed judgments (Jev), fit with ARC/AMP, owner decisions. |
+| [docs/ROADMAP.md](docs/ROADMAP.md) | **How**: component specs, verification program, phased plan, cloud kickoff prompt. |
+| `research/landscape-20261006/` | The eleven research reports (R01–R11) behind THESIS and ROADMAP, every claim tagged verified or recalled. |
 | [docs/RESEARCH.md](docs/RESEARCH.md) | **Research log**: thesis, ARC/AMP/Neural Core relation, experiment ledger, failure→fix chains, unproven claims. |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Working architecture contract and module overview. |
 | [docs/REPAIR-LIFECYCLE.md](docs/REPAIR-LIFECYCLE.md) | Draft trials, version-bound repairs, exact delivery, and their UI. |
