@@ -1,0 +1,157 @@
+[
+  {
+    "id": "sealed-1",
+    "sha256": "cc2ef20997ac8701efef3c49f4f05dd46b2502a4b9fa695fa2480151eec99555",
+    "kind": "oneshot",
+    "tokenSizesByDifficulty": {
+      "1": 2541,
+      "2": 3933,
+      "3": 6875,
+      "4": 8305,
+      "5": 9879
+    },
+    "controls": {
+      "reference": "30/30",
+      "badControls": "all fail",
+      "measuredAt": "d1,d3,d5 x seeds 1..30 x splits dev+test",
+      "referenceByDifficulty": {
+        "d1": "30/30",
+        "d3": "30/30",
+        "d5": "30/30"
+      },
+      "badControlNames": [
+        "empty",
+        "shuffled-or-corrupted",
+        "plausible-but-wrong"
+      ]
+    },
+    "heuristicSolverPassRateD3": 0,
+    "heuristicSolversD3": {
+      "naive": 0
+    },
+    "heuristicMeasuredAt": "d3 x seeds 1001..1050 split=test",
+    "archivedTests": {
+      "pass": 9,
+      "fail": 0
+    }
+  },
+  {
+    "id": "sealed-2",
+    "sha256": "0acb38cc6fbce9350682b925c0abb0c6b2f88cd518316b1dfaba301413ab4fc9",
+    "kind": "oneshot",
+    "tokenSizesByDifficulty": {
+      "1": 1792,
+      "2": 3378,
+      "3": 6734,
+      "4": 8234,
+      "5": 12397
+    },
+    "controls": {
+      "reference": "30/30",
+      "badControls": "all fail",
+      "measuredAt": "d1,d3,d5 x seeds 1..30 x splits dev+test",
+      "referenceByDifficulty": {
+        "d1": "30/30",
+        "d3": "30/30",
+        "d5": "30/30"
+      },
+      "badControlNames": [
+        "empty",
+        "shuffled-or-corrupted",
+        "plausible-but-wrong",
+        "plausible-but-wrong-2"
+      ]
+    },
+    "heuristicSolverPassRateD3": 0,
+    "heuristicSolversD3": {
+      "naive": 0,
+      "strong": 0
+    },
+    "heuristicMeasuredAt": "d3 x seeds 1001..1050 split=test",
+    "archivedTests": {
+      "pass": 10,
+      "fail": 0
+    }
+  },
+  {
+    "id": "sealed-3",
+    "sha256": "268b1166d5dfe2093cb2c692724b2b94f128515d8173db0742d121e733cf367c",
+    "kind": "interactive",
+    "tokenSizesByDifficulty": {
+      "1": 1538,
+      "2": 2206,
+      "3": 3347,
+      "4": 3982,
+      "5": 5001
+    },
+    "tokenSizesNote": "tokenSizesByDifficulty = prompt+inputs at episode start; explorationTokensByDifficulty adds the observations of an exhaustive exploration episode",
+    "explorationTokensByDifficulty": {
+      "1": 2379,
+      "2": 4284,
+      "3": 6427,
+      "4": 8058,
+      "5": 10668
+    },
+    "controls": {
+      "reference": "30/30",
+      "badControls": "all fail",
+      "measuredAt": "d1,d3,d5 x seeds 1..30 x splits dev+test",
+      "referenceByDifficulty": {
+        "d1": "30/30",
+        "d3": "30/30",
+        "d5": "30/30"
+      },
+      "badControlNames": [
+        "empty",
+        "shuffled-or-corrupted",
+        "plausible-but-wrong"
+      ]
+    },
+    "heuristicSolverPassRateD3": 0,
+    "heuristicSolversD3": {
+      "naive": 0,
+      "strong": 0
+    },
+    "heuristicMeasuredAt": "d3 x seeds 1001..1050 split=test",
+    "archivedTests": {
+      "pass": 10,
+      "fail": 0
+    }
+  },
+  {
+    "id": "sealed-4",
+    "sha256": "d590f2f4742f599e5d9e54619fe83a6b5d4b9760eaa010b86482ca7a8807bcb2",
+    "kind": "oneshot",
+    "tokenSizesByDifficulty": {
+      "1": 1033,
+      "2": 2206,
+      "3": 6340,
+      "4": 9015,
+      "5": 14148
+    },
+    "controls": {
+      "reference": "30/30",
+      "badControls": "all fail",
+      "measuredAt": "d1,d3,d5 x seeds 1..30 x splits dev+test",
+      "referenceByDifficulty": {
+        "d1": "30/30",
+        "d3": "30/30",
+        "d5": "30/30"
+      },
+      "badControlNames": [
+        "empty",
+        "shuffled-or-corrupted",
+        "plausible-but-wrong"
+      ]
+    },
+    "heuristicSolverPassRateD3": 0,
+    "heuristicSolversD3": {
+      "naive": 0
+    },
+    "heuristicMeasuredAt": "d3 x seeds 1001..1050 split=test",
+    "archivedTests": {
+      "pass": 10,
+      "fail": 0
+    }
+  }
+]
