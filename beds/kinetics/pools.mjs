@@ -33,40 +33,61 @@ export const LABS = ['Kessel Lab', 'Room 4.112', 'Enzymology Core', 'Bay C (nort
 
 export const BENCH_CODES = ['Blue', 'Amber', 'Teal', 'Granite', 'Violet', 'Moss', 'Coral', 'Slate', 'Saffron'];
 
-// Notes for wells that the SOP excludes. Each entry: [text, rate factor range, direction hint].
+// Notes for wells that the SOP excludes. `factors` are the rate-distortion ranges used when the
+// well is not "silent" (some excluded wells read normally; only the note marks them).
+// Every generator takes a seeded rng `r` and returns a phrase. Phrases are compositional so that
+// a short keyword list cannot enumerate them, and the `tricky` variants carry words that point the
+// other way (popped, after, looks fine, ...) while the SOP outcome is still unambiguous.
+const B = r => r.pick(['bubble', 'air bubble', 'small bubble', 'large bubble', 'tiny bubble', 'bubble']);
+const DURING = r => r.pick(['during the read', 'throughout the read', 'for the whole kinetic read', 'while the plate was being read', 'from the first cycle to the last']);
 export const OUTLIER_NOTES = {
   sat: {
     flags: ['SAT', 'OVR'],
-    text: ['reader flagged SAT on this read', 'over range (OVR) on the kinetic read', 'detector saturated (reader flag)', 'reader: saturated read'],
+    text: [r => r.pick(['reader flagged SAT on this read', 'over range (OVR) on the kinetic read', 'detector saturated (reader flag)', 'reader: saturated read', 'SAT flag from the reader on this well', 'OVR on this read; plate already discarded, so no re-read']),
+      r => r.pick(['reader said OVR here; the curve looked fine to me, so I kept the number', 'I did not expect it to saturate at this [S], but the reader flagged SAT', 'flagged as over range (OVR) by the reader; I think the flag is spurious', 'SAT flag, although the trace looks smooth to me'])],
     factors: [[0.4, 0.6], [1.7, 2.3]],
   },
   bubble: {
-    text: ['bubble in the well during the read', 'air bubble visible right through the read', 'could not get the bubble out before the read; read anyway',
-      'read with a bubble sitting on the meniscus', 'big bubble at read time (photo in folder)', 'bubble present when the plate went in, still there at the end'],
+    text: [r => r.pick([`${B(r)} in the well ${DURING(r)}`, `${B(r)} visible ${DURING(r)}`, `could not get the ${B(r)} out before the read; read anyway`, `read with a ${B(r)} sitting on the meniscus`,
+      `${B(r)} at read time (photo in folder)`, `${B(r)} present when the plate went in, still there at the end`, `${B(r)} stuck to the well wall ${DURING(r)}`]),
+    r => r.pick([`${B(r)} seen at loading; tapped the plate but it was still there when the read started`, `popped a ${B(r)} in this well after the read; it had been there ${DURING(r)}`,
+      `spun the plate before the read but the ${B(r)} did not move`, `the ${B(r)} was only removed after the read had finished`, `${B(r)} noticed after the read; the mid-read photo shows it was already there`,
+      `tried to pop the ${B(r)} before reading, missed it; it stayed ${DURING(r)}`])],
     factors: [[0.35, 0.6], [1.6, 2.1]],
   },
   pipette: {
     variants: [
-      { text: ['double enzyme addition (added the aliquot twice)', 'enzyme dispensed twice by mistake', 'two enzyme aliquots went in, not one'], factors: [[1.8, 2.1]] },
-      { text: ['missed the substrate on first pass, added it late', 'substrate addition forgotten, topped up about 2 min late'], factors: [[0.35, 0.6]] },
-      { text: ['spilled roughly 20 uL while moving the plate', 'part of the well volume spilled during the transfer'], factors: [[0.4, 0.6]] },
-      { text: ['pipetted the wrong buffer into this well', 'used the neighbouring buffer bottle by mistake for this well'], factors: [[0.35, 0.6], [1.6, 2.0]] },
-      { text: ['tip came off mid-dispense; volume uncertain', 'tip slipped during the enzyme dispense'], factors: [[0.35, 0.6]] },
+      { text: [r => r.pick(['double enzyme addition (added the aliquot twice)', 'enzyme dispensed twice by mistake', 'two enzyme aliquots went in, not one', 'enzyme went in twice (noticed it when counting tips)'])], factors: [[1.8, 2.1]] },
+      { text: [r => r.pick(['missed the substrate on first pass, added it late', 'substrate addition forgotten, topped up about 2 min late', 'substrate went in late (timer had already started)'])], factors: [[0.35, 0.6]] },
+      { text: [r => r.pick(['spilled roughly 20 uL while moving the plate', 'part of the well volume spilled during the transfer', 'lost some volume from this well when the plate tipped'])], factors: [[0.4, 0.6]] },
+      { text: [r => r.pick(['pipetted the wrong buffer into this well', 'used the neighbouring buffer bottle by mistake for this well', 'wrong reagent: this well got the stop buffer instead of assay buffer'])], factors: [[0.35, 0.6], [1.6, 2.0]] },
+      { text: [r => r.pick(['tip came off mid-dispense; volume uncertain', 'tip slipped during the enzyme dispense', 'lost the tip while dispensing enzyme into this well'])], factors: [[0.35, 0.6]] },
     ],
   },
 };
-
-export const DECOY_NOTES = {
-  'bubble-cleared': ['small bubble, popped with a clean tip before the read', 'bubble tapped out before reading', 'had a bubble; spun the plate 30 s and it was gone before the read',
-    'bubble spotted at loading, removed with a needle before the read'],
-  'bubble-after': ['bubbles appeared when I added the stop solution (after the read)', 'bubble formed while sealing the plate after the read finished',
-    'bubbles formed during clean-up, after the read had finished (the well was clear during the read)'],
-  low: ['LOW', 'low-signal flag', 'reader: LOW (close to detection limit)'],
-  edge: ['edge well', 'outer-row well (evaporation risk noted)', 'corner well'],
-  looks: ['value looks a bit high to me?', 'seems low; maybe exclude?', 'odd-looking number, double-checked the pipette: fine', 'higher than I expected, nothing wrong with the well',
-    'this one looks off to me, flagging for discussion'],
-  recheck: ['re-checked the volume after the read: correct', 'pipette calibration checked afterwards: ok'],
+// Short phrases used in late messages (chat/addenda) for an excluded well, keyed by reason.
+export const LATE_OUTLIER = {
+  bubble: r => r.pick([`there was a ${B(r)} in the well ${DURING(r)}`, `it read with a ${B(r)} in it (I could not get it out in time)`, `a ${B(r)} sat in that well ${DURING(r)}`]),
+  pipette: r => r.pick(['that well got two enzyme aliquots by mistake', 'I spilled part of that well while moving the plate', 'the substrate went into that well about 2 min late', 'my tip came off while dispensing enzyme into that well']),
 };
+
+// Notes on wells the SOP keeps. Several reuse the vocabulary of the exclusion notes.
+export const DECOY_NOTES = {
+  'bubble-cleared': r => r.pick([`${B(r)}, popped with a clean tip before the read`, `${B(r)} tapped out before reading`, `had a ${B(r)}; spun the plate 30 s and it was gone before the read`,
+    `${B(r)} spotted at loading, removed with a needle before the read`, `${B(r)} at loading; cleared before the read started`, `popped a ${B(r)} here before the plate went in`]),
+  'bubble-after': r => r.pick([`${B(r)}s appeared when I added the stop solution (after the read)`, `${B(r)} formed while sealing the plate after the read finished`,
+    `${B(r)}s formed during clean-up, after the read had finished (the well was clear during the read)`, `no bubble during the read; one appeared afterwards when I moved the plate`]),
+  'neg-bubble': r => r.pick(['no bubble this time (unlike the last plate)', 'checked for bubbles before the read: none', 'bubble-free, double-checked under the lamp', 'the "bubble" at loading was a speck on the seal, not in the well']),
+  'neg-sat': r => r.pick(['close to the top of the range but no SAT flag', 'not saturated (raw trace checked)', 'expected an OVR here after the last plate, but the reader did not flag it', 'no OVR this time after the gain change', 'thought this might saturate; it did not (no flag)']),
+  'neg-pipette': r => r.pick(['thought I had double-dispensed enzyme here, but the tip count says no', 'substrate added on time (checked the timer log)', 'spill was on the bench next to the plate, not in this well', 'worried about the tip here, but it stayed on; volume fine']),
+  low: r => r.pick(['LOW', 'low-signal flag', 'reader: LOW (close to detection limit)', 'LOW flag from the reader']),
+  edge: r => r.pick(['edge well', 'outer-row well (evaporation risk noted)', 'corner well', 'edge position, sealed well']),
+  looks: r => r.pick(['value looks a bit high to me?', 'seems low; maybe exclude?', 'odd-looking number, double-checked the pipette: fine', 'higher than I expected, nothing wrong with the well',
+    'this one looks off to me, flagging for discussion', 'lower than the neighbours; no idea why', 'would drop this one if it were up to me']),
+  recheck: r => r.pick(['re-checked the volume after the read: correct', 'pipette calibration checked afterwards: ok', 'verified the dilution for this well afterwards: correct']),
+};
+// Late messages that mention a kept well with exclusion vocabulary.
+export const LATE_DECOY = r => r.pick([`there was a ${B(r)} at loading, but I tapped it out before the read`, `a ${B(r)} formed only after the read (when I added the stop mix)`, `I wondered about a double enzyme addition there, but the tip count is right`]);
 
 export const FILLER = [
   ({ r, pH, T }) => `Made ${r.pick([250, 500, 1000])} mL of ${r.pick([25, 50, 100])} mM ${r.pick(['HEPES', 'MOPS', 'Tris', 'phosphate', 'MES'])} and adjusted to pH ${pH} at ${T} °C.`,

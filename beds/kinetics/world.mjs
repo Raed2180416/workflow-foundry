@@ -9,27 +9,27 @@ import { rng } from '../lib/rng.mjs';
 import { fitMM, fitMMMeans, relErr } from './fit.mjs';
 import { ENZYMES, SUBSTRATES, INHIBITORS, PEOPLE, PIS, READERS, BENCH_CODES, OUTLIER_NOTES } from './pools.mjs';
 
-export const VERSION = '1.0.0';
+export const VERSION = '2.0.0';
 export const TOL = 0.10;          // oracle tolerance (relative) on Vmax and Km
 export const MARGIN = 0.05;       // generation-time bound for the reference fit
 export const MEANS_MARGIN = 0.08; // generation-time bound for a fit on replicate means
 
 const ALL_FORMATS = ['mdtable', 'csv', 'prose', 'grouped', 'reader', 'semicolon'];
 export const KNOBS = {
-  1: { nBase: 2, nInhib: 0, nConc: 6, reps: [2, 2], cv: 0.025, techDocs: 2, formats: ALL_FORMATS.slice(0, 2), outliers: [1, 2], decoys: [1, 2],
+  1: { silent: [0, 0], late: 0, lateDecoys: 0, misattributed: 0, tricky: 0, deviant: 1, claims: ['swap'], viaClaim: 0, nBase: 2, nInhib: 0, nConc: 6, reps: [2, 2], cv: 0.025, techDocs: 2, formats: ALL_FORMATS.slice(0, 2), outliers: [1, 2], decoys: [1, 2],
     decoyKinds: ['bubble-cleared', 'low'], rereads: [0, 0], corrections: ['swap'], pilot: false, chat: false, injections: 0, tempRule: false,
     absorbance: 'none', concUnits: ['uM', 'mM'], rateUnits: ['uM/s', 'uM/min'], numStyles: ['plain'], aliasStyles: ['id', 'phT'], unitPlacement: ['header'], filler: [1, 2], blanks: 0, rawExport: null },
-  2: { nBase: 3, nInhib: 0, nConc: 7, reps: [3, 3], cv: 0.03, techDocs: 3, formats: ALL_FORMATS.slice(0, 3), outliers: [2, 3], decoys: [2, 3],
-    decoyKinds: ['bubble-cleared', 'low', 'edge', 'looks'], rereads: [0, 0], corrections: ['units'], pilot: false, chat: false, injections: 0, tempRule: false,
+  2: { silent: [0, 0], late: 0, lateDecoys: 0, misattributed: 0, tricky: 0.3, deviant: 1, claims: ['units'], viaClaim: 0, nBase: 3, nInhib: 0, nConc: 7, reps: [3, 3], cv: 0.03, techDocs: 3, formats: ALL_FORMATS.slice(0, 3), outliers: [2, 3], decoys: [2, 3],
+    decoyKinds: ['bubble-cleared', 'low', 'edge', 'looks', 'neg-bubble'], rereads: [0, 0], corrections: ['units'], pilot: false, chat: false, injections: 0, tempRule: false,
     absorbance: 'none', concUnits: ['uM', 'mM'], rateUnits: ['uM/s', 'uM/min', 'nM/s'], numStyles: ['plain', 'e'], aliasStyles: ['id', 'phT', 'TpH'], unitPlacement: ['header'], filler: [2, 4], blanks: 0.2, rawExport: null },
-  3: { nBase: 5, nInhib: 0, nConc: 10, reps: [3, 4], cv: 0.035, techDocs: 5, formats: ALL_FORMATS.slice(0, 4), outliers: [4, 5], decoys: [3, 4],
-    decoyKinds: ['bubble-cleared', 'low', 'edge', 'looks', 'bubble-after'], rereads: [0, 0], corrections: ['reassign', 'units'], pilot: true, chat: true, injections: 0, tempRule: false,
+  3: { silent: [1, 1], late: 1, lateDecoys: 1, misattributed: 0, tricky: 0.5, deviant: 1, claims: ['reassign'], viaClaim: 0.5, nBase: 5, nInhib: 0, nConc: 10, reps: [3, 4], cv: 0.035, techDocs: 5, formats: ALL_FORMATS.slice(0, 4), outliers: [4, 5], decoys: [3, 4],
+    decoyKinds: ['bubble-cleared', 'low', 'edge', 'looks', 'bubble-after', 'neg-bubble', 'neg-sat', 'neg-pipette'], rereads: [0, 0], corrections: ['reassign', 'units'], pilot: true, chat: true, injections: 0, tempRule: false,
     absorbance: 'none', concUnits: ['uM', 'mM', 'nM'], rateUnits: ['uM/s', 'uM/min', 'nM/s', 'nM/min'], numStyles: ['plain', 'e', 'E'], aliasStyles: ['phT', 'TpH', 'id'], unitPlacement: ['header', 'preamble'], filler: [7, 11], blanks: 0.3, rawExport: { series: 3, typos: 1 } },
-  4: { nBase: 5, nInhib: 2, nConc: 9, reps: [3, 4], cv: 0.04, techDocs: 6, formats: ALL_FORMATS.slice(0, 5), outliers: [6, 8], decoys: [5, 6],
-    decoyKinds: ['bubble-cleared', 'low', 'edge', 'looks', 'bubble-after', 'temp-minor', 'recheck'], rereads: [1, 2], corrections: ['reassign', 'swap', 'units'], pilot: true, chat: true, injections: 2, tempRule: true,
+  4: { silent: [1, 2], late: 1, lateDecoys: 1, misattributed: 1, tricky: 0.5, deviant: 2, claims: ['reassign', 'swap'], viaClaim: 0.5, nBase: 5, nInhib: 2, nConc: 9, reps: [3, 4], cv: 0.04, techDocs: 6, formats: ALL_FORMATS.slice(0, 5), outliers: [6, 8], decoys: [5, 6],
+    decoyKinds: ['bubble-cleared', 'low', 'edge', 'looks', 'bubble-after', 'temp-minor', 'recheck', 'neg-bubble', 'neg-sat', 'neg-pipette'], rereads: [1, 2], corrections: ['reassign', 'swap', 'units'], pilot: true, chat: true, injections: 2, tempRule: true,
     absorbance: 'factor', concUnits: ['uM', 'mM', 'nM'], rateUnits: ['uM/s', 'uM/min', 'nM/s', 'nM/min', 'mM/min'], numStyles: ['plain', 'e', 'E', 'x10'], aliasStyles: ['phT', 'TpH', 'id'], unitPlacement: ['header', 'preamble'], filler: [6, 10], blanks: 0.35, rawExport: { series: 4, typos: 1 } },
-  5: { nBase: 5, nInhib: 3, nConc: 10, reps: [3, 4], cv: 0.04, techDocs: 7, formats: ALL_FORMATS, outliers: [8, 11], decoys: [7, 9],
-    decoyKinds: ['bubble-cleared', 'low', 'edge', 'looks', 'bubble-after', 'temp-minor', 'recheck'], rereads: [2, 3], corrections: ['reassign', 'omitted-inhibitor', 'swap', 'units', 'retracted'], pilot: true, chat: true, injections: 3, tempRule: true,
+  5: { silent: [2, 2], late: 2, lateDecoys: 1, misattributed: 1, tricky: 0.6, deviant: 2, claims: ['reassign', 'units', 'swap'], viaClaim: 0.5, nBase: 5, nInhib: 3, nConc: 10, reps: [3, 4], cv: 0.04, techDocs: 7, formats: ALL_FORMATS, outliers: [8, 11], decoys: [7, 9],
+    decoyKinds: ['bubble-cleared', 'low', 'edge', 'looks', 'bubble-after', 'temp-minor', 'recheck', 'neg-bubble', 'neg-sat', 'neg-pipette'], rereads: [2, 3], corrections: ['reassign', 'omitted-inhibitor', 'swap', 'units', 'retracted'], pilot: true, chat: true, injections: 3, tempRule: true,
     absorbance: 'epsilon', concUnits: ['uM', 'mM', 'nM'], rateUnits: ['uM/s', 'uM/min', 'nM/s', 'nM/min', 'mM/min'], numStyles: ['plain', 'e', 'E', 'x10'], aliasStyles: ['phT', 'TpH', 'kelvin', 'bench', 'id'], unitPlacement: ['header', 'preamble'], filler: [8, 12], blanks: 0.4, rawExport: { series: 5, typos: 2 }, superseded: true },
 };
 
@@ -165,13 +165,51 @@ export function buildWorld({ seed, split, difficulty }) {
     if (w.reason === 'pipette') w.variant = sr.int(0, OUTLIER_NOTES.pipette.variants.length - 1);
     perCond[w.condId] = (perCond[w.condId] ?? 0) + 1; perSeries[w.series] = true;
   }
+  // a note written on the wrong row: X carries the bubble note, a later message moves it to the neighbour Y
+  for (let i = 0; i < k.misattributed; i++) {
+    const cands = [];
+    for (const y of wells.filter(x => x.status === 'outlier' && x.reason === 'bubble' && !x.late)) {
+      for (const id of [-1, 1].map(dx => seriesByKey[y.series].wells[y.idx + dx])) if (id && wellById[id].status === 'none') cands.push([y, wellById[id]]);
+    }
+    if (!cands.length) {
+      // promote a free well next to a free neighbour into a bubble exclusion so the trap always exists
+      const pool = wells.filter(w => w.status === 'none' && !perSeries[w.series] && (perCond[w.condId] ?? 0) < 2);
+      for (const y of sr.shuffle(pool)) {
+        const id = seriesByKey[y.series].wells[y.idx + 1] ?? seriesByKey[y.series].wells[y.idx - 1];
+        if (wellById[id].status !== 'none') continue;
+        y.status = 'outlier'; y.reason = 'bubble'; perCond[y.condId] = (perCond[y.condId] ?? 0) + 1; perSeries[y.series] = true;
+        cands.push([y, wellById[id]]); break;
+      }
+    }
+    const [y, x] = sr.pick(cands);
+    y.late = 'misattributed'; y.noteFrom = x.id;
+    x.status = 'decoy'; x.kind = 'misattributed'; x.noteFor = y.id;
+  }
+  const outs = wells.filter(w => w.status === 'outlier');
+  // exclusion facts reported only in a later message (chat or addendum), not in the well's row
+  for (const w of sr.shuffle(outs.filter(x => ['bubble', 'pipette'].includes(x.reason) && !x.late)).slice(0, k.late)) w.late = 'fact';
+  // silent exclusions: the rate reads normally, only the note marks the well (defeats residual-based exclusion)
+  const nSilent = sr.int(k.silent[0], k.silent[1]);
+  for (const w of sr.shuffle(outs.filter(x => x.reason !== 'temp' && !x.late)).slice(0, nSilent)) w.silent = true;
+  // phrasing that points the other way ("popped ... after the read; it had been there throughout")
+  for (const w of outs) if (['bubble', 'sat'].includes(w.reason) && !w.late && sr.chance(k.tricky)) w.tricky = true;
   const nDec = sr.int(k.decoys[0], k.decoys[1]);
   let kindCycle = sr.shuffle(k.decoyKinds);
+  const DEVIANT_KINDS = ['looks', 'low', 'edge'].filter(x => k.decoyKinds.includes(x));
   for (let i = 0; i < nDec; i++) {
     const free = wells.filter(w => w.status === 'none');
     const w = sr.pick(free);
     if (!kindCycle.length) kindCycle = sr.shuffle(k.decoyKinds);
-    w.status = 'decoy'; w.kind = kindCycle.pop();
+    w.status = 'decoy';
+    if (i < k.deviant) {
+      // kept wells whose value really is off (a technician's doubt, a LOW flag): residual-based exclusion fails
+      w.kind = sr.pick(DEVIANT_KINDS); kindCycle = kindCycle.filter((x, j) => j !== kindCycle.indexOf(w.kind));
+      w.dev = sr.chance(0.5) ? sr.float(1.25, 1.35) : sr.float(0.68, 0.76);
+    } else w.kind = kindCycle.pop();
+  }
+  for (let i = 0; i < k.lateDecoys; i++) {
+    const w = sr.pick(wells.filter(x => x.status === 'none'));
+    w.status = 'decoy'; w.kind = 'late-cleared';
   }
   const nRe = sr.int(k.rereads[0], k.rereads[1]);
   for (let i = 0; i < nRe; i++) {
@@ -189,7 +227,7 @@ export function buildWorld({ seed, split, difficulty }) {
     let accepted = false, best = null;
     for (let attempt = 0; attempt < 600 && !accepted; attempt++) {
       const ar = nr.fork(`${c.id}:${attempt}`);
-      const draws = cw.map(w => c.vmax * w.S / (c.km + w.S) * (1 + k.cv * ar.normal()));
+      const draws = cw.map(w => c.vmax * w.S / (c.km + w.S) * (1 + k.cv * ar.normal()) * (w.dev ?? 1));
       cw.forEach((w, i) => { w.rateTrue = draws[i]; });
       const pts = cleanPoints(cw);
       const fit = fitMM(pts, { fixedV: parent ? parent.refFit.vmax : null });
@@ -218,7 +256,7 @@ export function buildWorld({ seed, split, difficulty }) {
         else if (w.reason === 'temp') ranges = [[0.5, 0.7], [1.4, 1.7]];
         else ranges = OUTLIER_NOTES[w.reason].factors;
         const [lo, hi] = tr.pick(ranges);
-        w.factor = tr.float(lo, hi);
+        w.factor = w.silent ? 1 : tr.float(lo, hi);
         w.rate = w.rateTrue * w.factor;
       }
       const fit = fitMM(cw.map(w => ({ S: w.S, v: w.rate })), { fixedV: parent ? parent.refFit.vmax : null });

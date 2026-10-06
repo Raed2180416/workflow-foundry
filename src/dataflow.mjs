@@ -3,6 +3,16 @@
 // outcome oracle or a proof that a producer's data is current/true.
 import { refParts, condition } from './data.mjs';
 
+// Agent checks read the parsed model output as output.* (DESIGN §1.1). data.mjs has no `output`
+// root (its bytes are pinned by the outcome evaluators), so checks are evaluated over a rewritten
+// template where output.* becomes nodes._output.*, a key no node id can take.
+export const OUTPUT_KEY = '_output';
+export function bindOutput(template) {
+  if (Array.isArray(template)) return template.map(bindOutput);
+  if (!template || typeof template !== 'object') return template;
+  if (Object.hasOwn(template, '$ref')) return typeof template.$ref === 'string' && /^output(\.|$)/.test(template.$ref) ? { ...template, $ref: `nodes.${OUTPUT_KEY}${template.$ref.slice('output'.length)}` } : template;
+  return Object.fromEntries(Object.entries(template).map(([key, value]) => [key, bindOutput(value)]));
+}
 const unknown = () => ({});
 const record = properties => ({ type: 'object', properties, additionalProperties: false });
 const union = schemas => schemas.length === 1 ? schemas[0] : { anyOf: schemas };
@@ -198,8 +208,9 @@ export function analyzeDataflow(workflow, registry) {
       for (const key of ['when', 'args', 'checks', 'items', 'input', 'initial', 'subject']) {
         if (!Object.hasOwn(node, key)) continue;
         // Agent checks also see the parsed model output (DESIGN §1.1).
-        const scope = node.kind === 'agent' && key === 'checks' ? { ...context, output: [bound(node.returns)] } : context;
-        inspect(node[key], scope, `${nodePath}/${key}`, phases, inheritedGuard || (key !== 'when' && !!node.when), key === 'when' || key === 'checks');
+        const own = node.kind === 'agent' && key === 'checks';
+        const scope = own ? { ...context, nodes: [bound({ ...outputs(flow), properties: { ...outputs(flow).properties, [OUTPUT_KEY]: node.returns } })] } : context;
+        inspect(own ? bindOutput(node[key]) : node[key], scope, `${nodePath}/${key}`, phases, inheritedGuard || (key !== 'when' && !!node.when), key === 'when' || key === 'checks');
       }
       for (const [index, spec] of contextRefs(node)) inspect({ $ref: spec.ref }, context, `${nodePath}/context/inputs/${index}/ref`, phases, inheritedGuard || !!node.when);
       if (!node.body) continue;

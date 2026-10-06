@@ -5,8 +5,9 @@ Catalog: github.com/snakemake/snakemake-workflow-catalog (data.json; clone pinne
 /opt/corpus/snakemake/catalog. Picks the top-N *standardized* workflows by stars (the catalog's own
 template repository is excluded) and makes a shallow, blob-filtered, sparse clone of each at its latest
 release tag (else default-branch HEAD) into /opt/corpus/snakemake/repos/<owner>__<repo>.
-Only workflow definition files are checked out (Snakefile, *.smk, rules/, workflow/, config/, .test/,
-.tests/, .github/workflows/, LICENSE*). No LFS/submodules, hooks disabled, nothing executed.
+Only workflow definition files are checked out (Snakefile, *.smk, rules, schemas, config tables, .test config,
+.tests/unit, .github/workflows, LICENSE*); blobs are fetched lazily for those paths only (--filter=blob:none) and
+the full file list is written to <dir>.files.json from tree objects (test data is listed, not downloaded). No LFS/submodules, hooks disabled, nothing executed.
 Usage: python3 -I science-fetch-snakemake.py [N]
 """
 import concurrent.futures as cf, json, os, subprocess, sys
@@ -14,8 +15,11 @@ import concurrent.futures as cf, json, os, subprocess, sys
 ROOT = "/opt/corpus/snakemake"
 GIT = ["git", "-c", "core.hooksPath=/dev/null", "-c", "filter.lfs.smudge=", "-c", "filter.lfs.required=false",
        "-c", "protocol.file.allow=never"]
-SPARSE = ["/Snakefile", "/snakefile", "/*.smk", "/*.snakefile", "/rules/", "/workflow/", "/config/", "/.test/", "/.tests/",
-          "/.github/workflows/", "/LICENSE", "/LICENSE.*", "/LICENCE", "/COPYING", "/README.md", "/test/", "/tests/"]
+SPARSE = ["/Snakefile", "/snakefile", "/*.smk", "/*.snakefile", "/rules/*.smk", "/rules/*.snakefile", "/rules/*.py",
+          "/workflow/Snakefile", "/workflow/*.smk", "/workflow/rules/*.smk", "/workflow/rules/*.py", "/workflow/rules/**/*.smk",
+          "/workflow/schemas/", "/config/*.yaml", "/config/*.yml", "/config/*.tsv", "/config/*.csv",
+          "/.test/*.yaml", "/.test/*.yml", "/.test/config*/", "/.tests/unit/*.py", "/.github/workflows/",
+          "/LICENSE*", "/LICENCE*", "/COPYING*", "/README.md"]
 EXCLUDE = {"snakemake-workflows/snakemake-workflow-template"}
 
 
@@ -29,17 +33,20 @@ def clone(full, tag):
             subprocess.run(GIT + ["-C", d, "remote", "add", "origin", url], check=True)
         subprocess.run(GIT + ["-C", d, "sparse-checkout", "set", "--no-cone", *SPARSE], check=True)
         ref = f"refs/tags/{tag}" if tag else "HEAD"
-        r = subprocess.run(GIT + ["-C", d, "fetch", "-q", "--depth", "1", "--filter=blob:limit=2m", "--no-recurse-submodules",
+        r = subprocess.run(GIT + ["-C", d, "fetch", "-q", "--depth", "1", "--filter=blob:none", "--no-recurse-submodules",
                                   "origin", ref], timeout=600, capture_output=True, text=True)
         if r.returncode != 0 and tag:
             ref = "HEAD"
-            subprocess.run(GIT + ["-C", d, "fetch", "-q", "--depth", "1", "--filter=blob:limit=2m", "--no-recurse-submodules",
+            subprocess.run(GIT + ["-C", d, "fetch", "-q", "--depth", "1", "--filter=blob:none", "--no-recurse-submodules",
                                   "origin", "HEAD"], check=True, timeout=600)
         elif r.returncode != 0:
             raise RuntimeError(r.stderr.strip()[:200])
         subprocess.run(GIT + ["-C", d, "checkout", "-q", "FETCH_HEAD"], check=True, timeout=600)
         head = subprocess.run(["git", "-C", d, "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
         date = subprocess.run(["git", "-C", d, "log", "-1", "--format=%cI"], capture_output=True, text=True).stdout.strip()
+        # full file listing from tree objects only (no blobs): records test data presence without downloading it
+        files = subprocess.run(["git", "-C", d, "ls-tree", "-r", "--name-only", "HEAD"], capture_output=True, text=True).stdout.split("\n")
+        json.dump([f for f in files if f], open(f"{d}.files.json", "w"))
         return {"status": "ok", "head": head, "ref": ref, "date": date, "path": d}
     except Exception as e:
         return {"status": f"error: {str(e)[:200]}", "path": d}

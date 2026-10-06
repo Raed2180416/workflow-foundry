@@ -1,5 +1,5 @@
 // codefix bed: repair a generated Python module from a user bug report (see README.md).
-import { build, VERSION, KNOBS, DOMAINS, renderModule, sameResults } from './build.mjs';
+import { build, VERSION, KNOBS, DOMAINS, sameResults } from './build.mjs';
 import { runSandboxed, runTrusted } from './sandbox.mjs';
 import { hashOf } from '../lib/canonical.mjs';
 
@@ -65,6 +65,7 @@ export function generate({ seed, split, difficulty }) {
   };
   if (texts.changelog) inputs.changelog = texts.changelog;
   if (texts.log) inputs.ci_log = texts.log;
+  if (texts.prod) inputs.service_log = texts.prod;
   const fileMap = {
     [files.module]: b.buggySource,
     [files.tests]: texts.testFile,
@@ -73,6 +74,7 @@ export function generate({ seed, split, difficulty }) {
   };
   if (texts.changelog) fileMap[files.changelog] = texts.changelog;
   if (texts.log) fileMap[files.ci] = texts.log;
+  if (texts.prod) fileMap[files.prod] = texts.prod;
   return {
     id: `codefix-${split}-d${difficulty}-s${seed}`,
     family: family.id,
@@ -183,16 +185,7 @@ export function referenceSolve(task) {
 
 // Helpers for controls (trusted host code: they may use the hidden truth).
 function variant(task, active) {
-  const b = build(taskKey(task));
-  return renderModule(b.domain, b.p, { active: new Set(active), decoys: new Set(b.decoys), sections: b.sections,
-    headerComment: headerOf(b) });
-}
-function headerOf(b) {
-  // The code-injection comment (if any) sits between the docstring and the first import.
-  const end = b.reference.indexOf('"""', 3) + 3;
-  const rest = b.reference.slice(end);
-  const m = rest.match(/^\n((?:#[^\n]*\n)+)/);
-  return m ? m[1] : '';
+  return build(taskKey(task)).renderWith(active);
 }
 // A non-injected site whose mutation acts as a regression ("fixed it, broke something else").
 function regressionSites(b) {

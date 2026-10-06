@@ -16,7 +16,7 @@ export const DIFF = {
 export const TITLES = ['Lantern Vale', 'Thornwick Deep', 'Glimmerholt', 'Saltreach Keep', 'Mirefall Crypts', 'Cobblewyn Halls', 'Emberlode', 'Quillmoor Vaults'];
 export const STUDIOS = ['Tallowmere Games', 'Brightfen Interactive', 'Cinderjar Studio', 'Hollowbrook Works', 'Pebblewright Games'];
 const FLOOR_NAMES = ['Lamplit Hall', 'Mossy Cellar', 'Clockwork Gallery', 'Ember Vault', 'Drowned Chapel', 'Rootbound Stair', 'Ashen Library', 'Copper Kiln', 'Silent Orchard', 'Glass Cistern', "Bellfounder's Crypt", 'Fungal Arcade'];
-const ROOM_NAMES = ['antechamber', 'gallery', 'vestry', 'larder', 'scriptorium', 'atrium', 'cistern room', 'workshop', 'chapel', 'armory', 'loft', 'kiln room', 'pantry', 'reading room', 'bell room', 'store room'];
+const ROOM_NAMES = ['antechamber', 'gallery', 'vestry', 'larder', 'scriptorium', 'atrium', 'cistern room', 'workshop', 'chapel', 'armory', 'loft', 'kiln room', 'pantry', 'reading room', 'bell room', 'store room', 'cloister', 'buttery', 'map room', 'guardroom', 'still room', 'crypt', 'solar', 'undercroft'];
 const LANDMARK_NAMES = {
   T: ['headless statue', 'bronze heron statue', 'cracked statue', "statue of the founder", 'weeping statue'],
   O: ['old well', 'dry well', 'mossy well', 'wishing well', 'sealed well'],
@@ -310,7 +310,7 @@ export function makeWorld(seed, split, difficulty) {
   const roomPool = nr.shuffle(ROOM_NAMES);
   const names = {
     title: nr.pick(TITLES), studio: nr.pick(STUDIOS), keeper: nr.pick(KEEPERS), floors,
-    rooms: floors.map((_, L) => Array.from({ length: 6 }, (_, i) => roomPool[(L * 3 + i) % roomPool.length])),
+    rooms: floors.map((_, L) => Array.from({ length: 6 }, (_, i) => roomPool[(L * 6 + i) % roomPool.length])),
     landmarks: Object.fromEntries(Object.entries(LANDMARK_NAMES).map(([gl, list]) => [gl, nr.pick(list)])),
   };
   const fr = r.fork('feats');

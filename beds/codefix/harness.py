@@ -49,7 +49,9 @@ def norm(v, depth=0):
     if isinstance(v, (list, tuple)):
         return [norm(x, depth + 1) for x in v[:500]]
     if isinstance(v, dict):
-        return {"__map__": [[norm(k, depth + 1), norm(x, depth + 1)] for k, x in list(v.items())[:500]]}
+        # Python dict equality ignores order, so entries are sorted by key.
+        items = [[norm(k, depth + 1), norm(x, depth + 1)] for k, x in list(v.items())[:500]]
+        return {"__map__": sorted(items, key=lambda kv: json.dumps(kv[0], sort_keys=True))}
     if isinstance(v, (set, frozenset)):
         items = [norm(x, depth + 1) for x in v]
         return {"__set__": sorted(items, key=lambda x: json.dumps(x, sort_keys=True))[:500]}

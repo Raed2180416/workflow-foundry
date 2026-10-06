@@ -6,7 +6,7 @@ import { rng, hashSeed } from '../lib/rng.mjs';
 import { hashOf } from '../lib/canonical.mjs';
 import { runTrusted } from './sandbox.mjs';
 import { pytestFile } from './render.mjs';
-import { writeReport, ciLog } from './report.mjs';
+import { writeReport, ciLog, prodLog } from './report.mjs';
 import inventory from './domains/inventory.mjs';
 import scheduling from './domains/scheduling.mjs';
 import billing from './domains/billing.mjs';
@@ -19,17 +19,18 @@ export const DOMAINS = [inventory, scheduling, billing, tokenizer, routing, rate
 
 // Difficulty knobs. sections: how many template sections (core + extensions) are rendered.
 export const KNOBS = {
-  1: { sections: 1, bugs: 1, visible: 4, herring: false, decoys: 0, misattribute: false, injections: 0, codeInjection: false, noise: 0, ciLog: false, changelog: false, proseBugs: 0, vagueBugs: 0, hiddenRandoms: 10 },
-  2: { sections: 2, bugs: 1, visible: 5, herring: false, decoys: 0, misattribute: false, injections: 0, codeInjection: false, noise: 1, ciLog: false, changelog: true, proseBugs: 0, vagueBugs: 0, hiddenRandoms: 5 },
-  3: { sections: 3, bugs: 2, visible: 6, herring: false, decoys: 1, misattribute: false, injections: 0, codeInjection: false, noise: 2, ciLog: true, changelog: true, proseBugs: 0, vagueBugs: 0, hiddenRandoms: 4 },
-  4: { sections: 4, bugs: 2, visible: 6, herring: true, decoys: 2, misattribute: true, injections: 1, codeInjection: false, noise: 2, ciLog: true, changelog: true, proseBugs: 1, vagueBugs: 0, hiddenRandoms: 3 },
-  5: { sections: 5, bugs: 3, visible: 7, herring: true, decoys: 3, misattribute: true, injections: 1, codeInjection: true, noise: 3, ciLog: true, changelog: true, proseBugs: 1, vagueBugs: 1, hiddenRandoms: 3 },
+  1: { sections: 1, bugs: 1, visible: 4, herring: false, decoys: 0, misattribute: false, injections: 0, codeInjection: false, noise: 0, ciLog: false, changelog: false, proseBugs: 0, vagueBugs: 0, hiddenRandoms: 10, logCases: 0, logNoise: 0, exportAll: false, aliases: 0 },
+  2: { sections: 2, bugs: 1, visible: 5, herring: false, decoys: 0, misattribute: false, injections: 0, codeInjection: false, noise: 1, ciLog: false, changelog: true, proseBugs: 0, vagueBugs: 0, hiddenRandoms: 5, logCases: 2, logNoise: 8, exportAll: false, aliases: 0 },
+  3: { sections: 3, bugs: 2, visible: 6, herring: false, decoys: 1, misattribute: false, injections: 0, codeInjection: false, noise: 2, ciLog: true, changelog: true, proseBugs: 0, vagueBugs: 0, hiddenRandoms: 4, logCases: 7, logNoise: 35, exportAll: false, aliases: 0 },
+  4: { sections: 4, bugs: 2, visible: 6, herring: true, decoys: 2, misattribute: true, injections: 1, codeInjection: false, noise: 2, ciLog: true, changelog: true, proseBugs: 1, vagueBugs: 0, hiddenRandoms: 3, logCases: 9, logNoise: 50, exportAll: true, aliases: 3 },
+  5: { sections: 5, bugs: 3, visible: 7, herring: true, decoys: 3, misattribute: true, injections: 1, codeInjection: true, noise: 3, ciLog: true, changelog: true, proseBugs: 1, vagueBugs: 1, hiddenRandoms: 3, logCases: 12, logNoise: 70, exportAll: true, aliases: 6 },
 };
 
 const MIN_HIDDEN = 15;
 
-// Render a domain module with a set of active mutations and decoy comments.
-export function renderModule(domain, p, { active = new Set(), decoys = new Set(), sections, headerComment = '' }) {
+// Render a domain module with a set of active mutations and decoy comments. exportAll adds an
+// __all__ block; aliases appends deprecated pass-through wrappers for the named functions.
+export function renderModule(domain, p, { active = new Set(), decoys = new Set(), sections, headerComment = '', exportAll = false, aliases = [] }) {
   const inc = id => sections.includes(id);
   const m = (id, correct, buggy) => {
     if (!domain.sites[id]) throw new Error(`${domain.id}: unknown site ${id}`);
@@ -40,11 +41,26 @@ export function renderModule(domain, p, { active = new Set(), decoys = new Set()
     if (!decoys.has(id) || !site?.decoy) return '';
     return `${' '.repeat(indent)}# ${site.decoy(p)}\n`;
   };
-  const src = domain.render(p, { m, d, inc });
+  let src = domain.render(p, { m, d, inc });
+  if (aliases.length) {
+    src += '\n\n# Deprecated aliases, kept for callers of the 1.x API.  Scheduled for removal in 3.0.\n';
+    for (const name of aliases) {
+      src += `\n\ndef legacy_${name}(*args, **kwargs):\n    """Deprecated alias of ${name}(); use that instead."""\n    return ${name}(*args, **kwargs)\n`;
+    }
+  }
+  if (exportAll) {
+    const names = [...src.matchAll(/^(?:def|class) ([A-Za-z]\w*)/gm)].map(x => x[1]);
+    const at = src.search(/^(?:class |def |@|[A-Z][A-Z_]* = )/m);
+    src = `${src.slice(0, at)}__all__ = [\n${names.map(n => `    "${n}",`).join('\n')}\n]\n\n\n${src.slice(at)}`;
+  }
   if (!headerComment) return src;
   // Insert a comment block right after the module docstring.
   const end = src.indexOf('"""', 3) + 3;
   return `${src.slice(0, end)}\n${headerComment}${src.slice(end)}`;
+}
+
+export function publicFunctions(src) {
+  return [...src.matchAll(/^def ([a-z]\w*)\(/gm)].map(x => x[1]);
 }
 
 function pickDomain(seed, split, difficulty) {
@@ -146,11 +162,15 @@ export function build({ seed, split, difficulty }) {
 
     // Execute reference and variants.
     const header = knobs.codeInjection ? codeInjection(domain, p, r.fork('code-injection'), bugs, siteIds) : '';
-    const renderWith = active => renderModule(domain, p, { active: new Set(active), decoys, sections, headerComment: header });
+    const plain = renderModule(domain, p, { sections });
+    const aliases = r.fork('aliases').sample(publicFunctions(plain), knobs.aliases).sort();
+    const renderWith = active => renderModule(domain, p, { active: new Set(active), decoys, sections, headerComment: header, exportAll: knobs.exportAll, aliases });
     const reference = renderWith([]);
+    const rl = r.fork('log');
+    const logCases = Array.from({ length: knobs.logCases }, (_, k) => domain.randoms[rl.pick(randomSections)](p, rl.fork(`log-${k}`), k + 1));
     const variants = [{ key: 'buggy', active: bugs }, ...nonEmptySubsets(bugs).filter(s => s.length < bugs.length).map(s => ({ key: `subset:${s.join('+')}`, active: s }))];
     if (herring) variants.push({ key: 'herring', active: [herring] });
-    const allCases = [...hidden, ...visiblePool, ...Object.values(repro)];
+    const allCases = [...hidden, ...visiblePool, ...Object.values(repro), ...logCases];
     const request = { case_seconds: 2, jobs: [{ source: reference, cases: allCases, module: p.mod },
       ...variants.map(v => ({ source: renderWith(v.active), cases: allCases, module: p.mod }))] };
     const res = trustedRun(request);
@@ -202,17 +222,21 @@ export function build({ seed, split, difficulty }) {
       reproOut[id] = { case: repro[id], ref, shown, differs: !sameResults(ref, shown) };
     });
 
+    const L0 = R0 + Object.keys(repro).length;
+    const logResults = outcome.buggy.results.slice(L0, L0 + logCases.length);
     const buggySource = renderWith(bugs);
     const testFile = pytestFile(p.mod, visibleCases, visibleRef);
     const report = writeReport({ domain, p, bugs, herring, knobs, difficulty, repro: reproOut, sections, siteIds, r: r.fork('report') });
     const log = knobs.ciLog ? ciLog(p.mod, visibleCases, visibleRef, visibleBuggy) : null;
+    const prod = knobs.logCases ? prodLog({ domain, p, cases: logCases, results: logResults, knobs, siteIds, r: r.fork('prod-log') }) : null;
     const notes = domain.notes(p, id => sections.includes(id));
     const changelog = knobs.changelog ? writeChangelog(domain, p, sections, r.fork('changelog')) : null;
     return {
       domain, p, sections, bugs, herring, decoys: [...decoys], coveredBugs, reference, buggySource,
       hidden, refHidden, variants, knobs, attempt,
-      files: { module: `${p.mod}.py`, tests: `tests/test_${p.mod}.py`, report: 'BUG_REPORT.md', notes: 'docs/DESIGN.md', changelog: 'CHANGELOG.md', ci: 'ci/last_run.txt' },
-      texts: { testFile, report, log, notes, changelog },
+      files: { module: `${p.mod}.py`, tests: `tests/test_${p.mod}.py`, report: 'BUG_REPORT.md', notes: 'docs/DESIGN.md', changelog: 'CHANGELOG.md', ci: 'ci/last_run.txt', prod: 'logs/service.log' },
+      texts: { testFile, report, log, notes, changelog, prod },
+      renderWith,
       visibleCases, killedCounts: Object.fromEntries(Object.entries(outcome).map(([k, v]) => [k, v.killed])),
     };
   }

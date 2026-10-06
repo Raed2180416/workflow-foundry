@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { checkData, clone, condition, digest, errorData, FoundryError, references, resolve } from './data.mjs';
-import { modelNodes, requireWorkflow, validateData, validateDecision, validateIdentity, VERIFY_RETURNS } from './validate.mjs';
+import { bindOutput, modelNodes, OUTPUT_KEY, requireWorkflow, validateData, validateDecision, validateIdentity, VERIFY_RETURNS } from './validate.mjs';
 import { engineHash } from './engine.mjs';
 import { compileContext, contextInputs, inheritedLabel, joinLabels } from './context.mjs';
 import { verdictOf } from './verdict.mjs';
@@ -526,7 +526,7 @@ class Invocation {
         }
         entry = escalate('E1', code, message); continue;
       }
-      const failed = this.failedCheck(checks, { ...ctx, output: result.value });
+      const failed = this.failedCheck(checks.map(bindOutput), { ...ctx, nodes: { ...ctx.nodes, [OUTPUT_KEY]: result.value } });
       if (!failed) return { value: result.value, compiled, entry, escalations };
       if (rules.onCheckFail === 'fail') throw new FoundryError('NODE_CHECK_FAILED', `${node.id}: ${failed}`);
       if (rules.onCheckFail === 'resample' && resamples < rules.maxResamples) {

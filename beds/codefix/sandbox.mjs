@@ -12,6 +12,8 @@ import { fileURLToPath } from 'node:url';
 export const PYTHON = '/usr/bin/python3';
 const HARNESS = readFileSync(fileURLToPath(new URL('./harness.py', import.meta.url)), 'utf8');
 const MARK = '@@CODEFIX-RESULT@@';
+// -P -s -S -B instead of -I so that PYTHONHASHSEED (set here, the environment is otherwise
+// empty) applies: set iteration order must not make results nondeterministic.
 const MIN_ENV = { PATH: '/usr/bin:/bin', LANG: 'C.UTF-8', PYTHONHASHSEED: '0', PYTHONDONTWRITEBYTECODE: '1' };
 
 const SANDBOX_SCRIPT = [
@@ -25,7 +27,7 @@ const SANDBOX_SCRIPT = [
   'ulimit -v 1048576',
   'ulimit -f 4096',
   'ulimit -t 8',
-  'exec timeout -s KILL "$2" /usr/bin/python3 -I -S -B -c "$1"',
+  'exec timeout -s KILL "$2" /usr/bin/python3 -P -s -S -B -c "$1"',
 ].join('\n');
 
 function parse(proc, label) {
@@ -46,7 +48,7 @@ function parse(proc, label) {
 export function pythonAvailable() { return existsSync(PYTHON); }
 
 export function runTrusted(request, { timeoutMs = 20000 } = {}) {
-  const proc = spawnSync(PYTHON, ['-I', '-S', '-B', '-c', HARNESS], {
+  const proc = spawnSync(PYTHON, ['-P', '-s', '-S', '-B', '-c', HARNESS], {
     input: JSON.stringify(request), env: MIN_ENV, cwd: '/', timeout: timeoutMs, killSignal: 'SIGKILL',
     maxBuffer: 64 * 1024 * 1024, encoding: 'utf8',
   });

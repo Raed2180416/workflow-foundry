@@ -135,6 +135,7 @@ export function pytestFunction(c, results) {
       if (s[0] !== 'new' && v !== null && !isPlainObject(v)) body.push(`    assert ${target} == ${isFloatish(v) ? `pytest.approx(${pyValue(v)})` : pyValue(v)}`);
       return;
     }
+    if (v === null && s[0] === 'fn') { body.push(`    assert ${expr} is None`); return; }
     if (v === null || isPlainObject(v)) { body.push(`    ${expr}`); return; }
     const lit = isFloatish(v) ? `pytest.approx(${pyValue(v)})` : pyValue(v);
     body.push(`    assert ${expr} == ${lit}`);

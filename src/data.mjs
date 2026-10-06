@@ -41,7 +41,7 @@ export const clone = value => JSON.parse(JSON.stringify(checkData(value, { maxBy
 export const errorData = error => ({ code: error.code ?? 'ERROR', message: String(error.message ?? error).slice(0, 3000) });
 
 export function refParts(reference) {
-  if (typeof reference !== 'string' || !/^(input|nodes|item|index|iteration|previous|output)(\.[A-Za-z0-9_-]+)*$/.test(reference)) {
+  if (typeof reference !== 'string' || !/^(input|nodes|item|index|iteration|previous)(\.[A-Za-z0-9_-]+)*$/.test(reference)) {
     throw new FoundryError('INVALID_REFERENCE', `Invalid JSON reference: ${String(reference)}`);
   }
   const parts = reference.split('.');

@@ -35,7 +35,8 @@ export function blameChainSolve(task) {
       lvl: /^(ERROR|\[ERROR\]|E:)|"(level|lvl|severity)":"error|level=error/i.test(head) ? 'E' : /^(WARN|\[WARN\]|W:)|"(level|lvl|severity)":"warn|level=warn/i.test(head) ? 'W' : 'I' }; });
   const named = l => { for (const [re, n] of res) if (n !== l.svc && re.test(l.body)) return n; return null; };
   const fails = L.filter(l => l.lvl === 'E' && !/fallback|degraded/i.test(l.body)).map(l => ({ ...l, callee: named(l) })).filter(l => l.callee && calls.get(l.svc)?.has(l.callee));
-  const sick = s => L.filter(l => l.svc === s && l.lvl === 'E' && l.t >= (fails[0]?.t ?? 0)).length >= 3;
+  const t0 = fails[0]?.t ?? L[0].t, span = [t0 - L[0].t, L.at(-1).t - t0], ew = (s, a) => L.filter(l => l.svc === s && l.lvl !== 'I' && (l.t >= t0) === a).length;
+  const sick = s => ew(s, true) >= 3 && ew(s, true) / span[1] >= 2 * (ew(s, false) + 1) / span[0];
   const top = (s, seen) => { const c = new Map(); for (const f of fails) if (f.svc === s && !seen.has(f.callee)) c.set(f.callee, (c.get(f.callee) || 0) + 1); return [...c].sort((a, b) => b[1] - a[1]).find(([k, n]) => n >= 2 && sick(k))?.[0]; };
   const counts = new Map(); for (const f of fails) counts.set(f.svc, (counts.get(f.svc) || 0) + 1);
   let root = [...counts].sort((a, b) => b[1] - a[1])[0]?.[0] ?? L[0].svc; const seen = new Set([root]);
@@ -43,7 +44,7 @@ export function blameChainSolve(task) {
   const mine = L.filter(l => l.svc === root && l.lvl !== 'I');
   const cls = Object.entries(CLASS_RE).map(([k, re]) => [k, mine.filter(l => re.test(l.body)).length]).sort((a, b) => b[1] - a[1])[0][0];
   const hits = mine.filter(l => CLASS_RE[cls].test(l.body)), tF = fails.find(f => f.callee === root)?.t ?? 0; let i = hits.length - 1;
-  if (cls === 'memory_leak_oom') while (i > 0 && hits[i].t - hits[i - 1].t <= 60000) i--; else i = Math.max(0, hits.findIndex(h => h.t >= tF - 150000));
+  if (cls === 'memory_leak_oom') while (i > 0 && hits[i].t - hits[i - 1].t <= 150000) i--; else i = Math.max(0, hits.findIndex(h => h.t >= tF - 150000));
   const T = (hits[i] || mine[0] || L[0]).t, imp = new Set([root]);
   for (let grew = true; grew;) { grew = false; for (const f of fails) if (f.t >= T && imp.has(f.callee) && !imp.has(f.svc)) { imp.add(f.svc); grew = true; } }
   return { root_service: root, fault_class: cls, first_bad_timestamp: new Date(T).toISOString(), impacted_services: [...imp], evidence_line_ids: hits.slice(i, i + 10).map(l => l.id) };

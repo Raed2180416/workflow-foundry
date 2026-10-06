@@ -1,7 +1,8 @@
 import Ajv from 'ajv';
 import { readFileSync } from 'node:fs';
 import { checkData, FoundryError, digest, references } from './data.mjs';
-import { analyzeDataflow } from './dataflow.mjs';
+import { analyzeDataflow, bindOutput, OUTPUT_KEY } from './dataflow.mjs';
+export { bindOutput, OUTPUT_KEY };
 import { portableSchemaViolations, quarantinedSchemaViolations } from './schema-subset.mjs';
 import { inheritedLabel, joinLabels } from './context.mjs';
 import { classIndex, modelById, modelsForClass } from './models/policy.mjs';
@@ -230,7 +231,7 @@ export function validateWorkflow(workflow, { registry, maxNodes = 2000, modelPol
       if (outputChecks) delete own.checks;
       inspectRefs(own, `${prefix}.${node.id}`, ancestors.get(node.id) ?? new Set());
       inspectRefs(contextRefs(node), `${prefix}.${node.id}.context`, ancestors.get(node.id) ?? new Set());
-      if (outputChecks) inspectRefs(outputChecks, `${prefix}.${node.id}.checks`, ancestors.get(node.id) ?? new Set(), new Set([...locals, 'output']));
+      if (outputChecks) inspectRefs(bindOutput(outputChecks), `${prefix}.${node.id}.checks`, new Set([...(ancestors.get(node.id) ?? []), OUTPUT_KEY]));
       if (node.kind === 'verify' && node.independence === 'different-model' && policy) {
         try {
           const producers = references(node.subject).map(ref => ref.split('.')).filter(([root, id]) => root === 'nodes' && byId.get(id)?.kind === 'agent').map(([, id]) => byId.get(id));
