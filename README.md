@@ -154,19 +154,29 @@ propose/apply and export. The repair walkthrough is in
 
 ## Archives and history
 
-- **GitHub release `evidence-20261006`**: a scrubbed evidence tarball of about
-  57 MB. It contains benchmark runs, frozen Foundry SQLite databases, eval,
-  reference-SWE and product-demo runs, `.foundry` state, and UI screenshots.
-  The tests and docs that relied on those runs were removed from git. The data
-  lives only in the release.
-- **Not in git, kept locally or pending upload:** the third-party source corpus
-  (`corpus/`, about 3.8 GB), full raw run data, the raw research stack
-  (`~/Projects/grok-research-stack`), and the AI conversation logs from the Grok
-  and ChatGPT/Codex sessions. Credentials, raw provider transcripts and private
-  model reasoning are never published.
-- Git history keeps every deleted document, including the long-form friend
-  handoff, per-campaign result files and the full recovery archive. Look at
-  commits before this cleanup.
+Everything not kept in git is in two releases on this private repository:
+
+| Release | Asset | Contents |
+|---|---|---|
+| `archive-20261006` | `corpus.tar.zst.part-00`, `-01` | 3.8 GB: the 50 pinned third-party source repos (`corpus/`) that the manifests and dossiers cite. |
+| | `run-data.tar.zst.part-00` | 566 MB: `evals/runs/`, `.foundry/`, `research/product-demo/runs/`, `research/reference-swe/runs/`, `web/artifacts/`. |
+| | `research-history.tar.zst` | 110 MB: the full Grok research stack (Sep 13–17 consequence study, recovery, vendor), the Sep 13 demo project, and the 2026-10-06 Codex recovery workspace. |
+| | `conversations.tar.zst` | 117 MB: the Grok, ChatGPT and Codex conversation logs about this project. Detected credentials are replaced with `[REDACTED]`. |
+| | `SHA256SUMS` | Checksums for the assets above. |
+| `evidence-20261006` | `workflow-foundry-evidence-20261006.tar.gz` | 57 MB: a scrubbed, curated subset of the research evidence, with a per-file inclusion manifest in git history. |
+
+Restore from the repo root:
+
+```sh
+gh release download archive-20261006 -D ~/wf-archive && cd ~/wf-archive && sha256sum -c SHA256SUMS
+cat corpus.tar.zst.part-* | zstd -d | tar -x -C ~/Projects/workflow-foundry      # -> corpus/
+cat run-data.tar.zst.part-* | zstd -d | tar -x -C ~/Projects/workflow-foundry    # -> run dirs
+zstd -d < research-history.tar.zst | tar -x -C /some/dir
+```
+
+Git history keeps every deleted document, including the long-form friend handoff,
+the per-campaign result files and the full recovery archive. Look at the commits
+before the restructure.
 
 ## Boundaries
 
