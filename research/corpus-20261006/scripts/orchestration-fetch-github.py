@@ -7,6 +7,9 @@ Files land in /opt/corpus/<platform>/<owner>__<repo>@<oid>/<path>; a manifest JS
 oid, file list, sizes, sha256 and the licence file fetched from the same commit.
 Downloaded files are data only; nothing is executed.
 
+Alternative lister (for repositories Sourcegraph does not index): Software Heritage archive API
+(origin latest visit -> snapshot HEAD -> revision -> directory walk), selected with LISTER=swh.
+
 Usage: python3 -I orchestration-fetch-github.py <platform> <owner/repo> <tree-path> <regex> [rev] [max_files]
 """
 import hashlib, json, os, re, sys, time, urllib.request, datetime
@@ -43,8 +46,45 @@ def get(url):
         time.sleep(2 * (attempt + 1))
 
 
+def swh_json(url):
+    for attempt in range(4):
+        try:
+            with urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "foundry-corpus/1"}), timeout=90) as r:
+                return json.load(r)
+        except Exception:
+            if attempt == 3:
+                raise
+            time.sleep(5 * (attempt + 1))
+
+
+def swh_list(repo, tree_path):
+    api = "https://archive.softwareheritage.org/api/1"
+    visit = swh_json(f"{api}/origin/https://github.com/{repo}/visit/latest/?require_snapshot=true")
+    snap = swh_json(f"{api}/snapshot/{visit['snapshot']}/")
+    br = snap["branches"]
+    head = br.get("HEAD") or {}
+    if head.get("target_type") == "alias":
+        head = br.get(head["target"]) or {}
+    rev = swh_json(f"{api}/revision/{head['target']}/")
+    entries, stack = [], [(rev["directory"], "")]
+    while stack:
+        did, prefix = stack.pop()
+        for e in swh_json(f"{api}/directory/{did}/"):
+            path = f"{prefix}{e['name']}"
+            if e["type"] == "dir":
+                if not tree_path or path.startswith(tree_path) or tree_path.startswith(path):
+                    stack.append((e["target"], path + "/"))
+            elif e["type"] == "file" and (not tree_path or path.startswith(tree_path)):
+                entries.append({"path": path, "isDirectory": False, "byteSize": e.get("length")})
+    return head["target"], entries, visit["date"]
+
+
 def main():
     platform, repo, tree_path, rx = sys.argv[1:5]
+    if os.environ.get("LISTER") == "swh":
+        oid, entries, vdate = swh_list(repo, tree_path)
+        return finish(platform, repo, tree_path, rx, f"swh visit {vdate}", oid, entries,
+                      int(sys.argv[6]) if len(sys.argv) > 6 else 2000, "software heritage api")
     rev = sys.argv[5] if len(sys.argv) > 5 else "HEAD"
     max_files = int(sys.argv[6]) if len(sys.argv) > 6 else 2000
     q = """query($name:String!,$rev:String!,$path:String!){ repository(name:$name){ commit(rev:$rev){ oid
@@ -55,6 +95,10 @@ def main():
         print(json.dumps({"repo": repo, "outcome": "not found", "response": str(res)[:300]})); return
     oid = commit["oid"]
     entries = [e for e in ((commit.get("tree") or {}).get("entries") or []) if not e["isDirectory"]]
+    return finish(platform, repo, tree_path, rx, rev, oid, entries, max_files, "sourcegraph graphql")
+
+
+def finish(platform, repo, tree_path, rx, rev, oid, entries, max_files, lister):
     pat = re.compile(rx)
     sel = [e for e in entries if pat.search(e["path"])][:max_files]
     base = f"/opt/corpus/{platform}/{repo.replace('/', '__')}@{oid}"
@@ -79,9 +123,11 @@ def main():
             lic = {"path": cand, "sha256": hashlib.sha256(data).hexdigest(), "head": data[:200].decode("utf-8", "replace")}
             break
     man = {"repo": repo, "rev": rev, "oid": oid, "treePath": tree_path, "regex": rx, "listed": len(entries),
-           "selected": len(sel), "files": files, "license": lic, "lister": "sourcegraph graphql",
+           "selected": len(sel), "files": files, "license": lic, "lister": lister,
            "content": "raw.githubusercontent.com", "retrievedAt": datetime.date.today().isoformat(), "dir": base}
-    json.dump(man, open(base + ".manifest.json", "w"), indent=1)
+    json.dump(man, open(base + ".manifest.json", "w"), indent=1)  # latest run for this commit
+    slug = "path-" + (tree_path.strip("/").replace("/", "_") or "root")
+    json.dump(man, open(f"{base}.{slug}.manifest.json", "w"), indent=1)  # one per listed subtree
     print(json.dumps({k: man[k] for k in ("repo", "oid", "listed", "selected")} | {"license": (lic or {}).get("path")}))
 
 

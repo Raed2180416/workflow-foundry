@@ -1,0 +1,6 @@
+{
+  "private": true,
+  "type": "module",
+  "description": "Shim so that `node --test beds/records/` runs this bed's tests (Node resolves a directory argument via main).",
+  "main": "records.test.mjs"
+}

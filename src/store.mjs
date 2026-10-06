@@ -38,6 +38,8 @@ export class Store {
       CREATE TABLE IF NOT EXISTS qualifications(id TEXT PRIMARY KEY, workflow_hash TEXT NOT NULL, body TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS trials(id TEXT PRIMARY KEY, request_id TEXT NOT NULL, body TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS diagnostic_repairs(run_id TEXT PRIMARY KEY, request_id TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS decisions(id TEXT PRIMARY KEY, run_id TEXT NOT NULL, kind TEXT NOT NULL, body TEXT NOT NULL);
+      CREATE INDEX IF NOT EXISTS decisions_run ON decisions(run_id);
     `);
   }
   close() { this.db.close(); }
@@ -89,20 +91,24 @@ export class Store {
     if (saved.hash !== hash) throw new FoundryError('EVALUATION_STAGE', 'Candidate staging did not preserve its exact identity');
     return saved;
   }
-  createRun(workflowHash, input, registryHash, policy, { fixture = null, extra = {}, engineHash = null } = {}) {
+  // `binding` holds runtime-owned model/identity fields (DESIGN §5.1, §6); its hashes enter the birth event.
+  createRun(workflowHash, input, registryHash, policy, { fixture = null, extra = {}, engineHash = null, id = randomUUID(), binding = null } = {}) {
     checkData(input); checkData(policy); const { workflow } = this.workflow(workflowHash);
-    const now = Date.now(), id = randomUUID();
+    if (binding && (checkData(binding), Object.keys(binding).some(key => !['modelPolicyHash', 'modelMode', 'sampleSalt', 'assignment', 'assignmentHash', 'identity'].includes(key)))) throw new FoundryError('RUN_BINDING', 'Unsupported run binding field');
+    const now = Date.now();
     const run = {
       id, workflowHash, workflowId: workflow.id, registryHash, engineHash, input: clone(input),
       policy: clone(policy), createdAt: now, updatedAt: now,
       deadline: now + Math.min(workflow.budget.maxDurationMs, policy.maxDurationMs),
       status: 'ready', steps: 0, cost: 0, nodes: {}, outputs: {}, frames: {},
-      approvals: {}, error: null, extra: clone(extra)
+      approvals: {}, error: null, extra: clone(extra), ...(binding ? clone(binding) : {})
     };
+    const bound = binding ? { modelPolicyHash: binding.modelPolicyHash ?? null, modelMode: binding.modelMode ?? null, sampleSalt: binding.sampleSalt ?? null,
+      assignmentHash: binding.assignmentHash ?? null, identityHash: binding.identity ? digest(binding.identity) : null } : {};
     this.transaction(() => {
       this.db.prepare('INSERT INTO runs VALUES(?,?)').run(id, canonical(run));
       if (fixture) this.db.prepare('INSERT INTO fixtures VALUES(?,?)').run(id, canonical({ ...fixture, actions: [], wrongActions: 0 }));
-      const event = this.#event(id, { type: 'run.created', workflowHash, registryHash, engineHash, inputHash: digest(input), policyHash: digest(policy) });
+      const event = this.#event(id, { type: 'run.created', workflowHash, registryHash, engineHash, inputHash: digest(input), policyHash: digest(policy), ...bound });
       run.eventHead = { seq: event.seq, hash: event.hash };
       this.db.prepare('UPDATE runs SET body=? WHERE id=?').run(canonical(run), id);
     });
@@ -122,8 +128,8 @@ export class Store {
       if (!run.eventHead || tail?.seq !== run.eventHead.seq || tail?.hash !== run.eventHead.hash || count !== run.eventHead.seq) throw new FoundryError('CORRUPT_EVENTS', 'Refusing to append over missing or truncated checkpoint evidence');
       mutate(run); run.updatedAt = Date.now();
       checkData(run, { maxBytes: 12 * 1024 * 1024 });
-      if (event) {
-        const receipt = this.#event(id, typeof event === 'function' ? event(run) : event);
+      for (const item of [event].flat().flatMap(e => typeof e === 'function' ? [e(run)].flat() : [e]).filter(Boolean)) {
+        const receipt = this.#event(id, item);
         run.eventHead = { seq: receipt.seq, hash: receipt.hash };
       }
       this.db.prepare('UPDATE runs SET body=? WHERE id=?').run(canonical(run), id);
@@ -149,6 +155,13 @@ export class Store {
     if (!head || head.seq !== events.length || head.hash !== previousHash) throw new FoundryError('CORRUPT_EVENTS', 'Checkpoint/event head mismatch or truncated event history');
     return events;
   }
+  // Decision/trace records (DESIGN §6). Ids are deterministic: a journal-recovered replay of the
+  // same decision keeps the first record (append-only, first write wins).
+  recordDecision(runId, decision) {
+    checkData(decision, { maxBytes: 256 * 1024 });
+    return this.db.prepare('INSERT OR IGNORE INTO decisions VALUES(?,?,?,?)').run(decision.id, runId, decision.kind, canonical(decision)).changes === 1;
+  }
+  decisions(runId) { return this.db.prepare('SELECT body FROM decisions WHERE run_id=? ORDER BY rowid').all(runId).map(row => JSON.parse(row.body)); }
   fixture(id) { const row = this.db.prepare('SELECT body FROM fixtures WHERE run_id=?').get(id); return row ? JSON.parse(row.body) : null; }
   fixtureEffect(runId, key, action) {
     return this.transaction(() => {

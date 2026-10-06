@@ -25,12 +25,12 @@ const str = (v, name, required = false) => {
   if (typeof v !== 'string' || (required && !v)) throw new FoundryError('JOURNAL_ENTRY', `${name} must be a string`);
   return v;
 };
-const row = r => r && ({
+const row = r => r ? ({
   id: r.id, replayKey: r.replay_key, runId: r.run_id, nodeKey: r.node_key, attempt: r.attempt, sampleIndex: r.sample_index,
   modelId: r.model_id, provider: r.provider, engineVersion: r.engine_version, decoding: parse(r.decoding), receiptHash: r.receipt_hash,
   promptHash: r.prompt_hash, request: parse(r.request), response: parse(r.response), ok: r.ok === 1, errorCode: r.error_code,
   inputTokens: r.input_tokens, outputTokens: r.output_tokens, costUsd: r.cost_usd, imputedUsd: r.imputed_usd, latencyMs: r.latency_ms, createdAt: r.created_at,
-});
+}) : null;
 
 export class Journal {
   constructor(db) {

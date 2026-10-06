@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://contrare.example/schemas/foundry-identity-1.json",
+  "title": "Workflow Foundry identity envelope",
+  "description": "Stored on every run (run.identity) and decision. Foundry hashes are required; ARC and AMP identities are optional and opaque to Foundry. Carries no authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["foundry"],
+  "properties": {
+    "foundry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["workflowHash", "runId", "engineHash", "policyHash", "registryHash"],
+      "properties": {
+        "workflowHash": {"$ref": "#/definitions/sha256"},
+        "runId": {"$ref": "#/definitions/id"},
+        "engineHash": {"$ref": "#/definitions/sha256"},
+        "policyHash": {"$ref": "#/definitions/sha256"},
+        "registryHash": {"$ref": "#/definitions/sha256"}
+      }
+    },
+    "arc": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["taskId", "taskSpecDigest", "eventCursor"],
+      "properties": {
+        "taskId": {"$ref": "#/definitions/id"},
+        "taskSpecDigest": {"$ref": "#/definitions/digest"},
+        "eventCursor": {"$ref": "#/definitions/cursor"}
+      }
+    },
+    "amp": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["project", "capsule", "goal", "attempt", "contextReceipt"],
+      "properties": {
+        "project": {"$ref": "#/definitions/id"},
+        "capsule": {"$ref": "#/definitions/id"},
+        "goal": {"$ref": "#/definitions/id"},
+        "attempt": {"$ref": "#/definitions/cursor"},
+        "contextReceipt": {"$ref": "#/definitions/id"}
+      }
+    }
+  },
+  "definitions": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "digest": {"type": "string", "pattern": "^(?:[a-z0-9-]+:)?[0-9a-f]{32,128}$"},
+    "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,255}$"},
+    "cursor": {"oneOf": [{"type": "integer", "minimum": 0}, {"$ref": "#/definitions/id"}]}
+  }
+}

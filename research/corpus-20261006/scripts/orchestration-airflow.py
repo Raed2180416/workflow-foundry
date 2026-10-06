@@ -661,6 +661,8 @@ def to_item(path, d, pkg_dir):
             connectors.append(ex["connector"])
         if ex.get("trigger_rule") and ex["trigger_rule"] not in ("all_success",):
             guards += 1
+        if n["type"] in BRANCH_OPS and n["category"] != "condition":
+            guards += 1  # e.g. HITLBranchOperator: a human choice that is also a branch point
     nodes = [{k: v for k, v in n.items() if k != "_extra"} for n in nodes_raw]
     if d.schedule:
         sk, sv = d.schedule

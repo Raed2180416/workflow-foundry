@@ -49,10 +49,14 @@ test('Engine binding: historical unbound and corrupted bindings fail without dis
 
 test('Engine binding: an actual second process with changed engine source rejects a pending run while identical source resumes', async t => {
   const { dir, foundry } = await setup(t), copied = path.join(dir, 'copy');
-  mkdirSync(path.join(copied, 'src'), { recursive: true }); mkdirSync(path.join(copied, 'schemas'));
-  const names = ['engine.mjs', 'runtime.mjs', 'store.mjs', 'data.mjs', 'dataflow.mjs', 'validate.mjs', 'capabilities.mjs'];
-  for (const name of names) copyFileSync(path.join(sourceRoot, 'src', name), path.join(copied, 'src', name));
-  copyFileSync(path.join(sourceRoot, 'schemas/workflow.schema.json'), path.join(copied, 'schemas/workflow.schema.json'));
+  // Copy exactly the engine identity set (src/ modules and schemas), so the copy is the whole engine.
+  const names = Object.keys(engineIdentity().files);
+  assert.ok(names.includes('runtime.mjs') && names.includes('../schemas/workflow.schema.json'));
+  for (const name of names) {
+    const target = path.join(copied, 'src', name);
+    mkdirSync(path.dirname(target), { recursive: true });
+    copyFileSync(path.join(sourceRoot, 'src', name), target);
+  }
   symlinkSync(path.join(sourceRoot, 'node_modules'), path.join(copied, 'node_modules'), 'dir');
   const run = foundry.createRun(workflow().id);
   const code = `

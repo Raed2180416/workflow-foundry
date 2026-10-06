@@ -135,19 +135,27 @@ function infer(template, context, depth = 0) {
   return literalSchema(template);
 }
 
+const failure = record({ ok: { const: false }, error: record({ code: { type: 'string' }, message: { type: 'string' } }) });
+const verifyOutput = record({ pass: { type: 'boolean' }, score: { type: 'number' }, reasons: { type: 'array', items: { type: 'string' } },
+  independence: { enum: ['execution', 'different-model', 'same-model'] } });
+const contextRefs = node => (node.context?.inputs ?? []).map((spec, index) => [index, spec]).filter(([, spec]) => Object.hasOwn(spec, 'ref'));
+
 export function analyzeDataflow(workflow, registry) {
   const errors = [], warnings = [], outputCache = new WeakMap();
   const nodeOutput = node => {
     if (node.kind === 'task') {
       const schema = registry?.get(node.tool)?.outputSchema ?? unknown();
       if (schema && typeof schema === 'object') schemaRoots.set(schema, schema);
-      return node.onError === 'continue' ? union([schema, record({ ok: { const: false }, error: record({ code: { type: 'string' }, message: { type: 'string' } }) })]) : schema;
+      return node.onError === 'continue' ? union([schema, failure]) : schema;
     }
     if (node.kind === 'assert') return record({ passed: { const: true } });
     if (node.kind === 'human') return record({ answer: node.answerSchema });
     if (node.kind === 'wait') return record({ waitedMs: { type: 'integer' } });
     if (node.kind === 'map') return record({ items: { type: 'array', items: outputs(node.body), maxItems: node.maxItems }, count: { type: 'integer' } });
     if (node.kind === 'loop') return record({ iterations: { type: 'integer' }, last: outputs(node.body) });
+    if (node.kind === 'agent') return node.onError === 'continue' ? union([node.returns, failure]) : node.returns;
+    if (node.kind === 'code') return node.returns ?? unknown();
+    if (node.kind === 'verify') return verifyOutput;
     return unknown();
   };
   const outputs = flow => {
@@ -187,7 +195,13 @@ export function analyzeDataflow(workflow, registry) {
     const phases = phaseLocals?.map(local => ({ ...context, ...local }));
     for (let index = 0; index < flow.nodes.length; index++) {
       const node = flow.nodes[index], nodePath = `${location}/nodes/${index}`;
-      for (const key of ['when', 'args', 'checks', 'items', 'input', 'initial']) if (Object.hasOwn(node, key)) inspect(node[key], context, `${nodePath}/${key}`, phases, inheritedGuard || (key !== 'when' && !!node.when), key === 'when' || key === 'checks');
+      for (const key of ['when', 'args', 'checks', 'items', 'input', 'initial', 'subject']) {
+        if (!Object.hasOwn(node, key)) continue;
+        // Agent checks also see the parsed model output (DESIGN §1.1).
+        const scope = node.kind === 'agent' && key === 'checks' ? { ...context, output: [bound(node.returns)] } : context;
+        inspect(node[key], scope, `${nodePath}/${key}`, phases, inheritedGuard || (key !== 'when' && !!node.when), key === 'when' || key === 'checks');
+      }
+      for (const [index, spec] of contextRefs(node)) inspect({ $ref: spec.ref }, context, `${nodePath}/context/inputs/${index}/ref`, phases, inheritedGuard || !!node.when);
       if (!node.body) continue;
       const childInput = Object.hasOwn(node, 'input') ? infer(node.input, context) : input;
       if (node.kind === 'map') {

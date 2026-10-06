@@ -2,8 +2,14 @@ import Ajv from 'ajv';
 import { readFileSync } from 'node:fs';
 import { checkData, FoundryError, digest, references } from './data.mjs';
 import { analyzeDataflow } from './dataflow.mjs';
+import { portableSchemaViolations, quarantinedSchemaViolations } from './schema-subset.mjs';
+import { inheritedLabel, joinLabels } from './context.mjs';
+import { classIndex, modelById, modelsForClass } from './models/policy.mjs';
 
-export const workflowSchema = JSON.parse(readFileSync(new URL('../schemas/workflow.schema.json', import.meta.url), 'utf8'));
+const readSchema = name => JSON.parse(readFileSync(new URL(`../schemas/${name}`, import.meta.url), 'utf8'));
+export const workflowSchema = readSchema('workflow.schema.json');
+export const identitySchema = readSchema('identity.schema.json');
+export const decisionSchema = readSchema('decision.schema.json');
 const ajv = new Ajv({ allErrors: true, strict: false, validateFormats: false, ownProperties: true });
 const shape = ajv.compile(workflowSchema);
 const dataSchemaCache = new Map();
@@ -48,21 +54,104 @@ export function validateData(schema, data, label = 'data', options = {}) {
   if (result !== true) throw new FoundryError('SCHEMA_MISMATCH', `${label} does not satisfy its schema`, test.errors);
   return data;
 }
+// Host-owned trace contracts (DESIGN §6): one compiler that knows the identity schema by $id.
+const traceAjv = new Ajv({ allErrors: true, strictSchema: true, strictTypes: false, strictTuples: false, strictRequired: false, allowUnionTypes: true, ownProperties: true });
+traceAjv.addSchema(identitySchema);
+const identityTest = traceAjv.getSchema(identitySchema.$id), decisionTest = traceAjv.compile(decisionSchema);
+const traceCheck = (test, value, label) => {
+  checkData(value);
+  if (test(value) !== true) throw new FoundryError('SCHEMA_MISMATCH', `${label} does not satisfy its schema`, test.errors);
+  return value;
+};
+export const validateIdentity = identity => traceCheck(identityTest, identity, 'identity envelope');
+export const validateDecision = decision => traceCheck(decisionTest, decision, 'decision record');
+
+// Model-using nodes: agent, and verify with method agent.
+export const usesModel = node => node.kind === 'agent' || (node.kind === 'verify' && node.method === 'agent');
+export function modelNodes(flow, found = []) {
+  for (const node of flow.nodes ?? []) { if (usesModel(node)) found.push(node); if (node.body) modelNodes(node.body, found); }
+  return found;
+}
+export const VERIFY_RETURNS = Object.freeze({ type: 'object', additionalProperties: false, required: ['pass', 'score', 'reasons'], properties: {
+  pass: { type: 'boolean' }, score: { type: 'number', minimum: 0, maximum: 1 },
+  reasons: { type: 'array', maxItems: 8, items: { type: 'string', maxLength: 1000 } } } });
+const verifyFields = { code: ['lang', 'source'], agent: ['instructions', 'context', 'model', 'decoding', 'escalation'], capability: ['tool', 'args'] };
+const describe = violations => violations.slice(0, 5).map(v => `${v.path}${v.keyword ? ` ${v.keyword}` : ''}: ${v.problem}`).join('; ');
+// Context input refs are plain strings in the IR; inspection uses the {$ref} form.
+export const contextRefs = node => (node.context?.inputs ?? []).filter(spec => Object.hasOwn(spec, 'ref')).map(spec => ({ $ref: spec.ref }));
+const labelOf = (template, scope) => joinLabels(references(template).map(ref => inheritedLabel(ref, scope)));
+const only = (scope, prefix) => Object.fromEntries(Object.entries(scope).filter(([key]) => key === prefix || key.startsWith(`${prefix}.`)));
+const entry = (key, label) => label === 'trusted' ? {} : { [key]: label };
 
 const common = new Set(['id', 'kind', 'needs', 'description', 'when', 'join']);
 const fields = {
   task: ['tool', 'args', 'timeoutMs', 'retry', 'onError'], assert: ['checks'],
   human: ['question', 'answerSchema'], wait: ['delayMs'],
   map: ['items', 'maxItems', 'body', 'input'],
-  loop: ['maxIterations', 'body', 'until', 'initial', 'input']
+  loop: ['maxIterations', 'body', 'until', 'initial', 'input'],
+  agent: ['role', 'instructions', 'context', 'returns', 'model', 'decoding', 'checks', 'escalation', 'quarantined', 'timeoutMs', 'onError'],
+  code: ['lang', 'source', 'args', 'returns', 'timeoutMs'],
+  verify: ['method', 'subject', 'independence', 'gate', 'timeoutMs', 'role', ...new Set(Object.values(verifyFields).flat())]
 };
 
-export function validateWorkflow(workflow, { registry, maxNodes = 2000 } = {}) {
+// Static integrity labels (DESIGN §4): a conservative over-approximation of the runtime join.
+function effectTaint(workflow, registry, add) {
+  const seen = new Set(), report = (code, message, location) => { if (!seen.has(`${code}|${location}`)) { seen.add(`${code}|${location}`); add(code, message, location); } };
+  const walk = (flow, scope, prefix) => {
+    const byId = new Map(flow.nodes.map(n => [n.id, n])), labels = new Map();
+    const visit = id => {
+      if (labels.has(id)) return labels.get(id);
+      labels.set(id, 'trusted');
+      const node = byId.get(id);
+      for (const dep of node.needs) visit(dep);
+      const own = { ...scope, ...Object.fromEntries([...labels].filter(([, l]) => l !== 'trusted').map(([k, l]) => [`nodes.${k}`, l])) };
+      let label = 'trusted';
+      const inputs = () => joinLabels((node.context?.inputs ?? []).map(spec => joinLabels([spec.label ?? 'trusted', Object.hasOwn(spec, 'ref') ? inheritedLabel(spec.ref, own) : 'trusted'])));
+      if (node.kind === 'agent') label = node.quarantined === true ? 'trusted' : inputs();
+      else if (node.kind === 'verify') label = joinLabels([labelOf(node.subject, own), labelOf(node.args ?? null, own), inputs()]);
+      else if (node.kind === 'task' || node.kind === 'code') label = labelOf(node.args ?? null, own);
+      else if (node.body) {
+        const input = Object.hasOwn(node, 'input') ? entry('input', labelOf(node.input, own)) : only(own, 'input');
+        if (node.kind === 'map') label = joinLabels([labelOf(node.items, own), walk(node.body, { ...input, ...entry('item', labelOf(node.items, own)) }, `${prefix}.${node.id}.body`)]);
+        else {
+          let previous = labelOf(node.initial, own);
+          for (let pass = 0; pass < 8; pass++) {
+            const next = joinLabels([previous, walk(node.body, { ...input, ...entry('previous', previous) }, `${prefix}.${node.id}.body`)]);
+            if (next === previous) break; previous = next;
+          }
+          label = previous;
+        }
+      }
+      if (node.kind === 'task') {
+        const cap = registry?.get(node.tool), argsLabel = labelOf(node.args, own);
+        if (cap && cap.effects !== 'none' && !(cap.requiresApproval || cap.risk === 'high') && argsLabel !== 'trusted')
+          report('UNTRUSTED_EFFECT_ARGS', `${node.tool} has effects and no approval gate, but its arguments depend on ${argsLabel} data`, `${prefix}.${node.id}`);
+      }
+      labels.set(id, label); return label;
+    };
+    for (const id of byId.keys()) visit(id);
+    return joinLabels([...labels.values()]);
+  };
+  walk(workflow, { ...(workflow.labels ?? {}) }, 'workflow');
+}
+
+export function validateWorkflow(workflow, { registry, maxNodes = 2000, modelPolicy = null } = {}) {
   const errors = [], warnings = [];
   try { checkData(workflow); } catch (e) { return { valid: false, errors: [{ code: e.code, message: e.message }], warnings }; }
   if (!shape(workflow)) return { valid: false, errors: shape.errors.map(e => ({ code: 'SCHEMA', path: e.instancePath, message: `${e.message} ${JSON.stringify(e.params)}` })), warnings };
   let total = 0;
   const add = (code, message, location) => errors.push({ code, message, path: location });
+  const policy = modelPolicy?.policy ?? modelPolicy;
+  if (!policy && modelNodes(workflow).length) add('MODEL_POLICY_REQUIRED', 'Agent and model-verifier nodes are validated against the owner model policy; none was supplied', 'workflow');
+  const candidates = node => {
+    const { id, class: cls, maxClass } = node.model, entry = id === undefined ? null : modelById(policy, id);
+    if (cls !== undefined) classIndex(policy, cls);
+    if (entry && cls !== undefined && entry.class !== cls) throw new FoundryError('MODEL_CLASS_MISMATCH', `Model ${id} is class ${entry.class}, not ${cls}`);
+    const base = cls ?? entry.class, top = maxClass ?? base;
+    if (classIndex(policy, top) < classIndex(policy, base)) throw new FoundryError('MODEL_CLASS_ORDER', `maxClass ${top} is below the starting class ${base}`);
+    if (!entry && !modelsForClass(policy, base).length) throw new FoundryError('MODEL_CLASS_EMPTY', `The model policy lists no model for class ${base}`);
+    return { entry, first: entry ?? modelsForClass(policy, base)[0], range: policy.classOrder.slice(classIndex(policy, base), classIndex(policy, top) + 1) };
+  };
   if (/^[0-9a-f]{64}$/.test(workflow.id)) add('AMBIGUOUS_WORKFLOW_ID', 'Workflow ids cannot use the immutable SHA-256 address namespace', '/id');
   const walk = (flow, prefix, depth = 0, locals = new Set()) => {
     if (depth > 6) { add('NESTING_LIMIT', 'Nested flow depth exceeds 6', prefix); return; }
@@ -84,6 +173,34 @@ export function validateWorkflow(workflow, { registry, maxNodes = 2000 } = {}) {
       if (node.kind === 'human') {
         try { compileDataSchema(node.answerSchema); } catch (e) { add(e.code ?? 'INVALID_SCHEMA', e.message, `${prefix}.${node.id}.answerSchema`); }
       }
+      const at = `${prefix}.${node.id}`;
+      if (node.kind === 'verify') {
+        for (const key of Object.keys(node)) if (Object.values(verifyFields).flat().includes(key) && !verifyFields[node.method].includes(key)) add('WRONG_NODE_FIELD', `${key} does not belong to a ${node.method} verifier`, at);
+        if ((node.method === 'agent') === (node.independence === 'execution')) add('VERIFY_INDEPENDENCE', node.method === 'agent' ? 'A model verifier is labelled different-model or same-model, never execution' : 'Code and capability verifiers are execution checks', at);
+        if (node.method === 'capability') {
+          const cap = registry?.get(node.tool);
+          if (registry && !cap) add('UNKNOWN_TOOL', `Capability is not registered: ${node.tool}`, at);
+          if (cap && cap.effects !== 'none') add('VERIFY_EFFECTS', 'A verification oracle must not have effects', at);
+          if (cap && (node.timeoutMs ?? 60000) > cap.maxTimeoutMs) add('TIMEOUT_POLICY', 'Node timeout exceeds capability limit', at);
+        }
+      }
+      if (node.kind === 'agent') {
+        const portable = portableSchemaViolations(node.returns);
+        if (portable.length) add('SCHEMA_NOT_PORTABLE', `Output schema is outside the portable subset: ${describe(portable)}`, `${at}.returns`);
+        else {
+          try { compileDataSchema(node.returns); } catch (e) { add(e.code ?? 'INVALID_SCHEMA', e.message, `${at}.returns`); }
+          const quarantine = node.quarantined === true ? quarantinedSchemaViolations(node.returns) : [];
+          if (quarantine.length) add('QUARANTINE_SCHEMA', `Quarantined output schema may contain only booleans, string enums and bounded numbers: ${describe(quarantine)}`, `${at}.returns`);
+        }
+        if (node.onError === 'continue') warnings.push({ code: 'ERROR_CONTINUATION', path: at, message: 'Independent acceptance must detect failures hidden by continuation' });
+      }
+      if (usesModel(node)) {
+        const names = (node.context?.inputs ?? []).map(input => input.name);
+        if (new Set(names).size !== names.length) add('CONTEXT_INPUT', 'Context input names must be unique', `${at}.context`);
+        if (node.kind === 'verify' && names.includes('subject')) add('CONTEXT_INPUT', 'The context input name subject is reserved for the verified value', `${at}.context`);
+        if (policy) try { candidates(node); } catch (e) { add(e.code ?? 'MODEL_POLICY', e.message, `${at}.model`); }
+      }
+      if (node.kind === 'code' && node.returns) try { compileDataSchema(node.returns); } catch (e) { add(e.code ?? 'INVALID_SCHEMA', e.message, `${at}.returns`); }
     }
     const visiting = new Set(), done = new Set(), ancestors = new Map();
     const visit = id => {
@@ -108,8 +225,21 @@ export function validateWorkflow(workflow, { registry, maxNodes = 2000 } = {}) {
       } catch (e) { add(e.code, e.message, location); }
     };
     for (const node of flow.nodes) {
-      const { body, until, answerSchema, ...own } = node;
+      const { body, until, answerSchema, returns, context, instructions, source, model, decoding, escalation, ...own } = node;
+      const outputChecks = node.kind === 'agent' ? own.checks : undefined;
+      if (outputChecks) delete own.checks;
       inspectRefs(own, `${prefix}.${node.id}`, ancestors.get(node.id) ?? new Set());
+      inspectRefs(contextRefs(node), `${prefix}.${node.id}.context`, ancestors.get(node.id) ?? new Set());
+      if (outputChecks) inspectRefs(outputChecks, `${prefix}.${node.id}.checks`, ancestors.get(node.id) ?? new Set(), new Set([...locals, 'output']));
+      if (node.kind === 'verify' && node.independence === 'different-model' && policy) {
+        try {
+          const producers = references(node.subject).map(ref => ref.split('.')).filter(([root, id]) => root === 'nodes' && byId.get(id)?.kind === 'agent').map(([, id]) => byId.get(id));
+          const used = new Set(producers.map(p => candidates(p).first.family));
+          const { entry, range } = candidates(node);
+          const eligible = entry ? !used.has(entry.family) : range.some(cls => modelsForClass(policy, cls, { excludeFamily: used }).length);
+          if (!eligible) add('VERIFY_INDEPENDENCE', `No verifier model outside the producer famil${used.size === 1 ? 'y' : 'ies'} ${[...used].join(', ')} is available`, `${prefix}.${node.id}`);
+        } catch {}
+      }
       const cap = node.kind === 'task' ? registry?.get(node.tool) : null;
       for (const requirement of cap?.requiresEvidence ?? []) {
         const available = [...(ancestors.get(node.id) ?? [])].some(id => byId.get(id)?.kind === 'task' && byId.get(id)?.tool === requirement.sourceTool);
@@ -130,6 +260,7 @@ export function validateWorkflow(workflow, { registry, maxNodes = 2000 } = {}) {
   if (!errors.length) {
     const dataflow = analyzeDataflow(workflow, registry);
     errors.push(...dataflow.errors); warnings.push(...dataflow.warnings);
+    try { effectTaint(workflow, registry, add); } catch (e) { add(e.code ?? 'VALIDATION_ERROR', e.message, 'workflow'); }
   }
   if (total > workflow.budget.maxSteps) warnings.push({ code: 'SMALL_BUDGET', message: 'The declared step budget is smaller than the static node count' });
   return { valid: errors.length === 0, errors, warnings, nodeCount: total, ...(errors.length ? {} : { hash: digest(workflow) }) };

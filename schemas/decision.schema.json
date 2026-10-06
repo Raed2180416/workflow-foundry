@@ -1,0 +1,61 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://contrare.example/schemas/foundry-decision-1.json",
+  "title": "Workflow Foundry decision/trace record v1",
+  "description": "One logged decision (also the Neural Core data spec). Features hold trusted fields only; rationale is public text; untrusted provenance is listed in untrustedSpans. Load together with identity.schema.json, which is referenced by $id.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "id", "at", "kind", "identity", "features", "action", "alternatives", "propensity", "rationale", "costUsd"],
+  "properties": {
+    "schema": {"const": "foundry-decision/1"},
+    "id": {"$ref": "#/definitions/id"},
+    "at": {"type": "integer", "minimum": 0, "description": "Milliseconds since the Unix epoch."},
+    "kind": {"enum": ["selection", "escalation", "promotion", "verdict", "judgment", "adaptation"]},
+    "identity": {"$ref": "https://contrare.example/schemas/foundry-identity-1.json"},
+    "features": {"type": "object", "maxProperties": 256, "description": "Trusted fields only; untrusted-derived values never appear here."},
+    "action": {"$ref": "#/definitions/action"},
+    "alternatives": {
+      "type": "array",
+      "maxItems": 256,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["action", "score"],
+        "properties": {"action": {"$ref": "#/definitions/action"}, "score": {"type": "number"}}
+      }
+    },
+    "propensity": {"type": "number", "minimum": 0, "maximum": 1, "description": "Probability with which the logged action was chosen (1 for a deterministic rule)."},
+    "rationale": {"type": "string", "maxLength": 4000, "description": "Public rationale; never hidden reasoning."},
+    "costUsd": {"type": "number", "minimum": 0},
+    "outcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["verified", "oracle", "independence", "at"],
+      "properties": {
+        "verified": {"type": "boolean"},
+        "oracle": {"$ref": "#/definitions/id"},
+        "independence": {"enum": ["execution", "different-model", "same-model", "human"]},
+        "at": {"type": "integer", "minimum": 0}
+      }
+    },
+    "credit": {"oneOf": [{"type": "number", "minimum": -1, "maximum": 1}, {"type": "object", "maxProperties": 64}]},
+    "untrustedSpans": {
+      "type": "array",
+      "maxItems": 256,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "label"],
+        "properties": {
+          "path": {"type": "string", "minLength": 1, "maxLength": 512},
+          "label": {"type": "string", "pattern": "^untrusted:[A-Za-z0-9_.:-]+(?:\\+[A-Za-z0-9_.:-]+)*$"},
+          "sourceHash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    }
+  },
+  "definitions": {
+    "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,255}$"},
+    "action": {"oneOf": [{"type": "string", "minLength": 1, "maxLength": 1000}, {"type": "object", "maxProperties": 64}]}
+  }
+}

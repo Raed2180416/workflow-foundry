@@ -6,9 +6,12 @@ import { createRequire } from 'node:module';
 // its loaded modules even if the checkout later changes. This is a compatibility
 // identity, not remote attestation or a defense against a privileged host attacker.
 const require = createRequire(import.meta.url);
-const paths = ['engine.mjs', 'runtime.mjs', 'store.mjs', 'data.mjs', 'dataflow.mjs', 'validate.mjs', 'capabilities.mjs'];
+// Every module whose semantics a run depends on: execution, validation, context compilation,
+// verdicts, sandboxing, model policy/replay keys and the journal, plus the trace contracts.
+const paths = ['engine.mjs', 'runtime.mjs', 'store.mjs', 'data.mjs', 'dataflow.mjs', 'validate.mjs', 'capabilities.mjs',
+  'context.mjs', 'verdict.mjs', 'sandbox.mjs', 'schema-subset.mjs', 'models/port.mjs', 'models/policy.mjs', 'journal.mjs',
+  '../schemas/workflow.schema.json', '../schemas/identity.schema.json', '../schemas/decision.schema.json'];
 const files = Object.fromEntries(paths.map(name => [name, createHash('sha256').update(readFileSync(new URL(name, import.meta.url))).digest('hex')]));
-files['../schemas/workflow.schema.json'] = createHash('sha256').update(readFileSync(new URL('../schemas/workflow.schema.json', import.meta.url))).digest('hex');
 const ajv = JSON.parse(readFileSync(require.resolve('ajv/package.json'), 'utf8'));
 const descriptor = Object.freeze({ contract: 'native-engine-identity/1', node: process.version, platform: process.platform,
   architecture: process.arch, validator: `ajv@${ajv.version}`, files: Object.freeze(files) });

@@ -62,4 +62,5 @@ if len(sys.argv) > 1:
         out = f'{ROOT}/repo-{sha[:12]}/' + p.replace('/', '__')
         if not os.path.exists(out):
             open(out, 'wb').write(get(f'https://raw.githubusercontent.com/langgenius/dify/{sha}/{p}'))
+    open(f'{ROOT}/repo-{sha[:12]}/SHA', 'w').write(sha + '\n')
     print('repo files ok', sha)

@@ -35,6 +35,8 @@
     },
     "nodes": {"$ref": "#/definitions/nodes"},
     "acceptance": {"$ref": "#/definitions/checks"},
+    "labels": {"type": "object", "maxProperties": 256, "propertyNames": {"maxLength": 512, "pattern": "^input(\\.[A-Za-z0-9_-]+)*$"}, "additionalProperties": {"$ref": "#/definitions/label"}},
+    "discovery": {"type": "boolean"},
     "metadata": {
       "type": "object", "additionalProperties": false,
       "properties": {
@@ -48,6 +50,33 @@
     "id": {"type": "string", "pattern": "^[a-zA-Z][a-zA-Z0-9_-]{0,63}$"},
     "texts": {"type": "array", "maxItems": 200, "items": {"type": "string", "maxLength": 10000}},
     "nonemptyTexts": {"type": "array", "minItems": 1, "maxItems": 200, "items": {"type": "string", "minLength": 1, "maxLength": 10000}},
+    "label": {"type": "string", "maxLength": 512, "pattern": "^(?:trusted|untrusted:[A-Za-z0-9_.:-]+(?:\\+[A-Za-z0-9_.:-]+)*)$"},
+    "modelChoice": {
+      "type": "object", "additionalProperties": false, "minProperties": 1,
+      "properties": {"class": {"type": "string", "minLength": 1, "maxLength": 16}, "id": {"type": "string", "minLength": 1, "maxLength": 128}, "maxClass": {"type": "string", "minLength": 1, "maxLength": 16}},
+      "anyOf": [{"required": ["class"]}, {"required": ["id"]}]
+    },
+    "contextInput": {
+      "type": "object", "additionalProperties": false, "required": ["name"],
+      "properties": {
+        "name": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"}, "ref": {"type": "string", "minLength": 1, "maxLength": 512}, "value": {},
+        "label": {"$ref": "#/definitions/label"}, "render": {"enum": ["json", "text"]},
+        "maxTokens": {"type": "integer", "minimum": 1, "maximum": 1000000}, "priority": {"type": "number", "minimum": -1000000, "maximum": 1000000}
+      },
+      "oneOf": [{"required": ["ref"]}, {"required": ["value"]}]
+    },
+    "context": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "persona": {"type": "string", "minLength": 1, "maxLength": 10000},
+        "inputs": {"type": "array", "maxItems": 64, "items": {"$ref": "#/definitions/contextInput"}},
+        "recite": {"type": "object", "additionalProperties": false, "properties": {"goal": {"type": "boolean"}, "constraints": {"$ref": "#/definitions/texts"}, "acceptance": {"$ref": "#/definitions/texts"}}},
+        "history": {"enum": ["none"]},
+        "budget": {"type": "object", "additionalProperties": false, "properties": {"maxInputTokens": {"type": "integer", "minimum": 1, "maximum": 1000000}, "onOverflow": {"enum": ["fail", "truncate"]}}}
+      }
+    },
+    "decoding": {"type": "object", "additionalProperties": false, "properties": {"maxTokens": {"type": "integer", "minimum": 1, "maximum": 65536}, "reasoning": {"enum": ["none", "low", "medium", "high"]}, "temperature": {"type": "number", "minimum": 0, "maximum": 2}}},
+    "escalation": {"type": "object", "additionalProperties": false, "properties": {"schemaRetries": {"type": "integer", "minimum": 0, "maximum": 3}, "onCheckFail": {"enum": ["escalate", "resample", "fail"]}, "maxEscalations": {"type": "integer", "minimum": 0, "maximum": 2}, "maxResamples": {"type": "integer", "minimum": 0, "maximum": 8}}},
     "condition": {
       "oneOf": [
         {"type": "object", "additionalProperties": false, "required": ["op", "left", "right"], "properties": {"op": {"enum": ["eq", "ne", "gt", "gte", "lt", "lte", "in", "contains"]}, "left": {}, "right": {}}},
@@ -67,7 +96,7 @@
       "required": ["id", "kind", "needs", "description"],
       "properties": {
         "id": {"$ref": "#/definitions/id"},
-        "kind": {"enum": ["task", "assert", "human", "map", "loop", "wait"]},
+        "kind": {"enum": ["task", "assert", "human", "map", "loop", "wait", "agent", "code", "verify"]},
         "needs": {"type": "array", "uniqueItems": true, "maxItems": 500, "items": {"$ref": "#/definitions/id"}},
         "join": {"enum": ["all_success", "all_resolved"]},
         "description": {"type": "string", "minLength": 1, "maxLength": 10000},
@@ -93,7 +122,21 @@
         "maxIterations": {"type": "integer", "minimum": 1, "maximum": 1000},
         "initial": {},
         "until": {"$ref": "#/definitions/condition"},
-        "delayMs": {"type": "integer", "minimum": 0, "maximum": 3600000}
+        "delayMs": {"type": "integer", "minimum": 0, "maximum": 3600000},
+        "role": {"enum": ["classify", "route", "extract", "judge", "generate", "synthesis", "code_edit", "plan", "verify"]},
+        "instructions": {"type": "string", "minLength": 1, "maxLength": 50000},
+        "context": {"$ref": "#/definitions/context"},
+        "returns": {"type": "object"},
+        "model": {"$ref": "#/definitions/modelChoice"},
+        "decoding": {"$ref": "#/definitions/decoding"},
+        "escalation": {"$ref": "#/definitions/escalation"},
+        "quarantined": {"type": "boolean"},
+        "lang": {"enum": ["js", "python"]},
+        "source": {"type": "string", "minLength": 1, "maxLength": 262144},
+        "method": {"enum": ["code", "agent", "capability"]},
+        "subject": {},
+        "independence": {"enum": ["execution", "different-model", "same-model"]},
+        "gate": {"type": "boolean"}
       },
       "allOf": [
         {"if": {"properties": {"kind": {"const": "task"}}}, "then": {"required": ["tool", "args", "timeoutMs", "retry"]}},
@@ -101,7 +144,13 @@
         {"if": {"properties": {"kind": {"const": "human"}}}, "then": {"required": ["question", "answerSchema"]}},
         {"if": {"properties": {"kind": {"const": "map"}}}, "then": {"required": ["items", "maxItems", "body"]}},
         {"if": {"properties": {"kind": {"const": "loop"}}}, "then": {"required": ["maxIterations", "body", "until", "initial"]}},
-        {"if": {"properties": {"kind": {"const": "wait"}}}, "then": {"required": ["delayMs"]}}
+        {"if": {"properties": {"kind": {"const": "wait"}}}, "then": {"required": ["delayMs"]}},
+        {"if": {"properties": {"kind": {"const": "agent"}}}, "then": {"required": ["instructions", "returns", "model"]}},
+        {"if": {"properties": {"kind": {"const": "code"}}}, "then": {"required": ["lang", "source"]}},
+        {"if": {"properties": {"kind": {"const": "verify"}}}, "then": {"required": ["method", "subject", "independence"]}},
+        {"if": {"required": ["method"], "properties": {"kind": {"const": "verify"}, "method": {"const": "code"}}}, "then": {"required": ["lang", "source"]}},
+        {"if": {"required": ["method"], "properties": {"kind": {"const": "verify"}, "method": {"const": "agent"}}}, "then": {"required": ["instructions", "model"]}},
+        {"if": {"required": ["method"], "properties": {"kind": {"const": "verify"}, "method": {"const": "capability"}}}, "then": {"required": ["tool", "args"]}}
       ]
     }
   }

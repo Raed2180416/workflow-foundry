@@ -328,7 +328,7 @@ def convert(path, doc, idx, ndocs):
             else:
                 break
         desc = " ".join(lines)
-    text = " ".join([rel, name, desc, " ".join(n["summary"] for n in nodes)])
+    text = " ".join([rel, name, desc, " ".join(ctx.connectors)])
     features = oc.compute_features(nodes, edges, guards=ctx.guards, loops=ctx.loops,
                                    async_kinds=ctx.async_kinds, connectors=ctx.connectors,
                                    domains=oc.domains_for(text, ["k8s-orchestration"]))

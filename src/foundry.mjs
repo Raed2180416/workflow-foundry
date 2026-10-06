@@ -6,8 +6,9 @@ import { Store } from './store.mjs';
 import { Runtime } from './runtime.mjs';
 import { createDefaultRegistry } from './capabilities.mjs';
 import { requireWorkflow, validateWorkflow, workflowSchema } from './validate.mjs';
-import { checkData, clone, digest, FoundryError } from './data.mjs';
+import { checkData, clone, digest, errorData, FoundryError } from './data.mjs';
 import { TrialRunner } from './trials.mjs';
+import { loadPolicy } from './models/policy.mjs';
 
 export const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const skillRoot = path.join(packageRoot, 'skills');
@@ -33,24 +34,29 @@ export function readSkill(name, reference = 'SKILL.md') {
 }
 
 export class Foundry {
-  constructor(workspace, { registry = createDefaultRegistry(), policy = {}, trialPolicy = {} } = {}) {
-    this.store = new Store(workspace); this.registry = registry;
-    this.runtime = new Runtime(this.store, registry, policy); this.active = new Map();
+  // modelPolicy defaults to the committed owner policy; models (a ModelPort) is never created implicitly,
+  // so no workflow can spend on a model unless the host wires a port in explicitly.
+  constructor(workspace, { registry = createDefaultRegistry(), policy = {}, trialPolicy = {}, modelPolicy, models = null, codeRunner } = {}) {
+    if (modelPolicy === undefined) {
+      try { modelPolicy = loadPolicy(); } catch (error) { modelPolicy = null; this.modelPolicyError = errorData(error); }
+    }
+    this.store = new Store(workspace); this.registry = registry; this.modelPolicy = modelPolicy;
+    this.runtime = new Runtime(this.store, registry, policy, { models, modelPolicy, ...(codeRunner ? { codeRunner } : {}) }); this.active = new Map();
     this.trialRunner = new TrialRunner(this, trialPolicy);
   }
   async close() { await this.trialRunner.close(); await Promise.allSettled([...this.active.values()].map(x => x.promise)); this.store.close(); }
-  validate(workflow) { return validateWorkflow(workflow, { registry: this.registry }); }
+  validate(workflow) { return validateWorkflow(workflow, { registry: this.registry, modelPolicy: this.modelPolicy }); }
   save(workflow, expectedHash = null) {
-    const validation = requireWorkflow(workflow, { registry: this.registry });
+    const validation = requireWorkflow(workflow, { registry: this.registry, modelPolicy: this.modelPolicy });
     return { ...this.store.saveWorkflow(workflow, { expectedHash }), validation, qualification: 'candidate; execution and independent task evaluation required' };
   }
   propose({ requestId, workflow, rationale }) {
-    const validation = requireWorkflow(workflow, { registry: this.registry });
+    const validation = requireWorkflow(workflow, { registry: this.registry, modelPolicy: this.modelPolicy });
     return this.store.createProposal({ requestId, workflow, rationale, validation });
   }
   apply(id) {
     const proposal = this.store.proposal(id);
-    requireWorkflow(proposal.workflow, { registry: this.registry });
+    requireWorkflow(proposal.workflow, { registry: this.registry, modelPolicy: this.modelPolicy });
     return this.store.applyProposal(id);
   }
   trial(args, options) { return this.trialRunner.execute(args, options); }
@@ -87,10 +93,12 @@ export class Foundry {
     const { policy, extra, owner, ...visible } = run;
     return { ...visible, executionActive: !!owner, independentTaskVerified: false };
   }
-  inspectRun(id) { return { ...this.publicRun(this.store.run(id)), events: this.store.events(id) }; }
-  createRun(workflowId, input = {}) {
+  inspectRun(id) { return { ...this.publicRun(this.store.run(id)), events: this.store.events(id), decisions: this.store.decisions(id) }; }
+  // Only the documented run options pass through; fault injection (extra) stays a trusted test-only path.
+  createRun(workflowId, input = {}, { modelMode, sampleSalt, assignment, identity } = {}) {
     const { workflow } = this.store.workflow(workflowId);
-    return this.publicRun(this.runtime.create(workflow, input));
+    const options = Object.fromEntries(Object.entries({ modelMode, sampleSalt, assignment, identity }).filter(([, value]) => value !== undefined));
+    return this.publicRun(this.runtime.create(workflow, input, options));
   }
   startRun(id, { signal } = {}) {
     if (this.active.has(id)) return this.active.get(id).promise;

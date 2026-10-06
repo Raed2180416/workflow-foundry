@@ -75,15 +75,16 @@ DOMAIN_RULES = [
     ("data-engineering", r"bigquery|redshift|snowflake|spark|dataproc|dataflow|hive|athena|glue|emr|databricks|dbt|sql|postgres|mysql|mssql|oracle|trino|presto|teradata|druid|pinot|etl|warehouse|lake|parquet|csv|s3|gcs|blob|bucket|adls|hdfs|iceberg|delta"),
     ("streaming", r"kafka|pubsub|kinesis|eventhub|event.?bridge|sqs|sns|stream"),
     ("cloud-infra", r"kubernetes|k8s|\beks\b|\bgke\b|\baks\b|ec2|compute|cloud.?run|terraform|helm|instance|cluster|vm\b|container|docker|ecs|lambda|functions?\b"),
-    ("ci-cd", r"\bci\b|build|test|lint|release|deploy|publish|docker|artifact|coverage|pipeline run|tekton|github|gitlab"),
+    ("ci-cd", r"\bci\b|\bcd\b|\bbuild\b|unit.?tests?\b|\blint|release|deploy|publish|docker|coverage|pipelinerun|tekton|github|gitlab"),
     ("notifications", r"slack|email|smtp|teams|discord|telegram|pagerduty|opsgenie|sendgrid|webhook"),
-    ("data-quality", r"check|quality|great.?expectations|validate|assert"),
+    ("data-quality", r"data.?quality|great.?expectations|asset.?check|sql.?check|column.?check|table.?check|soda\b|deequ|data.?validat"),
     ("security", r"codeql|scan|sast|dast|security|vulnerab|sbom|sign|cosign|trivy|snyk"),
 ]
 
 
 def domains_for(text, base=()):
-    t = text.lower()
+    # drop corpus-layout tokens that would otherwise look like domain words
+    t = re.sub(r"tests?/system|test_data|sdk_compiled_pipelines|actions/checkout", " ", text.lower())
     out = list(base)
     for dom, rx in DOMAIN_RULES:
         if dom not in out and re.search(rx, t):
@@ -99,9 +100,13 @@ def trim(s, n=200):
 SECRETISH = re.compile(r"(?i)(password|passwd|secret|token|api[_-]?key|private[_-]?key|credential)s?\s*[:=]\s*\S+")
 
 
+EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}")
+
+
 def scrub(s, n=200):
-    """Short summary text with anything that looks like an inline secret assignment masked."""
-    return trim(SECRETISH.sub(lambda m: m.group(1) + "=<redacted>", str(s or "")), n)
+    """Short summary text with inline secret assignments and e-mail addresses masked."""
+    s = EMAIL.sub("<email>", str(s or ""))
+    return trim(SECRETISH.sub(lambda m: m.group(1) + "=<redacted>", s), n)
 
 
 def dedupe_edges(edges):
@@ -179,8 +184,8 @@ def make_item(*, platform, sid, url, revision, retrieved, license, license_evide
             "license": license, "licenseEvidence": license_evidence,
             "redistributable": bool(redistributable), "rawPath": raw_path,
         },
-        "title": trim(title, 200),
-        "description": {"text": trim(description, 600) if redistributable else "",
+        "title": scrub(title, 200),
+        "description": {"text": scrub(description, 600) if redistributable else "",
                         "provenance": desc_provenance if (redistributable and description) else "written"},
         "graph": {"nodes": nodes, "edges": edges},
         "features": features,
@@ -188,7 +193,8 @@ def make_item(*, platform, sid, url, revision, retrieved, license, license_evide
         "oracle": oracle,
     }
     if not redistributable:
-        # licence unknown/ToS: keep URL + normalised graph features only, no verbatim text
+        # licence unknown/ToS/copyleft: keep URL + normalised graph features only, no verbatim text
+        item["title"] = trim(sid, 200)
         item["description"] = {"text": "", "provenance": "written"}
         for n in nodes:
             n["summary"] = trim(n["type"], 80)
@@ -207,3 +213,63 @@ def write_jsonl(path, items):
     with open(path, "w") as fh:
         for it in items:
             fh.write(json.dumps(it, sort_keys=False, ensure_ascii=False) + "\n")
+
+
+# ------------------------------------------------------------------ licence text heuristics --
+PERMISSIVE = {"MIT", "Apache-2.0", "BSD-3-Clause", "BSD-2-Clause", "ISC", "Unlicense", "CC0-1.0",
+              "0BSD", "Zlib", "BSL-1.0", "MPL-2.0", "CC-BY-4.0", "BSD-3-Clause-Clear", "PSF-2.0",
+              "MIT-0", "Artistic-2.0", "WTFPL", "UPL-1.0"}
+
+
+def classify_license_text(txt):
+    """Best-effort SPDX id from a licence file's text. Returns 'unknown' when unsure."""
+    if not txt:
+        return "unknown"
+    t = re.sub(r"\s+", " ", txt[:6000]).lower()
+    if "gnu affero general public license" in t:
+        return "AGPL-3.0"
+    if "gnu lesser general public license" in t or "gnu library general public license" in t:
+        return "LGPL-3.0" if "version 3" in t else "LGPL-2.1"
+    if "gnu general public license" in t:
+        return "GPL-3.0" if "version 3" in t else ("GPL-2.0" if "version 2" in t else "GPL")
+    if "mozilla public license" in t and "2.0" in t:
+        return "MPL-2.0"
+    if "apache license" in t and ("version 2.0" in t or "2.0" in t[:400]):
+        return "Apache-2.0"
+    if "eclipse public license" in t:
+        return "EPL-2.0" if "2.0" in t else "EPL-1.0"
+    if "permission is hereby granted, free of charge" in t:
+        return "MIT-0" if "without restriction" in t and "the above copyright notice" not in t else "MIT"
+    if "this is free and unencumbered software released into the public domain" in t:
+        return "Unlicense"
+    if "creative commons legal code" in t and "cc0" in t or "cc0 1.0 universal" in t:
+        return "CC0-1.0"
+    if "redistribution and use in source and binary forms" in t:
+        if "neither the name" in t or "names of its contributors" in t or "name of the copyright holder" in t:
+            return "BSD-3-Clause"
+        return "BSD-2-Clause"
+    if "permission to use, copy, modify, and/or distribute this software for any purpose" in t or \
+       "permission to use, copy, modify, and distribute this software for any purpose" in t:
+        return "ISC"
+    if "boost software license" in t:
+        return "BSL-1.0"
+    if "this software is provided 'as-is'" in t and "altered source versions" in t:
+        return "Zlib"
+    if "do what the fuck you want" in t:
+        return "WTFPL"
+    if "attribution 4.0 international" in t:
+        return "CC-BY-4.0"
+    if "business source license" in t:
+        return "BUSL-1.1"
+    if "elastic license" in t:
+        return "Elastic-2.0"
+    if "server side public license" in t:
+        return "SSPL-1.0"
+    return "unknown"
+
+
+def redistributable_license(spdx):
+    """Policy for this corpus: commit normalised graphs (with short summaries/descriptions) only
+    for permissive licences; copyleft, source-available and unknown licences keep URL + graph
+    features only (no verbatim text)."""
+    return spdx in PERMISSIVE
