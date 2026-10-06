@@ -37,11 +37,11 @@ export async function runExperiment({ experiment, arms, tasks, trials = 3, workR
     const verdict = result.output == null ? { pass: false, score: 0, details: { noOutput: true } } : await score(t.familyId, t.task, result.output);
     let extraCost = 0;
     if (arm.afterTask) {
-      try { extraCost = (await arm.afterTask({ task: t.task, result, verdict, workdir, state })).costUsd ?? 0; }
+      try { extraCost = (await arm.afterTask({ task: t.task, taskKey: t.taskKey, trial, result, verdict, workdir, state })).costUsd ?? 0; }
       catch (error) { log(`afterTask failed for ${arm.id}: ${error.message}`); }
     }
     const rec = results.append({
-      experiment, arm: arm.id, armHash: armHash(arm), family: t.familyId, taskKey: t.taskKey, taskHash: t.taskHash, trial,
+      experiment, arm: arm.id, armHash: armHash(arm), family: t.familyId, task: t.taskKey, taskKey: t.taskKey, taskHash: t.taskHash, trial,
       pass: !!verdict.pass, score: verdict.score ?? null, costUsd: (result.costUsd ?? 0) + extraCost, imputedUsd: result.imputedUsd ?? 0,
       latencyMs: result.latencyMs ?? (Date.now() - started), error: result.error ?? null, meta: result.meta ?? null,
       oracleDetails: verdict.details ? JSON.stringify(verdict.details).slice(0, 2000) : null,

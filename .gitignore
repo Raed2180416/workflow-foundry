@@ -10,3 +10,4 @@ research/product-demo/
 *.tgz
 *.log
 .DS_Store
+experiments/runs/

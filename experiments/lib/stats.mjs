@@ -26,7 +26,8 @@ export function wilson(successes, n, z = 1.96) {
 // Group raw trial records { arm, task, family, trial, pass, costUsd, imputedUsd? } by arm → task.
 export function byArmTask(records) {
   const out = new Map();
-  for (const r of records) {
+  for (const r0 of records) {
+    const r = r0.task ? r0 : { ...r0, task: r0.taskKey };
     if (!out.has(r.arm)) out.set(r.arm, new Map());
     const tasks = out.get(r.arm);
     if (!tasks.has(r.task)) tasks.set(r.task, { task: r.task, family: r.family, trials: [] });
