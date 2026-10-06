@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { parseArgs } from 'node:util';
-import { readFileSync, writeFileSync, existsSync, statSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, statSync, lstatSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 import { Foundry, packageRoot, parseCandidate, skillCatalog } from '../src/foundry.mjs';
 import { createDefaultRegistry } from '../src/capabilities.mjs';
@@ -23,7 +23,31 @@ const definitions = {
   , agent: { type: 'string' }, model: { type: 'string' }, rounds: { type: 'string' }, 'generation-timeout': { type: 'string' }, 'auto-apply': { type: 'boolean' }
   , suite: { type: 'string' }
   , 'failed-run': { type: 'string' }, diagnostic: { type: 'string' }, proposal: { type: 'string' }
+  , 'artifact-name': { type: 'string' }, expected: { type: 'string' }, 'evaluator-id': { type: 'string' }
+  , contract: { type: 'string' }, receipt: { type: 'string' }, run: { type: 'string' }, 'max-depth': { type: 'string' }
+  , 'outcome-repair': { type: 'boolean' }
 };
+const outcomeCommands = {
+  'outcome-contract': { required: ['request', 'input', 'artifact-name', 'expected', 'evaluator-id'], optional: [], items: 0 },
+  'outcome-observe': { required: ['request', 'proposal', 'contract'], optional: [], items: 1 },
+  'outcome-repair-request': { required: ['receipt', 'request', 'run', 'expected-hash'], optional: ['diagnostic', 'max-depth'], items: 0 },
+  'outcome-context': { required: ['request'], optional: ['domain', 'no-skills'], items: 0 },
+  'outcome-propose': { required: ['request'], optional: ['rationale'], items: 1 },
+  'outcome-apply': { required: [], optional: [], items: 1 }
+};
+function checkOutcomeArguments(command, args, positionals) {
+  const spec = outcomeCommands[command];
+  const allowed = new Set(['workspace', 'project', 'components', ...spec.required, ...spec.optional]);
+  for (const name of Object.keys(args)) {
+    if (!allowed.has(name)) throw new FoundryError('OUTCOME_CLI_ARGUMENT', `--${name} is not supported by ${command}; use its explicit command arguments.`);
+  }
+  for (const name of spec.required) {
+    if (typeof args[name] !== 'string' || !args[name].trim()) throw new FoundryError('OUTCOME_CLI_ARGUMENT', `${command} requires --${name}.`);
+  }
+  if (positionals.length !== spec.items + 1 || positionals.slice(1).some(value => !value.trim())) {
+    throw new FoundryError('OUTCOME_CLI_ARGUMENT', `${command} requires exactly ${spec.items} positional argument(s). Use --help.`);
+  }
+}
 function readJson(file) {
   if (!file) throw new FoundryError('ARGUMENT', 'A JSON file is required');
   if (statSync(file).size > 2 * 1024 * 1024) throw new FoundryError('FILE_LIMIT', 'JSON input exceeds two MiB');
@@ -46,8 +70,20 @@ const usage = `Workflow Foundry 0.1.0 — experimental, source/evidence qualifie
 `  foundry trial CANDIDATE.json --request REQUEST_ID --input JSON_OR_FILE --workspace PATH\n` +
 `  foundry inspect-trial TRIAL_ID --workspace PATH\n` +
 `  foundry repair-request --request REQUEST_ID --failed-run RUN_ID --expected-hash HASH [--diagnostic TEXT]\n` +
+`  foundry outcome-contract --request ID --input JSON_OR_FILE --artifact-name NAME --expected JSON_OR_FILE --evaluator-id ID\n` +
+`  foundry outcome-observe RUN_ID --request ID --proposal ID --contract HASH\n` +
+`  foundry outcome-history --receipt HASH --workspace PATH  (read-only historical inspection)\n` +
+`  foundry outcome-repair-request --receipt HASH --request ID --run ID --expected-hash HASH [--diagnostic TEXT] [--max-depth 3]\n` +
+`  foundry outcome-context --request ID [--domain software] [--no-skills]\n` +
+`  foundry outcome-propose CANDIDATE.json --request ID [--rationale TEXT]\n` +
+`  foundry outcome-apply PROPOSAL_ID\n` +
 `  foundry delivery RUN_ID --request REQUEST_ID --proposal PROPOSAL_ID --workspace PATH\n` +
 `  foundry generate --task TEXT|--request ID --agent opencode-free --model OBSERVED_FREE_ID [--auto-apply]\n` +
+`  foundry generate --task TEXT|--request ID --agent opencode-v2-free --model opencode/big-pickle\n` +
+`  foundry generate --outcome-repair --request ID --agent opencode-free|opencode-v2-free --model OBSERVED_FREE_ID\n` +
+`  foundry construct-compare [PROGRAM.json]\n` +
+`  foundry construct-intent [PROGRAM.json]\n` +
+`  foundry construct-objective [PROGRAM.json|--text OBJECTIVE]\n` +
 `  foundry evaluate WORKFLOW_ID_OR_FILE --suite TRUSTED_SUITE.json --workspace PATH\n` +
 `  foundry propose CANDIDATE.json --request REQUEST_ID [--rationale TEXT] --workspace PATH\n` +
 `  foundry apply PROPOSAL_ID --workspace PATH\n` +
@@ -56,18 +92,57 @@ const usage = `Workflow Foundry 0.1.0 — experimental, source/evidence qualifie
 `  foundry answer RUN_ID --node root/NODE --answer JSON --workspace PATH\n` +
 `  foundry approve RUN_ID APPROVAL_ID --approved|--rejected --workspace PATH\n` +
 `  foundry export WORKFLOW_ID_OR_FILE --target langgraph|n8n [--out DIRECTORY]\n` +
-`  foundry serve --workspace PATH [--port 4177] [--agent opencode-free --model OBSERVED_FREE_ID --auto-apply]\n` +
+`  foundry serve --workspace PATH [--port 4177] [--agent opencode-free|opencode-v2-free --model OBSERVED_FREE_ID --auto-apply]\n` +
 `  foundry mcp --workspace PATH\n\n` +
 `Models construct candidates using skills/MCP. This CLI does not pretend a template\n` +
 `is model generation. A host-selected component manifest launches trusted MCP\n` +
 `servers; never supply an unreviewed model-authored manifest. Local success is\n` +
-`not proof of commercial parity or arbitrary deployment safety.\n`;
+`not proof of commercial parity or arbitrary deployment safety.\n` +
+`Outcome commands use --workspace PATH. Observation prints satisfied/unsatisfied/unknown;\n` +
+`a recorded receipt does not itself dispatch generation, apply a proposal, or execute a run.\n`;
 
 async function main() {
   const { values: args, positionals } = parseArgs({ options: definitions, allowPositionals: true, strict: true });
   const [command = 'help', item, second] = positionals;
   if (args.help || command === 'help') { process.stdout.write(usage); return; }
+  const outcomeCommand = Object.hasOwn(outcomeCommands, command);
+  if (outcomeCommand) checkOutcomeArguments(command, args, positionals);
+  if (args['outcome-repair'] && (command !== 'generate' || !args.request?.trim() || positionals.length !== 1 ||
+      ['task', 'text', 'workflow', 'expected-hash'].some(name => args[name] !== undefined))) {
+    throw new FoundryError('OUTCOME_CLI_ARGUMENT', 'Use generate --outcome-repair with one existing --request and no replacement task or workflow.');
+  }
+  if (args['outcome-repair'] && args['auto-apply']) {
+    throw new FoundryError('OUTCOME_CLI_ARGUMENT', 'Outcome generation produces a proposal; use a separate outcome-apply command to reverify its evidence.');
+  }
   const workspace = path.resolve(args.workspace ?? args.project ?? process.cwd());
+  if (command === 'outcome-history') {
+    if (positionals.length !== 1 || !/^[a-f0-9]{64}$/.test(args.receipt ?? '') ||
+        Object.keys(args).some(name => !['receipt', 'workspace', 'project'].includes(name))) {
+      throw new FoundryError('OUTCOME_CLI_ARGUMENT', 'Use outcome-history --receipt HASH --workspace PATH. No component, provider, execution or promotion options are accepted.');
+    }
+    // Handle history before component loading and Foundry/Store construction.
+    // Read-only SQLite may use its ordinary WAL reader machinery; no workflow,
+    // ledger, schema or artifact is created, initialized or changed here.
+    const directory = path.join(realpathSync(workspace), '.foundry');
+    if (!lstatSync(directory).isDirectory() || lstatSync(directory).isSymbolicLink()) {
+      throw new FoundryError('STATE_PATH', '.foundry must be an existing real directory');
+    }
+    for (const name of ['foundry.sqlite', 'foundry.sqlite-wal', 'foundry.sqlite-shm']) {
+      try {
+        if (lstatSync(path.join(directory, name)).isSymbolicLink()) throw new FoundryError('STATE_PATH', 'SQLite files must not be symlinks');
+      } catch (error) { if (error.code !== 'ENOENT' || name === 'foundry.sqlite') throw error; }
+    }
+    if (!lstatSync(path.join(directory, 'foundry.sqlite')).isFile()) throw new FoundryError('STATE_PATH', 'An existing regular SQLite database is required');
+    const { DatabaseSync } = await import('node:sqlite');
+    const { inspectOutcomeHistory } = await import('../src/outcome-history.mjs');
+    const db = new DatabaseSync(path.join(directory, 'foundry.sqlite'), { readOnly: true });
+    try {
+      db.exec('PRAGMA query_only=ON; BEGIN');
+      const history = inspectOutcomeHistory({ db }, { receiptId: args.receipt, currentRegistryHash: createDefaultRegistry().hash() });
+      db.exec('COMMIT'); print(history);
+    } finally { db.close(); }
+    return;
+  }
   if (command === 'doctor') {
     const pkg = JSON.parse(readFileSync(path.join(packageRoot, 'package.json'), 'utf8'));
     print({ version: pkg.version, source: packageRoot, node: process.version, supportedNode: Number(process.versions.node.split('.')[0]) >= 24,
@@ -91,14 +166,80 @@ async function main() {
     if (command === 'validate') {
       const result = validateWorkflow(readJson(args.file ?? item), { registry }); print(result); if (!result.valid) process.exitCode = 1; return;
     }
+    if (command === 'construct-compare') {
+      const { runConstructionProgram, bundledConstructionProgram } = await import('../src/construction.mjs');
+      const program = (args.file ?? item) ? readJson(args.file ?? item) : bundledConstructionProgram();
+      const report = runConstructionProgram(program);
+      print(report); if (report.ok === false) process.exitCode = 1; return;
+    }
+    if (command === 'construct-intent') {
+      const { runIntentProgram, bundledIntentProgram } = await import('../src/construction.mjs');
+      const program = (args.file ?? item) ? readJson(args.file ?? item) : bundledIntentProgram();
+      const report = runIntentProgram(program);
+      print(report); if (report.ok === false) process.exitCode = 1; return;
+    }
+    if (command === 'construct-objective') {
+      const construction = await import('../src/construction.mjs');
+      if (args.text || args.task) {
+        const built = construction.constructFromObjective({
+          objective: args.text ?? args.task,
+          provider: construction.createScriptedProvider('respecting')
+        });
+        print(built); return;
+      }
+      const program = (args.file ?? item) ? readJson(args.file ?? item) : construction.bundledObjectiveProgram();
+      const report = construction.runObjectiveProgram(program);
+      print(report); if (report.ok === false) process.exitCode = 1; return;
+    }
     foundry = new Foundry(workspace, { registry });
+    // Ordinary routes retain their existing behavior for ordinary requests.
+    // Outcome descendants require the coordinator's live evidence checks.
+    if (['propose', 'apply', 'prompt', 'generate'].includes(command) && !args['outcome-repair']) {
+      const requestId = command === 'apply' ? foundry.store.proposal(item).requestId : args.request;
+      if (requestId) {
+        const request = foundry.store.request(requestId);
+        const ledgerExists = foundry.store.db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='outcome_repairs'").get();
+        const recorded = ledgerExists && foundry.store.db.prepare('SELECT 1 FROM outcome_repairs WHERE request_id=?').get(requestId);
+        if (recorded || request.repairCause === 'observed-outcome' || Object.hasOwn(request, 'outcomeReceiptId')) {
+          throw new FoundryError('OUTCOME_CLI_ROUTE', 'This is an outcome repair request. Use outcome-context, outcome-propose, outcome-apply, or generate --outcome-repair to preserve evidence verification.');
+        }
+      }
+    }
+    let outcomes;
+    if (outcomeCommand || args['outcome-repair']) {
+      const { OutcomeRepairCoordinator } = await import('../src/outcome-repair.mjs');
+      outcomes = new OutcomeRepairCoordinator(foundry);
+    }
+    if (command === 'outcome-contract') {
+      print(outcomes.registerContract({ requestId: args.request, input: jsonValue(args.input), artifactName: args['artifact-name'],
+        expected: jsonValue(args.expected), evaluatorId: args['evaluator-id'] })); return;
+    }
+    if (command === 'outcome-observe') {
+      print(outcomes.observe({ requestId: args.request, proposalId: args.proposal, runId: item, contractId: args.contract })); return;
+    }
+    if (command === 'outcome-repair-request') {
+      print(outcomes.requestRepair({ receiptId: args.receipt, requestId: args.request, runId: args.run, expectedHash: args['expected-hash'],
+        diagnostic: args.diagnostic ?? '', ...(args['max-depth'] === undefined ? {} : { maxDepth: Number(args['max-depth']) }) })); return;
+    }
+    if (command === 'outcome-context') {
+      print(outcomes.designContext({ requestId: args.request, domain: args.domain, includeSkills: !args['no-skills'] })); return;
+    }
+    if (command === 'outcome-propose') {
+      const candidate = readJson(item);
+      print(outcomes.propose({ requestId: args.request, workflow: candidate.workflow ?? candidate,
+        rationale: args.rationale ?? candidate.rationale })); return;
+    }
+    if (command === 'outcome-apply') { print(outcomes.apply(item)); return; }
     if (args.agent || command === 'generate') {
-      if (args.agent !== 'opencode-free') throw new FoundryError('GENERATOR_PROVIDER', 'This CLI supports --agent opencode-free with an explicitly selected observed free model. Other host agents use MCP or the generator library interface.');
+      if (!['opencode-free', 'opencode-v2-free'].includes(args.agent)) throw new FoundryError('GENERATOR_PROVIDER', 'Choose --agent opencode-free for the legacy interface or opencode-v2-free for the pinned v2 interface, with an explicitly selected observed free model. Other host agents use MCP or the generator library interface.');
+      if (!args.model) throw new FoundryError('MODEL_ID', 'An explicit --model is required; this CLI never silently chooses a model or price tier.');
       const { WorkflowGenerator } = await import('../src/generator.mjs');
-      const { OpenCodeFreeProvider } = await import('../src/opencode-free.mjs');
-      const provider = new OpenCodeFreeProvider({ model: args.model });
+      const Provider = args.agent === 'opencode-v2-free'
+        ? (await import('../src/opencode-v2-free.mjs')).OpenCodeV2FreeProvider
+        : (await import('../src/opencode-free.mjs')).OpenCodeFreeProvider;
+      const provider = new Provider({ model: args.model });
       const evaluator = args.suite ? (await import('../src/evaluation.mjs')).suiteEvaluator(readJson(args.suite), { registryFactory: () => registry }) : null;
-      foundry.generator = new WorkflowGenerator(foundry, provider, { maxRounds: args.rounds ? Number(args.rounds) : 3, maxDurationMs: args['generation-timeout'] ? Number(args['generation-timeout']) : 900000, autoApply: !!args['auto-apply'], evaluator });
+      foundry.generator = new WorkflowGenerator(args['outcome-repair'] ? outcomes.generationHost() : foundry, provider, { maxRounds: args.rounds ? Number(args.rounds) : 3, maxDurationMs: args['generation-timeout'] ? Number(args['generation-timeout']) : 900000, autoApply: !!args['auto-apply'], evaluator });
     }
     if (command === 'generate') {
       const request = args.request ? foundry.store.request(args.request) : foundry.store.createRequest({ text: args.task ?? args.text ?? item, workflowId: args.workflow, baseHash: args['expected-hash'], source: 'user-cli' });
