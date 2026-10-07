@@ -13,8 +13,8 @@ const MAX_ATTEMPTS = 64; // from this attempt on the soft preferences (Jaccard, 
 // Difficulty knobs. lines is the target bundle size (actual size is within about +/-15%).
 // v1 knobs are unchanged; the v2 block (after `paraphrase`) was added by the audit (AUDIT.md).
 const BASE = { anchors: 1, minRootCands: 1, wrap: 0, chronic: 0, pods: false, soft: 0, deploy: 0, blipRoot: false, blipSame: false, benignHard: false, added: 0, stale: 0, proseAliases: 0, mislead: 0, notice: false, inject: false, legacySource: false, noisyNote: false, hypothesis: false, addresses: false };
-const HARD = { provider: 0.4, canary: 0.6, podEcho: true, revised: 2, stale: 1, onsetRepeat: 0.25, quiet: [0.3, 1], blipOnset: 0.85, recoverAlt: 0.7, decoyBelowRoot: 0.5, paraphrase: true, lookalikes: true, configLag: [30, 150], anon: 0.6, mixedNotes: 0.5, silentSoft: 0.5, softErr: 0.6, warnSev: 0.3, mention: 0.03, mentionErr: 0.4, decoy: 1, secondary: [0.35, 0.65], lead: [90, 300], cacheLag: [70, 200], blipNear: true, nearPrecursor: 0.8, ticketSubset: true, hardNotes: 2, renewHerring: true, baselines: 2, wantSoft: 0.5, bigSkew: 0.6 };
-const EASY = { provider: 0, canary: 0, podEcho: false, revised: 0, stale: 0, onsetRepeat: 0, quiet: [1, 1], blipOnset: 0, recoverAlt: 0, decoyBelowRoot: 1, paraphrase: false, lookalikes: false, configLag: null, anon: 0, mixedNotes: 0, silentSoft: 0, softErr: 0, warnSev: 0, mention: 0.01, mentionErr: 0, decoy: 0, secondary: [0, 0], lead: [15, 40], cacheLag: [3, 25], blipNear: false, nearPrecursor: 0, ticketSubset: false, hardNotes: 0, renewHerring: false, baselines: 0, wantSoft: 0, bigSkew: 0 };
+const HARD = { statsOnset: 0.5, statsAfter: true, provider: 0.4, canary: 0.6, podEcho: true, revised: 2, stale: 1, onsetRepeat: 0.25, quiet: [0.3, 1], blipOnset: 0.85, recoverAlt: 0.7, decoyBelowRoot: 0.5, paraphrase: true, lookalikes: true, configLag: [30, 150], anon: 0.6, mixedNotes: 0.5, silentSoft: 0.5, softErr: 0.6, warnSev: 0.3, mention: 0.03, mentionErr: 0.4, decoy: 1, secondary: [0.35, 0.65], lead: [90, 300], cacheLag: [70, 200], blipNear: true, nearPrecursor: 0.8, ticketSubset: true, hardNotes: 2, renewHerring: true, baselines: 2, wantSoft: 0.5, bigSkew: 0.6 };
+const EASY = { statsOnset: 0, statsAfter: false, provider: 0, canary: 0, podEcho: false, revised: 0, stale: 0, onsetRepeat: 0, quiet: [1, 1], blipOnset: 0, recoverAlt: 0, decoyBelowRoot: 1, paraphrase: false, lookalikes: false, configLag: null, anon: 0, mixedNotes: 0, silentSoft: 0, softErr: 0, warnSev: 0, mention: 0.01, mentionErr: 0, decoy: 0, secondary: [0, 0], lead: [15, 40], cacheLag: [3, 25], blipNear: false, nearPrecursor: 0, ticketSubset: false, hardNotes: 0, renewHerring: false, baselines: 0, wantSoft: 0, bigSkew: 0 };
 export const KNOBS = {
   1: { ...BASE, ...EASY, anchors: 1, services: 6, batch: 1, lines: 300, bg: 0.78, styles: ['plain'], refs: ['name'], blipOther: 1, noisyNote: true },
   2: { ...BASE, ...EASY, anchors: 2, services: 8, batch: 1, lines: 400, bg: 0.78, wrap: 0.15, styles: ['plain', 'bracket', 'kv'], refs: ['name', 'name', 'host'], soft: 0.4, deploy: 1, blipSame: true, blipOther: 1, noisyNote: true, mention: 0.015, secondary: [0.1, 0.2] },
@@ -424,6 +424,7 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   const pickSubset = (list, lo, hi) => r.sample(list, clamp(r.int(lo, hi), 1, list.length));
   const altOnset = (C.ONSET_ALT[cls] || []).filter((_, i) => cls !== 'clock_skew' || i > 0 || bigSkew);
   const canary = cls === 'bad_config_deploy' && Boolean(K.canary) && r.chance(K.canary);
+  const statsOnset = (gradual || cls === 'memory_leak_oom') && Boolean(K.statsOnset) && r.chance(K.statsOnset);
   const onsetT = gradual ? r.pick(C.TREND[cls].onset) : canary ? r.pick(C.CANARY) : (altOnset.length && K.paraphrase && r.chance(0.4) ? r.pick(altOnset) : r.pick(F.onset));
   const directT = F.direct ? pickSubset(F.direct, 2, 4) : null;
   const indirectT = F.indirect ? pickSubset(F.indirect, 1, 3) : null;
@@ -552,16 +553,19 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   // Root fault lines.
   const rf = r.fork('root-fault');
   const rootCtx = t => ctxFor(root, t, rf);
+  let valueAt = null;
   if (gradual) {
     // Trend from T (the onset) to symFrom (fatal), then sustained symptoms.
-    const start = cls === 'disk_full' ? root.fx.u0 + rf.int(3, 6) : Math.min(root.fx.max - 2, root.fx.a0 + rf.int(3, 6));
+    const start = cls === 'disk_full' ? root.fx.u0 + rf.int(4, 7) : Math.min(root.fx.max - 2, root.fx.a0 + rf.int(5, 8));
     const end = cls === 'disk_full' ? 99 : root.fx.max - 1;
-    const valueAt = t => Math.round(start + (end - start) * (t - T) / Math.max(1, lead));
-    emit(T, root, onsetT(rootCtx(T), rf, start), 'onset');
+    valueAt = t => Math.min(end + 1, Math.round(start + (end - start) * (t - T) / Math.max(1, lead)));
+    // v3 (audit): from d3 the first visible sign is often just an abnormal value in the service's usual stats
+    // line (same form as its baseline lines); the worded trend lines follow.
+    emit(T, root, statsOnset ? C.BASELINE_AFTER[cls]({ ...rootCtx(T), sym: false }, rf, start).slice(0, 2) : onsetT(rootCtx(T), rf, start), 'onset');
     for (let t = T + rf.int(15, 40); t < symFrom - 5; t += rf.int(15, 40)) emit(t, root, (repeatP && rf.chance(repeatP) ? onsetT : rf.pick(C.TREND[cls].step))(rootCtx(t), rf, valueAt(t)), 'root');
     emit(symFrom, root, rf.pick(F.onset)(rootCtx(symFrom), rf), 'root');
   } else {
-    emit(T, root, onsetT(rootCtx(T), rf), 'onset');
+    emit(T, root, statsOnset && cls === 'memory_leak_oom' ? C.BASELINE_AFTER.memory_leak_oom(rootCtx(T), rf, root.fx.p0).slice(0, 2) : onsetT(rootCtx(T), rf), 'onset');
   }
   if (cls === 'memory_leak_oom') {
     for (const g of leak.growth) {
@@ -682,7 +686,7 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   }
   for (let i = 0; i < Math.round(0.015 * K.lines); i++) {
     const t = rn.int(0, WINDOW - 1), s = pickWeighted(rn);
-    if (s.kind !== 'svc' || (s === root && t > T)) continue;
+    if (s.kind !== 'svc' || (s === root && t > T && !K.statsAfter)) continue;
     emit(t, s, rn.pick(C.SPORADIC)(ctxFor(s, t, rn), rn), 'sporadic');
   }
   // Benign lines naming a callee (slow but fine, reconnects, client-side 4xx at ERROR level).
@@ -699,9 +703,21 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   }
   // Same-vocabulary baselines at normal values: the root's own class (so its onset is the first
   // abnormal value, not the first matching word) and random classes in a few other services.
+  // v3 (audit): the root's periodic stats lines no longer stop at T (in v2 "the first abnormal line after the
+  // root's last stats line" was T); from d3 they continue and show the fault's values (BASELINE_AFTER).
+  const heapAt = t => (leak.growth.filter(g => g.t <= t).at(-1)?.p ?? root.fx.p0);
   const baselineFor = (s, klass) => {
     const step = rn.int(90, 180);
-    for (let t = rn.int(5, 120); t < (s === root ? T - 20 : WINDOW); t += step + rn.int(-20, 20)) {
+    const until = s !== root ? WINDOW : K.statsAfter ? WINDOW : T - 20;
+    for (let t = rn.int(5, 120); t < until; t += step + rn.int(-20, 20)) {
+      if (s === root && t >= T - 20 && t <= T) continue;
+      if (s === root && t > T) {
+        if (cls === 'memory_leak_oom' && inDown(t)) continue;
+        const v = valueAt ? valueAt(Math.min(t, symFrom)) : cls === 'memory_leak_oom' ? clamp(heapAt(t), 0, 99) : 0;
+        const [level, msg, tag] = C.BASELINE_AFTER[klass]({ ...ctxFor(s, t, rn), sym: t >= symFrom }, rn, v);
+        emit(t, s, [level, msg], tag);
+        continue;
+      }
       const v = klass === 'disk_full' ? s.fx.u0 + rn.int(-1, 1) : klass === 'connection_pool_exhaustion' ? clamp(s.fx.a0 + rn.int(-2, 2), 1, s.fx.max - 1) : s.fx.base + rn.int(-2, 2);
       emit(t, s, C.BASELINE[klass](ctxFor(s, t, rn), rn, v), 'baseline');
     }

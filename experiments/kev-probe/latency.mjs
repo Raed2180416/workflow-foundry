@@ -4,10 +4,12 @@
 import path from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { build } from '../../beds/incident/gen.mjs';
-import { RUN_DIR, kevClient, kevIdentity, spend, load, appendJsonl, writeJsonl, readJsonl, median, quantile } from './lib.mjs';
+import { RUN_DIR, KEV_URL, kevClient, kevIdentity, spend, load, appendJsonl, readJsonl, median, quantile } from './lib.mjs';
 import { writeFileSync } from 'node:fs';
 
-const OUT = path.join(RUN_DIR, 'latency.jsonl');
+// One file per server: :8008 is the server as provisioned, :8009 the probe's 2-thread instance (threads-ab.mjs).
+const TAG = new URL(KEV_URL).port;
+const OUT = path.join(RUN_DIR, `latency-${TAG}.jsonl`);
 const SIZES = [100, 500, 2000, 6000];          // target state tokens (Qwen tokenizer)
 const CHARS_PER_TOKEN = 1.78;                   // measured on this filler with the base tokenizer (log text: hex, timestamps)
 const QCOUNTS = [1, 3, 6];
@@ -72,5 +74,5 @@ for (const size of SIZES) for (const n of QCOUNTS) for (const cond of ['fresh', 
     wallMedianMs: median(xs.map(r => r.wallMs)), wallP90Ms: quantile(xs.map(r => r.wallMs), 0.9),
     serverMedianMs: median(xs.map(r => r.serverMs)), serverP90Ms: quantile(xs.map(r => r.serverMs), 0.9), load1Median: median(xs.map(r => r.load1)) });
 }
-writeFileSync(path.join(RUN_DIR, 'latency-summary.json'), JSON.stringify({ kev: ident, loadBefore: before, loadAfter: after, summary }, null, 1));
+writeFileSync(path.join(RUN_DIR, `latency-summary-${TAG}.json`), JSON.stringify({ server: KEV_URL, kev: ident, loadBefore: before, loadAfter: after, summary }, null, 1));
 console.table(summary);

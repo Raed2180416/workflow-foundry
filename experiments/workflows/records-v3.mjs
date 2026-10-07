@@ -208,6 +208,42 @@ export function parseVendexMoney(raw) {
   return { value: Math.round((whole + cents / 100) * 100) / 100, currency };
 }
 
+// Returns the verbatim substring of `line` that a model span was meant to copy: the span itself when it is
+// verbatim, else the word window of the line with the smallest edit distance (a miscopied word), or null when no
+// window is close (an invented span).
+export function alignSpan(span, line) {
+  if (span == null) return null;
+  const s = String(span).trim(), text = String(line ?? '');
+  if (!s) return null;
+  if (text.includes(s)) return s;
+  const lev = (a, b) => {
+    let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+    for (let i = 1; i <= a.length; i++) {
+      const cur = [i];
+      for (let j = 1; j <= b.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      prev = cur;
+    }
+    return prev[b.length];
+  };
+  const words = [...text.matchAll(/\S+/g)].map(m => ({ i: m.index, j: m.index + m[0].length }));
+  const n = s.split(/\s+/).length;
+  let best = null;
+  for (let a = 0; a < words.length; a++) for (let len = Math.max(1, n - 2); len <= n + 2 && a + len <= words.length; len++) {
+    const cand = text.slice(words[a].i, words[a + len - 1].j).replace(/[.,;:]+$/, '');
+    const dist = lev(cand, s);
+    if (!best || dist < best.dist) best = { cand, dist };
+  }
+  return best && best.dist <= Math.max(2, Math.floor(s.length * 0.25)) ? best.cand : null;
+}
+
+// Direction of a VENDEX balance phrase from the fixed keyword lists of the VENDEX notes; null when none occurs.
+export function vendexDirection(text) {
+  const t = String(text ?? '').toLowerCase();
+  if (/in credit by|holding a credit|credit balance|we owe them/.test(t)) return 'credit';
+  if (/owes us|open balance|outstanding|balance due/.test(t)) return 'owed_to_us';
+  return null;
+}
+
 // Splits a name as written into {given, family}. form: 'comma' (Family, Given ...), 'caps' (Given FAMILY with a
 // capitalised family), 'familyFirst' (KOBO), 'givenFirst' (Title Given [I.] Family), or 'auto' (structured rows).
 export function splitName(raw, form = 'auto') {
@@ -463,7 +499,7 @@ export function resolveConventions(input) {
   (input.perspectiveItems ?? []).forEach((item, i) => {
     const v = input.perspective?.[i]?.judge;
     if (!ok(input.perspective?.[i]) || !ok(v)) { diagnostics.push(`perspective ${item.system}: no judgment (kept)`); return; }
-    flip[item.system] = v.master_sign === 'flip';
+    flip[item.system] = v.positive_in_master === 'negative';
   });
   if (!Object.values(flip).some(Boolean)) diagnostics.push('no system flips its balance sign (README: at least one per task)');
   return { orders, orderHow, atlasCutoff, statusMeaning, mirror, flip, diagnostics };
@@ -628,7 +664,7 @@ export function mergeMain(input) {
     for (const r of out.rows) if (r && Number.isInteger(r.row) && chunk.ids.includes(r.row)) vendexRead.set(r.row, r);
   });
   const notMigrated = new Set();
-  const normal = [];
+  const normal = [], repaired = [];
   const unparsed = { dob: 0, updated: 0, money: 0 };
   for (const r of input.rows ?? []) {
     const sys = r.system;
@@ -639,8 +675,15 @@ export function mergeMain(input) {
     if (sys === 'VENDEX' && r.withdrawn) n.void = true;
     let updatedRaw = r.updated;
     if (sys === 'VENDEX') {
-      const v = vendexRead.get(r.row);
-      if (!v) { n.void = true; notMigrated.add(r.row); diagnostics.push(`vendex row ${r.row}: not read`); normal.push(n); continue; }
+      const read = vendexRead.get(r.row);
+      if (!read) { n.void = true; notMigrated.add(r.row); diagnostics.push(`vendex row ${r.row}: not read`); normal.push(n); continue; }
+      // Spans are re-anchored to the entry text: a miscopied word is replaced by what the entry actually says.
+      const v = { ...read };
+      for (const k of ['name', 'birth_date', 'revised', 'phone', 'balance_text']) {
+        if (typeof read[k] !== 'string' || !read[k].trim()) continue;
+        v[k] = alignSpan(read[k], r.text);
+        if (v[k] !== read[k].trim()) repaired.push(`${r.row}.${k}`);
+      }
       const nm = splitName(v.name, 'givenFirst');
       n.given = nm.given; n.family = nm.family;
       n.dob = parseDate(v.birth_date, { order: conv.orders.VENDEX, century: 1900 });
@@ -648,7 +691,8 @@ export function mergeMain(input) {
       n.country = v.country && /^[A-Z]{2}$/.test(v.country) ? v.country : null;
       n.e164 = toE164(v.phone, { country: n.country, system: sys, phones: spec.phones });
       const m = parseVendexMoney(v.balance_text);
-      if (m && m.value !== null && v.balance_kind !== 'none') n.money = { value: v.balance_kind === 'credit' ? -Math.abs(m.value) : Math.abs(m.value), currency: m.currency ?? v.currency ?? null };
+      const direction = vendexDirection(v.balance_text) ?? (v.balance_kind === 'none' ? null : v.balance_kind);
+      if (m && m.value !== null && direction) n.money = { value: direction === 'credit' ? -Math.abs(m.value) : Math.abs(m.value), currency: m.currency ?? (v.currency !== 'none' ? v.currency : null) };
       else if (v.balance_text && !/not (recorded|on file)|no balance/i.test(v.balance_text)) unparsed.money++;
       updatedRaw = v.revised;
       n.updated = parseDate(v.revised, { order: conv.orders.VENDEX, century: 2000 }) ?? '';
@@ -689,7 +733,7 @@ export function mergeMain(input) {
   const records = resolveIdentities(normal, spec);
   const voided = normal.filter(n => n.void).map(n => n.row);
   return { answer: { records }, conventions: { orders: conv.orders, orderHow: conv.orderHow, atlasCutoff: conv.atlasCutoff, statusMeaning: conv.statusMeaning, mirror: conv.mirror, flip: conv.flip },
-    diagnostics: diagnostics.slice(0, 40), unparsed, voided, notRead: [...notMigrated], rowIds: normal.map(n => n.row), vendexRead: [...vendexRead.values()], vendexLines: (input.rows ?? []).filter(r => r.system === 'VENDEX').map(r => ({ row: r.row, text: r.text })) };
+    diagnostics: diagnostics.slice(0, 40), repairedSpans: repaired, unparsed, voided, notRead: [...notMigrated], rowIds: normal.map(n => n.row), vendexRead: [...vendexRead.values()], vendexLines: (input.rows ?? []).filter(r => r.system === 'VENDEX').map(r => ({ row: r.row, text: r.text })) };
 }
 
 export function verifyMain(input) {
@@ -712,9 +756,10 @@ export function verifyMain(input) {
   for (const id of seen) if (voided.has(id)) reasons.push(`void row ${id} merged`);
   // VENDEX spans must be verbatim (a misplaced span is a misread).
   const lines = new Map((s.vendexLines ?? []).map(l => [l.row, l.text]));
+  const fixed = new Set(s.repairedSpans ?? []);
   for (const v of s.vendexRead ?? []) for (const k of ['name', 'birth_date', 'phone', 'balance_text', 'revised']) {
     const t = v[k];
-    if (typeof t === 'string' && t && !/unknown|not on file|not recorded|location not stated/i.test(t) && !(lines.get(v.row) ?? '').includes(t)) reasons.push(`vendex ${v.row} ${k} not verbatim`);
+    if (typeof t === 'string' && t && !(lines.get(v.row) ?? '').includes(t)) reasons.push(`vendex ${v.row} ${k} not verbatim${fixed.has(`${v.row}.${k}`) ? ' (re-anchored)' : ''}`);
   }
   for (const d of s.diagnostics ?? []) reasons.push(`diagnostic: ${d}`);
   for (const [k, n] of Object.entries(s.unparsed ?? {})) if (n) reasons.push(`${n} unparsed ${k} value(s)`);
@@ -723,7 +768,7 @@ export function verifyMain(input) {
 
 // ------------------------------------------------------------------------------------------------------------
 // Bundling: a code node's source holds the helpers it calls plus `export default main`.
-const HELPERS = [monthIndex, isoOf, isPlaceholder, parseDate, wordsToNumber, parseNumber, parseMoney, parseVendexMoney, splitName, splitParagraphs,
+const HELPERS = [monthIndex, isoOf, isPlaceholder, parseDate, wordsToNumber, parseNumber, parseMoney, parseVendexMoney, alignSpan, vendexDirection, splitName, splitParagraphs,
   parseLine, statusMention, exactCountry, parseSpec, toE164, orderFromExample, resolveConventions, resolveIdentities];
 export const bundle = main => `${HELPERS.filter(f => f !== main).map(f => f.toString()).join('\n\n')}\n\n${main.toString()}\n\nexport default ${main.name};\n`;
 
@@ -732,7 +777,7 @@ export const bundle = main => `${HELPERS.filter(f => f !== main).map(f => f.toSt
 const S = (maxLength = 400) => ({ type: ['string', 'null'], maxLength });
 const SYS_ENUM = ['BRIGHTDESK', 'LEDGR', 'ATLAS', 'VENDEX', 'KOBO', 'VERITAS', 'none'];
 
-export const DATE_INSTRUCTIONS = `You read one paragraph of source notes that describes a legacy system (named in "system"). Decide how this system writes NUMERIC dates such as 03/04/1990: day first ("dmy") or month first ("mdy"). For VENDEX the question covers all its numeric dates; for BRIGHTDESK and ATLAS it covers numeric birth dates.
+export const DATE_INSTRUCTIONS = `You read one paragraph of source notes (input block "paragraph") that describes a legacy system (named in "system"). Decide how this system writes NUMERIC dates such as 03/04/1990: day first ("dmy") or month first ("mdy"). For VENDEX the question covers all its numeric dates; for BRIGHTDESK and ATLAS it covers numeric birth dates.
 Return:
 - basis: how the paragraph settles it:
   "explicit" = it states the order itself (day first / month first, DD/MM/YYYY / MM/DD/YYYY, UK or US locale, European or American convention, including negated forms such as "does not use the American order");
@@ -769,7 +814,7 @@ export const DATE_CHECKS = [
       { op: 'all', conditions: [{ op: 'eq', left: out('place_in_united_states'), right: false }, { op: 'eq', left: out('order'), right: 'dmy' }] }] }] }] },
 ];
 
-export const SWITCH_INSTRUCTIONS = `You read the source-notes paragraph of the ATLAS ledger. Some ATLAS installations changed how they write numeric birth dates on a given day (for example when the hosting vendor changed): rows last changed on or after that day use a different order. Decide whether this paragraph describes such a dated change.
+export const SWITCH_INSTRUCTIONS = `You read the source-notes paragraph of the ATLAS ledger (input block "paragraph"). Some ATLAS installations changed how they write numeric birth dates on a given day (for example when the hosting vendor changed): rows last changed on or after that day use a different order. Decide whether this paragraph describes such a dated change.
 Return:
 - present: true only if the paragraph says numeric birth dates are written differently in rows changed on/after a certain date.
 - quote: that sentence copied exactly, character for character (null if not present).
@@ -788,7 +833,7 @@ export const switchChecks = paragraphRef => [
     { op: 'ne', left: out('after'), right: 'none' }, { op: 'ne', left: out('boundary'), right: 'none' }] }] },
 ];
 
-export const STATUS_INSTRUCTIONS = `You read the source-notes paragraph of one legacy system and one status value ("token") that occurs in that system's rows. Decide what the notes say about rows carrying this value: "void" (not a real account: excluded from the migration, dropped, left out) or "live" (a real account: kept and migrated). Labels can be misleading; only what the notes say counts.
+export const STATUS_INSTRUCTIONS = `You read the source-notes paragraph of one legacy system (input block "paragraph") and one status value ("token") that occurs in that system's rows. Decide what the notes say about rows carrying this value: "void" (not a real account: excluded from the migration, dropped, left out) or "live" (a real account: kept and migrated). Labels can be misleading; only what the notes say counts.
 Return:
 - meaning: "void" or "live".
 - relation / compared_with: if the notes define the value by comparison with one of the system's fixed markers, give the relation and that marker:
@@ -816,7 +861,7 @@ export const STATUS_CHECKS = [
       { op: 'all', conditions: [{ op: 'in', left: out('compared_with'), right: LIVE_MARKERS }, { op: 'eq', left: out('meaning'), right: 'void' }] }] }] }] },
 ];
 
-export const MIRROR_INSTRUCTIONS = `You read the source-notes paragraph of one legacy system (named in "system"). Each row has an update date (updated / Geändert / ts). Decide whether the paragraph says this system's update dates are real change dates or not:
+export const MIRROR_INSTRUCTIONS = `You read the source-notes paragraph of one legacy system (input block "paragraph"; the system is named in "system"). Each row has an update date (updated / Geändert / ts). Decide whether the paragraph says this system's update dates are real change dates or not:
 - "restamped": the dates are NOT real change dates; a copy job, mirror rebuild, restore from backup, migration to new hardware or re-import rewrote them (so they show copy/restore times).
 - "real": the paragraph says the dates are real change dates (including "was restored once but the restore kept the original dates", or "is not a read-only mirror").
 - "not_stated": the paragraph says nothing about whether its update dates are reliable.
@@ -832,22 +877,22 @@ export const MIRROR_CHECKS = [
   { op: 'any', conditions: [{ op: 'ne', left: out('update_dates'), right: 'restamped' }, { op: 'lte', left: { $ref: 'item.spanDays' }, right: 120 }] },
 ];
 
-export const PERSPECTIVE_INSTRUCTIONS = `You read the source-notes paragraph of one legacy system (named in "system"). Its rows print a balance (balance / Saldo / owed / balance). The canonical master stores what the account holder owes US as positive and what WE owe them (a credit they hold) as negative. Decide from the paragraph which side this system's balances are printed from:
-- positive_printed_balance_means: "they_owe_us" (a positive printed figure is money the customer/supplier/member owes us: a receivable, an open invoice, unpaid orders) or "we_owe_them" (a positive printed figure is money we owe them: a credit, prepaid deposit, store credit, a payable).
-- master_sign: "keep" if the master keeps the printed sign, "flip" if the master records it with the opposite sign.
+export const PERSPECTIVE_INSTRUCTIONS = `You read the source-notes paragraph of one legacy system (input block "paragraph"; the system is named in "system"). Its rows print a balance (balance / Saldo / owed). The canonical master stores money the account holder owes US as a positive number and money WE owe them (a credit they hold with us) as a negative number. Decide what happens to a POSITIVE printed balance of this system in the master:
+- positive_in_master: "positive" if the master keeps a positive printed figure positive (the printed figure is what they owe us: a receivable, an open invoice, unpaid orders, read literally); "negative" if it becomes negative (the printed figure is what we owe them: a credit, prepaid deposit, store credit, a payable; or the notes say the balances change sign / are printed the opposite way / must be flipped for the master).
+- positive_printed_balance_means: "they_owe_us" (goes with "positive") or "we_owe_them" (goes with "negative"). A paragraph that only says the sign changes in the master means a positive printed figure is money we owe them.
 - quote: the sentence that settles it, copied exactly, character for character, from the paragraph.
-Sign markers such as parentheses, a minus, "CR" or "▲" are applied before this; the question is only about the side the figures are printed from.`;
+Decide from what a POSITIVE printed figure is. A clause that only says how negative figures are marked (parentheses, a minus, "CR", "▲") does not change the answer.`;
 
 export const PERSPECTIVE_RETURNS = {
-  type: 'object', additionalProperties: false, required: ['positive_printed_balance_means', 'master_sign', 'quote'],
-  properties: { positive_printed_balance_means: { type: 'string', enum: ['they_owe_us', 'we_owe_them'] }, master_sign: { type: 'string', enum: ['keep', 'flip'] },
+  type: 'object', additionalProperties: false, required: ['positive_in_master', 'positive_printed_balance_means', 'quote'],
+  properties: { positive_in_master: { type: 'string', enum: ['positive', 'negative'] }, positive_printed_balance_means: { type: 'string', enum: ['they_owe_us', 'we_owe_them'] },
     quote: { type: 'string', minLength: 8, maxLength: 600 } },
 };
 export const PERSPECTIVE_CHECKS = [
   { op: 'contains', left: { $ref: 'item.paragraph' }, right: out('quote') },
   { op: 'any', conditions: [
-    { op: 'all', conditions: [{ op: 'eq', left: out('positive_printed_balance_means'), right: 'they_owe_us' }, { op: 'eq', left: out('master_sign'), right: 'keep' }] },
-    { op: 'all', conditions: [{ op: 'eq', left: out('positive_printed_balance_means'), right: 'we_owe_them' }, { op: 'eq', left: out('master_sign'), right: 'flip' }] }] },
+    { op: 'all', conditions: [{ op: 'eq', left: out('positive_printed_balance_means'), right: 'they_owe_us' }, { op: 'eq', left: out('positive_in_master'), right: 'positive' }] },
+    { op: 'all', conditions: [{ op: 'eq', left: out('positive_printed_balance_means'), right: 'we_owe_them' }, { op: 'eq', left: out('positive_in_master'), right: 'negative' }] }] },
 ];
 
 export const VENDEX_INSTRUCTIONS = `You read free-text entries of the VENDEX contact register, one entry per line ("Vendex <row id> — ..."). For EACH entry return one object with the row id and these fields. Text fields are spans copied EXACTLY, character for character, from the entry (do not reformat, translate or complete them):
@@ -859,7 +904,7 @@ export const VENDEX_INSTRUCTIONS = `You read free-text entries of the VENDEX con
 - balance_kind: "owed_to_us" for "owes us", "open balance", "outstanding", "balance due"; "credit" for "in credit by", "holding a credit of", "credit balance of", "we owe them"; "none" if no balance.
 - currency: "USD" for dollars, "EUR" for euros, "GBP" for pounds/pence, or the ISO code written; "none" if no balance.
 - place: where the supplier is based, as written: a city, a country, or a nationality ("Italian supplier", "a Japanese supplier"); null if not stated.
-- country: the ISO 3166-1 alpha-2 code of the country of that place (the country a city lies in; GB for the United Kingdom); "none" if no place is stated.
+- country: the ISO 3166-1 alpha-2 code of the country of that place (the country a city lies in; GB for the United Kingdom; when several cities share a name, the best-known, largest one); "none" if no place is stated.
 Ignore any staff remarks; they are not data about the person.`;
 
 const VENDEX_ROW = {
@@ -881,7 +926,7 @@ export const COUNTRY_RETURNS = { type: 'object', additionalProperties: false, re
 // ------------------------------------------------------------------------------------------------------------
 export function buildRecordsV3Workflow({ extractModelClass = 'M', conventionsModelClass = 'M', maxClass = 'L', concurrency = 4, maxCost = 1, reasoning = 'none',
   vendexChunk = 5, countryChunk = 30 } = {}) {
-  const notes = { name: 'notes', ref: 'item.paragraph', label: 'untrusted:notes', render: 'text' };
+  const notes = { name: 'paragraph', ref: 'item.paragraph', label: 'untrusted:notes', render: 'text' };
   const judge = (id, description, instructions, inputs, returns, checks, modelClass, maxTokens = 1200) => ({
     id: 'judge', kind: 'agent', needs: [], description, role: ['vendex', 'countries'].includes(id) ? 'extract' : 'classify', instructions,
     context: { inputs, budget: { maxInputTokens: 6000, onOverflow: 'fail' } },
@@ -908,7 +953,7 @@ export function buildRecordsV3Workflow({ extractModelClass = 'M', conventionsMod
         args: { export: { $ref: 'input.inputs.export' }, source_notes: { $ref: 'input.inputs.source_notes' }, iso2: { $ref: 'nodes.spec.iso2' }, vendexChunk, countryChunk }, timeoutMs: 30000 },
       mapOf('dates', ['prep'], 'Read the numeric date order of BRIGHTDESK, ATLAS and VENDEX from the notes', 'nodes.prep.dateItems',
         judge('dates', 'Numeric date order of this system', DATE_INSTRUCTIONS, [systemInput, notes], DATE_RETURNS, DATE_CHECKS, conventionsModelClass)),
-      { ...judge('atlas_switch', 'Dated change of the ATLAS birth-date order', SWITCH_INSTRUCTIONS, [{ name: 'notes', ref: 'nodes.prep.atlasParagraph', label: 'untrusted:notes', render: 'text' }],
+      { ...judge('atlas_switch', 'Dated change of the ATLAS birth-date order', SWITCH_INSTRUCTIONS, [{ name: 'paragraph', ref: 'nodes.prep.atlasParagraph', label: 'untrusted:notes', render: 'text' }],
         SWITCH_RETURNS, switchChecks('nodes.prep.atlasParagraph'), conventionsModelClass), id: 'atlas_switch', needs: ['prep'], onError: 'continue' },
       mapOf('statuses', ['prep'], 'Read the meaning of each extra status value from the notes', 'nodes.prep.statusItems',
         judge('statuses', 'Meaning of this status value', STATUS_INSTRUCTIONS, [systemInput, { name: 'token', ref: 'item.mention', render: 'text' }, notes], STATUS_RETURNS, STATUS_CHECKS, conventionsModelClass)),

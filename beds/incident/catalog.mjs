@@ -789,12 +789,12 @@ export const CALLEE_REJECT = {
 // first line where the values become abnormal, not the first line with the right words.
 export const BASELINE = {
   connection_pool_exhaustion: (c, r, v) => ['INFO', `pool '${c.pool}' stats: active=${v}/${c.max} idle=${c.max - v} pending=0`],
-  certificate_expiry: (c, r) => ['INFO', `TLS listener :${c.port} ok (${r.int(40, 900)} handshakes/min)`],
+  certificate_expiry: (c, r) => ['INFO', `TLS listener :${c.port}: ${r.int(40, 900)} handshakes/min, ${r.int(0, 1)}% failed`],
   bad_config_deploy: (c, r) => ['INFO', `config watch: no changes (release ${c.oldVer})`],
   disk_full: (c, r, v) => [v >= 80 ? 'WARN' : 'INFO', `disk usage ${v}% on ${c.vol}${v >= 80 ? ' (warning threshold 80%)' : ''}`],
-  dns_resolution_failure: (c, r) => ['INFO', `resolver ${c.resolver}: ${r.int(200, 4000)} lookups/min, cache hit ${r.int(80, 98)}%`],
+  dns_resolution_failure: (c, r) => ['INFO', `resolver ${c.resolver}: ${r.int(200, 4000)} lookups/min, ${r.int(0, 1)}% failed, cache hit ${r.int(80, 98)}%`],
   memory_leak_oom: (c, r, v) => [v >= 60 ? 'WARN' : 'INFO', `heap after gc ${v}% (pause ${r.int(20, 140)}ms)`],
-  clock_skew: (c, r) => ['INFO', `ntp offset ${r.int(1, 30)}ms (ok)`],
+  clock_skew: (c, r) => ['INFO', `ntp offset ${r.int(1, 30)}ms`],
   upstream_rate_limiting: (c, r) => ['INFO', `${c.ext} quota usage ${r.int(15, 60)}% of ${c.quota}/min`],
   poisoned_cache: (c, r) => ['INFO', `cache '${c.ns}' hit ratio 0.${r.int(85, 97)}, ${r.int(8000, 90000)} entries`],
 };
@@ -1048,7 +1048,7 @@ export const RECOVER_ALT = {
   certificate_expiry: [
     (c, r) => ['INFO', `served chain for ${c.host} replaced with the intermediate bundle; handshake errors stopped`],
     (c, r) => ['INFO', `renewed certificate for admin.${c.host}; handshakes on the admin listener succeed again`],
-    (c, r) => ['INFO', `TLS listener :${c.port} ok (${r.int(40, 900)} handshakes/min)`],
+    (c, r) => ['INFO', `TLS listener :${c.port}: ${r.int(40, 900)} handshakes/min, ${r.int(0, 1)}% failed`],
   ],
   bad_config_deploy: [
     (c, r) => ['INFO', 'previous configuration kept after the rejected reload; no requests were affected'],
@@ -1059,7 +1059,7 @@ export const RECOVER_ALT = {
     (c, r) => ['INFO', `retention job removed ${r.int(20, 400)} expired segments; ${c.vol} has ${c.free(c.u0)} GiB free`],
   ],
   dns_resolution_failure: [
-    (c, r) => ['INFO', `resolver ${c.resolver}: ${r.int(200, 4000)} lookups/min, cache hit ${r.int(80, 98)}%`],
+    (c, r) => ['INFO', `resolver ${c.resolver}: ${r.int(200, 4000)} lookups/min, ${r.int(0, 1)}% failed, cache hit ${r.int(80, 98)}%`],
     (c, r) => ['INFO', `lookups answering normally again (median ${r.int(1, 9)}ms)`],
   ],
   memory_leak_oom: [
@@ -1067,7 +1067,7 @@ export const RECOVER_ALT = {
     (c, r) => ['INFO', `the batch request finished; old generation collected back down to ${c.base}%`],
   ],
   clock_skew: [
-    (c, r) => ['INFO', `ntp offset ${r.int(1, 30)}ms (ok)`],
+    (c, r) => ['INFO', `ntp offset ${r.int(1, 30)}ms`],
     (c, r) => ['INFO', 'time source reachable again; local clock corrected'],
   ],
   upstream_rate_limiting: [
@@ -1140,3 +1140,19 @@ export const PROVIDER_FAIL = [
   (c, r) => ['ERROR', `${c.callee} unavailable and the fallback read from ${c.provider} failed too; ${c.route} failed`],
   (c, r) => ['ERROR', `fallback to ${c.provider} after a ${c.callee} error also failed (${r.pick([502, 503, 504])})`],
 ];
+
+// v3 (audit): the root's periodic stats lines after T (difficulty >= 3), in the same form as BASELINE but with
+// the fault's values. Returns [level, message, tag]; 'root' marks lines that show the fault.
+export const BASELINE_AFTER = {
+  connection_pool_exhaustion: (c, r, v) => (c.sym
+    ? ['INFO', `pool '${c.pool}' stats: active=${c.max}/${c.max} idle=0 pending=${r.int(20, 300)}`, 'root']
+    : ['INFO', `pool '${c.pool}' stats: active=${v}/${c.max} idle=${c.max - v} pending=0`, 'root']),
+  certificate_expiry: (c, r) => ['INFO', `TLS listener :${c.port}: ${r.int(5, 400)} handshakes/min, ${r.int(60, 100)}% failed`, 'root'],
+  bad_config_deploy: (c, r) => ['INFO', `config watch: no changes (release ${c.newVer})`, 'bg'],
+  disk_full: (c, r, v) => [v >= 80 ? 'WARN' : 'INFO', `disk usage ${Math.min(100, v)}% on ${c.vol}${v >= 80 ? ' (warning threshold 80%)' : ''}`, 'root'],
+  dns_resolution_failure: (c, r) => ['INFO', `resolver ${c.resolver}: ${r.int(200, 4000)} lookups/min, ${r.int(60, 100)}% failed, cache hit ${r.int(5, 40)}%`, 'root'],
+  memory_leak_oom: (c, r, v) => [v >= 60 ? 'WARN' : 'INFO', `heap after gc ${v}% (pause ${r.int(20, 140)}ms)`, v >= c.base + 8 ? 'root' : 'bg'],
+  clock_skew: (c, r) => ['INFO', `ntp offset ${c.skew * 1000}ms`, 'root'],
+  upstream_rate_limiting: (c, r) => ['INFO', `${c.ext} quota usage 100% of ${c.quota}/min`, 'root'],
+  poisoned_cache: (c, r) => ['INFO', `cache '${c.ns}' hit ratio 0.${r.int(97, 99)}, ${r.int(8000, 90000)} entries`, 'bg'],
+};
