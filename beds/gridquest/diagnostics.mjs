@@ -3,13 +3,13 @@
 // actions(), step info) and exist to show what the bed does NOT reward. See AUDIT.md.
 //   keywordAgent        v1 diagnostic: every direction word is an exit (weak by design)
 //   blindAgent          no exit parsing: actions() + room header + feedback, tries every wall
-//   regexAgent          40 lines, tuned with full knowledge of the v1 (1.0.0) templates
-//   regexAgentV2        40 lines, tuned to the v2 templates (landmarks by noun, fake and
+//   regexAgent          40-line function tuned with full knowledge of the v1 (1.0.0) templates
+//   regexAgentV2        40-line function tuned to the v2 templates (landmarks by noun, fake and
 //                       reopened exits, placement paraphrases) but with no synonym table
-//   templateAwareAgent  ~45 lines that IMPORT the bed's own alias table and hard-code every
-//                       placement template: a white-box upper bound, not a fair baseline
+//   templateAwareAgent  46-line function that IMPORTS the bed's own alias table and hard-codes
+//                       every placement template: a white-box upper bound, not a fair baseline
 //   snapshotSearch      blind breadth-first search through snapshot()/restore()
-// Line counts are physical lines from the `// ---` marker to the end of each function.
+// Line counts are physical lines of each exported function; module-level regex tables are noted.
 import { COLORS, ALIASES } from './text.mjs';
 
 const BACK = { north: 'south', south: 'north', east: 'west', west: 'east' };
@@ -73,7 +73,7 @@ export function keywordAgent(env, maxSteps) {
   return { actions };
 }
 
-// --- blindAgent (no exit parsing; 32 lines) ---
+// --- blindAgent (no exit parsing; 31-line function) ---
 export function blindAgent(env, budget) {
   const map = new Map(), acts = [];
   let obs = env.reset().observation, prev = null, prevDir = null;
@@ -106,7 +106,7 @@ export function blindAgent(env, budget) {
   return { actions: acts };
 }
 
-// --- regexAgent (tuned to the v1 templates; 40 lines) ---
+// --- regexAgent (tuned to the v1 templates; 40-line function + 5 table lines) ---
 const DW1 = { north: 'north', northern: 'north', northward: 'north', 'pole star': 'north', 'pole-star': 'north', south: 'south', southern: 'south', southward: 'south', 'noonday sun': 'south', 'noon-sun': 'south', east: 'east', eastern: 'east', eastward: 'east', sunrise: 'east', west: 'west', western: 'west', westward: 'west', sunset: 'west' };
 const DRE1 = /\b(north(?:ern|ward)?|south(?:ern|ward)?|east(?:ern|ward)?|west(?:ern|ward)?|pole[ -]star|noon(?:day sun|-sun)|sunrise|sunset)\b/g;
 const EXIT1 = /archway|passage|corridor|gap|steps|opening|arch\b|doorway|crack|door|bridge|chasm|rift|gorge|portcullis|chute|ledge|turnstile|hatch|ways stand open/;
@@ -153,7 +153,7 @@ export function regexAgent(env, budget) {
   return { actions: acts };
 }
 
-// --- regexAgentV2 (tuned to the v2 templates, no synonym table; 40 lines with the shared v1 tables) ---
+// --- regexAgentV2 (tuned to the v2 templates, no synonym table; 40-line function + 3 table lines, reuses regexAgent's tables) ---
 const FAKE2 = /bricked up;|has stayed that way|trompe|heap of fallen masonry|barred window|hand's width|flooded to the ceiling|only solid stone|since been bricked up|filled it again/;
 const PLACE2 = /^(?:there is |against the \w+ wall leans |pushed up against the \w+ wall is |close against the \w+ wall stands |along the \w+ wall you make out )?an? [\w-]+ ([\w-]+)/;
 const LAND2 = /(beside|next to|behind|same wall as|across the room from|directly across from|opposite) the (?:[\w-]+ )?([\w-]+)/;
@@ -183,9 +183,8 @@ export function regexAgentV2(env, budget) {
         room.ex[d] = closed1(s2) ? 'closed' : /no climbing back|no way back up|only one way: out|swings outward/.test(s) ? 'oneway' : 'open';
       }
     });
-    const next = todo.find(a => !room.done.has(a));
+    const next = todo.find(a => !room.done.has(a)), ok = (n, d) => R(n).ex[d] === 'open' && !R(n).blocked.has(d);
     if (next) { room.done.add(next); if (act(next).done) break; continue; }
-    const ok = (n, d) => R(n).ex[d] === 'open' && !R(n).blocked.has(d);
     const q = [[head, null]], seen = new Set([head]); let dir = null;
     for (let i = 0; i < q.length && !dir; i++) {
       const [cur, first] = q[i], f = Object.keys(R(cur).ex).filter(d => ok(cur, d) && !R(cur).links[d]);
@@ -199,7 +198,7 @@ export function regexAgentV2(env, budget) {
   return { actions: acts };
 }
 
-// --- templateAwareAgent (white-box: imports ALIASES from the bed; ~45 lines with shared tables) ---
+// --- templateAwareAgent (white-box: imports ALIASES from the bed; 46-line function + 3 table lines + shared tables) ---
 const AL = Object.fromEntries(Object.entries(ALIASES).flatMap(([n, as]) => [[n, n], ...as.map(a => [a, n])]));
 const REF3 = new RegExp(`(beside|next to|behind|same wall as|across the room from|directly across from|opposite|up next to|faces) the ((?:[\\w-]+ )?(?:${Object.keys(AL).sort((a, b) => b.length - a.length).map(x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')}))\\b`);
 const nounOf = ph => AL[ph] || AL[ph.split(' ').slice(1).join(' ')];
@@ -250,7 +249,7 @@ export function templateAwareAgent(env, budget) {
   return { actions: acts };
 }
 
-// --- snapshotSearch (no language understanding; 24 lines) ---
+// --- snapshotSearch (no language understanding; 27-line function) ---
 // Breadth-first search over env states through snapshot()/restore(), keyed by the observation
 // text minus the move counter plus the parity of effective toggles. With unlimited rewinds it
 // solved 30/30 d3 tasks of bed 1.0.0; the lifetime action ledger (createEnv) now stops it.

@@ -6,10 +6,10 @@ const CR = ['austria|sterr|^aut?$|vienn|graz|salzb|innsb|linz>AT', 'austr|^aus$|
   'spa|esp|spian|madri|barcel|sevil|bilb|zarag|m.lag>ES', 'mex|guadal|monter|puebl|tijua>MX', 'ital|itl|^ita$|milan|turin|napl|genoa|bologn|palerm|veron>IT',
   'neth|nehte|holl|neder|niede|^nld$|dutch|rotterd|utrech|eindh|amster|groni>NL', 'jap|jpa|nipp|^jpn$|osaka|kyoto|nagoy|sappor|yokoh|fukuo|kobe>JP',
   'swe|schwed|sverig|stockh|gothen|malm|uppsal>SE', 'dan|d.nem|denm|copenh|aarhu|odens|aalbor>DK', 'nor|oslo|trondh|stavan|troms>NO'].map(p => p.split('>'));
-const cty = s => { s = (s ?? '').trim().toLowerCase(); return !s ? null : CR.find(([re]) => new RegExp(re).test(s))?.[1] ?? null; };
+const cty = s => { s = (s ?? '').trim().toLowerCase(); return !s ? null : s.length === 2 ? (s === 'uk' ? 'GB' : s.toUpperCase()) : CR.find(([re]) => new RegExp(re).test(s))?.[1] ?? null; };
 const W = 'zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen'.split(' ');
 const T = ',,twenty,thirty,forty,fifty,sixty,seventy,eighty,ninety'.split(','), MON = 'janfebmaraprmayjunjulaugsepoctnovdec', p2 = n => String(n).padStart(2, '0');
-const words = s => s.split(/[\s-]+/).reduce(([t, c], w) => (w === 'thousand' ? [t + c * 1000, 0] : [t, w === 'hundred' ? c * 100 : c + W.indexOf(w) + 1 + 10 * T.indexOf(w) + 10]), [0, 0])
+const words = s => s.split(/[\s-]+/).reduce(([t, c], w) => (w === 'thousand' ? [t + c * 1000, 0] : [t, w === 'hundred' ? c * 100 : c + Math.max(0, W.indexOf(w)) + 10 * Math.max(0, T.indexOf(w))]), [0, 0])
   .reduce((a, b) => a + b), ymd = (y, m, d) => `${y}-${p2(m)}-${p2(d)}`;
 const date = (s, us) => { const n = s.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/), y = s.match(/\d{4}/)?.[0] ?? `19${s.slice(-2)}`; if (n) return us ? ymd(y, n[1], n[2]) : ymd(y, n[2], n[1]);
   return ymd(y, MON.indexOf(s.match(/[A-Za-z]{3,}/g).find(x => x !== 'the').slice(0, 3).toLowerCase()) / 3 + 1, s.replace(y, '').match(/\d{1,2}/)[0]); };

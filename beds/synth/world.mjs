@@ -27,7 +27,9 @@ export const POLICIES = {
 //   nErratum      an erratum corrects a sample size, which flips the ranking,
 //   erratumDecoy  an erratum on the winner corrects its NON-standard value (the standard value stands),
 //   loserErratum  an erratum corrects a losing document (erratum targets are not always winners),
-//   supersededLoser a losing document that has an earlier (void) version.
+//   supersededLoser a losing document that has an earlier (void) version,
+//   quoteInDoc    the winner quotes another value for the same cell in the sentence that gives its own,
+//   comparison    the winner reports the same property for a comparator entity in the same sentence.
 
 // Difficulty knobs. `mandatory` features are spread over the requested cells of every task;
 // `extras` are per-cell probabilities on top. See README for the measured token sizes.
@@ -43,7 +45,7 @@ export const KNOBS = {
   1: {
     entities: 2, cells: 4, policies: ['P1'], aliasInPrompt: true, nInMeta: true, mixedLabels: false, mixedDates: false,
     unitLevel: 1, plusMinus: false, fancyNumbers: false, pairs: 0, spelledN: false, background: 1, entityFiller: 0, condLevel: 1,
-    anaphora: 0, nVariety: 0, decoyP: 0, refStyles: ['id'], redHerrings: 0, otherErrata: 0, oocCollide: false,
+    docDefault: 0, ranges: 0, methodNums: 0, contrast: 0, split: 0, addN: 0, durations: 0, unitWords: 0, anaphora: 0, nVariety: 0, decoyP: 0, refStyles: ['id'], redHerrings: 0, otherErrata: 0, oocCollide: false,
     filler: { retract: 0, errata: 0, press: 0, supersede: 0 }, ooc: 0, erratumOnVoid: false, unitErratum: false, injection: false,
     mandatory: ['retracted', 'erratum', 'press', 'conditions', 'superseded', 'unit', 'rank'],
     extras: { loser: 0.3 }, attachP: 0.2,
@@ -51,7 +53,7 @@ export const KNOBS = {
   2: {
     entities: 3, cells: 6, policies: ['P1'], aliasInPrompt: true, nInMeta: true, mixedLabels: false, mixedDates: false,
     unitLevel: 2, plusMinus: false, fancyNumbers: false, pairs: 0, spelledN: false, background: 1, entityFiller: 1, condLevel: 2,
-    anaphora: 0.25, nVariety: 0.15, decoyP: 0.2, refStyles: ['id'], redHerrings: 0.1, otherErrata: 0, oocCollide: false,
+    docDefault: 0.05, ranges: 0.05, methodNums: 0.1, contrast: 0.1, split: 0.1, addN: 0.1, durations: 0.15, unitWords: 0.1, anaphora: 0.25, nVariety: 0.15, decoyP: 0.2, refStyles: ['id'], redHerrings: 0.1, otherErrata: 0, oocCollide: false,
     filler: { retract: 1, errata: 1, press: 0, supersede: 0 }, ooc: 0, erratumOnVoid: false, unitErratum: false, injection: false,
     mandatory: ['pressOnly', 'retracted', 'erratum', 'press', 'conditions', 'superseded', 'unit', 'rank'],
     extras: { loser: 0.3, press: 0.15, conditions: 0.15, nonstdSameDoc: 0.25, loserErratum: 0.1 }, attachP: 0.25,
@@ -59,33 +61,33 @@ export const KNOBS = {
   3: {
     entities: 4, cells: 9, policies: ['P1', 'P2', 'P3', 'P4'], aliasInPrompt: false, nInMeta: false, mixedLabels: true, mixedDates: true,
     unitLevel: 2, plusMinus: true, fancyNumbers: false, pairs: 0.5, spelledN: false, background: 1, entityFiller: 1, condLevel: 2,
-    anaphora: 0.4, nVariety: 0.35, decoyP: 0.6, refStyles: ['title', 'topic', 'date'], redHerrings: 0.3, otherErrata: 1, oocCollide: false,
+    docDefault: 0.25, ranges: 0.12, methodNums: 0.3, contrast: 0.3, split: 0.25, addN: 0.2, durations: 0.3, unitWords: 0.15, anaphora: 0.4, nVariety: 0.35, decoyP: 0.6, refStyles: ['title', 'topic', 'date', 'vague'], redHerrings: 0.3, otherErrata: 1, oocCollide: false,
     filler: { retract: 1, errata: 1, press: 1, supersede: 1 }, ooc: 1, erratumOnVoid: false, unitErratum: false, injection: false,
     mandatory: ['pressOnly', 'retracted', 'erratum', 'press', 'conditions', 'superseded', 'unit', 'rank', 'concern', 'quoted', 'distractor', 'aliasOnly',
-      'grossN', 'erratumDecoy'],
-    extras: { loser: 0.2, press: 0.1, conditions: 0.1, retracted: 0.1, rank: 0.15, quoted: 0.1, aliasOnly: 0.3, nonstdSameDoc: 0.3, erratum: 0.08,
+      'grossN', 'erratumDecoy', 'comparison'],
+    extras: { quoteInDoc: 0.3, comparison: 0.1, loser: 0.2, press: 0.1, conditions: 0.1, retracted: 0.1, rank: 0.15, quoted: 0.1, aliasOnly: 0.3, nonstdSameDoc: 0.3, erratum: 0.08,
       nErratum: 0.1, loserErratum: 0.12, supersededLoser: 0.12 },
     attachP: 0.3,
   },
   4: {
     entities: 5, cells: 12, policies: ['P1', 'P2', 'P3', 'P4'], aliasInPrompt: false, nInMeta: false, mixedLabels: true, mixedDates: true,
     unitLevel: 3, plusMinus: true, fancyNumbers: true, pairs: 0.6, spelledN: true, background: 2, entityFiller: 1, condLevel: 2,
-    anaphora: 0.45, nVariety: 0.4, decoyP: 0.7, refStyles: ['title', 'topic', 'date'], redHerrings: 0.35, otherErrata: 1, oocCollide: true,
+    docDefault: 0.3, ranges: 0.15, methodNums: 0.35, contrast: 0.3, split: 0.3, addN: 0.2, durations: 0.35, unitWords: 0.2, anaphora: 0.45, nVariety: 0.4, decoyP: 0.7, refStyles: ['title', 'topic', 'date', 'vague'], redHerrings: 0.35, otherErrata: 1, oocCollide: true,
     filler: { retract: 2, errata: 1, press: 1, supersede: 1 }, ooc: 1, erratumOnVoid: true, unitErratum: true, injection: false,
     mandatory: ['pressOnly', 'retracted', 'erratum', 'press', 'conditions', 'superseded', 'unit', 'rank', 'concern', 'quoted', 'distractor',
-      'aliasOnly', 'variant', 'predicted', 'distractor', 'grossN', 'erratumDecoy', 'nErratum'],
-    extras: { loser: 0.1, press: 0.06, conditions: 0.06, retracted: 0.05, rank: 0.12, quoted: 0.06, aliasOnly: 0.35, variant: 0.04, predicted: 0.04,
+      'aliasOnly', 'variant', 'predicted', 'distractor', 'grossN', 'erratumDecoy', 'nErratum', 'comparison', 'quoteInDoc'],
+    extras: { quoteInDoc: 0.2, comparison: 0.1, loser: 0.1, press: 0.06, conditions: 0.06, retracted: 0.05, rank: 0.12, quoted: 0.06, aliasOnly: 0.35, variant: 0.04, predicted: 0.04,
       nonstdSameDoc: 0.3, erratum: 0.06, loserErratum: 0.06, supersededLoser: 0.06 },
     attachP: 0.3,
   },
   5: {
     entities: 6, cells: 16, policies: ['P1', 'P2', 'P3', 'P4'], aliasInPrompt: false, nInMeta: false, mixedLabels: true, mixedDates: true,
     unitLevel: 3, plusMinus: true, fancyNumbers: true, pairs: 0.6, spelledN: true, background: 1, entityFiller: 1, condLevel: 2,
-    anaphora: 0.5, nVariety: 0.4, decoyP: 0.7, refStyles: ['title', 'topic', 'date'], redHerrings: 0.35, otherErrata: 1, oocCollide: true,
+    docDefault: 0.3, ranges: 0.15, methodNums: 0.35, contrast: 0.3, split: 0.3, addN: 0.2, durations: 0.35, unitWords: 0.2, anaphora: 0.5, nVariety: 0.4, decoyP: 0.7, refStyles: ['title', 'topic', 'date', 'vague'], redHerrings: 0.35, otherErrata: 1, oocCollide: true,
     filler: { retract: 2, errata: 1, press: 1, supersede: 1 }, ooc: 1, erratumOnVoid: true, unitErratum: true, injection: true,
     mandatory: ['pressOnly', 'retracted', 'erratum', 'press', 'conditions', 'superseded', 'unit', 'rank', 'concern', 'quoted', 'distractor',
-      'aliasOnly', 'variant', 'predicted', 'distractor', 'retracted', 'erratum', 'grossN', 'erratumDecoy', 'nErratum'],
-    extras: { loser: 0.08, press: 0.05, conditions: 0.05, retracted: 0.03, rank: 0.1, quoted: 0.05, aliasOnly: 0.4, variant: 0.03, predicted: 0.03,
+      'aliasOnly', 'variant', 'predicted', 'distractor', 'retracted', 'erratum', 'grossN', 'erratumDecoy', 'nErratum', 'comparison', 'quoteInDoc'],
+    extras: { quoteInDoc: 0.2, comparison: 0.1, loser: 0.08, press: 0.05, conditions: 0.05, retracted: 0.03, rank: 0.1, quoted: 0.05, aliasOnly: 0.4, variant: 0.03, predicted: 0.03,
       nonstdSameDoc: 0.3, erratum: 0.04, loserErratum: 0.05, supersededLoser: 0.05 },
     attachP: 0.3,
   },
@@ -251,7 +253,7 @@ export function buildWorld(seed, split, difficulty, attempt = 0) {
     const fs = cell.feats;
     if (['aliasOnly', 'pressOnly', 'distractor'].includes(f) && fs.has(f)) return false;
     if (fs.has('pressOnly') && ['erratum', 'superseded', 'rank', 'press', 'loser', 'concern', 'nonstdSameDoc', 'grossN', 'nErratum', 'erratumDecoy',
-      'loserErratum', 'supersededLoser'].includes(f)) return false;
+      'loserErratum', 'supersededLoser', 'quoteInDoc', 'comparison'].includes(f)) return false;
     if (f === 'pressOnly' && fs.size) return false;
     if (N_FEATURES.has(f) && (pol.id === 'P2' || [...N_FEATURES].some(x => fs.has(x)))) return false;
     // under P3 a 'rank' cell has a non-journal winner; features that need a journal winner clash
@@ -388,6 +390,8 @@ export function buildWorld(seed, split, difficulty, attempt = 0) {
     return d;
   };
   world.entMapTmp = new Map();
+  const comparators = {};
+  const comparatorFor = ent => (comparators[ent.kind] ||= mkEntity(ent.kind, { background: true, comparator: true }));
   const isVoidRole = d => ['retracted', 'superseded'].includes(d.role);
   const cellDocsOf = (ent, prop) => world.docs.filter(d => isResearch(d) && world.claims.some(c => c.doc === d.key && c.ent === ent.key && c.prop === prop));
 
@@ -450,7 +454,7 @@ export function buildWorld(seed, split, difficulty, attempt = 0) {
     if (f.has('loser')) mkLoser(W, ent, prop, truth);
     if (f.has('grossN')) {
       const C = mkCompetitor(W, ent, prop, truth, false);
-      if (C) C.nGross = W.n + r.int(1, 12);
+      if (C) { C.nGross = W.n + r.int(1, 12); C.grossOver = W.key; }
     }
     if (f.has('nErratum')) {
       // (a) a competitor's printed n is too large, or (b) the winner's printed n is too small.
@@ -466,7 +470,9 @@ export function buildWorld(seed, split, difficulty, attempt = 0) {
     }
     if (f.has('erratumDecoy')) {
       const nc = world.claims.find(c => c.doc === W.key && c.ent === ent.key && c.prop === prop && c.cond === 'non' && c.mode === 'measured');
-      addValueErratum(W, nc, fromCanon(prop, perturb(prop, toCanon(prop, nc.value, nc.unit), 0.08, 0.3), nc.unit));
+      let nv = perturb(prop, toCanon(prop, nc.value, nc.unit), 0.08, 0.3);
+      for (let k = 0; k < 8 && relDiff(nv, truth) < 0.05; k++) nv = perturb(prop, toCanon(prop, nc.value, nc.unit), 0.08, 0.3);
+      addValueErratum(W, nc, fromCanon(prop, nv, nc.unit));
     }
     if (f.has('loserErratum')) {
       const L = mkLoser(W, ent, prop, truth, ['journal']);
@@ -475,6 +481,16 @@ export function buildWorld(seed, split, difficulty, attempt = 0) {
     if (f.has('supersededLoser')) {
       const L = mkLoser(W, ent, prop, truth);
       if (L) { const lc = stdClaimOf(L, ent, prop); addOldVersion(L, ent, prop, toCanon(prop, lc.value, lc.unit)); }
+    }
+    if (f.has('quoteInDoc')) {
+      const echo = world.claims.filter(c => c.ent === ent.key && c.prop === prop && c.mode === 'measured' && c.cond === 'std' && !c.variant
+        && c.doc !== W.key && isResearch(docOf(c.doc)) && docOf(c.doc).date < W.date - 30);
+      const src = echo.length && r.chance(0.6) ? r.pick(echo) : null;
+      addClaim(W, ent, prop, src ? toCanon(prop, src.value, src.unit) : perturb(prop, truth), src ? src.unit : pickUnit(prop),
+        { mode: 'quoted', condText: wClaim.condText, quoteWith: wClaim.cid, quoteDoc: src ? src.doc : null, quoteOf: src ? null : `${r.pick(INITIALS)}. ${r.pick(SURNAMES)}`, quoteYearsBack: r.int(1, 4) });
+    }
+    if (f.has('comparison')) {
+      addClaim(W, comparatorFor(ent), prop, perturb(prop, truth, 0.1, 0.6), pickUnit(prop), { condText: wClaim.condText, compareWith: wClaim.cid });
     }
     if (f.has('quoted')) {
       const Q = beater(W, ent);
@@ -668,6 +684,8 @@ export function buildWorld(seed, split, difficulty, attempt = 0) {
 
   // --- sample sizes stated as gross counts minus exclusions (variety; truth unchanged) ----------
   for (const d of world.docs) if (isResearch(d) && d.n != null && d.nGross == null && d.nPrinted == null && r.chance(K.nVariety)) d.nGross = d.n + r.int(1, 8);
+  // a gross-count trap must still beat its winner when the winner's own gross count is read instead
+  for (const C of world.docs.filter(d => d.grossOver)) { const W = docOf(C.grossOver); if (W.nGross != null && C.nGross <= W.nGross) C.nGross = W.nGross + r.int(1, 6); }
 
   // --- decoys: the same first author publishes another document in the same venue -------------
   // (a notice must then be matched by more than "first author + venue")

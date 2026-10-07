@@ -23,6 +23,7 @@ DEST = "/opt/corpus/ifttt"
 OUT = "/opt/corpus/consumer-work/ifttt.candidates.jsonl"
 UA = {"User-Agent": "workflow-foundry-corpus/1 (research; 1 req/s)"}
 TOS = "ToS:https://ifttt.com/terms"
+AI_SVC = re.compile(r"(^ai_|_ai$|_ai_|chatgpt|openai|gemini|claude|gpt|llm)", re.I)
 
 
 def get(url):
@@ -105,7 +106,10 @@ def normalize():
                 asy.add(kind)
                 nid = g.node(ntype, "trigger", "none", f"Trigger: {st['name']} ({svc}; {st['meta'][0] if st['meta'] else 'trigger'})")
             elif lab == "with":
-                nid = g.node(ntype, "action", "read", f"Query: {st['name']} ({svc})")
+                if AI_SVC.search(svc):
+                    nid = g.node(ntype, "model", "external", f"AI query: {st['name']} ({svc})")
+                else:
+                    nid = g.node(ntype, "action", "read", f"Query: {st['name']} ({svc})")
             elif lab == "when":
                 has_code = True
                 nid = g.node("ifttt.filter_code", "code", "none", "Filter code (JavaScript; may skip or rewrite actions)")
@@ -113,7 +117,10 @@ def normalize():
                 eff = "external"
                 if svc in ("notifications", "if_notifications", "ifttt_notifications"):
                     eff = "external"
-                nid = g.node(ntype, "action", eff, f"Action: {st['name']} ({svc})")
+                if AI_SVC.search(svc):
+                    nid = g.node(ntype, "model", "external", f"AI action: {st['name']} ({svc})")
+                else:
+                    nid = g.node(ntype, "action", eff, f"Action: {st['name']} ({svc})")
             elif "delay" in lab or "wait" in lab:
                 asy.add("wait")
                 nid = g.node("ifttt.delay", "wait", "none", "Delay")
@@ -125,7 +132,7 @@ def normalize():
                 g.edge(p, nid, "control")
             prev = [nid]
         n_actions = sum(1 for st in a["steps"] if st["label"].lower() in ("then", "and"))
-        f = cc.compute_features(g, async_kinds=asy, connectors=sorted(conns), has_code=has_code,
+        feats = cc.compute_features(g, async_kinds=asy, connectors=sorted(conns), has_code=has_code,
                                 domains=["consumer-automation"] + (["smart-home"] if re.search(
                                     r"smartthings|hue|nest|ring|alexa|google_assistant|wemo|lifx|tuya|smart_life|ecobee|arlo|wyze",
                                     " ".join(conns)) else []))
@@ -143,8 +150,8 @@ def normalize():
             description=(f"IFTTT applet: {len(a['steps'])} steps ({n_actions} action(s)) across "
                          f"{len(conns)} service(s); trigger mode {', '.join(sorted(asy)) or 'unknown'}"
                          f"{'; filter code' if has_code else ''}{'; Pro feature' if a['pro'] else ''}."),
-            desc_provenance="written", graph=g, features=f, verdict=cc.verdict_from(needs), ir_notes=notes,
-            extra={"score": cc.complexity(f), "installs": a["installs"], "authorIsService": a["author"]})
+            desc_provenance="written", graph=g, features=feats, verdict=cc.verdict_from(needs), ir_notes=notes,
+            extra={"score": cc.complexity(feats), "installs": a["installs"], "authorIsService": a["author"]})
         if not cc.validate(item):
             items.append(item)
     cc.write_jsonl(OUT, items)

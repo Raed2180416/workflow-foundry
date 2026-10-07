@@ -1,6 +1,6 @@
 // `records` bed: data repair and entity resolution over a messy multi-system export.
 // Interface per beds/CONTRACT.md. Hidden truth is recomputed from (seed, split, difficulty).
-import { buildWorld, ruleSolve, resolveGroup, clusterRows } from './world.mjs';
+import { buildWorld, ruleSolve, resolveGroup, clusterRows, sameDay } from './world.mjs';
 import { isoDate } from './render.mjs';
 import * as P from './pools.mjs';
 
@@ -9,29 +9,34 @@ export const family = {
   domain: 'data repair / entity resolution',
   version: '2.0.0',
   description: 'Merge a messy export of customer/supplier rows from several legacy systems (mixed locales, '
-    + 'nicknames, transliterations, typos, void markers, adversarial staff memos) into one canonical record '
-    + 'per real person, following a prose spec for identity, conflict resolution, phone normalisation and USD conversion.',
+    + 'nicknames, transliterations, typos, twins and namesakes, void markers and look-alikes, adversarial staff memos) '
+    + 'into one canonical record per real person, following a prose spec for identity, conflict resolution, phone '
+    + 'normalisation and USD conversion with market FX quotes.',
   kind: 'oneshot',
 };
 
-const nullable = t => ({ type: [t, 'null'] });
+// Size caps (portable maxItems / maxLength) bound oracle work on hostile outputs: an export has at most
+// 150 rows, so a real answer never comes near them.
+const nullable = (t, extra = {}) => ({ type: [t, 'null'], ...extra });
+export const LIMITS = { records: 1000, sourceRows: 400, text: 200 };
 export const outputSchema = {
   type: 'object',
   required: ['records'],
   properties: {
     records: {
       type: 'array',
+      maxItems: LIMITS.records,
       items: {
         type: 'object',
         required: ['entity_id', 'source_rows', 'given_name', 'family_name', 'birth_date', 'country', 'phone_e164', 'amount_usd'],
         properties: {
           entity_id: { type: 'integer' },
-          source_rows: { type: 'array', minItems: 1, items: { type: 'integer' } },
-          given_name: { type: 'string' },
-          family_name: { type: 'string' },
-          birth_date: nullable('string'),
-          country: nullable('string'),
-          phone_e164: nullable('string'),
+          source_rows: { type: 'array', minItems: 1, maxItems: LIMITS.sourceRows, items: { type: 'integer' } },
+          given_name: { type: 'string', maxLength: LIMITS.text },
+          family_name: { type: 'string', maxLength: LIMITS.text },
+          birth_date: nullable('string', { maxLength: LIMITS.text }),
+          country: nullable('string', { maxLength: LIMITS.text }),
+          phone_e164: nullable('string', { maxLength: LIMITS.text }),
           amount_usd: nullable('number'),
         },
       },
@@ -53,11 +58,14 @@ function typeOk(t, v) {
   }
 }
 export function validate(schema, v, path = '$', errs = []) {
+  if (errs.length >= 32) return errs; // enough to reject; stop walking hostile outputs
   const types = schema.type === undefined ? null : [].concat(schema.type);
   if (types && !types.some(t => typeOk(t, v))) { errs.push(`${path}: expected ${types.join('|')}`); return errs; }
   if (schema.enum && !schema.enum.includes(v)) errs.push(`${path}: not in enum`);
+  if (typeof v === 'string' && schema.maxLength !== undefined && v.length > schema.maxLength) errs.push(`${path}: longer than ${schema.maxLength}`);
   if (Array.isArray(v)) {
     if (schema.minItems !== undefined && v.length < schema.minItems) errs.push(`${path}: fewer than ${schema.minItems} items`);
+    if (schema.maxItems !== undefined && v.length > schema.maxItems) { errs.push(`${path}: more than ${schema.maxItems} items`); return errs; }
     if (schema.items) v.forEach((x, i) => validate(schema.items, x, `${path}[${i}]`, errs));
   } else if (v !== null && typeof v === 'object') {
     for (const key of schema.required ?? []) if (!(key in v)) errs.push(`${path}: missing ${key}`);
@@ -208,6 +216,16 @@ export const badControls = [
     // Plausible: every row becomes its own person (no entity resolution at all).
     name: 'no-dedup',
     make: task => { const w = worldOf(task); return { records: w.rows.map(x => rowRecord(x.s, w.fx)) }; },
+  },
+  {
+    // Plausible shortcut: birth date as the identity key (undated rows joined by phone), names never
+    // compared. Twins and same-birthday people (every level) are merged.
+    name: 'birthdate-key',
+    make: task => {
+      const w = worldOf(task);
+      const link = (a, b) => (a.dob && b.dob ? sameDay(a.dob, b.dob) : Boolean(a.phone && a.phone === b.phone));
+      return ruleSolve(w.rows.map(x => x.s), w.fx, { link });
+    },
   },
   {
     // Plausible: void markers ignored (test fixtures, cancelled and withdrawn rows migrated).

@@ -186,8 +186,8 @@ function freshName(r, culture, taken, gender = null) {
   return null;
 }
 // Given name for the twin of `a`: same family name and birth date, a different given name. Prefers a
-// near-twin (exactly two typing errors apart, which the identity rule keeps apart but a lenient matcher
-// merges) or a same-initial name, and stays >= 3 edits from every other person.
+// same-initial name (defeats "birth date + initial" keys), then a near-twin, and stays >= 3 edits from
+// every other person.
 function twinName(r, a, taken) {
   const C = P.CULTURES[a.culture];
   const others = taken.filter(t => !(t.given === a.given && t.family === a.family));
@@ -195,10 +195,31 @@ function twinName(r, a, taken) {
     .map(([given, gender]) => ({ given, family: a.family, gender, dist: P.partDistance(given, a.given) }));
   const ok = c => c.dist >= 2 && others.every(o => nameDistance(o, c) >= 3);
   const near = c => c.dist === 2, initial = c => c.dist >= 3 && P.foldStrip(c.given)[0] === P.foldStrip(a.given)[0];
-  const order = r.chance(0.6) ? [near, initial, () => true] : [initial, near, () => true];
+  const order = [initial, near, () => true];
   for (const pref of order) {
     const c = cands.find(x => pref(x) && ok(x));
     if (c) return { given: c.given, family: c.family, gender: c.gender };
+  }
+  return null;
+}
+// Pairs of given names exactly two typing errors apart (Robert/Rupert, Matteo/Mattia), per culture.
+const nearPairCache = new Map();
+function nearPairs(culture) {
+  if (!nearPairCache.has(culture)) {
+    const g = P.CULTURES[culture].given, out = [];
+    for (let i = 0; i < g.length; i++) for (let j = i + 1; j < g.length; j++) if (P.partDistance(g[i][0], g[j][0]) === 2) out.push([g[i], g[j]]);
+    nearPairCache.set(culture, out);
+  }
+  return nearPairCache.get(culture);
+}
+// Names for a near-twin pair (same family name), both >= 3 edits from every other person.
+function nearTwinNames(r, taken) {
+  const culture = weighted(r, P.CULTURE_WEIGHTS.filter(([c]) => nearPairs(c).length));
+  for (let t = 0; t < 40; t++) {
+    const [x, y] = r.shuffle(r.pick(nearPairs(culture)));
+    const family = r.pick(P.CULTURES[culture].family);
+    const a = { given: x[0], family, gender: x[1] }, b = { given: y[0], family, gender: y[1] };
+    if (taken.every(o => nameDistance(o, a) >= 3 && nameDistance(o, b) >= 3)) return { culture, a, b };
   }
   return null;
 }
@@ -375,9 +396,13 @@ function attemptWorld(seed, split, difficulty, attempt) {
     budget -= a.size + b.size;
   }
   for (let i = 0; i < L.twins; i++) {
-    const a = makeEntity({ size: sampleSize(), role: 'twinA', noGivenTypo: true });
+    // 75% near-twins (given names two edits apart), else twins with distinct names (same initial if possible).
+    const near = r.chance(0.75) ? nearTwinNames(r, takenNames) : null;
+    const a = near ? makeEntity({ culture: near.culture, name: near.a, size: sampleSize(), role: 'twinA', noGivenTypo: true })
+      : makeEntity({ size: sampleSize(), role: 'twinA', noGivenTypo: true });
     if (!a) return null;
-    const name = twinName(r, a, takenNames);
+    if (near) takenNames.push(near.a);
+    const name = near ? near.b : twinName(r, a, takenNames);
     if (!name) return null;
     takenNames.push(name);
     const last = a.periods[a.periods.length - 1];

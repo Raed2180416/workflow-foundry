@@ -222,7 +222,7 @@ function examineThing(w, st, th) {
   }
   if (th.type === 'door') {
     const dr = w.doors[th.ref];
-    return `A ${dr.mat} door with a ${dr.color} lock. It is ${st.unlocked.includes(th.ref) ? 'unlocked' : 'locked'}.`;
+    return `${capFirst(an(`${dr.mat} door`))} with ${an(dr.color)} lock. It is ${st.unlocked.includes(th.ref) ? 'unlocked' : 'locked'}.`;
   }
   if (th.type === 'bridge') return `A drawbridge over a deep chasm. It is ${st.mech[th.ref] ? 'lowered across the gap' : 'raised out of reach'}. It must be worked from elsewhere.`;
   if (th.type === 'gate') return `A heavy iron portcullis. It is ${st.mech[th.ref] ? 'raised' : 'down'}. There is no way to lift it by hand.`;

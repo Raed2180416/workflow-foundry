@@ -98,3 +98,36 @@ export function adaptedSolve(task) {
   for (let grew = true; grew;) { grew = false; for (const f of fails) if (f.t >= hit.t && imp.has(f.callee) && !imp.has(f.svc)) { imp.add(f.svc); grew = true; } }
   return { root_service: root, fault_class: cls, first_bad_timestamp: new Date(hit.t).toISOString(), impacted_services: [...imp], evidence_line_ids: mine.slice(0, 10).map(l => l.id) };
 }
+
+// Third attacker (audit round 3): adaptedSolve plus catalog-aware tricks. Blame counts only
+// generic failure lines (class vocabulary in a blaming line usually means the blamer is the root
+// describing its own fault), a service that fails without naming anyone hands the chain to its
+// sickest table callee, the onset is the first change-like or class-like root line after the last
+// recovery, and the class comes from that onset line when it matches one.
+const ONSET_RE = /rollout started|starting \S+ release|loaded configuration|picked up by pod|cache refill|warm-up finished|jumped to|shrinking fast|and climbing|not been returned|rising while|without matching load|stepped forward|time sync lost|offset vs time|now \d+s ahead|heap after full gc|resident memory|watermark crossed|retained objects|temporary failure|eai_again|timed out resolving|could not be resolved|cannot refill|429|throttled|slow down|handshake .*expired|no longer valid|validity ended|certificate_expired|is outside its validity/i;
+export function strongSolve(task) {
+  const base = adaptedSolve(task), { system, log } = task.inputs;
+  const svcs = [...system.matchAll(/^\| ([a-z0-9-]+) \| [^|]+ \| [^|]+ \| ([^|]+) \|/gm)].filter(m => m[1] !== 'Service').map(m => [m[1], m[2].split(',').map(x => x.trim().replace(' (optional)', ''))]);
+  const callsOf = new Map(svcs), names = svcs.map(([n]) => n);
+  const L = log.trim().split('\n').map(l => { const [id, ts, src, ...rest] = l.split(' '); return { id, t: Date.parse(ts), svc: names.find(n => src === n || src.startsWith(`${n}-`)) || src, body: rest.join(' '), lvl: /error|^E:/i.test(rest.join(' ').slice(0, 24)) ? 'E' : /warn|^W:/i.test(rest.join(' ').slice(0, 24)) ? 'W' : 'I' }; });
+  const generic = l => l.lvl !== 'I' && FAIL_RE.test(l.body) && !BENIGN_RE.test(l.body) && !Object.values(CLASS_RE).some(re => re.test(l.body));
+  const names2 = (l, k) => new RegExp(`(^|[^a-z0-9.-])${k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([^a-z0-9-]|$)`).test(l.body);
+  const blamed = (s, k) => L.filter(l => l.svc === s && generic(l) && names2(l, k)).length;
+  const sickN = k => L.filter(l => l.svc === k && l.lvl !== 'I').length;
+  let root = base.root_service; const seen = new Set([root]);
+  for (let step = 0; step < 6; step++) {
+    const cands = (callsOf.get(root) || []).filter(k => callsOf.has(k) && !seen.has(k));
+    const byBlame = cands.map(k => [k, blamed(root, k)]).sort((a, b) => b[1] - a[1]);
+    const anonymous = !L.some(l => l.svc === root && generic(l) && cands.some(k => names2(l, k))) && L.some(l => l.svc === root && generic(l));
+    const next = byBlame[0]?.[1] >= 2 ? byBlame[0][0] : anonymous ? cands.sort((a, b) => sickN(b) - sickN(a))[0] : null;
+    if (!next) break; root = next; seen.add(next);
+  }
+  const mine = L.filter(l => l.svc === root), tF = Math.min(...L.filter(l => generic(l) && names2(l, root)).map(l => l.t), Infinity);
+  const lastRec = mine.filter(l => l.t < tF && RECOVER_RE.test(l.body)).at(-1)?.t ?? 0;
+  const onset = mine.find(l => l.t > lastRec && l.t <= tF && ONSET_RE.test(l.body) && !/expires in|approaching|per-client|responding 429/i.test(l.body));
+  const voted = Object.entries(CLASS_RE).map(([k, re]) => [k, mine.filter(l => l.lvl !== 'I' && l.t >= (onset?.t ?? tF) && re.test(l.body)).length]).sort((a, b) => b[1] - a[1])[0][0];
+  const cls = (onset && Object.entries(CLASS_RE).find(([, re]) => re.test(onset.body))?.[0]) || voted;
+  const T = onset?.t ?? (Number.isFinite(tF) ? tF - 30000 : Date.parse(base.first_bad_timestamp));
+  const imp = new Set([root, ...base.impacted_services.filter(s => s !== base.root_service)]);
+  return { root_service: root, fault_class: cls, first_bad_timestamp: new Date(T).toISOString(), impacted_services: [...imp], evidence_line_ids: mine.slice(0, 10).map(l => l.id) };
+}

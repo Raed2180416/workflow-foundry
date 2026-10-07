@@ -95,7 +95,7 @@ MODEL_HOSTS = re.compile(r"(api\.openai\.com|openai\.azure\.com|api\.anthropic\.
                          r"api\.cohere\.(ai|com)|api-inference\.huggingface\.co|api\.replicate\.com|api\.stability\.ai|"
                          r"api\.perplexity\.ai|api\.mistral\.ai|api\.groq\.com|openrouter\.ai|api\.deepseek\.com|"
                          r"api\.together\.xyz|aip\.baidubce\.com|dashscope\.aliyuncs\.com|api\.x\.ai)", re.I)
-MODEL_INTENT = re.compile(r"openai|chatgpt|anthropic|claude|gemini|perplexity|AskIntent|LLM", re.I)
+MODEL_INTENT = re.compile(r"openai|chatgpt|anthropic|claude|gemini|perplexity|\bLLM|_LLM", re.I)
 CODE_INTENT = re.compile(r"Scriptable_RunScript|ExecuteCommandIntent|Pythonista|Jayson|a_Shell|ish_|RunJavaScript|"
                          r"Pyto|ScriptableRun|RunScript", re.I)
 INTENT_RE = re.compile(r"\b((?:com|net|org|dk|io|de|ke|fr|me|co|app|framework|mini|ws|nl|ch|uk|jp|cn|ru|se|at|it|es|"

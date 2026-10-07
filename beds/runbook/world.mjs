@@ -31,17 +31,17 @@ export const KNOBS = {
     transientRestart: [1, 1], transientConfig: [0, 1], degraded: [1, 2], maxF: 1, budget: 200, windowHours: 3, bleed: [20, 120],
     windowMove: 0, includeDrained: 0.5, exhausted: 0, stuck: 0, lagModes: LAG_D2, wideRetries: false },
   3: { targets: 6, quarantined: 2, green: 3, otherSites: 3, otherPerSite: 6, otherPool: 4, extras: 5, workers: 3, db: false,
-    chatter: 9, distract: 2, amend: 2, herrings: 2, retract: false, inject: 0, lookalike: false, startEarly: true, tzLocal: false,
+    chatter: 9, distract: 2, amend: 2, herrings: 3, retract: false, inject: 0, lookalike: false, startEarly: true, tzLocal: false,
     words: true, legacy: true, tips: false, staleDb: 0, changelog: false, handover: true, postmortem: false,
     transientRestart: [1, 2], transientConfig: [1, 1], degraded: [2, 3], maxF: 2, budget: 320, windowHours: 3, bleed: [20, 150],
     windowMove: 0.45, includeDrained: 0.8, exhausted: 0.3, stuck: 0.35, lagModes: LAG_HARD, wideRetries: true },
   4: { targets: 8, quarantined: 2, green: 4, otherSites: 4, otherPerSite: 8, otherPool: 5, extras: 7, workers: 3, db: true,
-    chatter: 14, distract: 4, amend: 3, herrings: 3, retract: false, inject: 2, lookalike: false, startEarly: true, tzLocal: true,
+    chatter: 14, distract: 4, amend: 3, herrings: 4, retract: false, inject: 2, lookalike: false, startEarly: true, tzLocal: true,
     words: true, legacy: true, tips: false, staleDb: 0.5, changelog: false, handover: true, postmortem: true,
     transientRestart: [2, 3], transientConfig: [1, 1], degraded: [2, 4], maxF: 2, budget: 420, windowHours: 4, bleed: [20, 150],
     windowMove: 0.5, includeDrained: 0.8, exhausted: 0.35, stuck: 0.4, lagModes: LAG_HARD, wideRetries: true },
   5: { targets: 11, quarantined: 2, green: 5, otherSites: 6, otherPerSite: 10, otherPool: 6, extras: 8, workers: 4, db: true,
-    chatter: 22, distract: 7, amend: 3, herrings: 4, retract: true, inject: 4, lookalike: true, startEarly: true, tzLocal: true,
+    chatter: 22, distract: 7, amend: 3, herrings: 5, retract: true, inject: 4, lookalike: true, startEarly: true, tzLocal: true,
     words: true, legacy: true, tips: true, staleDb: 0.6, changelog: true, handover: true, postmortem: true,
     transientRestart: [2, 4], transientConfig: [1, 2], degraded: [3, 5], maxF: 3, budget: 520, windowHours: 4, bleed: [20, 150],
     windowMove: 0.5, includeDrained: 0.8, exhausted: 0.4, stuck: 0.5, lagModes: LAG_HARD, wideRetries: true },
@@ -239,9 +239,11 @@ export function buildWorld(seed, split, difficulty) {
   const rv = sub(seed, split, difficulty, 'values');
   const maxInflightInit = rv.pick(['192', '256', '320']);
   const maxInflightDesc = rv.pick(['384', '448', '512', '640']);
-  const maxInflightAmend = rv.pick(['352', '416', '480', '576'].filter(v => v !== maxInflightDesc));
-  const maxInflightHerring = rv.pick(['368', '400', '432', '544']);
   const maxInflightVendor = rv.pick(['704', '768', '1024']);
+  // From difficulty 3 an amendment may point at the vendor's suggestion instead of stating a number.
+  const valueForm = difficulty >= 3 && rv.chance(0.25) ? 'vendor' : 'explicit';
+  const maxInflightAmend = valueForm === 'vendor' ? maxInflightVendor : rv.pick(['352', '416', '480', '576'].filter(v => v !== maxInflightDesc));
+  const maxInflightHerring = rv.pick(['368', '400', '432', '544']);
   const slowInit = rv.pick(['0', '10', '15']);
   const slowStart = rv.pick(['20', '30', '45', '60']);
   const slowRetracted = rv.pick(['25', '40', '50', '90'].filter(v => v !== slowStart));
@@ -361,7 +363,7 @@ export function buildWorld(seed, split, difficulty) {
   const spec = {
     difficulty, ticketId, incIds, incOf, rbId, site, tz, svc, worker, pool, greenPool, color, ff, banner, paused, cluster,
     owner, approver, requester, people, kinds, versionFrom: vFrom, versionBase: vBase, versionTo, versionRc: vRc, versionAmended: vAmended,
-    keys: configKeys, maxInflight, maxInflightDesc, maxInflightInit, maxInflightAmend, maxInflightHerring, maxInflightVendor,
+    keys: configKeys, maxInflight, maxInflightDesc, valueForm, maxInflightInit, maxInflightAmend, maxInflightHerring, maxInflightVendor,
     slowStart: slowTo, slowDesc: slowStart, slowRetracted, slowAmend, slowInit,
     workMem, workMemDesc, workMemAmend, workMemInit, workMemHerring, idleInit,
     targets, descTargets, canary, quarantined, includedNode, includeDrained, excludedNode, descQuarantined, poolMembers: poolMembers.map(m => m.id),

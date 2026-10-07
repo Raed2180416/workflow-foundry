@@ -3,7 +3,7 @@
 // See README.md for knobs, oracle rule and the adversarial content per difficulty.
 import { estimateTokens } from '../lib/canonical.mjs';
 import { buildWorld, VERSION, TOL, KNOBS } from './world.mjs';
-import { renderTask } from './render.mjs';
+import { renderTask, RATE_FACTOR } from './render.mjs';
 import { fitMM, relErr } from './fit.mjs';
 
 export const family = {
@@ -11,7 +11,7 @@ export const family = {
   domain: 'scientific data analysis',
   version: VERSION,
   kind: 'oneshot',
-  description: 'Clean heterogeneous enzyme-kinetics notebook exports (mixed units and formats, SOP exclusions, decoy notes, mislabels with later corrections, re-reads, competitive inhibition) and fit Vmax/Km per condition.',
+  description: 'Clean heterogeneous enzyme-kinetics notebook exports (mixed units and formats, SOP exclusions stated in rows or in later messages, notes that look like exclusions but are not, corrections by the author versus rejected suggestions by others, re-reads, competitive inhibition) and fit Vmax/Km per condition.',
 };
 
 export const outputSchema = {
@@ -27,8 +27,9 @@ export const outputSchema = {
         required: ['condition_id', 'vmax', 'km'],
         properties: {
           condition_id: { type: 'string' },
-          vmax: { type: 'number', exclusiveMinimum: 0, description: 'µM/s' },
-          km: { type: 'number', exclusiveMinimum: 0, description: 'µM' },
+          // portable subset (src/schema-subset.mjs) has no exclusiveMinimum; the oracle requires > 0
+          vmax: { type: 'number', minimum: 0, description: 'Vmax in µM/s (must be > 0)' },
+          km: { type: 'number', minimum: 0, description: 'Km in µM (must be > 0)' },
         },
       },
     },
@@ -52,7 +53,9 @@ function build(seed, split, difficulty) {
 }
 
 export function generate({ seed, split = 'dev', difficulty = 3 }) {
-  const { prompt, inputs } = build(seed, split, difficulty);
+  const built = build(seed, split, difficulty);
+  // a fresh copy per call: a caller that edits task.inputs must not change later tasks (or the cache)
+  const prompt = built.prompt, inputs = structuredClone(built.inputs);
   const d = Number(difficulty);
   const tokens = estimateTokens(prompt) + estimateTokens(inputs);
   return {
@@ -123,7 +126,7 @@ export function oracle(task, output) {
 
   const seen = new Map(), dupes = [], unknown = [];
   for (const c of output.conditions) {
-    if (!world.byId[c.condition_id]) { unknown.push(c.condition_id); continue; }
+    if (!Object.hasOwn(world.byId, c.condition_id)) { unknown.push(c.condition_id); continue; }
     if (seen.has(c.condition_id)) dupes.push(c.condition_id);
     seen.set(c.condition_id, c);
   }
@@ -143,7 +146,9 @@ export function oracle(task, output) {
   const condFrac = perCondition.filter(p => p.ok).length / perCondition.length;
   const setExact = missing.length === 0 && extra.length === 0;
   const pass = evaluatorValid && setExact && condFrac === 1 && unknown.length === 0 && dupes.length === 0;
-  const score = evaluatorValid ? Number((0.75 * condFrac + 0.25 * jaccard).toFixed(4)) : 0;
+  // partial credit; unknown or duplicated condition entries dilute it, and only a passing output scores 1
+  const raw = (0.75 * condFrac + 0.25 * jaccard) * perCondition.length / (perCondition.length + unknown.length + dupes.length);
+  const score = evaluatorValid ? (pass ? 1 : Math.min(0.999, Number(raw.toFixed(4)))) : 0;
   return {
     pass, score,
     details: {
@@ -209,6 +214,32 @@ export const badControls = [
       for (const c of world.conds) pts[c.id] = [];
       for (const w of world.wells) if (w.status !== 'outlier' || w.id === keep) pts[w.condId].push({ S: shown[w.id].S, v: shown[w.id].rate });
       return toOutput(world, fitAll(world, pts), ids.filter(x => x !== keep));
+    },
+  },
+  {
+    name: 'plausible-but-wrong:apply-rejected-claims',
+    make(task) { // also applies the suggestions that the entry's author rejected (SOP section 4: they are not corrections)
+      const { world, shown } = build(task.seed, task.split, task.difficulty);
+      const moveTo = {}, swapS = {}, rateScale = {};
+      for (const c of world.claims) {
+        if (c.kind === 'reassign') for (const id of world.seriesByKey[c.series].wells) moveTo[id] = c.claimed;
+        if (c.kind === 'swap') { swapS[c.a] = c.b; swapS[c.b] = c.a; }
+        if (c.kind === 'units') { const d = world.docs[c.doc]; for (const key of d.series) for (const id of world.seriesByKey[key].wells) rateScale[id] = RATE_FACTOR[d.rateUnit] / RATE_FACTOR[c.claimedUnit]; }
+      }
+      const pts = assemble(world, shown, { condOf: w => moveTo[w.id] ?? w.condId, point: (w, s) => ({ S: swapS[w.id] ? shown[swapS[w.id]].S : s.S, v: s.rate * (rateScale[w.id] ?? 1) }) });
+      return toOutput(world, fitAll(world, pts), outlierIds(world));
+    },
+  },
+  {
+    name: 'plausible-but-wrong:exclude-by-residual',
+    make(task) { // perfect parsing and corrections, but exclusions by a residual rule (>15% off the reference curve) instead of the SOP notes
+      const { world, shown } = build(task.seed, task.split, task.difficulty);
+      const ref = referenceFits(world, shown);
+      const out = world.wells.filter(w => { const f = ref[w.condId], s = shown[w.id]; return Math.abs(s.rate / (f.vmax * s.S / (f.km + s.S)) - 1) > 0.15; }).map(w => w.id);
+      const drop = new Set(out);
+      const pts = Object.fromEntries(world.conds.map(c => [c.id, []]));
+      for (const w of world.wells) if (!drop.has(w.id)) pts[w.condId].push({ S: shown[w.id].S, v: shown[w.id].rate });
+      return toOutput(world, fitAll(world, pts), out);
     },
   },
   {

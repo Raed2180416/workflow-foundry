@@ -160,6 +160,8 @@ export const FAULTS = {
       (c, r) => ['ERROR', `inbound TLS on :${c.port} failing: serving certificate for ${c.host} is no longer valid (notAfter ${c.expIso})`],
       (c, r) => ['WARN', `x509 serving cert ${c.host} validity ended at ${c.expIso}; peers aborting handshakes`],
       (c, r) => ['WARN', `peer ${c.callerHost} sent alert 'certificate_expired' during handshake on :${c.port}`],
+      (c, r) => ['ERROR', `clients abort TLS setup with ${c.host}: the served chain's notAfter (${c.expIso}) is in the past`],
+      (c, r) => ['WARN', `${c.callerHost} hung up right after our Certificate message on :${c.port}`],
     ],
     direct: [
       (c, r) => ['WARN', `${r.int(12, 140)} TLS handshakes failed in the last 30s (reason: expired leaf certificate)`],
@@ -300,6 +302,7 @@ export const FAULTS = {
       (c, r) => ['WARN', `resident memory ${c.mb0} MiB and rising (+${r.int(18, 60)} MiB/min)`],
       (c, r) => ['WARN', `retained objects in cache '${c.cacheName}' grew to ${r.int(300, 900)}k entries; GC cannot reclaim them`],
       (c, r) => ['WARN', `memory watermark crossed: ${c.p0}% of limit used, baseline is ${c.base}%`],
+      (c, r) => ['WARN', `live set after collection ${c.p0}% of ${c.lim}Mi; it was ${c.base}% an hour ago`],
     ],
     growth: [
       (c, r, p) => ['WARN', `post-GC heap ${p}% (+${r.int(3, 9)}% in ${r.int(30, 60)}s)`],
@@ -374,6 +377,7 @@ export const FAULTS = {
       (c, r) => ['WARN', `throttled by ${c.ext}: quota of ${c.quota} requests/min exhausted`],
       (c, r) => ['WARN', `${c.ext} API says slow down (rate limit exceeded for key ****${hex(r, 4)})`],
       (c, r) => ['WARN', `${c.extHost} answered with status 429 and x-ratelimit-remaining: 0`],
+      (c, r) => ['WARN', `${c.ext} now refuses most of our calls (remaining budget 0 of ${c.quota})`],
     ],
     direct: [
       (c, r) => ['WARN', `backing off ${r.int(500, 8000)}ms before retrying ${c.ext}`],
@@ -722,7 +726,25 @@ export const ONSET_ALT = {
 
 // Root lines that name one of its own callees although the trouble is the root's own fault.
 export const CALLEE_LINES = {
+  connection_pool_exhaustion: [
+    (c, r) => ['ERROR', `call to ${c.dep} abandoned after ${r.pick([2000, 3000])}ms: request had already timed out locally`],
+  ],
+  certificate_expiry: [
+    (c, r) => ['ERROR', `request to ${c.dep} aborted: peer reset the connection during setup`],
+    (c, r) => ['ERROR', `call to ${c.dep} failed: connection closed by peer before the request was sent`],
+  ],
+  dns_resolution_failure: [
+    (c, r) => ['ERROR', `call to ${c.dep} failed before sending: no usable address`],
+  ],
+  upstream_rate_limiting: [
+    (c, r) => ['ERROR', `call to ${c.dep} timed out after ${r.pick([2000, 3000])}ms (all our workers were blocked)`],
+  ],
+  poisoned_cache: [
+    (c, r) => ['ERROR', `call to ${c.dep} failed: ${c.dep} rejected a request built from cached entry ${c.key}`],
+    (c, r) => ['ERROR', `request to ${c.dep} returned an error for ${c.key}; retry gave the same answer`],
+  ],
   bad_config_deploy: [
+    (c, r) => ['ERROR', `call to ${c.dep} failed after 0ms: deadline exceeded`],
     (c, r) => ['ERROR', `call to ${c.dep} failed: base URL from the ${c.newVer} settings is malformed ('${r.pick(['http//', 'https://:8443', 'tcp://undefined'])}')`],
     (c, r) => ['ERROR', `request to ${c.dep} aborted: timeout configured as 0ms`],
   ],
@@ -732,9 +754,11 @@ export const CALLEE_LINES = {
   ],
   disk_full: [
     (c, r) => ['ERROR', `could not spool the response from ${c.dep}: local buffer on ${c.vol} is full`],
+    (c, r) => ['ERROR', `call to ${c.dep} failed: could not persist its reply locally`],
   ],
   memory_leak_oom: [
     (c, r) => ['ERROR', `in-flight call to ${c.dep} aborted: worker killed by the memory limit`],
+    (c, r) => ['ERROR', `call to ${c.dep} aborted mid-request (our process was restarting)`],
     (c, r) => ['WARN', `call to ${c.dep} took ${r.int(2200, 7800)}ms (GC stall on our side)`],
   ],
 };
@@ -742,6 +766,14 @@ export const CALLEE_LINES = {
 // Lines a healthy callee logs about the root's bad requests (clock skew, bad config). They are
 // rejections, not failures: the callee keeps serving everyone else.
 export const CALLEE_REJECT = {
+  certificate_expiry: [
+    (c, r) => ['WARN', `rejected client certificate presented by ${c.peer}: certificate expired`],
+    (c, r) => ['WARN', `mTLS handshake from ${c.peer} refused: client certificate is past notAfter`],
+  ],
+  poisoned_cache: [
+    (c, r) => ['WARN', `400 Bad Request from ${c.peer}: field '${c.field}' is null`],
+    (c, r) => ['WARN', `rejected request from ${c.peer}: payload failed validation`],
+  ],
   clock_skew: [
     (c, r) => ['WARN', `rejected request from ${c.peer}: request timestamp ${c.skew}s ahead of server time`],
     (c, r) => ['WARN', `signature check failed for client ${c.peer}: clock difference ${c.skew}s exceeds 30s`],
@@ -773,6 +805,9 @@ export const TREND = {
       (c, r, v) => ['WARN', `disk usage on ${c.vol} jumped to ${v}% (was ${c.u0}% a few minutes ago); ${c.writer} is writing ${r.int(80, 400)} MB/s`],
       (c, r, v) => ['WARN', `free space on ${c.vol} shrinking fast: ${c.free(v)} GiB left`],
       (c, r, v) => ['WARN', `volume ${c.vol} at ${v}% and climbing; largest writer is ${c.writer}`],
+      (c, r, v) => ['WARN', `write rate on ${c.vol} up ${r.int(6, 30)}x in the last minute (${c.writer}); usage ${v}%`],
+      (c, r, v) => ['WARN', `usage ${v}% on ${c.vol}, ${v - c.u0} points above where it sat all morning`],
+      (c, r, v) => ['WARN', `${c.writer} output exploded: ${r.int(2, 9)} GiB in 60s on ${c.vol}`],
     ],
     step: [
       (c, r, v) => ['WARN', `disk usage ${v}% on ${c.vol}`],
@@ -785,6 +820,8 @@ export const TREND = {
       (c, r, v) => ['WARN', `connection checked out by ${c.route} ${r.int(31, 90)}s ago has not been returned (leak suspected)`],
       (c, r, v) => ['WARN', `pool '${c.pool}' in use ${v}/${c.max} and rising while the request rate is flat`],
       (c, r, v) => ['WARN', `active connections on '${c.pool}' up from ${c.a0} to ${v} without matching load`],
+      (c, r, v) => ['WARN', `${c.route} returned without closing its transaction; ${v}/${c.max} connections now checked out`],
+      (c, r, v) => ['WARN', `checkouts outpacing returns on '${c.pool}' (${r.int(3, 9)}/s vs ${r.int(0, 2)}/s)`],
     ],
     step: [
       (c, r, v) => ['INFO', `pool '${c.pool}' stats: active=${v}/${c.max} idle=${c.max - v} pending=0`],
@@ -902,7 +939,7 @@ export const ANON_FAIL = [
   (c, r) => ['ERROR', `${c.route} failed: upstream dependency error (${r.pick([502, 503, 504])})`],
   (c, r) => ['ERROR', `request ${rid(r)} failed after 3 retries: deadline exceeded`],
   (c, r) => ['ERROR', `${c.route} -> ${r.pick([500, 502, 503])} after ${r.int(900, 5100)}ms`],
-  (c, r) => ['WARN', `degraded: ${r.int(20, 90)}% of ${c.route} calls failing in the last minute`],
+  (c, r) => ['WARN', `${r.int(20, 90)}% of ${c.route} calls failed in the last minute`],
   (c, r) => ['ERROR', `handler ${c.route} gave up: dependency call did not complete`],
 ];
 
@@ -912,3 +949,63 @@ export const NOTE_MIXED = [
   (a, soft, hard, x) => `Of the services ${a} calls, only ${soft} is optional (${x.fallback} is used instead); a failure of ${hard} fails ${a}.`,
   (a, soft, hard, x) => `${a} keeps serving when ${soft} is down (using ${x.fallback}), unlike when ${hard} is down.`,
 ];
+
+// Benign warnings with the root's own vocabulary that do not contradict its baseline values; used
+// before and after T in the root for the classes whose generic chronic lines would.
+export const ROOT_CHRONIC = {
+  connection_pool_exhaustion: [
+    (c, r) => ['WARN', `slow checkout: connection held ${r.int(31, 58)}s by ${c.route} before it was returned (long transaction)`],
+    (c, r) => ['WARN', `pool '${c.pool}' validation query took ${r.int(300, 900)}ms on one connection; connection replaced`],
+  ],
+  certificate_expiry: [
+    (c, r) => ['WARN', `client ${r.pick(['10.9.3.4', '10.22.7.81', '10.4.0.19'])} offered TLS 1.0; handshake refused by policy`],
+    (c, r) => ['WARN', `TLS session cache full; evicting ${r.int(50, 900)} oldest sessions`],
+  ],
+  disk_full: [
+    (c, r) => ['WARN', `slow fsync on ${c.vol}: ${r.int(120, 600)}ms`],
+    (c, r) => ['WARN', `${c.writer} rotated a ${r.int(1, 4)} GiB file on ${c.vol}`],
+  ],
+  memory_leak_oom: [
+    (c, r) => ['WARN', `GC pause ${r.int(180, 450)}ms (young generation)`],
+    (c, r) => ['WARN', `allocation rate spike ${r.int(300, 900)} MiB/s during batch request; heap back to ${c.base}% after gc`],
+  ],
+};
+
+// An earlier, healthy rollout of the root itself (bad_config_deploy from difficulty 3).
+export const DEPLOY_PREV = {
+  start: (c, r) => ['INFO', `rollout started: ${c.svc} ${c.prevVer} -> ${c.oldVer} (rolling, maxUnavailable=1)`],
+  done: (c, r) => ['INFO', `rollout of ${c.oldVer} complete (${c.replicas}/${c.replicas} replicas healthy)`],
+};
+
+// Benign lines in the root that superficially resemble its onset (same words, harmless meaning).
+// From difficulty 3 a few appear before T (some within five minutes of it) and a few after.
+export const LOOKALIKE = {
+  connection_pool_exhaustion: [
+    (c, r) => ['WARN', `pool '${c.pool}' briefly at ${c.max}/${c.max} during the scheduled report query; no waiters, drained in ${r.int(1, 3)}s`],
+  ],
+  certificate_expiry: [
+    (c, r) => ['WARN', `handshake from ${c.peerIp} rejected: the client's own certificate expired (client-side problem)`],
+    (c, r) => ['WARN', `TLS handshake from ${c.peerIp} failed: client presented an expired certificate; connection refused`],
+  ],
+  bad_config_deploy: [
+    (c, r) => ['INFO', `release ${c.newVer} staged for canary (inactive until rollout)`],
+  ],
+  disk_full: [
+    (c, r) => ['WARN', `disk usage on ${c.vol}/tmp jumped to ${r.int(70, 85)}% during a scheduled compaction; cleaned up`],
+  ],
+  dns_resolution_failure: [
+    (c, r) => ['WARN', `lookup legacy-${hex(r, 4)}.partner.example: no such host (retired endpoint, ignored)`],
+  ],
+  memory_leak_oom: [
+    (c, r) => ['WARN', `heap after full gc ${r.int(58, 66)}% during cache warm-up (expected; settles within 2 minutes)`],
+  ],
+  clock_skew: [
+    (c, r) => ['WARN', `ntp: offset +${r.int(120, 600)}ms after live migration of the VM, slewing (within tolerance)`],
+  ],
+  upstream_rate_limiting: [
+    (c, r) => ['WARN', `${c.ext} sandbox endpoint answered 429 (test traffic; production quota unaffected)`],
+  ],
+  poisoned_cache: [
+    (c, r) => ['INFO', `cache refill: loaded ${r.int(200, 900)} entries into namespace '${c.ns}-preview' from snapshot ${c.snap}`],
+  ],
+};

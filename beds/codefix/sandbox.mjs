@@ -27,7 +27,7 @@ const SANDBOX_SCRIPT = [
   'cd /tmp',
   'ulimit -v 1048576',
   'ulimit -f 4096',
-  'ulimit -t 8',
+  'ulimit -t "$3"',
   'exec timeout -s KILL "$2" /usr/bin/python3 -P -s -S -B -c "$1"',
 ].join('\n');
 
@@ -64,9 +64,21 @@ export function runSandboxed(request, { timeoutMs = 1800 } = {}) {
   const seconds = Math.max(1, Math.ceil(timeoutMs / 1000));
   const nonce = randomBytes(12).toString('hex');
   const proc = spawnSync('unshare', ['--user', '--map-root-user', '--net', '--mount', '--fork', '--kill-child',
-    'sh', '-c', SANDBOX_SCRIPT, 'codefix-sandbox', HARNESS, String(seconds)], {
+    'sh', '-c', SANDBOX_SCRIPT, 'codefix-sandbox', HARNESS, String(seconds), '8'], {
     input: JSON.stringify({ ...request, nonce }), env: MIN_ENV, cwd: '/', timeout: timeoutMs + 400, killSignal: 'SIGKILL',
     maxBuffer: 16 * 1024 * 1024, encoding: 'utf8',
   });
   return parse(proc, 'sandboxed python', nonce);
+}
+
+// Audit helper: run an arbitrary Python script (e.g. attacks/trivial_solver.py) in the same namespace
+// sandbox with a JSON payload on stdin. Returns { ok, stdout, stderr, status }.
+export function runScriptSandboxed(script, payload, { timeoutMs = 120000 } = {}) {
+  const seconds = Math.max(1, Math.ceil(timeoutMs / 1000));
+  const proc = spawnSync('unshare', ['--user', '--map-root-user', '--net', '--mount', '--fork', '--kill-child',
+    'sh', '-c', SANDBOX_SCRIPT, 'codefix-sandbox', script, String(seconds), String(seconds + 5)], {
+    input: JSON.stringify(payload), env: MIN_ENV, cwd: '/', timeout: timeoutMs + 2000, killSignal: 'SIGKILL',
+    maxBuffer: 64 * 1024 * 1024, encoding: 'utf8',
+  });
+  return { ok: !proc.error && proc.status === 0, stdout: String(proc.stdout || ''), stderr: String(proc.stderr || ''), status: proc.status };
 }

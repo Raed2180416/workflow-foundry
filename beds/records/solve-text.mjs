@@ -6,6 +6,7 @@ import * as P from './pools.mjs';
 import { ruleSolve, rowsLink, sameDay, mulRate, divRate } from './world.mjs';
 import { dayNum, VENDEX_VOID } from './render.mjs';
 
+let AB = null; // active ablation (single-threaded, set per solveText call)
 const MONTH = {};
 P.MONTHS.forEach((m, i) => { MONTH[m.toLowerCase()] = i + 1; MONTH[m.slice(0, 3).toLowerCase()] = i + 1; });
 export const COUNTRY_ALIAS = new Map();
@@ -28,10 +29,12 @@ function longDate(s) { // "10 September 2022" | "March 5, 2021" | "3 Mar 2021"
   if (m) return ymd(m[3], MONTH[m[1].toLowerCase()], m[2]);
   throw new Error(`date? ${s}`);
 }
-function usNumeric(s, twoDigitCentury = 1900) { // month/day/year
+function usNumeric(s, twoDigitCentury = 1900) { // month/day/year (ablation 'vendex-dmy' reads day/month)
   const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/);
   if (!m) return null;
-  return ymd(m[3].length === 2 ? twoDigitCentury + Number(m[3]) : m[3], m[1], m[2]);
+  const y = m[3].length === 2 ? twoDigitCentury + Number(m[3]) : m[3];
+  if (AB === 'vendex-dmy' && Number(m[1]) <= 12 && Number(m[2]) <= 12) return ymd(y, m[2], m[1]);
+  return ymd(y, m[1], m[2]);
 }
 function vendexDob(s) {
   const num = usNumeric(s);
@@ -68,7 +71,7 @@ function decimalToMinor(text, currency) {
   const [i, f = ''] = text.split('.');
   return Number(i) * 10 ** md + (md ? Number(f.padEnd(md, '0').slice(0, md)) : 0);
 }
-let AB = null; // active ablation (single-threaded, set per solveText call)
+
 function phone(raw, iso, allow011) {
   const s = (raw ?? '').trim();
   if (MISSING.has(s.toLowerCase())) return null;
@@ -123,7 +126,10 @@ function parseFx(spec) {
     m = line.match(/^\s+([A-Z]{3})(?:\/USD)?\s+(\d+)\.(\d+)$/);
     if (m && P.CURRENCIES[m[1]]) fx[table][m[1]] = mulRate(Number(m[2]) * 1e6 + Number(m[3].padEnd(6, '0')));
     m = line.match(/^\s+USD\/([A-Z]{3})\s+(\d+)\.(\d{4})$/);
-    if (m && P.CURRENCIES[m[1]]) fx[table][m[1]] = divRate(Number(m[2]) * 1e4 + Number(m[3]));
+    if (m && P.CURRENCIES[m[1]]) {
+      const q4 = Number(m[2]) * 1e4 + Number(m[3]);
+      fx[table][m[1]] = AB === 'pairs-multiply' ? { num: q4, den: 10000 } : divRate(q4);
+    }
   }
   fx.cur.USD ??= mulRate(1000000);
   if (fx.cutover !== null) fx.old.USD ??= mulRate(1000000);
@@ -281,7 +287,11 @@ function vendexAmount(s) {
 // much each judgment matters; see README).
 export const ABLATIONS = ['atlas-cutoff', 'atlas-month-first', 'era-unreadable', 'sentinel-as-dob', 'keep-void', 'blocked-is-void',
   'single-fx-table', 'no-fx', 'keep-trunk-zero', 'no-011', 'nickname-as-given', 'no-accent-restore', 'exact-names',
-  'no-phone-link', 'phone-merges-households', 'obey-memos', 'oldest-wins'];
+  'no-phone-link', 'phone-merges-households', 'obey-memos', 'oldest-wins',
+  // v2 traps
+  'lenient-names', 'keyword-voids', 'country-from-phone', 'pairs-multiply', 'vendex-dmy'];
+const KEYWORD_VOID = /ZZTEST|DO NOT MIGRATE|SAMPLE|sandbox|withdrawn/i;
+const CC_ISO = new Map(Object.entries(P.COUNTRIES).reverse().map(([iso, c]) => [c.cc, iso])); // '1' -> US
 const fold = s => P.foldStrip(s);
 const LINKS = {
   'exact-names': (a, b) => {
@@ -291,6 +301,12 @@ const LINKS = {
   },
   'no-phone-link': (a, b) => Boolean(a.dob && b.dob && sameDay(a.dob, b.dob) && P.namesMatch(a.np, b.np)),
   'phone-merges-households': (a, b) => rowsLink(a, b) || Boolean(a.phone && b.phone && a.phone === b.phone),
+  // Tolerates two typing errors: merges near-twins (same birth date and family name, given names 2 edits apart).
+  'lenient-names': (a, b) => {
+    if (a.dob && b.dob) { if (!sameDay(a.dob, b.dob)) return false; } else if (!(a.phone && b.phone && a.phone === b.phone)) return false;
+    const g = P.partDistance(P.formalOf(a.np.given), P.formalOf(b.np.given));
+    return g <= 2 && g + P.partDistance(a.np.family, b.np.family) <= 2;
+  },
 };
 
 export function solveText(task, { ablate = null } = {}) {
@@ -301,7 +317,12 @@ export function solveText(task, { ablate = null } = {}) {
     const atlasNote = notes.split('\n').find(l => l.startsWith('ATLAS.')) ?? '';
     const cm = atlasNote.match(/(\d{1,2} [A-Z][a-z]+ \d{4})/);
     const ctx = { atlasCutoff: cm ? dayOf(longDate(cm[1])) : null };
-    let rows = exp.split('\n').filter(Boolean).map(line => parseLine(line, ctx));
+    let rows = exp.split('\n').filter(Boolean).map(line => {
+      const row = parseLine(line, ctx);
+      if (ablate === 'keyword-voids' && KEYWORD_VOID.test(line)) row.void = true;
+      if (ablate === 'country-from-phone' && row.phone) row.country = CC_ISO.get(CCS.find(cc => row.phone.slice(1).startsWith(cc)));
+      return row;
+    });
     if (ablate !== 'keep-void') rows = rows.filter(r => !r.void);
     let fx = parseFx(spec);
     if (ablate === 'single-fx-table') fx = { ...fx, cutover: null };

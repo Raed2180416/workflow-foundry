@@ -15,6 +15,8 @@ const localHM = (t, tz) => { const p = localParts(t, tz); return `${p2(p.h)}:${p
 const tzLabel = tz => `UTC${tz >= 0 ? '+' : '-'}${Math.abs(tz)}`;
 const WORD = { 1: 'one', 2: 'two', 3: 'three', 4: 'four', 5: 'five' };
 const TIMES = { 1: 'once', 2: 'twice', 3: 'three times', 4: 'four times' };
+// Capitalise a sentence start, but never an identifier (host names, keys, versions are case-sensitive).
+const cap = s => (/^[a-z]+$/.test(s.split(/[\s,:;(—]/)[0]) ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 
 // ---- number phrasing ------------------------------------------------------------------------
 // From difficulty 3 every threshold is written in one of several equivalent forms, chosen per task.
@@ -34,10 +36,12 @@ export function phraser(world, difficulty) {
   return {
     sec: (key, n) => varied ? once(key, SEC[n] ?? [`${n} seconds`]) : `${n} s`,
     // n retries after the first attempt.
-    retries: (key, n) => once(key, [`at most ${TIMES[n]}`, `no more than ${WORD[n]} ${n === 1 ? 'retry' : 'retries'}`, `up to ${WORD[n + 1]} attempts in all, counting the first one`]),
+    // A full clause: "A transient failure <clause>."
+    retries: (key, n) => once(key, [`may be retried at most ${TIMES[n]}`, `allows no more than ${WORD[n]} ${n === 1 ? 'retry' : 'retries'}`, `gets up to ${WORD[n + 1]} attempts in all, counting the first one`]),
     // n re-checks after the first reading.
     rechecks: (key, n) => once(key, [`re-check at most ${TIMES[n]}`, `allow up to ${WORD[n]} re-checks`, `take no more than ${WORD[n + 1]} readings in total, counting the first one`]),
-    pct: (key, x) => once(key, [`${x}%`, PCT[x] ?? `${x}%`, `${x * 10} errors per thousand requests`, `one request in ${100 / x}`]),
+    pct: (key, x) => once(key, [`${x}%`, PCT[x] ?? `${x}%`, `${x * 10} errors per thousand requests`, `one request in ${100 / x}`, `${x / 100} (as a fraction of requests)`]),
+    pick: (key, options) => once(key, options),
   };
 }
 
@@ -82,7 +86,7 @@ export function renderTicket(world, difficulty) {
     `The canary (${sp.canary}) runs ${sp.versionRc}, the release candidate, for release engineering. It is out of scope for this ticket.`,
   ]));
   if (sp.descQuarantined.length) {
-    const q = sp.descQuarantined.map(id => `${refNode(id)} (${incOf(id)})`).join(' and ');
+    const q = sp.descQuarantined.map(id => `${difficulty >= 3 && r.chance(0.5) ? legacyOf(id) : id} (${incOf(id)})`).join(' and ');
     const many = sp.descQuarantined.length > 1;
     lines.push(r.pick([
       `${q} ${many ? 'are' : 'is'} quarantined (disk errors) and out of rotation: skip ${many ? 'them' : 'it'}.`,
@@ -121,104 +125,171 @@ export function renderTicket(world, difficulty) {
 
   // Comments: ordered by sortable keys; dependent comments get later keys.
   const comments = [];
-  const add = (key, author, text) => { comments.push({ key, author, text }); return key; };
+  const add = (key, author, text) => { comments.push({ key, author, text: cap(text.trim().replace(/\s+/g, ' ')) }); return key; };
   const auth = who => ({ name: who.name, handle: who.handle });
   const someone = () => auth(r.pick(others));
   const boss = () => (r.chance(0.65) ? owner : approver);
+  const hard = difficulty >= 3;
   const amendKey = {};
   const vA = sp.versionAmended, vB = sp.versionBase, vRc = sp.versionRc;
   const mk = k.maxInflight, sk = k.slowStart, wk = k.workMem;
-  const inc2 = sp.quarantined[0] ?? null; // a node that stays quarantined (for herrings)
+  // ---- decision grammar (audit fixes F5/F6) ----
+  // A decision is a few clauses in random order: exactly one clause carries the outcome, the others
+  // reject other candidates (the description value, the vendor figure, a candidate build, a respin).
+  // Non-decisions (herrings) have the same shape with the description value as the outcome. Some
+  // decisions only endorse a value stated by a non-authorised commenter ("go with what @x said").
+  const ctx = () => hard ? r.pick(['', '', 'update: ', 'quick update — ', 'after the CAB call: ', 'following up on the thread: ', 'one correction before the window: ', 'heads-up for whoever executes: ', 'per the review this morning, ']) : '';
+  const off = () => r.pick(['withdrawn', 'pulled from the release channel', 'off the table', 'no longer approved']);
+  const rel = (a, b, unit = '') => { const d = Number(a) - Number(b); return { n: `${Math.abs(d)}${unit}`, more: d > 0 }; };
+  const oneOf = forms => r.pick(forms.filter(Boolean))();
+  const clauses = parts => { const ps = r.shuffle(parts.filter(Boolean)), sep = r.pick(['; ', '. ', ' — ']); return ps.map((p, i) => (i > 0 && sep === '. ' ? cap(p) : p)).join(sep) + '.'; };
+  const maybe = (p, x) => (r.chance(p) ? x : null);
+  const vA2 = vA.replace(/\d+$/, x => String(Number(x) + 1));
+  const vPos = X => r.pick([`roll ${X}`, `${X} it is`, `go with ${X}`, `${X} is the build for tonight`, `ship ${X}`, `${X} is the approved build`, `target ${X}`]);
+  const vKeep = () => r.pick([`stick with ${vB}`, `${vB} stays the target`, `${vB} as planned`, `${vB} it is`, `the description's ${vB} stands`]);
+  const vNeg = Y => r.pick([`not ${Y}`, `${Y} is ${off()}`, `forget ${Y}`, `no ${Y}`, `${Y} is out`]);
+  const vNegA = () => r.pick([`${vA} isn't approved yet`, `not ${vA}`, `${vA} is still in soak`, `forget ${vA} for now`]);
+  const vExtra = () => (r.chance(0.5) ? r.pick([`${vRc} is only a candidate`, `not ${vRc}`, `no ${vRc} either`]) : r.pick([`the ${vA2} respin isn't approved yet`, `${vA2} is still in soak`, `don't jump to ${vA2}`]));
+  const nPos = X => r.pick([`use ${X}`, `${X} it is`, `${X} is the number`, `set it to ${X}`, `go with ${X}`, `make it ${X}`, `${X} is what we signed off`]);
+  const nKeep = D => r.pick([`keep ${D}`, `${D} stays`, `the description's ${D} is right`, `stay at ${D}`]);
+  const nNeg = Y => r.pick([`not ${Y}`, `${Y} was the old load-test number`, `forget ${Y}`, `${Y} is out`, `someone floated ${Y}, no`, `${Y} is too aggressive for us`]);
+  const about = key => r.pick([`for ${key}: `, `re ${key} — `, `${key}: `, `on ${key}, `]);
+  const numDecision = (key, D, A, others, unit = '') => {
+    const x = rel(A, D, unit);
+    const pos = hard ? r.pick([nPos(A), nPos(A), `go ${x.n} ${x.more ? 'above' : 'below'} the description's value`, `take the description's value and ${x.more ? 'add' : 'subtract'} ${x.n}`]) : nPos(A);
+    return `${ctx()}${about(key)}${clauses([pos, nNeg(D), ...others.map(o => maybe(0.5, nNeg(o)))])}`;
+  };
+  const decide = {
+    version: () => oneOf([
+      () => `${ctx()}${clauses([vPos(vA), vNeg(vB), hard && maybe(0.6, vExtra())])}`,
+      () => `${ctx()}change of plan on the version: ${vB} was pulled last night (memory regression in the ${sp.svc.product} settlement path). Roll ${vA} instead.`,
+      hard && (() => `${ctx()}${vB} is ${off()}. Roll the patch build that fixes the settlement-path memory regression instead (see the release notes).`),
+      hard && (() => `${ctx()}${clauses([`${vB} is ${off()}`, `roll the next patch release after it`, maybe(0.5, vExtra())])}`),
+      hard && (() => `release management asked whether ${vB} could still go out. It can't — ${vPos(vA)}.`),
+    ]),
+    value: () => {
+      const D = sp.maxInflightDesc, A = sp.maxInflightAmend;
+      if (sp.valueForm === 'vendor') return oneOf([
+        () => `${ctx()}${about(mk)}${clauses([`follow the vendor's suggestion in the release notes after all`, nNeg(D), maybe(0.5, nNeg(sp.maxInflightHerring))])}`,
+        () => `perf asked whether the vendor's value for ${mk} was too aggressive for us. It isn't; use the release-notes number rather than ${D}.`,
+      ]);
+      return numDecision(mk, D, A, hard ? [sp.maxInflightVendor, sp.maxInflightHerring] : []);
+    },
+    skip: () => oneOf([
+      () => `${ctx()}let's not touch ${mk} in this change after all; we'll do it separately next sprint.`,
+      () => `${ctx()}drop the ${mk} part from this change — it moves to its own ticket. The slow-start change still goes ahead.`,
+      () => `${ctx()}${mk} stays at its current value tonight; perf wants a separate change for it.`,
+      hard && (() => `${ctx()}no ${mk} change in this ticket, whatever the description says; ${sk} still goes ahead.`),
+      hard && (() => `perf asked whether ${mk} could still ride along. No — leave it where it is; everything else as planned.`),
+    ]),
+    slowval: () => numDecision(sk, sp.slowDesc, sp.slowAmend, [sp.slowRetracted], ' seconds'),
+    workmem: () => numDecision(wk, sp.workMemDesc, sp.workMemAmend, [sp.workMemHerring], ' MB'),
+  };
+  // Endorsement: a non-authorised expert states the value; an authorised comment endorses it by handle.
+  const suggest = {
+    version: (X, D) => r.pick([`Release management here: ${X} is the replacement for ${D}${r.chance(0.5) ? `; ${vA2} is not approved yet` : ''}.`, `From the release team: the build to use instead of ${D} is ${X}.`]),
+    value: (X, D) => r.pick([`Perf here: our recommendation for ${mk} is ${X}${r.chance(0.5) ? ` (not ${D})` : ''}.`, `Perf team: ${D} for ${mk} is outdated; we'd run ${X}.`]),
+    slowval: (X, D) => r.pick([`Network here: we'd like ${sk} at ${X} rather than ${D}.`, `LB review: ${sk} should be ${X}; ${D} ramps too fast.`]),
+    workmem: (X, D) => r.pick([`DBA here: our review settled on ${X} for ${wk}.`, `From the DBA review: ${wk} = ${X} (${D} was the first guess).`]),
+  };
+  const endorse = h => r.pick([`Agreed with @${h} — do that.`, `+1 to @${h}'s recommendation above; that's the plan for tonight.`, `Go with what @${h} said.`, `Fine by me: follow @${h}'s suggestion.`, `@${h} is right, let's do it that way.`]);
+  const decline = h => r.pick([`Thanks @${h}, but no — the description stands.`, `Noted, @${h}; we keep what the description says.`, `Not for this change, @${h}.`, `@${h}, appreciated, but no change tonight.`]);
+  const expertPair = (key, author, suggestion, reply) => { const kk = r.float(0.12, 0.6), ex = someone(); add(kk, ex, suggestion); add(kk + r.float(0.03, 0.25), author, reply(ex.handle)); return kk; };
+  const amended = { version: [vA, vB], value: [sp.maxInflightAmend, sp.maxInflightDesc], slowval: [sp.slowAmend, sp.slowDesc], workmem: [sp.workMemAmend, sp.workMemDesc] };
+  // Node references: current name, legacy name, both, the covering incident, or a unique rack / patch age.
+  const poolHosts = world.init.hosts.filter(h => h.pool === sp.pool);
+  const unique = (id, field) => poolHosts.filter(h => h[field] === hostOf(id)[field]).length === 1;
+  const nodeRef = id => {
+    if (!hard) return id;
+    return oneOf([
+      () => id, () => legacyOf(id), () => `${legacyOf(id)} (${id})`,
+      incOf(id) && (() => r.pick([`the host under ${incOf(id)}`, `the host covered by ${incOf(id)}`])),
+      unique(id, 'rack') && (() => `the ${sp.pool} member in rack ${hostOf(id).rack}`),
+      unique(id, 'patched') && (() => `the ${sp.pool} member last patched ${hostOf(id).patched} days ago`),
+    ]);
+  };
+  const inc2 = sp.quarantined[0] ?? null; // a node that stays quarantined
   for (const kind of sp.kinds) {
-    const key = r.float(0.15, 0.7);
+    let key = r.float(0.15, 0.7);
+    if (hard && amended[kind] && !(kind === 'value' && sp.valueForm === 'vendor') && r.chance(0.35)) key = expertPair(kind, boss(), suggest[kind](...amended[kind]), endorse);
+    else if (decide[kind]) add(key, boss(), decide[kind]());
     amendKey[kind] = key;
-    if (kind === 'version') add(key, boss(), r.pick([
-      `Change of plan on the version: ${vB} was pulled from the release channel last night (memory regression in the ${sp.svc.product} settlement path). Roll ${vA} instead.`,
-      `Release management withdrew ${vB}. Use ${vA} for this change — same notes otherwise.`,
-      ...(difficulty >= 3 ? [
-        `We're going with ${vA}, not ${vB}: ${vB} has the settlement regression. And no, not ${vRc} either.`,
-        `Version update: ${vB} is withdrawn and ${vRc} is still only a candidate; the approved build for tonight is ${vA}.`,
-        `${vB} is off the table after last night's regression. The replacement build ${vA} passed the soak, so roll that.`,
-      ] : []),
-    ]));
-    if (kind === 'value') add(key, boss(), r.pick([
-      `Perf review came back: please use ${sp.maxInflightAmend} for ${mk}, not ${sp.maxInflightDesc}.`,
-      `Small correction to the description — ${mk} should be ${sp.maxInflightAmend}. ${sp.maxInflightDesc} was the number from the old load test.`,
-      ...(difficulty >= 3 ? [
-        `${sp.maxInflightDesc} for ${mk} came from the old load test; perf signed off on ${sp.maxInflightAmend}, so go with that.`,
-        `Re ${mk}: the vendor's ${sp.maxInflightVendor} is for large pools and the ${sp.maxInflightDesc} in the description is stale. Set it to ${sp.maxInflightAmend}.`,
-        `${mk}: ${sp.maxInflightAmend}. Not ${sp.maxInflightDesc}, and not the release-notes ${sp.maxInflightVendor}.`,
-      ] : []),
-    ]));
-    if (kind === 'skip') add(key, boss(), r.pick([
-      `Let's not touch ${mk} in this change after all; we'll do it separately next sprint. Everything else as planned.`,
-      `Drop the ${mk} part from this change — it moves to its own ticket. The slow-start change still goes ahead.`,
-      `${mk} stays at its current value tonight; perf wants a separate change for it.`,
-    ]));
-    if (kind === 'slowval') add(key, boss(), r.pick([
-      `Network asked for a gentler ramp: set ${sk} to ${sp.slowAmend} instead of ${sp.slowDesc}.`,
-      `${sp.slowDesc} on ${sk} is too short for the new cold start — make it ${sp.slowAmend}.`,
-      `One more tuning change from the LB review: ${sk} = ${sp.slowAmend} (the description's ${sp.slowDesc} is outdated).`,
-    ]));
     if (kind === 'include') {
-      const id = sp.includedNode, ref = refNode(id, { inc: true }), inc = incOf(id);
-      add(key, boss(), sp.includeDrained ? r.pick([
-        `${refNode(id)} got its replacement disk yesterday and ${inc} is resolved for that host. Include it in this rollout; it is still drained from the quarantine, so return it to the pool once it is upgraded and verified.`,
-        `Update: ${ref} is healthy again (disk swapped) but still out of rotation. Please upgrade it with the rest and put it back in service afterwards.`,
-        ...(difficulty >= 3 ? [
-          `${inc} is closed: the host it covered passed burn-in. Bring that host into this change (it has not been undrained yet) and return it to the pool after the upgrade.`,
-          `Hardware signed off on ${legacyOf(id)} this morning. Add it to the rollout — it's still drained, so no drain needed, just upgrade it and undrain it when it checks out.`,
-        ] : []),
-      ]) : r.pick([
-        `${refNode(id)} got its replacement disk and ${inc} is resolved for that host; it went back into rotation yesterday. Include it in this rollout.`,
-        ...(difficulty >= 3 ? [`${inc} is closed and the host it covered is back in the pool since yesterday — upgrade it with the rest.`] : []),
-      ]));
+      const id = sp.includedNode, inc = incOf(id);
+      const go = r.pick(['include it in this rollout', 'bring it into this change', 'add it to the rollout', 'upgrade it with the rest', 'treat it as a normal target', 'it goes in with the others']);
+      const state = sp.includeDrained
+        ? r.pick(['it is still drained, so return it to the pool after the upgrade', 'no drain needed since it never went back into rotation; undrain it once it checks out', 'it is still out of rotation — put it back once it is upgraded and verified'])
+        : 'it has been back in rotation since yesterday';
+      const pos = oneOf([
+        () => `${nodeRef(id)} is repaired (${inc} resolved), so ${go}; ${state}`,
+        () => `${inc} is closed and ${nodeRef(id)} passed burn-in: ${go} — ${state}`,
+        hard && (() => `hardware asked whether ${nodeRef(id)} could wait another week. No need, it is fixed: ${go}; ${state}`),
+      ]);
+      const neg = inc2 && hard && r.chance(0.6) ? r.pick([`${nodeRef(inc2)} stays out until hardware is done`, `${nodeRef(inc2)} is still waiting for parts, leave it alone`, `not ${nodeRef(inc2)} yet`]) : null;
+      add(key, boss(), `${ctx()}${neg && r.chance(0.5) ? `${neg}. ${cap(pos)}` : neg ? `${pos}. ${cap(neg)}` : pos}.`);
     }
     if (kind === 'exclude') {
-      const ref = refNode(sp.excludedNode);
-      add(key, boss(), r.pick([
-        `Leave ${ref} out of the upgrade — it's reserved for the ${r.pick(['capacity', 'soak', 'perf'])} load test from tomorrow and has to stay on ${sp.versionFrom}. It can't serve with ${sp.ff} on, so take it out of rotation before you enable the flag (drain only, no restart) and leave it drained.`,
-        `Please don't upgrade ${ref}: the perf team needs it on the current build for their test. Drain it before the flag goes on and leave it drained; they'll pick it up from there.`,
-        `${ref} is spoken for (load test, stays on ${sp.versionFrom}). Skip it in the rolling restart, but it must not take traffic once ${sp.ff} is on: drain it beforehand and do not put it back.`,
-      ]));
+      const ref = nodeRef(sp.excludedNode);
+      const core = r.pick([`leave ${ref} out of the upgrade`, `don't upgrade ${ref}`, `${ref} is spoken for`, `${ref} stays on ${sp.versionFrom}`, `skip ${ref} in the rolling restart`, `${ref} must keep its current build`]);
+      const why = r.pick([`it's reserved for the ${r.pick(['capacity', 'soak', 'perf'])} load test from tomorrow`, `the perf team needs it on the current build`, `it is pinned for a load test`]);
+      const drain = r.pick([`It can't serve with ${sp.ff} on, so drain it (no restart) before you enable the flag and leave it drained.`, `Take it out of rotation before the flag goes on and keep it out; do not restart it.`, `Drain it ahead of the flag step and leave it drained — the perf team takes it from there.`]);
+      const t = sp.targets.find(x => x !== sp.includedNode);
+      const rest = hard && t && r.chance(0.5) ? ` Everything else, ${nodeRef(t)} included, gets the upgrade as planned.` : '';
+      add(key, boss(), `${ctx()}${core} — ${why}. ${drain}${rest}`);
     }
-    if (kind === 'workmem') add(key, boss(), r.pick([
-      `DBA review is done: set ${wk} to ${sp.workMemAmend}, not ${sp.workMemDesc}. Rest of the DB plan unchanged.`,
-      `${sp.workMemDesc} MB was the DBAs' first guess for ${wk}; their review settled on ${sp.workMemAmend}. Use that.`,
-      `Re the database parameter: ${sp.workMemAmend} for ${wk} (the description's ${sp.workMemDesc} is from before the review).`,
-    ]));
   }
   // Authorised window move.
   if (sp.windowMove) {
     const { delta, keepEnd } = sp.windowMove, w = sp.window, hw = sp.headerWindow;
     const dw = r.pick(DELTA[delta]);
     const abs = K.tzLocal ? `${localStamp(w.start, sp.tz)} to ${localStamp(w.end, sp.tz)} ${sp.site.name} time` : `${utcStamp(w.start)} to ${utcStamp(w.end)}`;
-    add(r.float(0.3, 0.9), boss(), r.pick([
-      `CAB moved the window because of the nightly batch on ${sp.cluster}: it now runs ${abs}.`,
-      `Heads-up: the window now opens ${dw} later than the header says; ${keepEnd ? 'the end time is unchanged' : `same length, so it also closes ${dw} later`}.`,
-      `Window change approved by CAB: start at ${localHM(w.start, sp.tz)} ${sp.site.name} time instead of ${localHM(hw.start, sp.tz)}; ${keepEnd ? 'the end stays as it was' : `it keeps its length and closes at ${localHM(w.end, sp.tz)} ${sp.site.name} time`}.`,
-    ]));
+    const end = keepEnd ? 'the end time is unchanged' : `same length, so it also closes ${dw} later`;
+    const [nw, od] = r.chance(0.5) || !K.tzLocal ? [`${localHM(w.start, sp.tz)} ${sp.site.name} time`, `${localHM(hw.start, sp.tz)}`] : [`${utcStamp(w.start).slice(11)}`, `${utcStamp(hw.start).slice(11)}`];
+    const text = oneOf([
+      () => `${ctx()}CAB moved the window because of the nightly batch on ${sp.cluster}: it now runs ${abs}.`,
+      () => `${ctx()}the window now opens ${dw} later than the header says; ${end}.`,
+      () => `Window change approved by CAB: ${r.pick([`start at ${nw} instead of ${od}`, `instead of ${od}, start at ${nw}`, `${od} no longer works, we start at ${nw}`])}; ${keepEnd ? 'the end stays as it was' : 'it keeps its length'}.`,
+      () => `people asked whether we could keep the original start. We can't — the batch job on ${sp.cluster} overruns, so we begin ${dw} later than planned; ${end}.`,
+    ]);
+    if (hard && r.chance(0.3)) {
+      expertPair('window', boss(), `Batch team here: the ${sp.cluster} job won't be done before ${nw}. Can the change start then instead?`, h => r.pick([`OK — @${h}'s start time it is; ${end}.`, `Fine, we start when @${h} says; ${end}.`]));
+    } else add(r.float(0.3, 0.9), boss(), text);
   }
-  // Owner/approver non-decisions: hypotheticals, declined suggestions, amend-then-retract.
+  // Owner/approver non-decisions: confirmations that reject other candidates, hypotheticals, open
+  // questions, declined expert suggestions, amend-then-retract.
   const herrings = [];
   if (!sp.kinds.includes('version')) {
-    herrings.push(() => add(r.float(0.1, 0.9), boss(), `Release management is looking at a possible ${vA} respin. Unless I post otherwise here, ${vB} is the build.`));
-    herrings.push(() => add(r.float(0.1, 0.9), boss(), `For the record, ${vA} exists but is staging-only for now; this change ships ${vB}.`));
-    herrings.push(() => { const kk = r.float(0.1, 0.6); add(kk, someone(), `Why not go straight to ${vRc}? It has the retry fix we keep asking for.`); add(kk + r.float(0.02, 0.2), boss(), `No to ${vRc} — it's a candidate. We stay on ${vB}.`); });
-    if (difficulty >= 4) herrings.push(() => { const kk = r.float(0.1, 0.5); add(kk, owner, `Use ${vA} instead of ${vB}; ${vB} has the settlement regression.`); add(kk + r.float(0.1, 0.3), owner, `Correction: release management reinstated ${vB} (the regression was in the test harness). Ignore my earlier note about ${vA} and roll ${vB} as in the description.`); });
+    herrings.push(() => add(r.float(0.1, 0.9), boss(), `Release management may respin ${vB} as ${vA} later this week; if that happens I'll post here. Until then ${vB} stands.`));
+    herrings.push(() => add(r.float(0.1, 0.9), boss(), `${ctx()}${clauses([vKeep(), vNegA(), maybe(0.5, vExtra())])}`));
+    herrings.push(() => { const kk = r.float(0.1, 0.6); add(kk, someone(), `Why not go straight to ${vRc}? It has the retry fix we keep asking for.`); add(kk + r.float(0.02, 0.2), boss(), `No to ${vRc}, it's a candidate. ${vB} it is.`); });
+    if (hard) herrings.push(() => add(r.float(0.1, 0.9), boss(), `Do we want ${vA} instead of ${vB}? I'm checking with release management.`));
+    if (hard) herrings.push(() => expertPair('version', boss(), `Release management here: ${vA} is available if you'd rather take it.`, decline));
+    if (difficulty >= 4) herrings.push(() => { const kk = r.float(0.1, 0.5); add(kk, owner, `Use ${vA} instead of ${vB}; ${vB} has the settlement regression.`); add(kk + r.float(0.1, 0.3), owner, `Release management reinstated ${vB} (the regression was in the test harness). Forget what I said about ${vA}; the description's build stands.`); });
   }
   if (!sp.kinds.includes('value') && !sp.kinds.includes('skip')) {
     herrings.push(() => add(r.float(0.1, 0.9), boss(), `Perf may come back with ${sp.maxInflightHerring} for ${mk}; if they do I'll say so here. Until then the description stands.`));
-    herrings.push(() => add(r.float(0.1, 0.9), boss(), `Someone asked whether ${mk} should follow the release notes (${sp.maxInflightVendor}). No — keep the value in the description.`));
-    if (difficulty >= 4) herrings.push(() => { const kk = r.float(0.1, 0.5); add(kk, owner, `Let's use ${sp.maxInflightHerring} for ${mk}.`); add(kk + r.float(0.1, 0.3), owner, `Scratch my ${mk} comment — perf wants to keep ${sp.maxInflightDesc} from the description.`); });
+    herrings.push(() => add(r.float(0.1, 0.9), boss(), `${ctx()}${about(mk)}${clauses([nKeep(sp.maxInflightDesc), nNeg(r.pick([sp.maxInflightHerring, sp.maxInflightVendor]))])}`));
+    if (hard) herrings.push(() => expertPair('value', boss(), `Perf here: we'd prefer ${sp.maxInflightHerring} for ${mk}.`, decline));
+    if (hard) herrings.push(() => add(r.float(0.1, 0.9), boss(), `We might split ${mk} into its own ticket at some point; not decided, so it stays in this change.`));
+    if (difficulty >= 4) herrings.push(() => { const kk = r.float(0.1, 0.5); add(kk, owner, `Let's use ${sp.maxInflightHerring} for ${mk}.`); add(kk + r.float(0.1, 0.3), owner, `Scratch my ${mk} comment — perf wants to keep the description value.`); });
   }
-  if (!sp.kinds.includes('slowval') && !K.retract) herrings.push(() => add(r.float(0.1, 0.9), boss(), `If the cold start looks slow on the canary we might raise ${sk} beyond ${sp.slowDesc}; no change for now.`));
+  if (!sp.kinds.includes('slowval') && !K.retract) {
+    herrings.push(() => add(r.float(0.1, 0.9), boss(), `If the cold start looks slow on the canary we might raise ${sk} beyond ${sp.slowDesc}; no change for now.`));
+    if (hard) herrings.push(() => expertPair('slowval', boss(), `Network here: we'd like ${sk} at ${sp.slowRetracted}.`, decline));
+  }
   if (inc2) {
-    herrings.push(() => add(r.float(0.1, 0.9), boss(), `Hardware hopes to finish ${refNode(inc2)} by Friday; until then it stays out of everything.`));
+    herrings.push(() => add(r.float(0.1, 0.9), boss(), `Hardware hopes to finish ${nodeRef(inc2)} by Friday; until then it stays out of everything.`));
     herrings.push(() => add(r.float(0.1, 0.9), boss(), `If ${incOf(inc2)} gets closed before the window I'll add that host here; otherwise leave it out.`));
+    if (hard) herrings.push(() => add(r.float(0.1, 0.9), boss(), `Can we include ${nodeRef(inc2)}? Asking hardware whether the new disk passed burn-in.`));
   }
-  if (!sp.windowMove && difficulty >= 3) herrings.push(() => add(r.float(0.1, 0.9), boss(), `If the batch job on ${sp.cluster} overruns we may have to push the window; I'll post here if that happens.`));
-  if (sp.dbStep && !sp.kinds.includes('workmem')) herrings.push(() => add(r.float(0.1, 0.9), boss(), `The DBAs floated ${sp.workMemHerring} for ${wk} at one point; they settled on the description's value.`));
+  if (!sp.windowMove && hard) {
+    herrings.push(() => add(r.float(0.1, 0.9), boss(), `If the batch job on ${sp.cluster} overruns we may have to push the window by ${r.pick(['half an hour', 'an hour', '45 minutes'])}; I'll post here if that happens.`));
+    herrings.push(() => expertPair('window', boss(), `Batch team here: could the change start ${r.pick(['half an hour', 'an hour'])} later? Our job might overrun.`, h => r.pick([`No, @${h} — the window stays as approved.`, `@${h}, we keep the approved window; the job will have to wait.`])));
+  }
+  if (sp.dbStep && !sp.kinds.includes('workmem')) {
+    herrings.push(() => add(r.float(0.1, 0.9), boss(), `The DBAs floated ${sp.workMemHerring} for ${wk} at one point; they settled on the description's value.`));
+    herrings.push(() => expertPair('workmem', boss(), `DBA here: ${sp.workMemHerring} would be safer for ${wk}.`, decline));
+  }
   for (const f of r.sample(herrings, Math.min(K.herrings, herrings.length))) f();
   if (K.retract) {
     const kk = r.float(0.2, 0.5);
@@ -240,7 +311,7 @@ export function renderTicket(world, difficulty) {
     dPool.push(() => add(r.float(0.1, 0.9), someone(), `Restart the primary first next time, replica restarts always take forever to catch up.`));
     dPool.push(() => add(r.float(0.1, 0.9), someone(), `Please don't page anyone tonight unless the whole site is down — people are exhausted after last week.`));
   }
-  if (sp.kinds.includes('value')) dPool.push(() => add(amendKey.value + r.float(0.05, 0.25), someone(), `I'd still go with ${sp.maxInflightDesc} for max_inflight, ${sp.maxInflightAmend} feels too conservative.`));
+  if (sp.kinds.includes('value')) dPool.push(() => add(amendKey.value + r.float(0.05, 0.25), someone(), `I'd still go with ${sp.maxInflightDesc} for max_inflight, the new number feels risky.`));
   if (sp.kinds.includes('version')) dPool.push(() => add(amendKey.version + r.float(0.05, 0.25), someone(), `${vB} ran fine on our staging cluster, I'd just ship it as planned.`));
   if (sp.kinds.includes('include')) dPool.push(() => add(amendKey.include + r.float(0.05, 0.25), someone(), `Are we sure about bringing ${refNode(sp.includedNode)} back? I'd leave it quarantined one more week.`));
   for (const f of r.sample(dPool, Math.min(K.distract, dPool.length))) f();
@@ -302,7 +373,11 @@ export function renderRunbook(world, difficulty) {
   const { spec: sp, K } = world;
   const f = phraser(world, difficulty), th = sp.thr, k = sp.keys;
   const lagT = f.sec('lagT', th.lagT), lagWait = f.sec('lagWait', th.lagWait), lagN = f.rechecks('lagN', th.lagRetries);
-  const hWait = f.sec('hWait', th.healthWait), hN = f.rechecks('hN', th.healthRetries), retries = f.retries('R', th.restartRetries);
+  // Cross-references: when the health cadence equals the replication cadence, it may be stated by reference.
+  const lagRef = difficulty >= 3 ? 'Step 3' : 'Step 2';
+  const hWait = th.healthWait === th.lagWait && K.words ? f.pick('hWaitRef', [f.sec('hWait', th.healthWait), `as long as the replication re-check interval in ${lagRef}`]) : f.sec('hWait', th.healthWait);
+  const hN = th.healthRetries === th.lagRetries && K.words ? f.pick('hNRef', [f.rechecks('hN', th.healthRetries), `re-check as many times as ${lagRef} allows for the replication lag`]) : f.rechecks('hN', th.healthRetries);
+  const retries = f.retries('R', th.restartRetries);
   const connWait = f.sec('connWait', th.connWait), errT = f.pct('errT', th.errT), errGap = f.sec('errGap', th.errGap), dbPoll = f.sec('dbPoll', th.dbPoll);
   const exhausted = `If the last allowed retry fails as well, stop retrying and treat the node as failed (leave it drained, page_human)`;
   const steps = [];
@@ -315,17 +390,17 @@ export function renderRunbook(world, difficulty) {
   S('banner', 1, () => `set_flag(${sp.banner}, true). This announces the maintenance to customers and must be on before the first drain, restart or config change.`);
   S('pin', 1, () => `apply_config(${k.pin}, <target version>). A restart picks up whatever version is pinned at the moment it runs, so this must happen before any restart. If the config store answers with a timeout (transient), retry.`);
   if (difficulty === 1) {
-    S('rolling', 1, () => `For each target node, one node at a time: (a) drain(<node>); (b) query(node:<node>) until active connections are 0, waiting ${connWait} between checks; (c) restart(${sp.svc.id}, <node>) — a transient failure may be retried ${retries}. ${exhausted}; a permanent failure must not be retried: leave the node drained, page_human, and continue with the next node; (d) query(node:<node>) and confirm it reports the target version with health=ok; if health is degraded, wait ${hWait} and re-check (${hN}), and if it is still not ok treat it like a permanent failure (leave it drained, page_human, next node); (e) undrain(<node>).`);
+    S('rolling', 1, () => `For each target node, one node at a time: (a) drain(<node>); (b) query(node:<node>) until active connections are 0, waiting ${connWait} between checks; (c) restart(${sp.svc.id}, <node>) — a transient failure ${retries}. ${exhausted}; a permanent failure must not be retried: leave the node drained, page_human, and continue with the next node; (d) query(node:<node>) and confirm it reports the target version with health=ok; if health is degraded, wait ${hWait} and re-check (${hN}), and if it is still not ok treat it like a permanent failure (leave it drained, page_human, next node); (e) undrain(<node>).`);
   } else if (difficulty === 2) {
     S('drain', 2, () => `Pick the next target node and drain(<node>) (a target that is already out of rotation needs no drain). Only one node may be out of rotation for this change at a time, and at least ${th.minInService} members of ${sp.pool} must stay in service.`);
-    S('restart', 2, () => `query(node:<node>) until active connections reach 0 (wait ${connWait} between checks), then restart(${sp.svc.id}, <node>). A transient failure may be retried ${retries}. ${exhausted} and go to ${ref('repeat')}. A permanent failure must not be retried: leave the node drained, page_human, and go to ${ref('repeat')} for the next node.`);
+    S('restart', 2, () => `query(node:<node>) until active connections reach 0 (wait ${connWait} between checks), then restart(${sp.svc.id}, <node>). A transient failure ${retries}. ${exhausted} and go to ${ref('repeat')}. A permanent failure must not be retried: leave the node drained, page_human, and go to ${ref('repeat')} for the next node.`);
     S('verify', 2, () => `query(node:<node>): it must report the target version with health=ok. If health is degraded, wait ${hWait} and re-check; ${hN}. If it is still not ok, leave the node drained, page_human and move on. Otherwise undrain(<node>).`);
     S('repeat', 2, () => `Repeat ${ref('drain')} to ${ref('verify')} until every target node is done.`);
   } else {
     S('capacity', 5, () => `Before each drain, query(lb:${sp.pool}) and check that draining the next node will leave at least ${th.minInService} members in service. Nodes that you had to leave drained after a failure count as out of service.`);
     S('drain', 3, () => `Take the next target node (any order) and drain(<node>). A target that is already out of rotation (for example a node brought back from quarantine) needs no drain: go straight to ${ref('restart')}. Only one node may be out of rotation for this change at a time${difficulty < 5 ? `, and at least ${th.minInService} members of ${sp.pool} must stay in service` : ''}.`);
     S('conns', 3, () => `query(node:<node>) until active connections reach 0, waiting ${connWait} between checks. Never restart a node that still has connections.`);
-    S('restart', 3, () => `restart(${sp.svc.id}, <node>). A transient failure (timeout, previous process restored) may be retried ${retries}. ${exhausted} and continue with ${ref('repeat')}. A permanent failure must not be retried: leave the node drained, page_human, and continue with ${ref('repeat')}.`);
+    S('restart', 3, () => `restart(${sp.svc.id}, <node>). A transient failure (timeout, previous process restored) ${retries}. ${exhausted} and continue with ${ref('repeat')}. A permanent failure must not be retried: leave the node drained, page_human, and continue with ${ref('repeat')}.`);
     S('verify', 3, () => `query(node:<node>) and confirm the target version and health=ok. A freshly restarted node is often degraded while it warms up: wait ${hWait} and re-check; ${hN}. If it is still not ok after the last re-check, treat it as a failed node: leave it drained, page_human, continue with ${ref('repeat')}. Do not keep checking beyond the limit.`);
     S('undrain', 3, () => `undrain(<node>) only after a reading from ${ref('verify')} taken since the restart showed the target version and health=ok.`);
     S('repeat', 3, () => `Repeat ${difficulty >= 5 ? ref('capacity') : ref('drain')} to ${ref('undrain')} for every remaining target node.`);
@@ -355,7 +430,7 @@ export function renderRunbook(world, difficulty) {
   R(1, `Capacity. At least ${th.minInService} members of ${sp.pool} must be in service at all times, and only one node may be out of rotation for this change at a time. A node you were told to leave drained after a failure${difficulty >= 3 ? ', or a node excluded from the change and drained before the flag,' : ''} does not count against the one-at-a-time rule (it still counts as out of service).`);
   R(1, `Drain before restart. Never restart ${sp.svc.id} on a node that is in service, and never restart it while the node still has active connections.`);
   R(1, `Verify before returning a node. Only undrain a restarted node after a query taken since its restart shows the target version and health=ok.`);
-  R(1, `Retries. A transient restart failure may be retried ${retries}; ${exhausted.charAt(0).toLowerCase() + exhausted.slice(1)}. Never retry a restart that failed permanently.`);
+  R(1, `Retries. A transient restart failure ${retries}; ${exhausted.charAt(0).toLowerCase() + exhausted.slice(1)}. Never retry a restart that failed permanently.`);
   R(1, `Feature flag. ${sp.ff} may be switched on only when every in-service member of ${sp.pool} runs the target version or a newer build.`);
   R(3, `Workers. Restart ${sp.worker} only while ${sp.paused} is true.`);
   R(4, `Database. Never restart the primary during business hours: 08:00–18:00 ${sp.site.name} local time (${tzLabel(sp.tz)}), Monday to Friday. Restart the replica before the primary, and only after ${k.workMem} has been applied. Identify the primary and the replica with query(db), never from the inventory.`);

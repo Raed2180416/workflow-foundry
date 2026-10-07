@@ -1,0 +1,52 @@
+// AUDIT step 4, OVER-BUDGET white-box parser (48 code lines, ~10.1K characters): written with the
+// generator source open, one regex per template family. It is not a "trivial heuristic"; it is kept to
+// document the ceiling for template-aware scripted solvers (see ../AUDIT.md for its pass rates). Reads
+// only task.prompt and task.inputs. Not used as a bad control.
+import { fitMM } from '../fit.mjs';
+const num = t => +String(t).trim().replace(',', '.').replace('×10^', 'e').replace(/E\+?/, 'e'), hm = t => +t.slice(0, 2) * 60 + +t.slice(3, 5);
+const unit = s => { s = String(s).replace(/micromolar/g, 'uM').replace(/nanomolar/g, 'nM').replace(/millimolar/g, 'mM').replace(/ per second|\/L\/s| s⁻¹|_per_s\b/g, '/s').replace(/ per minute|\/L\/min| min⁻¹|_per_min\b/g, '/min').replace(/mol(\/L)?/, 'M');
+  const m = s.match(/(µ|u|n|m)M(?:\/(s|min))?/); return m ? { c: { µ: 1, u: 1, n: 1e-3, m: 1e3 }[m[1]], t: m[2] === 'min' ? 60 : 1 } : null; };
+const STRONG = /still there|had been there|already there|did not move|only removed after|missed it|flagged SAT|said OVR|flagged as over range|SAT flag,|could not get|OVR on this read/i, NEG = /before (the|reading)|after the read|afterwards|clean-up|stop (solution|mix)|no bubble|none\b|bubble-free|speck|no SAT|not saturated|did not flag|no OVR|it did not|tip count (says no|is right)|on time|next to the plate|stayed on|was clear|lower gain|gain reduced/i;
+const KEY = /\bSAT\b|OVR|saturat|over range|bubble|twice|two enzyme|\blate\b|missed|forgotten|spill|lost|wrong (buffer|reagent)|neighbouring buffer|tip (came off|slipped)/i, CP = /pH ?(\d+[.,]\d+)[ ,/]*(\d+) ?°C|(\d+) ?°?C?(?:-degree)? ?[,/]? ?pH ?(\d+[.,]\d+)|\bC(\d+)\b/g, HDR = /\[S\] \(([^)]+)\) \| v0 \(([^)]+)\)|S in (.+?), rate in (.+)|S_(\w+)[,;]rate_(\w+)|\[S\] in (\S+), initial rates in (.+?)\. |substrate in (\w+) and rates in ([a-z ]+?) throughout/;
+export function heuristicSolve(task) {
+  const { study, documents } = task.inputs, P = study.sample_id_pattern.split('-')[0], ID = `${P}-\\d{4}`, conds = study.conditions, authors = {}, win = {}, rows = {}, raw = {}, excl = new Map(), pos = {}, rowsOf = {}, msgs = [];
+  const isEx = (n, w) => { const ts = n.match(/\d\d:\d\d/g); if (w && ts && /bubble/.test(n)) { const a = hm(ts[0]), b = ts.length > 1 ? hm(ts[ts.length - 1]) : /first|appeared/.test(n) ? 1e9 : a; return a <= w[1] && b >= w[0]; } return STRONG.test(n) || (KEY.test(n) && !NEG.test(n)); };
+  const fr = conds.filter(c => !c.inhibitor), ex = (f, s) => fr.reduce((a, b) => (s * f(a) > s * f(b) ? a : b)).condition_id, find = (pH, T) => fr.find(c => (pH == null || c.pH === pH) && (T == null || c.temperature_C === T))?.condition_id;
+  const SEM = { coldest: () => ex(c => c.temperature_C, -1), warmest: () => ex(c => c.temperature_C, 1), 'most acidic': () => ex(c => c.pH, -1), 'most alkaline': () => ex(c => c.pH, 1) }, CP2 = /pH ?(\d+[.,]\d+) condition|ran at (\d+) °C|the (\d+) °C condition|(coldest|warmest|most acidic|most alkaline)/g;
+  const mentions = a => [...[...a.matchAll(CP)].map(m => m[5] ? `C${m[5]}` : find(num(m[1] ?? m[4]), +(m[2] ?? m[3]))), ...[...a.matchAll(CP2)].map(m => m[4] ? SEM[m[4]]() : find(m[1] ? num(m[1]) : null, m[1] ? null : +(m[2] ?? m[3])))].filter(Boolean), condOf = a => mentions(a)[0];
+  const range = (a, b) => { const out = []; for (let i = +a.slice(-4); i <= +b.slice(-4); i++) out.push(`${P}-${String(i).padStart(4, '0')}`); return out; };
+  const hdr = t => { const H = t.match(HDR), H2 = t.match(/rates in (.+?), \[S\] in (.+?)\.|rates below are ([a-z ]+?) and substrate is given in (\w+)/); return H ? H.slice(1).filter(Boolean) : H2 ? H2.slice(1).filter(Boolean).reverse() : null; };
+  for (const d of documents) for (const L of d.text.split('\n')) { let m; if ((m = L.match(/^\[[^\]]+\] ([^:]+): (.*)/))) msgs.push([m[1], m[2]]); else if ((m = L.match(/^Addendum \([^)]*\): (.*)/))) msgs.push([d.author, m[1]]); }
+  for (const d of documents.filter(x => /notebook|instrument/.test(x.kind))) {
+    const t = d.text, rf = t.match(/template as (.+?)'s (\S+) sheet|as on (.+?)'s export of (\S+) |those of the (\S+) sheet by (.+?)\./), src = rf && documents.find(x => x.author === (rf[1] ?? rf[3] ?? rf[6]) && x.date === (rf[2] ?? rf[4] ?? rf[5]));
+    const hs = hdr(t) ?? (src && hdr(src.text)) ?? [null, null]; let cu = unit(hs[0]), ru = unit(hs[1]);
+    if (ru?.t === 1 && msgs.some(([who, x]) => who === d.author && /per.minute|\/min|min⁻¹/.test(x) && !/^No\b|are not|really are|as labelled|nothing on my|did not affect|as written/.test(x))) ru = { ...ru, t: 60 };
+    const F = t.match(/corresponds to ([\d.]+) µM\/min/), E = t.match(/ε340 = ([\d.]+) mM⁻¹ cm⁻¹, and 200 µL in this plate gives a ([\d.]+) cm/), A = F ? num(F[1]) : E ? 1 / (num(E[1]) * num(E[2])) : null;
+    let cond = null, plate = null, w = null; const wp = {};
+    const add = (id, S, Su, v, Vu, cnd, note, pl, well) => { const cU = Su ? unit(Su) : cu, rU = Vu ? unit(Vu) : ru; rows[id] = { S: num(S) * (cU?.c ?? 1), v: A ? Math.abs(num(v)) * A / 60 : num(v) * (rU?.c ?? 1) / (rU?.t ?? 1), cond: cnd }; authors[id] = d.author;
+      if (isEx(note, w)) excl.set(id, true); if (pl && well) { pos[`${pl}${well}`] = id; (rowsOf[`${pl}${well[0]}`] ??= []).push(id); } };
+    for (const L of t.split('\n')) {
+      let m; if ((m = L.match(/^(?:### Plate (\d+), (.+), replicate|Condition: (.+?)   \(|Plate (\d+) \| Assay: (.+?) \|)/))) { cond = condOf(m[2] ?? m[3] ?? m[5]); plate = m[1] ?? m[4]; for (const q of (m[3] ? L : '').matchAll(/r(\d+) = plate (\d+) row (\w)/g)) wp['r' + q[1]] = q[2] + q[3]; }
+      if ((m = L.match(/(?:Read started|read|read from|A340 from) (\d\d:\d\d)(?:;| for|,) (?:\d+ cycles over )?(\d+) min/))) w = [hm(m[1]), hm(m[1]) + +m[2]];
+      if (d.kind === 'instrument') { if ((m = L.match(new RegExp(`^\\d+\\s+\\w\\d\\d\\s+(${ID})\\s+(\\S+)\\s+\\S+\\s+\\d+\\s*(\\S*)`)))) { const u = unit(t.match(/Rate\((.+?)\)/)[1]); raw[m[1]] = num(m[2]) * u.c / u.t; if (isEx(m[3])) excl.set(m[1], true); } continue; }
+      if ((m = L.match(new RegExp(`^\\| (${ID}) \\| (\\w+) \\| ([^|]+) \\| ([^|]+) \\| (.*)\\|`)))) add(m[1], m[3], null, m[4], null, cond, m[5], plate, m[2]);
+      else if ((m = L.match(new RegExp(`^(${ID})[,;](\\d+)[,;](\\w+)[,;]("[^"]*"|[^,;]*)[,;]\\d*[,;]([^,;]+)[,;]([^,;]+)[,;](?:[^,;]*[,;])?(.*)$`)))) { w = null; add(m[1], m[5], null, m[6], null, condOf(m[4].replace(/(\d),(\d)/g, '$1.$2')), m[7], m[2], m[3]); }
+      else if ((m = L.match(new RegExp(`^(\\w\\d\\d)\\s+(${ID})\\s+(\\S+) (\\S+)\\s+(\\S+)\\s*(?:(\\d+\\.\\d)\\s*)?(\\S*)`)))) { wp[m[1]] = m[2]; add(m[2], m[3], m[4], m[5], null, cond, m[7], plate, m[1]); }
+      else if ((m = L.match(/^  (\w\d\d): (.*)/)) && wp[m[1]]) { if (isEx(m[2], w)) excl.set(wp[m[1]], true); }
+      else if ((m = L.match(/^\s+\[S\] = (\S+?)(?: (\S+))?: (.*)$/))) for (const it of m[3].split(' | ')) { const q = it.match(new RegExp(`^r\\d+ (\\S+)(?: → re-read (\\S+))? \\((${ID})(.*)\\)`)); add(q[3], m[1], m[2], q[2] ?? q[1], null, cond, q[4]); const g = wp[it.match(/^r\d+/)[0]]; if (g) (rowsOf[g] ??= []).push(q[3]); }
+      else if (/^\d\d:\d\d /.test(L)) { const c = condOf(L.match(/replicate \d+ of (.+?) on plate/)[1]), NU = '(-?[\\d.,]+(?:[eE][-+]?\\d+|×10\\^-?\\d+)?)(?: ((?:µ|u|n|m)[^ ,.:)]*(?: s⁻¹| min⁻¹)?))?'; for (const s of L.split(new RegExp(`(?=(?<!\\()(?:Well \\w+ / )?${ID}\\b|(?<![\\d.,:])\\d[\\d.,eE+×^-]*(?: \\S+)? → )`))) {
+        const q = s.match(new RegExp(`(${ID}) \\(${NU}\\): ${NU}\\.|(${ID}) at ${NU} gave ${NU}\\.|^${NU} → ${NU} \\((${ID})\\)\\.|(${ID}), \\[S\\] ${NU}, v0 ${NU}\\.|(${ID}): ${NU} at ${NU}\\.`)); if (!q) continue;
+        const g = q.slice(1), o = [[0, 1, 2, 3, 4], [5, 6, 7, 8, 9], [14, 10, 11, 12, 13], [15, 16, 17, 18, 19], [20, 23, 24, 21, 22]].find(o => g[o[0]]); add(g[o[0]], g[o[1]], g[o[2]], g[o[3]], g[o[4]], c, s); } }
+    }
+  }
+  const refs = x => { const r = [...x.matchAll(new RegExp(`(${ID})(?:–| to | through |…)(${ID})`, 'g'))].flatMap(m => range(m[1], m[2])); if (r.length) return r; const pr = x.match(/plate (\d+),? row (\w)\b|row (\w) wells on plate (\d+)/); if (pr) return rowsOf[pr[1] ? pr[1] + pr[2] : pr[4] + pr[3]] ?? [];
+    return [...x.matchAll(new RegExp(`(${ID})(?: \\(plate \\d+, \\w\\d\\d\\))?|plate (\\d+),? (?:well )?(\\w\\d\\d)|well (\\w\\d\\d) on plate (\\d+)`, 'g'))].map(q => q[1] ?? pos[q[2] ? q[2] + q[3] : q[5] + q[4]]).filter(Boolean); };
+  msgs.forEach(([who, x], i) => { const rk = x.match(/plate (\d+)[^.]*?row (\w)\b[^.]*?(highest|top)|plate (\d+)[^.]*?(highest|top)[^.]*?row (\w)\b|row (\w) of plate (\d+)/); if (rk && /SAT|OVR|over range|saturation/.test(x) && !/no (SAT|over-range|saturation)/.test(x)) { const r = [...(rowsOf[(rk[1] ?? rk[4] ?? rk[8]) + (rk[2] ?? rk[6] ?? rk[7])] ?? [])].sort((a, b) => rows[b].S - rows[a].S); if (r.length) excl.set(r[/second|one below|next-to/.test(x) ? 1 : 0], true); return; }
+    const ids = [...new Set(refs(x))]; if (!ids.length && /^(You're right|Yes, my mistake|Good catch)/.test(x)) { const pq = msgs.slice(0, i).reverse().find(([w]) => w !== who); if (pq) ids.push(...refs(pq[1])); }
+    if (ids.length === 1 && /^(Ignore what I wrote|Scratch my message|Correction to my own note)/.test(x)) { excl.set(ids[0], false); return; }
+    if (!ids.length || authors[ids[0]] !== who || /^No\b|^Not on|really are|stands|is correct|^Scratch|did not happen|no problems|all correct|as my sheet says|right order|were not|exactly the/.test(x)) return; const tgt = mentions(x).find(c => c !== rows[ids[0]]?.cond);
+    if (ids.length > 2 && tgt) ids.forEach(id => rows[id] && (rows[id].cond = tgt)); else if (ids.length === 2 && /swap|wrong way|exchange|other's|each other/.test(x)) [rows[ids[0]].S, rows[ids[1]].S] = [rows[ids[1]].S, rows[ids[0]].S];
+    else if (ids.length === 2 && /belongs to|bubble was in|describes|wrong line/.test(x)) { const z = x.match(new RegExp(`(${ID}) (?:itself was|was fine|did not have)|wrong with (${ID})`)) ?? [], zz = z[1] ?? z[2] ?? ids[0], y = ids.find(q => q !== zz); excl.set(y, true); excl.set(zz, false); } else if (ids.length === 1 && KEY.test(x)) excl.set(ids[0], isEx(x)); });
+  const by = {}; for (const [id, r] of Object.entries(rows)) if (!excl.get(id)) (by[r.cond] ??= []).push({ S: r.S, v: raw[id] ?? r.v });
+  return { conditions: conds.map(c => { const f = fitMM(by[c.condition_id] ?? []); return { condition_id: c.condition_id, vmax: f.vmax, km: f.km }; }), excluded_samples: [...excl].filter(e => e[1]).map(e => e[0]).sort() };
+}

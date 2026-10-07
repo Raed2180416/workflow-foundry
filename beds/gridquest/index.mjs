@@ -35,19 +35,24 @@ export const outputSchema = {
 
 // The oracle judges the output as JSON data: it is serialised once (so getters, proxies,
 // inherited properties, holes and toJSON tricks cannot show validation one value and the
-// replay another), size-checked before serialisation, then validated against outputSchema.
+// replay another), then validated against outputSchema (AUDIT.md F3).
 function normalizeOutput(output) {
+  // JSON.stringify reads every property exactly once; the replacer aborts early on anything
+  // that could never be valid (over-long arrays or strings, oversized structures), so a huge
+  // output costs at most a few thousand visits.
+  let visited = 0;
+  const limit = (key, value) => {
+    if (++visited > 4 * MAX_ACTIONS) throw new Error('output is too large');
+    if (Array.isArray(value) && value.length > MAX_ACTIONS) throw new Error('too many actions');
+    if (typeof value === 'string' && value.length > MAX_ACTION_LEN) throw new Error(`every action must be a string of at most ${MAX_ACTION_LEN} characters`);
+    return value;
+  };
   try {
-    const raw = output !== null && typeof output === 'object' ? output.actions : undefined;
-    if (Array.isArray(raw)) {
-      if (raw.length > MAX_ACTIONS) return { error: 'too many actions' };
-      for (let i = 0; i < raw.length; i++) if (typeof raw[i] === 'string' && raw[i].length > MAX_ACTION_LEN) return { error: `every action must be a string of at most ${MAX_ACTION_LEN} characters` };
-    }
-    const text = JSON.stringify(output);
+    const text = JSON.stringify(output, limit);
     if (typeof text !== 'string') return { error: 'output is not JSON' };
     return { value: JSON.parse(text) };
-  } catch {
-    return { error: 'output is not JSON-serialisable' };
+  } catch (e) {
+    return { error: /too many|too large|at most/.test(e?.message) ? e.message : 'output is not JSON-serialisable' };
   }
 }
 function validOutput(output) {
@@ -161,7 +166,7 @@ function unseal(W, token) {
 // The env counts every action it executes in a lifetime ledger that reset() and restore() never
 // refund; once `lifetimeActions` (default: the task budget) actions have been spent, step()
 // refuses. Without this, snapshot/restore or reset would let a script with no language
-// understanding search the keep blindly (AUDIT.md finding 1). A harness that wants to grant
+// understanding search the keep blindly (AUDIT.md F1). A harness that wants to grant
 // extra exploration must say so explicitly via the option, and log it.
 export function createEnv(task, { lifetimeActions } = {}) {
   const W = world(task);

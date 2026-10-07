@@ -70,6 +70,8 @@ const norm = name => String(name).trim().toLowerCase();
 // oracle and the controls score the same task repeatedly. Callers never receive cached objects.
 const memo = new Map();
 function rebuildTruth(task) {
+  // Validate before the cache: a task with difficulty '3' (string) must not reuse the truth of 3.
+  if (!Number.isSafeInteger(task.seed) || !Number.isInteger(task.difficulty) || typeof task.split !== 'string') throw new TypeError('task seed/split/difficulty have the wrong type');
   const key = `${task.seed}|${task.split}|${task.difficulty}`;
   if (memo.has(key)) { const hit = memo.get(key); memo.delete(key); memo.set(key, hit); return hit; }
   const { truth } = build(task.seed, task.split, task.difficulty);
@@ -159,6 +161,25 @@ export const badControls = [
       const t = truthOf(task);
       const keep = t.impacted_services.filter(s => s !== t.root_service).slice(Math.floor(t.impacted_services.length / 2));
       return { ...referenceSolve(task), impacted_services: [t.root_service, ...keep].slice(0, Math.max(1, t.impacted_services.length - Math.floor(t.impacted_services.length / 2))) };
+    },
+  },
+  {
+    // Near miss (v2): blames the healthy-but-loud decoy below the root (else another decoy, else
+    // the noisy batch job); class, time and blast radius exact.
+    name: 'blame-decoy',
+    make(task) {
+      const t = truthOf(task);
+      return { ...referenceSolve(task), root_service: t.decoyBelowRoot || t.herrings.decoys[0]?.svc || t.noisy[0] };
+    },
+  },
+  {
+    // Near miss (v2): dates the fault from the root's own self-recovered blip (else 5 minutes early).
+    name: 'onset-at-root-blip',
+    make(task) {
+      const t = truthOf(task);
+      const blip = t.herrings.blips.find(b => b.svc === t.root_service);
+      const iso = new Date(Date.parse(t.first_bad_timestamp) - 1000 * (blip ? t.T - blip.t : 300)).toISOString().replace('.000Z', 'Z');
+      return { ...referenceSolve(task), first_bad_timestamp: iso };
     },
   },
   {

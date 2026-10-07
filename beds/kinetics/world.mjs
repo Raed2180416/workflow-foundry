@@ -49,7 +49,10 @@ function niceUp(x, minExclusive) {
 }
 const rd = (a, b) => Math.abs(a - b) / Math.min(a, b);
 const logU = (r, lo, hi) => Math.exp(r.float(Math.log(lo), Math.log(hi)));
-const fails = (fit, c) => !(relErr(fit.vmax, c.vmax) <= TOL && relErr(fit.km, c.km) <= TOL);
+// a trap or claim counts as load-bearing only if ignoring/applying it misses the tolerance by a margin
+// (display rounding and the exact fitting route must not be able to rescue a careless answer)
+export const LOAD_MARGIN = 0.13;
+const fails = (fit, c, m = LOAD_MARGIN) => !(relErr(fit.vmax, c.vmax) <= m && relErr(fit.km, c.km) <= m);
 
 function makeConditions(r, k) {
   for (let attempt = 0; attempt < 200; attempt++) {
@@ -78,8 +81,8 @@ function makeConditions(r, k) {
   throw new Error('kinetics: could not draw distinct conditions');
 }
 
-function makeGrid(r, km, n) {
-  const lo = 0.15 * km * r.float(0.8, 1.25), hi = 6 * km * r.float(0.85, 1.25);
+function makeGrid(r, kmLo, n, kmHi = kmLo) {
+  const lo = 0.15 * kmLo * r.float(0.8, 1.25), hi = 6 * kmHi * r.float(0.85, 1.25);
   const out = [];
   let prev = 0;
   for (let i = 0; i < n; i++) {
@@ -123,8 +126,10 @@ export function buildWorld({ seed, split, difficulty }) {
   conds.forEach((c, i) => { c.id = `C${i + 1}`; });
   for (const c of conds) { c.parentId = c.parent ? c.parent.id : null; delete c.parent; }
   const byId = Object.fromEntries(conds.map(c => [c.id, c]));
-  for (const c of conds) { c.grid = c.parentId ? null : makeGrid(cr, c.km, k.nConc); }
-  for (const c of conds) { if (c.parentId) c.grid = byId[c.parentId].grid; c.reps = cr.int(k.reps[0], k.reps[1]); }
+  // one dilution series for the whole study (a per-condition grid would fingerprint mislabelled rows)
+  const kms = conds.filter(c => !c.parentId).map(c => c.km);
+  const grid = makeGrid(cr, Math.min(...kms), k.nConc, Math.max(...kms));
+  for (const c of conds) { c.grid = grid; c.reps = cr.int(k.reps[0], k.reps[1]); }
   for (const c of conds) c.hasInhibitedSibling = conds.some(o => o.parentId === c.id);
 
   // ---- series, sample ids, plate positions -------------------------------------------------
@@ -271,7 +276,7 @@ export function buildWorld({ seed, split, difficulty }) {
     let accepted = false, best = null;
     for (let attempt = 0; attempt < 600 && !accepted; attempt++) {
       const ar = nr.fork(`${c.id}:${attempt}`);
-      const draws = cw.map(w => c.vmax * w.S / (c.km + w.S) * (1 + k.cv * ar.normal()) * (w.dev ?? 1));
+      const draws = cw.map(w => c.vmax * w.S / (c.km + w.S) * (w.dev ?? (1 + k.cv * ar.normal()))); // deviant kept wells: exactly dev x the curve
       cw.forEach((w, i) => { w.rateTrue = draws[i]; });
       const pts = cleanPoints(cw);
       const fit = fitMM(pts, { fixedV: parent ? parent.refFit.vmax : null });
@@ -304,7 +309,7 @@ export function buildWorld({ seed, split, difficulty }) {
         w.rate = w.rateTrue * w.factor;
       }
       const fit = fitMM(cw.map(w => ({ S: w.S, v: w.rate })), { fixedV: parent ? parent.refFit.vmax : null });
-      c.outlierLoadBearing = fails(fit, c);
+      c.outlierLoadBearing = fails(fit, c, TOL);
       if (c.outlierLoadBearing) break;
     }
   }
@@ -379,24 +384,24 @@ export function buildWorld({ seed, split, difficulty }) {
   }
   // ---- rejected claims: someone other than the author suggests a correction; the author denies it.
   // Under SOP section 4 they change nothing; each is chosen so that applying it would break a fit.
-  const claims = [];
+  const claims = [], claimConds = new Set(); // claims touch distinct conditions so that their effects cannot cancel
   for (const kind of k.claims) {
     if (kind === 'reassign') {
       let chosen = null;
       for (const s of pr.shuffle(series)) {
-        if (usedSeries.has(s.key) || byId[s.condId].parentId || byId[s.condId].reps < 2) continue;
-        for (const Y of pr.shuffle(conds.filter(c => c.id !== s.condId && !c.parentId))) {
+        if (usedSeries.has(s.key) || byId[s.condId].parentId || byId[s.condId].reps < 2 || claimConds.has(s.condId)) continue;
+        for (const Y of pr.shuffle(conds.filter(c => c.id !== s.condId && !c.parentId && !claimConds.has(c.id)))) {
           if (fails(fitCond(Y, [...condClean(Y.id), ...cleanPoints(s.wells.map(id => wellById[id]))]), Y)) { chosen = [s, Y]; break; }
         }
         if (chosen) break;
       }
       if (!chosen) continue;
-      const [s, Y] = chosen; usedSeries.add(s.key);
+      const [s, Y] = chosen; usedSeries.add(s.key); claimConds.add(s.condId); claimConds.add(Y.id);
       claims.push({ kind, series: s.key, claimed: Y.id, first: s.wells[0], last: s.wells[s.wells.length - 1], n: s.wells.length, loadBearing: true });
     } else if (kind === 'swap') {
       let chosen = null;
       for (const s of pr.shuffle(series)) {
-        if (usedSeries.has(s.key)) continue;
+        if (usedSeries.has(s.key) || claimConds.has(s.condId)) continue;
         const sw = s.wells.map(id => wellById[id]), n = sw.length, c = byId[s.condId];
         for (const [i, j] of [[0, n - 1], [1, n - 1], [0, n - 2], [1, n - 2]]) {
           const a = sw[i], b = sw[j];
@@ -407,7 +412,7 @@ export function buildWorld({ seed, split, difficulty }) {
         if (chosen) break;
       }
       if (!chosen) continue;
-      const [s, a, b] = chosen; usedSeries.add(s.key);
+      const [s, a, b] = chosen; usedSeries.add(s.key); claimConds.add(s.condId);
       claims.push({ kind, series: s.key, a: a.id, b: b.id, loadBearing: true });
     } else if (kind === 'units') claims.push({ kind, loadBearing: true }); // bound to a document below
   }
@@ -475,7 +480,8 @@ export function buildWorld({ seed, split, difficulty }) {
     let n = pp.int(1, 40);
     pilot = pc.map(c => {
       const v = c.vmax * pp.float(0.5, 0.65), km = c.km * pp.float(1.6, 2.2);
-      return { condId: c.id, wells: c.grid.map(S => ({ id: `PLT-${String(n++).padStart(3, '0')}`, S, rate: v * S / (km + S) * (1 + k.cv * pp.normal()) })) };
+      const pg = makeGrid(pp, c.km * pp.float(1.5, 2.5), pp.int(6, 8));
+      return { condId: c.id, wells: pg.map(S => ({ id: `PLT-${String(n++).padStart(3, '0')}`, S, rate: v * S / (km + S) * (1 + k.cv * pp.normal()) })) };
     });
   }
 

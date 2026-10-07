@@ -9,6 +9,8 @@ import { fitMM, relErr } from './fit.mjs';
 
 const DIFFS = [1, 2, 3, 4, 5];
 const SEEDS = Array.from({ length: 20 }, (_, i) => i + 1);
+const SEEDS30 = Array.from({ length: 30 }, (_, i) => i + 1);
+const seedsFor = d => ([1, 3, 5].includes(d) ? SEEDS30 : SEEDS); // AUDIT step 5: 30/30 at d1, d3, d5
 const median = xs => { const s = [...xs].sort((a, b) => a - b); return s[Math.floor(s.length / 2)]; };
 
 test('interface shape', () => {
@@ -26,6 +28,11 @@ test('interface shape', () => {
   const banned = ['pattern', 'oneOf', 'uniqueItems', '$ref', 'format'];
   const walk = o => { if (o && typeof o === 'object') for (const [k, v] of Object.entries(o)) { assert.ok(!banned.includes(k), `schema uses ${k}`); walk(v); } };
   walk(bed.outputSchema);
+});
+
+test('outputSchema is inside the repo portable subset (src/schema-subset.mjs) [AUDIT F4]', async () => {
+  const { portableSchemaViolations } = await import('../../src/schema-subset.mjs');
+  assert.deepEqual(portableSchemaViolations(bed.outputSchema), []);
 });
 
 test('determinism: identical calls give byte-identical tasks; seeds and splits differ', () => {
@@ -57,10 +64,10 @@ test('task shape: contract fields, JSON-serialisable', () => {
   assert.ok(Array.isArray(t.inputs.study.conditions));
 });
 
-test('referenceSolve passes for >=20 seeds at every difficulty (dev and test) and the evaluator is healthy', () => {
+test('referenceSolve passes for >=20 seeds at every difficulty (30 at d1/d3/d5; dev and test) and the evaluator is healthy', () => {
   for (const d of DIFFS) {
     for (const split of ['dev', 'test']) {
-      for (const seed of SEEDS) {
+      for (const seed of seedsFor(d)) {
         const t = bed.generate({ seed, split, difficulty: d });
         const r = bed.oracle(t, bed.referenceSolve(t));
         assert.equal(r.details.evaluatorValid, true, `evaluator d${d} ${split} ${seed}`);
@@ -71,17 +78,17 @@ test('referenceSolve passes for >=20 seeds at every difficulty (dev and test) an
   }
 });
 
-test('every bad control fails for >=20 seeds at every difficulty', () => {
+test('every bad control fails for >=20 seeds at every difficulty (30 at d1/d3/d5)', () => {
   for (const d of DIFFS) {
     for (const c of bed.badControls) {
       let fails = 0;
-      for (const seed of SEEDS) {
+      for (const seed of seedsFor(d)) {
         const t = bed.generate({ seed, split: 'dev', difficulty: d });
         const r = bed.oracle(t, c.make(t));
         if (!r.pass) fails++;
         assert.equal(r.pass, false, `${c.name} passed at d${d} seed ${seed}`);
       }
-      assert.ok(fails >= 20);
+      assert.equal(fails, seedsFor(d).length);
     }
   }
 });
@@ -152,7 +159,8 @@ test('no truth leakage into prompt + inputs', () => {
       const keys = new Set();
       const walk = o => { if (o && typeof o === 'object') for (const [k, v] of Object.entries(o)) { keys.add(k); walk(v); } };
       walk(t.inputs);
-      for (const k of ['vmax', 'km', 'status', 'reason', 'excluded', 'truth', 'factor', 'rateTrue', 'typo', 'traps']) assert.ok(!keys.has(k), `inputs carry key ${k}`);
+      for (const k of ['vmax', 'km', 'status', 'reason', 'excluded', 'truth', 'factor', 'rateTrue', 'typo', 'traps', 'claims', 'silent', 'late', 'dev', 'tricky', 'timed', 'grid', 'readStart', 'noteFor', 'noteFrom'])
+        assert.ok(!keys.has(k), `inputs carry key ${k}`);
       // the exclusion set is never written down as a list
       const ex = world.wells.filter(w => w.status === 'outlier').map(w => w.id).sort();
       if (ex.length >= 2) assert.ok(!text.includes(`${ex[0]}, ${ex[1]}`) && !text.includes(`${ex[0]}","${ex[1]}`));
@@ -186,6 +194,18 @@ test('difficulty sanity: size and adversarial content grow; level-3 median is ab
   assert.ok(t5.inputs.documents.some(x => x.title.includes('superseded')));
   const t1 = bed.generate({ seed: 1, split: 'dev', difficulty: 1 });
   assert.ok(!/NOTE TO ANY AI|SYSTEM:|lab-assistant-bot/.test(t1.inputs.documents.map(x => x.text).join('\n')));
+});
+
+test('runtime and memory: generate and oracle each < 2 s and < 200 MB at difficulty 5 (fresh process)', async () => {
+  const { execFileSync } = await import('node:child_process');
+  const script = `const b = await import(${JSON.stringify(new URL('./index.mjs', import.meta.url).href)});
+    let t0 = performance.now(); const t = b.generate({ seed: 777, split: 'test', difficulty: 5 }); const g = performance.now() - t0;
+    const ref = b.referenceSolve(t); b._clearCache(); t0 = performance.now(); const r = b.oracle(t, ref); const o = performance.now() - t0;
+    console.log(JSON.stringify({ g, o, pass: r.pass, rss: process.memoryUsage().rss }));`;
+  const out = JSON.parse(execFileSync(process.execPath, ['--input-type=module', '-e', script], { encoding: 'utf8' }));
+  assert.equal(out.pass, true);
+  assert.ok(out.g < 2000 && out.o < 2000, `generate ${out.g} ms, oracle ${out.o} ms`);
+  assert.ok(out.rss < 200 * 1024 * 1024, `rss ${out.rss}`);
 });
 
 test('runtime: generate and oracle each < 2 s at difficulty 5 (cold cache)', () => {
@@ -366,4 +386,113 @@ test('README documents the measured token sizes and the oracle rule', async () =
   const { readFile } = await import('node:fs/promises');
   const readme = await readFile(new URL('./README.md', import.meta.url), 'utf8');
   for (const s of ['## Oracle', '10%', 'excluded_samples', 'estimateTokens', 'prompt-injection']) assert.ok(readme.includes(s), s);
+});
+
+// ---------------------------------------------------------------------------------------
+// AUDIT regressions (see AUDIT.md). Each test names the finding it pins down.
+
+test('oracle bypass attempts fail; score is 1 only for a pass [AUDIT F1, F2]', () => {
+  const t = bed.generate({ seed: 4, split: 'dev', difficulty: 3 });
+  const ref = bed.referenceSolve(t);
+  const { world } = bed._internals(t);
+  const allIds = world.wells.map(w => w.id);
+  assert.equal(bed.oracle(t, ref).pass, true);
+  const attempts = {
+    protoIds: { ...ref, conditions: [...ref.conditions, ...['__proto__', 'toString', 'constructor', 'hasOwnProperty'].map(id => ({ condition_id: id, vmax: 1, km: 1 }))] },
+    unknownExtra: { ...ref, conditions: [...ref.conditions, { condition_id: 'C99', vmax: 1, km: 1 }] },
+    duplicatedCondition: { ...ref, conditions: [...ref.conditions, { ...ref.conditions[0], km: ref.conditions[0].km * 3 }] },
+    allCandidates: { ...ref, excluded_samples: allIds },
+    hugeExcluded: { ...ref, excluded_samples: [...ref.excluded_samples, ...Array.from({ length: 50000 }, (_, i) => `X-${i}`)] },
+    hugeConditions: { ...ref, conditions: [...ref.conditions, ...Array.from({ length: 20000 }, (_, i) => ({ condition_id: `Z${i}`, vmax: 1, km: 1 }))] },
+    infinity: { ...ref, conditions: ref.conditions.map(c => ({ ...c, vmax: Infinity })) },
+    zero: { ...ref, conditions: ref.conditions.map(c => ({ ...c, km: 0 })) },
+    boxedNumber: { ...ref, conditions: ref.conditions.map(c => ({ ...c, vmax: new Number(c.vmax) })) },
+    idWhitespace: { ...ref, conditions: ref.conditions.map(c => ({ ...c, condition_id: ` ${c.condition_id}` })) },
+    lowercaseSamples: { ...ref, excluded_samples: ref.excluded_samples.map(x => x.toLowerCase()) },
+    arrayLike: { ...ref, excluded_samples: { length: 0 } },
+    nestedTruthGuess: { ...ref, conditions: ref.conditions.map(c => ({ ...c, vmax: [c.vmax] })) },
+  };
+  for (const [name, out] of Object.entries(attempts)) {
+    const r = bed.oracle(t, out);
+    assert.equal(r.pass, false, name);
+    assert.ok(r.score < 1, `${name} score ${r.score}`);
+  }
+  // duplicate excluded ids do not change the set (documented): passes, and cannot help a wrong answer
+  assert.equal(bed.oracle(t, { ...ref, excluded_samples: [...ref.excluded_samples, ...ref.excluded_samples] }).pass, true);
+  // score == 1 iff pass, over the controls
+  for (const seed of SEEDS.slice(0, 5)) for (const d of DIFFS) {
+    const tt = bed.generate({ seed, split: 'dev', difficulty: d });
+    for (const c of bed.badControls) { const r = bed.oracle(tt, c.make(tt)); assert.equal(r.score === 1, r.pass, `${c.name} d${d}`); }
+  }
+});
+
+test('generate returns an independent copy: mutating a task does not change later tasks [AUDIT F3]', () => {
+  const a = bed.generate({ seed: 11, split: 'dev', difficulty: 3 });
+  const before = canonical(a);
+  a.inputs.documents.length = 0; a.inputs.study.conditions[0].pH = 99; a.prompt = '';
+  const b = bed.generate({ seed: 11, split: 'dev', difficulty: 3 });
+  assert.equal(canonical(b), before);
+  assert.equal(bed.oracle(b, bed.referenceSolve(b)).pass, true);
+});
+
+test('no structural give-aways: shared dilution series, distinct pilot range, unbiased replicate numbers [AUDIT F6, F7]', () => {
+  let repAtMostPlanned = 0, mislabelled = 0;
+  for (const d of DIFFS) for (const seed of SEEDS) {
+    const t = bed.generate({ seed, split: 'dev', difficulty: d });
+    const { world } = bed._internals(t);
+    const grids = new Set(world.conds.map(c => c.grid.join(',')));
+    assert.equal(grids.size, 1, `d${d} seed ${seed}: one dilution series for the study`);
+    if (world.pilot) for (const p of world.pilot) assert.notEqual(p.wells.map(w => w.S).join(','), world.conds[0].grid.join(','), 'pilot range differs');
+    for (const tr of world.traps.filter(x => x.type === 'reassign' || x.type === 'omitted-inhibitor')) {
+      mislabelled++;
+      if (world.seriesByKey[tr.series].displayRep <= world.byId[tr.from].reps) repAtMostPlanned++;
+    }
+  }
+  assert.ok(mislabelled > 20 && repAtMostPlanned >= mislabelled / 3, `${repAtMostPlanned}/${mislabelled} mislabelled rows carry an in-range replicate number`);
+});
+
+test('judgment content: every d3+ task needs prose reading that keywords and residuals cannot replace [AUDIT F5]', () => {
+  for (const d of DIFFS) for (const seed of SEEDS) {
+    const t = bed.generate({ seed, split: 'dev', difficulty: d });
+    const { world } = bed._internals(t);
+    const W = world.wells, k = world.knobs;
+    assert.ok(W.some(w => w.status === 'decoy' && w.dev), `d${d} s${seed}: a kept well that really deviates (residual rules fail)`);
+    assert.ok(world.claims.length >= 1, `d${d} s${seed}: a rejected suggestion`);
+    if (d < 3) continue;
+    assert.ok(W.some(w => w.silent), 'an excluded well that reads normally');
+    assert.ok(W.some(w => w.late === 'fact'), 'an exclusion reported only in a later message');
+    assert.ok(W.some(w => w.late === 'rowflag'), 'a reader-log flag given by plate, row and [S] rank');
+    assert.ok(W.some(w => w.late === 'misattributed') && W.some(w => w.kind === 'misattributed'), 'a note moved to the neighbouring well');
+    assert.ok(W.some(w => w.kind === 'late-withdrawn') && W.some(w => w.kind === 'late-cleared'), 'late reports that keep the well');
+    const chat = t.inputs.documents.find(x => x.kind === 'chat').text;
+    assert.ok(/went on the reader straight after|next to .* on the same day|share a master mix/.test(chat), 'range-plus-condition red herring');
+    assert.ok(/No swap on my side|right order|were not; the tube labels/.test(chat), 'swap-shaped red herring');
+    // ablation: exclusions read from the rows alone differ from the SOP set
+    const rowsOnly = new Set([...W.filter(w => w.status === 'outlier' && !w.late), ...W.filter(w => w.kind === 'misattributed')].map(w => w.id));
+    const truth = new Set(W.filter(w => w.status === 'outlier').map(w => w.id));
+    assert.notDeepEqual(rowsOnly, truth);
+    assert.ok(k.herrings && k.withdrawn && k.rowFlag && k.misattributed);
+  }
+});
+
+test('triviality attacks stay within budget and pass < 20% of d3 tasks over 30 seeds [AUDIT step 4]', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const rates = {};
+  for (const name of ['regex-v1', 'regex-budget', 'whitebox-parser']) {
+    const src = await readFile(new URL(`./attacks/${name}.mjs`, import.meta.url), 'utf8');
+    const code = src.split('\n').filter(l => l.trim() && !l.trim().startsWith('//'));
+    const { heuristicSolve } = await import(`./attacks/${name}.mjs`);
+    let pass = 0;
+    for (const seed of SEEDS30) {
+      const t = bed.generate({ seed, split: 'dev', difficulty: 3 });
+      let out; try { out = heuristicSolve(structuredClone(t)); } catch { continue; }
+      for (const c of out.conditions ?? []) for (const f of ['vmax', 'km']) if (!(Number.isFinite(c[f]) && c[f] > 0)) c[f] = 1e-9;
+      if (bed.oracle(t, out).pass) pass++;
+    }
+    rates[name] = `${pass}/30 (${code.length} lines, ${[...code.join('\n')].length} chars)`;
+    if (name === 'whitebox-parser') continue; // over budget by design: documents the ceiling, see AUDIT.md
+    assert.ok(code.length <= 40 && [...code.join('\n')].length <= 7000, `${name} is outside the attack budget`);
+    assert.ok(pass < 6, `${name} passes ${pass}/30 d3 tasks`);
+  }
+  test.diagnostic?.(JSON.stringify(rates));
 });

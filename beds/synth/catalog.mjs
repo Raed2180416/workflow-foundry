@@ -4,7 +4,7 @@
 
 // A unit converts a written number to the canonical unit as canonical = written * f + o.
 const U = (id, f, sym, extra = {}) => ({ id, f, o: 0, sym, ...extra });
-const CELSIUS = [U('°C', 1, ['°C']), U('K', 1, ['K'], { o: -273.15 }), U('°F', 5 / 9, ['°F'], { o: -32 * 5 / 9 })];
+const CELSIUS = [U('°C', 1, ['°C'], { w: ['degrees Celsius'] }), U('K', 1, ['K'], { o: -273.15, w: ['kelvin'] }), U('°F', 5 / 9, ['°F'], { o: -32 * 5 / 9, w: ['degrees Fahrenheit'] })];
 
 export const PROPS = {
   'aqueous solubility': {
@@ -13,8 +13,8 @@ export const PROPS = {
     stdDesc: 'in pure water (no buffer, salt, acid, base or co-solvent) at 25 °C (298 K)',
     std: ['in water at 25 °C', 'in water at 298 K', 'in deionised water at 25 °C', 'in pure water at 298.15 K', 'in ultrapure water at 25 °C'],
     nonstd: ['in water at 37 °C', 'in water at 310 K', 'in ethanol at 25 °C', 'in DMSO at 25 °C', 'in 0.1 M hydrochloric acid at 25 °C', 'in phosphate buffer (pH 7.4) at 25 °C', 'in water at 4 °C'],
-    units: [U('mg/mL', 1, ['mg/mL', 'mg mL⁻¹', 'mg·mL⁻¹']), U('g/L', 1, ['g/L', 'g L⁻¹']), U('µg/mL', 0.001, ['µg/mL', 'μg mL⁻¹', 'µg·mL⁻¹']),
-      U('mg/L', 0.001, ['mg/L', 'mg L⁻¹']), U('mg/100 mL', 0.01, ['mg/100 mL', 'mg per 100 mL'])],
+    units: [U('mg/mL', 1, ['mg/mL', 'mg mL⁻¹', 'mg·mL⁻¹'], { w: ['milligrams per millilitre'] }), U('g/L', 1, ['g/L', 'g L⁻¹'], { w: ['grams per litre'] }), U('µg/mL', 0.001, ['µg/mL', 'μg mL⁻¹', 'µg·mL⁻¹']),
+      U('mg/L', 0.001, ['mg/L', 'mg L⁻¹'], { w: ['milligrams per litre'] }), U('mg/100 mL', 0.01, ['mg/100 mL', 'mg per 100 mL'])],
   },
   'melting point': {
     kind: 'compound', unit: '°C', range: [85, 255], better: 'up', tempLike: true,
@@ -30,7 +30,7 @@ export const PROPS = {
     stdDesc: 'elimination half-life measured in vivo in humans (healthy volunteers or patients); animal studies and in-vitro systems do not count',
     std: ['in healthy human volunteers', 'in human subjects', 'in a first-in-human study', 'in adult patients'],
     nonstd: ['in mice', 'in rats', 'in beagle dogs', 'in cynomolgus monkeys', 'in human plasma in vitro'],
-    units: [U('h', 1, ['h', 'hours', 'hr']), U('min', 1 / 60, ['min', 'minutes']), U('days', 24, ['days', 'days'])],
+    units: [U('h', 1, ['h', 'hours', 'hr'], { w: ['hours'] }), U('min', 1 / 60, ['min', 'minutes'], { w: ['minutes'] }), U('days', 24, ['days', 'days'])],
   },
   'enzyme IC50': {
     kind: 'compound', unit: 'nM', range: [2.5, 850], better: 'down', tempLike: false,
@@ -38,7 +38,7 @@ export const PROPS = {
     stdDesc: 'in a cell-free assay with purified (or recombinant purified) enzyme; cell-based and blood assays do not count',
     std: ['in a cell-free enzyme assay', 'against the purified enzyme', 'in the biochemical (cell-free) assay', 'using recombinant purified enzyme'],
     nonstd: ['in a whole-cell assay', 'in cultured cells', 'in a cell-based reporter assay'],
-    units: [U('nM', 1, ['nM']), U('µM', 1000, ['µM', 'μM']), U('pM', 0.001, ['pM']), U('M', 1e9, ['M'], { sci: true })],
+    units: [U('nM', 1, ['nM'], { w: ['nanomolar'] }), U('µM', 1000, ['µM', 'μM'], { w: ['micromolar'] }), U('pM', 0.001, ['pM'], { w: ['picomolar'] }), U('M', 1e9, ['M'], { sci: true })],
   },
   density: {
     kind: 'material', unit: 'g/cm³', range: [1.3, 9.4], better: 'down', tempLike: false,
@@ -46,7 +46,7 @@ export const PROPS = {
     stdDesc: 'of the fully dense bulk solid (not a powder, foam, porous or partially sintered body) at room temperature (20–25 °C)',
     std: ['for dense bulk samples at room temperature', 'of the bulk solid at 20 °C', 'by helium pycnometry on bulk pieces at 23 °C', 'of fully dense bulk specimens at 25 °C'],
     nonstd: ['as a loose powder (tap density)', 'for the porous foam form at room temperature', 'at 900 °C', 'for a sintered compact with 30% porosity'],
-    units: [U('g/cm³', 1, ['g/cm³', 'g cm⁻³', 'g/cc']), U('kg/m³', 0.001, ['kg/m³', 'kg m⁻³']), U('g/mL', 1, ['g/mL'])],
+    units: [U('g/cm³', 1, ['g/cm³', 'g cm⁻³', 'g/cc'], { w: ['grams per cubic centimetre'] }), U('kg/m³', 0.001, ['kg/m³', 'kg m⁻³'], { w: ['kilograms per cubic metre'] }), U('g/mL', 1, ['g/mL'])],
   },
   'tensile strength': {
     kind: 'material', unit: 'MPa', range: [85, 2300], better: 'up', tempLike: false,
@@ -54,7 +54,7 @@ export const PROPS = {
     stdDesc: 'at room temperature (20–25 °C) on as-received material (not irradiated, corroded, cold-worked or heat-aged)',
     std: ['at room temperature', 'at 23 °C', 'at 296 K', 'under ambient laboratory conditions (22 °C)'],
     nonstd: ['at 600 °C', 'at 77 K', 'at −196 °C', 'at 873 K'],
-    units: [U('MPa', 1, ['MPa', 'N/mm²']), U('GPa', 1000, ['GPa']), U('ksi', 6.894757, ['ksi']), U('psi', 0.006894757, ['psi'])],
+    units: [U('MPa', 1, ['MPa', 'N/mm²'], { w: ['megapascals'] }), U('GPa', 1000, ['GPa'], { w: ['gigapascals'] }), U('ksi', 6.894757, ['ksi'], { w: ['thousand pounds per square inch'] }), U('psi', 0.006894757, ['psi'], { w: ['pounds per square inch'] })],
   },
   'thermal conductivity': {
     kind: 'material', unit: 'W/(m·K)', range: [0.6, 380], better: 'up', tempLike: false,
@@ -62,7 +62,7 @@ export const PROPS = {
     stdDesc: 'near room temperature (295–305 K)',
     std: ['at 300 K', 'at 27 °C', 'at room temperature (298 K)', 'at 25 °C'],
     nonstd: ['at 77 K', 'at 800 K', 'at 500 °C', 'at 4 K'],
-    units: [U('W/(m·K)', 1, ['W/(m·K)', 'W m⁻¹ K⁻¹', 'W/m·K']), U('mW/(m·K)', 0.001, ['mW/(m·K)', 'mW m⁻¹ K⁻¹']), U('W/(cm·K)', 100, ['W/(cm·K)', 'W cm⁻¹ K⁻¹'])],
+    units: [U('W/(m·K)', 1, ['W/(m·K)', 'W m⁻¹ K⁻¹', 'W/m·K'], { w: ['watts per metre-kelvin'] }), U('mW/(m·K)', 0.001, ['mW/(m·K)', 'mW m⁻¹ K⁻¹'], { w: ['milliwatts per metre-kelvin'] }), U('W/(cm·K)', 100, ['W/(cm·K)', 'W cm⁻¹ K⁻¹'])],
   },
   'band gap': {
     kind: 'material', unit: 'eV', range: [0.45, 5.4], better: 'up', tempLike: false,
@@ -70,7 +70,7 @@ export const PROPS = {
     stdDesc: 'at room temperature (290–300 K) and ambient pressure',
     std: ['at room temperature', 'at 295 K', 'at 22 °C', 'at 298 K'],
     nonstd: ['at 4 K', 'at 10 K', 'at 77 K', 'under 3 GPa of pressure'],
-    units: [U('eV', 1, ['eV']), U('meV', 0.001, ['meV'])],
+    units: [U('eV', 1, ['eV'], { w: ['electronvolts'] }), U('meV', 0.001, ['meV'], { w: ['millielectronvolts'] })],
   },
   'doubling time': {
     kind: 'organism', unit: 'min', range: [19, 290], better: 'down', tempLike: false,
@@ -78,7 +78,7 @@ export const PROPS = {
     stdDesc: 'in rich (complex) liquid medium at 30 °C (303 K), aerobic (cultures are aerobic unless stated otherwise)',
     std: ['in rich broth at 30 °C', 'in rich medium at 303 K', 'in nutrient-rich broth at 30 °C under aerobic conditions', 'in complex medium at 30 °C'],
     nonstd: ['in minimal medium at 30 °C', 'in rich broth at 15 °C', 'in rich broth at 288 K', 'in rich broth at 30 °C under anaerobic conditions'],
-    units: [U('min', 1, ['min', 'minutes']), U('h', 60, ['h', 'hours']), U('s', 1 / 60, ['s', 'seconds'])],
+    units: [U('min', 1, ['min', 'minutes'], { w: ['minutes'] }), U('h', 60, ['h', 'hours'], { w: ['hours'] }), U('s', 1 / 60, ['s', 'seconds'])],
   },
   'genome size': {
     kind: 'organism', unit: 'Mbp', range: [1.3, 9.6], better: 'up', tempLike: false,
@@ -86,7 +86,7 @@ export const PROPS = {
     stdDesc: 'total size from a complete (closed) genome assembly; draft assemblies and indirect estimates do not count',
     std: ['from the complete (closed) genome assembly', 'based on the finished, closed genome sequence', 'from a complete hybrid assembly'],
     nonstd: ['from a draft assembly of 112 contigs', 'estimated by pulsed-field gel electrophoresis', 'from a fragmented short-read draft assembly'],
-    units: [U('Mbp', 1, ['Mbp', 'Mb']), U('kbp', 0.001, ['kbp', 'kb']), U('bp', 1e-6, ['bp'], { sci: true })],
+    units: [U('Mbp', 1, ['Mbp', 'Mb'], { w: ['megabase pairs'] }), U('kbp', 0.001, ['kbp', 'kb'], { w: ['kilobase pairs'] }), U('bp', 1e-6, ['bp'], { sci: true })],
   },
   'cell length': {
     kind: 'organism', unit: 'µm', range: [0.7, 11.5], better: 'up', tempLike: false,
@@ -94,7 +94,7 @@ export const PROPS = {
     stdDesc: 'of cells in exponential (log) phase in liquid culture',
     std: ['during exponential growth', 'in exponential-phase cultures', 'in mid-log-phase cells'],
     nonstd: ['in stationary-phase cells', 'under nitrogen starvation', 'in cells from 7-day-old colonies'],
-    units: [U('µm', 1, ['µm', 'μm', 'micrometres']), U('nm', 0.001, ['nm'])],
+    units: [U('µm', 1, ['µm', 'μm', 'micrometres']), U('nm', 0.001, ['nm'], { w: ['nanometres'] })],
   },
   'optimal growth temperature': {
     kind: 'organism', unit: '°C', range: [22, 58], better: 'up', tempLike: true,
@@ -313,3 +313,20 @@ export function condFor(prop, std, r, level) {
   }
   return C.fmt(parts);
 }
+
+// Method details that carry a number in the same unit family as the measured value (the
+// measurement is the other number): "after a 2 h infusion, the half-life was 12 h".
+export const METHOD_DETAIL = {
+  'aqueous solubility': [['starting from a', [20, 50, 100], 'mg/mL', 'suspension']],
+  'melting point': [['at a heating rate of', [2, 5, 10], '°C', 'per minute']],
+  'plasma half-life': [['after a', [1, 2, 4], 'h', 'infusion']],
+  'enzyme IC50': [['in the presence of', [10, 50, 100], 'µM', 'ATP']],
+  density: [['calibrated against a', [2.7, 7.87], 'g/cm³', 'metal standard']],
+  'tensile strength': [['after a', [5, 10, 20], 'MPa', 'preload']],
+  'thermal conductivity': [['against a reference sample of', [1.4, 15, 150], 'W/(m·K)', '']],
+  'band gap': [['with', [3.8, 4.9, 6.2], 'eV', 'excitation']],
+  'doubling time': [['after a', [20, 30, 45], 'min', 'lag phase']],
+  'genome size': [['from', [12, 15, 20], 'kb', 'long reads']],
+  'cell length': [['using', [200, 500], 'nm', 'beads as a size standard']],
+  'optimal growth temperature': [['with cultures pre-grown at', [25, 30], '°C', '']],
+};

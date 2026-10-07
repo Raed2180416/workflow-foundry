@@ -17,8 +17,10 @@ import collections, json, os, re, sys, time, urllib.error, urllib.parse, urllib.
 ROOT = "/opt/corpus/dockstore"
 API = "https://dockstore.org/api"
 SKIP_ORGS = {"DockstoreTestUser", "dockstore-testing", "denis-yuen", "DockstoreTestUser2", "dockstore", "garyluu", "ga4gh",
-             "iwc-workflows", "nf-core", "ENCODE-DCC"}
-SKIP_NAMES = re.compile(r"(?i)^(warp/|gatk4-somatic-snvs-indels)|hello|whalesay|test|tutorial|example|demo")
+             "iwc-workflows", "nf-core", "ENCODE-DCC", "dockstore-personal-testing", "kathy-t", "david4096", "berebolledo",
+             "abc-xzy", "Huangzehui", "briandoconnor"}
+SEEN_REPOS = set()   # one entry per source repository name (forks/duplicates across organisations are skipped)
+SKIP_NAMES = re.compile(r"(?i)^(warp/|gatk4-somatic-snvs-indels)|hello|whalesay|test|tutorial|example|demo|bootcamp|foobar|plenary|md5sum|_copy\b|^bwa$|^gatk4-1$")
 
 
 def get(url, accept="application/json", raw=False):
@@ -69,8 +71,12 @@ def stage_select(n):
 
     for t in sorted(tools, key=score, reverse=True):
         org, name = t.get("organization") or "", t.get("name") or ""
+        repo = name.split("/")[0].lower()
         if org in SKIP_ORGS or SKIP_NAMES.search(name) or per_org[org] >= 2:
             continue
+        if (repo, name.lower()) in SEEN_REPOS or any(name.lower() == n for _, n in SEEN_REPOS):
+            continue
+        SEEN_REPOS.add((repo, name.lower()))
         if org == "broadinstitute" and name.startswith("warp"):
             continue
         vs = [v for v in t.get("versions") or [] if "WDL" in (v.get("descriptor_type") or [])]
