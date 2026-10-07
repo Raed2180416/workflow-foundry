@@ -317,6 +317,7 @@ time, **plus the parsers of the programs those jobs run** (next list).
 | F4 | medium | `git.refresh` ran git on the mailbox clone concurrently with the publisher. | One lock per clone (in-process queue and lock file), coalesced refreshes, stale `index.lock` cleanup. | `hardening.test.mjs` F4 ×4 |
 | F5 | low | A trusted key id with a bad signature could make the daemon buffer 1 MiB before verifying. | Verify against the announced hash before reading; unannounced bodies capped at 64 KiB. | `hardening.test.mjs` F5 |
 | F6 | low/info | A repository writer can redirect the cloud to another endpoint. | Documented above (inside the trust root). | — |
+| F7 | low (operational) | Found in the independent re-verification: after a hard kill of the daemon (SIGKILL, the out-of-memory killer) its detached job processes keep running. The restarted daemon marks the jobs `lost` but does not stop the processes, so they can keep holding the GPU's memory and a service port. Confirmed with a `kev.serve` job. | **Not fixed in code.** Under systemd, `KillMode=control-group` kills them. `LAPTOP-HANDOFF.md` §R lists and stops leftovers (the commands were tested). A daemon fix (record each child's start time in the job record and reap matching processes at start-up) is a follow-up. | — |
 
 ## 6. Kill switch and revocation
 
@@ -468,8 +469,11 @@ apt repository):**
 
 **Unknown until the laptop runs it:**
 - the round trip through a connected quick tunnel;
-- real CUDA training time and peak VRAM on the RTX 4060, with `TORCH_FORCE_WEIGHTS_ONLY_LOAD=1`
-  (expected to be harmless: Kev's own loads are already weights-only by default on torch 2.8);
+- real CUDA training time and peak VRAM on the RTX 4060, with `TORCH_FORCE_WEIGHTS_ONLY_LOAD=1`.
+  Expected to be harmless: on torch 2.8.0+cpu, a `head.pt` written the way `kev.train` writes it (the
+  real `parse_args` namespace in `meta.extra`, a tensor `state_dict` as the head) reloads through
+  `read_meta` under the flag, and every value in that namespace is a str, int, float or None. Only the
+  CUDA run itself is untested;
 - whether the owner's network allows outbound port 7844;
 - WSL idle shutdown;
 - whether this cloud session may push the `foundry-bridge` branch.
@@ -477,3 +481,30 @@ apt repository):**
 A manually triggered GitHub Actions job could run cloudflared and the daemon with stub programs
 (GitHub-hosted runners can reach port 7844) to observe the round trip before the laptop is ready. It
 needs a workflow file in the repository and the owner's approval; it has not been done.
+
+**Independent re-verification (2026-10-07, after the fixes above).**
+- Tests: 86 tests, 83 pass, 3 skip with the default environment; 86 of 86 pass with the real Kev venv.
+- The attack battery of the adversarial review, re-run: 61 defenses held. Its one `VULN` line, "unbounded
+  GPU job queue", is the script's old heuristic (`queued > 20`) firing on the new cap: with 80
+  concurrent submissions 34 were accepted (32 still queued, 1 running, the other already finished)
+  and 46 got 429 `queue_full`.
+- F1, re-attacked through a live daemon (32 checks): uploads into `runs/` (a daemon-written run's
+  `head.pt`, a made-up job id, a new directory), a `run` naming a made-up job id, a path below a real
+  run, a data file, a benchmark's output dir, an absolute or `..` path, and hub ids with a shell
+  suffix or a path in the revision, a hand-edited `head.pt`, and a `head.pt` replaced by a symlink are
+  all refused; a run the daemon trained itself is
+  accepted before and after a daemon restart; neither `config.env`, `envPassthrough` nor the daemon's
+  own environment can switch the guard off; credential-like variables do not reach jobs.
+- Two real processes (the daemon and `cli.mjs`) with a CLI-generated key: keygen (0600, nothing
+  printed), ping, info, selftest, put, a refused put into `runs/`, train, wait, log, ls, get with
+  sha256, serve, a proxied `/v1/systemone` with `x-bridge-*` and `authorization` stripped, cancel, an
+  untrusted key refused, no key material or signatures in any log (28 of 28), and the daemon is
+  reachable on loopback only (its container address refuses; `host: 0.0.0.0` is a config error).
+- The tunnel is still not observed: a retry of cloudflared 2026.10.0 registers a URL but QUIC and
+  TCP to port 7844 are blocked, so `readyConnections` stays 0.
+- The CONNECT transport reached pypi.org, api.trycloudflare.com and github.com through the real
+  egress proxy with verified TLS.
+- `bridge/laptop/kev-requirements.txt`: all 90 pins that apply on Linux x86_64 with Python 3.12 have
+  a compatible wheel on PyPI whose sha256 is in the file (3.8 GiB in all), and every dependency in
+  Kev's `pyproject.toml` (base and `serve`) is pinned. The model revisions exist: `kev-0.8b@v1.0`
+  (0.06 GiB) and the Qwen base at its pinned revision (1.65 GiB).

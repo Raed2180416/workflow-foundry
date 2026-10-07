@@ -1,4 +1,4 @@
-# Installed by LAPTOP-HANDOFF.md step 12 (placeholders @NODE@ and @REPO@ are filled in with sed).
+# Installed by LAPTOP-HANDOFF.md step 15 (placeholders @NODE@ and @REPO@ are filled in with sed).
 [Unit]
 Description=Foundry bridge daemon (127.0.0.1:8765)
 After=network-online.target

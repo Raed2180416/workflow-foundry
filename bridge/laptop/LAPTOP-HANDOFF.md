@@ -472,24 +472,65 @@ not connected: see §T4.
 
 Record the URL.
 
-## 15. Survive closing the terminal
+**Tell the human now,** as soon as these checks pass. Do not wait for the cloud to connect. Use
+this wording, with the real values:
+> The bridge is up on your laptop. Tunnel: `<URL>`, with `<N>` connections to Cloudflare. Daemon
+> `<version>`, running under `<tmux|systemd>`. The RTX 4060 is idle and ready. Nothing can use it
+> yet: the cloud session has to find the URL (it reads it from the `foundry-bridge` branch) and send
+> a signed request. I'll tell you when that happens. The URL changes every time the tunnel restarts;
+> there is nothing for you to bookmark or share.
 
-Pick **one** of the two set-ups below. Never run both.
+If a check failed, say which one and what you will try next instead. Do not describe the bridge as
+up unless `/ready` shows at least one connection **and** `"$URL/health"` answers.
 
-**A. tmux only (simplest).** tmux survives closing the terminal window. On Windows, however, WSL may
-shut the whole distribution down when no WSL terminal is open. Test it:
-1. Close every WSL and Ubuntu terminal window.
-2. Wait 3 minutes.
-3. In PowerShell, run `curl.exe -s https://<URL>/health`.
+## 15. Survive closing the terminal, and a reboot
 
-- If this prints `{"ok":true,...}`, you are done.
-- If it fails, either keep one Windows Terminal tab open running `wsl -d Ubuntu-24.04 -e tmux attach -t
-  foundry-bridge`, or ask the human whether to create a logon task that keeps WSL alive:
-  `schtasks /create /tn FoundryWSLKeepAlive /sc onlogon /tr "wsl.exe -d Ubuntu-24.04 --exec /bin/sleep infinity"`.
+Two different events must be survived:
+- **closing the terminal window** (or logging out of the shell);
+- **a reboot** of Windows or Linux, or a `wsl --shutdown`.
+
+| | A. tmux | B. systemd user services |
+|---|---|---|
+| Terminal closed, native Linux | survives | survives |
+| Terminal closed, WSL | may stop: test it below | survives once systemd is on, if the distribution stays running (test it below) |
+| Reboot, native Linux | **does not come back**: someone must run `start-tmux.sh` | comes back by itself (`enable-linger`) |
+| Reboot, WSL | **does not come back**: someone must open Ubuntu and run `start-tmux.sh` | comes back **only when the distribution starts**, which Windows does not do by itself: needs the logon task below |
+
+Pick **one** of the two set-ups. Never run both. Choose B unless systemd is unavailable and the
+human declines to enable it; with A, the bridge is down after every reboot until the owner or you
+restart it (§R).
+
+**The WSL logon task (both set-ups on WSL; ask the human first).** This starts the Ubuntu
+distribution when the owner logs in to Windows, and keeps it running with no terminal open. Run it
+in **PowerShell**:
+```powershell
+schtasks /create /tn FoundryWSLKeepAlive /sc onlogon /tr "wsl.exe -d Ubuntu-24.04 --exec /bin/sleep infinity"
+schtasks /query /tn FoundryWSLKeepAlive
+```
+It runs only after the owner logs in (a reboot that stops at the Windows login screen leaves the
+bridge down) and it keeps the distribution, and therefore the GPU, in use. To remove it:
+`schtasks /delete /tn FoundryWSLKeepAlive /f`.
+
+**The closed-terminal test needs the human,** because your own session runs in one of those
+terminals and closing it ends you. Before asking, write down `jq .startedAt
+~/.foundry-bridge/mailbox/bridge-state/endpoint.json` and the URL. Then ask the human to:
+1. close every Ubuntu and Claude Code window;
+2. wait 3 minutes;
+3. in PowerShell, run `curl.exe -s https://<URL>/health` and note the output;
+4. reopen Ubuntu and this Claude Code session, and tell you what the curl printed.
+
+**Pass** when the curl printed `{"ok":true,...}` and, after you reopen, `jq .startedAt` on the same
+file prints the value you wrote down (the daemon was not restarted in between). If it failed,
+either add the logon task above, or keep one Windows Terminal tab open running
+`wsl -d Ubuntu-24.04 -e tmux attach -t foundry-bridge` (A only).
+
+**A. tmux only (simplest).** Nothing more to do after step 14. tmux survives closing a terminal
+window on Linux. Do the closed-terminal test above on WSL.
 
 **B. systemd user services (survive logout and restart automatically).** These need systemd. In WSL,
 check with `ps -p 1 -o comm=`. If it does not print `systemd`, ask the human before enabling it in
-`/etc/wsl.conf` (`[boot]` then `systemd=true`, then `wsl --shutdown` from PowerShell).
+`/etc/wsl.conf` (`[boot]` then `systemd=true`, then `wsl --shutdown` from PowerShell, then reopen
+Ubuntu).
 
 ```bash
 bash ~/workflow-foundry/bridge/laptop/run/stop.sh          # stop the tmux variant first
@@ -497,15 +538,16 @@ mkdir -p ~/.config/systemd/user
 sed -e "s#@NODE@#$(command -v node)#" -e "s#@REPO@#$HOME/workflow-foundry#" ~/workflow-foundry/bridge/laptop/run/systemd/foundry-bridge.service > ~/.config/systemd/user/foundry-bridge.service
 sed -e "s#@CLOUDFLARED@#$(command -v cloudflared)#" ~/workflow-foundry/bridge/laptop/run/systemd/foundry-tunnel.service > ~/.config/systemd/user/foundry-tunnel.service
 systemctl --user daemon-reload && systemctl --user enable --now foundry-bridge.service foundry-tunnel.service
-sudo loginctl enable-linger "$USER"
+sudo loginctl enable-linger "$USER"      # needs the human's password; see the rules at the top
 ```
 **Check (B):**
 - `systemctl --user is-active foundry-bridge foundry-tunnel` prints `active` twice;
+- `loginctl show-user "$USER" -p Linger` prints `Linger=yes`;
 - the step 14 checks pass again, with a new URL;
 - in a non-interactive service, git push must work without a prompt: look for `endpoint published` in
   `~/foundry-bridge/daemon.log`.
 
-On WSL, run the same three-minute closed-terminal test as in A.
+On WSL, add the logon task above and do the closed-terminal test. For a full reboot test, see §R.
 
 ## 16. Tell the cloud session, then listen for it
 
@@ -549,8 +591,7 @@ arrives, see §T6.
   `cd ~/workflow-foundry && git pull --ff-only && bash bridge/laptop/run/stop.sh && bash bridge/laptop/run/start-tmux.sh`.
   With systemd, run `systemctl --user restart foundry-bridge` instead of the two scripts. Then rerun
   the step 14 checks.
-- **After a reboot or a long sleep:** open Ubuntu. With systemd the services start by themselves;
-  otherwise run `start-tmux.sh`. Rerun the step 14 checks and tell the cloud session.
+- **After a reboot, a crash or a long sleep:** follow §R.
 - **Never edit** `~/.foundry-bridge/mailbox` by hand. It is the daemon's own clone. Use
   `init-mailbox.mjs` for keys and KILL.
 - **The GPU queue:** the daemon runs one GPU job at a time, but services (`kev.serve`, `llama.serve`)
@@ -567,6 +608,64 @@ From fastest to slowest:
 | `pkill -f 'cloudflared tunnel'` | Cuts the public path only. Local state stays. |
 | `cd ~/workflow-foundry && node bridge/cloud/init-mailbox.mjs --kill` (undo with `--unkill`) | Within 5 minutes the daemon stops all work and refuses every signed request. This works from any machine with repo write access. |
 | `node bridge/cloud/init-mailbox.mjs --revoke <keyid>` | Revokes one cloud key within 5 minutes. |
+
+## R. Restart after a reboot, a crash or a long sleep
+
+Do this whenever the laptop rebooted, WSL was shut down (`wsl --shutdown`, a Windows update), the
+laptop slept for a long time, or the human reports that the bridge is down. Each step ends with a
+check.
+
+1. **Get a shell and check the GPU.** Open Ubuntu (on WSL with the logon task of §15, Windows has
+   already started it). **Check:** `nvidia-smi -L` prints the RTX 4060.
+2. **Start the bridge if it is not running.**
+   ```bash
+   systemctl --user is-active foundry-bridge foundry-tunnel 2>/dev/null          # systemd set-up: 'active' twice
+   systemctl --user start foundry-bridge foundry-tunnel                          # only if they were not active
+   tmux has-session -t foundry-bridge 2>/dev/null && echo "tmux: running" || bash ~/workflow-foundry/bridge/laptop/run/start-tmux.sh   # tmux set-up
+   ```
+   Use the line for the set-up in use (step 15). If the daemon exits at once, read the last lines of
+   `~/foundry-bridge/daemon.log`; exit code 2 means a bad configuration (§T10).
+3. **Wait 30 seconds, then rerun the step 14 checks.** Cloudflared gets a **new URL** at every start;
+   the daemon finds it and republishes it within about a minute. **Check:**
+   ```bash
+   jq '{state, url, tunnelReadyConnections, startedAt, heartbeatAt}' ~/.foundry-bridge/mailbox/bridge-state/endpoint.json
+   date -u +%FT%TZ
+   ```
+   `state` is `up`, `url` is the URL step 14 printed now, `tunnelReadyConnections` is 1 or more, and
+   `heartbeatAt` is within the last few minutes. If the clock looks wrong after a long sleep, see
+   §T3.
+4. **Find out what the restart cost.** A daemon restart stops everything the daemon was running:
+   ```bash
+   jq -r 'select(.state=="lost") | "\(.id) \(.kind) \(.error)"' ~/foundry-bridge/work/jobs/*.json
+   ```
+   Jobs that were queued or running become `lost` and are **not** resumed; services (`kev.serve`,
+   `llama.serve`) are gone. Uploaded data, finished runs and the replay-protection journal survive,
+   and a finished `kev.train` run is still usable as `run=runs/<jobId>`.
+
+   Then look for **leftover processes**. If the daemon was killed hard (`kill -9`, the out-of-memory
+   killer) instead of stopped, a job's process can keep running with nothing watching it. It would
+   hold the GPU's memory and the service port, and the next job could fail with out-of-memory.
+   ```bash
+   for p in $(jq -r 'select(.state=="lost" and .pid) | .pid' ~/foundry-bridge/work/jobs/*.json); do ps -o pid=,etime=,args= -p "$p"; done
+   ```
+   This prints **nothing** when all is well (checked on 2026-10-07 by killing a daemon that was
+   running a `kev.serve`). A line that shows `python -m kev.train`, `kev.serve` or `kev.benchmark`, or
+   `llama-server`, is a leftover of a lost job. Stop it (`<pid>` is its first column):
+   ```bash
+   kill -TERM -- -<pid>; sleep 10; ps -p <pid> >/dev/null && kill -KILL -- -<pid>; nvidia-smi --query-gpu=memory.used --format=csv,noheader
+   ```
+   Do this only for those commands. After a reboot a recorded pid can belong to an unrelated
+   program; if the line shows anything else, leave it alone and tell the human. Under systemd this
+   cannot happen, because the unit kills every process of the service when the daemon dies
+   (`KillMode=control-group`), and a reboot or `wsl --shutdown` kills everything. The tmux set-up is
+   the exposed one.
+5. **Tell the cloud session, and the human, in one short message each:** the time of the restart,
+   the new URL, `tunnelReadyConnections`, and the list of `lost` jobs from step 4 so the cloud can
+   resubmit them. The cloud finds the new URL on its own from the branch, so it needs no action from
+   you beyond this report.
+
+If the laptop was off or asleep for more than about 40 minutes, the cloud will have seen the
+heartbeat go stale (§T8). It recovers by itself once step 3 passes.
 
 ## L. Optional: llama.cpp server (only when the cloud asks)
 
@@ -675,6 +774,25 @@ by `--config` (default `~/foundry-bridge/bridge-config.json`) is missing, is not
 unknown key or a bad value. The message says which. The tmux loop and the systemd unit do not
 restart it on code 2; fix the file and start again.
 
+**T11. 507 `insufficient_storage`, or uploads refused.** The daemon refuses uploads and new jobs when
+the work directory's disk has less than 2 GB free (`limits.minFreeMiB`).
+- `df -h ~` shows the free space. On WSL, also check the Windows `C:` drive: the Ubuntu virtual disk
+  lives there and cannot grow past it.
+- Free space inside `~/foundry-bridge/work` first: old runs under `runs/` and uploads under `data/`.
+  **Ask the cloud session before deleting a run** (it may still need to download it or use it as
+  `initFrom`), and never delete the `jobs/` records of runs you keep (§17).
+- `~/.cache/pip` can be cleared with `~/kev-venv/bin/pip cache purge` once the venv is built.
+- Anything else outside `~/foundry-bridge/work` needs the human's approval.
+
+**T12. A job fails with CUDA out-of-memory, `nvidia-smi` shows memory in use, and no job is running.**
+Look for a leftover process of a lost job (§R step 4). Also check what else holds the GPU: in
+PowerShell on Windows, `nvidia-smi` lists every process using it, which WSL's view does not. A
+`kev.serve` or `llama.serve` that the cloud started on purpose also holds VRAM until it is stopped
+(`node bridge/cloud/cli.mjs jobs` on the cloud side; the cloud cancels it).
+
+**T13. 429 `queue_full`.** The daemon holds at most 32 queued GPU jobs. The cloud should cancel some
+or wait. `node bridge/cloud/cli.mjs jobs` on the cloud side lists them. You need to do nothing.
+
 ## What to tell the owner
 
 Send a short summary after step 16, and again whenever something changes. It should say:
@@ -688,14 +806,20 @@ Send a short summary after step 16, and again whenever something changes. It sho
 >   at most 32 queued);
 > - download results from `~/foundry-bridge/work/runs`.
 >
-> It cannot run arbitrary commands, read other files, or make the laptop load a model file it
-> uploaded: Kev only loads checkpoints the bridge itself trained (or the published Kev models), and
-> every job runs with torch's pickle protection forced on. Uploads stop when less than 2 GB of disk
-> is free. Things to know:
+> It cannot run arbitrary commands or read other files. Kev only loads checkpoints the bridge itself
+> trained (or the published Kev models), and every job runs with torch's pickle protection forced
+> on. One exception, only if you enable the optional llama.cpp server (it is off unless you or the
+> cloud ask for it): the cloud can then upload a GGUF model file for llama.cpp to load, and llama.cpp
+> is not sandboxed against a malicious model file. Uploads stop when less than 2 GB of disk is free.
+> Things to know:
 > - Cloudflare can see the traffic in plaintext, so do not send anything confidential through the
 >   bridge;
 > - the laptop must stay awake and on AC power;
-> - the GPU is busy while jobs run.
+> - the GPU is busy while jobs run;
+> - after a reboot, a Windows update or a long sleep the bridge is down until Ubuntu is running again
+>   (<automatic after you log in to Windows | when you open Ubuntu and I restart it>, depending on how
+>   it was set up). A job that was running at that moment is lost and the cloud resubmits it. The
+>   tunnel address changes each time, and the cloud finds the new one by itself.
 >
 > To stop everything at once, run `bash ~/workflow-foundry/bridge/laptop/run/stop.sh`. From anywhere,
 > `node bridge/cloud/init-mailbox.mjs --kill` stops the bridge within 5 minutes. Smoke results:
