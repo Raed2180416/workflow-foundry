@@ -149,7 +149,7 @@ test('F6 no false negatives: reformatted, renamed and alternative-fix sources pa
   const alt = (id, pairs) => pairs.reduce((s, [from, to]) => { assert.equal(s.split(from).length, 2, `${id}: ${from}`); return s.replace(from, to); }, originalOf(id));
   jobs.push(
     { id: 'context', name: 'alt-fix typeof', src: alt('context', [['input.priority !== undefined', "typeof input.priority !== 'undefined'"], ['context.persona !== undefined', "typeof context.persona !== 'undefined'"]]) },
-    { id: 'stats', name: 'alt-fix commuted comparisons', src: alt('stats', [['k < 0 || k > n', 'k < 0 || n < k'], ['i <= k; i++', 'i < k + 1; i++'], ['n - c < k ?', 'k > n - c ?']]) },
+    { id: 'stats', name: 'alt-fix commuted comparisons', src: alt('stats', [['k < 0 || k > n', 'k < 0 || n < k'], ['for (let i = 1; i <= k; i++)', 'for (let i = 1; i < k + 1; i++)'], ['n - c < k ?', 'k > n - c ?']]) },
     { id: 'verdict', name: 'alt-fix guard form', src: alt('verdict', [['f?.confirmed === true', 'Boolean(f) && f.confirmed === true']]) },
   );
   const results = await pool(jobs, async j => ({ ...j, out: await bed.evaluateSourceAsync(j.id, j.src) }));

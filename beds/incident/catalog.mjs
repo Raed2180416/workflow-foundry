@@ -568,6 +568,7 @@ export const DEPLOY = {
     (c, r) => ['INFO', `rollout started: ${c.svc} ${c.oldVer} -> ${c.newVer} (rolling, maxUnavailable=1)`],
     (c, r) => ['INFO', `starting ${c.svc} release ${c.newVer} (previous ${c.oldVer})`],
     (c, r) => ['INFO', `deploy ${c.newVer} picked up by pod ${c.pod}; replacing ${c.oldVer}`],
+    (c, r) => ['INFO', `canary: pod ${c.pod} switched to release ${c.newVer}; other pods stay on ${c.oldVer}`],
   ],
   ready: (c, r) => ['INFO', `pod ${c.pod} ready on ${c.newVer}`],
   done: (c, r) => ['INFO', `rollout of ${c.newVer} complete (${c.replicas}/${c.replicas} replicas healthy)`],
@@ -897,11 +898,15 @@ export const NOTES = {
     (a, b, x) => `${a} started fetching ${x.what} straight from ${b} in ${x.month}; the table predates that change.`,
     (a, b, x) => `The ${x.month} refactor gave ${a} a direct dependency on ${b} (${x.what}), which the table does not show yet.`,
     (a, b, x) => `Since ${x.month}, handling a request in ${a} can involve a call to ${b} for ${x.what}; table update pending.`,
+    (a, b, x) => `${a} began calling ${b} for ${x.what} in ${x.month}; that call is missing from the table.`,
+    (a, b, x) => `One call is not listed yet: ${a} -> ${b} (${x.what}), introduced in ${x.month}.`,
   ],
   stale: [
     (a, b, x) => `${a} no longer calls ${b}: the call was removed in ${x.ver}, but the table row has not been updated.`,
     (a, b, x) => `The ${a} -> ${b} entry in the table is outdated; ${a} stopped using ${b} in ${x.ver}.`,
     (a, b, x) => `Since release ${x.ver}, ${a} gets that data elsewhere and does not talk to ${b} any more (the table still lists it).`,
+    (a, b, x) => `${a} dropped its call to ${b} in ${x.ver}; disregard that table entry.`,
+    (a, b, x) => `The table still shows ${a} calling ${b}, which ended with ${x.ver}.`,
   ],
   optional: [
     (a, b, x) => `${a} treats ${b} as optional: when it misbehaves, ${a} falls back to ${x.fallback} and keeps serving.`,
@@ -928,6 +933,14 @@ export const NOTES = {
     (n, l) => `Older services still refer to ${n} by its pre-migration name '${l}'.`,
     (n, l) => `'${l}' is the old name of ${n}; some clients still use it in their logs.`,
     (n, l) => `${n} was called '${l}' before the platform migration, and older callers still log that name.`,
+  ],
+  // v3 (audit): optional calls whose fallback reads the data straight from one of the callee's own
+  // dependencies (the provider); the caller fails when the provider fails too.
+  provider: [
+    (a, b, x) => `${a} treats ${b} as optional: when ${b} fails, ${a} reads ${x.what} straight from ${x.provider} instead, so it only fails if ${x.provider} is down too.`,
+    (a, b, x) => `If ${b} is down, ${a} falls back to querying ${x.provider} directly for ${x.what}; that fallback works only while ${x.provider} is healthy.`,
+    (a, b, x) => `${a} can serve without ${b} as long as ${x.provider} answers (it then reads ${x.what} from ${x.provider} itself).`,
+    (a, b, x) => `The fallback of ${a} for ${b} is a direct read from ${x.provider}; when both are unavailable, requests to ${a} fail.`,
   ],
   legacySource: [
     (n, l) => `${n} still ships its logs under its old application name '${l}' instead of a pod name.`,
@@ -1078,3 +1091,49 @@ export const BLIP_ONSET = {
   clock_skew: (c, r) => ['WARN', `clock offset vs time source is +${r.int(2, 30)}s (tolerance 0.5s)`],
   upstream_rate_limiting: (c, r) => ['WARN', `${c.ext} responded 429 Too Many Requests (retry-after ${r.int(10, 60)}s)`],
 };
+
+// v3 (audit): two dated notes about the same call, the later one stating the current behaviour (difficulty
+// >= 3). The notes are listed in random order, so only the dates say which one holds.
+export const NOTE_DATED = {
+  // The edge is optional now; the older note describes the time before the fallback existed.
+  softNow: [
+    (a, b, x) => `In ${x.m2}, ${a} gained a fallback for ${b}: it now serves ${x.fallback} when ${b} fails.`,
+    (a, b, x) => `Since ${x.m2}, a failure of ${b} no longer fails ${a}; ${a} answers with ${x.fallback} instead.`,
+    (a, b, x) => `${a} was changed in ${x.m2} to tolerate ${b} being down (it uses ${x.fallback}).`,
+  ],
+  hardThen: [
+    (a, b, x) => `As of ${x.m1}, ${a} could not serve without ${b}.`,
+    (a, b, x) => `In ${x.m1}, every failure of ${b} also failed ${a}'s requests.`,
+    (a, b, x) => `The ${x.m1} dependency review listed ${b} as a hard dependency of ${a}.`,
+  ],
+  // The edge is hard now; the older note describes the fallback that no longer exists.
+  hardNow: [
+    (a, b, x) => `In ${x.m2}, ${a}'s fallback for ${b} was switched off; since then ${a} fails whenever ${b} does.`,
+    (a, b, x) => `As of ${x.m2}, ${a} needs ${b} for every request (the fallback to ${x.fallback} was retired).`,
+    (a, b, x) => `${a} was changed in ${x.m2} so that it no longer tolerates ${b} being down.`,
+  ],
+  softThen: [
+    (a, b, x) => `As of ${x.m1}, ${a} treated ${b} as optional and fell back to ${x.fallback}.`,
+    (a, b, x) => `In ${x.m1}, ${a} kept serving when ${b} was down (it used ${x.fallback}).`,
+    (a, b, x) => `The ${x.m1} dependency review listed ${b} as a soft dependency of ${a}.`,
+  ],
+};
+
+// v3 (audit): per-pod echoes of an event-like onset (difficulty >= 3).
+export const POD_ECHO = {
+  bad_config_deploy: (c, r) => ['INFO', `pod ${c.pod} loaded configuration bundle from release ${c.newVer} (was ${c.oldVer})`],
+};
+
+// v3 (audit): a bad release that starts as a canary (difficulty >= 3). The onset is the canary line; the
+// promotion to all pods follows 70-160 s later.
+export const CANARY = [
+  (c, r) => ['INFO', `canary: pod ${c.pod} switched to release ${c.newVer}; other pods stay on ${c.oldVer}`],
+  (c, r) => ['INFO', `traffic split for ${c.svc}: ${r.pick([5, 10, 20])}% of requests now served by ${c.newVer} (canary)`],
+  (c, r) => ['INFO', `pod ${c.pod} now running ${c.newVer} as the canary (was ${c.oldVer})`],
+];
+export const PROMOTE = (c, r) => ['INFO', `rollout started: ${c.svc} ${c.oldVer} -> ${c.newVer} (promoting the canary to all pods)`];
+// A caller whose optional callee and fallback provider have both failed.
+export const PROVIDER_FAIL = [
+  (c, r) => ['ERROR', `${c.callee} unavailable and the fallback read from ${c.provider} failed too; ${c.route} failed`],
+  (c, r) => ['ERROR', `fallback to ${c.provider} after a ${c.callee} error also failed (${r.pick([502, 503, 504])})`],
+];

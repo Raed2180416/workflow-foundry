@@ -129,6 +129,21 @@ for (const ds of DATASETS) {
     const mm = pick(modelRows), km = pick(kEval), rm = pick(rEval);
     const accOn = map => (map.size ? r3([...map.values()].filter(r => r.chosen === r.truth).length / map.size) : null);
     m.sameSubset = { n: mm.size, model: accOn(mm), kev: accOn(km), rule: accOn(rm), kevVsModel: mcnemar(km, mm), ruleVsModel: mcnemar(rm, mm) };
+    // Cascades on the same subset: take the cheap engine's answer when its confidence clears the threshold
+    // chosen on ITS calibration half (5% budget), otherwise escalate to the hosted model.
+    const modelCost = m.usdPer1000 / 1000;
+    const cascade = (cheapMap, calRowsCheap, cheapCostEach) => {
+      const t = calibrationReport(calRowsCheap, { errorBudget: 0.05 }).threshold;
+      let right = 0, kept = 0, n = 0;
+      for (const [id, mr] of mm) {
+        const c = cheapMap.get(id); if (!c) continue; n++;
+        const take = t != null && c.confidence >= t; if (take) kept++;
+        right += (take ? c : mr).chosen === mr.truth;
+      }
+      return n ? { n, threshold: r3(t), keptShare: r3(kept / n), accuracy: r3(right / n), usdPer1000: r3((cheapCostEach + (1 - kept / n) * modelCost) * 1000) } : null;
+    };
+    const kevCostEach = d.engines.kev ? d.engines.kev.usdPer1000.perCoreHour / 1000 : 0;
+    m.cascades = { kevThenModel: kCal.length ? cascade(km, kCal, kevCostEach) : null, ruleThenModel: rCal.length ? cascade(rm, rCal, 0) : null, modelOnly: { accuracy: accOn(mm), usdPer1000: m.usdPer1000 } };
     d.engines.model = m;
   }
   // Paired Kev vs rule on the full evaluation half

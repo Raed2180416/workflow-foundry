@@ -122,13 +122,13 @@ async function runKevEval(datasets) {
   }
 }
 
+// The hosted model always gets wording A (fixed before any Kev result, so it can run alongside the Kev
+// calibration pass); Kev gets the better of A and B on its calibration half, which slightly favours Kev.
 async function runModel(datasets) {
-  const fz = frozen();
   const { port: modelPort, db } = createModelPort({ journalFile: path.join(RUN_DIR, 'journal.sqlite'), concurrency: { 'claude-cli': 3 } });
   try {
     for (const ds of datasets) {
-      if (!fz[ds]) { console.log('model: no frozen wording for', ds); continue; }
-      const wording = fz[ds].wording;
+      const wording = 'A';
       const ledger = new JudgmentLedger(ledgerFile('model', ds));
       const port = new JudgmentPort({ engine: 'model', model: modelPort, modelId: HOSTED_MODEL, classBudget: 16000, runId: 'kev-probe', decoding: { maxTokens: 128, reasoning: 'none' }, ledger });
       const done = doneIds('model', ds);

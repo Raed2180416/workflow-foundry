@@ -13,14 +13,14 @@ const MAX_ATTEMPTS = 64; // from this attempt on the soft preferences (Jaccard, 
 // Difficulty knobs. lines is the target bundle size (actual size is within about +/-15%).
 // v1 knobs are unchanged; the v2 block (after `paraphrase`) was added by the audit (AUDIT.md).
 const BASE = { anchors: 1, minRootCands: 1, wrap: 0, chronic: 0, pods: false, soft: 0, deploy: 0, blipRoot: false, blipSame: false, benignHard: false, added: 0, stale: 0, proseAliases: 0, mislead: 0, notice: false, inject: false, legacySource: false, noisyNote: false, hypothesis: false, addresses: false };
-const HARD = { onsetRepeat: 0.25, quiet: [0.3, 1], blipOnset: 0.6, recoverAlt: 0.7, decoyBelowRoot: 0.5, paraphrase: true, lookalikes: true, configLag: [30, 150], anon: 0.6, mixedNotes: 0.5, silentSoft: 0.5, softErr: 0.6, warnSev: 0.3, mention: 0.03, mentionErr: 0.4, decoy: 1, secondary: [0.35, 0.65], lead: [90, 300], cacheLag: [70, 200], blipNear: true, nearPrecursor: 0.8, ticketSubset: true, hardNotes: 2, renewHerring: true, baselines: 2, wantSoft: 0.5, bigSkew: 0.6 };
-const EASY = { onsetRepeat: 0, quiet: [1, 1], blipOnset: 0, recoverAlt: 0, decoyBelowRoot: 1, paraphrase: false, lookalikes: false, configLag: null, anon: 0, mixedNotes: 0, silentSoft: 0, softErr: 0, warnSev: 0, mention: 0.01, mentionErr: 0, decoy: 0, secondary: [0, 0], lead: [15, 40], cacheLag: [3, 25], blipNear: false, nearPrecursor: 0, ticketSubset: false, hardNotes: 0, renewHerring: false, baselines: 0, wantSoft: 0, bigSkew: 0 };
+const HARD = { provider: 0.4, canary: 0.6, podEcho: true, revised: 2, stale: 1, onsetRepeat: 0.25, quiet: [0.3, 1], blipOnset: 0.6, recoverAlt: 0.7, decoyBelowRoot: 0.5, paraphrase: true, lookalikes: true, configLag: [30, 150], anon: 0.6, mixedNotes: 0.5, silentSoft: 0.5, softErr: 0.6, warnSev: 0.3, mention: 0.03, mentionErr: 0.4, decoy: 1, secondary: [0.35, 0.65], lead: [90, 300], cacheLag: [70, 200], blipNear: true, nearPrecursor: 0.8, ticketSubset: true, hardNotes: 2, renewHerring: true, baselines: 2, wantSoft: 0.5, bigSkew: 0.6 };
+const EASY = { provider: 0, canary: 0, podEcho: false, revised: 0, stale: 0, onsetRepeat: 0, quiet: [1, 1], blipOnset: 0, recoverAlt: 0, decoyBelowRoot: 1, paraphrase: false, lookalikes: false, configLag: null, anon: 0, mixedNotes: 0, silentSoft: 0, softErr: 0, warnSev: 0, mention: 0.01, mentionErr: 0, decoy: 0, secondary: [0, 0], lead: [15, 40], cacheLag: [3, 25], blipNear: false, nearPrecursor: 0, ticketSubset: false, hardNotes: 0, renewHerring: false, baselines: 0, wantSoft: 0, bigSkew: 0 };
 export const KNOBS = {
-  1: { ...BASE, ...EASY, anchors: 1, services: 6, batch: 1, lines: 300, bg: 0.78, styles: ['plain'], refs: ['name'], nearBias: 0.4, blipOther: 1, noisyNote: true },
-  2: { ...BASE, ...EASY, anchors: 2, services: 8, batch: 1, lines: 400, bg: 0.78, wrap: 0.15, styles: ['plain', 'bracket', 'kv'], refs: ['name', 'name', 'host'], soft: 0.4, nearBias: 0.5, deploy: 1, blipSame: true, blipOther: 1, noisyNote: true, mention: 0.015, secondary: [0.1, 0.2] },
-  3: { ...BASE, ...HARD, anchors: 2, minRootCands: 2, decoy: 2, services: 11, batch: 1, lines: 420, bg: 0.6, wrap: 0.3, chronic: 1, styles: ['plain', 'bracket', 'kv', 'json', 'short'], refs: ['name', 'host', 'legacy'], pods: true, soft: 0.5, nearBias: 0.6, deploy: 1, blipRoot: true, blipSame: true, blipOther: 2, benignHard: true, added: 1 },
-  4: { ...BASE, ...HARD, anchors: 3, minRootCands: 2, decoy: 2, services: 14, batch: 2, lines: 1600, bg: 0.7, wrap: 0.35, chronic: 1, styles: ['plain', 'bracket', 'kv', 'json', 'short'], refs: ['name', 'host', 'legacy', 'ip'], pods: true, soft: 0.45, nearBias: 0.75, deploy: 1, blipRoot: true, blipSame: true, blipOther: 2, benignHard: true, added: 1, stale: 1, proseAliases: 2, mislead: 1, hypothesis: true, addresses: true, warnSev: 0.35 },
-  5: { ...BASE, ...HARD, anchors: 3, minRootCands: 2, services: 18, batch: 2, lines: 4000, bg: 0.72, wrap: 0.35, chronic: 2, styles: ['plain', 'bracket', 'kv', 'json', 'short'], refs: ['name', 'host', 'legacy', 'ip'], pods: true, soft: 0.45, nearBias: 0.8, deploy: 2, blipRoot: true, blipSame: true, blipOther: 4, benignHard: true, added: 2, stale: 1, proseAliases: 3, mislead: 1, notice: true, inject: true, legacySource: true, hypothesis: true, addresses: true, warnSev: 0.4, softErr: 0.7, decoy: 2, hardNotes: 3, baselines: 3 },
+  1: { ...BASE, ...EASY, anchors: 1, services: 6, batch: 1, lines: 300, bg: 0.78, styles: ['plain'], refs: ['name'], blipOther: 1, noisyNote: true },
+  2: { ...BASE, ...EASY, anchors: 2, services: 8, batch: 1, lines: 400, bg: 0.78, wrap: 0.15, styles: ['plain', 'bracket', 'kv'], refs: ['name', 'name', 'host'], soft: 0.4, deploy: 1, blipSame: true, blipOther: 1, noisyNote: true, mention: 0.015, secondary: [0.1, 0.2] },
+  3: { ...BASE, ...HARD, anchors: 2, minRootCands: 2, decoy: 2, services: 11, batch: 1, lines: 420, bg: 0.6, wrap: 0.3, chronic: 1, styles: ['plain', 'bracket', 'kv', 'json', 'short'], refs: ['name', 'host', 'legacy'], pods: true, soft: 0.5, deploy: 1, blipRoot: true, blipSame: true, blipOther: 2, benignHard: true, added: 1 },
+  4: { ...BASE, ...HARD, anchors: 3, minRootCands: 2, decoy: 2, services: 14, batch: 2, lines: 1600, bg: 0.7, wrap: 0.35, chronic: 1, styles: ['plain', 'bracket', 'kv', 'json', 'short'], refs: ['name', 'host', 'legacy', 'ip'], pods: true, soft: 0.45, deploy: 1, blipRoot: true, blipSame: true, blipOther: 2, benignHard: true, added: 1, stale: 1, proseAliases: 2, mislead: 1, hypothesis: true, addresses: true, warnSev: 0.35 },
+  5: { ...BASE, ...HARD, anchors: 3, minRootCands: 2, services: 18, batch: 2, lines: 4000, bg: 0.72, wrap: 0.35, chronic: 2, styles: ['plain', 'bracket', 'kv', 'json', 'short'], refs: ['name', 'host', 'legacy', 'ip'], pods: true, soft: 0.45, deploy: 2, blipRoot: true, blipSame: true, blipOther: 4, benignHard: true, added: 2, proseAliases: 3, mislead: 1, notice: true, inject: true, legacySource: true, hypothesis: true, addresses: true, warnSev: 0.4, softErr: 0.7, decoy: 2, hardNotes: 3, baselines: 3, revised: 3, stale: 2 },
 };
 
 // Which roles can host each fault class (the root is never the gateway or a batch job).
@@ -217,6 +217,30 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
     e.silent = e.soft && K.silentSoft > 0 && r.chance(K.silentSoft);
     S[e.from].callees.push(e); S[e.to].callers.push(e);
   }
+  // v3 (audit): conditional fallbacks (d3+). Some optional calls fall back to reading the data straight from
+  // one of the callee's own dependencies (the provider). Such a caller only keeps serving while the provider
+  // answers: if the provider fails as well, the caller fails (and is impacted).
+  for (const e of edges) {
+    if (!e.soft || !K.provider || !r.chance(K.provider)) continue;
+    const providers = S[e.to].callees.map(x => x.to).filter(k => S[k].kind !== 'batch' && k !== e.from);
+    if (providers.length) e.provider = r.pick(providers);
+  }
+  // Impact propagation over the caller graph, callees before callers (roles are in topological order):
+  // a service fails when a hard callee fails, or when an optional callee and its fallback provider both fail.
+  const propagate = (rootKey, rootOutT) => {
+    const out = new Map([[rootKey, rootOutT]]);
+    for (const s of [...serving].sort((a, b) => b.role.order - a.role.order)) {
+      if (s.key === rootKey) continue;
+      let best = Infinity;
+      for (const e of s.callees) {
+        if (!out.has(e.to)) continue;
+        if (!e.soft) best = Math.min(best, out.get(e.to) + e.delay);
+        else if (e.provider && out.has(e.provider)) best = Math.min(best, Math.max(out.get(e.to), out.get(e.provider)) + e.delay);
+      }
+      if (best < Infinity) out.set(s.key, best);
+    }
+    return out;
+  };
   // v3 (audit): the root is drawn after the topology and the optional edges, uniformly among the services that
   // can host this class (layer-1 services weighted 0.4) and have a hard caller. v2 then flipped edges around
   // the root (its callee edges and some caller edges were forced hard), which was itself a cue.
@@ -230,8 +254,7 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   // reach Jaccard 0.8, and from d3 at least one caller must fall back (so that ERROR lines alone do not decide
   // impact). The root is then uniform (layer-weighted) among the candidates that satisfy them.
   const blastOf = s => {
-    const imp = new Set([s.key]);
-    for (const stack = [s]; stack.length;) for (const e of stack.pop().callers) if (!e.soft && S[e.from].kind !== 'batch' && !imp.has(e.from)) { imp.add(e.from); stack.push(S[e.from]); }
+    const imp = new Set(propagate(s.key, 0).keys());
     return { imp, deg: new Set(edges.filter(e => e.soft && imp.has(e.to) && !imp.has(e.from)).map(e => e.from)) };
   };
   // v3 (audit): the falling-back caller is required in a share K.wantSoft of tasks only; requiring it always
@@ -290,22 +313,9 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   }
   const inDown = t => leak.down.some(([a, b]) => t >= a && t <= b);
 
-  // Impact propagation (Dijkstra over hard caller edges); soft callers only degrade.
-  const impacted = new Map([[root.key, T]]);
-  const outTime = new Map([[root.key, rootOut]]);
-  const frontier = [root.key];
-  while (frontier.length) {
-    frontier.sort((a, b) => outTime.get(a) - outTime.get(b));
-    const k = frontier.shift();
-    for (const e of S[k].callers) {
-      if (e.soft || S[e.from].kind === 'batch') continue;
-      const t = outTime.get(k) + e.delay;
-      if (!outTime.has(e.from) || t < outTime.get(e.from)) {
-        impacted.set(e.from, t); outTime.set(e.from, t);
-        if (!frontier.includes(e.from)) frontier.push(e.from);
-      }
-    }
-  }
+  // Impact propagation (see propagate above); soft callers whose fallback still works only degrade.
+  const outTime = propagate(root.key, rootOut);
+  const impacted = new Map([...outTime].map(([k, t]) => [k, k === root.key ? T : t]));
   const degraded = new Map();
   for (const e of edges) {
     if (!e.soft || !outTime.has(e.to) || impacted.has(e.from)) continue;
@@ -413,7 +423,8 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   // Per-task phrasing subsets so that wording varies across seeds.
   const pickSubset = (list, lo, hi) => r.sample(list, clamp(r.int(lo, hi), 1, list.length));
   const altOnset = (C.ONSET_ALT[cls] || []).filter((_, i) => cls !== 'clock_skew' || i > 0 || bigSkew);
-  const onsetT = gradual ? r.pick(C.TREND[cls].onset) : (altOnset.length && K.paraphrase && r.chance(0.4) ? r.pick(altOnset) : r.pick(F.onset));
+  const canary = cls === 'bad_config_deploy' && Boolean(K.canary) && r.chance(K.canary);
+  const onsetT = gradual ? r.pick(C.TREND[cls].onset) : canary ? r.pick(C.CANARY) : (altOnset.length && K.paraphrase && r.chance(0.4) ? r.pick(altOnset) : r.pick(F.onset));
   const directT = F.direct ? pickSubset(F.direct, 2, 4) : null;
   const indirectT = F.indirect ? pickSubset(F.indirect, 1, 3) : null;
   const growthT = F.growth ? pickSubset(F.growth, 2, 4) : null;
@@ -439,12 +450,14 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   };
 
   // Which impacted callee does dependent s blame at time t?
-  const failingCallees = (s, t) => s.callees.filter(e => !e.soft && outTime.has(e.to) && t >= outTime.get(e.to) + e.delay);
+  const providerDown = (e, t) => Boolean(e.provider && outTime.has(e.provider) && t >= outTime.get(e.provider) + e.delay);
+  const failingCallees = (s, t) => s.callees.filter(e => (!e.soft || providerDown(e, t)) && outTime.has(e.to) && t >= outTime.get(e.to) + e.delay);
   // A failure line of service s blaming callee edge e. With probability K.wrap the caller relays
   // the error text it received (the root's own message, or the callee's relayed message).
   const depFailure = (s, t, rr, e, depth = 0) => {
     const c = ctxFor(s, t, rr, { callee: refOf(e), route: rr.pick(s.key === 'gateway' ? S[e.to].role.public : s.routes) });
     if (s === anon) return sevAdj(s, rr.pick(C.ANON_FAIL)(c, rr));
+    if (e.soft && rr.chance(0.6)) return sevAdj(s, rr.pick(C.PROVIDER_FAIL)({ ...c, provider: rr.chance(0.5) ? S[e.provider].name : S[e.provider].host }, rr));
     if (K.wrap && depth < 3 && rr.chance(K.wrap)) {
       let inner = null;
       if (e.to === root.key) { if (C.WRAPPABLE.has(cls) && t > symFrom) inner = symptom(t, rr)[1]; }
@@ -462,7 +475,8 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   // not mention the fallback on the same line.
   const softLine = (s, t, rr, e) => {
     const callee = S[e.to];
-    const c = ctxFor(s, t, rr, { callee: refOf(e), fallback: callee.role.fallback, what: callee.role.what, route: rr.pick(s.routes) });
+    const fallback = e.provider ? `${callee.role.what} read directly from ${S[e.provider].name}` : callee.role.fallback;
+    const c = ctxFor(s, t, rr, { callee: refOf(e), fallback, what: callee.role.what, route: rr.pick(s.routes) });
     if (e.silent || (K.softErr && rr.chance(K.softErr))) return sevAdj(s, rr.pick(C.SOFT_ERR)(c, rr));
     return rr.pick(C.SOFT_FALLBACK)(c, rr);
   };
@@ -507,7 +521,7 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
           emit(t, s, symptom(t, rb), 'root'); continue;
         }
         if (outTime.has(e.to) && t >= outTime.get(e.to) + e.delay) {
-          if (e.soft) { emit(t, s, softLine(s, t, rb, e), 'soft'); continue; }
+          if (e.soft && !providerDown(e, t)) { emit(t, s, softLine(s, t, rb, e), 'soft'); continue; }
           if (s !== root && rb.chance(0.85)) { const line = depFailure(s, t, rb, e); emit(t, s, line, 'dep'); continue; }
         }
         const route = rb.pick(S[e.to].routes);
@@ -528,7 +542,7 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
         const cands = failingCallees(s, t);
         if (cands.length) { emit(t, s, depFailure(s, t, rb, rb.pick(cands)), 'dep'); continue; }
       } else if (degraded.has(s.key) && t >= degraded.get(s.key) && rb.chance(0.35)) {
-        const softs = s.callees.filter(e => e.soft && outTime.has(e.to) && t >= outTime.get(e.to) + e.delay);
+        const softs = s.callees.filter(e => e.soft && !providerDown(e, t) && outTime.has(e.to) && t >= outTime.get(e.to) + e.delay);
         if (softs.length) { emit(t, s, softLine(s, t, rb, rb.pick(softs)), 'soft'); continue; }
       }
       emit(t, s, normalReq(s, t, rb), 'bg');
@@ -579,8 +593,24 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   }
   if (cls === 'bad_config_deploy') {
     const c = rootCtx(T);
-    for (const pod of root.pods.slice(0, 2)) emit(T + rf.int(3, 15), root, C.DEPLOY.ready({ ...c, pod }, rf), 'root');
-    emit(T + rf.int(25, 70), root, C.DEPLOY.done({ ...c, replicas: root.replicas }, rf), 'root');
+    if (K.podEcho) {
+      // v3 (audit): a rolling rollout; each pod logs its own config load 20-110 s after the rollout started
+      // (the onset is the first line of the bad rollout, not the last pod picking it up).
+      // A canary first (the onset line), promoted to all pods 70-160 s later.
+      const t1 = canary ? T + rf.int(70, 160) : T;
+      if (canary) emit(t1, root, C.PROMOTE(c, rf), 'root');
+      let last = t1;
+      for (const pod of root.pods) {
+        const tl = t1 + rf.int(20, 110);
+        last = Math.max(last, tl + 8);
+        emit(tl, root, C.POD_ECHO.bad_config_deploy({ ...c, pod }, rf), 'root');
+        emit(tl + rf.int(2, 8), root, C.DEPLOY.ready({ ...c, pod }, rf), 'root');
+      }
+      emit(last + rf.int(5, 20), root, C.DEPLOY.done({ ...c, replicas: root.replicas }, rf), 'root');
+    } else {
+      for (const pod of root.pods.slice(0, 2)) emit(T + rf.int(3, 15), root, C.DEPLOY.ready({ ...c, pod }, rf), 'root');
+      emit(T + rf.int(25, 70), root, C.DEPLOY.done({ ...c, replicas: root.replicas }, rf), 'root');
+    }
     // d3+: an earlier, healthy rollout of the same service a few minutes before the bad one.
     if (K.configLag && rf.chance(0.6)) {
       const tp = T - rf.int(240, 540), cp = { ...rootCtx(tp), replicas: root.replicas };
@@ -590,8 +620,16 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
     }
   }
   if (cls === 'poisoned_cache') {
+    // v3 (audit): the other replicas load the same bad snapshot 15-100 s later (identical form).
+    if (K.podEcho) for (let i = 0, n = rf.int(1, 3); i < n; i++) { const t = T + rf.int(15, 100); emit(t, root, onsetT(rootCtx(t), rf), 'root'); }
     // Routine refills before the bad one look exactly like the onset line.
-    for (let t = T - rf.int(240, 420); t > 30; t -= rf.int(240, 420)) emit(t, root, onsetT({ ...rootCtx(t), snap: `snap-${C.hexs(rf, 6)}` }, rf), 'bg');
+    for (let t = T - rf.int(240, 420); t > 30; t -= rf.int(240, 420)) {
+      const snap = `snap-${C.hexs(rf, 6)}`;
+      emit(t, root, onsetT({ ...rootCtx(t), snap }, rf), 'bg');
+      // v3 (audit): routine refills are echoed by the other replicas too.
+      const te = t + rf.int(15, 100);
+      if (K.podEcho && te < T - 30) emit(te, root, onsetT({ ...rootCtx(te), snap }, rf), 'bg');
+    }
   }
 
   // Dependents: an explicit first failure at their impact time plus extra failure lines.
@@ -713,12 +751,13 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   const sameHosts = nonRoot.filter(s => cls !== 'upstream_rate_limiting' || s.ext);
   if (K.blipSame && sameHosts.length) {
     const s = rh.pick(sameHosts);
-    herrings.blips.push({ svc: s.name, cls, t: blip(s, cls, rh.int(30, T - 240), 'blip-same') });
+    // v3 (audit): other services' blips may open with onset wording too (v2: only the root ever logged it).
+    herrings.blips.push({ svc: s.name, cls, t: blip(s, cls, rh.int(30, T - 240), 'blip-same', null, Boolean(K.blipOnset && C.BLIP_ONSET[cls] && rh.chance(K.blipOnset))) });
   }
   for (let i = 0; i < K.blipOther; i++) {
     const s = rh.pick(nonRoot.length ? nonRoot : serving);
     const other = rh.pick(C.FAULT_CLASSES.filter(x => x !== cls && (x !== 'upstream_rate_limiting' || s.ext)));
-    herrings.blips.push({ svc: s.name, cls: other, t: blip(s, other, rh.int(30, WINDOW - 300), 'blip-other') });
+    herrings.blips.push({ svc: s.name, cls: other, t: blip(s, other, rh.int(30, WINDOW - 300), 'blip-other', null, Boolean(K.blipOnset && C.BLIP_ONSET[other] && rh.chance(K.blipOnset))) });
   }
   // Chronic same-vocabulary warnings in a non-root service, steady over the whole window.
   herrings.chronic = [];
@@ -874,24 +913,41 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
     stale.push(pick);
     notes.push(note(C.NOTES.stale, S[pick.from].name, S[pick.to].name, { ver: S[pick.from].oldVer }));
   }
+  // Which note documents which call (for the tests; never shown to solvers).
+  const edgeDocs = [];
+  const doc = (e, kind, text) => { edgeDocs.push({ from: S[e.from].name, to: S[e.to].name, kind, soft: e.soft, text }); notes.push(text); };
+  // v3 (audit): dated pairs of notes about one call whose callee could have a fallback (d3+): the older
+  // note states the opposite of the current behaviour; the notes are shuffled, so only the months tell.
+  const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September'];
+  const revised = K.revised ? rs.sample(edges.filter(e => e.from !== 'gateway' && C.ROLE[e.to].fallback && !e.provider && !added.includes(e)), K.revised) : [];
+  for (const e of revised) {
+    const [i1, i2] = rs.sample(MONTHS.map((_, i) => i), 2).sort((a, b) => a - b);
+    const x = { m1: MONTHS[i1], m2: MONTHS[i2], fallback: S[e.to].role.fallback };
+    const [then, now] = e.soft ? [C.NOTE_DATED.hardThen, C.NOTE_DATED.softNow] : [C.NOTE_DATED.softThen, C.NOTE_DATED.hardNow];
+    doc(e, 'dated-then', rs.pick(then)(S[e.from].name, S[e.to].name, x));
+    doc(e, 'dated-now', rs.pick(now)(S[e.from].name, S[e.to].name, x));
+  }
   // Soft (optional) dependencies; from d3 some share a sentence with a hard dependency of the same
   // caller (so a sentence does not map to exactly one edge).
   const mixedUsed = new Set();
-  for (const e of edges.filter(x => x.soft)) {
+  for (const e of edges.filter(x => x.soft && !revised.includes(x))) {
     if (difficulty <= 2) continue;
-    const hardSib = edges.filter(x => x.from === e.from && !x.soft && !added.includes(x) && !mixedUsed.has(x));
+    if (e.provider) { doc(e, 'provider', note(C.NOTES.provider, S[e.from].name, S[e.to].name, { what: S[e.to].role.what, provider: S[e.provider].name })); continue; }
+    const hardSib = edges.filter(x => x.from === e.from && !x.soft && !added.includes(x) && !revised.includes(x) && !mixedUsed.has(x));
     if (K.mixedNotes && hardSib.length && rs.chance(K.mixedNotes)) {
       const h = rs.pick(hardSib);
       mixedUsed.add(h);
-      notes.push(rs.pick(C.NOTE_MIXED)(S[e.from].name, S[e.to].name, S[h.to].name, { fallback: S[e.to].role.fallback }));
+      const text = rs.pick(C.NOTE_MIXED)(S[e.from].name, S[e.to].name, S[h.to].name, { fallback: S[e.to].role.fallback });
+      doc(e, 'mixed', text);
+      edgeDocs.push({ from: S[h.from].name, to: S[h.to].name, kind: 'mixed', soft: false, text });
       continue;
     }
-    notes.push(note(C.NOTES.optional, S[e.from].name, S[e.to].name, { fallback: S[e.to].role.fallback }));
+    doc(e, 'optional', note(C.NOTES.optional, S[e.from].name, S[e.to].name, { fallback: S[e.to].role.fallback }));
   }
   // Hard dependencies stated explicitly (prefer callees that could have had a fallback).
-  const hardCands = edges.filter(e => !e.soft && e.from !== 'gateway' && !added.includes(e) && !mixedUsed.has(e));
+  const hardCands = edges.filter(e => !e.soft && e.from !== 'gateway' && !added.includes(e) && !revised.includes(e) && !mixedUsed.has(e));
   const hardPicked = rs.sample([...hardCands.filter(e => C.ROLE[e.to].fallback), ...hardCands.filter(e => !C.ROLE[e.to].fallback)].slice(0, Math.max(K.hardNotes, 3)), K.hardNotes);
-  for (const e of hardPicked) notes.push(note(C.NOTES.hard, S[e.from].name, S[e.to].name, { what: S[e.to].role.what, ver: S[e.from].oldVer }));
+  for (const e of hardPicked) doc(e, 'hard', note(C.NOTES.hard, S[e.from].name, S[e.to].name, { what: S[e.to].role.what, ver: S[e.from].oldVer }));
   // Aliases that only appear in prose.
   const legacyRefd = [...new Set(edges.filter(e => e.ref === 'legacy').map(e => e.to))];
   const proseAliasKeys = rs.sample(legacyRefd.length >= K.proseAliases ? legacyRefd : [...legacyRefd, ...serving.map(s => s.key).filter(k => !legacyRefd.includes(k))], K.proseAliases);
@@ -1015,13 +1071,15 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
     noisy: noisy.map(s => s.name),
     services: order.map(s => s.name),
     firstHopCallers: root.callers.filter(e => !e.soft).map(e => S[e.from].name),
-    softEdges: edges.filter(e => e.soft).map(e => [S[e.from].name, S[e.to].name, e.silent ? 'silent' : 'mixed']),
+    softEdges: edges.filter(e => e.soft).map(e => [S[e.from].name, S[e.to].name, e.silent ? 'silent' : 'mixed', e.provider ? S[e.provider].name : null]),
     warnSev: serving.filter(s => s.sev === 'warn').map(s => s.name),
     herrings: { ...herrings, deploys: herrings.deploys.map(k => S[k].name), chronic: herrings.chronic.map(h => ({ svc: h.svc, cls: h.cls, n: h.n })), decoys: herrings.decoys.map(d => ({ svc: d.svc, t: d.t, n: d.n })) },
     decoyBelowRoot: D ? D.name : null,
     anonymous: anon ? anon.name : null,
     ticketFeatures: { impacted: impactedFeatures, reported: impacted.has('gateway') ? features : [] },
     added: added.map(e => [S[e.from].name, S[e.to].name]),
+    edgeDocs,
+    revised: revised.map(e => [S[e.from].name, S[e.to].name, e.soft ? 'soft' : 'hard']),
     stale: stale.map(x => [S[x.from].name, S[x.to].name]),
     aliasDoc,
     idsByTag,
@@ -1047,8 +1105,8 @@ export function renderPrompt() {
     '{',
     '  "root_service": the canonical name (as written in the Service column of the dependency table) of the service where the fault started,',
     '  "fault_class": one of the class ids below,',
-    '  "first_bad_timestamp": ISO-8601 UTC timestamp such as "2026-03-14T10:22:31Z": when the fault began, i.e. the timestamp of the earliest line in the root service that shows the fault itself. Advance warnings that something will happen later, and short anomalies that recovered on their own before the incident, do not count. For a gradual fault this is the first line where the abnormal trend is visible, not the moment it became fatal,',
-    '  "impacted_services": canonical names of every service whose own requests or operations failed because of this fault, including the root. A service that only switched to a fallback and kept serving successfully is not impacted; a service with errors unrelated to this fault is not impacted,',
+    '  "first_bad_timestamp": ISO-8601 UTC timestamp such as "2026-03-14T10:22:31Z": when the fault began, i.e. the timestamp of the earliest line in the root service that shows the fault itself. Advance warnings that something will happen later, and short anomalies that recovered on their own before the incident, do not count. For a gradual fault this is the first line where the abnormal trend is visible, not the moment it became fatal. For a release or configuration change it is the first line where the new release or configuration is in use, a canary included,',
+    '  "impacted_services": canonical names of every service whose own requests or operations failed because of this fault, including the root. A service that only switched to a fallback and kept serving successfully is not impacted (but it is impacted if its fallback failed as well); a service with errors unrelated to this fault is not impacted,',
     '  "evidence_line_ids": up to 20 line ids (e.g. "L0123") that best support the diagnosis',
     '}',
     '',
