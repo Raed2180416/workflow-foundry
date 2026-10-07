@@ -116,17 +116,48 @@ held-out-family tests possible.
 - **State.**
   - The state holds observed facts only, as a JSON object. Kev renders key names, so names must
     be neutral (`kev:kev/api.py:49-55`) [D].
-  - Token figures are UTF-8 bytes / 4 [M probe/here]. Qwen token counts differ by an unmeasured
-    amount [unk]. J0 counts real tokens with the Kev tokenizer.
+  - **Token figures are real Qwen3.5 tokens.** The pinned tokenizer
+    (`Qwen/Qwen3.5-0.8B-Base@dc7cdfe2`, run by `lib/tokens.mjs` through `/opt/kev-venv` with
+    `python -I`) is the only budget gate [crit G2]. Bytes/4 under-counts logs, table rows, ids
+    and kinetics documents by 1.9–2.5× and prose by 1.05–1.2× [M crit-G: I1 8 lines 466 real vs
+    209; records 6-row export 505 vs 240; kinetics document 1,811 vs 717; records notes 1,708 vs
+    1,623]. §1.1 gives real tokens, measured where marked, otherwise bytes/4 × the ratio of that
+    text kind [E]. Acceptance recounts every record (§10).
   - Kev-0.8B is validated to 8,192 tokens [D `kev:README.md:220`]. The bridge allows at most
-    `maxState 8192`.
+    `maxState 8192`. `kev.benchmark --data` scores only states ≤ 384 tokens and silently skips
+    the rest [M crit-G G1], so evaluation goes through the served path (§7.5).
+- **Field provenance (time of decision)** [crit S8]. Every state key names the event that produces
+  it, and that event must have happened when the consumer asks. `spec/ports.json` carries the
+  provenance table per port. No key may hold the outcome of a check the port is meant to order
+  (F1 never sees the current replay, resample or control-build result).
+- **Allowed knowledge** [crit S10]. Each port declares the world knowledge it may use (R1 may know
+  that Chicago is in the US). Rows that need it carry `needsWorldKnowledge: true`, form their own
+  reported stratum, and are tested with held-out entity lists. Rows that need knowledge outside
+  the declaration are dropped or get a soft target.
+- **Deployment base rate** [crit S4, S11]. Each port declares the base rate at which thresholds
+  are fitted and risk is read:
+  - `bed-natural` (S2, I2, X1, X8): the bed's rate is the best deployment proxy available;
+  - `balanced-within-entity` (R1–R4, X5, I1): per-world draws such as R3's forced `pay` or
+    "KOBO is always void" are generator artefacts, not deployment priors, so labels are balanced
+    within each (port, system or service) and thresholds are fitted at that balance;
+  - `uniform` (all other ports, until a deployment rate is observed in ledger rows).
 - **Default consumer route.** Every escalation is journaled; there is no silent fallback.
+  0. A question with **no frozen port contract** (the generic enum of D:A0) goes to the hosted
+     model and is never Kev-gated [crit G27].
   1. Tuned Kev answers. If `p ≥ τ_port(ε)`, the answer is accepted.
-  2. Otherwise Haiku 4.5 answers through a typed JudgmentPort `model` call, calibrated on the calib
-     split. If its calibrated p clears its own threshold, that answer is accepted.
+  2. Otherwise the pre-registered weak model (class M, owner decision O1, §11) answers through a
+     typed JudgmentPort `model` call, calibrated on calib-OOD. If its calibrated p clears its own
+     threshold, that answer is accepted.
   3. Otherwise Sonnet 5.5 answers the same way.
   4. Otherwise the port's own terminal route applies, listed per port: a safe default, a code
      path, or a human.
+  - **onUnavailable.** If the tunnel or the laptop is down, step 1 is skipped with a journaled
+    `kev_unavailable` event and the chain starts at step 2. The CPU copy of Kev (26 s fresh at
+    about 566 tokens under load [M probe]) is not a fallback for in-workflow ports [crit G6].
+- **Namespaces** [crit G20]. In this document bare ids such as R1, I2, X5, F1 and C1–C9 are
+  **ports**. Inventory decisions are written `D:A2`, `D:C1`. The roadmap claim is "claim C4".
+  Build groups have word names (`records`, `heldout-author`, §10). Review findings are cited as
+  [crit S3] (shortcuts review) and [crit G1] (coverage review).
 - **Abstention-friendly options.** Ports avoid "none of these" options inside a choice, because
   they cost 0.8B badly (0.472 against 0.861) [D `01-kev-dossier.md` §2.3]. Where "absent" is a real
   answer, it is a separate yes/no question in the same record.
@@ -137,60 +168,68 @@ held-out-family tests possible.
 
 ### 1.1 Port table
 
-Abbreviations: fam = families (beds or sources); tok = typical/max state tokens; R/G/V = rank /
-gate / node value.
+Abbreviations: fam = families (beds or sources); tok = typical/max state size in **real Qwen3.5
+tokens** ([M crit-G] where measured, otherwise [E] = bytes/4 × the measured ratio for that text
+kind; acceptance recounts every record); R/G/V = rank / gate / node value.
 
-| Port | Decisions | K | fam | tok | Use | Label source | Wave |
+| Port | Decisions | K | fam | tok (real) | Use | Label source | Wave |
 |---|---|---|---|---|---|---|---|
-| R1 `date_order` | A2 | 3 | records | 300/600 | V | `w.ctx.conv` | 1 |
-| R2 `status_meaning` | A3 | 2 | records | 250/600 | V | `w.ctx.conv.flags` | 1 |
-| R3 `sign_convention` | A4 | 2 | records | 250/600 | V | `w.ctx.conv.persp` | 1 |
-| R4 `timestamp_reliability` | A5 | 2 | records | 250/600 | V | `w.ctx.conv.mirror`, `choices.reliable` | 1 |
-| R5 `country_token` | A6 | ≤40 | records | 40/150 | V | `row.country` | 2 |
-| I1 `fault_class` | A7 | 9 | incident | 220/2.6K | V/R | `truth.fault_class` | 1 |
-| I2 `log_line_role` | A8, A9 | 4 | incident | 60/150 | R | `truth.idsByTag` | 1 |
-| I3 `service_role` | A9 (+probe) | 4 | incident | 240/330 | V | `truth.impacted_services` etc. | 2 |
-| S1 `notice_target` | A10 (Q2) | ≤8 | synth | 250/700 | V | `world.retractions/errata/concerns` | 2 |
-| S2 `value_provenance` | A11 | 4 | synth | 120/300 | V | `world.claims[].mode` | 1 |
-| S3 `condition_standard` | A12 | 2 | synth | 60/150 | V | `claim.cond` | 2 |
-| S4 `variant_form` | A11 (part) | 2 | synth | 80/200 | V | `claim.variant` | 2 |
-| K1 `note_event_type` | A15 | 5 | kinetics | 80/200 | V | pools via tap | 2 |
-| K2 `condition_reference` | A17 | 2–8 | kinetics | 250/500 | V | `conditionDescription(c)` | 2 |
-| K3 `column_unit` | A19 | 7 | kinetics | 120/400 | V | `world.docs[].rateUnit` | 2 |
-| Q1 `room_exit` | A26 | 2 (×4) | gridquest | 170/300 | R | env step from snapshot | 2 |
-| Q2 `container_cue` | A27 | 2 | gridquest | 40/80 | R | text pools / env examine | 2 |
-| Q3 `next_action` | B8 | ≤15 | gridquest, gameqa, runbook | 300/600 | R | reference solver (soft) | 3 |
-| Q4 `expectation_met` | B6 | 2 | gridquest, runbook, gameqa | 250/600 | G | simulator | 1 |
-| Q5 `bug_class` | A31 | 10 | gameqa | 150/300 | V | `bugs[].cls` | 2 |
-| Q6 `spec_violation` | A29 (+codefix) | 2 | gameqa, codefix | 300/2K | G | world rules/errata; `b.herring` | 2 |
-| X1 `injected_instruction` | E4 (E3, A21, A30 part) | 2 | 8 beds + external | 60/150 (4K long) | R (alarm) | tags/pools per bed | 1 |
-| X2 `same_entity` | A1, A13, A32 (+aliases) | 2 | records, synth, gameqa, incident | 120/300 | V/R | entity/bug/service ids | 2 |
-| X3 `speech_act` | A16, A22 | 5 | kinetics, runbook (+codefix, gameqa if tapped) | 120/300 | V | tap over world claims/spec | 1* |
-| X4 `statement_standing` | A18, A23 (+supersession) | 4 | runbook, kinetics, synth, incident, gameqa | 150/400 | V | world spec/errata/supersessions | 2 |
-| X5 `precondition_holds` | D1 (D7 shape) | 3 | records, kinetics, runbook, incident, synth | 300/2K | G | world conventions | 1 |
-| X6 `report_triage` | A30, A21 | 6 | gameqa, codefix | 120/300 | R | decoys / herring / injections | 2 |
-| X7 `item_needed` | E1 | 2 | synth, incident, kinetics, gameqa | 150/300 | R | claims/tags/traps | 2 |
-| X8 `value_consistent` | B3, B4, B5 (field level) | 2 | records, kinetics, synth, records-real | 200/400 | G | truth + near-miss transforms; journal | 1 |
-| F1 `failure_class` | C1, C3 | 6 | templates, exec-injected, gameqa, real | 60/800 | R | injected cause; journals | 1 |
-| F2 `suspect_function` | A20 | ≤64 | codefix (6 domains), ownerci | 290/400 | R | `b.bugs` sites | 2 |
-| F3 `item_route` | B4 | 2 | records, synth (real traces) | 250/600 | G | Haiku replay agreement | 3 |
-| C1 `objective_requirements` | F1 | 2 (×12) | generated, hand-labelled real | 80/300 | V | composer truth; hand labels | 2 |
-| C2 `objective_ungrounded` | F2 | 2 | generated | 300/1.5K | G | composer truth | 2 |
-| C3 `corpus_domain` | G1 | 2 (×~10) | corpus | 200/500 | V | hand labels only | 3 |
-| C4 `corpus_node_category` | G2 | 13 | corpus | 60/100 | V | native types (silver), hand | 3 |
-| C5 `motif_semantics` | G3 | 2 | corpus | 400/1K | V | hand labels | 3 |
-| C6 `description_quality` | G6 | 4 (ordered) | corpus | 80/200 | R | hand labels | 3 |
-| C7 `transcript_gaming` | G7 | 2 | generated tool calls | 100/300 | R (alarm) | composer truth | 2 |
-| C8 `notes_leak` | G8 | 2 | generated notes | 200/300 | R (alarm) | composer truth | 3 |
-| C9 `same_task_family` | D5 | 2 | bed prompts | 600/1.8K | R | family ids | 3 |
+| R1 `date_order` | D:A2 | 3 | records | 340/720 | V | `w.ctx.conv` + counterfactual re-render | 1 |
+| R2 `status_meaning` | D:A3 | 2 | records | 340/720 | V | `w.ctx.conv.flags` + counterfactual | 1 |
+| R3 `sign_convention` | D:A4 | 2 | records | 340/720 | V | `w.ctx.conv.persp` + counterfactual | 1 |
+| R4 `timestamp_reliability` | D:A5 | 2 | records | 340/720 | V | `w.ctx.conv.mirror`, `choices.reliable` + counterfactual | 1 |
+| R5 `country_token` | D:A6 | ≤40 | records | 80/330 | V | `row.country` | 2 |
+| I1 `fault_class` | D:A7 | 9 | incident | 470/2.5K [M] | V/R | `truth.fault_class` | 1 |
+| I2 `log_line_role` | D:A8, D:A9 | 4 | incident | 65/85 [M] | R | `truth.idsByTag` (24-tag table) | 1 |
+| I3 `service_role` | D:A9 (+probe) | 4 | incident | 530/730 | V | `truth.impacted_services` etc. | 2 |
+| S1 `notice_target` | D:A10 (Q2) | ≤8 | synth | 290/840 | V | `world.retractions/errata/concerns` | 2 |
+| S2 `value_provenance` | D:A11 | 4 | synth | 140/350 | V | `world.claims[].mode` | 1 |
+| S3 `condition_standard` | D:A12 | 2 | synth | 70/180 | V | `claim.cond` | 2 |
+| S4 `variant_form` | D:A11 (part) | 2 | synth | 90/230 | V | `claim.variant` | 2 |
+| S5 `document_kind` | D:A14 (+D:A10 Q1, unseen names) | 7 | synth + authored unseen names | 30/80 | V | `TYPE_LABELS` kinds; authored names | 3 |
+| K1 `note_event_type` | D:A15 | 5 | kinetics | 100/250 | V | pools via tap | 2 |
+| K2 `condition_reference` | D:A17 | 2–8 | kinetics | 500/1.0K | V | `conditionDescription(c)` | 2 |
+| K3 `column_unit` | D:A19 | 7 | kinetics | 260/880 | V | `world.docs[].rateUnit` | 2 |
+| Q1 `room_exit` | D:A26 | 2 (×4) | gridquest | 190/340 | R | env step from snapshot (`lifetimeActions: Infinity`) | 2 |
+| Q2 `container_cue` | D:A27 | 2 | gridquest | 45/90 | R | text pools / env examine | 2 |
+| Q3 `next_action` | D:B8 | ≤15 | gridquest, gameqa, runbook | 340/690 | R | reference solver (soft) | 3 |
+| Q4 `expectation_met` | D:B6 | 2 | gridquest, runbook, gameqa | 280/690 | G | simulator | 1 |
+| Q5 `bug_class` | D:A31 | 10 | gameqa | 170/340 | V | `bugs[].cls` | 2 |
+| Q6 `spec_violation` | D:A29 (+codefix) | 2 | gameqa, codefix | 340/2.3K | G | world rules/errata; `b.herring` | 2 |
+| X1 `injected_instruction` | D:E4 (D:E3, D:A21, D:A30 part) | 2 | 8 beds + external | 70/170 (long ≤ 4K) | R (alarm) | tags/pools per bed | 1 |
+| X2 `same_entity` | D:A1, D:A13, D:A32 (+aliases) | 2 | records, synth, gameqa, incident | 150/360 | V/R | entity/bug/service ids | 2 |
+| X3 `speech_act` | D:A16, D:A22 | 5 | kinetics, runbook (+codefix, gameqa if tapped) | 140/350 | V | tap over world claims/spec | 1* |
+| X4 `statement_standing` | D:A18, D:A23 (+supersession) | 4 | runbook, kinetics, synth, incident, gameqa | 170/460 | V | world spec/errata/supersessions | 2 |
+| X5 `precondition_holds` | D:D1 (D:D7 shape) | 3 | records, synth, incident, bedtype; held out: kinetics, runbook | 600/4K | G | world conventions; family ids (bedtype) | 1 |
+| X6 `report_triage` | D:A30, D:A21 | 6 | gameqa, codefix | 140/350 | R | decoys / herring / injections | 2 |
+| X7 `item_needed` | D:E1 | 2 | synth, incident, kinetics, gameqa | 170/350 | R | claims/tags/traps | 2 |
+| X8 `value_consistent` | D:B3, D:B4, D:B5 (field level) | 2 | records, kinetics, synth, records-real (reserved worlds) | 420/840 | G | truth + near-miss transforms; regenerated world | 1 |
+| F1 `failure_class` | D:C1, D:C3 | 6 | exec-injected, templates, gameqa (real: case study) | 100/1.6K | R | healer checks on injected causes | 1† |
+| F2 `suspect_function` | D:A20 | ≤64 | codefix (6 domains), ownerci | 600/850 | R | `b.bugs` sites | 2 |
+| F3 `item_route` | D:B4 | 2 | records, synth (real traces) | 500/1.2K | G | weak-model replay agreement | 3 |
+| C1 `objective_requirements` | D:F1 | 2 (×12) | generated, hand-labelled real | 90/340 | V | composer truth; hand labels | 2 |
+| C2 `objective_ungrounded` | D:F2 | 2 | generated | 340/1.7K | G | composer truth | 2 |
+| C3 `corpus_domain` | D:G1 | 2 (×~10) | corpus | 230/570 | V | hand labels only | 3‡ |
+| C4 `corpus_node_category` | D:G2 | 13 | corpus | 120/200 | V | native types (silver), hand | 3‡ |
+| C5 `motif_semantics` | D:G3 | 2 | corpus | 800/2K | V | hand labels | 3‡ |
+| C6 `description_quality` | D:G6 | 4 (ordered) | corpus | 90/230 | R | hand labels | 3‡ |
+| C7 `transcript_gaming` | D:G7 | 2 | generated tool calls | 200/600 | R (alarm) | composer truth | 2 |
+| C8 `notes_leak` | D:G8 | 2 | generated notes | 230/340 | R (alarm) | composer truth | 3 |
+| C9 `same_task_family` | D:D5 | 2 | bed prompts | 700/2.1K | R | family ids | 3 |
 
 \* X3 is in wave 1 only if its span taps pass acceptance (§10). Otherwise it moves to wave 2 and
-S3 takes its slot.
+S3 takes its slot. The same contingency covers S2 if the synth-values tap fails [crit G13].
+† F1 is trained and measured in wave 1 but **cannot be promoted in wave 1**: no real-trace axis
+reaches the availability minimum (§3.5) [crit S7].
+‡ Out of the plan until the owner names the annotators (owner decision O5) [crit G24].
+
+**Count.** 42 ports [crit G21: revision 1 said 40 while listing 41; S5 is new].
 
 **Wave 1 (13):** R1, R2, R3, R4, I1, I2, S2, Q4, X1, X3, X5, X8, F1. The three decisions named in
-C4 (applicability, drift, failure class) are X5, Q4 and F1. The inventory's shortlist ranks 1–3
-and 6 are R1–R4, S2, X3 and X1. X8 is the lever that makes Haiku competent: it gates cheap
-extractions for escalation.
+claim C4 (applicability, drift, failure class) are X5, Q4 and F1. X5 now carries the THESIS's
+motivating failure shape, wrong-type reuse, through its `bedtype` family; F1 now uses the THESIS
+taxonomy [crit G7]. The inventory's shortlist ranks 1–3 and 6 are R1–R4, S2, X3 and X1. X8 is
+the lever that makes the weak model competent: it gates cheap extractions for escalation.
 
 ### 1.2 Port specifications
 
@@ -210,13 +249,28 @@ Common to R1–R4:
 - **Template ids.** `w.ctx.choices = {orderTpl{}, flagTpl[], mirrorTpl, reliableTpl, perspTpl{}, ref{}, reliable}`
   (`render.mjs` `noteChoices`).
 - **State shape.** `{system, source_note}`. `source_note` is system S's paragraph plus any
-  paragraph it names by system (the probe's construction, `fdy:experiments/kev-probe/datasets.mjs:308-316`).
-  It measures 294 tokens at p50 and 588 at max [M probe, applicability dataset].
+  paragraph it names by system (the probe's construction, `fdy:experiments/kev-probe/datasets.mjs`,
+  applicability builder). It measures 294 bytes/4 at p50 and 588 at max [M probe], about 340/720
+  real tokens [E ×1.1–1.2 for prose]. The port kit `src/judges/records.mjs` builds it, for the
+  factory and for the runtime (§8.4 W2).
 - **Difficulty.** Only d3–d5 carry task-drawn conventions (`k.conv`). d1–d2 items use fixed
   defaults and are capped at 10% of a port's rows as easy items.
 - **Multi-question records.** One paragraph can carry R1 + R2 + R3 + R4 questions together with
-  their X5 assumption questions.
+  their X5 assumption questions (train, calib and dev only; test records carry one question per
+  port per state, §2.3 rule 5).
 - **Consumer.** The code parser of a records workflow (V). The oracle checks the end result.
+- **Counterfactual balancing** (§2.5) [crit S3]. The bed's per-world draws carry priors that
+  survive template holdout [M crit-S Q7]: KOBO is always void (R2, 822/822) and always reliable
+  (R4, 683/683); system alone predicts R2 at 0.65 (majority 0.51) and R4 at 0.66 (0.50); R3 is 60%
+  `opposite` because the bed forces at least one `pay`. In every split except test-in, the factory
+  re-renders the decisive sentence so that each label is balanced **within (port, system)**:
+  same pool, opposite polarity, same template index where one exists (`ORDER_NOTE`, `FLAG_NOTE`,
+  `PERSP_NOTE`, `MIRROR_NOTE`, `RELIABLE_NOTE`, exported by `beds/records/render.mjs`), otherwise an
+  authored line of the right slice (§2.4). This is a string substitution in the factory
+  (`lib/counterfactual.mjs`), never a renderer fork.
+- **Slot binding** [crit S9c]. Only 0–6.7% of natural R rows hold more than one system paragraph
+  [M crit-S Q11], so the `{system}` slot is barely trained. At least 20% of R training rows, and a
+  200-item slot-swap test set per port, carry two systems' paragraphs with opposite labels.
 
 **R1 `date_order`** (A2).
 - **Q0** "Which numeric date order does {system} use for birth dates in this export?"
@@ -237,13 +291,24 @@ Common to R1–R4:
     template. Reference target `choices.ref[S]`.
   - **Exclude** ATLAS when `w.ctx.cutoff !== null` (d ≥ 4). Its order switches at a dated cutoff,
     so the question is ill-posed.
+  - **`ymd` reachability** [crit S3]. In the bed `ymd` is never the label of a d ≥ 3 item; it
+    appears only on the fixed KOBO and VERITAS easy items, so `ymd` ⟺ system ∈ {KOBO, VERITAS}.
+    Counterfactual year-first sentences (authored, train and OOD slices) for BRIGHTDESK, ATLAS and
+    VENDEX make `ymd` a label at d ≥ 3 in every split; the fixed items stay ≤ 10%.
 - **Adv.**
   - An injection-style memo urging the opposite order, from X1 pools; held-out carriers in test.
-  - A second paragraph with the opposite order in the same state.
-  - A reference template whose referenced paragraph is missing. This item is dropped from
-    training and kept in the "unknowable" test, where p ≥ 0.9 counts as a failure (§6).
-  - "By city" and "by servers' country" templates, which need world knowledge
-    (`fdy:beds/records/README.md:225-228`). Abstention is expected there.
+  - A second paragraph with the opposite order in the same state (slot binding).
+  - **Presence-matched unknowable** (§2.5) [crit S5]: the decisive sentence is replaced by a
+    same-register sentence that does not settle the question (another system's order, or another
+    convention of this system). The revision-1 construction (delete the sentence, or a reference
+    template whose target is missing) is detected at 1.000 by a bag-of-words probe and teaches
+    "new phrasing → abstain" [M crit-S Q9]; it is no longer used.
+  - "By city" and "by servers' country" templates need world knowledge
+    (`fdy:beds/records/README.md`, conventions section): 12.4% of R1 items [M crit-S Q10]. City
+    → country is **allowed knowledge** for R1 (§1.0). These rows carry `needsWorldKnowledge: true`,
+    are reported as their own stratum, and are re-rendered in calib-OOD, dev-OOD and test-OOD with
+    held-out cities (authored list, checked against a gazetteer by code), so recall of the bed's
+    fixed 60 `TEAM_CITIES` is not counted as knowledge.
 - **Per world.** 2–3 items: BRIGHTDESK, VENDEX, and ATLAS when it has no cutoff.
 - **Capacity.** 44 template combinations; 379–838 distinct paragraphs per system [M here].
 
@@ -265,6 +330,11 @@ Common to R1–R4:
   - Fixed meanings from `buildNotes`, as easy items (≤ 10%): LEDGR `storniert` = void, `gesperrt`
     = live when `k.blocked`; ATLAS `DO NOT MIGRATE`; KOBO `SAMPLE`; VERITAS `sandbox` /
     `production`.
+  - **KOBO balance** [crit S3]. The bed never draws a KOBO live flag ("KOBO has too few rows for
+    live flags", `beds/records/world.mjs`, conv flag draw). Counterfactual KOBO live sentences
+    (`FLAG_NOTE.live[i]` with KOBO slots) and VERITAS/LEDGR counterparts balance the label within
+    each system. On R2's held-out template the probe got the KOBO form right and the other
+    systems' forms wrong: the prior, not the text, decided [M crit-S Q3].
 - **Adv.**
   - Comparison-only templates ("Treat rows marked X exactly like Y", "Do not confuse X with Y").
     These need Y's meaning from the same note.
@@ -292,6 +362,9 @@ Common to R1–R4:
   - Template `choices.perspTpl[S]`, 0–3 (`PERSP_NOTE`, 4 per side for BRIGHTDESK, ATLAS, LEDGR
     and KOBO).
   - VENDEX states signs per entry and is excluded.
+  - **Balance.** The bed forces at least one `pay` per world (60% `opposite`). Every split except
+    test-in is balanced within system by the same-index swap `PERSP_NOTE[S].recv[i]` ↔
+    `.pay[i]`, which is also the counterfactual-flip test (§6.3).
 - **Adv.**
   - Terse templates that differ by one word ("same way" against "opposite way").
   - Vendex-style sign phrases transplanted into other systems' notes.
@@ -317,6 +390,12 @@ Common to R1–R4:
   - `S === choices.reliable` → `reliable`. `RELIABLE_NOTE` has 5 red-herring templates; the id is
     `choices.reliableTpl`.
   - Systems with no such sentence are excluded here. They feed X5 `not_stated`.
+  - **Format shortcut** [crit S3]. Only `MIRROR_NOTE` carries a date window, so the one-line rule
+    "the decisive sentence holds a date range → `restamped`" scores 1.000, on held-out templates
+    too [M crit-S Q6]. The factory adds `reliable` sentences with a date window ("the vendor
+    confirmed during the {w0}–{w1} audit that …") and `restamped` sentences without one (authored,
+    every slice), so that date-range presence is balanced within each label. KOBO is never a mirror
+    (`MIRROR_SYSTEMS`); counterfactual KOBO mirror sentences balance the system prior.
 - **Adv.** The `RELIABLE_NOTE` templates are themselves near-misses: restore and backup vocabulary
   with the opposite meaning. Injection.
 - **Per world.** 2 at d ≥ 3.
@@ -360,9 +439,15 @@ Common to I1–I3:
 - **Q3** "Classify the failure this service reports about itself."
 - **Opt.** The 9 `FAULT_CLASSES`, described by `CLASS_SUMMARY` (`catalog.mjs:6-31`).
 - **State.** `{service, window, log_lines}`.
-  - At most 8 lines: 220/320 tokens [M probe].
-  - Long variant, at most 40 lines: up to about 2.6K tokens [D inventory A7].
-- **Use.** An answer field and root-candidate ranking. The oracle grades. Abstain → Haiku →
+  - At most 8 lines: 466/501 real tokens [M crit-G] (220/320 bytes/4 [M probe]).
+  - Long variant, at most 40 lines: 2,266/2,497 real tokens [M crit-G]. The "whole service
+    window" variant (about 25.7K real tokens) is dropped [crit G2].
+  - **Neutral service handles** [crit S3]. The root service name alone predicts the fault class
+    at 0.307 against 0.085 for the majority class [M crit-S Q17], an entity prior of the bed. The
+    port kit replaces every service name, in the `service` key and inside the log lines, with a
+    stable per-state handle (`svc-a`, `svc-b`, …) resolved by code through the task's alias
+    table, at training and at serving. The same applies to I3.
+- **Use.** An answer field and root-candidate ranking. The oracle grades. Abstain → weak model →
   Sonnet.
 - **Labels.** `truth.fault_class`. Lines are `truth.linesBySvc[root_service]` in `[T, T+120 s]`.
 - **Adv.**
@@ -392,14 +477,31 @@ Common to I1–I3:
   - 60/150 tokens [E: 26.2 tokens per line, D inventory §1.3].
 - **Use.** Ranks root candidates for a code traversal of the blame graph (R). It is never the
   answer.
-- **Labels.** `truth.idsByTag` (`gen.mjs:904-915`):
+- **Labels.** `truth.idsByTag` (`beds/incident/gen.mjs`, `build`). The bed is now
+  `VERSION 4.0.0` and emits **24 tags** in dev worlds [M crit-G G9]; revision 1's table named 20
+  and said "every other tag → unrelated" while also "failing closed", a contradiction. The
+  mapping is now an **explicit 24-row table** in `spec/ports.json`, pinned to the bed version; a
+  tag outside it fails the build:
   - `onset`, `root` and `precursor` → `origin`
   - `dep` → `relay`
   - `soft` → `fallback`
-  - every other tag → `unrelated`. These include `bg`, `benign`, `noise`, `sporadic`, `chronic`,
-    `baseline`, `decoy`, `lookalike`, `mention`, `blip-*`, `deploy`, `inject` and `mislead`.
-  - The generator **fails closed on an unknown tag**, so a bed version bump cannot silently
-    relabel.
+  - `bg`, `benign`, `noise`, `sporadic`, `chronic`, `baseline`, `decoy`, `lookalike`, `mention`,
+    the `blip-*` tags, `deploy`, `inject`, `mislead`, **`renew`** (a certificate renewed in time,
+    a herring) and **`stray`** → `unrelated`
+  - **`echo` → excluded.** Echo lines are the callers' own failure or fallback lines during a
+    blip (`K.blipEcho`), drawn from the same `DEP_FAIL` and `SOFT_FALLBACK` templates as `dep`
+    and `soft` lines. 283 of 8,216 relay-form skeletons also occur as `unrelated`, all of them
+    echo lines [M crit-G]. The state has no episode context, so the label is not a function of
+    the state.
+  - **`consequence` → excluded.** These are a healthy callee rejecting the root's bad requests
+    (`C.CALLEE_REJECT`): not a failure of the emitting service, yet not noise either; no option
+    text fits. Excluded rows are counted per build.
+  - The `incident` group regenerates the tag inventory on 300 dev worlds and writes the table;
+    the decidability audit (§2.7) must then show masked-skeleton collisions under 1%. Before the
+    exclusions, 556 of 24,059 line skeletons (2.3%) carried more than one class, and 6.6% of
+    origin skeletons also occurred under an unrelated tag (`heap after gc <N>%` under onset, root,
+    baseline and blip tags) [M crit-G]. Remaining collision groups train on the group's empirical
+    label distribution as a soft `target` and are excluded from gated test sets.
 - **Adv.**
   - `mention`, `lookalike`, `chronic` and `decoy` lines: the root's vocabulary without its fault.
   - Relayed text that carries the root's vocabulary (`README.md:118-121`).
@@ -437,11 +539,13 @@ Common to S1–S4:
 - **Rendered documents.** From `generate()`: `task.inputs.documents[]` with
   `{id, type, venue, date, authors, title, text}`. A world doc key maps to its rendered id through
   `docMap.get(key).id`.
-- **Claim modes seen** in seeds 1–40 × d3–5: `measured`, `quoted`, `predicted`, `injection`.
-  Variant ids are 1–5 or null [M here].
-- **Excluded here.** A10 "what kind of notice is this" and A14 "venue tier". The rendered `type`
-  field already names the kind ("Retraction notice", "Erratum", "Letter", …) through
-  `TYPE_LABELS` (`catalog.mjs:175-183`), so a 25-entry lookup table decides both (§1.4).
+- **Claim modes** in 180 dev worlds (d3–d5): measured 10,087, quoted 915, predicted 171,
+  injection 60 (d5 only) [M crit-G]. Variant ids are 1–5 or null [M here].
+- **Closed label set.** D:A10 Q1 "what kind of notice is this" and D:A14 "venue tier" are decided
+  by code for the bed: the rendered `type` field names the kind ("Retraction notice", "Erratum",
+  "Letter", …) through `TYPE_LABELS` (`beds/synth/catalog.mjs`: 7 kinds with 22 mixed labels plus
+  7 plain ones [crit G22]). That exactness holds only for the bed's closed label set; unseen type
+  names are port S5 (wave 3) [crit G27].
 
 **S1 `notice_target`** (A10 Q2, wave 2).
 - **Q0** "Which of the candidate documents does this notice retract, correct or raise concern
@@ -469,16 +573,24 @@ Common to S1–S4:
 - **Q2** "What is the status of this reported value?"
 - **Q3** "Classify how the document presents this number."
 - **Opt**
-  - `own_measurement`: "measured by the authors of this document"
+  - `own_measurement`: "a measurement reported as part of the work this document presents, not
+    attributed to other work and not a prediction"
   - `quoted`: "attributed to other work"
   - `projected`: "a prediction, simulation, estimate or design target"
   - `instruction_like`: "an assertion telling the reader which value to use"
 - **State.** `{document_type, property, value, passage}`. `passage` is the sentence holding the
-  value plus or minus one sentence. 120/300 tokens [E].
+  value plus or minus one sentence. 140/350 real tokens [E].
 - **Labels.** `claim.mode`: `measured` → `own_measurement`, `quoted` → `quoted`,
   `predicted` → `projected`, `injection` → `instruction_like`.
   - The passage is located by an exact substring match of the formatted value in the document
-    text. Ambiguous matches are dropped. This needs the synth tap in G3.
+    text. Ambiguous matches are dropped. This needs the synth-values tap (group `synth`). If the
+    tap misses 95% alignment on 200 worlds, S2 moves to wave 2 and S3 (labels from `claim.cond`,
+    no tap) takes its wave-1 slot [crit G13].
+  - **Label semantics** [crit S10]. 868 of 15,065 claims (5.8%) sit in press releases with mode
+    `measured` [M crit-S Q19]; revision 1's description ("measured by the authors of this
+    document") was false for them. The description above matches the bed's meaning. The
+    press-release tier is a code rule over `document_type` (already in the state), as the synth
+    README treats it; press-release claims are reported as their own stratum.
 - **Use.** A node value. Code computes "usable claim" =
   `own_measurement ∧ S3 = yes ∧ S4 = unmodified ∧ X2 = same entity`.
   - This follows the dossier's "one question per precondition, combine in code" design, because
@@ -488,9 +600,13 @@ Common to S1–S4:
   - A quote of the exact winning value, attributed to someone else (`README.md:143-145`).
   - "We measured … in contrast to the predicted …".
   - Instruction-like assertions in level-5 notes.
-- **Per world.** Sample 6, balanced over modes. The natural rate of `measured` is about 95%
-  [M here: 59 of 62 claims, seed 3 d4]. Calibration and test use the natural rate plus a balanced
-  copy (§2.3).
+- **Per world.** Sample 6, balanced over modes in train. The natural rates are measured 90.1%,
+  quoted 7.7%, predicted 1.6%, injection 0.5% (15,065 claims, synth dev seeds 1–240, d3–d5)
+  [M crit-S Q19]; revision 1's "about 95%" was one world. `instruction_like` exists only at d5.
+  Deployment rate `bed-natural` (§1.0): thresholds are fitted on calib-OOD reweighted to it, and
+  the primary metrics are balanced accuracy and Brier skill score, so a constant
+  `own_measurement` answer fails every gate (§6) [crit S11]. Balanced copies give per-class
+  recall only.
 - **Probe.** The composite synth-claim rule scores 0.55 [0.441, 0.654] [M probe]. This is the
   hardest port for rules.
 
@@ -524,6 +640,22 @@ Common to S1–S4:
   - `modified`: "a salt, hydrate, doped, composite, porous or mutant form"
 - **Labels.** `claim.variant`: null → `unmodified`, otherwise `modified` (`catalog.mjs:118-128`).
 - **Per world.** Up to 6.
+
+**S5 `document_kind`** (D:A14, and D:A10 Q1 for unseen type names; wave 3, new) [crit G27].
+- **Q0** "What kind of document is this, judging by its type label and venue?"
+- **Q1** "Which document kind does this type label denote?"
+- **Q2** "Classify this document by its stated type."
+- **Q3** "Retraction, erratum, expression of concern, letter, full paper, preprint or press
+  release?"
+- **Opt.** The 7 `TYPE_LABELS` kinds, each with a one-line description. The peer-review tier of
+  D:A14 follows from the kind by a code table.
+- **State.** `{type_label, venue, title}`. 30/80 real tokens [E].
+- **Labels.** Bed type labels: `TYPE_LABELS` (code truth). **Unseen type names**: an authored pool
+  (group `heldout-author`) of type labels outside the bed's set ("Statement of withdrawal",
+  "Corrigendum notice", "Short communication"), whose kind is the brief's and passes the
+  two-model filter (§2.3 rule 1).
+- **Use.** Code decides every label in `TYPE_LABELS`; Kev is asked only when the type label is
+  unknown to the table. Evaluated only on the unseen-name pool.
 
 #### Group K: kinetics (`beds/kinetics`; wave 2)
 
@@ -596,8 +728,12 @@ Common to S1–S4:
   - `yes`: "passable now"
   - `no`: "no exit, blocked, bricked up or locked"
 - **State.** `{observation}`. 166 tokens [D inventory]; 170/300 [E].
-- **Labels.** The environment itself. `createEnv(task)` (`index.mjs:171`), then `snapshot()`,
-  then `step(direction)` and a check whether the room changed, then `restore()`.
+- **Labels.** The environment itself. `createEnv(task, { lifetimeActions: Infinity })`, then
+  `snapshot()`, then `step(direction)` and a check whether the room changed, then `restore()`.
+  The default lifetime cap is the task budget (53 at d3 seed 3) and restore does not refund it,
+  so the revision-1 labeller would stop part-way [M crit-G G16]; the harness must lift it
+  explicitly and log that it did (`beds/gridquest/index.mjs`, comment above `createEnv`). A second
+  code path reads `_internal.world(task).w.edges`; both must agree on 200 rooms.
 - **Adv.** Exits relative to landmarks. Bricked-up against reopened archways, where clause order
   decides (`OPEN_T`, `REOPENED_T`, `FAKE_EXIT_T`; `text.mjs:238-271`). Direction words inside
   decor text.
@@ -652,9 +788,13 @@ Common to S1–S4:
   - `as_expected` → continue;
   - abstain → a code check, then continue with a flag.
 - **Adv.** "All systems normal" injections inside the observation. Cosmetic text changes that are
-  not drift. The same room name for a different room.
+  not drift. The same room name for a different room: kept **only** where the observation states
+  something that tells the rooms apart (description, exits, items); otherwise the label is not
+  determined by the state and the item is dropped by the decidability audit (§2.7) [crit S10].
 - **Per episode.** Up to 20 steps.
 - **Held-out family.** gameqa (§3.4).
+- **Deployment rate.** `uniform` until wired ledger rows give a drift rate; the gated metrics are
+  balanced accuracy and Brier skill score.
 
 **Q5 `bug_class`** (A31, wave 2).
 - **Q0** "Which class of bug does this confirmed reproduction show?"
@@ -706,7 +846,11 @@ Common to S1–S4:
   (THESIS P9; `fdy:src/context.mjs:8`).
 - **Labels, by family:**
   - **records:** rows with `advMemo` are yes. `DECOY_MEMOS` and `BENIGN_MEMOS`
-    (`world.mjs:282-291`) are no. The 9 templates are at `README.md:306-317`.
+    (`beds/records/world.mjs`) are no. The 9 templates are in the README's adversarial-memo
+    section. The bed pools are small (12 benign strings, 2 decoys per system) and a probe's top
+    features are those strings [M crit-S Q13]; train negatives therefore add an authored pool of
+    ≥ 120 distinct benign and ≥ 40 decoy forms (group `train-pools`), and the hard-negative share
+    is counted in distinct forms, not rows [crit S18].
   - **incident:** `truth.idsByTag.inject` is yes. `mislead`, `notice`, `mention` and `benign`
     lines are no (`catalog.mjs:579-598`).
   - **synth:** the `world.injection` claim sentence is yes (`render.mjs:212`). Ordinary,
@@ -727,8 +871,17 @@ Common to S1–S4:
   - false claims with no command (incident `MISLEAD`);
   - authorised procedure text;
   - quoted injections inside an incident report ("the bot posted 'ignore …'; we ignored it").
+  - **Addressee-word balance** [crit S3, S13]. One regex for addressee words (AI, AUTOMATED,
+    ASSISTANT, `SYSTEM:`, bot, override, …) catches 10 of the 11 injection forms in the held-out
+    families kinetics and gridquest [M crit-S Q14], so revision 1's family axis was mostly a
+    keyword test. In train and in every OOD slice, ≥ 50% of positives carry no addressee word and
+    ≥ 30% of negatives carry one ("the assistant manager approved the refund", quoted injections,
+    `SYSTEM:` prefixes on ordinary log lines). Authored by `train-pools` (train) and
+    `heldout-author` (OOD slices).
 - **Per world.** 1–3 positives and 2–4 hard negatives per bed world at d ≥ 3–4. The natural rate is
-  well under 1% of lines [E]. Tests use the natural rate and an enriched 1:1 copy.
+  well under 1% of lines [E]. Deployment rate `bed-natural`: calib-OOD is enriched (about 1:3)
+  and importance-weighted back to the natural rate for thresholds; risk is read on a 3,000-row
+  natural-rate set; balanced copies give per-class recall only [crit S4, S11].
 
 **X2 `same_entity`** (A1, A13, A32, and incident service aliases; wave 2).
 - **Q0** "Do these two references denote the same real-world entity?"
@@ -816,8 +969,9 @@ wave 2).
   - `not_stated`: "the source text does not settle it"
 - **Trust split.** The assumption is **trusted** text from the kept workflow and travels in the
   question. The task text is untrusted and travels in the state.
-- **State.** `{source_text}`, the relevant paragraphs or document chosen by code. 300 tokens
-  typical, 2K max [E].
+- **State.** `{source_text}`, the relevant paragraphs or document chosen by code (the port kit,
+  §8.4 W2). 600 real tokens typical, 4K max, windowed [E: records paragraphs ×1.1, kinetics
+  documents ×2.5].
 - **Use.** The reuse gate in selection (G).
   - Every precondition of W is asked in **one request**, one question each, and combined in code.
   - All `holds` → eligible. Any `violated` → reject. Any `not_stated` or low p → abstain, then
