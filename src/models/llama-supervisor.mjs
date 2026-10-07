@@ -33,7 +33,7 @@ async function getJson(url, timeoutMs = 2000) {
 
 export class LlamaSupervisor {
   constructor({ policy, binary = DEFAULT_LLAMA_BINARY, modelsDir = DEFAULT_MODELS_DIR, host = '127.0.0.1', ctx = 8192, threads = 4, parallel = 1,
-    startTimeoutMs = 120000, logDir = tmpdir(), stopOnExit = true, extraArgs = [] } = {}) {
+    startTimeoutMs = 300000, logDir = tmpdir(), stopOnExit = true, extraArgs = [] } = {}) {
     if (!policy?.models) throw new FoundryError('MODEL_POLICY_INVALID', 'LlamaSupervisor requires the model policy');
     if (host !== '127.0.0.1' && host !== 'localhost') throw new FoundryError('MODEL_REQUEST', 'Local model servers bind to loopback only');
     Object.assign(this, { policy, binary, modelsDir, host, ctx, threads, parallel, startTimeoutMs, logDir, stopOnExit, extraArgs: [...extraArgs] });

@@ -9,6 +9,10 @@ import { FoundryError } from '../../data.mjs';
 import { runProcess } from '../../process.mjs';
 import { isPolicyModel } from '../policy.mjs';
 
+// Thinking budget per reasoning level (MAX_THINKING_TOKENS for the CLI). Measured 2026-10-07: --effort
+// alone does not stop Haiku 4.5 from extended thinking on this route (5.2K output tokens per extraction
+// call at --effort low); MAX_THINKING_TOKENS=0 does (102 vs 307 output tokens on a probe, same answer).
+export const THINKING = Object.freeze({ none: 0, low: 1024, medium: 8000, high: 32000 });
 const EFFORT = { none: 'low', low: 'low', medium: 'medium', high: 'high' };
 const SCRUBBED = /^(GH_TOKEN|GITHUB_TOKEN|GIT_CONFIG_.*|GIT_ASKPASS|CLOUDSDK_AUTH_ACCESS_TOKEN|AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY|AWS_SESSION_TOKEN)$/;
 const RATE = /\b(429|529)\b|overloaded|rate.?limit/i;
@@ -84,11 +88,11 @@ export class ClaudeCliProvider {
     catch (error) { throw fail('MODEL_UNAVAILABLE', `claude CLI version probe failed: ${error.code ?? error.message}`); }
     const args = this.args({ modelEntry, system, schema, decoding });
     const request = { binary: path.basename(this.binary), args: args.map(a => a === system ? '<system>' : a), temperature: 'provider-default',
-      maxTokens: 'provider-default', effort: EFFORT[decoding.reasoning ?? 'none'], maxBudgetUsd: this.maxBudgetUsd };
+      maxTokens: 'provider-default', effort: EFFORT[decoding.reasoning ?? 'none'], thinkingTokens: THINKING[decoding.reasoning ?? 'none'] ?? 0, maxBudgetUsd: this.maxBudgetUsd };
     const cwd = mkdtempSync(path.join(tmpdir(), 'foundry-claude-'));
     let processResult, launchError;
     try {
-      processResult = await runProcess(this.binary, args, { cwd, env: claudeEnv(this.env), input: prompt, timeoutMs: Math.min(timeoutMs, 3600000), signal, maxBytes: this.maxOutputBytes });
+      processResult = await runProcess(this.binary, args, { cwd, env: { ...claudeEnv(this.env), MAX_THINKING_TOKENS: String(THINKING[decoding.reasoning ?? 'none'] ?? 0) }, input: prompt, timeoutMs: Math.min(timeoutMs, 3600000), signal, maxBytes: this.maxOutputBytes });
     } catch (error) {
       launchError = error; processResult = error.processResult;
     } finally { rmSync(cwd, { recursive: true, force: true }); }

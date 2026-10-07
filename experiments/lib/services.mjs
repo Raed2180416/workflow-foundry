@@ -27,7 +27,7 @@ export async function startServices({ modelPort, ledger, familyId = null, probes
   const token = randomBytes(18).toString('hex');
   let scoreCalls = 0, seq = 0;
   const scoreLog = [];
-  const envs = new Map();
+  const envs = new Map(), created = new Map();
   const server = http.createServer(async (req, res) => {
     try {
       if (req.headers.authorization !== `Bearer ${token}`) return json(res, 401, { error: 'unauthorized' });
@@ -65,7 +65,11 @@ export async function startServices({ modelPort, ledger, familyId = null, probes
         if (op === 'create') {
           const task = body.taskFile ? body.task : (body.probe != null ? probes[Number(body.probe)] : null);
           if (!task) return json(res, 400, { error: 'create needs probe index' });
-          const id = `ep${envs.size + 1}`; envs.set(id, { env: fam.createEnv(task), snapshots: new Map() });
+          // One episode per task per session: a fresh env would reset the bed's lifetime move budget and
+          // allow blind search by repeated creation (gridquest audit F1). Snapshots/restore stay available.
+          const key = `probe:${Number(body.probe)}`;
+          if (created.has(key)) return json(res, 409, { error: 'an episode already exists for this task; use observe/step/snapshot/restore', episode: created.get(key) });
+          const id = `ep${envs.size + 1}`; envs.set(id, { env: fam.createEnv(task), snapshots: new Map() }); created.set(key, id);
           return json(res, 200, { episode: id, observation: envs.get(id).env.observe() });
         }
         const e = envs.get(body.episode);
