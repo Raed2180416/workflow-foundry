@@ -26,8 +26,8 @@ const exampleFiles = ['examples/hello.json', 'examples/incident.json', 'examples
 const documentationFiles = ['docs/ARCHITECTURE.md', 'docs/OUTCOME-REPAIR.md', 'docs/PACKAGING.md', 'docs/REPAIR-LIFECYCLE.md', 'docs/SOURCE-COVERAGE.md'];
 const publicationPath = relative => {
   if (/(?:^|\/)(?:\.[^/]+|private|credentials|corpus|research|evals|tests|artifacts|__pycache__|node_modules)(?:\/|$)/i.test(relative)) return false;
-  if (['package.json', 'README.md', 'bin/foundry.mjs', 'schemas/workflow.schema.json', ...webFiles, ...exampleFiles, ...documentationFiles].includes(relative)) return true;
-  return /^src\/[a-z][a-z0-9-]*\.mjs$/.test(relative)
+  if (['package.json', 'README.md', 'bin/foundry.mjs', 'schemas/workflow.schema.json', 'schemas/identity.schema.json', 'schemas/decision.schema.json', 'policy/models.json', ...webFiles, ...exampleFiles, ...documentationFiles].includes(relative)) return true;
+  return /^src\/(?:models\/(?:providers\/)?|executors\/)?[a-z][a-z0-9-]*\.mjs$/.test(relative)
     || /^skills\/[a-z][a-z0-9-]*\/(?:SKILL\.md|references\/[A-Za-z0-9_./-]+\.(?:md|json|txt))$/.test(relative);
 };
 // Snapshot every product source, including newly added files between snapshots.
@@ -207,7 +207,7 @@ test('packaging inventory gate rejects private state and evidence even under oth
   for (const relative of ['web/artifacts/screenshot.png', 'adapters/langgraph/__pycache__/runtime.pyc', 'src/__pycache__/module.pyc', 'src/.env', 'src/private/key.mjs', 'skills/workflow-foundry/references/private/token.txt', 'docs/private.md', 'corpus/vendor/LICENSE', 'evals/runs/receipt.json', '.npmrc']) assert.equal(publicationPath(relative), false, relative);
   // Decision D6 removed the LangGraph/n8n export adapters; their former paths must not re-enter the archive.
   for (const relative of ['adapters/index.mjs', 'adapters/langgraph/export.mjs', 'adapters/langgraph/runtime.py', 'adapters/langgraph/requirements.txt', 'adapters/n8n/export.mjs', 'adapters/n8n/portable.mjs']) assert.equal(publicationPath(relative), false, relative);
-  for (const relative of [...webFiles, ...exampleFiles, 'src/generator.mjs', 'skills/domain-science/references/source-map.md']) assert.equal(publicationPath(relative), true, relative);
+  for (const relative of [...webFiles, ...exampleFiles, 'src/generator.mjs', 'src/models/port.mjs', 'src/models/providers/claude-cli.mjs', 'src/executors/claude-code.mjs', 'policy/models.json', 'schemas/decision.schema.json', 'skills/domain-science/references/source-map.md']) assert.equal(publicationPath(relative), true, relative);
 });
 
 test('packaging actual tarball, project installers and generated stdio MCP commands', { skip: enabled ? false : 'opt-in lane: set FOUNDRY_PACKAGING_E2E=1 (needs corpus/ from release archive-20261006)', timeout: 90000 }, async t => {

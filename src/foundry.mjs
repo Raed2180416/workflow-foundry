@@ -35,12 +35,14 @@ export function readSkill(name, reference = 'SKILL.md') {
 
 export class Foundry {
   // modelPolicy defaults to the committed owner policy; models (a ModelPort) is never created implicitly,
-  // so no workflow can spend on a model unless the host wires a port in explicitly.
+  // so no workflow can spend on a model unless the host wires a port in explicitly. A host may pass
+  // models as a factory store => ModelPort when its journal must live in this workspace's store.
   constructor(workspace, { registry = createDefaultRegistry(), policy = {}, trialPolicy = {}, modelPolicy, models = null, codeRunner } = {}) {
     if (modelPolicy === undefined) {
       try { modelPolicy = loadPolicy(); } catch (error) { modelPolicy = null; this.modelPolicyError = errorData(error); }
     }
     this.store = new Store(workspace); this.registry = registry; this.modelPolicy = modelPolicy;
+    if (typeof models === 'function') models = models(this.store);
     this.runtime = new Runtime(this.store, registry, policy, { models, modelPolicy, ...(codeRunner ? { codeRunner } : {}) }); this.active = new Map();
     this.trialRunner = new TrialRunner(this, trialPolicy);
   }
@@ -114,6 +116,9 @@ export class Foundry {
     promise.catch(() => {});
     return promise;
   }
+  // DESIGN §5.4: resume every run with a due wait timer, through startRun so an execution this process
+  // already owns is never started twice.
+  tick(options = {}) { return this.runtime.tick({ ...options, start: id => this.startRun(id, { signal: options.signal }) }); }
   cancelRun(id) {
     const active = this.active.get(id);
     if (!active) throw new FoundryError('NOT_ACTIVE', 'This server does not own an active execution of that run');

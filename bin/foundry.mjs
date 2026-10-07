@@ -4,7 +4,7 @@ import { readFileSync, writeFileSync, existsSync, statSync, lstatSync, realpathS
 import path from 'node:path';
 import { Foundry, packageRoot, parseCandidate, skillCatalog } from '../src/foundry.mjs';
 import { createDefaultRegistry } from '../src/capabilities.mjs';
-import { validateWorkflow, workflowSchema } from '../src/validate.mjs';
+import { modelNodes, validateWorkflow, workflowSchema } from '../src/validate.mjs';
 import { loadComponents } from '../src/components.mjs';
 import { install, uninstall } from '../src/install.mjs';
 import { claudeHookResult } from '../src/hooks.mjs';
@@ -26,7 +26,53 @@ const definitions = {
   , 'artifact-name': { type: 'string' }, expected: { type: 'string' }, 'evaluator-id': { type: 'string' }
   , contract: { type: 'string' }, receipt: { type: 'string' }, run: { type: 'string' }, 'max-depth': { type: 'string' }
   , 'outcome-repair': { type: 'boolean' }
+  , policy: { type: 'string' }, 'model-mode': { type: 'string' }, salt: { type: 'string' }, 'max-cost': { type: 'string' }, assignment: { type: 'string' }
+  , 'tick-interval': { type: 'string' }
 };
+// Model-run options (DESIGN §5.1): which commands accept them.
+const runOnly = ['model-mode', 'salt', 'max-cost', 'assignment'];
+const modelCommands = new Set(['run', 'resume', 'tick']);
+function checkModelArguments(command, args) {
+  const misplaced = [...runOnly.filter(name => args[name] !== undefined && command !== 'run'),
+    ...(args.policy !== undefined && !modelCommands.has(command) ? ['policy'] : []), ...(args['tick-interval'] !== undefined && command !== 'serve' ? ['tick-interval'] : [])];
+  if (misplaced.length) throw new FoundryError('CLI_ARGUMENT', `--${misplaced[0]} is not supported by ${command}. Use --help.`);
+  if (args['max-cost'] !== undefined && !/^(0|[1-9][0-9]{0,6})(\.[0-9]{1,6})?$/.test(args['max-cost'])) throw new FoundryError('CLI_ARGUMENT', '--max-cost must be a non-negative decimal number of USD');
+  if (args['tick-interval'] !== undefined && !/^(0|[1-9][0-9]{0,4})$/.test(args['tick-interval'])) throw new FoundryError('CLI_ARGUMENT', '--tick-interval must be a whole number of seconds (0 turns the timer scan off)');
+}
+// The host (this CLI), never Foundry itself, wires a ModelPort: the owner policy, a journal in the workspace
+// store and the policy's providers. A run in replay mode registers no provider, so it cannot reach a live model.
+async function modelHost(args, command) {
+  const [{ loadPolicy }, { ModelPort, MODES }, { Journal }] = await Promise.all([import('../src/models/policy.mjs'), import('../src/models/port.mjs'), import('../src/journal.mjs')]);
+  const modelPolicy = loadPolicy(args.policy === undefined ? undefined : path.resolve(args.policy));
+  const mode = args['model-mode'] ?? 'live';
+  if (!MODES.includes(mode)) throw new FoundryError('RUN_OPTIONS', `--model-mode must be one of ${MODES.join('|')}`);
+  const providers = {};
+  if (!(command === 'run' && mode === 'replay')) {
+    const [{ ClaudeCliProvider }, { LlamaServerProvider }] = await Promise.all([import('../src/models/providers/claude-cli.mjs'), import('../src/models/providers/llama-server.mjs')]);
+    for (const [name, config] of Object.entries(modelPolicy.policy.providers)) {
+      if (config.kind === 'claude-cli') providers[name] = new ClaudeCliProvider({ policy: modelPolicy.policy, providerName: name });
+      else if (config.kind === 'openai-compatible-http') providers[name] = new LlamaServerProvider({ policy: modelPolicy.policy, providerName: name });
+    }
+  }
+  return { modelPolicy, mode, models: store => new ModelPort({ policy: modelPolicy.policy, providers, journal: new Journal(store) }) };
+}
+// ROADMAP §2.6 keeps maxCost at 0 by default. A live run that could reach a priced model is refused before
+// any call unless an explicit --max-cost covers it (the runtime still stops at the budget after each call).
+async function requireSpendBudget(workflow, { policy }, { mode, maxCost, assignment }) {
+  if (mode === 'replay') return;
+  const { classIndex, modelById } = await import('../src/models/policy.mjs');
+  const limit = Math.min(maxCost, workflow.budget.maxCost ?? maxCost);
+  if (limit > 0) return;
+  for (const node of modelNodes(workflow)) {
+    const top = node.model.maxClass ?? node.model.class ?? modelById(policy, node.model.id).class;
+    const reachable = policy.models.filter(m => classIndex(policy, m.class) <= classIndex(policy, top) || Object.values(assignment ?? {}).includes(m.id));
+    const priced = reachable.filter(m => m.price.inputPerMTok > 0 || m.price.outputPerMTok > 0).map(m => m.id);
+    if (priced.length) throw new FoundryError('COST_BUDGET_REQUIRED', `${node.id} can reach priced model(s) ${priced.join(', ')} but the cost budget is 0; pass --max-cost USD (or --model-mode replay)`);
+  }
+}
+const callSummary = row => ({ id: row.id, nodeKey: row.nodeKey, attempt: row.attempt, sampleIndex: row.sampleIndex, modelId: row.modelId, provider: row.provider,
+  engineVersion: row.engineVersion, ok: row.ok, errorCode: row.errorCode, inputTokens: row.inputTokens, outputTokens: row.outputTokens, costUsd: row.costUsd,
+  imputedUsd: row.imputedUsd, latencyMs: row.latencyMs, replayOf: row.request?.replayOf ?? null, replayKey: row.replayKey, receiptHash: row.receiptHash, createdAt: row.createdAt });
 const outcomeCommands = {
   'outcome-contract': { required: ['request', 'input', 'artifact-name', 'expected', 'evaluator-id'], optional: [], items: 0 },
   'outcome-observe': { required: ['request', 'proposal', 'contract'], optional: [], items: 1 },
@@ -88,17 +134,27 @@ const usage = `Workflow Foundry 0.1.0 — experimental, source/evidence qualifie
 `  foundry propose CANDIDATE.json --request REQUEST_ID [--rationale TEXT] --workspace PATH\n` +
 `  foundry apply PROPOSAL_ID --workspace PATH\n` +
 `  foundry run WORKFLOW_ID_OR_FILE --input JSON_OR_FILE [--fixture LOCAL_SIMULATOR.json] --workspace PATH\n` +
-`  foundry inspect RUN_ID | resume RUN_ID --workspace PATH\n` +
+`      [--policy MODEL_POLICY.json] [--model-mode live|replay|replay-or-live] [--salt TEXT]\n` +
+`      [--max-cost USD] [--assignment ASSIGNMENT.json]\n` +
+`  foundry inspect RUN_ID --workspace PATH\n` +
+`  foundry resume RUN_ID [--policy MODEL_POLICY.json] --workspace PATH\n` +
+`  foundry tick [--policy MODEL_POLICY.json] --workspace PATH  (resume runs whose wait timers are due)\n` +
+`  foundry calls --run RUN_ID --workspace PATH  (journaled model calls with cost)\n` +
 `  foundry answer RUN_ID --node root/NODE --answer JSON --workspace PATH\n` +
 `  foundry approve RUN_ID APPROVAL_ID --approved|--rejected --workspace PATH\n` +
-`  foundry serve --workspace PATH [--port 4177] [--agent opencode-free|opencode-v2-free --model OBSERVED_FREE_ID --auto-apply]\n` +
+`  foundry serve --workspace PATH [--port 4177] [--tick-interval SECONDS] [--agent opencode-free|opencode-v2-free --model OBSERVED_FREE_ID --auto-apply]\n` +
 `  foundry mcp --workspace PATH\n\n` +
 `Models construct candidates using skills/MCP. This CLI does not pretend a template\n` +
 `is model generation. A host-selected component manifest launches trusted MCP\n` +
 `servers; never supply an unreviewed model-authored manifest. Local success is\n` +
 `not proof of commercial parity or arbitrary deployment safety.\n` +
 `Outcome commands use --workspace PATH. Observation prints satisfied/unsatisfied/unknown;\n` +
-`a recorded receipt does not itself dispatch generation, apply a proposal, or execute a run.\n`;
+`a recorded receipt does not itself dispatch generation, apply a proposal, or execute a run.\n\n` +
+`Agent and model-verifier nodes use only model ids from the owner policy (default policy/models.json);\n` +
+`resume and tick must use the policy the run was created with. --max-cost defaults to 0, and a live run\n` +
+`that can reach a priced model is refused until it is set. --model-mode replay serves recorded calls\n` +
+`only (same --salt) and registers no provider. --assignment maps node ids or keys to policy model ids.\n` +
+`serve scans due wait timers every --tick-interval seconds (default 5; 0 turns it off).\n`;
 
 async function main() {
   const { values: args, positionals } = parseArgs({ options: definitions, allowPositionals: true, strict: true });
@@ -106,6 +162,7 @@ async function main() {
   if (args.help || command === 'help') { process.stdout.write(usage); return; }
   const outcomeCommand = Object.hasOwn(outcomeCommands, command);
   if (outcomeCommand) checkOutcomeArguments(command, args, positionals);
+  checkModelArguments(command, args);
   if (args['outcome-repair'] && (command !== 'generate' || !args.request?.trim() || positionals.length !== 1 ||
       ['task', 'text', 'workflow', 'expected-hash'].some(name => args[name] !== undefined))) {
     throw new FoundryError('OUTCOME_CLI_ARGUMENT', 'Use generate --outcome-repair with one existing --request and no replacement task or workflow.');
@@ -163,7 +220,13 @@ async function main() {
   try {
     if (command === 'capabilities') { print({ capabilities: registry.list(), registryHash: registry.hash() }); return; }
     if (command === 'validate') {
-      const result = validateWorkflow(readJson(args.file ?? item), { registry }); print(result); if (!result.valid) process.exitCode = 1; return;
+      const workflow = readJson(args.file ?? item);
+      let modelPolicy;
+      if (modelNodes(workflow).length || args.policy !== undefined) {
+        const { loadPolicy } = await import('../src/models/policy.mjs');
+        modelPolicy = loadPolicy(args.policy === undefined ? undefined : path.resolve(args.policy));
+      }
+      const result = validateWorkflow(workflow, { registry, ...(modelPolicy ? { modelPolicy } : {}) }); print(result); if (!result.valid) process.exitCode = 1; return;
     }
     if (command === 'construct-compare') {
       const { runConstructionProgram, bundledConstructionProgram } = await import('../src/construction.mjs');
@@ -190,7 +253,9 @@ async function main() {
       const report = construction.runObjectiveProgram(program);
       print(report); if (report.ok === false) process.exitCode = 1; return;
     }
-    foundry = new Foundry(workspace, { registry });
+    const host = modelCommands.has(command) ? await modelHost(args, command) : null;
+    const maxCost = args['max-cost'] === undefined ? undefined : Number(args['max-cost']);
+    foundry = new Foundry(workspace, { registry, ...(host ? { modelPolicy: host.modelPolicy, models: host.models } : {}), ...(maxCost === undefined ? {} : { policy: { maxCost } }) });
     // Ordinary routes retain their existing behavior for ordinary requests.
     // Outcome descendants require the coordinator's live evidence checks.
     if (['propose', 'apply', 'prompt', 'generate'].includes(command) && !args['outcome-repair']) {
@@ -253,7 +318,7 @@ async function main() {
     }
     if (command === 'serve') {
       const { serveHttp } = await import('../src/http.mjs');
-      const service = await serveHttp(foundry, { port: args.port === undefined ? 4177 : Number(args.port) }); persistent = true;
+      const service = await serveHttp(foundry, { port: args.port === undefined ? 4177 : Number(args.port), tickIntervalMs: 1000 * Number(args['tick-interval'] ?? 5) }); persistent = true;
       const processor = foundry.generator ? (await import('../src/generator.mjs')).startRequestProcessor(foundry.generator) : null;
       print({ ui: service.origin, workspace, agent: foundry.generator ? foundry.generator.provider.identity : 'Use the installed host agent MCP to consume requests and submit proposals.', autoApply: !!args['auto-apply'] });
       const close = async () => { await processor?.close(); for (const [id] of foundry.active) foundry.cancelRun(id); await service.close(); await foundry.close(); await components?.close(); process.exit(0); };
@@ -289,6 +354,14 @@ async function main() {
     }
     if (command === 'apply') { print(foundry.apply(item)); return; }
     if (command === 'inspect') { print(foundry.inspectRun(item)); return; }
+    if (command === 'tick') { print(await foundry.tick()); return; }
+    if (command === 'calls') {
+      if (!args.run?.trim()) throw new FoundryError('CLI_ARGUMENT', 'calls requires --run RUN_ID');
+      foundry.store.run(args.run);
+      const { Journal } = await import('../src/journal.mjs');
+      const journal = new Journal(foundry.store);
+      print({ runId: args.run, calls: journal.forRun(args.run).map(callSummary), totals: journal.costForRun(args.run) }); return;
+    }
     if (command === 'answer') { print(foundry.publicRun(foundry.runtime.answer(item, args.node, jsonValue(args.answer, null)))); return; }
     if (command === 'approve') {
       if (!!args.approved === !!args.rejected) throw new FoundryError('APPROVAL_CHOICE', 'Choose exactly one of --approved or --rejected');
@@ -301,7 +374,10 @@ async function main() {
         let workflow;
         if (existsSync(item ?? '')) { workflow = readJson(item); foundry.save(workflow, args['expected-hash']); }
         else workflow = foundry.store.workflow(item).workflow;
-        run = foundry.runtime.create(workflow, jsonValue(args.input), args.fixture ? { fixture: readJson(args.fixture) } : {});
+        const assignment = args.assignment === undefined ? undefined : readJson(args.assignment);
+        await requireSpendBudget(workflow, host.modelPolicy, { mode: host.mode, maxCost: foundry.runtime.policy.maxCost, assignment });
+        const options = { modelMode: host.mode, ...(args.salt === undefined ? {} : { sampleSalt: args.salt }), ...(assignment === undefined ? {} : { assignment }) };
+        run = foundry.runtime.create(workflow, jsonValue(args.input), { ...(args.fixture ? { fixture: readJson(args.fixture) } : {}), ...options });
       }
       const result = await foundry.startRun(run.id); print({ ...foundry.publicRun(result), events: foundry.store.events(run.id) });
       if (result.status === 'failed') process.exitCode = 1;

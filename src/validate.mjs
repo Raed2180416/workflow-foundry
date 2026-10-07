@@ -89,7 +89,7 @@ const common = new Set(['id', 'kind', 'needs', 'description', 'when', 'join']);
 const fields = {
   task: ['tool', 'args', 'timeoutMs', 'retry', 'onError'], assert: ['checks'],
   human: ['question', 'answerSchema'], wait: ['delayMs'],
-  map: ['items', 'maxItems', 'body', 'input'],
+  map: ['items', 'maxItems', 'body', 'input', 'concurrency', 'failure'],
   loop: ['maxIterations', 'body', 'until', 'initial', 'input'],
   agent: ['role', 'instructions', 'context', 'returns', 'model', 'decoding', 'checks', 'escalation', 'quarantined', 'timeoutMs', 'onError'],
   code: ['lang', 'source', 'args', 'returns', 'timeoutMs'],
@@ -97,8 +97,11 @@ const fields = {
 };
 
 // Static integrity labels (DESIGN §4): a conservative over-approximation of the runtime join.
+// An approval gate is requiresApproval, or risk "high" (the runtime requires approval for both).
+export const approvalGated = cap => cap.requiresApproval === true || cap.risk === 'high';
+export const labelPolicyMessage = (tool, label) => `${tool} has effects and no approval gate, but its arguments depend on ${label} data`;
 function effectTaint(workflow, registry, add) {
-  const seen = new Set(), report = (code, message, location) => { if (!seen.has(`${code}|${location}`)) { seen.add(`${code}|${location}`); add(code, message, location); } };
+  const seen = new Set(), report = (code, message, location, extra) => { if (!seen.has(`${code}|${location}`)) { seen.add(`${code}|${location}`); add(code, message, location, extra); } };
   const walk = (flow, scope, prefix) => {
     const byId = new Map(flow.nodes.map(n => [n.id, n])), labels = new Map();
     const visit = id => {
@@ -126,8 +129,11 @@ function effectTaint(workflow, registry, add) {
       }
       if (node.kind === 'task') {
         const cap = registry?.get(node.tool), argsLabel = labelOf(node.args, own);
-        if (cap && cap.effects !== 'none' && !(cap.requiresApproval || cap.risk === 'high') && argsLabel !== 'trusted')
-          report('UNTRUSTED_EFFECT_ARGS', `${node.tool} has effects and no approval gate, but its arguments depend on ${argsLabel} data`, `${prefix}.${node.id}`);
+        // LABEL_POLICY is the policy code; UNTRUSTED_EFFECT_ARGS names the rule (kept for existing consumers).
+        if (cap && cap.effects !== 'none' && !approvalGated(cap) && argsLabel !== 'trusted') {
+          report('LABEL_POLICY', labelPolicyMessage(node.tool, argsLabel), `${prefix}.${node.id}`, { rule: 'UNTRUSTED_EFFECT_ARGS', label: argsLabel });
+          report('UNTRUSTED_EFFECT_ARGS', labelPolicyMessage(node.tool, argsLabel), `${prefix}.${node.id}`);
+        }
       }
       labels.set(id, label); return label;
     };
@@ -142,7 +148,7 @@ export function validateWorkflow(workflow, { registry, maxNodes = 2000, modelPol
   try { checkData(workflow); } catch (e) { return { valid: false, errors: [{ code: e.code, message: e.message }], warnings }; }
   if (!shape(workflow)) return { valid: false, errors: shape.errors.map(e => ({ code: 'SCHEMA', path: e.instancePath, message: `${e.message} ${JSON.stringify(e.params)}` })), warnings };
   let total = 0;
-  const add = (code, message, location) => errors.push({ code, message, path: location });
+  const add = (code, message, location, extra = {}) => errors.push({ code, message, path: location, ...extra });
   const policy = modelPolicy?.policy ?? modelPolicy;
   if (!policy && modelNodes(workflow).length) add('MODEL_POLICY_REQUIRED', 'Agent and model-verifier nodes are validated against the owner model policy; none was supplied', 'workflow');
   const candidates = node => {
@@ -203,6 +209,10 @@ export function validateWorkflow(workflow, { registry, maxNodes = 2000, modelPol
         if (policy) try { candidates(node); } catch (e) { add(e.code ?? 'MODEL_POLICY', e.message, `${at}.model`); }
       }
       if (node.kind === 'code' && node.returns) try { compileDataSchema(node.returns); } catch (e) { add(e.code ?? 'INVALID_SCHEMA', e.message, `${at}.returns`); }
+      if (node.kind === 'map') {
+        if ((node.concurrency ?? 1) > workflow.budget.maxConcurrency) warnings.push({ code: 'MAP_CONCURRENCY_CAPPED', path: at, message: `concurrency ${node.concurrency} exceeds budget.maxConcurrency ${workflow.budget.maxConcurrency}; at most ${workflow.budget.maxConcurrency} items run at once` });
+        if (node.failure === 'collect') warnings.push({ code: 'ERROR_COLLECTION', path: at, message: 'Collected item failures become $error entries; acceptance must inspect the failed count' });
+      }
     }
     const visiting = new Set(), done = new Set(), ancestors = new Map();
     const visit = id => {

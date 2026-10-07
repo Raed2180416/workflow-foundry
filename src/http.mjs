@@ -19,9 +19,10 @@ async function body(req) {
   catch (error) { if (error.code) throw error; throw new FoundryError('JSON', 'Malformed request JSON'); }
 }
 
-export async function serveHttp(foundry, { port = 4177, host = '127.0.0.1' } = {}) {
+export async function serveHttp(foundry, { port = 4177, host = '127.0.0.1', tickIntervalMs = 0 } = {}) {
   if (host !== '127.0.0.1') throw new FoundryError('HTTP_BIND', 'This local UI supports loopback only');
   if (!Number.isInteger(port) || port < 0 || port > 65535) throw new FoundryError('HTTP_PORT', 'Invalid port');
+  if (!Number.isInteger(tickIntervalMs) || tickIntervalMs < 0 || tickIntervalMs > 86400000) throw new FoundryError('HTTP_TICK', 'tickIntervalMs must be an integer of 0 (off) to 86400000');
   const token = randomBytes(32).toString('hex');
   const nonce = randomBytes(20).toString('hex');
   let origin;
@@ -98,5 +99,11 @@ export async function serveHttp(foundry, { port = 4177, host = '127.0.0.1' } = {
   server.requestTimeout = 30000; server.headersTimeout = 10000; server.maxHeadersCount = 50;
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(port, host, resolve); });
   origin = `http://${host}:${server.address().port}`;
-  return { server, origin, close: () => new Promise((resolve, reject) => server.close(e => e ? reject(e) : resolve())) };
+  // DESIGN §5.4: the same durable timer scan as `foundry tick`, one scan at a time.
+  let scanning = null;
+  const stop = new AbortController();
+  const scan = () => { scanning ??= foundry.tick({ signal: stop.signal }).catch(error => console.error('Foundry timer scan:', error.code, error.message)).finally(() => { scanning = null; }); };
+  const interval = tickIntervalMs ? setInterval(scan, tickIntervalMs) : null;
+  interval?.unref();
+  return { server, origin, close: async () => { clearInterval(interval); stop.abort(); await scanning; await new Promise((resolve, reject) => server.close(e => e ? reject(e) : resolve())); } };
 }

@@ -1,9 +1,10 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { checkData, clone, condition, digest, errorData, FoundryError, references, resolve } from './data.mjs';
-import { bindOutput, modelNodes, OUTPUT_KEY, requireWorkflow, validateData, validateDecision, validateIdentity, VERIFY_RETURNS } from './validate.mjs';
+import { approvalGated, bindOutput, labelPolicyMessage, modelNodes, OUTPUT_KEY, requireWorkflow, validateData, validateDecision, validateIdentity, VERIFY_RETURNS } from './validate.mjs';
 import { engineHash } from './engine.mjs';
 import { compileContext, contextInputs, inheritedLabel, joinLabels } from './context.mjs';
 import { verdictOf } from './verdict.mjs';
@@ -42,9 +43,15 @@ const terminal = new Set(['succeeded', 'failed', 'cancelled', 'uncertain']);
 const environmentFaults = new Set(['MODEL_RATE_LIMIT', 'MODEL_UNAVAILABLE', 'MODEL_TIMEOUT']);
 const providerFaults = new Set(['MODEL_PROTOCOL', 'MODEL_BUDGET']);
 const retryable = new Set(['MODEL_SCHEMA', 'MODEL_TRUNCATED']);
-// onError:"continue" never hides an environment fault, a budget stop, a cancellation or a harness integrity failure.
+// onError:"continue" and map failure:"collect" never hide an environment fault, a budget stop, a cancellation,
+// a policy violation or a harness integrity failure.
 const unhandled = new Set([...environmentFaults, ...providerFaults, 'CANCELLED', 'ABORT_ERR', 'SANDBOX_UNAVAILABLE', 'COST_BUDGET', 'STEP_BUDGET',
-  'DEADLINE', 'STATE_BUDGET', 'STALE_RUNNER', 'REPLAY_MISS', 'MODEL_PORT_REQUIRED', 'VERIFY_INDEPENDENCE', 'ASSIGNMENT_INVALID']);
+  'DEADLINE', 'STATE_BUDGET', 'STALE_RUNNER', 'REPLAY_MISS', 'MODEL_PORT_REQUIRED', 'VERIFY_INDEPENDENCE', 'ASSIGNMENT_INVALID',
+  'LABEL_POLICY', 'FRAME_DRIFT', 'CORRUPT_EVENTS', 'MODEL_POLICY_DRIFT']);
+const cancelled = error => ['CANCELLED', 'ABORT_ERR'].includes(error?.code);
+// Abort scopes (one per flow frame and per map) follow async continuations, so a failure cancels only its own
+// scope; the invocation-wide controller remains the root. A scope belongs to exactly one Invocation.
+const scopes = new AsyncLocalStorage();
 const labelOf = (template, scope) => joinLabels(references(template ?? null).map(ref => inheritedLabel(ref, scope)));
 const labelEntry = (key, label) => label === 'trusted' ? {} : { [key]: label };
 const labelState = label => label === 'trusted' ? {} : { outputLabel: label };
@@ -53,6 +60,7 @@ const inputLabels = scope => Object.fromEntries(Object.entries(scope).filter(([k
 // Its run.verdict event precedes the terminal event, so the chain tail stays run.succeeded/run.stopped.
 function seal(run, workflow, store) {
   if (!terminal.has(run.status)) { delete run.verdict; return; }
+  store.clearTimers(run.id);
   run.verdict = verdictOf(run, { workflow });
   if (run.identity) {
     const decision = { schema: 'foundry-decision/1', id: `${run.id}:verdict:${run.eventHead?.seq ?? 0}`, at: Date.now(), kind: 'verdict', identity: run.identity,
@@ -146,6 +154,28 @@ export class Runtime {
       else r.status = 'ready';
     }, run => [...(run.status === 'cancelled' && run.verdict ? [{ type: 'run.verdict', ...run.verdict }] : []), { type: 'approval.decided', approvalId, approved: decision, actor }]);
   }
+  // DESIGN §5.4: resume every run that has a due wait timer. Timers live in the store, so any Runtime instance
+  // (a new process after a restart included) can do this. A timer whose node no longer waits is pruned; a run
+  // that needs a ModelPort this runtime lacks is left untouched rather than failed. `start` lets a host route
+  // through its own execution registry (Foundry.startRun) instead of this.execute.
+  async tick({ now = Date.now(), limit = 100, signal, start = runId => this.execute(runId, { signal }) } = {}) {
+    const due = new Map();
+    for (const timer of this.store.dueTimers(now, limit)) {
+      let run = null;
+      try { run = this.store.run(timer.runId); } catch (error) { if (error.code !== 'NOT_FOUND') throw error; }
+      const target = run && locateNode(run, timer.nodeKey);
+      if (!run || terminal.has(run.status) || !target || !['waiting', 'running'].includes(target.state.status)) { this.store.clearTimer(timer.runId, timer.nodeKey); continue; }
+      due.set(run.id, run);
+    }
+    const runs = [];
+    for (const [runId, run] of due) {
+      if (signal?.aborted) { runs.push({ runId, skipped: 'CANCELLED' }); continue; }
+      if (!this.models && modelNodes(this.store.workflow(run.workflowHash).workflow).length) { runs.push({ runId, skipped: 'MODEL_PORT_REQUIRED' }); continue; }
+      try { const after = await start(runId); runs.push({ runId, status: after.status, ...(after.error ? { error: after.error } : {}) }); }
+      catch (error) { runs.push({ runId, error: errorData(error) }); }
+    }
+    return { at: now, due: due.size, runs };
+  }
 }
 
 export function locateNode(run, nodeKey) {
@@ -165,6 +195,14 @@ class Invocation {
     if (signal?.aborted) this.onAbort();
   }
   current() { return this.store.run(this.runId); }
+  // The abort signal of the current continuation's scope (a flow frame, a map, or the whole invocation).
+  signal() { const scope = scopes.getStore(); return scope?.owner === this ? scope.controller.signal : this.abort.signal; }
+  async scoped(fn) {
+    const parent = this.signal(), controller = new AbortController(), forward = () => controller.abort();
+    if (parent.aborted) controller.abort(); else parent.addEventListener('abort', forward, { once: true });
+    try { return await scopes.run({ owner: this, controller }, () => fn(controller)); }
+    finally { parent.removeEventListener('abort', forward); }
+  }
   update(mutate, event) {
     return this.store.updateRun(this.runId, r => {
       if (r.owner?.token !== this.token) throw new FoundryError('STALE_RUNNER', 'Execution ownership changed');
@@ -175,7 +213,7 @@ class Invocation {
     return this.update(r => mutate(frameOf(r, frameKey), r), { type, nodeKey: `${frameKey}/${nodeId}`, ...extra });
   }
   checkBudget(run = this.current(), cost = 0) {
-    if (this.abort.signal.aborted) throw new FoundryError('CANCELLED', 'Execution cancelled');
+    if (this.signal().aborted) throw new FoundryError('CANCELLED', 'Execution cancelled');
     if (Date.now() >= run.deadline) throw new FoundryError('DEADLINE', 'Run deadline exhausted');
     if (run.steps >= Math.min(run.policy.maxSteps, this.workflow.budget.maxSteps)) throw new FoundryError('STEP_BUDGET', 'Run step budget exhausted');
     if (run.cost + cost > Math.min(run.policy.maxCost, this.workflow.budget.maxCost ?? run.policy.maxCost) + 1e-12) throw new FoundryError('COST_BUDGET', 'Run cost budget exhausted');
@@ -187,6 +225,8 @@ class Invocation {
       const old = f.nodes[node.id] ?? { attempts: 0 };
       f.nodes[node.id] = { ...old, kind: node.kind, status: 'running', attempts: old.attempts + 1, startedAt: Date.now(), startedSequence: (r.eventHead?.seq ?? 0) + 1, ...intent };
       r.steps++; r.cost += cost;
+      // A wait node's wake time is fixed and its timer registered when it starts, so a crash before it pauses keeps both.
+      if (node.kind === 'wait') this.store.setTimer(r.id, `${frameKey}/${node.id}`, intent.wakeAt);
     }, node.kind === 'task' ? 'tool.intent' : 'node.started', { kind: node.kind, reservedCost: cost, ...intent });
   }
   complete(frameKey, node, output, status = 'completed', { state = {}, run: alsoRun } = {}) {
@@ -282,37 +322,40 @@ class Invocation {
       if (old && old.contextHash !== contextHash) throw new FoundryError('FRAME_DRIFT', 'Nested execution context changed');
       if (!old) this.update(r => { r.frames[frameKey] = { nodes: {}, outputs: {}, contextHash }; }, { type: 'frame.created', frameKey, contextHash });
     }
-    const attempted = new Set();
-    while (true) {
-      const run = this.current();
-      if (this.abort.signal.aborted) throw new FoundryError('CANCELLED', 'Run cancellation was requested; completed effects remain in the evidence ledger');
-      if (Date.now() >= run.deadline) throw new FoundryError('DEADLINE', 'Run deadline exhausted');
-      if ([...Object.values(run.nodes), ...Object.values(run.frames).flatMap(f => Object.values(f.nodes))].some(n => n.status === 'uncertain')) return { done: false, outputs: clone(frameOf(run, frameKey).outputs) };
-      const f = frameOf(run, frameKey);
-      if (flow.nodes.every(n => nodeDone.has(f.nodes[n.id]?.status))) {
-        const ctx = this.context(frameKey, input, locals);
-        if (!flow.acceptance.every(c => condition(c, ctx))) throw new FoundryError('ACCEPTANCE_FAILED', `Acceptance failed for ${frameKey}`);
-        if (Date.now() >= this.current().deadline) throw new FoundryError('DEADLINE', 'Run deadline exhausted during acceptance evaluation');
-        return { done: true, outputs: clone(f.outputs) };
-      }
-      const ready = flow.nodes.filter(n => !attempted.has(n.id) && !nodeDone.has(f.nodes[n.id]?.status) && n.needs.every(dep => nodeDone.has(f.nodes[dep]?.status)));
-      if (!ready.length) return { done: false, outputs: clone(f.outputs) };
-      // Limit concurrent node continuations as well as actual capability calls.
-      const batch = ready.slice(0, Math.min(this.workflow.budget.maxConcurrency, this.current().policy.maxConcurrency));
-      batch.forEach(n => attempted.add(n.id));
-      const results = await Promise.allSettled(batch.map(async n => {
-        try { return await this.node(n, frameKey, input, locals); }
-        catch (error) {
-          this.eventNode(frameKey, n.id, frame => {
-            if (frame.nodes[n.id]?.status !== 'uncertain') frame.nodes[n.id] = { ...(frame.nodes[n.id] ?? { kind: n.kind, attempts: 0 }), status: 'failed', error: errorData(error) };
-          }, 'node.failed', { error: errorData(error) });
-          this.abort.abort();
-          throw error;
+    // A failing node cancels its own frame's in-flight siblings; its caller (a parent flow or a map) decides what else stops.
+    return this.scoped(async scope => {
+      const attempted = new Set();
+      while (true) {
+        const run = this.current();
+        if (scope.signal.aborted) throw new FoundryError('CANCELLED', 'Run cancellation was requested; completed effects remain in the evidence ledger');
+        if (Date.now() >= run.deadline) throw new FoundryError('DEADLINE', 'Run deadline exhausted');
+        if ([...Object.values(run.nodes), ...Object.values(run.frames).flatMap(f => Object.values(f.nodes))].some(n => n.status === 'uncertain')) return { done: false, outputs: clone(frameOf(run, frameKey).outputs) };
+        const f = frameOf(run, frameKey);
+        if (flow.nodes.every(n => nodeDone.has(f.nodes[n.id]?.status))) {
+          const ctx = this.context(frameKey, input, locals);
+          if (!flow.acceptance.every(c => condition(c, ctx))) throw new FoundryError('ACCEPTANCE_FAILED', `Acceptance failed for ${frameKey}`);
+          if (Date.now() >= this.current().deadline) throw new FoundryError('DEADLINE', 'Run deadline exhausted during acceptance evaluation');
+          return { done: true, outputs: clone(f.outputs) };
         }
-      }));
-      const failure = results.find(x => x.status === 'rejected' && !['CANCELLED', 'ABORT_ERR'].includes(x.reason?.code)) ?? results.find(x => x.status === 'rejected');
-      if (failure) throw failure.reason;
-    }
+        const ready = flow.nodes.filter(n => !attempted.has(n.id) && !nodeDone.has(f.nodes[n.id]?.status) && n.needs.every(dep => nodeDone.has(f.nodes[dep]?.status)));
+        if (!ready.length) return { done: false, outputs: clone(f.outputs) };
+        // Limit concurrent node continuations as well as actual capability calls.
+        const batch = ready.slice(0, Math.min(this.workflow.budget.maxConcurrency, this.current().policy.maxConcurrency));
+        batch.forEach(n => attempted.add(n.id));
+        const results = await Promise.allSettled(batch.map(async n => {
+          try { return await this.node(n, frameKey, input, locals); }
+          catch (error) {
+            this.eventNode(frameKey, n.id, frame => {
+              if (frame.nodes[n.id]?.status !== 'uncertain') frame.nodes[n.id] = { ...(frame.nodes[n.id] ?? { kind: n.kind, attempts: 0 }), status: 'failed', error: errorData(error) };
+            }, 'node.failed', { error: errorData(error) });
+            scope.abort();
+            throw error;
+          }
+        }));
+        const failure = results.find(x => x.status === 'rejected' && !cancelled(x.reason)) ?? results.find(x => x.status === 'rejected');
+        if (failure) throw failure.reason;
+      }
+    });
   }
   async node(node, frameKey, input, locals) {
     let state = frameOf(this.current(), frameKey).nodes[node.id];
@@ -328,7 +371,7 @@ class Invocation {
     }
     if (node.kind === 'task') return this.task(node, frameKey, ctx);
     const resumed = state?.status === 'running';
-    if (!state) { this.charge(frameKey, node); state = frameOf(this.current(), frameKey).nodes[node.id]; }
+    if (!state) { this.charge(frameKey, node, 0, node.kind === 'wait' ? { wakeAt: Date.now() + node.delayMs } : {}); state = frameOf(this.current(), frameKey).nodes[node.id]; }
     if (node.kind === 'agent') return this.agent(node, frameKey, ctx, state, resumed);
     if (node.kind === 'code') return this.code(node, frameKey, ctx);
     if (node.kind === 'verify') return this.verify(node, frameKey, ctx, state, resumed);
@@ -342,26 +385,14 @@ class Invocation {
       }, 'human.requested', { question: node.question }); return;
     }
     if (node.kind === 'wait') {
-      const wakeAt = state.wakeAt ?? Date.now() + node.delayMs;
+      // DESIGN §5.4: the timer row commits with the waiting state; a tick (any process) resumes the run when it is due.
+      const wakeAt = state.wakeAt ?? Date.now() + node.delayMs, nodeKey = `${frameKey}/${node.id}`;
       if (Date.now() < wakeAt) {
-        this.eventNode(frameKey, node.id, f => { Object.assign(f.nodes[node.id], { status: 'waiting', wakeAt }); }, 'node.waiting', { wakeAt }); return;
+        this.eventNode(frameKey, node.id, (f, r) => { Object.assign(f.nodes[node.id], { status: 'waiting', wakeAt }); this.store.setTimer(r.id, nodeKey, wakeAt); }, 'node.waiting', { wakeAt }); return;
       }
-      this.complete(frameKey, node, { waitedMs: node.delayMs }); return;
+      this.complete(frameKey, node, { waitedMs: node.delayMs }, 'completed', { run: r => this.store.clearTimer(r.id, nodeKey) }); return;
     }
-    if (node.kind === 'map') {
-      const items = resolve(node.items, ctx);
-      if (!Array.isArray(items) || items.length > node.maxItems) throw new FoundryError('MAP_BOUND', 'Map input is not an array or exceeds maxItems');
-      const childInput = Object.hasOwn(node, 'input') ? resolve(node.input, ctx) : input;
-      const scope = this.labelScope(frameKey), itemLabel = labelOf(node.items, scope);
-      const childLabels = { ...(Object.hasOwn(node, 'input') ? labelEntry('input', labelOf(node.input, scope)) : inputLabels(scope)), ...labelEntry('item', itemLabel) };
-      const outputs = [];
-      for (let index = 0; index < items.length; index++) {
-        const result = await this.flow(node.body, `${frameKey}/${node.id}:${index}`, childInput, { item: items[index], index }, childLabels);
-        if (!result.done) { this.eventNode(frameKey, node.id, f => { f.nodes[node.id].status = 'waiting_child'; }, 'node.waiting_child'); return; }
-        outputs.push(result.outputs);
-      }
-      this.complete(frameKey, node, { items: outputs, count: outputs.length }, 'completed', { state: labelState(joinLabels([itemLabel, this.childLabels(frameKey, node.id)])) }); return;
-    }
+    if (node.kind === 'map') return this.map(node, frameKey, ctx, input);
     if (node.kind === 'loop') {
       const childInput = Object.hasOwn(node, 'input') ? resolve(node.input, ctx) : input;
       const scope = this.labelScope(frameKey), initialLabel = labelOf(node.initial, scope);
@@ -382,13 +413,64 @@ class Invocation {
     }
     throw new FoundryError('UNKNOWN_NODE', `Unsupported node kind ${node.kind}`);
   }
+  // DESIGN §1.4. Up to `concurrency` items run at once (capped by the run's concurrency); outputs are ordered by index.
+  // An item that settles is recorded on its frame, so a resumed map re-enters only incomplete items. fail_fast
+  // cancels in-flight siblings on the first failure. collect records {$error} for the item and lets siblings run,
+  // unless the failure stops the whole run (budget, environment, cancellation, policy, integrity). An item that
+  // pauses (human, approval, wait, uncertain effect) stops new items from starting; in-flight items still finish.
+  async map(node, frameKey, ctx, input) {
+    const items = resolve(node.items, ctx);
+    if (!Array.isArray(items) || items.length > node.maxItems) throw new FoundryError('MAP_BOUND', 'Map input is not an array or exceeds maxItems');
+    const childInput = Object.hasOwn(node, 'input') ? resolve(node.input, ctx) : input;
+    const scope = this.labelScope(frameKey), itemLabel = labelOf(node.items, scope);
+    const childLabels = { ...(Object.hasOwn(node, 'input') ? labelEntry('input', labelOf(node.input, scope)) : inputLabels(scope)), ...labelEntry('item', itemLabel) };
+    const run = this.current(), nodeKey = `${frameKey}/${node.id}`, collect = node.failure === 'collect';
+    const limit = Math.max(1, Math.min(node.concurrency ?? 1, this.workflow.budget.maxConcurrency, run.policy.maxConcurrency));
+    const results = new Array(items.length), pending = [], failures = [];
+    items.forEach((item, index) => {
+      const frame = run.frames[`${nodeKey}:${index}`];
+      if (!frame?.result) { pending.push(index); return; }
+      if (frame.contextHash !== digest({ input: childInput, locals: { item, index } })) throw new FoundryError('FRAME_DRIFT', 'Nested execution context changed');
+      results[index] = frame.result === 'failed' ? { $error: clone(frame.error) } : clone(frame.outputs);
+    });
+    let next = 0, halted = false;
+    await this.scoped(async siblings => {
+      const worker = async () => {
+        while (!halted && !failures.length && next < pending.length) {
+          const index = pending[next++], key = `${nodeKey}:${index}`;
+          try {
+            const result = await this.flow(node.body, key, childInput, { item: items[index], index }, childLabels);
+            if (!result.done) { halted = true; return; }
+            this.update(r => { r.frames[key].result = 'completed'; }, { type: 'map.item.completed', nodeKey, index });
+            results[index] = result.outputs;
+          } catch (error) {
+            let failure = error;
+            if (collect && !siblings.signal.aborted && !unhandled.has(error.code)) {
+              const data = errorData(error);
+              try {
+                this.update(r => { Object.assign(r.frames[key], { result: 'failed', error: data }); }, { type: 'map.item.failed', nodeKey, index, error: data });
+                results[index] = { $error: data }; continue;
+              } catch (recording) { failure = recording; }
+            }
+            failures.push(failure); siblings.abort();
+          }
+        }
+      };
+      await Promise.all(Array.from({ length: Math.min(limit, pending.length) }, worker));
+    });
+    if (failures.length) throw failures.find(error => !cancelled(error)) ?? failures[0];
+    if (halted) { this.eventNode(frameKey, node.id, f => { f.nodes[node.id].status = 'waiting_child'; }, 'node.waiting_child'); return; }
+    const failed = results.filter(item => Object.hasOwn(item, '$error')).length;
+    this.complete(frameKey, node, { items: results, count: results.length, ...(collect ? { failed } : {}) }, 'completed',
+      { state: { ...labelState(joinLabels([itemLabel, this.childLabels(frameKey, node.id)])), ...(collect ? { failedItems: failed } : {}) } });
+  }
   async task(node, frameKey, ctx) {
     const cap = this.registry.get(node.tool), run = this.current();
     if (!cap || !run.policy.allowedCapabilities.includes(node.tool)) throw new FoundryError('CAPABILITY_DENIED', `Capability ${node.tool} is not permitted for this run`);
-    const args = resolve(node.args, ctx), argsLabel = labelOf(node.args, this.labelScope(frameKey));
+    const args = resolve(node.args, ctx), argsLabel = labelOf(node.args, this.labelScope(frameKey)), signal = this.signal();
     validateData(cap.inputSchema, args, `${node.tool} input`);
-    // DESIGN §4: untrusted-derived arguments reach an effect only through an approval gate.
-    if (cap.effects !== 'none' && !(cap.requiresApproval || cap.risk === 'high') && argsLabel !== 'trusted') throw new FoundryError('UNTRUSTED_EFFECT_ARGS', `${node.tool} has effects and no approval gate, but its arguments depend on ${argsLabel} data`);
+    // DESIGN §4: untrusted-derived arguments reach an effect only through an approval gate (the validator rejects this statically).
+    if (cap.effects !== 'none' && !approvalGated(cap) && argsLabel !== 'trusted') throw new FoundryError('LABEL_POLICY', labelPolicyMessage(node.tool, argsLabel), { rule: 'UNTRUSTED_EFFECT_ARGS', label: argsLabel });
     this.requireEvidence(cap, args, frameKey, node);
     const nodeKey = `${frameKey}/${node.id}`;
     const idempotencyKey = digest({ runId: this.runId, nodeKey, workflowHash: run.workflowHash, args });
@@ -402,13 +484,13 @@ class Invocation {
     const old = frameOf(run, frameKey).nodes[node.id];
     if ((old?.attempts ?? 0) >= node.retry.maxAttempts) throw new FoundryError('RETRY_EXHAUSTED', `${node.id} exhausted its total attempt budget`);
     while ((frameOf(this.current(), frameKey).nodes[node.id]?.attempts ?? 0) < node.retry.maxAttempts) {
-      await this.semaphore.take(this.abort.signal);
+      await this.semaphore.take(signal);
       let acquired = true;
       try {
         this.charge(frameKey, node, cap.cost, { tool: node.tool, idempotencyKey, argsHash: digest(args), effects: cap.effects });
         this.requireEvidence(cap, args, frameKey, node);
         const localAbort = new AbortController();
-        const stop = () => localAbort.abort(); this.abort.signal.addEventListener('abort', stop, { once: true });
+        const stop = () => localAbort.abort(); signal.addEventListener('abort', stop, { once: true });
         let settled = false, timeout, timedOut = false;
         const timeoutMs = Math.min(node.timeoutMs, Math.max(1, this.current().deadline - Date.now()));
         const execution = this.registry.execute(node.tool, args, {
@@ -431,17 +513,17 @@ class Invocation {
             return;
           }
           this.eventNode(frameKey, node.id, f => { Object.assign(f.nodes[node.id], { status: 'pending', error: errorData(error) }); }, 'tool.failed', { error: errorData(error) });
-          if (this.abort.signal.aborted) throw new FoundryError('CANCELLED', 'Execution cancelled while an operation was in progress');
+          if (signal.aborted) throw new FoundryError('CANCELLED', 'Execution cancelled while an operation was in progress');
           const attempts = frameOf(this.current(), frameKey).nodes[node.id].attempts;
           if (attempts >= node.retry.maxAttempts) {
             if (node.onError === 'continue') { this.complete(frameKey, node, { ok: false, error: errorData(error) }, 'handled_error', { state: labelState(argsLabel) }); return; }
             this.eventNode(frameKey, node.id, f => { f.nodes[node.id].status = 'failed'; }, 'node.failed', { error: errorData(error) });
             throw error;
           }
-        } finally { clearTimeout(timeout); this.abort.signal.removeEventListener('abort', stop); }
+        } finally { clearTimeout(timeout); signal.removeEventListener('abort', stop); }
       } finally { if (acquired) { this.semaphore.release(); acquired = false; } }
       if (node.retry.backoffMs) {
-        try { await delay(node.retry.backoffMs, undefined, { signal: this.abort.signal }); }
+        try { await delay(node.retry.backoffMs, undefined, { signal }); }
         catch (error) {
           if (error.code === 'ABORT_ERR') throw new FoundryError('CANCELLED', 'Execution cancelled during retry backoff');
           throw error;
@@ -496,11 +578,12 @@ class Invocation {
       const compiled = compileContext({ node, workflow: this.workflow, inputs, classBudget: policy.inputBudgetTokensByClass?.[entry.class], retryNote, schema: returns });
       const selected = { modelId: entry.id, modelClass: entry.class, sampleIndex, escalations, receiptHash: compiled.receiptHash };
       this.eventNode(frameKey, node.id, (f, r) => { this.preflight(r); Object.assign(f.nodes[node.id], selected); }, 'context.compiled', { ...selected, attempt, retry: retries, receipt: compiled.receipt });
-      await this.semaphore.take(this.abort.signal);
+      const signal = this.signal();
+      await this.semaphore.take(signal);
       let result;
       try {
         result = await models.call({ runId: this.runId, nodeKey, attempt, sampleIndex, modelId: entry.id, system: compiled.system, prompt: compiled.prompt, schema: returns,
-          decoding: node.decoding ?? {}, receiptHash: compiled.receiptHash, signal: this.abort.signal, mode: run.modelMode ?? 'live', salt: run.sampleSalt ?? this.runId,
+          decoding: node.decoding ?? {}, receiptHash: compiled.receiptHash, signal, mode: run.modelMode ?? 'live', salt: run.sampleSalt ?? this.runId,
           timeoutMs: Math.max(1, Math.min(node.timeoutMs ?? 120000, this.current().deadline - Date.now())) });
       } finally { this.semaphore.release(); }
       // Fault injection is explicit, only available to trusted test callers: the journal row is committed, the run is not.
@@ -538,7 +621,7 @@ class Invocation {
     }
   }
   preflight(run) {
-    if (this.abort.signal.aborted) throw new FoundryError('CANCELLED', 'Execution cancelled');
+    if (this.signal().aborted) throw new FoundryError('CANCELLED', 'Execution cancelled');
     if (Date.now() >= run.deadline) throw new FoundryError('DEADLINE', 'Run deadline exhausted');
     if (run.cost > this.costLimit(run) + 1e-12) throw new FoundryError('COST_BUDGET', 'Run cost budget exhausted');
   }
@@ -556,10 +639,11 @@ class Invocation {
       identity: run.identity, features, action, alternatives, propensity, rationale, costUsd }));
   }
   async sandboxed(spec) {
-    await this.semaphore.take(this.abort.signal);
+    const signal = this.signal();
+    await this.semaphore.take(signal);
     try {
       const timeoutMs = Math.max(1, Math.min(spec.timeoutMs, 600000, this.current().deadline - Date.now()));
-      return (await this.runtime.codeRunner({ ...spec, timeoutMs, signal: this.abort.signal })).value;
+      return (await this.runtime.codeRunner({ ...spec, timeoutMs, signal })).value;
     } finally { this.semaphore.release(); }
   }
   async code(node, frameKey, ctx) {
@@ -593,16 +677,16 @@ class Invocation {
     const cap = this.registry.get(node.tool), run = this.current(), nodeKey = `${frameKey}/${node.id}`;
     if (!cap || !run.policy.allowedCapabilities.includes(node.tool)) throw new FoundryError('CAPABILITY_DENIED', `Capability ${node.tool} is not permitted for this run`);
     if (cap.effects !== 'none') throw new FoundryError('VERIFY_EFFECTS', 'A verification oracle must not have effects');
-    const args = resolve(node.args, ctx), local = new AbortController(), stop = () => local.abort();
-    await this.semaphore.take(this.abort.signal);
-    this.abort.signal.addEventListener('abort', stop, { once: true });
+    const args = resolve(node.args, ctx), local = new AbortController(), stop = () => local.abort(), signal = this.signal();
+    await this.semaphore.take(signal);
+    signal.addEventListener('abort', stop, { once: true });
     let timer;
     try {
       const timeoutMs = Math.max(1, Math.min(node.timeoutMs ?? 60000, cap.maxTimeoutMs, run.deadline - Date.now()));
       return await Promise.race([
         this.registry.execute(node.tool, args, { signal: local.signal, runId: this.runId, nodeKey, idempotencyKey: digest({ runId: this.runId, nodeKey, args }), artifactsDir: path.join(this.store.directory, 'artifacts', this.runId), store: this.store }),
         new Promise((_, reject) => { timer = setTimeout(() => { local.abort(); reject(new FoundryError('TOOL_TIMEOUT', `${node.tool} timed out`)); }, timeoutMs); })]);
-    } finally { clearTimeout(timer); this.abort.signal.removeEventListener('abort', stop); this.semaphore.release(); }
+    } finally { clearTimeout(timer); signal.removeEventListener('abort', stop); this.semaphore.release(); }
   }
   async verify(node, frameKey, ctx, state, resumed) {
     const subject = resolve(node.subject, ctx), subjectLabel = labelOf(node.subject, this.labelScope(frameKey));

@@ -146,6 +146,7 @@ function infer(template, context, depth = 0) {
 }
 
 const failure = record({ ok: { const: false }, error: record({ code: { type: 'string' }, message: { type: 'string' } }) });
+const itemError = record({ $error: record({ code: { type: 'string' }, message: { type: 'string' } }) });
 const verifyOutput = record({ pass: { type: 'boolean' }, score: { type: 'number' }, reasons: { type: 'array', items: { type: 'string' } },
   independence: { enum: ['execution', 'different-model', 'same-model'] } });
 const contextRefs = node => (node.context?.inputs ?? []).map((spec, index) => [index, spec]).filter(([, spec]) => Object.hasOwn(spec, 'ref'));
@@ -161,7 +162,10 @@ export function analyzeDataflow(workflow, registry) {
     if (node.kind === 'assert') return record({ passed: { const: true } });
     if (node.kind === 'human') return record({ answer: node.answerSchema });
     if (node.kind === 'wait') return record({ waitedMs: { type: 'integer' } });
-    if (node.kind === 'map') return record({ items: { type: 'array', items: outputs(node.body), maxItems: node.maxItems }, count: { type: 'integer' } });
+    // DESIGN §1.4: with failure "collect" an item is its body outputs or {$error}, and the map adds a failed count.
+    if (node.kind === 'map') return node.failure === 'collect'
+      ? record({ items: { type: 'array', items: union([outputs(node.body), itemError]), maxItems: node.maxItems }, count: { type: 'integer' }, failed: { type: 'integer' } })
+      : record({ items: { type: 'array', items: outputs(node.body), maxItems: node.maxItems }, count: { type: 'integer' } });
     if (node.kind === 'loop') return record({ iterations: { type: 'integer' }, last: outputs(node.body) });
     if (node.kind === 'agent') return node.onError === 'continue' ? union([node.returns, failure]) : node.returns;
     if (node.kind === 'code') return node.returns ?? unknown();

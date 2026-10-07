@@ -11,6 +11,8 @@ function liveJobOwner(job) {
   return !job.processStart || !observed || observed === job.processStart;
 }
 
+const timerRow = row => ({ runId: row.run_id, nodeKey: row.node_key, wakeAt: row.wake_at });
+
 export class Store {
   constructor(workspace) {
     mkdirSync(workspace, { recursive: true });
@@ -40,6 +42,8 @@ export class Store {
       CREATE TABLE IF NOT EXISTS diagnostic_repairs(run_id TEXT PRIMARY KEY, request_id TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS decisions(id TEXT PRIMARY KEY, run_id TEXT NOT NULL, kind TEXT NOT NULL, body TEXT NOT NULL);
       CREATE INDEX IF NOT EXISTS decisions_run ON decisions(run_id);
+      CREATE TABLE IF NOT EXISTS timers(run_id TEXT NOT NULL, node_key TEXT NOT NULL, wake_at INTEGER NOT NULL, PRIMARY KEY(run_id,node_key));
+      CREATE INDEX IF NOT EXISTS timers_due ON timers(wake_at);
     `);
   }
   close() { this.db.close(); }
@@ -162,6 +166,19 @@ export class Store {
     return this.db.prepare('INSERT OR IGNORE INTO decisions VALUES(?,?,?,?)').run(decision.id, runId, decision.kind, canonical(decision)).changes === 1;
   }
   decisions(runId) { return this.db.prepare('SELECT body FROM decisions WHERE run_id=? ORDER BY rowid').all(runId).map(row => JSON.parse(row.body)); }
+  // Durable wake-ups for wait nodes (DESIGN §5.4). The runtime writes them inside its updateRun
+  // transaction, so a timer row and the node state that needs it commit together.
+  setTimer(runId, nodeKey, wakeAt) {
+    if (typeof runId !== 'string' || typeof nodeKey !== 'string' || !Number.isSafeInteger(wakeAt) || wakeAt < 0) throw new FoundryError('TIMER', 'A timer needs a run id, node key and integer wake time');
+    this.db.prepare('INSERT INTO timers VALUES(?,?,?) ON CONFLICT(run_id,node_key) DO UPDATE SET wake_at=excluded.wake_at').run(runId, nodeKey, wakeAt);
+  }
+  clearTimer(runId, nodeKey) { this.db.prepare('DELETE FROM timers WHERE run_id=? AND node_key=?').run(runId, nodeKey); }
+  clearTimers(runId) { this.db.prepare('DELETE FROM timers WHERE run_id=?').run(runId); }
+  timers(runId) { return this.db.prepare('SELECT run_id,node_key,wake_at FROM timers WHERE run_id=? ORDER BY wake_at,node_key').all(runId).map(timerRow); }
+  dueTimers(now = Date.now(), limit = 100) {
+    if (!Number.isFinite(now) || !Number.isSafeInteger(limit) || limit < 1 || limit > 10000) throw new FoundryError('TIMER', 'dueTimers needs a finite time and a limit of 1-10000');
+    return this.db.prepare('SELECT run_id,node_key,wake_at FROM timers WHERE wake_at<=? ORDER BY wake_at,run_id,node_key LIMIT ?').all(Math.floor(now), limit).map(timerRow);
+  }
   fixture(id) { const row = this.db.prepare('SELECT body FROM fixtures WHERE run_id=?').get(id); return row ? JSON.parse(row.body) : null; }
   fixtureEffect(runId, key, action) {
     return this.transaction(() => {

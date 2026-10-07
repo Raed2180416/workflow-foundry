@@ -13,7 +13,13 @@
   "files": [
     "bin/foundry.mjs",
     "src/*.mjs",
+    "src/models/*.mjs",
+    "src/models/providers/*.mjs",
+    "src/executors/*.mjs",
     "schemas/workflow.schema.json",
+    "schemas/identity.schema.json",
+    "schemas/decision.schema.json",
+    "policy/models.json",
     "skills/**/*.md",
     "skills/**/*.json",
     "skills/**/*.txt",

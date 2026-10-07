@@ -119,6 +119,8 @@
         "input": {},
         "items": {},
         "maxItems": {"type": "integer", "minimum": 0, "maximum": 1000},
+        "concurrency": {"type": "integer", "minimum": 1, "maximum": 16},
+        "failure": {"enum": ["fail_fast", "collect"]},
         "maxIterations": {"type": "integer", "minimum": 1, "maximum": 1000},
         "initial": {},
         "until": {"$ref": "#/definitions/condition"},
