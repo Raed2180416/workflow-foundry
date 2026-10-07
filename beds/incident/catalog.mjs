@@ -1047,6 +1047,7 @@ export const RECOVER_ALT = {
   ],
   certificate_expiry: [
     (c, r) => ['INFO', `served chain for ${c.host} replaced with the intermediate bundle; handshake errors stopped`],
+    (c, r) => ['INFO', `renewed certificate for admin.${c.host}; handshakes on the admin listener succeed again`],
     (c, r) => ['INFO', `TLS listener :${c.port} ok (${r.int(40, 900)} handshakes/min)`],
   ],
   bad_config_deploy: [
@@ -1081,9 +1082,11 @@ export const RECOVER_ALT = {
 
 // v3 (audit): the first line of the root's own self-recovering blip (difficulty >= 3) may use the same
 // wording as a real onset; only the recovery that follows (and the absence of consequences) tells them apart.
-// Certificate and config blips keep their own wording (a served certificate does not un-expire; the earlier
-// healthy rollout of the root already plays this role), and cache refills are already identical in form.
+// For certificates it is a second, internal-only hostname of the same service whose certificate lapsed and
+// was renewed; config blips keep their own wording (the earlier healthy rollout of the root already plays this
+// role), and cache refills are already identical in form.
 export const BLIP_ONSET = {
+  certificate_expiry: (c, r) => ['WARN', `x509 serving cert admin.${c.host} validity ended at ${c.nowIso}; peers aborting handshakes`],
   connection_pool_exhaustion: (c, r) => ['WARN', `connection pool '${c.pool}' at capacity: in use ${c.max}/${c.max}, ${r.int(30, 140)} callers waiting`],
   disk_full: (c, r) => ['WARN', `disk usage on ${c.vol} jumped to ${c.u0 + r.int(6, 10)}% (was ${c.u0}% a few minutes ago); ${c.writer} is writing ${r.int(80, 400)} MB/s`],
   dns_resolution_failure: (c, r) => ['ERROR', `lookup ${c.someHost}: temporary failure in name resolution`],
