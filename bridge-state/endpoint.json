@@ -1,0 +1,17 @@
+{
+  "schema": "foundry-bridge/endpoint@1",
+  "state": "up",
+  "url": null,
+  "tunnelSource": null,
+  "tunnelReadyConnections": null,
+  "daemonVersion": "0.2.0",
+  "startedAt": "2026-10-07T21:49:46.455Z",
+  "heartbeatAt": "2026-10-07T21:49:48.287Z",
+  "gpu": {
+    "name": "NVIDIA GeForce RTX 4060 Laptop GPU",
+    "memoryTotalMiB": 8188,
+    "driver": "615.71.09",
+    "cuda": null
+  },
+  "services": []
+}
