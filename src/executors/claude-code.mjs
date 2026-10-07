@@ -15,10 +15,12 @@ export const WORK_ROOT = '/var/tmp/foundry-work', KIT_ROOT = '/opt/foundry-kit';
 // projects, /run host service sockets, /opt/rclone* sync configuration; the rest is corpus, model and venv data.
 // Hiding all of /root also keeps a builder from planting configuration (~/.claude.json, ~/.bashrc) for host sessions.
 // Not all of /home: the CLI's managed login needs a path there (live-tested 2026-10-07: hiding /home fails auth).
-export const DEFAULT_HIDDEN = Object.freeze(['/home/user', '/root', '/tmp', '/var/tmp', '/mnt', '/run', '/srv', '/media', '/old_root', '/dev/shm',
+export const DEFAULT_HIDDEN = Object.freeze(['/home/user', '/home/claude', '/home/ubuntu', '/root', '/tmp', '/var/tmp', '/mnt', '/run', '/srv', '/media', '/old_root', '/dev/shm',
   '/opt/corpus', '/opt/models', '/opt/hf-cache', '/opt/kev-venv', '/opt/llamacpp', '/opt/rclone', '/opt/rclone-attach', '/opt/env-runner', WORK_ROOT, KIT_ROOT]);
 // Kept visible, read-only, inside a hidden path: the proxy CA bundle (NODE_EXTRA_CA_CERTS) and user-local binaries (node).
-export const DEFAULT_KEEP_RO = Object.freeze(['/root/.ccr', '/root/.local']);
+// /home/claude/.claude/remote holds the CLI's managed login (live-tested 2026-10-07: hiding it fails auth); the rest of
+// that account directory (.ssh, .npm, .gitconfig, other .claude state) is hidden.
+export const DEFAULT_KEEP_RO = Object.freeze(['/root/.ccr', '/root/.local', '/home/claude/.claude/remote']);
 export const DEFAULT_TOOLS = ['Bash', 'Read', 'Write', 'Edit', 'Glob', 'Grep'];
 // Repository credentials, plus the parent Claude session's identity, sockets and tuning (else every nested CLI runs
 // as the parent session, shares its scratchpad and gets ~530 extra prompt tokens). Model access keeps the CLI's own
@@ -32,11 +34,12 @@ export const scrubEnv = (env = process.env) => Object.fromEntries(Object.entries
 // spawns `claude`. Mentions of the word (grep claude, ~/.claude, model ids like claude-opus-5-5) do not count.
 const NESTED_CLI = /(?:^|[;&|(`\n]|\$\()\s*(?:[A-Za-z_][A-Za-z0-9_]*=\S*\s+)*(?:(?:exec|env|nohup|command|time|timeout\s+\S+|npx(?:\s+-y)?|sudo)\s+(?:-\S+\s+)*(?:[A-Za-z_][A-Za-z0-9_]*=\S*\s+)*)*(?:\S*\/)?claude(?:\s|$|[;&|)])/;
 const NESTED_API = /api\.anthropic\.com|@anthropic-ai\/(?:sdk|claude-code|claude-agent-sdk)|\banthropic\.(?:Anthropic|AsyncAnthropic)\b|\/v1\/(?:messages|complete)\b/;
+const NESTED_KIT = /foundry-kit\/[0-9a-f]+\/bin\/foundry\.mjs\s+(?:run|resume|tick|trial)\b/;
 const NESTED_SPAWN = /\b(?:spawn|spawnSync|exec|execSync|execFile|execFileSync|execa|Popen|run|check_output|call|system)\s*\(\s*\[?\s*['"`](?:\S*\/)?claude(?:['"`\s])/;
 export function nestedModelUses(toolUses = []) {
   return toolUses.filter(u => {
     const input = u?.input ?? {};
-    if (u?.name === 'Bash') { const cmd = String(input.command ?? ''); return NESTED_CLI.test(cmd) || NESTED_API.test(cmd) || NESTED_SPAWN.test(cmd); }
+    if (u?.name === 'Bash') { const cmd = String(input.command ?? ''); return NESTED_CLI.test(cmd) || NESTED_API.test(cmd) || NESTED_SPAWN.test(cmd) || NESTED_KIT.test(cmd); }
     if (['Write', 'Edit', 'MultiEdit', 'NotebookEdit'].includes(u?.name)) {
       const text = [input.content, input.new_string, input.new_source, ...(Array.isArray(input.edits) ? input.edits.map(e => e?.new_string) : [])].filter(x => typeof x === 'string').join('\n');
       return NESTED_API.test(text) || NESTED_SPAWN.test(text);
@@ -86,6 +89,8 @@ export function maskSteps({ workdir, kitDir = null, hidden = DEFAULT_HIDDEN, kee
   for (const p of roots) if (p !== stage) steps.push(`mount -t tmpfs -o mode=0755 foundry-hidden ${shellQuote(p)}`);
   keeps.forEach((k, i) => steps.push(`mkdir -p ${shellQuote(k)}`, `mount --move ${shellQuote(`${stage}/k${i}`)} ${shellQuote(k)}`));
   for (const k of ro) steps.push(`mount -o remount,bind,ro ${shellQuote(k)}`);
+  // sysfs read-only; /sys/fs/cgroup is its own mount and stays writable for the CLI's per-command cgroups (gate G2 live test).
+  steps.push('mount -o remount,bind,ro /sys');
   return steps;
 }
 // The marker line on stderr separates a sandbox that could not be set up (an environment fault: nothing ran, nothing
@@ -132,6 +137,7 @@ export function sessionError({ result, stderr = '', timedOut = false, sandboxRea
 export async function runClaudeCode({
   model, prompt, workdir, files = {}, budgetUsd = 1, timeoutMs = 15 * 60 * 1000, tools = DEFAULT_TOOLS,
   hidden = DEFAULT_HIDDEN, keepRo = DEFAULT_KEEP_RO, kitDir = null, systemPrompt = null, appendSystemPrompt = null, effort = null, binary = 'claude', signal,
+  env: extraEnv = {},
 } = {}) {
   if (!model) throw new FoundryError('EXECUTOR_MODEL', 'An explicit model id from the policy file is required');
   if (!sandboxAvailable()) throw new FoundryError('SANDBOX_UNAVAILABLE', 'User/mount/pid namespaces are required to hide oracles from executors');
@@ -143,7 +149,9 @@ export async function runClaudeCode({
   if (appendSystemPrompt) args.push('--append-system-prompt', appendSystemPrompt);
   if (effort) args.push('--effort', effort);
   const script = sandboxScript(maskSteps({ workdir, kitDir, hidden, keepRo }), workdir, [binary, ...args]);
-  const env = scrubEnv();
+  // Extra variables for the whole session (C0: the model gateway, so even a direct call of the kit's CLI is policed).
+  for (const k of Object.keys(extraEnv)) if (SCRUBBED_ENV.test(k)) throw new FoundryError('SANDBOX_ENV', `refusing to pass credential variable ${k}`);
+  const env = { ...scrubEnv(), ...extraEnv };
   const started = Date.now();
   const child = spawn('unshare', [...UNSHARE_ARGS, 'sh', '-c', script], { env, stdio: ['pipe', 'pipe', 'pipe'], detached: true });
   let stdout = '', stderr = '', timedOut = false;

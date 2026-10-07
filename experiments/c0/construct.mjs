@@ -122,7 +122,8 @@ export async function construct({ arm, armId = arm, familyId, probeSeeds = [1, 2
   try {
     for (const [rel, content] of Object.entries(files)) { mkdirSync(path.dirname(path.join(workdir, rel)), { recursive: true }); writeFileSync(path.join(workdir, rel), content); }
     for (const exe of ['tools/foundry', 'tools/run-solver']) if (files[exe]) chmodSync(path.join(workdir, exe), 0o755);
-    r = await runClaudeCode({ model: builderModel, prompt, workdir, files: {}, kitDir: kit.dir, budgetUsd: builderBudgetUsd, timeoutMs: minutes * 60 * 1000 + 5 * 60 * 1000, effort: builderEffort });
+    r = await runClaudeCode({ model: builderModel, prompt, workdir, files: {}, kitDir: kit.dir, budgetUsd: builderBudgetUsd, timeoutMs: minutes * 60 * 1000 + 5 * 60 * 1000, effort: builderEffort,
+      env: arm === 'F' ? { FOUNDRY_MODEL_GATEWAY_URL: svc.url, FOUNDRY_MODEL_GATEWAY_TOKEN: svc.token } : {} });
   } catch (error) {
     // runClaudeCode throws only before the CLI starts (model id, sandbox, workspace): nothing was spent.
     r = { costUsd: 0, costUnknown: false, costUpperUsd: 0, turns: null, usage: null, streamUsage: null, toolUses: [], sessionId: null,

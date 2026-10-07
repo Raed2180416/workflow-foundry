@@ -15,7 +15,7 @@ import { Journal } from '../src/journal.mjs';
 import { ScriptedProvider } from '../src/models/providers/scripted.mjs';
 import { UNTRUSTED_PREAMBLE } from '../src/context.mjs';
 
-const S = 'qwen3.5-2b-q4km', S2 = 'granite-4.2-3b-q4km', M = 'claude-haiku-4-5-20251001', L = 'claude-sonnet-5-5', F = 'claude-opus-5-5';
+const S = 'qwen3.5-2b-q4km', S2 = 'granite-4.2-3b-q4km', M = loadPolicy().policy.models.find(m => m.class === 'M').id, L = 'claude-sonnet-5-5', F = 'claude-opus-5-5';
 const loaded = loadPolicy();
 const amount = { type: 'object', additionalProperties: false, required: ['amount'], properties: { amount: { type: 'number' } } };
 const base = (nodes, acceptance, extra = {}) => ({ schemaVersion: '1.0', id: 'AgentProbe', version: 1, title: 'Agent probe', goal: 'Normalise one synthetic record',

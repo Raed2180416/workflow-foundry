@@ -21,14 +21,15 @@ const FAMILIES = arg('families', 'records,incident,codefix,synth,kinetics').spli
 const PHASE = arg('phase', 'all'), DRY = process.argv.includes('--dry');
 // Owner policy 2026-10-07: Haiku 4.5 is the deliberately weak model the system must make work; Sonnet 5.5 and
 // Opus 5.5 are the stronger tiers. Local generative models (class S) are parked and unreachable (not in the subset).
-const MODELS = ['claude-haiku-4-5-20251001', 'claude-sonnet-5-5', 'claude-opus-5-5'];
+// Owner policy 2026-10-07: Haiku 5.5 is the weak model (it replaced Haiku 4.5); local generative models are parked.
+const MODELS = ['claude-haiku-5-5', 'claude-sonnet-5-5', 'claude-opus-5-5'];
 // Builder models. Effort xhigh for both: CLI 2.1.292 accepted --effort xhigh for Haiku 4.5 (probe 2026-10-07: success,
 // extended thinking active). If a later CLI rejects it, the session ends without a result (EXECUTOR_PROTOCOL, an
 // environment fault in construction-faults.jsonl) and is never retried silently at another effort: change it here
 // and record an amendment.
 const ALL_BUILDERS = {
   opus: { model: 'claude-opus-5-5', effort: 'xhigh', b0: { budgetUsd: 2 } },
-  haiku: { model: 'claude-haiku-4-5-20251001', effort: 'xhigh', b0: { budgetUsd: 1 } },
+  haiku: { model: 'claude-haiku-5-5', effort: 'xhigh', b0: { budgetUsd: 1 } },
 };
 const BUILDERS = arg('builders', 'opus,haiku').split(',').map(tag => { if (!ALL_BUILDERS[tag]) throw new Error(`unknown builder ${tag}`); return [tag, ALL_BUILDERS[tag]]; });
 // Per-arm caps, identical for both builder models (PREREG §2).
@@ -127,7 +128,7 @@ if (PHASE !== 'construct') {
       if (rec.nestedModelAttempts > 0) { appendFileSync(path.join(OUT, 'voided.jsonl'), JSON.stringify({ label: rec.label, armId: rec.armId, familyId, reason: 'nestedModelAttempts', count: rec.nestedModelAttempts, at: new Date().toISOString() }) + '\n'); console.log('VOID', rec.label); continue; }
       arms.push(constructedArm(a, rec));
     }
-    for (const [tag, builder] of BUILDERS) arms.push(b0Agent({ id: `B0-${tag}`, model: builder.model, budgetUsd: builder.b0.budgetUsd, timeoutMs: EXEC_MS }));
+    for (const [tag, builder] of BUILDERS) arms.push(b0Agent({ id: `B0-${tag}`, model: builder.model, budgetUsd: builder.b0.budgetUsd, timeoutMs: EXEC_MS, effort: builder.effort }));
     const tasks = await makeTasks(familyId, { split: 'test', seeds: [6001, 6002, 6003, 6004], difficulty: 3 });
     if (DRY) { console.log(familyId, JSON.stringify(arms.map(a => [a.id, armHash(a)])), tasks.map(t => t.taskHash.slice(0, 12)).join(',')); continue; }
     const common = { workRoot: path.join(WORK, 'exec'), concurrency: 3, envFaultRule: true, strictResume: true, onRecord: () => checkKill() };

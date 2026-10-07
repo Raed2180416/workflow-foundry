@@ -16,7 +16,7 @@ import { ModelPort } from '../src/models/port.mjs';
 import { Journal } from '../src/journal.mjs';
 import { ScriptedProvider } from '../src/models/providers/scripted.mjs';
 
-const S = 'qwen3.5-2b-q4km', M = 'claude-haiku-4-5-20251001';
+const S = 'qwen3.5-2b-q4km', M = loadPolicy().policy.models.find(m => m.class === 'M').id;
 const loaded = loadPolicy();
 const amount = { type: 'object', additionalProperties: false, required: ['amount'], properties: { amount: { type: 'number' } } };
 const agent = (id, extra = {}) => ({ id, kind: 'agent', needs: [], description: 'Extract the amount', role: 'extract', instructions: 'Return the amount in USD as a number.',

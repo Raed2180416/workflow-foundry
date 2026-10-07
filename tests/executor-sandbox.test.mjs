@@ -48,7 +48,10 @@ test('maskSteps keeps the workdir writable and the kit read-only inside hidden r
   assert.throws(() => maskSteps({ workdir: work, kitDir: path.join(work, 'kit') }), { code: 'EXECUTOR_PATH' }, 'kept paths may not nest');
   assert.throws(() => maskSteps({ workdir: '/proc/self' }), { code: 'EXECUTOR_PATH' });
   assert.ok(DEFAULT_HIDDEN.includes(KIT_ROOT) && DEFAULT_HIDDEN.includes('/root') && DEFAULT_HIDDEN.includes('/tmp') && DEFAULT_HIDDEN.includes('/home/user'));
-  assert.deepEqual([...DEFAULT_KEEP_RO], ['/root/.ccr', '/root/.local']);
+  assert.deepEqual([...DEFAULT_KEEP_RO], ['/root/.ccr', '/root/.local', '/home/claude/.claude/remote']);
+  // C0 gate 2026-10-07: the account directories are hidden (only the CLI login stays, read-only) and sysfs is read-only.
+  assert.ok(DEFAULT_HIDDEN.includes('/home/claude') && DEFAULT_HIDDEN.includes('/home/ubuntu'));
+  assert.equal(maskSteps({ workdir: work }).at(-1), 'mount -o remount,bind,ro /sys');
 });
 
 test('scrubEnv removes repository credentials and the parent session identity, keeping the rest', () => {
@@ -63,10 +66,12 @@ test('nestedModelUses counts nested CLI runs and direct API use, not mentions of
     bash('FOO=1 exec claude -p x'), bash('echo $(claude -p x)'), bash('curl https://api.anthropic.com/v1/messages -d @b.json'), bash('npx -y @anthropic-ai/claude-code -p x'),
     { name: 'Write', input: { file_path: 'a.mjs', content: "import { spawn } from 'node:child_process'; spawn('claude', ['-p', q]);" } },
     { name: 'Write', input: { file_path: 'a.py', content: 'import anthropic\nc = anthropic.Anthropic()' } },
-    { name: 'Edit', input: { new_string: "execSync('claude -p ' + q)" } }];
+    { name: 'Edit', input: { new_string: "execSync('claude -p ' + q)" } },
+    // a direct call of the kit's CLI would skip the session gateway (C0 gate 2026-10-07)
+    bash('node /opt/foundry-kit/f5c921b04646bec8/bin/foundry.mjs run wf.json --input {}'), bash('cd x && node /opt/foundry-kit/abc123/bin/foundry.mjs resume r1')];
   for (const u of hits) assert.equal(nestedModelUses([u]), 1, JSON.stringify(u.input));
   const misses = [bash('grep -rn claude tools/policy.json'), bash('cat ~/.claude/settings.json'), bash('ls /root/.claude'), bash('node solve.mjs --model claude-opus-5-5'),
-    bash('echo "use claude-haiku-4-5-20251001"'), { name: 'Write', input: { content: "callModel({ model: 'claude-sonnet-5-5' })" } }, { name: 'Read', input: { file_path: '/x/claude' } }];
+    bash('echo "use claude-haiku-4-5-20251001"'), bash('node /opt/foundry-kit/abc123/bin/foundry.mjs validate wf.json'), { name: 'Write', input: { content: "callModel({ model: 'claude-sonnet-5-5' })" } }, { name: 'Read', input: { file_path: '/x/claude' } }];
   for (const u of misses) assert.equal(nestedModelUses([u]), 0, JSON.stringify(u.input));
   assert.equal(nestedModelUses([...hits, ...misses]), hits.length);
 });
