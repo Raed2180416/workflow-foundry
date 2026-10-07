@@ -31,9 +31,12 @@ capability number against a simple baseline and a `research/<topic>-<date>/REPOR
 | Phase | State | Evidence |
 |---|---|---|
 | 0 Unblock | **done** | [env probe](research/env-20261006/ENV.md), suite 605 tests: 590 pass, 0 fail, 15 skip (all with recorded reasons: `node research/list-skips.mjs`) |
-| 1 Core nodes | **built; exit experiment pending** | [design](research/core-20261006/DESIGN.md), [pre-registration](research/core-20261006/PREREG.md); suite 735 tests, 718 pass, 0 fail, 17 recorded skips; 10 adversarial-review findings being fixed |
-| 2 Construction (C0) | harness built, dev round pre-registered | [design](research/construction-20261006/DESIGN.md), [dev prereg](research/construction-20261006/PREREG-dev.md) |
-| 3–6 | not started | see [ROADMAP §5](docs/ROADMAP.md) |
+| 1 Core nodes | **built and reviewed; exit experiment pending** | [design](research/core-20261006/DESIGN.md), [pre-registration](research/core-20261006/PREREG.md); 10 adversarial-review findings fixed and verified; suite 765 tests: 747 pass, 0 fail, 18 recorded skips |
+| 2 Construction (C0) | harness built, dev round pre-registered (draft); [workflow corpus](research/corpus-20261006/COVERAGE.md) complete: 1,342 items from 27 platforms with a 30-item pilot shortlist | [design](research/construction-20261006/DESIGN.md), [dev prereg](research/construction-20261006/PREREG-dev.md) |
+| Beds | 8 Tier-A families + 4 sealed families built; independent audits: gridquest and codefix done, records, incident, synth, kinetics in progress, owner family `ownerci` being built | `beds/*/AUDIT.md` |
+| 3 Cheap execution (C1) | assignment search built, local pilot running | [design draft](research/distill-20261007/DESIGN.md) |
+| 4 Typed judgments | System One engine (Kev/Jev) + calibration ledger built; live on Kev-0.8B (CPU) | `src/judgment.mjs` |
+| 5–6 | not started | see [ROADMAP §5](docs/ROADMAP.md) |
 
 **Phase 1 (core nodes), what exists now:** `agent` nodes (one narrow, typed model judgment, with
 escalation E1/E2/E7), sandboxed `code` nodes (JS/Python in user+mount+pid+net namespaces),
