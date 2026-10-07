@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { existsSync, realpathSync } from 'node:fs';
+import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import { checkData, FoundryError } from './data.mjs';
 
 // DESIGN §1.2. Code runs in fresh user+net+mount+pid namespaces: every inherited mount is
@@ -21,7 +21,20 @@ export const MAX_OUTPUT_BYTES = 512 * 1024;
 // wasm) at 1.25 GiB: ~0.6 GiB V8/thread baseline plus the 512 MiB heap; --permission already
 // forbids child processes and workers, so NPROC only bounds V8/libuv threads (about 11).
 // RLIMIT_NPROC is never enforced for host root (kuid 0), so a root host runs the sandbox as nobody.
+// Inside an outer user namespace that maps only root (an executor sandbox started with
+// --map-root-user), uid 65534 does not exist and setuid would fail with EINVAL; there the code keeps
+// the mapped root and NPROC is not enforced, while the memory, file-size and core limits still are.
+// That outer sandbox already gives its occupant (a builder agent) a shell, so NPROC adds nothing there.
 const MiB = 1024 * 1024, SANDBOX_ID = 65534;
+// True when `id` is mapped in this process's user namespace (/proc/self/{uid,gid}_map: inside outside count).
+export function idMapped(file, id) {
+  try {
+    return readFileSync(`/proc/self/${file}`, 'utf8').trim().split('\n').some(line => {
+      const [inside, , count] = line.trim().split(/\s+/).map(Number);
+      return Number.isFinite(inside) && Number.isFinite(count) && id >= inside && id < inside + count;
+    });
+  } catch { return false; }
+}
 export const LIMITS = Object.freeze({
   js: Object.freeze({ nproc: 32, data: 1280 * MiB, fsize: 16 * MiB, core: 0 }),
   python: Object.freeze({ nproc: 8, as: 1024 * MiB, fsize: 16 * MiB, core: 0 })
@@ -139,7 +152,7 @@ export async function runCode({ lang, source, input = null, timeoutMs = 10000, m
   const unshareBinary = unshare ?? first(['/usr/bin/unshare', '/bin/unshare', '/usr/sbin/unshare', '/sbin/unshare']);
   if (!unshareBinary) throw new FoundryError('SANDBOX_UNAVAILABLE', 'unshare(1) is not installed; code nodes never run unsandboxed');
   const argv = ['--user', '--map-root-user', '--net', '--mount', '--pid', '--fork', '--kill-child', '--mount-proc', '/bin/sh', '-c', SETUP, 'foundry-sandbox', INNER, prlimitArgs(lang), ...interpreter(lang)];
-  const identity = process.getuid?.() === 0 ? { uid: SANDBOX_ID, gid: SANDBOX_ID } : {};
+  const identity = process.getuid?.() === 0 && idMapped('uid_map', SANDBOX_ID) && idMapped('gid_map', SANDBOX_ID) ? { uid: SANDBOX_ID, gid: SANDBOX_ID } : {};
   const startedAt = Date.now();
   return new Promise((resolve, reject) => {
     let child;

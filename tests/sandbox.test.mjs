@@ -202,3 +202,17 @@ test('sandbox: fails closed when unshare is unavailable and validates requests',
   await rejects(runCode({ lang: 'js', source: 'export default () => 1', maxOutputBytes: 600 * 1024 }), 'CODE_OUTPUT_INVALID');
   await rejects(runCode({ lang: 'js', source: 'export default () => 1', input: { n: NaN } }), 'INVALID_NUMBER');
 });
+
+// Builder sessions run inside an executor sandbox (unshare --user --map-root-user) where only uid 0 is
+// mapped; a code node there must still run (keeping the mapped root) instead of failing setuid(65534).
+test('sandbox: code nodes run inside an outer user namespace that maps only root', { skip: skip || (process.getuid?.() !== 0 && 'host is not root') }, async () => {
+  const { spawnSync } = await import('node:child_process');
+  const sandbox = fileURLToPath(new URL('../src/sandbox.mjs', import.meta.url));
+  const script = `import { runCode, idMapped } from ${JSON.stringify(sandbox)};
+    const r = await runCode({ lang: 'js', source: 'export default function main(i) { return { y: i.x * 2 }; }', input: { x: 21 } });
+    console.log(JSON.stringify({ y: r.value?.y ?? null, mapped: idMapped('uid_map', 65534) }));`;
+  const p = spawnSync('unshare', ['--user', '--map-root-user', '--mount', '--fork', process.execPath, '--input-type=module', '-e', script], { encoding: 'utf8', timeout: 60000 });
+  assert.equal(p.status, 0, p.stderr);
+  const out = JSON.parse(p.stdout.trim().split('\n').at(-1));
+  assert.deepEqual(out, { y: 42, mapped: false });
+});
