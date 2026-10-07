@@ -22,7 +22,7 @@
 | B0-opus | none | Claude Code headless (Opus 5.5) with tools, per-task cap $2, 20 min |
 | B0-haiku | none | same with Haiku 4.5, per-task cap $1 |
 
-Models a builder may assign: `qwen3.5-4b-q4km` (local, slow), `claude-haiku-4-5-20251001`, `claude-sonnet-5-5`, `claude-opus-5-5`. Prompts: `experiments/c0/prompts.mjs` (hash under Amendments). One construction per family per arm (K_c = 1 in this round). Execution K = 2 trials per task.
+Models a builder may assign: `claude-haiku-4-5-20251001`, `claude-sonnet-5-5`, `claude-opus-5-5` (local generative models are parked: owner decision 2026-10-07, see README). Prompts: `experiments/c0/prompts.mjs` (hash under Amendments). One construction per family per arm (K_c = 1 in this round). Execution K = 2 trials per task.
 
 ## 3. Measurements
 - **Construction success**: artifact delivered and runs without harness fault on all probes.

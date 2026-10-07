@@ -1,6 +1,6 @@
 // Phase 1 exit experiment (pre-registered in research/core-20261006/PREREG.md). Frozen: its sha256 is
 // recorded in the pre-registration; any change after the first run is an amendment.
-// Usage: node experiments/p1/run.mjs [--lane hosted|local] [--dry]
+// Usage: node experiments/p1/run.mjs [--dry]
 import path from 'node:path';
 import { makeTasks } from '../lib/beds.mjs';
 import { runExperiment, armHash } from '../lib/runner.mjs';
@@ -10,9 +10,9 @@ import { b0Agent } from '../lib/arms/b0-agent.mjs';
 import { foundryWorkflow } from '../lib/arms/foundry-workflow.mjs';
 import { buildRecordsWorkflow } from '../workflows/records-hand.mjs';
 
-const lane = process.argv.includes('--lane') ? process.argv[process.argv.indexOf('--lane') + 1] : 'hosted';
+const lane = 'hosted'; // the local lane was dropped before freezing (owner decision 2026-10-07: local generative models parked)
 const dry = process.argv.includes('--dry');
-const HAIKU = 'claude-haiku-4-5-20251001', SONNET = 'claude-sonnet-5-5', QWEN4B = 'qwen3.5-4b-q4km';
+const HAIKU = 'claude-haiku-4-5-20251001', SONNET = 'claude-sonnet-5-5';
 const out = path.resolve('experiments/runs/p1');
 const { port } = createModelPort({ journalFile: path.join(out, `journal-${lane}.sqlite`) });
 const seeds = [5001, 5002, 5003, 5004, 5005, 5006];
@@ -30,14 +30,11 @@ const hosted = [
   foundryWorkflow({ id: 'fhand-haiku', workflow: wf('M', 'L'), modelPort: port, assignment: { read: HAIKU }, maxCostUsd: 2 }),
   foundryWorkflow({ id: 'fhand-sonnet', workflow: wf('L', 'L'), modelPort: port, assignment: { read: SONNET }, maxCostUsd: 2 }),
 ];
-// Local lane: S-class extraction with the escalation rules E1/E2/E7 allowed up to L (Sonnet).
-const local = [foundryWorkflow({ id: 'fhand-qwen4b-esc', workflow: wf('S', 'L'), modelPort: port, assignment: { read: QWEN4B }, maxCostUsd: 2 })];
-const arms = lane === 'local' ? local : hosted;
-const localTasks = tasks.filter(t => t.task.difficulty === 2).slice(0, 3);
+const arms = hosted;
 if (dry) {
-  console.log(JSON.stringify({ lane, tasks: (lane === 'local' ? localTasks : tasks).map(t => [t.taskKey, t.taskHash.slice(0, 12)]), arms: arms.map(a => [a.id, armHash(a)]) }, null, 1));
+  console.log(JSON.stringify({ lane, tasks: tasks.map(t => [t.taskKey, t.taskHash.slice(0, 12)]), arms: arms.map(a => [a.id, armHash(a)]) }, null, 1));
   process.exit(0);
 }
-await runExperiment({ experiment: `p1-records-${lane}`, arms, tasks: lane === 'local' ? localTasks : tasks, trials: lane === 'local' ? 1 : 3,
-  workRoot: process.env.FOUNDRY_WORK_ROOT ?? '/var/tmp/foundry-work/p1', resultsFile: path.join(out, `results-${lane}.jsonl`), concurrency: lane === 'local' ? 1 : 3 });
+await runExperiment({ experiment: `p1-records-${lane}`, arms, tasks, trials: 3,
+  workRoot: process.env.FOUNDRY_WORK_ROOT ?? '/var/tmp/foundry-work/p1', resultsFile: path.join(out, `results-${lane}.jsonl`), concurrency: 3 });
 process.exit(0);

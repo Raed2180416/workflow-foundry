@@ -104,6 +104,15 @@ All of these are diagnostic development runs on OpenCode free models
 | Outcome repair checkpoint (09-17) | Run "succeeded" with a wrong artifact. Unsatisfied outcome recorded, same-builder model repair passed 5 dev + 8 withheld cases, v2 applied, re-run satisfied. Independent partitions: repaired 98/98, faulty 80/98 (196 executions). Suite 645 tests, 641 pass, 4 opt-in skips. Opt-in run: 82 checks pass. | A working model-in-the-loop repair mechanism on **one synthetic objective**. The fault and expectation were supplied. This is not general intent satisfaction. |
 | Free-provider construction (09-17) | Big Pickle returned one 150 s HTTP 200 stream with reasoning only: no answer, no usage. | An error-precedence bug was fixed and tested offline (23 checks). No successful hosted rerun yet. |
 
+### 2026-10 cloud session (development evidence; Claude CLI route and local CPU models)
+
+| Experiment (date) | Result | Supported conclusion |
+|---|---|---|
+| Records single-call calibration (10-06) | Sonnet 5.5 single call 6/6 (d1–d3, ≈ $0.08–0.18 per task); Haiku 4.5 single call 0/6. K = 1. | A single strong call is a strong baseline on `records`; Haiku alone is not enough. |
+| Haiku thinking on an extraction node (10-07) | With default thinking, Haiku spent ≈ 5.2K output tokens per 6-row extraction call and scored *lower* than with thinking off (`MAX_THINKING_TOKENS=0`): field accuracy 0.84–0.91 vs 0.98, at 3–4× the cost. | For narrow typed extraction, thinking hurt. `reasoning: none` now really disables it on the CLI route. |
+| Hand-written records workflow on Haiku (10-07) | After moving date and amount parsing into code (the model returns raw spans): 3/3 d2 dev tasks pass at $0.086/task; d3 still fails (0.90, 0.95). K = 1, dev seeds. | Code-owned parsing turns a failing cheap workflow into a passing one at d2, at about the cost of one Sonnet call: parity, not savings yet. |
+| Local generative models as node executors (10-07) | Screening the records extraction node against Sonnet reference outputs (leaf agreement, threshold 0.98): Qwen3.5-2B Q4_K_M 0.80 on 4 calls at **268 s per call** (4-core CPU, no GPU); Granite-4.2-3B Q4_K_M 0.38 with 2/4 schema failures; Qwen3.5-4B stopped before screening. | **Negative.** On this VM, local generative models are too slow and too weak for node execution. Parked by owner decision; Haiku is the cheap executor. Kev (typed judgments, one prefill pass, ≈ 1.4 s per question) is kept. |
+
 ## Failure → fix chains
 
 The working method: preserve the failure, find the causal weakness, fix the general

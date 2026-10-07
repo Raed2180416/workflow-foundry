@@ -14,7 +14,8 @@ import { b0Agent } from '../lib/arms/b0-agent.mjs';
 const arg = (name, dflt) => (process.argv.includes(`--${name}`) ? process.argv[process.argv.indexOf(`--${name}`) + 1] : dflt);
 const FAMILIES = arg('families', 'records,incident,codefix,synth,kinetics').split(',');
 const PHASE = arg('phase', 'all'), DRY = process.argv.includes('--dry');
-const MODELS = ['qwen3.5-4b-q4km', 'claude-haiku-4-5-20251001', 'claude-sonnet-5-5', 'claude-opus-5-5'];
+// Local generative models are parked (owner decision 2026-10-07: CPU-only VM, 268 s per call measured).
+const MODELS = ['claude-haiku-4-5-20251001', 'claude-sonnet-5-5', 'claude-opus-5-5'];
 const OUT = path.resolve('experiments/runs/c0-dev'), WORK = '/var/tmp/foundry-work/c0-dev';
 const ART = path.resolve('research/construction-20261006/artifacts');
 mkdirSync(OUT, { recursive: true });

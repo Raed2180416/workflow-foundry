@@ -9,6 +9,18 @@ workflows are C0's outputs.*
 search, reach non-inferior verified success at much lower cost than (a) the frontier
 executing alone (B0, Opus agent) and (b) the same workflow on all-frontier models, and
 beat the all-cheapest assignment on success.
+
+**Scope change (owner decision, 2026-10-07).** Local *generative* models are parked on this
+VM (4 CPU cores, no GPU). Measured in the screening pilot (`experiments/pilots/distill-records-pilot.mjs`,
+records extraction node, reference = Sonnet outputs from passing runs): Qwen3.5-2B took
+268 s per call and reached 0.80 leaf agreement on 4 calls; Granite-4.2-3B reached 0.38 with
+2 of 4 calls failing the schema; both were dropped (threshold 0.98); Qwen3.5-4B was stopped
+before screening. So C1 is measured here with **Haiku 4.5 as the cheap executor** (class M)
+against Sonnet 5.5 (L) and Opus 5.5 (F). The open-weight half of ROADMAP's C1 wording
+("assigned open-weight models") is **not measured** until GPU compute exists; the report will
+say so. The one local model kept is **Kev** (typed judgments in one prefill pass, ~1.4 s per
+question on this CPU), which enters C1 as a gate in front of model calls (§3, step 4), not as
+an executor.
 **Exit (ROADMAP §5.3):** C1 on two Tier A families and one owner family. Primary metric:
 CPS at a non-inferiority margin on verified success; secondary: pass^k.
 
@@ -23,19 +35,21 @@ prompt variants change.
    separately, L (Sonnet) on the family's `dev` split (seeds 101–116, d3), K = 1. Keep the
    runs that pass the oracle; their journaled node calls are the references.
 2. **Node screening** (`experiments/lib/distill.mjs`). For each agent node, replay the
-   recorded requests verbatim on the candidates, cheapest first: Qwen3.5-2B, Granite-4.2-3B,
-   Qwen3.5-4B (local, CPU), Haiku 4.5, Sonnet 5.5. Score = leaf agreement with the reference
+   recorded requests verbatim on the candidates, cheapest first: Haiku 4.5 (thinking off,
+   then low), Sonnet 5.5. Score = leaf agreement with the reference
    output (exact strings after trim, numbers to 1e-9 relative); a schema failure scores 0.
    Successive halving at cumulative sample sizes 4 → 8 → 16 with threshold 0.98 and at most
    10% failed calls. The cheapest survivor is the node's candidate assignment.
-3. **Prompt variants.** For a node whose cheapest *local* candidate misses the threshold,
+3. **Prompt variants.** For a node whose cheapest candidate (Haiku) misses the threshold,
    the builder model (Opus) gets the node's failures (inputs, reference, candidate output)
    and writes **one** prompt variant for that node–model pair; it is re-screened once.
    Variants are bound to the pair (fixes do not transfer between models, R09).
 4. **Cascade option.** A node may instead get a cascade: cheapest candidate first, and
    escalation on node-check failure (E2) or schema failure (E1), as the runtime already
-   supports. Screening reports the check's catch rate on the candidate's disagreements;
-   a cascade is admissible only if the check flags ≥ 90% of disagreeing outputs.
+   supports, or on a **Kev gate**: a typed judgment ("is this output consistent with the
+   input?", calibrated on the reference traces) that escalates below its threshold.
+   Screening reports each gate's catch rate on the candidate's disagreements; a cascade is
+   admissible only if its gate flags ≥ 90% of disagreeing outputs.
 5. **End-to-end confirmation on dev.** Run the searched assignment and the cascade
    variant end to end on dev (16 tasks, K = 1). If success is more than 5 points below the
    all-frontier assignment, the most-disagreeing node is promoted one class and the run
@@ -50,14 +64,14 @@ Arms per family, on held-out `test` seeds (never inspected), K = 3:
 | `wf-searched` | the frozen searched assignment |
 | `wf-cascade` | cheapest candidates + E1/E2 escalation up to F |
 | `wf-frontier` | the same workflow, every agent node Opus |
-| `wf-cheapest` | the same workflow, every agent node Qwen3.5-2B (local) |
+| `wf-cheapest` | the same workflow, every agent node Haiku 4.5 with thinking off |
 | `B0-opus` | Claude Code headless with Opus, same per-task cap as C0 |
 | `B0-haiku` | the same with Haiku |
 
 **Non-inferiority margin:** 5 points on verified success (pre-registered), tested with a
-family-clustered paired bootstrap 95% CI on (wf-searched − wf-frontier). CPS includes
-local compute imputed at $0.20 per CPU-hour (the policy file's `imputedComputeUsdPerHour`),
-reported separately as well, since on this VM local inference is slow and not free.
+family-clustered paired bootstrap 95% CI on (wf-searched − wf-frontier). CPS is hosted
+list price; Kev gates add imputed CPU at $0.20 per CPU-hour (the policy file's
+`imputedComputeUsdPerHour`), reported separately.
 
 **Power.** With 3 families × 16 test tasks × K = 3 the CI half-width on a success
 difference is about ±10 points: enough to see large gaps, not to prove 5-point
@@ -71,14 +85,14 @@ that break named tests, with the suite as oracle and a diff guard against test e
 Built as a bed (`beds/ownerci/`) with the same contract and an independent audit.
 
 ## 6. Engine conformance (§5.3 build item)
-Measured on CPU only: the same GGUF and schema through llama.cpp `llama-server`
-(json_schema grammar) and, if installable within the D5 cap, Ollama. vLLM/SGLang need a
-GPU and are reported as **not measured** in this environment.
+Parked with the local generative models. The llama.cpp provider and its tests stay in the
+code (`src/models/providers/llama-server.mjs`); Ollama, vLLM and SGLang are **not measured**
+in this environment.
 
 ## 7. Open questions
 - Reference choice: an Opus reference can itself be wrong on passing runs (a wrong leaf
   that the oracle tolerates). Agreement is a screen, not a verdict; end-to-end
   confirmation decides.
-- Local latency: Qwen3.5-4B runs at ≈ 6 tokens/s generation on this CPU, so a d3
-  `records` task is ≈ 10–20 min of CPU. Local arms run at concurrency 1 and are budgeted
-  in wall time as well as dollars.
+- With Haiku as the cheapest executor, the price gap to Sonnet is about 3–4× per token, not
+  the 50–100× an open-weight model would give; C1's savings come mainly from narrow
+  prompts, thinking off and code-owned procedure, and the claim must be sized to that.

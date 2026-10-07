@@ -122,6 +122,7 @@ itemised here; it counts against the same plan allowance.
 | OpenCode | Verify OpenCode v2.0.23 locally and add its (version, sha256, evidence) to `OPENCODE_V2_ALLOWLIST`. | Do it when convenient; cloud runs skip those tests. | No |
 | D7 | No `TYPESAFE_API_KEY`: hosted Jev is unavailable. Kev (open weights on Hugging Face) will be used for the typed-judgment engine on CPU. | Provision the key if hosted Jev should be compared. | No |
 | PR #1 | Phase 0 is in [PR #1](https://github.com/Raed2180416/workflow-foundry/pull/1). The session's permission policy does not let the agent merge without review, so later phases stack on the same branch as separate commits. | Review and merge when convenient. | No |
+| Local models (decided) | 2026-10-07: local *generative* models (Qwen/Granite via llama.cpp) are parked: 268 s per call and 0.38–0.80 agreement on this 4-core CPU ([negative result](docs/RESEARCH.md)). Haiku 4.5 is the cheap executor; Kev stays as the local typed-judgment engine. C1's open-weight half is not measured here. | A GPU (any 16–24 GB card) would reopen the open-weight lane. | No |
 | Remote compute | No Modal/Harbor credentials: Tier B/C container beds (SWE-bench Pro, Terminal-Bench) cannot run from here. | Provision if Tier B is wanted. | Only for Tier B/C |
 
 ## Quickstart and commands
