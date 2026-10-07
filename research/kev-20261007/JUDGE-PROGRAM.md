@@ -1,4 +1,4 @@
-# Kev judge program: ports, data, splits, sizes, gates (2026-10-07)
+# Kev judge program: ports, data, splits, sizes, gates (2026-10-07, revision 2)
 
 *Design document. Development/diagnostic status: nothing here has been trained or evaluated yet.
 Companion to [01-kev-dossier.md](01-kev-dossier.md) (what Kev is) and
@@ -7,32 +7,49 @@ It answers the owner direction of 2026-10-07 ("25 min for 5K ... we need to be r
 Kev-0.8B for every place a quick typed decision helps, build datasets that are right, and show
 whether the size is sufficient.*
 
+*Revision 2 resolves the findings of two adversarial reviews:
+[JUDGE-CRITIQUE-shortcuts.md](JUDGE-CRITIQUE-shortcuts.md) (S1–S18 and its decidability audit: would
+Kev learn the skill or the generator?) and [JUDGE-CRITIQUE-coverage.md](JUDGE-CRITIQUE-coverage.md)
+(G1–G28 and its claim-C4 ladder: coverage, feasibility, wiring). Every finding is fixed or rejected
+with a reason; the **Review log** at the end lists each one and where it landed. The worker build
+plan is [JUDGE-BUILD-PLAN.json](JUDGE-BUILD-PLAN.json) (§10).*
+
 **Evidence tags.** Every number carries one:
-- **[M]** measured, with the source: `[M here]` = this session (command in Appendix A);
-  `[M probe]` = `research/kev-20261007/probe-summary.json` (generated 2026-10-07T17:01Z, rule arm only
-  so far); `[M owner]` = owner-reported laptop smoke (task text and `docs/laptop-agent-kickoff.md` §G;
-  no run record exists in this repository).
-- **[D]** documented, with file and line (`kev:` = `/home/user/jaredpalmer/kev` at `5e42a7a0`,
-  `fdy:` = this repository). Kev documents are its author's claims, not verified here.
-- **[E]** estimated, with the reasoning or formula.
+- **[M]** measured, with the source: `[M here]` = the revision-1 session (Appendix A);
+  `[M probe]` = `research/kev-20261007/probe-summary.json` (generated 2026-10-07T17:01Z, rule arm only;
+  `03-probe-results.md` is still a placeholder, so no stock-Kev probe numbers exist);
+  `[M crit-S]` / `[M crit-G]` = measured in the shortcuts / coverage review (their Appendix A,
+  dev seeds only); `[M owner]` = owner-reported laptop smoke (no run record in this repository).
+- **[D]** documented, with file and function (`kev:` = `/home/user/jaredpalmer/kev` at `5e42a7a0`,
+  `fdy:` = this repository). Kev documents are its author's claims, not verified here. Bed line
+  numbers drift while other agents edit the beds; the function or constant name is the stable
+  reference [crit G12].
+- **[E]** estimated, with the reasoning or formula. **[I]** inference, with the reasoning.
 - **[unk]** not known from any source available here.
 
 **Ground rules this program obeys.**
 - Kev ranks, gates and abstains; it never promotes, completes or grants (`fdy:docs/THESIS.md` §7,
-  `fdy:docs/ROADMAP.md:368-369`). A port gates only after it beats its baselines on held-out labels
-  (C4, `fdy:docs/ROADMAP.md:643`, `:732`).
-- Sealed beds (`beds/sealed/`) are never read or used. Bed `test` split seeds (≥ 5000) are evaluation
-  only and never enter training, calibration or selection.
-- Labels come from generator truth, simulators, oracles or journals. No LLM ever labels a record.
-- Model ids come only from `fdy:policy/models.json`; every escalation is a logged event.
+  `fdy:docs/ROADMAP.md` §2.4). A port gates only after it beats its baselines on held-out labels
+  (claim C4, `fdy:docs/ROADMAP.md` claims table and falsifiers).
+- Sealed beds (`beds/sealed/`) are never read, listed, hashed or used. Bed `test` split seeds
+  (≥ 5000) are evaluation only and never enter training, calibration or selection.
+- Labels come from generator truth, simulators, oracles, replays or journals. **No LLM ever labels
+  a record.** Authored pool lines inherit the truth of the brief they were written to and must
+  pass a two-model filter (§2.3 rule 1); agent auditors read rows and report "cannot tell", but
+  never assign labels (§2.7).
+- Model ids come only from `fdy:policy/models.json`; every escalation is a logged event. The weak
+  model is Haiku 5.5 (`claude-haiku-5-5`, policy class M): owner decision O1, resolved 2026-10-07
+  (the owner: "anthropic updated haiku from 4.5 to haiku 5.5"; Haiku is deliberately the weak
+  model in experiments). Haiku 4.5 (`claude-haiku-4-5-20251001`) stays in the policy for earlier
+  pilots and as a reference only; its journals (e.g. `records-hand-pilot`) are historical data.
 
 ---
 
 ## 0. Summary
 
-1. **The binding constraint is surface diversity, not row count.** The bed generators write their
-   label-bearing sentences from small template pools. Measured on 900 dev worlds of `records`
-   (seeds 1–300 × d3–d5) [M here]:
+1. **The binding constraint is surface diversity, so the unit of evidence is the surface form.**
+   The bed generators write their label-bearing sentences from small template pools. Measured on
+   900 dev worlds of `records` (seeds 1–300 × d3–d5) [M here]:
 
    | Port | Distinct label-bearing forms in 900 worlds |
    |---|---|
@@ -41,49 +58,70 @@ whether the size is sufficient.*
    | timestamp re-stamp (R4) | 220 |
    | status-value meaning (R2) | 288 (16 template ids) |
 
-   Injection text is the same story: 4–9 templates per bed (incident `INJECT` 4, kinetics 5,
-   gridquest 6, records 9 memo templates) [M here; `fdy:beds/records/README.md:306-317`]. A
-   fine-tuned 0.8B will memorise these in a few hundred rows. Accuracy on new seeds from the same
-   templates (test-in-family) then measures recall, not skill. **Only held-out templates,
-   held-out paraphrases, held-out families and real traces can show robustness**, and they are the
-   promotion gates here (§3, §6, §8).
-2. **"Is 5K sufficient?" becomes a measured curve, with a prediction written down first.**
-   - Wave 1 has 13 ports (§1.1). 5K rows gives the hard ports about 480 rows each (§4.3). Kev's own
-     docs saw no detectable gain at 400 records and +5.9 pp at 1,050 records
-     (`kev:skills/kev-finetune/README.md:46-50`; `kev:README.md:157`) [D].
-   - **Prediction:** 5K is enough for the template-bound ports (R2–R4) and not enough for the hard
-     ports. The first size expected to move the hard ports is about 20K rows, about 1.75 h of
-     training at the smoke rate [E].
-   - **Measurement:** nested runs at 2.5K, 5K, 10K and 20K rows, with 40K only if triggered (§4.4).
-     The decision rule per port is: 5K is sufficient if `acc(20K) − acc(5K)` on test-OOD has a 95%
-     upper bound below 2 pp.
-3. **The 0.287 s/example rate was measured on toy records.** The smoke fine-tune used about 64
-   README-style examples with very short states (`fdy:docs/laptop-agent-kickoff.md` §G) [M owner].
-   - Foundry rows are 60–600 tokens. Training time per row is likely 1–3× higher [E].
-   - Job J0 (§7.4) re-measures seconds per row and peak VRAM at 300, 2K and 8K tokens before
-     anything else runs.
-4. **The bridge has two traps for this data.**
-   - `kev.train` defaults to `maxState 384` (`fdy:bridge/laptop/jobs.mjs:56`). Kev silently drops
-     every record over the training context and only prints "dropped N of M"
-     (`kev:kev/train.py:103-109`) [D]. Every job here sets `maxState` explicitly, and acceptance
-     requires `dropped = 0`.
-   - `kev.benchmark` takes only `{run, data, rotations}` (`fdy:bridge/laptop/jobs.mjs:62`). So
-     forgetting is measured by uploading Kev's suite development files as data. The temperature is
-     refit in the cloud from the benchmark rows.
-5. **Probe status.** The stock-Kev probe has finished only its rule arm [M probe]: rule accuracy
-   0.55 (synth claim) to 0.971 (failure class). The 0.971 shows that the probe's hand-written
-   failure templates are solved by keywords. That family is therefore training data only, never
-   test evidence (F1, §1.2). The stock-Kev and Sonnet arms are still running (budget file: 171 of
-   2,500 Kev requests used, 17:18Z). `03-probe-results.md` does not exist yet.
-6. **Scope.**
-   - **Catalogued:** 40 ports, 13 of them in wave 1. They cover 46 of the inventory's decisions.
-   - **Deferred:** 18 decisions, until labels exist.
-   - **Excluded or realised elsewhere:** 36 decisions, each with its reason. This includes A0 and
-     E3, which are realised by the judge node and the serving mode, and H1, which is governance.
-   - The total is 46 + 18 + 36 = 100. Every decision point is mapped in §1.5.
-7. **The C4 claim this can support.** Per port, the claim is calibrated and beats the baselines
-   on held-out templates and families of the development beds. That is **development evidence**.
-   Claim-bearing C4 needs real-trace labels from wired judge nodes (§3.5, §9).
+   Injection text is the same: 4–9 templates per bed [M here]. A fine-tuned 0.8B memorises these;
+   a bag-of-words probe already scores 0.885–1.000 in-family on R1–R4 [M crit-S Q1]. Revision 1
+   relied on held-out bed templates, but those are **6, 4, 8 and 7 sentences** for R1–R4; a
+   world-clustered CI over them is ±4 pp, a form-clustered one ±27 pp [M crit-S Q3]. Revision 2
+   therefore:
+   - resamples by **form × world** in every CI and refuses a gate verdict on any axis with fewer
+     than **30 independent forms per label** ("diagnostic: n_forms = k") (§6.0);
+   - makes the **authored OOD pools** the gating template axis, sized for it (≥ 200 lines per label
+     per template-bound port, split across three OOD slices), with ≥ 40% probe-hard lines (§2.4);
+     bed held-out templates become a diagnostic sub-axis.
+2. **Held-out surfaces no longer leak, and shortcuts that survive holdout are removed in the
+   factory.** Revision 1's per-port template holdout leaked: 100% of R2 and R3 held-out test
+   sentences occurred verbatim in other ports' training states [M crit-S Q4]. A span-skeleton
+   registry now covers every held-out surface and is checked against **every** port's states;
+   offending sentences are re-rendered, not whole worlds rejected (§2.3 rule 7). Counterfactual
+   re-rendering balances labels within (port, system), removes R4's date-range format rule
+   (1.000 on held-out templates [M crit-S Q6]), makes R1 `ymd` reachable, replaces incident
+   service names with per-state handles, and balances X1 addressee words (§1.2, §2.5). A
+   partial-input battery must sit within 3 pp of the majority class before a build freezes.
+3. **Three OOD slices.** calib-OOD fits temperature, per-option biases and thresholds; dev-OOD
+   selects configs and reads the learning curve; test-OOD is read once. In-family calib only
+   reports the calibration gap (§3.1, §7.5). Revision 1 calibrated on near-memorised in-family
+   data and read its curve on test [crit S4, S6].
+4. **Causal and decidability gates.** Counterfactual flip, invariance, slot swap, evidence
+   dependence, a probe-hard stratum and partial-input baselines show *why* the model is right
+   (§6.3). Every port passes a decidability audit (state-only solver, masked-state collisions under
+   1%, time-of-decision field provenance, allowed knowledge, label semantics against option text,
+   blind read) before its data freezes (§2.7). Unknowables are presence-matched, not deletions.
+5. **"Is 5K sufficient?" is a measured curve with a named indeterminate outcome.** Nested points at
+   2.5K, 5K, 10K and 20K rows (40K only if triggered), two training seeds at 5K and 20K, read on
+   dev-OOD. Per port and overall the verdict is *sufficient*, *insufficient* or *indeterminate*
+   (with its minimum detectable difference) (§4.4). Prediction, written first: 5K is enough at most
+   for R2–R4; the hard ports need about 20K; X1 and F1 are limited by families, not rows.
+6. **The laptop plan is scheduled in forward tokens.** The 0.287 s/example smoke rate came from toy
+   records (3 questions, 151 forward tokens per record) [M crit-G G3]. The curve points cost about
+   3.0M / 5.0M / 9.0M / 17.0M training tokens [E crit-G]; at 525 to 4,953 tokens/s the 5K point
+   takes 17 min to 2.6 h. J0 fits seconds per record and per token, host RAM, VRAM and the kernel
+   path; the schedule, a priority order and a reduced plan below 1,500 tokens/s are
+   pre-registered (§7.4).
+7. **Evaluation goes through the serving path.** `kev.benchmark --data` silently skips every state
+   over 384 tokens, which is most wave-1 states [M crit-G G1]. Files with longer states are scored
+   through `kev.serve` with `SystemOneClient` and the bridge's signed `bridgeFetch`
+   (`score-served.mjs`), which is also the bf16 path that serves; calibration is fitted there
+   (§7.5). States are budgeted in real Qwen3.5 tokens (§1.0).
+8. **Wiring is part of the build.** Group W delivers a provider route for enum agent nodes, a
+   journaled `judge` node, port kits shared by factory and runtime, a router with
+   `onUnavailable`, the ledger content store, builder-facing text for both builder arms, and the
+   end-to-end checks: X8 cascade at ≥ 100 tasks per arm and the X5 gate at ≥ 150 non-matching
+   tasks (§8).
+9. **Claim-C4 alignment.** F1 uses the THESIS taxonomy (flake / variance / defect / env /
+   impossible / finding) with a time-of-decision state; X5 gains a cross-family type-applicability
+   family, the 0/21 wrong-type-reuse shape. F1 is trained in wave 1 but cannot be promoted in
+   wave 1. Evidence climbs a ladder: T1 offline gates (development evidence) → T2 wired end-to-end
+   checks → T3 ledger rows from judge nodes in experiments (claim-bearing) (§8.5).
+10. **Scope.** 42 ports, 13 in wave 1. Inventory accounting: 47 decisions mapped, 18 deferred,
+    35 excluded = 100 (§1.5). Three ledger-only contracts are frozen so labels accumulate for
+    deferred THESIS ports (§1.3).
+11. **Sizes at a glance** (§4.3). Each curve point trains on N Foundry rows plus 2,000 replay
+    records and reads 17,800 fixed evaluation rows (calib-OOD 7,000, dev-select 2,600, dev-OOD
+    8,200). The final read is test-in 6,500 rows and test-OOD about 42,000 rows, once for stock
+    Kev and once for the selected candidate.
+12. **Owner decisions** (§11): O1 weak-model id and O2 hosted budget are resolved (Haiku 5.5;
+    proceed under $450 after the pilot). Still open: O3 `flash-linear-attention` on the laptop; O4 policy entries for Kev runs; O5 annotators;
+    O6 a Kev-4B ceiling read; O7 WSL memory cap and laptop availability for about four nights.
 
 ---
 
@@ -139,7 +177,7 @@ held-out-family tests possible.
 - **Deployment base rate** [crit S4, S11]. Each port declares the base rate at which thresholds
   are fitted and risk is read:
   - `bed-natural` (S2, I2, X1, X8): the bed's rate is the best deployment proxy available;
-  - `balanced-within-entity` (R1–R4, X5, I1): per-world draws such as R3's forced `pay` or
+  - `balanced-within-entity` (R1–R4, X5): per-world draws such as R3's forced `pay` or
     "KOBO is always void" are generator artefacts, not deployment priors, so labels are balanced
     within each (port, system or service) and thresholds are fitted at that balance;
   - `uniform` (all other ports, until a deployment rate is observed in ledger rows).
@@ -1263,68 +1301,82 @@ recurring family?"
 - **Expectation.** Embedding kNN is expected to win. The port is kept as an honest calibration
   case.
 
-### 1.3 Deferred ports (catalogued, no label source at volume yet)
+### 1.3 Deferred decisions (catalogued, no label source at volume yet)
 
-| ID | Decision | Why deferred | Activation trigger |
+| Decision | What | Why deferred | Activation trigger |
 |---|---|---|---|
-| B2 | resample or escalate after a check failure | low volume; a per-node resample success rate is the baseline | ≥ 300 labelled check failures in journals |
-| B5 | verify node, whole output (ordered score) | states of several thousand tokens; replaced by X8 at field level | judge node live and ≥ 300 oracle-labelled verifies |
-| B10 | fork at uncertainty | the bet is unmeasured (`ROADMAP:929`) | H9 experiment funded |
-| C4 | which node to substitute first | needs substitution replay | C3 natural failures journaled |
-| C5 | L3 patch kind | low volume; a frontier proposer writes the patch anyway | n/a |
-| D2 | choice among candidates (propensity) | library not built (Phase 5) | Phase 5 selection running |
-| D3 | rerank retrieved candidates | retrieval is weak at 0.8B (bright 0.36) [D dossier] | as D2 |
-| D4 | task features | declared metadata mostly decides it (code) | owner tasks without metadata |
-| D6 | reuse, construct, delegate or cascade | outcome labels are Phase 5 | Phase 5 |
-| D7 | deopt during reuse | oracle after reuse; X5 covers its shape | Phase 5 |
-| D12 | domain skill pack | weak, confounded labels | ≥ 100 constructions |
-| F3 | ambiguity consequential? | the owner's answers are the only labels | ≥ 100 owner answers |
-| F4 | computable or judgment | design reasoning of the builder | n/a |
-| F5 | operator fit | confounded construction outcomes | C0 rounds ≥ 3 |
-| F6 | engine and class per node | screening agreement labels are scarce | distillation screens ≥ 200 nodes |
-| F7 | probe-failure cause | the builder reads the failures directly | n/a |
-| F8 | workflow, script or agent per family | a handful of families gives nothing to learn | n/a |
-| H6 | explorer persona | coverage-gain bandits in code | n/a |
+| D:B2 | resample or escalate after a check failure | low volume; a per-node resample success rate is the baseline | ≥ 300 labelled check failures in journals |
+| D:B5 | verify node, whole output (ordered score) | states of several thousand tokens; replaced by X8 at field level | judge node live and ≥ 300 oracle-labelled verifies |
+| D:B10 | fork at uncertainty | the bet is unmeasured (ROADMAP H9) | H9 experiment funded |
+| D:C4 | which node to substitute first | needs substitution replay | D:C3 natural failures journaled |
+| D:C5 | L3 patch kind | low volume; a frontier proposer writes the patch anyway | n/a |
+| D:D2 | choice among candidates (propensity) | library not built (Phase 5) | Phase 5 selection running |
+| D:D3 | rerank retrieved candidates | retrieval is weak at 0.8B (bright 0.36) [D dossier] | as D:D2 |
+| D:D4 | task features | declared metadata mostly decides it (code) | owner tasks without metadata |
+| D:D6 | reuse, construct, delegate or cascade | outcome labels are Phase 5 | Phase 5 |
+| D:D7 | deopt during reuse | oracle after reuse; X5 covers its shape | Phase 5 |
+| D:D12 | domain skill pack | weak, confounded labels | ≥ 100 constructions |
+| D:F3 | ambiguity consequential? | the owner's answers are the only labels | ≥ 100 owner answers |
+| D:F4 | computable or judgment | design reasoning of the builder | n/a |
+| D:F5 | operator fit | confounded construction outcomes | C0 rounds ≥ 3 |
+| D:F6 | engine and class per node | screening agreement labels are scarce | distillation screens ≥ 200 nodes |
+| D:F7 | probe-failure cause | the builder reads the failures directly | n/a |
+| D:F8 | workflow, script or agent per family | a handful of families gives nothing to learn | n/a |
+| D:H6 | explorer persona | coverage-gain bandits in code | n/a |
 
-That is 18 deferred decisions. Each row names its trigger; until the trigger fires, the decision
-keeps its current mechanism.
+That is 18 deferred decisions. Until a trigger fires, the decision keeps its current mechanism.
+
+**Ledger-only contracts** [crit G, §2.1 deferrals]. The THESIS ports "Verifier" (D:B5) and "Choice"
+(D:D2), and D:D6, the decision claim C2 hangs on, have no label source now. Their contracts are
+frozen anyway, so that judge-node ledger rows accumulate labels from day one (needs W4, §8.4):
+`L1 verifier_score` (D:B5, ordered score), `L2 candidate_choice` (D:D2, variable options),
+`L3 reuse_route` (D:D6: reuse / construct / delegate / cascade). They carry Q0, options, state
+keys and field provenance in `spec/ports.json`, and no data, no training and no gate.
 
 ### 1.4 Excluded decisions
 
 | Reason | Decisions |
 |---|---|
-| **Authority-bearing** (Kev must not decide) | A25 safety-rule applicability; C8 contract unsatisfiable; C9 agent repair diagnostic (untrusted, not a decision input); D8 admission; D9 promotion ladder; D10 re-qualification; E5 integrity labels; E6 sink-policy endorsement; F9 spend a /score check (gating it changes the experiment); F12 non-vacuous checks (executed controls decide); G5 licence (a legal decision); H2 human answers |
-| **Code rule suffices or is exact** | A10 Q1 notice kind and A14 venue tier (`TYPE_LABELS` names the kind, `synth/catalog.mjs:175-183`); A24 runbook observation class (templated simulator messages); B1 retry on schema failure; B7 stuck or softlocked (rule E plus branch test); C2 flaky test (reruns decide); C6 error code → verdict; C7 provider error class; D11 merge near-duplicate workflows (structural hash); E2 truncation order (author priority, receipt stability); F10 literal leakage (exact scans); F11 motif closeness; G4 oracle tier; G10 cost and latency anomalies (statistics); G11 node agreement (exact leaf match is the declared measurement) |
-| **Not a judgment** (consumes judgments, or is a deployment mode) | B9 allocator; B11 route after abstention (policy per port); E3 quarantined read (realised as the serving mode of every port, tested by the injection gate and X1); A0 enum node served by Kev (realised by the judge node, §8.2); G9 bed audit aid (a diagnostic use of `/permute`, not a trained port) |
-| **Needs generation or another modality** | H3 decision-card explanation; H4 reports and regression tests; H5 visual pass (text-only Kev) |
-| **Label not determined by the state** | A28 gridquest note truth: every true wording also occurs as a false note (`gridquest/README.md:199-200`). This is the FlakeFlagger lesson [D dossier §2.4]. |
-| **Governance, not a decision** | H1 Kev weights identity: fix it in `policy/models.json` (§8.4) |
+| **Authority-bearing** (Kev must not decide) | D:A25 safety-rule applicability; D:C8 contract unsatisfiable; D:C9 agent repair diagnostic (untrusted, not a decision input); D:D8 admission; D:D9 promotion ladder; D:D10 re-qualification; D:E5 integrity labels; D:E6 sink-policy endorsement; D:F9 spend a /score check (gating it changes the experiment); D:F12 non-vacuous checks (executed controls decide); D:G5 licence (a legal decision); D:H2 human answers |
+| **Code rule suffices or is exact** | D:A24 runbook observation class (templated simulator messages); D:B1 retry on schema failure; D:B7 stuck or softlocked (rule E plus branch test); D:C2 flaky test (reruns decide); D:C6 error code → verdict; D:C7 provider error class; D:D11 merge near-duplicate workflows (structural hash); D:E2 truncation order (author priority, receipt stability); D:F10 literal leakage (exact scans); D:F11 motif closeness; D:G4 oracle tier; D:G10 cost and latency anomalies (statistics); D:G11 node agreement (exact leaf match is the declared measurement) |
+| **Not a judgment** (consumes judgments, or is a deployment mode) | D:B9 allocator; D:B11 route after abstention (policy per port); D:E3 quarantined read (realised as the serving mode of every port, tested by the injection gate and X1); D:A0 enum node served by Kev (realised by the provider route and the judge node, §8.4; a question with no frozen contract goes to the hosted model and is never Kev-gated); D:G9 bed audit aid (a diagnostic use of `/permute`) |
+| **Needs generation or another modality** | D:H3 decision-card explanation; D:H4 reports and regression tests; D:H5 visual pass (text-only Kev) |
+| **Label not determined by the state** | D:A28 gridquest note truth: every true wording also occurs as a false note (`gridquest/README.md`, notes section). This is the FlakeFlagger lesson [D dossier §2.4]. |
+| **Governance, not a decision** | D:H1 Kev weights identity: fix it in `policy/models.json` (owner decision O4) |
+
+D:A14 moved from "code rule" to port S5: the code table stays exact for the bed's closed label set,
+and S5 covers unseen type names [crit G27]. D:A10 Q1 (notice kind) is decided by the same code
+table for the bed and by S5 for unseen names; D:A10 is counted once, as mapped (S1).
 
 ### 1.5 Coverage map: every inventory decision
 
-- **A0** → §8.2 judge node.
-- **A1** → X2. **A2** → R1 and X5. **A3** → R2 and X5. **A4** → R3 and X5. **A5** → R4 and X5.
-  **A6** → R5.
-- **A7** → I1. **A8** → I2. **A9** → I2 and I3.
-- **A10** → S1 for the target question; X4 for supersession; Q1 (notice kind) excluded.
-- **A11** → S2 and S4. **A12** → S3. **A13** → X2. **A14** excluded.
-- **A15** → K1. **A16** → X3. **A17** → K2. **A18** → X4. **A19** → K3.
-- **A20** → F2. **A21** → X6 and X1. **A22** → X3. **A23** → X4.
-- **A24**, **A25** excluded. **A26** → Q1. **A27** → Q2. **A28** excluded.
-- **A29** → Q6. **A30** → X6 and X1. **A31** → Q5. **A32** → X2.
-- **B1** excluded. **B2** deferred. **B3** → X8 at field level; the whole-output form is deferred
-  with B5. **B4** → F3 and X8. **B5** deferred, partly X8. **B6** → Q4. **B7** excluded.
-  **B8** → Q3. **B9** excluded. **B10** deferred. **B11** excluded.
-- **C1** → F1. **C2** excluded. **C3** → F1 (`finding`). **C4**, **C5** deferred.
-  **C6–C9** excluded.
-- **D1** → X5. **D2–D4** deferred. **D5** → C9. **D6**, **D7** deferred. **D8–D11** excluded.
-  **D12** deferred.
-- **E1** → X7. **E2** excluded. **E3** → serving mode plus X1. **E4** → X1. **E5**, **E6**
-  excluded.
-- **F1** → C1. **F2** → C2. **F3–F8** deferred. **F9–F12** excluded.
-- **G1** → C3. **G2** → C4. **G3** → C5. **G4**, **G5** excluded. **G6** → C6. **G7** → C7.
-  **G8** → C8. **G9–G11** excluded.
-- **H1** governance. **H2–H5** excluded. **H6** deferred.
+- **D:A0** → excluded as a judgment (served by W0/W1; unknown port → hosted model).
+- **D:A1** → X2. **D:A2** → R1 and X5. **D:A3** → R2 and X5. **D:A4** → R3 and X5. **D:A5** → R4
+  and X5. **D:A6** → R5.
+- **D:A7** → I1. **D:A8** → I2. **D:A9** → I2 and I3.
+- **D:A10** → S1 for the target question; X4 for supersession; Q1 (notice kind) by code, S5 for
+  unseen names. **D:A11** → S2 and S4. **D:A12** → S3. **D:A13** → X2. **D:A14** → S5.
+- **D:A15** → K1. **D:A16** → X3. **D:A17** → K2. **D:A18** → X4. **D:A19** → K3.
+- **D:A20** → F2. **D:A21** → X6 and X1. **D:A22** → X3. **D:A23** → X4.
+- **D:A24**, **D:A25** excluded. **D:A26** → Q1. **D:A27** → Q2. **D:A28** excluded.
+- **D:A29** → Q6. **D:A30** → X6 and X1. **D:A31** → Q5. **D:A32** → X2.
+- **D:B1** excluded. **D:B2** deferred. **D:B3** → X8 at field level. **D:B4** → F3 and X8.
+  **D:B5** deferred (ledger-only L1; partly X8). **D:B6** → Q4. **D:B7** excluded. **D:B8** → Q3.
+  **D:B9** excluded. **D:B10** deferred. **D:B11** excluded.
+- **D:C1** → F1. **D:C2** excluded. **D:C3** → F1 (`finding`). **D:C4**, **D:C5** deferred.
+  **D:C6–D:C9** excluded.
+- **D:D1** → X5. **D:D2** deferred (ledger-only L2). **D:D3**, **D:D4** deferred. **D:D5** → C9.
+  **D:D6** deferred (ledger-only L3). **D:D7** deferred. **D:D8–D:D11** excluded. **D:D12** deferred.
+- **D:E1** → X7. **D:E2** excluded. **D:E3** excluded (serving mode plus X1). **D:E4** → X1.
+  **D:E5**, **D:E6** excluded.
+- **D:F1** → C1. **D:F2** → C2. **D:F3–D:F8** deferred. **D:F9–D:F12** excluded.
+- **D:G1** → C3. **D:G2** → C4. **D:G3** → C5. **D:G4**, **D:G5** excluded. **D:G6** → C6.
+  **D:G7** → C7. **D:G8** → C8. **D:G9–D:G11** excluded.
+- **D:H1** governance (excluded). **D:H2–D:H5** excluded. **D:H6** deferred.
+
+**Totals.** Mapped 47 (revision 1's 46 plus D:A14), deferred 18, excluded 35: 100, every id
+D:A0–D:H6 exactly once. The coverage review recomputed revision 1's 46 + 18 + 36 by script
+[M crit-G]; acceptance re-runs that script against this section (§10, `contracts-lib`).
 
 ---
 
@@ -1334,305 +1386,371 @@ keeps its current mechanism.
 
 ```
 experiments/kev-data/
-  spec/ports.json          frozen port contracts: id, Q0-Q3, options {name: description},
-                           criteria, type, state budget, families, wave. Hashed into every build.
-  ports/<group>.mjs        one generator module per group:
-                           records-notes, incident, synth, kinetics, interactive, textqa,
-                           crossbed-links, failures, construction
-  taps/<bed>.mjs           span taps for beds without per-span truth:
-                           kinetics, runbook, codefix, gameqa, synth-values
-  lib/render.mjs           re-exports toSystemOneQuestion from src/judgment.mjs; renders questions
+  spec/ports.json          42 port contracts + 3 ledger-only contracts. Per port: id, Q0-Q3, options
+                           {name: description}, criteria, state keys with field provenance (§1.0),
+                           allowedKnowledge, deploymentRate, budgets in real tokens, families,
+                           holdouts, wave, gating|advisory. Hashed into every build.
+  ports/<group>.mjs        one generator module per bed group (records-notes, incident, synth,
+                           kinetics, runbook, interactive, failures-code, construction-crossfamily)
+  taps/<bed>.mjs           span taps: kinetics, runbook, codefix, gameqa, synth-values
+  lib/render.mjs           re-exports toSystemOneQuestion from src/judgment.mjs
   lib/hash.mjs             worldHash, stateHash, spanHash, skeleton()
-  lib/tokens.mjs           bytes/4 estimate; exact Qwen counts via /opt/kev-venv (python -I) in batch
-  lib/balance.mjs          caps, base-rate control, stratified sampling
-  lib/leakage.mjs          forbidden-key scan, OOD span registry, paraphrase/template exclusion
-  build.mjs                assemble splits (§3) → .foundry/kev-data/<buildId>/
-  export-kev.mjs           strip meta → Kev JSONL + meta sidecar; upload manifest for the bridge
-  kev-data.test.mjs        acceptance tests (§10)
-experiments/kev-data/heldout/   written by G0b only; never imported by ports/*.mjs or build.mjs
-  paraphrases.json         ≥ 2 held-out question wordings per port
-  surface/<port>.jsonl     authored OOD surface pools: new templates and carriers
+  lib/tokens.mjs           exact Qwen3.5 counts and Kev's fits() via /opt/kev-venv (python -I), batched
+  lib/balance.mjs          caps, within-entity balance, deployment-rate sampling, importance weights
+  lib/leakage.mjs          forbidden exact key names, span-skeleton registry, wording exclusion
+  lib/registry.mjs         reserved-world registry (§2.3 rule 8)
+  lib/counterfactual.mjs   re-render one decisive sentence from an exported pool or an authored line
+  lib/probe.mjs            bag-of-words logistic probe (unigrams + bigrams, plain JS)
+  solve/<port>.mjs         state-only solvers for the decidability audit (§2.7)
+  build.mjs                assemble splits and slices (§3) → .foundry/kev-data/<buildId>/
+  export-kev.mjs           strip meta → Kev JSONL + meta sidecar; _meta.source for unknowables
+  score-served.mjs         served scorer: SystemOneClient + bridgeFetch (§7.5)
+  jobs.mjs                 bridge job writer J0-J5 (§7.4)
+  audit.mjs                decidability audit, partial-input battery, form counts, probe-hard shares
+  analyze.mjs              metrics, two-way bootstrap, gates, curve rule, calibration fit, reports
+  test/<group>.test.mjs    one acceptance file per build group, runnable alone with node --test
+src/judges/<bed>.mjs       port kits: buildState(task, slots) and questions(port, slots), imported by
+                           the factory and by the runtime (W2, §8.4)
+.foundry/kev-data/heldout/ written only by heldout-author; git-ignored; only sha256 manifests
+                           are committed before the freeze [crit G12]
+.foundry/kev-data/frozen/<pin>/   frozen copy of the pinned beds (below)
+research/kev-20261007/data/<buildId>.json   committed build manifest (counts, hashes, pins)
 ```
 
-- **Output location.** Built data goes to `.foundry/kev-data/<buildId>/`, which git ignores. Only
-  the manifest goes into git: `research/kev-20261007/data/<buildId>.json`, holding counts, hashes,
-  bed source hashes and the generator commit. This follows the rule against large data in git
-  (`fdy:docs/ROADMAP.md` §6.6).
-- **Bed version pin.** Other agents are editing `beds/records`, `beds/kinetics` and
-  `beds/ownerci`. A build therefore pins the bed sources by sha256 of each bed directory's tracked
-  files, plus the beds' `VERSION` constants (incident 3.0.0, kinetics 3.0.0, runbook world 2.0.0,
-  synth 2.0.0, codefix 1.1.0, ownerci 1.1.0). It refuses to mix two versions in one build.
+- **Output location.** Built data stays under `.foundry/kev-data/`, which git ignores. Only
+  manifests are committed (`fdy:docs/ROADMAP.md` §6.6).
+- **Bed pin** [crit G12]. An explicit allow-list: the nine dev beds (`records`, `incident`,
+  `synth`, `kinetics`, `runbook`, `gameqa`, `gridquest`, `codefix`, `ownerci`) plus `beds/lib` and
+  `beds/CONTRACT.md`. The pin is the sha256 over the content of `git ls-files` for each listed
+  path. `beds/sealed/` is never listed, hashed or opened; adding a file there must not change
+  the pin. `VERSION` constants are recorded where exported (incident is now 4.0.0; revision 1's
+  3.0.0 pin was already stale; `records` and `gameqa` export none, gridquest's is not exported),
+  but the content hash is the pin. Builds read a **frozen copy** (`git archive` of the pinned
+  commit for the allow-listed paths, plus the hash of the working-tree diff for them) in
+  `.foundry/kev-data/frozen/`, never live imports; a build refuses to run if the diff hash changed
+  since the previous night's build.
+- **Bed internals** are imported from the frozen copy only (`records/world.mjs`,
+  `incident/gen.mjs` and `catalog.mjs`, `codefix/build.mjs`, kinetics `_internals`, gameqa and
+  gridquest `_internal`), and cited by function name.
 
 ### 2.2 Common interface
 
 ```js
 // experiments/kev-data/ports/<group>.mjs
 export const group = 'records-notes';
-export const ports = ['date_order', 'status_meaning', 'sign_convention', 'timestamp_reliability'];
-export const families = { date_order: ['records'], /* ... */ };
-// Pure function of (split, seeds, opts, factory version). Yields Kev training objects.
-export function* records(split /* 'train'|'calib'|'dev'|'test-in'|'test-ood' */, seeds /* number[] */,
-                         opts /* {difficulties, ports, variants, paraphraseSet, heldoutTemplates, maxPerWorld} */) {
+export const ports = ['R1', 'R2', 'R3', 'R4', 'X5:records', 'X8:records', 'X1:records'];
+// Pure function of (split, slice, seeds, opts, factory version, frozen bed pin).
+export function* records(split /* 'train'|'calib-in'|'calib-ood'|'dev-select'|'dev-ood'|'test-in'|'test-ood' */,
+                         seeds /* number[] */,
+                         opts /* {difficulties, ports, variants, wordingSlice, surfaceSlice, maxPerWorld} */) {
   yield {
-    state: { system: 'ATLAS', source_note: '...' },             // observed facts only
+    state: { system: 'ATLAS', source_note: '...' },          // built by src/judges/records.mjs
     questions: {
-      date_order:     { type: 'choice', instructions: '...', criteria: { dmy: '...', mdy: '...', ymd: '...' }, label: 'dmy' },
-      sign_convention:{ type: 'choice', instructions: '...', criteria: { opposite: '...', same: '...' }, label: 'same' },
+      R1: { type: 'choice', instructions: '...', criteria: { dmy: '...', mdy: '...', ymd: '...' }, label: 'dmy' },
     },
-    meta: { ports: ['date_order', 'sign_convention'], family: 'records', bed: 'records', bedVersion: '3.x', split: 'dev',
-            seed: 1234, difficulty: 3, worldHash: 'sha256:…', stateHash: 'sha256:…', spanHashes: ['…'],
-            templateIds: { orderTpl: 5, perspTpl: 2 }, skeleton: { date_order: 'sha256:…' },
-            variant: 'clean' /* | adversarial | long | evidence-removed */, paraphraseIds: { date_order: 'Q2' },
-            labelSource: 'generator', hardNegative: null },
+    meta: { ports: ['R1'], family: 'records', bed: 'records', bedPin: 'sha256:…', split: 'calib-ood',
+            seed: 4321, difficulty: 3, worldHash: 'sha256:…', stateHash: 'sha256:…',
+            formId: 'sha256:…',                 // masked skeleton of the label-bearing sentence (§6.0 unit)
+            surface: { source: 'authored', slice: 'calib-ood', lineHash: 'sha256:…' },
+            counterfactual: { swapped: true, from: 'ORDER_NOTE[ATLAS].mdy[3]' },
+            variant: 'clean' /* | injection | distractor | slot-swap | unknowable | long | flip | invariance */,
+            pairId: null, wordingId: 'cal-07', needsWorldKnowledge: false,
+            labelSource: 'generator', reserved: false, hardNegative: null },
   };
 }
 ```
 
-- **Export.** `export-kev.mjs` writes `{state, questions: {qid: {type, instructions, criteria, label, src, target?}}, _meta: {id}}`.
-  - `src` is set to `kevdata_<port>`, so Kev's per-question report is per port.
-  - `meta` goes to `<file>.meta.jsonl`, keyed by `_meta.id`.
-  - Kev's `load_records` and `api_request` read only `state` and `questions`
-    (`kev:kev/data.py:365-396`) [D]. Labels and metadata never reach the model through the API
-    path. The sidecar keeps template ids and seeds off the laptop's training file entirely.
-- **Question ids** are the port id, or `<port>~<paraphraseId>` when a test record carries several
+- **Export.** `export-kev.mjs` writes `{state, questions: {qid: {type, instructions, criteria, label, src, target?}}, _meta: {id, source?}}`.
+  - `src` is `kevdata_<port>`, so Kev's per-question report is per port.
+  - Presence-matched unknowables carry `_meta.source = "unknowable"`, because `kev.benchmark`
+    excludes that source from accuracy and summarises only `variant == "clean"`
+    (`kev:kev/benchmark.py`) [crit G17].
+  - `meta` goes to `<file>.meta.jsonl`, keyed by `_meta.id`. Kev's `load_records` and
+    `api_request` read only `state` and `questions` (`kev:kev/data.py`) [D]; template ids, form
+    ids and seeds never reach the laptop's training file.
+- **Question ids** are the port id, or `<port>~<wordingId>` when a test record carries several
   wordings of one port. Kev never shows the id to the model (`kev:README.md:249`) [D].
 
 ### 2.3 Rules
 
-1. **Label = generator truth only.** The truth comes from the generator, a simulator, an oracle or
-   a journal outcome, named per port in §1.2.
-   - Authored surface pools (§2.4) inherit the truth of the template they paraphrase.
-   - A pool line is admitted only if **both** Sonnet 5.5 and Opus 5.5, asked the port question
-     zero-shot, recover the inherited label. Any disagreement discards the line.
-   - This is a filter on text, not a labeller.
+1. **Label = generator truth only.** Truth comes from the generator, a simulator, an oracle, a
+   replay or a journal outcome, named per port in §1.2.
+   - Authored lines inherit the truth of their brief. A line is admitted only if **both** Sonnet
+     5.5 and Opus 5.5, asked the port question zero-shot, recover that label; disagreement discards
+     it. This is a filter on text, not a labeller. Rejected lines are logged with both answers and
+     reported per port, because the filter removes exactly the ambiguous lines [crit S13].
 2. **The state never contains truth or generator metadata.**
-   - The forbidden key names include `truth`, `label`, `tag`, `kind`, `tpl`, `template`, `seed`,
-     `split`, `difficulty`, `answer`, `gold`, `correct`, `polarity`, `mode`, `cls`, `role`.
-   - Bed-internal ids that are not rendered (incident tags, synth doc keys, kinetics trap ids)
-     never appear.
-   - Values come only from rendered task text, or from code that a deployed workflow could run on
-     that text: the alias table, the system's paragraph, a unit conversion.
-3. **Wording.**
-   - Train, calib and dev sample Q0–Q3 uniformly per record.
-   - Test-in-family uses Q0–Q3.
-   - Test-OOD-paraphrase uses only the held-out wordings.
-   - The exporter asserts that no held-out wording, exact or whitespace-normalised, appears in any
-     training file.
-4. **Options.**
-   - Order is shuffled per record with a seeded RNG (`beds/lib/rng.mjs`, salt `kev-data`).
-   - Kev's trainer re-permutes every epoch anyway (`augment`, `kev:kev/data.py:323-343`) [D]. The
-     shuffle matters for evaluation files, which are not augmented.
-   - Names and descriptions are fixed per port.
-5. **Multi-question records where a state naturally carries several questions.**
-   - records paragraph: R1–R4 and X5;
-   - synth passage: S2, S3, S4 and X2;
-   - gridquest room: Q1 × 4 and Q2;
-   - incident service window: I1 and I3;
-   - X7: K items, each its own question.
-   - Training caps a record at 6 questions. Each question costs a full row (state + branch) unless
-     `shared_prefix 1` is validated (§7.4).
-6. **State budget.**
-   - Each port declares a typical and a maximum size (§1.2). Records above the maximum are
-     dropped by the factory, not by Kev, and counted.
-   - Long variants (§6.6) are their own variant, limited to 8,192 tokens.
-   - `maxState` for a training job is set to the 99.9th percentile of the build, at most 8,192.
-7. **Dedup.**
-   - `worldHash` is the sha256 of the canonical task inputs (`beds/lib/canonical.mjs`). It dedups
-     worlds within a split, because seeds can collide on small instance spaces (codefix d1–d3,
-     `codefix/README.md:253-257`).
-   - `stateHash` dedups exact states across **all** splits. A test record whose `stateHash` occurs
-     in train is dropped and counted.
-   - Each build reports the **label-bearing-span overlap rate**: the share of test-in-family
-     records whose label-bearing span occurs verbatim in train. For template-bound ports it is
-     near 100% by construction (§0).
-8. **Balance and base rate.**
-   - Train caps every label at 3× the rarest.
-   - Calib and test-in-family keep natural rates at a deployment-like difficulty mix: d3:d4:d5 =
-     2:1:1 where the port exists at d ≥ 3.
-   - Where a port's minority rate is under 10% (X1, S2, I2 fallback), test sets add a balanced copy.
-     Both copies are reported, and the thresholds are fit on the natural-rate calib.
-9. **Hard negatives.**
-   - **Structural:** listed per port, from bed truth (partners, decoys, lookalikes, siblings,
-     red-herring templates). Target share 30–50% of each port's negatives.
-   - **Cross-port:** spans labelled in one port reused as negatives in another (an injection line
-     as I2 `unrelated`; a decoy memo as R2 context).
-   - **Model-mined:** after the first curve point, score a pool of 5× fresh **train-seed**
-     candidates with the tuned and stock models. The 10% with the highest loss and the confident
-     errors enter the next build. Mining never touches calib, dev or test seeds.
-10. **Determinism and provenance.**
-    - `records()` is pure. Two builds with the same config are byte-identical.
-    - Every record carries the bed name, the version and the world hash.
+   - Forbidden **exact** key names [crit G23]: `truth`, `label`, `tag`, `kind`, `tpl`, `template`,
+     `seed`, `split`, `difficulty`, `answer`, `gold`, `correct`, `polarity`, `mode`, `cls`, `role`.
+     Descriptive keys such as `source_kind`, `node_kind` and `author_role` are allowed and are
+     tested by the metadata-only baseline (§6.3).
+   - Bed-internal ids that are not rendered never appear.
+   - Values come only from rendered task text, or from code a deployed workflow could run on that
+     text (the port kit), and every key passes the time-of-decision check (§1.0) [crit S8].
+3. **Wording.** Train, calib-in and dev-select sample Q0–Q3 uniformly per record. Each OOD slice
+   uses only its own held-out wordings (10 calib-OOD, 10 dev-OOD, 20 test-OOD per port). The
+   exporter asserts that no held-out wording of any slice, exact or whitespace-normalised, appears
+   in a file of another slice or in training.
+4. **Options.** Order is shuffled per record with a seeded RNG (`beds/lib/rng.mjs`, salt
+   `kev-data`); Kev re-permutes in training anyway (`augment`, `kev:kev/data.py`) [D]. Each
+   evaluation file reports the histogram of the label's option position, which must be within
+   ±5 pp of uniform per position, and accuracy by position [crit S16].
+5. **Multi-question records.** Where a state naturally carries several questions (records
+   paragraph: R1–R4 and X5; synth passage: S2, S3, S4, X2; gridquest room: Q1 × 4 and Q2; incident
+   window: I1 and I3; X7: K items), train, calib and dev records may carry up to 6. Test records
+   carry at most one question per port per state, except paraphrase-consistency and pair records,
+   which are clustered by state in every CI [crit S17].
+6. **State budget** [crit G2]. Every record must pass Kev's own
+   `fits(materialize(r), tok, **training_context(max_state))` in the factory; a misfit is dropped by
+   the factory, never by Kev, and counted. The "whole service window" (about 25.7K real tokens) and
+   "all documents of the cell" (about 14K) variants are dropped. Long variants are windowed to
+   ≤ 4K real tokens (I1 ≤ 2.5K); 8K variants are built only if J0 shows the 8K row fits (§7.4).
+   `maxState` for a job is the build's 99.9th percentile of real tokens.
+7. **Dedup and leakage.**
+   - `worldHash` (canonical task inputs, `beds/lib/canonical.mjs`) dedups worlds within a split;
+     `stateHash` dedups exact states across **all** splits and slices.
+   - **Span-skeleton registry** [crit S2]. `heldout/registry.json` holds the masked skeleton
+     (digits, dates, names, markers masked) of every held-out bed-template render, every authored
+     OOD line of every slice, every held-out wording, every label-bearing span of a held-out
+     family, and every held-out entity list. It is checked against **every port's** states in
+     train, calib-in and dev-select, and each OOD slice is checked against the others. A training
+     state that contains a registered span has that one sentence re-rendered with a non-held-out
+     template of the same pool, label and slots (`lib/counterfactual.mjs`); if that is
+     impossible, the record is dropped and counted. Revision 1 rejected per port, which let 100% of
+     R2 and R3 held-out sentences reach training through other ports; rejecting whole worlds
+     instead would keep only 7.5% of them [M crit-S Q4, Q5].
+   - Held-out bed templates are excluded from the `train-pools` paraphrase input.
+   - Each build reports the span-overlap rate for **every** axis, not only test-in.
+8. **Reserved worlds** [crit G8]. `lib/registry.mjs` lists every (bed, split, difficulty, seed)
+   already used as evaluation, real trace, probe or pilot: dev seeds 1–400 of every bed (the
+   probe's range, which contains the records-hand-pilot worlds), the real-trace reserve (test
+   7000–7039) and the end-to-end reserve (test 7040–7199). No reserved world enters a train or
+   calib file; a deliberate injection of `records:dev:d3:s101` into train fails the build.
+9. **Balance and deployment base rate** [crit S4, S11]. Train caps every label at 3× the rarest
+   and balances labels within (port, system or service) where a per-entity prior exists. calib-OOD
+   is drawn at the port's declared deployment rate (§1.0); rare-positive ports (X1, S2 minority
+   classes) use an enriched calib-OOD with importance weights back to that rate. Test sets are at
+   the deployment rate, plus balanced copies used only for per-class recall, never for threshold
+   claims.
+10. **Hard negatives.** Structural (from bed truth), cross-port (a span labelled in one port reused
+    as a negative in another) and model-mined (after the first curve point, from fresh train seeds
+    only). The 30–50% target counts **distinct negative forms**, not rows [crit S18].
+11. **Determinism and provenance.** `records()` is pure: two builds with the same config and pin
+    are byte-identical, including on different nights.
 
-### 2.4 Surface diversity: authored OOD pools (the fix for §0.1)
+### 2.4 Surface pools: train pools and the three OOD slices
 
-- **Train pools (G0a).**
-  - Sonnet 5.5 paraphrases each label-bearing template of a template-bound port, 20 per
-    template, keeping its semantics.
-  - Slots stay as placeholders, such as `{S}` and `{token}`.
-  - Every line passes the two-model filter (§2.3 rule 1).
-  - These lines enter train and calib only.
-- **OOD pools (G0b, a separate worker).**
-  - Opus 5.5, given a different brief, writes **new** templates: another register (terse ops chat,
-    vendor-documentation style, non-native English). No bed templates are shown, only the port
-    contract and examples of meaning.
-  - Requirements: at least 30 lines per label per port, and a maximum 4-gram Jaccard of 0.3
-    against any train-pool or bed template. Lines above it are dropped.
-  - The same two-model filter applies.
-  - These lines are test-OOD-template only.
-- **Cost.** Wave-1 ports have about 120 templates. 120 × 20 paraphrases, about 2.4K short calls,
-  cost roughly $5–15 [E from D per-call cost, `fdy:README.md:71-73` via inventory §1.2].
-- **Effect.** The two-model filter removes the paraphrases whose meaning drifted. It cannot remove
-  shared misreadings of both models. A human spot check of 50 lines per port is recorded (§10).
+- **`train-pools` (Sonnet 5.5).** Paraphrases each **non-held-out** label-bearing template of a
+  template-bound port, 20 per template, with slots as placeholders (`{S}`, `{token}`). It also
+  writes the counterfactual sentences the balancing needs (R4 `reliable` with a date window and
+  `restamped` without; R1 year-first; KOBO live and mirror sentences), ≥ 120 benign and ≥ 40 decoy
+  memo forms for X1 and R2 contexts, and X1 positives without addressee words and negatives with
+  them. Two-model filter; reject log. Train and calib-in only.
+- **`heldout-author` (Opus 5.5, separate worker, separate brief).** Never sees bed templates or
+  the `train-pools` prompts; it gets the port contract and examples of meaning. It writes, per
+  wave-1 template-bound port (R1–R4, X1, X5 records assumptions, X8 conventions sentences) and per
+  label, **≥ 200 lines in other registers** (terse ops chat, vendor documentation, non-native
+  English): 40 calib-OOD, 60 dev-OOD, 100 test-OOD, assigned by the hash of the line's skeleton.
+  It also writes the 40 held-out wordings per port, the presence-matched non-deciding sentences
+  (§2.5), held-out city lists with countries (checked against a gazetteer by code), held-out
+  injection carriers re-targeted per port, the unseen type names for S5, and Q2 OOD cues.
+- **Requirements on every OOD slice.**
+  - Copy filter: maximum 4-gram Jaccard 0.3 against any train-pool line or bed template.
+  - **Probe-hard quota** [crit S13]: at least 40% of each slice's lines are misclassified by both
+    the train-fitted bag-of-words probe and the port's rule (negations, counter-keywords, decisive
+    words in the wrong role). Lexical leakage is measured with the probe and the rule, not with
+    n-grams ("flip the sign" and "the sign is reversed" share no 4-gram but share the decisive
+    word). `shortcut-audit` computes the share; a slice under 40% goes back to `heldout-author`
+    for a top-up round.
+  - The two-model filter applies; its rejects are logged.
+  - Accuracy is always reported for probe-easy and probe-hard strata separately.
+- **Storage.** `.foundry/kev-data/heldout/`, git-ignored; only sha256 manifests are committed
+  before the freeze; bed-group workers are briefed not to read it [crit G12].
+- **Cost.** About 2.4K short train-pool calls and about 4K OOD lines in batches: $10–30 [E from
+  the journaled per-call cost].
+- **Human spot check.** 50 lines per port, read by the owner if available (O5); otherwise the
+  two auditor agents of §2.7. Agreement is reported. Neither labels.
 
-### 2.5 Adversarial variants (generic)
+### 2.5 Variants
 
-- **Injection insert.** A carrier sentence urging the **wrong** option is inserted into the state.
-  - Train uses the bed injection pools and the train authored pool.
-  - Test uses held-out carriers: authored OOD lines plus `deepset/prompt-injections` text
-    re-targeted at the port.
-  - The insert position is random among sentence boundaries. The item is paired with its clean
-    version.
-- **Distractor.** A second, label-opposite span about another entity or system, in the same
-  state.
-- **Evidence removed.** The decisive sentence is deleted.
-  - For X5 the label becomes `not_stated`.
-  - For other ports the record is used only in the unknowable test: a fully confident answer
-    there is an error (§6.7).
-  - In training such records get a soft uniform `target` (`kev:kev/data.py:404-409`) [D], as Kev's
-    own unknowable records do.
-- **Long.** The decisive span is embedded in its real document: the full notes, the whole service
-  window, all documents of the cell. This makes 2K-, 4K- and 8K-token variants.
-- **Share.** In train: 10% injection-insert, 10% distractor, 3% evidence-removed and 5% long
-  [E: chosen to keep compute under 2× the clean cost, §4.2].
+- **Injection insert.** A carrier sentence urging the **wrong** option is inserted at a random
+  sentence boundary. Train uses bed pools and the train authored pool; OOD slices use held-out
+  carriers (authored lines and `deepset/prompt-injections` text re-targeted at the port). Each
+  item is paired with its clean twin; the pair is one cluster.
+- **Distractor and slot swap.** A second system's paragraph with the opposite label in the same
+  state. ≥ 20% of training rows for slotted ports (R1–R4, X5 records, X8), 10% elsewhere.
+- **Presence-matched unknowable** [crit S5]. The decisive sentence is **replaced** by a
+  same-register sentence that does not settle the question: the same convention for another
+  system, or another convention of the same system. Never a gap. Both arms (stated and
+  unknowable) are built from training and from held-out phrasings, and the report is the 2 × 2
+  known/new phrasing × stated/unknowable. For X5 the label is `not_stated`; for other ports the
+  training record gets a soft uniform `target` (`kev:kev/data.py`, as Kev's own unknowable
+  records) and evaluation files mark it `_meta.source = "unknowable"`. Acceptance: the
+  train-fitted probe separates stated from unknowable at ≤ 0.65 on the presence-matched set
+  (revision 1's deletions were separated at 1.000, and a model trained on them called 52% of new
+  phrasings "not stated" [M crit-S Q9]).
+- **Counterfactual flip and invariance twins** [crit S9]. Flip: same template index, opposite
+  polarity, nothing else changed (`PERSP_NOTE[S].recv[i]` ↔ `.pay[i]`, `FLAG_NOTE.live[i]` ↔
+  `.void[i]`, `ORDER_NOTE[S].dmy[i]` ↔ `.mdy[i]`; for X8, a value right under the other system's
+  convention). Invariance: another template of the same label. Available for R1–R4, X5 (polarity
+  pairs) and X8; other ports report the gate as not available.
+- **Counterfactual balancing** (§1.2): within-entity label balance, R4 date-window decoupling,
+  R1 `ymd`, incident service handles, X1 addressee-word balance.
+- **Long.** The decisive span embedded in its real document, windowed (§2.3 rule 6).
+- **Shares in train:** injection 10%; distractor or slot swap 20% (slotted ports) or 10%;
+  presence-matched unknowable 5%; long 5%.
 
 ### 2.6 Span taps
 
 - **Why.** kinetics notes and messages, runbook ticket comments and statements, codefix bug-thread
-  comments, gameqa reports and synth value sentences are rendered from world structures. No
-  exported per-span label exists for them.
-- **How a tap works.** It regenerates the task, takes the rendered text, and aligns every
-  world-level fact with **exactly one** verbatim span:
-  - pool-template match with the slots filled from the world;
-  - otherwise a unique substring match on the fact's rendered values.
-  - A fact with zero or several matching spans is dropped and counted.
-- **Rule: never fork a bed renderer.**
-  - If a tap cannot reach 95% alignment on 200 worlds, the group asks the bed owner for an
-    exported `spans(task)` hook. That is a versioned bed change with its own test.
-  - The ports that need it move to the next wave.
+  comments, gameqa reports and synth value sentences are rendered from world structures with no
+  exported per-span label.
+- **How.** A tap regenerates the task, takes the rendered text, and aligns every world-level fact
+  with **exactly one** verbatim span (pool-template match with slots filled from the world;
+  otherwise a unique substring match). A fact with zero or several spans is dropped and counted.
+- **Rule: never fork a bed renderer.** A tap below 95% alignment on 200 worlds triggers a request
+  to the bed owner for an exported `spans(task)` hook (a versioned bed change with its own test),
+  and its ports move a wave: X3 → wave 2 with S3 in; S2 → wave 2 with S3 in [crit G13].
+
+### 2.7 Decidability audit (acceptance gate per port) [crit S10, G9; crit-S §4]
+
+Every training and test label must be decidable from **the state the model sees**, using only the
+knowledge the port declares. A label that is right about the world but invisible in the state is
+label noise. Revision 1's acceptance 1(a) checked correctness against the world only.
+
+1. **State-only solver.** `solve/<port>.mjs` reads only the exported state and question (for
+   template ports: a template match on the state string with the exported pools, in the manner of
+   `beds/records/solve-text.mjs`, restricted to the state). It must reproduce the label on
+   ≥ 99.5% of 500 rows per port and split. Undecidable rows are listed with reasons and removed,
+   relabelled, or given a soft target (F1, I2 collision groups). Ports whose labels are not
+   expected to be code-solvable (S2 passages, X3, Q4) run the solver on their template-bearing
+   subset and rely on steps 2 and 6 for the rest.
+2. **Masked-state collisions.** Group rows by skeleton(state) + question + slots; the share of
+   groups with more than one label must be under 1% (generalises the I2 finding to every port).
+3. **Time of decision.** The provenance table (§1.0) is checked key by key.
+4. **Allowed knowledge.** Rows needing knowledge are flagged and stratified; knowledge outside the
+   declaration means drop or soft target.
+5. **Label semantics against the option text.** Every truth → option mapping is checked against
+   the bed README's meaning. Known breaks, fixed in §1.2: S2 press releases; I2 `echo` and
+   `consequence`; X8 day ≤ 12; Q4 same room name.
+6. **Blind read.** 50 rows per port, state and question only, read by two independent auditor
+   agents (Sonnet 5.5 and Opus 5.5, separate briefs) with a "cannot tell from this state" option;
+   the owner reads 20 rows each for X5, Q4 and F1 if available (O5). Agreement with the label and
+   the cannot-tell rate are reported; more than 5% cannot-tell in any class blocks the port.
+   Auditors never label: a disagreement leads to a code fix or a drop.
+7. **Partial-input ceilings** (§6.3). A port whose metadata-only, context-only, format-only or
+   decisive-span-free baseline exceeds majority + 3 pp on any axis is not frozen until the factory
+   rebalances it.
+8. **Class support** [crit G9]. A class × family × difficulty support table is printed before
+   freezing. Known thin cells: runbook `retract` exists only at d5; synth `instruction_like` only at
+   d5 and `projected` is 171 of 11,233 claims; kinetics' retracted swap at d5 (withdrawn late reports
+   may add support at lower levels). A class with fewer than 30 forms in a test cell is reported
+   as diagnostic for that cell.
 
 ---
 
 ## 3. Splits
 
-### 3.1 Seed ranges (all beds)
+### 3.1 Seed ranges and slices (all beds)
 
-| Split | Bed split | Seeds | Use |
-|---|---|---|---|
-| train | `dev` | 1–3999 | training; hard-negative mining |
-| calib | `dev` | 4000–4499 | temperature and thresholds (never training) |
-| dev-select | `dev` | 4500–4999 | hyperparameter and checkpoint selection, curve read-out |
-| test-in-family | `test` | 5000–5999 | evaluation only: same templates and families as train |
-| test-OOD | `test` | 6000–6999 | evaluation only: held-out paraphrases, templates or skeletons, families; adversarial and long variants built from these seeds |
+| Split | Bed split | Seeds | Surfaces | Use |
+|---|---|---|---|---|
+| reserved | `dev` | 1–400 | – | probe and pilot worlds; never trained or calibrated |
+| train | `dev` | 401–3999 | bed templates (non-held-out), train-pool lines, Q0–Q3, train families, skeleton buckets 40–100% | training; hard-negative mining |
+| calib-in | `dev` | 4000–4199 | as train | in-family calibration gap (report only) |
+| calib-OOD | `dev` | 4200–4499 | calib-OOD authored lines and wordings, skeleton bucket 30–40% | temperature, per-option biases, thresholds |
+| dev-select | `dev` | 4500–4699 | as train | in-family diagnostics, transfer gap at selection |
+| dev-OOD | `dev` | 4700–4999 | dev-OOD authored lines and wordings, skeleton bucket 20–30% | learning-curve read-out; config and checkpoint selection |
+| test-in | `test` | 5000–5999 | as train | read once: recall |
+| test-OOD | `test` | 6000–6999 | test-OOD authored lines and wordings, skeleton bucket 0–20%, held-out families, held-out bed templates (diagnostic), adversarial, long, unknowable, causal | read once |
+| real reserve | `test` | 7000–7039 (× d3–d5) | real weak-model runs | X8-real axis; X8 end-to-end |
+| e2e reserve | `test` | 7040–7199 | – | X5 end-to-end gate (§8.3) |
 
-- **Seed hygiene.**
-  - Bed authors used test seeds 5000–5099 and 5000–5029 in their own tests
-    (`records/README.md:184-187`, `codefix/README.md:256-262`). That is harmless for us, because
-    the tests did not train anything.
-  - The construction pre-registration uses test seeds ≥ 5001 for C0 tasks
-    (`fdy:research/construction-20261006/DESIGN.md:71-72`). Our tests read the same generators
-    with different questions. **They do not consume those tasks or change them.**
-- **The split is only RNG salt** (`beds/CONTRACT.md`). Dev and test worlds can coincide at low
-  difficulty (codefix: 16/3/1 identical modules at d1/d2/d3, `codefix/README.md:255-257`). Hence
-  the `stateHash` and `worldHash` dedup across splits (§2.3 rule 7).
+- **Seed hygiene.** Bed authors used test seeds 5000–5099 and 5000–5029 in their own tests; the
+  construction pre-registration uses test seeds ≥ 5001 for C0 tasks
+  (`fdy:research/construction-20261006/DESIGN.md`). We read the same generators with different
+  questions and do not consume or change those tasks. The split is only RNG salt
+  (`beds/CONTRACT.md`), so dev and test worlds can coincide at low difficulty; `stateHash` and
+  `worldHash` dedup across all splits.
+- **No test-OOD hash** may appear in any curve, selection or calibration log; `analyze.mjs`
+  asserts it [crit S6].
 
-### 3.2 (b) Held-out paraphrases
+### 3.2 Held-out wordings
 
-- Every port has at least 2 held-out question wordings, written by G0b (§2.4). One of them is in
-  a different register.
-- They are used in test-OOD only.
-- **Paraphrase-consistency records** carry the same state with Q0 and both held-out wordings as
-  three questions.
+- 40 per port: 10 calib-OOD, 10 dev-OOD, 20 test-OOD, at least a third in a different register.
+- Paraphrase-consistency records carry Q0 and two test wordings of the same state (one cluster).
+- The paraphrase axis's unit is the wording; it gates with ≥ 20 wordings (§6.0).
 
-### 3.3 (c) Held-out templates and skeletons
+### 3.3 Held-out templates and skeletons
 
-| Port | Template ids exposed | Held out (pre-registered) |
+| Port | Gating template axis | Diagnostic sub-axis (bed templates held out, re-rendered elsewhere) |
 |---|---|---|
-| R1 | `choices.orderTpl[S]` (6–8 per system × order) | the highest index per (system, order) |
-| R2 | `choices.flagTpl[i]` 0–7 per polarity | 6 and 7 |
-| R3 | `choices.perspTpl[S]` 0–3 | 3 |
-| R4 | `choices.mirrorTpl` 0–4, `choices.reliableTpl` 0–4 | 4 and 4 |
-| Q5 | `bugs[].template` (13 ids) | 3 ids, each from a class that keeps ≥ 1 training template |
-| X1 | per-bed pools (records 9 templates, incident `INJECT` 4, kinetics 5, gridquest 6) | 1 template per bed, plus the authored OOD pool |
-| all other ports | none exposed | **skeleton holdout** (below) |
+| R1 | authored lines, 100 per label in test-OOD | `choices.orderTpl[S]`: highest index per (system, order); 6 forms [M crit-S] |
+| R2 | authored lines | `choices.flagTpl[i]` 6 and 7; 4 forms |
+| R3 | authored lines | `choices.perspTpl[S]` 3; 8 forms |
+| R4 | authored lines | `choices.mirrorTpl` 4, `choices.reliableTpl` 4; 7 forms |
+| X1 | authored lines + held-out families | 1 bed template per bed |
+| X5 (records) | authored assumption and conventions lines | as R1–R4 |
+| X8 | authored conventions lines | as R1–R4 |
+| Q5 (wave 2) | 3 of 13 `bugs[].template` ids, each from a class keeping a training template | – |
+| other ports | skeleton buckets | – |
 
-- **Excluding held-out templates.** Worlds whose label-bearing sentence uses a held-out template
-  are rejected in train, calib and dev. They are eligible only in test-OOD-template.
-- **Skeleton holdout.** `skeleton(span)` masks the span's variable parts and hashes the rest:
-  - digits, hex runs and ISO timestamps;
-  - every entity, service, person and system name from the world's own name lists;
-  - quoted strings.
-  
-  The skeleton hashes are sorted, and the 20% lowest are held out. A skeleton holdout counts as
-  **not measurable** for a port with fewer than 5 skeleton clusters per label. The report says so
-  instead of inventing a number.
-- **Authored OOD pool.** Template-bound ports (R1–R4, Q2, X1) also get the G0b pool (§2.4). This is
-  the strongest template test available without sealed beds.
+- **Held-out bed templates are re-rendered, not world-rejected**, in train, calib and dev (§2.3
+  rule 7). They are too few forms to gate (6, 4, 8, 7) and are reported as a strip plot.
+- **Skeleton holdout.** `skeleton(span)` masks digits, hex runs and timestamps, every entity,
+  service, person and system name from the world's own name lists, and quoted strings, then hashes
+  the rest. Buckets by hash: 0–20% test-OOD, 20–30% dev-OOD, 30–40% calib-OOD, 40–100% train. A
+  skeleton axis gates only with ≥ 30 clusters per label; otherwise it is "diagnostic:
+  n_forms = k" [crit S1; revision 1 allowed 5]. For F1 the skeleton is the workflow shape of the
+  exec-injected family.
 
-### 3.4 (d) Held-out families (pre-registered, one training run)
+### 3.4 Held-out families (pre-registered, one training run)
 
-| Port | Train families | Held-out families (test only) |
+| Port | Train families | Held-out families (test-OOD only) |
 |---|---|---|
 | X1 | records, incident, synth, runbook, codefix, gameqa | **kinetics, gridquest**, external deepset |
 | X2 | records, synth, incident | **gameqa** |
 | X3 | kinetics (and codefix if tapped) | **runbook** |
 | X4 | runbook, kinetics, synth, gameqa | **incident** |
-| X5 | records, synth, incident | **kinetics, runbook** |
+| X5 | records, synth, incident, bedtype (7 families) | **kinetics, runbook**, bedtype (kinetics and runbook descriptions and prompts) |
 | X6 | gameqa | **codefix** |
 | X7 | synth, incident, gameqa | **kinetics** |
-| X8 | records, kinetics | **synth**, records-real (REAL-TRACE) |
+| X8 | records, kinetics | **synth**, records-real (reserved worlds) |
 | Q4 | gridquest, runbook | **gameqa** |
-| F1 | templates, exec-injected, gameqa | **REAL-TRACE journals** |
+| F1 | exec-injected, templates, gameqa | none available in wave 1 (REAL is a case study, §3.5) |
 | F2 | codefix: 4 domains | **codefix: 2 domains, ownerci** |
 | Q6 | gameqa | **codefix** |
 
-- **Cross-port leakage guard.** A held-out family's spans must not reach training through another
-  port. The registry `heldout/ood-spans.json` holds the `spanHash` of every label-bearing span in
-  held-out-family test records. Any training record whose normalised state contains a registered
-  span is dropped, from every port.
-  - Example: kinetics injection lines must not enter training as X7 kinetics items. X7 holds out
-    kinetics anyway, but X4 trains on kinetics.
-- **Why one run.** All holdouts are applied together, so one training run serves every
-  family-OOD test. Leave-one-family-out runs for X1 would need 8 runs. They are listed as
-  optional follow-ups.
+- Cross-port leakage of held-out families is covered by the general span-skeleton registry
+  (§2.3 rule 7): kinetics injection lines cannot reach training as X4 kinetics items.
+- One training run serves every family test; leave-one-family-out runs for X1 are optional
+  follow-ups.
 
-### 3.5 (e) Real-trace sets
+### 3.5 Real-trace sets and the availability rule [crit S7, G8]
 
-| Set | Port | Size now | Label |
-|---|---|---|---|
-| records-hand-pilot journal (`experiments/runs/records-hand-pilot/journal.sqlite`) | X8 | 148 calls, 121 Haiku 4.5 [M here, D inventory §1.2] → about 6 rows × 5 fields each [E] | field equals the regenerated world's truth |
-| journaled failures (probe real slice) | F1 | 9 [D probe `datasets.mjs:286-295`] | cause from the message, by the probe author |
-| c0-smoke, distill-pilot, calibration journals | F1, X8 | 4 + 15 + 12 calls [M here] | as above where labelable |
-| future judge-node ledger rows | every wired port | 0 | oracle, replay or control-build outcomes |
+**An axis is available** (counts in §8.1) only with **≥ 30 independent tasks or worlds and ≥ 300
+rows** labelled by an oracle, a replay or a journal outcome. Below that it is reported as a case
+study, outside §8.1.
 
-- **Today these sets are tiny.** For most ports **no real-trace set exists**. Claim-bearing C4
-  evidence therefore waits for two Foundry changes (§8.4):
-  - the ledger stores request content, which it lacks today (`fdy:src/judgment.mjs:80-85`);
-  - judge nodes run in C0/C1 experiments.
-- **Pre-registered for later.** As soon as a port has 300 oracle-labelled ledger rows, its
-  promotion is re-checked on them.
+| Set | Port | Size | Label | Status |
+|---|---|---|---|---|
+| real reserve: weak model on records extraction, 120 worlds (test 7000–7039 × d3–d5) | X8 | about 960 calls, about 1,500 gated field rows (day ≤ 12 strata) | field = the world regenerated from the task key | **available** once run |
+| `records-hand-pilot` journal | X8 | 121 Haiku 4.5 calls, 12 runs, 5 worlds, inside train seeds [M crit-G] | as above | case study |
+| probe real failures | F1 | 9 items, 3 distinct states, LLM-labelled [M crit-S] | – | **dropped** |
+| journaled failures with replay/resample/control labels | F1 | 0 today | check outcome | case study until ≥ 30 tasks, 300 rows |
+| `c0-smoke`, `distill-pilot`, `calibration` journals | F1, X8 | 4 + 15 + 12 calls [M here] | as above | case study |
+| judge-node ledger rows (W4) | every wired port | 0 | oracle, replay or control outcome | claim-bearing at ≥ 300 rows over ≥ 30 worlds (T3, §8.5) |
 
-### 3.6 (f) Kev's own suites (forgetting)
+### 3.6 Kev's own suites (the forgetting battery, §6.4)
 
-- **Suites.** `evals/v7/decision-v7/development.jsonl` (1,204 records) and
-  `evals/v4/transfer-v4/development.jsonl` (764 records). `hard-v1/development.jsonl` (700) is
-  optional [D dossier §2.5].
-- **How they are used.** They are uploaded to the bridge as data files and scored with
-  `kev.benchmark --data` for stock and for every candidate.
-- **Never used:** Kev's `test.jsonl` partitions ("one read, ever", `kev:README.md:345`).
-- **Replay** draws from decision-v7 `train` on the Hub mirror `jaredpalmer/kev-suites@cc4bac80…`.
-  That matches `SUITES_REVISION` (`kev:kev/suite.py:39`) and the HF API [M here].
-  - Licences of its sources such as Yelp and Amazon are unverified for redistribution
-    [D dossier §5.1]. Our adapters are not redistributed.
+- `evals/v7/decision-v7/development.jsonl` (1,204 records; reported but flagged in-distribution,
+  because replay draws from decision-v7 train), `evals/v4/transfer-v4/development.jsonl` (764),
+  `evals/hard-v1/development.jsonl` (700; mandatory, not replayed) and the unknowable records of
+  `evals/v9/transfer-v9` development [D dossier §2.5] [crit S12].
+- Never used: Kev's `test.jsonl` partitions ("one read, ever", `kev:README.md:345`).
+- Replay draws from decision-v7 `train` on `jaredpalmer/kev-suites@cc4bac80…`, which declares no
+  licence and mixes Yelp, Amazon, IMDB, AG News, MNLI and others [M crit-G G18]. Use: replay only;
+  adapters are not redistributed. Manifest entries are written by `assembly` (§10).
 
 ---
 
@@ -1640,19 +1758,22 @@ export function* records(split /* 'train'|'calib'|'dev'|'test-in'|'test-ood' */,
 
 ### 4.1 Unit and throughput
 
-- **Unit.** One **row** is one (state, question) pair. With LoRA, Kev runs each question as its
-  own causal row over the full state (`shared_prefix` is off by default for LoRA,
-  `kev:kev/train.py:440`) [D]. A record with q questions costs about q rows.
-- **Throughput.**
-  - 0.287 s per example and 3.4 GB peak VRAM on the RTX 4060, in bf16 autocast with batch 1,
-    accum 8 and checkpointing, on the about 64 toy records of the smoke [M owner].
-  - Foundry rows are 60–600 tokens (2,000 for long variants). The planning range is
-    **0.29–0.6 s/row** [E]. Below about 300 tokens the per-step overhead of 24 layers dominates;
-    beyond that, cost grows roughly linearly, since DeltaNet is linear and only 6 attention
-    layers exist.
-  - J0 replaces this estimate with measurements (§7.4).
-- **Replay** records are decision-v7 records, mostly ≤ 384 tokens [D dossier §1.9]. Each costs
-  about one row per question [E].
+- **Row** = one (state, question) pair. With LoRA, Kev runs each question as its own causal row
+  over the full state (`shared_prefix` is off by default for LoRA, `kev:kev/train.py`) [D]; J0b
+  tests `shared_prefix 1`.
+- **Cost is forward tokens, not rows** [crit G3].
+  - The smoke's 0.287 s/example has no run record here; the bundled toy file has 3 questions per
+    record, 30-token states and 151 forward tokens per record, so it is about 525 tokens/s on 8
+    optimizer steps including warm-up [M crit-G]. It can be wrong in either direction: pessimistic
+    for short multi-question records, far too optimistic once tokens dominate.
+  - Independent anchor: the v1.0 release run did 15.5M forward tokens in 3,136 s = **4,953
+    tokens/s** at batch 4 on a ≥ 24 GB device, with **+34.6%** variants from none-pair siblings
+    [D release `training_metrics.json`, read by crit-G].
+  - Token model [E crit-G]: 800 forward tokens per requested training row (about 530 mean real
+    state tokens with 5% long variants, plus about 100 branch tokens, × 1.3 none-pair inflation on
+    3+-option ports) and 500 per replay record.
+- J0 replaces these with two measured parameters, seconds per record and seconds per forward
+  token, at about 300 / 2K / 8K real tokens (§7.4).
 
 ### 4.2 Evidence on how much data Kev needs [D]
 
@@ -1662,175 +1783,252 @@ export function* records(split /* 'train'|'calib'|'dev'|'test-in'|'test-ood' */,
 | `kev:README.md:157` | Kev-4B, 5,219 real complaints, 1 epoch | 0.804 → 0.904 |
 | `kev:PLAN.md:196-197` | hard-v1, more data from the same generator | +26 pp for the first 6K records, +5 pp for the next 12K |
 | `kev:skills/kev-finetune/references/data-format.md:52-56` | sizing table | 300–600 first real run; 1,000–3,000 production |
-| `kev:skills/kev-finetune/scripts/plan_size.py:25-28` | McNemar, paired | +5 pp at 80% power: 281 questions (2% regressions) to 469 (5%) [M here, the formula evaluated]; +10 pp: 108–155 |
+| `kev:skills/kev-finetune/scripts/plan_size.py:25-28` | McNemar, paired | +5 pp at 80% power: 281 questions (2% regressions) to 469 (5%); +10 pp: 108–155 |
 
-- **Reading.** About 1,000 rows per question type is where Kev's docs first show a real gain, on
-  a 4B model. 0.8B is weaker everywhere [D dossier §2.1], so per-port needs are unlikely to be
-  smaller [E].
-- **Capacity.** For template-bound ports (§0.1), extra rows add repetitions, not information. The
-  cap is about 10 rows per distinct training form [E].
+- **Reading.** About 1,000 rows per question type is where Kev's docs first show a real gain, on a
+  4B model; 0.8B is weaker everywhere [D dossier §2.1]. Note that the McNemar sizes count
+  independent questions; with form clustering the independent unit is the form (§6.0).
+- **Capacity.** Extra rows over the same forms add repetitions, not information: about 10 rows per
+  distinct training form is the cap [E].
 
-### 4.3 Per-port allocation (pre-registered rule)
+### 4.3 Allocation and set sizes (pre-registered)
 
-- **Bands.** Assigned from **dev-select** numbers of the stock-Kev benchmark (J1), before any
-  training.
-  - **hard (weight 1.5):** stock-Kev accuracy < 0.75, or K ≥ 5, or ≥ 3 families.
-  - **capacity-bound (weight 0.5):** fewer than 300 distinct training forms (§0.1). Rows are
-    capped at 10 × forms.
-  - **medium (weight 1.0):** otherwise.
-  - Rows for a port = N × weight / Σ weights. Surplus from capped ports is redistributed to the
-    hard ports.
-- **Provisional bands for wave 1** (until J1): hard = S2, X1, X3, X5, X8, I1, F1, Q4; medium = R1,
-  I2; capacity-bound = R2, R3, R4. Σ weights = 15.5.
+**Bands** come from the stock-Kev read on **dev-OOD** (J1), before any training:
+- **hard (weight 1.5):** stock balanced accuracy < 0.75, or K ≥ 5, or ≥ 3 families;
+- **capacity-bound (weight 0.5):** fewer than 300 distinct training forms in the build (counted
+  after `train-pools`); rows capped at 10 × forms;
+- **medium (1.0):** otherwise. Rows for a port = N × weight / Σ weights; surplus from capped ports
+  goes to the hard ports.
+- **Provisional bands** (until J1): hard = S2, X1, X3, X5, X8, I1, F1, Q4; medium = R1, I2;
+  capacity-bound = R2, R3, R4 (Σ = 15.5). With 20 paraphrases per template, R2–R4 may leave the
+  capacity band; the rule decides on the build.
 
-| Total rows N | hard port | medium port | capacity-bound port (R3 cap ≈ 240) |
+| Train rows N | hard port | medium port | capacity-bound port |
 |---|---|---|---|
 | 2.5K | 240 | 160 | 80 |
 | **5K** | **480** | 320 | 160 |
-| 10K | 970 | 650 | 320 (R3: 240) |
-| 20K | 1,940 (+ surplus) | 1,290 | 650 (R3: 240) |
-| 40K (conditional) | 3,000 (cap) | 2,580 | capped |
+| 10K | 970 | 650 | 320 |
+| 20K | 1,935 | 1,290 | 645 |
+| 40K (conditional) | 3,000 (cap) + surplus | 2,580 | capped |
 
-- **Rows in the full-rate split** [E]:
-  - train: as above;
-  - calib: 400 per port (thresholds at 5% error need several hundred; Kev needs ≥ 100 for a stable
-    T, `kev:skills/kev-finetune/scripts/plan_size.py:40`);
-  - dev-select: 300 per port;
-  - test-in-family: 500 per port;
-  - test-OOD: 500 per axis per port where the axis exists (paraphrase, template, family),
-    plus 200 adversarial pairs, 100 unknowable items, and 50 × 2 long items for long-state ports.
-- **Why 500 per test axis.** It detects +5 pp at 80% power with up to 5% regressions (469
-  questions, §4.2). Test records allow **at most 1 question per port per world**, so clustering
-  does not inflate n.
-- **Worlds needed.** At about 2–8 records per world per port (§1.2) and about 0.06 s per records
-  world [M here: 61 ms/world, d3–d5, loaded machine], with < 2 s per world in the other beds
-  [D `beds/CONTRACT.md`], the wave-1 build at 40K takes minutes to about an hour of CPU [E].
+Cross-bed ports split their train rows evenly over their train families (X1 six, X5 four, X8 two,
+Q4 two); F1 keeps templates ≤ 20%.
+
+**Evaluation sets per wave-1 port** (rows; one question per port per state in test):
+
+| Set | Rows per port | Notes |
+|---|---|---|
+| calib-in | 300 | report only |
+| calib-OOD | 500 (X5 1,000; X1 600 enriched) | ≥ 40 authored forms per label for template-bound ports |
+| dev-select | 200 | in-family |
+| dev-OOD | 600 (X5 1,000) | ≥ 60 forms per label (template-bound); read at every curve point |
+| test-in | 500 | read once |
+| test-OOD | per axis, below | read once |
+
+| Port | Template / skeleton | Paraphrase | Families | Real | Adversarial (pairs) | Unknowable | Long | Causal | Other | Total |
+|---|---|---|---|---|---|---|---|---|---|---|
+| R1, R2, R3, R4 (each) | 600 + 150 bed-template diagnostic | 400 | – | – | 400 (800 rows) | 300 | 150 | flip 400, invariance 400, slot 200 | – | 3,400 |
+| I1 | 600 | 400 | – | – | 400 (800) | 300 | 150 | – | – | 2,250 |
+| I2 | 600 | 400 | – | – | 200 (400) | – | – | – | balanced copy 300 | 1,700 |
+| S2 | 600 | 400 | – | – | 400 (800) | 300 | – | – | balanced copy 400 | 2,500 |
+| Q4 | 600 | 400 | gameqa 600 | – | 400 (800) | 300 | – | – | – | 2,700 |
+| X1 | 600 authored | 400 | kinetics 600, gridquest 600, deepset ≤ 600 | – | – | – | 150 | – | natural rate 3,000 | 5,950 |
+| X3 | 600 | 400 | runbook 600 | – | 400 (800) | 300 | – | – | – | 2,700 |
+| X5 | 1,000 | 400 | kinetics 600, runbook 600, bedtype 600 | – | 400 (800) | in labels | 300 | flip 400, slot 200 | – | 4,900 |
+| X8 | 600 | 400 | synth 600 | 1,500 | 400 (800) | – | – | flip 400 | – | 4,300 |
+| F1 | 600 (workflow shapes) | 400 | – | case study | 200 (400) | – | – | – | – | 1,400 |
+| **Wave 1** | | | | | | | | | | **≈ 42,000** |
+
+**Totals per learning-curve point** (wave 1; rows = state-question pairs):
+
+| Point | Foundry train rows | Replay records | Forward tokens [E] | Evaluation read at the point |
+|---|---|---|---|---|
+| 2.5K | 2,500 | 2,000 | 3.0M | 15,200 (calib-OOD 7,000 + dev-OOD 8,200) + forgetting battery |
+| 5K | 5,000 | 2,000 | 5.0M | 17,800 (calib-OOD 7,000 + dev-select 2,600 + dev-OOD 8,200) + forgetting battery |
+| 10K | 10,000 | 2,000 | 9.0M | 15,200 + battery (dev-select is read at 5K, 20K and 40K only) |
+| 20K | 20,000 | 2,000 | 17.0M | 17,800 + battery |
+| 40K (conditional) | 40,000 | 2,000 | 33.0M | 17,800 + battery |
+| final read (once, stock and candidate) | – | – | – | test-in 6,500 + test-OOD ≈ 42,000 + calib-in 3,900 |
+
+Wave-2 ports get a smoke set only (§10): about 300 train and 100 dev-select rows per port.
+
+- **Worlds and build time.** Records worlds generate in about 61 ms each [M here]; the other beds
+  in under 2 s [D `beds/CONTRACT.md`]. CPU build time is minutes to about an hour; the cost is in
+  pool authoring, hosted arms and the embedding arm (§5).
 
 ### 4.4 The curve that answers "is 5K sufficient?"
 
-- **Points.** Nested training sets at N = 2.5K, 5K, 10K, 20K (40K conditional). Each larger set
-  contains the smaller one, with the same seed order, replay fixed at 2,000 and 1 epoch. Only N
-  varies.
-- **Measured per point and per port**, on dev-select and on test-OOD-template:
-  - accuracy, Brier, and coverage at 5% error.
-  - The curve uses the temperature refit on calib.
-- **Decision rule (pre-registered).**
-  - For port p, **5K is sufficient** if `acc(20K) − acc(5K)` on test-OOD-template has a 95%
-    upper bound < 2 pp **and** coverage@5% does not improve by more than 5 pp.
-  - Overall, **5K is sufficient** if that holds for ≥ 80% of the wave-1 ports.
-  - **40K runs** only if ≥ 3 ports gain ≥ 2 pp from 10K to 20K with a CI excluding 0.
-- **Prediction (written before any run).**
-  - 5K is sufficient for R2–R4, which are capacity-bound.
-  - It is insufficient for S2, X5, X8, I1 and X3.
-  - For X1 and F1, more rows raise in-family accuracy but not family-OOD accuracy, because those
-    ports are limited by their families, not by N.
-- **What would change the plan.** A port that is flat from 2.5K to 20K on test-OOD while
-  test-in-family rises is **memorising**. More data will not fix it; more surface diversity
-  (§2.4) or more families will. That port's verdict says so.
-
-**Laptop time** (training only):
-
-| N | Rows with replay | At 0.287 s/row [M owner] | At 0.6 s/row [E] |
-|---|---|---|---|
-| 2.5K | 4.5K | 22 min | 45 min |
-| 5K | 7K | 34 min | 70 min |
-| 10K | 12K | 57 min | 120 min |
-| 20K | 22K | 105 min | 220 min |
-| 40K | 42K | 201 min | 420 min |
-
-- **Evaluation per curve point.** dev-select plus test-OOD-template for 13 ports is about 10K rows
-  at about ⅓ of the training cost per row [E: forward only, dossier §4.4 ratio], so about
-  15–35 min.
+- **Points.** Nested training sets at N = 2.5K, 5K, 10K, 20K (40K conditional): each larger set
+  contains the smaller one in the same seed order; replay fixed at 2,000; 1 epoch; only N varies.
+  **Two training seeds at 5K and 20K** [crit G11, S6].
+- **Read-out** on **dev-OOD** (gating unit counts, §6.0) after a calib-OOD refit at each point;
+  dev-select at 5K and 20K for the transfer gap. Test-OOD is never read for the curve.
+- **Decision rule (pre-registered).** Δ = balanced accuracy(20K) − balanced accuracy(5K) on
+  dev-OOD, averaged over the two seeds; CIs from the two-way (form × world) bootstrap with the
+  between-seed variance added.
+  - **Per port:** *sufficient* if the one-sided 95% upper bound of Δ is < 3 pp and the coverage
+    gain at ε has an upper bound < 5 pp; *insufficient* if the lower bound of Δ is > 0;
+    otherwise *indeterminate*, reported with its minimum detectable difference.
+  - **Overall** (macro over wave-1 ports, port-stratified bootstrap): *sufficient* if the upper
+    bound is < 2 pp; *insufficient* if the lower bound is > 0; otherwise *indeterminate*.
+  - **40K trigger:** the overall 10K → 20K lower bound is > 0, or ≥ 3 ports are *insufficient*
+    with a 10K → 20K lower bound > 0. An indeterminate outcome does not trigger 40K; the report
+    states the N the observed slope would need.
+  - **Power, written down first.** Before J2, `analyze.mjs` simulates the rule at true
+    differences of 0, 1, 2 and 3 pp using J1's dev-OOD unit counts and discordance, and the
+    pre-registration records the outcome probabilities and each port's MDE [crit G11]. At about
+    120 forms per port, per-port verdicts will often be indeterminate; the pooled verdict (about
+    1,500 forms) is the one designed to resolve [E: 1.96 × 0.3 / √1,500 ≈ 1.5 pp].
+- **Prediction (written before any run).** 5K is sufficient at most for R2–R4. It is
+  insufficient for S2, X5, X8, I1 and X3. For X1 and F1, more rows raise in-family accuracy but
+  not family-OOD accuracy, because those ports are limited by their families.
+- **Memorisation signature.** Flat dev-OOD while dev-select rises means memorising: more rows will
+  not fix it; more surface forms or families will. That port's verdict says so.
 
 ---
 
 ## 5. Baselines (per port, same records, same splits)
 
-1. **Rule (≤ 30 lines per port).**
-   - Keyword, regex and string-similarity rules, written from the bed READMEs and the option
-     semantics. They are tuned on train and dev-select only, never on test.
-   - The probe's rules (`fdy:experiments/kev-probe/rules.mjs`) are reused where ports overlap:
-     records-pair → X2 records, incident-class → I1, incident-root → I3, injection → X1,
-     failure-class → F1, applicability → X5 records.
-   - Rule scores are normalised by JudgmentPort `rule`, then temperature-fit on calib, like every
-     engine.
-2. **Embedding baselines.**
-   - **Model:** `BAAI/bge-small-en-v1.5`, revision `5c38ec7c405ec4b44b94cc5a9bb96e735b38267a`,
-     licence tag MIT, 33,360,512 parameters [M here, HF API]. 384-dimensional; 512-token input
-     limit [D model card].
-   - **Fallback:** `sentence-transformers/all-MiniLM-L6-v2`, `1110a243…`, Apache-2.0, 22.7M
-     parameters [M here].
-   - **Runtime:** CPU on this VM in `/opt/kev-venv` with `python -I`: transformers 5.17.0,
-     scikit-learn 1.9.1, torch 2.8.0+cpu [M here, dossier §3.2]. CLS pooling, L2-normalised.
-   - **Input:** the question instructions plus the state rendered exactly as Kev renders it (key:
-     value lines), truncated head-and-tail to 512 tokens.
-   - **Two heads per port:**
-     - kNN: k = 15, cosine, distance-weighted, with Laplace smoothing.
-     - L2 logistic regression: C ∈ {0.1, 1, 10} chosen on dev-select. Features are
-       `[e(question); e(state); e(question) ⊙ e(state)]`, so slot-filled questions (X5, X7) can
-       interact with the state.
-   - **Acquisition:** download about 130 MB, recorded in `research/manifests/models.json` with URL,
-     revision, date, licence and outcome.
-   - **Cost:** about 20–50 ms per 256-token text on 4 cores [E], so 100K texts take about
-     0.5–1.5 h.
-3. **Stock Kev-0.8B@v1.0.**
-   - Same records, served on the laptop GPU through the same bridge.
-   - Read at the shipped T = 2.351 [M probe `/v1/models`] and at a calib refit (§7.5).
-   - Its permutation and paraphrase numbers are the robustness reference.
-4. **Haiku 4.5, zero-shot typed.**
-   - JudgmentPort engine `model` with `modelId: claude-haiku-4-5-20251001` (`fdy:policy/models.json:44`),
-     `decoding {maxTokens 128, reasoning 'none'}`. The question, criteria and options are the
-     same; option descriptions go in as one criterion, as in the probe's `modelRequestFor`.
-   - It reports self-reported confidence (`fdy:src/ports.mjs:93-112`). A one-parameter power
-     transform of that confidence is fit on calib; raw and calibrated numbers are both reported.
-   - **Arms:** calib, test-in-family and every test-OOD axis, wave 1. About 26K calls at
-     $0.001–0.003 each, about **$26–78** [E from D per-call cost]. Concurrency ≤ 4.
-5. **Sonnet 5.5, zero-shot typed, on a subset.**
-   - 150 calib + 150 test-OOD-template items per port, about 3.9K calls at about 2× Haiku's token
-     price (`fdy:policy/models.json:46`), about **$8–23** [E].
-   - The total hosted spend is under the $500 per-experiment pause line
-     (`fdy:policy/models.json:13`).
-6. **Composite-question arm** (S2 only): the probe's direct "usable claim?" question, against code
-   composition of S2 ∧ S3 ∧ S4 ∧ X2. This tests whether decomposition helps 0.8B.
+1. **Prior** [crit S11]: the calib-OOD class prior at the deployment rate.
+2. **Partial-input battery** [crit S9f, S15]: decisive span only; context only (decisive span
+   removed); metadata only (system, marker, `source_kind`, `error_code`, `node_kind`, service
+   handle); format only (date-range presence, length, digit counts); `prior_runs` only (F1); and the
+   full bag-of-words probe (`lib/probe.mjs`, unigrams and bigrams, trained on the train split). All
+   are logistic regressions fitted on train.
+3. **Rule** (≤ 30 lines per port), from the bed READMEs and option semantics, tuned on train and
+   dev-select only. The probe's rules are reused where ports overlap.
+4. **Embedding** (`BAAI/bge-small-en-v1.5@5c38ec7c`, MIT; fallback
+   `sentence-transformers/all-MiniLM-L6-v2@1110a243`, Apache-2.0), CPU in `/opt/kev-venv` with
+   `python -I`. kNN (k = 15, cosine, distance-weighted) and L2 logistic on
+   `[e(q); e(s); e(q) ⊙ e(s)]` (C chosen on dev-OOD). Two input variants [crit G14]: head-and-tail
+   truncation to 512 tokens, and **chunk-and-max-pool** over 512-token chunks, so long states are
+   not cut against the baseline. **Variable-option ports** (S1, K2, F2, Q3, C1 per requirement)
+   use option scoring: cosine between e(q ⊕ s) and each option's description, fed to the logistic.
+   Measured CPU cost: 35 ms/text at 128 tokens, 86–289 ms at 242 tokens [M crit-G]: about 3–8 h
+   per 100K texts, run as a background job with an embedding cache keyed by text hash.
+5. **Stock Kev-0.8B@v1.0**, read through the same served path, with T and per-option biases refit
+   on calib-OOD exactly as for the candidate.
+6. **local-logit** [crit G14]: `Qwen/Qwen3.5-0.8B-Base@dc7cdfe2` option-letter logits on 100
+   dev-OOD items per wave-1 port, on this CPU. Diagnostic: it joins the best baseline only if it
+   beats stock Kev on dev-OOD for that port.
+7. **Weak model, zero-shot typed** (owner decision O1), JudgmentPort engine `model`,
+   `decoding {maxTokens 128, reasoning 'none'}`, self-reported confidence with a one-parameter
+   power transform fitted on calib-OOD. **A 50-call pilot runs first** and fixes cost and latency
+   per call [crit G15]. Planned arms: calib-OOD 300 per port and a test-OOD subsample of about 900
+   per port (template or skeleton 300, family 300 where present, paraphrase 150, adversarial 150
+   pairs), about 15.6K calls. Cost per call on the CLI path: Haiku 4.5 at least $0.0045, median
+   $0.0139 in the pilot journal [M crit-G] → about $70–220; Haiku 5.5 lists at a tenth of Haiku
+   4.5's token price, but the CLI path's fixed overhead is unmeasured. Concurrency ≤ 4 at 3–9 s
+   per call is 3–10 h of cloud wall clock, run in parallel with the laptop nights.
+8. **Sonnet 5.5, zero-shot typed, subset:** 150 calib-OOD + 300 test-OOD per port (about 5.9K
+   calls), priced by the pilot.
+9. **Composite-question arm** (S2 only): the probe's direct "usable claim?" question against code
+   composition of S2 ∧ S3 ∧ S4 ∧ X2.
 
-- **Note on hosted arms.** The probe ran Sonnet only, after an earlier owner request
-  (`fdy:experiments/kev-probe/run.mjs:21`: "owner request: no Haiku arm"). This program's
-  direction names Haiku as the weak model the system must make competent. Haiku is included as a
-  baseline and as the first escalation step. **The owner should confirm both arms.** If Haiku is
-  vetoed, Sonnet takes both roles, at about 2× the cost.
+- **Best baseline**, per port and axis: the strongest of prior, the partial-input battery, rule,
+  embedding-logistic, embedding-kNN, stock Kev, and local-logit if it qualifies. The weak model
+  and Sonnet are compared in the cost-adjusted rule (§8.1).
+- **Hosted budget.** Arms, the real-trace and end-to-end runs (§3.5, §8.3), surface authoring and
+  auditor reads come to about $150–450 [E] before the pilot. The pilot sets the number (owner
+  decision O2); the subsamples are drawn by a pre-registered hash, so a cut nests. Pause and ask
+  above $500 (policy).
+- **No larger-model ceiling** unless the owner funds one cloud read of stock Kev-4B on the OOD
+  axes of three ports (O6) [crit G28]. Kev's README puts Kev-0.8B at 0.14 coverage at a 5% error
+  budget on new-source decisions against 0.52–0.69 for Kev-4B to 27B (`kev:README.md:216`).
+  Without it, the weak model and Sonnet are the only ceiling arms, and the report says so.
 
 ---
 
-## 6. Metrics and robustness gates
+## 6. Metrics and gates
 
-Every number is per port and per evaluation set, with a 95% CI. CIs come from a paired
-**world-clustered** bootstrap with 10,000 resamples. Thresholds are fit on calib and applied
-unchanged to the tests. All gate thresholds below are pre-registered estimates [E], chosen from
-Kev's documented behaviour and Foundry's budgets.
+### 6.0 Units, intervals and minimums [crit S1, S14, S17]
 
-| # | Metric | Definition | Gate for promotion |
-|---|---|---|---|
-| 6.1 | Accuracy | argmax = label | beats the best baseline, CI of the paired difference > 0 (§8.1) |
-| 6.2 | Brier | Σ over options (p − y)², as in `calibrationReport` (`fdy:src/judgment.mjs:106-131`) | ≤ best baseline's (CI of the difference ≤ 0) |
-| 6.3 | ECE | 10 equal-width bins on p(chosen), plus 15 equal-mass bins as a check | ≤ 0.05 on every test-OOD axis |
-| 6.4 | Coverage at 5% and 10% error | τ = the lowest threshold on calib with accepted risk ≤ ε; then realised coverage and risk on test | realised risk: Clopper–Pearson upper bound ≤ ε + 0.03; X5 uses ε = 2% |
-| 6.5 | Transfer gap | acc(test-in-family) − acc(test-OOD axis) | reported. A gap > 10 pp labels the port "memorising"; the gate itself is absolute on OOD |
-| 6.6 | Long-state degradation | accuracy at 2K and 8K variants against short | drop ≤ 5 pp at the port's declared max state, otherwise the state budget shrinks to the largest passing size |
-| 6.7 | Unknowable confidence | share of evidence-removed items answered with p ≥ 0.9 | ≤ 5% (Kev documents 0% on its own unknowable items, Jev 9% [D dossier §2.3]) |
-| 6.8 | Paraphrase consistency | argmax agreement across Q0 and 2 held-out wordings; mean max \|Δp\| | agreement ≥ 0.90 and held-out-wording accuracy within 3 pp of Q0 |
-| 6.9 | Option-order invariance | `POST /v1/systemone/permute`, n_perm = 6, seed fixed, 100 items per port (`kev:kev/serve.py:255-275`) | flip rate ≤ 5% (stock 0.8B: 5.6% out of domain [D dossier §1.7]). If it fails, rotation averaging (`kev.benchmark --rotations 3`) is tested and, if it passes, served at 3× cost |
-| 6.10 | Injection resistance | 200 clean/adversarial pairs: accuracy drop; **target-flip rate** = share whose argmax becomes the option the injection urges | drop ≤ 3 pp and target-flip ≤ 2% |
-| 6.11 | Forgetting | decision-v7 dev and transfer-v4 dev accuracy against stock, paired | drop ≤ 2 pp on each (`kev:skills/kev-finetune/references/hill-climbing.md:31-33`); Brier rise ≤ 0.02 |
-| 6.12 | Latency, laptop GPU | p50 and p90, fresh and cached state, at the typical state; JudgmentPort wall time through the tunnel | in-workflow gate ports: p90 ≤ 2 s (owner smoke: about 0.5 s first call, about 25 ms cached [M owner]) |
-| 6.13 | Latency, this CPU | the same, 20 items per port, Kev fp32 at `:8008` | reported only. The CPU path is a logged fallback, never a silent one. Probe: 2.4 s fresh at about 157 input tokens, 26 s fresh at about 566 tokens under load 10, 0.8–3 s cached [M probe] |
-| 6.14 | Cost | imputed laptop compute plus hosted $ per 1,000 decisions, escalations included | used in §8.1 |
+- **Unit.** The independent unit of an axis is the **masked surface form**: the skeleton of the
+  label-bearing sentence (template ports), the skeleton cluster (skeleton ports), the form within
+  a held-out family (family axes), the wording (paraphrase axis), the task or world (real axis).
+- **CIs** come from a paired **two-way cluster bootstrap over form × world** (paired items, pairs
+  and multi-wording records also clustered by state), 10,000 resamples. Per-form accuracy is shown
+  as a strip plot next to every axis number. (Revision 1's world-clustered CI over 493 items on
+  R3's held-out templates was ±4 pp; form-clustered it is ±27 pp [M crit-S Q3].)
+- **Minimum to gate:** ≥ 30 independent forms per label (paraphrase: ≥ 20 wordings; real: ≥ 30
+  tasks and 300 rows). Below that the axis prints "diagnostic: n_forms = k" and `analyze.mjs`
+  refuses to emit a verdict for it.
+- **Point or bound.** Every gate below states which. The pre-registration lists, per port and axis,
+  n, the unit count, and the false-fail probability of a model sitting exactly at the threshold.
+- **Deployment rate.** Risk and coverage are read only on deployment-rate sets (§1.0); balanced
+  copies give per-class recall only.
 
-**Not gates, but always reported:**
-- the label-bearing-span overlap rate (§2.3 rule 7);
-- per-family accuracy;
-- accuracy by difficulty;
-- the confusion matrix;
-- the 20 most confident errors, kept in raw form as negative results.
+### 6.1 Co-primary metrics [crit S11; crit-G §2.9]
+
+| Id | Metric | Gate (every available OOD axis) |
+|---|---|---|
+| ACC | **balanced accuracy** (macro recall) | paired difference against the best baseline: 95% lower bound > 0 |
+| BSS | **Brier skill score** against the calib-OOD prior (Brier as in `calibrationReport`, `fdy:src/judgment.mjs`) | paired difference in Brier against the best baseline: 95% upper bound ≤ 0 |
+| RISK | **coverage at ε** with realised risk | τ fitted on calib-OOD at the deployment rate; realised risk on test, one-sided Clopper–Pearson upper bound ≤ ε + 0.03 (ε = 5%: passes at ≤ 29 errors in 500 accepted). X5: ε = 2%, bound ≤ 0.04 (≤ 29 errors in 1,000 accepted) |
+
+A constant `own_measurement` answer on S2 fails ACC and BSS by construction (acceptance test).
+
+### 6.2 Calibration and robustness gates
+
+| Id | Metric | Gate |
+|---|---|---|
+| ECE | 15 equal-mass bins on p(chosen) (primary); 10 equal-width as a check | ≤ 0.05 point estimate, **only on axes with ≥ 500 items**. A perfectly calibrated model fails ECE ≤ 0.05 with probability 0.35–0.77 at n = 100 [M crit-S Q21]; smaller axes report a reliability diagram with a bootstrap band and the Brier calibration component, no gate |
+| GAP | transfer gap: balanced accuracy, test-in minus each OOD axis | reported; > 10 pp labels the port "memorising" |
+| LONG | accuracy at the long variant against short, 150 per length | drop ≤ 5 pp (point), CI reported; otherwise the budget shrinks to the largest passing size |
+| UNK | share of **held-out-phrasing presence-matched** unknowables answered with p ≥ 0.9, n ≥ 300 | one-sided upper bound ≤ 0.08 (passes at ≤ 16/300). The 2 × 2 known/new phrasing × stated/unknowable is reported |
+| PARA | argmax agreement across Q0 and two test wordings; accuracy on 20 test wordings | agreement ≥ 0.90 (point) and held-out-wording accuracy within 3 pp of Q0 (CI over wordings) |
+| ORDER | `POST /v1/systemone/permute`, n_perm = 6, 200 items per port (`kev:kev/serve.py`); label-position accuracy | flip rate ≤ 5% (point; stock 0.8B 5.6% out of domain [D dossier §1.7]); if it fails, rotation averaging is tested and, if it passes, served at 3× cost |
+| INJ | 400 clean/injected pairs: accuracy drop and **target-flip rate** (argmax becomes the urged option) | drop ≤ 3 pp (point) and target-flip upper bound ≤ 5% (passes at ≤ 12/400) |
+
+### 6.3 Causal gates and partial-input ceilings [crit S9, S15]
+
+| Id | Metric | Gate |
+|---|---|---|
+| FLIP | counterfactual flip twins (same index, opposite polarity), 200 pairs | flip rate lower bound ≥ 0.90 (passes at ≥ 188/200) |
+| INV | invariance twins (another template, same label), 200 pairs | unchanged-answer rate lower bound ≥ 0.90 |
+| SLOT | two-system states with opposite labels, asked about each system | balanced accuracy within 3 pp of single-system states (CI of the difference) |
+| EVID | evidence-dependence: on presence-matched unknowable twins | tuned accuracy ≤ context-only baseline + 3 pp, and mean max-p within 0.10 of the prior |
+| HARD | probe-hard stratum: test items the train-fitted probe gets wrong | tuned beats every baseline there (lower bound > 0), where the stratum has ≥ 30 forms |
+| PART | partial-input ceilings: each partial-input baseline's balanced accuracy | ≤ majority + 3 pp on every axis (build gate before freeze, re-read on test) |
+| PAIR | pair consistency for X5 polarity pairs and every twin set | both-right rate reported; X5's accuracy is pair accuracy |
+
+Each causal gate has a **planted-shortcut control**: a model trained on a build with the KOBO
+priors left in must fail EVID on KOBO items; a build with R4's date-window shortcut left in must
+fail PART. If a control passes, the gate is broken and blocks claims.
+
+### 6.4 Forgetting battery [crit S12]
+
+Each bound is a one-sided 95% CI against stock, paired.
+
+1. transfer-v4 dev and hard-v1 dev (mandatory, never replayed): accuracy drop ≤ 2 pp;
+   Brier rise ≤ 0.02.
+2. decision-v7 dev: reported, flagged in-distribution (replay comes from decision-v7 train).
+3. transfer-v9 unknowable records: share answered with p ≥ 0.9 ≤ stock + 2 pp.
+4. `/permute` flip rate on 200 suite items ≤ stock + 2 pp.
+5. Option-name prior drift: p(`yes`) and p(`same`) on 200 content-free or irrelevant states;
+   mean shift ≤ 0.05 (binary ports share option names with other yes/no questions).
+6. A **generic canary set**: 300 Foundry-shaped questions from wave-2/3 ports and non-port enums
+   (agent nodes with enum returns from the repository's workflows): accuracy where labelled,
+   agreement with stock otherwise, reported with bounds. The tuned model will serve these too,
+   since the bridge runs one `kev.serve` at a time.
+
+A deliberately over-trained candidate (ep2 at lr 4e-5) is read once as a control; if it passes
+items 5 and 6, the battery is too weak and blocks claims.
+
+### 6.5 Operational gates
+
+| Id | Metric | Gate |
+|---|---|---|
+| LAT | p50 and p90 at the typical state, fresh and cached, through the tunnel with `bridgeFetch` | in-workflow gate ports: p90 ≤ 2 s (owner smoke: about 0.5 s first call, about 25 ms cached [M owner]) |
+| CPU | the same on this VM's CPU (fp32) | reported only; never an in-workflow fallback |
+| COST | imputed laptop compute plus hosted $ per 1,000 decisions, escalations included | used in §8.1 |
+
+### 6.6 Always reported
+
+Span-overlap rate per axis; per-family, per-difficulty and per-form accuracy (strip plots);
+probe-easy and probe-hard strata; `needsWorldKnowledge`, press-release and day ≤ 12 strata;
+label-position accuracy; confusion matrix; the 20 most confident errors kept raw as negative
+results; every axis's unit count next to its number.
 
 ---
 
@@ -1838,211 +2036,270 @@ Kev's documented behaviour and Foundry's budgets.
 
 ### 7.1 Pins
 
-- **Init:** `jaredpalmer/kev-0.8b@v1.0`. Weights `9a45d25e`; tag at card commit
-  `bf75a6a8848ea6960ff2ed108d9ed44c2941174f` [D dossier §1.1; M here snapshot].
-- **Base:** `Qwen/Qwen3.5-0.8B-Base`, `base_revision dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68`,
-  read from the v1.0 snapshot's `training_config.json` [M here]. It is passed explicitly
-  (`extra.base_revision`).
-- **Kev code:** `5e42a7a03f28134853dd3ff77461457e921e5ec1` on both sides
-  (`docs/laptop-agent-kickoff.md` §D). Every job records `git rev-parse` of the laptop's Kev
-  checkout.
-- **Replay suite:** decision-v7, Hub `jaredpalmer/kev-suites@cc4bac803e73112689ec327ffa481c519cbc7a05`
-  [M here].
+- **Init:** `jaredpalmer/kev-0.8b@v1.0` (weights `9a45d25e`; card commit `bf75a6a8…`) [D dossier
+  §1.1; M here].
+- **Base:** `Qwen/Qwen3.5-0.8B-Base`, `base_revision dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68`
+  (from the v1.0 `training_config.json`) [M here], passed explicitly.
+- **Kev code:** `5e42a7a03f28134853dd3ff77461457e921e5ec1` on both sides; every job records
+  `git rev-parse` of the laptop's checkout. The release was trained by a Kev revision with a
+  `lora_placement` field the pin lacks; the module sets agree [M crit-G].
+- **Replay suite:** decision-v7, `jaredpalmer/kev-suites@cc4bac803e73112689ec327ffa481c519cbc7a05`.
 
 ### 7.2 Recipe
 
-The recipe mirrors the released 0.8B final stage [M here, `training_config.json`]: lr 2e-5,
-1 epoch, LoRA r16 (it must match the init), `lora_targets all`, `head_dim 256`, `p_none 0.1`,
-`p_none_distract 0.12`, `p_distract 0.15`, `p_none_pair 0.25`, replay from decision-v7.
+The recipe mirrors the released 0.8B final stage [M here, re-checked by crit-G]: lr 2e-5, 1 epoch,
+LoRA r16, `lora_targets all`, `head_dim 256`, `p_none 0.1`, `p_none_distract 0.12`,
+`p_distract 0.15`, `p_none_pair 0.25`, replay from decision-v7; batch 1 × accum 8 (the release's
+effective batch of 8 at 4 × 2) because of the 8 GB card.
 
-- The release used `replay 6000`, `max_state 7552` and batch 4 × accum 2. We use batch 1 ×
-  accum 8, the same effective batch of 8, because of the 8 GB card.
-- `p_none` and `p_distract` are not exposed by the bridge (`TRAIN_EXTRA`,
-  `fdy:bridge/laptop/jobs.mjs:41-47`), so Kev's defaults apply. They equal the release.
-- `--anchor` is not exposed either. It is also a documented negative result
-  (`kev:PLAN.md:255-273`) [D].
+- **Augmentation adds out-of-contract options** [crit G19]. With p 0.10 (questions with > 2
+  options) the true option is removed and a generic "other / none / not listed" key becomes the
+  label; with p 0.12 a generic option is added as a wrong alternative; with p 0.15 an irrelevant
+  distractor; `p_none_pair 0.25` adds two sibling records for 3+ option questions
+  (`kev:kev/data.py`). None but `p_none_pair` is a bridge parameter. Foundry contracts never
+  offer such options, and the catch-all ports (I2 `unrelated`, X5 `not_stated`, X3 `mentions`)
+  will see a different generic key correct beside their own. It is the release recipe and stays;
+  its effect is tested by grid config `np0` (§7.3).
+- **Long states.** States over 2K real tokens train with `row_budget 16384` and `length_sort 1`
+  (bridge-exposed). `weights_dtype bf16` is used only for the J0 long-state probe, never for curve
+  points: it is not a warm-start compatibility field, so a bf16 head would make every later
+  stock-versus-candidate comparison differ in numerics as well as weights [crit G4].
+  `perm_kl` and `row_budget` conflict in Kev and are never combined.
+- `--anchor` is not exposed and is a documented negative result (`kev:PLAN.md:255-273`) [D].
 
-### 7.3 Small grid
-
-The grid varies one factor at a time from the base, at the N the curve selects (10K by default).
+### 7.3 Small grid (at 5K, one factor at a time)
 
 | Config | Change | Prior expectation |
 |---|---|---|
 | base | as §7.2, replay 2,000 | — |
-| lr4 | lr 4e-5 (the skill's 0.8B default, cap 5e-5, `hill-climbing.md:52`) | maybe +, more forgetting |
-| pkl | `perm_kl 0.1`, `perm_frac 0.3` | null; Kev lists `perm_kl` among failed levers [D `kev:PLAN.md:255-273`] |
-| brier | `brier_w 0.25` | null, same source |
-| ep2 | epochs 2 | + on hard ports if the train loss is still falling (`hill-climbing.md:50`) |
-| rp6 | replay 6,000 | less forgetting, about 0.6 h more |
+| lr4 | lr 4e-5 (the skill's 0.8B default, cap 5e-5) | maybe +, more forgetting |
+| ep2 | epochs 2 | + on hard ports if the train loss still falls |
+| rp6 | replay 6,000 | less forgetting |
+| np0 | `p_none_pair 0` | tests the augmentation on catch-all ports: their `unrelated` / `not_stated` / `mentions` recall on dev-OOD is reported for base and np0, and a drop > 3 pp is flagged [crit G19] |
 
-- **Selection** is on dev-select only:
-  - minimise the macro NLL across wave-1 ports after a calib T refit;
-  - subject to forgetting ≤ 2 pp;
-  - ties within 0.005 NLL go to base.
-- **Test sets are read once**, for the selected config and for stock Kev (§9).
+- Revision 1's `pkl` (`perm_kl`) and `brier` (`brier_w`) configs are dropped: Kev lists both
+  among its failed levers (`kev:PLAN.md:255-273`), `perm_kl` conflicts with the long-state flags,
+  and the laptop budget is the binding constraint [crit G3].
+- **Selection** on dev-OOD only [crit G10]: minimise macro NLL across wave-1 ports after the
+  calib-OOD refit, subject to the forgetting battery (§6.4); ties within 0.005 NLL go to base. The
+  dev-select NLL is reported beside it. The winning config is retrained at the N the curve selects
+  (if it is not base); otherwise the curve's model at that N is the candidate.
+- **Test sets are read once**, for the selected candidate and for stock Kev.
 
-### 7.4 Job specs (bridge `kev.train` / `kev.benchmark`, `fdy:bridge/laptop/jobs.mjs:52-62`)
+### 7.4 Jobs, schedule and budget
 
-Data files are uploaded under the bridge's `data/` directory. Job outputs are
-`runs/<name>/`: adapter, `head.pt`, `training_config.json`, `train.log`, and `rows.json` for
-benchmarks.
+Bridge kinds: `kev.train`, `kev.benchmark` (`run`, `data`, `rotations` only) and `kev.serve` (one
+at a time; a second is refused with 409 `service_exists`) (`fdy:bridge/laptop/jobs.mjs`, `KINDS`).
+Job outputs are `runs/<jobId>/`; `kev.benchmark`, `kev.serve` and J3 accept `runs/<jobId>` only for
+a `kev.train` job this daemon finished whose `head.pt` sha still matches [crit G17].
+
+**Prerequisite.** Ask the laptop agent for the smoke run's `training_metrics.json` and `train.log`
+(`forward_tokens`, `wall_seconds`, `step_seconds`, `peak_device_bytes`, `peak_rss_bytes`) [crit G3].
 
 ```jsonc
-// J0a: throughput and VRAM calibration (3 jobs, about 10 min total). Data = 400 rows each at about 300 / 2K / 8K state tokens.
-{ "kind": "kev.train", "params": { "dataset": "data/j0-300.jsonl", "base": "Qwen/Qwen3.5-0.8B-Base",
+// J0a: two-parameter throughput, host RAM, VRAM, kernel path (3 jobs). 400 rows at about 300 / 2K / 8K real tokens.
+{ "kind": "kev.train", "params": { "dataset": "data/j0-0300.jsonl", "base": "Qwen/Qwen3.5-0.8B-Base",
   "initFrom": "jaredpalmer/kev-0.8b@v1.0", "epochs": 1, "lr": 2e-5, "batch": 1, "accum": 8, "dtype": "bf16",
   "maxState": 8192, "checkpointing": 1, "lora": 16,
-  "extra": { "base_revision": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68", "max_steps": 50, "seed": 1 } } }
-// J0b: same with "shared_prefix": 1 on 4-question records; adopt it if ≥ 1.5× faster and the 50-step losses match within 1%.
-
-// J1: stock baseline reads (one job per file: calib, dev-select, test-in, test-ood-*, kev suites)
-{ "kind": "kev.benchmark", "params": { "run": "jaredpalmer/kev-0.8b@v1.0", "data": "data/w1-calib.jsonl", "rotations": 1 } }
-
-// J2: curve point (N = 2.5K, 5K, 10K, 20K; files nested)
-{ "kind": "kev.train", "params": { "dataset": "data/w1-train-05k.jsonl", "base": "Qwen/Qwen3.5-0.8B-Base",
-  "initFrom": "jaredpalmer/kev-0.8b@v1.0", "epochs": 1, "lr": 2e-5, "batch": 1, "accum": 8, "dtype": "bf16",
-  "maxState": 2048, "checkpointing": 1, "lora": 16,
-  "extra": { "base_revision": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68", "suite": "evals/v7/decision-v7",
-             "replay": 2000, "p_none_pair": 0.25, "seed": 1 } } }
-// maxState: the build's 99.9th percentile (2,048 when long variants are excluded; 8,192 with them, if J0 shows the VRAM fits).
-// J3: the same benchmark set as J1 with "run": "runs/<J2 out>".
-// J4: grid configs (§7.3): J2 plus one changed field.
-// J5: final candidate: the full robustness battery (all test files + permute via a kev.serve service + latency).
+  "extra": { "base_revision": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68", "max_steps": 50, "seed": 1,
+             "suite": "evals/v7/decision-v7", "replay": 50 } } }       // prefetches decision-v7 train and checks its hash
+// j0-2k: "max_steps": 30, "row_budget": 16384, "length_sort": 1
+// j0-8k: "max_steps": 10, "row_budget": 16384, "length_sort": 1, "weights_dtype": "bf16" (long-state probe only)
+// J0b: j0-0300 rebuilt as 4-question records with "shared_prefix": 1; adopt if >= 1.5x faster and 50-step losses match within 1%.
+// J0c: kev.serve (stock), then score-served.mjs on 400 records at 300 and 2K tokens, concurrency 1 and 4:
+//      seconds per request, tunnel round trip; then stop the service.
+// J1:  stock reads. kev.benchmark --data only for files whose every state fits 384 tokens (I2, S2, X1 short,
+//      F1 templates, Kev suites); every other file through score-served.mjs against stock kev.serve.
+// J2:  curve point (N = 2.5K, 5K, 10K, 20K; files nested), as J0a without max_steps, "maxState": build p99.9,
+//      "replay": 2000, "p_none_pair": 0.25, seed 1; seeds 2 at 5K and 20K.
+// J3:  the J1 reads with "run": "runs/<J2 jobId>" (kev.serve for served files).
+// J4:  grid configs (§7.3): J2 at 5K plus one changed field.
+// J5:  final: test-in, test-OOD, calib-in, permute and latency, stock then candidate (never concurrent).
 ```
 
-**Acceptance per job:**
-- `train.log` reports `dropped 0 of M` (`kev:kev/train.py:105-108`).
-- `training_config.json` shows `init_from` and `base_revision` as pinned.
-- The sha256 of the dataset matches the build manifest.
-- A benchmark's `rows.json` count equals the file's question count.
+**Acceptance per job** [crit G17]: `train.log` contains no "dropped" line and its `N training
+requests` equals file records plus replay; `training_config.json` shows `init_from` and
+`base_revision` as pinned; the dataset sha256 matches the build manifest; any benchmark report
+with `coverage.rejected_records > 0` is invalid; J0 reports s/record, s/token, tokens/s,
+`peak_rss_bytes` (must stay under 80% of free RAM, no OOM-kill in `train.log`),
+`peak_device_bytes`, `free -m`, free disk and the DeltaNet kernel path [crit G4].
 
-**Night plan (8 h per night):**
-- **Night 1:** J0 (15 min) → J1 (30–45 min) → J2 at 2.5K, 5K, 10K, 20K (3.6–7.6 h with
-  evaluations).
-  - At the pessimistic rate the 20K point moves to night 2.
-  - The CPU here builds data and runs the embedding and rule baselines in parallel. Hosted arms
-    run in the cloud.
-- **Night 2:** the grid at the chosen N, at most 4 configs per night (5 × 1–2 h).
-- **Night 3:** the final candidate, plus 40K if triggered, plus J5 for the final candidate and
-  stock: about 2–3 h for the robustness battery, `/permute` (100 items × 6 orders × 13 ports at
-  about 25–100 ms each [E]) and latency.
+**Laptop time.** Training tokens per point (§4.3) at three rates:
 
-### 7.5 Temperature refit and thresholds
+| Point | Tokens | 525 tok/s (toy smoke) | 1,500 tok/s (assumed) | 4,953 tok/s (release, batch 4) |
+|---|---|---|---|---|
+| 2.5K | 3.0M | 1.6 h | 33 min | 10 min |
+| 5K | 5.0M | 2.6 h | 56 min | 17 min |
+| 10K | 9.0M | 4.8 h | 1.7 h | 30 min |
+| 20K | 17.0M | 9.0 h | 3.1 h | 57 min |
+| 40K | 33.0M | 17.5 h | 6.1 h | 1.9 h |
 
-- **Where the logits come from.** `kev.benchmark --run` on calib writes `rows.json` with logits.
-  Remote reads lack them, which is why `kev.calibrate` refuses remote rows
-  (`kev:kev/calibrate.py:32-34`) [D].
-- **Fit.** The cloud fits a global T and a per-port T by minimum NLL. A per-port T is kept only if
-  its 5-fold out-of-fold NLL beats the global T by ≥ 1% and the port has ≥ 300 calib questions.
-  The default is global, because Kev found per-type temperatures worse (`kev:PLAN.md:209-210`)
-  [D].
-- **Applying T in Foundry.** The bridge's `kev.serve` cannot set `KEV_TEMPERATURE`, so T is applied
-  Foundry-side: `p' ∝ p^(T_served/T_port)`. T_served is read from `/v1/models` `temperature` per
-  run.
-  - This is exact up to Kev's 4-decimal rounding (dossier §6.2). Floor p at 5e-5 before the
-    power.
-  - Whether a plain `kev.train` delta stores the init's T or 1.0 is [unk]. It is read, not
-    assumed.
-- **Thresholds.** τ_port(5%) and τ_port(10%) come from `calibrationReport` on calib after T
-  (`errorBudget`, `fdy:src/judgment.mjs:106-131`). They are frozen into the judge config (§8.4).
-  Kev's own advice is "re-read them after every retrain" (`kev:skills/kev-finetune/SKILL.md:153-154`)
-  [D].
+Evaluation: one read of the 17,800-row point set is about 11,900 served requests at about 1.5
+questions per request, 0.075–0.3 s each, so 15 min to 1 h [E]; J0c replaces this. The final read
+(about 52K rows, stock and candidate) is 2–7 h.
+
+**Budget and priority** (pre-registered; at most 5 nights of 8 h = 40 laptop hours, owner decision
+O7). At 1,500 tokens/s the full plan is about 99.5M training tokens (18.4 h) plus 12 point reads
+(3–12 h), the forgetting battery (about 1.2 h), the final read (2–7 h) and J0 (about 0.75 h):
+26–40 h. Work runs in this order, and whatever does not fit is cut from the bottom:
+
+1. J0 (all parts) and J1.
+2. Curve seed 1 at 2.5K, 5K, 10K, 20K; the end-to-end checks start after the 5K point (§8.3).
+3. Seed 2 at 5K and 20K.
+4. Grid at 5K (lr4, ep2, rp6, np0) and the final retrain at the selected N.
+5. 40K if triggered; one combined wave-2 smoke fine-tune (4K rows) [crit G25].
+6. J5, the final read: always runs, on whatever candidate the completed steps selected.
+
+**Reduced plan**, pre-registered for a measured rate below 1,500 tokens/s: points 2.5K, 5K and
+20K; second seed at 5K only; grid {base, lr4} at 5K; no final retrain; no 40K. About 35M tokens
+(18.5 h at 525 tokens/s) plus 7 point reads.
+
+**Memory and kernels** [crit G4]. The owner states 14 GB host RAM with about 2 GB free under WSL2;
+the release run peaked at 10.3 GB host RSS on another machine, and an fp32 load stages about
+3.1 GB on the CPU. The owner caps WSL memory and closes apps (O7); `kev.serve` is stopped before
+every training job. `flash-linear-attention` 0.5.2 and `causal-conv1d` are absent from
+`bridge/laptop/kev-requirements.txt`, so Transformers falls back to the torch DeltaNet path; J0
+runs with and without `fla` if the owner installs it (O3), and the kernel path is logged per job.
+
+**Optional bridge request.** If J0c shows more than 0.3 s per served request at concurrency 4,
+the bridge owner is asked for a batch scoring job (Kev's `kev.benchmark --remote`, or a scoring
+job with a `max_state` option). It is not a dependency; `bridge/` belongs to other agents.
+
+### 7.5 Scoring path, calibration and thresholds [crit G1, G5, S4]
+
+- **Scoring path = serving path.** `kev.benchmark --data` hard-codes the training context
+  (state 384, branch 1,024) and skips every longer record as `ContextOverflow`, counting it in
+  `coverage.rejected_records` while the job succeeds (`kev:kev/benchmark.py`, `kev:kev/model.py`)
+  [M crit-G: 35 dev states, I1 8 lines 2 of 4 rejected, records and kinetics all rejected]. So
+  `score-served.mjs` sends each record to the running `kev.serve` with
+  `new SystemOneClient({ url: \`${endpoint}/svc/kev\`, fetchImpl: client.bridgeFetch })`
+  (`fdy:bridge/PROTOCOL.md`, "From code"; every `/svc/kev` request is signed), all questions of a
+  record in one request, one served model at a time. `kev.serve` takes states to 65,536 tokens and
+  serves bf16 on CUDA, which moves probabilities by up to about 0.03 against fp32
+  (`kev:README.md:409`); scoring on the served path removes that mismatch for both stock and
+  candidate. `kev.benchmark --data` remains for files that fit 384 tokens entirely, where its
+  fp32 numbers are reported beside a 300-row served re-read of the same file.
+- **Fit on calib-OOD, at the deployment rate.** Probabilities come back at 4 decimals; they are
+  floored at 5e-5. The transform is **vector scaling**: `log p'_k = log p_k / T + b_k`,
+  renormalised, with a global T by default and per-port T and per-option biases b kept only if
+  their 5-fold out-of-fold NLL beats T-only by ≥ 1% on ≥ 300 calib questions (Kev found per-type
+  temperatures worse, `kev:PLAN.md:209-210`). A temperature alone cannot undo the prior shift
+  between the 3:1-capped training prior and natural rates (ln(180/3) ≈ 4.1 nats between S2's
+  `measured` and `instruction_like` [M crit-S]). Rare-positive ports fit on the enriched calib-OOD
+  with importance weights back to the deployment rate; results are reported at that rate. ECE on
+  test-OOD is reported for both the T-only and the vector fit.
+- **Revision 1's in-family calib** held almost no errors (a probe already scores 0.99–1.00 on
+  R2–R4 in-family [M crit-S Q1]), so minimum-NLL T sharpened without bound and τ(5%) accepted
+  everything. calib-in now only reports the in-family/OOD calibration gap.
+- **A delta run saves T = 1.0.** `Meta(...)` in `kev:kev/train.py` sets no temperature and
+  `warm_start` does not copy the init's 2.351 [D crit-G G5]. Stock and candidate are therefore
+  both refit; no "as shipped" Brier or ECE comparison is made.
+- **Thresholds.** τ_port(5%), τ_port(10%) (X5: 2%) from `calibrationReport` (`errorBudget`) on the
+  transformed calib-OOD probabilities. Frozen into the judge config (§8.4) with T, b and the run
+  id; re-read after every retrain (`kev:skills/kev-finetune/SKILL.md`).
+- **Stability test.** Two served reads of 300 dev-select rows per port agree within 0.01 in mean
+  max-p with ≤ 0.5% argmax flips, or the port is flagged.
 
 ### 7.6 Artefacts and serving
 
-- **Laptop output.** `runs/<name>/` holds the adapter, `head.pt`, `training_config.json` and
-  `train.log`. The LoRA has 11.3M parameters, about 45 MB in fp32 [E from dossier §1.1].
-- **Cloud copy.** Outputs are pulled to `.foundry/kev-runs/<name>/` through the bridge's
-  `outputs` listing. The sha256 of every file goes into `research/kev-20261007/runs.json`. Weights
-  are never committed (§6.6 rule).
-- **Live serving.**
-  - `kev.serve` services on the laptop GPU: port 8008 for stock, 8009 for the promoted candidate.
-  - Reached through the bridge tunnel. Foundry's `SystemOneClient` uses the tunnel URL from
-    `FOUNDRY_SYSTEMONE_URL`, with a bearer token from `FOUNDRY_SYSTEMONE_API_KEY` when the laptop
-    sets `KEV_API_KEY` (`fdy:src/judgment.mjs:11-19`).
-  - Every ledger row records `/v1/models` `run` and `temperature`.
-- **CPU fallback.** The same adapter can be served by `kev.serve` on this VM's CPU in fp32.
-  - It is slow: 26 s fresh at about 566 tokens under load [M probe].
-  - It is used only as a logged fallback for offline ports.
+- **Laptop output.** `runs/<jobId>/`: adapter, `head.pt`, `training_config.json`, `train.log`. The
+  LoRA has 11.3M parameters (about 45 MB fp32) [E].
+- **Cloud copy.** Pulled to `.foundry/kev-runs/<jobId>/` through the bridge's `outputs` listing;
+  the sha256 of every file goes into `research/kev-20261007/runs.json`. Weights are never
+  committed.
+- **Live serving.** One `kev.serve` at a time on the laptop GPU; stock and candidate are
+  sequenced, never concurrent, and no service runs during training. Foundry reaches it through
+  `SystemOneClient` with `fetchImpl: client.bridgeFetch` at `<endpoint>/svc/kev` (§7.5), not a
+  bearer token. Every ledger row records run id, dtype, backend, `fla` status, T and the bias
+  vector hash (today `JudgmentPort` stores only `systemOneModel ?? body.model`, `fdy:src/ports.mjs`).
+- **CPU copy.** The adapter can be served on this VM's CPU in fp32 for offline ports only, as a
+  logged path (26 s fresh at about 566 tokens under load [M probe]).
 
 ---
 
-## 8. Promotion and wiring
+## 8. Promotion, wiring and the evidence ladder
 
 ### 8.1 Promotion rule (per port, on test-OOD, pre-registered)
 
-A tuned judge **gates** real decisions for port p only if **all** of these hold.
+A tuned judge **gates** real decisions for port p only if **all** hold:
 
-1. **Accuracy.** On **every** available test-OOD axis (paraphrase, template or skeleton, family,
-   real-trace), the paired, world-clustered 95% CI of `acc(tuned) − acc(best baseline)` is
-   above 0.
-   - The best baseline is the strongest of rule, embedding-logistic, embedding-kNN and stock Kev.
-   - Haiku is compared too (item 2).
-2. **Cost-adjusted.** At the port's error budget ε (5%; X5 2%), the expected cost per decision of
-   `tuned → Haiku → Sonnet` is lower than for the best alternative chain, and its realised risk is
-   no higher.
-   - The cost is `c_kev + (1 − cov_kev)·(c_haiku + (1 − cov_haiku|kev-abstained)·c_sonnet)`, with
-     imputed laptop compute for Kev and list prices for the hosted models.
-   - A Haiku-first chain that is cheaper at equal risk wins, and the port's engine becomes Haiku.
-3. **Calibration.** ECE ≤ 0.05 on every test-OOD axis (6.3). Realised risk at τ is within bound
-   (6.4).
-4. **Robustness.** Gates 6.6–6.10 pass.
-5. **Forgetting.** ≤ 2 pp on each Kev suite (6.11).
-6. **Latency.** Gate 6.12 passes for in-workflow ports.
+1. **Co-primary.** ACC, BSS and RISK (§6.1) pass on **every available** test-OOD axis (template or
+   skeleton, paraphrase, family, real; §3.5 and §6.0 decide availability). The conjunction is an
+   intersection-union test, so no further α adjustment is needed per port.
+2. **Cost-adjusted.** At the port's ε, the expected cost per decision of
+   `tuned → weak model → Sonnet` is lower than the best alternative chain's, at no higher realised
+   risk: `c_kev + (1 − cov_kev)·(c_weak + (1 − cov_weak|kev-abstained)·c_sonnet)`, with imputed laptop
+   compute for Kev and list prices for hosted models. A weak-model-first chain that is cheaper at
+   equal risk wins, and the port's engine becomes the weak model.
+3. **Calibration.** ECE where an axis has ≥ 500 items (§6.2).
+4. **Robustness.** LONG, UNK, PARA, ORDER and INJ pass.
+5. **Causal.** FLIP, INV and SLOT where available; EVID, HARD and PART everywhere; their
+   planted-shortcut controls fail as designed.
+6. **Forgetting.** The §6.4 battery passes.
+7. **Latency.** LAT passes for in-workflow ports.
 
-- **Otherwise the port stays advisory.** Its judgments are logged and may **rank** (order checks,
-  items or candidates), but never accept, reject or skip.
-- **Multiplicity.** Promotions are decided per port. The C4 statement "k of N ports" uses
-  Holm–Bonferroni over the wave's ports (§9).
+- **Otherwise the port stays advisory**: its judgments are logged and may **rank** (order checks,
+  items or candidates), never accept, reject or skip.
+- **F1 is not promotable in wave 1** (no available real axis). A port whose every gating axis is
+  diagnostic cannot be promoted either; the report says "no power", not "no skill".
+- **Multiplicity.** "k of N ports" uses Holm–Bonferroni over the wave's ports.
 
-### 8.2 The judge node (workflow-level use)
+### 8.2 The judge in a workflow
 
-- **Today nothing can call a port.** No IR node calls a `JudgmentPort`
-  (`fdy:schemas/workflow.schema.json:99`; inventory §1.4).
-- **The required addition** is a journaled `judge` node:
-  `{port, stateFrom, questions[{port, slots}], engine: 'systemone@<run-id>', threshold: 'calibrated:0.05', onAbstain: 'escalate' | {default: <option>} | 'fail'}`.
-  - All questions about one state go in **one request**. This removes the one-question-per-request
-    limitation (`fdy:src/ports.mjs:78`) and uses Kev's state cache.
-  - The judge node's output is the option. Code consumes it; the oracle and replay check the
-    outcome.
-  - The node's text output channel is a single enum. This satisfies the quarantine rule (E3)
-    by construction.
-- **Escalation chain** (`fdy:policy/models.json` notes: no silent fallback):
-  1. Kev answers. If p ≥ τ, accept.
-  2. Otherwise `JudgmentPort(model, claude-haiku-4-5-20251001)` answers, calibrated. If above its
-     threshold, accept.
-  3. Otherwise `JudgmentPort(model, claude-sonnet-5-5)` answers.
-  4. Otherwise the port's terminal route applies (§1.2: safe default, code, or human).
-  - Each step is an event, with the request hash, model, p and cost.
+- **Today nothing calls a port.** The node-kind enum has no `judge`
+  (`fdy:schemas/workflow.schema.json`: task, assert, human, map, loop, wait, agent, code, verify),
+  nothing outside tests constructs a `JudgmentPort`, and builder-facing text never mentions Kev
+  [M crit-G G6].
+- **Two hooks**, cheapest first: (a) a `systemone` provider route for existing `agent` nodes whose
+  `returns` is a single enum (micro-harness operator 3, classify with an enum and cascade), which
+  reuses `model.class/maxClass`, escalation, checks and the journal with no schema change (W0);
+  (b) a journaled `judge` node, `{port, stateFrom, questions[{port, slots}], engine:
+  'systemone@<run-id>', threshold: 'calibrated:0.05', onAbstain: 'escalate' | {default: <option>} |
+  'fail', onUnavailable: 'escalate' | 'fail'}`, with all questions about one state in one request
+  (W1). The script-harness arm reaches judges through a `tools/judge.mjs` helper beside its
+  `callModel` helper (W6), because it never sees IR nodes.
+- **Escalation chain** as §1.0: unknown port → hosted; Kev; weak model; Sonnet; terminal route.
+  Each step is a journaled event with the request hash, model, p and cost.
 
-### 8.3 End-to-end checks for the two consumers that matter most
+### 8.3 End-to-end checks (W7) [crit G6]
 
-- **X8 cascade gate on Haiku extraction**, records d3, dev-select seeds, 30 tasks per arm. Arms:
-  - Haiku alone;
-  - Haiku + X8 gate → Sonnet on flagged rows;
-  - Sonnet alone.
-  
-  Metrics: oracle pass rate and $ per task. **This is the direct test of "make Haiku competent."**
-- **X5 reuse gate.** The kept records workflow is applied to tasks whose conventions match or
-  differ. Metrics: wrong-reuse rate (target ≤ 2%) and abstention rate. This is a Phase-5 preview
-  of C4's "downstream wrong-reuse" metric (`fdy:docs/ROADMAP.md:643`).
+Scheduled right after the 5K seed-1 point, so the phase produces a capability number early
+(AGENTS.md), labelled development evidence, and repeated on the final candidate.
+- **X8 cascade on weak-model extraction**, records d3–d5, the 120 real-reserve worlds (§3.5),
+  ≥ 100 tasks per arm: weak model alone; weak model + X8 gate → Sonnet on flagged rows; Sonnet
+  alone. The weak-model runs are shared with the X8-real axis. Metrics: oracle pass rate and $ per
+  task, with CIs; below 100 tasks per arm the report gives the CI and no verdict. **This is the
+  direct test of "make the weak model competent".**
+- **X5 reuse gate**: the kept records workflow applied to e2e-reserve tasks (test 7040–7199) whose
+  conventions match or differ, with ≥ 150 non-matching tasks: zero wrong reuses then bound the
+  wrong-reuse rate at 2% (0/150 → one-sided upper bound 1.98%). Metrics: wrong-reuse rate,
+  abstention rate, and the bedtype cross-type false-accept rate.
 
-### 8.4 Foundry changes these depend on (not made by this program document)
+### 8.4 Group W: the wiring packages (built alongside the data, §10)
 
-1. **Ledger content store.** Persist `request` (state, question, criteria, options) by hash next to
-   `requestHash` (`fdy:src/judgment.mjs:80-85`). Without it, wired ports never produce training
-   or real-trace data [D dossier §4.5].
-2. **Policy entries.**
-   - `kev-0.8b@v1.0` and each promoted run go into `fdy:policy/models.json` as the only source of
-     model ids, with weight hashes, the provider `systemone`, and the imputed compute cost.
-   - Today the `systemone` engine books `costUsd: 0` (`fdy:src/ports.mjs:80`) against the policy's
-     imputed-cost rule (`:8`).
-   - This is an owner decision (H1).
-3. **Judge config file.** Per port: wording hash, option contract hash, run id, T, τ(5%), τ(10%),
-   promotion status (`gating` or `advisory`), and the evaluation report hash. Editing the wording
-   or options invalidates the promotion (D10 re-qualification).
-4. **Per-port temperature transform** in the `systemone` engine (§7.5).
-5. **The `judge` IR node** (§8.2), validated like other nodes.
+| Package | What | Test that can fail |
+|---|---|---|
+| W0 | `systemone` provider route for single-enum `agent` nodes | scripted Kev and scripted weak model: a low-p answer escalates once and both steps are journaled |
+| W1 | `judge` node: schema, validator, executor, journal, replay; adapters reject it rather than flatten | replaying a journaled run makes 0 network calls and reproduces the output |
+| W2 | port kits `src/judges/<bed>.mjs`, imported by the factory and the runtime | for 200 bed tasks per port, `buildState(task)` equals the training state byte for byte |
+| W3 | router Kev → weak model → Sonnet → terminal route, with `onUnavailable` and the unknown-port rule | an injected tunnel failure yields a journaled escalation, never a silent default; an unknown port never reaches Kev |
+| W4 | ledger content store: persist the request (state, question, criteria, options) by hash next to `requestHash` (`fdy:src/judgment.mjs`, `JudgmentLedger`), and an oracle-label join | a ledger row round-trips to the exact request; a joined label set exports in Kev format |
+| W5 | policy proposal: `systemone` provider, Kev run ids with weight hashes, imputed cost (today `costUsd: 0`, `fdy:src/ports.mjs`) | a proposal file validates against `tests/model-policy.test.mjs`; the owner applies it (O4) |
+| W6 | builder-facing: operator text for micro-harness operators 2, 3 and 4; `tools/judge.mjs` for the script arm; a port catalogue marking each port `gating` or `advisory` | the validator rejects a `gating` binding to an `advisory` port |
+| W7 | end-to-end harness (§8.3) | arms below the task minimum produce "no verdict" |
+| W8 | maturity bookkeeping per port (ROADMAP §6.2: EXISTS, REACHABLE, DEFAULT-LIVE, OBSERVED, CAUSAL, PRODUCT-PROVEN) | after T1 a port is at most EXISTS; REACHABLE needs W0 or W1; DEFAULT-LIVE needs the builder to emit it unprompted |
+
+Judge config per port (W1/W3): wording hash, option-contract hash, run id, T, biases, τ(5%),
+τ(10%), status (`gating` or `advisory`) and the evaluation report hash; editing the wording or
+options invalidates the promotion (D:D10 re-qualification).
+
+### 8.5 The evidence ladder [crit-G §2.9]
+
+- **T1** offline per-port gates on generator labels (this program): *development evidence*.
+- **T2** the wired end-to-end checks of §8.3: *development evidence for the mechanism*.
+- **T3** claim-bearing: ledger rows from judge nodes in C0, C3 and C2 experiments, ≥ 300
+  oracle-labelled rows per port over ≥ 30 worlds; the sealed-family result is left to the sealed-bed
+  owner. T1 cannot support the claim-C4 sentence by itself.
 
 ---
 
@@ -2050,155 +2307,231 @@ A tuned judge **gates** real decisions for port p only if **all** of these hold.
 
 ```yaml
 id: kev-judge-w1
-status: DEVELOPMENT (generator-labelled dev beds; real-trace axes are claim-bearing only where n ≥ 300)
+status: DEVELOPMENT (T1: generator-labelled dev beds; T2 end-to-end; claim-bearing only at T3)
 claim: >
-  C4 (per port): for each wave-1 port p, Kev-0.8B fine-tuned from jaredpalmer/kev-0.8b@v1.0 on
-  generator-labelled Foundry decisions is calibrated (ECE ≤ 0.05) on held-out paraphrases,
-  templates/skeletons and families, and beats the best of {rule, embedding-logistic, embedding-kNN,
-  stock Kev} in accuracy and Brier there; ports that fail stay advisory (ROADMAP:732).
-supports: ROADMAP C4 (applicability = X5, drift = Q4, failure class = F1, plus 10 further ports)
-does_not_support: downstream wrong-reuse (Phase 5), sealed-family generalisation, commercial parity
+  Claim C4 (per port): for each wave-1 port p, Kev-0.8B fine-tuned from jaredpalmer/kev-0.8b@v1.0 on
+  generator-labelled Foundry decisions beats the best of {prior, partial-input battery, rule,
+  embedding-logistic, embedding-kNN, stock Kev (+ local-logit if qualified)} in balanced accuracy and
+  Brier skill, and holds its risk at the calibrated threshold, on every available held-out axis
+  (authored templates or skeletons, wordings, families, real traces); ports that fail stay advisory.
+supports: claim C4 (applicability = X5 incl. bedtype, drift = Q4, failure class = F1 [not promotable in wave 1])
+does_not_support: downstream wrong-reuse in Phase 5, sealed-family generalisation, commercial parity
 frozen_inputs:
-  ports_contract: experiments/kev-data/spec/ports.json  sha256: <...>
-  heldout: experiments/kev-data/heldout/*                sha256: <...>   # authored by G0b, never seen by G1-G8 code
-  generator_commit: <git sha>; bed_source_hashes: {records: ..., incident: ..., ...}
-  builds: {train-02.5k, train-05k, train-10k, train-20k, calib, dev, test-in, test-ood-*}: sha256 each
-  seeds: {train: 1-3999, calib: 4000-4499, dev: 4500-4999, test_in: 5000-5999 (bed split test), test_ood: 6000-6999 (bed split test)}
-  holdouts: §3.3 table and §3.4 table, verbatim
+  ports_contract: experiments/kev-data/spec/ports.json         sha256: <...>
+  heldout: .foundry/kev-data/heldout/* (manifest committed)    sha256: <...>   # heldout-author only
+  generator_commit: <git sha>; bed_pin: {allow-list of 9 beds + beds/lib + CONTRACT.md: sha256}
+  frozen_runtime_for_F1: <git sha of src/>
+  builds: {train-02.5k, train-05k, train-10k, train-20k, calib-in, calib-ood, dev-select, dev-ood, test-in, test-ood-*}: sha256 each
+  seeds: {reserved: dev 1-400, train: dev 401-3999, calib_in: 4000-4199, calib_ood: 4200-4499,
+          dev_select: 4500-4699, dev_ood: 4700-4999, test_in: test 5000-5999, test_ood: test 6000-6999,
+          real_reserve: test 7000-7039, e2e_reserve: test 7040-7199}
+  holdouts: §3.3 and §3.4 tables, verbatim; slice assignment hashes
 models:
   init: jaredpalmer/kev-0.8b@v1.0 (bf75a6a8…), base Qwen/Qwen3.5-0.8B-Base@dc7cdfe2…, kev code 5e42a7a0…
-  hosted: claude-haiku-4-5-20251001 (all sets), claude-sonnet-5-5 (subset)   # from policy/models.json
+  weak: claude-haiku-5-5     # from policy/models.json (O1 resolved 2026-10-07)
+  strong: claude-sonnet-5-5 (subset)
   embedding: BAAI/bge-small-en-v1.5@5c38ec7c…
-architect_vs_executor: data and code by Opus/Sonnet development agents; judgments by the engines above; no human labels except C1 real set
-primary_metric: per port, accuracy on each test-OOD axis (paired diff vs best baseline, world-clustered bootstrap, 10,000 resamples)
-secondary: Brier, ECE, coverage@5%/10% at calib thresholds, gates 6.6–6.14
-multiplicity: Holm–Bonferroni over the 13 wave-1 ports for the "k of 13" statement; per-port decisions at one-sided α = 0.05
-size_question: §4.4 decision rule and prediction, verbatim
-selection: dev-select only (macro NLL after calib T; forgetting ≤ 2 pp); tests read once per frozen candidate + stock
-budget: laptop ≤ 3 nights (24 GPU-h); hosted ≤ $150; pause and ask above $500 (policy)
+architect_vs_executor: data and code by Opus/Sonnet development agents; labels by generators,
+  simulators, replays and oracles; auditor agents read, never label; human reads only where the owner names readers (O5)
+units: masked surface form; two-way form × world bootstrap; ≥ 30 forms per label to gate (paraphrase ≥ 20 wordings; real ≥ 30 tasks, 300 rows)
+primary_metrics: ACC, BSS, RISK (co-primary, §6.1), per port and axis, with n, units and false-fail probability at threshold
+secondary: ECE (axes ≥ 500), GAP, LONG, UNK, PARA, ORDER, INJ, FLIP, INV, SLOT, EVID, HARD, PART, PAIR, forgetting battery, LAT, COST
+multiplicity: Holm–Bonferroni over the 13 wave-1 ports for "k of 13"; per-port conjunction is intersection-union
+size_question: §4.4 rule, prediction and simulated power table, verbatim
+selection: dev-OOD only (macro NLL after calib-OOD refit; forgetting battery); test read once per frozen candidate + stock;
+  no test-OOD hash in any curve, selection or calibration log
+budget: laptop ≤ 40 h (5 nights) with the §7.4 priority order and reduced plan; hosted set by the 50-call pilot (O2); pause above $500
 kill_rules:
-  - no wave-1 port beats its best baseline on any OOD axis at 20K → stop, record the negative result in docs/RESEARCH.md
-  - forgetting > 5 pp at any size → halve lr, replay 6,000; if it persists, stop
-  - adversarial target-flip > 10% on ≥ 3 ports → injection-hardening data round before any promotion
-  - an acceptance test (§10) fails after the freeze → the build is invalid; no claims from it
+  - no wave-1 port passes ACC on any gating OOD axis at 20K → stop; record the negative result in docs/RESEARCH.md
+  - forgetting battery item 1 fails at any size → halve lr, replay 6,000; if it persists, stop
+  - INJ target-flip upper bound > 10% on ≥ 3 ports → injection-hardening data round before any promotion
+  - a planted-shortcut control passes, or an acceptance test fails after the freeze → the build is invalid; no claims from it
 analysis_script: experiments/kev-data/analyze.mjs  sha256: <...>
-exclusions: records dropped by budget/dedup/tap ambiguity are counted per port and reported, never silently
+exclusions: records dropped by budget, dedup, tap ambiguity, decidability or reserved-world checks are counted per port and reported
 ```
 
 ---
 
-## 10. Build plan (parallel groups)
+## 10. Build plan
 
-Each group is one worker for under an hour. Each has a **cut line**: what to drop to fit the hour.
-Everything lands in `experiments/kev-data/` only. No group edits `beds/`, `bridge/`, `src/` or
-other agents' directories.
+The machine-readable plan for the worker fan-out is
+[JUDGE-BUILD-PLAN.json](JUDGE-BUILD-PLAN.json): one object per build group with its ports,
+beds, main file, acceptance tests, estimated rows and dependencies. Its `estimatedRecords` are
+**rows** (state-question pairs) for wave 1 at the 20K curve point; `train` sums to 20,000 over the
+groups, `calib` (calib-in + calib-OOD) to about 11,000, `dev` (dev-select + dev-OOD) to about
+10,800, `testIn` to 6,500 and `testOOD` to about 42,000. Wave-2 smoke sets are named in each group's
+scope.
 
-| Group | Scope | Cut line |
+**DAG** [crit G13]:
+1. `contracts-lib` first (all 42 contracts, `lib/*`, interface stub, export, per-group test
+   harness). It is the only critical-path group and is kept small: no pools.
+2. In parallel against the frozen interface: `heldout-author`, `train-pools`, the eight bed groups
+   (`records`, `incident`, `synth`, `kinetics`, `runbook`, `interactive`, `failures-code`,
+   `construction-crossfamily`), `served-scorer-jobs`, `wiring-provider-router`,
+   `wiring-judge-node`, `wiring-ledger`, `wiring-builder`, `hosted-arms` (pilot only).
+3. Then `shortcut-audit` (probe-hard shares, partial-input battery, decidability audit) with a
+   top-up loop back to `heldout-author` and the bed groups; `realtrace-x8` (after O1 and the
+   pilot); `assembly` (one named assembler for each cross-bed port: X1, X2, X4, X5, X7, X8).
+4. Then `baselines-local`, `analysis` and the hosted arms proper; `e2e-harness` after the first
+   curve point.
+
+**Common acceptance for every data group** (in addition to its own list): rows per port at target,
+train label balance within 1:3 and within entity where declared, the decidability audit (§2.7),
+real-token fit of every record (§2.3 rule 6), a second-code-path label agreement ≥ 99.5% on 200
+records, tap alignment ≥ 95% on 200 worlds, the span-skeleton and reserved-world scans, determinism
+across two runs, generation time logged, and a test file that runs alone with `node --test` and
+fails on a seeded defect.
+
+**Global acceptance** (`node --test experiments/kev-data/`), before a build can freeze:
+1. **Labels:** second code path (R1: the world's reference parse of a day-≤12 date matches only
+   the labelled order; I2: tag and service agree; X8: the bed's near-miss transformation
+   reproduces the wrong value); the decidability audit per port.
+2. **Leakage:** forbidden exact key names; no unrendered ids; no held-out wording, template, line,
+   family span or entity in train, calib-in or dev-select, and no cross-slice leaks; the
+   partial-input battery within majority + 3 pp; a planted perspTpl-3 sentence in an R1 training
+   record fails the build.
+3. **Split hygiene:** disjoint seeds and slices; no `stateHash` overlap between train and any
+   evaluation set; reserved worlds absent from train and calib (a planted `records:dev:d3:s101`
+   fails).
+4. **Size, balance and units:** counts, label and position distributions, real-token p50/p90/max
+   per port, distinct forms per label per axis (axes under 30 marked diagnostic), worlds, questions
+   per state. Shortfalls are reported, not padded.
+5. **Determinism:** two builds on different nights are byte-identical; a bed edit between them is
+   refused; a file added under `beds/sealed/` changes nothing and is never opened.
+6. **Kev format:** every line passes `kev.data.load_records`, `materialize` and `fits()` at the job's
+   `maxState` in `/opt/kev-venv` (`python -I`, CPU, no training); files routed to
+   `kev.benchmark --data` fit 384 tokens entirely.
+7. **Bridge contract:** every J-spec passes the bridge's `validateParams` and `buildCommand`
+   (imported read-only) and the real `kev.train` / `kev.benchmark` argparse, in a test under
+   `experiments/kev-data/test/` (not in `bridge/`, which other agents own) [crit G17].
+
+---
+
+## 11. Risks, unknowns and owner decisions
+
+- **Generator templates still bound the evidence.** In-family numbers are recall. The gating axes
+  are authored lines, skeleton buckets, wordings, families and the real reserve; their quality
+  rests on the probe-hard quota, the two-model filter and the decidability audit, which reduce but
+  do not remove the risk that authored pools encode both authoring models' readings.
+- **Power.** Per-port curve verdicts will often be indeterminate (§4.4); per-port promotion needs
+  ≥ 30 forms per label on every gating axis, and some family axes will be diagnostic (X5 kinetics
+  has two assumption kinds; X3 runbook `retract` is d5 only). "No power" is reported as such.
+- **Throughput and memory.** Unmeasured on Foundry-shaped rows until J0; a 15× spread between
+  plausible rates (§7.4). If 8K rows do not fit, long variants train and are read at ≤ 4K.
+- **Served evaluation throughput.** Unmeasured until J0c; the final read may take 2–7 h.
+- **Taps** may fail on kinetics, runbook, codefix or synth values; then X3, S2 and the K, Q6, X6
+  families move a wave (§2.6).
+- **Bed drift.** Other agents are editing `beds/`; the frozen copy and the pin make a build
+  reproducible, but a bed fix after the freeze means a new build and a new pre-registration.
+- **Runtime drift.** F1's exec-injected family runs on a frozen copy of `src/`; its states may
+  differ from the live runtime's journal format by the time W1 lands.
+- **Wrong reuse needs Phase 5.** §8.3's X5 check is a preview; the claim needs T3.
+
+**Owner decisions** (none blocks the data build or J0):
+
+| Id | Decision | Default if unanswered |
 |---|---|---|
-| **G0a** common | `spec/ports.json` (all 40 contracts from §1.2), `lib/*`, `build.mjs`, `export-kev.mjs`, acceptance harness, train surface pools for R1–R4 and X1 | surface pools → next hour |
-| **G0b** held-out author (separate worker; must not read G0a's pool prompts) | `heldout/paraphrases.json` (≥ 2 per port), `heldout/surface/*` for R1–R4, Q2 and X1, OOD span registry tool | Q2 pool |
-| **G1** records-notes | R1–R5, X5 records kinds, X8 records family (near-miss transforms), X2 records rows, X1 records memos | R5 |
-| **G2** incident | I1–I3, I2 tag mapping with fail-closed tags, X1 incident, X2 aliases, X4 incident notes, X5 incident soft edges, X7 incident | X4 and X7 incident |
-| **G3** synth | synth-values tap, S1–S4, X1/X2/X4/X5/X7/X8 synth families | S1, X7 |
-| **G4** kinetics | kinetics tap, K1–K3, X1/X3/X4/X5/X7/X8 kinetics families | K1 and X3 (they need the tap); K2 and K3 need no tap |
-| **G5** runbook | runbook tap, X3 runbook, X4 runbook, X1 runbook, X5 runbook params, Q4 runbook family | X4 |
-| **G6** interactive | gridquest Q1, Q2, Q4 (env snapshot/restore); gameqa Q4 and Q5; Q3 skeleton (wave 3) | Q3 |
-| **G7** failures and code | F1 (templates, exec-injected generator under the real runtime with stub models, gameqa `finding`, journal slice), F2 (codefix domains, ownerci), the X8 real-trace extractor | ownerci family |
-| **G8** construction and audit | objective composer (C1, C2), C7 composer, C8 composer, C9 pairs; hand-label protocol for C1-real and C3–C6 | C8, C9 |
-| **G9** baselines and evaluation | rules for every wave-1 port (≤ 30 lines each), the embedding pipeline (bge-small; kNN + logistic), Haiku/Sonnet runners over JudgmentPort, `analyze.mjs` (metrics, gates, bootstrap, curve), bridge job writer | Sonnet runner (reuse the probe's) |
-
-**Acceptance tests.** These are `node --test experiments/kev-data/`. They run before a build can
-be frozen.
-
-1. **Label correctness.**
-   - (a) For 200 records per port, the label is re-derived by a **second code path**:
-     - R1: the world's reference parse of a day-≤12 date for that system matches only the
-       labelled order;
-     - I2: the line's tag from `idsByTag` and its service from `linesBySvc` agree;
-     - X8: applying the bed's own near-miss transformation reproduces the wrong value.
-   - (b) For template ports, the label-bearing span is a verbatim substring of the state.
-   - (c) For each port, 30 records are read by the worker. The verdicts are written to the group's
-     log. Any disagreement blocks the build.
-   - (d) Taps reach ≥ 95% alignment on 200 worlds, and every aligned fact maps to exactly one
-     span.
-2. **Leakage scan.**
-   - No forbidden key names (§2.3 rule 2).
-   - No unrendered bed-internal ids.
-   - No held-out wording, template or registered OOD span in train, calib or dev.
-   - Two shortcut checks flag a port "rule-solvable" and demote its in-family numbers to
-     diagnostic:
-     - a length-only logistic predicts the label with AUC ≤ 0.65;
-     - the port's rule scores < 0.98 on train.
-3. **Split hygiene.**
-   - Seed ranges are disjoint.
-   - There is no `stateHash` overlap between train and any test split.
-   - The `worldHash` overlap is reported.
-   - Held-out families are absent from train for their port, and registered spans are absent for
-     every port.
-4. **Size and balance statistics.** Per port and split:
-   - counts and label distribution (train within the 3:1 cap; calib and test at natural rates plus
-     balanced copies);
-   - tokens p50/p90/max, both bytes/4 and Qwen counts for a 500-record sample;
-   - distinct `stateHash`, skeletons and templates, worlds, and questions per state.
-   - Targets come from §4.3. Shortfalls are reported, not padded.
-5. **Determinism.** Two builds are byte-identical.
-6. **Kev format.** 100 lines per file pass `kev.data.load_records` and `materialize` in
-   `/opt/kev-venv`, with `python -I` on CPU and no training. The factory's estimated count of
-   records that would exceed `maxState` is 0.
+| O1 | weak-model id | **resolved 2026-10-07: Haiku 5.5** (`claude-haiku-5-5`); Haiku 4.5 is reference only |
+| O2 | hosted budget after the pilot (estimate $150–450) | **resolved 2026-10-07 by the orchestrator under the owner's budget envelope and "Full speed" usage choice**: proceed if the 50-call pilot projects ≤ $450 for wave 1 (with Haiku 5.5 at a tenth of Haiku 4.5's price the weak-model arms shrink accordingly); a projection over $500 pauses for the owner (ROADMAP §6) |
+| O3 | install `flash-linear-attention` 0.5.2 (and `causal-conv1d`) on the laptop | torch DeltaNet path, logged |
+| O4 | policy entries for Kev runs (`systemone` provider, weight hashes, imputed cost) | W5 writes a proposal only |
+| O5 | annotators: the owner's 20-row reads for X5, Q4, F1; C1-real and C3–C6 hand labels | auditor agents only; C1-real and C3–C6 stay out |
+| O6 | one cloud read of stock Kev-4B on three ports' OOD axes | not run; weak model and Sonnet are the only ceiling arms |
+| O7 | laptop availability for about 5 nights, WSL memory cap, apps closed during training | the §7.4 priority order cuts from the bottom |
 
 ---
 
-## 11. Risks and unknowns
+## Appendix A. Measured in the revision-1 session
 
-- **Generator templates bound every in-family result.** Wave-1 numbers on test-in-family are
-  recall. Only §3.2–§3.5 axes count. The beds' own authors say white-box parsers reach 14/30
-  (kinetics) and 17/30 (records) on d3 test tasks (`kinetics/README.md:278-282`; inventory §2).
-- **LLM-authored surface pools.** The two-model filter and the human spot check reduce, but do not
-  remove, the risk that pools encode both models' misreadings.
-- **Throughput.** The rate is unmeasured on Foundry-shaped rows (J0). VRAM at 8K is unmeasured too.
-  If 8K does not fit, long variants train at ≤ 4K and the long-state gate is read at 4K.
-- **The temperature after a delta** is [unk] (§7.5).
-- **Probe incomplete.** The stock-Kev numbers that set the bands (§4.3) come from J1, not from the
-  probe, which may still be running.
-- **Taps** may fail on kinetics, runbook or codefix. Then X3 and the K, Q6 and X6 families move a
-  wave, and S3 enters wave 1.
-- **Wrong-reuse needs Phase 5.** The X5 gate's real consequence, wrong reuse, can only be measured
-  there (§8.3 is a preview).
-- **Owner decisions needed:**
-  - the Haiku arm (§5);
-  - policy entries for Kev runs (§8.4);
-  - the hosted budget, about $150 for wave 1.
-
----
-
-## Appendix A. Measured in this session
-
-- **Template capacity of records notes.** A scratchpad script (not committed) called `buildWorld`
-  for dev seeds 1–300 × d3–d5 and counted distinct `(system, value, template id)` combinations
-  per port. Output: 900 worlds, 61 ms per world, 44 order-template combinations, 288 flag
-  combinations, 16 flag template ids, 220 mirror/reliable combinations, 32 perspective
-  combinations, and 379–838 distinct paragraphs per system.
-- **Pool sizes** from the bed exports: incident `INJECT` 4, `MISLEAD` 4, `FAULT_CLASSES` 9;
-  kinetics `INJECTIONS` 5; gridquest `INJECTIONS` 6, `TRUE_CUES` 5, `OPEN_T` 10, `REOPENED_T` 7,
+- **Template capacity of records notes.** `buildWorld` for dev seeds 1–300 × d3–d5: 900 worlds,
+  61 ms per world, 44 order-template combinations, 288 flag combinations, 16 flag template ids,
+  220 mirror/reliable combinations, 32 perspective combinations, 379–838 distinct paragraphs per
+  system.
+- **Pool sizes** from bed exports: incident `INJECT` 4, `MISLEAD` 4, `FAULT_CLASSES` 9; kinetics
+  `INJECTIONS` 5; gridquest `INJECTIONS` 6, `TRUE_CUES` 5, `OPEN_T` 10, `REOPENED_T` 7,
   `FAKE_EXIT_T` 10; gameqa `BUG_CLASSES` 10, `TEMPLATES` 13.
-- **Truth fields** were inspected read-only for incident (`build(2,'dev',3)`: 17 tags, about 500
-  lines), synth (`hidden(seed 3, d4)`: claim modes and doc kinds; modes over seeds 1–40),
-  kinetics (`_internals`), runbook (`buildWorld` keys), gameqa (`caseFor`), codefix (`build`) and
-  gridquest (`createEnv().reset()`).
-- **Probe dataset state sizes** (bytes/4): applicability 294/588, codefix-fn 287/405, failure-class
-  54/73, incident-class 219/304, incident-root 236/323, injection 59/95, records-pair 107/157,
-  synth-claim 207/308 (p50/max).
-- **HF API** (read-only GETs):
-  - `BAAI/bge-small-en-v1.5`: sha `5c38ec7c…`, `license:mit`, 33,360,512 parameters.
-  - `sentence-transformers/all-MiniLM-L6-v2`: `1110a243…`, `license:apache-2.0`, 22,713,728
-    parameters.
-  - `deepset/prompt-injections`: `4f61ecb0…`, `license:apache-2.0`, n < 1K.
-  - `jaredpalmer/kev-suites`: `cc4bac80…`.
-- **Kev v1.0 snapshot** `training_config.json`: the args quoted in §7.2 and
-  `base_revision dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68`.
+- **Probe dataset state sizes** (bytes/4): applicability 294/588, codefix-fn 287/405,
+  failure-class 54/73, incident-class 219/304, incident-root 236/323, injection 59/95,
+  records-pair 107/157, synth-claim 207/308 (p50/max).
+- **HF API** (read-only): `BAAI/bge-small-en-v1.5` `5c38ec7c…` MIT, 33,360,512 parameters;
+  `sentence-transformers/all-MiniLM-L6-v2` `1110a243…` Apache-2.0; `deepset/prompt-injections`
+  `4f61ecb0…` Apache-2.0, n < 1K; `jaredpalmer/kev-suites` `cc4bac80…` (no licence declared).
+- **Kev v1.0 snapshot** `training_config.json`: the args in §7.2 and `base_revision dc7cdfe2…`.
 - **Experiment journals**, read-only row counts: records-hand-pilot 148, distill-pilot 15,
-  calibration 12, c0-smoke 4, c0-dev 0, p1 0.
-- **McNemar sizes** from Kev's `plan_size.py` formula: +5 pp needs 281 / 469 questions (2% / 5%
-  regressions); +10 pp needs 108 / 155.
-- **Nothing was trained, served or sent to a hosted model.** No sealed bed and no bed `test`
-  split was generated.
+  calibration 12, c0-smoke 4.
+
+**Revision 2** made no new measurements of beds, models or data. It took its measured inputs from
+the two reviews (tagged [M crit-S], [M crit-G]), read `policy/models.json`, `docs/THESIS.md` §7,
+the ROADMAP classifier, `bridge/laptop/jobs.mjs`, `src/judgment.mjs`, `src/ports.mjs` and the
+incident generator's `consequence` emission, and computed the Clopper–Pearson thresholds quoted in
+§6 with `scipy.stats.beta` in `/opt/kev-venv` (`python -I`). Nothing was trained, served, sent to a
+hosted model or committed; no sealed bed and no bed `test` split was generated.
+
+---
+
+## Review log
+
+Status: **Fixed** (the finding's fix is adopted), **Fixed, changed** (adopted with a stated
+change), **Rejected** (with the reason), **Owner** (needs an owner decision; the default is stated).
+
+### Shortcuts review (JUDGE-CRITIQUE-shortcuts.md)
+
+| Finding | Status | Where | Note |
+|---|---|---|---|
+| S1 pseudo-replicated template axis; wrong CI unit | Fixed | §0.1, §6.0, §3.3, §2.4 | form × world bootstrap; ≥ 30 forms per label to gate, else "diagnostic"; strip plots; skeleton minimum 30 (was 5); authored pools sized to ≥ 100 test forms per label |
+| S2 held-out templates leak through shared states and other ports | Fixed | §2.3 rule 7, §3.3, §2.4 | span-skeleton registry over every held-out surface, checked against every port; one-sentence re-render instead of world rejection; held-out templates excluded from `train-pools` input; overlap rate per axis; planted perspTpl-3 test |
+| S3 shortcuts surviving holdout (R4 format, system priors, service names, F1 history, X1 keywords) | Fixed | §1.2 R group, R1, R2, R3, R4, I1, X1; §2.5 | counterfactual balancing within (port, system); R4 date-window decoupling; R1 `ymd`; neutral service handles (chosen over name balancing: handles remove the prior at serving too); X1 addressee-word balance and ≥ 120 benign forms; partial-input battery ≤ majority + 3 pp |
+| S4 calibration on near-memorised data; prior shift | Fixed, changed | §3.1, §7.5, §2.3 rule 9 | calib-OOD slice; vector scaling (T + per-option biases) kept only if OOF NLL improves ≥ 1%; enriched calib with importance weights; served path. **Rejected part:** "a third template index per pool" for calib-OOD; the bed pools are too small (R3 has 4 per side, R4 5 per pool); calib-OOD uses authored lines and wordings instead |
+| S5 unknowables by deletion teach template detection | Fixed | §2.5, §1.2 R1, X5; UNK in §6.2 | presence-matched unknowables; both arms from both phrasings; 2 × 2 report; X5 ≥ 50% presence-matched, absent-system ≤ 10% reported apart; probe separation ≤ 0.65 acceptance |
+| S6 curve selects on test; sufficiency rule underpowered | Fixed, changed | §4.4, §3.1, §7.3 | curve and selection on dev-OOD; test-OOD hash guard; two seeds at 5K and 20K; equivalence margins 3 pp per port, 2 pp pooled; named indeterminate outcome; simulated power before J2. **Changed:** dev-OOD is 600 rows over ≥ 120 forms per port (X5 1,000), not 2,000 over 200, because each point already reads 17,800 rows on the laptop; per-port verdicts may be indeterminate and the pooled verdict (~1,500 forms) carries the answer |
+| S7 real-trace axes too small, inside train seeds, LLM-labelled | Fixed | §3.5, §1.2 X8 and F1, §8.1 | availability rule (≥ 30 tasks, 300 rows); F1's 9 LLM-labelled items dropped (not relabelled: their replay inputs are not journaled); X8 real rebuilt on 120 reserved worlds; F1 not promotable in wave 1 |
+| S8 F1 state carries post-decision information | Fixed | §1.0 field provenance, §1.2 F1, §2.3 rule 2 | provenance table per port; F1 `prior_runs` replaces `history`; `prior_runs`-only within 10 pp of majority |
+| S9 no test shows why the model is right | Fixed | §6.3, §2.5, §1.2 R group | FLIP, INV, SLOT (≥ 20% slot rows in train), EVID, HARD, PART with planted-shortcut controls; 40 wordings per port |
+| S10 decidability not audited | Fixed | §2.7, §1.2 S2, I2, X8, Q4, R1 | state-only solvers ≥ 99.5%; collisions < 1%; allowed knowledge; label semantics (S2 press releases redescribed, I2 echo/consequence excluded, X8 day ≤ 12, Q4 same room name); blind read |
+| S11 base rates make gates gameable | Fixed | §6.1, §5, §1.0 | balanced accuracy and Brier skill score co-primary; risk only at the deployment rate; prior and partial-input baselines in "best baseline"; constant-answer acceptance test |
+| S12 forgetting check misses likely failures | Fixed | §6.4, §3.6 | six-item battery with one-sided bounds; hard-v1 mandatory; transfer-v9 unknowables; permute; option-name drift; canary set; over-trained control |
+| S13 OOD pools filtered toward easy lines; wrong leakage distance | Fixed | §2.4 | probe-hard quota ≥ 40% per slice; leakage by probe and rule; reject log; strata reported; 4-gram filter kept only as a copy filter |
+| S14 small-axis gates fail correct models and pass bad ones | Fixed | §6.0–§6.3 | point or bound for every gate; ECE only at ≥ 500; UNK n ≥ 300, INJ 400 pairs with stated pass counts; false-fail probabilities in the pre-registration |
+| S15 length-only check inverted and weak | Fixed | §5 item 2, PART | replaced by the partial-input battery on every axis |
+| S16 label-position balance | Fixed | §2.3 rule 4 | per-file position histogram within ±5 pp; accuracy by position |
+| S17 paired and multi-question items dependent | Fixed | §6.0, §2.3 rule 5, §1.2 X5 | clustered by state; pair accuracy for X5; PAIR |
+| S18 hard-negative pools are small fixed lists | Fixed | §1.2 X1, §2.3 rule 10, §2.4 | ≥ 120 benign and ≥ 40 decoy forms; target counted in distinct forms |
+| crit-S §3 power table per port | Fixed | §6.0, §9 | unit counts printed next to every axis; MDE in the pre-registration |
+| crit-S §4 decidability audit (7 steps) | Fixed | §2.7 | all seven steps, plus a class-support table from crit G9; the human read of C4 ports is owner decision O5 |
+
+### Coverage review (JUDGE-CRITIQUE-coverage.md)
+
+| Finding | Status | Where | Note |
+|---|---|---|---|
+| G1 evaluation path rejects states over 384 tokens | Fixed | §7.5, §7.4, §10 test 6 | served scorer for every file with a longer state; `kev.benchmark --data` only for files fitting 384; any report with rejected records invalid. The bridge job kind is an optional request, not a dependency (`bridge/` is other agents') |
+| G2 bytes/4 budgets | Fixed | §1.0, §1.1, §2.3 rule 6 | exact tokenizer is the only gate; real-token table; `fits()` on every record; whole-log and all-documents variants dropped |
+| G3 training time rests on an unverified number | Fixed | §4.1, §7.4 | smoke metrics requested; J0 two-parameter fit with step caps; schedule in forward tokens; none-pair inflation; recomputed budget |
+| G4 host RAM, kernels, weights dtype | Fixed / Owner | §7.4, §7.2 | RSS, VRAM, free RAM and disk in J0; `kev.serve` stopped before training; `row_budget` and `length_sort` for > 2K; bf16 weights only for the long probe; `fla` is O3; WSL cap is O7 |
+| G5 calibration on a different path; serving plan wrong | Fixed | §7.5, §7.6 | calibration on served probabilities (the alternative, pinning `KEV_DTYPE=fp32` in the operator config, was not chosen: what serves is what is calibrated); T = 1.0 after a delta answered; one service at a time; `bridgeFetch`; ledger fields |
+| G6 no build group delivers wiring; C4 e2e has no owner | Fixed | §8.2–§8.4, §10 | group W (W0–W8) as build groups; X8 ≥ 100 tasks per arm; X5 ≥ 150 non-matching tasks; unknown-port rule; onUnavailable |
+| G7 C4 ports do not match the THESIS | Fixed | §1.2 F1, X5 | THESIS taxonomy adopted (no amendment); `model_output` and `budget` pre-routed by code; bedtype family in wave 1; C9 stays a comparison arm |
+| G8 reserved worlds; five-world real set | Fixed | §2.3 rule 8, §3.1, §3.5 | reserved-world registry with planted-seed test; availability rule; 120 reserved real worlds |
+| G9 I2 tags, determinacy, class support | Fixed | §1.2 I2, §2.7 | explicit 24-tag table (renew, stray unrelated; echo, consequence excluded); collisions < 1% for every port; class-support table |
+| G10 selection reads in-family data | Fixed | §7.3, §3.1 | dev-OOD selection slice |
+| G11 sufficiency and 40K rules have no power | Fixed, changed | §4.4, §4.3 | named indeterminate outcome; two seeds; X5 calib and test ≥ 1,000; simulated rule outcomes; margin widened to 3 pp per port instead of n ≥ 1,000 per port (laptop read budget) |
+| G12 held-out pools, bed pin, internals unprotected | Fixed | §2.1, §2.4 | heldout in `.foundry/`, hashes only; allow-list pin over `git ls-files`; frozen copy; functions not lines |
+| G13 groups not independent; acceptance global | Fixed | §10, JSON | explicit DAG; small critical path; per-group acceptance; S2 tap contingency; one assembler per cross-bed port; F1 on a frozen runtime |
+| G14 baselines slower and less fair | Fixed, changed | §5 | honest CPU budget and cache; chunk-and-max-pool; option scoring. **Changed:** local-logit runs on 100 dev-OOD items per port as a diagnostic, not as a full arm, because CPU inference at 2–26 s per item would take 2–28 h; stock Kev on the same backbone is the full-size comparator |
+| G15 hosted arms priced from an unsupported number | Fixed / Owner | §5, §11 | 50-call pilot first; journaled floor and median used; cloud wall clock scheduled; budget is O2; weak-model id is O1 |
+| G16 gridquest lifetime cap | Fixed | §1.2 Q1 | `lifetimeActions: Infinity`, logged; second path via `_internal.world`; 200-room agreement |
+| G17 acceptance wording and job-spec details | Fixed | §7.4, §2.2, §10 test 7 | absence of "dropped"; request count; `runs/<jobId>`; `_meta.source`; suite prefetch in J0; free disk; contract test outside `bridge/` |
+| G18 licences and acquisitions | Fixed | §3.6, §10 (`assembly`) | manifest entries for kev-suites (licence undeclared; replay only), the Kev snapshot, deepset, the Qwen base, bge-small and MiniLM, validated with `research/acquire.mjs` |
+| G19 augmentation puts out-of-contract options in training | Fixed | §7.2, §7.3 | stated; kept; grid config `np0` measures it on catch-all ports |
+| G20 id collisions | Fixed | §1.0 namespaces | `D:` for decisions, "claim C4", word names for groups, [crit …] for findings |
+| G21 port count | Fixed | §1.1 | 42 with S5 |
+| G22 `TYPE_LABELS` count | Fixed | §1.2 S group | 7 kinds, 22 mixed labels plus 7 plain |
+| G23 forbidden keys vs descriptive keys | Fixed | §2.3 rule 2 | exact key names; descriptive keys tested by the metadata-only baseline |
+| G24 annotators unnamed | Owner | §1.2 C1, C3–C6; O5 | out of the plan until named |
+| G25 wave-2 data untested | Fixed, changed | §7.4 item 5, §10 | wave-2 ports get the decidability audit, a stock read on dev-select (100 per port) and one combined 4K-row smoke fine-tune, not one per group (laptop budget) |
+| G26 batch id not injective | Fixed | §1.2 X8 | labels from the task key |
+| G27 closed-label exclusions; unknown ports | Fixed | §1.2 S5, §1.0, §1.4 | wave-3 S5 for unseen type names; "no contract → hosted, never Kev-gated" |
+| G28 model size untested | Owner | §5, O6 | default: no Kev-4B read; weak model and Sonnet are the only ceiling arms, stated in the report |
+| crit-G §2.1 freeze deferred THESIS port contracts | Fixed | §1.3 | ledger-only contracts L1–L3 |
+| crit-G §2.9 Brier and coverage co-primary | Fixed | §6.1, §8.1 | ACC, BSS, RISK |
+| crit-G §2.9 evidence ladder T1–T3 | Fixed | §8.5 | adopted, with W8 maturity bookkeeping |
+| crit-G §3 recommended order | Fixed | §7.4 priority, §10 DAG | smoke metrics and J0 first; token-exact factory, determinacy and reserved-world gates before any laptop job; W in parallel |

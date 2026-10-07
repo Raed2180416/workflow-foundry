@@ -1,0 +1,462 @@
+[
+  {
+    "group": "contracts-lib",
+    "ports": ["R1", "R2", "R3", "R4", "R5", "I1", "I2", "I3", "S1", "S2", "S3", "S4", "S5", "K1", "K2", "K3", "Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "X1", "X2", "X3", "X4", "X5", "X6", "X7", "X8", "F1", "F2", "F3", "C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9", "L1", "L2", "L3"],
+    "beds": ["records", "incident", "synth", "kinetics", "runbook", "gameqa", "gridquest", "codefix", "ownerci", "lib"],
+    "generatorFile": "experiments/kev-data/spec/ports.json",
+    "scope": "Critical path; keep it small (no pools). Freeze the 42 port contracts and the 3 ledger-only contracts from JUDGE-PROGRAM.md §1 (Q0-Q3, options with descriptions, criteria, state keys with field provenance, allowedKnowledge, deploymentRate, budgets in real tokens, families, holdouts, wave, gating|advisory). Write lib/render.mjs (re-export toSystemOneQuestion from src/judgment.mjs), lib/hash.mjs (worldHash, stateHash, spanHash, skeleton), lib/tokens.mjs (exact Qwen3.5-0.8B-Base@dc7cdfe2 tokenizer and Kev fits() through /opt/kev-venv with python -I, batched), lib/balance.mjs, lib/leakage.mjs (forbidden exact key names, span-skeleton registry API), lib/registry.mjs (reserved worlds: dev 1-400, test 7000-7199), lib/counterfactual.mjs (one-sentence re-render API taking an opaque line provider), lib/probe.mjs (bag-of-words logistic, unigrams+bigrams, plain JS), build.mjs skeleton with the §3.1 split and slice table, export-kev.mjs, the bed pin (allow-list of the 9 dev beds + beds/lib + beds/CONTRACT.md hashed over git ls-files; frozen copy via git archive into .foundry/kev-data/frozen/<pin>/), src/judges/kit.mjs (port-kit interface stub: buildState(task, slots), questions(port, slots)), the per-group test harness helpers, and the coverage script for §1.5. Never list, hash or open beds/sealed/.",
+    "outputs": ["experiments/kev-data/spec/ports.json", "experiments/kev-data/lib/*.mjs", "experiments/kev-data/build.mjs", "experiments/kev-data/export-kev.mjs", "experiments/kev-data/test/contracts-lib.test.mjs", "src/judges/kit.mjs"],
+    "acceptanceTests": [
+      "spec/ports.json validates: 42 ports + 3 ledger-only contracts; every port has Q0-Q3, 2-64 options, <= 32 criteria, question <= 4,000 characters, field provenance for every state key, deploymentRate, allowedKnowledge and real-token budgets",
+      "a contract rendered through lib/render.mjs is byte-identical to a direct toSystemOneQuestion call",
+      "coverage script over 02-decision-inventory.md and JUDGE-PROGRAM.md §1.5: every id D:A0-D:H6 appears exactly once; totals 47 mapped, 18 deferred, 35 excluded",
+      "lib/tokens.mjs counts fixtures with the pinned tokenizer; a unit test pins the real/bytes-4 ratio near 2x for a log fixture and a table fixture and near 1.1x for prose",
+      "the fits() wrapper rejects a 9K-token record at maxState 8192 and accepts a 300-token record",
+      "lib/leakage.mjs: a state with key 'kind' fails, 'source_kind' passes; a planted perspTpl-3 sentence skeleton in an R1 training state is detected",
+      "lib/registry.mjs: a planted records:dev:d3:s101 in a train file fails the build",
+      "bed pin: adding a file under beds/sealed/ leaves the pin hash unchanged, and an fs-access spy shows no path under beds/sealed/ was opened",
+      "frozen copy: builds import beds only from .foundry/kev-data/frozen/<pin>/; a changed working-tree diff hash between two runs refuses the build",
+      "export-kev.mjs output passes kev.data.load_records and materialize on CPU (python -I); unknowable variants carry _meta.source = 'unknowable'; the meta sidecar is keyed by _meta.id",
+      "a stub generator built twice is byte-identical",
+      "the test file runs alone with node --test and fails on a seeded defect"
+    ],
+    "estimatedRecords": { "train": 0, "calib": 0, "testIn": 0, "testOOD": 0, "dev": 0 },
+    "cutLine": "ledger-only contracts L1-L3 and the coverage script may land in a second hour",
+    "dependsOn": []
+  },
+  {
+    "group": "heldout-author",
+    "ports": ["R1", "R2", "R3", "R4", "I1", "I2", "S2", "Q4", "X1", "X3", "X5", "X8", "F1", "S5", "Q2"],
+    "beds": [],
+    "generatorFile": "experiments/kev-data/heldout/author.mjs",
+    "scope": "Separate worker on Opus 5.5 with its own brief. Never reads bed templates, train-pools prompts or outputs, or bed-group code: it gets the port contracts and examples of meaning only. Writes to .foundry/kev-data/heldout/ (git-ignored) and commits only sha256 manifests. Produces: 40 held-out wordings per wave-1 port (10 calib-OOD, 10 dev-OOD, 20 test-OOD; at least a third in another register); for R1-R4, X1, X5 records assumptions and X8 conventions sentences, >= 200 lines per label in other registers (terse ops chat, vendor documentation, non-native English), sliced 40 calib-OOD / 60 dev-OOD / 100 test-OOD by skeleton hash; R1 year-first and R4 window-decoupled lines; presence-matched non-deciding sentences per template-bound port; held-out cities with countries; held-out injection carriers re-targeted per port; X1 OOD positives without addressee words and negatives with them; S5 unseen document-type names; Q2 OOD cues. Each line passes the two-model filter (Sonnet 5.5 and Opus 5.5 zero-shot must both recover the brief's label) and a copy filter run by a script the author does not read. Answers top-up requests from shortcut-audit. About 4.5K lines and 520 wordings; $10-30.",
+    "outputs": [".foundry/kev-data/heldout/wordings.json", ".foundry/kev-data/heldout/surface/<port>.jsonl", ".foundry/kev-data/heldout/registry.json", "experiments/kev-data/heldout-manifest.json"],
+    "acceptanceTests": [
+      "every wave-1 port has 40 held-out wordings split 10/10/20, at least a third in another register, none equal (whitespace-normalised) to any Q0-Q3",
+      "R1-R4, X1, X5-records and X8-conventions pools hold >= 200 admitted lines per label, sliced 40/60/100 by skeleton hash, with no skeleton shared across slices",
+      "every admitted line passed both Sonnet 5.5 and Opus 5.5 zero-shot; the reject log lists every rejected line with both answers",
+      "copy filter: maximum 4-gram Jaccard <= 0.3 against every train-pool line and bed template",
+      "X1 OOD slices: >= 50% of positives contain no addressee word and >= 30% of negatives contain one (the crit-S Q14 regex)",
+      "R4 OOD lines: date-window presence balanced within each label to +/- 5 pp; R1 OOD lines include year-first lines for BRIGHTDESK, ATLAS and VENDEX",
+      "held-out cities: each maps to exactly one country in the code gazetteer and none is in records TEAM_CITIES",
+      "files exist only under .foundry/kev-data/heldout/; only sha256 manifests are committed; a static scan finds no import of the heldout path in experiments/kev-data/ports/ or taps/",
+      "probe-hard share >= 40% per slice as computed by shortcut-audit, after at most two top-up rounds; otherwise that port's template axis is recorded as diagnostic"
+    ],
+    "estimatedRecords": { "train": 0, "calib": 0, "testIn": 0, "testOOD": 0, "dev": 0 },
+    "cutLine": "S5 names and Q2 cues (wave 2/3) move to a second hour",
+    "dependsOn": ["contracts-lib"]
+  },
+  {
+    "group": "train-pools",
+    "ports": ["R1", "R2", "R3", "R4", "X1", "X5"],
+    "beds": ["records", "incident", "synth", "kinetics", "runbook", "codefix", "gameqa", "gridquest"],
+    "generatorFile": "experiments/kev-data/pools/train-pools.mjs",
+    "scope": "Sonnet 5.5. Paraphrase every non-held-out label-bearing template of R1-R4 (20 per template, slots kept as placeholders); write the counterfactual sentences the balancing needs (R4 reliable lines with a date window and restamped lines without; R1 year-first lines for BRIGHTDESK, ATLAS and VENDEX; KOBO live-flag and mirror lines); >= 120 benign and >= 40 decoy memo forms; X1 train positives without addressee words and negatives with them, per train family. Two-model filter with reject log. Held-out bed templates (JUDGE-PROGRAM.md §3.3) are excluded from the input. Output to .foundry/kev-data/pools/train/ with a committed manifest. Must not read .foundry/kev-data/heldout/ or the heldout-author brief.",
+    "outputs": [".foundry/kev-data/pools/train/<port>.jsonl", "experiments/kev-data/pools/train-manifest.json"],
+    "acceptanceTests": [
+      "the paraphrase input contains no held-out bed template, asserted by template id and by skeleton",
+      "20 admitted paraphrases per non-held-out template, or the shortfall is reported; slots ({S}, {token}, {w0}, {w1}, {field}) preserved exactly",
+      "every admitted line passed the two-model filter; the reject log is kept",
+      "R4 train pool: date-window presence balanced within each label to +/- 5 pp",
+      "R1: >= 30 year-first lines per system for BRIGHTDESK, ATLAS and VENDEX; KOBO: >= 30 live-flag and >= 30 mirror lines",
+      "X1: >= 120 distinct benign and >= 40 distinct decoy forms (distinct by skeleton); >= 50% of authored positives without addressee words and >= 30% of negatives with them",
+      "no train-pool skeleton collides with the heldout registry (checked against the committed hash manifest only)"
+    ],
+    "estimatedRecords": { "train": 0, "calib": 0, "testIn": 0, "testOOD": 0, "dev": 0 },
+    "cutLine": "X1 pools for codefix, gameqa and runbook families",
+    "dependsOn": ["contracts-lib"]
+  },
+  {
+    "group": "records",
+    "ports": ["R1", "R2", "R3", "R4", "X5:records", "X8:records", "X1:records", "R5 (wave-2 smoke)", "X2:records (wave-2 smoke)"],
+    "beds": ["records"],
+    "generatorFile": "experiments/kev-data/ports/records-notes.mjs",
+    "scope": "Port kit src/judges/records.mjs (state builders for R1-R4, X5 records, X8). Generator for every split and slice; OOD-slice lines arrive through the lib/counterfactual.mjs line provider at assembly time (test with stub lines; never open the heldout directory). Counterfactual balancing within (port, system): KOBO live and mirror, R3 same-index side swap, R4 date-window decoupling, R1 ymd at d >= 3; slot-swap rows (>= 20% of R train rows; 200 slot-swap test items per port); flip and invariance twins; presence-matched unknowables; needsWorldKnowledge flag and held-out-city re-render in OOD slices; one-sentence re-render of held-out bed templates and registered spans; X5 records polarity pairs (>= 50% of not_stated presence-matched, absent-system <= 10%); X8 records near-miss values with day <= 12 strata; X1 records memos with the train-pool benign and decoy forms; solve/R1-R4.mjs state-only solvers. ATLAS excluded when ctx.cutoff is set. Wave-2 smoke: about 300 train and 100 dev-select rows each for R5 and X2:records.",
+    "outputs": ["experiments/kev-data/ports/records-notes.mjs", "src/judges/records.mjs", "experiments/kev-data/solve/R1.mjs", "experiments/kev-data/solve/R2.mjs", "experiments/kev-data/solve/R3.mjs", "experiments/kev-data/solve/R4.mjs", "experiments/kev-data/test/records.test.mjs"],
+    "acceptanceTests": [
+      "port kit: for 200 records tasks per port, src/judges/records.mjs buildState(task) equals the factory state byte for byte",
+      "within every (port, system) cell of train, calib-OOD, dev-OOD and test-OOD, binary labels are 45-55% and R1 labels within +/- 5 pp of uniform; a system-only logistic scores <= majority + 3 pp",
+      "R4: the date-range rule scores <= majority + 3 pp on every split; R1: ymd is a label at d >= 3 for BRIGHTDESK, ATLAS and VENDEX",
+      "flip twins: the state differs from its twin in the decisive sentence only (same pool, same index, opposite polarity)",
+      ">= 20% of R train rows carry two systems' paragraphs with opposite labels; 200 slot-swap test items per port",
+      "presence-matched unknowables replace the decisive sentence and never delete it; a train-fitted probe separates stated from unknowable at <= 0.65",
+      "no held-out bed template or registered skeleton appears in any train, calib-in or dev-select state; span-overlap rate reported per axis",
+      "solve/R1-R4 reproduce >= 99.5% of labels from the state alone on 500 rows per split; undecidable rows listed",
+      "second code path: R1 reference parse of a day-<=12 date matches only the labelled order on 200 records; X8 near-miss transform reproduces the wrong value on 200",
+      "X5 records: polarity pairs share a pairId; >= 50% of not_stated rows presence-matched; absent-system source <= 10%",
+      "every record passes fits() at its file's maxState; no dev seed 1-400 in any file",
+      "the test file runs alone and fails on a seeded defect (a KOBO-only void flag left unbalanced)"
+    ],
+    "estimatedRecords": { "train": 5000, "calib": 4075, "testIn": 2458, "testOOD": 16165, "dev": 4033 },
+    "cutLine": "R5 and X2:records wave-2 smoke sets",
+    "dependsOn": ["contracts-lib", "train-pools"]
+  },
+  {
+    "group": "incident",
+    "ports": ["I1", "I2", "X5:incident", "X1:incident", "I3 (wave-2 smoke)", "X2:incident (wave-2 smoke)", "X4:incident (wave-2 held-out family)", "X7:incident (wave-2 smoke)"],
+    "beds": ["incident"],
+    "generatorFile": "experiments/kev-data/ports/incident.mjs",
+    "scope": "Port kit src/judges/incident.mjs with neutral per-state service handles (svc-a, svc-b, ...) resolved through the alias table, in the service key and inside log lines, for I1 and I3. Regenerate the tag inventory on 300 dev worlds against bed VERSION 4.0.0 and write the explicit 24-row I2 table into spec/ports.json (renew and stray -> unrelated; echo and consequence -> excluded and counted); fail closed on any other tag. I1 at <= 8 lines and a long variant at <= 40 lines (no whole-window variant). Skeleton buckets by hash (test-OOD 0-20%, dev-OOD 20-30%, calib-OOD 30-40%). Masked-skeleton collision groups get soft targets and stay out of gated test sets. X5 incident soft-edge assumptions; X1 incident inject versus mislead, notice, mention and benign lines. Wave-2 smoke: about 300 train and 100 dev-select rows each for I3, X2, X7; X4 incident is a held-out test family only.",
+    "outputs": ["experiments/kev-data/ports/incident.mjs", "src/judges/incident.mjs", "experiments/kev-data/solve/I1.mjs", "experiments/kev-data/solve/I2.mjs", "experiments/kev-data/test/incident.test.mjs"],
+    "acceptanceTests": [
+      "the I2 table has exactly the 24 tags emitted by bed VERSION 4.0.0 on 300 dev worlds; a synthetic unknown tag fails the build; echo and consequence rows are excluded and counted",
+      "masked line-skeleton collisions are < 1% of groups for I2 after the exclusions; remaining collision groups carry soft targets and are absent from gated test files",
+      "no service name from the world's name lists appears in any I1 or I3 state; a service-handle-only predictor scores <= majority + 3 pp",
+      "I1 states are <= 501 real tokens (8 lines) and <= 2.5K (long variant); no whole-window variant exists",
+      "port kit: buildState(task) equals the factory state byte for byte on 200 tasks",
+      "second code path: the I2 tag from idsByTag and the service from linesBySvc agree on 200 records",
+      "each skeleton axis reports clusters per label; an axis under 30 is marked diagnostic in the manifest",
+      "decidability audit: solver, collisions, provenance and blind read pass for I1 and I2",
+      "no dev seed 1-400 in any file; the test file fails on a seeded defect (an unmapped tag)"
+    ],
+    "estimatedRecords": { "train": 4032, "calib": 2075, "testIn": 1208, "testOOD": 5417, "dev": 2033 },
+    "cutLine": "X7 and X2 incident smoke sets",
+    "dependsOn": ["contracts-lib"]
+  },
+  {
+    "group": "synth",
+    "ports": ["S2", "X5:synth", "X1:synth", "X8:synth (held-out family)", "S1 (wave-2 smoke)", "S3 (wave-2 smoke; wave-1 contingency)", "S4 (wave-2 smoke)", "S5 (wave 3)", "X2:synth (wave-2 smoke)", "X4:synth (wave-2 smoke)", "X7:synth (wave-2 smoke)"],
+    "beds": ["synth"],
+    "generatorFile": "experiments/kev-data/ports/synth.mjs",
+    "scope": "synth-values tap (taps/synth-values.mjs): align each claim to exactly one passage by exact substring match of the formatted value. S2 with the revised own_measurement description, press-release stratum, bed-natural deployment rate (train capped 3:1; calib-OOD enriched with importance weights), balanced copies for per-class recall only. Tap contingency: below 95% alignment on 200 worlds, S2 moves to wave 2 and S3 (labels from claim.cond, no tap) is produced at wave-1 size instead. X5 synth ranking-policy and standard-condition assumptions; X1 synth injection claims; X8 synth as a held-out test family (toCanon versus uncorrected or wrong-unit values). S5 wave-3 rows from TYPE_LABELS plus the authored unseen-name pool supplied at assembly. Port kit src/judges/synth.mjs.",
+    "outputs": ["experiments/kev-data/ports/synth.mjs", "experiments/kev-data/taps/synth-values.mjs", "src/judges/synth.mjs", "experiments/kev-data/test/synth.test.mjs"],
+    "acceptanceTests": [
+      "synth-values tap aligns >= 95% of claims to exactly one passage on 200 worlds, or the contingency switch produces S3 at wave-1 size and the manifest records it",
+      "S2 option descriptions equal the contract; press-release claims carry a stratum flag",
+      "mode rates in calib-OOD (after importance weights) and in test files match the bed-natural rates within 1 pp",
+      "a constant own_measurement predictor fails ACC and BSS on the S2 test fixture",
+      "class support table printed: instruction_like only at d5; projected count reported per split",
+      "X8 synth rows appear only in test-OOD files and their spans are in the registry",
+      "port kit byte-identity on 200 tasks; decidability audit passes for S2",
+      "no dev seed 1-400 in any file; the test file fails on a seeded defect (an ambiguous passage match kept)"
+    ],
+    "estimatedRecords": { "train": 2742, "calib": 1275, "testIn": 708, "testOOD": 4567, "dev": 1233 },
+    "cutLine": "S1, X7 and S5 rows",
+    "dependsOn": ["contracts-lib"]
+  },
+  {
+    "group": "kinetics",
+    "ports": ["X3:kinetics", "X8:kinetics", "X5:kinetics (held-out family)", "X1:kinetics (held-out family)", "K1 (wave-2 smoke)", "K2 (wave-2 smoke)", "K3 (wave-2 smoke)", "X4:kinetics (wave-2 smoke)", "X7:kinetics (wave-2 held-out family)"],
+    "beds": ["kinetics"],
+    "generatorFile": "experiments/kev-data/ports/kinetics.mjs",
+    "scope": "Kinetics tap (taps/kinetics.mjs) aligning world claims, traps, notes and messages to exactly one rendered span. X3 kinetics (the X3 training family; authority stays in code), X8 kinetics (well values against RATE_FACTOR near-misses), X5 and X1 kinetics as held-out test families only. Documents windowed to <= 4K real tokens; no all-documents variant. K2 and K3 need no tap. Port kit src/judges/kinetics.mjs. Wave-2 smoke: about 300 train and 100 dev-select rows each for K1-K3 and X4.",
+    "outputs": ["experiments/kev-data/ports/kinetics.mjs", "experiments/kev-data/taps/kinetics.mjs", "src/judges/kinetics.mjs", "experiments/kev-data/test/kinetics.test.mjs"],
+    "acceptanceTests": [
+      "tap aligns >= 95% of facts to exactly one span on 200 worlds, or X3 moves to wave 2 with S3 in and the manifest records it",
+      "X8 kinetics second code path: applying RATE_FACTOR reproduces the wrong value on 200 rows",
+      "every state <= 4K real tokens; no all-documents variant exists",
+      "X5 kinetics and X1 kinetics rows appear only in test-OOD files; their spans are registered and absent from every train state of every port",
+      "X3 class support per difficulty printed; a class with < 30 forms in a test cell is marked diagnostic",
+      "port kit byte-identity on 200 tasks; decidability audit for X3 and X8",
+      "no dev seed 1-400 in any file; the test file fails on a seeded defect (a fact aligned to two spans kept)"
+    ],
+    "estimatedRecords": { "train": 2903, "calib": 1200, "testIn": 750, "testOOD": 4400, "dev": 1200 },
+    "cutLine": "K1 and X4 smoke sets (K2 and K3 need no tap and stay)",
+    "dependsOn": ["contracts-lib"]
+  },
+  {
+    "group": "runbook",
+    "ports": ["Q4:runbook", "X1:runbook", "X3:runbook (held-out family)", "X5:runbook (held-out family)", "X4:runbook (wave-2 smoke)"],
+    "beds": ["runbook"],
+    "generatorFile": "experiments/kev-data/ports/runbook.mjs",
+    "scope": "Runbook tap (taps/runbook.mjs) for ticket comments and statements. Q4 runbook family: expected outcome ok; drift from simulator REJECTED, INVALID VALUE, degraded or lag results (plan.reject, plan.degraded, plan.lag). X1 runbook: bot injections, NOTE TO AI ASSISTANTS and logInjections against authorised steps. X3 and X5 runbook (amended spec values against the stale-ticket near-miss) as held-out test families only. Port kit src/judges/runbook.mjs.",
+    "outputs": ["experiments/kev-data/ports/runbook.mjs", "experiments/kev-data/taps/runbook.mjs", "src/judges/runbook.mjs", "experiments/kev-data/test/runbook.test.mjs"],
+    "acceptanceTests": [
+      "tap aligns >= 95% of facts to exactly one span on 200 worlds",
+      "Q4 runbook drift labels agree with a second path (re-running the simulator step from a snapshot) on 200 steps",
+      "X3 and X5 runbook rows appear only in test-OOD files; spans registered",
+      "class support table: retract present only at d5 is printed and the X3 retracts cell marked diagnostic if under 30 forms",
+      "port kit byte-identity on 200 tasks; decidability audit for Q4 runbook",
+      "no dev seed 1-400 in any file; the test file fails on a seeded defect"
+    ],
+    "estimatedRecords": { "train": 1291, "calib": 550, "testIn": 333, "testOOD": 2942, "dev": 533 },
+    "cutLine": "X4 runbook smoke set",
+    "dependsOn": ["contracts-lib"]
+  },
+  {
+    "group": "interactive",
+    "ports": ["Q4:gridquest", "Q4:gameqa (held-out family)", "X1:gameqa", "X1:gridquest (held-out family)", "Q1 (wave-2 smoke)", "Q2 (wave-2 smoke)", "Q5 (wave-2 smoke)", "Q6:gameqa (wave-2 smoke)", "X6:gameqa (wave-2 smoke)", "X2:gameqa (wave-2 held-out family)", "Q3 (wave 3)"],
+    "beds": ["gridquest", "gameqa"],
+    "generatorFile": "experiments/kev-data/ports/interactive.mjs",
+    "scope": "gridquest Q4 from solver routes with perturbed beliefs (wrong exit, locked door, one-way passage); gameqa Q4 as a held-out family (rules and errata against manifested bugs via _internal.replay and evaluateRepro). Same-room-name drift items kept only when the observation distinguishes the rooms. Q1 labels with createEnv(task, { lifetimeActions: Infinity }), logged, cross-checked with _internal.world(task).w.edges. X1 gameqa (injection reports and pinned posts) and X1 gridquest (held-out family). Port kit src/judges/interactive.mjs. Wave-2 smoke for Q1, Q2, Q5, Q6, X6; Q3 skeleton only.",
+    "outputs": ["experiments/kev-data/ports/interactive.mjs", "src/judges/interactive.mjs", "experiments/kev-data/solve/Q4.mjs", "experiments/kev-data/test/interactive.test.mjs"],
+    "acceptanceTests": [
+      "Q1: the step/restore labeller logs lifetimeActions: Infinity and agrees with _internal.world edges on 200 rooms",
+      "Q4: no same-room-name drift item whose observation does not distinguish the rooms survives the solver check",
+      "Q4 gameqa and X1 gridquest rows appear only in test-OOD files; spans registered",
+      "Q4 drift labels from the simulator agree with a second replay on 200 steps",
+      "port kit byte-identity on 200 tasks; decidability audit for Q4",
+      "no dev seed 1-400 in any file; the test file fails on a seeded defect (an indistinguishable same-name room kept)"
+    ],
+    "estimatedRecords": { "train": 1291, "calib": 550, "testIn": 333, "testOOD": 2942, "dev": 533 },
+    "cutLine": "Q3 skeleton and Q5/Q6 smoke sets",
+    "dependsOn": ["contracts-lib"]
+  },
+  {
+    "group": "failures-code",
+    "ports": ["F1", "X1:codefix", "F2 (wave-2 smoke)", "X6:codefix (wave-2 held-out family)", "Q6:codefix (wave-2 held-out family)"],
+    "beds": ["codefix", "ownerci", "gameqa"],
+    "generatorFile": "experiments/kev-data/ports/failures-code.mjs",
+    "scope": "F1 with the THESIS taxonomy (flake, variance, defect, env, impossible, finding). Exec-injected workflows run under a frozen copy of src/ (git archive of a named commit into .foundry/kev-data/frozen-src/<sha>/; never write under src/, never touch src/executors/), with injected causes, labelled by the healer's checks in ROADMAP order (replay; resample K=8 with a Wilson bound; environment fingerprint; control build; known-good contract check), cross-checked against the injected cause. State {node_kind, attempt, error_code, message, prior_runs} with prior_runs from earlier journaled runs only. Schema-invalid output and budget exhaustion are routed by code and never reach F1. Probe templates rewritten to the new taxonomy and state (<= 20% of F1 train). gameqa CRASH_TEXT -> finding. Drop the 9 LLM-labelled probe real items; a journal miner collects replay-labelled real failures as a case study. Workflow-shape skeleton buckets for F1's OOD axis. codefix tap for X1:codefix (knobs.injections, codeInjection comments). F2 wave-2 smoke over 4 training domains.",
+    "outputs": ["experiments/kev-data/ports/failures-code.mjs", "experiments/kev-data/exec/", "experiments/kev-data/taps/codefix.mjs", "src/judges/failures.mjs", "experiments/kev-data/test/failures-code.test.mjs"],
+    "acceptanceTests": [
+      "F1 options are exactly flake, variance, defect, env, impossible, finding; a schema-invalid or budget-exhausted failure never produces an F1 record",
+      "label = check outcome; agreement with the injected cause >= 95% on 200 runs; disagreements dropped and counted",
+      "no F1 state field holds a current replay, resample or control-build result; a prior_runs-only predictor scores <= majority + 10 pp",
+      "the frozen src/ commit sha is in the build manifest; git diff shows no change under src/",
+      "masked-state collision groups carry soft targets; the 9 probe real items are absent from every file",
+      "workflow-shape buckets give >= 30 shapes per label in test-OOD, or the axis is marked diagnostic",
+      "templates are <= 20% of F1 train rows",
+      "codefix tap aligns >= 95% on 200 worlds for X1:codefix",
+      "no dev seed 1-400 in any file; the test file fails on a seeded defect (a history field with a replay outcome)"
+    ],
+    "estimatedRecords": { "train": 2257, "calib": 950, "testIn": 585, "testOOD": 2092, "dev": 935 },
+    "cutLine": "ownerci family of F2 and the journal miner",
+    "dependsOn": ["contracts-lib"]
+  },
+  {
+    "group": "construction-crossfamily",
+    "ports": ["X5:bedtype", "C1 (wave-2 smoke)", "C2 (wave-2 smoke)", "C7 (wave-2 smoke)", "C8 (wave 3)", "C9 (wave 3)"],
+    "beds": ["records", "incident", "synth", "kinetics", "runbook", "gameqa", "gridquest", "codefix", "ownerci"],
+    "generatorFile": "experiments/kev-data/ports/construction-crossfamily.mjs",
+    "scope": "X5 bedtype family (cross-family type applicability, wave 1): the assumption is a bed family's task statement (family.description or the README task paragraph; trusted, travels in the question); the state is another task's prompt head and inputs head (untrusted). Same family -> holds, another family -> violated, a no-task paragraph -> not_stated. Hard pairs (incident/runbook, synth/kinetics, records/ownerci). kinetics and runbook descriptions and prompts held out for test-OOD. Tag the cross-type slice for the 0/21-shaped false-accept report at epsilon = 2%. C1/C2 objective composer, C7 tool-call composer, C8 notes composer, C9 prompt pairs; regex baselines imported read-only from src/construction-objective.mjs and experiments/c0/construct.mjs. C1-real is not built until the owner names annotators (O5).",
+    "outputs": ["experiments/kev-data/ports/construction-crossfamily.mjs", "src/judges/bedtype.mjs", "experiments/kev-data/test/construction-crossfamily.test.mjs"],
+    "acceptanceTests": [
+      "bedtype labels by construction only (family ids); label balance within 1:3 in train",
+      "kinetics and runbook descriptions and prompts appear only in test-OOD files; spans registered",
+      "hard pairs are >= 30% of violated rows",
+      "the cross-type slice is tagged and has >= 150 rows in test-OOD",
+      "states <= 4K real tokens; the assumption is in the question, never in the state",
+      "C composers: labels equal the composed requirement sets; the regex baselines are imported, not copied; no file under experiments/c0/ is modified",
+      "no dev seed 1-400 in any file; the test file fails on a seeded defect (a same-family pair labelled violated)"
+    ],
+    "estimatedRecords": { "train": 484, "calib": 325, "testIn": 125, "testOOD": 1375, "dev": 300 },
+    "cutLine": "C8 and C9",
+    "dependsOn": ["contracts-lib"]
+  },
+  {
+    "group": "realtrace-x8",
+    "ports": ["X8:records-real"],
+    "beds": ["records"],
+    "generatorFile": "experiments/kev-data/realtrace/x8-real.mjs",
+    "scope": "Run the pre-registered weak model (owner decision O1) on the records extraction node for the 120 reserved worlds (bed split test, seeds 7000-7039 x d3-d5), about 960 journaled calls ($4-14 at Haiku 4.5 CLI prices; less for Haiku 5.5). Label every output field against the world regenerated from the run's task key (records:test:dN:sNNNN), never from the batch id. Day <= 12 strata. Register the worlds in the reserved-world registry. The runs are shared with e2e-harness as its weak-model arm. records-hand-pilot stays a case study.",
+    "outputs": ["experiments/kev-data/realtrace/x8-real.mjs", ".foundry/kev-data/realtrace/x8/", "experiments/kev-data/test/realtrace-x8.test.mjs"],
+    "acceptanceTests": [
+      ">= 30 worlds (target 120) and >= 300 gated field rows; every world is in test 7000-7039 and in the reserved registry",
+      "labels come from task-key regeneration; a grep finds no batch-id-based labeller",
+      "every call is journaled with a model id from policy/models.json, cost and latency; total spend stays within the budget the hosted pilot set",
+      "fields with day > 12 dates are a separate stratum and absent from gated files",
+      "no records-hand-pilot row is in any gated file"
+    ],
+    "estimatedRecords": { "train": 0, "calib": 0, "testIn": 0, "testOOD": 1500, "dev": 0 },
+    "cutLine": "stop at 60 worlds if the pilot price is above the median estimate",
+    "dependsOn": ["contracts-lib", "records", "hosted-arms"]
+  },
+  {
+    "group": "assembly",
+    "ports": ["R1", "R2", "R3", "R4", "I1", "I2", "S2", "Q4", "X1", "X3", "X5", "X8", "F1", "X2", "X4", "X7", "X1:deepset"],
+    "beds": ["records", "incident", "synth", "kinetics", "runbook", "gameqa", "gridquest", "codefix", "ownerci"],
+    "generatorFile": "experiments/kev-data/build.mjs",
+    "scope": "Runs every group generator from the frozen bed copy for every split and slice; renders the OOD slices by passing heldout-author lines through each generator's line provider (the only group that reads .foundry/kev-data/heldout/); enforces the span-skeleton and reserved-world registries; applies the §4.3 bands and caps; writes nested curve files (2.5K, 5K, 10K, 20K, 40K) in one seed order, plus calib-in, calib-OOD, dev-select, dev-OOD, test-in and test-OOD axis files; routes each file to kev.benchmark (every state fits 384 tokens) or to the served scorer; exports Kev JSONL with meta sidecars. One named assembler (this group) for each cross-bed port: X1, X2, X4, X5, X7, X8. Acquires deepset/prompt-injections@4f61ecb0 (test-only, re-targeted per port) and writes research/manifests entries for kev-suites@cc4bac80 (licence undeclared; replay only), the Kev snapshot, deepset, Qwen3.5-0.8B-Base, bge-small and MiniLM. Commits only research/kev-20261007/data/<buildId>.json.",
+    "outputs": ["experiments/kev-data/build.mjs", ".foundry/kev-data/<buildId>/", "research/kev-20261007/data/<buildId>.json", "research/manifests/models.json (entries)", "experiments/kev-data/test/assembly.test.mjs"],
+    "acceptanceTests": [
+      "global acceptance 1-6 of JUDGE-PROGRAM.md §10 pass on the full build",
+      "nested inclusion: every record of train-N is in train-2N in the same order; each point has exactly N Foundry rows and the per-port allocation of §4.3",
+      "sum over groups at 20K: train 20,000, calib ~11,000, dev ~10,800, test-in 6,500, test-OOD ~42,000 rows (shortfalls reported, never padded)",
+      "no held-out wording, line, template, family span or entity in any train, calib-in or dev-select file; no cross-slice leak; a planted perspTpl-3 sentence fails the build",
+      "every file routed to kev.benchmark has all states <= 384 tokens; every other file is marked served",
+      "two builds on different nights are byte-identical; a bed edit between them is refused",
+      "research/manifests entries validate with research/acquire.mjs",
+      "the build manifest names the assembler for X1, X2, X4, X5, X7 and X8"
+    ],
+    "estimatedRecords": { "train": 0, "calib": 0, "testIn": 0, "testOOD": 600, "dev": 0 },
+    "cutLine": "40K curve file (build it only if the 40K trigger fires) and wave-2 smoke files",
+    "dependsOn": ["contracts-lib", "heldout-author", "train-pools", "records", "incident", "synth", "kinetics", "runbook", "interactive", "failures-code", "construction-crossfamily"]
+  },
+  {
+    "group": "shortcut-audit",
+    "ports": ["R1", "R2", "R3", "R4", "I1", "I2", "S2", "Q4", "X1", "X3", "X5", "X8", "F1"],
+    "beds": [],
+    "generatorFile": "experiments/kev-data/audit.mjs",
+    "scope": "The bag-of-words probe and the partial-input battery (decisive span only, context only, metadata only, format only, prior_runs only, full probe) per port and axis; distinct forms per label per axis; probe-hard share per OOD slice with top-up requests to heldout-author; the decidability audit runner (state-only solvers, masked-state collisions, provenance check, allowed-knowledge strata, label-semantics checklist, blind read by two auditor agents (Sonnet 5.5 and Opus 5.5, separate briefs, cannot-tell option; owner reads if O5)); the class-support table; planted-shortcut control builds (KOBO priors left in; R4 date-window shortcut left in; deletion-style unknowables) handed to analysis. Also audits wave-2 smoke sets.",
+    "outputs": ["experiments/kev-data/audit.mjs", "experiments/kev-data/lib/probe.mjs (uses)", "research/kev-20261007/data/<buildId>-audit.json", "experiments/kev-data/test/shortcut-audit.test.mjs"],
+    "acceptanceTests": [
+      "on a revision-1-style control build it reproduces the reviews' numbers: R4 date-range rule 1.000; R3 held-out-template form-clustered CI near [0.35, 0.90]; deletion unknowables separated at 1.000",
+      "on the revision-2 build every partial-input baseline is <= majority + 3 pp on every axis, or the port is listed as not frozen",
+      "probe-hard share >= 40% per OOD slice, or a top-up request is filed and the outcome recorded",
+      "presence-matched unknowables: stated against unknowable separation <= 0.65",
+      "blind read: 50 rows per port by two auditors; > 5% cannot-tell in any class blocks the port; auditors never write labels",
+      "the planted-shortcut control builds exist with their hashes in the audit report",
+      "the audit report lists, per port and axis, n, forms per label and diagnostic/gating status"
+    ],
+    "estimatedRecords": { "train": 0, "calib": 0, "testIn": 0, "testOOD": 0, "dev": 0 },
+    "cutLine": "wave-2 smoke audits",
+    "dependsOn": ["contracts-lib", "assembly"]
+  },
+  {
+    "group": "baselines-local",
+    "ports": ["R1", "R2", "R3", "R4", "I1", "I2", "S2", "Q4", "X1", "X3", "X5", "X8", "F1"],
+    "beds": [],
+    "generatorFile": "experiments/kev-data/baselines/run.mjs",
+    "scope": "Prior baseline; rules (<= 30 lines per wave-1 port; probe rules reused where ports overlap) tuned on train and dev-select only; embedding arm with BAAI/bge-small-en-v1.5@5c38ec7c (fallback all-MiniLM-L6-v2@1110a243) on CPU in /opt/kev-venv with python -I: kNN (k=15) and L2 logistic on [e(q); e(s); e(q)*e(s)], truncated and chunk-and-max-pool variants, option scoring for variable-option ports, an embedding cache keyed by text hash, run as a background job; local-logit (Qwen3.5-0.8B-Base option-letter logits) on 100 dev-OOD items per wave-1 port as a diagnostic.",
+    "outputs": ["experiments/kev-data/baselines/run.mjs", "experiments/kev-data/baselines/rules/<port>.mjs", "experiments/kev-data/baselines/embed.py", "experiments/kev-data/test/baselines-local.test.mjs"],
+    "acceptanceTests": [
+      "kNN reproduces a hand-computed accuracy on 50 records",
+      "a file-access log shows no rule or embedding fit read a test file",
+      "truncated and chunk-max-pool variants are both reported per port and axis",
+      "option scoring runs on S1, K2, F2, Q3 and C1 smoke sets",
+      "CPU wall time per 1K texts is logged; cached texts are not re-embedded",
+      "local-logit results are flagged diagnostic unless they beat stock Kev on dev-OOD for the port"
+    ],
+    "estimatedRecords": { "train": 0, "calib": 0, "testIn": 0, "testOOD": 0, "dev": 0 },
+    "cutLine": "local-logit subset and the MiniLM fallback",
+    "dependsOn": ["contracts-lib", "assembly"]
+  },
+  {
+    "group": "hosted-arms",
+    "ports": ["R1", "R2", "R3", "R4", "I1", "I2", "S2", "Q4", "X1", "X3", "X5", "X8", "F1"],
+    "beds": [],
+    "generatorFile": "experiments/kev-data/hosted/run.mjs",
+    "scope": "First a 50-call pilot of the actual typed JudgmentPort model calls for claude-haiku-4-5-20251001, claude-haiku-5-5 and claude-sonnet-5-5 (ids from policy/models.json only): cost and latency per call on the claude-cli path. After O1 and O2: weak model on calib-OOD (300 per port) and a test-OOD subsample (~900 per port), Sonnet 5.5 on 150 calib-OOD + 300 test-OOD per port; subsamples drawn by pre-registered hashes so cuts nest; concurrency <= 4; run in the cloud in parallel with the laptop nights; one-parameter power-transform calibration fitted on calib-OOD. The pilot can start as soon as contracts-lib lands.",
+    "outputs": ["experiments/kev-data/hosted/run.mjs", "research/kev-20261007/data/hosted-pilot.json", "experiments/kev-data/test/hosted-arms.test.mjs"],
+    "acceptanceTests": [
+      "the pilot report gives $/call and s/call ranges per model id before any arm launches",
+      "every call uses an id from policy/models.json and is journaled with cost; spend stops at the O2 budget and pauses above $500",
+      "subsample hashes are pre-registered; a budget cut yields a nested subset",
+      "test files are read once, after the freeze"
+    ],
+    "estimatedRecords": { "train": 0, "calib": 0, "testIn": 0, "testOOD": 0, "dev": 0 },
+    "cutLine": "Sonnet test-OOD subsample halves first",
+    "dependsOn": ["contracts-lib", "assembly"]
+  },
+  {
+    "group": "served-scorer-jobs",
+    "ports": ["R1", "R2", "R3", "R4", "I1", "I2", "S2", "Q4", "X1", "X3", "X5", "X8", "F1"],
+    "beds": [],
+    "generatorFile": "experiments/kev-data/score-served.mjs",
+    "scope": "score-served.mjs: SystemOneClient({ url: `${endpoint}/svc/kev`, fetchImpl: client.bridgeFetch }), all questions of a record in one request, one served model at a time, 4-decimal probabilities to rows files. jobs.mjs: J0a (two-parameter throughput at about 300/2K/8K real tokens with max_steps 50/30/10, suite + replay 50 prefetch, row_budget and length_sort for long rows), J0b (shared_prefix A/B), J0c (served throughput at concurrency 1 and 4, tunnel round trip), J1-J5 specs; the J0 analysis that fits seconds per record and per forward token and regenerates the §7.4 schedule; the budget tracker with the priority order and the reduced-plan switch below 1,500 tokens/s. A contract test under experiments/kev-data/test/ imports bridge validators read-only; nothing under bridge/ is edited.",
+    "outputs": ["experiments/kev-data/score-served.mjs", "experiments/kev-data/jobs.mjs", "experiments/kev-data/test/served-scorer-jobs.test.mjs"],
+    "acceptanceTests": [
+      "every J-spec passes the bridge's validateParams and buildCommand (imported read-only) and the real kev.train / kev.benchmark argparse at Kev 5e42a7a0",
+      "a 200-record file with 40% of states between 400 and 2,000 tokens: kev.benchmark --data shows rejected_records > 0; score-served shows 0 rejections; 20 records re-read through the raw API agree within |dp| < 0.01",
+      "the job writer never requests a second kev.serve and never queues a kev.train while a service runs",
+      "the J0 report contains s/record, s/token, tokens/s, peak_rss_bytes, peak_device_bytes, free -m, free disk and the kernel path, and the schedule table is regenerated from it",
+      "the file router sends a file to kev.benchmark only if every state fits 384 tokens",
+      "acceptance per training job: no 'dropped' line, 'N training requests' equals file records plus replay, outputs under runs/<jobId>",
+      "after J2 at 5K, the measured time is within 20% of the J0 prediction or the schedule is recomputed and the deviation logged"
+    ],
+    "estimatedRecords": { "train": 0, "calib": 0, "testIn": 0, "testOOD": 0, "dev": 0 },
+    "cutLine": "J0b shared_prefix A/B",
+    "dependsOn": ["contracts-lib"]
+  },
+  {
+    "group": "analysis",
+    "ports": ["R1", "R2", "R3", "R4", "I1", "I2", "S2", "Q4", "X1", "X3", "X5", "X8", "F1"],
+    "beds": [],
+    "generatorFile": "experiments/kev-data/analyze.mjs",
+    "scope": "Metrics and gates of JUDGE-PROGRAM.md §6 (ACC, BSS, RISK co-primary; ECE only on axes >= 500; GAP, LONG, UNK, PARA, ORDER, INJ, FLIP, INV, SLOT, EVID, HARD, PART, PAIR; forgetting battery; LAT, COST); two-way form x world bootstrap with state clustering; refusal below 30 forms per label; false-fail table; vector-scaling calibration (T + per-option biases) on calib-OOD with out-of-fold selection and importance weights; thresholds at the deployment rate; the §4.4 curve rule with two seeds and the indeterminate outcome; the pre-J2 power simulation; test-OOD hash guard; Holm over ports; the cost-adjusted chain; W8 maturity table; the §9 pre-registration generator.",
+    "outputs": ["experiments/kev-data/analyze.mjs", "research/kev-20261007/PREREG-kev-judge-w1.yaml", "experiments/kev-data/test/analysis.test.mjs"],
+    "acceptanceTests": [
+      "refuses a gate verdict on an axis with < 30 forms per label; on the revision-1 R3 probe output it reproduces a form-clustered CI near [0.35, 0.90]",
+      "a simulated perfectly calibrated model: ECE is not gated below 500 items, and the printed false-fail table matches simulation within 2 pp",
+      "vector scaling on a synthetic prior-shifted set keeps biases only if out-of-fold NLL improves >= 1%",
+      "an assertion fails if any test-OOD file hash appears in a curve, selection or calibration log",
+      "a constant own_measurement predictor fails ACC and BSS on S2",
+      "the planted-shortcut control builds fail EVID (KOBO) and PART (R4 window); if a control passes, the report blocks claims",
+      "the curve-rule simulation at true differences 0, 1, 2, 3 pp writes outcome probabilities and per-port MDEs into the pre-registration before J2"
+    ],
+    "estimatedRecords": { "train": 0, "calib": 0, "testIn": 0, "testOOD": 0, "dev": 0 },
+    "cutLine": "cost-adjusted chain report (needs hosted arms) may follow",
+    "dependsOn": ["contracts-lib", "shortcut-audit", "baselines-local", "served-scorer-jobs"]
+  },
+  {
+    "group": "wiring-provider-router",
+    "ports": ["R1", "R2", "R3", "R4", "I1", "I2", "S2", "Q4", "X1", "X3", "X5", "X8", "F1"],
+    "beds": [],
+    "generatorFile": "src/judges/router.mjs",
+    "scope": "W0: a systemone provider route for existing agent nodes whose returns is a single enum (micro-harness operator 3), reusing model.class/maxClass, escalation, checks and the journal, with no schema change. W3: the router Kev -> weak model -> Sonnet -> terminal route, with the unknown-port rule (no frozen contract -> hosted, never Kev) and onUnavailable (journaled kev_unavailable, escalate). The per-port transform (T, per-option biases) applied Foundry-side. W5: a policy proposal file only (systemone provider, Kev run ids with weight hashes, imputed cost); policy/models.json is edited by the owner (O4). Do not edit src/executors/ (other agents) or policy/models.json.",
+    "outputs": ["src/judges/router.mjs", "src/judges/transform.mjs", "research/kev-20261007/policy-proposal.json", "tests/judges-router.test.mjs"],
+    "acceptanceTests": [
+      "scripted Kev and scripted weak model: a low-p answer escalates exactly once and both steps are journaled with p, model and cost",
+      "an injected tunnel failure yields a journaled kev_unavailable event and an escalation, never a silent default",
+      "a question with no frozen port contract never reaches Kev",
+      "the Foundry-side transform matches analysis.mjs on 100 fixtures within 1e-4",
+      "the policy proposal validates against tests/model-policy.test.mjs; policy/models.json is unchanged",
+      "git diff shows no change under src/executors/"
+    ],
+    "estimatedRecords": { "train": 0, "calib": 0, "testIn": 0, "testOOD": 0, "dev": 0 },
+    "cutLine": "W5 proposal",
+    "dependsOn": ["contracts-lib"]
+  },
+  {
+    "group": "wiring-judge-node",
+    "ports": ["R1", "R2", "R3", "R4", "I1", "I2", "S2", "Q4", "X1", "X3", "X5", "X8", "F1"],
+    "beds": [],
+    "generatorFile": "src/judges/node.mjs",
+    "scope": "W1: a journaled judge node {port, stateFrom, questions[{port, slots}], engine 'systemone@<run-id>', threshold 'calibrated:<eps>', onAbstain, onUnavailable}: schema kind in schemas/workflow.schema.json, validator rules in src/validate.mjs, executor in src/judges/node.mjs registered with the runtime's node dispatch, journal and replay. All questions about one state go in one request; the output channel is a single enum (quarantine rule). External adapters reject the kind rather than flatten it. Do not edit src/executors/.",
+    "outputs": ["src/judges/node.mjs", "schemas/workflow.schema.json (judge kind)", "src/validate.mjs (judge rules)", "tests/judge-node.test.mjs"],
+    "acceptanceTests": [
+      "the schema accepts a judge node; the validator rejects an unknown port, a threshold without a frozen tau, and a gating binding to an advisory port",
+      "replaying a journaled judge run makes 0 network calls and reproduces the output",
+      "all questions about one state are sent in one request",
+      "every external adapter rejects the judge kind with a typed error",
+      "the node's output is a single enum value from the port contract",
+      "the existing test suite still passes (node --test)"
+    ],
+    "estimatedRecords": { "train": 0, "calib": 0, "testIn": 0, "testOOD": 0, "dev": 0 },
+    "cutLine": "adapter rejections for adapters other than the two most used",
+    "dependsOn": ["contracts-lib", "wiring-provider-router"]
+  },
+  {
+    "group": "wiring-ledger",
+    "ports": ["R1", "R2", "R3", "R4", "I1", "I2", "S2", "Q4", "X1", "X3", "X5", "X8", "F1", "L1", "L2", "L3"],
+    "beds": [],
+    "generatorFile": "src/judgment.mjs",
+    "scope": "W4: JudgmentLedger stores the request content (state, question, criteria, options) by hash next to requestHash, plus run id, dtype, backend, fla status, T and the bias-vector hash; an oracle-label join; an exporter from labelled ledger rows to Kev format for T3 evidence and future training. Ledger-only contracts L1-L3 accumulate rows.",
+    "outputs": ["src/judgment.mjs (JudgmentLedger content store)", "experiments/kev-data/ledger-export.mjs", "tests/judgment-ledger.test.mjs"],
+    "acceptanceTests": [
+      "a ledger row round-trips to the exact request object",
+      "a joined label set exports in Kev format and passes kev.data.load_records",
+      "ledger rows carry run id, dtype, backend, fla status, T and the bias hash",
+      "existing JudgmentLedger callers and tests are unchanged in behaviour"
+    ],
+    "estimatedRecords": { "train": 0, "calib": 0, "testIn": 0, "testOOD": 0, "dev": 0 },
+    "cutLine": "the oracle-label join",
+    "dependsOn": ["contracts-lib"]
+  },
+  {
+    "group": "wiring-builder",
+    "ports": ["R1", "R2", "R3", "R4", "I1", "I2", "S2", "Q4", "X1", "X3", "X5", "X8", "F1"],
+    "beds": [],
+    "generatorFile": "experiments/kev-data/spec/catalogue.json",
+    "scope": "W6: the port catalogue marking each port gating or advisory (from analysis results; all advisory until promoted); operator text for micro-harness operators 2, 3 and 4 naming judge ports only for frozen contracts; a tools/judge.mjs helper template for the script-harness arm beside its callModel helper.",
+    "outputs": ["experiments/kev-data/spec/catalogue.json", "skills/micro-harness/references/operators.md (judge sections)", "skills/script-harness/references/judge-helper.md", "tests/judge-catalogue.test.mjs"],
+    "acceptanceTests": [
+      "the validator rejects a gating binding to an advisory port",
+      "the script-arm helper calls a scripted judge and returns an enum plus p",
+      "operator text names Kev only for ports with frozen contracts",
+      "the catalogue defaults every port to advisory until analysis records a promotion"
+    ],
+    "estimatedRecords": { "train": 0, "calib": 0, "testIn": 0, "testOOD": 0, "dev": 0 },
+    "cutLine": "operator 2 and 4 text",
+    "dependsOn": ["wiring-judge-node", "wiring-provider-router"]
+  },
+  {
+    "group": "e2e-harness",
+    "ports": ["X8", "X5"],
+    "beds": ["records"],
+    "generatorFile": "experiments/kev-data/e2e/run.mjs",
+    "scope": "W7. X8 cascade on weak-model extraction over the 120 real-reserve worlds (shared weak-model runs from realtrace-x8): arms weak model alone, weak model + X8 gate -> Sonnet on flagged rows, Sonnet alone; >= 100 tasks per arm; oracle pass rate and $ per task with CIs. X5 reuse gate on e2e-reserve tasks (test 7040-7199) with >= 150 non-matching tasks: wrong-reuse rate (0/150 bounds it at 2%), abstention rate, bedtype cross-type false accepts. Runs after the 5K seed-1 curve point (development evidence) and again on the final candidate.",
+    "outputs": ["experiments/kev-data/e2e/run.mjs", "research/kev-20261007/data/e2e-<run>.json", "experiments/kev-data/test/e2e-harness.test.mjs"],
+    "acceptanceTests": [
+      "an arm with < 100 tasks (X8) or < 150 non-matching tasks (X5) reports a CI and 'no verdict'",
+      "every task world is in the reserved registry and outside every training range",
+      "every escalation is journaled; Sonnet is called only on flagged rows in the gated arm",
+      "oracle pass rate and $ per task are reported per arm with CIs",
+      "the run records the Kev run id, T, biases and thresholds used"
+    ],
+    "estimatedRecords": { "train": 0, "calib": 0, "testIn": 0, "testOOD": 0, "dev": 0 },
+    "cutLine": "the Sonnet-alone arm halves to 60 tasks if the O2 budget binds (reported as no verdict for that comparison)",
+    "dependsOn": ["realtrace-x8", "wiring-provider-router", "wiring-judge-node", "served-scorer-jobs", "analysis"]
+  }
+]
