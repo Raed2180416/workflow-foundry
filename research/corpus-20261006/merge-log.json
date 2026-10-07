@@ -34,8 +34,8 @@
  "output": {
   "path": "items.jsonl",
   "items": 1342,
-  "bytes": 24770963,
-  "sha256": "c0f275cfaae7ef03a59a3852e59c370c4302237bd03cdb9cd50a15cf4aa96455",
+  "bytes": 24736654,
+  "sha256": "b968d16807847a0d2b1f1b3a66a4d1b393d86805f2235c805136a5437608b3a0",
   "byCluster": {
    "automation": 395,
    "orchestration": 396,
@@ -77,6 +77,25 @@
     "langflow:financial-report-parser",
     "langflow:hybrid-search-rag"
    ]
+  },
+  "copyleft-made-non-redistributable": {
+   "count": 30,
+   "examples": [
+    "gitlab-ci:gitlab.com/libeigen/eigen: MPL-2.0",
+    "comfyui:jakechai-ComfyUI-JakeUpgrade-Workflow-ComfyUI-Main-imgen-JK_workflow_imgen_SD3.json: GPL-3.0",
+    "comfyui:jakechai-ComfyUI-JakeUpgrade-Workflow-ComfyUI-Main-img2mesh-JK_workflow_img2mesh_Hunyuan3DWrapper.json: GPL-3.0",
+    "comfyui:jakechai-ComfyUI-JakeUpgrade-Workflow-ComfyUI-API-dev-JK-API-Imgen-SD15.json: GPL-3.0",
+    "comfyui:jakechai-ComfyUI-JakeUpgrade-Workflow-ComfyUI-API-dev-JK-API-Imgen-QWen.json: GPL-3.0",
+    "comfyui:jakechai-ComfyUI-JakeUpgrade-Workflow-ComfyUI-Main-imgen-mGPU-JK_workflow_imgen_QWen_ModelSheet_adv_mGPU.json: GPL-3.0",
+    "comfyui:Deno2026-comfyui-deno-custom-nodes-docs-workflows-ltx23-8gb-vram-public-baseline.json: GPL-3.0",
+    "comfyui:ltdrdata-ComfyUI-Impact-Pack-tests-workflows-impactwildcardprocessor_yaml_tests.json: GPL-3.0"
+   ]
+  },
+  "connector-template-fragment-dropped": {
+   "count": 1,
+   "examples": [
+    "home-assistant:forum-730391: {% if states[repeat"
+   ]
   }
  },
  "drops": [],
@@ -87,6 +106,9 @@
   },
   "maxFanOut": {
    "consumer-creative": 27
+  },
+  "connectors": {
+   "consumer-creative": 1
   }
  },
  "verdict": {
@@ -96,6 +118,20 @@
    "orchestration": 260,
    "science": 99,
    "consumer-creative": 99
+  },
+  "kindTransitions": {
+   "automation: via-extension -> via-extension": 324,
+   "automation: native -> native": 62,
+   "automation: via-extension -> native": 7,
+   "automation: unsupported -> unsupported": 2,
+   "orchestration: native -> native": 120,
+   "orchestration: via-extension -> via-extension": 219,
+   "orchestration: via-extension -> native": 57,
+   "science: native -> native": 147,
+   "science: via-extension -> via-extension": 131,
+   "consumer-creative: via-extension -> via-extension": 190,
+   "consumer-creative: native -> native": 60,
+   "consumer-creative: via-extension -> native": 23
   },
   "tokenMap": {
    "automation|schedule-trigger": [

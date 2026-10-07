@@ -64,6 +64,10 @@ const SECRET_PATTERNS = [
 ];
 export const findSecret = s => SECRET_PATTERNS.find(rx => rx.test(String(s ?? '')));
 
+// One redistribution policy for every cluster (the conservative one the orchestration and science converters used):
+// copyleft, share-alike and non-commercial licences keep only URL + derived graph + features, like unknown/ToS items.
+export const NON_REDISTRIBUTABLE_LICENCE = /^(A?GPL|LGPL|EPL|MPL|EUPL|CC-BY(-[0-9.]+)?-(NC|SA|ND)|CC-BY-NC|CC-BY-SA)|^unknown$|^ToS:/;
+
 const isObj = v => v !== null && typeof v === 'object' && !Array.isArray(v);
 const isNat = v => Number.isInteger(v) && v >= 0;
 const isStr = (v, min = 0) => typeof v === 'string' && v.length >= min;
@@ -122,6 +126,8 @@ export function validateItem(item, { canonical = false } = {}) {
     if (typeof s.redistributable !== 'boolean') err('source.redistributable', 'redistributable must be boolean');
     else if (s.redistributable && isStr(s.license) && (s.license === 'unknown' || s.license.startsWith('ToS:')))
       err('source.redistributable', 'an unknown or ToS-governed licence cannot be redistributable');
+    else if (canonical && s.redistributable && isStr(s.license) && NON_REDISTRIBUTABLE_LICENCE.test(s.license))
+      err('source.redistributable', `licence ${s.license} is copyleft/share-alike/non-commercial: not redistributable under the merged policy`);
     if (!isStr(s.rawPath) || !s.rawPath.startsWith('/opt/corpus/')) err('source.rawPath', 'rawPath must point under /opt/corpus/ (outside git)');
     if (isStr(item.id) && isStr(s.platform) && !item.id.startsWith(`${s.platform}:`)) err('id.platform', 'id must start with <source.platform>:');
   }

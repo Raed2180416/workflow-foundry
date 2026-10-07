@@ -11,3 +11,9 @@ research/product-demo/
 *.log
 .DS_Store
 experiments/runs/
+
+# workflow corpus: the uncompressed files are rebuilt from the gzipped copies in git
+# (node research/corpus-20261006/scripts/unpack.mjs); ROADMAP §6 rule 6
+research/corpus-20261006/items.jsonl
+research/corpus-20261006/items-sample.jsonl
+research/corpus-20261006/parts/*.jsonl

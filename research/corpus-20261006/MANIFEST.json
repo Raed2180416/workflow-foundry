@@ -1,0 +1,4207 @@
+{
+ "schema": "foundry-corpus-manifest/1",
+ "corpus": "corpus-20261006",
+ "itemSchema": "foundry-corpus-item/1 (ITEM-SCHEMA.md)",
+ "generatedAt": "2026-10-07",
+ "status": "development/diagnostic corpus; not sealed evaluation evidence. Graphs, features and IR verdicts are static-analysis heuristics, not compiled or executed.",
+ "generators": [
+  "scripts/merge-items.mjs",
+  "scripts/check-items.mjs",
+  "scripts/coverage-report.mjs"
+ ],
+ "reproduce": "cd research/corpus-20261006 && node scripts/merge-items.mjs && node scripts/check-items.mjs items.jsonl --canonical && node scripts/coverage-report.mjs",
+ "files": {
+  "items": {
+   "path": "items.jsonl",
+   "bytes": 24736654,
+   "lines": 1342,
+   "sha256": "b968d16807847a0d2b1f1b3a66a4d1b393d86805f2235c805136a5437608b3a0",
+   "inGit": false,
+   "distribution": "too large for git (> 5 MB): publish as a release asset; it includes redistributable:false items reduced to URL + derived graph + features, which needs the owner's confirmation before publishing"
+  },
+  "sample": {
+   "path": "items-sample.jsonl",
+   "bytes": 4948828,
+   "lines": 297,
+   "sha256": "8decafabf074f0d6fa8867d82e2e246f97b36725a668bb80a7489ef0afe673d7",
+   "inGit": true,
+   "selection": "redistributable items only: the pilot shortlist, the redistributable items among the 30 most complex (lines <= 250 kB), then a round-robin over platforms at even complexity strides, up to 5 MB"
+  },
+  "mergeLog": {
+   "path": "merge-log.json",
+   "bytes": 10429,
+   "lines": 358,
+   "sha256": "4cc07d700369992042c036b738923c9989cd566619879e3c6c37ae7dc51619d5"
+  },
+  "parts": [
+   {
+    "part": "parts/automation.jsonl",
+    "cluster": "automation",
+    "lines": 396,
+    "bytes": 3321251,
+    "sha256": "c599838fea1b921f62aa74b3d6169ed783c137414458b8f1fbfe2ec47eb86264",
+    "ledger": "parts/automation-ledger.md",
+    "inGit": "small enough"
+   },
+   {
+    "part": "parts/orchestration.jsonl",
+    "cluster": "orchestration",
+    "lines": 400,
+    "bytes": 3104069,
+    "sha256": "a781c67e2e3e3f7c88b634c3c286308b289a623d4e235859defa7b97e22d5b95",
+    "ledger": "parts/orchestration-ledger.md",
+    "inGit": "small enough"
+   },
+   {
+    "part": "parts/science.jsonl",
+    "cluster": "science",
+    "lines": 278,
+    "bytes": 12208842,
+    "sha256": "133439979cd47c0b76aa845269266e428cd55703afc8cf4c09d6f6d525408264",
+    "ledger": "parts/science-ledger.md",
+    "inGit": "over 5 MB: release asset recommended"
+   },
+   {
+    "part": "parts/consumer-creative.jsonl",
+    "cluster": "consumer-creative",
+    "lines": 273,
+    "bytes": 7383293,
+    "sha256": "47c4ba85a99adcef02bab74d9b65eb29d4d1cf7bdd8cab06ef2476a3a51ca57a",
+    "ledger": "parts/consumer-creative-ledger.md",
+    "inGit": "over 5 MB: release asset recommended"
+   }
+  ]
+ },
+ "counts": {
+  "items": 1342,
+  "byCluster": {
+   "automation": 395,
+   "orchestration": 396,
+   "science": 278,
+   "consumer-creative": 273
+  },
+  "byPlatform": {
+   "activepieces": 40,
+   "coze": 22,
+   "dify": 50,
+   "flowise": 51,
+   "langflow": 27,
+   "n8n": 135,
+   "node-red": 45,
+   "zapier": 25,
+   "airflow": 88,
+   "argo": 55,
+   "dagster": 25,
+   "github-actions": 85,
+   "gitlab-ci": 41,
+   "kubeflow": 30,
+   "prefect": 18,
+   "tekton": 20,
+   "temporal": 34,
+   "cwl": 45,
+   "galaxy": 60,
+   "nextflow": 25,
+   "nf-core": 72,
+   "snakemake": 40,
+   "wdl": 36,
+   "apple-shortcuts": 79,
+   "comfyui": 73,
+   "home-assistant": 96,
+   "ifttt": 25
+  },
+  "redistributable": 850,
+  "byLicence": {
+   "Apache-2.0": 467,
+   "MIT": 315,
+   "unknown": 148,
+   "ToS:https://n8n.io/legal/self-serve-terms/": 135,
+   "GPL-3.0": 47,
+   "ToS:https://www.activepieces.com/terms": 40,
+   "ToS:https://marketplace.dify.ai/terms": 39,
+   "CC-BY-4.0": 25,
+   "ToS:https://ifttt.com/terms": 25,
+   "ToS:https://zapier.com/legal/terms-of-service": 25,
+   "BSD-3-Clause": 21,
+   "LicenseRef-Dify-Open-Source-License": 11,
+   "AGPL-3.0": 7,
+   "GPL-2.0-or-later": 5,
+   "GPL-3.0-or-later": 5,
+   "BSD-3-Clause-Clear": 4,
+   "LicenseRef-US-Government-Public-Domain": 4,
+   "CC-BY-NC-SA-4.0": 3,
+   "CC-BY-NC-4.0": 2,
+   "GPL-2.0": 2,
+   "LicenseRef-WorkflowHub-other-open": 2,
+   "AGPL-3.0-or-later": 1,
+   "Artistic-2.0": 1,
+   "BSD-2-Clause": 1,
+   "CC0-1.0": 1,
+   "EPL-2.0": 1,
+   "GPL-3.0-only": 1,
+   "LGPL-2.1": 1,
+   "LGPL-3.0": 1,
+   "LicenseRef-gitlab-detected-other": 1,
+   "MPL-2.0": 1
+  },
+  "byLicenceFamily": {
+   "permissive": 839,
+   "terms of service": 264,
+   "unknown": 148,
+   "copyleft / share-alike": 72,
+   "other / custom": 14,
+   "non-commercial": 5
+  },
+  "byVerdict": {
+   "via-extension": 864,
+   "native": 476,
+   "unsupported": 2
+  },
+  "byOracle": {
+   "none": 952,
+   "test-profile": 260,
+   "output-equivalence": 106,
+   "mocked-execution": 24
+  },
+  "droppedInvalid": 0,
+  "droppedDuplicates": 5,
+  "nodes": 78278,
+  "edges": 137325
+ },
+ "sources": [
+  {
+   "platform": "activepieces",
+   "cluster": "automation",
+   "origin": "www.activepieces.com",
+   "items": 40,
+   "redistributable": 0,
+   "licences": {
+    "ToS:https://www.activepieces.com/terms": 40
+   },
+   "revisions": [
+    "template 07OX2PJBTt6TGnEOIJa8b; updated 2026-10-02T15:22:07.514Z; sha256:74ac00…",
+    "template 1TPst6qx7bNcQ2jV2ZZ61; updated 2026-10-02T15:22:07.514Z; sha256:0aac50…",
+    "template 3AzxIABbHE7PBCsBZfP3m; updated 2026-10-02T15:22:07.514Z; sha256:8e1520…",
+    "template 4EogKQgXUDqf92CgxvjOC; updated 2026-10-02T15:22:07.514Z; sha256:b12e7b…",
+    "template 71gZO0fNzDjf7Zn4uPAlU; updated 2025-12-17T19:55:01.640Z; sha256:fc7be2…"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 40,
+   "ledger": "parts/automation-ledger.md"
+  },
+  {
+   "platform": "coze",
+   "cluster": "automation",
+   "origin": "github.com/coze-dev/coze-studio",
+   "items": 22,
+   "redistributable": 22,
+   "licences": {
+    "Apache-2.0": 22
+   },
+   "revisions": [
+    "fefb05ff27be1da939612fbf9faf5db62583b8ae"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/automation-ledger.md"
+  },
+  {
+   "platform": "dify",
+   "cluster": "automation",
+   "origin": "marketplace.dify.ai",
+   "items": 39,
+   "redistributable": 0,
+   "licences": {
+    "ToS:https://marketplace.dify.ai/terms": 39
+   },
+   "revisions": [
+    "template 0fc0bb5c-635f-45f7-ac9a-44ba61dbf8ef; dsl version 0.6.0; updated 2026-…",
+    "template 11ddc721-1c90-40e2-b64c-3669c446a129; dsl version 0.6.0; updated 2026-…",
+    "template 19c465b2-4aa9-439d-8b6d-023adcd65491; dsl version 0.6.0; updated 2026-…",
+    "template 1b5493cc-7099-4ef0-8990-21e73a7f85a1; dsl version 0.7.0; updated 2026-…",
+    "template 1e8853ab-edbc-4326-8af8-07cb51cd693b; dsl version 0.6.0; updated 2026-…"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 39,
+   "ledger": "parts/automation-ledger.md"
+  },
+  {
+   "platform": "dify",
+   "cluster": "automation",
+   "origin": "github.com/langgenius/dify",
+   "items": 11,
+   "redistributable": 11,
+   "licences": {
+    "LicenseRef-Dify-Open-Source-License": 11
+   },
+   "revisions": [
+    "519ef8b8c2d75f597b8a1dfff79ef4b8c5013e3e"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/automation-ledger.md"
+  },
+  {
+   "platform": "flowise",
+   "cluster": "automation",
+   "origin": "github.com/FlowiseAI/Flowise",
+   "items": 51,
+   "redistributable": 51,
+   "licences": {
+    "Apache-2.0": 51
+   },
+   "revisions": [
+    "9291856d1ea4a4ceea9f8fef8ce14f4f6c81e8eb"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/automation-ledger.md"
+  },
+  {
+   "platform": "langflow",
+   "cluster": "automation",
+   "origin": "github.com/langflow-ai/langflow",
+   "items": 27,
+   "redistributable": 27,
+   "licences": {
+    "MIT": 27
+   },
+   "revisions": [
+    "504c02fc47e76087b82b0e7cbe4186e9cdd916d4"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/automation-ledger.md"
+  },
+  {
+   "platform": "n8n",
+   "cluster": "automation",
+   "origin": "n8n.io",
+   "items": 135,
+   "redistributable": 0,
+   "licences": {
+    "ToS:https://n8n.io/legal/self-serve-terms/": 135
+   },
+   "revisions": [
+    "template 10143; createdAt 2025-10-25T06:41:25.093Z; sha256:459befcb24310073",
+    "template 10156; createdAt 2025-10-25T10:07:17.772Z; sha256:d05d45d7d9ae42a1",
+    "template 10550; createdAt 2025-11-06T06:45:44.123Z; sha256:e96bd57439e18ba7",
+    "template 10602; createdAt 2025-11-07T15:54:14.146Z; sha256:19d9f45ce2841a69",
+    "template 10665; createdAt 2025-11-09T20:36:53.243Z; sha256:fbd90f3d77898e5c"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 135,
+   "ledger": "parts/automation-ledger.md"
+  },
+  {
+   "platform": "node-red",
+   "cluster": "automation",
+   "origin": "flows.nodered.org",
+   "items": 45,
+   "redistributable": 0,
+   "licences": {
+    "unknown": 45
+   },
+   "revisions": [
+    "gist 01276f61d719d0692d43353e6f696b98; updated_at 2021-08-12T05:31:54Z; sha256:…",
+    "gist 03fb3e10dded33d788f0990f4915f2c1; updated_at 2022-05-18T09:01:30Z; sha256:…",
+    "gist 0c124990674bef5112d0e09d8e8f9d7e; updated_at 2021-02-11T03:33:15Z; sha256:…",
+    "gist 0cc3b1d4f7e159800c01c650c30752ae; updated_at 2018-04-03T19:36:15Z; sha256:…",
+    "gist 1161d0c466c977dbe89aea25fa7855bd; updated_at 2021-10-11T08:26:40Z; sha256:…"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 45,
+   "ledger": "parts/automation-ledger.md"
+  },
+  {
+   "platform": "zapier",
+   "cluster": "automation",
+   "origin": "zapier.com",
+   "items": 25,
+   "redistributable": 0,
+   "licences": {
+    "ToS:https://zapier.com/legal/terms-of-service": 25
+   },
+   "revisions": [
+    "template page create-workshop-bookings-for-program-coordinators-before-next-wor…",
+    "template page send-shipped-order-updates-to-fulfillment-and-billing-before-the-…",
+    "template page send-new-storefront-customer-alerts-to-support-reps-before-next-w…",
+    "template page send-patient-survey-responses-to-care-managers-before-next-workda…",
+    "template page create-pairing-calendar-events-for-engineers-before-weekly-sync-4…"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 25,
+   "ledger": "parts/automation-ledger.md"
+  },
+  {
+   "platform": "airflow",
+   "cluster": "orchestration",
+   "origin": "pypi.org (sdists)",
+   "items": 88,
+   "redistributable": 88,
+   "licences": {
+    "Apache-2.0": 88
+   },
+   "revisions": [
+    "apache-airflow-core==3.3.2 sdist sha256:53f38e7749a2689a1d67c6e661284ecddaa687c…",
+    "apache-airflow-providers-airbyte==6.1.0 sdist sha256:dbcace859b117b7fce61e4dd5d…",
+    "apache-airflow-providers-akeyless==0.3.1 sdist sha256:c8a8c522c7418141dd35fb302…",
+    "apache-airflow-providers-alibaba==3.5.0 sdist sha256:164c370dc0fb0d75bf95e1d811…",
+    "apache-airflow-providers-amazon==9.37.0 sdist sha256:9972c5f4bab9ef1deab4f3e267…"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 17,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "argo",
+   "cluster": "orchestration",
+   "origin": "github.com/argoproj/argo-workflows",
+   "items": 55,
+   "redistributable": 55,
+   "licences": {
+    "Apache-2.0": 55
+   },
+   "revisions": [
+    "66e32e5cc367f223e2ecf4fbe852b95eaed83034"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "dagster",
+   "cluster": "orchestration",
+   "origin": "github.com/dagster-io/dagster",
+   "items": 25,
+   "redistributable": 25,
+   "licences": {
+    "Apache-2.0": 25
+   },
+   "revisions": [
+    "8ed0d4d398c8bb2ed82049d272abab6747aeb391"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/argoproj/argo-workflows",
+   "items": 2,
+   "redistributable": 2,
+   "licences": {
+    "Apache-2.0": 2
+   },
+   "revisions": [
+    "66e32e5cc367f223e2ecf4fbe852b95eaed83034"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/kubeflow/pipelines",
+   "items": 2,
+   "redistributable": 2,
+   "licences": {
+    "Apache-2.0": 2
+   },
+   "revisions": [
+    "96b3906a83bf58a440e5e2e5307c51769a185ffb"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/DZakh/sury",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "8d5e7d4ff43ac14a6fd43ea1b6eb01e0cebf9803"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/GitoxideLabs/gitoxide",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "fc2b2477d8e063006fc9ab3befe4f1668a8199ff"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/Lightning-AI/pytorch-lightning",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "34afde742ebe3acb56f5d0f14cd79d589d9771e0"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/MODFLOW-ORG/modflow6",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "CC0-1.0": 1
+   },
+   "revisions": [
+    "8f0f53b040423ef0816c414f81c8811ac6c138cb"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/Netflix/OpenVPCal",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "43f3a1adeb0ee7e59b21a12e66db01e5bbdc1179"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/OfficeDev/teams-toolkit",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "8e7de59fbd8a176b5e26a1e3ff8413fe6a1d4173"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/OpenZeppelin/openzeppelin-relayer",
+   "items": 1,
+   "redistributable": 0,
+   "licences": {
+    "AGPL-3.0": 1
+   },
+   "revisions": [
+    "2dd9f8902d82189b7e8b684922bb90c240245dc0"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/PhilDL/react-router-gospel-stack",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "5f4a21697404fddd8dcf3325e75e8ad3f382339c"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/PunGrumpy/logixlysia",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "40d473574b6db119cea135bfc88c7d2f89ace02b"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/agadmator-library/agadmator-library.github.io",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "d99371b9d6cccbf3aaefe26149da2f8b17802e5c"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/aio-libs/multidict",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "481293778fd2737f2e446aa237b5f697bd3285cd"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/aio-libs/yarl",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "8451c5b4c33c3d738a1154ea9102d25b0b9ea553"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/ankorstore/yokai",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "cfd113c4238107ad68e1ecfa6ed600567841b5bf"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/antvis/g2",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "f437ad50c9b991ee27c950793aa3abff9e6aa276"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/apache/arrow-adbc",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "9f3c283126d91887b074847001aed0ec48083d4e"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/assemblee-virtuelle/semapps",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "b1a9a662e9b1132374f3a915de6d58227b446f94"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/aws/aws-sdk-pandas",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "ecf9ab3a6dc229cfdce78b291771079ed6dab675"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/aws/s2n-quic",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "8626f1a260b68e520620f90d8e2819978b329c96"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/benfred/py-spy",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "6357ae890bf6ef348f244d681810bce0a3438c0c"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/billabear/billabear",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "921b6052815e55ae79560371dc37b1fb6b53b12f"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/bqbooster/dbt-bigquery-monitoring",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "85b0251ee70f239edef982eccac4519f58c5a173"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/brainglobe/cellfinder",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "BSD-3-Clause": 1
+   },
+   "revisions": [
+    "2646ced26877aaef7202f0c127ffefc5e5dc2564"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/bytecodealliance/wasmtime",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "0e51666b7df8347b54a7cc3bb81d5708923d28ba"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/c2fo/vfs",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "c1dc0bf52dcbdc5cb5f2cc2f31cdab25d1ddef53"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/canboat/canboatjs",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "504490a138d5615cb389c4e6ab42d4971552bbad"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/cdklabs/cdk-watchful",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "89f1eb6a6eda3a027b17145b00a3f10a1338139c"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/ch-robinson/dotnet-avro",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "5b462268a4c3c76a88618af722b9171426afca34"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/clash-verge-rev/clash-verge-rev",
+   "items": 1,
+   "redistributable": 0,
+   "licences": {
+    "GPL-3.0": 1
+   },
+   "revisions": [
+    "b21bad334b964d85cae87bff4bd7b653b858c324"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/communitytoolkit/maui",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "79ad2102c20fa4e3a9135747d181ec89635b57ac"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/cosmos/ibc-go",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "4af8aa6a0c08d3a4d85b6fe3e96e5bbbde4078ae"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/dbt-labs/dbt-adapters",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "818a81ab04aef3768fe7bce4ddb50a033e110f18"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/elastic/apm-agent-java",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "775980a4618e9c43d5a7a4251ed0a467c994ee10"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/elastio/bon",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "814078adff54c640550ae87994758d5973d50fde"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/facebook/flow",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "99ef8b04ea10e4ba26c8a6f1114de610d07ca25c"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/firedrakeproject/firedrake",
+   "items": 1,
+   "redistributable": 0,
+   "licences": {
+    "LGPL-3.0": 1
+   },
+   "revisions": [
+    "285ed4c20867259fa42e65a9d740d4570402cf24"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/freenet/freenet-core",
+   "items": 1,
+   "redistributable": 0,
+   "licences": {
+    "AGPL-3.0": 1
+   },
+   "revisions": [
+    "528f2ee67214dc3d7aef56cc7a28641b89441876"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/genomehubs/blobtoolkit",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "7d3820f23aaa4c5ed7d7d9eaecf0f16a80344b97"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/gorilla-devs/GDLauncher-Carbon",
+   "items": 1,
+   "redistributable": 0,
+   "licences": {
+    "GPL-2.0": 1
+   },
+   "revisions": [
+    "7e802776b106c6c664c59554d9456cdeb0400337"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/gsantner/markor",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "ea066b6ac90328a73e7bc1c19078663c66208ef4"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/hetznercloud/csi-driver",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "84e176940180d6e75f7072d15616b3b75075cf5a"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/hpyproject/hpy",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "c75638412df3960a693e1908e059c19405ccdb38"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/intel/compile-time-init-build",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "27c99ad921716b2095387f125810aa39845311cd"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/jhumanj/opnform",
+   "items": 1,
+   "redistributable": 0,
+   "licences": {
+    "AGPL-3.0": 1
+   },
+   "revisions": [
+    "ce91534a6c7fb5e8dbaa1c8a72e69e127baf3310"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/jrprice/oclgrind",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "BSD-3-Clause": 1
+   },
+   "revisions": [
+    "5597a379b4f7d74c4af5532260df0366c277259f"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/korlibs/korge",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "312b81af8beeac28ae3158da9afbdbb4e4001936"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/kyverno/kyverno",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "bed48c3821b54e56a8c533eff45145d7e059ef3a"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/lightgbm-org/LightGBM",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "ee30b8aabdd17bd52275e19f0a5c97be033d523c"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/loxilb-io/loxilb",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "635890d71d66728db934b0ab46d4c43d0fb94d2a"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/microsoft/promptflow",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "148108106cec45b78cd1cafa21c3169ef2475efe"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/mlocati/docker-php-extension-installer",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "ac5e9ab917dca32b4b2a70d7b47e226db7f44e7b"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/mun-lang/mun",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "058072c9efaee9508deac2530c076586c6575511"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/neuralensemble/elephant",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "BSD-3-Clause": 1
+   },
+   "revisions": [
+    "db5a5f033caa83770c4747cb12de246806e0d227"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/newfuture/ddns",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "78a81b9f3b12b4ccac4d3395c376d679a2a0c6cf"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/nextcloud/circles",
+   "items": 1,
+   "redistributable": 0,
+   "licences": {
+    "AGPL-3.0": 1
+   },
+   "revisions": [
+    "800be22d458006c6ec774e02d7b20f58b429f455"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/nuclia/nucliadb",
+   "items": 1,
+   "redistributable": 0,
+   "licences": {
+    "AGPL-3.0": 1
+   },
+   "revisions": [
+    "b8740dbb2d33949439d88149add6c436a92fd220"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/okigan/awscurl",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "a07acb98a267785e2bf032217100d835cfa0f6be"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/open-telemetry/opentelemetry-js-contrib",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "43862624e2d1f068dc679cf30a1bdc94bc329810"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/opensearch-project/ml-commons",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "05d5f81c5b10abf309581e8cd5fbfabf05ae739e"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/openwrt/openwrt",
+   "items": 1,
+   "redistributable": 0,
+   "licences": {
+    "GPL-2.0": 1
+   },
+   "revisions": [
+    "eecc6e48117be26c2eefd9257cceb9d9b1e842f2"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/opsmill/infrahub",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "f5cf36ce554124bd1246ae795d94931c57fa6c9a"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/oxy-hq/oxy",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "cc79d76d1846e6feb328c0603739adfc359d6990"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/paulmarisoumary/discord-bot",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "fecbc7a64a55b19e53a65e8e367c0d64cd2ff8d3"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/pocl/pocl",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "6d21f30da224fb5a651308c480dc0e59f8155b5f"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/protonemedia/laravel-splade",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "7fab8a2d88fd179791447cab87e53180845368a3"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/pyvista/pyvista",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "7959cb49138baf5a4933a681da33d69c60c20e57"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/quarkslab/quokka",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "78bf4f0e863b7b7c579091097cfa430840a4f642"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/realm/realm-dotnet",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "270174dcbe285334efa8eb5fdd28efb5e4277cdf"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/sanity-io/sanity-astro",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "46d666194bc33f9a1532820d97ad85a73404d542"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/scala-steward-org/scala-steward",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "bb339ac03dade4b106707814704303b8e171257e"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/shafthq/shaft_engine",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "3b2eae51248d2cf58146a64c48265259ee077a0a"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/smithy-lang/smithy-rs",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "4a05398254802681b6f05389186b3c8f37083b0b"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/squat/kilo",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "5999c610c0c082e2113c900d2e1546605be23a7d"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/srid/haskell-flake",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "7a6e2add3dca31aac5437de0f5a304fa477acd88"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/stashapp/stash-box",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "0f9defdd3113d794d1157adb681e3184111aa356"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/vahidn/itextsharp.lgplv2.core",
+   "items": 1,
+   "redistributable": 0,
+   "licences": {
+    "LGPL-2.1": 1
+   },
+   "revisions": [
+    "bc82a2fe388a02d2eea504d597549373eef1fe21"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/worldcoin/orb-software",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "148e8d0e1a84f079a26d040f109c51d186e83148"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/wukongdaily/AutoBuildImmortalWrt",
+   "items": 1,
+   "redistributable": 0,
+   "licences": {
+    "GPL-3.0": 1
+   },
+   "revisions": [
+    "9b5150dffa21ba0f2a878949ace4f41c64d87264"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/yamada-ui/yamada-ui",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "eedfa05684a8c826bb7823e12b8e30a6ea3b2f2e"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/z3prover/z3",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "a00ac9be84dd91d7d32cb267415a2469f65b2b95"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/zilliztech/milvus-backup",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "3ff9df132c581e4a56782df149a919909ce06bbb"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "origin": "github.com/zuplo/zudoku",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "61dd2e04a22cf438c74c86875272822dc110b354"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "gitlab-ci",
+   "cluster": "orchestration",
+   "origin": "gitlab.com/gitlab-org/gitlab",
+   "items": 14,
+   "redistributable": 14,
+   "licences": {
+    "MIT": 14
+   },
+   "revisions": [
+    "a1ef5ed1e7fd72e58911cf4338742d42c8e0ed9b",
+    "a6c8ade79f3c34758c98df62fa93fd6bf7b4b1cb"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 2,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "gitlab-ci",
+   "cluster": "orchestration",
+   "origin": "gitlab.freedesktop.org",
+   "items": 2,
+   "redistributable": 0,
+   "licences": {
+    "GPL-2.0-or-later": 1,
+    "unknown": 1
+   },
+   "revisions": [
+    "ed1f38cd449b32e935d994eed61600230cf4004b",
+    "c2188da5409b8dcf574480365202f25562856a8d"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 2,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "gitlab-ci",
+   "cluster": "orchestration",
+   "origin": "gitlab.com/AOMediaCodec/SVT-AV1",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "BSD-3-Clause-Clear": 1
+   },
+   "revisions": [
+    "1394731134e0ca891e11db3cd98144d1aa9a7b72"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "gitlab-ci",
+   "cluster": "orchestration",
+   "origin": "gitlab.com/OpenMW/openmw",
+   "items": 1,
+   "redistributable": 0,
+   "licences": {
+    "GPL-3.0-or-later": 1
+   },
+   "revisions": [
+    "71fc0a4a2904ed9c315050194f51857ed598a8d1"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "gitlab-ci",
+   "cluster": "orchestration",
+   "origin": "gitlab.com/baserow/baserow",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "68aec3cbee2f0373f7d98426fd87fbb0045bf93c"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "gitlab-ci",
+   "cluster": "orchestration",
+   "origin": "gitlab.com/crafty-controller/crafty-4",
+   "items": 1,
+   "redistributable": 0,
+   "licences": {
+    "GPL-3.0-or-later": 1
+   },
+   "revisions": [
+    "fe65b372a4388552e9f4a1fe54251b2321f042fa"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "gitlab-ci",
+   "cluster": "orchestration",
+   "origin": "gitlab.com/dependabot-gitlab/dependabot",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "e1b6bd11e143ebe5bcf9f2f3c426568e96ea4588"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "gitlab-ci",
+   "cluster": "orchestration",
+   "origin": "gitlab.com/duplicity/duplicity",
+   "items": 1,
+   "redistributable": 0,
+   "licences": {
+    "GPL-2.0-or-later": 1
+   },
+   "revisions": [
+    "2c0e77492112cb4d3a8cb913171e43c62e335050"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "gitlab-ci",
+   "cluster": "orchestration",
+   "origin": "gitlab.com/gitlab-com/runbooks",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "6f7f29a5ed7557a2f2523787b17575cc77c38a01"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "gitlab-ci",
+   "cluster": "orchestration",
+   "origin": "gitlab.com/gitlab-org/charts",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "79ad585a08a1ddf560b63b3b5f1e85e3b0b366da"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "gitlab-ci",
+   "cluster": "orchestration",
+   "origin": "gitlab.com/gitlab-org/cli",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "4d447cc6c19858928884626d802c8f7b7c5f799e"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "gitlab-ci",
+   "cluster": "orchestration",
+   "origin": "gitlab.com/gitlab-org/gitaly",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "5379ceec30992954223861980389778af444651f"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "gitlab-ci",
+   "cluster": "orchestration",
+   "origin": "gitlab.com/gitlab-org/gitlab-development-kit",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "bf97fb3327781ab7dc474f6c3459029f4cdf1328"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "gitlab-ci",
+   "cluster": "orchestration",
+   "origin": "gitlab.com/gitlab-org/gitlab-environment-toolkit",
+   "items": 1,
+   "redistributable": 0,
+   "licences": {
+    "LicenseRef-gitlab-detected-other": 1
+   },
+   "revisions": [
+    "28a9290c64892b0e7293d58b67eba2ff36d97cc9"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "gitlab-ci",
+   "cluster": "orchestration",
+   "origin": "gitlab.com/gitlab-org/gitlab-runner",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "29703ea18f7a7c39ae7aaa66939e8338c966d3b6"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "gitlab-ci",
+   "cluster": "orchestration",
+   "origin": "gitlab.com/gitlab-org/gitlab-ui",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "8660f9fec8cb516908ea705c6a91d21c74895564"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "gitlab-ci",
+   "cluster": "orchestration",
+   "origin": "gitlab.com/gitlab-org/omnibus-gitlab",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "30cace23dc197fd06250c324fe95892b5bcb55c1"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "gitlab-ci",
+   "cluster": "orchestration",
+   "origin": "gitlab.com/graphviz/graphviz",
+   "items": 1,
+   "redistributable": 0,
+   "licences": {
+    "EPL-2.0": 1
+   },
+   "revisions": [
+    "2954e36da96d21884a643b54a2fd7d9eb76e9e6a"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "gitlab-ci",
+   "cluster": "orchestration",
+   "origin": "gitlab.com/libeigen/eigen",
+   "items": 1,
+   "redistributable": 0,
+   "licences": {
+    "MPL-2.0": 1
+   },
+   "revisions": [
+    "9338bfc900e2fba9be506738cda23ee0d03b488c"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "gitlab-ci",
+   "cluster": "orchestration",
+   "origin": "gitlab.com/libvirt/libvirt",
+   "items": 1,
+   "redistributable": 0,
+   "licences": {
+    "GPL-2.0-or-later": 1
+   },
+   "revisions": [
+    "1bb978470e912e58b9e3ae89c4dbd14f143cfcd7"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "gitlab-ci",
+   "cluster": "orchestration",
+   "origin": "gitlab.com/nvidia/container-images",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "BSD-3-Clause": 1
+   },
+   "revisions": [
+    "209a790aaaa17c05137379c34a533e18d27e3cd9"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "gitlab-ci",
+   "cluster": "orchestration",
+   "origin": "gitlab.com/postgres-ai/database-lab",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "d279a1d6d7c0b48e06a968b5603b686dbc28f140"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "gitlab-ci",
+   "cluster": "orchestration",
+   "origin": "gitlab.com/qemu-project/qemu",
+   "items": 1,
+   "redistributable": 0,
+   "licences": {
+    "GPL-2.0-or-later": 1
+   },
+   "revisions": [
+    "3377670ee96b5a68361016680a95b9013709d4b7"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "gitlab-ci",
+   "cluster": "orchestration",
+   "origin": "gitlab.com/tezos/tezos",
+   "items": 1,
+   "redistributable": 0,
+   "licences": {
+    "unknown": 1
+   },
+   "revisions": [
+    "7788ce534d8243bb9761b013d65ebb36b3f463f8"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "gitlab-ci",
+   "cluster": "orchestration",
+   "origin": "gitlab.com/wireshark/wireshark",
+   "items": 1,
+   "redistributable": 0,
+   "licences": {
+    "GPL-2.0-or-later": 1
+   },
+   "revisions": [
+    "4cf03d0ab38e108c9de7f2a3bda858dbec04ee07"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "gitlab-ci",
+   "cluster": "orchestration",
+   "origin": "gitlab.gnome.org",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "6cec2d131e86a8a1c7453919488a4274f2582d7c"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "gitlab-ci",
+   "cluster": "orchestration",
+   "origin": "invent.kde.org",
+   "items": 1,
+   "redistributable": 0,
+   "licences": {
+    "GPL-3.0-only": 1
+   },
+   "revisions": [
+    "c7b05604b38f4cc038a89d4569ddbc5b5564397a"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "kubeflow",
+   "cluster": "orchestration",
+   "origin": "github.com/kubeflow/pipelines",
+   "items": 30,
+   "redistributable": 30,
+   "licences": {
+    "Apache-2.0": 30
+   },
+   "revisions": [
+    "96b3906a83bf58a440e5e2e5307c51769a185ffb"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "prefect",
+   "cluster": "orchestration",
+   "origin": "github.com/PrefectHQ/prefect",
+   "items": 15,
+   "redistributable": 15,
+   "licences": {
+    "Apache-2.0": 15
+   },
+   "revisions": [
+    "b73b09dc3699489c799dbb40ac5ed2da459e391c"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "prefect",
+   "cluster": "orchestration",
+   "origin": "github.com/PrefectHQ/prefect-recipes",
+   "items": 3,
+   "redistributable": 3,
+   "licences": {
+    "Apache-2.0": 3
+   },
+   "revisions": [
+    "ebc974b22430f8fceda609dd0d17663ab2008c01"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "tekton",
+   "cluster": "orchestration",
+   "origin": "github.com/tektoncd/pipeline",
+   "items": 20,
+   "redistributable": 20,
+   "licences": {
+    "Apache-2.0": 20
+   },
+   "revisions": [
+    "61e02215132ce7bef054ff7e1fb074f217716c1a"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "temporal",
+   "cluster": "orchestration",
+   "origin": "github.com/temporalio/samples-python",
+   "items": 18,
+   "redistributable": 18,
+   "licences": {
+    "MIT": 18
+   },
+   "revisions": [
+    "a8f66ddd98496916776819770e8e2da0b46f8a80"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "temporal",
+   "cluster": "orchestration",
+   "origin": "github.com/temporalio/samples-go",
+   "items": 16,
+   "redistributable": 16,
+   "licences": {
+    "Apache-2.0": 16
+   },
+   "revisions": [
+    "aaf79b672b32d9b7427a476a7488850cc11454b6"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/orchestration-ledger.md"
+  },
+  {
+   "platform": "cwl",
+   "cluster": "science",
+   "origin": "workflowhub.eu",
+   "items": 22,
+   "redistributable": 21,
+   "licences": {
+    "Apache-2.0": 14,
+    "MIT": 5,
+    "CC-BY-4.0": 1,
+    "BSD-3-Clause": 1,
+    "LicenseRef-WorkflowHub-other-open": 1
+   },
+   "revisions": [
+    "WorkflowHub workflow 107 version 1; RO-Crate download",
+    "f6ad72e6aadbdb831921f3af81cd104ee2f1cd3a",
+    "7b935a043840cccd92d7f02eaa89c67f85db6a54",
+    "WorkflowHub workflow 1868 version 2; RO-Crate download",
+    "WorkflowHub workflow 2013 version 1; RO-Crate download"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 22,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "cwl",
+   "cluster": "science",
+   "origin": "github.com/Barski-lab/workflows",
+   "items": 4,
+   "redistributable": 0,
+   "licences": {
+    "unknown": 4
+   },
+   "revisions": [
+    "4723ce567089dc9ee51e067b813c5b527a3da16a"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "cwl",
+   "cluster": "science",
+   "origin": "github.com/ncbi/pgap",
+   "items": 4,
+   "redistributable": 4,
+   "licences": {
+    "LicenseRef-US-Government-Public-Domain": 4
+   },
+   "revisions": [
+    "2a81fcde75ca7665814c8de2210c7bc3121a08a3"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "cwl",
+   "cluster": "science",
+   "origin": "github.com/EBI-Metagenomics/pipeline-v5",
+   "items": 3,
+   "redistributable": 3,
+   "licences": {
+    "Apache-2.0": 3
+   },
+   "revisions": [
+    "fff6fa392370b56e1fe7c374167ba73df3018775"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "cwl",
+   "cluster": "science",
+   "origin": "github.com/kids-first/kf-alignment-workflow",
+   "items": 3,
+   "redistributable": 3,
+   "licences": {
+    "Apache-2.0": 3
+   },
+   "revisions": [
+    "43d7b79b07b8948c879b9bf97aeec461c79492d2"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "cwl",
+   "cluster": "science",
+   "origin": "github.com/kids-first/kf-germline-workflow",
+   "items": 3,
+   "redistributable": 0,
+   "licences": {
+    "unknown": 3
+   },
+   "revisions": [
+    "66a5324600596ab8c6c8474a52b5944011dd923f"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "cwl",
+   "cluster": "science",
+   "origin": "github.com/mskcc/ACCESS-Pipeline",
+   "items": 2,
+   "redistributable": 2,
+   "licences": {
+    "MIT": 2
+   },
+   "revisions": [
+    "b0f226a9ac5152f3afe0d38c8cd54aa25b8b01cf"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "cwl",
+   "cluster": "science",
+   "origin": "github.com/nci-gdc/gdc-dnaseq-cwl",
+   "items": 2,
+   "redistributable": 2,
+   "licences": {
+    "Apache-2.0": 2
+   },
+   "revisions": [
+    "86f949778822efa7d95a1b2580bf4c7b5809a0bd"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "cwl",
+   "cluster": "science",
+   "origin": "github.com/common-workflow-library/bio-cwl-tools",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "810495363e06f80529633389ec25f8bb6b961844"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "cwl",
+   "cluster": "science",
+   "origin": "github.com/kids-first/kf-somatic-workflow",
+   "items": 1,
+   "redistributable": 0,
+   "licences": {
+    "unknown": 1
+   },
+   "revisions": [
+    "41ac01945eacf95058c8ef6aee3a9ed94beb457c"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "galaxy",
+   "cluster": "science",
+   "origin": "github.com/galaxyproject/iwc",
+   "items": 35,
+   "redistributable": 31,
+   "licences": {
+    "MIT": 17,
+    "CC-BY-4.0": 11,
+    "Apache-2.0": 3,
+    "GPL-3.0-or-later": 2,
+    "unknown": 1,
+    "AGPL-3.0-or-later": 1
+   },
+   "revisions": [
+    "fc190a435262bb61ba29f316e987aa492eb5d18b"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "galaxy",
+   "cluster": "science",
+   "origin": "workflowhub.eu",
+   "items": 25,
+   "redistributable": 18,
+   "licences": {
+    "MIT": 9,
+    "CC-BY-4.0": 7,
+    "GPL-3.0": 4,
+    "CC-BY-NC-4.0": 2,
+    "Artistic-2.0": 1,
+    "Apache-2.0": 1,
+    "LicenseRef-WorkflowHub-other-open": 1
+   },
+   "revisions": [
+    "WorkflowHub workflow 1103 version 3; RO-Crate download",
+    "WorkflowHub workflow 1104 version 2; RO-Crate download",
+    "WorkflowHub workflow 1189 version 2; RO-Crate download",
+    "WorkflowHub workflow 1356 version 1; RO-Crate download",
+    "WorkflowHub workflow 1465 version 1; RO-Crate download"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 25,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "nextflow",
+   "cluster": "science",
+   "origin": "workflowhub.eu",
+   "items": 25,
+   "redistributable": 23,
+   "licences": {
+    "MIT": 16,
+    "Apache-2.0": 5,
+    "CC-BY-4.0": 2,
+    "GPL-3.0": 1,
+    "GPL-3.0-or-later": 1
+   },
+   "revisions": [
+    "81c1fc9a0688f6696e02289ca3fcd9cbcf6aeb86",
+    "690e56b3d349ee32754c9cc1cfc5474308f682ee",
+    "WorkflowHub workflow 106 version 3; RO-Crate download",
+    "WorkflowHub workflow 140 version 1; RO-Crate download",
+    "25ed63c014cfc79a885456f90621b55efd52d440"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 25,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "nf-core",
+   "cluster": "science",
+   "origin": "nf-co.re",
+   "items": 72,
+   "redistributable": 72,
+   "licences": {
+    "MIT": 72
+   },
+   "revisions": [
+    "8bc3e567d0bb3a4c47ead15a8f42e764580f76dc",
+    "2723d4c298d48321594920d0324697e14d73ee94",
+    "1a1dbe52ffbd82256c941a032b0e22abbd925b8a",
+    "61b9413bc0531a79190806fde34538fdfbbe15f6",
+    "20b66e785a822028eaa125583aad0747d55bba61"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 72,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "snakemake",
+   "cluster": "science",
+   "origin": "workflowhub.eu",
+   "items": 11,
+   "redistributable": 6,
+   "licences": {
+    "MIT": 4,
+    "GPL-3.0": 4,
+    "CC-BY-4.0": 2,
+    "AGPL-3.0": 1
+   },
+   "revisions": [
+    "ad88ea0bbcb01a732835f4dff641e929e5a3533f",
+    "83e496ba1ee66e8804d67c78a977d60790cca642",
+    "d5a96345915025fad253757a263c0d56c41be6e5",
+    "98a6cafeda7594305a4fc3b388d0f08afd57d61a",
+    "aac8d955ebde0e4bd90fa6a9f9f99021143f3c94"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 11,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "snakemake",
+   "cluster": "science",
+   "origin": "github.com/GuttmanLab/chipdip-pipeline",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "a5b0ddd7b7f2c2accc3980aa5481457fb75485db"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "snakemake",
+   "cluster": "science",
+   "origin": "github.com/IKIM-Essen/RiboSnake",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "453e8c885b534b372ed1f22da677bf1347e1d955"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "snakemake",
+   "cluster": "science",
+   "origin": "github.com/IKIM-Essen/uncovar",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "BSD-2-Clause": 1
+   },
+   "revisions": [
+    "17b4f32f25709a294f3aed98c37c00b839977e82"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "snakemake",
+   "cluster": "science",
+   "origin": "github.com/MPUSP/snakemake-crispr-guides",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "8e6116a7eca3d8961510ac8c8522f86dae904a13"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "snakemake",
+   "cluster": "science",
+   "origin": "github.com/NCI-CGR/TriosCompass_v2",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "b6733d99f86aa2ec938ffc542bda033950472322"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "snakemake",
+   "cluster": "science",
+   "origin": "github.com/SarahSaadain/pastForward",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "987da084aa80670dd352ee0d64817fc452b286b0"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "snakemake",
+   "cluster": "science",
+   "origin": "github.com/SchlossLab/mikropml-snakemake-workflow",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "7159f18df561df58bef468f17f4ef886ec4be68d"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "snakemake",
+   "cluster": "science",
+   "origin": "github.com/akcorut/kGWASflow",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "27654c8398249a5581c1463b2036211cb3fdbc0d"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "snakemake",
+   "cluster": "science",
+   "origin": "github.com/cbg-ethz/V-pipe",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "7013890976e7e8a719ec369bfffef8ddb2963e14"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "snakemake",
+   "cluster": "science",
+   "origin": "github.com/daspacio9/pooledpremiumpcrpipeline2",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "cc7966138bf74fd72643dfffb7d6123890302d68"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "snakemake",
+   "cluster": "science",
+   "origin": "github.com/epigen/dea_limma",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "70fe01d1e56ec9223b542dfe1133fb28cc30202b"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "snakemake",
+   "cluster": "science",
+   "origin": "github.com/epigen/rnaseq_pipeline",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "df795ef403ff3dd1d666fa4a5f795ce9f9457b61"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "snakemake",
+   "cluster": "science",
+   "origin": "github.com/fischuu/Snakebite-Holoruminant-MetaG",
+   "items": 1,
+   "redistributable": 0,
+   "licences": {
+    "unknown": 1
+   },
+   "revisions": [
+    "cfd990e0a891679557091da569873f0a353b1b6e"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "snakemake",
+   "cluster": "science",
+   "origin": "github.com/friendsofstrandseq/mosaicatcher-pipeline",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "2289f7cc8ef20ef2914bc1381a03b0367b7fe445"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "snakemake",
+   "cluster": "science",
+   "origin": "github.com/khanlab/SPIMprep",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "85f518d103bcc07db253e6e1e90b7417f5cf2047"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "snakemake",
+   "cluster": "science",
+   "origin": "github.com/kircherlab/MPRAsnakeflow",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "72daedcf15a0aeb28a07c2a1e02625279cb16c09"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "snakemake",
+   "cluster": "science",
+   "origin": "github.com/magwenelab/WeavePop",
+   "items": 1,
+   "redistributable": 0,
+   "licences": {
+    "GPL-3.0": 1
+   },
+   "revisions": [
+    "b04735d515142e6ebbe4e90824ae6a3187bf23c2"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "snakemake",
+   "cluster": "science",
+   "origin": "github.com/moiexpositoalonsolab/grenepipe",
+   "items": 1,
+   "redistributable": 0,
+   "licences": {
+    "GPL-3.0": 1
+   },
+   "revisions": [
+    "53912b0749f90c7c29ecde2855657318e1269020"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "snakemake",
+   "cluster": "science",
+   "origin": "github.com/niekwit/cut_and_run",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "dd734eeb0417984c44f6864058e62cbf63d227e9"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "snakemake",
+   "cluster": "science",
+   "origin": "github.com/niekwit/damid-seq",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "5e7a30822c6fe17bbd40af01a04734e3077f7499"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "snakemake",
+   "cluster": "science",
+   "origin": "github.com/nismod/open-gira",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "3acb87d7d7d2e4edb103c8348e189813ef8afe90"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "snakemake",
+   "cluster": "science",
+   "origin": "github.com/snakemake-workflows/dna-seq-gatk-variant-calling",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "cffa77a9634801152971448bd41d0687cf765723"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "snakemake",
+   "cluster": "science",
+   "origin": "github.com/snakemake-workflows/dna-seq-varlociraptor",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "a96a2abbe3ca95182c4b81f2a3efe5ddd34724e7"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "snakemake",
+   "cluster": "science",
+   "origin": "github.com/snakemake-workflows/rna-seq-kallisto-sleuth",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "46fb01a2d09f651ca195525d19016f5a334ff004"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "snakemake",
+   "cluster": "science",
+   "origin": "github.com/sneuensc/mapache",
+   "items": 1,
+   "redistributable": 0,
+   "licences": {
+    "GPL-3.0": 1
+   },
+   "revisions": [
+    "54c773df91c0184ffa44eed7e4cd141f4398b18c"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "snakemake",
+   "cluster": "science",
+   "origin": "github.com/usnistgov/defrabb",
+   "items": 1,
+   "redistributable": 0,
+   "licences": {
+    "unknown": 1
+   },
+   "revisions": [
+    "d13873ee7b347c18b83d5849b0078b249fa9b7bc"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "snakemake",
+   "cluster": "science",
+   "origin": "github.com/ylab-hi/ScanNeo2",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "30d98b6869c71bc8bc3abc0f535d025ebfef1148"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "snakemake",
+   "cluster": "science",
+   "origin": "github.com/zavolanlab/mirflowz",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "10b78c8b9877f1f26724b74c30d100d70ffefe4d"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "snakemake",
+   "cluster": "science",
+   "origin": "github.com/zjnolen/PopGLen",
+   "items": 1,
+   "redistributable": 0,
+   "licences": {
+    "GPL-3.0": 1
+   },
+   "revisions": [
+    "1276acd74df911620c05c2f1d174b281c3bd3c41"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "wdl",
+   "cluster": "science",
+   "origin": "dockstore.org",
+   "items": 17,
+   "redistributable": 9,
+   "licences": {
+    "MIT": 5,
+    "unknown": 4,
+    "GPL-3.0": 3,
+    "BSD-3-Clause-Clear": 3,
+    "AGPL-3.0": 1,
+    "BSD-3-Clause": 1
+   },
+   "revisions": [
+    "Dockstore version main",
+    "Dockstore version master",
+    "Dockstore version giraffe-dv-dt-hprcy1"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 3,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "wdl",
+   "cluster": "science",
+   "origin": "github.com/broadinstitute/warp",
+   "items": 15,
+   "redistributable": 15,
+   "licences": {
+    "BSD-3-Clause": 15
+   },
+   "revisions": [
+    "aca5a01195186257063c3948a9ab645c95ec320d"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "wdl",
+   "cluster": "science",
+   "origin": "workflowhub.eu",
+   "items": 2,
+   "redistributable": 2,
+   "licences": {
+    "CC-BY-4.0": 2
+   },
+   "revisions": [
+    "09cc2139f309dc03093ed91c9f02dfdeebf986ae"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "wdl",
+   "cluster": "science",
+   "origin": "github.com/ENCODE-DCC/atac-seq-pipeline",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "47ba8dff9c332e24b48e767303e9fcac98589cf2"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "wdl",
+   "cluster": "science",
+   "origin": "github.com/ENCODE-DCC/chip-seq-pipeline2",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "26eeda81a0540dc793fc69b0c390d232ca7ca50a"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/science-ledger.md"
+  },
+  {
+   "platform": "apple-shortcuts",
+   "cluster": "consumer-creative",
+   "origin": "huggingface.co/datasets/openbmb/WorkflowLLM",
+   "items": 64,
+   "redistributable": 64,
+   "licences": {
+    "Apache-2.0": 64
+   },
+   "revisions": [
+    "d0de182c3f9abac5c4ded9ae2eadcd8155ee1435"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "apple-shortcuts",
+   "cluster": "consumer-creative",
+   "origin": "www.icloud.com",
+   "items": 15,
+   "redistributable": 0,
+   "licences": {
+    "unknown": 15
+   },
+   "revisions": [
+    "iCloud record 0f8a1267edde48efa50de6a35a8bcdbd recordChangeTag lhytr6c6 modifie…",
+    "iCloud record 4fb3ce50d8ca4495977a809623a30e46 recordChangeTag kjy7vwfb modifie…",
+    "iCloud record 5cbc20665bb94f1b9c0dc9c2be03b924 recordChangeTag lhytp1s8 modifie…",
+    "iCloud record 6ba47bd9ab264078895bb556c5b30204 recordChangeTag jske4z4t modifie…",
+    "iCloud record 7ec28ab7f447419c8f492fc3b7f6df1e recordChangeTag lsgeu4nx modifie…"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 15,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "comfyui",
+   "cluster": "consumer-creative",
+   "origin": "github.com/Comfy-Org/workflow_templates",
+   "items": 15,
+   "redistributable": 15,
+   "licences": {
+    "MIT": 15
+   },
+   "revisions": [
+    "b4119d0fcecf78a376e087305ec4f485c66a03f5"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "comfyui",
+   "cluster": "consumer-creative",
+   "origin": "github.com/jakechai/ComfyUI-JakeUpgrade",
+   "items": 7,
+   "redistributable": 0,
+   "licences": {
+    "GPL-3.0": 7
+   },
+   "revisions": [
+    "a3bd9e260cae465464c57c8b6d6a9a50ceb3856b"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "comfyui",
+   "cluster": "consumer-creative",
+   "origin": "huggingface.co/datasets/Cseti/ComfyUI-Workflows",
+   "items": 6,
+   "redistributable": 0,
+   "licences": {
+    "unknown": 6
+   },
+   "revisions": [
+    "c36360bcb6222df315b5c3c1ed8bd60c6967bc5a"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "comfyui",
+   "cluster": "consumer-creative",
+   "origin": "github.com/WASasquatch/was-node-suite-comfyui",
+   "items": 6,
+   "redistributable": 6,
+   "licences": {
+    "MIT": 6
+   },
+   "revisions": [
+    "c75b26ceb4a1e1bcebf4659894ed88c64a23426a"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "comfyui",
+   "cluster": "consumer-creative",
+   "origin": "github.com/kijai/ComfyUI-WanVideoWrapper",
+   "items": 6,
+   "redistributable": 6,
+   "licences": {
+    "Apache-2.0": 6
+   },
+   "revisions": [
+    "088128b224242e110d3906c6750e9a3a348a659b"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "comfyui",
+   "cluster": "consumer-creative",
+   "origin": "github.com/TTPlanetPig/Comfyui_TTP_Toolset",
+   "items": 5,
+   "redistributable": 5,
+   "licences": {
+    "MIT": 5
+   },
+   "revisions": [
+    "c8889e40e90e293226cc6810c7d27b9c17300da6"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "comfyui",
+   "cluster": "consumer-creative",
+   "origin": "github.com/scraed/LanPaint",
+   "items": 5,
+   "redistributable": 0,
+   "licences": {
+    "GPL-3.0": 5
+   },
+   "revisions": [
+    "2d7912f9a5efe5ece8de334c7ca18317b8288c39"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "comfyui",
+   "cluster": "consumer-creative",
+   "origin": "github.com/shadowcz007/comfyui-mixlab-nodes",
+   "items": 4,
+   "redistributable": 4,
+   "licences": {
+    "MIT": 4
+   },
+   "revisions": [
+    "c5392aa23762a440834c056c3e22cf99ccf52703"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "comfyui",
+   "cluster": "consumer-creative",
+   "origin": "github.com/xxyQwQ/ComfyBench",
+   "items": 4,
+   "redistributable": 0,
+   "licences": {
+    "unknown": 4
+   },
+   "revisions": [
+    "4318ca5bc95a76fab44c2fa0c413b701e9b18b98"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "comfyui",
+   "cluster": "consumer-creative",
+   "origin": "huggingface.co/datasets/NerdyRodent/NR-Flux-ComfyUI-Workflows",
+   "items": 3,
+   "redistributable": 3,
+   "licences": {
+    "MIT": 3
+   },
+   "revisions": [
+    "16d5ff0700d77d00aa8864249e3580bce97636ce"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "comfyui",
+   "cluster": "consumer-creative",
+   "origin": "github.com/chflame163/ComfyUI_LayerStyle",
+   "items": 2,
+   "redistributable": 2,
+   "licences": {
+    "MIT": 2
+   },
+   "revisions": [
+    "a3459a7638c4c2839878089c105c73af0eb2edd2"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "comfyui",
+   "cluster": "consumer-creative",
+   "origin": "github.com/ltdrdata/ComfyUI-Impact-Pack",
+   "items": 2,
+   "redistributable": 0,
+   "licences": {
+    "GPL-3.0": 2
+   },
+   "revisions": [
+    "429d0159ad429e64d2b3916e6e7be9c22d025c3c"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "comfyui",
+   "cluster": "consumer-creative",
+   "origin": "github.com/Deno2026/comfyui-deno-custom-nodes",
+   "items": 1,
+   "redistributable": 0,
+   "licences": {
+    "GPL-3.0": 1
+   },
+   "revisions": [
+    "5dc0a624b41a68b98f39d3abb321322ee7f78274"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "comfyui",
+   "cluster": "consumer-creative",
+   "origin": "github.com/Jonseed/ComfyUI-Detail-Daemon",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "3394e44afea04ed0188fb37b21f0d9952469766b"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "comfyui",
+   "cluster": "consumer-creative",
+   "origin": "huggingface.co/datasets/Old-Fisherman/ComfyUI_Workflows",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "e4124433cd98b681d104aa23af53f8152f2d9940"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "comfyui",
+   "cluster": "consumer-creative",
+   "origin": "github.com/alexopus/ComfyUI-Image-Saver",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "dbf94571699d6750182821cfe7d90c4e8840257d"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "comfyui",
+   "cluster": "consumer-creative",
+   "origin": "github.com/christian-byrne/audio-separation-nodes-comfyui",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "ac339561973f0c1e56db2f9d40f11b0fddda6763"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "comfyui",
+   "cluster": "consumer-creative",
+   "origin": "github.com/cubiq/ComfyUI_IPAdapter_plus",
+   "items": 1,
+   "redistributable": 0,
+   "licences": {
+    "GPL-3.0": 1
+   },
+   "revisions": [
+    "a0f451a5113cf9becb0847b92884cb10cbdec0ef"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "comfyui",
+   "cluster": "consumer-creative",
+   "origin": "github.com/kijai/ComfyUI-WanAnimatePreprocess",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "0e0b6a2a555625acf4d4aefb780e27d06937132f"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "comfyui",
+   "cluster": "consumer-creative",
+   "origin": "github.com/welltop-cn/ComfyUI-TeaCache",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "91dff8e31684ca70a5fda309611484402d8fa192"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "home-assistant",
+   "cluster": "consumer-creative",
+   "origin": "github.com/jazzyisj/home-assistant-config",
+   "items": 15,
+   "redistributable": 0,
+   "licences": {
+    "unknown": 15
+   },
+   "revisions": [
+    "879750e017878080923eb4d7b6ea760d0fe8a4cc"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "home-assistant",
+   "cluster": "consumer-creative",
+   "origin": "github.com/CCOSTAN/Home-AssistantConfig",
+   "items": 13,
+   "redistributable": 13,
+   "licences": {
+    "MIT": 13
+   },
+   "revisions": [
+    "71ffa6120b8b649508c3ffe312f6d09792c7b37b"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "home-assistant",
+   "cluster": "consumer-creative",
+   "origin": "github.com/EPMatt/awesome-ha-blueprints",
+   "items": 12,
+   "redistributable": 0,
+   "licences": {
+    "GPL-3.0": 12
+   },
+   "revisions": [
+    "79b7c6b65a0d19de0863d588c600803cbc879a34"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "home-assistant",
+   "cluster": "consumer-creative",
+   "origin": "github.com/TheFes/HA-configuration",
+   "items": 11,
+   "redistributable": 0,
+   "licences": {
+    "unknown": 11
+   },
+   "revisions": [
+    "057c1548bb390624e1ad3983280ee3e8e5ef6f1c"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "home-assistant",
+   "cluster": "consumer-creative",
+   "origin": "gist.githubusercontent.com",
+   "items": 10,
+   "redistributable": 0,
+   "licences": {
+    "unknown": 10
+   },
+   "revisions": [
+    "forum post v21 updated 2026-02-09T21:45:56.922Z; sha256:c9abe15702cac1a0",
+    "forum post v4 updated 2022-11-03T23:50:58.045Z; sha256:2e3dd968f78ff051",
+    "forum post v201 updated 2026-08-12T09:53:33.152Z; sha256:eb378157e063d531",
+    "forum post v68 updated 2026-07-16T09:37:31.587Z; sha256:af46750608bb5703",
+    "forum post v51 updated 2026-07-16T09:50:14.253Z; sha256:978dc3226ac3746c"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 10,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "home-assistant",
+   "cluster": "consumer-creative",
+   "origin": "github.com/geekofweek/homeassistant",
+   "items": 10,
+   "redistributable": 0,
+   "licences": {
+    "unknown": 10
+   },
+   "revisions": [
+    "bc37548a39a783d5b967d04144d412261d4b3c52"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "home-assistant",
+   "cluster": "consumer-creative",
+   "origin": "github.com/dannytsang/homeassistant-config",
+   "items": 8,
+   "redistributable": 0,
+   "licences": {
+    "unknown": 8
+   },
+   "revisions": [
+    "89e71604772cc4bc0722d0a8af0582509834ecf3"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "home-assistant",
+   "cluster": "consumer-creative",
+   "origin": "github.com/basnijholt/home-assistant-config",
+   "items": 3,
+   "redistributable": 3,
+   "licences": {
+    "MIT": 3
+   },
+   "revisions": [
+    "3b7b439761c4be7b854278b6e6d094a668712595"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "home-assistant",
+   "cluster": "consumer-creative",
+   "origin": "github.com/home-assistant/home-assistant.io",
+   "items": 3,
+   "redistributable": 0,
+   "licences": {
+    "CC-BY-NC-SA-4.0": 3
+   },
+   "revisions": [
+    "be62035471100102de772b812ac90bf92f786dfc"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "home-assistant",
+   "cluster": "consumer-creative",
+   "origin": "github.com/Petro31/home-assistant-config",
+   "items": 2,
+   "redistributable": 0,
+   "licences": {
+    "unknown": 2
+   },
+   "revisions": [
+    "c29a6a013b5f3b13f96fd985acddc3c7971ae622"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "home-assistant",
+   "cluster": "consumer-creative",
+   "origin": "github.com/Burningstone91/smart-home-setup",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "c2f34cc8b8243bc6ce620b3f03e3e44ff28150ca"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "home-assistant",
+   "cluster": "consumer-creative",
+   "origin": "github.com/JamesMcCarthy79/Home-Assistant-Config",
+   "items": 1,
+   "redistributable": 0,
+   "licences": {
+    "unknown": 1
+   },
+   "revisions": [
+    "fdcd4180d34e77be08ef967f8bd41e90d23fd89d"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "home-assistant",
+   "cluster": "consumer-creative",
+   "origin": "github.com/SgtBatten/HA_blueprints",
+   "items": 1,
+   "redistributable": 0,
+   "licences": {
+    "unknown": 1
+   },
+   "revisions": [
+    "f003ea11ba96e262199ea130fe8f749605645a52"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "home-assistant",
+   "cluster": "consumer-creative",
+   "origin": "github.com/bachya/smart-home",
+   "items": 1,
+   "redistributable": 0,
+   "licences": {
+    "unknown": 1
+   },
+   "revisions": [
+    "879a7140d1d2af2b9d0196b722e0fef6b432e7e4"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "home-assistant",
+   "cluster": "consumer-creative",
+   "origin": "github.com/TheHolyRoger/THR_HA_Blueprints",
+   "items": 1,
+   "redistributable": 0,
+   "licences": {
+    "unknown": 1
+   },
+   "revisions": [
+    "3b8b258c98cc649364e33968be0712bd160d61c8"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "home-assistant",
+   "cluster": "consumer-creative",
+   "origin": "github.com/edwardtfn/HomeAssistant-Config",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "ae221dbf6324784d1671f0f9900e9e17e9ef4681"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "home-assistant",
+   "cluster": "consumer-creative",
+   "origin": "github.com/kschlichter/Home-Assistant-Inovelli-Effects-and-Colors",
+   "items": 1,
+   "redistributable": 0,
+   "licences": {
+    "unknown": 1
+   },
+   "revisions": [
+    "ea3ae964e3b594d9f57a6df1eff5f23454e82322"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "home-assistant",
+   "cluster": "consumer-creative",
+   "origin": "github.com/etiennec78/Home-Automation",
+   "items": 1,
+   "redistributable": 0,
+   "licences": {
+    "GPL-3.0": 1
+   },
+   "revisions": [
+    "0ccbf8bb92563f2a540e212dc1f4cb91260e68d2"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "home-assistant",
+   "cluster": "consumer-creative",
+   "origin": "github.com/danielpetrovic/home-assistant-config",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "5337fd4917513911cdb8f2c0ac2d7e80ae40b4d1"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "ifttt",
+   "cluster": "consumer-creative",
+   "origin": "ifttt.com",
+   "items": 25,
+   "redistributable": 0,
+   "licences": {
+    "ToS:https://ifttt.com/terms": 25
+   },
+   "revisions": [
+    "page fetched 2026-10-06; sha256:e8774777b8054265",
+    "page fetched 2026-10-06; sha256:27df7ce73ad1b9e3",
+    "page fetched 2026-10-06; sha256:dba3bfe947087edd",
+    "page fetched 2026-10-06; sha256:2923d99335c66584",
+    "page fetched 2026-10-06; sha256:33bd09ad899e5b18"
+   ],
+   "retrievedAt": [
+    "2026-10-06"
+   ],
+   "revisionCount": 25,
+   "ledger": "parts/consumer-creative-ledger.md"
+  }
+ ],
+ "rawData": {
+  "root": "/opt/corpus/",
+  "inGit": false,
+  "note": "every item records source.rawPath; raw copies stay outside git (each cluster <= 3 GB)"
+ }
+}

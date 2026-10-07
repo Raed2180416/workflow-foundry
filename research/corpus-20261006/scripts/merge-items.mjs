@@ -8,7 +8,8 @@
 //   1. parse each line; unparseable lines are dropped
 //   2. repair what can be repaired without guessing: strip keys outside ITEM-SCHEMA, percent-encode URLs,
 //      trim node summaries to 200 chars, drop dangling edges, de-duplicate identical edges, blank any
-//      non-written description of a non-redistributable item
+//      non-written description of a non-redistributable item, and apply one redistribution policy (copyleft,
+//      share-alike and non-commercial licences are not redistributable; their node summaries become type-level)
 //   3. recompute the graph-derived features (nodeCount, edgeCount, maxFanOut, humanSteps, effects, hasCode,
 //      hasModelCalls) and floor the source-derived ones (branching >= condition nodes, loops >= loop nodes,
 //      subworkflows >= subworkflow nodes); make async agree with wait nodes and trigger constructs
@@ -24,7 +25,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { validateItem, graphFeatures, parseVerdict, sortConstructs, CONSTRUCT_IDS, ITEM_KEYS, SOURCE_KEYS, NODE_KEYS, EDGE_KEYS,
-  FEATURE_KEYS, ASYNC } from './check-items.mjs';
+  FEATURE_KEYS, ASYNC, NON_REDISTRIBUTABLE_LICENCE } from './check-items.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const arg = (name, dflt) => { const i = process.argv.indexOf(name); return i >= 0 ? process.argv[i + 1] : dflt; };
@@ -35,7 +36,7 @@ const CLUSTER_ORDER = ['automation', 'orchestration', 'science', 'consumer-creat
 const sha256 = b => crypto.createHash('sha256').update(b).digest('hex');
 
 // ---------------------------------------------------------------- logging
-const log = { fixes: {}, drops: [], featureChanges: {}, verdict: { changed: 0, byCluster: {}, tokenMap: {} }, dedupe: { dropped: [], shapeTwinsKept: [] }, cycleArtifacts: [] };
+const log = { fixes: {}, drops: [], featureChanges: {}, verdict: { changed: 0, byCluster: {}, kindTransitions: {}, tokenMap: {} }, dedupe: { dropped: [], shapeTwinsKept: [] }, cycleArtifacts: [] };
 function fix(rule, id, detail) {
   const r = (log.fixes[rule] ??= { count: 0, examples: [] });
   r.count++;
@@ -227,6 +228,13 @@ function repair(item, cluster) {
     item.source.url = item.source.url.replace(URL_SAFE, ch => encodeURIComponent(ch));
     fix('url-percent-encoded', id);
   }
+  if (item.source.redistributable && NON_REDISTRIBUTABLE_LICENCE.test(item.source.license)) {
+    // consumer-creative treated GPL-3.0 as redistributable; the other clusters did not. Apply the conservative policy everywhere:
+    // keep URL, title, a written description, the derived graph with type-level summaries, and the features.
+    item.source.redistributable = false;
+    for (const n of item.graph.nodes) n.summary = String(n.type).slice(0, 80);
+    fix('copyleft-made-non-redistributable', id, item.source.license);
+  }
   if (!item.source.redistributable && item.description.text && item.description.provenance !== 'written') {
     item.description = { text: '', provenance: 'written' };
     fix('description-blanked-not-redistributable', id);
@@ -260,7 +268,9 @@ function recomputeFeatures(item, cluster, constructs) {
   for (const [t, a] of [['schedule-trigger', 'schedule'], ['webhook-trigger', 'webhook'], ['event-trigger', 'event'], ['poll-trigger', 'poll']])
     if (constructs.includes(t)) asy.add(a);
   next.async = [...asy].sort();
-  next.connectors = [...new Set(f.connectors.map(c => String(c).trim()).filter(Boolean))].sort();
+  const templated = f.connectors.filter(c => /\{[%{]/.test(String(c)));   // Jinja fragments mis-read as connector names
+  if (templated.length) fix('connector-template-fragment-dropped', item.id, templated.join(', ').slice(0, 80));
+  next.connectors = [...new Set(f.connectors.map(c => String(c).trim()).filter(c => c && !/\{[%{]/.test(c)))].sort();
   next.domains = [...new Set(f.domains.map(d => String(d).trim().toLowerCase()).filter(Boolean))];
   const ordered = {};
   for (const k of FEATURE_KEYS) ordered[k] = next[k];
@@ -309,10 +319,11 @@ for (const file of partFiles) {
     const { verdict, notes, constructs } = canonicalVerdict(item, cluster);
     item.ir = { verdict, notes };
     if (before !== verdict) { log.verdict.changed++; log.verdict.byCluster[cluster] = (log.verdict.byCluster[cluster] ?? 0) + 1; }
+
     recomputeFeatures(item, cluster, constructs);
     const errors = validateItem(item, { canonical: true });
     if (errors.length) { log.drops.push({ part: file, line: i + 1, id: item.id, reason: 'invalid-after-repair', detail: errors.map(e => `${e.rule}: ${e.msg}`).join('; ').slice(0, 400) }); return; }
-    kept.push({ item, cluster, part: file, line: i + 1 });
+    kept.push({ item, cluster, part: file, line: i + 1, before });
   });
 }
 
@@ -350,6 +361,11 @@ for (const members of groups.values()) {
 
 const final = kept.filter(k => !k.drop)
   .sort((a, b) => rank(a.part) - rank(b.part) || (a.item.id < b.item.id ? -1 : a.item.id > b.item.id ? 1 : 0));
+const kindOf = v => String(v).split(':')[0];
+for (const k of final) { // after de-duplication, so the counts describe items.jsonl
+  const tr = `${k.cluster}: ${kindOf(k.before)} -> ${kindOf(k.item.ir.verdict)}`;
+  log.verdict.kindTransitions[tr] = (log.verdict.kindTransitions[tr] ?? 0) + 1;
+}
 const body = final.map(k => JSON.stringify(k.item)).join('\n') + '\n';
 fs.writeFileSync(OUT, body);
 
