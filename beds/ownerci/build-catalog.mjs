@@ -12,7 +12,7 @@
 // + two hidden-only), running each combination and its near-miss variant once so that the CI
 // report and the controls rest on observed results. Mutants are trusted host-generated code; the
 // runner still isolates them like candidates. Nothing here runs at generate()/oracle() time.
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -25,8 +25,13 @@ import { sha256 } from '../lib/canonical.mjs';
 const argv = Object.fromEntries(process.argv.slice(2).map(a => a.replace(/^--/, '').split('=')));
 const CONCURRENCY = Number(argv.concurrency ?? 3);
 const ONLY = argv.modules ? argv.modules.split(',') : MODULE_IDS;
+// --reuse-mutants keeps the kept mutants (and their observed results) of the committed catalog and
+// rebuilds only the combinations of --difficulties (default 3,4,5). A full build gives the same
+// mutants (the runs are deterministic), so this is a shortcut, not a different catalog.
+const REUSE = 'reuse-mutants' in argv;
+const DIFFS = argv.difficulties ? argv.difficulties.split(',').map(Number) : [3, 4, 5];
 const OUT = path.join(FIXTURES, 'catalog.json');
-export const CATALOG_VERSION = 1;
+export const CATALOG_VERSION = 2; // 2: masked d3 pairs (AUDIT.md F5)
 const SLOW_MS = 15000;
 const TARGETS = { 3: 40, 4: 30, 5: 30 };
 // Operators allowed for a hidden-only (visible-silent) mutant: the mutated token must look
@@ -46,7 +51,14 @@ function silentEligible(m) {
   }
   return false;
 }
-// In a combination every visible-killed mutant must leave its own trace in the CI report (a
+// Difficulty 3 (catalog v2, AUDIT.md F5): MASKED pairs. Both mutants are visible-killed, alone
+// each fails exactly the same visible tests, and together they fail that same set, so fixing either
+// one alone turns no visible test green (a solver that fixes the first symptom and re-runs, or a
+// search that keeps any single edit that turns a test green, makes no progress). Their hidden
+// failing sets differ. Because one member may have no symptom of its own in the CI report, both
+// must be silent-eligible (the mutated token looks locally wrong to a careful reader).
+const sameVisible = (a, b) => a.visibleFailing.join('\u0001') === b.visibleFailing.join('\u0001');
+// In a combination at d4-d5 every visible-killed mutant must leave its own trace in the CI report (a
 // failing test the other visible mutants do not cause) and must not turn most of the suite red.
 const ownTrace = (m, others) => m.visibleFailing.some(n => others.every(o => !o.visibleFailing.includes(n)));
 const notMostlyRed = (m, total) => m.visibleFailing.length <= Math.max(1, Math.floor(total * 0.75));
@@ -202,13 +214,20 @@ async function buildCombos(id, built) {
   const visibleK = mutants.filter(m => m.visibleFailing.length && notMostlyRed(m, expected.visible.length));
   const silent = mutants.filter(m => !m.visibleFailing.length && m.silentEligible);
   const r = rng('ownerci-combos', id);
+  const maskedPairs = [];
+  for (let i = 0; i < visibleK.length; i++) for (let j = i + 1; j < visibleK.length; j++) {
+    const [a, b] = [visibleK[i], visibleK[j]];
+    if (a.silentEligible && b.silentEligible && sameVisible(a, b) && disjoint(a, b) && sig(a) !== sig(b)) maskedPairs.push([a, b]);
+  }
+  const maskedOrder = r.shuffle(maskedPairs);
+  let maskedNext = 0;
   const shapes = {
-    3: () => [r.pick(visibleK), r.pick(visibleK)],
+    3: () => maskedOrder[maskedNext++] ?? [null],
     4: () => [r.pick(visibleK), r.pick(visibleK), r.pick(silent)],
     5: () => [r.pick(visibleK), r.pick(silent), r.pick(silent)],
   };
   const combos = { 3: [], 4: [], 5: [] };
-  for (const d of [3, 4, 5]) {
+  for (const d of DIFFS) {
     if (!visibleK.length || (d >= 4 && silent.length < d - 3)) continue;
     const proposals = [], keys = new Set();
     for (let attempt = 0; attempt < 4000 && proposals.length < TARGETS[d] * 2; attempt++) {
@@ -219,7 +238,7 @@ async function buildCombos(id, built) {
         if (ms[i] === ms[j] || !disjoint(ms[i], ms[j]) || sig(ms[i]) === sig(ms[j])) ok = false;
       }
       const vis = ms.filter(m => m.visibleFailing.length);
-      if (ok && vis.length > 1 && !vis.every(m => ownTrace(m, vis.filter(o => o !== m)))) ok = false;
+      if (ok && d >= 4 && vis.length > 1 && !vis.every(m => ownTrace(m, vis.filter(o => o !== m)))) ok = false;
       if (!ok) continue;
       const key = ms.map(m => m.id).sort().join('+');
       if (keys.has(key)) continue;
@@ -229,6 +248,8 @@ async function buildCombos(id, built) {
       const src = applyEdits(original, ms.map(m => m.edit));
       const s = summarize(id, await runAsync(id, src), expected);
       if (!s.ok || !s.visibleFailing.length || s.visibleFailing.length === expected.visible.length || s.wallMs > SLOW_MS) return null;
+      // d3: the masking must hold in the combination itself (same failing set as each member)
+      if (d === 3 && !ms.every(m => sameVisible(m, s))) return null;
       const rest = ms.slice(1);
       let nearMiss;
       if (rest.length === 1) nearMiss = { visibleFailing: rest[0].visibleFailing, hiddenFailing: rest[0].hiddenFailing };
@@ -245,7 +266,7 @@ async function buildCombos(id, built) {
         if (v.ok === false || !v.hiddenFailing.length) return null;
         visibleOnlyFix = { visibleFailing: v.visibleFailing, hiddenFailing: v.hiddenFailing };
       }
-      return { mutants: ms.map(m => m.id), visibleFailing: s.visibleFailing, hiddenFailing: s.hiddenFailing, failures: s.failures, nearMiss, visibleOnlyFix };
+      return { mutants: ms.map(m => m.id), ...(d === 3 ? { masked: true } : {}), visibleFailing: s.visibleFailing, hiddenFailing: s.hiddenFailing, failures: s.failures, nearMiss, visibleOnlyFix };
     });
     combos[d] = validated.filter(Boolean).slice(0, TARGETS[d]).map((c, i) => ({ id: `${id}-d${d}-c${String(i + 1).padStart(2, '0')}`, module: id, ...c }));
     process.stderr.write(`${id}: d${d} ${combos[d].length} combos from ${proposals.length} proposals\n`);
@@ -253,7 +274,28 @@ async function buildCombos(id, built) {
   return combos;
 }
 
+async function reuseMain() {
+  const started = performance.now();
+  const catalog = JSON.parse(readFileSync(OUT, 'utf8'));
+  catalog.version = CATALOG_VERSION;
+  catalog.node = process.version;
+  for (const d of DIFFS) catalog.combos[d] = catalog.combos[d].filter(c => !ONLY.includes(c.module));
+  for (const id of ONLY) {
+    const info = catalog.modules[id];
+    const original = fixtureFiles(id)[MODULES[id].modulePath];
+    if (sha256(original) !== info.originalSha256) throw new Error(`${id}: catalog was built from a different module`);
+    const built = { mutants: catalog.mutants.filter(m => m.module === id), expected: { visible: info.visibleTests, hidden: info.hiddenTests }, original };
+    const combos = await buildCombos(id, built);
+    for (const d of DIFFS) catalog.combos[d].push(...combos[d]);
+  }
+  for (const d of DIFFS) catalog.combos[d].sort((a, b) => MODULE_IDS.indexOf(a.module) - MODULE_IDS.indexOf(b.module) || (a.id < b.id ? -1 : 1));
+  catalog.combosRebuiltSeconds = Math.round((performance.now() - started) / 1000);
+  writeFileSync(OUT, `${JSON.stringify(catalog)}\n`);
+  process.stderr.write(`rewrote combos d${DIFFS.join(',d')} in ${OUT}: d3 ${catalog.combos[3].length} d4 ${catalog.combos[4].length} d5 ${catalog.combos[5].length}\n`);
+}
+
 async function main() {
+  if (REUSE) return reuseMain();
   const started = performance.now();
   process.stderr.write(`sandbox: ${sandboxAvailable() ? 'unshare user+net namespace' : 'plain child process'}; concurrency ${CONCURRENCY}\n`);
   const catalog = { version: CATALOG_VERSION, generatedBy: 'beds/ownerci/build-catalog.mjs', node: process.version,

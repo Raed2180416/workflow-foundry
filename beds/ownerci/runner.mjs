@@ -144,6 +144,8 @@ function prepare(moduleId, moduleSource, { exportsSpec = null, includeHidden = t
 
 function collect(job, proc) {
   const out = { ok: false, sandbox: job.sandboxed ? 'unshare' : 'plain-child', exitStatus: proc.status ?? null, signal: proc.signal ?? null, tests: [], error: null };
+  // diagnostic only (candidate-controlled text, never parsed)
+  if (proc.status !== 0) out.stderrTail = String(proc.stderr ?? '').slice(-600);
   try {
     if (!existsSync(job.resultFile)) { out.error = `no reporter output (${proc.signal ? `killed by ${proc.signal}` : `exit ${proc.status}`}); stderr: ${String(proc.stderr ?? '').slice(-600)}`; return out; }
     const parsed = JSON.parse(readFileSync(job.resultFile, 'utf8'));

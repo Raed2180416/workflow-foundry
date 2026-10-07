@@ -212,7 +212,8 @@ export function evaluateSource(moduleId, src, run = runSync) {
   const expectedV = new Set(info.visibleTests), expectedH = new Set(info.hiddenTests);
   const unexpected = [...other.map(t => `${t.file}::${t.name}`), ...[...visible.keys()].filter(n => !expectedV.has(n)).map(n => `visible::${n}`),
     ...[...hidden.keys()].filter(n => !expectedH.has(n)).map(n => `hidden::${n}`)];
-  const integrity = { duplicates: duplicates.slice(0, 20), unexpected: unexpected.slice(0, 20).map(x => String(x).slice(0, 200)), exitStatus: result.exitStatus };
+  const integrity = { duplicates: duplicates.slice(0, 20), unexpected: unexpected.slice(0, 20).map(x => String(x).slice(0, 200)), exitStatus: result.exitStatus,
+    ...(result.exitStatus !== 0 && result.stderrTail ? { stderrTail: result.stderrTail } : {}) };
   const tests = { total, visible: info.visibleTests.length, hidden: info.hiddenTests.length, visibleFailed, hiddenFailedCount: hiddenFailed.length };
   const common = { sandbox: result.sandbox, wallMs: result.wallMs, tests, integrity };
   const reported = [...info.visibleTests.filter(n => visible.has(n)), ...info.hiddenTests.filter(n => hidden.has(n))].length;
