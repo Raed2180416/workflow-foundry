@@ -209,6 +209,26 @@ export const CITIES = {
   JP: ['Osaka', 'Kyoto', 'Nagoya', 'Sapporo', 'Yokohama', 'Fukuoka', 'Kobe'], SE: ['Stockholm', 'Gothenburg', 'Malmö', 'Uppsala'],
   DK: ['Copenhagen', 'Aarhus', 'Odense', 'Aalborg'], NO: ['Oslo', 'Trondheim', 'Stavanger', 'Tromsø'],
 };
+// Where the VENDEX procurement team sits (difficulty >= 3). The notes may give only the city and say the
+// team "writes numeric dates the way people there do", so the date order follows from the city's
+// country: month first in the United States, day first in the others listed here (no Canadian or
+// Japanese cities, whose conventions are mixed or year-first).
+export const TEAM_CITIES = {
+  mdy: ['Chicago', 'Houston', 'Denver', 'Seattle', 'Atlanta', 'Boston', 'Phoenix', 'Minneapolis', 'Pittsburgh', 'Dallas', 'Detroit',
+    'Portland, Oregon', 'Charlotte', 'Nashville', 'Columbus', 'Indianapolis', 'Baltimore', 'Cleveland', 'Tampa', 'Sacramento', 'Kansas City',
+    'Raleigh', 'Milwaukee', 'Albuquerque', 'Salt Lake City', 'Omaha', 'Richmond, Virginia', 'Memphis', 'Louisville', 'Tucson'],
+  dmy: ['London', 'Birmingham', 'Glasgow', 'Cardiff', 'Belfast', 'Dublin', 'Cork', 'Sydney', 'Perth', 'Auckland', 'Wellington', 'Paris',
+    'Lyon', 'Madrid', 'Valencia', 'Rome', 'Milan', 'Berlin', 'Frankfurt', 'Amsterdam', 'Brussels', 'Vienna', 'Zurich', 'Copenhagen',
+    'Oslo', 'Stockholm', 'Lisbon', 'Prague', 'Warsaw', 'Athens'],
+};
+// Per-task extra status values (difficulty >= 3): which of them are void is stated only in the task's
+// source notes and changes from task to task.
+export const FLAG_TOKENS = {
+  BRIGHTDESK: ['lead', 'prospect', 'churned', 'dormant'], LEDGR: ['archiviert', 'ruhend', 'inaktiv', 'Altdaten'],
+  ATLAS: ['ON HOLD', 'DORMANT', 'LEGACY', 'REVIEW'], KOBO: ['GUEST', 'STAFF', 'TRIAL', 'GIFT'], VERITAS: ['staging', 'replay', 'backfill', 'uat'],
+};
+// Systems that can be the task's re-stamped mirror (difficulty >= 3).
+export const MIRROR_SYSTEMS = ['BRIGHTDESK', 'LEDGR', 'VERITAS'];
 export const COUNTRY_NAME = {
   US: 'United States', CA: 'Canada', GB: 'United Kingdom', IE: 'Ireland', AU: 'Australia', DE: 'Germany', AT: 'Austria',
   CH: 'Switzerland', FR: 'France', BE: 'Belgium', ES: 'Spain', MX: 'Mexico', IT: 'Italy', NL: 'Netherlands', JP: 'Japan',

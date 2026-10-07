@@ -3,7 +3,8 @@
 // reference solver and the bad controls all derive from buildWorld(seed, split, difficulty).
 import { rng, hashSeed } from '../lib/rng.mjs';
 import * as P from './pools.mjs';
-import { dayNum, fromDay, isoDate, renderLine, buildNotes, buildSpec, buildPrompt } from './render.mjs';
+import { dayNum, fromDay, isoDate, renderLine, buildNotes, buildSpec, buildPrompt, noteChoices } from './render.mjs';
+import { scoreAgainst } from './score.mjs';
 
 export const SYSTEM_ORDER = ['BRIGHTDESK', 'LEDGR', 'ATLAS', 'VENDEX', 'KOBO', 'VERITAS'];
 const MEMO_SYSTEMS = new Set(['BRIGHTDESK', 'ATLAS', 'VENDEX', 'KOBO', 'VERITAS']);
@@ -13,8 +14,12 @@ const MEMO_SYSTEMS = new Set(['BRIGHTDESK', 'ATLAS', 'VENDEX', 'KOBO', 'VERITAS'
 // sharing a phone); mates: unrelated pairs sharing a birth date; keepPhoneP: share of moves that keep
 // the old (foreign) phone; expatP: people whose phone number is from another country than the one they
 // live in; decoys: memo lines that mention a void marker without being one.
+// conv (d>=3): the ATLAS and VENDEX numeric date orders are drawn per task and stated only in the notes, and
+// dates whose day is above 12 are written with a month name, so the order cannot be read off the data.
+// flags (d>=3): number of per-task status values whose meaning (void or live) is stated only in the notes.
+// mirror (d>=3): one system's update dates are re-stamp times; its rows lose every conflict (notes + spec 4).
 const BASE_K = { placeholders: false, prefix011: false, era: false, countryTypo: 0, credits: false, chf: false, blocked: false, datedFx: false,
-  fxPairs: false, atlasNoteStyle: false };
+  fxPairs: false, atlasNoteStyle: false, conv: false, flags: 0, mirror: false };
 export const LEVELS = {
   1: { rows: 30, systems: ['BRIGHTDESK', 'LEDGR', 'ATLAS'], twinVoids: 1, soloVoids: 1, namesakes: 0, swapTraps: 0,
     households: 0, advMemos: 0, benignMemoP: 0.08, typoP: 0.12, nickP: 0.35, moveP: 0.15, phoneChangeP: 0.12,
@@ -30,18 +35,20 @@ export const LEVELS = {
     households: 2, advMemos: 3, benignMemoP: 0.12, typoP: 0.22, nickP: 0.45, moveP: 0.25, phoneChangeP: 0.18,
     noDobP: 0.16, singleNoDobP: 0.05, miss: { phone: 0.1, country: 0.08, amount: 0.08 }, ambP: 0.7,
     sizes: [[1, 42], [2, 32], [3, 17], [4, 7], [5, 2]], atlasCutoff: false, minAmbiguousAtlas: 4, twins: 2, mates: 1, keepPhoneP: 0.4, expatP: 0.12, decoys: 2,
-    k: { ...BASE_K, placeholders: true, credits: true, blocked: true, prefix011: true, era: true, chf: true, fxPairs: true, atlasNoteStyle: true, countryTypo: 0.15 } },
+    k: { ...BASE_K, placeholders: true, credits: true, blocked: true, prefix011: true, era: true, chf: true, fxPairs: true, atlasNoteStyle: true, countryTypo: 0.15,
+      conv: true, flags: 2, mirror: true } },
   4: { rows: 115, systems: SYSTEM_ORDER, twinVoids: 3, soloVoids: 3, namesakes: 3, swapTraps: 2,
     households: 3, advMemos: 5, benignMemoP: 0.12, typoP: 0.25, nickP: 0.5, moveP: 0.3, phoneChangeP: 0.2,
     noDobP: 0.18, singleNoDobP: 0.05, miss: { phone: 0.12, country: 0.1, amount: 0.1 }, ambP: 0.72,
     sizes: [[1, 40], [2, 32], [3, 17], [4, 8], [5, 3]], atlasCutoff: true, minAmbiguousAtlas: 5, twins: 2, mates: 2, keepPhoneP: 0.4, expatP: 0.12, decoys: 3,
-    k: { ...BASE_K, placeholders: true, credits: true, blocked: true, prefix011: true, era: true, chf: true, fxPairs: true, atlasNoteStyle: true, countryTypo: 0.2 } },
+    k: { ...BASE_K, placeholders: true, credits: true, blocked: true, prefix011: true, era: true, chf: true, fxPairs: true, atlasNoteStyle: true, countryTypo: 0.2,
+      conv: true, flags: 3, mirror: true } },
   5: { rows: 150, systems: SYSTEM_ORDER, twinVoids: 4, soloVoids: 4, namesakes: 4, swapTraps: 3,
     households: 4, advMemos: 7, benignMemoP: 0.12, typoP: 0.28, nickP: 0.5, moveP: 0.35, phoneChangeP: 0.22,
     noDobP: 0.2, singleNoDobP: 0.06, miss: { phone: 0.12, country: 0.1, amount: 0.1 }, ambP: 0.72,
     sizes: [[1, 38], [2, 32], [3, 18], [4, 8], [5, 4]], atlasCutoff: true, minAmbiguousAtlas: 6, twins: 3, mates: 2, keepPhoneP: 0.4, expatP: 0.14, decoys: 4,
     k: { ...BASE_K, placeholders: true, credits: true, blocked: true, prefix011: true, era: true, chf: true, datedFx: true, fxPairs: true,
-      atlasNoteStyle: true, countryTypo: 0.25 } },
+      atlasNoteStyle: true, countryTypo: 0.25, conv: true, flags: 3, mirror: true } },
 };
 
 const D_START = dayNum(2016, 1, 4), D_END = dayNum(2025, 9, 26);
@@ -60,8 +67,9 @@ function weighted(r, opts) {
 
 // ---------------------------------------------------------------------------------------
 // Rules on structured rows (spec sections 3, 4, 7). A structured row ("srow") is
-// { rowId, date, np: {given, family}, dob: {y,m,d}|null, country: ISO|null, phone: E.164|null,
-//   amount: {minor, currency}|null }.
+// { rowId, date, rank, np: {given, family}, dob: {y,m,d}|null, country: ISO|null, phone: E.164|null,
+//   amount: {minor, currency}|null }. rank is 1 for rows of the task's re-stamped mirror system (they come
+//   after every other row of the person in the conflict order, spec section 4) and 0 otherwise.
 export const sameDay = (a, b) => a.y === b.y && a.m === b.m && a.d === b.d;
 export function rowsLink(a, b) {
   if (a.dob && b.dob) { if (!sameDay(a.dob, b.dob)) return false; } else if (!(a.phone && b.phone && a.phone === b.phone)) return false;
@@ -103,7 +111,7 @@ export function rateFor(fx, currency, date) {
   if (fx.cutover !== null && date < fx.cutover) return fx.old[currency];
   return fx.cur[currency];
 }
-const byRecency = (a, b) => (b.date - a.date) || (b.rowId - a.rowId);
+export const byRecency = (a, b) => ((a.rank ?? 0) - (b.rank ?? 0)) || (b.date - a.date) || (b.rowId - a.rowId);
 function resolvePart(rows, latest, key) {
   const norm = s => (key === 'given' ? P.formalOf(s) : s);
   const base = norm(latest.np[key]);
