@@ -233,7 +233,7 @@ test('oracle tolerance: one wrong field still passes; acceptable variant forms a
   }
 });
 
-test('A12 regression: README states the version, pass rule and thresholds the code uses', () => {
+test('A7 regression: README states the version, pass rule and thresholds the code uses', () => {
   const readme = readFileSync(new URL('./README.md', import.meta.url), 'utf8');
   assert.ok(readme.includes(`**Version:** ${bed.family.version}`), 'README version');
   assert.ok(readme.includes('pass = fieldAccuracy ≥ 0.97  AND  pairF1 ≥ 0.95  AND  extra ≤ floor(0.02·E)  AND  missing ≤ floor(0.02·E)'), 'README pass rule');
@@ -388,7 +388,7 @@ test('F5 regression: FX market quotes (divide USD/XXX) and paraphrased ATLAS cut
     wrong += r.details.perField.amount_usd < 1 ? 1 : 0;
   }
   assert.ok(wrong >= 18, `multiplying by USD/XXX rates is wrong in ${wrong}/20 tasks`);
-  // A10: the old test counted the matched text ("On 3", "On 12", ...) instead of the template.
+  // A6: the old test counted the matched text ("On 3", "On 12", ...) instead of the template.
   const styles = new Set(SEEDS.map(seed => bed.buildWorld(seed, 'dev', 4).ctx.choices.cutTpl));
   assert.equal(styles.size, ATLAS_CUTOFF_NOTE.length, 'all ATLAS cutoff paraphrases occur');
 });
@@ -527,8 +527,8 @@ test('pools are internally consistent', () => {
   assert.equal(P.numberWords(1200), 'one thousand two hundred');
 });
 
-test('runtime limits at difficulty 5 (cold generate and cold oracle, measured in a fresh process)', () => {
-  // A12: the old check read this test process's heap, which also holds every cached task of the suite.
+test('A12 regression: runtime limits at difficulty 5 (cold generate and cold oracle, measured in a fresh process)', () => {
+  // The old check read this test process's heap, which also holds every cached task of the suite.
   const script = `
     const bed = await import(${JSON.stringify(new URL('./index.mjs', import.meta.url).href)});
     const { solveText } = await import(${JSON.stringify(new URL('./solve-text.mjs', import.meta.url).href)});

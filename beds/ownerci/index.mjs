@@ -140,22 +140,52 @@ export const BANNED = Object.freeze([
   ['process (any use)', /\bprocess\b/], ['global object', /\bglobal\s*[.[]/], ['child_process', /child_process/], ['node:fs', /['"](?:node:)?fs(?:\/promises)?['"]/],
   ['worker_threads', /worker_threads/], ['node:vm', /['"](?:node:)?vm['"]/], ['dynamic import()', /\bimport\s*\(/], ['eval', /\beval\s*\(/],
   ['Function constructor', /\bFunction\s*\(/], ['require()', /\brequire\s*\(/], ['test-runner detection', /NODE_TEST|node:test|--test/],
-  ['timers', /\bset(?:Interval|Timeout|Immediate)\b/],
+  ['timers', /\bset(?:Interval|Timeout|Immediate)\b/], ['import.meta', /\bimport\s*\.\s*meta\b/],
 ]);
+// Free identifiers that reach the host (the global object, the process, code generation). A
+// property name after `.` (`row.global`) is not a free identifier and is allowed.
+export const BANNED_IDENTIFIERS = Object.freeze(['process', 'globalThis', 'global', 'eval', 'Function', 'require', 'module', 'exports',
+  '__dirname', '__filename', 'Deno', 'Bun']);
 const exportRe = name => new RegExp(`\\bexport\\s+(?:async\\s+)?(?:function\\*?|const|let|var|class)\\s+${name}\\b|\\bexport\\s*\\{[^}]*\\b${name}\\b[^}]*\\}`);
-// Code text without comments (so a comment that says "process" is not a violation). Falls back to
-// the raw source when the tokenizer cannot read it (that source will not import anyway).
-function codeText(src) {
-  try { return tokenize(src).map(t => t.value).join(' '); } catch { return src; }
+
+// Module specifiers of static `import ... from 'x'`, `import 'x'` and `export ... from 'x'`
+// (a string token right after `from` or `import`), as cooked values.
+function moduleSpecifiers(toks) {
+  const out = [];
+  toks.forEach((t, k) => {
+    const prev = toks[k - 1];
+    if (t.type === 'string' && prev?.type === 'ident' && (prev.value === 'from' || prev.value === 'import') && toks[k - 2]?.value !== '.') out.push(t.value.slice(1, -1));
+  });
+  return out;
+}
+const originalTokens = new Map();
+function tokensOfOriginal(moduleId) {
+  if (!originalTokens.has(moduleId)) originalTokens.set(moduleId, tokenize(originalOf(moduleId)));
+  return originalTokens.get(moduleId);
 }
 
 export function staticGuard(moduleId, src) {
   const original = originalOf(moduleId);
   const v = [];
   if (src.length < original.length / 2 || src.length > original.length * 2) v.push(`size ${src.length} outside [0.5x, 2x] of the original ${original.length}`);
-  const code = codeText(src), originalCode = codeText(original);
+  // The guard reads code through the bed's tokenizer (comments, strings, templates and regex
+  // literals are separated from code). A source it cannot tokenize, for example one with a
+  // unicode escape in an identifier (\u0070rocess), is rejected rather than read as raw text.
+  let toks;
+  try { toks = tokenize(src); } catch (e) { v.push(`source could not be tokenized by the guard (${String(e.message).slice(0, 80)}); escapes in identifiers are not allowed`); return v; }
+  const origToks = tokensOfOriginal(moduleId);
+  const code = toks.map(t => t.value).join(' '), originalCode = origToks.map(t => t.value).join(' ');
   for (const [label, re] of BANNED) if (re.test(code) && !re.test(originalCode)) v.push(`contains ${label}`);
-  for (const e of CATALOG.modules[moduleId].exports) if (!exportRe(e.name).test(src)) v.push(`missing export ${e.name}`);
+  const freeIdents = ts => new Set(ts.filter((t, k) => t.type === 'ident' && ts[k - 1]?.value !== '.' && ts[k - 1]?.value !== '?.').map(t => t.value));
+  const used = freeIdents(toks), originalUsed = freeIdents(origToks);
+  for (const name of BANNED_IDENTIFIERS) if (used.has(name) && !originalUsed.has(name)) v.push(`uses the identifier ${name}`);
+  // Imports: only the module specifiers the original module imports (same modules, any quotes).
+  const allowed = new Set(moduleSpecifiers(origToks));
+  for (const spec of moduleSpecifiers(toks)) {
+    if (spec.includes('\\')) v.push(`import specifier with an escape sequence: ${spec.slice(0, 60)}`);
+    else if (!allowed.has(spec)) v.push(`imports ${spec.slice(0, 60)}, which the original module does not import`);
+  }
+  for (const e of CATALOG.modules[moduleId].exports) if (!exportRe(e.name).test(code)) v.push(`missing export ${e.name}`);
   return v;
 }
 
@@ -171,17 +201,24 @@ export function evaluateSource(moduleId, src, run = runSync) {
   if (violations.length) return fail('diff guard violated', { guard: { ok: false, violations } });
   const result = run(moduleId, src, { exportsSpec: info.exports });
   if (!result.ok) return fail('test run failed to report (fail closed)', { error: result.error, sandbox: result.sandbox });
-  const { visible, hidden, guard } = classify(moduleId, result);
+  const { visible, hidden, guard, other, duplicates } = classify(moduleId, result);
   const passed = t => t?.status === 'pass';
   const visibleFailed = info.visibleTests.filter(n => !passed(visible.get(n)));
   const hiddenFailed = info.hiddenTests.filter(n => !passed(hidden.get(n)));
   const total = info.visibleTests.length + info.hiddenTests.length;
+  // Run integrity (AUDIT.md F3): every expected test reports exactly once, nothing else reports
+  // at top level (a crashed or prematurely exiting test process shows up as a file-level result),
+  // and `node --test` exits 0. Any breach fails the run even if every expected name says pass.
+  const expectedV = new Set(info.visibleTests), expectedH = new Set(info.hiddenTests);
+  const unexpected = [...other.map(t => `${t.file}::${t.name}`), ...[...visible.keys()].filter(n => !expectedV.has(n)).map(n => `visible::${n}`),
+    ...[...hidden.keys()].filter(n => !expectedH.has(n)).map(n => `hidden::${n}`)];
+  const integrity = { duplicates: duplicates.slice(0, 20), unexpected: unexpected.slice(0, 20).map(x => String(x).slice(0, 200)), exitStatus: result.exitStatus };
   const tests = { total, visible: info.visibleTests.length, hidden: info.hiddenTests.length, visibleFailed, hiddenFailedCount: hiddenFailed.length };
-  const common = { sandbox: result.sandbox, wallMs: result.wallMs, tests };
+  const common = { sandbox: result.sandbox, wallMs: result.wallMs, tests, integrity };
   const reported = [...info.visibleTests.filter(n => visible.has(n)), ...info.hiddenTests.filter(n => hidden.has(n))].length;
   if (reported === 0) {
-    const loadError = [...visible.values(), ...hidden.values()].find(t => t.status === 'fail')?.error?.message ?? null;
-    return { pass: false, score: 0, details: { reason: 'module failed to load (no test could run)', loadError, guard: { ok: null, violations: [] }, ...common } };
+    const loadError = [...visible.values(), ...hidden.values(), ...other].find(t => t.status === 'fail')?.error?.message ?? null;
+    return { pass: false, score: 0, details: { reason: 'module failed to load (no test could run)', loadError: loadError && String(loadError).slice(0, 600), guard: { ok: null, violations: [] }, ...common } };
   }
   if (!passed(guard)) {
     const msg = guard?.error?.message ?? 'module did not import, so its exports could not be checked';
@@ -189,6 +226,10 @@ export function evaluateSource(moduleId, src, run = runSync) {
   }
   const score = (total - visibleFailed.length - hiddenFailed.length) / total;
   const allPass = visibleFailed.length === 0 && hiddenFailed.length === 0;
+  const clean = duplicates.length === 0 && unexpected.length === 0 && result.exitStatus === 0;
+  if (allPass && !clean) {
+    return { pass: false, score: Math.min(score, (total - 1) / total), details: { reason: 'test run integrity violated (duplicate, unexpected or crashed test reports, or non-zero exit)', guard: { ok: true, violations: [] }, ...common } };
+  }
   return { pass: allPass, score, details: { reason: allPass ? 'all visible and hidden tests pass' : 'tests failed', guard: { ok: true, violations: [] }, ...common } };
 }
 
