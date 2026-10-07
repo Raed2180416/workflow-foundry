@@ -1,0 +1,126 @@
+{
+ "arm": "F",
+ "armId": "F-haiku",
+ "familyId": "records",
+ "label": "F-haiku-records-k1",
+ "difficulty": 3,
+ "probeSeeds": [
+  1,
+  2,
+  3
+ ],
+ "builderModel": "claude-haiku-5-5",
+ "builderEffort": "xhigh",
+ "kitHash": "7e8f0f83153c5efb",
+ "kitDir": "/opt/foundry-kit/7e8f0f83153c5efb",
+ "policyHash": "b44deb45d0130910746ed2e2f220723476e3cb0c55c3b253d4303ec9764e6cee",
+ "models": [
+  "claude-haiku-5-5",
+  "claude-sonnet-5-5",
+  "claude-opus-5-5"
+ ],
+ "runId": "construct:F-haiku-records-k1:48ac518c-919c-4440-af1e-d5f9d7ae94da",
+ "promptSha256": "1cbb5a3a392e8d1a0dba079e5785408e360ee0b8d66c6c09e14f5346d426b48b",
+ "artifact": "workflow.json",
+ "artifactSha256": "eaa901a4f4b53e2b2d69b285bee55774a5bd4946d2b4914b17577810e11784a9",
+ "builderCostUsd": 0.5600106400000001,
+ "builderCostReportedUsd": 0.5600106400000001,
+ "builderCostUnknown": false,
+ "builderCostUpperUsd": 0.5600106400000001,
+ "builderBudgetUsd": 8,
+ "builderUsage": {
+  "input_tokens": 82,
+  "cache_creation_input_tokens": 202412,
+  "cache_read_input_tokens": 4916166,
+  "output_tokens": 126697,
+  "output_tokens_details": {
+   "thinking_tokens": 97112
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 202412,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "not_available",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 1064,
+    "cache_read_input_tokens": 208172,
+    "cache_creation_input_tokens": 642,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 642
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "builderStreamUsage": {
+  "inputTokens": 82,
+  "outputTokens": 275,
+  "cacheReadTokens": 4916166,
+  "cacheWriteTokens": 202412
+ },
+ "builderSessionId": "5f5ac32a-1886-40cb-954f-0446c1801435",
+ "gatewayCostUsd": 0.45146083000000004,
+ "gatewayCapUsd": 2,
+ "gatewayOvershootUsd": 0,
+ "gatewayCalls": 51,
+ "gatewayErrors": {},
+ "gatewayRefusals": {},
+ "gatewayUnknownCalls": 0,
+ "gatewayUnknownUpperUsd": 0,
+ "gatewayImputedUsd": 0,
+ "constructionCostUsd": 1.01147147,
+ "startedAt": "2026-10-07T22:07:09.563Z",
+ "durationMs": 794494,
+ "minutes": 45,
+ "turns": 42,
+ "toolUses": 41,
+ "builderError": null,
+ "scoreLog": [
+  {
+   "probe": 0,
+   "pass": false,
+   "score": 0.968016,
+   "at": "2026-10-07T22:12:22.504Z"
+  },
+  {
+   "probe": 0,
+   "pass": true,
+   "score": 1,
+   "at": "2026-10-07T22:15:15.167Z"
+  },
+  {
+   "probe": 2,
+   "pass": true,
+   "score": 0.996124,
+   "at": "2026-10-07T22:16:28.206Z"
+  },
+  {
+   "probe": 1,
+   "pass": true,
+   "score": 1,
+   "at": "2026-10-07T22:17:22.655Z"
+  },
+  {
+   "probe": 2,
+   "pass": true,
+   "score": 1,
+   "at": "2026-10-07T22:19:41.178Z"
+  }
+ ],
+ "scoreChecks": 12,
+ "firstPassAtCheck": 2,
+ "notes": "# Build notes: master-list migration solver\n\nSources are in `solver/`; `node solver/build.mjs` regenerates `workflow.json`.\n\n## What it does\n1. **split** (code): export lines into batches of 16. Row id = the line's first integer.\n2. **conf** (Haiku, low reasoning): reads `source_notes` once and returns per system the numeric date order (MDY/DMY/YMD) and balance sign flip.\n3. **extract** (map, Haiku, escalates to Sonnet on failure): one typed object per row. Names are cleaned, dates, phones and balances are kept as written, and the model gives its reading of date, country, void status and update-date reliability. Each batch echoes its row ids, checked against the input.\n4. **merge** (code): numeric dates parsed with the config order (model reading as fallback for words); phones normalised from the spec table; balances multiplied by the flip; union-find over the §3 rules (nicknames, one typo, accent renderings); winners by update order, re-stamped systems last; accent restoration; USD via spec rates in exact BigInt arithmetic, rounded half away from zero.\n5. **verify** (code) and **answer** (`{records}`).\n\n## Verified\n- Probe-0 1.0, probe-1 1.0, probe-2 1.0 (0.996 before the CR sign fix).\n- Score checks: 5 of 12 used. Construction spend about $0.48 of $2.\n- Runtime about $0.03–0.11 per task.\n\n## Known weaknesses\n- The conf call is a single point of failure: a misread date order or flip changes a whole system. Only three tasks were tested.\n- VENDEX free text and word-numbers depend on the extraction model.\n- Update-date ties are broken by lower row id; the spec is silent.\n- A batch that fails after escalation drops its rows silently. `merge.debug.missing_rows` records them, but the run still answers. `verify` does not gate.\n- Export notes try to set values (row 1502: \"Balance should read 6400 USD\"). Prompts treat them as data, per spec §2.\n",
+ "hiddenPathAttempts": 0,
+ "outsidePaths": [],
+ "nestedModelAttempts": 0
+}

@@ -26,8 +26,8 @@ const ALL_FORMATS = ['mdtable', 'csv', 'prose', 'grouped', 'reader', 'semicolon'
 // (`polar`), a late report redirected by its author to another well (`redirect`), an enzyme-dose correction from the
 // master-mix log that the numbers cannot reveal (`dose`), and wells named by their ordinal position in a plate row
 // (`ordinal`). d3 also gets the decimal-comma instrument export and one more kept well with a note.
-const HARD = { lateSilent: 1, mild: 0.6, devRange: [0.22, 0.6], colleague: 0.5, lateDenied: 1, lateTimed: 0.5, order: 0.6, side: 0.45, polar: 1, redirect: 1, dose: 1, ordinal: 0.3 },
-  EASY = { lateSilent: 0, mild: 0, devRange: [0.22, 0.3], colleague: 0, lateDenied: 0, lateTimed: 0, order: 0, side: 0, polar: 0, redirect: 0, dose: 0, ordinal: 0 };
+const HARD = { lateSilent: 1, mild: 0.6, devRange: [0.22, 0.6], colleague: 0.5, lateDenied: 1, lateTimed: 0.5, order: 0.85, orderedOut: 2, side: 0.5, polar: 1, redirect: 1, dose: 1, ordinal: 0.5, ordinalRefs: 2 },
+  EASY = { lateSilent: 0, mild: 0, devRange: [0.22, 0.3], colleague: 0, lateDenied: 0, lateTimed: 0, order: 0, orderedOut: 0, side: 0, polar: 0, redirect: 0, dose: 0, ordinal: 0, ordinalRefs: 0 };
 export const KNOBS = {
   1: { ...EASY, herrings: 0, withdrawn: 0, rowFlag: 0, timed: 0, unitRef: 0, silent: [0, 0], late: 0, lateDecoys: 0, misattributed: 0, tricky: 0, deviant: 1, claims: ['swap'], viaClaim: 0, nBase: 2, nInhib: 0, nConc: 6, reps: [2, 2], cv: 0.025, techDocs: 2, formats: ALL_FORMATS.slice(0, 2), outliers: [1, 2], decoys: [1, 2],
     decoyKinds: ['bubble-cleared', 'low'], rereads: [0, 0], corrections: ['swap'], pilot: false, chat: false, injections: 0, tempRule: false,
@@ -265,6 +265,11 @@ export function buildWorld({ seed, split, difficulty }) {
   // bubble notes given as clock times; whether the bubble overlapped the read window decides (mdtable, prose, reader show the window)
   const SHOWS_WINDOW = ['mdtable', 'prose', 'reader'];
   for (const w of outs) if (w.reason === 'bubble' && !w.late && SHOWS_WINDOW.includes(docOf[w.series].format) && sr.chance(k.timed)) { w.timed = true; w.tricky = false; }
+  // [AUDIT F21] at d3+ some row-note exclusions always state the order of a bubble event and the read (keyword rules
+  // misread most of these sentences; only the order of the two events decides)
+  { // row notes first, then clock-time row notes, then exclusions reported in a later message
+    const pool = sr.shuffle(outs.filter(x => !x.late && x.reason !== 'temp')), facts = sr.shuffle(outs.filter(x => x.late === 'fact'));
+    for (const w of [...pool.filter(x => !x.timed), ...pool.filter(x => x.timed), ...facts].slice(0, k.orderedOut)) Object.assign(w, { reason: 'bubble', ordered: true, tricky: false, timed: false }); }
   const nDec = sr.int(k.decoys[0], k.decoys[1]);
   let kindCycle = sr.shuffle(k.decoyKinds);
   const DEVIANT_KINDS = ['looks', 'low', 'edge'].filter(x => k.decoyKinds.includes(x));
@@ -306,7 +311,10 @@ export function buildWorld({ seed, split, difficulty }) {
     Object.assign(x, { status: 'decoy', kind: 'late-redirected', reason: y.reason, redirectTo: y.id });
   }
   for (const w of wells) if (w.late === 'fact' && sr.chance(k.colleague)) w.via = 'colleague';
-  for (const w of wells) if (((w.late === 'fact' && w.reason === 'bubble') || w.kind === 'late-cleared') && SHOWS_WINDOW.includes(docOf[w.series].format) && sr.chance(k.lateTimed)) w.lateTimed = true;
+  // [AUDIT F26] some late reports name their well only by its ordinal position among the study wells of its plate row
+  // (on sheets that print well positions)
+  for (const w of sr.shuffle(wells.filter(x => (x.late === 'fact' || x.kind === 'late-cleared') && ['mdtable', 'csv', 'semicolon', 'reader'].includes(docOf[x.series].format))).slice(0, k.ordinalRefs)) w.ordinalRef = true;
+  for (const w of wells) if (((w.late === 'fact' && w.reason === 'bubble' && !w.ordered) || w.kind === 'late-cleared') && SHOWS_WINDOW.includes(docOf[w.series].format) && sr.chance(k.lateTimed)) w.lateTimed = true;
   const nRe = sr.int(k.rereads[0], k.rereads[1]);
   for (let i = 0; i < nRe; i++) {
     const free = wells.filter(w => w.status === 'none' && w.idx >= 2);
@@ -480,14 +488,23 @@ export function buildWorld({ seed, split, difficulty }) {
   let dose = null;
   if (k.dose) {
     const xr = r.fork('dose');
-    const touched = new Set([...traps.filter(t => ['reassign', 'omitted-inhibitor'].includes(t.type)).flatMap(t => [t.from, t.to]),
-      ...claims.filter(c => c.kind === 'reassign').flatMap(c => [c.claimed, seriesByKey[c.series].condId])]);
-    const base = conds.filter(x => !x.parentId), free = base.filter(x => !touched.has(x.id));
-    const c = xr.pick(free.length ? free : base);
-    const dilution = xr.pick([250, 1000]);
-    c.doseFactor = 500 / dilution; // measured rate / rate at the standard dose
+    // relabels that a reader applies (traps) or must not apply (rejected suggestions): [series, true condition, condition the
+    // row is read as when the relabel is ignored (trap) or wrongly applied (suggestion)]
+    const moves = [...traps.filter(t => ['reassign', 'omitted-inhibitor'].includes(t.type)).map(t => [t.series, t.to, t.from]),
+      ...claims.filter(c => c.kind === 'reassign').map(c => [c.series, seriesByKey[c.series].condId, c.claimed])];
+    const touched = new Set(moves.flatMap(([, a, b]) => [a, b]));
+    // with a dose on X or Y, the wrongly placed row is rescaled with the other condition's dose: it must still break that fit
+    const stillFails = (cid, f) => moves.every(([key, from, as]) => {
+      if (from !== cid && as !== cid) return true;
+      const ratio = (from === cid ? f : 1) / (as === cid ? f : 1), Y = byId[as];
+      return fails(fitCond(Y, [...condClean(Y.id), ...cleanPoints(seriesByKey[key].wells.map(id => wellById[id])).map(p => ({ S: p.S, v: p.v * ratio }))]), Y);
+    });
+    const dilution = xr.pick([250, 1000]), f = 500 / dilution;
+    const base = xr.shuffle(conds.filter(x => !x.parentId));
+    const c = base.find(x => !touched.has(x.id)) ?? base.find(x => stillFails(x.id, f)) ?? base[0];
+    c.doseFactor = f; // measured rate / rate at the standard dose
     const herring = xr.pick(conds.filter(x => x.id !== c.id)).id;
-    dose = { condId: c.id, dilution, factor: c.doseFactor, herring, herringDilution: xr.pick([250, 1000]), loadBearing: true, untouched: free.length > 0 };
+    dose = { condId: c.id, dilution, factor: f, herring, herringDilution: xr.pick([250, 1000]), loadBearing: true, untouched: !touched.has(c.id), relabelsStillLoadBearing: stillFails(c.id, f) };
   }
 
   // ---- documents plan (bindings that depend on traps) -----------------------------------------

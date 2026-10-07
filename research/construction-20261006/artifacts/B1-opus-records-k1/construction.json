@@ -1,0 +1,114 @@
+{
+ "arm": "B1",
+ "armId": "B1-opus",
+ "familyId": "records",
+ "label": "B1-opus-records-k1",
+ "difficulty": 3,
+ "probeSeeds": [
+  1,
+  2,
+  3
+ ],
+ "builderModel": "claude-opus-5-5",
+ "builderEffort": "xhigh",
+ "kitHash": "6bc6b06eccf45cae",
+ "kitDir": "/opt/foundry-kit/6bc6b06eccf45cae",
+ "policyHash": "b44deb45d0130910746ed2e2f220723476e3cb0c55c3b253d4303ec9764e6cee",
+ "models": [
+  "claude-haiku-5-5",
+  "claude-sonnet-5-5",
+  "claude-opus-5-5"
+ ],
+ "runId": "construct:B1-opus-records-k1:7a5b06b9-6a70-4f39-ad06-2106bd69a516",
+ "promptSha256": "25ad97b80d179c8ea794574d78b73d13e324b355defa2a9404552ada4592dffe",
+ "artifact": "solve.mjs",
+ "artifactSha256": "1e4bf7baac1be5353f240be0ec882986e07afcad4ee64184d6b2550a70ddd451",
+ "builderCostUsd": 2.1009962,
+ "builderCostReportedUsd": 2.1009962,
+ "builderCostUnknown": false,
+ "builderCostUpperUsd": 2.1009962,
+ "builderBudgetUsd": 8,
+ "builderUsage": {
+  "input_tokens": 54,
+  "cache_creation_input_tokens": 91012,
+  "cache_read_input_tokens": 1745521,
+  "output_tokens": 51179,
+  "output_tokens_details": {
+   "thinking_tokens": 22883
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 91012,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "not_available",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 812,
+    "cache_read_input_tokens": 95411,
+    "cache_creation_input_tokens": 1098,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 1098
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "builderStreamUsage": {
+  "inputTokens": 54,
+  "outputTokens": 238,
+  "cacheReadTokens": 1745521,
+  "cacheWriteTokens": 91012
+ },
+ "builderSessionId": "c3c2e065-5d36-45b7-acb1-206cb47165d7",
+ "gatewayCostUsd": 1.3577024,
+ "gatewayCapUsd": 2,
+ "gatewayOvershootUsd": 0,
+ "gatewayCalls": 57,
+ "gatewayErrors": {},
+ "gatewayRefusals": {},
+ "gatewayUnknownCalls": 0,
+ "gatewayUnknownUpperUsd": 0,
+ "gatewayImputedUsd": 0,
+ "constructionCostUsd": 3.4586986,
+ "startedAt": "2026-10-07T22:07:09.558Z",
+ "durationMs": 657979,
+ "minutes": 45,
+ "turns": 28,
+ "toolUses": 27,
+ "builderError": null,
+ "scoreLog": [
+  {
+   "probe": 0,
+   "pass": true,
+   "score": 1,
+   "at": "2026-10-07T22:14:12.141Z"
+  },
+  {
+   "probe": 1,
+   "pass": true,
+   "score": 1,
+   "at": "2026-10-07T22:15:10.718Z"
+  },
+  {
+   "probe": 2,
+   "pass": true,
+   "score": 1,
+   "at": "2026-10-07T22:15:10.880Z"
+  }
+ ],
+ "scoreChecks": 12,
+ "firstPassAtCheck": 1,
+ "notes": "# Record-migration solver: build notes\n\n## What `solve.mjs` does\n1. **Spec (code):** reads the FX rates, phone code/trunk table and nickname appendix from `inputs.spec`.\n2. **Notes config (models):** two parallel Opus calls (`low`), plus a third (`medium`) only on disagreement, with a per-field majority vote. Per system they return: date order, balance sign (SAME/FLIP/WORDS), whether update dates are real, default currency, implied country, void-marker literals.\n3. **Rows:** code parsers for BRIGHTDESK, LEDGR, ATLAS, KOBO and VERITAS strip memo/note fields before void checks. Free-text lines (VENDEX or unknown systems) are void-checked in code, then extracted by Sonnet in batches of 6 as raw text plus reading. Code parses the raw dates and numerals; missing ids are retried singly.\n4. **Code:** country aliases (Sonnet maps only unknown strings), E.164 phones, exact BigInt FX with half-away rounding, name matching (≤1 typo, accents, nicknames), union-find identity, conflict ordering (systems with unreal dates last), accent restoration.\n\n## Verified\n- Probes 0, 1 and 2 all **pass with score 1.0**.\n- After the config-vote and void-literal hardening, re-runs gave byte-identical answers.\n- Cost: about **$0.10–0.13 per task**.\n\n## Known weaknesses\n- Structured parsers assume the probe line layouts. Other layouts fall back to less reliable model extraction.\n- ATLAS \"Title Given Family\" names with a two-word given name split wrongly.\n- A local phone on a row with no country is dropped, with no fallback to the person's country.\n- Free-text void check is \"ends with marker\", so a remark ending in the exact marker would wrongly void the row.\n- Equal update dates are ordered by row id, which the spec doesn't define.\n- If both config calls misread the notes the same way, the vote can't catch it.\n",
+ "hiddenPathAttempts": 0,
+ "outsidePaths": [],
+ "nestedModelAttempts": 0
+}

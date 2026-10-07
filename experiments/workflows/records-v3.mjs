@@ -27,7 +27,7 @@
 //                    meaning consistent with the fixed marker's meaning and the stated relation.
 //   mirror [M]       map over BRIGHTDESK/LEDGR/VERITAS: are this system's update dates real change dates or
 //                    re-stamped (copy/restore/re-import)? Checks: quote in the paragraph; a "restamped" answer
-//                    must agree with the data (that system's update dates span <= 120 days). The data never
+//                    must agree with the data (that system's update dates span <= 365 days). The data never
 //                    decides the convention: it only triggers escalation when the reading contradicts it.
 //   perspective [M]  map over BRIGHTDESK/LEDGR/ATLAS/KOBO: what a POSITIVE printed balance becomes in the master
 //                    (positive/negative), what it means (they owe us / we owe them) and what a NEGATIVE printed
@@ -42,13 +42,23 @@
 //   vendex_b [M]     an independent second read of the same chunks (other framing and field order). Code combines
 //                    the two reads field by field (combineVendexReads): spans are re-anchored to the entry text
 //                    (alignSpan repairs a miscopied word, drops an invented span), a field only one read found is
-//                    kept, a disagreement goes to the span that parses, and a country needs a stated place.
+//                    kept, a disagreement goes to the span that parses, and a country needs a stated place. A
+//                    disagreement about the COUNTRY (including none against a code) is never decided by code: see
+//                    vendex_diff / adjudicate.
 //   countries [M]    map over chunks of distinct country strings that are not exact ISO codes (English and
 //                    German names, aliases, typos), with the spec's country table as context: the English name
 //                    (as the table spells it) then an ISO alpha-2 enum; code takes the table's code for the name,
 //                    the enum as fallback. Ids echoed and checked; "other" is rejected (escalation), since every
-//                    country of this bed is in the spec's calling-code table.
-//   merge (code)     conventions -> void rows, dates (with the ATLAS cutoff), signs, conflict order (mirror rows
+//                    country of this bed is in the spec's calling-code table. "none" is rejected too, and names and
+//                    codes must be as many as the lines.
+//   vendex_diff (code)  lists the VENDEX rows whose two reads disagree about the country (a missing claim against a
+//                    code included), with the entry and the stated place(s) but not the competing codes (usually empty).
+//   adjudicate [M]   map over those rows: country (ISO enum) + a verbatim quote of the entry's place words. Checks: quote
+//                    in the entry (a country other than "none" needs one), not "other". Model class = the extraction class,
+//                    escalating to maxClass. Each adjudication is recorded (merge.adjudications, a "note:" in the check);
+//                    an adjudication that failed leaves the row on its first claim with evidence plus a diagnostic.
+//   merge (code)     join all_resolved (atlas_switch has onError 'continue': an exhausted check there is a diagnostic and no
+//                    dated order change, not a skipped merge/check/answer). conventions -> void rows, dates (with the ATLAS cutoff), signs, conflict order (mirror rows
 //                    last); spec section 3 identity (union-find), section 4 conflicts and accent restoration,
 //                    section 6 E.164, section 7 exact FX with half-away-from-zero rounding.
 //   check (verify)   structural invariants of the answer + consistency of the conventions with each other and
@@ -72,6 +82,9 @@
 //   - VENDEX is read twice (vendex, vendex_b) instead of once: on dev seeds the dominant residual error was a
 //     field silently omitted by one read (a birth date, a revision date, a nationality), which no per-chunk
 //     schema check can detect; omissions of two differently framed reads rarely coincide (+~$0.03 per task).
+//   - A disagreement between the two VENDEX reads about the country goes to a narrow typed node (vendex_diff, adjudicate)
+//     instead of silently keeping read A's country (review F2): before, a read that stated a place but gave country
+//     "none" discarded the other read's country, and two different codes were resolved by position.
 //   - A failed check on a convention or country node escalates at once (onCheckFail 'escalate'): on dev seed 109
 //     (d4) a resample after an inconsistent answer returned a consistent but wrong one. VENDEX chunks (id echo)
 //     and nodes already at maxClass resample once instead.
@@ -185,7 +198,7 @@ export function wordsToNumber(text) {
   return seen ? total + current : null;
 }
 
-// A plain decimal number as written ("50,042.72", "1.365,81", "2090332"); german: '.' groups and ',' decimals.
+// A plain decimal number as written ("31,507.64", "1.365,81", "2090332"); german: '.' groups and ',' decimals.
 export function parseNumber(token, german = false) {
   let t = String(token ?? '').replace(/[\s'’]/g, '');
   if (!/\d/.test(t)) return null;
@@ -277,10 +290,39 @@ export function vendexDirection(text) {
   return null;
 }
 
+// The reads of one VENDEX read node as a map row id -> read object: only rows of the chunk's own ids, first occurrence
+// wins, a failed chunk ({$error}) or a malformed one contributes nothing.
+export function vendexReadsOf(chunks, items) {
+  const m = new Map();
+  (chunks ?? []).forEach((chunk, ci) => {
+    const out = items?.[ci]?.judge;
+    if (!out || out.$error || !Array.isArray(out.rows)) return;
+    for (const r of out.rows) if (r && Number.isInteger(r.row) && chunk.ids.includes(r.row) && !m.has(r.row)) m.set(r.row, r);
+  });
+  return m;
+}
+
+// Do the two reads of one VENDEX entry disagree about the country? A read's claim is its ISO code, but only when its
+// place is a span the entry actually states (a country needs its evidence); "none", "other" and an invented place
+// claim nothing. A disagreement is any difference between the claims, a missing claim against a code included. Returns
+// null when the claims agree or when a read is missing (no second opinion), else {a, b, places}: both claims and the
+// stated place span(s). Such a row goes to the narrow country adjudication node; code never picks a side.
+export function vendexCountryDispute(a, b, text) {
+  if (![a, b].every(r => r && typeof r === 'object')) return null;
+  const place = r => (typeof r.place === 'string' && r.place.trim() ? alignSpan(r.place, text) : null);
+  const claim = r => (place(r) !== null && /^[A-Z]{2}$/.test(r.country ?? '') ? r.country : null);
+  const ca = claim(a), cb = claim(b);
+  if (ca === cb) return null;
+  return { a: ca, b: cb, places: [...new Set([place(a), place(b)].filter(Boolean))] };
+}
+
 // Combines two independent reads of one VENDEX entry field by field. Spans are re-anchored to the entry text; a
 // span only one read found is kept (omissions are the common error), and when both found different spans the one
-// that parses wins (then read A). The country follows the read whose place is actually stated in the entry.
-export function combineVendexReads(a, b, text, { order = null } = {}) {
+// that parses wins (then read A). The country is not combined by preference: when the reads disagree about it
+// (vendexCountryDispute) the result of the adjudication node (`adjudicated`, {country, quote}) decides, "none" included.
+// Without one (the node failed, or no second read exists) the first claim that has evidence is used, and the caller
+// sees `dispute` and records the unadjudicated disagreement. Returns {read, notes, dispute, adjudicated}.
+export function combineVendexReads(a, b, text, { order = null, adjudicated = null } = {}) {
   const reads = [a, b].filter(x => x && typeof x === 'object');
   if (!reads.length) return null;
   const out = { row: reads[0].row }, notes = [];
@@ -296,13 +338,19 @@ export function combineVendexReads(a, b, text, { order = null } = {}) {
     } else if (found.length === 1 && reads.length === 2) notes.push(`${k}: only one read`);
     out[k] = pick;
   }
-  const withPlace = reads.find(r => typeof r.place === 'string' && r.place.trim() && alignSpan(r.place, text) !== null);
-  out.country = withPlace && /^[A-Z]{2}$/.test(withPlace.country ?? '') ? withPlace.country : null;
+  const claims = reads.map(r => {
+    const placed = typeof r.place === 'string' && r.place.trim() && alignSpan(r.place, text) !== null;
+    return placed && /^[A-Z]{2}$/.test(r.country ?? '') ? r.country : null;
+  });
+  const dispute = vendexCountryDispute(a, b, text);
+  const ruled = dispute && adjudicated && typeof adjudicated.country === 'string';
+  out.country = ruled ? (/^[A-Z]{2}$/.test(adjudicated.country) ? adjudicated.country : null) : claims.find(Boolean) ?? null;
+  if (dispute) notes.push(`country: A ${dispute.a ?? 'none'} vs B ${dispute.b ?? 'none'} (${dispute.places.join(' | ')}) -> ${ruled ? `adjudicated ${out.country ?? 'none'}` : `not adjudicated, used ${out.country ?? 'none'}`}`);
   const kinds = reads.map(r => r.balance_kind).filter(x => x && x !== 'none');
   out.balance_kind = kinds[0] ?? 'none';
   const ccys = reads.map(r => r.currency).filter(x => x && x !== 'none');
   out.currency = ccys[0] ?? null;
-  return { read: out, notes };
+  return { read: out, notes, dispute, adjudicated: Boolean(ruled) };
 }
 
 // Splits a name as written into {given, family}. form: 'comma' (Family, Given ...), 'caps' (Given FAMILY with a
@@ -400,15 +448,14 @@ export function statusMention(system, token) {
   return ({ BRIGHTDESK: `stage=${token}`, LEDGR: `"${token}"`, ATLAS: `:: ${token}`, KOBO: `flag: ${token}`, VERITAS: `"env":"${token}"` })[system] ?? token;
 }
 
-// Deterministic country mapping for exact codes only (ISO alpha-2 in the table, "UK", ISO alpha-3).
-export function exactCountry(text, iso2List) {
+// Deterministic country mapping for exact codes only (ISO alpha-2 in the table, "UK", ISO alpha-3 through the iso3
+// map, which code nodes receive through args: ISO3 is the one copy).
+export function exactCountry(text, iso2List, iso3 = {}) {
   const t = String(text ?? '').trim().replace(/\./g, '').toUpperCase();
   if (!t) return null;
   if (t === 'UK') return 'GB';
   if (/^[A-Z]{2}$/.test(t) && iso2List.includes(t)) return t;
-  const ISO3 = { USA: 'US', CAN: 'CA', GBR: 'GB', IRL: 'IE', AUS: 'AU', NZL: 'NZ', DEU: 'DE', AUT: 'AT', CHE: 'CH', FRA: 'FR', BEL: 'BE',
-    LUX: 'LU', NLD: 'NL', ESP: 'ES', PRT: 'PT', ITA: 'IT', MEX: 'MX', JPN: 'JP', SWE: 'SE', DNK: 'DK', NOR: 'NO', FIN: 'FI' };
-  if (/^[A-Z]{3}$/.test(t) && Object.hasOwn(ISO3, t) && iso2List.includes(ISO3[t])) return ISO3[t];
+  if (/^[A-Z]{3}$/.test(t) && Object.hasOwn(iso3, t) && iso2List.includes(iso3[t])) return iso3[t];
   return null;
 }
 
@@ -462,7 +509,9 @@ export function toE164(phone, { country = null, system = '', international = fal
   let intl = international;
   if (/^\+/.test(p)) intl = true;
   else if (/^00/.test(d)) { intl = true; d = d.slice(2); }
-  else if (system === 'BRIGHTDESK' && /^011/.test(d)) { intl = true; d = d.slice(3); }
+  // The US access code "011" is written as its own group ("011 44 ..."): a local number whose digits merely begin 011
+  // ("01 114 4194") is not one, so the test reads the number as written, not the digits with their spaces removed.
+  else if (system === 'BRIGHTDESK' && /^011(?!\d)/.test(p.replace(/^[^\d+]+/, ''))) { intl = true; d = d.slice(3); }
   const table = Object.entries(phones).map(([iso, v]) => ({ iso, ...v }));
   if (intl) {
     const hit = table.filter(c => d.startsWith(c.cc)).sort((a, b) => b.cc.length - a.cc.length)[0];
@@ -542,11 +591,16 @@ export function resolveConventions(input) {
     if (stated && flipped && stated !== flipped) diagnostics.push(`ATLAS switch: notes say ${stated} after the move, but the base order is ${orders.ATLAS}`);
     if (day && flipped) atlasCutoff = { from: day, inclusive: sw.boundary !== 'after', order: flipped };
     else diagnostics.push('ATLAS switch present but unreadable');
-  } else if (!sw) diagnostics.push('ATLAS switch judgment missing');
-  // Status values.
+  } else if (!sw) {
+    // A handled node error arrives as {ok: false, error}: no dated change is applied (the base order stands), and the
+    // check fails with this reason, so the run still produces an answer that says what it could not read.
+    const failed = input.atlasSwitch && typeof input.atlasSwitch === 'object' && input.atlasSwitch.ok === false;
+    diagnostics.push(failed ? `ATLAS switch judgment failed (${input.atlasSwitch.error?.code ?? 'error'}): no dated order change applied` : 'ATLAS switch judgment missing');
+  }
+  // Status values: the fixed markers (the one table, injected through args) plus the per-task values judged below.
   const statusMeaning = {};
-  for (const [sys, map] of Object.entries({ BRIGHTDESK: { customer: 'live' }, LEDGR: { aktiv: 'live', gesperrt: 'live', storniert: 'void' }, ATLAS: { 'DO NOT MIGRATE': 'void' },
-    KOBO: { SAMPLE: 'void' }, VERITAS: { sandbox: 'void', production: 'live' } })) statusMeaning[sys] = { ...map };
+  for (const [sys, map] of Object.entries(input.fixedStatus ?? {})) statusMeaning[sys] = { ...map };
+  for (const sys of ['BRIGHTDESK', 'LEDGR', 'ATLAS', 'VENDEX', 'KOBO', 'VERITAS']) statusMeaning[sys] ??= {};
   (input.statusItems ?? []).forEach((item, i) => {
     const v = input.statuses?.[i]?.judge;
     if (!ok(input.statuses?.[i]) || !ok(v)) { diagnostics.push(`status ${item.system} ${item.token}: no judgment (treated as live)`); statusMeaning[item.system][item.token] = 'live'; return; }
@@ -666,12 +720,11 @@ export function prepMain(input) {
   const rows = String(input.export ?? '').split('\n').map(l => l.trim()).filter(Boolean).map(parseLine);
   const paragraphs = splitParagraphs(input.source_notes);
   const para = sys => paragraphs[sys] || String(input.source_notes ?? '');
-  const FIXED = { BRIGHTDESK: ['customer'], LEDGR: ['aktiv', 'gesperrt', 'storniert'], ATLAS: ['DO NOT MIGRATE'], KOBO: ['SAMPLE'], VERITAS: ['sandbox', 'production'] };
   const seen = new Set(), statusItems = [];
   for (const r of rows) {
     if (r.system === 'VENDEX' || r.status == null || r.status === '') continue;
     const key = `${r.system}\u0000${r.status}`;
-    if (seen.has(key) || (FIXED[r.system] ?? []).includes(r.status)) continue;
+    if (seen.has(key) || Object.hasOwn(input.fixedStatus?.[r.system] ?? {}, r.status)) continue;
     seen.add(key);
     statusItems.push({ system: r.system, token: r.status, mention: statusMention(r.system, r.status), paragraph: para(r.system) });
   }
@@ -689,7 +742,7 @@ export function prepMain(input) {
   for (const r of rows) {
     if (!['BRIGHTDESK', 'LEDGR', 'ATLAS'].includes(r.system)) continue;
     const c = String(r.country ?? '').trim();
-    if (!c || isPlaceholder(c) || exactCountry(c, iso2) || countryStrings.includes(c)) continue;
+    if (!c || isPlaceholder(c) || exactCountry(c, iso2, input.iso3) || countryStrings.includes(c)) continue;
     countryStrings.push(c);
   }
   const countryChunks = [];
@@ -707,6 +760,23 @@ export function prepMain(input) {
     atlasParagraph: para('ATLAS'), counts: { rows: rows.length, vendex: vendex.length, statusTokens: statusItems.length, countryStrings: countryStrings.length } };
 }
 
+// VENDEX rows whose two reads disagree about the country (usually none): the items of the country adjudication map.
+// The adjudicator sees the entry and the stated place(s) only, not the competing codes. Withdrawn (void) rows are
+// skipped; items beyond maxItems are counted in `overflow` (merge reports them) instead of breaking the map bound.
+export function disputesMain(input) {
+  const readA = vendexReadsOf(input.vendexChunks, input.vendex), readB = vendexReadsOf(input.vendexChunks, input.vendexB);
+  const items = [];
+  let overflow = 0;
+  for (const r of input.rows ?? []) {
+    if (r.system !== 'VENDEX' || r.withdrawn) continue;
+    const d = vendexCountryDispute(readA.get(r.row) ?? null, readB.get(r.row) ?? null, r.text);
+    if (!d) continue;
+    if (items.length >= input.maxItems) { overflow++; continue; }
+    items.push({ row: r.row, text: r.text, places: d.places.join(' | '), known: String(input.countryList ?? '') });
+  }
+  return { items, overflow };
+}
+
 export function mergeMain(input) {
   const spec = input.spec;
   const conv = resolveConventions(input);
@@ -715,7 +785,7 @@ export function mergeMain(input) {
   const countryOf = new Map();
   (input.countryChunks ?? []).forEach((chunk, ci) => {
     const out = input.countries?.[ci]?.judge;
-    if (!out || out.$error || !Array.isArray(out.codes)) { diagnostics.push(`country chunk ${ci}: no judgment`); return; }
+    if (!out || out.$error || !Array.isArray(out.codes)) { diagnostics.push(`country chunk ${ci}: no judgment (${chunk.ids.length} country string(s) unmapped)`); return; }
     // The name is written first and decides when it is a name of the spec's table; the code is the fallback.
     const byName = new Map(Object.entries(spec.countryNames ?? {}).map(([iso, name]) => [String(name).toLowerCase(), iso]));
     chunk.ids.forEach((id, j) => {
@@ -723,30 +793,32 @@ export function mergeMain(input) {
       if (named && typeof code === 'string' && code !== named) overrides.push(`country "${input.countryStrings[id - 1]}": name ${out.names[j]} (${named}) vs code ${code}`);
       const pick = named ?? (typeof code === 'string' && /^[A-Z]{2}$/.test(code) ? code : null);
       if (pick) countryOf.set(input.countryStrings[id - 1], pick);
+      else diagnostics.push(`unmapped country string "${input.countryStrings[id - 1]}" (name ${JSON.stringify(out.names?.[j] ?? null)}, code ${JSON.stringify(code ?? null)})`);
     });
   });
   const iso = text => {
     const t = String(text ?? '').trim();
     if (!t || isPlaceholder(t)) return null;
-    return exactCountry(t, spec.iso2 ?? []) ?? countryOf.get(t) ?? null;
+    return exactCountry(t, spec.iso2 ?? [], input.iso3) ?? countryOf.get(t) ?? null;
   };
   // Two independent reads of every VENDEX chunk (vendex, vendex_b); either may be missing.
-  const readsOf = list => {
-    const m = new Map();
-    (input.vendexChunks ?? []).forEach((chunk, ci) => {
-      const out = list?.[ci]?.judge;
-      if (!out || out.$error || !Array.isArray(out.rows)) return;
-      for (const r of out.rows) if (r && Number.isInteger(r.row) && chunk.ids.includes(r.row) && !m.has(r.row)) m.set(r.row, r);
-    });
-    return m;
-  };
-  const readA = readsOf(input.vendex), readB = readsOf(input.vendexB);
+  const readA = vendexReadsOf(input.vendexChunks, input.vendex), readB = vendexReadsOf(input.vendexChunks, input.vendexB);
   (input.vendexChunks ?? []).forEach((chunk, ci) => {
     if (!input.vendex?.[ci]?.judge) diagnostics.push(`vendex chunk ${ci}: read A missing`);
     if (input.vendexB && !input.vendexB?.[ci]?.judge) diagnostics.push(`vendex chunk ${ci}: read B missing`);
   });
   const vendexRead = new Map();
   for (const id of new Set([...readA.keys(), ...readB.keys()])) vendexRead.set(id, { a: readA.get(id) ?? null, b: readB.get(id) ?? null });
+  // Country adjudications: one narrow judgment per VENDEX row on which the two reads disagree about the country
+  // (vendex_diff lists the rows, adjudicate judges them in the same order). A missing judgment leaves the row
+  // unadjudicated, which is a diagnostic below.
+  const adjudicatedBy = new Map();
+  (input.disputes ?? []).forEach((d, i) => {
+    const v = input.adjudications?.[i]?.judge;
+    if (v && !v.$error && v.ok !== false && typeof v.country === 'string') adjudicatedBy.set(d.row, v);
+  });
+  if (input.disputeOverflow) diagnostics.push(`${input.disputeOverflow} country dispute(s) beyond the adjudication cap`);
+  const adjudications = [];
   const notMigrated = new Set();
   const normal = [], repaired = [], vendexFinal = [];
   const unparsed = { dob: 0, updated: 0, money: 0 };
@@ -760,11 +832,17 @@ export function mergeMain(input) {
     let updatedRaw = r.updated;
     if (sys === 'VENDEX') {
       const pair = vendexRead.get(r.row);
-      const combined = pair ? combineVendexReads(pair.a, pair.b, r.text, { order: conv.orders.VENDEX }) : null;
+      const combined = pair ? combineVendexReads(pair.a, pair.b, r.text, { order: conv.orders.VENDEX, adjudicated: adjudicatedBy.get(r.row) ?? null }) : null;
       if (!combined) { n.void = true; notMigrated.add(r.row); diagnostics.push(`vendex row ${r.row}: not read`); normal.push(n); continue; }
       // Spans are re-anchored to the entry text: a miscopied word is replaced by what the entry actually says.
       const v = combined.read;
       for (const x of combined.notes) repaired.push(`${r.row} ${x}`);
+      // A void row (withdrawn application) never reaches the answer, so its country dispute is moot.
+      if (combined.dispute && !n.void) {
+        const d = combined.dispute;
+        if (combined.adjudicated) adjudications.push(`vendex row ${r.row}: country reads disagree (A ${d.a ?? 'none'}, B ${d.b ?? 'none'}; ${d.places.join(' | ')}) -> adjudicated ${v.country ?? 'none'} (${JSON.stringify(adjudicatedBy.get(r.row)?.quote ?? null)})`);
+        else diagnostics.push(`vendex row ${r.row}: country reads disagree (A ${d.a ?? 'none'}, B ${d.b ?? 'none'}) and were not adjudicated: used ${v.country ?? 'none'}`);
+      }
       vendexFinal.push(v);
       const nm = splitName(v.name, 'givenFirst');
       n.given = nm.given; n.family = nm.family;
@@ -816,7 +894,7 @@ export function mergeMain(input) {
   const records = resolveIdentities(normal, spec);
   const voided = normal.filter(n => n.void).map(n => n.row);
   return { answer: { records }, conventions: { orders: conv.orders, orderHow: conv.orderHow, atlasCutoff: conv.atlasCutoff, statusMeaning: conv.statusMeaning, mirror: conv.mirror, flip: conv.flip },
-    diagnostics: diagnostics.slice(0, 40), overrides: overrides.slice(0, 40), vendexDisagreements: repaired.slice(0, 40), unparsed, voided, notRead: [...notMigrated], rowIds: normal.map(n => n.row), vendexRead: vendexFinal, vendexLines: (input.rows ?? []).filter(r => r.system === 'VENDEX').map(r => ({ row: r.row, text: r.text })) };
+    diagnostics: diagnostics.slice(0, 40), overrides: overrides.slice(0, 40), adjudications: adjudications.slice(0, 40), vendexDisagreements: repaired.slice(0, 40), unparsed, voided, notRead: [...notMigrated], rowIds: normal.map(n => n.row), vendexRead: vendexFinal, vendexLines: (input.rows ?? []).filter(r => r.system === 'VENDEX').map(r => ({ row: r.row, text: r.text })) };
 }
 
 export function verifyMain(input) {
@@ -850,14 +928,15 @@ export function verifyMain(input) {
   for (const [k, n] of Object.entries(s.unparsed ?? {})) if (n) reasons.push(`${n} unparsed ${k} value(s)`);
   // Overrides are listed but do not fail the check: code used the order its evidence rule derived from the model's own
   // quoted example/reference/place (dev a6+a8r: 7 of 43 runs had one; every derived value was correct).
-  const notes = (s.overrides ?? []).slice(0, 8).map(x => `note: override ${String(x).slice(0, 300)}`);
+  const notes = [...(s.overrides ?? []).slice(0, 8).map(x => `note: override ${String(x).slice(0, 300)}`),
+    ...(s.adjudications ?? []).slice(0, 4).map(x => `note: adjudication ${String(x).slice(0, 300)}`)];
   return { pass: recs.length > 0 && reasons.length === 0, score: reasons.length ? Math.max(0, 1 - reasons.length / 20) : 1,
     reasons: [...reasons.slice(0, 32 - notes.length), ...notes].map(x => String(x).slice(0, 900)) };
 }
 
 // ------------------------------------------------------------------------------------------------------------
 // Bundling: a code node's source holds the helpers it calls plus `export default main`.
-const HELPERS = [monthIndex, isoOf, isPlaceholder, parseDate, wordsToNumber, parseNumber, parseMoney, parseVendexMoney, alignSpan, vendexDirection, combineVendexReads, splitName, splitParagraphs,
+const HELPERS = [monthIndex, isoOf, isPlaceholder, parseDate, wordsToNumber, parseNumber, parseMoney, parseVendexMoney, alignSpan, vendexDirection, vendexReadsOf, vendexCountryDispute, combineVendexReads, splitName, splitParagraphs,
   parseLine, statusMention, exactCountry, parseSpec, toE164, orderFromExample, resolveConventions, resolveIdentities];
 export const bundle = main => `${HELPERS.filter(f => f !== main).map(f => f.toString()).join('\n\n')}\n\n${main.toString()}\n\nexport default ${main.name};\n`;
 
@@ -866,19 +945,19 @@ export const bundle = main => `${HELPERS.filter(f => f !== main).map(f => f.toSt
 const S = (maxLength = 400) => ({ type: ['string', 'null'], maxLength });
 const SYS_ENUM = ['BRIGHTDESK', 'LEDGR', 'ATLAS', 'VENDEX', 'KOBO', 'VERITAS', 'none'];
 
-export const DATE_INSTRUCTIONS = `You read one paragraph of source notes (input block "paragraph") that describes a legacy system (named in "system"). Decide how this system writes NUMERIC dates such as 03/04/1990: day first ("dmy") or month first ("mdy"). For VENDEX the question covers all its numeric dates; for BRIGHTDESK and ATLAS it covers numeric birth dates.
+export const DATE_INSTRUCTIONS = `You read one paragraph of source notes (input block "paragraph") that describes a legacy system (named in "system"). Decide how this system writes NUMERIC dates such as 07/05/1962: day first ("dmy") or month first ("mdy"). For VENDEX the question covers all its numeric dates; for BRIGHTDESK and ATLAS it covers numeric birth dates.
 Return:
 - basis: how the paragraph settles it:
-  "explicit" = it states the order itself (day first / month first, DD/MM/YYYY / MM/DD/YYYY, UK or US locale, European or American convention, including negated forms such as "does not use the American order");
+  "explicit" = it states the order itself (day first / month first, DD/MM/YYYY / MM/DD/YYYY, UK or US locale, European or American convention, including negated forms such as "never writes the month first");
   "example" = it gives an example numeric date and says what it means (a full date, or only the month someone was born in / a date falls in);
   "same_as_system" = it says the order is the same as another system's;
   "place" = it gives only a place (the city the team works in now, or the country where the servers stand) and says dates are written the way people there do.
 - order: your reading, "dmy" or "mdy".
 - quote: the one sentence that settles it, copied exactly, character for character, from the paragraph.
-- example_numeric / example_meaning: for basis "example", the example numeric date exactly as written (e.g. "03/02/1958") and the words that say what it means exactly as written (e.g. "3 February 1958" or "September"); otherwise null.
+- example_numeric / example_meaning: for basis "example", the example numeric date exactly as written (e.g. "06/11/1964") and the words that say what it means exactly as written (e.g. "6 November 1964" or "March"); otherwise null.
 - same_as_system: for basis "same_as_system", the other system's name; otherwise "none".
 - moved_from / place / place_in_united_states: for basis "place". If the text says the team moved ("moved from A to B"), moved_from is A, the place it moved FROM, exactly as written, and place is B, the place it moved TO and works in now; otherwise moved_from is null and place is the place given (where the team works, or the country where the servers stand), exactly as written. place_in_united_states says whether "place" (B, not A) is in the United States. All three are null for other bases.
-If the paragraph also says the order changed at some date (a vendor move), answer for the order BEFORE that change ("the order described above"). Ignore sentences about other kinds of dates (update dates, era dates, ISO dates).`;
+If the paragraph also says the order changed on a given date (for example after a migration to a new vendor), answer for the order that applied BEFORE that date. A team moving to another city is not such a change: for basis "place", answer for the place the team works in now. Ignore sentences about other kinds of dates (update dates, era dates, ISO dates).`;
 
 export const DATE_RETURNS = {
   type: 'object', additionalProperties: false,
@@ -909,7 +988,7 @@ export const SWITCH_INSTRUCTIONS = `You read the source-notes paragraph of the A
 Return:
 - present: true only if the paragraph says numeric birth dates are written differently in rows changed on/after a certain date.
 - quote: that sentence copied exactly, character for character (null if not present).
-- switch_date: the date of the change exactly as written in that sentence, e.g. "5 May 2020" (null if not present). Other dates in the paragraph (for example the date ATLAS went live) are not the change date.
+- switch_date: the date of the change exactly as written in that sentence, e.g. "19 April 2023" (null if not present). Other dates in the paragraph (for example the date ATLAS went live) are not the change date.
 - after: how numeric birth dates are written in rows changed on/after the change: "swapped" (day and month the other way round from before), "day_first" or "month_first"; "none" if not present.
 - boundary: "on_or_after" if rows changed ON that day already use the new order, "after" if only rows changed strictly later do; "none" if not present.`;
 
@@ -954,7 +1033,7 @@ export const STATUS_CHECKS = [
 
 export const MIRROR_INSTRUCTIONS = `You read the source-notes paragraph of one legacy system (input block "paragraph"; the system is named in "system"). Each row has an update date (updated / Geändert / ts). Decide whether the paragraph says this system's update dates are real change dates or not:
 - "restamped": the dates are NOT real change dates; a copy job, mirror rebuild, restore from backup, migration to new hardware or re-import rewrote them (so they show copy/restore times).
-- "real": the paragraph says the dates are real change dates (including "was restored once but the restore kept the original dates", or "is not a read-only mirror").
+- "real": the paragraph says the dates are real change dates (including "was rebuilt once but the rebuild kept the original dates", or "this system writes its own dates and is not a copy").
 - "not_stated": the paragraph says nothing about whether its update dates are reliable.
 Return update_dates and quote: the sentence that settles it, copied exactly, character for character (null for not_stated).`;
 
@@ -964,8 +1043,9 @@ export const MIRROR_RETURNS = {
 };
 export const MIRROR_CHECKS = [
   { op: 'any', conditions: [{ op: 'eq', left: out('update_dates'), right: 'not_stated' }, { op: 'contains', left: { $ref: 'item.paragraph' }, right: out('quote') }] },
-  // Data cross-check only: a re-stamped system's update dates lie in its copy/restore window.
-  { op: 'any', conditions: [{ op: 'ne', left: out('update_dates'), right: 'restamped' }, { op: 'lte', left: { $ref: 'item.spanDays' }, right: 120 }] },
+  // Data cross-check only (an escalation trigger, never the decision): a re-stamped system's update dates lie in its
+  // copy/restore window, which is at most a year wide.
+  { op: 'any', conditions: [{ op: 'ne', left: out('update_dates'), right: 'restamped' }, { op: 'lte', left: { $ref: 'item.spanDays' }, right: 365 }] },
 ];
 
 export const PERSPECTIVE_INSTRUCTIONS = `You read the source-notes paragraph of one legacy system (input block "paragraph"; the system is named in "system"). Its rows print a balance (balance / Saldo / owed). The canonical master stores money the account holder owes US as a positive number and money WE owe them (a credit they hold with us) as a negative number. Decide what happens to a POSITIVE printed balance of this system in the master:
@@ -1001,15 +1081,15 @@ export const PERSPECTIVE_CHECKS = [
 ];
 
 export const VENDEX_INSTRUCTIONS = `You read free-text entries of the VENDEX contact register, one entry per line ("Vendex <row id> — ..."). For EACH entry return one object with the row id and these fields. Text fields are spans copied EXACTLY, character for character, from the entry (do not reformat, translate or complete them):
-- name: the person's name as written, including any title and middle initial (e.g. "Ms. Femke Visser", "Mattia M. Ferraro").
-- birth_date: the birth date as written, without the words around it (e.g. "13 April 1988", "the 27th of April 1996", "June 12th, 1957", "5/9/1952", "21-Dec-58"); null if the entry has none or says it is unknown / not on file.
-- revised: the date the entry was revised as written (for "Spoke with <name> on <date>" it is the call date; it may stand at the start, in the middle or at the end of the entry, e.g. "Revised on ...", "last revised ...", "Entry revised ..."); e.g. "19 March 2020", "08/03/2019", "June 13, 2019". Every entry has one.
-- phone: the phone number as written (e.g. "+33 1 95 59 16 95", "02 563 30 11"); null if none.
-- balance_text: the whole balance phrase as written, including the direction words and currency (e.g. "in credit by two hundred thirty-five euros and sixteen cents", "Balance due USD 50,042.72", "owes us fifty-eight US dollars and forty-three cents"); null if no balance is recorded.
+- name: the person's name as written, including any title and middle initial (e.g. "Ms. Marelle Quist", "Tobin R. Halvard").
+- birth_date: the birth date as written, without the words around it (e.g. "9 October 1971", "the 3rd of August 1983", "March 21st, 1949", "7/3/1966", "14-Nov-61"); null if the entry has none or says it is unknown / not on file.
+- revised: the date the entry was revised as written (for "Spoke with <name> on <date>" it is the call date; it may stand at the start, in the middle or at the end of the entry, e.g. "Revised on ...", "last revised ...", "Entry revised ..."); e.g. "27 March 2021", "12/05/2018", "January 8, 2018". Every entry has one.
+- phone: the phone number as written (e.g. "+49 30 5550 7123", "031 555 0192"); null if none.
+- balance_text: the whole balance phrase as written, including the direction words and currency (e.g. "in credit by four hundred seventy euros and nine cents", "Balance due USD 31,507.64", "owes us sixty-one US dollars and twenty cents"); null if no balance is recorded.
 - balance_kind: "owed_to_us" for "owes us", "open balance", "outstanding", "balance due"; "credit" for "in credit by", "holding a credit of", "credit balance of", "we owe them"; "none" if no balance.
 - currency: "USD" for dollars, "EUR" for euros, "GBP" for pounds/pence, or the ISO code written; "none" if no balance.
-- place_kind: how the entry says where the person is: "city", "country", "nationality" or "not_stated". Look everywhere in the entry: a word in parentheses right after the name ("(Amsterdam)", "(Norwegian)"), "based in ...", "a/an ... supplier" or "... contact" with a nationality adjective, or a "— ... —" segment after the name. "location not stated" means not_stated.
-- place: that city, country or nationality as written (e.g. "Kelowna", "the UK", "Norwegian", "Italian supplier"); null if not stated.
+- place_kind: how the entry says where the person is: "city", "country", "nationality" or "not_stated". Look everywhere in the entry: a word in parentheses right after the name ("(Brindlewick)", "(Narvonian)"), "based in ...", "a/an ... supplier" or "... contact" with a nationality adjective, or a "— ... —" segment after the name. "location not stated" means not_stated.
+- place: that city, country or nationality as written (e.g. "Brindlewick", "the Narvonian Union", "Narvonian", "Narvonian supplier"); null if not stated.
 - country: the ISO 3166-1 alpha-2 code of the country of that place (the country a city lies in; the country of a nationality; GB for the United Kingdom; when several cities share a name, the best-known, largest one); "none" if not stated. The input block "known_countries" lists the countries of this migration.
 Ignore any staff remarks; they are not data about the person.`;
 
@@ -1020,7 +1100,7 @@ export const VENDEX_B_INSTRUCTIONS = `You check free-text entries of the VENDEX 
 - revised: the revision date (every entry has one: "Entry revised <date>", "Revised on <date>", "last revised <date>", or the call date in "Spoke with <name> on <date>").
 - name: the person's name with any title and middle initial.
 - birth_date: the birth date without the words around it (after "b.", "born", "DOB", "date of birth", "Born"); null only if the entry gives none or says it is unknown / not on file.
-- place_kind and place: where the person is, as written: a city, a country or a nationality ("(Oslo)", "(Norwegian)", "based in ...", "a Dutch supplier", "Swiss supplier", "— Geelong —"); place_kind "not_stated" and place null if nothing is stated ("location not stated").
+- place_kind and place: where the person is, as written: a city, a country or a nationality ("(Brindlewick)", "(Narvonian)", "based in ...", "a Narvonian supplier", "a Zelmarian contact", "— Dunhollow —"); place_kind "not_stated" and place null if nothing is stated ("location not stated").
 - country: ISO 3166-1 alpha-2 code of that place (country of a city or nationality; GB for the United Kingdom; for a city name shared by several countries, the best-known, largest city); "none" if not stated. The block "known_countries" lists this migration's countries.
 - phone: the phone number as written; null if none / not on file.
 - balance_text: the whole balance phrase with its direction words and currency ("owes us ...", "open balance ...", "outstanding ...", "balance due ...", "in credit by ...", "holding a credit of ...", "credit balance of ...", "we owe them ..."); null if not recorded.
@@ -1044,13 +1124,40 @@ const VENDEX_ROW_B = { ...VENDEX_ROW, required: VENDEX_B_ORDER, properties: Obje
 export const VENDEX_B_RETURNS = { type: 'object', additionalProperties: false, required: ['ids', 'rows'],
   properties: { ids: { type: 'array', items: { type: 'integer' }, maxItems: 20 }, rows: { type: 'array', items: VENDEX_ROW_B, maxItems: 20 } } };
 
-export const COUNTRY_INSTRUCTIONS = `Each numbered line is a country as written in a legacy system: an English or German country name, an official or local name, an alias or abbreviation, possibly with a typing error (a letter wrong, missing, extra or two letters swapped, e.g. "Itlay", "Swedn"). Watch confusable names (Austria/Australia, Schweiz = Switzerland / Schweden = Sweden, Irland = Ireland) and German abbreviations. The input block "known_countries" lists the countries of this migration with their codes; the country meant is almost always one of them.
-For each line, in order, return in "names" the English name of the country meant, spelled exactly as in known_countries when it is listed there, and in "codes" its ISO 3166-1 alpha-2 code (GB for the United Kingdom); "other" only for a country that is not listed, "none" if the line names no country. Return the line numbers you processed, in order, in "ids". The three arrays have the same length and order.`;
+export const COUNTRY_INSTRUCTIONS = `Each numbered line is a country as written in a legacy system: an English or German country name, an official or local name, an alias or abbreviation, possibly with a typing error (a letter wrong, missing, extra or two letters swapped, e.g. "Belgum", "Portugl"). Watch confusable names (Austria/Australia, Schweiz = Switzerland / Schweden = Sweden, Irland = Ireland) and German abbreviations. The input block "known_countries" lists the countries of this migration with their codes; the country meant is almost always one of them.
+For each line, in order, return in "names" the English name of the country meant, spelled exactly as in known_countries when it is listed there, and in "codes" its ISO 3166-1 alpha-2 code (GB for the United Kingdom); Every line names one of these countries; "other" (a country that is not listed) and "none" (no country) are for lines that do not, and count as a misreading. Return the line numbers you processed, in order, in "ids". The three arrays have the same length and order.`;
+export const COUNTRY_CHECKS = [
+  { op: 'eq', left: out('ids'), right: { $ref: 'item.ids' } },
+  { op: 'eq', left: out('names.length'), right: { $ref: 'item.ids.length' } },
+  { op: 'eq', left: out('codes.length'), right: { $ref: 'item.ids.length' } },
+  { op: 'not', condition: { op: 'contains', left: out('codes'), right: 'other' } },
+  { op: 'not', condition: { op: 'contains', left: out('codes'), right: 'none' } },
+];
 export const COUNTRY_RETURNS = { type: 'object', additionalProperties: false, required: ['ids', 'names', 'codes'],
   properties: { ids: { type: 'array', items: { type: 'integer' }, maxItems: 40 }, names: { type: 'array', items: { type: 'string', maxLength: 60 }, maxItems: 40 },
     codes: { type: 'array', items: { type: 'string', enum: ISO_ENUM }, maxItems: 40 } } };
 
+// Narrow adjudication of one VENDEX entry on which the two independent reads disagree about the country (only such
+// rows are judged, usually none). Input: the entry and the stated place(s); not the competing codes.
+export const ADJUDICATE_INSTRUCTIONS = `Two independent readings of one free-text entry of the VENDEX contact register (input block "entry") disagree about the country of the person. The input block "stated_places" lists the place span(s) they took from the entry (a city, a country or a nationality, as written; several are separated by "|"). Read the entry yourself and decide which country the person is in.
+- If the entry says where the person is (a word in parentheses right after the name, "based in ...", a nationality adjective with "supplier" or "contact", or a "— ... —" segment after the name), give the ISO 3166-1 alpha-2 code of that country: the country a city lies in, the country of a nationality, GB for the United Kingdom; when several cities share a name, the best-known, largest one. The input block "known_countries" lists the countries of this migration; the country meant is almost always one of them.
+- Only a place that describes the PERSON counts, not a place that belongs to someone else.
+- "none" if the entry states no place ("location not stated") or the place does not identify a country. "other" only for a country that is not listed (it will be rejected, so check the list again first).
+Return country and quote: the words of the entry that state the place, copied exactly, character for character (null only when country is "none").`;
+
+export const ADJUDICATE_RETURNS = { type: 'object', additionalProperties: false, required: ['country', 'quote'],
+  properties: { country: { type: 'string', enum: ISO_ENUM }, quote: S(200) } };
+export const ADJUDICATE_CHECKS = [
+  // The quote is verbatim from the entry (a country other than "none" needs it), and "other" signals a misread.
+  { op: 'any', conditions: [{ op: 'eq', left: out('country'), right: 'none' }, { op: 'all', conditions: [
+    { op: 'ne', left: out('quote'), right: null }, { op: 'contains', left: { $ref: 'item.text' }, right: out('quote') }] }] },
+  { op: 'ne', left: out('country'), right: 'other' },
+];
+
 // ------------------------------------------------------------------------------------------------------------
+// Most VENDEX rows the country adjudication map takes (the map bound); a larger dispute list is reported by merge.
+const DISPUTE_CAP = 60;
+
 export function buildRecordsV3Workflow({ extractModelClass = 'M', conventionsModelClass = 'M', maxClass = 'L', concurrency = 4, maxCost = 1, reasoning = 'none',
   vendexChunk = 5, countryChunk = 30 } = {}) {
   const notes = { name: 'paragraph', ref: 'item.paragraph', label: 'untrusted:notes', render: 'text' };
@@ -1059,7 +1166,7 @@ export function buildRecordsV3Workflow({ extractModelClass = 'M', conventionsMod
   // answer); at the top permitted class the only recovery left is one resample. VENDEX id-echo slips are resampled.
   const onFail = (id, modelClass) => (id === 'vendex' || order.indexOf(modelClass) >= order.indexOf(maxClass) ? 'resample' : 'escalate');
   const judge = (id, description, instructions, inputs, returns, checks, modelClass, maxTokens = 1200) => ({
-    id: 'judge', kind: 'agent', needs: [], description, role: ['vendex', 'countries'].includes(id) ? 'extract' : 'classify', instructions,
+    id: 'judge', kind: 'agent', needs: [], description, role: ['vendex', 'countries', 'adjudicate'].includes(id) ? 'extract' : 'classify', instructions,
     context: { inputs, budget: { maxInputTokens: 6000, onOverflow: 'fail' } },
     returns, model: { class: modelClass, maxClass }, decoding: { reasoning, maxTokens }, checks,
     escalation: { schemaRetries: 1, onCheckFail: onFail(id, modelClass), maxResamples: 1, maxEscalations: 2 }, timeoutMs: 300000,
@@ -1082,7 +1189,8 @@ export function buildRecordsV3Workflow({ extractModelClass = 'M', conventionsMod
       { id: 'spec', kind: 'code', needs: [], description: 'Parse rate tables, calling codes and nicknames from the spec', lang: 'js', source: bundle(parseSpec),
         args: { spec: { $ref: 'input.inputs.spec' } }, timeoutMs: 20000 },
       { id: 'prep', kind: 'code', needs: ['spec'], description: 'Split rows, parse structured dialects, split notes, list status tokens and country strings', lang: 'js', source: bundle(prepMain),
-        args: { export: { $ref: 'input.inputs.export' }, source_notes: { $ref: 'input.inputs.source_notes' }, iso2: { $ref: 'nodes.spec.iso2' }, countryList: { $ref: 'nodes.spec.countryList' }, vendexChunk, countryChunk }, timeoutMs: 30000 },
+        args: { export: { $ref: 'input.inputs.export' }, source_notes: { $ref: 'input.inputs.source_notes' }, iso2: { $ref: 'nodes.spec.iso2' }, countryList: { $ref: 'nodes.spec.countryList' },
+          fixedStatus: FIXED_STATUS, iso3: ISO3, vendexChunk, countryChunk }, timeoutMs: 30000 },
       mapOf('dates', ['prep'], 'Read the numeric date order of BRIGHTDESK, ATLAS and VENDEX from the notes', 'nodes.prep.dateItems',
         judge('dates', 'Numeric date order of this system', DATE_INSTRUCTIONS, [systemInput, notes], DATE_RETURNS, DATE_CHECKS, conventionsModelClass)),
       { ...judge('atlas_switch', 'Dated change of the ATLAS birth-date order', SWITCH_INSTRUCTIONS, [{ name: 'paragraph', ref: 'nodes.prep.atlasParagraph', label: 'untrusted:notes', render: 'text' }],
@@ -1101,17 +1209,29 @@ export function buildRecordsV3Workflow({ extractModelClass = 'M', conventionsMod
           [{ op: 'eq', left: out('ids'), right: { $ref: 'item.ids' } }], extractModelClass, 3000), 60),
       mapOf('countries', ['prep'], 'Map country strings to ISO codes', 'nodes.prep.countryChunks',
         judge('countries', 'ISO code of each country as written', COUNTRY_INSTRUCTIONS, [knownCountries, { name: 'countries', ref: 'item.lines', label: 'untrusted:export', render: 'text' }], COUNTRY_RETURNS,
-          // Every country of this bed is in the spec's table: "other" signals a misread name, so it is resampled/escalated.
-          [{ op: 'eq', left: out('ids'), right: { $ref: 'item.ids' } }, { op: 'not', condition: { op: 'contains', left: out('codes'), right: 'other' } }], extractModelClass, 1500), 20),
-      { id: 'merge', kind: 'code', needs: ['prep', 'spec', 'dates', 'atlas_switch', 'statuses', 'mirror', 'perspective', 'vendex', 'vendex_b', 'countries'],
+          // Every string handed to this node names a country of the spec's table: "other" and "none" signal a misread, so
+          // they are resampled/escalated, and names and codes must be as many as the lines (code maps them by position).
+          COUNTRY_CHECKS, extractModelClass, 1500), 20),
+      // Rows on which the two VENDEX reads disagree about the country (usually none) go to a narrow adjudication node: code
+      // never picks a side of a disagreement about a model-read field.
+      { id: 'vendex_diff', kind: 'code', needs: ['prep', 'vendex', 'vendex_b'], description: 'List the VENDEX rows whose two reads disagree about the country', lang: 'js', source: bundle(disputesMain),
+        args: { rows: { $ref: 'nodes.prep.rows' }, vendexChunks: { $ref: 'nodes.prep.vendexChunks' }, vendex: { $ref: 'nodes.vendex.items' }, vendexB: { $ref: 'nodes.vendex_b.items' },
+          countryList: { $ref: 'nodes.spec.countryList' }, maxItems: DISPUTE_CAP }, timeoutMs: 30000 },
+      mapOf('adjudicate', ['vendex_diff'], 'Adjudicate the country of each VENDEX row on which the two reads disagree', 'nodes.vendex_diff.items',
+        judge('adjudicate', 'Country of this VENDEX entry', ADJUDICATE_INSTRUCTIONS, [knownCountries, { name: 'entry', ref: 'item.text', label: 'untrusted:export', render: 'text' },
+          { name: 'stated_places', ref: 'item.places', label: 'untrusted:export', render: 'text' }], ADJUDICATE_RETURNS, ADJUDICATE_CHECKS, extractModelClass, 600), DISPUTE_CAP),
+      // join all_resolved: atlas_switch has onError 'continue', and an exhausted check there must leave a diagnostic and a
+      // sane default (no dated order change) in merge, not skip merge, check and answer.
+      { id: 'merge', kind: 'code', join: 'all_resolved', needs: ['prep', 'spec', 'dates', 'atlas_switch', 'statuses', 'mirror', 'perspective', 'vendex', 'vendex_b', 'countries', 'vendex_diff', 'adjudicate'],
         description: 'Apply the conventions and the spec: void rows, dates, signs, identity, conflicts, phones, FX', lang: 'js', source: bundle(mergeMain),
         args: {
-          spec: { $ref: 'nodes.spec' }, rows: { $ref: 'nodes.prep.rows' },
+          spec: { $ref: 'nodes.spec' }, rows: { $ref: 'nodes.prep.rows' }, fixedStatus: FIXED_STATUS, iso3: ISO3,
           dateItems: { $ref: 'nodes.prep.dateItems' }, dates: { $ref: 'nodes.dates.items' }, atlasSwitch: { $ref: 'nodes.atlas_switch' },
           statusItems: { $ref: 'nodes.prep.statusItems' }, statuses: { $ref: 'nodes.statuses.items' },
           mirrorItems: { $ref: 'nodes.prep.mirrorItems' }, mirror: { $ref: 'nodes.mirror.items' },
           perspectiveItems: { $ref: 'nodes.prep.perspectiveItems' }, perspective: { $ref: 'nodes.perspective.items' },
           vendexChunks: { $ref: 'nodes.prep.vendexChunks' }, vendex: { $ref: 'nodes.vendex.items' }, vendexB: { $ref: 'nodes.vendex_b.items' },
+          disputes: { $ref: 'nodes.vendex_diff.items' }, disputeOverflow: { $ref: 'nodes.vendex_diff.overflow' }, adjudications: { $ref: 'nodes.adjudicate.items' },
           countryStrings: { $ref: 'nodes.prep.countryStrings' }, countryChunks: { $ref: 'nodes.prep.countryChunks' }, countries: { $ref: 'nodes.countries.items' },
         }, timeoutMs: 120000 },
       { id: 'check', kind: 'verify', needs: ['merge'], description: 'Structural invariants and convention consistency', method: 'code', lang: 'js', source: bundle(verifyMain),

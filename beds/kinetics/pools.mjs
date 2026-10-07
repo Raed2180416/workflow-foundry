@@ -153,7 +153,7 @@ export const SERIES_COMMENTS = [
   'Linear phase a bit short at the top concentration but slopes look fine.',
   'Plate went in about 40 s after the enzyme addition.',
   'No lag phase visible.',
-  'Same master mix as the previous plate.',
+  'Plate equilibrated in the reader for 5 min before the first cycle.', // [AUDIT F24] (was: same master mix as the previous plate)
   'Fresh substrate dilutions for this plate.',
   'Read straight after mixing; seal on.',
 ];
@@ -215,13 +215,17 @@ export function orderedBubble(r, mode, readMin = null, { impersonal = false } = 
 // [AUDIT F22] Side remarks about things that are not study wells (the blank, the standards, the practice or pilot
 // plate, last week's plate), in the vocabulary of the opposite outcome. They never change a study well.
 export const SIDE_REMARKS = {
-  // appended to notes of EXCLUDED wells (vocabulary of kept wells)
+  // added to notes of EXCLUDED wells (vocabulary of kept wells)
   keepish: [r => `the blank on this plate was ${r.pick(['clean', 'fine', 'clear'])}`, () => 'no bubble in the blank next to it', r => `the standards were ${r.pick(['fine', 'clean'])}`,
-    () => 'on the practice plate I had popped a bubble in this position before the read', () => 'nothing wrong with the blank', () => 'the pilot plate never had this problem', () => 'last week the same position read clean'],
-  // appended to notes of KEPT wells (vocabulary of excluded wells)
+    () => 'on the practice plate I had popped a bubble in this position before the read', () => 'nothing wrong with the blank', () => 'the pilot plate never had this problem', () => 'last week the same position read clean',
+    r => `${r.pick(['STD-2', 'STD-3', 'STD-4'])} next to it read normally`, () => 'the neighbouring study\'s well in this position was fine', () => 'the duplicate on the spare plate was clean', () => 'my practice run of this row had no such problem'],
+  // added to notes of KEPT wells (vocabulary of excluded wells)
   exclish: [() => 'the blank on this plate did read with a bubble, though', () => 'the practice plate had a double enzyme addition in this position', () => 'the standards on this plate were over range (OVR)',
-    () => 'last week this position read with a bubble for the whole read', () => 'the pilot plate saturated (SAT) at this concentration', () => 'the blank next to it got its buffer late'],
+    () => 'last week this position read with a bubble for the whole read', () => 'the pilot plate saturated (SAT) at this concentration', () => 'the blank next to it got its buffer late',
+    r => `${r.pick(['STD-2', 'STD-3', 'STD-4'])} on this plate saturated`, () => 'the neighbouring study\'s well in this position had a bubble during its read', () => 'the duplicate on the spare plate got the enzyme twice', () => 'my practice run of this row had a spill here'],
 };
+// a side remark goes after the note or, joined differently, before it
+export const sideJoin = (note, remark, r) => r.pick([() => `${note}; ${remark}`, () => `${note} (${remark})`, () => `${remark}; as for this well: ${note}`, () => `${note}. Unrelated: ${remark}`])();
 
 // [AUDIT F23] The author's answer to a colleague's report. Whether it confirms or denies is in the content; the opening
 // word (Yes, No, Confirmed, You're right) and a trailing side clause can point the other way.
@@ -229,10 +233,14 @@ export const ANSWERS = {
   confirm: [b => `Yes, ${b}: that's right, I forgot to note it.`, b => `Confirmed for ${b}; I remember it now. It is not on my sheet.`, b => `You're right about ${b}.`,
     b => `Yes for ${b}; I will add it to my sheet.`, b => `${b}: that's on me; it happened and never made it onto my sheet.`, b => `No point denying it: ${b} had exactly that.`,
     b => `My sheet says nothing about ${b}, but you are right: it happened.`, b => `I thought ${b} was fine, but the photo proves you right.`,
-    b => `${b} had it, I'm afraid; nothing else on that plate was affected, though.`, b => `Sadly yes for ${b}; the rest of the row was fine.`],
+    b => `${b} had it, I'm afraid; nothing else on that plate was affected, though.`, b => `Sadly yes for ${b}; the rest of the row was fine.`,
+    b => `Nothing to add: ${b} had exactly that.`, b => `Not just the practice plate: ${b} had it as well.`, b => `No, you are not imagining it: ${b} had it.`,
+    b => `I thought my sheet was complete, but ${b} did have it.`, b => `Clean photo or not, ${b} had it; I saw it myself.`],
   deny: [b => `No, ${b} was fine; you are thinking of a different plate.`, b => `I checked: nothing like that happened in ${b}.`, b => `Not in ${b}; my sheet is complete.`,
     b => `Yes, I looked at ${b} again: nothing like that happened there.`, b => `You're right that it was a busy day, but ${b} itself was fine.`,
-    b => `${b} was fine, but you are right that the practice plate had it.`, b => `Confirmed with the photo: ${b} was clean the whole time.`, b => `${b}? That was the practice plate, not this one.`],
+    b => `${b} was fine, but you are right that the practice plate had it.`, b => `Confirmed with the photo: ${b} was clean the whole time.`, b => `${b}? That was the practice plate, not this one.`,
+    b => `Wrong well, I'm afraid: ${b} had nothing of the sort.`, b => `Sadly for your theory, ${b} was perfectly normal.`, b => `My sheet is right about ${b}: it had none of that.`,
+    b => `I would have noted it: ${b} did not have it.`, b => `Right plate, wrong well: not ${b}.`],
 };
 
 // [AUDIT F25] A late report posted for the wrong well X, moved by its author to well Y the next day: the fact belongs
@@ -243,6 +251,19 @@ export const REDIRECT = [
   (x, y) => `${x} was fine after all; the well I meant yesterday is ${y}.`,
   (x, y) => `Mixed up two wells yesterday: what I wrote about ${x} belongs to ${y}.`,
   (x, y, xid) => `Yesterday's report on ${x} is about ${y}, the well I actually meant; ${xid} had nothing.`,
+  (x, y) => `It was ${y}, not ${x}, that my message yesterday was about.`,
+  (x, y) => `${y} is the well I meant yesterday; I typed ${x} by mistake.`,
+];
+// [AUDIT F25] withdrawals of a late report (the well stays in); some carry none of the usual opening words
+export const WITHDRAW = [
+  ref => `Ignore what I wrote yesterday about ${ref}: wrong plate. That well was fine.`,
+  ref => `Scratch my message about ${ref}; I mixed it up with the practice plate. Nothing happened in that well.`,
+  ref => `Correction to my own note on ${ref}: that was the neighbouring study's plate, not ours. The well is fine.`,
+  ref => `Please disregard what I said about ${ref} yesterday; I was looking at the wrong export.`,
+  ref => `${ref}: I take back yesterday's message, it was a different well.`,
+  ref => `What I posted about ${ref} yesterday was about the practice plate; the study well itself was fine.`,
+  ref => `Forget my note on ${ref}: that came from the wrong export, the well was fine.`,
+  ref => `Looked at the photo again: ${ref} was fine after all, my message yesterday was wrong.`,
 ];
 
 // [AUDIT F24] Master-mix log: the enzyme working dilution of each condition's mix. Rates scale with the enzyme, so a mix
@@ -253,10 +274,15 @@ export const DOSE_TEXT = [
   d => `working dilution 1:${d}, not the standard 1:500, so ${d < 500 ? 'twice' : 'half'} the usual enzyme; every plate of this condition was run with it`,
   d => `enzyme diluted ${d}-fold instead of 500-fold by mistake; the mix had already been used for all plates of this condition`,
   d => `${d < 500 ? 'double' : 'half'}-strength enzyme: 1 in ${d} rather than 1 in 500. All of this condition's wells got it`,
+  d => `${d < 500 ? 'twice the standard amount of enzyme went in (the stock was diluted half as much as it should have been)' : 'only half the standard amount of enzyme went in (the stock was diluted twice as much as it should have been)'}; all of this condition's plates were run with it`,
+  d => `the dilutor log shows the enzyme was diluted ${d < 500 ? 'half as much' : 'twice as much'} as the SOP says; this mix was used for every plate of the condition`,
 ];
 export const DOSE_HERRING = [
   d => `first made at 1:${d} by mistake and poured away before any plate was loaded; remade at 1:500 the same morning`,
   d => `a 1:${d} dilution was prepared by mistake, caught before use and discarded; the mix used for the plates was 1:500`,
   () => 'someone asked whether this one was also off: checked the dilutor log, it was 1:500',
+  d => `I almost used 1:${d} (the old pilot setting) but switched to 1:500 before making the mix`,
+  d => `1:500 (the pilot plate had used 1:${d}, which is irrelevant here)`,
+  d => `made at 1:500; the 1:${d} label on the tube is from last month's project`,
 ];
-export const DOSE_OK = [() => 'enzyme at 1:500', () => 'enzyme 1:500, as per SOP', () => 'standard 1:500 enzyme dilution', () => '1:500, 5 uL per well'];
+export const DOSE_OK = [() => 'enzyme at 1:500', () => 'enzyme 1:500, as per SOP', () => 'standard 1:500 enzyme dilution', () => '1:500, 5 uL per well', () => 'standard working dilution', () => 'as per SOP (1 in 500)'];

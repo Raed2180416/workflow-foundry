@@ -1357,3 +1357,463 @@ export const STRAY_STATS = {
 
 // v4: a caller whose workers are all stuck on a failing callee times out on its healthy callees too.
 export const COLLATERAL = [DEP_FAIL[0], DEP_FAIL[4], DEP_FAIL[6], DEP_FAIL[9]];
+
+// ================================================================ v4, second-audit round 2 (2026-10-07)
+// The first v4 devices stopped the v3 attackers, but a fresh white-box script (A5 in AUDIT.md, 40 lines) still
+// passed about 45% of d3 tasks: it classified every line by its template and only needed a few keyword lists.
+// The pools below widen those lists (more paraphrases per role, with words shared across roles) and add events
+// whose role depends on context a reader checks in one look but a script has to code separately.
+
+// Momentary improvements inside the real episode, placed between T and the first caller failure (latent phase)
+// or between T and the fatal point. Unlike PARTIAL_RECOVERY they carry no "still"/"resumed" marker: the numbers
+// or the subject show that the fault goes on.
+export const PARTIAL_MORE = {
+  connection_pool_exhaustion: [
+    (c, r) => ['INFO', `one connection came back to '${c.pool}' (${c.max - 1}/${c.max} in use, ${r.int(20, 140)} borrowers queued)`],
+    (c, r) => ['INFO', `a long transaction on '${c.pool}' finished and returned its connection; the other ${c.max - 1} are checked out`],
+  ],
+  certificate_expiry: [
+    (c, r) => ['INFO', `handshake from an internal health checker succeeded (it does not verify certificates); verifying clients are refused`],
+    (c, r) => ['INFO', `${r.int(2, 9)} requests served on connections opened before notAfter; new handshakes fail`],
+  ],
+  disk_full: [
+    (c, r) => ['INFO', `log rotation freed ${r.int(80, 900)} MiB on ${c.vol}; ${c.writer} filled it again within seconds`],
+    (c, r) => ['INFO', `temporary files on ${c.vol} cleaned up (${r.int(100, 700)} MiB); usage keeps rising`],
+  ],
+  dns_resolution_failure: [
+    (c, r) => ['INFO', `${c.calleeHost} answered from the local host cache (entry ${r.int(20, 280)}s old); fresh lookups fail`],
+    (c, r) => ['INFO', `retry ${r.int(2, 3)}/3 resolved ${c.calleeHost} once; the next lookup timed out again`],
+  ],
+  memory_leak_oom: [
+    (c, r) => ['INFO', `young collection freed ${r.int(20, 90)} MiB; the old generation did not shrink`],
+    (c, r) => ['INFO', `cache '${c.cacheName}' evicted ${r.int(200, 900)} entries; heap back up within a minute`],
+  ],
+  clock_skew: [
+    (c, r) => ['INFO', `time source answered once (estimated offset +${c.skew}s); the step correction was refused by policy`],
+    (c, r) => ['INFO', `${r.int(2, 9)} requests with long-lived tokens validated fine; short-lived tokens fail`],
+  ],
+  upstream_rate_limiting: [
+    (c, r) => ['INFO', `${c.ext} accepted ${r.int(3, 40)} requests when its window rolled over; 429s again right after`],
+    (c, r) => ['INFO', `retry queue to ${c.ext} flushed ${r.int(5, 60)} requests; the provider is refusing the rest`],
+  ],
+  poisoned_cache: [
+    (c, r) => ['INFO', `cache '${c.ns}' hit ratio 0.99 (no origin fetches)`],
+  ],
+  bad_config_deploy: [
+    (c, r) => ['INFO', `pod ${c.pod} passed its readiness probe on ${c.newVer}`],
+  ],
+};
+
+// Benign lines with the fault's words, worded differently from LOOKALIKE (the reason they are harmless is in
+// the line, in varied words). From d3 one of them sits between the root's blip and T (p 0.75).
+export const LOOKALIKE_MORE = {
+  connection_pool_exhaustion: [
+    (c, r) => ['WARN', `connection pool '${c.pool}' at capacity: in use ${c.max}/${c.max} while the weekly export holds its reserved slots; no request is waiting`],
+    (c, r) => ['WARN', `all ${c.max} connections of '${c.pool}' are checked out by the warm-up job for ${r.int(1, 4)}s; it gives them back before traffic starts`],
+    (c, r) => ['WARN', `waiting for a ${c.db} connection took ${r.int(900, 2900)}ms (pool max ${c.max}) in the load-test harness against the staging copy`],
+  ],
+  certificate_expiry: [
+    (c, r) => ['WARN', `x509 serving cert for the decommissioned hostname old-${c.host} validity ended; nothing points there any more`],
+    (c, r) => ['WARN', `inbound TLS on :${c.port} from ${c.peerIp} failing: that scanner insists on an expired test certificate we never served`],
+    (c, r) => ['WARN', `peer ${c.peerIp} sent alert 'certificate_expired' about its own client certificate during handshake on :${c.port}`],
+  ],
+  bad_config_deploy: [
+    (c, r) => ['INFO', `dry run: loaded configuration bundle from release ${c.otherVer} into a scratch process; live config untouched`],
+    (c, r) => ['INFO', `rollout plan for ${c.svc} ${c.otherVer} drafted; waiting for approval`],
+  ],
+  disk_full: [
+    (c, r) => ['WARN', `volume ${c.vol} at ${c.u0 + r.int(1, 3)}% and climbing slowly as every evening; ${r.int(30, 90)} GiB free`],
+    (c, r) => ['WARN', `write to ${c.vol}/scratch/${hex(r, 6)} failed: no space left on the test quota (scratch area only)`],
+  ],
+  dns_resolution_failure: [
+    (c, r) => ['WARN', `getaddrinfo EAI_AGAIN canary-${hex(r, 4)}.${c.host} (synthetic probe name that is not supposed to exist)`],
+    (c, r) => ['WARN', `could not resolve old-${hex(r, 3)}.partner.example (attempt 1/3); the partner shut that name down last year`],
+  ],
+  memory_leak_oom: [
+    (c, r) => ['WARN', `memory watermark crossed: ${c.base + r.int(14, 20)}% of limit used during the hourly report render; it frees the memory when done`],
+    (c, r) => ['WARN', `resident memory ${Math.round(c.lim * (c.base + r.int(12, 24)) / 100)} MiB and rising while the cache preloads; capped at ${c.base + 25}% by design`],
+  ],
+  clock_skew: [
+    (c, r) => ['WARN', `system clock stepped forward by 1s (leap-second smear finished)`],
+    (c, r) => ['WARN', `time sync lost for ${r.int(5, 40)}s while the NTP sidecar restarted; offset stayed at ${r.int(1, 9)}ms`],
+  ],
+  upstream_rate_limiting: [
+    (c, r) => ['WARN', `throttled by ${c.ext}: quota of ${r.int(5, 20)} requests/min exhausted for the reporting key (production calls use another key)`],
+    (c, r) => ['WARN', `${c.ext} refuses most of our calls to its deprecated v1 endpoint; we only call it from the nightly reconciliation`],
+  ],
+  poisoned_cache: [
+    (c, r) => ['INFO', `warm-up finished: '${c.ns}-shadow' primed with ${r.int(200, 900)} entries (source snap-${hex(r, 6)}); shadow reads only`],
+  ],
+};
+
+// Consequences of the true fault worded like its sibling class (in addition to SIBLING_ONSET); the cause is in
+// the line. From d3 they share the SIBLING_ONSET slot (20% of the root's symptom lines).
+export const SIBLING_MORE = {
+  connection_pool_exhaustion: [(c, r) => ['WARN', `throttling our own callers: ${r.int(20, 300)} requests answered 429 because no ${c.db} connection was free`]],
+  upstream_rate_limiting: [(c, r) => ['WARN', `all ${c.max} connections of '${c.pool}' are checked out by requests parked until ${c.ext} accepts calls again`]],
+  disk_full: [(c, r) => ['WARN', `memory watermark crossed: ${c.base + r.int(12, 20)}% of limit used because writes to ${c.vol} cannot be flushed`]],
+  memory_leak_oom: [(c, r) => ['WARN', `free space on ${c.vol} shrinking fast: core dumps of the killed process (${r.int(1, 4)} GiB each)`]],
+  dns_resolution_failure: [(c, r) => ['WARN', `connection pool '${c.pool}' at capacity: in use ${c.max}/${c.max}, every slot stuck dialing ${c.calleeHost} (lookup pending)`]],
+  bad_config_deploy: [(c, r) => ['INFO', `warm-up finished: '${c.ns}' primed with ${r.int(8000, 90000)} entries in the new ${c.newVer} format`]],
+  clock_skew: [(c, r) => ['ERROR', `TLS handshake from ${c.callerHost} rejected by the client: our clock says the session ticket is from the future`]],
+  certificate_expiry: [(c, r) => ['WARN', `clock offset vs time source is +0.0${r.int(1, 9)}s; certificate checks fail anyway (the served leaf is past notAfter)`]],
+  poisoned_cache: [(c, r) => ['WARN', `config value 'cache.schema' disagrees with entry ${c.key} (written by ${c.otherVer}); serving it as-is`]],
+};
+
+// A canary line that does not name the new release (the promotion, 70-160 s later, does).
+export const CANARY_NOVER = [
+  (c, r) => ['INFO', `canary: pod ${c.pod} switched to the new build; other pods stay on ${c.oldVer}`],
+  (c, r) => ['INFO', `traffic split for ${c.svc}: ${r.pick([5, 10, 20])}% of requests now go to the canary build`],
+];
+
+// Extra note paraphrases (d3+), with vocabulary the earlier pools do not use.
+export const NOTES_MORE = {
+  optional: [
+    (a, b, x) => `${b} is off the critical path for ${a}: ${a} shows ${x.fallback} and carries on.`,
+    (a, b, x) => `Calls from ${a} to ${b} are best-effort; ${a} answers with ${x.fallback} when they error.`,
+    (a, b, x) => `${a} degrades gracefully without ${b} (it serves ${x.fallback}).`,
+    (a, b, x) => `For ${a}, ${b} is a nice-to-have; ${x.fallback} covers for it.`,
+  ],
+  hard: [
+    (a, b, x) => `${a} was meant to degrade gracefully without ${b}, but that was never implemented; it errors when ${b} errors.`,
+    (a, b, x) => `${b} is on the critical path of every ${a} request; best-effort handling was discussed and rejected.`,
+    (a, b, x) => `Nothing covers for ${b} inside ${a}: it is not a nice-to-have but a hard requirement.`,
+  ],
+  provider: [
+    (a, b, x) => `When ${b} errors, ${a} goes to ${x.provider} for ${x.what} itself; ${a} is only down if ${x.provider} is down as well.`,
+    (a, b, x) => `${a}'s answer to a ${b} outage is to ask ${x.provider} directly; that only helps while ${x.provider} is up.`,
+  ],
+};
+
+// ================================================================ v4, second-audit round 3 (2026-10-07)
+// Round 2 still left a 40-line white-box script (A6) near 45%: each new phrase cost it one regex alternative.
+// Round 3 composes benign lines from parts (a fault-sounding head and a reason it is harmless, drawn
+// independently) and draws the names of unrelated resources from per-task generated sets, so a script has to
+// carry either long phrase lists or real logic (which resource the failures involve), not a few keywords.
+
+const pickOf = (r, xs) => xs[r.int(0, xs.length - 1)];
+// Combinatorial benign lookalikes: head(c, r) sounds like the class's fault, tail(c, r) says why it is harmless.
+// Heads and tails are drawn independently; tails share words with real symptom lines on purpose.
+export const LOOK_HEAD = {
+  connection_pool_exhaustion: [
+    (c, r) => `connection pool '${c.pool}' at capacity: in use ${c.max}/${c.max}`,
+    (c, r) => `all ${c.max} connections of '${c.pool}' are checked out`,
+    (c, r) => `waiting for a ${c.db} connection took ${r.int(900, 2900)}ms (pool max ${c.max})`,
+    (c, r) => `pool '${c.pool}' saturated (${c.max}/${c.max})`,
+  ],
+  certificate_expiry: [
+    (c, r) => `TLS handshake from ${c.peerIp} rejected: certificate expired`,
+    (c, r) => `x509: certificate has expired (peer ${c.peerIp})`,
+    (c, r) => `handshake on :${c.port} aborted with alert 'certificate_expired'`,
+    (c, r) => `peer ${c.peerIp} hung up after the certificate exchange`,
+  ],
+  bad_config_deploy: [
+    (c, r) => `loaded configuration bundle from release ${c.otherVer}`,
+    (c, r) => `rollout of ${c.otherVer} prepared`,
+    (c, r) => `config value 'retry.max'='-1' is not valid`,
+    (c, r) => `unknown setting 'cache.ttl_ms' in release ${c.otherVer}`,
+  ],
+  disk_full: [
+    (c, r) => `write failed: no space left on device`,
+    (c, r) => `disk usage jumped to ${r.int(88, 97)}%`,
+    (c, r) => `free space shrinking fast: ${r.int(1, 6)} GiB left`,
+    (c, r) => `ENOSPC while writing a temp file`,
+  ],
+  dns_resolution_failure: [
+    (c, r) => `lookup failed: temporary failure in name resolution`,
+    (c, r) => `getaddrinfo EAI_AGAIN`,
+    (c, r) => `SERVFAIL while resolving a name`,
+    (c, r) => `could not resolve host (attempt ${r.int(1, 3)}/3)`,
+  ],
+  memory_leak_oom: [
+    (c, r) => `heap after full GC is ${c.base + r.int(12, 22)}% (baseline ${c.base}%)`,
+    (c, r) => `resident memory ${Math.round(c.lim * (c.base + r.int(12, 24)) / 100)} MiB and rising`,
+    (c, r) => `memory watermark crossed: ${c.base + r.int(14, 24)}% of limit used`,
+    (c, r) => `container OOMKilled (limit ${r.pick([256, 512])}Mi)`,
+  ],
+  clock_skew: [
+    (c, r) => `clock offset vs time source is +${r.int(2, 40)}s`,
+    (c, r) => `token rejected: issued-at is ${r.int(2, 40)}s in the future`,
+    (c, r) => `request signature timestamp outside allowed window`,
+    (c, r) => `time sync lost; estimated drift +${r.int(2, 30)}s`,
+  ],
+  upstream_rate_limiting: [
+    (c, r) => `${c.ext} responded 429 Too Many Requests`,
+    (c, r) => `throttled by ${c.ext}: quota exhausted`,
+    (c, r) => `backing off ${r.int(500, 8000)}ms before retrying ${c.ext}`,
+    (c, r) => `${c.ext} rate limit exceeded`,
+  ],
+  poisoned_cache: [
+    (c, r) => `cache refill: loaded ${r.int(200, 9000)} entries from snapshot snap-${hex(r, 6)}`,
+    (c, r) => `cached value failed integrity check (checksum mismatch)`,
+    (c, r) => `decoded cached entry is missing field '${c.field}'`,
+    (c, r) => `${r.int(5, 90)} cache entries failed checksum`,
+  ],
+};
+// Why it is harmless. Generic tails fit every class; the class tails name its own benign context.
+export const LOOK_TAIL_ANY = [
+  (c, r) => ` for the synthetic probe in the staging cell; customer traffic does not go there`,
+  (c, r) => ` while replaying last week's traffic against the perf copy (not production)`,
+  (c, r) => ` in the disaster-recovery drill on the standby copy; the live service is untouched`,
+  (c, r) => `; this is the chaos-test injector's scheduled run, scoped to its own test tenant`,
+  (c, r) => ` on the shadow deployment that receives a mirrored copy of requests and answers nobody`,
+  (c, r) => ` in the nightly reconciliation job, which runs outside the request path`,
+  (c, r) => ` for a client library self-test at start-up; no request was involved`,
+  (c, r) => `: line emitted by the pre-production smoke suite, which shares this log stream`,
+];
+export const LOOK_TAIL = {
+  connection_pool_exhaustion: [
+    (c, r) => ` during the weekly export, which owns the reserved slots; request handlers use the rest and nobody queued`,
+    (c, r) => ` for ${r.int(1, 3)}s while the warm-up job opened its connections; drained before traffic arrived`,
+  ],
+  certificate_expiry: [
+    (c, r) => ` (that client pins an old test certificate of its own; our serving certificate is valid)`,
+    (c, r) => `: the scanner probes with a deliberately expired certificate every hour`,
+  ],
+  bad_config_deploy: [
+    (c, r) => ` into a scratch process for a dry run; the running configuration did not change`,
+    (c, r) => ` by the linter in CI; nothing was deployed`,
+  ],
+  disk_full: [
+    (c, r) => ` on the scratch quota of the backup verifier (a separate 2 GiB area)`,
+    (c, r) => ` on /tmp of the one-off migration pod, which exits when done`,
+  ],
+  dns_resolution_failure: [
+    (c, r) => ` for a retired partner name that the address cleaner still checks once an hour`,
+    (c, r) => ` for the deliberately non-existent name the resolver health probe uses`,
+  ],
+  memory_leak_oom: [
+    (c, r) => ` during the hourly report render, which hands the memory back when it finishes`,
+    (c, r) => ` in the one-off reindex worker, which is expected to need that much`,
+  ],
+  clock_skew: [
+    (c, r) => ` on the build agent that signs test fixtures (its clock is not used in production)`,
+    (c, r) => ` in the replay harness, which feeds recorded timestamps on purpose`,
+  ],
+  upstream_rate_limiting: [
+    (c, r) => ` on the sandbox key used by the integration tests; the production key has its own quota`,
+    (c, r) => ` from the backfill script, which shares no quota with live traffic`,
+  ],
+  poisoned_cache: [
+    (c, r) => ` in the preview namespace used by the content editors; shoppers never read it`,
+    (c, r) => ` in the shadow cache that mirrors reads for comparison and serves nobody`,
+  ],
+};
+export const LOOKALIKE_GEN = cls => (c, r) => {
+  const head = pickOf(r, LOOK_HEAD[cls])(c, r);
+  const tail = (r.chance(0.4) ? pickOf(r, LOOK_TAIL_ANY) : pickOf(r, LOOK_TAIL[cls]))(c, r);
+  return [cls === 'bad_config_deploy' || cls === 'poisoned_cache' ? 'INFO' : 'WARN', `${head}${tail}`];
+};
+
+// Per-task names of unrelated resources for stray anomalies (round 1 drew them from short fixed lists that a
+// script could list). Each returns a name that differs from the faulting resource `own`.
+const SYL = ['brin', 'cal', 'dor', 'fen', 'gla', 'hol', 'kes', 'lum', 'mar', 'nor', 'pel', 'quil', 'ros', 'sal', 'tav', 'vel', 'wyn'];
+const SUF = ['dle', 'ford', 'mark', 'wick', 'ton', 'brook', 'gate', 'more', 'cast', 'line'];
+export const STRAY_GEN = {
+  pool: (r, own) => { let x; do x = `${pickOf(r, ['hikari', 'pgx', 'sqlpool', 'dbpool', 'r2dbc', 'c3p0'])}-${pickOf(r, ['reports', 'batch', 'audit', 'export', 'jobs', 'admin', 'search', 'ro', 'main', 'rw'])}`; while (x === own); return x; },
+  db: r => `${pickOf(r, ['reporting', 'analytics', 'audit', 'archive', 'warehouse', 'billing'])}-${pickOf(r, ['replica', 'db', 'store', 'mirror'])}`,
+  certHost: (r, host) => `${pickOf(r, ['admin', 'metrics', 'debug', 'internal', 'ops', 'status', 'grpc', 'legacy', 'partner', 'webhooks'])}.${host}`,
+  vol: (r, own) => { let x; do x = pickOf(r, ['/var/log', '/tmp', '/var/cache/app', '/var/lib/backup', '/srv/exports', '/data', '/srv/objects', '/var/spool', '/opt/app/logs', '/var/lib/scratch']); while (x === own); return x; },
+  proc: r => `${pickOf(r, ['log-shipper', 'envoy', 'metrics', 'thumbnail', 'otel', 'pdf-render', 'search-indexer', 'audit-forwarder', 'image-resize', 'report'])} ${pickOf(r, ['sidecar', 'agent', 'worker', 'process', 'helper'])}`,
+  peer: r => `${pickOf(r, ['ntp', 'time', 'chrony', 'clock'])}${r.int(1, 9)}.${pickOf(r, [...SYL, 'pool', 'vendor'])}.example`,
+  ext: r => `${pickOf(r, SYL)[0].toUpperCase()}${pickOf(r, SYL).slice(1)}${pickOf(r, SUF)} ${pickOf(r, ['metrics API', 'status API', 'analytics', 'avatar API', 'webhooks', 'search API', 'reviews API'])}`,
+  comp: r => `${pickOf(r, ['flux', 'path', 'mesh', 'span', 'pulse', 'relay', 'vector', 'beacon', 'envoy', 'istio', 'otel', 'log'])}${pickOf(r, ['d', '-agent', '-proxy', '-sidecar', '-init', '-collector', '-shipper'])}`,
+};
+
+// Notes may name a service by what it provides instead of by name (d3+); the overview says which service that
+// is. f(what) gives the reference.
+export const DESCRIBE = [
+  what => `the service that provides ${what}`,
+  what => `the ${what} service`,
+  what => `the service behind ${what}`,
+];
+
+// ================================================================ v4, second-audit round 4 (2026-10-07)
+// Wider onset vocabulary (d3+): a script that recognises the first line of the fault must now carry these
+// phrasings too (each one avoids the key phrases of the earlier pools). Sudden classes take (c, r); gradual ones
+// take (c, r, v) like TREND.onset.
+export const ONSET_X = {
+  connection_pool_exhaustion: [
+    (c, r, v) => ['WARN', `connections held by '${c.pool}' climbed to ${v}/${c.max} although traffic is unchanged`],
+    (c, r, v) => ['WARN', `'${c.pool}': ${v} slots borrowed, ${r.int(2, 9)} of them not handed back in the last minute`],
+    (c, r, v) => ['WARN', `occupancy of '${c.pool}' drifting up (${v}/${c.max}); idle slots are not being reclaimed`],
+  ],
+  certificate_expiry: [
+    (c, r) => ['ERROR', `${c.callerHost} dropped the session: the certificate we present for ${c.host} lapsed at ${c.expIso}`],
+    (c, r) => ['WARN', `serving ${c.host} with an out-of-date leaf (notAfter ${c.expIso}); peers drop the connection`],
+    (c, r) => ['ERROR', `client-side verification of our chain fails for ${c.host}: leaf too old (${c.expIso})`],
+    (c, r) => ['WARN', `TLS endpoint :${c.port} turns peers away: the presented leaf ran out at ${c.expIso}`],
+  ],
+  bad_config_deploy: [
+    (c, r) => ['INFO', `${c.svc} switched to build ${c.newVer} (was ${c.oldVer})`],
+    (c, r) => ['INFO', `release ${c.newVer} of ${c.svc} is live (replaced ${c.oldVer})`],
+  ],
+  disk_full: [
+    (c, r, v) => ['WARN', `${c.vol} gaining several GiB a minute (${v}% used), mostly from ${c.writer}`],
+    (c, r, v) => ['WARN', `usage of ${c.vol} up to ${v}% and accelerating; ${c.writer} is the biggest consumer`],
+  ],
+  dns_resolution_failure: [
+    (c, r) => ['ERROR', `${c.calleeHost} gets no answer from ${c.resolver}; the outbound call cannot be addressed`],
+    (c, r) => ['ERROR', `resolver ${c.resolver} gave no reply for ${c.calleeHost} within ${r.pick([2000, 5000])}ms`],
+    (c, r) => ['ERROR', `name of ${c.calleeHost} unresolvable right now (nameserver ${c.resolver} silent)`],
+  ],
+  memory_leak_oom: [
+    (c, r) => ['WARN', `old space did not shrink after collection: ${c.p0}% of ${c.lim}Mi in use (steady state ${c.base}%)`],
+    (c, r) => ['WARN', `live heap after marking is ${c.p0}%; it usually settles at ${c.base}%`],
+  ],
+  clock_skew: [
+    (c, r) => ['WARN', `local wall time runs ${c.skew}s fast compared with the time servers`],
+    (c, r) => ['WARN', `time discipline lost: we are ${c.skew}s ahead and drifting`],
+    (c, r) => ['WARN', `our timestamps lead the reference by ${c.skew}s; the time daemon has no reachable server`],
+  ],
+  upstream_rate_limiting: [
+    (c, r) => ['WARN', `${c.ext} is turning our requests away: per-minute allowance of ${c.quota} used up`],
+    (c, r) => ['WARN', `${c.ext} said 'quota exceeded' on ${r.int(60, 99)}% of calls in the last 30s`],
+    (c, r) => ['WARN', `provider ${c.ext} limiting us: the allowance for this window is spent`],
+  ],
+  poisoned_cache: [
+    (c, r) => ['INFO', `'${c.ns}' reloaded wholesale from ${c.snap} (${r.int(8000, 90000)} entries)`],
+    (c, r) => ['INFO', `bulk load of ${r.int(8000, 90000)} entries into '${c.ns}' from ${c.snap} complete`],
+  ],
+};
+
+// Per-service wording (d3+): each service keeps or swaps (p 0.6 per group) a few stock phrases for synonyms, as
+// different client libraries and teams do. Applied to whole messages when the log is rendered. The patterns
+// only match message vocabulary, never names, hosts or the stats forms the tests and readers rely on.
+export const DIALECT = [
+  [/\bat capacity\b/g, ['maxed out', 'at its limit', 'fully used']],
+  [/\bchecked out\b/g, ['borrowed', 'leased', 'taken']],
+  [/\bno space left on device\b/g, ['device is full (ENOSPC)', 'out of disk space', 'disk full']],
+  [/\btemporary failure in name resolution\b/g, ['name lookup failed (EAI_AGAIN)', 'resolver could not answer for now', 'DNS lookup failed, try again later']],
+  [/\bToo Many Requests\b/g, ['(throttled)', '(rate limit hit)', '(slow down)']],
+  [/\bsucceeding again\b/g, ['working again', 'back to normal', 'healthy again']],
+  [/\bcleared\b/g, ['gone', 'over', 'resolved']],
+  [/\bclock offset\b/g, ['time offset', 'clock drift']],
+  [/\bcertificate expired\b/g, ['cert expired', 'certificate past its expiry', 'expired certificate']],
+  [/\bchecksum mismatch\b/g, ['hash mismatch', 'bad checksum']],
+  [/\bfailed checksum\b/g, ['had bad checksums', 'failed verification']],
+  [/\brollout started\b/g, ['deployment started', 'rolling update started', 'rollout begun']],
+  [/\bresident memory\b/g, ['RSS', 'process memory']],
+  [/\bheap after full GC is\b/g, ['heap after a full collection is', 'post-full-GC heap is']],
+  [/\bsynchronised\b/g, ['in sync', 'locked to the time source']],
+  [/\bfreed\b/g, ['released', 'reclaimed']],
+  [/\bdrained\b/g, ['emptied', 'cleared out']],
+];
+
+// Test and shadow replicas (d3+): a pod of a service that serves no customers. The notes say which pod it is;
+// its lines can show any fault class with the ordinary wording and never count (the prompt says so).
+export const SHADOW_NOTE = [
+  (pod, svc) => `Pod ${pod} of ${svc} is the load-test replica: it serves synthetic traffic only, so nothing it logs affects customers.`,
+  (pod, svc) => `${pod} is a shadow instance of ${svc} that replays mirrored requests and answers nobody; its errors are not production errors.`,
+  (pod, svc) => `The perf team runs ${pod} (a ${svc} replica outside the load balancer) for capacity tests; disregard it when judging customer impact.`,
+  (pod, svc) => `${svc} has one replica, ${pod}, that is excluded from production traffic while the next release is soak-tested on it.`,
+];
+
+// ================================================================ v4, second-audit round 5 (2026-10-07)
+// Word-level wording per service (d3+), on top of DIALECT: each service swaps each of these words for one of its
+// synonyms with p 0.6. A white-box script built in round 4 (A8, 37 lines) still passed about 30% because it
+// matched the catalog's fixed phrases; now each phrase it relies on comes in several spellings per task. The
+// boundaries skip names, hosts, paths, quoted identifiers and class ids (letters, digits, '/', '.', '-', '_' or
+// quotes next to the word), and stats lines are left alone.
+const word = w => new RegExp(`(?<![\\w/.'"-])${w}(?![\\w/.'"-])`, 'g');
+export const LEXICON = [
+  [word('connection pool'), ['conn pool', 'db pool', 'client pool']],
+  [word('connections'), ['conns', 'sessions']],
+  [word('waiting'), ['queued', 'blocked', 'parked']],
+  [word('returned'), ['given back', 'released']],
+  [word('certificate'), ['cert', 'x509 certificate', 'TLS cert']],
+  [word('expired'), ['lapsed', 'out of date']],
+  [word('handshake'), ['TLS negotiation', 'TLS setup']],
+  [word('validity'), ['valid period', 'lifetime']],
+  [word('rollout'), ['deployment', 'rolling update']],
+  [word('configuration'), ['config', 'settings']],
+  [word('release'), ['build', 'version']],
+  [word('free space'), ['space left', 'headroom']],
+  [word('name resolution'), ['DNS resolution', 'name lookup']],
+  [word('resolve'), ['look up', 'translate']],
+  [word('resolver'), ['nameserver', 'DNS server']],
+  [word('heap'), ['managed heap', 'JVM heap']],
+  [word('memory'), ['RAM', 'mem']],
+  [word('clock'), ['system time', 'wall clock']],
+  [word('offset'), ['drift', 'skew']],
+  [word('token'), ['credential', 'bearer token']],
+  [word('quota'), ['allowance', 'request budget']],
+  [word('throttled'), ['rate-limited', 'held back']],
+  [word('retrying'), ['trying again']],
+  [word('snapshot'), ['dump', 'image']],
+  [word('checksum'), ['hash', 'digest']],
+  [word('entries'), ['records', 'items']],
+  [word('field'), ['attribute', 'property']],
+  [word('failed'), ['did not succeed', 'broke']],
+  [word('timed out'), ['hit its timeout', 'ran out of time']],
+  [word('staging'), ['pre-production', 'stage']],
+  [word('shadow'), ['mirror', 'dark-launch']],
+  [word('synthetic'), ['scripted', 'artificial']],
+  [word('drill'), ['exercise', 'rehearsal']],
+  [word('client'), ['caller', 'peer']],
+  [word('clients'), ['callers', 'peers']],
+  [word('transaction'), ['txn', 'unit of work']],
+  [word('borrowers'), ['requesters', 'handlers']],
+  [word('idle'), ['unused', 'spare']],
+  [word('leaf'), ['end-entity cert', 'server cert']],
+  [word('hung up'), ['disconnected', 'went away']],
+  [word('renewal'), ['rotation', 'reissue']],
+  [word('served'), ['presented', 'offered']],
+  [word('panic'), ['crash', 'fatal error']],
+  [word('setting'), ['option', 'parameter']],
+  [word('not valid'), ['invalid', 'rejected']],
+  [word('volume'), ['filesystem', 'disk']],
+  [word('usage'), ['utilisation', 'fill level']],
+  [word('segment'), ['chunk', 'block']],
+  [word('lookup'), ['DNS query', 'resolution']],
+  [word('answered'), ['replied', 'responded']],
+  [word('addresses'), ['IPs', 'A records']],
+  [word('old generation'), ['tenured space', 'old gen']],
+  [word('killed'), ['terminated', 'stopped']],
+  [word('limit'), ['cap', 'ceiling']],
+  [word('rising'), ['climbing', 'growing']],
+  [word('time source'), ['NTP server', 'reference clock']],
+  [word('signature'), ['signing stamp', 'HMAC']],
+  [word('requests'), ['calls', 'queries']],
+  [word('budget'), ['allowance', 'credit']],
+  [word('window'), ['period', 'interval']],
+  [word('exhausted'), ['used up', 'spent']],
+  [word('refill'), ['reload', 'repopulation']],
+  [word('namespace'), ['keyspace', 'region']],
+  [word('integrity'), ['consistency', 'validation']],
+  [word('entry'), ['record', 'item']],
+  [word('schema'), ['layout', 'format']],
+  [word('normally'), ['as usual', 'fine']],
+  [word('succeeded'), ['worked', 'went through']],
+  [word('stopped'), ['ended', 'ceased']],
+  [word('nobody'), ['no one', 'not a single caller']],
+  [word('expected'), ['anticipated', 'normal']],
+  [word('scheduled'), ['planned', 'routine']],
+  [word('nightly'), ['overnight', 'night-time']],
+  [word('weekly'), ['once-a-week', 'Sunday']],
+  [word('replica'), ['copy', 'instance']],
+  [word('probe'), ['monitor', 'check']],
+  [word('deliberately'), ['on purpose', 'intentionally']],
+  [word('decommissioned'), ['retired', 'shut-down']],
+  [word('customers'), ['shoppers', 'end users']],
+  [word('customer'), ['shopper', 'end-user']],
+  [word('production'), ['live', 'prod']],
+];
+// Stats lines keep their machine form (readers compare their values across services).
+export const STATS_FORM = /stats:|disk usage \d+% on|heap after gc \d+%|TLS listener :\d+: \d+ handshakes|lookups\/min|ntp offset -?\d+ms|quota usage \d+%|config watch: no changes|hit ratio 0\.\d+, \d+ entries/;
+
+// Consequence episodes in direct callers (d3+, round 5): a caller whose calls to the root hang runs out of its own
+// connections, workers or memory. The lines use the stock wording of pool exhaustion, rate limiting or memory
+// trouble; about half of them say what they are waiting for (the root, by one of its names). They start after
+// the caller's own failures begin. The class definitions in the prompt settle it: the caller's pool or heap is
+// not the fault, the service it waits for is.
+export const CONSEQUENCE = [
+  (c, r) => ['WARN', `connection pool '${c.pool}' at capacity: in use ${c.max}/${c.max}, ${r.int(20, 140)} callers waiting`],
+  (c, r) => ['WARN', `connection pool '${c.pool}' at capacity: every connection is stuck in a call to ${c.callee}`],
+  (c, r) => ['WARN', `worker pool saturated: ${r.pick([32, 64, 128])} of ${r.pick([32, 64, 128])} threads busy, ${r.int(40, 400)} requests queued`],
+  (c, r) => ['WARN', `worker pool saturated: threads blocked waiting for ${c.callee}`],
+  (c, r) => ['WARN', `request queue ${r.int(300, 1000)}/1024; load shedding with 429 Too Many Requests`],
+  (c, r) => ['WARN', `request queue ${r.int(300, 1000)}/1024 while ${c.callee} answers slowly; shedding with 429`],
+  (c, r) => ['WARN', `heap after full GC is ${c.base + r.int(12, 24)}% (baseline ${c.base}%): requests buffered in memory`],
+  (c, r) => ['WARN', `heap after full GC is ${c.base + r.int(12, 24)}% (baseline ${c.base}%) while responses from ${c.callee} are pending`],
+];

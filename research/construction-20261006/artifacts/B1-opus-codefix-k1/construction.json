@@ -1,0 +1,116 @@
+{
+ "arm": "B1",
+ "armId": "B1-opus",
+ "familyId": "codefix",
+ "label": "B1-opus-codefix-k1",
+ "difficulty": 3,
+ "probeSeeds": [
+  1,
+  2,
+  3
+ ],
+ "builderModel": "claude-opus-5-5",
+ "builderEffort": "xhigh",
+ "kitHash": "6bc6b06eccf45cae",
+ "kitDir": "/opt/foundry-kit/6bc6b06eccf45cae",
+ "policyHash": "b44deb45d0130910746ed2e2f220723476e3cb0c55c3b253d4303ec9764e6cee",
+ "models": [
+  "claude-haiku-5-5",
+  "claude-sonnet-5-5",
+  "claude-opus-5-5"
+ ],
+ "runId": "construct:B1-opus-codefix-k1:a02348db-1f6c-4a85-9706-2da40bee4ccb",
+ "promptSha256": "25ad97b80d179c8ea794574d78b73d13e324b355defa2a9404552ada4592dffe",
+ "artifact": "solve.mjs",
+ "artifactSha256": "1ba247999f2e7678a7eaf569d50d2df724c222c58daf26892c423d1f54e702be",
+ "builderCostUsd": 1.3241635999999999,
+ "builderCostReportedUsd": 1.3241635999999999,
+ "builderCostUnknown": false,
+ "builderCostUpperUsd": 1.3241635999999999,
+ "builderBudgetUsd": 8,
+ "builderUsage": {
+  "input_tokens": 44,
+  "cache_creation_input_tokens": 64660,
+  "cache_read_input_tokens": 954838,
+  "output_tokens": 30787,
+  "output_tokens_details": {
+   "thinking_tokens": 10094
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 64660,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "not_available",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 834,
+    "cache_read_input_tokens": 70362,
+    "cache_creation_input_tokens": 1294,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 1294
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "builderStreamUsage": {
+  "inputTokens": 44,
+  "outputTokens": 153,
+  "cacheReadTokens": 954838,
+  "cacheWriteTokens": 64660
+ },
+ "builderSessionId": "5628e7c3-b5fb-4941-aaef-8b8dc8e7b87a",
+ "gatewayCostUsd": 1.4537194000000002,
+ "gatewayCapUsd": 2,
+ "gatewayOvershootUsd": 0,
+ "gatewayCalls": 12,
+ "gatewayErrors": {},
+ "gatewayRefusals": {},
+ "gatewayUnknownCalls": 0,
+ "gatewayUnknownUpperUsd": 0,
+ "gatewayImputedUsd": 0,
+ "constructionCostUsd": 2.777883,
+ "startedAt": "2026-10-07T22:18:07.583Z",
+ "durationMs": 648161,
+ "minutes": 45,
+ "turns": 24,
+ "toolUses": 23,
+ "builderError": null,
+ "scoreLog": [
+  {
+   "probe": 0,
+   "pass": true,
+   "score": 1,
+   "at": "2026-10-07T22:22:37.917Z"
+  },
+  {
+   "probe": 1,
+   "pass": true,
+   "score": 1,
+   "at": "2026-10-07T22:23:11.228Z"
+  },
+  {
+   "probe": 2,
+   "pass": true,
+   "score": 1,
+   "at": "2026-10-07T22:23:11.703Z"
+  }
+ ],
+ "scoreChecks": 12,
+ "firstPassAtCheck": 1,
+ "notes": "# BUILD-NOTES\n\n## What the solver does\n`node solve.mjs task.json` fixes a Python module so it matches its docstrings and DESIGN.md.\n\n1. **Setup (code):** loads the module, tests, bug thread, docs, changelog, CI log and a filtered service log. Builds a scratch sandbox with a minimal `pytest` shim (pytest isn't installed) and an AST checker for public names, signatures and imports.\n2. **Find (Opus, medium reasoning):** one typed call returns defects, each with a verbatim `old`/`new` snippet edit and a `witness` (Python asserts based on the docs).\n3. **Verify (code):** applies the edits, compiles, checks the API and imports, runs the visible tests and every witness. Failures go back to the model for up to 2 repair rounds, then one retry at high reasoning.\n4. **Audit (Opus, medium):** searches the patched module for remaining defects. An edit is kept only if its witness fails before and passes after, with no test or witness regressions.\n5. Prints `{\"patched_source\": ...}`, falling back to the best candidate or the original. At most 6 model calls per task.\n\n## Verified\n- Probes 0–2: all pass (score 1.0); decoy FIXME comments were left alone.\n- The local harness reproduces each probe's CI results.\n- Synthetic task (probe-1 plus 2 injected, unreported bugs): all 4 fixed.\n- Service logs match the *buggy* code, so they are used only as evidence.\n- Cost: about $0.25 per task.\n\n## Known weaknesses\n- Everything rests on Opus reading the docs correctly; witnesses can't catch a shared misreading.\n- The audit found nothing on any probe, so it may be wasted cost on easy tasks.\n- Tests that need pytest fixtures are skipped.\n- Without `python3`, nothing is verified and audit edits are rejected.\n",
+ "hiddenPathAttempts": 1,
+ "outsidePaths": [
+  "/opt/node24/bin"
+ ],
+ "nestedModelAttempts": 0
+}

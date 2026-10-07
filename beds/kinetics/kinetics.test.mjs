@@ -6,6 +6,7 @@ import * as bed from './index.mjs';
 import { buildWorld, TOL } from './world.mjs';
 import { renderTask } from './render.mjs';
 import { fitMM, relErr } from './fit.mjs';
+import { ANSWERS, orderedBubble, SIDE_REMARKS } from './pools.mjs';
 
 const DIFFS = [1, 2, 3, 4, 5];
 const SEEDS = Array.from({ length: 20 }, (_, i) => i + 1);
@@ -367,7 +368,8 @@ test('documents support the reference data: parsed numbers x stated units == val
         for (const row of parseDoc(doc, world.meta.prefix, world.meta.reader, t.inputs.documents)) {
           const w = world.wellById[row.id], s = shown[row.id];
           assert.ok(w, `unknown id ${row.id}`);
-          if (row.src === 'export') { exportRows++; assert.ok(relErr(row.rate, s.rate) < 1e-9, `export ${row.id}`); continue; }
+          // the export prints rates at the enzyme dose the wells received; the careful reader rescales them [AUDIT F24]
+          if (row.src === 'export') { exportRows++; assert.ok(relErr(row.rate, s.rate * (s.doseFactor ?? 1)) < 1e-9, `export ${row.id}`); continue; }
           assert.ok(!seen.has(row.id), `${row.id} transcribed twice`);
           seen.set(row.id, row);
           assert.ok(relErr(row.S, s.rowS) < 1e-9, `d${d} s${seed} ${row.id} S ${row.S} vs ${s.rowS} (${doc.title})`);
@@ -387,11 +389,14 @@ test('documents support the reference data: parsed numbers x stated units == val
 test('README documents the version, the measured token sizes and the oracle rule; AUDIT.md exists [AUDIT F16]', async () => {
   const { readFile } = await import('node:fs/promises');
   const readme = await readFile(new URL('./README.md', import.meta.url), 'utf8');
-  for (const s of ['## Oracle', '10%', 'excluded_samples', 'estimateTokens', 'prompt-injection', `**Version:** ${bed.family.version}`, 'AUDIT.md']) assert.ok(readme.includes(s), s);
+  for (const s of ['## Oracle', '10%', 'excluded_samples', 'estimateTokens', 'prompt-injection', `**Version:** ${bed.family.version}`, 'AUDIT.md', 'master-mix log']) assert.ok(readme.includes(s), s);
   // [AUDIT F16] the audit record the README and the tests cite exists, is dated, and covers this version
   const audit = await readFile(new URL('./AUDIT.md', import.meta.url), 'utf8');
   assert.match(audit.split('\n')[0], /^# kinetics adversarial audit, \d{4}-\d\d-\d\d/);
   assert.ok(audit.includes(`-> ${bed.family.version}`) && audit.includes('| id | severity | finding | evidence (before) | fix | regression test |'));
+  // the second pass has its own dated section and findings table
+  assert.match(audit, /^## Second pass, \d{4}-\d\d-\d\d \(3\.0\.0 -> 4\.0\.0\)/m);
+  for (const id of ['F20', 'F21', 'F22', 'F23', 'F24', 'F25', 'F26', 'F27', 'F28', 'F29']) assert.match(audit, new RegExp(`^\\| ${id} \\|`, 'm'), id);
 });
 
 // ---------------------------------------------------------------------------------------
@@ -462,10 +467,11 @@ test('the register and the replicate numbers do not give a mislabelled row away 
     // replicate numbers as written: exactly 1..n per labelled condition (no duplicate, no gap, no excess)
     for (const reps of Object.values(lab)) assert.deepEqual([...reps].sort((a, b) => a - b), reps.map((_, i) => i + 1));
     const multiset = o => Object.values(o).map(x => (Array.isArray(x) ? x.length : x)).sort().join(',');
-    for (const tr of world.traps.filter(x => x.type === 'reassign' || x.type === 'omitted-inhibitor')) {
-      moves++;
-      if (tr.countsKept) { kept++; assert.equal(multiset(lab), multiset(tru), `d${d} ${split} ${seed}: label row counts are a permutation of the true ones`); }
-    }
+    const relabels = world.traps.filter(x => x.type === 'reassign' || x.type === 'omitted-inhibitor');
+    moves += relabels.length; kept += relabels.filter(x => x.countsKept).length;
+    // [AUDIT F29] the profile is a permutation when every relabel of the task kept it (one fallback relabel breaks it
+    // for the whole task, so the old per-relabel assertion failed whenever the other relabel had fallen back)
+    if (relabels.every(x => x.countsKept)) assert.equal(multiset(lab), multiset(tru), `d${d} ${split} ${seed}: label row counts are a permutation of the true ones`);
   }
   assert.ok(moves >= 100 && kept / moves >= 0.97, `${kept}/${moves} mislabels keep the row-count profile`);
 });
@@ -507,7 +513,11 @@ test('judgment content: every d3+ task needs prose reading that keywords and res
     assert.ok(W.filter(w => w.status === 'decoy' && w.dev).length >= 2, 'two kept wells that really deviate');
     assert.ok(W.filter(w => w.status === 'outlier' && w.silent).length >= 4, 'silent exclusions');
     const chat = t.inputs.documents.find(x => x.kind === 'chat').text;
-    assert.ok(/went on the reader straight after|next to .* on the same day|share a master mix/.test(chat), 'range-plus-condition red herring');
+    assert.ok(/went on the reader straight after|next to .* on the same day|pipetted from the same substrate dilutions as/.test(chat), 'range-plus-condition red herring');
+    // 4.0.0 [AUDIT F21-F26]: order-of-events notes on excluded wells, a redirected report, the enzyme dose
+    assert.ok(W.filter(w => w.status === 'outlier' && w.ordered).length >= 2, 'two exclusions stated only as an order of events');
+    assert.ok(W.some(w => w.kind === 'late-redirected') && W.some(w => w.late === 'redirect'), 'a late report moved to another well');
+    assert.ok(world.dose && t.inputs.documents.some(x => x.kind === 'log'), 'an enzyme-dose correction in the master-mix log');
     assert.ok(/No swap on my side|right order|were not; the tube labels/.test(chat), 'swap-shaped red herring');
     // ablation: exclusions read from the rows alone differ from the SOP set
     const rowsOnly = new Set([...W.filter(w => w.status === 'outlier' && !w.late), ...W.filter(w => w.kind === 'misattributed')].map(w => w.id));
@@ -518,6 +528,8 @@ test('judgment content: every d3+ task needs prose reading that keywords and res
 });
 
 // Attack budget for a "<=40-line heuristic": <=40 code lines and <=7000 characters (comment lines excluded).
+// measured values of the over-budget 4.0.0 attacks (AUDIT.md, second pass); tests fail if the generator gets easier for them
+const GUARD = { golfed: { test: 18, dev: 20 }, whitebox: { test: 24, dev: 25 } };
 const attackSize = src => { const code = src.split('\n').filter(l => l.trim() && !l.trim().startsWith('//')); return { lines: code.length, chars: [...code.join('\n')].length }; };
 async function attackRate(name, d, split, s0) {
   const { heuristicSolve } = await import(`./attacks/${name}.mjs`);
@@ -531,10 +543,12 @@ async function attackRate(name, d, split, s0) {
   return pass;
 }
 
-test('triviality: within-budget attacks pass < 20% of d3 tasks (30 test seeds from 5000, 30 dev seeds) [AUDIT step 5, F9]', async (ctx) => {
+test('triviality: within-budget attacks pass < 20% of d3 tasks (30 test seeds from 5000, 30 dev seeds) [AUDIT step 5, F9, F20]', async (ctx) => {
   const { readFile } = await import('node:fs/promises');
   const rates = {};
-  for (const name of ['regex-v1', 'regex-budget', 'residual-hybrid']) {
+  // budget-v3: the second-pass auditor's attack on 3.0.0 (27/30 d3 test there). Its 4.0.0 adaptation (golfed-v4) no
+  // longer fits the budget; see the over-budget test and AUDIT.md, second pass, step 5
+  for (const name of ['regex-v1', 'regex-budget', 'residual-hybrid', 'budget-v3']) {
     const size = attackSize(await readFile(new URL(`./attacks/${name}.mjs`, import.meta.url), 'utf8'));
     assert.ok(size.lines <= 40 && size.chars <= 7000, `${name} is outside the attack budget: ${JSON.stringify(size)}`);
     const test = await attackRate(name, 3, 'test', 5000), dev = await attackRate(name, 3, 'dev', 1);
@@ -547,14 +561,17 @@ test('triviality: within-budget attacks pass < 20% of d3 tasks (30 test seeds fr
 test('triviality: over-budget attacks are documented, not hidden (AUDIT.md) [AUDIT step 5]', async (ctx) => {
   const { readFile } = await import('node:fs/promises');
   const rates = {};
-  for (const name of ['adapted-v3', 'whitebox-parser', 'whitebox-v3']) {
+  for (const name of ['adapted-v3', 'whitebox-parser', 'whitebox-v3', 'golfed-v4', 'whitebox-v4']) {
     const size = attackSize(await readFile(new URL(`./attacks/${name}.mjs`, import.meta.url), 'utf8'));
     assert.ok(size.lines > 40 || size.chars > 7000, `${name} is within budget and belongs in the budget test`);
     rates[name] = { test: await attackRate(name, 3, 'test', 5000), dev: await attackRate(name, 3, 'dev', 1), ...size };
   }
   // regression guards at the documented values (AUDIT.md): a generator change that makes them easier must be noticed
-  assert.ok(rates['adapted-v3'].test <= 5 && rates['whitebox-parser'].test <= 2, JSON.stringify(rates));
-  assert.ok(rates['whitebox-v3'].test <= 16 && rates['whitebox-v3'].dev <= 12, `white-box ceiling moved: ${JSON.stringify(rates['whitebox-v3'])}`);
+  assert.ok(rates['adapted-v3'].test <= 2 && rates['whitebox-parser'].test <= 2 && rates['whitebox-v3'].test <= 2, JSON.stringify(rates));
+  assert.ok(rates['golfed-v4'].test <= GUARD.golfed.test && rates['golfed-v4'].dev <= GUARD.golfed.dev, `golfed ceiling moved: ${JSON.stringify(rates['golfed-v4'])}`);
+  // the 4.0.0-aware golfed parser is far outside the budget (a generator change that lets it shrink must be noticed)
+  assert.ok(rates['golfed-v4'].chars > 9000, `golfed-v4 size ${rates['golfed-v4'].chars}`);
+  assert.ok(rates['whitebox-v4'].test <= GUARD.whitebox.test && rates['whitebox-v4'].dev <= GUARD.whitebox.dev, `white-box ceiling moved: ${JSON.stringify(rates['whitebox-v4'])}`);
   ctx.diagnostic(JSON.stringify(rates));
 });
 
@@ -616,9 +633,14 @@ test('prose: clock-time shapes occur with both outcomes; colleague reports are a
     for (const w of world.wells.filter(x => x.via === 'colleague' || x.kind === 'late-denied')) {
       const author = world.docs.find(x => x.series.includes(w.series)).author;
       const names = [w.id, `plate ${w.plate} ${w.pos}`];
-      const ans = chat.filter(l => l.includes(`] ${author}: `) && names.some(n => l.includes(n)));
-      if (w.status === 'outlier') { confirmed++; assert.ok(ans.some(l => /: (Yes|Confirmed|You're right)/.test(l)), `d${d} ${seed}: ${w.id} confirmed by ${author}`); }
-      else { denied++; assert.ok(ans.some(l => /: (No,|I checked: nothing|Not in)/.test(l)), `d${d} ${seed}: ${w.id} denied by ${author}`); }
+      const ans = chat.filter(l => l.includes(`] ${author}: `) && names.some(n => l.toLowerCase().includes(n.toLowerCase())));
+      // [AUDIT F23] the answer's polarity is in its content: check it against the generating pool, not its first word
+      const pool = ANSWERS[w.status === 'outlier' ? 'confirm' : 'deny'], other = ANSWERS[w.status === 'outlier' ? 'deny' : 'confirm'];
+      const texts = (P, b) => new Set(P.map(f => { const x = f(b); return x.charAt(0).toUpperCase() + x.slice(1); }));
+      const said = ans.map(l => l.split(`] ${author}: `)[1]);
+      const inPool = P => said.some(a => names.some(n => texts(P, n).has(a)));
+      assert.ok(inPool(pool) && !inPool(other), `d${d} ${seed}: ${w.id} ${w.status === 'outlier' ? 'confirmed' : 'denied'} by ${author}: ${said.join(' | ')}`);
+      if (w.status === 'outlier') confirmed++; else denied++;
     }
   }
   assert.ok(confirmed > 20 && denied > 20, `${confirmed} confirmed and ${denied} denied colleague reports`);
@@ -632,4 +654,159 @@ test('prose: clock-time shapes occur with both outcomes; colleague reports are a
     for (const [shape, re] of Object.entries(SHAPES)) if (re.test(text)) (shapes[shape] ??= new Set()).add(mode === 'during');
   }
   for (const shape of Object.keys(SHAPES)) assert.deepEqual([...(shapes[shape] ?? [])].sort(), [false, true], `shape ${shape}`);
+});
+
+// ---------------------------------------------------------------------------------------
+// Second-pass audit (2026-10-07, 3.0.0 -> 4.0.0) regressions. See AUDIT.md, "Second pass".
+const D3UP = [3, 4, 5];
+const forTasks = (fn, { diffs = D3UP, n = 20 } = {}) => {
+  for (const d of diffs) for (const [split, s0] of [['dev', 1], ['test', 5000]]) for (let seed = s0; seed < s0 + n; seed++) {
+    const t = bed.generate({ seed, split, difficulty: d });
+    fn(t, bed._internals(t), d, `d${d} ${split} ${seed}`);
+  }
+};
+
+test('herrings never contradict a sheet: the no-flag row has no SAT/OVR; no "no problems"; no shared master mix [AUDIT F20]', () => {
+  let rowHerrings = 0;
+  forTasks((t, { world }, d, tag) => {
+    const chat = t.inputs.documents.find(x => x.kind === 'chat').text;
+    const m = chat.match(/Reader log for plate (\d+) row (\w): no SAT|Checked plate (\d+), row (\w) in the reader log|Plate (\d+) row (\w): the reader log shows no saturation/);
+    if (m) {
+      rowHerrings++;
+      const s = world.series.find(x => x.plate === +(m[1] ?? m[3] ?? m[5]) && x.row === (m[2] ?? m[4] ?? m[6]));
+      for (const id of s.wells) { const w = world.wellById[id]; assert.ok(!(w.status === 'outlier' && w.reason === 'sat') && w.kind !== 'sat-reread', `${tag}: ${id} is flagged in a row the author calls flag-free`); }
+    }
+    assert.ok(!/no problems with either|share a master mix/.test(chat), `${tag}: ambiguous herring wording`);
+  });
+  assert.ok(rowHerrings > 60, `${rowHerrings} row herrings checked`);
+});
+
+test('correction suggestions come from people without a sheet in the study [AUDIT F27]', () => {
+  let n = 0;
+  forTasks((t, { world }, d, tag) => {
+    const chat = t.inputs.documents.find(x => x.kind === 'chat').text.split('\n');
+    const authors = new Set(world.docs.map(x => x.author));
+    for (const l of chat) {
+      const m = l.match(/^\[[^\]]+\] ([^:]+): (.*)/);
+      if (m && /Mine was\.|like on mine|My export came out that way|I had a tube swap|Same rack as my swap|my copy of the plate map|weren't .* Your sheet says|were really .*, not .*\?$|template was switched/.test(m[2])) { n++; assert.ok(!authors.has(m[1]), `${tag}: ${m[1]} has a sheet and suggests a correction: ${m[2]}`); }
+    }
+  });
+  assert.ok(n > 100, `${n} suggestions checked`);
+});
+
+test('filler and row headers agree with the master-mix log: study lot, no other dilutions or mix ids, fixed enzyme volume [AUDIT F24]', () => {
+  forTasks((t, { world }, d, tag) => {
+    for (const doc of t.inputs.documents.filter(x => x.kind === 'notebook')) {
+      for (const m of doc.text.matchAll(/Enzyme stock \(lot ([^,]+),/g)) assert.equal(m[1], world.meta.lot, `${tag}: filler enzyme lot`);
+      for (const m of doc.text.matchAll(/enzyme last \((\d+) uL\)|(\d+) uL per well/g)) assert.equal(m[1] ?? m[2], '5', `${tag}: enzyme volume`);
+      assert.ok(!/diluted 1:(?!500)\d+|master mix MM-|Same master mix|reads every \d+ s for/.test(doc.text), `${tag}: ${doc.title} has a dilution, mix id or read length that can contradict the log or the row`);
+    }
+  }, { diffs: [1, 2, 3, 4, 5], n: 10 });
+});
+
+test('enzyme dose: only the master-mix log reveals it; the SOP rule is stated; relabels stay load-bearing; ignoring it fails [AUDIT F24]', () => {
+  let viaChat = 0, n = 0;
+  forTasks((t, { world, shown }, d, tag) => {
+    n++;
+    const D = world.dose, c = world.byId[D.condId];
+    const sop = t.inputs.documents.find(x => x.kind === 'sop' && !/superseded/.test(x.title)).text;
+    assert.ok(/multiplying them by \(dilution used ÷ 500\)/.test(sop) && /discarded before any plate was loaded does not matter/.test(sop), `${tag}: SOP dose rule`);
+    assert.ok(!c.parentId && [2, 0.5].includes(D.factor) && D.relabelsStillLoadBearing, `${tag}: dose ${JSON.stringify(D)}`);
+    const log = t.inputs.documents.find(x => x.kind === 'log').text;
+    const chat = t.inputs.documents.find(x => x.kind === 'chat').text;
+    if (/Correction to the master-mix log|The master-mix log is wrong for|Found my dilutor note/.test(chat)) viaChat++;
+    assert.ok(log.split('\n').filter(l => l.startsWith('- MM-')).length === world.conds.length, `${tag}: one log line per condition`);
+    // every well of the condition carries the factor, so the condition's rows agree with each other (numbers alone cannot find it)
+    for (const w of world.wells) assert.equal(shown[w.id].doseFactor, w.condId === D.condId ? D.factor : 1, `${tag}: ${w.id} dose factor`);
+    // ignoring the dose misses the tolerance by a wide margin
+    const pts = bed._assemble(world, shown, { point: (w, s) => ({ S: s.S, v: s.rate * s.doseFactor }) });
+    const fits = bed._fitAll(world, pts);
+    assert.ok(relErr(fits[D.condId].vmax, c.vmax) > 0.4, `${tag}: dose not load-bearing`);
+  });
+  assert.ok(viaChat > 0.3 * n && viaChat < 0.7 * n, `${viaChat}/${n} dose facts given as a later correction of the log`);
+  const ctl = bed.badControls.find(x => x.name === 'plausible-but-wrong:ignore-dose');
+  assert.ok(ctl);
+});
+
+test('order-of-events bubble notes: two per task on excluded wells, and every sentence frame occurs with both outcomes [AUDIT F21]', async () => {
+  forTasks((t, { world }, d, tag) => assert.ok(world.wells.filter(w => w.status === 'outlier' && w.ordered && w.reason === 'bubble').length >= 2, `${tag}: ordered exclusions`));
+  const { rng } = await import('../lib/rng.mjs');
+  const r = rng('order-frames'), FRAMES = { before: /^(?!first)(.+) before (.+)$/, after: /^(?!first)(.+) after (.+)$/, firstThen: /^first .+, then /, byTheTime: /^by the time /, only: / only (once|after) /, rel: / (\d+|[a-z]+) min(utes?)? (before|after) / };
+  const seen = {};
+  for (const mode of ['during', 'before', 'after']) for (const rm of [null, 10]) for (let i = 0; i < 400; i++) {
+    const s = orderedBubble(r, mode, rm);
+    for (const [f, re] of Object.entries(FRAMES)) if (re.test(s)) (seen[f] ??= new Set()).add(mode === 'during');
+    // the removed bubble is always the one from loading: "removed after the read started" means it was there at the start
+    if (/popped|tapped out|burst|cleared|got .* out|knocked/.test(s) && !/formed|appeared/.test(s)) assert.match(s, /loading/, s);
+  }
+  for (const f of Object.keys(FRAMES)) assert.deepEqual([...(seen[f] ?? [])].sort(), [false, true], `frame ${f} occurs with both outcomes`);
+  // "formed N min after the read started" is inside a 10-min read iff N < 10
+  const NUMW = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen'];
+  let rel = 0;
+  for (const mode of ['during', 'after']) for (let i = 0; i < 300; i++) {
+    const s = orderedBubble(r, mode, 10);
+    const m = s.match(/(?:formed|appeared|air got into the well|came up) (\w+) min(?:utes?)? after (?:the read started|the kinetic read began|the first read cycle ran|the reader started measuring)/);
+    if (m) { rel++; const n = isNaN(m[1]) ? NUMW.indexOf(m[1]) : +m[1]; assert.ok(mode === 'during' ? n >= 1 && n < 10 : n > 10, `${mode}: ${s}`); }
+  }
+  assert.ok(rel > 100, `${rel} relative-time sentences`);
+});
+
+test('side remarks about non-study items occur with both outcomes and never on a misattributed note [AUDIT F22]', () => {
+  const both = { keepish: 0, exclish: 0 };
+  // every remark text each pool can produce (a remark picks among fixed words)
+  const all = Object.fromEntries(Object.entries(SIDE_REMARKS).map(([k, P]) => [k, P.flatMap(f => [0, 1, 2].map(i => f({ pick: a => a[Math.min(i, a.length - 1)] })))]));
+  forTasks((t, { world }, d, tag) => {
+    const notebooks = t.inputs.documents.filter(x => x.kind === 'notebook').map(x => x.text);
+    for (const [k, S] of Object.entries(all)) if (S.some(s => notebooks.some(x => x.includes(s)))) both[k]++;
+    for (const w of world.wells.filter(x => x.kind === 'misattributed')) {
+      const line = notebooks.join('\n').split('\n').find(l => l.includes(w.id) && /^\||^[A-Z]{2}-\d{4}[,;]/.test(l));
+      if (line) assert.ok(!Object.values(all).flat().some(s => line.includes(s)), `${tag}: side remark on a moved note: ${line}`);
+    }
+  });
+  assert.ok(both.keepish > 30 && both.exclish > 30, JSON.stringify(both));
+});
+
+test('a late report moved to another well: the fact goes to Y on the same sheet, X stays in [AUDIT F25]', () => {
+  forTasks((t, { world }, d, tag) => {
+    const xs = world.wells.filter(w => w.kind === 'late-redirected');
+    assert.equal(xs.length, 1, tag);
+    for (const x of xs) {
+      const y = world.wellById[x.redirectTo], docOf = w => world.docs.find(doc => doc.series.includes(w.series));
+      assert.ok(y.status === 'outlier' && y.late === 'redirect' && y.silent && x.status === 'decoy', tag);
+      assert.equal(docOf(x), docOf(y), `${tag}: same author`);
+      const author = docOf(x).author, chat = t.inputs.documents.find(c => c.kind === 'chat').text.split('\n').filter(l => l.includes(`] ${author}: `));
+      assert.ok(chat.some(l => l.includes(x.id) && /wrong well|meant|belongs to|is about|typed|was about|not /.test(l)), `${tag}: redirect message names ${x.id}`);
+    }
+  });
+});
+
+test('ordinal well references resolve to the intended well [AUDIT F26]', () => {
+  const ORD = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth', 'eleventh', 'twelfth'];
+  let checked = 0;
+  forTasks((t, { world }) => {
+    const text = t.inputs.documents.map(x => x.text).join('\n');
+    for (const m of text.matchAll(/[Tt]he (\w+) study well (?:from the (left|right) in|\(counting from the (left)\) of) plate (\d+),? row (\w)|[Pp]late (\d+), row (\w), (\w+) study well counting from the (right)/g)) {
+      const ord = ORD.indexOf(m[1] ?? m[8]), side = m[2] ?? m[3] ?? m[9], plate = +(m[4] ?? m[6]), row = m[5] ?? m[7];
+      const s = world.series.find(x => x.plate === plate && x.row === row);
+      assert.ok(s && ord >= 0 && ord < s.wells.length, m[0]);
+      checked++;
+    }
+    for (const w of world.wells.filter(x => x.ordinalRef)) {
+      const s = world.seriesByKey[w.series], n = s.wells.length;
+      const left = `the ${ORD[w.p]} study well`, right = `${ORD[n - 1 - w.p]} study well`;
+      assert.ok(new RegExp(`(${left} (from the left in|\\(counting from the left\\) of) plate ${w.plate},? row ${s.row})|(the ${right} from the right in plate ${w.plate} row ${s.row})|(plate ${w.plate}, row ${s.row}, ${right} counting from the right)`, 'i').test(text), `${w.id}: ordinal reference`);
+    }
+  });
+  assert.ok(checked > 100, `${checked} ordinal references`);
+});
+
+test('validation stops early: a sparse array of length 2^32-1 is rejected quickly [AUDIT F28]', () => {
+  const t = bed.generate({ seed: 5002, split: 'test', difficulty: 3 });
+  const huge = []; huge.length = 2 ** 32 - 1;
+  const t0 = performance.now();
+  const r = bed.oracle(t, { conditions: huge, excluded_samples: [] });
+  const r2 = bed.oracle(t, { conditions: [], excluded_samples: huge });
+  assert.ok(performance.now() - t0 < 500);
+  assert.equal(r.pass, false); assert.equal(r.details.reason, 'schema-invalid'); assert.ok(r.details.schemaErrors.length <= 21);
+  assert.equal(r2.pass, false); assert.equal(r2.details.reason, 'schema-invalid');
 });

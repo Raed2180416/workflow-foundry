@@ -103,12 +103,15 @@ export function referenceSolve(task) {
 // walked by index, so holes in a non-JSON array are reported instead of crashing the oracle; numbers must
 // be finite JSON numbers >= 0 (schema `minimum: 0`); a value of 0 is valid and fails the tolerance.
 const isPlain = v => v !== null && typeof v === 'object' && !Array.isArray(v);
+// [AUDIT F28] validation stops after MAX_ERRORS errors: a sparse array of length 2^32-1 (possible for a non-JSON caller)
+// is rejected at its first holes instead of being walked for minutes
+const MAX_ERRORS = 20;
 export function validateOutput(out) {
   const errs = [];
   if (!isPlain(out)) return ['output must be an object'];
   for (const k of Object.keys(out)) if (!['conditions', 'excluded_samples'].includes(k)) errs.push(`unexpected property ${k}`);
   if (!Array.isArray(out.conditions)) errs.push('conditions must be an array');
-  else for (let i = 0; i < out.conditions.length; i++) {
+  else for (let i = 0; i < out.conditions.length && errs.length < MAX_ERRORS; i++) {
     const c = out.conditions[i];
     if (!isPlain(c)) { errs.push(`conditions[${i}] must be an object`); continue; }
     for (const k of Object.keys(c)) if (!['condition_id', 'vmax', 'km'].includes(k)) errs.push(`conditions[${i}] unexpected property ${k}`);
@@ -116,7 +119,7 @@ export function validateOutput(out) {
     for (const k of ['vmax', 'km']) if (!Object.hasOwn(c, k) || typeof c[k] !== 'number' || !Number.isFinite(c[k]) || c[k] < 0) errs.push(`conditions[${i}].${k} must be a finite number >= 0`);
   }
   if (!Array.isArray(out.excluded_samples)) errs.push('excluded_samples must be an array');
-  else for (let i = 0; i < out.excluded_samples.length; i++) if (typeof out.excluded_samples[i] !== 'string') errs.push(`excluded_samples[${i}] must be a string`);
+  else for (let i = 0; i < out.excluded_samples.length && errs.length < MAX_ERRORS; i++) if (typeof out.excluded_samples[i] !== 'string') errs.push(`excluded_samples[${i}] must be a string`);
   return errs;
 }
 
@@ -233,6 +236,15 @@ export const badControls = [
       }
       const pts = assemble(world, shown, { condOf: w => moveTo[w.id] ?? w.condId, point: (w, s) => ({ S: swapS[w.id] ? shown[swapS[w.id]].S : s.S, v: s.rate * (rateScale[w.id] ?? 1) }) });
       return toOutput(world, fitAll(world, pts), outlierIds(world));
+    },
+  },
+  {
+    name: 'plausible-but-wrong:ignore-dose',
+    make(task) { // [AUDIT F24] everything right except the enzyme-dose rescaling from the master-mix log (d3+; at d1-d2 there
+      // is no dose correction, so this control is the reference with one Km 15% low)
+      const { world, shown } = build(task.seed, task.split, task.difficulty);
+      if (!world.dose) { const ref = referenceSolve(task); const c0 = world.conds[0]; return { ...ref, conditions: ref.conditions.map(c => (c.condition_id === c0.id ? { ...c, km: c0.km * 0.85 } : c)) }; }
+      return toOutput(world, fitAll(world, assemble(world, shown, { point: (w, s) => ({ S: s.S, v: s.rate * s.doseFactor }) })), outlierIds(world));
     },
   },
   {

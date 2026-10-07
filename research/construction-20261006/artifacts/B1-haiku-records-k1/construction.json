@@ -1,0 +1,144 @@
+{
+ "arm": "B1",
+ "armId": "B1-haiku",
+ "familyId": "records",
+ "label": "B1-haiku-records-k1",
+ "difficulty": 3,
+ "probeSeeds": [
+  1,
+  2,
+  3
+ ],
+ "builderModel": "claude-haiku-5-5",
+ "builderEffort": "xhigh",
+ "kitHash": "6bc6b06eccf45cae",
+ "kitDir": "/opt/foundry-kit/6bc6b06eccf45cae",
+ "policyHash": "b44deb45d0130910746ed2e2f220723476e3cb0c55c3b253d4303ec9764e6cee",
+ "models": [
+  "claude-haiku-5-5",
+  "claude-sonnet-5-5",
+  "claude-opus-5-5"
+ ],
+ "runId": "construct:B1-haiku-records-k1:383e7d26-8fc8-4eaa-9d28-ee59c7fa96da",
+ "promptSha256": "25ad97b80d179c8ea794574d78b73d13e324b355defa2a9404552ada4592dffe",
+ "artifact": "solve.mjs",
+ "artifactSha256": "09e56f5422640de69e128a86a86c3f795bf345005b392aa69d8dd92b4e90753e",
+ "builderCostUsd": 0.56889009,
+ "builderCostReportedUsd": 0.56889009,
+ "builderCostUnknown": false,
+ "builderCostUpperUsd": 0.56889009,
+ "builderBudgetUsd": 8,
+ "builderUsage": {
+  "input_tokens": 84,
+  "cache_creation_input_tokens": 184701,
+  "cache_read_input_tokens": 5083883,
+  "output_tokens": 132425,
+  "output_tokens_details": {
+   "thinking_tokens": 104660
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 184701,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "not_available",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 667,
+    "cache_read_input_tokens": 190150,
+    "cache_creation_input_tokens": 953,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 953
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "builderStreamUsage": {
+  "inputTokens": 84,
+  "outputTokens": 325,
+  "cacheReadTokens": 5083883,
+  "cacheWriteTokens": 184701
+ },
+ "builderSessionId": "b8b5c94f-e527-4b02-8483-4780133e9023",
+ "gatewayCostUsd": 0.8026899299999996,
+ "gatewayCapUsd": 2,
+ "gatewayOvershootUsd": 0,
+ "gatewayCalls": 168,
+ "gatewayErrors": {},
+ "gatewayRefusals": {},
+ "gatewayUnknownCalls": 0,
+ "gatewayUnknownUpperUsd": 0,
+ "gatewayImputedUsd": 0,
+ "constructionCostUsd": 1.3715800199999997,
+ "startedAt": "2026-10-07T22:07:09.569Z",
+ "durationMs": 988452,
+ "minutes": 45,
+ "turns": 42,
+ "toolUses": 41,
+ "builderError": null,
+ "scoreLog": [
+  {
+   "probe": 0,
+   "pass": true,
+   "score": 1,
+   "at": "2026-10-07T22:15:11.621Z"
+  },
+  {
+   "probe": 1,
+   "pass": false,
+   "score": 0.963459,
+   "at": "2026-10-07T22:18:52.012Z"
+  },
+  {
+   "probe": 2,
+   "pass": false,
+   "score": 0.934072,
+   "at": "2026-10-07T22:18:52.099Z"
+  },
+  {
+   "probe": 0,
+   "pass": true,
+   "score": 1,
+   "at": "2026-10-07T22:21:37.629Z"
+  },
+  {
+   "probe": 1,
+   "pass": true,
+   "score": 1,
+   "at": "2026-10-07T22:21:37.757Z"
+  },
+  {
+   "probe": 2,
+   "pass": true,
+   "score": 1,
+   "at": "2026-10-07T22:21:37.871Z"
+  },
+  {
+   "probe": 0,
+   "pass": true,
+   "score": 1,
+   "at": "2026-10-07T22:22:56.568Z"
+  },
+  {
+   "probe": 1,
+   "pass": false,
+   "score": 0.961344,
+   "at": "2026-10-07T22:22:56.686Z"
+  }
+ ],
+ "scoreChecks": 12,
+ "firstPassAtCheck": 1,
+ "notes": "# Build notes: legacy-records master-list solver\n\n## What solve.mjs does\n1. **Config (one Sonnet call).** Reads the notes and returns per-system settings: numeric date order, sign convention, whether update dates are real, implicit country, international prefixes. Code overrides the date order only when four-digit-year dates contradict it.\n2. **Spec tables parsed in code**: FX rates, calling codes and trunk prefixes, Appendix A nicknames.\n3. **Extraction (Haiku, batches of 8, no reasoning).** Per row: name parts, verbatim date/country/phone/balance spans, ISO country, sign marks, void marker. Batch ids are checked; failures escalate Haiku → Sonnet → Opus.\n4. **Code.** A void marker must appear in the row's own fields (memo/note/remark excluded). Dates use the system's order. Phones become E.164. Balances get the config sign flip and exact decimal USD conversion. Identity is union-find over rules 3a/3b with accent-, nickname- and typo-tolerant names. Conflicts resolve in update-date order, with non-real-date systems last.\n\n## Verified\n- Probe 0: 1.0 (two runs).\n- Probe 1: 1.0 in one run, 0.961 in a later run with identical code.\n- Probe 2: 1.0 in one run.\n- About $0.05–0.15 per probe run; construction spend ≈ $0.80 of $2.\n\n## Known weaknesses\n- **Extraction variance.** Probe 1 row 9328 lost its birth date in one run and split a person. No second-pass check.\n- **Config errors are systematic.** A wrong date order or sign convention affects every row of that system.\n- **Free-text amounts** fall back to the model's magnitude; only probe cases tested.\n- **Dropped batches** if all three models fail; logged to stderr.\n- **Scale** tested only on 85-row inputs.\n",
+ "hiddenPathAttempts": 0,
+ "outsidePaths": [],
+ "nestedModelAttempts": 0
+}

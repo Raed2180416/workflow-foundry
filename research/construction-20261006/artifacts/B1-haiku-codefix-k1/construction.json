@@ -1,0 +1,129 @@
+{
+ "arm": "B1",
+ "armId": "B1-haiku",
+ "familyId": "codefix",
+ "label": "B1-haiku-codefix-k1",
+ "difficulty": 3,
+ "probeSeeds": [
+  1,
+  2,
+  3
+ ],
+ "builderModel": "claude-haiku-5-5",
+ "builderEffort": "xhigh",
+ "kitHash": "6bc6b06eccf45cae",
+ "kitDir": "/opt/foundry-kit/6bc6b06eccf45cae",
+ "policyHash": "b44deb45d0130910746ed2e2f220723476e3cb0c55c3b253d4303ec9764e6cee",
+ "models": [
+  "claude-haiku-5-5",
+  "claude-sonnet-5-5",
+  "claude-opus-5-5"
+ ],
+ "runId": "construct:B1-haiku-codefix-k1:90cdfe76-4d42-475c-9f2f-6d399075cedc",
+ "promptSha256": "25ad97b80d179c8ea794574d78b73d13e324b355defa2a9404552ada4592dffe",
+ "artifact": "solve.mjs",
+ "artifactSha256": "14c8db4b1e5b11253363d1ddd2c53e5065c4280062791fd6ba331d23cf44803b",
+ "builderCostUsd": 0.06142194000000002,
+ "builderCostReportedUsd": 0.06142194000000002,
+ "builderCostUnknown": false,
+ "builderCostUpperUsd": 0.06142194000000002,
+ "builderBudgetUsd": 8,
+ "builderUsage": {
+  "input_tokens": 50,
+  "cache_creation_input_tokens": 89632,
+  "cache_read_input_tokens": 1471704,
+  "output_tokens": 57547,
+  "output_tokens_details": {
+   "thinking_tokens": 39971
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 89632,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "not_available",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 1270,
+    "cache_read_input_tokens": 94087,
+    "cache_creation_input_tokens": 1947,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 1947
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "builderStreamUsage": {
+  "inputTokens": 50,
+  "outputTokens": 142,
+  "cacheReadTokens": 1471704,
+  "cacheWriteTokens": 89632
+ },
+ "builderSessionId": "4726a8d4-7fbc-4aa5-ad49-c5f0520baf81",
+ "gatewayCostUsd": 0.7743148000000001,
+ "gatewayCapUsd": 2,
+ "gatewayOvershootUsd": 0,
+ "gatewayCalls": 12,
+ "gatewayErrors": {},
+ "gatewayRefusals": {},
+ "gatewayUnknownCalls": 0,
+ "gatewayUnknownUpperUsd": 0,
+ "gatewayImputedUsd": 0,
+ "constructionCostUsd": 0.8357367400000001,
+ "startedAt": "2026-10-07T22:23:38.102Z",
+ "durationMs": 349405,
+ "minutes": 45,
+ "turns": 28,
+ "toolUses": 27,
+ "builderError": null,
+ "scoreLog": [
+  {
+   "probe": 0,
+   "pass": true,
+   "score": 1,
+   "at": "2026-10-07T22:26:51.618Z"
+  },
+  {
+   "probe": 1,
+   "pass": true,
+   "score": 1,
+   "at": "2026-10-07T22:27:33.697Z"
+  },
+  {
+   "probe": 2,
+   "pass": true,
+   "score": 1,
+   "at": "2026-10-07T22:27:33.890Z"
+  },
+  {
+   "probe": 2,
+   "pass": true,
+   "score": 1,
+   "at": "2026-10-07T22:28:48.366Z"
+  },
+  {
+   "probe": 0,
+   "pass": true,
+   "score": 1,
+   "at": "2026-10-07T22:28:54.257Z"
+  }
+ ],
+ "scoreChecks": 12,
+ "firstPassAtCheck": 1,
+ "notes": "# BUILD-NOTES: module-fix solver (solve.mjs)\n\n## What it does\n`node solve.mjs task.json` prints `{\"patched_source\": ...}`; logs go to stderr.\n1. **Audit** (claude-opus-5-5, medium): checks the module against its docstrings and design notes, sentence by sentence, and returns defects with spec quotes. Bug reports are claims to check, not ground truth.\n2. **Patch** (claude-sonnet-5-5, low): returns exact `{old, new}` edits. Code applies an edit only if `old` occurs exactly once; otherwise it retries once.\n3. **Verify in code**: compile check, public names and parameter names unchanged, visible tests run in an isolated Python process with a stub `pytest`.\n4. **Repair** (claude-opus-5-5, low, max 2 rounds) on any problem. The candidate with fewest problems is printed; a fatal error prints the original.\n\n## Verified\n- Offline: the Python checker on probe-0's original matches CI (5 pass, `test_top_tokens_by_frequency` fails).\n- `tools/run-solver`, final config: probe-0 and probe-2 score 1.0. Probe-1 scored 1.0 under the Sonnet-audit config; the Opus-audit output differs only in an equivalent `if` form and was not re-scored.\n- All probes were fixed on the first pass, so the repair and retry paths are untested.\n- Cost: about $0.17 per task. Construction spend $0.77 of $2; 7 score checks left.\n\n## Known weaknesses\n- Recall rests on one audit call; subtle defects with no spec example, test or log trace may be missed.\n- Verification checks compile, names and visible tests only; hidden behaviour and unintended edits are not checked.\n- A visible test that contradicts the spec may pull repair the wrong way; untested.\n- The pytest stub covers `raises`, `approx`, `mark`, `fixture` only.\n- Only `patched_source` is returned, so changelog requests are ignored.\n- Three probes are the only evaluation; no false-positive rate measured.\n",
+ "hiddenPathAttempts": 1,
+ "outsidePaths": [
+  "/opt/node24/bin",
+  "/opt/node24/bin/node"
+ ],
+ "nestedModelAttempts": 0
+}

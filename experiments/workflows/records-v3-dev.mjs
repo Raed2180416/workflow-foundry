@@ -25,6 +25,7 @@ if (argv[0] === '--summary') {
     const sum = f => rs.reduce((a, r) => a + (f(r) ?? 0), 0);
     console.log(`${k}: pass ${rs.filter(r => r.pass).length}/${rs.length}, mean score ${(sum(r => r.score) / rs.length).toFixed(4)}, cost mean $${(sum(r => r.costUsd) / rs.length).toFixed(4)}`
       + ` max $${Math.max(...rs.map(r => r.costUsd)).toFixed(4)} total $${sum(r => r.costUsd).toFixed(3)}, calls mean ${(sum(r => r.calls) / rs.length).toFixed(1)}, escalations ${sum(r => r.escalations)}`
+      + `, adjudications ${sum(r => r.adjudications?.length)}`
       + `, failed seeds: ${rs.filter(r => !r.pass).map(r => r.task.split(':s')[1]).join(',') || '-'}`);
   }
   process.exit(0);
@@ -54,7 +55,7 @@ const arm = { ...inner, async run(args) {
     const calls = journal.forRun(result.meta.runId);
     const perNode = {};
     for (const c of calls) { const segs = c.nodeKey.split('/'), m = segs.find(x => x.includes(':')); const k = m ? m.split(':')[0] : segs.at(-1); perNode[k] = Math.round(((perNode[k] ?? 0) + (c.costUsd ?? 0)) * 1e5) / 1e5; }
-    result.meta = { ...result.meta, conventions: merge.conventions, diagnostics: merge.diagnostics, overrides: merge.overrides, unparsed: merge.unparsed, verify: { pass: check.pass, reasons: (check.reasons ?? []).slice(0, 12) },
+    result.meta = { ...result.meta, conventions: merge.conventions, diagnostics: merge.diagnostics, overrides: merge.overrides, adjudications: merge.adjudications, unparsed: merge.unparsed, verify: { pass: check.pass, reasons: (check.reasons ?? []).slice(0, 12) },
       perNode, replayed: calls.filter(c => c.replayedFrom != null || c.costUsd === 0).length };
     await f.close();
   } catch (error) { result.meta = { ...result.meta, metaError: String(error.message ?? error) }; }
@@ -67,10 +68,10 @@ for (const r of recs.filter(x => x.arm === armId && x.trial === trial && tasks.s
   const det = r.oracleDetails ? JSON.parse(r.oracleDetails) : {};
   const line = { at: r.at, label, mode, arm: armId, options, task: r.taskKey, trial: r.trial, pass: r.pass, score: r.score, costUsd: r.costUsd,
     calls: r.meta?.calls, models: r.meta?.models, escalations: r.meta?.escalations, verdict: r.meta?.verdict, status: r.meta?.status, error: r.error,
-    perNode: r.meta?.perNode, conventions: r.meta?.conventions, diagnostics: r.meta?.diagnostics, overrides: r.meta?.overrides, verify: r.meta?.verify,
+    perNode: r.meta?.perNode, conventions: r.meta?.conventions, diagnostics: r.meta?.diagnostics, overrides: r.meta?.overrides, adjudications: r.meta?.adjudications, verify: r.meta?.verify,
     oracle: { pairF1: det.pairF1, fieldAccuracy: det.fieldAccuracy, extra: det.extra, missing: det.missing, E: det.entities, perField: det.perField, mismatches: det.mismatches } };
   appendFileSync(path.join(ROOT, 'dev-log.jsonl'), JSON.stringify(line) + '\n');
-  console.log(`${r.taskKey} ${r.pass ? 'PASS' : 'fail'} score=${r.score?.toFixed(3)} $${r.costUsd.toFixed(4)} calls=${r.meta?.calls} esc=${r.meta?.escalations} ${r.error ? 'err=' + r.error.code : ''}`
+  console.log(`${r.taskKey} ${r.pass ? 'PASS' : 'fail'} score=${r.score?.toFixed(3)} $${r.costUsd.toFixed(4)} calls=${r.meta?.calls} esc=${r.meta?.escalations} adj=${r.meta?.adjudications?.length ?? '?'} ${r.error ? 'err=' + r.error.code : ''}`
     + ` pF1=${det.pairF1?.toFixed?.(3)} fAcc=${det.fieldAccuracy?.toFixed?.(3)} extra=${det.extra} missing=${det.missing}`);
   if (!r.pass) console.log('   diag:', JSON.stringify(r.meta?.diagnostics ?? []).slice(0, 600), '\n   mism:', JSON.stringify(det.mismatches ?? []).slice(0, 1500));
 }

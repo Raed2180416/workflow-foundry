@@ -1,0 +1,114 @@
+{
+ "arm": "F",
+ "armId": "F-haiku",
+ "familyId": "codefix",
+ "label": "F-haiku-codefix-k1",
+ "difficulty": 3,
+ "probeSeeds": [
+  1,
+  2,
+  3
+ ],
+ "builderModel": "claude-haiku-5-5",
+ "builderEffort": "xhigh",
+ "kitHash": "7e8f0f83153c5efb",
+ "kitDir": "/opt/foundry-kit/7e8f0f83153c5efb",
+ "policyHash": "b44deb45d0130910746ed2e2f220723476e3cb0c55c3b253d4303ec9764e6cee",
+ "models": [
+  "claude-haiku-5-5",
+  "claude-sonnet-5-5",
+  "claude-opus-5-5"
+ ],
+ "runId": "construct:F-haiku-codefix-k1:b4d1054c-dd64-4137-9e8e-55c01837cd0b",
+ "promptSha256": "1cbb5a3a392e8d1a0dba079e5785408e360ee0b8d66c6c09e14f5346d426b48b",
+ "artifact": "workflow.json",
+ "artifactSha256": "16f8843927be3a6b6b77d84fe96c111aa70816bae13c3b80e693f6d8635c6c6b",
+ "builderCostUsd": 0.21433525000000006,
+ "builderCostReportedUsd": 0.21433525000000006,
+ "builderCostUnknown": false,
+ "builderCostUpperUsd": 0.21433525000000006,
+ "builderBudgetUsd": 8,
+ "builderUsage": {
+  "input_tokens": 76,
+  "cache_creation_input_tokens": 118504,
+  "cache_read_input_tokens": 3035011,
+  "output_tokens": 64129,
+  "output_tokens_details": {
+   "thinking_tokens": 42205
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 118504,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "not_available",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 973,
+    "cache_read_input_tokens": 124500,
+    "cache_creation_input_tokens": 406,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 406
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "builderStreamUsage": {
+  "inputTokens": 76,
+  "outputTokens": 318,
+  "cacheReadTokens": 3035011,
+  "cacheWriteTokens": 118504
+ },
+ "builderSessionId": "163dca74-e4d3-4fec-bbf4-31277e677c8d",
+ "gatewayCostUsd": 0.680712,
+ "gatewayCapUsd": 2,
+ "gatewayOvershootUsd": 0,
+ "gatewayCalls": 6,
+ "gatewayErrors": {},
+ "gatewayRefusals": {},
+ "gatewayUnknownCalls": 0,
+ "gatewayUnknownUpperUsd": 0,
+ "gatewayImputedUsd": 0,
+ "constructionCostUsd": 0.8950472500000001,
+ "startedAt": "2026-10-07T22:20:24.343Z",
+ "durationMs": 440767,
+ "minutes": 45,
+ "turns": 41,
+ "toolUses": 40,
+ "builderError": null,
+ "scoreLog": [
+  {
+   "probe": 0,
+   "pass": true,
+   "score": 1,
+   "at": "2026-10-07T22:25:18.490Z"
+  },
+  {
+   "probe": 1,
+   "pass": true,
+   "score": 1,
+   "at": "2026-10-07T22:25:18.711Z"
+  },
+  {
+   "probe": 2,
+   "pass": true,
+   "score": 1,
+   "at": "2026-10-07T22:25:18.985Z"
+  }
+ ],
+ "scoreChecks": 12,
+ "firstPassAtCheck": 1,
+ "notes": "# BUILD-NOTES\n\n## What the solver does\n`workflow.json` (6 nodes) repairs a Python module against its docs, bug reports and visible tests, and returns `{patched_source}`.\n\n1. `bundle` (code): joins the module, tests, bug report, design notes, changelog and logs into one text block.\n2. `fix` (agent, Sonnet 5.5, medium reasoning): audits each function against its docs and returns the defects and the full corrected module. The prompt treats docs as authoritative and bug reports and FIXME comments as unverified, and asks for minimal edits.\n3. `check1` (code): the module must parse, keep public names and signatures, add no imports, and pass the visible tests.\n4. `repair` (agent, Opus 5.5), only if `check1` fails: gets the failures and the previous attempt, and re-audits.\n5. `check2` and `answer` (code): return the first passing candidate, otherwise the one with fewest failures.\n\n## Verified\n- `foundry validate`: valid.\n- Probes 0–2: each patch is a minimal diff fixing the defects I found by reading the code (sort keys, negative ids, missing bounds, unadvanced loop state, unknown keys). FIXME decoys left unchanged. All score 1.0 (3 of 12 score checks used).\n- Synthetic variant with a guard removed (not covered by visible tests): restored exactly.\n- Forced-failure variant: repair path runs and selection works.\n- Cost: about $0.09 per task on the Sonnet pass, $0.31 with Opus repair. Construction spend $0.68 of $2.\n\n## Known weaknesses\n- Recall rests on one audit call with no second independent audit.\n- Repair runs only on visible test failures or signature/import violations.\n- Full-file output can over-edit; minimal diff is prompted, not enforced.\n- The pytest shim supports only `raises` and `approx`.\n- Haiku was not tested as a cheaper first pass.\n- Reads `inputs` only, not `files`.\n- Tested on 3 real probes and 2 synthetic variants.\n",
+ "hiddenPathAttempts": 0,
+ "outsidePaths": [],
+ "nestedModelAttempts": 0
+}
