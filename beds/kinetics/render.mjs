@@ -190,7 +190,7 @@ function seriesMeta(world, s, rr) {
   return rr.pick([
     `Read started ${t}; ${rr.pick([20, 25, 30, 40])} cycles over ${n} min; enzyme lot ${world.meta.lot}.`,
     `Enzyme lot ${world.meta.lot}, 5 uL per well; read ${t}, ${n} min kinetic.`,
-    `${world.meta.reader}, kinetic read from ${t} for ${n} min; plate shaken ${rr.pick([5, 10])} s before the first cycle.`, // [AUDIT F24] no mix ids that could contradict the master-mix log
+    `${world.meta.reader}, kinetic read from ${t} for ${n} min; plate shaken ${rr.pick([5, 10])} s before the first cycle.`, // [AUDIT F32] no mix ids that could contradict the master-mix log
   ]);
 }
 // Bubble notes given as clock times. Exclusion depends on overlap with the read window [start, start+min].
@@ -711,7 +711,7 @@ export function renderTask(world, { seed, split, difficulty }) {
     const Y1 = rr.pick(world.conds.filter(c => !c.parentId && c.id !== X1.id));
     const r1 = rangeRef({ series: s1.key, first: s1.wells[0], last: s1.wells[s1.wells.length - 1], n: s1.wells.length }, world, rr, d1);
     chat.push({ day: chatDay + rr.int(0, 1), mins: rr.int(8 * 60, 17 * 60), who: d1.author, text: cap(rr.pick([
-      `${r1} (${alias(X1, d1.aliasStyle, world, rr)}) went on the reader straight after ${condDesc(Y1, world, rr)}; no mix-up between the two.`,
+      `${r1} (${alias(X1, d1.aliasStyle, world, rr)}) went on the reader straight after ${condDesc(Y1, world, rr)}; no mix-up between the two.`, // [AUDIT F31] (was "no problems with either")
       `I ran ${r1} next to ${condDesc(Y1, world, rr)} on the same day; labels double-checked against the plate map, all correct as written.`,
       // [AUDIT F24] (was "share a master mix with": with the master-mix log that could read as a dose statement)
       `for the record, ${r1} were pipetted from the same substrate dilutions as ${condDesc(Y1, world, rr)} but are ${alias(X1, d1.aliasStyle, world, rr)}, as my sheet says.`])) });
@@ -725,7 +725,7 @@ export function renderTask(world, { seed, split, difficulty }) {
       `My ${d3.date} rates are as labelled on the sheet; the per-minute template only came in after my run.`,
       `To be clear, nothing on my ${d3.date} sheet needs a per-minute/per-second fix: the units there are the ones the reader used.`,
       `The template change to per-minute did not affect my ${d3.date} export; keep the units as written.`]) });
-    // [AUDIT F20] the row has no SAT/OVR anywhere (no saturated exclusion, no flagged first read): "no SAT or OVR flags at
+    // [AUDIT F30] the row has no SAT/OVR anywhere (no saturated exclusion, no flagged first read): "no SAT or OVR flags at
     // all" must not contradict a row note
     const s4 = free.slice(2).find(s => ['mdtable', 'csv', 'semicolon', 'reader', 'grouped'].includes(docOfSeries(s.key).format)
       && s.wells.every(id => { const w = world.wellById[id]; return !(w.status === 'outlier' && (w.reason === 'sat' || w.idx >= s.wells.length - 3)) && w.kind !== 'sat-reread'; }));

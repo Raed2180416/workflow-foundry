@@ -12,17 +12,18 @@ const MAX_ATTEMPTS = 64; // from this attempt on the soft preferences (Jaccard, 
 
 // Difficulty knobs. lines is the target bundle size (actual medians are within about +20%).
 // In HARD/EASY the keys before `tRange` were added by round 2 of the second audit, the keys from `tRange` to before
-// `longBlips` by its round 1 (v4, AUDIT.md "Second audit"); `consequence` is round 5, `dialect`, `shadow` and `onsetX` round 4, `lookalikeGen`, `strayGen` and
+// `longBlips` by its round 1 (v4, AUDIT.md "Second audit"); `strayRec`, `echoOnlyRec`, `prevNear` and `consequence` are round 5, `dialect`, `shadow` and `onsetX` round 4, `lookalikeGen`, `strayGen` and
 // `describe` are round 3, the keys from `longBlips` to before `paraphrase` by the
 // v3 audit, the keys from `paraphrase` on by the v2 audit round; the per-level keys are v1's (with v3/v4 changes
-// noted in AUDIT.md). Round 2 also raised decoyBlip 0.5 -> 0.8 and decoyBelowRoot 0.3 -> 0.5, round 4 onsetMore 0.5 -> 0.6, round 5 quiet [0.3, 1] -> [0.2, 1] and strayOthers [1, 2] -> [2, 3].
+// noted in AUDIT.md). Round 2 also raised decoyBlip 0.5 -> 0.8 and decoyBelowRoot 0.3 -> 0.5, round 4 onsetMore 0.5 -> 0.6, round 5 quiet [0.3, 1] -> [0.15, 0.9], strayOthers [1, 2] -> [2, 3], revised 2 -> 3, mixedNotes 0.5 -> 0.7
+// and (d3 only) added 1 -> 2, stale 1 -> 2.
 const BASE = { anchors: 1, minRootCands: 1, wrap: 0, chronic: 0, pods: false, soft: 0, deploy: 0, blipRoot: false, blipSame: false, benignHard: false, added: 0, stale: 0, proseAliases: 0, mislead: 0, notice: false, inject: false, legacySource: false, noisyNote: false, hypothesis: false, addresses: false };
-const HARD = { consequence: 0.6, dialect: true, shadow: [1, 2], onsetX: true, lookalikeGen: true, strayGen: true, describe: 0.3, partialMore: true, nearLookalike: 0.75, lookalikeMore: true, anonDirect: 0.7, anonCollateral: true, nearHerrings: 0.8, canaryNoVer: 0.5, cacheOtherNs: 0.6, tRange: [480, 960], latent: [5, 600], leakPace: [10, 75], rootStats: false, blipStats: 0.7, collateral: [0.2, 0.45], onsetDirect: 0.4, certLead: [75, 240], stray: 0.65, strayOthers: [2, 3], blipEcho: 0.8, onsetMore: 0.6, recoverMore: true, longBlips: true, lookalikeOthers: 0.85, siblingOnset: 0.2, anonMax: 3, decoyBlip: 0.8, partialRec: true, statsOnset: 0, statsAfter: true, provider: 0.4, canary: 0.6, podEcho: true, revised: 2, stale: 1, onsetRepeat: 0.25, quiet: [0.2, 1], blipOnset: 0.85, recoverAlt: 0.7, decoyBelowRoot: 0.5, paraphrase: true, lookalikes: true, configLag: [20, 480], anon: 0.8, mixedNotes: 0.5, silentSoft: 0.5, softErr: 0.6, warnSev: 0.3, mention: 0.03, mentionErr: 0.4, decoy: 1, secondary: [0.35, 0.65], lead: [60, 600], cacheLag: [45, 600], blipNear: true, nearPrecursor: 0.8, ticketSubset: true, hardNotes: 2, renewHerring: true, baselines: 3, wantSoft: 0.5, bigSkew: 0.6 };
-const EASY = { consequence: 0, dialect: false, shadow: null, onsetX: false, lookalikeGen: false, strayGen: false, describe: 0, partialMore: false, nearLookalike: 0, lookalikeMore: false, anonDirect: 0, anonCollateral: false, nearHerrings: 0, canaryNoVer: 0, cacheOtherNs: 0, tRange: [540, 1020], latent: null, leakPace: null, rootStats: true, blipStats: 0, collateral: null, onsetDirect: 0, certLead: [5, 45], stray: 0, strayOthers: [0, 0], blipEcho: 0, onsetMore: 0, recoverMore: false, longBlips: false, lookalikeOthers: 0, siblingOnset: 0, anonMax: 1, decoyBlip: 0, partialRec: false, statsOnset: 0, statsAfter: false, provider: 0, canary: 0, podEcho: false, revised: 0, stale: 0, onsetRepeat: 0, quiet: [1, 1], blipOnset: 0, recoverAlt: 0, decoyBelowRoot: 1, paraphrase: false, lookalikes: false, configLag: null, anon: 0, mixedNotes: 0, silentSoft: 0, softErr: 0, warnSev: 0, mention: 0.01, mentionErr: 0, decoy: 0, secondary: [0, 0], lead: [15, 40], cacheLag: [3, 25], blipNear: false, nearPrecursor: 0, ticketSubset: false, hardNotes: 0, renewHerring: false, baselines: 0, wantSoft: 0, bigSkew: 0 };
+const HARD = { strayRec: 0.6, echoOnlyRec: 0.4, prevNear: true, consequence: 0.8, dialect: true, shadow: [1, 2], onsetX: true, lookalikeGen: true, strayGen: true, describe: 0.4, partialMore: true, nearLookalike: 0.75, lookalikeMore: true, anonDirect: 0.7, anonCollateral: true, nearHerrings: 0.8, canaryNoVer: 0.5, cacheOtherNs: 0.6, tRange: [480, 960], latent: [5, 600], leakPace: [10, 75], rootStats: false, blipStats: 0.7, collateral: [0.2, 0.45], onsetDirect: 0.4, certLead: [75, 240], stray: 0.65, strayOthers: [2, 3], blipEcho: 0.8, onsetMore: 0.6, recoverMore: true, longBlips: true, lookalikeOthers: 0.85, siblingOnset: 0.2, anonMax: 3, decoyBlip: 0.8, partialRec: true, statsOnset: 0, statsAfter: true, provider: 0.4, canary: 0.6, podEcho: true, revised: 3, stale: 1, onsetRepeat: 0.25, quiet: [0.15, 0.9], blipOnset: 0.85, recoverAlt: 0.7, decoyBelowRoot: 0.5, paraphrase: true, lookalikes: true, configLag: [20, 480], anon: 0.8, mixedNotes: 0.7, silentSoft: 0.5, softErr: 0.6, warnSev: 0.3, mention: 0.03, mentionErr: 0.4, decoy: 1, secondary: [0.35, 0.65], lead: [60, 600], cacheLag: [45, 600], blipNear: true, nearPrecursor: 0.8, ticketSubset: true, hardNotes: 2, renewHerring: true, baselines: 3, wantSoft: 0.5, bigSkew: 0.6 };
+const EASY = { strayRec: 0, echoOnlyRec: 0, prevNear: false, consequence: 0, dialect: false, shadow: null, onsetX: false, lookalikeGen: false, strayGen: false, describe: 0, partialMore: false, nearLookalike: 0, lookalikeMore: false, anonDirect: 0, anonCollateral: false, nearHerrings: 0, canaryNoVer: 0, cacheOtherNs: 0, tRange: [540, 1020], latent: null, leakPace: null, rootStats: true, blipStats: 0, collateral: null, onsetDirect: 0, certLead: [5, 45], stray: 0, strayOthers: [0, 0], blipEcho: 0, onsetMore: 0, recoverMore: false, longBlips: false, lookalikeOthers: 0, siblingOnset: 0, anonMax: 1, decoyBlip: 0, partialRec: false, statsOnset: 0, statsAfter: false, provider: 0, canary: 0, podEcho: false, revised: 0, stale: 0, onsetRepeat: 0, quiet: [1, 1], blipOnset: 0, recoverAlt: 0, decoyBelowRoot: 1, paraphrase: false, lookalikes: false, configLag: null, anon: 0, mixedNotes: 0, silentSoft: 0, softErr: 0, warnSev: 0, mention: 0.01, mentionErr: 0, decoy: 0, secondary: [0, 0], lead: [15, 40], cacheLag: [3, 25], blipNear: false, nearPrecursor: 0, ticketSubset: false, hardNotes: 0, renewHerring: false, baselines: 0, wantSoft: 0, bigSkew: 0 };
 export const KNOBS = {
   1: { ...BASE, ...EASY, anchors: 1, services: 6, batch: 1, lines: 300, bg: 0.78, styles: ['plain'], refs: ['name'], blipOther: 1, noisyNote: true },
   2: { ...BASE, ...EASY, anchors: 2, services: 8, batch: 1, lines: 400, bg: 0.78, wrap: 0.15, styles: ['plain', 'bracket', 'kv'], refs: ['name', 'name', 'host'], soft: 0.4, deploy: 1, blipSame: true, blipOther: 1, noisyNote: true, mention: 0.015, secondary: [0.1, 0.2] },
-  3: { ...BASE, ...HARD, anchors: 2, minRootCands: 2, decoy: 2, services: 11, batch: 1, lines: 420, bg: 0.38, wrap: 0.3, chronic: 1, styles: ['plain', 'bracket', 'kv', 'json', 'short'], refs: ['name', 'host', 'legacy'], pods: true, soft: 0.5, deploy: 1, blipRoot: true, blipSame: true, blipOther: 2, benignHard: true, added: 1 },
+  3: { ...BASE, ...HARD, anchors: 2, minRootCands: 2, decoy: 2, services: 11, batch: 1, lines: 420, bg: 0.38, wrap: 0.3, chronic: 1, styles: ['plain', 'bracket', 'kv', 'json', 'short'], refs: ['name', 'host', 'legacy'], pods: true, soft: 0.5, deploy: 1, blipRoot: true, blipSame: true, blipOther: 2, benignHard: true, added: 2, stale: 2 },
   4: { ...BASE, ...HARD, anchors: 3, minRootCands: 2, decoy: 2, services: 14, batch: 2, lines: 1600, bg: 0.7, wrap: 0.35, chronic: 1, styles: ['plain', 'bracket', 'kv', 'json', 'short'], refs: ['name', 'host', 'legacy', 'ip'], pods: true, soft: 0.45, deploy: 1, blipRoot: true, blipSame: true, blipOther: 2, benignHard: true, added: 1, stale: 1, proseAliases: 2, mislead: 1, hypothesis: true, addresses: true, warnSev: 0.35, baselines: 4 },
   5: { ...BASE, ...HARD, anchors: 3, minRootCands: 2, services: 18, batch: 2, lines: 4000, bg: 0.72, wrap: 0.35, chronic: 2, styles: ['plain', 'bracket', 'kv', 'json', 'short'], refs: ['name', 'host', 'legacy', 'ip'], pods: true, soft: 0.45, deploy: 2, blipRoot: true, blipSame: true, blipOther: 4, benignHard: true, added: 2, proseAliases: 3, mislead: 1, notice: true, inject: true, legacySource: true, hypothesis: true, addresses: true, warnSev: 0.4, softErr: 0.7, decoy: 2, hardNotes: 3, baselines: 5, revised: 3, stale: 2 },
 };
@@ -663,6 +664,7 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
     // v4: precursors count down to notAfter (which lies before T from d3).
     for (const m of mins) if (notAfter - m * 60 > 0) emit(notAfter - m * 60, root, F.precursor(rootCtx(notAfter - m * 60), rf, m), 'precursor');
   }
+  let prevRollout = null;
   if (cls === 'bad_config_deploy') {
     const c = rootCtx(T);
     if (K.podEcho) {
@@ -685,7 +687,9 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
     }
     // d3+: an earlier, healthy rollout of the same service a few minutes before the bad one.
     if (K.configLag && rf.chance(0.6)) {
-      const tp = T - rf.int(240, 540), cp = { ...rootCtx(tp), replicas: root.replicas };
+      // v4 round 5: from d3 the healthy rollout comes after the root's blip, 110-260 s before T (was 240-540 s).
+      const tp = T - (K.prevNear ? rf.int(110, 260) : rf.int(240, 540)), cp = { ...rootCtx(tp), replicas: root.replicas };
+      prevRollout = tp;
       emit(tp, root, C.DEPLOY_PREV.start(cp, rf), 'bg');
       for (const pod of root.pods) emit(tp + rf.int(5, 30), root, C.DEPLOY.ready({ ...cp, pod, newVer: root.oldVer }, rf), 'bg');
       emit(tp + rf.int(35, 90), root, C.DEPLOY_PREV.done(cp, rf), 'bg');
@@ -910,13 +914,16 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
       emit(tb, s, klass === 'clock_skew' ? ['INFO', `ntp offset ${rh.int(150, 480)}ms`] : C.BASELINE_AFTER[klass](cb, rh, v).slice(0, 2), tag);
     }
     const recover = K.recoverAlt && rh.chance(K.recoverAlt) ? rh.pick([...C.RECOVER_ALT[klass], ...(K.recoverMore ? C.RECOVER_MORE[klass] : [])]) : P.recover;
-    emit(t0 + offs.end, s, recover(ctxFor(s, t0 + offs.end, rh), rh), tag);
+    const echoEdges = s.callers.filter(e => S[e.from].kind !== 'batch'), canEcho = K.blipEcho && echoEdges.length && t0 + offs.end + 45 < T - 15;
+    // v4 round 5: the root's own blip sometimes ends without a line of its own (K.echoOnlyRec): only its callers
+    // say that their calls succeed again (and its request lines are normal again).
+    const echoOnly = s === root && klass === cls && canEcho && K.echoOnlyRec && rh.chance(K.echoOnlyRec);
+    if (!echoOnly) emit(t0 + offs.end, s, recover(ctxFor(s, t0 + offs.end, rh), rh), tag);
     // v4 (second audit): the callers of a blipping service notice it (d3+): 1-3 failed calls during the blip,
     // then one line saying their calls succeed again. In v3 the first caller failure that named the root was
     // always part of the real incident, so "the root's first onset-like line after its last recovery before
     // the first caller failure" dated the fault; now a short script has to tell episodes apart.
-    const echoEdges = s.callers.filter(e => S[e.from].kind !== 'batch');
-    if (K.blipEcho && echoEdges.length && t0 + offs.end + 45 < T - 15 && rh.chance(K.blipEcho)) {
+    if (canEcho && (echoOnly || rh.chance(K.blipEcho))) {
       const echoCtx = (e, t) => {
         const c2 = S[e.from];
         const fallback = e.provider ? `${s.role.what} read directly from ${S[e.provider].name}` : s.role.fallback;
@@ -943,7 +950,7 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
     // d3+: close to T (recovers at least 60 s before it); otherwise 5.5 to 12 minutes before.
     const offs = blipOffsets();
     // v4: a certificate root's own blip ends before its main certificate's notAfter.
-    const lim = Math.min(T - 60, notAfter - 10, rootStray ? rootStray.t - 10 : Infinity);
+    const lim = Math.min(T - 60, notAfter - 10, rootStray ? rootStray.t - 10 : Infinity, prevRollout !== null ? prevRollout - 10 : Infinity);
     const t0 = K.blipNear ? rh.int(Math.max(30, lim - 420), lim - offs.end) : rh.int(Math.max(30, T - 720), T - 330);
     const onsetLike = Boolean(K.blipOnset && C.BLIP_ONSET[cls] && rh.chance(K.blipOnset));
     herrings.blips.push({ svc: root.name, cls, t: blip(root, cls, t0, 'blip-root', offs, onsetLike), end: t0 + offs.end, onsetLike });
@@ -1012,11 +1019,15 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   // the first onset-worded root line after the root's last recovery was T in every task with no lookalike in
   // between; now it is a stray line in about 60% of d3+ tasks, and only the resource it names tells.
   herrings.strays = [];
+  // v4 round 5: a stray may recover (K.strayRec): the root's 20-500 s after T (inside the real episode), any other
+  // service's at a random later time. Its repeats all come before the recovery.
   const strayLines = (s, klass, t, repeats, o = strayOther(s, klass, t, rh)) => {
     emit(t, s, rh.pick(C.STRAY[klass])(ctxFor(s, t, rh), rh, o), 'stray');
     const event = klass === 'bad_config_deploy' || klass === 'poisoned_cache';
-    for (let i = 0, n = event ? 0 : repeats; i < n; i++) { const t2 = rh.int(t + 20, WINDOW - 1); emit(t2, s, rh.pick(C.STRAY[klass])(ctxFor(s, t2, rh), rh, o), 'stray'); }
-    herrings.strays.push({ svc: s.name, cls: klass, t });
+    const tr = K.strayRec && C.STRAY_REC[klass] && rh.chance(K.strayRec) ? (s === root ? Math.max(t + 30, T + rh.int(20, 500)) : rh.int(t + 60, t + 900)) : WINDOW;
+    for (let i = 0, n = event ? 0 : repeats; i < n; i++) { const t2 = rh.int(t + 20, Math.max(t + 21, Math.min(WINDOW, tr) - 5)); emit(t2, s, rh.pick(C.STRAY[klass])(ctxFor(s, t2, rh), rh, o), 'stray'); }
+    if (tr < WINDOW) emit(tr, s, rh.pick(C.STRAY_REC[klass])(ctxFor(s, tr, rh), rh, o), 'stray');
+    herrings.strays.push({ svc: s.name, cls: klass, t, end: tr < WINDOW ? tr : null });
   };
   if (rootStray) strayLines(root, cls, rootStray.t, rh.int(0, 2), rootStray.o);
   for (let i = 0, n = rh.int(...K.strayOthers), used = new Set(); i < n; i++) {

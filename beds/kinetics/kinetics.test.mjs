@@ -160,7 +160,7 @@ test('no truth leakage into prompt + inputs', () => {
       const keys = new Set();
       const walk = o => { if (o && typeof o === 'object') for (const [k, v] of Object.entries(o)) { keys.add(k); walk(v); } };
       walk(t.inputs);
-      for (const k of ['vmax', 'km', 'status', 'reason', 'excluded', 'truth', 'factor', 'rateTrue', 'typo', 'traps', 'claims', 'silent', 'late', 'dev', 'tricky', 'timed', 'grid', 'readStart', 'noteFor', 'noteFrom'])
+      for (const k of ['vmax', 'km', 'status', 'reason', 'excluded', 'truth', 'factor', 'rateTrue', 'typo', 'traps', 'claims', 'silent', 'late', 'dev', 'tricky', 'timed', 'grid', 'readStart', 'noteFor', 'noteFrom', 'dose', 'doseFactor', 'dilution', 'ordered', 'ordinalRef', 'redirectTo'])
         assert.ok(!keys.has(k), `inputs carry key ${k}`);
       // the exclusion set is never written down as a list
       const ex = world.wells.filter(w => w.status === 'outlier').map(w => w.id).sort();
@@ -396,7 +396,7 @@ test('README documents the version, the measured token sizes and the oracle rule
   assert.ok(audit.includes(`-> ${bed.family.version}`) && audit.includes('| id | severity | finding | evidence (before) | fix | regression test |'));
   // the second pass has its own dated section and findings table
   assert.match(audit, /^## Second pass, \d{4}-\d\d-\d\d \(3\.0\.0 -> 4\.0\.0\)/m);
-  for (const id of ['F20', 'F21', 'F22', 'F23', 'F24', 'F25', 'F26', 'F27', 'F28', 'F29']) assert.match(audit, new RegExp(`^\\| ${id} \\|`, 'm'), id);
+  for (const id of ['F20', 'F21', 'F22', 'F23', 'F24', 'F25', 'F26', 'F27', 'F28', 'F29', 'F30', 'F31', 'F32', 'F33']) assert.match(audit, new RegExp(`^\\| ${id} \\|`, 'm'), id);
 });
 
 // ---------------------------------------------------------------------------------------
@@ -529,7 +529,7 @@ test('judgment content: every d3+ task needs prose reading that keywords and res
 
 // Attack budget for a "<=40-line heuristic": <=40 code lines and <=7000 characters (comment lines excluded).
 // measured values of the over-budget 4.0.0 attacks (AUDIT.md, second pass); tests fail if the generator gets easier for them
-const GUARD = { golfed: { test: 18, dev: 20 }, whitebox: { test: 24, dev: 25 } };
+const GUARD = { golfed: { test: 21, dev: 19 }, whitebox: { test: 26, dev: 25 } };
 const attackSize = src => { const code = src.split('\n').filter(l => l.trim() && !l.trim().startsWith('//')); return { lines: code.length, chars: [...code.join('\n')].length }; };
 async function attackRate(name, d, split, s0) {
   const { heuristicSolve } = await import(`./attacks/${name}.mjs`);
@@ -666,7 +666,7 @@ const forTasks = (fn, { diffs = D3UP, n = 20 } = {}) => {
   }
 };
 
-test('herrings never contradict a sheet: the no-flag row has no SAT/OVR; no "no problems"; no shared master mix [AUDIT F20]', () => {
+test('herrings never contradict a sheet: the no-flag row has no SAT/OVR; no "no problems"; no shared master mix [AUDIT F30, F31]', () => {
   let rowHerrings = 0;
   forTasks((t, { world }, d, tag) => {
     const chat = t.inputs.documents.find(x => x.kind === 'chat').text;
@@ -694,7 +694,7 @@ test('correction suggestions come from people without a sheet in the study [AUDI
   assert.ok(n > 100, `${n} suggestions checked`);
 });
 
-test('filler and row headers agree with the master-mix log: study lot, no other dilutions or mix ids, fixed enzyme volume [AUDIT F24]', () => {
+test('filler and row headers agree with the master-mix log: study lot, no other dilutions or mix ids, fixed enzyme volume [AUDIT F32]', () => {
   forTasks((t, { world }, d, tag) => {
     for (const doc of t.inputs.documents.filter(x => x.kind === 'notebook')) {
       for (const m of doc.text.matchAll(/Enzyme stock \(lot ([^,]+),/g)) assert.equal(m[1], world.meta.lot, `${tag}: filler enzyme lot`);

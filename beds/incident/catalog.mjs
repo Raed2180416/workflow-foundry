@@ -1226,6 +1226,8 @@ export const STRAY = {
   clock_skew: [
     (c, r, o) => ['WARN', `chrony: source ${o.peer} is ${r.int(2, 40)}s ahead of the other sources; not used for synchronisation`],
     (c, r, o) => ['WARN', `ntp peer ${o.peer} reports a time ${r.int(2, 40)}s ahead of the other peers; peer rejected`],
+    // v4 round 5: no verdict in the line; the local clock stays with the other sources.
+    (c, r, o) => ['WARN', `time source ${o.peer} disagrees with the other sources by +${r.int(2, 40)}s`],
   ],
   upstream_rate_limiting: [
     (c, r, o) => ['WARN', `${o.ext} responded 429 Too Many Requests (retry-after ${r.int(10, 60)}s)`],
@@ -1817,3 +1819,23 @@ export const CONSEQUENCE = [
   (c, r) => ['WARN', `heap after full GC is ${c.base + r.int(12, 24)}% (baseline ${c.base}%): requests buffered in memory`],
   (c, r) => ['WARN', `heap after full GC is ${c.base + r.int(12, 24)}% (baseline ${c.base}%) while responses from ${c.callee} are pending`],
 ];
+
+// Recovery of a stray anomaly (round 5). It ends like a real recovery but names the other resource. The root's
+// stray often recovers after T, inside the real episode, so "the root's last recovery-worded line" can be later
+// than the onset; only the resource it names shows that it is not about the fault.
+export const STRAY_REC = {
+  connection_pool_exhaustion: [
+    (c, r, o) => ['INFO', `queue for '${o.pool}' drained; borrowers are no longer waiting`],
+    (c, r, o) => ['INFO', `pool pressure on '${o.pool}' cleared; pending=0`],
+  ],
+  certificate_expiry: [(c, r, o) => ['INFO', `renewed certificate for ${o.host}; handshakes on :${o.port} succeed again`]],
+  bad_config_deploy: [(c, r, o) => ['INFO', `${o.comp} rolled back to ${o.v1}; healthy again`]],
+  disk_full: [
+    (c, r, o) => ['INFO', `cleanup done on ${o.vol}; plenty of space again`],
+    (c, r, o) => ['INFO', `log rotation freed ${r.int(8, 40)} GiB on ${o.vol}; usage back to ${o.v0}%`],
+  ],
+  memory_leak_oom: [(c, r, o) => ['INFO', `${o.proc} restarted; memory back to its usual level`]],
+  clock_skew: [(c, r, o) => ['INFO', `time source ${o.peer} back in agreement with the other sources`]],
+  upstream_rate_limiting: [(c, r, o) => ['INFO', `${o.ext} calls succeeding again`]],
+  poisoned_cache: [(c, r, o) => ['INFO', `'${o.ns}' consistent again after the repair job`]],
+};

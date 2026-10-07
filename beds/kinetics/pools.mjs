@@ -112,13 +112,13 @@ export const LATE_DECOY = r => r.pick([`there was ${aB(r)} at loading, but I tap
 
 export const FILLER = [
   ({ r, pH, T }) => `Made ${r.pick([250, 500, 1000])} mL of ${r.pick([25, 50, 100])} mM ${r.pick(['HEPES', 'MOPS', 'Tris', 'phosphate', 'MES'])} and adjusted to pH ${pH} at ${T} °C.`,
-  // [AUDIT F24] the study lot and no dilution of its own: enzyme working dilutions are recorded in the master-mix log
+  // [AUDIT F32] the study lot and no dilution of its own: enzyme working dilutions are recorded in the master-mix log
   ({ r, lot, mixLog }) => `Enzyme stock (lot ${lot}, ${(r.int(12, 48) / 10).toFixed(1)} mg/mL) thawed on ice; ${mixLog ? 'working dilution as recorded in the master-mix log' : 'diluted 1:500 into the master mix'}.`,
   ({ r, reader }) => `${reader} warmed up for ${r.pick([15, 20, 30])} min; lamp hours ${r.int(900, 4200)}.`,
   ({ r }) => `NADH stock ${r.pick([10, 20, 25])} mM in ${r.pick(['10 mM NaOH', 'water', 'assay buffer'])}; final NADH in each well ${r.pick([150, 200, 250])} uM.`,
   ({ r }) => `Substrate stock ${r.pick([100, 200, 250])} mM in ${r.pick(['water', 'DMSO', 'assay buffer'])}; serial dilutions made fresh at ${r.int(8, 11)}:${String(r.int(0, 59)).padStart(2, '0')}.`,
   ({ r }) => `Blank BLK-${String(r.int(1, 40)).padStart(2, '0')} (no enzyme): ${(r.int(1, 9) / 10000).toFixed(4)} uM/s, as usual.`,
-  // [AUDIT F24] no read length here: each plate row states its own read window
+  // [AUDIT F32] no read length here: each plate row states its own read window
   ({ r }) => `Plate sealed with ${r.pick(['optical film', 'a breathable seal', 'the clear lid'])}; reads every ${r.pick([10, 15, 20, 30])} s, slopes from the linear part.`,
   ({ r }) => `Room temperature ${(r.int(205, 236) / 10).toFixed(1)} °C, humidity ${r.int(30, 61)}%.`,
   ({ r }) => `Standards STD-1..STD-4 (0, 20, 40, 80 uM NADH) read at A340: 0.00${r.int(1, 4)}, 0.${r.int(110, 135)}, 0.${r.int(240, 265)}, 0.${r.int(480, 520)}.`,
@@ -153,7 +153,7 @@ export const SERIES_COMMENTS = [
   'Linear phase a bit short at the top concentration but slopes look fine.',
   'Plate went in about 40 s after the enzyme addition.',
   'No lag phase visible.',
-  'Plate equilibrated in the reader for 5 min before the first cycle.', // [AUDIT F24] (was: same master mix as the previous plate)
+  'Plate equilibrated in the reader for 5 min before the first cycle.', // [AUDIT F32] (was: same master mix as the previous plate)
   'Fresh substrate dilutions for this plate.',
   'Read straight after mixing; seal on.',
 ];
