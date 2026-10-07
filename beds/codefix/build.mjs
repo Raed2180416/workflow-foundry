@@ -14,7 +14,7 @@ import tokenizer from './domains/tokenizer.mjs';
 import routing from './domains/routing.mjs';
 import ratelimit from './domains/ratelimit.mjs';
 
-export const VERSION = '1.0.0';
+export const VERSION = '1.1.0';
 export const DOMAINS = [inventory, scheduling, billing, tokenizer, routing, ratelimit];
 
 // Difficulty knobs. sections: how many template sections (core + extensions) are rendered.

@@ -37,11 +37,15 @@ function expectation(c, ref, shown) {
   return `For \`${stepExpr(c.steps[i])}\` I expected ${describe(ref[i])}, but ${describeGot(shown[i])}.`;
 }
 
+// AUDIT F6: the red-herring complaint uses exactly the same expectation sentence and the same
+// comment lead-ins as real bugs, so no surface phrase separates the two (v1.0.0 used "I would
+// expect" and a herring-only lead-in pool).
 function herringExpectation(c, ref, wanted) {
-  const i = firstDiff(ref, wanted);
-  if (i < 0) return '';
-  return `For \`${stepExpr(c.steps[i])}\` I would expect ${describe(wanted[i])}, but ${describeGot(ref[i])}.`;
+  return expectation(c, ref, wanted);
 }
+
+export const COMMENT_LEADS = ['Another one, maybe related:', 'Different symptom, same release:', 'I hit something else in the same module:',
+  'While you are in there:', 'Related, I think:', 'One more thing that bugs me:'];
 
 export function writeReport({ domain, p, bugs, herring, knobs, version, repro, siteIds, r }) {
   const people = r.shuffle(PEOPLE);
@@ -76,14 +80,14 @@ export function writeReport({ domain, p, bugs, herring, knobs, version, repro, s
       const sec = domain.sections.find(s => s.id === site(id).section);
       comments.push(`${r.pick(['Possibly related:', 'Also, while we are here:', 'Not sure if this belongs here, but'])} someone on the ${r.pick(['night shift', 'finance team', 'support rota'])} said the ${sec.label} part "has been acting up since the last upgrade". No details, sorry.`);
     } else {
-      comments.push(`${r.pick(['Another one, maybe related:', 'Different symptom, same release:', 'I hit something else in the same module:'])} ${block(id, { prose })}`);
+      comments.push(`${r.pick(COMMENT_LEADS)} ${block(id, { prose })}`);
     }
   });
   if (herring) {
     const rp = repro[herring];
     const text = r.pick(site(herring).herring)(p);
     const extra = rp?.differs ? `\n\n\`\`\`\n${replTranscript(p.mod, rp.case, rp.ref)}\n\`\`\`\n\n${herringExpectation(rp.case, rp.ref, rp.shown)}` : '';
-    comments.push(`${r.pick(['While you are in there:', 'Related, I think:', 'One more thing that bugs me:'])} ${text}${extra}`);
+    comments.push(`${r.pick(COMMENT_LEADS)} ${text}${extra}`);
   }
   const noise = r.sample(NOISE, knobs.noise);
   noise.forEach(n => comments.splice(r.int(0, comments.length), 0, n));

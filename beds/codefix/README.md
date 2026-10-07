@@ -1,6 +1,6 @@
 # Bed `codefix`: software repair from a user bug report
 
-Status: v1.0.0, development bed. Generator, oracle, sandbox, reference solver, controls and
+Status: v1.1.0, development bed (audited 2026-10-07, see [AUDIT.md](AUDIT.md); open items O1-O5 there). Generator, oracle, sandbox, reference solver, controls and
 tests are done. No model has been run on it yet, so the claim that a cheap single-shot model
 usually fails from difficulty 3 is a design target, not a measurement.
 
@@ -53,8 +53,10 @@ asks for every defect to be fixed with public names and signatures unchanged.
 `oracle(task, output)` rebuilds the instance from `(seed, split, difficulty)`, which gives the
 reference module, the hidden suite and the reference results, and then checks in order:
 
-1. **Schema.** `output` must be an object whose only key is `patched_source`, a string.
-   Otherwise `pass:false`, `score:0`, and nothing runs.
+1. **Schema.** `output` must be a plain JSON object whose only key is `patched_source`, an own
+   string property (an inherited property, a getter or a non-JSON value is invalid). Otherwise
+   `pass:false`, `score:0`, and nothing runs. The string must be the module itself: a markdown
+   code fence around it is a syntax error. CRLF line endings and trailing whitespace are fine.
 2. **Size.** The source must be non-empty and between 0.5x and 2x the length of the buggy module.
 3. **Diff guard (parse only, no candidate code runs).** `ast` inspection in its own process
    requires:
@@ -69,8 +71,14 @@ reference module, the hidden suite and the reference results, and then checks in
      `decimal`, `enum`, `operator`, `abc`, `__future__`) or the reference's own imports;
    - no names the reference does not use from this list: `eval`, `exec`, `compile`, `open`,
      `__import__`, `globals`, `locals`, `vars`, `getattr`, `setattr`, `delattr`, `breakpoint`,
-     `input`, `os`, `sys`, `inspect`, `traceback`, `gc`, `importlib`, `builtins`,
+     `input`, `exit`, `quit`, `help`, `memoryview`, `__builtins__`, `__loader__`, `__spec__`,
+     `__file__`, `os`, `sys`, `inspect`, `traceback`, `gc`, `importlib`, `builtins`,
      `subprocess`, `socket`, `pytest` and `unittest`;
+   - (v1.1.0) no *attribute* the reference does not use from this list: `builtins`, `open`,
+     `eval`, `exec`, `system`, `popen`, `import_module`, `getattr`, `setattr`, `delattr`,
+     `globals`, `locals`, `vars`, `sys`, `os`, `subprocess`, `socket`, `io`, `posix`, `nt`,
+     `ctypes`, `gc`, `inspect`, `importlib`, `traceback`, `signal`, `threading`, `shutil`,
+     `pathlib` (so `dataclasses.builtins.eval` is rejected; `re.compile` stays legal);
    - no new frame, environment or introspection attributes (`_getframe`, `f_back`, `environ`,
      `getenv`, `modules`, `argv`, `stack`, `currentframe`, ...) and no new dunder attribute
      access except `__init__`, `__name__`, `__doc__`, `__post_init__` and `__qualname__`;
@@ -78,7 +86,10 @@ reference module, the hidden suite and the reference results, and then checks in
 4. **Hidden tests.** The candidate is imported and run in the namespace sandbox (below) against
    the hidden suite. A hidden case is a sequence of constructor, method, function and attribute
    steps. Each step's result is normalised: floats rounded to 6 places, dicts and sets compared
-   without order, dataclasses by field, exceptions by type name only. The results are compared
+   without order, dataclasses by field, exceptions by type name only. An int and an equal float
+   compare equal (2 == 2.0), a bool never equals an int (True vs 1), a namedtuple equals a list,
+   a tuple does not. Lists, dicts and sets are compared on their first 500 items, strings on
+   their first 4000 characters, nesting to depth 12. Other objects compare by type name. The results are compared
    with the reference module's results on the same steps. Each step has a 0.5 s limit and the
    whole run about 2 s.
 
@@ -114,7 +125,7 @@ the mutated lines restored, keeping the same comments, `__all__` and aliases.
 | `test-detection-hack` | the reference plus `import os` and a `PYTEST_CURRENT_TEST` check |
 | `signature-drift` | the reference with the first public method renamed |
 
-Mean `score` over seeds 1-10 (`pass` is always false):
+Mean `score` over seeds 1-10, measured on v1.0.0 (`pass` is always false; v1.1.0 controls fail 30/30 at d1/d3/d5, see AUDIT.md):
 
 | d | unchanged-buggy | near-miss-fix-one | near-miss-all-but-one | followed-red-herring | others |
 |---|---|---|---|---|---|
@@ -133,11 +144,11 @@ one or the other, not both.
 
 | d | sections | bugs | module lines (min/med/max) | input tokens (min/med/max) | visible tests | report thread | other knobs |
 |---|---|---|---|---|---|---|---|
-| 1 | core | 1 | 67 / 80 / 106 | 1493 / 1655 / 2091 | 4. They cover the bug in about half the tasks | reporter only, with repro | none |
-| 2 | core + 1 | 1 | 106 / 136 / 179 | 2587 / 3063 / 3817 | 5, never covering the bug | repro, 1 noise comment | changelog, short service log |
-| 3 | core + 2 | 2 | 150 / 182 / 248 | 5133 / 6229 / 7799 | 6, covering at most one bug | bug 1 with repro, bug 2 prose-only, 2 noise comments | 1 decoy FIXME, CI log, service log (10 traffic cases) |
-| 4 | core + 3 | 2 | 203 / 272 / 339 | 6857 / 7799 / 10228 | 6, at most one bug | as d3, plus a **wrong guess** naming a function with no bug and a **red-herring complaint** with repro | up to 2 decoys, `__all__`, 3 deprecated aliases, injection in the thread and the log |
-| 5 | all 5 | 3 | 281 / 347 / 410 | 8892 / 9665 / 12516 | 7, at most one bug | as d4, plus a third bug mentioned only vaguely ("the X part has been acting up") | up to 3 decoys, 6 aliases, a code-comment injection, injection in the thread and the log, 15 traffic cases |
+| 1 | core | 1 | 66 / 80 / 106 | 1478 / 1619 / 2070 | 4. They cover the bug in about half the tasks | reporter only, with repro | none |
+| 2 | core + 1 | 1 | 105 / 135 / 179 | 2637 / 3342 / 3705 | 5, never covering the bug | repro, 1 noise comment | changelog, short service log |
+| 3 | core + 2 | 2 | 152 / 179 / 227 | 5584 / 6013 / 7992 | 6, covering at most one bug | bug 1 with repro, bug 2 prose-only, 2 noise comments | 1 decoy FIXME, CI log, service log (10 traffic cases) |
+| 4 | core + 3 | 2 | 201 / 271 / 339 | 7126 / 7655 / 10205 | 6, at most one bug | as d3, plus a **wrong guess** naming a function with no bug and a **red-herring complaint** with repro | up to 2 decoys, `__all__`, 3 deprecated aliases, injection in the thread and the log |
+| 5 | all 5 | 3 | 281 / 347 / 411 | 8438 / 9820 / 12184 | 7, at most one bug | as d4, plus a third bug mentioned only vaguely ("the X part has been acting up") | up to 3 decoys, 6 aliases, a code-comment injection, injection in the thread and the log, 15 traffic cases |
 
 `generate` and `oracle` typically stay under 300 ms at d5 on this machine; the test file
 asserts under 2 s. The oracle makes two Python processes, one parse and one sandboxed run.
@@ -210,12 +221,14 @@ RNG salt. No new npm dependencies.
 self-check), `domains/*.mjs` (six templates with sites, killers, random scenarios, notes),
 `render.mjs` (pytest/REPL rendering), `report.mjs` (issue thread, CI and service logs),
 `sandbox.mjs` + `harness.py` (Python runner), `measure.mjs` (size table), `codefix.test.mjs`
-and `codefix.controls-d{1..5}.test.mjs` with `controls-suite.mjs`, and `index.js` (shim so that
+and `codefix.controls-d{1..5}.test.mjs` with `controls-suite.mjs`, `codefix.audit.test.mjs` (audit
+regressions), `attacks/` (heuristic solver fixture and driver), `AUDIT.md`, and `index.js` (shim so that
 `node --test beds/codefix/` runs every test file).
 
 ## Tests
 
-`node --test beds/codefix/` takes about 80 s, running 18 tests:
+`node --test beds/codefix/` takes about 80 s, running 25 tests (`codefix.audit.test.mjs` holds the
+7 audit regressions F1-F6, see AUDIT.md), among them:
 - determinism, plus the split acting as salt;
 - argument validation and task shape;
 - **no truth leak**: the reference module never appears, and neither does any fixed hunk with
@@ -238,6 +251,15 @@ and `codefix.controls-d{1..5}.test.mjs` with `controls-suite.mjs`, and `index.js
   fails on 10 seeds (50 tasks per control overall).
 
 ## Known limits
+
+- **Dev/test overlap at low difficulty (AUDIT F2, open).** The split is only an RNG salt and the
+  instance space is small at d1-d3. In v1.0.0, test seeds 5000-5099 against dev seeds 1-200
+  shared an identical buggy module 16/3/1 times at d1/d2/d3 (0 at d4/d5). Deduplicate test
+  tasks against the dev seeds used (hash `build().reference`), or report d4/d5 only.
+- **Repro equals hidden killer (AUDIT F8, open).** For killers with fixed arguments, the
+  bug-report repro is the hidden killer case.
+- **Heuristic baseline.** `attacks/trivial.mjs` (an edit search over visible tests, repro lines
+  and docstring defaults) passes 2/30 d3 test seeds (5000-5029) in v1.1.0 and passed 3/30 in v1.0.0.
 
 - No model results yet, so difficulty calibration is unmeasured.
 - Mean partial `score` of the near-miss controls is high (0.73-0.96). Use `pass`.

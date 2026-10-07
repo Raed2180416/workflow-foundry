@@ -1,0 +1,322 @@
+{
+ "generator": "research/corpus-20261006/scripts/merge-items.mjs",
+ "generatedAt": "2026-10-07",
+ "inputs": [
+  {
+   "part": "parts/automation.jsonl",
+   "cluster": "automation",
+   "lines": 396,
+   "bytes": 3321251,
+   "sha256": "c599838fea1b921f62aa74b3d6169ed783c137414458b8f1fbfe2ec47eb86264"
+  },
+  {
+   "part": "parts/orchestration.jsonl",
+   "cluster": "orchestration",
+   "lines": 400,
+   "bytes": 3104069,
+   "sha256": "a781c67e2e3e3f7c88b634c3c286308b289a623d4e235859defa7b97e22d5b95"
+  },
+  {
+   "part": "parts/science.jsonl",
+   "cluster": "science",
+   "lines": 278,
+   "bytes": 12208842,
+   "sha256": "133439979cd47c0b76aa845269266e428cd55703afc8cf4c09d6f6d525408264"
+  },
+  {
+   "part": "parts/consumer-creative.jsonl",
+   "cluster": "consumer-creative",
+   "lines": 273,
+   "bytes": 7383293,
+   "sha256": "47c4ba85a99adcef02bab74d9b65eb29d4d1cf7bdd8cab06ef2476a3a51ca57a"
+  }
+ ],
+ "output": {
+  "path": "items.jsonl",
+  "items": 1342,
+  "bytes": 24770963,
+  "sha256": "c0f275cfaae7ef03a59a3852e59c370c4302237bd03cdb9cd50a15cf4aa96455",
+  "byCluster": {
+   "automation": 395,
+   "orchestration": 396,
+   "science": 278,
+   "consumer-creative": 273
+  }
+ },
+ "constructs": [
+  "schedule-trigger",
+  "webhook-trigger",
+  "event-trigger",
+  "poll-trigger",
+  "chat-session",
+  "signal-wait",
+  "durable-wait",
+  "run-concurrency-policy",
+  "stream",
+  "subworkflow-call",
+  "parametric-action-input",
+  "flow-size>500",
+  "error-branch",
+  "completion-hook",
+  "adaptive-retry",
+  "dynamic-dag",
+  "agent-tool-loop",
+  "cross-run-state",
+  "unstructured-cycle"
+ ],
+ "fixes": {
+  "url-percent-encoded": {
+   "count": 86,
+   "examples": [
+    "langflow:basic-prompting",
+    "langflow:blog-writer",
+    "langflow:content-aggregator",
+    "langflow:custom-component-generator",
+    "langflow:deep-research-agent",
+    "langflow:document-q-a",
+    "langflow:financial-report-parser",
+    "langflow:hybrid-search-rag"
+   ]
+  }
+ },
+ "drops": [],
+ "featureChanges": {
+  "async": {
+   "automation": 17,
+   "orchestration": 42
+  },
+  "maxFanOut": {
+   "consumer-creative": 27
+  }
+ },
+ "verdict": {
+  "changed": 637,
+  "byCluster": {
+   "automation": 179,
+   "orchestration": 260,
+   "science": 99,
+   "consumer-creative": 99
+  },
+  "tokenMap": {
+   "automation|schedule-trigger": [
+    "schedule-trigger"
+   ],
+   "automation|webhook-trigger": [
+    "webhook-trigger"
+   ],
+   "automation|event-trigger": [
+    "event-trigger"
+   ],
+   "automation|error-branch": [
+    "error-branch"
+   ],
+   "automation|retry-policy": [
+    "(native)"
+   ],
+   "automation|subworkflow-call": [
+    "subworkflow-call"
+   ],
+   "automation|agent-tool-loop": [
+    "agent-tool-loop"
+   ],
+   "automation|conversation-state": [
+    "cross-run-state"
+   ],
+   "automation|external-state-store": [
+    "cross-run-state"
+   ],
+   "automation|unstructured-cycle": [
+    "unstructured-cycle"
+   ],
+   "automation|chat-session": [
+    "chat-session"
+   ],
+   "automation|signal-resume": [
+    "signal-wait"
+   ],
+   "automation|stream": [
+    "stream"
+   ],
+   "automation|dynamic-fan-out": [
+    "(native)"
+   ],
+   "orchestration|triggers": [
+    "(native)",
+    "event-trigger",
+    "poll-trigger",
+    "schedule-trigger",
+    "webhook-trigger"
+   ],
+   "orchestration|setup-teardown(as all_resolved join; teardown scoping is an extension)": [
+    "completion-hook"
+   ],
+   "orchestration|signals": [
+    "event-trigger",
+    "signal-wait"
+   ],
+   "orchestration|subworkflow-call": [
+    "subworkflow-call"
+   ],
+   "orchestration|error-branches": [
+    "error-branch"
+   ],
+   "orchestration|subworkflow-call(inlined at compile time)": [
+    "(native)"
+   ],
+   "orchestration|finally(error-branches)": [
+    "completion-hook"
+   ],
+   "science|retry-policy": [
+    "adaptive-retry"
+   ],
+   "science|completion-hook": [
+    "completion-hook"
+   ],
+   "science|error-branch": [
+    "error-branch"
+   ],
+   "science|subworkflow-call": [
+    "subworkflow-call"
+   ],
+   "science|dynamic-dag": [
+    "dynamic-dag"
+   ],
+   "consumer-creative|split-over-500-nodes": [
+    "flow-size>500"
+   ],
+   "consumer-creative|subworkflow-call": [
+    "subworkflow-call"
+   ],
+   "consumer-creative|signal-wait": [
+    "signal-wait"
+   ],
+   "consumer-creative|event-trigger": [
+    "event-trigger"
+   ],
+   "consumer-creative|schedule-trigger": [
+    "schedule-trigger"
+   ],
+   "consumer-creative|durable-wait>1h": [
+    "durable-wait"
+   ],
+   "consumer-creative|run-mode-restart": [
+    "run-concurrency-policy"
+   ],
+   "consumer-creative|parametric-action-input": [
+    "parametric-action-input"
+   ],
+   "consumer-creative|run-mode-parallel": [
+    "run-concurrency-policy"
+   ],
+   "consumer-creative|run-mode-queued": [
+    "run-concurrency-policy"
+   ],
+   "consumer-creative|webhook-trigger": [
+    "webhook-trigger"
+   ],
+   "consumer-creative|poll-trigger": [
+    "poll-trigger"
+   ]
+  }
+ },
+ "dedupe": {
+  "dropped": [
+   {
+    "dropped": "dify:mkt-dcb096ae-5bb5-4409-946c-49277d53023f",
+    "kept": "dify:mkt-19c465b2-4aa9-439d-8b6d-023adcd65491",
+    "why": "same graph and description"
+   },
+   {
+    "dropped": "airflow:apache-airflow-providers-teradata/tests/system/teradata/example_remote_bteq#example_remote_bteq",
+    "kept": "airflow:apache-airflow-providers-teradata/tests/system/teradata/example_bteq#example_bteq",
+    "why": "same graph and description"
+   },
+   {
+    "dropped": "airflow:apache-airflow-providers-common-ai/src/airflow/providers/common/ai/example_dags/example_llm#example_llm_operator_usage_limits",
+    "kept": "airflow:apache-airflow-providers-common-ai/src/airflow/providers/common/ai/example_dags/example_llm#example_llm_operator_structured",
+    "why": "same graph and description"
+   },
+   {
+    "dropped": "gitlab-ci:gitlab-org/gitlab/lib/gitlab/ci/templates/Jobs/Deploy.latest.gitlab-ci.yml",
+    "kept": "gitlab-ci:gitlab-org/gitlab/lib/gitlab/ci/templates/Jobs/Deploy.gitlab-ci.yml",
+    "why": "same graph and title"
+   },
+   {
+    "dropped": "gitlab-ci:gitlab-org/gitlab/lib/gitlab/ci/templates/Security/SAST.gitlab-ci.yml",
+    "kept": "gitlab-ci:gitlab-org/gitlab/lib/gitlab/ci/templates/Jobs/SAST.gitlab-ci.yml",
+    "why": "same graph and title"
+   }
+  ],
+  "shapeTwinsKept": [
+   [
+    "langflow:simple-agent",
+    "langflow:social-media-agent"
+   ],
+   [
+    "flowise:agentflows-prompt-engineering-team",
+    "flowise:agentflows-software-team"
+   ],
+   [
+    "argo:conditional-artifacts",
+    "argo:conditional-parameters"
+   ],
+   [
+    "argo:dag-conditional-artifacts",
+    "argo:dag-conditional-parameters"
+   ],
+   [
+    "kubeflow:valid/artifacts_complex",
+    "kubeflow:valid/if_elif_else_with_oneof_parameters"
+   ],
+   [
+    "kubeflow:valid/pythonic_artifacts_with_list_of_artifacts",
+    "kubeflow:valid/take_nap_compiled"
+   ],
+   [
+    "prefect:prefect/examples/ai_data_analyst_with_pydantic_ai.py",
+    "prefect:prefect/docs/v3/advanced/database-maintenance.mdx"
+   ],
+   [
+    "temporal:samples-python/strands_plugin/activity_interrupt",
+    "temporal:samples-python/strands_plugin/human_in_the_loop"
+   ],
+   [
+    "temporal:samples-python/hello/hello_query",
+    "temporal:samples-python/hello/hello_search_attributes"
+   ],
+   [
+    "temporal:samples-go/external-env-conf",
+    "temporal:samples-python/hello/hello_activity_method",
+    "temporal:samples-python/hello/hello_local_activity"
+   ]
+  ]
+ },
+ "cycleArtifacts": [
+  "gitlab-ci:gitlab.com/postgres-ai/database-lab",
+  "snakemake:workflowhub/1759",
+  "snakemake:friendsofstrandseq/mosaicatcher-pipeline@v2.5.1",
+  "snakemake:workflowhub/1815",
+  "snakemake:IKIM-Essen/uncovar@v1.1.1",
+  "snakemake:SarahSaadain/pastForward@v2.1.0",
+  "snakemake:zjnolen/PopGLen@v0.4.4",
+  "snakemake:niekwit/damid-seq@v0.7.0",
+  "snakemake:fischuu/Snakebite-Holoruminant-MetaG@0.4.62",
+  "snakemake:workflowhub/1900",
+  "snakemake:nismod/open-gira@v0.4.2",
+  "snakemake:ylab-hi/ScanNeo2@v0.7.0",
+  "snakemake:workflowhub/414",
+  "snakemake:snakemake-workflows/dna-seq-varlociraptor@v6.10.1",
+  "snakemake:magwenelab/WeavePop@v1.0.0",
+  "snakemake:usnistgov/defrabb",
+  "snakemake:niekwit/cut_and_run@v0.5.0",
+  "snakemake:sneuensc/mapache@v0.3.0",
+  "snakemake:cbg-ethz/V-pipe@v3.0.0.pre1",
+  "snakemake:khanlab/SPIMprep@v0.1.0-alpha",
+  "snakemake:workflowhub/2081",
+  "snakemake:daspacio9/pooledpremiumpcrpipeline2@v4.0.2",
+  "snakemake:snakemake-workflows/dna-seq-gatk-variant-calling@v2.1.1",
+  "comfyui:jakechai-ComfyUI-JakeUpgrade-Workflow-ComfyUI-Main-imgen-JK_workflow_imgen_SD3.json",
+  "comfyui:jakechai-ComfyUI-JakeUpgrade-Workflow-ComfyUI-Main-img2mesh-JK_workflow_img2mesh_Hunyuan3DWrapper.json",
+  "comfyui:TTPlanetPig-Comfyui_TTP_Toolset-examples-LTX_2_First_Last_Middle_Frame_control_v1_sub.json"
+ ]
+}

@@ -31,6 +31,12 @@ const BANNED_NAMES = new Set(['eval', 'exec', 'compile', 'open', '__import__', '
 const BANNED_ATTRS = new Set(['_getframe', 'f_back', 'f_globals', 'f_locals', 'f_code', 'gi_frame', 'cr_frame',
   'tb_frame', 'environ', 'getenv', 'modules', 'argv', 'stack', 'currentframe', 'settrace', 'setprofile']);
 const DUNDER_OK = new Set(['__init__', '__name__', '__doc__', '__post_init__', '__qualname__']);
+// AUDIT F3: attribute access reaches the same capabilities as the banned names
+// (e.g. `dataclasses.builtins.eval`, `dataclasses.sys`), so these attribute names are banned
+// too unless the reference itself uses them. `compile` is left out on purpose (`re.compile`).
+const BANNED_ATTR_NAMES = new Set(['builtins', 'open', 'eval', 'exec', 'system', 'popen', 'import_module', 'getattr',
+  'setattr', 'delattr', 'globals', 'locals', 'vars', 'sys', 'os', 'subprocess', 'socket', 'io', 'posix', 'nt',
+  'ctypes', 'gc', 'inspect', 'importlib', 'traceback', 'signal', 'threading', 'shutil', 'pathlib']);
 
 const taskKey = task => ({ seed: task.seed, split: task.split, difficulty: task.difficulty });
 
@@ -86,10 +92,18 @@ export function generate({ seed, split, difficulty }) {
   };
 }
 
-function schemaValid(output) {
-  return output !== null && typeof output === 'object' && !Array.isArray(output)
-    && typeof output.patched_source === 'string'
-    && Object.keys(output).every(k => k === 'patched_source');
+// AUDIT F4: read the answer once, as an own data property of a plain JSON value. An inherited
+// `patched_source` (prototype), a getter, or a non-JSON object is schema-invalid.
+function readOutput(output) {
+  if (output === null || typeof output !== 'object' || Array.isArray(output)) return null;
+  let plain;
+  try { plain = JSON.parse(JSON.stringify(output)); } catch { return null; }
+  if (plain === null || typeof plain !== 'object' || Array.isArray(plain)) return null;
+  const keys = Object.keys(plain);
+  if (keys.length !== 1 || keys[0] !== 'patched_source' || !Object.hasOwn(output, 'patched_source')) return null;
+  const desc = Object.getOwnPropertyDescriptor(output, 'patched_source');
+  if (!desc || !('value' in desc) || typeof desc.value !== 'string' || desc.value !== plain.patched_source) return null;
+  return plain.patched_source;
 }
 
 const inspectCache = new Map();
@@ -131,7 +145,7 @@ export function guard(reference, cand) {
   const refAttrs = new Set(reference.attrs);
   for (const a of cand.attrs) {
     if (refAttrs.has(a)) continue;
-    if (BANNED_ATTRS.has(a)) v.push(`disallowed attribute .${a}`);
+    if (BANNED_ATTRS.has(a) || BANNED_ATTR_NAMES.has(a)) v.push(`disallowed attribute .${a}`);
     else if (a.startsWith('__') && a.endsWith('__') && !DUNDER_OK.has(a)) v.push(`disallowed dunder attribute .${a}`);
   }
   if (cand.suspiciousStrings?.length) v.push(`test-framework string literal: ${JSON.stringify(cand.suspiciousStrings[0])}`);
@@ -143,9 +157,9 @@ function fail(reason, details = {}) {
 }
 
 export function oracle(task, output) {
-  if (!schemaValid(output)) return fail('schema-invalid output: expected {patched_source: string}');
+  const src = readOutput(output);
+  if (src === null) return fail('schema-invalid output: expected {patched_source: string}');
   const b = build(taskKey(task));
-  const src = output.patched_source;
   const base = b.buggySource.length;
   if (src.trim().length === 0) return fail('empty patched_source');
   if (src.length > 2 * base || src.length < base / 2) {
@@ -156,20 +170,29 @@ export function oracle(task, output) {
   const refInfo = referenceInspect(b.reference);
   const parsed = runTrusted({ inspect: [src] });
   if (!parsed.ok) return fail('could not inspect patched_source (fail closed)', { error: parsed.error });
-  const violations = guard(refInfo, parsed.value.inspect[0]);
+  const violations = guard(refInfo, parsed.value?.inspect?.[0] ?? { syntaxError: 'no inspection result' });
   if (violations.length) {
     return { pass: false, score: 0, details: { reason: 'diff guard violated', guard: { ok: false, violations }, loadError: null, hidden: null } };
   }
   // 2) Hidden tests: the candidate runs only inside the namespace sandbox.
   const run = runSandboxed({ jobs: [{ source: src, cases: b.hidden, module: b.p.mod }], case_seconds: 0.5 });
   if (!run.ok) return fail('sandbox run failed (fail closed)', { error: run.error });
-  const job = run.value.jobs[0];
+  return scoreHidden(b, run.value?.jobs?.[0]);
+}
+
+// AUDIT F5: a malformed harness response (missing job, missing or short results) fails closed
+// instead of throwing inside sameResults().
+export function scoreHidden(b, job) {
+  if (!job || typeof job !== 'object') return fail('sandbox returned no job result (fail closed)');
+  if (!job.loadError && (!Array.isArray(job.results) || job.results.length !== b.hidden.length)) {
+    return fail('sandbox returned malformed results (fail closed)');
+  }
   const total = b.hidden.length;
   let passed = 0;
   const failed = [];
   if (!job.loadError) {
     b.hidden.forEach((c, i) => {
-      if (sameResults(job.results[i], b.refHidden[i])) passed++;
+      if (Array.isArray(job.results[i]) && sameResults(job.results[i], b.refHidden[i])) passed++;
       else failed.push(c.title);
     });
   }
