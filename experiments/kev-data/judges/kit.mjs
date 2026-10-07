@@ -3,11 +3,11 @@
 // factory (experiments/kev-data) and the runtime import the same kit, so the state a model is
 // trained on and the state it is served are built by one function, and the question is rendered by
 // one call to toSystemOneQuestion (src/judgment.mjs). This file is the interface and the shared
-// checks only; the per-bed kits (src/judges/<bed>.mjs) are written by the bed groups.
+// checks only; the per-bed kits (experiments/kev-data/judges/<bed>.mjs until C0 and P1 finish; then src/judges/) are written by the bed groups.
 //
 // Contract shape: see experiments/kev-data/spec/ports.json and experiments/kev-data/README.md.
-import { toSystemOneQuestion } from '../judgment.mjs';
-import { checkData, FoundryError } from '../data.mjs';
+import { toSystemOneQuestion } from '../../../src/judgment.mjs';
+import { checkData, FoundryError } from '../../../src/data.mjs';
 
 export const KIT_INTERFACE_VERSION = 1;
 

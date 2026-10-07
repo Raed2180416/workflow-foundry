@@ -22,7 +22,7 @@
 | `b0call-sonnet-med` | same, thinking budget 8K | Sonnet 5.5 | $1 |
 | `b0ncall-haiku-med` | B0+N: as `b0call-haiku-med` plus append-only notes rewritten after each task given only the outcome bit; 3 seeded stream orders | Haiku 5.5 | $1 + notes call |
 | `b0agent-haiku` | B0 executor: Claude Code headless with Bash/Read/Write/Edit/Glob/Grep in a sandbox with the repo hidden | Haiku 5.5 | $1, 20 min |
-| `fhand-haiku` | F: `experiments/workflows/records-v3.mjs`. Code nodes parse the five structured systems, the spec tables, identity rules, merge, FX; typed agent nodes read each per-task convention (date order per system, status meanings, mirror, perspective), VENDEX free text (two independent reads) and non-exact countries; every model node has checks; E1/E2 escalation up to L | Haiku 5.5 (+ Sonnet 5.5 on escalation) | run maxCost $2, 20 min |
+| `fhand-haiku` | F: `experiments/workflows/records-v3.mjs`. Code nodes parse the five structured systems, the spec tables, identity rules, merge, FX; typed agent nodes read each per-task convention (date order per system, status meanings, mirror, perspective), VENDEX free text (two independent reads; a code node lists rows where the reads disagree on country and a third typed read adjudicates them with a verbatim quote) and non-exact countries; every model node has checks; E1/E2 escalation up to L | Haiku 5.5 (+ Sonnet 5.5 on escalation) | run maxCost $2, 20 min |
 | `fhand-sonnet` | same workflow, every model node on Sonnet 5.5 | Sonnet 5.5 | $2, 20 min |
 
 Held constant: the bed, oracle, tasks, the policy subset `[claude-haiku-5-5, claude-haiku-4-5-20251001, claude-sonnet-5-5]` of `policy/models.json` (hash printed by `--dry`), the CLI version (recorded per call in the journal). Arms run interleaved (rotated order per task), concurrency 4. Local generative models were parked before freezing (owner decision 2026-10-07; negative result in `docs/RESEARCH.md`), so class S is not run.
@@ -55,3 +55,27 @@ Estimate from the dev pilots (`/var/tmp/foundry-work/records-v3/dev-log.jsonl`):
 
 ## Amendments
 (dated entries only)
+
+- **2026-10-07 ~23:00 UTC, before freezing (no test task run yet).**
+  1. *Review fixes to the hand workflow* (independent review on unused dev seeds; findings F1–F8 plus F9):
+     - F1: `merge` joins `all_resolved`, so a handled judgment failure still yields an answer.
+     - F2: a code-detected VENDEX country dispute is adjudicated by a typed read.
+     - F3: every prompt example is synthetic; no dev-seed literals.
+     - F5: the mirror window is 365 days.
+     - F6: stricter country checks and unmapped-string diagnostics.
+     - F8: single marker and ISO tables.
+     - F9: `toE164` no longer reads a leading local `011` as the US access code.
+     - A date-prompt wording that made Haiku and Sonnet confuse a team move with a dated order change (2 of 12 seeds) was corrected.
+
+     Unit tests: `experiments/workflows/records-v3.test.mjs` 35/35; `node --test beds/records/` green.
+  2. *Haiku 5.5 dev check* (the workflow was developed on Haiku 4.5; dev seeds only, final code):
+     - Seeds 151–155: d3 and d4, 10/10 (before the fixes).
+     - Seeds 156–160 (label `h55fix3-*`): d3 5/5 and d4 5/5, all scoring 1.000, $0.011–0.020 per task, 1 escalation to L.
+     - Seeds 101–120: d3 20/20 and d4 20/20, all scoring 1.000.
+
+     Dev seeds were reused while fixing: development evidence only. The pre-registered cost estimate (§7) stands; with Haiku 5.5, fhand-haiku is expected to cost about $0.015 per task.
+  3. *Thinking control on Haiku 5.5* (probe, Claude Code CLI 2.1.293, one structured call each):
+     - `reasoning: none` maps to `--effort low` with `MAX_THINKING_TOKENS=0`: no thinking block, 53 output tokens.
+     - `--effort medium` with `MAX_THINKING_TOKENS=0` still produced a thinking block, so effort, not the token budget, switches Haiku 5.5's adaptive thinking on.
+     - The pre-registered arms map `none` to effort low and `medium` to effort medium with an 8K budget, so `b0call-haiku-none` is thinking-off and `b0call-haiku-med` is thinking-on, as labelled.
+  4. *Policy/runtime hygiene:* a judge-kit file written into `src/judges/` by another agent was moved to `experiments/kev-data/judges/` before freezing, so `src/` is exactly the runtime the dev checks ran.

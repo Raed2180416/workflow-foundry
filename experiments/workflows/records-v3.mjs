@@ -95,6 +95,12 @@
 // Final code, live: Haiku (M, escalation to L) label a8: d3 10/10, d4 10/10 on seeds 101-110, all score 1.000,
 // $0.091-0.153 per task (mean $0.111 d3, $0.123 d4), 12 escalations to L (perspective 6, countries 5, atlas_switch 1);
 // Sonnet (L) label s8: d3 5/5, d4 5/5 on seeds 106-110, $0.17-0.28 per task (s6, earlier prompts: 101-105, 10/10).
+// Review fixes 2026-10-07 (F1-F8; also the toE164 "011" fix), dev only, Haiku 5.5 (class M, escalation to L): seeds 156-160
+// d3 5/5 and d4 5/5 (label h55fix3-*), all score 1.000, $0.011-0.020 per task; seeds 101-120 d3 20/20 and d4 20/20
+// (h55fix3-w*), all 1.000; 0 country adjudications in those 50 runs and 1 in 62 live runs of the final code (s106 d4: A none,
+// B CA, place "Regina" -> CA, verbatim quote). An intermediate wording of the date prompt ("the original order, not the
+// one that applies afterwards") made Haiku AND Sonnet read a team's move (VENDEX "moved from A to B") as the dated change:
+// 2 of 12 seeds failed (h55fix2-x4 s108, s109); the current wording separates the two and both pass.
 // Recommended for P1: fhand-haiku {extractModelClass:'M', conventionsModelClass:'M', maxClass:'L', concurrency:4,
 // maxCost:2, reasoning:'none'}; fhand-sonnet the same with both classes 'L'.
 //

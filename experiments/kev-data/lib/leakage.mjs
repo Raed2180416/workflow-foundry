@@ -5,7 +5,7 @@
 //     port's states, sentence by sentence (a hit is re-rendered by lib/counterfactual.mjs or the
 //     record is dropped and counted; the build fails on any hit that reaches a file)
 //   wording exclusion: no held-out wording, exact or whitespace-normalised, outside its own slice
-import { FORBIDDEN_STATE_KEYS, findForbiddenKeys } from '../../../src/judges/kit.mjs';
+import { FORBIDDEN_STATE_KEYS, findForbiddenKeys } from '../judges/kit.mjs';
 import { sentences, skeleton, skeletonText } from './hash.mjs';
 import { normalizeWs, questionOf, wordingPattern } from './render.mjs';
 

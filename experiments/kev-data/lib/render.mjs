@@ -1,9 +1,9 @@
 // Question rendering for the Kev data factory (JUDGE-PROGRAM.md §1.0 wire form). Training records
 // are built by importing the serving function itself, so serving and training match byte for byte:
 // toSystemOneQuestion from src/judgment.mjs, reached through the port-kit interface
-// (src/judges/kit.mjs questionFromContract), which the runtime uses too.
+// (experiments/kev-data/judges/kit.mjs questionFromContract), which the runtime uses too.
 import { toSystemOneQuestion } from '../../../src/judgment.mjs';
-import { questionFromContract, fillWording, slotNames, contractOptions, LIMITS } from '../../../src/judges/kit.mjs';
+import { questionFromContract, fillWording, slotNames, contractOptions, LIMITS } from '../judges/kit.mjs';
 
 export { toSystemOneQuestion, fillWording, slotNames, contractOptions, LIMITS };
 export const renderQuestion = questionFromContract;
