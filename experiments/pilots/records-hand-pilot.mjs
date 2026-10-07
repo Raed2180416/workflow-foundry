@@ -14,6 +14,6 @@ const workflow = buildRecordsWorkflow({ chunkSize: Number(chunk), modelClass: 'S
 const tasks = await makeTasks('records', { split: 'dev', seeds: seeds.split(',').map(Number), difficulty: Number(d) });
 const short = m => m.replace(/^claude-/, '').split('-')[0].replace(/-q4km$/, '');
 const arms = models.split(',').map(m => foundryWorkflow({ id: `fhand3-${short(m)}-r${reasoning}-c${chunk}`, workflow, modelPort: port, assignment: { read: m }, maxCostUsd: 2 }));
-const recs = await runExperiment({ experiment: `records-hand-d${d}`, arms, tasks, trials: Number(trials), workRoot: path.join(out, 'work'), resultsFile: path.join(out, 'results.jsonl'), concurrency: 2, keepWorkdirs: true });
+const recs = await runExperiment({ experiment: `records-hand-d${d}`, arms, tasks, trials: Number(trials), workRoot: '/var/tmp/foundry-work/records-hand-pilot', resultsFile: path.join(out, 'results.jsonl'), concurrency: 2, keepWorkdirs: true });
 for (const r of recs) console.log(r.arm, r.taskKey, r.trial, r.pass, r.score, r.costUsd.toFixed(4), JSON.stringify(r.meta), r.error?.code ?? '', (r.oracleDetails ?? '').slice(0, 300));
 process.exit(0);

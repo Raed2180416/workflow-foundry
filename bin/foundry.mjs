@@ -47,7 +47,13 @@ async function modelHost(args, command) {
   const mode = args['model-mode'] ?? 'live';
   if (!MODES.includes(mode)) throw new FoundryError('RUN_OPTIONS', `--model-mode must be one of ${MODES.join('|')}`);
   const providers = {};
-  if (!(command === 'run' && mode === 'replay')) {
+  if (!(command === 'run' && mode === 'replay') && process.env.FOUNDRY_MODEL_GATEWAY_URL) {
+    // Inside a sandbox (executor or construction session) every model call goes to the host gateway,
+    // which enforces the owner policy, the spend cap and its own journal; no provider runs locally.
+    const { GatewayProvider } = await import('../src/models/providers/gateway.mjs');
+    const gateway = new GatewayProvider();
+    for (const name of Object.keys(modelPolicy.policy.providers)) providers[name] = gateway;
+  } else if (!(command === 'run' && mode === 'replay')) {
     const [{ ClaudeCliProvider }, { LlamaServerProvider }] = await Promise.all([import('../src/models/providers/claude-cli.mjs'), import('../src/models/providers/llama-server.mjs')]);
     for (const [name, config] of Object.entries(modelPolicy.policy.providers)) {
       if (config.kind === 'claude-cli') providers[name] = new ClaudeCliProvider({ policy: modelPolicy.policy, providerName: name });

@@ -14,7 +14,7 @@ const { port } = createModelPort({ journalFile: path.join(out, `${family}.journa
 const tasks = [];
 for (const d of diffs.split(',').map(Number)) tasks.push(...await makeTasks(family, { split: 'dev', seeds: seeds.split(',').map(Number), difficulty: d }));
 const arms = models.split(',').map(m => b0Call({ id: `b0call-${m.replace(/^claude-/, '').split('-')[0]}`, model: m, modelPort: port }));
-const recs = await runExperiment({ experiment: `calibrate-${family}`, arms, tasks, trials: Number(trials), workRoot: path.join(out, 'work'), resultsFile: path.join(out, `${family}.jsonl`), concurrency: 4 });
+const recs = await runExperiment({ experiment: `calibrate-${family}`, arms, tasks, trials: Number(trials), workRoot: '/var/tmp/foundry-work/calibration', resultsFile: path.join(out, `${family}.jsonl`), concurrency: 4 });
 for (const [arm, m] of byArmTask(recs)) {
   for (const d of diffs.split(',')) {
     const sub = new Map([...m].filter(([k]) => k.includes(`:d${d}:`)));

@@ -39,5 +39,5 @@ if (dry) {
   process.exit(0);
 }
 await runExperiment({ experiment: `p1-records-${lane}`, arms, tasks: lane === 'local' ? localTasks : tasks, trials: lane === 'local' ? 1 : 3,
-  workRoot: path.join(out, 'work'), resultsFile: path.join(out, `results-${lane}.jsonl`), concurrency: lane === 'local' ? 1 : 3 });
+  workRoot: process.env.FOUNDRY_WORK_ROOT ?? '/var/tmp/foundry-work/p1', resultsFile: path.join(out, `results-${lane}.jsonl`), concurrency: lane === 'local' ? 1 : 3 });
 process.exit(0);

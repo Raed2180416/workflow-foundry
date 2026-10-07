@@ -20,6 +20,8 @@ async function pool(items, limit, fn) {
 }
 
 export async function runExperiment({ experiment, arms, tasks, trials = 3, workRoot, resultsFile, concurrency = 4, keepWorkdirs = false, log = console.log }) {
+  // Sandboxed arms hide the repository, so a workdir inside it would be invisible to the executor.
+  if (path.resolve(workRoot).startsWith(path.resolve(new URL('../..', import.meta.url).pathname) + path.sep)) throw new Error(`workRoot must be outside the repository: ${workRoot}`);
   const results = new Results(resultsFile);
   const one = async (arm, t, trial, state) => {
     if (results.has(arm.id, t.taskKey, trial)) {
