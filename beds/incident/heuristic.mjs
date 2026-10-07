@@ -39,8 +39,7 @@ export function heuristicSolve(task, { useNote = false } = {}) {
   const late = mine.filter(l => l.t > lastRec && l.t >= tF - 420000 && (l.lvl !== 'I' || /refill|warm-up|rollout|release|picked up/.test(l.body)));
   const cls = Object.entries(V).map(([k, re]) => [k, late.filter(l => re.test(l.body)).length]).sort((a, b) => b[1] - a[1])[0][0];
   const os = mine.filter(l => l.t > lastRec && l.t <= tF + 60000 && ONSET.test(l.body)), onset = (/cache|config/.test(cls) ? os.at(-1) : os[0]) || late.find(l => V[cls].test(l.body)) || late[0] || L[0];
-  const imp = new Set([root]);
-  for (let grew = true; grew;) { grew = false; for (const [a, cs] of calls) if (!batch.has(a) && !imp.has(a) && [...cs].some(b => imp.has(b) && !soft.has(`${a}>${b}`))) { imp.add(a); grew = true; } }
+  const imp = new Set([root]); for (let grew = true; grew;) { grew = false; for (const [a, cs] of calls) if (!batch.has(a) && !imp.has(a) && [...cs].some(b => imp.has(b) && !soft.has(`${a}>${b}`))) { imp.add(a); grew = true; } }
   return { root_service: root, fault_class: cls, first_bad_timestamp: new Date(onset.t).toISOString(), impacted_services: [...imp], evidence_line_ids: [onset.id] };
 }
 export const noteSolve = task => heuristicSolve(task, { useNote: true });

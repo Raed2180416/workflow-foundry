@@ -17,12 +17,10 @@ const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), word = n => new RegEx
 export function adaptedHeuristicSolve(task) {
   const { system, log } = task.inputs, alias = new Map(), calls = new Map(), batch = new Set(), soft = new Set();
   for (const [, n, tier, c, o] of system.matchAll(/^\| ([a-z0-9-]+) \| [^|]+ \| (\w+) \| ([^|]+) \| ([^|]+) \|$/gm)) {
-    if (n === 'Service') continue; alias.set(n, n); if (tier === 'batch') batch.add(n);
-    calls.set(n, new Set(c.trim() === '-' ? [] : c.split(',').map(x => x.trim().replace(' (optional)', '')))); for (const x of c.split(',')) if (x.includes('(optional)')) soft.add(`${n}>${x.trim().replace(' (optional)', '')}`);
+    if (n === 'Service') continue; alias.set(n, n); if (tier === 'batch') batch.add(n); calls.set(n, new Set(c.trim() === '-' ? [] : c.split(',').map(x => x.trim().replace(' (optional)', '')))); for (const x of c.split(',')) if (x.includes('(optional)')) soft.add(`${n}>${x.trim().replace(' (optional)', '')}`);
     for (const x of o.split(',').map(y => y.trim().replace(/'/g, ''))) if (x !== '-') alias.set(x, n);
   }
-  for (const m of system.matchAll(/^- (\S+): (\d+\.\d+\.\d+\.\d+:\d+)$/gm)) alias.set(m[2], m[1]);
-  const svcs = [...calls.keys()], inS = s => svcs.filter(n => word(n).test(s)).sort((a, b) => s.search(word(a)) - s.search(word(b)));
+  for (const m of system.matchAll(/^- (\S+): (\d+\.\d+\.\d+\.\d+:\d+)$/gm)) alias.set(m[2], m[1]); const svcs = [...calls.keys()], inS = s => svcs.filter(n => word(n).test(s)).sort((a, b) => s.search(word(a)) - s.search(word(b)));
   for (const sent of system.split('\n').filter(l => l.startsWith('- ')).map(l => l.slice(2))) {
     const ns = inS(sent), q = /'([a-z0-9-]+)'/.exec(sent), h = HARDP.exec(sent)?.slice(1).find(Boolean);
     if (ns.length === 1 && q && /name|called/.test(sent)) alias.set(q[1], ns[0]);
@@ -40,10 +38,8 @@ export function adaptedHeuristicSolve(task) {
   let root = svcs.filter(k => ownOnset(k).length).sort((a, b) => blamed(b) - blamed(a))[0] ?? svcs[1];
   for (let k; (k = [...(calls.get(root) || [])].find(c => blamed(c, root) >= 2 && ownOnset(c).length && blamed(c) > blamed(c, root)));) root = k;
   const mine = ownOnset(root), cls = Object.entries(OS).map(([c, re]) => [c, mine.filter(l => re.test(l.body)).length]).sort((a, b) => b[1] - a[1])[0][0];
-  const ep = mine.filter(l => OS[cls].test(l.body)); let i = ep.length - 1;
-  while (i > 0 && ep[i].t - ep[i - 1].t <= 150000 && !L.some(l => l.svc === root && l.t > ep[i - 1].t && l.t < ep[i].t && /pending=0|\(ok\)|% \(pause|quota usage|lookups\/min|again|drained|corrected|restored|kept after/i.test(l.body))) i--;
+  const ep = mine.filter(l => OS[cls].test(l.body)); let i = ep.length - 1; while (i > 0 && ep[i].t - ep[i - 1].t <= 150000 && !L.some(l => l.svc === root && l.t > ep[i - 1].t && l.t < ep[i].t && /pending=0|\(ok\)|% \(pause|quota usage|lookups\/min|again|drained|corrected|restored|kept after/i.test(l.body))) i--;
   const T = /cache|config/.test(cls) ? ep.filter(l => l.t <= (fails.find(f => f.callee === root)?.t ?? Infinity)).at(-1) ?? ep[0] : ep[i];
-  const imp = new Set([root]);
-  for (let grew = true; grew;) { grew = false; for (const [a, cs] of calls) if (!batch.has(a) && !imp.has(a) && [...cs].some(b => imp.has(b) && !soft.has(`${a}>${b}`))) { imp.add(a); grew = true; } }
+  const imp = new Set([root]); for (let grew = true; grew;) { grew = false; for (const [a, cs] of calls) if (!batch.has(a) && !imp.has(a) && [...cs].some(b => imp.has(b) && !soft.has(`${a}>${b}`))) { imp.add(a); grew = true; } }
   return { root_service: root, fault_class: cls, first_bad_timestamp: new Date((T ?? L[0]).t).toISOString(), impacted_services: [...imp], evidence_line_ids: T ? [T.id] : [] };
 }

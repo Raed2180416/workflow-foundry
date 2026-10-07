@@ -5,7 +5,7 @@ import { rng } from '../lib/rng.mjs';
 import { estimateTokens } from '../lib/canonical.mjs';
 import * as C from './catalog.mjs';
 
-export const VERSION = '2.0.0';
+export const VERSION = '3.0.0';
 export const WINDOW = 1800; // seconds of logs per task
 const MAX_ATTEMPTS = 64; // from this attempt on the soft preferences (Jaccard, fallback callers) are dropped;
 // structural validity (topology size, eligible root candidates) is never relaxed
@@ -13,8 +13,8 @@ const MAX_ATTEMPTS = 64; // from this attempt on the soft preferences (Jaccard, 
 // Difficulty knobs. lines is the target bundle size (actual size is within about +/-15%).
 // v1 knobs are unchanged; the v2 block (after `paraphrase`) was added by the audit (AUDIT.md).
 const BASE = { anchors: 1, minRootCands: 1, wrap: 0, chronic: 0, pods: false, soft: 0, deploy: 0, blipRoot: false, blipSame: false, benignHard: false, added: 0, stale: 0, proseAliases: 0, mislead: 0, notice: false, inject: false, legacySource: false, noisyNote: false, hypothesis: false, addresses: false };
-const HARD = { statsOnset: 0.5, statsAfter: true, provider: 0.4, canary: 0.6, podEcho: true, revised: 2, stale: 1, onsetRepeat: 0.25, quiet: [0.3, 1], blipOnset: 0.85, recoverAlt: 0.7, decoyBelowRoot: 0.5, paraphrase: true, lookalikes: true, configLag: [30, 150], anon: 0.6, mixedNotes: 0.5, silentSoft: 0.5, softErr: 0.6, warnSev: 0.3, mention: 0.03, mentionErr: 0.4, decoy: 1, secondary: [0.35, 0.65], lead: [90, 300], cacheLag: [70, 200], blipNear: true, nearPrecursor: 0.8, ticketSubset: true, hardNotes: 2, renewHerring: true, baselines: 2, wantSoft: 0.5, bigSkew: 0.6 };
-const EASY = { statsOnset: 0, statsAfter: false, provider: 0, canary: 0, podEcho: false, revised: 0, stale: 0, onsetRepeat: 0, quiet: [1, 1], blipOnset: 0, recoverAlt: 0, decoyBelowRoot: 1, paraphrase: false, lookalikes: false, configLag: null, anon: 0, mixedNotes: 0, silentSoft: 0, softErr: 0, warnSev: 0, mention: 0.01, mentionErr: 0, decoy: 0, secondary: [0, 0], lead: [15, 40], cacheLag: [3, 25], blipNear: false, nearPrecursor: 0, ticketSubset: false, hardNotes: 0, renewHerring: false, baselines: 0, wantSoft: 0, bigSkew: 0 };
+const HARD = { siblingOnset: 0.2, anonMax: 2, decoyBlip: 0.5, partialRec: true, statsOnset: 0.7, statsAfter: true, provider: 0.4, canary: 0.6, podEcho: true, revised: 2, stale: 1, onsetRepeat: 0.25, quiet: [0.3, 1], blipOnset: 0.85, recoverAlt: 0.7, decoyBelowRoot: 0.3, paraphrase: true, lookalikes: true, configLag: [30, 150], anon: 0.6, mixedNotes: 0.5, silentSoft: 0.5, softErr: 0.6, warnSev: 0.3, mention: 0.03, mentionErr: 0.4, decoy: 1, secondary: [0.35, 0.65], lead: [90, 300], cacheLag: [70, 200], blipNear: true, nearPrecursor: 0.8, ticketSubset: true, hardNotes: 2, renewHerring: true, baselines: 2, wantSoft: 0.5, bigSkew: 0.6 };
+const EASY = { siblingOnset: 0, anonMax: 1, decoyBlip: 0, partialRec: false, statsOnset: 0, statsAfter: false, provider: 0, canary: 0, podEcho: false, revised: 0, stale: 0, onsetRepeat: 0, quiet: [1, 1], blipOnset: 0, recoverAlt: 0, decoyBelowRoot: 1, paraphrase: false, lookalikes: false, configLag: null, anon: 0, mixedNotes: 0, silentSoft: 0, softErr: 0, warnSev: 0, mention: 0.01, mentionErr: 0, decoy: 0, secondary: [0, 0], lead: [15, 40], cacheLag: [3, 25], blipNear: false, nearPrecursor: 0, ticketSubset: false, hardNotes: 0, renewHerring: false, baselines: 0, wantSoft: 0, bigSkew: 0 };
 export const KNOBS = {
   1: { ...BASE, ...EASY, anchors: 1, services: 6, batch: 1, lines: 300, bg: 0.78, styles: ['plain'], refs: ['name'], blipOther: 1, noisyNote: true },
   2: { ...BASE, ...EASY, anchors: 2, services: 8, batch: 1, lines: 400, bg: 0.78, wrap: 0.15, styles: ['plain', 'bracket', 'kv'], refs: ['name', 'name', 'host'], soft: 0.4, deploy: 1, blipSame: true, blipOther: 1, noisyNote: true, mention: 0.015, secondary: [0.1, 0.2] },
@@ -332,7 +332,8 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   }
   // From d3 one impacted intermediate service may log its failures without naming the callee.
   const anonCands = [...impacted.keys()].filter(k => k !== root.key && k !== 'gateway' && S[k].kind === 'svc');
-  const anon = K.anon && anonCands.length && r.chance(K.anon) ? S[r.pick(anonCands)] : null;
+  // v3 (audit): up to K.anonMax such services (v2: at most one).
+  const anons = new Set(K.anon && anonCands.length && r.chance(K.anon) ? r.sample(anonCands, Math.min(anonCands.length, r.int(1, K.anonMax))).map(k => S[k]) : []);
   const failProb = new Map();
   for (const k of impacted.keys()) {
     if (k === root.key) continue;
@@ -424,7 +425,9 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   const pickSubset = (list, lo, hi) => r.sample(list, clamp(r.int(lo, hi), 1, list.length));
   const altOnset = (C.ONSET_ALT[cls] || []).filter((_, i) => cls !== 'clock_skew' || i > 0 || bigSkew);
   const canary = cls === 'bad_config_deploy' && Boolean(K.canary) && r.chance(K.canary);
-  const statsOnset = (gradual || cls === 'memory_leak_oom') && Boolean(K.statsOnset) && r.chance(K.statsOnset);
+  const promoteAt = canary ? T + r.int(70, 160) : T; // a canary is promoted to all pods 70-160 s after T
+  // v3 (audit): stats-form onsets for every class whose stats line can show the fault (not config/cache).
+  const statsOnset = !['bad_config_deploy', 'poisoned_cache'].includes(cls) && Boolean(K.statsOnset) && r.chance(K.statsOnset);
   const onsetT = gradual ? r.pick(C.TREND[cls].onset) : canary ? r.pick(C.CANARY) : (altOnset.length && K.paraphrase && r.chance(0.4) ? r.pick(altOnset) : r.pick(F.onset));
   const directT = F.direct ? pickSubset(F.direct, 2, 4) : null;
   const indirectT = F.indirect ? pickSubset(F.indirect, 1, 3) : null;
@@ -445,6 +448,7 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   const symptom = (t, rr) => {
     const c = ctxFor(root, t, rr);
     if (repeatP && !gradual && rr.chance(repeatP)) return onsetT(c, rr);
+    if (K.siblingOnset && C.SIBLING_ONSET[cls] && rr.chance(K.siblingOnset)) return rr.pick(C.SIBLING_ONSET[cls])(c, rr);
     if (secT && rr.chance(secShare)) return rr.pick(secT)(c, rr);
     if (calleeT && rr.chance(calleeP)) return rr.pick(calleeT)(c, rr);
     return rr.chance(0.65) ? rr.pick(directT)(c, rr) : rr.pick(indirectT)(c, rr);
@@ -457,7 +461,7 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   // the error text it received (the root's own message, or the callee's relayed message).
   const depFailure = (s, t, rr, e, depth = 0) => {
     const c = ctxFor(s, t, rr, { callee: refOf(e), route: rr.pick(s.key === 'gateway' ? S[e.to].role.public : s.routes) });
-    if (s === anon) return sevAdj(s, rr.pick(C.ANON_FAIL)(c, rr));
+    if (anons.has(s)) return sevAdj(s, rr.pick(C.ANON_FAIL)(c, rr));
     if (e.soft && rr.chance(0.6)) return sevAdj(s, rr.pick(C.PROVIDER_FAIL)({ ...c, provider: rr.chance(0.5) ? S[e.provider].name : S[e.provider].host }, rr));
     if (K.wrap && depth < 3 && rr.chance(K.wrap)) {
       let inner = null;
@@ -565,7 +569,7 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
     for (let t = T + rf.int(15, 40); t < symFrom - 5; t += rf.int(15, 40)) emit(t, root, (repeatP && rf.chance(repeatP) ? onsetT : rf.pick(C.TREND[cls].step))(rootCtx(t), rf, valueAt(t)), 'root');
     emit(symFrom, root, rf.pick(F.onset)(rootCtx(symFrom), rf), 'root');
   } else {
-    emit(T, root, statsOnset && cls === 'memory_leak_oom' ? C.BASELINE_AFTER.memory_leak_oom(rootCtx(T), rf, root.fx.p0).slice(0, 2) : onsetT(rootCtx(T), rf), 'onset');
+    emit(T, root, statsOnset ? C.BASELINE_AFTER[cls](rootCtx(T), rf, root.fx.p0).slice(0, 2) : onsetT(rootCtx(T), rf), 'onset');
   }
   if (cls === 'memory_leak_oom') {
     for (const g of leak.growth) {
@@ -590,6 +594,13 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
     emit(first + (gradual ? 1 : 0), root, rf.pick(directT)(rootCtx(first), rf), 'root');
     for (let i = 0; i < nSym; i++) { const t = rf.int(first, WINDOW - 1); emit(t, root, symptom(t, rf), 'root'); }
   }
+  // v3 (audit): 1-2 momentary or partial "recoveries" inside the real episode (the fault goes on).
+  if (K.partialRec && C.PARTIAL_RECOVERY[cls]) {
+    for (let i = 0, n = rf.int(1, 2); i < n; i++) {
+      const t = T + rf.int(10, Math.max(20, Math.min(240, rootOut - T + 120)));
+      if (!(cls === 'memory_leak_oom' && inDown(t))) emit(t, root, C.PARTIAL_RECOVERY[cls](rootCtx(t), rf), 'root');
+    }
+  }
   if (cls === 'certificate_expiry') {
     const mins = rf.sample([20, 12, 6], rf.int(1, 2));
     if (K.nearPrecursor && rf.chance(K.nearPrecursor)) mins.push(rf.pick([2, 3]));
@@ -601,7 +612,7 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
       // v3 (audit): a rolling rollout; each pod logs its own config load 20-110 s after the rollout started
       // (the onset is the first line of the bad rollout, not the last pod picking it up).
       // A canary first (the onset line), promoted to all pods 70-160 s later.
-      const t1 = canary ? T + rf.int(70, 160) : T;
+      const t1 = promoteAt;
       if (canary) emit(t1, root, C.PROMOTE(c, rf), 'root');
       let last = t1;
       for (const pod of root.pods) {
@@ -699,7 +710,8 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   // Onset lookalikes in the root (d3+): benign lines with the onset's words, some shortly before T.
   if (K.lookalikes) {
     const times = [rn.int(30, Math.max(31, T - 400)), rn.int(Math.max(30, T - 300), T - 60), ...Array.from({ length: rn.int(0, 2) }, () => rn.int(30, T - 60)), ...Array.from({ length: rn.int(1, 3) }, () => rn.int(T + 60, WINDOW - 1))];
-    for (const t of times) emit(t, root, rn.pick(C.LOOKALIKE[cls])(ctxFor(root, t, rn), rn), 'lookalike');
+    // After T a config lookalike stages a later release (the new one is already live by then).
+    for (const t of times) emit(t, root, rn.pick(C.LOOKALIKE[cls])({ ...ctxFor(root, t, rn), newVer: t > T ? root.otherVer : root.newVer }, rn), 'lookalike');
   }
   // Same-vocabulary baselines at normal values: the root's own class (so its onset is the first
   // abnormal value, not the first matching word) and random classes in a few other services.
@@ -714,7 +726,8 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
       if (s === root && t > T) {
         if (cls === 'memory_leak_oom' && inDown(t)) continue;
         const v = valueAt ? valueAt(Math.min(t, symFrom)) : cls === 'memory_leak_oom' ? clamp(heapAt(t), 0, 99) : 0;
-        const [level, msg, tag] = C.BASELINE_AFTER[klass]({ ...ctxFor(s, t, rn), sym: t >= symFrom }, rn, v);
+        // A config stats line reports the new release only once every pod runs it.
+        const [level, msg, tag] = C.BASELINE_AFTER[klass]({ ...ctxFor(s, t, rn), sym: t >= symFrom, newVer: t >= promoteAt + 120 ? root.newVer : root.oldVer }, rn, v);
         emit(t, s, [level, msg], tag);
         continue;
       }
@@ -746,7 +759,7 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   const blip = (s, klass, t0, tag, offsets = null, onsetLike = false) => {
     const P = C.FAULTS[klass];
     const offs = offsets || blipOffsets();
-    offs.lines.forEach((dt, i) => emit(t0 + dt, s, (i === 0 && onsetLike ? C.BLIP_ONSET[klass] : rh.pick(P.blip))(ctxFor(s, t0 + dt, rh), rh), tag));
+    offs.lines.forEach((dt, i) => emit(t0 + dt, s, (onsetLike && (i === 0 || rh.chance(0.6)) ? C.BLIP_ONSET[klass] : rh.pick(P.blip))(ctxFor(s, t0 + dt, rh), rh), tag));
     const recover = K.recoverAlt && rh.chance(K.recoverAlt) ? rh.pick(C.RECOVER_ALT[klass]) : P.recover;
     emit(t0 + offs.end, s, recover(ctxFor(s, t0 + offs.end, rh), rh), tag);
     return t0;
@@ -803,6 +816,12 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
       emit(t, s, (i % 2 ? rh.pick(C.CHRONIC[vocab]) : rh.pick(pool))(ctxFor(s, t, rh), rh), 'decoy');
     }
     herrings.decoys.push({ key: s.key, svc: s.name, t: tD, n, vocab });
+    // v3 (audit): the first decoy may also have had a short, recovered blip with onset wording before T.
+    if (s === decoys[0] && K.decoyBlip && rh.chance(K.decoyBlip)) {
+      const klass = rh.pick(Object.keys(C.BLIP_ONSET).filter(x => x !== cls && (x !== 'upstream_rate_limiting' || s.ext)));
+      const offs = blipOffsets(), t0 = rh.int(Math.max(30, T - 400), Math.max(31, T - 60 - offs.end));
+      herrings.blips.push({ svc: s.name, cls: klass, t: blip(s, klass, t0, 'blip-other', offs, true), end: t0 + offs.end, onsetLike: true });
+    }
   }
   // A healthy callee rejecting the root's bad requests (clock skew, bad config): not a failure.
   if (D && C.CALLEE_REJECT[cls]) {
@@ -1091,7 +1110,7 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
     warnSev: serving.filter(s => s.sev === 'warn').map(s => s.name),
     herrings: { ...herrings, deploys: herrings.deploys.map(k => S[k].name), chronic: herrings.chronic.map(h => ({ svc: h.svc, cls: h.cls, n: h.n })), decoys: herrings.decoys.map(d => ({ svc: d.svc, t: d.t, n: d.n })) },
     decoyBelowRoot: D ? D.name : null,
-    anonymous: anon ? anon.name : null,
+    anonymous: [...anons].map(s => s.name),
     ticketFeatures: { impacted: impactedFeatures, reported: impacted.has('gateway') ? features : [] },
     added: added.map(e => [S[e.from].name, S[e.to].name]),
     edgeDocs,

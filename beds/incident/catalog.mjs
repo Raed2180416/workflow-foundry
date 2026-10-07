@@ -994,7 +994,8 @@ export const ROOT_CHRONIC = {
   ],
   memory_leak_oom: [
     (c, r) => ['WARN', `GC pause ${r.int(180, 450)}ms (young generation)`],
-    (c, r) => ['WARN', `allocation rate spike ${r.int(300, 900)} MiB/s during batch request; heap back to ${c.base}% after gc`],
+    // v3 (audit): no heap value (the line runs all window, also while the heap is leaking).
+    (c, r) => ['WARN', `allocation rate spike ${r.int(300, 900)} MiB/s during a batch request`],
   ],
 };
 
@@ -1155,4 +1156,29 @@ export const BASELINE_AFTER = {
   clock_skew: (c, r) => ['INFO', `ntp offset ${c.skew * 1000}ms`, 'root'],
   upstream_rate_limiting: (c, r) => ['INFO', `${c.ext} quota usage 100% of ${c.quota}/min`, 'root'],
   poisoned_cache: (c, r) => ['INFO', `cache '${c.ns}' hit ratio 0.${r.int(97, 99)}, ${r.int(8000, 90000)} entries`, 'bg'],
+};
+
+// v3 (audit): lines inside the real fault episode that sound like a recovery but are explicitly partial or
+// momentary (difficulty >= 3); the fault continues. c.v is the current trend value where one exists.
+export const PARTIAL_RECOVERY = {
+  connection_pool_exhaustion: (c, r) => ['INFO', `one connection returned to '${c.pool}'; ${r.int(20, 140)} borrowers still waiting`],
+  certificate_expiry: (c, r) => ['INFO', `${r.int(2, 9)} legacy clients that skip certificate checks connected fine; all verifying clients still fail`],
+  disk_full: (c, r) => ['INFO', `log rotation freed ${r.int(80, 900)} MiB on ${c.vol}; usage still climbing`],
+  dns_resolution_failure: (c, r) => ['INFO', `lookup of ${c.calleeHost} succeeded on the third retry; other lookups still failing`],
+  memory_leak_oom: (c, r) => ['INFO', `minor GC freed ${r.int(20, 90)} MiB; old generation still growing`],
+  clock_skew: (c, r) => ['INFO', `time source answered once, but the local clock is still ${c.skew}s ahead`],
+  upstream_rate_limiting: (c, r) => ['INFO', `${c.ext} accepted ${r.int(3, 40)} requests after its quota window reset; throttling resumed within seconds`],
+};
+
+// v3 (audit): consequences of the true fault worded like a sibling class's onset (difficulty >= 3). Each keeps
+// the detail that shows the real cause (who answers 429, why the pool is full, why the heap grows).
+export const SIBLING_ONSET = {
+  connection_pool_exhaustion: [(c, r) => ['WARN', `answering 429 Too Many Requests (retry-after ${r.int(5, 30)}s) to our callers while every ${c.db} connection is busy`]],
+  upstream_rate_limiting: [(c, r) => ['WARN', `connection pool '${c.pool}' at capacity: in use ${c.max}/${c.max}, ${r.int(30, 140)} callers waiting for ${c.ext} quota`]],
+  disk_full: [(c, r) => ['WARN', `heap after full GC is ${c.base + r.int(12, 20)}% (baseline ${c.base}%): dirty pages cannot be flushed to the full ${c.vol}`]],
+  memory_leak_oom: [(c, r) => ['WARN', `write rate on ${c.vol} up ${r.int(6, 30)}x in the last minute (heap dumps of the dying process)`]],
+  dns_resolution_failure: [(c, r) => ['WARN', `all ${c.max} connections of '${c.pool}' are checked out; new borrowers are queueing (no address for ${c.calleeHost})`]],
+  bad_config_deploy: [(c, r) => ['INFO', `cache refill: loaded ${r.int(8000, 90000)} entries into namespace '${c.ns}' from snapshot ${c.snap} (rebuilt by ${c.newVer} with its new schema)`]],
+  clock_skew: [(c, r) => ['WARN', `x509 serving cert ${c.host} validity ended at ${c.nowIso} according to our clock (clients see it as valid)`]],
+  certificate_expiry: [(c, r) => ['WARN', `token from ${c.callerHost} rejected as expired: local time ${c.nowIso} is past its exp claim (session bound to the expired certificate)`]],
 };

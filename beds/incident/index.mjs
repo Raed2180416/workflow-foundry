@@ -1,5 +1,6 @@
 // `incident` bed: SRE incident triage over a generated microservice system and log bundle.
 // Interface per beds/CONTRACT.md. The oracle and reference solver are trusted host code.
+import { types } from 'node:util';
 import { FAULT_CLASSES, SIBLING_CLASS } from './catalog.mjs';
 import { build, VERSION } from './gen.mjs';
 
@@ -18,16 +19,19 @@ export const outputSchema = {
   properties: {
     root_service: { type: 'string', minLength: 1, maxLength: 80, description: 'canonical service name from the dependency table' },
     fault_class: { type: 'string', enum: [...FAULT_CLASSES] },
-    first_bad_timestamp: { type: 'string', minLength: 20, maxLength: 40, description: 'ISO-8601 UTC timestamp, e.g. 2026-03-14T10:22:31Z' },
+    first_bad_timestamp: { type: 'string', minLength: 17, maxLength: 40, description: 'ISO-8601 timestamp with Z or a UTC offset, e.g. 2026-03-14T10:22:31Z (seconds and fractions optional)' },
     impacted_services: { type: 'array', minItems: 1, maxItems: 40, items: { type: 'string', minLength: 1, maxLength: 80 } },
     evidence_line_ids: { type: 'array', maxItems: 50, items: { type: 'string', minLength: 1, maxLength: 12 } },
   },
 };
 
-export const PASS_RULE = 'root_service exact AND fault_class exact AND |first_bad_timestamp - T| <= 60 s AND Jaccard(impacted_services) >= 0.8';
+export const PASS_RULE = 'root_service equal (trimmed, case-insensitive) AND fault_class exact AND |first_bad_timestamp - T| <= 60 s AND Jaccard(impacted_services, trimmed, case-insensitive, duplicates collapse) >= 0.8';
 const TIME_TOLERANCE_S = 60;
 const JACCARD_MIN = 0.8;
-const ISO_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d{1,6})?)?(Z|[+-]\d{2}:\d{2})$/;
+// Date and time separated by T, minutes required, seconds and fractions optional, Z or +hh:mm (RFC 3339 also
+// allows lower-case t and z, which are accepted and upper-cased before parsing).
+const ISO_RE = /^\d{4}-\d{2}-\d{2}[Tt]\d{2}:\d{2}(:\d{2}(\.\d{1,6})?)?([Zz]|[+-]\d{2}:\d{2})$/;
+const parseIso = text => (ISO_RE.test(text) ? Date.parse(text.toUpperCase()) : NaN);
 
 export function generate({ seed, split = 'dev', difficulty = 3 } = {}) {
   return build(seed, split, difficulty).task;
@@ -51,20 +55,52 @@ export function validateOutput(output) {
     } else if (spec.type === 'array') {
       if (!Array.isArray(v)) { errors.push(`'${key}' must be an array`); continue; }
       if (spec.minItems !== undefined && v.length < spec.minItems) errors.push(`'${key}' needs at least ${spec.minItems} item(s)`);
-      if (spec.maxItems !== undefined && v.length > spec.maxItems) errors.push(`'${key}' has more than ${spec.maxItems} items`);
-      v.forEach((item, i) => {
+      if (spec.maxItems !== undefined && v.length > spec.maxItems) { errors.push(`'${key}' has more than ${spec.maxItems} items`); continue; }
+      // An index loop (not forEach): holes in a sparse array are items too and must be rejected.
+      for (let i = 0; i < v.length; i++) {
+        const item = v[i];
         if (typeof item !== 'string') errors.push(`'${key}[${i}]' must be a string`);
         else if (item.length < spec.items.minLength || item.length > spec.items.maxLength) errors.push(`'${key}[${i}]' has an invalid length`);
-      });
+      }
     }
   }
-  if (typeof output.first_bad_timestamp === 'string' && !(ISO_RE.test(output.first_bad_timestamp) && Number.isFinite(Date.parse(output.first_bad_timestamp)))) {
+  if (typeof output.first_bad_timestamp === 'string' && !Number.isFinite(parseIso(output.first_bad_timestamp))) {
     errors.push("'first_bad_timestamp' is not an ISO-8601 timestamp with a UTC offset");
   }
   return errors;
 }
 
 const norm = name => String(name).trim().toLowerCase();
+
+// Copies a solver output as plain JSON-like data before anything else looks at it, so that getters, proxies,
+// toJSON hooks, prototypes or a value that changes between reads cannot steer or crash the oracle. Anything that
+// is not plain data (accessors, proxies, functions, symbols, non-plain prototypes, holes, deep nesting, huge
+// arrays) makes the output invalid.
+function plainCopy(value, depth = 0) {
+  if (value === null || typeof value === 'string' || typeof value === 'boolean' || typeof value === 'number') return value;
+  if (typeof value !== 'object' || depth > 3 || types.isProxy(value)) throw new TypeError('output is not plain JSON data');
+  if (Array.isArray(value)) {
+    if (Object.getPrototypeOf(value) !== Array.prototype || value.length > 1000) throw new TypeError('output contains a non-plain or oversized array');
+    const out = [];
+    for (let i = 0; i < value.length; i++) {
+      const d = Object.getOwnPropertyDescriptor(value, i);
+      if (!d || !('value' in d)) throw new TypeError('output contains a sparse array or an accessor');
+      out.push(plainCopy(d.value, depth + 1));
+    }
+    return out;
+  }
+  const proto = Object.getPrototypeOf(value);
+  if (proto !== Object.prototype && proto !== null) throw new TypeError('output contains a non-plain object');
+  const out = {};
+  for (const key of Reflect.ownKeys(value)) {
+    if (typeof key !== 'string') throw new TypeError('output contains a symbol key');
+    const d = Object.getOwnPropertyDescriptor(value, key);
+    if (!('value' in d)) throw new TypeError(`output field '${key}' is an accessor`);
+    // defineProperty keeps a literal '__proto__' key as an own field (it is then rejected as unexpected).
+    Object.defineProperty(out, key, { value: plainCopy(d.value, depth + 1), enumerable: true, writable: true, configurable: true });
+  }
+  return out;
+}
 
 // Small memo of rebuilt truths: rebuilding is deterministic, the cache only saves time when the
 // oracle and the controls score the same task repeatedly. Callers never receive cached objects.
@@ -81,16 +117,25 @@ function rebuildTruth(task) {
 }
 
 export function oracle(task, output) {
+  // The oracle never throws: whatever the task or output, it returns a verdict.
+  try { return judge(task, output); }
+  catch (error) { return { pass: false, score: 0, details: { schemaValid: false, errors: [`oracle could not read the output: ${String(error?.message ?? error).slice(0, 200)}`] } }; }
+}
+
+function judge(task, rawOutput) {
   if (!task || task.family !== 'incident') return { pass: false, score: 0, details: { error: 'not an incident task' } };
   let truth;
   try { truth = rebuildTruth(task); }
   catch (error) { return { pass: false, score: 0, details: { error: `cannot rebuild task: ${error.message}` } }; }
+  let output;
+  try { output = plainCopy(rawOutput); }
+  catch (error) { return { pass: false, score: 0, details: { schemaValid: false, errors: [error.message] } }; }
   const errors = validateOutput(output);
   if (errors.length) return { pass: false, score: 0, details: { schemaValid: false, errors } };
 
   const rootOk = norm(output.root_service) === norm(truth.root_service);
   const classOk = output.fault_class === truth.fault_class;
-  const deltaS = Math.abs(Date.parse(output.first_bad_timestamp) - Date.parse(truth.first_bad_timestamp)) / 1000;
+  const deltaS = Math.abs(parseIso(output.first_bad_timestamp) - Date.parse(truth.first_bad_timestamp)) / 1000;
   const timeOk = deltaS <= TIME_TOLERANCE_S;
   const want = new Set(truth.impacted_services.map(norm));
   const got = new Set(output.impacted_services.map(norm));

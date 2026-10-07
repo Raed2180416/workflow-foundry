@@ -19,8 +19,7 @@ export function fourthHeuristicSolve(task) {
     calls.set(n, new Set(c.trim() === '-' ? [] : c.split(',').map(x => x.trim().replace(' (optional)', '')))); for (const x of c.split(',')) if (x.includes('(optional)')) soft.set(`${n}>${x.trim().replace(' (optional)', '')}`, null);
     for (const x of o.split(',').map(y => y.trim().replace(/'/g, ''))) if (x !== '-') alias.set(x, n);
   }
-  for (const m of system.matchAll(/^- (\S+): (\d+\.\d+\.\d+\.\d+:\d+)$/gm)) alias.set(m[2], m[1]);
-  const svcs = [...calls.keys()], inS = s => svcs.filter(n => word(n).test(s)).sort((a, b) => s.search(word(a)) - s.search(word(b)));
+  for (const m of system.matchAll(/^- (\S+): (\d+\.\d+\.\d+\.\d+:\d+)$/gm)) alias.set(m[2], m[1]); const svcs = [...calls.keys()], inS = s => svcs.filter(n => word(n).test(s)).sort((a, b) => s.search(word(a)) - s.search(word(b)));
   for (const sent of system.split('\n').filter(l => l.startsWith('- ')).map(l => l.slice(2))) {
     const ns = inS(sent), q = /'([a-z0-9-]+)'/.exec(sent), mo = /\b(January|February|March|April|May|June|July|August|September)\b/.exec(sent), h = /(?:no fallback for|failure of|needs|unlike when) (\S+)/.exec(sent)?.[1];
     if (ns.length === 1 && q && /name|called/.test(sent)) alias.set(q[1], ns[0]);
@@ -41,7 +40,6 @@ export function fourthHeuristicSolve(task) {
   const mine = L.filter(l => l.svc === root && !named(l)), tF = fails.find(f => f.callee === root)?.t ?? L.at(-1).t;
   const cls = Object.entries(OS).map(([c, re]) => [c, mine.filter(l => re.test(l.body) && l.t <= tF + 60000).length]).sort((a, b) => b[1] - a[1])[0][0];
   const lastRec = mine.filter(l => l.t < tF && REC.test(l.body)).at(-1)?.t ?? 0, T = mine.find(l => l.t > lastRec && l.t <= tF + 60000 && OS[cls].test(l.body)) ?? mine.find(l => l.t > lastRec) ?? L[0];
-  const imp = new Set([root]);
-  for (let grew = true; grew;) { grew = false; for (const [a, cs] of calls) if (!batch.has(a) && !imp.has(a) && [...cs].some(b => imp.has(b) && (!soft.has(`${a}>${b}`) || imp.has(soft.get(`${a}>${b}`))))) { imp.add(a); grew = true; } }
+  const imp = new Set([root]); for (let grew = true; grew;) { grew = false; for (const [a, cs] of calls) if (!batch.has(a) && !imp.has(a) && [...cs].some(b => imp.has(b) && (!soft.has(`${a}>${b}`) || imp.has(soft.get(`${a}>${b}`))))) { imp.add(a); grew = true; } }
   return { root_service: root, fault_class: cls, first_bad_timestamp: new Date(T.t).toISOString(), impacted_services: [...imp], evidence_line_ids: [T.id] };
 }

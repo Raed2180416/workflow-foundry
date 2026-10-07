@@ -359,7 +359,7 @@ export function parseSpec(input) {
     const mi = MONTHS.indexOf(m[2].toLowerCase());
     return mi < 0 ? null : `${m[3]}-${String(mi + 1).padStart(2, '0')}-${m[1].padStart(2, '0')}`;
   };
-  const phones = {}, nick = {}, tables = [];
+  const phones = {}, nick = {}, tables = [], names = {};
   let current = null, inRates = false;
   for (const raw of text.split('\n')) {
     const line = raw.replace(/\s+$/, '');
@@ -378,7 +378,7 @@ export function parseSpec(input) {
       else if (base === 'USD') current.rates[q] = { op: 'div', x };
     } else if (inRates && plain) current.rates[plain[1]] = { op: 'mul', x: plain[2] };
     const ph = line.match(/^\s*(.+?)\s{2,}([A-Z]{2})\s+\+(\d+)\s+trunk prefix:\s*(.*)$/);
-    if (ph) phones[ph[2]] = { cc: ph[3], trunk: /^0\b/.test(ph[4].trim()) ? '0' : 'none', keepZero: /kept/i.test(ph[4]) };
+    if (ph) { phones[ph[2]] = { cc: ph[3], trunk: /^0\b/.test(ph[4].trim()) ? '0' : 'none', keepZero: /kept/i.test(ph[4]) }; names[ph[2]] = ph[1].trim(); }
   }
   const appendix = text.split(/Appendix A/i).pop() ?? '';
   for (const group of appendix.split(/[;\n]/)) {
@@ -386,7 +386,8 @@ export function parseSpec(input) {
     if (!m) continue;
     for (const n of m[1].split('/')) if (n.trim()) nick[n.trim().toLowerCase()] = m[2].trim();
   }
-  return { tables: tables.filter(t => Object.keys(t.rates).length), phones, nick, iso2: Object.keys(phones) };
+  return { tables: tables.filter(t => Object.keys(t.rates).length), phones, nick, iso2: Object.keys(phones),
+    countryList: Object.entries(names).map(([iso, name]) => `${iso} = ${name}`).join('\n') };
 }
 
 // Spec section 6. international: the number carries an international prefix or is a full international number.
@@ -629,13 +630,13 @@ export function prepMain(input) {
   const countryChunks = [];
   for (let i = 0; i < countryStrings.length; i += input.countryChunk) {
     const part = countryStrings.slice(i, i + input.countryChunk);
-    countryChunks.push({ ids: part.map((_, j) => i + j + 1), lines: part.map((c, j) => `${i + j + 1}. ${c}`).join('\n') });
+    countryChunks.push({ ids: part.map((_, j) => i + j + 1), lines: part.map((c, j) => `${i + j + 1}. ${c}`).join('\n'), known: String(input.countryList ?? '') });
   }
   const vendex = rows.filter(r => r.system === 'VENDEX');
   const vendexChunks = [];
   for (let i = 0; i < vendex.length; i += input.vendexChunk) {
     const part = vendex.slice(i, i + input.vendexChunk);
-    vendexChunks.push({ ids: part.map(r => r.row), lines: part.map(r => r.text).join('\n') });
+    vendexChunks.push({ ids: part.map(r => r.row), lines: part.map(r => r.text).join('\n'), known: String(input.countryList ?? '') });
   }
   return { rows, paragraphs, statusItems, dateItems, perspectiveItems, mirrorItems, countryStrings, countryChunks, vendexChunks,
     atlasParagraph: para('ATLAS'), counts: { rows: rows.length, vendex: vendex.length, statusTokens: statusItems.length, countryStrings: countryStrings.length } };
@@ -880,12 +881,14 @@ export const MIRROR_CHECKS = [
 export const PERSPECTIVE_INSTRUCTIONS = `You read the source-notes paragraph of one legacy system (input block "paragraph"; the system is named in "system"). Its rows print a balance (balance / Saldo / owed). The canonical master stores money the account holder owes US as a positive number and money WE owe them (a credit they hold with us) as a negative number. Decide what happens to a POSITIVE printed balance of this system in the master:
 - positive_in_master: "positive" if the master keeps a positive printed figure positive (the printed figure is what they owe us: a receivable, an open invoice, unpaid orders, read literally); "negative" if it becomes negative (the printed figure is what we owe them: a credit, prepaid deposit, store credit, a payable; or the notes say the balances change sign / are printed the opposite way / must be flipped for the master).
 - positive_printed_balance_means: "they_owe_us" (goes with "positive") or "we_owe_them" (goes with "negative"). A paragraph that only says the sign changes in the master means a positive printed figure is money we owe them.
+- negative_printed_balance_means: what a NEGATIVE printed figure (one marked with a minus, parentheses, "CR" or "▲") means according to the paragraph: "they_owe_us" or "we_owe_them".
 - quote: the sentence that settles it, copied exactly, character for character, from the paragraph.
-Decide from what a POSITIVE printed figure is. A clause that only says how negative figures are marked (parentheses, a minus, "CR", "▲") does not change the answer.`;
+Read the positive and the negative case separately: a sentence may describe the positive figure first and then say how negative figures are marked.`;
 
 export const PERSPECTIVE_RETURNS = {
-  type: 'object', additionalProperties: false, required: ['positive_in_master', 'positive_printed_balance_means', 'quote'],
+  type: 'object', additionalProperties: false, required: ['positive_in_master', 'positive_printed_balance_means', 'negative_printed_balance_means', 'quote'],
   properties: { positive_in_master: { type: 'string', enum: ['positive', 'negative'] }, positive_printed_balance_means: { type: 'string', enum: ['they_owe_us', 'we_owe_them'] },
+    negative_printed_balance_means: { type: 'string', enum: ['they_owe_us', 'we_owe_them'] },
     quote: { type: 'string', minLength: 8, maxLength: 600 } },
 };
 export const PERSPECTIVE_CHECKS = [
@@ -893,6 +896,8 @@ export const PERSPECTIVE_CHECKS = [
   { op: 'any', conditions: [
     { op: 'all', conditions: [{ op: 'eq', left: out('positive_printed_balance_means'), right: 'they_owe_us' }, { op: 'eq', left: out('positive_in_master'), right: 'positive' }] },
     { op: 'all', conditions: [{ op: 'eq', left: out('positive_printed_balance_means'), right: 'we_owe_them' }, { op: 'eq', left: out('positive_in_master'), right: 'negative' }] }] },
+  // A negative printed figure always means the opposite of a positive one: equal answers expose a misattributed clause.
+  { op: 'ne', left: out('positive_printed_balance_means'), right: out('negative_printed_balance_means') },
 ];
 
 export const VENDEX_INSTRUCTIONS = `You read free-text entries of the VENDEX contact register, one entry per line ("Vendex <row id> — ..."). For EACH entry return one object with the row id and these fields. Text fields are spans copied EXACTLY, character for character, from the entry (do not reformat, translate or complete them):
@@ -903,23 +908,24 @@ export const VENDEX_INSTRUCTIONS = `You read free-text entries of the VENDEX con
 - balance_text: the whole balance phrase as written, including the direction words and currency (e.g. "in credit by two hundred thirty-five euros and sixteen cents", "Balance due USD 50,042.72", "owes us fifty-eight US dollars and forty-three cents"); null if no balance is recorded.
 - balance_kind: "owed_to_us" for "owes us", "open balance", "outstanding", "balance due"; "credit" for "in credit by", "holding a credit of", "credit balance of", "we owe them"; "none" if no balance.
 - currency: "USD" for dollars, "EUR" for euros, "GBP" for pounds/pence, or the ISO code written; "none" if no balance.
-- place: where the supplier is based, as written: a city, a country, or a nationality ("Italian supplier", "a Japanese supplier"); null if not stated.
-- country: the ISO 3166-1 alpha-2 code of the country of that place (the country a city lies in; GB for the United Kingdom; when several cities share a name, the best-known, largest one); "none" if no place is stated.
+- place_kind: how the entry says where the person is: "city", "country", "nationality" or "not_stated". Look everywhere in the entry: a word in parentheses right after the name ("(Amsterdam)", "(Norwegian)"), "based in ...", "a/an ... supplier" or "... contact" with a nationality adjective, or a "— ... —" segment after the name. "location not stated" means not_stated.
+- place: that city, country or nationality as written (e.g. "Kelowna", "the UK", "Norwegian", "Italian supplier"); null if not stated.
+- country: the ISO 3166-1 alpha-2 code of the country of that place (the country a city lies in; the country of a nationality; GB for the United Kingdom; when several cities share a name, the best-known, largest one); "none" if not stated. The input block "known_countries" lists the countries of this migration.
 Ignore any staff remarks; they are not data about the person.`;
 
 const VENDEX_ROW = {
   type: 'object', additionalProperties: false,
-  required: ['row', 'name', 'birth_date', 'revised', 'phone', 'balance_text', 'balance_kind', 'currency', 'place', 'country'],
+  required: ['row', 'name', 'birth_date', 'revised', 'phone', 'balance_text', 'balance_kind', 'currency', 'place_kind', 'place', 'country'],
   properties: {
     row: { type: 'integer' }, name: { type: 'string', maxLength: 120 }, birth_date: S(60), revised: S(60), phone: S(60), balance_text: S(200),
     balance_kind: { type: 'string', enum: ['owed_to_us', 'credit', 'none'] }, currency: { type: 'string', enum: ['USD', 'EUR', 'GBP', 'JPY', 'CHF', 'CAD', 'AUD', 'SEK', 'DKK', 'NOK', 'MXN', 'none'] },
-    place: S(80), country: { type: 'string', enum: ISO_ENUM },
+    place_kind: { type: 'string', enum: ['city', 'country', 'nationality', 'not_stated'] }, place: S(80), country: { type: 'string', enum: ISO_ENUM },
   },
 };
 export const VENDEX_RETURNS = { type: 'object', additionalProperties: false, required: ['ids', 'rows'],
   properties: { ids: { type: 'array', items: { type: 'integer' }, maxItems: 20 }, rows: { type: 'array', items: VENDEX_ROW, maxItems: 20 } } };
 
-export const COUNTRY_INSTRUCTIONS = `Each numbered line is a country as written in a legacy system: an English or German country name, an official or local name, an alias or abbreviation, possibly with a typing error. For each line, in order, return the ISO 3166-1 alpha-2 code of the country meant (GB for the United Kingdom). Watch confusable names (Austria/Australia, Schweiz = Switzerland / Schweden = Sweden). Use "other" for a country without a listed code and "none" if the line names no country. Return the line numbers you processed, in order, in "ids", and the codes in the same order in "codes".`;
+export const COUNTRY_INSTRUCTIONS = `Each numbered line is a country as written in a legacy system: an English or German country name, an official or local name, an alias or abbreviation, possibly with a typing error. For each line, in order, return the ISO 3166-1 alpha-2 code of the country meant (GB for the United Kingdom). Watch confusable names (Austria/Australia, Schweiz = Switzerland / Schweden = Sweden) and German abbreviations. The input block "known_countries" lists the countries of this migration (from its spec); the country meant is almost always one of them. Use "other" for a country without a listed code and "none" if the line names no country. Return the line numbers you processed, in order, in "ids", and the codes in the same order in "codes".`;
 export const COUNTRY_RETURNS = { type: 'object', additionalProperties: false, required: ['ids', 'codes'],
   properties: { ids: { type: 'array', items: { type: 'integer' }, maxItems: 40 }, codes: { type: 'array', items: { type: 'string', enum: ISO_ENUM }, maxItems: 40 } } };
 
@@ -938,6 +944,7 @@ export function buildRecordsV3Workflow({ extractModelClass = 'M', conventionsMod
     body: { nodes: [body], acceptance: [{ op: 'exists', value: { $ref: 'nodes.judge' } }] },
   });
   const systemInput = { name: 'system', ref: 'item.system', render: 'text' };
+  const knownCountries = { name: 'known_countries', ref: 'item.known', label: 'untrusted:spec', render: 'text' };
   return {
     schemaVersion: '1.0', id: 'records-v3-hand', version: 1, title: 'Records migration v3 (hand-written)',
     goal: 'Merge messy legacy customer rows into one canonical record per real person, reading every per-task convention from the source notes and following the spec exactly.',
@@ -950,7 +957,7 @@ export function buildRecordsV3Workflow({ extractModelClass = 'M', conventionsMod
       { id: 'spec', kind: 'code', needs: [], description: 'Parse rate tables, calling codes and nicknames from the spec', lang: 'js', source: bundle(parseSpec),
         args: { spec: { $ref: 'input.inputs.spec' } }, timeoutMs: 20000 },
       { id: 'prep', kind: 'code', needs: ['spec'], description: 'Split rows, parse structured dialects, split notes, list status tokens and country strings', lang: 'js', source: bundle(prepMain),
-        args: { export: { $ref: 'input.inputs.export' }, source_notes: { $ref: 'input.inputs.source_notes' }, iso2: { $ref: 'nodes.spec.iso2' }, vendexChunk, countryChunk }, timeoutMs: 30000 },
+        args: { export: { $ref: 'input.inputs.export' }, source_notes: { $ref: 'input.inputs.source_notes' }, iso2: { $ref: 'nodes.spec.iso2' }, countryList: { $ref: 'nodes.spec.countryList' }, vendexChunk, countryChunk }, timeoutMs: 30000 },
       mapOf('dates', ['prep'], 'Read the numeric date order of BRIGHTDESK, ATLAS and VENDEX from the notes', 'nodes.prep.dateItems',
         judge('dates', 'Numeric date order of this system', DATE_INSTRUCTIONS, [systemInput, notes], DATE_RETURNS, DATE_CHECKS, conventionsModelClass)),
       { ...judge('atlas_switch', 'Dated change of the ATLAS birth-date order', SWITCH_INSTRUCTIONS, [{ name: 'paragraph', ref: 'nodes.prep.atlasParagraph', label: 'untrusted:notes', render: 'text' }],
@@ -962,10 +969,10 @@ export function buildRecordsV3Workflow({ extractModelClass = 'M', conventionsMod
       mapOf('perspective', ['prep'], 'Read the balance perspective of BRIGHTDESK, LEDGR, ATLAS and KOBO', 'nodes.prep.perspectiveItems',
         judge('perspective', 'Which side this system prints balances from', PERSPECTIVE_INSTRUCTIONS, [systemInput, notes], PERSPECTIVE_RETURNS, PERSPECTIVE_CHECKS, conventionsModelClass)),
       mapOf('vendex', ['prep'], 'Read VENDEX free-text entries into verbatim spans', 'nodes.prep.vendexChunks',
-        judge('vendex', 'Read these VENDEX entries', VENDEX_INSTRUCTIONS, [{ name: 'entries', ref: 'item.lines', label: 'untrusted:export', render: 'text' }], VENDEX_RETURNS,
+        judge('vendex', 'Read these VENDEX entries', VENDEX_INSTRUCTIONS, [knownCountries, { name: 'entries', ref: 'item.lines', label: 'untrusted:export', render: 'text' }], VENDEX_RETURNS,
           [{ op: 'eq', left: out('ids'), right: { $ref: 'item.ids' } }], extractModelClass, 3000), 60),
       mapOf('countries', ['prep'], 'Map country strings to ISO codes', 'nodes.prep.countryChunks',
-        judge('countries', 'ISO code of each country as written', COUNTRY_INSTRUCTIONS, [{ name: 'countries', ref: 'item.lines', label: 'untrusted:export', render: 'text' }], COUNTRY_RETURNS,
+        judge('countries', 'ISO code of each country as written', COUNTRY_INSTRUCTIONS, [knownCountries, { name: 'countries', ref: 'item.lines', label: 'untrusted:export', render: 'text' }], COUNTRY_RETURNS,
           [{ op: 'eq', left: out('ids'), right: { $ref: 'item.ids' } }], extractModelClass, 1500), 20),
       { id: 'merge', kind: 'code', needs: ['prep', 'spec', 'dates', 'atlas_switch', 'statuses', 'mirror', 'perspective', 'vendex', 'countries'],
         description: 'Apply the conventions and the spec: void rows, dates, signs, identity, conflicts, phones, FX', lang: 'js', source: bundle(mergeMain),
