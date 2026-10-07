@@ -713,8 +713,8 @@ function attemptWorld(seed, split, difficulty, attempt) {
     if (!fails(vx)) return null;
   }
   for (const f of conv.flags) {
-    const wrong = f.polarity === 'live' ? rows.filter(x => x.flag !== f.token).map(x => x.s)
-      : [...live, ...voids.filter(v => v.flag === f.token).map(v => v.s)];
+    const mine = x => x.system === f.system && x.flag === f.token;
+    const wrong = f.polarity === 'live' ? rows.filter(x => !mine(x)).map(x => x.s) : [...live, ...voids.filter(mine).map(v => v.s)];
     if (!fails(wrong)) return null;
   }
   if (conv.mirror && !fails(live.map(s => ({ ...s, rank: 0 })))) return null;

@@ -59,10 +59,11 @@ export function renderReport({ r, difficulty, module, failures, hiddenFailCount,
   const out = [];
   out.push(`GitHub Actions — workflow-foundry / ci.yml / job "${job}" — run #${runNo} (attempt 1) — FAILED`);
   out.push(`Trigger: pull_request #${pr} (${branch} -> main)   Commit: ${sha.slice(0, 7)} "${subject}"`);
-  out.push(`Runner: ubuntu-24.04 (hosted)   Node.js: v24.${r.int(18, 21)}.${r.int(0, 3)}`);
+  const nodeVersion = `24.${r.int(18, 21)}.${r.int(0, 3)}`;
+  out.push(`Runner: ubuntu-24.04 (hosted)   Node.js: v${nodeVersion}`);
   out.push('');
   if (noise) {
-    const nodeDir = `/opt/hostedtoolcache/node/24.${r.int(18, 21)}.${r.int(0, 3)}/x64`;
+    const nodeDir = `/opt/hostedtoolcache/node/${nodeVersion}/x64`;
     out.push('##[group]Run actions/checkout@v4', 'Syncing repository: workflow-foundry', `Fetching the repository (depth 1) ... ${sha.slice(0, 7)}`, '##[endgroup]');
     out.push('##[group]Run actions/setup-node@v4', `Found in cache @ ${nodeDir}`, `Restored dependency cache in ${r.int(2, 9)}.${r.int(0, 9)}s`, '##[endgroup]');
     out.push('##[group]Run npm ci', r.pick(DEPRECATIONS.slice(2, 4))(pid()), `added ${r.int(150, 260)} packages, and audited ${r.int(261, 300)} packages in ${r.int(2, 9)}s`,

@@ -256,10 +256,10 @@ export const TEAM_CITIES = {
     'Oslo', 'Stockholm', 'Lisbon', 'Prague', 'Warsaw', 'Helsinki'],
 };
 // Per-task extra status values (difficulty >= 3): which of them are void is stated only in the task's
-// source notes and changes from task to task.
+// source notes and changes from task to task. Tokens are unique across systems, ignoring letter case.
 export const FLAG_TOKENS = {
   BRIGHTDESK: ['hold', 'review', 'legacy', 'migrated'], LEDGR: ['archiviert', 'ruhend', 'inaktiv', 'Altdaten'],
-  ATLAS: ['ON HOLD', 'DORMANT', 'LEGACY', 'REVIEW'], KOBO: ['GUEST', 'TRIAL', 'GIFT', 'HOLD'], VERITAS: ['replay', 'backfill', 'legacy', 'batch'],
+  ATLAS: ['ON STOP', 'DORMANT', 'ARCHIVE', 'QUERY'], KOBO: ['GUEST', 'TRIAL', 'GIFT', 'PAUSED'], VERITAS: ['replay', 'backfill', 'batch', 'import'],
 };
 // Systems that can be the task's re-stamped mirror (difficulty >= 3).
 export const MIRROR_SYSTEMS = ['BRIGHTDESK', 'LEDGR', 'VERITAS'];
