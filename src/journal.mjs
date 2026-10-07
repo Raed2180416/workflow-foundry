@@ -31,7 +31,8 @@ const row = r => r ? ({
   id: r.id, replayKey: r.replay_key, runId: r.run_id, nodeKey: r.node_key, attempt: r.attempt, sampleIndex: r.sample_index,
   modelId: r.model_id, provider: r.provider, engineVersion: r.engine_version, decoding: parse(r.decoding), receiptHash: r.receipt_hash,
   promptHash: r.prompt_hash, request: parse(r.request), response: parse(r.response), ok: r.ok === 1, errorCode: r.error_code,
-  inputTokens: r.input_tokens, outputTokens: r.output_tokens, costUsd: r.cost_usd, imputedUsd: r.imputed_usd, latencyMs: r.latency_ms, createdAt: r.created_at,
+  inputTokens: r.input_tokens, outputTokens: r.output_tokens, cacheReadTokens: r.cache_read_tokens ?? null, cacheWriteTokens: r.cache_write_tokens ?? null,
+  costUsd: r.cost_usd, imputedUsd: r.imputed_usd, latencyMs: r.latency_ms, createdAt: r.created_at,
 }) : null;
 
 export class Journal {
@@ -42,18 +43,23 @@ export class Journal {
     handle.exec(`CREATE TABLE IF NOT EXISTS model_calls(id INTEGER PRIMARY KEY, replay_key TEXT NOT NULL, run_id TEXT NOT NULL, node_key TEXT NOT NULL,
         attempt INT, sample_index INT, model_id TEXT NOT NULL, provider TEXT, engine_version TEXT, decoding TEXT, receipt_hash TEXT, prompt_hash TEXT,
         request TEXT, response TEXT, ok INT NOT NULL, error_code TEXT, input_tokens INT, output_tokens INT, cost_usd REAL, imputed_usd REAL,
-        latency_ms INT, created_at INT NOT NULL);
+        latency_ms INT, created_at INT NOT NULL, cache_read_tokens INT, cache_write_tokens INT);
       CREATE INDEX IF NOT EXISTS model_calls_replay ON model_calls(replay_key, id);
       CREATE INDEX IF NOT EXISTS model_calls_attempt ON model_calls(run_id, node_key, attempt, id);`);
+    // Cached prompt tokens (hosted calls report most input as cache reads/writes): added to journals created before them.
+    const columns = new Set(handle.prepare('PRAGMA table_info(model_calls)').all().map(c => c.name));
+    for (const c of ['cache_read_tokens', 'cache_write_tokens']) if (!columns.has(c)) handle.exec(`ALTER TABLE model_calls ADD COLUMN ${c} INT`);
     this.statements = {
       insert: handle.prepare(`INSERT INTO model_calls(replay_key,run_id,node_key,attempt,sample_index,model_id,provider,engine_version,decoding,receipt_hash,
-        prompt_hash,request,response,ok,error_code,input_tokens,output_tokens,cost_usd,imputed_usd,latency_ms,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`),
+        prompt_hash,request,response,ok,error_code,input_tokens,output_tokens,cost_usd,imputed_usd,latency_ms,created_at,cache_read_tokens,cache_write_tokens)
+        VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`),
       lookup: handle.prepare(`SELECT * FROM model_calls WHERE replay_key=? AND ${replayableSql} ORDER BY id DESC LIMIT 1`),
       attempt: handle.prepare('SELECT * FROM model_calls WHERE run_id=? AND node_key=? AND attempt=? ORDER BY id'),
       run: handle.prepare('SELECT * FROM model_calls WHERE run_id=? ORDER BY id'),
       get: handle.prepare('SELECT * FROM model_calls WHERE id=?'),
       cost: handle.prepare(`SELECT COUNT(*) AS calls, COALESCE(SUM(cost_usd),0) AS cost, COALESCE(SUM(imputed_usd),0) AS imputed,
-        COALESCE(SUM(input_tokens),0) AS input, COALESCE(SUM(output_tokens),0) AS output, COALESCE(SUM(ok=0),0) AS errors,
+        COALESCE(SUM(input_tokens),0) AS input, COALESCE(SUM(output_tokens),0) AS output, COALESCE(SUM(cache_read_tokens),0) AS cache_read,
+        COALESCE(SUM(cache_write_tokens),0) AS cache_write, COALESCE(SUM(ok=0),0) AS errors,
         COALESCE(SUM(${unknownSql}),0) AS unknown, COALESCE(SUM(${unknownSql} AND json_extract(response,'$.costUpperUsd') IS NULL),0) AS unbounded,
         COALESCE(SUM(CASE WHEN ${unknownSql} THEN json_extract(response,'$.costUpperUsd') END),0) AS upper,
         COALESCE(SUM(CASE WHEN ${unknownSql} THEN json_extract(response,'$.costEstimateUsd') END),0) AS estimate FROM model_calls WHERE run_id=?`),
@@ -70,7 +76,7 @@ export class Journal {
       str(entry.engineVersion, 'engineVersion'), json(entry.decoding), str(entry.receiptHash, 'receiptHash'), str(entry.promptHash, 'promptHash'),
       json(entry.request), json(entry.response), ok ? 1 : 0, ok ? null : entry.errorCode,
       int(entry.inputTokens, 'inputTokens'), int(entry.outputTokens, 'outputTokens'), num(entry.costUsd, 'costUsd'), num(entry.imputedUsd, 'imputedUsd'),
-      int(entry.latencyMs, 'latencyMs'), Date.now());
+      int(entry.latencyMs, 'latencyMs'), Date.now(), int(entry.cacheReadTokens, 'cacheReadTokens'), int(entry.cacheWriteTokens, 'cacheWriteTokens'));
     return Number(lastInsertRowid);
   }
   get(id) { return row(this.statements.get.get(id)); }
@@ -82,7 +88,7 @@ export class Journal {
    *  (null when one has none) and of their estimates; the fields are present only when there are such calls. */
   costForRun(runId) {
     const r = this.statements.cost.get(runId);
-    return { calls: r.calls, costUsd: r.cost, imputedUsd: r.imputed, inputTokens: r.input, outputTokens: r.output, errors: r.errors,
+    return { calls: r.calls, costUsd: r.cost, imputedUsd: r.imputed, inputTokens: r.input, outputTokens: r.output, cacheReadTokens: r.cache_read, cacheWriteTokens: r.cache_write, errors: r.errors,
       ...(r.unknown ? { costUnknownCalls: r.unknown, costUnknownUpperUsd: r.unbounded ? null : r.upper, costUnknownEstimateUsd: r.estimate } : {}) };
   }
 }

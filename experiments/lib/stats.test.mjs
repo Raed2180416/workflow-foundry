@@ -43,3 +43,12 @@ test('mcnemar counts discordant tasks', () => {
   const m = mcnemar(recs, 'A', 'B');
   assert.equal(m.aOnly + m.bOnly > 0, true); assert.ok(m.p > 0 && m.p <= 1);
 });
+
+test('paired bootstrap can charge each arm its construction cost once per family', () => {
+  const plain = pairedBootstrap(recs, 'A', 'B', { iterations: 500 });
+  const built = pairedBootstrap(recs, 'A', 'B', { iterations: 500, constructionUsd: { A: { f1: 0.6, f2: 0.6 } } });
+  // A: 27 successes, $0.36 execution + $1.20 construction; B: 18 successes, $1.80.
+  close(built.cpsRatio.point, ((0.36 + 1.2) / 27) / (1.8 / 18));
+  close(plain.cpsRatio.point, (0.36 / 27) / (1.8 / 18));
+  assert.ok(built.cpsRatio.lo > plain.cpsRatio.lo && built.cpsRatio.finiteResamples > 0);
+});

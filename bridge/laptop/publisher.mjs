@@ -2,7 +2,9 @@
 //  - every tunnel poll (default 15 s): look up the tunnel URL; a change publishes at once
 //  - every refresh (default 5 min): git fetch the mailbox, reload keys, apply the KILL switch
 //  - heartbeat (default and minimum 15 min): republish endpoint.json with a new heartbeatAt
-// All git work is serialized on one promise chain; failures back off and never stop the daemon.
+// The publisher's own steps run on one promise chain; the git work inside them is serialized with
+// every other user of the clone by the mailbox lock (mailbox.mjs). Failures back off and never stop
+// the daemon.
 import { buildEndpoint } from '../mailbox.mjs';
 
 export class Publisher {
@@ -39,7 +41,7 @@ export class Publisher {
 
   async #publish(state) {
     const snap = await this.snapshot();
-    const endpoint = buildEndpoint({ url: state === 'stopped' ? null : this.tunnel.url, tunnelSource: this.tunnel.source, daemonVersion: this.daemonVersion, startedAt: this.startedAt, heartbeatAt: new Date(this.now()).toISOString(), gpu: snap.gpu, services: state === 'stopped' ? [] : snap.services, state });
+    const endpoint = buildEndpoint({ url: state === 'stopped' ? null : this.tunnel.url, tunnelSource: this.tunnel.source, tunnelReadyConnections: state === 'stopped' ? null : snap.tunnelReadyConnections, daemonVersion: this.daemonVersion, startedAt: this.startedAt, heartbeatAt: new Date(this.now()).toISOString(), gpu: snap.gpu, services: state === 'stopped' ? [] : snap.services, state });
     try {
       const r = await this.mailbox.publishEndpoint(endpoint);
       this.#lastPublish = this.now(); this.#dirty = false; this.#failures = 0; this.#nextAttempt = 0; this.lastError = null;

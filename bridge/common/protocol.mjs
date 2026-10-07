@@ -5,8 +5,10 @@
 //   METHOD "\n" path-with-query "\n" timestamp-ms "\n" nonce "\n" sha256hex(body)
 // signed with Ed25519 (crypto.sign(null, ...)); the signature travels base64 in x-bridge-sig.
 import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
 
-export const DAEMON_VERSION = '0.1.0';
+export const DAEMON_VERSION = '0.2.0';
 export const PROTOCOL = 'foundry-bridge/1';
 
 export const H = Object.freeze({
@@ -99,13 +101,51 @@ export function constantTimeEqualHex(a, b) {
 }
 
 // ---- nonce cache ---------------------------------------------------------------------------------
-// Insertion order equals expiry order (fixed TTL, monotonic clock), so expired entries are purged
-// from the front. When full of unexpired nonces it refuses new ones rather than evicting: evicting
-// an unexpired nonce would reopen a replay window.
+// A nonce is remembered until max(now, ts) + ttl. Because ttl (10 min) is longer than the +-120 s
+// timestamp window, a forgotten nonce can never pass the timestamp check again, whatever the clock
+// did in between: expiry is anchored in the request's own timestamp. Expired entries are purged from
+// the front (insertion order is expiry order up to the 240 s spread of accepted timestamps, so an
+// entry may outlive its expiry by that much, never the reverse). When full of unexpired nonces the
+// cache refuses new ones rather than evicting: evicting an unexpired nonce would reopen a replay window.
+//
+// `file` (optional) makes the cache survive a daemon restart (finding F2): every accepted nonce is
+// appended synchronously to the journal before the request is acted on, and the unexpired entries
+// are reloaded on start. The journal is compacted when it holds many expired lines. A failed write is
+// reported through onError (the cache keeps working in memory) and in `journal.error`.
+const JOURNAL_LINE = /^([0-9]{1,16}) ([0-9a-f]{32,128})$/;
+
 export class NonceCache {
-  #map = new Map();
-  constructor({ ttlMs = NONCE_TTL_MS, maxSize = 100_000, now = () => Date.now() } = {}) {
-    this.ttlMs = ttlMs; this.maxSize = maxSize; this.now = now;
+  #map = new Map(); #file = null; #lines = 0; #onError; #error = null;
+  constructor({ ttlMs = NONCE_TTL_MS, maxSize = 100_000, now = () => Date.now(), file = null, onError = () => {} } = {}) {
+    this.ttlMs = ttlMs; this.maxSize = maxSize; this.now = now; this.#file = file; this.#onError = onError;
+    if (file) this.#load();
+  }
+  #load() {
+    let text = '';
+    try { text = fs.readFileSync(this.#file, 'utf8'); } catch (error) { if (error.code !== 'ENOENT') this.#fail(error); }
+    const t = this.now(); const entries = [];
+    for (const line of text.split('\n')) {
+      const m = JOURNAL_LINE.exec(line);   // a torn last line from a crash simply does not match
+      if (m && Number(m[1]) > t) entries.push([m[2], Number(m[1])]);
+    }
+    entries.sort((a, b) => a[1] - b[1]);
+    for (const [nonce, expiry] of entries) this.#map.set(nonce, Math.max(expiry, this.#map.get(nonce) ?? 0));
+    this.#compact();
+  }
+  #fail(error) {
+    const msg = `nonce journal ${this.#file}: ${error.code ?? error.message}`;
+    if (this.#error !== msg) this.#onError(new Error(msg));
+    this.#error = msg;
+  }
+  #compact() {
+    if (!this.#file) return;
+    try {
+      fs.mkdirSync(path.dirname(this.#file), { recursive: true });
+      const tmp = `${this.#file}.${process.pid}.tmp`;
+      fs.writeFileSync(tmp, [...this.#map].map(([n, e]) => `${e} ${n}\n`).join(''), { mode: 0o600 });
+      fs.renameSync(tmp, this.#file);
+      this.#lines = this.#map.size; this.#error = null;
+    } catch (error) { this.#fail(error); }
   }
   #purge() {
     const t = this.now();
@@ -113,12 +153,22 @@ export class NonceCache {
   }
   has(nonce) { this.#purge(); return this.#map.has(nonce); }
   // true when recorded; false when already seen; throws NONCE_CACHE_FULL when full.
-  add(nonce) {
+  // `ts` is the request's timestamp (ms); expiry is max(now, ts) + ttl.
+  add(nonce, ts = this.now()) {
     this.#purge();
     if (this.#map.has(nonce)) return false;
     if (this.#map.size >= this.maxSize) { const e = new Error('nonce cache full'); e.code = 'NONCE_CACHE_FULL'; throw e; }
-    this.#map.set(nonce, this.now() + this.ttlMs);
+    const expiry = Math.max(this.now(), Number(ts) || 0) + this.ttlMs;
+    this.#map.set(nonce, expiry);
+    if (this.#file) {
+      if (this.#lines >= Math.max(4096, 2 * this.#map.size)) this.#compact();
+      else {
+        try { fs.appendFileSync(this.#file, `${expiry} ${nonce}\n`, { mode: 0o600 }); this.#lines++; this.#error = null; }
+        catch (error) { this.#fail(error); }
+      }
+    }
     return true;
   }
   get size() { this.#purge(); return this.#map.size; }
+  get journal() { return this.#file ? { file: this.#file, lines: this.#lines, error: this.#error } : null; }
 }

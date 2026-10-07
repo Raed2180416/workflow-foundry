@@ -10,17 +10,18 @@ export const WINDOW = 1800; // seconds of logs per task
 const MAX_ATTEMPTS = 64; // from this attempt on the soft preferences (Jaccard, fallback callers) are dropped;
 // structural validity (topology size, eligible root candidates) is never relaxed
 
-// Difficulty knobs. lines is the target bundle size (actual size is within about +/-15%).
-// v1 knobs are unchanged; the v2 block (after `paraphrase`) was added by the audit (AUDIT.md).
+// Difficulty knobs. lines is the target bundle size (actual medians are within about +20%).
+// In HARD/EASY the keys before `paraphrase` were added by the v3 audit (AUDIT.md, 2026-10-07); the keys from
+// `paraphrase` on come from the v2 audit round; the per-level keys are v1's (with v3 changes noted in AUDIT.md).
 const BASE = { anchors: 1, minRootCands: 1, wrap: 0, chronic: 0, pods: false, soft: 0, deploy: 0, blipRoot: false, blipSame: false, benignHard: false, added: 0, stale: 0, proseAliases: 0, mislead: 0, notice: false, inject: false, legacySource: false, noisyNote: false, hypothesis: false, addresses: false };
-const HARD = { siblingOnset: 0.2, anonMax: 2, decoyBlip: 0.5, partialRec: true, statsOnset: 0.7, statsAfter: true, provider: 0.4, canary: 0.6, podEcho: true, revised: 2, stale: 1, onsetRepeat: 0.25, quiet: [0.3, 1], blipOnset: 0.85, recoverAlt: 0.7, decoyBelowRoot: 0.3, paraphrase: true, lookalikes: true, configLag: [30, 150], anon: 0.6, mixedNotes: 0.5, silentSoft: 0.5, softErr: 0.6, warnSev: 0.3, mention: 0.03, mentionErr: 0.4, decoy: 1, secondary: [0.35, 0.65], lead: [90, 300], cacheLag: [70, 200], blipNear: true, nearPrecursor: 0.8, ticketSubset: true, hardNotes: 2, renewHerring: true, baselines: 2, wantSoft: 0.5, bigSkew: 0.6 };
-const EASY = { siblingOnset: 0, anonMax: 1, decoyBlip: 0, partialRec: false, statsOnset: 0, statsAfter: false, provider: 0, canary: 0, podEcho: false, revised: 0, stale: 0, onsetRepeat: 0, quiet: [1, 1], blipOnset: 0, recoverAlt: 0, decoyBelowRoot: 1, paraphrase: false, lookalikes: false, configLag: null, anon: 0, mixedNotes: 0, silentSoft: 0, softErr: 0, warnSev: 0, mention: 0.01, mentionErr: 0, decoy: 0, secondary: [0, 0], lead: [15, 40], cacheLag: [3, 25], blipNear: false, nearPrecursor: 0, ticketSubset: false, hardNotes: 0, renewHerring: false, baselines: 0, wantSoft: 0, bigSkew: 0 };
+const HARD = { longBlips: true, lookalikeOthers: 0.85, siblingOnset: 0.2, anonMax: 3, decoyBlip: 0.5, partialRec: true, statsOnset: 0.7, statsAfter: true, provider: 0.4, canary: 0.6, podEcho: true, revised: 2, stale: 1, onsetRepeat: 0.25, quiet: [0.3, 1], blipOnset: 0.85, recoverAlt: 0.7, decoyBelowRoot: 0.3, paraphrase: true, lookalikes: true, configLag: [30, 150], anon: 0.8, mixedNotes: 0.5, silentSoft: 0.5, softErr: 0.6, warnSev: 0.3, mention: 0.03, mentionErr: 0.4, decoy: 1, secondary: [0.35, 0.65], lead: [90, 300], cacheLag: [70, 200], blipNear: true, nearPrecursor: 0.8, ticketSubset: true, hardNotes: 2, renewHerring: true, baselines: 3, wantSoft: 0.5, bigSkew: 0.6 };
+const EASY = { longBlips: false, lookalikeOthers: 0, siblingOnset: 0, anonMax: 1, decoyBlip: 0, partialRec: false, statsOnset: 0, statsAfter: false, provider: 0, canary: 0, podEcho: false, revised: 0, stale: 0, onsetRepeat: 0, quiet: [1, 1], blipOnset: 0, recoverAlt: 0, decoyBelowRoot: 1, paraphrase: false, lookalikes: false, configLag: null, anon: 0, mixedNotes: 0, silentSoft: 0, softErr: 0, warnSev: 0, mention: 0.01, mentionErr: 0, decoy: 0, secondary: [0, 0], lead: [15, 40], cacheLag: [3, 25], blipNear: false, nearPrecursor: 0, ticketSubset: false, hardNotes: 0, renewHerring: false, baselines: 0, wantSoft: 0, bigSkew: 0 };
 export const KNOBS = {
   1: { ...BASE, ...EASY, anchors: 1, services: 6, batch: 1, lines: 300, bg: 0.78, styles: ['plain'], refs: ['name'], blipOther: 1, noisyNote: true },
   2: { ...BASE, ...EASY, anchors: 2, services: 8, batch: 1, lines: 400, bg: 0.78, wrap: 0.15, styles: ['plain', 'bracket', 'kv'], refs: ['name', 'name', 'host'], soft: 0.4, deploy: 1, blipSame: true, blipOther: 1, noisyNote: true, mention: 0.015, secondary: [0.1, 0.2] },
-  3: { ...BASE, ...HARD, anchors: 2, minRootCands: 2, decoy: 2, services: 11, batch: 1, lines: 420, bg: 0.6, wrap: 0.3, chronic: 1, styles: ['plain', 'bracket', 'kv', 'json', 'short'], refs: ['name', 'host', 'legacy'], pods: true, soft: 0.5, deploy: 1, blipRoot: true, blipSame: true, blipOther: 2, benignHard: true, added: 1 },
-  4: { ...BASE, ...HARD, anchors: 3, minRootCands: 2, decoy: 2, services: 14, batch: 2, lines: 1600, bg: 0.7, wrap: 0.35, chronic: 1, styles: ['plain', 'bracket', 'kv', 'json', 'short'], refs: ['name', 'host', 'legacy', 'ip'], pods: true, soft: 0.45, deploy: 1, blipRoot: true, blipSame: true, blipOther: 2, benignHard: true, added: 1, stale: 1, proseAliases: 2, mislead: 1, hypothesis: true, addresses: true, warnSev: 0.35 },
-  5: { ...BASE, ...HARD, anchors: 3, minRootCands: 2, services: 18, batch: 2, lines: 4000, bg: 0.72, wrap: 0.35, chronic: 2, styles: ['plain', 'bracket', 'kv', 'json', 'short'], refs: ['name', 'host', 'legacy', 'ip'], pods: true, soft: 0.45, deploy: 2, blipRoot: true, blipSame: true, blipOther: 4, benignHard: true, added: 2, proseAliases: 3, mislead: 1, notice: true, inject: true, legacySource: true, hypothesis: true, addresses: true, warnSev: 0.4, softErr: 0.7, decoy: 2, hardNotes: 3, baselines: 3, revised: 3, stale: 2 },
+  3: { ...BASE, ...HARD, anchors: 2, minRootCands: 2, decoy: 2, services: 11, batch: 1, lines: 420, bg: 0.38, wrap: 0.3, chronic: 1, styles: ['plain', 'bracket', 'kv', 'json', 'short'], refs: ['name', 'host', 'legacy'], pods: true, soft: 0.5, deploy: 1, blipRoot: true, blipSame: true, blipOther: 2, benignHard: true, added: 1 },
+  4: { ...BASE, ...HARD, anchors: 3, minRootCands: 2, decoy: 2, services: 14, batch: 2, lines: 1600, bg: 0.7, wrap: 0.35, chronic: 1, styles: ['plain', 'bracket', 'kv', 'json', 'short'], refs: ['name', 'host', 'legacy', 'ip'], pods: true, soft: 0.45, deploy: 1, blipRoot: true, blipSame: true, blipOther: 2, benignHard: true, added: 1, stale: 1, proseAliases: 2, mislead: 1, hypothesis: true, addresses: true, warnSev: 0.35, baselines: 4 },
+  5: { ...BASE, ...HARD, anchors: 3, minRootCands: 2, services: 18, batch: 2, lines: 4000, bg: 0.72, wrap: 0.35, chronic: 2, styles: ['plain', 'bracket', 'kv', 'json', 'short'], refs: ['name', 'host', 'legacy', 'ip'], pods: true, soft: 0.45, deploy: 2, blipRoot: true, blipSame: true, blipOther: 4, benignHard: true, added: 2, proseAliases: 3, mislead: 1, notice: true, inject: true, legacySource: true, hypothesis: true, addresses: true, warnSev: 0.4, softErr: 0.7, decoy: 2, hardNotes: 3, baselines: 5, revised: 3, stale: 2 },
 };
 
 // Which roles can host each fault class (the root is never the gateway or a batch job).
@@ -707,11 +708,18 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
     const pool = K.mentionErr && rn.chance(K.mentionErr) ? C.MENTION_ERR : C.MENTION;
     emit(t, s, rn.pick(pool)(ctxFor(s, t, rn, { callee: refOf(e), route: rn.pick(s.routes) }), rn), 'mention');
   }
-  // Onset lookalikes in the root (d3+): benign lines with the onset's words, some shortly before T.
+  // Onset lookalikes (d3+): benign lines with the onset's words in the root, some shortly before T.
+  // v3 (audit): in v2 only the root ever logged these templates, so one regex over them named the root in 100%
+  // of d3 tasks. Now most other services log lookalikes of a class of their own, in the same numbers.
+  const classesFor = s => C.FAULT_CLASSES.filter(x => (x !== 'connection_pool_exhaustion' || s.role.db) && (x !== 'upstream_rate_limiting' || s.ext));
   if (K.lookalikes) {
-    const times = [rn.int(30, Math.max(31, T - 400)), rn.int(Math.max(30, T - 300), T - 60), ...Array.from({ length: rn.int(0, 2) }, () => rn.int(30, T - 60)), ...Array.from({ length: rn.int(1, 3) }, () => rn.int(T + 60, WINDOW - 1))];
+    const times = [rn.int(30, Math.max(31, T - 400)), rn.int(Math.max(30, T - 300), T - 60), ...Array.from({ length: rn.int(0, 1) }, () => rn.int(30, T - 60)), ...Array.from({ length: rn.int(1, 2) }, () => rn.int(T + 60, WINDOW - 1))];
     // After T a config lookalike stages a later release (the new one is already live by then).
     for (const t of times) emit(t, root, rn.pick(C.LOOKALIKE[cls])({ ...ctxFor(root, t, rn), newVer: t > T ? root.otherVer : root.newVer }, rn), 'lookalike');
+    for (const s of serving.filter(x => x !== root && x !== gateway && rn.chance(K.lookalikeOthers))) {
+      const klass = rn.pick(classesFor(s));
+      for (let i = 0, n = 2 + rn.int(0, 1) + rn.int(1, 2); i < n; i++) { const t = rn.int(30, WINDOW - 1); emit(t, s, rn.pick(C.LOOKALIKE[klass])(ctxFor(s, t, rn), rn), 'lookalike'); }
+    }
   }
   // Same-vocabulary baselines at normal values: the root's own class (so its onset is the first
   // abnormal value, not the first matching word) and random classes in a few other services.
@@ -745,8 +753,11 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
     for (let t = rn.int(5, 150); t < WINDOW; t += rn.int(100, 220)) emit(t, root, rn.pick(chronicPool)(ctxFor(root, t, rn), rn), 'baseline');
     const pool = serving.filter(s => s !== root && s !== gateway && !decoys.includes(s));
     for (const s of rn.sample(pool, Math.min(pool.length, K.baselines - 1))) {
-      const klass = rn.pick(C.FAULT_CLASSES.filter(x => (x !== 'connection_pool_exhaustion' || s.role.db) && (x !== 'upstream_rate_limiting' || s.ext)));
+      const klass = rn.pick(classesFor(s));
       baselineFor(s, klass);
+      // v3 (audit): the same own-vocabulary chronic warnings as the root (v2: ROOT_CHRONIC lines were root-only).
+      const own = rn.chance(0.7) ? (C.ROOT_CHRONIC[klass] || C.CHRONIC[klass]) : C.CHRONIC[C.SIBLING_CLASS[klass]];
+      for (let t = rn.int(5, 150); t < WINDOW; t += rn.int(100, 220)) emit(t, s, rn.pick(own)(ctxFor(s, t, rn), rn), 'baseline');
     }
   }
 
@@ -758,15 +769,17 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   // root's own blip may open with onset wording (BLIP_ONSET).
   const blip = (s, klass, t0, tag, offsets = null, onsetLike = false) => {
     const P = C.FAULTS[klass];
-    const offs = offsets || blipOffsets();
+    const offs = offsets || blipOffsets(onsetLike && K.longBlips);
     offs.lines.forEach((dt, i) => emit(t0 + dt, s, (onsetLike && (i === 0 || rh.chance(0.6)) ? C.BLIP_ONSET[klass] : rh.pick(P.blip))(ctxFor(s, t0 + dt, rh), rh), tag));
     const recover = K.recoverAlt && rh.chance(K.recoverAlt) ? rh.pick(C.RECOVER_ALT[klass]) : P.recover;
     emit(t0 + offs.end, s, recover(ctxFor(s, t0 + offs.end, rh), rh), tag);
     return t0;
   };
-  const blipOffsets = () => {
+  // v3 (audit): onset-worded blips in other services are longer (3-6 lines), so that "the callee with the most
+  // onset-worded lines" no longer singles out the root.
+  const blipOffsets = (long = false) => {
     const lines = [0];
-    for (let i = 1, n = rh.int(2, 3); i < n; i++) lines.push(lines[i - 1] + rh.int(5, 40));
+    for (let i = 1, n = long ? rh.int(3, 6) : rh.int(2, 3); i < n; i++) lines.push(lines[i - 1] + rh.int(5, 40));
     return { lines, end: lines[lines.length - 1] + rh.int(30, 120) };
   };
   const herrings = { blips: [] };
@@ -806,7 +819,7 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
     const tD = Math.max(5, T - rh.int(30, 300));
     // v3 (audit): about as loud as the root's own WARN/ERROR lines (v2: a fixed 14-22 at d3).
     const rootLoud = events.filter(ev => ev.s === root.key && (ev.level === 'WARN' || ev.level === 'ERROR')).length;
-    const n = Math.max(Math.round(rh.int(14, 22) * Math.max(1, K.lines / 600)), Math.round(rootLoud * rh.float(0.7, 1.3)));
+    const n = Math.max(Math.round(rh.int(14, 22) * Math.max(1, K.lines / 600)), Math.round(rootLoud * rh.float(0.5, 1.0)));
     const pool = C.DECOY[s.kind] || C.DECOY.svc;
     // Half of the decoy lines are benign-valued warnings in another class's vocabulary, so the
     // decoy also "looks like" a fault class to keyword matching.
@@ -922,9 +935,10 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   const tableEdges = edges.map(e => ({ ...e }));
   const notes = [];
   // Edges that exist but are missing from the table (described in prose instead).
-  // v3 (audit): drawn uniformly from all hard, non-gateway edges. v2 drew it among impacted->impacted edges
-  // with edges into the root counted twice, so the callee of this note was the root in 89% of d3 tasks.
-  const addedPool = edges.filter(e => !e.soft && e.from !== 'gateway');
+  // v3 (audit): drawn uniformly from all non-gateway edges (an optional one also gets its optional note). v2
+  // drew it among impacted->impacted edges with edges into the root counted twice, so the callee of this note
+  // was the root in 89% of d3 tasks.
+  const addedPool = edges.filter(e => e.from !== 'gateway');
   const added = rs.sample(addedPool, K.added);
   const monthName = rs.pick(['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September']);
   for (const e of added) {

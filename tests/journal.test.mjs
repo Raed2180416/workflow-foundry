@@ -17,7 +17,8 @@ test('journal creates model_calls and its indexes idempotently on a shared handl
   new Journal(db); new Journal(db);
   const columns = db.prepare('PRAGMA table_info(model_calls)').all().map(c => c.name);
   assert.deepEqual(columns, ['id', 'replay_key', 'run_id', 'node_key', 'attempt', 'sample_index', 'model_id', 'provider', 'engine_version', 'decoding',
-    'receipt_hash', 'prompt_hash', 'request', 'response', 'ok', 'error_code', 'input_tokens', 'output_tokens', 'cost_usd', 'imputed_usd', 'latency_ms', 'created_at']);
+    'receipt_hash', 'prompt_hash', 'request', 'response', 'ok', 'error_code', 'input_tokens', 'output_tokens', 'cost_usd', 'imputed_usd', 'latency_ms', 'created_at',
+    'cache_read_tokens', 'cache_write_tokens']);
   const indexes = db.prepare("SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='model_calls' ORDER BY name").all().map(r => r.name);
   assert.deepEqual(indexes, ['model_calls_attempt', 'model_calls_replay']);
   assert.throws(() => new Journal({}), { code: 'JOURNAL_DB' });
@@ -55,7 +56,24 @@ test('forAttempt, forRun and costForRun are scoped and ordered', () => {
   assert.equal(cost.calls, 3); assert.equal(cost.errors, 1);
   assert.ok(Math.abs(cost.costUsd - 0.002) < 1e-12); assert.ok(Math.abs(cost.imputedUsd - 0.0005) < 1e-12);
   assert.equal(cost.inputTokens, 107); assert.equal(cost.outputTokens, 23);
-  assert.deepEqual(journal.costForRun('nobody'), { calls: 0, costUsd: 0, imputedUsd: 0, inputTokens: 0, outputTokens: 0, errors: 0 });
+  assert.deepEqual(journal.costForRun('nobody'), { calls: 0, costUsd: 0, imputedUsd: 0, inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, errors: 0 });
+});
+
+test('cached prompt tokens are journaled, summed per run, and added to journals created before them', () => {
+  const db = new DatabaseSync(':memory:');
+  // A journal from before the cache columns existed: the same table without them, with one row.
+  db.exec(`CREATE TABLE model_calls(id INTEGER PRIMARY KEY, replay_key TEXT NOT NULL, run_id TEXT NOT NULL, node_key TEXT NOT NULL,
+    attempt INT, sample_index INT, model_id TEXT NOT NULL, provider TEXT, engine_version TEXT, decoding TEXT, receipt_hash TEXT, prompt_hash TEXT,
+    request TEXT, response TEXT, ok INT NOT NULL, error_code TEXT, input_tokens INT, output_tokens INT, cost_usd REAL, imputed_usd REAL,
+    latency_ms INT, created_at INT NOT NULL)`);
+  db.prepare(`INSERT INTO model_calls(replay_key,run_id,node_key,model_id,ok,input_tokens,output_tokens,cost_usd,created_at) VALUES('old','run-1','n','m',1,4,2,0.1,0)`).run();
+  const journal = new Journal(db);
+  assert.equal(journal.get(1).cacheReadTokens, null, 'old rows keep an unknown cache count');
+  const id = journal.record(entry({ replayKey: 'new', inputTokens: 3, outputTokens: 40, cacheReadTokens: 4200, cacheWriteTokens: 900 }));
+  assert.equal(journal.get(id).cacheReadTokens, 4200); assert.equal(journal.get(id).cacheWriteTokens, 900);
+  const cost = journal.costForRun('run-1');
+  assert.equal(cost.calls, 2); assert.equal(cost.inputTokens, 7); assert.equal(cost.cacheReadTokens, 4200); assert.equal(cost.cacheWriteTokens, 900);
+  assert.throws(() => journal.record(entry({ cacheReadTokens: -1 })), { code: 'JOURNAL_ENTRY' });
 });
 
 test('record rejects incomplete or malformed entries without writing', () => {

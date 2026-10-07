@@ -34,7 +34,7 @@ const runOnly = ['model-mode', 'salt', 'max-cost', 'assignment'];
 const modelCommands = new Set(['run', 'resume', 'tick']);
 function checkModelArguments(command, args) {
   const misplaced = [...runOnly.filter(name => args[name] !== undefined && command !== 'run'),
-    ...(args.policy !== undefined && !modelCommands.has(command) ? ['policy'] : []), ...(args['tick-interval'] !== undefined && command !== 'serve' ? ['tick-interval'] : [])];
+    ...(args.policy !== undefined && !modelCommands.has(command) && command !== 'validate' ? ['policy'] : []), ...(args['tick-interval'] !== undefined && command !== 'serve' ? ['tick-interval'] : [])];
   if (misplaced.length) throw new FoundryError('CLI_ARGUMENT', `--${misplaced[0]} is not supported by ${command}. Use --help.`);
   if (args['max-cost'] !== undefined && !/^(0|[1-9][0-9]{0,6})(\.[0-9]{1,6})?$/.test(args['max-cost'])) throw new FoundryError('CLI_ARGUMENT', '--max-cost must be a non-negative decimal number of USD');
   if (args['tick-interval'] !== undefined && !/^(0|[1-9][0-9]{0,4})$/.test(args['tick-interval'])) throw new FoundryError('CLI_ARGUMENT', '--tick-interval must be a whole number of seconds (0 turns the timer scan off)');
@@ -378,7 +378,14 @@ async function main() {
       if (command === 'resume') run = foundry.store.run(item);
       else {
         let workflow;
-        if (existsSync(item ?? '')) { workflow = readJson(item); foundry.save(workflow, args['expected-hash']); }
+        if (existsSync(item ?? '')) {
+          workflow = readJson(item);
+          try { foundry.save(workflow, args['expected-hash']); }
+          catch (error) {
+            if (error.code !== 'STALE_WORKFLOW') throw error;
+            throw new FoundryError('STALE_WORKFLOW', `${error.message}: the workspace holds another version of ${workflow.id}. Use a fresh --workspace, or bump "version" and pass --expected-hash ${error.details?.currentHash ?? '<current head hash>'}`, error.details);
+          }
+        }
         else workflow = foundry.store.workflow(item).workflow;
         const assignment = args.assignment === undefined ? undefined : readJson(args.assignment);
         await requireSpendBudget(workflow, host.modelPolicy, { mode: host.mode, maxCost: foundry.runtime.policy.maxCost, assignment });

@@ -11,6 +11,8 @@ import path from 'node:path';
 const argv = process.argv.slice(2);
 const opt = name => { const i = argv.indexOf(name); return i >= 0 ? argv[i + 1] : undefined; };
 
+if (argv[0] === '--version') { console.log('Python 3.12.0-fake'); process.exit(0); }
+
 if (argv[0] === '-c') {
   console.log('fake selftest starting');
   console.log('FOUNDRY_RESULT ' + JSON.stringify({ python: '3.12.0-fake', torch: '2.8.0+fake', cuda_available: true, device: 'Fake RTX 4060 Laptop GPU', vram_mib: 8188, bf16_tflops: 1.23, kev_import: 'ok', env_has_hf_token: 'HF_TOKEN' in process.env, pythonpath: process.env.PYTHONPATH ?? null }));

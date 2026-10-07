@@ -1008,30 +1008,38 @@ export const DEPLOY_PREV = {
 // Benign lines in the root that superficially resemble its onset (same words, harmless meaning).
 // From difficulty 3 a few appear before T (some within five minutes of it) and a few after.
 export const LOOKALIKE = {
+  // v3 (audit): the second template of each class repeats the real onset wording with a benign qualifier.
   connection_pool_exhaustion: [
     (c, r) => ['WARN', `pool '${c.pool}' briefly at ${c.max}/${c.max} during the scheduled report query; no waiters, drained in ${r.int(1, 3)}s`],
+    (c, r) => ['WARN', `connection pool '${c.pool}' at capacity: in use ${c.max}/${c.max} for the nightly report query only; no callers waiting, drained in ${r.int(1, 3)}s`],
   ],
   certificate_expiry: [
     (c, r) => ['WARN', `handshake from ${c.peerIp} rejected: the client's own certificate expired (client-side problem)`],
     (c, r) => ['WARN', `TLS handshake from ${c.peerIp} failed: client presented an expired certificate; connection refused`],
+    (c, r) => ['WARN', `TLS handshake from ${c.peerIp} rejected by the client: certificate expired on the client's side (its own outdated trust store; our certificate is valid)`],
   ],
   bad_config_deploy: [
     (c, r) => ['INFO', `release ${c.newVer} staged for canary (inactive until rollout)`],
   ],
   disk_full: [
     (c, r) => ['WARN', `disk usage on ${c.vol}/tmp jumped to ${r.int(70, 85)}% during a scheduled compaction; cleaned up`],
+    (c, r) => ['WARN', `disk usage on ${c.vol}/tmp jumped to ${r.int(70, 85)}% (was ${r.int(40, 60)}% a few minutes ago) while the scheduled compaction ran; space returned when it finished`],
   ],
   dns_resolution_failure: [
     (c, r) => ['WARN', `lookup legacy-${hex(r, 4)}.partner.example: no such host (retired endpoint, ignored)`],
+    (c, r) => ['WARN', `lookup legacy-${hex(r, 4)}.partner.example: temporary failure in name resolution (retired endpoint, nothing calls it any more)`],
   ],
   memory_leak_oom: [
     (c, r) => ['WARN', `heap after full gc ${r.int(58, 66)}% during cache warm-up (expected; settles within 2 minutes)`],
+    (c, r) => ['WARN', `heap after full GC is ${r.int(58, 66)}% (baseline ${c.base}%) while the cache warms up after a deploy of a sibling service; expected to settle within 2 minutes`],
   ],
   clock_skew: [
     (c, r) => ['WARN', `ntp: offset +${r.int(120, 600)}ms after live migration of the VM, slewing (within tolerance)`],
+    (c, r) => ['WARN', `clock offset vs time source is +0.${r.int(2, 4)}s after live migration of the VM (tolerance 0.5s); slewing back`],
   ],
   upstream_rate_limiting: [
     (c, r) => ['WARN', `${c.ext} sandbox endpoint answered 429 (test traffic; production quota unaffected)`],
+    (c, r) => ['WARN', `${c.ext} responded 429 Too Many Requests (retry-after ${r.int(10, 60)}s) to the sandbox test key; the production quota is unaffected`],
   ],
   poisoned_cache: [
     (c, r) => ['INFO', `cache refill: loaded ${r.int(200, 900)} entries into namespace '${c.ns}-preview' from snapshot ${c.snap}`],

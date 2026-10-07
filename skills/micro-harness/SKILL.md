@@ -38,9 +38,10 @@ and a check. It is judged only by an external oracle on unseen tasks of the fami
      `code`. Never ask a model to apply a long rule list to many items at once.
    - End with a `verify` node (method `code`) that checks structural invariants of the
      answer, and a final node with id `answer` whose output is exactly the answer object.
-4. **Choose models.** Start every agent node at the cheapest class that can plausibly do the
-   judgment (`S` or `M`), with `maxClass` one or two steps up so escalation (schema failure,
-   failed check) can rescue hard items. Use `decoding.reasoning: "none"` for extraction and
+4. **Choose models.** Start every agent node at the cheapest class in the session's model
+   policy that can plausibly do the judgment (here `M` = Haiku; a class with no model in the
+   session policy fails validation with MODEL_CLASS_EMPTY), with `maxClass` one or two steps
+   up so escalation (schema failure, failed check) can rescue hard items. Use `decoding.reasoning: "none"` for extraction and
    classification (extended thinking made a small model *worse* on narrow extraction in our
    measurements, and 3–5× more expensive); use `low`/`medium` only for genuine multi-step
    judgments.

@@ -8,7 +8,15 @@
 // Every write is fetch -> reset to the remote tip -> re-apply -> commit -> push, retried with backoff
 // on a non-fast-forward. That is a rebase of one regenerated commit; it works in shallow clones where
 // `pull --rebase` can fail, and it never force-pushes.
+//
+// Concurrency (finding F4): every git operation on a clone runs under one lock, so a refresh can never
+// interleave with a publish. The lock is a per-instance promise queue plus a lock file next to the
+// clone (`<dir>.lock`), which also serializes other processes (`daemon.mjs --check`, the cloud CLI,
+// init-mailbox.mjs) that use the same clone. A lock file whose owner process is gone, or whose holder
+// stopped refreshing it for 2 minutes, is taken over. Under the lock a leftover `.git/index.lock`
+// (from a git process killed on timeout) is stale by construction and is removed.
 import { spawn } from 'node:child_process';
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import fsp from 'node:fs/promises';
 import os from 'node:os';
@@ -59,6 +67,78 @@ async function git(args, opts) {
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const isNonFastForward = stderr => /non-fast-forward|fetch first|\[rejected\]|stale info|failed to update ref|cannot lock ref/i.test(stderr);
 
+// ---- cross-process lock file ---------------------------------------------------------------------
+
+export const LOCK_STALE_MS = 120_000;      // a holder touches its lock every 30 s; 2 min of silence = dead holder
+const HELD_LOCKS = new Set();
+let lockExitHook = false;
+
+function pidAlive(pid) {
+  if (!Number.isInteger(pid) || pid <= 0) return false;
+  try { process.kill(pid, 0); return true; } catch (error) { return error.code === 'EPERM'; }
+}
+
+function readLock(file) {
+  try {
+    const st = fs.statSync(file);
+    let owner = null; try { owner = JSON.parse(fs.readFileSync(file, 'utf8')); } catch {}
+    return { mtimeMs: st.mtimeMs, owner };
+  } catch (error) { if (error.code === 'ENOENT') return null; throw error; }
+}
+
+// -> { release() }. Waits up to timeoutMs, then throws MAILBOX_BUSY.
+export async function acquireLockFile(file, { timeoutMs = 300_000, staleMs = LOCK_STALE_MS, pollMs = 100, log = () => {} } = {}) {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  const token = crypto.randomBytes(8).toString('hex');
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    try {
+      fs.writeFileSync(file, JSON.stringify({ pid: process.pid, host: os.hostname(), token, at: new Date().toISOString() }), { flag: 'wx', mode: 0o600 });
+      break;
+    } catch (error) {
+      if (error.code !== 'EEXIST') throw error;
+      const cur = readLock(file);
+      if (!cur) continue;   // released between our attempt and the read
+      const owner = cur.owner;
+      const sameHost = owner?.host === os.hostname();
+      const ours = [...HELD_LOCKS].some(h => h.token === owner?.token);
+      const dead = sameHost && !ours && (owner.pid === process.pid || !pidAlive(owner.pid));   // same pid but not ours: a previous process
+      const silent = Date.now() - cur.mtimeMs > staleMs;
+      const unreadable = !owner && Date.now() - cur.mtimeMs > 5000;   // a fresh empty file is a holder mid-write
+      if (dead || silent || unreadable) {
+        // take over. If another process replaced the stale lock with a live one in between, we moved
+        // the live one: put it back.
+        const aside = `${file}.stale-${token}`;
+        try {
+          fs.renameSync(file, aside);
+          if ((readLock(aside)?.owner?.token ?? null) !== (owner?.token ?? null)) { try { fs.linkSync(aside, file); } catch {} }
+          else log(`mailbox lock ${file}: took over the lock of a ${dead ? 'dead' : silent ? 'silent' : 'broken'} holder (pid ${owner?.pid ?? '?'})`);
+          fs.rmSync(aside, { force: true });
+        } catch {}
+        continue;
+      }
+      if (Date.now() > deadline) throw Object.assign(new Error(`mailbox lock ${file} is held by pid ${cur.owner?.pid} on ${cur.owner?.host}`), { code: 'MAILBOX_BUSY' });
+      await sleep(pollMs);
+    }
+  }
+  const keepAlive = setInterval(() => { try { const t = new Date(); fs.utimesSync(file, t, t); } catch {} }, Math.max(1000, Math.floor(staleMs / 4)));
+  keepAlive.unref?.();
+  const held = { file, token };
+  HELD_LOCKS.add(held);
+  if (!lockExitHook) { lockExitHook = true; process.on('exit', () => { for (const h of HELD_LOCKS) releaseSync(h); }); }
+  return {
+    release() {
+      clearInterval(keepAlive);
+      HELD_LOCKS.delete(held);
+      releaseSync(held);
+    }
+  };
+}
+
+function releaseSync({ file, token }) {
+  try { if (JSON.parse(fs.readFileSync(file, 'utf8')).token === token) fs.rmSync(file, { force: true }); } catch {}
+}
+
 // ---- keys ----------------------------------------------------------------------------------------
 
 // Reads every *.pub (PEM SPKI Ed25519, <= 4 KiB) in `dir`. Bad files are reported, never fatal.
@@ -88,9 +168,11 @@ export function keyFileName(label, id) {
 
 // ---- endpoint.json -------------------------------------------------------------------------------
 
-export function buildEndpoint({ url, daemonVersion, startedAt, heartbeatAt, gpu = null, services = [], tunnelSource = null, state = 'up' }) {
+// tunnelReadyConnections: cloudflared's edge connections when the daemon published (null = unknown).
+// 0 means the URL exists but Cloudflare answers 530 / error 1033 until cloudflared connects.
+export function buildEndpoint({ url, daemonVersion, startedAt, heartbeatAt, gpu = null, services = [], tunnelSource = null, tunnelReadyConnections = null, state = 'up' }) {
   return {
-    schema: ENDPOINT_SCHEMA, state, url: url ?? null, tunnelSource, daemonVersion,
+    schema: ENDPOINT_SCHEMA, state, url: url ?? null, tunnelSource, tunnelReadyConnections: Number.isInteger(tunnelReadyConnections) ? tunnelReadyConnections : null, daemonVersion,
     startedAt, heartbeatAt,
     gpu: gpu ? { name: gpu.name ?? null, memoryTotalMiB: gpu.memoryTotalMiB ?? null, driver: gpu.driver ?? null, cuda: gpu.cuda ?? null } : null,
     services: services.map(s => ({ id: s.id, kind: s.kind, name: s.name ?? null, state: s.state }))
@@ -141,13 +223,26 @@ Never put private keys, tokens or datasets on this branch. Commits are append-on
 // ---- Mailbox -------------------------------------------------------------------------------------
 
 export class Mailbox {
-  constructor({ dir = DEFAULT_MAILBOX_DIR, remote, branch = DEFAULT_BRANCH, git: gitBin = 'git', env = process.env, depth = 1, commitArgs = DEFAULT_COMMIT_ARGS, timeoutMs = 120_000 } = {}) {
+  #queue = Promise.resolve();
+  constructor({ dir = DEFAULT_MAILBOX_DIR, remote, branch = DEFAULT_BRANCH, git: gitBin = 'git', env = process.env, depth = 1, commitArgs = DEFAULT_COMMIT_ARGS, timeoutMs = 120_000, lockTimeoutMs = 300_000, log = () => {} } = {}) {
     if (!remote || typeof remote !== 'string') throw new TypeError('Mailbox needs a remote URL or path');
     if (!BRANCH_RE.test(branch) || branch.includes('..')) throw new TypeError(`invalid mailbox branch ${branch}`);
-    Object.assign(this, { dir: path.resolve(dir), remote, branch, gitBin, env, depth, commitArgs: [...commitArgs], timeoutMs });
+    Object.assign(this, { dir: path.resolve(dir), remote, branch, gitBin, env, depth, commitArgs: [...commitArgs], timeoutMs, lockTimeoutMs, log });
+    this.lockFile = `${this.dir}.lock`;
   }
   #opts(extra = {}) { return { cwd: this.dir, env: this.env, git: this.gitBin, timeoutMs: this.timeoutMs, ...extra }; }
   #depthArgs() { return this.depth ? ['--depth', String(this.depth)] : []; }
+
+  // Runs fn with this clone locked against every other git operation, in this process and others.
+  // Calls are queued in order. fn must not call the public (locking) methods: use the #-methods.
+  exclusive(fn) {
+    const run = this.#queue.then(async () => {
+      const lock = await acquireLockFile(this.lockFile, { timeoutMs: this.lockTimeoutMs, log: this.log });
+      try { return await fn(); } finally { lock.release(); }
+    });
+    this.#queue = run.catch(() => {});
+    return run;
+  }
 
   static async remoteBranchExists(remote, branch, { env = process.env, git: gitBin = 'git', timeoutMs = 60_000 } = {}) {
     const out = await git(['ls-remote', '--heads', remote, `refs/heads/${branch}`], { env, git: gitBin, timeoutMs, cwd: os.tmpdir() });
@@ -156,7 +251,33 @@ export class Mailbox {
 
   get cloned() { return fs.existsSync(path.join(this.dir, '.git')); }
 
-  async ensure() {
+  ensure() { return this.exclusive(() => this.#ensure()); }
+  refresh() { return this.exclusive(() => this.#refresh()); }
+  head() { return this.exclusive(() => this.#head()); }
+  update(mutator, opts) { return this.exclusive(() => this.#update(mutator, opts)); }
+
+  // Fetch, then read everything the daemon or the cloud needs, as one locked step, so the files read
+  // belong to the commit reported.
+  snapshot() {
+    return this.exclusive(async () => {
+      const head = await this.#refresh();
+      const { keys, errors } = this.readKeys();
+      return { head, keys, errors, killed: this.isKilled(), endpointRaw: this.readEndpointRaw() };
+    });
+  }
+
+  // Under the lock no git process of ours is running, so a lock file git left behind (a git killed on
+  // timeout) is stale. Removing it keeps one crash from wedging the mailbox for good.
+  #clearStaleGitLocks() {
+    for (const name of ['index.lock', 'HEAD.lock', 'shallow.lock', 'config.lock']) {
+      const f = path.join(this.dir, '.git', name);
+      try {
+        if (Date.now() - fs.statSync(f).mtimeMs > 10_000) { fs.rmSync(f, { force: true }); this.log(`mailbox: removed stale .git/${name}`); }
+      } catch {}
+    }
+  }
+
+  async #ensure() {
     if (this.cloned) {
       const url = (await git(['remote', 'get-url', 'origin'], this.#opts())).trim();
       if (url !== this.remote) throw Object.assign(new Error(`mailbox clone at ${this.dir} points at a different remote; move it aside or pass that remote`), { code: 'MAILBOX_REMOTE_MISMATCH' });
@@ -171,8 +292,9 @@ export class Mailbox {
   }
 
   // Fetch the remote tip and make the clone match it exactly (it is a dedicated clone: nothing local to keep).
-  async refresh() {
-    await this.ensure();
+  async #refresh() {
+    await this.#ensure();
+    this.#clearStaleGitLocks();
     const r = await runGit(['fetch', '--quiet', '--no-tags', ...this.#depthArgs(), 'origin', `+refs/heads/${this.branch}:refs/remotes/origin/${this.branch}`], this.#opts());
     if (r.code !== 0) {
       if (/couldn't find remote ref/i.test(r.stderr)) throw Object.assign(new Error(`mailbox branch ${this.branch} disappeared from the remote`), { code: 'MAILBOX_MISSING' });
@@ -181,10 +303,10 @@ export class Mailbox {
     await git(['checkout', '--quiet', '-B', this.branch, `refs/remotes/origin/${this.branch}`], this.#opts());
     await git(['reset', '--quiet', '--hard', `refs/remotes/origin/${this.branch}`], this.#opts());
     await git(['clean', '-fdxq'], this.#opts());
-    return this.head();
+    return this.#head();
   }
 
-  async head() { return (await git(['rev-parse', 'HEAD'], this.#opts())).trim(); }
+  async #head() { return (await git(['rev-parse', 'HEAD'], this.#opts())).trim(); }
 
   readKeys() { return readKeyDir(path.join(this.dir, KEYS_DIR)); }
   isKilled() { return fs.existsSync(path.join(this.dir, KILL_FILE)); }
@@ -193,18 +315,19 @@ export class Mailbox {
   }
 
   // mutator(dir) -> truthy when it changed something. Retries non-fast-forward pushes with backoff.
-  async update(mutator, { message = 'bridge-state update', retries = 6, baseDelayMs = 1000, maxDelayMs = 60_000 } = {}) {
+  // The mutator runs under the lock and must not call the locking methods.
+  async #update(mutator, { message = 'bridge-state update', retries = 6, baseDelayMs = 1000, maxDelayMs = 60_000 } = {}) {
     let lastError = null;
     for (let attempt = 1; attempt <= retries + 1; attempt++) {
-      await this.refresh();
+      await this.#refresh();
       const changed = await mutator(this.dir);
-      if (!changed) return { pushed: false, head: await this.head(), attempts: attempt };
+      if (!changed) return { pushed: false, head: await this.#head(), attempts: attempt };
       await git(['add', '-A', '--', STATE_DIR], this.#opts());
       const diff = await runGit(['diff', '--cached', '--quiet'], this.#opts());
-      if (diff.code === 0) return { pushed: false, head: await this.head(), attempts: attempt };
+      if (diff.code === 0) return { pushed: false, head: await this.#head(), attempts: attempt };
       await git([...this.commitArgs, 'commit', '--quiet', '--no-verify', '-m', message], this.#opts());
       const push = await runGit(['push', '--quiet', '--no-verify', 'origin', `HEAD:refs/heads/${this.branch}`], this.#opts());
-      if (push.code === 0) return { pushed: true, head: await this.head(), attempts: attempt };
+      if (push.code === 0) return { pushed: true, head: await this.#head(), attempts: attempt };
       lastError = new GitError(['push'], push.code, push.stderr);
       if (!isNonFastForward(push.stderr)) throw lastError;
       const delay = Math.min(maxDelayMs, baseDelayMs * 2 ** (attempt - 1)) * (0.5 + Math.random() / 2);

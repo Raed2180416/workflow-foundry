@@ -23,12 +23,22 @@ export const DEFAULTS = Object.freeze({
   proxyTimeoutSeconds: 300,
   serviceStartSeconds: 1200,
   timeouts: { 'sys.selftest': 900, 'kev.train': 43_200, 'kev.benchmark': 14_400 },
-  limits: { fileBytes: 256 * 1024 * 1024, jsonBytes: 1024 * 1024, nonceCache: 100_000 },
+  limits: {
+    fileBytes: 256 * 1024 * 1024,      // PUT /files body
+    jsonBytes: 1024 * 1024,            // any other body (JSON, proxied service requests)
+    unannouncedBodyBytes: 64 * 1024,   // largest body accepted WITHOUT x-bridge-body-sha256 (read before the signature check)
+    nonceCache: 100_000,
+    maxQueued: 32,                     // queued GPU jobs; more get 429
+    maxJobRecords: 1000,               // finished job records (+ logs) kept; older ones are pruned (succeeded kev.train runs are kept)
+    jobLogBytes: 512 * 1024 * 1024,    // a job whose log grows past this is stopped
+    minFreeMiB: 2048                   // uploads and new jobs are refused (507) when the workdir disk has less free space; 0 = off
+  },
   mailbox: { enabled: true, remote: null, branch: 'foundry-bridge', dir: '~/.foundry-bridge/mailbox', refreshMinutes: 5, heartbeatMinutes: 15, keysMaxAgeHours: 24 },
   tunnel: { publicUrl: null, metrics: 'http://127.0.0.1:20241', log: '~/foundry-bridge/cloudflared.log', pollSeconds: 15 }
 });
 
 const NESTED = ['timeouts', 'limits', 'mailbox', 'tunnel'];
+export const FORBIDDEN_JOB_ENV = Object.freeze(['TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD', 'TORCH_FORCE_WEIGHTS_ONLY_LOAD']);
 
 export function expandHome(p) {
   if (typeof p !== 'string') return p;
@@ -69,8 +79,14 @@ export function normalizeConfig(input = {}) {
     else c.env[k] = v.startsWith('~') ? expandHome(v) : v;
   }
   if (!Array.isArray(c.envPassthrough) || c.envPassthrough.some(n => typeof n !== 'string' || !/^[A-Za-z_][A-Za-z0-9_]*$/.test(n))) errors.push('envPassthrough must be a list of variable names');
+  // jobs always run with TORCH_FORCE_WEIGHTS_ONLY_LOAD=1 (PROTOCOL.md §5, finding F1); the override would undo that
+  for (const name of FORBIDDEN_JOB_ENV) {
+    if (c.env && Object.hasOwn(c.env, name)) errors.push(`env.${name} is not allowed: jobs always load torch files weights-only`);
+    if (Array.isArray(c.envPassthrough) && c.envPassthrough.includes(name)) errors.push(`envPassthrough must not include ${name}`);
+  }
   for (const [k, v] of Object.entries(c.timeouts)) if (!(Number.isFinite(v) && v > 0)) errors.push(`timeouts.${k} must be positive seconds`);
-  for (const [k, v] of Object.entries(c.limits)) if (!(Number.isInteger(v) && v > 0)) errors.push(`limits.${k} must be a positive integer`);
+  for (const [k, v] of Object.entries(c.limits)) if (!(Number.isInteger(v) && (v > 0 || (k === 'minFreeMiB' && v === 0)))) errors.push(`limits.${k} must be a positive integer`);
+  if (c.limits.unannouncedBodyBytes > c.limits.jsonBytes) errors.push('limits.unannouncedBodyBytes must not exceed limits.jsonBytes');
   for (const k of ['maxLlamaServices', 'proxyTimeoutSeconds', 'serviceStartSeconds']) if (!(Number.isFinite(c[k]) && c[k] > 0)) errors.push(`${k} must be positive`);
   const m = c.mailbox;
   if (typeof m.enabled !== 'boolean') errors.push('mailbox.enabled must be boolean');

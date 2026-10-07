@@ -132,7 +132,13 @@ export async function request(urlStr, { method = 'GET', headers = {}, body, sign
   try {
     socket = proxyUrl ? await connectTunnel(proxyUrl, host, port, sig) : await connectDirect(host, port, sig);
     if (isHttps) socket = await startTls(socket, host, ca, sig);
-  } catch (error) { socket?.destroy(); throw mapAbort(error); }
+  } catch (error) {
+    socket?.destroy();
+    // phase 'connect': nothing of the request was sent, so the caller may safely retry it
+    const e = mapAbort(error);
+    if (e && typeof e === 'object') e.phase = 'connect';
+    throw e;
+  }
 
   const payload = typeof body === 'string' ? Buffer.from(body) : body;
   const hdrs = { host: url.host, connection: 'close', ...headers };

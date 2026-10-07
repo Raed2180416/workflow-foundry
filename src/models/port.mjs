@@ -61,7 +61,7 @@ export const DECODING_BY_KIND = Object.freeze({
   'openai-compatible-http': (d = {}, { defaultMaxTokens = 1024 } = {}) => ({ maxTokens: d.maxTokens ?? defaultMaxTokens, reasoning: d.reasoning ?? 'none', temperature: d.temperature ?? 0 }),
 });
 
-const RATE = /\b(429|529)\b|overloaded|rate.?limit/i;
+const RATE = /\b(429|529)\b|overloaded|rate.?limit|usage limit|hit your (usage )?limit|limit reached/i;
 export function classifyError(error) {
   if (error?.code === 'CANCELLED') return 'CANCELLED';
   if (MODEL_ERRORS.includes(error?.code)) return error.code;
@@ -89,7 +89,9 @@ class Semaphore {
 const zeroUsage = () => ({ inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0 });
 const count = v => Number.isSafeInteger(v) && v >= 0 ? v : 0;
 const usageOf = u => ({ inputTokens: count(u?.inputTokens), outputTokens: count(u?.outputTokens), cacheReadTokens: count(u?.cacheReadTokens), cacheWriteTokens: count(u?.cacheWriteTokens) });
-const listPrice = (price, u) => ((u.inputTokens + u.cacheReadTokens + u.cacheWriteTokens) * (price?.inputPerMTok ?? 0) + u.outputTokens * (price?.outputPerMTok ?? 0)) / 1e6;
+// List price from usage (the fallback when a provider reports no cost): cache reads at 0.1x the input price, cache
+// writes at the one-hour rate 2x (an upper bound: five-minute writes are 1.25x), output at the output price.
+const listPrice = (price, u) => ((u.inputTokens + 0.1 * u.cacheReadTokens + 2 * u.cacheWriteTokens) * (price?.inputPerMTok ?? 0) + u.outputTokens * (price?.outputPerMTok ?? 0)) / 1e6;
 const plain = v => JSON.parse(JSON.stringify(v));
 const ajvMessage = errors => (errors ?? []).slice(0, 5).map(e => `${e.instancePath || '(root)'} ${e.message}`).join('; ');
 // error.feedback is the model-facing summary of a fault the port detected, built only from fixed text and the schema
@@ -187,7 +189,8 @@ export class ModelPort {
         const latencyMs = Math.max(0, this.now() - started);
         const journalId = this.journal.record({ ...base, provider: hit.provider, engineVersion: hit.engineVersion,
           request: { mode: req.mode, salt: req.salt, replayOf: hit.id }, response: { ...hit.response, replayedFrom: hit.response?.replayedFrom ?? hit.id },
-          ok: hit.ok, errorCode: hit.errorCode, inputTokens: hit.inputTokens, outputTokens: hit.outputTokens, costUsd: 0, imputedUsd: 0, latencyMs });
+          ok: hit.ok, errorCode: hit.errorCode, inputTokens: hit.inputTokens, outputTokens: hit.outputTokens, cacheReadTokens: hit.cacheReadTokens, cacheWriteTokens: hit.cacheWriteTokens,
+          costUsd: 0, imputedUsd: 0, latencyMs });
         return this.#fromRow(hit, { latencyMs, journalId });
       }
       if (req.mode === 'replay') throw new FoundryError('REPLAY_MISS', `No journaled response for ${req.nodeKey} (sample ${req.sampleIndex}) on ${entry.id}`, { replayKey, modelId: entry.id, nodeKey: req.nodeKey, sampleIndex: req.sampleIndex });
@@ -202,7 +205,8 @@ export class ModelPort {
     try {
       const deadline = AbortSignal.timeout(req.timeoutMs);
       const signal = req.signal ? AbortSignal.any([req.signal, deadline]) : deadline;
-      try { raw = await provider.complete({ modelEntry: entry, providerConfig: config, system: req.system, prompt: req.prompt, schema: req.schema, decoding: req.decoding, signal, timeoutMs: req.timeoutMs }); }
+      // nodeKey travels for tracing only (a gateway forwards it to the host journal); it never changes the sample.
+      try { raw = await provider.complete({ modelEntry: entry, providerConfig: config, system: req.system, prompt: req.prompt, schema: req.schema, decoding: req.decoding, signal, timeoutMs: req.timeoutMs, nodeKey: req.nodeKey }); }
       catch (error) { failure = error; timedOut = deadline.aborted && !req.signal?.aborted; }
     } finally { latencyMs = Math.max(0, this.now() - callStart); semaphore.release(); }
 
@@ -237,7 +241,8 @@ export class ModelPort {
       usage, finishReason, error: error ?? undefined, meta: raw?.meta ?? failure?.meta ?? undefined, ...spend };
     const journalId = this.journal.record({ ...base, provider: entry.provider, engineVersion,
       request: plain({ system: req.system, prompt: req.prompt, schema: req.schema, mode: req.mode, salt: req.salt, providerRequest: raw?.request ?? failure?.request }),
-      response: plain(response), ok, errorCode: error?.code, inputTokens: usage.inputTokens, outputTokens: usage.outputTokens, costUsd, imputedUsd, latencyMs });
+      response: plain(response), ok, errorCode: error?.code, inputTokens: usage.inputTokens, outputTokens: usage.outputTokens,
+      cacheReadTokens: usage.cacheReadTokens, cacheWriteTokens: usage.cacheWriteTokens, costUsd, imputedUsd, latencyMs });
     // The journaled spend of a cancelled call travels with the cancellation, so the caller can still charge it.
     if (error?.code === 'CANCELLED') throw new FoundryError('CANCELLED', 'Model call cancelled', { journalId, replayKey, modelId: entry.id, costUsd, imputedUsd, latencyMs, usage, ...spend });
     return { ok, value: ok ? value : undefined, text: response.text, usage, costUsd, imputedUsd, latencyMs, finishReason, modelId: entry.id,

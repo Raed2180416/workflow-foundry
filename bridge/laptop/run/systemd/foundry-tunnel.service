@@ -1,0 +1,14 @@
+# Installed by LAPTOP-HANDOFF.md step 12 (placeholder @CLOUDFLARED@ is filled in with sed).
+[Unit]
+Description=Cloudflare quick tunnel to the Foundry bridge daemon
+After=network-online.target foundry-bridge.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=@CLOUDFLARED@ tunnel --no-autoupdate --url http://127.0.0.1:8765 --metrics 127.0.0.1:20241 --logfile %h/foundry-bridge/cloudflared.log --loglevel info
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=default.target

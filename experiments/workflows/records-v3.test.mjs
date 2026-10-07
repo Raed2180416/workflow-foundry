@@ -3,6 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as W from './records-v3.mjs';
+import { condition } from '../../src/data.mjs';
 
 const SPEC = `7. Balances. amount_usd = ...
      EUR/USD  1.1344
@@ -95,6 +96,23 @@ test('alignSpan keeps verbatim spans and re-anchors a miscopied word to the entr
   assert.equal(W.alignSpan(null, line), null);
 });
 
+test('combineVendexReads recovers omissions, re-anchors spans and needs a stated place for a country', () => {
+  const text = 'Vendex 2851 — Prof. Jutes Lefèvre b. 04/10/1971; phone not on file; open balance eighty-nine euros and forty cents. Revised on 6 June 2022.';
+  const a = { row: 2851, name: 'Prof. Jutes Lefèvre', birth_date: null, revised: '6 June 2022', phone: null, balance_text: 'open balance eighty-nine euros and forty cents',
+    balance_kind: 'owed_to_us', currency: 'EUR', place_kind: 'nationality', place: 'French', country: 'FR' };
+  const b = { ...a, birth_date: '04/10/1971', balance_text: 'open balance eighty-six euros and forty cents', place: null, place_kind: 'not_stated', country: 'none' };
+  const { read, notes } = W.combineVendexReads(a, b, text, { order: 'dmy' });
+  assert.equal(read.birth_date, '04/10/1971');
+  assert.equal(read.balance_text, 'open balance eighty-nine euros and forty cents');
+  assert.equal(read.place, null);
+  assert.equal(read.country, null);
+  assert.equal(read.currency, 'EUR');
+  assert.ok(notes.some(n => n.startsWith('birth_date')));
+  const one = W.combineVendexReads(null, { ...a, place: 'Lefèvre', country: 'FR' }, text);
+  assert.equal(one.read.country, 'FR');
+  assert.equal(W.combineVendexReads(null, null, text), null);
+});
+
 test('splitName handles every structured name form', () => {
   assert.deepEqual(W.splitName('Dr Anthony ROWNTREE', 'caps'), { given: 'Anthony', family: 'ROWNTREE' });
   assert.deepEqual(W.splitName('Piet VAN DER MEER', 'caps'), { given: 'Piet', family: 'VAN DER MEER' });
@@ -107,6 +125,8 @@ test('splitName handles every structured name form', () => {
   assert.deepEqual(W.splitName('Pieter van der Meer', 'givenFirst'), { given: 'Pieter', family: 'van der Meer' });
   assert.deepEqual(W.splitName('KOUNO Shouta', 'familyFirst'), { given: 'Shouta', family: 'KOUNO' });
   assert.deepEqual(W.splitName('Ms. Femke Visser', 'givenFirst'), { given: 'Femke', family: 'Visser' });
+  // Titles are leading tokens only: "dr" inside a family name is a typo of the particle "der".
+  assert.deepEqual(W.splitName('Maarten van dr Meer', 'givenFirst'), { given: 'Maarten', family: 'van dr Meer' });
 });
 
 test('parseLine reads the five structured dialects and keeps VENDEX text without remarks', () => {
@@ -236,6 +256,38 @@ test('FX conversion is exact with half-away-from-zero rounding', () => {
   assert.equal(one({ value: 0.005, currency: 'USD' }), 0.01);
 });
 
+test('mergeMain applies read conventions end to end on literal rows', () => {
+  const spec = W.parseSpec({ spec: SPEC + '\n     Ireland         IE  +353  trunk prefix: 0\n     Germany         DE  +49   trunk prefix: 0' });
+  const rows = [
+    'LEDGR;8141;Brennan, Rupert;Herr Dr.;2.12.1981;Irland;01 451 8494;248,00- EUR;aktiv;06.10.2018',
+    'BRIGHTDESK row=9000 | name=Rupert BRENNAN | dob=12/02/1981 | country=IE | phone= | balance=($10.00) | updated=2016-01-01 | stage=hold',
+    'BRIGHTDESK row=9001 | name=Fake PERSON | dob=01/01/1990 | country=IE | phone= | balance=$5.00 | updated=2016-01-01 | stage=legacy',
+    'Vendex 9002 — Spoke with Rupert Brennan on 03/04/2020 (based in Cork). DOB 2 December 1981. Owes us twelve hundred euros.',
+  ].map(W.parseLine);
+  const prep = W.prepMain({ export: rows.map(r => r.line).join('\n'), source_notes: '', iso2: spec.iso2, countryList: spec.countryList, vendexChunk: 5, countryChunk: 30 });
+  assert.deepEqual(prep.countryStrings, ['Irland']);
+  assert.deepEqual(prep.statusItems.map(x => x.token), ['hold', 'legacy']);
+  const j = v => ({ judge: v });
+  const read = { row: 9002, name: 'Rupert Brennan', birth_date: '2 December 1981', revised: '03/04/2020', phone: null, balance_text: 'Owes us twelve hundred euros',
+    balance_kind: 'owed_to_us', currency: 'EUR', place_kind: 'city', place: 'Cork', country: 'IE' };
+  const m = W.mergeMain({ spec, rows: prep.rows, dateItems: prep.dateItems,
+    dates: [j({ basis: 'explicit', order: 'mdy' }), j({ basis: 'explicit', order: 'dmy' }), j({ basis: 'explicit', order: 'mdy' })], atlasSwitch: { present: false },
+    statusItems: prep.statusItems, statuses: [j({ meaning: 'live' }), j({ meaning: 'void' })],
+    mirrorItems: prep.mirrorItems, mirror: [j({ update_dates: 'not_stated' }), j({ update_dates: 'restamped' }), j({ update_dates: 'real' })],
+    perspectiveItems: prep.perspectiveItems, perspective: [j({ positive_in_master: 'negative' }), j({ positive_in_master: 'positive' }), j({ positive_in_master: 'positive' }), j({ positive_in_master: 'positive' })],
+    vendexChunks: prep.vendexChunks, vendex: [j({ ids: [9002], rows: [read] })], vendexB: [j({ ids: [9002], rows: [{ ...read, birth_date: null }] })],
+    countryStrings: prep.countryStrings, countryChunks: prep.countryChunks, countries: [j({ ids: [1], names: ['Ireland'], codes: ['DE'] })] });
+  const recs = m.answer.records;
+  assert.equal(recs.length, 1);
+  assert.deepEqual(recs[0].source_rows, [8141, 9000, 9002]);
+  // VENDEX 03/04/2020 read month first is 4 March 2020: the most recent row (LEDGR is the re-stamped mirror, so last).
+  assert.equal(recs[0].amount_usd, Number((1200 * 1.1344).toFixed(2)));
+  assert.equal(recs[0].country, 'IE');
+  assert.equal(recs[0].birth_date, '1981-12-02');
+  assert.ok(m.voided.includes(9001));
+  assert.ok(m.diagnostics.some(d => d.includes('Irland')));
+});
+
 test('verifyMain flags structural problems and non-verbatim VENDEX spans', () => {
   const ok = W.verifyMain({ subject: { answer: { records: [{ entity_id: 1, source_rows: [1, 2], given_name: 'A', family_name: 'B', birth_date: '2000-01-01', country: 'US', phone_e164: '+15550100', amount_usd: 1 }] },
     rowIds: [1, 2, 3], voided: [3], vendexRead: [], vendexLines: [] } });
@@ -246,6 +298,42 @@ test('verifyMain flags structural problems and non-verbatim VENDEX spans', () =>
   assert.equal(bad.pass, false);
   for (const needle of ['not its smallest row', 'bad birth date', 'bad phone', 'bad country', 'row 4 neither void nor merged', 'void row 3 merged', 'vendex 4 name not verbatim'])
     assert.ok(bad.reasons.some(r => r.includes(needle)), needle);
+});
+
+// Agent-node checks evaluated the way the runtime binds them (output.* -> the candidate value).
+const passes = (checks, output, item) => checks.every(c => {
+  try { return condition(JSON.parse(JSON.stringify(c).replace(/"output\./g, '"nodes.__out.')), { item, nodes: { __out: output } }); } catch { return false; }
+});
+test('perspective checks escalate a consistent but wrong reading that the notes contradict', () => {
+  const item = { paragraph: 'KOBO. Balances are in yen. The balance is prepaid store credit, which we owe the member (negative in the master); "▲" or a minus marks a member who owes us.' };
+  const quote = 'The balance is prepaid store credit, which we owe the member (negative in the master);';
+  const right = { positive_in_master: 'negative', positive_printed_balance_means: 'we_owe_them', negative_printed_balance_means: 'they_owe_us', master_span: '(negative in the master)', quote };
+  assert.equal(passes(W.PERSPECTIVE_CHECKS, right, item), true);
+  assert.equal(passes(W.PERSPECTIVE_CHECKS, { ...right, positive_in_master: 'positive', positive_printed_balance_means: 'they_owe_us', negative_printed_balance_means: 'we_owe_them' }, item), false);
+  assert.equal(passes(W.PERSPECTIVE_CHECKS, { ...right, negative_printed_balance_means: 'we_owe_them' }, item), false);
+  assert.equal(passes(W.PERSPECTIVE_CHECKS, { ...right, quote: 'The balance is store credit we owe.' }, item), false);
+  const keep = { paragraph: 'KOBO. KOBO balances keep their sign in the master.' };
+  assert.equal(passes(W.PERSPECTIVE_CHECKS, { positive_in_master: 'negative', positive_printed_balance_means: 'we_owe_them', negative_printed_balance_means: 'they_owe_us',
+    master_span: 'keep their sign in the master', quote: 'KOBO balances keep their sign in the master.' }, keep), false);
+});
+
+test('date-order checks require verbatim evidence and a moved-to place distinct from the moved-from place', () => {
+  const item = { system: 'VENDEX', paragraph: 'VENDEX. Free text. The team moved from Glasgow to Kansas City in 2015 and has written numeric dates the local way ever since.' };
+  const base = { basis: 'place', order: 'mdy', quote: 'The team moved from Glasgow to Kansas City in 2015 and has written numeric dates the local way ever since.',
+    example_numeric: null, example_meaning: null, same_as_system: 'none', moved_from: 'Glasgow', place: 'Kansas City', place_in_united_states: true };
+  assert.equal(passes(W.DATE_CHECKS, base, item), true);
+  assert.equal(passes(W.DATE_CHECKS, { ...base, moved_from: 'Glasgow', place: 'Glasgow', place_in_united_states: false, order: 'dmy' }, item), false);
+  assert.equal(passes(W.DATE_CHECKS, { ...base, order: 'dmy' }, item), false);
+  assert.equal(passes(W.DATE_CHECKS, { ...base, basis: 'same_as_system', same_as_system: 'LEDGR', order: 'mdy', quote: base.quote }, item), false);
+});
+
+test('status checks tie the meaning to the compared fixed marker and the stated relation', () => {
+  const item = { system: 'KOBO', token: 'GIFT', mention: 'flag: GIFT', paragraph: 'KOBO. A row with "flag: SAMPLE" is a demo account and void. Treat rows marked "flag: GIFT" exactly like SAMPLE demo accounts.' };
+  const quote = 'Treat rows marked "flag: GIFT" exactly like SAMPLE demo accounts.';
+  assert.equal(passes(W.STATUS_CHECKS, { meaning: 'void', relation: 'same_as', compared_with: 'SAMPLE', quote }, item), true);
+  assert.equal(passes(W.STATUS_CHECKS, { meaning: 'live', relation: 'same_as', compared_with: 'SAMPLE', quote }, item), false);
+  assert.equal(passes(W.STATUS_CHECKS, { meaning: 'void', relation: 'different_from', compared_with: 'SAMPLE', quote }, item), false);
+  assert.equal(passes(W.STATUS_CHECKS, { meaning: 'void', relation: 'none', compared_with: 'none', quote: 'A row with "flag: SAMPLE" is a demo account and void.' }, item), false);
 });
 
 test('the workflow builds with every per-task convention behind a model node and every code node self-contained', () => {

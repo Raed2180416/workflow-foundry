@@ -29,13 +29,25 @@
 //                    re-stamped (copy/restore/re-import)? Checks: quote in the paragraph; a "restamped" answer
 //                    must agree with the data (that system's update dates span <= 120 days). The data never
 //                    decides the convention: it only triggers escalation when the reading contradicts it.
-//   perspective [M]  map over BRIGHTDESK/LEDGR/ATLAS/KOBO: does a positive printed balance mean they owe us or
-//                    we owe them, and does the master keep or flip the sign (two redundant enums that must agree).
-//   vendex [M]       map over chunks of VENDEX free-text rows: verbatim spans (name, birth date, revision date,
-//                    phone, balance text) + typed country / balance direction / currency. Ids are echoed and
-//                    checked. Code parses every span (date order from `dates`, number words, currency words).
+//   perspective [M]  map over BRIGHTDESK/LEDGR/ATLAS/KOBO: what a POSITIVE printed balance becomes in the master
+//                    (positive/negative), what it means (they owe us / we owe them) and what a NEGATIVE printed
+//                    figure means, plus the verbatim span saying what the master does. Checks: quote and span in the
+//                    paragraph; the first two agree; positive and negative meanings differ (catches a clause about
+//                    "▲"/minus misattributed to positive figures); the span's sign words ("negative in the master",
+//                    "opposite", "flip", "change" / "keep", "same way") agree with the answer.
+//   vendex [M]       map over chunks of 5 VENDEX free-text rows: verbatim spans (name, birth date, revision date,
+//                    phone, balance text, place) + typed place kind / country / balance direction / currency.
+//                    Ids are echoed and checked. Code parses every span (date order from `dates`, number words,
+//                    currency words; direction from the notes' fixed keyword lists, model enum as fallback).
+//   vendex_b [M]     an independent second read of the same chunks (other framing and field order). Code combines
+//                    the two reads field by field (combineVendexReads): spans are re-anchored to the entry text
+//                    (alignSpan repairs a miscopied word, drops an invented span), a field only one read found is
+//                    kept, a disagreement goes to the span that parses, and a country needs a stated place.
 //   countries [M]    map over chunks of distinct country strings that are not exact ISO codes (English and
-//                    German names, aliases, typos): ISO alpha-2 enum, ids echoed and checked.
+//                    German names, aliases, typos), with the spec's country table as context: the English name
+//                    (as the table spells it) then an ISO alpha-2 enum; code takes the table's code for the name,
+//                    the enum as fallback. Ids echoed and checked; "other" is rejected (escalation), since every
+//                    country of this bed is in the spec's calling-code table.
 //   merge (code)     conventions -> void rows, dates (with the ATLAS cutoff), signs, conflict order (mirror rows
 //                    last); spec section 3 identity (union-find), section 4 conflicts and accent restoration,
 //                    section 6 E.164, section 7 exact FX with half-away-from-zero rounding.
@@ -55,6 +67,16 @@
 //     title/initial removal); multi-word family names only occur as Dutch particles ("van der Meer"), which the
 //     "Title Given [I.] Family" rule handles. VENDEX names come as verbatim spans and use the same rule.
 //   - Thinking is off everywhere (skills/micro-harness: narrow extraction is better and cheaper without it).
+//   - VENDEX is read twice (vendex, vendex_b) instead of once: on dev seeds the dominant residual error was a
+//     field silently omitted by one read (a birth date, a revision date, a nationality), which no per-chunk
+//     schema check can detect; omissions of two differently framed reads rarely coincide (+~$0.03 per task).
+//   - A failed check on a convention or country node escalates at once (onCheckFail 'escalate'): on dev seed 109
+//     (d4) a resample after an inconsistent answer returned a consistent but wrong one. VENDEX chunks (id echo)
+//     and nodes already at maxClass resample once instead.
+//
+// Development evidence (dev split only, seeds 101-125, d3 and d4; /var/tmp/foundry-work/records-v3/dev-log.jsonl):
+// code-side derivation corrected the model's direct date-order answer in about 1 of 20 judgments (example and
+// same-as-system bases), which is why the order is derived from evidence spans rather than taken as answered.
 //
 // Code-node functions are plain, self-contained JS so they can be unit-tested (records-v3.test.mjs); they are
 // serialised into the IR together with the helpers they call (bundle()).
@@ -244,20 +266,50 @@ export function vendexDirection(text) {
   return null;
 }
 
+// Combines two independent reads of one VENDEX entry field by field. Spans are re-anchored to the entry text; a
+// span only one read found is kept (omissions are the common error), and when both found different spans the one
+// that parses wins (then read A). The country follows the read whose place is actually stated in the entry.
+export function combineVendexReads(a, b, text, { order = null } = {}) {
+  const reads = [a, b].filter(x => x && typeof x === 'object');
+  if (!reads.length) return null;
+  const out = { row: reads[0].row }, notes = [];
+  const parses = (k, v) => (k === 'birth_date' || k === 'revised' ? parseDate(v, { order, century: k === 'revised' ? 2000 : 1900 }) !== null
+    : k === 'balance_text' ? parseVendexMoney(v) !== null : true);
+  for (const k of ['name', 'birth_date', 'revised', 'phone', 'balance_text', 'place']) {
+    const spans = reads.map(r => (typeof r[k] === 'string' && r[k].trim() ? alignSpan(r[k], text) : null));
+    const found = spans.filter(Boolean);
+    let pick = found[0] ?? null;
+    if (found.length === 2 && found[0] !== found[1]) {
+      pick = found.find(v => parses(k, v)) ?? found[0];
+      notes.push(`${k}: "${found[0]}" vs "${found[1]}"`);
+    } else if (found.length === 1 && reads.length === 2) notes.push(`${k}: only one read`);
+    out[k] = pick;
+  }
+  const withPlace = reads.find(r => typeof r.place === 'string' && r.place.trim() && alignSpan(r.place, text) !== null);
+  out.country = withPlace && /^[A-Z]{2}$/.test(withPlace.country ?? '') ? withPlace.country : null;
+  const kinds = reads.map(r => r.balance_kind).filter(x => x && x !== 'none');
+  out.balance_kind = kinds[0] ?? 'none';
+  const ccys = reads.map(r => r.currency).filter(x => x && x !== 'none');
+  out.currency = ccys[0] ?? null;
+  return { read: out, notes };
+}
+
 // Splits a name as written into {given, family}. form: 'comma' (Family, Given ...), 'caps' (Given FAMILY with a
 // capitalised family), 'familyFirst' (KOBO), 'givenFirst' (Title Given [I.] Family), or 'auto' (structured rows).
 export function splitName(raw, form = 'auto') {
-  const TITLE = /^(mr|mrs|ms|miss|mx|dr|prof|herr|frau|sir|madam|mme|m)\.?$/i;
+  const TITLE = /^(mr|mrs|ms|miss|mx|dr|prof|herr|frau|sir|madam|mme)\.?$/i;
   const INITIAL = /^\p{Lu}\.?$/u;
+  // Titles are only ever leading tokens; a later "dr" can be a typo of the particle "der".
+  const lead = tokens => { const t = tokens.filter(Boolean); while (t.length > 1 && TITLE.test(t[0])) t.shift(); return t; };
   let s = String(raw ?? '').replace(/\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim();
   if (!s) return { given: '', family: '' };
   if (form === 'auto') form = s.includes(',') ? 'comma' : 'givenFirst';
   if (form === 'comma') {
     const [fam, rest = ''] = s.split(/,(.*)/s);
-    const tokens = rest.trim().split(' ').filter(t => t && !TITLE.test(t) && !INITIAL.test(t));
-    return { given: tokens[0] ?? '', family: fam.trim().split(' ').filter(t => !TITLE.test(t)).join(' ') };
+    const given = lead(rest.trim().split(' '));
+    return { given: given[0] ?? '', family: fam.trim() };
   }
-  const tokens = s.split(' ').filter(t => t && !TITLE.test(t));
+  const tokens = lead(s.split(' '));
   if (form === 'familyFirst') return { family: tokens[0] ?? '', given: tokens.slice(1).filter(t => !INITIAL.test(t)).join(' ') };
   const isCaps = t => /\p{L}.*\p{L}/u.test(t) && t === t.toUpperCase() && t !== t.toLowerCase();
   if (form === 'caps' && tokens.some(isCaps)) {
@@ -387,7 +439,7 @@ export function parseSpec(input) {
     for (const n of m[1].split('/')) if (n.trim()) nick[n.trim().toLowerCase()] = m[2].trim();
   }
   return { tables: tables.filter(t => Object.keys(t.rates).length), phones, nick, iso2: Object.keys(phones),
-    countryList: Object.entries(names).map(([iso, name]) => `${iso} = ${name}`).join('\n') };
+    countryNames: names, countryList: Object.entries(names).map(([iso, name]) => `${iso} = ${name}`).join('\n') };
 }
 
 // Spec section 6. international: the number carries an international prefix or is a full international number.
@@ -651,21 +703,39 @@ export function mergeMain(input) {
   (input.countryChunks ?? []).forEach((chunk, ci) => {
     const out = input.countries?.[ci]?.judge;
     if (!out || out.$error || !Array.isArray(out.codes)) { diagnostics.push(`country chunk ${ci}: no judgment`); return; }
-    chunk.ids.forEach((id, j) => { const code = out.codes[j]; if (typeof code === 'string' && /^[A-Z]{2}$/.test(code)) countryOf.set(input.countryStrings[id - 1], code); });
+    // The name is written first and decides when it is a name of the spec's table; the code is the fallback.
+    const byName = new Map(Object.entries(spec.countryNames ?? {}).map(([iso, name]) => [String(name).toLowerCase(), iso]));
+    chunk.ids.forEach((id, j) => {
+      const named = byName.get(String(out.names?.[j] ?? '').trim().toLowerCase()), code = out.codes[j];
+      if (named && typeof code === 'string' && code !== named) diagnostics.push(`country "${input.countryStrings[id - 1]}": name ${out.names[j]} (${named}) vs code ${code}`);
+      const pick = named ?? (typeof code === 'string' && /^[A-Z]{2}$/.test(code) ? code : null);
+      if (pick) countryOf.set(input.countryStrings[id - 1], pick);
+    });
   });
   const iso = text => {
     const t = String(text ?? '').trim();
     if (!t || isPlaceholder(t)) return null;
     return exactCountry(t, spec.iso2 ?? []) ?? countryOf.get(t) ?? null;
   };
-  const vendexRead = new Map();
+  // Two independent reads of every VENDEX chunk (vendex, vendex_b); either may be missing.
+  const readsOf = list => {
+    const m = new Map();
+    (input.vendexChunks ?? []).forEach((chunk, ci) => {
+      const out = list?.[ci]?.judge;
+      if (!out || out.$error || !Array.isArray(out.rows)) return;
+      for (const r of out.rows) if (r && Number.isInteger(r.row) && chunk.ids.includes(r.row) && !m.has(r.row)) m.set(r.row, r);
+    });
+    return m;
+  };
+  const readA = readsOf(input.vendex), readB = readsOf(input.vendexB);
   (input.vendexChunks ?? []).forEach((chunk, ci) => {
-    const out = input.vendex?.[ci]?.judge;
-    if (!out || out.$error || !Array.isArray(out.rows)) { diagnostics.push(`vendex chunk ${ci}: no judgment`); return; }
-    for (const r of out.rows) if (r && Number.isInteger(r.row) && chunk.ids.includes(r.row)) vendexRead.set(r.row, r);
+    if (!input.vendex?.[ci]?.judge) diagnostics.push(`vendex chunk ${ci}: read A missing`);
+    if (input.vendexB && !input.vendexB?.[ci]?.judge) diagnostics.push(`vendex chunk ${ci}: read B missing`);
   });
+  const vendexRead = new Map();
+  for (const id of new Set([...readA.keys(), ...readB.keys()])) vendexRead.set(id, { a: readA.get(id) ?? null, b: readB.get(id) ?? null });
   const notMigrated = new Set();
-  const normal = [], repaired = [];
+  const normal = [], repaired = [], vendexFinal = [];
   const unparsed = { dob: 0, updated: 0, money: 0 };
   for (const r of input.rows ?? []) {
     const sys = r.system;
@@ -676,24 +746,23 @@ export function mergeMain(input) {
     if (sys === 'VENDEX' && r.withdrawn) n.void = true;
     let updatedRaw = r.updated;
     if (sys === 'VENDEX') {
-      const read = vendexRead.get(r.row);
-      if (!read) { n.void = true; notMigrated.add(r.row); diagnostics.push(`vendex row ${r.row}: not read`); normal.push(n); continue; }
+      const pair = vendexRead.get(r.row);
+      const combined = pair ? combineVendexReads(pair.a, pair.b, r.text, { order: conv.orders.VENDEX }) : null;
+      if (!combined) { n.void = true; notMigrated.add(r.row); diagnostics.push(`vendex row ${r.row}: not read`); normal.push(n); continue; }
       // Spans are re-anchored to the entry text: a miscopied word is replaced by what the entry actually says.
-      const v = { ...read };
-      for (const k of ['name', 'birth_date', 'revised', 'phone', 'balance_text']) {
-        if (typeof read[k] !== 'string' || !read[k].trim()) continue;
-        v[k] = alignSpan(read[k], r.text);
-        if (v[k] !== read[k].trim()) repaired.push(`${r.row}.${k}`);
-      }
+      const v = combined.read;
+      for (const x of combined.notes) repaired.push(`${r.row} ${x}`);
+      vendexFinal.push(v);
       const nm = splitName(v.name, 'givenFirst');
       n.given = nm.given; n.family = nm.family;
       n.dob = parseDate(v.birth_date, { order: conv.orders.VENDEX, century: 1900 });
       if (v.birth_date && !isPlaceholder(v.birth_date) && !/unknown|not on file/i.test(v.birth_date) && !n.dob) unparsed.dob++;
-      n.country = v.country && /^[A-Z]{2}$/.test(v.country) ? v.country : null;
+      // A country needs its evidence: a place that the entry actually states (combineVendexReads).
+      n.country = v.country;
       n.e164 = toE164(v.phone, { country: n.country, system: sys, phones: spec.phones });
       const m = parseVendexMoney(v.balance_text);
       const direction = vendexDirection(v.balance_text) ?? (v.balance_kind === 'none' ? null : v.balance_kind);
-      if (m && m.value !== null && direction) n.money = { value: direction === 'credit' ? -Math.abs(m.value) : Math.abs(m.value), currency: m.currency ?? (v.currency !== 'none' ? v.currency : null) };
+      if (m && m.value !== null && direction) n.money = { value: direction === 'credit' ? -Math.abs(m.value) : Math.abs(m.value), currency: m.currency ?? v.currency ?? null };
       else if (v.balance_text && !/not (recorded|on file)|no balance/i.test(v.balance_text)) unparsed.money++;
       updatedRaw = v.revised;
       n.updated = parseDate(v.revised, { order: conv.orders.VENDEX, century: 2000 }) ?? '';
@@ -734,7 +803,7 @@ export function mergeMain(input) {
   const records = resolveIdentities(normal, spec);
   const voided = normal.filter(n => n.void).map(n => n.row);
   return { answer: { records }, conventions: { orders: conv.orders, orderHow: conv.orderHow, atlasCutoff: conv.atlasCutoff, statusMeaning: conv.statusMeaning, mirror: conv.mirror, flip: conv.flip },
-    diagnostics: diagnostics.slice(0, 40), repairedSpans: repaired, unparsed, voided, notRead: [...notMigrated], rowIds: normal.map(n => n.row), vendexRead: [...vendexRead.values()], vendexLines: (input.rows ?? []).filter(r => r.system === 'VENDEX').map(r => ({ row: r.row, text: r.text })) };
+    diagnostics: diagnostics.slice(0, 40), vendexDisagreements: repaired.slice(0, 40), unparsed, voided, notRead: [...notMigrated], rowIds: normal.map(n => n.row), vendexRead: vendexFinal, vendexLines: (input.rows ?? []).filter(r => r.system === 'VENDEX').map(r => ({ row: r.row, text: r.text })) };
 }
 
 export function verifyMain(input) {
@@ -757,10 +826,12 @@ export function verifyMain(input) {
   for (const id of seen) if (voided.has(id)) reasons.push(`void row ${id} merged`);
   // VENDEX spans must be verbatim (a misplaced span is a misread).
   const lines = new Map((s.vendexLines ?? []).map(l => [l.row, l.text]));
-  const fixed = new Set(s.repairedSpans ?? []);
-  for (const v of s.vendexRead ?? []) for (const k of ['name', 'birth_date', 'phone', 'balance_text', 'revised']) {
-    const t = v[k];
-    if (typeof t === 'string' && t && !(lines.get(v.row) ?? '').includes(t)) reasons.push(`vendex ${v.row} ${k} not verbatim${fixed.has(`${v.row}.${k}`) ? ' (re-anchored)' : ''}`);
+  for (const v of s.vendexRead ?? []) {
+    for (const k of ['name', 'birth_date', 'phone', 'balance_text', 'revised', 'place']) {
+      const t = v[k];
+      if (typeof t === 'string' && t && !(lines.get(v.row) ?? '').includes(t)) reasons.push(`vendex ${v.row} ${k} not verbatim`);
+    }
+    if (!v.revised) reasons.push(`vendex ${v.row} has no revision date`);
   }
   for (const d of s.diagnostics ?? []) reasons.push(`diagnostic: ${d}`);
   for (const [k, n] of Object.entries(s.unparsed ?? {})) if (n) reasons.push(`${n} unparsed ${k} value(s)`);
@@ -769,7 +840,7 @@ export function verifyMain(input) {
 
 // ------------------------------------------------------------------------------------------------------------
 // Bundling: a code node's source holds the helpers it calls plus `export default main`.
-const HELPERS = [monthIndex, isoOf, isPlaceholder, parseDate, wordsToNumber, parseNumber, parseMoney, parseVendexMoney, alignSpan, vendexDirection, splitName, splitParagraphs,
+const HELPERS = [monthIndex, isoOf, isPlaceholder, parseDate, wordsToNumber, parseNumber, parseMoney, parseVendexMoney, alignSpan, vendexDirection, combineVendexReads, splitName, splitParagraphs,
   parseLine, statusMention, exactCountry, parseSpec, toE164, orderFromExample, resolveConventions, resolveIdentities];
 export const bundle = main => `${HELPERS.filter(f => f !== main).map(f => f.toString()).join('\n\n')}\n\n${main.toString()}\n\nexport default ${main.name};\n`;
 
@@ -789,16 +860,16 @@ Return:
 - quote: the one sentence that settles it, copied exactly, character for character, from the paragraph.
 - example_numeric / example_meaning: for basis "example", the example numeric date exactly as written (e.g. "03/02/1958") and the words that say what it means exactly as written (e.g. "3 February 1958" or "September"); otherwise null.
 - same_as_system: for basis "same_as_system", the other system's name; otherwise "none".
-- place / place_in_united_states: for basis "place", the place exactly as written (if the team moved, the place it works in NOW) and whether that place is in the United States; otherwise null.
+- moved_from / place / place_in_united_states: for basis "place". If the text says the team moved ("moved from A to B"), moved_from is A, the place it moved FROM, exactly as written, and place is B, the place it moved TO and works in now; otherwise moved_from is null and place is the place given (where the team works, or the country where the servers stand), exactly as written. place_in_united_states says whether "place" (B, not A) is in the United States. All three are null for other bases.
 If the paragraph also says the order changed at some date (a vendor move), answer for the order BEFORE that change ("the order described above"). Ignore sentences about other kinds of dates (update dates, era dates, ISO dates).`;
 
 export const DATE_RETURNS = {
   type: 'object', additionalProperties: false,
-  required: ['basis', 'order', 'quote', 'example_numeric', 'example_meaning', 'same_as_system', 'place', 'place_in_united_states'],
+  required: ['basis', 'order', 'quote', 'example_numeric', 'example_meaning', 'same_as_system', 'moved_from', 'place', 'place_in_united_states'],
   properties: {
     basis: { type: 'string', enum: ['explicit', 'example', 'same_as_system', 'place'] }, order: { type: 'string', enum: ['dmy', 'mdy'] },
     quote: { type: 'string', minLength: 8, maxLength: 600 }, example_numeric: S(40), example_meaning: S(80), same_as_system: { type: 'string', enum: SYS_ENUM },
-    place: S(80), place_in_united_states: { type: ['boolean', 'null'] },
+    moved_from: S(80), place: S(80), place_in_united_states: { type: ['boolean', 'null'] },
   },
 };
 const out = p => ({ $ref: `output.${p}` });
@@ -811,6 +882,8 @@ export const DATE_CHECKS = [
   { op: 'any', conditions: [{ op: 'ne', left: out('basis'), right: 'same_as_system' }, { op: 'ne', left: out('same_as_system'), right: 'LEDGR' }, { op: 'eq', left: out('order'), right: 'dmy' }] },
   { op: 'any', conditions: [{ op: 'ne', left: out('basis'), right: 'place' }, { op: 'all', conditions: [
     { op: 'contains', left: out('quote'), right: out('place') },
+    { op: 'any', conditions: [{ op: 'eq', left: out('moved_from'), right: null }, { op: 'all', conditions: [
+      { op: 'contains', left: out('quote'), right: out('moved_from') }, { op: 'ne', left: out('moved_from'), right: out('place') }] }] },
     { op: 'any', conditions: [{ op: 'all', conditions: [{ op: 'eq', left: out('place_in_united_states'), right: true }, { op: 'eq', left: out('order'), right: 'mdy' }] },
       { op: 'all', conditions: [{ op: 'eq', left: out('place_in_united_states'), right: false }, { op: 'eq', left: out('order'), right: 'dmy' }] }] }] }] },
 ];
@@ -882,13 +955,14 @@ export const PERSPECTIVE_INSTRUCTIONS = `You read the source-notes paragraph of 
 - positive_in_master: "positive" if the master keeps a positive printed figure positive (the printed figure is what they owe us: a receivable, an open invoice, unpaid orders, read literally); "negative" if it becomes negative (the printed figure is what we owe them: a credit, prepaid deposit, store credit, a payable; or the notes say the balances change sign / are printed the opposite way / must be flipped for the master).
 - positive_printed_balance_means: "they_owe_us" (goes with "positive") or "we_owe_them" (goes with "negative"). A paragraph that only says the sign changes in the master means a positive printed figure is money we owe them.
 - negative_printed_balance_means: what a NEGATIVE printed figure (one marked with a minus, parentheses, "CR" or "▲") means according to the paragraph: "they_owe_us" or "we_owe_them".
+- master_span: the words of the paragraph that say what the MASTER does with this system's balances, copied exactly (for example a phrase saying the balance is negative or positive in the master, keeps its sign, changes sign, is flipped, is recorded with the opposite sign, or is printed the same way as the master); null if the paragraph says nothing about the master.
 - quote: the sentence that settles it, copied exactly, character for character, from the paragraph.
 Read the positive and the negative case separately: a sentence may describe the positive figure first and then say how negative figures are marked.`;
 
 export const PERSPECTIVE_RETURNS = {
-  type: 'object', additionalProperties: false, required: ['positive_in_master', 'positive_printed_balance_means', 'negative_printed_balance_means', 'quote'],
+  type: 'object', additionalProperties: false, required: ['positive_in_master', 'positive_printed_balance_means', 'negative_printed_balance_means', 'master_span', 'quote'],
   properties: { positive_in_master: { type: 'string', enum: ['positive', 'negative'] }, positive_printed_balance_means: { type: 'string', enum: ['they_owe_us', 'we_owe_them'] },
-    negative_printed_balance_means: { type: 'string', enum: ['they_owe_us', 'we_owe_them'] },
+    negative_printed_balance_means: { type: 'string', enum: ['they_owe_us', 'we_owe_them'] }, master_span: S(300),
     quote: { type: 'string', minLength: 8, maxLength: 600 } },
 };
 export const PERSPECTIVE_CHECKS = [
@@ -898,12 +972,21 @@ export const PERSPECTIVE_CHECKS = [
     { op: 'all', conditions: [{ op: 'eq', left: out('positive_printed_balance_means'), right: 'we_owe_them' }, { op: 'eq', left: out('positive_in_master'), right: 'negative' }] }] },
   // A negative printed figure always means the opposite of a positive one: equal answers expose a misattributed clause.
   { op: 'ne', left: out('positive_printed_balance_means'), right: out('negative_printed_balance_means') },
+  // The master span is verbatim, and a span that says the sign changes cannot go with "positive" (nor "keeps" with
+  // "negative"): a lexical sanity check on the model's own evidence that escalates a consistent but wrong reading.
+  { op: 'any', conditions: [{ op: 'eq', left: out('master_span'), right: null }, { op: 'contains', left: { $ref: 'item.paragraph' }, right: out('master_span') }] },
+  { op: 'any', conditions: [{ op: 'eq', left: out('master_span'), right: null }, { op: 'eq', left: out('positive_in_master'), right: 'negative' }, { op: 'not', condition: { op: 'any', conditions: [
+    { op: 'all', conditions: [{ op: 'contains', left: out('master_span'), right: 'negative' }, { op: 'contains', left: out('master_span'), right: 'in the master' }] },
+    { op: 'contains', left: out('master_span'), right: 'becomes negative' }, { op: 'contains', left: out('master_span'), right: 'opposite' },
+    { op: 'contains', left: out('master_span'), right: 'flip' }, { op: 'contains', left: out('master_span'), right: 'change' }] } }] },
+  { op: 'any', conditions: [{ op: 'eq', left: out('master_span'), right: null }, { op: 'eq', left: out('positive_in_master'), right: 'positive' }, { op: 'not', condition: { op: 'any', conditions: [
+    { op: 'contains', left: out('master_span'), right: 'keep' }, { op: 'contains', left: out('master_span'), right: 'same way' }] } }] },
 ];
 
 export const VENDEX_INSTRUCTIONS = `You read free-text entries of the VENDEX contact register, one entry per line ("Vendex <row id> — ..."). For EACH entry return one object with the row id and these fields. Text fields are spans copied EXACTLY, character for character, from the entry (do not reformat, translate or complete them):
 - name: the person's name as written, including any title and middle initial (e.g. "Ms. Femke Visser", "Mattia M. Ferraro").
 - birth_date: the birth date as written, without the words around it (e.g. "13 April 1988", "the 27th of April 1996", "June 12th, 1957", "5/9/1952", "21-Dec-58"); null if the entry has none or says it is unknown / not on file.
-- revised: the date the entry was revised as written (for "Spoke with <name> on <date>" it is the call date); e.g. "19 March 2020", "08/03/2019", "June 13, 2019".
+- revised: the date the entry was revised as written (for "Spoke with <name> on <date>" it is the call date; it may stand at the start, in the middle or at the end of the entry, e.g. "Revised on ...", "last revised ...", "Entry revised ..."); e.g. "19 March 2020", "08/03/2019", "June 13, 2019". Every entry has one.
 - phone: the phone number as written (e.g. "+33 1 95 59 16 95", "02 563 30 11"); null if none.
 - balance_text: the whole balance phrase as written, including the direction words and currency (e.g. "in credit by two hundred thirty-five euros and sixteen cents", "Balance due USD 50,042.72", "owes us fifty-eight US dollars and forty-three cents"); null if no balance is recorded.
 - balance_kind: "owed_to_us" for "owes us", "open balance", "outstanding", "balance due"; "credit" for "in credit by", "holding a credit of", "credit balance of", "we owe them"; "none" if no balance.
@@ -913,31 +996,56 @@ export const VENDEX_INSTRUCTIONS = `You read free-text entries of the VENDEX con
 - country: the ISO 3166-1 alpha-2 code of the country of that place (the country a city lies in; the country of a nationality; GB for the United Kingdom; when several cities share a name, the best-known, largest one); "none" if not stated. The input block "known_countries" lists the countries of this migration.
 Ignore any staff remarks; they are not data about the person.`;
 
+// Second, independent read of the same entries: other framing and field order, so that its omissions are not the
+// first read's omissions (combined field by field in code).
+export const VENDEX_B_INSTRUCTIONS = `You check free-text entries of the VENDEX contact register, one entry per line ("Vendex <row id> — ..."). Go through each entry from left to right and copy every field when you meet it. Copy spans EXACTLY, character for character; never reformat or complete them. For each entry return:
+- row: its row id.
+- revised: the revision date (every entry has one: "Entry revised <date>", "Revised on <date>", "last revised <date>", or the call date in "Spoke with <name> on <date>").
+- name: the person's name with any title and middle initial.
+- birth_date: the birth date without the words around it (after "b.", "born", "DOB", "date of birth", "Born"); null only if the entry gives none or says it is unknown / not on file.
+- place_kind and place: where the person is, as written: a city, a country or a nationality ("(Oslo)", "(Norwegian)", "based in ...", "a Dutch supplier", "Swiss supplier", "— Geelong —"); place_kind "not_stated" and place null if nothing is stated ("location not stated").
+- country: ISO 3166-1 alpha-2 code of that place (country of a city or nationality; GB for the United Kingdom; for a city name shared by several countries, the best-known, largest city); "none" if not stated. The block "known_countries" lists this migration's countries.
+- phone: the phone number as written; null if none / not on file.
+- balance_text: the whole balance phrase with its direction words and currency ("owes us ...", "open balance ...", "outstanding ...", "balance due ...", "in credit by ...", "holding a credit of ...", "credit balance of ...", "we owe them ..."); null if not recorded.
+- balance_kind: "owed_to_us" or "credit" from those direction words; "none" if no balance.
+- currency: "USD" for dollars, "EUR" for euros, "GBP" for pounds/pence, or the ISO code written; "none" if no balance.
+Ignore staff remarks.`;
+
 const VENDEX_ROW = {
   type: 'object', additionalProperties: false,
   required: ['row', 'name', 'birth_date', 'revised', 'phone', 'balance_text', 'balance_kind', 'currency', 'place_kind', 'place', 'country'],
   properties: {
-    row: { type: 'integer' }, name: { type: 'string', maxLength: 120 }, birth_date: S(60), revised: S(60), phone: S(60), balance_text: S(200),
+    row: { type: 'integer' }, name: { type: 'string', maxLength: 120 }, birth_date: S(60), revised: { type: 'string', minLength: 4, maxLength: 60 }, phone: S(60), balance_text: S(200),
     balance_kind: { type: 'string', enum: ['owed_to_us', 'credit', 'none'] }, currency: { type: 'string', enum: ['USD', 'EUR', 'GBP', 'JPY', 'CHF', 'CAD', 'AUD', 'SEK', 'DKK', 'NOK', 'MXN', 'none'] },
     place_kind: { type: 'string', enum: ['city', 'country', 'nationality', 'not_stated'] }, place: S(80), country: { type: 'string', enum: ISO_ENUM },
   },
 };
 export const VENDEX_RETURNS = { type: 'object', additionalProperties: false, required: ['ids', 'rows'],
   properties: { ids: { type: 'array', items: { type: 'integer' }, maxItems: 20 }, rows: { type: 'array', items: VENDEX_ROW, maxItems: 20 } } };
+const VENDEX_B_ORDER = ['row', 'revised', 'name', 'birth_date', 'place_kind', 'place', 'country', 'phone', 'balance_text', 'balance_kind', 'currency'];
+const VENDEX_ROW_B = { ...VENDEX_ROW, required: VENDEX_B_ORDER, properties: Object.fromEntries(VENDEX_B_ORDER.map(k => [k, VENDEX_ROW.properties[k]])) };
+export const VENDEX_B_RETURNS = { type: 'object', additionalProperties: false, required: ['ids', 'rows'],
+  properties: { ids: { type: 'array', items: { type: 'integer' }, maxItems: 20 }, rows: { type: 'array', items: VENDEX_ROW_B, maxItems: 20 } } };
 
-export const COUNTRY_INSTRUCTIONS = `Each numbered line is a country as written in a legacy system: an English or German country name, an official or local name, an alias or abbreviation, possibly with a typing error. For each line, in order, return the ISO 3166-1 alpha-2 code of the country meant (GB for the United Kingdom). Watch confusable names (Austria/Australia, Schweiz = Switzerland / Schweden = Sweden) and German abbreviations. The input block "known_countries" lists the countries of this migration (from its spec); the country meant is almost always one of them. Use "other" for a country without a listed code and "none" if the line names no country. Return the line numbers you processed, in order, in "ids", and the codes in the same order in "codes".`;
-export const COUNTRY_RETURNS = { type: 'object', additionalProperties: false, required: ['ids', 'codes'],
-  properties: { ids: { type: 'array', items: { type: 'integer' }, maxItems: 40 }, codes: { type: 'array', items: { type: 'string', enum: ISO_ENUM }, maxItems: 40 } } };
+export const COUNTRY_INSTRUCTIONS = `Each numbered line is a country as written in a legacy system: an English or German country name, an official or local name, an alias or abbreviation, possibly with a typing error (a letter wrong, missing, extra or two letters swapped, e.g. "Itlay", "Swedn"). Watch confusable names (Austria/Australia, Schweiz = Switzerland / Schweden = Sweden, Irland = Ireland) and German abbreviations. The input block "known_countries" lists the countries of this migration with their codes; the country meant is almost always one of them.
+For each line, in order, return in "names" the English name of the country meant, spelled exactly as in known_countries when it is listed there, and in "codes" its ISO 3166-1 alpha-2 code (GB for the United Kingdom); "other" only for a country that is not listed, "none" if the line names no country. Return the line numbers you processed, in order, in "ids". The three arrays have the same length and order.`;
+export const COUNTRY_RETURNS = { type: 'object', additionalProperties: false, required: ['ids', 'names', 'codes'],
+  properties: { ids: { type: 'array', items: { type: 'integer' }, maxItems: 40 }, names: { type: 'array', items: { type: 'string', maxLength: 60 }, maxItems: 40 },
+    codes: { type: 'array', items: { type: 'string', enum: ISO_ENUM }, maxItems: 40 } } };
 
 // ------------------------------------------------------------------------------------------------------------
 export function buildRecordsV3Workflow({ extractModelClass = 'M', conventionsModelClass = 'M', maxClass = 'L', concurrency = 4, maxCost = 1, reasoning = 'none',
   vendexChunk = 5, countryChunk = 30 } = {}) {
   const notes = { name: 'paragraph', ref: 'item.paragraph', label: 'untrusted:notes', render: 'text' };
+  const order = ['S', 'M', 'L', 'F'];
+  // A failed consistency check is escalated at once (a resample of the same model can return a consistent but wrong
+  // answer); at the top permitted class the only recovery left is one resample. VENDEX id-echo slips are resampled.
+  const onFail = (id, modelClass) => (id === 'vendex' || order.indexOf(modelClass) >= order.indexOf(maxClass) ? 'resample' : 'escalate');
   const judge = (id, description, instructions, inputs, returns, checks, modelClass, maxTokens = 1200) => ({
     id: 'judge', kind: 'agent', needs: [], description, role: ['vendex', 'countries'].includes(id) ? 'extract' : 'classify', instructions,
     context: { inputs, budget: { maxInputTokens: 6000, onOverflow: 'fail' } },
     returns, model: { class: modelClass, maxClass }, decoding: { reasoning, maxTokens }, checks,
-    escalation: { schemaRetries: 1, onCheckFail: 'resample', maxResamples: 1, maxEscalations: 2 }, timeoutMs: 300000,
+    escalation: { schemaRetries: 1, onCheckFail: onFail(id, modelClass), maxResamples: 1, maxEscalations: 2 }, timeoutMs: 300000,
   });
   const mapOf = (id, needs, description, itemsRef, body, maxItems = 40) => ({
     id, kind: 'map', needs, description, items: { $ref: itemsRef }, maxItems, concurrency, failure: 'collect',
@@ -971,10 +1079,14 @@ export function buildRecordsV3Workflow({ extractModelClass = 'M', conventionsMod
       mapOf('vendex', ['prep'], 'Read VENDEX free-text entries into verbatim spans', 'nodes.prep.vendexChunks',
         judge('vendex', 'Read these VENDEX entries', VENDEX_INSTRUCTIONS, [knownCountries, { name: 'entries', ref: 'item.lines', label: 'untrusted:export', render: 'text' }], VENDEX_RETURNS,
           [{ op: 'eq', left: out('ids'), right: { $ref: 'item.ids' } }], extractModelClass, 3000), 60),
+      mapOf('vendex_b', ['prep'], 'Second, independent read of the VENDEX entries', 'nodes.prep.vendexChunks',
+        judge('vendex', 'Read these VENDEX entries from left to right', VENDEX_B_INSTRUCTIONS, [knownCountries, { name: 'entries', ref: 'item.lines', label: 'untrusted:export', render: 'text' }], VENDEX_B_RETURNS,
+          [{ op: 'eq', left: out('ids'), right: { $ref: 'item.ids' } }], extractModelClass, 3000), 60),
       mapOf('countries', ['prep'], 'Map country strings to ISO codes', 'nodes.prep.countryChunks',
         judge('countries', 'ISO code of each country as written', COUNTRY_INSTRUCTIONS, [knownCountries, { name: 'countries', ref: 'item.lines', label: 'untrusted:export', render: 'text' }], COUNTRY_RETURNS,
-          [{ op: 'eq', left: out('ids'), right: { $ref: 'item.ids' } }], extractModelClass, 1500), 20),
-      { id: 'merge', kind: 'code', needs: ['prep', 'spec', 'dates', 'atlas_switch', 'statuses', 'mirror', 'perspective', 'vendex', 'countries'],
+          // Every country of this bed is in the spec's table: "other" signals a misread name, so it is resampled/escalated.
+          [{ op: 'eq', left: out('ids'), right: { $ref: 'item.ids' } }, { op: 'not', condition: { op: 'contains', left: out('codes'), right: 'other' } }], extractModelClass, 1500), 20),
+      { id: 'merge', kind: 'code', needs: ['prep', 'spec', 'dates', 'atlas_switch', 'statuses', 'mirror', 'perspective', 'vendex', 'vendex_b', 'countries'],
         description: 'Apply the conventions and the spec: void rows, dates, signs, identity, conflicts, phones, FX', lang: 'js', source: bundle(mergeMain),
         args: {
           spec: { $ref: 'nodes.spec' }, rows: { $ref: 'nodes.prep.rows' },
@@ -982,7 +1094,7 @@ export function buildRecordsV3Workflow({ extractModelClass = 'M', conventionsMod
           statusItems: { $ref: 'nodes.prep.statusItems' }, statuses: { $ref: 'nodes.statuses.items' },
           mirrorItems: { $ref: 'nodes.prep.mirrorItems' }, mirror: { $ref: 'nodes.mirror.items' },
           perspectiveItems: { $ref: 'nodes.prep.perspectiveItems' }, perspective: { $ref: 'nodes.perspective.items' },
-          vendexChunks: { $ref: 'nodes.prep.vendexChunks' }, vendex: { $ref: 'nodes.vendex.items' },
+          vendexChunks: { $ref: 'nodes.prep.vendexChunks' }, vendex: { $ref: 'nodes.vendex.items' }, vendexB: { $ref: 'nodes.vendex_b.items' },
           countryStrings: { $ref: 'nodes.prep.countryStrings' }, countryChunks: { $ref: 'nodes.prep.countryChunks' }, countries: { $ref: 'nodes.countries.items' },
         }, timeoutMs: 120000 },
       { id: 'check', kind: 'verify', needs: ['merge'], description: 'Structural invariants and convention consistency', method: 'code', lang: 'js', source: bundle(verifyMain),

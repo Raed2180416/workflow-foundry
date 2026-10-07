@@ -6,7 +6,8 @@
 //
 // Binds 127.0.0.1 only; a Cloudflare quick tunnel (cloudflared) is the only way in. Every endpoint
 // except GET /health needs an Ed25519 signature by a key listed in the mailbox branch
-// (bridge-state/keys/*.pub). See bridge/PROTOCOL.md.
+// (bridge-state/keys/*.pub). See bridge/PROTOCOL.md. The config file must exist: nothing falls back
+// to built-in defaults silently.
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import fsp from 'node:fs/promises';
@@ -20,19 +21,22 @@ import {
   NonceCache, canonicalString, verifySignature, sha256hex, constantTimeEqualHex
 } from '../common/protocol.mjs';
 import { parseRelPath, TOPS } from '../common/relpath.mjs';
-import { Mailbox, readKeyDir } from '../mailbox.mjs';
-import { DEFAULT_CONFIG_PATH, loadConfig, normalizeConfig, ConfigError } from './config.mjs';
-import { JobManager, JobError, JOB_ID_RE } from './jobs.mjs';
+import { DEFAULT_COMMIT_ARGS, Mailbox, readKeyDir } from '../mailbox.mjs';
+import { DEFAULT_CONFIG_PATH, normalizeConfig, ConfigError } from './config.mjs';
+import { JobManager, JobError, JOB_ID_RE, MIN_TORCH } from './jobs.mjs';
 import { Publisher } from './publisher.mjs';
 import { diskFree, gitHead, gpuInfo, gpuSummary, osInfo, pythonVersion } from './sysinfo.mjs';
-import { discoverTunnelUrl } from './tunnel.mjs';
+import { discoverTunnelUrl, tunnelReady } from './tunnel.mjs';
 
 export class HttpError extends Error {
   constructor(status, code, message, reason, details) { super(message ?? code); this.status = status; this.code = code; this.reason = reason ?? code; this.details = details; }
 }
 
 const authFail = (reason, message) => new HttpError(401, 'unauthorized', message ?? reason, reason);
-const UPLOAD_TOPS = ['data', 'runs'];   // logs/ is daemon-owned: readable, never writable
+// runs/ and logs/ are daemon-owned: readable, never writable. runs/ holds checkpoints that Kev
+// unpickles (head.pt), so only jobs may write there (finding F1).
+const UPLOAD_TOPS = ['data'];
+const CLIENT_GONE = new Set(['ERR_STREAM_PREMATURE_CLOSE', 'ECONNRESET', 'EPIPE', 'ERR_STREAM_DESTROYED']);
 const STRIP_REQ = /^(x-bridge-.*|authorization|proxy-authorization|cookie|host|connection|keep-alive|transfer-encoding|te|trailer|upgrade|proxy-connection|content-length|expect|forwarded|x-forwarded-.*|x-real-ip|true-client-ip|cf-.*|cdn-loop)$/i;
 const STRIP_RES = /^(connection|keep-alive|transfer-encoding|proxy-.*|trailer|upgrade)$/i;
 
@@ -70,18 +74,20 @@ async function hashFile(file) {
 
 // ---- daemon --------------------------------------------------------------------------------------
 
-export async function createDaemon({ config, keysDir = null, mailbox = null, publicUrl = null, log = defaultLog, now = () => Date.now(), publish = true } = {}) {
+export async function createDaemon({ config, keysDir = null, mailbox = null, publicUrl = null, log = defaultLog, now = () => Date.now(), publish = true, jobOptions = {} } = {}) {
   const cfg = normalizeConfig(config);   // idempotent on an already normalized config
   await fsp.mkdir(cfg.workdir, { recursive: true });
   const startedAt = new Date(now()).toISOString();
   const state = { keys: new Map(), keySource: keysDir ? 'keys-dir' : mailbox ? 'mailbox' : 'none', keysLoadedAt: 0, keyErrors: [], killed: false, mailboxHead: null, refreshError: null, refreshedAt: null };
-  const nonces = new NonceCache({ maxSize: cfg.limits.nonceCache, now });
   let publisher = null;
 
-  const jobs = new JobManager({ config: cfg, workdir: cfg.workdir, log, refresh: () => refresh(), onServicesChange: () => publisher?.poke(), now });
+  const jobs = new JobManager({ config: cfg, workdir: cfg.workdir, log, refresh: () => refresh(), onServicesChange: () => publisher?.poke(), now, ...jobOptions });
   await jobs.init();
   const workdirReal = jobs.workdirReal;
   const accessLogFile = path.join(workdirReal, 'logs', 'bridge-access.log');
+  // F2: accepted nonces are journaled under state/ (not reachable through /files), so a restart does
+  // not reopen the 120 s replay window
+  const nonces = new NonceCache({ maxSize: cfg.limits.nonceCache, now, file: path.join(workdirReal, 'state', 'nonces.log'), onError: e => log(`WARNING ${e.message}; replay protection across a restart is degraded until it can be written`) });
 
   function access(rec) {
     try {
@@ -99,7 +105,7 @@ export async function createDaemon({ config, keysDir = null, mailbox = null, pub
     state.killed = !!on; jobs.setKilled(on);
   }
 
-  async function refresh() {
+  async function doRefresh() {
     if (keysDir) {
       const { keys, errors } = readKeyDir(keysDir);
       setKeys(keys, errors); state.refreshedAt = new Date(now()).toISOString();
@@ -107,15 +113,24 @@ export async function createDaemon({ config, keysDir = null, mailbox = null, pub
     }
     if (!mailbox) return { source: 'none', keys: [] };
     try {
-      const head = await mailbox.refresh();
-      const { keys, errors } = mailbox.readKeys();
-      setKeys(keys, errors); setKilled(mailbox.isKilled());
-      Object.assign(state, { mailboxHead: head, refreshError: null, refreshedAt: new Date(now()).toISOString() });
-      return { source: 'mailbox', head, keys: keys.map(k => k.id), errors, killed: state.killed };
+      // one locked step: fetch + keys + KILL, never interleaved with the publisher's git work (F4)
+      const snap = await mailbox.snapshot();
+      setKeys(snap.keys, snap.errors); setKilled(snap.killed);
+      Object.assign(state, { mailboxHead: snap.head, refreshError: null, refreshedAt: new Date(now()).toISOString() });
+      return { source: 'mailbox', head: snap.head, keys: snap.keys.map(k => k.id), errors: snap.errors, killed: state.killed };
     } catch (error) {
       state.refreshError = error.message;
       throw error;
     }
+  }
+  // Coalesced: at most one refresh runs and one waits, however many callers (publisher ticks,
+  // git.refresh jobs) ask; a waiting caller still gets a fetch that started after it asked.
+  let refreshRunning = null, refreshQueued = null;
+  function refresh() {
+    if (refreshQueued) return refreshQueued;
+    if (!refreshRunning) return (refreshRunning = doRefresh().finally(() => { refreshRunning = null; }));
+    refreshQueued = refreshRunning.catch(() => {}).then(() => { refreshQueued = null; return refresh(); });
+    return refreshQueued;
   }
 
   // ---- auth ----
@@ -142,8 +157,14 @@ export async function createDaemon({ config, keysDir = null, mailbox = null, pub
     catch { throw authFail('bad_request_line'); }
     if (!verifySignature(auth.key.publicKey, canonical, auth.sig)) throw authFail('bad_signature', 'bad signature');
     let added;
-    try { added = nonces.add(auth.nonce); } catch { throw new HttpError(503, 'busy', 'nonce cache full', 'nonce_cache_full'); }
+    try { added = nonces.add(auth.nonce, Number(auth.ts)); } catch { throw new HttpError(503, 'busy', 'nonce cache full', 'nonce_cache_full'); }
     if (!added) throw authFail('replayed_nonce', 'nonce already used');
+  }
+  async function checkDisk(incoming = 0) {
+    const minBytes = cfg.limits.minFreeMiB * 2 ** 20;
+    if (!minBytes) return;
+    const d = await diskFree(workdirReal);
+    if (d.freeBytes !== null && d.freeBytes !== undefined && d.freeBytes - incoming < minBytes) throw new HttpError(507, 'insufficient_storage', `only ${Math.floor(d.freeBytes / 2 ** 20)} MiB free in the workdir (limit ${cfg.limits.minFreeMiB} MiB after this upload)`);
   }
 
   // ---- routes ----
@@ -177,11 +198,17 @@ export async function createDaemon({ config, keysDir = null, mailbox = null, pub
     if (isUpload) {
       if (!auth.announced) throw new HttpError(400, 'body_hash_required', 'uploads must announce x-bridge-body-sha256');
       verify(auth, req, auth.announced);   // before a single body byte is written to disk
-    } else {
+    } else if (auth.announced) {
+      // F5: authenticate first, against the announced hash; only then read (up to the limit) and compare
+      verify(auth, req, auth.announced);
       body = await readBody(req, limit);
-      const sha = sha256hex(body);
-      if (auth.announced && !constantTimeEqualHex(sha, auth.announced)) throw authFail('body_hash_mismatch', 'body does not match x-bridge-body-sha256');
-      verify(auth, req, sha);
+      if (!constantTimeEqualHex(sha256hex(body), auth.announced)) throw authFail('body_hash_mismatch', 'body does not match x-bridge-body-sha256');
+    } else {
+      // no announced hash: the body must be read before the signature can be checked, so only a small one is
+      const pre = cfg.limits.unannouncedBodyBytes;
+      if (declared !== null && declared > pre) throw new HttpError(413, 'too_large', `bodies over ${pre} bytes must announce x-bridge-body-sha256`, 'body_hash_required');
+      body = await readBody(req, pre);
+      verify(auth, req, sha256hex(body));
     }
     rec.keyId = auth.keyId;
     if (state.killed) throw new HttpError(403, 'killed', 'the kill switch is set (bridge-state/KILL in the mailbox)');
@@ -191,7 +218,7 @@ export async function createDaemon({ config, keysDir = null, mailbox = null, pub
       case 'ping': return sendJson(req, res, 200, { ok: true, keyId: auth.keyId, version: DAEMON_VERSION, protocol: PROTOCOL, time: new Date(now()).toISOString() });
       case 'info': return sendJson(req, res, 200, await info());
       case 'listFiles': return sendJson(req, res, 200, await listFiles(query.get('dir') ?? '', query.get('recursive') === '1'));
-      case 'getFile': return getFile(req, res, a1);
+      case 'getFile': return getFile(req, res, a1, rec);
       case 'putFile': return putFile(req, res, a1, auth.announced, query.get('overwrite') === '1', limit);
       case 'submit': {
         let payload;
@@ -220,16 +247,20 @@ export async function createDaemon({ config, keysDir = null, mailbox = null, pub
   }
 
   async function info() {
-    const [gpu, python, kev, disk] = await Promise.all([gpuInfo(cfg.nvidiaSmi), pythonVersion(cfg.python), gitHead(cfg.kevDir), diskFree(workdirReal)]);
+    const [gpu, python, kev, disk, torch, ready] = await Promise.all([gpuInfo(cfg.nvidiaSmi), pythonVersion(cfg.python), gitHead(cfg.kevDir), diskFree(workdirReal), jobs.torchCheck(), tunnelReady(cfg.tunnel.metrics)]);
+    const journal = nonces.journal;
     return {
       version: DAEMON_VERSION, protocol: PROTOCOL, startedAt, time: new Date(now()).toISOString(),
       os: osInfo(), node: process.version, python: python.version ?? null, pythonError: python.reason ?? null,
+      torch: { version: torch.version, weightsOnlySafe: torch.safe, minimum: MIN_TORCH.join('.'), error: torch.error },
       kevCommit: kev.commit ?? null, llamaServer: !!(cfg.llamaServer && fs.existsSync(cfg.llamaServer)), device: cfg.device,
-      gpu, disk, services: jobs.services(), queue: jobs.queue(),
+      gpu, disk, services: jobs.services(), queue: jobs.queue(), jobRecords: jobs.recordCount,
       keys: { source: state.keySource, count: state.keys.size, errors: state.keyErrors.length, loadedAt: state.keysLoadedAt ? new Date(state.keysLoadedAt).toISOString() : null },
+      nonces: { cached: nonces.size, journaled: !!journal && !journal.error, journalError: journal?.error ? 'nonce journal not writable (see the daemon log)' : null },
       mailbox: state.keySource === 'mailbox' ? { branch: cfg.mailbox.branch, head: state.mailboxHead, refreshedAt: state.refreshedAt, error: state.refreshError, lastPublished: publisher?.lastPublished ?? null, publishError: publisher?.lastError ?? null } : null,
-      tunnel: publisher?.tunnel ?? { url: publicUrl, source: publicUrl ? 'flag' : null },
-      killed: state.killed, limits: { fileBytes: cfg.limits.fileBytes, jsonBytes: cfg.limits.jsonBytes }
+      tunnel: { ...(publisher?.tunnel ?? { url: publicUrl, source: publicUrl ? 'flag' : null }), readyConnections: ready?.readyConnections ?? null },
+      killed: state.killed,
+      limits: Object.fromEntries(['fileBytes', 'jsonBytes', 'unannouncedBodyBytes', 'maxQueued', 'maxJobRecords', 'jobLogBytes', 'minFreeMiB'].map(k => [k, cfg.limits[k]]))
     };
   }
 
@@ -267,7 +298,7 @@ export async function createDaemon({ config, keysDir = null, mailbox = null, pub
     return { dir: rel, entries, truncated };
   }
 
-  async function getFile(req, res, tail) {
+  async function getFile(req, res, tail, rec) {
     const { segments, rel } = relOrThrow(tail, { decode: true });
     const top = await topReal(segments[0]);
     let real;
@@ -278,7 +309,13 @@ export async function createDaemon({ config, keysDir = null, mailbox = null, pub
     if (!st.isFile()) throw new HttpError(403, 'not_a_file', `${rel} is not a regular file`);
     const sha = await hashFile(real);
     res.writeHead(200, { 'content-type': 'application/octet-stream', 'content-length': st.size, 'x-bridge-sha256': sha, 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' });
-    await pipeline(fs.createReadStream(real), res);
+    try { await pipeline(fs.createReadStream(real), res); }
+    catch (error) {
+      // a client that closes its connection as soon as it has content-length bytes is normal, not an
+      // internal error (seen in the e2e run with ERR_STREAM_PREMATURE_CLOSE); the client checks the hash
+      if (CLIENT_GONE.has(error.code) || res.destroyed) { rec.reason = 'client_closed'; return; }
+      throw error;
+    }
   }
 
   async function putFile(req, res, tail, expectedSha, overwrite, limit) {
@@ -307,6 +344,8 @@ export async function createDaemon({ config, keysDir = null, mailbox = null, pub
     if (existing?.isSymbolicLink()) throw new HttpError(403, 'symlink_target', `${rel} is a symlink`);
     if (existing?.isDirectory()) throw new HttpError(409, 'is_directory', `${rel} is a directory`);
     if (existing && !overwrite) throw new HttpError(409, 'exists', `${rel} exists; pass ?overwrite=1 to replace it`);
+    const declared = req.headers['content-length'] !== undefined ? Number(req.headers['content-length']) : 0;
+    await checkDisk(declared);   // F3
     const tmp = path.join(cur, `.upload-${crypto.randomBytes(6).toString('hex')}.part`);
     const hash = crypto.createHash('sha256'); let size = 0;
     try {
@@ -387,9 +426,10 @@ export async function createDaemon({ config, keysDir = null, mailbox = null, pub
       mailbox, refresh, log, daemonVersion: DAEMON_VERSION, startedAt, now,
       heartbeatMs: cfg.mailbox.heartbeatMinutes * 60_000, refreshMs: cfg.mailbox.refreshMinutes * 60_000, pollMs: cfg.tunnel.pollSeconds * 1000,
       discoverTunnel: () => discoverTunnelUrl({ publicUrl: publicUrl ?? cfg.tunnel.publicUrl, metrics: cfg.tunnel.metrics, log: cfg.tunnel.log }),
-      snapshot: async () => ({ gpu: gpuSummary(await gpuInfo(cfg.nvidiaSmi)), services: jobs.services().map(s => ({ id: s.id, kind: s.kind, name: s.name, state: s.state })) })
+      snapshot: async () => ({ gpu: gpuSummary(await gpuInfo(cfg.nvidiaSmi)), services: jobs.services().map(s => ({ id: s.id, kind: s.kind, name: s.name, state: s.state })), tunnelReadyConnections: (await tunnelReady(cfg.tunnel.metrics))?.readyConnections ?? null })
     }).start();
   } else if (mailbox) await refresh().catch(error => log(`mailbox refresh failed: ${error.message}`));
+  if (nonces.journal?.error) log(`WARNING ${nonces.journal.error}`);
 
   let closing = null;
   const close = () => (closing ??= doClose());
@@ -400,7 +440,7 @@ export async function createDaemon({ config, keysDir = null, mailbox = null, pub
     await jobs.shutdown();
     if (publisher) await publisher.stop();
   }
-  return { server, port, url, jobs, state, refresh, setKilled, close, publisher: () => publisher, config: cfg };
+  return { server, port, url, jobs, state, refresh, setKilled, close, publisher: () => publisher, config: cfg, nonces };
 }
 
 function defaultLog(msg) { process.stdout.write(`[foundry-bridge ${new Date().toISOString()}] ${msg}\n`); }
@@ -443,22 +483,32 @@ async function check(cfg, opts) {
   mark(Number(process.versions.node.split('.')[0]) >= 20, 'node >= 20', process.version);
   try { await fsp.mkdir(cfg.workdir, { recursive: true }); await fsp.access(cfg.workdir, fs.constants.W_OK); mark(true, 'workdir writable', cfg.workdir); } catch (e) { mark(false, 'workdir writable', e.message); }
   const py = await pythonVersion(cfg.python); mark(!!py.version, 'python', py.version ?? py.reason);
+  if (py.version) {
+    const t = await new JobManager({ config: cfg, workdir: cfg.workdir }).torchCheck();
+    mark(t.safe, `torch >= ${MIN_TORCH.join('.')} (safe checkpoint loading)`, t.version ? `torch ${t.version}` : t.error);
+  }
   const kev = await gitHead(cfg.kevDir); mark(!!kev.commit, 'kev checkout', kev.commit ?? kev.reason);
   const gpu = await gpuInfo(cfg.nvidiaSmi); soft(gpu.available, 'nvidia-smi', gpu.available ? `${gpu.gpus[0].name}, ${gpu.gpus[0].memoryTotalMiB} MiB, driver ${gpu.gpus[0].driver}, CUDA ${gpu.cuda}` : gpu.reason);
   if (cfg.llamaServer) mark(fs.existsSync(cfg.llamaServer), 'llama-server', cfg.llamaServer); else warn('llama-server', 'not configured (optional)');
   if (opts.keysDir) { const k = readKeyDir(opts.keysDir); mark(k.keys.length > 0, 'keys dir', `${k.keys.length} key(s)${k.errors.length ? `, errors: ${k.errors.join('; ')}` : ''}`); }
   else if (cfg.mailbox.enabled && !opts.noMailbox) {
     try {
-      const mb = new Mailbox({ dir: cfg.mailbox.dir, remote: cfg.mailbox.remote ?? await defaultRemote(), branch: cfg.mailbox.branch });
-      const head = await mb.refresh(); const k = mb.readKeys();
-      mark(k.keys.length > 0, 'mailbox keys', `${cfg.mailbox.branch}@${head.slice(0, 8)}: ${k.keys.length} key(s) [${k.keys.map(x => x.id).join(', ')}]${k.errors.length ? `, errors: ${k.errors.join('; ')}` : ''}`);
-      if (mb.isKilled()) warn('mailbox', 'KILL file present: the daemon will refuse all work');
-      const push = await (await import('../mailbox.mjs')).runGit(['push', '--dry-run', '--quiet', 'origin', `HEAD:refs/heads/${cfg.mailbox.branch}`], { cwd: mb.dir, timeoutMs: 60_000 });
+      // the same clone the running daemon uses: every git step below waits for the mailbox lock (F4)
+      const mb = new Mailbox({ dir: cfg.mailbox.dir, remote: cfg.mailbox.remote ?? await defaultRemote(), branch: cfg.mailbox.branch, lockTimeoutMs: 120_000 });
+      const snap = await mb.snapshot();
+      mark(snap.keys.length > 0, 'mailbox keys', `${cfg.mailbox.branch}@${snap.head.slice(0, 8)}: ${snap.keys.length} key(s) [${snap.keys.map(x => x.id).join(', ')}]${snap.errors.length ? `, errors: ${snap.errors.join('; ')}` : ''}`);
+      if (snap.killed) warn('mailbox', 'KILL file present: the daemon will refuse all work');
+      const { runGit } = await import('../mailbox.mjs');
+      const push = await mb.exclusive(() => runGit(['push', '--dry-run', '--quiet', 'origin', `HEAD:refs/heads/${cfg.mailbox.branch}`], { cwd: mb.dir, timeoutMs: 60_000 }));
       mark(push.code === 0, 'mailbox push access (dry run)', push.code === 0 ? 'ok' : push.stderr.trim().slice(0, 200));
     } catch (e) { mark(false, 'mailbox', e.message); }
   } else warn('mailbox', 'disabled');
   const t = await discoverTunnelUrl({ publicUrl: opts.publicUrl ?? cfg.tunnel.publicUrl, metrics: cfg.tunnel.metrics, log: cfg.tunnel.log });
   soft(!!t.url, 'tunnel URL', t.url ? `${t.url} (${t.source})` : 'not found yet (start cloudflared)');
+  if (cfg.tunnel.metrics) {
+    const r = await tunnelReady(cfg.tunnel.metrics);
+    soft(!!r?.readyConnections, 'tunnel connected to Cloudflare', r ? `readyConnections=${r.readyConnections}${r.readyConnections ? '' : ' (cloudflared runs but has no edge connection: see LAPTOP-HANDOFF §T4)'}` : `no answer from ${cfg.tunnel.metrics}/ready (cloudflared not running?)`);
+  }
   const free = await new Promise(r => { const s = http.createServer(); s.once('error', () => r(false)); s.listen(cfg.port, cfg.host, () => s.close(() => r(true))); });
   soft(free, `port ${cfg.host}:${cfg.port} free`, free ? '' : 'in use (the daemon may already be running)');
   return { ok, text: lines.join('\n') };
@@ -467,12 +517,15 @@ async function check(cfg, opts) {
 async function main() {
   let opts;
   try { opts = parseArgs(process.argv.slice(2)); } catch (error) { console.error(error.message); process.exit(2); }
-  if (opts.help) { console.log(fs.readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n').slice(1, 9).map(l => l.replace(/^\/\/ ?/, '')).join('\n')); return; }
+  if (opts.help) { const l = fs.readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n').slice(1); console.log(l.slice(0, l.findIndex(x => !x.startsWith('//'))).map(x => x.replace(/^\/\/ ?/, '')).join('\n')); return; }
   if (opts.version) { console.log(DAEMON_VERSION); return; }
   let cfg;
   try {
-    const base = fs.existsSync(opts.config) ? JSON.parse(fs.readFileSync(opts.config, 'utf8')) : (opts.keysDir ? {} : null);
-    if (!base) throw new ConfigError(`config ${opts.config} not found (copy bridge/laptop/bridge-config.example.json there)`);
+    // never fall back to built-in defaults when the file is missing (a typo in --config would otherwise
+    // start a daemon on a different workdir); write {} to a file to run on defaults deliberately
+    if (!fs.existsSync(opts.config)) throw new ConfigError(`config ${opts.config} not found (copy bridge/laptop/bridge-config.example.json there)`);
+    let base;
+    try { base = JSON.parse(fs.readFileSync(opts.config, 'utf8')); } catch (error) { throw new ConfigError(`config ${opts.config} is not valid JSON: ${error.message}`); }
     for (const k of ['host', 'port', 'workdir']) if (opts[k] !== undefined) base[k] = opts[k];
     cfg = normalizeConfig(base);
   } catch (error) { console.error(error.message); process.exit(2); }
@@ -481,7 +534,8 @@ async function main() {
   if (!opts.keysDir && cfg.mailbox.enabled && !opts.noMailbox) {
     const remote = cfg.mailbox.remote ?? await defaultRemote();
     if (!remote) { console.error('mailbox.remote is not set and the repository origin could not be read'); process.exit(2); }
-    mailbox = new Mailbox({ dir: cfg.mailbox.dir, remote, branch: cfg.mailbox.branch });
+    // laptop commits are never signed: a passphrase prompt in a background service would hang the publisher
+    mailbox = new Mailbox({ dir: cfg.mailbox.dir, remote, branch: cfg.mailbox.branch, commitArgs: [...DEFAULT_COMMIT_ARGS, '-c', 'commit.gpgsign=false'] });
   }
   const d = await createDaemon({ config: cfg, keysDir: opts.keysDir ?? null, mailbox, publicUrl: opts.publicUrl ?? null });
   defaultLog(`foundry-bridge ${DAEMON_VERSION} listening on ${d.url} (workdir ${cfg.workdir}; keys from ${opts.keysDir ? 'keys dir' : mailbox ? `mailbox ${cfg.mailbox.branch}` : 'nowhere: every signed request will fail'})`);
@@ -493,10 +547,11 @@ async function main() {
     try { await d.close(); } catch (e) { defaultLog(`shutdown error: ${e.message}`); }
     process.exit(0);
   };
+  for (const s of [process.stdout, process.stderr]) s.on('error', () => {});   // a closed pipe (tee, tmux) must not kill the daemon
   process.on('unhandledRejection', error => defaultLog(`unhandled rejection (daemon keeps running): ${error?.stack ?? error}`));
   process.on('SIGINT', () => stop('SIGINT'));
   process.on('SIGTERM', () => stop('SIGTERM'));
-  process.on('SIGHUP', () => d.refresh().then(r => defaultLog(`SIGHUP refresh: ${r.keys?.length ?? 0} key(s)`), e => defaultLog(`SIGHUP refresh failed: ${e.message}`)));
+  process.on('SIGHUP', () => stop('SIGHUP'));   // terminal or tmux pane closed: stop cleanly
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main();

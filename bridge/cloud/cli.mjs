@@ -5,7 +5,7 @@
 //   node bridge/cloud/cli.mjs discover
 //   node bridge/cloud/cli.mjs ping | info | jobs
 //   node bridge/cloud/cli.mjs selftest [--timeout S]
-//   node bridge/cloud/cli.mjs put <local-file> <data/...|runs/...> [--overwrite]
+//   node bridge/cloud/cli.mjs put <local-file> <data/...> [--overwrite]          (runs/ and logs/ are daemon-written)
 //   node bridge/cloud/cli.mjs get <data/...|runs/...|logs/...> <dest> [--dir]
 //   node bridge/cloud/cli.mjs ls [<dir>] [--recursive]
 //   node bridge/cloud/cli.mjs job <kind> [--params JSON] [key=value ...]   e.g. job kev.train dataset=data/t.jsonl epochs=2 extra.max_steps=50
@@ -38,7 +38,8 @@ function parse(argv) {
 
 function usage(msg) {
   if (msg) process.stderr.write(`${msg}\n\n`);
-  const text = fs.readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n').slice(1, 22).map(l => l.replace(/^\/\/ ?/, '')).join('\n');
+  const lines = fs.readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n').slice(1);
+  const text = lines.slice(0, lines.findIndex(l => !l.startsWith('//'))).map(l => l.replace(/^\/\/ ?/, '')).join('\n');
   process.stderr.write(`${text}\n`);
   process.exit(2);
 }
@@ -74,7 +75,8 @@ async function cmdWait(c, id, o) {
     onLog: o.quiet ? undefined : text => process.stderr.write(text)
   });
   out(o, job, `${job.id} ${job.kind}: ${job.state}${job.exitCode !== null ? ` (exit ${job.exitCode})` : ''}${job.error ? ` - ${job.error}` : ''}${job.result ? `\nresult: ${JSON.stringify(job.result)}` : ''}${job.outputs ? `\noutputs: ${job.outputs.dir} (${job.outputs.files.length} files)` : ''}`);
-  return ['succeeded', 'running'].includes(job.state) ? 0 : 3;
+  const ok = job.state === 'succeeded' || (job.class === 'service' && (job.state === 'running' || (job.state === 'stopped' && job.cancelRequested)));
+  return ok ? 0 : 3;
 }
 
 async function main() {
@@ -89,14 +91,14 @@ async function main() {
     }
     case 'discover': {
       const d = await discover();
-      const { endpoint, ...summary } = d;
+      const { endpoint } = d;
       out(o, d, `${d.url ?? '(no url)'}  state=${d.state ?? '-'}  heartbeat ${d.ageMs === null || d.ageMs === undefined ? '?' : `${Math.round(d.ageMs / 1000)} s ago`}${d.stale ? ' (STALE)' : ''}\nmailbox ${d.head?.slice(0, 8)}  keys [${d.keys.join(', ')}]${d.killed ? '  KILL SET' : ''}${d.errors?.length ? `\nproblems: ${d.errors.join('; ')}` : ''}${endpoint ? `\ndaemon ${endpoint.daemonVersion} since ${endpoint.startedAt}; gpu ${endpoint.gpu?.name ?? 'none'}; services ${JSON.stringify(endpoint.services ?? [])}` : ''}`);
-      void summary;
       return d.ok && !d.stale ? 0 : 1;
     }
     case 'ping': {
       const c = await client(o);
       const h = await c.health();
+      if (h.status !== 200) throw new Error(`GET /health -> ${h.status}: ${(h.raw ?? h.error ?? '').toString().slice(0, 200)}${h.hint ? `\n  hint: ${h.hint}` : ''}`);
       const p = await c.ping();
       out(o, { health: h, ping: p }, `health ${h.status} ok=${h.ok} version=${h.version} rtt=${h.rttMs} ms clock skew=${h.skewMs ?? '?'} ms\nsigned ping ok as key ${p.keyId} (daemon ${p.version}, ${p.protocol})`);
       return 0;
@@ -111,7 +113,7 @@ async function main() {
       return cmdWait(c, job.id, { ...o, timeout: o.timeout ?? 900 });
     }
     case 'put': {
-      if (pos.length !== 2) usage('put <local-file> <data/...|runs/...>');
+      if (pos.length !== 2) usage('put <local-file> <data/...>');
       const c = await client(o);
       const r = await c.upload(pos[0], pos[1], { overwrite: !!o.overwrite });
       out(o, r, `${r.path} ${r.size} bytes sha256 ${r.sha256}`);

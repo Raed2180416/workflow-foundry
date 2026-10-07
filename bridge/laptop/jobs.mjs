@@ -2,7 +2,15 @@
 // Processes are spawned with argument arrays (never a shell), a minimal environment and their own
 // process group, so cancel/stop reaches the whole tree. Commands come from bridge-config.json paths;
 // requests only choose among validated parameters.
-import { spawn, spawnSync } from 'node:child_process';
+//
+// Checkpoints (finding F1). Kev reads a run's head.pt with torch.load, which unpickles. So:
+//  - runs/ is written only by jobs (the files API refuses uploads there);
+//  - a `runs/<dir>` reference must name a kev.train job this daemon ran to success, and its head.pt
+//    must still have the sha256 recorded when that job ended;
+//  - every job runs with TORCH_FORCE_WEIGHTS_ONLY_LOAD=1 (torch then refuses pickled code even where
+//    a caller passes weights_only=False), and kev.* jobs are refused unless the configured python has
+//    torch >= 2.6 (older weights-only unpicklers had a known bypass, CVE-2025-32434).
+import { execFile, spawn, spawnSync } from 'node:child_process';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import fsp from 'node:fs/promises';
@@ -10,7 +18,9 @@ import http from 'node:http';
 import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
+import { pipeline } from 'node:stream/promises';
 import { parseRelPath } from '../common/relpath.mjs';
+import { diskFree as defaultDiskFree } from './sysinfo.mjs';
 
 export const HUB_RUN_RE = /^jaredpalmer\/kev-[0-9.]+b(@v[0-9.]+)?$/;
 export const BASE_RE = /^Qwen\/Qwen3(\.[0-9]+)?-[0-9.]+B(-Base)?$/;
@@ -104,7 +114,7 @@ export async function validateParams(schema, params, ctx, prefix = '') {
       }
       case 'runRef': {
         if (v === '' && spec.allowNone) { value[k] = ''; resolved[k] = ''; break; }
-        if (typeof v !== 'string') { errors.push(`${name}: a hub id matching ${HUB_RUN_RE} or a runs/<dir> checkpoint`); break; }
+        if (typeof v !== 'string') { errors.push(`${name}: a hub id matching ${HUB_RUN_RE} or runs/<jobId> of a finished kev.train job`); break; }
         if (HUB_RUN_RE.test(v)) { value[k] = v; resolved[k] = v; break; }
         try { resolved[k] = await ctx.resolveRunDir(v); value[k] = v; } catch (error) { errors.push(`${name}: ${error.message}`); }
         break;
@@ -161,6 +171,25 @@ try:
         r["peak_mem_mib"] = torch.cuda.max_memory_allocated() // 2**20
 except Exception as e:
     r["torch_error"] = f"{type(e).__name__}: {e}"
+# The bridge's pickle guard (PROTOCOL.md §5): torch >= 2.6, and a pickle that would call a function
+# must be refused even when weights_only=False is asked for (TORCH_FORCE_WEIGHTS_ONLY_LOAD=1).
+try:
+    import io, re
+    import torch
+    m = re.match(r"(\d+)\.(\d+)", torch.__version__)
+    r["torch_weights_only_safe"] = bool(m) and (int(m.group(1)), int(m.group(2))) >= (2, 6)
+    r["torch_force_weights_only"] = os.environ.get("TORCH_FORCE_WEIGHTS_ONLY_LOAD")
+    class _Probe:
+        def __reduce__(self):
+            return (print, ("FOUNDRY_PICKLE_GADGET_RAN",))
+    buf = io.BytesIO(); torch.save({"probe": _Probe()}, buf); buf.seek(0)
+    try:
+        torch.load(buf, map_location="cpu", weights_only=False)
+        r["pickle_guard"] = "executed"
+    except Exception as e:
+        r["pickle_guard"] = "refused"
+except Exception as e:
+    r["pickle_guard"] = f"error: {type(e).__name__}: {e}"
 try:
     import kev
     r["kev_import"] = "ok"
@@ -170,8 +199,32 @@ try:
 except Exception as e:
     r["kev_error"] = f"{type(e).__name__}: {e}"
 print("FOUNDRY_RESULT " + json.dumps(r), flush=True)
-sys.exit(0 if r.get("cuda_available") and "kev_error" not in r and "torch_error" not in r else 1)
+ok = r.get("cuda_available") and "kev_error" not in r and "torch_error" not in r
+ok = ok and r.get("torch_weights_only_safe") and r.get("pickle_guard") == "refused"
+sys.exit(0 if ok else 1)
 `;
+
+// Reads the torch version from package metadata (no torch import: fast).
+export const TORCH_PROBE_PY = String.raw`
+import importlib.metadata as m
+try:
+    print("FOUNDRY_TORCH " + m.version("torch"))
+except m.PackageNotFoundError:
+    print("FOUNDRY_TORCH none")
+`;
+export const MIN_TORCH = Object.freeze([2, 6]);
+export function torchSafe(version) {
+  const m = /^(\d+)\.(\d+)/.exec(String(version ?? ''));
+  if (!m) return false;
+  const [maj, min] = [Number(m[1]), Number(m[2])];
+  return maj > MIN_TORCH[0] || (maj === MIN_TORCH[0] && min >= MIN_TORCH[1]);
+}
+
+export async function hashFile(file) {
+  const h = crypto.createHash('sha256');
+  await pipeline(fs.createReadStream(file), async src => { for await (const c of src) h.update(c); });
+  return h.digest('hex');
+}
 
 function flag(name) { return `--${name}`; }
 
@@ -239,6 +292,9 @@ export function jobEnv(cfg, base = process.env) {
   Object.assign(env, cfg.env);
   if (cfg.kevDir) env.PYTHONPATH = cfg.kevDir;
   env.PYTHONUNBUFFERED = '1'; env.PYTHONNOUSERSITE = '1'; env.TOKENIZERS_PARALLELISM = 'false';
+  // the pickle guard (F1): torch refuses pickled code in every torch.load, even with weights_only=False
+  delete env.TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD;
+  env.TORCH_FORCE_WEIGHTS_ONLY_LOAD = '1';
   if (cfg.python && !IS_WIN) env.PATH = `${path.dirname(cfg.python)}${path.delimiter}${env.PATH ?? '/usr/local/bin:/usr/bin:/bin'}`;
   return env;
 }
@@ -316,8 +372,9 @@ let exitHookInstalled = false;
 
 export class JobManager {
   #jobs = new Map(); #children = new Map(); #queue = []; #running = null; #killed = false;
-  constructor({ config, workdir, log = () => {}, refresh = async () => ({}), onServicesChange = () => {}, now = () => Date.now() }) {
-    Object.assign(this, { cfg: config, workdir, log, refresh, onServicesChange, now });
+  #inlineRunning = null; #inlinePending = null; #torch = null; #torchProbe = null;
+  constructor({ config, workdir, log = () => {}, refresh = async () => ({}), onServicesChange = () => {}, now = () => Date.now(), diskFree = defaultDiskFree, logWatchMs = 5000 }) {
+    Object.assign(this, { cfg: config, workdir, log, refresh, onServicesChange, now, diskFree, logWatchMs });
     this.jobsDir = path.join(workdir, 'jobs'); this.logsDir = path.join(workdir, 'logs'); this.runsDir = path.join(workdir, 'runs'); this.dataDir = path.join(workdir, 'data');
   }
 
@@ -327,11 +384,12 @@ export class JobManager {
     for (const name of (await fsp.readdir(this.jobsDir)).filter(n => n.endsWith('.json'))) {
       try {
         const job = JSON.parse(await fsp.readFile(path.join(this.jobsDir, name), 'utf8'));
-        if (!JOB_ID_RE.test(job.id)) continue;
+        if (!JOB_ID_RE.test(job.id) || name !== `${job.id}.json`) continue;
         if (!TERMINAL.has(job.state)) { job.state = 'lost'; job.error = 'daemon restarted while this job was queued or running'; job.endedAt ??= new Date(this.now()).toISOString(); await this.#save(job); }
         this.#jobs.set(job.id, job);
       } catch {}
     }
+    await this.#prune();
     LIVE_MANAGERS.add(this.#children);
     if (!exitHookInstalled) {
       exitHookInstalled = true;
@@ -350,15 +408,21 @@ export class JobManager {
     if (!(await fsp.stat(real)).isFile()) throw new Error(`${rel} is not a file`);
     return real;
   }
+  // A checkpoint reference must be runs/<jobId> of a kev.train job this daemon ran to success, whose
+  // head.pt still has the sha256 recorded when the job ended (F1). Nothing else under runs/ is loaded.
   async resolveRunDir(rel) {
     const { segments } = parseRelPath(rel, { tops: ['runs'] });
-    if (segments.length < 2) throw new Error('name a run directory under runs/');
-    const top = await fsp.realpath(this.runsDir);
-    let real;
-    try { real = await fsp.realpath(path.join(this.workdirReal, ...segments)); } catch { throw new Error(`${rel} does not exist`); }
-    if (!inside(real, top)) throw new Error(`${rel} escapes runs/ through a symlink`);
-    if (!fs.existsSync(path.join(real, 'head.pt'))) throw new Error(`${rel} has no head.pt (not a finished Kev checkpoint)`);
-    return real;
+    if (segments.length !== 2 || !JOB_ID_RE.test(segments[1])) throw new Error('name a checkpoint as runs/<jobId> of a kev.train job this daemon ran');
+    const job = this.#jobs.get(segments[1]);
+    if (!job || job.kind !== 'kev.train' || job.state !== 'succeeded' || !job.checkpoint?.headSha256) throw new Error(`${rel} is not a checkpoint of a kev.train job this daemon finished successfully`);
+    const dir = path.join(this.workdirReal, 'runs', segments[1]);
+    const st = await fsp.lstat(dir).catch(() => null);
+    if (!st?.isDirectory()) throw new Error(`${rel} is missing or is not a plain directory`);
+    const head = path.join(dir, 'head.pt');
+    const hs = await fsp.lstat(head).catch(() => null);
+    if (!hs?.isFile()) throw new Error(`${rel}/head.pt is missing or is not a regular file`);
+    if (await hashFile(head) !== job.checkpoint.headSha256) throw new Error(`${rel}/head.pt changed after the job wrote it; refusing to load it`);
+    return dir;
   }
   llamaAllowlist() {
     if (!this.cfg.llamaAllowlist) return [];
@@ -366,6 +430,25 @@ export class JobManager {
       const j = JSON.parse(fs.readFileSync(this.cfg.llamaAllowlist, 'utf8'));
       return (Array.isArray(j?.models) ? j.models : []).filter(m => typeof m?.repo === 'string' && typeof m?.file === 'string');
     } catch { return []; }
+  }
+
+  // torch version of the configured python, from package metadata. Cached: 10 min when safe, 1 min otherwise.
+  async torchCheck({ force = false } = {}) {
+    const t = this.#torch;
+    if (!force && t && this.now() - t.at < (t.safe ? 600_000 : 60_000)) return t;
+    this.#torchProbe ??= (async () => {
+      let version = null, error = null;
+      if (!this.cfg.python) error = 'python not configured';
+      else {
+        const r = await new Promise(resolve => execFile(this.cfg.python, ['-c', TORCH_PROBE_PY], { cwd: this.cfg.kevDir ?? os.tmpdir(), env: jobEnv(this.cfg), timeout: 60_000, windowsHide: true, maxBuffer: 1 << 16 }, (err, stdout, stderr) => resolve({ err, stdout: String(stdout ?? ''), stderr: String(stderr ?? '') })));
+        const m = /^FOUNDRY_TORCH (\S+)$/m.exec(r.stdout);
+        if (m && m[1] !== 'none') version = m[1];
+        else error = m ? 'torch is not installed in the configured python' : `torch probe failed: ${(r.err?.code ?? r.stderr.trim().split('\n').pop() ?? 'no output')}`.slice(0, 300);
+      }
+      this.#torch = { at: this.now(), version, safe: !error && torchSafe(version), error };
+      return this.#torch;
+    })().finally(() => { this.#torchProbe = null; });
+    return this.#torchProbe;
   }
 
   // ---- public API ----
@@ -380,6 +463,8 @@ export class JobManager {
     if (typeof kind !== 'string' || !Object.hasOwn(KINDS, kind)) throw new JobError(400, 'unknown_kind', `unknown job kind ${String(kind).slice(0, 60)}; known: ${Object.keys(KINDS).join(', ')}`);
     const def = KINDS[kind];
     const { value, resolved } = await validateParams(def.params, params, this);
+    if (def.class === 'inline' && this.#inlinePending) return { ...this.public(this.#inlinePending), coalesced: true };   // F4: at most one waiting
+    if (def.class === 'gpu' && this.#queue.length >= this.cfg.limits.maxQueued) throw new JobError(429, 'queue_full', `${this.#queue.length} GPU jobs are already queued (limit ${this.cfg.limits.maxQueued}); wait or cancel some`);
     const id = newJobId();
     const job = { id, kind, class: def.class, params: value, state: 'queued', createdAt: new Date(this.now()).toISOString(), startedAt: null, endedAt: null, exitCode: null, signal: null, error: null, result: null, outputs: null, log: `logs/${id}.log` };
     let built = null;
@@ -387,13 +472,19 @@ export class JobManager {
       const outRel = def.class === 'gpu' && kind !== 'sys.selftest' ? `runs/${id}` : null;
       built = buildCommand(kind, job, resolved, this.cfg, outRel ? path.join(this.workdirReal, 'runs', id) : null);
       if (outRel) job.outputDir = outRel;
+      await this.#checkDisk();
+      if (kind.startsWith('kev.')) {
+        const t = await this.torchCheck();
+        if (!t.safe) throw new JobError(503, 'unsafe_torch', `refusing ${kind}: the configured python has ${t.version ? `torch ${t.version}` : 'no usable torch'}${t.error ? ` (${t.error})` : ''}; Kev checkpoints are pickles and need torch >= ${MIN_TORCH.join('.')} to be loaded safely`);
+      }
     }
     if (def.class === 'service') await this.#checkService(kind, job);
     this.#jobs.set(id, job);
     await this.#save(job);
     if (def.class === 'gpu') { this.#queue.push({ job, built }); this.#pump(); }
     else if (def.class === 'service') await this.#start(job, built);
-    else this.#runInline(job).catch(error => this.log(`inline job ${id}: ${error.message}`));
+    else if (this.#inlineRunning) this.#inlinePending = job;
+    else this.#runInline(job);
     return this.public(job);
   }
 
@@ -401,6 +492,7 @@ export class JobManager {
   list({ limit = 50 } = {}) { return [...this.#jobs.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, limit).map(j => this.summary(j)); }
   queue() { return { running: this.#running?.id ?? null, queued: this.#queue.map(q => q.job.id) }; }
   services() { return [...this.#jobs.values()].filter(j => j.class === 'service' && !TERMINAL.has(j.state)).map(j => this.summary(j)); }
+  get recordCount() { return this.#jobs.size; }
 
   // { port } of the running service, or null
   serviceTarget(kind, name) {
@@ -425,6 +517,7 @@ export class JobManager {
     if (TERMINAL.has(job.state)) return this.public(job);
     const qi = this.#queue.findIndex(q => q.job.id === id);
     if (qi >= 0) { this.#queue.splice(qi, 1); await this.#finish(job, { state: 'cancelled', error: 'cancelled while queued' }); return this.public(job); }
+    if (this.#inlinePending === job) { this.#inlinePending = null; await this.#finish(job, { state: 'cancelled', error: 'cancelled while queued' }); return this.public(job); }
     job.cancelRequested = true;
     const child = this.#children.get(id);
     if (child) {
@@ -437,6 +530,7 @@ export class JobManager {
 
   stopAll(reason) {
     for (const q of this.#queue.splice(0)) this.#finish(q.job, { state: 'cancelled', error: reason }).catch(error => this.log(`finish ${q.job.id}: ${error.message}`));
+    if (this.#inlinePending) { const j = this.#inlinePending; this.#inlinePending = null; this.#finish(j, { state: 'cancelled', error: reason }).catch(() => {}); }
     for (const id of this.#children.keys()) this.cancel(id).catch(error => this.log(`cancel ${id}: ${error.message}`));
   }
 
@@ -447,7 +541,7 @@ export class JobManager {
   }
 
   public(job) {
-    const { cancelRequested, pid, ...rest } = job;
+    const { cancelRequested, pid, finishing, ...rest } = job;
     return { ...rest, cancelRequested: !!cancelRequested };
   }
   summary(j) { return { id: j.id, kind: j.kind, class: j.class, state: j.state, createdAt: j.createdAt, startedAt: j.startedAt, endedAt: j.endedAt, exitCode: j.exitCode, name: j.params?.name ?? null, port: j.params?.port ?? null }; }
@@ -458,6 +552,28 @@ export class JobManager {
     const tmp = `${file}.${process.pid}.${crypto.randomBytes(3).toString('hex')}.tmp`;
     await fsp.writeFile(tmp, JSON.stringify(job, null, 2));
     await fsp.rename(tmp, file);
+  }
+
+  // F3: refuse new work while the workdir's disk is nearly full (uploads are checked by the daemon)
+  async #checkDisk() {
+    const minBytes = this.cfg.limits.minFreeMiB * 2 ** 20;
+    if (!minBytes) return;
+    const d = await this.diskFree(this.workdirReal);
+    if (d.freeBytes !== null && d.freeBytes !== undefined && d.freeBytes < minBytes) throw new JobError(507, 'insufficient_storage', `only ${Math.floor(d.freeBytes / 2 ** 20)} MiB free in the workdir (limit ${this.cfg.limits.minFreeMiB} MiB); free some space on the laptop`);
+  }
+
+  // F3: keep at most limits.maxJobRecords finished records (and their logs). Records of successful
+  // kev.train jobs are kept: they are the provenance that lets runs/<jobId> be loaded again.
+  async #prune() {
+    const max = this.cfg.limits.maxJobRecords;
+    const done = [...this.#jobs.values()].filter(j => TERMINAL.has(j.state) && !(j.kind === 'kev.train' && j.state === 'succeeded'));
+    if (done.length <= max) return;
+    done.sort((a, b) => String(a.endedAt ?? a.createdAt).localeCompare(String(b.endedAt ?? b.createdAt)));
+    for (const j of done.slice(0, done.length - max)) {
+      this.#jobs.delete(j.id);
+      await fsp.rm(path.join(this.jobsDir, `${j.id}.json`), { force: true }).catch(() => {});
+      await fsp.rm(path.join(this.logsDir, `${j.id}.log`), { force: true }).catch(() => {});
+    }
   }
 
   async #checkService(kind, job) {
@@ -478,10 +594,18 @@ export class JobManager {
     this.#start(next.job, next.built).catch(error => this.log(`job ${next.job.id} start failed: ${error.message}`));
   }
 
+  // Stops a running job for a reason of the daemon's (timeout, log too large, not ready): it ends failed.
+  #abort(job, child, reason) {
+    if (job.killedFor) return;
+    job.killedFor = reason;
+    killTree(child.pid, 'SIGTERM');
+    setTimeout(() => { if (this.#children.has(job.id)) killTree(child.pid, 'SIGKILL'); }, 10_000).unref();
+  }
+
   async #start(job, built) {
     const logFile = path.join(this.logsDir, `${job.id}.log`);
     const fd = fs.openSync(logFile, 'a');
-    const shown = [built.cmd, ...built.args].map(a => a.length > 200 ? `${a.slice(0, 60)}...<${a.length} chars>` : a)
+    const shown = [built.cmd, ...built.args].map(a => (a.includes('\n') || a.length > 200) ? `<inline code, ${a.length} chars>` : a)
       .map(a => a.split(this.workdirReal).join('$WORKDIR').split(os.homedir()).join('~')).join(' ');
     fs.writeSync(fd, `[bridge ${new Date(this.now()).toISOString()}] start ${job.kind} ${job.id}: ${shown}\n`);
     let child;
@@ -500,26 +624,33 @@ export class JobManager {
     let done = false;
     const onEnd = async (code, signal, err) => {
       if (done) return; done = true;
-      clearTimeout(timer);
+      clearTimeout(timer); clearInterval(watchLog);
       this.#children.delete(job.id);
-      const state = job.cancelRequested ? (job.class === 'service' ? 'stopped' : 'cancelled')
-        : job.timedOut ? 'failed'
+      const state = job.killedFor ? 'failed'
+        : job.cancelRequested ? (job.class === 'service' ? 'stopped' : 'cancelled')
         : code === 0 && job.class !== 'service' ? 'succeeded' : 'failed';
-      const error = err ? `spawn error: ${err.code ?? err.message}` : job.timedOut ? `timed out after ${this.#timeoutFor(job)} s` : state === 'failed' ? (job.class === 'service' ? `service exited (code ${code}, signal ${signal})` : `exit code ${code}${signal ? `, signal ${signal}` : ''}`) : null;
+      const error = err ? `spawn error: ${err.code ?? err.message}` : job.killedFor ? job.killedFor : state === 'failed' ? (job.class === 'service' ? `service exited (code ${code}, signal ${signal})` : `exit code ${code}${signal ? `, signal ${signal}` : ''}`) : null;
       try { await this.#finish(job, { state, exitCode: code ?? null, signal: signal ?? null, error }); }
       catch (e) { this.log(`job ${job.id}: could not record its end: ${e.message}`); }
     };
     child.on('error', err => onEnd(null, null, err));
     child.on('exit', (code, signal) => onEnd(code, signal, null));
     const limit = this.#timeoutFor(job);
-    const timer = limit ? setTimeout(() => { job.timedOut = true; killTree(child.pid, 'SIGTERM'); setTimeout(() => killTree(child.pid, 'SIGKILL'), 10_000).unref(); }, limit * 1000) : null;
+    const timer = limit ? setTimeout(() => this.#abort(job, child, `timed out after ${limit} s`), limit * 1000) : null;
     timer?.unref?.();
-    if (job.class === 'service') { this.onServicesChange(); this.#watchReady(job, built.probe).catch(error => this.log(`service ${job.id} readiness: ${error.message}`)); }
+    // F3: a job's log may not grow past limits.jobLogBytes
+    const maxLog = this.cfg.limits.jobLogBytes;
+    const watchLog = setInterval(() => {
+      let size = 0; try { size = fs.statSync(logFile).size; } catch {}
+      if (size > maxLog) this.#abort(job, child, `log grew past ${maxLog} bytes (limits.jobLogBytes)`);
+    }, this.logWatchMs);
+    watchLog.unref?.();
+    if (job.class === 'service') { this.onServicesChange(); this.#watchReady(job, built.probe, child).catch(error => this.log(`service ${job.id} readiness: ${error.message}`)); }
   }
 
   #timeoutFor(job) { return job.class === 'service' ? 0 : this.cfg.timeouts[job.kind] ?? 0; }
 
-  async #watchReady(job, route) {
+  async #watchReady(job, route, child) {
     const deadline = Date.now() + this.cfg.serviceStartSeconds * 1000;
     while (job.state === 'starting' && this.#children.has(job.id)) {
       const status = await probe(job.params.port, route);
@@ -529,7 +660,7 @@ export class JobManager {
         this.log(`service ${job.kind} ${job.id} ready on 127.0.0.1:${job.params.port}`);
         return;
       }
-      if (Date.now() > deadline) { job.error = 'service did not become ready in time'; job.timedOut = true; this.cancel(job.id); return; }
+      if (Date.now() > deadline) { this.#abort(job, child, 'service did not become ready in time'); return; }
       await new Promise(r => setTimeout(r, 1000));
     }
   }
@@ -552,22 +683,39 @@ export class JobManager {
       const abs = path.join(this.workdirReal, job.outputDir);
       job.outputs = fs.existsSync(abs) ? await listOutputs(abs, job.outputDir) : { dir: job.outputDir, files: [], truncated: false };
     }
+    // F1 provenance: the head.pt this job wrote, so runs/<jobId> can be loaded later and only unchanged
+    if (job.kind === 'kev.train' && state === 'succeeded') {
+      const head = path.join(this.workdirReal, 'runs', job.id, 'head.pt');
+      try { if ((await fsp.lstat(head)).isFile()) job.checkpoint = { dir: `runs/${job.id}`, headSha256: await hashFile(head) }; } catch {}
+    }
     job.exitCode = exitCode; job.signal = signal; job.error = err; job.endedAt = endedAt;
     job.state = state; delete job.finishing;
     await this.#save(job);
     if (this.#running === job) { this.#running = null; setImmediate(() => this.#pump()); }
     if (wasService) this.onServicesChange();
     this.log(`job ${job.kind} ${job.id} -> ${job.state}${job.error ? ` (${job.error})` : ''}`);
+    await this.#prune().catch(e => this.log(`pruning job records: ${e.message}`));
   }
 
+  // git.refresh: one runs at a time and at most one waits (F4); the refresh itself is serialized with
+  // the publisher by the daemon and the mailbox lock.
   async #runInline(job) {
-    job.state = 'running'; job.startedAt = new Date(this.now()).toISOString();
-    await this.#save(job);
+    this.#inlineRunning = job;
     try {
-      job.result = await this.refresh();
-      await this.#finish(job, { state: 'succeeded' });
+      job.state = 'running'; job.startedAt = new Date(this.now()).toISOString();
+      await this.#save(job);
+      try {
+        job.result = await this.refresh();
+        await this.#finish(job, { state: 'succeeded' });
+      } catch (error) {
+        await this.#finish(job, { state: 'failed', error: error.message });
+      }
     } catch (error) {
-      await this.#finish(job, { state: 'failed', error: error.message });
+      this.log(`inline job ${job.id}: ${error.message}`);
+    } finally {
+      this.#inlineRunning = null;
+      const next = this.#inlinePending; this.#inlinePending = null;
+      if (next && !TERMINAL.has(next.state)) this.#runInline(next);
     }
   }
 }

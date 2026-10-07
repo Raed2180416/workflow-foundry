@@ -5,8 +5,9 @@
 //        [--extract M|L] [--max L] [--mode live|replay-or-live] [--trial K] [--concurrency N]
 // --mode replay-or-live serves identical prompts from the journal (zero cost) and is for code-only iteration;
 // reported numbers come from --mode live runs with a fresh --label (fresh samples).
+// Summary of the dev log: node experiments/workflows/records-v3-dev.mjs --summary [label ...]
 import path from 'node:path';
-import { appendFileSync, mkdirSync } from 'node:fs';
+import { appendFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { makeTasks } from '../lib/beds.mjs';
 import { runExperiment } from '../lib/runner.mjs';
 import { createModelPort } from '../lib/models.mjs';
@@ -15,6 +16,19 @@ import { Foundry } from '../../src/foundry.mjs';
 import { buildRecordsV3Workflow } from './records-v3.mjs';
 
 const argv = process.argv.slice(2);
+if (argv[0] === '--summary') {
+  const rows = readFileSync('/var/tmp/foundry-work/records-v3/dev-log.jsonl', 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l))
+    .filter(r => r.mode === 'live' && (argv.length === 1 || argv.slice(1).includes(r.label)));
+  const groups = new Map();
+  for (const r of rows) { const k = `${r.label} ${r.arm} d${r.task.match(/:d(\d)/)[1]}`; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(r); }
+  for (const [k, rs] of groups) {
+    const sum = f => rs.reduce((a, r) => a + (f(r) ?? 0), 0);
+    console.log(`${k}: pass ${rs.filter(r => r.pass).length}/${rs.length}, mean score ${(sum(r => r.score) / rs.length).toFixed(4)}, cost mean $${(sum(r => r.costUsd) / rs.length).toFixed(4)}`
+      + ` max $${Math.max(...rs.map(r => r.costUsd)).toFixed(4)} total $${sum(r => r.costUsd).toFixed(3)}, calls mean ${(sum(r => r.calls) / rs.length).toFixed(1)}, escalations ${sum(r => r.escalations)}`
+      + `, failed seeds: ${rs.filter(r => !r.pass).map(r => r.task.split(':s')[1]).join(',') || '-'}`);
+  }
+  process.exit(0);
+}
 const opt = (name, fallback) => { const i = argv.indexOf(`--${name}`); return i >= 0 ? argv[i + 1] : fallback; };
 const [d, seedSpec] = argv;
 const seeds = seedSpec.includes('-') ? (([a, b]) => Array.from({ length: b - a + 1 }, (_, i) => a + i))(seedSpec.split('-').map(Number)) : seedSpec.split(',').map(Number);

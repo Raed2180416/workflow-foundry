@@ -4,7 +4,16 @@ Top level: `schemaVersion, id, version (int), title, goal, domain, envelope {ass
 successCriteria (non-empty)}, budget {maxSteps, maxConcurrency (≤16), maxDurationMs, maxCost},
 inputSchema?, labels? {"input.<field>": "untrusted:<src>"}, nodes, acceptance (non-empty, must
 reference runtime values)`. Every node: `id, kind, needs (ids it depends on), description`, optional
-`when` (condition), `join`.
+`when` (condition), `join` (`all_success` default | `all_resolved`).
+
+`acceptance` (top level and in map/loop bodies) is a list of conditions (below), e.g.
+`[{"op":"exists","value":{"$ref":"nodes.answer.items"}}]`, never strings.
+
+Branches: a node whose `when` is false is `skipped`. With the default `join: all_success` every node
+that needs a skipped (or failed) node is skipped too (an `answer` skipped this way leaves the run
+"succeeded" with no answer); a node that merges branches needs
+`"join":"all_resolved"`, and each `$ref` into a possibly skipped node needs a `"default"`
+(`{"$ref":"nodes.b.x","default":null}`), else it fails with MISSING_REFERENCE.
 
 References: `{"$ref": "input.inputs.export"}`, `{"$ref": "nodes.<id>.<field>"}`; inside a map body
 `item`, `index`; inside agent `checks` also `output`. A ref may only name nodes listed (transitively)
@@ -17,6 +26,7 @@ JS: `export default function main(input) { return {...}; }` (may be async). Pyth
 Pure: no network, no files, no environment; input = resolved `args`; output must be JSON.
 
 ## agent
+`role`: one of classify, route, extract, judge, generate, synthesis, code_edit, plan, verify.
 ```json
 {"kind":"agent","role":"extract","instructions":"...",
  "context":{"inputs":[{"name":"rows","ref":"item.lines","label":"untrusted:data","render":"text"}],

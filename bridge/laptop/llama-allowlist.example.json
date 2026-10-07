@@ -1,0 +1,8 @@
+{
+  "$comment": "Hugging Face GGUF files the cloud may ask llama.serve to load with --hf-repo/--hf-file. The operator owns this file. llama-server cannot pin a revision, so for pinned runs download the file at the revision below, check its sha256, put it under ~/foundry-bridge/work/data/models/ and use the gguf parameter instead. Revisions and hashes from research/manifests/models.json.",
+  "models": [
+    { "repo": "unsloth/Qwen3.5-2B-GGUF", "file": "Qwen3.5-2B-Q4_K_M.gguf", "revision": "f6d5376be1edb4d416d56da11e5397a961aca8ae", "sha256": "aaf42c8b7c3cab2bf3d69c355048d4a0ee9973d48f16c731c0520ee914699223" },
+    { "repo": "unsloth/Qwen3.5-4B-GGUF", "file": "Qwen3.5-4B-Q4_K_M.gguf", "revision": "e87f176479d0855a907a41277aca2f8ee7a09523", "sha256": "00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4" },
+    { "repo": "ibm-granite/granite-4.2-3b-GGUF", "file": "granite-4.2-3b-Q4_K_M.gguf", "revision": "c40945d71cd90f249a56985e8155551a9188dc30", "sha256": "e0406663965846ae22a403456eb826ccce5f450840491f71952f18a7cb78e7d5" }
+  ]
+}

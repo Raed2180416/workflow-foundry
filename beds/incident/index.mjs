@@ -9,7 +9,7 @@ export const family = {
   domain: 'SRE incident triage',
   version: VERSION,
   kind: 'oneshot',
-  description: 'Find the root service, fault class, start time and blast radius of one injected fault in a fictional microservice system from its service map, an incident ticket and an interleaved multi-service log bundle (300 to ~4000 lines) full of cascades, aliases and red herrings.',
+  description: 'Find the root service, fault class, start time and blast radius of one injected fault in a fictional microservice system from its service map, an incident ticket and an interleaved multi-service log bundle (about 300 to 4,700 lines) full of cascades, aliases, prose rules and red herrings.',
 };
 
 export const outputSchema = {

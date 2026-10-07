@@ -59,7 +59,10 @@ export function summarizeArm(taskMap, { k = 3, includeImputed = false, extraCost
 
 // Family-clustered paired bootstrap of (A − B) success rate and log CPS ratio (A/B).
 // Resamples families, then tasks within each family, keeping A and B paired per task.
-export function pairedBootstrap(records, armA, armB, { iterations = 10000, seed = 'bootstrap', includeImputed = false } = {}) {
+// constructionUsd { [arm]: { [family]: usd } } adds each arm's one-off construction cost to its CPS: a family's cost is
+// spread evenly over that family's shared tasks, so the full-sample point estimate counts it exactly once and every
+// resampled task carries its share.
+export function pairedBootstrap(records, armA, armB, { iterations = 10000, seed = 'bootstrap', includeImputed = false, constructionUsd = null } = {}) {
   const grouped = byArmTask(records);
   const A = grouped.get(armA), B = grouped.get(armB);
   if (!A || !B) throw new Error(`missing arm ${!A ? armA : armB}`);
@@ -71,12 +74,13 @@ export function pairedBootstrap(records, armA, armB, { iterations = 10000, seed 
     families.get(f).push(t);
   }
   const famList = [...families.keys()];
+  const share = (arm, t) => { const f = A.get(t).family ?? 'all'; return (constructionUsd?.[arm]?.[f] ?? 0) / families.get(f).length; };
   const stat = taskIds => {
     let an = 0, ac = 0, bn = 0, bc = 0, acost = 0, bcost = 0;
     for (const t of taskIds) {
       const a = A.get(t).trials, b = B.get(t).trials;
-      an += a.length; ac += a.filter(x => x.pass).length; acost += totalCost(a, { includeImputed });
-      bn += b.length; bc += b.filter(x => x.pass).length; bcost += totalCost(b, { includeImputed });
+      an += a.length; ac += a.filter(x => x.pass).length; acost += totalCost(a, { includeImputed }) + share(armA, t);
+      bn += b.length; bc += b.filter(x => x.pass).length; bcost += totalCost(b, { includeImputed }) + share(armB, t);
     }
     const diff = ac / an - bc / bn;
     const cpsA = ac ? acost / ac : Infinity, cpsB = bc ? bcost / bc : Infinity;

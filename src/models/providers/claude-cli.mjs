@@ -9,11 +9,15 @@ import { FoundryError } from '../../data.mjs';
 import { runProcess } from '../../process.mjs';
 import { isPolicyModel } from '../policy.mjs';
 import { DECODING_BY_KIND, THINKING } from '../port.mjs';
+import { SCRUBBED_ENV } from '../../executors/claude-code.mjs';
 
 // Thinking budget per reasoning level: defined with the replay-key decoding in ../port.mjs (engine identity).
 export { THINKING };
-const SCRUBBED = /^(GH_TOKEN|GITHUB_TOKEN|GIT_CONFIG_.*|GIT_ASKPASS|CLOUDSDK_AUTH_ACCESS_TOKEN|AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY|AWS_SESSION_TOKEN)$/;
-const RATE = /\b(429|529)\b|overloaded|rate.?limit/i;
+// Repository credentials and the parent Claude session's identity, sockets and tuning (MAX_THINKING_TOKENS is set
+// explicitly per call below), shared with the executor sandbox.
+const SCRUBBED = SCRUBBED_ENV;
+// Rate limits, overload and subscription usage limits are environment faults, never model outcomes.
+const RATE = /\b(429|529)\b|overloaded|rate.?limit|usage limit|hit your (usage )?limit|limit reached/i;
 const versions = new Map();
 
 const fail = (code, message, extra = {}) => Object.assign(new FoundryError(code, message), extra);
@@ -43,8 +47,8 @@ export function interpretResult(result, { modelId, stderr = '' } = {}) {
   if (result.is_error || (typeof result.subtype === 'string' && result.subtype.startsWith('error'))) {
     const status = Number(result.api_error_status);
     const detail = `${result.subtype ?? 'error'}${result.api_error_status ? ` (HTTP ${result.api_error_status})` : ''}`;
-    if (status === 429 || status === 529 || RATE.test(`${result.result ?? ''} ${stderr}`)) throw fail('MODEL_RATE_LIMIT', `claude CLI rate limited or overloaded: ${detail}`, extra);
     if (result.subtype === 'error_max_budget_usd') throw fail('MODEL_BUDGET', 'claude CLI hit the per-call --max-budget-usd cap', extra);
+    if (status === 429 || status === 529 || RATE.test(`${result.result ?? ''} ${stderr}`)) throw fail('MODEL_RATE_LIMIT', `claude CLI rate limited or overloaded: ${detail}`, extra);
     if (/structured.?output/i.test(result.subtype ?? '')) throw fail('MODEL_SCHEMA', `claude CLI could not produce structured output: ${detail}`, extra);
     if (result.stop_reason === 'refusal') throw fail('MODEL_REFUSAL', 'The model refused the request', extra);
     if (status >= 500 || status === 401 || status === 403) throw fail('MODEL_UNAVAILABLE', `claude CLI API error: ${detail}`, extra);

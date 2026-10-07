@@ -24,7 +24,36 @@ export const DEFAULT_KEY_PATH = path.join(BRIDGE_HOME, 'cloud-ed25519.pem');
 export const TERMINAL_JOB = new Set(['succeeded', 'failed', 'cancelled', 'stopped', 'lost']);
 
 export class BridgeError extends Error {
-  constructor(status, body, message) { super(message); this.code = 'BRIDGE_HTTP'; this.status = status; this.body = body; this.error = body?.error; this.reason = body?.reason; }
+  constructor(status, body, message, hint = null) { super(hint ? `${message}\n  hint: ${hint}` : message); this.code = 'BRIDGE_HTTP'; this.status = status; this.body = body; this.error = body?.error; this.reason = body?.reason; this.hint = hint; }
+}
+
+// What a non-daemon answer means. The daemon always answers JSON {error, ...}; anything else came from
+// Cloudflare's edge or cloudflared (seen in the e2e run: 530 with the text body "error code: 1033").
+export function explainHttp(status, text = '') {
+  let daemon = false; try { daemon = typeof JSON.parse(text)?.error === 'string'; } catch {}
+  if (daemon) return null;
+  const code = /error code:\s*(\d+)/i.exec(text)?.[1];
+  if (status === 530 || code === '1033') return 'Cloudflare knows this tunnel hostname but no cloudflared is connected to it (530 / error 1033): the laptop is asleep or offline, or cloudflared stopped or cannot reach Cloudflare (port 7844). Run `cli.mjs discover` (heartbeat age, tunnelReadyConnections) and ask the laptop operator to check `curl -s 127.0.0.1:20241/ready`.';
+  if (status === 502 || status === 503) return 'cloudflared answered but could not reach the daemon on 127.0.0.1:8765 (the daemon is down or restarting on the laptop).';
+  if (status === 524) return 'the laptop took longer than about 100 s to answer and Cloudflare gave up (524); long work must run as a job and be polled.';
+  if (status === 429) return 'Cloudflare quick tunnels allow at most 200 requests in flight; slow down.';
+  if (status === 413) return 'Cloudflare refused the request size (quick tunnels: about 100 MB per request); split the file.';
+  return null;
+}
+
+// A refused CONNECT (the egress proxy cannot resolve a hostname yet: a new trycloudflare name takes
+// about 2 s) or a refused direct connection never reached the daemon, so it is safe to retry.
+export function retryableConnectError(error) {
+  if (error?.phase !== 'connect') return false;
+  if (error.code === 'PROXY_REFUSED') return !(error.status >= 400 && error.status < 500);
+  return error.code === 'CONNECT_FAILED' || error.code === 'PROXY_UNREACHABLE';
+}
+
+const STREAM_HINT = 'streaming responses (server-sent events) do not pass a Cloudflare quick tunnel; send stream:false (BridgeClient option allowStreaming overrides this for a named tunnel)';
+function wantsStream(buf, headers) {
+  if (/text\/event-stream/i.test(headers.accept ?? '')) return true;
+  if (!buf || buf.length > (1 << 20)) return false;
+  try { return JSON.parse(buf.toString('utf8'))?.stream === true; } catch { return false; }
 }
 
 // ---- keys ----------------------------------------------------------------------------------------
@@ -68,10 +97,9 @@ export async function defaultRemote(env = process.env) {
 // git fetch the mailbox branch and read bridge-state/endpoint.json.
 export async function discover({ mailboxDir = process.env.FOUNDRY_BRIDGE_MAILBOX ?? DEFAULT_MAILBOX_DIR, remote, branch = process.env.FOUNDRY_BRIDGE_BRANCH ?? DEFAULT_BRANCH, env = process.env, now = Date.now(), allowHttpLocal = env.FOUNDRY_BRIDGE_ALLOW_LOCAL === '1', staleAfterMs } = {}) {
   const mb = new Mailbox({ dir: mailboxDir, remote: remote ?? await defaultRemote(env), branch, env });
-  const head = await mb.refresh();
-  const raw = mb.readEndpointRaw();
-  const keys = mb.readKeys().keys.map(k => k.id);
-  const killed = mb.isKilled();
+  const snap = await mb.snapshot();   // one locked step: parallel CLI calls share the clone safely
+  const { head, endpointRaw: raw, killed } = snap;
+  const keys = snap.keys.map(k => k.id);
   if (raw === null) return { ok: false, url: null, errors: ['no bridge-state/endpoint.json yet: the laptop daemon has not published'], head, keys, killed };
   return { ...parseEndpoint(raw, { now, allowHttpLocal, ...(staleAfterMs ? { staleAfterMs } : {}) }), head, keys, killed };
 }
@@ -103,14 +131,30 @@ async function fileSha256(file) {
 }
 
 export class BridgeClient {
-  constructor({ endpoint, key, keyPath, timeoutMs = 60_000, env = process.env, transport = request, clockOffsetMs = 0 } = {}) {
+  constructor({ endpoint, key, keyPath, timeoutMs = 60_000, env = process.env, transport = request, clockOffsetMs = 0, connectRetryMs = 10_000, allowStreaming } = {}) {
     if (!endpoint) throw new Error('BridgeClient needs an endpoint (discover() or FOUNDRY_BRIDGE_URL)');
     const u = new URL(endpoint);
     if (u.pathname !== '/' || u.search || u.username) throw new Error('endpoint must be an origin like https://<name>.trycloudflare.com');
     this.endpoint = u.origin; this.origin = u.origin;
     this.key = key ?? loadKey(keyPath);
-    Object.assign(this, { timeoutMs, env, transport, clockOffsetMs });
+    Object.assign(this, { timeoutMs, env, transport, clockOffsetMs, connectRetryMs });
+    this.allowStreaming = allowStreaming ?? !/\.trycloudflare\.com$/i.test(u.hostname);
     this.bridgeFetch = this.bridgeFetch.bind(this);
+  }
+
+  // Sends one request, retrying connect-phase failures (never sent) for up to connectRetryMs.
+  async #send(url, makeOpts) {
+    const deadline = Date.now() + this.connectRetryMs;
+    for (let delay = 250; ; delay = Math.min(delay * 2, 2000)) {
+      try { return await this.transport(url, makeOpts()); }
+      catch (error) {
+        if (!retryableConnectError(error) || Date.now() + delay > deadline) {
+          if (error?.code === 'PROXY_REFUSED') error.message += ` (the egress proxy could not open a connection to ${new URL(url).host}; a brand-new trycloudflare hostname needs a few seconds, otherwise the endpoint in the mailbox is stale)`;
+          throw error;
+        }
+        await new Promise(r => setTimeout(r, delay));
+      }
+    }
   }
 
   // One signed request. `body`: Buffer/string; or `file` (streamed, hashed first). Retries once after a
@@ -122,10 +166,13 @@ export class BridgeClient {
     const bodySha256 = file ? await fileSha256(file) : sha256hex(buf ?? '');
     const size = file ? (await fsp.stat(file)).size : buf?.length;
     for (let attempt = 0; attempt < 2; attempt++) {
-      const sigHeaders = signRequest({ privateKey: this.key.privateKey, keyId: this.key.keyId, method, path: pathWithQuery, bodySha256, ts: Date.now() + this.clockOffsetMs });
-      const hdrs = { ...headers, ...sigHeaders };
-      if (size !== undefined) hdrs['content-length'] = String(size);
-      const res = await this.transport(this.endpoint + pathWithQuery, { method, headers: hdrs, body: file ? fs.createReadStream(file) : buf, signal, timeoutMs, idleMs, env: this.env });
+      const res = await this.#send(this.endpoint + pathWithQuery, () => {
+        // a fresh timestamp and nonce for every attempt
+        const sigHeaders = signRequest({ privateKey: this.key.privateKey, keyId: this.key.keyId, method, path: pathWithQuery, bodySha256, ts: Date.now() + this.clockOffsetMs });
+        const hdrs = { ...headers, ...sigHeaders };
+        if (size !== undefined) hdrs['content-length'] = String(size);
+        return { method, headers: hdrs, body: file ? fs.createReadStream(file) : buf, signal, timeoutMs, idleMs, env: this.env };
+      });
       if (res.status === 401 && attempt === 0 && res.headers.date) {
         const text = (await readAll(res.body, 1 << 20)).toString('utf8');
         let j = null; try { j = JSON.parse(text); } catch {}
@@ -142,7 +189,7 @@ export class BridgeClient {
     const res = await this.signed(method, pathWithQuery, { ...opts, body: payload === undefined ? undefined : JSON.stringify(payload), headers: payload === undefined ? {} : { 'content-type': 'application/json' } });
     const text = (await readAll(res.body, 64 << 20)).toString('utf8');
     let j = null; try { j = text ? JSON.parse(text) : null; } catch {}
-    if (res.status < 200 || res.status >= 300) throw new BridgeError(res.status, j ?? { raw: text.slice(0, 500) }, `${method} ${pathWithQuery} -> ${res.status} ${j?.error ?? ''}${j?.reason ? ` (${j.reason})` : ''}: ${j?.message ?? text.slice(0, 200)}`);
+    if (res.status < 200 || res.status >= 300) throw new BridgeError(res.status, j ?? { raw: text.slice(0, 500) }, `${method} ${pathWithQuery} -> ${res.status} ${j?.error ?? ''}${j?.reason ? ` (${j.reason})` : ''}: ${j?.message ?? text.slice(0, 200)}`, explainHttp(res.status, text));
     return j;
   }
 
@@ -158,10 +205,11 @@ export class BridgeClient {
       if (u.origin !== this.origin) throw new TypeError(`bridgeFetch: ${u.origin} is not the bridge endpoint ${this.origin}`);
       pathWithQuery = u.pathname + u.search;
     }
-    const method = (init.method ?? (typeof input === 'object' && input?.method) ?? 'GET').toUpperCase();
+    const method = String(init.method ?? (typeof input === 'object' && input !== null ? input.method : undefined) ?? 'GET').toUpperCase();
     const headers = headerObject(init.headers);
     const body = toBuffer(init.body);
     if (init.body instanceof URLSearchParams && !headers['content-type']) headers['content-type'] = 'application/x-www-form-urlencoded;charset=UTF-8';
+    if (!this.allowStreaming && wantsStream(body, headers)) throw new TypeError(`bridgeFetch ${pathWithQuery}: ${STREAM_HINT}`);
     const res = await this.signed(method, pathWithQuery, { body, headers, signal: init.signal ?? undefined });
     const out = new Headers();
     for (let i = 0; i < res.rawHeaders.length; i += 2) { try { out.append(res.rawHeaders[i], res.rawHeaders[i + 1]); } catch {} }
@@ -173,20 +221,22 @@ export class BridgeClient {
   // ---- endpoints ----
   async health() {
     const t0 = Date.now();
-    const res = await this.transport(`${this.endpoint}/health`, { method: 'GET', timeoutMs: this.timeoutMs, env: this.env });
+    const res = await this.#send(`${this.endpoint}/health`, () => ({ method: 'GET', timeoutMs: this.timeoutMs, env: this.env }));
     const text = (await readAll(res.body, 1 << 16)).toString('utf8');
     const server = Date.parse(res.headers.date ?? '');
     let j = null; try { j = JSON.parse(text); } catch {}
-    return { status: res.status, ...(j ?? { raw: text.slice(0, 200) }), rttMs: Date.now() - t0, skewMs: Number.isFinite(server) ? server - Date.now() : null };
+    const hint = res.status === 200 ? null : explainHttp(res.status, text);
+    return { status: res.status, ...(j ?? { raw: text.slice(0, 200) }), rttMs: Date.now() - t0, skewMs: Number.isFinite(server) ? server - Date.now() : null, ...(hint ? { hint } : {}) };
   }
   ping() { return this.json('GET', '/ping'); }
   info() { return this.json('GET', '/info'); }
   list(dir = '', { recursive = false } = {}) {
-    const q = new URLSearchParams(); if (dir) q.set('dir', dir); if (recursive) q.set('recursive', '1');
-    return this.json('GET', `/files${q.size ? `?${q}` : ''}`);
+    // keep '/' literal in the query: the signed target should need no normalisation on the way
+    const q = [dir ? `dir=${encodeURIComponent(dir).replace(/%2F/g, '/')}` : '', recursive ? 'recursive=1' : ''].filter(Boolean).join('&');
+    return this.json('GET', `/files${q ? `?${q}` : ''}`);
   }
   async upload(file, rel, { overwrite = false, timeoutMs = 30 * 60_000 } = {}) {
-    parseRelPath(rel, { tops: ['data', 'runs'] });
+    parseRelPath(rel, { tops: ['data'] });   // runs/ and logs/ are written only by the daemon's jobs
     const res = await this.json('PUT', `/files/${rel}${overwrite ? '?overwrite=1' : ''}`, undefined, { file, timeoutMs });
     return res;
   }
@@ -196,7 +246,7 @@ export class BridgeClient {
     if (res.status !== 200) {
       const text = (await readAll(res.body, 1 << 20)).toString('utf8');
       let j = null; try { j = JSON.parse(text); } catch {}
-      throw new BridgeError(res.status, j, `GET /files/${rel} -> ${res.status}: ${j?.message ?? text.slice(0, 200)}`);
+      throw new BridgeError(res.status, j, `GET /files/${rel} -> ${res.status}: ${j?.message ?? text.slice(0, 200)}`, explainHttp(res.status, text));
     }
     const expected = res.headers['x-bridge-sha256'];
     await fsp.mkdir(path.dirname(path.resolve(dest)), { recursive: true });
@@ -224,8 +274,9 @@ export class BridgeClient {
   cancel(id) { return this.json('POST', `/jobs/${encodeURIComponent(id)}/cancel`); }
 
   // Polls the job (and its log) until it reaches a terminal state, or, for a service, until it is
-  // running. Network errors are retried until timeoutMs; the job keeps running on the laptop.
-  async waitJob(id, { pollMs = 2000, timeoutMs = 6 * 3600_000, onLog, signal } = {}) {
+  // running (ready). Network errors are retried until timeoutMs; the job keeps running on the laptop.
+  // `until: 'terminal'` waits for a service to end as well (a service with a pending stop always does).
+  async waitJob(id, { pollMs = 2000, timeoutMs = 6 * 3600_000, onLog, signal, until = 'auto' } = {}) {
     const deadline = Date.now() + timeoutMs;
     let offset = 0; let lastError = null;
     for (;;) {
@@ -236,7 +287,8 @@ export class BridgeClient {
         offset = chunk.nextOffset;
         if (chunk.nextOffset < chunk.size) continue;   // more log to read right away
         const job = await this.job(id);
-        if (TERMINAL_JOB.has(job.state) || (job.class === 'service' && job.state === 'running')) {
+        const serviceReady = job.class === 'service' && job.state === 'running' && !job.cancelRequested && until !== 'terminal';
+        if (TERMINAL_JOB.has(job.state) || serviceReady) {
           const rest = await this.log(id, offset);
           if (rest.data && onLog) onLog(rest.data);
           return job;

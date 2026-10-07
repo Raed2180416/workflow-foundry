@@ -2,7 +2,7 @@
 // Same tools and per-task budget as every other agent arm; the repo and oracles are hidden.
 import path from 'node:path';
 import { mkdirSync, readFileSync, existsSync } from 'node:fs';
-import { runClaudeCode, readJsonFile } from '../../../src/executors/claude-code.mjs';
+import { runClaudeCode, readJsonFile, nestedModelUses } from '../../../src/executors/claude-code.mjs';
 import { solverView, loadFamily } from '../beds.mjs';
 import { startServices, Ledger } from '../services.mjs';
 
@@ -29,7 +29,8 @@ const instructions = schema => [
   '```json', JSON.stringify(schema, null, 1), '```',
 ].join('\n');
 
-export function b0Agent({ id, model, budgetUsd = 1, timeoutMs = 15 * 60 * 1000, notes = false, effort = null }) {
+// binary: the CLI to run (tests substitute a stand-in; not part of the arm definition).
+export function b0Agent({ id, model, budgetUsd = 1, timeoutMs = 15 * 60 * 1000, notes = false, effort = null, binary = 'claude' }) {
   const def = { kind: notes ? 'b0n-agent' : 'b0-agent', model, budgetUsd, timeoutMs, effort, tools: 'default', notesWords: notes ? 200 : 0 };
   return {
     id, def, stateful: notes,
@@ -50,9 +51,12 @@ export function b0Agent({ id, model, budgetUsd = 1, timeoutMs = 15 * 60 * 1000, 
         prompt += '\n\n./notes.md holds lessons you wrote after earlier tasks of this same kind. Read it first.';
       }
       let r;
-      try { r = await runClaudeCode({ model, prompt, workdir, files, budgetUsd, timeoutMs, effort }); }
+      try { r = await runClaudeCode({ model, prompt, workdir, files, budgetUsd, timeoutMs, effort, binary }); }
       finally { await svc?.close(); }
-      return { output: readJsonFile(workdir, 'answer.json'), costUsd: r.costUsd, latencyMs: r.durationMs, error: r.error, meta: { turns: r.turns, tools: r.toolUses.length } };
+      // A killed session (no result event) is charged at its budget bound, never $0; costUnknown marks it.
+      return { output: readJsonFile(workdir, 'answer.json'), costUsd: r.costUsd ?? r.costUpperUsd, costUnknown: r.costUnknown, latencyMs: r.durationMs, error: r.error,
+        meta: { turns: r.turns, tools: r.toolUses.length, costUnknown: r.costUnknown, costUpperUsd: r.costUpperUsd, streamUsage: r.streamUsage,
+          nestedModelAttempts: nestedModelUses(r.toolUses), sessionId: r.sessionId } };
     },
     // B0+N: after the oracle, the same model appends lessons given only the outcome bit.
     async afterTask({ task, result, verdict, workdir, state }) {
@@ -65,10 +69,10 @@ export function b0Agent({ id, model, budgetUsd = 1, timeoutMs = 15 * 60 * 1000, 
         'Keep the whole file under 200 words. Write general lessons for future tasks of this kind, not answers to this specific task.',
       ].join('\n');
       const files = { 'notes.md': state.notes ?? '', 'answer.json': JSON.stringify(result.output ?? null, null, 1) };
-      const r = await runClaudeCode({ model, prompt, workdir: dir, files, budgetUsd: Math.min(0.3, budgetUsd), timeoutMs: 5 * 60 * 1000 });
+      const r = await runClaudeCode({ model, prompt, workdir: dir, files, budgetUsd: Math.min(0.3, budgetUsd), timeoutMs: 5 * 60 * 1000, binary });
       const updated = existsSync(path.join(dir, 'notes.md')) ? readFileSync(path.join(dir, 'notes.md'), 'utf8') : state.notes;
       state.notes = (updated ?? '').split(/\s+/).slice(0, 260).join(' ');
-      return { costUsd: r.costUsd };
+      return { costUsd: r.costUsd ?? r.costUpperUsd };
     },
   };
 }

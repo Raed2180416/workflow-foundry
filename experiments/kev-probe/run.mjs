@@ -85,9 +85,9 @@ async function runKevCal(datasets) {
   }
 }
 
-function runFreeze() {
+function runFreeze(datasets) {
   const out = frozen();
-  for (const ds of Object.keys(BUILDERS)) {
+  for (const ds of datasets) {
     const rows = new JudgmentLedger(ledgerFile('kev', ds)).rows().filter(r => r.split === 'calibration');
     if (!rows.length) continue;
     const by = Object.fromEntries(['A', 'B'].map(w => [w, calibrationReport(rows.filter(r => r.meta.wording === w))]));
@@ -190,7 +190,7 @@ const datasets = rest.length ? rest : Object.keys(BUILDERS);
 if (cmd) console.log('kev', JSON.stringify(await kevIdentity().catch(e => ({ error: e.message }))), 'load', load().uptime);
 if (cmd === 'rule') await runRule(datasets);
 else if (cmd === 'kev-cal') await runKevCal(datasets);
-else if (cmd === 'freeze') runFreeze();
+else if (cmd === 'freeze') runFreeze(datasets);
 else if (cmd === 'kev-eval') await runKevEval(datasets);
 else if (cmd === 'model') await runModel(datasets);
 else if (cmd === 'permute') await runPermute(datasets);

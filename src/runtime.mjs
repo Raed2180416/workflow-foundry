@@ -604,7 +604,8 @@ class Invocation {
       try {
         result = await models.call({ runId: this.runId, nodeKey, attempt, sampleIndex, modelId: entry.id, system: compiled.system, prompt: compiled.prompt, schema: returns,
           decoding: node.decoding ?? {}, receiptHash: compiled.receiptHash, signal: stop.signal, mode: run.modelMode ?? 'live', salt: run.sampleSalt ?? this.runId,
-          timeoutMs: node.timeoutMs ?? 120000 });
+          // Default per-call timeout: the ModelPort's own (300 s by default, the same as a B1 script's gateway calls).
+          timeoutMs: node.timeoutMs ?? (Number.isInteger(models.timeoutMs) ? models.timeoutMs : 120000) });
       } catch (error) {
         // A cancelled call is journaled with what it consumed; charge that before the cancellation propagates.
         const spent = error.code === 'CANCELLED' ? error.details : null;

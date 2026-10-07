@@ -1,0 +1,28 @@
+{
+  "$comment": "Copy to ~/foundry-bridge/bridge-config.json. Paths may start with ~/. Unknown keys are errors. See bridge/laptop/LAPTOP-HANDOFF.md.",
+  "host": "127.0.0.1",
+  "port": 8765,
+  "workdir": "~/foundry-bridge/work",
+  "python": "~/kev-venv/bin/python",
+  "kevDir": "~/kev",
+  "device": "cuda",
+  "nvidiaSmi": "nvidia-smi",
+  "llamaServer": null,
+  "llamaAllowlist": "~/foundry-bridge/llama-allowlist.json",
+  "env": {
+    "HF_HOME": "~/hf-cache",
+    "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "mailbox": {
+    "remote": null,
+    "branch": "foundry-bridge",
+    "dir": "~/.foundry-bridge/mailbox",
+    "refreshMinutes": 5,
+    "heartbeatMinutes": 15
+  },
+  "tunnel": {
+    "metrics": "http://127.0.0.1:20241",
+    "log": "~/foundry-bridge/cloudflared.log"
+  }
+}
