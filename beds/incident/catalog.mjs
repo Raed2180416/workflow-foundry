@@ -1190,3 +1190,170 @@ export const SIBLING_ONSET = {
   clock_skew: [(c, r) => ['WARN', `x509 serving cert ${c.host} validity ended at ${c.nowIso} according to our clock (clients see it as valid)`]],
   certificate_expiry: [(c, r) => ['WARN', `token from ${c.callerHost} rejected as expired: local time ${c.nowIso} is past its exp claim (session bound to the expired certificate)`]],
 };
+
+// ================================================================ v4 additions (second audit, 2026-10-07)
+// See AUDIT.md (second round). Each device below needs a short script to carry separate logic, not only
+// another keyword, while a careful reader resolves it with a rule stated in the prompt.
+
+// Stray anomalies of the class's own kind in another resource of the same service (another connection pool,
+// volume, certificate hostname, process, NTP source, provider, software component or cache namespace). They
+// never recover and have no consequences; the prompt says such lines are not the fault. `o` holds the other
+// resource. No DNS variant: a stray lookup failure cannot be told apart from the start of a resolver outage.
+export const STRAY = {
+  connection_pool_exhaustion: [
+    (c, r, o) => ['WARN', `connection pool '${o.pool}' at capacity: in use ${o.max}/${o.max}, ${r.int(4, 30)} callers waiting`],
+    (c, r, o) => ['WARN', `all ${o.max} connections of '${o.pool}' are checked out; new borrowers are queueing`],
+    (c, r, o) => ['WARN', `waiting for a ${o.db} connection took ${r.int(900, 2900)}ms (pool max ${o.max})`],
+  ],
+  certificate_expiry: [
+    (c, r, o) => ['WARN', `x509 serving cert ${o.host} validity ended at ${o.exp}; peers aborting handshakes`],
+    (c, r, o) => ['ERROR', `inbound TLS on :${o.port} failing: serving certificate for ${o.host} is no longer valid (notAfter ${o.exp})`],
+  ],
+  bad_config_deploy: [
+    (c, r, o) => ['INFO', `rollout started: ${o.comp} ${o.v1} -> ${o.v2}`],
+    (c, r, o) => ['INFO', `starting ${o.comp} release ${o.v2} (previous ${o.v1})`],
+  ],
+  disk_full: [
+    (c, r, o) => ['WARN', `volume ${o.vol} at ${o.v}% and climbing; largest writer is ${o.writer}`],
+    (c, r, o) => ['WARN', `disk usage on ${o.vol} jumped to ${o.v}% (was ${o.v - r.int(8, 20)}% a few minutes ago); ${o.writer} is writing ${r.int(20, 120)} MB/s`],
+    (c, r, o) => ['WARN', `free space on ${o.vol} shrinking fast: ${r.int(2, 9)} GiB left`],
+  ],
+  memory_leak_oom: [
+    (c, r, o) => ['WARN', `${o.proc}: resident memory ${r.int(300, 900)} MiB and rising (+${r.int(18, 60)} MiB/min)`],
+    (c, r, o) => ['WARN', `memory watermark crossed in ${o.proc}: ${r.int(70, 88)}% of its limit used, baseline is ${r.int(30, 50)}%`],
+  ],
+  // About one bad time source, not the local clock (which stays in sync).
+  clock_skew: [
+    (c, r, o) => ['WARN', `chrony: source ${o.peer} is ${r.int(2, 40)}s ahead of the other sources; not used for synchronisation`],
+    (c, r, o) => ['WARN', `ntp peer ${o.peer} reports a time ${r.int(2, 40)}s ahead of the other peers; peer rejected`],
+  ],
+  upstream_rate_limiting: [
+    (c, r, o) => ['WARN', `${o.ext} responded 429 Too Many Requests (retry-after ${r.int(10, 60)}s)`],
+    (c, r, o) => ['WARN', `throttled by ${o.ext}: quota of ${o.q} requests/min exhausted`],
+  ],
+  poisoned_cache: [
+    (c, r, o) => ['INFO', `cache refill: loaded ${r.int(8000, 90000)} entries into namespace '${o.ns}' from snapshot ${o.snap}`],
+    (c, r, o) => ['INFO', `warm-up finished: '${o.ns}' primed with ${r.int(8000, 90000)} entries (source ${o.snap})`],
+  ],
+};
+// Names for the other resources (drawn from the same naming patterns as the faulting ones where possible).
+export const STRAY_NAMES = {
+  pools: ['hikari', 'pgx', 'sqlpool', 'dbpool'].flatMap(a => ['main', 'primary', 'rw', 'ro', 'reports', 'batch'].map(b => `${a}-${b}`)),
+  dbs: ['reporting-replica', 'analytics-db', 'audit-replica', 'archive-db'],
+  vols: ['/var/log', '/tmp', '/var/cache/app', '/var/lib/backup', '/srv/exports', '/data', '/srv/objects'],
+  certHosts: ['admin', 'metrics', 'debug', 'internal'],
+  certPorts: [9443, 9100, 8444, 9901],
+  procs: ['log-shipper sidecar', 'envoy sidecar', 'metrics agent', 'thumbnail worker', 'otel collector'],
+  peers: ['ntp1.pool.example', 'ntp2.pool.example', 'time.vendor.example', 'ntp3.pool.example'],
+  exts: ['Telemetrix metrics API', 'Gravelpost avatar API', 'Lumen status API', 'Quillmark analytics'],
+  comps: ['envoy-sidecar', 'log-shipper', 'otel-collector', 'istio-proxy'],
+  ns: ['price-quotes', 'product-cards', 'stock-levels', 'query-results', 'page-fragments', 'profiles', 'rate-tables', 'promo-rules', 'introspection', 'geocodes', 'flag-sets', 'rec-lists', 'sessions', 'segments', 'entries'],
+};
+
+// Onset paraphrases added from difficulty 3 (the first line of the fault is drawn from the v3 pool or these).
+// Gradual classes take (c, r, v) like TREND.onset.
+export const ONSET_MORE = {
+  connection_pool_exhaustion: [
+    (c, r, v) => ['WARN', `'${c.pool}' has ${v} of ${c.max} connections out and is not getting them back`],
+    (c, r, v) => ['WARN', `connections from '${c.pool}' are borrowed faster than they come back (${v}/${c.max} in use)`],
+    (c, r, v) => ['WARN', `leak detector: ${r.int(3, 9)} connections from '${c.pool}' outstanding longer than expected; ${v}/${c.max} now in use`],
+  ],
+  disk_full: [
+    (c, r, v) => ['WARN', `${c.vol} filling quickly: ${v}% used, ${c.free(v)} GiB left at the current write rate`],
+    (c, r, v) => ['WARN', `${c.writer} is producing far more output than usual; ${c.vol} now ${v}% full`],
+    (c, r, v) => ['WARN', `capacity alert: ${c.vol} grew ${v - c.u0} points in a few minutes (now ${v}%)`],
+  ],
+  certificate_expiry: [
+    (c, r) => ['ERROR', `new TLS sessions to ${c.host} fail: clients reject our leaf (validity window closed at ${c.expIso})`],
+    (c, r) => ['WARN', `handshake with ${c.callerHost} aborted: peer reports bad_certificate (our chain expired ${c.expIso})`],
+    (c, r) => ['ERROR', `clients no longer accept the certificate on :${c.port}; it lapsed at ${c.expIso}`],
+    (c, r) => ['WARN', `inbound connection from ${c.callerHost} dropped at verification: served leaf not valid after ${c.expIso}`],
+  ],
+  dns_resolution_failure: [
+    (c, r) => ['ERROR', `cannot resolve ${c.calleeHost}: resolver ${c.resolver} returned SERVFAIL`],
+    (c, r) => ['ERROR', `name service for ${c.calleeHost} unavailable (resolver ${c.resolver} does not answer)`],
+    (c, r) => ['ERROR', `refresh of the cached address of ${c.calleeHost} failed (EAI_AGAIN)`],
+  ],
+  memory_leak_oom: [
+    (c, r) => ['WARN', `old generation keeps growing after every collection: ${c.p0}% of ${c.lim}Mi (normally ${c.base}%)`],
+    (c, r) => ['WARN', `heap usage ${c.p0}% after GC and not coming down (usual level ${c.base}%)`],
+    (c, r) => ['WARN', `memory pressure: ${c.mb0} MiB in use; ${c.base}% of the limit is the usual steady state`],
+  ],
+  clock_skew: [
+    (c, r) => ['WARN', `local time is ${c.skew}s ahead of the reference clock; NTP unreachable`],
+    (c, r) => ['WARN', `time daemon lost all sources; system clock drifting (+${c.skew}s so far)`],
+    (c, r) => ['WARN', `wall clock jumped ${c.skew}s ahead of the time source`],
+  ],
+  upstream_rate_limiting: [
+    (c, r) => ['WARN', `${c.ext} started rejecting our requests with 429 (limit ${c.quota}/min reached)`],
+    (c, r) => ['WARN', `${c.ext}: request budget for this window used up; calls are being refused`],
+    (c, r) => ['WARN', `${c.ext} is throttling us: ${r.int(60, 99)}% of calls answered with 429`],
+  ],
+  bad_config_deploy: [
+    (c, r) => ['INFO', `deploying ${c.newVer} to ${c.svc} (replacing ${c.oldVer})`],
+    (c, r) => ['INFO', `${c.svc} now running build ${c.newVer}; previous build ${c.oldVer}`],
+    (c, r) => ['INFO', `applied new configuration from ${c.newVer} (previously ${c.oldVer})`],
+  ],
+  poisoned_cache: [
+    (c, r) => ['INFO', `snapshot ${c.snap} loaded into '${c.ns}': ${r.int(8000, 90000)} entries`],
+    (c, r) => ['INFO', `'${c.ns}' repopulated from ${c.snap} (${r.int(8000, 90000)} entries)`],
+  ],
+};
+
+// More ways a short anomaly ends (added to RECOVER_ALT from difficulty 3).
+export const RECOVER_MORE = {
+  connection_pool_exhaustion: [(c, r) => ['INFO', `borrowers on '${c.pool}' get a connection immediately again`]],
+  certificate_expiry: [(c, r) => ['INFO', `admin listener now presents the rotated certificate; no handshake errors since`]],
+  bad_config_deploy: [(c, r) => ['INFO', 'reload rolled back automatically; running config unchanged']],
+  disk_full: [(c, r) => ['INFO', `cleanup done on ${c.vol}; plenty of space again`]],
+  dns_resolution_failure: [(c, r) => ['INFO', `resolver ${c.resolver} answering again; lookups normal`]],
+  memory_leak_oom: [(c, r) => ['INFO', `memory back to its usual level after the restart (${c.base}%)`]],
+  clock_skew: [(c, r) => ['INFO', 'offset back within tolerance after slewing']],
+  upstream_rate_limiting: [(c, r) => ['INFO', `${c.ext} accepting all our calls again`]],
+  poisoned_cache: [(c, r) => ['INFO', `'${c.ns}' consistent again after the repair job`]],
+};
+
+// What a caller logs when a short anomaly of a service it calls ends (its own retries or probes succeed).
+export const ECHO_RECOVER = [
+  (c, r) => ['INFO', `circuit breaker for ${c.callee} closed again (probe succeeded)`],
+  (c, r) => ['INFO', `calls to ${c.callee} succeeding again after ${r.int(2, 9)} failures`],
+  (c, r) => ['INFO', `${c.callee} answering normally again; retry queue drained`],
+];
+
+// v4: from difficulty 3 the first visible line of a sudden fault is often one of its ordinary symptom lines
+// rather than an onset message (as in real logs, where nothing announces the start). Only symptoms that make
+// sense as a first line are used (no "in the last 30s" counts, no renewal bookkeeping). Memory leaks start with
+// a growth line instead (called with the onset heap value).
+export const ONSET_DIRECT = {
+  certificate_expiry: [FAULTS.certificate_expiry.direct[1], FAULTS.certificate_expiry.direct[3], FAULTS.certificate_expiry.direct[4]],
+  dns_resolution_failure: [1, 2, 3].map(i => FAULTS.dns_resolution_failure.direct[i]),
+  clock_skew: [FAULTS.clock_skew.direct[3], FAULTS.clock_skew.indirect[2]],
+  upstream_rate_limiting: [FAULTS.upstream_rate_limiting.direct[0], FAULTS.upstream_rate_limiting.direct[3]],
+  memory_leak_oom: FAULTS.memory_leak_oom.growth.map(g => (c, r) => g(c, r, c.p0)),
+};
+
+// v4: latent phase of a sudden fault (difficulty >= 3). Callers keep working for 5-400 s after T (pooled TLS
+// connections opened before the certificate expired, cached DNS answers, cached token checks, retries and
+// queues in front of a throttling provider), so the root's own lines between T and the first caller failure
+// only use symptoms that do not fail requests. In v3 callers failed 2-50 s after T, so "the first caller
+// failure that names the root, minus 20 s" dated a sudden fault without reading the root at all.
+export const LATENT_EARLY = {
+  certificate_expiry: { direct: FAULTS.certificate_expiry.direct, indirect: [1, 2, 3].map(i => FAULTS.certificate_expiry.indirect[i]) },
+  dns_resolution_failure: { direct: [1, 2, 3].map(i => FAULTS.dns_resolution_failure.direct[i]), indirect: [0, 2, 3].map(i => FAULTS.dns_resolution_failure.indirect[i]) },
+  clock_skew: { direct: [FAULTS.clock_skew.direct[3]], indirect: [2, 3].map(i => FAULTS.clock_skew.indirect[i]) },
+  upstream_rate_limiting: { direct: [0, 3].map(i => FAULTS.upstream_rate_limiting.direct[i]), indirect: [0, 1, 3].map(i => FAULTS.upstream_rate_limiting.indirect[i]) },
+};
+
+// v4: stats lines of a second resource of the same kind (another pool, volume, TLS listener or provider) in the
+// same form as BASELINE / BASELINE_AFTER. Normal values all window, except for the resource of a stray anomaly,
+// whose values turn abnormal at the stray line and stay so. A script that dates the fault by "the first abnormal
+// stats value" has to pick the series of the resource the failures involve.
+export const STRAY_STATS = {
+  connection_pool_exhaustion: (c, r, o, bad) => ['INFO', bad ? `pool '${o.pool}' stats: active=${o.max}/${o.max} idle=0 pending=${r.int(4, 40)}` : `pool '${o.pool}' stats: active=${r.int(0, 2)}/${o.max} idle=${o.max - 2} pending=0`],
+  disk_full: (c, r, o, bad) => (bad ? ['WARN', `disk usage ${o.v}% on ${o.vol} (warning threshold 80%)`] : ['INFO', `disk usage ${o.v0}% on ${o.vol}`]),
+  certificate_expiry: (c, r, o, bad) => ['INFO', `TLS listener :${o.port}: ${r.int(2, 60)} handshakes/min, ${bad ? r.int(90, 100) : r.int(0, 1)}% failed`],
+  upstream_rate_limiting: (c, r, o, bad) => ['INFO', `${o.ext} quota usage ${bad ? 100 : r.int(10, 60)}% of ${o.q}/min`],
+};
+
+// v4: a caller whose workers are all stuck on a failing callee times out on its healthy callees too.
+export const COLLATERAL = [DEP_FAIL[0], DEP_FAIL[4], DEP_FAIL[6], DEP_FAIL[9]];
