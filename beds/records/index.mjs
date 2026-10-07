@@ -8,11 +8,12 @@ import * as P from './pools.mjs';
 export const family = {
   id: 'records',
   domain: 'data repair / entity resolution',
-  version: '2.0.0',
+  version: '3.0.0',
   description: 'Merge a messy export of customer/supplier rows from several legacy systems (mixed locales, '
     + 'nicknames, transliterations, typos, twins and namesakes, void markers and look-alikes, adversarial staff memos) '
     + 'into one canonical record per real person, following a prose spec for identity, conflict resolution, phone '
-    + 'normalisation and USD conversion with market FX quotes.',
+    + 'normalisation and USD conversion with market FX quotes. From difficulty 3 the date orders, extra status values, '
+    + 'a re-stamped mirror system and balance perspectives change from task to task and are stated only in paraphrased notes.',
   kind: 'oneshot',
 };
 
@@ -129,6 +130,16 @@ export const badControls = [
   // Difficulty >= 3: per-task conventions stated only in the source notes. The generator rejects any world
   // in which one of these single misreadings would still pass, so each fails on every seed.
   {
+    // Plausible: BRIGHTDESK numeric birth dates read in the other order (e.g. "US CRM, so month first"
+    // when the notes say the instance runs in UK locale).
+    name: 'brightdesk-order-flipped', minDifficulty: 3,
+    make: task => {
+      const w = worldOf(task);
+      return ruleSolve(w.rows.map(x => (x.system === 'BRIGHTDESK' && x.s.dob && x.s.dob.d <= 12
+        ? { ...x.s, dob: { y: x.s.dob.y, m: x.s.dob.d, d: x.s.dob.m } } : x.s)), w.fx);
+    },
+  },
+  {
     // Plausible: VENDEX numeric dates read in the other order (the notes' team convention ignored).
     name: 'vendex-order-flipped', minDifficulty: 3,
     make: task => {
@@ -163,6 +174,15 @@ export const badControls = [
     // Plausible: the mirror note ignored; re-stamped rows win conflicts by their (re-stamp) dates.
     name: 'mirror-ignored', minDifficulty: 3,
     make: task => { const w = worldOf(task); return ruleSolve(w.rows.map(x => ({ ...x.s, rank: 0 })), w.fx); },
+  },
+  {
+    // Plausible: every printed balance read as owed to us (the per-system perspective notes ignored).
+    name: 'perspective-ignored', minDifficulty: 3,
+    make: task => {
+      const w = worldOf(task);
+      const flip = s => (s.amount ? { ...s, amount: { ...s.amount, minor: -s.amount.minor } } : s);
+      return ruleSolve(w.rows.map(x => (w.ctx.conv.persp[x.system] === 'pay' ? flip(x.s) : x.s)), w.fx);
+    },
   },
 ];
 

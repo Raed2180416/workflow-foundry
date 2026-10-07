@@ -331,8 +331,14 @@ function attemptWorld(seed, split, difficulty, attempt) {
   // Per-task conventions that only the source notes state (difficulty >= 3): the ATLAS and VENDEX numeric
   // date orders, the task's re-stamped mirror system and its rebuild window, and extra status values whose
   // meaning (void or live) changes from task to task. At least one extra status is void and one is live.
-  const conv = { atlas: 'dmy', vendex: 'mdy', mirror: null, window: null, flags: [] };
-  if (k.conv) { conv.atlas = r.pick(['dmy', 'mdy']); conv.vendex = r.pick(['mdy', 'dmy']); }
+  // persp: whether a positive balance in ATLAS / LEDGR / KOBO is owed to us ('recv') or by us ('pay', so the
+  // master flips its sign); at least one system is 'pay'.
+  const conv = { atlas: 'dmy', vendex: 'mdy', bd: 'mdy', mirror: null, window: null, flags: [], persp: {} };
+  if (k.conv) {
+    conv.atlas = r.pick(['dmy', 'mdy']); conv.vendex = r.pick(['mdy', 'dmy']); conv.bd = r.pick(['mdy', 'dmy']);
+    for (const sys of ['BRIGHTDESK', 'ATLAS', 'LEDGR', 'KOBO'].filter(x => active.includes(x))) conv.persp[sys] = r.pick(['recv', 'pay']);
+    if (!Object.values(conv.persp).includes('pay')) conv.persp[r.pick(Object.keys(conv.persp))] = 'pay';
+  }
   if (k.mirror) {
     conv.mirror = r.pick(P.MIRROR_SYSTEMS.filter(s => active.includes(s)));
     const len = r.int(20, 45), w0 = r.int(D_END - 420, D_END - 60 - len);
@@ -695,6 +701,8 @@ function attemptWorld(seed, split, difficulty, attempt) {
   const fails = srows => !scoreAgainst(truth.records, ruleSolve(srows, fx)).pass;
   if (k.conv) {
     if (!fails(misread)) return null;
+    // BRIGHTDESK numeric birth dates (days <= 12) read in the other order
+    if (!fails(rows.map(x => (x.system === 'BRIGHTDESK' && x.s.dob && x.s.dob.d <= 12 ? flipDob(x.s) : x.s)))) return null;
     const vx = rows.map(x => {
       if (x.system !== 'VENDEX') return x.s;
       let s = x.s;
@@ -710,6 +718,10 @@ function attemptWorld(seed, split, difficulty, attempt) {
     if (!fails(wrong)) return null;
   }
   if (conv.mirror && !fails(live.map(s => ({ ...s, rank: 0 })))) return null;
+  if (k.conv) { // balance perspective: reading every balance as owed to us must fail
+    const flipAmt = s => (s.amount ? { ...s, amount: { ...s.amount, minor: -s.amount.minor } } : s);
+    if (!fails(rows.map(x => (conv.persp[x.system] === 'pay' ? flipAmt(x.s) : x.s)))) return null;
+  }
 
   // Rendering
   const ctx = {

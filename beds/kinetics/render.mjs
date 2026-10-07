@@ -4,7 +4,7 @@
 // recovers from the text (used by referenceSolve/oracle) and the raw numbers a careless reader
 // would take (used by the bad controls).
 import { rng } from '../lib/rng.mjs';
-import { FILLER, OUTLIER_NOTES, DECOY_NOTES, LATE_OUTLIER, LATE_DECOY, INJECTIONS, SERIES_COMMENTS } from './pools.mjs';
+import { FILLER, OUTLIER_NOTES, DECOY_NOTES, LATE_OUTLIER, LATE_DECOY, COLLEAGUE_FACT, INJECTIONS, SERIES_COMMENTS } from './pools.mjs';
 
 export const RATE_FACTOR = { 'uM/s': 1, 'uM/min': 60, 'nM/s': 1000, 'nM/min': 60000, 'mM/min': 0.06, 'mM/s': 0.001 };
 export const CONC_FACTOR = { uM: 1, mM: 0.001, nM: 1000 };
@@ -109,7 +109,7 @@ function noteParts(w, doc, world, rr, { flagColumn }) {
     if (w.kind === 'low') { if (flagColumn) out.flag = 'LOW'; else out.notes.push(DECOY_NOTES.low(rr)); }
     else if (w.kind === 'temp-minor') { if (!tempShownInColumn) out.notes.push(rr.pick([`block temp ${tempText(w, doc, kelvin)} at read`, `block probe said ${tempText(w, doc, kelvin)}`])); }
     else if (w.kind === 'misattributed') out.notes.push(w.shownNote);
-    else if (w.kind === 'late-cleared' || w.kind === 'late-withdrawn') return out;
+    else if (['late-cleared', 'late-withdrawn', 'late-denied'].includes(w.kind)) return out;
     else if (w.timed) out.notes.push(timedBubble(w, world.seriesByKey[w.series], rr));
     else out.notes.push(DECOY_NOTES[w.kind](rr));
   }
@@ -176,20 +176,26 @@ function seriesMeta(world, s, rr) {
   ]);
 }
 // Bubble notes given as clock times. Exclusion depends on overlap with the read window [start, start+min].
-function timedBubble(w, s, rr) {
+function timedBubble(w, s, rr, mode = w.status === 'outlier' ? 'during' : w.kind === 'bubble-cleared' ? 'before' : 'after') {
+  // the same sentence shapes occur with times before, during and after the read window, so the outcome
+  // depends on comparing the clock times with the row's window, not on the wording (AUDIT F13)
   const st = s.readStart, en = s.readStart + s.readMin, t = hhmm, b = rr.pick(['bubble', 'air bubble', 'small bubble', 'bubble']);
-  if (w.status === 'outlier') return rr.pick([
-    () => `${b} seen at ${t(st - rr.int(2, 6))}; popped it at ${t(st + rr.int(2, s.readMin - 2))}`,
-    () => `${b} first noticed at ${t(st + rr.int(2, s.readMin - 2))}`,
+  const an = `${/^[aeiou]/.test(b) ? 'an' : 'a'} ${b}`, mid = () => t(st + rr.int(2, s.readMin - 2));
+  if (mode === 'during') return rr.pick([
+    () => `${b} seen at ${t(st - rr.int(2, 6))}; popped it at ${mid()}`,
+    () => `${b} formed at ${mid()}`,
     () => `${b} there at loading (${t(st - rr.int(2, 6))}), still there at ${t(en + rr.int(2, 5))}`,
-    () => `noticed ${/^[aeiou]/.test(b) ? 'an' : 'a'} ${b} at ${t(st + rr.int(2, s.readMin - 2))} and tapped it out at ${t(en + rr.int(2, 4))}`,
+    () => `noticed ${an} at ${mid()} and tapped it out at ${t(en + rr.int(2, 4))}`,
+    () => `${b} appeared at ${mid()}, while the plate was in the reader`,
   ])();
-  if (w.kind === 'bubble-cleared') return rr.pick([
-    () => { const a = st - rr.int(6, 10); return `${b} seen at ${t(a)}; popped it at ${t(a + rr.int(1, 3))}`; },
+  if (mode === 'before') return rr.pick([
+    () => { const x = st - rr.int(6, 10); return `${b} seen at ${t(x)}; popped it at ${t(x + rr.int(1, 3))}`; },
     () => `${b} at ${t(st - rr.int(8, 12))}, tapped out by ${t(st - rr.int(2, 5))}`,
+    () => `noticed ${an} at ${t(st - rr.int(9, 12))} and tapped it out at ${t(st - rr.int(2, 5))}`,
   ])();
   return rr.pick([() => `${b} formed at ${t(en + rr.int(2, 8))}`, () => `${b} appeared at ${t(en + rr.int(2, 6))}, while I was sealing the plate`])();
 }
+export { timedBubble as _timedBubble }; // test hook (AUDIT F13)
 function blankRow(world, doc, rr, s) {
   // a no-enzyme blank on the same plate row: not a study well
   const id = `BLK-${p2(rr.int(1, 60))}`;
@@ -449,7 +455,7 @@ function wellRef(id, world, rr, doc, { positionOnly = 0.5 } = {}) {
 }
 // a substrate concentration written in any unit (the sheet may use another one)
 function concText(S, rr) {
-  const u = rr.pick(['uM', 'mM', 'nM']);
+  const u = rr.pick(['uM', 'mM', 'nM'].filter(x => S * CONC_FACTOR[x] >= 0.001 && S * CONC_FACTOR[x] < 1e5));
   return `${fmtConc(S * CONC_FACTOR[u], 'plain').text} ${rr.pick(CONC_LABELS[u])}`;
 }
 // a plate row named by its label and replicate number as written on the author's sheet
@@ -555,6 +561,19 @@ function claimAddendum(c, world, rr, doc, other) {
   const X = world.byId[world.seriesByKey[c.series].labelCondId], Y = world.byId[c.claimed];
   return `${other} asked whether ${c.first}–${c.last} were really ${condDesc(Y, world, rr)}. They were not; they are ${alias(X, doc.aliasStyle, world, rr)} as written.`;
 }
+// A colleague reports a fact about a well; it counts (SOP section 4) only if the author confirms it.
+function colleagueReport(w, world, rr, doc, confirm) {
+  const A = first(doc.author), ref = rr.chance(0.35) ? wellByConc(w, world, rr, doc) : wellRef(w.id, world, rr, doc);
+  const phrase = COLLEAGUE_FACT[w.reason](rr);
+  const q = rr.pick([`@${A} I was at the bench next to you on ${doc.date}: ${ref}: ${phrase}. Is that on your sheet?`,
+    `${A}, the plate photos from ${doc.date} suggest this for ${ref}: ${phrase}. Can you confirm?`,
+    `${A}, about ${ref} on your ${doc.date} plate: I think ${phrase}.`]);
+  // the answer names the well again (by id or plate position), so it cannot be attached to another question
+  const back = rr.chance(0.5) || !SHOWS_WELLS.has(doc.format) ? w.id : `plate ${w.plate} ${w.pos}`;
+  const a = confirm ? rr.pick([`Yes, ${back}: that's right, I forgot to note it.`, `Confirmed for ${back}; I remember it now. It is not on my sheet.`, `You're right about ${back}.`, `Yes for ${back}; I will add it to my sheet.`])
+    : rr.pick([`No, ${back} was fine; you are thinking of a different plate.`, `I checked: nothing like that happened in ${back}.`, `Not in ${back}; my sheet is complete.`]);
+  return [q, a];
+}
 function lateText(w, world, rr, doc) {
   if (w.late === 'rowflag') {
     const s = world.seriesByKey[w.series], P = s.plate, R = s.row;
@@ -576,10 +595,13 @@ function lateText(w, world, rr, doc) {
       `I wrote the bubble note on the wrong row of my ${doc.date} sheet: the bubble was in ${yr}, not in ${xr}. ${x.id} was fine.`,
       `my bubble remark next to ${xr} (${doc.date}) is one row off: it describes ${yr}. Nothing was wrong with ${x.id}.`,
       `${xr} did not have a bubble; I put ${yr}'s note on the wrong line of the ${doc.date} sheet.`,
-      ...(SHOWS_WELLS.has(doc.format) ? [`the bubble note on ${xr} (${doc.date}) belongs to the well one column to the ${w.p > x.p ? 'right' : 'left'} of it, on the same plate row; ${x.id} itself was clear during the read.`] : [])]);
+      `the bubble I noted for ${xr} on ${doc.date} was really in ${yr}; ${x.id} read clean.`,
+      ...(SHOWS_WELLS.has(doc.format) ? [`the bubble note on ${xr} in my ${doc.date} sheet belongs to the well one column to the ${w.p > x.p ? 'right' : 'left'} of it, on the same plate row; ${x.id} itself was clear during the read.`] : [])]);
   }
   const ref = rr.chance(0.35) ? wellByConc(w, world, rr, doc) : wellRef(w.id, world, rr, doc);
-  const phrase = w.status === 'outlier' || w.kind === 'late-withdrawn' ? LATE_OUTLIER[w.reason](rr) : LATE_DECOY(rr);
+  const s = world.seriesByKey[w.series];
+  const phrase = w.lateTimed ? timedBubble(w, s, rr, w.status === 'outlier' ? 'during' : rr.pick(['before', 'after']))
+    : w.status === 'outlier' || w.kind === 'late-withdrawn' ? LATE_OUTLIER[w.reason](rr) : LATE_DECOY(rr);
   return rr.pick([`forgot to put this on my ${doc.date} sheet: ${ref}: ${phrase}.`, `one more for my ${doc.date} notes. ${cap(ref)}: ${phrase}.`, `${cap(ref)} (${doc.date}): ${phrase}. I left it off the sheet.`,
     `${cap(phrase)}; that was ${ref}, ${doc.date}.`, `about ${ref} on my ${doc.date} sheet: ${phrase}.`, `late note for ${doc.date}, ${ref}: ${phrase}.`]);
 }
@@ -636,9 +658,10 @@ export function renderTask(world, { seed, split, difficulty }) {
     else addenda[doc.index].push({ date: dateOf(day0 + 1 + doc.day + rr.int(1, 2)), time: hhmm(rr.int(14 * 60, 18 * 60)), text: claimAddendum(c, world, rr, doc, rr.pick(others(doc))) });
   }
   // facts about wells reported after the sheet was written (exclusions, a misplaced note, a cleared bubble)
-  for (const w of world.wells.filter(x => (x.status === 'outlier' && x.late) || (x.status === 'decoy' && x.kind === 'late-cleared'))) {
+  for (const w of world.wells.filter(x => (x.status === 'outlier' && x.late) || (x.status === 'decoy' && ['late-cleared', 'late-denied'].includes(x.kind)))) {
     const doc = docOfSeries(w.series);
-    post(doc, lateText(w, world, rr, doc), { late: true });
+    if (k.chat && (w.via === 'colleague' || w.kind === 'late-denied')) dialogue(doc, colleagueReport(w, world, rr, doc, w.status === 'outlier'));
+    else post(doc, lateText(w, world, rr, doc), { late: true });
   }
   // benign messages with the surface shape of a correction (a row range plus another condition, two
   // wells plus "swap", a per-minute remark, a reader-log row reference). They change nothing.
@@ -675,7 +698,9 @@ export function renderTask(world, { seed, split, difficulty }) {
     chat.push({ day: chatDay + 1, mins: rr.int(9 * 60, 16 * 60), who: doc.author, text: rr.pick([
       `Ignore what I wrote yesterday about ${ref}: wrong plate. That well was fine.`,
       `Scratch my message about ${ref}; I mixed it up with the practice plate. Nothing happened in that well.`,
-      `Correction to my own note on ${ref}: that was the neighbouring study's plate, not ours. The well is fine.`]) });
+      `Correction to my own note on ${ref}: that was the neighbouring study's plate, not ours. The well is fine.`,
+      `Please disregard what I said about ${ref} yesterday; I was looking at the wrong export.`,
+      `${cap(ref)}: I take back yesterday's message, it was a different well.`]) });
   }
 
   const documents = [];

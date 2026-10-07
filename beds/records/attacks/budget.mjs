@@ -1,4 +1,4 @@
-// Attack B (AUDIT step 4): best-effort heuristic solver in an honest budget, <=40 lines x <=160 chars, reading only task.inputs.
+// Attack B (v2 audit, step 4): heuristic solver reading only task.inputs. NOTE (2026-10-07 audit): it claimed "<=40 lines x <=160 chars" but is 54 lines, max 237 chars.
 const CR = ['austria|sterr|^aut?$|vienn|graz|salzb|innsb|linz>AT', 'austr|^aus$|sydn|melb|brisb|adel|canb|hobar>AU', 'stat|staat|usa|u\\.s|amer|^us$>US',
   'king|brit|engl|^uk$|^gb$|k.nigr|manch|leeds|brist|liverp|edinb|glasg|sheff|notting>GB', 'cana|canda|kanad|^can$|toront|vancou|montr|calg|ottaw|winni|edmont>CA',
   'irl|irel|irle|eire|irish|dubl|cork|galw|limer|waterf>IE', 'germ|gema|deutsch|^brd$|^de$|^ger$|munic|hamb|colog|stuttg|d.ssel|leipz|dresd|hanov>DE',

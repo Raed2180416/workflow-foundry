@@ -27,9 +27,10 @@ export const outputSchema = {
         required: ['condition_id', 'vmax', 'km'],
         properties: {
           condition_id: { type: 'string' },
-          // portable subset (src/schema-subset.mjs) has no exclusiveMinimum; the oracle requires > 0
-          vmax: { type: 'number', minimum: 0, description: 'Vmax in µM/s (must be > 0)' },
-          km: { type: 'number', minimum: 0, description: 'Km in µM (must be > 0)' },
+          // portable subset (src/schema-subset.mjs) has no exclusiveMinimum: 0 is schema-valid and simply
+          // misses the tolerance (relative error 1)
+          vmax: { type: 'number', minimum: 0, description: 'Vmax in µM/s' },
+          km: { type: 'number', minimum: 0, description: 'Km in µM' },
         },
       },
     },
@@ -98,20 +99,24 @@ export function referenceSolve(task) {
 }
 
 // ---------------------------------------------------------------------------------------
-// Schema validation (portable subset, hand-rolled: no dependency on ajv).
+// Schema validation: exactly outputSchema (portable subset), hand-rolled (no dependency on ajv). Arrays are
+// walked by index, so holes in a non-JSON array are reported instead of crashing the oracle; numbers must
+// be finite JSON numbers >= 0 (schema `minimum: 0`); a value of 0 is valid and fails the tolerance.
+const isPlain = v => v !== null && typeof v === 'object' && !Array.isArray(v);
 export function validateOutput(out) {
   const errs = [];
-  if (!out || typeof out !== 'object' || Array.isArray(out)) return ['output must be an object'];
+  if (!isPlain(out)) return ['output must be an object'];
   for (const k of Object.keys(out)) if (!['conditions', 'excluded_samples'].includes(k)) errs.push(`unexpected property ${k}`);
   if (!Array.isArray(out.conditions)) errs.push('conditions must be an array');
-  else out.conditions.forEach((c, i) => {
-    if (!c || typeof c !== 'object' || Array.isArray(c)) { errs.push(`conditions[${i}] must be an object`); return; }
+  else for (let i = 0; i < out.conditions.length; i++) {
+    const c = out.conditions[i];
+    if (!isPlain(c)) { errs.push(`conditions[${i}] must be an object`); continue; }
     for (const k of Object.keys(c)) if (!['condition_id', 'vmax', 'km'].includes(k)) errs.push(`conditions[${i}] unexpected property ${k}`);
-    if (typeof c.condition_id !== 'string') errs.push(`conditions[${i}].condition_id must be a string`);
-    for (const k of ['vmax', 'km']) if (typeof c[k] !== 'number' || !Number.isFinite(c[k]) || !(c[k] > 0)) errs.push(`conditions[${i}].${k} must be a positive finite number`);
-  });
+    if (!Object.hasOwn(c, 'condition_id') || typeof c.condition_id !== 'string') errs.push(`conditions[${i}].condition_id must be a string`);
+    for (const k of ['vmax', 'km']) if (!Object.hasOwn(c, k) || typeof c[k] !== 'number' || !Number.isFinite(c[k]) || c[k] < 0) errs.push(`conditions[${i}].${k} must be a finite number >= 0`);
+  }
   if (!Array.isArray(out.excluded_samples)) errs.push('excluded_samples must be an array');
-  else out.excluded_samples.forEach((s, i) => { if (typeof s !== 'string') errs.push(`excluded_samples[${i}] must be a string`); });
+  else for (let i = 0; i < out.excluded_samples.length; i++) if (typeof out.excluded_samples[i] !== 'string') errs.push(`excluded_samples[${i}] must be a string`);
   return errs;
 }
 

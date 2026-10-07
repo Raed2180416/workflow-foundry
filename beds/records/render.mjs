@@ -1,6 +1,6 @@
 // Text rendering for the `records` bed: one line per source row in the dialect of its legacy
 // system, plus the prose source notes, the canonical spec and the task prompt.
-import { COUNTRIES, COUNTRY_NAME, CURRENCIES, CITIES, NICKNAMES, MONTHS, MONTHS_SHORT, TEAM_CITIES, numberWords, ordinal } from './pools.mjs';
+import { COUNTRIES, COUNTRY_NAME, CURRENCIES, CITIES, ALL_CITIES, NICKNAMES, MONTHS, MONTHS_SHORT, TEAM_CITIES, numberWords, ordinal } from './pools.mjs';
 
 const p2 = n => String(n).padStart(2, '0');
 const DAY = 86400000;
@@ -106,7 +106,12 @@ function dobText(rec, rr, ctx) {
   }
   const { y, m, d } = rec.dob;
   switch (rec.system) {
-    case 'BRIGHTDESK': return rec.dobPad || rr.chance(0.7) ? `${p2(m)}/${p2(d)}/${y}` : `${m}/${d}/${y}`;
+    case 'BRIGHTDESK': {
+      if (!k.conv) return rec.dobPad || rr.chance(0.7) ? `${p2(m)}/${p2(d)}/${y}` : `${m}/${d}/${y}`;
+      if (d > 12) return `${d} ${MONTHS_SHORT[m - 1]} ${y}`;
+      const [a, b] = ctx.conv.bd === 'mdy' ? [m, d] : [d, m];
+      return rec.dobPad || rr.chance(0.7) ? `${p2(a)}/${p2(b)}/${y}` : `${a}/${b}/${y}`;
+    }
     case 'LEDGR': return rr.chance(0.8) ? `${p2(d)}.${p2(m)}.${y}` : `${d}.${m}.${y}`;
     case 'ATLAS':
       // From difficulty 3, unambiguous dates (day > 12) carry the month name, so only the notes give the order.
@@ -152,7 +157,9 @@ function amountText(rec, rr, ctx) {
   const k = ctx.k;
   if (!rec.amountPresent) return k.placeholders && rr.chance(0.6) ? rr.pick(['TBD', 'n/a', '—']) : '';
   const cur = rec.currency, md = CURRENCIES[cur].minor;
-  const neg = rec.amountMinor < 0, abs = Math.abs(rec.amountMinor);
+  // A 'pay' perspective system prints the balance from the other side, so the master flips its sign.
+  const shown = ctx.conv.persp[rec.system] === 'pay' ? -rec.amountMinor : rec.amountMinor;
+  const neg = shown < 0, abs = Math.abs(shown);
   const us = fmtAmount(abs, md), de = fmtAmount(abs, md, { thou: '.', dec: ',' });
   switch (rec.system) {
     case 'BRIGHTDESK':
@@ -256,8 +263,8 @@ function vendexLine(rec, rr, ctx) {
   const name = nameText(rec);
   const c = rec.countryPresent ? COUNTRIES[rec.country] : null;
   // Country: named, a nationality adjective, or a city it is based in.
-  const kind = c ? weighted(rr, [['named', 4], ['demonym', 3], ['city', 3]]) : null;
-  const placeIn = kind === 'named' ? rr.pick(c.prose) : kind === 'city' ? rr.pick(CITIES[rec.country]) : null;
+  const kind = c ? weighted(rr, ctx.k.conv ? [['named', 3], ['demonym', 2], ['city', 5]] : [['named', 4], ['demonym', 3], ['city', 3]]) : null;
+  const placeIn = kind === 'named' ? rr.pick(c.prose) : kind === 'city' ? rr.pick((ctx.k.conv ? ALL_CITIES : CITIES)[rec.country]) : null;
   const dem = kind === 'demonym' ? c.demonym : null;
   const t = rr.int(0, 4);
   const dobKw = t === 3 ? rr.pick(['Born', 'Date of birth', 'DOB']) : rr.pick(VX.dob);
@@ -289,25 +296,77 @@ function vendexLine(rec, rr, ctx) {
 // Prose: source notes, spec, prompt
 // ---------------------------------------------------------------------------------------
 // Per-task prose (difficulty >= 3). Each convention is stated in one of several paraphrases: explicit,
-// by example, by reference to another system, by locale or city (world knowledge), or with negations and
-// red herrings, so that no single keyword decides it. solve-text.mjs (test-only) parses these templates
-// to prove derivability; arms never see this file.
+// by example, by reference to another system, by locale, server country or city (world knowledge), or
+// with negations. Every keyword that could decide a class also occurs in a paraphrase of the opposite
+// class, so no single keyword decides it. solve-text.mjs (test-only) parses these templates to prove
+// derivability; arms never see this file.
 const exampleText = ({ y, m, d }, order) => `${p2(order === 'mdy' ? m : d)}/${p2(order === 'mdy' ? d : m)}/${y}`;
-export const ATLAS_ORDER_NOTE = {
-  dmy: [
-    () => 'ATLAS was configured in UK locale: numeric birth dates are day/month/year.',
-    () => 'Numeric birth dates in ATLAS put the day before the month, in the same order as LEDGR (only the separator differs).',
-    c => `For example, an ATLAS birth date written ${exampleText(c.atlasEx, 'dmy')} is ${c.atlasEx.d} ${MONTHS[c.atlasEx.m - 1]} ${c.atlasEx.y}.`,
-    () => 'The slashes may look American, but ATLAS birth dates are not month-first: the day comes first.',
-    () => 'ATLAS kept the UK convention for numeric birth dates (unlike BRIGHTDESK).',
-  ],
-  mdy: [
-    () => 'ATLAS was installed by a US contractor and runs in US locale: numeric birth dates are month/day/year.',
-    () => 'Numeric birth dates in ATLAS put the month before the day, in the same order as BRIGHTDESK.',
-    c => `For example, an ATLAS birth date written ${exampleText(c.atlasEx, 'mdy')} is ${c.atlasEx.d} ${MONTHS[c.atlasEx.m - 1]} ${c.atlasEx.y}.`,
-    () => 'ATLAS is a UK ledger, but its birth dates are not day-first: the month comes first.',
-    () => 'ATLAS never adopted the UK convention for numeric birth dates; it uses the American one, like BRIGHTDESK.',
-  ],
+const exMeaning = e => `${e.d} ${MONTHS[e.m - 1]} ${e.y}`;
+// Templates are { t: c => text, ref?: true }; a ref template names another system with the same order
+// (c.ref[sys]) and is only used when such a system exists.
+export const ORDER_NOTE = {
+  ATLAS: {
+    dmy: [
+      { t: () => 'ATLAS was configured in UK locale, so numeric birth dates are day/month/year, not month/day/year.' },
+      { ref: true, t: c => `Numeric birth dates in ATLAS use the same order as ${c.ref.ATLAS} (only the separator may differ).` },
+      { t: c => `For example, an ATLAS birth date written ${exampleText(c.atlasEx, 'dmy')} is ${exMeaning(c.atlasEx)}.` },
+      { t: () => 'The slashes may look American, but ATLAS birth dates are not month-first: the day comes first.' },
+      { t: () => 'Unlike the US installation it was copied from, ATLAS writes the day first in numeric birth dates.' },
+      { t: c => `An ATLAS row "born ${exampleText(c.atlasEx, 'dmy')}" belongs to someone born in ${MONTHS[c.atlasEx.m - 1]}.` },
+      { t: c => `ATLAS formats numeric dates the way people do in the country where its servers stand, ${c.serverDmy}.` },
+      { t: () => 'Read numeric ATLAS birth dates as DD/MM/YYYY, never as MM/DD/YYYY.' },
+    ],
+    mdy: [
+      { t: () => 'ATLAS was configured in US locale, so numeric birth dates are month/day/year, not day/month/year.' },
+      { ref: true, t: c => `Numeric birth dates in ATLAS use the same order as ${c.ref.ATLAS} (only the separator may differ).` },
+      { t: c => `For example, an ATLAS birth date written ${exampleText(c.atlasEx, 'mdy')} is ${exMeaning(c.atlasEx)}.` },
+      { t: () => 'ATLAS is a UK ledger, but its birth dates are not day-first: the month comes first.' },
+      { t: () => 'Unlike the UK installation it was copied from, ATLAS writes the month first in numeric birth dates.' },
+      { t: c => `An ATLAS row "born ${exampleText(c.atlasEx, 'mdy')}" belongs to someone born in ${MONTHS[c.atlasEx.m - 1]}.` },
+      { t: () => 'ATLAS formats numeric dates the way people do in the country where its servers stand, the United States.' },
+      { t: () => 'Read numeric ATLAS birth dates as MM/DD/YYYY, never as DD/MM/YYYY.' },
+    ],
+  },
+  BRIGHTDESK: {
+    mdy: [
+      { t: () => 'The instance runs in US locale, so numeric birth dates are month/day/year.' },
+      { t: () => 'Numeric birth dates are MM/DD/YYYY, as everywhere in the US sales organisation, even for European customers.' },
+      { t: c => `For example, dob=${exampleText(c.bdEx, 'mdy')} is ${exMeaning(c.bdEx)}.` },
+      { t: () => 'The instance kept its vendor\'s American defaults, so the month comes before the day in numeric birth dates; the London office\'s day-first setup was never applied.' },
+      { t: c => `A customer with dob=${exampleText(c.bdEx, 'mdy')} was born in ${MONTHS[c.bdEx.m - 1]}.` },
+      { t: () => 'BRIGHTDESK does not use the British order for numeric birth dates.' },
+    ],
+    dmy: [
+      { t: () => 'Although BRIGHTDESK is a US sales CRM, the instance was cloned from the London office and runs in UK locale: numeric birth dates are day/month/year.' },
+      { t: () => 'Numeric birth dates are DD/MM/YYYY; the US sales team never changed the London defaults.' },
+      { t: c => `For example, dob=${exampleText(c.bdEx, 'dmy')} is ${exMeaning(c.bdEx)}.` },
+      { t: () => 'The instance does not keep its vendor\'s American defaults: the day comes before the month in numeric birth dates.' },
+      { t: c => `A customer with dob=${exampleText(c.bdEx, 'dmy')} was born in ${MONTHS[c.bdEx.m - 1]}.` },
+      { t: () => 'BRIGHTDESK does not use the American order for numeric birth dates.' },
+    ],
+  },
+  VENDEX: {
+    mdy: [
+      { t: () => 'Numeric dates follow the American convention, month/day/year, not the European day/month/year.' },
+      { t: c => `The team works from ${c.cityUS} and writes numeric dates the way people there do.` },
+      { ref: true, t: c => `Numeric dates use the same order as ${c.ref.VENDEX}.` },
+      { t: c => `A numeric date such as ${exampleText({ ...c.vxEx, y: 2021 }, 'mdy')} means ${MONTHS[c.vxEx.m - 1]} ${c.vxEx.d}, 2021.` },
+      { t: c => `The team moved from ${c.cityEU} to ${c.cityUS} in 2015 and has written numeric dates the local way ever since.` },
+      { t: () => 'Numeric dates are MM/DD/YYYY.' },
+      { t: c => `In a numeric date the first number is the month (so ${exampleText({ ...c.vxEx, y: 2021 }, 'mdy')} falls in ${MONTHS[c.vxEx.m - 1]}).` },
+      { t: () => 'The team never adopted the day-first habit of its European suppliers.' },
+    ],
+    dmy: [
+      { t: () => 'Numeric dates follow the European convention, day/month/year, not the American month/day/year.' },
+      { t: c => `The team works from ${c.cityEU} and writes numeric dates the way people there do.` },
+      { ref: true, t: c => `Numeric dates use the same order as ${c.ref.VENDEX}.` },
+      { t: c => `A numeric date such as ${exampleText({ ...c.vxEx, y: 2021 }, 'dmy')} means ${c.vxEx.d} ${MONTHS[c.vxEx.m - 1]} 2021.` },
+      { t: c => `The team moved from ${c.cityUS} to ${c.cityEU} in 2015 and has written numeric dates the local way ever since.` },
+      { t: () => 'Numeric dates are DD/MM/YYYY.' },
+      { t: c => `In a numeric date the first number is the day (so ${exampleText({ ...c.vxEx, y: 2021 }, 'dmy')} falls in ${MONTHS[c.vxEx.m - 1]}).` },
+      { t: () => 'The team never adopted the month-first habit of its American suppliers.' },
+    ],
+  },
 };
 // The ATLAS cutoff (difficulty >= 4) swaps day and month relative to the task's base order.
 export const ATLAS_CUTOFF_NOTE = [
@@ -315,22 +374,6 @@ export const ATLAS_CUTOFF_NOTE = [
   (d, other) => `Since its migration to a new vendor on ${d}, ATLAS has written numeric birth dates ${other} in every row whose last change falls on or after that day; rows last changed earlier keep the order described above.`,
   (d, other, c) => `Caution: ATLAS went live on ${c.liveSince}, but the date that matters is ${d}, when the hosting vendor changed: rows last changed on or after ${d} swap day and month relative to the order above; earlier rows do not.`,
 ];
-export const VENDEX_ORDER_NOTE = {
-  mdy: [
-    () => 'Numeric dates follow the US convention, month/day/year.',
-    c => `The team works from ${c.cityUS} and writes numeric dates the way people there do.`,
-    () => 'Numeric dates use the same order as BRIGHTDESK.',
-    c => `A numeric date such as ${exampleText({ ...c.vxEx, y: 2021 }, 'mdy')} means ${MONTHS[c.vxEx.m - 1]} ${c.vxEx.d}, 2021.`,
-    c => `The team moved from ${c.cityEU} to ${c.cityUS} in 2015 and has written numeric dates the local way ever since.`,
-  ],
-  dmy: [
-    () => 'Numeric dates follow the European convention, day/month/year.',
-    c => `The team works from ${c.cityEU} and writes numeric dates the way people there do.`,
-    () => 'Numeric dates use the same order as LEDGR.',
-    c => `A numeric date such as ${exampleText({ ...c.vxEx, y: 2021 }, 'dmy')} means ${c.vxEx.d} ${MONTHS[c.vxEx.m - 1]} 2021.`,
-    c => `The team moved from ${c.cityUS} to ${c.cityEU} in 2015 and has written numeric dates the local way ever since.`,
-  ],
-};
 // How an extra status value appears in a line, and which fixed void marker / live value it can be compared to.
 export const FLAG_FORM = {
   BRIGHTDESK: { show: t => `stage=${t}`, void: 'the ZZTEST fixtures', live: 'stage=customer rows' },
@@ -341,18 +384,24 @@ export const FLAG_FORM = {
 };
 export const FLAG_NOTE = {
   live: [
-    (sh, F) => `Rows marked ${sh} belong to customers who are still on the books; they must be migrated.`,
-    (sh, F) => `Rows marked ${sh} are genuine accounts that are merely dormant, so they are not void.`,
+    (sh, F) => `Rows marked ${sh} belong to customers who are still on the books; they must be migrated, not dropped.`,
+    (sh, F) => `Rows marked ${sh} look like test data but are genuine, merely dormant accounts; they are not void.`,
     (sh, F) => `Treat rows marked ${sh} exactly like ${F.live}.`,
     (sh, F) => `${sh} only means that credit control paused the account; do not drop these rows.`,
     (sh, F) => `Do not confuse ${sh} with ${F.void}: these rows are real accounts and stay in the master list.`,
+    (sh, F) => `Finance still invoices rows marked ${sh}, so they are not void.`,
+    (sh, F) => `Rows marked ${sh} are customers we still serve, whatever the label suggests; keep them.`,
+    (sh, F) => `A row marked ${sh} does not carry a void marker; keep it.`,
   ],
   void: [
-    (sh, F) => `Rows marked ${sh} were created by a load-test tool and never belonged to a customer; they must not be migrated.`,
-    (sh, F) => `Rows marked ${sh} are leftovers of an aborted import, so they are void.`,
+    (sh, F) => `Rows marked ${sh} were created by a load-test tool and never belonged to a customer; they must be dropped, not migrated.`,
+    (sh, F) => `Rows marked ${sh} look like genuine, dormant accounts but are leftovers of an aborted import; they are void.`,
     (sh, F) => `Treat rows marked ${sh} exactly like ${F.void}.`,
-    (sh, F) => `${sh} marks applications that were rejected during onboarding; drop these rows.`,
-    (sh, F) => `Unlike ${F.live}, rows marked ${sh} are not real accounts and stay out of the master list.`,
+    (sh, F) => `${sh} marks applications that were rejected during onboarding; do not keep these rows.`,
+    (sh, F) => `Do not confuse ${sh} with ${F.live}: these rows are not real accounts and stay out of the master list.`,
+    (sh, F) => `Nobody ever bought anything through a row marked ${sh}, so it is void.`,
+    (sh, F) => `Rows marked ${sh} were opened by the auditors to test the system, whatever the label suggests; leave them out.`,
+    (sh, F) => `A row marked ${sh} counts as carrying a void marker; drop it.`,
   ],
 };
 export const UPDATE_FIELD = { BRIGHTDESK: 'updated', LEDGR: 'Geändert', ATLAS: 'last change', VENDEX: 'revision', KOBO: 'upd', VERITAS: 'ts' };
@@ -360,23 +409,92 @@ export const MIRROR_NOTE = [
   (S, f, w) => `This ${S} extract comes from a read-only mirror that was rebuilt between ${w[0]} and ${w[1]}: the ${f} value of every ${S} row is the time the mirror copied it, not the time the record last changed.`,
   (S, f, w) => `Do not trust the ${f} dates of ${S}: the system was restored from an old backup between ${w[0]} and ${w[1]}, and the restore re-stamped every row.`,
   (S, f, w) => `The ${f} column of ${S} shows when the nightly copy job last rewrote the row; during the rebuild of ${w[0]}–${w[1]} it rewrote every row, so the column no longer says when the data changed.`,
+  (S, f, w) => `${S} was migrated to new hardware between ${w[0]} and ${w[1]}, and the migration overwrote ${f} on every row with the migration date.`,
+  (S, f, w) => `Every ${f} value in ${S} falls between ${w[0]} and ${w[1]} because the vendor re-imported the whole table then; these dates say nothing about real changes.`,
 ];
+// Red herrings about another system's (reliable) update dates; they reuse the mirror notes' vocabulary.
 export const RELIABLE_NOTE = [
   (S, f, y) => `${S}'s ${f} is the real date of the last change; the vendor confirmed this during the ${y} audit.`,
   (S, f) => `The ${f} value of ${S} rows is reliable: the application sets it whenever a field is edited.`,
+  (S, f) => `${S} never re-stamps rows: its ${f} always shows the true date of the last change.`,
+  (S, f, y) => `${S} was restored from an old backup once, in ${y}, but the restore kept the original ${f} values, so they are real change dates.`,
+  (S, f) => `${S} is not a read-only mirror: it sets ${f} when the data actually changes.`,
 ];
+// Balance perspective (difficulty >= 3): 'recv' prints balances as the master does; 'pay' prints them from
+// the other side, so the master flips the sign.
+export const PERSP_NOTE = {
+  BRIGHTDESK: {
+    recv: ['Balances are open invoices, not prepaid deposits: the customer owes us.',
+      'A positive balance is money the customer still has to pay us; a credit is money we owe the customer.',
+      'BRIGHTDESK prints balances the same way as the master.',
+      'Balances keep their sign in the master.'],
+    pay: ['Balances are prepaid deposits we hold for the customer, not open invoices, so the master records them with the opposite sign.',
+      'A positive balance is money we owe the customer; it is negative in the master, and a credit (negative) becomes positive.',
+      'BRIGHTDESK prints balances the opposite way to the master.',
+      'Balances change sign in the master.'],
+  },
+  ATLAS: {
+    recv: ['The "owed" column is what the supplier owes us, not what we owe the supplier.',
+      'ATLAS is our accounts-receivable ledger: "owed" is money due to us, and a "CR" figure is money we owe the supplier.',
+      'Read "owed" literally: it is the amount the supplier still has to pay us.',
+      'A positive "owed" figure is a debt of the supplier to us; the master keeps its sign.'],
+    pay: ['The "owed" column is what we owe the supplier, not what the supplier owes us, so the master records it with the opposite sign (a "CR" figure becomes positive).',
+      'ATLAS is our accounts-payable ledger: "owed" is money we have to pay, which is a credit (negative) in the master, and a "CR" figure is money the supplier owes us.',
+      'Do not read "owed" literally: it is the amount we still have to pay the supplier, so flip its sign for the master.',
+      'A positive "owed" figure is a debt of ours to the supplier; the master stores it as a negative balance.'],
+  },
+  LEDGR: {
+    recv: ['Saldo is shown from our side, not from the account holder\'s side: a positive Saldo is what the account holder owes us.',
+      'A positive Saldo is a receivable (the account holder owes us); a negative one is a credit.',
+      'LEDGR prints Saldo the same way as the master: positive means the account holder owes us.',
+      'Saldo keeps its sign in the master.'],
+    pay: ['Saldo is shown from the account holder\'s side, not from ours: a positive Saldo is a credit they hold with us (negative in the master), a negative Saldo is what they owe us.',
+      'A positive Saldo is money we owe the account holder; in the master it becomes negative, and a negative Saldo becomes positive.',
+      'LEDGR prints Saldo the opposite way to the master: positive means we owe the account holder.',
+      'Saldo changes sign in the master.'],
+  },
+  KOBO: {
+    recv: ['The balance is the value of unpaid orders, which the member owes us; it is not store credit.',
+      'A positive balance is money the member still has to pay us.',
+      'KOBO balances keep their sign in the master.',
+      'KOBO balances are receivables: positive means the member owes us.'],
+    pay: ['The balance is prepaid store credit, which we owe the member (negative in the master); "▲" or a minus marks a member who owes us.',
+      'A positive balance is money we owe the member, so it is negative in the master.',
+      'KOBO balances change sign in the master.',
+      'KOBO balances are payables: positive means we owe the member.'],
+  },
+};
+const SERVER_DMY = ['Ireland', 'the United Kingdom', 'Germany', 'the Netherlands', 'Australia'];
 // Paraphrase choices for one task, drawn from a dedicated RNG stream (so they never disturb the world).
 export function noteChoices(ctx, rr) {
   const ex = () => { for (;;) { const m = rr.int(1, 12), d = rr.int(1, 12); if (d !== m) return { y: rr.int(1950, 1999), m, d }; } };
+  const cv = ctx.conv, has = s => ctx.systems.includes(s);
   const c = {
-    atlasTpl: rr.int(0, 4), atlasEx: ex(), cutTpl: rr.int(0, 2), liveSince: longDay(rr.int(dayNum(2004, 1, 1), dayNum(2012, 12, 31))),
-    vendexTpl: rr.int(0, 4), cityUS: rr.pick(TEAM_CITIES.mdy), cityEU: rr.pick(TEAM_CITIES.dmy), vxEx: ex(),
-    flagTpl: ctx.conv.flags.map(() => rr.int(0, 4)), mirrorTpl: rr.int(0, 2), reliableTpl: rr.int(0, 1), auditYear: rr.int(2019, 2024),
+    atlasEx: ex(), bdEx: ex(), vxEx: ex(), serverDmy: rr.pick(SERVER_DMY), cutTpl: rr.int(0, 2),
+    liveSince: longDay(rr.int(dayNum(2004, 1, 1), dayNum(2012, 12, 31))),
+    cityUS: rr.pick(TEAM_CITIES.mdy), cityEU: rr.pick(TEAM_CITIES.dmy),
+    flagTpl: cv.flags.map(() => rr.int(0, 7)), mirrorTpl: rr.int(0, 4), reliableTpl: rr.int(0, 4), auditYear: rr.int(2019, 2024),
+    perspTpl: Object.fromEntries(Object.keys(PERSP_NOTE).map(s => [s, rr.int(0, 3)])), ref: {}, orderTpl: {},
   };
-  const others = ['BRIGHTDESK', 'LEDGR', 'KOBO', 'VERITAS'].filter(s => ctx.systems.includes(s) && s !== ctx.conv.mirror);
+  // Reference targets: a system with the same (base) order. ATLAS may refer to LEDGR or BRIGHTDESK; VENDEX
+  // also to ATLAS when ATLAS has no cutoff and does not itself use a reference (no cycles, no ambiguity).
+  const pickTpl = (sys, order, refs) => {
+    const tpls = ORDER_NOTE[sys][order].map((t, i) => [t, i]).filter(([t]) => !t.ref || refs.length);
+    const [t, i] = rr.pick(tpls);
+    if (t.ref) c.ref[sys] = rr.pick(refs);
+    return i;
+  };
+  const orderOf = { LEDGR: 'dmy', BRIGHTDESK: cv.bd, ATLAS: cv.atlas };
+  c.orderTpl.BRIGHTDESK = pickTpl('BRIGHTDESK', cv.bd, []);
+  c.orderTpl.ATLAS = pickTpl('ATLAS', cv.atlas, ['LEDGR', 'BRIGHTDESK'].filter(s => has(s) && orderOf[s] === cv.atlas));
+  const atlasRef = ORDER_NOTE.ATLAS[cv.atlas][c.orderTpl.ATLAS].ref;
+  c.orderTpl.VENDEX = pickTpl('VENDEX', cv.vendex, ['LEDGR', 'BRIGHTDESK', 'ATLAS'].filter(s => has(s) && orderOf[s] === cv.vendex
+    && (s !== 'ATLAS' || (ctx.cutoff === null && !atlasRef))));
+  const others = ['BRIGHTDESK', 'LEDGR', 'KOBO', 'VERITAS'].filter(s => has(s) && s !== cv.mirror);
   c.reliable = others.length ? rr.pick(others) : null;
   return c;
 }
+export const orderSentence = (sys, ctx) => ORDER_NOTE[sys][sys === 'BRIGHTDESK' ? ctx.conv.bd : ctx.conv[sys.toLowerCase()]][ctx.choices.orderTpl[sys]].t(ctx.choices);
 // Sentences appended to one system's paragraph: its extra status value, mirror statement or red herring.
 function perTaskSentences(sys, ctx) {
   const c = ctx.choices, out = [];
@@ -389,6 +507,25 @@ function perTaskSentences(sys, ctx) {
   if (ctx.conv.mirror === sys) out.push(MIRROR_NOTE[c.mirrorTpl](sys, UPDATE_FIELD[sys], ctx.windowText));
   if (c.reliable === sys) out.push(RELIABLE_NOTE[c.reliableTpl](sys, UPDATE_FIELD[sys], c.auditYear));
   return out;
+}
+const perspText = (sys, ctx) => PERSP_NOTE[sys][ctx.conv.persp[sys]][ctx.choices.perspTpl[sys]];
+function creditSentence(sys, ctx) {
+  const k = ctx.k;
+  if (sys === 'BRIGHTDESK') {
+    if (!k.credits) return '';
+    return k.conv ? `; a balance in parentheses, or with a leading minus, is negative. ${perspText('BRIGHTDESK', ctx)}`
+      : '; a balance in parentheses, or with a leading minus, is a credit (negative)';
+  }
+  if (sys === 'LEDGR') {
+    if (!k.credits) return '';
+    return k.conv ? ` A minus sign after the number ("250,00- EUR") or before it marks a negative Saldo. ${perspText('LEDGR', ctx)}`
+      : ' A minus sign after the number ("250,00- EUR") or before it marks a credit (negative balance).';
+  }
+  if (sys === 'ATLAS') {
+    if (!k.credits) return '';
+    return k.conv ? ` "CR" after an amount marks a negative "owed" figure. ${perspText('ATLAS', ctx)}` : ' "CR" after an amount means the supplier is in credit (a negative balance).';
+  }
+  return k.conv ? ` ${perspText('KOBO', ctx)}` : '';
 }
 const withTail = (text, sys, ctx) => [text, ...perTaskSentences(sys, ctx)].join(' ');
 const SYSTEM_BLURB = {
@@ -410,22 +547,22 @@ export function buildNotes(ctx) {
   for (const s of ctx.systems) {
     out.push('');
     if (s === 'BRIGHTDESK') {
-      out.push(withTail(`BRIGHTDESK. Lines look like "BRIGHTDESK row=<id> | name=... | dob=... | country=... | phone=... | balance=... | updated=YYYY-MM-DD", sometimes followed by "| memo=...". The instance runs in US locale, so birth dates are month/day/year (zero padding is inconsistent). Names are written either "Given FAMILY" (family name in capital letters; a title may precede the given name and a middle initial may follow it) or "Family, Given" (a middle initial may follow). Balances are in US dollars${k.credits ? '; a balance in parentheses, or with a leading minus, is a credit (negative)' : ''}.${k.prefix011 ? ' Some reps typed 011, the US international access code, in front of the country code of foreign numbers.' : ''}${k.flags ? ' Some rows also carry a "stage" field; "stage=customer" is an ordinary live account.' : ''} QA fixtures are void: a row whose name begins with "ZZTEST" must not be migrated.`, s, ctx));
+      out.push(withTail(`BRIGHTDESK. Lines look like "BRIGHTDESK row=<id> | name=... | dob=... | country=... | phone=... | balance=... | updated=YYYY-MM-DD", sometimes followed by "| memo=...". ${k.conv ? `Birth dates are written numerically (zero padding is inconsistent) or, when the day is above 12, with an abbreviated month name ("25 Mar 1985"). ${orderSentence('BRIGHTDESK', ctx)}` : 'The instance runs in US locale, so birth dates are month/day/year (zero padding is inconsistent).'} Names are written either "Given FAMILY" (family name in capital letters; a title may precede the given name and a middle initial may follow it) or "Family, Given" (a middle initial may follow). Balances are in US dollars${creditSentence('BRIGHTDESK', ctx)}${k.conv && k.credits ? '' : '.'}${k.prefix011 ? ' Some reps typed 011, the US international access code, in front of the country code of foreign numbers.' : ''}${k.flags ? ' Some rows also carry a "stage" field; "stage=customer" is an ordinary live account.' : ''} QA fixtures are void: a row whose name begins with "ZZTEST" must not be migrated.`, s, ctx));
     } else if (s === 'LEDGR') {
-      out.push(withTail(`LEDGR. Semicolon-separated positional fields: LEDGR; Satz-Nr (row id); Name as "Nachname, Vorname" (family name, given name); Anrede (salutation and academic title, may be empty); Geburtsdatum (birth date, day.month.year); Land (country, written in German); Telefon; Saldo (balance, German number format: "." groups thousands and "," is the decimal separator; currency EUR${k.chf ? ', or CHF for Swiss accounts' : ''}); Status; Geändert (date of last change, day.month.year). Status "aktiv" is a live account${k.blocked ? ', "gesperrt" is a blocked but real account that must still be migrated' : ''}; "storniert" marks a cancelled entry, which is void.${k.credits ? ' A minus sign after the number ("250,00- EUR") or before it marks a credit (negative balance).' : ''}`, s, ctx));
+      out.push(withTail(`LEDGR. Semicolon-separated positional fields: LEDGR; Satz-Nr (row id); Name as "Nachname, Vorname" (family name, given name); Anrede (salutation and academic title, may be empty); Geburtsdatum (birth date, day.month.year); Land (country, written in German); Telefon; Saldo (balance, German number format: "." groups thousands and "," is the decimal separator; currency EUR${k.chf ? ', or CHF for Swiss accounts' : ''}); Status; Geändert (date of last change, day.month.year). Status "aktiv" is a live account${k.blocked ? ', "gesperrt" is a blocked but real account that must still be migrated' : ''}; "storniert" marks a cancelled entry, which is void.${creditSentence('LEDGR', ctx)}`, s, ctx));
     } else if (s === 'ATLAS') {
       const c = ctx.choices;
       const order = !k.conv ? 'ATLAS was configured in UK locale: birth dates are day/month/year.'
-        : `Birth dates are written numerically or, when the day is above 12, with an abbreviated month name ("25 Mar 1985" or "25-Mar-1985"). ${ATLAS_ORDER_NOTE[ctx.conv.atlas][c.atlasTpl](c)}`;
+        : `Birth dates are written numerically or, when the day is above 12, with an abbreviated month name ("25 Mar 1985" or "25-Mar-1985"). ${orderSentence('ATLAS', ctx)}`;
       const other = ctx.conv.atlas === 'dmy' ? 'month first (month/day/year)' : 'day first (day/month/year)';
       const cut = ctx.cutoff === null ? '' : ` ${ATLAS_CUTOFF_NOTE[c.cutTpl](ctx.cutoffText, other, c)}`;
-      out.push(withTail(`ATLAS. Lines look like "ATLAS #<id> :: <name> :: born <birth date> :: <country> :: tel <phone> :: owed <amount in GBP> :: last change <date>", optionally with ":: note: ..."${k.flags ? ' and a trailing status tag (":: <TAG>")' : ''}. Names are "FAMILY, Given (Title)" or "Title Given Family". ${order}${cut} Unknown birth dates appear as "n/k" or "?".${k.credits ? ' "CR" after an amount means the supplier is in credit (a negative balance).' : ''} A line ending ":: DO NOT MIGRATE" is void.`, s, ctx));
+      out.push(withTail(`ATLAS. Lines look like "ATLAS #<id> :: <name> :: born <birth date> :: <country> :: tel <phone> :: owed <amount in GBP> :: last change <date>", optionally with ":: note: ..."${k.flags ? ' and a trailing status tag (":: <TAG>")' : ''}. Names are "FAMILY, Given (Title)" or "Title Given Family". ${order}${cut} Unknown birth dates appear as "n/k" or "?".${creditSentence('ATLAS', ctx)} A line ending ":: DO NOT MIGRATE" is void.`, s, ctx));
     } else if (s === 'VENDEX') {
       const vxDates = !k.conv ? 'are written out in words or numerically in the team\'s US convention, month/day/year; a two-digit year in a birth date means 19xx.'
-        : `are written out in words or, when the day is 12 or less, sometimes numerically. ${VENDEX_ORDER_NOTE[ctx.conv.vendex][ctx.choices.vendexTpl](ctx.choices)} A two-digit year in a birth date means 19xx.`;
+        : `are written out in words or, when the day is 12 or less, sometimes numerically. ${orderSentence('VENDEX', ctx)} A two-digit year in a birth date means 19xx.`;
       out.push(withTail(`VENDEX. Free-text English entries ("Vendex <id> — ...") written by ${k.conv ? 'the' : 'a US-based'} procurement team; the phrasing varies from entry to entry. Names are written given name first (with an optional title and middle initial). Dates — birth dates and the date the entry was revised — ${vxDates} For a call note ("Spoke with <name> on <date>") the call date is the revision date. Balances may be written in words: "dollars" are US dollars, "euros" EUR and "pounds" GBP (pence are hundredths of a pound). "Owes us", "open balance", "outstanding" and "balance due" introduce what the supplier owes us; "in credit by", "holding a credit of", "credit balance of" and "we owe them" introduce a credit, that is a negative balance. The country is named, implied by a nationality adjective ("a Dutch supplier" is in the Netherlands), or implied by the city the supplier is based in. An entry that ends with "(Application withdrawn — never onboarded.)" is void.`, s, ctx));
     } else if (s === 'KOBO') {
-      out.push(withTail(`KOBO. Lines look like "KOBO/<id> member: <name> | birth: <date> | tel: <phone> | balance: <yen> | upd: YYYY/MM/DD", optionally with "| note: ...". KOBO serves customers resident in Japan only, so its rows have no country field (the country is Japan) and its phone numbers are Japanese local numbers. Names are written family name first without a comma ("TANAKA Hiroshi" or "Tanaka Hiroshi"); KOBO cannot store accented letters. Birth dates are year/month/day${k.era ? ' or Japanese era notation: "S" is Shōwa (S1 = 1926, so S62 = 1987; Shōwa ended on 7 January 1989) and "H" is Heisei (H1 = 1989, starting 8 January 1989); for example H3.11.20 is 1991-11-20' : ''}. Balances are in yen ("¥" or "円")${k.credits ? '; "▲" in front of an amount marks it negative, as does a minus sign' : ''}. A row with "flag: SAMPLE" is a demo account and void.`, s, ctx));
+      out.push(withTail(`KOBO. Lines look like "KOBO/<id> member: <name> | birth: <date> | tel: <phone> | balance: <yen> | upd: YYYY/MM/DD", optionally with "| note: ...". KOBO serves customers resident in Japan only, so its rows have no country field (the country is Japan) and its phone numbers are Japanese local numbers. Names are written family name first without a comma ("TANAKA Hiroshi" or "Tanaka Hiroshi"); KOBO cannot store accented letters. Birth dates are year/month/day${k.era ? ' or Japanese era notation: "S" is Shōwa (S1 = 1926, so S62 = 1987; Shōwa ended on 7 January 1989) and "H" is Heisei (H1 = 1989, starting 8 January 1989); for example H3.11.20 is 1991-11-20' : ''}. Balances are in yen ("¥" or "円")${k.credits ? '; "▲" in front of an amount marks it negative, as does a minus sign' : ''}.${creditSentence('KOBO', ctx)} A row with "flag: SAMPLE" is a demo account and void.`, s, ctx));
     } else if (s === 'VERITAS') {
       out.push(withTail(`VERITAS. Each line is "VERITAS " followed by a JSON object: row, family, given, dob (ISO date), country (ISO alpha-2, except that the United Kingdom is sometimes written "UK"; letter case varies), msisdn (the full international number including country code, without "+"), amount and ccy (ISO currency code), ts (time of last update, ISO 8601 UTC) and an optional note. A dob of 1900-01-01 is the vendor's sentinel for "unknown" and is not a real birth date. Rows containing "env":"sandbox" are test traffic and void.${k.flags ? ' "env":"production" marks live traffic.' : ''}`, s, ctx));
     }
@@ -478,7 +615,7 @@ export function buildSpec(ctx) {
     L.push(`     ${COUNTRY_NAME[iso].padEnd(15)} ${iso}  +${c.cc.padEnd(4)} trunk prefix: ${trunk}`);
   }
   L.push('');
-  const when = k.datedFx ? ' in force on that row\'s update date' : '';
+  const when = k.datedFx ? ` in force on that row's update date${k.mirror ? ' (the date as written in the row, also for a re-stamped system)' : ''}` : '';
   if (ctx.fx.pairs) {
     L.push(`7. Balances. amount_usd = the winning row's balance converted to US dollars at the rate of that row's currency${when}, computed exactly and rounded half away from zero to two decimals (round once, at the end; never round the rate). A credit stays negative. USD balances are not converted. Rates are market quotes: "BASE/QUOTE x" means 1 unit of BASE = x units of QUOTE.`);
   } else {

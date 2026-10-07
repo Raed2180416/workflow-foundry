@@ -25,7 +25,8 @@ export default async function* ownerciReporter(source) {
     const status = type === 'test:fail' ? 'fail' : data.skip !== undefined && data.skip !== false ? 'skip'
       : data.todo !== undefined && data.todo !== false ? 'todo' : 'pass';
     results.push({
-      name: text(data.name, 500), file: text(data.file, 1000), nesting: data.nesting ?? 0, line: data.line ?? null, status,
+      name: text(data.name, 500), file: text(data.file, 1000), nesting: data.nesting ?? 0, line: data.line ?? null, column: data.column ?? null,
+      durationMs: typeof data.details?.duration_ms === 'number' ? Math.round(data.details.duration_ms * 1000) / 1000 : null, status,
       error: status === 'fail' ? describe(data.details?.error) : null,
     });
   }

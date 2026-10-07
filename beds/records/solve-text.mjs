@@ -4,7 +4,7 @@
 // rendered text alone. It is NOT the reference solver and is never shown to arms.
 import * as P from './pools.mjs';
 import { ruleSolve, rowsLink, sameDay, mulRate, divRate } from './world.mjs';
-import { dayNum, VENDEX_VOID, FLAG_FORM, FLAG_NOTE } from './render.mjs';
+import { dayNum, VENDEX_VOID, FLAG_FORM, FLAG_NOTE, PERSP_NOTE } from './render.mjs';
 
 let AB = null; // active ablation (single-threaded, set per solveText call)
 const MONTH = {};
@@ -15,7 +15,7 @@ for (const [iso, c] of Object.entries(P.COUNTRIES)) {
 }
 COUNTRY_ALIAS.set('uk', 'GB');
 const DEMONYM = new Map(Object.entries(P.COUNTRIES).map(([iso, c]) => [c.demonym.toLowerCase(), iso]));
-const CITY = new Map(Object.entries(P.CITIES).flatMap(([iso, list]) => list.map(c => [c.toLowerCase(), iso])));
+const CITY = new Map(Object.entries(P.ALL_CITIES).flatMap(([iso, list]) => list.map(c => [c.toLowerCase(), iso])));
 const CCS = [...new Set(Object.values(P.COUNTRIES).map(c => c.cc))].sort((a, b) => b.length - a.length);
 const TITLE_TOKENS = new Set(['mr', 'mr.', 'ms', 'ms.', 'mrs', 'mrs.', 'dr', 'dr.', 'prof.', 'prof']);
 const MISSING = new Set(['', 'n/a', '—', 'tbd', '?', 'n/k']);
@@ -145,8 +145,10 @@ function parseLine(line, ctx) {
     const isVoid = name.startsWith('ZZTEST ') || flagVoid(ctx, 'BRIGHTDESK', f.stage);
     if (isVoid) name = name.slice(7);
     const iso = country(f.country);
-    const dm = f.dob.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-    const dob = dm && f.dob !== '00/00/0000' ? ymd(dm[3], dm[1], dm[2]) : null;
+    const dm = f.dob.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/), dw = f.dob.match(/^(\d{1,2}) ([A-Z][a-z]{2}) (\d{4})$/);
+    const bdMonthFirst = (ctx.bdOrder === 'mdy') !== (AB === 'bd-flipped');
+    const dob = dm && f.dob !== '00/00/0000' ? (bdMonthFirst ? ymd(dm[3], dm[1], dm[2]) : ymd(dm[3], dm[2], dm[1]))
+      : dw ? ymd(dw[3], MONTH[dw[2].toLowerCase()], dw[1]) : null;
     let amount = null;
     const b = f.balance.trim();
     if (!MISSING.has(b.toLowerCase())) {
@@ -295,8 +297,76 @@ export const ABLATIONS = ['atlas-cutoff', 'atlas-month-first', 'era-unreadable',
   // v2 traps
   'lenient-names', 'keyword-voids', 'country-from-phone', 'pairs-multiply',
   // v3 per-task prose (difficulty >= 3); 'notes-defaults' is a program that never reads the per-task notes
-  'vendex-flipped', 'atlas-flipped', 'flags-flipped', 'unknown-flags-live', 'mirror-ignored', 'notes-defaults'];
+  'vendex-flipped', 'atlas-flipped', 'bd-flipped', 'flags-flipped', 'unknown-flags-live', 'mirror-ignored', 'perspective-ignored', 'notes-defaults'];
 const KEYWORD_VOID = /ZZTEST|DO NOT MIGRATE|SAMPLE|sandbox|withdrawn/i;
+
+// ---------------------------------------------------------------------------------------
+// Per-task notes (difficulty >= 3): date orders, ATLAS cutoff, extra status values, re-stamped mirror.
+const reEsc = x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const TEAM_ORDER = new Map(Object.entries(P.TEAM_CITIES).flatMap(([order, cities]) => cities.map(c => [c, order])));
+// Status-value sentences: regexes derived from the paraphrase pool with the shown value as a capture group.
+const SHOW_RE = { BRIGHTDESK: 'stage=(\\S+?)', LEDGR: 'Status "([^"]+)"', ATLAS: '":: ([^"]+)"', KOBO: '"flag: ([^"]+)"', VERITAS: '"env":"([^"]+)"' };
+const FLAG_RES = Object.fromEntries(Object.entries(SHOW_RE).map(([sys, show]) => [sys, ['live', 'void'].flatMap(pol =>
+  FLAG_NOTE[pol].map(tpl => [pol, new RegExp(reEsc(tpl('\u0000', FLAG_FORM[sys])).replace('\u0000', show))]))]));
+function dateOrderOfExample(written, meaning) { // "06/05/2021" + "June 5, 2021" | "6 May 2021" -> 'mdy' | 'dmy'
+  const [a] = written.split('/').map(Number);
+  let m = meaning.match(/^([A-Za-z]+) (\d{1,2}), \d{4}$/);
+  if (m) return MONTH[m[1].toLowerCase()] === a ? 'mdy' : 'dmy';
+  m = meaning.match(/^(\d{1,2}) ([A-Za-z]+) \d{4}$/);
+  if (m) return Number(m[1]) === a ? 'dmy' : 'mdy';
+  throw new Error(`example? ${meaning}`);
+}
+export function parseNotes(notes) {
+  const para = sys => notes.split('\n').find(l => l.startsWith(`${sys}.`)) ?? '';
+  const out = { atlasOrder: 'dmy', atlasCutoff: null, vendexOrder: 'mdy', bdOrder: 'mdy', flags: {}, mirror: null, persp: {} };
+  const orderOf = sys => ({ LEDGR: 'dmy', BRIGHTDESK: out.bdOrder, ATLAS: out.atlasOrder }[sys]);
+  let m;
+  // BRIGHTDESK (difficulty 1-2 wording: "runs in US locale, so birth dates are month/day/year")
+  const B = para('BRIGHTDESK');
+  if (/runs in UK locale: numeric birth dates are day\/month\/year|Numeric birth dates are DD\/MM\/YYYY|does not keep its vendor's American defaults|does not use the American order/.test(B)) out.bdOrder = 'dmy';
+  else if ((m = B.match(/For example, dob=(\d\d\/\d\d)\/\d{4} is (\d{1,2} [A-Za-z]+ \d{4})\./))) out.bdOrder = dateOrderOfExample(m[1], m[2]);
+  else if ((m = B.match(/A customer with dob=(\d\d)\/\d\d\/\d{4} was born in ([A-Za-z]+)\./))) out.bdOrder = MONTH[m[2].toLowerCase()] === Number(m[1]) ? 'mdy' : 'dmy';
+  else if (!/runs in US locale, so (?:numeric )?birth dates are month\/day\/year|Numeric birth dates are MM\/DD\/YYYY|kept its vendor's American defaults|does not use the British order/.test(B) && B) throw new Error('BRIGHTDESK order not found');
+  // ATLAS
+  const A = para('ATLAS');
+  if (/are day\/month\/year, not|not month-first: the day comes first|Unlike the US installation|as DD\/MM\/YYYY, never|configured in UK locale: birth dates are day\/month\/year/.test(A)) out.atlasOrder = 'dmy';
+  else if (/are month\/day\/year, not|not day-first: the month comes first|Unlike the UK installation|as MM\/DD\/YYYY, never/.test(A)) out.atlasOrder = 'mdy';
+  else if ((m = A.match(/an ATLAS birth date written (\d\d\/\d\d)\/\d{4} is (\d{1,2} [A-Za-z]+ \d{4})\./))) out.atlasOrder = dateOrderOfExample(m[1], m[2]);
+  else if ((m = A.match(/An ATLAS row "born (\d\d)\/\d\d\/\d{4}" belongs to someone born in ([A-Za-z]+)\./))) out.atlasOrder = MONTH[m[2].toLowerCase()] === Number(m[1]) ? 'mdy' : 'dmy';
+  else if ((m = A.match(/the country where its servers stand, (.+?)\. /))) out.atlasOrder = m[1] === 'the United States' ? 'mdy' : 'dmy';
+  else if ((m = A.match(/Numeric birth dates in ATLAS use the same order as (\w+)/))) out.atlasOrder = orderOf(m[1]);
+  else if (A) throw new Error('ATLAS order not found');
+  m = A.match(/On (\d{1,2} [A-Z][a-z]+ \d{4}), ATLAS moved/) ?? A.match(/migration to a new vendor on (\d{1,2} [A-Z][a-z]+ \d{4})/)
+    ?? A.match(/the date that matters is (\d{1,2} [A-Z][a-z]+ \d{4})/);
+  if (m) out.atlasCutoff = dayOf(longDate(m[1]));
+  // VENDEX
+  const V = para('VENDEX');
+  if (V) {
+    if (/written by a US-based procurement team|follow the American convention, month\/day\/year|Numeric dates are MM\/DD\/YYYY|first number is the month|never adopted the day-first habit/.test(V)) out.vendexOrder = 'mdy';
+    else if (/follow the European convention, day\/month\/year|Numeric dates are DD\/MM\/YYYY|first number is the day|never adopted the month-first habit/.test(V)) out.vendexOrder = 'dmy';
+    else if ((m = V.match(/A numeric date such as (\d\d\/\d\d)\/2021 means (.+?)\. /))) out.vendexOrder = dateOrderOfExample(m[1], m[2]);
+    else if ((m = V.match(/Numeric dates use the same order as (\w+)\./))) out.vendexOrder = orderOf(m[1]);
+    else if ((m = V.match(/moved from .+? to (.+?) in 2015/) ?? V.match(/works from (.+?) and writes numeric dates/))) out.vendexOrder = TEAM_ORDER.get(m[1]);
+    else out.vendexOrder = null;
+    if (!out.vendexOrder) throw new Error('VENDEX order not found');
+  }
+  for (const [sys, res] of Object.entries(FLAG_RES)) {
+    const text = para(sys);
+    for (const [pol, re] of res) { const f = text.match(re); if (f) (out.flags[sys] ||= {})[f[1]] = pol; }
+  }
+  for (const sys of ['BRIGHTDESK', 'LEDGR', 'KOBO', 'VERITAS']) {
+    if (/extract comes from a read-only mirror|Do not trust the \S+ dates of|shows when the nightly copy job last rewrote|the migration overwrote|re-imported the whole table/.test(para(sys))) out.mirror = sys;
+  }
+  for (const [sys, pols] of Object.entries(PERSP_NOTE)) {
+    for (const [pol, texts] of Object.entries(pols)) if (texts.some(t => para(sys).includes(t))) out.persp[sys] = pol;
+  }
+  return out;
+}
+function flagVoid(ctx, sys, value) {
+  const pol = ctx.flags?.[sys]?.[value];
+  if (!pol || AB === 'unknown-flags-live' || AB === 'notes-defaults') return false;
+  return (pol === 'void') !== (AB === 'flags-flipped');
+}
 const CC_ISO = new Map(Object.entries(P.COUNTRIES).reverse().map(([iso, c]) => [c.cc, iso])); // '1' -> US
 const fold = s => P.foldStrip(s);
 const LINKS = {
@@ -320,11 +390,15 @@ export function solveText(task, { ablate = null } = {}) {
   AB = ablate;
   try {
     const { export: exp, source_notes: notes, spec } = task.inputs;
-    const atlasNote = notes.split('\n').find(l => l.startsWith('ATLAS.')) ?? '';
-    const cm = atlasNote.match(/(\d{1,2} [A-Z][a-z]+ \d{4})/);
-    const ctx = { atlasCutoff: cm ? dayOf(longDate(cm[1])) : null };
+    const ctx = parseNotes(notes);
+    if (ablate === 'notes-defaults') Object.assign(ctx, { atlasOrder: 'dmy', vendexOrder: 'mdy', bdOrder: 'mdy', mirror: null });
+    VX_ORDER = ctx.vendexOrder;
     let rows = exp.split('\n').filter(Boolean).map(line => {
       const row = parseLine(line, ctx);
+      row.rank = ctx.mirror && ablate !== 'mirror-ignored' && line.startsWith(ctx.mirror) ? 1 : 0;
+      const sys = line.match(/^[A-Za-z]+/)[0].toUpperCase();
+      const pay = ctx.persp[sys] === 'pay' && ablate !== 'perspective-ignored' && ablate !== 'notes-defaults';
+      if (pay && row.amount) row.amount = { ...row.amount, minor: -row.amount.minor };
       if (ablate === 'keyword-voids' && KEYWORD_VOID.test(line)) row.void = true;
       if (ablate === 'country-from-phone' && row.phone) row.country = CC_ISO.get(CCS.find(cc => row.phone.slice(1).startsWith(cc)));
       return row;
@@ -361,5 +435,5 @@ export function solveText(task, { ablate = null } = {}) {
       }
     }
     return out;
-  } finally { AB = null; }
+  } finally { AB = null; VX_ORDER = 'mdy'; }
 }

@@ -18,7 +18,11 @@ const ALL_FORMATS = ['mdtable', 'csv', 'prose', 'grouped', 'reader', 'semicolon'
 // 3.0.0 (audit 2026-10-07): at d3+ every exclusion reported only in a later message is silent (reads
 // normally), some non-silent exclusions are only mildly distorted (`mild`), and kept deviant wells reach
 // the same size of deviation (`devRange`), so no residual threshold separates excluded from kept wells.
-const HARD = { lateSilent: 1, mild: 0.5, devRange: [0.22, 0.6] }, EASY = { lateSilent: 0, mild: 0, devRange: [0.22, 0.3] };
+// Late facts may come from a colleague and count only once the author confirms them (`colleague`); a
+// colleague's report that the author denies keeps the well (`lateDenied`); late bubble reports may be
+// given as clock times to compare with the row's read window (`lateTimed`).
+const HARD = { lateSilent: 1, mild: 0.6, devRange: [0.22, 0.6], colleague: 0.5, lateDenied: 1, lateTimed: 0.5 },
+  EASY = { lateSilent: 0, mild: 0, devRange: [0.22, 0.3], colleague: 0, lateDenied: 0, lateTimed: 0 };
 export const KNOBS = {
   1: { ...EASY, herrings: 0, withdrawn: 0, rowFlag: 0, timed: 0, unitRef: 0, silent: [0, 0], late: 0, lateDecoys: 0, misattributed: 0, tricky: 0, deviant: 1, claims: ['swap'], viaClaim: 0, nBase: 2, nInhib: 0, nConc: 6, reps: [2, 2], cv: 0.025, techDocs: 2, formats: ALL_FORMATS.slice(0, 2), outliers: [1, 2], decoys: [1, 2],
     decoyKinds: ['bubble-cleared', 'low'], rereads: [0, 0], corrections: ['swap'], pilot: false, chat: false, injections: 0, tempRule: false,
@@ -26,14 +30,14 @@ export const KNOBS = {
   2: { ...EASY, herrings: 0, withdrawn: 0, rowFlag: 0, timed: 0, unitRef: 0, silent: [0, 0], late: 0, lateDecoys: 0, misattributed: 0, tricky: 0.3, deviant: 1, claims: ['units'], viaClaim: 0, nBase: 3, nInhib: 0, nConc: 7, reps: [3, 3], cv: 0.03, techDocs: 3, formats: ALL_FORMATS.slice(0, 3), outliers: [2, 3], decoys: [2, 3],
     decoyKinds: ['bubble-cleared', 'low', 'edge', 'looks', 'neg-bubble'], rereads: [0, 0], corrections: ['units'], pilot: false, chat: false, injections: 0, tempRule: false,
     absorbance: 'none', concUnits: ['uM', 'mM'], rateUnits: ['uM/s', 'uM/min', 'nM/s'], numStyles: ['plain', 'e'], aliasStyles: ['id', 'phT', 'TpH'], unitPlacement: ['header'], filler: [2, 4], blanks: 0.2, rawExport: null },
-  3: { ...HARD, herrings: 1, withdrawn: 1, rowFlag: 1, timed: 0.7, unitRef: 1, silent: [1, 1], late: 1, lateDecoys: 1, misattributed: 1, tricky: 0.5, deviant: 1, claims: ['reassign'], viaClaim: 0.5, nBase: 5, nInhib: 0, nConc: 10, reps: [3, 4], cv: 0.035, techDocs: 5, formats: ALL_FORMATS.slice(0, 4), outliers: [5, 6], decoys: [3, 4],
+  3: { ...HARD, herrings: 1, withdrawn: 1, rowFlag: 1, timed: 0.7, unitRef: 1, silent: [1, 1], late: 2, lateDecoys: 2, misattributed: 1, tricky: 0.5, deviant: 2, claims: ['reassign'], viaClaim: 0.5, nBase: 5, nInhib: 0, nConc: 10, reps: [3, 4], cv: 0.035, techDocs: 5, formats: ALL_FORMATS.slice(0, 4), outliers: [7, 8], decoys: [3, 4],
     decoyKinds: ['bubble-cleared', 'low', 'edge', 'looks', 'bubble-after', 'neg-bubble', 'neg-sat', 'neg-pipette'], rereads: [0, 0], corrections: ['reassign', 'swap', 'units'], pilot: true, chat: true, injections: 0, tempRule: false,
     absorbance: 'none', concUnits: ['uM', 'mM', 'nM'], rateUnits: ['uM/s', 'uM/min', 'nM/s', 'nM/min'], numStyles: ['plain', 'e', 'E'], aliasStyles: ['phT', 'TpH', 'id'], unitPlacement: ['header', 'preamble'], filler: [7, 11], blanks: 0.3, rawExport: { series: 3, typos: 1 } },
-  4: { ...HARD, herrings: 1, withdrawn: 1, rowFlag: 1, timed: 0.7, unitRef: 1, silent: [1, 2], late: 1, lateDecoys: 1, misattributed: 1, tricky: 0.5, deviant: 2, claims: ['reassign', 'swap'], viaClaim: 0.5, nBase: 5, nInhib: 2, nConc: 9, reps: [3, 4], cv: 0.04, techDocs: 6, formats: ALL_FORMATS.slice(0, 5), outliers: [6, 8], decoys: [5, 6],
+  4: { ...HARD, herrings: 1, withdrawn: 1, rowFlag: 2, timed: 0.7, unitRef: 1, silent: [1, 2], late: 2, lateDecoys: 2, misattributed: 1, tricky: 0.5, deviant: 2, claims: ['reassign', 'swap'], viaClaim: 0.5, nBase: 5, nInhib: 2, nConc: 9, reps: [3, 4], cv: 0.04, techDocs: 6, formats: ALL_FORMATS.slice(0, 5), outliers: [8, 9], decoys: [5, 6],
     decoyKinds: ['bubble-cleared', 'low', 'edge', 'looks', 'bubble-after', 'temp-minor', 'recheck', 'neg-bubble', 'neg-sat', 'neg-pipette'], rereads: [1, 2], corrections: ['reassign', 'swap', 'units'], pilot: true, chat: true, injections: 2, tempRule: true,
     absorbance: 'factor', concUnits: ['uM', 'mM', 'nM'], rateUnits: ['uM/s', 'uM/min', 'nM/s', 'nM/min', 'mM/min'], numStyles: ['plain', 'e', 'E', 'x10'], aliasStyles: ['phT', 'TpH', 'id'], unitPlacement: ['header', 'preamble'], filler: [6, 10], blanks: 0.35, rawExport: { series: 4, typos: 1 } },
-  5: { ...HARD, herrings: 1, withdrawn: 1, rowFlag: 1, timed: 0.7, unitRef: 1, silent: [2, 2], late: 2, lateDecoys: 1, misattributed: 1, tricky: 0.6, deviant: 2, claims: ['reassign', 'units', 'swap'], viaClaim: 0.5, nBase: 5, nInhib: 3, nConc: 10, reps: [3, 4], cv: 0.04, techDocs: 7, formats: ALL_FORMATS, outliers: [8, 11], decoys: [7, 9],
-    decoyKinds: ['bubble-cleared', 'low', 'edge', 'looks', 'bubble-after', 'temp-minor', 'recheck', 'neg-bubble', 'neg-sat', 'neg-pipette'], rereads: [2, 3], corrections: ['reassign', 'omitted-inhibitor', 'swap', 'units', 'retracted'], pilot: true, chat: true, injections: 3, tempRule: true,
+  5: { ...HARD, herrings: 1, withdrawn: 1, rowFlag: 2, timed: 0.7, unitRef: 1, silent: [2, 2], late: 2, lateDecoys: 2, misattributed: 1, tricky: 0.6, deviant: 2, claims: ['reassign', 'units', 'swap'], viaClaim: 0.5, nBase: 5, nInhib: 3, nConc: 10, reps: [3, 4], cv: 0.04, techDocs: 7, formats: ALL_FORMATS, outliers: [9, 11], decoys: [7, 9],
+    decoyKinds: ['bubble-cleared', 'low', 'edge', 'looks', 'bubble-after', 'temp-minor', 'recheck', 'neg-bubble', 'neg-sat', 'neg-pipette'], rereads: [2, 3], corrections: ['omitted-inhibitor', 'reassign', 'swap', 'units', 'retracted'], pilot: true, chat: true, injections: 3, tempRule: true,
     absorbance: 'epsilon', concUnits: ['uM', 'mM', 'nM'], rateUnits: ['uM/s', 'uM/min', 'nM/s', 'nM/min', 'mM/min'], numStyles: ['plain', 'e', 'E', 'x10'], aliasStyles: ['phT', 'TpH', 'kelvin', 'bench', 'id'], unitPlacement: ['header', 'preamble'], filler: [8, 12], blanks: 0.4, rawExport: { series: 5, typos: 2 }, superseded: true },
 };
 
@@ -281,6 +285,12 @@ export function buildWorld({ seed, split, difficulty }) {
     const w = sr.pick(wells.filter(x => x.status === 'none'));
     w.status = 'decoy'; w.kind = 'late-cleared';
   }
+  for (let i = 0; i < k.lateDenied; i++) {
+    const w = sr.pick(wells.filter(x => x.status === 'none'));
+    w.status = 'decoy'; w.kind = 'late-denied'; w.reason = sr.pick(['bubble', 'pipette']);
+  }
+  for (const w of wells) if (w.late === 'fact' && sr.chance(k.colleague)) w.via = 'colleague';
+  for (const w of wells) if (((w.late === 'fact' && w.reason === 'bubble') || w.kind === 'late-cleared') && SHOWS_WINDOW.includes(docOf[w.series].format) && sr.chance(k.lateTimed)) w.lateTimed = true;
   const nRe = sr.int(k.rereads[0], k.rereads[1]);
   for (let i = 0; i < nRe; i++) {
     const free = wells.filter(w => w.status === 'none' && w.idx >= 2);
@@ -354,6 +364,8 @@ export function buildWorld({ seed, split, difficulty }) {
   const usedSeries = new Set();
   const fitCond = (c, pts) => fitMM(pts, { fixedV: c.parentId ? byId[c.parentId].refFit.vmax : null });
   const condClean = cid => cleanPoints(wells.filter(w => w.condId === cid));
+  const labCount = {}; // plate rows per label as they stand (a second relabel must see the first one)
+  for (const s of series) labCount[s.labelCondId] = (labCount[s.labelCondId] ?? 0) + 1;
   for (const type of k.corrections) {
     if (type === 'reassign' || type === 'omitted-inhibitor') {
       const cands = [];
@@ -365,7 +377,7 @@ export function buildWorld({ seed, split, difficulty }) {
         for (const Y of pr.shuffle(targets)) cands.push([s, Y]);
       }
       let chosen = null, loadBearing = false;
-      const countsKept = ([s, Y]) => byId[s.condId].reps === Y.reps + 1;
+      const countsKept = ([s, Y]) => labCount[s.labelCondId] === labCount[Y.id] + 1;
       for (const [s, Y] of [...cands.filter(countsKept), ...cands.filter(x => !countsKept(x))]) {
         const moved = cleanPoints(s.wells.map(id => wellById[id]));
         if (fails(fitCond(Y, [...condClean(Y.id), ...moved]), Y)) { chosen = [s, Y]; loadBearing = true; break; }
@@ -373,9 +385,11 @@ export function buildWorld({ seed, split, difficulty }) {
       if (!chosen && cands.length) chosen = cands[0];
       if (!chosen) continue;
       const [s, Y] = chosen;
+      const kept = countsKept([s, Y]);
+      labCount[s.labelCondId]--; labCount[Y.id]++;
       s.labelCondId = Y.id; usedSeries.add(s.key);
       const via = type === 'reassign' && pr.chance(k.viaClaim) ? 'claim' : 'direct';
-      traps.push({ type, series: s.key, from: Y.id, to: s.condId, first: s.wells[0], last: s.wells[s.wells.length - 1], n: s.wells.length, loadBearing, via, countsKept: countsKept([s, Y]) });
+      traps.push({ type, series: s.key, from: Y.id, to: s.condId, first: s.wells[0], last: s.wells[s.wells.length - 1], n: s.wells.length, loadBearing, via, countsKept: kept });
     } else if (type === 'swap' || type === 'retracted') {
       let chosen = null, fallback = null, loadBearing = false;
       for (const s of pr.shuffle(series)) {

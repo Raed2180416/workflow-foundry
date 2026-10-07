@@ -61,7 +61,7 @@ export const OUTLIER_NOTES = {
   pipette: {
     variants: [
       { text: [r => r.pick(['double enzyme addition (added the aliquot twice)', 'enzyme dispensed twice by mistake', 'two enzyme aliquots went in, not one', 'enzyme went in twice (noticed it when counting tips)']),
-        r => r.pick(['nothing spilled, but the enzyme went in twice here', 'no tip problem; I simply added the enzyme twice to this well'])], factors: [[1.8, 2.1]] },
+        r => r.pick(['nothing spilled, but the enzyme went in twice here', 'no tip problem; I simply added the enzyme twice to this well', 'the tip count shows one tip too many here: two enzyme aliquots'])], factors: [[1.8, 2.1]] },
       { text: [r => r.pick(['missed the substrate on first pass, added it late', 'substrate addition forgotten, topped up about 2 min late', 'substrate went in late (timer had already started)']),
         r => r.pick(['enzyme fine; the substrate went in about two minutes late', 'not a missed well after all: the substrate was added, but late'])], factors: [[0.35, 0.6]] },
       { text: [r => r.pick(['spilled roughly 20 uL while moving the plate', 'part of the well volume spilled during the transfer', 'lost some volume from this well when the plate tipped']),
@@ -75,22 +75,29 @@ export const OUTLIER_NOTES = {
 };
 // Short phrases used in late messages (chat/addenda) for an excluded well, keyed by reason.
 export const LATE_OUTLIER = {
-  bubble: r => r.pick([`there was ${aB(r)} in the well ${DURING(r)}`, `it read with ${aB(r)} in it (I could not get it out in time)`, `${aB(r)} sat in that well ${DURING(r)}`, `no bubble at loading, but one appeared during the read and stayed until the end`]),
-  pipette: r => r.pick(['that well got two enzyme aliquots by mistake', 'I spilled part of that well while moving the plate', 'the substrate went into that well about 2 min late', 'my tip came off while dispensing enzyme into that well', 'not a spill: the enzyme went into that well twice']),
+  bubble: r => r.pick([`there was ${aB(r)} in the well ${DURING(r)}`, `it read with ${aB(r)} in it (I could not get it out in time)`, `${aB(r)} sat in that well ${DURING(r)}`, `no bubble at loading, but one appeared during the read and stayed until the end`,
+    'I tapped the plate before the read, but the bubble came back and stayed for the whole read', 'it was not gone by the time the read started; the bubble stayed until the end']),
+  pipette: r => r.pick(['that well got two enzyme aliquots by mistake', 'I spilled part of that well while moving the plate', 'the substrate went into that well about 2 min late', 'my tip came off while dispensing enzyme into that well', 'not a spill: the enzyme went into that well twice', 'the tip count says two enzyme additions there, not one',
+    'not on time: the substrate went into that well about two minutes late']),
 };
 
+// What a colleague says they saw in someone else's well (it counts only if the author confirms it).
+export const COLLEAGUE_FACT = {
+  bubble: r => r.pick([`there was ${aB(r)} in it ${DURING(r)}`, `${aB(r)} sat in that well ${DURING(r)}`, `it was read with ${aB(r)} in it`]),
+  pipette: r => r.pick(['it got two enzyme aliquots', 'part of it spilled when the plate tipped', 'the substrate went in about 2 min late', 'the tip came off during the enzyme dispense']),
+};
 // Notes on wells the SOP keeps. Several reuse the vocabulary of the exclusion notes.
 export const DECOY_NOTES = {
   'bubble-cleared': r => r.pick([`${B(r)}, popped with a clean tip before the read`, `${B(r)} tapped out before reading`, `had ${aB(r)}; spun the plate 30 s and it was gone before the read`,
     `${B(r)} spotted at loading, removed with a needle before the read`, `${B(r)} at loading; cleared before the read started`, `popped ${aB(r)} here before the plate went in`,
-    `${B(r)} in this well at loading; it was gone before the read started`, `there was ${aB(r)} here, but I popped it before the read`]),
+    `${B(r)} in this well at loading; it was gone before the read started`, `there was ${aB(r)} here, but I popped it before the read`, `${B(r)} at loading, gone by the time the read began`]),
   'bubble-after': r => r.pick([`${B(r)}s appeared when I added the stop solution (after the read)`, `${B(r)} formed while sealing the plate after the read finished`,
-    `${B(r)}s formed during clean-up, after the read had finished (the well was clear during the read)`, `no bubble during the read; one appeared afterwards when I moved the plate`, `${B(r)} present at the end of the day, not during the read (the mid-read photo is clear)`]),
+    `${B(r)}s formed during clean-up, after the read had finished (the well was clear during the read)`, `no bubble during the read; one appeared afterwards when I moved the plate`, `${B(r)} present at the end of the day, not during the read (the mid-read photo is clear)`, `${B(r)} formed once the read was over`]),
   'neg-bubble': r => r.pick(['no bubble this time (unlike the last plate)', 'checked for bubbles before the read: none', 'bubble-free, double-checked under the lamp', 'the "bubble" at loading was a speck on the seal, not in the well',
     'bubble? none in this well during the read', 'I looked for a bubble during the read and saw none']),
   'neg-sat': r => r.pick(['close to the top of the range but no SAT flag', 'not saturated (raw trace checked)', 'expected an OVR here after the last plate, but the reader did not flag it', 'no OVR this time after the gain change', 'thought this might saturate; it did not (no flag)', 'SAT? no, the reader log is clean for this well', 'high signal, but not over range: no flag in the reader log']),
   'neg-pipette': r => r.pick(['thought I had double-dispensed enzyme here, but the tip count says no', 'substrate added on time (checked the timer log)', 'spill was on the bench next to the plate, not in this well', 'worried about the tip here, but it stayed on; volume fine', 'no spill, no double addition, tip stayed on',
-    'I had noted a possible late substrate addition here; the timer log shows it went in on time']),
+    'I had noted a possible late substrate addition here; the timer log shows it went in on time', 'possible double enzyme addition here? checked the tip box: single addition']),
   low: r => r.pick(['LOW', 'low-signal flag', 'reader: LOW (close to detection limit)', 'LOW flag from the reader']),
   edge: r => r.pick(['edge well', 'outer-row well (evaporation risk noted)', 'corner well', 'edge position, sealed well']),
   looks: r => r.pick(['value looks a bit high to me?', 'seems low; maybe exclude?', 'odd-looking number, double-checked the pipette: fine', 'higher than I expected, nothing wrong with the well',
@@ -99,7 +106,9 @@ export const DECOY_NOTES = {
 };
 // Late messages that mention a kept well with exclusion vocabulary.
 export const LATE_DECOY = r => r.pick([`there was ${aB(r)} at loading, but I tapped it out before the read`, `${aB(r)} formed only after the read (when I added the stop mix)`, `I wondered about a double enzyme addition there, but the tip count is right`,
-  'it looked like a bubble, but it was on the seal, not in the well', 'no double enzyme there after all; the tip count is right']);
+  'it looked like a bubble, but it was on the seal, not in the well', 'no double enzyme there after all; the tip count is right',
+  `the ${B(r)} I saw there at loading had disappeared when the read began`, `${aB(r)} did form there, but only once the read was over`,
+  'the double addition I worried about happened on the practice plate, not in that well']);
 
 export const FILLER = [
   ({ r, pH, T }) => `Made ${r.pick([250, 500, 1000])} mL of ${r.pick([25, 50, 100])} mM ${r.pick(['HEPES', 'MOPS', 'Tris', 'phosphate', 'MES'])} and adjusted to pH ${pH} at ${T} °C.`,

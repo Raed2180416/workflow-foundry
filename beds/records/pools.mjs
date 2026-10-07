@@ -195,7 +195,9 @@ export const COUNTRIES = {
   NO: { en: ['Norway', 'Norge', 'NOR'], de: ['Norwegen'], typo: ['Norwya'], prose: ['Norway'], demonym: 'Norwegian',
     cc: '47', trunk: '', currency: 'NOK' },
 };
-// Cities used by VENDEX to imply a country ("based in Lyon"). Large, unambiguous cities only.
+// Cities used by VENDEX to imply a country ("based in Lyon"). Large, unambiguous cities only. The first
+// block is the v2 pool (difficulty <= 2 never renders VENDEX); EXTRA_CITIES widens the pool from
+// difficulty 3 so that a lookup table no longer fits a short script (world knowledge, not a closed list).
 export const CITIES = {
   US: ['Chicago', 'Houston', 'Denver', 'Seattle', 'Atlanta', 'Boston', 'Phoenix', 'Minneapolis', 'Pittsburgh'],
   CA: ['Toronto', 'Vancouver', 'Montreal', 'Calgary', 'Ottawa', 'Winnipeg', 'Edmonton'],
@@ -209,6 +211,38 @@ export const CITIES = {
   JP: ['Osaka', 'Kyoto', 'Nagoya', 'Sapporo', 'Yokohama', 'Fukuoka', 'Kobe'], SE: ['Stockholm', 'Gothenburg', 'Malmö', 'Uppsala'],
   DK: ['Copenhagen', 'Aarhus', 'Odense', 'Aalborg'], NO: ['Oslo', 'Trondheim', 'Stavanger', 'Tromsø'],
 };
+export const EXTRA_CITIES = {
+  US: ['San Antonio', 'San Diego', 'Jacksonville', 'Fort Worth', 'El Paso', 'Oklahoma City', 'Las Vegas', 'Fresno', 'Colorado Springs', 'Tulsa',
+    'Wichita', 'New Orleans', 'Cincinnati', 'St. Louis', 'Anchorage', 'Honolulu', 'Spokane', 'Boise'],
+  CA: ['Quebec City', 'Saskatoon', 'Regina', 'Kitchener', 'Mississauga', 'Laval', 'Gatineau', 'Kelowna', 'Moncton', 'Sherbrooke', 'Brampton',
+    'Markham', 'Oshawa', 'Thunder Bay'],
+  GB: ['Newcastle upon Tyne', 'Cardiff', 'Belfast', 'Southampton', 'Leicester', 'Coventry', 'Brighton', 'Norwich', 'Exeter', 'Swansea',
+    'Dundee', 'Bournemouth', 'Sunderland', 'Wolverhampton', 'Middlesbrough'],
+  IE: ['Kilkenny', 'Drogheda', 'Dundalk', 'Sligo', 'Athlone', 'Wexford', 'Killarney', 'Tralee', 'Letterkenny', 'Ennis'],
+  AU: ['Darwin', 'Gold Coast', 'Wollongong', 'Geelong', 'Townsville', 'Cairns', 'Toowoomba', 'Ballarat', 'Bendigo', 'Launceston', 'Mackay',
+    'Rockhampton'],
+  DE: ['Bremen', 'Nuremberg', 'Essen', 'Dortmund', 'Bonn', 'Mannheim', 'Karlsruhe', 'Wiesbaden', 'Münster', 'Augsburg', 'Freiburg', 'Kiel',
+    'Rostock', 'Heidelberg'],
+  AT: ['Klagenfurt', 'Villach', 'Wels', 'Sankt Pölten', 'Dornbirn', 'Steyr', 'Feldkirch', 'Bregenz', 'Leoben', 'Krems'],
+  CH: ['Bern', 'Winterthur', 'St. Gallen', 'Lugano', 'Biel', 'Thun', 'Fribourg', 'Schaffhausen', 'Chur', 'Neuchâtel', 'Sion'],
+  FR: ['Nice', 'Montpellier', 'Rennes', 'Reims', 'Le Havre', 'Grenoble', 'Dijon', 'Angers', 'Nîmes', 'Clermont-Ferrand', 'Brest', 'Tours',
+    'Limoges', 'Amiens', 'Perpignan', 'Metz'],
+  BE: ['Charleroi', 'Namur', 'Leuven', 'Mons', 'Mechelen', 'Aalst', 'Kortrijk', 'Hasselt', 'Ostend', 'Tournai'],
+  ES: ['Murcia', 'Palma', 'Alicante', 'Valladolid', 'Vigo', 'Gijón', 'Pamplona', 'San Sebastián', 'Santander', 'Cádiz', 'Oviedo', 'Tarragona',
+    'Almería', 'Logroño'],
+  MX: ['Juárez', 'Zapopan', 'Chihuahua', 'Aguascalientes', 'Hermosillo', 'Saltillo', 'Mexicali', 'Culiacán', 'Acapulco', 'Querétaro',
+    'Morelia', 'Toluca', 'Cancún', 'Veracruz', 'Oaxaca', 'Tampico'],
+  IT: ['Florence', 'Venice', 'Bari', 'Catania', 'Trieste', 'Padua', 'Brescia', 'Parma', 'Modena', 'Perugia', 'Livorno', 'Cagliari', 'Messina',
+    'Bergamo', 'Pisa'],
+  NL: ['The Hague', 'Tilburg', 'Almere', 'Breda', 'Nijmegen', 'Haarlem', 'Arnhem', 'Enschede', 'Apeldoorn', 'Zwolle', 'Maastricht', 'Leiden',
+    'Delft', 'Dordrecht'],
+  JP: ['Hiroshima', 'Sendai', 'Kawasaki', 'Chiba', 'Kitakyushu', 'Sakai', 'Niigata', 'Hamamatsu', 'Kumamoto', 'Okayama', 'Kagoshima', 'Nara',
+    'Kanazawa', 'Nagasaki'],
+  SE: ['Västerås', 'Örebro', 'Linköping', 'Helsingborg', 'Jönköping', 'Norrköping', 'Lund', 'Umeå', 'Gävle', 'Borås', 'Sundsvall', 'Luleå'],
+  DK: ['Esbjerg', 'Randers', 'Kolding', 'Horsens', 'Vejle', 'Roskilde', 'Herning', 'Silkeborg', 'Næstved', 'Fredericia'],
+  NO: ['Bergen', 'Drammen', 'Fredrikstad', 'Kristiansand', 'Sandnes', 'Ålesund', 'Bodø', 'Tønsberg', 'Haugesund', 'Lillehammer', 'Hamar'],
+};
+export const ALL_CITIES = Object.fromEntries(Object.keys(CITIES).map(iso => [iso, [...CITIES[iso], ...EXTRA_CITIES[iso]]]));
 // Where the VENDEX procurement team sits (difficulty >= 3). The notes may give only the city and say the
 // team "writes numeric dates the way people there do", so the date order follows from the city's
 // country: month first in the United States, day first in the others listed here (no Canadian or
@@ -217,9 +251,9 @@ export const TEAM_CITIES = {
   mdy: ['Chicago', 'Houston', 'Denver', 'Seattle', 'Atlanta', 'Boston', 'Phoenix', 'Minneapolis', 'Pittsburgh', 'Dallas', 'Detroit',
     'Portland, Oregon', 'Charlotte', 'Nashville', 'Columbus', 'Indianapolis', 'Baltimore', 'Cleveland', 'Tampa', 'Sacramento', 'Kansas City',
     'Raleigh', 'Milwaukee', 'Albuquerque', 'Salt Lake City', 'Omaha', 'Richmond, Virginia', 'Memphis', 'Louisville', 'Tucson'],
-  dmy: ['London', 'Birmingham', 'Glasgow', 'Cardiff', 'Belfast', 'Dublin', 'Cork', 'Sydney', 'Perth', 'Auckland', 'Wellington', 'Paris',
-    'Lyon', 'Madrid', 'Valencia', 'Rome', 'Milan', 'Berlin', 'Frankfurt', 'Amsterdam', 'Brussels', 'Vienna', 'Zurich', 'Copenhagen',
-    'Oslo', 'Stockholm', 'Lisbon', 'Prague', 'Warsaw', 'Athens'],
+  dmy: ['London', 'Leeds', 'Glasgow', 'Cardiff', 'Belfast', 'Dublin', 'Cork', 'Sydney', 'Adelaide', 'Auckland', 'Wellington', 'Paris',
+    'Lyon', 'Madrid', 'Seville', 'Rome', 'Milan', 'Berlin', 'Frankfurt', 'Amsterdam', 'Brussels', 'Vienna', 'Zurich', 'Copenhagen',
+    'Oslo', 'Stockholm', 'Lisbon', 'Prague', 'Warsaw', 'Helsinki'],
 };
 // Per-task extra status values (difficulty >= 3): which of them are void is stated only in the task's
 // source notes and changes from task to task.

@@ -33,7 +33,11 @@
           "transforms": []
         }
       },
-      "hidden": null
+      "hidden": {
+        "path": "hidden.test.mjs",
+        "sha256": "ec20096f8da9604bed801d150f76f5fd19627f96eb2224973828b59eedebf7fa",
+        "origin": "authored for this bed from the original module behaviour"
+      }
     },
     "context": {
       "modulePath": "src/context.mjs",
@@ -72,7 +76,11 @@
           "transforms": []
         }
       },
-      "hidden": null
+      "hidden": {
+        "path": "hidden.test.mjs",
+        "sha256": "de23c89e9d677ab95d1b5f0aeae2572e3ef5ffabad911d6bcfd0adad742ef80f",
+        "origin": "authored for this bed from the original module behaviour"
+      }
     },
     "schema-subset": {
       "modulePath": "src/schema-subset.mjs",
@@ -111,7 +119,11 @@
           "transforms": []
         }
       },
-      "hidden": null
+      "hidden": {
+        "path": "hidden.test.mjs",
+        "sha256": "7013c5c6c01795cf5d81b8ff3a73e3ff0c9672d15b9e807725b6619696fc951b",
+        "origin": "authored for this bed from the original module behaviour"
+      }
     },
     "journal": {
       "modulePath": "src/journal.mjs",
@@ -145,7 +157,11 @@
           "transforms": []
         }
       },
-      "hidden": null
+      "hidden": {
+        "path": "hidden.test.mjs",
+        "sha256": "9a75323b3ce5bd385ec138f8958bcb364ee70b58a8cfa0b5d521cfb4f11e75db",
+        "origin": "authored for this bed from the original module behaviour"
+      }
     },
     "stats": {
       "modulePath": "experiments/lib/stats.mjs",
@@ -176,7 +192,11 @@
           "transforms": []
         }
       },
-      "hidden": null
+      "hidden": {
+        "path": "hidden.test.mjs",
+        "sha256": "b6d389a1030839c20695d4d2709a3a6ef953c56ad7a13568d3f3e48184f959a7",
+        "origin": "authored for this bed from the original module behaviour"
+      }
     },
     "distill": {
       "modulePath": "experiments/lib/distill.mjs",
@@ -207,7 +227,11 @@
           "transforms": []
         }
       },
-      "hidden": null
+      "hidden": {
+        "path": "hidden.test.mjs",
+        "sha256": "b14f24964af3b3a8e94463696fa744bd66adbc76c6fe0c5a63cceeb0c04db04e",
+        "origin": "authored for this bed from the original module behaviour"
+      }
     }
   }
 }
