@@ -6,7 +6,7 @@
 //     record is dropped and counted; the build fails on any hit that reaches a file)
 //   wording exclusion: no held-out wording, exact or whitespace-normalised, outside its own slice
 import { FORBIDDEN_STATE_KEYS, findForbiddenKeys } from '../judges/kit.mjs';
-import { sentences, skeleton, skeletonText } from './hash.mjs';
+import { canonical, sentences, sha256, skeleton, skeletonText, tagged } from './hash.mjs';
 import { normalizeWs, questionOf, wordingPattern } from './render.mjs';
 
 export { FORBIDDEN_STATE_KEYS, findForbiddenKeys };
@@ -78,6 +78,8 @@ export class SpanRegistry {
   has(hash) { return this.#entries.has(hash); }
   entries() { return [...this.#entries.values()].flat(); }
   toJSON() { return { version: 1, entries: this.entries().sort((a, b) => a.hash < b.hash ? -1 : a.hash > b.hash ? 1 : 0) }; }
+  // Content digest (recorded in build manifests and build ids).
+  get digest() { return tagged(sha256(canonical(this.toJSON()))); }
   static fromJSON(obj) { if (obj?.version !== 1) throw new Error('unknown registry version'); return new SpanRegistry(obj.entries); }
 
   scanText(text, { names = [], markers = [] } = {}) {
@@ -108,11 +110,14 @@ export { skeletonText };
 // normalised, appears in a file of another slice or in training") that the instruction's question
 // matches, with any slot filling.
 export class WordingGuard {
-  #items;
+  #items; #digest;
   constructor(wordings = []) {
+    for (const w of wordings) if (!w || typeof w.port !== 'string' || typeof w.id !== 'string' || typeof w.slice !== 'string' || typeof w.text !== 'string' || !w.text.trim()) throw new Error('a held-out wording is {port, id, slice, text}');
     this.#items = wordings.map(w => ({ ...w, norm: normalizeWs(w.text), re: wordingPattern(w.text) }));
+    this.#digest = tagged(sha256(canonical(wordings.map(({ port, id, slice, text }) => ({ port, id, slice, text })).sort((a, b) => (`${a.port}/${a.slice}/${a.id}` < `${b.port}/${b.slice}/${b.id}` ? -1 : 1)))));
   }
   get size() { return this.#items.length; }
+  get digest() { return this.#digest; }
   forSlice(port, slice) { return this.#items.filter(w => w.port === port && w.slice === slice); }
   check(instructions, slice) {
     const q = normalizeWs(questionOf(instructions));

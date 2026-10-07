@@ -86,6 +86,18 @@ function checkCommon(id, c, errors, { ledger }) {
     catch (e) { err(`wording ${w} does not render within JudgmentPort limits: ${e.message}`); }
   }
   for (const [name, s] of Object.entries(c.slots ?? {})) for (const v of s.values ?? []) if (/[{}]/.test(v)) err(`slot ${name} value contains a brace`);
+  // A companion question (S1_present) is served in the same record as its own small contract.
+  if (c.companion) {
+    const cc = c.companion;
+    if (!new RegExp(`^${id}_[a-z]+$`).test(cc.id ?? '')) err(`companion id ${cc.id} must be ${id}_<word>`);
+    if (!nonEmpty(cc.wordings?.Q0)) err('companion needs a Q0 wording');
+    const names = Object.keys(cc.options ?? {});
+    if (names.length < LIMITS.minOptions || names.length > LIMITS.maxOptions || !Object.values(cc.options).every(nonEmpty)) err('companion needs 2-64 described options');
+    for (const w of Object.keys(cc.wordings ?? {})) {
+      if (slotNames(cc.wordings[w]).length) err(`companion wording ${w} may not use slots`);
+      try { renderQuestion({ id: cc.id, wordings: cc.wordings, options: cc.options, criteria: [] }, { wording: w }); } catch (e) { err(`companion wording ${w} does not render: ${e.message}`); }
+    }
+  }
 }
 
 export function validateSpec(spec) {

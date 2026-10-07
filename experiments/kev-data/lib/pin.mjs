@@ -128,7 +128,10 @@ export function freezeBeds(root, { outRoot = path.join(root, '.foundry', 'kev-da
   mkdirSync(frozenRoot(outRoot), { recursive: true });
   const tmp = `${dir}.tmp-${process.pid}`;
   rmSync(tmp, { recursive: true, force: true }); mkdirSync(tmp, { recursive: true });
-  const tar = git(root, ['archive', '--format=tar', info.commit, '--', ...pathspecs()], { encoding: 'buffer' });
+  // Only allow-listed paths that hold files at the pin (git archive refuses a pathspec that matches nothing).
+  const present = pathspecs().filter(a => info.files.some(f => f.path === a || f.path.startsWith(`${a}/`)));
+  if (!present.length) throw new Error(`FROZEN_EMPTY: no allow-listed bed files at ${info.commit}`);
+  const tar = git(root, ['archive', '--format=tar', info.commit, '--', ...present], { encoding: 'buffer' });
   execFileSync('tar', ['-x', '-f', '-', '-C', tmp], { input: tar, maxBuffer: 1 << 30 });
   verifyFrozen(tmp, info);
   writeFileSync(path.join(tmp, 'FROZEN.json'), JSON.stringify({ pin: info.pin, commit: info.commit, diffHash: diff.diffHash, clean: diff.clean,

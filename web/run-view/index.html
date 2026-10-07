@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<meta name="description" content="Read-only run inspector: watch a recorded Workflow Foundry run as a few simple nodes, and open any node to read its transcript.">
+<!--CSP-->
+<title>Foundry run view</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="run-view.css">
+</head>
+<body>
+<a class="skip-link" href="#graph">Skip to the run graph</a>
+<header class="bar">
+  <div class="brand"><span class="mark" aria-hidden="true">W</span><span>Run view <small>read-only inspector</small></span></div>
+  <div class="title">
+    <h1 id="title">No run loaded</h1>
+    <p id="subtitle" class="muted">Open a run exported by export-run.mjs.</p>
+  </div>
+  <div class="actions">
+    <label class="detail" for="detail"><span>Detail</span>
+      <input id="detail" type="range" min="0" max="2" step="1" value="1" aria-describedby="detail-help">
+      <output id="detail-label" for="detail">Normal</output>
+    </label>
+    <span id="detail-help" class="sr-only">Simple folds chains and wide fans into single nodes. Normal folds only chains and preparation steps. Raw shows every workflow node.</span>
+    <button id="open" type="button" class="btn">Open run JSON</button>
+    <input id="file" type="file" accept=".json,application/json" hidden>
+    <button id="motion" type="button" class="btn" aria-pressed="true">Motion on</button>
+    <button id="theme" type="button" class="btn">Light theme</button>
+  </div>
+</header>
+
+<section id="summary" class="summary" aria-label="Run summary" hidden></section>
+
+<div id="stage" class="stage">
+  <section class="graphpane" aria-label="Run graph">
+    <div id="empty" class="empty">
+      <h2>Open a recorded run</h2>
+      <p>Use <strong>Open run JSON</strong>, drop a file on this page, or load one with <code>?data=run.json</code> when this page is served over http.</p>
+      <p class="muted">Create the file with <code>node web/run-view/export-run.mjs --workspace DIR --out run.json</code>.</p>
+    </div>
+    <div id="graph" class="graph" role="group" aria-label="Workflow nodes, left to right in dependency order" hidden>
+      <svg id="edges" class="edges" aria-hidden="true" focusable="false"></svg>
+      <div id="cols" class="cols"></div>
+    </div>
+    <div id="legend" class="legend" aria-label="State legend" hidden></div>
+  </section>
+  <aside id="drawer" class="drawer" aria-label="Node transcript" hidden></aside>
+</div>
+
+<footer id="player" class="player" aria-label="Replay controls" hidden>
+  <div class="transport">
+    <button id="to-start" type="button" class="btn icon" aria-label="Back to start" title="Back to start">|&lt;</button>
+    <button id="prev-note" type="button" class="btn icon" aria-label="Previous notable moment" title="Previous notable moment ( [ )">&lt;&lt;</button>
+    <button id="step-back" type="button" class="btn icon" aria-label="Back one event" title="Back one event ( , )">&lt;</button>
+    <button id="play" type="button" class="btn primary" aria-label="Play">Play</button>
+    <button id="step" type="button" class="btn icon" aria-label="Forward one event" title="Forward one event ( . )">&gt;</button>
+    <button id="next-note" type="button" class="btn icon" aria-label="Next notable moment" title="Next notable moment ( ] )">&gt;&gt;</button>
+    <button id="to-end" type="button" class="btn icon" aria-label="Jump to end" title="Jump to end">&gt;|</button>
+  </div>
+  <div class="scrub">
+    <svg id="ticks" class="ticks" viewBox="0 0 1000 10" preserveAspectRatio="none" aria-hidden="true" focusable="false"></svg>
+    <input id="scrub" type="range" min="0" max="1000" step="1" value="0" aria-label="Replay position">
+  </div>
+  <div class="readout"><output id="clock" aria-live="off">00:00 / 00:00</output><span id="evcount" class="muted">0 / 0 events</span></div>
+  <label class="speed" for="speed"><span>Speed</span>
+    <select id="speed"><option value="0.5">0.5x</option><option value="1" selected>1x</option><option value="2">2x</option><option value="4">4x</option><option value="8">8x</option><option value="16">16x</option></select>
+  </label>
+  <label class="check" for="compress"><input id="compress" type="checkbox" checked><span>Shorten idle gaps, hold notable moments</span></label>
+</footer>
+<div id="live" class="sr-only" role="status" aria-live="polite"></div>
+<noscript><p class="empty">JavaScript is required to replay a run.</p></noscript>
+<script src="run-view.js"></script>
+</body>
+</html>

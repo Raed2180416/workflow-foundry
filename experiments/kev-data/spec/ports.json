@@ -3,7 +3,8 @@
   "program": "research/kev-20261007/JUDGE-PROGRAM.md (revision 2, 2026-10-07)",
   "frozenBy": "contracts-lib",
   "conventions": {
-    "wireForm": "one System One choice question per port, rendered by questionFromContract (src/judges/kit.mjs) -> toSystemOneQuestion (src/judgment.mjs); instructions = the filled wording (+ \"\\nCriteria:\\n- ...\" when criteria are non-empty); criteria object = {option: description}",
+    "wireForm": "one System One choice question per port, rendered by questionFromContract (experiments/kev-data/judges/kit.mjs) -> toSystemOneQuestion (src/judgment.mjs); instructions = the filled wording (+ \"\\nCriteria:\\n- ...\" when criteria are non-empty); criteria object = {option: description}",
+    "portKits": "Port kits (buildState(task, slots), questions(port, slots)) live in experiments/kev-data/judges/<bed>.mjs, built on experiments/kev-data/judges/kit.mjs, until the frozen C0 and P1 experiments finish (relocated from src/judges/ on 2026-10-07 22:50: a file added under src/ changes the frozen construction-kit hash); they move to src/judges/ afterwards with no interface change. State-key provenance below names the kit files at their current location.",
     "limits": {
       "options": [
         2,
@@ -151,11 +152,11 @@
         "keys": {
           "system": {
             "event": "the records task is received: the system name heads its paragraph in the task notes",
-            "source": "port kit src/judges/records.mjs from task.inputs notes"
+            "source": "port kit experiments/kev-data/judges/records.mjs from task.inputs notes"
           },
           "source_note": {
             "event": "the records task is received: system S's notes paragraph plus any paragraph it names by system",
-            "source": "port kit src/judges/records.mjs from the rendered notes (buildNotes output)"
+            "source": "port kit experiments/kev-data/judges/records.mjs from the rendered notes (buildNotes output)"
           }
         },
         "note": null
@@ -269,7 +270,7 @@
         "keys": {
           "system": {
             "event": "the records task is received: the system name heads its paragraph in the task notes",
-            "source": "port kit src/judges/records.mjs from task.inputs notes"
+            "source": "port kit experiments/kev-data/judges/records.mjs from task.inputs notes"
           },
           "marker": {
             "event": "the records task is received: the marker as displayed in the system's rows (FLAG_FORM display form)",
@@ -277,7 +278,7 @@
           },
           "source_note": {
             "event": "the records task is received: system S's notes paragraph plus any paragraph it names by system",
-            "source": "port kit src/judges/records.mjs from the rendered notes (buildNotes output)"
+            "source": "port kit experiments/kev-data/judges/records.mjs from the rendered notes (buildNotes output)"
           }
         },
         "note": null
@@ -376,11 +377,11 @@
         "keys": {
           "system": {
             "event": "the records task is received: the system name heads its paragraph in the task notes",
-            "source": "port kit src/judges/records.mjs from task.inputs notes"
+            "source": "port kit experiments/kev-data/judges/records.mjs from task.inputs notes"
           },
           "source_note": {
             "event": "the records task is received: system S's notes paragraph plus any paragraph it names by system",
-            "source": "port kit src/judges/records.mjs from the rendered notes (buildNotes output)"
+            "source": "port kit experiments/kev-data/judges/records.mjs from the rendered notes (buildNotes output)"
           }
         },
         "note": null
@@ -493,11 +494,11 @@
         "keys": {
           "system": {
             "event": "the records task is received: the system name heads its paragraph in the task notes",
-            "source": "port kit src/judges/records.mjs from task.inputs notes"
+            "source": "port kit experiments/kev-data/judges/records.mjs from task.inputs notes"
           },
           "source_note": {
             "event": "the records task is received: system S's notes paragraph plus any paragraph it names by system",
-            "source": "port kit src/judges/records.mjs from the rendered notes (buildNotes output)"
+            "source": "port kit experiments/kev-data/judges/records.mjs from the rendered notes (buildNotes output)"
           }
         },
         "note": null
@@ -617,7 +618,7 @@
         "keys": {
           "system": {
             "event": "the records task is received: the system name heads its paragraph in the task notes",
-            "source": "port kit src/judges/records.mjs from task.inputs notes"
+            "source": "port kit experiments/kev-data/judges/records.mjs from task.inputs notes"
           },
           "location_text": {
             "event": "the records task is received: the location field of one row as written",
@@ -724,7 +725,7 @@
         "keys": {
           "service": {
             "event": "the incident task is received: the service whose lines are read, as a per-state handle (svc-a, svc-b, ...) resolved by code through the task's alias table",
-            "source": "port kit src/judges/incident.mjs"
+            "source": "port kit experiments/kev-data/judges/incident.mjs"
           },
           "window": {
             "event": "the incident task is received: the time window [T, T+120 s] of the lines, as rendered timestamps",
@@ -938,7 +939,7 @@
         "keys": {
           "service": {
             "event": "the incident task is received: the service whose lines are read, as a per-state handle (svc-a, svc-b, ...) resolved by code through the task's alias table",
-            "source": "port kit src/judges/incident.mjs"
+            "source": "port kit experiments/kev-data/judges/incident.mjs"
           },
           "window": {
             "event": "the incident task is received: the time window [T, T+120 s] of the lines, as rendered timestamps",
@@ -1036,7 +1037,7 @@
         "keys": {
           "notice": {
             "event": "the synth task is received: the notice document as rendered",
-            "source": "port kit src/judges/synth.mjs from task.inputs.documents"
+            "source": "port kit experiments/kev-data/judges/synth.mjs from task.inputs.documents"
           },
           "notice.type": {
             "event": "rendered document type field",

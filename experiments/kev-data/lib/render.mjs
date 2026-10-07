@@ -32,6 +32,18 @@ export const uniformTarget = options => Object.fromEntries(options.map(o => [o, 
 // of one port (paraphrase-consistency records). Kev never shows the id to the model.
 export const questionId = (port, wordingId = null) => wordingId ? `${port}~${wordingId}` : port;
 export const portOfQuestionId = qid => String(qid).split('~')[0];
+// The contract a question id answers to: a port, or a port's companion question (S1_present: a
+// yes/no question asked in the same record instead of a "none" option, §1.0). A companion is served
+// as its own mini-contract (its own wordings and options, no criteria) and reported under its own id.
+export function questionContract(qid, contracts) {
+  const base = portOfQuestionId(qid);
+  if (contracts?.[base]) return { port: base, reportId: base, contract: contracts[base], companion: false };
+  const parent = Object.values(contracts ?? {}).find(c => c?.companion?.id === base);
+  if (!parent) return null;
+  const cc = parent.companion;
+  return { port: parent.id, reportId: base, companion: true,
+    contract: { id: cc.id, wordings: cc.wordings, options: cc.options, criteria: cc.criteria ?? [], unknowable: 'n/a', ledgerOnly: parent.ledgerOnly ?? false } };
+}
 
 // A regex that matches any filling of a wording template (slots match any non-empty text without
 // braces), with whitespace normalised. Used to check that an instruction was rendered from an

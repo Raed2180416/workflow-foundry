@@ -5,7 +5,7 @@ import { rng } from '../lib/rng.mjs';
 import { estimateTokens } from '../lib/canonical.mjs';
 import * as C from './catalog.mjs';
 
-export const VERSION = '4.0.0';
+export const VERSION = '4.1.0';
 export const WINDOW = 1800; // seconds of logs per task
 const MAX_ATTEMPTS = 64; // from this attempt on the soft preferences (Jaccard, fallback callers) are dropped;
 // structural validity (topology size, eligible root candidates) is never relaxed
@@ -772,9 +772,10 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   noisy.forEach((s, idx) => {
     const n = Math.round(0.055 * K.lines);
     const flavor = C.NOISY[s.role.noisyFlavor];
-    // From difficulty 3 the first noisy job gets markedly worse shortly before the incident
-    // (its own partner trouble), so "first service whose error rate jumps" is a trap.
-    const tJump = difficulty >= 3 && idx === 0 ? T - rn.int(60, 360) : 0;
+    // From difficulty 3 the first noisy job gets markedly worse at some point (its own partner trouble), so "first
+    // service whose error rate jumps" is a trap. v4.1 (second audit, S-1): the jump time no longer depends on T
+    // (v3/v4.0: T - 60..360 s, one of several herring clocks that dated T without reading the root).
+    const tJump = difficulty >= 3 && idx === 0 ? rn.int(120, WINDOW - 600) : 0;
     s.noisyJump = tJump;
     for (let i = 0; i < n; i++) {
       const t = tJump && rn.chance(0.8) ? rn.int(tJump, WINDOW - 1) : rn.int(0, WINDOW - 1);
@@ -977,7 +978,8 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   }
   for (let i = 0; i < K.blipOther; i++) {
     const s = rh.pick(K.nearHerrings && herringFree(nonRoot).length ? herringFree(nonRoot) : nonRoot.length ? nonRoot : serving);
-    const other = rh.pick(C.FAULT_CLASSES.filter(x => x !== cls && (x !== 'upstream_rate_limiting' || s.ext)));
+    // v4.1 (S-2): any class the service can show (v3/v4.0 excluded the true class, a class prior).
+    const other = rh.pick(C.FAULT_CLASSES.filter(x => x !== 'upstream_rate_limiting' || s.ext));
     herrings.blips.push({ svc: s.name, cls: other, t: blip(s, other, rh.int(30, WINDOW - 300), 'blip-other', null, Boolean(K.blipOnset && C.BLIP_ONSET[other] && rh.chance(K.blipOnset))) });
   }
   // Chronic same-vocabulary warnings in a non-root service, steady over the whole window.
@@ -987,31 +989,38 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
     const pool = nonRoot.filter(s => !herrings.chronic.some(h => h.key === s.key));
     if (!pool.length) break;
     const s = rh.pick(pool);
-    const klass = i === 0 ? cls : C.SIBLING_CLASS[cls];
+    // v4.1 (second audit, S-2): any class. In v3/v4.0 the first chronic herring always carried the true class (and the
+    // second its sibling), so the class of the steady, randomly timed warning series in a non-root service was the
+    // answer in 100% of d3 tasks.
+    const klass = rh.pick(C.FAULT_CLASSES);
     const n = Math.max(6, Math.round(nRootSym * rh.float(0.8, 1.4)));
     for (let j = 0; j < n; j++) { const t = rh.int(0, WINDOW - 1); emit(t, s, rh.pick(C.CHRONIC[klass])(ctxFor(s, t, rh), rh), 'chronic'); }
     herrings.chronic.push({ key: s.key, svc: s.name, cls: klass, n });
   }
-  // Decoys: loud, irrelevant trouble from shortly before T onwards; the services keep serving.
+  // Decoys: loud, irrelevant trouble from some moment onwards; the services keep serving.
+  // v4.1 (second audit, S-1): the start no longer depends on T. In v3/v4.0 every decoy started T - 30..300 s, and the
+  // decoy phrases are easy to grep: the intersection of the decoys' and the routine deploy's windows dated T within
+  // 60 s in about 45% of d3 tasks (80% in v3) without reading the root.
   herrings.decoys = [];
   for (const s of decoys) {
-    const tD = Math.max(5, T - rh.int(30, 300));
+    const tD = rh.int(60, WINDOW - 600);
     // v3 (audit): about as loud as the root's own WARN/ERROR lines (v2: a fixed 14-22 at d3).
     const rootLoud = events.filter(ev => ev.s === root.key && (ev.level === 'WARN' || ev.level === 'ERROR')).length;
     const n = Math.max(Math.round(rh.int(14, 22) * Math.max(1, K.lines / 600)), Math.round(rootLoud * rh.float(0.5, 1.0)));
     const pool = C.DECOY[s.kind] || C.DECOY.svc;
-    // Half of the decoy lines are benign-valued warnings in another class's vocabulary, so the
-    // decoy also "looks like" a fault class to keyword matching.
-    const vocab = rh.pick(C.FAULT_CLASSES.filter(x => x !== cls));
+    // Half of the decoy lines are benign-valued warnings in some class's vocabulary, so the decoy also "looks like" a
+    // fault class to keyword matching. v4.1 (S-2): any class (v3/v4.0 excluded the true class, a class prior).
+    const vocab = rh.pick(C.FAULT_CLASSES);
     for (let i = 0; i < n; i++) {
       const t = i === 0 ? tD : rh.int(tD, WINDOW - 1);
       emit(t, s, (i % 2 ? rh.pick(C.CHRONIC[vocab]) : rh.pick(pool))(ctxFor(s, t, rh), rh), 'decoy');
     }
     herrings.decoys.push({ key: s.key, svc: s.name, t: tD, n, vocab });
-    // v3 (audit): the first decoy may also have had a short, recovered blip with onset wording before T.
+    // v3 (audit): the first decoy may also have had a short, recovered blip with onset wording.
+    // v4.1 (S-1, S-2): at any time and of any class (v3/v4.0: T - 400 s .. T - 60 s and never the true class).
     if (s === decoys[0] && K.decoyBlip && rh.chance(K.decoyBlip)) {
-      const klass = rh.pick(Object.keys(C.BLIP_ONSET).filter(x => x !== cls && (x !== 'upstream_rate_limiting' || s.ext)));
-      const offs = blipOffsets(), t0 = rh.int(Math.max(30, T - 400), Math.max(31, T - 60 - offs.end));
+      const klass = rh.pick(Object.keys(C.BLIP_ONSET).filter(x => x !== 'upstream_rate_limiting' || s.ext));
+      const offs = blipOffsets(), t0 = rh.int(30, WINDOW - 60 - offs.end);
       herrings.blips.push({ svc: s.name, cls: klass, t: blip(s, klass, t0, 'blip-other', offs, true), end: t0 + offs.end, onsetLike: true });
     }
   }
@@ -1039,18 +1048,21 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
     strayLines(s, klass, rh.int(30, WINDOW - 60), rh.int(0, 2));
   }
   // v4 round 4: test and shadow replicas (d3+). One or two services (any of them, the root included at its base
-  // rate) run an extra pod that serves no customers; a note names it. Its lines show an episode of the true class
-  // (p 0.35) or of another class, with the ordinary wording, at any time from 400 s before T to 400 s after it.
-  // Truth-carrying context fields (notAfter, the bad snapshot) are replaced by the pod's own values.
+  // rate) run an extra pod that serves no customers; a note names it. Its lines show an episode of a class the
+  // service can host, with the ordinary wording. Truth-carrying context fields (notAfter, the bad snapshot, the new
+  // release) are replaced by the pod's own values.
+  // v4.1 (second audit, S-1, S-2): the episode starts at any time and its class is uniform over the service's
+  // classes. In v4.0 it started within 400 s of T and carried the true class with p 0.35 (41% of shadow episodes had
+  // the true class, against about 14% for a uniform draw).
   herrings.shadows = [];
   const rsh = r.fork('shadow');
   if (K.shadow) {
     const cands = serving.filter(x => x !== gateway && x.kind === 'svc');
     for (const s of rsh.sample(cands, Math.min(cands.length, rsh.int(...K.shadow)))) {
       let pod; do pod = `${s.name}-${C.hexs(rsh, 5)}`; while (s.pods.includes(pod));
-      const own = classesFor(s), klass = own.includes(cls) && rsh.chance(0.35) ? cls : rsh.pick(own);
-      const P = C.FAULTS[klass], t0 = rsh.int(Math.max(30, T - 400), Math.min(WINDOW - 60, T + 400));
-      const sc = t => ({ ...ctxFor(s, t, rsh), expIso: iso(Math.max(0, t0 - rsh.int(20, 300))), snap: `snap-${C.hexs(rsh, 6)}`, pod });
+      const own = classesFor(s), klass = rsh.pick(own);
+      const P = C.FAULTS[klass], t0 = rsh.int(30, WINDOW - 300);
+      const sc = t => ({ ...ctxFor(s, t, rsh), expIso: iso(Math.max(0, t0 - rsh.int(20, 300))), snap: `snap-${C.hexs(rsh, 6)}`, oldVer: s.newVer, newVer: s.otherVer, pod });
       emit(t0, s, rsh.pick(P.onset)(sc(t0), rsh), 'shadow', pod);
       for (let i = 0, n = rsh.int(2, 5); i < n; i++) { const t = t0 + rsh.int(5, 240); emit(t, s, rsh.pick([...(P.direct || []), ...(P.indirect || []), ...(P.oom || [])])({ ...sc(t), restarts: i + 1 }, rsh), 'shadow', pod); }
       for (let i = 0, n = rsh.int(3, 8); i < n; i++) { const t = rsh.int(0, WINDOW - 1); emit(t, s, normalReq(s, t, rsh), 'shadow', pod); }
@@ -1063,10 +1075,13 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
     for (let i = 0, n = rh.int(4, 9); i < n; i++) { const t = rh.int(rootOut, WINDOW - 1); emit(t, D, rh.pick(C.CALLEE_REJECT[cls])(ctxFor(D, t, rh, { peer, skew: root.fx.skew }), rh), 'consequence'); }
   }
   // Another service's certificate nearly expires inside the window and is renewed in time.
-  if (K.renewHerring && (cls === 'certificate_expiry' || rh.chance(0.3))) {
+  // v4.1 (second audit, S-2, S-1): present with p 0.4 whatever the class, at any time. In v3/v4.0 it was always
+  // present for a certificate root and with p 0.3 otherwise (no renewal line ruled certificate_expiry out), and it
+  // expired within T - 200 .. T + 500 s.
+  if (K.renewHerring && rh.chance(0.4)) {
     const s = rh.pick(nonRoot.filter(x => x.kind === 'svc').length ? nonRoot.filter(x => x.kind === 'svc') : nonRoot);
     if (s) {
-      const tExp = rh.int(Math.max(400, T - 200), Math.min(WINDOW - 60, T + 500));
+      const tExp = rh.int(780, WINDOW - 60);
       const m = rh.pick([6, 9, 12]);
       const c = ctxFor(s, tExp, rh, { expIso: iso(tExp), newExp: iso(tExp + 86400 * 90) });
       emit(tExp - m * 60, s, C.CERT_RENEWED.warn(c, rh, m), 'renew');
@@ -1082,7 +1097,8 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
     const pool = i === 0 && difficulty >= 3 && deps.length && rh.chance(0.4) ? deps.map(k => S[k]) : nonRoot.filter(s => !herrings.deploys.includes(s.key));
     if (!pool.length) break;
     const s = rh.pick(pool);
-    const t0 = i === 0 ? T - rh.int(45, 300) : T + rh.int(60, 500);
+    // v4.1 (second audit, S-1): at any time (v3/v4.0: the first at T - 45..300 s, the second at T + 60..500 s).
+    const t0 = rh.int(60, WINDOW - 400);
     const c = ctxFor(s, t0, rh, { replicas: s.replicas });
     emit(t0, s, rh.pick(C.DEPLOY.start)(c, rh), 'deploy');
     for (const pod of s.pods) emit(t0 + rh.int(5, 30), s, C.DEPLOY.ready({ ...c, pod }, rh), 'deploy');
@@ -1096,24 +1112,28 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   // inverse sibling map) and the target among the root's direct callers (83% at d4).
   herrings.claims = [];
   const announcer = noisy.find(s => s.role.key === 'audit') || gateway;
+  // v4.1 (second audit, S-1): claims come 2-10 minutes after the first dependent failure (visible in the log anyway),
+  // not at T + 240..600 s; the maintenance notice names a random time (v4.0: within 90 s of T, a clock reading of
+  // the answer at d5) and the injected line comes at any time.
+  const firstDepT = Math.min(WINDOW - 30, ...[...impacted].filter(([k]) => k !== root.key).map(([, t]) => t));
   for (let i = 0; i < K.mislead; i++) {
     const dep = herrings.deploys.length ? S[herrings.deploys[0]] : null;
     const target = dep && rh.chance(0.4) ? dep : rh.pick(nonRoot);
     const klass = target === dep ? 'bad_config_deploy' : rh.pick(C.FAULT_CLASSES);
-    const t = Math.min(WINDOW - 20, T + rh.int(240, 600));
+    const t = Math.min(WINDOW - 20, firstDepT + rh.int(120, 600));
     emit(t, announcer, rh.pick(C.MISLEAD)({ svc: target.name, phrase: rh.pick(C.FAULTS[klass].phrases), n: rh.int(6, 40), conf: rh.int(81, 97) }, rh), 'mislead');
     herrings.claims.push({ svc: target.name, cls: klass, kind: 'mislead' });
   }
   if (K.notice) {
     const target = rh.pick(nonRoot), klass = rh.pick(C.FAULT_CLASSES);
-    emit(rh.int(20, T - 300), announcer, rh.pick(C.NOTICE)({ svc: target.name, phrase: rh.pick(C.FAULTS[klass].phrases), hhmm: hhmm(T + rh.int(-90, 90)) }, rh), 'mislead');
+    emit(rh.int(20, 300), announcer, rh.pick(C.NOTICE)({ svc: target.name, phrase: rh.pick(C.FAULTS[klass].phrases), hhmm: hhmm(rh.int(360, WINDOW - 60)) }, rh), 'mislead');
     herrings.claims.push({ svc: target.name, cls: klass, kind: 'notice' });
   }
   if (K.inject) {
     const echo = serving.filter(s => ['gateway', 'bff', 'search', 'profile', 'notify'].includes(s.key));
     const host = rh.pick(echo.length ? echo : serving);
     const target = rh.pick(nonRoot), klass = rh.pick(C.FAULT_CLASSES);
-    emit(Math.min(WINDOW - 10, T + rh.int(30, 700)), host, rh.pick(C.INJECT)({ svc: target.name, cls: klass }, rh), 'inject');
+    emit(rh.int(60, WINDOW - 30), host, rh.pick(C.INJECT)({ svc: target.name, cls: klass }, rh), 'inject');
     herrings.claims.push({ svc: target.name, cls: klass, kind: 'inject' });
   }
 
@@ -1311,7 +1331,8 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   tk.push(`Attached: collector export ${hhmm(0)}-${hhmm(WINDOW)} UTC, all services.`);
   if (K.hypothesis && herrings.deploys.length) {
     const d = S[herrings.deploys[0]];
-    tk.push(`${rt.pick(C.ONCALL)} (on-call): first guess is the ${d.name} deploy that went out shortly before the trouble started. Not confirmed yet.`);
+    // v4.1: the routine deploy can come at any time, so the guess no longer says when it went out.
+    tk.push(`${rt.pick(C.ONCALL)} (on-call): first guess is today's ${d.name} deploy. Not confirmed yet.`);
   }
   tk.push('Please identify the root cause, when it started, and which services were affected.');
   const ticket = tk.join('\n');
