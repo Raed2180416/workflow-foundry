@@ -112,17 +112,19 @@ export const LATE_DECOY = r => r.pick([`there was ${aB(r)} at loading, but I tap
 
 export const FILLER = [
   ({ r, pH, T }) => `Made ${r.pick([250, 500, 1000])} mL of ${r.pick([25, 50, 100])} mM ${r.pick(['HEPES', 'MOPS', 'Tris', 'phosphate', 'MES'])} and adjusted to pH ${pH} at ${T} °C.`,
-  ({ r }) => `Enzyme stock (lot ${r.int(7100, 7999)}-${r.pick(['A', 'B', 'C'])}, ${(r.int(12, 48) / 10).toFixed(1)} mg/mL) thawed on ice and diluted 1:${r.pick([200, 400, 500, 800])} into assay buffer.`,
+  // [AUDIT F24] the study lot and no dilution of its own: enzyme working dilutions are recorded in the master-mix log
+  ({ r, lot, mixLog }) => `Enzyme stock (lot ${lot}, ${(r.int(12, 48) / 10).toFixed(1)} mg/mL) thawed on ice; ${mixLog ? 'working dilution as recorded in the master-mix log' : 'diluted 1:500 into the master mix'}.`,
   ({ r, reader }) => `${reader} warmed up for ${r.pick([15, 20, 30])} min; lamp hours ${r.int(900, 4200)}.`,
   ({ r }) => `NADH stock ${r.pick([10, 20, 25])} mM in ${r.pick(['10 mM NaOH', 'water', 'assay buffer'])}; final NADH in each well ${r.pick([150, 200, 250])} uM.`,
   ({ r }) => `Substrate stock ${r.pick([100, 200, 250])} mM in ${r.pick(['water', 'DMSO', 'assay buffer'])}; serial dilutions made fresh at ${r.int(8, 11)}:${String(r.int(0, 59)).padStart(2, '0')}.`,
   ({ r }) => `Blank BLK-${String(r.int(1, 40)).padStart(2, '0')} (no enzyme): ${(r.int(1, 9) / 10000).toFixed(4)} uM/s, as usual.`,
-  ({ r }) => `Plate sealed with ${r.pick(['optical film', 'a breathable seal', 'the clear lid'])}; reads every ${r.pick([10, 15, 20, 30])} s for ${r.pick([5, 8, 10])} min, slopes from the linear part.`,
+  // [AUDIT F24] no read length here: each plate row states its own read window
+  ({ r }) => `Plate sealed with ${r.pick(['optical film', 'a breathable seal', 'the clear lid'])}; reads every ${r.pick([10, 15, 20, 30])} s, slopes from the linear part.`,
   ({ r }) => `Room temperature ${(r.int(205, 236) / 10).toFixed(1)} °C, humidity ${r.int(30, 61)}%.`,
   ({ r }) => `Standards STD-1..STD-4 (0, 20, 40, 80 uM NADH) read at A340: 0.00${r.int(1, 4)}, 0.${r.int(110, 135)}, 0.${r.int(240, 265)}, 0.${r.int(480, 520)}.`,
   ({ r }) => `Plate ${r.int(1, 12)} from yesterday re-imaged for the archive; no new numbers.`,
   ({ r }) => `Checked the multichannel (${r.pick(['8', '12'])}-ch) — channel ${r.int(1, 8)} was slightly slow to aspirate, replaced the tip cone.`,
-  ({ r }) => `Assay mix per well: ${r.pick([150, 160, 170])} uL buffer, ${r.pick([10, 20])} uL NADH, ${r.pick([10, 20])} uL substrate dilution, enzyme last (${r.pick([2, 5, 10])} uL) to start.`,
+  ({ r }) => { const n = r.pick([10, 20]), s = r.pick([10, 20]); return `Assay mix per well: ${195 - n - s} uL buffer, ${n} uL NADH, ${s} uL substrate dilution, enzyme last (5 uL) to start.`; },
   ({ r }) => `Kinetic window ${r.pick(['0-3', '0-4', '1-5'])} min used for slopes; R² of the linear fits all above 0.99${r.int(0, 9)} except where noted.`,
   ({ r }) => (r.chance(0.5) ? `${r.pick(['Fridge', 'Cold room'])} log checked: ${r.pick(['4.1', '3.8', '4.4'])} °C overnight, fine.` : `Freezer ${r.pick(['A', 'B'])} log checked: ${r.pick(['-19.6', '-20.3', '-80.4'])} °C overnight, fine.`),
   ({ r }) => `Spoke with ${r.pick(['the core', 'IT', 'facilities'])} about the ${r.pick(['network share', 'reader PC update', 'door badge'])}; nothing that affects the data.`,
@@ -155,3 +157,106 @@ export const SERIES_COMMENTS = [
   'Fresh substrate dilutions for this plate.',
   'Read straight after mixing; seal on.',
 ];
+
+// ---------------------------------------------------------------------------------------
+// 4.0.0 (audit 2026-10-07, second pass; AUDIT.md F21-F27). Phrasing whose SOP outcome depends on structure (the
+// order of two events, who or what a clause is about, the content of an answer), not on keywords.
+
+// [AUDIT F21] A bubble note states the ORDER of two events: the bubble from loading was removed / a bubble formed,
+// and the read started / ended. The same words and connectives occur with both outcomes; the event types and their
+// order decide (SOP 2.2: excluded iff the bubble was in the well at some time between the start and the end of the
+// read). The removed bubble is always "the bubble from loading", so "removed after the read started" means it was
+// in the well when the read started, whatever the read length.
+export const NUM_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen'];
+export const minutes = (n, r) => (r.chance(0.5) ? `${NUM_WORDS[n]} minute${n === 1 ? '' : 's'}` : `${n} min`);
+const LOADED = ['the bubble from loading', 'the bubble I had seen at loading', 'the loading bubble'];
+const LOADED_3P = ['the bubble that was there at loading', 'the loading bubble'];
+const EV = {
+  gone: { // removing the bubble that was in the well at loading; `impersonal` for reports by someone else
+    act: (r, i) => { const b = r.pick(i ? LOADED_3P : LOADED); return r.pick(i ? [`${b} burst`, `${b} cleared`, `${b} was popped`, `${b} was tapped out`] : [`I popped ${b}`, `I tapped out ${b}`, `${b} burst`, `${b} cleared`, `I knocked ${b} out with a tip`, `I got ${b} out`]); },
+    done: (r, i) => { const b = r.pick(i ? LOADED_3P : LOADED); return r.pick(i ? [`${b} had cleared`, `${b} was gone`, `${b} had burst`] : [`${b} had cleared`, `${b} was gone`, `I had popped ${b}`, `${b} had burst`]); },
+    notyet: (r, i) => { const b = r.pick(i ? LOADED_3P : LOADED); return r.pick(i ? [`${b} was still there`, `${b} had not cleared yet`] : [`${b} was still there`, `I had not got ${b} out yet`, `${b} had not cleared yet`]); },
+  },
+  formed: {
+    act: r => r.pick(['a bubble formed', 'a bubble appeared', 'air got into the well', 'a bubble came up']),
+    done: r => r.pick(['a bubble had formed', 'a bubble had appeared', 'air had got into the well']),
+    notyet: r => r.pick(['no bubble had formed yet', 'the well was still clear', 'there was no bubble yet']),
+  },
+  start: { act: r => r.pick(['the read started', 'the kinetic read began', 'the first read cycle ran', 'the reader started measuring']) },
+  end: { act: r => r.pick(['the read finished', 'the last read cycle ran', 'the kinetic read ended', 'the reader stopped measuring']) },
+};
+// x = bubble event ('gone' | 'formed'), y = read event ('start' | 'end'); xFirst: x happened before y
+function orderSentence(r, x, y, xFirst, rel, i) {
+  const X = EV[x], Y = EV[y];
+  if (rel) return `${X.act(r, i)} ${minutes(rel, r)} ${xFirst ? 'before' : 'after'} ${Y.act(r)}`;
+  const frames = xFirst
+    ? [() => `${X.act(r, i)} before ${Y.act(r)}`, () => `${Y.act(r)} after ${X.act(r, i)}`, () => `first ${X.act(r, i)}, then ${Y.act(r)}`, () => `by the time ${Y.act(r)}, ${X.done(r, i)}`,
+      ...(x === 'gone' ? [() => `${Y.act(r)} only once ${X.done(r, i)}`] : [])]
+    : [() => `${X.act(r, i)} after ${Y.act(r)}`, () => `${Y.act(r)} before ${X.act(r, i)}`, () => `first ${Y.act(r)}, then ${X.act(r, i)}`, () => `by the time ${Y.act(r)}, ${X.notyet(r, i)}`,
+      () => `${X.act(r, i)} only after ${Y.act(r)}`];
+  return r.pick(frames)();
+}
+// mode: 'during' (excluded), 'before' (the bubble from loading removed before the read; kept), 'after' (a bubble formed
+// only after the read; kept). readMin: the row's read length when its sheet prints it; it enables "formed N min after
+// the read started", which is inside the read when N < readMin and after it when N > readMin.
+export function orderedBubble(r, mode, readMin = null, { impersonal = false } = {}) {
+  const rel = r.chance(0.35);
+  if (mode === 'before') return orderSentence(r, 'gone', 'start', true, rel ? r.int(1, 6) : null, impersonal);
+  if (mode === 'after') {
+    if (readMin && r.chance(0.45)) return `${EV.formed.act(r)} ${minutes(readMin + r.int(1, 5), r)} after ${EV.start.act(r)}`;
+    return orderSentence(r, 'formed', 'end', false, rel ? r.int(1, 6) : null, impersonal);
+  }
+  const v = r.pick(['gone', 'formed', ...(readMin ? ['formedRel'] : [])]);
+  if (v === 'gone') return orderSentence(r, 'gone', 'start', false, rel ? r.int(1, 6) : null, impersonal);
+  if (v === 'formedRel') return `${EV.formed.act(r)} ${minutes(r.int(1, readMin - 1), r)} after ${EV.start.act(r)}`;
+  return orderSentence(r, 'formed', 'end', true, rel ? r.int(1, 6) : null, impersonal);
+}
+
+// [AUDIT F22] Side remarks about things that are not study wells (the blank, the standards, the practice or pilot
+// plate, last week's plate), in the vocabulary of the opposite outcome. They never change a study well.
+export const SIDE_REMARKS = {
+  // appended to notes of EXCLUDED wells (vocabulary of kept wells)
+  keepish: [r => `the blank on this plate was ${r.pick(['clean', 'fine', 'clear'])}`, () => 'no bubble in the blank next to it', r => `the standards were ${r.pick(['fine', 'clean'])}`,
+    () => 'on the practice plate I had popped a bubble in this position before the read', () => 'nothing wrong with the blank', () => 'the pilot plate never had this problem', () => 'last week the same position read clean'],
+  // appended to notes of KEPT wells (vocabulary of excluded wells)
+  exclish: [() => 'the blank on this plate did read with a bubble, though', () => 'the practice plate had a double enzyme addition in this position', () => 'the standards on this plate were over range (OVR)',
+    () => 'last week this position read with a bubble for the whole read', () => 'the pilot plate saturated (SAT) at this concentration', () => 'the blank next to it got its buffer late'],
+};
+
+// [AUDIT F23] The author's answer to a colleague's report. Whether it confirms or denies is in the content; the opening
+// word (Yes, No, Confirmed, You're right) and a trailing side clause can point the other way.
+export const ANSWERS = {
+  confirm: [b => `Yes, ${b}: that's right, I forgot to note it.`, b => `Confirmed for ${b}; I remember it now. It is not on my sheet.`, b => `You're right about ${b}.`,
+    b => `Yes for ${b}; I will add it to my sheet.`, b => `${b}: that's on me; it happened and never made it onto my sheet.`, b => `No point denying it: ${b} had exactly that.`,
+    b => `My sheet says nothing about ${b}, but you are right: it happened.`, b => `I thought ${b} was fine, but the photo proves you right.`,
+    b => `${b} had it, I'm afraid; nothing else on that plate was affected, though.`, b => `Sadly yes for ${b}; the rest of the row was fine.`],
+  deny: [b => `No, ${b} was fine; you are thinking of a different plate.`, b => `I checked: nothing like that happened in ${b}.`, b => `Not in ${b}; my sheet is complete.`,
+    b => `Yes, I looked at ${b} again: nothing like that happened there.`, b => `You're right that it was a busy day, but ${b} itself was fine.`,
+    b => `${b} was fine, but you are right that the practice plate had it.`, b => `Confirmed with the photo: ${b} was clean the whole time.`, b => `${b}? That was the practice plate, not this one.`],
+};
+
+// [AUDIT F25] A late report posted for the wrong well X, moved by its author to well Y the next day: the fact belongs
+// to Y (excluded), X is kept.
+export const REDIRECT = [
+  (x, y) => `My message yesterday about ${x} named the wrong well: it was ${y}.`,
+  (x, y, xid) => `Correction to yesterday's note on ${x}: wrong well. That happened in ${y}; ${xid} itself was fine.`,
+  (x, y) => `${x} was fine after all; the well I meant yesterday is ${y}.`,
+  (x, y) => `Mixed up two wells yesterday: what I wrote about ${x} belongs to ${y}.`,
+  (x, y, xid) => `Yesterday's report on ${x} is about ${y}, the well I actually meant; ${xid} had nothing.`,
+];
+
+// [AUDIT F24] Master-mix log: the enzyme working dilution of each condition's mix. Rates scale with the enzyme, so a mix
+// at another dilution than the SOP standard (1:500) needs rescaling (SOP section 5); a mix that was discarded before
+// any plate was loaded does not matter. `d` is the dilution (250 or 1000).
+export const DOSE_TEXT = [
+  d => `the enzyme went in at 1:${d} instead of 1:500 (the dilutor was set to ${d}); noticed only after all of this condition's plates had been read`,
+  d => `working dilution 1:${d}, not the standard 1:500, so ${d < 500 ? 'twice' : 'half'} the usual enzyme; every plate of this condition was run with it`,
+  d => `enzyme diluted ${d}-fold instead of 500-fold by mistake; the mix had already been used for all plates of this condition`,
+  d => `${d < 500 ? 'double' : 'half'}-strength enzyme: 1 in ${d} rather than 1 in 500. All of this condition's wells got it`,
+];
+export const DOSE_HERRING = [
+  d => `first made at 1:${d} by mistake and poured away before any plate was loaded; remade at 1:500 the same morning`,
+  d => `a 1:${d} dilution was prepared by mistake, caught before use and discarded; the mix used for the plates was 1:500`,
+  () => 'someone asked whether this one was also off: checked the dilutor log, it was 1:500',
+];
+export const DOSE_OK = [() => 'enzyme at 1:500', () => 'enzyme 1:500, as per SOP', () => 'standard 1:500 enzyme dilution', () => '1:500, 5 uL per well'];

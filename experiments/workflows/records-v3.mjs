@@ -94,7 +94,8 @@ export const SYSTEMS = ['BRIGHTDESK', 'LEDGR', 'ATLAS', 'VENDEX', 'KOBO', 'VERIT
 export const DATE_SYSTEMS = ['BRIGHTDESK', 'ATLAS', 'VENDEX'];
 export const PERSPECTIVE_SYSTEMS = ['BRIGHTDESK', 'LEDGR', 'ATLAS', 'KOBO'];
 export const MIRROR_CANDIDATES = ['BRIGHTDESK', 'LEDGR', 'VERITAS'];
-// Fixed status markers (README "look-alike non-values and live rows"; identical sentences in every task's notes).
+// Fixed status markers (README "look-alike non-values and live rows"; identical sentences in every task's notes). THE
+// one table of them: code nodes receive it through args (fixedStatus), the marker lists below are derived from it.
 export const FIXED_STATUS = {
   BRIGHTDESK: { customer: 'live' },
   LEDGR: { aktiv: 'live', gesperrt: 'live', storniert: 'void' },
@@ -102,10 +103,13 @@ export const FIXED_STATUS = {
   KOBO: { SAMPLE: 'void' },
   VERITAS: { sandbox: 'void', production: 'live' },
 };
-// The markers a per-task status sentence may compare a value with, and their fixed meanings.
-export const MARKER_ENUM = ['stage=customer', 'ZZTEST', 'aktiv', 'gesperrt', 'storniert', 'DO NOT MIGRATE', 'SAMPLE', 'sandbox', 'production', 'ordinary_live_rows', 'none'];
-export const VOID_MARKERS = ['ZZTEST', 'storniert', 'DO NOT MIGRATE', 'SAMPLE', 'sandbox'];
-export const LIVE_MARKERS = ['stage=customer', 'aktiv', 'gesperrt', 'production', 'ordinary_live_rows'];
+// The markers a per-task status sentence may compare a value with, and their fixed meanings (ZZTEST is a BRIGHTDESK
+// name marker, not a status value, so it is the one entry that is not in FIXED_STATUS).
+const markersWith = meaning => Object.entries(FIXED_STATUS).flatMap(([system, table]) => Object.entries(table)
+  .filter(([, m]) => m === meaning).map(([token]) => (system === 'BRIGHTDESK' ? `stage=${token}` : token)));
+export const VOID_MARKERS = ['ZZTEST', ...markersWith('void')];
+export const LIVE_MARKERS = [...markersWith('live'), 'ordinary_live_rows'];
+export const MARKER_ENUM = [...VOID_MARKERS, ...LIVE_MARKERS, 'none'];
 // ISO alpha-2 codes a country judgment may return (the spec's calling-code table plus neighbours, so that a
 // country outside the table is reported rather than forced onto the nearest listed one).
 export const ISO_ENUM = ['US', 'CA', 'GB', 'IE', 'AU', 'NZ', 'DE', 'AT', 'CH', 'FR', 'BE', 'LU', 'NL', 'ES', 'PT', 'IT', 'MX', 'JP',

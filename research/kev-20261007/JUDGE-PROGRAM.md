@@ -107,8 +107,10 @@ held-out-family tests possible.
     (`fdy:src/ports.mjs:46-54`).
 - **Wording.**
   - Each port has a canonical wording Q0 and three training paraphrases Q1–Q3, listed below.
-  - At least two **held-out paraphrases** per port are written by a separate worker (§2.4, G0b).
-    They are stored where no training code can import them, and are used only in test-OOD.
+  - **40 held-out wordings** per wave-1 port are written by a separate worker (group
+    `heldout-author`, §2.4): 10 for calib-OOD, 10 for dev-OOD, 20 for test-OOD [crit S9: two
+    wordings are two samples of a wording distribution, not an axis]. They are stored in
+    `.foundry/kev-data/heldout/`, git-ignored, where no training code reads them.
   - Paraphrases may vary the question only. **Option names and descriptions are fixed per port**
     and are part of the port contract. Any change re-qualifies the port
     (`fdy:docs/ROADMAP.md:501-502`).
@@ -272,7 +274,7 @@ Common to R1–R4:
   [M crit-S Q11], so the `{system}` slot is barely trained. At least 20% of R training rows, and a
   200-item slot-swap test set per port, carry two systems' paragraphs with opposite labels.
 
-**R1 `date_order`** (A2).
+**R1 `date_order`** (D:A2).
 - **Q0** "Which numeric date order does {system} use for birth dates in this export?"
 - **Q1** "According to the source note, in what order does {system} write day, month and year?"
 - **Q2** "How should a numeric birth date from {system} be read: day first, month first or year
@@ -312,7 +314,7 @@ Common to R1–R4:
 - **Per world.** 2–3 items: BRIGHTDESK, VENDEX, and ATLAS when it has no cutoff.
 - **Capacity.** 44 template combinations; 379–838 distinct paragraphs per system [M here].
 
-**R2 `status_meaning`** (A3).
+**R2 `status_meaning`** (D:A3).
 - **Q0** "Does the status value {value} in {system} mark a void row that must not be migrated, or
   a live account?"
 - **Q1** "According to the note, are {system} rows marked {value} real accounts or void entries?"
@@ -345,7 +347,7 @@ Common to R1–R4:
 - **Capacity.** 288 distinct (system, token, polarity, template) combinations; 16 template ids
   [M here].
 
-**R3 `sign_convention`** (A4).
+**R3 `sign_convention`** (D:A4).
 - **Q0** "Does {system} print balances the same way as the master, where a positive balance is
   owed to us, or from the other side?"
 - **Q1** "According to the note, must {system} balances keep their sign in the master, or be
@@ -373,7 +375,7 @@ Common to R1–R4:
 - **Capacity.** **32** combinations [M here]. This is the most template-bound port; its in-family
   test is memorisation by construction.
 
-**R4 `timestamp_reliability`** (A5).
+**R4 `timestamp_reliability`** (D:A5).
 - **Q0** "Are {system}'s last-change dates real change dates, or re-stamps that must not be used
   to order conflicting rows?"
 - **Q1** "According to the note, do {system}'s update timestamps show when a record really
@@ -401,7 +403,7 @@ Common to R1–R4:
 - **Per world.** 2 at d ≥ 3.
 - **Capacity.** 220 combinations [M here].
 
-**R5 `country_token`** (A6, wave 2).
+**R5 `country_token`** (D:A6, wave 2).
 - **Q0** "Which country does this {system} row's location text refer to?"
 - **Q1** "Name the country meant by the location written in this row."
 - **Q2** "This row gives a country name, nationality, city or code. Which country is it?"
@@ -431,7 +433,7 @@ Common to I1–I3:
 - **Line text.** Taken from `task.inputs.log` by line id, as in the probe
   (`datasets.mjs:82-85`).
 
-**I1 `fault_class`** (A7).
+**I1 `fault_class`** (D:A7).
 - **Q0** "Which class of fault do these log lines from this service show?"
 - **Q1** "These are the first log lines a service wrote after a fault began inside it. What fault
   class is it?"
@@ -459,7 +461,7 @@ Common to I1–I3:
 - **Surface.** Template ids are not exposed, so template holdout uses skeletons (§3.3).
 - **Probe.** Rule accuracy 0.861 [0.763, 0.923], n = 72 [M probe].
 
-**I2 `log_line_role`** (A8, and A9 at line level).
+**I2 `log_line_role`** (D:A8, and D:A9 at line level).
 - **Q0** "What does this log line say about the incident?"
 - **Q1** "Is this line a failure that started in the emitting service, a failure it relays from a
   service it calls, a fallback, or unrelated?"
@@ -509,7 +511,7 @@ Common to I1–I3:
 - **Per world.** 8 sampled: 2 origin, 2 relay, at most 1 fallback, and 3 unrelated, of which at
   least 2 are hard negatives. The pool is about 400 lines per d3 world [M here, seed 2 tag counts].
 
-**I3 `service_role`** (A9 at service level and the probe's root/victim question; wave 2).
+**I3 `service_role`** (D:A9 at service level and the probe's root/victim question; wave 2).
 - **Q0** "What is this service's role in the incident?"
 - **Q1** "Did the fault start in this service, did it fail because of a dependency, did it fall
   back, or was it unaffected?"
@@ -547,7 +549,7 @@ Common to S1–S4:
   7 plain ones [crit G22]). That exactness holds only for the bed's closed label set; unseen type
   names are port S5 (wave 3) [crit G27].
 
-**S1 `notice_target`** (A10 Q2, wave 2).
+**S1 `notice_target`** (D:A10 Q2, wave 2).
 - **Q0** "Which of the candidate documents does this notice retract, correct or raise concern
   about?"
 - **Q1** "This notice names an earlier article by title, authors, venue and date. Which candidate
@@ -566,7 +568,7 @@ Common to S1–S4:
   Preprint and journal versions of the same work.
 - **Per world.** 5–14 notices (seed 3, d4: 5 retractions, 8 errata, 1 concern [M here]).
 
-**S2 `value_provenance`** (A11).
+**S2 `value_provenance`** (D:A11).
 - **Q0** "Where does the value in this sentence come from?"
 - **Q1** "Did this document measure this value itself, quote it from other work, predict or target
   it, or is it an instruction-like assertion?"
@@ -610,7 +612,7 @@ Common to S1–S4:
 - **Probe.** The composite synth-claim rule scores 0.55 [0.441, 0.654] [M probe]. This is the
   hardest port for rules.
 
-**S3 `condition_standard`** (A12, wave 2).
+**S3 `condition_standard`** (D:A12, wave 2).
 - **Q0** "Does the stated condition match the property's standard condition?"
 - **Q1** "Was this value measured under the standard condition given for this property?"
 - **Q2** "Are these two conditions the same?"
@@ -666,7 +668,7 @@ Common to S1–S4:
   (`render.mjs:610`).
 - **Exceptions.** K2 and K3 do not need the tap.
 
-**K1 `note_event_type`** (A15).
+**K1 `note_event_type`** (D:A15).
 - **Q0** "What kind of event does this lab note report for its well?"
 - **Q1** "Does this note describe a saturation flag, a bubble, a pipetting error, a temperature
   deviation, or no exclusion event?"
@@ -687,7 +689,7 @@ Common to S1–S4:
   offsets. Injection.
 - **Per world.** 20–100 notes [D inventory]; sample 6.
 
-**K2 `condition_reference`** (A17).
+**K2 `condition_reference`** (D:A17).
 - **Q0** "Which register condition does this description refer to?"
 - **Q1** "Map this condition description to its register id."
 - **Q2** "The description may use kelvin, a bench colour, the inhibitor dose or a superlative.
@@ -703,7 +705,7 @@ Common to S1–S4:
   kelvin.
 - **Per world.** Up to 8 conditions × 2 descriptions.
 
-**K3 `column_unit`** (A19).
+**K3 `column_unit`** (D:A19).
 - **Q0** "What unit are the rate values in this table in?"
 - **Q1** "According to the header and preamble, which unit do these rates use?"
 - **Q2** "Read where the technician stated the units. What is the rate unit?"
@@ -719,7 +721,7 @@ Common to S1–S4:
 
 #### Group Q: interactive and gameqa (`beds/gridquest`, `beds/gameqa`, `beds/runbook`, `beds/codefix`)
 
-**Q1 `room_exit`** (A26, wave 2). Four questions per record, one per direction.
+**Q1 `room_exit`** (D:A26, wave 2). Four questions per record, one per direction.
 - **Q0** "Can the player leave this room going {direction} right now?"
 - **Q1** "Is there a usable exit to the {direction}?"
 - **Q2** "Going {direction} from here: open way, or no way through?"
@@ -739,7 +741,7 @@ Common to S1–S4:
   decor text.
 - **Per episode.** Up to 8 rooms on the reference route, × 4 directions.
 
-**Q2 `container_cue`** (A27, wave 2).
+**Q2 `container_cue`** (D:A27, wave 2).
 - **Q0** "Is this container described with a cue that something may be hidden in it?"
 - **Q1** "Is this container worth examining?"
 - **Q2** "Does the text hint that this container holds something?"
@@ -752,7 +754,7 @@ Common to S1–S4:
   authored OOD cues are informative.
 - **Per world.** A few per room.
 
-**Q3 `next_action`** (B8, wave 3).
+**Q3 `next_action`** (D:B8, wave 3).
 - **Q0** "Which action should the explorer take next?"
 - **Q1** "Choose the next action."
 - **Q2** "Given the observation and recent history, which legal action is best now?"
@@ -765,7 +767,7 @@ Common to S1–S4:
   does not determine it [E]. This port stays a ranking prior and never gates. It is evaluated by
   top-3 agreement and steps saved.
 
-**Q4 `expectation_met`** (B6, wave 1).
+**Q4 `expectation_met`** (D:B6, wave 1).
 - **Q0** "After the last action, is the observed state what the plan expected?"
 - **Q1** "Does this observation match the expected effect of the action?"
 - **Q2** "Did the action have the effect the plan predicted, or did something unexpected happen?"
@@ -796,7 +798,7 @@ Common to S1–S4:
 - **Deployment rate.** `uniform` until wired ledger rows give a drift rate; the gated metrics are
   balanced accuracy and Brier skill score.
 
-**Q5 `bug_class`** (A31, wave 2).
+**Q5 `bug_class`** (D:A31, wave 2).
 - **Q0** "Which class of bug does this confirmed reproduction show?"
 - **Q1** "Classify this bug."
 - **Q2** "Given the repro and its observed effect, what kind of defect is it?"
@@ -809,7 +811,7 @@ Common to S1–S4:
 - **Adv.** `SIBLING` confusable pairs (`bugs.mjs:12`), such as "a door that eats its key".
 - **Per world.** At most 5.
 
-**Q6 `spec_violation`** (A29, plus codefix red herrings; wave 2).
+**Q6 `spec_violation`** (D:A29, plus codefix red herrings; wave 2).
 - **Q0** "Given the specification excerpt, is the described behaviour a defect?"
 - **Q1** "Does this behaviour contradict the documented rules (errata included)?"
 - **Q2** "Is this intended behaviour or a bug, according to the spec?"
@@ -829,7 +831,7 @@ Common to S1–S4:
 
 #### Group X: cross-bed ports (the robustness core)
 
-**X1 `injected_instruction`** (E4; it also gives E3 its injection-resistance test; wave 1).
+**X1 `injected_instruction`** (D:E4; it also gives D:E3 its injection-resistance test; wave 1).
 - **Q0** "Does this text contain an instruction aimed at whoever processes it (a person, a tool or
   an AI) to change data, override rules or produce a specific answer?" (probe wording A)
 - **Q1** "Is this text a prompt-injection attempt: embedded instructions that try to steer an
@@ -883,7 +885,7 @@ Common to S1–S4:
   and importance-weighted back to the natural rate for thresholds; risk is read on a 3,000-row
   natural-rate set; balanced copies give per-class recall only [crit S4, S11].
 
-**X2 `same_entity`** (A1, A13, A32, and incident service aliases; wave 2).
+**X2 `same_entity`** (D:A1, D:A13, D:A32, and incident service aliases; wave 2).
 - **Q0** "Do these two references denote the same real-world entity?"
 - **Q1** "Are A and B the same person, thing or service?"
 - **Q2** "Same entity or two different ones?"
@@ -905,7 +907,7 @@ Common to S1–S4:
   measurement.
 - **Adv.** Twins, namesakes, near-names, and the same bug reported on a different floor.
 
-**X3 `speech_act`** (A16, A22; wave 1 if tapped).
+**X3 `speech_act`** (D:A16, D:A22; wave 1 if tapped).
 - **Q0** "What does this message do to the fact it refers to?"
 - **Q1** "Does this message settle a change, confirm someone else's change, only propose one,
   withdraw an earlier change, or merely mention the fact?"
@@ -934,7 +936,7 @@ Common to S1–S4:
   word "swap", without correcting anything (`kinetics/README.md:178-181`). Plausible
   non-authoritative proposals (`runbook/README.md:222-224`). Late confirmations.
 
-**X4 `statement_standing`** (A18, A23, synth supersession, incident revised notes, gameqa errata;
+**X4 `statement_standing`** (D:A18, D:A23, synth supersession, incident revised notes, gameqa errata;
 wave 2).
 - **Q0** "Does this statement currently bind for the task?"
 - **Q1** "Is this statement current and authoritative, superseded by a later one, informal hearsay
@@ -957,7 +959,7 @@ wave 2).
   - **incident:** `truth.revised` and `truth.stale` (dated note pairs).
   - **gameqa:** `world.errata` supersede `docRules`.
 
-**X5 `precondition_holds`** (D1, with the D7 shape; wave 1).
+**X5 `precondition_holds`** (D:D1, with the D:D7 shape; wave 1).
 - **Q0** "A kept workflow assumes: {assumption}. According to the task's source text, does this
   task satisfy that assumption?"
 - **Q1** "Does the source text confirm, contradict or not address this assumption: {assumption}?"
@@ -986,16 +988,32 @@ wave 2).
     (`index.mjs:135-147`) is the near-miss.
   - **incident:** "the call from A to B is optional", from `truth.softEdges` and `edgeDocs`.
   - **synth:** ranking policy P1–P4 (`world.policy`) and standard conditions.
-  - **`not_stated` items** come from three sources: an assumption about a system or entity absent
-    from the source text; a source text from another world with that sentence removed; or an
-    unrelated paragraph.
+  - **bedtype: cross-family type applicability (new, wave 1)** [crit G7]. The failure that
+    motivated claim C4 is wrong-type reuse: the skills arm went 0/21 with 21 false successes
+    against a 7/21 baseline (`fdy:docs/RESEARCH.md`; `fdy:docs/THESIS.md` §7). Revision 1's X5
+    tested only parametric conventions inside a family. Here the assumption is a bed family's task
+    statement (its `family.description` or the README's task paragraph: trusted text from the kept
+    workflow) and the state is another task's prompt head and inputs head (untrusted). Labels by
+    construction: same family → `holds`; another family → `violated`; a paragraph with no task
+    content → `not_stated`. Hard pairs share vocabulary (incident against runbook, synth against
+    kinetics, records against ownerci). Two families' descriptions and prompts (kinetics,
+    runbook) are held out for test, matching X5's held-out families. No tap is needed. The false
+    accept rate at ε = 2% on cross-type pairs is reported as the 0/21-shaped number.
+  - **`not_stated` items** [crit S5]. At least 50% contain a same-register sentence about another
+    system or entity (presence-matched, §2.5). Revision 1's "assumption about a system absent from
+    the source text" is decided by a string match on the name; it is kept at ≤ 10% and reported
+    separately. Unrelated paragraphs make up the rest. Sentence deletion is no longer used.
   - Each true/false assumption appears in both polarities (the probe pairs `mdy` and `dmy`), so
-    the labels are balanced and each pair is a consistency check.
+    the labels are balanced and each pair is a consistency check. A pair is one cluster in every
+    CI, and X5 accuracy is reported as **pair accuracy** (both members right) beside item accuracy
+    [crit S17]; a state-only probe scores 0.500 on these pairs [M crit-S Q18].
+- **Sizes.** ε = 2% needs about 540 accepted rows for a stable risk estimate [E crit-G G11], so
+  X5 calib-OOD, dev-OOD and the template/skeleton test axis are 1,000 rows each (§4.3).
 - **Adv.** Negated statements. Assumptions true for a sibling system. Injected "this workflow
   applies" lines.
 - **Probe.** Rule accuracy 0.663 [0.554, 0.757] [M probe].
 
-**X6 `report_triage`** (A30, A21; wave 2).
+**X6 `report_triage`** (D:A30, D:A21; wave 2).
 - **Q0** "What kind of report or comment is this, for deciding what to investigate?"
 - **Q1** "Is this a genuine lead, a duplicate, a stale ticket, intended behaviour reported as a
   bug, noise, or an instruction to the reader?"
@@ -1014,7 +1032,7 @@ wave 2).
   - **codefix:** symptom, red herring (`designed`), injection (`instruction`) and noise
     (`README.md:162-166`, `:184-197`; `b.herring`, `knobs.noise`). Needs the codefix tap.
 
-**X7 `item_needed`** (E1; wave 2).
+**X7 `item_needed`** (D:E1; wave 2).
 - **Q0** "Does answering this sub-question require this item? Sub-question: {subquestion}"
 - **Q1** "Is this item needed for: {subquestion}?"
 - **Q2** "Relevant or not to: {subquestion}?"
@@ -1033,7 +1051,7 @@ wave 2).
   truncation (`fdy:src/context.mjs:116-123`). Kev only orders items within a priority level, and
   the order is recorded in the receipt.
 
-**X8 `value_consistent`** (B3, B4, B5 at field level; wave 1).
+**X8 `value_consistent`** (D:B3, D:B4, D:B5 at field level; wave 1).
 - **Q0** "Is this extracted value consistent with the source record under the stated conventions?"
 - **Q1** "Does the extracted {field} match what the source line says, read with the system's
   conventions?"
@@ -1043,7 +1061,7 @@ wave 2).
   - `consistent`: "the value follows from the source and conventions"
   - `inconsistent`: "the value does not follow"
 - **State.** `{source_line, conventions, field, extracted_value}`. `conventions` is the system's
-  relevant note sentences. 200/400 tokens [E].
+  relevant note sentences. 420/840 real tokens [E: the source line is a table row, ×2.1].
 - **Use.** The cascade gate on cheap extraction:
   - `inconsistent` at or above threshold → re-ask Sonnet for that row;
   - `consistent` at or above threshold → accept;
@@ -1058,51 +1076,87 @@ wave 2).
   - **kinetics:** a well value in canonical units against a wrong unit factor (`RATE_FACTOR`).
   - **synth:** a cell value after `toCanon` against the uncorrected or wrong-unit value
     (`world.mjs:101-108`).
-  - **REAL-TRACE family:** `experiments/runs/records-hand-pilot/journal.sqlite`. It holds 148
-    `model_calls`, 121 of them Haiku 4.5 on the 6-row extraction node [M here; D inventory §1.2].
-    Each output field is labelled against the world regenerated from the batch id in the spec
-    text (`ctx.batch`, `world.mjs:730`).
+  - **REAL-TRACE family (rebuilt)** [crit G8, S7, G26]. `records-hand-pilot` holds 121 Haiku 4.5
+    calls in 12 runs over **5 worlds** (dev d2 s101–s103, d3 s101–s102), three of them at d2,
+    all inside the training seed range [M crit-G, crit-S Q20]; it is kept as a case study only.
+    The real axis is rebuilt by running the pre-registered weak model (O1) on the records
+    extraction node over **120 reserved worlds**: bed split `test`, seeds 7000–7039 × d3–d5,
+    outside every training range and listed in the reserved-world registry (§2.3 rule 8). About
+    960 calls, $4–14 at the journaled $0.0045–0.0139 per Haiku 4.5 call [M crit-G G15]. Each
+    output field is labelled against the world regenerated from the run's **task key**
+    (`records:test:d3:s7001`), never from the batch id, which is not injective
+    (`world.mjs`, `ctx.batch`). The same runs are the weak-model arm of the X8 end-to-end check
+    (§8.3).
+  - **Day ≤ 12 strata** [crit S10]. A day–month swap can produce a wrong value only when the day
+    is ≤ 12, so every date with day > 12 is `consistent` by construction. Date items are reported
+    in two strata, and only day ≤ 12 items enter gated sets.
 - **Adv.** An injection memo on the same row. A value that is right under the other system's
-  convention.
+  convention (the counterfactual-flip test, §6.3).
 
 #### Group F: failures and code
 
-**F1 `failure_class`** (C1, C3; wave 1).
-- **Q0** "What kind of failure is this workflow node failure?" (probe wording A)
-- **Q1** "Classify the failure of this workflow node."
-- **Q2** "Was this failure transient, environmental, a bad model answer, an exhausted budget, a
-  defect in the workflow, or a real finding about the system under test?"
-- **Q3** "Which cause is most likely for this failure?"
+**F1 `failure_class`** (D:C1, D:C3; wave 1, not promotable in wave 1).
+- **Taxonomy** [crit G7]. Revision 1 offered flake / env / model_output / budget / defect /
+  finding and mapped D:C1 to it as if it were the THESIS port. THESIS §7 and the ROADMAP
+  classifier define the failure-class port as **flake / variance / defect / env / impossible /
+  finding**, and the healer's checks (replay; resample K = 8; environment fingerprint; control
+  build; unsatisfiable contract) depend on `variance` and `impossible`. F1 now uses the THESIS
+  taxonomy. The two revision-1 classes are decided by code **before** F1 is asked, and are never
+  F1 options: schema-invalid, truncated or refused model output (D:B1 retry on schema failure;
+  D:C7 provider error class) and budget exhaustion (the runtime's budget error codes).
+- **Q0** "What kind of failure is this workflow node failure?"
+- **Q1** "Classify the likely cause of this workflow node's failure."
+- **Q2** "Is this failure a transient flake, model variance, a workflow defect, an environment
+  problem, an impossible contract, or a real finding about the system under test?"
+- **Q3** "Which cause should the healer check first?"
 - **Opt**
-  - `flake`: "transient; a retry or replay would likely pass"
-  - `env`: "the environment is broken: a missing dependency, credentials, disk, permissions or a
-    service that is down"
-  - `model_output`: "the model answer was malformed, truncated, refused or outside the schema"
-  - `budget`: "a cost, step, time or token budget ran out"
-  - `defect`: "the workflow's own logic or code is wrong and fails the same way on replay"
+  - `flake`: "transient; the same node passes on replay with the same inputs"
+  - `variance`: "the model's answer varies; resampling at the same upstream state changes the
+    outcome"
+  - `defect`: "the workflow's own logic, contract or code is wrong"
+  - `env`: "the environment is broken or changed: a dependency, credentials, disk, permissions or
+    a service that is down"
+  - `impossible`: "the contract cannot be satisfied, even on a known-good example"
   - `finding`: "the system under test misbehaved; this is the result, not a harness fault"
-- **State.** `{node_kind, attempt, error_code, message, history}`. 55/75 tokens [M probe].
-  - The exec-injected family adds the last events and an environment-fingerprint diff, up to 800
-    tokens.
+- **State (time of decision)** [crit S8]. `{node_kind, attempt, error_code, message, prior_runs}`.
+  `prior_runs` holds counts from **earlier** journaled runs of the same node (passes, failures,
+  distinct error codes), which exist when the healer asks. Never the current replay, resample or
+  control-build result. Revision 1's `history` strings were replay and rerun outcomes ("passed on
+  rerun of the same build", "fails identically on replay") and alone predicted the class at
+  1.000 [M crit-S Q15]. 100/1.6K real tokens [E]; the exec-injected family adds the last journal
+  events and an environment-fingerprint diff taken **before** the failure.
 - **Use.** The healer orders checks (R); replay decides. It is never a verdict.
-- **Labels and families.**
-  - **templates:** probe `datasets.mjs:226-271`, 35 templates. Training only: the rule scores
-    0.971 [M probe].
-  - **exec-injected** (new, G7): tiny Foundry workflows run under the real runtime with injected
-    causes. The label is the injected cause; the state is the real journal record.
-    - a stub model returning schema-invalid JSON → `model_output`
-    - a code node with a deterministic `KeyError` → `defect`
-    - a step cap too small → `budget`
-    - a missing module or unwritable directory → `env`
-    - one injected `ECONNRESET` that passes on retry → `flake`
-  - **gameqa:** crash texts (`CRASH_TEXT`, `engine.mjs:18`) from repro replays → `finding`.
-  - **REAL-TRACE:** journaled failures. The probe found 9 (`datasets.mjs:286-295`). This set grows
-    as experiments run.
-- **Shortcut control.** Variants drop `error_code`, or swap in a code that is plausible but
-  uninformative (for example `VERIFY_FAILED` for both a flake and a defect, decided by
-  `history`).
+- **Labels.** The healer's own checks, in the ROADMAP order, run on exec-injected workflows: the
+  replay passes → `flake`; a Wilson lower bound on the resample-K flip rate above τ →
+  `variance`; the environment fingerprint differs from the last passing run → `env`; a control
+  run on the previous build disagrees → `finding`; the contract fails on a known-good example →
+  `impossible`; otherwise `defect`. The label is the check outcome, cross-checked against the
+  injected cause; a disagreement drops the record and is counted.
+- **Determinacy.** One pre-replay state can have several causes (an `ECONNRESET` can be a flake
+  or an outage). Masked-state collision groups with more than one cause train on the group's
+  empirical cause distribution as a soft `target`; evaluation adds Brier and top-2 accuracy, the
+  numbers that matter for ordering checks.
+- **Families.**
+  - **exec-injected** (main): tiny Foundry workflows run under a **frozen copy of `src/` at a
+    named commit** (other agents are editing the runtime) [crit G13], with injected causes: one
+    `ECONNRESET` that passes on retry (`flake`); a stub model failing on 30–60% of samples
+    (`variance`); a code node with a deterministic `KeyError` (`defect`); a missing module or
+    unwritable directory (`env`); a contract with contradictory checks (`impossible`); a fixture
+    system under test with a planted bug (`finding`). Its OOD axis is a skeleton holdout over
+    workflow shapes (§3.3).
+  - **templates:** the probe's 35 templates rewritten to the new taxonomy and state, at most 20%
+    of F1 training rows. The rule solves them (0.971 [M probe]); never test evidence.
+  - **gameqa:** crash texts (`CRASH_TEXT`, `engine.mjs`) from repro replays → `finding`.
+  - **REAL-TRACE.** The 9 probe items were labelled "from the message, by the probe author", and
+    the probe author is an LLM agent (git authorship of `experiments/kev-probe/datasets.mjs`)
+    [M crit-S], against "no LLM ever labels a record". They are **dropped**. Real journaled
+    failures enter only with replay, resample or control-build labels, and the axis stays a case
+    study until it reaches the availability minimum (§3.5). **F1 cannot be promoted in wave 1.**
+- **Shortcut control.** The partial-input battery (§6.3) includes `error_code`-only,
+  `message`-only and `prior_runs`-only predictors; `prior_runs`-only must sit within 10 pp of
+  the majority class on the build.
 
-**F2 `suspect_function`** (A20, wave 2).
+**F2 `suspect_function`** (D:A20, wave 2).
 - **Q0** "Which function or method contains the defect that causes the reported problem?"
 - **Q1** "The bug report describes a symptom seen by a user. In which function of the module is
   the faulty code?"
@@ -1118,7 +1172,7 @@ wave 2).
 - **Probe.** Rule accuracy 0.82 [M probe], mostly because reports name the function.
 - **Fit.** Low at 0.8B [D inventory A20].
 
-**F3 `item_route`** (B4, wave 3).
+**F3 `item_route`** (D:B4, wave 3).
 - **Q0** "Will the cheap model extract this item correctly?"
 - **Q1** "Is this item easy enough for the cheap path?"
 - **Q2** "Cheap model or strong model for this item?"
@@ -1133,7 +1187,7 @@ wave 2).
 
 #### Group C: construction, corpus, audit
 
-**C1 `objective_requirements`** (F1, wave 2). One record holds 12 yes/no questions, one per
+**C1 `objective_requirements`** (D:F1, wave 2). One record holds 12 yes/no questions, one per
 `REQUIREMENT_LIBRARY` id (`fdy:src/construction-objective.mjs:21-34`): `human-gate`,
 `high-risk-not-model-owned`, `durable-wait`, `compensation-named-limit`, `branching`, `recovery`,
 `isolation`, `pre-post-llm-gate`, `map-fanout`, `loop-until`, `research-grounding`,
@@ -1147,15 +1201,16 @@ wave 2).
   - `no`: "not required"
 - **State.** `{objective}`. 80/300 tokens [E].
 - **Labels.**
-  - A new **objective composer** (G8). It builds objective text from requirement phrases with
+  - A new **objective composer** (group `construction`). It builds objective text from requirement phrases with
     paraphrases, negations ("no approval step is needed"), and cue words used in other senses
     ("each customer's address" without fan-out; "if" inside a quotation). The label is the
     composed requirement set.
-  - **REAL-TRACE:** the bundled programs and C0 objectives, hand-labelled by two annotators, with
-    agreement reported.
+  - **REAL-TRACE:** the bundled programs and C0 objectives, hand-labelled by two annotators the
+    owner names (owner decision O5), with agreement reported. Not built until they are named
+    [crit G24].
 - **Baseline.** The regexes themselves.
 
-**C2 `objective_ungrounded`** (F2, wave 2).
+**C2 `objective_ungrounded`** (D:F2, wave 2).
 - **Q0** "Does this objective need a capability that no listed tool provides?"
 - **Q1** "Can this objective be met with the listed capabilities?"
 - **Q2** "Is the objective grounded in the available tools?"
@@ -1166,7 +1221,7 @@ wave 2).
 - **State.** `{objective, capabilities}`. 300 tokens typical, 1.5K max [E].
 - **Labels.** The composer's truth.
 
-**C3–C6: corpus** (G1, G2, G3, G6; wave 3).
+**C3–C6: corpus** (D:G1, D:G2, D:G3, D:G6; wave 3).
 - **C3** `corpus_domain`: about 10 yes/no questions per item.
 - **C4** `corpus_node_category`: 13 categories, `COVERAGE.md:264-280`.
 - **C5** `motif_semantics`: two 2-way questions (`COVERAGE.md:430`, `:432`).
@@ -1176,9 +1231,10 @@ wave 2).
   - Test labels are **hand labels only**, about 300 per port, from two annotators.
   - C4 may use native platform node types as training labels (silver), with the type field
     removed from the state. That is code truth over structured data, not an LLM label.
-- **Status.** These ports stay label-limited and advisory until hand labels exist.
+- **Status.** Out of the plan until the owner names the annotators (owner decision O5)
+  [crit G24]. Agent auditors may read rows (§2.7) but never label them.
 
-**C7 `transcript_gaming`** (G7, wave 2).
+**C7 `transcript_gaming`** (D:G7, wave 2).
 - **Q0** "Does this tool call try to reach hidden oracle material, probe the scorer adversarially,
   or hard-code answers?"
 - **Q1** "Is this builder action an attempt to game the evaluation?"
@@ -1193,13 +1249,13 @@ wave 2).
   and `os.walk`.
 - **Use.** An alarm only (`fdy:docs/ROADMAP.md:456`).
 
-**C8 `notes_leak`** (G8, wave 3). "Do these notes contain instance-specific answers rather than
+**C8 `notes_leak`** (D:G8, wave 3). "Do these notes contain instance-specific answers rather than
 general lessons?"
 - **Opt.** `leaky`, `general`.
 - **Labels.** A composer that templates truth values into "lessons", against general lessons.
 - **Use.** An alarm only.
 
-**C9 `same_task_family`** (D5, wave 3). "Are these two task statements instances of the same
+**C9 `same_task_family`** (D:D5, wave 3). "Are these two task statements instances of the same
 recurring family?"
 - **Opt.** `same`, `different`.
 - **State.** Two bed prompts, 600/1.8K tokens [D inventory §1.3].

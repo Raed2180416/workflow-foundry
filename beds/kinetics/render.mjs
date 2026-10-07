@@ -4,7 +4,7 @@
 // recovers from the text (used by referenceSolve/oracle) and the raw numbers a careless reader
 // would take (used by the bad controls).
 import { rng } from '../lib/rng.mjs';
-import { FILLER, OUTLIER_NOTES, DECOY_NOTES, LATE_OUTLIER, LATE_DECOY, COLLEAGUE_FACT, INJECTIONS, SERIES_COMMENTS } from './pools.mjs';
+import { FILLER, OUTLIER_NOTES, DECOY_NOTES, LATE_OUTLIER, LATE_DECOY, COLLEAGUE_FACT, INJECTIONS, SERIES_COMMENTS, orderedBubble, SIDE_REMARKS, ANSWERS, REDIRECT, DOSE_TEXT, DOSE_HERRING, DOSE_OK } from './pools.mjs';
 
 export const RATE_FACTOR = { 'uM/s': 1, 'uM/min': 60, 'nM/s': 1000, 'nM/min': 60000, 'mM/min': 0.06, 'mM/s': 0.001 };
 export const CONC_FACTOR = { uM: 1, mM: 0.001, nM: 1000 };
@@ -92,8 +92,20 @@ function alias(c, style, world, rr) {
 function tempText(w, doc, kelvinDoc) {
   return kelvinDoc ? `${(w.tempC + 273.15).toFixed(1)} K` : `${w.tempC.toFixed(1)} °C`;
 }
-function noteParts(w, doc, world, rr, { flagColumn }) {
-  // returns { flag, notes: [text], firstFlag, rereadNote }
+// the read length is printed on the sheet for these formats (needed by "N min after the read started" phrasing)
+const SHOWS_WINDOW = new Set(['mdtable', 'prose', 'reader']);
+const readMinOf = (w, world) => (SHOWS_WINDOW.has(world.docs.find(d => d.series.includes(w.series)).format) ? world.seriesByKey[w.series].readMin : null);
+function noteParts(w, doc, world, rr, opts) {
+  const out = noteParts0(w, doc, world, rr, opts);
+  // [AUDIT F22] a side remark about a non-study item, in the vocabulary of the opposite outcome
+  if (out.notes.length && w.kind !== 'misattributed' && rr.chance(world.knobs.side)) {
+    const pool = w.status === 'outlier' ? SIDE_REMARKS.keepish : SIDE_REMARKS.exclish;
+    out.notes[out.notes.length - 1] += `; ${rr.pick(pool)(rr)}`;
+  }
+  return out;
+}
+function noteParts0(w, doc, world, rr, { flagColumn }) {
+  // returns { flag, notes: [text] }
   const out = { flag: '', notes: [] };
   const kelvin = doc.aliasStyle === 'kelvin';
   const tempShownInColumn = doc.format === 'reader' && world.knobs.tempRule;
@@ -102,15 +114,16 @@ function noteParts(w, doc, world, rr, { flagColumn }) {
     const tricky = w.tricky ? 1 : 0;
     if (w.reason === 'sat') {
       if (flagColumn && !tricky) out.flag = rr.pick(OUTLIER_NOTES.sat.flags); else out.notes.push(OUTLIER_NOTES.sat.text[tricky](rr));
-    } else if (w.reason === 'bubble') out.notes.push(w.timed ? timedBubble(w, world.seriesByKey[w.series], rr) : OUTLIER_NOTES.bubble.text[tricky](rr));
+    } else if (w.reason === 'bubble') out.notes.push(w.timed ? timedBubble(w, world.seriesByKey[w.series], rr) : rr.chance(world.knobs.order) ? orderedBubble(rr, 'during', readMinOf(w, world)) : OUTLIER_NOTES.bubble.text[tricky](rr));
     else if (w.reason === 'pipette') out.notes.push(OUTLIER_NOTES.pipette.variants[w.variant].text[tricky](rr));
     else if (w.reason === 'temp' && !tempShownInColumn) out.notes.push(rr.pick([`block read ${tempText(w, doc, kelvin)} during this read`, `block temp ${tempText(w, doc, kelvin)} at read`, `logged ${tempText(w, doc, kelvin)} on the block probe`]));
   } else if (w.status === 'decoy') {
     if (w.kind === 'low') { if (flagColumn) out.flag = 'LOW'; else out.notes.push(DECOY_NOTES.low(rr)); }
     else if (w.kind === 'temp-minor') { if (!tempShownInColumn) out.notes.push(rr.pick([`block temp ${tempText(w, doc, kelvin)} at read`, `block probe said ${tempText(w, doc, kelvin)}`])); }
     else if (w.kind === 'misattributed') out.notes.push(w.shownNote);
-    else if (['late-cleared', 'late-withdrawn', 'late-denied'].includes(w.kind)) return out;
+    else if (['late-cleared', 'late-withdrawn', 'late-denied', 'late-redirected'].includes(w.kind)) return out;
     else if (w.timed) out.notes.push(timedBubble(w, world.seriesByKey[w.series], rr));
+    else if (['bubble-cleared', 'bubble-after'].includes(w.kind) && rr.chance(world.knobs.order)) out.notes.push(orderedBubble(rr, w.kind === 'bubble-cleared' ? 'before' : 'after', readMinOf(w, world)));
     else out.notes.push(DECOY_NOTES[w.kind](rr));
   }
   return out;
@@ -133,19 +146,24 @@ function rateView(rate, doc, world, rr) {
   return { text: f.text, raw: f.value, canon: f.value / RATE_FACTOR[doc.rateUnit], canonHeader: f.value / RATE_FACTOR[doc.headerRateUnit] };
 }
 
+// [AUDIT F24] rates are measured at the enzyme dose the well received; the careful reader rescales them (SOP section 5)
+export const doseOf = (w, world) => world.byId[w.condId].doseFactor ?? 1;
 function wellView(w, doc, world, rr, shown, opts) {
   const rowConcUnit = doc.mixedRowUnits ? rr.pick(['uM', 'mM']) : doc.concUnit;
   const Sdisp = w.displayS ?? w.S;
   const sf = fmtConc(Sdisp * CONC_FACTOR[rowConcUnit], doc.numStyle);
-  const primary = rateView(w.status === 'reread' ? w.firstRate : w.rate * (w.typo ?? 1), doc, world, rr);
+  const df = doseOf(w, world);
+  const primary = rateView((w.status === 'reread' ? w.firstRate : w.rate * (w.typo ?? 1)) * df, doc, world, rr);
   const parts = noteParts(w, doc, world, rr, opts);
   let reread = null;
   if (w.status === 'reread') {
-    reread = rateView(w.rate, doc, world, rr);
+    reread = rateView(w.rate * df, doc, world, rr);
     if (w.kind === 'sat-reread' && opts.flagColumn) parts.flag = rr.pick(['OVR', 'SAT']);
   }
   const used = reread ?? primary;
-  shown.set(w.id, { S: w.S, rate: used.canon, rowS: sf.value / CONC_FACTOR[rowConcUnit], rawS: sf.value, rawRate: used.raw, rateHeader: used.canonHeader });
+  // rate: careful reader (units, corrections and the dose rescaling applied); rawRate: the printed number; rateHeader: the
+  // printed number in the header's units, without later corrections or the dose rescaling (careless reader)
+  shown.set(w.id, { S: w.S, rate: used.canon / df, rowS: sf.value / CONC_FACTOR[rowConcUnit], rawS: sf.value, rawRate: used.raw, rateHeader: used.canonHeader, doseFactor: df });
   return { w, S: sf.text, rowConcUnit, rate: primary.text, reread: reread?.text ?? null, rereadKind: w.kind, flag: parts.flag, notes: parts.notes, temp: w.tempC };
 }
 function rereadSentence(v, unitLabel, rr) {
@@ -161,7 +179,7 @@ function filler(world, doc, rr, n) {
   const c = world.byId[world.seriesByKey[doc.series[0]].labelCondId];
   const lines = [];
   const pool = rr.shuffle(FILLER.map((_, i) => i));
-  for (let i = 0; i < n; i++) lines.push(FILLER[pool[i % pool.length]]({ r: rr, pH: phTxt(c.pH), T: c.tempC, reader: world.meta.reader }));
+  for (let i = 0; i < n; i++) lines.push(FILLER[pool[i % pool.length]]({ r: rr, pH: phTxt(c.pH), T: c.tempC, reader: world.meta.reader, lot: world.meta.lot, mixLog: !!world.dose }));
   return lines;
 }
 
@@ -171,7 +189,7 @@ function seriesMeta(world, s, rr) {
   const t = hhmm(s.readStart), n = s.readMin;
   return rr.pick([
     `Read started ${t}; ${rr.pick([20, 25, 30, 40])} cycles over ${n} min; enzyme lot ${world.meta.lot}.`,
-    `Enzyme lot ${world.meta.lot}, ${rr.pick([2, 5])} uL per well; read ${t}, ${n} min kinetic.`,
+    `Enzyme lot ${world.meta.lot}, 5 uL per well; read ${t}, ${n} min kinetic.`,
     `${world.meta.reader}, kinetic read from ${t} for ${n} min; master mix MM-${rr.int(1, 9)}.`,
   ]);
 }
