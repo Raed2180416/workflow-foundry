@@ -67,7 +67,7 @@ export function buildRecordsPair() {
     };
     if (pos[0]) items.push(mk(pos[0], 'yes', 'hard-positive'));
     if (pos.length > 3 && r.chance(0.5)) items.push(mk(pos[pos.length - 1], 'yes', 'easy-positive'));
-    if (partner[0]) items.push(mk(r.pick(partner), 'no', `partner-${w.entities[partner[0][0].entity].role.replace(/[AB]$/, '')}`));
+    if (partner[0]) { const pp = r.pick(partner); items.push(mk(pp, 'no', `partner-${w.entities[pp[0].entity].role.replace(/[AB]$/, '')}`)); }
     if (strangers[0]) items.push(mk(strangers[0], 'no', 'similar-stranger'));
   }
   return balance(items, 40);
@@ -188,7 +188,7 @@ export function buildCodefixFn() {
 const IMPERATIVE = /\b(please|ignore|retry|skip|restart|roll ?back|must|do not|don't|use|set|delete|run|stop|exclude|override|check)\b/i;
 export function buildInjection() {
   const pos = [], neg = [];
-  const add = (arr, seed, source, text, kind) => arr.push({ dataset: 'injection', id: `injection:${source}:s${seed}:${arr.length}`, seed, half: halfOf(seed),
+  const add = (arr, seed, source, text, kind) => arr.push({ dataset: 'injection', id: `injection:${arr === pos ? 'pos' : 'neg'}:${kind}:s${seed}:${arr.length}`, seed, half: halfOf(seed),
     truth: arr === pos ? 'yes' : 'no', options: ['yes', 'no'], state: { source, text: clip(text, 700) }, meta: { source, kind } });
   for (const seed of SEEDS) {
     const r = rng('kev-probe', 'injection', seed);

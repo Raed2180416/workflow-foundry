@@ -9,19 +9,18 @@ export const VERSION = '2.0.0';
 export const WINDOW = 1800; // seconds of logs per task
 const MAX_ATTEMPTS = 64; // from this attempt on the soft preferences (Jaccard, fallback callers) are dropped;
 // structural validity (topology size, eligible root candidates) is never relaxed
-const SOFT_ATTEMPTS = 12; // after this many attempts the soft-caller preference is dropped
 
 // Difficulty knobs. lines is the target bundle size (actual size is within about +/-15%).
 // v1 knobs are unchanged; the v2 block (after `paraphrase`) was added by the audit (AUDIT.md).
 const BASE = { anchors: 1, minRootCands: 1, wrap: 0, chronic: 0, pods: false, soft: 0, deploy: 0, blipRoot: false, blipSame: false, benignHard: false, added: 0, stale: 0, proseAliases: 0, mislead: 0, notice: false, inject: false, legacySource: false, noisyNote: false, hypothesis: false, addresses: false };
-const HARD = { paraphrase: true, lookalikes: true, configLag: [30, 150], anon: 0.6, mixedNotes: 0.5, silentSoft: 0.5, softErr: 0.6, warnSev: 0.3, mention: 0.03, mentionErr: 0.4, decoy: 1, secondary: [0.35, 0.65], lead: [90, 300], cacheLag: [70, 200], blipNear: true, nearPrecursor: 0.8, ticketSubset: true, hardNotes: 1, renewHerring: true, baselines: 2, wantSoft: true, bigSkew: 0.6 };
-const EASY = { paraphrase: false, lookalikes: false, configLag: null, anon: 0, mixedNotes: 0, silentSoft: 0, softErr: 0, warnSev: 0, mention: 0.01, mentionErr: 0, decoy: 0, secondary: [0, 0], lead: [15, 40], cacheLag: [3, 25], blipNear: false, nearPrecursor: 0, ticketSubset: false, hardNotes: 0, renewHerring: false, baselines: 0, wantSoft: false, bigSkew: 0 };
+const HARD = { onsetRepeat: 0.25, quiet: [0.3, 1], blipOnset: 0.6, recoverAlt: 0.7, decoyBelowRoot: 0.5, paraphrase: true, lookalikes: true, configLag: [30, 150], anon: 0.6, mixedNotes: 0.5, silentSoft: 0.5, softErr: 0.6, warnSev: 0.3, mention: 0.03, mentionErr: 0.4, decoy: 1, secondary: [0.35, 0.65], lead: [90, 300], cacheLag: [70, 200], blipNear: true, nearPrecursor: 0.8, ticketSubset: true, hardNotes: 2, renewHerring: true, baselines: 2, wantSoft: 0.5, bigSkew: 0.6 };
+const EASY = { onsetRepeat: 0, quiet: [1, 1], blipOnset: 0, recoverAlt: 0, decoyBelowRoot: 1, paraphrase: false, lookalikes: false, configLag: null, anon: 0, mixedNotes: 0, silentSoft: 0, softErr: 0, warnSev: 0, mention: 0.01, mentionErr: 0, decoy: 0, secondary: [0, 0], lead: [15, 40], cacheLag: [3, 25], blipNear: false, nearPrecursor: 0, ticketSubset: false, hardNotes: 0, renewHerring: false, baselines: 0, wantSoft: 0, bigSkew: 0 };
 export const KNOBS = {
   1: { ...BASE, ...EASY, anchors: 1, services: 6, batch: 1, lines: 300, bg: 0.78, styles: ['plain'], refs: ['name'], nearBias: 0.4, blipOther: 1, noisyNote: true },
   2: { ...BASE, ...EASY, anchors: 2, services: 8, batch: 1, lines: 400, bg: 0.78, wrap: 0.15, styles: ['plain', 'bracket', 'kv'], refs: ['name', 'name', 'host'], soft: 0.4, nearBias: 0.5, deploy: 1, blipSame: true, blipOther: 1, noisyNote: true, mention: 0.015, secondary: [0.1, 0.2] },
-  3: { ...BASE, ...HARD, anchors: 2, minRootCands: 2, services: 11, batch: 1, lines: 420, bg: 0.6, wrap: 0.3, chronic: 1, styles: ['plain', 'bracket', 'kv', 'json', 'short'], refs: ['name', 'host', 'legacy'], pods: true, soft: 0.5, nearBias: 0.6, deploy: 1, blipRoot: true, blipSame: true, blipOther: 2, benignHard: true, added: 1 },
-  4: { ...BASE, ...HARD, anchors: 3, minRootCands: 2, services: 14, batch: 2, lines: 1600, bg: 0.7, wrap: 0.35, chronic: 1, styles: ['plain', 'bracket', 'kv', 'json', 'short'], refs: ['name', 'host', 'legacy', 'ip'], pods: true, soft: 0.45, nearBias: 0.75, deploy: 1, blipRoot: true, blipSame: true, blipOther: 2, benignHard: true, added: 1, stale: 1, proseAliases: 2, mislead: 1, hypothesis: true, addresses: true, warnSev: 0.35 },
-  5: { ...BASE, ...HARD, anchors: 3, minRootCands: 2, services: 18, batch: 2, lines: 4000, bg: 0.72, wrap: 0.35, chronic: 2, styles: ['plain', 'bracket', 'kv', 'json', 'short'], refs: ['name', 'host', 'legacy', 'ip'], pods: true, soft: 0.45, nearBias: 0.8, deploy: 2, blipRoot: true, blipSame: true, blipOther: 4, benignHard: true, added: 2, stale: 1, proseAliases: 3, mislead: 1, notice: true, inject: true, legacySource: true, hypothesis: true, addresses: true, warnSev: 0.4, softErr: 0.7, decoy: 2, hardNotes: 2, baselines: 3 },
+  3: { ...BASE, ...HARD, anchors: 2, minRootCands: 2, decoy: 2, services: 11, batch: 1, lines: 420, bg: 0.6, wrap: 0.3, chronic: 1, styles: ['plain', 'bracket', 'kv', 'json', 'short'], refs: ['name', 'host', 'legacy'], pods: true, soft: 0.5, nearBias: 0.6, deploy: 1, blipRoot: true, blipSame: true, blipOther: 2, benignHard: true, added: 1 },
+  4: { ...BASE, ...HARD, anchors: 3, minRootCands: 2, decoy: 2, services: 14, batch: 2, lines: 1600, bg: 0.7, wrap: 0.35, chronic: 1, styles: ['plain', 'bracket', 'kv', 'json', 'short'], refs: ['name', 'host', 'legacy', 'ip'], pods: true, soft: 0.45, nearBias: 0.75, deploy: 1, blipRoot: true, blipSame: true, blipOther: 2, benignHard: true, added: 1, stale: 1, proseAliases: 2, mislead: 1, hypothesis: true, addresses: true, warnSev: 0.35 },
+  5: { ...BASE, ...HARD, anchors: 3, minRootCands: 2, services: 18, batch: 2, lines: 4000, bg: 0.72, wrap: 0.35, chronic: 2, styles: ['plain', 'bracket', 'kv', 'json', 'short'], refs: ['name', 'host', 'legacy', 'ip'], pods: true, soft: 0.45, nearBias: 0.8, deploy: 2, blipRoot: true, blipSame: true, blipOther: 4, benignHard: true, added: 2, stale: 1, proseAliases: 3, mislead: 1, notice: true, inject: true, legacySource: true, hypothesis: true, addresses: true, warnSev: 0.4, softErr: 0.7, decoy: 2, hardNotes: 3, baselines: 3 },
 };
 
 // Which roles can host each fault class (the root is never the gateway or a batch job).
@@ -227,9 +226,22 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
     && (cls !== 'dns_resolution_failure' || s.callees.length > 0 || Boolean(s.ext));
   const rootCands = serving.filter(canRoot);
   if (rootCands.length < K.minRootCands) return null;
+  // Blast-radius preferences, checked per candidate (no extra attempts): "every serving service" must not
+  // reach Jaccard 0.8, and from d3 at least one caller must fall back (so that ERROR lines alone do not decide
+  // impact). The root is then uniform (layer-weighted) among the candidates that satisfy them.
+  const blastOf = s => {
+    const imp = new Set([s.key]);
+    for (const stack = [s]; stack.length;) for (const e of stack.pop().callers) if (!e.soft && S[e.from].kind !== 'batch' && !imp.has(e.from)) { imp.add(e.from); stack.push(S[e.from]); }
+    return { imp, deg: new Set(edges.filter(e => e.soft && imp.has(e.to) && !imp.has(e.from)).map(e => e.from)) };
+  };
+  // v3 (audit): the falling-back caller is required in a share K.wantSoft of tasks only; requiring it always
+  // made the root the busiest callee of the table in 30% of d3 tasks (a table-only shortcut).
+  const needSoft = r.chance(K.wantSoft);
+  const okCands = rootCands.filter(s => { const b = blastOf(s); return last || (b.imp.size / serving.length < 0.8 && (!needSoft || b.deg.size >= 1)); });
+  if (!okCands.length) return null;
   const rootWeight = s => (s.role.layer === 1 ? 0.4 : 1);
-  let xr = r.next() * rootCands.reduce((a, s) => a + rootWeight(s), 0);
-  const root = rootCands.find(s => (xr -= rootWeight(s)) <= 0) || rootCands[rootCands.length - 1];
+  let xr = r.next() * okCands.reduce((a, s) => a + rootWeight(s), 0);
+  const root = okCands.find(s => (xr -= rootWeight(s)) <= 0) || okCands[okCands.length - 1];
   const refOf = e => {
     const callee = S[e.to];
     if (e.ref === 'host') return callee.host;
@@ -300,11 +312,9 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
     const t = outTime.get(e.to) + e.delay;
     if (!degraded.has(e.from) || t < degraded.get(e.from)) degraded.set(e.from, t);
   }
-  // Rejection sampling (audit fix): "every serving service" must not reach Jaccard 0.8, and from
-  // d3 at least one caller must fall back (so that plain ERROR lines do not decide impact alone).
-  const allServingJaccard = impacted.size / serving.length;
-  const softWanted = attempt < SOFT_ATTEMPTS ? 1 : 0; // v3 (audit): v2 asked for 2 first, which favoured roots with many callers
-  if (!last && (allServingJaccard >= 0.8 || (K.wantSoft && degraded.size < softWanted))) return null;
+  // The candidate filter above guarantees the blast-radius preferences (v2 asked for two falling-back callers
+  // first, which favoured roots with many callers); this re-check guards the propagation code against drift.
+  if (!last && (impacted.size / serving.length >= 0.8 || (needSoft && degraded.size < 1))) throw new Error('incident: blast-radius check drifted');
 
   if (K.silentSoft && degraded.size) {
     const softIn = edges.filter(e => e.soft && degraded.has(e.from) && outTime.has(e.to));
@@ -321,12 +331,15 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   }
 
   // Decoys (d3+): healthy services with loud trouble unrelated to serving, starting shortly
-  // before T. The first sits directly below the root when possible (a callee the root names).
+  // before T. v3 (audit): the first sits directly below the root (a callee the root names) only with
+  // probability K.decoyBelowRoot, otherwise below any impacted service (v2: always below the root when it had
+  // a callee, so "a caller of the loud healthy service" pointed at the root).
   const decoys = [];
   if (K.decoy) {
     const below = cls === 'connection_pool_exhaustion' ? [S[root.role.db]] : root.callees.map(e => S[e.to]);
     const others = serving.filter(s => s !== gateway && !impacted.has(s.key));
-    const first = below.length ? r.pick(below) : (others.length ? r.pick(others) : null);
+    const belowAny = others.filter(s => s.callers.some(e => impacted.has(e.from)));
+    const first = below.length && r.chance(K.decoyBelowRoot) ? r.pick(below) : belowAny.length ? r.pick(belowAny) : (others.length ? r.pick(others) : null);
     if (first) decoys.push(first);
     for (let i = 1; i < K.decoy; i++) {
       const pool = others.filter(s => !decoys.includes(s));
@@ -335,6 +348,10 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   }
   const D = decoys.find(s => root.callees.some(e => e.to === s.key)) || null;
   const edgeToD = D ? root.callees.find(e => e.to === D.key) : null;
+
+  // v3 (audit): how much the root itself logs about its fault (d3+: 30% to 100% of the v2 volume). In v2 the
+  // root had the most WARN+ERROR lines plus blame of all services in most tasks.
+  const quiet = r.float(...K.quiet);
 
   // ---------------------------------------------------------------- events
   const events = [];
@@ -409,8 +426,13 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   // Mutual TLS: a certificate-expiry root presents the same expired certificate as a client, so
   // its own outbound calls fail too (and its callees log the rejection).
   const calleeP = cls === 'dns_resolution_failure' || cls === 'connection_pool_exhaustion' ? 0.15 : cls === 'certificate_expiry' ? 0.35 : 0.25;
+  // v3 (audit): from d3 the root keeps repeating its onset wording while the fault lasts (as real services
+  // do), so "the last onset-like line before callers fail" is no longer the onset; T is the first line of the
+  // final episode that never recovered. Event-like onsets (a rollout, a cache refill) do not repeat.
+  const repeatP = ['bad_config_deploy', 'poisoned_cache'].includes(cls) ? 0 : K.onsetRepeat;
   const symptom = (t, rr) => {
     const c = ctxFor(root, t, rr);
+    if (repeatP && !gradual && rr.chance(repeatP)) return onsetT(c, rr);
     if (secT && rr.chance(secShare)) return rr.pick(secT)(c, rr);
     if (calleeT && rr.chance(calleeP)) return rr.pick(calleeT)(c, rr);
     return rr.chance(0.65) ? rr.pick(directT)(c, rr) : rr.pick(indirectT)(c, rr);
@@ -460,7 +482,7 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
         // Data-tier services.
         if (s === root && t > symFrom) {
           if (cls === 'memory_leak_oom' && inDown(t)) continue;
-          if (cls === 'disk_full' && rb.chance(F.rootReqP)) { emit(t, s, symptom(t, rb), 'root'); continue; }
+          if (cls === 'disk_full' && rb.chance(F.rootReqP * quiet)) { emit(t, s, symptom(t, rb), 'root'); continue; }
           if (cls === 'poisoned_cache' && rb.chance(0.25)) { emit(t, s, rb.pick(indirectT)(ctxFor(s, t, rb), rb), 'root'); continue; }
         }
         emit(t, s, rb.pick(C.BG_DATA[s.kind])(ctxFor(s, t, rb), rb), 'bg');
@@ -501,7 +523,7 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
       }
       if (s === root && t > symFrom) {
         if (F.rootTrafficKeep !== undefined && !rb.chance(F.rootTrafficKeep)) continue;
-        if (rb.chance(F.rootReqP)) { emit(t, s, rootReqLine(t, rb), 'root'); continue; }
+        if (rb.chance(F.rootReqP * quiet)) { emit(t, s, rootReqLine(t, rb), 'root'); continue; }
       } else if (impacted.has(s.key) && s !== root && t >= impacted.get(s.key) && rb.chance(failProb.get(s.key))) {
         const cands = failingCallees(s, t);
         if (cands.length) { emit(t, s, depFailure(s, t, rb, rb.pick(cands)), 'dep'); continue; }
@@ -522,13 +544,16 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
     const end = cls === 'disk_full' ? 99 : root.fx.max - 1;
     const valueAt = t => Math.round(start + (end - start) * (t - T) / Math.max(1, lead));
     emit(T, root, onsetT(rootCtx(T), rf, start), 'onset');
-    for (let t = T + rf.int(15, 40); t < symFrom - 5; t += rf.int(15, 40)) emit(t, root, rf.pick(C.TREND[cls].step)(rootCtx(t), rf, valueAt(t)), 'root');
+    for (let t = T + rf.int(15, 40); t < symFrom - 5; t += rf.int(15, 40)) emit(t, root, (repeatP && rf.chance(repeatP) ? onsetT : rf.pick(C.TREND[cls].step))(rootCtx(t), rf, valueAt(t)), 'root');
     emit(symFrom, root, rf.pick(F.onset)(rootCtx(symFrom), rf), 'root');
   } else {
     emit(T, root, onsetT(rootCtx(T), rf), 'onset');
   }
   if (cls === 'memory_leak_oom') {
-    for (const g of leak.growth) emit(g.t, root, rf.pick(growthT)(rootCtx(g.t), rf, clamp(g.p, 0, 99)), 'root');
+    for (const g of leak.growth) {
+      const p = clamp(g.p, 0, 99);
+      emit(g.t, root, repeatP && rf.chance(repeatP) ? onsetT({ ...rootCtx(g.t), p0: p, mb0: Math.round(root.fx.lim * p / 100) }, rf) : rf.pick(growthT)(rootCtx(g.t), rf, p), 'root');
+    }
     for (const o of leak.ooms) {
       emit(o.t, root, rf.pick(F.oom)({ ...rootCtx(o.t), restarts: o.restarts }, rf), 'root');
       const [, up] = leak.down.find(([a]) => a === o.t);
@@ -542,7 +567,7 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
       for (let i = 0; i < n; i++) { const t = rf.int(leak.ooms[0].t + 1, WINDOW - 1); if (!inDown(t)) emit(t, root, rf.pick(extra)(rootCtx(t), rf), 'root'); }
     }
   } else {
-    const nSym = Math.round(0.4 * root.lambda * (WINDOW - symFrom)) + 5;
+    const nSym = Math.round(0.4 * quiet * root.lambda * (WINDOW - symFrom)) + 4;
     const first = symFrom + (cls === 'poisoned_cache' || gradual || symFrom > T ? 0 : 2);
     emit(first + (gradual ? 1 : 0), root, rf.pick(directT)(rootCtx(first), rf), 'root');
     for (let i = 0; i < nSym; i++) { const t = rf.int(first, WINDOW - 1); emit(t, root, symptom(t, rf), 'root'); }
@@ -662,11 +687,14 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   const rh = r.fork('herrings');
   const nonRoot = serving.filter(s => s !== root && s.key !== 'gateway');
   // A short anomaly that recovers on its own; returns its start time.
-  const blip = (s, klass, t0, tag, offsets = null) => {
+  // v3 (audit): from d3 the recovery is often paraphrased or only visible in values (RECOVER_ALT), and the
+  // root's own blip may open with onset wording (BLIP_ONSET).
+  const blip = (s, klass, t0, tag, offsets = null, onsetLike = false) => {
     const P = C.FAULTS[klass];
     const offs = offsets || blipOffsets();
-    offs.lines.forEach(dt => emit(t0 + dt, s, rh.pick(P.blip)(ctxFor(s, t0 + dt, rh), rh), tag));
-    emit(t0 + offs.end, s, P.recover(ctxFor(s, t0 + offs.end, rh), rh), tag);
+    offs.lines.forEach((dt, i) => emit(t0 + dt, s, (i === 0 && onsetLike ? C.BLIP_ONSET[klass] : rh.pick(P.blip))(ctxFor(s, t0 + dt, rh), rh), tag));
+    const recover = K.recoverAlt && rh.chance(K.recoverAlt) ? rh.pick(C.RECOVER_ALT[klass]) : P.recover;
+    emit(t0 + offs.end, s, recover(ctxFor(s, t0 + offs.end, rh), rh), tag);
     return t0;
   };
   const blipOffsets = () => {
@@ -679,7 +707,8 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
     // d3+: close to T (recovers at least 60 s before it); otherwise 5.5 to 12 minutes before.
     const offs = blipOffsets();
     const t0 = K.blipNear ? rh.int(Math.max(30, T - 480), T - 60 - offs.end) : rh.int(Math.max(30, T - 720), T - 330);
-    herrings.blips.push({ svc: root.name, cls, t: blip(root, cls, t0, 'blip-root', offs), end: t0 + offs.end });
+    const onsetLike = Boolean(K.blipOnset && C.BLIP_ONSET[cls] && rh.chance(K.blipOnset));
+    herrings.blips.push({ svc: root.name, cls, t: blip(root, cls, t0, 'blip-root', offs, onsetLike), end: t0 + offs.end, onsetLike });
   }
   const sameHosts = nonRoot.filter(s => cls !== 'upstream_rate_limiting' || s.ext);
   if (K.blipSame && sameHosts.length) {
@@ -707,7 +736,9 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   herrings.decoys = [];
   for (const s of decoys) {
     const tD = Math.max(5, T - rh.int(30, 300));
-    const n = Math.round(rh.int(14, 22) * Math.max(1, K.lines / 600));
+    // v3 (audit): about as loud as the root's own WARN/ERROR lines (v2: a fixed 14-22 at d3).
+    const rootLoud = events.filter(ev => ev.s === root.key && (ev.level === 'WARN' || ev.level === 'ERROR')).length;
+    const n = Math.max(Math.round(rh.int(14, 22) * Math.max(1, K.lines / 600)), Math.round(rootLoud * rh.float(0.7, 1.3)));
     const pool = C.DECOY[s.kind] || C.DECOY.svc;
     // Half of the decoy lines are benign-valued warnings in another class's vocabulary, so the
     // decoy also "looks like" a fault class to keyword matching.
@@ -860,7 +891,7 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   // Hard dependencies stated explicitly (prefer callees that could have had a fallback).
   const hardCands = edges.filter(e => !e.soft && e.from !== 'gateway' && !added.includes(e) && !mixedUsed.has(e));
   const hardPicked = rs.sample([...hardCands.filter(e => C.ROLE[e.to].fallback), ...hardCands.filter(e => !C.ROLE[e.to].fallback)].slice(0, Math.max(K.hardNotes, 3)), K.hardNotes);
-  for (const e of hardPicked) notes.push(note(C.NOTES.hard, S[e.from].name, S[e.to].name, { what: S[e.to].role.what }));
+  for (const e of hardPicked) notes.push(note(C.NOTES.hard, S[e.from].name, S[e.to].name, { what: S[e.to].role.what, ver: S[e.from].oldVer }));
   // Aliases that only appear in prose.
   const legacyRefd = [...new Set(edges.filter(e => e.ref === 'legacy').map(e => e.to))];
   const proseAliasKeys = rs.sample(legacyRefd.length >= K.proseAliases ? legacyRefd : [...legacyRefd, ...serving.map(s => s.key).filter(k => !legacyRefd.includes(k))], K.proseAliases);

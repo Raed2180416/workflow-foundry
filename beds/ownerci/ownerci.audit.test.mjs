@@ -157,7 +157,28 @@ test('F6 no false negatives: reformatted, renamed and alternative-fix sources pa
   assert.deepEqual(failures, []);
 });
 
-test('F7 freezing: generate reads nothing outside beds/ownerci and beds/lib (Node permission model)', () => {
+test('F7 hidden suites: previously surviving, non-equivalent mutants are now killed by hidden tests', () => {
+  const pins = [
+    ['context', 'logic-swap', /if \(!node \|\| typeof node !== 'object'\)/, /\|\| -> &&/],
+    ['context', 'off-by-one', /if \(over\(\) > 0\) throw new FoundryError\('CONTEXT_OVERFLOW'/, /^0 -> 1$/],
+    ['schema-subset', 'off-by-one', /add = \(path, problem\)/, /^0 -> 1$/],
+    ['journal', 'bool-swap', /str\(entry\.modelId, 'modelId', true\)/, /true -> false/],
+    ['stats', 'default-arg', /seed = 'bootstrap'/, /seed = 'bootstrap'/],
+    ['stats', 'arg-swap', /hat\.push\(passHatK\(tn, tc, k\)\)/, /swap tn <-> tc/],
+    ['distill', 'default-arg', /maxErrorRate = 0\.1/, /maxErrorRate = 0\.1/],
+    ['distill', 'cmp-flip', /relTol \* Math\.max\(1, Math\.abs\(v\)\)/, /<= -> </],
+  ];
+  for (const [id, operator, line, note] of pins) {
+    const lines = originalOf(id).split('\n');
+    const kept = bed.CATALOG.mutants.filter(m => m.module === id && m.operator === operator && line.test(lines[m.line - 1]) && note.test(m.note));
+    assert.ok(kept.length > 0, `${id} ${operator} ${note}: not in the catalog (no test kills it)`);
+    assert.ok(kept.every(m => m.hiddenFailing.length > 0), `${id} ${operator} ${note}: hidden suite does not kill it`);
+  }
+  const counts = Object.fromEntries(MODULE_IDS.map(id => [id, bed.CATALOG.modules[id].hiddenTests.length]));
+  assert.deepEqual(counts, { verdict: 10, context: 18, 'schema-subset': 12, journal: 11, stats: 10, distill: 10 });
+});
+
+test('F9 freezing: generate reads nothing outside beds/ownerci and beds/lib (Node permission model)', () => {
   const script = `const bed = await import(${JSON.stringify(path.join(HERE, 'index.mjs'))});
     const ids = []; for (const d of [1, 2, 3, 4, 5]) for (const seed of [1, 2]) ids.push(bed.generate({ seed, split: 'test', difficulty: d }).id);
     console.log(JSON.stringify(ids));`;
@@ -168,7 +189,7 @@ test('F7 freezing: generate reads nothing outside beds/ownerci and beds/lib (Nod
   assert.equal(JSON.parse(r.stdout).length, 10);
 });
 
-test('F7 freezing: MANIFEST hashes match the fixtures and, when git is available, the frozen commit', () => {
+test('F9 freezing: MANIFEST hashes match the fixtures and, when git is available, the frozen commit', () => {
   const git = spawnSync('git', ['-C', REPO, 'cat-file', '-e', `${bed.MANIFEST.commit}^{commit}`], { encoding: 'utf8' });
   for (const id of MODULE_IDS) {
     const files = fixtureFiles(id);
@@ -194,7 +215,7 @@ test('F8 determinism: a fresh process generates byte-identical tasks', () => {
   assert.deepEqual(JSON.parse(r.stdout), keys.map(([seed, split, difficulty]) => sha256(canonical(bed.generate({ seed, split, difficulty })))));
 });
 
-test('F9 near-miss control is the documented one for multi-mutant tasks (fix only the first mutant)', () => {
+test('controls: the near-miss control is the documented one for multi-mutant tasks (fix only the first mutant)', () => {
   const task = bed.generate({ seed: 8, split: 'test', difficulty: 3 });
   const inst = bed.instance(task);
   const near = bed.badControls.find(c => c.name === 'near-miss-fix-one').make(task).patched_source;

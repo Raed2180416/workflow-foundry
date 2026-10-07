@@ -19,6 +19,7 @@ import { MODULES } from './modules.mjs';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.resolve(HERE, '..', '..');
 const FIXTURES = path.join(HERE, 'fixtures');
+const HIDDEN_ORIGIN = 'authored for this bed from the original module behaviour; context, schema-subset, journal, stats and distill suites extended by the 2026-10-07 audit (AUDIT.md F7)';
 const git = (...args) => execFileSync('git', ['-C', REPO, ...args], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
 
 // Edits applied to frozen test files. Each must match exactly once.
@@ -84,7 +85,7 @@ function main() {
     const hidden = existsSync(hiddenPath) ? readFileSync(hiddenPath, 'utf8') : null;
     manifest.modules[id] = {
       modulePath: m.modulePath, testPath: m.testPath, related: m.related, files,
-      hidden: hidden === null ? null : { path: 'hidden.test.mjs', sha256: sha256(hidden), origin: 'authored for this bed from the original module behaviour' },
+      hidden: hidden === null ? null : { path: 'hidden.test.mjs', sha256: sha256(hidden), origin: HIDDEN_ORIGIN },
     };
   }
   writeFileSync(path.join(FIXTURES, 'MANIFEST.json'), `${JSON.stringify(manifest, null, 2)}\n`);

@@ -11,7 +11,9 @@ const OUT = path.join(RUN_DIR, 'latency.jsonl');
 const SIZES = [100, 500, 2000, 6000];          // target state tokens (Qwen tokenizer)
 const CHARS_PER_TOKEN = 1.78;                   // measured on this filler with the base tokenizer (log text: hex, timestamps)
 const QCOUNTS = [1, 3, 6];
-const REPEATS = Number(process.env.REPEATS ?? 5);
+// 5 repeats each; the 6000-token size is cut to 3 repeats because a fresh 6k-token prefill takes minutes on
+// this shared 4-core box (stated in the report).
+const REPEATS = { 100: 5, 500: 5, 2000: 5, 6000: 3 };
 
 // Filler: a generated incident log (dev seed 11, d5). Content is irrelevant to latency but realistic.
 const filler = build(11, 'dev', 5).task.inputs.log;
@@ -49,9 +51,11 @@ async function timed(state, n, cond, size, rep) {
 const ident = await kevIdentity();
 const before = load();
 console.log('kev', JSON.stringify(ident), 'load', before.uptime);
+const done = new Set(readJsonl(OUT).map(r => `${r.size}|${r.n}|${r.rep}|${r.cond}`));
 for (const size of SIZES) {
-  for (let rep = 0; rep < REPEATS; rep++) {
+  for (let rep = 0; rep < REPEATS[size]; rep++) {
     for (const n of QCOUNTS) {
+      if (done.has(`${size}|${n}|${rep}|fresh`) && done.has(`${size}|${n}|${rep}|cached`)) continue; // resume
       const s = freshState(size);
       await timed(s, n, 'fresh', size, rep);   // new state: prefix cache miss
       await timed(s, n, 'cached', size, rep);  // same state again: prefix cache hit

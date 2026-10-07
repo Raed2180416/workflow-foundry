@@ -911,7 +911,7 @@ export const NOTES = {
     // v3 (audit): paraphrases without the keywords a short script greps for.
     (a, b, x) => `When ${b} is unavailable, ${a} shows ${x.fallback}; nothing breaks for its users.`,
     (a, b, x) => `${a} can do without ${b}: it substitutes ${x.fallback} and its requests still succeed.`,
-    (a, b, x) => `A ${b} outage only costs ${a} some freshness, because ${a} then serves ${x.fallback}.`,
+    (a, b, x) => `An outage of ${b} only costs ${a} some freshness, because ${a} then serves ${x.fallback}.`,
     (a, b, x) => `${a} only uses ${b} to enrich its answers; without it, ${a} answers with ${x.fallback}.`,
   ],
   hard: [
@@ -919,7 +919,7 @@ export const NOTES = {
     (a, b, x) => `Calls from ${a} to ${b} are not optional; there is no degraded mode for ${x.what}.`,
     (a, b, x) => `A cached fallback for ${b} inside ${a} was proposed but never built, so ${a} cannot serve without it.`,
     // v3 (audit): hard dependencies stated with the vocabulary of optional ones (read the whole sentence).
-    (a, b, x) => `${a} used to fall back to a cached copy when ${b} failed, but that fallback was removed in ${x.ver}; today a ${b} failure fails ${a}'s requests.`,
+    (a, b, x) => `${a} used to fall back to a cached copy when ${b} failed, but that fallback was removed in ${x.ver}; today every failure of ${b} fails ${a}'s requests.`,
     (a, b, x) => `${a} still has an 'optional' flag for ${b} in its config, but the flag has been ignored since ${x.ver}: ${a} cannot answer without ${b}.`,
     (a, b, x) => `Unlike its other dependencies, ${b} is not something ${a} can do without; there is no degraded mode for ${x.what}.`,
     (a, b, x) => `The planned fallback for ${b} in ${a} (serving stale ${x.what}) was never switched on, so ${a} errors whenever ${b} does.`,

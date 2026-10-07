@@ -36,7 +36,7 @@
       "hidden": {
         "path": "hidden.test.mjs",
         "sha256": "ec20096f8da9604bed801d150f76f5fd19627f96eb2224973828b59eedebf7fa",
-        "origin": "authored for this bed from the original module behaviour"
+        "origin": "authored for this bed from the original module behaviour; context, schema-subset, journal, stats and distill suites extended by the 2026-10-07 audit (AUDIT.md F7)"
       }
     },
     "context": {
@@ -79,8 +79,7 @@
       "hidden": {
         "path": "hidden.test.mjs",
         "sha256": "d2482544a40e5a823e872de4ada83d8e63c6cd7fc51ad6eae33bdc7bc870ba6e",
-        "origin": "authored for this bed from the original module behaviour",
-        "revised": "2026-10-07 audit (AUDIT.md F7): added cases for boundaries no earlier hidden test pinned"
+        "origin": "authored for this bed from the original module behaviour; context, schema-subset, journal, stats and distill suites extended by the 2026-10-07 audit (AUDIT.md F7)"
       }
     },
     "schema-subset": {
@@ -123,8 +122,7 @@
       "hidden": {
         "path": "hidden.test.mjs",
         "sha256": "0279765184ee3efd8da0e326874e8df99a5e9a7c73249c452a59d9b714636d04",
-        "origin": "authored for this bed from the original module behaviour",
-        "revised": "2026-10-07 audit (AUDIT.md F7): added cases for boundaries no earlier hidden test pinned"
+        "origin": "authored for this bed from the original module behaviour; context, schema-subset, journal, stats and distill suites extended by the 2026-10-07 audit (AUDIT.md F7)"
       }
     },
     "journal": {
@@ -162,8 +160,7 @@
       "hidden": {
         "path": "hidden.test.mjs",
         "sha256": "37811d23e2dc62c72531cd388ca6bde10a315f645f4ed27e64d3b6cecd617db4",
-        "origin": "authored for this bed from the original module behaviour",
-        "revised": "2026-10-07 audit (AUDIT.md F7): added cases for boundaries no earlier hidden test pinned"
+        "origin": "authored for this bed from the original module behaviour; context, schema-subset, journal, stats and distill suites extended by the 2026-10-07 audit (AUDIT.md F7)"
       }
     },
     "stats": {
@@ -198,8 +195,7 @@
       "hidden": {
         "path": "hidden.test.mjs",
         "sha256": "ca854de801fbf5a82553f556c77dc3ab1e8680d0065ce01a0995f697b73eb0a7",
-        "origin": "authored for this bed from the original module behaviour",
-        "revised": "2026-10-07 audit (AUDIT.md F7): added cases for boundaries no earlier hidden test pinned"
+        "origin": "authored for this bed from the original module behaviour; context, schema-subset, journal, stats and distill suites extended by the 2026-10-07 audit (AUDIT.md F7)"
       }
     },
     "distill": {
@@ -234,8 +230,7 @@
       "hidden": {
         "path": "hidden.test.mjs",
         "sha256": "7bb276e81a4271e3cf0e3637cfe2cd431c6f9d580977a74ea66308b9ad6660ba",
-        "origin": "authored for this bed from the original module behaviour",
-        "revised": "2026-10-07 audit (AUDIT.md F7): added cases for boundaries no earlier hidden test pinned"
+        "origin": "authored for this bed from the original module behaviour; context, schema-subset, journal, stats and distill suites extended by the 2026-10-07 audit (AUDIT.md F7)"
       }
     }
   }
