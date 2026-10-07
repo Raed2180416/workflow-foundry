@@ -1,5 +1,6 @@
 // Stand-in for the Kev venv's python in tests. Emulates just enough of:
-//   python -c <selftest>            -> prints a FOUNDRY_RESULT line
+//   python -c <torch probe>         -> prints FOUNDRY_TORCH <FAKE_TORCH_VERSION, default 2.8.0+fake> ('none' = no torch)
+//   python -c <selftest>            -> prints a FOUNDRY_RESULT line (pickle_guard reflects TORCH_FORCE_WEIGHTS_ONLY_LOAD)
 //   python -m kev.train ... --out D -> writes a run directory (data file name containing "slow" runs
 //                                      until killed, "fail" exits 3)
 //   python -m kev.benchmark --out D -> writes report.json
@@ -13,10 +14,20 @@ const opt = name => { const i = argv.indexOf(name); return i >= 0 ? argv[i + 1] 
 
 if (argv[0] === '--version') { console.log('Python 3.12.0-fake'); process.exit(0); }
 
+const TORCH = process.env.FAKE_TORCH_VERSION ?? '2.8.0+fake';
+const forced = process.env.TORCH_FORCE_WEIGHTS_ONLY_LOAD === '1';
+
+if (argv[0] === '-c' && argv[1].includes('FOUNDRY_TORCH')) {
+  console.log(`FOUNDRY_TORCH ${TORCH}`);
+  process.exit(0);
+}
+
 if (argv[0] === '-c') {
   console.log('fake selftest starting');
-  console.log('FOUNDRY_RESULT ' + JSON.stringify({ python: '3.12.0-fake', torch: '2.8.0+fake', cuda_available: true, device: 'Fake RTX 4060 Laptop GPU', vram_mib: 8188, bf16_tflops: 1.23, kev_import: 'ok', env_has_hf_token: 'HF_TOKEN' in process.env, pythonpath: process.env.PYTHONPATH ?? null }));
-  process.exit(0);
+  const safe = /^(\d+)\.(\d+)/.test(TORCH) && (([a, b]) => a > 2 || (a === 2 && b >= 6))(TORCH.split('.').map(Number));
+  const r = { python: '3.12.0-fake', torch: TORCH, cuda_available: true, device: 'Fake RTX 4060 Laptop GPU', vram_mib: 8188, bf16_tflops: 1.23, kev_import: 'ok', env_has_hf_token: 'HF_TOKEN' in process.env, pythonpath: process.env.PYTHONPATH ?? null, torch_weights_only_safe: safe, torch_force_weights_only: process.env.TORCH_FORCE_WEIGHTS_ONLY_LOAD ?? null, pickle_guard: forced ? 'refused' : 'executed' };
+  console.log('FOUNDRY_RESULT ' + JSON.stringify(r));
+  process.exit(r.torch_weights_only_safe && r.pickle_guard === 'refused' ? 0 : 1);
 }
 
 const mod = argv[0] === '-m' ? argv[1] : null;
@@ -56,7 +67,7 @@ if (mod === 'kev.train') {
     req.on('data', d => { body += d; });
     req.on('end', () => {
       const send = (status, obj) => { res.writeHead(status, { 'content-type': 'application/json', 'set-cookie': 'x=1', 'x-upstream': 'fake-kev' }); res.end(JSON.stringify(obj)); };
-      if (req.method === 'GET' && req.url === '/v1/models') return send(200, { models: [{ name: 'kev-latest', run: opt('--run') }] });
+      if (req.method === 'GET' && req.url === '/v1/models') return send(200, { models: [{ name: 'kev-latest', run: opt('--run') }], weightsOnlyForced: forced });
       if (req.method === 'POST' && req.url.startsWith('/v1/systemone')) {
         let j = {}; try { j = JSON.parse(body); } catch {}
         const answers = {};

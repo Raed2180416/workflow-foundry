@@ -209,7 +209,9 @@ test('resolveConventions derives orders from examples, references and places, an
     perspective: [judged({ positive_in_master: 'negative' }), judged({ positive_in_master: 'positive' }), { $error: { code: 'X' } }, judged({ positive_in_master: 'positive' })],
   });
   assert.deepEqual(conv.orders, { BRIGHTDESK: 'dmy', ATLAS: 'dmy', VENDEX: 'dmy' });
-  assert.ok(conv.diagnostics.some(d => d.includes('example gives dmy')));
+  // The derived order overrides the model's direct answer; the disagreement is an override note, not a failure.
+  assert.ok(conv.overrides.some(d => d.includes('example gives dmy')));
+  assert.ok(!conv.diagnostics.some(d => d.includes('example gives')));
   assert.deepEqual(conv.atlasCutoff, { from: '2021-01-17', inclusive: true, order: 'mdy' });
   assert.equal(conv.statusMeaning.LEDGR.Altdaten, 'void');
   assert.equal(conv.statusMeaning.LEDGR.storniert, 'void');
@@ -285,7 +287,8 @@ test('mergeMain applies read conventions end to end on literal rows', () => {
   assert.equal(recs[0].country, 'IE');
   assert.equal(recs[0].birth_date, '1981-12-02');
   assert.ok(m.voided.includes(9001));
-  assert.ok(m.diagnostics.some(d => d.includes('Irland')));
+  assert.ok(m.overrides.some(d => d.includes('Irland')));
+  assert.ok(!m.diagnostics.some(d => d.includes('Irland')));
 });
 
 test('verifyMain flags structural problems and non-verbatim VENDEX spans', () => {
@@ -298,6 +301,15 @@ test('verifyMain flags structural problems and non-verbatim VENDEX spans', () =>
   assert.equal(bad.pass, false);
   for (const needle of ['not its smallest row', 'bad birth date', 'bad phone', 'bad country', 'row 4 neither void nor merged', 'void row 3 merged', 'vendex 4 name not verbatim'])
     assert.ok(bad.reasons.some(r => r.includes(needle)), needle);
+  // Overrides are reported as notes and do not fail the check; real diagnostics do.
+  const noted = W.verifyMain({ subject: { answer: { records: [{ entity_id: 1, source_rows: [1], given_name: 'A', family_name: 'B', birth_date: null, country: null, phone_e164: null, amount_usd: null }] },
+    rowIds: [1], voided: [], vendexRead: [], vendexLines: [], overrides: ['BRIGHTDESK: example gives dmy, model said mdy'] } });
+  assert.equal(noted.pass, true);
+  assert.equal(noted.score, 1);
+  assert.ok(noted.reasons.some(r => r.startsWith('note: override BRIGHTDESK')));
+  const diag = W.verifyMain({ subject: { answer: { records: [{ entity_id: 1, source_rows: [1], given_name: 'A', family_name: 'B', birth_date: null, country: null, phone_e164: null, amount_usd: null }] },
+    rowIds: [1], voided: [], vendexRead: [], vendexLines: [], diagnostics: ['mirror systems: none (expected exactly one)'] } });
+  assert.equal(diag.pass, false);
 });
 
 // Agent-node checks evaluated the way the runtime binds them (output.* -> the candidate value).

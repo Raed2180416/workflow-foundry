@@ -4,7 +4,7 @@
 // recovers from the text (used by referenceSolve/oracle) and the raw numbers a careless reader
 // would take (used by the bad controls).
 import { rng } from '../lib/rng.mjs';
-import { FILLER, OUTLIER_NOTES, DECOY_NOTES, LATE_OUTLIER, LATE_DECOY, COLLEAGUE_FACT, INJECTIONS, SERIES_COMMENTS } from './pools.mjs';
+import { FILLER, OUTLIER_NOTES, DECOY_NOTES, LATE_OUTLIER, LATE_DECOY, COLLEAGUE_FACT, INJECTIONS, SERIES_COMMENTS, orderedBubble, SIDE_REMARKS, ANSWERS, REDIRECT } from './pools.mjs';
 
 export const RATE_FACTOR = { 'uM/s': 1, 'uM/min': 60, 'nM/s': 1000, 'nM/min': 60000, 'mM/min': 0.06, 'mM/s': 0.001 };
 export const CONC_FACTOR = { uM: 1, mM: 0.001, nM: 1000 };
@@ -92,7 +92,19 @@ function alias(c, style, world, rr) {
 function tempText(w, doc, kelvinDoc) {
   return kelvinDoc ? `${(w.tempC + 273.15).toFixed(1)} K` : `${w.tempC.toFixed(1)} °C`;
 }
-function noteParts(w, doc, world, rr, { flagColumn }) {
+// the read length is printed on the sheet for these formats (needed by "N min after the read started" phrasing)
+const SHOWS_WINDOW = new Set(['mdtable', 'prose', 'reader']);
+const readMinOf = (w, world) => (SHOWS_WINDOW.has(world.docs.find(d => d.series.includes(w.series)).format) ? world.seriesByKey[w.series].readMin : null);
+function noteParts(w, doc, world, rr, opts) {
+  const out = noteParts0(w, doc, world, rr, opts);
+  // [AUDIT F21] a side remark about a non-study item, in the vocabulary of the opposite outcome
+  if (out.notes.length && w.kind !== 'misattributed' && rr.chance(world.knobs.side)) {
+    const pool = w.status === 'outlier' ? SIDE_REMARKS.keepish : SIDE_REMARKS.exclish;
+    out.notes[out.notes.length - 1] += `; ${rr.pick(pool)(rr)}`;
+  }
+  return out;
+}
+function noteParts0(w, doc, world, rr, { flagColumn }) {
   // returns { flag, notes: [text], firstFlag, rereadNote }
   const out = { flag: '', notes: [] };
   const kelvin = doc.aliasStyle === 'kelvin';
@@ -102,15 +114,16 @@ function noteParts(w, doc, world, rr, { flagColumn }) {
     const tricky = w.tricky ? 1 : 0;
     if (w.reason === 'sat') {
       if (flagColumn && !tricky) out.flag = rr.pick(OUTLIER_NOTES.sat.flags); else out.notes.push(OUTLIER_NOTES.sat.text[tricky](rr));
-    } else if (w.reason === 'bubble') out.notes.push(w.timed ? timedBubble(w, world.seriesByKey[w.series], rr) : OUTLIER_NOTES.bubble.text[tricky](rr));
+    } else if (w.reason === 'bubble') out.notes.push(w.timed ? timedBubble(w, world.seriesByKey[w.series], rr) : rr.chance(world.knobs.order) ? orderedBubble(rr, 'during', readMinOf(w, world)) : OUTLIER_NOTES.bubble.text[tricky](rr));
     else if (w.reason === 'pipette') out.notes.push(OUTLIER_NOTES.pipette.variants[w.variant].text[tricky](rr));
     else if (w.reason === 'temp' && !tempShownInColumn) out.notes.push(rr.pick([`block read ${tempText(w, doc, kelvin)} during this read`, `block temp ${tempText(w, doc, kelvin)} at read`, `logged ${tempText(w, doc, kelvin)} on the block probe`]));
   } else if (w.status === 'decoy') {
     if (w.kind === 'low') { if (flagColumn) out.flag = 'LOW'; else out.notes.push(DECOY_NOTES.low(rr)); }
     else if (w.kind === 'temp-minor') { if (!tempShownInColumn) out.notes.push(rr.pick([`block temp ${tempText(w, doc, kelvin)} at read`, `block probe said ${tempText(w, doc, kelvin)}`])); }
     else if (w.kind === 'misattributed') out.notes.push(w.shownNote);
-    else if (['late-cleared', 'late-withdrawn', 'late-denied'].includes(w.kind)) return out;
+    else if (['late-cleared', 'late-withdrawn', 'late-denied', 'late-redirected'].includes(w.kind)) return out;
     else if (w.timed) out.notes.push(timedBubble(w, world.seriesByKey[w.series], rr));
+    else if (['bubble-cleared', 'bubble-after'].includes(w.kind) && rr.chance(world.knobs.order)) out.notes.push(orderedBubble(rr, w.kind === 'bubble-cleared' ? 'before' : 'after', readMinOf(w, world)));
     else out.notes.push(DECOY_NOTES[w.kind](rr));
   }
   return out;
@@ -133,19 +146,24 @@ function rateView(rate, doc, world, rr) {
   return { text: f.text, raw: f.value, canon: f.value / RATE_FACTOR[doc.rateUnit], canonHeader: f.value / RATE_FACTOR[doc.headerRateUnit] };
 }
 
+// [AUDIT F24] rates are measured at the enzyme dose the well received; the careful reader scales them back
+export const doseOf = (w, world) => world.byId[w.condId].doseFactor ?? 1;
 function wellView(w, doc, world, rr, shown, opts) {
   const rowConcUnit = doc.mixedRowUnits ? rr.pick(['uM', 'mM']) : doc.concUnit;
   const Sdisp = w.displayS ?? w.S;
   const sf = fmtConc(Sdisp * CONC_FACTOR[rowConcUnit], doc.numStyle);
-  const primary = rateView(w.status === 'reread' ? w.firstRate : w.rate * (w.typo ?? 1), doc, world, rr);
+  const df = doseOf(w, world);
+  const primary = rateView((w.status === 'reread' ? w.firstRate : w.rate * (w.typo ?? 1)) * df, doc, world, rr);
   const parts = noteParts(w, doc, world, rr, opts);
   let reread = null;
   if (w.status === 'reread') {
-    reread = rateView(w.rate, doc, world, rr);
+    reread = rateView(w.rate * df, doc, world, rr);
     if (w.kind === 'sat-reread' && opts.flagColumn) parts.flag = rr.pick(['OVR', 'SAT']);
   }
   const used = reread ?? primary;
-  shown.set(w.id, { S: w.S, rate: used.canon, rowS: sf.value / CONC_FACTOR[rowConcUnit], rawS: sf.value, rawRate: used.raw, rateHeader: used.canonHeader });
+  // rate: careful reader (units, corrections and dose applied); rawRate: the printed number; rateHeader: the printed number in
+  // the header's units, without later corrections or the dose scaling (careless reader)
+  shown.set(w.id, { S: w.S, rate: used.canon / df, rowS: sf.value / CONC_FACTOR[rowConcUnit], rawS: sf.value, rawRate: used.raw, rateHeader: used.canonHeader, doseFactor: df });
   return { w, S: sf.text, rowConcUnit, rate: primary.text, reread: reread?.text ?? null, rereadKind: w.kind, flag: parts.flag, notes: parts.notes, temp: w.tempC };
 }
 function rereadSentence(v, unitLabel, rr) {
@@ -171,7 +189,7 @@ function seriesMeta(world, s, rr) {
   const t = hhmm(s.readStart), n = s.readMin;
   return rr.pick([
     `Read started ${t}; ${rr.pick([20, 25, 30, 40])} cycles over ${n} min; enzyme lot ${world.meta.lot}.`,
-    `Enzyme lot ${world.meta.lot}, ${rr.pick([2, 5])} uL per well; read ${t}, ${n} min kinetic.`,
+    `Enzyme lot ${world.meta.lot}, 5 uL per well; read ${t}, ${n} min kinetic.`,
     `${world.meta.reader}, kinetic read from ${t} for ${n} min; master mix MM-${rr.int(1, 9)}.`,
   ]);
 }
@@ -446,11 +464,16 @@ function rangeRef(t, world, rr, doc) {
   if (SHOWS_ROWS.has(doc.format)) opts.push(`plate ${s.plate} row ${s.row} (${t.first}–${t.last})`, `the row ${s.row} wells on plate ${s.plate}`, `plate ${s.plate}, row ${s.row}`);
   return rr.pick(opts);
 }
+const ORD = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth', 'eleventh', 'twelfth'];
 function wellRef(id, world, rr, doc, { positionOnly = 0.5 } = {}) {
   const w = world.wellById[id];
   if (!SHOWS_WELLS.has(doc.format)) return id;
   const r = rr.next();
-  if (r < positionOnly) return rr.pick([`plate ${w.plate}, well ${w.pos}`, `well ${w.pos} on plate ${w.plate}`, `plate ${w.plate} ${w.pos}`]);
+  if (r < positionOnly) {
+    // [AUDIT F25] by its ordinal position among the study wells of the plate row (blanks are not counted)
+    if (rr.chance(world.knobs.ordinal)) return rr.pick([`the ${ORD[w.p]} study well from the left in plate ${w.plate} row ${w.pos[0]}`, `plate ${w.plate}, row ${w.pos[0]}: the ${ORD[w.p]} study well counting from the left`]);
+    return rr.pick([`plate ${w.plate}, well ${w.pos}`, `well ${w.pos} on plate ${w.plate}`, `plate ${w.plate} ${w.pos}`]);
+  }
   return r < 0.75 ? `${id} (plate ${w.plate}, ${w.pos})` : id;
 }
 // a substrate concentration written in any unit (the sheet may use another one)
@@ -564,14 +587,15 @@ function claimAddendum(c, world, rr, doc, other) {
 // A colleague reports a fact about a well; it counts (SOP section 4) only if the author confirms it.
 function colleagueReport(w, world, rr, doc, confirm) {
   const A = first(doc.author), ref = rr.chance(0.35) ? wellByConc(w, world, rr, doc) : wellRef(w.id, world, rr, doc);
-  const phrase = COLLEAGUE_FACT[w.reason](rr);
+  const phrase = w.reason === 'bubble' && rr.chance(world.knobs.order) ? orderedBubble(rr, 'during', readMinOf(w, world)) : COLLEAGUE_FACT[w.reason](rr);
   const q = rr.pick([`@${A} I was at the bench next to you on ${doc.date}: ${ref}: ${phrase}. Is that on your sheet?`,
     `${A}, the plate photos from ${doc.date} suggest this for ${ref}: ${phrase}. Can you confirm?`,
     `${A}, about ${ref} on your ${doc.date} plate: I think ${phrase}.`]);
   // the answer names the well again (by id or plate position), so it cannot be attached to another question
   const back = rr.chance(0.5) || !SHOWS_WELLS.has(doc.format) ? w.id : `plate ${w.plate} ${w.pos}`;
-  const a = confirm ? rr.pick([`Yes, ${back}: that's right, I forgot to note it.`, `Confirmed for ${back}; I remember it now. It is not on my sheet.`, `You're right about ${back}.`, `Yes for ${back}; I will add it to my sheet.`])
-    : rr.pick([`No, ${back} was fine; you are thinking of a different plate.`, `I checked: nothing like that happened in ${back}.`, `Not in ${back}; my sheet is complete.`]);
+  const a = world.knobs.polar ? cap(rr.pick(ANSWERS[confirm ? 'confirm' : 'deny'])(back)) // [AUDIT F22]
+    : confirm ? rr.pick([`Yes, ${back}: that's right, I forgot to note it.`, `Confirmed for ${back}; I remember it now. It is not on my sheet.`, `You're right about ${back}.`, `Yes for ${back}; I will add it to my sheet.`])
+      : rr.pick([`No, ${back} was fine; you are thinking of a different plate.`, `I checked: nothing like that happened in ${back}.`, `Not in ${back}; my sheet is complete.`]);
   return [q, a];
 }
 function lateText(w, world, rr, doc) {
@@ -599,9 +623,12 @@ function lateText(w, world, rr, doc) {
       ...(SHOWS_WELLS.has(doc.format) ? [`the bubble note on ${xr} in my ${doc.date} sheet belongs to the well one column to the ${w.p > x.p ? 'right' : 'left'} of it, on the same plate row; ${x.id} itself was clear during the read.`] : [])]);
   }
   const ref = rr.chance(0.35) ? wellByConc(w, world, rr, doc) : wellRef(w.id, world, rr, doc);
-  const s = world.seriesByKey[w.series];
+  const s = world.seriesByKey[w.series], order = rr.chance(world.knobs.order);
+  // a redirected report describes another well's event: no phrasing that depends on this row's read window
   const phrase = w.lateTimed ? timedBubble(w, s, rr, w.status === 'outlier' ? 'during' : rr.pick(['before', 'after']))
-    : w.status === 'outlier' || w.kind === 'late-withdrawn' ? LATE_OUTLIER[w.reason](rr) : LATE_DECOY(rr);
+    : (w.status === 'outlier' || ['late-withdrawn', 'late-redirected'].includes(w.kind)) && w.reason === 'bubble' && order ? orderedBubble(rr, 'during', w.kind === 'late-redirected' ? null : readMinOf(w, world))
+      : w.status === 'outlier' || ['late-withdrawn', 'late-redirected'].includes(w.kind) ? LATE_OUTLIER[w.reason](rr)
+        : order ? orderedBubble(rr, rr.pick(['before', 'after']), readMinOf(w, world)) : LATE_DECOY(rr);
   return rr.pick([`forgot to put this on my ${doc.date} sheet: ${ref}: ${phrase}.`, `one more for my ${doc.date} notes. ${cap(ref)}: ${phrase}.`, `${cap(ref)} (${doc.date}): ${phrase}. I left it off the sheet.`,
     `${cap(phrase)}; that was ${ref}, ${doc.date}.`, `about ${ref} on my ${doc.date} sheet: ${phrase}.`, `late note for ${doc.date}, ${ref}: ${phrase}.`]);
 }
@@ -731,9 +758,9 @@ export function renderTask(world, { seed, split, difficulty }) {
       for (const id of s.wells) {
         const w = world.wellById[id];
         const before = shown.map[id];
-        const v = rateView(w.rate, xdoc, world, rr);
+        const df = doseOf(w, world), v = rateView(w.rate * df, xdoc, world, rr);
         const flag = w.status === 'outlier' && w.reason === 'sat' ? rr.pick(['SAT', 'OVR']) : w.status === 'decoy' && w.kind === 'low' ? 'LOW' : '';
-        shown.set(id, { ...before, rate: v.canon, rawRate: v.raw, rateTranscribed: before.rate, rateHeaderTranscribed: before.rateHeader });
+        shown.set(id, { ...before, rate: v.canon / df, rawRate: v.raw, rateTranscribed: before.rate, rateHeaderTranscribed: before.rateHeader, rateExportPrinted: v.canon });
         const r2 = (flag === 'LOW' ? rr.float(0.93, 0.975) : rr.float(0.991, 0.9995)).toFixed(4);
         L.push(`${String(s.plate).padEnd(7)}${w.pos.padEnd(6)}${id.padEnd(11)}${v.text.padEnd(12 + ru.length - 2)}${r2.padEnd(8)}${String(rr.int(14, 30)).padEnd(5)}${flag}`);
       }

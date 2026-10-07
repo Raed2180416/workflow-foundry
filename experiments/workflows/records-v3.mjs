@@ -54,6 +54,8 @@
 //   check (verify)   structural invariants of the answer + consistency of the conventions with each other and
 //                    with the data (exactly one mirror, every status token judged, VENDEX spans verbatim, all
 //                    rows accounted for). gate:false: the verdict is recorded, the answer is still emitted.
+//                    Where code's evidence rule (example / same-as-system / place, country name) overrode the
+//                    model's direct answer, the override is listed as a "note:" reason without failing the check.
 //   answer (code)    {records:[...]}.
 //
 // Deviations from the v2 workflow (experiments/workflows/records-hand.mjs), with reasons:
@@ -77,6 +79,11 @@
 // Development evidence (dev split only, seeds 101-125, d3 and d4; /var/tmp/foundry-work/records-v3/dev-log.jsonl):
 // code-side derivation corrected the model's direct date-order answer in about 1 of 20 judgments (example and
 // same-as-system bases), which is why the order is derived from evidence spans rather than taken as answered.
+// Final code, live: Haiku (M, escalation to L) label a8: d3 10/10, d4 10/10 on seeds 101-110, all score 1.000,
+// $0.091-0.153 per task (mean $0.111 d3, $0.123 d4), 12 escalations to L (perspective 6, countries 5, atlas_switch 1);
+// Sonnet (L) label s8: d3 5/5, d4 5/5 on seeds 106-110, $0.17-0.28 per task (s6, earlier prompts: 101-105, 10/10).
+// Recommended for P1: fhand-haiku {extractModelClass:'M', conventionsModelClass:'M', maxClass:'L', concurrency:4,
+// maxCost:2, reasoning:'none'}; fhand-sonnet the same with both classes 'L'.
 //
 // Code-node functions are plain, self-contained JS so they can be unit-tested (records-v3.test.mjs); they are
 // serialised into the IR together with the helpers they call (bundle()).
@@ -492,7 +499,9 @@ export function resolveConventions(input) {
     (items ?? []).forEach((it, i) => { const v = it && it[key]; out[metaList[i]] = ok(it) && ok(v) ? v : null; });
     return out;
   };
-  const diagnostics = [];
+  // diagnostics: missing or inconsistent judgments (verify reasons). overrides: the model's direct order answer
+  // disagreed with the order code derived from its own evidence (example, reference, place); the derived value is used.
+  const diagnostics = [], overrides = [];
   const dateAns = byItem(input.dates, 'judge', (input.dateItems ?? []).map(x => x.system));
   const resolveOrder = (sys, depth = 0) => {
     if (sys === 'LEDGR') return { order: 'dmy', how: 'fixed' };
@@ -500,15 +509,15 @@ export function resolveConventions(input) {
     if (!a) return null;
     if (a.basis === 'example') {
       const d = orderFromExample(a.example_numeric, a.example_meaning);
-      if (d) { if (d !== a.order) diagnostics.push(`${sys}: example gives ${d}, model said ${a.order}`); return { order: d, how: 'example' }; }
+      if (d) { if (d !== a.order) overrides.push(`${sys}: example gives ${d}, model said ${a.order}`); return { order: d, how: 'example' }; }
     }
     if (a.basis === 'same_as_system' && a.same_as_system && a.same_as_system !== sys && depth < 4) {
       const r = resolveOrder(a.same_as_system, depth + 1);
-      if (r) { if (r.order !== a.order) diagnostics.push(`${sys}: same as ${a.same_as_system} (${r.order}), model said ${a.order}`); return { order: r.order, how: `same_as:${a.same_as_system}` }; }
+      if (r) { if (r.order !== a.order) overrides.push(`${sys}: same as ${a.same_as_system} (${r.order}), model said ${a.order}`); return { order: r.order, how: `same_as:${a.same_as_system}` }; }
     }
     if (a.basis === 'place' && typeof a.place_in_united_states === 'boolean') {
       const d = a.place_in_united_states ? 'mdy' : 'dmy';
-      if (d !== a.order) diagnostics.push(`${sys}: place gives ${d}, model said ${a.order}`);
+      if (d !== a.order) overrides.push(`${sys}: place gives ${d}, model said ${a.order}`);
       return { order: d, how: 'place' };
     }
     return a.order === 'dmy' || a.order === 'mdy' ? { order: a.order, how: 'stated' } : null;
@@ -555,7 +564,7 @@ export function resolveConventions(input) {
     flip[item.system] = v.positive_in_master === 'negative';
   });
   if (!Object.values(flip).some(Boolean)) diagnostics.push('no system flips its balance sign (README: at least one per task)');
-  return { orders, orderHow, atlasCutoff, statusMeaning, mirror, flip, diagnostics };
+  return { orders, orderHow, atlasCutoff, statusMeaning, mirror, flip, diagnostics, overrides };
 }
 
 // Spec sections 3, 4, 6, 7 over normalised rows. rows: [{row, system, void, given, family, dob, country, e164, money, updated}].
@@ -697,7 +706,7 @@ export function prepMain(input) {
 export function mergeMain(input) {
   const spec = input.spec;
   const conv = resolveConventions(input);
-  const diagnostics = [...conv.diagnostics];
+  const diagnostics = [...conv.diagnostics], overrides = [...(conv.overrides ?? [])];
   // Country strings -> ISO (exact codes in code; everything else from the countries judgment).
   const countryOf = new Map();
   (input.countryChunks ?? []).forEach((chunk, ci) => {
@@ -707,7 +716,7 @@ export function mergeMain(input) {
     const byName = new Map(Object.entries(spec.countryNames ?? {}).map(([iso, name]) => [String(name).toLowerCase(), iso]));
     chunk.ids.forEach((id, j) => {
       const named = byName.get(String(out.names?.[j] ?? '').trim().toLowerCase()), code = out.codes[j];
-      if (named && typeof code === 'string' && code !== named) diagnostics.push(`country "${input.countryStrings[id - 1]}": name ${out.names[j]} (${named}) vs code ${code}`);
+      if (named && typeof code === 'string' && code !== named) overrides.push(`country "${input.countryStrings[id - 1]}": name ${out.names[j]} (${named}) vs code ${code}`);
       const pick = named ?? (typeof code === 'string' && /^[A-Z]{2}$/.test(code) ? code : null);
       if (pick) countryOf.set(input.countryStrings[id - 1], pick);
     });
@@ -803,7 +812,7 @@ export function mergeMain(input) {
   const records = resolveIdentities(normal, spec);
   const voided = normal.filter(n => n.void).map(n => n.row);
   return { answer: { records }, conventions: { orders: conv.orders, orderHow: conv.orderHow, atlasCutoff: conv.atlasCutoff, statusMeaning: conv.statusMeaning, mirror: conv.mirror, flip: conv.flip },
-    diagnostics: diagnostics.slice(0, 40), vendexDisagreements: repaired.slice(0, 40), unparsed, voided, notRead: [...notMigrated], rowIds: normal.map(n => n.row), vendexRead: vendexFinal, vendexLines: (input.rows ?? []).filter(r => r.system === 'VENDEX').map(r => ({ row: r.row, text: r.text })) };
+    diagnostics: diagnostics.slice(0, 40), overrides: overrides.slice(0, 40), vendexDisagreements: repaired.slice(0, 40), unparsed, voided, notRead: [...notMigrated], rowIds: normal.map(n => n.row), vendexRead: vendexFinal, vendexLines: (input.rows ?? []).filter(r => r.system === 'VENDEX').map(r => ({ row: r.row, text: r.text })) };
 }
 
 export function verifyMain(input) {
@@ -835,7 +844,11 @@ export function verifyMain(input) {
   }
   for (const d of s.diagnostics ?? []) reasons.push(`diagnostic: ${d}`);
   for (const [k, n] of Object.entries(s.unparsed ?? {})) if (n) reasons.push(`${n} unparsed ${k} value(s)`);
-  return { pass: recs.length > 0 && reasons.length === 0, score: reasons.length ? Math.max(0, 1 - reasons.length / 20) : 1, reasons: reasons.slice(0, 32).map(x => String(x).slice(0, 900)) };
+  // Overrides are listed but do not fail the check: code used the order its evidence rule derived from the model's own
+  // quoted example/reference/place (dev a6+a8r: 7 of 43 runs had one; every derived value was correct).
+  const notes = (s.overrides ?? []).slice(0, 8).map(x => `note: override ${String(x).slice(0, 300)}`);
+  return { pass: recs.length > 0 && reasons.length === 0, score: reasons.length ? Math.max(0, 1 - reasons.length / 20) : 1,
+    reasons: [...reasons.slice(0, 32 - notes.length), ...notes].map(x => String(x).slice(0, 900)) };
 }
 
 // ------------------------------------------------------------------------------------------------------------

@@ -2,6 +2,8 @@
 //  - every tunnel poll (default 15 s): look up the tunnel URL; a change publishes at once
 //  - every refresh (default 5 min): git fetch the mailbox, reload keys, apply the KILL switch
 //  - heartbeat (default and minimum 15 min): republish endpoint.json with a new heartbeatAt
+//  - tunnel readiness: when cloudflared gains or loses its edge connections (GET /ready), republish
+//    so tunnelReadyConnections in endpoint.json is not stale for a whole heartbeat (at most once a minute)
 // The publisher's own steps run on one promise chain; the git work inside them is serialized with
 // every other user of the clone by the mailbox lock (mailbox.mjs). Failures back off and never stop
 // the daemon.
@@ -9,9 +11,9 @@ import { buildEndpoint } from '../mailbox.mjs';
 
 export class Publisher {
   #chain = Promise.resolve(); #timer = null; #stopped = false;
-  #lastRefresh = 0; #lastPublish = 0; #dirty = true; #failures = 0; #nextAttempt = 0;
-  constructor({ mailbox, refresh, snapshot, discoverTunnel, heartbeatMs = 15 * 60_000, refreshMs = 5 * 60_000, pollMs = 15_000, log = () => {}, daemonVersion, startedAt, now = () => Date.now() }) {
-    Object.assign(this, { mailbox, refresh, snapshot, discoverTunnel, heartbeatMs, refreshMs, pollMs, log, daemonVersion, startedAt, now });
+  #lastRefresh = 0; #lastPublish = 0; #dirty = true; #failures = 0; #nextAttempt = 0; #publishedReady;
+  constructor({ mailbox, refresh, snapshot, discoverTunnel, tunnelReady = null, heartbeatMs = 15 * 60_000, refreshMs = 5 * 60_000, pollMs = 15_000, readyRepublishMs = 60_000, log = () => {}, daemonVersion, startedAt, now = () => Date.now() }) {
+    Object.assign(this, { mailbox, refresh, snapshot, discoverTunnel, tunnelReady, heartbeatMs, refreshMs, pollMs, readyRepublishMs, log, daemonVersion, startedAt, now });
     this.tunnel = { url: null, source: null };
     this.lastError = null;
   }
@@ -31,6 +33,14 @@ export class Publisher {
       const t = await this.discoverTunnel();
       if (t.url !== this.tunnel.url) { this.log(`tunnel URL ${t.url ?? '(none)'} via ${t.source ?? '-'}`); this.tunnel = t; this.#dirty = true; }
     } catch (error) { this.log(`tunnel discovery failed: ${error.message}`); }
+    if (this.tunnelReady && this.#lastPublish && now - this.#lastPublish >= this.readyRepublishMs) {
+      try {
+        const n = await this.tunnelReady();
+        const up = Number.isInteger(n) ? n > 0 : null;
+        const was = Number.isInteger(this.#publishedReady) ? this.#publishedReady > 0 : null;
+        if (up !== was) { this.log(`tunnel ${up ? 'connected to' : up === false ? 'lost its connections to' : 'readiness unknown at'} Cloudflare (readyConnections ${n ?? 'n/a'})`); this.#dirty = true; }
+      } catch {}
+    }
     if (!this.#lastRefresh || now - this.#lastRefresh >= this.refreshMs) {
       this.#lastRefresh = now;
       try { await this.refresh(); } catch (error) { this.lastError = `refresh: ${error.message}`; this.log(`mailbox refresh failed: ${error.message}`); }
@@ -45,6 +55,7 @@ export class Publisher {
     try {
       const r = await this.mailbox.publishEndpoint(endpoint);
       this.#lastPublish = this.now(); this.#dirty = false; this.#failures = 0; this.#nextAttempt = 0; this.lastError = null;
+      this.#publishedReady = endpoint.tunnelReadyConnections;
       this.lastPublished = { at: endpoint.heartbeatAt, url: endpoint.url, head: r.head, pushed: r.pushed };
       this.log(`endpoint published (${state}, url ${endpoint.url ?? 'none'}, ${r.pushed ? `pushed ${r.head.slice(0, 8)}` : 'unchanged'})`);
     } catch (error) {

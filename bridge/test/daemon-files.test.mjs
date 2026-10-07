@@ -59,15 +59,21 @@ test('path traversal variants are refused on GET and PUT', async t => {
   assert.equal(ls.status, 400);
   const lsData = await signed(url, key, { path: '/files?dir=data' });
   assert.deepEqual(lsData.json.entries.map(e => e.path), ['data/ok.txt'], 'dotfiles are not listed');
-  // nothing was written outside data/ and runs/
-  assert.deepEqual(fs.readdirSync(cfg.workdir).sort(), ['data', 'jobs', 'logs', 'runs']);
+  // nothing was written outside data/ (state/ holds the daemon's nonce journal)
+  assert.deepEqual(fs.readdirSync(cfg.workdir).sort(), ['data', 'jobs', 'logs', 'runs', 'state']);
+  assert.deepEqual(fs.readdirSync(path.join(cfg.workdir, 'runs')), []);
 });
 
-test('logs/ is readable but not writable; uploads go to data/ or runs/', async t => {
-  const { url, key } = await startDaemon(t);
+test('logs/ and runs/ are readable but not writable; uploads go to data/ only (F1: runs/ holds pickled checkpoints)', async t => {
+  const { url, key, cfg } = await startDaemon(t);
   const w = await signed(url, key, { method: 'PUT', path: '/files/logs/bridge-access.log', body: 'x' });
   assert.equal(w.status, 400); assert.equal(w.json.reason, 'outside_roots');
-  assert.equal((await signed(url, key, { method: 'PUT', path: '/files/runs/mine/head.pt', body: 'h' })).status, 201);
+  // the attack-report F1 staging step: a crafted head.pt (+ adapter files) uploaded into runs/evil
+  for (const f of ['head.pt', 'adapter_config.json', 'adapter_model.safetensors']) {
+    const r = await signed(url, key, { method: 'PUT', path: `/files/runs/evil/${f}`, body: 'h' });
+    assert.equal(r.status, 400, f); assert.equal(r.json.reason, 'outside_roots', f);
+  }
+  assert.equal(fs.existsSync(path.join(cfg.workdir, 'runs', 'evil')), false, 'nothing was created under runs/');
   const r = await signed(url, key, { path: '/files/logs/bridge-access.log' });
   assert.equal(r.status, 200);
 });

@@ -463,28 +463,39 @@ export class JobManager {
     if (typeof kind !== 'string' || !Object.hasOwn(KINDS, kind)) throw new JobError(400, 'unknown_kind', `unknown job kind ${String(kind).slice(0, 60)}; known: ${Object.keys(KINDS).join(', ')}`);
     const def = KINDS[kind];
     const { value, resolved } = await validateParams(def.params, params, this);
-    if (def.class === 'inline' && this.#inlinePending) return { ...this.public(this.#inlinePending), coalesced: true };   // F4: at most one waiting
-    if (def.class === 'gpu' && this.#queue.length >= this.cfg.limits.maxQueued) throw new JobError(429, 'queue_full', `${this.#queue.length} GPU jobs are already queued (limit ${this.cfg.limits.maxQueued}); wait or cancel some`);
-    const id = newJobId();
-    const job = { id, kind, class: def.class, params: value, state: 'queued', createdAt: new Date(this.now()).toISOString(), startedAt: null, endedAt: null, exitCode: null, signal: null, error: null, result: null, outputs: null, log: `logs/${id}.log` };
-    let built = null;
-    if (def.class !== 'inline') {
-      const outRel = def.class === 'gpu' && kind !== 'sys.selftest' ? `runs/${id}` : null;
-      built = buildCommand(kind, job, resolved, this.cfg, outRel ? path.join(this.workdirReal, 'runs', id) : null);
-      if (outRel) job.outputDir = outRel;
-      await this.#checkDisk();
-      if (kind.startsWith('kev.')) {
-        const t = await this.torchCheck();
-        if (!t.safe) throw new JobError(503, 'unsafe_torch', `refusing ${kind}: the configured python has ${t.version ? `torch ${t.version}` : 'no usable torch'}${t.error ? ` (${t.error})` : ''}; Kev checkpoints are pickles and need torch >= ${MIN_TORCH.join('.')} to be loaded safely`);
-      }
+    // Every admission decision below is a check and a claim with no await in between, so concurrent
+    // submissions cannot all pass a check that only one of them should pass (queue cap, one waiting
+    // git.refresh, one kev.serve, port and service limits).
+    if (def.class === 'inline') {
+      if (this.#inlinePending) return { ...this.public(this.#inlinePending), coalesced: true };   // F4: at most one waiting
+      const job = this.#newJob(kind, def, value);
+      this.#jobs.set(job.id, job);
+      if (this.#inlineRunning) { this.#inlinePending = job; await this.#save(job); }
+      else this.#runInline(job);   // claims #inlineRunning synchronously
+      return this.public(job);
     }
-    if (def.class === 'service') await this.#checkService(kind, job);
-    this.#jobs.set(id, job);
-    await this.#save(job);
-    if (def.class === 'gpu') { this.#queue.push({ job, built }); this.#pump(); }
-    else if (def.class === 'service') await this.#start(job, built);
-    else if (this.#inlineRunning) this.#inlinePending = job;
-    else this.#runInline(job);
+    const job = this.#newJob(kind, def, value);
+    const outRel = def.class === 'gpu' && kind !== 'sys.selftest' ? `runs/${job.id}` : null;
+    const built = buildCommand(kind, job, resolved, this.cfg, outRel ? path.join(this.workdirReal, 'runs', job.id) : null);
+    if (outRel) job.outputDir = outRel;
+    if (def.class === 'gpu') this.#checkQueue();   // fail fast, before the slower checks
+    await this.#checkDisk();
+    if (kind.startsWith('kev.')) {
+      const t = await this.torchCheck();
+      if (!t.safe) throw new JobError(503, 'unsafe_torch', `refusing ${kind}: the configured python has ${t.version ? `torch ${t.version}` : 'no usable torch'}${t.error ? ` (${t.error})` : ''}; Kev checkpoints are pickles and need torch >= ${MIN_TORCH.join('.')} to be loaded safely`);
+    }
+    if (this.#killed) throw new JobError(403, 'killed', 'the kill switch is set; no new work is accepted');
+    if (def.class === 'gpu') {
+      this.#checkQueue();
+      this.#jobs.set(job.id, job);
+      this.#queue.push({ job, built });
+      await this.#save(job);
+      this.#pump();
+    } else {
+      await this.#reserveService(kind, job);   // the job is in #jobs (state queued) from here on
+      await this.#save(job);
+      await this.#start(job, built);
+    }
     return this.public(job);
   }
 
@@ -547,11 +558,29 @@ export class JobManager {
   summary(j) { return { id: j.id, kind: j.kind, class: j.class, state: j.state, createdAt: j.createdAt, startedAt: j.startedAt, endedAt: j.endedAt, exitCode: j.exitCode, name: j.params?.name ?? null, port: j.params?.port ?? null }; }
 
   // ---- internals ----
-  async #save(job) {
-    const file = path.join(this.jobsDir, `${job.id}.json`);
-    const tmp = `${file}.${process.pid}.${crypto.randomBytes(3).toString('hex')}.tmp`;
-    await fsp.writeFile(tmp, JSON.stringify(job, null, 2));
-    await fsp.rename(tmp, file);
+  #newJob(kind, def, value) {
+    const id = newJobId();
+    return { id, kind, class: def.class, params: value, state: 'queued', createdAt: new Date(this.now()).toISOString(), startedAt: null, endedAt: null, exitCode: null, signal: null, error: null, result: null, outputs: null, log: `logs/${id}.log` };
+  }
+
+  #checkQueue() {
+    if (this.#queue.length >= this.cfg.limits.maxQueued) throw new JobError(429, 'queue_full', `${this.#queue.length} GPU jobs are already queued (limit ${this.cfg.limits.maxQueued}); wait or cancel some`);
+  }
+
+  // Saves of one job are chained, so an older state can never overwrite a newer one on disk.
+  #saving = new Map();
+  #save(job) {
+    const prev = this.#saving.get(job.id) ?? Promise.resolve();
+    const next = prev.catch(() => {}).then(async () => {
+      const file = path.join(this.jobsDir, `${job.id}.json`);
+      const tmp = `${file}.${process.pid}.${crypto.randomBytes(3).toString('hex')}.tmp`;
+      const { finishing, ...rec } = job;
+      await fsp.writeFile(tmp, JSON.stringify(rec, null, 2));
+      await fsp.rename(tmp, file);
+    });
+    this.#saving.set(job.id, next);
+    next.then(() => { if (this.#saving.get(job.id) === next) this.#saving.delete(job.id); }, () => { if (this.#saving.get(job.id) === next) this.#saving.delete(job.id); });
+    return next;
   }
 
   // F3: refuse new work while the workdir's disk is nearly full (uploads are checked by the daemon)
@@ -576,14 +605,21 @@ export class JobManager {
     }
   }
 
-  async #checkService(kind, job) {
+  // Checks the service limits and claims the slot (and port) synchronously, then confirms that the
+  // port is free on the host. On refusal the claim is released.
+  async #reserveService(kind, job) {
     const live = [...this.#jobs.values()].filter(j => j.class === 'service' && !TERMINAL.has(j.state));
     if (kind === 'kev.serve' && live.some(j => j.kind === 'kev.serve')) throw new JobError(409, 'service_exists', 'a kev.serve service is already running; stop it first');
     if (kind === 'llama.serve') {
       if (live.some(j => j.kind === 'llama.serve' && j.params.name === job.params.name)) throw new JobError(409, 'service_exists', `llama service ${job.params.name} already exists`);
       if (live.filter(j => j.kind === 'llama.serve').length >= this.cfg.maxLlamaServices) throw new JobError(409, 'too_many_services', `at most ${this.cfg.maxLlamaServices} llama services`);
     }
-    if (live.some(j => j.params.port === job.params.port) || !(await portFree(job.params.port))) throw new JobError(409, 'port_busy', `port ${job.params.port} is in use`);
+    if (live.some(j => j.params.port === job.params.port)) throw new JobError(409, 'port_busy', `port ${job.params.port} is in use`);
+    this.#jobs.set(job.id, job);
+    if (!(await portFree(job.params.port))) {
+      this.#jobs.delete(job.id);
+      throw new JobError(409, 'port_busy', `port ${job.params.port} is in use`);
+    }
   }
 
   #pump() {
@@ -603,6 +639,7 @@ export class JobManager {
   }
 
   async #start(job, built) {
+    if (this.#killed || job.cancelRequested) { await this.#finish(job, { state: 'cancelled', error: this.#killed ? 'the kill switch is set' : 'cancelled before it started' }); return; }
     const logFile = path.join(this.logsDir, `${job.id}.log`);
     const fd = fs.openSync(logFile, 'a');
     const shown = [built.cmd, ...built.args].map(a => (a.includes('\n') || a.length > 200) ? `<inline code, ${a.length} chars>` : a)
@@ -700,7 +737,7 @@ export class JobManager {
   // git.refresh: one runs at a time and at most one waits (F4); the refresh itself is serialized with
   // the publisher by the daemon and the mailbox lock.
   async #runInline(job) {
-    this.#inlineRunning = job;
+    this.#inlineRunning = job;   // synchronous: submit relies on it
     try {
       job.state = 'running'; job.startedAt = new Date(this.now()).toISOString();
       await this.#save(job);

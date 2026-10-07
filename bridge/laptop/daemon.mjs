@@ -320,7 +320,7 @@ export async function createDaemon({ config, keysDir = null, mailbox = null, pub
 
   async function putFile(req, res, tail, expectedSha, overwrite, limit) {
     const { segments, rel } = relOrThrow(tail, { decode: true, tops: UPLOAD_TOPS });
-    if (segments.length < 2) throw new HttpError(400, 'bad_path', 'name a file below data/ or runs/');
+    if (segments.length < 2) throw new HttpError(400, 'bad_path', 'name a file below data/');
     const top = await topReal(segments[0]);
     // walk the parents: an existing component may be a symlink only if it stays inside the top dir
     let cur = top;
@@ -426,6 +426,7 @@ export async function createDaemon({ config, keysDir = null, mailbox = null, pub
       mailbox, refresh, log, daemonVersion: DAEMON_VERSION, startedAt, now,
       heartbeatMs: cfg.mailbox.heartbeatMinutes * 60_000, refreshMs: cfg.mailbox.refreshMinutes * 60_000, pollMs: cfg.tunnel.pollSeconds * 1000,
       discoverTunnel: () => discoverTunnelUrl({ publicUrl: publicUrl ?? cfg.tunnel.publicUrl, metrics: cfg.tunnel.metrics, log: cfg.tunnel.log }),
+      tunnelReady: cfg.tunnel.metrics ? async () => (await tunnelReady(cfg.tunnel.metrics))?.readyConnections ?? null : null,
       snapshot: async () => ({ gpu: gpuSummary(await gpuInfo(cfg.nvidiaSmi)), services: jobs.services().map(s => ({ id: s.id, kind: s.kind, name: s.name, state: s.state })), tunnelReadyConnections: (await tunnelReady(cfg.tunnel.metrics))?.readyConnections ?? null })
     }).start();
   } else if (mailbox) await refresh().catch(error => log(`mailbox refresh failed: ${error.message}`));

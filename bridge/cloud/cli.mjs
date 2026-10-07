@@ -92,7 +92,7 @@ async function main() {
     case 'discover': {
       const d = await discover();
       const { endpoint } = d;
-      out(o, d, `${d.url ?? '(no url)'}  state=${d.state ?? '-'}  heartbeat ${d.ageMs === null || d.ageMs === undefined ? '?' : `${Math.round(d.ageMs / 1000)} s ago`}${d.stale ? ' (STALE)' : ''}\nmailbox ${d.head?.slice(0, 8)}  keys [${d.keys.join(', ')}]${d.killed ? '  KILL SET' : ''}${d.errors?.length ? `\nproblems: ${d.errors.join('; ')}` : ''}${endpoint ? `\ndaemon ${endpoint.daemonVersion} since ${endpoint.startedAt}; gpu ${endpoint.gpu?.name ?? 'none'}; services ${JSON.stringify(endpoint.services ?? [])}` : ''}`);
+      out(o, d, `${d.url ?? '(no url)'}  state=${d.state ?? '-'}  heartbeat ${d.ageMs === null || d.ageMs === undefined ? '?' : `${Math.round(d.ageMs / 1000)} s ago`}${d.stale ? ' (STALE)' : ''}\nmailbox ${d.head?.slice(0, 8)}  keys [${d.keys.join(', ')}]${d.killed ? '  KILL SET' : ''}${d.errors?.length ? `\nproblems: ${d.errors.join('; ')}` : ''}${endpoint ? `\ndaemon ${endpoint.daemonVersion} since ${endpoint.startedAt}; gpu ${endpoint.gpu?.name ?? 'none'}; services ${JSON.stringify(endpoint.services ?? [])}` : ''}${endpoint && endpoint.tunnelReadyConnections === 0 ? '\nwarning: cloudflared had 0 edge connections at the last publish; requests get 530 / error 1033 until it connects' : ''}`);
       return d.ok && !d.stale ? 0 : 1;
     }
     case 'ping': {

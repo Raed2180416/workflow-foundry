@@ -7,7 +7,7 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { SystemOneClient } from '../../src/judgment.mjs';
 import { BridgeClient, BridgeError, keygen, loadKey } from '../cloud/client.mjs';
-import { sha256hex } from '../common/protocol.mjs';
+import { DAEMON_VERSION, sha256hex } from '../common/protocol.mjs';
 import { scratch, startDaemon } from './helpers.mjs';
 
 const CLI = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'cloud', 'cli.mjs');
@@ -103,7 +103,7 @@ test('e2e: the CLI drives every command against a live daemon', async t => {
   const o = { keyFile, url };
   let r = await cli(['ping'], o);
   assert.equal(r.code, 0, r.err); assert.match(r.out, /signed ping ok/);
-  r = await cli(['info', '--json'], o); assert.equal(r.code, 0, r.err); assert.equal(JSON.parse(r.out).version, '0.1.0');
+  r = await cli(['info', '--json'], o); assert.equal(r.code, 0, r.err); assert.equal(JSON.parse(r.out).version, DAEMON_VERSION);
   r = await cli(['selftest'], o); assert.equal(r.code, 0, r.err); assert.match(r.out, /succeeded/); assert.match(r.out, /Fake RTX 4060/);
   fs.writeFileSync(path.join(root, 'slow.jsonl'), '{}\n');
   r = await cli(['put', path.join(root, 'slow.jsonl'), 'data/slow.jsonl'], o); assert.equal(r.code, 0, r.err); assert.match(r.out, /sha256/);

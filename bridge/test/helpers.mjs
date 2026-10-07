@@ -113,5 +113,17 @@ export async function waitFor(fn, { timeoutMs = 10_000, everyMs = 50, what = 'co
   }
 }
 
+// Writes what a kev.train job this daemon ran to success leaves behind (its record in jobs/ with the
+// head.pt hash, and runs/<jobId>/head.pt), so tests can reference runs/<jobId> without training.
+export function plantTrainedRun(workdir, { id = `j-20261007-000000-${crypto.randomBytes(3).toString('hex')}`, head = Buffer.alloc(0) } = {}) {
+  fs.mkdirSync(path.join(workdir, 'jobs'), { recursive: true });
+  fs.mkdirSync(path.join(workdir, 'runs', id), { recursive: true });
+  fs.writeFileSync(path.join(workdir, 'runs', id, 'head.pt'), head);
+  const t = new Date().toISOString();
+  const rec = { id, kind: 'kev.train', class: 'gpu', params: {}, state: 'succeeded', createdAt: t, startedAt: t, endedAt: t, exitCode: 0, signal: null, error: null, result: null, outputs: null, log: `logs/${id}.log`, outputDir: `runs/${id}`, checkpoint: { dir: `runs/${id}`, headSha256: sha256hex(head) } };
+  fs.writeFileSync(path.join(workdir, 'jobs', `${id}.json`), JSON.stringify(rec));
+  return `runs/${id}`;
+}
+
 export const sha = sha256hex;
 export const randomHex = n => crypto.randomBytes(n).toString('hex');

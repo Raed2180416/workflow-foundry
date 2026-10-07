@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
 import test from 'node:test';
-import { publicKeyPem } from '../common/protocol.mjs';
+import { DAEMON_VERSION, publicKeyPem } from '../common/protocol.mjs';
 import { ENDPOINT_SCHEMA, Mailbox, buildEndpoint, initMailbox, parseEndpoint, runGit, validEndpointUrl } from '../mailbox.mjs';
 import { discover } from '../cloud/client.mjs';
 import { discoverTunnelUrl, lastQuickTunnelUrl } from '../laptop/tunnel.mjs';
@@ -142,7 +142,7 @@ test('daemon + mailbox: keys come from the branch, the tunnel URL is published, 
   const { d, url } = await startDaemon(t, { root, config: cfg, keysDir: path.join(root, 'unused-keys'), key: k, daemonOpts: { mailbox, keysDir: null } });
   const cloudDir = path.join(root, 'cloud-mb');
   const seen = await waitFor(async () => { const x = await discover({ mailboxDir: cloudDir, remote, env: ENV }); return x.url === 'https://first-tunnel.trycloudflare.com' && x; }, { timeoutMs: 20_000, everyMs: 300, what: 'first publish' });
-  assert.equal(seen.endpoint.state, 'up'); assert.equal(seen.endpoint.daemonVersion, '0.1.0');
+  assert.equal(seen.endpoint.state, 'up'); assert.equal(seen.endpoint.daemonVersion, DAEMON_VERSION);
   assert.equal((await signed(url, k, { path: '/ping' })).status, 200, 'key loaded from the mailbox');
   // the tunnel restarts with a new URL: published within a poll or two
   fs.appendFileSync(tunnelLog, 'INF |  https://second-tunnel.trycloudflare.com  |\n');

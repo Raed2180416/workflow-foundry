@@ -9,7 +9,7 @@ import { rng } from '../lib/rng.mjs';
 import { fitMM, fitMMMeans, relErr } from './fit.mjs';
 import { ENZYMES, SUBSTRATES, INHIBITORS, PEOPLE, PIS, READERS, BENCH_CODES, OUTLIER_NOTES } from './pools.mjs';
 
-export const VERSION = '3.0.0';
+export const VERSION = '4.0.0';
 export const TOL = 0.10;          // oracle tolerance (relative) on Vmax and Km
 export const MARGIN = 0.05;       // generation-time bound for the reference fit
 export const MEANS_MARGIN = 0.08; // generation-time bound for a fit on replicate means
@@ -21,8 +21,12 @@ const ALL_FORMATS = ['mdtable', 'csv', 'prose', 'grouped', 'reader', 'semicolon'
 // Late facts may come from a colleague and count only once the author confirms them (`colleague`); a
 // colleague's report that the author denies keeps the well (`lateDenied`); late bubble reports may be
 // given as clock times to compare with the row's read window (`lateTimed`).
-const HARD = { lateSilent: 1, mild: 0.6, devRange: [0.22, 0.6], colleague: 0.5, lateDenied: 1, lateTimed: 0.5 },
-  EASY = { lateSilent: 0, mild: 0, devRange: [0.22, 0.3], colleague: 0, lateDenied: 0, lateTimed: 0 };
+// 4.0.0 (audit 2026-10-07, second pass; AUDIT.md F20-F27): bubble notes that state the order of events (`order`), side
+// remarks about non-study items in the opposite vocabulary (`side`), colleague answers whose polarity is in the content
+// (`polar`), a late report redirected to another well (`redirect`), an enzyme-dose correction from the master-mix log
+// that numbers alone cannot recover (`dose`), and wells named by their ordinal position in a plate row.
+const HARD = { lateSilent: 1, mild: 0.6, devRange: [0.22, 0.6], colleague: 0.5, lateDenied: 1, lateTimed: 0.5, order: 0.6, side: 0.45, polar: 1, redirect: 1, dose: 1, ordinal: 0.3 },
+  EASY = { lateSilent: 0, mild: 0, devRange: [0.22, 0.3], colleague: 0, lateDenied: 0, lateTimed: 0, order: 0, side: 0, polar: 0, redirect: 0, dose: 0, ordinal: 0 };
 export const KNOBS = {
   1: { ...EASY, herrings: 0, withdrawn: 0, rowFlag: 0, timed: 0, unitRef: 0, silent: [0, 0], late: 0, lateDecoys: 0, misattributed: 0, tricky: 0, deviant: 1, claims: ['swap'], viaClaim: 0, nBase: 2, nInhib: 0, nConc: 6, reps: [2, 2], cv: 0.025, techDocs: 2, formats: ALL_FORMATS.slice(0, 2), outliers: [1, 2], decoys: [1, 2],
     decoyKinds: ['bubble-cleared', 'low'], rereads: [0, 0], corrections: ['swap'], pilot: false, chat: false, injections: 0, tempRule: false,
@@ -30,7 +34,7 @@ export const KNOBS = {
   2: { ...EASY, herrings: 0, withdrawn: 0, rowFlag: 0, timed: 0, unitRef: 0, silent: [0, 0], late: 0, lateDecoys: 0, misattributed: 0, tricky: 0.3, deviant: 1, claims: ['units'], viaClaim: 0, nBase: 3, nInhib: 0, nConc: 7, reps: [3, 3], cv: 0.03, techDocs: 3, formats: ALL_FORMATS.slice(0, 3), outliers: [2, 3], decoys: [2, 3],
     decoyKinds: ['bubble-cleared', 'low', 'edge', 'looks', 'neg-bubble'], rereads: [0, 0], corrections: ['units'], pilot: false, chat: false, injections: 0, tempRule: false,
     absorbance: 'none', concUnits: ['uM', 'mM'], rateUnits: ['uM/s', 'uM/min', 'nM/s'], numStyles: ['plain', 'e'], aliasStyles: ['id', 'phT', 'TpH'], unitPlacement: ['header'], filler: [2, 4], blanks: 0.2, rawExport: null },
-  3: { ...HARD, herrings: 1, withdrawn: 1, rowFlag: 1, timed: 0.7, unitRef: 1, silent: [1, 1], late: 2, lateDecoys: 2, misattributed: 1, tricky: 0.5, deviant: 2, claims: ['reassign'], viaClaim: 0.5, nBase: 5, nInhib: 0, nConc: 10, reps: [3, 4], cv: 0.035, techDocs: 5, formats: ALL_FORMATS.slice(0, 4), outliers: [7, 8], decoys: [3, 4],
+  3: { ...HARD, herrings: 1, withdrawn: 1, rowFlag: 1, timed: 0.7, unitRef: 1, silent: [1, 1], late: 2, lateDecoys: 2, misattributed: 1, tricky: 0.5, deviant: 2, claims: ['reassign'], viaClaim: 0.5, nBase: 5, nInhib: 0, nConc: 10, reps: [3, 4], cv: 0.035, techDocs: 5, formats: ['mdtable', 'csv', 'prose', 'grouped', 'semicolon'], outliers: [7, 8], decoys: [4, 5],
     decoyKinds: ['bubble-cleared', 'low', 'edge', 'looks', 'bubble-after', 'neg-bubble', 'neg-sat', 'neg-pipette'], rereads: [0, 0], corrections: ['reassign', 'swap', 'units'], pilot: true, chat: true, injections: 0, tempRule: false,
     absorbance: 'none', concUnits: ['uM', 'mM', 'nM'], rateUnits: ['uM/s', 'uM/min', 'nM/s', 'nM/min'], numStyles: ['plain', 'e', 'E'], aliasStyles: ['phT', 'TpH', 'id'], unitPlacement: ['header', 'preamble'], filler: [7, 11], blanks: 0.3, rawExport: { series: 3, typos: 1 } },
   4: { ...HARD, herrings: 1, withdrawn: 1, rowFlag: 2, timed: 0.7, unitRef: 1, silent: [1, 2], late: 2, lateDecoys: 2, misattributed: 1, tricky: 0.5, deviant: 2, claims: ['reassign', 'swap'], viaClaim: 0.5, nBase: 5, nInhib: 2, nConc: 9, reps: [3, 4], cv: 0.04, techDocs: 6, formats: ALL_FORMATS.slice(0, 5), outliers: [8, 9], decoys: [5, 6],
@@ -289,6 +293,17 @@ export function buildWorld({ seed, split, difficulty }) {
     const w = sr.pick(wells.filter(x => x.status === 'none'));
     w.status = 'decoy'; w.kind = 'late-denied'; w.reason = sr.pick(['bubble', 'pipette']);
   }
+  // [AUDIT F23] a late report posted for the wrong well X and moved by its author to well Y the next day: Y is excluded
+  // (it reads normally), X is kept. Both wells sit on the same author's sheet.
+  for (let i = 0; i < k.redirect; i++) {
+    const y = sr.pick(wells.filter(w => w.status === 'none' && !perSeries[w.series] && (perCond[w.condId] ?? 0) < 2));
+    const x = y && sr.pick(wells.filter(w => w.status === 'none' && w.id !== y.id && docOf[w.series] === docOf[y.series]));
+    if (!x) break;
+    Object.assign(y, { status: 'outlier', reason: sr.pick(['bubble', 'pipette']), late: 'redirect', silent: true });
+    y.variant = sr.int(0, OUTLIER_NOTES.pipette.variants.length - 1);
+    perCond[y.condId] = (perCond[y.condId] ?? 0) + 1; perSeries[y.series] = true;
+    Object.assign(x, { status: 'decoy', kind: 'late-redirected', reason: y.reason, redirectTo: y.id });
+  }
   for (const w of wells) if (w.late === 'fact' && sr.chance(k.colleague)) w.via = 'colleague';
   for (const w of wells) if (((w.late === 'fact' && w.reason === 'bubble') || w.kind === 'late-cleared') && SHOWS_WINDOW.includes(docOf[w.series].format) && sr.chance(k.lateTimed)) w.lateTimed = true;
   const nRe = sr.int(k.rereads[0], k.rereads[1]);
@@ -457,6 +472,21 @@ export function buildWorld({ seed, split, difficulty }) {
     } else if (kind === 'units') claims.push({ kind, loadBearing: true }); // bound to a document below
   }
 
+  // ---- [AUDIT F24] enzyme dose: one condition's master mix got the enzyme at another working dilution. Every rate of
+  // that condition is measured at that dose (rates scale with enzyme); the SOP scales them back to the standard 1:500.
+  // All of the condition's rows are affected alike, so neither its own rows nor the other conditions reveal the factor.
+  let dose = null;
+  if (k.dose) {
+    const xr = r.fork('dose');
+    const c = xr.pick(conds.filter(x => !x.parentId));
+    const dilution = xr.pick([250, 1000]);
+    dose = { condId: c.id, dilution, factor: 500 / dilution, loadBearing: true }; // measured / standard rate
+    c.doseFactor = dose.factor;
+    const others = conds.filter(x => x.id !== c.id);
+    dose.herring = xr.pick(others).id; // a mix made at the wrong dilution but discarded before use
+    dose.herringDilution = xr.pick([250, 1000]);
+  }
+
   // ---- documents plan (bindings that depend on traps) -----------------------------------------
   // the units trap needs a doc whose rate unit sits in a header we can falsify
   const unitsTrap = traps.find(t => t.type === 'units');
@@ -525,5 +555,5 @@ export function buildWorld({ seed, split, difficulty }) {
     });
   }
 
-  return { difficulty, knobs: k, meta, conds, byId, series, seriesByKey, wells, wellById, traps, claims, docs, absorb, bench, pilot, rawExport };
+  return { difficulty, knobs: k, meta, conds, byId, series, seriesByKey, wells, wellById, traps, claims, docs, absorb, bench, pilot, rawExport, dose };
 }

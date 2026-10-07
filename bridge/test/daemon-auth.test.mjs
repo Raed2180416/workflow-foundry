@@ -99,7 +99,7 @@ test('tampering with method, path, query or body breaks the signature', async t 
 
 test('bodies over the limit are refused with 413 (declared or streamed)', async t => {
   const root = scratch(t, 'limit');
-  const { url, key } = await startDaemon(t, { root, config: testConfig(root, { limits: { jsonBytes: 1024, fileBytes: 4096 } }) });
+  const { url, key } = await startDaemon(t, { root, config: testConfig(root, { limits: { jsonBytes: 1024, unannouncedBodyBytes: 512, fileBytes: 4096 } }) });
   const big = JSON.stringify({ kind: 'sys.selftest', params: { pad: 'x'.repeat(2000) } });
   let r = await signed(url, key, { method: 'POST', path: '/jobs', body: big });
   assert.equal(r.status, 413);

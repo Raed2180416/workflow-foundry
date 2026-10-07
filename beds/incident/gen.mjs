@@ -5,17 +5,18 @@ import { rng } from '../lib/rng.mjs';
 import { estimateTokens } from '../lib/canonical.mjs';
 import * as C from './catalog.mjs';
 
-export const VERSION = '3.0.0';
+export const VERSION = '4.0.0';
 export const WINDOW = 1800; // seconds of logs per task
 const MAX_ATTEMPTS = 64; // from this attempt on the soft preferences (Jaccard, fallback callers) are dropped;
 // structural validity (topology size, eligible root candidates) is never relaxed
 
 // Difficulty knobs. lines is the target bundle size (actual medians are within about +20%).
-// In HARD/EASY the keys before `paraphrase` were added by the v3 audit (AUDIT.md, 2026-10-07); the keys from
-// `paraphrase` on come from the v2 audit round; the per-level keys are v1's (with v3 changes noted in AUDIT.md).
+// In HARD/EASY the keys before `longBlips` were added by the second audit (v4, AUDIT.md "Second round"), the keys
+// from `longBlips` to before `paraphrase` by the v3 audit (AUDIT.md, 2026-10-07), the keys from `paraphrase` on
+// by the v2 audit round; the per-level keys are v1's (with v3/v4 changes noted in AUDIT.md).
 const BASE = { anchors: 1, minRootCands: 1, wrap: 0, chronic: 0, pods: false, soft: 0, deploy: 0, blipRoot: false, blipSame: false, benignHard: false, added: 0, stale: 0, proseAliases: 0, mislead: 0, notice: false, inject: false, legacySource: false, noisyNote: false, hypothesis: false, addresses: false };
-const HARD = { longBlips: true, lookalikeOthers: 0.85, siblingOnset: 0.2, anonMax: 3, decoyBlip: 0.5, partialRec: true, statsOnset: 0.7, statsAfter: true, provider: 0.4, canary: 0.6, podEcho: true, revised: 2, stale: 1, onsetRepeat: 0.25, quiet: [0.3, 1], blipOnset: 0.85, recoverAlt: 0.7, decoyBelowRoot: 0.3, paraphrase: true, lookalikes: true, configLag: [30, 150], anon: 0.8, mixedNotes: 0.5, silentSoft: 0.5, softErr: 0.6, warnSev: 0.3, mention: 0.03, mentionErr: 0.4, decoy: 1, secondary: [0.35, 0.65], lead: [90, 300], cacheLag: [70, 200], blipNear: true, nearPrecursor: 0.8, ticketSubset: true, hardNotes: 2, renewHerring: true, baselines: 3, wantSoft: 0.5, bigSkew: 0.6 };
-const EASY = { longBlips: false, lookalikeOthers: 0, siblingOnset: 0, anonMax: 1, decoyBlip: 0, partialRec: false, statsOnset: 0, statsAfter: false, provider: 0, canary: 0, podEcho: false, revised: 0, stale: 0, onsetRepeat: 0, quiet: [1, 1], blipOnset: 0, recoverAlt: 0, decoyBelowRoot: 1, paraphrase: false, lookalikes: false, configLag: null, anon: 0, mixedNotes: 0, silentSoft: 0, softErr: 0, warnSev: 0, mention: 0.01, mentionErr: 0, decoy: 0, secondary: [0, 0], lead: [15, 40], cacheLag: [3, 25], blipNear: false, nearPrecursor: 0, ticketSubset: false, hardNotes: 0, renewHerring: false, baselines: 0, wantSoft: 0, bigSkew: 0 };
+const HARD = { tRange: [480, 960], latent: [5, 600], leakPace: [10, 75], rootStats: false, blipStats: 0.7, collateral: [0.2, 0.45], onsetDirect: 0.4, certLead: [75, 240], stray: 0.65, strayOthers: [1, 2], blipEcho: 0.8, onsetMore: 0.5, recoverMore: true, longBlips: true, lookalikeOthers: 0.85, siblingOnset: 0.2, anonMax: 3, decoyBlip: 0.5, partialRec: true, statsOnset: 0, statsAfter: true, provider: 0.4, canary: 0.6, podEcho: true, revised: 2, stale: 1, onsetRepeat: 0.25, quiet: [0.3, 1], blipOnset: 0.85, recoverAlt: 0.7, decoyBelowRoot: 0.3, paraphrase: true, lookalikes: true, configLag: [20, 480], anon: 0.8, mixedNotes: 0.5, silentSoft: 0.5, softErr: 0.6, warnSev: 0.3, mention: 0.03, mentionErr: 0.4, decoy: 1, secondary: [0.35, 0.65], lead: [60, 600], cacheLag: [45, 600], blipNear: true, nearPrecursor: 0.8, ticketSubset: true, hardNotes: 2, renewHerring: true, baselines: 3, wantSoft: 0.5, bigSkew: 0.6 };
+const EASY = { tRange: [540, 1020], latent: null, leakPace: null, rootStats: true, blipStats: 0, collateral: null, onsetDirect: 0, certLead: [5, 45], stray: 0, strayOthers: [0, 0], blipEcho: 0, onsetMore: 0, recoverMore: false, longBlips: false, lookalikeOthers: 0, siblingOnset: 0, anonMax: 1, decoyBlip: 0, partialRec: false, statsOnset: 0, statsAfter: false, provider: 0, canary: 0, podEcho: false, revised: 0, stale: 0, onsetRepeat: 0, quiet: [1, 1], blipOnset: 0, recoverAlt: 0, decoyBelowRoot: 1, paraphrase: false, lookalikes: false, configLag: null, anon: 0, mixedNotes: 0, silentSoft: 0, softErr: 0, warnSev: 0, mention: 0.01, mentionErr: 0, decoy: 0, secondary: [0, 0], lead: [15, 40], cacheLag: [3, 25], blipNear: false, nearPrecursor: 0, ticketSubset: false, hardNotes: 0, renewHerring: false, baselines: 0, wantSoft: 0, bigSkew: 0 };
 export const KNOBS = {
   1: { ...BASE, ...EASY, anchors: 1, services: 6, batch: 1, lines: 300, bg: 0.78, styles: ['plain'], refs: ['name'], blipOther: 1, noisyNote: true },
   2: { ...BASE, ...EASY, anchors: 2, services: 8, batch: 1, lines: 400, bg: 0.78, wrap: 0.15, styles: ['plain', 'bracket', 'kv'], refs: ['name', 'name', 'host'], soft: 0.4, deploy: 1, blipSame: true, blipOther: 1, noisyNote: true, mention: 0.015, secondary: [0.1, 0.2] },
@@ -275,8 +276,13 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   };
 
   // ---------------------------------------------------------------- timeline
-  const T = r.int(540, 1020);
+  const T = r.int(...K.tRange); // v4: 8-16 min into the window from d3 (was 9-17), so long lags still fit
   const F = C.FAULTS[cls];
+  // v4 (second audit): the expired certificate's notAfter is no longer T itself. In v3 every certificate line
+  // quoted notAfter = T, so the exact answer string appeared verbatim in the log of 100% of certificate tasks.
+  // Connections opened before notAfter keep working; the fault shows when the first new handshake fails (T).
+  // Below d3 the lead is inside the 60 s tolerance; from d3 it is 75-240 s (the prompt states the rule).
+  const notAfter = cls === 'certificate_expiry' ? T - r.fork('cert-lead').int(...K.certLead) : T;
   const W0 = Date.UTC(2026, r.int(0, 11), r.int(1, 28), r.int(0, 23), r.int(0, 59), 0);
   const iso = t => new Date(W0 + t * 1000).toISOString().replace('.000Z', 'Z');
   const hhmm = t => new Date(W0 + t * 1000).toISOString().slice(11, 16);
@@ -285,21 +291,41 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   // filling, connections leaking) start at T as a trend and turn fatal at symFrom.
   const gradual = GRADUAL.has(cls);
   const lead = gradual ? r.int(...K.lead) : 0;
+  // Clock skew can be small (token windows) or large (certificate validity); large only from d3.
+  const bigSkew = cls === 'clock_skew' && K.bigSkew > 0 && r.chance(K.bigSkew);
+  if (bigSkew) root.fx.skew = r.pick([3600 * r.int(5, 20), 86400 * r.int(2, 30), 86400 * r.int(300, 420)]);
+  // How the fault's first line looks (drawn before the timeline, because some onsets imply immediate impact).
+  const rof = r.fork('onset-family');
+  const altOnset = (C.ONSET_ALT[cls] || []).filter((_, i) => cls !== 'clock_skew' || i > 0 || bigSkew);
+  const canary = cls === 'bad_config_deploy' && Boolean(K.canary) && rof.chance(K.canary);
+  // v3 (audit): stats-form onsets for every class whose stats line can show the fault (not config/cache).
+  // v4: 0 from d3 (with the root's stats series, a numeric "first abnormal value" rule dated the fault).
+  const statsOnset = !['bad_config_deploy', 'poisoned_cache'].includes(cls) && Boolean(K.statsOnset) && rof.chance(K.statsOnset);
+  // v4 (second audit): from d3 half of the onsets come from a second paraphrase pool (ONSET_MORE), and the
+  // first line of a sudden fault is often an ordinary symptom (ONSET_DIRECT).
+  const more = Boolean(K.onsetMore) && !canary && !statsOnset && rof.chance(K.onsetMore);
+  const useAlt = !more && !gradual && !canary && altOnset.length > 0 && K.paraphrase && rof.chance(0.4);
+  const directOnset = !statsOnset && !more && !useAlt && Boolean(K.onsetDirect && C.ONSET_DIRECT[cls]) && rof.chance(K.onsetDirect);
+  // v4 (second audit): latent phase (d3+). A sudden fault fails callers only 5-400 s after T (see LATENT_EARLY);
+  // a clock-skew onset worded as a rejected token or certificate fails requests at once.
+  const latent = Boolean(K.latent && C.LATENT_EARLY[cls]) && !(useAlt && cls === 'clock_skew');
   let symFrom = T;
   let rootOut;
   if (gradual) { symFrom = T + lead; rootOut = symFrom + r.int(...(cls === 'disk_full' ? [1, 8] : [5, 20])); }
   else if (cls === 'poisoned_cache') { symFrom = T + r.int(...K.cacheLag); rootOut = symFrom + r.int(0, 10); }
   else if (cls === 'bad_config_deploy' && K.configLag) { symFrom = T + r.int(...K.configLag); rootOut = symFrom + r.int(...F.outDelay); }
-  else rootOut = T + r.int(...(F.outDelay || [2, 10]));
-  // Clock skew can be small (token windows) or large (certificate validity); large only from d3.
-  const bigSkew = cls === 'clock_skew' && K.bigSkew > 0 && r.chance(K.bigSkew);
-  if (bigSkew) root.fx.skew = r.pick([3600 * r.int(5, 20), 86400 * r.int(2, 30), 86400 * r.int(300, 420)]);
+  else rootOut = T + (latent ? r.fork('latent').int(...K.latent) : r.int(...(F.outDelay || [2, 10])));
+  // From when the root's own request lines fail (and its traffic drops): after the latent phase.
+  const impactFrom = latent ? rootOut : symFrom;
+  const early = t => latent && t < rootOut;
   // Memory leak: heap growing from T, OOM kills, restarts; callers fail from the first kill.
+  // v4: the growth rate varies per task (d3+), so the first kill comes about 1.5 to 9 minutes after T.
   const leak = { growth: [], ooms: [], down: [] };
   if (cls === 'memory_leak_oom') {
     let t = T, p = root.fx.p0, restarts = 1;
+    const gi = K.leakPace ? r.int(...K.leakPace) : 31;
     while (t < WINDOW) {
-      t += r.int(18, 45); p += r.int(3, 7);
+      t += K.leakPace ? r.int(Math.round(gi * 0.6), Math.round(gi * 1.4)) : r.int(18, 45); p += r.int(3, 7);
       if (t >= WINDOW) break;
       if (p >= 95) {
         leak.ooms.push({ t, restarts: restarts++ });
@@ -396,7 +422,7 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
       lim: fx.lim, base: fx.base, p0: fx.p0, mb0: fx.mb0, cacheName: fx.ns, ns: fx.ns,
       key: `${fx.keyPrefix}${rr.int(10000, 99999)}`, field: rr.pick(fields), va: fx.va, vb: fx.vb, snap: fx.snap,
       skew: fx.skew, skewIso: iso(t + fx.skew), resolver: fx.resolver, oldVer: s.oldVer, newVer: s.newVer, prevVer: s.prevVer, otherVer: s.otherVer,
-      expIso: iso(T), nowIso: iso(t), callerHost: callerHostOf(s, rr), calleeHost,
+      expIso: iso(notAfter), nowIso: iso(t), callerHost: callerHostOf(s, rr), calleeHost,
       dep: depEdge ? refOf(depEdge) : null, restarts: 1, partnerHost: rr.pick(C.PARTNER_HOSTS),
       ...extra,
     };
@@ -424,12 +450,8 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   };
   // Per-task phrasing subsets so that wording varies across seeds.
   const pickSubset = (list, lo, hi) => r.sample(list, clamp(r.int(lo, hi), 1, list.length));
-  const altOnset = (C.ONSET_ALT[cls] || []).filter((_, i) => cls !== 'clock_skew' || i > 0 || bigSkew);
-  const canary = cls === 'bad_config_deploy' && Boolean(K.canary) && r.chance(K.canary);
   const promoteAt = canary ? T + r.int(70, 160) : T; // a canary is promoted to all pods 70-160 s after T
-  // v3 (audit): stats-form onsets for every class whose stats line can show the fault (not config/cache).
-  const statsOnset = !['bad_config_deploy', 'poisoned_cache'].includes(cls) && Boolean(K.statsOnset) && r.chance(K.statsOnset);
-  const onsetT = gradual ? r.pick(C.TREND[cls].onset) : canary ? r.pick(C.CANARY) : (altOnset.length && K.paraphrase && r.chance(0.4) ? r.pick(altOnset) : r.pick(F.onset));
+  const onsetT = more ? r.pick(C.ONSET_MORE[cls]) : gradual ? r.pick(C.TREND[cls].onset) : canary ? r.pick(C.CANARY) : useAlt ? r.pick(altOnset) : r.pick(F.onset);
   const directT = F.direct ? pickSubset(F.direct, 2, 4) : null;
   const indirectT = F.indirect ? pickSubset(F.indirect, 1, 3) : null;
   const growthT = F.growth ? pickSubset(F.growth, 2, 4) : null;
@@ -449,6 +471,7 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   const symptom = (t, rr) => {
     const c = ctxFor(root, t, rr);
     if (repeatP && !gradual && rr.chance(repeatP)) return onsetT(c, rr);
+    if (early(t)) return rr.chance(0.65) ? rr.pick(C.LATENT_EARLY[cls].direct)(c, rr) : rr.pick(C.LATENT_EARLY[cls].indirect)(c, rr);
     if (K.siblingOnset && C.SIBLING_ONSET[cls] && rr.chance(K.siblingOnset)) return rr.pick(C.SIBLING_ONSET[cls])(c, rr);
     if (secT && rr.chance(secShare)) return rr.pick(secT)(c, rr);
     if (calleeT && rr.chance(calleeP)) return rr.pick(calleeT)(c, rr);
@@ -514,14 +537,15 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
       if (kindOf === 'out') {
         const useExt = s.ext && (!s.callees.length || rb.chance(0.3));
         if (useExt) {
-          if (s === root && t > T && cls === 'upstream_rate_limiting') { emit(t, s, rb.pick(directT)(ctxFor(s, t, rb), rb), 'root'); continue; }
-          if (s === root && t > T && cls === 'dns_resolution_failure') { emit(t, s, rb.pick(directT)(ctxFor(s, t, rb, { calleeHost: s.ext.host }), rb), 'root'); continue; }
+          const dT = early(t) ? C.LATENT_EARLY[cls].direct : directT;
+          if (s === root && t > T && cls === 'upstream_rate_limiting') { emit(t, s, rb.pick(dT)(ctxFor(s, t, rb), rb), 'root'); continue; }
+          if (s === root && t > T && cls === 'dns_resolution_failure') { emit(t, s, rb.pick(dT)(ctxFor(s, t, rb, { calleeHost: s.ext.host }), rb), 'root'); continue; }
           emit(t, s, ['DEBUG', `call ${s.ext.name} ${rb.pick(['POST /v1/requests', 'GET /v2/status', 'POST /api/send', 'GET /v1/lookup'])} -> 200 ${rb.int(40, 600)}ms`], 'bg');
           continue;
         }
         const e = rb.pick(s.callees);
         if (s === root && t > T && cls === 'dns_resolution_failure') {
-          emit(t, s, rb.pick(directT)(ctxFor(s, t, rb, { calleeHost: S[e.to].host }), rb), 'root'); continue;
+          emit(t, s, rb.pick(early(t) ? C.LATENT_EARLY[cls].direct : directT)(ctxFor(s, t, rb, { calleeHost: S[e.to].host }), rb), 'root'); continue;
         }
         if (s === root && t > symFrom && cls === 'connection_pool_exhaustion' && e.to === s.role.db && rb.chance(0.7)) {
           emit(t, s, symptom(t, rb), 'root'); continue;
@@ -541,7 +565,7 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
         else emit(t, s, normalReq(s, t, rb, e), 'bg');
         continue;
       }
-      if (s === root && t > symFrom) {
+      if (s === root && t > impactFrom) {
         if (F.rootTrafficKeep !== undefined && !rb.chance(F.rootTrafficKeep)) continue;
         if (rb.chance(F.rootReqP * quiet)) { emit(t, s, rootReqLine(t, rb), 'root'); continue; }
       } else if (impacted.has(s.key) && s !== root && t >= impacted.get(s.key) && rb.chance(failProb.get(s.key))) {
@@ -570,7 +594,8 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
     for (let t = T + rf.int(15, 40); t < symFrom - 5; t += rf.int(15, 40)) emit(t, root, (repeatP && rf.chance(repeatP) ? onsetT : rf.pick(C.TREND[cls].step))(rootCtx(t), rf, valueAt(t)), 'root');
     emit(symFrom, root, rf.pick(F.onset)(rootCtx(symFrom), rf), 'root');
   } else {
-    emit(T, root, statsOnset ? C.BASELINE_AFTER[cls](rootCtx(T), rf, root.fx.p0).slice(0, 2) : onsetT(rootCtx(T), rf), 'onset');
+    // v4: from d3 the first line is often an ordinary symptom of the fault (ONSET_DIRECT), not an onset message.
+    emit(T, root, statsOnset ? C.BASELINE_AFTER[cls](rootCtx(T), rf, root.fx.p0).slice(0, 2) : (directOnset ? rf.pick(C.ONSET_DIRECT[cls]) : onsetT)(rootCtx(T), rf), 'onset');
   }
   if (cls === 'memory_leak_oom') {
     for (const g of leak.growth) {
@@ -592,7 +617,7 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   } else {
     const nSym = Math.round(0.4 * quiet * root.lambda * (WINDOW - symFrom)) + 4;
     const first = symFrom + (cls === 'poisoned_cache' || gradual || symFrom > T ? 0 : 2);
-    emit(first + (gradual ? 1 : 0), root, rf.pick(directT)(rootCtx(first), rf), 'root');
+    emit(first + (gradual ? 1 : 0), root, rf.pick(early(first) ? C.LATENT_EARLY[cls].direct : directT)(rootCtx(first), rf), 'root');
     for (let i = 0; i < nSym; i++) { const t = rf.int(first, WINDOW - 1); emit(t, root, symptom(t, rf), 'root'); }
   }
   // v3 (audit): 1-2 momentary or partial "recoveries" inside the real episode (the fault goes on).
@@ -605,7 +630,8 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   if (cls === 'certificate_expiry') {
     const mins = rf.sample([20, 12, 6], rf.int(1, 2));
     if (K.nearPrecursor && rf.chance(K.nearPrecursor)) mins.push(rf.pick([2, 3]));
-    for (const m of mins) if (T - m * 60 > 0) emit(T - m * 60, root, F.precursor(rootCtx(T - m * 60), rf, m), 'precursor');
+    // v4: precursors count down to notAfter (which lies before T from d3).
+    for (const m of mins) if (notAfter - m * 60 > 0) emit(notAfter - m * 60, root, F.precursor(rootCtx(notAfter - m * 60), rf, m), 'precursor');
   }
   if (cls === 'bad_config_deploy') {
     const c = rootCtx(T);
@@ -659,6 +685,19 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
     for (let i = 0; i < nExtra; i++) {
       const t = rd.int(t0, WINDOW - 1);
       emit(t, s, depFailure(s, t, rd, rd.pick(failingCallees(s, t))), 'dep');
+    }
+  }
+  // v4 (second audit): collateral timeouts (d3+). A direct caller stuck on the root runs out of workers, so its
+  // calls to healthy callees time out too; these lines blame a service that is fine. In v3 every failure line of a
+  // caller named a failing callee, so "follow the most-blamed callee down the graph" found the root in ~70% of
+  // d3 tasks; the careful reader checks that the blamed callee shows no trouble of its own.
+  const rc = r.fork('collateral');
+  if (K.collateral) for (const e0 of root.callers.filter(e => !e.soft && e.from !== 'gateway' && S[e.from].kind === 'svc' && !anons.has(S[e.from]))) {
+    const s = S[e0.from], t0 = impacted.get(s.key), healthy = s.callees.filter(e => !outTime.has(e.to));
+    if (t0 === undefined || !healthy.length) continue;
+    for (let i = 0, n = Math.round(rc.float(...K.collateral) * (0.3 * s.lambda * (WINDOW - t0) + 2)); i < n; i++) {
+      const t = rc.int(t0 + 5, WINDOW - 1), e = rc.pick(healthy);
+      emit(t, s, sevAdj(s, rc.pick(C.COLLATERAL)(ctxFor(s, t, rc, { callee: refOf(e), route: rc.pick(s.routes) }), rc)), 'collateral');
     }
   }
   for (const [k, t0] of degraded) {
@@ -726,11 +765,26 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   // v3 (audit): the root's periodic stats lines no longer stop at T (in v2 "the first abnormal line after the
   // root's last stats line" was T); from d3 they continue and show the fault's values (BASELINE_AFTER).
   const heapAt = t => (leak.growth.filter(g => g.t <= t).at(-1)?.p ?? root.fx.p0);
+  // v4 (second audit): another resource of the same kind as a service's faulting one (see STRAY in catalog.mjs).
+  const strayOther = (s, klass, t, rr) => {
+    const pickNot = (list, x) => rr.pick(list.filter(y => y !== x));
+    if (klass === 'connection_pool_exhaustion') return { pool: pickNot(C.STRAY_NAMES.pools, s.fx.pool), max: rr.pick([4, 6, 8, 10, 12]), db: rr.pick(C.STRAY_NAMES.dbs) };
+    if (klass === 'certificate_expiry') return { host: `${rr.pick(C.STRAY_NAMES.certHosts.filter(h => s !== root || h !== 'admin'))}.${s.host}`, port: pickNot(C.STRAY_NAMES.certPorts, s.port), exp: iso(Math.max(0, t - rr.int(0, 90))) };
+    if (klass === 'bad_config_deploy') { const a = rr.int(1, 9), b = rr.int(1, 40), p = rr.int(0, 9); return { comp: rr.pick(C.STRAY_NAMES.comps), v1: `v${a}.${b}.${p}`, v2: `v${a}.${b}.${p + 1}` }; }
+    if (klass === 'disk_full') return { vol: pickNot(C.STRAY_NAMES.vols, s.fx.vol), v: rr.int(86, 97), v0: rr.int(35, 70), writer: rr.pick(C.WRITERS) };
+    if (klass === 'memory_leak_oom') return { proc: rr.pick(C.STRAY_NAMES.procs) };
+    if (klass === 'clock_skew') return { peer: rr.pick(C.STRAY_NAMES.peers) };
+    if (klass === 'upstream_rate_limiting') return { ext: rr.pick(C.STRAY_NAMES.exts), q: rr.pick([60, 120, 300]) };
+    return { ns: pickNot(C.STRAY_NAMES.ns, s.fx.ns), snap: `snap-${C.hexs(rr, 6)}` };
+  };
+  // The root's stray anomaly (if any) is decided here, before the stats lines that show it: 65-240 s before T.
+  const rsy = r.fork('root-stray');
+  const rootStray = K.stray && C.STRAY[cls] && rsy.chance(K.stray) ? (t => ({ t, o: strayOther(root, cls, t, rsy) }))(rsy.int(T - 240, T - 65)) : null;
   const baselineFor = (s, klass) => {
     const step = rn.int(90, 180);
     const until = s !== root ? WINDOW : K.statsAfter ? WINDOW : T - 20;
     for (let t = rn.int(5, 120); t < until; t += step + rn.int(-20, 20)) {
-      if (s === root && t >= T - 20 && t <= T) continue;
+      if (s === root && t >= Math.min(T - 20, notAfter - 5) && t <= T) continue;
       if (s === root && t > T) {
         if (cls === 'memory_leak_oom' && inDown(t)) continue;
         const v = valueAt ? valueAt(Math.min(t, symFrom)) : cls === 'memory_leak_oom' ? clamp(heapAt(t), 0, 99) : 0;
@@ -742,9 +796,19 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
       const v = klass === 'disk_full' ? s.fx.u0 + rn.int(-1, 1) : klass === 'connection_pool_exhaustion' ? clamp(s.fx.a0 + rn.int(-2, 2), 1, s.fx.max - 1) : s.fx.base + rn.int(-2, 2);
       emit(t, s, C.BASELINE[klass](ctxFor(s, t, rn), rn, v), 'baseline');
     }
+    // v4 (second audit): a second resource of the same kind reports in the same form (d3+); the root's stray
+    // resource turns abnormal at its stray line. In v3 the root's only stats series had exactly one change, at T.
+    if (K.stray && C.STRAY_STATS[klass]) {
+      const sr = s === root && rootStray ? rootStray : null;
+      const o = sr ? sr.o : strayOther(s, klass, 0, rn);
+      for (let t = rn.int(5, 120); t < WINDOW; t += rn.int(90, 180)) emit(t, s, C.STRAY_STATS[klass](ctxFor(s, t, rn), rn, o, Boolean(sr && t >= sr.t)), sr && t >= sr.t ? 'stray' : 'baseline');
+    }
   };
   if (K.baselines) {
-    baselineFor(root, cls);
+    // v4 (second audit): from d3 the root has no periodic stats series of its fault's kind. In v3 that series
+    // switched from normal to abnormal values at T, which bracketed T to one sampling period for any script that
+    // parses numbers (the second audit's stats attacker dated the fault in about half of the d3 tasks that way).
+    if (K.rootStats) baselineFor(root, cls);
     // Benign warnings in the root from the start of the window (true or sibling vocabulary), so
     // that "first warning with the right words" lands before T.
     // (Own-class chronic lines would contradict the baseline values for these classes.)
@@ -771,8 +835,32 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
     const P = C.FAULTS[klass];
     const offs = offsets || blipOffsets(onsetLike && K.longBlips);
     offs.lines.forEach((dt, i) => emit(t0 + dt, s, (onsetLike && (i === 0 || rh.chance(0.6)) ? C.BLIP_ONSET[klass] : rh.pick(P.blip))(ctxFor(s, t0 + dt, rh), rh), tag));
-    const recover = K.recoverAlt && rh.chance(K.recoverAlt) ? rh.pick(C.RECOVER_ALT[klass]) : P.recover;
+    // v4 (second audit): the root's own stats series shows its blip too (d3+), so its first abnormal value is not T.
+    if (s === root && klass === cls && K.blipStats && !['bad_config_deploy', 'poisoned_cache'].includes(klass) && rh.chance(K.blipStats)) {
+      const tb = t0 + rh.int(1, Math.max(2, offs.end - 5)), cb = { ...ctxFor(s, tb, rh), sym: true };
+      const v = klass === 'disk_full' ? rh.int(95, 98) : klass === 'memory_leak_oom' ? s.fx.base + rh.int(14, 20) : s.fx.max;
+      emit(tb, s, klass === 'clock_skew' ? ['INFO', `ntp offset ${rh.int(150, 480)}ms`] : C.BASELINE_AFTER[klass](cb, rh, v).slice(0, 2), tag);
+    }
+    const recover = K.recoverAlt && rh.chance(K.recoverAlt) ? rh.pick([...C.RECOVER_ALT[klass], ...(K.recoverMore ? C.RECOVER_MORE[klass] : [])]) : P.recover;
     emit(t0 + offs.end, s, recover(ctxFor(s, t0 + offs.end, rh), rh), tag);
+    // v4 (second audit): the callers of a blipping service notice it (d3+): 1-3 failed calls during the blip,
+    // then one line saying their calls succeed again. In v3 the first caller failure that named the root was
+    // always part of the real incident, so "the root's first onset-like line after its last recovery before
+    // the first caller failure" dated the fault; now a short script has to tell episodes apart.
+    const echoEdges = s.callers.filter(e => S[e.from].kind !== 'batch');
+    if (K.blipEcho && echoEdges.length && t0 + offs.end + 45 < T - 15 && rh.chance(K.blipEcho)) {
+      const echoCtx = (e, t) => {
+        const c2 = S[e.from];
+        const fallback = e.provider ? `${s.role.what} read directly from ${S[e.provider].name}` : s.role.fallback;
+        return ctxFor(c2, t, rh, { callee: refOf(e), route: rh.pick(c2.key === 'gateway' ? s.role.public : c2.routes), fallback, what: s.role.what });
+      };
+      for (let i = 0, n = rh.int(1, 3); i < n; i++) {
+        const e = rh.pick(echoEdges), t = t0 + rh.int(Math.min(3, offs.end), Math.max(4, offs.end - 2));
+        emit(t, S[e.from], e.soft ? rh.pick(C.SOFT_FALLBACK)(echoCtx(e, t), rh) : sevAdj(S[e.from], rh.pick(C.DEP_FAIL)(echoCtx(e, t), rh)), 'echo');
+      }
+      const e = rh.pick(echoEdges), tr = t0 + offs.end + rh.int(3, 40);
+      emit(tr, S[e.from], rh.pick(C.ECHO_RECOVER)(echoCtx(e, tr), rh), 'echo');
+    }
     return t0;
   };
   // v3 (audit): onset-worded blips in other services are longer (3-6 lines), so that "the callee with the most
@@ -786,7 +874,9 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   if (K.blipRoot) {
     // d3+: close to T (recovers at least 60 s before it); otherwise 5.5 to 12 minutes before.
     const offs = blipOffsets();
-    const t0 = K.blipNear ? rh.int(Math.max(30, T - 480), T - 60 - offs.end) : rh.int(Math.max(30, T - 720), T - 330);
+    // v4: a certificate root's own blip ends before its main certificate's notAfter.
+    const lim = Math.min(T - 60, notAfter - 10, rootStray ? rootStray.t - 10 : Infinity);
+    const t0 = K.blipNear ? rh.int(Math.max(30, lim - 420), lim - offs.end) : rh.int(Math.max(30, T - 720), T - 330);
     const onsetLike = Boolean(K.blipOnset && C.BLIP_ONSET[cls] && rh.chance(K.blipOnset));
     herrings.blips.push({ svc: root.name, cls, t: blip(root, cls, t0, 'blip-root', offs, onsetLike), end: t0 + offs.end, onsetLike });
   }
@@ -835,6 +925,23 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
       const offs = blipOffsets(), t0 = rh.int(Math.max(30, T - 400), Math.max(31, T - 60 - offs.end));
       herrings.blips.push({ svc: s.name, cls: klass, t: blip(s, klass, t0, 'blip-other', offs, true), end: t0 + offs.end, onsetLike: true });
     }
+  }
+  // v4 (second audit): stray anomalies of the true class's kind in another resource of the root (another pool,
+  // volume, certificate hostname, process, NTP source, provider, component or cache namespace), after the root's
+  // own blip and 65-240 s before T, never recovering; and the same kind of noise in 1-2 other services. In v3
+  // the first onset-worded root line after the root's last recovery was T in every task with no lookalike in
+  // between; now it is a stray line in about 60% of d3+ tasks, and only the resource it names tells.
+  herrings.strays = [];
+  const strayLines = (s, klass, t, repeats, o = strayOther(s, klass, t, rh)) => {
+    emit(t, s, rh.pick(C.STRAY[klass])(ctxFor(s, t, rh), rh, o), 'stray');
+    const event = klass === 'bad_config_deploy' || klass === 'poisoned_cache';
+    for (let i = 0, n = event ? 0 : repeats; i < n; i++) { const t2 = rh.int(t + 20, WINDOW - 1); emit(t2, s, rh.pick(C.STRAY[klass])(ctxFor(s, t2, rh), rh, o), 'stray'); }
+    herrings.strays.push({ svc: s.name, cls: klass, t });
+  };
+  if (rootStray) strayLines(root, cls, rootStray.t, rh.int(0, 2), rootStray.o);
+  for (const s of rh.sample(nonRoot, rh.int(...K.strayOthers))) {
+    const klass = rh.pick(classesFor(s).filter(x => C.STRAY[x]));
+    strayLines(s, klass, rh.int(30, WINDOW - 60), rh.int(0, 2));
   }
   // A healthy callee rejecting the root's bad requests (clock skew, bad config): not a failure.
   if (D && C.CALLEE_REJECT[cls]) {
@@ -1115,7 +1222,7 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
     impacted_services: [...impacted.keys()].map(k => S[k].name).sort(),
     T, rootOut, symFrom, onsetId, attempt, bigSkew,
     rootIds: [...(idsByTag.onset || []), ...(idsByTag.root || []), ...(idsByTag.precursor || [])],
-    depIds: idsByTag.dep || [],
+    depIds: [...(idsByTag.dep || []), ...(idsByTag.collateral || [])],
     degraded: [...degraded.keys()].map(k => S[k].name).sort(),
     noisy: noisy.map(s => s.name),
     services: order.map(s => s.name),
@@ -1154,7 +1261,7 @@ export function renderPrompt() {
     '{',
     '  "root_service": the canonical name (as written in the Service column of the dependency table) of the service where the fault started,',
     '  "fault_class": one of the class ids below,',
-    '  "first_bad_timestamp": ISO-8601 UTC timestamp such as "2026-03-14T10:22:31Z": when the fault began, i.e. the timestamp of the earliest line in the root service that shows the fault itself. Advance warnings that something will happen later, and short anomalies that recovered on their own before the incident, do not count. For a gradual fault this is the first line where the abnormal trend is visible, not the moment it became fatal. For a release or configuration change it is the first line where the new release or configuration is in use, a canary included,',
+    '  "first_bad_timestamp": ISO-8601 UTC timestamp such as "2026-03-14T10:22:31Z": when the fault began, i.e. the timestamp of the earliest line in the root service that shows the fault itself. Advance warnings that something will happen later, and short anomalies that recovered on their own before the incident, do not count. For a gradual fault this is the first line where the abnormal trend is visible, not the moment it became fatal. For a release or configuration change it is the first line where the new release or configuration is in use, a canary included. For an expired certificate it is the first line where a handshake or connection actually fails, not the expiry time printed in the certificate (connections opened before that time can keep working for a while). A similar anomaly in another resource of the same service (another connection pool, volume, certificate hostname, process, time source, external provider, software component or cache namespace) that the failures do not involve is not the fault,',
     '  "impacted_services": canonical names of every service whose own requests or operations failed because of this fault, including the root. A service that only switched to a fallback and kept serving successfully is not impacted (but it is impacted if its fallback failed as well); a service with errors unrelated to this fault is not impacted,',
     '  "evidence_line_ids": up to 20 line ids (e.g. "L0123") that best support the diagnosis',
     '}',
