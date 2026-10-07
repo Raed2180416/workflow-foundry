@@ -5,7 +5,7 @@
 | Experiment id | `p1-records-v3` |
 | Claim tested | Phase 1 exit (ROADMAP §5.1): a hand-written Foundry workflow for one Tier-A family runs on M and L models (S is parked, see below) with a check on every model node and reproducible context receipts; its verified success, pass^3 and CPS are reported against single-call (B0), notes (B0+N) and agent (B0-agent) baselines. Directional question for C1: does the workflow let the cheap model (Haiku 5.5, class M) reach or beat the success of a strong single call (Sonnet 5.5) at lower cost, and does it rescue a weaker model (Haiku 4.5 single call as reference)? |
 | Evidence class | **development**. The workflow (`experiments/workflows/records-v3.mjs`) was built by an Opus agent on `records` dev seeds 101–160 (d3–d4) without reading the generator internals, then independently reviewed on dev seeds it had not used. Evaluation uses the bed's `test` split, seeds 5001–5006, never inspected: held-out *instances* of a *development* family. Not claim-bearing for generalisation. |
-| Pre-registration commit | recorded in the Amendments section when frozen |
+| Pre-registration commit | `880c6b91f183a569571480d7ff5d297839a8cdac` (freeze record under Amendments) |
 | Date | 2026-10-07 |
 
 ## 1. Beds and splits
@@ -79,3 +79,11 @@ Estimate from the dev pilots (`/var/tmp/foundry-work/records-v3/dev-log.jsonl`):
      - `--effort medium` with `MAX_THINKING_TOKENS=0` still produced a thinking block, so effort, not the token budget, switches Haiku 5.5's adaptive thinking on.
      - The pre-registered arms map `none` to effort low and `medium` to effort medium with an 8K budget, so `b0call-haiku-none` is thinking-off and `b0call-haiku-med` is thinking-on, as labelled.
   4. *Policy/runtime hygiene:* a judge-kit file written into `src/judges/` by another agent was moved to `experiments/kev-data/judges/` before freezing, so `src/` is exactly the runtime the dev checks ran.
+
+- **2026-10-07 ~23:05 UTC: FROZEN.** Freeze record (`node research/freeze.mjs experiments/p1 experiments/workflows/records-v3.mjs experiments/lib beds/records beds/lib beds/CONTRACT.md policy/models.json src`): commit `880c6b91f183a569571480d7ff5d297839a8cdac`; combined sha256 `b261b68f5f59f6c76865869546d6fd2ade7ba9f2f80c392ab050b84964ff0402`.
+  From `node experiments/p1/run.mjs --dry`:
+  - policy-subset hash `8726861174679e459e79d0452fb2a3f06730d7e9a8c2539284455edbbe256551`;
+  - arms: b0call-haiku-none `6e4e5e7531d728c7`, b0call-haiku-med `0dc33013447a127b`, b0call-haiku45-none `96f491b40796fb6d`, b0call-sonnet-med `a4412f8467c9f792`, b0ncall-haiku-med `300d1084a005c802`, b0agent-haiku `81b94a94074a3c7b`, fhand-haiku `99d5c16663a15c39`, fhand-sonnet `73c72bcb3f2bb771`;
+  - tasks: d3/s5001 `c8b902b9b0ef`, d3/s5002 `b5d9867837ba`, d3/s5003 `154b3a1ab551`, d3/s5004 `6cc15facd8a5`, d3/s5005 `ba4ed3965434`, d3/s5006 `5acadccfe62a`, d4/s5001 `17f545695787`, d4/s5002 `f6083ab0b89f`, d4/s5003 `c9786101e26e`, d4/s5004 `dfeb71a8c354`, d4/s5005 `e10f33d4435a`, d4/s5006 `514768170433`.
+
+  Any later change to these files is an amendment.
