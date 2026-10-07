@@ -6,7 +6,7 @@ with its hashes) and is recorded under Amendments.
 | Field | Value |
 |---|---|
 | Experiment id | `c0-dev` |
-| Claim tested | C0 (ROADMAP §4.1), development round: given a task family it has not solved before, does a builder agent (Claude Code) produce a working solver more often, and with lower total cost per verified success, when it builds a typed Foundry workflow (F) than when it writes an ordinary orchestration script (B1), and than when the same model solves each task directly (B0)? Asked separately for a strong builder (Opus 5.5) and a weak one (Haiku 4.5): the system must make even Haiku able to construct, edit and run workflows. |
+| Claim tested | C0 (ROADMAP §4.1), development round: given a task family it has not solved before, does a builder agent (Claude Code) produce a working solver more often, and with lower total cost per verified success, when it builds a typed Foundry workflow (F) than when it writes an ordinary orchestration script (B1), and than when the same model solves each task directly (B0)? Asked separately for a strong builder (Opus 5.5) and a weak one (Haiku 5.5): the system must make even Haiku able to construct, edit and run workflows. |
 | Evidence class | **development**. Families are the 5 one-shot dev beds; the construction skills (`skills/micro-harness`, `skills/script-harness`) were written by the experimenter using the records pilot. Results may improve the protocol and skills before the sealed round (`PREREG-sealed.md`), which is the claim-bearing test. |
 | Pre-registration commit | recorded under Amendments when frozen |
 | Date | 2026-10-07 |
@@ -20,7 +20,7 @@ with its hashes) and is recorded under Amendments.
 
 ## 2. Models and arms
 **Models (owner policy, 2026-10-07).** The only models any arm, artifact or builder smoke run may call are
-`claude-haiku-4-5-20251001` (class M, the deliberately weak model, "akin to a ~9B model"), `claude-sonnet-5-5`
+`claude-haiku-5-5` (class M, the deliberately weak model; it replaced Haiku 5.5 on 2026-10-07), `claude-sonnet-5-5`
 (class L) and `claude-opus-5-5` (class F). Class S (local qwen/granite models) is empty: local generative models are
 parked and unreachable. Enforced four ways: the experiment's ModelPort holds a subset of the owner policy (its hash
 `policyHash` is recorded with every construction and arm; the owner policy hash is recorded too); the host gateway
@@ -28,18 +28,18 @@ allow-lists the three ids; the F builder's Foundry CLI validates and runs agains
 class S node fails with MODEL_CLASS_EMPTY); no local model provider is constructed. Development agents that build
 Foundry itself (Opus 5.5 and Sonnet 5.5) are not part of the experiment.
 
-**Builder models.** Opus 5.5 at effort `xhigh` and Haiku 4.5 at effort `xhigh` (Claude Code CLI 2.1.292 accepted
-`--effort xhigh` for Haiku 4.5 in a probe on 2026-10-07, with extended thinking active; had it been rejected, `high`
+**Builder models.** Opus 5.5 at effort `xhigh` and Haiku 5.5 at effort `xhigh` (the Claude Code CLI accepted
+`--effort xhigh` for Haiku in probes on 2026-10-07, with extended thinking active; had it been rejected, `high`
 would have been used and recorded here). Each builder model builds both artifacts for every family.
 
 | Arm | Construction | Execution per task |
 |---|---|---|
 | F-opus | Opus 5.5 (xhigh) builder in the executor sandbox with the Foundry kit (read-only), `skills/micro-harness`, 3 probes, `/score` (≤ 12 checks), model gateway ($2 cap); builder cap $8; 45 min | the delivered `workflow.json` (pinned copy, hash-checked) on the Foundry runtime (host), maxCost $1, 20 min |
 | B1-opus | same builder, sandbox, probes, `/score`, gateway, caps and time; a read-only script kit with `skills/script-harness`; writes `solve.mjs` | `node solve.mjs task.json` in the sandbox without network (the gateway's unix socket only), gateway cap $1, 20 min |
-| F-haiku | as F-opus with a Haiku 4.5 (xhigh) builder | as F-opus |
-| B1-haiku | as B1-opus with a Haiku 4.5 (xhigh) builder | as B1-opus |
+| F-haiku | as F-opus with a Haiku 5.5 (xhigh) builder | as F-opus |
+| B1-haiku | as B1-opus with a Haiku 5.5 (xhigh) builder | as B1-opus |
 | B0-opus | none | Claude Code headless (Opus 5.5) with tools in the executor sandbox, per-task cap $2, 20 min |
-| B0-haiku | none | the same with Haiku 4.5, per-task cap $1, 20 min |
+| B0-haiku | none | the same with Haiku 5.5, per-task cap $1, 20 min (B0 arms run at the builders' effort, `xhigh`) |
 
 Construction labels are `<arm>-<family>-k1` (e.g. `F-opus-records-k1`): 5 families × 4 constructed arms = 20
 constructions (K_c = 1 in this round). Each delivered artifact also runs once on its 3 probes (construction success).
@@ -137,3 +137,10 @@ minutes will cost several times more per construction, Haiku less.
      /home/user, /run, other workdirs and kits hidden, parent session identity scrubbed; B1 execution has no network.
   8. Cost estimate rewritten for 20 constructions and six arms (DESIGN §2's $6 construction budget is superseded by
      $8 builder + $2 gateway).
+
+- **2026-10-07 (pre-freeze, after the C0 gate).**
+  1. Haiku 5.5 (`claude-haiku-5-5`, $0.10/$0.50 per MTok) replaces Haiku 4.5 as the weak builder and B0 model (owner notice: Anthropic replaced Haiku 4.5; owner policy: Haiku is the weak model the system must make competent). The session subset is Haiku 5.5, Sonnet 5.5, Opus 5.5.
+  2. B0 arms run at the builders' effort (`xhigh`), so "the same agent solving directly" uses the same model and effort.
+  3. Gate fixes: the F builder session carries the session gateway in its whole environment (a direct call of the kit CLI is policed and counted as nested use); account directories under /home are hidden except the CLI login (read-only); sysfs is read-only.
+  4. Families are frozen one at a time: a family runs only after its bed's audit is complete and its tests are green; the bed version, the task hashes printed by `--dry` and the bed-file sha256 are recorded here before that family's first construction. records (3.0.0) and codefix (1.1.0) are ready; incident, synth and kinetics wait for their audits.
+  5. Kill rule stays at $350 total recorded spend (owner chose full-speed operation on 2026-10-07; the bound is below the $500 pause rule).
