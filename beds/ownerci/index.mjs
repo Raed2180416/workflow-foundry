@@ -2,12 +2,12 @@
 // summary, the frozen visible tests and the read-only modules it imports (see README.md).
 import { readFileSync } from 'node:fs';
 import { MODULES, MODULE_IDS } from './modules.mjs';
-import { classify, fixtureFiles, runSync, sandboxAvailable, GUARD_TEST } from './runner.mjs';
+import { classify, fixtureFiles, runAsync, runSync, sandboxAvailable, GUARD_TEST } from './runner.mjs';
 import { applyEdits, tokenize } from './mutate.mjs';
 import { renderPrompt, renderReport } from './render.mjs';
 import { rng } from '../lib/rng.mjs';
 
-export const VERSION = '1.0.0';
+export const VERSION = '1.1.0'; // 1.1.0: hardened oracle, masked d3 pairs (AUDIT.md)
 const CATALOG = JSON.parse(readFileSync(new URL('./fixtures/catalog.json', import.meta.url), 'utf8'));
 const MANIFEST = JSON.parse(readFileSync(new URL('./fixtures/MANIFEST.json', import.meta.url), 'utf8'));
 export const FROZEN_COMMIT = MANIFEST.commit;
@@ -37,7 +37,7 @@ const EASY = new Set(['cmp-flip', 'logic-swap', 'negation-removal', 'bool-swap',
 export const KNOBS = Object.freeze({
   1: Object.freeze({ mutants: 1, pool: 'single visible-killed mutant, easy operator, <= 3 failing visible tests', frames: 6, noise: false, hiddenOnly: 0 }),
   2: Object.freeze({ mutants: 1, pool: 'single visible-killed mutant not in the d1 pool', frames: 2, noise: false, hiddenOnly: 0 }),
-  3: Object.freeze({ mutants: 2, pool: 'validated pair, both visible-killed, different failing sets', frames: 4, noise: true, hiddenOnly: 0 }),
+  3: Object.freeze({ mutants: 2, pool: 'validated masked pair: both visible-killed, the same visible failing tests alone and together, different hidden failing sets', frames: 4, noise: true, hiddenOnly: 0 }),
   4: Object.freeze({ mutants: 3, pool: 'validated triple: two visible-killed + one hidden-only', frames: 4, noise: true, hiddenOnly: 1 }),
   5: Object.freeze({ mutants: 3, pool: 'validated triple: one visible-killed + two hidden-only', frames: 4, noise: true, hiddenOnly: 2 }),
 });
@@ -60,11 +60,13 @@ export const POOL_SIZES = Object.freeze(Object.fromEntries(Object.entries(POOLS)
 
 // Module choice: at d1-d2 proportional to the pool (capped at 20, so a module with 3 instances is
 // rarely repeated); from d3 the two larger modules (context, schema-subset: ~100-140 lines plus
-// larger tests and imports) count double, which raises reading load with difficulty.
+// larger tests and imports) count double, which raises reading load with difficulty, and a module
+// with fewer than 40 instances is down-weighted in proportion (verdict has 8 masked d3 pairs).
 const LARGE = new Set(['context', 'schema-subset']);
 export function moduleWeight(difficulty, id) {
-  if (difficulty <= 2) return Math.min(20, POOLS[difficulty][id]?.length ?? 0);
-  return LARGE.has(id) ? 2 : 1;
+  const n = POOLS[difficulty][id]?.length ?? 0;
+  if (difficulty <= 2) return Math.min(20, n);
+  return (LARGE.has(id) ? 2 : 1) * Math.min(1, n / 40);
 }
 const taskKey = task => ({ seed: task.seed, split: task.split, difficulty: task.difficulty });
 const originalOf = id => fixtureFiles(id)[MODULES[id].modulePath];
@@ -132,15 +134,19 @@ function readOutput(output) {
   return plain.patched_source;
 }
 
-// Diff guard (static part). Strings from the task specification, plus a few equivalents that
-// reach the same capabilities; each is allowed only if the original module already contains it.
+// Diff guard (static part). The six strings of the task specification are checked on all code
+// tokens including string literals; the further patterns (equivalents that reach the same
+// capabilities) only on code outside string and template literals, so an error message that
+// says "cannot process" is not a violation (AUDIT.md F6). Each is allowed only if the original
+// module already contains it. Comments never count.
 export const BANNED = Object.freeze([
-  ['node:test', /node:test/], ['process.env', /process\s*\.\s*env/], ['process.argv', /process\s*\.\s*argv/], ['process.exit', /process\s*\.\s*exit/],
-  ['require.cache', /require\s*\.\s*cache/], ['globalThis', /globalThis/],
-  ['process (any use)', /\bprocess\b/], ['global object', /\bglobal\s*[.[]/], ['child_process', /child_process/], ['node:fs', /['"](?:node:)?fs(?:\/promises)?['"]/],
-  ['worker_threads', /worker_threads/], ['node:vm', /['"](?:node:)?vm['"]/], ['dynamic import()', /\bimport\s*\(/], ['eval', /\beval\s*\(/],
-  ['Function constructor', /\bFunction\s*\(/], ['require()', /\brequire\s*\(/], ['test-runner detection', /NODE_TEST|node:test|--test/],
-  ['timers', /\bset(?:Interval|Timeout|Immediate)\b/], ['import.meta', /\bimport\s*\.\s*meta\b/],
+  ['node:test', /node:test/, 'all'], ['process.env', /process\s*\.\s*env/, 'all'], ['process.argv', /process\s*\.\s*argv/, 'all'],
+  ['process.exit', /process\s*\.\s*exit/, 'all'], ['require.cache', /require\s*\.\s*cache/, 'all'], ['globalThis', /globalThis/, 'all'],
+  ['child_process', /child_process/, 'all'], ['node:fs', /['"](?:node:)?fs(?:\/promises)?['"]/, 'all'], ['worker_threads', /worker_threads/, 'all'],
+  ['node:vm', /['"](?:node:)?vm['"]/, 'all'], ['test-runner detection', /NODE_TEST|node:test|--test/, 'all'],
+  ['process (any use)', /\bprocess\b/, 'code'], ['global object', /\bglobal\s*[.[]/, 'code'], ['dynamic import()', /\bimport\s*\(/, 'code'],
+  ['eval', /\beval\s*\(/, 'code'], ['Function constructor', /\bFunction\s*\(/, 'code'], ['require()', /\brequire\s*\(/, 'code'],
+  ['timers', /\bset(?:Interval|Timeout|Immediate)\b/, 'code'], ['import.meta', /\bimport\s*\.\s*meta\b/, 'code'],
 ]);
 // Free identifiers that reach the host (the global object, the process, code generation). A
 // property name after `.` (`row.global`) is not a free identifier and is allowed.
@@ -174,8 +180,13 @@ export function staticGuard(moduleId, src) {
   let toks;
   try { toks = tokenize(src); } catch (e) { v.push(`source could not be tokenized by the guard (${String(e.message).slice(0, 80)}); escapes in identifiers are not allowed`); return v; }
   const origToks = tokensOfOriginal(moduleId);
-  const code = toks.map(t => t.value).join(' '), originalCode = origToks.map(t => t.value).join(' ');
-  for (const [label, re] of BANNED) if (re.test(code) && !re.test(originalCode)) v.push(`contains ${label}`);
+  const text = (ts, scope) => ts.filter(t => scope === 'all' || (t.type !== 'string' && t.type !== 'template')).map(t => t.value).join(' ');
+  const code = text(toks, 'all'), originalCode = text(origToks, 'all');
+  const bare = text(toks, 'code'), originalBare = text(origToks, 'code');
+  for (const [label, re, scope] of BANNED) {
+    const [candidate, original] = scope === 'all' ? [code, originalCode] : [bare, originalBare];
+    if (re.test(candidate) && !re.test(original)) v.push(`contains ${label}`);
+  }
   const freeIdents = ts => new Set(ts.filter((t, k) => t.type === 'ident' && ts[k - 1]?.value !== '.' && ts[k - 1]?.value !== '?.').map(t => t.value));
   const used = freeIdents(toks), originalUsed = freeIdents(origToks);
   for (const name of BANNED_IDENTIFIERS) if (used.has(name) && !originalUsed.has(name)) v.push(`uses the identifier ${name}`);
@@ -193,13 +204,26 @@ function fail(reason, details = {}) {
   return { pass: false, score: 0, details: { reason, ...details } };
 }
 
-/** Score a candidate source for a module: shared by the oracle and the bed's own tests. */
-export function evaluateSource(moduleId, src, run = runSync) {
-  const info = CATALOG.modules[moduleId];
+// Checks that run before anything executes; returns a failing verdict or null.
+function precheck(moduleId, src) {
   if (src.trim().length === 0) return fail('empty patched_source');
   const violations = staticGuard(moduleId, src);
   if (violations.length) return fail('diff guard violated', { guard: { ok: false, violations } });
-  const result = run(moduleId, src, { exportsSpec: info.exports });
+  return null;
+}
+
+/** Score a candidate source for a module: shared by the oracle and the bed's own tests. */
+export function evaluateSource(moduleId, src, run = runSync) {
+  return precheck(moduleId, src) ?? scoreRun(moduleId, run(moduleId, src, { exportsSpec: CATALOG.modules[moduleId].exports }));
+}
+/** Same as evaluateSource with an asynchronous runner (parallel scoring in harnesses and tests). */
+export async function evaluateSourceAsync(moduleId, src, run = runAsync) {
+  return precheck(moduleId, src) ?? scoreRun(moduleId, await run(moduleId, src, { exportsSpec: CATALOG.modules[moduleId].exports }));
+}
+
+/** Verdict for one runner result (exported for the integrity regression tests). */
+export function scoreRun(moduleId, result) {
+  const info = CATALOG.modules[moduleId];
   if (!result.ok) return fail('test run failed to report (fail closed)', { error: result.error, sandbox: result.sandbox });
   const { visible, hidden, guard, other, duplicates } = classify(moduleId, result);
   const passed = t => t?.status === 'pass';
@@ -239,6 +263,12 @@ export function oracle(task, output) {
   if (src === null) return fail('schema-invalid output: expected {patched_source: string}');
   const inst = instance(taskKey(task));
   return evaluateSource(inst.module, src);
+}
+/** oracle() with the test run in a non-blocking child process; identical verdicts. */
+export async function oracleAsync(task, output) {
+  const src = readOutput(output);
+  if (src === null) return fail('schema-invalid output: expected {patched_source: string}');
+  return evaluateSourceAsync(instance(taskKey(task)).module, src);
 }
 
 export function referenceSolve(task) {
@@ -314,6 +344,13 @@ export const badControls = [
   },
   { name: 'export-removed', make: task => ({ patched_source: removeOneExport(instance(taskKey(task)).module) }) },
   { name: 'try-catch-defaults', make: task => ({ patched_source: tryCatchDefaults(instance(taskKey(task)).module) }) },
+  {
+    // Oracle bypass (AUDIT.md F1): leave the mutants in place and replace the methods of the
+    // assert object the frozen tests import. Stopped by the import allowlist (and, behind it,
+    // by the frozen assert objects of the harden.mjs preload).
+    name: 'assert-monkeypatch',
+    make: task => ({ patched_source: `import __assert from 'node:assert/strict';\nfor (const k of Object.keys(__assert)) __assert[k] = () => {};\n${task.inputs.module_source}` }),
+  },
   {
     name: 'test-detection-hack',
     make: task => {

@@ -132,7 +132,12 @@ test('difficulty sanity: mutant counts, hidden-only mutants, report content and 
       assert.ok(inst.visibleFailing.length > 0, `${task.id}: CI must show at least one visible failure`);
       for (const name of inst.visibleFailing) assert.ok(report.includes(`✖ ${name} (`), `${task.id}: failing test ${name} missing from report`);
       assert.match(report, new RegExp(`ℹ fail ${inst.visibleFailing.length}\\n`));
-      if (difficulty === 3) assert.notDeepEqual(inst.mutants[0].visibleFailing, inst.mutants[1].visibleFailing);
+      if (difficulty === 3) {
+        // masked pair (AUDIT.md F5): same visible failing tests alone and together, different hidden ones
+        assert.deepEqual(inst.mutants[0].visibleFailing, inst.mutants[1].visibleFailing, task.id);
+        assert.deepEqual(inst.visibleFailing, inst.mutants[0].visibleFailing, task.id);
+        assert.notDeepEqual(inst.mutants[0].hiddenFailing, inst.mutants[1].hiddenFailing, task.id);
+      }
       const noisy = /Restored dependency cache/.test(report) && /npm warn deprecated/.test(report);
       assert.equal(noisy, difficulty >= 3, `${task.id}: noise lines only from d3`);
       assert.equal(/some failures may not be visible/.test(report), difficulty >= 4, task.id);
@@ -172,7 +177,9 @@ test('static diff guard: size bounds, banned capabilities, exports; comments are
     assert.match(bed.staticGuard(id, src.slice(0, Math.floor(src.length * 0.4))).join(';'), /size/);
     for (const [label, snippet] of [['process.env', 'const e = process.env.X;'], ['globalThis', 'const g = globalThis;'], ['node:test', "import t from 'node:test';"],
       ['process.exit', 'if (0) process.exit(0);'], ['node:fs', "import fs from 'node:fs';"], ['dynamic import()', "const m = import('x');"], ['eval', 'eval("1");'],
-      ['Function constructor', 'const f = Function("return 1");'], ['process (any use)', 'const p = process;']]) {
+      ['Function constructor', 'const f = Function("return 1");'], ['process (any use)', 'const p = process;'],
+      ['which the original module does not import', "import assert from 'node:assert';"], ['import.meta', 'const u = import.meta.url;'],
+      ['could not be tokenized', 'const x = \\u0070rocess;']]) {
       assert.ok(bed.staticGuard(id, `${snippet}\n${src}`).some(v => v.includes(label)), `${id}: ${label}`);
     }
     const first = bed.CATALOG.modules[id].exports[0].name;

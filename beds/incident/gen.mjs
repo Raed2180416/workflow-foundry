@@ -7,20 +7,21 @@ import * as C from './catalog.mjs';
 
 export const VERSION = '2.0.0';
 export const WINDOW = 1800; // seconds of logs per task
-const MAX_ATTEMPTS = 64; // the last attempt is accepted unconditionally
+const MAX_ATTEMPTS = 64; // from this attempt on the soft preferences (Jaccard, fallback callers) are dropped;
+// structural validity (topology size, eligible root candidates) is never relaxed
 const SOFT_ATTEMPTS = 12; // after this many attempts the soft-caller preference is dropped
 
 // Difficulty knobs. lines is the target bundle size (actual size is within about +/-15%).
 // v1 knobs are unchanged; the v2 block (after `paraphrase`) was added by the audit (AUDIT.md).
-const BASE = { wrap: 0, chronic: 0, pods: false, soft: 0, deploy: 0, blipRoot: false, blipSame: false, benignHard: false, added: 0, stale: 0, proseAliases: 0, mislead: 0, notice: false, inject: false, legacySource: false, noisyNote: false, hypothesis: false, addresses: false };
+const BASE = { anchors: 1, minRootCands: 1, wrap: 0, chronic: 0, pods: false, soft: 0, deploy: 0, blipRoot: false, blipSame: false, benignHard: false, added: 0, stale: 0, proseAliases: 0, mislead: 0, notice: false, inject: false, legacySource: false, noisyNote: false, hypothesis: false, addresses: false };
 const HARD = { paraphrase: true, lookalikes: true, configLag: [30, 150], anon: 0.6, mixedNotes: 0.5, silentSoft: 0.5, softErr: 0.6, warnSev: 0.3, mention: 0.03, mentionErr: 0.4, decoy: 1, secondary: [0.35, 0.65], lead: [90, 300], cacheLag: [70, 200], blipNear: true, nearPrecursor: 0.8, ticketSubset: true, hardNotes: 1, renewHerring: true, baselines: 2, wantSoft: true, bigSkew: 0.6 };
 const EASY = { paraphrase: false, lookalikes: false, configLag: null, anon: 0, mixedNotes: 0, silentSoft: 0, softErr: 0, warnSev: 0, mention: 0.01, mentionErr: 0, decoy: 0, secondary: [0, 0], lead: [15, 40], cacheLag: [3, 25], blipNear: false, nearPrecursor: 0, ticketSubset: false, hardNotes: 0, renewHerring: false, baselines: 0, wantSoft: false, bigSkew: 0 };
 export const KNOBS = {
-  1: { ...BASE, ...EASY, services: 6, batch: 1, lines: 300, bg: 0.78, styles: ['plain'], refs: ['name'], nearBias: 0.4, blipOther: 1, noisyNote: true },
-  2: { ...BASE, ...EASY, services: 8, batch: 1, lines: 400, bg: 0.78, wrap: 0.15, styles: ['plain', 'bracket', 'kv'], refs: ['name', 'name', 'host'], soft: 0.4, nearBias: 0.5, deploy: 1, blipSame: true, blipOther: 1, noisyNote: true, mention: 0.015, secondary: [0.1, 0.2] },
-  3: { ...BASE, ...HARD, services: 11, batch: 1, lines: 420, bg: 0.6, wrap: 0.3, chronic: 1, styles: ['plain', 'bracket', 'kv', 'json', 'short'], refs: ['name', 'host', 'legacy'], pods: true, soft: 0.5, nearBias: 0.6, deploy: 1, blipRoot: true, blipSame: true, blipOther: 2, benignHard: true, added: 1 },
-  4: { ...BASE, ...HARD, services: 14, batch: 2, lines: 1600, bg: 0.7, wrap: 0.35, chronic: 1, styles: ['plain', 'bracket', 'kv', 'json', 'short'], refs: ['name', 'host', 'legacy', 'ip'], pods: true, soft: 0.45, nearBias: 0.75, deploy: 1, blipRoot: true, blipSame: true, blipOther: 2, benignHard: true, added: 1, stale: 1, proseAliases: 2, mislead: 1, hypothesis: true, addresses: true, warnSev: 0.35 },
-  5: { ...BASE, ...HARD, services: 18, batch: 2, lines: 4000, bg: 0.72, wrap: 0.35, chronic: 2, styles: ['plain', 'bracket', 'kv', 'json', 'short'], refs: ['name', 'host', 'legacy', 'ip'], pods: true, soft: 0.45, nearBias: 0.8, deploy: 2, blipRoot: true, blipSame: true, blipOther: 4, benignHard: true, added: 2, stale: 1, proseAliases: 3, mislead: 1, notice: true, inject: true, legacySource: true, hypothesis: true, addresses: true, warnSev: 0.4, softErr: 0.7, decoy: 2, hardNotes: 2, baselines: 3 },
+  1: { ...BASE, ...EASY, anchors: 1, services: 6, batch: 1, lines: 300, bg: 0.78, styles: ['plain'], refs: ['name'], nearBias: 0.4, blipOther: 1, noisyNote: true },
+  2: { ...BASE, ...EASY, anchors: 2, services: 8, batch: 1, lines: 400, bg: 0.78, wrap: 0.15, styles: ['plain', 'bracket', 'kv'], refs: ['name', 'name', 'host'], soft: 0.4, nearBias: 0.5, deploy: 1, blipSame: true, blipOther: 1, noisyNote: true, mention: 0.015, secondary: [0.1, 0.2] },
+  3: { ...BASE, ...HARD, anchors: 2, minRootCands: 2, services: 11, batch: 1, lines: 420, bg: 0.6, wrap: 0.3, chronic: 1, styles: ['plain', 'bracket', 'kv', 'json', 'short'], refs: ['name', 'host', 'legacy'], pods: true, soft: 0.5, nearBias: 0.6, deploy: 1, blipRoot: true, blipSame: true, blipOther: 2, benignHard: true, added: 1 },
+  4: { ...BASE, ...HARD, anchors: 3, minRootCands: 2, services: 14, batch: 2, lines: 1600, bg: 0.7, wrap: 0.35, chronic: 1, styles: ['plain', 'bracket', 'kv', 'json', 'short'], refs: ['name', 'host', 'legacy', 'ip'], pods: true, soft: 0.45, nearBias: 0.75, deploy: 1, blipRoot: true, blipSame: true, blipOther: 2, benignHard: true, added: 1, stale: 1, proseAliases: 2, mislead: 1, hypothesis: true, addresses: true, warnSev: 0.35 },
+  5: { ...BASE, ...HARD, anchors: 3, minRootCands: 2, services: 18, batch: 2, lines: 4000, bg: 0.72, wrap: 0.35, chronic: 2, styles: ['plain', 'bracket', 'kv', 'json', 'short'], refs: ['name', 'host', 'legacy', 'ip'], pods: true, soft: 0.45, nearBias: 0.8, deploy: 2, blipRoot: true, blipSame: true, blipOther: 4, benignHard: true, added: 2, stale: 1, proseAliases: 3, mislead: 1, notice: true, inject: true, legacySource: true, hypothesis: true, addresses: true, warnSev: 0.4, softErr: 0.7, decoy: 2, hardNotes: 2, baselines: 3 },
 };
 
 // Which roles can host each fault class (the root is never the gateway or a batch job).
@@ -76,22 +77,15 @@ function versions(r) {
 }
 
 // ------------------------------------------------------------------ topology
-function buildTopology(r, K, cls) {
-  // Deeper roots give longer cascades; layer-1 roots are allowed but rarer.
-  const eligible = C.ROLES.filter(ELIGIBLE[cls]);
-  const rootWeight = role => (role.layer === 1 ? 0.4 : 1);
-  let x = r.next() * eligible.reduce((a, role) => a + rootWeight(role), 0);
-  const rootRole = eligible.find(role => (x -= rootWeight(role)) <= 0) || eligible[eligible.length - 1];
+// v3 (audit): the topology is built without knowing the root. v2 grew it around the root (its callers were
+// preferred while filling, edges into it were likelier), so the root had the largest in-degree of the
+// dependency table in 78% of d3 tasks. Now a few random anchor roles are chained up to the gateway, the
+// rest is filled uniformly, and the root is drawn afterwards among the eligible services (buildAttempt).
+function buildTopology(r, K) {
   const chosen = new Map();
-  const forced = []; // [from, to] edges that must exist
+  const forced = []; // [from, to] edges that must exist (each service reachable from the gateway)
   const add = key => { if (!chosen.has(key)) chosen.set(key, C.ROLE[key]); };
   add('gateway');
-  add(rootRole.key);
-  if (cls === 'connection_pool_exhaustion') { add(rootRole.db); forced.push([rootRole.key, rootRole.db]); }
-  if (cls === 'dns_resolution_failure' && rootRole.likes.length) {
-    const callee = r.pick(rootRole.likes);
-    add(callee); forced.push([rootRole.key, callee]);
-  }
   const chainUp = key => {
     const role = C.ROLE[key];
     if (role.layer <= 1) return;
@@ -102,23 +96,18 @@ function buildTopology(r, K, cls) {
     add(caller.key); forced.push([caller.key, key]);
     chainUp(caller.key);
   };
-  chainUp(rootRole.key);
-  for (const key of [...chosen.keys()]) if (key !== rootRole.key) chainUp(key);
   const target = K.services - K.batch;
+  for (const a of r.sample(C.ROLES.filter(y => y.layer >= 1 && y.layer <= 3), K.anchors)) {
+    add(a.key);
+    if (a.db && r.chance(0.8)) add(a.db);
+  }
+  for (const key of [...chosen.keys()]) if (key !== 'gateway') chainUp(key);
+  if (chosen.size > target) return null;
   while (chosen.size < target) {
     const present = [...chosen.values()];
     const cands = C.ROLES.filter(y => y.layer >= 1 && y.layer <= 3 && !chosen.has(y.key) && (y.layer === 1 || present.some(p => p.likes.includes(y.key))));
     if (!cands.length) break;
-    // Prefer callers of the root or of its (transitive) callers, so the incident has room to spread.
-    const upstream = new Set([rootRole.key]);
-    for (let grew = true; grew;) {
-      grew = false;
-      for (const [from, to] of forced) if (upstream.has(to) && !upstream.has(from)) { upstream.add(from); grew = true; }
-      for (const p of present) if (p.layer >= 1 && !upstream.has(p.key) && p.likes.some(k => upstream.has(k))) { upstream.add(p.key); grew = true; }
-    }
-    const near = cands.filter(y => y.likes.some(k => upstream.has(k)));
-    const pool = near.length && r.chance(K.nearBias) ? near : cands;
-    add(r.pick(pool).key);
+    add(r.pick(cands).key);
   }
   for (const role of r.sample(C.ROLES.filter(y => y.layer === 9), K.batch)) add(role.key);
 
@@ -130,7 +119,7 @@ function buildTopology(r, K, cls) {
     const role = C.ROLE[from];
     if (role.layer === 9) continue;
     if (role.layer === 0) { for (const to of keys) if (C.ROLE[to].layer === 1) addEdge(from, to); continue; }
-    for (const to of role.likes) if (chosen.has(to) && r.chance(to === rootRole.key ? 0.9 : 0.8)) addEdge(from, to);
+    for (const to of role.likes) if (chosen.has(to) && r.chance(0.8)) addEdge(from, to);
   }
   // Every non-gateway, non-batch service needs at least one caller.
   for (const to of keys) {
@@ -141,7 +130,7 @@ function buildTopology(r, K, cls) {
     addEdge(likers.length ? r.pick(likers) : 'gateway', to);
   }
   const edges = [...edgeSet.values()].sort((a, b) => C.ROLE[a.from].order - C.ROLE[b.from].order || C.ROLE[a.to].order - C.ROLE[b.to].order);
-  return { rootKey: rootRole.key, keys, edges };
+  return { keys, edges };
 }
 
 // ------------------------------------------------------------------ build
@@ -152,16 +141,18 @@ export function build(seed, split, difficulty) {
   // The fault class is drawn once per task so that rejection sampling of the topology (below)
   // does not skew the class distribution.
   const cls = rng('incident', VERSION, split, seed, difficulty, 'class').pick(C.FAULT_CLASSES);
-  for (let attempt = 0; ; attempt++) {
+  for (let attempt = 0; attempt < 4096; attempt++) {
     const out = buildAttempt(seed, split, difficulty, cls, attempt, attempt >= MAX_ATTEMPTS - 1);
     if (out) return out;
   }
+  throw new Error(`incident: no valid task for seed ${seed} (${split}, d${difficulty})`);
 }
 
 function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   const K = KNOBS[difficulty];
   const r = rng('incident', VERSION, split, seed, difficulty, attempt);
-  const topo = buildTopology(r, K, cls);
+  const topo = buildTopology(r, K);
+  if (!topo) return null;
   const company = r.pick(C.COMPANIES);
   const teams = r.shuffle(C.TEAMS);
 
@@ -215,7 +206,6 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
     S[key].fx.mb0 = Math.round(S[key].fx.lim * S[key].fx.p0 / 100);
   });
   const svcKeys = topo.keys;
-  const root = S[topo.rootKey];
   const gateway = S.gateway;
   const noisy = svcKeys.filter(k => S[k].kind === 'batch').map(k => S[k]);
   const serving = svcKeys.filter(k => S[k].kind !== 'batch').map(k => S[k]);
@@ -228,10 +218,18 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
     e.silent = e.soft && K.silentSoft > 0 && r.chance(K.silentSoft);
     S[e.from].callees.push(e); S[e.to].callers.push(e);
   }
-  // The root needs at least one hard caller, and the DNS/pool companions are hard edges.
-  if (!root.callers.some(e => !e.soft)) r.pick(root.callers).soft = false;
-  if (difficulty >= 3 && root.callers.filter(e => !e.soft).length < 2 && root.callers.length >= 3) r.pick(root.callers.filter(e => e.soft)).soft = false;
-  for (const e of root.callees) e.soft = false;
+  // v3 (audit): the root is drawn after the topology and the optional edges, uniformly among the services that
+  // can host this class (layer-1 services weighted 0.4) and have a hard caller. v2 then flipped edges around
+  // the root (its callee edges and some caller edges were forced hard), which was itself a cue.
+  const hardIn = s => s.callers.filter(e => !e.soft && S[e.from].kind !== 'batch');
+  const canRoot = s => ELIGIBLE[cls](s.role) && hardIn(s).length > 0
+    && (cls !== 'connection_pool_exhaustion' || s.callees.some(e => e.to === s.role.db))
+    && (cls !== 'dns_resolution_failure' || s.callees.length > 0 || Boolean(s.ext));
+  const rootCands = serving.filter(canRoot);
+  if (rootCands.length < K.minRootCands) return null;
+  const rootWeight = s => (s.role.layer === 1 ? 0.4 : 1);
+  let xr = r.next() * rootCands.reduce((a, s) => a + rootWeight(s), 0);
+  const root = rootCands.find(s => (xr -= rootWeight(s)) <= 0) || rootCands[rootCands.length - 1];
   const refOf = e => {
     const callee = S[e.to];
     if (e.ref === 'host') return callee.host;
@@ -305,7 +303,7 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   // Rejection sampling (audit fix): "every serving service" must not reach Jaccard 0.8, and from
   // d3 at least one caller must fall back (so that plain ERROR lines do not decide impact alone).
   const allServingJaccard = impacted.size / serving.length;
-  const softWanted = attempt < SOFT_ATTEMPTS / 2 ? 2 : attempt < SOFT_ATTEMPTS ? 1 : 0;
+  const softWanted = attempt < SOFT_ATTEMPTS ? 1 : 0; // v3 (audit): v2 asked for 2 first, which favoured roots with many callers
   if (!last && (allServingJaccard >= 0.8 || (K.wantSoft && degraded.size < softWanted))) return null;
 
   if (K.silentSoft && degraded.size) {
@@ -741,7 +739,8 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   herrings.deploys = [];
   for (let i = 0; i < K.deploy; i++) {
     const deps = [...impacted.keys()].filter(k => k !== root.key && k !== 'gateway' && !herrings.deploys.includes(k));
-    const pool = i === 0 && difficulty >= 3 && deps.length && rh.chance(0.7) ? deps.map(k => S[k]) : nonRoot.filter(s => !herrings.deploys.includes(s.key));
+    // v3 (audit): 0.7 -> 0.4, so the routine-deploy service is no longer a strong impacted-membership cue.
+    const pool = i === 0 && difficulty >= 3 && deps.length && rh.chance(0.4) ? deps.map(k => S[k]) : nonRoot.filter(s => !herrings.deploys.includes(s.key));
     if (!pool.length) break;
     const s = rh.pick(pool);
     const t0 = i === 0 ? T - rh.int(45, 300) : T + rh.int(60, 500);
@@ -753,27 +752,28 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
     herrings.deploys.push(s.key);
   }
   // Misleading claims (d>=4), maintenance notice (d5), injected instructions (d5).
-  const wrongClass = (prefer, avoid = []) => (prefer && prefer !== cls && !avoid.includes(prefer) ? prefer : rh.pick(C.FAULT_CLASSES.filter(x => x !== cls && !avoid.includes(x))));
+  // v3 (audit): claims never name the true root, but their target and class are drawn independently of the
+  // truth. v2 drew the class as the sibling of the true class (which identified the true class through the
+  // inverse sibling map) and the target among the root's direct callers (83% at d4).
   herrings.claims = [];
   const announcer = noisy.find(s => s.role.key === 'audit') || gateway;
   for (let i = 0; i < K.mislead; i++) {
-    const firstHop = root.callers.filter(e => !e.soft).map(e => S[e.from]);
     const dep = herrings.deploys.length ? S[herrings.deploys[0]] : null;
-    const target = dep && rh.chance(0.5) ? dep : rh.pick(firstHop.length ? firstHop : nonRoot);
-    const klass = target === dep ? wrongClass('bad_config_deploy') : wrongClass(C.SIBLING_CLASS[cls]);
+    const target = dep && rh.chance(0.4) ? dep : rh.pick(nonRoot);
+    const klass = target === dep ? 'bad_config_deploy' : rh.pick(C.FAULT_CLASSES);
     const t = Math.min(WINDOW - 20, T + rh.int(240, 600));
     emit(t, announcer, rh.pick(C.MISLEAD)({ svc: target.name, phrase: rh.pick(C.FAULTS[klass].phrases), n: rh.int(6, 40), conf: rh.int(81, 97) }, rh), 'mislead');
     herrings.claims.push({ svc: target.name, cls: klass, kind: 'mislead' });
   }
   if (K.notice) {
-    const target = rh.pick(nonRoot), klass = wrongClass(null, herrings.claims.map(c => c.cls));
+    const target = rh.pick(nonRoot), klass = rh.pick(C.FAULT_CLASSES);
     emit(rh.int(20, T - 300), announcer, rh.pick(C.NOTICE)({ svc: target.name, phrase: rh.pick(C.FAULTS[klass].phrases), hhmm: hhmm(T + rh.int(-90, 90)) }, rh), 'mislead');
     herrings.claims.push({ svc: target.name, cls: klass, kind: 'notice' });
   }
   if (K.inject) {
     const echo = serving.filter(s => ['gateway', 'bff', 'search', 'profile', 'notify'].includes(s.key));
     const host = rh.pick(echo.length ? echo : serving);
-    const target = rh.pick(nonRoot), klass = wrongClass(null);
+    const target = rh.pick(nonRoot), klass = rh.pick(C.FAULT_CLASSES);
     emit(Math.min(WINDOW - 10, T + rh.int(30, 700)), host, rh.pick(C.INJECT)({ svc: target.name, cls: klass }, rh), 'inject');
     herrings.claims.push({ svc: target.name, cls: klass, kind: 'inject' });
   }
@@ -782,7 +782,8 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   events.sort((a, b) => a.t - b.t || a.seq - b.seq);
   const width = Math.max(4, String(events.length).length);
   const rr = r.fork('render');
-  const legacySourceSvc = K.legacySource ? rr.pick([...impacted.keys()].filter(k => k !== 'gateway').map(k => S[k])) : null;
+  // v3 (audit): any serving service (v2 always picked an impacted one).
+  const legacySourceSvc = K.legacySource ? rr.pick(serving.filter(s => s !== gateway)) : null;
   const esc = text => text.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
   const body = (s, level, msg) => {
     const lower = level.toLowerCase();
@@ -816,9 +817,10 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   const tableEdges = edges.map(e => ({ ...e }));
   const notes = [];
   // Edges that exist but are missing from the table (described in prose instead).
-  const addedPool = edges.filter(e => impacted.has(e.from) && impacted.has(e.to) && !e.soft && e.from !== 'gateway');
-  const added = rs.sample(addedPool.filter(e => e.to === root.key).length ? [...addedPool.filter(e => e.to === root.key), ...addedPool] : addedPool, K.added)
-    .filter((e, i, a) => a.findIndex(x => x.from === e.from && x.to === e.to) === i);
+  // v3 (audit): drawn uniformly from all hard, non-gateway edges. v2 drew it among impacted->impacted edges
+  // with edges into the root counted twice, so the callee of this note was the root in 89% of d3 tasks.
+  const addedPool = edges.filter(e => !e.soft && e.from !== 'gateway');
+  const added = rs.sample(addedPool, K.added);
   const monthName = rs.pick(['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September']);
   for (const e of added) {
     tableEdges.find(x => x.from === e.from && x.to === e.to).inTable = false;
@@ -827,14 +829,15 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   // Stale table rows: listed calls that no longer happen.
   const stale = [];
   for (let i = 0; i < K.stale; i++) {
-    const targets = [root, ...[...impacted.keys()].map(k => S[k])].filter(t => t.key !== 'gateway');
+    // v3 (audit): any plausible (role-compatible) missing edge between serving services. v2 required an
+    // impacted target and a non-impacted caller and preferred the root (the root in 71% of d4 tasks).
     const cands = [];
-    for (const t of targets) for (const s of serving) {
-      if (s === t || s.key === 'gateway' || impacted.has(s.key) || degraded.has(s.key) || s.role.order >= t.role.order) continue;
+    for (const t of serving) for (const s of serving) {
+      if (s === t || s.key === 'gateway' || t.key === 'gateway' || s.role.order >= t.role.order) continue;
       if (edges.some(e => e.from === s.key && e.to === t.key) || stale.some(x => x.from === s.key && x.to === t.key)) continue;
-      cands.push({ from: s.key, to: t.key, liked: s.role.likes.includes(t.role.key), root: t === root });
+      cands.push({ from: s.key, to: t.key, liked: s.role.likes.includes(t.role.key) });
     }
-    const best = cands.filter(c => c.root && c.liked).length ? cands.filter(c => c.root && c.liked) : cands.filter(c => c.liked).length ? cands.filter(c => c.liked) : cands;
+    const best = cands.filter(c => c.liked).length ? cands.filter(c => c.liked) : cands;
     if (!best.length) break;
     const pick = rs.pick(best);
     stale.push(pick);

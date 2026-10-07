@@ -144,3 +144,12 @@ test('hidden journal: costForRun reports unobserved spend with bounds and estima
   assert.deepEqual(Object.fromEntries(Object.entries(k.costForRun('r')).filter(([key]) => key.startsWith('costUnknown'))),
     { costUnknownCalls: 2, costUnknownUpperUsd: 3, costUnknownEstimateUsd: 0 });
 });
+
+// ---- added by the 2026-10-07 audit (AUDIT.md F7)
+test('hidden journal: modelId is required on every entry', () => {
+  const j = new Journal(new DatabaseSync(':memory:'));
+  const base = { replayKey: 'k', runId: 'r', nodeKey: 'n', modelId: 'm', ok: true };
+  assert.equal(typeof j.record(base), 'number');
+  assert.throws(() => j.record({ ...base, modelId: undefined }), { code: 'JOURNAL_ENTRY', message: 'modelId is required' });
+  assert.throws(() => j.record({ ...base, modelId: '' }), { code: 'JOURNAL_ENTRY', message: 'modelId must be a string' });
+});

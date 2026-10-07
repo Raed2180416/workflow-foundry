@@ -213,3 +213,59 @@ test('hidden context: hashes, receipt fields and quarantine declassification', (
 test('hidden context: estimateTokens is ceil(utf8 bytes / 4)', () => {
   for (const [text, n] of [['', 0], ['a', 1], ['abcd', 1], ['abcde', 2], ['€', 1], ['€€', 2], ['😀😀', 2], ['x'.repeat(4001), 1001]]) assert.equal(estimateTokens(text), n, text);
 });
+
+// ---- added by the 2026-10-07 audit (AUDIT.md F7): boundaries no earlier test pinned. The digests
+// were computed from the ORIGINAL module; the spot checks say what they cover.
+const sweepDigest = rows => createHash('sha256').update(JSON.stringify(rows)).digest('hex');
+
+test('hidden context: truncation sweep over sizes, UTF-8 widths and maxTokens matches the reference', () => {
+  const texts = [];
+  for (const n of [1, 4, 7, 8, 9, 31, 32, 33, 60, 84, 85, 100, 140]) texts.push('x'.repeat(n));
+  for (const n of [4, 5, 16, 17, 43]) texts.push('é'.repeat(n));
+  for (const n of [3, 11, 29]) texts.push('€'.repeat(n));
+  for (const n of [2, 8, 21, 22]) texts.push('😀'.repeat(n));
+  for (const n of [3, 7]) texts.push('ab😀é€'.repeat(n));
+  const rows = [];
+  for (const maxTokens of [1, 2, 3, 5, 8, 13, 21, 22, 23]) for (const value of texts) {
+    const out = compileContext({ node: node(), inputs: [{ name: 'x', value, maxTokens }] });
+    rows.push([maxTokens, bytes(value), out.receipt.inputs[0].truncated, out.receipt.inputs[0].tokens, bytes(blockOf(out.prompt, 'x'))]);
+  }
+  const first = compileContext({ node: node(), inputs: [{ name: 'x', value: 'x'.repeat(140), maxTokens: 22 }] });
+  assert.equal(first.receipt.inputs[0].truncated, true);
+  assert.equal(blockOf(first.prompt, 'x'), 'x'.repeat(88 - bytes(marker(140))) + marker(140));
+  assert.equal(sweepDigest(rows), '506b138e2387c40c13644f3cc02d3c62bb5273affeef5fed53ee87450302aafa');
+});
+
+test('hidden context: overflow truncation sweep around the exact budget, with default and explicit priorities', () => {
+  const rows = [];
+  const sets = [
+    [{ name: 'a', value: 'a'.repeat(600) }, { name: 'b', value: 'b'.repeat(600), priority: 0.5 }],
+    [{ name: 'a', value: 'a'.repeat(600), priority: 0 }, { name: 'b', value: 'b'.repeat(600) }],
+    [{ name: 'a', value: 'é'.repeat(300), priority: -1 }, { name: 'b', value: '€'.repeat(200) }, { name: 'c', value: 'c'.repeat(50), priority: 3 }],
+  ];
+  sets.push([{ name: 'tiny', value: 't', priority: -5 }, { name: 'big', value: 'b'.repeat(900) }]);
+  // padding the instructions by 0-3 bytes makes every byte residue of the total occur, so the
+  // overflow (in bytes) takes every value from -8 to 8 next to the token budget
+  for (const inputs of sets) for (const pad of [0, 1, 2, 3]) {
+    const instructions = `Do the thing.${'.'.repeat(pad)}`;
+    const full = compileContext({ node: node({ instructions }), inputs });
+    const need = Math.ceil((bytes(full.system) + bytes(full.prompt)) / 4);
+    for (let budget = need - 260; budget <= need + 2; budget += (budget < need - 4 ? 32 : 1)) {
+      for (const onOverflow of ['truncate', 'fail']) {
+        try {
+          const out = compileContext({ node: node({ instructions, context: { budget: { maxInputTokens: budget, onOverflow } } }), inputs });
+          rows.push([pad, budget - need, onOverflow, out.receipt.totalTokens, out.receipt.inputs.map(i => [i.truncated, i.tokens])]);
+        } catch (e) { rows.push([pad, budget - need, onOverflow, e.code]); }
+      }
+    }
+  }
+  const two = compileContext({ node: node({ context: { budget: { maxInputTokens: 300, onOverflow: 'truncate' } } }), inputs: sets[0] });
+  assert.deepEqual(two.receipt.inputs.map(i => i.truncated), [true, false], 'a missing priority counts as 0, below 0.5');
+  assert.equal(sweepDigest(rows), '6c30b3db72735be37cb83f54e0e5a1eda057f7fa9c98a08b54f772011f437884');
+});
+
+test('hidden context: non-object nodes are rejected; a one-token budget is valid but overflows', () => {
+  for (const bad of ['node', 7, true]) assert.throws(() => compileContext({ node: bad }), { code: 'CONTEXT_INPUT', message: 'A node is required' });
+  assert.throws(() => compileContext({ node: node(), inputs: [], classBudget: 1 }), { code: 'CONTEXT_OVERFLOW' });
+  assert.throws(() => compileContext({ node: node(), inputs: [], classBudget: 0 }), { code: 'CONTEXT_INPUT', message: 'Token budgets must be positive integers' });
+});

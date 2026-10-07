@@ -908,11 +908,21 @@ export const NOTES = {
     (a, b, x) => `If ${b} is slow or down, ${a} serves ${x.fallback} instead; its customers do not see an error.`,
     (a, b, x) => `${a} wraps its calls to ${b} in a fallback (${x.fallback}), so trouble in ${b} only degrades ${a}.`,
     (a, b, x) => `${b} is a soft dependency of ${a}: on errors ${a} uses ${x.fallback}.`,
+    // v3 (audit): paraphrases without the keywords a short script greps for.
+    (a, b, x) => `When ${b} is unavailable, ${a} shows ${x.fallback}; nothing breaks for its users.`,
+    (a, b, x) => `${a} can do without ${b}: it substitutes ${x.fallback} and its requests still succeed.`,
+    (a, b, x) => `A ${b} outage only costs ${a} some freshness, because ${a} then serves ${x.fallback}.`,
+    (a, b, x) => `${a} only uses ${b} to enrich its answers; without it, ${a} answers with ${x.fallback}.`,
   ],
   hard: [
     (a, b, x) => `${a} has no fallback for ${b}: if ${b} fails, requests to ${a} fail too.`,
     (a, b, x) => `Calls from ${a} to ${b} are not optional; there is no degraded mode for ${x.what}.`,
     (a, b, x) => `A cached fallback for ${b} inside ${a} was proposed but never built, so ${a} cannot serve without it.`,
+    // v3 (audit): hard dependencies stated with the vocabulary of optional ones (read the whole sentence).
+    (a, b, x) => `${a} used to fall back to a cached copy when ${b} failed, but that fallback was removed in ${x.ver}; today a ${b} failure fails ${a}'s requests.`,
+    (a, b, x) => `${a} still has an 'optional' flag for ${b} in its config, but the flag has been ignored since ${x.ver}: ${a} cannot answer without ${b}.`,
+    (a, b, x) => `Unlike its other dependencies, ${b} is not something ${a} can do without; there is no degraded mode for ${x.what}.`,
+    (a, b, x) => `The planned fallback for ${b} in ${a} (serving stale ${x.what}) was never switched on, so ${a} errors whenever ${b} does.`,
   ],
   alias: [
     (n, l) => `Older services still refer to ${n} by its pre-migration name '${l}'.`,
@@ -948,6 +958,10 @@ export const NOTE_MIXED = [
   (a, soft, hard, x) => `${a} treats ${soft} as optional (it falls back to ${x.fallback}), but it has no fallback for ${hard}.`,
   (a, soft, hard, x) => `Of the services ${a} calls, only ${soft} is optional (${x.fallback} is used instead); a failure of ${hard} fails ${a}.`,
   (a, soft, hard, x) => `${a} keeps serving when ${soft} is down (using ${x.fallback}), unlike when ${hard} is down.`,
+  // v3 (audit): the hard dependency named first.
+  (a, soft, hard, x) => `${a} has no fallback for ${hard}; ${soft}, on the other hand, it can skip (it uses ${x.fallback}).`,
+  (a, soft, hard, x) => `A failure of ${hard} fails ${a}, whereas a failure of ${soft} only makes ${a} use ${x.fallback}.`,
+  (a, soft, hard, x) => `${a} needs ${hard} for every request but can live without ${soft} (${x.fallback}).`,
 ];
 
 // Benign warnings with the root's own vocabulary that do not contradict its baseline values; used
@@ -1008,4 +1022,59 @@ export const LOOKALIKE = {
   poisoned_cache: [
     (c, r) => ['INFO', `cache refill: loaded ${r.int(200, 900)} entries into namespace '${c.ns}-preview' from snapshot ${c.snap}`],
   ],
+};
+
+// v3 (audit): ways a short anomaly ends. Some say so in words, some only by values that are back to the
+// service's normal (the same form as its baseline lines). Used for every self-recovering blip from difficulty 3.
+export const RECOVER_ALT = {
+  connection_pool_exhaustion: [
+    (c, r) => ['INFO', `queue for '${c.pool}' drained; borrowers are no longer waiting`],
+    (c, r) => ['INFO', `pool '${c.pool}' stats: active=${c.a0}/${c.max} idle=${c.max - c.a0} pending=0`],
+    (c, r) => ['INFO', `the long report query released its connections; acquire time back to ${r.int(1, 4)}ms`],
+  ],
+  certificate_expiry: [
+    (c, r) => ['INFO', `served chain for ${c.host} replaced with the intermediate bundle; handshake errors stopped`],
+    (c, r) => ['INFO', `TLS listener :${c.port} ok (${r.int(40, 900)} handshakes/min)`],
+  ],
+  bad_config_deploy: [
+    (c, r) => ['INFO', 'previous configuration kept after the rejected reload; no requests were affected'],
+    (c, r) => ['INFO', `config watch: no changes (release ${c.oldVer})`],
+  ],
+  disk_full: [
+    (c, r) => ['INFO', `disk usage ${c.u0}% on ${c.vol}`],
+    (c, r) => ['INFO', `retention job removed ${r.int(20, 400)} expired segments; ${c.vol} has ${c.free(c.u0)} GiB free`],
+  ],
+  dns_resolution_failure: [
+    (c, r) => ['INFO', `resolver ${c.resolver}: ${r.int(200, 4000)} lookups/min, cache hit ${r.int(80, 98)}%`],
+    (c, r) => ['INFO', `lookups answering normally again (median ${r.int(1, 9)}ms)`],
+  ],
+  memory_leak_oom: [
+    (c, r) => ['INFO', `heap after gc ${c.base}% (pause ${r.int(20, 140)}ms)`],
+    (c, r) => ['INFO', `the batch request finished; old generation collected back down to ${c.base}%`],
+  ],
+  clock_skew: [
+    (c, r) => ['INFO', `ntp offset ${r.int(1, 30)}ms (ok)`],
+    (c, r) => ['INFO', 'time source reachable again; local clock corrected'],
+  ],
+  upstream_rate_limiting: [
+    (c, r) => ['INFO', `${c.ext} quota usage ${r.int(15, 60)}% of ${c.quota}/min`],
+    (c, r) => ['INFO', `${c.ext} window reset; requests flowing normally`],
+  ],
+  poisoned_cache: [
+    (c, r) => ['INFO', `cache '${c.ns}' hit ratio 0.${r.int(85, 97)}, ${r.int(8000, 90000)} entries`],
+    (c, r) => ['INFO', `bad entries purged from '${c.ns}'; reads validate again`],
+  ],
+};
+
+// v3 (audit): the first line of the root's own self-recovering blip (difficulty >= 3) may use the same
+// wording as a real onset; only the recovery that follows (and the absence of consequences) tells them apart.
+// Certificate and config blips keep their own wording (a served certificate does not un-expire; the earlier
+// healthy rollout of the root already plays this role), and cache refills are already identical in form.
+export const BLIP_ONSET = {
+  connection_pool_exhaustion: (c, r) => ['WARN', `connection pool '${c.pool}' at capacity: in use ${c.max}/${c.max}, ${r.int(30, 140)} callers waiting`],
+  disk_full: (c, r) => ['WARN', `disk usage on ${c.vol} jumped to ${c.u0 + r.int(6, 10)}% (was ${c.u0}% a few minutes ago); ${c.writer} is writing ${r.int(80, 400)} MB/s`],
+  dns_resolution_failure: (c, r) => ['ERROR', `lookup ${c.someHost}: temporary failure in name resolution`],
+  memory_leak_oom: (c, r) => ['WARN', `heap after full GC is ${c.base + r.int(12, 18)}% (baseline ${c.base}%); old generation not shrinking`],
+  clock_skew: (c, r) => ['WARN', `clock offset vs time source is +${r.int(2, 30)}s (tolerance 0.5s)`],
+  upstream_rate_limiting: (c, r) => ['WARN', `${c.ext} responded 429 Too Many Requests (retry-after ${r.int(10, 60)}s)`],
 };

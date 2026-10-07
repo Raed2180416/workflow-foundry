@@ -157,3 +157,34 @@ test('hidden schema-subset: checkQuarantinedSchema message and return value', ()
   for (let i = 0; i < 7; i++) many[`s${i}`] = { type: 'string' };
   assert.throws(() => checkQuarantinedSchema(obj(many)), e => e.details.violations.length === 7 && e.message.split('; use a string enum').length === 6);
 });
+
+// ---- added by the 2026-10-07 audit (AUDIT.md F7): capacity arithmetic no earlier test pinned.
+// The digest was computed from the ORIGINAL module; the spot checks say what it covers.
+import { createHash as auditHash } from 'node:crypto';
+import { quarantinedSchemaViolations as auditViolations } from './src/schema-subset.mjs';
+
+test('hidden schema-subset: capacity sweep (fractional and negative ranges, empty ranges, small arrays) matches the reference', () => {
+  const obj = props => ({ type: 'object', additionalProperties: false, required: Object.keys(props), properties: props });
+  const bools = n => Object.fromEntries(Array.from({ length: n }, (_, i) => [`b${i}`, { type: 'boolean' }]));
+  const enumOf = n => ({ type: 'string', enum: Array.from({ length: n }, (_, i) => `v${i}`) });
+  const leaves = [
+    { type: 'number', minimum: 0.25, maximum: 0.5 }, { type: 'number', minimum: -0.5, maximum: -0.25 }, { type: 'number', minimum: -1, maximum: 1 },
+    { type: 'number', minimum: 0, maximum: 0 }, { type: 'number', minimum: 0.5, maximum: 0.75 }, { type: 'integer', minimum: 1, maximum: 1 },
+    { type: 'integer', minimum: 3, maximum: 2 }, { type: 'integer', minimum: -5, maximum: 5 }, enumOf(1), enumOf(2), enumOf(3), enumOf(20),
+    { type: 'array', items: { type: 'boolean' }, maxItems: 0 }, { type: 'array', items: enumOf(20), maxItems: 1 },
+    { type: 'array', items: enumOf(20), minItems: 1, maxItems: 1 }, { type: 'array', items: { type: 'boolean' }, minItems: 3, maxItems: 2 },
+    { type: 'array', items: { type: 'boolean' }, minItems: 0, maxItems: 2 }, { type: 'string' },
+  ];
+  const rows = [];
+  for (const leaf of leaves) for (const pad of [0, 13, 40, 63, 64]) {
+    for (const required of [true, false]) {
+      const schema = obj({ ...bools(pad), leaf });
+      if (!required) schema.required = schema.required.filter(k => k !== 'leaf');
+      rows.push(auditViolations(schema).map(v => `${v.path} ${v.problem}`));
+    }
+  }
+  assert.deepEqual(auditViolations(obj({ ...bools(64), s: { type: 'string' } })).map(v => v.path), ['#/properties/s'], 'a violating leaf adds no capacity');
+  assert.equal(auditViolations(obj({ ...bools(13), x: { type: 'number', minimum: 0.25, maximum: 0.5 } })).length, 1, '0.25..0.5 holds 2^52 doubles');
+  assert.equal(createHashHex(rows), '6c1b481fb4d2230de713b775e6ef47f4f7a70afddbb229d7a38c4fd478bf46fa');
+});
+function createHashHex(rows) { return auditHash('sha256').update(JSON.stringify(rows)).digest('hex'); }

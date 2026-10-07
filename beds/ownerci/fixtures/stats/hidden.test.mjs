@@ -141,3 +141,26 @@ test('hidden stats: mcnemar counts discordant majority outcomes and gives the ex
   const l = mcnemar(lopsided, 'A', 'B');
   assert.equal(l.aOnly, 6); assert.equal(l.bOnly, 0); close(l.p, 2 / 64);
 });
+
+// ---- added by the 2026-10-07 audit (AUDIT.md F7)
+test('hidden stats: missing costs count as zero and pass^k takes (trials, successes) in that order', () => {
+  const trials = (task, n, c) => Array.from({ length: n }, (_, i) => ({ arm: 'A', task, family: 'f', trial: i, pass: i < c }));
+  const s = summarizeArm(byArmTask([...trials('t1', 4, 2), ...trials('t2', 5, 3), ...trials('t3', 6, 1)]).get('A'), { k: 3 });
+  assert.equal(s.costUsd, 0); assert.equal(s.cps, 0); assert.equal(s.costPerTrial, 0);
+  assert.ok(Math.abs(s.passHat3 - (0 + 0.1 + 0) / 3) < 1e-12, String(s.passHat3));
+  assert.ok(Math.abs(s.passAt3 - (1 + 1 + 0.5) / 3) < 1e-12, String(s.passAt3));
+});
+
+test('hidden stats: pairedBootstrap with the default seed and few iterations gives the reference quantiles', () => {
+  const recs = [];
+  const add = (arm, task, family, passes, cost) => passes.forEach((p, i) => recs.push({ arm, task, family, trial: i, pass: p, costUsd: cost }));
+  for (const [t, f, a, b] of [['t1', 'f1', [1, 1, 0], [0, 0, 0]], ['t2', 'f1', [1, 0, 0], [1, 1, 0]], ['t3', 'f2', [1, 1, 1], [1, 0, 0]],
+    ['t4', 'f2', [0, 0, 1], [0, 1, 1]], ['t5', 'f3', [1, 0, 1], [0, 0, 1]], ['t6', 'f3', [1, 1, 0], [1, 0, 0]], ['t7', 'f4', [0, 1, 1], [0, 0, 1]]]) {
+    add('A', t, f, a.map(Boolean), 0.22); add('B', t, f, b.map(Boolean), 0.1);
+  }
+  const r = pairedBootstrap(recs, 'A', 'B', { iterations: 9 });
+  const got = [r.successDiff.lo, r.successDiff.hi, r.cpsRatio.lo, r.cpsRatio.hi, r.cpsRatio.finiteResamples].map(x => Math.round(x * 1e9) / 1e9);
+  assert.deepEqual(got, [0.047619048, 0.333333333, 0.733333333, 1.925, 9]);
+  const r2 = pairedBootstrap(recs, 'A', 'B', { iterations: 9, seed: 'bootstrap' });
+  assert.deepEqual([r2.successDiff.lo, r2.successDiff.hi], [r.successDiff.lo, r.successDiff.hi], 'the default seed is "bootstrap"');
+});

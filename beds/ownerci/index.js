@@ -3,3 +3,4 @@
 // fixture suites under fixtures/ are never run directly; the oracle runs them in a child process.
 import './ownerci.test.mjs';
 import './ownerci.controls.test.mjs';
+import './ownerci.audit.test.mjs';

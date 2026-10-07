@@ -138,3 +138,28 @@ test('hidden distill: searchNode stops early when every candidate is dropped and
   assert.equal(short.assigned, 'z'); assert.equal(short.sampleSize, 3); assert.equal(short.candidates[0].n, 3);
   assert.equal(short.candidates[0].unitCostUsd, 0);
 });
+
+// ---- added by the 2026-10-07 audit (AUDIT.md F7)
+test('hidden distill: the tolerance comparison is inclusive and its absolute floor is exactly 1', () => {
+  assert.equal(leafAgreement(1, 1, { relTol: 0 }), 1);
+  assert.equal(leafAgreement({ x: 3 }, { x: 3 }, { relTol: 0 }), 1);
+  assert.equal(leafAgreement({ x: 0.5 }, { x: 0.5 + 1.5e-9 }), 0);
+  assert.equal(leafAgreement({ x: 2 }, { x: 2 + 1.5e-9 }), 1);
+});
+
+test('hidden distill: searchNode defaults (rounds 4/8/16, error rate 0.1) and missing cost fields', async () => {
+  const p = port(({ modelId }, i) => (modelId === 'flaky' && i === 9 ? { ok: false, error: { code: 'MODEL_TIMEOUT' } } : { ok: true, value: { v: i } }));
+  const r = await searchNode({ node: 'n', calls: callsOf(10), candidates: ['flaky', 'good'], modelPort: p, runId: 'run', threshold: 0.5 });
+  const [flaky, good] = r.candidates;
+  assert.deepEqual([flaky.n, flaky.errors, flaky.alive], [10, 1, true], 'an error rate of exactly 0.1 survives the default');
+  assert.equal(r.assigned, 'flaky');
+  assert.deepEqual([good.costUsd, good.imputedUsd, good.latencyMs, good.unitCostUsd], [0, 0, 0, 0]);
+  const big = await searchNode({ node: 'n', calls: callsOf(20), candidates: ['good'], modelPort: port((req, i) => ({ ok: true, value: { v: i } })), runId: 'run' });
+  assert.equal(big.sampleSize, 16);
+  const seen = [];
+  await searchNode({ node: 'n', calls: callsOf(20), candidates: ['bad'], modelPort: port((req, i) => (seen.push(i), { ok: true, value: { v: -1 } })), runId: 'run' });
+  assert.equal(seen.length, 4, 'the first default round has 4 calls');
+  const second = await searchNode({ node: 'n', calls: callsOf(20), candidates: ['late'], modelPort: port((req, i) => (i === 5 ? { ok: false, error: { code: 'X' } } : { ok: true, value: { v: i } })),
+    runId: 'run', threshold: 0 });
+  assert.deepEqual([second.candidates[0].n, second.candidates[0].alive], [8, false], 'the second default round ends at 8 calls (1/8 errors > 0.1)');
+});

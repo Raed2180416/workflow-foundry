@@ -41,7 +41,7 @@ trained, and no bed was read.
   | Metric | Kev-0.8B | Kev-4B | Jev | Source |
   |---|---|---|---|---|
   | transfer-v4 (new sources, development) accuracy | 0.648 | 0.817 | 0.857 | `kev:README.md:40-46` |
-  | Share automatable at a 5 % error budget, out of domain | 0.145 (dev), 0.274 (locked test) | – | 0.70 | `kev:docs/model-cards/kev-0.8b.md:183,282` |
+  | Share automatable at a 5 % error budget, out of domain | 0.145 (dev), 0.274 (locked test) | 0.620 (dev), 0.701 (locked test) | 0.70 | `kev:docs/model-cards/kev-0.8b.md:183,282`; `kev:docs/model-cards/kev-4b.md:181,281` |
   | Held-out agent-session logs | 0.655 | 0.847 | – | `agents-ood` run records |
   | Held-out injection / PII / grounding | 0.506 | 0.679 | – | `guardrails-ood` run records |
 
@@ -381,7 +381,7 @@ Jev was read on development partitions only (`kev:README.md:40-48`;
   - [run] 0.8B in distribution: documents-v1 test 0.616, hard-v1 test 0.192, devtools-v1 test 0.282
     (`kev:runs/release/kev-08b-r15.json` → `candidate.docs1_test` / `hard_test` / `devtools_test`).
   - These are in-sample maxima over thresholds, "not a deployed error guarantee"
-    (`kev:kev/benchmark.py:94-96`).
+    (`kev:kev/benchmark.py:96`).
 - **Why one T is not enough [doc].**
   - "A single temperature cannot reorder confidences" (`kev:README.md:413`).
   - "A temperature fitted on easy in-distribution rows does not transfer to hard or distant
@@ -508,7 +508,7 @@ Model time per request, median of 20, for a new state / the same state again
 | 4B | M5 MLX | 721 / 136 ms | 65k state: 84.5 s / 716 ms | 10.2–13.0 GB peak (`kev-4b.md:260-267`) |
 | 4B | M5, **torch bf16** (no DeltaNet kernels on MPS) | 3,302 / 847 ms, 5 questions | – | – (`kev:AGENTS.md:269`) |
 | 9B | L40S / H100 | 66.4 / 42.7 ms; 24.0 / 16.6 ms | 235.6 / 57.5 ms; 88.5 / 26.4 ms | 21.9 GB GPU; 19.3 GB bf16 backbone (`kev-9b.md:248`; `kev:AGENTS.md:269`) |
-| 27B | B200 / H200 / H100 | 46.5–75.0 ms new | 178–277 ms new | 51 GB weights, ~66 GB resident (`kev:README.md:396`) |
+| 27B | B200 / H200 / H100 | 46.5–75.0 ms new | 178–278 ms new | 51 GB weights, ~66 GB resident (`kev:README.md:396`) |
 
 - **No x86 CPU numbers [unk].** Kev documents **no latency for an x86 CPU**. The only CPU statements
   are about numerical parity (`kev:docs/model-cards/kev-0.8b.md:268`) and memory behaviour
@@ -520,7 +520,8 @@ Model time per request, median of 20, for a new state / the same state again
   `avx512f`, `avx512_bf16`, `amx_bf16` and `amx_tile`. RAM is 15 GB total with about 11 GB
   available, no swap, no GPU.
 - **Kev process [here].** PID 22454 holds 3.63 GB RSS for 0.8B in fp32. The base safetensors on
-  disk are 1.7 GB in bf16. torch reports 4 intra-op threads.
+  disk are 1.7 GB in bf16. A separate `python -I` process in the same venv reports torch 2.8.0+cpu,
+  transformers 5.17.0, peft 0.21.0, and 4 intra-op threads by default.
 - **Prior Foundry records [F-rec].**
   - "smoke: 3 typed questions in 1.4 s" (`fdy:research/manifests/models.json:70`).
   - `fdy:research/distill-20261007/DESIGN.md:21` and `fdy:docs/RESEARCH.md:114` instead say
@@ -742,7 +743,9 @@ One JSON object per line, in the request shape with a `label` on every question
 - **Same wire format [doc/code].** `POST /v1/systemone {state, model, questions}` and
   `GET /v1/models`. "The TypeSafe Python SDK works against a Kev server unchanged"
   (`kev:README.md:19`, `:122-151`).
-- **TypeSafe SDK 0.7.2, installed in `/opt/kev-venv` [code].**
+- **TypeSafe SDK 0.7.2, installed in `/opt/kev-venv` [code].** Paths below are relative to
+  `/opt/kev-venv/lib/python3.13/site-packages/`. Kev pins `typesafe-sdk>=0.6.0`
+  (`kev:pyproject.toml:40`).
   - Default base URL `https://api.typesafe.ai` and default model `jev-latest`.
   - Environment variables `TYPESAFE_API_KEY`, `TYPESAFE_BASE_URL`, `TYPESAFE_DEFAULT_MODEL`.
   - **Default timeout 10 s** (`typesafe_sdk/constants.py:3-21`).
@@ -751,7 +754,7 @@ One JSON object per line, in the request shape with a `label` on every question
   - Kev accepts any `model` string, and its `/v1/models` lists `kev-latest` and `jev-latest` (§1.10).
 - **Through the Vercel AI SDK [code/doc].** Jev is model `typesafe-ai/jev`, and question type
   `noul` is sent as `"boolean"` (`kev:playground/scripts/jev-evaluate.mjs:10-14`;
-  `kev:skills/kev-finetune/references/deploy.md:121-126`).
+  `kev:skills/kev-finetune/references/deploy.md:38-43`).
   - Through the gateway, a noul answer arrives as `probability` rather than `noul`
     (`kev:kev/predictors.py:329-330`).
 - **Jev limits recorded by Kev's author [code/doc].**
