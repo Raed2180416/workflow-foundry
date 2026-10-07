@@ -49,6 +49,14 @@ const unhandled = new Set([...environmentFaults, ...providerFaults, 'CANCELLED',
   'DEADLINE', 'STATE_BUDGET', 'STALE_RUNNER', 'REPLAY_MISS', 'MODEL_PORT_REQUIRED', 'VERIFY_INDEPENDENCE', 'ASSIGNMENT_INVALID',
   'LABEL_POLICY', 'FRAME_DRIFT', 'CORRUPT_EVENTS', 'MODEL_POLICY_DRIFT']);
 const cancelled = error => ['CANCELLED', 'ABORT_ERR'].includes(error?.code);
+// A call cut short because the run deadline, not its own timeout, set its limit is the deadline's outcome.
+const deadlineStop = (what, details) => new FoundryError('DEADLINE', `Run deadline exhausted while ${what} was running`, details);
+// The E1 retry note sits outside every untrusted fence, so it carries only the port's model-safe feedback (fixed text
+// and schema paths), never a provider message or an instance path that model output (steerable by input) can fill.
+const RETRY_FEEDBACK = { MODEL_SCHEMA: 'Model output did not satisfy its schema', MODEL_TRUNCATED: 'Generation stopped at the token limit' };
+// Sum of spend bounds; null (unbounded) once any part has none.
+const addBound = (total = 0, bound) => total === null || typeof bound !== 'number' ? null : total + bound;
+const unknownOf = call => call.costUnknown === true ? { costUnknown: true, costUpperUsd: call.costUpperUsd ?? null, costEstimateUsd: call.costEstimateUsd ?? null } : {};
 // Abort scopes (one per flow frame and per map) follow async continuations, so a failure cancels only its own
 // scope; the invocation-wide controller remains the root. A scope belongs to exactly one Invocation.
 const scopes = new AsyncLocalStorage();
@@ -195,6 +203,12 @@ class Invocation {
     if (signal?.aborted) this.onAbort();
   }
   current() { return this.store.run(this.runId); }
+  // The run deadline stops a model call or code through its own signal, so the stop is never mistaken for the
+  // operation's own timeout or a provider fault: reached() is true only when the deadline (not the caller) aborted it.
+  untilDeadline(signal) {
+    const deadline = AbortSignal.timeout(Math.max(1, this.current().deadline - Date.now()));
+    return { signal: AbortSignal.any([signal, deadline]), reached: () => deadline.aborted && !signal.aborted };
+  }
   // The abort signal of the current continuation's scope (a flow frame, a map, or the whole invocation).
   signal() { const scope = scopes.getStore(); return scope?.owner === this ? scope.controller.signal : this.abort.signal; }
   async scoped(fn) {
@@ -461,8 +475,10 @@ class Invocation {
     if (failures.length) throw failures.find(error => !cancelled(error)) ?? failures[0];
     if (halted) { this.eventNode(frameKey, node.id, f => { f.nodes[node.id].status = 'waiting_child'; }, 'node.waiting_child'); return; }
     const failed = results.filter(item => Object.hasOwn(item, '$error')).length;
+    // A collected $error carries the item's error text, which can quote anything the item could read: its inputs and item.
+    const failedLabel = failed ? joinLabels(Object.values(childLabels)) : 'trusted';
     this.complete(frameKey, node, { items: results, count: results.length, ...(collect ? { failed } : {}) }, 'completed',
-      { state: { ...labelState(joinLabels([itemLabel, this.childLabels(frameKey, node.id)])), ...(collect ? { failedItems: failed } : {}) } });
+      { state: { ...labelState(joinLabels([itemLabel, failedLabel, this.childLabels(frameKey, node.id)])), ...(collect ? { failedItems: failed } : {}) } });
   }
   async task(node, frameKey, ctx) {
     const cap = this.registry.get(node.tool), run = this.current();
@@ -492,7 +508,8 @@ class Invocation {
         const localAbort = new AbortController();
         const stop = () => localAbort.abort(); signal.addEventListener('abort', stop, { once: true });
         let settled = false, timeout, timedOut = false;
-        const timeoutMs = Math.min(node.timeoutMs, Math.max(1, this.current().deadline - Date.now()));
+        const remaining = this.current().deadline - Date.now(), deadlineBound = remaining <= node.timeoutMs;
+        const timeoutMs = Math.min(node.timeoutMs, Math.max(1, remaining));
         const execution = this.registry.execute(node.tool, args, {
           signal: localAbort.signal, runId: this.runId, nodeKey, idempotencyKey,
           artifactsDir: path.join(this.store.directory, 'artifacts', this.runId), store: this.store
@@ -507,6 +524,7 @@ class Invocation {
           this.complete(frameKey, node, result, 'completed', { state: labelState(argsLabel) }); return;
         } catch (error) {
           localAbort.abort();
+          if (timedOut && deadlineBound) error = deadlineStop(node.tool);
           if (timedOut && !settled) await Promise.race([execution.catch(() => {}), delay(100)]);
           if (cap.effects === 'non-idempotent' || (timedOut && !settled) || (this.userCancelled && cap.effects !== 'none')) {
             this.eventNode(frameKey, node.id, f => { Object.assign(f.nodes[node.id], { status: 'uncertain', error: errorData(error) }); }, 'effect.uncertain', { error: errorData(error), cancellationConfirmed: settled });
@@ -514,6 +532,7 @@ class Invocation {
           }
           this.eventNode(frameKey, node.id, f => { Object.assign(f.nodes[node.id], { status: 'pending', error: errorData(error) }); }, 'tool.failed', { error: errorData(error) });
           if (signal.aborted) throw new FoundryError('CANCELLED', 'Execution cancelled while an operation was in progress');
+          if (error.code === 'DEADLINE') throw error; // never retried, never handled by onError
           const attempts = frameOf(this.current(), frameKey).nodes[node.id].attempts;
           if (attempts >= node.retry.maxAttempts) {
             if (node.onError === 'continue') { this.complete(frameKey, node, { ok: false, error: errorData(error) }, 'handled_error', { state: labelState(argsLabel) }); return; }
@@ -578,32 +597,33 @@ class Invocation {
       const compiled = compileContext({ node, workflow: this.workflow, inputs, classBudget: policy.inputBudgetTokensByClass?.[entry.class], retryNote, schema: returns });
       const selected = { modelId: entry.id, modelClass: entry.class, sampleIndex, escalations, receiptHash: compiled.receiptHash };
       this.eventNode(frameKey, node.id, (f, r) => { this.preflight(r); Object.assign(f.nodes[node.id], selected); }, 'context.compiled', { ...selected, attempt, retry: retries, receipt: compiled.receipt });
-      const signal = this.signal();
+      const signal = this.signal(), stop = this.untilDeadline(signal);
       await this.semaphore.take(signal);
       let result;
       try {
         result = await models.call({ runId: this.runId, nodeKey, attempt, sampleIndex, modelId: entry.id, system: compiled.system, prompt: compiled.prompt, schema: returns,
-          decoding: node.decoding ?? {}, receiptHash: compiled.receiptHash, signal, mode: run.modelMode ?? 'live', salt: run.sampleSalt ?? this.runId,
-          timeoutMs: Math.max(1, Math.min(node.timeoutMs ?? 120000, this.current().deadline - Date.now())) });
+          decoding: node.decoding ?? {}, receiptHash: compiled.receiptHash, signal: stop.signal, mode: run.modelMode ?? 'live', salt: run.sampleSalt ?? this.runId,
+          timeoutMs: node.timeoutMs ?? 120000 });
+      } catch (error) {
+        // A cancelled call is journaled with what it consumed; charge that before the cancellation propagates.
+        const spent = error.code === 'CANCELLED' ? error.details : null;
+        if (spent?.journalId != null) this.chargeModel(frameKey, node, spent, 'model.cancelled', { modelId: entry.id, attempt, sampleIndex, errorCode: 'CANCELLED',
+          costUsd: spent.costUsd, imputedUsd: spent.imputedUsd ?? 0, latencyMs: spent.latencyMs, usage: spent.usage, journalId: spent.journalId, ...unknownOf(spent) });
+        throw stop.reached() ? deadlineStop(`${node.id}'s model call`, { journalId: spent?.journalId ?? null, modelId: entry.id }) : error;
       } finally { this.semaphore.release(); }
       // Fault injection is explicit, only available to trusted test callers: the journal row is committed, the run is not.
       if (this.current().extra?.crashAfterModel === nodeKey) process.kill(process.pid, 'SIGKILL');
       recovered = result.recovered === true;
       const code = result.ok ? null : result.error?.code ?? 'MODEL_PROTOCOL';
-      this.eventNode(frameKey, node.id, (f, r) => {
-        const s = f.nodes[node.id], seen = s.journalIds ?? [];
-        if (result.journalId != null && seen.includes(result.journalId)) return; // already charged before a crash
-        s.journalIds = [...seen, result.journalId]; s.modelCalls = (s.modelCalls ?? 0) + 1;
-        s.costUsd = (s.costUsd ?? 0) + result.costUsd; s.imputedUsd = (s.imputedUsd ?? 0) + (result.imputedUsd ?? 0); r.cost += result.costUsd;
-      }, recovered ? 'node.recovered_from_journal' : 'model.called', { modelId: result.modelId, provider: result.provider, engineVersion: result.engineVersion, attempt, sampleIndex,
+      this.chargeModel(frameKey, node, result, recovered ? 'node.recovered_from_journal' : 'model.called', { modelId: result.modelId, provider: result.provider, engineVersion: result.engineVersion, attempt, sampleIndex,
         ok: result.ok, errorCode: code, costUsd: result.costUsd, imputedUsd: result.imputedUsd ?? 0, latencyMs: result.latencyMs, usage: result.usage, finishReason: result.finishReason,
-        journalId: result.journalId ?? null, replayed: result.replayed === true && !recovered, ...(result.replayedFrom ? { replayedFrom: result.replayedFrom } : {}) });
+        journalId: result.journalId ?? null, replayed: result.replayed === true && !recovered, ...(result.replayedFrom ? { replayedFrom: result.replayedFrom } : {}), ...unknownOf(result) });
       if (this.current().cost > this.costLimit(this.current()) + 1e-12) throw new FoundryError('COST_BUDGET', `Run cost budget exhausted by a model call at ${node.id}`);
       if (!result.ok) {
         const message = result.error?.message ?? code;
         if (environmentFaults.has(code) || providerFaults.has(code)) throw new FoundryError(code, `${node.id}: ${message}`, { journalId: result.journalId ?? null, modelId: entry.id });
         if (retryable.has(code) && retries < rules.schemaRetries) {
-          retries++; retryNote = `Retry ${retries} of ${rules.schemaRetries} on this model. ${code}: ${message}`;
+          retries++; retryNote = `Retry ${retries} of ${rules.schemaRetries} on this model. ${code}: ${result.error?.feedback ?? RETRY_FEEDBACK[code]}`;
           this.eventNode(frameKey, node.id, () => {}, 'model.retry', { rule: 'E1', modelId: entry.id, errorCode: code, retry: retries, ...(recovered ? { recovered: true } : {}) });
           continue;
         }
@@ -619,6 +639,18 @@ class Invocation {
       }
       entry = escalate('E2', 'NODE_CHECK_FAILED', failed);
     }
+  }
+  // Charges one journaled model call to its node and the run, once per journal row (a crash may replay the commit).
+  // run.cost is known spend; a call whose spend is unknown adds its bound to costUnknownUpperUsd (DESIGN §2).
+  chargeModel(frameKey, node, call, type, event) {
+    this.eventNode(frameKey, node.id, (f, r) => {
+      const s = f.nodes[node.id], seen = s.journalIds ?? [];
+      if (call.journalId != null && seen.includes(call.journalId)) return; // already charged before a crash
+      s.journalIds = [...seen, call.journalId]; s.modelCalls = (s.modelCalls ?? 0) + 1;
+      const cost = call.costUsd ?? 0;
+      s.costUsd = (s.costUsd ?? 0) + cost; s.imputedUsd = (s.imputedUsd ?? 0) + (call.imputedUsd ?? 0); r.cost += cost;
+      if (call.costUnknown === true) for (const t of [s, r]) { t.costUnknownCalls = (t.costUnknownCalls ?? 0) + 1; t.costUnknownUpperUsd = addBound(t.costUnknownUpperUsd, call.costUpperUsd); }
+    }, type, event);
   }
   preflight(run) {
     if (this.signal().aborted) throw new FoundryError('CANCELLED', 'Execution cancelled');
@@ -639,12 +671,11 @@ class Invocation {
       identity: run.identity, features, action, alternatives, propensity, rationale, costUsd }));
   }
   async sandboxed(spec) {
-    const signal = this.signal();
+    const signal = this.signal(), stop = this.untilDeadline(signal);
     await this.semaphore.take(signal);
-    try {
-      const timeoutMs = Math.max(1, Math.min(spec.timeoutMs, 600000, this.current().deadline - Date.now()));
-      return (await this.runtime.codeRunner({ ...spec, timeoutMs, signal })).value;
-    } finally { this.semaphore.release(); }
+    try { return (await this.runtime.codeRunner({ ...spec, timeoutMs: Math.min(spec.timeoutMs, 600000), signal: stop.signal })).value; }
+    catch (error) { throw stop.reached() ? deadlineStop('code') : error; }
+    finally { this.semaphore.release(); }
   }
   async code(node, frameKey, ctx) {
     const value = await this.sandboxed({ lang: node.lang, source: node.source, input: resolve(node.args ?? {}, ctx), timeoutMs: node.timeoutMs ?? 10000 });
@@ -682,10 +713,16 @@ class Invocation {
     signal.addEventListener('abort', stop, { once: true });
     let timer;
     try {
-      const timeoutMs = Math.max(1, Math.min(node.timeoutMs ?? 60000, cap.maxTimeoutMs, run.deadline - Date.now()));
+      // Every dispatch reserves the oracle's cost against the run budget, as a task dispatch does (the node's step was already taken).
+      this.eventNode(frameKey, node.id, (f, r) => {
+        this.preflight(r);
+        if (r.cost + cap.cost > this.costLimit(r) + 1e-12) throw new FoundryError('COST_BUDGET', 'Run cost budget exhausted');
+        r.cost += cap.cost; f.nodes[node.id].costUsd = (f.nodes[node.id].costUsd ?? 0) + cap.cost;
+      }, 'oracle.dispatched', { tool: node.tool, reservedCost: cap.cost, argsHash: digest(args) });
+      const limit = Math.min(node.timeoutMs ?? 60000, cap.maxTimeoutMs), remaining = this.current().deadline - Date.now();
       return await Promise.race([
         this.registry.execute(node.tool, args, { signal: local.signal, runId: this.runId, nodeKey, idempotencyKey: digest({ runId: this.runId, nodeKey, args }), artifactsDir: path.join(this.store.directory, 'artifacts', this.runId), store: this.store }),
-        new Promise((_, reject) => { timer = setTimeout(() => { local.abort(); reject(new FoundryError('TOOL_TIMEOUT', `${node.tool} timed out`)); }, timeoutMs); })]);
+        new Promise((_, reject) => { timer = setTimeout(() => { local.abort(); reject(remaining <= limit ? deadlineStop(node.tool) : new FoundryError('TOOL_TIMEOUT', `${node.tool} timed out`)); }, Math.max(1, Math.min(limit, remaining))); })]);
     } finally { clearTimeout(timer); signal.removeEventListener('abort', stop); this.semaphore.release(); }
   }
   async verify(node, frameKey, ctx, state, resumed) {

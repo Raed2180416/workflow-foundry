@@ -2,10 +2,10 @@
 // - POST /score   {probe, output}        -> {pass, score}   (probe tasks only, call-limited; oracle stays on the host)
 // - POST /model   {model, system, prompt, schema?, decoding?} -> {ok, value, text, error, costUsd}  (policy-enforced, journaled, budgeted)
 // - POST /env/<op> {episode, ...}        -> interactive bed env API (create/reset/step/observe/snapshot/restore/actions)
-// - GET  /budget                         -> {spentUsd, capUsd, scoreCallsLeft}
+// - GET  /budget                         -> {spentUsd, capUsd, scoreCallsLeft, unknownCalls, unknownUpperUsd}
 // Every request needs the per-session bearer token; the services bind to 127.0.0.1 only.
 import http from 'node:http';
-import { randomBytes } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import { score, loadFamily } from './beds.mjs';
 
 const json = (res, code, body) => { res.writeHead(code, { 'content-type': 'application/json' }); res.end(JSON.stringify(body)); };
@@ -16,14 +16,20 @@ const readBody = req => new Promise((resolve, reject) => {
   req.on('error', reject);
 });
 
-// A per-session ledger. capUsd bounds everything paid through /model in this session.
+// A per-session ledger. capUsd bounds everything paid through /model in this session. spentUsd is known spend; calls
+// whose spend could not be observed (a killed hosted call) add their bound to unknownUpperUsd (null: unbounded).
 export class Ledger {
-  constructor({ capUsd, label }) { this.capUsd = capUsd; this.label = label; this.spentUsd = 0; this.imputedUsd = 0; this.calls = 0; this.errors = {}; }
+  constructor({ capUsd, label }) { this.capUsd = capUsd; this.label = label; this.spentUsd = 0; this.imputedUsd = 0; this.calls = 0; this.errors = {}; this.unknownCalls = 0; this.unknownUpperUsd = 0; }
   remaining() { return this.capUsd - this.spentUsd; }
-  charge(r) { this.spentUsd += r.costUsd ?? 0; this.imputedUsd += r.imputedUsd ?? 0; this.calls++; if (r.error) this.errors[r.error.code] = (this.errors[r.error.code] ?? 0) + 1; }
+  charge(r) {
+    this.spentUsd += r.costUsd ?? 0; this.imputedUsd += r.imputedUsd ?? 0; this.calls++; if (r.error) this.errors[r.error.code] = (this.errors[r.error.code] ?? 0) + 1;
+    if (r.costUnknown === true) { this.unknownCalls++; this.unknownUpperUsd = this.unknownUpperUsd === null || typeof r.costUpperUsd !== 'number' ? null : this.unknownUpperUsd + r.costUpperUsd; }
+  }
 }
 
-export async function startServices({ modelPort, ledger, familyId = null, probes = [], scoreLimit = 12, runId = 'gateway', allowedModels = null, log = () => {} }) {
+// runId defaults to a fresh id per session: the port's crash recovery and default salt key on (runId, nodeKey), and
+// nodeKeys restart at 0 each session, so a shared id would serve one session's journaled answers to the next.
+export async function startServices({ modelPort, ledger, familyId = null, probes = [], scoreLimit = 12, runId = `gateway-${randomUUID()}`, allowedModels = null, log = () => {} }) {
   const token = randomBytes(18).toString('hex');
   let scoreCalls = 0, seq = 0;
   const scoreLog = [];
@@ -32,7 +38,8 @@ export async function startServices({ modelPort, ledger, familyId = null, probes
     try {
       if (req.headers.authorization !== `Bearer ${token}`) return json(res, 401, { error: 'unauthorized' });
       const url = new URL(req.url, 'http://x');
-      if (req.method === 'GET' && url.pathname === '/budget') return json(res, 200, { spentUsd: ledger.spentUsd, capUsd: ledger.capUsd, scoreCallsLeft: scoreLimit - scoreCalls });
+      if (req.method === 'GET' && url.pathname === '/budget') return json(res, 200, { spentUsd: ledger.spentUsd, capUsd: ledger.capUsd, scoreCallsLeft: scoreLimit - scoreCalls,
+        unknownCalls: ledger.unknownCalls ?? 0, unknownUpperUsd: ledger.unknownUpperUsd ?? 0 });
       if (req.method !== 'POST') return json(res, 405, { error: 'method' });
       const body = await readBody(req);
       if (url.pathname === '/score') {
@@ -55,7 +62,8 @@ export async function startServices({ modelPort, ledger, familyId = null, probes
           r = await modelPort.call({ runId, nodeKey: `gateway/${body.node ?? 'call'}/${seq++}`, modelId: body.model, system: String(body.system ?? ''), prompt: String(body.prompt ?? ''), schema, decoding: body.decoding ?? {} });
         } catch (error) { return json(res, 400, { ok: false, error: { code: error.code ?? 'MODEL_REQUEST', message: String(error.message).slice(0, 500) } }); }
         ledger.charge(r);
-        return json(res, 200, { ok: r.ok, value: r.value ?? null, error: r.error ?? null, costUsd: r.costUsd, modelId: r.modelId, spentUsd: ledger.spentUsd });
+        return json(res, 200, { ok: r.ok, value: r.value ?? null, error: r.error ?? null, costUsd: r.costUsd, modelId: r.modelId, spentUsd: ledger.spentUsd,
+          ...(r.costUnknown ? { costUnknown: true, costUpperUsd: r.costUpperUsd ?? null } : {}) });
       }
       if (url.pathname.startsWith('/env/')) {
         const op = url.pathname.slice(5);
@@ -87,5 +95,5 @@ export async function startServices({ modelPort, ledger, familyId = null, probes
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const { port } = server.address();
-  return { url: `http://127.0.0.1:${port}`, token, scoreLog, close: () => new Promise(r => server.close(r)), get scoreCalls() { return scoreCalls; } };
+  return { url: `http://127.0.0.1:${port}`, token, runId, scoreLog, close: () => new Promise(r => server.close(r)), get scoreCalls() { return scoreCalls; } };
 }

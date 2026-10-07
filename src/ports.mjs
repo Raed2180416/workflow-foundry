@@ -1,6 +1,7 @@
 import { performance } from 'node:perf_hooks';
 import { compileContext } from './context.mjs';
 import { checkData, clone, digest, FoundryError } from './data.mjs';
+import { toSystemOneQuestion, fromSystemOneAnswer } from './judgment.mjs';
 
 // DESIGN §6. Native implementations of the three seams; ARC/AMP/Jev adapters implement the same shapes.
 export class ContextPort {
@@ -54,16 +55,29 @@ function judgmentRequest({ port, question, criteria = [], state = {}, options })
 const argmax = (options, p) => options.reduce((best, o) => p[o] > p[best] ? o : best, options[0]);
 
 export class JudgmentPort {
-  constructor({ engine, rule, model, modelId, decoding = { maxTokens: 128, reasoning: 'none' }, classBudget, runId = 'judgment' } = {}) {
+  constructor({ engine, rule, model, modelId, decoding = { maxTokens: 128, reasoning: 'none' }, classBudget, runId = 'judgment', systemOne, systemOneModel = null, ledger = null } = {}) {
     if (engine === 'rule' && typeof rule !== 'function') throw new FoundryError('PORT_CONFIG', 'The rule engine needs a rule function');
     if (engine === 'model' && (typeof model?.call !== 'function' || typeof modelId !== 'string')) throw new FoundryError('PORT_CONFIG', 'The model engine needs a ModelPort with call() and a policy model id');
-    if (!['rule', 'model'].includes(engine)) throw new FoundryError('PORT_CONFIG', 'engine must be rule or model');
-    Object.assign(this, { engine, rule, model, modelId, decoding, classBudget, runId });
+    if (engine === 'systemone' && typeof systemOne?.ask !== 'function') throw new FoundryError('PORT_CONFIG', 'The systemone engine needs a System One client (Jev or Kev)');
+    if (!['rule', 'model', 'systemone'].includes(engine)) throw new FoundryError('PORT_CONFIG', 'engine must be rule, model or systemone');
+    if (ledger != null && typeof ledger.record !== 'function') throw new FoundryError('PORT_CONFIG', 'ledger must have record()');
+    Object.assign(this, { engine, rule, model, modelId, decoding, classBudget, runId, systemOne, systemOneModel, ledger });
   }
+  // With a ledger, every answer is recorded (ledgerId in the result) so its verified outcome can be
+  // attached later with ledger.label(id, truth).
   async judge(request) {
     const req = judgmentRequest(request ?? {}), started = performance.now();
-    const out = this.engine === 'rule' ? await this.#rule(req) : await this.#model(req, request);
-    return { ...out, engine: this.engine, latencyMs: Math.round(performance.now() - started) };
+    const out = this.engine === 'rule' ? await this.#rule(req) : this.engine === 'systemone' ? await this.#systemOne(req, request) : await this.#model(req, request);
+    const result = { ...out, engine: this.engine, latencyMs: Math.round(performance.now() - started) };
+    if (this.ledger) result.ledgerId = this.ledger.record({ port: req.port, engine: this.engine, model: result.model, request: req, result, split: request.split ?? 'unspecified', meta: request.meta ?? {} });
+    return result;
+  }
+  // Calibrated probabilities from a System One server; the state goes in as data and the answer is
+  // a distribution over the offered options only, so nothing free-form flows back.
+  async #systemOne(req, { signal, optionDescriptions } = {}) {
+    const body = await this.systemOne.ask({ state: req.state, questions: { [req.port]: toSystemOneQuestion({ ...req, optionDescriptions }) }, signal });
+    const out = fromSystemOneAnswer(body?.answers?.[req.port], req.options);
+    return { ...out, model: this.systemOneModel ?? body?.model ?? null, costUsd: 0, receiptHash: null, serverLatencyMs: body?.latency_ms ?? null };
   }
   async #rule(req) {
     const raw = await this.rule(clone(req));

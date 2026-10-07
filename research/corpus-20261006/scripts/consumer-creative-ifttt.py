@@ -83,12 +83,13 @@ def parse(page):
 
 
 def normalize():
-    items = []
+    items, nosteps = [], []
     pages = sorted(f for f in os.listdir(os.path.join(DEST, "pages")) if f.endswith(".html"))
     for f in pages:
         raw = open(os.path.join(DEST, "pages", f), "rb").read()
         a = parse(raw)
         if not a["steps"]:
+            nosteps.append({"id": f[:-5], "bytes": len(raw), "title": bool(a["title"])})
             continue
         aid = f[:-5]
         g = cc.Graph()
@@ -155,6 +156,8 @@ def normalize():
         if not cc.validate(item):
             items.append(item)
     cc.write_jsonl(OUT, items)
+    json.dump({"pages": len(pages), "items": len(items), "noSteps": nosteps},
+              open(OUT.replace(".candidates.jsonl", ".report.json"), "w"), indent=1)
     print("pages", len(pages), "items", len(items), "->", OUT)
 
 

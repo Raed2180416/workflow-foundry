@@ -59,6 +59,8 @@ def main():
             desc = str(meta.get("description") or "")
             d = os.path.dirname(rel)
             near = [x for x in listing if x.startswith(d + "/")] if d else listing
+            # WARP: per-pipeline Verify<Name>.wdl / test-wdls/Test<Name>.wdl compare outputs against truth sets
+            near = near + [x for x in listing if x in (f"verification/Verify{wf.name}.wdl", f"verification/test-wdls/Test{wf.name}.wdl")]
             items.append(bd.wdl_item(g, sid=f"{rec['repo']}/{rel}", url=f"https://github.com/{rec['repo']}/blob/{rec['head']}/{rel}",
                                      revision=f"commit {rec['head']} ({rec.get('date')})", license=spdx,
                                      license_evidence=f"{lf or 'no LICENSE file'} at github.com/{rec['repo']}@{rec['head'][:12]}",

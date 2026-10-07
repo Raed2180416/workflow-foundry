@@ -7,6 +7,8 @@ import { FoundryError, canonical } from './data.mjs';
 export const REPLAYABLE_ERRORS = Object.freeze(['MODEL_SCHEMA', 'MODEL_TRUNCATED', 'MODEL_REFUSAL']);
 const replayableSql = `(ok=1 OR error_code IN (${REPLAYABLE_ERRORS.map(c => `'${c}'`).join(',')}))`;
 export const isReplayable = row => !!row && (row.ok || REPLAYABLE_ERRORS.includes(row.errorCode));
+// A call whose spend the provider could not observe (ModelPort records response.costUnknown with a bound).
+const unknownSql = `COALESCE(json_extract(response,'$.costUnknown'),0)=1`;
 
 const json = value => value === undefined || value === null ? null : canonical(value);
 const parse = text => text == null ? null : JSON.parse(text);
@@ -51,7 +53,10 @@ export class Journal {
       run: handle.prepare('SELECT * FROM model_calls WHERE run_id=? ORDER BY id'),
       get: handle.prepare('SELECT * FROM model_calls WHERE id=?'),
       cost: handle.prepare(`SELECT COUNT(*) AS calls, COALESCE(SUM(cost_usd),0) AS cost, COALESCE(SUM(imputed_usd),0) AS imputed,
-        COALESCE(SUM(input_tokens),0) AS input, COALESCE(SUM(output_tokens),0) AS output, COALESCE(SUM(ok=0),0) AS errors FROM model_calls WHERE run_id=?`),
+        COALESCE(SUM(input_tokens),0) AS input, COALESCE(SUM(output_tokens),0) AS output, COALESCE(SUM(ok=0),0) AS errors,
+        COALESCE(SUM(${unknownSql}),0) AS unknown, COALESCE(SUM(${unknownSql} AND json_extract(response,'$.costUpperUsd') IS NULL),0) AS unbounded,
+        COALESCE(SUM(CASE WHEN ${unknownSql} THEN json_extract(response,'$.costUpperUsd') END),0) AS upper,
+        COALESCE(SUM(CASE WHEN ${unknownSql} THEN json_extract(response,'$.costEstimateUsd') END),0) AS estimate FROM model_calls WHERE run_id=?`),
     };
   }
 
@@ -73,8 +78,11 @@ export class Journal {
   lookup(replayKey) { return row(this.statements.lookup.get(replayKey)); }
   forAttempt(runId, nodeKey, attempt) { return this.statements.attempt.all(runId, nodeKey, attempt).map(row); }
   forRun(runId) { return this.statements.run.all(runId).map(row); }
+  /** costUsd is known spend. Calls whose spend could not be observed add their count, the sum of their bounds
+   *  (null when one has none) and of their estimates; the fields are present only when there are such calls. */
   costForRun(runId) {
     const r = this.statements.cost.get(runId);
-    return { calls: r.calls, costUsd: r.cost, imputedUsd: r.imputed, inputTokens: r.input, outputTokens: r.output, errors: r.errors };
+    return { calls: r.calls, costUsd: r.cost, imputedUsd: r.imputed, inputTokens: r.input, outputTokens: r.output, errors: r.errors,
+      ...(r.unknown ? { costUnknownCalls: r.unknown, costUnknownUpperUsd: r.unbounded ? null : r.upper, costUnknownEstimateUsd: r.estimate } : {}) };
   }
 }

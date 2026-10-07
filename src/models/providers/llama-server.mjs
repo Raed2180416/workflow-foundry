@@ -4,8 +4,11 @@ import path from 'node:path';
 import { FoundryError } from '../../data.mjs';
 import { isPolicyModel } from '../policy.mjs';
 import { LlamaSupervisor } from '../llama-supervisor.mjs';
+import { DECODING_BY_KIND } from '../port.mjs';
 
 const fail = (code, message, extra = {}) => Object.assign(new FoundryError(code, message), extra);
+// The decoding this provider actually sends, defaults resolved; ModelPort hashes it into the replay key (DESIGN §3).
+export const llamaServerDecoding = DECODING_BY_KIND['openai-compatible-http'];
 
 export class LlamaServerProvider {
   constructor({ policy, providerName = 'llama-server', supervisor, autoStart = true, defaultMaxTokens = 1024, maxResponseBytes = 4 * 1024 * 1024 } = {}) {
@@ -16,15 +19,17 @@ export class LlamaServerProvider {
   }
 
   baseUrl(entry) { return this.config.baseUrlTemplate.replace('{port}', String(entry.port)); }
+  effectiveDecoding(decoding) { return llamaServerDecoding(decoding, this); }
 
   body({ modelEntry, system, prompt, schema, decoding = {} }) {
+    const applied = this.effectiveDecoding(decoding);
     return {
       model: modelEntry.id,
       messages: [{ role: 'system', content: system }, { role: 'user', content: prompt }],
-      temperature: decoding.temperature ?? 0,
-      max_tokens: decoding.maxTokens ?? this.defaultMaxTokens,
+      temperature: applied.temperature,
+      max_tokens: applied.maxTokens,
       response_format: { type: 'json_schema', json_schema: { name: 'output', schema, strict: true } },
-      chat_template_kwargs: { enable_thinking: (decoding.reasoning ?? 'none') !== 'none' },
+      chat_template_kwargs: { enable_thinking: applied.reasoning !== 'none' },
       stream: false,
     };
   }

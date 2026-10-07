@@ -515,10 +515,11 @@ def main():
             revision=f"hf openbmb/WorkflowLLM@{HF_REV}; data.zip sha256:{ZIP_SHA[:16]}; seed_data.json[{idx}] key={e['key'][:80]!r}; code {cc.sha_prefix(code)}",
             license="Apache-2.0",
             license_evidence=("README.md of huggingface.co/datasets/openbmb/WorkflowLLM@" + HF_REV + " ends with "
-                              "'license: apache-2.0'; GitHub OpenBMB/WorkflowLLM LICENSE is Apache-2.0. Caveat: the seed "
-                              "shortcuts were collected by the dataset authors from public sharing sites (e.g. RoutineHub, "
-                              "per the 'RoutineHub •' key prefixes and arXiv:2411.05451 §3); upstream authors' terms were not "
-                              "re-verified per item."),
+                              "'license: apache-2.0' (front matter placed at the end, so the HF API shows no licence tag); "
+                              "github.com/OpenBMB/WorkflowLLM LICENSE @ 2b5a2dee5fefbb6bf2fe68310393c3cf0c24cfcc is Apache-2.0 "
+                              "(read 2026-10-07). Caveat: the seed shortcuts were collected by the dataset authors from public "
+                              "sharing sites (inferred from the 'RoutineHub •' key prefixes); the original shortcut authors' "
+                              "terms were not re-verified per item."),
             redistributable=True,
             raw_path=f"{RAW}/data.zip#seed_data.json[{idx}]",
             title=e["key"],
@@ -534,6 +535,8 @@ def main():
             continue
         items.append(item)
     cc.write_jsonl(OUT, items)
+    json.dump({"seed": len(seed), "converted": len(items), "parseFailures": fails,
+               "emptyGraphs": len(seed) - len(items) - fails}, open(OUT.replace(".candidates.jsonl", ".report.json"), "w"), indent=1)
     print(f"seed {len(seed)} converted {len(items)} failed {fails} -> {OUT}")
 
 

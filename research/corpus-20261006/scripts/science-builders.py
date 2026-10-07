@@ -105,16 +105,17 @@ def files_oracle(files, extra_kind=None, extra_notes=""):
     smk = [x for x in f if x.startswith((".test/", ".tests/"))]
     testcfg = [x for x in f if re.search(r"conf/test[^/]*\.config$", x)]
     tdata = [x for x in f if re.search(r"(^|/)(test[-_]?data|tests?/data|testdata)/", x, re.I)]
-    expected = [x for x in f if re.search(r"(expected|truth|golden)", x, re.I)]
+    expected = [x for x in f if re.search(r"(expected|truth|golden|(^|/)ref_output/|(^|/)verification/(Verify|test-wdls/Test))", x, re.I)]
+    testin = [x for x in f if re.search(r"(^|/)(test_inputs|test_workflow|example_input_json)/.*\.(json|ya?ml)$", x)]
     if extra_kind:
         kind = extra_kind
-    elif snaps or (planemo and expected) or (cwltest and expected):
+    elif snaps or (planemo and expected) or (cwltest and expected) or (testin and expected):
         kind = "output-equivalence"
-    elif planemo or cwltest or nftest or smk or testcfg or (jobs and tdata):
+    elif planemo or cwltest or nftest or smk or testcfg or testin or (jobs and tdata):
         kind = "test-profile"
     else:
         kind = "none"
     notes = (f"repo listing: planemo tests {len(planemo)}, cwltest/test yml {len(cwltest)}, job/param files {len(jobs)}, nf-test {len(nftest)} "
-             f"(snapshots {len(snaps)}), Snakemake .test files {len(smk)}, test configs {len(testcfg)}, test-data files {len(tdata)}, "
+             f"(snapshots {len(snaps)}), Snakemake .test files {len(smk)}, test configs {len(testcfg)}, test-input sets {len(testin)}, test-data files {len(tdata)}, "
              f"expected/truth files {len(expected)}. {extra_notes} Not run here.")
     return {"kind": kind, "notes": sc.trim(notes, 600)}

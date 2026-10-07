@@ -132,6 +132,51 @@ test('sandbox: code cannot unmount its masks, clear read-only or regain capabili
   assert.equal(existsSync(probe), false);
 });
 
+test('sandbox: the root is an allowlist; host trees outside it do not exist and every mount but /tmp is read-only', { skip }, async () => {
+  const source = py(['import os', 'def main(input):', '    out = {"root": sorted(os.listdir("/")), "etc": sorted(os.listdir("/etc")), "dev": sorted(os.listdir("/dev"))}',
+    '    out["masked"] = {d: os.listdir(d) for d in input["masked"] if os.path.isdir(d)}',
+    '    out["absent"] = [p for p in ["/sys", "/boot", "/nix", "/old", "/lost+found", "/container_info.json", "/mnt/user-data", "/opt/corpus"] if os.path.lexists(p)]',
+    '    with open("/proc/self/mountinfo") as f:', '        rows = [l.split() for l in f]', '    out["writable"] = [r[4] for r in rows if "ro" not in r[5].split(",")]', '    return out']);
+  const { value } = await runCode({ lang: 'python', source, input: { masked: MASKED_PATHS } });
+  const allowed = new Set(['usr', 'bin', 'sbin', 'lib', 'lib32', 'lib64', 'libx32', 'etc', 'proc', 'dev', ...MASKED_PATHS.map(p => p.slice(1))]);
+  assert.deepEqual(value.root.filter(e => !allowed.has(e)), [], `unexpected root entries: ${value.root}`);
+  assert.deepEqual(value.etc.filter(e => !['ld.so.cache', 'ld.so.conf', 'ld.so.conf.d', 'localtime'].includes(e)), [], `unexpected /etc entries: ${value.etc}`);
+  assert.deepEqual(value.dev, ['fd', 'full', 'null', 'random', 'stderr', 'stdin', 'stdout', 'urandom', 'zero']);
+  assert.equal(Object.keys(value.masked).length, MASKED_PATHS.length, 'masked trees exist as directories');
+  for (const [dir, entries] of Object.entries(value.masked)) assert.deepEqual(entries, [], `${dir} must be empty (python's interpreter lives under /usr)`);
+  assert.deepEqual(value.absent, []);
+  assert.deepEqual(value.writable, ['/tmp']);
+});
+
+test('sandbox: per-process limits cap memory, processes and file size inside the namespace', { skip, timeout: 60000 }, async () => {
+  const source = py(['import os, time', 'def main(input):', '    with open("/proc/self/limits") as f:', '        lim = {l[:26].strip(): l[26:47].strip() for l in f}',
+    '    kids, err = 0, None', '    try:', '        for _ in range(64):', '            if os.fork() == 0:', '                time.sleep(2)', '                os._exit(0)', '            kids += 1',
+    '    except OSError as e:', '        err = type(e).__name__', '    small = len(bytearray(256 << 20)) >> 20', '    try:', '        bytearray(1 << 30)', '        big = "allocated"', '    except MemoryError:', '        big = "MemoryError"',
+    '    return {"limits": [lim["Max processes"], lim["Max address space"], lim["Max file size"], lim["Max core file size"]], "kids": kids, "err": err, "small": small, "big": big}']);
+  const { value } = await runCode({ lang: 'python', source, timeoutMs: 30000 });
+  assert.deepEqual(value.limits, ['8', String(1 << 30), String(16 << 20), '0']);
+  assert.equal(value.err, 'BlockingIOError'); assert.ok(value.kids < 8, `a fork loop is bounded by RLIMIT_NPROC (forked ${value.kids})`);
+  assert.deepEqual([value.small, value.big], [256, 'MemoryError'], 'a 256 MiB allocation works; 1 GiB exceeds RLIMIT_AS');
+  const alloc = mib => runCode({ lang: 'js', source: `export default () => { const a = []; for (let i = 0; i < ${mib / 64}; i++) a.push(Buffer.alloc(64 << 20, 1)); return a.length; }`, timeoutMs: 30000 })
+    .then(r => r.value, e => e.code);
+  assert.equal(await alloc(256), 4, 'control: ordinary Buffer use still works under RLIMIT_DATA');
+  assert.equal(await alloc(1536), 'CODE_ERROR', 'Buffers outside the V8 heap are capped by RLIMIT_DATA');
+});
+
+test('sandbox: a root host runs the sandbox as an unprivileged kernel uid', { skip: skip || (process.getuid?.() !== 0 && 'host is not root') }, async () => {
+  const tag = String(800000 + randomBytes(3).readUIntBE(0, 3));
+  const run = runCode({ lang: 'python', timeoutMs: 3000, source: py(['import os, time', 'def main(input):', '    if os.fork() == 0:', `        os.execv("/bin/sleep", ["sleep", "${tag}"])`, '    time.sleep(30)']) });
+  let uid;
+  for (let i = 0; i < 40 && uid === undefined; i++) {
+    await new Promise(r => setTimeout(r, 50));
+    for (const p of readdirSync('/proc').filter(p => /^\d+$/.test(p))) {
+      try { if (readFileSync(`/proc/${p}/cmdline`, 'utf8').split('\0').includes(tag)) uid = readFileSync(`/proc/${p}/status`, 'utf8').match(/^Uid:\s+(\d+)/m)[1]; } catch {}
+    }
+  }
+  await rejects(run, 'CODE_TIMEOUT');
+  assert.equal(uid, '65534', 'RLIMIT_NPROC is not enforced for kuid 0, so sandboxed code must not run as host root');
+});
+
 test('sandbox: oversized output is rejected', { skip }, async () => {
   await rejects(runCode({ lang: 'js', source: 'export default () => "x".repeat(600 * 1024)' }), 'CODE_OUTPUT');
   await rejects(runCode({ lang: 'python', source: py(['def main(input):', '    return "x" * (600 * 1024)']) }), 'CODE_OUTPUT');

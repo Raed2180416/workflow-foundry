@@ -44,45 +44,56 @@ export function checkPortableSchema(schema) {
 }
 
 // A quarantined node may read untrusted content because its output has too little capacity to
-// carry instructions: leaves are booleans, string enums or bounded numbers; containers are closed.
+// carry instructions: leaves are booleans, string enums or bounded numbers; containers are closed,
+// and the whole output admits at most 2^QUARANTINE_MAX_BITS distinct values. Capacity is an upper
+// bound in bits: boolean 1, enum log2(distinct values), const 0, integer log2(integers in range),
+// number log2(IEEE doubles in range) (about 62 for [0, 1]: a float is not a small channel),
+// optional property log2(values + 1), array log2(length choices) + maxItems × item. JSON key order
+// is not counted (objects are unordered; ≤ log2(k!) bits for k properties).
+export const QUARANTINE_MAX_BITS = 64;
+const doubleOrdinal = x => { const view = new DataView(new ArrayBuffer(8)); view.setFloat64(0, Math.abs(x)); const n = view.getBigUint64(0); return x < 0 ? -n : n; };
+const log2Count = n => n > 0 ? Math.log2(Number(n)) : 0;
 export function quarantinedSchemaViolations(schema) {
   const portable = portableSchemaViolations(schema);
   if (portable.length) return portable;
-  const violations = [], add = (path, problem) => violations.push({ path, keyword: null, problem });
+  const violations = [], add = (path, problem) => { violations.push({ path, keyword: null, problem }); return 0; };
   const walk = (node, path) => {
-    if (Object.hasOwn(node, 'const')) {
-      if (!['string', 'boolean'].includes(typeof node.const)) add(path, 'const leaves must be a string or boolean');
-      return;
-    }
+    if (Object.hasOwn(node, 'const')) return ['string', 'boolean'].includes(typeof node.const) ? 0 : add(path, 'const leaves must be a string or boolean');
     if (Object.hasOwn(node, 'enum')) {
-      if (!node.enum.every(v => typeof v === 'string') || (node.type !== undefined && node.type !== 'string')) add(path, 'enum leaves must be string-only');
-      return;
+      if (!node.enum.every(v => typeof v === 'string') || (node.type !== undefined && node.type !== 'string')) return add(path, 'enum leaves must be string-only');
+      return log2Count(new Set(node.enum).size);
     }
     const { type } = node;
-    if (typeof type !== 'string') { add(path, 'every quarantined sub-schema needs exactly one type'); return; }
-    if (type === 'boolean') return;
+    if (typeof type !== 'string') return add(path, 'every quarantined sub-schema needs exactly one type');
+    if (type === 'boolean') return 1;
     if (type === 'number' || type === 'integer') {
-      if (!Number.isFinite(node.minimum) || !Number.isFinite(node.maximum)) add(path, 'numbers must declare both minimum and maximum');
-      return;
+      const { minimum: lo, maximum: hi } = node;
+      if (!Number.isFinite(lo) || !Number.isFinite(hi)) return add(path, 'numbers must declare both minimum and maximum');
+      return type === 'integer' ? log2Count(Math.floor(hi) - Math.ceil(lo) + 1) : log2Count(doubleOrdinal(hi) - doubleOrdinal(lo) + 1n);
     }
     if (type === 'object') {
       if (node.additionalProperties !== false) add(path, 'objects must set additionalProperties: false');
-      for (const [name, child] of Object.entries(node.properties ?? {})) walk(child, `${path}/properties/${name}`);
-      return;
+      const required = new Set(node.required ?? []);
+      return Object.entries(node.properties ?? {}).reduce((sum, [name, child]) => {
+        const bits = walk(child, `${path}/properties/${name}`);
+        return sum + (required.has(name) ? bits : bits + Math.log2(1 + 2 ** -bits));
+      }, 0);
     }
     if (type === 'array') {
-      if (!Number.isSafeInteger(node.maxItems)) add(path, 'arrays must declare maxItems');
-      if (!isObject(node.items)) add(path, 'arrays must declare items'); else walk(node.items, `${path}/items`);
-      return;
+      const { maxItems: max, minItems: min = 0 } = node;
+      const bits = isObject(node.items) ? walk(node.items, `${path}/items`) : add(path, 'arrays must declare items');
+      if (!Number.isSafeInteger(max)) return add(path, 'arrays must declare maxItems');
+      return log2Count(max - min + 1) + (max > 0 ? max * bits : 0);
     }
-    add(path, type === 'string' ? 'free strings are not allowed; use a string enum' : `type ${type} is not allowed`);
+    return add(path, type === 'string' ? 'free strings are not allowed; use a string enum' : `type ${type} is not allowed`);
   };
-  walk(schema, '#');
+  const bits = walk(schema, '#');
+  if (bits > QUARANTINE_MAX_BITS) add('#', `output capacity is ${Math.round(bits * 10) / 10} bits; a quarantined output may carry at most ${QUARANTINE_MAX_BITS}`);
   return violations;
 }
 
 export function checkQuarantinedSchema(schema) {
   const violations = quarantinedSchemaViolations(schema);
-  if (violations.length) throw new FoundryError('QUARANTINE_SCHEMA', `Quarantined output schema may contain only booleans, string enums and bounded numbers: ${violations.slice(0, 5).map(v => `${v.path}: ${v.problem}`).join('; ')}`, { violations });
+  if (violations.length) throw new FoundryError('QUARANTINE_SCHEMA', `Quarantined output schema may contain only booleans, string enums and bounded numbers within ${QUARANTINE_MAX_BITS} bits of output capacity: ${violations.slice(0, 5).map(v => `${v.path}: ${v.problem}`).join('; ')}`, { violations });
   return schema;
 }

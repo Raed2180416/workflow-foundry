@@ -8,12 +8,10 @@ import path from 'node:path';
 import { FoundryError } from '../../data.mjs';
 import { runProcess } from '../../process.mjs';
 import { isPolicyModel } from '../policy.mjs';
+import { DECODING_BY_KIND, THINKING } from '../port.mjs';
 
-// Thinking budget per reasoning level (MAX_THINKING_TOKENS for the CLI). Measured 2026-10-07: --effort
-// alone does not stop Haiku 4.5 from extended thinking on this route (5.2K output tokens per extraction
-// call at --effort low); MAX_THINKING_TOKENS=0 does (102 vs 307 output tokens on a probe, same answer).
-export const THINKING = Object.freeze({ none: 0, low: 1024, medium: 8000, high: 32000 });
-const EFFORT = { none: 'low', low: 'low', medium: 'medium', high: 'high' };
+// Thinking budget per reasoning level: defined with the replay-key decoding in ../port.mjs (engine identity).
+export { THINKING };
 const SCRUBBED = /^(GH_TOKEN|GITHUB_TOKEN|GIT_CONFIG_.*|GIT_ASKPASS|CLOUDSDK_AUTH_ACCESS_TOKEN|AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY|AWS_SESSION_TOKEN)$/;
 const RATE = /\b(429|529)\b|overloaded|rate.?limit/i;
 const versions = new Map();
@@ -24,6 +22,9 @@ const finishOf = stop => ({ end_turn: 'stop', tool_use: 'stop', stop_sequence: '
 const dated = (a, b) => a.length === b.length + 9 && a.startsWith(`${b}-`) && /^\d{8}$/.test(a.slice(b.length + 1));
 export const sameModel = (a, b) => typeof a === 'string' && typeof b === 'string' && (a === b || dated(a, b) || dated(b, a));
 const usageOf = u => u && ({ inputTokens: u.input_tokens ?? 0, outputTokens: u.output_tokens ?? 0, cacheReadTokens: u.cache_read_input_tokens ?? 0, cacheWriteTokens: u.cache_creation_input_tokens ?? 0 });
+// The decoding this route actually applies; ModelPort hashes it into the replay key (DESIGN §3). Temperature and
+// max tokens are not controllable here, so any requested value becomes the provider default.
+export const claudeCliDecoding = DECODING_BY_KIND['claude-cli'];
 
 export function claudeEnv(env = process.env) {
   return Object.fromEntries(Object.entries(env).filter(([k, v]) => typeof v === 'string' && !SCRUBBED.test(k)));
@@ -74,9 +75,11 @@ export class ClaudeCliProvider {
     return versions.get(this.binary);
   }
 
+  effectiveDecoding(decoding) { return claudeCliDecoding(decoding); }
+
   args({ modelEntry, system, schema, decoding = {} }) {
     const args = [...this.invocation, '--model', modelEntry.id, '--system-prompt', system, '--json-schema', JSON.stringify(schema),
-      '--effort', EFFORT[decoding.reasoning ?? 'none'] ?? 'low', '--max-budget-usd', String(this.maxBudgetUsd)];
+      '--effort', claudeCliDecoding(decoding).effort, '--max-budget-usd', String(this.maxBudgetUsd)];
     if (args.some(a => a === '--fallback-model')) throw new FoundryError('MODEL_POLICY_INVALID', '--fallback-model is never passed');
     return args;
   }
@@ -86,27 +89,30 @@ export class ClaudeCliProvider {
     let engineVersion;
     try { engineVersion = await this.engineVersion(); }
     catch (error) { throw fail('MODEL_UNAVAILABLE', `claude CLI version probe failed: ${error.code ?? error.message}`); }
-    const args = this.args({ modelEntry, system, schema, decoding });
-    const request = { binary: path.basename(this.binary), args: args.map(a => a === system ? '<system>' : a), temperature: 'provider-default',
-      maxTokens: 'provider-default', effort: EFFORT[decoding.reasoning ?? 'none'], thinkingTokens: THINKING[decoding.reasoning ?? 'none'] ?? 0, maxBudgetUsd: this.maxBudgetUsd };
+    const args = this.args({ modelEntry, system, schema, decoding }), applied = claudeCliDecoding(decoding);
+    const request = { binary: path.basename(this.binary), args: args.map(a => a === system ? '<system>' : a), temperature: applied.temperature,
+      maxTokens: applied.maxTokens, effort: applied.effort, thinkingTokens: applied.thinkingTokens, maxBudgetUsd: this.maxBudgetUsd };
     const cwd = mkdtempSync(path.join(tmpdir(), 'foundry-claude-'));
     let processResult, launchError;
     try {
-      processResult = await runProcess(this.binary, args, { cwd, env: { ...claudeEnv(this.env), MAX_THINKING_TOKENS: String(THINKING[decoding.reasoning ?? 'none'] ?? 0) }, input: prompt, timeoutMs: Math.min(timeoutMs, 3600000), signal, maxBytes: this.maxOutputBytes });
+      processResult = await runProcess(this.binary, args, { cwd, env: { ...claudeEnv(this.env), MAX_THINKING_TOKENS: String(applied.thinkingTokens) }, input: prompt, timeoutMs: Math.min(timeoutMs, 3600000), signal, maxBytes: this.maxOutputBytes });
     } catch (error) {
       launchError = error; processResult = error.processResult;
     } finally { rmSync(cwd, { recursive: true, force: true }); }
     const stderr = processResult?.stderr?.slice(-4000) ?? '';
+    // A CLI that ran but returned no result object (killed on timeout or cancellation, over its output budget, crashed)
+    // may already have been billed: its spend is unknown, never an exact $0. The per-call cap bounds it (DESIGN §2).
+    const unknownSpend = processResult && launchError?.code !== 'PROCESS_LAUNCH' ? { costUnknown: true, costCapUsd: this.maxBudgetUsd } : {};
     if (launchError && launchError.code !== 'PROCESS_FAILED') {
       const code = launchError.code === 'PROCESS_TIMEOUT' ? 'MODEL_TIMEOUT' : launchError.code === 'CANCELLED' ? 'CANCELLED'
         : launchError.code === 'PROCESS_LAUNCH' ? 'MODEL_UNAVAILABLE' : 'MODEL_PROTOCOL';
-      throw fail(code, `claude CLI ${launchError.message}`, { engineVersion, request });
+      throw fail(code, `claude CLI ${launchError.message}`, { engineVersion, request, ...unknownSpend });
     }
     let parsed;
     try { parsed = JSON.parse(processResult.stdout); }
     catch {
       const code = RATE.test(stderr) ? 'MODEL_RATE_LIMIT' : 'MODEL_PROTOCOL';
-      throw fail(code, `claude CLI exited ${processResult.code ?? processResult.signal} without a JSON result${stderr ? `: ${stderr.trim().split('\n').at(-1).slice(0, 300)}` : ''}`, { engineVersion, request });
+      throw fail(code, `claude CLI exited ${processResult.code ?? processResult.signal} without a JSON result${stderr ? `: ${stderr.trim().split('\n').at(-1).slice(0, 300)}` : ''}`, { engineVersion, request, ...unknownSpend });
     }
     try { return { ...interpretResult(parsed, { modelId: modelEntry.id, stderr }), engineVersion, request }; }
     catch (error) { error.engineVersion = engineVersion; error.request = request; throw error; }

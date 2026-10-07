@@ -8,8 +8,8 @@ Stage `select`: drops test/demo organisations and sources acquired directly (bro
                 gatk-workflows/gatk4-somatic-snvs-indels, iwc-workflows, nf-core), keeps at most 2 entries per
                 organisation, preferring verified/production versions -> candidates.json (N, default 70)
 Stage `files`:  for each candidate's chosen version: TRS /files listing, then PRIMARY/SECONDARY descriptors and
-                TEST_FILEs (<=2 MB each) via .../PLAIN_WDL/descriptor/<relative path> into files/<n>/ (path-traversal
-                guarded), plus the entry record /api/workflows/path/entry/<path>/published for licenseInformation.
+                TEST_FILEs (<=2 MB each) via .../PLAIN_WDL/descriptor/<repo-absolute path> into files/<n>/<that path>
+                (path-traversal guarded; v2 of this stage, v1 stored primary-relative paths and lost `../` imports), plus the entry record /api/workflows/path/entry/<path>/published for licenseInformation.
 Nothing is executed.  Usage: python3 -I science-fetch-dockstore.py list|select|files [N]
 """
 import collections, json, os, re, sys, time, urllib.error, urllib.parse, urllib.request
@@ -108,12 +108,15 @@ def stage_files():
         os.makedirs(dest, exist_ok=True)
         got, primary, tests = 0, None, []
         for f in listing:
-            path, ft = f.get("path") or "", f.get("file_type") or ""
+            # store under the repository-absolute path (dockstore_absolute_path) so that `../` imports between
+            # descriptors resolve inside files/<n>/; fall back to the primary-relative TRS path
+            path = (f.get("dockstore_absolute_path") or f.get("path") or "").lstrip("/")
+            ft = f.get("file_type") or ""
             if ft == "TEST_FILE":
                 tests.append(path)
             if ft not in ("PRIMARY_DESCRIPTOR", "SECONDARY_DESCRIPTOR", "TEST_FILE"):
                 continue
-            b = get(f"{API}/ga4gh/trs/v2/tools/{tid}/versions/{ver}/PLAIN_WDL/descriptor/{urllib.parse.quote(path.lstrip('/'), safe='/')}",
+            b = get(f"{API}/ga4gh/trs/v2/tools/{tid}/versions/{ver}/PLAIN_WDL/descriptor/{urllib.parse.quote('/' + path, safe='')}",
                     accept="text/plain", raw=True)
             if b is None or len(b) > 2_000_000:
                 continue
@@ -124,7 +127,7 @@ def stage_files():
             open(t, "wb").write(b)
             got += 1
             if ft == "PRIMARY_DESCRIPTOR":
-                primary = path.lstrip("/")
+                primary = path
         path_ = c["id"].replace("#workflow/", "")
         entry = get(f"{API}/workflows/path/entry/{urllib.parse.quote(path_, safe='')}/published")
         lic = ((entry or {}).get("licenseInformation") or {}).get("licenseName")

@@ -511,6 +511,21 @@ def find_objects(doc, path=()):
                 yield from find_objects(v, path + (str(i),))
 
 
+def yaml_aliases(text):
+    """Number of YAML alias references (*name) in a file. PyYAML inlines each one, so a graph built from
+    an aliased block repeats that block's nodes at every reference (that is also how HA runs it)."""
+    if "*" not in text:
+        return 0
+    try:
+        return sum(1 for ev in yaml.parse(text, Loader=Loader) if isinstance(ev, yaml.AliasEvent))
+    except Exception:
+        return 0
+
+
+def alias_note(n):
+    return f" The source file uses {n} YAML alias reference(s); they were inlined, so repeated blocks appear once per reference." if n else ""
+
+
 def convert_obj(kind, obj):
     conv = Conv()
     if kind == "script" or kind == "blueprint-script":
@@ -532,9 +547,11 @@ def from_git(items):
                                                 r"secrets|known_devices|node_modules|zigbee2mqtt|appdaemon/apps)", rel, re.I):
                 continue
             try:
-                docs = list(yaml.load_all(open(p, encoding="utf-8"), Loader=Loader))
+                text = open(p, encoding="utf-8").read()
+                docs = list(yaml.load_all(text, Loader=Loader))
             except Exception:
                 continue
+            nal = yaml_aliases(text)
             for di, doc in enumerate(docs):
                 for n, (kind, obj, kp) in enumerate(find_objects(doc)):
                     conv = convert_obj(kind, obj)
@@ -545,7 +562,8 @@ def from_git(items):
                                   url=f"https://github.com/{repo}/blob/{e['sha']}/{rel}", revision=f"git {e['sha']} ({e.get('commitDate')}); {cc.sha_prefix(json.dumps(obj, sort_keys=True, default=str))}",
                                   lic=lic, lic_ev=e.get("licenseEvidence", ""), redis=lic in REDIS, raw_path=p,
                                   title=safe_title(name or f"{kind} {keyp}"), kind=kind.replace("-", " ").capitalize(),
-                                  x={"src": "git", "repo": repo, "role": e.get("role")})
+                                  extra_notes=alias_note(nal),
+                                  x={"src": "git", "repo": repo, "role": e.get("role"), "yamlAliases": nal})
                     if item:
                         items.append(item)
 
@@ -558,9 +576,11 @@ def from_forum(items):
         if r.get("outcome") != "acquired":
             continue
         try:
-            doc = yaml.load(open(r["rawPath"], encoding="utf-8"), Loader=Loader)
+            text = open(r["rawPath"], encoding="utf-8").read()
+            doc = yaml.load(text, Loader=Loader)
         except Exception:
             continue
+        nal = yaml_aliases(text)
         if not isinstance(doc, dict) or "blueprint" not in doc:
             continue
         kind = "blueprint-" + str((doc.get("blueprint") or {}).get("domain", "automation"))
@@ -575,8 +595,8 @@ def from_forum(items):
                       lic_ev=r.get("licenseEvidence", ""), redis=lic in REDIS, raw_path=r["rawPath"],
                       title=safe_title((doc.get("blueprint") or {}).get("name") or r.get("title")),
                       kind=kind.replace("-", " ").capitalize(),
-                      extra_notes=f" Blueprint Exchange topic {r['url']} ({r.get('likes')} likes, {r.get('views')} views).",
-                      x={"src": "forum", "likes": r.get("likes"), "views": r.get("views"), "topic": r["topic"]})
+                      extra_notes=f" Blueprint Exchange topic {r['url']} ({r.get('likes')} likes, {r.get('views')} views)." + alias_note(nal),
+                      x={"src": "forum", "likes": r.get("likes"), "views": r.get("views"), "topic": r["topic"], "yamlAliases": nal})
         if item:
             items.append(item)
 
@@ -626,6 +646,9 @@ def main():
         seen.add(key)
         out.append(it)
     cc.write_jsonl(OUT, out)
+    json.dump({"objects": len(items), "unique": len(out),
+               "bySource": {k: sum(1 for i in out if i["x"].get("src") == k) for k in ("git", "forum", "docs")}},
+              open(OUT.replace(".candidates.jsonl", ".report.json"), "w"), indent=1)
     print("items", len(items), "unique", len(out), "->", OUT)
 
 

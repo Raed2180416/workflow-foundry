@@ -5,6 +5,7 @@ import { FoundryError, checkData, digest } from '../data.mjs';
 import { compileDataSchema } from '../validate.mjs';
 import { portableSchemaViolations } from '../schema-subset.mjs';
 import { isReplayable } from '../journal.mjs';
+import { estimateTokens } from '../context.mjs';
 import { modelById, providerConfig } from './policy.mjs';
 
 export const MODEL_ERRORS = Object.freeze(['MODEL_SCHEMA', 'MODEL_TRUNCATED', 'MODEL_REFUSAL', 'MODEL_RATE_LIMIT', 'MODEL_UNAVAILABLE', 'MODEL_TIMEOUT', 'MODEL_PROTOCOL', 'MODEL_BUDGET']);
@@ -34,7 +35,30 @@ export function normalizeDecoding(decoding = {}) {
 }
 
 export const promptHashOf = ({ system, prompt, schema }) => digest({ system, prompt, schema });
-export const replayKeyOf = ({ promptHash, modelId, decoding, sampleIndex, salt }) => digest({ promptHash, modelId, decoding, sampleIndex, salt });
+// A replay key binds what decides a sample: the prompt, the policy entry behind the id and its provider config
+// (weights, invocation, engine; accounting-only fields excluded), the decoding the provider applies, sample and salt.
+export const modelDigestOf = (entry, config) => {
+  const { price, ...model } = entry, { imputedComputeUsdPerHour, ...provider } = config ?? {};
+  return digest({ model, provider });
+};
+export const replayKeyOf = ({ promptHash, modelId, modelDigest, decoding, sampleIndex, salt }) => digest({ promptHash, modelId, modelDigest, decoding, sampleIndex, salt });
+
+// Thinking budget per reasoning level (MAX_THINKING_TOKENS for the claude CLI). Measured 2026-10-07: --effort alone
+// does not stop Haiku 4.5 from extended thinking on this route (5.2K output tokens per extraction call at --effort low);
+// MAX_THINKING_TOKENS=0 does (102 vs 307 output tokens on a probe, same answer).
+export const THINKING = Object.freeze({ none: 0, low: 1024, medium: 8000, high: 32000 });
+const EFFORT = Object.freeze({ none: 'low', low: 'low', medium: 'medium', high: 'high' });
+// The decoding each provider kind actually applies, its defaults resolved: the replay key hashes it, so the stock
+// resolvers live here, in the engine identity. A registered provider answers for its own options (effectiveDecoding);
+// these serve when none is (strict replay, a test double, the sandbox gateway). The claude CLI has no temperature or
+// max-tokens control, so a requested value becomes the provider default.
+export const DECODING_BY_KIND = Object.freeze({
+  'claude-cli': (d = {}) => {
+    const reasoning = d.reasoning ?? 'none';
+    return { reasoning, effort: EFFORT[reasoning] ?? 'low', thinkingTokens: THINKING[reasoning] ?? 0, maxTokens: 'provider-default', temperature: 'provider-default' };
+  },
+  'openai-compatible-http': (d = {}, { defaultMaxTokens = 1024 } = {}) => ({ maxTokens: d.maxTokens ?? defaultMaxTokens, reasoning: d.reasoning ?? 'none', temperature: d.temperature ?? 0 }),
+});
 
 const RATE = /\b(429|529)\b|overloaded|rate.?limit/i;
 export function classifyError(error) {
@@ -67,6 +91,19 @@ const usageOf = u => ({ inputTokens: count(u?.inputTokens), outputTokens: count(
 const listPrice = (price, u) => ((u.inputTokens + u.cacheReadTokens + u.cacheWriteTokens) * (price?.inputPerMTok ?? 0) + u.outputTokens * (price?.outputPerMTok ?? 0)) / 1e6;
 const plain = v => JSON.parse(JSON.stringify(v));
 const ajvMessage = errors => (errors ?? []).slice(0, 5).map(e => `${e.instancePath || '(root)'} ${e.message}`).join('; ');
+// error.feedback is the model-facing summary of a fault the port detected, built only from fixed text and the schema
+// (schema paths and the validator's schema-derived messages). Instance paths and provider text can quote model output
+// that untrusted input steers, so a provider-reported fault carries no feedback.
+const own = (code, message, extra = {}) => ({ code, message, feedback: message, ...extra });
+const schemaFeedback = errors => [...new Set((errors ?? []).map(e => `${e.schemaPath} ${e.message}`))].slice(0, 5).join('; ');
+// A provider that ran but could not observe its spend reports costUnknown (and its per-call cap): the row records a
+// bound (the cap; null when the provider has none) and an estimate (list price of the estimated input, within the cap).
+function unknownSpend(entry, req, failure) {
+  const cap = Number.isFinite(failure.costCapUsd) && failure.costCapUsd >= 0 ? failure.costCapUsd : null;
+  const inputTokens = estimateTokens(req.system) + estimateTokens(req.prompt) + estimateTokens(JSON.stringify(req.schema));
+  const estimate = listPrice(entry.price, { ...zeroUsage(), inputTokens });
+  return { costUnknown: true, costUpperUsd: cap, costEstimateUsd: cap === null ? estimate : Math.min(cap, estimate) };
+}
 
 export class ModelPort {
   constructor({ policy, providers = {}, journal, mode = 'live', salt = null, concurrency = {}, timeoutMs = 300000, now = Date.now } = {}) {
@@ -120,16 +157,22 @@ export class ModelPort {
     return { runId, nodeKey, attempt, sampleIndex, modelId, system, prompt, schema, receiptHash, mode, salt, timeoutMs, decoding: normalizeDecoding(req.decoding ?? {}), signal: req.signal };
   }
 
+  #decoding(entry, config, requested) {
+    const provider = this.providers[entry.provider];
+    const resolve = typeof provider?.effectiveDecoding === 'function' ? d => provider.effectiveDecoding(d, { modelEntry: entry, providerConfig: config }) : DECODING_BY_KIND[config.kind];
+    return resolve ? checkData(plain(resolve({ ...requested }))) : requested;
+  }
+
   async call(input) {
     const req = this.#request(input);
     // Preconditions: none of these reach a provider or the journal.
-    const entry = modelById(this.policy, req.modelId);
+    const entry = modelById(this.policy, req.modelId), config = providerConfig(this.policy, entry);
     checkPortableSchema(req.schema);
     const validate = compileDataSchema(req.schema);
-    const promptHash = promptHashOf(req);
-    const replayKey = replayKeyOf({ promptHash, modelId: entry.id, decoding: req.decoding, sampleIndex: req.sampleIndex, salt: req.salt });
+    const promptHash = promptHashOf(req), decoding = this.#decoding(entry, config, req.decoding);
+    const replayKey = replayKeyOf({ promptHash, modelId: entry.id, modelDigest: modelDigestOf(entry, config), decoding, sampleIndex: req.sampleIndex, salt: req.salt });
     const base = { replayKey, runId: req.runId, nodeKey: req.nodeKey, attempt: req.attempt, sampleIndex: req.sampleIndex, modelId: entry.id,
-      decoding: req.decoding, receiptHash: req.receiptHash, promptHash };
+      decoding, receiptHash: req.receiptHash, promptHash };
     const started = this.now();
 
     if (req.mode !== 'replay') {
@@ -151,7 +194,6 @@ export class ModelPort {
 
     const provider = this.providers[entry.provider];
     if (!provider) throw new FoundryError('MODEL_PROVIDER_MISSING', `No provider is registered for ${entry.provider} (model ${entry.id})`);
-    const config = providerConfig(this.policy, entry);
     const semaphore = this.#semaphore(entry);
     await semaphore.acquire(req.signal);
     let raw, failure, latencyMs, timedOut = false;
@@ -165,7 +207,10 @@ export class ModelPort {
 
     const usage = usageOf(raw?.usage ?? failure?.usage);
     const reportedCost = raw?.costUsd ?? failure?.costUsd;
-    const costUsd = typeof reportedCost === 'number' && Number.isFinite(reportedCost) && reportedCost >= 0 ? reportedCost : listPrice(entry.price, usage);
+    const known = typeof reportedCost === 'number' && Number.isFinite(reportedCost) && reportedCost >= 0;
+    const costUsd = known ? reportedCost : listPrice(entry.price, usage);
+    // run.cost and costUsd stay known spend; an unobservable spend is never recorded as a silent exact $0.
+    const spend = !raw && !known && failure?.costUnknown === true ? unknownSpend(entry, req, failure) : {};
     const imputedUsd = (config.imputedComputeUsdPerHour ?? 0) * latencyMs / 3600000;
     const engineVersion = raw?.engineVersion ?? failure?.engineVersion ?? null;
     let ok = false, value, error = null;
@@ -173,27 +218,29 @@ export class ModelPort {
     if (failure) {
       const code = req.signal?.aborted ? 'CANCELLED' : timedOut ? 'MODEL_TIMEOUT' : classifyError(failure);
       error = { code, message: String(failure.message ?? failure).slice(0, 3000) };
-    } else if (finishReason === 'length') error = { code: 'MODEL_TRUNCATED', message: 'Generation stopped at the token limit (finish_reason=length)' };
-    else if (finishReason === 'refusal') error = { code: 'MODEL_REFUSAL', message: 'The model refused the request' };
+    } else if (finishReason === 'length') error = own('MODEL_TRUNCATED', 'Generation stopped at the token limit (finish_reason=length)');
+    else if (finishReason === 'refusal') error = own('MODEL_REFUSAL', 'The model refused the request');
     else {
       value = raw?.value;
       if (value === undefined) {
-        try { value = JSON.parse(raw?.text ?? ''); } catch { error = { code: 'MODEL_SCHEMA', message: 'Model output is not a JSON value' }; }
+        try { value = JSON.parse(raw?.text ?? ''); } catch { error = own('MODEL_SCHEMA', 'Model output is not a JSON value'); }
       }
       if (!error) {
-        try { checkData(value); } catch (e) { error = { code: 'MODEL_SCHEMA', message: `Model output is not plain JSON data: ${e.message}` }; value = undefined; }
+        try { checkData(value); } catch (e) { error = own('MODEL_SCHEMA', `Model output is not plain JSON data: ${e.message}`); value = undefined; }
       }
-      if (!error && validate(value) !== true) error = { code: 'MODEL_SCHEMA', message: `Model output does not satisfy its schema: ${ajvMessage(validate.errors)}`, details: (validate.errors ?? []).slice(0, 10) };
+      if (!error && validate(value) !== true) error = own('MODEL_SCHEMA', `Model output does not satisfy its schema: ${ajvMessage(validate.errors)}`,
+        { details: (validate.errors ?? []).slice(0, 10), feedback: `Model output does not satisfy its schema: ${schemaFeedback(validate.errors)}` });
       ok = !error;
     }
     const response = { value: ok ? value : undefined, rejectedValue: !ok && value !== undefined ? value : undefined, text: raw?.text ?? failure?.text ?? null,
-      usage, finishReason, error: error ?? undefined, meta: raw?.meta ?? failure?.meta ?? undefined };
+      usage, finishReason, error: error ?? undefined, meta: raw?.meta ?? failure?.meta ?? undefined, ...spend };
     const journalId = this.journal.record({ ...base, provider: entry.provider, engineVersion,
       request: plain({ system: req.system, prompt: req.prompt, schema: req.schema, mode: req.mode, salt: req.salt, providerRequest: raw?.request ?? failure?.request }),
       response: plain(response), ok, errorCode: error?.code, inputTokens: usage.inputTokens, outputTokens: usage.outputTokens, costUsd, imputedUsd, latencyMs });
-    if (error?.code === 'CANCELLED') throw new FoundryError('CANCELLED', 'Model call cancelled', { journalId, replayKey });
+    // The journaled spend of a cancelled call travels with the cancellation, so the caller can still charge it.
+    if (error?.code === 'CANCELLED') throw new FoundryError('CANCELLED', 'Model call cancelled', { journalId, replayKey, modelId: entry.id, costUsd, imputedUsd, latencyMs, usage, ...spend });
     return { ok, value: ok ? value : undefined, text: response.text, usage, costUsd, imputedUsd, latencyMs, finishReason, modelId: entry.id,
-      provider: entry.provider, engineVersion, replayed: false, ...(error ? { error } : {}), replayKey, promptHash, journalId };
+      provider: entry.provider, engineVersion, replayed: false, ...(error ? { error } : {}), ...spend, replayKey, promptHash, journalId };
   }
 
   /** Journaled outcomes of one node attempt, for crash recovery and audit (DESIGN §3). */

@@ -31,8 +31,36 @@ capability number against a simple baseline and a `research/<topic>-<date>/REPOR
 | Phase | State | Evidence |
 |---|---|---|
 | 0 Unblock | **done** | [env probe](research/env-20261006/ENV.md), suite 605 tests: 590 pass, 0 fail, 15 skip (all with recorded reasons: `node research/list-skips.mjs`) |
-| 1 Core nodes | in progress | [design](research/core-20261006/DESIGN.md) |
-| 2–6 | not started | see [ROADMAP §5](docs/ROADMAP.md) |
+| 1 Core nodes | **built; exit experiment pending** | [design](research/core-20261006/DESIGN.md), [pre-registration](research/core-20261006/PREREG.md); suite 735 tests, 718 pass, 0 fail, 17 recorded skips; 10 adversarial-review findings being fixed |
+| 2 Construction (C0) | harness built, dev round pre-registered | [design](research/construction-20261006/DESIGN.md), [dev prereg](research/construction-20261006/PREREG-dev.md) |
+| 3–6 | not started | see [ROADMAP §5](docs/ROADMAP.md) |
+
+**Phase 1 (core nodes), what exists now:** `agent` nodes (one narrow, typed model judgment, with
+escalation E1/E2/E7), sandboxed `code` nodes (JS/Python in user+mount+pid+net namespaces),
+`verify` nodes with independence labels, parallel `map`, timers with `foundry tick`, run verdicts,
+a deterministic context compiler with receipts, and a record/replay journal for every model call
+(`src/models/`, `src/journal.mjs`, `src/context.mjs`, `src/sandbox.mjs`). Model access: hosted
+Claude models through `claude -p` and local CPU models through llama.cpp, all ids from
+`policy/models.json`. A live smoke run (three parallel Haiku agent nodes, a sandboxed code node and a
+verifier) passed in 6.4 s for $0.009.
+
+**First measurements (development evidence, `records` bed, K = 1, small n):**
+- A single Sonnet 5.5 call already solves `records` at d1–d3 (6/6, ≈ $0.08–0.18 per task); a
+  single Haiku 4.5 call does not (0/6).
+- A hand-written Foundry workflow (code owns parsing and rules, Haiku makes one narrow judgment per
+  6-row chunk) went from failing at $0.30/task to passing 3/3 d2 tasks at $0.086/task after two
+  changes: thinking off for the narrow extraction node (thinking made Haiku *worse* and 3–4× more
+  expensive), and parsing dates and amounts in code from the model's raw spans. At d3 it still
+  fails (0.90, 0.95). The pre-registered experiment ([PREREG](research/core-20261006/PREREG.md))
+  will measure this properly.
+- Construction plumbing works end to end: a builder agent in the sandbox used the Foundry kit, the
+  model gateway and the probe scorer and delivered a valid workflow (Haiku builder smoke, $0.83).
+
+**Usage-limit incident (2026-10-06 ≈ 20:00 UTC → 2026-10-07 11:00 UTC):** parallel subagent
+workflows (bed building, corpus acquisition, reviews) exhausted the plan's weekly limit; 14 agents
+failed and their work was redone after the reset. Subagents and `claude -p` experiment calls draw on
+the same plan allowance ([docs](https://code.claude.com/docs/en/costs)); usage credits are off, so
+the effect is a pause, not a charge. Agent fan-out is now kept small.
 
 What Phase 0 changed:
 - **Node 24.21.0** from the pinned official tarball (`scripts/setup-node24.sh`, sha256-checked).
@@ -72,7 +100,15 @@ reported separately. Orchestration by this session and its subagents is not item
 | Date | Item | Models | Calls | USD |
 |---|---|---|---|---|
 | 2026-10-06 | Phase 0 access probes (one default-context call, then minimal-context structured calls) | Haiku, Sonnet, Opus | 8 | 0.37 |
-| | **Total** | | | **0.37** |
+| 2026-10-06 | Executor smoke tests (Claude Code headless in the sandbox) | Haiku | 2 | 0.03 |
+| 2026-10-06 | Records calibration pilot (single call, d1–d3) | Haiku, Sonnet | 12 | 1.36 |
+| 2026-10-07 | Records hand-workflow pilots (thinking on/off, code-side parsing, d2–d3, local Qwen) | Haiku, Sonnet, Qwen | 142 | 2.25 |
+| 2026-10-07 | Live smoke runs (CLI agent workflow, gateway, Haiku-builder construction) | Haiku, Sonnet | ~60 | 0.85 |
+| | **Total measured (experiment calls)** | | | **4.86** |
+
+List price as computed by the CLI. On this subscription it is a yardstick, not a charge (usage
+credits are off). Orchestration by this session and its subagents (millions of tokens) is not
+itemised here; it counts against the same plan allowance.
 
 ## Owner decisions needed
 

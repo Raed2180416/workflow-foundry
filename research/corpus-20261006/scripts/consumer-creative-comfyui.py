@@ -41,7 +41,7 @@ POLL_PROVIDERS = {"kling", "luma", "runway", "pika", "minimax", "vidu", "tripo",
                   "wavespeed", "meshy", "pixverse", "beeble", "topaz", "bfl", "alibaba-wan-api", "higgsfield", "ltx-api",
                   "hunyuan-api", "google", "magnific", "xai"}
 LOCAL_SERVICE = [("ollama", r"Ollama"), ("lm-studio", r"LMStudio|LM Studio"), ("discord", r"Discord"),
-                 ("telegram", r"Telegram"), ("http", r"HTTP|Http|Webhook|URL ?Request|Fetch|API Request"),
+                 ("telegram", r"Telegram"), ("google-translate", r"GoogleTranslate"), ("deepl", r"DeepL"), ("http", r"HTTP|Http|Webhook|URL ?Request|Fetch|API Request"),
                  ("s3", r"\bS3\b"), ("civitai", r"Civitai|CivitAI"), ("huggingface", r"HuggingFace|HF ?Download")]
 LOOP_OPEN = re.compile(r"(WhileLoopOpen|ForLoopOpen|forLoopStart|whileLoopStart|^StartLoop$|ForeachListBegin|LoopStart|Loop Start|"
                        r"For Loop Start|While Loop Start|ImpactQueueTrigger)", re.I)
@@ -49,7 +49,7 @@ LOOP_CLOSE = re.compile(r"(WhileLoopClose|ForLoopClose|forLoopEnd|whileLoopEnd|^
                         r"While Loop End)", re.I)
 HUMAN = re.compile(r"(Chooser|ImageChooser|Image Selector|PreviewChooser|Pause|Interactive|HumanInTheLoop|Approval|Wait For User)", re.I)
 CODE = re.compile(r"(GLSLShader|Python|Exec(ute)?(Code|Script)|Evaluate (Strings|Ints|Floats)|Eval(uate)? ?Code|JavaScript|"
-                  r"RunScript|Script Node|CodeNode|ExpressionEditor)", re.I)
+                  r"RunScript|Script Node|(?<![A-Za-z])CodeNode)", re.I)  # not ExpressionEditor (LivePortrait face edit)
 COND = re.compile(r"(Switch(?! Mesh Axis| 3DGS Axis)|\bIf\b|IfElse|Conditional|ExecutionGate|Gate\b|ImpactCompare|StringCompare|"
                   r"ConditionalStop|SwitchByIndex|Selector \(rgthree\)|Any Switch|Logic)", re.I)
 MODEL = re.compile(r"(KSampler(?!Select)|Sampler(Custom|Advanced)|SamplerCustom|\bSampler\b(?! Loader)|Sampler$|Sampler\W|DetailDaemonSampler|"
@@ -443,6 +443,8 @@ def main():
             continue
         items.append(item)
     cc.write_jsonl(OUT, items)
+    stats["items"] = len(items)
+    json.dump(stats, open(OUT.replace(".candidates.jsonl", ".report.json"), "w"), indent=1)
     print(stats, "items", len(items), "->", OUT)
 
 

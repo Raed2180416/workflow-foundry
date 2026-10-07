@@ -26,6 +26,16 @@ RAW = "/opt/corpus/apple-shortcuts"
 OUT = "/opt/corpus/consumer-work/apple-shortcuts-native.candidates.jsonl"
 PFX = "is.workflow.actions."
 VAR_ACTIONS = {"setvariable", "appendvariable", "getvariable"}
+# WFCondition codes as stored in .plist files (older exports store the English label instead);
+# codes not listed here are reported verbatim rather than guessed.
+COND = {0: "<", 1: "<=", 2: ">", 3: ">=", 4: "==", 5: "!=", 8: "begins with", 9: "ends with", 99: "contains",
+        999: "does not contain", 100: "has any value", 101: "has no value", 1003: "is between"}
+
+
+def cond_label(c):
+    if isinstance(c, str):
+        return c
+    return COND.get(c, f"condition code {c if c is not None else 'unset'}")
 
 
 def refs(params):
@@ -78,7 +88,7 @@ def convert(plist):
         if short == "conditional":
             if mode == 0:
                 c = g.node("is.workflow.actions.conditional", "condition", "none",
-                           f"If ({p.get('WFCondition', '?')})")
+                           f"If ({cond_label(p.get('WFCondition'))})")
                 data_edges(c, p)
                 for x in preds:
                     g.edge(x, c)
@@ -173,18 +183,22 @@ def convert(plist):
 
 def main():
     man = json.load(open(os.path.join(RAW, "icloud-manifest.json")))
-    items = []
+    items, report = [], {"records": len(man["records"]), "outcomes": {}, "unparseable": [], "tooSmall": [], "invalid": []}
     for r in man["records"]:
-        if r.get("outcome") != "acquired":
+        o = r.get("outcome", "?")
+        report["outcomes"][o] = report["outcomes"].get(o, 0) + 1
+        if o != "acquired":
             continue
         try:
             pl = plistlib.load(open(r["rawPath"], "rb"))
         except Exception as ex:
             print("unparseable", r["id"], ex)
+            report["unparseable"].append({"id": r["id"], "error": str(ex)[:80], "head": open(r["rawPath"], "rb").read(8).hex()})
             continue
         conv, exit_inside = convert(pl)
         g = conv.g
         if len(g.nodes) < 2:
+            report["tooSmall"].append({"id": r["id"], "actions": len(pl.get("WFWorkflowActions", [])), "nodes": len(g.nodes)})
             continue
         acts = pl.get("WFWorkflowActions", [])
         needs = set(conv.needs)
@@ -220,7 +234,11 @@ def main():
             extra={"score": cc.complexity(f), "srcActions": len(acts), "native": True})
         if not cc.validate(item):
             items.append(item)
+        else:
+            report["invalid"].append({"id": r["id"], "errors": cc.validate(item)[:3]})
     cc.write_jsonl(OUT, items)
+    report["items"] = len(items)
+    json.dump(report, open(OUT.replace(".candidates.jsonl", ".report.json"), "w"), indent=1)
     print("records", len(man["records"]), "items", len(items), "->", OUT)
 
 

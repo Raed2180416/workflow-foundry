@@ -3,36 +3,73 @@ import { existsSync, realpathSync } from 'node:fs';
 import { checkData, FoundryError } from './data.mjs';
 
 // DESIGN §1.2. Code runs in fresh user+net+mount+pid namespaces: every inherited mount is
-// remounted read-only, private trees are hidden under tmpfs, the environment holds PATH only,
-// and source plus input arrive on stdin. Nothing ever falls back to an unsandboxed run.
+// remounted read-only, the environment holds PATH only, and source plus input arrive on stdin.
+// Nothing ever falls back to an unsandboxed run. The root is an allowlist, not a mask: setup
+// pivots onto a fresh tmpfs holding read-only binds of VISIBLE_PATHS and of the interpreter
+// binary alone, the pid namespace's /proc, five /dev nodes and a private /tmp, then detaches the
+// host root and makes the new root read-only. Any other host path (uploads, corpus, /opt, /sys…)
+// does not exist inside; MASKED_PATHS exist only as empty read-only directories.
 // The setup namespace root could undo its own mounts, so the interpreter starts one user+mount
 // namespace deeper, as an unmapped user with no capabilities: the kernel then locks every
 // mount it inherits (no unmounting a mask, no clearing read-only), even from namespaces it creates.
-export const MASKED_PATHS = Object.freeze(['/home', '/root', '/opt/models', '/tmp', '/var', '/run']);
+export const VISIBLE_PATHS = Object.freeze(['/usr', '/bin', '/sbin', '/lib', '/lib32', '/lib64', '/libx32', '/etc/ld.so.cache', '/etc/ld.so.conf', '/etc/ld.so.conf.d', '/etc/localtime']);
+export const MASKED_PATHS = Object.freeze(['/home', '/root', '/opt', '/mnt', '/srv', '/media', '/tmp', '/var', '/run']);
 export const MAX_OUTPUT_BYTES = 512 * 1024;
+// Per-process limits set inside the namespace before the interpreter starts (prlimit, soft = hard).
+// Python: 1 GiB address space, at most 8 tasks (threads + forks). JS: V8 reserves more address
+// space than any useful RLIMIT_AS, so RLIMIT_DATA caps committed private memory (heap, Buffers,
+// wasm) at 1.25 GiB: ~0.6 GiB V8/thread baseline plus the 512 MiB heap; --permission already
+// forbids child processes and workers, so NPROC only bounds V8/libuv threads (about 11).
+// RLIMIT_NPROC is never enforced for host root (kuid 0), so a root host runs the sandbox as nobody.
+const MiB = 1024 * 1024, SANDBOX_ID = 65534;
+export const LIMITS = Object.freeze({
+  js: Object.freeze({ nproc: 32, data: 1280 * MiB, fsize: 16 * MiB, core: 0 }),
+  python: Object.freeze({ nproc: 8, as: 1024 * MiB, fsize: 16 * MiB, core: 0 })
+});
 const SAFE_PATH = '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin';
 const RESULT = 'FOUNDRY_RESULT:', READY = 'FOUNDRY_SANDBOX_READY\n';
 const STDERR_KEEP = 64 * 1024;
 const first = candidates => candidates.find(file => existsSync(file));
 
 // Mount points with escaped names cannot be addressed reliably from sh, so they make the
-// sandbox unavailable instead of staying writable.
+// sandbox unavailable instead of staying writable. The host /tmp (never visible inside) is the
+// staging mount point for the new root; $2 is the interpreter binary, bound at its own path.
 const SETUP = `set -eu
 inner="$1"; shift
 for mp in $(awk '{print $5}' /proc/self/mountinfo); do
   case "$mp" in *\\\\*) echo "foundry-sandbox: unsupported mount point name" >&2; exit 97;; esac
   if mountpoint -q "$mp"; then mount -o remount,bind,ro "$mp"; fi
 done
-for d in ${MASKED_PATHS.filter(p => p !== '/tmp').join(' ')}; do
-  if [ -d "$d" ]; then mount -t tmpfs -o ro,size=4k,mode=0755 foundry-mask "$d"; fi
+mount -t tmpfs -o rw,nosuid,nodev,size=1m,nr_inodes=1024,mode=0755 foundry-root /tmp
+cd /tmp
+mkdir old proc dev etc
+for d in ${MASKED_PATHS.join(' ')}; do mkdir -p ".$d"; done
+for p in ${VISIBLE_PATHS.join(' ')} "$2"; do
+  if [ -e ".$p" ] || [ -L ".$p" ]; then continue; fi
+  if [ -L "$p" ]; then ln -s "$(readlink "$p")" ".$p"
+  elif [ -d "$p" ]; then mkdir -p ".$p"; mount --rbind "$p" ".$p"; mount -o remount,bind,ro ".$p"
+  elif [ -f "$p" ]; then mkdir -p ".\${p%/*}"; : > ".$p"; mount --bind "$p" ".$p"; mount -o remount,bind,ro ".$p"
+  fi
 done
-mount -t tmpfs -o rw,nosuid,nodev,size=16m,nr_inodes=1024,mode=1777 foundry-tmp /tmp
+mount --rbind /proc proc
+mount -t tmpfs -o rw,nosuid,size=64k,nr_inodes=64,mode=0755 foundry-dev dev
+for n in null zero full random urandom; do : > "dev/$n"; mount --bind "/dev/$n" "dev/$n"; done
+ln -s /proc/self/fd dev/fd; ln -s fd/0 dev/stdin; ln -s fd/1 dev/stdout; ln -s fd/2 dev/stderr
+mount -o remount,bind,ro dev
+pivot_root . old
+cd /
+umount -n -l /old
+rmdir /old
+mount -n -t tmpfs -o rw,nosuid,nodev,size=16m,nr_inodes=1024,mode=1777 foundry-tmp /tmp
+mount -n -o remount,bind,ro /
 cd /tmp
 exec unshare --user --mount /bin/sh -c "$inner" foundry-sandbox "$@"`;
 const INNER = `set -eu
+limits="$1"; shift
 caps=
 while read -r key value; do if [ "$key" = CapEff: ]; then caps="$value"; fi; done < /proc/self/status
 if [ "$caps" != 0000000000000000 ]; then echo "foundry-sandbox: capabilities remain ($caps)" >&2; exit 98; fi
+prlimit --pid $$ $limits
 printf '${READY.trim()}\\n' >&2
 exec env -i PATH=${SAFE_PATH} "$@"`;
 
@@ -82,11 +119,12 @@ function interpreter(lang) {
     if (!found) throw new FoundryError('SANDBOX_UNAVAILABLE', 'python3 is not installed in a system location');
     return realpathSync(found);
   })();
-  if (MASKED_PATHS.some(p => binary === p || binary.startsWith(`${p}/`))) throw new FoundryError('SANDBOX_UNAVAILABLE', `Interpreter ${binary} lives under a path the sandbox hides`);
+  if (binary.startsWith('/tmp/')) throw new FoundryError('SANDBOX_UNAVAILABLE', `Interpreter ${binary} lives under a path the sandbox hides`);
   return lang === 'js'
     ? [binary, '--permission', '--max-old-space-size=512', '--input-type=module', '--eval', JS_RUNNER]
     : [binary, '-I', '-B', '-c', PY_RUNNER];
 }
+const prlimitArgs = lang => Object.entries(LIMITS[lang]).map(([name, value]) => `--${name}=${value}`).join(' ');
 
 const tail = (text, n = 2000) => text.length > n ? `…${text.slice(-n)}` : text;
 
@@ -99,11 +137,12 @@ export async function runCode({ lang, source, input = null, timeoutMs = 10000, m
   if (signal?.aborted) throw new FoundryError('CANCELLED', 'Code execution was cancelled before launch');
   const unshareBinary = unshare ?? first(['/usr/bin/unshare', '/bin/unshare', '/usr/sbin/unshare', '/sbin/unshare']);
   if (!unshareBinary) throw new FoundryError('SANDBOX_UNAVAILABLE', 'unshare(1) is not installed; code nodes never run unsandboxed');
-  const argv = ['--user', '--map-root-user', '--net', '--mount', '--pid', '--fork', '--kill-child', '--mount-proc', '/bin/sh', '-c', SETUP, 'foundry-sandbox', INNER, ...interpreter(lang)];
+  const argv = ['--user', '--map-root-user', '--net', '--mount', '--pid', '--fork', '--kill-child', '--mount-proc', '/bin/sh', '-c', SETUP, 'foundry-sandbox', INNER, prlimitArgs(lang), ...interpreter(lang)];
+  const identity = process.getuid?.() === 0 ? { uid: SANDBOX_ID, gid: SANDBOX_ID } : {};
   const startedAt = Date.now();
   return new Promise((resolve, reject) => {
     let child;
-    try { child = spawn(unshareBinary, argv, { cwd: '/', env: { PATH: SAFE_PATH }, shell: false, detached: true, stdio: ['pipe', 'pipe', 'pipe'] }); }
+    try { child = spawn(unshareBinary, argv, { cwd: '/', env: { PATH: SAFE_PATH }, shell: false, detached: true, stdio: ['pipe', 'pipe', 'pipe'], ...identity }); }
     catch (error) { reject(new FoundryError('SANDBOX_UNAVAILABLE', `Sandbox launch failed: ${error.message}`)); return; }
     const stdout = [], stderr = [];
     let stdoutBytes = 0, stderrBytes = 0, failure = null;
