@@ -331,6 +331,8 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   if (cls === 'memory_leak_oom') {
     let t = T, p = root.fx.p0, restarts = 1;
     const gi = K.leakPace ? r.int(...K.leakPace) : 31;
+    // v4 round 5: from d3 the first growth line follows the onset by at least 45 s more.
+    if (K.onsetX) t += r.fork('leak-first').int(45, 90);
     while (t < WINDOW) {
       t += K.leakPace ? r.int(Math.round(gi * 0.6), Math.round(gi * 1.4)) : r.int(18, 45); p += r.int(3, 7);
       if (t >= WINDOW) break;
@@ -833,7 +835,7 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
     if (K.strayGen) {
       const G = C.STRAY_GEN;
       if (klass === 'connection_pool_exhaustion') return { pool: G.pool(rr, s.fx.pool), max: rr.pick([4, 6, 8, 10, 12]), db: G.db(rr) };
-      if (klass === 'certificate_expiry') { let host; do host = G.certHost(rr, s.host); while (s === root && host.startsWith('admin.')); return { host, port: pickNot(C.STRAY_NAMES.certPorts, s.port), exp: iso(Math.max(0, t - rr.int(0, 90))) }; }
+      if (klass === 'certificate_expiry') return { host: G.certHost(rr, s.host, s.name, s.ns), port: pickNot(C.STRAY_NAMES.certPorts, s.port), exp: iso(Math.max(0, t - rr.int(0, 90))) };
       if (klass === 'bad_config_deploy') { const a = rr.int(1, 9), b = rr.int(1, 40), p = rr.int(0, 9); return { comp: G.comp(rr), v1: `v${a}.${b}.${p}`, v2: `v${a}.${b}.${p + 1}` }; }
       if (klass === 'disk_full') return { vol: G.vol(rr, s.fx.vol), v: rr.int(86, 97), v0: rr.int(35, 70), writer: rr.pick(C.WRITERS) };
       if (klass === 'memory_leak_oom') return { proc: G.proc(rr) };

@@ -21,11 +21,12 @@ const ALL_FORMATS = ['mdtable', 'csv', 'prose', 'grouped', 'reader', 'semicolon'
 // Late facts may come from a colleague and count only once the author confirms them (`colleague`); a
 // colleague's report that the author denies keeps the well (`lateDenied`); late bubble reports may be
 // given as clock times to compare with the row's read window (`lateTimed`).
-// 4.0.0 (audit 2026-10-07, second pass; AUDIT.md F20-F27): bubble notes that state the order of events (`order`), side
-// remarks about non-study items in the opposite vocabulary (`side`), colleague answers whose polarity is in the content
-// (`polar`), a late report redirected by its author to another well (`redirect`), an enzyme-dose correction from the
-// master-mix log that the numbers cannot reveal (`dose`), and wells named by their ordinal position in a plate row
-// (`ordinal`). d3 also gets the decimal-comma instrument export and one more kept well with a note.
+// 4.0.0 (audit 2026-10-07, second pass; AUDIT.md F20-F26): bubble notes that state the order of events (`order`; at
+// least `orderedOut` excluded wells per task), side remarks about non-study items in the opposite vocabulary (`side`),
+// colleague answers whose polarity is in the content (`polar`), a late report redirected by its author to another well
+// (`redirect`), an enzyme-dose correction from the master-mix log that the numbers cannot reveal (`dose`), and wells
+// named by their ordinal position in a plate row (`ordinal`; always for `ordinalRefs` late reports). d3 also gets the
+// decimal-comma instrument export and one more kept well with a note.
 const HARD = { lateSilent: 1, mild: 0.6, devRange: [0.22, 0.6], colleague: 0.5, lateDenied: 1, lateTimed: 0.5, order: 0.85, orderedOut: 2, side: 0.5, polar: 1, redirect: 1, dose: 1, ordinal: 0.5, ordinalRefs: 2 },
   EASY = { lateSilent: 0, mild: 0, devRange: [0.22, 0.3], colleague: 0, lateDenied: 0, lateTimed: 0, order: 0, orderedOut: 0, side: 0, polar: 0, redirect: 0, dose: 0, ordinal: 0, ordinalRefs: 0 };
 export const KNOBS = {
@@ -483,8 +484,9 @@ export function buildWorld({ seed, split, difficulty }) {
 
   // ---- [AUDIT F24] enzyme dose: one condition's wells got the enzyme at another working dilution (master-mix log).
   // Rates scale with the enzyme, and the SOP rescales them to the standard 1:500. Every well of that condition is
-  // affected alike, so neither its own rows nor the other conditions reveal the factor: only the log does. The condition
-  // is not touched by a relabel (trap or suggestion), so the label correction and the dose never interact.
+  // affected alike, so neither its own rows nor the other conditions reveal the factor: only the log does. A condition
+  // that no relabel (trap or rejected suggestion) touches is preferred; otherwise one for which every relabel stays
+  // load-bearing with the dose applied (the SOP applies label corrections first).
   let dose = null;
   if (k.dose) {
     const xr = r.fork('dose');
