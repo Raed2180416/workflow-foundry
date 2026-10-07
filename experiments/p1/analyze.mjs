@@ -22,7 +22,7 @@ for (const [arm, tasks] of byArmTask(recs)) {
 console.log('| arm | d | tasks | trials | success | rate | 95% CI | pass^3 | mean score | $ total | CPS | $/trial | imputed $ | errors |');
 console.log('|---|---|---|---|---|---|---|---|---|---|---|---|---|---|');
 for (const r of rows) console.log(`| ${r.arm} | ${r.d} | ${r.tasks} | ${r.trials} | ${r.success} | ${r.rate} | ${r.ci} | ${r.passHat3} | ${r.meanScore} | ${r.costUsd} | ${r.cps} | ${r.costPerTrial} | ${r.imputedUsd} | ${r.errors} |`);
-const PAIRS = [['fhand-haiku', 'b0call-haiku-med'], ['fhand-haiku', 'b0call-haiku-none'], ['fhand-haiku', 'b0ncall-haiku-med'], ['fhand-haiku', 'b0agent-haiku'], ['fhand-haiku', 'b0call-sonnet-med'], ['fhand-sonnet', 'b0call-sonnet-med']];
+const PAIRS = [['b0call-haiku-none', 'b0call-haiku45-none'], ['fhand-haiku', 'b0call-haiku-med'], ['fhand-haiku', 'b0call-haiku-none'], ['fhand-haiku', 'b0ncall-haiku-med'], ['fhand-haiku', 'b0agent-haiku'], ['fhand-haiku', 'b0call-sonnet-med'], ['fhand-sonnet', 'b0call-sonnet-med']];
 const arms = new Set(recs.map(r => r.arm));
 console.log('\n| A | B | tasks | success diff A−B [95% CI] | CPS ratio A/B [95% CI] | McNemar p |');
 console.log('|---|---|---|---|---|---|');
