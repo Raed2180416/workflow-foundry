@@ -236,7 +236,9 @@ test('every trap is load-bearing; keeping SOP-excluded wells breaks the fit', ()
       if (world.conds.some(c => relErr(kept[c.id].vmax, c.vmax) > TOL || relErr(kept[c.id].km, c.km) > TOL)) keepFail++;
       if (world.rawExport) assert.equal(world.rawExport.typos.length, world.knobs.rawExport.typos, 'typos placed');
     }
-    assert.ok(keepFail >= 18, `d${d}: keeping outliers broke the fit in only ${keepFail}/20`);
+    // 3.0.0: at d3+ most exclusions are silent (they read normally), so keeping them breaks a fit less
+    // often (36-42/50 over dev seeds 1-50); the exact-set rule makes every exclusion count regardless
+    assert.ok(keepFail >= (d <= 2 ? 18 : 12), `d${d}: keeping outliers broke the fit in only ${keepFail}/20`);
   }
 });
 

@@ -328,6 +328,30 @@ function attemptWorld(seed, split, difficulty, attempt) {
   if (k.datedFx) fx.cutover = r.int(dayNum(2019, 9, 1), dayNum(2022, 12, 31));
   const atlasCutoff = L.atlasCutoff ? r.int(dayNum(2020, 3, 1), dayNum(2023, 6, 30)) : null;
 
+  // Per-task conventions that only the source notes state (difficulty >= 3): the ATLAS and VENDEX numeric
+  // date orders, the task's re-stamped mirror system and its rebuild window, and extra status values whose
+  // meaning (void or live) changes from task to task. At least one extra status is void and one is live.
+  const conv = { atlas: 'dmy', vendex: 'mdy', mirror: null, window: null, flags: [] };
+  if (k.conv) { conv.atlas = r.pick(['dmy', 'mdy']); conv.vendex = r.pick(['mdy', 'dmy']); }
+  if (k.mirror) {
+    conv.mirror = r.pick(P.MIRROR_SYSTEMS.filter(s => active.includes(s)));
+    const len = r.int(20, 45), w0 = r.int(D_END - 420, D_END - 60 - len);
+    conv.window = [w0, w0 + len];
+  }
+  if (k.flags) {
+    const pols = r.shuffle(k.flags === 2 ? ['live', 'void'] : ['live', 'void', r.pick(['live', 'void'])]);
+    let pool = r.shuffle(Object.keys(P.FLAG_TOKENS).filter(s => active.includes(s)));
+    for (const polarity of pols) {
+      const system = pool.find(s => polarity === 'void' || s !== 'KOBO'); // KOBO has too few rows for live flags
+      pool = pool.filter(s => s !== system);
+      conv.flags.push({ system, polarity, token: r.pick(P.FLAG_TOKENS[system]) });
+    }
+  }
+  const VOID_FLAG_ROWS = 2; // fake people per void extra status: honouring them adds two extra entities
+  const atlasMonthFirst = date => (conv.atlas === 'mdy') !== (atlasCutoff !== null && date >= atlasCutoff);
+  const isMirror = sys => sys === conv.mirror;
+  const windowDate = taken => { for (;;) { const d = r.int(conv.window[0], conv.window[1]); if (!taken.has(d)) { taken.add(d); return d; } } };
+
   function makeEntity(opts = {}) {
     const culture = opts.culture ?? weighted(r, P.CULTURE_WEIGHTS);
     const name = opts.name ?? freshName(r, culture, takenNames, opts.gender ?? null);
@@ -345,7 +369,7 @@ function attemptWorld(seed, split, difficulty, attempt) {
     while (dates.size < e.size) dates.add(r.int(D_START, D_END));
     e.dates = [...dates].sort((a, b) => a - b);
     let phoneIso = c0;
-    if (!opts.phone && r.chance(L.expatP)) while (phoneIso === c0) phoneIso = weighted(r, MOVE_TARGETS);
+    if (!opts.phone && !opts.noExpat && r.chance(L.expatP)) while (phoneIso === c0) phoneIso = weighted(r, MOVE_TARGETS);
     e.periods = [{ from: -Infinity, country: c0, phone: opts.phone ?? newPhone(r, phoneIso, usedPhones) }];
     if (e.size >= 2 && !opts.phone && r.chance(L.moveP)) {
       const i = r.int(1, e.size - 1);
@@ -372,7 +396,7 @@ function attemptWorld(seed, split, difficulty, attempt) {
 
   // Special structures first: namesake pairs (same name, different birth date; swap traps use the
   // day/month-swapped date) and households (same family name and phone, different given name).
-  const nonVoidTarget = L.rows - L.twinVoids - L.soloVoids;
+  const nonVoidTarget = L.rows - L.twinVoids - L.soloVoids - VOID_FLAG_ROWS * conv.flags.filter(f => f.polarity === 'void').length;
   let budget = nonVoidTarget;
   for (let i = 0; i < L.namesakes; i++) {
     const a = makeEntity({ size: Math.max(2, sampleSize()), role: 'namesakeA' });
@@ -436,15 +460,23 @@ function attemptWorld(seed, split, difficulty, attempt) {
 
   // Rows
   const rows = [];
+  const systemFor = (e, j, per) => {
+    if (e.role === 'swapB' && j === 0 && active.includes('ATLAS')) return 'ATLAS';
+    if (e.role === 'namesakeA' && j === 0 && entities[e.partner]?.role === 'swapB') return 'BRIGHTDESK';
+    return weighted(r, systemWeights(per.country, e.culture, active, per.phone.iso));
+  };
   for (const e of entities) {
-    e.dates.forEach((date, j) => {
-      const per = periodAt(e, date);
-      let system;
-      if (e.role === 'swapB' && j === 0 && active.includes('ATLAS')) system = 'ATLAS';
-      else if (e.role === 'namesakeA' && j === 0 && entities[e.partner]?.role === 'swapB') system = 'BRIGHTDESK';
-      else system = weighted(r, systemWeights(per.country, e.culture, active, per.phone.iso));
-      rows.push(makeRow(e, per, system, date, j === e.size - 1));
-    });
+    if (!k.mirror) { // v2 order of random draws, so that difficulties 1-2 are byte-identical to v2
+      e.dates.forEach((date, j) => { const per = periodAt(e, date); rows.push(makeRow(e, per, systemFor(e, j, per), date, j === e.size - 1)); });
+      continue;
+    }
+    // A mirror row shows a re-stamp date from the rebuild window and ranks after the person's other rows,
+    // so the person's most recent row (never typo'd, source of the canonical name) is ranked first.
+    const systems = e.dates.map((date, j) => systemFor(e, j, periodAt(e, date)));
+    const taken = new Set(e.dates.filter((_, j) => !isMirror(systems[j])));
+    const shown = e.dates.map((date, j) => (isMirror(systems[j]) ? windowDate(taken) : date));
+    const order = e.dates.map((_, j) => j).sort((a, b) => (isMirror(systems[a]) - isMirror(systems[b])) || (shown[b] - shown[a]));
+    e.dates.forEach((date, j) => rows.push(makeRow(e, periodAt(e, date), systems[j], shown[j], j === order[0])));
   }
 
   function makeRow(e, per, system, date, isLatest) {
@@ -457,6 +489,10 @@ function attemptWorld(seed, split, difficulty, attempt) {
     row.phoneView = system === 'KOBO' ? 'local' : system === 'VERITAS' ? 'intl'
       : (row.countryPresent && per.phone.iso === row.country && r.chance(0.6) ? 'local' : 'intl');
     row.dob = e.dob; row.dobPresent = true; row.dobPad = r.chance(0.5);
+    if (system === 'VENDEX' && k.conv) { // numeric only when the day is <= 12, so the order cannot be inferred
+      row.vxDobNum = e.dob.d <= 12 && r.chance(0.55);
+      row.vxRevNum = fromDay(date).d <= 12 && r.chance(0.4);
+    }
     row.currency = currencyFor(system, row.countryPresent ? row.country : per.country, k);
     row.amountMinor = amountFor(r, row.currency, k);
     row.amountPresent = !r.chance(L.miss.amount);
@@ -524,7 +560,7 @@ function attemptWorld(seed, split, difficulty, attempt) {
     if (!e) return null;
     const last = e.periods[e.periods.length - 1];
     const sys = weighted(r, systemWeights(last.country, e.culture, active, last.phone.iso));
-    const date = Math.max(...e.dates) + r.int(5, 240);
+    const date = isMirror(sys) ? windowDate(new Set()) : Math.max(...e.dates) + r.int(5, 240);
     const row = makeRow(e, last, sys, date, true);
     row.void = true; row.twinOf = e.idx; row.memo = null;
     if (r.chance(0.5)) row.phone = newPhone(r, last.country, usedPhones);
@@ -535,9 +571,31 @@ function attemptWorld(seed, split, difficulty, attempt) {
     if (!e) return null;
     const per = e.periods[0];
     const sys = weighted(r, systemWeights(per.country, e.culture, active, per.phone.iso));
-    const row = makeRow(e, per, sys, e.dates[0], true);
+    const row = makeRow(e, per, sys, isMirror(sys) ? windowDate(new Set()) : e.dates[0], true);
     row.void = true; row.memo = null;
     voids.push(row);
+  }
+  // Extra status values. A void one marks fake people (honouring them adds extra entities); a live one marks
+  // real rows, at least two of them the only row of their person (dropping them loses whole people).
+  for (const f of conv.flags.filter(x => x.polarity === 'void')) {
+    for (let i = 0; i < VOID_FLAG_ROWS; i++) {
+      const kobo = f.system === 'KOBO';
+      const e = makeEntity({ size: 1, role: 'void', ...(kobo ? { culture: 'ja', country: 'JP', noExpat: true } : {}) });
+      if (!e) return null;
+      const row = makeRow(e, e.periods[0], f.system, isMirror(f.system) ? windowDate(new Set()) : e.dates[0], true);
+      row.void = true; row.memo = null; row.flag = f.token;
+      voids.push(row);
+    }
+  }
+  const soloPeople = new Set(entities.filter(e => e.size === 1 && e.role !== 'void').map(e => e.idx));
+  for (const f of conv.flags.filter(x => x.polarity === 'live')) {
+    const mine = rows.filter(x => x.system === f.system && !x.flag);
+    const solo = r.shuffle(mine.filter(x => soloPeople.has(x.entity)));
+    if (solo.length < 2) return null;
+    const pick = solo.slice(0, 2);
+    const multi = mine.filter(x => !soloPeople.has(x.entity));
+    if (multi.length && r.chance(0.6)) pick.push(r.pick(multi));
+    for (const x of pick) x.flag = f.token;
   }
   const allRows = [...rows, ...voids];
 
@@ -596,7 +654,7 @@ function attemptWorld(seed, split, difficulty, attempt) {
 
   // Structured rows and the identity check: the spec's rules must reproduce the world exactly.
   const srowOf = row => ({
-    rowId: row.rowId, date: row.date, np: row.np, dob: row.dobPresent ? row.dob : null,
+    rowId: row.rowId, date: row.date, rank: isMirror(row.system) ? 1 : 0, np: row.np, dob: row.dobPresent ? row.dob : null,
     country: row.countryPresent ? row.country : null, phone: row.phonePresent ? P.e164(row.phone.iso, row.phone.nsn) : null,
     amount: row.amountPresent ? { minor: row.amountMinor, currency: row.currency } : null,
   });
@@ -614,10 +672,13 @@ function attemptWorld(seed, split, difficulty, attempt) {
     const ds = rows.filter(x => x.entity === e.idx).map(x => x.date);
     if (new Set(ds).size !== ds.length) return null;
   }
-  // The locale trap must bite: reading day/month ATLAS birth dates as month/day must change the
-  // clustering of at least minAmbiguousAtlas people (splits, or merges with a namesake).
-  const dayFirstAtlas = x => x.system === 'ATLAS' && !(atlasCutoff !== null && x.date >= atlasCutoff);
-  const misread = rows.map(x => (dayFirstAtlas(x) && x.s.dob && x.s.dob.d <= 12 ? { ...x.s, dob: { y: x.dob.y, m: x.dob.d, d: x.dob.m } } : x.s));
+  // The locale trap must bite: reading ATLAS numeric birth dates in the opposite order (day/month as
+  // month/day and, at difficulty >= 3, month/day as day/month) must change the clustering of at least
+  // minAmbiguousAtlas people (splits, or merges with a namesake). At difficulty 1-2 every ATLAS row is
+  // day-first, so this is the v2 check unchanged.
+  const flipDob = s => ({ ...s, dob: { y: s.dob.y, m: s.dob.d, d: s.dob.m } });
+  const atlasFlips = x => x.system === 'ATLAS' && x.s.dob && x.s.dob.d <= 12 && (k.conv || !atlasMonthFirst(x.date));
+  const misread = rows.map(x => (atlasFlips(x) ? flipDob(x.s) : x.s));
   const keyOf = c => c.map(q => q.rowId).sort((p, q) => p - q).join(',');
   const misreadKeys = new Set(clusterRows(misread).map(keyOf));
   if (clusters.filter(c => !misreadKeys.has(keyOf(c))).length < L.minAmbiguousAtlas) return null;
@@ -629,16 +690,38 @@ function attemptWorld(seed, split, difficulty, attempt) {
 
   const truth = ruleSolve(live, fx);
 
+  // Decisiveness (difficulty >= 3): misreading any single per-task convention must fail the oracle on its
+  // own, with everything else right. Otherwise the convention would be decoration, not judgment.
+  const fails = srows => !scoreAgainst(truth.records, ruleSolve(srows, fx)).pass;
+  if (k.conv) {
+    if (!fails(misread)) return null;
+    const vx = rows.map(x => {
+      if (x.system !== 'VENDEX') return x.s;
+      let s = x.s;
+      if (x.vxDobNum && s.dob && s.dob.d !== s.dob.m) s = flipDob(s);
+      if (x.vxRevNum) { const t = fromDay(s.date); if (t.d !== t.m) s = { ...s, date: dayNum(t.y, t.d, t.m) }; }
+      return s;
+    });
+    if (!fails(vx)) return null;
+  }
+  for (const f of conv.flags) {
+    const wrong = f.polarity === 'live' ? rows.filter(x => x.flag !== f.token).map(x => x.s)
+      : [...live, ...voids.filter(v => v.flag === f.token).map(v => v.s)];
+    if (!fails(wrong)) return null;
+  }
+  if (conv.mirror && !fails(live.map(s => ({ ...s, rank: 0 })))) return null;
+
   // Rendering
   const ctx = {
     k, systems: SYSTEM_ORDER.filter(s => active.includes(s)), cutoff: atlasCutoff,
     cutoffText: atlasCutoff === null ? null : longDate(atlasCutoff),
-    atlasMonthFirst: date => atlasCutoff !== null && date >= atlasCutoff,
+    atlasMonthFirst, conv, windowText: conv.window && conv.window.map(longDate),
     batch: `${split === 'dev' ? 'D' : 'T'}${difficulty}-${1000 + (hashSeed('batch', split, seed, difficulty) % 9000)}`,
     fx: { cur: fx.cur, old: fx.old, pairs: fx.pairs }, atlasNoteStyle: k.atlasNoteStyle ? r.int(0, 2) : 0,
     fxCutoverText: fx.cutover === null ? null : longDate(fx.cutover),
     fxCutoverPrevText: fx.cutover === null ? null : longDate(fx.cutover - 1),
   };
+  ctx.choices = k.conv ? noteChoices(ctx, rng('records', 'notes', split, seed, difficulty, attempt)) : null;
   const sorted = [...allRows].sort((a, b) => a.rowId - b.rowId);
   const lines = sorted.map(row => renderLine(row, rng('records', 'render', split, seed, difficulty, attempt, row.rowId), ctx));
   return {

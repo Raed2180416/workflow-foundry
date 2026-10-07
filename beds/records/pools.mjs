@@ -224,8 +224,8 @@ export const TEAM_CITIES = {
 // Per-task extra status values (difficulty >= 3): which of them are void is stated only in the task's
 // source notes and changes from task to task.
 export const FLAG_TOKENS = {
-  BRIGHTDESK: ['lead', 'prospect', 'churned', 'dormant'], LEDGR: ['archiviert', 'ruhend', 'inaktiv', 'Altdaten'],
-  ATLAS: ['ON HOLD', 'DORMANT', 'LEGACY', 'REVIEW'], KOBO: ['GUEST', 'STAFF', 'TRIAL', 'GIFT'], VERITAS: ['staging', 'replay', 'backfill', 'uat'],
+  BRIGHTDESK: ['hold', 'review', 'legacy', 'migrated'], LEDGR: ['archiviert', 'ruhend', 'inaktiv', 'Altdaten'],
+  ATLAS: ['ON HOLD', 'DORMANT', 'LEGACY', 'REVIEW'], KOBO: ['GUEST', 'TRIAL', 'GIFT', 'HOLD'], VERITAS: ['replay', 'backfill', 'legacy', 'batch'],
 };
 // Systems that can be the task's re-stamped mirror (difficulty >= 3).
 export const MIRROR_SYSTEMS = ['BRIGHTDESK', 'LEDGR', 'VERITAS'];

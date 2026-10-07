@@ -103,7 +103,7 @@ function noteParts(w, doc, world, rr, { flagColumn }) {
     if (w.reason === 'sat') {
       if (flagColumn && !tricky) out.flag = rr.pick(OUTLIER_NOTES.sat.flags); else out.notes.push(OUTLIER_NOTES.sat.text[tricky](rr));
     } else if (w.reason === 'bubble') out.notes.push(w.timed ? timedBubble(w, world.seriesByKey[w.series], rr) : OUTLIER_NOTES.bubble.text[tricky](rr));
-    else if (w.reason === 'pipette') out.notes.push(OUTLIER_NOTES.pipette.variants[w.variant].text[0](rr));
+    else if (w.reason === 'pipette') out.notes.push(OUTLIER_NOTES.pipette.variants[w.variant].text[tricky](rr));
     else if (w.reason === 'temp' && !tempShownInColumn) out.notes.push(rr.pick([`block read ${tempText(w, doc, kelvin)} during this read`, `block temp ${tempText(w, doc, kelvin)} at read`, `logged ${tempText(w, doc, kelvin)} on the block probe`]));
   } else if (w.status === 'decoy') {
     if (w.kind === 'low') { if (flagColumn) out.flag = 'LOW'; else out.notes.push(DECOY_NOTES.low(rr)); }
@@ -182,13 +182,13 @@ function timedBubble(w, s, rr) {
     () => `${b} seen at ${t(st - rr.int(2, 6))}; popped it at ${t(st + rr.int(2, s.readMin - 2))}`,
     () => `${b} first noticed at ${t(st + rr.int(2, s.readMin - 2))}`,
     () => `${b} there at loading (${t(st - rr.int(2, 6))}), still there at ${t(en + rr.int(2, 5))}`,
-    () => `noticed a ${b} at ${t(st + rr.int(2, s.readMin - 2))} and tapped it out at ${t(en + rr.int(2, 4))}`,
+    () => `noticed ${/^[aeiou]/.test(b) ? 'an' : 'a'} ${b} at ${t(st + rr.int(2, s.readMin - 2))} and tapped it out at ${t(en + rr.int(2, 4))}`,
   ])();
   if (w.kind === 'bubble-cleared') return rr.pick([
     () => { const a = st - rr.int(6, 10); return `${b} seen at ${t(a)}; popped it at ${t(a + rr.int(1, 3))}`; },
     () => `${b} at ${t(st - rr.int(8, 12))}, tapped out by ${t(st - rr.int(2, 5))}`,
   ])();
-  return rr.pick([() => `${b} first noticed at ${t(en + rr.int(2, 8))}`, () => `${b} appeared at ${t(en + rr.int(2, 6))}, while I was sealing the plate`])();
+  return rr.pick([() => `${b} formed at ${t(en + rr.int(2, 8))}`, () => `${b} appeared at ${t(en + rr.int(2, 6))}, while I was sealing the plate`])();
 }
 function blankRow(world, doc, rr, s) {
   // a no-enzyme blank on the same plate row: not a study well
@@ -447,6 +447,19 @@ function wellRef(id, world, rr, doc, { positionOnly = 0.5 } = {}) {
   if (r < positionOnly) return rr.pick([`plate ${w.plate}, well ${w.pos}`, `well ${w.pos} on plate ${w.plate}`, `plate ${w.plate} ${w.pos}`]);
   return r < 0.75 ? `${id} (plate ${w.plate}, ${w.pos})` : id;
 }
+// a substrate concentration written in any unit (the sheet may use another one)
+function concText(S, rr) {
+  const u = rr.pick(['uM', 'mM', 'nM']);
+  return `${fmtConc(S * CONC_FACTOR[u], 'plain').text} ${rr.pick(CONC_LABELS[u])}`;
+}
+// a plate row named by its label and replicate number as written on the author's sheet
+function rowByLabel(s, world, rr, doc) {
+  return `replicate ${s.displayRep} of ${alias(world.byId[s.labelCondId], doc.aliasStyle, world, rr)}`;
+}
+// a well named by its row (label + replicate number) and its substrate concentration
+function wellByConc(w, world, rr, doc) {
+  return `the ${concText(w.S, rr)} well of ${rowByLabel(world.seriesByKey[w.series], world, rr, doc)}`;
+}
 function condDesc(c, world, rr) {
   const noInh = c.hasInhibitedSibling ? rr.pick([', no inhibitor', ' (vehicle only)', ' without inhibitor']) : '';
   const opts = [`the pH ${phTxt(c.pH)}, ${c.tempC} °C${noInh} condition`, `the ${c.tempC} °C / pH ${phTxt(c.pH)}${noInh} condition`, `the ${c.tempC}-degree, pH ${phTxt(c.pH)}${noInh} set`, `condition ${c.id} (pH ${phTxt(c.pH)}, ${c.tempC} °C${noInh})`];
@@ -522,7 +535,8 @@ function claimDialogue(c, world, rr, doc, confirm) {
     const where = doc.format === 'grouped' ? 'units line' : doc.unitPlacement === 'header' ? 'rate column header' : 'units';
     if (confirm) {
       const q = rr.pick([`${A}, was the reader template on per-minute for your ${doc.date} run too? Mine was.`, `${A}, I think the template was switched to per-minute that week; are your ${doc.date} rates per minute?`]);
-      const a = rr.pick([`Yes, it was. So the ${doc.huLabel} in my ${where} is wrong; the values are ${doc.ruLabel}.`, `Good catch: per-minute mode. My numbers are ${doc.ruLabel}, not ${doc.huLabel}.`]);
+      const a = rr.pick([`Yes, it was. So the ${doc.huLabel} in my ${where} is wrong; the values are ${doc.ruLabel}.`, `Good catch: per-minute mode. My numbers are ${doc.ruLabel}, not ${doc.huLabel}.`,
+        `Correct, per minute that week. Read my ${doc.date} numbers as ${doc.ruLabel}; the ${where} is a leftover.`, `I just checked the template log and you are right; my values are ${doc.ruLabel}.`]);
       return [q, a];
     }
     const q = rr.pick([`${A}, I think the rates on your ${doc.date} sheet are really ${label}, like on mine; the template was switched that week.`, `${A}, are your ${doc.date} rates ${label}? My export came out that way.`]);
@@ -546,20 +560,25 @@ function lateText(w, world, rr, doc) {
     const s = world.seriesByKey[w.series], P = s.plate, R = s.row;
     const which = w.rank === 1 ? rr.pick(['the highest-[S] well', 'the top-concentration well', 'the well with the highest substrate concentration', 'the last (highest [S]) well'])
       : rr.pick(['the second-highest-[S] well', 'the well one below the top concentration', 'the next-to-highest [S] well']);
+    const lab = rowByLabel(s, world, rr, doc), conc = concText(w.S, rr);
     return rr.pick([`the reader log for plate ${P} shows an OVR flag on ${which} of row ${R}; I forgot to copy it onto my ${doc.date} sheet.`,
       `checked the reader log: on plate ${P}, row ${R}, ${which} was flagged SAT. It is not marked on my sheet.`,
       `plate ${P} row ${R}: ${which} came out over range (OVR) in the reader log; my ${doc.date} sheet does not show the flag.`,
       `the saturation flag I missed on ${doc.date} is in row ${R} of plate ${P}: ${which}.`,
-      `reader log, plate ${P}: SAT on ${which} in row ${R}. Not on my sheet, sorry.`]);
+      `reader log, plate ${P}: SAT on ${which} in row ${R}. Not on my sheet, sorry.`,
+      `the reader log flags ${which} of my ${lab} as OVR; I forgot to copy that onto the ${doc.date} sheet.`,
+      `in ${lab} (${doc.date}) the reader log has SAT on the ${conc} well; my sheet does not show it.`,
+      `reader log, plate ${P} row ${R}: OVR on the ${conc} well. Not on my sheet, sorry.`]);
   }
   if (w.status === 'outlier' && w.late === 'misattributed') {
     const x = world.wellById[w.noteFrom], xr = wellRef(x.id, world, rr, doc, { positionOnly: 0 }), yr = wellRef(w.id, world, rr, doc, { positionOnly: 0.3 });
     return rr.pick([`the note "${x.shownNote}" on ${xr} in my ${doc.date} sheet belongs to ${yr}, the next well. ${x.id} itself was clear during the read.`,
       `I wrote the bubble note on the wrong row of my ${doc.date} sheet: the bubble was in ${yr}, not in ${xr}. ${x.id} was fine.`,
       `my bubble remark next to ${xr} (${doc.date}) is one row off: it describes ${yr}. Nothing was wrong with ${x.id}.`,
-      `${xr} did not have a bubble; I put ${yr}'s note on the wrong line of the ${doc.date} sheet.`]);
+      `${xr} did not have a bubble; I put ${yr}'s note on the wrong line of the ${doc.date} sheet.`,
+      ...(SHOWS_WELLS.has(doc.format) ? [`the bubble note on ${xr} (${doc.date}) belongs to the well one column to the ${w.p > x.p ? 'right' : 'left'} of it, on the same plate row; ${x.id} itself was clear during the read.`] : [])]);
   }
-  const ref = wellRef(w.id, world, rr, doc);
+  const ref = rr.chance(0.35) ? wellByConc(w, world, rr, doc) : wellRef(w.id, world, rr, doc);
   const phrase = w.status === 'outlier' || w.kind === 'late-withdrawn' ? LATE_OUTLIER[w.reason](rr) : LATE_DECOY(rr);
   return rr.pick([`forgot to put this on my ${doc.date} sheet: ${ref}: ${phrase}.`, `one more for my ${doc.date} notes. ${cap(ref)}: ${phrase}.`, `${cap(ref)} (${doc.date}): ${phrase}. I left it off the sheet.`,
     `${cap(phrase)}; that was ${ref}, ${doc.date}.`, `about ${ref} on my ${doc.date} sheet: ${phrase}.`, `late note for ${doc.date}, ${ref}: ${phrase}.`]);
@@ -643,7 +662,7 @@ export function renderTask(world, { seed, split, difficulty }) {
       `My ${d3.date} rates are as labelled on the sheet; the per-minute template only came in after my run.`,
       `To be clear, nothing on my ${d3.date} sheet needs a per-minute/per-second fix: the units there are the ones the reader used.`,
       `The template change to per-minute did not affect my ${d3.date} export; keep the units as written.`]) });
-    const s4 = free.slice(2).find(s => ['mdtable', 'csv', 'semicolon', 'reader', 'grouped'].includes(docOfSeries(s.key).format) && s.wells.slice(-3).every(id => world.wellById[id].status !== 'outlier'));
+    const s4 = free.slice(2).find(s => ['mdtable', 'csv', 'semicolon', 'reader', 'grouped'].includes(docOfSeries(s.key).format) && s.wells.every(id => world.wellById[id].idx < s.wells.length - 3 || world.wellById[id].status !== 'outlier'));
     if (s4) { const d4 = docOfSeries(s4.key); chat.push({ day: chatDay + rr.int(0, 1), mins: rr.int(8 * 60, 17 * 60), who: d4.author, text: rr.pick([
       `Reader log for plate ${s4.plate} row ${s4.row}: no SAT or OVR flags at all, including the highest-[S] well.`,
       `Checked plate ${s4.plate}, row ${s4.row} in the reader log because the top-concentration well looked high: no over-range flag, the value is real.`,
@@ -756,7 +775,7 @@ export function renderTask(world, { seed, split, difficulty }) {
     conditions: world.conds.map(c => ({
       condition_id: c.id, pH: c.pH, temperature_C: c.tempC,
       inhibitor: c.inhibitor ? { name: m.inhibitor, concentration_uM: c.inhibitor.uM } : null,
-      planned_replicates: c.reps, planned_substrate_levels: c.grid.length,
+      planned_substrate_levels: c.grid.length,
     })),
     ...(inhibitorNote ? { note: inhibitorNote } : {}),
   };

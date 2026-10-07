@@ -1,6 +1,6 @@
 // Text rendering for the `records` bed: one line per source row in the dialect of its legacy
 // system, plus the prose source notes, the canonical spec and the task prompt.
-import { COUNTRIES, COUNTRY_NAME, CURRENCIES, CITIES, NICKNAMES, MONTHS, MONTHS_SHORT, numberWords, ordinal } from './pools.mjs';
+import { COUNTRIES, COUNTRY_NAME, CURRENCIES, CITIES, NICKNAMES, MONTHS, MONTHS_SHORT, TEAM_CITIES, numberWords, ordinal } from './pools.mjs';
 
 const p2 = n => String(n).padStart(2, '0');
 const DAY = 86400000;
@@ -8,6 +8,7 @@ export const fromDay = n => { const dt = new Date(n * DAY); return { y: dt.getUT
 export const dayNum = (y, m, d) => Date.UTC(y, m - 1, d) / DAY;
 export const isoDate = ({ y, m, d }) => `${y}-${p2(m)}-${p2(d)}`;
 const isoDay = n => isoDate(fromDay(n));
+const longDay = n => { const { y, m, d } = fromDay(n); return `${d} ${MONTHS[m - 1]} ${y}`; };
 
 // ---------------------------------------------------------------------------------------
 // Numbers
@@ -77,12 +78,20 @@ function eraDate({ y, m, d }) {
   if (n >= dayNum(1989, 1, 8)) return `H${y - 1988}.${p2(m)}.${p2(d)}`;
   return `S${y - 1925}.${p2(m)}.${p2(d)}`;
 }
-// VENDEX is a US team: numeric dates are month/day/year (a two-digit birth year means 19xx).
-function vendexDob({ y, m, d }, rr) {
-  const opts = [`${MONTHS[m - 1]} ${ordinal(d)}, ${y}`, `${d} ${MONTHS[m - 1]} ${y}`, `the ${ordinal(d)} of ${MONTHS[m - 1]} ${y}`,
-    `${p2(m)}/${p2(d)}/${y}`, `${m}/${d}/${y}`];
-  if (y < 2000) opts.push(`${p2(d)}-${MONTHS_SHORT[m - 1]}-${String(y).slice(2)}`, `${m}/${d}/${String(y).slice(2)}`);
-  return rr.pick(opts);
+// VENDEX numeric dates follow the task's order (ctx.conv.vendex) and are used only when the world chose a
+// numeric form (rec.vxDobNum), which it does only for days <= 12; other dates are written with month names.
+// A two-digit birth year means 19xx.
+function vendexDob(rec, rr, ctx) {
+  const { y, m, d } = rec.dob;
+  if (!rec.vxDobNum) {
+    const words = [`${MONTHS[m - 1]} ${ordinal(d)}, ${y}`, `${d} ${MONTHS[m - 1]} ${y}`, `the ${ordinal(d)} of ${MONTHS[m - 1]} ${y}`];
+    if (y < 2000) words.push(`${p2(d)}-${MONTHS_SHORT[m - 1]}-${String(y).slice(2)}`);
+    return rr.pick(words);
+  }
+  const [a, b] = ctx.conv.vendex === 'mdy' ? [m, d] : [d, m];
+  const nums = [`${p2(a)}/${p2(b)}/${y}`, `${a}/${b}/${y}`];
+  if (y < 2000) nums.push(`${a}/${b}/${String(y).slice(2)}`);
+  return rr.pick(nums);
 }
 function dobText(rec, rr, ctx) {
   const k = ctx.k;
@@ -99,20 +108,26 @@ function dobText(rec, rr, ctx) {
   switch (rec.system) {
     case 'BRIGHTDESK': return rec.dobPad || rr.chance(0.7) ? `${p2(m)}/${p2(d)}/${y}` : `${m}/${d}/${y}`;
     case 'LEDGR': return rr.chance(0.8) ? `${p2(d)}.${p2(m)}.${y}` : `${d}.${m}.${y}`;
-    case 'ATLAS': return ctx.atlasMonthFirst(rec.date) ? `${p2(m)}/${p2(d)}/${y}` : `${p2(d)}/${p2(m)}/${y}`;
+    case 'ATLAS':
+      // From difficulty 3, unambiguous dates (day > 12) carry the month name, so only the notes give the order.
+      if (k.conv && d > 12) return rr.chance(0.5) ? `${d} ${MONTHS_SHORT[m - 1]} ${y}` : `${d}-${MONTHS_SHORT[m - 1]}-${y}`;
+      return ctx.atlasMonthFirst(rec.date) ? `${p2(m)}/${p2(d)}/${y}` : `${p2(d)}/${p2(m)}/${y}`;
     case 'KOBO': return k.era && rr.chance(0.5) ? eraDate(rec.dob) : `${y}/${p2(m)}/${p2(d)}`;
-    case 'VENDEX': return vendexDob(rec.dob, rr);
+    case 'VENDEX': return vendexDob(rec, rr, ctx);
     default: return isoDate(rec.dob);
   }
 }
-function updatedText(rec, rr) {
+function updatedText(rec, rr, ctx) {
   const { y, m, d } = fromDay(rec.date);
   switch (rec.system) {
     case 'BRIGHTDESK': return `${y}-${p2(m)}-${p2(d)}`;
     case 'LEDGR': return `${p2(d)}.${p2(m)}.${y}`;
     case 'ATLAS': return `${d} ${MONTHS_SHORT[m - 1]} ${y}`;
     case 'KOBO': return `${y}/${p2(m)}/${p2(d)}`;
-    case 'VENDEX': return rr.pick([`${d} ${MONTHS[m - 1]} ${y}`, `${MONTHS[m - 1]} ${d}, ${y}`, `${p2(m)}/${p2(d)}/${y}`]);
+    case 'VENDEX': {
+      if (!rec.vxRevNum) return rr.pick([`${d} ${MONTHS[m - 1]} ${y}`, `${MONTHS[m - 1]} ${d}, ${y}`]);
+      return ctx.conv.vendex === 'mdy' ? `${p2(m)}/${p2(d)}/${y}` : `${p2(d)}/${p2(m)}/${y}`;
+    }
     default: return `${y}-${p2(m)}-${p2(d)}T${p2(rr.int(6, 21))}:${p2(rr.int(0, 59))}:${p2(rr.int(0, 59))}Z`;
   }
 }
@@ -190,19 +205,23 @@ export function renderLine(rec, rr, ctx) {
   const memo = rec.memo;
   switch (rec.system) {
     case 'BRIGHTDESK': {
-      const name = `${rec.void ? 'ZZTEST ' : ''}${nameText(rec)}`;
-      return `BRIGHTDESK row=${id} | name=${name} | dob=${dobText(rec, rr, ctx)} | country=${countryText(rec, rr, ctx)} | phone=${phoneText(rec, rr, ctx)} | balance=${amountText(rec, rr, ctx)} | updated=${updatedText(rec, rr)}${memo ? ` | memo=${memo}` : ''}`;
+      const name = `${rec.void && !rec.flag ? 'ZZTEST ' : ''}${nameText(rec)}`;
+      const line = `BRIGHTDESK row=${id} | name=${name} | dob=${dobText(rec, rr, ctx)} | country=${countryText(rec, rr, ctx)} | phone=${phoneText(rec, rr, ctx)} | balance=${amountText(rec, rr, ctx)} | updated=${updatedText(rec, rr, ctx)}`;
+      const stage = rec.flag ? ` | stage=${rec.flag}` : ctx.k.flags && !rec.void && rr.chance(0.3) ? ' | stage=customer' : '';
+      return `${line}${stage}${memo ? ` | memo=${memo}` : ''}`;
     }
     case 'LEDGR': {
-      const status = rec.void ? 'storniert' : (ctx.k.blocked && rr.chance(0.12) ? 'gesperrt' : 'aktiv');
-      return `LEDGR;${id};${rec.name.family}, ${rec.name.given};${rec.name.title ?? ''};${dobText(rec, rr, ctx)};${countryText(rec, rr, ctx)};${phoneText(rec, rr, ctx)};${amountText(rec, rr, ctx)};${status};${updatedText(rec, rr)}`;
+      const status = rec.flag ?? (rec.void ? 'storniert' : (ctx.k.blocked && rr.chance(0.12) ? 'gesperrt' : 'aktiv'));
+      return `LEDGR;${id};${rec.name.family}, ${rec.name.given};${rec.name.title ?? ''};${dobText(rec, rr, ctx)};${countryText(rec, rr, ctx)};${phoneText(rec, rr, ctx)};${amountText(rec, rr, ctx)};${status};${updatedText(rec, rr, ctx)}`;
     }
     case 'ATLAS': {
       const dob = dobText(rec, rr, ctx);
-      return `ATLAS #${id} :: ${nameText(rec)} :: born ${dob} :: ${countryText(rec, rr, ctx)} :: tel ${phoneText(rec, rr, ctx)} :: owed ${amountText(rec, rr, ctx)} :: last change ${updatedText(rec, rr)}${memo ? ` :: note: ${memo}` : ''}${rec.void ? ' :: DO NOT MIGRATE' : ''}`;
+      const tag = rec.flag ? ` :: ${rec.flag}` : rec.void ? ' :: DO NOT MIGRATE' : '';
+      return `ATLAS #${id} :: ${nameText(rec)} :: born ${dob} :: ${countryText(rec, rr, ctx)} :: tel ${phoneText(rec, rr, ctx)} :: owed ${amountText(rec, rr, ctx)} :: last change ${updatedText(rec, rr, ctx)}${memo ? ` :: note: ${memo}` : ''}${tag}`;
     }
     case 'KOBO': {
-      return `KOBO/${id} member: ${nameText(rec)} | birth: ${dobText(rec, rr, ctx)} | tel: ${phoneText(rec, rr, ctx)} | balance: ${amountText(rec, rr, ctx)} | upd: ${updatedText(rec, rr)}${memo ? ` | note: ${memo}` : ''}${rec.void ? ' | flag: SAMPLE' : ''}`;
+      const flag = rec.flag ? ` | flag: ${rec.flag}` : rec.void ? ' | flag: SAMPLE' : '';
+      return `KOBO/${id} member: ${nameText(rec)} | birth: ${dobText(rec, rr, ctx)} | tel: ${phoneText(rec, rr, ctx)} | balance: ${amountText(rec, rr, ctx)} | upd: ${updatedText(rec, rr, ctx)}${memo ? ` | note: ${memo}` : ''}${flag}`;
     }
     case 'VENDEX': return vendexLine(rec, rr, ctx);
     case 'VERITAS': {
@@ -212,9 +231,11 @@ export function renderLine(rec, rr, ctx) {
         `"country":${rec.countryPresent ? jsonStr(countryText(rec, rr, ctx)) : 'null'}`,
         `"msisdn":${rec.phonePresent ? jsonStr(`${COUNTRIES[rec.phone.iso].cc}${rec.phone.nsn}`) : jsonStr('')}`,
         `"amount":${rec.amountPresent ? jsonStr(amountText(rec, rr, ctx)) : 'null'}`, `"ccy":${jsonStr(rec.currency)}`,
-        `"ts":${jsonStr(updatedText(rec, rr))}`];
+        `"ts":${jsonStr(updatedText(rec, rr, ctx))}`];
       if (memo) obj.push(`"note":${jsonStr(memo)}`);
-      if (rec.void) obj.push('"env":"sandbox"');
+      if (rec.flag) obj.push(`"env":${jsonStr(rec.flag)}`);
+      else if (rec.void) obj.push('"env":"sandbox"');
+      else if (ctx.k.flags && rr.chance(0.3)) obj.push('"env":"production"');
       return `VERITAS {${obj.join(',')}}`;
     }
     default: throw new Error(`system ${rec.system}`);
@@ -245,7 +266,7 @@ function vendexLine(rec, rr, ctx) {
   const amt = rec.amountPresent
     ? `${rr.pick(rec.amountMinor < 0 ? VX.credit : VX.owes)} ${amountText(rec, rr, ctx)}`
     : rr.pick(VX.noAmount);
-  const rev = updatedText(rec, rr);
+  const rev = updatedText(rec, rr, ctx);
   const cap = x => x[0].toUpperCase() + x.slice(1);
   let s;
   if (t === 0) {
@@ -266,12 +287,110 @@ function vendexLine(rec, rr, ctx) {
 
 // ---------------------------------------------------------------------------------------
 // Prose: source notes, spec, prompt
-// Paraphrases of the ATLAS locale switch (same rule, different wording).
-const ATLAS_CUTOFF_NOTE = [
-  d => `On ${d}, ATLAS moved to a new hosting vendor whose default locale is US; every row whose last change is on or after ${d} stores its birth date as month/day/year, while rows last changed before that date still hold day/month/year.`,
-  d => `Since its migration to a US-hosted vendor on ${d}, ATLAS writes birth dates month first (month/day/year) in every row whose last change falls on or after that day; rows last changed earlier keep the UK order.`,
-  d => `Caution: rows last changed on or after ${d} (the day ATLAS switched to its new US hosting vendor) hold month/day/year birth dates; earlier rows still hold day/month/year.`,
+// ---------------------------------------------------------------------------------------
+// Per-task prose (difficulty >= 3). Each convention is stated in one of several paraphrases: explicit,
+// by example, by reference to another system, by locale or city (world knowledge), or with negations and
+// red herrings, so that no single keyword decides it. solve-text.mjs (test-only) parses these templates
+// to prove derivability; arms never see this file.
+const exampleText = ({ y, m, d }, order) => `${p2(order === 'mdy' ? m : d)}/${p2(order === 'mdy' ? d : m)}/${y}`;
+export const ATLAS_ORDER_NOTE = {
+  dmy: [
+    () => 'ATLAS was configured in UK locale: numeric birth dates are day/month/year.',
+    () => 'Numeric birth dates in ATLAS put the day before the month, in the same order as LEDGR (only the separator differs).',
+    c => `For example, an ATLAS birth date written ${exampleText(c.atlasEx, 'dmy')} is ${c.atlasEx.d} ${MONTHS[c.atlasEx.m - 1]} ${c.atlasEx.y}.`,
+    () => 'The slashes may look American, but ATLAS birth dates are not month-first: the day comes first.',
+    () => 'ATLAS kept the UK convention for numeric birth dates (unlike BRIGHTDESK).',
+  ],
+  mdy: [
+    () => 'ATLAS was installed by a US contractor and runs in US locale: numeric birth dates are month/day/year.',
+    () => 'Numeric birth dates in ATLAS put the month before the day, in the same order as BRIGHTDESK.',
+    c => `For example, an ATLAS birth date written ${exampleText(c.atlasEx, 'mdy')} is ${c.atlasEx.d} ${MONTHS[c.atlasEx.m - 1]} ${c.atlasEx.y}.`,
+    () => 'ATLAS is a UK ledger, but its birth dates are not day-first: the month comes first.',
+    () => 'ATLAS never adopted the UK convention for numeric birth dates; it uses the American one, like BRIGHTDESK.',
+  ],
+};
+// The ATLAS cutoff (difficulty >= 4) swaps day and month relative to the task's base order.
+export const ATLAS_CUTOFF_NOTE = [
+  (d, other) => `On ${d}, ATLAS moved to a new hosting vendor; in rows last changed on or after that day, numeric birth dates have day and month the other way round from the order above. Earlier rows are unaffected.`,
+  (d, other) => `Since its migration to a new vendor on ${d}, ATLAS has written numeric birth dates ${other} in every row whose last change falls on or after that day; rows last changed earlier keep the order described above.`,
+  (d, other, c) => `Caution: ATLAS went live on ${c.liveSince}, but the date that matters is ${d}, when the hosting vendor changed: rows last changed on or after ${d} swap day and month relative to the order above; earlier rows do not.`,
 ];
+export const VENDEX_ORDER_NOTE = {
+  mdy: [
+    () => 'Numeric dates follow the US convention, month/day/year.',
+    c => `The team works from ${c.cityUS} and writes numeric dates the way people there do.`,
+    () => 'Numeric dates use the same order as BRIGHTDESK.',
+    c => `A numeric date such as ${exampleText({ ...c.vxEx, y: 2021 }, 'mdy')} means ${MONTHS[c.vxEx.m - 1]} ${c.vxEx.d}, 2021.`,
+    c => `The team moved from ${c.cityEU} to ${c.cityUS} in 2015 and has written numeric dates the local way ever since.`,
+  ],
+  dmy: [
+    () => 'Numeric dates follow the European convention, day/month/year.',
+    c => `The team works from ${c.cityEU} and writes numeric dates the way people there do.`,
+    () => 'Numeric dates use the same order as LEDGR.',
+    c => `A numeric date such as ${exampleText({ ...c.vxEx, y: 2021 }, 'dmy')} means ${c.vxEx.d} ${MONTHS[c.vxEx.m - 1]} 2021.`,
+    c => `The team moved from ${c.cityUS} to ${c.cityEU} in 2015 and has written numeric dates the local way ever since.`,
+  ],
+};
+// How an extra status value appears in a line, and which fixed void marker / live value it can be compared to.
+export const FLAG_FORM = {
+  BRIGHTDESK: { show: t => `stage=${t}`, void: 'the ZZTEST fixtures', live: 'stage=customer rows' },
+  LEDGR: { show: t => `Status "${t}"`, void: '"storniert" entries', live: '"gesperrt" accounts' },
+  ATLAS: { show: t => `":: ${t}"`, void: 'lines ending ":: DO NOT MIGRATE"', live: 'lines without a trailing tag' },
+  KOBO: { show: t => `"flag: ${t}"`, void: 'SAMPLE demo accounts', live: 'ordinary member rows' },
+  VERITAS: { show: t => `"env":"${t}"`, void: 'sandbox traffic', live: 'production traffic' },
+};
+export const FLAG_NOTE = {
+  live: [
+    (sh, F) => `Rows marked ${sh} belong to customers who are still on the books; they must be migrated.`,
+    (sh, F) => `Rows marked ${sh} are genuine accounts that are merely dormant, so they are not void.`,
+    (sh, F) => `Treat rows marked ${sh} exactly like ${F.live}.`,
+    (sh, F) => `${sh} only means that credit control paused the account; do not drop these rows.`,
+    (sh, F) => `Do not confuse ${sh} with ${F.void}: these rows are real accounts and stay in the master list.`,
+  ],
+  void: [
+    (sh, F) => `Rows marked ${sh} were created by a load-test tool and never belonged to a customer; they must not be migrated.`,
+    (sh, F) => `Rows marked ${sh} are leftovers of an aborted import, so they are void.`,
+    (sh, F) => `Treat rows marked ${sh} exactly like ${F.void}.`,
+    (sh, F) => `${sh} marks applications that were rejected during onboarding; drop these rows.`,
+    (sh, F) => `Unlike ${F.live}, rows marked ${sh} are not real accounts and stay out of the master list.`,
+  ],
+};
+export const UPDATE_FIELD = { BRIGHTDESK: 'updated', LEDGR: 'Geändert', ATLAS: 'last change', VENDEX: 'revision', KOBO: 'upd', VERITAS: 'ts' };
+export const MIRROR_NOTE = [
+  (S, f, w) => `This ${S} extract comes from a read-only mirror that was rebuilt between ${w[0]} and ${w[1]}: the ${f} value of every ${S} row is the time the mirror copied it, not the time the record last changed.`,
+  (S, f, w) => `Do not trust the ${f} dates of ${S}: the system was restored from an old backup between ${w[0]} and ${w[1]}, and the restore re-stamped every row.`,
+  (S, f, w) => `The ${f} column of ${S} shows when the nightly copy job last rewrote the row; during the rebuild of ${w[0]}–${w[1]} it rewrote every row, so the column no longer says when the data changed.`,
+];
+export const RELIABLE_NOTE = [
+  (S, f, y) => `${S}'s ${f} is the real date of the last change; the vendor confirmed this during the ${y} audit.`,
+  (S, f) => `The ${f} value of ${S} rows is reliable: the application sets it whenever a field is edited.`,
+];
+// Paraphrase choices for one task, drawn from a dedicated RNG stream (so they never disturb the world).
+export function noteChoices(ctx, rr) {
+  const ex = () => { for (;;) { const m = rr.int(1, 12), d = rr.int(1, 12); if (d !== m) return { y: rr.int(1950, 1999), m, d }; } };
+  const c = {
+    atlasTpl: rr.int(0, 4), atlasEx: ex(), cutTpl: rr.int(0, 2), liveSince: longDay(rr.int(dayNum(2004, 1, 1), dayNum(2012, 12, 31))),
+    vendexTpl: rr.int(0, 4), cityUS: rr.pick(TEAM_CITIES.mdy), cityEU: rr.pick(TEAM_CITIES.dmy), vxEx: ex(),
+    flagTpl: ctx.conv.flags.map(() => rr.int(0, 4)), mirrorTpl: rr.int(0, 2), reliableTpl: rr.int(0, 1), auditYear: rr.int(2019, 2024),
+  };
+  const others = ['BRIGHTDESK', 'LEDGR', 'KOBO', 'VERITAS'].filter(s => ctx.systems.includes(s) && s !== ctx.conv.mirror);
+  c.reliable = others.length ? rr.pick(others) : null;
+  return c;
+}
+// Sentences appended to one system's paragraph: its extra status value, mirror statement or red herring.
+function perTaskSentences(sys, ctx) {
+  const c = ctx.choices, out = [];
+  if (!c) return out;
+  ctx.conv.flags.forEach((f, i) => {
+    if (f.system !== sys) return;
+    const F = FLAG_FORM[sys];
+    out.push(FLAG_NOTE[f.polarity][c.flagTpl[i]](F.show(f.token), F));
+  });
+  if (ctx.conv.mirror === sys) out.push(MIRROR_NOTE[c.mirrorTpl](sys, UPDATE_FIELD[sys], ctx.windowText));
+  if (c.reliable === sys) out.push(RELIABLE_NOTE[c.reliableTpl](sys, UPDATE_FIELD[sys], c.auditYear));
+  return out;
+}
+const withTail = (text, sys, ctx) => [text, ...perTaskSentences(sys, ctx)].join(' ');
 const SYSTEM_BLURB = {
   BRIGHTDESK: 'US sales CRM',
   LEDGR: 'German ERP for customers and suppliers across Europe and beyond',
@@ -291,17 +410,24 @@ export function buildNotes(ctx) {
   for (const s of ctx.systems) {
     out.push('');
     if (s === 'BRIGHTDESK') {
-      out.push(`BRIGHTDESK. Lines look like "BRIGHTDESK row=<id> | name=... | dob=... | country=... | phone=... | balance=... | updated=YYYY-MM-DD", sometimes followed by "| memo=...". The instance runs in US locale, so birth dates are month/day/year (zero padding is inconsistent). Names are written either "Given FAMILY" (family name in capital letters; a title may precede the given name and a middle initial may follow it) or "Family, Given" (a middle initial may follow). Balances are in US dollars${k.credits ? '; a balance in parentheses, or with a leading minus, is a credit (negative)' : ''}.${k.prefix011 ? ' Some reps typed 011, the US international access code, in front of the country code of foreign numbers.' : ''} QA fixtures are void: a row whose name begins with "ZZTEST" must not be migrated.`);
+      out.push(withTail(`BRIGHTDESK. Lines look like "BRIGHTDESK row=<id> | name=... | dob=... | country=... | phone=... | balance=... | updated=YYYY-MM-DD", sometimes followed by "| memo=...". The instance runs in US locale, so birth dates are month/day/year (zero padding is inconsistent). Names are written either "Given FAMILY" (family name in capital letters; a title may precede the given name and a middle initial may follow it) or "Family, Given" (a middle initial may follow). Balances are in US dollars${k.credits ? '; a balance in parentheses, or with a leading minus, is a credit (negative)' : ''}.${k.prefix011 ? ' Some reps typed 011, the US international access code, in front of the country code of foreign numbers.' : ''}${k.flags ? ' Some rows also carry a "stage" field; "stage=customer" is an ordinary live account.' : ''} QA fixtures are void: a row whose name begins with "ZZTEST" must not be migrated.`, s, ctx));
     } else if (s === 'LEDGR') {
-      out.push(`LEDGR. Semicolon-separated positional fields: LEDGR; Satz-Nr (row id); Name as "Nachname, Vorname" (family name, given name); Anrede (salutation and academic title, may be empty); Geburtsdatum (birth date, day.month.year); Land (country, written in German); Telefon; Saldo (balance, German number format: "." groups thousands and "," is the decimal separator; currency EUR${k.chf ? ', or CHF for Swiss accounts' : ''}); Status; Geändert (date of last change, day.month.year). Status "aktiv" is a live account${k.blocked ? ', "gesperrt" is a blocked but real account that must still be migrated' : ''}; "storniert" marks a cancelled entry, which is void.${k.credits ? ' A minus sign after the number ("250,00- EUR") or before it marks a credit (negative balance).' : ''}`);
+      out.push(withTail(`LEDGR. Semicolon-separated positional fields: LEDGR; Satz-Nr (row id); Name as "Nachname, Vorname" (family name, given name); Anrede (salutation and academic title, may be empty); Geburtsdatum (birth date, day.month.year); Land (country, written in German); Telefon; Saldo (balance, German number format: "." groups thousands and "," is the decimal separator; currency EUR${k.chf ? ', or CHF for Swiss accounts' : ''}); Status; Geändert (date of last change, day.month.year). Status "aktiv" is a live account${k.blocked ? ', "gesperrt" is a blocked but real account that must still be migrated' : ''}; "storniert" marks a cancelled entry, which is void.${k.credits ? ' A minus sign after the number ("250,00- EUR") or before it marks a credit (negative balance).' : ''}`, s, ctx));
     } else if (s === 'ATLAS') {
-      out.push(`ATLAS. Lines look like "ATLAS #<id> :: <name> :: born <birth date> :: <country> :: tel <phone> :: owed <amount in GBP> :: last change <date>", optionally with ":: note: ...". Names are "FAMILY, Given (Title)" or "Title Given Family". ATLAS was configured in UK locale: birth dates are day/month/year.${ctx.cutoff !== null ? ` ${ATLAS_CUTOFF_NOTE[ctx.atlasNoteStyle](ctx.cutoffText)}` : ''} Unknown birth dates appear as "n/k" or "?".${k.credits ? ' "CR" after an amount means the supplier is in credit (a negative balance).' : ''} A line ending ":: DO NOT MIGRATE" is void.`);
+      const c = ctx.choices;
+      const order = !k.conv ? 'ATLAS was configured in UK locale: birth dates are day/month/year.'
+        : `Birth dates are written numerically or, when the day is above 12, with an abbreviated month name ("25 Mar 1985" or "25-Mar-1985"). ${ATLAS_ORDER_NOTE[ctx.conv.atlas][c.atlasTpl](c)}`;
+      const other = ctx.conv.atlas === 'dmy' ? 'month first (month/day/year)' : 'day first (day/month/year)';
+      const cut = ctx.cutoff === null ? '' : ` ${ATLAS_CUTOFF_NOTE[c.cutTpl](ctx.cutoffText, other, c)}`;
+      out.push(withTail(`ATLAS. Lines look like "ATLAS #<id> :: <name> :: born <birth date> :: <country> :: tel <phone> :: owed <amount in GBP> :: last change <date>", optionally with ":: note: ..."${k.flags ? ' and a trailing status tag (":: <TAG>")' : ''}. Names are "FAMILY, Given (Title)" or "Title Given Family". ${order}${cut} Unknown birth dates appear as "n/k" or "?".${k.credits ? ' "CR" after an amount means the supplier is in credit (a negative balance).' : ''} A line ending ":: DO NOT MIGRATE" is void.`, s, ctx));
     } else if (s === 'VENDEX') {
-      out.push(`VENDEX. Free-text English entries ("Vendex <id> — ...") written by a US-based procurement team; the phrasing varies from entry to entry. Names are written given name first (with an optional title and middle initial). Dates — birth dates and the date the entry was revised — are written out in words or numerically in the team's US convention, month/day/year; a two-digit year in a birth date means 19xx. For a call note ("Spoke with <name> on <date>") the call date is the revision date. Balances may be written in words: "dollars" are US dollars, "euros" EUR and "pounds" GBP (pence are hundredths of a pound). "Owes us", "open balance", "outstanding" and "balance due" introduce what the supplier owes us; "in credit by", "holding a credit of", "credit balance of" and "we owe them" introduce a credit, that is a negative balance. The country is named, implied by a nationality adjective ("a Dutch supplier" is in the Netherlands), or implied by the city the supplier is based in. An entry that ends with "(Application withdrawn — never onboarded.)" is void.`);
+      const vxDates = !k.conv ? 'are written out in words or numerically in the team\'s US convention, month/day/year; a two-digit year in a birth date means 19xx.'
+        : `are written out in words or, when the day is 12 or less, sometimes numerically. ${VENDEX_ORDER_NOTE[ctx.conv.vendex][ctx.choices.vendexTpl](ctx.choices)} A two-digit year in a birth date means 19xx.`;
+      out.push(withTail(`VENDEX. Free-text English entries ("Vendex <id> — ...") written by ${k.conv ? 'the' : 'a US-based'} procurement team; the phrasing varies from entry to entry. Names are written given name first (with an optional title and middle initial). Dates — birth dates and the date the entry was revised — ${vxDates} For a call note ("Spoke with <name> on <date>") the call date is the revision date. Balances may be written in words: "dollars" are US dollars, "euros" EUR and "pounds" GBP (pence are hundredths of a pound). "Owes us", "open balance", "outstanding" and "balance due" introduce what the supplier owes us; "in credit by", "holding a credit of", "credit balance of" and "we owe them" introduce a credit, that is a negative balance. The country is named, implied by a nationality adjective ("a Dutch supplier" is in the Netherlands), or implied by the city the supplier is based in. An entry that ends with "(Application withdrawn — never onboarded.)" is void.`, s, ctx));
     } else if (s === 'KOBO') {
-      out.push(`KOBO. Lines look like "KOBO/<id> member: <name> | birth: <date> | tel: <phone> | balance: <yen> | upd: YYYY/MM/DD", optionally with "| note: ...". KOBO serves customers resident in Japan only, so its rows have no country field (the country is Japan) and its phone numbers are Japanese local numbers. Names are written family name first without a comma ("TANAKA Hiroshi" or "Tanaka Hiroshi"); KOBO cannot store accented letters. Birth dates are year/month/day${k.era ? ' or Japanese era notation: "S" is Shōwa (S1 = 1926, so S62 = 1987; Shōwa ended on 7 January 1989) and "H" is Heisei (H1 = 1989, starting 8 January 1989); for example H3.11.20 is 1991-11-20' : ''}. Balances are in yen ("¥" or "円")${k.credits ? '; "▲" in front of an amount marks it negative, as does a minus sign' : ''}. A row with "flag: SAMPLE" is a demo account and void.`);
+      out.push(withTail(`KOBO. Lines look like "KOBO/<id> member: <name> | birth: <date> | tel: <phone> | balance: <yen> | upd: YYYY/MM/DD", optionally with "| note: ...". KOBO serves customers resident in Japan only, so its rows have no country field (the country is Japan) and its phone numbers are Japanese local numbers. Names are written family name first without a comma ("TANAKA Hiroshi" or "Tanaka Hiroshi"); KOBO cannot store accented letters. Birth dates are year/month/day${k.era ? ' or Japanese era notation: "S" is Shōwa (S1 = 1926, so S62 = 1987; Shōwa ended on 7 January 1989) and "H" is Heisei (H1 = 1989, starting 8 January 1989); for example H3.11.20 is 1991-11-20' : ''}. Balances are in yen ("¥" or "円")${k.credits ? '; "▲" in front of an amount marks it negative, as does a minus sign' : ''}. A row with "flag: SAMPLE" is a demo account and void.`, s, ctx));
     } else if (s === 'VERITAS') {
-      out.push(`VERITAS. Each line is "VERITAS " followed by a JSON object: row, family, given, dob (ISO date), country (ISO alpha-2, except that the United Kingdom is sometimes written "UK"; letter case varies), msisdn (the full international number including country code, without "+"), amount and ccy (ISO currency code), ts (time of last update, ISO 8601 UTC) and an optional note. A dob of 1900-01-01 is the vendor's sentinel for "unknown" and is not a real birth date. Rows containing "env":"sandbox" are test traffic and void.`);
+      out.push(withTail(`VERITAS. Each line is "VERITAS " followed by a JSON object: row, family, given, dob (ISO date), country (ISO alpha-2, except that the United Kingdom is sometimes written "UK"; letter case varies), msisdn (the full international number including country code, without "+"), amount and ccy (ISO currency code), ts (time of last update, ISO 8601 UTC) and an optional note. A dob of 1900-01-01 is the vendor's sentinel for "unknown" and is not a real birth date. Rows containing "env":"sandbox" are test traffic and void.${k.flags ? ' "env":"production" marks live traffic.' : ''}`, s, ctx));
     }
   }
   return out.join('\n');
@@ -331,7 +457,11 @@ export function buildSpec(ctx) {
   L.push('   A person is a group of rows linked by such matches (chains count). Rows whose birth dates differ are different people even when their names are identical — namesakes exist. A shared phone number on its own (for example a household line) does not make two people one.');
   L.push('   3.1 Names match when, ignoring letter case, the system\'s name order, titles and salutations, middle initials, spaces and apostrophes: the given names are equal once a nickname is replaced by its formal name (appendix A), the family names are equal, an accented letter counts as equal to its ASCII rendering (listed in section 4), and at most one typing error in total is tolerated across given and family name together (one letter wrong, missing or extra, or two adjacent letters swapped). Two different ASCII renderings of one accented letter (for example "u" and "ue" for "ü") are not equal to each other; that difference counts as a typing error.');
   L.push('');
-  L.push('4. Conflicts. For every field the most recently updated row of the person that supplies a usable value wins. The update date of a row is its updated / Geändert / last change / upd / revision / ts field.');
+  if (k.mirror) {
+    L.push('4. Conflicts. Order the rows of a person from the most recently updated to the least recently updated. The update date of a row is its updated / Geändert / last change / upd / revision / ts field. Exception: if the source notes say that a system\'s update dates are not real change dates (for example because a copy or restore job re-stamped its rows), all rows of that system come after the person\'s other rows in this order, whatever their dates; among themselves they keep their date order. For every field, the first row in this order that supplies a usable value wins; "most recently updated" and "most recent" below refer to this order.');
+  } else {
+    L.push('4. Conflicts. For every field the most recently updated row of the person that supplies a usable value wins. The update date of a row is its updated / Geändert / last change / upd / revision / ts field.');
+  }
   L.push('   - Names: take the given and family name from the person\'s most recently updated row, drop titles, salutations and middle initials, and replace a nickname by its formal name from appendix A (letter case is not graded). Accent restoration: if a name part obtained this way has no accented letters, and another row of the person spells the same part with accented letters (after the same nickname replacement) such that ours is its ASCII rendering, use the accented spelling. ASCII renderings: ä→a or ae, ö→o or oe, ü→u or ue, ß→ss, ø→o or oe, å→a or aa, æ→ae, ō→o or ou, ū→u or uu; any other accent is simply dropped (é→e, ñ→n, ç→c, ò→o). Example: latest row "Jose", another row "Pepe" (appendix A: José) gives "José".');
   L.push('   - Birth date: the same in all rows of a person (section 3).');
   L.push('   - Country: from the most recent row that states a country (a system that serves a single country states it implicitly — see the source notes; the calling code of a phone number does not state a country). People move; older rows may show an earlier country.');

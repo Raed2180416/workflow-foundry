@@ -4,7 +4,7 @@
 // rendered text alone. It is NOT the reference solver and is never shown to arms.
 import * as P from './pools.mjs';
 import { ruleSolve, rowsLink, sameDay, mulRate, divRate } from './world.mjs';
-import { dayNum, VENDEX_VOID } from './render.mjs';
+import { dayNum, VENDEX_VOID, FLAG_FORM, FLAG_NOTE } from './render.mjs';
 
 let AB = null; // active ablation (single-threaded, set per solveText call)
 const MONTH = {};
@@ -29,15 +29,16 @@ function longDate(s) { // "10 September 2022" | "March 5, 2021" | "3 Mar 2021"
   if (m) return ymd(m[3], MONTH[m[1].toLowerCase()], m[2]);
   throw new Error(`date? ${s}`);
 }
-function usNumeric(s, twoDigitCentury = 1900) { // month/day/year (ablation 'vendex-dmy' reads day/month)
+let VX_ORDER = 'mdy'; // VENDEX numeric date order of the current task (from the notes; ablation 'vendex-flipped' inverts it)
+function vxNumeric(s, twoDigitCentury = 1900) {
   const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/);
   if (!m) return null;
   const y = m[3].length === 2 ? twoDigitCentury + Number(m[3]) : m[3];
-  if (AB === 'vendex-dmy' && Number(m[1]) <= 12 && Number(m[2]) <= 12) return ymd(y, m[2], m[1]);
-  return ymd(y, m[1], m[2]);
+  const monthFirst = (VX_ORDER === 'mdy') !== (AB === 'vendex-flipped');
+  return monthFirst ? ymd(y, m[1], m[2]) : ymd(y, m[2], m[1]);
 }
 function vendexDob(s) {
-  const num = usNumeric(s);
+  const num = vxNumeric(s);
   if (num) return num;
   let m = s.match(/^([A-Za-z]+) (\d{1,2})(?:st|nd|rd|th), (\d{4})$/);
   if (m) return ymd(m[3], MONTH[m[1].toLowerCase()], m[2]);
@@ -141,7 +142,7 @@ function parseLine(line, ctx) {
   if ((m = line.match(/^BRIGHTDESK row=(\d+) \| (.*)$/))) {
     const f = Object.fromEntries(m[2].split(' | ').map(kv => { const i = kv.indexOf('='); return [kv.slice(0, i), kv.slice(i + 1)]; }));
     let name = f.name;
-    const isVoid = name.startsWith('ZZTEST ');
+    const isVoid = name.startsWith('ZZTEST ') || flagVoid(ctx, 'BRIGHTDESK', f.stage);
     if (isVoid) name = name.slice(7);
     const iso = country(f.country);
     const dm = f.dob.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
@@ -170,19 +171,22 @@ function parseLine(line, ctx) {
       amount = { minor: (neg ? -1 : 1) * decimalToMinor(num, currency), currency };
     }
     const [dd, mm, yy] = changed.split('.');
-    return { rowId: Number(id), void: status === 'storniert' || (AB === 'blocked-is-void' && status === 'gesperrt'), date: dayOf(ymd(yy, mm, dd)), np: familyComma(name), dob,
+    return { rowId: Number(id), void: status === 'storniert' || (AB === 'blocked-is-void' && status === 'gesperrt') || flagVoid(ctx, 'LEDGR', status), date: dayOf(ymd(yy, mm, dd)), np: familyComma(name), dob,
       country: iso, phone: phone(tel, iso, false), amount };
   }
   if ((m = line.match(/^ATLAS #(\d+) :: (.*)$/))) {
     const parts = m[2].split(' :: ');
-    const isVoid = parts[parts.length - 1] === 'DO NOT MIGRATE';
+    const tag = parts[parts.length - 1];
+    const isVoid = tag === 'DO NOT MIGRATE' || flagVoid(ctx, 'ATLAS', tag);
     const [name, born, land, tel, owed, change] = parts;
     const date = dayOf(longDate(change.replace(/^last change /, '')));
     const iso = country(land);
     const ds = born.replace(/^born /, '');
     const dm = ds.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-    const monthFirst = AB === 'atlas-month-first' || (AB !== 'atlas-cutoff' && ctx.atlasCutoff !== null && date >= ctx.atlasCutoff);
-    const dob = dm ? (monthFirst ? ymd(dm[3], dm[1], dm[2]) : ymd(dm[3], dm[2], dm[1])) : null;
+    const base = ctx.atlasOrder === 'mdy', switched = AB !== 'atlas-cutoff' && ctx.atlasCutoff !== null && date >= ctx.atlasCutoff;
+    const monthFirst = AB === 'atlas-month-first' || ((base !== switched) !== (AB === 'atlas-flipped'));
+    const wm = ds.match(/^(\d{1,2})[ -]([A-Z][a-z]{2})[ -](\d{4})$/);
+    const dob = dm ? (monthFirst ? ymd(dm[3], dm[1], dm[2]) : ymd(dm[3], dm[2], dm[1])) : wm ? ymd(wm[3], MONTH[wm[2].toLowerCase()], wm[1]) : null;
     const o = owed.replace(/^owed /, '').trim();
     let amount = null;
     if (!MISSING.has(o.toLowerCase())) {
@@ -210,7 +214,7 @@ function parseLine(line, ctx) {
       amount = { minor: (neg ? -1 : 1) * Number(bal.replace(/[▲¥円,\s-]|JPY/g, '')), currency: 'JPY' };
     }
     const [y, mo, d] = f.upd.split('/');
-    return { rowId: Number(m[1]), void: f.flag === 'SAMPLE', date: dayOf(ymd(y, mo, d)), np, dob, country: 'JP',
+    return { rowId: Number(m[1]), void: f.flag === 'SAMPLE' || flagVoid(ctx, 'KOBO', f.flag), date: dayOf(ymd(y, mo, d)), np, dob, country: 'JP',
       phone: phone(f.tel, 'JP', false), amount, memo: f.note ?? null };
   }
   if (line.startsWith('Vendex ')) return parseVendex(line);
@@ -218,7 +222,7 @@ function parseLine(line, ctx) {
     const o = JSON.parse(line.slice(8));
     const dob = o.dob && (o.dob !== '1900-01-01' || AB === 'sentinel-as-dob') ? ymd(...o.dob.split('-')) : null;
     const iso = o.country ? country(o.country.toUpperCase() === 'UK' ? 'GB' : o.country.toUpperCase()) : null;
-    return { rowId: o.row, void: o.env === 'sandbox', date: dayOf(ymd(...o.ts.slice(0, 10).split('-'))), np: { given: o.given, family: o.family },
+    return { rowId: o.row, void: o.env === 'sandbox' || flagVoid(ctx, 'VERITAS', o.env), date: dayOf(ymd(...o.ts.slice(0, 10).split('-'))), np: { given: o.given, family: o.family },
       dob, country: iso, phone: o.msisdn ? `+${o.msisdn}` : null,
       amount: o.amount === null ? null : { minor: (o.amount.startsWith('-') ? -1 : 1) * decimalToMinor(o.amount.replace('-', ''), o.ccy), currency: o.ccy },
       memo: o.note ?? null };
@@ -265,7 +269,7 @@ function parseVendex(line) {
   const dobS = f.dob.replace(/^(born|date of birth|DOB|b\.|Born|Date of birth) /, '');
   const dob = /not on file|unknown/.test(f.dob) ? null : vendexDob(dobS);
   const ph = /not on file/i.test(f.phone) ? null : phone(f.phone.replace(/^([Pp]hone|[Rr]each at|[Tt]el\.|[Mm]obile|[Bb]est number) /, ''), iso, false);
-  const rev = usNumeric(f.rev, 2000) ?? longDate(f.rev);
+  const rev = vxNumeric(f.rev, 2000) ?? longDate(f.rev);
   return { rowId: Number(m[1]), void: isVoid, date: dayOf(rev), np: givenFirst(f.name), dob, country: iso, phone: ph,
     amount: vendexAmount(f.amt), memo };
 }
@@ -289,7 +293,9 @@ export const ABLATIONS = ['atlas-cutoff', 'atlas-month-first', 'era-unreadable',
   'single-fx-table', 'no-fx', 'keep-trunk-zero', 'no-011', 'nickname-as-given', 'no-accent-restore', 'exact-names',
   'no-phone-link', 'phone-merges-households', 'obey-memos', 'oldest-wins',
   // v2 traps
-  'lenient-names', 'keyword-voids', 'country-from-phone', 'pairs-multiply', 'vendex-dmy'];
+  'lenient-names', 'keyword-voids', 'country-from-phone', 'pairs-multiply',
+  // v3 per-task prose (difficulty >= 3); 'notes-defaults' is a program that never reads the per-task notes
+  'vendex-flipped', 'atlas-flipped', 'flags-flipped', 'unknown-flags-live', 'mirror-ignored', 'notes-defaults'];
 const KEYWORD_VOID = /ZZTEST|DO NOT MIGRATE|SAMPLE|sandbox|withdrawn/i;
 const CC_ISO = new Map(Object.entries(P.COUNTRIES).reverse().map(([iso, c]) => [c.cc, iso])); // '1' -> US
 const fold = s => P.foldStrip(s);

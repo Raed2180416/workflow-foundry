@@ -1,0 +1,213 @@
+{
+  "note": "Frozen copies of workflow-foundry modules and their focused node:test suites (ROADMAP §4.2 owner family \"CI-failure repair\"). Bytes are `git show <commit>:<source>`; repository-relative layout is preserved under fixtures/<module>/. hidden.test.mjs files are authored for this bed from the ORIGINAL behaviour and are not part of the repository at that commit.",
+  "commit": "3fe9b8d604f97ee34adec023a3369bbe0c18efae",
+  "commitDate": "2026-10-07T15:32:05+00:00",
+  "commitSubject": "WIP snapshot: records bed audit in progress (unreviewed)",
+  "modules": {
+    "verdict": {
+      "modulePath": "src/verdict.mjs",
+      "testPath": "tests/verdict.test.mjs",
+      "related": [
+        "src/data.mjs"
+      ],
+      "files": {
+        "src/verdict.mjs": {
+          "source": "src/verdict.mjs",
+          "role": "module",
+          "sha256": "9fb2c5a6b1484cb0d4258846d65cf59d1f013fb10500cc127a3c403d0e1f426a",
+          "sourceSha256": "9fb2c5a6b1484cb0d4258846d65cf59d1f013fb10500cc127a3c403d0e1f426a",
+          "transforms": []
+        },
+        "tests/verdict.test.mjs": {
+          "source": "tests/verdict.test.mjs",
+          "role": "visible-tests",
+          "sha256": "b2152f65a034c7f456db4ccd02084bd2034fbe86aa4bf8a762587484493384c2",
+          "sourceSha256": "b2152f65a034c7f456db4ccd02084bd2034fbe86aa4bf8a762587484493384c2",
+          "transforms": []
+        },
+        "src/data.mjs": {
+          "source": "src/data.mjs",
+          "role": "related",
+          "sha256": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c",
+          "sourceSha256": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c",
+          "transforms": []
+        }
+      },
+      "hidden": null
+    },
+    "context": {
+      "modulePath": "src/context.mjs",
+      "testPath": "tests/context.test.mjs",
+      "related": [
+        "src/data.mjs",
+        "src/schema-subset.mjs"
+      ],
+      "files": {
+        "src/context.mjs": {
+          "source": "src/context.mjs",
+          "role": "module",
+          "sha256": "f1024b4bf689374713a589899c7ac4a83d3a7044d82230c7ebbdfd89b485fe5d",
+          "sourceSha256": "f1024b4bf689374713a589899c7ac4a83d3a7044d82230c7ebbdfd89b485fe5d",
+          "transforms": []
+        },
+        "tests/context.test.mjs": {
+          "source": "tests/context.test.mjs",
+          "role": "visible-tests",
+          "sha256": "c93b56763a703453456a5bf53502ba3464ae07d942cea02d64077cd0aeb5aadb",
+          "sourceSha256": "c93b56763a703453456a5bf53502ba3464ae07d942cea02d64077cd0aeb5aadb",
+          "transforms": []
+        },
+        "src/data.mjs": {
+          "source": "src/data.mjs",
+          "role": "related",
+          "sha256": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c",
+          "sourceSha256": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c",
+          "transforms": []
+        },
+        "src/schema-subset.mjs": {
+          "source": "src/schema-subset.mjs",
+          "role": "related",
+          "sha256": "20a6f35b8c9b25ce43820f08adf5de1c31a6115444c0bbabfa43ddd3ab2ef5eb",
+          "sourceSha256": "20a6f35b8c9b25ce43820f08adf5de1c31a6115444c0bbabfa43ddd3ab2ef5eb",
+          "transforms": []
+        }
+      },
+      "hidden": null
+    },
+    "schema-subset": {
+      "modulePath": "src/schema-subset.mjs",
+      "testPath": "tests/context.test.mjs",
+      "related": [
+        "src/data.mjs",
+        "src/context.mjs"
+      ],
+      "files": {
+        "src/schema-subset.mjs": {
+          "source": "src/schema-subset.mjs",
+          "role": "module",
+          "sha256": "20a6f35b8c9b25ce43820f08adf5de1c31a6115444c0bbabfa43ddd3ab2ef5eb",
+          "sourceSha256": "20a6f35b8c9b25ce43820f08adf5de1c31a6115444c0bbabfa43ddd3ab2ef5eb",
+          "transforms": []
+        },
+        "tests/context.test.mjs": {
+          "source": "tests/context.test.mjs",
+          "role": "visible-tests",
+          "sha256": "c93b56763a703453456a5bf53502ba3464ae07d942cea02d64077cd0aeb5aadb",
+          "sourceSha256": "c93b56763a703453456a5bf53502ba3464ae07d942cea02d64077cd0aeb5aadb",
+          "transforms": []
+        },
+        "src/data.mjs": {
+          "source": "src/data.mjs",
+          "role": "related",
+          "sha256": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c",
+          "sourceSha256": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c",
+          "transforms": []
+        },
+        "src/context.mjs": {
+          "source": "src/context.mjs",
+          "role": "related",
+          "sha256": "f1024b4bf689374713a589899c7ac4a83d3a7044d82230c7ebbdfd89b485fe5d",
+          "sourceSha256": "f1024b4bf689374713a589899c7ac4a83d3a7044d82230c7ebbdfd89b485fe5d",
+          "transforms": []
+        }
+      },
+      "hidden": null
+    },
+    "journal": {
+      "modulePath": "src/journal.mjs",
+      "testPath": "tests/journal.test.mjs",
+      "related": [
+        "src/data.mjs"
+      ],
+      "files": {
+        "src/journal.mjs": {
+          "source": "src/journal.mjs",
+          "role": "module",
+          "sha256": "a0fe5a82bf9e329bd5e1535ffff107d5d750d360c1ae1bbeae0383a4456a9ed8",
+          "sourceSha256": "a0fe5a82bf9e329bd5e1535ffff107d5d750d360c1ae1bbeae0383a4456a9ed8",
+          "transforms": []
+        },
+        "tests/journal.test.mjs": {
+          "source": "tests/journal.test.mjs",
+          "role": "visible-tests",
+          "sha256": "b88f856fc41c880c363d2c81089e5308de2141bfb6e1b7c73c7f9ed2febe8a7c",
+          "sourceSha256": "671e79df10ebc8ce35a1e89108a2b301e9e3c535d6aec9e95c76360f89d8c463",
+          "transforms": [
+            "drops the one test that needs src/store.mjs (a 399-line filesystem store) and a temp workspace; the remaining 4 tests exercise journal.mjs alone",
+            "same: removes the Store-backed test body"
+          ]
+        },
+        "src/data.mjs": {
+          "source": "src/data.mjs",
+          "role": "related",
+          "sha256": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c",
+          "sourceSha256": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c",
+          "transforms": []
+        }
+      },
+      "hidden": null
+    },
+    "stats": {
+      "modulePath": "experiments/lib/stats.mjs",
+      "testPath": "experiments/lib/stats.test.mjs",
+      "related": [
+        "beds/lib/rng.mjs"
+      ],
+      "files": {
+        "experiments/lib/stats.mjs": {
+          "source": "experiments/lib/stats.mjs",
+          "role": "module",
+          "sha256": "d846c23b329ff16b559f0c9d4b4b3ea931b461c79da1978da02809c8e3ce3397",
+          "sourceSha256": "d846c23b329ff16b559f0c9d4b4b3ea931b461c79da1978da02809c8e3ce3397",
+          "transforms": []
+        },
+        "experiments/lib/stats.test.mjs": {
+          "source": "experiments/lib/stats.test.mjs",
+          "role": "visible-tests",
+          "sha256": "b3a1045fd7d38972cb5cf760eaf134519d6e4f0a50f49f24b87879474acb908a",
+          "sourceSha256": "b3a1045fd7d38972cb5cf760eaf134519d6e4f0a50f49f24b87879474acb908a",
+          "transforms": []
+        },
+        "beds/lib/rng.mjs": {
+          "source": "beds/lib/rng.mjs",
+          "role": "related",
+          "sha256": "a2094022a04d6336428fd0317a6f602c8f13cbd84ba12243bb2c9bed97d516a8",
+          "sourceSha256": "a2094022a04d6336428fd0317a6f602c8f13cbd84ba12243bb2c9bed97d516a8",
+          "transforms": []
+        }
+      },
+      "hidden": null
+    },
+    "distill": {
+      "modulePath": "experiments/lib/distill.mjs",
+      "testPath": "experiments/lib/distill.test.mjs",
+      "related": [
+        "src/data.mjs"
+      ],
+      "files": {
+        "experiments/lib/distill.mjs": {
+          "source": "experiments/lib/distill.mjs",
+          "role": "module",
+          "sha256": "9e3a30a8e4b32cfd35bd46261e79e690cacc7b5ce6c0f34efa09161737ddd589",
+          "sourceSha256": "9e3a30a8e4b32cfd35bd46261e79e690cacc7b5ce6c0f34efa09161737ddd589",
+          "transforms": []
+        },
+        "experiments/lib/distill.test.mjs": {
+          "source": "experiments/lib/distill.test.mjs",
+          "role": "visible-tests",
+          "sha256": "0c0f902795fc765a56169904e7b5f198b5a9b2b98cc23c51aa962990cba141d9",
+          "sourceSha256": "0c0f902795fc765a56169904e7b5f198b5a9b2b98cc23c51aa962990cba141d9",
+          "transforms": []
+        },
+        "src/data.mjs": {
+          "source": "src/data.mjs",
+          "role": "related",
+          "sha256": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c",
+          "sourceSha256": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c",
+          "transforms": []
+        }
+      },
+      "hidden": null
+    }
+  }
+}

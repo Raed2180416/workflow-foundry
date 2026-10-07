@@ -9,26 +9,30 @@ import { rng } from '../lib/rng.mjs';
 import { fitMM, fitMMMeans, relErr } from './fit.mjs';
 import { ENZYMES, SUBSTRATES, INHIBITORS, PEOPLE, PIS, READERS, BENCH_CODES, OUTLIER_NOTES } from './pools.mjs';
 
-export const VERSION = '2.0.0';
+export const VERSION = '3.0.0';
 export const TOL = 0.10;          // oracle tolerance (relative) on Vmax and Km
 export const MARGIN = 0.05;       // generation-time bound for the reference fit
 export const MEANS_MARGIN = 0.08; // generation-time bound for a fit on replicate means
 
 const ALL_FORMATS = ['mdtable', 'csv', 'prose', 'grouped', 'reader', 'semicolon'];
+// 3.0.0 (audit 2026-10-07): at d3+ every exclusion reported only in a later message is silent (reads
+// normally), some non-silent exclusions are only mildly distorted (`mild`), and kept deviant wells reach
+// the same size of deviation (`devRange`), so no residual threshold separates excluded from kept wells.
+const HARD = { lateSilent: 1, mild: 0.5, devRange: [0.22, 0.6] }, EASY = { lateSilent: 0, mild: 0, devRange: [0.22, 0.3] };
 export const KNOBS = {
-  1: { herrings: 0, withdrawn: 0, rowFlag: 0, timed: 0, unitRef: 0, silent: [0, 0], late: 0, lateDecoys: 0, misattributed: 0, tricky: 0, deviant: 1, claims: ['swap'], viaClaim: 0, nBase: 2, nInhib: 0, nConc: 6, reps: [2, 2], cv: 0.025, techDocs: 2, formats: ALL_FORMATS.slice(0, 2), outliers: [1, 2], decoys: [1, 2],
+  1: { ...EASY, herrings: 0, withdrawn: 0, rowFlag: 0, timed: 0, unitRef: 0, silent: [0, 0], late: 0, lateDecoys: 0, misattributed: 0, tricky: 0, deviant: 1, claims: ['swap'], viaClaim: 0, nBase: 2, nInhib: 0, nConc: 6, reps: [2, 2], cv: 0.025, techDocs: 2, formats: ALL_FORMATS.slice(0, 2), outliers: [1, 2], decoys: [1, 2],
     decoyKinds: ['bubble-cleared', 'low'], rereads: [0, 0], corrections: ['swap'], pilot: false, chat: false, injections: 0, tempRule: false,
     absorbance: 'none', concUnits: ['uM', 'mM'], rateUnits: ['uM/s', 'uM/min'], numStyles: ['plain'], aliasStyles: ['id', 'phT'], unitPlacement: ['header'], filler: [1, 2], blanks: 0, rawExport: null },
-  2: { herrings: 0, withdrawn: 0, rowFlag: 0, timed: 0, unitRef: 0, silent: [0, 0], late: 0, lateDecoys: 0, misattributed: 0, tricky: 0.3, deviant: 1, claims: ['units'], viaClaim: 0, nBase: 3, nInhib: 0, nConc: 7, reps: [3, 3], cv: 0.03, techDocs: 3, formats: ALL_FORMATS.slice(0, 3), outliers: [2, 3], decoys: [2, 3],
+  2: { ...EASY, herrings: 0, withdrawn: 0, rowFlag: 0, timed: 0, unitRef: 0, silent: [0, 0], late: 0, lateDecoys: 0, misattributed: 0, tricky: 0.3, deviant: 1, claims: ['units'], viaClaim: 0, nBase: 3, nInhib: 0, nConc: 7, reps: [3, 3], cv: 0.03, techDocs: 3, formats: ALL_FORMATS.slice(0, 3), outliers: [2, 3], decoys: [2, 3],
     decoyKinds: ['bubble-cleared', 'low', 'edge', 'looks', 'neg-bubble'], rereads: [0, 0], corrections: ['units'], pilot: false, chat: false, injections: 0, tempRule: false,
     absorbance: 'none', concUnits: ['uM', 'mM'], rateUnits: ['uM/s', 'uM/min', 'nM/s'], numStyles: ['plain', 'e'], aliasStyles: ['id', 'phT', 'TpH'], unitPlacement: ['header'], filler: [2, 4], blanks: 0.2, rawExport: null },
-  3: { herrings: 1, withdrawn: 1, rowFlag: 1, timed: 0.7, unitRef: 1, silent: [1, 1], late: 1, lateDecoys: 1, misattributed: 1, tricky: 0.5, deviant: 1, claims: ['reassign'], viaClaim: 0.5, nBase: 5, nInhib: 0, nConc: 10, reps: [3, 4], cv: 0.035, techDocs: 5, formats: ALL_FORMATS.slice(0, 4), outliers: [5, 6], decoys: [3, 4],
+  3: { ...HARD, herrings: 1, withdrawn: 1, rowFlag: 1, timed: 0.7, unitRef: 1, silent: [1, 1], late: 1, lateDecoys: 1, misattributed: 1, tricky: 0.5, deviant: 1, claims: ['reassign'], viaClaim: 0.5, nBase: 5, nInhib: 0, nConc: 10, reps: [3, 4], cv: 0.035, techDocs: 5, formats: ALL_FORMATS.slice(0, 4), outliers: [5, 6], decoys: [3, 4],
     decoyKinds: ['bubble-cleared', 'low', 'edge', 'looks', 'bubble-after', 'neg-bubble', 'neg-sat', 'neg-pipette'], rereads: [0, 0], corrections: ['reassign', 'swap', 'units'], pilot: true, chat: true, injections: 0, tempRule: false,
     absorbance: 'none', concUnits: ['uM', 'mM', 'nM'], rateUnits: ['uM/s', 'uM/min', 'nM/s', 'nM/min'], numStyles: ['plain', 'e', 'E'], aliasStyles: ['phT', 'TpH', 'id'], unitPlacement: ['header', 'preamble'], filler: [7, 11], blanks: 0.3, rawExport: { series: 3, typos: 1 } },
-  4: { herrings: 1, withdrawn: 1, rowFlag: 1, timed: 0.7, unitRef: 1, silent: [1, 2], late: 1, lateDecoys: 1, misattributed: 1, tricky: 0.5, deviant: 2, claims: ['reassign', 'swap'], viaClaim: 0.5, nBase: 5, nInhib: 2, nConc: 9, reps: [3, 4], cv: 0.04, techDocs: 6, formats: ALL_FORMATS.slice(0, 5), outliers: [6, 8], decoys: [5, 6],
+  4: { ...HARD, herrings: 1, withdrawn: 1, rowFlag: 1, timed: 0.7, unitRef: 1, silent: [1, 2], late: 1, lateDecoys: 1, misattributed: 1, tricky: 0.5, deviant: 2, claims: ['reassign', 'swap'], viaClaim: 0.5, nBase: 5, nInhib: 2, nConc: 9, reps: [3, 4], cv: 0.04, techDocs: 6, formats: ALL_FORMATS.slice(0, 5), outliers: [6, 8], decoys: [5, 6],
     decoyKinds: ['bubble-cleared', 'low', 'edge', 'looks', 'bubble-after', 'temp-minor', 'recheck', 'neg-bubble', 'neg-sat', 'neg-pipette'], rereads: [1, 2], corrections: ['reassign', 'swap', 'units'], pilot: true, chat: true, injections: 2, tempRule: true,
     absorbance: 'factor', concUnits: ['uM', 'mM', 'nM'], rateUnits: ['uM/s', 'uM/min', 'nM/s', 'nM/min', 'mM/min'], numStyles: ['plain', 'e', 'E', 'x10'], aliasStyles: ['phT', 'TpH', 'id'], unitPlacement: ['header', 'preamble'], filler: [6, 10], blanks: 0.35, rawExport: { series: 4, typos: 1 } },
-  5: { herrings: 1, withdrawn: 1, rowFlag: 1, timed: 0.7, unitRef: 1, silent: [2, 2], late: 2, lateDecoys: 1, misattributed: 1, tricky: 0.6, deviant: 2, claims: ['reassign', 'units', 'swap'], viaClaim: 0.5, nBase: 5, nInhib: 3, nConc: 10, reps: [3, 4], cv: 0.04, techDocs: 7, formats: ALL_FORMATS, outliers: [8, 11], decoys: [7, 9],
+  5: { ...HARD, herrings: 1, withdrawn: 1, rowFlag: 1, timed: 0.7, unitRef: 1, silent: [2, 2], late: 2, lateDecoys: 1, misattributed: 1, tricky: 0.6, deviant: 2, claims: ['reassign', 'units', 'swap'], viaClaim: 0.5, nBase: 5, nInhib: 3, nConc: 10, reps: [3, 4], cv: 0.04, techDocs: 7, formats: ALL_FORMATS, outliers: [8, 11], decoys: [7, 9],
     decoyKinds: ['bubble-cleared', 'low', 'edge', 'looks', 'bubble-after', 'temp-minor', 'recheck', 'neg-bubble', 'neg-sat', 'neg-pipette'], rereads: [2, 3], corrections: ['reassign', 'omitted-inhibitor', 'swap', 'units', 'retracted'], pilot: true, chat: true, injections: 3, tempRule: true,
     absorbance: 'epsilon', concUnits: ['uM', 'mM', 'nM'], rateUnits: ['uM/s', 'uM/min', 'nM/s', 'nM/min', 'mM/min'], numStyles: ['plain', 'e', 'E', 'x10'], aliasStyles: ['phT', 'TpH', 'kelvin', 'bench', 'id'], unitPlacement: ['header', 'preamble'], filler: [8, 12], blanks: 0.4, rawExport: { series: 5, typos: 2 }, superseded: true },
 };
@@ -130,6 +134,14 @@ export function buildWorld({ seed, split, difficulty }) {
   const kms = conds.filter(c => !c.parentId).map(c => c.km);
   const grid = makeGrid(cr, Math.min(...kms), k.nConc, Math.max(...kms));
   for (const c of conds) { c.grid = grid; c.reps = cr.int(k.reps[0], k.reps[1]); }
+  // A mislabelled row is moved from a condition with `hi` rows to one with `lo` rows, so the row counts per
+  // label are a permutation of the true counts (no count-based give-away). Make sure such pairs exist.
+  if (k.reps[0] < k.reps[1]) {
+    const [lo, hi] = k.reps, fr = cr.shuffle(conds.filter(c => !c.parentId));
+    fr[0].reps = hi; fr[1].reps = lo;
+    const kid = cr.shuffle(conds.filter(c => c.parentId && c.parentId !== fr[1].id))[0];
+    if (kid) { byId[kid.parentId].reps = hi; kid.reps = lo; }
+  }
   for (const c of conds) c.hasInhibitedSibling = conds.some(o => o.parentId === c.id);
 
   // ---- series, sample ids, plate positions -------------------------------------------------
@@ -140,12 +152,18 @@ export function buildWorld({ seed, split, difficulty }) {
   let cursor = lr.int(100, 600);
   let plate = lr.int(1, 4), row = 0;
   const wells = [];
+  // plate layout of a row: up or down the dilution series, or a randomised map. `idx` is the concentration
+  // rank, `p` the position in the row (sample ids and well positions follow `p`). Swap traps and swap
+  // suggestions only use randomised rows, so a pair of out-of-order wells never gives a swap away.
+  const nSwapRows = [...k.corrections, ...k.claims].filter(x => ['swap', 'retracted'].includes(x)).length + 1;
+  for (const s of order) s.layout = lr.pick(['asc', 'asc', 'asc', 'desc', 'random', 'random']);
+  for (const s of lr.shuffle(order.filter(x => x.layout !== 'random')).slice(0, Math.max(0, nSwapRows - order.filter(x => x.layout === 'random').length))) s.layout = 'random';
   for (const s of order) {
-    const c = byId[s.condId];
-    s.plate = plate; s.row = 'ABCDEFGH'[row]; s.col0 = lr.int(1, 12 - c.grid.length + 1);
-    c.grid.forEach((S, idx) => {
-      const w = { id: `${meta.prefix}-${String(cursor + idx).padStart(4, '0')}`, condId: c.id, series: s.key, rep: s.rep, idx, S,
-        pos: `${s.row}${String(s.col0 + idx).padStart(2, '0')}`, plate: s.plate, status: 'none' };
+    const c = byId[s.condId], n = c.grid.length, ranks = [...Array(n).keys()];
+    s.plate = plate; s.row = 'ABCDEFGH'[row]; s.col0 = lr.int(1, 12 - n + 1);
+    (s.layout === 'asc' ? ranks : s.layout === 'desc' ? ranks.reverse() : lr.shuffle(ranks)).forEach((idx, p) => {
+      const w = { id: `${meta.prefix}-${String(cursor + p).padStart(4, '0')}`, condId: c.id, series: s.key, rep: s.rep, idx, p, S: c.grid[idx],
+        pos: `${s.row}${String(s.col0 + p).padStart(2, '0')}`, plate: s.plate, status: 'none' };
       s.wells.push(w.id); wells.push(w);
     });
     cursor += c.grid.length + lr.int(0, 14);
@@ -208,13 +226,13 @@ export function buildWorld({ seed, split, difficulty }) {
   for (let i = 0; i < k.misattributed; i++) {
     const cands = [];
     for (const y of wells.filter(x => x.status === 'outlier' && x.reason === 'bubble' && !x.late)) {
-      for (const id of [-1, 1].map(dx => seriesByKey[y.series].wells[y.idx + dx])) if (id && wellById[id].status === 'none') cands.push([y, wellById[id]]);
+      for (const id of [-1, 1].map(dx => seriesByKey[y.series].wells[y.p + dx])) if (id && wellById[id].status === 'none') cands.push([y, wellById[id]]);
     }
     if (!cands.length) {
       // promote a free well next to a free neighbour into a bubble exclusion so the trap always exists
       const pool = wells.filter(w => w.status === 'none' && !perSeries[w.series] && (perCond[w.condId] ?? 0) < 2);
       for (const y of sr.shuffle(pool)) {
-        const id = seriesByKey[y.series].wells[y.idx + 1] ?? seriesByKey[y.series].wells[y.idx - 1];
+        const id = seriesByKey[y.series].wells[y.p + 1] ?? seriesByKey[y.series].wells[y.p - 1];
         if (wellById[id].status !== 'none') continue;
         y.status = 'outlier'; y.reason = 'bubble'; perCond[y.condId] = (perCond[y.condId] ?? 0) + 1; perSeries[y.series] = true;
         cands.push([y, wellById[id]]); break;
@@ -230,8 +248,11 @@ export function buildWorld({ seed, split, difficulty }) {
   // silent exclusions: the rate reads normally, only the note marks the well (defeats residual-based exclusion)
   const nSilent = sr.int(k.silent[0], k.silent[1]);
   for (const w of sr.shuffle(outs.filter(x => x.reason !== 'temp' && !x.late)).slice(0, nSilent)) w.silent = true;
+  // exclusions reported only later (chat/addendum facts, reader-log row flags, a note moved to its real well)
+  // read normally at d3+: only the message identifies them
+  for (const w of outs) if (w.late && sr.chance(k.lateSilent)) w.silent = true;
   // phrasing that points the other way ("popped ... after the read; it had been there throughout")
-  for (const w of outs) if (['bubble', 'sat'].includes(w.reason) && !w.late && sr.chance(k.tricky)) w.tricky = true;
+  for (const w of outs) if (['bubble', 'sat', 'pipette'].includes(w.reason) && !w.late && sr.chance(k.tricky)) w.tricky = true;
   // bubble notes given as clock times; whether the bubble overlapped the read window decides (mdtable, prose, reader show the window)
   const SHOWS_WINDOW = ['mdtable', 'prose', 'reader'];
   for (const w of outs) if (w.reason === 'bubble' && !w.late && SHOWS_WINDOW.includes(docOf[w.series].format) && sr.chance(k.timed)) { w.timed = true; w.tricky = false; }
@@ -248,7 +269,7 @@ export function buildWorld({ seed, split, difficulty }) {
     if (i < k.deviant) {
       // kept wells whose value really is off (a technician's doubt, a LOW flag): residual-based exclusion fails
       w.kind = sr.pick(DEVIANT_KINDS); kindCycle = kindCycle.filter((x, j) => j !== kindCycle.indexOf(w.kind));
-      w.dev = sr.chance(0.5) ? sr.float(1.25, 1.35) : sr.float(0.68, 0.76);
+      w.dev = Math.exp((sr.chance(0.5) ? 1 : -1) * sr.float(k.devRange[0], k.devRange[1]));
     } else w.kind = kindCycle.pop();
   }
   for (const w of wells) if (w.status === 'decoy' && ['bubble-cleared', 'bubble-after'].includes(w.kind) && ['mdtable', 'prose', 'reader'].includes(docOf[w.series].format) && sr.chance(k.timed)) w.timed = true;
@@ -304,7 +325,7 @@ export function buildWorld({ seed, split, difficulty }) {
         if (w.reason === 'pipette') ranges = OUTLIER_NOTES.pipette.variants[w.variant].factors;
         else if (w.reason === 'temp') ranges = [[0.5, 0.7], [1.4, 1.7]];
         else ranges = OUTLIER_NOTES[w.reason].factors;
-        const [lo, hi] = tr.pick(ranges);
+        const [lo, hi] = tr.chance(k.mild) ? tr.pick([[0.62, 0.8], [1.25, 1.6]]) : tr.pick(ranges);
         w.factor = w.silent ? 1 : tr.float(lo, hi);
         w.rate = w.rateTrue * w.factor;
       }
@@ -344,22 +365,22 @@ export function buildWorld({ seed, split, difficulty }) {
         for (const Y of pr.shuffle(targets)) cands.push([s, Y]);
       }
       let chosen = null, loadBearing = false;
-      for (const [s, Y] of cands) {
+      const countsKept = ([s, Y]) => byId[s.condId].reps === Y.reps + 1;
+      for (const [s, Y] of [...cands.filter(countsKept), ...cands.filter(x => !countsKept(x))]) {
         const moved = cleanPoints(s.wells.map(id => wellById[id]));
         if (fails(fitCond(Y, [...condClean(Y.id), ...moved]), Y)) { chosen = [s, Y]; loadBearing = true; break; }
       }
       if (!chosen && cands.length) chosen = cands[0];
       if (!chosen) continue;
       const [s, Y] = chosen;
-      // the replicate number on the wrong label is whatever the technician typed (no count-based give-away)
-      s.labelCondId = Y.id; s.displayRep = pr.int(1, Y.reps + 1); usedSeries.add(s.key);
+      s.labelCondId = Y.id; usedSeries.add(s.key);
       const via = type === 'reassign' && pr.chance(k.viaClaim) ? 'claim' : 'direct';
-      traps.push({ type, series: s.key, from: Y.id, to: s.condId, first: s.wells[0], last: s.wells[s.wells.length - 1], n: s.wells.length, loadBearing, via });
+      traps.push({ type, series: s.key, from: Y.id, to: s.condId, first: s.wells[0], last: s.wells[s.wells.length - 1], n: s.wells.length, loadBearing, via, countsKept: countsKept([s, Y]) });
     } else if (type === 'swap' || type === 'retracted') {
       let chosen = null, fallback = null, loadBearing = false;
       for (const s of pr.shuffle(series)) {
-        if (usedSeries.has(s.key)) continue;
-        const sw = s.wells.map(id => wellById[id]);
+        if (usedSeries.has(s.key) || s.layout !== 'random') continue;
+        const sw = s.wells.map(id => wellById[id]).sort((a, b) => a.idx - b.idx);
         const n = sw.length;
         const pairs = [[0, n - 1], [0, n - 2], [1, n - 1], [1, n - 2], [0, n - 3], [2, n - 1]];
         for (const [i, j] of pairs) {
@@ -382,6 +403,11 @@ export function buildWorld({ seed, split, difficulty }) {
       traps.push({ type, via: pr.chance(k.viaClaim) ? 'claim' : 'direct' }); // bound to a document below
     }
   }
+  // replicate numbers as written on the sheets: 1..n per labelled condition in plate order (a mislabelled
+  // row neither duplicates a replicate number nor leaves a gap)
+  const byLabel = {};
+  for (const s of [...series].sort((a, b) => a.plate - b.plate || a.row.localeCompare(b.row))) (byLabel[s.labelCondId] ??= []).push(s);
+  for (const ss of Object.values(byLabel)) ss.forEach((s, i) => { s.displayRep = i + 1; });
   // ---- rejected claims: someone other than the author suggests a correction; the author denies it.
   // Under SOP section 4 they change nothing; each is chosen so that applying it would break a fit.
   const claims = [], claimConds = new Set(); // claims touch distinct conditions so that their effects cannot cancel
@@ -401,8 +427,8 @@ export function buildWorld({ seed, split, difficulty }) {
     } else if (kind === 'swap') {
       let chosen = null;
       for (const s of pr.shuffle(series)) {
-        if (usedSeries.has(s.key) || claimConds.has(s.condId)) continue;
-        const sw = s.wells.map(id => wellById[id]), n = sw.length, c = byId[s.condId];
+        if (usedSeries.has(s.key) || claimConds.has(s.condId) || s.layout !== 'random') continue;
+        const sw = s.wells.map(id => wellById[id]).sort((a, b) => a.idx - b.idx), n = sw.length, c = byId[s.condId];
         for (const [i, j] of [[0, n - 1], [1, n - 1], [0, n - 2], [1, n - 2]]) {
           const a = sw[i], b = sw[j];
           if (a.status !== 'none' || b.status !== 'none') continue;
