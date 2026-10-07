@@ -187,9 +187,13 @@ test('schema subset: portable keywords pass; DESIGN §5.3 rejected keywords fail
 });
 
 test('schema subset: quarantine allows only booleans, string enums and bounded numbers', () => {
-  const ok = { type: 'object', additionalProperties: false, properties: { flag: { type: 'boolean' }, pick: { enum: ['a', 'b'] }, n: { type: 'number', minimum: -1, maximum: 1 },
+  const ok = { type: 'object', additionalProperties: false, properties: { flag: { type: 'boolean' }, pick: { enum: ['a', 'b'] }, n: { type: 'integer', minimum: -1, maximum: 1 },
     list: { type: 'array', maxItems: 4, items: { type: 'integer', minimum: 0, maximum: 3 } }, nested: { type: 'object', additionalProperties: false, properties: { c: { const: 'only' } } } } };
   assert.equal(checkQuarantinedSchema(ok), ok);
+  // A bounded float is allowed but counted at its full capacity (~62 bits for [0, 1]); two floats exceed the 64-bit cap.
+  const oneFloat = { type: 'object', additionalProperties: false, required: ['p'], properties: { p: { type: 'number', minimum: 0, maximum: 1 } } };
+  assert.equal(checkQuarantinedSchema(oneFloat), oneFloat);
+  assert.throws(() => checkQuarantinedSchema({ ...oneFloat, properties: { p: oneFloat.properties.p, q: oneFloat.properties.p } }), { code: 'QUARANTINE_SCHEMA' });
   const bad = [
     { type: 'object', properties: { flag: { type: 'boolean' } } },
     { type: 'object', additionalProperties: false, properties: { s: { type: 'string' } } },

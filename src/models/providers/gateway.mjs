@@ -21,7 +21,9 @@ export class GatewayProvider {
     if (res.status === 402) throw fail('MODEL_BUDGET', `gateway budget exhausted (spent ${body.spentUsd} of ${body.capUsd})`);
     if (res.status === 401 || res.status === 403) throw fail('MODEL_UNAVAILABLE', `gateway refused: ${body.error ?? res.status}`);
     if (res.status !== 200) throw fail(body?.error?.code ?? 'MODEL_PROTOCOL', `gateway error ${res.status}: ${JSON.stringify(body.error ?? body).slice(0, 300)}`);
-    if (!body.ok) throw fail(body.error?.code ?? 'MODEL_PROTOCOL', body.error?.message ?? 'gateway call failed', { costUsd: body.costUsd ?? 0 });
+    // A host call whose spend the host could not observe stays unknown here too (never a silent $0).
+    if (!body.ok) throw fail(body.error?.code ?? 'MODEL_PROTOCOL', body.error?.message ?? 'gateway call failed',
+      body.costUnknown === true ? { costUnknown: true, costCapUsd: body.costUpperUsd ?? null } : { costUsd: body.costUsd ?? 0 });
     return { value: body.value, text: null, usage: null, costUsd: body.costUsd ?? 0, finishReason: 'stop', engineVersion: `gateway:${body.modelId}` };
   }
 }

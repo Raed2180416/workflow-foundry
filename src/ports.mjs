@@ -94,17 +94,18 @@ export class JudgmentPort {
   // an enum plus a bounded number, so the call is quarantined and its result declassified.
   async #model(req, { stateLabel = 'untrusted:judgment-state', signal, nodeKey, attempt = 1, sampleIndex = 0 }) {
     const schema = { type: 'object', additionalProperties: false, required: ['choice', 'confidence'], properties: {
-      choice: { type: 'string', enum: req.options }, confidence: { type: 'number', minimum: 0, maximum: 1 } } };
+      choice: { type: 'string', enum: req.options }, confidence: { type: 'integer', minimum: 0, maximum: 100 } } };
     const node = { id: `judge-${req.port}`, kind: 'agent', description: req.question, quarantined: true, returns: schema,
-      instructions: `Answer one typed judgment question for the "${req.port}" port. Choose exactly one value from the options input as "choice", and give "confidence": the probability, from 0 to 1, that your choice is correct.${req.criteria.length ? `\nCriteria:\n${req.criteria.map(c => `- ${c}`).join('\n')}` : ''}` };
+      instructions: `Answer one typed judgment question for the "${req.port}" port. Choose exactly one value from the options input as "choice", and give "confidence": the probability, as an integer percent from 0 to 100, that your choice is correct.${req.criteria.length ? `\nCriteria:\n${req.criteria.map(c => `- ${c}`).join('\n')}` : ''}` };
     const compiled = compileContext({ node, classBudget: this.classBudget, inputs: [
       { name: 'options', value: req.options, label: 'trusted', render: 'json' },
       { name: 'state', value: req.state, label: stateLabel, render: 'json' }] });
     const r = await this.model.call({ runId: this.runId, nodeKey: nodeKey ?? `judgment/${req.port}`, attempt, sampleIndex, modelId: this.modelId,
       system: compiled.system, prompt: compiled.prompt, schema, decoding: this.decoding, receiptHash: compiled.receiptHash, signal });
     if (!r?.ok) throw new FoundryError(r?.error?.code ?? 'MODEL_FAILED', r?.error?.message ?? 'Judgment model call failed', { receiptHash: compiled.receiptHash });
-    const { choice, confidence } = r.value ?? {};
-    if (!req.options.includes(choice) || !(Number.isFinite(confidence) && confidence >= 0 && confidence <= 1)) throw new FoundryError('JUDGMENT_PROTOCOL', 'The model did not return one offered option with a confidence in [0, 1]');
+    const { choice, confidence: percent } = r.value ?? {};
+    if (!req.options.includes(choice) || !(Number.isInteger(percent) && percent >= 0 && percent <= 100)) throw new FoundryError('JUDGMENT_PROTOCOL', 'The model did not return one offered option with an integer confidence percent in [0, 100]');
+    const confidence = percent / 100;
     const n = req.options.length;
     const probabilities = Object.fromEntries(req.options.map(o => [o, (o === choice ? confidence : 0) + (1 - confidence) / n]));
     return { probabilities, chosen: choice, confidence, model: r.modelId ?? this.modelId, costUsd: r.costUsd ?? 0, receiptHash: compiled.receiptHash };

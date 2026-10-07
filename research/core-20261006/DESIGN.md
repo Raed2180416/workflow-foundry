@@ -48,10 +48,19 @@ influence control flow; every model id comes from `policy/models.json`.
   "timeoutMs": 10000 }
 ```
 - Executed by `src/sandbox.mjs` in a child process: `unshare --user --map-root-user --net
-  --mount --fork`, tmpfs over `/home`, `/root`, `/opt/models`, `/tmp`, `/var` inside the
-  namespace, clean environment, no network, stdin/stdout JSON, wall timeout, process-group
-  kill, output ≤ 512 KiB. Node runs with `--permission` (no fs write, no child processes).
-  If `unshare` is unavailable the node fails with `SANDBOX_UNAVAILABLE` (never runs unsandboxed).
+  --mount --pid --fork`, then an allowlisted root built on a fresh tmpfs and entered with
+  `pivot_root`: read-only `/usr`, `/bin`, `/sbin`, `/lib*`, the `ld.so` and `localtime`
+  entries of `/etc`, the interpreter binary alone at its own path, `/proc`, five `/dev`
+  nodes and a private 16 MiB `/tmp`; `/home`, `/root`, `/opt`, `/mnt`, `/srv`, `/media`,
+  `/var`, `/run` exist only as empty read-only directories (review fix 10, 2026-10-07).
+  Resource limits via `prlimit` (soft = hard) before the code starts: Python address space
+  1 GiB, JS data 1.25 GiB plus `--max-old-space-size=512`, processes 8 (Python) / 32 (JS),
+  file size 16 MiB, no core (review fix 8). On a root host the code runs as uid/gid 65534,
+  because the kernel does not enforce the process limit for root. Clean environment, no
+  network, stdin/stdout JSON, wall timeout, process-group kill, output ≤ 512 KiB. Node runs
+  with `--permission` (no fs write, no child processes). If `unshare`, `pivot_root` or
+  `prlimit` is unavailable, or the interpreter is not reachable inside the new root, the node
+  fails with `SANDBOX_UNAVAILABLE` (never runs unsandboxed, and never blames the code).
 - Effects: none. Output is recorded in run state like any node output.
 
 ### 1.3 `verify` — a check whose independence is labelled
@@ -113,7 +122,12 @@ model_calls(id INTEGER PRIMARY KEY, replay_key TEXT, run_id TEXT, node_key TEXT,
   receipt_hash TEXT, prompt_hash TEXT, request TEXT, response TEXT, ok INT, error_code TEXT,
   input_tokens INT, output_tokens INT, cost_usd REAL, imputed_usd REAL, latency_ms INT, created_at INT)
 ```
-- `replayKey = digest({ promptHash: digest({system, prompt, schema}), modelId, decoding, sampleIndex, salt })`.
+- `replayKey = digest({ promptHash: digest({system, prompt, schema}), modelId, modelDigest, decoding, sampleIndex, salt })`,
+  where `modelDigest` hashes the policy entry and its provider config minus accounting
+  (`price`, `imputedComputeUsdPerHour`), routing (`class`, `port`, `auth`) and documentation
+  (`knownGaps`) fields, and `decoding` is the decoding the provider actually applies (llama:
+  default max tokens 1024, temperature 0; claude: effort and thinking budget) (review fix 6).
+  Journals recorded before 2026-10-07 do not replay under the new keys.
   `salt` is a run option (`sampleSalt`, default = runId → fresh samples per run; experiments set
   `trial:<k>` so trial k is reproducible).
 - Modes (run option `modelMode`): `live` (call and record), `replay` (must hit; miss →
@@ -143,7 +157,13 @@ model_calls(id INTEGER PRIMARY KEY, replay_key TEXT, run_id TEXT, node_key TEXT,
 - Labels: integrity `trusted` | `untrusted:<src>`; output label = join (any untrusted →
   `untrusted:<sorted sources joined by +>`). `quarantined: true` nodes must have `returns`
   whose leaves are only boolean, enum strings, or bounded numbers/integers (validator) and
-  declassify to `trusted`.
+  declassify to `trusted`. The total output capacity must be at most 64 bits (review fix 1):
+  boolean 1, enum log2(n), integer log2(range), an optional property log2(values + 1), an
+  array log2(lengths) + maxItems × item bits, and a bounded float log2 of the doubles in its
+  range (≈ 62 bits for [0, 1], so at most one float). Typed-judgment confidences are integer
+  percents for this reason. Key order is not counted (≤ log2(k!) bits per object).
+- The E1 retry note carries only fixed text and schema paths and schema-derived messages,
+  never model-produced keys or values (review fix 9).
 - Validator rule: a `task` node whose capability has effects ≠ `none` may not take args that
   depend (via refs) on an untrusted-labelled output unless the capability `requiresApproval`.
 

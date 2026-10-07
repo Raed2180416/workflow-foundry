@@ -206,7 +206,8 @@ class Invocation {
   // The run deadline stops a model call or code through its own signal, so the stop is never mistaken for the
   // operation's own timeout or a provider fault: reached() is true only when the deadline (not the caller) aborted it.
   untilDeadline(signal) {
-    const deadline = AbortSignal.timeout(Math.max(1, this.current().deadline - Date.now()));
+    // Node clamps timers above 2^31-1 ms to 1 ms, so a far deadline is capped (a run never lives that long in one process).
+    const deadline = AbortSignal.timeout(Math.min(2 ** 31 - 1, Math.max(1, this.current().deadline - Date.now())));
     return { signal: AbortSignal.any([signal, deadline]), reached: () => deadline.aborted && !signal.aborted };
   }
   // The abort signal of the current continuation's scope (a flow frame, a map, or the whole invocation).

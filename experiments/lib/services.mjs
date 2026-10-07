@@ -39,7 +39,7 @@ export async function startServices({ modelPort, ledger, familyId = null, probes
       if (req.headers.authorization !== `Bearer ${token}`) return json(res, 401, { error: 'unauthorized' });
       const url = new URL(req.url, 'http://x');
       if (req.method === 'GET' && url.pathname === '/budget') return json(res, 200, { spentUsd: ledger.spentUsd, capUsd: ledger.capUsd, scoreCallsLeft: scoreLimit - scoreCalls,
-        unknownCalls: ledger.unknownCalls ?? 0, unknownUpperUsd: ledger.unknownUpperUsd ?? 0 });
+        unknownCalls: ledger.unknownCalls ?? 0, unknownUpperUsd: ledger.unknownUpperUsd === undefined ? 0 : ledger.unknownUpperUsd });
       if (req.method !== 'POST') return json(res, 405, { error: 'method' });
       const body = await readBody(req);
       if (url.pathname === '/score') {

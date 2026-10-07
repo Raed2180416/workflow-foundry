@@ -38,7 +38,8 @@ export const promptHashOf = ({ system, prompt, schema }) => digest({ system, pro
 // A replay key binds what decides a sample: the prompt, the policy entry behind the id and its provider config
 // (weights, invocation, engine; accounting-only fields excluded), the decoding the provider applies, sample and salt.
 export const modelDigestOf = (entry, config) => {
-  const { price, ...model } = entry, { imputedComputeUsdPerHour, ...provider } = config ?? {};
+  // Excluded: accounting (price, imputed compute), routing (class, port, auth) and documentation (knownGaps) fields.
+  const { price, class: _class, port: _port, ...model } = entry, { imputedComputeUsdPerHour, auth, knownGaps, ...provider } = config ?? {};
   return digest({ model, provider });
 };
 export const replayKeyOf = ({ promptHash, modelId, modelDigest, decoding, sampleIndex, salt }) => digest({ promptHash, modelId, modelDigest, decoding, sampleIndex, salt });

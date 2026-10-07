@@ -51,6 +51,7 @@ for p in ${VISIBLE_PATHS.join(' ')} "$2"; do
   elif [ -f "$p" ]; then mkdir -p ".\${p%/*}"; : > ".$p"; mount --bind "$p" ".$p"; mount -o remount,bind,ro ".$p"
   fi
 done
+[ -e ".$2" ] || { echo "foundry-sandbox: interpreter $2 is not reachable" >&2; exit 96; }
 mount --rbind /proc proc
 mount -t tmpfs -o rw,nosuid,size=64k,nr_inodes=64,mode=0755 foundry-dev dev
 for n in null zero full random urandom; do : > "dev/$n"; mount --bind "/dev/$n" "dev/$n"; done
