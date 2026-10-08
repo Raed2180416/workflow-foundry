@@ -1,8 +1,9 @@
 # R-bench item: Garage Garbage Day Reminders (Home Assistant, CCOSTAN)
 
 `home-assistant:CCOSTAN/Home-AssistantConfig/config/automation/Speech/garbage_day_garage.yaml#0`, pilot P4 in
-`research/replicate-20261008/SELECTION.md`. Harness built 2026-10-08. **Status: development/diagnostic harness. Nothing here is a sealed
-evaluation, and no solver arm has been run on it.** The scenarios, expected traces and the oracle were all written by the same agent
+`research/replicate-20261008/SELECTION.md`. Harness built 2026-10-08 (v0.1.0) and adversarially verified the same day (v0.2.0; see
+[Verification](#verification-2026-10-08-v020) and [Known limits](#known-limits)). **Status: development/diagnostic harness. Nothing here is a sealed
+evaluation, and no solver arm has been run on it.** Verdict of the verification: **usable with limits**. The scenarios, expected traces and the oracle were all written by the same agent
 (the freeze in `fixtures/frozen.json` only stops accidental drift); a sealed run needs a battery written by someone else.
 
 Evidence status, up front: **the original was executed on an interpreter for the YAML subset it uses (`controls/original-engine.mjs`), not on
@@ -18,7 +19,10 @@ summarised by `group.garage_doors`) is opened on one of those days and **stays o
 1. pushes a notification to Carlo's phone with two buttons, *Snooze 30m* and *Snooze 2h* (`script.notify_engine_two_button`, group `Garbage_Reminders`,
    stable tag `garbage_day_reminder`) and speaks once inside (`script.speech_engine`), both at the same instant, the **reminder start**;
 2. announces the same message on the garage Alexa (`notify.alexa_media_garage`, `announce`) at **+30 s, +90 s and +180 s**; before each one it checks again
-   that the door group is still open, it is still Wednesday or Sunday and the shared snooze timer is idle, and if any check fails **the whole sequence ends**;
+   that the door group is still open, it is still Wednesday or Sunday and the shared snooze timer is idle, and if any check fails **that announcement is skipped**
+   and the next one is checked again at its own time (v0.2.0: the checks are `condition`s inside a `repeat`, and Home Assistant documents that a false condition
+   there ends only the current round; v0.1.0 assumed the whole run ends. The author's comment, "Stop if the door closed, the day changed, or Carlo snoozed the
+   alert", describes the v0.1.0 behaviour, so the YAML probably does not do what its author meant: an improvement candidate, see Known limits);
 3. on a snooze button (a `mobile_app_notification_action` event) starts `timer.garbage_reminder_snooze` for 30 minutes or 2 hours, writes a logbook entry
    and, because the automation is `mode: restart`, kills any announcements still waiting. A running snooze timer also stops new reminders from starting.
 
@@ -52,7 +56,7 @@ Limits: 40 calls per event, 5000 events per scenario. The environment never says
 It replays the episode record `{actions}` in a fresh environment and compares the **successful service calls the mock recorded** with the trace each scenario expects:
 same service, same effect-relevant data, **every call within +-1 s** of its nominal instant, nothing missing, nothing extra. Not judged: how the solution is built, the order of calls at the
 same instant, icons and other cosmetics, the solver's own action ids (the mock phone resolves a button *title* to whatever action id the solver's push declared), failed calls (status >= 400).
-Text is compared with whitespace collapsed; `level` defaults to `active`; a missing `timer.start` duration is the timer's configured 30 minutes; durations compare in seconds
+Text is compared with whitespace collapsed and typographic quotes read as ASCII (v0.2.0); the two push buttons are a set of titles, their order is not judged (v0.2.0); `level` defaults to `active`; a missing `timer.start` duration is the timer's configured 30 minutes; durations compare in seconds
 (`0:30:00`, `00:30:00`, `1800`, `{minutes: 30}` are one thing). Seeds move the day and time of day, opening times and margins; `difficulty` d adds d-1 notification actions from other apps at random
 instants (they must change nothing). Expected traces are written next to each scenario in `scenarios.mjs`, as functions of that scenario's own timings.
 
@@ -61,15 +65,15 @@ instants (they must change nothing). Expected traces are written next to each sc
 | # | id | what happens | expected calls |
 | --- | --- | --- | --- |
 | 1 | `mon-open` | Monday: the door opens and stays open; it is not a garbage day. | 0 |
-| 2 | `wed-flap` | Wednesday: the door flaps open for 10-15 s three times; it never stays open for 20 s. | 0 |
+| 2 | `wed-flap` | Wednesday: the door flaps three times (open 5-8 s, shut 3-6 s, open 14-17 s, ...); it is open 20 s after the first opening but never *stays* open 20 s (v0.2.0). | 0 |
 | 3 | `wed-full` | Wednesday: the door opens and stays open. Push and speech, then three announcements. | 5 |
 | 4 | `sun-full` | Sunday: the same, and the message does not mention recycling. | 5 |
-| 5 | `wed-stop-then-reopen` | Wednesday: closed at the second check so the run ends; it reopens before the third check would have been due and a new reminder starts 20 s later. | 8 |
+| 5 | `wed-stop-then-reopen` | Wednesday: closed at the second check, so that announcement is skipped; it reopens before the third check, which announces; a new reminder starts 20 s after the reopening (v0.2.0). | 9 |
 | 6 | `wed-close-before-first` | Wednesday: the door closes 8-20 s after the reminder started. | 2 |
 | 7 | `wed-snooze30-then-expiry` | Wednesday: Snooze 30m between the 1st and 2nd announcement; a reopening inside the half hour is ignored; one after the snooze ran out starts a new reminder. | 10 |
 | 8 | `sun-snooze2h` | Sunday: Snooze 2h between the 2nd and 3rd announcement; a reopening about an hour later is ignored; one after two hours reminds again. | 11 |
 | 9 | `wed-snooze-after-run-ended` | Wednesday: the run is over when Snooze 30m is tapped on the old notification; the snooze must still be recorded and a reopening is ignored. | 4 |
-| 10 | `wed-external-snooze` | Wednesday: another automation starts the shared timer mid-sequence; the next check sees it and the run ends. | 3 |
+| 10 | `wed-external-snooze` | Wednesday: another automation starts the shared timer mid-sequence; the later checks see it; a close and reopen while it runs starts nothing (v0.2.0). | 3 |
 | 11 | `wed-midnight-ends-sequence` | Wednesday evening: midnight falls between the 1st and 2nd announcement. | 3 |
 | 12 | `tue-midnight-starts-wed` | Tuesday night: the door opens before midnight, the debounce ends after it; the day is judged at the reminder start (Wednesday message). | 5 |
 | 13 | `wed-reopen-restarts-run` | Wednesday: closed for 1-2 s and reopened while the first run waits; the new reminder replaces it (restart mode). | 7 |
@@ -84,32 +88,63 @@ Deviation from the SELECTION plan (14 scenarios): 15. Scenario 10 was added beca
 only a timer started by something else can. The plan's "new open within 30 minutes suppressed" is in 7, "Sunday 2-hour snooze" in 8, "Wednesday message mentions recycling, Sunday does not" in 3/4.
 
 T3 cost: self-inflicted work = `sched.set` + `sched.cancel` + `ha.get_state` + wake-ups delivered, over the 15 core scenarios; kv operations are not counted (so a stateless design is not penalised).
-Cap 278 = ceil(1.25 x 222), where 222 is the original's maximum over seeds 0..19, difficulties 1..5, both splits. `improved` costs 184; a once-a-second poller 4384-4532.
+Cap 310 = ceil(1.25 x 248), where 248 is the original's maximum over seeds 0..19, difficulties 1..5, both splits (v0.1.0: 278 = 1.25 x 222; the original now runs
+its later rounds after a failed check, and wed-external-snooze has one more opening). `improved` costs 203; the independent `alternative.mjs` design up to about 260;
+a correct design that schedules all three announcements up front 267; a once-a-second poller 5529-5677.
 
 ## Controls (`controls/report.json`, regenerate with `node controls/run-controls.mjs`; 65 instances: dev seeds 0..19 x d1,3,5 + test seeds 0..4 x d3)
 
 | control | result |
 | --- | --- |
-| **original** (the author's YAML on `original-engine.mjs`) | T2/T1 battery **65/65 pass**, 0 interpreter errors. T3: core 15/15 pass, the four probes fail on 65/65 (the original is the T3 baseline, not a failure) |
+| **original** (the author's YAML on `original-engine.mjs`, documented condition scope) | T2/T1 battery **65/65 pass**, 0 interpreter errors. T3: core 15/15 pass, the four probes fail on 65/65 (the original is the T3 baseline, not a failure) |
 | `makeFaithful` (hand transcription) | T1 65/65, T2 65/65 |
 | `makeImproved` | T3 65/65 (core + probes + cost 184 <= 278) |
-| `alternative.mjs` (kv-only state, own ids, own wake ids, message split over value1/value2, numeric duration, async) | passes T2 and T3 (ordinary + probes + cost) on seeds 0..5 at d1,3,5 (in `item.test.mjs`); it is the evidence that the oracle does not judge construction |
-| 9 mutants of the original YAML (drop `for`, drop the weekday / door / timer conditions, `mode: single`, delays as absolute offsets, recycling always, 2h = 30m, no logbook) | all rejected 65/65, each on the scenarios that expose it |
-| 25 broken controls (`controls/broken.mjs`: empty, **do-nothing**, shuffled, delays-as-absolute, no debounce, weekday at door-open, skip-instead-of-stop, no restart, any/prefix action snoozes, wrong message, ...) | all rejected 65/65, each on its expected scenarios |
+| `alternative.mjs` (kv-only state, own ids, own wake ids, message split over value1/value2 with a typographic apostrophe, buttons in the other order, numeric duration, async) | passes T2 and T3 (ordinary + probes + cost) on seeds 0..5 at d1,3,5 (in `item.test.mjs`); it is the evidence that the oracle does not judge construction |
+| `makeFaithful({lastChangedDebounce})` (one wake per opening, debounce from the group's `last_changed`) | passes T2 and T3 on 20 seeds (`item.test.mjs`, "verifier probes"); failed `wed-flap` on 24/120 instances under v0.1.0 |
+| 10 mutants of the original YAML (drop `for`, drop the weekday / door / timer conditions, `mode: single`, delays as absolute offsets, recycling always, 2h = 30m, no logbook, and v0.2.0 `stop-on-failed-check`: what the author's comment says) | all rejected 65/65, each on the scenarios that expose it |
+| 27 broken controls (`controls/broken.mjs`: empty, **do-nothing**, shuffled, delays-as-absolute, no debounce, weekday at door-open, no restart, any/prefix action snoozes, wrong message, ...; v0.2.0: `stop-for-good` replaces `skip-instead-of-stop`, new `naive-debounce` and `start-gate-from-memory`) | all rejected 65/65, each on its expected scenarios |
 | T3-only: `abort-on-first-failure` (= the original's behaviour), `polling` (correct effects, 1 s poller) | both pass the ordinary battery 65/65 and fail T3 65/65 (probes, cost cap) |
-| oracle / generate time | max 98 ms / 10 ms (contract limit 2 s) |
+| oracle / generate time | max 203 ms / 20 ms on a loaded machine (v0.1.0: 98 / 10 ms; contract limit 2 s) |
 
-**Do-nothing** passes exactly the two "nothing should happen" scenarios (1, 2) and fails the other 13. `item.test.mjs` (35 tests, ~30 s, `node --test`) asserts all of the above on >= 20 seeds per control, plus determinism,
+**Do-nothing** passes exactly the two "nothing should happen" scenarios (1, 2) and fails the other 13. `item.test.mjs` (36 tests, ~55 s, `node --test`) asserts all of the above on >= 20 seeds per control, plus determinism,
 schema rejection, no hidden-truth leak (scenario ids, start times and expected traces are not in the task), timing margins (no door/phone event within 2 s of a scheduled wake-up), snapshot/restore, the mock's semantics,
 tolerance edges (+0.9 s passes, +1.1 s fails), freeze hashes, and that the committed original is byte-identical to the pinned sha256 (and to `/opt/corpus` when present).
 
-## Unknowns and limits (read before using a number from this item)
+## Known limits
 
-- **Not run on Home Assistant.** The interpreter implements the semantics in `inputs.haSemantics`. The oracle's expectations were written from the YAML and the documented behaviour, independently of the interpreter,
-  and the two agreed on the first run (15/15), but both came from the same reading by the same agent.
-- **The one assumption that matters most**: a false `condition` inside a `repeat` ends the **whole** run (recalled from Home Assistant's `script.py`, where `_ConditionFail` is re-raised out of sub-scripts; SELECTION states the same; the author's
-  comment "Stop if the door closed, the day changed, or Carlo snoozed the alert" reads the same way). Not executed. `report.json: semanticSensitivity` and a test show that exactly one scenario (5, `wed-stop-then-reopen`) depends on it:
-  under the alternative reading (only that iteration ends) the original would fail it on 65/65 instances.
+Read before using a number from this item. The first five are the verification's (2026-10-08); the rest were the builder's and still hold.
+
+- **Not run on Home Assistant.** The interpreter implements the semantics in `inputs.haSemantics`; nothing was observed on a real instance. The real-HA control
+  (`pytest-homeassistant-custom-component`, about 6 h by the SELECTION estimate) is still the only way to turn the semantics below into observations.
+- **The condition-scope semantics are documented, not observed (v0.2.0 flip).** v0.1.0 assumed, from recall, that a false `condition` inside a `repeat` ends the
+  **whole** run. The Home Assistant documentation pinned in the corpus says the opposite: a condition stops only the sequence it is in; inside a Repeat only the
+  current round, inside Choose only that option, inside Run in parallel only its branch; only `stop` ends the whole run
+  (`/opt/corpus/home-assistant/git/home-assistant__home-assistant.io/source/_docs/scripts.markdown` lines 538-542 and 1504-1506, revision
+  `be62035471100102de772b812ac90bf92f786dfc`, 2026-10-06, CC BY-NC-SA 4.0, paraphrased here, not copied). The Home Assistant core clone in the corpus is
+  blob-less and `homeassistant/helpers/script.py` is not on disk, so the code was not read (fetching it would have been a network call). v0.2.0 follows the
+  documentation in the interpreter, the semantics text, the T2 description, the references, the independent solution and the expectation of scenario 5
+  (`wed-stop-then-reopen` now expects the third announcement of the first run at R+180, 9 calls). `report.json: semanticSensitivity` shows exactly that scenario
+  disagrees under the old reading (65/65). **Improvement candidate (not judged):** the author's comment says "Stop if ...", so the YAML most likely does not do
+  what its author meant; `stop` (as in the `stop-on-failed-check` mutant) would.
+- **The original's real announcement times drift; the oracle's +-1 s does not model it.** `parallel` waits for both branches, and calling `script.speech_engine`
+  directly waits for that script (recalled, not in the corpus docs). The author's own `speech_engine` calls `script.speech_processing`, which runs an OpenAI
+  `conversation.process` rewrite of the message and `tts.cloud_say` (`config/script/speech_processing.yaml`, read as data). So on the real system the three
+  announcements come at about R + (speech time) + 30/90/180 s, several seconds late, and the real original would likely fail the +-1 s window. The oracle judges the
+  author's stated schedule ("announce at 30s/90s/180s"), with calls taking no virtual time. The inside speech is also LLM-rewritten and gated (08:00-22:00, bed,
+  family home) inside the helper; both are the helper's business and mocked as a recorder. "The original has no model calls" is true of the automation only.
+- **Judged strictly, on purpose:** cancelling the timer before starting it (an extra `timer.cancel`, which fires `timer.cancelled`) fails; text case, the push's
+  `who`/`group`/`tag`/`level`, the speech player (living room or none) and the logbook wording are exact; retries of a failed call that land outside the outage are extra calls.
+  A solver that knows Home Assistant better than the semantics text could still disagree with these choices.
+- **Fixed in v0.2.0 (what v0.1.0 got wrong):** (1) a wrong `naive-debounce` ("open 20 s after it opened", without "stayed open") passed 96/120 instances; `wed-flap`
+  now catches it on every instance. (2) a wrong `start-gate-from-memory` (the start gate trusts the handler's memory of its own taps instead of the shared timer)
+  passed 120/120; `wed-external-snooze` now reopens the door inside the external snooze. (3) correct designs failed 120/120 for incidental choices: buttons in the
+  other order, a typographic apostrophe. (4) `ha.get_state` returned `last_changed` in undocumented scenario seconds, so a correct debounce built on it failed
+  `wed-flap` on 24/120; it is now local time in the format of `event.at.iso`. (5) the T1/T3 semantics text told solvers the undocumented condition scope.
+  Scenario 5's expectation changed accordingly. Frozen hashes, cost cap (278 -> 310) and `report.json` were regenerated; VERSION 0.2.0.
+- **Fixed scenario order.** The 15 core scenarios always come in the same order and the factory is called once per scenario, so a handler with module-level state
+  can count scenarios. Exploiting that needs the hidden battery (only the scoring endpoint could leak it, call-limited, probe tasks only); not mitigated.
+- **Interactive arms** stepping `createEnv` directly must not get the env object: `_records()` / `_scenarios()` (and `snapshot()`, which carries the future script)
+  are host-side. `experiments/lib/services.mjs` keeps snapshots server-side by id and returns only observations, which is safe; any other adapter must do the same.
 - T3 probes P2 and P4 (Alexa) rest on "an action that raises ends the run unless `continue_on_error`" (documented). P1 and P3 additionally assume that an error inside a *called script* reaches the caller; not verified.
   The failure responses in `fixtures/recorded-responses.json` are synthetic.
 - The helper scripts and the phone are mocks at the service-call boundary: `script.notify_engine_two_button` is a recorder that shows a push; its internals (templates, icon presets, `input_boolean.text_notifications`) are out of scope. The companion app's event carries only `{action}` here.
