@@ -514,7 +514,7 @@ export function nonDeciding(G, W, units, u, port, key, { phrasing = 'known' } = 
   }
   const opts = [];
   if (port === 'R2') {
-    for (const x of units.filter(x => x.pool === 'flag' && x.sys !== u.sys && x.sentence !== u.sentence)) opts.push({ text: x.sentence, from: `flag:${x.sys}`, kind: 'other-system' });
+    for (const x of units.filter(x => x.pool === 'flag' && x.sys !== u.sys && x.sentence !== u.sentence)) opts.push({ text: x.sentence, from: `flag:${x.sys}`, kind: 'other-system', T: x.sys });
   } else {
     // another system's sentence of the same pool, one that names that system (a nameless sentence in S's
     // paragraph would read as a statement about S and settle the question)
@@ -527,7 +527,7 @@ export function nonDeciding(G, W, units, u, port, key, { phrasing = 'known' } = 
         for (let i = 0; i < n; i++) {
           if (isHeldOutBed(bed, pool, T, label, i) || (pool === 'order' && bed.render.ORDER_NOTE[T][label][i].ref)) continue;
           const v = variantSentence(bed, W, { pool, sys: T, label, index: i }, {});
-          if (v && named.test(v.text) && v.text !== u.sentence) opts.push({ text: v.text, from: tplName({ pool, sys: T }, i, label), kind: 'other-system' });
+          if (v && named.test(v.text) && v.text !== u.sentence && !units.some(x => x.sentence === v.text)) opts.push({ text: v.text, from: tplName({ pool, sys: T }, i, label), kind: 'other-system', T });
         }
       }
     }
@@ -537,7 +537,7 @@ export function nonDeciding(G, W, units, u, port, key, { phrasing = 'known' } = 
     const free = (bed.pools.FLAG_TOKENS[u.sys] ?? []).filter(t => !used.has(t));
     if (free.length) {
       const tok = pickBy(free, 'tok', ...key), pol = H32('pol', ...key) % 2 ? 'void' : 'live', idx = pickBy(allowedIndices(bed, W, { ...u, label: pol }, pol), 'ni', ...key);
-      if (idx !== undefined) opts.push({ text: bed.render.FLAG_NOTE[pol][idx](F.show(tok), F), from: `FLAG_NOTE.${pol}[${idx}]#${tok}`, kind: 'other-marker' });
+      if (idx !== undefined) opts.push({ text: bed.render.FLAG_NOTE[pol][idx](F.show(tok), F), from: `FLAG_NOTE.${pol}[${idx}]#${tok}`, kind: 'other-marker', T: pickBy(W.systems.filter(x => x !== u.sys), 'tsys', ...key) });
     }
   }
   if (!opts.length) return null;
@@ -701,19 +701,20 @@ export function unknowablePlans(G, W, port, u, scr, job, key, units) {
   const nd = deleting ? { text: '', from: 'deleted', kind: 'deletion', phrasing: 'known' } : nonDeciding(G, W, units, u, port, key, { phrasing });
   if (!nd) { bump(G, `skip:${port}:unknowable:no-nondeciding`); return null; }
   const stated = basePlan(G, W, port, u, scr, { ...job, variant: 'clean', axis: 'unknowable-stated', mode: 'bed' }, key, naturalD(G, W, u), u.label);
-  // The pair is presence-matched at the word level: both states hold the non-deciding sentence F. The stated
-  // twin keeps the decisive sentence D and carries F in front of it (the same junction as in the unknowable); the unknowable replaces D by F. (A twin without F
-  // would differ from the unknowable by F's words as well, and a bag-of-words probe separates those at 0.82.)
+  // Presence-matched at the word level (a bag-of-words probe separates the naive pair at 0.82): both twins show the
+  // asked system's paragraph and the paragraph of the system T the non-deciding sentence is about, so both hold the
+  // same system names and the same number of pool sentences; the unknowable replaces the decisive sentence D by a
+  // sentence about T (never deletes it).
   const stateNotes = applyEdits(W.task.inputs.source_notes, scr.edits);
-  const paragraphs = stateNotes.ok ? groupParagraphs(stateNotes.notes, [u.sys]) : undefined;
+  const T = deleting ? null : (nd.T ?? pickBy(W.systems.filter(x => x !== u.sys), 'tsys', ...key));
+  const paragraphs = stateNotes.ok ? groupParagraphs(stateNotes.notes, H32('uorder', ...key) % 2 ? [u.sys, ...(T ? [T] : [])] : [...(T ? [T] : []), u.sys]) : undefined;
   const options = optionsOf(G, port);
   const edits = [...scr.edits, deleting ? { old: u.sentence, new: '', delete: true, role: 'unknowable' } : { old: u.sentence, new: nd.text, role: 'unknowable' }];
   const U = { ...stated, edits, kitSlots: { ...stated.kitSlots, paragraphs }, variant: 'unknowable', axis: 'unknowable', soft: true, label: pickBy(options, 'unk', ...key),
     decisive: nd.text ? [nd.text] : [], role: 'nondeciding', surface: { source: nd.phrasing === 'new' ? 'ood-line' : 'bed', line: null, from: nd.from },
     counterfactual: { swapped: true, kind: 'unknowable', from: tplName(u, u.index), to: nd.from, pool: u.pool, nondeciding: nd.kind, phrasing: nd.phrasing },
-    cell: null, counts: [], extra: { meta: { phrasing: nd.phrasing, nondecidingKind: nd.kind, replaced: u.sentence } } };
-  const S = { ...stated, kitSlots: { ...stated.kitSlots, paragraphs },
-    edits: deleting ? stated.edits : [...stated.edits, { old: u.sentence, new: `${nd.text} ${u.sentence}`, role: 'distractor' }], extra: { ...stated.extra, meta: { ...stated.extra.meta, distractor: nd.text || null } } };
+    cell: null, counts: [], extra: { meta: { phrasing: nd.phrasing, nondecidingKind: nd.kind, replaced: u.sentence, about: T } } };
+  const S = { ...stated, kitSlots: { ...stated.kitSlots, paragraphs } };
   return withPair([S, U], key);
 }
 export function injectionPlans(G, W, port, u, scr, job, key) {
@@ -820,6 +821,8 @@ function scrubFor(G, W, keep) {
 // Produce (and count) the records of one unit for one job, or null.
 export function runJob(G, W, port, u, jobId, units) {
   const job = { id: jobId, ...JOBS[jobId], axis: jobId };
+  // an unknowable pair is presence-matched: its decisive sentence names its system like the foreign sentence does
+  if (jobId === 'unknowable' && port !== 'R2' && G.control !== 'deletion-unknowable' && !namesSystem(u.sentence, u.sys)) return null;
   if (G.ood && G.slice !== 'test-ood' && ['injection', 'slot', 'long'].includes(jobId)) job.mode = 'ood-pref';
   const key = jobKey(G.slice, W, port, u, jobId);
   const scr = scrubFor(G, W, jobId === 'bed-template' ? new Set([u.id]) : new Set());
@@ -1288,6 +1291,7 @@ export function targetsFor(slice, port, opts = {}) {
   return out;
 }
 const ORDER_OF = { R: JOB_ORDER, X5: X5_JOB_ORDER, X8: X8_JOB_ORDER, X1: X1_JOB_ORDER };
+const namesSystem = (text, sys) => new RegExp(`(?<![A-Za-z0-9_])${sys}(?![A-Za-z0-9_])`).test(text);
 const countRows = (jobId, recs, port) => {
   if (port === 'X5' && jobId === 'unknowable') return recs.length;
   if (jobId === 'unknowable' && port !== 'X5') return recs.filter(r => r.meta.variant === 'unknowable').length;

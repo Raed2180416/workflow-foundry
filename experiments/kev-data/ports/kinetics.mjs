@@ -503,7 +503,9 @@ export async function* records(slice, seeds, opts = {}, ctx) {
     }
     if (wanted.includes('X7') && perWorld.X7) {
       const tap = alignMessages({ task, world, parsed: p });
-      const cands = [...tap.spans.values()].filter(sp => sp.label && X7_NEEDED[sp.factType] !== undefined).map(sp => ({ sp, id: sp.id, label: X7_NEEDED[sp.factType] ? 'needed' : 'not_needed' }));
+      // the held-out family stays in the 0-20% skeleton bucket, apart from the messages the train ports (X3, X4) read
+      const cands = [...tap.spans.values()].filter(sp => sp.label && X7_NEEDED[sp.factType] !== undefined && skeletonBucket(formOf(parsedOf(task).messageById[sp.id].text, masks)) === 'test-ood')
+        .map(sp => ({ sp, id: sp.id, label: X7_NEEDED[sp.factType] ? 'needed' : 'not_needed' }));
       for (const c of rotate(cands, ['needed', 'not_needed'], perWorld.X7, `${slice}|X7|${seed}`, c => c.id)) {
         const state = buildX7(task, { message: c.id }), sub = pick(SUBQUESTIONS, `${slice}|X7|${seed}|${c.id}|sq`);
         yield makeRecord({ contract: contracts.X7, slice, opts, key: `${slice}|X7|${seed}|${c.id}`, state, label: c.label, slots: { subquestion: sub },

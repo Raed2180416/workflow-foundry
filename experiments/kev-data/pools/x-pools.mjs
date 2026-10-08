@@ -28,7 +28,8 @@ export function buildXCandidates({ authored }) {
     for (const [section, [label, role]] of Object.entries(X1_ROLES)) {
       for (const [j, entry] of (d[section] ?? []).entries()) {
         // an entry is a string, or [text, sourceKind] when the line comes from another kind of source than the file's default
-        const [text, sourceKind] = Array.isArray(entry) ? entry : [entry, d.sourceKind];
+        let [text, sourceKind] = Array.isArray(entry) ? entry : [entry, d.sourceKind];
+        if (family === 'codefix' && !Array.isArray(entry) && /^#\s/.test(text)) sourceKind = 'code comment';   // code comments of the module, thread comments otherwise
         candidates.push({ key: `X1:${family}:${role}#${pad(j)}`, port: 'X1', group: 'authored', kind: role, templateId: null, source: null, system: null, label, order: null, family, sourceKind, role,
           text, expectSlots: null, allow: [], require: [], slotCarried: false, pairKey: null, pairIndex: j });
       }

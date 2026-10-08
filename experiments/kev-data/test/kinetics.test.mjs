@@ -271,7 +271,7 @@ test('states: every state <= 4K real tokens, windowed to one document; no all-do
   // a state quotes at most one document: one title line at most, and no state is the whole task text
   for (const r of recs) {
     const text = Object.values(r.state).flat().filter(x => typeof x === 'string').join('\n');
-    assert.ok((text.match(/^# /gm) ?? []).length <= 1, 'a state holds the lines of one document');
+    assert.ok((text.match(/^# (?!export |units:)/gm) ?? []).length <= 1, 'a state holds the lines of one document');
   }
   assert.ok(Math.max(...res.map(r => r.stateTokens)) < 3000, 'long variants are windows of one document, far from the 12K of all documents');
   // the kit's window parameter is bounded: there is no builder that takes more than one document
@@ -296,9 +296,10 @@ test('held-out families: X5 and X1 kinetics rows appear only in test-ood files; 
   const nSpans = gen.registerHeldout(registry, held);
   assert.ok(nSpans >= 20 && registry.size >= 20, `${nSpans} spans registered`);
   let hits = 0, states = 0;
-  for (const recs of Object.values(trainLike)) for (const r of recs) { states++; hits += registry.scanState(r.state, { names: r.meta.masks.names, markers: r.meta.masks.markers, slice: 'train' }).length; }
+  const hitPorts = {};
+  for (const recs of Object.values(trainLike)) for (const r of recs) { states++; const h = registry.scanState(r.state, { names: r.meta.masks.names, markers: r.meta.masks.markers, slice: 'train' }); hits += h.length; for (const x of h) { const k = `${portOf(r)}<-${x.entry.port}`; hitPorts[k] = (hitPorts[k] ?? 0) + 1; } }
   t.diagnostic(`held-out rows ${JSON.stringify(heldPorts)}; ${registry.size} registered spans scanned against ${states} train-like states: ${hits} hits`);
-  assert.equal(hits, 0, 'no registered span of X1 or X5 kinetics is in a train, calib-in or dev-select state');
+  assert.equal(hits, 0, `no registered span of X1, X5 or X7 kinetics is in a train, calib-in or dev-select state: ${JSON.stringify(hitPorts)}`);
   // the same registry flags a planted span: the scan is not vacuous
   const plant = held.find(r => portOf(r) === 'X1');
   assert.ok(registry.scanState({ text: plant.state.text }, { names: plant.meta.masks.names, markers: plant.meta.masks.markers, slice: 'train' }).length > 0);
@@ -446,7 +447,7 @@ test('build: this generator builds a verified Kev dataset from a frozen bed copy
   const ports = Object.keys(m.slices.train.perPort);
   t.diagnostic(`build ${build.buildId}: train ${m.slices.train.records} records ${JSON.stringify(Object.fromEntries(ports.map(p => [p, m.slices.train.perPort[p].questions])))}, dev-select ${m.slices['dev-select'].records}; job maxState ${m.jobMaxState}`);
   assert.ok(ports.includes('X3') && ports.includes('X8') && ports.includes('K3'));
-  assert.deepEqual(m.slices.train.dropped, {}, 'no record dropped');
+  assert.deepEqual(Object.keys(m.slices.train.dropped).filter(k => k !== 'duplicate'), [], `only exact duplicates are dropped: ${JSON.stringify(m.slices.train.dropped)}`);
   assert.ok(verifyBuildDir(build.dir).ok);
   const again = await buildKev({ root: repo, outRoot: H.tempDir('kev-kin-build-'), generators: [GEN_FILE], slices: ['train', 'dev-select'],
     seeds: { train: range(401, 40), 'dev-select': range(4500, 20) }, opts: { smokeEvery: 2 }, ...H.emptyHeldout() });

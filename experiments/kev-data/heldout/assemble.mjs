@@ -30,7 +30,7 @@ export function loadAuthored(authoredDir) {
     for (const f of listTxt(dir)) (A.pools[port][stemLabel(f)] ??= []).push(...readEntries(dir, f));
   }
   const x5 = path.join(authoredDir, 'X5');
-  for (const f of listTxt(x5)) (stemLabel(f) === 'pairs' ? A.x5pairs : stemLabel(f) === 'not_stated' ? A.x5ns : stemLabel(f) === 'assumptions' ? A.x5bank : (() => { throw new AuthorError('AUTHOR_FILE', `X5/${f}: expected pairs*.txt, not_stated*.txt or assumptions*.txt`); })()).push(...readEntries(x5, f));
+  for (const f of listTxt(x5)) (f.startsWith('pairs') ? A.x5pairs : f.startsWith('not_stated') ? A.x5ns : f.startsWith('assumptions') ? A.x5bank : (() => { throw new AuthorError('AUTHOR_FILE', `X5/${f}: expected pairs*.txt, not_stated*.txt or assumptions*.txt`); })()).push(...readEntries(x5, f));
   const x8 = path.join(authoredDir, 'X8');
   for (const f of listTxt(x8)) A.x8.push(...readEntries(x8, f));
   for (const [dirName, target] of [['nondeciding', A.nondeciding], ['carriers', A.carriers], ['wordings', A.wordings]]) {

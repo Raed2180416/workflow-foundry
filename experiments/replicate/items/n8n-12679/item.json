@@ -1,0 +1,27 @@
+{
+  "schema": "rbench-item/1",
+  "id": "n8n:12679",
+  "safeId": "n8n-12679",
+  "title": "Sync contacts two-way between Zoho CRM and KlickTipp",
+  "harnessVersion": "0.1.0",
+  "builtOn": "2026-10-08",
+  "status": "development/diagnostic harness; no sealed evaluation set; not yet run by any solver arm",
+  "source": {
+    "platform": "n8n",
+    "url": "https://n8n.io/workflows/12679",
+    "revision": "template 12679; createdAt 2026-01-13T10:53:04.787Z; sha256:aa95c542e06370a2",
+    "retrievedAt": "2026-10-06",
+    "license": "ToS:https://n8n.io/legal/self-serve-terms/",
+    "redistributable": false,
+    "rawPath": "/opt/corpus/n8n/workflows/12679.json.gz",
+    "rawFileSha256": "e007cdb5b21493078a941883f27eabe8a6f9c4bb19adb32cebcc096634ece9c1",
+    "committed": "nothing from the definition: no node text, no ids, no description text. The job description is a paraphrase; account ids are bound by role at run time."
+  },
+  "variants": {
+    "T1": "original definition (read from the corpus at task time) + environment config + API",
+    "T2": "paraphrased description + field map + config + API + worked examples (different data set)",
+    "T3": "original definition + description + config + API + cost target (budget.externalCalls)"
+  },
+  "scenarios": { "core": 15, "probes": 4, "probeIds": ["P1", "P2", "P3", "P4"] },
+  "controls": { "original": "executed on shim nodes (controls/original.mjs), needs the corpus file", "transcription": "controls/reference.mjs makeFaithful", "improved": "controls/reference.mjs makeImproved", "report": "controls/report.json" }
+}
