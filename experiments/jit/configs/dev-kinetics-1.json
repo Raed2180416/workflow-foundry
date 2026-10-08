@@ -1,0 +1,78 @@
+{
+ "experiment": "jit-dev-kinetics-1",
+ "familyId": "kinetics",
+ "split": "dev",
+ "segments": [
+  {
+   "difficulty": 4,
+   "seeds": [
+    201,
+    202,
+    203,
+    204,
+    205,
+    206,
+    207,
+    208,
+    209,
+    210,
+    211,
+    212,
+    213,
+    214,
+    215,
+    216
+   ]
+  },
+  {
+   "difficulty": 5,
+   "seeds": [
+    217,
+    218,
+    219,
+    220,
+    221,
+    222,
+    223,
+    224
+   ]
+  }
+ ],
+ "arms": [
+  "agent:claude-haiku-5-5",
+  "agent:claude-sonnet-5-5",
+  "jit:claude-haiku-5-5/claude-haiku-5-5",
+  "jit:claude-sonnet-5-5/claude-haiku-5-5",
+  "jit:claude-opus-5-5/claude-haiku-5-5"
+ ],
+ "jit": {
+  "warmup": 3,
+  "shadowEvery": 4,
+  "recompileOnDeopts": 2,
+  "maxTraces": 8,
+  "compilerFallback": "claude-opus-5-5",
+  "compare": "unordered",
+  "maxFallbacks": 2
+ },
+ "compile": {
+  "builderEffort": "high",
+  "builderBudgetUsd": 3,
+  "gatewayUsd": 1.5,
+  "checkUsd": 1.5,
+  "minutes": 30,
+  "fallback": {
+   "builderEffort": "high",
+   "builderBudgetUsd": 8,
+   "gatewayUsd": 1.5,
+   "checkUsd": 1.5,
+   "minutes": 45
+  }
+ },
+ "perTaskUsd": 1,
+ "agentBudgetUsd": 2,
+ "agentMinutes": 15,
+ "compiledMinutes": 20,
+ "staticFallback": "claude-haiku-5-5",
+ "concurrency": 2,
+ "spendStopUsd": 40
+}
