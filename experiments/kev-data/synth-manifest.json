@@ -230,5 +230,55 @@
     "X5 axes not built: the adversarial, long and slot axes of the program's X5 table (the policy and condition axes with flip pairs and one not_stated per group, presence-matched, are).",
     "Partial-input ceilings (PART): the metadata-only baseline of S2 is within majority + 3 pp; value-only, length-only and context-only baselines are above it on the dev sample (see supply/part in the test diagnostics). S2 is not frozen on that axis.",
     "Held-out wordings, carriers and unseen names reach the generator only through opts (stub fixtures here and in the tests); the OOD adversarial and paraphrase axes are therefore counted on stubs."
-  ]
+  ],
+  "partialInput": {
+    "port": "S2",
+    "ceiling": 0.28,
+    "fitRows": {
+      "own_measurement": 219,
+      "quoted": 219,
+      "projected": 219,
+      "instruction_like": 73
+    },
+    "evalRows": {
+      "own_measurement": 258,
+      "quoted": 258,
+      "instruction_like": 86,
+      "projected": 258
+    },
+    "supply": {
+      "own_measurement": 54441,
+      "quoted": 6003,
+      "projected": 928,
+      "instruction_like": 159
+    },
+    "baselines": {
+      "document type + property": {
+        "capped3to1": 0.345,
+        "natural": 0.35,
+        "status": "OPEN"
+      },
+      "value only (digits masked)": {
+        "capped3to1": 0.325,
+        "natural": 0.333,
+        "status": "OPEN"
+      },
+      "passage length": {
+        "capped3to1": 0.35,
+        "natural": 0.326,
+        "status": "OPEN"
+      },
+      "context only (value sentence removed)": {
+        "capped3to1": 0.306,
+        "natural": 0.328,
+        "status": "OPEN"
+      },
+      "full passage (control)": {
+        "capped3to1": 0.959,
+        "natural": 0.956,
+        "status": "control"
+      }
+    },
+    "note": "fit on the even-seed half of the whole train supply capped 3:1, eval on the odd-seed half (capped, and at the natural rates); the structure behind the OPEN baselines is the bed's: press-release documents hold only measured claims, instruction_like sits only in preprints, memos and lab notes at d5, projected only from d4"
+  }
 }

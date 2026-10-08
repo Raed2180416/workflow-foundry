@@ -30,6 +30,7 @@
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
+import { assertNoReserved } from '../lib/registry.mjs';
 import { bump, fail, loadWorld, difficultyOf, DEFAULT_DIFFICULTIES, OOD } from './synth-core.mjs';
 import { s2Candidates, s2Records, S2_LABELS, NATURAL_RATES } from './synth-s2.mjs';
 import { x5Candidates, x5Records } from './synth-x5.mjs';
@@ -84,6 +85,8 @@ export async function* records(slice, seeds, opts = {}, ctx) {
   for (const p of want) if (HELD_OUT_PORTS.includes(p) && slice !== 'test-ood') throw fail('HELDOUT_FAMILY', `${p} is a held-out family (test-ood only, §3.4); it is not generated in ${slice}`);
   if (!want.size) return;
   const diffs = G.opts.difficulties ?? DEFAULT_DIFFICULTIES;
+  // a reserved world (dev seeds 1-400, the real and e2e reserves outside their slices) never enters a file (§2.3 rule 8)
+  assertNoReserved([...seeds].map(seed => ({ bed: 'synth', split: G.def.bedSplit, difficulty: difficultyOf(seed, diffs), seed })), slice);
   const worlds = new Map(), pool = { S2: [], X5: [], X1: [], X8: [], S3: [], S4: [], S5: [], S1: [], 'X2:synth': [], 'X4:synth': [], 'X7:synth': [] };
   const lines = want.has('X1:synth') ? authoredLines(G) : [], perWorldLines = G.opts.authoredPerWorld ?? 2;
   const smoke = new Set([...want].filter(p => SMOKE_PORTS.includes(p) && p !== 'S5'));

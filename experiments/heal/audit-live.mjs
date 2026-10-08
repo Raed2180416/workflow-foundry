@@ -10,6 +10,7 @@
 //            runs and scored by the bed oracle (V3/V4), with 0 live calls required; the V6 cost ratio is recomputed.
 //   fresh    every V7 row of every archived verification is replayed strictly from the archived fresh-task journal (base and
 //            candidate, the gate's own salt) and scored by the bed oracle; the stratum is recomputed from the bed.
+//   relax    the V2 relax proof of the three codefix candidates with the current mutant battery.
 //   lineage  each promotion line names a code decision; decide() is re-run on each archived verification record.
 // Output: ids, scores, counts, hashes and dollars only (never task text or model output).
 import path from 'node:path';
@@ -27,7 +28,7 @@ const arg = (name, dflt) => (process.argv.includes(`--${name}`) ? process.argv[p
 const LIVE = path.join(REPO, 'experiments/heal/runs');
 const RUN_DIRS = ['live-20261008', 'live-20261008-r2', 'live-20261008-r3', 'live-20261008-r4'];
 const ARCHIVE = path.join(LIVE, 'live-20261008/archive');
-const only = new Set((arg('only', 'spend,cfx,fresh,lineage')).split(','));
+const only = new Set((arg('only', 'spend,cfx,relax,fresh,lineage')).split(','));
 const out = { schema: 'heal-live-audit/1', at: new Date().toISOString() };
 const jsonl = f => existsSync(f) ? readFileSync(f, 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l)) : [];
 const r6 = x => +(+x).toFixed(6);
@@ -92,6 +93,27 @@ if (only.has('cfx')) {
   console.error(`[audit] cfx: ${cands.map(c => `${c.run} V3 ${c.v3.filter(x => x.cand).length}/${c.v3.length} V4 ${c.v4.candPass}/${c.v4.n} ratio ${c.costRatio} hash ${c.hashMatches}`).join('; ')}`);
 }
 
+// ---- relax: the V2 proof of the codefix candidates, re-run with the CURRENT battery (review 2026-10-08 added the kind_changed mutant and
+// counts a crash of the relaxed check as a violation) ----------------------------------------------------------------------------------------
+if (only.has('relax')) {
+  const { relaxProof } = await import('./proofs.mjs');
+  const base = await loadWorkflow(path.join(REPO, 'research/construction-20261006/artifacts/F-haiku-codefix-k1/workflow.json'));
+  const policy = kit.sessionPolicy(['claude-haiku-5-5', 'claude-sonnet-5-5', 'claude-opus-5-5']);
+  const env = { classOrder: policy.classOrder, classOf: id => kit.policy.modelById(policy, id).class, isStrong: gate.isStrong };
+  const t = findTrial('F-haiku/codefix:test:d3:s6004/0', trials), task = await taskOf(t);
+  const ctx = await openCtx(t.source, { kit, name: 'audit-relax' }); let outputs; try { outputs = (await replayRun(ctx, base, t, { task })).outputs; } finally { ctx.close(); }
+  const node = base.nodes.find(n => n.id === 'check1'), args = kit.data.resolve(node.args, { input: { prompt: task.task.prompt, inputs: task.task.inputs ?? {} }, nodes: outputs });
+  const texts = [task.task.prompt, ...Object.values(task.task.inputs ?? {}).filter(v => typeof v === 'string')];
+  out.relax = [];
+  for (const d of ['live-20261008-r2', 'live-20261008-r3', 'live-20261008-r4']) {
+    const o = JSON.parse(readFileSync(path.join(LIVE, d, 'cfx.json'), 'utf8')), p = o.proposals.find(x => x.kind === 'defect');
+    const c = compileOps(base, p.ops, env), proof = c.proofs.find(x => x.type === 'relax');
+    const r = await relaxProof({ proof, kit, node, args, moduleSource: args.source, taskTexts: texts });
+    out.relax.push({ run: d, proposal: p.id, proposer: o.proposals.find(x => x.kind === 'defect').proposer?.modelId ?? null, ok: r.ok, mutants: r.mutants.length, classes: [...new Set(r.mutants.map(m => m.class))], violations: r.violations });
+  }
+  console.error(`[audit] relax: ${out.relax.map(r => `${r.run} ${r.ok ? 'proven' : 'NOT proven'}`).join('; ')}`);
+}
+
 // ---- V7: replay every fresh-task row from the archived fresh journals -------------------------------------------------------------------
 const archivedRecords = () => readdirSync(path.join(ARCHIVE, 'state')).flatMap(s => readdirSync(path.join(ARCHIVE, 'state', s)).map(f => ({ state: s, file: path.join(ARCHIVE, 'state', s, f) })));
 if (only.has('fresh')) {
@@ -144,5 +166,5 @@ if (only.has('lineage')) {
 
 const file = path.resolve(arg('out', path.join(LIVE, 'live-20261008/audit.json')));
 mkdirSync(path.dirname(file), { recursive: true }); writeFileSync(file, JSON.stringify(out, null, 1) + '\n');
-console.log(JSON.stringify({ out: path.relative(REPO, file), spend: out.spend?.total, cfx: out.cfx?.candidates?.map(c => [c.run, c.hashMatches, c.v3.map(x => x.cand), c.v4.candPass, c.costRatio]), fresh: out.fresh?.map(f => [f.proposal, f.base_pass, f.cand_pass, f.allAgree]), redecided: out.lineage?.redecided?.map(r => [r.record, r.recorded, r.now]) }, null, 1));
+console.log(JSON.stringify({ out: path.relative(REPO, file), spend: out.spend?.total, relax: out.relax?.map(r => [r.run, r.ok]), cfx: out.cfx?.candidates?.map(c => [c.run, c.hashMatches, c.v3.map(x => x.cand), c.v4.candPass, c.costRatio]), fresh: out.fresh?.map(f => [f.proposal, f.base_pass, f.cand_pass, f.allAgree]), redecided: out.lineage?.redecided?.map(r => [r.record, r.recorded, r.now]) }, null, 1));
 process.exit(0);

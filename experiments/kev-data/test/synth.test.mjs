@@ -321,7 +321,7 @@ test('gate: X8 synth is a held-out family: refused outside test-ood by the gener
   assert.ok(spec.contracts.X8.families.heldOut.includes('synth') && !spec.contracts.X8.families.train.includes('synth'));
 });
 
-test('splits: a reserved dev world (seeds 1-400) is refused by the record check in every file', () => {
+test('splits: a reserved dev world (seeds 1-400) is refused by the record check in every file and by the generator', async () => {
   const spec = SPEC();
   const rec = seed => ({
     state: { document_type: 'Research article', property: 'density', value: '2 g/cm³', passage: 'The density was 2 g/cm³.' },
@@ -333,6 +333,8 @@ test('splits: a reserved dev world (seeds 1-400) is refused by the record check 
     assert.ok(planted.errors.some(e => e.code === 'RESERVED_WORLD'), `${slice}: ${JSON.stringify(planted.errors.map(e => e.code))}`);
   }
   assert.ok(!checkRecord(rec(401), { slice: 'train', contracts: spec.contracts, variants: spec.spec.conventions.variants }).errors.some(e => e.code === 'RESERVED_WORLD'));
+  // the generator refuses a reserved seed before it loads a world
+  for (const slice of ['train', 'dev-select']) await assert.rejects(async () => { for await (const _ of gen.records(slice, [101], { ports: ['S2'] }, { slice: sliceDef(slice), contracts: spec.contracts })) { /* none */ } }, e => e.code === 'RESERVED_WORLD', slice);
 });
 
 test('kit: the authored statements are unique and the carriers and non-settling lines are well formed', () => {

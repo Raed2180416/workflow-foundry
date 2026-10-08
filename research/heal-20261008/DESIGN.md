@@ -981,3 +981,77 @@ exactly (same fidelity as B.3). Run 1 used the code as built in B.4; runs 2-4 us
   would not have worked (conf on class L: 0/4 pass, as the original). The closed condition grammar cannot iterate over array items,
   so no per-row guard can be written for a root array.
 - V7 at 4 seeds x K = 1 is directional only; V5 on codefix is vacuous (existence-only acceptance).
+
+### B.6 Adversarial review of the live runs, 2026-10-08 22:35-23:30 UTC [M]
+
+*Development/diagnostic evidence; every seed involved is INSPECTED or a heal-pool dev seed. Changed: `experiments/heal/{seeds,scan,heal,
+verify,replay,proofs,promote,retry-control}.mjs`; new `audit-live.mjs` (recomputes everything below from raw data, $0), `p1-mechanism.mjs`
+(the one live re-run), `test/review-fixes.test.mjs` (6 tests); data in `experiments/heal/runs/review-20261008/`; this appendix and the
+pointer at the top of B.5. Read-only paths and git state were not touched. Live spend of the review: $0.083 (journaled, scope
+`review-p1-mechanism` in `spend-global.jsonl`); campaign total $6.50.*
+
+**Recomputed from the raw data** (`node experiments/heal/audit-live.mjs` -> `runs/review-20261008/audit.json`, `audit-relax.json`):
+- *Spend.* 399 ledger lines = $6.414775 (H-rec 3.1079, H-cfx 2.0252, H-p1 0.6095, retry controls 0.5836, diagnosis probes 0.0886, which
+  B.5's per-case figures leave out). Each incident's `spend.jsonl` equals its run record; the 35 proposer journals sum to the recorded
+  round costs; the six archived fresh-task journals sum to the six V7 stage costs. One cap overrun: H-rec run 3, $2.44 of $2.00 (two
+  calls charged at the $1 per-call bound; their journal copies were deleted, so "cancelled" cannot be checked any more).
+- *H-cfx.* The three candidates recompile from their ops on the frozen kit to the verified hashes. Strict replay: the base fails all 3
+  failing runs, each candidate passes 3/3, the 8 regression runs pass 8/8, 0 live calls, cost ratio 0.588. All as recorded.
+- *V7.* All 24 fresh rows of the six verifications replay strictly from their archived journal with 0 live calls and give the recorded
+  base/candidate pass. Recomputed strata: run 2's set held one wrong-default task (1004: base pass, healed pass), run 3's none, run 4's
+  two (base 0/2, healed 2/2); over runs 2-4 the wrong-default stratum is base 1/3, healed 3/3, the other 9/9 vs 9/9.
+- *Decisions.* `decide()` re-run on every archived verification gives the recorded decision. The only waiver in a promotion
+  (`CLASS_ABOVE_DEFAULT_UNJUSTIFIED` on `judge__esc`) carries text written by the op compiler, not by the proposer.
+- *Literals and contamination.* No proposer output names a system or a convention value (the two that mention MDY say "a US-labelled
+  system is not automatically MDY"). No relaxed check contains a task literal; the quote `min_count is inclusive (default 2).` is only
+  the justification. The codefix fresh seeds 1001-1012 have no reference in common with the inspected test tasks or the C0 probes, and no
+  other repository file uses the heal-pool seeds.
+- *Localisation* matches the three hand diagnoses as B.5 says (node, field, value, clone group, routing). Wall times were 69-97 s
+  (H-rec) and 15-41 s (H-cfx), not 69-89 and 32-41.
+
+**Corrections to B.5.**
+1. *H-p1 was a demonstrated fix of its error class, not sampling luck.* `k_sample_agreement` keeps reader 1's prompt, so in V3 reader 1
+   REPLAYS the recorded wrong read (`statuses:1`, meaning live, relation none) and only readers 2 and 3 are live. Re-run live with the
+   calls kept (`p1-mechanism.mjs` part A): 3/3 pass, reader 1 replayed the wrong read in all 3, and the two new reads outvoted it. The
+   "retry unchanged" control (8/8 vs 8/8) only shows the error is rare; it cannot test the mechanism. Part B injected the incident's
+   error class (meaning flipped, relation "none", the check's escape hatch) into each of the 88 recorded status reads of all 35 passing
+   P1 runs: the parent v2 silently returned a `succeeded` run that fails the oracle 88/88; the healed v3 passed 88/88, with no
+   escalation ($0.08). The effect on the natural pass rate is still unmeasured (the base error is about 1 in 36 trials), and the cost
+   is +15%.
+2. *H-cfx: two of the three verified candidates, not three.* The Sonnet candidate (run 2) compares `_shape(cand_api[key])`, which
+   raises on the string `"class"`: when a public function becomes a class it crashes where the old check flagged a signature change.
+   The battery had no such mutant. With the `kind_changed` mutant and "a crash is a violation", run 2 fails V2; runs 3 (Haiku) and 4
+   (Opus) still pass (16 mutants each). Also: the added code is 5-13 lines plus a 1-2-line change, not 1-9.
+3. *H-rec rounds:* 16 = 3 invalid ops, 3 leak rejects, 8 V3 failures, 1 V1 reject (`ESCALATION_WITHOUT_CHECKS`, an
+   `edit_instructions` + `escalate_class` pair, not a pure escalation), 1 pending (budget). Five, not six, candidates had a V3 replica
+   end `failed`. The evidence-field check itself works: an exact quote of the notes passes and a non-quote fails after the Haiku -> Sonnet
+   escalation ($0, scripted model). So those failures are model quoting, not a harness fault.
+4. *Leak rejects.* The two in run 2 are confirmed false positives ("the system's name" and "source notes the" occur in 6/6 other tasks;
+   `maxLength: 600`). The run-1 rule-3 hit on `conf__s1.returns` does not reproduce with the scanner as committed at 16:17 or 20:55 UTC
+   (the clone's schema puts BRIGHTDESK 44 characters from DMY); the content was the base node's own schema, so it was very likely a false
+   positive, but its cause is unconfirmed.
+5. *The owner path for H-cfx.* `approve` did not only handle `owner-review`: it promoted any proposal file it was pointed at, including a
+   `blocked` one, a `pending` one (H-rec run 3, V3 not finished) or a rejected lint-debt proposal (tried on a copy of the state, $0).
+   And `decide()` sends every `relax_check` to owner review, so the codefix fix needs the owner even after the lint debt is cleared.
+
+**Defects found and fixed (all tested in `test/review-fixes.test.mjs`; 92 tests pass).**
+- *Fresh-seed dedupe (seeds.mjs).* A codefix draw was deduplicated only against earlier fresh draws, never against the inspected test
+  tasks or the probes (§8.1 says "every task already used"). Used tasks are now hashed into the ledger first. A stratum-vetoed seed was
+  cached and then skipped forever as a duplicate of itself; only used tasks count now. No contamination happened (checked above).
+- *Scanner (scan.mjs, heal.mjs).* The live-run fix exempted any phrase found in ANY of six other tasks; 26 BRIGHTDESK trigrams recur in
+  only 2 or 3 of them, so a copied convention sentence would have passed rule 1. A template constant must now occur in EVERY other task
+  (`familyTasks`). `minimum`/`maximum` are value bounds and are scanned again (a year or amount there is a leak). Re-scanning all 22
+  compiled proposals changes no outcome (one extra rule-1 hit, on a proposal V1 had already rejected).
+- *Relax proof (proofs.mjs).* `kind_changed` mutant; a relaxed check that crashes where the old one judged is a violation.
+- *Evidence (replay.mjs, verify.mjs, heal.mjs, retry-control.mjs).* V3/V4/V5 replicas and the retry control journaled their live calls
+  only into throwaway copies that `close()` deletes; the raw outputs behind "2 of 3 replicas", the node-check failures and the $1 bound
+  charges are gone. Live rows are now copied to `<runs>/verify-live/<proposal>.sqlite` (and `<out>.journal.sqlite` for the control)
+  before the copy is deleted; the V7 journal is written under the run directory and its handle closed.
+- *Budget (verify.mjs).* The first V3 replica is reserved like the others.
+- *Approval (promote.mjs, heal.mjs).* `approve` refuses a candidate whose verification did not pass V0-V8 (`HEAL_NOT_VERIFIED`) or whose
+  decision is not `owner-review`/`blocked`, and records an approval over a block in the lineage line.
+
+**Not changed (reported).** V4 counts a run stopped by `MODEL_ESCALATION_EXHAUSTED` after a failed node check as an oracle regression,
+not a false alarm (conservative). The brief gives the proposer the localised flip (BRIGHTDESK MDY -> DMY), i.e. the dev oracle's answer
+for that field, by design (§7.5); rule 3 only matches the literal enum value, so "BRIGHTDESK is day-first" would pass the scanner and
+only V7's stratum would catch it. The H-p1 v3 head stays promoted; the H-rec and H-p1 lint-debt heads stay promoted (they fix nothing).

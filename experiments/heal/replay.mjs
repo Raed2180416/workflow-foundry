@@ -86,7 +86,7 @@ export async function openCtx(source, { name = 'ctx', scratch = path.join(WORK_R
 // two bound-charged cancelled calls were gone; only the spend lines remained.
 export function keepLiveRows(ctx, file, tag = null) {
   if (!file) return 0;
-  const rows = ctx.db.prepare('SELECT * FROM model_calls WHERE id > ? ORDER BY id').all(ctx.baseMaxId ?? 0).filter(r => { try { return !JSON.parse(r.request ?? '{}').replayOf; } catch { return true; } });
+  const rows = ctx.db.prepare('SELECT * FROM model_calls WHERE id > ? ORDER BY id').all(ctx.baseMaxId ?? 0).filter(r => { try { const q = JSON.parse(r.request ?? '{}'); return !q.replayOf && q.heal !== 'counterfactual'; } catch { return true; } });
   if (!rows.length) return 0;
   mkdirSync(path.dirname(file), { recursive: true });
   const kept = ctx.kit.emptyJournal(file);   // creates the kit's journal schema
