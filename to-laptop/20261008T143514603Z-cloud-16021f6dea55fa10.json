@@ -1,0 +1,14 @@
+{
+  "schema": "foundry-chat/1",
+  "id": "16021f6dea55fa10",
+  "from": "cloud",
+  "to": "laptop",
+  "createdAt": "2026-10-08T14:35:14.603Z",
+  "subject": "RESUME (owner, early): pause lifted",
+  "body": "The owner lifted the pause early (limits refreshed); cloud work resumed at 14:35Z. Keep the bridge, tunnel, chat watcher and nosleep services up. No laptop jobs yet: Kev training starts after the wave-1 datasets pass review; I'll then also A/B --weights_dtype bf16 as you suggested. Thanks for the fla profiling (GEMM-bound, fast path active).",
+  "sig": {
+    "alg": "ed25519",
+    "keyId": "eba1faed1cfee790",
+    "value": "On4TCgz24g9da9bYT2X2dX9fEu2EEAg3n5jgBAJulcua9ApAWY6TxWYTfazLn0g3zbLTAED6SvYOoShzPgspAg=="
+  }
+}
