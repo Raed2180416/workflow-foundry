@@ -1,0 +1,556 @@
+// JIT stream runner (SPEC §6). One recurring stream of tasks, several arms:
+//   agent:<model>                 interpret every task (independent; run under the concurrency cap)
+//   static:<solve.mjs>            a fixed compiled script; deopt/crash/timeout/invalid -> claude-haiku-5-5 interpreter
+//   jit:<interpreter>/<compiler>  warmup -> compile -> run compiled; deopt -> interpret + recompile; shadows,
+//                                 adjudication by majority, regressions, reject-if-worse, one Opus fallback per compile
+// Every arm writes only its own directory (results.jsonl, events.jsonl, faults.jsonl, journal.sqlite, traces/,
+// versions/, regressions/), so arms can run as separate processes and resume independently. The bed oracle scores the
+// delivered answer only; nothing it says ever reaches an interpreter, a compiler or the JIT state.
+// CLI: node experiments/jit/stream.mjs --config <file> [--arms a,b] [--dry] [--run-root dir] [--work-root dir]
+import path from 'node:path';
+import { existsSync, readFileSync, writeFileSync, mkdirSync, appendFileSync, rmSync, copyFileSync } from 'node:fs';
+import { createHash, randomUUID } from 'node:crypto';
+import { fileURLToPath } from 'node:url';
+import { canonical } from '../../beds/lib/canonical.mjs';
+import { loadPolicy } from '../../src/models/policy.mjs';
+import { ENV_FAULTS, metEnvFault } from '../lib/runner.mjs';
+
+const REPO = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
+export const RUN_ROOT = path.join(REPO, 'experiments/runs/jit'), WORK_ROOT = '/var/tmp/foundry-work/jit';
+export const POLICY_MODELS = Object.freeze(['claude-haiku-5-5', 'claude-sonnet-5-5', 'claude-opus-5-5']);
+export const DEFAULT_JIT = Object.freeze({ warmup: 3, shadowEvery: 4, recompileOnDeopts: 2, maxTraces: 8, compilerFallback: 'claude-opus-5-5', acceptExact: 0.75,
+  maxFallbacks: null, compare: 'canonical' });
+// SPEC §3.5: builder Haiku high $3 + $1.5 gateway 30 min; the fallback Opus high $8 + $1.5 gateway 45 min.
+export const DEFAULT_COMPILE = Object.freeze({ builderEffort: 'high', builderBudgetUsd: 3, gatewayUsd: 1.5, minutes: 30,
+  fallback: Object.freeze({ builderEffort: 'high', builderBudgetUsd: 8, gatewayUsd: 1.5, minutes: 45 }) });
+const STATIC_FALLBACK = 'claude-haiku-5-5';
+
+const sha = s => createHash('sha256').update(s).digest('hex');
+const readJsonl = f => (existsSync(f) ? readFileSync(f, 'utf8').split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean) : []);
+const round = x => Math.round(x * 1e6) / 1e6;
+const uniq = xs => [...new Set(xs)];
+
+// ---------------------------------------------------------------------------------------------- config and arms
+function seedList(seeds) {
+  if (Array.isArray(seeds)) return seeds.map(Number);
+  const m = typeof seeds === 'string' && seeds.match(/^(\d+)\.\.(\d+)$/);
+  if (m) return Array.from({ length: Number(m[2]) - Number(m[1]) + 1 }, (_, i) => Number(m[1]) + i);
+  if (seeds && Number.isInteger(seeds.from) && Number.isInteger(seeds.to)) return seedList(`${seeds.from}..${seeds.to}`);
+  throw new Error(`segment seeds must be a list, "a..b" or {from,to}: ${JSON.stringify(seeds)}`);
+}
+
+export function normalizeConfig(raw) {
+  for (const k of ['experiment', 'familyId', 'split']) if (typeof raw?.[k] !== 'string' || !raw[k]) throw new Error(`config.${k} is required`);
+  if (!/^[\w.-]+$/.test(raw.experiment)) throw new Error('config.experiment must match [\\w.-]+');
+  if (!Array.isArray(raw.segments) || !raw.segments.length) throw new Error('config.segments must be a non-empty list');
+  if (!Array.isArray(raw.arms) || !raw.arms.length) throw new Error('config.arms must be a non-empty list');
+  const segments = raw.segments.map(s => ({ difficulty: Number(s.difficulty ?? 3), seeds: seedList(s.seeds) }));
+  // SPEC §6.4: held-out streams use fresh test seeds >= 7001 (5001-5006 and 6001-6004 are burned).
+  if (raw.split === 'test' && segments.some(s => s.seeds.some(x => x < 7001))) throw new Error('test-split streams must use fresh seeds >= 7001');
+  return {
+    ...raw, segments,
+    jit: { ...DEFAULT_JIT, ...(raw.jit ?? {}) },
+    compile: { ...DEFAULT_COMPILE, ...(raw.compile ?? {}), fallback: { ...DEFAULT_COMPILE.fallback, ...(raw.compile?.fallback ?? {}) } },
+    perTaskUsd: raw.perTaskUsd ?? 1, agentBudgetUsd: raw.agentBudgetUsd ?? 1, agentMinutes: raw.agentMinutes ?? 15, agentEffort: raw.agentEffort ?? null,
+    compiledMinutes: raw.compiledMinutes ?? 20, concurrency: raw.concurrency ?? 3, staticFallback: raw.staticFallback ?? STATIC_FALLBACK,
+    gatewayModels: raw.gatewayModels ?? [...POLICY_MODELS], spendStopUsd: raw.spendStopUsd ?? null,
+  };
+}
+
+const slugify = s => s.replace(/[^A-Za-z0-9._-]+/g, '-').replace(/^-+|-+$/g, '');
+export function parseArm(spec, config, { policyIds = null } = {}) {
+  const i = spec.indexOf(':');
+  const kind = spec.slice(0, i), rest = spec.slice(i + 1);
+  let arm;
+  if (kind === 'agent') arm = { kind, model: rest, models: [rest], slug: `agent-${slugify(rest)}` };
+  else if (kind === 'static') {
+    const scriptPath = path.resolve(REPO, rest);
+    const p = path.parse(scriptPath);
+    arm = { kind, scriptPath, fallback: config.staticFallback, models: uniq([...config.gatewayModels, config.staticFallback]).sort(),
+      slug: `static-${slugify(path.basename(p.dir))}-${slugify(p.name)}` };
+  } else if (kind === 'jit') {
+    const [interpreter, compiler] = rest.split('/');
+    if (!interpreter || !compiler) throw new Error(`jit arm needs <interpreter>/<compiler>: ${spec}`);
+    arm = { kind, interpreter, compiler, fallback: config.jit.compilerFallback,
+      models: uniq([...config.gatewayModels, interpreter, compiler, ...(config.jit.compilerFallback ? [config.jit.compilerFallback] : [])]).sort(),
+      slug: `jit-${slugify(interpreter)}--${slugify(compiler)}` };
+  } else throw new Error(`unknown arm kind in ${spec} (agent:, static:, jit:)`);
+  arm.spec = spec;
+  // Model ids only from the owner policy file (SPEC §6.4); nothing falls back silently.
+  const ids = policyIds ?? loadPolicy().policy.models.map(m => m.id);
+  for (const m of uniq([...arm.models, arm.model, arm.interpreter, arm.compiler, arm.fallback].filter(Boolean))) if (!ids.includes(m)) throw new Error(`${spec}: model ${m} is not in policy/models.json`);
+  // The arm definition hash: a resume never mixes rows recorded under another definition (tasks are checked per row).
+  const def = { spec, familyId: config.familyId, split: config.split, perTaskUsd: config.perTaskUsd, agentBudgetUsd: config.agentBudgetUsd, agentMinutes: config.agentMinutes,
+    agentEffort: config.agentEffort, models: arm.models,
+    ...(kind === 'static' ? { scriptSha: existsSync(arm.scriptPath) ? sha(readFileSync(arm.scriptPath)) : null, compiledMinutes: config.compiledMinutes, fallback: arm.fallback } : {}),
+    ...(kind === 'jit' ? { jit: config.jit, compile: config.compile, compiledMinutes: config.compiledMinutes } : {}) };
+  arm.def = def; arm.hash = sha(canonical(def)).slice(0, 16);
+  return arm;
+}
+
+export const matchArm = (arm, filters) => !filters?.length || filters.some(f => f === arm.spec || f === arm.slug || f === arm.kind);
+
+// ---------------------------------------------------------------------------------------------- JIT helpers
+// SPEC §6.2: answers are compared as canonical JSON. 'unordered' (opt-in) treats every array as a multiset.
+export function sameAnswer(a, b, mode = 'canonical') {
+  if (a == null || b == null) return false;
+  if (mode === 'unordered') {
+    const norm = v => Array.isArray(v) ? v.map(norm).sort((x, y) => (canonical(x) < canonical(y) ? -1 : canonical(x) > canonical(y) ? 1 : 0))
+      : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, norm(x)])) : v;
+    return canonical(norm(a)) === canonical(norm(b));
+  }
+  return canonical(a) === canonical(b);
+}
+
+const DEOPT_KINDS = new Set(['guard', 'invariant', 'judge', 'budget', 'unknown', 'crash', 'timeout', 'invalid']);
+// SPEC §3.1: up to max traces, newest first, every deopt kind seen so far represented (its newest trace).
+export function selectTraces(pool, max) {
+  const newest = [...pool].sort((a, b) => b.idx - a.idx || b.seq - a.seq);
+  const picked = [], seen = new Set();
+  for (const t of newest) if (DEOPT_KINDS.has(t.kind) && !seen.has(t.kind) && picked.length < max) { seen.add(t.kind); picked.push(t); }
+  for (const t of newest) if (picked.length < max && !picked.includes(t)) picked.push(t);
+  return picked.sort((a, b) => b.idx - a.idx || b.seq - a.seq);
+}
+
+// check-traces records: {exact, partial, deopts, crashes, perCase}. exact/partial may be fractions or counts;
+// perCase entries carry a case id (id | case | traceId | regressionId | name) and exact (bool or 0..1).
+const caseId = e => e?.id ?? e?.case ?? e?.traceId ?? e?.regressionId ?? e?.name ?? null;
+const caseExact = e => (typeof e?.exact === 'boolean' ? (e.exact ? 1 : 0) : typeof e?.exact === 'number' ? (e.exact >= 1 ? 1 : 0) : e?.status === 'exact' ? 1 : 0);
+const casePartial = e => { const p = Number(e?.partial ?? (caseExact(e) ? 1 : 0)); return p > 1 ? p / 100 : p; };
+const perCaseList = ct => (Array.isArray(ct?.perCase) ? ct.perCase : ct?.perCase && typeof ct.perCase === 'object' ? Object.entries(ct.perCase).map(([id, v]) => ({ id, ...(typeof v === 'object' ? v : { exact: v }) })) : []);
+export function exactOf(ct) {
+  if (!ct) return 0;
+  const cases = perCaseList(ct);
+  if (cases.length) return cases.reduce((s, e) => s + caseExact(e), 0) / cases.length;
+  const n = Number(ct.cases ?? ct.total ?? 0), x = Number(ct.exact ?? 0);
+  return x > 1 && n ? x / n : x > 1 ? 1 : x;
+}
+export function accepted(ct, { threshold = 0.75, regressionIds = [] } = {}) {
+  if (!ct) return false;
+  const cases = perCaseList(ct);
+  const failingRegression = cases.some(e => regressionIds.includes(caseId(e)) && !caseExact(e));
+  return exactOf(ct) + 1e-9 >= threshold && !failingRegression;
+}
+// SPEC §6.2.4: the new version is worse when, on the old version's cases (by id), it has fewer exact cases (then lower
+// mean partial agreement on a tie). Without per-case ids, the aggregates are compared.
+export function worseOnOld(newCt, oldCt) {
+  if (!oldCt) return false;
+  if (!newCt) return true;
+  const oldCases = perCaseList(oldCt).filter(e => caseId(e) != null), newById = new Map(perCaseList(newCt).filter(e => caseId(e) != null).map(e => [caseId(e), e]));
+  const shared = oldCases.filter(e => newById.has(caseId(e)));
+  if (shared.length) {
+    const ex = (list, pick) => list.reduce((s, e) => s + pick(e), 0);
+    const oldExact = ex(shared, caseExact), newExact = ex(shared.map(e => newById.get(caseId(e))), caseExact);
+    if (newExact !== oldExact) return newExact < oldExact;
+    return ex(shared.map(e => newById.get(caseId(e))), casePartial) + 1e-9 < ex(shared, casePartial);
+  }
+  return exactOf(newCt) + 1e-9 < exactOf(oldCt);
+}
+
+// ---------------------------------------------------------------------------------------------- per-arm files
+export const armPaths = (runDir, slug) => {
+  const dir = path.join(runDir, slug);
+  return { dir, results: path.join(dir, 'results.jsonl'), events: path.join(dir, 'events.jsonl'), faults: path.join(dir, 'faults.jsonl'), journal: path.join(dir, 'journal.sqlite'),
+    traces: path.join(dir, 'traces'), versions: path.join(dir, 'versions'), regressions: path.join(dir, 'regressions') };
+};
+
+class EnvFault extends Error {
+  constructor(component, result) {
+    super(`${component}: environment fault ${result?.error?.code ?? Object.keys(result?.meta?.errors ?? {}).join(',')} (after one retry)`);
+    this.code = 'ENV_FAULT'; this.component = component; this.result = result;
+  }
+}
+class SpendStop extends Error { constructor(msg) { super(msg); this.code = 'SPEND_STOP'; } }
+
+// Default dependencies (the live ones). Tests inject fakes for all of them.
+async function liveDeps() {
+  const [{ interpret }, { runCompiled }, { compile }, beds, models] = await Promise.all([
+    import('./interpret.mjs'), import('./run-compiled.mjs'), import('./compile.mjs'), import('../lib/beds.mjs'), import('../lib/models.mjs')]);
+  return { interpret, runCompiled, compile, score: beds.score, makeTasks: beds.makeTasks, loadFamily: beds.loadFamily, createModelPort: models.createModelPort };
+}
+
+export async function streamTasks(config, deps) {
+  const out = [];
+  for (const seg of config.segments) for (const t of await deps.makeTasks(config.familyId, { split: config.split, seeds: seg.seeds, difficulty: seg.difficulty })) out.push({ ...t, idx: out.length });
+  return out;
+}
+
+// ---------------------------------------------------------------------------------------------- one arm
+class ArmRun {
+  constructor({ arm, config, runDir, workRoot, deps, log, budget, binary }) {
+    Object.assign(this, { arm, config, deps, log, budget, binary });
+    this.p = armPaths(runDir, arm.slug);
+    this.work = path.join(workRoot, config.experiment, arm.slug);
+    for (const d of [this.p.dir, this.p.traces, this.p.versions, this.p.regressions]) mkdirSync(d, { recursive: true });
+    // This arm's definition, beside its rows (per-arm file: never shared with another process).
+    writeFileSync(path.join(this.p.dir, 'arm.json'), JSON.stringify({ experiment: config.experiment, spec: arm.spec, slug: arm.slug, kind: arm.kind, hash: arm.hash, def: arm.def }, null, 1));
+    this.rows = new Map();
+    for (const r of readJsonl(this.p.results)) {
+      if (r.experiment !== config.experiment) continue;
+      if (r.armHash !== arm.hash) throw new Error(`resume would mix versions of ${arm.spec} (${r.armHash} vs ${arm.hash}): use a new experiment name`);
+      this.rows.set(r.idx, r);
+    }
+    // Spend recorded by attempts that never finished a row (a crash or a fault): billed to the next row of that index.
+    const billed = new Set([...this.rows.values()].flatMap(r => r.spendIds ?? []));
+    this.unbilled = new Map();
+    this.compileDone = new Map();
+    for (const e of readJsonl(this.p.events)) {
+      if (e.kind === 'spend' && !billed.has(e.id)) { if (!this.unbilled.has(e.idx)) this.unbilled.set(e.idx, []); this.unbilled.get(e.idx).push(e); }
+      if (e.kind === 'compile-attempt' && e.key) this.compileDone.set(e.key, e);
+    }
+    this.seq = 0;
+  }
+
+  event(idx, kind, data = {}) {
+    const e = { at: new Date().toISOString(), arm: this.arm.spec, idx, kind, ...data };
+    appendFileSync(this.p.events, JSON.stringify(e) + '\n');
+    return e;
+  }
+
+  begin(t) {
+    if (this.config.spendStopUsd != null && this.budget.spent > this.config.spendStopUsd) throw new SpendStop(`spend stop: $${this.budget.spent.toFixed(2)} > $${this.config.spendStopUsd}`);
+    const run = this;
+    return {
+      idx: t.idx, events: [], breakdown: {}, spendIds: [], costUnknown: false, started: Date.now(),
+      ev(kind, data = {}) { const e = run.event(t.idx, kind, data); const { at, arm, idx, ...compact } = e; this.events.push(compact); return compact; },
+      spend(component, usd, unknown = false) {
+        const id = `${t.idx}-${component}-${randomUUID().slice(0, 8)}`, costUsd = round(Number(usd) || 0);
+        run.event(t.idx, 'spend', { id, component, costUsd, costUnknown: !!unknown });
+        this.breakdown[component] = round((this.breakdown[component] ?? 0) + costUsd); this.spendIds.push(id); this.costUnknown ||= !!unknown;
+        run.budget.spent += costUsd;
+      },
+    };
+  }
+
+  async finish(tr, t, { delivered, output, version = null, compiledStatus = null, deoptKind = null, error = null, extra = {}, stateAfter }) {
+    // Bill the spend of earlier, unfinished attempts at this index (crash, fault) so every dollar sits in some row.
+    let orphanUsd = 0;
+    for (const e of this.unbilled.get(t.idx) ?? []) { tr.breakdown[e.component] = round((tr.breakdown[e.component] ?? 0) + e.costUsd); tr.spendIds.push(e.id); orphanUsd += e.costUsd; tr.costUnknown ||= !!e.costUnknown; }
+    this.unbilled.delete(t.idx);
+    const verdict = output == null ? { pass: false, score: 0, details: { noOutput: true } } : await this.deps.score(this.config.familyId, t.task, output);
+    const row = {
+      experiment: this.config.experiment, arm: this.arm.spec, armSlug: this.arm.slug, armHash: this.arm.hash, kind: this.arm.kind,
+      idx: t.idx, taskId: t.task.id ?? t.taskKey, taskKey: t.taskKey, taskHash: t.taskHash, seed: t.task.seed ?? null, difficulty: t.task.difficulty ?? null,
+      delivered, pass: !!verdict.pass, score: verdict.score ?? null,
+      costUsd: round(Object.values(tr.breakdown).reduce((s, x) => s + x, 0)), costBreakdown: tr.breakdown, costUnknown: tr.costUnknown, orphanUsd: round(orphanUsd),
+      latencyMs: Date.now() - tr.started, events: tr.events, version, compiledStatus, deoptKind, error,
+      oracleDetails: verdict.details ? JSON.stringify(verdict.details).slice(0, 2000) : null, spendIds: tr.spendIds, ...extra,
+      ...(stateAfter ? { stateAfter } : {}), at: new Date().toISOString(),
+    };
+    appendFileSync(this.p.results, JSON.stringify(row) + '\n');
+    this.rows.set(t.idx, row);
+    this.log(`${this.arm.slug} #${t.idx} ${t.taskKey}: ${row.pass ? 'PASS' : 'fail'} score=${row.score} by=${delivered}${version ? ` v${version}` : ''} $${row.costUsd.toFixed(4)}`);
+    return row;
+  }
+
+  fault(t, err) {
+    appendFileSync(this.p.faults, JSON.stringify({ experiment: this.config.experiment, arm: this.arm.spec, idx: t.idx, taskKey: t.taskKey, component: err.component,
+      error: err.result?.error ?? null, metaErrors: err.result?.meta?.errors ?? null, builderError: err.result?.builderError ?? null, at: new Date().toISOString() }) + '\n');
+    this.event(t.idx, 'fault', { component: err.component, code: err.result?.error?.code ?? err.result?.builderError?.code ?? null });
+    this.log(`${this.arm.slug} #${t.idx}: ENV FAULT in ${err.component} (not recorded as an outcome; a resume retries it)`);
+  }
+
+  // Environment faults are retried once, then raised as EnvFault (never a task failure).
+  async retrying(tr, component, fn, isFault) {
+    for (let attempt = 0; ; attempt++) {
+      const r = await fn(attempt);
+      if (!isFault(r)) return r;
+      if (attempt === 0) { tr.ev('fault-retry', { component, code: r?.error?.code ?? r?.builderError?.code ?? Object.keys(r?.meta?.errors ?? {}).join(',') }); continue; }
+      throw new EnvFault(component, r);
+    }
+  }
+
+  async interpret(tr, t, role, model) {
+    return this.retrying(tr, role, async attempt => {
+      const traceId = `i${String(t.idx).padStart(3, '0')}-${role}-${randomUUID().slice(0, 6)}`;
+      const workdir = path.join(this.work, traceId);
+      rmSync(workdir, { recursive: true, force: true }); mkdirSync(workdir, { recursive: true });
+      const trace = await this.deps.interpret({ task: t.task, familyId: this.config.familyId, outputSchema: this.outputSchema, model, budgetUsd: this.config.agentBudgetUsd,
+        timeoutMs: this.config.agentMinutes * 60 * 1000, workdir, effort: this.config.agentEffort, traceId, ...(this.binary ? { binary: this.binary } : {}) });
+      writeFileSync(path.join(this.p.traces, `${trace.traceId}.json`), JSON.stringify(trace));
+      tr.spend(role, trace.costUsd ?? 0, trace.costUnknown);
+      tr.ev('interpret', { role, model, traceId: trace.traceId, answer: trace.answer != null, error: trace.error?.code ?? null, costUsd: trace.costUsd ?? 0, attempt,
+        nestedModelAttempts: trace.nestedModelAttempts ?? 0, hiddenPathAttempts: trace.hiddenPathAttempts ?? 0 });
+      return trace;
+    }, trace => ENV_FAULTS.has(trace?.error?.code));
+  }
+
+  async compiled(tr, t, solvePath, version) {
+    return this.retrying(tr, 'compiled', async attempt => {
+      const workdir = path.join(this.work, `i${String(t.idx).padStart(3, '0')}-compiled-${randomUUID().slice(0, 6)}`);
+      rmSync(workdir, { recursive: true, force: true }); mkdirSync(workdir, { recursive: true });
+      const rc = await this.deps.runCompiled({ solvePath, task: t.task, modelPort: this.port, perTaskUsd: this.config.perTaskUsd, timeoutMs: this.config.compiledMinutes * 60 * 1000,
+        workdir, familyId: this.config.familyId, outputSchema: this.outputSchema, allowedModels: this.arm.models, label: `${this.config.experiment}:${this.arm.slug}:${t.idx}:v${version ?? 0}` });
+      tr.spend('compiled', rc.costUsd ?? 0, rc.costUnknown);
+      tr.ev('compiled', { version, status: rc.status, deoptKind: rc.deopt?.kind ?? null, costUsd: rc.costUsd ?? 0, attempt, error: rc.error?.code ?? null });
+      return rc;
+    }, rc => rc?.status !== 'ok' && metEnvFault(rc));
+  }
+
+  async runTask(t) {
+    const tr = this.begin(t);
+    if (this.arm.kind === 'agent') {
+      const trace = await this.interpret(tr, t, 'interpreter', this.arm.model);
+      return this.finish(tr, t, { delivered: 'interpreter', output: trace.answer, error: trace.error ?? null, extra: { traceId: trace.traceId } });
+    }
+    // static
+    const rc = await this.compiled(tr, t, this.arm.scriptPath, null);
+    if (rc.status === 'ok') return this.finish(tr, t, { delivered: 'compiled', output: rc.output, compiledStatus: 'ok' });
+    const dk = rc.status === 'deopt' ? rc.deopt?.kind ?? 'unknown' : rc.status;
+    tr.ev(rc.status === 'deopt' ? 'deopt' : rc.status, { deoptKind: dk, detail: rc.deopt?.name ?? rc.error?.code ?? null });
+    tr.ev('fallback', { model: this.arm.fallback });
+    const trace = await this.interpret(tr, t, 'fallback', this.arm.fallback);
+    return this.finish(tr, t, { delivered: 'interpreter', output: trace.answer, compiledStatus: rc.status, deoptKind: dk, error: trace.error ?? null, extra: { traceId: trace.traceId } });
+  }
+}
+
+// ---------------------------------------------------------------------------------------------- the JIT arm
+const freshState = () => ({ traces: [], regressions: [], version: null, versionsCount: 0, deoptsSinceCompile: 0, compiledOks: 0, pendingCompile: 'initial', fallbacksUsed: 0 });
+
+class JitRun extends ArmRun {
+  addTrace(state, trace, t, role, kind) {
+    if (trace?.answer == null) return false;   // the compiler distils answers, not failures
+    state.traces.push({ traceId: trace.traceId, idx: t.idx, seq: state.traces.length, role, kind });
+    return true;
+  }
+  loadTrace(id) { return JSON.parse(readFileSync(path.join(this.p.traces, `${id}.json`), 'utf8')); }
+
+  // One builder session (or its record from before a crash: compile-attempt events are reused, never re-bought).
+  async compileAttempt(tr, t, state, n, builderModel, settings, inputs) {
+    const tag = builderModel.replace(/^claude-/, '').replace(/[^a-z0-9]+/gi, '');
+    const key = `v${n}-${tag}-${inputs.hash}`;
+    const vdir = path.join(this.p.versions, `v${n}-${tag}`);
+    const prior = this.compileDone.get(key);
+    if (prior) {
+      tr.ev('compile-reused', { version: n, builderModel, key });
+      return { ...prior.result, dir: vdir, reused: true };
+    }
+    const res = await this.retrying(tr, 'compile', async attempt => {
+      const r = await this.deps.compile({ familyId: this.config.familyId, traces: inputs.traces, previous: inputs.previous, regressions: inputs.regressions, builderModel,
+        builderEffort: settings.builderEffort, builderBudgetUsd: settings.builderBudgetUsd, gatewayUsd: settings.gatewayUsd, minutes: settings.minutes, perTaskUsd: this.config.perTaskUsd,
+        modelPort: this.port, workRoot: path.join(this.work, 'compile'), label: `v${n}-${tag}${attempt ? `-r${attempt}` : ''}`, models: this.arm.models });
+      const rec = r.record ?? {};
+      const builderUsd = rec.builderCostUsd ?? 0, gatewayUsd = rec.gatewayCostUsd ?? 0, total = rec.constructionCostUsd ?? builderUsd + gatewayUsd;
+      tr.spend('compileBuilder', builderUsd, rec.builderCostUnknown); tr.spend('compileGateway', total - builderUsd, (rec.gatewayUnknownCalls ?? 0) > 0);
+      return r;
+    }, r => ENV_FAULTS.has(r?.record?.builderError?.code) ? { builderError: r.record.builderError, error: r.record.builderError } : false);
+    const rec = res.record ?? {};
+    mkdirSync(vdir, { recursive: true });
+    const hasSolve = !!(res.solvePath && existsSync(res.solvePath));
+    if (hasSolve) copyFileSync(res.solvePath, path.join(vdir, 'solve.mjs'));
+    if (res.workdir && existsSync(path.join(res.workdir, 'BUILD-NOTES.md'))) copyFileSync(path.join(res.workdir, 'BUILD-NOTES.md'), path.join(vdir, 'BUILD-NOTES.md'));
+    writeFileSync(path.join(vdir, 'compile.json'), JSON.stringify({ ...rec, inputs: { traceIds: inputs.traces.map(x => x.traceId), regressionIds: inputs.regressions.map(x => x.regressionId), previousSha: inputs.previous ? sha(inputs.previous) : null } }, null, 1));
+    const result = { version: n, builderModel, hasSolve, solveSha: hasSolve ? sha(readFileSync(path.join(vdir, 'solve.mjs'))) : null, checkTraces: rec.checkTraces ?? null,
+      nestedModelAttempts: rec.nestedModelAttempts ?? 0, hiddenPathAttempts: rec.hiddenPathAttempts ?? 0, costUsd: rec.constructionCostUsd ?? (rec.builderCostUsd ?? 0) + (rec.gatewayCostUsd ?? 0),
+      builderError: rec.builderError?.code ?? null };
+    const e = this.event(t.idx, 'compile-attempt', { key, result });
+    this.compileDone.set(key, e);
+    tr.events.push({ kind: 'compile-attempt', key, version: n, builderModel, exact: exactOf(result.checkTraces), hasSolve, costUsd: result.costUsd });
+    return { ...result, dir: vdir };
+  }
+
+  async doCompile(tr, t, state) {
+    const pool = state.traces.map(x => ({ ...x }));
+    if (!pool.length) { tr.ev('compile-skipped', { reason: 'no usable trace yet' }); return; }
+    const n = state.versionsCount + 1;
+    const traces = selectTraces(pool, this.config.jit.maxTraces).map(x => this.loadTrace(x.traceId));
+    const regressions = state.regressions.map(id => JSON.parse(readFileSync(path.join(this.p.regressions, `${id}.json`), 'utf8')));
+    const previous = state.version ? readFileSync(path.join(this.p.dir, state.version.dir, 'solve.mjs'), 'utf8') : null;
+    const inputs = { traces, regressions, previous, hash: sha(canonical({ t: traces.map(x => x.traceId), r: state.regressions, p: previous ? sha(previous) : null })).slice(0, 12) };
+    const reason = state.pendingCompile;
+    const ok = a => a.hasSolve && a.nestedModelAttempts === 0 && accepted(a.checkTraces, { threshold: this.config.jit.acceptExact, regressionIds: state.regressions });
+    const attempts = [await this.compileAttempt(tr, t, state, n, this.arm.compiler, this.config.compile, inputs)];
+    const fb = this.arm.fallback;
+    if (!ok(attempts[0]) && fb && fb !== this.arm.compiler && (this.config.jit.maxFallbacks == null || state.fallbacksUsed < this.config.jit.maxFallbacks)) {
+      state.fallbacksUsed++;
+      tr.ev('fallback-compile', { version: n, from: this.arm.compiler, to: fb, exact: exactOf(attempts[0].checkTraces), hasSolve: attempts[0].hasSolve });
+      attempts.push(await this.compileAttempt(tr, t, state, n, fb, this.config.compile.fallback, inputs));
+    }
+    state.versionsCount = n; state.deoptsSinceCompile = 0; state.pendingCompile = null;
+    for (const a of attempts) if (a.nestedModelAttempts > 0) tr.ev('void', { version: n, builderModel: a.builderModel, nestedModelAttempts: a.nestedModelAttempts });
+    // The best usable attempt: accepted first, then exact agreement, then partial.
+    const usable = attempts.filter(a => a.hasSolve && a.nestedModelAttempts === 0);
+    const rank = a => [ok(a) ? 1 : 0, exactOf(a.checkTraces), Number(a.checkTraces?.partial ?? 0)];
+    const best = usable.sort((a, b) => { const x = rank(a), y = rank(b); return y[0] - x[0] || y[1] - x[1] || y[2] - x[2]; })[0];
+    if (!best) { tr.ev('compile-failed', { version: n, reason, attempts: attempts.map(a => a.builderModel) }); return; }
+    if (state.version && worseOnOld(best.checkTraces, state.version.checkTraces)) {
+      tr.ev('rejected', { version: n, keep: state.version.n, newExact: exactOf(best.checkTraces), oldExact: exactOf(state.version.checkTraces), builderModel: best.builderModel });
+      return;
+    }
+    const kind = state.version ? 'recompile' : 'compile';
+    state.version = { n, dir: path.relative(this.p.dir, best.dir), sha: best.solveSha, builderModel: best.builderModel, checkTraces: best.checkTraces, adoptedAt: t.idx, accepted: ok(best) };
+    tr.ev(kind, { version: n, reason, builderModel: best.builderModel, exact: exactOf(best.checkTraces), accepted: ok(best), traces: traces.length, regressions: regressions.length });
+  }
+
+  solvePathOf(state) {
+    const p = path.join(this.p.dir, state.version.dir, 'solve.mjs');
+    // Pinned: the executed script is the copy whose hash the state recorded.
+    if (!existsSync(p) || sha(readFileSync(p)) !== state.version.sha) throw new Error(`${this.arm.slug}: version v${state.version.n} solve.mjs is missing or changed`);
+    return p;
+  }
+
+  async runJitTask(t, state) {
+    const tr = this.begin(t);
+    const J = this.config.jit, model = this.arm.interpreter;
+    const fallbackInterpret = async (statusKind, rc) => {
+      const trace = await this.interpret(tr, t, 'interpreter', model);
+      this.addTrace(state, trace, t, 'fallback', statusKind);
+      state.deoptsSinceCompile++;
+      if (state.deoptsSinceCompile >= J.recompileOnDeopts) state.pendingCompile ??= statusKind === 'no-version' ? 'no-version' : 'deopts';
+      return { trace, rc };
+    };
+    if (t.idx >= J.warmup && state.pendingCompile) await this.doCompile(tr, t, state);
+    if (t.idx < J.warmup) {
+      const trace = await this.interpret(tr, t, 'interpreter', model);
+      this.addTrace(state, trace, t, 'warmup', 'warmup');
+      return this.finish(tr, t, { delivered: 'interpreter', output: trace.answer, error: trace.error ?? null, extra: { traceId: trace.traceId }, stateAfter: structuredClone(state) });
+    }
+    if (!state.version) {
+      tr.ev('no-version');
+      const { trace } = await fallbackInterpret('no-version');
+      return this.finish(tr, t, { delivered: 'interpreter', output: trace.answer, error: trace.error ?? null, extra: { traceId: trace.traceId }, stateAfter: structuredClone(state) });
+    }
+    const version = state.version.n;
+    const rc = await this.compiled(tr, t, this.solvePathOf(state), version);
+    if (rc.status !== 'ok') {
+      const dk = rc.status === 'deopt' ? rc.deopt?.kind ?? 'unknown' : rc.status;
+      tr.ev(rc.status === 'deopt' ? 'deopt' : rc.status, { version, deoptKind: dk, detail: rc.deopt?.name ?? rc.error?.code ?? null });
+      const { trace } = await fallbackInterpret(dk, rc);
+      return this.finish(tr, t, { delivered: 'interpreter', output: trace.answer, version, compiledStatus: rc.status, deoptKind: dk, error: trace.error ?? null,
+        extra: { traceId: trace.traceId }, stateAfter: structuredClone(state) });
+    }
+    state.compiledOks++;
+    let delivered = 'compiled', output = rc.output;
+    const extra = {};
+    if (J.shadowEvery && state.compiledOks % J.shadowEvery === 0) {
+      // Shadow: the arm's interpreter on the same task, fresh session; it never sees the compiled answer.
+      let s1 = null;
+      try { s1 = await this.interpret(tr, t, 'shadow', model); }
+      catch (e) { if (e.code !== 'ENV_FAULT') throw e; this.fault(t, e); tr.ev('shadow-fault'); }
+      if (s1) extra.shadowTraceId = s1.traceId;
+      if (s1 && s1.answer == null) tr.ev('shadow', { version, agree: null, note: 'shadow gave no answer' });
+      else if (s1 && sameAnswer(s1.answer, rc.output, J.compare)) { tr.ev('shadow', { version, agree: true }); this.addTrace(state, s1, t, 'shadow', 'shadow'); }
+      else if (s1) {
+        tr.ev('shadow', { version, agree: false }); tr.ev('disagree', { version });
+        let s2 = null;
+        try { s2 = await this.interpret(tr, t, 'adjudicator', model); }
+        catch (e) { if (e.code !== 'ENV_FAULT') throw e; this.fault(t, e); tr.ev('adjudicator-fault'); }
+        if (s2) extra.adjudicatorTraceId = s2.traceId;
+        if (s2 && sameAnswer(s2.answer, rc.output, J.compare)) tr.ev('adjudicate', { version, outcome: 'compiled' });
+        else if (s2 && sameAnswer(s2.answer, s1.answer, J.compare)) {
+          // Compiled answer in the minority: deliver the majority, keep the case (never the oracle's verdict).
+          delivered = 'adjudicated'; output = s1.answer;
+          const regressionId = `reg-${String(t.idx).padStart(3, '0')}-${randomUUID().slice(0, 6)}`;
+          writeFileSync(path.join(this.p.regressions, `${regressionId}.json`), JSON.stringify({ ...s1, regressionId, expected: s1.answer, compiledOutput: rc.output, version,
+            shadowTraceId: s1.traceId, adjudicatorTraceId: s2.traceId, idx: t.idx }));
+          state.regressions.push(regressionId);
+          this.addTrace(state, s1, t, 'shadow', 'shadow');
+          tr.ev('adjudicate', { version, outcome: 'interpreter' }); tr.ev('regression', { version, regressionId });
+          state.pendingCompile = 'regression';
+        } else { tr.ev('adjudicate', { version, outcome: 'none' }); tr.ev('unresolved', { version }); }
+      }
+    }
+    return this.finish(tr, t, { delivered, output, version, compiledStatus: 'ok', extra, stateAfter: structuredClone(state) });
+  }
+}
+
+// ---------------------------------------------------------------------------------------------- the stream
+async function pool(items, limit, fn) {
+  let next = 0;
+  await Promise.all(Array.from({ length: Math.max(1, Math.min(limit, items.length)) }, async () => { while (next < items.length) { const i = next++; await fn(items[i], i); } }));
+}
+
+// runStream: returns { runDir, arms: [{spec, slug, done, errors}], rows }.
+export async function runStream({ config: rawConfig, arms: filters = null, runRoot = RUN_ROOT, workRoot = WORK_ROOT, deps: injected = null, log = console.log, dry = false, binary = null,
+  allowWorkInRepo = false }) {
+  const config = normalizeConfig(rawConfig);
+  const runDir = path.join(runRoot, config.experiment);
+  // Sandboxed sessions hide the repository; workdirs live outside it (runner.mjs rule), traces and versions inside.
+  if (!allowWorkInRepo && path.resolve(workRoot).startsWith(REPO + path.sep)) throw new Error(`workRoot must be outside the repository: ${workRoot}`);
+  const deps = { ...(injected ? {} : await liveDeps()), ...(injected ?? {}) };
+  if (!deps.makeTasks) deps.makeTasks = (await import('../lib/beds.mjs')).makeTasks;
+  const policyIds = deps.policyIds ?? null;
+  const arms = config.arms.map(spec => parseArm(spec, config, { policyIds })).filter(a => matchArm(a, filters));
+  if (!arms.length) throw new Error(`no arm matches --arms ${filters?.join(',')}`);
+  const tasks = await streamTasks(config, deps);
+  if (dry) {
+    const plan = { experiment: config.experiment, runDir, workRoot: path.join(workRoot, config.experiment), familyId: config.familyId, split: config.split,
+      tasks: tasks.map(t => ({ idx: t.idx, taskKey: t.taskKey, taskHash: t.taskHash?.slice(0, 12) })),
+      arms: arms.map(a => ({ spec: a.spec, slug: a.slug, hash: a.hash, models: a.models, done: readJsonl(armPaths(runDir, a.slug).results).filter(r => r.experiment === config.experiment).length })),
+      caps: { perTaskUsd: config.perTaskUsd, agentBudgetUsd: config.agentBudgetUsd, agentMinutes: config.agentMinutes, compile: config.compile, jit: config.jit, spendStopUsd: config.spendStopUsd },
+      worstCaseUsd: Object.fromEntries(arms.map(a => [a.spec, worstCase(a, config, tasks.length)])) };
+    log(JSON.stringify(plan, null, 1));
+    return { runDir, plan, arms: [], rows: [] };
+  }
+  mkdirSync(runDir, { recursive: true });
+  const fam = deps.loadFamily ? await deps.loadFamily(config.familyId) : null;
+  const outputSchema = deps.outputSchema ?? fam?.outputSchema ?? null;
+  // Spend already recorded by these arms (for the optional spend stop).
+  const budget = { spent: 0 };
+  const runs = arms.map(arm => {
+    const R = arm.kind === 'jit' ? JitRun : ArmRun;
+    const run = new R({ arm, config, runDir, workRoot, deps, log, budget, binary });
+    run.outputSchema = outputSchema;
+    budget.spent += [...run.rows.values()].reduce((s, r) => s + (r.costUsd ?? 0), 0) + [...run.unbilled.values()].flat().reduce((s, e) => s + e.costUsd, 0);
+    return run;
+  });
+  for (const run of runs) {
+    for (const [idx, r] of run.rows) if (tasks[idx] && r.taskHash !== tasks[idx].taskHash) throw new Error(`${run.arm.slug}: recorded task #${idx} (${r.taskKey}) differs from the config's: use a new experiment name`);
+    // One journal per arm directory (SQLite contention between arm processes); agent arms need no gateway.
+    if (run.arm.kind !== 'agent') run.port = deps.createModelPort({ journalFile: run.p.journal, allowedModels: run.arm.models, concurrency: { 'claude-cli': 16 } }).port;
+  }
+  const status = new Map(runs.map(r => [r.arm.slug, { spec: r.arm.spec, slug: r.arm.slug, done: 0, faults: 0, errors: [] }]));
+  const note = (run, error) => {
+    const s = status.get(run.arm.slug);
+    if (error.code === 'SPEND_STOP') { s.errors.push(error.message); return; }
+    s.errors.push(String(error.stack ?? error.message ?? error).slice(0, 2000));
+    log(`${run.arm.slug}: ERROR ${error.message}`);
+  };
+  // Agent and static arms: independent tasks under the concurrency cap, arm order rotated per task.
+  const flat = runs.filter(r => r.arm.kind !== 'jit'), jobs = [];
+  tasks.forEach((t, ti) => flat.forEach((_, ai) => { const run = flat[(ai + ti) % flat.length]; if (!run.rows.has(t.idx)) jobs.push([run, t]); }));
+  const flatDone = pool(jobs, config.concurrency, async ([run, t]) => {
+    const s = status.get(run.arm.slug);
+    try { await run.runTask(t); s.done++; }
+    catch (error) { if (error.code === 'ENV_FAULT') { run.fault(t, error); s.faults++; } else note(run, error); }
+  });
+  // JIT arms: sequential, in stream order; state comes from the last finished row.
+  const streams = runs.filter(r => r.arm.kind === 'jit').map(async run => {
+    const s = status.get(run.arm.slug);
+    let state = freshState();
+    for (const t of tasks) {
+      const prior = run.rows.get(t.idx);
+      if (prior) { state = structuredClone(prior.stateAfter ?? state); continue; }
+      try { await run.runJitTask(t, state); s.done++; }
+      catch (error) {
+        if (error.code === 'ENV_FAULT') { run.fault(t, error); s.faults++; log(`${run.arm.slug}: stream stops at #${t.idx} (resume continues it here)`); }
+        else note(run, error);
+        return;
+      }
+    }
+  });
+  await Promise.all([flatDone, ...streams]);
+  return { runDir, arms: [...status.values()], rows: runs.flatMap(r => [...r.rows.values()]) };
+}
+
+// Worst-case dollars per arm at the configured caps (planning only; real spend is measured).
+function worstCase(arm, c, n) {
+  const agent = c.agentBudgetUsd, comp = c.compile.builderBudgetUsd + c.compile.gatewayUsd, fb = c.compile.fallback.builderBudgetUsd + c.compile.fallback.gatewayUsd;
+  if (arm.kind === 'agent') return round(n * agent);
+  if (arm.kind === 'static') return round(n * (c.perTaskUsd + agent));
+  const post = Math.max(0, n - c.jit.warmup);
+  const compiles = 1 + Math.floor(post / Math.max(1, c.jit.recompileOnDeopts));
+  return round(c.jit.warmup * agent + post * (c.perTaskUsd + 2 * agent) + compiles * (comp + (arm.fallback ? fb : 0)));
+}
+
+// ---------------------------------------------------------------------------------------------- CLI
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const arg = (name, dflt = null) => (process.argv.includes(`--${name}`) ? process.argv[process.argv.indexOf(`--${name}`) + 1] : dflt);
+  const file = arg('config');
+  if (!file) { console.error('usage: node experiments/jit/stream.mjs --config <file> [--arms a,b] [--dry] [--run-root dir] [--work-root dir]'); process.exit(2); }
+  const config = JSON.parse(readFileSync(path.resolve(file), 'utf8'));
+  const filters = arg('arms')?.split(',').map(s => s.trim()).filter(Boolean) ?? null;
+  const res = await runStream({ config, arms: filters, dry: process.argv.includes('--dry'), runRoot: path.resolve(arg('run-root', RUN_ROOT)), workRoot: path.resolve(arg('work-root', WORK_ROOT)) });
+  if (res.arms.length) console.log(JSON.stringify(res.arms, null, 1));
+  process.exit(res.arms.some(a => a.errors.length) ? 1 : 0);
+}
