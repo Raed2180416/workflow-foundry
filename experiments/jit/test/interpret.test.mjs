@@ -7,7 +7,7 @@ import { mkdtempSync, rmSync, mkdirSync, writeFileSync, chmodSync, readFileSync,
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { sandboxAvailable } from '../../../src/executors/claude-code.mjs';
-import { interpret, harvestScripts, outsidePathsOf, validateOutput, SCRIPT_CAP_BYTES } from '../interpret.mjs';
+import { interpret, harvestScripts, outsidePathsOf, validateOutput, writtenScripts, allScripts, SCRIPT_CAP_BYTES, INLINE_MIN_CHARS } from '../interpret.mjs';
 
 const skip = sandboxAvailable() ? false : 'no user namespaces';
 const tmp = t => { const d = mkdtempSync(path.join(tmpdir(), 'jit-interp-')); t.after(() => rmSync(d, { recursive: true, force: true })); return d; };
@@ -93,4 +93,29 @@ test('harvest helpers: exclusions, outside-path scan, schema check', t => {
   assert.equal(validateOutput(SCHEMA, { records: [] }).valid, true);
   assert.equal(validateOutput(SCHEMA, { rows: [] }).valid, false);
   assert.equal(validateOutput(null, 1).valid, true, 'no schema: nothing to check');
+});
+
+test('programs written outside the workdir are harvested: Write elsewhere, heredoc files, heredoc stdin, long inline programs', t => {
+  const d = tmp(t);
+  writeFileSync(path.join(d, 'solve.py'), 'print("final")\n');
+  const long = 'import json\n' + 'x = 1\n'.repeat(INLINE_MIN_CHARS / 6 + 5);
+  const uses = [
+    { name: 'Write', input: { file_path: '/tmp/scratch/helper.mjs', content: 'export const a = 1;\n' } },
+    { name: 'Write', input: { file_path: path.join(d, 'solve.py'), content: 'print("draft")\n' } },
+    { name: 'Write', input: { file_path: '/tmp/notes.md', content: 'not a script' } },
+    { name: 'Bash', input: { command: "mkdir -p /tmp/w && cat > /tmp/w/build.py <<'EOF'\nimport json\nprint(json.dumps({}))\nEOF\npython3 /tmp/w/build.py > answer.json" } },
+    { name: 'Bash', input: { command: 'cat <<EOF > /tmp/w/run.sh\necho hi\nEOF' } },
+    { name: 'Bash', input: { command: "python3 - <<'PY'\nprint('from stdin')\nPY" } },
+    { name: 'Bash', input: { command: `python3 -c "${long}"` } },
+    { name: 'Bash', input: { command: 'python3 -c "print(1)"' } },
+    { name: 'Bash', input: { command: "cat > /tmp/w/build.py <<'EOF'\nprint('second version')\nEOF" } },
+  ];
+  const w = writtenScripts(uses);
+  assert.deepEqual(w.map(x => [x.path, x.source]), [
+    ['/tmp/scratch/helper.mjs', 'write'], [path.join(d, 'solve.py'), 'write'], ['/tmp/w/run.sh', 'heredoc'], ['command-3.py', 'heredoc-stdin'], ['command-4.py', 'inline'], ['/tmp/w/build.py', 'heredoc']]);
+  assert.equal(w.find(x => x.path === '/tmp/w/build.py').text, "print('second version')\n", 'the last write of a path wins');
+  assert.equal(w.find(x => x.path === 'command-3.py').text, "print('from stdin')\n");
+  const all = allScripts(d, uses);
+  assert.deepEqual(all.map(x => [x.path, x.source]), [['solve.py', 'workdir'], ['/tmp/scratch/helper.mjs', 'write'], ['/tmp/w/run.sh', 'heredoc'], ['command-3.py', 'heredoc-stdin'], ['command-4.py', 'inline'], ['/tmp/w/build.py', 'heredoc']]);
+  assert.equal(all[0].text, 'print("final")\n', 'the file left in the workdir wins over a Write of the same path');
 });

@@ -38,13 +38,46 @@ export function harvestScripts(workdir, { exclude = new Set() } = {}) {
   const scripts = [];
   for (const rel of listFiles(workdir)) {
     if (!SCRIPT_EXT.has(path.extname(rel)) || exclude.has(rel) || rel.startsWith('files/')) continue;
-    const buf = readFileSync(path.join(workdir, rel));
-    const truncated = buf.length > SCRIPT_CAP_BYTES;
-    scripts.push({ path: rel, bytes: buf.length, text: buf.subarray(0, SCRIPT_CAP_BYTES).toString('utf8') + (truncated ? '\n/* [truncated by the harness at 20 KB] */\n' : ''), ...(truncated ? { truncated: true } : {}) });
+    scripts.push(capped(rel, readFileSync(path.join(workdir, rel), 'utf8'), 'workdir'));
     if (scripts.length >= MAX_SCRIPTS) break;
   }
   return scripts;
 }
+
+// Programs the agent wrote that never landed in its workdir: a Write tool call to another path (e.g. /tmp, private to the
+// sandbox and gone afterwards), a heredoc into a script file, a heredoc fed to an interpreter, or a long inline -c/-e
+// program. Agents often work this way (live smoke 2026-10-08: Haiku wrote its whole build.py to /tmp via a heredoc), and
+// the compiler only sees the first 200 characters of each command. Last write of a path wins; each text is capped.
+const SCRIPT_PATH = /\.(?:mjs|js|py|sh)$/;
+const HEREDOC_TO_FILE = /(?:cat|tee)\s+(?:-a\s+)?>{0,2}\s*['"]?([^\s'"<>|;&]+)['"]?\s*<<-?\s*(['"]?)([A-Za-z_]\w*)\2[^\n]*\n([\s\S]*?)\n\s*\3\s*(?=\n|$)/g;
+const HEREDOC_FILE_LAST = /cat\s*<<-?\s*(['"]?)([A-Za-z_]\w*)\1\s*>{1,2}\s*['"]?([^\s'"<>|;&]+)['"]?[^\n]*\n([\s\S]*?)\n\s*\2\s*(?=\n|$)/g;
+const HEREDOC_TO_INTERP = /\b(python3?|node)\b[^\n<]*?<<-?\s*(['"]?)([A-Za-z_]\w*)\2[^\n]*\n([\s\S]*?)\n\s*\3\s*(?=\n|$)/g;
+const INLINE = /\b(python3?|node)\s+(?:-[A-Za-z-]+(?:=\S+)?\s+)*?(?:-c|-e|--eval)\s+(["'])([\s\S]*)\2/;
+export const INLINE_MIN_CHARS = 400;
+const ext = interp => (interp.startsWith('python') ? 'py' : 'mjs');
+export function writtenScripts(toolUses) {
+  const found = new Map();
+  const add = (p, text, source) => { found.delete(p); found.set(p, { path: p, text, source }); };
+  let n = 0;
+  for (const u of toolUses) {
+    const input = u?.input ?? {};
+    if (u?.name === 'Write' && typeof input.file_path === 'string' && SCRIPT_PATH.test(input.file_path) && typeof input.content === 'string') add(input.file_path, input.content, 'write');
+    if (u?.name !== 'Bash' || typeof input.command !== 'string') continue;
+    const cmd = input.command;
+    n++;
+    for (const m of cmd.matchAll(HEREDOC_TO_FILE)) if (SCRIPT_PATH.test(m[1])) add(m[1], m[4] + '\n', 'heredoc');
+    for (const m of cmd.matchAll(HEREDOC_FILE_LAST)) if (SCRIPT_PATH.test(m[3])) add(m[3], m[4] + '\n', 'heredoc');
+    let k = 0;
+    for (const m of cmd.matchAll(HEREDOC_TO_INTERP)) add(`command-${n}${k++ ? `-${k}` : ''}.${ext(m[1])}`, m[4] + '\n', 'heredoc-stdin');
+    const inline = cmd.match(INLINE);
+    if (!k && inline && inline[3].length >= INLINE_MIN_CHARS) add(`command-${n}.${ext(inline[1])}`, inline[3], 'inline');
+  }
+  return [...found.values()];
+}
+const capped = (p, text, source) => {
+  const buf = Buffer.from(text, 'utf8'), truncated = buf.length > SCRIPT_CAP_BYTES;
+  return { path: p, bytes: buf.length, text: buf.subarray(0, SCRIPT_CAP_BYTES).toString('utf8') + (truncated ? '\n/* [truncated by the harness at 20 KB] */\n' : ''), source, ...(truncated ? { truncated: true } : {}) };
+};
 
 // Tool uses from the session transcript runClaudeCode writes into the workdir (same extraction as runClaudeCode).
 export function transcriptToolUses(workdir) {
@@ -77,7 +110,9 @@ export async function interpret({ task, familyId, outputSchema = null, model, bu
   let r;
   try { r = await agent.run({ task, familyId, outputSchema, workdir, state: {} }); }
   catch (error) {
-    // runClaudeCode throws only before the CLI starts: nothing was spent.
+    // runClaudeCode throws (a coded FoundryError) only before the CLI starts: nothing was spent. An uncoded error is a
+    // harness bug (an unknown family, say) and surfaces instead of passing for an environment fault.
+    if (!error.code) throw error;
     r = { output: null, costUsd: 0, costUnknown: false, latencyMs: Date.now() - started, meta: {},
       error: { code: error.code === 'SANDBOX_UNAVAILABLE' ? 'SANDBOX_UNAVAILABLE' : 'EXECUTOR_LAUNCH', message: String(error.message ?? error).slice(0, 500) } };
   }
@@ -95,7 +130,7 @@ export async function interpret({ task, familyId, outputSchema = null, model, bu
     model, effort, budgetUsd,
     answer, answerValid: check.valid, answerErrors: check.errors,
     costUsd: r.costUsd ?? 0, costUnknown: !!r.costUnknown, latencyMs: r.latencyMs ?? (Date.now() - started), error: r.error ?? null,
-    scripts: harvestScripts(workdir, { exclude }), commands,
+    scripts: allScripts(workdir, toolUses, exclude), commands,
     turns: r.meta?.turns ?? null, tools: r.meta?.tools ?? toolUses.length, sessionId: r.meta?.sessionId ?? null,
     nestedModelAttempts: r.meta?.nestedModelAttempts ?? 0, hiddenPathAttempts, outsidePaths,
     streamUsage: r.meta?.streamUsage ?? null,
@@ -104,6 +139,19 @@ export async function interpret({ task, familyId, outputSchema = null, model, bu
   };
   writeFileSync(path.join(workdir, 'trace.json'), JSON.stringify(trace, null, 1));
   return trace;
+}
+
+// The workdir's scripts first, then programs written elsewhere (a workdir file of the same path wins).
+export function allScripts(workdir, toolUses, exclude = new Set()) {
+  const own = path.resolve(workdir), scripts = harvestScripts(workdir, { exclude });
+  const have = new Set(scripts.map(s => s.path));
+  for (const w of writtenScripts(toolUses)) {
+    if (scripts.length >= MAX_SCRIPTS) break;
+    const rel = w.path.startsWith(own + path.sep) ? path.relative(own, w.path) : w.path;
+    if (have.has(rel) || exclude.has(rel)) continue;
+    have.add(rel); scripts.push(capped(rel, w.text, w.source));
+  }
+  return scripts;
 }
 
 // A trace is a usable compile input only with an answer (the compiler distils answers, not failures).

@@ -19,11 +19,11 @@ import { createModelPort as createModelPortSync } from '../lib/models.mjs';
 const REPO = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 export const RUN_ROOT = path.join(REPO, 'experiments/runs/jit'), WORK_ROOT = '/var/tmp/foundry-work/jit';
 export const POLICY_MODELS = Object.freeze(['claude-haiku-5-5', 'claude-sonnet-5-5', 'claude-opus-5-5']);
-export const DEFAULT_JIT = Object.freeze({ warmup: 3, shadowEvery: 4, recompileOnDeopts: 2, maxTraces: 8, compilerFallback: 'claude-opus-5-5', acceptExact: 0.75,
-  maxFallbacks: null, compare: 'canonical' });
-// SPEC §3.5: builder Haiku high $3 + $1.5 gateway 30 min; the fallback Opus high $8 + $1.5 gateway 45 min.
-export const DEFAULT_COMPILE = Object.freeze({ builderEffort: 'high', builderBudgetUsd: 3, gatewayUsd: 1.5, minutes: 30,
-  fallback: Object.freeze({ builderEffort: 'high', builderBudgetUsd: 8, gatewayUsd: 1.5, minutes: 45 }) });
+export const DEFAULT_JIT = Object.freeze({ warmup: 3, shadowEvery: 4, recompileOnDeopts: 2, maxTraces: 8, compilerFallback: 'claude-opus-5-5', maxFallbacks: null, compare: 'canonical' });
+// SPEC §3.5: builder Haiku high $3 + $1.5 gateway 30 min; the fallback Opus high $8 + $1.5 gateway 45 min. checkUsd caps the
+// host acceptance check (compile.mjs hostCheck); a check with budget deopts is re-run once at twice that cap.
+export const DEFAULT_COMPILE = Object.freeze({ builderEffort: 'high', builderBudgetUsd: 3, gatewayUsd: 1.5, checkUsd: 1.5, minutes: 30,
+  fallback: Object.freeze({ builderEffort: 'high', builderBudgetUsd: 8, gatewayUsd: 1.5, checkUsd: 1.5, minutes: 45 }) });
 const STATIC_FALLBACK = 'claude-haiku-5-5';
 
 const sha = s => createHash('sha256').update(s).digest('hex');
@@ -118,10 +118,11 @@ export function selectTraces(pool, max) {
 // timeout|unlabeled, exact?, partial?}]}. Cases are matched across compiles by ref (the positional id changes).
 const caseId = e => e?.ref ?? e?.traceId ?? e?.regressionId ?? e?.caseId ?? e?.id ?? e?.name ?? null;
 const compactCheck = ct => (ct ? { exact: ct.exact ?? null, exactRate: ct.exactRate ?? null, partial: ct.partial ?? null, deopts: ct.deopts ?? null, crashes: ct.crashes ?? null,
-  regressions: ct.regressions ?? null, regressionsPassed: ct.regressionsPassed ?? null, accepted: ct.accepted ?? null, error: ct.error ?? null,
+  timeouts: ct.timeouts ?? null, deoptKinds: ct.deoptKinds ?? null, cases: ct.cases ?? null, labeled: ct.labeled ?? null, diffs: ct.diffs ?? null,
+  regressions: ct.regressions ?? null, regressionsPassed: ct.regressionsPassed ?? null, clean: ct.clean ?? null, unexplained: ct.unexplained ?? null,
+  accepted: ct.accepted ?? null, error: ct.error ?? null, recheck: ct.recheck ?? null,
   perCase: perCaseList(ct).map(e => ({ id: e.id ?? null, ref: caseId(e), kind: e.kind ?? null, status: e.status ?? null, exact: caseExact(e) === 1, partial: e.partial ?? null })) } : null);
 const caseExact = e => (typeof e?.exact === 'boolean' ? (e.exact ? 1 : 0) : typeof e?.exact === 'number' ? (e.exact >= 1 ? 1 : 0) : e?.status === 'exact' ? 1 : 0);
-const casePartial = e => { const p = Number(e?.partial ?? (caseExact(e) ? 1 : 0)); return p > 1 ? p / 100 : p; };
 const perCaseList = ct => (Array.isArray(ct?.perCase) ? ct.perCase : ct?.perCase && typeof ct.perCase === 'object' ? Object.entries(ct.perCase).map(([id, v]) => ({ id, ...(typeof v === 'object' ? v : { exact: v }) })) : []);
 export function exactOf(ct) {
   if (!ct) return 0;
@@ -131,27 +132,39 @@ export function exactOf(ct) {
   const n = Number(ct.cases ?? ct.total ?? 0), x = Number(ct.exact ?? 0);
   return x > 1 && n ? x / n : x > 1 ? 1 : x;
 }
-export function accepted(ct, { threshold = 0.75, regressionIds = [] } = {}) {
-  if (!ct) return false;
-  const cases = perCaseList(ct);
-  const failingRegression = cases.some(e => (e.kind === 'regression' || regressionIds.includes(caseId(e))) && !caseExact(e))
-    || (typeof ct.regressions === 'number' && typeof ct.regressionsPassed === 'number' && ct.regressionsPassed < ct.regressions);
-  return exactOf(ct) + 1e-9 >= threshold && !failingRegression;
-}
-// SPEC §6.2.4: the new version is worse when, on the old version's cases (by id), it has fewer exact cases (then lower
-// mean partial agreement on a tie). Without per-case ids, the aggregates are compared.
-export function worseOnOld(newCt, oldCt) {
-  if (!oldCt) return false;
-  if (!newCt) return true;
+// Acceptance is compile.mjs's verdict: the host check is clean (no crash, deopt or timeout on any case, every regression
+// case passes) and every diff case is named in BUILD-NOTES.md. exactOf() is a logged diagnostic only.
+export const accepted = ct => ct?.accepted === true;
+// Exact cases on the old version's cases, matched by ref (traceId / caseId); cases the new check did not run are left out.
+export function exactOnOld(newCt, oldCt) {
   const oldCases = perCaseList(oldCt).filter(e => caseId(e) != null), newById = new Map(perCaseList(newCt).filter(e => caseId(e) != null).map(e => [caseId(e), e]));
   const shared = oldCases.filter(e => newById.has(caseId(e)));
-  if (shared.length) {
-    const ex = (list, pick) => list.reduce((s, e) => s + pick(e), 0);
-    const oldExact = ex(shared, caseExact), newExact = ex(shared.map(e => newById.get(caseId(e))), caseExact);
-    if (newExact !== oldExact) return newExact < oldExact;
-    return ex(shared.map(e => newById.get(caseId(e))), casePartial) + 1e-9 < ex(shared, casePartial);
-  }
-  return exactOf(newCt) + 1e-9 < exactOf(oldCt);
+  return { shared: shared.length, oldExact: shared.reduce((s, e) => s + caseExact(e), 0), newExact: shared.reduce((s, e) => s + caseExact(newById.get(caseId(e))), 0) };
+}
+// SPEC §6.2.4 (as reconciled with compile.mjs): a recompiled version replaces the current one only if its host check is
+// clean and its exact count on the old cases is no lower. Returns the reason to reject, or null.
+export function rejectReason(newCt, oldCt) {
+  if (!oldCt) return null;
+  if (!newCt?.clean) return 'not clean';
+  const o = exactOnOld(newCt, oldCt);
+  if (o.shared) return o.newExact < o.oldExact ? `fewer exact on the old cases (${o.newExact} < ${o.oldExact} of ${o.shared})` : null;
+  return exactOf(newCt) + 1e-9 < exactOf(oldCt) ? 'lower exact rate (no shared case ids)' : null;
+}
+export const worseOnOld = (newCt, oldCt) => rejectReason(newCt, oldCt) != null;
+
+// checkTraces from a hostCheck() result, by compile.mjs's rule: accepted = clean and every diff case named in BUILD-NOTES.md.
+export function checkFromSummary(check, workdir, regressions = 0) {
+  const s = check?.summary ?? null;
+  const notesFile = workdir ? path.join(workdir, 'BUILD-NOTES.md') : null;
+  const notes = notesFile && existsSync(notesFile) ? readFileSync(notesFile, 'utf8') : null;
+  const unexplained = (s?.perCase ?? []).filter(c => c.status === 'diff' && !new RegExp(`\\b${c.id}\\b`).test(notes ?? '')).map(c => c.id);
+  return {
+    exact: s?.exact ?? 0, partial: s?.partial ?? null, deopts: s?.deopts ?? 0, crashes: s?.crashes ?? 0, perCase: s?.perCase ?? [],
+    cases: s?.cases ?? 0, labeled: s?.labeled ?? 0, exactRate: s?.exactRate ?? null, diffs: s?.diffs ?? 0, deoptKinds: s?.deoptKinds ?? {}, timeouts: s?.timeouts ?? 0,
+    regressions: s?.regressions ?? regressions, regressionsPassed: s?.regressionsPassed ?? 0, clean: !!s?.clean, unexplained,
+    accepted: !!s?.clean && unexplained.length === 0, costUsd: check?.costUsd ?? 0, calls: check?.calls ?? 0, unknownCalls: check?.unknownCalls ?? 0, refusals: check?.refusals ?? {},
+    durationMs: check?.durationMs ?? null, error: check?.error ?? null,
+  };
 }
 
 // ---------------------------------------------------------------------------------------------- per-arm files
@@ -179,6 +192,9 @@ async function liveDeps() {
     interpret: async a => (await import('./interpret.mjs')).interpret(a),
     runCompiled: async a => (await import('./run-compiled.mjs')).runCompiled(a),
     compile: async a => (await import('./compile.mjs')).compile(a),
+    // compile.mjs's host acceptance check again, on the solve.mjs the builder left, at a higher cap.
+    recheck: async ({ workdir, solvePath, traces, regressions, modelPort, models, capUsd, label }) => (await import('./compile.mjs')).hostCheck({
+      dir: path.join(workdir, '.host-check-recheck'), solveSource: readFileSync(solvePath, 'utf8'), traces, regressions, modelPort, models, capUsd, label }),
     createModelPort: a => createModelPortSync(a),
     score: beds.score, makeTasks: beds.makeTasks, loadFamily: beds.loadFamily,
   };
@@ -190,6 +206,23 @@ export async function streamTasks(config, deps) {
   return out;
 }
 
+// One process per arm at a time: <armDir>/.lock holds the owner's pid; a lock whose process is gone is taken over.
+const alive = pid => { try { process.kill(pid, 0); return true; } catch (e) { return e.code === 'EPERM'; } };
+function lockArm(dir) {
+  const file = path.join(dir, '.lock');
+  for (let i = 0; i < 2; i++) {
+    try { writeFileSync(file, String(process.pid), { flag: 'wx' }); return () => rmSync(file, { force: true }); }
+    catch (e) {
+      if (e.code !== 'EEXIST') throw e;
+      const pid = Number(readFileSync(file, 'utf8'));
+      if (pid && pid !== process.pid && alive(pid)) throw new Error(`arm directory ${dir} is in use by process ${pid}`);
+      if (pid === process.pid) throw new Error(`arm directory ${dir} is already open in this process`);
+      rmSync(file, { force: true });
+    }
+  }
+  throw new Error(`could not lock ${dir}`);
+}
+
 // ---------------------------------------------------------------------------------------------- one arm
 class ArmRun {
   constructor({ arm, config, runDir, workRoot, deps, log, budget, binary }) {
@@ -197,8 +230,6 @@ class ArmRun {
     this.p = armPaths(runDir, arm.slug);
     this.work = path.join(workRoot, config.experiment, arm.slug);
     for (const d of [this.p.dir, this.p.traces, this.p.versions, this.p.regressions]) mkdirSync(d, { recursive: true });
-    // This arm's definition, beside its rows (per-arm file: never shared with another process).
-    writeFileSync(path.join(this.p.dir, 'arm.json'), JSON.stringify({ experiment: config.experiment, spec: arm.spec, slug: arm.slug, kind: arm.kind, hash: arm.hash, def: arm.def }, null, 1));
     this.rows = new Map();
     for (const r of readJsonl(this.p.results)) {
       if (r.experiment !== config.experiment) continue;
@@ -213,6 +244,9 @@ class ArmRun {
       if (e.kind === 'spend' && !billed.has(e.id)) { if (!this.unbilled.has(e.idx)) this.unbilled.set(e.idx, []); this.unbilled.get(e.idx).push(e); }
       if (e.kind === 'compile-attempt' && e.key) this.compileDone.set(e.key, e);
     }
+    // Last: a refused resume above takes no lock. Then this arm's definition, beside its rows (a per-arm file).
+    this.unlock = lockArm(this.p.dir);
+    writeFileSync(path.join(this.p.dir, 'arm.json'), JSON.stringify({ experiment: config.experiment, spec: arm.spec, slug: arm.slug, kind: arm.kind, hash: arm.hash, def: arm.def }, null, 1));
   }
 
   event(idx, kind, data = {}) {
@@ -341,7 +375,8 @@ class JitRun extends ArmRun {
     }
     const res = await this.retrying(tr, 'compile', async attempt => {
       const r = await this.deps.compile({ familyId: this.config.familyId, traces: inputs.traces, previous: inputs.previous, regressions: inputs.regressions, builderModel,
-        builderEffort: settings.builderEffort, builderBudgetUsd: settings.builderBudgetUsd, gatewayUsd: settings.gatewayUsd, minutes: settings.minutes, perTaskUsd: this.config.perTaskUsd,
+        builderEffort: settings.builderEffort, builderBudgetUsd: settings.builderBudgetUsd, gatewayUsd: settings.gatewayUsd, checkUsd: settings.checkUsd ?? settings.gatewayUsd,
+        minutes: settings.minutes, perTaskUsd: this.config.perTaskUsd,
         modelPort: this.port, workRoot: path.join(this.work, 'compile'), label: `v${n}-${tag}${attempt ? `-r${attempt}` : ''}`, models: this.arm.models, version: n });
       const rec = r.record ?? {};
       // Every dollar of the compile: the builder session, its gateway calls, and the host acceptance check.
@@ -351,18 +386,30 @@ class JitRun extends ArmRun {
       return r;
     }, r => ENV_FAULTS.has(r?.record?.builderError?.code) || ENV_FAULTS.has(r?.record?.checkTraces?.error?.code));
     const rec = res.record ?? {};
-    mkdirSync(vdir, { recursive: true });
     const hasSolve = !!(res.solvePath && existsSync(res.solvePath));
+    // A host check that hit budget deopts is re-run once at twice the check cap before acceptance is judged.
+    let recheckUsd = 0;
+    if (hasSolve && (rec.checkTraces?.deoptKinds?.budget ?? 0) > 0) {
+      const capUsd = 2 * (settings.checkUsd ?? settings.gatewayUsd);
+      tr.ev('recheck', { version: n, builderModel, reason: 'budget deopts in the host check', budgetDeopts: rec.checkTraces.deoptKinds.budget, capUsd });
+      const rc = await this.deps.recheck({ workdir: res.workdir, solvePath: res.solvePath, traces: inputs.traces, regressions: inputs.regressions, modelPort: this.port, models: this.arm.models,
+        capUsd, label: `v${n}-${tag}-recheck` });
+      recheckUsd = rc.costUsd ?? 0;
+      tr.spend('compileCheck', recheckUsd, (rc.unknownCalls ?? 0) > 0);
+      rec.checkTraces = { ...checkFromSummary(rc, res.workdir, inputs.regressions.length), recheck: { capUsd, firstCheck: compactCheck(rec.checkTraces) } };
+    }
+    mkdirSync(vdir, { recursive: true });
     if (hasSolve) copyFileSync(res.solvePath, path.join(vdir, 'solve.mjs'));
     if (res.workdir && existsSync(path.join(res.workdir, 'BUILD-NOTES.md'))) copyFileSync(path.join(res.workdir, 'BUILD-NOTES.md'), path.join(vdir, 'BUILD-NOTES.md'));
     writeFileSync(path.join(vdir, 'compile.json'), JSON.stringify({ ...rec, inputs: { traceIds: inputs.traces.map(x => x.traceId), regressionIds: inputs.regressions.map(x => x.regressionId), previousSha: inputs.previous ? sha(inputs.previous) : null } }, null, 1));
     const result = { version: n, builderModel, hasSolve, solveSha: hasSolve ? sha(readFileSync(path.join(vdir, 'solve.mjs'))) : null, checkTraces: compactCheck(rec.checkTraces),
       nestedModelAttempts: rec.nestedModelAttempts ?? 0, hiddenPathAttempts: rec.hiddenPathAttempts ?? 0,
-      costUsd: rec.compileCostUsd ?? (rec.builderCostUsd ?? 0) + (rec.gatewayCostUsd ?? 0) + (rec.checkCostUsd ?? 0),
+      costUsd: (rec.compileCostUsd ?? (rec.builderCostUsd ?? 0) + (rec.gatewayCostUsd ?? 0) + (rec.checkCostUsd ?? 0)) + recheckUsd,
       builderError: rec.builderError?.code ?? null, checkError: rec.checkTraces?.error?.code ?? null, builderAccepted: rec.checkTraces?.accepted ?? null };
     const e = this.event(t.idx, 'compile-attempt', { key, result });
     this.compileDone.set(key, e);
-    tr.events.push({ kind: 'compile-attempt', key, version: n, builderModel, exact: exactOf(result.checkTraces), hasSolve, costUsd: result.costUsd });
+    tr.events.push({ kind: 'compile-attempt', key, version: n, builderModel, exactRate: exactOf(result.checkTraces), accepted: accepted(result.checkTraces), clean: !!result.checkTraces?.clean,
+      hasSolve, costUsd: result.costUsd });
     return { ...result, dir: vdir };
   }
 
@@ -375,28 +422,31 @@ class JitRun extends ArmRun {
     const previous = state.version ? readFileSync(path.join(this.p.dir, state.version.dir, 'solve.mjs'), 'utf8') : null;
     const inputs = { traces, regressions, previous, hash: sha(canonical({ t: traces.map(x => x.traceId), r: state.regressions, p: previous ? sha(previous) : null })).slice(0, 12) };
     const reason = state.pendingCompile;
-    const ok = a => a.hasSolve && a.nestedModelAttempts === 0 && accepted(a.checkTraces, { threshold: this.config.jit.acceptExact, regressionIds: state.regressions });
+    const ok = a => a.hasSolve && a.nestedModelAttempts === 0 && accepted(a.checkTraces);
     const attempts = [await this.compileAttempt(tr, t, state, n, this.arm.compiler, this.config.compile, inputs)];
     const fb = this.arm.fallback;
     if (!ok(attempts[0]) && fb && fb !== this.arm.compiler && (this.config.jit.maxFallbacks == null || state.fallbacksUsed < this.config.jit.maxFallbacks)) {
       state.fallbacksUsed++;
-      tr.ev('fallback-compile', { version: n, from: this.arm.compiler, to: fb, exact: exactOf(attempts[0].checkTraces), hasSolve: attempts[0].hasSolve });
+      tr.ev('fallback-compile', { version: n, from: this.arm.compiler, to: fb, exactRate: exactOf(attempts[0].checkTraces), clean: !!attempts[0].checkTraces?.clean, hasSolve: attempts[0].hasSolve });
       attempts.push(await this.compileAttempt(tr, t, state, n, fb, this.config.compile.fallback, inputs));
     }
     state.versionsCount = n; state.deoptsSinceCompile = 0; state.pendingCompile = null;
     for (const a of attempts) if (a.nestedModelAttempts > 0) tr.ev('void', { version: n, builderModel: a.builderModel, nestedModelAttempts: a.nestedModelAttempts });
-    // The best usable attempt: accepted first, then exact agreement, then partial.
+    // The best usable attempt: accepted first, then clean, then exact rate, then partial (the later attempt on a tie).
     const usable = attempts.filter(a => a.hasSolve && a.nestedModelAttempts === 0);
-    const rank = a => [ok(a) ? 1 : 0, exactOf(a.checkTraces), Number(a.checkTraces?.partial ?? 0)];
-    const best = usable.sort((a, b) => { const x = rank(a), y = rank(b); return y[0] - x[0] || y[1] - x[1] || y[2] - x[2]; })[0];
+    const rank = a => [ok(a) ? 1 : 0, a.checkTraces?.clean ? 1 : 0, exactOf(a.checkTraces), Number(a.checkTraces?.partial ?? 0)];
+    const best = usable.reverse().sort((a, b) => { const x = rank(a), y = rank(b); return y[0] - x[0] || y[1] - x[1] || y[2] - x[2] || y[3] - x[3]; })[0];
     if (!best) { tr.ev('compile-failed', { version: n, reason, attempts: attempts.map(a => a.builderModel) }); return; }
-    if (state.version && worseOnOld(best.checkTraces, state.version.checkTraces)) {
-      tr.ev('rejected', { version: n, keep: state.version.n, newExact: exactOf(best.checkTraces), oldExact: exactOf(state.version.checkTraces), builderModel: best.builderModel });
+    const why = state.version ? rejectReason(best.checkTraces, state.version.checkTraces) : null;
+    if (why) {
+      tr.ev('rejected', { version: n, keep: state.version.n, why, ...exactOnOld(best.checkTraces, state.version.checkTraces), newExactRate: exactOf(best.checkTraces),
+        oldExactRate: exactOf(state.version.checkTraces), builderModel: best.builderModel });
       return;
     }
     const kind = state.version ? 'recompile' : 'compile';
     state.version = { n, dir: path.relative(this.p.dir, best.dir), sha: best.solveSha, builderModel: best.builderModel, checkTraces: best.checkTraces, adoptedAt: t.idx, accepted: ok(best) };
-    tr.ev(kind, { version: n, reason, builderModel: best.builderModel, exact: exactOf(best.checkTraces), accepted: ok(best), traces: traces.length, regressions: regressions.length });
+    tr.ev(kind, { version: n, reason, builderModel: best.builderModel, exactRate: exactOf(best.checkTraces), accepted: ok(best), clean: !!best.checkTraces?.clean,
+      traces: traces.length, regressions: regressions.length });
   }
 
   solvePathOf(state) {
@@ -504,13 +554,20 @@ export async function runStream({ config: rawConfig, arms: filters = null, runRo
   const outputSchema = deps.outputSchema ?? fam?.outputSchema ?? null;
   // Spend already recorded by these arms (for the optional spend stop).
   const budget = { spent: 0 };
-  const runs = arms.map(arm => {
-    const R = arm.kind === 'jit' ? JitRun : ArmRun;
-    const run = new R({ arm, config, runDir, workRoot, deps, log, budget, binary });
-    run.outputSchema = outputSchema;
-    budget.spent += [...run.rows.values()].reduce((s, r) => s + (r.costUsd ?? 0), 0) + [...run.unbilled.values()].flat().reduce((s, e) => s + e.costUsd, 0);
-    return run;
-  });
+  const runs = [];
+  try {
+    for (const arm of arms) {
+      const R = arm.kind === 'jit' ? JitRun : ArmRun;
+      const run = new R({ arm, config, runDir, workRoot, deps, log, budget, binary });
+      runs.push(run);
+      run.outputSchema = outputSchema;
+      budget.spent += [...run.rows.values()].reduce((s, r) => s + (r.costUsd ?? 0), 0) + [...run.unbilled.values()].flat().reduce((s, e) => s + e.costUsd, 0);
+    }
+    return await driveArms({ runs, tasks, config, deps, log, runDir });
+  } finally { for (const run of runs) run.unlock?.(); }
+}
+
+async function driveArms({ runs, tasks, config, deps, log, runDir }) {
   for (const run of runs) {
     for (const [idx, r] of run.rows) if (tasks[idx] && r.taskHash !== tasks[idx].taskHash) throw new Error(`${run.arm.slug}: recorded task #${idx} (${r.taskKey}) differs from the config's: use a new experiment name`);
     // One journal per arm directory (SQLite contention between arm processes); agent arms need no gateway.
@@ -552,7 +609,9 @@ export async function runStream({ config: rawConfig, arms: filters = null, runRo
 
 // Worst-case dollars per arm at the configured caps (planning only; real spend is measured).
 function worstCase(arm, c, n) {
-  const agent = c.agentBudgetUsd, comp = c.compile.builderBudgetUsd + c.compile.gatewayUsd, fb = c.compile.fallback.builderBudgetUsd + c.compile.fallback.gatewayUsd;
+  // A compile: builder + gateway + host check, plus a recheck at twice the check cap.
+  const cost = k => k.builderBudgetUsd + k.gatewayUsd + 3 * (k.checkUsd ?? k.gatewayUsd);
+  const agent = c.agentBudgetUsd, comp = cost(c.compile), fb = cost(c.compile.fallback);
   if (arm.kind === 'agent') return round(n * agent);
   if (arm.kind === 'static') return round(n * (c.perTaskUsd + agent));
   const post = Math.max(0, n - c.jit.warmup);

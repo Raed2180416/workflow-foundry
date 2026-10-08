@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync, mkdirSync, writeFileSync, readdirSync, readFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { runStream, normalizeConfig, parseArm, selectTraces, accepted, worseOnOld, exactOf, sameAnswer, POLICY_MODELS, armPaths } from '../stream.mjs';
+import { runStream, normalizeConfig, parseArm, selectTraces, accepted, worseOnOld, rejectReason, exactOnOld, exactOf, sameAnswer, POLICY_MODELS, armPaths } from '../stream.mjs';
 import { buildReport } from '../report.mjs';
 
 const tmp = t => { const d = mkdtempSync(path.join(tmpdir(), 'jit-stream-')); t.after(() => rmSync(d, { recursive: true, force: true })); return d; };
@@ -60,10 +60,16 @@ function fakeDeps(plan, hooks = {}) {
   return { deps, calls };
 }
 
-const perCase = (a, exactFor) => {
-  const cases = [...a.traces.map(t => ({ id: t.traceId })), ...a.regressions.map(r => ({ id: r.regressionId }))];
-  const pc = cases.map((c, i) => ({ ...c, exact: exactFor(c, i, cases) }));
-  return { exact: pc.filter(c => c.exact).length / pc.length, partial: 0.9, deopts: 0, crashes: 0, perCase: pc };
+// A compile.mjs-shaped check record: positional ids (case-<i> regressions, then trace-<i> newest first) with ref, statuses,
+// clean (no crash/deopt/timeout, every regression exact) and accepted (clean, every diff explained in BUILD-NOTES.md).
+const perCase = (a, statusFor, { explained = true } = {}) => {
+  const cases = [...a.regressions.map((r, i) => ({ id: `case-${i}`, ref: r.caseId, kind: 'regression' })), ...a.traces.map((t, i) => ({ id: `trace-${i}`, ref: t.traceId, kind: 'trace' }))];
+  const pc = cases.map((c, i) => { const status = statusFor(c, i, cases); return { ...c, status, ...(status === 'exact' || status === 'diff' ? { exact: status === 'exact', partial: status === 'exact' ? 1 : 0.8 } : {}) }; });
+  const exact = pc.filter(c => c.status === 'exact').length, bad = pc.filter(c => ['deopt', 'crash', 'timeout'].includes(c.status)).length;
+  const clean = bad === 0 && pc.filter(c => c.kind === 'regression').every(c => c.status === 'exact');
+  const diffs = pc.filter(c => c.status === 'diff').map(c => c.id);
+  return { exact, exactRate: exact / pc.length, partial: 0.9, deopts: pc.filter(c => c.status === 'deopt').length, crashes: 0, deoptKinds: {}, perCase: pc, clean,
+    unexplained: explained ? [] : diffs, accepted: clean && (explained || !diffs.length) };
 };
 
 // Scenario: warmup 2, shadow every 2nd compiled ok, recompile after 2 deopts. Every transition of SPEC §6.2.
@@ -80,11 +86,12 @@ const PLAN = {
     return { status: 'ok' };
   },
   checks(callNo, a) {
-    if (callNo === 1) return perCase(a, (c, i) => i === 0);                      // v1 Haiku: 50% -> Opus fallback
-    if (callNo === 2) return perCase(a, () => true);                             // v1 Opus: 100%, adopted
-    if (callNo === 3) return perCase(a, () => true);                             // v2: recompile after 2 deopts
-    if (callNo === 4) return perCase(a, (c, i, all) => c.id !== all.filter(x => x.id.includes('-interpreter-')).at(-1).id);   // v3: worse on an old case
-    return perCase(a, () => true);
+    if (callNo === 1) return perCase(a, (c, i) => (i === 0 ? 'exact' : 'deopt'));   // v1 Haiku: a deopt, not clean, not accepted -> Opus fallback
+    if (callNo === 2) return perCase(a, () => 'exact');                               // v1 Opus: accepted, adopted
+    if (callNo === 3) return perCase(a, () => 'exact');                               // v2: recompile after 2 deopts
+    // v3: accepted (its one diff is explained in BUILD-NOTES.md) but fewer exact on v2's old cases -> rejected, no fallback
+    if (callNo === 4) return perCase(a, (c, i, all) => (c.ref === all.filter(x => x.ref?.includes('-interpreter-')).at(-1).ref ? 'diff' : 'exact'));
+    return perCase(a, () => 'exact');
   },
 };
 const CONFIG = {
@@ -126,7 +133,8 @@ function checkScenario(rows, calls, { compileCalls = 4 } = {}) {
   // than v2 on v2's old cases: rejected, v2 kept
   assert.equal(calls.compile[3].regressionIds.length, 1); assert.deepEqual(calls.compile[3].regressionExpected, [{ v: 8 }]);
   assert.ok(kinds(by(8)).includes('rejected')); assert.equal(by(8).version, 2);
-  assert.equal(calls.compile.length, compileCalls, 'v3 was accepted (>= 75%) so no Opus fallback, and nothing else compiles');
+  assert.match(by(8).events.find(e => e.kind === 'rejected').why, /fewer exact on the old cases \(4 < 5 of 5\)/);
+  assert.equal(calls.compile.length, compileCalls, 'v3 was accepted so no Opus fallback, and nothing else compiles');
   // no majority -> unresolved, compiled answer delivered
   assert.ok(kinds(by(9)).includes('unresolved')); assert.equal(by(9).delivered, 'compiled'); assert.equal(by(9).pass, false);
   assert.equal(by(10).delivered, 'compiled');
@@ -160,7 +168,7 @@ test('JIT state machine: warmup, compile with Opus fallback, shadows, deopt/cras
   close(spends.reduce((s, e) => s + e.costUsd, 0), total, 'events = rows');
   // the arm wrote only its own directory (arms run as separate processes)
   assert.deepEqual(readdirSync(path.join(root, 'runs/jit-fake')), ['jit-claude-sonnet-5-5--claude-haiku-5-5']);
-  assert.deepEqual(readdirSync(p.dir).sort(), ['arm.json', 'events.jsonl', 'regressions', 'results.jsonl', 'traces', 'versions']);
+  assert.deepEqual(readdirSync(p.dir).sort(), ['arm.json', 'events.jsonl', 'regressions', 'results.jsonl', 'traces', 'versions'], 'and the lock is released');
   assert.deepEqual(readdirSync(p.versions).sort(), ['v1-haiku55', 'v1-opus55', 'v2-haiku55', 'v3-haiku55']);
   assert.equal(readdirSync(p.regressions).length, 1);
   const reg = JSON.parse(readFileSync(path.join(p.regressions, readdirSync(p.regressions)[0]), 'utf8'));
@@ -249,6 +257,13 @@ test('agent and static arms: concurrency cap, static deopt/crash fall back to th
   const before = calls.interpret.length;
   const again = await runStream({ config, deps, arms: ['agent-claude-opus-5-5'], runRoot: path.join(root, 'runs'), workRoot: path.join(root, 'work'), log: () => {} });
   assert.equal(again.arms.length, 1); assert.equal(again.arms[0].done, 0); assert.equal(calls.interpret.length, before);
+  // one process per arm: a live owner's lock refuses a second runner; a dead owner's lock is taken over
+  const lock = path.join(root, 'runs/flat/agent-claude-opus-5-5/.lock');
+  writeFileSync(lock, String(process.ppid));
+  await assert.rejects(runStream({ config, deps, arms: ['agent-claude-opus-5-5'], runRoot: path.join(root, 'runs'), workRoot: path.join(root, 'work'), log: () => {} }), /in use by process/);
+  writeFileSync(lock, '999999999');
+  const taken = await runStream({ config, deps, arms: ['agent-claude-opus-5-5'], runRoot: path.join(root, 'runs'), workRoot: path.join(root, 'work'), log: () => {} });
+  assert.equal(taken.arms[0].errors.length, 0); assert.equal(existsSync(lock), false, 'released at the end');
   const rep = buildReport(path.join(root, 'runs/flat'));
   assert.equal(rep.arms.length, 3);
   close(rep.arms.find(a => a.kind === 'static').totalUsd, 6 * 0.01 + 2 * 0.1, 'static total');
@@ -274,14 +289,14 @@ test('helpers: trace selection keeps every deopt kind, acceptance, worse-on-old-
   ];
   const sel = selectTraces(pool, 4).map(x => x.traceId);
   assert.deepEqual(sel, ['j', 's7', 's6', 'g'], 'newest first, the old guard deopt kept');
-  const ct = (ids, ex) => ({ exact: ex.filter(Boolean).length / ex.length, perCase: ids.map((id, i) => ({ id, exact: ex[i], partial: ex[i] ? 1 : 0.5 })) });
-  assert.equal(accepted(ct(['a', 'b', 'c', 'd'], [1, 1, 1, 0])), true);
-  assert.equal(accepted(ct(['a', 'b', 'c', 'd'], [1, 1, 0, 0])), false);
-  assert.equal(accepted(ct(['a', 'b', 'c', 'reg-1'], [1, 1, 1, 0]), { regressionIds: ['reg-1'] }), false, 'a failing regression case blocks acceptance');
+  const ct = (ids, ex, clean = true) => ({ clean, accepted: clean, exact: ex.filter(Boolean).length, perCase: ids.map((id, i) => ({ id, exact: ex[i], partial: ex[i] ? 1 : 0.5 })) });
+  assert.equal(accepted(ct(['a'], [1])), true); assert.equal(accepted({ exactRate: 1, clean: true }), false, 'acceptance is compile.mjs\'s verdict only');
   assert.equal(exactOf({ exact: 3, perCase: [] , cases: 4 }), 0.75);
   assert.equal(worseOnOld(ct(['a', 'b', 'c'], [1, 0, 1]), ct(['a', 'b'], [1, 1])), true);
   assert.equal(worseOnOld(ct(['a', 'b', 'c'], [1, 1, 0]), ct(['a', 'b'], [1, 1])), false, 'a new case failing is not worse on the old cases');
-  assert.equal(worseOnOld({ exact: 0.5 }, { exact: 0.8 }), true, 'aggregate fallback without per-case ids');
+  assert.equal(rejectReason(ct(['a', 'b'], [1, 1], false), ct(['a', 'b'], [1, 1])), 'not clean', 'a recompiled version must be clean');
+  assert.equal(rejectReason(ct(['a', 'b'], [1, 1]), null), null, 'the first version is not compared');
+  assert.equal(worseOnOld({ clean: true, exactRate: 0.5 }, { exactRate: 0.8 }), true, 'aggregate fallback without per-case ids');
   assert.equal(worseOnOld(null, { exact: 0.8 }), true);
   // compile.mjs records: positional ids (trace-<i>, newest first) with ref = traceId/caseId, exact as a count, exactRate
   const rec = (pairs, regs = []) => ({ exact: pairs.filter(p => p[1] === 'exact').length, exactRate: pairs.filter(p => p[1] === 'exact').length / pairs.length,
@@ -289,14 +304,31 @@ test('helpers: trace selection keeps every deopt kind, acceptance, worse-on-old-
     regressions: regs.length, regressionsPassed: pairs.filter(p => regs.includes(p[0]) && p[1] === 'exact').length });
   const oldRec = rec([['t1', 'exact'], ['t0', 'exact']]);
   assert.equal(exactOf(rec([['t2', 'exact'], ['t1', 'exact'], ['t0', 'deopt'], ['t9', 'exact']])), 0.75);
-  assert.equal(worseOnOld(rec([['t2', 'exact'], ['t1', 'exact'], ['t0', 'deopt']]), oldRec), true, 'matched by ref although trace-1 moved');
-  assert.equal(worseOnOld(rec([['t2', 'diff'], ['t1', 'exact'], ['t0', 'exact']]), oldRec), false);
-  assert.equal(accepted(rec([['r1', 'diff'], ['t1', 'exact'], ['t0', 'exact'], ['t2', 'exact'], ['t3', 'exact']], ['r1'])), false, 'the regression case must pass');
-  assert.equal(accepted(rec([['r1', 'exact'], ['t1', 'exact'], ['t0', 'exact'], ['t2', 'diff']], ['r1'])), true);
+  assert.equal(worseOnOld({ ...rec([['t2', 'exact'], ['t1', 'exact'], ['t0', 'diff']]), clean: true }, oldRec), true, 'matched by ref although trace-1 moved');
+  assert.equal(worseOnOld({ ...rec([['t2', 'diff'], ['t1', 'exact'], ['t0', 'exact']]), clean: true }, oldRec), false);
+  assert.deepEqual(exactOnOld(rec([['t2', 'diff'], ['t1', 'exact'], ['t0', 'exact']]), oldRec), { shared: 2, oldExact: 2, newExact: 2 });
   assert.equal(sameAnswer({ a: [1, 2], b: 1 }, { b: 1, a: [1, 2] }), true);
   assert.equal(sameAnswer({ a: [1, 2] }, { a: [2, 1] }), false);
   assert.equal(sameAnswer({ a: [1, 2] }, { a: [2, 1] }, 'unordered'), true);
   assert.equal(sameAnswer(null, null), false, 'a missing answer never votes');
+});
+
+test('a host check with budget deopts is re-run once at twice checkUsd before acceptance is judged; its cost is billed', async t => {
+  const root = tmp(t);
+  const plan = { compiled: () => ({ status: 'ok' }), checks: (n, a) => ({ ...perCase(a, () => 'deopt'), deoptKinds: { budget: 2 } }) };
+  const { deps, calls } = fakeDeps(plan);
+  const rechecks = [];
+  deps.recheck = async a => { rechecks.push(a); return { summary: { exact: a.traces.length, exactRate: 1, clean: true, deoptKinds: {}, perCase: a.traces.map((x, i) => ({ id: `trace-${i}`, ref: x.traceId, kind: 'trace', status: 'exact', exact: true })) }, costUsd: 0.4 }; };
+  const config = { ...CONFIG, experiment: 'recheck', segments: [{ difficulty: 3, seeds: [1, 2, 3] }], jit: { ...CONFIG.jit, warmup: 1, shadowEvery: 0 }, compile: { checkUsd: 1.25 } };
+  const res = await runStream({ config, deps, runRoot: path.join(root, 'runs'), workRoot: path.join(root, 'work'), log: () => {} });
+  const rows = [...res.rows].sort((a, b) => a.idx - b.idx);
+  assert.equal(rechecks.length, 1); assert.equal(rechecks[0].capUsd, 2.5); assert.match(rechecks[0].label, /^v1-haiku55-recheck$/);
+  assert.equal(calls.compile.length, 1, 'the recheck passed: no Opus fallback');
+  assert.ok(kinds(rows[1]).includes('recheck')); assert.equal(rows[1].events.find(e => e.kind === 'compile').accepted, true);
+  close(rows[1].costBreakdown.compileCheck, 0.25 + 0.4, 'first check + recheck');
+  assert.equal(rows[2].delivered, 'compiled');
+  const rec = JSON.parse(readFileSync(path.join(root, 'runs/recheck/jit-claude-sonnet-5-5--claude-haiku-5-5/versions/v1-haiku55/compile.json'), 'utf8'));
+  assert.equal(rec.checkTraces.accepted, true); assert.equal(rec.checkTraces.recheck.firstCheck.deoptKinds.budget, 2);
 });
 
 // ---- the stream through the real interpret() and runCompiled(): stand-in CLI in each workdir, scripted gateway ----
@@ -343,7 +375,7 @@ console.log(JSON.stringify({ records: [{ id: seed }] }));`);
     interpret: async a => { copyFileSync(cli, path.join(a.workdir, 'fake-claude')); chmodSync(path.join(a.workdir, 'fake-claude'), 0o755); return realInterpret({ ...a, binary: path.join(a.workdir, 'fake-claude') }); },
     runCompiled: realRunCompiled,
   });
-  const config = { ...CONFIG, experiment: 'live-shape', segments: [{ difficulty: 3, seeds: [1, 2, 3, 4] }], arms: ['agent:claude-haiku-5-5', `static:${solve}`], concurrency: 2, agentMinutes: 1, compiledMinutes: 1 };
+  const config = { ...CONFIG, experiment: 'live-shape', familyId: 'records', segments: [{ difficulty: 3, seeds: [1, 2, 3, 4] }], arms: ['agent:claude-haiku-5-5', `static:${solve}`], concurrency: 2, agentMinutes: 1, compiledMinutes: 1 };
   const res = await runStream({ config, deps, runRoot: path.join(root, 'runs'), workRoot: path.join(root, 'work'), log: () => {} });
   assert.ok(res.arms.every(a => a.errors.length === 0 && a.done === 4), JSON.stringify(res.arms));
   const st = res.rows.filter(r => r.kind === 'static').sort((a, b) => a.idx - b.idx);
