@@ -101,47 +101,100 @@ const fields = {
 // An approval gate is requiresApproval, or risk "high" (the runtime requires approval for both).
 export const approvalGated = cap => cap.requiresApproval === true || cap.risk === 'high';
 export const labelPolicyMessage = (tool, label) => `${tool} has effects and no approval gate, but its arguments depend on ${label} data`;
+export const controlPolicyMessage = (tool, label, via = []) => `${tool} has effects and no approval gate, but whether it fires depends on ${label} data${via.length ? ` (${via.join('; ')})` : ''}. Route the decision through a human node or a quarantined judgment with a bounded enum, or gate the capability`;
+
+// Control-flow (program-counter) taint, ROADMAP §2.9 and review-20261007/07 S2. A node's CONTROL label is the join of
+// the labels that decide whether it runs at all: the guard (`when`) of the node, the iteration condition (`until`) and
+// the item array (cardinality) of every enclosing loop/map, and the control label of every predecessor whose skip
+// would skip this node (`needs` under join all_success; onError "continue" also lets the predecessor's DATA decide).
+// What every reference to a node sees is its OUT label, data joined with control: a skipped node's output is absent,
+// and absence (exists, default) is itself a read of the guard. A quarantined judgment declassifies its data, never the
+// control that decided whether it ran. Termination (a failed assert or verify stops the run) is not tracked; only
+// skip and iteration decisions are. Wait delays are schema literals, so there is nothing to taint.
+const TRUSTED = 'trusted';
+const NO_CONTROL = Object.freeze({ label: TRUSTED, via: Object.freeze([]) });
+const joinControl = parts => {
+  const live = parts.filter(part => part.label !== TRUSTED), via = [];
+  for (const part of live) for (const step of part.via) if (!via.includes(step) && via.length < 6) via.push(step);
+  return live.length ? { label: joinLabels(live.map(part => part.label)), via } : NO_CONTROL;
+};
+const untrustedRefs = (template, scope) => [...new Set(references(template ?? null).filter(ref => inheritedLabel(ref, scope) !== TRUSTED))].slice(0, 3).join(', ');
+const controlFrom = (label, via) => label === TRUSTED ? NO_CONTROL : { label, via: [via()] };
+const outEntries = outs => Object.fromEntries([...outs].filter(([, label]) => label !== TRUSTED).map(([id, label]) => [`nodes.${id}`, label]));
+const FIXPOINT_PASSES = 32;
 function effectTaint(workflow, registry, add) {
-  const seen = new Set(), report = (code, message, location, extra) => { if (!seen.has(`${code}|${location}`)) { seen.add(`${code}|${location}`); add(code, message, location, extra); } };
-  const walk = (flow, scope, prefix) => {
-    const byId = new Map(flow.nodes.map(n => [n.id, n])), labels = new Map();
+  const seen = new Set(), report = (code, message, location, extra) => {
+    const key = `${code}|${location}|${extra?.rule ?? ''}`;
+    if (!seen.has(key)) { seen.add(key); add(code, message, location, extra); }
+  };
+  const memo = new WeakMap();
+  // Returns { label, outs, findings } for one flow under the control label `pc` of its enclosing node. Findings are
+  // returned, not reported, so that the passes of a loop fixpoint that are later superseded report nothing.
+  const walk = (flow, scope, prefix, pc) => {
+    const memoKey = `${prefix}|${JSON.stringify(scope)}|${pc.label}|${pc.via.join('|')}`;
+    if (!memo.has(flow)) memo.set(flow, new Map());
+    if (memo.get(flow).has(memoKey)) return memo.get(flow).get(memoKey);
+    const byId = new Map(flow.nodes.map(n => [n.id, n])), data = new Map(), control = new Map(), outs = new Map(), findings = [];
     const visit = id => {
-      if (labels.has(id)) return labels.get(id);
-      labels.set(id, 'trusted');
+      if (outs.has(id)) return;
+      outs.set(id, TRUSTED); data.set(id, TRUSTED); control.set(id, NO_CONTROL);
       const node = byId.get(id);
       for (const dep of node.needs) visit(dep);
-      const own = { ...scope, ...Object.fromEntries([...labels].filter(([, l]) => l !== 'trusted').map(([k, l]) => [`nodes.${k}`, l])) };
-      let label = 'trusted';
-      const inputs = () => joinLabels((node.context?.inputs ?? []).map(spec => joinLabels([spec.label ?? 'trusted', Object.hasOwn(spec, 'ref') ? inheritedLabel(spec.ref, own) : 'trusted'])));
-      if (node.kind === 'agent') label = node.quarantined === true ? 'trusted' : inputs();
+      const own = { ...scope, ...outEntries(outs) };
+      let nodeControl = joinControl([pc, controlFrom(node.when ? labelOf(node.when, own) : TRUSTED, () => `${node.id} is guarded by a when that reads ${untrustedRefs(node.when, own)}`),
+        ...((node.join ?? 'all_success') === 'all_success' ? node.needs.map(dep => {
+          const through = joinControl([control.get(dep), byId.get(dep).onError === 'continue' ? controlFrom(data.get(dep), () => `${dep} continues on error over ${data.get(dep)} data`) : NO_CONTROL]);
+          return through.label === TRUSTED ? through : { label: through.label, via: through.via.map(step => `${node.id} needs ${dep} <- ${step}`.slice(0, 300)) };
+        }) : [])]);
+      let label = TRUSTED;
+      const inputs = () => joinLabels((node.context?.inputs ?? []).map(spec => joinLabels([spec.label ?? TRUSTED, Object.hasOwn(spec, 'ref') ? inheritedLabel(spec.ref, own) : TRUSTED])));
+      if (node.kind === 'agent') label = node.quarantined === true ? TRUSTED : inputs();
       else if (node.kind === 'verify') label = joinLabels([labelOf(node.subject, own), labelOf(node.args ?? null, own), inputs()]);
       else if (node.kind === 'task' || node.kind === 'code') label = labelOf(node.args ?? null, own);
       else if (node.body) {
         const input = Object.hasOwn(node, 'input') ? entry('input', labelOf(node.input, own)) : only(own, 'input');
-        if (node.kind === 'map') label = joinLabels([labelOf(node.items, own), walk(node.body, { ...input, ...entry('item', labelOf(node.items, own)) }, `${prefix}.${node.id}.body`)]);
-        else {
-          let previous = labelOf(node.initial, own);
-          for (let pass = 0; pass < 8; pass++) {
-            const next = joinLabels([previous, walk(node.body, { ...input, ...entry('previous', previous) }, `${prefix}.${node.id}.body`)]);
-            if (next === previous) break; previous = next;
+        const bodyPrefix = `${prefix}.${node.id}.body`;
+        if (node.kind === 'map') {
+          const items = labelOf(node.items, own);
+          const child = walk(node.body, { ...input, ...entry('item', items) }, bodyPrefix, joinControl([nodeControl, controlFrom(items, () => `map ${node.id} iterates over ${untrustedRefs(node.items, own)}`)]));
+          findings.push(...child.findings);
+          label = joinLabels([items, child.label]);
+        } else {
+          // The body's control label includes what decides how many iterations run (the until label), and until reads body
+          // outputs, so the two feed each other; the label lattice is finite, so a fixpoint exists.
+          let previous = labelOf(node.initial, own), until = TRUSTED, child = null, settled = false;
+          const untilScope = () => ({ ...input, ...entry('previous', previous), ...outEntries(child?.outs ?? new Map()) });
+          const exits = () => controlFrom(until, () => `loop ${node.id} exits on ${untrustedRefs(node.until, untilScope())}`);
+          for (let pass = 0; pass < FIXPOINT_PASSES && !settled; pass++) {
+            child = walk(node.body, { ...input, ...entry('previous', previous) }, bodyPrefix, joinControl([nodeControl, exits()]));
+            const nextUntil = joinLabels([until, labelOf(node.until, untilScope())]), nextPrevious = joinLabels([previous, child.label]);
+            settled = nextPrevious === previous && nextUntil === until; previous = nextPrevious; until = nextUntil;
           }
-          label = previous;
+          if (!settled) throw new FoundryError('TAINT_FIXPOINT', `Label analysis of loop ${node.id} did not converge in ${FIXPOINT_PASSES} passes`);
+          findings.push(...child.findings);
+          label = previous; nodeControl = joinControl([nodeControl, exits()]);
         }
       }
       if (node.kind === 'task') {
         const cap = registry?.get(node.tool), argsLabel = labelOf(node.args, own);
-        // LABEL_POLICY is the policy code; UNTRUSTED_EFFECT_ARGS names the rule (kept for existing consumers).
-        if (cap && cap.effects !== 'none' && !approvalGated(cap) && argsLabel !== 'trusted') {
-          report('LABEL_POLICY', labelPolicyMessage(node.tool, argsLabel), `${prefix}.${node.id}`, { rule: 'UNTRUSTED_EFFECT_ARGS', label: argsLabel });
-          report('UNTRUSTED_EFFECT_ARGS', labelPolicyMessage(node.tool, argsLabel), `${prefix}.${node.id}`);
+        if (cap && cap.effects !== 'none' && !approvalGated(cap)) {
+          // LABEL_POLICY is the policy code; the rule code (UNTRUSTED_EFFECT_ARGS, UNTRUSTED_CONTROL) names the rule and is kept as a code of its own.
+          if (argsLabel !== TRUSTED) findings.push(
+            { code: 'LABEL_POLICY', message: labelPolicyMessage(node.tool, argsLabel), location: `${prefix}.${node.id}`, extra: { rule: 'UNTRUSTED_EFFECT_ARGS', label: argsLabel } },
+            { code: 'UNTRUSTED_EFFECT_ARGS', message: labelPolicyMessage(node.tool, argsLabel), location: `${prefix}.${node.id}` });
+          if (nodeControl.label !== TRUSTED) findings.push(
+            { code: 'LABEL_POLICY', message: controlPolicyMessage(node.tool, nodeControl.label, nodeControl.via), location: `${prefix}.${node.id}`, extra: { rule: 'UNTRUSTED_CONTROL', label: nodeControl.label, via: nodeControl.via } },
+            { code: 'UNTRUSTED_CONTROL', message: controlPolicyMessage(node.tool, nodeControl.label, nodeControl.via), location: `${prefix}.${node.id}` });
         }
       }
-      labels.set(id, label); return label;
+      data.set(id, label); control.set(id, nodeControl); outs.set(id, joinLabels([label, nodeControl.label]));
     };
     for (const id of byId.keys()) visit(id);
-    return joinLabels([...labels.values()]);
+    const result = { label: joinLabels([...outs.values()]), outs, findings };
+    memo.get(flow).set(memoKey, result);
+    return result;
   };
-  walk(workflow, { ...(workflow.labels ?? {}) }, 'workflow');
+  for (const { code, message, location, extra } of walk(workflow, { ...(workflow.labels ?? {}) }, 'workflow', NO_CONTROL).findings) report(code, message, location, extra);
 }
 
 // strict: also run the construction lint (lint.mjs). Its error findings make the workflow invalid, its warnings are

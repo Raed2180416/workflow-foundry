@@ -166,6 +166,17 @@ model_calls(id INTEGER PRIMARY KEY, replay_key TEXT, run_id TEXT, node_key TEXT,
   never model-produced keys or values (review fix 9).
 - Validator rule: a `task` node whose capability has effects ≠ `none` may not take args that
   depend (via refs) on an untrusted-labelled output unless the capability `requiresApproval`.
+- Control-flow rule (stage-1 amendment, ROADMAP §2.9; code `LABEL_POLICY`, rule
+  `UNTRUSTED_CONTROL`): the same node may not *fire* because of untrusted data either. A node's
+  control label is the join of its `when`, the `items` of every enclosing map, the `until` of every
+  enclosing loop, and the control label of every `needs` predecessor under `join: all_success` (plus
+  the predecessor's data label when it has `onError: "continue"`). A reference to a node sees data
+  joined with control, so a skipped node's absence (`exists`, `default`) is a read of its guard. A
+  quarantined judgment declassifies its data, never the control that decided whether it ran. The
+  runtime repeats the check at dispatch and records `controlLabel` in the node state (only when
+  untrusted). Termination (a failed assert or verify) and wait delays (schema literals) are not
+  tracked. Routes that clear it: a `human` answer, a `quarantined` bounded-enum judgment, or an
+  approval-gated capability.
 
 ## 5. Runtime integration (`src/runtime.mjs`)
 ### 5.1 Agent execution and escalation (R09 §C5)

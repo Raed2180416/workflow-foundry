@@ -163,7 +163,7 @@ export function rowsOf(record, body, extra = {}) {
   return asked.map(qid => {
     const q = record.questions[qid], keys = questionKeys(q);
     const { p, total } = validateDistribution(rawByKey(answers[qid], q, keys), keys);
-    const row = { id: meta.id, group: meta.group_id ?? meta.id, question: qid, source: meta.source, task: q.src, type: q.type, variant: meta.variant ?? 'clean',
+    const row = { id: meta.id, group: meta.group_id ?? meta.id, question: qid, source: meta.source ?? 'custom', task: q.src, type: q.type, variant: meta.variant ?? 'clean',
       keys, label: labelIndex(q, keys), control_id: meta.control_id ?? null, pair_id: meta.pair_id ?? null, sibling: meta.sibling ?? null,
       parent: meta.parent_id ?? ((meta.variant ?? 'clean') === 'clean' ? meta.id : meta.group_id), p, raw_probability_sum: round(total, 6), zero_count: p.filter(x => x === 0).length };
     const target = targetVector(q, keys);
@@ -243,17 +243,19 @@ export function compareReads(a, b, { dp = STABLE_DP, flipRate = STABLE_FLIP_RATE
 
 // ---- scoring ---------------------------------------------------------------------------------------------------
 
-// Results are committed in input order whatever the concurrency, as kev.benchmark does.
+// Results are committed in input order whatever the concurrency, as kev.benchmark does. Commits are serialised.
 async function mapOrdered(items, concurrency, work, commit) {
   const results = new Array(items.length), done = new Array(items.length).fill(false);
-  let next = 0, committed = 0, failure = null;
-  const flush = async () => { while (committed < items.length && done[committed]) { await commit(results[committed], committed); results[committed] = undefined; committed++; } };
+  let next = 0, committed = 0, failure = null, chain = Promise.resolve();
+  const flush = () => (chain = chain.then(async () => {
+    while (committed < items.length && done[committed]) { const i = committed++, r = results[i]; results[i] = undefined; await commit(r, i); }
+  }));
   const worker = async () => {
     while (!failure) {
       const i = next++;
       if (i >= items.length) return;
       try { results[i] = await work(items[i], i); done[i] = true; await flush(); }
-      catch (error) { failure = error; return; }
+      catch (error) { failure ??= error; return; }
     }
   };
   await Promise.all(Array.from({ length: Math.max(1, Math.min(concurrency, items.length)) }, worker));

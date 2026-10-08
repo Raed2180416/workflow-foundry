@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { checkData, clone, condition, digest, errorData, FoundryError, references, resolve } from './data.mjs';
-import { approvalGated, bindOutput, labelPolicyMessage, modelNodes, OUTPUT_KEY, requireWorkflow, validateData, validateDecision, validateIdentity, VERIFY_RETURNS } from './validate.mjs';
+import { approvalGated, bindOutput, controlPolicyMessage, labelPolicyMessage, modelNodes, OUTPUT_KEY, requireWorkflow, validateData, validateDecision, validateIdentity, VERIFY_RETURNS } from './validate.mjs';
 import { engineHash } from './engine.mjs';
 import { compileContext, contextInputs, inheritedLabel, joinLabels } from './context.mjs';
 import { verdictOf } from './verdict.mjs';
@@ -63,6 +63,10 @@ const scopes = new AsyncLocalStorage();
 const labelOf = (template, scope) => joinLabels(references(template ?? null).map(ref => inheritedLabel(ref, scope)));
 const labelEntry = (key, label) => label === 'trusted' ? {} : { [key]: label };
 const labelState = label => label === 'trusted' ? {} : { outputLabel: label };
+// A node's control label (program-counter taint, ROADMAP §2.9) is the join of the labels that decided whether it runs: the control
+// label of its frame (the enclosing map's items, the enclosing loop's until), its `when`, and the control of every predecessor whose
+// skip would skip it. What a reference to the node sees (outputLabel) is its data label joined with its control label, as in validate.mjs.
+const controlState = label => label === 'trusted' ? {} : { controlLabel: label, outputLabel: label };
 const inputLabels = scope => Object.fromEntries(Object.entries(scope).filter(([key]) => key === 'input' || key.startsWith('input.')));
 // The run verdict (DESIGN §5.2) is sealed in the same commit as the terminal status, with its decision record.
 // Its run.verdict event precedes the terminal event, so the chain tail stays run.succeeded/run.stopped.
@@ -196,7 +200,7 @@ class Invocation {
   constructor(runtime, runId, signal) {
     this.store = runtime.store; this.registry = runtime.registry; this.runId = runId; this.runtime = runtime;
     this.abort = new AbortController(); this.token = randomUUID(); this.outerSignal = signal;
-    this.flowDefinitions = new Map(); this.frameLabels = new Map();
+    this.flowDefinitions = new Map(); this.frameLabels = new Map(); this.frameControl = new Map(); this.nodeControl = new Map();
     this.userCancelled = false;
     this.onAbort = () => { this.userCancelled = true; this.abort.abort(); };
     signal?.addEventListener('abort', this.onAbort, { once: true });
@@ -246,6 +250,8 @@ class Invocation {
   }
   complete(frameKey, node, output, status = 'completed', { state = {}, run: alsoRun } = {}) {
     checkData(output, { maxBytes: 512 * 1024 });
+    const control = this.nodeControl.get(`${frameKey}/${node.id}`) ?? 'trusted';
+    if (control !== 'trusted') state = { ...state, ...controlState(control), outputLabel: joinLabels([state.outputLabel ?? 'trusted', control]) };
     this.eventNode(frameKey, node.id, (f, run) => {
       f.nodes[node.id] = { ...f.nodes[node.id], ...state, status, completedAt: Date.now(), completedSequence: (run.eventHead?.seq ?? 0) + 1, outputHash: digest(output) };
       f.outputs[node.id] = clone(output);
@@ -257,6 +263,17 @@ class Invocation {
     const scope = { ...(this.frameLabels.get(frameKey) ?? {}) };
     for (const [id, state] of Object.entries(frameOf(this.current(), frameKey).nodes)) if (state.outputLabel && state.outputLabel !== 'trusted') scope[`nodes.${id}`] = state.outputLabel;
     return scope;
+  }
+  // The control label of a node about to run or be skipped (see controlState). onError "continue" lets a predecessor's data decide
+  // whether it completes, so its whole output label counts. A predecessor joined with all_resolved never changes whether this node runs.
+  controlLabel(node, frameKey) {
+    const scope = this.labelScope(frameKey), states = frameOf(this.current(), frameKey).nodes, definitions = this.flowDefinitions.get(frameKey).nodes;
+    const parts = [this.frameControl.get(frameKey) ?? 'trusted', node.when ? labelOf(node.when, scope) : 'trusted'];
+    if ((node.join ?? 'all_success') === 'all_success') for (const dep of node.needs) {
+      parts.push(states[dep]?.controlLabel ?? 'trusted');
+      if (definitions.find(n => n.id === dep)?.onError === 'continue') parts.push(states[dep]?.outputLabel ?? 'trusted');
+    }
+    return joinLabels(parts);
   }
   // Every node label recorded in the child frames of one map/loop node (conservative join).
   childLabels(frameKey, nodeId, index = null) {
@@ -329,8 +346,8 @@ class Invocation {
   context(frameKey, input, locals) {
     return { input: clone(input), nodes: clone(frameOf(this.current(), frameKey).outputs), ...clone(locals) };
   }
-  async flow(flow, frameKey, input, locals, labels = frameKey === 'root' ? { ...(this.workflow.labels ?? {}) } : {}) {
-    this.flowDefinitions.set(frameKey, flow); this.frameLabels.set(frameKey, labels);
+  async flow(flow, frameKey, input, locals, labels = frameKey === 'root' ? { ...(this.workflow.labels ?? {}) } : {}, control = 'trusted') {
+    this.flowDefinitions.set(frameKey, flow); this.frameLabels.set(frameKey, labels); this.frameControl.set(frameKey, control);
     if (frameKey !== 'root') {
       const old = this.current().frames[frameKey];
       const contextHash = digest({ input, locals });
@@ -377,12 +394,14 @@ class Invocation {
     if (['awaiting_human', 'awaiting_approval', 'uncertain'].includes(state?.status)) return;
     const ctx = this.context(frameKey, input, locals);
     const predecessors = frameOf(this.current(), frameKey).nodes;
+    const control = this.controlLabel(node, frameKey);
+    this.nodeControl.set(`${frameKey}/${node.id}`, control);
     if (!state && (node.join ?? 'all_success') === 'all_success' && node.needs.some(id => predecessors[id]?.status !== 'completed')) {
-      this.eventNode(frameKey, node.id, f => { f.nodes[node.id] = { kind: node.kind, status: 'skipped', attempts: 0, reason: 'required predecessor did not succeed' }; }, 'node.skipped', { reason: 'required predecessor did not succeed' });
+      this.eventNode(frameKey, node.id, f => { f.nodes[node.id] = { kind: node.kind, status: 'skipped', attempts: 0, reason: 'required predecessor did not succeed', ...controlState(control) }; }, 'node.skipped', { reason: 'required predecessor did not succeed' });
       return;
     }
     if (!state && node.when && !condition(node.when, ctx)) {
-      this.eventNode(frameKey, node.id, f => { f.nodes[node.id] = { kind: node.kind, status: 'skipped', attempts: 0 }; }, 'node.skipped'); return;
+      this.eventNode(frameKey, node.id, f => { f.nodes[node.id] = { kind: node.kind, status: 'skipped', attempts: 0, ...controlState(control) }; }, 'node.skipped'); return;
     }
     if (node.kind === 'task') return this.task(node, frameKey, ctx);
     const resumed = state?.status === 'running';
@@ -396,7 +415,7 @@ class Invocation {
     }
     if (node.kind === 'human') {
       this.eventNode(frameKey, node.id, f => {
-        Object.assign(f.nodes[node.id], { status: 'awaiting_human', question: node.question, answerSchema: clone(node.answerSchema) });
+        Object.assign(f.nodes[node.id], { status: 'awaiting_human', question: node.question, answerSchema: clone(node.answerSchema), ...controlState(control) });
       }, 'human.requested', { question: node.question }); return;
     }
     if (node.kind === 'wait') {
@@ -412,15 +431,17 @@ class Invocation {
       const childInput = Object.hasOwn(node, 'input') ? resolve(node.input, ctx) : input;
       const scope = this.labelScope(frameKey), initialLabel = labelOf(node.initial, scope);
       const inherited = Object.hasOwn(node, 'input') ? labelEntry('input', labelOf(node.input, scope)) : inputLabels(scope);
-      let previous = resolve(node.initial, ctx);
+      let previous = resolve(node.initial, ctx), exits = 'trusted';
       for (let iteration = 0; iteration < node.maxIterations; iteration++) {
         const childKey = `${frameKey}/${node.id}:${iteration}`;
         const childLocals = { iteration, previous };
         const previousLabel = iteration === 0 ? initialLabel : this.childLabels(frameKey, node.id, iteration - 1);
-        const result = await this.flow(node.body, childKey, childInput, childLocals, { ...inherited, ...labelEntry('previous', previousLabel) });
+        // Whether this iteration runs at all was decided by the until of every earlier iteration.
+        const result = await this.flow(node.body, childKey, childInput, childLocals, { ...inherited, ...labelEntry('previous', previousLabel) }, joinLabels([control, exits]));
         if (!result.done) { this.eventNode(frameKey, node.id, f => { f.nodes[node.id].status = 'waiting_child'; }, 'node.waiting_child'); return; }
+        exits = joinLabels([exits, labelOf(node.until, this.labelScope(childKey))]);
         if (condition(node.until, { input: childInput, nodes: result.outputs, ...childLocals })) {
-          this.complete(frameKey, node, { iterations: iteration + 1, last: result.outputs }, 'completed', { state: labelState(joinLabels([initialLabel, this.childLabels(frameKey, node.id)])) }); return;
+          this.complete(frameKey, node, { iterations: iteration + 1, last: result.outputs }, 'completed', { state: labelState(joinLabels([initialLabel, this.childLabels(frameKey, node.id), exits])) }); return;
         }
         previous = result.outputs;
       }
@@ -434,6 +455,7 @@ class Invocation {
   // unless the failure stops the whole run (budget, environment, cancellation, policy, integrity). An item that
   // pauses (human, approval, wait, uncertain effect) stops new items from starting; in-flight items still finish.
   async map(node, frameKey, ctx, input) {
+    const control = this.nodeControl.get(`${frameKey}/${node.id}`) ?? 'trusted';
     const items = resolve(node.items, ctx);
     if (!Array.isArray(items) || items.length > node.maxItems) throw new FoundryError('MAP_BOUND', 'Map input is not an array or exceeds maxItems');
     const childInput = Object.hasOwn(node, 'input') ? resolve(node.input, ctx) : input;
@@ -454,7 +476,8 @@ class Invocation {
         while (!halted && !failures.length && next < pending.length) {
           const index = pending[next++], key = `${nodeKey}:${index}`;
           try {
-            const result = await this.flow(node.body, key, childInput, { item: items[index], index }, childLabels);
+            // How many items run (and so how often an effect in the body fires) is decided by the items array.
+            const result = await this.flow(node.body, key, childInput, { item: items[index], index }, childLabels, joinLabels([control, itemLabel]));
             if (!result.done) { halted = true; return; }
             this.update(r => { r.frames[key].result = 'completed'; }, { type: 'map.item.completed', nodeKey, index });
             results[index] = result.outputs;
@@ -488,6 +511,9 @@ class Invocation {
     validateData(cap.inputSchema, args, `${node.tool} input`);
     // DESIGN §4: untrusted-derived arguments reach an effect only through an approval gate (the validator rejects this statically).
     if (cap.effects !== 'none' && !approvalGated(cap) && argsLabel !== 'trusted') throw new FoundryError('LABEL_POLICY', labelPolicyMessage(node.tool, argsLabel), { rule: 'UNTRUSTED_EFFECT_ARGS', label: argsLabel });
+    // ...and the same for whether the effect fires at all (control-flow taint).
+    const control = this.nodeControl.get(`${frameKey}/${node.id}`) ?? 'trusted';
+    if (cap.effects !== 'none' && !approvalGated(cap) && control !== 'trusted') throw new FoundryError('LABEL_POLICY', controlPolicyMessage(node.tool, control), { rule: 'UNTRUSTED_CONTROL', label: control });
     this.requireEvidence(cap, args, frameKey, node);
     const nodeKey = `${frameKey}/${node.id}`;
     const idempotencyKey = digest({ runId: this.runId, nodeKey, workflowHash: run.workflowHash, args });
@@ -495,7 +521,9 @@ class Invocation {
     if ((cap.requiresApproval || cap.risk === 'high') && run.approvals[approvalId]?.status !== 'approved') {
       this.eventNode(frameKey, node.id, (f, r) => {
         f.nodes[node.id] = { ...(f.nodes[node.id] ?? { attempts: 0 }), kind: 'task', status: 'awaiting_approval', tool: node.tool, approvalId };
-        r.approvals[approvalId] = { id: approvalId, nodeKey, tool: node.tool, args: clone(args), idempotencyKey, status: 'pending', risk: cap.risk };
+        r.approvals[approvalId] = { id: approvalId, nodeKey, tool: node.tool, args: clone(args), idempotencyKey, status: 'pending', risk: cap.risk,
+          // The approver sees that untrusted data shaped this request, which is what makes the approval a declassification step.
+          ...(argsLabel !== 'trusted' ? { argsLabel } : {}), ...(control !== 'trusted' ? { controlLabel: control } : {}) };
       }, 'approval.requested', { approvalId, tool: node.tool, argsHash: digest(args) }); return;
     }
     const old = frameOf(run, frameKey).nodes[node.id];

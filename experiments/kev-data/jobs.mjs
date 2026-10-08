@@ -92,12 +92,12 @@ const pad2 = n => String(n).padStart(2, '0');
 // One log line. `i` orders the timestamps; `pad` appends that many one-token filler words before the latency
 // field (the fine adjustment that lands a record on its token target; a line alone is about 45 tokens).
 const FILLER = Object.freeze(['the', 'and', 'of', 'to', 'in', 'is', 'it', 'for', 'on', 'as', 'at', 'by', 'be', 'or', 'an', 'if', 'we', 'so', 'do', 'no', 'up', 'out', 'new', 'old', 'one', 'two', 'all', 'any', 'can', 'not', 'but', 'was', 'are', 'has', 'had', 'its', 'our', 'who', 'how', 'now']);
-function logLine(rng, i, level, service, latency, pad = 0) {
+function logLine(rng, i, level, service, latency, pad = 0, padRng = rng) {
   const pick = a => a[Math.floor(rng() * a.length)];
   const fill = tpl => tpl.replace(/\{(\w)\}/g, (_, k) => (k === 'p' ? String(1 + Math.floor(rng() * 9)) : String(1 + Math.floor(rng() * (k === 'b' ? 97 : 9800)))));
   const sec = i * 3 + Math.floor(rng() * 3), h = Math.floor(sec / 3600) % 24, m = Math.floor(sec / 60) % 60, s = sec % 60;
   const id = Math.floor(rng() * 0xffffff).toString(16).padStart(6, '0');
-  const filler = Array.from({ length: pad }, () => pick(FILLER)).join(' ');
+  const filler = Array.from({ length: pad }, () => FILLER[Math.floor(padRng() * FILLER.length)]).join(' ');   // its own stream: the other lines do not change with the pad
   return `2026-10-07T${pad2(h)}:${pad2(m)}:${pad2(s)}Z ${service} ${level} ${fill(pick(MESSAGES[level]))}${filler ? ` ${filler}` : ''} latency=${latency}ms id=${id}`;
 }
 // A log of n lines (the first line carries `pad` filler words). The first ERROR and one WARN are placed up front,
@@ -116,7 +116,8 @@ export function makeLog(seedText, n, pad = 0) {
   }
   const top = Math.max(...plan.map(l => l.latency)), tops = plan.filter(l => l.latency === top);
   if (tops.length > 1) tops[0].latency = top + 1;                                  // a unique slowest line
-  return plan.map((l, i) => logLine(rng, i, l.level, l.service, l.latency, i === 0 ? pad : 0));
+  const padRng = mulberry32(seedOf(`${seedText}/pad`));
+  return plan.map((l, i) => logLine(rng, i, l.level, l.service, l.latency, i === 0 ? pad : 0, padRng));
 }
 const parseLine = line => { const m = /^\S+ (\S+) (DEBUG|INFO|WARN|ERROR) .* latency=(\d+)ms id=\w+$/.exec(line); if (!m) throw fail('J0_DATA', `unparseable log line ${JSON.stringify(line.slice(0, 80))}`); return { service: m[1], level: m[2], latency: Number(m[3]) }; };
 
@@ -158,7 +159,7 @@ export function probeRecord({ id, lines, seedText, questions = 1 }) {
 // answers are re-read off the final lines, so adjusting never changes what is true. `measure` defaults to the
 // pinned tokenizer through /opt/kev-venv (one Python process per pass).
 export function buildProbeRecords({ prefix, targets, questions = 1, tolerance = 0.02, measure = records => measureRecords(records, { maxState: 8192 }), maxPasses = 10, perLine = 45 }) {
-  const n = targets.length, lines = targets.map(t => Math.max(4, Math.floor(t / perLine))), pad = targets.map(() => 0);
+  const n = targets.length, lines = targets.map(t => Math.max(2, Math.floor(t / perLine))), pad = targets.map(() => 0);
   const make = i => probeRecord({ id: `${prefix}/${i}`, lines: makeLog(`${prefix}/${i}`, lines[i], pad[i]), seedText: `${prefix}/${i}`, questions });
   const records = Array.from({ length: n }, (_, i) => make(i)), results = measure(records);
   const off = () => results.map((r, i) => i).filter(i => !results[i].ok || Math.abs(results[i].stateTokens - targets[i]) > tolerance * targets[i]);
@@ -168,7 +169,7 @@ export function buildProbeRecords({ prefix, targets, questions = 1, tolerance = 
     for (const i of todo) {
       const have = results[i].stateTokens, gap = targets[i] - have, avg = Math.max(1, (have - pad[i]) / lines[i]);
       if (gap < 0 && pad[i] >= -gap) pad[i] += gap;                                   // too long: shed filler first
-      else if (gap < 0) { lines[i] = Math.max(4, lines[i] - Math.max(1, Math.floor(-gap / avg))); pad[i] = 0; }
+      else if (gap < 0) { lines[i] = Math.max(2, lines[i] - Math.max(1, Math.floor(-gap / avg))); pad[i] = 0; }
       else if (gap >= avg) lines[i] += Math.floor(gap / avg);                          // too short by a line or more
       else pad[i] += gap;
     }
@@ -221,7 +222,9 @@ export function routeFromResults(results, { file = null } = {}) {
   };
 }
 export function routeFile(file, { measure = validateKevFile } = {}) {
-  const loaded = measure(file, { maxState: TRAINING_CONTEXT.maxState });
+  let loaded;
+  try { loaded = measure(file, { maxState: TRAINING_CONTEXT.maxState }); }
+  catch (error) { throw fail('ROUTE_INVALID', `${file} does not load as a Kev file: ${String(error.message).replace(/^KEV_PYTHON: /, '').slice(0, 300)}`); }
   return { file, ...routeFromResults(loaded.results, { file }), sha256: sha256(readFileSync(file)) };
 }
 export function routeRecords(records, { measure = measureRecords } = {}) {

@@ -124,7 +124,9 @@ export const PERMS = Object.freeze([
   PERM([['records', 'gridquest'], ['gridquest', 'ownerci'], ['ownerci', 'incident'], ['incident', 'codefix'], ['codefix', 'synth'], ['synth', 'gameqa'], ['gameqa', 'records']]),
 ]);
 // cluster i of a block: its state bed and the partner (the other bed of the pair)
-export function permPair(i, beds = TRAIN_BEDS) {
+// Within a round the beds come in PERM_ORDER, hard edges first, so a short block (a few clusters) is hard-heavy too.
+export const PERM_ORDER = Object.freeze(['codefix', 'ownerci', 'gameqa', 'gridquest', 'records', 'incident', 'synth']);
+export function permPair(i, beds = PERM_ORDER) {
   const round = Math.floor(i / beds.length), state = beds[i % beds.length];
   return { state, partner: PERMS[round % PERMS.length][state] };
 }
@@ -170,7 +172,12 @@ export function planBedtype(slice, rows = DEFAULT_ROWS[slice]) {
   }
   const table = SHARES[slice];
   if (!table) return [];
-  for (const [axis, kind, share, per] of table) add(axis, kind, Math.round((rows * share) / per));
+  // clusters per kind: the floor of the share, then the leftover rows go to the kinds with the largest remainders (never over the target)
+  const want = table.map(([axis, kind, share, per]) => ({ axis, kind, per, exact: (rows * share) / per })), n = want.map(w => Math.floor(w.exact));
+  let left = rows - want.reduce((s, w, i) => s + n[i] * w.per, 0);
+  for (const i of want.map((_, j) => j).sort((a, b) => (want[b].exact - n[b]) - (want[a].exact - n[a]) || a - b)) if (left >= want[i].per) { n[i]++; left -= want[i].per; }
+  for (let i = 0; i < want.length && left > 0; i++) while (left >= want[i].per && want[i].kind === 'notstated') { n[i]++; left -= want[i].per; }
+  want.forEach((w, i) => add(w.axis, w.kind, n[i]));
   return out;
 }
 // seeds a cluster consumes (a state-flip and a slot cluster read two tasks)
@@ -243,7 +250,7 @@ function makeRecord(env, c) {
     counterfactual: c.counterfactual ?? null, pairId: c.pairId ?? null, masks: st.masks, axis: c.axis, crossType, hard: c.label !== 'not_stated' && st.bed !== null && isHard(c.aBed, st.bed), hardDeclared: st.bed !== null && isDeclaredHard(c.aBed, st.bed),
     heldOut,
     bedtype: { assumptionBed: c.aBed, assumptionSource: c.atext.source, assumptionText: c.atext.text, framing: c.framing.id, negated: Boolean(c.negated), stateBed: st.bed, stateSeed: st.seed, stateDifficulty: st.difficulty, stateWorldKey: st.worldKey, stateWorldHash: st.worldHash,
-      window: st.window, relation: c.label, heldoutSpans: st.heldSpans, ...(c.extra ?? {}) },
+      window: st.window, relation: c.label, heldoutSpans: st.heldSpans, ...(st.bed === null ? { adjacent: Boolean(st.adjacent) } : {}), ...(c.extra ?? {}) },
   };
   if (own) Object.assign(meta, { seed: st.seed, difficulty: st.difficulty, worldHash: st.worldHash });
   else meta.worlds = [st.worldKey];
@@ -325,7 +332,7 @@ function* realizeCluster(env, c, seeds, gi) {
     case 'notstated': {
       const aBed = c.held ? HELD_OUT_BEDS[c.i % 2] : TRAIN_BEDS[c.i % TRAIN_BEDS.length];
       const st = noTaskState(env, aBed, seeds[0], `${key}|np`, bucket, { adjacent: c.i % 2 === 0 });
-      yield rec('n', { aBed, ...A(aBed, 'n'), st, label: 'not_stated', variant: 'unknowable', pairId: null, extra: { adjacent: st.adjacent } });
+      yield rec('n', { aBed, ...A(aBed, 'n'), st, label: 'not_stated', variant: 'unknowable', pairId: null });
       return;
     }
     case 'paraphrase': {
@@ -391,7 +398,7 @@ export function heldoutHeadSpans(facts, { seeds = Array.from({ length: 30 }, (_,
     const head = taskHead(facts[bed].generate({ seed, split: 'dev', difficulty: d })), masks = maskTerms(head);
     for (const text of sentences(promptPart(head))) if (text.length >= 40 && !trainSkel.has(skeleton(text))) out.push({ text, bed, masks, kind: 'family-span' });
   }
-  for (const t of heldoutTexts(facts)) for (const text of sentences(t.text)) if (text.split(/\s+/).length >= 6) out.push({ text, bed: t.bed, masks: { names: [], markers: [] }, kind: 'family-description' });
+  for (const bed of HELD_OUT_BEDS) for (const t of facts[bed].texts) for (const text of sentences(t.text)) if (text.split(/\s+/).length >= 6) out.push({ text, bed, masks: { names: [], markers: [] }, kind: 'family-description' });
   return out;
 }
 export function registerHeldoutBeds(registry, facts, opts) {
