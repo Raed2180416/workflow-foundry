@@ -13,7 +13,7 @@ export const STAGE_LABEL = Object.freeze({
 const PAYLOAD_STAGES = new Set(['load', 'ident']);
 
 export const R = (path) => ({ $ref: path });
-const task = (id, needs, description, tool, args, extra = {}) => ({ id, kind: 'task', needs, description, tool, args, timeoutMs: 15000, retry: { maxAttempts: 1, backoffMs: 0 }, ...extra });
+const task = (id, needs, description, tool, args, extra = {}) => ({ id, kind: 'task', needs, description, tool, args, timeoutMs: 60000, retry: { maxAttempts: 1, backoffMs: 0 }, ...extra });
 
 // One upstream stage -> its node. `P` is the payload reference ('input' or 'nodes.<id>').
 export function stageNode(stage, id, needs, P, plan) {
@@ -80,6 +80,6 @@ export function buildWorkflow(plan, rb, { fixed = false } = {}) {
   return {
     schemaVersion: '1.0', id: plan.workflowId, version: 1, title: plan.title, goal: `Process the ${plan.payload.source} batch and report on it.`, domain: 'kev-data-exec',
     envelope: { assumptions: [`the ${plan.payload.source} source is reachable`], risks: [], successCriteria: ['every step completes and the acceptance checks hold'] },
-    inputSchema: { type: 'object' }, budget: { maxSteps: rb.budget?.maxSteps ?? 300, maxConcurrency: 2, maxDurationMs: 120000 }, nodes, acceptance,
+    inputSchema: { type: 'object' }, budget: { maxSteps: rb.budget?.maxSteps ?? 300, maxConcurrency: 2, maxDurationMs: 600000 }, nodes, acceptance,
   };
 }

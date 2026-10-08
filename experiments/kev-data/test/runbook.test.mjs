@@ -300,7 +300,7 @@ test('bed pins: OPS, the bot, note, change-log and look-alike texts, the approve
     const cut = new RegExp(values.map(esc).join('|'));
     const lines = chatterOf(sl, d);
     assert.ok(lines.length >= 29);
-    for (const line of lines) for (const frag of line.split(new RegExp(cut.source, 'g'))) if (frag.trim().length >= 10) { assert.ok(render.includes(frag), `chatter fragment ${JSON.stringify(frag)}`); checkedFragments++; }
+    for (const line of lines) for (const frag of line.split(new RegExp(cut.source, 'g'))) if (frag.trim().length >= 10) { const src = frag.replace(/quarantined hosts?\.$/, 'quarantined '); /* the bed picks host/hosts by a ternary in its source */ assert.ok(render.includes(src), `chatter fragment ${JSON.stringify(frag)}`); checkedFragments++; }
   }
   assert.ok(checkedFragments >= 60, `${checkedFragments} fragments`);
 });
@@ -702,6 +702,22 @@ test('build: this generator builds a verified Kev dataset from a frozen bed copy
   const again = await buildKev(cfg());
   assert.equal(again.buildId, build.buildId);
   assert.equal(JSON.stringify(again.manifest), JSON.stringify(m), 'a second build gives a byte-identical manifest');
+});
+
+test('authored lines: every line this group wrote is listed with its brief, is unique, and waits for the two-model filter', () => {
+  const lines = gen.authoredLines();
+  assert.ok(lines.length >= 30, `only ${lines.length} authored lines listed`);
+  const ids = lines.map(l => l.id), texts = lines.map(l => l.text);
+  assert.equal(new Set(ids).size, ids.length, 'duplicate authored line id');
+  assert.equal(new Set(texts.map(t => `${t}`.toLowerCase())).size, texts.length, 'duplicate authored line text');
+  for (const l of lines) {
+    assert.ok(l.text && l.brief && l.port, `incomplete authored line ${l.id}`);
+    assert.equal(l.twoModel, 'pending', `${l.id} must not claim the two-model filter before the hosted-arms group runs it`);
+  }
+  // every line the generator can put in a state is in the register: the carriers, the unobserved attributes, the X5 fillers
+  for (const k of Object.keys(gen.Q4_CARRIERS)) for (const t of gen.Q4_CARRIERS[k]) assert.ok(texts.includes(t), `carrier not listed: ${t}`);
+  for (const t of [...gen.X5_FILLERS.description, ...gen.X5_FILLERS.comment]) assert.ok(texts.includes(t), `filler not listed: ${t}`);
+  assert.deepEqual([...new Set(lines.map(l => l.port))].sort(), ['Q4', 'X5']);
 });
 
 test('kit: refuses what the runtime must not do (a missing slot, an unknown comment, a missing span, a topic it has no rule for)', async () => {

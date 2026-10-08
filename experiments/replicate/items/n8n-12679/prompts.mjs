@@ -3,8 +3,8 @@
 import { CONFIG } from './scenarios.mjs';
 
 export const DESCRIPTION = `A marketing team keeps its CRM (Zoho CRM) and its e-mail marketing tool (KlickTipp) aligned automatically.
-Whenever a contact is created, changed or deleted on one side, the other side follows, so customer profiles, subscription state
-and segments stay in step without manual updates or CSV imports.
+A change on one side (a new contact, an edit, a deletion) is mirrored on the other, so contact details, subscription state and segment
+membership match without anyone retyping records or importing spreadsheets.
 
 Zoho CRM -> KlickTipp. Zoho workflow rules call the integration in three situations:
  - a contact was registered through a web form: create the subscriber through the DOUBLE opt-in list (it stays Pending until the person
@@ -65,6 +65,7 @@ Your solution handles each event by calling the API (inputs.api) and then finish
 \`export default function handle(event, api)\` (api.zoho.getContact({id}) etc., synchronous), or, if you can only express pure functions, as
 \`policy({event, history}) -> {call, args} | {done: true}\` which the harness calls repeatedly with the growing history of {call, args, response}.
 Limits: at most ${CONFIG.limits.runsPerQuiescence} events are handled per originating change (a step with several changes gets that many each) before the harness declares a loop; at most ${CONFIG.limits.callsPerRun} calls per event.
+Write nothing the job does not call for (for example no tags other than the segment and creation tags it names).
 The result is judged by what both systems contain after every step and by the trace of your calls. Nothing else counts.`;
 
 const T1 = `TASK T1 (translate). The original n8n workflow "Sync contacts two-way between Zoho CRM and KlickTipp" is in the file original/workflow.json

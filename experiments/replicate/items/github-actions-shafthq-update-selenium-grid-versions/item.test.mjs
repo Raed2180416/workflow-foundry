@@ -4,7 +4,7 @@
 // unshare and docker, whose absence is reported as a skip with the reason).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -30,6 +30,7 @@ import { hashOf } from '../../../../beds/lib/canonical.mjs';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const SLOW = { timeout: 600000 };
 const VARIANTS = bed.VARIANTS;
+const tmp = prefix => { mkdirSync(SCRATCH, { recursive: true }); return mkdtempSync(path.join(SCRATCH, prefix)); };
 const CONCURRENCY = isolation() === 'mount-ns' ? 4 : 1;      // the original writes /tmp/reference-compose.yml: parallel runs need the private /tmp
 async function pool(items, fn, n = CONCURRENCY) {
   const out = new Array(items.length);
@@ -428,7 +429,7 @@ test('docker stub: agrees with the real `docker compose config` on every recorde
 });
 
 test('docker stub vs the live docker compose on the files this item actually produces', { skip: dockerAvailable() ? false : 'docker compose is not available in this environment (the recorded probes above still hold the stub to the real results)' }, () => {
-  const dir = mkdtempSync(path.join(SCRATCH, 'live-'));
+  const dir = tmp('live-');
   try {
     const rec = JSON.parse(readFileSync(path.join(HERE, 'fixtures', 'docker-probes.json'), 'utf8'));
     for (const p of rec.probes.filter(x => !x.outOfScope)) assert.equal(realCompose(p.text, dir).rc, p.rc, `${p.name}: the live command no longer matches the recording`);
@@ -590,13 +591,13 @@ test('the shared experiment helpers can render this item\'s tasks (solverView / 
   assert.equal(view.prompt, t.prompt);
   assert.ok(view.files['inputs.json'].includes('reference_fetch') && view.files['files/original/update-selenium-grid-versions.yml']);
   assert.ok(inlineRender(t).includes('## inputs.json'));
-  const dir = mkdtempSync(path.join(SCRATCH, 'mat-'));
+  const dir = tmp('mat-');
   try { const written = bed.materialize(t, dir); assert.ok(written.some(f => f.endsWith('original/update-selenium-grid-versions.yml')) && written.some(f => f.endsWith('inputs.json'))); }
   finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
 test('run-solution.mjs judges a solver module from the command line', () => {
-  const dir = mkdtempSync(path.join(SCRATCH, 'cli-'));
+  const dir = tmp('cli-');
   try {
     const solver = path.join(dir, 'solver.mjs');
     writeFileSync(solver, `import { solveImproved } from ${JSON.stringify(pathToFileURL(path.join(HERE, 'controls', 'reference.mjs')).href)};\nexport default inputs => solveImproved(inputs);\n`);

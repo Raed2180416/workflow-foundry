@@ -43,8 +43,9 @@ and their licence allows redistribution of a normalized graph. Corpus text is un
 Conventions beyond the shape above (enforced by `scripts/check-items.mjs` unless noted):
 
 - **Encoding.** `source.url` is percent-encoded (RFC 3986; a space is `%20`) and so is any path inside an `id`
-  (e.g. `crewai:crewAI-examples/notebooks/Coding%20Assistant/…`); `rawPath` is the literal local path. The checker
-  rejects whitespace in both and a `%` in an id that does not start an encoded octet; `merge-items.mjs` encodes unsafe
+  (e.g. `crewai:crewAI-examples/notebooks/Coding%20Assistant/…`); `rawPath` and the paths in `source.extraction.spans`
+  are literal local paths (`notebooks/Coding Assistant/…:L129-L144`), never percent-encoded. The checker rejects
+  whitespace in the URL and the id, a `%` in an id that does not start an encoded octet, and an encoded octet in a span path; `merge-items.mjs` encodes unsafe
   URL characters; `agentic-assemble.mjs` also checks that the percent-decoded path of a pinned GitHub URL is the tail of
   `rawPath`.
 - **`source.extraction`** is optional; when present it has exactly the keys above (other keys are rejected).

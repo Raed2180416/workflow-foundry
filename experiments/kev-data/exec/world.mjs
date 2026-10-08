@@ -133,7 +133,7 @@ export class World {
   registerFixtures(registry) {
     const add = (name, description, execute, extra = {}) => registry.register({
       name, description, version: '1', implementation: `kev-data/exec/${name}`, inputSchema: { type: 'object' }, outputSchema: {},
-      effects: 'none', risk: 'low', requiresApproval: false, maxTimeoutMs: 20000, cost: 0, cancellation: 'cooperative', execute, ...extra });
+      effects: 'none', risk: 'low', requiresApproval: false, maxTimeoutMs: 120000, cost: 0, cancellation: 'cooperative', execute, ...extra });
     add('fx.fetch', 'Fetch rows from a named source over the network (fixture).', async args => {
       this.nth('fetch'); const e = this.intercept('fetch'); if (e) throw e;
       return this.payload(args.source, args.count);

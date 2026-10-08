@@ -161,7 +161,7 @@ Reported as they happened. Exact messages in quotes.
 * **O3** No YAML library: `ls node_modules | grep -i -E "yaml|toml"` printed nothing and installing one is out of bounds. `miniyaml.mjs` (~150 lines) is a subset parser that **throws `UNSUPPORTED`** on flow collections, anchors, folded scalars, merge keys, multi-line scalars and extra documents. It reads the original and
   every variant; `docker`'s stub refuses what it cannot read (exit 125) instead of guessing.
 * **O4** The original writes an absolute path, `curl -s … > /tmp/reference-compose.yml`. Run as is, every execution would use (and share) the host's /tmp. `runner.mjs` gives each step a private tmpfs /tmp with `unshare --mount --propagation private` where that works (this container, as root: `isolation: "mount-ns"`),
-  and the test asserts the host /tmp stays clean. Where `unshare --mount` fails, `isolation()` reports `none`, the run uses the host /tmp and the tests run the original one at a time. Not exercised here: the `none` path.
+  and the test asserts the host /tmp stays clean. Where `unshare --mount` fails, `isolation()` reports `none`, the run uses the host /tmp and the tests run the original one at a time. The `none` path is NOT exercised: it would write `/tmp/reference-compose.yml` on the host, outside the area this task may write to.
 * **O5** Foundry cannot run this job end to end (section 6). `docker` is installed but has no daemon: `failed to connect to the docker API at unix:///var/run/docker.sock; check if the path is correct and if the daemon is running: dial unix /var/run/docker.sock: connect: no such file or directory`; `docker compose config` needs none, which is why the validation could be recorded for real.
 * **O6** Executing corrected reading, twice. (a) I first modelled the quoted-reference kind as "bash syntax error, run fails" (reasoning from the `"${{ }}"` splice); the executed original instead produced the glued-tag PR, because `grep 'image: selenium/IMG:'` does not match a quoted line at all. The scenario, its truth and the README were rewritten after that run.
   (b) My first `controls/foundry-workflow.mjs` run failed with `requireStack: [] | } | Node.js v24.21.0`: my own off-by-one in the repository-root path (the CLI needs `cwd` = repository root). Neither is a harness limitation; both are why the truth is checked by execution.
@@ -184,4 +184,10 @@ Run: `node --test experiments/replicate/items/github-actions-shafthq-update-sele
 Freezing: `fixtures/FREEZE.json` pins every file under `fixtures/`, the generator, oracle, task text, runner and stubs, and the hashes of one canonical task per variant. It was taken at the end of the build, **after** the controls had been run against the harness repeatedly (the quoted-reference truth was
 rewritten after the first execution, O6) and before any solver arm: it does not claim to precede the first control run.
 
-EFFORT_PLACEHOLDER
+## 10. Effort
+
+Built 2026-10-08 in one agent session: about **52 minutes of wall time** (09:51 to 10:43 UTC), the full test file and the controls run about ten times each along the way. **102 files, about 6.7 K lines**:
+2.0 K lines of code in 21 modules (+ 24 lines of shell shims), 0.65 K lines of tests (43 tests: 42 pass, 1 `todo` for O1; about 85 s, of which 25 s is the Foundry check and 24 s the broken-variant sweep), 0.19 K lines of this README,
+and 3.8 K lines of generated or recorded material (68 scenario files, 1.7 K lines of YAML, 2.1 K lines of JSON: the 14 scenario descriptions, the docker probes, the controls report, the freeze). The largest parts: `scenarios.mjs` (kinds and truth, 270 lines),
+`runner.mjs` (workflow executor, 228), `miniyaml.mjs` (168), `controls/reference.mjs` (132), `oracle.mjs` (130). Roughly a third of the time went into the runner and its shims, a third into scenarios, truth and controls, a third into tests, the Foundry check and this file (estimate, not logged).
+

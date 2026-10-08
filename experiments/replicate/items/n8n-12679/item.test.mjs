@@ -376,6 +376,105 @@ test('runtime limits at difficulty 5: generate and oracle each under 2 s', () =>
   assert.ok(Date.now() - t0 < 2000, 'the echo-loop control is bounded by the run cap');
 });
 
+// ------------------------------------------------------------------------------------------------ adversarial verification (v0.2.0)
+// Each wrong solution below passed the v0.1.0 oracle on 20/20 seeds (12/20 for the edit-only KlickTipp segment case); each correct
+// alternative below must keep passing. Raw numbers before/after: README "Adversarial verification".
+const wrapApi = (api, f) => {
+  const out = { state: api.state };
+  for (const svc of ['zoho', 'klicktipp']) out[svc] = Object.fromEntries(Object.entries(api[svc]).map(([k, fn]) => [k, a => f(`${svc}.${k}`, structuredClone(a ?? {}), fn, api)]));
+  return out;
+};
+const via = f => { const base = makeFaithful(CONFIG); return (e, api) => base(e, wrapApi(api, (n, a, fn, raw) => f(n, a, fn, raw, e))); };
+const ADV_SEEDS = [0, 1, 2, 3, 4];
+
+test('adversarial: wrong solutions that passed v0.1.0 are rejected, for the named reason', () => {
+  const K = CONFIG.klicktipp;
+  const wrong = {
+    'every new subscriber also gets the created-via-form tag': [via((n, a, fn) => { if (n === 'klicktipp.subscribe') a.tagId = [K.tags.created.id, K.tags.createdViaForm.id]; return fn(a); }), 'TAG_UNEXPECTED:createdViaForm'],
+    'a bookkeeping tag on every Zoho contact it touches': [via((n, a, fn, raw) => { const r = fn(a); if (n === 'zoho.bulkUpdate' && r.status === 200) for (const x of r.body.data) if (x.status === 'success') raw.zoho.addTags({ ids: [x.details.id], tags: [{ name: 'Synced by bot' }] }); return r; }), 'TAG_UNEXPECTED:zoho'],
+    'Zoho segment tags matched case-sensitively': [via((n, a, fn) => { const r = fn(a); if (n === 'zoho.getContact' && r.status === 200) for (const rec of r.body.data) rec.Tag = rec.Tag.filter(t => CONFIG.segments.some(s => s.zohoTag === t.name)); return r; }), 'SEGMENT_MISMATCH:klicktipp'],
+    'KlickTipp segment tags carried to Zoho on create only': [via((n, a, fn, raw, e) => (n === 'zoho.addTags' && e.trigger === 'kt-tagged' && e.data[K.fields.zohoContactId] ? { status: 200, body: { data: [] } } : fn(a))), 'SEGMENT_MISMATCH:zoho'],
+    'empty values never written (a cleared field is not propagated)': [via((n, a, fn) => { if (a.fields) for (const k of Object.keys(a.fields)) if (a.fields[k] === '' || a.fields[k] === null) delete a.fields[k]; return fn(a); }), 'FIELD_MISMATCH:'],
+  };
+  for (const [key, zohoName] of Object.entries(ZOHO_OF)) {
+    if (key === 'email') continue;
+    wrong[`KlickTipp->Zoho update path forgets ${key}`] = [via((n, a, fn) => { if (n === 'zoho.updateContact' && a.fields) delete a.fields[zohoName]; return fn(a); }), `FIELD_MISMATCH:zoho.${key}`];
+    if (key !== 'last') wrong[`Zoho->KlickTipp update path forgets ${key}`] = [via((n, a, fn) => { if (n === 'klicktipp.updateSubscriber' && a.fields && Object.keys(a.fields).length > 1) delete a.fields[KT_OF[key]]; return fn(a); }), `FIELD_MISMATCH:klicktipp.${key}`];
+  }
+  for (const [name, [h, code]] of Object.entries(wrong)) for (const seed of ADV_SEEDS) {
+    const t = gen(seed, 3, 'T2'), r = bed.oracle(t, driveSync(t, h));
+    assert.equal(r.pass, false, `${name} (seed ${seed}) passed`);
+    assert.ok([...codesOf(r)].some(c => c.startsWith(code)), `${name} (seed ${seed}): expected ${code}, got ${[...codesOf(r)].slice(0, 6)}`);
+  }
+});
+
+test('adversarial: correct alternatives the oracle must not reject (incidental conventions)', () => {
+  const K = CONFIG.klicktipp, zf = K.fields.zohoContactId, ok = r => r.status < 300, nz = v => (v == null ? '' : String(v));
+  const berlin = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hourCycle: 'h23' });
+  const berlinMidnight = iso => { const [y, m, d] = iso.split('-').map(Number); for (const off of [1, 2]) { const t = Date.UTC(y, m - 1, d, -off); if (berlin.format(new Date(t)).endsWith('00')) return String(t / 1000); } throw new Error('no Berlin midnight'); };
+  const berlinIso = u => (u === '' ? null : berlin.format(new Date(Number(u) * 1000)).slice(0, 10));
+  // Live reads, compare-before-write, KlickTipp dates written as unix seconds of Berlin midnight, segments unioned both ways, Zoho deletions
+  // resolved by email lookup instead of the stored link.
+  const alt = (e, api) => {
+    if (e.trigger.startsWith('zoho')) {
+      const b = e.data.body; if (b.modifiedBy === CONFIG.apiUserName) return;
+      if (e.trigger === 'zoho-deleted') { if (b.email) { const g = api.klicktipp.getSubscriber({ email: b.email }); if (ok(g)) api.klicktipp.deleteSubscriber({ id: g.body.id }); } return; }
+      const g = api.zoho.getContact({ id: b.id }); if (!ok(g)) return; const z = g.body.data[0]; if (!z.Email) return;
+      const form = e.trigger === 'zoho-form';
+      const fields = { [zf]: z.id, fieldFirstName: nz(z.First_Name), fieldLastName: nz(z.Last_Name), fieldPhone: nz(z.Phone), fieldMobilePhone: nz(z.Mobile), fieldPrivatePhone: nz(z.Home_Phone), fieldFax: nz(z.Fax),
+        fieldBirthday: z.Date_of_Birth ? berlinMidnight(z.Date_of_Birth) : '', fieldCountry: nz(z.Mailing_Country), fieldState: nz(z.Mailing_State), fieldCity: nz(z.Mailing_City), fieldStreet1: nz(z.Mailing_Street), fieldZip: nz(z.Mailing_Zip) };
+      let r = z.KlickTipp_ID ? api.klicktipp.updateSubscriber({ id: z.KlickTipp_ID, email: z.Email, fields }) : null;
+      if (!r || !ok(r)) r = api.klicktipp.subscribe({ email: z.Email, listId: form ? K.lists.doi.id : K.lists.soi.id, tagId: form ? K.tags.createdViaForm.id : K.tags.created.id, fields });
+      if (!ok(r)) return;
+      const optOut = r.body.status !== 'Subscribed';
+      if (z.KlickTipp_ID !== r.body.id || z.Email_Opt_Out !== optOut) api.zoho.updateContact({ id: z.id, fields: { KlickTipp_ID: r.body.id, Email_Opt_Out: optOut } });
+      const has = name => z.Tag.some(t => t.name.toLowerCase() === name.toLowerCase());
+      const toKt = CONFIG.segments.filter(sg => has(sg.zohoTag) && !r.body.tags.includes(K.tags[sg.klicktippTag].id)).map(sg => K.tags[sg.klicktippTag].id);
+      if (toKt.length) api.klicktipp.tag({ email: z.Email, tagIds: toKt });
+      const toZoho = CONFIG.segments.filter(sg => !has(sg.zohoTag) && r.body.tags.includes(K.tags[sg.klicktippTag].id)).map(sg => ({ name: sg.zohoTag }));
+      if (toZoho.length) api.zoho.addTags({ ids: [z.id], tags: toZoho });
+      return;
+    }
+    if (e.trigger === 'kt-deleted') { if (e.data[zf]) api.zoho.deleteContact({ id: e.data[zf] }); return; }
+    const g = api.klicktipp.getSubscriber({ id: e.data.id }); if (!ok(g)) return; const s = g.body; if (!s.fieldLastName) return;
+    const fields = { Email: s.email, First_Name: s.fieldFirstName, Last_Name: s.fieldLastName, Phone: s.fieldPhone, Mobile: s.fieldMobilePhone, Home_Phone: s.fieldPrivatePhone, Fax: s.fieldFax, Date_of_Birth: berlinIso(s.fieldBirthday),
+      Mailing_Country: s.fieldCountry, Mailing_State: s.fieldState, Mailing_City: s.fieldCity, Mailing_Street: s.fieldStreet1, Mailing_Zip: s.fieldZip, KlickTipp_ID: s.id, Email_Opt_Out: s.status !== 'Subscribed' };
+    let zid = s[zf];
+    if (zid && !ok(api.zoho.updateContact({ id: zid, fields }))) zid = null;
+    if (!zid) { const c = api.zoho.createContact({ fields }); if (!ok(c)) return; zid = c.body.data[0].details.id; api.klicktipp.updateSubscriber({ id: s.id, fields: { [zf]: zid } }); }
+    const tags = CONFIG.segments.filter(sg => s.tags.includes(K.tags[sg.klicktippTag].id)).map(sg => ({ name: sg.zohoTag }));
+    if (tags.length) api.zoho.addTags({ ids: [zid], tags });
+  };
+  for (const seed of ADV_SEEDS) for (const d of [3, 5]) { const t = gen(seed, d, 'T2'), r = bed.oracle(t, driveSync(t, alt)); assert.ok(r.pass, `d${d} seed ${seed}: ${JSON.stringify(r.details.scenarios.filter(s => !s.pass).slice(0, 2))}`); }
+});
+
+test('adversarial: hostile values get an answer, never an exception (mocks and oracle)', () => {
+  const t = gen(0, 3, 'T2'), K = CONFIG.klicktipp;
+  const env = createEnv(t); env.reset();
+  assert.equal(env.step({ call: 'klicktipp.subscribe', args: { email: 'x.y@mail.example', listId: 'toString' } }).observation.response.status, 400, 'a prototype key is not a list');
+  assert.equal(env.step({ call: 'klicktipp.subscribe', args: { email: 'x.y@mail.example', listId: K.lists.soi.id, fields: { fieldBirthday: '99999999999999999999' } } }).observation.response.status, 400, 'an out-of-range date is refused');
+  // A solution whose subscribe sends an out-of-range birthday used to make oracle() throw RangeError; now it is judged.
+  const base = makeFaithful(CONFIG);
+  const out = driveSync(t, (e, api) => base(e, { ...api, klicktipp: { ...api.klicktipp, subscribe: a => api.klicktipp.subscribe({ ...a, fields: { ...a.fields, fieldBirthday: '99999999999999999999' } }) } }));
+  const r = bed.oracle(t, out); assert.equal(r.pass, false);
+});
+
+test('a T3 solver sees its cost target through the generic renderers; T1/T3 definition files come from solverFiles()', () => {
+  const t3 = gen(1, 3, 'T3'), t1 = gen(1, 3, 'T1'), t2 = gen(1, 3, 'T2');
+  assert.equal(t3.inputs.costTarget.externalCalls, t3.budget.externalCalls);
+  assert.ok(inlineRender(t3).includes(`"externalCalls": ${t3.budget.externalCalls}`), 'the number is in what an arm renders');
+  assert.match(t3.prompt, /inputs\.costTarget\.externalCalls/);
+  assert.equal(t1.inputs.costTarget, undefined); assert.equal(t2.inputs.costTarget, undefined);
+  assert.ok(!('files/original/workflow.json' in solverView(t1).files), 'documented limit: the generic solverView does not carry attachments');
+  assert.deepEqual(bed.solverFiles(t2), {});
+});
+
+test('original: solverFiles() returns the definition for T1/T3 (in memory; never persisted)', { skip: skipOriginal }, () => {
+  const f = bed.solverFiles(gen(1, 3, 'T3'));
+  assert.deepEqual(Object.keys(f), ['original/workflow.json']);
+  assert.ok(JSON.parse(f['original/workflow.json']).nodes.length >= 38);
+});
+
 // ------------------------------------------------------------------------------------------------ T3
 test('T3: the transcription of the original passes core and the cost cap but fails all four probes; the improved reference passes everything cheaper', () => {
   for (const seed of SEEDS) {

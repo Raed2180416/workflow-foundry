@@ -368,7 +368,6 @@ export const Q4_CARRIERS = Object.freeze({
     'status: CHECK. Results do not match the runbook, escalate to the on-call',
   ]),
 });
-export const AUTHORED_LINE_IDS = Object.freeze({ q4Carriers: Object.keys(Q4_CARRIERS).flatMap(k => Q4_CARRIERS[k].map((_, i) => `Q4:carrier:${k}#${i}`)) });
 
 // insert a carrier line at a line boundary of the observation (not before the first line)
 export function injectCarrier(obs, carrier, key) {
@@ -850,6 +849,21 @@ export async function* records(slice, seeds, opts = {}, ctx) {
     }
     if (wanted.includes('X4') && perWorld.X4 && difficulty >= 3 && hnum(`${slice}|smoke|X4|${seed}`) % smokeEvery === 0) yield* x4Rows(c0, perWorld.X4);
   }
+}
+
+// The lines this group authored as a development agent (JUDGE-PROGRAM.md §2.3 rule 1: they inherit the truth of their
+// brief and must pass the two-model filter, which is deferred to the hosted-arms group). Every line is listed with its
+// brief; none is admitted yet (`twoModel: 'pending'`). The carriers urge the wrong option of a Q4 step; the unobserved
+// attributes are the plan sentences of the Q4 unknowables; the fillers are the presence-matched sentences of X5 and state
+// nothing about any parameter. The X5 assumption templates and the Q4 plan phrasings are code templates over world slots
+// (their truth is the comparison of a value with the world's), listed by id only.
+export function authoredLines() {
+  const out = [];
+  for (const [k, list] of Object.entries(Q4_CARRIERS)) list.forEach((text, i) => out.push({ id: `Q4:carrier:${k}#${i}`, port: 'Q4', kind: 'carrier', brief: k === 'normal' ? 'claims the step went as planned (urges as_expected)' : 'claims the step went wrong (urges drifted)', text, twoModel: 'pending' }));
+  UNOBSERVED.forEach((text, i) => out.push({ id: `Q4:unobserved#${i}`, port: 'Q4', kind: 'unobserved-attribute', brief: 'an attribute the observation does not show (the plan sentence is unknowable)', text, twoModel: 'pending' }));
+  X5_FILLERS.description.forEach((text, i) => out.push({ id: `X5:filler:description#${i}`, port: 'X5', kind: 'filler', brief: 'a description sentence that states no parameter (not_stated)', text, twoModel: 'pending' }));
+  X5_FILLERS.comment.forEach((text, i) => out.push({ id: `X5:filler:comment#${i}`, port: 'X5', kind: 'filler', brief: 'a ticket comment that states no parameter (not_stated)', text, twoModel: 'pending' }));
+  return out;
 }
 
 // helpers the test file and the assembly reuse

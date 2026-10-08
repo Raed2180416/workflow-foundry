@@ -51,9 +51,14 @@ export function execSourceHash() {
   const files = ['plan', 'recipes', 'vocab', 'world', 'workflow', 'scenario', 'healer', 'sut', 'util'].map(f => path.join(EXEC_DIR, `${f}.mjs`)).concat(path.join(EXEC_DIR, '..', 'judges', 'failures.mjs')).sort();
   return (sourceHash = sha(files.map(f => `${path.basename(f)}\0${readFileSync(f, 'utf8')}`).join('\n')).slice(0, 16));
 }
+// The cache key is the whole plan (its key does not name its cause: two runs with different seed lists reuse the key `f1|slice|seed|idx` for
+// different causes), and a hit is accepted only if the entry carries the identity of the plan that asks for it.
+export const planCacheId = plan => sha(canonical(plan)).slice(0, 24);
+export const cacheFile = (cacheDir, frozen, plan) => path.join(cacheDir, `${sha(`${EXEC_VERSION}|${execSourceHash()}|${frozen.commit}|${planCacheId(plan)}`).slice(0, 40)}.json`);
+const sameIdentity = (r, plan) => r && r.key === plan.key && r.cause === plan.cause && r.recipe === plan.recipe && r.shapeId === plan.shapeId;
 export async function runCached(rt, frozen, plan, cacheDir) {
-  const file = cacheDir ? path.join(cacheDir, `${sha(`${EXEC_VERSION}|${execSourceHash()}|${frozen.commit}|${plan.key}`).slice(0, 40)}.json`) : null;
-  if (file && existsSync(file)) { try { return JSON.parse(readFileSync(file, 'utf8')); } catch { /* a torn cache file is recomputed */ } }
+  const file = cacheDir ? cacheFile(cacheDir, frozen, plan) : null;
+  if (file && existsSync(file)) { try { const r = JSON.parse(readFileSync(file, 'utf8')); if (sameIdentity(r, plan)) return r; } catch { /* a torn cache file is recomputed */ } }
   let lastError;
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
@@ -62,6 +67,10 @@ export async function runCached(rt, frozen, plan, cacheDir) {
       return r;
     } catch (e) { lastError = e; if (e.code !== 'EXEC_INFRA') break; }
   }
+  // an infrastructure fault that outlives its retries (a sandbox that missed a wall-clock budget on an overloaded host) would make the
+  // kept rows depend on machine load; it stops the build instead of silently dropping the scenario. A scenario that fails the same way
+  // every time (a recipe fault) is a deterministic drop, counted in stats.errors.
+  if (lastError.code === 'EXEC_INFRA') throw Object.assign(new Error(`${plan.key}: ${lastError.message} (after 3 attempts); rerun the build on a less loaded host`), { code: 'EXEC_INFRA' });
   return { key: plan.key, cause: plan.cause, error: `${lastError.code ?? 'ERROR'}: ${String(lastError.message).slice(0, 200)}` };
 }
 

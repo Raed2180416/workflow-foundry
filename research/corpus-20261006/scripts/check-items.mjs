@@ -198,6 +198,9 @@ export function validateItem(item, { canonical = false } = {}) {
           const bad = x.spans.filter(p => !isStr(p) || p.length > 300 || !EXTRACTION_SPAN.test(p) || findSecret(p));
           if (bad.length) err('source.extraction', `extraction.spans entries must be <path>:L<a>[-L<b>] (<=300 chars), e.g. ${JSON.stringify(bad[0]).slice(0, 80)}`);
           if (new Set(x.spans).size !== x.spans.length) err('source.extraction', 'extraction.spans must be distinct');
+          // spans name local files, like rawPath: literal paths, never percent-encoded (ITEM-SCHEMA.md, Encoding)
+          const encoded = x.spans.find(p => isStr(p) && /%[0-9A-Fa-f]{2}/.test(p.replace(/:L\d+(-L\d+)?$/, '')));
+          if (encoded) err('source.extraction', `extraction.spans are literal local paths, not percent-encoded: ${JSON.stringify(encoded).slice(0, 80)}`);
         }
         if (!isStr(x.extractor, 1) || x.extractor.length > 100) err('source.extraction', 'extraction.extractor must be a non-empty model or tool id (<=100 chars)');
         if ('verifier' in x && (!isStr(x.verifier, 1) || x.verifier.length > 200)) err('source.extraction', 'extraction.verifier, when present, must be a non-empty string (<=200 chars)');
@@ -360,6 +363,8 @@ export function selfTest() {
     ['extraction span without lines', it => { it.source.extraction = { ...extraction, spans: ['flow.py'] }; }, ['source.extraction']],
     ['extraction duplicate spans', it => { it.source.extraction = { ...extraction, spans: ['flow.py:L1', 'flow.py:L1'] }; }, ['source.extraction']],
     ['extraction missing extractor', it => { it.source.extraction = { method: 'model-read-source', spans: ['flow.py:L1'] }; }, ['source.extraction']],
+    ['extraction span with a literal space', it => { it.source.extraction = { ...extraction, spans: ['notebooks/Coding Assistant/a.ipynb:L3-L9'] }; }, []],
+    ['extraction span percent-encoded', it => { it.source.extraction = { ...extraction, spans: ['notebooks/Coding%20Assistant/a.ipynb:L3-L9'] }; }, ['source.extraction']],
     ['other unknown source key still rejected', it => { it.source.notes = 'x'; }, ['source.extra-key']],
     ['local: url for a third-party platform', it => { it.source.url = 'local:repo/flow.py'; }, ['source.url']],
     ['local: url for a first-party platform', it => { it.id = 'claude-code-workflows:s/flow.js'; it.source.platform = 'claude-code-workflows'; it.source.url = 'local:s/flow.js';

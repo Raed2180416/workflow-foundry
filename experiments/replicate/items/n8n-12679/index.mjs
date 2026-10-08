@@ -49,7 +49,7 @@ const clientConfig = () => ({
   zoho: CONFIG.zoho,
   klicktipp: CONFIG.klicktipp,
   segments: CONFIG.segments,
-  note: 'The ids below are this environment\'s account. Segment tags carry over by name pair: Zoho tag name <-> KlickTipp tag id.',
+  note: 'The ids below are this environment\'s account. Segment tags carry over by name pair: Zoho tag name <-> KlickTipp tag id. People type Zoho tag names in any letter case, so a Zoho tag matches a segment case-insensitively.',
 });
 
 function check({ seed, split, difficulty, variant }) {

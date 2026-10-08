@@ -1,7 +1,7 @@
 {
  "schema": "rbench-github-actions-shafthq-update-selenium-grid-versions-freeze/1",
  "version": "0.1.0",
- "frozenAt": "2026-10-08T10:29:50Z",
+ "frozenAt": "2026-10-08T10:40:14Z",
  "beforeFirstRun": false,
  "note": "Development harness. The generator, the truth rules and the oracle were iterated while the controls were first run against them (README section 7 lists what the executed original changed); this freeze is taken at the end of the build, after those runs and BEFORE any solver arm has run on the item. Nothing here is a sealed evaluation set.",
  "files": {

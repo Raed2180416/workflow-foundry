@@ -27,6 +27,25 @@
 //   builtin        false: no built-in authored lines (lib: ports/interactive-lines.mjs) in train-like slices
 //   share          { injection, invariance, paraphrase, unknowable } fractions of clean Q4:gridquest rows that get a twin
 //   smokeEvery     a wave-2 smoke port uses one world in `smokeEvery` (default 6)
+//
+// Readings of the specification taken here (each is tested or reported by test/interactive.test.mjs):
+//   - Q1 never labels the terminal state (the engine ignores every action after the treasure is taken); the labeller lifts the engine's
+//     lifetime action ledger (lifetimeActions: Infinity), logs it on every probe, and is cross-checked by a second path (world edges plus the
+//     abstract model's state bits).
+//   - Q4:gameqa reads the compact observation (events, HUD line, player cell, status) of the post-action state; a planted bug whose
+//     effect is not in that reading (enemy_ai, ghost_sprite, enemy_lag and the like) is dropped, not labelled.
+//   - Q4 unknowable = the remote effect of a switch left out of the result line (gridquest only). The label stays the true one and the
+//     training target is uniform; in an OOD slice the row's own form may be in the train bucket ("known" phrasing) or the slice's bucket
+//     ("new"), the 2 x 2 of the program (§2.5). Clean OOD rows are always in the slice's bucket.
+//   - The held-out families (Q4:gameqa, X1:gridquest, X2:gameqa) are not bucket-restricted: the family is the held-out axis.
+//   - A world-independent state (a pinned tracker post, a Q2 sentence, a Q6 behaviour) is a state of one slice only: the built-in
+//     pinned posts are split between train, calib-in, dev-select and test-in by a hash of the post; what still collides is dropped by the
+//     build (rule 7). Repeated states in test-in and test-ood are dropped here.
+//   - X1:gridquest registers the injection spans only (negatives are shared bed prose); X1:gameqa has bed injection forms in the train
+//     bucket only, so an OOD slice has X1:gameqa positives only from slice-tagged held-out lines in opts.lines.
+//   - formId of Q1, Q2 and Q3 is the skeleton of the whole description (or sentence): their form counts over-count; they are smoke sets.
+//   - Every authored line of ports/interactive-lines.mjs and every row composed from a pool line is pending the two-model filter
+//     (ports/interactive-lines.mjs PENDING_FILTER); the row says so in meta.surface.source ('authored', 'authored-builtin').
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
@@ -305,13 +324,22 @@ async function* gridquestQ4(G, mod, seed, difficulty, perWorld) {
   }
   // presence-matched unknowable (§2.5): the remote effects of a switch are reported only in the result line; replace it by
   // the same-register line that settles nothing. The label stays the true one (as_expected); the training target is uniform.
-  for (const c of oks.filter(o => o.remote && o.kind === 'toggle')) {
-    if (unit(`${c.key}|unk`) >= G.share.unknowable) continue;
+  // In an OOD slice the unknowable axis is the 2 x 2 known/new phrasing x stated/unknowable of the program (§2.5): the row's own form may
+  // be in the slice's held-out bucket ('new' phrasing) or in the train bucket ('known' phrasing); the other OOD buckets stay out.
+  // The source steps are every remote-effect toggle of the route, not only those whose stated row passed the bucket filter.
+  const unkShare = OOD.has(G.slice) ? Math.max(G.share.unknowable, G.opts.share?.unknowable ?? 1) : G.share.unknowable;
+  for (const c of cands.filter(o => o.role === 'ok' && o.remote && o.kind === 'toggle')) {
+    if (unit(`${c.key}|unk`) >= unkShare) continue;
     const o = parseObservation(c.observation), first = /^You [a-z ]+ the [a-z]+\./.exec(o.lastAction)?.[0];
     if (!first) continue;
     const obs = scrubFamilySpans(GQ.withLastAction(c.observation, first), seed, G.slice);
+    if (G.slice !== 'test-ood' && carriesInjection(obs)) { bump(G, 'q4:injection-left'); continue; }
     const rec = q4Record(c, ctx0, { observation: obs, tag: 'unk', variant: 'unknowable', target: G.slice === 'train' ? uniformTarget(['as_expected', 'drifted']) : undefined, meta: { counterfactual: { swapped: true, from: 'result line', to: 'result line without the remote effects', path: 'observation' } } });
-    if (bucketAllows(G.slice, rec.meta.formId)) yield rec; else bump(G, 'q4:unknowable-bucket');
+    const bucket = skeletonBucket(rec.meta.formId), phrasing = bucket === BUCKET_OF_SLICE[G.slice] ? (OOD.has(G.slice) ? 'new' : 'known') : bucket === 'train' && OOD.has(G.slice) ? 'known' : null;
+    if (!phrasing) { bump(G, 'q4:unknowable-bucket'); continue; }
+    rec.meta.unknowable = { phrasing, stated: `${seed}:${c.id}` };
+    bump(G, `q4:unknowable-${phrasing}`);
+    yield rec;
   }
 }
 
@@ -411,6 +439,9 @@ function x1Lines(G) {
 }
 const lineKey = l => l.id ?? sha(l.text).slice(0, 12);
 
+// 70% of the posts to train, 10% each to calib-in, dev-select and test-in
+const PINNED_PARTS = Object.freeze([['calib-in', 0.1], ['dev-select', 0.2], ['test-in', 0.3]]);
+const pinnedPart = ([title, body]) => { const u = unit(`pinned-part|${title}|${body}`); return (PINNED_PARTS.find(([, upto]) => u < upto) ?? ['train'])[0]; };
 async function* gameqaX1(G, qa, seed, difficulty, perWorld) {
   const task = qa.index.generate({ seed, split: G.def.bedSplit, difficulty }), c = qa.case.caseFor(task);
   const wh = worldHash(task), masks = QA.masksOf(c);
@@ -440,7 +471,10 @@ async function* gameqaX1(G, qa, seed, difficulty, perWorld) {
   posLines.forEach((l, j) => { const x = composed(l, j); if (x) cand.push(x); });
   negLines.forEach((l, j) => { const x = composed(l, j); if (x) cand.push(x); });
   if (pinnedOn) {
-    shuffled(BENIGN_PINNED.map((t, j) => ({ t, j })), `${G.slice}|X1|${seed}|bp`).slice(0, 4).forEach(({ t: [title, body], j }) => {
+    // a pinned post is the same text in every world, so the posts are split between the train slice and the in-distribution evaluation
+    // slices (calib-in, dev-select, test-in) by a hash of the post: no evaluation state is a train state or another slice's state (the build would drop the copy: rule 7)
+    const part = G.slice;
+    shuffled(BENIGN_PINNED.map((t, j) => ({ t, j })).filter(({ t }) => pinnedPart(t) === part), `${G.slice}|X1|${seed}|bp`).slice(0, 4).forEach(({ t: [title, body], j }) => {
       cand.push({ id: `pinned:${j}`, label: 'no', slots: { text: `${title}\n${body}`, source_kind: 'tracker post' }, form: formOf(`${title} ${body}`, masks), source: 'authored-builtin', kind: 'benign-pinned', hard: QA.hardNegativeKind(body) ?? 'pinned', addressee: QA.hasAddressee(body), labelSource: 'authored-brief', weight: 3 });
     });
   }

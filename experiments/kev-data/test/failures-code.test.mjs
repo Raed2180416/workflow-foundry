@@ -16,7 +16,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadSpec, REPO_ROOT } from '../lib/contracts.mjs';
@@ -33,9 +34,9 @@ import { planScenario } from '../exec/plan.mjs';
 import { runScenario } from '../exec/scenario.mjs';
 import { RESAMPLE_K, TAU, contractOf, evaluateContract } from '../exec/healer.mjs';
 import { wilsonLower } from '../exec/util.mjs';
-import { makeRecord, mapLimit } from '../exec/rows.mjs';
+import { BUCKET_OF_SLICE, bucketAllows, makeRecord, mapLimit } from '../exec/rows.mjs';
 import { toSystemOneQuestion } from '../lib/render.mjs';
-import { F1_MIX, F1_ROWS, TEMPLATE_CAP, applyCollisionTargets, execSourceHash, runCached } from '../exec/f1.mjs';
+import { F1_MIX, F1_ROWS, TEMPLATE_CAP, applyCollisionTargets, cacheFile, execSourceHash, planCacheId, runCached } from '../exec/f1.mjs';
 import { TEMPLATES, TEMPLATE_COUNTS } from '../exec/templates.mjs';
 import { alignCodefix, tapStatus, truthOf } from '../taps/codefix.mjs';
 import { THREAD_INJECTIONS, slotRe } from '../taps/codefix-frames.mjs';
@@ -330,7 +331,12 @@ test('unit: a slice reads its own skeleton bucket of the workflow shape (train 4
   for (const b of ['train', 'calib-ood', 'dev-ood', 'test-ood']) assert.ok(by[b] > 10, `${b}: ${by[b]}`);
   assert.ok(Math.abs(by['test-ood'] / 400 - 0.2) < 0.08 && Math.abs(by.train / 400 - 0.6) < 0.1, JSON.stringify(by));
   assert.equal(new Set(plans.map(p => p.shapeId)).size > 150, true, 'shapes are diverse');
-  assert.deepEqual(Object.fromEntries(Object.entries(want)), want);
+  assert.deepEqual({ ...BUCKET_OF_SLICE }, want, 'each slice reads its own skeleton bucket');
+  for (const [slice, bucket] of Object.entries(want)) {
+    const ok = plans.filter(p => bucketAllows(slice, p.shapeId));
+    assert.ok(ok.length > 0 && ok.every(p => skeletonBucket(p.shapeId) === bucket), `${slice} keeps exactly the ${bucket} shapes`);
+  }
+  assert.ok(plans.filter(p => bucketAllows('test-ood', p.shapeId)).every(p => !bucketAllows('train', p.shapeId)), 'a test-ood shape is never a train shape');
 });
 
 test('workflow-shape buckets give >= 30 shapes per label in test-OOD, or the axis is marked diagnostic', async t => {
@@ -518,6 +524,26 @@ test('build: this generator builds a verified Kev dataset (train and dev-select,
   const recs = (await TRAIN()).slice(0, 60);
   const tok = measureRecords(recs.map(r => ({ state: r.state, questions: r.questions })));
   assert.ok(tok.every(x => x.fits));
+});
+
+test('exec cache: the key is the whole plan; an entry written for another plan with the same key (another cause) is never returned', async () => {
+  const { rt, frozen } = await RUNTIME();
+  const a = planScenario('acc|cache|1', { cause: 'flake' }), b = planScenario('acc|cache|1', { cause: 'defect' });
+  assert.equal(a.key, b.key, 'two plans can share a key');
+  assert.notEqual(planCacheId(a), planCacheId(b));
+  const dir = mkdtempSync(path.join(tmpdir(), 'kev-exec-cache-'));
+  try {
+    assert.notEqual(cacheFile(dir, frozen, a), cacheFile(dir, frozen, b));
+    const rb = await runCached(rt, frozen, b, dir);
+    assert.equal(rb.cause, 'defect');
+    // a stale entry under a's name that carries b's identity (what the old key scheme returned) is recomputed, not trusted
+    writeFileSync(cacheFile(dir, frozen, a), JSON.stringify(rb));
+    const ra = await runCached(rt, frozen, a, dir);
+    assert.equal(ra.cause, 'flake');
+    assert.equal(ra.recipe, a.recipe);
+    assert.equal(JSON.parse(readFileSync(cacheFile(dir, frozen, a), 'utf8')).cause, 'flake', 'the recomputed result replaced the stale entry');
+    assert.equal((await runCached(rt, frozen, a, dir)).shapeId, a.shapeId, 'a second read hits the cache');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
 test('determinism: two runs give the same records (the exec cache does not change a result)', async () => {

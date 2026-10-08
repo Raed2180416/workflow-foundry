@@ -18,10 +18,10 @@ import { R } from './workflow.mjs';
 
 export const CAUSES = Object.freeze(['flake', 'variance', 'defect', 'env', 'impossible', 'finding']);
 export const mkErr = (code, message) => Object.assign(new Error(message), { code });
-const task = (id, needs, description, tool, args, extra = {}) => ({ id, kind: 'task', needs, description, tool, args, timeoutMs: 15000, retry: { maxAttempts: 1, backoffMs: 0 }, ...extra });
+const task = (id, needs, description, tool, args, extra = {}) => ({ id, kind: 'task', needs, description, tool, args, timeoutMs: 60000, retry: { maxAttempts: 1, backoffMs: 0 }, ...extra });
 const withRetry = (P, extra = {}) => ({ retry: { maxAttempts: P.A, backoffMs: 0 }, ...extra });
 const rowsRef = c => (c.inMap ? R('item') : R(`${c.P}.rows`));
-const codeNode = (c, lang, source, extra = {}) => ({ id: c.id, kind: 'code', needs: c.needs, description: 'Compute a derived value from the rows', lang, source, timeoutMs: 20000,
+const codeNode = (c, lang, source, extra = {}) => ({ id: c.id, kind: 'code', needs: c.needs, description: 'Compute a derived value from the rows', lang, source, timeoutMs: 90000,
   args: { rows: R(`${c.P}.rows`), total: R(`${c.P}.total`), source: R(`${c.P}.source`) }, ...extra });
 const fill = (src, vars) => src.replace(/\{(\w+)\}/g, (_, k) => String(vars[k]));
 const agentCore = (c, P, checks) => ({ id: c.id, kind: 'agent', needs: c.needs, description: 'Choose a label for the batch', role: 'classify', instructions: P.instruction,

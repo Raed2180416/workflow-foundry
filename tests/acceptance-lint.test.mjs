@@ -15,6 +15,7 @@ import { createDefaultRegistry } from '../src/capabilities.mjs';
 import { validateWorkflow, validateDecision, workflowSchema } from '../src/validate.mjs';
 import { lintWorkflow, LINT_RULES, LINT_PROFILE } from '../src/lint.mjs';
 import { assessWorkflow, gradeAcceptance, isStrong } from '../src/acceptance.mjs';
+import { verdictOf } from '../src/verdict.mjs';
 import { loadPolicy } from '../src/models/policy.mjs';
 import { ModelPort } from '../src/models/port.mjs';
 import { Journal } from '../src/journal.mjs';
@@ -316,6 +317,17 @@ test('lint: a rule that cannot run is reported, not swallowed, and malformed inp
   assert.equal(notWorkflow.valid, false);
   assert.equal(notWorkflow.lint, undefined, 'a workflow that fails its schema is not linted');
 });
+
+test('malformed workflows fail closed: assessed as unassessed, never pass, and neither the lint nor the verdict throws', () => {
+  for (const bad of [{ acceptance: [exists('nodes.a.x')], nodes: [null] }, { acceptance: [exists('nodes.a.x')], nodes: [{ id: 'a', kind: 'map', body: {} }] }, { acceptance: [{ op: 'exists' }], nodes: 'x' }]) {
+    assert.equal(assessWorkflow(bad).acceptance.grade === 'existence-only' || assessWorkflow(bad).acceptance.grade === 'unassessed', true);
+    assert.notEqual(verdictOfSucceeded(bad), 'pass');
+  }
+  assert.equal(assessWorkflow({ acceptance: [exists('nodes.a.x')], nodes: [{ id: 'a', kind: 'map', body: {} }] }).acceptance.grade, 'unassessed');
+  const report = lintWorkflow({ nodes: 'x', acceptance: [] });
+  assert.deepEqual([report.codes, report.acceptance.grade], [{ LINT_RULE_SKIPPED: 1 }, 'unassessed']);
+});
+const verdictOfSucceeded = workflow => verdictOf({ status: 'succeeded' }, { workflow }).verdict;
 
 test('schema: the oracle declaration needs a reason, only the none mode exists, and model.justification is bounded', () => {
   const ok = wf([code('answer')], [exists('nodes.answer.id')], { oracle: { mode: 'none', reason: 'No executable oracle exists for this brief.' } });

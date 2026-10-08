@@ -3,7 +3,7 @@
 // (offline: the command needs no daemon). The recording is what the validation stub (mocks/compose-validate.mjs) is held to by
 // item.test.mjs; run it again when the Docker client changes:  node controls/record-docker-probes.mjs
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { SCRATCH } from '../runner.mjs';
 
@@ -67,6 +67,7 @@ export function realCompose(text, dir) {
 if (import.meta.url === `file://${process.argv[1]}`) {
   const version = dockerAvailable();
   if (!version) { console.error('docker compose is not available here; fixtures/docker-probes.json left as it is'); process.exit(1); }
+  mkdirSync(SCRATCH, { recursive: true });
   const dir = mkdtempSync(path.join(SCRATCH, 'probe-'));
   const probes = Object.entries(PROBES).map(([name, text]) => ({ name, text, ...realCompose(text, dir), ...(OUT_OF_SCOPE[name] ? { outOfScope: OUT_OF_SCOPE[name] } : {}) }));
   rmSync(dir, { recursive: true, force: true });

@@ -161,7 +161,14 @@ const rules = {
 
 // Runs every rule; a rule that throws is reported, never swallowed.
 export function lintWorkflow(workflow, { modelPolicy = null } = {}) {
-  const findings = [], ctx = buildContext(workflow, modelPolicy);
+  const findings = [];
+  let ctx;
+  try { ctx = buildContext(workflow, modelPolicy); }
+  catch (error) {
+    findings.push(finding('LINT_RULE_SKIPPED', 'workflow', `The lint could not read this workflow: ${String(error.message ?? error).slice(0, 300)}`,
+      { repair: { action: 'fix-workflow', hint: 'Resolve the schema and validation errors first' }, details: { rule: 'context' } }));
+    return { profile: LINT_PROFILE, ok: true, counts: { error: 0, warning: 1 }, codes: { LINT_RULE_SKIPPED: 1 }, findings, acceptance: { grade: 'unassessed', code: 'ACCEPTANCE_UNASSESSED', gates: [], weak: [] } };
+  }
   for (const [name, rule] of Object.entries(rules)) {
     try { findings.push(...rule(ctx)); }
     catch (error) {

@@ -7,7 +7,7 @@
 // effect nodes, and the `docker compose config` validation (the edit only swaps tags in a file that loaded before, so the code node
 // skips it; the references call the validation stub).
 import { spawnSync } from 'node:child_process';
-import { copyFileSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { fileURLToPath } from 'node:url';
@@ -88,6 +88,7 @@ export function workflow() {
 /** Runs a workflow (default: this item's own; `workflowFile` = any workflow.json an arm built) through the real CLI on a task (C0 protocol: {prompt, inputs, files}); returns the plan and the wall time. */
 export function runViaFoundry(task, { dir, workflowFile } = {}) {
   const own = !dir;
+  if (own) mkdirSync(SCRATCH, { recursive: true });
   dir ??= mkdtempSync(path.join(SCRATCH, 'foundry-'));
   try {
     const wf = path.join(dir, 'workflow.json'), input = path.join(dir, 'task.json');

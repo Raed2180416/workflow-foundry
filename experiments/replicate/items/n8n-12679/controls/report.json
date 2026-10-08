@@ -6,7 +6,7 @@
   "url": "https://n8n.io/workflows/12679",
   "rawSha256": "e007cdb5b21493078a941883f27eabe8a6f9c4bb19adb32cebcc096634ece9c1"
  },
- "harness": "0.1.0",
+ "harness": "0.2.0",
  "seeds": 20,
  "status": "development/diagnostic; not a sealed evaluation",
  "controls": {
@@ -16,27 +16,27 @@
     "d1": {
      "seeds": 5,
      "pass": 5,
-     "meanCalls": 145
+     "meanCalls": 149
     },
     "d2": {
      "seeds": 5,
      "pass": 5,
-     "meanCalls": 156
+     "meanCalls": 160
     },
     "d3": {
      "seeds": 20,
      "pass": 20,
-     "meanCalls": 184
+     "meanCalls": 188
     },
     "d4": {
      "seeds": 5,
      "pass": 5,
-     "meanCalls": 219
+     "meanCalls": 223
     },
     "d5": {
      "seeds": 5,
      "pass": 5,
-     "meanCalls": 254
+     "meanCalls": 258
     }
    },
    "onT3": {
@@ -57,31 +57,31 @@
     "d1": {
      "seeds": 5,
      "pass": 5,
-     "meanCalls": 116,
-     "meanRatioToTranscription": 0.804
+     "meanCalls": 119,
+     "meanRatioToTranscription": 0.802
     },
     "d2": {
      "seeds": 5,
      "pass": 5,
-     "meanCalls": 122,
-     "meanRatioToTranscription": 0.785
+     "meanCalls": 125,
+     "meanRatioToTranscription": 0.784
     },
     "d3": {
      "seeds": 20,
      "pass": 20,
-     "meanCalls": 141,
+     "meanCalls": 144,
      "meanRatioToTranscription": 0.767
     },
     "d4": {
      "seeds": 5,
      "pass": 5,
-     "meanCalls": 164,
+     "meanCalls": 167,
      "meanRatioToTranscription": 0.747
     },
     "d5": {
      "seeds": 5,
      "pass": 5,
-     "meanCalls": 186,
+     "meanCalls": 189,
      "meanRatioToTranscription": 0.735
     }
    }
@@ -150,43 +150,45 @@
     "expectedCodesHit": [],
     "codesBySeedCount": {
      "MISSING_KT": 20,
-     "EXTRA_KT": 20,
-     "LINK_BROKEN": 19,
-     "OPTOUT_MISMATCH": 13,
-     "MISSING_ZOHO": 20,
      "EXTRA_ZOHO": 20,
-     "ECHO_WRITE": 18,
-     "FIELD_MISMATCH:zoho.first": 20,
-     "FIELD_MISMATCH:zoho.last": 16,
+     "EXTRA_KT": 20,
+     "MISSING_ZOHO": 20,
+     "SEGMENT_MISMATCH:klicktipp": 11,
+     "LINK_BROKEN": 18,
+     "SEGMENT_MISMATCH:zoho": 14,
      "FIELD_MISMATCH:zoho.phone": 20,
+     "ECHO_WRITE": 17,
+     "FIELD_MISMATCH:zoho.first": 20,
+     "FIELD_MISMATCH:zoho.last": 17,
      "FIELD_MISMATCH:zoho.mobile": 19,
      "FIELD_MISMATCH:zoho.dob": 17,
-     "FIELD_MISMATCH:zoho.street": 19,
+     "FIELD_MISMATCH:zoho.street": 18,
      "FIELD_MISMATCH:zoho.city": 14,
-     "FIELD_MISMATCH:zoho.state": 12,
-     "FIELD_MISMATCH:zoho.zip": 16,
-     "FIELD_MISMATCH:zoho.country": 11,
-     "SEGMENT_MISMATCH:zoho": 15,
+     "FIELD_MISMATCH:zoho.state": 13,
+     "FIELD_MISMATCH:zoho.zip": 17,
+     "FIELD_MISMATCH:zoho.country": 10,
+     "FIELD_MISMATCH:klicktipp.first": 10,
+     "FIELD_MISMATCH:klicktipp.phone": 17,
+     "FIELD_MISMATCH:klicktipp.mobile": 11,
+     "FIELD_MISMATCH:klicktipp.homePhone": 10,
+     "FIELD_MISMATCH:klicktipp.fax": 13,
+     "FIELD_MISMATCH:klicktipp.dob": 10,
+     "FIELD_MISMATCH:klicktipp.street": 11,
+     "FIELD_MISMATCH:klicktipp.city": 14,
+     "FIELD_MISMATCH:klicktipp.zip": 13,
+     "FIELD_MISMATCH:klicktipp.country": 8,
      "STATUS_WRONG": 7,
-     "FIELD_MISMATCH:klicktipp.phone": 13,
-     "FIELD_MISMATCH:klicktipp.city": 13,
-     "DUP_ZOHO": 7,
-     "FIELD_MISMATCH:zoho.homePhone": 16,
-     "FIELD_MISMATCH:zoho.fax": 13,
-     "SEGMENT_MISMATCH:klicktipp": 9,
-     "FIELD_MISMATCH:klicktipp.first": 8,
-     "FIELD_MISMATCH:klicktipp.last": 12,
-     "FIELD_MISMATCH:klicktipp.mobile": 9,
-     "FIELD_MISMATCH:klicktipp.homePhone": 9,
-     "FIELD_MISMATCH:klicktipp.fax": 12,
-     "FIELD_MISMATCH:klicktipp.dob": 9,
-     "FIELD_MISMATCH:klicktipp.street": 9,
-     "FIELD_MISMATCH:klicktipp.state": 7,
-     "FIELD_MISMATCH:klicktipp.zip": 10,
-     "FIELD_MISMATCH:klicktipp.country": 6,
-     "TAG_MISSING:created": 8,
      "LIST_WRONG": 2,
-     "TAG_MISSING:createdViaForm": 1
+     "TAG_MISSING:created": 8,
+     "TAG_UNEXPECTED:createdViaForm": 1,
+     "OPTOUT_MISMATCH": 9,
+     "FIELD_MISMATCH:zoho.homePhone": 14,
+     "FIELD_MISMATCH:zoho.fax": 12,
+     "FIELD_MISMATCH:klicktipp.last": 11,
+     "FIELD_MISMATCH:klicktipp.state": 8,
+     "DUP_ZOHO": 3,
+     "TAG_MISSING:createdViaForm": 1,
+     "DUP_KT": 1
     }
    },
    "plausible-but-wrong": {
@@ -235,6 +237,7 @@
      "STATUS_WRONG": 20,
      "LIST_WRONG": 20,
      "TAG_MISSING:created": 20,
+     "TAG_UNEXPECTED:createdViaForm": 20,
      "OPTOUT_MISMATCH": 20,
      "TAG_MISSING:createdViaForm": 20
     }
@@ -253,6 +256,7 @@
     "codesBySeedCount": {
      "EXTRA_KT": 20,
      "LIST_WRONG": 6,
+     "TAG_UNEXPECTED:createdViaForm": 6,
      "STATUS_WRONG": 10,
      "SEGMENT_MISMATCH:klicktipp": 6,
      "OPTOUT_MISMATCH": 8,
@@ -333,15 +337,17 @@
      "EXTRA_KT": 20,
      "EXTRA_ZOHO": 20,
      "OPTOUT_MISMATCH": 20,
-     "LIST_WRONG": 8,
      "DUP_ZOHO": 20,
+     "FIELD_MISMATCH:zoho.phone": 20,
+     "SEGMENT_MISMATCH:zoho": 20,
+     "DUP_CREATE": 20,
+     "LIST_WRONG": 8,
+     "TAG_UNEXPECTED:createdViaForm": 6,
      "FIELD_MISMATCH:zoho.first": 16,
      "FIELD_MISMATCH:zoho.mobile": 16,
-     "SEGMENT_MISMATCH:zoho": 11,
      "FIELD_MISMATCH:klicktipp.first": 2,
      "FIELD_MISMATCH:klicktipp.mobile": 1,
      "FIELD_MISMATCH:zoho.last": 11,
-     "FIELD_MISMATCH:zoho.phone": 18,
      "FIELD_MISMATCH:zoho.homePhone": 12,
      "FIELD_MISMATCH:zoho.fax": 10,
      "FIELD_MISMATCH:zoho.dob": 12,
@@ -349,7 +355,6 @@
      "FIELD_MISMATCH:zoho.city": 9,
      "FIELD_MISMATCH:zoho.state": 10,
      "FIELD_MISMATCH:zoho.zip": 12,
-     "DUP_CREATE": 16,
      "FIELD_MISMATCH:zoho.country": 10,
      "TAG_MISSING:createdViaForm": 2,
      "SEGMENT_MISMATCH:klicktipp": 4,
@@ -364,7 +369,7 @@
     "describe": "a KlickTipp edit always creates a new Zoho contact instead of updating the linked one",
     "seeds": 20,
     "passedOracle": 0,
-    "meanScore": 0.667,
+    "meanScore": 0.6,
     "expectedCodes": [
      "DUP_CREATE"
     ],
@@ -378,9 +383,10 @@
      "DUP_CREATE": 20,
      "ID_UNSTABLE": 20,
      "EXTRA_ZOHO": 20,
+     "FIELD_MISMATCH:zoho.phone": 20,
+     "SEGMENT_MISMATCH:zoho": 20,
      "FIELD_MISMATCH:zoho.first": 19,
      "FIELD_MISMATCH:zoho.last": 17,
-     "FIELD_MISMATCH:zoho.phone": 19,
      "FIELD_MISMATCH:zoho.mobile": 19,
      "FIELD_MISMATCH:zoho.homePhone": 17,
      "FIELD_MISMATCH:zoho.fax": 16,
@@ -390,7 +396,6 @@
      "FIELD_MISMATCH:zoho.zip": 17,
      "FIELD_MISMATCH:zoho.country": 15,
      "FIELD_MISMATCH:zoho.state": 16,
-     "SEGMENT_MISMATCH:zoho": 16,
      "FIELD_MISMATCH:klicktipp.first": 2,
      "FIELD_MISMATCH:klicktipp.phone": 2,
      "FIELD_MISMATCH:klicktipp.street": 2,
@@ -514,7 +519,7 @@
      "P3": 20,
      "P4": 20
     },
-    "meanExternalCalls": 184,
+    "meanExternalCalls": 188,
     "meanFailedCalls": 4.6,
     "nodeErrorsAcrossSeeds": {
      "Delete contact in KlickTipp: HTTP 404 {\"error\":\"SUBSCRIBER_NOT_FOUND\",\"message\":": 52,
@@ -535,7 +540,7 @@
      "P3": 20,
      "P4": 20
     },
-    "meanExternalCalls": 180,
+    "meanExternalCalls": 184,
     "meanFailedCalls": 12.9,
     "nodeErrorsAcrossSeeds": {
      "Delete contact in KlickTipp: HTTP 404 {\"error\":\"SUBSCRIBER_NOT_FOUND\",\"message\":": 52,
@@ -566,6 +571,7 @@
       "STATUS_WRONG": 20,
       "LIST_WRONG": 20,
       "TAG_MISSING:created": 20,
+      "TAG_UNEXPECTED:createdViaForm": 20,
       "OPTOUT_MISMATCH": 20,
       "TAG_MISSING:createdViaForm": 20
      }
@@ -576,6 +582,7 @@
      "codesBySeedCount": {
       "EXTRA_KT": 20,
       "LIST_WRONG": 6,
+      "TAG_UNEXPECTED:createdViaForm": 6,
       "STATUS_WRONG": 10,
       "SEGMENT_MISMATCH:klicktipp": 6,
       "OPTOUT_MISMATCH": 8,
@@ -640,12 +647,13 @@
       "EXTRA_ZOHO": 20,
       "SEGMENT_MISMATCH:zoho": 20,
       "DUP_ZOHO": 20,
+      "FIELD_MISMATCH:zoho.phone": 20,
+      "DUP_CREATE": 20,
       "FIELD_MISMATCH:zoho.first": 16,
       "FIELD_MISMATCH:zoho.mobile": 16,
       "FIELD_MISMATCH:klicktipp.first": 2,
       "FIELD_MISMATCH:klicktipp.mobile": 1,
       "FIELD_MISMATCH:zoho.last": 11,
-      "FIELD_MISMATCH:zoho.phone": 18,
       "FIELD_MISMATCH:zoho.homePhone": 12,
       "FIELD_MISMATCH:zoho.fax": 10,
       "FIELD_MISMATCH:zoho.dob": 12,
@@ -653,7 +661,6 @@
       "FIELD_MISMATCH:zoho.city": 9,
       "FIELD_MISMATCH:zoho.state": 10,
       "FIELD_MISMATCH:zoho.zip": 12,
-      "DUP_CREATE": 17,
       "OPTOUT_MISMATCH": 14,
       "FIELD_MISMATCH:zoho.country": 10,
       "FIELD_MISMATCH:klicktipp.phone": 1,

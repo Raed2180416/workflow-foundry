@@ -16,9 +16,9 @@
  "files": {
   "items": {
    "path": "items.jsonl",
-   "bytes": 26353889,
+   "bytes": 26353873,
    "lines": 1559,
-   "sha256": "e085e2ef829767ea3a55abbbc92c93a316125ef05b3df3f20c3ece05ffbdb33a",
+   "sha256": "ad00607bc2c9a22dbfb52ec1e3a1689e34b37fc8529afb8d7304069d447456b6",
    "inGit": false,
    "distribution": "too large for git (> 5 MB): publish as a release asset; it includes redistributable:false items reduced to URL + derived graph + features, which needs the owner's confirmation before publishing"
   },
@@ -34,7 +34,7 @@
    "path": "merge-log.json",
    "bytes": 24142,
    "lines": 829,
-   "sha256": "c3845e7929ea107d4cf8b8ead033ef415317a0922f215d5c0df37cdc8a32c195"
+   "sha256": "6d9128bbdbbc971e5634f9108101f5b4953daff1618a4aa021b1e48f8ebbe71a"
   },
   "parts": [
    {
@@ -89,12 +89,12 @@
     "part": "parts/agentic.jsonl",
     "cluster": "agentic",
     "lines": 217,
-    "bytes": 1789815,
-    "sha256": "5c78971803ea5d6380ba81a7776e63564f332fdf077906756475c6ad5b445148",
+    "bytes": 1789799,
+    "sha256": "9e29eb9057337d9fbcbdd07fe5b1a2107f0ffc97ef34f60ebf3ff51087ad456e",
     "gz": "parts/agentic.jsonl.gz",
     "ledger": "parts/agentic-ledger.md",
-    "ledgerBytes": 962208,
-    "ledgerSha256": "babbf4983f8f63ecdc001a5be560aba7de347f772a3abe51261e1d407d54fefb",
+    "ledgerBytes": 962675,
+    "ledgerSha256": "5efc02203ca9fff3b37dad6b66f884a39e6f146fd14ddb1e6f9d79f480a6d484",
     "inGit": "small enough"
    }
   ]

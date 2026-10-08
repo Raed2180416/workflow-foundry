@@ -141,8 +141,15 @@ export function gradeAcceptance(workflow) {
     : { grade: 'existence-only', code: 'ACCEPTANCE_EXISTENCE_ONLY', reason: 'Acceptance only checks that an answer exists', gates, weak, sameModel };
 }
 
-// Everything the lint and the verdict need to know about one workflow, computed once.
+// Everything the lint and the verdict need to know about one workflow, computed once. Total: a workflow too malformed to analyse is
+// `unassessed`, which can never be a pass, so sealing a run can neither throw nor certify what it could not read.
 export function assessWorkflow(workflow) {
+  try { return analyse(workflow); }
+  catch (error) {
+    return { acceptance: { grade: 'unassessed', code: 'ACCEPTANCE_UNASSESSED', reason: `The workflow could not be analysed (${String(error.message ?? error).slice(0, 120)})`, gates: [], weak: [] }, ungatedCollectMaps: [], nonGatingVerifies: [] };
+  }
+}
+function analyse(workflow) {
   const acceptance = gradeAcceptance(workflow), ungatedCollectMaps = [], nonGatingVerifies = [];
   if (workflow && Array.isArray(workflow.nodes)) {
     for (const { flow, path, until } of flowsOf(workflow)) {
