@@ -26,7 +26,9 @@ export const COMBINED_HEADER = ['Sample', 'POS', 'FILTER', 'REF', 'ALT', 'DP', '
 
 // Deliberate faults used by controls.mjs (mutation testing). Default: faithful.
 export const MUTATIONS = ['af-boundary-inclusive', 'no-dp-alt-term', 'first-sample-only', 'no-recalc-swap', 'text-sort-pos',
-  'ignore-upstream-filter', 'one-row-per-effect', 'unsorted-combined', 'dp-boundary-inclusive'];
+  'ignore-upstream-filter', 'one-row-per-effect', 'unsorted-combined', 'dp-boundary-inclusive',
+  // added by the adversarial verification (2026-10-08, family version 2): faults the v1 battery let through
+  'no-dp-prefilter', 'variant-key-pos', 'combined-stats-by-variant'];
 
 const bytewise = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 const tsv = (header, rows) => [header, ...rows].map(r => r.join('\t')).join('\n') + '\n';
@@ -85,13 +87,13 @@ export function processSample(vcf, p, mutation) {
   const label = filterLabel(p), extracted = [], processed = [];
   for (const r of parseVcf(vcf)) {
     const dp = Number(r.info.get('DP'));
-    if (!(dp >= 1)) continue; // step 4: SnpSift Filter "DP >= 1"
+    if (!(dp >= 1) && mutation !== 'no-dp-prefilter') continue; // step 4: SnpSift Filter "DP >= 1"
     let filter = r.filter;
     if (failsThresholds(r, p, mutation)) filter = filter === 'PASS' || filter === '.' || filter === '' ? label : `${filter};${label}`; // step 7 (--addFilter)
     if (mutation === 'ignore-upstream-filter') filter = failsThresholds(r, p) ? label : 'PASS';
     const dp4 = r.info.get('DP4').split(','), eff = r.info.get('EFF');
     const effects = eff ? splitEffects(eff).map(effectColumns) : [Array(7).fill('.')];
-    const recalc = pyFloat(pyRound6((Number(dp4[2]) + Number(dp4[3])) / dp)); // step 9
+    const recalc = dp > 0 ? pyFloat(pyRound6((Number(dp4[2]) + Number(dp4[3])) / dp)) : '0.0'; // step 9 (dp 0 only reachable under the no-dp-prefilter mutation: a guarded division)
     const af = javaFloat(Number(r.info.get('AF')));
     const rows = effects.map(e => [r.chrom, r.pos, filter, r.ref, r.alt, String(dp), af, r.info.get('DP4'), r.info.get('SB'), ...e, dp4[2], dp4[3], recalc]);
     extracted.push(...rows);
@@ -126,7 +128,7 @@ export function runJob(job, { mutation } = {}) {
   const nums = rows => rows.map(r => Number(r[I.af]));
 
   // by variant (steps 18, 21, 22, 25, 28, 31, 33)
-  const byKey = group(all, r => r[I.key]);
+  const byKey = group(all, r => (mutation === 'variant-key-pos' ? r[I.pos] : r[I.key]));
   const byVariant = [];
   for (const rows of byKey.values()) {
     const pass = rows.filter(isPass);
@@ -146,10 +148,10 @@ export function runJob(job, { mutation } = {}) {
   const combined = [];
   for (const [pos, rows] of byPos) {
     if (!passPos.has(pos)) continue;
-    const mn = g14(Math.min(...nums(rows))), mx = g14(Math.max(...nums(rows)));
-    const nChange = String(uniq(rows.map(x => x[I.change])).length), nFun = String(uniq(rows.map(x => x[I.funclass])).length);
+    const stats = rs => [g14(Math.min(...nums(rs))), g14(Math.max(...nums(rs))), String(uniq(rs.map(x => x[I.change])).length), String(uniq(rs.map(x => x[I.funclass])).length)];
+    const perPos = stats(rows);
     for (const r of rows) combined.push([r[I.sample], pos, r[I.filter], r[I.ref], r[I.alt], r[I.dp], r[I.af], r[I.afCaller], r[I.sb], r[I.dp4],
-      ...r.slice(11, 18), mn, mx, nChange, nFun, r[I.change]]);
+      ...r.slice(11, 18), ...(mutation === 'combined-stats-by-variant' ? stats(rows.filter(x => x[I.key] === r[I.key])) : perPos), r[I.change]]);
   }
   if (mutation !== 'unsorted-combined') combined.sort((a, b) => bytewise(a[0], b[0]) || Number(a[1]) - Number(b[1]) || bytewise(lineOf(a), lineOf(b)));
 

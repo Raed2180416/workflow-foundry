@@ -312,6 +312,54 @@ async function* gridquestQ4(G, mod, seed, difficulty, perWorld) {
 }
 
 // ================================================================================================================
+// Q1 room_exit and Q2 container_cue (wave-2 smoke sets, gridquest)
+// ================================================================================================================
+async function* gridquestQ1(G, mod, seed, difficulty, perWorld) {
+  const task = mod.index.generate({ seed, split: G.def.bedSplit, difficulty }), wh = worldHash(task), masks = GQ.masksOf(mod, task);
+  const W = mod.index._internal.world(task), route = GQ.trueRoute(mod, task);
+  // states along the reference route in distinct rooms (up to perWorld)
+  const ks = shuffled([...route.snaps.keys()], `${G.slice}|Q1|${seed}|ks`), seenCells = new Set(), chosen = [];
+  for (const k of ks) {
+    const cell = route.snaps[k].st.pos;
+    if (seenCells.has(cell)) continue;
+    seenCells.add(cell); chosen.push(k);
+    if (chosen.length >= perWorld) break;
+  }
+  const log = (G.labellerLog ??= []);
+  for (const k of chosen) {
+    const probed = GQ.probeExits(mod, task, k, log), edges = GQ.exitsByEdges(mod, task, k);
+    if (DIRECTIONS.some(d => probed.labels[d] !== edges.labels[d])) { bump(G, 'q1:path-disagree'); continue; }
+    const observation = scrubFamilySpans(probed.observation, seed, G.slice), form = formOf(parseObservation(observation).description, masks);
+    if (!bucketAllows(G.slice, form)) continue;
+    const slots = { observation }, state = kits.gridquest.Q1.buildState(task, slots), key = `${G.slice}|Q1|${seed}|${k}`;
+    const questions = {};
+    for (const d of DIRECTIONS) {
+      const w = wordingFor(G.contracts.Q1, G.slice, `${key}|${d}`, G.opts);
+      questions[`Q1~${d}`] = labelledQuestion(G.contracts.Q1, { label: probed.labels[d], wording: w.wording, wordingText: w.wordingText, slots: { direction: d }, optionOrder: optionOrder(Object.keys(G.contracts.Q1.options), `${key}|${d}`) });
+    }
+    yield { state, questions, meta: { family: 'gridquest', bed: 'gridquest', seed, difficulty, worldHash: wh, variant: 'clean', formId: form, labelSource: 'simulator', needsWorldKnowledge: false, wordingId: 'Q0-Q3', surface: { source: 'bed', slice: G.slice, lineHash: spanHash(state.observation) }, masks,
+      kit: { port: 'Q1', slots }, q1: { k, labeller: { path: 'createEnv', lifetimeActions: 'Infinity', lifted: true, probes: 4 }, secondPath: 'w.edges + abstract model', labels: probed.labels } } };
+  }
+}
+async function* gridquestQ2(G, mod, seed, difficulty, perWorld) {
+  const task = mod.index.generate({ seed, split: G.def.bedSplit, difficulty }), wh = worldHash(task), masks = GQ.masksOf(mod, task);
+  const { items, stats } = GQ.containerSentences(mod, task);
+  bump(G, 'q2:objects', stats.objects); bump(G, 'q2:aligned', stats.aligned);
+  const cands = items.map((x, j) => ({ ...x, id: `q2:${x.cell}:${x.noun}`, form: formOf(x.sentence, masks), label: x.cued ? 'cued' : 'plain' }))
+    .filter(x => (x.kind !== 'decor' || unit(`${G.slice}|Q2|${seed}|${x.id}|decor`) < 0.5) && bucketAllows(G.slice, x.form));
+  const cued = cands.filter(x => x.label === 'cued'), plain = cands.filter(x => x.label === 'plain');
+  const nCued = Math.ceil(perWorld / 2);
+  const chosen = [...weightedDraw(cued, () => 1, nCued, `${G.slice}|Q2|${seed}|cued`), ...weightedDraw(plain, x => (x.kind === 'plain' ? 2 : 1), perWorld - nCued, `${G.slice}|Q2|${seed}|plain`)];
+  for (const x of chosen) {
+    const observation = scrubFamilySpans(x.observation, seed, G.slice);
+    if (!descriptionSentences(parseObservation(observation).description).includes(x.sentence)) continue;
+    const slots = { observation, sentence: x.sentence }, state = kits.gridquest.Q2.buildState(task, slots);
+    yield makeRecord({ contract: G.contracts.Q2, slice: G.slice, opts: G.opts, key: `${G.slice}|Q2|${seed}|${x.id}`, state, label: x.label,
+      meta: { family: 'gridquest', bed: 'gridquest', seed, difficulty, worldHash: wh, variant: 'clean', formId: x.form, labelSource: 'generator', surface: { source: 'bed', slice: G.slice, lineHash: spanHash(x.sentence) }, masks, kit: { port: 'Q2', slots }, q2: { kind: x.kind, cue: x.object.cue ?? null } } });
+  }
+}
+
+// ================================================================================================================
 // Q4:gameqa (held-out family, test-ood only)
 // ================================================================================================================
 const Q4_TEMPLATE_WEIGHT = Object.freeze({ crash_action: 1, stale_hud: 0.25, purse_wrap: 1, chest_rubble: 4, price_rounding: 1.5, wall_clip: 1, stairs_drop: 1, load_dupe: 1, door_bypass: 1.2, key_eaten: 4, enemy_teleport: 2, enemy_freeze: 2, ghost_sprite: 2 });
@@ -472,8 +520,11 @@ export async function* records(slice, seeds, opts = {}, ctx) {
   const need = bed => jobs.some(j => BED_OF(j) === bed);
   const mod = need('gridquest') ? await GQ.loadGq(ctx.beds) : null;
   const qa = need('gameqa') ? await QA.loadQa(ctx.beds) : null;
+  const smokeEvery = opts.smokeEvery ?? 6, smoke = (job, seed) => hnum(`${slice}|smoke|${job}|${seed}`) % smokeEvery === 0;
   for (const seed of seeds) {
     if (jobs.includes('Q4:gridquest') && perWorld['Q4:gridquest']) yield* gridquestQ4(G, mod, seed, GQ.difficultyOf(seed, diffs.gridquest), perWorld['Q4:gridquest']);
+    if (jobs.includes('Q1') && perWorld.Q1 && smoke('Q1', seed)) yield* gridquestQ1(G, mod, seed, GQ.difficultyOf(seed, diffs.gridquest), perWorld.Q1);
+    if (jobs.includes('Q2') && perWorld.Q2 && smoke('Q2', seed)) yield* gridquestQ2(G, mod, seed, GQ.difficultyOf(seed, diffs.gridquest.filter(d => d >= 2)), perWorld.Q2);
     if (jobs.includes('X1:gridquest') && perWorld['X1:gridquest']) yield* gridquestX1(G, mod, seed, GQ.difficultyOf(seed, diffs.gridquest.filter(d => d >= 3)), perWorld['X1:gridquest']);
     if (jobs.includes('X1:gameqa') && perWorld['X1:gameqa']) yield* gameqaX1(G, qa, seed, QA.difficultyOf(seed, diffs.gameqa.filter(d => d >= 3)), perWorld['X1:gameqa']);
     if (jobs.includes('Q4:gameqa') && perWorld['Q4:gameqa']) yield* gameqaQ4(G, qa, seed, QA.difficultyOf(seed, diffs.gameqa), perWorld['Q4:gameqa']);

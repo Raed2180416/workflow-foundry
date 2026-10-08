@@ -294,3 +294,67 @@ export const replaceSentence = (observation, from, to) => {
 };
 
 export { lowerFirst, parseObservation, descriptionSentences };
+
+// ================================================================================================================
+// Q1 room_exit: the labeller (JUDGE-PROGRAM.md §1.2 Q1) and its second code path
+// ================================================================================================================
+const headerOf = obs => /^\[(.+)\]/.exec(obs)?.[1] ?? null;
+// First path: the environment itself. createEnv with the lifetime ledger LIFTED (the default cap is the task budget
+// and restore() does not refund it, so the revision-1 labeller stopped part-way, §1.2 Q1); the lift is explicit and
+// logged. For every direction: snapshot, step(go <direction>), did the room change?, restore.
+export function probeExits(mod, task, k, log = []) {
+  const W = mod.index._internal.world(task);
+  const env = mod.index.createEnv(task, { lifetimeActions: Infinity });
+  env.reset();
+  for (const a of W.solution.slice(0, k)) env.step(a);
+  const observation = env.observe(), head = headerOf(observation), labels = {};
+  let probes = 0;
+  for (const d of DIRECTIONS) {
+    const snap = env.snapshot(), r = env.step(`go ${d}`);
+    labels[d] = headerOf(r.observation) !== head ? 'yes' : 'no';
+    env.restore(snap);
+    probes++;
+  }
+  log.push({ task: task.id, k, lifetimeActions: 'Infinity', lifted: true, probes, spent: env.spent() });
+  return { observation, labels };
+}
+// Second path: the world structure (_internal.world(task).w.edges) with the dynamic state (position, unlocked
+// doors, mechanisms) read from the ABSTRACT model of the bed (solver.mjs simulate over state bits), so neither the
+// engine's parser nor its observation text is involved.
+export function exitsByEdges(mod, task, k) {
+  const W = mod.index._internal.world(task), w = W.w, m = W.model, s = mod.solver.simulate(m, W.solution.slice(0, k)).state;
+  const cell = s & 63, ex = mod.render.exitsOf(w, cell), bitAt = (o, i) => (s >>> (o + i)) & 1, labels = {};
+  for (const d of DIRECTIONS) {
+    const ei = ex[d];
+    if (ei === undefined) { labels[d] = 'no'; continue; }
+    const e = w.edges[ei];
+    labels[d] = e.kind === 'open' ? 'yes' : e.kind === 'door' ? (bitAt(m.oD, e.door) ? 'yes' : 'no') : e.kind === 'mech' ? (bitAt(m.oM, e.mech) ? 'yes' : 'no') : e.kind === 'oneway' ? (e.from === cell ? 'yes' : 'no') : 'no';
+  }
+  return { cell, labels };
+}
+
+// ================================================================================================================
+// Q2 container_cue: the sentence that describes a fixed object, aligned with the object by its own indefinite phrase
+// ================================================================================================================
+const an = word => (/^[aeiou]/i.test(word) && !/^one\b/i.test(word) ? `an ${word}` : `a ${word}`);
+const escapeRe = s => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+export function roomObservation(mod, W, cell, last = 'You go north.') {
+  const w = W.w, st = { pos: cell, inv: [], revealed: [], unlocked: [], mech: w.mechs.map(m => m.open0), swCount: w.switches.map(() => 0), steps: 0, won: false };
+  return mod.render.observationText(w, st, W.budget, last);
+}
+// every fixed object of the world with its sentence: { cell, object, kind: 'hide'|'fake'|'plain'|'decor', cued, sentence, observation } or { aligned: false }
+export function containerSentences(mod, task) {
+  const W = mod.index._internal.world(task), w = W.w, out = [], stats = { objects: 0, aligned: 0, missing: 0, ambiguous: 0 };
+  for (let cell = 0; cell < w.n * w.n; cell++) {
+    const observation = roomObservation(mod, W, cell), sentences = descriptionSentences(parseObservation(observation).description);
+    for (const o of w.objects.filter(x => x.room === cell)) {
+      stats.objects++;
+      const re = new RegExp(`\\b${escapeRe(an(`${o.adj} ${o.noun}`))}\\b`, 'i'), hits = sentences.filter(s => re.test(s));
+      if (hits.length === 0) { stats.missing++; continue; }
+      if (hits.length > 1) { stats.ambiguous++; continue; }
+      stats.aligned++;
+      out.push({ cell, object: o, kind: o.kind, cued: o.cue !== undefined, sentence: hits[0], observation, noun: o.noun });
+    }
+  }
+  return { items: out, stats };
+}

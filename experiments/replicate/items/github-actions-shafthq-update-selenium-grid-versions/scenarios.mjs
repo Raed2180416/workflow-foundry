@@ -215,14 +215,23 @@ export const KINDS = Object.freeze([
       return { world: world({ spec, refSpec, rawTags: lat }),
         truth: { original: outcomeOf({ spec, cur, lat: seenByOriginal }), intent: outcomeOf({ spec, cur, lat }) }, meta: { commented, old } };
     } },
-  { id: 'quoted-image-refs', minDifficulty: 5, note: 'DEFECT: the repository file quotes its image references; the original dies (bash syntax error) or corrupts the quote and fails validation',
+  { id: 'quoted-image-refs', minDifficulty: 5, note: 'DEFECT: the repository file quotes some image references; grep cannot see them (current tag ""), and the original pastes the new tag in front of the old one',
     build(r) {
       const { cur, spec, ref } = base(r), rr = r.fork('lat');
       const q = rr.pick(['"', "'"]), quoted = subsetOf(rr, KEYS, 1, 4), noop = rr.chance(0.3);
       const lat = Object.fromEntries(KEYS.map(k => [k, noop || !rr.chance(0.7) ? cur[k] : newer(rr, cur[k])]));
       if (!noop && KEYS.every(k => lat[k] === cur[k])) lat.hub = newer(rr, cur.hub);
       const s = { ...spec, quote: Object.fromEntries(quoted.map(k => [k, q])) };
-      return { world: world({ spec: s, refSpec: ref, rawTags: lat }), truth: { original: failed(), intent: outcomeOf({ spec: s, cur, lat }) }, meta: { q, quoted, noop } };
+      // What the original does: a quoted image line does not match `image: selenium/IMG:`, so CURRENT is "" and NEW differs from it. The
+      // sed pattern is then just `selenium/IMG:` and NEW lands in front of the old tag (valid YAML, wrong image).
+      const seen = Object.fromEntries(KEYS.map(k => [k, quoted.includes(k) ? '' : cur[k]]));
+      const mangled = { ...cur }, changedOriginal = [];
+      for (const k of KEYS) {
+        if (quoted.includes(k)) { mangled[k] = lat[k] + cur[k]; changedOriginal.push({ key: k, from: '', to: lat[k] }); }
+        else if (lat[k] !== cur[k]) { mangled[k] = lat[k]; changedOriginal.push({ key: k, from: cur[k], to: lat[k] }); }
+      }
+      const original = { status: 'updated', versions: { current: seen, latest: { ...lat } }, changed: changedOriginal, composeAfter: renderRepo({ ...s, tags: mangled }), prAction: 'created', prNumber: null, message: null };
+      return { world: world({ spec: s, refSpec: ref, rawTags: lat }), truth: { original, intent: outcomeOf({ spec: s, cur, lat }) }, meta: { q, quoted, noop } };
     } },
 ]);
 export const KIND_IDS = Object.freeze(KINDS.map(k => k.id));
