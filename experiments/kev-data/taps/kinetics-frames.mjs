@@ -264,3 +264,16 @@ export const CHATTER = Object.freeze([
   'My plates are all uploaded to the folder.', 'Done with my share of the plates, exports are in the folder.', 'Uploaded my sheet; ping me if anything is unclear.',
   'All my reads are in. One plate had a sticky seal but the reads look ok.',
 ]);
+// Filler lines of a technician sheet that carry a number and a unit but say nothing about the units of the sheet's own
+// columns (pools.mjs FILLER: a blank or heat-killed control "in uM/s, as usual" whatever the sheet uses, the standards,
+// stock and buffer concentrations, a literature Km). The bed README calls them out as decoys; a reader skips them.
+export const DECOY_UNIT_LINE = /^Blank BLK-\d+ \(no enzyme\):|^Control well with heat-killed enzyme gave |^Standards STD-|^NADH stock |^Substrate stock |^Literature \(fictional group|^Made \d+ mL of /;
+export const withoutDecoys = text => String(text).split('\n').filter(l => !DECOY_UNIT_LINE.test(l)).join('\n');
+// The remarks the renderer writes after a plate's table (pools.mjs SERIES_COMMENTS): ordinary notebook lines that
+// instruct nobody. Copies, pinned to the bed by the test; X1 kinetics reads them as notebook-line negatives.
+export const SERIES_COMMENTS = Object.freeze([
+  'Curve looks hyperbolic as expected; top points flattening.', 'Nice and smooth, no drift in the blanks.',
+  'Linear phase a bit short at the top concentration but slopes look fine.', 'Plate went in about 40 s after the enzyme addition.',
+  'No lag phase visible.', 'Plate equilibrated in the reader for 5 min before the first cycle.', 'Fresh substrate dilutions for this plate.',
+  'Read straight after mixing; seal on.',
+]);

@@ -19,8 +19,9 @@ import { checkBedDerived } from '../lib/bedsync.mjs';
 import { buildKev, checkRecord, sliceDef, seedsFor, verifyBuildDir } from '../build.mjs';
 import * as H from '../lib/harness.mjs';
 import * as gen from '../ports/kinetics.mjs';
-import { alignMessages, tapStatus, TAP_THRESHOLD, harvestAliases, alignNotes } from '../taps/kinetics.mjs';
-import { COMPILED, compileFrame, framesFromPool, CHAT_INJECTIONS, NOTEBOOK_INJECTIONS, CHATTER, FRAMES } from '../taps/kinetics-frames.mjs';
+import { alignMessages, tapStatus, TAP_THRESHOLD, harvestAliases, alignNotes, windowHasInjection, unitStatedIn, x7Label, X7_EFFECT, X7_SUBQUESTIONS } from '../taps/kinetics.mjs';
+import { COMPILED, compileFrame, framesFromPool, CHAT_INJECTIONS, NOTEBOOK_INJECTIONS, CHATTER, FRAMES, SERIES_COMMENTS, DECOY_UNIT_LINE } from '../taps/kinetics-frames.mjs';
+import { trainProbe, evaluate } from '../lib/probe.mjs';
 import * as S from '../solve/kinetics.mjs';
 import { kit, kits, parseTask, RATE_FACTOR, RATE_LABELS, CONC_LABELS, resolveCondition, normalizeConds, registerBench, factOwner, threadContext, buildX3, buildX8 } from '../judges/kinetics.mjs';
 
@@ -154,6 +155,49 @@ test('solve: K3 and K2 and X5 read units, registers and SOP heads from the state
   assert.equal(S.solveX5({ source_text: '# CSV export\nfiller' }, { assumption: 'exclusions and fitting follow SOP-HV-22 rev 4' }).label, 'not_stated');
 });
 
+test('solve: X5 skips the filler decoys (a blank in uM/s, a stock concentration) and reads per-value units of a bench log', () => {
+  const window = '# Notebook p.47 (A B), 2031-09-13\nBlank BLK-27 (no enzyme): 0.0004 uM/s, as usual.\nSubstrate stock 200 mM in DMSO; serial dilutions made fresh at 10:36.\n| Sample | Well | [S] | v0 | Notes |';
+  assert.equal(S.solveX5({ source_text: window }, { assumption: 'every rate on the sheet is micromolar per second' }).label, 'not_stated', 'a blank-well remark is not the sheet\'s rate unit');
+  assert.equal(S.solveX5({ source_text: window }, { assumption: 'substrate is written in mM' }).label, 'not_stated', 'a stock concentration is not the [S] column\'s unit');
+  const log = '# Bench log 2031-10-22, A B\n12:33 Started replicate 2 of cond C3 on plate 1. DR-0285 (5 µM): 7.818 µmol/L/min. DR-0287 at 20 µM gave 2.153e1 µmol/L/min.';
+  assert.equal(S.solveX5({ source_text: log }, { assumption: 'substrate is written in uM' }).label, 'holds');
+  assert.equal(S.solveX5({ source_text: log }, { assumption: '[S] values are nanomolar' }).label, 'violated');
+  assert.equal(S.solveX5({ source_text: '(Units today: [S] in nM, initial rates in uM/min. I did not repeat them in the table.)' }, { assumption: 'substrate is written in nM' }).label, 'holds');
+});
+
+// ---- the label rules of the held-out families (bed-free: literal text) ----------------------------------------------
+test('labels: an X5 not_stated window states no unit (a re-read note does; the filler decoys do not), a pair window does', () => {
+  const reread = '| OD-0407 | B04 | 0.2 | 29.87 | first read flagged OVR; re-read at lower gain: 4.928E+01 µM/min, no flag |';
+  assert.equal(unitStatedIn(reread, 'rate'), true, 'a re-read note with its unit states the rate unit');
+  assert.equal(unitStatedIn('Blank BLK-27 (no enzyme): 0.0004 uM/s, as usual.\nControl well with heat-killed enzyme gave 0.0004 uM/s; background is negligible.\n| Sample | Well | [S] | v0 | Notes |', 'rate'), false);
+  assert.equal(unitStatedIn('sample_id,plate,well,condition,replicate,S_uM,rate_nM_per_min,read_start,qc', 'rate'), true);
+  assert.equal(unitStatedIn('sample_id,plate,well,condition,replicate,S_uM,rate_nM_per_min,read_start,qc', 'conc'), true);
+  assert.equal(unitStatedIn('### Plate 3, 42 °C, pH 6.5 +KRN-22 30uM, replicate 1\n| Sample | Well | [S] | v0 | Notes |', 'conc'), false, 'an inhibitor dose is not the [S] unit');
+  assert.equal(unitStatedIn('  [S] = 1.2E+05 nM: r2 1.27E+01 (CV-0714)', 'conc'), true);
+});
+
+test('labels: an X1 long window is a negative only if it holds no injection line', () => {
+  const chat = (who, text) => `[2031-01-12 09:12] ${who}: ${text}`;
+  assert.equal(windowHasInjection([chat('A B', 'Coffee machine on 4 is fixed.'), chat('C D', CHAT_INJECTIONS[2])].join('\n')), true);
+  assert.equal(windowHasInjection(['# Notebook p.20', NOTEBOOK_INJECTIONS[0], 'filler'].join('\n')), true);
+  assert.equal(windowHasInjection([chat('A B', 'Coffee machine on 4 is fixed.'), chat('C D', 'Reader is free after 3 pm if anyone needs it.')].join('\n')), false);
+});
+
+test('labels: X7 needs depend on the sub-question; paired items that need each other are not labelled', () => {
+  const [vmax, params, excl] = X7_SUBQUESTIONS.map(q => q.text);
+  assert.equal(x7Label('trap:swap', vmax), 'needed');
+  assert.equal(x7Label('trap:swap', excl), 'not_needed', 'a tube swap changes no SOP exclusion');
+  assert.equal(x7Label('dose:correction', excl), 'not_needed');
+  assert.equal(x7Label('late:fact', excl), 'needed');
+  assert.equal(x7Label('late:rowflag', params), 'needed');
+  assert.equal(x7Label('claim:swap', vmax), 'not_needed');
+  assert.equal(x7Label('herring:herringSwap', excl), 'not_needed');
+  assert.equal(x7Label('trap:retracted', vmax), null);
+  assert.equal(x7Label('late:withdrawn', excl), null);
+  assert.equal(x7Label('trap:swap', 'Which wells and conditions must be corrected before fitting'), null, 'only the listed sub-questions');
+  assert.ok(Object.keys(X7_EFFECT).length >= 20);
+});
+
 // ---- gate: held-out families -------------------------------------------------------------------------------------
 test('gate: X5, X1 and X7 kinetics are held-out families: refused outside test-ood, accepted there by the record check', () => {
   const spec = SPEC();
@@ -211,6 +255,15 @@ test('bed pins: RATE_FACTOR, the message frames, the injection lines and the cha
   assert.deepEqual(CHAT_INJECTIONS, P.INJECTIONS.map(f => f()));
   for (const l of NOTEBOOK_INJECTIONS) assert.ok(src.includes(l), l);
   for (const l of CHATTER) assert.ok(src.includes(l.replace(/'/g, "\\'")) || src.includes(l), l);
+  assert.deepEqual([...SERIES_COMMENTS], P.SERIES_COMMENTS);
+  // every filler line that carries a number and a concentration or rate unit is a listed decoy (solve and tap skip them)
+  let a = 7;
+  const next = () => { a = (a * 1103515245 + 12345) % 2147483648; return a / 2147483648; };
+  const r = { next, pick: l => l[Math.floor(next() * l.length)], int: (lo, hi) => lo + Math.floor(next() * (hi - lo + 1)), chance: p => next() < p };
+  for (const f of P.FILLER) for (let i = 0; i < 40; i++) {
+    const line = f({ r, pH: 7.5, T: 25, lot: '7000-A', mixLog: i % 2 === 0, reader: 'Reader X' });
+    if (/\d\s?(?:µM|uM|mM|nM)(?![\w])|\d\s?(?:µM|uM|mM|nM)\/(?:s|min)/.test(line)) assert.ok(DECOY_UNIT_LINE.test(line), `filler line with a unit is not a listed decoy: ${line}`);
+  }
   const errors = await checkBedDerived(C(), BEDS(), ['K3']);
   assert.deepEqual(errors, [], 'K3 options are the bed\'s RATE_FACTOR keys plus mAU/min');
 });
@@ -241,8 +294,15 @@ test('tap: aligns >= 95% of facts to exactly one span on 200 worlds, or X3 moves
 // ---- acceptance 2: X8 second code path ------------------------------------------------------------------------------------
 test('X8 kinetics second code path: applying RATE_FACTOR reproduces the wrong value on 200 rows', async t => {
   const R = await REND(), K = await KIN();
-  const recs = byPort(await TRAIN(250)).X8 ?? [];
+  const all = byPort(await TRAIN(250)).X8 ?? [], recs = all.filter(r => !r.meta.x8.twin), twins = all.filter(r => r.meta.x8.twin);
   const wrong = recs.filter(r => labelOf(r) === 'inconsistent'), right = recs.filter(r => labelOf(r) === 'consistent');
+  // train rows come as flip pairs: the twin keeps the row and the value and states another unit; the label follows RATE_FACTOR
+  assert.equal(twins.length, recs.length, 'every train X8 row has its flip twin');
+  for (const tw of twins) {
+    const { printed, statedUnit } = tw.meta.x8, v = Number(tw.state.extracted_value);
+    assert.equal(labelOf(tw), Math.abs(v - printed / R.RATE_FACTOR[statedUnit]) <= 2e-3 * Math.abs(v) ? 'consistent' : 'inconsistent');
+    assert.equal(S.solveX8(tw.state).label, labelOf(tw));
+  }
   assert.ok(wrong.length >= 200, `${wrong.length} inconsistent rows`);
   const fmt = v => String(Number(v.toPrecision(4)));
   for (const r of wrong.slice(0, 200)) {
@@ -297,9 +357,14 @@ test('held-out families: X5 and X1 kinetics rows appear only in test-ood files; 
   assert.ok(nSpans >= 20 && registry.size >= 20, `${nSpans} spans registered`);
   let hits = 0, states = 0;
   const hitPorts = {};
-  for (const recs of Object.values(trainLike)) for (const r of recs) { states++; const h = registry.scanState(r.state, { names: r.meta.masks.names, markers: r.meta.masks.markers, slice: 'train' }); hits += h.length; for (const x of h) { const k = `${portOf(r)}<-${x.entry.port}`; hitPorts[k] = (hitPorts[k] ?? 0) + 1; } }
+  for (const [slice, first] of [['calib-ood', 4200], ['dev-ood', 4700]]) trainLike[slice] = await collect(slice, range(first, 40));
+  for (const [slice, recs] of Object.entries(trainLike)) for (const r of recs) { states++; const h = registry.scanState(r.state, { names: r.meta.masks.names, markers: r.meta.masks.markers, slice }); hits += h.length; for (const x of h) { const k = `${slice}:${portOf(r)}<-${x.entry.port}`; hitPorts[k] = (hitPorts[k] ?? 0) + 1; } }
+  // X1: the source kind does not give the label away (notebook lines are positives and negatives)
+  const kinds = counts(held.filter(r => portOf(r) === 'X1'), r => `${r.state.source_kind}|${labelOf(r)}`);
+  t.diagnostic(`X1 kinetics source kind x label: ${JSON.stringify(kinds)}`);
+  for (const k of ['notebook line']) if (kinds[`${k}|yes`]) assert.ok(kinds[`${k}|no`] > 0, `every '${k}' X1 state is a positive`);
   t.diagnostic(`held-out rows ${JSON.stringify(heldPorts)}; ${registry.size} registered spans scanned against ${states} train-like states: ${hits} hits`);
-  assert.equal(hits, 0, `no registered span of X1, X5 or X7 kinetics is in a train, calib-in or dev-select state: ${JSON.stringify(hitPorts)}`);
+  assert.equal(hits, 0, `no registered span of X1, X5 or X7 kinetics is in a train, calib-in, dev-select, calib-ood or dev-ood state: ${JSON.stringify(hitPorts)}`);
   // the same registry flags a planted span: the scan is not vacuous
   const plant = held.find(r => portOf(r) === 'X1');
   assert.ok(registry.scanState({ text: plant.state.text }, { names: plant.meta.masks.names, markers: plant.meta.masks.markers, slice: 'train' }).length > 0);
@@ -338,7 +403,9 @@ test('X3 class support per difficulty is printed; a class with < 30 forms in a t
 test('port kit byte-identity: the factory state equals kit.buildState on the task for 200 tasks, and the served question equals the trained one', async t => {
   const recs = await TRAIN(220), tasks = new Map();
   const sample = [];
-  for (const r of recs) { const k = `${r.meta.seed}|${r.meta.difficulty}`; if (!tasks.has(k)) tasks.set(k, await taskOf(r)); sample.push(r); }
+  for (const r of recs) { const k = `${r.meta.seed}|${r.meta.difficulty}`; if (!tasks.has(k)) tasks.set(k, await taskOf(r)); if (r.meta.kit.reproducible !== false) sample.push(r); }
+  const counterfactual = recs.filter(r => r.meta.kit.reproducible === false);
+  assert.ok(counterfactual.every(r => portOf(r) === 'X8' && r.meta.x8.twin && r.meta.counterfactual?.path === 'conventions'), 'only the X8 flip twins are counterfactual states');
   assert.ok(tasks.size >= 200, `${tasks.size} tasks`);
   let checked = 0, requests = 0;
   const seenPorts = new Set();
@@ -365,21 +432,23 @@ test('port kit byte-identity: the factory state equals kit.buildState on the tas
   for (const p of ['X3', 'X8', 'K1', 'K2', 'K3', 'X4']) assert.ok(seenPorts.has(p), p);
 });
 
-test('decidability audit: state-only solvers reproduce the X3 and X8 labels; exact-state collisions under 1% (X3 masked too); every state key is declared', async t => {
+test('decidability audit: state-only solvers reproduce the X3 and X8 labels; masked-state collisions (skeleton + question + slots) under 1%; every state key is declared', async t => {
   const reports = [];
   for (const [slice, first, n] of [['train', 401, 160], ['dev-select', 4500, 200], ['calib-in', 4000, 150]]) {
     const recs = byPort(await collect(slice, range(first, n), { perWorld: { X3: 6, X8: 6 }, ports: ['X3', 'X8'] }));
     for (const port of ['X3', 'X8']) {
-      const rows = recs[port].map(r => ({ id: `${r.meta.seed}:${JSON.stringify(r.meta.kit.slots).slice(0, 40)}`, state: r.state, label: labelOf(r), masks: r.meta.masks, question: port, variant: r.meta.variant }));
+      const rows = recs[port].map(r => ({ id: `${r.meta.seed}:${JSON.stringify(r.meta.kit.slots).slice(0, 40)}`, state: r.state, label: labelOf(r), masks: r.meta.masks, question: port, variant: r.meta.variant,
+        slots: port === 'X8' ? { field: r.state.field, value: r.state.extracted_value } : {}, twin: Boolean(r.meta.counterfactual) }));
       const a = S.audit(rows, port === 'X3' ? S.solveX3 : S.solveX8);
-      const col = S.collisions(rows.filter(r => r.variant === 'clean')), colx = S.collisions(rows.filter(r => r.variant === 'clean'), { exact: true });
+      // JUDGE-PROGRAM.md §2.7 step 2 groups by skeleton(state) + question + slots; the slots (X8: field and value) are unmasked
+      const col = S.collisions(rows.filter(r => !r.twin)), colx = S.collisions(rows.filter(r => !r.twin), { exact: true });
       reports.push({ slice, port, rows: rows.length, ...a, collisions: col.share, collisionsExact: colx.share });
       t.diagnostic(`${slice} ${port}: ${rows.length} rows, solver decides ${a.decided} (${(a.coverage * 100).toFixed(1)}%) and agrees on ${(a.accuracy * 100).toFixed(2)}%; masked-state collisions ${(col.share * 100).toFixed(2)}% (exact state ${(colx.share * 100).toFixed(2)}%); undecided ${JSON.stringify(a.undecided)}`);
       assert.ok(rows.length >= 400, `${slice} ${port}: ${rows.length} rows`);
       assert.ok(a.accuracy >= 0.995, `${slice} ${port}: ${a.wrong.slice(0, 3).map(w => JSON.stringify(w)).join(' ')}`);
       assert.ok(a.coverage >= 0.99, `${slice} ${port} coverage ${a.coverage}`);
       assert.ok(colx.share < 0.01, `${slice} ${port}: ${colx.share}`);
-      if (port === 'X3') assert.ok(col.share < 0.01, `${slice} X3 masked collisions ${col.share}`);
+      assert.ok(col.share < 0.01, `${slice} ${port} masked collisions ${col.share}`);
       // time of decision: every state key is a key the contract declares with its provenance
       const declared = new Set(Object.keys(C()[port].state.keys).map(k => k.split('.')[0]));
       for (const r of recs[port]) for (const k of Object.keys(r.state)) assert.ok(declared.has(k), `${port}: undeclared state key ${k}`);
@@ -399,6 +468,66 @@ test('decidability audit: state-only solvers reproduce the X3 and X8 labels; exa
   const k1 = await rowsOf('K1', st => S.solveK1(st, index));
   assert.ok(k1.accuracy >= 0.995, `K1 ${k1.wrong.slice(0, 2).map(w => JSON.stringify(w))}`);
   assert.ok(k1.coverage >= 0.85, `K1 pool coverage ${k1.coverage}`);
+});
+
+test('decidability audit on the held-out families: state-only solvers reproduce X5, X1 and X8 test-ood labels (counts only, no text read)', async t => {
+  // test-split worlds are generated by the slice's code path; this test reads only agreement counts and reasons
+  const recs = byPort(await collect('test-ood', range(6000, 220), { ports: ['X5', 'X1', 'X8'] }));
+  const assumptionOf = r => { const q = Object.values(r.questions)[0]; return q.instructions.slice(q.instructions.indexOf('? ') + 2); };   // the stub wording ends "? {assumption}"
+  const runs = {
+    X5: S.audit(recs.X5.map(r => ({ id: r.meta.pairId ?? '', state: r.state, label: labelOf(r), slots: { assumption: assumptionOf(r) } })), S.solveX5, { slotsOf: r => r.slots }),
+    X1: S.audit(recs.X1.map(r => ({ id: '', state: r.state, label: labelOf(r) })), S.solveX1),
+    X8: S.audit(recs.X8.filter(r => Object.keys(r.questions).length === 1).map(r => ({ id: '', state: r.state, label: labelOf(r) })), S.solveX8),
+  };
+  for (const [port, a] of Object.entries(runs)) {
+    t.diagnostic(`test-ood ${port}: ${a.rows} rows, solver decides ${a.decided}, agrees ${a.agree} (${((a.accuracy ?? 0) * 100).toFixed(2)}%); undecided ${JSON.stringify(a.undecided)}; disagreements by truth->solved ${JSON.stringify(counts(a.wrong, w => `${w.truth}->${w.solved}`))}`);
+    assert.ok(a.rows >= 500, `${port}: ${a.rows} rows (the program audits 500 per port and split)`);
+    assert.ok(a.coverage >= 0.99 && a.accuracy >= 0.995, `${port}: coverage ${a.coverage}, agreement ${a.accuracy}`);
+  }
+  const x5ns = recs.X5.filter(r => labelOf(r) === 'not_stated');
+  t.diagnostic(`X5 not_stated: ${JSON.stringify(counts(x5ns, r => r.meta.x5.notStated))} (presence-matched must be >= 50%)`);
+  assert.ok(x5ns.filter(r => r.meta.x5.notStated === 'presence-matched').length >= 0.5 * x5ns.length);
+  assert.ok(x5ns.filter(r => r.meta.x5.notStated === 'unrelated').length <= 0.1 * x5ns.length, 'the absent-subject kind (decided by a string match) is <= 10% of not_stated');
+});
+
+// ---- partial-input ceilings (JUDGE-PROGRAM.md §6.3 PART, §2.7 step 7) -------------------------------------------------------------------
+// A train-fitted bag-of-words probe on one part of the state, scored on dev-select: balanced accuracy must stay within majority + 3 pp.
+// Each axis has a planted-shortcut control: the same probe on a train build with the counterfactual pairs left out must break the ceiling.
+test('partial-input ceilings: X8 value-only and decisive-span-free, X3 author-owner metadata stay within majority + 3 pp; controls break them', async t => {
+  const probeOn = (train, evalRecs, view) => {
+    const ex = rs => rs.map(r => ({ text: view(r), label: labelOf(r) }));
+    const e = evaluate(trainProbe(ex(train), { iterations: 120 }), ex(evalRecs));
+    return { bal: e.balancedAccuracy, ceiling: 1 / new Set(evalRecs.map(labelOf)).size + 0.03 };
+  };
+  const magnitude = r => `mag${Math.floor(Math.log10(Math.abs(Number(r.state.extracted_value))))} ${r.state.extracted_value}`;
+  const own = r => (r.state.author === r.state.fact_owner ? 'author-owns-fact' : 'author-other');
+  const evalRecs = byPort(await collect('dev-select', range(4500, 200), { ports: ['X3', 'X8'] }));
+  const train = byPort(await collect('train', range(401, 300), { ports: ['X3', 'X8'] }));
+  const control = byPort(await collect('train', range(401, 300), { ports: ['X3', 'X8'], x8Pairs: false, authorSwap: 0 }));
+  const axes = [
+    ['X8', 'extracted value only', magnitude, true], ['X8', 'decisive-span-free (row and value)', r => `${r.state.source_line} ${magnitude(r)}`, true],
+    ['X8', 'source line only', r => r.state.source_line, false], ['X8', 'conventions only', r => r.state.conventions, false],
+    ['X3', 'metadata: author owns the fact', own, true], ['X3', 'author handle', r => r.state.author, false],
+  ];
+  for (const [port, name, view, planted] of axes) {
+    const m = probeOn(train[port], evalRecs[port], view);
+    t.diagnostic(`PART ${port} ${name}: ${m.bal.toFixed(3)} (ceiling ${m.ceiling.toFixed(3)}; train ${train[port].length}, dev-select ${evalRecs[port].length})`);
+    assert.ok(m.bal <= m.ceiling, `${port} ${name}: ${m.bal} > ${m.ceiling}`);
+    if (planted) {
+      const c = probeOn(control[port], evalRecs[port], view);
+      t.diagnostic(`  planted control (no pairs or twins in train): ${c.bal.toFixed(3)}`);
+      assert.ok(c.bal > c.ceiling + 0.05, `the ${port} ${name} control must break the ceiling: ${c.bal}`);
+    }
+  }
+  // X3 context: answers and withdrawals come with the message they answer, so the context alone separates them. This axis is
+  // OPEN: it is printed and recorded, and X3 kinetics is not frozen on it (shortcut-audit), until counterfactual context
+  // material or a program decision exists.
+  for (const [name, view] of [['context only', r => r.state.thread_context.join(' ')], ['context count', r => `ctx${r.state.thread_context.length}`]]) {
+    const m = probeOn(train.X3, evalRecs.X3, view);
+    t.diagnostic(`PART X3 ${name}: ${m.bal.toFixed(3)} (ceiling ${m.ceiling.toFixed(3)}) ${m.bal > m.ceiling ? 'OPEN: X3 kinetics not frozen on this axis' : 'within the ceiling'}`);
+  }
+  // the assembly can balance within the partial-input cell the generator records
+  assert.ok(train.X3.every(r => /^(own|other)\|ctx[01]$/.test(r.meta.x3.cell)));
 });
 
 // ---- the common acceptance -----------------------------------------------------------------------------------------------------------
@@ -450,8 +579,16 @@ test('determinism: two runs give the same records; the author-swap twin changes 
     const orig = a.find(r => r.meta.pairId === tw.meta.pairId && r !== tw);
     assert.ok(orig && labelOf(orig) === labelOf(tw));
     assert.deepEqual({ ...tw.state, author: orig.state.author }, orig.state, 'only the author differs');
-    assert.notEqual(tw.state.author, orig.state.fact_owner);
+    assert.notEqual(tw.state.author, orig.state.author);
+    // a proposal moves to the entry's owner, any other act away from it and from whoever it answers
+    if (labelOf(tw) === 'proposes') assert.equal(tw.state.author, orig.state.fact_owner);
+    else { assert.notEqual(tw.state.author, orig.state.fact_owner); assert.ok(!orig.state.thread_context.some(c => c.startsWith(`${tw.state.author}: `))); }
+    assert.equal(tw.meta.x3.own, tw.state.author === tw.state.fact_owner);
   }
+  // in train every X3 row has its twin, so author == fact_owner is independent of the label (the PART test measures it)
+  const x3 = a.filter(r => portOf(r) === 'X3');
+  const paired = x3.filter(r => r.meta.pairId).length;
+  assert.ok(paired >= 0.95 * x3.length, `train X3 rows come in author-swap pairs: ${paired}/${x3.length}`);
 });
 
 test('build: this generator builds a verified Kev dataset from a frozen bed copy (train and dev-select, real token fits)', async t => {
@@ -487,7 +624,7 @@ test('kit: refuses what the runtime must not do (a missing slot, an unknown mess
 // ---- acceptance 7: the test file fails on seeded defects ---------------------------------------------------------------------------------------
 test('seeded defect: this file runs alone with node --test and fails on seeded defects (a fact aligned to two spans kept)', { skip: MUTANT_RUN ? 'inside a mutant run' : false, timeout: 10 * 60 * 1000 }, () => {
   // the tests that need no frozen bed (a mutant copy has none)
-  const pattern = '^(tap fixture|frames: |solve: |gate: |splits: )';
+  const pattern = '^(tap fixture|frames: |solve: |labels: |gate: |splits: )';
   const mutants = [
     { name: 'tap keeps a fact aligned to two spans', mutations: [
       { file: 'taps/kinetics.mjs', from: 'p.span = p.candidates.length === 1 ? p.candidates[0] : null;', to: 'p.span = p.candidates[0] ?? null;' },
@@ -497,6 +634,10 @@ test('seeded defect: this file runs alone with node --test and fails on seeded d
     { name: 'the X8 solver accepts anything', mutations: [{ file: 'solve/kinetics.mjs', from: '<= 2e-3 * Math.abs(expected)', to: '<= 2e3 * Math.abs(expected)' }] },
     { name: 'a retraction frame is removed', mutations: [{ file: 'taps/kinetics-frames.mjs', from: "'Scratch my addendum about {}/{} on the {d} sheet. I re-checked the plate map and the tubes were labelled correctly; nothing was swapped.',", to: '' }] },
     { name: 'a reserved world is no longer reserved', mutations: [{ file: 'lib/registry.mjs', from: 'seeds: [1, 400]', to: 'seeds: [1, 100]' }] },
+    { name: 'X7 labels ignore the sub-question', mutations: [{ file: 'taps/kinetics.mjs', from: "return sq.needs.includes(effect) ? 'needed' : 'not_needed';", to: "return effect !== 'none' ? 'needed' : 'not_needed';" }] },
+    { name: 'an X1 long window with an injection line stays a negative', mutations: [{ file: 'taps/kinetics.mjs', from: '|| NOTEBOOK_INJECTIONS.includes(l));\n\n// ---- X5', to: '&& false);\n\n// ---- X5' }] },
+    { name: 'a re-read note no longer states the unit of an X5 window', mutations: [{ file: 'taps/kinetics.mjs', from: "return kind === 'conc' ? CONC_STATED.some(re => re.test(t)) : RATE_ANY.test(t);", to: "return kind === 'conc' ? CONC_STATED.some(re => re.test(t)) : /v0 \\(|rate_/.test(t);" }] },
+    { name: 'the X5 solver reads a blank-well remark as the sheet\'s unit', mutations: [{ file: 'solve/kinetics.mjs', from: 't = withoutDecoys(state.source_text);', to: 't = String(state.source_text);' }] },
   ];
   const r = H.seededDefect({ file: TEST_FILE, pattern, mutants, env: { KEV_DATA_MUTANT_RUN: '1' } });
   assert.equal(r.control.status, 0, r.control.stdout.split('\n').filter(l => /not ok/.test(l)).join('\n'));

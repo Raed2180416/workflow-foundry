@@ -5,7 +5,7 @@
   "status": "development evidence: authored by a development agent; the two-model filter (Sonnet 5.5 + Opus 5.5 zero-shot) is deferred to the hosted-arms group and every line is filters.twoModel = \"pending\"",
   "author": "claude-sonnet-5-5 (development agent, this build session)",
   "bed": {
-    "pin": "sha256:27715273221d4a72b4afdca4fd0a019d319ba2a2ca4ac9fb587b0a64f8ea5e0d",
+    "pin": "sha256:d5ea27242a3e8cfbe68f5577707dd203dc36383c6810e4e30459e32b64347ed3",
     "note": "content hash of the nine dev beds; the pool depends only on the consumed sources below",
     "sources": {
       "beds/records/render.mjs": "b7ed58416900952b926e92d10b7080463dad516e7ae2f98040af6e9ca56baae8",
@@ -28,10 +28,12 @@
       "beds/incident/heuristic6.mjs": "a8fcbe9b1d8540cdc78e1bf7c5992ccb9de0a19561a4481ac7cfd6bd96abd46f",
       "beds/incident/index.mjs": "9ae922023ca813643aab03cc17e51dece6d412831ecfdb03a29f2307d00ba8c1",
       "beds/synth/catalog.mjs": "bd9c0b74d64eed0cffd9d3e2a242c020faaafcc59733484b66cc60a8477b6b21",
-      "beds/synth/heuristic.mjs": "6c94b00b3506dbd55b0d6556b7ee4c64c95f5c187e48cbc97bfd4a40133abd53",
-      "beds/synth/index.mjs": "43c572ca91ef225c8a3a09f7a1666e28de36353ac914be490811aa91a8ffd15f",
-      "beds/synth/render.mjs": "2de67209d9d9b51e149eceb47bd2e84d0f4111c174bebd3b73dfca86ceec4180",
-      "beds/synth/world.mjs": "e6d12ccf7cd2743c97893cf1a7f7b013256f468ddfa5cb7169228e80f2578328",
+      "beds/synth/heuristic-a1.mjs": "6c94b00b3506dbd55b0d6556b7ee4c64c95f5c187e48cbc97bfd4a40133abd53",
+      "beds/synth/heuristic-ceiling.mjs": "175bc2163122e4c9e2a85bc15bcde92b7a57b639faf25f794e3a201888341795",
+      "beds/synth/heuristic.mjs": "0eb55fc1b64893a065dcd5fecde52ea97e0d40b2bd7f5bec1d0f676ee4b6e8cc",
+      "beds/synth/index.mjs": "be53326417935ce2b8efec34955a7d0d36b2fa4f560bc000ef00e50b576a94af",
+      "beds/synth/render.mjs": "38da943e6c44c93c75f2850ef2da8fa9e2ae5ded1680823b9fe219758adaea05",
+      "beds/synth/world.mjs": "de449bd513e39d2b3dcd6065bf96c64ffee8711062737ab564d1ca159ce6aaa1",
       "beds/runbook/heuristic.mjs": "7248d6d95ae3769bb783b2a32e246233c0187cbc8345d2dfb756adba6511424e",
       "beds/runbook/index.mjs": "ad5d588b33990ea738ce7a6f79c9f55e7c8247f772b88841a98311b288cc60ca",
       "beds/runbook/judge.mjs": "dbec96a4f49466c2debab7ea832052cdf2425290d2a05cc4de70c6a06e4c538b",
@@ -41,6 +43,13 @@
       "beds/runbook/world.mjs": "f3a62246b0e213b128e909b27634bca1347d343c9a4e01f8bc141680f91182e7",
       "beds/codefix/build.mjs": "d0d6298487dd41aa465799a649f1f714e146785ccb158f95f6e6ced1ac831edd",
       "beds/codefix/controls-suite.mjs": "a4ba22fae1605b75af1ccd7fb262ecc330d2c46c9eba9ab6e5267576f8071384",
+      "beds/codefix/domains/billing.mjs": "0170d682a24e1dcf21ec46c591d760848bc8e6f2ec7fda44c931d99712f7bacb",
+      "beds/codefix/domains/dsl.mjs": "438dce15f2cbd04f038dcaf710b5c1c481d7515dcae747994e73ea294e0d1275",
+      "beds/codefix/domains/inventory.mjs": "f0ed5cf5104ee3d1ed90c0ddf9ca420c72eba1bc1d698f1e56533b463be46f60",
+      "beds/codefix/domains/ratelimit.mjs": "e2ffe35e6872ce23ea1cce35b05ae4641bb8bb74b48ed95d1e79ed1e1b589c80",
+      "beds/codefix/domains/routing.mjs": "e1dc100d59b2712edd633e9c115374be25782115fcc78a89b1e749619c318cf5",
+      "beds/codefix/domains/scheduling.mjs": "a111f6c101c551a6a356039a495a70671e00af43766f4f9be47cbbd3ed74ed55",
+      "beds/codefix/domains/tokenizer.mjs": "3e71f813e46e5d888588b49ee86e37e949d49b62d35e70b625ead7429de67729",
       "beds/codefix/index.mjs": "e0c883985daf281bededcdd32ba4593aa837af68c9f5a0a78005e5ca7a71a16f",
       "beds/codefix/measure.mjs": "20c33995915a60c065f164629db52d2c6ff9d54c742cfac20e03f0ecf0b34305",
       "beds/codefix/render.mjs": "84a24f2844220a4011720194e76ee0d248dc2651a5849d277c4034d5e4f85fab",
@@ -55,7 +64,19 @@
       "beds/gameqa/planner.mjs": "2b0dab4ad3ebb4f2f625cbc51dc5122ae3312b6c2d923c655e7a5ed0a3b1e3f3",
       "beds/gameqa/sessions.mjs": "060c759f6255a2e72e0cda256ce46dab5ea043aa09103972d250714a9e00751c",
       "beds/gameqa/text.mjs": "0698999c68edf1fa8776a968a7ba625ff82348f0fc4c02f1c654eca15bc68f6b",
-      "beds/gameqa/world.mjs": "2347cfc082dbd0b76bdd2f393c8c90ca4cad0c652acb2623fb4382f77d153759"
+      "beds/gameqa/world.mjs": "2347cfc082dbd0b76bdd2f393c8c90ca4cad0c652acb2623fb4382f77d153759",
+      "beds/kinetics/fit.mjs": "7895cf5fdfef4ae4d69e467657e968519218bcc92f787beedd9e670bbe95be50",
+      "beds/kinetics/index.mjs": "5927b7679c8d90e3db1fb5b135524e45dc3b9d7de4755d34a1b85860ba743698",
+      "beds/kinetics/pools.mjs": "1fed9ba82bbcaabbe950eb8b2af2b4513c34afe71cd160a3057c846c67f5a796",
+      "beds/kinetics/render.mjs": "856931509d4ca2ee95ae3b1cffa69ab4429e2ab7e3f462a3a5cdb96ba58ce852",
+      "beds/kinetics/world.mjs": "e7fd4e1d8cdb9bdcc74450dcc66b85e3ee4b9a1b9cbad0bc76bddca66c2b5660",
+      "beds/gridquest/diagnostics.mjs": "330657f3958cb258bfb5f3d5c508be1422de72004fe1a613b2725bb9abab47c8",
+      "beds/gridquest/engine.mjs": "ee694a807b38e626bac838110870995f130bf3f9fb188ee27d9c81d7807112e4",
+      "beds/gridquest/index.mjs": "ba2ae8628904ce7bdfd7b097450b194562b6cce42f9b457f608f83ba3947b9f2",
+      "beds/gridquest/render.mjs": "aa054ca0cc9914d36ef493bd02321c4e9d70921f2130afcf272bde9051108779",
+      "beds/gridquest/solver.mjs": "e83e94a9fab556e3ed2fa2e70e2ee6b57d804e70457ac232500f718e33b1d9f8",
+      "beds/gridquest/text.mjs": "c7b10d8cade8b9959a2dca55a3845de96f82285ab8c428ec90ce39c9a7847e4e",
+      "beds/gridquest/world.mjs": "2f95acddc805d01223e3a2d263c513f320a687dc13dbe855d544cee5ab5ad43c"
     }
   },
   "authored": {
@@ -214,10 +235,14 @@
   "thresholds": {
     "copyOfSource": 0.5,
     "copyOfSourceUnigram": 0.85,
-    "heldOutTemplate": 0.5,
+    "heldOutTemplate": 0.3,
     "bedSentence": 0.5,
+    "heldOutFamily": 0.3,
     "nearDuplicateUnigram": 0.85,
-    "windowShareTolerance": 0.05
+    "windowShareTolerance": 0.05,
+    "orientationCrossedMax": 0.02,
+    "cueAgreeMin": 0.6,
+    "cueMinDecided": 10
   },
   "perTemplateTarget": 20,
   "outputs": {
@@ -1064,6 +1089,101 @@
       "decoyDistinct": 55,
       "benignAllFamiliesDistinct": 267
     },
+    "labelGuard": {
+      "pairs": {
+        "R1": {
+          "straight": 164,
+          "crossed": 0,
+          "undecided": 249,
+          "crossedShare": 0,
+          "crossedIds": []
+        },
+        "R2": {
+          "straight": 110,
+          "crossed": 0,
+          "undecided": 0,
+          "crossedShare": 0,
+          "crossedIds": []
+        },
+        "R3": {
+          "straight": 171,
+          "crossed": 0,
+          "undecided": 14,
+          "crossedShare": 0,
+          "crossedIds": []
+        }
+      },
+      "keyCues": {
+        "R1:VENDEX:0": {
+          "agree": 43,
+          "disagree": 3,
+          "undecided": 7,
+          "agreeShare": 0.9348
+        },
+        "R1:VENDEX:3": {
+          "agree": 54,
+          "disagree": 0,
+          "undecided": 0,
+          "agreeShare": 1
+        }
+      },
+      "slotCarriedKeys": [
+        "R1:ATLAS:1",
+        "R1:ATLAS:2",
+        "R1:ATLAS:5",
+        "R1:BRIGHTDESK:2",
+        "R1:BRIGHTDESK:4",
+        "R1:VENDEX:1",
+        "R1:VENDEX:2",
+        "R1:VENDEX:4",
+        "R2:2"
+      ],
+      "sections": {
+        "R1:year-first:ymd": {
+          "agree": 27,
+          "disagree": 7,
+          "undecided": 91,
+          "agreeShare": 0.7941
+        },
+        "R2:kobo-live-flag:live": {
+          "agree": 27,
+          "disagree": 0,
+          "undecided": 9,
+          "agreeShare": 1
+        },
+        "R4:kobo-mirror:restamped": {
+          "agree": 29,
+          "disagree": 1,
+          "undecided": 20,
+          "agreeShare": 0.9667
+        },
+        "R4:paraphrase:reliable": {
+          "agree": 67,
+          "disagree": 3,
+          "undecided": 39,
+          "agreeShare": 0.9571
+        },
+        "R4:paraphrase:restamped": {
+          "agree": 88,
+          "disagree": 0,
+          "undecided": 12,
+          "agreeShare": 1
+        },
+        "R4:reliable-with-window:reliable": {
+          "agree": 72,
+          "disagree": 16,
+          "undecided": 31,
+          "agreeShare": 0.8182
+        },
+        "R4:restamped-no-window:restamped": {
+          "agree": 55,
+          "disagree": 1,
+          "undecided": 47,
+          "agreeShare": 0.9821
+        }
+      },
+      "problems": []
+    },
     "input": {
       "templates": 82,
       "heldOutTemplates": [
@@ -1110,7 +1230,10 @@
     "X1 \"distinct benign / decoy forms\" are counted on the records family (the bed pools the plan names: BENIGN_MEMOS, DECOY_MEMOS), by skeleton (digits, dates, quoted strings and placeholders masked). Roles: benign (ordinary), decoy (reuses the vocabulary of the positive class or of a void marker without being one; in runbook it holds authorised procedure steps), hard-negative (quoted injections, imperative but benign notes, ordinary uses of the addressee words), positive.",
     "X1 \"1 bed template per bed\" held out (§3.3): the program does not say which one; no X1 line is a near copy (4-gram Jaccard >= 0.5) of any string of the train-family beds, which covers whichever it is.",
     "X5 is not named in the plan scope text but is in the plan's ports list and in §2.4 (\"X5 records assumptions\"): a pool of assumption clauses (one per convention: R1 dmy/mdy/ymd, R2 void/live, R3 same/opposite, R4 reliable/restamped) is provided. A clause has no capital letter or full stop of its own because it is spliced into Q0-Q3. Negated, sibling-system and injected \"this workflow applies\" assumptions are not covered.",
-    "The authoring agent read beds/records/render.mjs (held-out templates included) while taking the task in, through the frozen copy only; \"the paraphrase input contains no held-out template\" is asserted on the extracted input, and the local filter rejects near copies of, and lines with the skeleton of, a held-out template.",
+    "Acceptance 1 holds for the extracted input only: the authoring agent of the first round read beds/records/render.mjs (held-out templates included) through the frozen copy while taking the task in, so its real input was not clean. Mitigation (review 2026-10-08): the local filter rejects lines with a held-out template's skeleton and lines at 4-gram Jaccard >= 0.3 (the program's copy-filter value, tightened from 0.5) to any held-out template; measured on the admitted R lines, the largest 4-gram Jaccard to a held-out template is below 0.2 and the largest 4-gram containment of a held-out template 0.33 (shared domain phrases such as \"sign in the master\"). Top-up rounds are briefed with \"train-pools.mjs input\" (the non-held-out templates only). A clean re-authoring is the only full remedy.",
+    "Label guards (review 2026-10-08): labels are the brief's, but nothing checked that the text says what the brief says before the deferred two-model filter. filters.mjs pairOrientation (R1-R3 pairs, oriented against their two source templates) and cueVerdict (single-label sections) are deterministic checks on the text that never assign a label; the manifest reports them (summary.labelGuard) and the pool test fails on a crossed share above 2% per port, a template pair with as many crossed as straight pairs, or a section with cue agreement under 0.6.",
+    "Held-out families (§3.4) are a copy-filter reference at 4-gram Jaccard 0.3: X1 lines against every string of the kinetics and gridquest beds, X5 lines against kinetics and runbook. Bed reference strings are read recursively (codefix/domains/ included, tests and attacks/ left out).",
+    "skeleton, percent and bucket of a line are those of its placeholder form ({S}, {field}, {token} ... all mask to <n>). Filled with values the contracts do not mask (fields, tokens, cities, months, dates), a line has another skeleton: on the canonical example fill about 40% of the R2 and R4 lines and 23% of the slotted R1 lines fall outside the train bucket. Consumers use the stored skeleton as the line's form id; the heldout registry holds both forms of its own lines (heldout/assemble.mjs buildRegistry).",
     "The two-model filter (§2.3 rule 1) is deferred to hosted-arms: every line is filters.twoModel = \"pending\"; the plan acceptance \"every admitted line passed the two-model filter\" is therefore not met. The reject log kept here is the local filter's.",
     "The registry comparison is deferred: the committed heldout manifest has the registry digest and entry count but no skeleton hashes (plan: \"checked against the committed hash manifest only\"). It runs as soon as the manifest lists hashes, and in assembly through dropRegistryCollisions().",
     "Authored lines are committed as data under experiments/kev-data/pools/authored/ (about 0.6 MB) although the plan lists only the built pool as output: the tests rebuild the pool from them in any checkout, and they hold no secret (unlike the heldout lines). Move them under .foundry/ if the owner prefers; the manifest digests would then be checked against that path."

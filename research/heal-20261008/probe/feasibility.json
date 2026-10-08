@@ -1,0 +1,2056 @@
+{
+ "generated": "2026-10-08T14:59:14.684Z",
+ "kit": {
+  "kit": "/opt/foundry-kit/7e8f0f83153c5efb",
+  "kitHash": "7e8f0f83153c5efb",
+  "commit": "880c6b9",
+  "files": 87,
+  "mismatchedWithCommit": [],
+  "liveDiffers": [
+   "bin/foundry.mjs",
+   "schemas/workflow.schema.json",
+   "src/engine.mjs",
+   "src/foundry.mjs",
+   "src/http.mjs",
+   "src/journal.mjs",
+   "src/mcp.mjs",
+   "src/runtime.mjs",
+   "src/store.mjs",
+   "src/validate.mjs",
+   "src/verdict.mjs"
+  ],
+  "liveOnly": [
+   "src/acceptance.mjs",
+   "src/audit.mjs",
+   "src/lint.mjs",
+   "src/verify-run.mjs"
+  ],
+  "policyIdentical": true
+ },
+ "c0": {
+  "policyHash": "b44deb45d0130910746ed2e2f220723476e3cb0c55c3b253d4303ec9764e6cee",
+  "fidelity": [
+   {
+    "family": "records",
+    "seed": 6001,
+    "trial": 0,
+    "taskHashMatch": true,
+    "recorded": {
+     "pass": false,
+     "score": 0.789197,
+     "verdict": "pass",
+     "calls": 7
+    },
+    "replay": {
+     "taskHash": "65b90546430e1403c93f59b31b628918281f49ca986fa2b067d5c56ea265c1cf",
+     "status": "succeeded",
+     "error": null,
+     "verdict": "pass",
+     "pass": false,
+     "score": 0.789197,
+     "calls": 7,
+     "ms": 3050
+    },
+    "identical": true
+   },
+   {
+    "family": "records",
+    "seed": 6001,
+    "trial": 1,
+    "taskHashMatch": true,
+    "recorded": {
+     "pass": false,
+     "score": 0.789197,
+     "verdict": "pass",
+     "calls": 7
+    },
+    "replay": {
+     "taskHash": "65b90546430e1403c93f59b31b628918281f49ca986fa2b067d5c56ea265c1cf",
+     "status": "succeeded",
+     "error": null,
+     "verdict": "pass",
+     "pass": false,
+     "score": 0.789197,
+     "calls": 7,
+     "ms": 3078
+    },
+    "identical": true
+   },
+   {
+    "family": "records",
+    "seed": 6002,
+    "trial": 0,
+    "taskHashMatch": true,
+    "recorded": {
+     "pass": true,
+     "score": 1,
+     "verdict": "pass",
+     "calls": 7
+    },
+    "replay": {
+     "taskHash": "04b0ce19a379826dfa76fa8957933554d7c40100beddd1c47e417b1a19080de4",
+     "status": "succeeded",
+     "error": null,
+     "verdict": "pass",
+     "pass": true,
+     "score": 1,
+     "calls": 7,
+     "ms": 3001
+    },
+    "identical": true
+   },
+   {
+    "family": "records",
+    "seed": 6002,
+    "trial": 1,
+    "taskHashMatch": true,
+    "recorded": {
+     "pass": true,
+     "score": 1,
+     "verdict": "pass",
+     "calls": 7
+    },
+    "replay": {
+     "taskHash": "04b0ce19a379826dfa76fa8957933554d7c40100beddd1c47e417b1a19080de4",
+     "status": "succeeded",
+     "error": null,
+     "verdict": "pass",
+     "pass": true,
+     "score": 1,
+     "calls": 7,
+     "ms": 3897
+    },
+    "identical": true
+   },
+   {
+    "family": "records",
+    "seed": 6003,
+    "trial": 0,
+    "taskHashMatch": true,
+    "recorded": {
+     "pass": true,
+     "score": 1,
+     "verdict": "pass",
+     "calls": 7
+    },
+    "replay": {
+     "taskHash": "059523f247d7ca3e3187e16b0587ce72637e63509129f4b84b98400dc923481c",
+     "status": "succeeded",
+     "error": null,
+     "verdict": "pass",
+     "pass": true,
+     "score": 1,
+     "calls": 7,
+     "ms": 3719
+    },
+    "identical": true
+   },
+   {
+    "family": "records",
+    "seed": 6003,
+    "trial": 1,
+    "taskHashMatch": true,
+    "recorded": {
+     "pass": true,
+     "score": 1,
+     "verdict": "pass",
+     "calls": 7
+    },
+    "replay": {
+     "taskHash": "059523f247d7ca3e3187e16b0587ce72637e63509129f4b84b98400dc923481c",
+     "status": "succeeded",
+     "error": null,
+     "verdict": "pass",
+     "pass": true,
+     "score": 1,
+     "calls": 7,
+     "ms": 3763
+    },
+    "identical": true
+   },
+   {
+    "family": "records",
+    "seed": 6004,
+    "trial": 0,
+    "taskHashMatch": true,
+    "recorded": {
+     "pass": true,
+     "score": 1,
+     "verdict": "pass",
+     "calls": 7
+    },
+    "replay": {
+     "taskHash": "33187e47773fab81f81f17a5a5eae5ed7d50389f20cb5200be5a74fea761e0d8",
+     "status": "succeeded",
+     "error": null,
+     "verdict": "pass",
+     "pass": true,
+     "score": 1,
+     "calls": 7,
+     "ms": 3878
+    },
+    "identical": true
+   },
+   {
+    "family": "records",
+    "seed": 6004,
+    "trial": 1,
+    "taskHashMatch": true,
+    "recorded": {
+     "pass": true,
+     "score": 1,
+     "verdict": "pass",
+     "calls": 8
+    },
+    "replay": {
+     "taskHash": "33187e47773fab81f81f17a5a5eae5ed7d50389f20cb5200be5a74fea761e0d8",
+     "status": "succeeded",
+     "error": null,
+     "verdict": "pass",
+     "pass": true,
+     "score": 1,
+     "calls": 8,
+     "ms": 4245
+    },
+    "identical": true
+   },
+   {
+    "family": "codefix",
+    "seed": 6001,
+    "trial": 0,
+    "taskHashMatch": true,
+    "recorded": {
+     "pass": false,
+     "score": 0,
+     "verdict": "pass",
+     "calls": 2
+    },
+    "replay": {
+     "taskHash": "ff6e83052b15399db1349a4f29f46d8a940ce01b890cd3bd1abdf4b43dcf0101",
+     "status": "succeeded",
+     "error": null,
+     "verdict": "pass",
+     "pass": false,
+     "score": 0,
+     "calls": 2,
+     "ms": 2687
+    },
+    "identical": true
+   },
+   {
+    "family": "codefix",
+    "seed": 6001,
+    "trial": 1,
+    "taskHashMatch": true,
+    "recorded": {
+     "pass": true,
+     "score": 1,
+     "verdict": "pass",
+     "calls": 2
+    },
+    "replay": {
+     "taskHash": "ff6e83052b15399db1349a4f29f46d8a940ce01b890cd3bd1abdf4b43dcf0101",
+     "status": "succeeded",
+     "error": null,
+     "verdict": "pass",
+     "pass": true,
+     "score": 1,
+     "calls": 2,
+     "ms": 2663
+    },
+    "identical": true
+   },
+   {
+    "family": "codefix",
+    "seed": 6002,
+    "trial": 0,
+    "taskHashMatch": true,
+    "recorded": {
+     "pass": true,
+     "score": 1,
+     "verdict": "pass",
+     "calls": 1
+    },
+    "replay": {
+     "taskHash": "e1552397191cf74c4c6879f1896e9b18aaf6bc5f536789253c5f7edd1f010ebe",
+     "status": "succeeded",
+     "error": null,
+     "verdict": "pass",
+     "pass": true,
+     "score": 1,
+     "calls": 1,
+     "ms": 2057
+    },
+    "identical": true
+   },
+   {
+    "family": "codefix",
+    "seed": 6002,
+    "trial": 1,
+    "taskHashMatch": true,
+    "recorded": {
+     "pass": true,
+     "score": 1,
+     "verdict": "pass",
+     "calls": 1
+    },
+    "replay": {
+     "taskHash": "e1552397191cf74c4c6879f1896e9b18aaf6bc5f536789253c5f7edd1f010ebe",
+     "status": "succeeded",
+     "error": null,
+     "verdict": "pass",
+     "pass": true,
+     "score": 1,
+     "calls": 1,
+     "ms": 1980
+    },
+    "identical": true
+   },
+   {
+    "family": "codefix",
+    "seed": 6003,
+    "trial": 0,
+    "taskHashMatch": true,
+    "recorded": {
+     "pass": true,
+     "score": 1,
+     "verdict": "pass",
+     "calls": 1
+    },
+    "replay": {
+     "taskHash": "2a0a5317d3c6ea22dfd93276742e5132515d777be810cb8ec61e91748cf2cb06",
+     "status": "succeeded",
+     "error": null,
+     "verdict": "pass",
+     "pass": true,
+     "score": 1,
+     "calls": 1,
+     "ms": 2236
+    },
+    "identical": true
+   },
+   {
+    "family": "codefix",
+    "seed": 6003,
+    "trial": 1,
+    "taskHashMatch": true,
+    "recorded": {
+     "pass": true,
+     "score": 1,
+     "verdict": "pass",
+     "calls": 1
+    },
+    "replay": {
+     "taskHash": "2a0a5317d3c6ea22dfd93276742e5132515d777be810cb8ec61e91748cf2cb06",
+     "status": "succeeded",
+     "error": null,
+     "verdict": "pass",
+     "pass": true,
+     "score": 1,
+     "calls": 1,
+     "ms": 2496
+    },
+    "identical": true
+   },
+   {
+    "family": "codefix",
+    "seed": 6004,
+    "trial": 0,
+    "taskHashMatch": true,
+    "recorded": {
+     "pass": false,
+     "score": 0.9565217391304348,
+     "verdict": "pass",
+     "calls": 2
+    },
+    "replay": {
+     "taskHash": "f97ea914f7d0b0ea68531717fd54f5f85303bce176efe8424f782ba6e1e49e9e",
+     "status": "succeeded",
+     "error": null,
+     "verdict": "pass",
+     "pass": false,
+     "score": 0.9565217391304348,
+     "calls": 2,
+     "ms": 2846
+    },
+    "identical": true
+   },
+   {
+    "family": "codefix",
+    "seed": 6004,
+    "trial": 1,
+    "taskHashMatch": true,
+    "recorded": {
+     "pass": false,
+     "score": 0.9565217391304348,
+     "verdict": "pass",
+     "calls": 2
+    },
+    "replay": {
+     "taskHash": "f97ea914f7d0b0ea68531717fd54f5f85303bce176efe8424f782ba6e1e49e9e",
+     "status": "succeeded",
+     "error": null,
+     "verdict": "pass",
+     "pass": false,
+     "score": 0.9565217391304348,
+     "calls": 2,
+     "ms": 2562
+    },
+    "identical": true
+   }
+  ],
+  "recordsConfFlips": {
+   "trial": "records:test:d3:s6001 t0",
+   "candidates": 24,
+   "passing": [
+    "BRIGHTDESK.numeric_order=DMY"
+   ],
+   "rows": [
+    {
+     "node": "conf",
+     "change": "identity",
+     "score": 0.789197,
+     "pass": false,
+     "error": null
+    },
+    {
+     "node": "conf",
+     "system": "BRIGHTDESK",
+     "field": "numeric_order",
+     "from": "MDY",
+     "to": "DMY",
+     "score": 1,
+     "pass": true,
+     "error": null
+    },
+    {
+     "node": "conf",
+     "system": "BRIGHTDESK",
+     "field": "numeric_order",
+     "from": "MDY",
+     "to": "YMD",
+     "score": 0.789197,
+     "pass": false,
+     "error": null
+    },
+    {
+     "node": "conf",
+     "system": "BRIGHTDESK",
+     "field": "numeric_order",
+     "from": "MDY",
+     "to": "NONE",
+     "score": 0.789197,
+     "pass": false,
+     "error": null
+    },
+    {
+     "node": "conf",
+     "system": "BRIGHTDESK",
+     "field": "sign_flip",
+     "from": 1,
+     "to": -1,
+     "score": 0.78293,
+     "pass": false,
+     "error": null
+    },
+    {
+     "node": "conf",
+     "system": "LEDGR",
+     "field": "numeric_order",
+     "from": "DMY",
+     "to": "MDY",
+     "score": 0.789197,
+     "pass": false,
+     "error": null
+    },
+    {
+     "node": "conf",
+     "system": "LEDGR",
+     "field": "numeric_order",
+     "from": "DMY",
+     "to": "YMD",
+     "score": 0.789197,
+     "pass": false,
+     "error": null
+    },
+    {
+     "node": "conf",
+     "system": "LEDGR",
+     "field": "numeric_order",
+     "from": "DMY",
+     "to": "NONE",
+     "score": 0.789197,
+     "pass": false,
+     "error": null
+    },
+    {
+     "node": "conf",
+     "system": "LEDGR",
+     "field": "sign_flip",
+     "from": -1,
+     "to": 1,
+     "score": 0.78293,
+     "pass": false,
+     "error": null
+    },
+    {
+     "node": "conf",
+     "system": "ATLAS",
+     "field": "numeric_order",
+     "from": "DMY",
+     "to": "MDY",
+     "score": 0.577313,
+     "pass": false,
+     "error": null
+    },
+    {
+     "node": "conf",
+     "system": "ATLAS",
+     "field": "numeric_order",
+     "from": "DMY",
+     "to": "YMD",
+     "score": 0.789197,
+     "pass": false,
+     "error": null
+    },
+    {
+     "node": "conf",
+     "system": "ATLAS",
+     "field": "numeric_order",
+     "from": "DMY",
+     "to": "NONE",
+     "score": 0.789197,
+     "pass": false,
+     "error": null
+    },
+    {
+     "node": "conf",
+     "system": "ATLAS",
+     "field": "sign_flip",
+     "from": -1,
+     "to": 1,
+     "score": 0.773325,
+     "pass": false,
+     "error": null
+    },
+    {
+     "node": "conf",
+     "system": "VENDEX",
+     "field": "numeric_order",
+     "from": "MDY",
+     "to": "DMY",
+     "score": 0.72082,
+     "pass": false,
+     "error": null
+    },
+    {
+     "node": "conf",
+     "system": "VENDEX",
+     "field": "numeric_order",
+     "from": "MDY",
+     "to": "YMD",
+     "score": 0.789197,
+     "pass": false,
+     "error": null
+    },
+    {
+     "node": "conf",
+     "system": "VENDEX",
+     "field": "numeric_order",
+     "from": "MDY",
+     "to": "NONE",
+     "score": 0.789197,
+     "pass": false,
+     "error": null
+    },
+    {
+     "node": "conf",
+     "system": "VENDEX",
+     "field": "sign_flip",
+     "from": 1,
+     "to": -1,
+     "score": 0.789197,
+     "pass": false,
+     "error": null
+    },
+    {
+     "node": "conf",
+     "system": "KOBO",
+     "field": "numeric_order",
+     "from": "YMD",
+     "to": "MDY",
+     "score": 0.789197,
+     "pass": false,
+     "error": null
+    },
+    {
+     "node": "conf",
+     "system": "KOBO",
+     "field": "numeric_order",
+     "from": "YMD",
+     "to": "DMY",
+     "score": 0.789197,
+     "pass": false,
+     "error": null
+    },
+    {
+     "node": "conf",
+     "system": "KOBO",
+     "field": "numeric_order",
+     "from": "YMD",
+     "to": "NONE",
+     "score": 0.789197,
+     "pass": false,
+     "error": null
+    },
+    {
+     "node": "conf",
+     "system": "KOBO",
+     "field": "sign_flip",
+     "from": 1,
+     "to": -1,
+     "score": 0.784507,
+     "pass": false,
+     "error": null
+    },
+    {
+     "node": "conf",
+     "system": "VERITAS",
+     "field": "numeric_order",
+     "from": "YMD",
+     "to": "MDY",
+     "score": 0.789197,
+     "pass": false,
+     "error": null
+    },
+    {
+     "node": "conf",
+     "system": "VERITAS",
+     "field": "numeric_order",
+     "from": "YMD",
+     "to": "DMY",
+     "score": 0.789197,
+     "pass": false,
+     "error": null
+    },
+    {
+     "node": "conf",
+     "system": "VERITAS",
+     "field": "numeric_order",
+     "from": "YMD",
+     "to": "NONE",
+     "score": 0.789197,
+     "pass": false,
+     "error": null
+    },
+    {
+     "node": "conf",
+     "system": "VERITAS",
+     "field": "sign_flip",
+     "from": 1,
+     "to": -1,
+     "score": 0.779756,
+     "pass": false,
+     "error": null
+    }
+   ]
+  },
+  "codefixCheckFlips": [
+   {
+    "trial": "codefix:test:d3:s6001 t0",
+    "check1Ok": false,
+    "problems": 1,
+    "recordedPass": false,
+    "identity, reads dropped": {
+     "score": 0,
+     "pass": false,
+     "error": "REPLAY_MISS",
+     "calls": 1
+    },
+    "identity, reads kept": {
+     "score": 0,
+     "pass": false,
+     "error": null,
+     "calls": 2
+    },
+    "ok false -> true": {
+     "score": 1,
+     "pass": true,
+     "error": null,
+     "calls": 1
+    }
+   },
+   {
+    "trial": "codefix:test:d3:s6004 t0",
+    "check1Ok": false,
+    "problems": 1,
+    "recordedPass": false,
+    "identity, reads dropped": {
+     "score": 0,
+     "pass": false,
+     "error": "REPLAY_MISS",
+     "calls": 1
+    },
+    "identity, reads kept": {
+     "score": 0.9565217391304348,
+     "pass": false,
+     "error": null,
+     "calls": 2
+    },
+    "ok false -> true": {
+     "score": 1,
+     "pass": true,
+     "error": null,
+     "calls": 1
+    }
+   },
+   {
+    "trial": "codefix:test:d3:s6004 t1",
+    "check1Ok": false,
+    "problems": 1,
+    "recordedPass": false,
+    "identity, reads dropped": {
+     "score": 0,
+     "pass": false,
+     "error": "REPLAY_MISS",
+     "calls": 1
+    },
+    "identity, reads kept": {
+     "score": 0.9565217391304348,
+     "pass": false,
+     "error": null,
+     "calls": 2
+    },
+    "ok false -> true": {
+     "score": 1,
+     "pass": true,
+     "error": null,
+     "calls": 1
+    }
+   },
+   {
+    "trial": "codefix:test:d3:s6001 t1",
+    "check1Ok": false,
+    "problems": 1,
+    "recordedPass": true,
+    "identity, reads dropped": {
+     "score": 0,
+     "pass": false,
+     "error": "REPLAY_MISS",
+     "calls": 1
+    },
+    "identity, reads kept": {
+     "score": 1,
+     "pass": true,
+     "error": null,
+     "calls": 2
+    },
+    "ok false -> true": {
+     "score": 1,
+     "pass": true,
+     "error": null,
+     "calls": 1
+    }
+   }
+  ],
+  "fragility": [
+   {
+    "seed": 6001,
+    "trial": 0,
+    "basePass": false,
+    "system": "BRIGHTDESK",
+    "field": "numeric_order",
+    "to": "DMY",
+    "baseRecords": 42,
+    "flippedRecords": 37,
+    "changedShare": 0.31,
+    "flippedPass": true,
+    "error": null
+   },
+   {
+    "seed": 6001,
+    "trial": 0,
+    "basePass": false,
+    "system": "BRIGHTDESK",
+    "field": "sign_flip",
+    "to": -1,
+    "baseRecords": 42,
+    "flippedRecords": 42,
+    "changedShare": 0.214,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6001,
+    "trial": 0,
+    "basePass": false,
+    "system": "LEDGR",
+    "field": "numeric_order",
+    "to": "MDY",
+    "baseRecords": 42,
+    "flippedRecords": 42,
+    "changedShare": 0,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6001,
+    "trial": 0,
+    "basePass": false,
+    "system": "LEDGR",
+    "field": "sign_flip",
+    "to": 1,
+    "baseRecords": 42,
+    "flippedRecords": 42,
+    "changedShare": 0.095,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6001,
+    "trial": 0,
+    "basePass": false,
+    "system": "ATLAS",
+    "field": "numeric_order",
+    "to": "MDY",
+    "baseRecords": 42,
+    "flippedRecords": 48,
+    "changedShare": 0.417,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6001,
+    "trial": 0,
+    "basePass": false,
+    "system": "ATLAS",
+    "field": "sign_flip",
+    "to": 1,
+    "baseRecords": 42,
+    "flippedRecords": 42,
+    "changedShare": 0.262,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6001,
+    "trial": 0,
+    "basePass": false,
+    "system": "VENDEX",
+    "field": "numeric_order",
+    "to": "DMY",
+    "baseRecords": 42,
+    "flippedRecords": 42,
+    "changedShare": 0.214,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6001,
+    "trial": 0,
+    "basePass": false,
+    "system": "VENDEX",
+    "field": "sign_flip",
+    "to": -1,
+    "baseRecords": 42,
+    "flippedRecords": 42,
+    "changedShare": 0,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6001,
+    "trial": 0,
+    "basePass": false,
+    "system": "KOBO",
+    "field": "sign_flip",
+    "to": -1,
+    "baseRecords": 42,
+    "flippedRecords": 42,
+    "changedShare": 0.071,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6001,
+    "trial": 0,
+    "basePass": false,
+    "system": "VERITAS",
+    "field": "sign_flip",
+    "to": -1,
+    "baseRecords": 42,
+    "flippedRecords": 42,
+    "changedShare": 0.143,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6001,
+    "trial": 1,
+    "basePass": false,
+    "system": "BRIGHTDESK",
+    "field": "numeric_order",
+    "to": "DMY",
+    "baseRecords": 42,
+    "flippedRecords": 37,
+    "changedShare": 0.31,
+    "flippedPass": true,
+    "error": null
+   },
+   {
+    "seed": 6001,
+    "trial": 1,
+    "basePass": false,
+    "system": "BRIGHTDESK",
+    "field": "sign_flip",
+    "to": -1,
+    "baseRecords": 42,
+    "flippedRecords": 42,
+    "changedShare": 0.214,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6001,
+    "trial": 1,
+    "basePass": false,
+    "system": "LEDGR",
+    "field": "numeric_order",
+    "to": "MDY",
+    "baseRecords": 42,
+    "flippedRecords": 42,
+    "changedShare": 0,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6001,
+    "trial": 1,
+    "basePass": false,
+    "system": "LEDGR",
+    "field": "sign_flip",
+    "to": 1,
+    "baseRecords": 42,
+    "flippedRecords": 42,
+    "changedShare": 0.095,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6001,
+    "trial": 1,
+    "basePass": false,
+    "system": "ATLAS",
+    "field": "numeric_order",
+    "to": "MDY",
+    "baseRecords": 42,
+    "flippedRecords": 48,
+    "changedShare": 0.417,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6001,
+    "trial": 1,
+    "basePass": false,
+    "system": "ATLAS",
+    "field": "sign_flip",
+    "to": 1,
+    "baseRecords": 42,
+    "flippedRecords": 42,
+    "changedShare": 0.262,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6001,
+    "trial": 1,
+    "basePass": false,
+    "system": "VENDEX",
+    "field": "numeric_order",
+    "to": "DMY",
+    "baseRecords": 42,
+    "flippedRecords": 42,
+    "changedShare": 0.214,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6001,
+    "trial": 1,
+    "basePass": false,
+    "system": "VENDEX",
+    "field": "sign_flip",
+    "to": -1,
+    "baseRecords": 42,
+    "flippedRecords": 42,
+    "changedShare": 0,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6001,
+    "trial": 1,
+    "basePass": false,
+    "system": "KOBO",
+    "field": "sign_flip",
+    "to": -1,
+    "baseRecords": 42,
+    "flippedRecords": 42,
+    "changedShare": 0.071,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6001,
+    "trial": 1,
+    "basePass": false,
+    "system": "VERITAS",
+    "field": "sign_flip",
+    "to": -1,
+    "baseRecords": 42,
+    "flippedRecords": 42,
+    "changedShare": 0.143,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6002,
+    "trial": 0,
+    "basePass": true,
+    "system": "BRIGHTDESK",
+    "field": "numeric_order",
+    "to": "MDY",
+    "baseRecords": 39,
+    "flippedRecords": 46,
+    "changedShare": 0.348,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6002,
+    "trial": 0,
+    "basePass": true,
+    "system": "BRIGHTDESK",
+    "field": "sign_flip",
+    "to": 1,
+    "baseRecords": 39,
+    "flippedRecords": 39,
+    "changedShare": 0.026,
+    "flippedPass": true,
+    "error": null
+   },
+   {
+    "seed": 6002,
+    "trial": 0,
+    "basePass": true,
+    "system": "LEDGR",
+    "field": "numeric_order",
+    "to": "MDY",
+    "baseRecords": 39,
+    "flippedRecords": 39,
+    "changedShare": 0,
+    "flippedPass": true,
+    "error": null
+   },
+   {
+    "seed": 6002,
+    "trial": 0,
+    "basePass": true,
+    "system": "LEDGR",
+    "field": "sign_flip",
+    "to": 1,
+    "baseRecords": 39,
+    "flippedRecords": 39,
+    "changedShare": 0.179,
+    "flippedPass": true,
+    "error": null
+   },
+   {
+    "seed": 6002,
+    "trial": 0,
+    "basePass": true,
+    "system": "ATLAS",
+    "field": "numeric_order",
+    "to": "DMY",
+    "baseRecords": 39,
+    "flippedRecords": 46,
+    "changedShare": 0.478,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6002,
+    "trial": 0,
+    "basePass": true,
+    "system": "ATLAS",
+    "field": "sign_flip",
+    "to": 1,
+    "baseRecords": 39,
+    "flippedRecords": 39,
+    "changedShare": 0.359,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6002,
+    "trial": 0,
+    "basePass": true,
+    "system": "VENDEX",
+    "field": "numeric_order",
+    "to": "DMY",
+    "baseRecords": 39,
+    "flippedRecords": 41,
+    "changedShare": 0.122,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6002,
+    "trial": 0,
+    "basePass": true,
+    "system": "VENDEX",
+    "field": "sign_flip",
+    "to": -1,
+    "baseRecords": 39,
+    "flippedRecords": 39,
+    "changedShare": 0,
+    "flippedPass": true,
+    "error": null
+   },
+   {
+    "seed": 6002,
+    "trial": 0,
+    "basePass": true,
+    "system": "KOBO",
+    "field": "sign_flip",
+    "to": -1,
+    "baseRecords": 39,
+    "flippedRecords": 39,
+    "changedShare": 0,
+    "flippedPass": true,
+    "error": null
+   },
+   {
+    "seed": 6002,
+    "trial": 0,
+    "basePass": true,
+    "system": "VERITAS",
+    "field": "sign_flip",
+    "to": -1,
+    "baseRecords": 39,
+    "flippedRecords": 39,
+    "changedShare": 0.359,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6002,
+    "trial": 1,
+    "basePass": true,
+    "system": "BRIGHTDESK",
+    "field": "numeric_order",
+    "to": "MDY",
+    "baseRecords": 39,
+    "flippedRecords": 46,
+    "changedShare": 0.348,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6002,
+    "trial": 1,
+    "basePass": true,
+    "system": "BRIGHTDESK",
+    "field": "sign_flip",
+    "to": 1,
+    "baseRecords": 39,
+    "flippedRecords": 39,
+    "changedShare": 0.026,
+    "flippedPass": true,
+    "error": null
+   },
+   {
+    "seed": 6002,
+    "trial": 1,
+    "basePass": true,
+    "system": "LEDGR",
+    "field": "numeric_order",
+    "to": "MDY",
+    "baseRecords": 39,
+    "flippedRecords": 39,
+    "changedShare": 0,
+    "flippedPass": true,
+    "error": null
+   },
+   {
+    "seed": 6002,
+    "trial": 1,
+    "basePass": true,
+    "system": "LEDGR",
+    "field": "sign_flip",
+    "to": 1,
+    "baseRecords": 39,
+    "flippedRecords": 39,
+    "changedShare": 0.179,
+    "flippedPass": true,
+    "error": null
+   },
+   {
+    "seed": 6002,
+    "trial": 1,
+    "basePass": true,
+    "system": "ATLAS",
+    "field": "numeric_order",
+    "to": "DMY",
+    "baseRecords": 39,
+    "flippedRecords": 46,
+    "changedShare": 0.478,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6002,
+    "trial": 1,
+    "basePass": true,
+    "system": "ATLAS",
+    "field": "sign_flip",
+    "to": 1,
+    "baseRecords": 39,
+    "flippedRecords": 39,
+    "changedShare": 0.359,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6002,
+    "trial": 1,
+    "basePass": true,
+    "system": "VENDEX",
+    "field": "numeric_order",
+    "to": "DMY",
+    "baseRecords": 39,
+    "flippedRecords": 41,
+    "changedShare": 0.122,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6002,
+    "trial": 1,
+    "basePass": true,
+    "system": "VENDEX",
+    "field": "sign_flip",
+    "to": -1,
+    "baseRecords": 39,
+    "flippedRecords": 39,
+    "changedShare": 0,
+    "flippedPass": true,
+    "error": null
+   },
+   {
+    "seed": 6002,
+    "trial": 1,
+    "basePass": true,
+    "system": "KOBO",
+    "field": "sign_flip",
+    "to": -1,
+    "baseRecords": 39,
+    "flippedRecords": 39,
+    "changedShare": 0,
+    "flippedPass": true,
+    "error": null
+   },
+   {
+    "seed": 6002,
+    "trial": 1,
+    "basePass": true,
+    "system": "VERITAS",
+    "field": "sign_flip",
+    "to": -1,
+    "baseRecords": 39,
+    "flippedRecords": 39,
+    "changedShare": 0.359,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6003,
+    "trial": 0,
+    "basePass": true,
+    "system": "BRIGHTDESK",
+    "field": "numeric_order",
+    "to": "DMY",
+    "baseRecords": 46,
+    "flippedRecords": 49,
+    "changedShare": 0.204,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6003,
+    "trial": 0,
+    "basePass": true,
+    "system": "BRIGHTDESK",
+    "field": "sign_flip",
+    "to": 1,
+    "baseRecords": 46,
+    "flippedRecords": 46,
+    "changedShare": 0.13,
+    "flippedPass": true,
+    "error": null
+   },
+   {
+    "seed": 6003,
+    "trial": 0,
+    "basePass": true,
+    "system": "LEDGR",
+    "field": "numeric_order",
+    "to": "MDY",
+    "baseRecords": 46,
+    "flippedRecords": 46,
+    "changedShare": 0,
+    "flippedPass": true,
+    "error": null
+   },
+   {
+    "seed": 6003,
+    "trial": 0,
+    "basePass": true,
+    "system": "LEDGR",
+    "field": "sign_flip",
+    "to": 1,
+    "baseRecords": 46,
+    "flippedRecords": 46,
+    "changedShare": 0.13,
+    "flippedPass": true,
+    "error": null
+   },
+   {
+    "seed": 6003,
+    "trial": 0,
+    "basePass": true,
+    "system": "ATLAS",
+    "field": "numeric_order",
+    "to": "MDY",
+    "baseRecords": 46,
+    "flippedRecords": 49,
+    "changedShare": 0.224,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6003,
+    "trial": 0,
+    "basePass": true,
+    "system": "ATLAS",
+    "field": "sign_flip",
+    "to": 1,
+    "baseRecords": 46,
+    "flippedRecords": 46,
+    "changedShare": 0.217,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6003,
+    "trial": 0,
+    "basePass": true,
+    "system": "VENDEX",
+    "field": "numeric_order",
+    "to": "MDY",
+    "baseRecords": 46,
+    "flippedRecords": 47,
+    "changedShare": 0.085,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6003,
+    "trial": 0,
+    "basePass": true,
+    "system": "VENDEX",
+    "field": "sign_flip",
+    "to": -1,
+    "baseRecords": 46,
+    "flippedRecords": 46,
+    "changedShare": 0,
+    "flippedPass": true,
+    "error": null
+   },
+   {
+    "seed": 6003,
+    "trial": 0,
+    "basePass": true,
+    "system": "KOBO",
+    "field": "sign_flip",
+    "to": -1,
+    "baseRecords": 46,
+    "flippedRecords": 46,
+    "changedShare": 0.022,
+    "flippedPass": true,
+    "error": null
+   },
+   {
+    "seed": 6003,
+    "trial": 0,
+    "basePass": true,
+    "system": "VERITAS",
+    "field": "sign_flip",
+    "to": -1,
+    "baseRecords": 46,
+    "flippedRecords": 46,
+    "changedShare": 0.261,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6003,
+    "trial": 1,
+    "basePass": true,
+    "system": "BRIGHTDESK",
+    "field": "numeric_order",
+    "to": "DMY",
+    "baseRecords": 46,
+    "flippedRecords": 49,
+    "changedShare": 0.204,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6003,
+    "trial": 1,
+    "basePass": true,
+    "system": "BRIGHTDESK",
+    "field": "sign_flip",
+    "to": 1,
+    "baseRecords": 46,
+    "flippedRecords": 46,
+    "changedShare": 0.13,
+    "flippedPass": true,
+    "error": null
+   },
+   {
+    "seed": 6003,
+    "trial": 1,
+    "basePass": true,
+    "system": "LEDGR",
+    "field": "numeric_order",
+    "to": "MDY",
+    "baseRecords": 46,
+    "flippedRecords": 46,
+    "changedShare": 0,
+    "flippedPass": true,
+    "error": null
+   },
+   {
+    "seed": 6003,
+    "trial": 1,
+    "basePass": true,
+    "system": "LEDGR",
+    "field": "sign_flip",
+    "to": 1,
+    "baseRecords": 46,
+    "flippedRecords": 46,
+    "changedShare": 0.13,
+    "flippedPass": true,
+    "error": null
+   },
+   {
+    "seed": 6003,
+    "trial": 1,
+    "basePass": true,
+    "system": "ATLAS",
+    "field": "numeric_order",
+    "to": "MDY",
+    "baseRecords": 46,
+    "flippedRecords": 49,
+    "changedShare": 0.224,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6003,
+    "trial": 1,
+    "basePass": true,
+    "system": "ATLAS",
+    "field": "sign_flip",
+    "to": 1,
+    "baseRecords": 46,
+    "flippedRecords": 46,
+    "changedShare": 0.217,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6003,
+    "trial": 1,
+    "basePass": true,
+    "system": "VENDEX",
+    "field": "numeric_order",
+    "to": "MDY",
+    "baseRecords": 46,
+    "flippedRecords": 47,
+    "changedShare": 0.085,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6003,
+    "trial": 1,
+    "basePass": true,
+    "system": "VENDEX",
+    "field": "sign_flip",
+    "to": -1,
+    "baseRecords": 46,
+    "flippedRecords": 46,
+    "changedShare": 0,
+    "flippedPass": true,
+    "error": null
+   },
+   {
+    "seed": 6003,
+    "trial": 1,
+    "basePass": true,
+    "system": "KOBO",
+    "field": "sign_flip",
+    "to": -1,
+    "baseRecords": 46,
+    "flippedRecords": 46,
+    "changedShare": 0.022,
+    "flippedPass": true,
+    "error": null
+   },
+   {
+    "seed": 6003,
+    "trial": 1,
+    "basePass": true,
+    "system": "VERITAS",
+    "field": "sign_flip",
+    "to": -1,
+    "baseRecords": 46,
+    "flippedRecords": 46,
+    "changedShare": 0.261,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6004,
+    "trial": 0,
+    "basePass": true,
+    "system": "BRIGHTDESK",
+    "field": "numeric_order",
+    "to": "DMY",
+    "baseRecords": 41,
+    "flippedRecords": 43,
+    "changedShare": 0.163,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6004,
+    "trial": 0,
+    "basePass": true,
+    "system": "BRIGHTDESK",
+    "field": "sign_flip",
+    "to": -1,
+    "baseRecords": 41,
+    "flippedRecords": 41,
+    "changedShare": 0.049,
+    "flippedPass": true,
+    "error": null
+   },
+   {
+    "seed": 6004,
+    "trial": 0,
+    "basePass": true,
+    "system": "LEDGR",
+    "field": "numeric_order",
+    "to": "MDY",
+    "baseRecords": 41,
+    "flippedRecords": 41,
+    "changedShare": 0,
+    "flippedPass": true,
+    "error": null
+   },
+   {
+    "seed": 6004,
+    "trial": 0,
+    "basePass": true,
+    "system": "LEDGR",
+    "field": "sign_flip",
+    "to": 1,
+    "baseRecords": 41,
+    "flippedRecords": 41,
+    "changedShare": 0.244,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6004,
+    "trial": 0,
+    "basePass": true,
+    "system": "ATLAS",
+    "field": "numeric_order",
+    "to": "MDY",
+    "baseRecords": 41,
+    "flippedRecords": 44,
+    "changedShare": 0.295,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6004,
+    "trial": 0,
+    "basePass": true,
+    "system": "ATLAS",
+    "field": "sign_flip",
+    "to": -1,
+    "baseRecords": 41,
+    "flippedRecords": 41,
+    "changedShare": 0.22,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6004,
+    "trial": 0,
+    "basePass": true,
+    "system": "VENDEX",
+    "field": "numeric_order",
+    "to": "DMY",
+    "baseRecords": 41,
+    "flippedRecords": 44,
+    "changedShare": 0.182,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6004,
+    "trial": 0,
+    "basePass": true,
+    "system": "VENDEX",
+    "field": "sign_flip",
+    "to": -1,
+    "baseRecords": 41,
+    "flippedRecords": 41,
+    "changedShare": 0,
+    "flippedPass": true,
+    "error": null
+   },
+   {
+    "seed": 6004,
+    "trial": 0,
+    "basePass": true,
+    "system": "KOBO",
+    "field": "sign_flip",
+    "to": -1,
+    "baseRecords": 41,
+    "flippedRecords": 41,
+    "changedShare": 0.024,
+    "flippedPass": true,
+    "error": null
+   },
+   {
+    "seed": 6004,
+    "trial": 0,
+    "basePass": true,
+    "system": "VERITAS",
+    "field": "sign_flip",
+    "to": -1,
+    "baseRecords": 41,
+    "flippedRecords": 41,
+    "changedShare": 0.171,
+    "flippedPass": true,
+    "error": null
+   },
+   {
+    "seed": 6004,
+    "trial": 1,
+    "basePass": true,
+    "system": "BRIGHTDESK",
+    "field": "numeric_order",
+    "to": "DMY",
+    "baseRecords": 41,
+    "flippedRecords": 43,
+    "changedShare": 0.163,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6004,
+    "trial": 1,
+    "basePass": true,
+    "system": "BRIGHTDESK",
+    "field": "sign_flip",
+    "to": -1,
+    "baseRecords": 41,
+    "flippedRecords": 41,
+    "changedShare": 0.049,
+    "flippedPass": true,
+    "error": null
+   },
+   {
+    "seed": 6004,
+    "trial": 1,
+    "basePass": true,
+    "system": "LEDGR",
+    "field": "numeric_order",
+    "to": "MDY",
+    "baseRecords": 41,
+    "flippedRecords": 41,
+    "changedShare": 0,
+    "flippedPass": true,
+    "error": null
+   },
+   {
+    "seed": 6004,
+    "trial": 1,
+    "basePass": true,
+    "system": "LEDGR",
+    "field": "sign_flip",
+    "to": 1,
+    "baseRecords": 41,
+    "flippedRecords": 41,
+    "changedShare": 0.244,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6004,
+    "trial": 1,
+    "basePass": true,
+    "system": "ATLAS",
+    "field": "numeric_order",
+    "to": "MDY",
+    "baseRecords": 41,
+    "flippedRecords": 44,
+    "changedShare": 0.295,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6004,
+    "trial": 1,
+    "basePass": true,
+    "system": "ATLAS",
+    "field": "sign_flip",
+    "to": -1,
+    "baseRecords": 41,
+    "flippedRecords": 41,
+    "changedShare": 0.22,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6004,
+    "trial": 1,
+    "basePass": true,
+    "system": "VENDEX",
+    "field": "numeric_order",
+    "to": "DMY",
+    "baseRecords": 41,
+    "flippedRecords": 44,
+    "changedShare": 0.182,
+    "flippedPass": false,
+    "error": null
+   },
+   {
+    "seed": 6004,
+    "trial": 1,
+    "basePass": true,
+    "system": "VENDEX",
+    "field": "sign_flip",
+    "to": -1,
+    "baseRecords": 41,
+    "flippedRecords": 41,
+    "changedShare": 0,
+    "flippedPass": true,
+    "error": null
+   },
+   {
+    "seed": 6004,
+    "trial": 1,
+    "basePass": true,
+    "system": "KOBO",
+    "field": "sign_flip",
+    "to": -1,
+    "baseRecords": 41,
+    "flippedRecords": 41,
+    "changedShare": 0.024,
+    "flippedPass": true,
+    "error": null
+   },
+   {
+    "seed": 6004,
+    "trial": 1,
+    "basePass": true,
+    "system": "VERITAS",
+    "field": "sign_flip",
+    "to": -1,
+    "baseRecords": 41,
+    "flippedRecords": 41,
+    "changedShare": 0.171,
+    "flippedPass": true,
+    "error": null
+   }
+  ],
+  "costProfile": [
+   {
+    "family": "records",
+    "seed": 6001,
+    "trial": 0,
+    "pass": false,
+    "costUsd": 0.029305110000000002,
+    "latencyMs": 56864,
+    "calls": 7,
+    "escalations": 0
+   },
+   {
+    "family": "records",
+    "seed": 6001,
+    "trial": 1,
+    "pass": false,
+    "costUsd": 0.02983761,
+    "latencyMs": 58485,
+    "calls": 7,
+    "escalations": 0
+   },
+   {
+    "family": "records",
+    "seed": 6002,
+    "trial": 0,
+    "pass": true,
+    "costUsd": 0.02995791,
+    "latencyMs": 59070,
+    "calls": 7,
+    "escalations": 0
+   },
+   {
+    "family": "records",
+    "seed": 6002,
+    "trial": 1,
+    "pass": true,
+    "costUsd": 0.02960351,
+    "latencyMs": 61986,
+    "calls": 7,
+    "escalations": 0
+   },
+   {
+    "family": "records",
+    "seed": 6003,
+    "trial": 0,
+    "pass": true,
+    "costUsd": 0.031018109999999998,
+    "latencyMs": 62884,
+    "calls": 7,
+    "escalations": 0
+   },
+   {
+    "family": "records",
+    "seed": 6003,
+    "trial": 1,
+    "pass": true,
+    "costUsd": 0.03154551,
+    "latencyMs": 57850,
+    "calls": 7,
+    "escalations": 0
+   },
+   {
+    "family": "records",
+    "seed": 6004,
+    "trial": 0,
+    "pass": true,
+    "costUsd": 0.02899931,
+    "latencyMs": 55851,
+    "calls": 7,
+    "escalations": 0
+   },
+   {
+    "family": "records",
+    "seed": 6004,
+    "trial": 1,
+    "pass": true,
+    "costUsd": 0.10175071,
+    "latencyMs": 59345,
+    "calls": 8,
+    "escalations": 1
+   },
+   {
+    "family": "codefix",
+    "seed": 6001,
+    "trial": 0,
+    "pass": false,
+    "costUsd": 0.35526399999999997,
+    "latencyMs": 67991,
+    "calls": 2,
+    "escalations": 0
+   },
+   {
+    "family": "codefix",
+    "seed": 6001,
+    "trial": 1,
+    "pass": true,
+    "costUsd": 0.21135139999999997,
+    "latencyMs": 69278,
+    "calls": 2,
+    "escalations": 0
+   },
+   {
+    "family": "codefix",
+    "seed": 6002,
+    "trial": 0,
+    "pass": true,
+    "costUsd": 0.0817,
+    "latencyMs": 20623,
+    "calls": 1,
+    "escalations": 0
+   },
+   {
+    "family": "codefix",
+    "seed": 6002,
+    "trial": 1,
+    "pass": true,
+    "costUsd": 0.08326,
+    "latencyMs": 22152,
+    "calls": 1,
+    "escalations": 0
+   },
+   {
+    "family": "codefix",
+    "seed": 6003,
+    "trial": 0,
+    "pass": true,
+    "costUsd": 0.09232399999999999,
+    "latencyMs": 22916,
+    "calls": 1,
+    "escalations": 0
+   },
+   {
+    "family": "codefix",
+    "seed": 6003,
+    "trial": 1,
+    "pass": true,
+    "costUsd": 0.09334999999999999,
+    "latencyMs": 22021,
+    "calls": 1,
+    "escalations": 0
+   },
+   {
+    "family": "codefix",
+    "seed": 6004,
+    "trial": 0,
+    "pass": false,
+    "costUsd": 0.29102120000000004,
+    "latencyMs": 60676,
+    "calls": 2,
+    "escalations": 0
+   },
+   {
+    "family": "codefix",
+    "seed": 6004,
+    "trial": 1,
+    "pass": false,
+    "costUsd": 0.17942619999999998,
+    "latencyMs": 58023,
+    "calls": 2,
+    "escalations": 0
+   }
+  ]
+ },
+ "p1": {
+  "policyHash": "8726861174679e459e79d0452fb2a3f06730d7e9a8c2539284455edbbe256551",
+  "fidelity": {
+   "recorded": {
+    "pass": false,
+    "score": 0.945946,
+    "verdict": "pass",
+    "calls": 18
+   },
+   "replay": {
+    "taskHash": "b5d9867837ba5d14590ccdd7fbb5fec7c2d22d9a70bea523597092e932b874f5",
+    "status": "succeeded",
+    "error": null,
+    "verdict": "pass",
+    "pass": false,
+    "score": 0.945946,
+    "calls": 18,
+    "ms": 8847
+   },
+   "identical": true
+  },
+  "identity": {
+   "taskHash": "b5d9867837ba5d14590ccdd7fbb5fec7c2d22d9a70bea523597092e932b874f5",
+   "status": "succeeded",
+   "error": null,
+   "verdict": "pass",
+   "pass": false,
+   "score": 0.945946,
+   "calls": 18,
+   "ms": 8378
+  },
+  "original": {
+   "meaning": "live",
+   "relation": "none",
+   "compared_with": "none"
+  },
+  "flips": [
+   {
+    "change": {
+     "meaning": "void"
+    },
+    "score": 1,
+    "pass": true,
+    "verdict": "pass",
+    "error": null,
+    "calls": 18
+   },
+   {
+    "change": {
+     "relation": "same_as"
+    },
+    "score": 0,
+    "pass": false,
+    "verdict": "harness_fault",
+    "error": "REPLAY_MISS",
+    "calls": 9
+   },
+   {
+    "change": {
+     "relation": "different_from"
+    },
+    "score": 0,
+    "pass": false,
+    "verdict": "harness_fault",
+    "error": "REPLAY_MISS",
+    "calls": 9
+   },
+   {
+    "change": {
+     "meaning": "void",
+     "relation": "different_from",
+     "compared_with": "ordinary_live_rows"
+    },
+    "score": 1,
+    "pass": true,
+    "verdict": "pass",
+    "error": null,
+    "calls": 18
+   }
+  ],
+  "escapeHatch": {
+   "fhand-haiku": {
+    "judgments": 90,
+    "relationNone": 59,
+    "relationNoneLive": 28,
+    "relationNoneVoid": 31
+   },
+   "fhand-sonnet": {
+    "judgments": 90,
+    "relationNone": 54,
+    "relationNoneLive": 24,
+    "relationNoneVoid": 30
+   }
+  }
+ }
+}

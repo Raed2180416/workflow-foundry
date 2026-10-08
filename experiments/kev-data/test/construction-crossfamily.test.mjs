@@ -360,8 +360,10 @@ test('unit: stub beds: the no-task sentences and carriers of a slice are in its 
     assert.deepEqual(hits.map(h => h.sentence), [], `${slice}: ${JSON.stringify(hits[0]?.entry)}`);
   }
   // the scan is not vacuous: a sentence of the test-ood paragraphs placed in a train state is found
-  const planted = x5(await STUB_RECS('test-ood')).find(r => r.meta.bedtype.stateBed === null);
-  assert.ok(registry.scanState({ source_text: bare(planted.state.source_text)[0] }, { slice: 'train' }).length > 0);
+  // (a no-task state of the axes that isolate one factor reads the train bucket and is ordinary training text, so it is not registered)
+  const planted = x5(await STUB_RECS('test-ood')).find(r => r.meta.bedtype.stateBed === null && r.meta.bedtype.bucket === 'test-ood');
+  assert.ok(planted, 'a test-ood no-task state of the test-ood bucket exists');
+  assert.ok(registry.scanState({ source_text: bare(planted.state.source_text).find(x => x.split(/\s+/).length >= 5) }, { slice: 'train' }).length > 0);
   t.diagnostic(`registered ${JSON.stringify(n)}; ${scanned} stub states scanned`);
 });
 

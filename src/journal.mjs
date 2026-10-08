@@ -2,6 +2,7 @@
 // response is durable before the caller can observe it (R2 journal-before-observe).
 import { DatabaseSync } from 'node:sqlite';
 import { FoundryError, canonical } from './data.mjs';
+import { bindRow } from './audit.mjs';
 
 // Model-behaviour outcomes are reproducible and replay; environment faults never do.
 export const REPLAYABLE_ERRORS = Object.freeze(['MODEL_SCHEMA', 'MODEL_TRUNCATED', 'MODEL_REFUSAL']);
@@ -80,6 +81,11 @@ export class Journal {
     return Number(lastInsertRowid);
   }
   get(id) { return row(this.statements.get.get(id)); }
+  /** The audit binding of a stored row (src/audit.mjs): request/response hashes and a digest of the whole row, as persisted. Null when there is no such row. */
+  binding(id) {
+    const raw = this.statements.get.get(id);
+    return raw ? { ...bindRow(raw), runId: raw.run_id } : null;
+  }
   /** Latest replayable row for a key (ok, or a model-behaviour error); environment faults are skipped. */
   lookup(replayKey) { return row(this.statements.lookup.get(replayKey)); }
   forAttempt(runId, nodeKey, attempt) { return this.statements.attempt.all(runId, nodeKey, attempt).map(row); }

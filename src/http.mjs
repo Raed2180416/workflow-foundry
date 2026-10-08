@@ -4,6 +4,8 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { packageRoot } from './foundry.mjs';
 import { FoundryError, checkData, errorData } from './data.mjs';
+import { anchorInWorkspace } from './audit.mjs';
+import { verifyRun } from './verify-run.mjs';
 
 const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8' };
 const safeEqual = (a, b) => typeof a === 'string' && Buffer.byteLength(a) === Buffer.byteLength(b) && timingSafeEqual(Buffer.from(a), Buffer.from(b));
@@ -41,7 +43,9 @@ export async function serveHttp(foundry, { port = 4177, host = '127.0.0.1', tick
       if (req.method === 'GET' && parts[0] === 'api') {
         if (parts.length === 2 && parts[1] === 'state') return json(200, foundry.state());
         if (parts.length === 3 && parts[1] === 'workflows') return json(200, foundry.store.workflow(parts[2]));
-        if (parts.length === 3 && parts[1] === 'runs') return json(200, foundry.inspectRun(parts[2]));
+        if (parts.length === 3 && parts[1] === 'runs') { const view = foundry.inspectRun(parts[2]); return json(200, { ...view, anchor: anchorInWorkspace(foundry.store, { runId: view.id, events: view.events, status: view.status }) }); }
+        // Recomputes everything the run's hash chain binds (src/verify-run.mjs); read-only.
+        if (parts.length === 4 && parts[1] === 'runs' && parts[3] === 'verify') return json(200, verifyRun(foundry.store, parts[2]));
         if (parts.length === 3 && parts[1] === 'context') return json(200, foundry.designContext({ requestId: parts[2] }));
         if (parts.length === 3 && parts[1] === 'generation') return json(200, foundry.store.generationJob(parts[2]));
         if (parts.length === 3 && parts[1] === 'trials') return json(200, foundry.inspectTrial(parts[2]));

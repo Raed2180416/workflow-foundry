@@ -38,7 +38,7 @@
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, openSync, readFileSync, writeFileSync } from 'node:fs';
 import { spawn, spawnSync } from 'node:child_process';
 import net from 'node:net';
 import os from 'node:os';
@@ -1011,10 +1011,13 @@ test('kev-live: the real model on CPU: kev.benchmark --data and kev.serve on the
   const report = JSON.parse(readFileSync(path.join(dir, 'bench', 'report.json'), 'utf8'));
   t.diagnostic(`kev.benchmark --data: ${JSON.stringify(report.coverage)}`);
   assert.equal(report.coverage.rejected_records, longN);
-  const port = await freePort(), srv = spawn(PYTHON, ['-I', '-c', `import sys, runpy; sys.path.insert(0, ${JSON.stringify(KEV.root)}); sys.argv = ['kev.serve', '--run', 'jaredpalmer/kev-0.8b@v1.0', '--host', '127.0.0.1', '--port', '${port}']; runpy.run_module('kev.serve', run_name='__main__')`], { env: { ...pyEnv(), KEV_PREFIX_CACHE: '0' }, stdio: 'ignore' });
-  t.after(() => srv.kill('SIGKILL'));
-  const url = `http://127.0.0.1:${port}`;
-  for (let i = 0; i < 1200; i++) { try { if ((await fetch(`${url}/v1/models`)).ok) break; } catch {} await wait(1000); }
+  const port = await freePort(), serveLog = path.join(dir, 'kev-serve.log');
+  const srv = spawn(PYTHON, ['-I', '-c', `import sys, runpy; sys.path.insert(0, ${JSON.stringify(KEV.root)}); sys.argv = ['kev.serve', '--run', 'jaredpalmer/kev-0.8b@v1.0', '--host', '127.0.0.1', '--port', '${port}']; runpy.run_module('kev.serve', run_name='__main__')`], { env: { ...pyEnv(), KEV_PREFIX_CACHE: '0' }, stdio: ['ignore', openSync(serveLog, 'w'), openSync(serveLog, 'a')] });
+  t.after(() => srv.kill('SIGKILL')); process.once('exit', () => srv.kill('SIGKILL'));
+  const url = `http://127.0.0.1:${port}`, readyBy = Date.now() + Number(process.env.KEV_DATA_SERVED_LIVE_READY_S ?? 3600) * 1000;
+  let ready = false;       // model load on a shared CPU can take far longer than a minute: wait for the service, and say so if it never comes
+  while (!ready && srv.exitCode === null && Date.now() < readyBy) { try { ready = (await fetch(`${url}/v1/models`)).ok; } catch {} if (!ready) await wait(2000); }
+  assert.ok(ready, `kev.serve was not answering ${srv.exitCode === null ? 'before the deadline' : `(exit ${srv.exitCode})`}:\n${readFileSync(serveLog, 'utf8').slice(-1500)}`);
   const loaded = SS.loadKevRecords(file);
   const r = await SS.scoreServed({ records: loaded.records, served: SS.servedClient({ url, timeoutMs: 3600_000 }), url, rowsFile: path.join(dir, 'rows.jsonl'), reread: 20, timeoutMs: 3600_000, expectRun: 'jaredpalmer/kev-0.8b@v1.0' });
   t.diagnostic(`score-served: ${JSON.stringify(r.report.coverage)} reread ${JSON.stringify(r.report.reread)} ${r.report.timing.seconds_per_request} s/request`);
@@ -1133,6 +1136,79 @@ test('bridge: a plan runs against the bridge\'s own daemon: one service at a tim
   const report = J.analyzeJ0(J.loadJ0Observations(dir));
   assert.ok(report.jobs['0300'].seconds_per_record > 0 && report.host.free_m.available === 11444 && report.host.free_disk.freeBytes > 0, JSON.stringify(report.missing));
   assert.equal(report.kernel_path.fast, true);
+});
+
+// =============================================================================================================
+// cli: both modules run as commands (exit codes, files, refusals); nothing here touches a laptop
+// =============================================================================================================
+test('cli: score-served.mjs and jobs.mjs run as commands: exit codes, rows and report files, resume, permute, and no submit without --confirm-submit', { timeout: 5 * 60_000 }, async t => {
+  const dir = H.tempDir('served-cli-'), script = path.join(dir, 'fake-kev.mjs');
+  writeFileSync(script, FAKE_KEV_JS);                                 // the same kev.serve stand-in as the bridge test: /v1/models, /v1/systemone, /v1/systemone/permute
+  const port = await freeServePort(), url = `http://127.0.0.1:${port}`, RUN = 'jaredpalmer/kev-0.8b@v1.0';
+  const child = spawn(process.execPath, [script, '-m', 'kev.serve', '--run', RUN, '--port', String(port)], { stdio: 'ignore', timeout: 10 * 60_000, killSignal: 'SIGKILL' });   // the timeout keeps a killed test run from leaving the stand-in behind
+  t.after(() => child.kill('SIGKILL')); process.once('exit', () => child.kill('SIGKILL'));
+  for (let i = 0; i < 100; i++) { try { if ((await fetch(`${url}/v1/models`)).ok) break; } catch {} await wait(100); }
+  const env = { PATH: process.env.PATH ?? '/usr/bin:/bin', HOME: process.env.HOME ?? '/tmp' };      // no bridge variable, no credential
+  const cmd = (file, args) => spawnSync(process.execPath, [path.join(HERE, '..', file), ...args], { encoding: 'utf8', env, timeout: 180_000, cwd: dir });
+  const data = path.join(dir, 'cli.jsonl');
+  writeFileSync(data, jsonl(Array.from({ length: 12 }, (_, i) => logRecord('cli', i, 3 + (i % 4)))));
+
+  // score-served: a valid run exits 0, writes one row per question in the file's order and a report next to the rows
+  const rows = path.join(dir, 'out', 'cli.rows.jsonl');
+  let r = cmd('score-served.mjs', ['--data', data, '--out', rows, '--url', url, '--concurrency', '3', '--reread', '4', '--expect-run', RUN]);
+  assert.equal(r.status, 0, r.stderr);
+  const summary = JSON.parse(r.stdout);
+  assert.equal(summary.valid, true); assert.equal(summary.coverage.evaluated_records, 12); assert.equal(summary.coverage.rejected_records, 0); assert.equal(summary.reread.records, 4); assert.equal(summary.reread.agree, true);
+  const written = readFileSync(rows, 'utf8').trim().split('\n').map(l => JSON.parse(l));
+  assert.deepEqual(written.map(x => x.id), Array.from({ length: 12 }, (_, i) => `cli/${i}`)); assert.ok(written.every(x => x.path === 'served' && x.run === RUN && x.p.length === 4));
+  const rep = JSON.parse(readFileSync(SS.reportFileOf(rows), 'utf8'));
+  assert.equal(rep.valid, true); assert.equal(rep.input.sha256, sha(readFileSync(data))); assert.equal(rep.rows.sha256, sha(readFileSync(rows))); assert.equal(rep.concurrency, 3);
+  // --resume on a finished run scores nothing again
+  r = cmd('score-served.mjs', ['--data', data, '--out', rows, '--url', url, '--resume']);
+  assert.equal(r.status, 0, r.stderr); assert.equal(readFileSync(rows, 'utf8').trim().split('\n').length, 12); assert.equal(JSON.parse(readFileSync(SS.reportFileOf(rows), 'utf8')).timing.requests, 0);
+  // --limit reads a prefix of the file
+  r = cmd('score-served.mjs', ['--data', data, '--out', path.join(dir, 'out', 'limit.jsonl'), '--url', url, '--limit', '5']);
+  assert.equal(r.status, 0, r.stderr); assert.equal(JSON.parse(r.stdout).coverage.requested_records, 5);
+  // the wrong model is a refusal (1), a bad command line is a usage error (2), an invalid run is 3
+  r = cmd('score-served.mjs', ['--data', data, '--out', path.join(dir, 'out', 'wrong.jsonl'), '--url', url, '--expect-run', 'runs/j-20261008-000000-aaaaaa']);
+  assert.equal(r.status, 1); assert.match(r.stderr, /SERVED_MODEL_MISMATCH/);
+  assert.equal(cmd('score-served.mjs', ['--data', data]).status, 2, '--out is required');
+  assert.equal(cmd('score-served.mjs', ['--data', data, '--out', rows, '--url', url, '--bridge']).status, 2, 'exactly one of --url and --bridge (and nothing connects)');
+  assert.equal(cmd('score-served.mjs', ['--data', data, '--out', rows, '--url', url, '--concurrency', '0']).status, 2);
+  assert.equal(cmd('score-served.mjs', ['--data', data, '--out', rows, '--url', url, '--nope']).status, 2);
+  const noLabel = path.join(dir, 'nolabel.jsonl'); writeFileSync(noLabel, jsonl([{ state: { a: 1 }, questions: { q: { type: 'choice', instructions: 'Which?', criteria: { x: '', y: '' } } } }]));
+  r = cmd('score-served.mjs', ['--data', noLabel, '--out', path.join(dir, 'out', 'nolabel.rows.jsonl'), '--url', url]);
+  assert.equal(r.status, 1); assert.match(r.stderr, /SERVED_INPUT.*no label/, 'a file without labels is refused before the first request');
+  // --permute: the flip rate of the option-order read, written as JSON
+  const perm = path.join(dir, 'out', 'cli.permute.json');
+  r = cmd('score-served.mjs', ['--data', data, '--out', perm, '--url', url, '--permute', '6', '--expect-run', RUN]);
+  assert.equal(r.status, 0, r.stderr);
+  const pj = JSON.parse(readFileSync(perm, 'utf8'));
+  assert.equal(pj.schema, 'kev-data/served-permute@1'); assert.equal(pj.items, 6); assert.equal(pj.flips, 0); assert.equal(pj.flip_rate, 0); assert.equal(pj.n_perm, 6);
+
+  // jobs.mjs: the schedule from a rate (the reduced plan below 1,500 tokens/s), check-train on a log, and no submit without confirmation
+  r = cmd('jobs.mjs', ['schedule', '--rate', '1200']);
+  assert.equal(r.status, 0, r.stderr); assert.match(r.stdout, /Plan: \*\*reduced\*\*/); assert.match(r.stdout, /\| 20K \| 17\.0M \|/);
+  r = cmd('jobs.mjs', ['schedule', '--rate', '1600']);
+  assert.match(r.stdout, /Plan: \*\*full\*\*/);
+  assert.equal(cmd('jobs.mjs', ['schedule']).status, 2, 'a rate or a report is required');
+  const good = path.join(dir, 'good.log'), bad = path.join(dir, 'bad.log');
+  writeFileSync(good, GOOD_LOG(400, 50)); writeFileSync(bad, GOOD_LOG(400, 50, 'dropped 2 of 450 records that exceed the training context (384 state / 1024 branch)'));
+  r = cmd('jobs.mjs', ['check-train', '--log', good, '--records', '400', '--replay', '50']);
+  assert.equal(r.status, 0, r.stdout + r.stderr); assert.equal(JSON.parse(r.stdout).ok, true);
+  r = cmd('jobs.mjs', ['check-train', '--log', bad, '--records', '400', '--replay', '50']);
+  assert.equal(r.status, 3); assert.ok(JSON.parse(r.stdout).errors.some(e => /dropped/.test(e)));
+  const plan = path.join(dir, 'plan.json'); writeFileSync(plan, JSON.stringify({ schema: 'kev-data/jobs-plan@1', stages: [] }));
+  r = cmd('jobs.mjs', ['submit', '--plan', plan, '--dir', path.join(dir, 'run')]);
+  assert.equal(r.status, 2); assert.match(r.stderr, /--confirm-submit/); assert.equal(existsSync(path.join(dir, 'run')), false, 'nothing was created, nothing connected');
+  // the J0 data builder and the router as commands: a 16-record kernel-probe file fits the training context, a long one does not
+  r = cmd('jobs.mjs', ['data', '--out', path.join(dir, 'j0'), '--only', 'kernel']);
+  assert.equal(r.status, 0, r.stderr);
+  const built = JSON.parse(r.stdout).kernel; assert.equal(built.records, 16); assert.ok(built.stateTokens.max <= 384, JSON.stringify(built.stateTokens)); assert.equal(built.sha256, sha(readFileSync(built.file)));
+  const long = path.join(dir, 'long.jsonl'); writeFileSync(long, jsonl([logRecord('cli/long', 0, 30), logRecord('cli/long', 1, 3)]));
+  r = cmd('jobs.mjs', ['route', built.file, long]);
+  assert.equal(r.status, 0, r.stderr);
+  const routes = JSON.parse(r.stdout); assert.deepEqual(routes.map(x => x.route), ['benchmark', 'served']); assert.equal(routes[1].overflowing, 1); assert.equal(routes[1].fitting, 1);
 });
 
 // =============================================================================================================

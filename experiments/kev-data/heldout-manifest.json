@@ -28,8 +28,8 @@
   "note": "authored lines are never train lines, so the whole hash space is shared 5:3:2; lib/hash.mjs skeletonBucket reserves 60% for bed-rendered train states"
  },
  "authored": {
-  "files": 109,
-  "sha256": "3deef4b8e4726a049bdb9bafc0cced51a74aea5979d6551352088001c28c1109"
+  "files": 110,
+  "sha256": "e72f62870ee5ba10958323412fb4e6dc195ec6ef3639b566f7fc7774c94e731d"
  },
  "files": {
   "cities.json": {
@@ -38,13 +38,13 @@
    "lines": 1174
   },
   "copy-filter.json": {
-   "sha256": "bdd70388ffd16854bfb35a3ecfbe63f35b57dd3518a163c38c08f0e49e42dde1",
+   "sha256": "f03d07093ada56510665d7c2ab8b41db7cbd05c691a7064004bcff452e00f8b2",
    "bytes": 402,
    "lines": 22
   },
   "registry.json": {
-   "sha256": "69f981a78a74b048bcc5c7dc486be280edacbd8a76843d90aac5db517f999c0e",
-   "bytes": 1143938,
+   "sha256": "aec9b1c190b2330d4fe6359eccda8fe1852372f265c4484c10c04f05508d2e96",
+   "bytes": 2846899,
    "lines": 1
   },
   "reject-log.jsonl": {
@@ -103,9 +103,9 @@
    "lines": 32
   },
   "surface/S5.jsonl": {
-   "sha256": "f1a44d65ae5c7d27e884b6840b97310756311d57be28234db8afbe1cf0480edd",
-   "bytes": 45512,
-   "lines": 92
+   "sha256": "132d930a6f557658606a9ae0277f419d9ef5582fe9e915f3fcb3c1ebada642ef",
+   "bytes": 46183,
+   "lines": 93
   },
   "surface/X1.jsonl": {
    "sha256": "8859356b1825b99bbb737426a41cd6f0f931a0dfb6e6e76c629341f4fbf33f03",
@@ -873,12 +873,12 @@
   "X5": 723,
   "X8": 237,
   "F1": 48,
-  "S5": 92,
+  "S5": 93,
   "Q2": 112
  },
  "status": {
   "admitted": 0,
-  "pending-filter": 3633,
+  "pending-filter": 3634,
   "reserve": 925,
   "rejected": 0,
   "carrier": 355
@@ -889,8 +889,8 @@
   "dmy": 96
  },
  "registry": {
-  "entries": 6302,
-  "digest": "sha256:48efcec6c719ba8887662f83b90466a4fadc06f7d5ed02034cc2a9cd48f45fca",
+  "entries": 15371,
+  "digest": "sha256:2d3ea6c19982dbe4ecf56062de1a453b2422e6f00884262e10ba902d168dc9f3",
   "masks": {
    "names": [
     "ATLAS",
@@ -930,10 +930,10 @@
    "files": 6,
    "strings": 18152
   },
-  "checked": 6227,
+  "checked": 6229,
   "maxJaccard": 0.3,
   "failing": 0,
-  "sha256": "28d9e1b54acb82381c9ef3a0b44c2fa8b6b7fd72afbe467b40967e00614eeb79"
+  "sha256": "e5824633a47470bfdd49c8f608ab66959e14b118f4e718e48bb495130b0b68d3"
  },
  "topUp": {
   "rounds": []

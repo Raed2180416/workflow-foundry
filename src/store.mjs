@@ -1,8 +1,9 @@
 import { DatabaseSync } from 'node:sqlite';
-import { mkdirSync, lstatSync, realpathSync, chmodSync, existsSync, readFileSync } from 'node:fs';
+import { mkdirSync, lstatSync, realpathSync, chmodSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { canonical, clone, digest, FoundryError, checkData } from './data.mjs';
+import { AUDIT, journalSeal, sha256, verdictInputsHash } from './audit.mjs';
 
 const processStart = pid => { try { return readFileSync(`/proc/${pid}/stat`, 'utf8').split(') ')[1].split(' ')[19]; } catch { return null; } };
 function liveJobOwner(job) {
@@ -14,6 +15,9 @@ function liveJobOwner(job) {
 const timerRow = row => ({ runId: row.run_id, nodeKey: row.node_key, wakeAt: row.wake_at });
 
 export class Store {
+  // The updateRun in progress (its run id and the decisions recorded during it), so a decision commits with its chain event.
+  #scope = null;
+  #depth = 0;
   constructor(workspace) {
     mkdirSync(workspace, { recursive: true });
     this.workspace = realpathSync(workspace);
@@ -48,9 +52,10 @@ export class Store {
   }
   close() { this.db.close(); }
   transaction(fn) {
-    this.db.exec('BEGIN IMMEDIATE');
+    this.db.exec('BEGIN IMMEDIATE'); this.#depth++;
     try { const result = fn(); this.db.exec('COMMIT'); return result; }
     catch (error) { this.db.exec('ROLLBACK'); throw error; }
+    finally { this.#depth--; }
   }
   #workflow(hash) {
     const row = this.db.prepare('SELECT body FROM workflows WHERE hash=?').get(hash);
@@ -96,7 +101,8 @@ export class Store {
     return saved;
   }
   // `binding` holds runtime-owned model/identity fields (DESIGN §5.1, §6); its hashes enter the birth event.
-  createRun(workflowHash, input, registryHash, policy, { fixture = null, extra = {}, engineHash = null, id = randomUUID(), binding = null } = {}) {
+  // `journal` says where the run's model journal lives ('workspace': this database; 'external': another one), so a verifier knows what to look for.
+  createRun(workflowHash, input, registryHash, policy, { fixture = null, extra = {}, engineHash = null, id = randomUUID(), binding = null, journal = null } = {}) {
     checkData(input); checkData(policy); const { workflow } = this.workflow(workflowHash);
     if (binding && (checkData(binding), Object.keys(binding).some(key => !['modelPolicyHash', 'modelMode', 'sampleSalt', 'assignment', 'assignmentHash', 'identity'].includes(key)))) throw new FoundryError('RUN_BINDING', 'Unsupported run binding field');
     const now = Date.now();
@@ -112,7 +118,7 @@ export class Store {
     this.transaction(() => {
       this.db.prepare('INSERT INTO runs VALUES(?,?)').run(id, canonical(run));
       if (fixture) this.db.prepare('INSERT INTO fixtures VALUES(?,?)').run(id, canonical({ ...fixture, actions: [], wrongActions: 0 }));
-      const event = this.#event(id, { type: 'run.created', workflowHash, registryHash, engineHash, inputHash: digest(input), policyHash: digest(policy), ...bound });
+      const event = this.#event(id, { type: 'run.created', audit: AUDIT, ...(journal ? { journal } : {}), workflowHash, registryHash, engineHash, inputHash: digest(input), policyHash: digest(policy), ...bound });
       run.eventHead = { seq: event.seq, hash: event.hash };
       this.db.prepare('UPDATE runs SET body=? WHERE id=?').run(canonical(run), id);
     });
@@ -130,15 +136,28 @@ export class Store {
       const tail = this.db.prepare('SELECT seq,hash FROM events WHERE run_id=? ORDER BY seq DESC LIMIT 1').get(id);
       const count = this.db.prepare('SELECT COUNT(*) AS count FROM events WHERE run_id=?').get(id).count;
       if (!run.eventHead || tail?.seq !== run.eventHead.seq || tail?.hash !== run.eventHead.hash || count !== run.eventHead.seq) throw new FoundryError('CORRUPT_EVENTS', 'Refusing to append over missing or truncated checkpoint evidence');
-      mutate(run); run.updatedAt = Date.now();
-      checkData(run, { maxBytes: 12 * 1024 * 1024 });
-      for (const item of [event].flat().flatMap(e => typeof e === 'function' ? [e(run)].flat() : [e]).filter(Boolean)) {
+      const scope = this.#scope = { runId: id, decisions: [] };
+      let items;
+      try {
+        mutate(run); run.updatedAt = Date.now();
+        checkData(run, { maxBytes: 12 * 1024 * 1024 });
+        items = [event].flat().flatMap(e => typeof e === 'function' ? [e(run)].flat() : [e]).filter(Boolean);
+      } finally { this.#scope = null; }
+      // Audit binding (src/audit.mjs): a decision recorded in this update gets its chain event ahead of the update's own events, and a verdict
+      // event that the writer did not seal itself (the runtime does, against its own journal) is sealed here against this database's journal.
+      for (const item of [...scope.decisions, ...items.map(item => item.type === 'run.verdict' && item.journalRoot === undefined ? { ...item, ...this.sealBinding(id, run) } : item)]) {
         const receipt = this.#event(id, item);
         run.eventHead = { seq: receipt.seq, hash: receipt.hash };
       }
       this.db.prepare('UPDATE runs SET body=? WHERE id=?').run(canonical(run), id);
       return clone(run);
     });
+  }
+  /** The seal a `run.verdict` event carries: the Merkle root of the run's journal rows (in `journalDb`, default this database) and the hash of
+   *  the state the verdict was computed from. */
+  sealBinding(id, run, journalDb = this.db) {
+    const seal = journalSeal(journalDb, id);
+    return { journalRoot: seal.root, journalCalls: seal.calls, journalMaxId: seal.maxId, boardRoot: null, verdictInputsHash: verdictInputsHash(run) };
   }
   #event(id, data) {
     checkData(data, { maxBytes: 1024 * 1024 });
@@ -148,24 +167,78 @@ export class Store {
     this.db.prepare('INSERT INTO events VALUES(?,?,?,?)').run(id, event.seq, canonical(event), hash);
     return { ...event, hash };
   }
-  events(id) {
-    let previousHash = null;
-    const events = this.db.prepare('SELECT body,hash FROM events WHERE run_id=? ORDER BY seq').all(id).map((row, i) => {
-      const event = JSON.parse(row.body);
-      if (event.seq !== i + 1 || event.previousHash !== previousHash || digest(event) !== row.hash) throw new FoundryError('CORRUPT_EVENTS', 'Event chain verification failed');
-      previousHash = row.hash; return { ...event, hash: row.hash };
-    });
+  // The verified event chain of a run, or the first place it breaks: {events, error: {seq, message, reason} | null}. `events` holds the
+  // events up to (not including) the break. events() throws on a break; verifyRun (src/verify-run.mjs) reports it.
+  chain(id) {
     const head = this.run(id).eventHead;
-    if (!head || head.seq !== events.length || head.hash !== previousHash) throw new FoundryError('CORRUPT_EVENTS', 'Checkpoint/event head mismatch or truncated event history');
+    let previousHash = null;
+    const events = [];
+    const broken = (seq, reason, message = 'Event chain verification failed') => ({ events, error: { seq, reason, message } });
+    for (const [i, row] of this.db.prepare('SELECT body,hash FROM events WHERE run_id=? ORDER BY seq').all(id).entries()) {
+      let event;
+      try { event = JSON.parse(row.body); } catch { return broken(i + 1, 'event body is not JSON'); }
+      if (event.seq !== i + 1) return broken(i + 1, `sequence ${event.seq} where ${i + 1} was expected (event removed or reordered)`);
+      if (event.previousHash !== previousHash) return broken(i + 1, 'previousHash does not continue the chain');
+      if (digest(event) !== row.hash) return broken(i + 1, 'event body does not match its recorded hash (edited)');
+      previousHash = row.hash; events.push({ ...event, hash: row.hash });
+    }
+    if (!head || head.seq !== events.length || head.hash !== previousHash) return broken(events.length + 1, 'checkpoint head differs from the event history (truncated, appended or rewritten)', 'Checkpoint/event head mismatch or truncated event history');
+    return { events, error: null };
+  }
+  events(id) {
+    const { events, error } = this.chain(id);
+    if (error) throw new FoundryError('CORRUPT_EVENTS', error.message, { seq: error.seq, reason: error.reason });
     return events;
   }
   // Decision/trace records (DESIGN §6). Ids are deterministic: a journal-recovered replay of the
   // same decision keeps the first record (append-only, first write wins).
   recordDecision(runId, decision) {
     checkData(decision, { maxBytes: 256 * 1024 });
-    return this.db.prepare('INSERT OR IGNORE INTO decisions VALUES(?,?,?,?)').run(decision.id, runId, decision.kind, canonical(decision)).changes === 1;
+    const insert = () => {
+      const text = canonical(decision);
+      const inserted = this.db.prepare('INSERT OR IGNORE INTO decisions VALUES(?,?,?,?)').run(decision.id, runId, decision.kind, text).changes === 1;
+      // The decision enters the run's hash chain in the same commit: its id, kind and the hash of the stored text (src/audit.mjs).
+      // (Named decisionHash, not hash: events() puts the event's own chain hash in `hash`.)
+      if (inserted && this.#scope?.runId === runId) this.#scope.decisions.push({ type: 'decision.recorded', id: decision.id, kind: decision.kind, decisionHash: sha256(text) });
+      return inserted;
+    };
+    // Inside this run's updateRun the chain event rides along. Called on its own, a decision for a run with a chain is recorded through one
+    // (a decision outside any run, or inside someone else's transaction, is stored unbound, as before).
+    const chained = this.#scope?.runId !== runId && this.#depth === 0 && this.db.prepare("SELECT 1 FROM runs WHERE id=? AND json_extract(body,'$.eventHead.seq') IS NOT NULL").get(runId);
+    if (!chained) return insert();
+    let inserted = false;
+    this.updateRun(runId, () => { inserted = insert(); }, []);
+    return inserted;
   }
   decisions(runId) { return this.db.prepare('SELECT body FROM decisions WHERE run_id=? ORDER BY rowid').all(runId).map(row => JSON.parse(row.body)); }
+  /** Decision rows exactly as stored (the text the chain event hashes). */
+  decisionRows(runId) { return this.db.prepare('SELECT id, kind, body FROM decisions WHERE run_id=? ORDER BY rowid').all(runId); }
+  /** Bind an executor transcript into the run's hash chain: `executor.finished {transcriptHash}`. The file is hashed, and by default copied
+   *  into the workspace (artifacts/<run>/transcripts/) so it can be re-hashed later; with copy:false it stays where it is (location is
+   *  informational, and a verifier that cannot find it reports the hash as unchecked, not as wrong). */
+  bindTranscript(runId, { nodeKey, file, label = null, copy = true } = {}) {
+    this.run(runId); // NOT_FOUND before anything is written
+    if (!/^[A-Za-z0-9_.:-]{1,200}$/.test(runId) || runId === '.' || runId === '..') throw new FoundryError('TRANSCRIPT', 'Run ids that are not plain names cannot hold transcripts');
+    if (typeof nodeKey !== 'string' || !nodeKey || nodeKey.length > 512) throw new FoundryError('TRANSCRIPT', 'A transcript is bound to a node key');
+    if (typeof file !== 'string' || !file) throw new FoundryError('TRANSCRIPT', 'A transcript file path is required');
+    if (label !== null && (typeof label !== 'string' || label.length > 200)) throw new FoundryError('TRANSCRIPT', 'A transcript label is a string of at most 200 characters');
+    const source = path.resolve(file);
+    let info;
+    try { info = lstatSync(source); } catch (error) { throw new FoundryError('TRANSCRIPT', `Transcript file not found: ${error.code ?? 'unreadable'}`); }
+    if (info.isSymbolicLink() || !info.isFile()) throw new FoundryError('TRANSCRIPT', 'A transcript must be a regular file, not a symlink');
+    if (info.size > 256 * 1024 * 1024) throw new FoundryError('TRANSCRIPT', 'A transcript larger than 256 MiB cannot be bound');
+    const data = readFileSync(source), transcriptHash = sha256(data);
+    let location = { kind: 'external', path: source };
+    if (copy) {
+      const relative = path.join('artifacts', runId, 'transcripts', `${transcriptHash.slice(0, 16)}${path.extname(source).replace(/[^.A-Za-z0-9]/g, '')}`);
+      const target = path.join(this.directory, relative);
+      mkdirSync(path.dirname(target), { recursive: true, mode: 0o700 });
+      if (!existsSync(target)) writeFileSync(target, data, { flag: 'wx', mode: 0o600 });
+      location = { kind: 'workspace', path: relative };
+    }
+    const bound = this.updateRun(runId, () => {}, { type: 'executor.finished', nodeKey, label, transcriptHash, bytes: data.length, location });
+    return { runId, nodeKey, label, transcriptHash, bytes: data.length, location, seq: bound.eventHead.seq };
+  }
   // Durable wake-ups for wait nodes (DESIGN §5.4). The runtime writes them inside its updateRun
   // transaction, so a timer row and the node state that needs it commit together.
   setTimer(runId, nodeKey, wakeAt) {

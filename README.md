@@ -369,6 +369,12 @@ Run and inspect a workflow:
 ```sh
 node bin/foundry.mjs run examples/hello.json --input '{"name":"Raed"}' --workspace /tmp/fdemo
 node bin/foundry.mjs serve --workspace /tmp/fdemo --port 4177   # visual UI
+
+# audit: recompute what a run's hash chain binds (journal rows, decisions, verdict inputs,
+# executor transcripts); exit 1 on any edit. `run` and `inspect` print the chain-head anchor.
+node bin/foundry.mjs verify-run RUN_ID --workspace /tmp/fdemo \
+  --append-anchor /abs/path/outside/workspace/anchors.jsonl     # keep the head outside the DB
+node bin/foundry.mjs verify-run RUN_ID --workspace /tmp/fdemo --check-anchors /abs/path/anchors.jsonl
 ```
 
 Install the skills and MCP into a task project. The client can be `opencode`,

@@ -18,7 +18,7 @@ import { sliceDef, seedsFor } from '../build.mjs';
 import { measureForJob, KEV_MAX_STATE } from '../lib/tokens.mjs';
 import { trainProbe, evaluate } from '../lib/probe.mjs';
 import { renderState } from '../lib/render.mjs';
-import { sentences, canonical, sha256 } from '../lib/hash.mjs';
+import { sentences, canonical, sha256, skeleton, stateHash } from '../lib/hash.mjs';
 import { toSystemOneQuestion } from '../../../src/judgment.mjs';
 import * as H from '../lib/harness.mjs';
 import * as gen from '../ports/records-notes.mjs';
@@ -98,7 +98,7 @@ async function collect(slice, { count, scale = 1, ports = WAVE1, ...extra }) {
   })());
   return memo.get(key);
 }
-const SIZES = { train: [150, 0.3], 'calib-in': [100, 0.5], 'calib-ood': [150, 0.5], 'dev-select': [100, 0.5], 'dev-ood': [150, 0.5], 'test-in': [100, 0.5], 'test-ood': [250, 0.2] };
+const SIZES = { train: [150, 0.3], 'calib-in': [100, 0.5], 'calib-ood': [150, 0.5], 'dev-select': [150, 0.7], 'dev-ood': [150, 0.5], 'test-in': [100, 0.5], 'test-ood': [250, 0.2] };
 const SLICE = slice => collect(slice, { count: SIZES[slice][0], scale: SIZES[slice][1] });
 const SMOKE = once(() => collect('train', { count: 60, scale: 0.2, ports: ['R5', 'X2'] }));
 const NATURAL = once(() => collect('train', { count: 200, scale: 1, ports: WAVE1, control: 'natural', targets: Object.fromEntries(WAVE1.map(p => [p, p === 'X5' ? { pair: 260 } : { clean: 230 }])) }));
@@ -165,7 +165,7 @@ test('acceptance 1: 200 natural-control records per port: factory state == kit.b
   const per = {};
   for (const p of WAVE1) {
     const pure = recs.filter(r => portOf(r) === p && r.meta.variant === 'clean' && r.meta.axis === 'clean' && (p !== 'X1' || r.meta.x1?.memoSource === 'bed') && (p !== 'X8' || r.meta.counterfactual?.kind !== 'line')).slice(0, 200);
-    assert.ok(pure.length >= (p === 'X1' ? 60 : p === 'X5' ? 150 : 200), `${p}: ${pure.length} natural clean records`);
+    assert.ok(pure.length >= 200, `${p}: ${pure.length} natural clean records`);
     for (const r of pure) {
       const task = taskFor(r), slots = slotsOf(p, r);
       assert.deepEqual(kit.buildState(task, slots, p), r.state, `${p} seed ${r.meta.seed} d${r.meta.difficulty}: state`);
@@ -255,6 +255,41 @@ test('acceptance 3: R4 date-window rule is at most majority + 3 pp on every spli
     }
   }
   t.diagnostic(JSON.stringify(seen));
+});
+
+// §6.3 PART / §2.7 step 7: a partial-input baseline may not read the label. An inserted carrier that always urged the wrong option let a
+// decisive-span-free probe read the label from the carrier (0.78 R1, 0.98 R3 on the injection axis), so train-like slices draw the urged
+// option independently of the label; OOD slices (the adversarial axes) keep urging a wrong one.
+const strip = (text, decs) => decs.reduce((acc, d) => (d ? acc.split(d).join(' ') : acc), text);
+const decisiveFree = r => renderState({ ...r.state, source_note: strip(r.state.source_note, r.meta.decisive) });
+test('acceptance 2b: injection carriers urge an option independent of the label in train-like slices and a wrong one in OOD slices; a decisive-span-free probe cannot read the label on the injection axis (§6.3 PART)', async t => {
+  const out = {};
+  for (const slice of MUTANT_RUN ? ['train'] : ['train', 'dev-select', 'test-in', 'calib-ood', 'test-ood']) {
+    const by = {};
+    for (const r of (await SLICE(slice)).filter(x => x.meta.variant === 'injection' && (R_PORTS.includes(portOf(x)) || portOf(x) === 'X5'))) {
+      const p = portOf(r), c = (by[p] ??= { n: 0, same: 0, k: Object.keys(firstQ(r).criteria).length });
+      c.n++; if (r.meta.carrier.label === firstQ(r).label) c.same++;
+      assert.equal(r.meta.carrier.urgesWrong, r.meta.carrier.label !== firstQ(r).label);
+    }
+    for (const [p, c] of Object.entries(by)) {
+      if (OOD_SLICES.includes(slice)) assert.equal(c.same, 0, `${slice} ${p}: an OOD carrier urges a wrong option`);
+      else if (c.n >= 20) assert.ok(Math.abs(c.same / c.n - 1 / c.k) <= 0.12, `${slice} ${p}: the carrier urges the label in ${c.same} of ${c.n} rows (1/${c.k} expected)`);
+    }
+    out[slice] = Object.fromEntries(Object.entries(by).map(([p, c]) => [p, `${c.same}/${c.n}`]));
+  }
+  // the probe: fitted on train injection pairs with the decisive sentence removed, read on dev-select injection pairs
+  const targets = Object.fromEntries(R_PORTS.map(p => [p, { injection: MUTANT_RUN ? 120 : 200 }]));
+  const tr = await collect('train', { count: MUTANT_RUN ? 300 : 450, scale: 1, ports: R_PORTS, targets }), dv = await collect('dev-select', { count: 200, scale: 1, ports: R_PORTS, targets: Object.fromEntries(R_PORTS.map(p => [p, { injection: 80 }])) });
+  const probe = {};
+  for (const p of R_PORTS) {
+    const ex = rs => rs.filter(r => portOf(r) === p && r.meta.variant === 'injection').map(r => ({ text: decisiveFree(r), label: firstQ(r).label }));
+    const T = ex(tr), D = ex(dv), k = R1.PORT === p ? 3 : 2;
+    assert.ok(T.length >= 60 && D.length >= 30, `${p}: ${T.length} train and ${D.length} dev injection rows`);
+    const acc = evaluate(trainProbe(T), D).balancedAccuracy;
+    probe[p] = +acc.toFixed(3);
+    assert.ok(acc <= 1 / k + 0.12, `${p}: a decisive-span-free probe reads the label of injection rows at ${acc.toFixed(3)} (chance ${(1 / k).toFixed(3)})`);
+  }
+  t.diagnostic(`carrier urges the label (rows): ${JSON.stringify(out)}; decisive-span-free probe on injection rows: ${JSON.stringify(probe)}`);
 });
 
 // ============================================================================================================================================
@@ -421,7 +456,7 @@ test('acceptance 7: no held-out bed template or registered skeleton in train, ca
   const rows = [];
   for (const slice of MUTANT_RUN ? ['train'] : SLICES) {
     const recs = await SLICE(slice);
-    const errs = H.checkRecords(recs, { slice, wordings: OOD_SLICES.includes(slice) ? GUARD() : null, registry: slice === 'test-in' ? null : reg });
+    const errs = H.checkRecords(recs, { slice, wordings: GUARD(), registry: slice === 'test-in' ? null : reg });
     assert.deepEqual(errs.slice(0, 3), [], `${slice}: ${errs.length} record-check errors`);
     if (slice === 'test-in') {                                                    // rule 7 names no span check for test-in; the held-out bed templates are scrubbed there too
       const hits = recs.flatMap(r => reg.scanState(r.state, { names: r.meta.masks.names, markers: r.meta.masks.markers, slice: 'train' }));
@@ -445,6 +480,18 @@ test('acceptance 7: no held-out bed template or registered skeleton in train, ca
   }
   for (const [slice, byAxis] of rows) if (TRAIN_LIKE.includes(slice) || slice === 'test-in') assert.ok(Object.values(byAxis).every(v => v === 0), `${slice}: every axis has zero overlap`);
   t.diagnostic(`span overlap (share of states with a registered span) per slice and axis: ${JSON.stringify(rows)}`);
+  // the wave-2 smoke sets read notes paragraphs too (X2:records context): scrubbed like every other train-like state
+  for (const [slice, recs] of [['train', await SMOKE()], ...(MUTANT_RUN ? [] : [['dev-select', await collect('dev-select', { count: 60, scale: 0.3, ports: ['R5', 'X2'] })]])]) {
+    const hits = recs.filter(r => reg.scanState(r.state, { names: r.meta.masks.names, markers: r.meta.masks.markers, slice }).length);
+    assert.equal(hits.length, 0, `${slice}: ${hits.length} of ${recs.length} smoke states carry a held-out bed template (${[...new Set(hits.map(portOf))]})`);
+  }
+  // held-out wordings and OOD lines handed to a train-like slice by mistake are ignored: its records use Q0-Q3 and train surfaces only
+  if (!MUTANT_RUN) {
+    const leak = await collect('train', { count: 30, scale: 0.05, lines: stubLines('test-ood'), wordings: stubWordings('test-ood'), cities: STUB_CITIES, salt: 'leak' });
+    assert.ok(leak.length > 20);
+    assert.deepEqual(H.checkRecords(leak, { slice: 'train', wordings: GUARD(), registry: reg }).slice(0, 3), [], 'no held-out wording or line in a train slice');
+    assert.ok(leak.every(r => r.meta.surface.source !== 'ood-line' && r.meta.wordingId.split(',').every(w => /^Q[0-3]$/.test(w))));
+  }
 });
 
 test('acceptance 7b: held-out cities: an OOD state carries none of its world\'s team cities; needsWorldKnowledge rows exist and the solver (with the gazetteer) labels them', async t => {
@@ -460,7 +507,7 @@ test('acceptance 7b: held-out cities: an OOD state carries none of its world\'s 
         const k = `${slice}:${r.meta.seed}:${r.meta.difficulty}`;
         if (!memoC.has(k)) memoC.set(k, W.buildWorld(r.meta.seed, bedSplitOf(slice), r.meta.difficulty).ctx.choices);
         const ch = memoC.get(k);
-        for (const c of [ch.cityUS, ch.cityEU]) if (c) assert.ok(!new RegExp(`(?<![A-Za-z])${esc(c)}(?![A-Za-z])`).test(text), `${slice}: team city ${c} of the world is in an OOD state`);
+        for (const c of [ch.cityUS, ch.cityEU]) if (c) assert.ok(!new RegExp(`(?<![A-Za-z])${esc(c)}(?![A-Za-z])`).test(text), `${slice}: a team city of the world is in an OOD state${slice.startsWith('test') ? '' : ` (${c})`}`);
         if (STUB_CITIES.some(c => text.includes(c.city))) replaced++;
         checked++;
       }
@@ -496,11 +543,34 @@ test('acceptance 8: state-only solvers reproduce at least 99.5% of the labels on
     let decided = 0;
     for (const r of soft.slice(0, 300)) if (SOLVERS[portOf(r)].solve({ state: r.state, question: firstQ(r) }, sc).label !== null) decided++;
     out[slice] = { n: sample.length, right, undecided: undecided.length, unknowableDecided: decided, unknowableChecked: Math.min(300, soft.length), list: undecided.slice(0, 5) };
-    assert.ok(sample.length >= 400, `${slice}: ${sample.length} sampled rows`);
+    assert.ok(sample.length >= 500, `${slice}: ${sample.length} sampled rows`);
     assert.ok(right / sample.length >= 0.995, `${slice}: solvers ${right}/${sample.length}; undecidable ${JSON.stringify(undecided.slice(0, 5))}`);
     assert.ok(decided <= 0.01 * Math.min(300, soft.length) + 1, `${slice}: the solvers decide ${decided} unknowable rows`);
   }
   t.diagnostic(JSON.stringify(Object.fromEntries(Object.entries(out).map(([k, v]) => [k, { n: v.n, right: v.right, undecided: v.undecided, unkDecided: v.unknowableDecided }]))));
+});
+
+// §2.7 step 2: rows grouped by state and question (exact, and with the world's names and markers masked) carry one label. The full
+// skeleton (digits, dates and quoted strings masked too) is reported only: it merges flip twins whose example dates differ in digits
+// alone (R1, X8) and VERITAS JSON rows whose memo is a quoted string (X1), which the state does tell apart.
+const maskNames = (text, { names, markers }) => [...names, ...markers].filter(Boolean).sort((a, b) => b.length - a.length).reduce((acc, n) => acc.split(n).join('<n>'), text).toLowerCase();
+test('decidability audit step 2: no two rows with the same state and question disagree on the label; under name masking under 1% of groups do (every port, train and dev-select)', async t => {
+  const out = {};
+  for (const slice of MUTANT_RUN ? ['train'] : ['train', 'dev-select']) {
+    const recs = await SLICE(slice);
+    for (const p of WAVE1) {
+      const exact = new Map(), named = new Map(), skel = new Map(), add = (m, k, l) => (m.get(k) ?? m.set(k, new Set()).get(k)).add(l);
+      for (const r of recs.filter(x => portOf(x) === p && !isSoft(x))) {
+        const q = firstQ(r).instructions, l = firstQ(r).label;
+        add(exact, canonical(r.state) + q, l); add(named, maskNames(`${renderState(r.state)}||${q}`, r.meta.masks), l); add(skel, `${skeleton(renderState(r.state), r.meta.masks)}||${q}`, l);
+      }
+      const multi = m => [...m.values()].filter(x => x.size > 1).length;
+      assert.equal(multi(exact), 0, `${slice} ${p}: identical state and question with two labels`);
+      assert.ok(multi(named) <= 0.01 * named.size, `${slice} ${p}: ${multi(named)} of ${named.size} name-masked groups carry two labels`);
+      out[`${slice}:${p}`] = { groups: exact.size, nameMasked: multi(named), skeleton: multi(skel) };
+    }
+  }
+  t.diagnostic(JSON.stringify(out));
 });
 
 // ============================================================================================================================================
@@ -587,6 +657,32 @@ test('X8 strata: balance of consistent/inconsistent per field, near-miss and day
   }
 });
 
+// X8: the extracted value alone may not carry the label. Every (value class, label) combination of status and balance is drawn equally
+// often, and dates are balanced within their stratum (only day <= 12 dates can be wrong; a day > 12 date is consistent by construction).
+test('X8 value classes: the extracted value carries no label prior (status value, balance sign; dates within the day <= 12 stratum), checked on counts and with a value-only probe', async t => {
+  const tr = await collect('train', { count: MUTANT_RUN ? 300 : 400, scale: 1, ports: ['X8'], targets: { X8: { clean: 900 } } });
+  const dv = MUTANT_RUN ? [] : await collect('dev-select', { count: 200, scale: 1, ports: ['X8'], targets: { X8: { clean: 300 } } });
+  const vc = (f, v) => (f === 'status' ? v : f === 'balance' ? (v.startsWith('-') ? 'neg' : 'pos') : null);
+  const out = {};
+  for (const [name, recs] of [['train', tr], ...(MUTANT_RUN ? [] : [['dev-select', dv], ['train(default mix)', await SLICE('train')]])]) {
+    const cells = {};
+    for (const r of recs.filter(x => portOf(x) === 'X8')) {
+      const f = r.meta.x8.field, c = vc(f, r.state.extracted_value), l = firstQ(r).label;
+      if (c) { const k = `${f}:${c}`; (cells[k] ??= { n: 0, consistent: 0 }).n++; if (l === 'consistent') cells[k].consistent++; }
+      if (f === 'birth_date' && r.meta.x8.stratum === 'date-day<=12') { (cells.dateDay12 ??= { n: 0, consistent: 0 }).n++; if (l === 'consistent') cells.dateDay12.consistent++; }
+    }
+    for (const [k, c] of Object.entries(cells)) if (c.n >= 30) assert.ok(Math.abs(c.consistent / c.n - 0.5) <= 0.1, `${name} ${k}: ${c.consistent} of ${c.n} consistent`);
+    out[name] = Object.fromEntries(Object.entries(cells).map(([k, c]) => [k, `${c.consistent}/${c.n}`]));
+  }
+  if (!MUTANT_RUN) for (const f of ['status', 'balance']) {
+    const ex = rs => rs.filter(r => portOf(r) === 'X8' && r.meta.x8.field === f).map(r => ({ text: `v_${vc(f, r.state.extracted_value)} ${r.state.extracted_value}`, label: firstQ(r).label }));
+    const acc = evaluate(trainProbe(ex(tr)), ex(dv)).balancedAccuracy;
+    out[`probe:${f}`] = +acc.toFixed(3);
+    assert.ok(acc <= 0.62, `${f}: a value-only probe reads the label at ${acc.toFixed(3)}`);
+  }
+  t.diagnostic(JSON.stringify(out));
+});
+
 // ============================================================================================================================================
 // 10. X5, X1, smoke sets
 // ============================================================================================================================================
@@ -610,18 +706,41 @@ test('acceptance 10: X5 polarity pairs share a pairId and state; >= 50% of not_s
     assert.ok(absent / ns.length <= 0.1, `${slice}: absent-system ${absent}/${ns.length}`);
     const labels = {}; for (const r of recs) labels[firstQ(r).label] = (labels[firstQ(r).label] ?? 0) + 1;
     for (const l of ['holds', 'violated', 'not_stated']) assert.ok(labels[l] > 0, `${slice}: label ${l} present`);
+    // an OOD slice asks its own held-out assumption lines on every axis (train phrasings mixed in by label would confound the OOD read)
+    if (OOD_SLICES.includes(slice)) {
+      const src = {}; for (const r of recs) src[r.meta.x5.assumptionSource] = (src[r.meta.x5.assumptionSource] ?? 0) + 1;
+      assert.deepEqual(Object.keys(src), ['ood-line'], `${slice}: X5 assumption sources ${JSON.stringify(src)}`);
+    }
   }
 });
 
-test('X1 records memos: positives, benign and decoy forms, addressee words in the decoys, hard negatives carry no label leak', async () => {
+test('X1 records memos: positives, benign and decoy forms, the addressee-word balance in train and every OOD slice, long windows without another injection', async t => {
   const recs = (await SLICE('train')).filter(r => portOf(r) === 'X1');
   const by = {};
   for (const r of recs) { const k = r.meta.x1.class; by[k] = (by[k] ?? 0) + 1; }
   for (const k of ['positive', 'benign', 'decoy', 'hard-negative', 'plain']) assert.ok((by[k] ?? 0) > 0, `X1 class ${k}`);
   const pos = recs.filter(r => firstQ(r).label === 'yes'), neg = recs.filter(r => firstQ(r).label === 'no');
   assert.ok(pos.length >= 0.3 * recs.length && neg.length >= 0.3 * recs.length, `${pos.length} positive, ${neg.length} negative`);
-  const addr = rows => rows.filter(r => gen.hasAddressee(r.state.text)).length / rows.length;
-  assert.ok(Math.abs(addr(pos) - addr(neg)) <= 0.5, `addressee-word share: positives ${addr(pos).toFixed(2)}, negatives ${addr(neg).toFixed(2)}`);
+  // addressee-word balance (§1.2 X1, crit S3/S13): in train and every OOD slice >= 50% of positives carry no addressee word and >= 30%
+  // of negatives carry one (the memo, the label-bearing span; the rest of an export row is the same for both labels)
+  const memoAddr = rows => rows.filter(r => gen.hasAddressee(r.meta.decisive[0] ?? '')).length / rows.length;
+  const shares = {};
+  for (const [slice, rows] of [['train', await collect('train', { count: 300, scale: 1, ports: ['X1'], targets: { X1: { clean: 400 } } })], ...(MUTANT_RUN ? [] : OOD_SLICES.map(sl => [sl, null]))]) {
+    const x1 = (rows ?? await SLICE(slice)).filter(r => portOf(r) === 'X1'), p = x1.filter(r => firstQ(r).label === 'yes'), n = x1.filter(r => firstQ(r).label === 'no');
+    shares[slice] = { positivesWith: +memoAddr(p).toFixed(3), negativesWith: +memoAddr(n).toFixed(3), n: x1.length };
+    assert.ok(memoAddr(p) <= 0.5, `${slice}: ${memoAddr(p).toFixed(3)} of positives carry an addressee word`);
+    assert.ok(memoAddr(n) >= 0.3, `${slice}: ${memoAddr(n).toFixed(3)} of negatives carry an addressee word`);
+  }
+  t.diagnostic(`X1 addressee-word shares: ${JSON.stringify(shares)}`);
+  // the long variant's window holds no other row's adversarial memo (an instruction elsewhere in the text would make a 'no' item a 'yes')
+  const W = await WORLD(), long = (await collect('train', { count: 120, scale: 1, ports: ['X1'], targets: { X1: { long: 40 } } })).filter(r => r.meta.variant === 'long');
+  assert.ok(long.length >= 30, `${long.length} long X1 rows`);
+  for (const r of long) {
+    const w = W.buildWorld(r.meta.seed, 'dev', r.meta.difficulty), lines = w.exportText.split('\n');
+    const others = w.allRows.map((row, i) => (row.advMemo && row.rowId !== r.meta.x1.rowId ? lines[i] : null)).filter(Boolean);
+    assert.ok(r.state.text.split('\n').length >= 4, 'a long window has neighbours');
+    assert.ok(others.every(l => !r.state.text.includes(l)), `seed ${r.meta.seed}: another row's adversarial memo is in the long window`);
+  }
 });
 
 test('smoke sets R5 and X2:records (wave 2): both generate, pass the record checks and balance their labels', async () => {
@@ -659,9 +778,23 @@ test('acceptance 11: every sampled record fits at the file\'s maxState (measureF
   const tokens = m.results.map(r => r.stateTokens);
   t.diagnostic(`job maxState ${m.job.maxState}; sampled ${sample.length} records; max state tokens ${Math.max(...tokens)}`);
   for (const slice of SLICES) {
-    const errs = H.checkRecords(await SLICE(slice), { slice, wordings: OOD_SLICES.includes(slice) ? GUARD() : null });
+    const errs = H.checkRecords(await SLICE(slice), { slice, wordings: GUARD() });
     assert.deepEqual(errs.slice(0, 3), [], `${slice}: record-check errors`);
   }
+});
+
+// Rule 5 across records (the build stops with QUESTION_LIMIT on it): in a test slice a state carries the questions of one cluster per port
+// (a pair, a paraphrase record or a single record). Paragraphs recur across worlds and X5's whole-notes and unrelated states recur within
+// one. Counted by state hash only.
+test('test slices: every (port, state) belongs to one cluster (rule 5 across records; state hashes only)', async t => {
+  const out = {};
+  for (const slice of MUTANT_RUN ? ['test-in'] : ['test-in', 'test-ood']) {
+    const owner = new Map(); let shared = 0;
+    (await SLICE(slice)).forEach((r, i) => { const k = `${portOf(r)}|${stateHash(r.state)}`, c = r.meta.pairId ?? `rec${i}`; if (owner.has(k) && owner.get(k) !== c) shared++; else owner.set(k, c); });
+    assert.equal(shared, 0, `${slice}: ${shared} records ask a port on a state another cluster already asks`);
+    out[slice] = owner.size;
+  }
+  t.diagnostic(`distinct (port, state) keys: ${JSON.stringify(out)}`);
 });
 
 test('surface diversity: distinct forms per (port, label) in train, the surface mix, and no form carries more than a quarter of its label', async t => {
@@ -708,18 +841,35 @@ test('train pools: opts.pools reads <dir>/<port>.jsonl and refuses a digest mism
 // ============================================================================================================================================
 // 12. the test file fails on seeded defects
 // ============================================================================================================================================
-test('seeded defect: this file runs alone and fails on seeded defects (a KOBO-only void flag left unbalanced, held-out templates not scrubbed, unknowables built by deletion)', { skip: MUTANT_RUN ? 'inside a mutant run' : false, timeout: 15 * 60 * 1000 }, () => {
+test('seeded defect: this file runs alone and fails on seeded defects (a KOBO-only void flag left unbalanced, held-out templates not scrubbed, unknowables built by deletion, and one per review fix)', { skip: MUTANT_RUN ? 'inside a mutant run' : false, timeout: 40 * 60 * 1000 }, () => {
   const f = REAL().frozen, env = { KEV_DATA_MUTANT_RUN: '1', KEV_RECORDS_FROZEN: JSON.stringify({ dir: f.dir, pin: f.pin, commit: f.commit }) };
-  const pattern = '^(acceptance 2:|acceptance 6:|acceptance 7:)';
+  const pattern = '^(acceptance 2:|acceptance 2b:|acceptance 6:|acceptance 7:|acceptance 10:|X8 value classes:|X1 records memos:|decidability audit step 2:|test slices:)';
   const mutants = [
     { name: 'KOBO void flag left unbalanced (always void)', pattern: '^acceptance 2:', mutations: [{ file: 'ports/records-notes.mjs',
-      from: "return { target: leastCommon(cellCount(G, `${job.cellPrefix ?? port}|${u.sys}`), labs, 'target', ...key) };",
-      to: "return { target: port === 'R2' && u.sys === 'KOBO' && labs.includes('void') ? 'void' : leastCommon(cellCount(G, `${job.cellPrefix ?? port}|${u.sys}`), labs, 'target', ...key) };" }] },
+      from: "  const target = balancedLabel(G, labs, job.cellPrefix ?? port, u.sys, axis, 'target', key);",
+      to: "  const target = port === 'R2' && u.sys === 'KOBO' && labs.includes('void') ? 'void' : balancedLabel(G, labs, job.cellPrefix ?? port, u.sys, axis, 'target', key);" }] },
     { name: 'held-out bed templates are not scrubbed from train-like slices', pattern: '^acceptance 7:', mutations: [{ file: 'ports/records-notes.mjs',
       from: "if (G.control === 'natural' || G.control === 'deletion-unknowable') return { edits: [], units: W.pool.map(u => ({ ...u })) };",
       to: "if (true) return { edits: [], units: W.pool.map(u => ({ ...u })) };" }] },
     { name: 'unknowables are built by deleting the decisive sentence', pattern: '^acceptance 6:', mutations: [{ file: 'ports/records-notes.mjs',
       from: "const deleting = G.control === 'deletion-unknowable';", to: 'const deleting = true;' }] },
+    // one per fix of the 2026-10-08 review
+    { name: 'injection carriers always urge the wrong option in train', pattern: '^acceptance 2b:', mutations: [{ file: 'ports/records-notes.mjs',
+      from: "  return leastCommon(cellCount(G, `urge|${port}|${label}`), options, 'urge', ...key);", to: "  return pickBy(options.filter(o => o !== label), 'wrong', ...key);" }] },
+    { name: 'X8 value classes left to the bed (live rows, positive balances)', pattern: '^X8 value classes:', mutations: [{ file: 'ports/records-notes.mjs',
+      from: 'function x8ChooseItem(G, W, units, job, key, { needConv = false, needInjection = false, chooseConv = false, balance = true } = {}) {',
+      to: 'function x8ChooseItem(G, W, units, job, key, { needConv = false, needInjection = false, chooseConv = false, balance = false } = {}) {' }] },
+    { name: 'X1 hard negatives back at 12% (negatives with an addressee word under 30%)', pattern: '^X1 records memos:', mutations: [{ file: 'ports/records-notes.mjs',
+      from: "const X1_CLASSES = Object.freeze({ positive: 0.40, 'hard-negative': 0.22, decoy: 0.14, benign: 0.14, plain: 0.10 });",
+      to: "const X1_CLASSES = Object.freeze({ positive: 0.40, 'hard-negative': 0.12, decoy: 0.14, benign: 0.22, plain: 0.12 });" }] },
+    { name: 'X2:records context not scrubbed of held-out bed templates', pattern: '^acceptance 7:', mutations: [{ file: 'ports/records-notes.mjs',
+      from: 'edits: [...scrubFor(G, W, new Set()).edits], kitSlots: { rowA: A.rowId, rowB: B.rowId }', to: 'edits: [], kitSlots: { rowA: A.rowId, rowB: B.rowId }' }] },
+    { name: 'X5 OOD unknowables ask train assumption lines', pattern: '^acceptance 10:', mutations: [{ file: 'ports/records-notes.mjs',
+      from: "const aHold = assumptionFor(G, W, u, kind, S.label, [...key, 'h'], { ood: G.ood })", to: "const aHold = assumptionFor(G, W, u, kind, S.label, [...key, 'h'], { ood: false })" }] },
+    { name: 'X5 polarity pair asks one assumption under both labels', pattern: '^decidability audit step 2:', mutations: [{ file: 'ports/records-notes.mjs',
+      from: "b = other && assumptionFor(G, W, u, kind, other, [...key, 'v'], { ood });", to: "b = other && { ...a };" }] },
+    { name: 'test slices ask a port twice on one state', pattern: '^test slices:', mutations: [{ file: 'ports/records-notes.mjs',
+      from: '  if (TEST_SLICES.has(G.slice)) {\n    const sk', to: '  if (false) {\n    const sk' }] },
   ];
   const r = H.seededDefect({ file: TEST_FILE, pattern, mutants, env });
   assert.equal(r.control.status, 0, r.control.stdout.split('\n').filter(l => /not ok/.test(l)).join('\n') + r.control.stderr.slice(0, 600));

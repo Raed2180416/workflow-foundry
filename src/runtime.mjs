@@ -11,6 +11,7 @@ import { verdictOf } from './verdict.mjs';
 import { runCode } from './sandbox.mjs';
 import { classIndex, modelById, modelsForClass, nextClass, validatePolicy } from './models/policy.mjs';
 import { MODES } from './models/port.mjs';
+import { AUDIT, journalSeal } from './audit.mjs';
 
 const finished = new Set(['succeeded', 'failed', 'cancelled']);
 const nodeDone = new Set(['completed', 'skipped', 'handled_error']);
@@ -47,7 +48,7 @@ const retryable = new Set(['MODEL_SCHEMA', 'MODEL_TRUNCATED']);
 // a policy violation or a harness integrity failure.
 const unhandled = new Set([...environmentFaults, ...providerFaults, 'CANCELLED', 'ABORT_ERR', 'SANDBOX_UNAVAILABLE', 'COST_BUDGET', 'STEP_BUDGET',
   'DEADLINE', 'STATE_BUDGET', 'STALE_RUNNER', 'REPLAY_MISS', 'MODEL_PORT_REQUIRED', 'VERIFY_INDEPENDENCE', 'ASSIGNMENT_INVALID',
-  'LABEL_POLICY', 'FRAME_DRIFT', 'CORRUPT_EVENTS', 'MODEL_POLICY_DRIFT']);
+  'LABEL_POLICY', 'FRAME_DRIFT', 'CORRUPT_EVENTS', 'MODEL_POLICY_DRIFT', 'JOURNAL_TAMPERED']);
 const cancelled = error => ['CANCELLED', 'ABORT_ERR'].includes(error?.code);
 // A call cut short because the run deadline, not its own timeout, set its limit is the deadline's outcome.
 const deadlineStop = (what, details) => new FoundryError('DEADLINE', `Run deadline exhausted while ${what} was running`, details);
@@ -113,7 +114,8 @@ export class Runtime {
     if (identity !== null && (!identity || typeof identity !== 'object' || Array.isArray(identity) || Object.keys(identity).some(k => !['arc', 'amp'].includes(k)))) throw new FoundryError('RUN_OPTIONS', 'identity may carry only arc and amp parts; the foundry part is runtime-owned');
     const assigned = this.assignment(workflow, assignment), id = randomUUID(), registryHash = this.registry.hash();
     const envelope = validateIdentity({ foundry: { workflowHash: hash, runId: id, engineHash, policyHash: digest(this.policy), registryHash }, ...clone(identity ?? {}) });
-    return this.store.createRun(hash, input, registryHash, this.policy, { ...rest, engineHash, id, binding: {
+    const journal = this.models ? (this.models.journal?.db === this.store.db ? 'workspace' : 'external') : null;
+    return this.store.createRun(hash, input, registryHash, this.policy, { ...rest, engineHash, id, journal, binding: {
       modelPolicyHash: modelNodes(workflow).length ? this.modelPolicyHash : null, modelMode, sampleSalt: sampleSalt ?? id,
       assignment: assigned, assignmentHash: digest(assigned), identity: envelope } });
   }
@@ -134,6 +136,8 @@ export class Runtime {
     }
     return clone(assignment);
   }
+  // The run.verdict chain event, sealed against the journal this runtime's ModelPort writes to (which may not be the store's database).
+  verdictEvent(run) { return { type: 'run.verdict', ...run.verdict, ...this.store.sealBinding(run.id, run, this.models?.journal?.db) }; }
   async execute(runId, { signal } = {}) {
     // A Runtime invocation has isolated coordination state. Multiple runs may use
     // the same Store but must not share mutable in-flight fields.
@@ -164,7 +168,7 @@ export class Runtime {
       target.state.status = decision ? 'pending' : 'failed';
       if (!decision) { r.status = 'cancelled'; r.error = { code: 'APPROVAL_REJECTED', message: 'User rejected the operation' }; seal(r, null, this.store); }
       else r.status = 'ready';
-    }, run => [...(run.status === 'cancelled' && run.verdict ? [{ type: 'run.verdict', ...run.verdict }] : []), { type: 'approval.decided', approvalId, approved: decision, actor }]);
+    }, run => [...(run.status === 'cancelled' && run.verdict ? [this.verdictEvent(run)] : []), { type: 'approval.decided', approvalId, approved: decision, actor }]);
   }
   // DESIGN §5.4: resume every run that has a due wait timer. Timers live in the store, so any Runtime instance
   // (a new process after a restart included) can do this. A timer whose node no longer waits is pruned; a run
@@ -201,7 +205,7 @@ class Invocation {
     this.store = runtime.store; this.registry = runtime.registry; this.runId = runId; this.runtime = runtime;
     this.abort = new AbortController(); this.token = randomUUID(); this.outerSignal = signal;
     this.flowDefinitions = new Map(); this.frameLabels = new Map(); this.frameControl = new Map(); this.nodeControl = new Map();
-    this.userCancelled = false;
+    this.userCancelled = false; this.replaySources = new Map();
     this.onAbort = () => { this.userCancelled = true; this.abort.abort(); };
     signal?.addEventListener('abort', this.onAbort, { once: true });
     if (signal?.aborted) this.onAbort();
@@ -320,7 +324,7 @@ class Invocation {
       if (states.some(n => n.status === 'awaiting_approval')) status = 'awaiting_approval';
       if (states.some(n => n.status === 'uncertain')) status = 'uncertain';
       if (status === 'succeeded' && Date.now() >= run.deadline) throw new FoundryError('DEADLINE', 'Run deadline exhausted before completion was committed');
-      return this.update(r => { r.status = status; r.owner = null; seal(r, this.workflow, this.store); }, r => [...(r.verdict ? [{ type: 'run.verdict', ...r.verdict }] : []), { type: `run.${status}` }]);
+      return this.update(r => { r.status = status; r.owner = null; seal(r, this.workflow, this.store); }, r => [...(r.verdict ? [this.runtime.verdictEvent(r)] : []), { type: `run.${status}` }]);
     } catch (error) {
       this.abort.abort();
       if (!owned) throw error;
@@ -328,7 +332,7 @@ class Invocation {
         const all = [...Object.values(r.nodes), ...Object.values(r.frames).flatMap(f => Object.values(f.nodes))];
         r.status = all.some(n => n.status === 'uncertain') ? 'uncertain' : (this.userCancelled || error.code === 'CANCELLED' ? 'cancelled' : 'failed');
         r.error = errorData(error); r.owner = null; seal(r, this.workflow, this.store);
-      }, r => [...(r.verdict ? [{ type: 'run.verdict', ...r.verdict }] : []), { type: 'run.stopped', error: errorData(error) }]);
+      }, r => [...(r.verdict ? [this.runtime.verdictEvent(r)] : []), { type: 'run.stopped', error: errorData(error) }]);
     } finally { this.outerSignal?.removeEventListener('abort', this.onAbort); }
   }
   recover() {
@@ -676,6 +680,10 @@ class Invocation {
   // Charges one journaled model call to its node and the run, once per journal row (a crash may replay the commit).
   // run.cost is known spend; a call whose spend is unknown adds its bound to costUnknownUpperUsd (DESIGN §2).
   chargeModel(frameKey, node, call, type, event) {
+    if (call.replayed === true && call.recovered !== true && call.replayedFrom != null) this.checkReplay(call);
+    // The event binds the journal row as persisted (request and response hashes, row digest), so editing the row later is detectable.
+    const { journalRowHash, requestHash, responseHash } = (call.journalId != null ? this.runtime.models?.journal?.binding?.(call.journalId) : null) ?? {};
+    if (journalRowHash) event = { ...event, journalRowHash, requestHash, responseHash };
     this.eventNode(frameKey, node.id, (f, r) => {
       const s = f.nodes[node.id], seen = s.journalIds ?? [];
       if (call.journalId != null && seen.includes(call.journalId)) return; // already charged before a crash
@@ -684,6 +692,45 @@ class Invocation {
       s.costUsd = (s.costUsd ?? 0) + cost; s.imputedUsd = (s.imputedUsd ?? 0) + (call.imputedUsd ?? 0); r.cost += cost;
       if (call.costUnknown === true) for (const t of [s, r]) { t.costUnknownCalls = (t.costUnknownCalls ?? 0) + 1; t.costUnknownUpperUsd = addBound(t.costUnknownUpperUsd, call.costUpperUsd); }
     }, type, event);
+  }
+  // A replayed call must reproduce what an earlier run's hash chain committed to (src/audit.mjs), or replay would launder an edited
+  // response into this run's evidence. Two checks, skipped for a recording that predates the binding or whose run is gone: the copy
+  // journaled for this call equals the original row, and the original is what its run's chain (or, if no event names it, its sealed
+  // journal root) bound. A mismatch stops the run before the response is used.
+  checkReplay(call) {
+    const journal = this.runtime.models?.journal;
+    if (typeof journal?.binding !== 'function') return;
+    const original = journal.get(call.replayedFrom), served = call.journalId == null ? null : journal.get(call.journalId);
+    if (!original) return;
+    const tampered = reason => new FoundryError('JOURNAL_TAMPERED', `Replay refused: journal row ${call.replayedFrom} ${reason}`, { journalId: call.replayedFrom, runId: original.runId });
+    if (served) {
+      const { replayedFrom, ...copy } = served.response ?? {}, { replayedFrom: _, ...first } = original.response ?? {};
+      if (served.ok !== original.ok || served.errorCode !== original.errorCode || digest(copy) !== digest(first)) throw tampered(`differs from the copy replayed from it (row ${call.journalId})`);
+    }
+    const origin = this.replaySource(original.runId);
+    if (!origin) return;
+    const bound = origin.rows.get(call.replayedFrom), row = journal.binding(call.replayedFrom);
+    if (bound !== undefined) { if (bound !== row.journalRowHash) throw tampered(`was edited after run ${original.runId} bound it`); return; }
+    // Not named by any event of its run: it is covered only by that run's sealed journal root, and only if it predates the seal.
+    if (!origin.seal) return;
+    if (call.replayedFrom > origin.seal.journalMaxId) throw tampered(`was written after run ${original.runId} was sealed and no event of it binds the row`);
+    if (!origin.rootChecked) {
+      const now = journalSeal(this.store.db, original.runId, origin.seal.journalMaxId);
+      if (now.root !== origin.seal.journalRoot || now.calls !== origin.seal.journalCalls) throw tampered(`belongs to a run whose sealed journal (event ${origin.seal.seq}) no longer matches its rows`);
+      origin.rootChecked = true;
+    }
+  }
+  // What a replay source run's verified chain says about its journal rows; null when the run is gone or predates the binding.
+  replaySource(runId) {
+    if (this.replaySources.has(runId)) return this.replaySources.get(runId);
+    let source = null;
+    try { this.store.run(runId); } catch (error) { if (error.code === 'NOT_FOUND') { this.replaySources.set(runId, null); return null; } throw error; }
+    const log = this.store.events(runId); // a corrupt source chain stops the run (CORRUPT_EVENTS) rather than feeding it
+    if (log[0]?.audit === AUDIT) {
+      source = { rows: new Map(log.filter(e => e.journalId != null && e.journalRowHash).map(e => [e.journalId, e.journalRowHash])), seal: log.findLast(e => e.type === 'run.verdict') ?? null, rootChecked: false };
+    }
+    this.replaySources.set(runId, source);
+    return source;
   }
   preflight(run) {
     if (this.signal().aborted) throw new FoundryError('CANCELLED', 'Execution cancelled');

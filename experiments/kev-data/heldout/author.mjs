@@ -51,6 +51,30 @@ export function writeOutputs(model, outDir = HELDOUT_DIR) {
   return files;
 }
 
+// Outputs that are not a build of `model` (2026-10-08 review, second pass: authored sources edited after the last
+// build left outputs that no longer matched them, and the copy filter, which re-assembles from the sources, passed
+// on text that was not the text shipped). Wordings, cities and the registry must be byte-identical; a surface file
+// must hold the same units with the same text, label, role, slice and skeleton (statuses and filter answers are
+// the two-model filter's to change). Returns the stale paths relative to outDir ([] when current).
+const UNIT_IDENTITY = ['id', 'port', 'role', 'label', 'slice', 'text', 'assumption', 'skeleton', 'type_label', 'venue', 'title', 'target'];
+const identityOf = u => JSON.stringify(UNIT_IDENTITY.map(k => u[k] ?? null));
+export function staleOutputs(model, outDir = HELDOUT_DIR) {
+  const stale = [], read = rel => { const f = path.join(outDir, rel); return existsSync(f) ? readFileSync(f, 'utf8') : null; };
+  const exact = {
+    'wordings.jsonl': jsonl(model.wordings.map(({ port, id, slice, text, register }) => ({ port, id, slice, text, register }))),
+    'cities.json': JSON.stringify({ version: 1, cities: model.cities }, null, 1) + '\n',
+    'registry.json': JSON.stringify(model.registry.toJSON()) + '\n',
+  };
+  for (const [rel, body] of Object.entries(exact)) if (read(rel) !== body) stale.push(rel);
+  for (const port of HELDOUT_SURFACE_PORTS) {
+    const rel = `surface/${port}.jsonl`, have = read(rel);
+    if (have === null) { stale.push(rel); continue; }
+    const onDisk = have.split('\n').filter(Boolean).map(l => identityOf(JSON.parse(l))).sort(), built = model.surface[port].map(u => identityOf(serializeUnit(u))).sort();
+    if (onDisk.length !== built.length || onDisk.some((x, i) => x !== built[i])) stale.push(rel);
+  }
+  return stale;
+}
+
 export function statusCounts(surface) {
   const c = { admitted: 0, 'pending-filter': 0, reserve: 0, rejected: 0, carrier: 0 };
   for (const units of Object.values(surface)) for (const u of units) c[u.status] = (c[u.status] ?? 0) + 1;
@@ -124,9 +148,18 @@ export function localDiagnostics(surface) {
 export function writeManifest(manifest, file = MANIFEST_PATH) { put(file, JSON.stringify(manifest, null, 1) + '\n'); return file; }
 // Rebuild the manifest after any output changed (the copy-filter report is one of the hashed files): the
 // committed copy (hashes and counts only) and the copy beside the outputs.
-export function refreshManifest(model, outDir = HELDOUT_DIR) {
+// The statuses and filter answers are taken from the surface files on disk (review, second pass): after the hosted-arms
+// group's two-model filter has rewritten them, a manifest built from a fresh assembly would count every line as
+// pending while hashing the filtered files.
+export function refreshManifest(model, outDir = HELDOUT_DIR, { manifestFile = MANIFEST_PATH } = {}) {
+  for (const port of HELDOUT_SURFACE_PORTS) {
+    const f = path.join(outDir, 'surface', `${port}.jsonl`);
+    if (!existsSync(f)) continue;
+    const onDisk = new Map(readFileSync(f, 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l)).map(o => [o.id, o]));
+    for (const u of model.surface[port]) { const o = onDisk.get(u.id); if (o) { u.status = o.status; u.filter = o.filter ?? null; } }
+  }
   const manifest = buildManifest(model, outDir);
-  writeManifest(manifest); put(path.join(outDir, 'manifest.json'), JSON.stringify(manifest, null, 1) + '\n');
+  writeManifest(manifest, manifestFile); put(path.join(outDir, 'manifest.json'), JSON.stringify(manifest, null, 1) + '\n');
   return manifest;
 }
 

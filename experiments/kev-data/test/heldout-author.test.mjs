@@ -27,7 +27,7 @@ import {
   ADDRESSEE_BROAD, ADDRESSEE_CORE, NAMED_REGISTERS, OOD_SLICES, QUOTA, SLICE_CUTS, hasBroadAddressee, hasCoreAddressee, oodSliceOfHash,
   parseSource, selectQuota, skeletonOf, HARD_TAGS, jaccard, ngramSet, dateExamples,
 } from '../heldout/pools.mjs';
-import { assemble, buildRegistry, selectPool, registrySliceConflicts } from '../heldout/assemble.mjs';
+import { assemble, buildRegistry, selectPool, registrySliceConflicts, fillVariants } from '../heldout/assemble.mjs';
 import { buildWordings, WORDING_PORTS, parseWordings, WORDING_COUNTS } from '../heldout/wordings.mjs';
 import { GAZETTEER, COUNTRY_ORDER, lookup, ambiguousNames } from '../heldout/gazetteer.mjs';
 import { x8Items } from '../heldout/x8.mjs';
@@ -35,8 +35,9 @@ import { fillText, slotsFor, filterRequests } from '../heldout/fill.mjs';
 import { ABSTAIN, checkFilterInvariant, resolveFilterModels, rejectLogLines, runTwoModelFilter, FILTER_MODEL_IDS } from '../heldout/filter.mjs';
 import { bedCorpus, runCopyFilter, trainPoolCorpus, jsStrings } from '../heldout/copy-filter.mjs';
 import { ruleLabel, hardness } from '../heldout/hardness.mjs';
-import { HELDOUT_DIR, MANIFEST_PATH, buildManifest } from '../heldout/author.mjs';
+import { HELDOUT_DIR, MANIFEST_PATH, buildManifest, writeOutputs, staleOutputs, refreshManifest } from '../heldout/author.mjs';
 import { deserializeUnit, filterRound } from '../heldout/run-filter.mjs';
+import { prefillHeldoutSlots } from '../heldout/surface.mjs';
 
 const TEST_FILE = fileURLToPath(import.meta.url);
 const KEV_DATA = path.resolve(path.dirname(TEST_FILE), '..');
@@ -159,6 +160,72 @@ test('unit: a fixture pool is assembled, sliced, selected and registered', () =>
   assert.ok(reg.scanState({ source_note: filled }, { slice: 'test-ood' }).length === 0, 'and not into its own slice');
   assert.ok(reg.scanState({ source_note: filled }, { slice: 'dev-ood' }).length >= 1, 'but into another OOD slice');
   assert.ok(!JSON.stringify(reg.toJSON()).includes('puts the day first'), 'the registry holds hashes, never text');
+});
+
+test('unit: a registered line is found in its rendered form: window dates, field names, cities and countries are registered filled', () => {
+  const fw = i => { let w = ''; let n = i + 17; do { w += 'abcdefghijklmnopqrstuvwxyz'[n % 26]; n = Math.floor(n / 26); } while (n); return w; };
+  // the records line provider fills {w0} {w1} with dates ("3 March 2024"), {field} with the system's update field and
+  // {token} with the world's marker (passed as a marker mask); the skeleton masks a {placeholder} as <n> but a date as
+  // <t> and keeps a field name, city or country, so a placeholder-only registration never matches the rendered state
+  const fx = fixtureDir({
+    'R4/reliable.01.txt': lines(40, i => `o@@Run ${fw(i)}: between {w0} and {w1} the {field} column of {S} kept its values, case ${fw(i * 3 + 1)}`),
+    'R2/void.01.txt': lines(40, i => `o@@Note ${fw(i)}: {S} rows flagged {token} are void, case ${fw(i * 5 + 2)}`),
+    'R1/know.01.txt': lines(12, i => `o@@Memo ${fw(i)}: the {S} back office works out of {city}, case ${fw(i * 7 + 3)}`) + lines(12, i => `o@@Memo ${fw(i + 50)}: the {S} servers stand in {country}, case ${fw(i * 11 + 4)}`),
+    'cities.01.txt': 'US@@Boise\nGB@@Leeds\n',
+  });
+  const m = assemble(fx, { lenient: true });
+  const pick = (port, re) => m.surface[port].find(u => re.test(u.text));
+  const other = s => OOD_SLICES.find(x => x !== s);
+  const r4 = pick('R4', /\{w0\}/), r2 = pick('R2', /\{token\}/), city = pick('R1', /\{city\}/), country = pick('R1', /\{country\}/);
+  const cases = [
+    [r4, r4.text.replace('{w0}', '4 May 2023').replace('{w1}', '9 June 2023').replace('{field}', 'last change').replace('{S}', 'KOBO'), {}],
+    [r2, r2.text.replace('{token}', '[DEL-7]').replace('{S}', 'LEDGR'), { markers: ['[DEL-7]'] }],
+    [city, city.text.replace('{S}', 'ATLAS').replace('{city}', 'Leeds'), {}],
+    [country, country.text.replace('{S}', 'VENDEX').replace('{country}', 'Ireland'), {}],
+  ];
+  for (const [u, filled, masks] of cases) {
+    assert.ok(m.registry.scanState({ source_note: filled }, { ...masks, slice: 'train' }).length >= 1, `${u.id}: the rendered line is found in a training state`);
+    assert.ok(m.registry.scanState({ source_note: filled }, { ...masks, slice: other(u.slice) }).length >= 1, `${u.id}: and in another OOD slice`);
+    assert.equal(m.registry.scanState({ source_note: filled }, { ...masks, slice: u.slice }).length, 0, `${u.id}: but not in its own slice`);
+  }
+  assert.deepEqual(registrySliceConflicts(m.registry), []);
+  assert.equal(m.registry.entries().filter(e => e.kind === 'entity').length, 2, 'filled variants never count as entities');
+  assert.deepEqual(fillVariants('no slots here {S}', { fields: ['ts'] }), []);
+  assert.equal(fillVariants('{field} between {w0} and {w1}', { fields: ['ts', 'upd'] }).length, 4, 'window shapes x field values');
+});
+
+test('unit: prefillHeldoutSlots fills only the placeholders the records provider does not know, from the unit\'s own slice', () => {
+  const cities = [{ city: 'Boise', cc: 'US', order: 'mdy', slice: 'dev-ood' }, { city: 'Leeds', cc: 'GB', order: 'dmy', slice: 'dev-ood' }, { city: 'Graz', cc: 'AT', order: 'dmy', slice: 'test-ood' }];
+  const u = { id: 'R1-know-x', text: 'the {S} team sits in {city}, {S2} shares it; marker {token} from {w0} to {w1}', slice: 'dev-ood' };
+  const a = prefillHeldoutSlots(u, { cities, order: 'dmy', system: 'ATLAS' });
+  assert.equal(a.values.city, 'Leeds', 'a dmy city of the unit\'s own slice'); assert.notEqual(a.values.S2, 'ATLAS');
+  assert.match(a.text, /\{S\}.*\{token\}.*\{w0\}.*\{w1\}/, 'the records vocabulary is left for the provider'); assert.ok(!/\{(?:S2|city|country)\}/.test(a.text));
+  assert.equal(prefillHeldoutSlots({ ...u, text: 'servers in {country}' }, { cities, order: 'mdy' }).text, 'servers in United States');
+  assert.throws(() => prefillHeldoutSlots(u, { cities }), /order being instantiated/);
+  assert.throws(() => prefillHeldoutSlots({ ...u, slice: 'calib-ood' }, { cities, order: 'mdy' }), /no held-out mdy city in calib-ood/);
+  assert.deepEqual(prefillHeldoutSlots(u, { cities, order: 'dmy', system: 'ATLAS' }), a, 'deterministic');
+});
+
+test('unit: staleOutputs reports outputs that are not a build of the current authored sources', () => {
+  const fw = i => { let w = ''; let n = i + 17; do { w += 'abcdefghijklmnopqrstuvwxyz'[n % 26]; n = Math.floor(n / 26); } while (n); return w; };
+  const fx = fixtureDir({ 'R1/dmy.01.txt': lines(20, i => `o@@Line ${fw(i)}: {S} puts the day first, case ${fw(i * 3 + 7)}`) });
+  const out = H.tempDir('kev-heldout-out-');
+  const m1 = assemble(fx, { lenient: true });
+  writeOutputs(m1, out);
+  assert.deepEqual(staleOutputs(m1, out), [], 'a fresh build is current');
+  const f = path.join(out, 'surface', 'R1.jsonl'), rows = jsonl(f);
+  rows[0].status = rows[0].status === 'reserve' ? 'pending-filter' : 'reserve'; rows[0].filter = null;
+  writeFileSync(f, rows.map(r => JSON.stringify(r)).join('\n') + '\n');
+  assert.deepEqual(staleOutputs(m1, out), [], 'statuses are the two-model filter\'s to change');
+  // a manifest refreshed after the filter counts the statuses on disk, not those of a fresh assembly
+  const admitted = rows.find(r => r.status === 'pending-filter'); admitted.status = 'admitted'; admitted.filter = { sonnet: ['dmy'], opus: ['dmy'], expect: ['dmy'], models: FILTER_MODEL_IDS };
+  writeFileSync(f, rows.map(r => JSON.stringify(r)).join('\n') + '\n');
+  const mf = path.join(H.tempDir('kev-heldout-mf-'), 'manifest.json'), man = refreshManifest(assemble(fx, { lenient: true }), out, { manifestFile: mf });
+  assert.equal(man.status.admitted, 1, 'the admitted line on disk is counted'); assert.equal(JSON.parse(readFileSync(mf, 'utf8')).status.admitted, 1);
+  assert.equal(man.files['surface/R1.jsonl'].sha256, sha(readFileSync(f)), 'and the hash is of the filtered file');
+  writeFileSync(path.join(fx, 'R1', 'dmy.02.txt'), 'o@@One more line: {S} writes the day before the month, case extra\n');
+  const m2 = assemble(fx, { lenient: true });
+  assert.deepEqual(staleOutputs(m2, out).sort(), ['registry.json', 'surface/R1.jsonl'], 'an authored line added after the build makes the outputs stale');
 });
 
 test('unit: top-up lines (tag tu=1) are forced into the selection and never exceed the slice quota', () => {
@@ -346,8 +413,11 @@ test('unit: the copy filter flags a line that copies a bed template and passes a
   const rep2 = runCopyFilter({ units, corpora: { bed: corpus, trainPools: tp } });
   assert.ok(rep2.failing.some(f => f.id === 'indep' && f.against === 'trainPools'), 'a train-pool line is checked too');
   assert.equal(trainPoolCorpus(path.join(pools, 'nope')).present, false);
-  const rep3 = runCopyFilter({ units: [{ id: 't', port: 'S5', role: 'type-name', text: 'Retraction notice', type_label: 'Retraction notice', title: 'x' }], corpora: { bed: { strings: ['retraction notice'], files: 1 } } });
-  assert.deepEqual(rep3.failing.map(f => f.id), ['t'], 'an unseen type name that equals a bed string is flagged');
+  // a bed type label is shorter than four words, so bedCorpus keeps it in `short` (not in the 4-gram index): only the exact rule sees it
+  const rep3 = runCopyFilter({ units: [{ id: 't', port: 'S5', role: 'type-name', text: 'Retraction notice', type_label: 'Retraction notice', title: 'a title that shares nothing with the bed' }], corpora: { bed: { strings: ['an unrelated bed sentence of some length here'], short: ['Retraction notice'], files: 1 } } });
+  assert.deepEqual(rep3.failing.map(f => `${f.id}:${f.kind}`), ['t:exact'], 'an unseen type name that equals a (short) bed string is flagged');
+  const shortBed = bedCorpus(frozenBeds(freezeBeds(H.tempBedRepo({ 'beds/synth/catalog.mjs': "export const TYPE_LABELS = { retraction: 'Retraction notice' };\n", 'beds/lib/canonical.mjs': 'export const c = 1;\n', 'beds/CONTRACT.md': '# contract\n' }), { outRoot: H.tempDir('kev-cf2-') })));
+  assert.ok(shortBed.short.includes('Retraction notice'), 'bedCorpus keeps short bed strings for the exact rule');
   assert.deepEqual(jsStrings('const a = "one two three four", b = `x ${y} five six seven eight`;'), ['one two three four', 'x  {x}  five six seven eight']);
 });
 
@@ -484,6 +554,27 @@ test('acceptance: R1-R4, X1, X5-records and X8-conventions pools hold 200 select
   for (const u of x5a) { assert.equal(oodSliceOfHash(skeletonOf(u.assumption, masks)), u.slice, `${u.id}: assumption in its own slice`); assert.ok((regHashes.get(skeletonOf(u.assumption, masks)) ?? []).includes(u.slice), `${u.id}: assumption registered`); }
 });
 
+test('acceptance: the outputs are a build of the current authored sources, and the registry finds every line in its rendered form', { skip: MUTANT_RUN && 'needs the real outputs' }, () => {
+  // review, second pass: authored S5 names had been edited after the last build, so the outputs (and the manifest) no
+  // longer matched the sources the copy filter re-assembles
+  const model = assemble(path.join(DIR, 'authored'), { lenient: true });
+  assert.deepEqual(model.errors, [], 'the authored sources lint clean');
+  assert.deepEqual(staleOutputs(model, DIR), [], 'every output is a build of the current authored sources (run author.mjs build, then copy-filter.mjs)');
+  const { surface, cities } = real(), reg = SpanRegistry.fromJSON(real().registry), other = s => OOD_SLICES.find(x => x !== s);
+  const fields = C.R4.slots.field.values, misses = [];
+  let checked = 0;
+  for (const port of ['R1', 'R2', 'R4', 'X5']) for (const u of surface[port].filter(x => x.role !== 'carrier' && /\{(?:w0|w1|field|city|country)\}/.test(`${x.text} ${x.assumption ?? ''}`))) {
+    for (const t of [u.text, u.assumption].filter(Boolean)) {
+      const filled = t.replace(/\{w0\}/g, '12 May 2022').replace(/\{w1\}/g, '30 June 2022').replace(/\{field\}/g, fields[checked % fields.length]).replace(/\{city\}/g, cities[checked % cities.length].city)
+        .replace(/\{country\}/g, 'Denmark').replace(/\{S2?\}/g, 'KOBO').replace(/\{token\}/g, '<<ZZ9>>');
+      checked++;
+      if (!reg.scanState({ source_note: filled }, { markers: ['<<ZZ9>>'], slice: other(u.slice) }).length) misses.push(u.id);
+    }
+  }
+  assert.ok(checked >= 300, `checked ${checked} rendered lines`);
+  assert.deepEqual(misses, [], 'rendered held-out lines the registry does not find');
+});
+
 test('acceptance: registers: the three named other registers carry most of every label and each is really present; local hardness diagnostics are recorded', { skip: MUTANT_RUN && 'needs the real outputs' }, (t) => {
   const { surface, manifest } = real();
   for (const port of ['R1', 'R2', 'R3', 'R4', 'X1', 'X5']) for (const u0 of [...new Set(surface[port].filter(u => u.role === 'decisive').map(u => u.label))]) {
@@ -616,8 +707,14 @@ test('acceptance: files exist only under .foundry/kev-data/heldout/, only a sha2
   const heldTexts = [...new Set([...Object.values(surface).flat().flatMap(u => [u.text, u.assumption, u.title, u.venue, u.type_label]), ...wordings.map(w => w.text)].filter(t => typeof t === 'string'))];
   const pf = path.join(H.tempDir('kev-heldout-pat-'), 'patterns.txt'); writeFileSync(pf, heldTexts.filter(t => t.length >= 20).join('\n') + '\n');
   let grepHits = '';
-  try { grepHits = execFileSync('git', ['-C', REPO, 'grep', '-F', '-l', '--untracked', '-f', pf, '--', '.'], { encoding: 'utf8', maxBuffer: 1 << 26 }); } catch (e) { if (e.status !== 1) throw e; }
+  // beds/ is excluded from the repository grep (the live bed tree, beds/sealed/ among it, is never opened: review, second
+  // pass); the beds are searched in the frozen copy instead, which holds only the allow-listed files
+  try { grepHits = execFileSync('git', ['-C', REPO, 'grep', '-F', '-l', '--untracked', '-f', pf, '--', '.', ':(exclude)beds'], { encoding: 'utf8', maxBuffer: 1 << 26 }); } catch (e) { if (e.status !== 1) throw e; }
   assert.deepEqual(grepHits.trim().split('\n').filter(Boolean), [], 'held-out text found in repository files');
+  const frozenDir = REAL_BEDS().beds.dir; let bedHits = '';
+  assert.ok(!existsSync(path.join(frozenDir, 'beds', 'sealed')), 'the frozen copy holds no sealed bed');
+  try { bedHits = execFileSync('grep', ['-r', '-F', '-l', '-f', pf, '--', frozenDir], { encoding: 'utf8', maxBuffer: 1 << 26 }); } catch (e) { if (e.status !== 1) throw e; }
+  assert.deepEqual(bedHits.trim().split('\n').filter(Boolean).map(f => path.relative(frozenDir, f)), [], 'held-out text found in a bed file (frozen copy)');
   const norm = t => String(t).toLowerCase().replace(/\s+/g, ' ').trim(), shortSet = new Set(heldTexts.filter(t => t.length >= 12).map(norm));
   for (const f of [TEST_FILE, ...readdirSync(path.join(KEV_DATA, 'heldout')).filter(n => n.endsWith('.mjs')).map(n => path.join(KEV_DATA, 'heldout', n))])
     for (const lit of jsStrings(readFileSync(f, 'utf8'))) assert.ok(!shortSet.has(norm(lit)), `${path.basename(f)} carries a held-out text as a string literal`);
@@ -684,7 +781,7 @@ test('seeded defects: each mutation of the machinery fails the unit tests', { sk
       { name: 'addressee core list', mutations: [{ file: 'heldout/pools.mjs', from: 'assistants?|automated|bots?|chatbots?', to: 'assistants?|automated|chatbots?' }] },
       { name: 'exact class share', mutations: [{ file: 'heldout/pools.mjs', from: 'take(u => classOf(u) === cls, n - (counts[cls] ?? 0))', to: 'take(u => classOf(u) === cls, 0)' }] },
       { name: 'filter admits on one model', mutations: [{ file: 'heldout/filter.mjs', from: 'ok: sonnet === want && opus === want', to: 'ok: sonnet === want || opus === want' }] },
-      { name: 'copy filter threshold', mutations: [{ file: 'heldout/copy-filter.mjs', from: 'if (j > threshold || exact)', to: 'if (j > 9 || exact)' }] },
+      { name: 'copy filter threshold', mutations: [{ file: 'heldout/copy-filter.mjs', from: 'if (j > threshold || exact || sk)', to: 'if (j > 9 || exact || sk)' }] },
       { name: 'wording equals Q0', mutations: [{ file: 'heldout/wordings.mjs', from: 'if (qNorm.includes(n))', to: 'if (false)' }] },
       { name: 'X8 status truth', mutations: [{ file: 'heldout/x8.mjs', from: "good = V === 'void' ? 'no' : 'yes'", to: "good = V === 'void' ? 'yes' : 'no'" }] },
       { name: 'R1 example lint', mutations: [{ file: 'heldout/pools.mjs', from: 'x.order !== label && !isHard(tags)', to: 'false' }] },
@@ -692,11 +789,16 @@ test('seeded defects: each mutation of the machinery fails the unit tests', { sk
       { name: 'registry slice check off', mutations: [{ file: 'heldout/assemble.mjs', from: '.filter(([, m]) => m.size > 1)', to: '.filter(([, m]) => m.size > 9)' }] },
       { name: 'pair twin admitted alone', mutations: [{ file: 'heldout/filter.mjs', from: "u.status = ok && !pairFail ? 'admitted' : 'rejected';", to: "u.status = ok ? 'admitted' : 'rejected';" }] },
       { name: 'pair mirror overwrites the filter', mutations: [{ file: 'heldout/assemble.mjs', from: "if (!h || u.status === 'admitted' || u.status === 'rejected') continue;", to: 'if (!h) continue;' }] },
-      { name: 'copy filter skeleton rule off', mutations: [{ file: 'heldout/copy-filter.mjs', from: 'const sk = own.some(h => skel[k].has(h));', to: 'const sk = false;' }] },
+      { name: 'copy filter skeleton rule off', mutations: [{ file: 'heldout/copy-filter.mjs', from: 'const sk = !!skel[k] && own.some(h => skel[k].has(h));', to: 'const sk = false;' }] },
+      { name: 'copy filter exact type-name rule off', mutations: [{ file: 'heldout/copy-filter.mjs', from: "const exact = role === 'type-name' && t === texts[0]", to: 'const exact = false && t === texts[0]' }] },
+      { name: 'registry filled variants off', mutations: [{ file: 'heldout/assemble.mjs', from: 'for (const v of fillVariants(text, F)) {', to: 'for (const v of []) {' }] },
+      { name: 'prefill ignores the slice', mutations: [{ file: 'heldout/surface.mjs', from: 'c.order === order && c.slice === unit.slice', to: 'c.order === order' }] },
+      { name: 'manifest counts a fresh assembly', mutations: [{ file: 'heldout/author.mjs', from: 'if (o) { u.status = o.status; u.filter = o.filter ?? null; }', to: 'if (o) { /* ignored */ }' }] },
+      { name: 'stale surface ignored', mutations: [{ file: 'heldout/author.mjs', from: 'if (onDisk.length !== built.length || onDisk.some((x, i) => x !== built[i])) stale.push(rel);', to: 'if (false) stale.push(rel);' }] },
     ],
   });
   assert.deepEqual(r.control.failed, [], `the unmutated copy passes: ${r.control.failed.join('; ')}\n${r.control.stderr.slice(-400)}`);
-  assert.ok(r.control.passed.length >= 16, `the control ran ${r.control.passed.length} unit tests`);
+  assert.ok(r.control.passed.length >= 18, `the control ran ${r.control.passed.length} unit tests`);
   const survivors = r.mutants.filter(m => m.failed.length === 0).map(m => m.name);
   assert.deepEqual(survivors, [], `seeded defects survived the unit tests: ${survivors.join('; ')}`);
 });

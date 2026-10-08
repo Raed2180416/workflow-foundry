@@ -10,8 +10,12 @@
 //   one unit per line, `reg[,tag[=value]...]@@field[@@field...]`; blank lines and `#` lines skipped.
 //   reg is a register code (REGISTERS). Fields are the unit's text(s); placeholders are {S} (the
 //   system), {S2} (another system), {token} (the R2 marker), {w0} {w1} (an R4 date window), {field}
-//   (the R4 update-field name), {city} {country} (R1 team city / server country). The same names the
-//   train pools use, so one line provider serves both.
+//   (the R4 update-field name), {city} {country} (R1 team city / server country). {S} {token} {w0} {w1}
+//   {field} are names of the train pools' slot vocabulary (the records line provider fills them); {S2},
+//   {city} and {country} are NOT (that vocabulary has {city_us} {city_eu} {server}, filled from the bed's
+//   own lists), so a consumer fills those three first: {S2} with a system other than {S}, {city} and
+//   {country} from cities.json of the unit's slice with the order being instantiated (surface.mjs
+//   prefillHeldoutSlots). Corrected by the 2026-10-08 review (second pass).
 import { createHash } from 'node:crypto';
 import { skeleton, skeletonPercent, sentences } from '../lib/hash.mjs';
 import { defaultMasks } from '../lib/leakage.mjs';

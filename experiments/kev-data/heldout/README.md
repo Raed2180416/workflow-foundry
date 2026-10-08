@@ -15,7 +15,8 @@ other groups' files. The programs that do read them are scripts that report ids 
 
 - `copy-filter.mjs` reads the frozen bed copy (allow-listed files, `beds/sealed/` excluded) and the train
   pools, and writes `copy-filter.json` with ids, jaccard values and counts.
-- `test/heldout-author.test.mjs` reads `TEAM_CITIES` from the frozen bed copy to check the city list.
+- `test/heldout-author.test.mjs` reads `TEAM_CITIES` from the frozen bed copy to check the city list, and greps the
+  frozen copy (never the live `beds/` tree, which holds `beds/sealed/`) for held-out text; its repository grep excludes `beds/`.
 
 One slip is on record: a grep for the name `TEAM_CITIES` over `experiments/kev-data` while debugging the city
 test printed a handful of matching lines from `pools/templates.mjs`, `solve/records-lib.mjs` and
@@ -37,7 +38,8 @@ node experiments/kev-data/heldout/run-filter.mjs --providers <module.mjs> [--rou
 node --test experiments/kev-data/test/heldout-author.test.mjs
 ```
 
-Order after editing an authored source: `build`, then `copy-filter`. The copy filter rewrites the manifest because
+Order after editing an authored source: `build`, then `copy-filter` (it refuses to run on outputs that are not a build of
+the current sources: `author.mjs staleOutputs`). The copy filter rewrites the manifest because
 its report is one of the hashed outputs.
 
 ## Authored sources (`.foundry/kev-data/heldout/authored/`, git-ignored)
@@ -85,3 +87,22 @@ answered by adding lines tagged `tu=1` or `tu=2` (at most two rounds); they are 
   none, so the window is not a label cue.
 - X5 `not_stated` units: at least 50 percent presence-matched (a same-register sentence about another system or
   convention), absent-system at most 10 percent.
+
+## Placeholders and the registry (review, second pass, 2026-10-08)
+
+- `{S}` `{token}` `{w0}` `{w1}` `{field}` are names of the train pools' slot vocabulary, which the records line provider fills
+  from the world. `{S2}`, `{city}` and `{country}` are not in that vocabulary (it has `{city_us}` `{city_eu}` `{server}`, filled
+  from the bed's own lists) and its `fillLine` throws on them. A consumer calls `surface.mjs prefillHeldoutSlots(unit, {cities,
+  order, system})` first: `{S2}` becomes another system, `{city}`/`{country}` a held-out city of the unit's slice with the order
+  being instantiated.
+- `registry.json` registers every text in placeholder form and, for the slots the skeleton does not mask to `<n>` (window dates,
+  the R4 field name, cities, countries), under canonical fillings (`assemble.mjs fillVariants`: both window shapes, every contract
+  value of the field slot, every held-out city, every gazetteer country; X8 lines also under the conventions sentence `x8Items`
+  renders). Before, such a line was registered only as `<n>` and could never match its rendered sentence, so the build's span
+  check was blind to it in training and across OOD slices. `{S}` and `{S2}` match through the registry's name masks, `{token}`
+  only when the consumer passes the world's markers (`meta.masks.markers`), as the records generator does.
+- The acceptance tests check that the outputs are a build of the current authored sources (`staleOutputs`) and that every R1,
+  R2, R4 and X5 line with such a slot is found by the registry once rendered.
+- S5: over the two review passes nine unseen type names were retired or renamed: three the program quotes as examples, five
+  equal to a string of the frozen bed copy (three of them synth `TYPE_LABELS`), one quoted in the test file. The copy filter's
+  exact rule compares every type label with every bed string, short ones included; the outputs were rebuilt afterwards.

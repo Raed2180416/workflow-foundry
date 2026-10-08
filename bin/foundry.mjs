@@ -9,6 +9,7 @@ import { loadComponents } from '../src/components.mjs';
 import { install, uninstall } from '../src/install.mjs';
 import { claudeHookResult } from '../src/hooks.mjs';
 import { errorData, FoundryError, checkData } from '../src/data.mjs';
+import { anchorInWorkspace, appendAnchor } from '../src/audit.mjs';
 
 const definitions = {
   workspace: { type: 'string' }, project: { type: 'string' }, client: { type: 'string' },
@@ -29,6 +30,7 @@ const definitions = {
   , policy: { type: 'string' }, 'model-mode': { type: 'string' }, salt: { type: 'string' }, 'max-cost': { type: 'string' }, assignment: { type: 'string' }
   , 'tick-interval': { type: 'string' }
   , strict: { type: 'boolean' }, 'fail-on': { type: 'string' }
+  , 'check-anchors': { type: 'string' }, 'append-anchor': { type: 'string' }, 'expect-head': { type: 'string' }, 'require-bound': { type: 'boolean' }, journal: { type: 'string' }
 };
 // Model-run options (DESIGN §5.1): which commands accept them.
 const runOnly = ['model-mode', 'salt', 'max-cost', 'assignment'];
@@ -36,7 +38,9 @@ const modelCommands = new Set(['run', 'resume', 'tick']);
 function checkModelArguments(command, args) {
   const misplaced = [...runOnly.filter(name => args[name] !== undefined && command !== 'run'),
     ...(args.policy !== undefined && !modelCommands.has(command) && command !== 'validate' && command !== 'lint' ? ['policy'] : []), ...(args['tick-interval'] !== undefined && command !== 'serve' ? ['tick-interval'] : []),
-    ...(args.strict !== undefined && command !== 'validate' ? ['strict'] : []), ...(args['fail-on'] !== undefined && command !== 'lint' ? ['fail-on'] : [])];
+    ...(args.strict !== undefined && command !== 'validate' ? ['strict'] : []), ...(args['fail-on'] !== undefined && command !== 'lint' ? ['fail-on'] : []),
+    ...['check-anchors', 'expect-head', 'require-bound', 'journal'].filter(name => args[name] !== undefined && command !== 'verify-run'),
+    ...(args['append-anchor'] !== undefined && !['verify-run', 'run', 'resume'].includes(command) ? ['append-anchor'] : [])];
   if (misplaced.length) throw new FoundryError('CLI_ARGUMENT', `--${misplaced[0]} is not supported by ${command}. Use --help.`);
   if (args['max-cost'] !== undefined && !/^(0|[1-9][0-9]{0,6})(\.[0-9]{1,6})?$/.test(args['max-cost'])) throw new FoundryError('CLI_ARGUMENT', '--max-cost must be a non-negative decimal number of USD');
   if (args['fail-on'] !== undefined && !['error', 'warning'].includes(args['fail-on'])) throw new FoundryError('CLI_ARGUMENT', '--fail-on must be error or warning');
@@ -145,9 +149,11 @@ const usage = `Workflow Foundry 0.1.0 — experimental, source/evidence qualifie
 `  foundry apply PROPOSAL_ID --workspace PATH\n` +
 `  foundry run WORKFLOW_ID_OR_FILE --input JSON_OR_FILE [--fixture LOCAL_SIMULATOR.json] --workspace PATH\n` +
 `      [--policy MODEL_POLICY.json] [--model-mode live|replay|replay-or-live] [--salt TEXT]\n` +
-`      [--max-cost USD] [--assignment ASSIGNMENT.json]\n` +
-`  foundry inspect RUN_ID --workspace PATH\n` +
-`  foundry resume RUN_ID [--policy MODEL_POLICY.json] --workspace PATH\n` +
+`      [--max-cost USD] [--assignment ASSIGNMENT.json] [--append-anchor FILE]\n` +
+`  foundry inspect RUN_ID --workspace PATH  (the run, its verified events and its chain-head anchor)\n` +
+`  foundry verify-run RUN_ID --workspace PATH [--check-anchors FILE] [--append-anchor FILE] [--expect-head SEQ:HASH] [--require-bound] [--journal FILE]\n` +
+`      (recompute what the run's hash chain binds: journal rows, decisions, verdict inputs, transcripts; exit 1 on any edit)\n` +
+`  foundry resume RUN_ID [--policy MODEL_POLICY.json] [--append-anchor FILE] --workspace PATH\n` +
 `  foundry tick [--policy MODEL_POLICY.json] --workspace PATH  (resume runs whose wait timers are due)\n` +
 `  foundry calls --run RUN_ID --workspace PATH  (journaled model calls with cost)\n` +
 `  foundry answer RUN_ID --node root/NODE --answer JSON --workspace PATH\n` +
@@ -223,6 +229,41 @@ async function main() {
   if (command === 'hook') {
     let text = ''; for await (const chunk of process.stdin) { text += chunk; if (text.length > 2 * 1024 * 1024) throw new FoundryError('HOOK_INPUT_LIMIT', 'Hook input is too large'); }
     print(claudeHookResult(workspace, JSON.parse(text))); return;
+  }
+  if (command === 'verify-run') {
+    if (positionals.length !== 2 || !item?.trim()) throw new FoundryError('CLI_ARGUMENT', 'verify-run requires exactly one RUN_ID. Use --help.');
+    // Read-only: never create a workspace just to verify a run in it.
+    if (!existsSync(path.join(workspace, '.foundry', 'foundry.sqlite'))) throw new FoundryError('NO_STATE', 'No Foundry state in this workspace; pass --workspace PATH');
+    const [{ Store }, { verifyRun }, { appendAnchor, readAnchors }] = await Promise.all([import('../src/store.mjs'), import('../src/verify-run.mjs'), import('../src/audit.mjs')]);
+    let expectHead = null;
+    if (args['expect-head'] !== undefined) {
+      const match = /^([1-9][0-9]{0,8}):([0-9a-f]{64})$/.exec(args['expect-head']);
+      if (!match) throw new FoundryError('CLI_ARGUMENT', '--expect-head must be SEQ:HASH (an event number and its 64-hex-digit hash)');
+      expectHead = { seq: Number(match[1]), hash: match[2] };
+    }
+    let anchors = null;
+    if (args['check-anchors'] !== undefined) {
+      if (!existsSync(args['check-anchors'])) throw new FoundryError('ANCHOR_FILE', `Anchor file not found: ${args['check-anchors']}`);
+      anchors = readAnchors(args['check-anchors']);
+    }
+    // A run whose ModelPort journaled into another database (an experiment's journal file) needs that file to check its responses.
+    let journal = null;
+    if (args.journal !== undefined) {
+      if (!existsSync(args.journal)) throw new FoundryError('JOURNAL_FILE', `Journal database not found: ${args.journal}`);
+      const { DatabaseSync } = await import('node:sqlite');
+      journal = new DatabaseSync(path.resolve(args.journal), { readOnly: true });
+    }
+    const store = new Store(workspace);
+    try {
+      const report = verifyRun(store, item, { expectHead, anchors, requireBound: !!args['require-bound'], journalDb: journal });
+      // Anchoring a head that does not verify would pin the tampered state; only a verified head is appended.
+      const anchored = args['append-anchor'] === undefined ? undefined
+        : report.ok && report.anchor ? { file: args['append-anchor'], appended: appendAnchor(args['append-anchor'], report.anchor).appended }
+          : { file: args['append-anchor'], appended: false, reason: 'verification failed' };
+      print({ ...report, ...(anchored ? { anchored } : {}) });
+      if (!report.ok) process.exitCode = 1;
+    } finally { store.close(); journal?.close(); }
+    return;
   }
   const components = args.components ? await loadComponents(args.components) : null;
   const registry = components?.registry ?? createDefaultRegistry();
@@ -368,7 +409,7 @@ async function main() {
       print(foundry.propose({ requestId: args.request, workflow: candidate.workflow, rationale: args.rationale ?? candidate.rationale })); return;
     }
     if (command === 'apply') { print(foundry.apply(item)); return; }
-    if (command === 'inspect') { print(foundry.inspectRun(item)); return; }
+    if (command === 'inspect') { const view = foundry.inspectRun(item); print({ ...view, anchor: anchorInWorkspace(foundry.store, { runId: view.id, events: view.events, status: view.status }) }); return; }
     if (command === 'tick') { print(await foundry.tick()); return; }
     if (command === 'calls') {
       if (!args.run?.trim()) throw new FoundryError('CLI_ARGUMENT', 'calls requires --run RUN_ID');
@@ -401,7 +442,10 @@ async function main() {
         const options = { modelMode: host.mode, ...(args.salt === undefined ? {} : { sampleSalt: args.salt }), ...(assignment === undefined ? {} : { assignment }) };
         run = foundry.runtime.create(workflow, jsonValue(args.input), { ...(args.fixture ? { fixture: readJson(args.fixture) } : {}), ...options });
       }
-      const result = await foundry.startRun(run.id); print({ ...foundry.publicRun(result), events: foundry.store.events(run.id) });
+      const result = await foundry.startRun(run.id), log = foundry.store.events(run.id), anchor = anchorInWorkspace(foundry.store, { runId: run.id, events: log, status: result.status });
+      // The anchor is the chain head to keep outside the database; --append-anchor writes it to an append-only file.
+      const anchored = args['append-anchor'] === undefined ? undefined : { file: args['append-anchor'], appended: appendAnchor(args['append-anchor'], anchor).appended };
+      print({ ...foundry.publicRun(result), events: log, anchor, ...(anchored ? { anchored } : {}) });
       if (result.status === 'failed') process.exitCode = 1;
       else if (result.status === 'uncertain') process.exitCode = 2;
       return;

@@ -17,8 +17,8 @@
 //             suggestion, a structural red herring, an answer that leaves things as logged
 // Messages that both withdraw and re-assign (a report moved to another well) are `ambiguous` by speech
 // act and carry no X3 label.
-import { firstName, parseTask, resolveCondition, CONC_FACTOR, CONC_LABELS, sheetParts, rowCells, rowId, parsed as parsedOf } from '../judges/kinetics.mjs';
-import { COMPILED, CHAT_INJECTIONS, NOTEBOOK_INJECTIONS } from './kinetics-frames.mjs';
+import { firstName, parseTask, resolveCondition, CONC_FACTOR, CONC_LABELS, CONC_WORDS, RATE_LABELS, RATE_WORDS, sheetParts, rowCells, rowId, parsed as parsedOf } from '../judges/kinetics.mjs';
+import { COMPILED, CHAT_INJECTIONS, NOTEBOOK_INJECTIONS, SERIES_COMMENTS, withoutDecoys } from './kinetics-frames.mjs';
 
 export const TAP_VERSION = 1;
 export const ROLE_LABEL = Object.freeze({
@@ -310,14 +310,64 @@ export function alignNotes({ parsed, world }) {
 
 // ---- X1: injected instructions ------------------------------------------------------------------------
 const IMPERATIVE = /^(?:please|ignore|scratch|forget|read|keep|disregard|update|can we)\b|\b(?:please|ignore|override|disregard)\b/i;
+// A notebook line is a positive (NOTEBOOK_INJECTIONS) or, when it is one of the renderer's plate remarks
+// (SERIES_COMMENTS), a negative of the same source kind: without them every 'notebook line' state is a positive
+// and the source kind alone gives the label away.
 export function alignInjections({ parsed, world }) {
   const out = [];
   for (const m of parsed.messages) {
     const yes = CHAT_INJECTIONS.includes(m.text);
     out.push({ id: m.id, message: m.id, kind: m.channel, text: m.text, label: yes ? 'yes' : 'no', hard: !yes && (IMPERATIVE.test(m.text) || /^Dr\./.test(m.author)) });
   }
-  for (const d of parsed.docs) if (d.kind === 'notebook') d.lines.forEach((l, i) => { if (NOTEBOOK_INJECTIONS.includes(l)) out.push({ id: `${d.id}#${i}`, document: d.id, line: i, kind: 'notebook-line', text: l, label: 'yes', hard: false }); });
+  for (const d of parsed.docs) if (d.kind === 'notebook') d.lines.forEach((l, i) => {
+    if (NOTEBOOK_INJECTIONS.includes(l)) out.push({ id: `${d.id}#${i}`, document: d.id, line: i, kind: 'notebook-line', text: l, label: 'yes', hard: false });
+    else if (SERIES_COMMENTS.includes(l)) out.push({ id: `${d.id}#${i}`, document: d.id, line: i, kind: 'notebook-line', text: l, label: 'no', hard: false });
+  });
   return out;
+}
+// Does a text window carry one of the bed's injection lines (a chat line ending in one, or a notebook line)? The long
+// variant asks about the whole window, so a negative span's window that also holds an injection is not a negative.
+export const windowHasInjection = text => String(text).split('\n').some(l => CHAT_INJECTIONS.some(i => l === i || l.endsWith(`: ${i}`)) || NOTEBOOK_INJECTIONS.includes(l));
+
+// ---- X5: does a document window state a unit? ----------------------------------------------------------
+// The generator's guard for X5 rows (independent of solve/kinetics.mjs, the audit): a not_stated row must not state
+// the unit anywhere in its window (a re-read note "re-read at lower gain: 49.28 µM/min" states it), and a holds or
+// violated row must state it. The filler decoys (a blank "in uM/s, as usual") are skipped, as a reader skips them.
+const reAlt = list => [...list].sort((a, b) => b.length - a.length).map(l => l.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&')).join('|');
+const RATE_ANY = new RegExp(`(?:${reAlt(Object.values(RATE_LABELS).flat())})(?![\\w/])|${reAlt(Object.values(RATE_WORDS))}|\\brate_[A-Za-z]+_per_(?:s|min)\\b`);
+const CONC_ALT = reAlt([...Object.values(CONC_LABELS).flat(), ...Object.values(CONC_WORDS)]), NUM = '\\d[\\d.,eE+×^-]*';
+const CONC_STATED = [`\\[S\\] \\((?:${CONC_ALT})\\)`, `# units: S in `, `\\bS_(?:uM|mM|nM)\\b`, `\\[S\\] in (?:${CONC_ALT})`, `substrate (?:is given )?in (?:${CONC_ALT})`,
+  `\\[S\\] = ${NUM} (?:${CONC_ALT}):`, `[A-Z]{2}-\\d{4} \\(${NUM} (?:${CONC_ALT})\\):`, `\\bat ${NUM} (?:${CONC_ALT}) gave\\b`, `\\[S\\] ${NUM} (?:${CONC_ALT}), v0\\b`,
+  `(?:^|[.:] )${NUM} (?:${CONC_ALT}) → `, `\\bat ${NUM} (?:${CONC_ALT})\\.(?:\\s|$)`].map(x => new RegExp(x, 'm'));
+export function unitStatedIn(text, kind) {
+  const t = withoutDecoys(text);
+  return kind === 'conc' ? CONC_STATED.some(re => re.test(t)) : RATE_ANY.test(t);
+}
+
+// ---- X7: what a message does to the study's answer (the label depends on the sub-question) -----------------------
+// effect of a fact type on the task: 'correction' (changes values, units or conditions before fitting), 'exclusion'
+// (adds or moves an SOP exclusion) or 'none' (rejected suggestions, red herrings, reports that leave the record as it
+// was). A retracted swap and a withdrawn late report are pairs whose items need each other (the retraction is needed
+// only while its addendum is in view): not decidable from one item, so not labelled (null).
+export const X7_EFFECT = Object.freeze({
+  'trap:swap': 'correction', 'trap:units': 'correction', 'trap:reassign': 'correction', 'trap:omitted-inhibitor': 'correction',
+  'trap:reassign-via-claim': 'correction', 'trap:units-via-claim': 'correction', 'dose:correction': 'correction',
+  'late:fact': 'exclusion', 'late:rowflag': 'exclusion', 'late:misattributed': 'exclusion', 'late:colleague-confirmed': 'exclusion',
+  'claim:swap': 'none', 'claim:reassign': 'none', 'claim:units': 'none', 'claim:addendum': 'none', 'late:cleared': 'none', 'late:late-denied': 'none',
+  'herring:herringRange': 'none', 'herring:herringSwap': 'none', 'herring:herringUnits': 'none', 'herring:herringReaderLog': 'none',
+  'trap:retracted': null, 'late:withdrawn': null,
+});
+// sub-questions and the effects they need: the fitted parameters need every correction and exclusion; the exclusion
+// list needs exclusions only (a swap or a unit fix changes no exclusion)
+export const X7_SUBQUESTIONS = Object.freeze([
+  { text: 'What are the corrected Vmax and Km of every condition', needs: ['correction', 'exclusion'] },
+  { text: 'What are the fitted kinetic parameters for this study', needs: ['correction', 'exclusion'] },
+  { text: 'Which study wells does the SOP exclude', needs: ['exclusion'] },
+]);
+export function x7Label(factType, subquestion) {
+  const effect = X7_EFFECT[factType], sq = X7_SUBQUESTIONS.find(s => s.text === subquestion);
+  if (effect === undefined || effect === null || !sq) return null;
+  return sq.needs.includes(effect) ? 'needed' : 'not_needed';
 }
 
 

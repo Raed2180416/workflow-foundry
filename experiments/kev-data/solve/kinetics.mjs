@@ -3,7 +3,7 @@
 // >= 99.5% of the rows it decides. A solver returns { label, basis } or { label: null, reason } for a row it
 // cannot decide (listed, never forced). Ports whose labels are semantic (X3 content classes, K1, X7) run the
 // solver on their template-bearing subset only; the rest relies on the masked-state collision audit.
-import { COMPILED, CHAT_INJECTIONS, NOTEBOOK_INJECTIONS } from '../taps/kinetics-frames.mjs';
+import { COMPILED, CHAT_INJECTIONS, NOTEBOOK_INJECTIONS, withoutDecoys } from '../taps/kinetics-frames.mjs';
 import { RATE_FACTOR, RATE_LABELS, RATE_WORDS, CONC_LABELS, CONC_WORDS, rowCells, parseRate, resolveCondition, UNIT_CODES } from '../judges/kinetics.mjs';
 import { skeletonText } from '../lib/hash.mjs';
 import { stringLeaves } from '../lib/leakage.mjs';
@@ -37,11 +37,19 @@ export function rateUnitStated(text) {
 }
 export function concUnitStated(text) {
   const t = String(text);
-  for (const re of [/\[S\] \(([^)]+)\)/, /# units: S in (.+?),/, /\[S\] in (.+?)(?:\.|$)/m, /substrate is given in (.+?), as on/, /substrate in (.+?) and rates/]) {
+  for (const re of [/\[S\] \(([^)]+)\)/, /# units: S in (.+?),/, /\[S\] in ([^,.;)\n]+)/, /substrate is given in (.+?), as on/, /substrate in (.+?) and rates/]) {
     const m = re.exec(t); if (m) { const u = concUnitOfLabel(m[1]); if (u) return u; }
   }
   const col = /\bS_([A-Za-z]+)\b/.exec(t);
-  return col && CONC_FACTOR_CODES.includes(col[1]) ? col[1] : null;
+  if (col && CONC_FACTOR_CODES.includes(col[1])) return col[1];
+  // units written after each value (a bench log): "VN-0285 (5 µM):", "at 20 µM gave", "[S] 300 µM, v0", "80 µM → ", "at 40 µM."
+  const labels = [...CONC_BY_LABEL.keys()].sort((a, b) => b.length - a.length).map(l => l.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&')).join('|');
+  const num = '\\d[\\d.,eE+×^-]*';
+  const found = new Set();
+  for (const re of [`[A-Z]{2}-\\d{4} \\(${num} (${labels})\\):`, `\\bat ${num} (${labels}) gave\\b`, `\\[S\\] ${num} (${labels}), v0\\b`, `(?:^|[.:] )${num} (${labels}) → `, `\\bat ${num} (${labels})\\.(?:\\s|$)`]) {
+    for (const m of t.matchAll(new RegExp(re, 'gm'))) found.add(concUnitOfLabel(m[1]));
+  }
+  return found.size === 1 ? [...found][0] : null;
 }
 const CONC_FACTOR_CODES = ['uM', 'mM', 'nM'];
 
@@ -124,7 +132,7 @@ export function solveX1(state) {
 // ---- X5 ------------------------------------------------------------------------------------------
 // the assumption (question slot) against the document window
 export function solveX5(state, { assumption }) {
-  const a = String(assumption), t = String(state.source_text);
+  const a = String(assumption), t = withoutDecoys(state.source_text);
   const sop = /(SOP-[A-Z]{2}-\d+) (?:rev|revision) (\d+)|revision (\d+) of (SOP-[A-Z]{2}-\d+)/.exec(a);
   if (sop) {
     const code = sop[1] ?? sop[4], n = Number(sop[2] ?? sop[3]);
@@ -169,11 +177,12 @@ export function solveX4(state) {
 }
 
 // ---- masked-state collisions (§2.7 step 2) ------------------------------------------------------------
-// Group rows by skeleton(state) + question; the share of groups with more than one label.
+// Group rows by skeleton(state) + question + slots (JUDGE-PROGRAM.md §2.7 step 2: the slot fillings are part of the
+// key, unmasked; for X8 they are the field and the extracted value); the share of groups with more than one label.
 export function collisions(rows, { exact = false } = {}) {
   const groups = new Map();
   for (const r of rows) {
-    const sk = exact ? JSON.stringify(r.state) : stringLeaves(r.state).map(l => skeletonText(l.text, r.masks ?? {})).join(' | '), key = `${sk}|${r.question}`;
+    const sk = exact ? JSON.stringify(r.state) : stringLeaves(r.state).map(l => skeletonText(l.text, r.masks ?? {})).join(' | '), key = `${sk}|${r.question}|${JSON.stringify(r.slots ?? {})}`;
     const g = groups.get(key) ?? { labels: new Set(), n: 0, example: r.id };
     g.labels.add(r.label); g.n++; groups.set(key, g);
   }

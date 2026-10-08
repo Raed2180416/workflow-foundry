@@ -264,22 +264,58 @@ export function assemble(authoredDir, { spec = loadSpec(), masks = defaultMasks(
   { const seen = new Map(); for (const u of surface.Q2) { if (seen.has(u.skeleton)) errors.push(`${u.source}: Q2 cue repeats ${seen.get(u.skeleton)}${seen.get(u.skeleton).includes(u.label) ? '' : ' (different label: masked collision)'}`); else seen.set(u.skeleton, `${u.source}:${u.label}`); } }
 
   for (const port of Object.keys(surface)) surface[port].sort((a, b) => (a.role < b.role ? -1 : a.role > b.role ? 1 : (a.label ?? '') < (b.label ?? '') ? -1 : (a.label ?? '') > (b.label ?? '') ? 1 : byHash(a, b)));
-  const registry = buildRegistry({ surface, wordings, cities }, masks);
+  const registry = buildRegistry({ surface, wordings, cities }, masks, { spec });
   errors.push(...registrySliceConflicts(registry));
   if (errors.length && !lenient) { const e = new AuthorError('AUTHOR_LINT', `${errors.length} problem(s):\n  ${errors.slice(0, 60).join('\n  ')}${errors.length > 60 ? `\n  ... ${errors.length - 60} more` : ''}`); e.errors = errors; throw e; }
   return { wordings, surface, cities, registry, errors, stats, contractsHash: spec.hash };
 }
 
+// Filled-form variants (2026-10-08 review, second pass). A registered skeleton only matches a state sentence whose
+// skeleton is equal, and lib/hash.mjs masks a {placeholder} as <n>. {S} and {S2} are filled with a records system (a
+// registry name mask, so <n> again) and {token} with the world's marker (the consumer's meta.masks markers, <n>); every
+// other slot is filled with text the skeleton keeps or masks differently: a window date becomes <t> (or <d>/<d>), a field
+// name, city or country stays a word. Registered only in placeholder form, a line with such a slot could never be found
+// in a rendered state, in training or in another OOD slice. Each such text is therefore also registered under canonical
+// fillings of those slots: both window shapes, every contract value of the R4 field slot, every held-out city and every
+// country of the code gazetteer; and an X8 line under the conventions sentence x8Items() actually renders.
+export const VARIANT_SLOTS = Object.freeze(['w0', 'w1', 'field', 'city', 'country']);
+export const WINDOW_FILLS = Object.freeze([['3 March 2001', '19 April 2001'], ['03/2001', '04/2001']]);
+export function fillVariants(text, { fields = [], cities = [], countries = [] } = {}) {
+  const ph = placeholdersOf(text).filter(p => VARIANT_SLOTS.includes(p));
+  if (!ph.length) return [];
+  const axes = [];
+  if (ph.includes('w0') || ph.includes('w1')) axes.push(WINDOW_FILLS.map(([w0, w1]) => ({ w0, w1 })));
+  if (ph.includes('field')) axes.push(fields.map(field => ({ field })));
+  if (ph.includes('city')) axes.push(cities.map(city => ({ city })));
+  if (ph.includes('country')) axes.push(countries.map(country => ({ country })));
+  let combos = [{}];
+  for (const axis of axes) combos = combos.flatMap(c => axis.map(v => ({ ...c, ...v })));
+  return combos.map(v => String(text).replace(/\{([A-Za-z_][A-Za-z0-9_]*)\}/g, (m, n) => (v[n] ?? m)));
+}
+const defaultFills = (spec, cities) => ({ fields: [...(spec.contracts.R4?.slots?.field?.values ?? [])], cities: cities.map(c => c.city), countries: Object.values(COUNTRIES) });
+
 // The span-skeleton registry (§2.3 rule 7): hashes only, never text. Every authored line, assumption,
-// carrier, type name, cue and wording is registered with the slice it belongs to.
-export function buildRegistry({ surface, wordings, cities = [] }, masks = defaultMasks()) {
+// carrier, type name, cue and wording is registered with the slice it belongs to (and, for slots the skeleton
+// does not mask, under its filled forms: fillVariants above).
+export function buildRegistry({ surface, wordings, cities = [] }, masks = defaultMasks(), { fills = null, spec = null } = {}) {
   const reg = new SpanRegistry([], { masks });
-  const add = (text, slice, port, kind, source) => { if (text && String(text).trim()) reg.add(text, { slice, source, port, kind }); };
+  const F = fills ?? defaultFills(spec ?? loadSpec(), cities);
+  const add = (text, slice, port, kind, source) => {
+    if (!text || !String(text).trim()) return;
+    const base = reg.add(text, { slice, source, port, kind }), seen = new Set([base]);
+    for (const v of fillVariants(text, F)) {
+      const h = skeletonOf(v, masks);
+      if (!seen.has(h)) { seen.add(h); reg.add(v, { slice, source, port, kind: `${kind}-filled` }); }
+    }
+  };
   for (const [port, units] of Object.entries(surface)) {
     for (const u of units) {
       if (u.role === 'type-name') add(u.type_label, u.slice, port, 'type-label', `heldout:${u.id}`);
-      else if (u.role === 'decisive' && port === 'X8') add(u.text, u.slice, port, 'conventions', `heldout:${u.id}`);
-      else add(u.text, u.slice, port, u.role === 'carrier' ? 'carrier' : u.role === 'nondeciding' ? 'nondeciding' : u.role === 'cue' ? 'cue' : 'line', `heldout:${u.id}`);
+      else if (u.role === 'decisive' && port === 'X8') {
+        add(u.text, u.slice, port, 'conventions', `heldout:${u.id}`);
+        const rendered = u.items?.[0]?.conventions;
+        if (rendered && skeletonOf(rendered, masks) !== skeletonOf(u.text, masks)) reg.add(rendered, { slice: u.slice, source: `heldout:${u.id}`, port, kind: 'conventions-filled' });
+      } else add(u.text, u.slice, port, u.role === 'carrier' ? 'carrier' : u.role === 'nondeciding' ? 'nondeciding' : u.role === 'cue' ? 'cue' : 'line', `heldout:${u.id}`);
       if (u.assumption) add(u.assumption, u.slice, port, 'assumption', `heldout:${u.id}`);
     }
   }

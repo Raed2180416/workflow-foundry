@@ -16,10 +16,10 @@ import { loadSpec } from '../lib/contracts.mjs';
 import { sentences, skeleton, skeletonBucket } from '../lib/hash.mjs';
 import { defaultMasks } from '../lib/leakage.mjs';
 import { SLOT_VOCABULARY, assertInputClean, canonicalValues, extractTemplates, fillLine, paraphraseInput, slotsOf, templateSkeleton } from '../pools/templates.mjs';
-import { hasAddressee, isWindowed, literalDates } from '../pools/filters.mjs';
-import { CUT_LINE_FAMILIES, DEFAULT_OUT, HELDOUT_MANIFEST_PATH, MANIFEST_PATH, PER_TEMPLATE_TARGET, POOL_PORTS, TRAIN_FAMILIES, applyTwoModelVerdicts, briefsFor,
-  buildCandidates, buildTrainPools, checkAgainstHeldoutManifest, dropRegistryCollisions, expandPair, formGap, lineSkeleton, loadHeldoutManifest, manifestOf, providerLists, readJsonl, screen,
-  rejectsDirOf, summarize, windowBalance, windowBalanced, windowSkeletons, writeTrainPools, x1Stats } from '../pools/train-pools.mjs';
+import { cueVerdict, grams, hasAddressee, isWindowed, jaccardSets, literalDates, pairOrientation } from '../pools/filters.mjs';
+import { CUT_LINE_FAMILIES, DEFAULT_OUT, HELDOUT_MANIFEST_PATH, HELD_OUT_FAMILY_BEDS, MANIFEST_PATH, PER_TEMPLATE_TARGET, POOL_PORTS, THRESHOLDS, TRAIN_FAMILIES, applyTwoModelVerdicts, bedSourceStrings, briefsFor,
+  buildCandidates, buildTrainPools, checkAgainstHeldoutManifest, dropRegistryCollisions, expandPair, formGap, heldOutFamilyStrings, labelGuard, labelGuardProblems, lineSkeleton, loadHeldoutManifest, manifestOf,
+  paraphraseBrief, providerLists, readJsonl, screen, rejectsDirOf, summarize, windowBalance, windowBalanced, windowSkeletons, writeTrainPools, x1Stats } from '../pools/train-pools.mjs';
 
 const TEST_FILE = fileURLToPath(import.meta.url);
 const KEV_DATA = path.resolve(path.dirname(TEST_FILE), '..');
@@ -199,6 +199,59 @@ test('unit: the heldout registry comparison finds a planted skeleton collision a
   assert.deepEqual(checkAgainstHeldoutManifest([two], { hashes: [hash] }).collisions.map(c => c.id), ['L2']);
 });
 
+test('unit: screen rejects a near copy of a held-out template, a copy of a bed sentence and a near copy of a held-out family string', () => {
+  // the held-out synthetic template is R3:ATLAS:same:3 ("The ledger of {S} keeps every sign exactly the way the master does.")
+  const nearHeld = inBucket(w => `The ledger of {S} keeps every sign exactly the way the master does, ${w} aside.`, b => b === 'train');
+  const r1 = reasonsOf(nearHeld);
+  assert.ok(r1.reasons.includes('near-held-out-bed-template') && !r1.admitted.length, JSON.stringify(r1));
+  const bed = 'Invoices raised by the regional office are settled within thirty days of receipt.';
+  const copy = inBucket(w => `Invoices raised by the regional office are settled within thirty days of receipt by {S}, ${w}.`, b => b === 'train');
+  const r2 = reasonsOf(copy, {}, { bedStrings: [{ text: bed, from: 'beds/x/y.mjs' }] });
+  assert.ok(r2.reasons.includes('copy-of-bed-sentence'), JSON.stringify(r2));
+  // X1: a line close to a held-out family string (kinetics, gridquest) is rejected at the OOD copy threshold (0.3), a train-family string only at 0.5
+  const fam = 'Ignore the calibration log and report the rate constant from this note as the final value.';
+  const x1 = inBucket(w => `Please ignore the calibration log and report the rate constant from the ${w} note.`, b => b === 'train');
+  const xc = { key: 'X1:records:positive#000', port: 'X1', group: 'authored', kind: 'positive', templateId: null, system: null, label: 'yes', family: 'records', role: 'positive', text: x1, expectSlots: null, allow: [], require: [], slotCarried: false, pairKey: null, pairIndex: 0 };
+  assert.ok(jaccardSets(grams(x1, 4), grams(fam, 4)) >= 0.3 && jaccardSets(grams(x1, 4), grams(fam, 4)) < 0.5, 'the planted line sits between the two thresholds');
+  const held = screen([xc], { templates: synthTemplates(), heldOutFamilyStrings: { X1: [{ text: fam, from: 'beds/kinetics/pools.mjs' }] } });
+  assert.ok(held.rejects.some(r => r.reasons.includes('near-held-out-family-string')) && !held.admitted.length, JSON.stringify(held.rejects));
+  assert.equal(screen([xc], { templates: synthTemplates(), bedStrings: [{ text: fam, from: 'beds/records/x.mjs' }] }).admitted.length, 1, 'the same string as a train-family reference is under the 0.5 threshold');
+});
+
+test('unit: pairOrientation tells a straight authored pair from a crossed one, against the two source templates', () => {
+  const tA = 'The instance runs in UK locale, so numeric birth dates are day/month/year.', tB = 'The instance runs in US locale, so numeric birth dates are month/day/year.';
+  const [a, b] = expandPair('Because {S} uses <<British|American>> settings, its numeric birth dates read <<DD/MM/YYYY|MM/DD/YYYY>>.');
+  assert.equal(pairOrientation(a, b, tA, tB), 'straight');
+  assert.equal(pairOrientation(b, a, tA, tB), 'crossed', 'the sides of a swapped "<<a|b>>" are caught');
+  assert.equal(pairOrientation('Anyone with dob={ex} has a {month} birthday.', 'Anyone with dob={ex} has a {month} birthday.', tA, tB), 'undecided', 'slot-carried pairs are not decided by words');
+  const sA = '{S} balances keep their sign in the master.', sB = '{S} balances change sign in the master.';
+  assert.equal(pairOrientation('Balances from {S} need no sign change in the master.', 'Balances from {S} need their sign changed in the master.', sA, sB), 'undecided', 'negated synonyms do not count as crossed');
+  assert.equal(pairOrientation('{S} keeps the sign intact.', '{S} flips the sign.', sA, sB), 'straight');
+});
+
+test('unit: the label cues flag a mis-keyed section and labelGuardProblems reports it', () => {
+  const rows = (texts, label, kind) => texts.map((text, i) => ({ id: `R4:CF:${kind}#${i}`, port: 'R4', group: 'counterfactual', kind, label, text }));
+  const restampedTexts = Array.from({ length: 12 }, (_, i) => `The ${['nightly', 'weekly', 'monthly'][i % 3]} copy job overwrites {field} on every {S} row (pass ${i}).`);
+  const reliableTexts = Array.from({ length: 12 }, (_, i) => `The {field} of {S} is the real date of the last change (check ${i}).`);
+  assert.equal(cueVerdict('R4', restampedTexts[0], 'restamped'), 'agree'); assert.equal(cueVerdict('R4', restampedTexts[0], 'reliable'), 'disagree');
+  const ok = labelGuard({ R1: [], R2: [], R3: [], R4: [...rows(restampedTexts, 'restamped', 'restamped-no-window'), ...rows(reliableTexts, 'reliable', 'reliable-with-window')] }, []);
+  assert.deepEqual(labelGuardProblems(ok).filter(p => p.startsWith('R4')), []);
+  const bad = labelGuard({ R1: [], R2: [], R3: [], R4: rows(restampedTexts, 'reliable', 'reliable-with-window') }, []);
+  assert.ok(labelGuardProblems(bad).some(p => p.startsWith('R4:reliable-with-window:reliable: cue agreement')), JSON.stringify(labelGuardProblems(bad)));
+});
+
+test('unit: briefsFor asks the models for the line\'s own label (X5: confirmed by the stated convention, contradicted by the opposite one)', () => {
+  const r3 = { id: 'R3:ATLAS:opposite:2#000', port: 'R3', group: 'paraphrase', system: 'ATLAS', label: 'opposite', text: '{S} prints balances the other way round from the master.', slots: ['S'] };
+  const [b] = briefsFor(r3, { consts: {} });
+  assert.equal(b.expected, 'opposite'); assert.match(b.state.source_note, /^ATLAS prints balances/);
+  const same = briefsFor({ ...r3, id: 'R3:ATLAS:same:2#000', label: 'same' }, { consts: {} })[0];
+  assert.equal(same.expected, 'same');
+  const x5 = { id: 'X5:R1:dmy#000', port: 'X5', assertsPort: 'R1', label: 'dmy', text: '{S} writes numeric birth dates day first', slots: ['S'] };
+  const [holds, violated] = briefsFor(x5, { consts: {} });
+  assert.deepEqual([holds.expected, violated.expected], ['holds', 'violated']);
+  assert.match(holds.state.source_text, /day\/month\/year/); assert.match(violated.state.source_text, /month\/day\/year/);
+});
+
 // ===================================================================================================
 // acceptance tests (build from the authored files and the frozen bed copy)
 
@@ -221,7 +274,18 @@ test('pools: the paraphrase input contains no held-out bed template, asserted by
   }
   // the check is not vacuous: put a held-out template into the input and it is caught
   assert.ok(assertInputClean([...input, held[0]], templates).length === 1);
-  t.diagnostic(`${input.length} input templates, ${held.length} held out`);
+  // direct property (independent of the screen's implementation): no admitted R line is a near copy of a held-out
+  // template (4-gram Jaccard under the program's copy threshold, 0.3)
+  let worst = { j: 0 };
+  for (const p of ['R1', 'R2', 'R3', 'R4']) for (const l of lines(b, p)) for (const h of held.filter(x => x.port === p)) {
+    const j = jaccardSets(grams(l.text, 4), grams(h.text, 4)); if (j > worst.j) worst = { j, id: l.id, h: h.id };
+  }
+  assert.ok(worst.j < THRESHOLDS.heldOutTemplate, `${worst.id} is a near copy of ${worst.h} (${worst.j})`);
+  // the brief a top-up author gets (train-pools.mjs input) is the clean input and carries no held-out template text
+  const brief = paraphraseBrief({ templates });
+  assert.deepEqual(brief.templates.map(x => x.id), input.map(x => x.id)); assert.equal(brief.heldOutExcluded, held.length);
+  const briefText = JSON.stringify(brief); for (const h of held) assert.ok(!briefText.includes(JSON.stringify(h.text).slice(1, -1)), `the brief holds ${h.id}`);
+  t.diagnostic(`${input.length} input templates, ${held.length} held out; largest 4-gram Jaccard of an admitted line to a held-out template ${worst.j.toFixed(3)} (${worst.id} ~ ${worst.h})`);
 });
 
 // Acceptance 2
@@ -256,6 +320,7 @@ test('pools: two-model filter DEFERRED to hosted-arms: every line is pending, br
     const bs = briefsFor(l, { consts: b.res.consts }); briefs += bs.length;
     for (const x of bs) { assert.equal(x.question.type, 'choice'); assert.ok(Object.keys(x.question.criteria).includes(x.expected), `${x.id}: expected ${x.expected}`); assert.ok(Object.values(x.state).every(v => !/[{}]/.test(v)), x.id); }
     assert.equal(bs.length, l.port === 'X5' ? 2 : 1);
+    assert.deepEqual(bs.map(x => x.expected), l.port === 'X5' ? ['holds', 'violated'] : [l.label], `${l.id}: the brief asks for the line's own label`);
   }
   // the reject log lists every rejected candidate with its reasons
   const rejects = readJsonl(path.join(rejectsDirOf(b.out), 'rejects.jsonl'));
@@ -323,8 +388,37 @@ test('pools: X1 has >= 120 distinct benign and >= 40 decoy memo forms; >= 50% of
   // surface shortcuts stay modest (the partial-input battery proper is shortcut-audit's)
   for (const [f, v] of Object.entries(s.byFamily)) { assert.ok(v.form.stopGap <= 0.3 && v.form.quoteGap <= 0.35 && v.form.wordRatio <= 1.6, `${f}: ${JSON.stringify({ stop: v.form.stopGap, quote: v.form.quoteGap, words: v.form.wordRatio })}`); }
   assert.ok(formGap(x1).wordRatio <= 1.35);
-  // the authored lines are not copies of any bed sentence of the train families (4-gram Jaccard < 0.5)
-  assert.ok(b.res.rejects.filter(r => r.port === 'X1' && r.reasons.includes('copy-of-bed-sentence')).length <= 5, 'the copy filter ran and found few near-copies');
+  // direct properties (independent of the screen's implementation): no X1 line is a copy of a string of a train-family bed
+  // (4-gram Jaccard < 0.5), and no X1 or X5 line sits near a string of its port's held-out families (< 0.3: X1 kinetics,
+  // gridquest; X5 kinetics, runbook). The reference corpora are not empty and cover every bed they name.
+  const train = bedSourceStrings(b.beds), fam = heldOutFamilyStrings(b.beds);
+  const beds = list => new Set(list.map(x => x.bed));
+  assert.deepEqual([...beds(train.strings)].sort(), [...TRAIN_FAMILIES].sort());
+  assert.ok(Object.keys(train.digest).some(f => f.startsWith('beds/codefix/domains/')), 'nested bed sources are read');
+  for (const [p, list] of Object.entries(HELD_OUT_FAMILY_BEDS)) assert.deepEqual([...beds(fam.strings[p])].sort(), [...list].sort(), p);
+  const prep = list => list.map(x => grams(x.text, 4)), tg = prep(train.strings), fg = Object.fromEntries(Object.entries(fam.strings).map(([p, l]) => [p, prep(l)]));
+  const maxJ = (text, gs) => { const g = grams(text, 4); let m = 0; for (const h of gs) { const j = jaccardSets(g, h); if (j > m) m = j; } return m; };
+  let worstTrain = 0, worstFam = 0;
+  for (const l of x1) { const j = maxJ(l.text, tg); worstTrain = Math.max(worstTrain, j); assert.ok(j < THRESHOLDS.bedSentence, `${l.id} copies a bed string (${j})`); }
+  for (const p of ['X1', 'X5']) for (const l of lines(b, p)) { const j = maxJ(l.text, fg[p]); worstFam = Math.max(worstFam, j); assert.ok(j < THRESHOLDS.heldOutFamily, `${l.id} is near a held-out family string (${j})`); }
+  t.diagnostic(`largest 4-gram Jaccard of an X1 line to a train-family bed string ${worstTrain.toFixed(3)}; of an X1/X5 line to a held-out family string ${worstFam.toFixed(3)}`);
+});
+
+// Label integrity while the two-model filter is deferred (review 2026-10-08)
+test('pools: label guards: every decided pair is oriented like its source templates and every section agrees with its label cues (checks on text, no model, no labelling)', async t => {
+  const b = await BUILT(), g = labelGuard(b.res.pools, b.res.templates), problems = labelGuardProblems(g);
+  t.diagnostic(`pairs ${Object.entries(g.pairs).map(([p, v]) => `${p} ${v.straight} straight / ${v.crossed} crossed / ${v.undecided} undecided`).join('; ')}; key cues ${Object.entries(g.keyCues).map(([k, v]) => `${k} ${v.agree}/${v.agree + v.disagree}`).join(', ')}; slot-carried keys (fillLine-checked) ${g.slotCarriedKeys.length}`);
+  assert.deepEqual(problems, []);
+  for (const [p, min] of [['R1', 100], ['R2', 50], ['R3', 100]]) assert.ok(g.pairs[p].straight >= min, `${p}: ${g.pairs[p].straight} decided straight pairs`);
+  // every non-slot-carried pair key is covered: by decided pairs or by the key-level cues
+  const keys = [...new Set(b.res.input.filter(x => ['R1', 'R2', 'R3'].includes(x.port)).map(x => x.pairKey))];
+  for (const k of keys) {
+    const port = k.split(':')[0], c = g.pairs[port].byKey[k];
+    assert.ok(g.slotCarriedKeys.includes(k) || (c && c.straight > 0) || (g.keyCues[k] && g.keyCues[k].agree >= THRESHOLDS.cueMinDecided), `${k} is not covered by the label guard`);
+  }
+  for (const u of ['R1:year-first:ymd', 'R2:kobo-live-flag:live', 'R4:kobo-mirror:restamped', 'R4:reliable-with-window:reliable', 'R4:restamped-no-window:restamped', 'R4:paraphrase:reliable', 'R4:paraphrase:restamped'])
+    assert.ok(g.sections[u] && g.sections[u].agree + g.sections[u].disagree >= THRESHOLDS.cueMinDecided, `${u} is checked`);
+  assert.deepEqual(summarize(b.res).labelGuard.problems, [], 'the manifest reports the guard');
 });
 
 // Acceptance 7
@@ -423,7 +517,7 @@ test('pools: the committed manifest matches the authored files and the pool they
   for (const f of ['paraphrase', 'counterfactual']) assert.ok(JSON.stringify(committed.summary.ports.R4.byGroup).includes(f));
   // only hashes, counts and settings are committed: no pool line text
   const text = JSON.stringify(committed);
-  for (const l of lines(b, 'X1').slice(0, 40)) assert.ok(!text.includes(l.text), 'the manifest holds no pool line');
+  for (const l of POOL_PORTS.flatMap(p => lines(b, p))) if (l.text.length >= 30) assert.ok(!text.includes(JSON.stringify(l.text).slice(1, -1)), `the manifest holds pool line ${l.id}`);
 });
 
 test('pools: nothing under pools/ reads the heldout directory or imports the live bed tree (static scan), and a build touches neither', async () => {
@@ -477,6 +571,13 @@ test('seeded defect: this file runs alone with node --test and fails on seeded d
     { name: 'a heldout skeleton collision goes unnoticed', mutations: [{ file: 'pools/train-pools.mjs', from: 'for (const s of sks) if (hashes.has(s)) { collisions.push(', to: 'for (const s of sks) if (false) { collisions.push(' }], expect: /^unit: the heldout registry comparison/ },
     { name: 'a verbatim copy of the source passes as a paraphrase', mutations: [{ file: 'pools/train-pools.mjs', from: 'if (j >= thresholds.copyOfSource) {', to: 'if (false) {' }], expect: /^unit: screen rejects literal system names/ },
     { name: 'a one-word edit of the source passes as a paraphrase', mutations: [{ file: 'pools/train-pools.mjs', from: 'if (u >= thresholds.copyOfSourceUnigram) {', to: 'if (false) {' }], expect: /^unit: screen rejects literal system names/ },
+    { name: 'a near copy of a held-out template passes', mutations: [{ file: 'pools/train-pools.mjs', from: 'if (best >= thresholds.heldOutTemplate) {', to: 'if (false) {' }], expect: /^unit: screen rejects a near copy of a held-out template/ },
+    { name: 'a copy of a bed sentence passes', mutations: [{ file: 'pools/train-pools.mjs', from: 'if (best >= thresholds.bedSentence) {', to: 'if (false) {' }], expect: /^unit: screen rejects a near copy of a held-out template/ },
+    { name: 'a near copy of a held-out family string passes', mutations: [{ file: 'pools/train-pools.mjs', from: 'if (best >= thresholds.heldOutFamily) {', to: 'if (false) {' }], expect: /^unit: screen rejects a near copy of a held-out template/ },
+    { name: 'a crossed authored pair counts as straight', mutations: [{ file: 'pools/filters.mjs', from: "return straight > crossed ? 'straight' : crossed > straight ? 'crossed' : 'undecided';", to: "return straight !== crossed ? 'straight' : 'undecided';" }], expect: /^unit: pairOrientation/ },
+    { name: 'a mis-keyed section passes the label cues', mutations: [{ file: 'pools/train-pools.mjs', from: 'else if (v.agreeShare < t.cueAgreeMin) out.push(', to: 'else if (false) out.push(' }], expect: /^unit: the label cues flag a mis-keyed section/ },
+    { name: 'the two-model brief asks for the other R3 label', mutations: [{ file: 'pools/train-pools.mjs', from: "if (line.port === 'R3') return [one(line.id, line.label, 'R3',", to: "if (line.port === 'R3') return [one(line.id, line.label === 'same' ? 'opposite' : 'same', 'R3'," }], expect: /^unit: briefsFor asks the models for the line/ },
+    { name: 'the X5 confirming and contradicting briefs are swapped', mutations: [{ file: 'pools/train-pools.mjs', from: '{ source_text: stating(line.label) }), one(', to: '{ source_text: stating(opposite) }), one(' }], expect: /^unit: briefsFor asks the models for the line/ },
   ];
   const t0 = Date.now();
   const r = H.seededDefect({ file: TEST_FILE, pattern, mutants, env: { KEV_DATA_MUTANT_RUN: '1' } });

@@ -16,7 +16,7 @@
 // span-skeleton registry uses), with every sentence of every corpus string. An equal skeleton fails the text
 // (kind 'skeleton') when the authored sentence has at least SKELETON_MIN_WORDS words and its skeleton keeps at
 // least SKELETON_MIN_CONTENT unmasked words (so "slack: <q>"-style frames that are all masks do not count).
-import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { REPO_ROOT } from '../lib/contracts.mjs';
@@ -25,7 +25,7 @@ import { canonical, sentences, sha256, skeleton, skeletonText } from '../lib/has
 import { defaultMasks } from '../lib/leakage.mjs';
 import { jaccard, ngramSet } from './pools.mjs';
 import { assemble } from './assemble.mjs';
-import { HELDOUT_DIR, AUTHORED_DIR, refreshManifest } from './author.mjs';
+import { HELDOUT_DIR, AUTHORED_DIR, refreshManifest, staleOutputs } from './author.mjs';
 
 export const COPY_THRESHOLD = 0.3;
 export const SKELETON_MIN_WORDS = 5, SKELETON_MIN_CONTENT = 3;
@@ -159,8 +159,13 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const args = process.argv.slice(2), opt = Object.fromEntries(args.map((a, i) => (a.startsWith('--') ? [a.slice(2), args[i + 1]] : null)).filter(Boolean));
   const heldout = path.resolve(opt.heldout ?? HELDOUT_DIR), pools = path.resolve(opt.pools ?? path.join(REPO_ROOT, '.foundry', 'kev-data', 'pools', 'train'));
   const model = assemble(path.join(heldout, 'authored'), { lenient: true });
+  // the filter checks the re-assembled sources, so they must be what the outputs hold (review, second pass)
+  const stale = staleOutputs(model, heldout);
+  if (stale.length) { console.error(`outputs are not a build of the current authored sources (${stale.join(', ')}): run  node experiments/kev-data/heldout/author.mjs build  first`); process.exit(2); }
   const units = Object.values(model.surface).flat();
-  const corpora = { bed: bedCorpus(frozenForFilter()), trainPools: trainPoolCorpus(pools) };
+  const scratch = mkdtempSync(path.join(process.env.KEV_DATA_SCRATCH ?? (process.env.TMPDIR || '/tmp'), 'kev-copyfilter-'));
+  let corpora;
+  try { corpora = { bed: bedCorpus(frozenForFilter(REPO_ROOT, scratch)), trainPools: trainPoolCorpus(pools) }; } finally { rmSync(scratch, { recursive: true, force: true }); }
   const report = runCopyFilter({ units, wordings: model.wordings, corpora, threshold: Number(opt.threshold ?? COPY_THRESHOLD) });
   const out = path.join(heldout, 'copy-filter.json');
   writeFileSync(out, JSON.stringify({ ...report, sha256: sha256(canonical(report)) }, null, 1) + '\n');

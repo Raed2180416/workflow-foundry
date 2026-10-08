@@ -1,9 +1,15 @@
 // Noninterference check for control-flow taint (ROADMAP §2.9). A seeded generator builds small random workflows over an untrusted
-// input (guards, joins, maps, loops, ungated effects). Every workflow the validator ACCEPTS is run with different untrusted input
-// values; the set of effects that fired must not depend on them (termination excepted: only runs that all succeed are compared).
-// The same harness run against the validator before the control rule existed found interference in 50 of 140 accepted workflows
-// (seed 21, 150 generated); it must find none now. Also checks the dispatcher is never stricter than the validator.
-// Local mock tools only. Development/diagnostic evidence, not a proof: the generator covers task, map and loop nodes only.
+// input (guards, joins, maps, loops, ungated effects, and a task that really fails under onError "continue"). Every workflow the
+// validator ACCEPTS is run with different untrusted input values; the set of effects that fired must not depend on them (termination
+// excepted: only runs that all succeed are compared). Also checks the dispatcher is never stricter than the validator.
+// Measured 2026-10-08 on seeds 21, 7 and 99 with 400 workflows each (FOUNDRY_FUZZ_SEED / FOUNDRY_FUZZ_COUNT; the committed default is a
+// smoke-sized 80): the validator before the control rule existed accepted every workflow and 297 of the 1138 comparable ones interfered;
+// the current validator accepted 648, ran 624 comparable ones and none interfered. Mutation check: six one-line weakenings of the rule
+// (onError continuation, the needs chain, map items, loop until, the guard itself, the output label) are each caught, four by this
+// fuzz at 300 workflows and all six at 1500, and all six by the static tests in control-taint.test.mjs. The smoke size does not catch
+// every mutant; run the larger size after changing the rule.
+// Local mock tools only. Development/diagnostic evidence, not a proof: the generator covers task, map and loop nodes only (no human,
+// agent, verify or assert nodes; a failed assert or verify stops the run, which is the termination channel the rule does not track).
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync } from 'node:fs';
@@ -15,6 +21,7 @@ import { validateWorkflow } from '../src/validate.mjs';
 import { createDefaultRegistry } from '../src/capabilities.mjs';
 
 const ref = (p, d) => d === undefined ? { $ref: p } : { $ref: p, default: d };
+const SEED = Number(process.env.FOUNDRY_FUZZ_SEED ?? 21), COUNT = Number(process.env.FOUNDRY_FUZZ_COUNT ?? 80);
 
 function generator(seed) {
   let state = seed;
@@ -27,8 +34,10 @@ function generator(seed) {
       const source = () => pick(['input.doc', 'input.mode', ...locals, ...needs.map(dep => `nodes.${dep}.v`)]);
       const guard = () => chance(0.3) ? { op: 'exists', value: ref(source()) } : { op: 'eq', left: ref(source(), '-'), right: pick(['go', 'stop']) };
       const base = { id, needs, description: id, ...(chance(0.35) ? { when: guard() } : {}), ...(chance(0.2) ? { join: 'all_resolved' } : {}) };
-      const kind = pick(['id', 'id', 'effect', 'effect', ...(depth > 0 ? [] : ['map', 'loop'])]);
+      const kind = pick(['id', 'id', 'check', 'effect', 'effect', ...(depth > 0 ? [] : ['map', 'loop'])]);
       if (kind === 'id') nodes.push({ ...base, kind: 'task', tool: 'core.identity', args: { v: chance(0.6) ? ref(source(), '-') : 'lit' }, timeoutMs: 1000, retry: { maxAttempts: 1 }, ...(chance(0.15) ? { onError: 'continue' } : {}) });
+      // core.pluck fails when a row has no field x: it succeeds on rows [] and fails on rows ['a', 'b'], and onError continue turns the failure into a skip.
+      else if (kind === 'check') nodes.push({ ...base, kind: 'task', tool: 'core.pluck', args: { items: ref('input.rows'), field: 'x' }, timeoutMs: 1000, retry: { maxAttempts: 1 }, onError: 'continue' });
       else if (kind === 'effect') nodes.push({ ...base, kind: 'task', tool: 'core.artifact', args: { name: `a-${id}.txt`, content: 'fixed' }, timeoutMs: 1000, retry: { maxAttempts: 1 } });
       else if (kind === 'map') nodes.push({ ...base, kind: 'map', items: chance(0.5) ? ref('input.rows') : [1, 2], maxItems: 5, body: flow(depth + 1, `${id}b`, ['item']) });
       else {
@@ -49,8 +58,8 @@ const firedEffects = run => [...Object.entries(run.nodes), ...Object.entries(run
   .filter(([, node]) => node.tool === 'core.artifact' && node.status === 'completed').map(([id]) => id).sort().join(',');
 
 test('noninterference: no accepted workflow fires different effects for different untrusted inputs, and the dispatcher never refuses an accepted one', async t => {
-  const registry = createDefaultRegistry(), make = generator(21), tally = { generated: 0, accepted: 0, rejectedControl: 0, comparable: 0, interference: [], dispatcherRefusals: [] };
-  for (let index = 0; index < 80; index++) {
+  const registry = createDefaultRegistry(), make = generator(SEED), tally = { generated: 0, accepted: 0, rejectedControl: 0, comparable: 0, continued: 0, interference: [], dispatcherRefusals: [] };
+  for (let index = 0; index < COUNT; index++) {
     const workflow = make(index); tally.generated++;
     const verdict = validateWorkflow(workflow, { registry });
     assert.deepEqual(verdict.errors.filter(e => !['LABEL_POLICY', 'UNTRUSTED_CONTROL', 'UNTRUSTED_EFFECT_ARGS'].includes(e.code)), [], `generated workflow ${index} is well-formed`);
@@ -66,12 +75,14 @@ test('noninterference: no accepted workflow fires different effects for differen
         const done = await runtime.execute(runtime.create(variant, { doc, rows, mode: 'go' }).id);
         if (done.error?.code === 'LABEL_POLICY') tally.dispatcherRefusals.push(index);
         fired.push(done.status === 'succeeded' ? firedEffects(done) : null);
+        if (Object.values(done.nodes).some(node => node.status === 'handled_error')) tally.continued++;
       } finally { store.close(); rmSync(root, { recursive: true, force: true }); }
     }
     if (fired.every(f => f !== null)) { tally.comparable++; if (new Set(fired).size > 1) tally.interference.push({ index, fired: [...new Set(fired)] }); }
   }
   assert.ok(tally.rejectedControl >= 10 && tally.accepted >= 10 && tally.comparable >= 10, `the sample exercises both outcomes: ${JSON.stringify({ ...tally, interference: undefined, dispatcherRefusals: undefined })}`);
+  assert.ok(tally.continued >= 3, `the onError continuation path is exercised by real failures: ${tally.continued} runs`);
   assert.deepEqual(tally.dispatcherRefusals, [], 'the runtime check is never stricter than the validator');
   assert.deepEqual(tally.interference, [], 'accepted workflows fire the same effects whatever the untrusted input says');
-  t.diagnostic(JSON.stringify({ generated: tally.generated, accepted: tally.accepted, rejected: tally.rejectedControl, comparable: tally.comparable }));
+  t.diagnostic(JSON.stringify({ seed: SEED, generated: tally.generated, accepted: tally.accepted, rejected: tally.rejectedControl, comparable: tally.comparable, continued: tally.continued }));
 });

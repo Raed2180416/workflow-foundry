@@ -26,7 +26,9 @@
 //   wordings      { X3: [{id, text}], ... } the held-out wordings of THIS slice (required in calib-ood,
 //                 dev-ood and test-ood for the wave-1 ports X3, X8, X5, X1)
 //   smokeEvery    a wave-2 smoke port uses one world in `smokeEvery` (default 12; K1 3, X4 8)
-//   authorSwap    share of X3 rows that also get an author-swap twin (default 0.15)
+//   authorSwap    share of X3 rows that also get an author-swap twin (default 1 in train, 0.15 elsewhere)
+//   x8Pairs       X8 rows come as flip pairs (default: in train only; false leaves the magnitude shortcut in, the
+//                 planted-shortcut control of the PART test)
 //   x3Authority   false: X3 states omit author and fact_owner (default true)
 import { createHash } from 'node:crypto';
 import { labelledQuestion, questionId } from '../lib/render.mjs';
@@ -36,13 +38,13 @@ import {
   parsed as parsedOf, buildX3, buildX8, buildK1, buildK2, buildK3, buildX1, buildX5, buildX4, buildX7, sheetParts, parseRate, rowCells, normalizeConds,
   registerBench, resolveCondition, describeCondition, referencedSheet, unitBearingLines, X8_FIELD, RATE_FACTOR, RATE_LABELS, RATE_WORDS, CONC_LABELS, CONC_WORDS, UNIT_CODES, isUnitSentence, headerOf,
 } from '../judges/kinetics.mjs';
-import { alignMessages, harvestAliases, alignNotes, alignInjections, alignStatements } from '../taps/kinetics.mjs';
+import { alignMessages, harvestAliases, alignNotes, alignInjections, alignStatements, windowHasInjection, unitStatedIn, x7Label, X7_SUBQUESTIONS } from '../taps/kinetics.mjs';
 import { CHAT_INJECTIONS, NOTEBOOK_INJECTIONS } from '../taps/kinetics-frames.mjs';
 import { stringLeaves } from '../lib/leakage.mjs';
 
 export const group = 'kinetics';
 export const ports = ['X3:kinetics', 'X8:kinetics', 'X5:kinetics', 'X1:kinetics', 'K1', 'K2', 'K3', 'X4:kinetics', 'X7:kinetics'];
-export const GENERATOR_VERSION = 'kinetics@1';
+export const GENERATOR_VERSION = 'kinetics@2';
 const FAMILY = 'kinetics', BED = 'kinetics';
 
 const sha = s => createHash('sha256').update(s).digest('hex');
@@ -154,8 +156,10 @@ function x3Candidates({ task, tap, masks, slice, authority = true }) {
     const slots = authority ? { message: sp.id } : { message: sp.id, authority: false }, state = authority ? full : buildX3(task, slots);
     const texts = [state.message, ...state.thread_context.map(c => c.replace(/^[^:]+: /, ''))];
     const forms = texts.map(t => formOf(t, masks));
-    // the message is the label-bearing span; its thread context must not carry a surface of another bucket
-    if (!bucketAllows(slice, forms[0]) || (slice === 'train' || slice === 'calib-in' || slice === 'dev-select' || slice === 'test-in') && !forms.every(f => bucketAllows(slice, f))) { dropped.bucket = (dropped.bucket ?? 0) + 1; continue; }
+    // the message is the label-bearing span, in the slice's own bucket; its thread context may carry train surfaces
+    // (seen in training anyway) or the slice's own, never another held-out bucket's (an OOD slice's context would
+    // otherwise carry test-ood surfaces into calib-ood and dev-ood)
+    if (!bucketAllows(slice, forms[0]) || !forms.slice(1).every(f => bucketAllows(slice, f) || skeletonBucket(f) === 'train')) { dropped.bucket = (dropped.bucket ?? 0) + 1; continue; }
     out.push({ sp, slots, state, form: forms[0], label: sp.label });
   }
   return { cands: out, dropped };
@@ -165,18 +169,37 @@ function x3Record(c, ctx) {
   const key = `${slice}|X3|${seed}|${c.sp.id}`;
   return makeRecord({ contract: contracts.X3, slice, opts, key, state: c.state, label: c.label,
     meta: { seed, difficulty, worldHash: wh, variant: 'clean', formId: c.form, surface: { source: 'bed', slice, lineHash: spanHash(c.state.message) }, masks,
-      kit: { port: 'X3', slots: c.slots }, x3: { role: c.sp.role, factType: c.sp.factType, fact: c.sp.fact }, ...(ctx.x3Wave === 2 ? { wave: 2 } : {}) } });
+      kit: { port: 'X3', slots: c.slots }, x3: x3Cell(c.state, { role: c.sp.role, factType: c.sp.factType, fact: c.sp.fact }), ...(ctx.x3Wave === 2 ? { wave: 2 } : {}) } });
 }
-// an author-swap twin: the same message attributed to someone else; the speech act does not change, only
-// the authority does (authority stays in code, §1.2 X3)
+// The partial-input cell of an X3 row (§6.3 PART): whether the author owns the fact and whether the state carries
+// thread context. The assembly balances labels within these cells (lib/balance.mjs balanceWithin, group:
+// r => r.meta.x3.cell); the author-swap twins fill the author axis (see swapTwin).
+const x3Cell = (state, x) => {
+  const own = state.author !== undefined && state.author === state.fact_owner, context = state.thread_context.length;
+  return { ...x, own, context, cell: `${state.author === undefined ? 'no-author' : own ? 'own' : 'other'}|ctx${Math.min(context, 1)}` };
+};
+// An author-swap twin: the same message and context attributed to someone else. The speech act is read from the
+// message; who may make it effective is decided in code (§1.2 X3), so the label does not change. In the bed every
+// proposal comes from someone who does not own the entry and every other act from its owner, so without the twins
+// author == fact_owner alone gives the label away (a metadata-only probe reads 0.61 balanced accuracy against a
+// 0.23 ceiling, §6.3 PART). Train therefore twins every row (opts.authorSwap, default 1 in train): a proposal is
+// re-attributed to the entry's owner, any other act to someone who neither owns the entry nor wrote the message it
+// answers (the principal investigator included). The kit renders the twin from slots {message, author}.
 function swapTwin(rec, c, ctx, people) {
   const { contracts, slice, opts, seed } = ctx;
-  const others = people.filter(p => p !== rec.state.author && p !== rec.state.fact_owner && !/^Dr\./.test(p));
-  if (!others.length || rec.state.author === undefined) return null;
-  const to = pick(others, `${slice}|swap|${seed}|${c.sp.id}`);
-  const key = `${slice}|X3|${seed}|${c.sp.id}|swap`;
-  const twin = makeRecord({ contract: contracts.X3, slice, opts, key, state: { ...rec.state, author: to }, label: c.label,
-    meta: { ...rec.meta, variant: 'invariance', pairId: `kx3:${slice}:${seed}:${c.sp.id}`, counterfactual: { swapped: true, from: rec.state.author, to, path: 'author' }, kit: { ...rec.meta.kit, slots: { ...c.slots, author: to } } } });
+  if (rec.state.author === undefined) return null;
+  let to = null;
+  if (c.label === 'proposes') to = rec.state.fact_owner !== rec.state.author ? rec.state.fact_owner : null;
+  else {
+    const answered = rec.state.thread_context.map(x => x.split(': ')[0]);
+    const others = people.filter(p => p !== rec.state.author && p !== rec.state.fact_owner && !answered.includes(p));
+    if (others.length) to = pick(others, `${slice}|swap|${seed}|${c.sp.id}`);
+  }
+  if (!to) return null;
+  const key = `${slice}|X3|${seed}|${c.sp.id}|swap`, state = { ...rec.state, author: to };
+  const twin = makeRecord({ contract: contracts.X3, slice, opts, key, state, label: c.label,
+    meta: { ...rec.meta, variant: 'invariance', pairId: `kx3:${slice}:${seed}:${c.sp.id}`, counterfactual: { swapped: true, from: rec.state.author, to, path: 'author' }, kit: { ...rec.meta.kit, slots: { ...c.slots, author: to } },
+      x3: x3Cell(state, { role: rec.meta.x3.role, factType: rec.meta.x3.factType, fact: rec.meta.x3.fact }) } });
   rec.meta.pairId = twin.meta.pairId;
   return twin;
 }
@@ -232,8 +255,8 @@ function makeX8(c, ctx, wantConsistent) {
 // rate unit. Only the decisive sentence differs; the value that was right under the first unit is wrong under the
 // second (and the other way round). Returns the new conventions, or null when the statement cannot be swapped.
 const labelOf = (units, text) => Object.entries(units).find(([, l]) => l.includes(text.trim()))?.[0] ?? null;
-export function swapRateUnit(conventions, from, to, key) {
-  const lab = pick(RATE_LABELS[to], `${key}|label`), words = RATE_WORDS[to], [prefix, time] = to.split('/');
+export function swapRateUnit(conventions, from, to, key, lab = pick(RATE_LABELS[to], `${key}|label`)) {
+  const words = RATE_WORDS[to], [prefix, time] = to.split('/');
   const rules = [
     [/(v0 \()([^)]+)(\))/, (m, a, l, z) => (labelOf(RATE_LABELS, l) === from ? a + lab + z : null)],
     [/(# units: S in .+?, rate in )(.+)$/m, (m, a, l) => (labelOf(RATE_LABELS, l) === from ? a + lab : null)],
@@ -251,19 +274,32 @@ export function swapRateUnit(conventions, from, to, key) {
   }
   return hits === 1 ? out : null;
 }
+// The twin's unit statement is a surface of its own: it must sit in the slice's skeleton bucket like any label-bearing
+// span (a train twin never carries a held-out surface, a test-ood twin never a train one). Candidates (unit, notation)
+// are tried in a hashed order until one is in the bucket.
 function flipTwin(rec, c, ctx) {
-  const { slice, contracts, opts, seed, task } = ctx, trueUnit = c.doc.rateUnit;
+  const { slice, contracts, opts, seed, masks } = ctx, trueUnit = c.doc.rateUnit;
   const others = UNIT_CODES.filter(u => u !== trueUnit);
   // a consistent value becomes wrong under another unit; a wrong value becomes right under the unit it was converted with
-  const to = Object.values(rec.questions)[0].label === 'consistent' ? pick(others, `${slice}|flip|${seed}|${c.id}`) : rec.meta.x8.wrongUnit;
-  const conv = swapRateUnit(rec.state.conventions, trueUnit, to, `${slice}|flipconv|${seed}|${c.id}`);
+  const units = Object.values(rec.questions)[0].label === 'consistent' ? others : [rec.meta.x8.wrongUnit];
+  const tries = units.flatMap(u => RATE_LABELS[u].map(l => ({ u, l }))).sort((a, b) => byHash(sha(`${slice}|flip|${seed}|${c.id}|${a.u}|${a.l}`), sha(`${slice}|flip|${seed}|${c.id}|${b.u}|${b.l}`)));
+  let to = null, conv = null;
+  for (const t of tries) {
+    const out = swapRateUnit(rec.state.conventions, trueUnit, t.u, `${slice}|flipconv|${seed}|${c.id}`, t.l);
+    if (!out) continue;
+    const swapped = out.split('\n').filter(l => !rec.state.conventions.split('\n').includes(l));
+    if (!linesAllow(slice, swapped, masks)) continue;
+    to = t.u; conv = out; break;
+  }
   if (!conv) return null;
   const value = Number(rec.state.extracted_value), label = Math.abs(value - c.printed / RATE_FACTOR[to]) <= 2e-3 * Math.abs(value) ? 'consistent' : 'inconsistent';
   const state = { ...rec.state, conventions: conv };
   const pairId = `kx8:${slice}:${seed}:${c.id}`;
   rec.meta.variant = 'flip'; rec.meta.pairId = pairId;
   return makeRecord({ contract: contracts.X8, slice, opts, key: `${slice}|X8|${seed}|${c.id}|flip`, state, label, slots: { field: state.field, value: state.extracted_value },
-    meta: { ...rec.meta, variant: 'flip', pairId, formId: formOf(conv, ctx.masks), surface: { source: 'bed', slice, lineHash: spanHash(conv) }, counterfactual: { swapped: true, from: trueUnit, to, path: 'conventions' } } });
+    meta: { ...rec.meta, variant: 'flip', pairId, formId: formOf(conv, ctx.masks), surface: { source: 'bed', slice, lineHash: spanHash(conv) }, counterfactual: { swapped: true, from: trueUnit, to, path: 'conventions' },
+      // a counterfactual state: the kit renders the task's real unit statement, never this one
+      kit: { ...rec.meta.kit, reproducible: false }, x8: { ...rec.meta.x8, twin: true, statedUnit: to } } });
 }
 
 // ---- K3 / K2 / K1 (wave-2 smoke) ---------------------------------------------------------------
@@ -350,7 +386,11 @@ function x5UnitRows(task, world, masks, ctx) {
     const slots = { document: sheet.id, rows: 5 }, state = buildX5(task, slots);
     const bearing = unitBearingLines(sheet), span = bearing.join('\n'), form = formOf(span, masks);
     if (!linesAllow('test-ood', bearing, masks)) continue;               // the family's spans stay in the 0-20% skeleton bucket: apart from the train ports' spans
-    const settled = doc.unitPlacement !== 'ref';
+    // decided from the window itself (taps/kinetics.mjs unitStatedIn), never from the placement alone: a sheet that
+    // refers to another sheet can still state the asked unit (a semicolon export's column names, a re-read note)
+    const stated = unitStatedIn(state.source_text, kind);
+    if (!stated && doc.unitPlacement !== 'ref') continue;                 // the window leaves the unit open: neither a pair nor a natural not_stated
+    const settled = stated;
     const makeAssumption = (u, which) => {
       if (kind === 'rate') return pick(RATE_PHRASES, `${kindKey}|${which}|rp`)({ label: pick(RATE_LABELS[u], `${kindKey}|${which}|rl`), words: RATE_WORDS[u] });
       return pick(CONC_PHRASES, `${kindKey}|${which}|cp`)({ label: pick(CONC_LABELS[u], `${kindKey}|${which}|cl`), words: CONC_WORDS[u] });
@@ -369,7 +409,7 @@ function x5UnitRows(task, world, masks, ctx) {
     out.push(pair);
     // the unit statement replaced by a same-register line that does not settle the question
     const unitless = unitlessWindow(task, sheet, state.source_text, kindKey);
-    if (unitless && sheet.format !== 'prose') {
+    if (unitless && sheet.format !== 'prose' && !unitStatedIn(unitless, kind)) {   // nothing else in the window may state it (a re-read note does)
       const pm = { variant: 'unknowable', pairId: `${pairId}:pm`, x5: { ...base.x5, notStated: 'presence-matched' }, counterfactual: { swapped: true, from: 'unit statement', to: 'same-register line', path: 'source_text' } };
       out.push([rec('not_stated', makeAssumption(truth, 'c'), { source_text: unitless }, { tag: 'pm1', meta: pm }), rec('not_stated', makeAssumption(wrong, 'd'), { source_text: unitless }, { tag: 'pm2', meta: pm })]);
     }
@@ -390,9 +430,10 @@ function x5SopRows(task, world, masks, ctx) {
     if (!superseded) out.push([rec('holds', docRev, 'h', { variant: 'flip', pairId }), rec('violated', docRev - 1, 'v', { variant: 'flip', pairId })]);
     else out.push([rec('holds', rev, 'h', { variant: 'flip', pairId }), rec('violated', docRev, 'v', { variant: 'flip', pairId })]);
   }
-  // the SOP revision against a sheet excerpt that does not mention the SOP: not stated
+  // the SOP revision against a sheet excerpt that does not mention the SOP: not stated. This is the absent-subject kind
+  // (a string match on the SOP code decides it), kept at <= 10% of the not_stated rows (§1.2 X5) and marked 'unrelated'.
   const sheet = p.sheets[hnum(`${slice}|X5sop-ns|${seed}`) % p.sheets.length];
-  if (sheet && unit(`${slice}|X5sop-ns-keep|${seed}`) < 0.12) {
+  if (sheet && unit(`${slice}|X5sop-ns-keep|${seed}`) < 0.06) {
     const slots = { document: sheet.id, rows: 2 }, state = buildX5(task, slots);
     if (!/\bSOP\b/.test(state.source_text)) {
       const key = `${slice}|X5sopns|${seed}`, n = unit(`${key}|n`) < 0.5 ? rev : rev - 1;
@@ -433,10 +474,6 @@ function x4Candidates({ task, world, masks, slice }) {
   }
   return out;
 }
-const SUBQUESTIONS = [
-  'What are the corrected Vmax and Km of every condition', 'Which study wells does the SOP exclude', 'What are the fitted kinetic parameters for this study',
-  'Which wells and conditions must be corrected before fitting',
-];
 
 // ---- label-bearing spans of the held-out families (for the span registry, §2.3 rule 7) -----------------
 // Returns [{text, port, kind, masks}] for a record of X1, X5 or X7. The assembly registers them with
@@ -468,7 +505,7 @@ export async function* records(slice, seeds, opts = {}, ctx) {
   for (const port of wanted) if (HELD_OUT_PORTS.includes(port) && slice !== 'test-ood') throw fail('HELDOUT_FAMILY', `${port}:kinetics is a held-out family (test-ood only, §3.4); it is not generated in ${slice}`);
   if (!wanted.length) return;
   const K = await ctx.beds.import('beds/kinetics/index.mjs');
-  const diffs = opts.difficulties ?? [1, 2, 3, 4, 5], smokeEvery = 12, swapShare = opts.authorSwap ?? 0.15, authority = opts.x3Authority !== false;
+  const diffs = opts.difficulties ?? [1, 2, 3, 4, 5], smokeEvery = 12, swapShare = opts.authorSwap ?? (slice === 'train' ? 1 : 0.15), authority = opts.x3Authority !== false;
   const x3Wave = opts.x3Wave ?? 1;            // 2: the tap missed its gate (taps/kinetics.mjs tapStatus); X3 is then a wave-2 smoke set
   const test = slice === 'test-ood';
   async function* oneWorld(seed) {
@@ -485,20 +522,27 @@ export async function* records(slice, seeds, opts = {}, ctx) {
       const { cands } = x3Candidates({ task, tap, masks, slice, authority });
       for (const c of rotate(cands, X3_LABELS, perWorld.X3, `${slice}|X3|${seed}`, undefined, X3_WEIGHTS)) {
         const rec = x3Record(c, c0);
-        const twin = authority && c.label !== 'proposes' && unit(`${slice}|swap|${seed}|${c.sp.id}`) < swapShare ? swapTwin(rec, c, c0, p.people) : null;
+        const twin = authority && unit(`${slice}|swap|${seed}|${c.sp.id}`) < swapShare ? swapTwin(rec, c, c0, p.people) : null;
         const para = test && !twin && unit(`${slice}|para|${seed}|${c.sp.id}`) < 0.15 ? paraphraseOf(rec, contracts.X3, slice, opts, `${slice}|X3|${seed}|${c.sp.id}`) : null;
         yield para ?? rec;
         if (twin) yield twin;
       }
     }
     if (wanted.includes('X8') && perWorld.X8) {
+      // Train rows come as flip pairs (§2.5 counterfactual balancing): the same row and extracted value under two unit
+      // statements with opposite labels. A wrong unit factor moves the value by orders of magnitude, so without the
+      // pairs the value's magnitude alone gives the label away (a value-only probe reads 0.80-0.87 balanced accuracy
+      // against a 0.53 ceiling, §6.3 PART); with them every value is consistent once and inconsistent once. A row
+      // whose unit statement cannot be swapped inside the bucket is not used in train.
+      const pairs = opts.x8Pairs ?? slice === 'train';
       let made = 0;
       for (const c of x8Candidates(c0).sort((a, b) => byHash(sha(a.key), sha(b.key)))) {
         if (made >= perWorld.X8) break;
         const rec = makeX8(c, c0, unit(`${slice}|${c.key}|label`) < 0.5);
         if (!rec) continue;
+        const twin = pairs || (test && unit(`${slice}|flip|${c.key}`) < 0.2) ? flipTwin(rec, c, c0) : null;
+        if (pairs && !twin) continue;
         made++;
-        const twin = test && unit(`${slice}|flip|${c.key}`) < 0.2 ? flipTwin(rec, c, c0) : null;
         yield test && !twin && unit(`${slice}|para|${c.key}`) < 0.15 ? paraphraseOf(rec, contracts.X8, slice, opts, `${slice}|X8|${seed}|${c.id}`, { field: rec.state.field, value: rec.state.extracted_value }) ?? rec : rec;
         if (twin) yield twin;
       }
@@ -529,12 +573,19 @@ export async function* records(slice, seeds, opts = {}, ctx) {
           meta: { seed, difficulty, worldHash: wh, variant: 'clean', formId: c.form, surface: { source: 'bed', slice, lineHash: spanHash(c.state.statement) }, masks, kit: { port: 'X4', slots: c.slots }, x4: { kind: c.kind } } });
     }
     if (wanted.includes('X1') && perWorld.X1) {
-      const cands = x1Candidates(c0).filter(c => c.label === 'yes' || skeletonBucket(c.form) === 'test-ood');   // negatives stay in the held-out bucket, apart from the train ports' spans
+      // message negatives stay in the held-out bucket, apart from the messages the train ports (X3, X4) read; the
+      // notebook-line negatives (plate remarks after a table) are read by no train port
+      const all = x1Candidates(c0), nbYes = all.filter(c => c.x.kind === 'notebook-line' && c.label === 'yes').length;
+      // at most as many notebook-line negatives as the world has notebook-line positives, so the source kind stays balanced
+      const nbNo = new Set(all.filter(c => c.x.kind === 'notebook-line' && c.label === 'no').sort((a, b) => byHash(sha(`${slice}|X1nb|${seed}|${a.id}`), sha(`${slice}|X1nb|${seed}|${b.id}`))).slice(0, nbYes).map(c => c.id));
+      const cands = all.filter(c => c.label === 'yes' || (c.x.kind === 'notebook-line' ? nbNo.has(c.id) : skeletonBucket(c.form) === 'test-ood'));
       const yes = cands.filter(c => c.label === 'yes').sort((a, b) => byHash(sha(`${slice}|X1|${seed}|${a.id}`), sha(`${slice}|X1|${seed}|${b.id}`)));
       const no = cands.filter(c => c.label === 'no').sort((a, b) => (Number(b.hard) - Number(a.hard)) || byHash(sha(`${slice}|X1|${seed}|${a.id}`), sha(`${slice}|X1|${seed}|${b.id}`)));
       for (const c of rotate([...yes, ...no], ['yes', 'no'], perWorld.X1, `${slice}|X1|${seed}`, c => c.id)) {
-        const long = unit(`${slice}|X1long|${seed}|${c.id}`) < 0.1;
-        const state = buildX1(task, { ...c.slots, long });
+        // the long variant asks about the whole window: a negative whose window also holds an injection line is not a
+        // negative there, so it stays short
+        let long = unit(`${slice}|X1long|${seed}|${c.id}`) < 0.1, state = buildX1(task, { ...c.slots, long });
+        if (long && c.label === 'no' && windowHasInjection(state.text)) { long = false; state = buildX1(task, { ...c.slots, long }); }
         yield makeRecord({ contract: contracts.X1, slice, opts, key: `${slice}|X1|${seed}|${c.id}`, state, label: c.label,
           meta: { seed, difficulty, worldHash: wh, variant: long ? 'long' : 'clean', formId: c.form, surface: { source: 'bed', slice, lineHash: spanHash(c.x.text) }, masks, kit: { port: 'X1', slots: { ...c.slots, long } },
             x1: { hard: c.hard, kind: c.x.kind } } });
@@ -547,12 +598,15 @@ export async function* records(slice, seeds, opts = {}, ctx) {
     if (wanted.includes('X7') && perWorld.X7) {
       const tap = alignMessages({ task, world, parsed: p });
       // the held-out family stays in the 0-20% skeleton bucket, apart from the messages the train ports (X3, X4) read
-      const cands = [...tap.spans.values()].filter(sp => sp.label && X7_NEEDED[sp.factType] !== undefined && skeletonBucket(formOf(parsedOf(task).messageById[sp.id].text, masks)) === 'test-ood')
-        .map(sp => ({ sp, id: sp.id, label: X7_NEEDED[sp.factType] ? 'needed' : 'not_needed' }));
+      // the label depends on the sub-question (taps/kinetics.mjs x7Label): a swap correction is needed for the fitted
+      // parameters, not for the exclusion list
+      const cands = [...tap.spans.values()].filter(sp => sp.label && skeletonBucket(formOf(parsedOf(task).messageById[sp.id].text, masks)) === 'test-ood')
+        .map(sp => { const sub = pick(X7_SUBQUESTIONS, `${slice}|X7|${seed}|${sp.id}|sq`).text; return { sp, id: sp.id, sub, label: x7Label(sp.factType, sub) }; })
+        .filter(c => c.label);
       for (const c of rotate(cands, ['needed', 'not_needed'], perWorld.X7, `${slice}|X7|${seed}`, c => c.id)) {
-        const state = buildX7(task, { message: c.id }), sub = pick(SUBQUESTIONS, `${slice}|X7|${seed}|${c.id}|sq`);
-        yield makeRecord({ contract: contracts.X7, slice, opts, key: `${slice}|X7|${seed}|${c.id}`, state, label: c.label, slots: { subquestion: sub },
-          meta: { seed, difficulty, worldHash: wh, variant: 'clean', formId: formOf(state.item, masks), surface: { source: 'bed', slice, lineHash: spanHash(state.item) }, masks, kit: { port: 'X7', slots: { message: c.id } }, x7: { factType: c.sp.factType } } });
+        const state = buildX7(task, { message: c.id });
+        yield makeRecord({ contract: contracts.X7, slice, opts, key: `${slice}|X7|${seed}|${c.id}`, state, label: c.label, slots: { subquestion: c.sub },
+          meta: { seed, difficulty, worldHash: wh, variant: 'clean', formId: formOf(state.item, masks), surface: { source: 'bed', slice, lineHash: spanHash(state.item) }, masks, kit: { port: 'X7', slots: { message: c.id } }, x7: { factType: c.sp.factType, subquestion: c.sub } } });
       }
     }
   }
@@ -562,15 +616,10 @@ export async function* records(slice, seeds, opts = {}, ctx) {
     yield r;
   }
 }
-// X7: whether a message is needed to answer a study-level sub-question. A message is needed when the bed
-// applies it (a correction, a late fact, a confirmed report) and not when it is rejected, withdrawn or
-// leaves the record as it was.
-export const X7_NEEDED = Object.freeze({
-  'trap:swap': true, 'trap:units': true, 'trap:reassign': true, 'trap:omitted-inhibitor': true, 'trap:reassign-via-claim': true, 'trap:units-via-claim': true,
-  'late:fact': true, 'late:rowflag': true, 'late:misattributed': true, 'late:colleague-confirmed': true, 'dose:correction': true,
-  'trap:retracted': false, 'claim:swap': false, 'claim:reassign': false, 'claim:units': false, 'claim:addendum': false, 'late:withdrawn': false, 'late:cleared': false, 'late:late-denied': false,
-  'herring:herringRange': false, 'herring:herringSwap': false, 'herring:herringUnits': false, 'herring:herringReaderLog': false,
-});
+// X7: the labels are x7Label (taps/kinetics.mjs) of the message's fact type and the sub-question. JUDGE-PROGRAM.md §1.2
+// names "traps with loadBearing" (every trap is load-bearing, beds/kinetics/README.md); late exclusion facts and the
+// enzyme-dose correction change the answer too and are needed where the sub-question covers them; a retracted swap
+// and a withdrawn report are left out (their two items need each other).
 
 
 // ---- class support (JUDGE-PROGRAM.md §2.7 step 8): class x difficulty, forms = distinct masked surface forms ----

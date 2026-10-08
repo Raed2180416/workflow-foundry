@@ -13,6 +13,7 @@
 // What runs here is the deterministic local filter (pools/filters.mjs).
 //
 //   node experiments/kev-data/pools/train-pools.mjs build [--out DIR] [--manifest FILE|-] [--heldout-manifest FILE]
+//   node experiments/kev-data/pools/train-pools.mjs input --out FILE     (the paraphrase brief: non-held-out templates only)
 //   node experiments/kev-data/pools/train-pools.mjs briefs --pool DIR --out FILE
 //   node experiments/kev-data/pools/train-pools.mjs apply-verdicts --pool DIR --verdicts FILE --out DIR
 //
@@ -29,7 +30,7 @@ import { canonical, sentences, skeleton, skeletonBucket, skeletonPercent } from 
 import { defaultMasks } from '../lib/leakage.mjs';
 import { renderQuestion } from '../lib/render.mjs';
 import { SLOT_VOCABULARY, SYSTEMS, assertInputClean, canonicalValues, extractTemplates, fillLine, paraphraseInput, slotsOf, systemFor, templateSkeleton } from './templates.mjs';
-import { ADDRESSEE_REGEX_SOURCE, grams, hasAddressee, isWindowed, jaccardSets, jaccard1, literalDates, literalSystemNames, maxJaccard4, prepGrams, shapeProblems, sourceStrings } from './filters.mjs';
+import { ADDRESSEE_REGEX_SOURCE, bedReferenceStrings, cueVerdict, grams, hasAddressee, isWindowed, jaccardSets, jaccard1, literalDates, literalSystemNames, maxJaccard4, pairOrientation, prepGrams, shapeProblems, sourceStrings } from './filters.mjs';
 
 export const POOLS_VERSION = 1;
 export const POOLS_DIR = path.resolve(fileURLToPath(new URL('.', import.meta.url)));
@@ -43,7 +44,15 @@ export const TRAIN_FAMILIES = Object.freeze(['records', 'incident', 'synth', 'ru
 export const CUT_LINE_FAMILIES = Object.freeze(['codefix', 'gameqa', 'runbook']);   // plan cutLine: X1 pools for these may be cut
 // Thresholds of the local copy filters (4-gram Jaccard). The program's OOD copy filter is 0.3 against
 // train-pool lines; for train-pool lines themselves the comparisons below are the paraphrase checks.
-export const THRESHOLDS = Object.freeze({ copyOfSource: 0.5, copyOfSourceUnigram: 0.85, heldOutTemplate: 0.5, bedSentence: 0.5, nearDuplicateUnigram: 0.85, windowShareTolerance: 0.05 });
+// heldOutTemplate and heldOutFamily use the program's copy-filter value (0.3, §2.4: OOD lines against train-pool
+// lines and bed templates), applied the other way round: a train-pool line may not sit that close to a held-out bed
+// template (§3.3) or to a string of a held-out family's bed (§3.4: X1 kinetics and gridquest; X5 kinetics and runbook).
+// orientationCrossedMax and cueAgreeMin are the label guards' tolerances (filters.mjs pairOrientation, cueVerdict).
+export const THRESHOLDS = Object.freeze({ copyOfSource: 0.5, copyOfSourceUnigram: 0.85, heldOutTemplate: 0.3, bedSentence: 0.5, heldOutFamily: 0.3, nearDuplicateUnigram: 0.85, windowShareTolerance: 0.05,
+  orientationCrossedMax: 0.02, cueAgreeMin: 0.6, cueMinDecided: 10 });
+// The held-out families of the cross-bed ports this pool writes for (JUDGE-PROGRAM.md §3.4): their bed strings are a
+// copy-filter reference at THRESHOLDS.heldOutFamily. runbook is an X1 train family but an X5 held-out family.
+export const HELD_OUT_FAMILY_BEDS = Object.freeze({ X1: Object.freeze(['kinetics', 'gridquest']), X5: Object.freeze(['kinetics', 'runbook']) });
 
 const sha = x => createHash('sha256').update(x).digest('hex');
 const R = (n, d = 4) => (n === null || n === undefined ? null : Number(n.toFixed(d)));
@@ -157,12 +166,13 @@ export function buildCandidates({ templates, authored }) {
 // ---- screening ------------------------------------------------------------------------------------
 // Static checks first (every reason is logged), then the order-dependent ones (duplicates) among the
 // candidates that survived, in authored order.
-export function screen(candidates, { templates, bedStrings = [], thresholds = THRESHOLDS, trainBucketOnly = true }) {
+export function screen(candidates, { templates, bedStrings = [], heldOutFamilyStrings = {}, thresholds = THRESHOLDS, trainBucketOnly = true }) {
   const byId = new Map(templates.map(t => [t.id, t]));
   const heldOut = templates.filter(t => t.heldOut);
   const heldOutSk = new Map(heldOut.map(t => [templateSkeleton(t), t.id]));
   const heldOutGrams = prepGrams(heldOut.map(t => ({ text: t.text, id: t.id })));
   const bedGrams = prepGrams(bedStrings);
+  const famGrams = Object.fromEntries(Object.entries(heldOutFamilyStrings).map(([p, list]) => [p, prepGrams(list)]));
   const admitted = [], rejects = [], seenSk = new Map(), seenText = new Set(), byTemplate = new Map();
   const reject = (c, reasons, extra = {}) => rejects.push({ key: c.key, port: c.port, templateId: c.templateId, kind: c.kind, label: c.label, system: c.system, family: c.family ?? null, text: c.text, reasons, ...extra });
 
@@ -210,6 +220,10 @@ export function screen(candidates, { templates, bedStrings = [], thresholds = TH
     if (bedGrams.length) {
       let best = 0, at = null; for (const b of bedGrams) { const j = jaccardSets(g, b.grams); if (j > best) { best = j; at = b.text; } }
       if (best >= thresholds.bedSentence) { reasons.push('copy-of-bed-sentence'); extra.bedSentence = { text: String(at).slice(0, 120), jaccard: Number(best.toFixed(3)) }; }
+    }
+    if (famGrams[c.port]?.length) {   // held-out family of this port (test-OOD only): the OOD copy threshold
+      let best = 0, at = null; for (const b of famGrams[c.port]) { const j = jaccardSets(g, b.grams); if (j > best) { best = j; at = b; } }
+      if (best >= thresholds.heldOutFamily) { reasons.push('near-held-out-family-string'); extra.heldOutFamily = { from: at.from ?? null, text: String(at.text).slice(0, 120), jaccard: Number(best.toFixed(3)) }; }
     }
     if (reasons.length) { reject(c, reasons, extra); continue; }
 
@@ -349,7 +363,8 @@ export function loadHeldoutManifest(file = HELDOUT_MANIFEST_PATH) {
 }
 
 // ---- consumers' API -----------------------------------------------------------------------------
-export function loadTrainPool(dir, port) { return readJsonl(path.join(dir, `${port}.jsonl`)); }
+// requirePassed: only the lines the two-model filter admitted (filters.twoModel === "passed"); none until hosted-arms runs it.
+export function loadTrainPool(dir, port, { requirePassed = false } = {}) { const rows = readJsonl(path.join(dir, `${port}.jsonl`)); return requirePassed ? rows.filter(l => l.filters?.twoModel === 'passed') : rows; }
 // lib/counterfactual.mjs listProvider lists: key -> [{text, from}]. text is the filled sentence.
 //   R1/R3/R2/R4 key: `${port}:${system|*}:${label}`; the caller fills slots through `values`.
 export function providerLists(lines, valuesFor) {
@@ -423,18 +438,65 @@ export function applyTwoModelVerdicts(lines, verdicts, { briefs = l => briefsFor
 }
 
 // ---- bed source strings (the copy-filter reference for X1) ------------------------------------------
-export function bedSourceStrings(beds, familyBeds = ['records', 'incident', 'synth', 'runbook', 'codefix', 'gameqa']) {
-  const out = [], digest = {};
-  for (const bed of familyBeds) {
-    const dir = path.join(beds.dir, 'beds', bed);
-    if (!existsSync(dir)) continue;
-    for (const f of readdirSync(dir).filter(f => f.endsWith('.mjs') && !/\.test\.mjs$/.test(f)).sort()) {
-      const rel = `beds/${bed}/${f}`; let src; try { src = beds.read(rel); } catch { continue; }
-      digest[rel] = sha(src);
-      for (const s of sourceStrings(src)) out.push({ text: s, from: rel });
+// Every .mjs file of the train-family beds, recursively (codefix/domains/ included; tests and the audits' attacks/
+// left out), read through the frozen copy only.
+export function bedSourceStrings(beds, familyBeds = TRAIN_FAMILIES) { return bedReferenceStrings(beds, familyBeds, { sha }); }
+// The held-out family references per port (HELD_OUT_FAMILY_BEDS): {strings: {X1: [...], X5: [...]}, digest}.
+export function heldOutFamilyStrings(beds) {
+  const strings = {}, digest = {};
+  for (const [port, list] of Object.entries(HELD_OUT_FAMILY_BEDS)) { const r = bedReferenceStrings(beds, list, { sha }); strings[port] = r.strings; Object.assign(digest, r.digest); }
+  return { strings, digest };
+}
+
+// ---- label guards (filters.mjs pairOrientation, cueVerdict): checks on authored text, never labels ----------------
+// pairs: R1-R3 paraphrase pairs (both sides admitted), oriented against their two source bed templates.
+// keyCues: the template pairs orientation cannot decide (both templates use the same words, e.g. "European, not
+// American" against "American, not European", or only the order of {day} and {month} differs): the label cues of
+// every line of the pair key instead. Slot-carried pairs (the label sits in the slot values; fillLine is tested)
+// are listed, not checked.
+// sections: single-label units (counterfactual sections, R4 paraphrases), the label cues' agreement.
+export function labelGuard(pools, templates) {
+  const byT = new Map(templates.map(t => [t.id, t])), pairs = {}, sections = {}, keyCues = {}, slotCarriedKeys = [];
+  for (const p of ['R1', 'R2', 'R3']) {
+    const rows = pools[p].filter(l => l.group === 'paraphrase' && l.twin), byId = new Map(rows.map(l => [l.id, l]));
+    const tot = { straight: 0, crossed: 0, undecided: 0 }, byKey = {}, crossedIds = [];
+    for (const l of rows) {
+      const o = byId.get(l.twin); if (!o || l.id > o.id) continue;   // each pair once
+      const v = pairOrientation(l.text, o.text, byT.get(l.templateId).text, byT.get(o.templateId).text);
+      tot[v]++; (byKey[l.pairKey] ??= { straight: 0, crossed: 0, undecided: 0 })[v]++;
+      if (v === 'crossed') crossedIds.push(l.id);
+    }
+    pairs[p] = { ...tot, crossedShare: R(tot.crossed / Math.max(1, tot.straight + tot.crossed)), byKey: Object.fromEntries(Object.entries(byKey).sort(([a], [b]) => (a < b ? -1 : 1))), crossedIds };
+    for (const key of [...new Set(templates.filter(t => t.port === p && !t.heldOut).map(t => t.pairKey))].sort()) {
+      if (templates.some(t => t.pairKey === key && t.slotCarried)) { slotCarriedKeys.push(key); continue; }
+      const c = byKey[key]; if (c && c.straight + c.crossed > 0) continue;
+      const v = { agree: 0, disagree: 0, undecided: 0 };
+      for (const l of pools[p]) if (l.pairKey === key) v[cueVerdict(p, l.text, l.label)]++;
+      keyCues[key] = { ...v, agreeShare: R(v.agree / Math.max(1, v.agree + v.disagree)) };
     }
   }
-  return { strings: out, digest };
+  for (const p of ['R1', 'R2', 'R4']) for (const l of pools[p]) {
+    if (l.group === 'paraphrase' && p !== 'R4') continue;
+    const unit = `${p}:${l.kind}:${l.label}`;
+    (sections[unit] ??= { agree: 0, disagree: 0, undecided: 0 })[cueVerdict(p, l.text, l.label)]++;
+  }
+  for (const v of Object.values(sections)) v.agreeShare = R(v.agree / Math.max(1, v.agree + v.disagree));
+  return { pairs, keyCues, slotCarriedKeys, sections: Object.fromEntries(Object.entries(sections).sort(([a], [b]) => (a < b ? -1 : 1))) };
+}
+// The guard's failures ([] = none): too many crossed pairs in a port, a template pair whose decided pairs are mostly
+// crossed, a section whose cue agreement is low (a mis-keyed section scores about 1 - its true share).
+export function labelGuardProblems(g, t = THRESHOLDS) {
+  const out = [];
+  for (const [p, v] of Object.entries(g.pairs)) {
+    if (v.straight + v.crossed < 20) out.push(`${p}: only ${v.straight + v.crossed} decided pairs`);
+    if (v.crossedShare > t.orientationCrossedMax) out.push(`${p}: ${v.crossed} crossed of ${v.straight + v.crossed} decided pairs`);
+    for (const [k, c] of Object.entries(v.byKey)) if (c.crossed > 0 && c.crossed >= c.straight) out.push(`${k}: ${c.crossed} crossed against ${c.straight} straight pairs`);
+  }
+  for (const [u, v] of [...Object.entries(g.sections), ...Object.entries(g.keyCues ?? {})]) {
+    if (v.agree + v.disagree < t.cueMinDecided) out.push(`${u}: only ${v.agree + v.disagree} lines decided by the label cues`);
+    else if (v.agreeShare < t.cueAgreeMin) out.push(`${u}: cue agreement ${v.agreeShare} (${v.agree}/${v.agree + v.disagree})`);
+  }
+  return out;
 }
 
 // ---- the build ------------------------------------------------------------------------------------
@@ -452,14 +514,14 @@ export async function buildTrainPools({ root = REPO_ROOT, beds = null, authoredD
     candidates.push(...x.candidates); problems.push(...x.problems);
     if (extraCandidates) candidates.push(...extraCandidates);
     const violations = assertInputClean(input, templates);
-    const corpus = bedSourceStrings(beds);
-    const { admitted, rejects } = screen(candidates, { templates, bedStrings: corpus.strings });
+    const corpus = bedSourceStrings(beds), fam = heldOutFamilyStrings(beds);
+    const { admitted, rejects } = screen(candidates, { templates, bedStrings: corpus.strings, heldOutFamilyStrings: fam.strings });
     const lines = linkTwins(admitted.map(toLine)).sort((a, b) => (a.id < b.id ? -1 : 1));
     // a filled example of every R and X5 line (deterministic values), so that readers who compare wording (the
     // heldout copy filter, the shortcut audit) see a sentence and not placeholders
     for (const l of lines) if (l.slots.length) l.example = fillLine(l, canonicalValues(l, consts));
     const pools = Object.fromEntries(POOL_PORTS.map(p => [p, lines.filter(l => l.port === p)]));
-    return { pools, rejects, problems, violations, input, templates, extent, consts, source, authoredDigest, corpusDigest: corpus.digest, sources, bedPin: beds.pin, bedCommit: beds.commit, heldoutManifest: loadHeldoutManifest(heldoutManifestPath) };
+    return { pools, rejects, problems, violations, input, templates, extent, consts, source, authoredDigest, corpusDigest: { ...corpus.digest, ...fam.digest }, sources, bedPin: beds.pin, bedCommit: beds.commit, heldoutManifest: loadHeldoutManifest(heldoutManifestPath) };
   } finally { if (tmp) rmSync(tmp, { recursive: true, force: true }); }
 }
 
@@ -478,10 +540,12 @@ export function summarize(res) {
   return {
     ports, perTemplate, shortfalls: perTemplate.filter(t => t.shortfall > 0), rejectsByReason: Object.fromEntries(Object.entries(rb).sort(([a], [b]) => (a < b ? -1 : 1))), rejectsTotal: rejects.length,
     r4WindowBalance: { reliable: { ...wb.reliable, share: R(wb.reliable.share) }, restamped: { ...wb.restamped, share: R(wb.restamped.share) }, gap: R(wb.gap), balanced: windowBalanced(wb) },
-    r1: r1Stats([...pools.R1, ...pools.R2]), x1: x1Stats(pools.X1),
+    r1: r1Stats([...pools.R1, ...pools.R2]), x1: x1Stats(pools.X1), labelGuard: summarizeGuard(labelGuard(pools, templates)),
     input: { templates: input.length, heldOutTemplates: heldOut.map(t => t.id), heldOutCount: heldOut.length, violations, problems },
   };
 }
+const summarizeGuard = g => ({ pairs: Object.fromEntries(Object.entries(g.pairs).map(([p, v]) => [p, { straight: v.straight, crossed: v.crossed, undecided: v.undecided, crossedShare: v.crossedShare, crossedIds: v.crossedIds }])),
+  keyCues: g.keyCues, slotCarriedKeys: g.slotCarriedKeys, sections: g.sections, problems: labelGuardProblems(g) });
 // Every place this group fills in or departs from the program text / plan.
 export const SPEC_GAPS = Object.freeze([
   'Slots: the plan lists {S}, {token}, {w0}, {w1}, {field}; the ORDER_NOTE, FLAG_NOTE and RELIABLE_NOTE templates also carry example dates, a referenced system, the servers\' country, two team cities, an audit year and the FLAG_FORM comparison descriptors, so SLOT_VOCABULARY has 16 names. "Preserved exactly" is the multiset of placeholders of the source template (a dropped, repeated or extra placeholder rejects the line; {S} included).',
@@ -493,7 +557,10 @@ export const SPEC_GAPS = Object.freeze([
   'X1 "distinct benign / decoy forms" are counted on the records family (the bed pools the plan names: BENIGN_MEMOS, DECOY_MEMOS), by skeleton (digits, dates, quoted strings and placeholders masked). Roles: benign (ordinary), decoy (reuses the vocabulary of the positive class or of a void marker without being one; in runbook it holds authorised procedure steps), hard-negative (quoted injections, imperative but benign notes, ordinary uses of the addressee words), positive.',
   'X1 "1 bed template per bed" held out (§3.3): the program does not say which one; no X1 line is a near copy (4-gram Jaccard >= 0.5) of any string of the train-family beds, which covers whichever it is.',
   'X5 is not named in the plan scope text but is in the plan\'s ports list and in §2.4 ("X5 records assumptions"): a pool of assumption clauses (one per convention: R1 dmy/mdy/ymd, R2 void/live, R3 same/opposite, R4 reliable/restamped) is provided. A clause has no capital letter or full stop of its own because it is spliced into Q0-Q3. Negated, sibling-system and injected "this workflow applies" assumptions are not covered.',
-  'The authoring agent read beds/records/render.mjs (held-out templates included) while taking the task in, through the frozen copy only; "the paraphrase input contains no held-out template" is asserted on the extracted input, and the local filter rejects near copies of, and lines with the skeleton of, a held-out template.',
+  'Acceptance 1 holds for the extracted input only: the authoring agent of the first round read beds/records/render.mjs (held-out templates included) through the frozen copy while taking the task in, so its real input was not clean. Mitigation (review 2026-10-08): the local filter rejects lines with a held-out template\'s skeleton and lines at 4-gram Jaccard >= 0.3 (the program\'s copy-filter value, tightened from 0.5) to any held-out template; measured on the admitted R lines, the largest 4-gram Jaccard to a held-out template is below 0.2 and the largest 4-gram containment of a held-out template 0.33 (shared domain phrases such as "sign in the master"). Top-up rounds are briefed with "train-pools.mjs input" (the non-held-out templates only). A clean re-authoring is the only full remedy.',
+  'Label guards (review 2026-10-08): labels are the brief\'s, but nothing checked that the text says what the brief says before the deferred two-model filter. filters.mjs pairOrientation (R1-R3 pairs, oriented against their two source templates) and cueVerdict (single-label sections) are deterministic checks on the text that never assign a label; the manifest reports them (summary.labelGuard) and the pool test fails on a crossed share above 2% per port, a template pair with as many crossed as straight pairs, or a section with cue agreement under 0.6.',
+  'Held-out families (§3.4) are a copy-filter reference at 4-gram Jaccard 0.3: X1 lines against every string of the kinetics and gridquest beds, X5 lines against kinetics and runbook. Bed reference strings are read recursively (codefix/domains/ included, tests and attacks/ left out).',
+  'skeleton, percent and bucket of a line are those of its placeholder form ({S}, {field}, {token} ... all mask to <n>). Filled with values the contracts do not mask (fields, tokens, cities, months, dates), a line has another skeleton: on the canonical example fill about 40% of the R2 and R4 lines and 23% of the slotted R1 lines fall outside the train bucket. Consumers use the stored skeleton as the line\'s form id; the heldout registry holds both forms of its own lines (heldout/assemble.mjs buildRegistry).',
   'The two-model filter (§2.3 rule 1) is deferred to hosted-arms: every line is filters.twoModel = "pending"; the plan acceptance "every admitted line passed the two-model filter" is therefore not met. The reject log kept here is the local filter\'s.',
   'The registry comparison is deferred: the committed heldout manifest has the registry digest and entry count but no skeleton hashes (plan: "checked against the committed hash manifest only"). It runs as soon as the manifest lists hashes, and in assembly through dropRegistryCollisions().',
   'Authored lines are committed as data under experiments/kev-data/pools/authored/ (about 0.6 MB) although the plan lists only the built pool as output: the tests rebuild the pool from them in any checkout, and they hold no secret (unlike the heldout lines). Move them under .foundry/ if the owner prefers; the manifest digests would then be checked against that path.',
@@ -524,6 +591,15 @@ export function manifestOf(res, outDirFiles) {
 }
 
 export const rejectsDirOf = outDir => `${path.resolve(outDir)}-rejects`;
+// The paraphrase input as an artefact (acceptance 1): the only template text a paraphrasing author may be given in
+// a top-up round. Held-out templates are counted, never written; the brief is refused if the clean-input check fails.
+export function paraphraseBrief({ templates }) {
+  const input = paraphraseInput(templates), violations = assertInputClean(input, templates);
+  if (violations.length) throw new Error(`PARAPHRASE_INPUT_UNCLEAN: ${JSON.stringify(violations).slice(0, 300)}`);
+  return { schema: 'kev-data/train-pools-input/1', note: 'paraphrase input of the train pools: the non-held-out label-bearing records templates (JUDGE-PROGRAM.md §2.3 rule 7, §3.3). Brief a paraphrasing author with this file only, never with beds/records/render.mjs.',
+    heldOutExcluded: templates.filter(t => t.heldOut).length, slotVocabulary: SLOT_VOCABULARY,
+    templates: input.map(t => ({ id: t.id, port: t.port, label: t.label, system: t.system, source: t.source, text: t.text, slots: t.slots, slotCarried: t.slotCarried, pairKey: t.pairKey })) };
+}
 export async function writeTrainPools(res, outDir = DEFAULT_OUT) {
   mkdirSync(outDir, { recursive: true });
   const files = {};
@@ -554,6 +630,15 @@ async function main(argv) {
     if (res.problems.length || res.violations.length) { console.error('PROBLEMS', res.problems, res.violations); process.exitCode = 1; }
     return;
   }
+  if (cmd === 'input') {
+    const out = path.resolve(arg(argv, '--out')), tmp = mkdtempSync(path.join(os.tmpdir(), 'kev-train-pools-'));
+    try {
+      const { templates } = await extractTemplates(frozenBeds(freezeBeds(REPO_ROOT, { outRoot: tmp })));
+      const brief = paraphraseBrief({ templates }); writeFileSync(out, JSON.stringify(brief, null, 2) + '\n');
+      console.log(`${brief.templates.length} input templates (${brief.heldOutExcluded} held out, not written) -> ${out}`);
+    } finally { rmSync(tmp, { recursive: true, force: true }); }
+    return;
+  }
   if (cmd === 'briefs') {
     const dir = path.resolve(arg(argv, '--pool')), out = path.resolve(arg(argv, '--out'));
     const res = await buildTrainPools(); const consts = res.consts;
@@ -568,8 +653,12 @@ async function main(argv) {
       const r = applyTwoModelVerdicts(loadTrainPool(dir, p), verdicts, { briefs: l => briefsFor(l, { consts }) });
       writeFileSync(path.join(out, `${p}.jsonl`), jsonl([...r.admitted, ...r.pending].sort((a, b) => (a.id < b.id ? -1 : 1)))); rejected.push(...r.rejected);
     }
-    writeFileSync(path.join(out, 'two-model-rejects.jsonl'), jsonl(rejected)); console.log(`${rejected.length} lines rejected by the two-model filter`); return;
+    // next to the pool directory, not in it (as writeTrainPools does): readers that scan the pool see pool lines only.
+    // Lines without a verdict stay in the pool with filters.twoModel = "pending"; consumers that need filtered lines
+    // select filters.twoModel === "passed".
+    const rdir = rejectsDirOf(out); mkdirSync(rdir, { recursive: true });
+    writeFileSync(path.join(rdir, 'two-model-rejects.jsonl'), jsonl(rejected)); console.log(`${rejected.length} lines rejected by the two-model filter -> ${rdir}`); return;
   }
-  console.error('usage: train-pools.mjs build|briefs|apply-verdicts ...'); process.exitCode = 2;
+  console.error('usage: train-pools.mjs build|input|briefs|apply-verdicts ...'); process.exitCode = 2;
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) await main(process.argv.slice(2));

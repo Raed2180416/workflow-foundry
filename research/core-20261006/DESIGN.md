@@ -175,8 +175,10 @@ model_calls(id INTEGER PRIMARY KEY, replay_key TEXT, run_id TEXT, node_key TEXT,
   quarantined judgment declassifies its data, never the control that decided whether it ran. The
   runtime repeats the check at dispatch and records `controlLabel` in the node state (only when
   untrusted). Termination (a failed assert or verify) and wait delays (schema literals) are not
-  tracked. Routes that clear it: a `human` answer, a `quarantined` bounded-enum judgment, or an
-  approval-gated capability.
+  tracked; tests pin both decisions. A quarantined judgment that fails under `onError: "continue"`
+  is treated as one more value of its bounded decision, not as untrusted control. Routes that
+  clear it: a `human` answer, a `quarantined` bounded-enum judgment, or an approval-gated
+  capability.
 
 ## 5. Runtime integration (`src/runtime.mjs`)
 ### 5.1 Agent execution and escalation (R09 §C5)
