@@ -1,0 +1,31 @@
+{
+  "_comment": "Synthetic mock-account configuration for R-bench item n8n:12679. All ids are our own; the author's account ids are never committed (the original-definition control rebinds them by role, see controls/original.mjs).",
+  "apiUserName": "Integration Bot",
+  "uiUsers": ["Mara Lindqvist", "Tobias Renner"],
+  "zoho": {
+    "linkField": "KlickTipp_ID",
+    "optOutField": "Email_Opt_Out",
+    "segmentTags": { "online": "Online Store", "abc": "ABC" }
+  },
+  "klicktipp": {
+    "lists": {
+      "soi": { "id": "9001", "optIn": "single", "label": "single opt-in list (subscribed immediately)" },
+      "doi": { "id": "9002", "optIn": "double", "label": "double opt-in list (Pending until the subscriber confirms)" }
+    },
+    "tags": {
+      "created": { "id": "9101", "label": "set on subscribers created from a Zoho create/update" },
+      "createdViaForm": { "id": "9102", "label": "set on subscribers created from a Zoho web-form submission" },
+      "segmentOnline": { "id": "9103", "label": "segment: Online Store" },
+      "segmentAbc": { "id": "9104", "label": "segment: ABC" },
+      "activationSend": { "id": "9105", "label": "activation tag: KlickTipp fires the 'contact tagged' webhook when it is applied" },
+      "activationDeleted": { "id": "9106", "label": "activation tag: KlickTipp fires the 'contact deleted' webhook when it is applied" }
+    },
+    "fields": { "zohoContactId": "field9301" }
+  },
+  "segments": [
+    { "key": "online", "zohoTag": "Online Store", "klicktippTag": "segmentOnline" },
+    { "key": "abc", "zohoTag": "ABC", "klicktippTag": "segmentAbc" }
+  ],
+  "latencyMs": { "zoho": 180, "klicktipp": 250 },
+  "limits": { "runsPerQuiescence": 20, "callsPerRun": 150 }
+}

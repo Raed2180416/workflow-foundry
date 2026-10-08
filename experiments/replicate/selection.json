@@ -1,0 +1,2466 @@
+{
+ "schema": "foundry-replicate-selection/1",
+ "created": "2026-10-08",
+ "status": "development/diagnostic selection; nothing frozen, nothing run",
+ "items": [
+  {
+   "rank": 1,
+   "id": "galaxy:iwc/variation-reporting/Generic-variation-analysis-reporting",
+   "platform": "galaxy",
+   "cluster": "science",
+   "title": "Generic variation analysis reporting (IWC variant-calling, v0.1.1)",
+   "priority": "A",
+   "pilot": "science (shipped test data and reference outputs)",
+   "source": {
+    "url": "https://github.com/galaxyproject/iwc/blob/fc190a435262bb61ba29f316e987aa492eb5d18b/workflows/variant-calling/variation-reporting/Generic-variation-analysis-reporting.ga",
+    "revision": "iwc commit fc190a435262bb61ba29f316e987aa492eb5d18b; workflow release 0.1.1",
+    "retrievedAt": "2026-10-06",
+    "license": "MIT",
+    "redistributable": true,
+    "rawPath": "/opt/corpus/galaxy/iwc/workflows/variant-calling/variation-reporting/Generic-variation-analysis-reporting.ga",
+    "rawPin": {
+     "file": "/opt/corpus/galaxy/iwc/workflows/variant-calling/variation-reporting/Generic-variation-analysis-reporting.ga",
+     "fragment": null,
+     "sha256": "b146d115ad99dc836ce2df56975b99176e1a6abdc7b30a8e338b9872e088589f"
+    }
+   },
+   "shape": {
+    "nodes": 31,
+    "edges": 34,
+    "branching": 1,
+    "loops": 2,
+    "humanSteps": 0,
+    "modelCalls": false,
+    "code": false,
+    "async": [],
+    "subworkflows": 0,
+    "irVerdict": "native",
+    "corpusOracle": "output-equivalence"
+   },
+   "why": "IWC workflow by Wolfgang Maier that turns per-sample VCFs from any IWC variant-calling workflow into by-sample and by-variant reports: 31 Galaxy tool steps (35 with inputs) chaining SnpSift filter/extractFields, column_maker, datamash, find-and-replace, joins and collection collapse. A reporting chore people otherwise script by hand; deterministic tabular job with light tools (no aligner).",
+   "constructs": [
+    "run parameters (AF, DP, DP_ALT thresholds)",
+    "map over a sample collection",
+    "filter",
+    "joins and group-by aggregation (fan-in)",
+    "split to collection"
+   ],
+   "tasks": {
+    "T1": "feasible: .ga is MIT and complete; tool semantics (SnpSift expressions, datamash ops) must be reproduced in code nodes",
+    "T2": "feasible: README + the four parameter annotations + one example VCF and its four output tables",
+    "T3": "feasible: same four tables with far fewer steps and no model calls; robustness to multi-sample collections and missing ANN fields"
+   },
+   "oracle": {
+    "kind": "output-equivalence",
+    "files": [
+     "/opt/corpus/galaxy/iwc/workflows/variant-calling/variation-reporting/Generic-variation-analysis-reporting-tests.yml",
+     "/opt/corpus/galaxy/iwc/workflows/variant-calling/variation-reporting/test-data/Variation data to report_filtered variants ERR3485802.vcf",
+     "/opt/corpus/galaxy/iwc/workflows/variant-calling/variation-reporting/test-data/af_recalculated.tabular",
+     "/opt/corpus/galaxy/iwc/workflows/variant-calling/variation-reporting/test-data/all_variants_all_samples.tabular",
+     "/opt/corpus/galaxy/iwc/workflows/variant-calling/variation-reporting/test-data/by_variant_report.tabular",
+     "/opt/corpus/galaxy/iwc/workflows/variant-calling/variation-reporting/test-data/combined_variant_report.tabular"
+    ],
+    "plan": "Run the candidate on the shipped VCF with AF 0.05, DP 1, DP_ALT 10. The four tables must match the shipped ones: the tests file allows compare: diff with lines_diff 6; R-bench reports that score and a stricter one (row multiset equal after header normalisation). Generalisation set: 20 seeded variants of the shipped VCF (resampled records, 2 to 5 samples per collection, shifted thresholds) whose expected tables come from a reference implementation that must first reproduce the shipped outputs exactly (oracle health gate); these cases are labelled derived.",
+    "pass": "all four tables equal on the shipped case and on >= 18/20 derived cases"
+   },
+   "controls": {
+    "original": "shipped-outputs",
+    "originalHow": "the shipped tables are the original workflow outputs; a planemo re-run needs a Galaxy server with pinned tool-shed tools (optional, heavy)",
+    "broken": [
+     "AF filter uses > instead of >=",
+     "DP_ALT recalculation dropped",
+     "collapse keeps only the first sample",
+     "empty"
+    ]
+   },
+   "mocks": [],
+   "acquisition": [],
+   "effortHours": 10,
+   "risks": [
+    "only one sample in the shipped test, so generalisation cases depend on our reference implementation (validated on the shipped case first)",
+    "SnpSift expression and ANN-field semantics must be matched exactly",
+    "lines_diff 6 is a loose shipped criterion"
+   ],
+   "licenceNote": "MIT (workflow and test data in galaxyproject/iwc); redistributable",
+   "pilotSlot": "P1"
+  },
+  {
+   "rank": 2,
+   "id": "nf-core:stableexpression@v1.0.0",
+   "platform": "nf-core",
+   "cluster": "science",
+   "title": "nf-core/stableexpression v1.0.0",
+   "priority": "B",
+   "pilot": null,
+   "source": {
+    "url": "https://nf-co.re/stableexpression/v1.0.0",
+    "revision": "tag v1.0.0 commit f0313431db960f512264615aa72c59d60b65e8b4 (published 2026-09-22T11:01:33Z)",
+    "retrievedAt": "2026-10-06",
+    "license": "MIT",
+    "redistributable": true,
+    "rawPath": "/opt/corpus/nf-core/repos/stableexpression",
+    "rawPin": {
+     "file": "/opt/corpus/nf-core/repos/stableexpression/main.nf",
+     "fragment": null,
+     "sha256": "83f01f23267da7ccb827f770f4c36e6ed00ba17565d3054862e1b179c5c28efb"
+    }
+   },
+   "shape": {
+    "nodes": 40,
+    "edges": 66,
+    "branching": 15,
+    "loops": 15,
+    "humanSteps": 0,
+    "modelCalls": false,
+    "code": true,
+    "async": [],
+    "subworkflows": 19,
+    "irVerdict": "via-extension:error-branch+completion-hook+adaptive-retry",
+    "corpusOracle": "output-equivalence"
+   },
+   "why": "Finds the most stable reference genes for a species by pooling public and custom RNA-seq/microarray count datasets: cleaning, ID mapping, CPM/TPM and quantile normalisation, geNorm and NormFinder, a combined stability score and a report. Niche question, small team, Python/R table scripts rather than aligners.",
+   "constructs": [
+    "optional external fetch (Expression Atlas, GEO, Ensembl, g:Profiler)",
+    "per-dataset fan-out",
+    "merge and imputation",
+    "two stability algorithms in parallel",
+    "aggregate ranking",
+    "error tolerance per dataset"
+   ],
+   "tasks": {
+    "T1": "feasible but large: Nextflow modules map to code nodes; parquet intermediates",
+    "T2": "feasible: description + the local beta_vulgaris datasets + an example summary table",
+    "T3": "feasible: drop redundant normalisation passes; robustness to missing values and empty datasets"
+   },
+   "oracle": {
+    "kind": "output-equivalence",
+    "files": [
+     "/opt/corpus/nf-core/repos/stableexpression/conf/test_dataset_format.config",
+     "/opt/corpus/nf-core/repos/stableexpression/tests/test_data/workflows/sampled/beta_vulgaris/samplesheet.csv",
+     "/opt/corpus/nf-core/repos/stableexpression/tests/test_data/workflows/sampled/beta_vulgaris/design.csv",
+     "/opt/corpus/nf-core/repos/stableexpression/tests/test_data/workflows/sampled/beta_vulgaris/counts.csv.gz",
+     "/opt/corpus/nf-core/repos/stableexpression/tests/test_data/workflows/sampled/beta_vulgaris/counts1.csv",
+     "/opt/corpus/nf-core/repos/stableexpression/tests/test_data/workflows/sampled/beta_vulgaris/counts2.csv",
+     "/opt/corpus/nf-core/repos/stableexpression/tests/default.nf.test.snap",
+     "/opt/corpus/nf-core/repos/stableexpression/tests/test_data/modules/normfinder/",
+     "/opt/corpus/nf-core/repos/stableexpression/tests/test_data/modules/compute_stability_scores/"
+    ],
+    "plan": "Expected reporting/all_genes_summary.csv comes from one pinned original run (nextflow + docker, profile test_dataset_format, all inputs local). Where a profile is snapshotted, the run must first reproduce the md5 in tests/default.nf.test.snap. Candidate pass: the 10 most stable genes as a set and Kendall tau >= 0.9 on their order, per-gene stability scores within 1e-6 relative. Module fixtures give unit-level checks for NormFinder and the combined score. Fetch-mode scenarios use mock Expression Atlas/GEO responses built from the module test data (labelled derived).",
+    "pass": "top-10 set equal, tau >= 0.9, scores within tolerance on the local profile"
+   },
+   "controls": {
+    "original": "heavy",
+    "originalHow": "nextflow run -profile test_dataset_format,docker with pinned container digests (D5 cap)",
+    "broken": [
+     "quantile normalisation skipped",
+     "geNorm M ranking reversed",
+     "imputation dropped"
+    ]
+   },
+   "mocks": [
+    "Expression Atlas API",
+    "GEO",
+    "Ensembl FTP (GFF)",
+    "g:Profiler"
+   ],
+   "acquisition": [
+    "Nextflow binary (pinned)",
+    "container images by digest"
+   ],
+   "effortHours": 16,
+   "risks": [
+    "pyarrow is not installed for the code sandbox; parquet intermediates need it or CSV substitutes",
+    "the local profile may not be snapshotted; then the expected file is our pinned original run",
+    "NormFinder is an R implementation; numeric tolerance must be frozen before runs"
+   ],
+   "licenceNote": "MIT; redistributable",
+   "pilotSlot": null
+  },
+  {
+   "rank": 3,
+   "id": "nf-core:reportho@1.1.0",
+   "platform": "nf-core",
+   "cluster": "science",
+   "title": "nf-core/reportho 1.1.0",
+   "priority": "B",
+   "pilot": null,
+   "source": {
+    "url": "https://nf-co.re/reportho/1.1.0",
+    "revision": "tag 1.1.0 commit 9e8ae5a07ddb5ccd34bb01c72e70e390d97d1cb7 (published 2025-10-21T14:54:11Z)",
+    "retrievedAt": "2026-10-06",
+    "license": "MIT",
+    "redistributable": true,
+    "rawPath": "/opt/corpus/nf-core/repos/reportho",
+    "rawPin": {
+     "file": "/opt/corpus/nf-core/repos/reportho/main.nf",
+     "fragment": null,
+     "sha256": "37855217f0676c8dd2e1267e9a027bc0a3cbff5631a665bf31dd871419908773"
+    }
+   },
+   "shape": {
+    "nodes": 48,
+    "edges": 97,
+    "branching": 16,
+    "loops": 3,
+    "humanSteps": 0,
+    "modelCalls": false,
+    "code": true,
+    "async": [],
+    "subworkflows": 12,
+    "irVerdict": "via-extension:error-branch+completion-hook+adaptive-retry",
+    "corpusOracle": "output-equivalence"
+   },
+   "why": "Orthology report for query proteins: gathers orthologs from OMA, PANTHER and EggNOG (online APIs or offline database dumps), scores consensus across sources, filters by min_score, computes stats and plots. Specialist pipeline; Python scripts and ripgrep over small tables.",
+   "constructs": [
+    "per-query fan-out",
+    "parallel source lookups (online or offline branch)",
+    "merge and score",
+    "threshold filter",
+    "optional downstream branch",
+    "stats fan-in"
+   ],
+   "tasks": {
+    "T1": "feasible after acquiring bin/ scripts (not in the sparse clone)",
+    "T2": "feasible: description + mini databases + an example score table",
+    "T3": "feasible: one pass over each database; graceful handling of a source with no hits"
+   },
+   "oracle": {
+    "kind": "output-equivalence",
+    "files": [
+     "/opt/corpus/nf-core/repos/reportho/conf/test_offline.config",
+     "/opt/corpus/nf-core/repos/reportho/tests/offline.nf.test",
+     "/opt/corpus/nf-core/repos/reportho/tests/offline.nf.test.snap",
+     "nf-core/test-datasets@<pin>:reportho/testdata/samplesheet/samplesheet.csv",
+     "nf-core/test-datasets@<pin>:reportho/testdata/databases/{oma-mini.txt.gz,oma-uniprot-mini.txt.gz,oma-ensembl-mini.txt.gz,oma-refseq-mini.txt.gz,AllOrthologs-mini.txt,1_members-mini.tsv.gz,latest.Eukaryota-mini.tsv.gz}"
+    ],
+    "plan": "Expected score/<id>/<id>_score_table.csv and filtered hits from one pinned original run with profile test_offline (min_score 2); output file list must match tests/offline.nf.test.snap. Online-mode scenarios serve mock OMA/PANTHER/UniProt/EggNOG/Ensembl responses generated from the same mini databases, so online and offline candidates must agree (metamorphic check).",
+    "pass": "score tables and filtered hit lists equal per query; online == offline"
+   },
+   "controls": {
+    "original": "heavy",
+    "originalHow": "nextflow run -profile test_offline,docker after acquiring test-datasets",
+    "broken": [
+     "score counts sources with no hit",
+     "min_score off by one",
+     "EggNOG id mapping dropped"
+    ]
+   },
+   "mocks": [
+    "OMA REST",
+    "PANTHER",
+    "UniProt",
+    "EggNOG",
+    "Ensembl",
+    "RefSeq (online mode only)"
+   ],
+   "acquisition": [
+    "bin/*.py scripts at the pinned revision",
+    "nf-core/test-datasets reportho branch files (pinned SHA)"
+   ],
+   "effortHours": 14,
+   "risks": [
+    "the sparse clone lacks bin/ scripts, so T1 and semantics depend on acquisition",
+    "the snapshot pins file lists, not values, for some outputs"
+   ],
+   "licenceNote": "MIT; redistributable",
+   "pilotSlot": null
+  },
+  {
+   "rank": 4,
+   "id": "nf-core:nanostring@1.3.3",
+   "platform": "nf-core",
+   "cluster": "science",
+   "title": "nf-core/nanostring 1.3.3",
+   "priority": "B",
+   "pilot": null,
+   "source": {
+    "url": "https://nf-co.re/nanostring/1.3.3",
+    "revision": "tag 1.3.3 commit 6f0b2d537a1f06e8fe1d6c63d7c409009141aa62 (published 2026-01-30T15:24:34Z)",
+    "retrievedAt": "2026-10-06",
+    "license": "MIT",
+    "redistributable": true,
+    "rawPath": "/opt/corpus/nf-core/repos/nanostring",
+    "rawPin": {
+     "file": "/opt/corpus/nf-core/repos/nanostring/main.nf",
+     "fragment": null,
+     "sha256": "5788035966a15aefee7be8ae57043f27edc5f817b91a2847bb6bbae9bac12738"
+    }
+   },
+   "shape": {
+    "nodes": 11,
+    "edges": 14,
+    "branching": 2,
+    "loops": 2,
+    "humanSteps": 0,
+    "modelCalls": false,
+    "code": true,
+    "async": [],
+    "subworkflows": 8,
+    "irVerdict": "via-extension:error-branch+completion-hook+adaptive-retry",
+    "corpusOracle": "output-equivalence"
+   },
+   "why": "NanoString nCounter processing: RCC QC and normalisation via NACHO, annotated tables, optional gene-score computation and heatmap. Assay-specific and small (11 nodes) but numerically exact, so a rebuild either does the normalisation right or fails.",
+   "constructs": [
+    "per-sample parsing",
+    "QC gate",
+    "normalisation",
+    "optional gene-score branch",
+    "report fan-in"
+   ],
+   "tasks": {
+    "T1": "feasible: R scripts in modules/local/*/resources/usr/bin plus the NACHO module",
+    "T2": "feasible: description + RCC files + example normalised table",
+    "T3": "feasible: robustness to failed-QC samples; fewer passes"
+   },
+   "oracle": {
+    "kind": "output-equivalence",
+    "files": [
+     "/opt/corpus/nf-core/repos/nanostring/conf/test.config",
+     "/opt/corpus/nf-core/repos/nanostring/tests/test.nf.test.snap",
+     "/opt/corpus/nf-core/repos/nanostring/tests/test_samples.nf.test.snap",
+     "/opt/corpus/nf-core/repos/nanostring/tests/test_scores.nf.test.snap",
+     "/opt/corpus/nf-core/repos/nanostring/modules/local/compute_gene_scores/resources/usr/bin/compute_gene_scores.R",
+     "nf-core/test-datasets@<pin>:nanostring/samplesheets/samplesheet_test.csv and the RCC files it lists"
+    ],
+    "plan": "Expected normalised and annotated count tables from one pinned original run (profile test, and test_scores for the gene-score branch); its md5s must match the shipped snapshots (38 md5 entries over the snap files). Candidate pass: per gene and sample values within 1e-6 relative, QC flags equal.",
+    "pass": "normalised tables within tolerance, QC flags equal, gene scores within tolerance"
+   },
+   "controls": {
+    "original": "heavy",
+    "originalHow": "nextflow run -profile test,docker (R/NACHO containers)",
+    "broken": [
+     "positive-control scaling skipped",
+     "arithmetic instead of geometric mean for housekeeping factors",
+     "failed-QC samples silently dropped"
+    ]
+   },
+   "mocks": [],
+   "acquisition": [
+    "RCC files and samplesheets from nf-core/test-datasets (pinned SHA)",
+    "Nextflow and container digests"
+   ],
+   "effortHours": 12,
+   "risks": [
+    "md5 equality is impossible across implementations, so the numeric tolerance carries the judgement",
+    "small DAG: T2 difficulty sits in the numerics, not the structure"
+   ],
+   "licenceNote": "MIT; redistributable",
+   "pilotSlot": null
+  },
+  {
+   "rank": 5,
+   "id": "galaxy:iwc/hyphy/capheine-core-and-compare",
+   "platform": "galaxy",
+   "cluster": "science",
+   "title": "CAPHEINE: Combined HyPhy Core and Compare (IWC comparative_genomics, v0.2)",
+   "priority": "C",
+   "pilot": null,
+   "source": {
+    "url": "https://github.com/galaxyproject/iwc/blob/fc190a435262bb61ba29f316e987aa492eb5d18b/workflows/comparative_genomics/hyphy/capheine-core-and-compare.ga",
+    "revision": "iwc commit fc190a435262bb61ba29f316e987aa492eb5d18b; workflow release 0.2",
+    "retrievedAt": "2026-10-06",
+    "license": "MIT",
+    "redistributable": true,
+    "rawPath": "/opt/corpus/galaxy/iwc/workflows/comparative_genomics/hyphy/capheine-core-and-compare.ga",
+    "rawPin": {
+     "file": "/opt/corpus/galaxy/iwc/workflows/comparative_genomics/hyphy/capheine-core-and-compare.ga",
+     "fragment": null,
+     "sha256": "93476e86f459bfa5a8856b1febc0c4126112f9778f28d4f009af6b4cd477acc4"
+    }
+   },
+   "shape": {
+    "nodes": 32,
+    "edges": 44,
+    "branching": 3,
+    "loops": 1,
+    "humanSteps": 0,
+    "modelCalls": false,
+    "code": false,
+    "async": [],
+    "subworkflows": 3,
+    "irVerdict": "native",
+    "corpusOracle": "test-profile"
+   },
+   "why": "CAPHEINE: a hand-assembled selection-analysis bundle (preprocessing, codon alignment, tree inference, HyPhy selection tests, and a branch comparison with optional foreground labelling by list or regex). Shipped Dengue test data, four test cases.",
+   "constructs": [
+    "nested sub-workflows (core, compare, preprocessing)",
+    "optional branches (foreground list vs regex vs none)",
+    "map over genes",
+    "fan-in summary"
+   ],
+   "tasks": {
+    "T1": "feasible only with tool capabilities (tape-backed)",
+    "T2": "constrained: the rebuild must use the recorded tool set",
+    "T3": "feasible on orchestration (skip redundant analyses, fail-soft per gene)"
+   },
+   "oracle": {
+    "kind": "test-profile + tool tapes",
+    "files": [
+     "/opt/corpus/galaxy/iwc/workflows/comparative_genomics/hyphy/capheine-core-and-compare-tests.yml",
+     "/opt/corpus/galaxy/iwc/workflows/comparative_genomics/hyphy/test-data/"
+    ],
+    "plan": "Record each heavy tool call of an original run once (tool, version, args, input hash -> outputs) from pinned containers; candidates call tool capabilities that replay tapes and fail closed on unrecorded calls. Pass = every has_text assertion of the four shipped cases, plus correct foreground/background labelling per case.",
+    "pass": "all shipped assertions in 4/4 cases"
+   },
+   "controls": {
+    "original": "heavy",
+    "originalHow": "planemo test with pinned tools, or tape replay of the original calls",
+    "broken": [
+     "regex foreground labelling ignored",
+     "RELAX comparison skipped",
+     "empty"
+    ]
+   },
+   "mocks": [
+    "tool tapes: codon aligner, IQ-TREE, HyPhy"
+   ],
+   "acquisition": [
+    "pinned tool containers for recording"
+   ],
+   "effortHours": 20,
+   "risks": [
+    "tapes restrict T2 to the original tool set, so the oracle judges orchestration and glue, not the science",
+    "has_text assertions are weak",
+    "HyPhy runtime during recording"
+   ],
+   "licenceNote": "MIT; redistributable",
+   "pilotSlot": null
+  },
+  {
+   "rank": 6,
+   "id": "snakemake:daspacio9/pooledpremiumpcrpipeline2@v4.0.2",
+   "platform": "snakemake",
+   "cluster": "science",
+   "title": "daspacio9/pooledpremiumpcrpipeline2 v4.0.2",
+   "priority": "C",
+   "pilot": null,
+   "source": {
+    "url": "https://github.com/daspacio9/pooledpremiumpcrpipeline2/tree/cc7966138bf74fd72643dfffb7d6123890302d68",
+    "revision": "tag v4.0.2 commit cc7966138bf74fd72643dfffb7d6123890302d68 (2026-09-03T12:05:37-07:00)",
+    "retrievedAt": "2026-10-06",
+    "license": "MIT",
+    "redistributable": true,
+    "rawPath": "/opt/corpus/snakemake/repos/daspacio9__pooledpremiumpcrpipeline2",
+    "rawPin": {
+     "file": "/opt/corpus/snakemake/repos/daspacio9__pooledpremiumpcrpipeline2/workflow/Snakefile",
+     "fragment": null,
+     "sha256": "93f667de6a9edabb1527dbf18577e55d2aef713aba3a80db3e160f92f0c9a9a6"
+    }
+   },
+   "shape": {
+    "nodes": 34,
+    "edges": 47,
+    "branching": 0,
+    "loops": 9,
+    "humanSteps": 0,
+    "modelCalls": true,
+    "code": true,
+    "async": [],
+    "subworkflows": 0,
+    "irVerdict": "via-extension:error-branch+dynamic-dag",
+    "corpusOracle": "test-profile"
+   },
+   "why": "Single-author lab pipeline (Derek Sprayberry Aspacio) that demultiplexes pooled, dual-barcoded amplicons returned by the Plasmidsaurus Premium PCR service and calls per-sample consensus, coverage QC and AB1 export. The clearest niche, hand-built science item in the corpus.",
+   "constructs": [
+    "barcode reference preparation sub-workflow",
+    "demultiplex fan-out",
+    "per-sample consensus",
+    "QC fan-in",
+    "cleanup"
+   ],
+   "tasks": {
+    "T1": "feasible after acquiring workflow/scripts and test reads",
+    "T2": "feasible for demultiplexing; consensus needs tool tapes",
+    "T3": "feasible on demultiplexing robustness"
+   },
+   "oracle": {
+    "kind": "output-equivalence + tool tapes",
+    "files": [
+     "/opt/corpus/snakemake/repos/daspacio9__pooledpremiumpcrpipeline2/.test/config/config.yaml",
+     "/opt/corpus/snakemake/repos/daspacio9__pooledpremiumpcrpipeline2/workflow/rules/demux.smk",
+     "daspacio9/pooledpremiumpcrpipeline2@cc7966138bf74fd72643dfffb7d6123890302d68: .test/ reads, barcode fasta/csv, workflow/scripts/*.py (blobs not materialised in the partial clone)"
+    ],
+    "plan": "Expected read-to-sample assignment and consensus sequences from one pinned original run. Pass = assignment exact; consensus identity >= 99.9% (medaka polishing replayed from tapes); QC summary values equal.",
+    "pass": "assignment exact, consensus identity >= 0.999 for every sample"
+   },
+   "controls": {
+    "original": "heavy",
+    "originalHow": "snakemake --use-conda or apptainer, once, to record",
+    "broken": [
+     "barcode orientation swapped",
+     "min-length filter dropped"
+    ]
+   },
+   "mocks": [
+    "tool tapes: minimap2, medaka, samtools"
+   ],
+   "acquisition": [
+    "scripts and test data blobs at the pinned SHA",
+    "conda environments or containers"
+   ],
+   "effortHours": 24,
+   "risks": [
+    "most of the job lives in tools",
+    "medaka model weights and env resolution",
+    "acquisition from a partial clone"
+   ],
+   "licenceNote": "MIT; redistributable",
+   "pilotSlot": null
+  },
+  {
+   "rank": 7,
+   "id": "galaxy:workflowhub/251",
+   "platform": "galaxy",
+   "cluster": "science",
+   "title": "Investigation of lockdown effect on air quality between January 2019 to May 2021. (WorkflowHub #251)",
+   "priority": "B",
+   "pilot": null,
+   "source": {
+    "url": "https://workflowhub.eu/workflows/251?version=1",
+    "revision": "WorkflowHub workflow 251 version 1; RO-Crate download",
+    "retrievedAt": "2026-10-06",
+    "license": "Apache-2.0",
+    "redistributable": true,
+    "rawPath": "/opt/corpus/workflowhub/x/251/Galaxy-Workflow-Investigation_of_lockdown_effect_on_air_quality_between_January_2019_to_May_2021.ga",
+    "rawPin": {
+     "file": "/opt/corpus/workflowhub/x/251/Galaxy-Workflow-Investigation_of_lockdown_effect_on_air_quality_between_January_2019_to_May_2021.ga",
+     "fragment": null,
+     "sha256": "e68007f55435f6a1301d90a34eff424cbd85cbb3208ac7926c4a12a190887a06"
+    }
+   },
+   "shape": {
+    "nodes": 53,
+    "edges": 72,
+    "branching": 0,
+    "loops": 0,
+    "humanSteps": 0,
+    "modelCalls": false,
+    "code": false,
+    "async": [],
+    "subworkflows": 0,
+    "irVerdict": "native",
+    "corpusOracle": "none"
+   },
+   "why": "RELIANCE-project researcher workflow: extract five half-year periods (Jan-Jun 2019/2020/2021, Jul-Dec 2019/2020) of a CAMS air-quality variable at one location and compute mean/min/max per period (53 nodes of xarray_select, datamash, text processing, paste). Non-biology science item.",
+   "constructs": [
+    "parameterised location",
+    "five parallel period extractions",
+    "per-period aggregation",
+    "fan-in table"
+   ],
+   "tasks": {
+    "T1": "feasible: .ga is Apache-2.0",
+    "T2": "feasible: description + a synthetic grid + example table",
+    "T3": "feasible: 53 steps collapse to one pass; period boundaries made explicit"
+   },
+   "oracle": {
+    "kind": "authored output-equivalence",
+    "files": [
+     "/opt/corpus/workflowhub/x/251/Galaxy-Workflow-Investigation_of_lockdown_effect_on_air_quality_between_January_2019_to_May_2021.ga"
+    ],
+    "plan": "Seeded synthetic CAMS-like grids (lat/lon/time, hourly, JSON) with known values; the oracle computes per-period mean/min/max at the nearest grid point. Pass = values within 1e-9, correct inclusive period boundaries in UTC, correct nearest-point choice.",
+    "pass": "all periods correct on >= 19/20 seeded grids"
+   },
+   "controls": {
+    "original": "heavy",
+    "originalHow": "Galaxy with xarray tools (optional)",
+    "broken": [
+     "period end off by one day",
+     "interpolated instead of nearest point",
+     "mean of daily means"
+    ]
+   },
+   "mocks": [],
+   "acquisition": [],
+   "effortHours": 8,
+   "risks": [
+    "no shipped test: authored oracle (T3-tier)",
+    "real input is a Copernicus netCDF; the synthetic grid stands in",
+    "computationally simple: the value is in period/coordinate semantics and consolidation"
+   ],
+   "licenceNote": "Apache-2.0; redistributable",
+   "pilotSlot": null
+  },
+  {
+   "rank": 8,
+   "id": "github-actions:shafthq/shaft_engine/.github/workflows/update-selenium-grid-versions.yml",
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "title": "Update Selenium Grid Docker Versions",
+   "priority": "A",
+   "pilot": "choice: orchestration cluster, and the only pilot whose original runs offline as a true control",
+   "source": {
+    "url": "https://github.com/shafthq/shaft_engine/blob/3b2eae51248d2cf58146a64c48265259ee077a0a/.github/workflows/update-selenium-grid-versions.yml",
+    "revision": "3b2eae51248d2cf58146a64c48265259ee077a0a (versions in dataset: 3; Zenodo 10.5281/zenodo.20340547 pool R)",
+    "retrievedAt": "2026-10-06",
+    "license": "MIT",
+    "redistributable": true,
+    "rawPath": "/opt/corpus/github-actions/raw/shafthq__shaft_engine@3b2eae51248d2cf58146a64c48265259ee077a0a/.github/workflows/update-selenium-grid-versions.yml",
+    "rawPin": {
+     "file": "/opt/corpus/github-actions/raw/shafthq__shaft_engine@3b2eae51248d2cf58146a64c48265259ee077a0a/.github/workflows/update-selenium-grid-versions.yml",
+     "fragment": null,
+     "sha256": "dff6b15a22a2e6350a68805e1779eb7b3d6a0a42143cc2df8614c3aef50facef"
+    }
+   },
+   "shape": {
+    "nodes": 8,
+    "edges": 7,
+    "branching": 2,
+    "loops": 0,
+    "humanSteps": 0,
+    "modelCalls": false,
+    "code": true,
+    "async": [
+     "schedule"
+    ],
+    "subworkflows": 0,
+    "irVerdict": "via-extension:schedule-trigger",
+    "corpusOracle": "none"
+   },
+   "why": "A maintainer bot in the SHAFT test-automation framework: weekly, fetch Selenium's reference docker-compose, extract chrome/edge/firefox/hub tags, strip nightly/beta/dev tags, compare with the repo's selenium4.yml, rewrite versions, validate, and open a pull request only on change: a 177-line workflow, mostly hand-written bash, in six steps.",
+   "constructs": [
+    "schedule trigger (run input)",
+    "external fetch",
+    "parse and normalise",
+    "guard on change",
+    "file-edit effect",
+    "pull-request effect"
+   ],
+   "tasks": {
+    "T1": "feasible: bash steps map to code nodes plus HTTP/file/PR capabilities",
+    "T2": "feasible: description + one reference compose + the repo file",
+    "T3": "feasible: idempotent PR (update an open bot PR instead of opening another), fail loudly on malformed reference"
+   },
+   "oracle": {
+    "kind": "mocked-execution (effect trace + file state)",
+    "files": [
+     "/opt/corpus/github-actions/raw/shafthq__shaft_engine@3b2eae51248d2cf58146a64c48265259ee077a0a/.github/workflows/update-selenium-grid-versions.yml",
+     "shafthq/shaft_engine@3b2eae51248d2cf58146a64c48265259ee077a0a:src/main/resources/docker-compose/selenium4.yml (acquire one file)"
+    ],
+    "plan": "12+ authored scenarios: normal bump, nightly/beta tags on some images, an image missing from the reference, no change, malformed reference, already-open bot PR. Pass = resulting selenium4.yml byte-equal to the expected edit, PR opened iff changed with the expected branch/title fields, no PR on no-change, visible failure on malformed input.",
+    "pass": "all scenarios"
+   },
+   "controls": {
+    "original": "runnable",
+    "originalHow": "execute the run: steps under bash in a temp repo with curl shimmed to the fixture and peter-evans/create-pull-request replaced by a recording stub",
+    "broken": [
+     "pre-release filter dropped",
+     "PR opened without change",
+     "only chrome updated"
+    ]
+   },
+   "mocks": [
+    "HTTP GET raw.githubusercontent.com (fixture)",
+    "repository filesystem (temp dir)",
+    "GitHub pull-request API (recording stub)",
+    "docker compose config validation (stub)"
+   ],
+   "acquisition": [
+    "selenium4.yml at the pinned SHA"
+   ],
+   "effortHours": 6,
+   "risks": [
+    "low judgement: a short script solves it, so it measures replication fidelity and control machinery, not judgement",
+    "grep/sed first-match semantics must be reproduced"
+   ],
+   "licenceNote": "MIT; redistributable",
+   "pilotSlot": "P5"
+  },
+  {
+   "rank": 9,
+   "id": "prefect:prefect-recipes/flows-advanced/merge_dependabot_pull_requests.py",
+   "platform": "prefect",
+   "cluster": "orchestration",
+   "title": "merge_dependabot_pull_requests (prefect-recipes:flows-advanced/merge_dependabot_pull_requests.py)",
+   "priority": "B",
+   "pilot": null,
+   "source": {
+    "url": "https://github.com/PrefectHQ/prefect-recipes/blob/ebc974b22430f8fceda609dd0d17663ab2008c01/flows-advanced/merge_dependabot_pull_requests.py",
+    "revision": "ebc974b22430f8fceda609dd0d17663ab2008c01",
+    "retrievedAt": "2026-10-06",
+    "license": "Apache-2.0",
+    "redistributable": true,
+    "rawPath": "/opt/corpus/prefect/PrefectHQ__prefect-recipes@ebc974b22430f8fceda609dd0d17663ab2008c01/flows-advanced/merge_dependabot_pull_requests.py",
+    "rawPin": {
+     "file": "/opt/corpus/prefect/PrefectHQ__prefect-recipes@ebc974b22430f8fceda609dd0d17663ab2008c01/flows-advanced/merge_dependabot_pull_requests.py",
+     "fragment": null,
+     "sha256": "8d39e16238ec300d2a27c49da41d68619a0c03576ffc64fa1794204c6fe86231"
+    }
+   },
+   "shape": {
+    "nodes": 3,
+    "edges": 4,
+    "branching": 0,
+    "loops": 1,
+    "humanSteps": 0,
+    "modelCalls": false,
+    "code": true,
+    "async": [],
+    "subworkflows": 2,
+    "irVerdict": "via-extension:subworkflow-call",
+    "corpusOracle": "none"
+   },
+   "why": "Community recipe for a cross-repo chore: scrape the collections catalog for Prefect-authored repos, find each repo's open dependabot PR with a given title, approve it and comment \"@dependabot merge\". Sub-flows, retries, task caching.",
+   "constructs": [
+    "sub-flow per repository (map)",
+    "retries with delay",
+    "cached lookup",
+    "guard on title match",
+    "two write effects per match"
+   ],
+   "tasks": {
+    "T1": "feasible",
+    "T2": "feasible: docstring description + example API responses",
+    "T3": "feasible: idempotence (no duplicate comment on re-run), handle more than ten open PRs"
+   },
+   "oracle": {
+    "kind": "mocked-execution",
+    "files": [
+     "/opt/corpus/prefect/PrefectHQ__prefect-recipes@ebc974b22430f8fceda609dd0d17663ab2008c01/flows-advanced/merge_dependabot_pull_requests.py"
+    ],
+    "plan": "Stateful mock GitHub (REST git/trees and contents, GraphQL pull-request query, review and comment mutations). Scenarios: matching and non-matching titles, closed PRs, non-Prefect catalog entries, transient 502 (retry), more than ten open PRs, re-run. Pass = exactly the expected PRs approved and commented once; others untouched.",
+    "pass": "all scenarios"
+   },
+   "controls": {
+    "original": "heavy",
+    "originalHow": "pinned venv (prefect, prefect-github, httpx) with HTTPS interception to the mock; needs owner approval for the install",
+    "broken": [
+     "approve without title match",
+     "comment twice"
+    ]
+   },
+   "mocks": [
+    "GitHub REST",
+    "GitHub GraphQL"
+   ],
+   "acquisition": [],
+   "effortHours": 8,
+   "risks": [
+    "three normalised nodes understate the code",
+    "the original page size of ten is a latent defect the T3 track should expose"
+   ],
+   "licenceNote": "Apache-2.0; redistributable",
+   "pilotSlot": null
+  },
+  {
+   "rank": 10,
+   "id": "github-actions:canboat/canboatjs/.github/workflows/test_canboat_changes.yml",
+   "platform": "github-actions",
+   "cluster": "orchestration",
+   "title": "Test Canboat json Changes",
+   "priority": "B",
+   "pilot": null,
+   "source": {
+    "url": "https://github.com/canboat/canboatjs/blob/504490a138d5615cb389c4e6ab42d4971552bbad/.github/workflows/test_canboat_changes.yml",
+    "revision": "504490a138d5615cb389c4e6ab42d4971552bbad (versions in dataset: 39; Zenodo 10.5281/zenodo.20340547 pool C)",
+    "retrievedAt": "2026-10-06",
+    "license": "Apache-2.0",
+    "redistributable": true,
+    "rawPath": "/opt/corpus/github-actions/raw/canboat__canboatjs@504490a138d5615cb389c4e6ab42d4971552bbad/.github/workflows/test_canboat_changes.yml",
+    "rawPin": {
+     "file": "/opt/corpus/github-actions/raw/canboat__canboatjs@504490a138d5615cb389c4e6ab42d4971552bbad/.github/workflows/test_canboat_changes.yml",
+     "fragment": null,
+     "sha256": "359c43d0447402a50736ec534ecbf3ecd19af836853640511d6af1c4db897cbc"
+    }
+   },
+   "shape": {
+    "nodes": 28,
+    "edges": 27,
+    "branching": 20,
+    "loops": 0,
+    "humanSteps": 0,
+    "modelCalls": false,
+    "code": true,
+    "async": [
+     "event"
+    ],
+    "subworkflows": 0,
+    "irVerdict": "via-extension:event-trigger+error-branch",
+    "corpusOracle": "none"
+   },
+   "why": "Maintainer's cross-repo compatibility check for the canboat NMEA 2000 PGN database: on dispatch, check out canboat.json, ts-pgns, canboatjs and ten downstream Signal K packages, build and test each with always(), and report which broke. Niche (marine electronics), failure-tolerant fan-out.",
+   "constructs": [
+    "event trigger with inputs",
+    "ordered builds with links",
+    "continue after failure (always())",
+    "status fan-in report"
+   ],
+   "tasks": {
+    "T1": "feasible with tapes",
+    "T2": "feasible with tapes",
+    "T3": "feasible: parallel downstream tests, clearer report"
+   },
+   "oracle": {
+    "kind": "mocked-execution with tapes",
+    "files": [
+     "/opt/corpus/github-actions/raw/canboat__canboatjs@504490a138d5615cb389c4e6ab42d4971552bbad/.github/workflows/test_canboat_changes.yml"
+    ],
+    "plan": "Build/test outcomes per repository replayed from tapes for scenarios (all pass, generate fails in ts-pgns, one downstream fails, missing branch). Pass = dependency order respected, downstream steps still run after an earlier failure, final status and the list of failing repositories correct.",
+    "pass": "all scenarios"
+   },
+   "controls": {
+    "original": "runnable",
+    "originalHow": "workflow steps executed with checkout/npm replaced by tape stubs",
+    "broken": [
+     "stop at first failure",
+     "skip downstream when canboatjs fails"
+    ]
+   },
+   "mocks": [
+    "git checkout tapes",
+    "npm build/test tapes"
+   ],
+   "acquisition": [],
+   "effortHours": 8,
+   "risks": [
+    "the real job (building thirteen repositories) is not reproduced; the oracle judges orchestration semantics only"
+   ],
+   "licenceNote": "Apache-2.0; redistributable",
+   "pilotSlot": null
+  },
+  {
+   "rank": 11,
+   "id": "temporal:samples-go/shoppingcart",
+   "platform": "temporal",
+   "cluster": "orchestration",
+   "title": "shoppingcart (Temporal Go sample)",
+   "priority": "B",
+   "pilot": null,
+   "source": {
+    "url": "https://github.com/temporalio/samples-go/tree/aaf79b672b32d9b7427a476a7488850cc11454b6/shoppingcart",
+    "revision": "aaf79b672b32d9b7427a476a7488850cc11454b6 (Go module v1.3.1-0.20261002171058-aaf79b672b32)",
+    "retrievedAt": "2026-10-06",
+    "license": "Apache-2.0",
+    "redistributable": true,
+    "rawPath": "/opt/corpus/temporal/extracted/github.com/temporalio/samples-go@v1.3.1-0.20261002171058-aaf79b672b32/shoppingcart/",
+    "rawPin": {
+     "file": "/opt/corpus/temporal/extracted/github.com/temporalio/samples-go@v1.3.1-0.20261002171058-aaf79b672b32/shoppingcart/workflow.go",
+     "fragment": null,
+     "sha256": "ceb6e2ed2cb5d838dc59cceff1e5a68fa76940d5b0d99e04e86d516402f449e7"
+    }
+   },
+   "shape": {
+    "nodes": 4,
+    "edges": 4,
+    "branching": 9,
+    "loops": 1,
+    "humanSteps": 0,
+    "modelCalls": false,
+    "code": false,
+    "async": [
+     "event",
+     "wait"
+    ],
+    "subworkflows": 0,
+    "irVerdict": "via-extension:signal-wait",
+    "corpusOracle": "test-profile"
+   },
+   "why": "Vendor sample kept as a calibration control: it ships an executable Go test (add/remove/invalid updates, checkout) for a long-lived entity workflow, so R-bench can check that its event-sequence harness reproduces a known-correct result. Reported separately from the niche items.",
+   "constructs": [
+    "update handlers (events)",
+    "validation with rejection",
+    "entity state",
+    "terminal signal"
+   ],
+   "tasks": {
+    "T1": "feasible",
+    "T2": "feasible",
+    "T3": "limited"
+   },
+   "oracle": {
+    "kind": "test-profile ported to a scenario tape",
+    "files": [
+     "/opt/corpus/temporal/extracted/github.com/temporalio/samples-go@v1.3.1-0.20261002171058-aaf79b672b32/shoppingcart/workflow.go",
+     "/opt/corpus/temporal/extracted/github.com/temporalio/samples-go@v1.3.1-0.20261002171058-aaf79b672b32/shoppingcart/workflow_test.go"
+    ],
+    "plan": "Port each RegisterDelayedCallback update to an event; pass = returned cart state after each update, rejection of \"invalid\" with the exact error text, final cart at checkout.",
+    "pass": "test-equivalent"
+   },
+   "controls": {
+    "original": "heavy",
+    "originalHow": "go test ./shoppingcart (Go toolchain and module download; optional)",
+    "broken": [
+     "invalid action accepted",
+     "remove below zero"
+    ]
+   },
+   "mocks": [],
+   "acquisition": [],
+   "effortHours": 5,
+   "risks": [
+    "vendor sample, not niche",
+    "updates need the signal-wait extension; the harness stands in with one run per event and external state"
+   ],
+   "licenceNote": "Apache-2.0 per corpus item; redistributable",
+   "pilotSlot": null
+  },
+  {
+   "rank": 12,
+   "id": "dagster:data-quality-patterns",
+   "platform": "dagster",
+   "cluster": "orchestration",
+   "title": "data-quality-patterns (Dagster example project, 16 py files)",
+   "priority": "B",
+   "pilot": null,
+   "source": {
+    "url": "https://github.com/dagster-io/dagster/tree/8ed0d4d398c8bb2ed82049d272abab6747aeb391/examples/data-quality-patterns",
+    "revision": "8ed0d4d398c8bb2ed82049d272abab6747aeb391",
+    "retrievedAt": "2026-10-06",
+    "license": "Apache-2.0",
+    "redistributable": true,
+    "rawPath": "/opt/corpus/dagster/dagster-io__dagster@8ed0d4d398c8bb2ed82049d272abab6747aeb391/examples/data-quality-patterns/",
+    "rawPin": {
+     "file": "/opt/corpus/dagster/dagster-io__dagster@8ed0d4d398c8bb2ed82049d272abab6747aeb391/examples/data-quality-patterns/src/data_quality_patterns/definitions.py",
+     "fragment": null,
+     "sha256": "f464dd5f2e30680fe4846348845e94610d407e7b9e6380c46c5315a1c4db20ad"
+    }
+   },
+   "shape": {
+    "nodes": 18,
+    "edges": 15,
+    "branching": 0,
+    "loops": 0,
+    "humanSteps": 0,
+    "modelCalls": false,
+    "code": false,
+    "async": [],
+    "subworkflows": 0,
+    "irVerdict": "native",
+    "corpusOracle": "test-profile"
+   },
+   "why": "Vendor example kept as a calibration control for table-in/report-out jobs: synthetic data generator, Python validators, asset checks and freshness checks with a shipped pytest suite.",
+   "constructs": [
+    "data generation",
+    "parallel checks",
+    "check aggregation"
+   ],
+   "tasks": {
+    "T1": "feasible",
+    "T2": "feasible",
+    "T3": "feasible: one-pass validation"
+   },
+   "oracle": {
+    "kind": "test-profile",
+    "files": [
+     "/opt/corpus/dagster/dagster-io__dagster@8ed0d4d398c8bb2ed82049d272abab6747aeb391/examples/data-quality-patterns/tests/test_validators.py",
+     "/opt/corpus/dagster/dagster-io__dagster@8ed0d4d398c8bb2ed82049d272abab6747aeb391/examples/data-quality-patterns/tests/test_asset_checks.py",
+     "/opt/corpus/dagster/dagster-io__dagster@8ed0d4d398c8bb2ed82049d272abab6747aeb391/examples/data-quality-patterns/src/data_quality_patterns/lib/validators.py"
+    ],
+    "plan": "Seeded datasets with injected defects (nulls, out-of-range values, duplicates, stale timestamps). Pass = per-check pass/fail and counts equal to the original validators run in-process.",
+    "pass": "all checks equal on >= 19/20 seeds"
+   },
+   "controls": {
+    "original": "heavy",
+    "originalHow": "pytest in a pinned venv; the Great Expectations checks may need a heavy dependency (partial)",
+    "broken": [
+     "inclusive/exclusive threshold swapped",
+     "duplicates counted per row instead of per key"
+    ]
+   },
+   "mocks": [],
+   "acquisition": [
+    "pinned dagster venv for the original control"
+   ],
+   "effortHours": 6,
+   "risks": [
+    "vendor sample",
+    "GE dependency weight"
+   ],
+   "licenceNote": "Apache-2.0; redistributable",
+   "pilotSlot": null
+  },
+  {
+   "rank": 13,
+   "id": "n8n:12679",
+   "platform": "n8n",
+   "cluster": "automation",
+   "title": "Sync contacts two-way between Zoho CRM and KlickTipp",
+   "priority": "A",
+   "pilot": "automation that needs mocks (two stateful SaaS systems)",
+   "source": {
+    "url": "https://n8n.io/workflows/12679",
+    "revision": "template 12679; createdAt 2026-01-13T10:53:04.787Z; sha256:aa95c542e06370a2",
+    "retrievedAt": "2026-10-06",
+    "license": "ToS:https://n8n.io/legal/self-serve-terms/",
+    "redistributable": false,
+    "rawPath": "/opt/corpus/n8n/workflows/12679.json.gz",
+    "rawPin": {
+     "file": "/opt/corpus/n8n/workflows/12679.json.gz",
+     "fragment": null,
+     "sha256": "e007cdb5b21493078a941883f27eabe8a6f9c4bb19adb32cebcc096634ece9c1"
+    }
+   },
+   "shape": {
+    "nodes": 38,
+    "edges": 35,
+    "branching": 13,
+    "loops": 0,
+    "humanSteps": 0,
+    "modelCalls": false,
+    "code": false,
+    "async": [
+     "event",
+     "webhook"
+    ],
+    "subworkflows": 0,
+    "irVerdict": "via-extension:webhook-trigger+event-trigger",
+    "corpusOracle": "none"
+   },
+   "why": "Community-built two-way contact sync between Zoho CRM and the KlickTipp email-marketing tool: five entry points (three Zoho webhooks, two KlickTipp triggers), segment switches, single vs double opt-in, delete propagation, cross-linked IDs, opt-out mirroring, and a guard that only processes changes made by UI users so the sync does not echo forever.",
+   "constructs": [
+    "five triggers",
+    "loop-prevention guard",
+    "segment routing (switch)",
+    "create/update/delete per side",
+    "raw HTTP calls next to connector nodes"
+   ],
+   "tasks": {
+    "T1": "feasible: definition read from rawPath at task time (not committed)",
+    "T2": "feasible: written intent + example events",
+    "T3": "feasible: idempotent upserts, fewer API calls, explicit conflict rule"
+   },
+   "oracle": {
+    "kind": "mocked-execution (state invariants + effect trace)",
+    "files": [
+     "/opt/corpus/n8n/workflows/12679.json.gz"
+    ],
+    "plan": "In-memory stateful mocks of both systems (contacts, tags, the Zoho-ID custom field in KlickTipp, KlickTipp_ID and Email_Opt_Out in Zoho). The harness turns every mock-side change into the matching trigger event, tagged with origin (UI user or API), and runs the candidate once per event until quiescence (at most 20 runs). 15 scripted scenarios. Pass = state invariants (each in-segment subscribed Zoho contact has exactly one KlickTipp subscriber with matching email/name/phone and both IDs cross-linked; deletions propagated; opt-out mirrored; tags per segment), no echo loop (API-origin events never processed), no duplicate creates in the trace.",
+    "pass": "15/15 scenarios"
+   },
+   "controls": {
+    "original": "transcribed",
+    "originalHow": "n8n nodes call fixed vendor endpoints and the KlickTipp node is a community package, so the original cannot run offline; a reference re-implementation written node by node from the JSON stands in (labelled weaker)",
+    "broken": [
+     "UI-user guard removed (echo loop)",
+     "SOI and DOI swapped",
+     "delete not propagated"
+    ]
+   },
+   "mocks": [
+    "Zoho CRM v3 contacts (get/create/update/delete, add_tags, bulk PUT)",
+    "KlickTipp subscribers (get/create/update/delete/tag)",
+    "webhook and trigger events"
+   ],
+   "acquisition": [],
+   "effortHours": 14,
+   "risks": [
+    "n8n ToS: the definition stays in /opt/corpus and is read at task time; only our fixtures are committed",
+    "mock semantics are authored from the definition itself, so invariants are kept semantic rather than API-shaped",
+    "triggers and cross-run state are harness stand-ins"
+   ],
+   "licenceNote": "ToS n8n self-serve terms; not redistributable (fixtures are our own work)",
+   "pilotSlot": "P2"
+  },
+  {
+   "rank": 14,
+   "id": "n8n:20281",
+   "platform": "n8n",
+   "cluster": "automation",
+   "title": "Create Jira tickets from Gmail and Outlook support emails with OpenAI and Slack",
+   "priority": "A",
+   "pilot": "model calls (narrow, gradable classification)",
+   "source": {
+    "url": "https://n8n.io/workflows/20281",
+    "revision": "template 20281; createdAt 2026-10-01T10:03:42.368Z; sha256:888d63efe77042f3",
+    "retrievedAt": "2026-10-06",
+    "license": "ToS:https://n8n.io/legal/self-serve-terms/",
+    "redistributable": false,
+    "rawPath": "/opt/corpus/n8n/workflows/20281.json.gz",
+    "rawPin": {
+     "file": "/opt/corpus/n8n/workflows/20281.json.gz",
+     "fragment": null,
+     "sha256": "001466dc8eb800e2439004a1683d57b4bd99e8ed71a1d1c74276b9a6f25a651e"
+    }
+   },
+   "shape": {
+    "nodes": 48,
+    "edges": 52,
+    "branching": 6,
+    "loops": 0,
+    "humanSteps": 0,
+    "modelCalls": true,
+    "code": true,
+    "async": [
+     "event",
+     "poll"
+    ],
+    "subworkflows": 5,
+    "irVerdict": "via-extension:event-trigger+subworkflow-call+error-branch",
+    "corpusOracle": "none"
+   },
+   "why": "Support-operations automation: Gmail and Outlook intake normalised to one shape, internal and automated senders filtered before spending tokens, an LLM classifier with an enum schema (customer request, category, priority, confidence), low confidence routed to a human review queue, Jira dedupe by JQL then comment or create, Slack/Teams notifications, configurable acknowledgement (off/draft/send), audit log, error workflow, all dispatched through a self-calling sub-workflow router.",
+   "constructs": [
+    "two polling triggers",
+    "pre-filter before model",
+    "structured model judgement",
+    "confidence gate to human review",
+    "dedupe then create-or-comment",
+    "mode switch",
+    "sub-workflow dispatch",
+    "error workflow"
+   ],
+   "tasks": {
+    "T1": "feasible: the self-call router maps to inlined branches or call",
+    "T2": "feasible: written intent + 10 example emails with outcomes",
+    "T3": "feasible: same routing and accuracy with a cheaper model or fewer calls; cost is recorded"
+   },
+   "oracle": {
+    "kind": "mocked-execution + labelled judgement",
+    "files": [
+     "/opt/corpus/n8n/workflows/20281.json.gz"
+    ],
+    "plan": "80 synthetic labelled emails (fictional company and products, both provider shapes): 15 internal/no-reply, 10 duplicates of open tickets, 10 deliberately ambiguous. Labels frozen before any run, two-annotator check. Pass = (a) deterministic routing exact: filtered senders get no model call and no ticket, duplicates comment on the right open key, every ambiguous or below-threshold email reaches the review queue; (b) category accuracy >= 0.85 and priority accuracy >= 0.80 on non-filtered emails; (c) acknowledgement mode honoured. Model calls and cost are recorded per run.",
+    "pass": "(a) and (c) exact, (b) thresholds met"
+   },
+   "controls": {
+    "original": "transcribed",
+    "originalHow": "vendor endpoints and credentials; reference re-implementation plus the labels",
+    "broken": [
+     "everything classified as Bug",
+     "no dedupe",
+     "acknowledgement sent in draft mode"
+    ]
+   },
+   "mocks": [
+    "Gmail (trigger, reply, draft)",
+    "Outlook (trigger, reply)",
+    "Jira (JQL search, create, comment)",
+    "Slack",
+    "Teams webhook",
+    "Google Sheets append"
+   ],
+   "acquisition": [],
+   "effortHours": 16,
+   "risks": [
+    "label quality decides the oracle; freeze labels and thresholds first",
+    "n8n ToS",
+    "self-calling sub-workflow needs call or inlining"
+   ],
+   "licenceNote": "ToS n8n; not redistributable",
+   "pilotSlot": "P3"
+  },
+  {
+   "rank": 15,
+   "id": "n8n:19463",
+   "platform": "n8n",
+   "cluster": "automation",
+   "title": "Route Alertmanager incidents with OpenAI GPT-4.1, Slack, PagerDuty, and ClickUp",
+   "priority": "B",
+   "pilot": null,
+   "source": {
+    "url": "https://n8n.io/workflows/19463",
+    "revision": "template 19463; createdAt 2026-09-11T04:52:37.769Z; sha256:d46ed9693b8bc624",
+    "retrievedAt": "2026-10-06",
+    "license": "ToS:https://n8n.io/legal/self-serve-terms/",
+    "redistributable": false,
+    "rawPath": "/opt/corpus/n8n/workflows/19463.json.gz",
+    "rawPin": {
+     "file": "/opt/corpus/n8n/workflows/19463.json.gz",
+     "fragment": null,
+     "sha256": "46d6d34e4cabe60a741f6786059b8de3bd61d818d018ccec9a5678a1a28915c3"
+    }
+   },
+   "shape": {
+    "nodes": 36,
+    "edges": 35,
+    "branching": 7,
+    "loops": 0,
+    "humanSteps": 0,
+    "modelCalls": true,
+    "code": false,
+    "async": [
+     "event",
+     "schedule",
+     "webhook"
+    ],
+    "subworkflows": 0,
+    "irVerdict": "via-extension:schedule-trigger+webhook-trigger+event-trigger+error-branch+agent-tool-loop+cross-run-state",
+    "corpusOracle": "none"
+   },
+   "why": "SRE-built mobile observability router: Alertmanager webhook, resolved short-circuit, fingerprint dedupe with cooldown in Postgres, alert-storm rate limit, source classification, a tool-calling RCA agent (client telemetry, Prometheus, deployments, past-incident search) with output validation, escalation policy, ticket create vs comment on repeats, error trigger with dead-letter row and platform alert, scheduled heartbeat.",
+   "constructs": [
+    "webhook trigger with response",
+    "dedupe and rate limit (cross-run state)",
+    "agent with tools",
+    "output validation gate",
+    "escalation switch",
+    "error workflow",
+    "schedule heartbeat"
+   ],
+   "tasks": {
+    "T1": "feasible: agent tools become fetch tasks or agent.tools",
+    "T2": "feasible",
+    "T3": "feasible: fetch evidence deterministically, one cheap classification call"
+   },
+   "oracle": {
+    "kind": "mocked-execution + labelled judgement",
+    "files": [
+     "/opt/corpus/n8n/workflows/19463.json.gz"
+    ],
+    "plan": "20 scripted alert sequences with telemetry fixtures in which the root cause is determinable (deploy then crash spike, backend 5xx, flapping). Pass = escalation trace exact (page only for critical or flapping; ticket created once, commented on repeats; storm notice instead of per-alert RCA above the rate; resolved closes the incident; dead-letter row and platform alert when a tool fails) and RCA class/severity correct on >= 80%.",
+    "pass": "trace exact, judgement >= 0.8"
+   },
+   "controls": {
+    "original": "transcribed",
+    "originalHow": "reference re-implementation",
+    "broken": [
+     "no cooldown (duplicate pages)",
+     "page on every alert"
+    ]
+   },
+   "mocks": [
+    "Postgres tables incidents/workflow_health_log/dead_letter_events (in memory)",
+    "Slack",
+    "PagerDuty",
+    "ClickUp",
+    "email",
+    "APM, Prometheus and CI/CD HTTP tools",
+    "vector search"
+   ],
+   "acquisition": [],
+   "effortHours": 18,
+   "risks": [
+    "agent tool loop is not native",
+    "scenario authoring cost",
+    "n8n ToS"
+   ],
+   "licenceNote": "ToS n8n; not redistributable",
+   "pilotSlot": null
+  },
+  {
+   "rank": 16,
+   "id": "n8n:17541",
+   "platform": "n8n",
+   "cluster": "automation",
+   "title": "Track and alert congressional and insider trades via EDGAR, House.gov, and Gmail",
+   "priority": "B",
+   "pilot": null,
+   "source": {
+    "url": "https://n8n.io/workflows/17541",
+    "revision": "template 17541; createdAt 2026-07-27T18:46:57.564Z; sha256:f0227d57a4e31f2d",
+    "retrievedAt": "2026-10-06",
+    "license": "ToS:https://n8n.io/legal/self-serve-terms/",
+    "redistributable": false,
+    "rawPath": "/opt/corpus/n8n/workflows/17541.json.gz",
+    "rawPin": {
+     "file": "/opt/corpus/n8n/workflows/17541.json.gz",
+     "fragment": null,
+     "sha256": "041f814ebcd5d4ca964c2eee1879427008bf6cb1c16951c051a964483ed24fe5"
+    }
+   },
+   "shape": {
+    "nodes": 20,
+    "edges": 21,
+    "branching": 2,
+    "loops": 0,
+    "humanSteps": 0,
+    "modelCalls": false,
+    "code": true,
+    "async": [
+     "schedule"
+    ],
+    "subworkflows": 0,
+    "irVerdict": "via-extension:schedule-trigger",
+    "corpusOracle": "none"
+   },
+   "why": "Hobby investor's tracker: every 45 minutes fetch the SEC EDGAR Form 4 feed (with a declared User-Agent), enrich each filing from its ownership XML, scrape the House disclosure page to the current-year ZIP, parse the periodic-transaction index and PDFs, merge both sources, dedupe against a sheet and within the run, apply a recency gate against first-run spam, append rows, email each new filing.",
+   "constructs": [
+    "schedule trigger",
+    "two source branches merged",
+    "archive and document parsing",
+    "dedupe against external state",
+    "recency gate",
+    "per-item email"
+   ],
+   "tasks": {
+    "T1": "feasible",
+    "T2": "feasible",
+    "T3": "feasible: incremental fetch, robust parsing"
+   },
+   "oracle": {
+    "kind": "mocked-execution (multi-run)",
+    "files": [
+     "/opt/corpus/n8n/workflows/17541.json.gz"
+    ],
+    "plan": "Fixtures with fictional filers in the real formats: EDGAR Atom feed and Form 4 XML, House landing HTML, ZIP with XML index, PTR text (PDF extraction offered as a capability returning text), sheet state. 10 multi-run scenarios (empty sheet, repeats, stale filings, malformed XML). Pass = appended rows and emails are exactly the new recent filings with correct amounts, tickers and transaction types; no duplicates across runs.",
+    "pass": "all scenarios"
+   },
+   "controls": {
+    "original": "transcribed",
+    "originalHow": "reference re-implementation",
+    "broken": [
+     "recency gate dropped",
+     "dedupe only within the run"
+    ]
+   },
+   "mocks": [
+    "HTTP (EDGAR, House clerk site)",
+    "scraping proxy node",
+    "PDF text extraction capability",
+    "Google Sheets",
+    "Gmail"
+   ],
+   "acquisition": [],
+   "effortHours": 14,
+   "risks": [
+    "fixture realism for EDGAR/House formats is authored by us",
+    "PDF parsing reduced to a text capability",
+    "use fictional filers only",
+    "n8n ToS"
+   ],
+   "licenceNote": "ToS n8n; not redistributable",
+   "pilotSlot": null
+  },
+  {
+   "rank": 17,
+   "id": "n8n:19295",
+   "platform": "n8n",
+   "cluster": "automation",
+   "title": "Recover unscheduled dental treatment with Google Sheets and Gmail",
+   "priority": "B",
+   "pilot": null,
+   "source": {
+    "url": "https://n8n.io/workflows/19295",
+    "revision": "template 19295; createdAt 2026-09-06T18:20:29.012Z; sha256:545e54c975bb2ea5",
+    "retrievedAt": "2026-10-06",
+    "license": "ToS:https://n8n.io/legal/self-serve-terms/",
+    "redistributable": false,
+    "rawPath": "/opt/corpus/n8n/workflows/19295.json.gz",
+    "rawPin": {
+     "file": "/opt/corpus/n8n/workflows/19295.json.gz",
+     "fragment": null,
+     "sha256": "c448f8b73ab3a335a53b7c8ab57044ddc3ebec0ee20e86e23a0e65e25426fdb5"
+    }
+   },
+   "shape": {
+    "nodes": 13,
+    "edges": 11,
+    "branching": 1,
+    "loops": 0,
+    "humanSteps": 0,
+    "modelCalls": false,
+    "code": true,
+    "async": [
+     "schedule"
+    ],
+    "subworkflows": 0,
+    "irVerdict": "via-extension:schedule-trigger",
+    "corpusOracle": "none"
+   },
+   "why": "A dental practice's treatment-recovery routine: daily, read the patient and procedure sheets, decide per unscheduled treatment whether to send a first or second reminder or escalate to the front desk for a call (by days unscheduled and value), update stage and contact date; weekly owner summary of recovered vs still-unscheduled value.",
+   "constructs": [
+    "two schedule triggers",
+    "join two sheets",
+    "staged decision rule",
+    "per-item email and row update",
+    "weekly aggregate"
+   ],
+   "tasks": {
+    "T1": "feasible",
+    "T2": "feasible",
+    "T3": "feasible: batch updates, explicit idempotence"
+   },
+   "oracle": {
+    "kind": "mocked-execution (virtual clock)",
+    "files": [
+     "/opt/corpus/n8n/workflows/19295.json.gz"
+    ],
+    "plan": "Virtual-clock run over 21 days of seeded sheet fixtures with fictional patients. Pass = exact sequence of reminder emails, escalations and row updates, and the weekly summary numbers.",
+    "pass": "trace and summaries exact"
+   },
+   "controls": {
+    "original": "transcribed",
+    "originalHow": "reference re-implementation",
+    "broken": [
+     "escalation before the second reminder",
+     "summary over the wrong window"
+    ]
+   },
+   "mocks": [
+    "Google Sheets (read, update rows)",
+    "Gmail send",
+    "clock"
+   ],
+   "acquisition": [],
+   "effortHours": 6,
+   "risks": [
+    "health-adjacent: synthetic data only, no patient operations",
+    "simple logic, low judgement",
+    "n8n ToS"
+   ],
+   "licenceNote": "ToS n8n; not redistributable",
+   "pilotSlot": null
+  },
+  {
+   "rank": 18,
+   "id": "n8n:18122",
+   "platform": "n8n",
+   "cluster": "automation",
+   "title": "Notify on workflow errors via Slack with Discord fallback",
+   "priority": "B",
+   "pilot": null,
+   "source": {
+    "url": "https://n8n.io/workflows/18122",
+    "revision": "template 18122; createdAt 2026-08-12T11:46:35.412Z; sha256:669282795b164fce",
+    "retrievedAt": "2026-10-06",
+    "license": "ToS:https://n8n.io/legal/self-serve-terms/",
+    "redistributable": false,
+    "rawPath": "/opt/corpus/n8n/workflows/18122.json.gz",
+    "rawPin": {
+     "file": "/opt/corpus/n8n/workflows/18122.json.gz",
+     "fragment": null,
+     "sha256": "d75d5f7465d5e1b28839b5709c8a5deb4916305fd42116d1e268b3c138c5607f"
+    }
+   },
+   "shape": {
+    "nodes": 13,
+    "edges": 12,
+    "branching": 2,
+    "loops": 0,
+    "humanSteps": 0,
+    "modelCalls": false,
+    "code": true,
+    "async": [
+     "event"
+    ],
+    "subworkflows": 0,
+    "irVerdict": "via-extension:event-trigger+error-branch",
+    "corpusOracle": "none"
+   },
+   "why": "Error-workflow pattern: on any workflow failure, dedupe by execution id in workflow static data, post to Slack, fall back to Discord when Slack fails. Small, but it exercises an error trigger, a fallback branch and cross-run state.",
+   "constructs": [
+    "error trigger",
+    "cross-run dedupe state",
+    "fallback on failed effect"
+   ],
+   "tasks": {
+    "T1": "feasible from a redacted copy",
+    "T2": "feasible",
+    "T3": "feasible: bounded state, retry before fallback"
+   },
+   "oracle": {
+    "kind": "mocked-execution",
+    "files": [
+     "/opt/corpus/n8n/workflows/18122.json.gz (contains credential-shaped webhook URLs: use only a redacted copy)"
+    ],
+    "plan": "Scripted failure events (repeated execution ids, Slack 500 and timeout, both channels down). Pass = exactly one notification per execution id, Discord only when Slack failed, the notified-id store stays bounded.",
+    "pass": "all scenarios"
+   },
+   "controls": {
+    "original": "transcribed",
+    "originalHow": "reference re-implementation",
+    "broken": [
+     "notify twice",
+     "never fall back"
+    ]
+   },
+   "mocks": [
+    "Slack webhook",
+    "Discord webhook",
+    "error-trigger event",
+    "workflow static data"
+   ],
+   "acquisition": [],
+   "effortHours": 4,
+   "risks": [
+    "the raw source embeds Slack and Discord webhook URLs that look like live credentials: never copy them into tasks, fixtures or reports; T1 prompts use a redacted copy; tell the owner",
+    "n8n ToS"
+   ],
+   "licenceNote": "ToS n8n; not redistributable",
+   "pilotSlot": null
+  },
+  {
+   "rank": 19,
+   "id": "n8n:11805",
+   "platform": "n8n",
+   "cluster": "automation",
+   "title": "Recover Shopify abandoned carts with email, SMS, WhatsApp & Facebook retargeting",
+   "priority": "B",
+   "pilot": null,
+   "source": {
+    "url": "https://n8n.io/workflows/11805",
+    "revision": "template 11805; createdAt 2025-12-14T23:19:42.640Z; sha256:88be693494e16031",
+    "retrievedAt": "2026-10-06",
+    "license": "ToS:https://n8n.io/legal/self-serve-terms/",
+    "redistributable": false,
+    "rawPath": "/opt/corpus/n8n/workflows/11805.json.gz",
+    "rawPin": {
+     "file": "/opt/corpus/n8n/workflows/11805.json.gz",
+     "fragment": null,
+     "sha256": "61002ea8889989a893ddd06dbc4bb5cd54ca69295e0c24a61655ab2943c98fe9"
+    }
+   },
+   "shape": {
+    "nodes": 44,
+    "edges": 46,
+    "branching": 7,
+    "loops": 1,
+    "humanSteps": 0,
+    "modelCalls": false,
+    "code": true,
+    "async": [
+     "wait",
+     "webhook"
+    ],
+    "subworkflows": 0,
+    "irVerdict": "via-extension:webhook-trigger+unstructured-cycle",
+    "corpusOracle": "none"
+   },
+   "why": "E-commerce recovery sequence: webhook, cart and customer history, abandonment-reason heuristics, personalised offers, then waits of 1 h, 4 h, 24 h and 48 h with order checks in between, email then SMS then email then WhatsApp plus retargeting, a high-value alert and attribution logging.",
+   "constructs": [
+    "webhook trigger",
+    "long durable waits",
+    "check-then-act after each wait",
+    "segment rules",
+    "multi-channel effects",
+    "attribution fan-in"
+   ],
+   "tasks": {
+    "T1": "feasible with the durable-wait stand-in",
+    "T2": "feasible",
+    "T3": "feasible: stop early, fewer status calls"
+   },
+   "oracle": {
+    "kind": "mocked-execution (virtual clock)",
+    "files": [
+     "/opt/corpus/n8n/workflows/11805.json.gz"
+    ],
+    "plan": "Scenarios in which the order completes before each stage, never, or the cart is high value. Pass = the touchpoint trace stops at the right stage, discount codes follow the segment rules, attribution rows and the Slack alert only above the threshold.",
+    "pass": "all scenarios"
+   },
+   "controls": {
+    "original": "transcribed",
+    "originalHow": "reference re-implementation",
+    "broken": [
+     "no order check after a wait",
+     "message sent after purchase"
+    ]
+   },
+   "mocks": [
+    "Shopify order get",
+    "cart and customer APIs",
+    "SendGrid",
+    "Twilio",
+    "WhatsApp",
+    "Facebook Graph",
+    "Google Sheets",
+    "Slack",
+    "clock"
+   ],
+   "acquisition": [],
+   "effortHours": 10,
+   "risks": [
+    "waits up to 48 h exceed the IR wait cap of 1 h: needs durable-wait or harness time skipping",
+    "template-like structure, so niche-ness is moderate",
+    "n8n ToS"
+   ],
+   "licenceNote": "ToS n8n; not redistributable",
+   "pilotSlot": null
+  },
+  {
+   "rank": 20,
+   "id": "n8n:16639",
+   "platform": "n8n",
+   "cluster": "automation",
+   "title": "Log Strava zone 2 and 5K test runs to Google Sheets",
+   "priority": "B",
+   "pilot": null,
+   "source": {
+    "url": "https://n8n.io/workflows/16639",
+    "revision": "template 16639; createdAt 2026-06-25T22:32:32.817Z; sha256:c8e8525eb3958c5e",
+    "retrievedAt": "2026-10-06",
+    "license": "ToS:https://n8n.io/legal/self-serve-terms/",
+    "redistributable": false,
+    "rawPath": "/opt/corpus/n8n/workflows/16639.json.gz",
+    "rawPin": {
+     "file": "/opt/corpus/n8n/workflows/16639.json.gz",
+     "fragment": null,
+     "sha256": "0786d404a1d2b08d3b0abc95300a5f91cf2f052b657856ac6fac8ac6fbe99461"
+    }
+   },
+   "shape": {
+    "nodes": 11,
+    "edges": 13,
+    "branching": 1,
+    "loops": 1,
+    "humanSteps": 0,
+    "modelCalls": false,
+    "code": true,
+    "async": [
+     "schedule"
+    ],
+    "subworkflows": 0,
+    "irVerdict": "via-extension:schedule-trigger",
+    "corpusOracle": "none"
+   },
+   "why": "A runner's personal training log: daily fetch Strava activities, classify zone-2 long runs and 5K tests by pace and elapsed time, format pace, place each into the right cell of a training-cycle sheet (cycle rows 2/6/10, five run columns) and skip already logged IDs.",
+   "constructs": [
+    "schedule trigger",
+    "loop over activities",
+    "rule-based classification",
+    "cell placement in external state",
+    "merge"
+   ],
+   "tasks": {
+    "T1": "feasible",
+    "T2": "feasible",
+    "T3": "feasible: fix the zone-2 rule (see risks)"
+   },
+   "oracle": {
+    "kind": "mocked-execution",
+    "files": [
+     "/opt/corpus/n8n/workflows/16639.json.gz"
+    ],
+    "plan": "Activity and sheet fixtures. Pass = exact cell updates. One scenario separates the author's evident intent (zone 2 = pace between 6.3 and 7.0 min/km) from the original expression, which chains comparisons in JavaScript ((6.3 <= pace) <= 7 is always true), so neither pace bound is enforced; T1 is graded for fidelity, T2/T3 for intent (frozen before runs).",
+    "pass": "all scenarios for the graded mode"
+   },
+   "controls": {
+    "original": "transcribed",
+    "originalHow": "reference re-implementation; the original itself fails the intent scenario (documented defect)",
+    "broken": [
+     "chained comparison kept",
+     "already-logged IDs written again"
+    ]
+   },
+   "mocks": [
+    "Strava activities API",
+    "Google Sheets",
+    "clock"
+   ],
+   "acquisition": [],
+   "effortHours": 5,
+   "risks": [
+    "small",
+    "intent must be frozen before runs",
+    "n8n ToS"
+   ],
+   "licenceNote": "ToS n8n; not redistributable",
+   "pilotSlot": null
+  },
+  {
+   "rank": 21,
+   "id": "node-red:a04546c46361167fd1d83aed8e4f22ec",
+   "platform": "node-red",
+   "cluster": "automation",
+   "title": "Givenergy Plants and Inverter API (v1.1)",
+   "priority": "B",
+   "pilot": null,
+   "source": {
+    "url": "https://flows.nodered.org/flow/a04546c46361167fd1d83aed8e4f22ec",
+    "revision": "gist a04546c46361167fd1d83aed8e4f22ec; updated_at 2022-07-06T09:39:42Z; sha256:1d4726e2583b471e",
+    "retrievedAt": "2026-10-06",
+    "license": "unknown",
+    "redistributable": false,
+    "rawPath": "/opt/corpus/node-red/pages/page-010.json.gz#a04546c46361167fd1d83aed8e4f22ec",
+    "rawPin": {
+     "file": "/opt/corpus/node-red/pages/page-010.json.gz",
+     "fragment": "a04546c46361167fd1d83aed8e4f22ec",
+     "sha256": "08cd483f121826cd1583f8b76e02906bc9545a97e15141377e8f28d86d7f65a6"
+    }
+   },
+   "shape": {
+    "nodes": 64,
+    "edges": 64,
+    "branching": 6,
+    "loops": 0,
+    "humanSteps": 0,
+    "modelCalls": false,
+    "code": true,
+    "async": [
+     "wait"
+    ],
+    "subworkflows": 0,
+    "irVerdict": "unsupported:interactive-dashboard-state",
+    "corpusOracle": "none"
+   },
+   "why": "Home-solar owner's flow for the GivEnergy cloud API: register devices, keep serials in flow context, poll latest system and meter data, read 19 inverter registers per inverter, route by serial, throttle, and show about 40 values for two inverters. Boundary item: the corpus verdict is unsupported (interactive dashboard state).",
+   "constructs": [
+    "inject timers",
+    "flow-context state",
+    "per-inverter routing",
+    "rate-limited HTTP",
+    "dashboard sinks"
+   ],
+   "tasks": {
+    "T1": "partial: dashboard widgets become a JSON status product",
+    "T2": "feasible as a data product",
+    "T3": "feasible: one batched read per poll"
+   },
+   "oracle": {
+    "kind": "mocked-execution",
+    "files": [
+     "/opt/corpus/node-red/pages/page-010.json.gz#a04546c46361167fd1d83aed8e4f22ec"
+    ],
+    "plan": "Mock GivEnergy v1 API (communication devices, system-data/latest, meter-data/latest, inverter settings read) and scripted polls. Pass = per-inverter status (field to value) equal to the expected one; values routed to the right inverter.",
+    "pass": "all fields for both inverters"
+   },
+   "controls": {
+    "original": "heavy",
+    "originalHow": "Node-RED and node-red-dashboard containers (pinned) pointed at the mock API",
+    "broken": [
+     "inverter routing swapped",
+     "register map shifted by one"
+    ]
+   },
+   "mocks": [
+    "GivEnergy cloud API",
+    "flow context",
+    "inject schedule"
+   ],
+   "acquisition": [
+    "public GivEnergy API documentation for fixture realism"
+   ],
+   "effortHours": 10,
+   "risks": [
+    "licence unknown (flows.nodered.org): local use only",
+    "fixtures authored from the flow's own parsing are circular without the API docs",
+    "dashboard semantics are out of IR scope"
+   ],
+   "licenceNote": "unknown; not redistributable",
+   "pilotSlot": null
+  },
+  {
+   "rank": 22,
+   "id": "home-assistant:CCOSTAN/Home-AssistantConfig/config/automation/Speech/garbage_day_garage.yaml#0",
+   "platform": "home-assistant",
+   "cluster": "consumer-creative",
+   "title": "Garage Garbage Day Reminders",
+   "priority": "A",
+   "pilot": "consumer (Home Assistant)",
+   "source": {
+    "url": "https://github.com/CCOSTAN/Home-AssistantConfig/blob/71ffa6120b8b649508c3ffe312f6d09792c7b37b/config/automation/Speech/garbage_day_garage.yaml",
+    "revision": "git 71ffa6120b8b649508c3ffe312f6d09792c7b37b (2026-10-05T21:48:56+00:00); sha256:07f20031459e8662",
+    "retrievedAt": "2026-10-06",
+    "license": "MIT",
+    "redistributable": true,
+    "rawPath": "/opt/corpus/home-assistant/git/CCOSTAN__Home-AssistantConfig/config/automation/Speech/garbage_day_garage.yaml",
+    "rawPin": {
+     "file": "/opt/corpus/home-assistant/git/CCOSTAN__Home-AssistantConfig/config/automation/Speech/garbage_day_garage.yaml",
+     "fragment": null,
+     "sha256": "c7cae208c73ad49d929e18a43bc09b70760a44ec85f81c93118a31b194f0f62b"
+    }
+   },
+   "shape": {
+    "nodes": 20,
+    "edges": 21,
+    "branching": 7,
+    "loops": 1,
+    "humanSteps": 0,
+    "modelCalls": false,
+    "code": false,
+    "async": [
+     "event",
+     "wait"
+    ],
+    "subworkflows": 3,
+    "irVerdict": "via-extension:event-trigger+durable-wait+run-concurrency-policy+subworkflow-call",
+    "corpusOracle": "none"
+   },
+   "why": "Carlo Costanzo's garbage-day reminder: debounced garage-open trigger (20 s), Wednesday and Sunday only, a shared snooze timer, an actionable push with 30-minute and 2-hour snooze buttons, inside speech, then Alexa announcements at +30, +90 and +180 s that stop as soon as the door closes, the day changes or a snooze starts. Restart mode means a snooze press also kills pending announcements.",
+   "constructs": [
+    "state trigger with for: debounce",
+    "event triggers from notification actions (human step)",
+    "weekday and timer conditions",
+    "parallel effects",
+    "repeat with delays and in-loop conditions",
+    "restart concurrency mode"
+   ],
+   "tasks": {
+    "T1": "feasible: YAML is MIT",
+    "T2": "feasible: written intent + two example traces",
+    "T3": "feasible: same trace with fewer timer checks; explicit cancellation instead of relying on restart mode"
+   },
+   "oracle": {
+    "kind": "mocked-execution (ordered service-call trace)",
+    "files": [
+     "/opt/corpus/home-assistant/git/CCOSTAN__Home-AssistantConfig/config/automation/Speech/garbage_day_garage.yaml"
+    ],
+    "plan": "Home Assistant mock built once for all HA items: entity state machine, virtual clock, service registry that records calls, event bus. 14 scenarios: Monday open (nothing); Wednesday flapping under 20 s (nothing); Wednesday open and staying open (push + speech + three announcements at the exact offsets); door closes after the first announcement (one announcement); 30-minute snooze mid-sequence (timer.start 00:30:00, logbook entry, no further announcements, a new open within 30 minutes suppressed); Sunday 2-hour snooze; Wednesday message mentions recycling, Sunday does not. Pass = ordered trace equal (service, target, key data, time offset +-1 s).",
+    "pass": "14/14 scenarios"
+   },
+   "controls": {
+    "original": "heavy",
+    "originalHow": "pytest-homeassistant-custom-component (pinned) with time travel and stub scripts gives a real original-passes control (about 6 h extra)",
+    "broken": [
+     "debounce dropped",
+     "snooze ignored inside the repeat",
+     "announces on Monday"
+    ]
+   },
+   "mocks": [
+    "HA state machine and clock",
+    "script.notify_engine_two_button",
+    "script.speech_engine",
+    "script.send_to_logbook",
+    "notify.alexa_media_garage",
+    "timer"
+   ],
+   "acquisition": [],
+   "effortHours": 12,
+   "risks": [
+    "HA semantics (a failed condition inside repeat stops the whole run; restart mode) must be written down precisely in the harness, the same semantics the candidate has to reproduce",
+    "Jinja templating"
+   ],
+   "licenceNote": "MIT (Copyright 2018 Carlo Costanzo); redistributable",
+   "pilotSlot": "P4"
+  },
+  {
+   "rank": 23,
+   "id": "home-assistant:CCOSTAN/Home-AssistantConfig/config/packages/llmvision.yaml#automation/1",
+   "platform": "home-assistant",
+   "cluster": "consumer-creative",
+   "title": "LLM Vision - Front door packages",
+   "priority": "B",
+   "pilot": null,
+   "source": {
+    "url": "https://github.com/CCOSTAN/Home-AssistantConfig/blob/71ffa6120b8b649508c3ffe312f6d09792c7b37b/config/packages/llmvision.yaml",
+    "revision": "git 71ffa6120b8b649508c3ffe312f6d09792c7b37b (2026-10-05T21:48:56+00:00); sha256:213bfd3ecf129631",
+    "retrievedAt": "2026-10-06",
+    "license": "MIT",
+    "redistributable": true,
+    "rawPath": "/opt/corpus/home-assistant/git/CCOSTAN__Home-AssistantConfig/config/packages/llmvision.yaml",
+    "rawPin": {
+     "file": "/opt/corpus/home-assistant/git/CCOSTAN__Home-AssistantConfig/config/packages/llmvision.yaml",
+     "fragment": null,
+     "sha256": "386db82bfc322243db0aa59a9087ab87e02240a553a20721ff1865aca0f1fc0c"
+    }
+   },
+   "shape": {
+    "nodes": 20,
+    "edges": 24,
+    "branching": 5,
+    "loops": 0,
+    "humanSteps": 0,
+    "modelCalls": true,
+    "code": false,
+    "async": [
+     "event",
+     "wait"
+    ],
+    "subworkflows": 2,
+    "irVerdict": "via-extension:event-trigger+run-concurrency-policy+subworkflow-call",
+    "corpusOracle": "none"
+   },
+   "why": "Front-door package detection: three triggers (person count, relock, manual button), delays of 3 min and 20 s, a rate limit from the last-run timestamp (15 min, or 5 min on relock and only if a package is already flagged), a cost-controlled vision call, tolerant normalisation of the model's on/off answer, bookkeeping, logbook and a manual-check notification.",
+   "constructs": [
+    "three triggers with ids",
+    "trigger-specific delays",
+    "rate limit from stored state",
+    "model call via service with response",
+    "response normalisation",
+    "restart mode"
+   ],
+   "tasks": {
+    "T1": "feasible",
+    "T2": "feasible",
+    "T3": "feasible: fewer vision calls at equal detection"
+   },
+   "oracle": {
+    "kind": "mocked-execution",
+    "files": [
+     "/opt/corpus/home-assistant/git/CCOSTAN__Home-AssistantConfig/config/packages/llmvision.yaml"
+    ],
+    "plan": "HA mock plus a scripted vision-analyzer capability whose answers include \"On.\", \"yes, a box\", \"unknown\" and empty. Pass = vision calls only when allowed (count and cost recorded), correct boolean transitions, set_value/set_datetime/logbook/notify trace.",
+    "pass": "all scenarios"
+   },
+   "controls": {
+    "original": "heavy",
+    "originalHow": "pytest-HA with a stub llmvision service",
+    "broken": [
+     "rate limit dropped",
+     "\"no\" treated as on"
+    ]
+   },
+   "mocks": [
+    "llmvision.stream_analyzer (scripted)",
+    "camera",
+    "lock",
+    "person-count sensor",
+    "scripts"
+   ],
+   "acquisition": [],
+   "effortHours": 8,
+   "risks": [
+    "the vision judgement itself is scripted (no images), so model quality is not measured here"
+   ],
+   "licenceNote": "MIT; redistributable",
+   "pilotSlot": null
+  },
+  {
+   "rank": 24,
+   "id": "home-assistant:CCOSTAN/Home-AssistantConfig/config/packages/tesla_model_y.yaml#script/tesla_home_charge_protect",
+   "platform": "home-assistant",
+   "cluster": "consumer-creative",
+   "title": "Tesla Home Charge - Protective Stop",
+   "priority": "B",
+   "pilot": null,
+   "source": {
+    "url": "https://github.com/CCOSTAN/Home-AssistantConfig/blob/71ffa6120b8b649508c3ffe312f6d09792c7b37b/config/packages/tesla_model_y.yaml",
+    "revision": "git 71ffa6120b8b649508c3ffe312f6d09792c7b37b (2026-10-05T21:48:56+00:00); sha256:b0a2085ab0db2a8b",
+    "retrievedAt": "2026-10-06",
+    "license": "MIT",
+    "redistributable": true,
+    "rawPath": "/opt/corpus/home-assistant/git/CCOSTAN__Home-AssistantConfig/config/packages/tesla_model_y.yaml",
+    "rawPin": {
+     "file": "/opt/corpus/home-assistant/git/CCOSTAN__Home-AssistantConfig/config/packages/tesla_model_y.yaml",
+     "fragment": null,
+     "sha256": "7a7cbe6b9dfe730a86214193f8f8400f103dbac5866f00317175d5dc2e8ec034"
+    }
+   },
+   "shape": {
+    "nodes": 21,
+    "edges": 27,
+    "branching": 5,
+    "loops": 1,
+    "humanSteps": 0,
+    "modelCalls": false,
+    "code": false,
+    "async": [
+     "wait"
+    ],
+    "subworkflows": 4,
+    "irVerdict": "via-extension:signal-wait+subworkflow-call",
+    "corpusOracle": "none"
+   },
+   "why": "Safety script for home EV charging: snapshot from a custom charge-guard integration, a condition over excessive/unverified/restart-required states, verification-timestamp arithmetic, alert flags, and a parallel block (stop charging only if allowed, urgent notification, Alexa warning) in which every branch continues on error.",
+   "constructs": [
+    "service call with response",
+    "guard condition",
+    "timestamp arithmetic",
+    "parallel branches with continue_on_error",
+    "single mode"
+   ],
+   "tasks": {
+    "T1": "feasible",
+    "T2": "feasible",
+    "T3": "feasible: explicit outcome record per branch"
+   },
+   "oracle": {
+    "kind": "mocked-execution",
+    "files": [
+     "/opt/corpus/home-assistant/git/CCOSTAN__Home-AssistantConfig/config/packages/tesla_model_y.yaml"
+    ],
+    "plan": "12 charge-guard snapshot fixtures with injected service failures. Pass = flags and timestamps set exactly; stop attempted iff stop_allowed; notifications sent even when the switch call fails; nothing happens for charging_safe without the restart flag.",
+    "pass": "12/12"
+   },
+   "controls": {
+    "original": "heavy",
+    "originalHow": "pytest-HA with a stub tesla_charge_guard",
+    "broken": [
+     "continue_on_error dropped (notification lost when the switch fails)",
+     "stop when not allowed"
+    ]
+   },
+   "mocks": [
+    "tesla_charge_guard.snapshot",
+    "switch",
+    "script.notify_engine",
+    "notify.alexa_media_garage",
+    "input helpers"
+   ],
+   "acquisition": [],
+   "effortHours": 6,
+   "risks": [
+    "the custom component's response shape is known only from this YAML"
+   ],
+   "licenceNote": "MIT; redistributable",
+   "pilotSlot": null
+  },
+  {
+   "rank": 25,
+   "id": "home-assistant:TheFes/HA-configuration/packages/00-general/energy/start_washingmachine.yaml#automation/0",
+   "platform": "home-assistant",
+   "cluster": "consumer-creative",
+   "title": "Start Washing machine",
+   "priority": "B",
+   "pilot": null,
+   "source": {
+    "url": "https://github.com/TheFes/HA-configuration/blob/057c1548bb390624e1ad3983280ee3e8e5ef6f1c/packages/00%20general/energy/start_washingmachine.yaml",
+    "revision": "git 057c1548bb390624e1ad3983280ee3e8e5ef6f1c (2026-08-31T15:55:12+02:00); sha256:ef07ba91ad7927eb",
+    "retrievedAt": "2026-10-06",
+    "license": "unknown",
+    "redistributable": false,
+    "rawPath": "/opt/corpus/home-assistant/git/TheFes__HA-configuration/packages/00 general/energy/start_washingmachine.yaml",
+    "rawPin": {
+     "file": "/opt/corpus/home-assistant/git/TheFes__HA-configuration/packages/00 general/energy/start_washingmachine.yaml",
+     "fragment": null,
+     "sha256": "801f9cc849fc6e6986d6ce7f2ca388abc312fe93f03e26df1f726ebd3279bfa9"
+    }
+   },
+   "shape": {
+    "nodes": 28,
+    "edges": 29,
+    "branching": 3,
+    "loops": 0,
+    "humanSteps": 0,
+    "modelCalls": false,
+    "code": false,
+    "async": [
+     "event",
+     "schedule",
+     "wait"
+    ],
+    "subworkflows": 0,
+    "irVerdict": "via-extension:schedule-trigger+event-trigger+run-concurrency-policy",
+    "corpusOracle": "none"
+   },
+   "why": "A Dutch power user's automation that schedules the washing machine at the cheapest window given dynamic energy prices and the chosen programme's energy profile, number of washes, an end-time limit and an only-today switch; it then starts the machine remotely (waking it from sleep), notifies, and resets helpers at midnight.",
+   "constructs": [
+    "time, state and template triggers",
+    "optimisation over a price curve",
+    "branch per trigger id",
+    "device command sequence",
+    "event to set a sensor",
+    "parallel mode"
+   ],
+   "tasks": {
+    "T1": "feasible after acquiring the cheapest_energy_hours macro",
+    "T2": "feasible",
+    "T3": "feasible: fix the reset branch (see oracle)"
+   },
+   "oracle": {
+    "kind": "independent optimum + mocked-execution",
+    "files": [
+     "/opt/corpus/home-assistant/git/TheFes__HA-configuration/packages/00 general/energy/start_washingmachine.yaml"
+    ],
+    "plan": "The oracle brute-forces the cost of every feasible start on a 15-minute grid over the price curve and programme profile within [now, end]. Pass = the chosen start is optimal (ties allowed), notification date logic correct, start branch only when the remote flag is on and the machine status allows it, wake before start when asleep. The reset branch tests trigger id reset_helpers while the triggers declare helper_reset, so the midnight reset never runs; the T3 track must fix it (a scenario checks the 00:00 reset).",
+    "pass": "optimal start on all price curves; reset scenario for T3"
+   },
+   "controls": {
+    "original": "heavy",
+    "originalHow": "pytest-HA after acquiring the macro; the original fails the reset scenario (documented defect)",
+    "broken": [
+     "earliest start instead of cheapest",
+     "washes count ignored"
+    ]
+   },
+   "mocks": [
+    "price sensor attributes",
+    "energy_plots sensor",
+    "select.wasmachine_operation",
+    "notify",
+    "counters and helpers"
+   ],
+   "acquisition": [
+    "TheFes cheapest-energy-hours macro at a pinned revision (licence to check)"
+   ],
+   "effortHours": 10,
+   "risks": [
+    "licence unknown (no LICENSE in the repo): local use only",
+    "macro semantics (weights, split windows) are intricate",
+    "Dutch notification strings"
+   ],
+   "licenceNote": "unknown; not redistributable",
+   "pilotSlot": null
+  },
+  {
+   "rank": 26,
+   "id": "home-assistant:basnijholt/home-assistant-config/automations/apple_watch.yaml#5",
+   "platform": "home-assistant",
+   "cluster": "consumer-creative",
+   "title": "Apple Watch: set lights",
+   "priority": "B",
+   "pilot": null,
+   "source": {
+    "url": "https://github.com/basnijholt/home-assistant-config/blob/3b7b439761c4be7b854278b6e6d094a668712595/automations/apple_watch.yaml",
+    "revision": "git 3b7b439761c4be7b854278b6e6d094a668712595 (2026-03-05T15:36:32-08:00); sha256:5017e5733b1af3c4",
+    "retrievedAt": "2026-10-06",
+    "license": "MIT",
+    "redistributable": true,
+    "rawPath": "/opt/corpus/home-assistant/git/basnijholt__home-assistant-config/automations/apple_watch.yaml",
+    "rawPin": {
+     "file": "/opt/corpus/home-assistant/git/basnijholt__home-assistant-config/automations/apple_watch.yaml",
+     "fragment": null,
+     "sha256": "4c6bd8c47a40d6b6c1a32a96a37ff6f6c1ed47380da97cf19b208e67a7b4a459"
+    }
+   },
+   "shape": {
+    "nodes": 18,
+    "edges": 17,
+    "branching": 1,
+    "loops": 0,
+    "humanSteps": 2,
+    "modelCalls": false,
+    "code": false,
+    "async": [
+     "event",
+     "wait"
+    ],
+    "subworkflows": 5,
+    "irVerdict": "via-extension:event-trigger+signal-wait+run-concurrency-policy+subworkflow-call",
+    "corpusOracle": "none"
+   },
+   "why": "A two-level Apple Watch menu: an iOS action opens an actionable notification for the room, waits at most 20 s, then a second menu for the light action (off, on, 50%, 100%, 1%, white, cozy), maps the choices to light groups and service calls; the notify target comes from the source device; parallel mode.",
+   "constructs": [
+    "event trigger",
+    "two human steps with timeouts",
+    "dynamic service target",
+    "choice-to-action mapping",
+    "parallel mode"
+   ],
+   "tasks": {
+    "T1": "feasible",
+    "T2": "feasible",
+    "T3": "feasible: correlate answers to the asking device"
+   },
+   "oracle": {
+    "kind": "mocked-execution",
+    "files": [
+     "/opt/corpus/home-assistant/git/basnijholt__home-assistant-config/automations/apple_watch.yaml"
+    ],
+    "plan": "Scripted notification-action events (answers, timeout, answers out of order, two watches at once). Pass = correct light calls per answers, nothing after a timeout, and concurrent runs do not consume each other's answers. The original listens to global events in parallel mode, so it cross-talks (documented defect; T1 graded for fidelity, T3 for the fix).",
+    "pass": "all scenarios for the graded mode"
+   },
+   "controls": {
+    "original": "heavy",
+    "originalHow": "pytest-HA",
+    "broken": [
+     "continue after timeout",
+     "hall mapped to one light only"
+    ]
+   },
+   "mocks": [
+    "notify.mobile_app_*",
+    "light services",
+    "event bus"
+   ],
+   "acquisition": [],
+   "effortHours": 5,
+   "risks": [
+    "human steps simulated by scripted answers",
+    "small mapping job"
+   ],
+   "licenceNote": "MIT; redistributable",
+   "pilotSlot": null
+  },
+  {
+   "rank": 27,
+   "id": "apple-shortcuts:workflowllm-seed-06844",
+   "platform": "apple-shortcuts",
+   "cluster": "consumer-creative",
+   "title": "RoutineHub • Events Overview",
+   "priority": "B",
+   "pilot": null,
+   "source": {
+    "url": "https://huggingface.co/datasets/openbmb/WorkflowLLM/blob/d0de182c3f9abac5c4ded9ae2eadcd8155ee1435/data.zip#seed_data.json[6844]",
+    "revision": "hf openbmb/WorkflowLLM@d0de182c3f9abac5c4ded9ae2eadcd8155ee1435; data.zip sha256:2c1fc53d3ecabada; seed_data.json[6844] key='RoutineHub • Events Overview'; code sha256:7a44172b48e53834",
+    "retrievedAt": "2026-10-06",
+    "license": "Apache-2.0",
+    "redistributable": true,
+    "rawPath": "/opt/corpus/apple-shortcuts/workflowllm/data.zip#seed_data.json[6844]",
+    "rawPin": {
+     "file": "/opt/corpus/apple-shortcuts/workflowllm/data.zip",
+     "fragment": "seed_data.json[6844]",
+     "sha256": "2c1fc53d3ecabada9b61ca4af4db811af71e20a60839cc295a3b2d342c25393b"
+    }
+   },
+   "shape": {
+    "nodes": 52,
+    "edges": 100,
+    "branching": 13,
+    "loops": 3,
+    "humanSteps": 2,
+    "modelCalls": false,
+    "code": false,
+    "async": [],
+    "subworkflows": 7,
+    "irVerdict": "via-extension:subworkflow-call",
+    "corpusOracle": "none"
+   },
+   "why": "Events Overview v1.3 by Alex Sotirakis (RoutineHub): today's and tomorrow's calendar events with a per-event weather forecast, optional reminders, a temperature-unit setting, choose-from-list event details, then a menu to show the event in Calendar or get directions in Apple or Google Maps; 52 actions with menus and loops.",
+   "constructs": [
+    "date arithmetic",
+    "loops over events",
+    "per-event lookups",
+    "human menus and lists",
+    "sub-shortcut calls",
+    "device effects"
+   ],
+   "tasks": {
+    "T1": "feasible from the WorkflowLLM transcription",
+    "T2": "feasible",
+    "T3": "feasible: one forecast fetch per day instead of per event"
+   },
+   "oracle": {
+    "kind": "mocked-execution",
+    "files": [
+     "/opt/corpus/apple-shortcuts/workflowllm/data.zip#seed_data.json[6844]"
+    ],
+    "plan": "Mock device APIs (calendar with fixed events, reminders, location, hourly forecast, maps) and scripted user choices. Pass = rendered list text (order, time format, weather per event, unit) and the effect of the chosen path (directions request to the right app with the event location; nothing on cancel).",
+    "pass": "all scenarios"
+   },
+   "controls": {
+    "original": "transcribed",
+    "originalHow": "iOS only; a reference re-implementation from the transcription stands in",
+    "broken": [
+     "tomorrow's events dropped",
+     "wrong temperature unit"
+    ]
+   },
+   "mocks": [
+    "calendar",
+    "reminders",
+    "location",
+    "weather",
+    "maps",
+    "notification",
+    "menu answers"
+   ],
+   "acquisition": [],
+   "effortHours": 10,
+   "risks": [
+    "WorkflowLLM converted the original plist into Python-like code with model-written comments, so the definition is lossy",
+    "per-shortcut author terms not checked (dataset is Apache-2.0)",
+    "locale and date formats must be frozen"
+   ],
+   "licenceNote": "Apache-2.0 (dataset); original author terms unverified",
+   "pilotSlot": null
+  },
+  {
+   "rank": 28,
+   "id": "apple-shortcuts:workflowllm-seed-10733",
+   "platform": "apple-shortcuts",
+   "cluster": "consumer-creative",
+   "title": "RoutineHub • Shazam & Lyrics",
+   "priority": "B",
+   "pilot": null,
+   "source": {
+    "url": "https://huggingface.co/datasets/openbmb/WorkflowLLM/blob/d0de182c3f9abac5c4ded9ae2eadcd8155ee1435/data.zip#seed_data.json[10733]",
+    "revision": "hf openbmb/WorkflowLLM@d0de182c3f9abac5c4ded9ae2eadcd8155ee1435; data.zip sha256:2c1fc53d3ecabada; seed_data.json[10733] key='RoutineHub • Shazam & Lyrics'; code sha256:d51b58ff60a5092a",
+    "retrievedAt": "2026-10-06",
+    "license": "Apache-2.0",
+    "redistributable": true,
+    "rawPath": "/opt/corpus/apple-shortcuts/workflowllm/data.zip#seed_data.json[10733]",
+    "rawPin": {
+     "file": "/opt/corpus/apple-shortcuts/workflowllm/data.zip",
+     "fragment": "seed_data.json[10733]",
+     "sha256": "2c1fc53d3ecabada9b61ca4af4db811af71e20a60839cc295a3b2d342c25393b"
+    }
+   },
+   "shape": {
+    "nodes": 33,
+    "edges": 65,
+    "branching": 6,
+    "loops": 2,
+    "humanSteps": 3,
+    "modelCalls": false,
+    "code": false,
+    "async": [],
+    "subworkflows": 0,
+    "irVerdict": "native",
+    "corpusOracle": "none"
+   },
+   "why": "Identify a song with Shazam or ask for title and artist, look it up in iTunes, build a lyrics.ovh URL with word-by-word encoding loops, fetch the lyrics, handle not-found, and render HTML with text replacements.",
+   "constructs": [
+    "menu (human step)",
+    "external lookups",
+    "loops building an encoded URL",
+    "not-found branch",
+    "document rendering"
+   ],
+   "tasks": {
+    "T1": "feasible from the transcription",
+    "T2": "feasible",
+    "T3": "feasible: one encoding call, better not-found handling"
+   },
+   "oracle": {
+    "kind": "mocked-execution",
+    "files": [
+     "/opt/corpus/apple-shortcuts/workflowllm/data.zip#seed_data.json[10733]"
+    ],
+    "plan": "Mocks for the Shazam result or scripted ask answers, iTunes search and lyrics.ovh. Pass = correct URL encoding of artist and title (spaces, ampersands, accents), not-found path, rendered HTML equal after replacements. Lyrics fixtures are invented text.",
+    "pass": "all scenarios"
+   },
+   "controls": {
+    "original": "transcribed",
+    "originalHow": "iOS only",
+    "broken": [
+     "no URL encoding",
+     "crash on not-found"
+    ]
+   },
+   "mocks": [
+    "Shazam",
+    "iTunes Search API",
+    "lyrics.ovh",
+    "ask/menu answers",
+    "preview"
+   ],
+   "acquisition": [],
+   "effortHours": 7,
+   "risks": [
+    "lossy transcription",
+    "copyrighted lyrics: fixtures use invented text",
+    "small"
+   ],
+   "licenceNote": "Apache-2.0 (dataset); original author terms unverified",
+   "pilotSlot": null
+  },
+  {
+   "rank": 29,
+   "id": "google-adk:adk-samples/core/python/ambient-expense-agent/expense_agent/agent.py",
+   "platform": "google-adk",
+   "cluster": "agentic",
+   "title": "ADK ambient expense agent: Pub/Sub-triggered graph with an amount router, an LLM risk review and a human approval pause",
+   "priority": "B",
+   "pilot": null,
+   "source": {
+    "url": "https://github.com/google/adk-samples/blob/c339821da836d05a366de7687c6c75f0b2c9c9af/core/python/ambient-expense-agent/expense_agent/agent.py",
+    "revision": "c339821da836d05a366de7687c6c75f0b2c9c9af",
+    "retrievedAt": "2026-10-07",
+    "license": "Apache-2.0",
+    "redistributable": true,
+    "rawPath": "/opt/corpus/agentic/google-adk/adk-samples/core/python/ambient-expense-agent/expense_agent/agent.py",
+    "rawPin": {
+     "file": "/opt/corpus/agentic/google-adk/adk-samples/core/python/ambient-expense-agent/expense_agent/agent.py",
+     "fragment": null,
+     "sha256": "1ab02c05940cf220af3b984c3ffbdc5902912affe983d5037d408c854c8f94aa"
+    }
+   },
+   "shape": {
+    "nodes": 8,
+    "edges": 10,
+    "branching": 1,
+    "loops": 0,
+    "humanSteps": 1,
+    "modelCalls": true,
+    "code": true,
+    "async": [
+     "wait",
+     "webhook"
+    ],
+    "subworkflows": 0,
+    "irVerdict": "via-extension:webhook-trigger+agent-tool-loop",
+    "corpusOracle": "mocked-execution"
+   },
+   "why": "Event-driven expense approval: a Pub/Sub message is parsed and routed by an amount threshold; small amounts are auto-approved; larger ones go to an LLM reviewer that raises a structured alert through a tool, then the run pauses for a manager to approve or reject, and the decision is logged. The google-adk ledger records a defect: a malformed message becomes amount 0 and reaches the auto-approve node, which then indexes a missing key.",
+   "constructs": [
+    "webhook-style trigger",
+    "threshold router in code",
+    "model review with a tool",
+    "human approval pause",
+    "log"
+   ],
+   "tasks": {
+    "T1": "feasible",
+    "T2": "feasible",
+    "T3": "feasible: malformed messages rejected, not auto-approved"
+   },
+   "oracle": {
+    "kind": "mocked-execution + labelled judgement",
+    "files": [
+     "/opt/corpus/agentic/google-adk/adk-samples/core/python/ambient-expense-agent/expense_agent/agent.py",
+     "/opt/corpus/agentic/google-adk/adk-samples/core/python/ambient-expense-agent/tests/conftest.py",
+     "/opt/corpus/agentic/google-adk/adk-samples/core/python/ambient-expense-agent/tests/test_integration.py"
+    ],
+    "plan": "30 synthetic expense events (fictional), scripted manager decisions. Pass = routing by threshold exact, review alert fields (category, risk flags) correct on >= 80% against frozen labels, approvals and rejections logged, malformed messages flagged (T3).",
+    "pass": "routing exact, judgement >= 0.8"
+   },
+   "controls": {
+    "original": "heavy",
+    "originalHow": "pytest tests/test_integration.py with the canned model in conftest.py (pinned google-adk venv; optional)",
+    "broken": [
+     "auto-approve everything",
+     "threshold inclusive/exclusive swapped"
+    ]
+   },
+   "mocks": [
+    "Pub/Sub push",
+    "alert tool",
+    "manager approval (human node)",
+    "log sink"
+   ],
+   "acquisition": [
+    "pinned google-adk venv for the original control"
+   ],
+   "effortHours": 8,
+   "risks": [
+    "vendor sample, less niche",
+    "small graph"
+   ],
+   "licenceNote": "Apache-2.0; redistributable",
+   "pilotSlot": null
+  },
+  {
+   "rank": 30,
+   "id": "google-adk:adk-samples/contrib/python/small-business-loan-agent/app/agent.py",
+   "platform": "google-adk",
+   "cluster": "agentic",
+   "title": "ADK small-business loan orchestrator: four agent-tool specialists, persisted step state, halt guards and an LLM judge gate",
+   "priority": "C",
+   "pilot": null,
+   "source": {
+    "url": "https://github.com/google/adk-samples/blob/c339821da836d05a366de7687c6c75f0b2c9c9af/contrib/python/small-business-loan-agent/app/agent.py",
+    "revision": "c339821da836d05a366de7687c6c75f0b2c9c9af",
+    "retrievedAt": "2026-10-07",
+    "license": "Apache-2.0",
+    "redistributable": true,
+    "rawPath": "/opt/corpus/agentic/google-adk/adk-samples/contrib/python/small-business-loan-agent/app/agent.py",
+    "rawPin": {
+     "file": "/opt/corpus/agentic/google-adk/adk-samples/contrib/python/small-business-loan-agent/app/agent.py",
+     "fragment": null,
+     "sha256": "764323278bd7fcdcec368d94881bad3a951e25bcaddd9666c7c3369d421fbb43"
+    }
+   },
+   "shape": {
+    "nodes": 15,
+    "edges": 23,
+    "branching": 3,
+    "loops": 1,
+    "humanSteps": 1,
+    "modelCalls": true,
+    "code": true,
+    "async": [],
+    "subworkflows": 0,
+    "irVerdict": "via-extension:chat-session+agent-tool-loop+cross-run-state+llm-router+supervisor-delegation+agent-as-tool+shared-scratchpad+guardrail-tripwire+multimodal-io",
+    "corpusOracle": "test-profile"
+   },
+   "why": "Small-business loan workflow: a status tool, then document-extraction, underwriting and pricing specialists as agent tools, a user approval pause and a decision specialist; hooks persist per-step state and halt later steps on flagged issues.",
+   "constructs": [
+    "supervisor with agent tools",
+    "per-step state",
+    "halt rule",
+    "human approval",
+    "decision"
+   ],
+   "tasks": {
+    "T1": "feasible with restructuring",
+    "T2": "feasible",
+    "T3": "feasible: deterministic underwriting rules in code, model only for extraction"
+   },
+   "oracle": {
+    "kind": "labelled judgement + shipped unit expectations",
+    "files": [
+     "/opt/corpus/agentic/google-adk/adk-samples/contrib/python/small-business-loan-agent/app/agent.py",
+     "/opt/corpus/agentic/google-adk/adk-samples/contrib/python/small-business-loan-agent/tests/unit/test_tools_logic.py"
+    ],
+    "plan": "Synthetic applications (fictional businesses, documents as text) with known facts. Pass = key extracted numbers exact, risk tier and halt decisions per the decision table in tests/unit/test_tools_logic.py, pricing outputs per rule, approval pause honoured; generated explanations are not graded.",
+    "pass": "numbers and decisions exact on >= 90% of applications"
+   },
+   "controls": {
+    "original": "heavy",
+    "originalHow": "pytest tests/unit (pure helpers) in a pinned venv",
+    "broken": [
+     "halt table inverted",
+     "dollar parsing of \"1.2M\" wrong"
+    ]
+   },
+   "mocks": [
+    "Firestore state",
+    "document store",
+    "human approval"
+   ],
+   "acquisition": [
+    "pinned google-adk venv"
+   ],
+   "effortHours": 12,
+   "risks": [
+    "vendor sample",
+    "README evalset absent in the pinned tree",
+    "agent tool loop not native"
+   ],
+   "licenceNote": "Apache-2.0; redistributable",
+   "pilotSlot": null
+  }
+ ]
+}

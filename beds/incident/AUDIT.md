@@ -1,5 +1,7 @@
 # Audit of bed `incident` — 2026-10-07
 
+(First audit, v2.0.0 → v3.0.0. The second audit, v4.0.0 → v4.2.0, is the last section of this file.)
+
 Adversarial audit, then fixes, of the `incident` bed as found (generator `VERSION` 2.0.0; the README still said
 v1.0.0 and the code referred to an `AUDIT.md` that did not exist). Scope: only `beds/incident/`. No model or LLM
 API was called; every number below comes from deterministic scripts. Result: bed version **3.0.0** (task content
@@ -134,3 +136,143 @@ Before: 20 tests, 19 passing (T-1). After: 26 tests, all passing (`node --test b
 - Not validated with any model; difficulty for models is a design target.
 - Residual structural priors (root never gateway/batch, must host the class and have a hard caller; unique
   busiest table callee in about 5–10% of d3–d5 tasks); the class mix per 300 dev seeds ranges 25–45 per class.
+
+---
+
+# Second audit — 2026-10-07 (attempt 1, interrupted) and 2026-10-08 (pass 2, this section)
+
+Scope: only `beds/incident/`. No model or LLM API was called; every number below comes from deterministic scripts
+(test split unless noted). Result: bed version **4.2.0** (task content changed for every seed).
+
+## What the interrupted first attempt left (reconstructed, not re-verified line by line)
+
+The first attempt of the second audit changed the generator in five rounds (v4.0.0) and then a partial sixth pass
+(v4.1.0), and stopped before updating this file, the README or the tests. Its changes are documented only in code
+comments (`gen.mjs`, the dated round headers in `catalog.mjs`); the comments cite this file's "Second audit" section,
+which did not exist. Summary from those comments:
+
+- Round 1 (v4.0): certificate notAfter no longer equals T (it is 75–240 s earlier from d3; v3 printed the exact
+  answer string in every certificate task); latent phase for sudden faults; collateral timeouts; ONSET_MORE and
+  ONSET_DIRECT onsets; no stats series of the fault's kind in the root from d3; stray anomalies in another resource;
+  root blips echoed by callers; T range 8–16 min.
+- Round 2: anonymous direct callers (p 0.7), momentary improvements between T and the cascade, herrings placed on
+  the root's table neighbours, canaries without the version, routine refills of other cache namespaces, more note
+  paraphrases.
+- Round 3: composed lookalikes, per-task generated names for unrelated resources, notes that name services by what
+  they provide.
+- Round 4: per-service dialects, test and shadow replicas, ONSET_X, first symptom 15–90 s after the onset.
+- Round 5: word-level synonyms per service, recovering strays, echo-only recoveries, consequence episodes.
+- v4.1 ("S-1", "S-2"): decoys, routine deploys, the noisy job's jump, claims, the maintenance notice, injections and
+  the certificate-renewal herring no longer timed relative to T; chronic, decoy, blip-other, shadow and renewal
+  herrings no longer drawn with the true class (or excluding it).
+
+Spot checks of those claims (100–200 test seeds, d3): on v4.0 the first decoy start dated T within 60 s for a
+constant offset in 67% of tasks and the first routine deploy in 49% (base rate 25%); on v4.1 19% and 13%. A
+keyword vote over WARN/ERROR lines (the 9-regex list in `incident.test.mjs`) named the true class in 90/100 tasks on
+v4.0 and 62/100 on v4.1. Both confirm S-1 and S-2 as described. Its attackers A5–A11 and two over-budget ceilings
+lived only in a scratch directory; the strongest two are now fixtures (`heuristic6.mjs` = its `a10b.mjs`,
+`heuristic-ceiling2.mjs` = its `a8full.mjs`, verbatim apart from a one-line v4.2 adaptation noted in their headers).
+
+## Findings (pass 2)
+
+Severity as in the first audit: critical = a script reads the answer (or a component of it) without judgment;
+high = a large shortcut or a broken claim; medium = a partial shortcut or an oracle defect with no known pass
+bypass; low = robustness or documentation.
+
+| id | sev | finding | evidence | fix | regression test |
+|---|---|---|---|---|---|
+| F-28 | high | The working tree was v4.1.0 while README, AUDIT.md and the interface test said 3.0.0; 4 of 26 tests failed on arrival (version pin; the note check required literal service names although from d3 notes name services by what they provide; two tests expected the root's stats series that v4 round 1 removed; v3 decoy-timing and lag bounds). Knob, size and baseline tables described v3. | `node --test beds/incident/`: 22/26 | Tests rewritten to v4 semantics with the same intent (description-aware note check that also asserts each description names exactly one service; "no stats series of the fault's kind in the root from d3"; lag bounds from `KNOBS`); README rewritten; this section. | `interface`, `v3 traps stay solvable`, `onset rules …`, `gradual onsets …` |
+| F-29 | critical (v3, v4.0), high (v4.1) | Class prior. The root's herring kit (its own blip, its stray, its lookalikes, the same-class blip in a neighbour) carried only the true class, and nothing of similar weight carried any other single class. A 9-regex keyword vote over WARN/ERROR lines named the true class in 99/100 d3 tasks on v3.0.0 (missed by the first audit), 90 on v4.0, 62 on v4.1; the attempt's catalog regexes 74% (v4.1, 200 seeds); the true class was the unique most frequent blip class in 80% (v4.1). | `incident.test.mjs` VOTE lists; truth tags over test seeds 5000–5099/5199 | Rival anomaly (`K.rival`, d3+): a non-root service R carries the same kit for one other class h (blip shortly before its own episode, lookalikes, a blip of h in a third service) plus a sustained, never-recovering anomaly of h in another resource of R, 0.8–1.4× the root's fault lines (5–30), random start; decoy vocabulary leans to h (p 0.5); new `RIVAL_MORE` templates (no class ids or verdicts). After: vote 35/100 (d3), 27/100 (d5); the rival class wins the vote in about half; catalog regexes 50% (a coin flip between the two stories); unique blip majority 24%. New near-miss control `follow-rival`. | `F-29: no class prior …` (fails on v4.1: 80/100 and 62/100); `v3 traps …` (4b); controls |
+| F-30 | medium | Herring clocks left after v4.1: blips were echoed by callers only if they ended before T − 60 s, so "the last 'answering again' line + 3 min" was within 60 s of T in 43% of d3 tasks (49% at d5); the same-class blip came before T − 240 s (33%). Base rate for a constant guess over T's range: 25%. | best-constant-offset scan, 200–300 test seeds | Echoes for any non-root blip at any time, as long as neither the blipping service nor the echoing caller is failing or falling back because of the real fault by then; same-class blip at any time. After: 14% and 11%; decoys 20%, deploys 13%, rival start 12%. | `F-30: herring clocks …` (fails on v4.1: 42%, 33%) |
+| F-31 | high | Triviality at the bar on v4.1, invisible to the suite: the attempt's compliant A10 (38 code lines) passed 13/60 (21.7%) at d3 on test seeds 5000–5059 and A9 12/60 (20%); on the tested range 5000–5029 its over-budget ceilings passed 6/30 (20%) at d3 (`zceil2`) and 6/30 at d5 (`a8full`). None of them was a fixture, so the suite's tripwire (the v3 attackers, 0–1/30) could not see it. | `final.mjs` runs (scratch), numbers below | F-29 and F-30; A10, A12 and ceiling2 are fixtures now (compliant < 20%, over-budget < 35% on 5000–5029 at d3 and d5). After: A10 6/60, ceiling2 9/60 at d3. | `surface-statistics and adversarial scripts …` |
+| F-32 | low | Dead noise: from d3 the stats-baseline services still logged a second, always-normal stats series (`STRAY_STATS`) meant to mirror the root's, which v4 round 1 removed (about 10 lines per task). | code (`baselineFor`) | Gated on `K.rootStats` (never true together with strays, so it is off at every level); with lighter decoys (0.4–0.8 of the root's loudness, at least 10–16 lines; were 0.5–1.0 and 14–22) and d3 `bg` 0.38 → 0.32 this keeps d3 at 16.5K tokens with the rival (about 18K without these trims). | `difficulty scales size …` (d3 median ≤ 17K) |
+| F-33 | low | The triviality test called attackers without a guard; the v4 attackers throw on some d1 tasks, which crashed the test instead of counting a failed answer. | test run | A throwing script answers nothing. | same test |
+| O-6 | low | The oracle accepted timestamps with calendar fields that do not exist (`2026-02-30T10:00:00Z`, `…T24:00:00Z`): V8 rolls them over to another day. No pass bypass beyond the ±60 s rule, but the README promised a real instant. | probes | Month 01–12, day within the month, hour 00–23 checked before parsing. | `oracle rejects schema-invalid output …` |
+| D-4 | low | The overview wrote "X provides P, and it calls Y" when the "relies on" clause was skipped, so "provides …" did not delimit P; notes that name X by what it provides could not be resolved literally (failed the new description check at dev/d3/s14). | test | Comma only after a "relies on" clause. | `v3 traps …` (each description names exactly one service) |
+| D-5 | low | Notes opening with a description started lower-case ("- the service behind …"), and possessives on descriptions read "the service behind order records's requests". | proofreading | Capitalised openings; templates rephrased without possessives. Fixtures lower-case "The " before matching. | `v3 traps …` (case-insensitive mention check) |
+
+Also checked, no defect found: determinism (byte-identical tasks in one process and across processes; hash of 9
+tasks identical in two runs); test seeds 5000–5999 share no RNG seed with dev seeds 0–19999 (attempts 0, 1 and the
+class draw) and no test task 5000–5029 equals a dev task 0–299; `outputSchema` uses only the portable subset; every
+export is present; no exact answer timestamp appears in any message body (the rival's certificate dates are tied
+to its own start, so they hit T only by chance: 1 of 100 d5 tasks); no benign template family is logged by the root
+alone (one skeleton in 4/200 tasks, a recovery line of the root's own stray); the rival's and the blip-same
+service's table neighbourhoods contain the root in 14% and 25% of d3 tasks (a random non-root service: 10%).
+
+## Oracle probes (steps 3 and 4)
+
+Rejected without crashing, in addition to the first audit's list: `2026-02-30`, `T24:00`, month 13 or 00, a
+leading space, 7 fractional digits, a comma as decimal separator, `+24:00` and `+00:60` offsets, a zero-width space
+in a name, the whole answer as a JSON string, evidence ids over 12 characters, a class with a leading space.
+Accepted (no false negatives): leap days (`2028-02-29`), `+14:00` offsets, a non-breaking space around a name (it
+is trimmed), plus the first audit's variants (all still tested). The README pass rule matches `PASS_RULE` and the
+code.
+
+## Triviality attack (step 5)
+
+New attacker, written from scratch for this pass: **A12** (`heuristic5.mjs`, 40 code lines, 8.4k characters,
+short keyword lists instead of the phrase catalog): cascade start = first burst of dependent failures; root = the
+service with the most novel WARN/ERROR fault-worded lines near the cascade plus failing request lines of its own,
+weighted by failing documented callers, then descending to a troubled callee; class = keyword vote over the root's
+lines; T = the root's first novel class-worded line after its last recovery (its own, or echoed by a caller) that
+names the same resource as its late fault lines; impacted = closure over the table and parsed notes. It stays at
+6–8% (its root accuracy is 35%; given the true root it passes 14.5%, so time is its weak part). The catalog-aware A10
+and ceiling2 are stronger (given the true root they pass 21% and 34.5%; their root accuracy is 53% and 41%).
+
+Pass counts (test seeds; "→" is v4.1 → v4.2; v4.1 is the working tree as found, v4.2 the result):
+
+| attacker | lines | d3 5000–5029 | d5 5000–5029 | d3 5000–5059 | d3 5000–5199 | d5 5000–5199 |
+|---|---|---|---|---|---|---|
+| v2/v3 scripts (`baseline`, `attack`, A1, A1note, A2, A4) | ≤ 40 | 0–1 → 0 | 0–3 → 0 | 0–1 → 0–1 | ≤ 4 → ≤ 4 | ≤ 7 → ≤ 3 |
+| A12 `heuristic5.mjs` (this pass) | 40 | 2 → 2 | 3 → 3 | 2 → 5 | 12 → 15 (7.5%) | 14 → 16 (8%) |
+| A10 `heuristic6.mjs` (attempt 1) | 38 | 5 → 2 | 5 → 1 | 13 → 6 | 35 → 28 (14%) | 16 → 12 (6%) |
+| A9 (attempt 1, scratch) | 38 | 5 → 1 | 4 → 0 | 12 → 5 | 39 → 22 (11%) | 12 → 8 |
+| A11 (attempt 1, scratch) | 51 | 1 → 1 | 0 → 0 | 4 → 1 | 20 → 12 | 8 → 12 |
+| ceiling (v3) | ~48 | 0 → 0 | 0 → 0 | 0 → 0 | 1 → 2 | 3 → 1 |
+| ceiling2 `heuristic-ceiling2.mjs` (attempt 1) | 44 | 3 → 4 | 6 → 3 | 10 → 9 | 30 → 29 (14.5%) | 22 → 20 (10%) |
+| ceiling3 (attempt 1 `zceil2`, scratch) | 47 | 6 → 0 | 3 → 3 | 13 → 2 | 37 → 23 | 15 → 15 |
+
+Every compliant script is below 20% on every range at d3 and d5 (the bar applies to 5000–5029); the best is A10 at
+14% over 200 d3 seeds. Over-budget ceilings reach 14.5%. Two dead ends worth recording (measured on an intermediate v4.2 build): a combination of A12's and ceiling2's root
+finders (union of correct roots 60%) did not beat ceiling2 alone (14% each), and the global keyword vote is now a
+coin flip between the true and the rival class.
+
+## Controls (step 6)
+
+`referenceSolve` passes 30/30 at d1, d3, d5 and 20/20 at d2, d4, on dev seeds 0–29 and test seeds 5000–5029,
+score 1, also after a JSON round trip. All 10 bad controls (the first audit's 9 plus `follow-rival`) fail on every
+one of those tasks with score < 1.
+
+## Sizes and performance (step 7)
+
+`estimateTokens(prompt) + estimateTokens(inputs)`, dev seeds 0–59 (test seeds 5000–5059 within 2%; d3 16,745):
+
+| d | v4.1 median tokens (min–max) | v4.2 median tokens (min–max) | v4.2 lines median |
+|---|---|---|---|
+| 1 | 9,029 (8,400–9,909) | 8,955 (8,429–9,687) | 314 |
+| 2 | 12,308 (11,276–13,172) | 12,131 (10,922–13,300) | 419 |
+| 3 | 16,647 (14,397–22,791) | 16,533 (14,472–22,399) | 472 |
+| 4 | 54,590 (50,167–62,169) | 54,764 (49,758–62,071) | 1,896 |
+| 5 | 123,010 (112,154–142,275) | 123,455 (115,472–133,071) | 4,493 |
+
+The static prompt is 1,195 tokens (v3: 990). d3 stays above the contract's 6–15K aim. `generate` takes about 8 ms
+at d3 and 60 ms at d5 (max 92 ms over 60 seeds); a fresh process generating and scoring a d5 task stays far below
+2 s and 200 MB (tested).
+
+## Test suite
+
+Before: 26 tests, 22 passing (F-28). After: 28 tests, all passing (`node --test beds/incident/`, about 105 s).
+
+## Left open
+
+- Residual class signal: a catalog-tuned keyword vote names the true class in about half of d3 tasks, because the
+  root's own fault lines carry it; choosing between the two stories needs the root.
+- The root's own blip is near T by design; the first blip echo still dates T within 60 s in 34% of d3 tasks for a
+  constant offset (base 25%).
+- I-12 (first audit) is no longer at 30%: the best over-budget ceiling passes 14.5% at d3. O-5 stays open (verdict
+  details would leak the answer if fed back).
+- The rival makes root-finding harder for every reader, not only for scripts; whether d3 remains solvable by
+  frontier models at a useful rate is unmeasured. The tests only show that every answer is recoverable.
+- The first attempt's rounds 1–5 were taken as found apart from the spot checks above; their individual
+  before/after numbers in code comments are that attempt's own.
+- d3 median 16.5K tokens, above the contract's aim. Not validated with any model.
