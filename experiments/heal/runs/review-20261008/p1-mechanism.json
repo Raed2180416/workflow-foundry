@@ -1,0 +1,3366 @@
+{
+ "schema": "heal-p1-mechanism/1",
+ "at": "2026-10-08T23:08:25.451Z",
+ "tier": "development/diagnostic (P1 test seeds are INSPECTED)",
+ "parent": 2,
+ "healed": 3,
+ "A": {
+  "replicas": 3,
+  "pass": 3,
+  "reader1ReplayedWrong": 3,
+  "rows": [
+   {
+    "replica": 0,
+    "pass": true,
+    "score": 1,
+    "status": "succeeded",
+    "liveCalls": 4,
+    "item1": [
+     {
+      "node": "judge__s1",
+      "replayed": true,
+      "meaning": "live",
+      "relation": "none"
+     },
+     {
+      "node": "judge__s2",
+      "replayed": false,
+      "meaning": "void",
+      "relation": "different_from"
+     },
+     {
+      "node": "judge__s3",
+      "replayed": false,
+      "meaning": "void",
+      "relation": "different_from"
+     }
+    ]
+   },
+   {
+    "replica": 1,
+    "pass": true,
+    "score": 1,
+    "status": "succeeded",
+    "liveCalls": 4,
+    "item1": [
+     {
+      "node": "judge__s1",
+      "replayed": true,
+      "meaning": "live",
+      "relation": "none"
+     },
+     {
+      "node": "judge__s3",
+      "replayed": false,
+      "meaning": "void",
+      "relation": "different_from"
+     },
+     {
+      "node": "judge__s2",
+      "replayed": false,
+      "meaning": "void",
+      "relation": "different_from"
+     }
+    ]
+   },
+   {
+    "replica": 2,
+    "pass": true,
+    "score": 1,
+    "status": "succeeded",
+    "liveCalls": 4,
+    "item1": [
+     {
+      "node": "judge__s1",
+      "replayed": true,
+      "meaning": "live",
+      "relation": "none"
+     },
+     {
+      "node": "judge__s3",
+      "replayed": false,
+      "meaning": "void",
+      "relation": "different_from"
+     },
+     {
+      "node": "judge__s2",
+      "replayed": false,
+      "meaning": "void",
+      "relation": "different_from"
+     }
+    ]
+   }
+  ]
+ },
+ "B": {
+  "trials": 35,
+  "faults": 88,
+  "decisive": 88,
+  "parentPass": 0,
+  "healedPass": 88,
+  "ran": 88,
+  "escalated": 0,
+  "stopped": null,
+  "rows": [
+   {
+    "trial": "fhand-haiku/records:test:d3:s5001/1",
+    "item": 1,
+    "from": "live",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 4,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": false,
+       "meaning": "live",
+       "relation": "different_from"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": false,
+       "meaning": "live",
+       "relation": "different_from"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d3:s5001/2",
+    "item": 0,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 4,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": false,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": false,
+       "meaning": "void",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d3:s5001/0",
+    "item": 0,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 4,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": false,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": false,
+       "meaning": "void",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d3:s5001/1",
+    "item": 0,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d3:s5001/2",
+    "item": 1,
+    "from": "live",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "different_from"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "different_from"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d3:s5001/0",
+    "item": 1,
+    "from": "live",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "different_from"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "different_from"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d3:s5002/0",
+    "item": 0,
+    "from": "live",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 4,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": false,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": false,
+       "meaning": "live",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d3:s5002/2",
+    "item": 0,
+    "from": "live",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 4,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": false,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": false,
+       "meaning": "live",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d3:s5003/0",
+    "item": 0,
+    "from": "live",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 4,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": false,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": false,
+       "meaning": "live",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d3:s5002/0",
+    "item": 1,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "different_from"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "different_from"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d3:s5002/2",
+    "item": 1,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "different_from"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "different_from"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d3:s5003/0",
+    "item": 1,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "different_from"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "different_from"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d3:s5003/1",
+    "item": 0,
+    "from": "live",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 4,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": false,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": false,
+       "meaning": "live",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d3:s5003/2",
+    "item": 0,
+    "from": "live",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 4,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": false,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": false,
+       "meaning": "live",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d3:s5004/0",
+    "item": 0,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 4,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": false,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": false,
+       "meaning": "void",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d3:s5003/1",
+    "item": 1,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "different_from"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "different_from"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d3:s5003/2",
+    "item": 1,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "different_from"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "different_from"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d3:s5004/0",
+    "item": 1,
+    "from": "live",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d3:s5004/1",
+    "item": 0,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 4,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": false,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": false,
+       "meaning": "void",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d3:s5004/2",
+    "item": 0,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 4,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": false,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": false,
+       "meaning": "void",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d3:s5005/0",
+    "item": 0,
+    "from": "live",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 4,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": false,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": false,
+       "meaning": "live",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d3:s5004/1",
+    "item": 1,
+    "from": "live",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d3:s5004/2",
+    "item": 1,
+    "from": "live",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d3:s5005/0",
+    "item": 1,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "same_as"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "same_as"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d3:s5005/1",
+    "item": 1,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 4,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": false,
+       "meaning": "void",
+       "relation": "same_as"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": false,
+       "meaning": "void",
+       "relation": "same_as"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d3:s5005/2",
+    "item": 0,
+    "from": "live",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 4,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": false,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": false,
+       "meaning": "live",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d3:s5006/0",
+    "item": 0,
+    "from": "live",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 4,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": false,
+       "meaning": "live",
+       "relation": "same_as"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": false,
+       "meaning": "live",
+       "relation": "same_as"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d3:s5005/1",
+    "item": 0,
+    "from": "live",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d3:s5006/0",
+    "item": 1,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "same_as"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "same_as"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d3:s5005/2",
+    "item": 1,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "same_as"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "same_as"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d3:s5006/1",
+    "item": 0,
+    "from": "live",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 4,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": false,
+       "meaning": "live",
+       "relation": "same_as"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": false,
+       "meaning": "live",
+       "relation": "same_as"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d3:s5006/2",
+    "item": 1,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 4,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": false,
+       "meaning": "void",
+       "relation": "same_as"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": false,
+       "meaning": "void",
+       "relation": "same_as"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5001/0",
+    "item": 0,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 6,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": false,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": false,
+       "meaning": "void",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d3:s5006/1",
+    "item": 1,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "same_as"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "same_as"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d3:s5006/2",
+    "item": 0,
+    "from": "live",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "same_as"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "same_as"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5001/0",
+    "item": 1,
+    "from": "live",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5001/0",
+    "item": 2,
+    "from": "live",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "same_as"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "same_as"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5001/1",
+    "item": 0,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 6,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": false,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": false,
+       "meaning": "void",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5001/2",
+    "item": 2,
+    "from": "live",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 6,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": false,
+       "meaning": "live",
+       "relation": "same_as"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": false,
+       "meaning": "live",
+       "relation": "same_as"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5001/1",
+    "item": 1,
+    "from": "live",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5001/2",
+    "item": 0,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5002/0",
+    "item": 0,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 6,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": false,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": false,
+       "meaning": "void",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5001/1",
+    "item": 2,
+    "from": "live",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "same_as"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "same_as"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5002/0",
+    "item": 2,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5001/2",
+    "item": 1,
+    "from": "live",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5002/0",
+    "item": 1,
+    "from": "live",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5002/1",
+    "item": 0,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 6,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": false,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": false,
+       "meaning": "void",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5002/2",
+    "item": 0,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 6,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": false,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": false,
+       "meaning": "void",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5002/1",
+    "item": 1,
+    "from": "live",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5002/2",
+    "item": 1,
+    "from": "live",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5003/0",
+    "item": 0,
+    "from": "live",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 6,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": false,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": false,
+       "meaning": "live",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5002/1",
+    "item": 2,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5002/2",
+    "item": 2,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5003/0",
+    "item": 1,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5003/1",
+    "item": 0,
+    "from": "live",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 6,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": false,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": false,
+       "meaning": "live",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5003/0",
+    "item": 2,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "different_from"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "different_from"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5003/2",
+    "item": 0,
+    "from": "live",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 6,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": false,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": false,
+       "meaning": "live",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5003/1",
+    "item": 2,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "different_from"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "different_from"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5003/2",
+    "item": 2,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "different_from"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "different_from"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5004/0",
+    "item": 0,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 6,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": false,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": false,
+       "meaning": "void",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5003/1",
+    "item": 1,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5004/0",
+    "item": 1,
+    "from": "live",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5003/2",
+    "item": 1,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5004/0",
+    "item": 2,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5004/1",
+    "item": 0,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 6,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": false,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": false,
+       "meaning": "void",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5004/2",
+    "item": 0,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 6,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": false,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": false,
+       "meaning": "void",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5004/1",
+    "item": 1,
+    "from": "live",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5005/0",
+    "item": 0,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 6,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": false,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": false,
+       "meaning": "void",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5004/2",
+    "item": 1,
+    "from": "live",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5004/1",
+    "item": 2,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5005/0",
+    "item": 1,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "same_as"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "same_as"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5004/2",
+    "item": 2,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5005/0",
+    "item": 2,
+    "from": "live",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5005/1",
+    "item": 0,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 6,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": false,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": false,
+       "meaning": "void",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5005/2",
+    "item": 0,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 6,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": false,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": false,
+       "meaning": "void",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5005/1",
+    "item": 1,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "same_as"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "same_as"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5006/0",
+    "item": 0,
+    "from": "live",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 6,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": false,
+       "meaning": "live",
+       "relation": "same_as"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": false,
+       "meaning": "live",
+       "relation": "same_as"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5005/2",
+    "item": 1,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "same_as"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "same_as"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5005/1",
+    "item": 2,
+    "from": "live",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5006/0",
+    "item": 2,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5005/2",
+    "item": 2,
+    "from": "live",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5006/0",
+    "item": 1,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "different_from"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "different_from"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5006/1",
+    "item": 0,
+    "from": "live",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 6,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": false,
+       "meaning": "live",
+       "relation": "same_as"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": false,
+       "meaning": "live",
+       "relation": "same_as"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5006/2",
+    "item": 0,
+    "from": "live",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 6,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": false,
+       "meaning": "live",
+       "relation": "same_as"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": false,
+       "meaning": "live",
+       "relation": "same_as"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5006/1",
+    "item": 2,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5006/2",
+    "item": 2,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "none"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5006/1",
+    "item": 1,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "different_from"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "different_from"
+      }
+     ]
+    }
+   },
+   {
+    "trial": "fhand-haiku/records:test:d4:s5006/2",
+    "item": 1,
+    "from": "void",
+    "parent": {
+     "pass": false,
+     "status": "succeeded",
+     "err": null
+    },
+    "decisive": true,
+    "healed": {
+     "pass": true,
+     "status": "succeeded",
+     "err": null,
+     "liveCalls": 0,
+     "readers": [
+      {
+       "node": "judge__s1",
+       "replayed": true,
+       "meaning": "live",
+       "relation": "none"
+      },
+      {
+       "node": "judge__s2",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "different_from"
+      },
+      {
+       "node": "judge__s3",
+       "replayed": true,
+       "meaning": "void",
+       "relation": "different_from"
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "spentUsd": 0.083188,
+ "capUsd": 0.5,
+ "evidence": "experiments/heal/runs/review-20261008/p1-mechanism.journal.sqlite"
+}

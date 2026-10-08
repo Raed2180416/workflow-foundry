@@ -1,0 +1,58 @@
+{
+ "schema": "heal-live-audit/1",
+ "at": "2026-10-08T23:09:33.620Z",
+ "relax": [
+  {
+   "run": "live-20261008-r2",
+   "proposal": "p-4e3456da-r3",
+   "proposer": "claude-sonnet-5-5",
+   "ok": false,
+   "mutants": 16,
+   "classes": [
+    "renamed",
+    "removed",
+    "added",
+    "kind_changed",
+    "default_count",
+    "default_value"
+   ],
+   "violations": [
+    "mutant kind_changed:tokenize:12: the new check crashes where the old one judged it",
+    "mutant kind_changed:normalize_space:40: the new check crashes where the old one judged it",
+    "mutant kind_changed:char_ngrams:45: the new check crashes where the old one judged it"
+   ]
+  },
+  {
+   "run": "live-20261008-r3",
+   "proposal": "p-dfd855f4-r2",
+   "proposer": "claude-haiku-5-5",
+   "ok": true,
+   "mutants": 16,
+   "classes": [
+    "renamed",
+    "removed",
+    "added",
+    "kind_changed",
+    "default_count",
+    "default_value"
+   ],
+   "violations": []
+  },
+  {
+   "run": "live-20261008-r4",
+   "proposal": "p-a3336190-r4",
+   "proposer": "claude-opus-5-5",
+   "ok": true,
+   "mutants": 16,
+   "classes": [
+    "renamed",
+    "removed",
+    "added",
+    "kind_changed",
+    "default_count",
+    "default_value"
+   ],
+   "violations": []
+  }
+ ]
+}

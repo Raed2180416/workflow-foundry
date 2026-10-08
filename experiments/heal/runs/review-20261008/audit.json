@@ -1,0 +1,1058 @@
+{
+ "schema": "heal-live-audit/1",
+ "at": "2026-10-08T23:09:14.862Z",
+ "spend": {
+  "total": 6.497963,
+  "lines": 490,
+  "byScope": {
+   "H-cfx": 2.02524,
+   "H-rec": 3.107855,
+   "H-p1": 0.60952,
+   "diagnosis": 0.088583,
+   "H-p1-retry": 0.192627,
+   "H-rec-retry": 0.39095,
+   "review-p1-mechanism": 0.083188
+  },
+  "incidentSumsMatchScopes": {
+   "H-rec": 3.107855,
+   "H-cfx": 2.02524,
+   "H-p1": 0.60952
+  },
+  "runs": [
+   {
+    "run": "live-20261008/rec",
+    "recordSpent": 0.213822,
+    "cap": 2,
+    "fileSpent": 0.213821,
+    "fileMatchesRecord": true,
+    "overCap": false,
+    "proposer": {
+     "rounds": 4,
+     "journalUsd": 0.085015,
+     "recordUsd": 0.085015,
+     "ledgerUsd": 0.085016,
+     "failedCalls": 0
+    },
+    "boundCharges": []
+   },
+   {
+    "run": "live-20261008/cfx",
+    "recordSpent": 0.124448,
+    "cap": 3,
+    "fileSpent": 0.124448,
+    "fileMatchesRecord": true,
+    "overCap": false,
+    "proposer": {
+     "rounds": 4,
+     "journalUsd": 0.124448,
+     "recordUsd": 0.124448,
+     "ledgerUsd": 0.124448,
+     "failedCalls": 0
+    },
+    "boundCharges": []
+   },
+   {
+    "run": "live-20261008/p1",
+    "recordSpent": 0.45259,
+    "cap": 2,
+    "fileSpent": 0.452586,
+    "fileMatchesRecord": true,
+    "overCap": false,
+    "proposer": {
+     "rounds": 4,
+     "journalUsd": 0.088513,
+     "recordUsd": 0.088513,
+     "ledgerUsd": 0.088513,
+     "failedCalls": 0
+    },
+    "boundCharges": []
+   },
+   {
+    "run": "live-20261008-r2/rec",
+    "recordSpent": 0.156447,
+    "cap": 2,
+    "fileSpent": 0.156448,
+    "fileMatchesRecord": true,
+    "overCap": false,
+    "proposer": {
+     "rounds": 4,
+     "journalUsd": 0.089983,
+     "recordUsd": 0.089983,
+     "ledgerUsd": 0.089983,
+     "failedCalls": 0
+    },
+    "boundCharges": []
+   },
+   {
+    "run": "live-20261008-r2/cfx",
+    "recordSpent": 0.627531,
+    "cap": 3,
+    "fileSpent": 0.627532,
+    "fileMatchesRecord": true,
+    "overCap": false,
+    "proposer": {
+     "rounds": 3,
+     "journalUsd": 0.073597,
+     "recordUsd": 0.073597,
+     "ledgerUsd": 0.073598,
+     "failedCalls": 0
+    },
+    "boundCharges": []
+   },
+   {
+    "run": "live-20261008-r2/p1",
+    "recordSpent": 0.156932,
+    "cap": 1.4,
+    "fileSpent": 0.156934,
+    "fileMatchesRecord": true,
+    "overCap": false,
+    "proposer": {
+     "rounds": 2,
+     "journalUsd": 0.002903,
+     "recordUsd": 0.002903,
+     "ledgerUsd": 0.002903,
+     "failedCalls": 0
+    },
+    "boundCharges": []
+   },
+   {
+    "run": "live-20261008-r3/rec",
+    "recordSpent": 2.442315,
+    "cap": 2,
+    "fileSpent": 2.442315,
+    "fileMatchesRecord": true,
+    "overCap": true,
+    "proposer": {
+     "rounds": 4,
+     "journalUsd": 0.071727,
+     "recordUsd": 0.071727,
+     "ledgerUsd": 0.071726,
+     "failedCalls": 0
+    },
+    "boundCharges": [
+     {
+      "label": "V3 F-haiku/records:test:d3:s6001/0 r0",
+      "usd": 1.021926
+     },
+     {
+      "label": "V3 F-haiku/records:test:d3:s6001/0 r1",
+      "usd": 1.022841
+     }
+    ]
+   },
+   {
+    "run": "live-20261008-r3/cfx",
+    "recordSpent": 0.355163,
+    "cap": 2.5,
+    "fileSpent": 0.355163,
+    "fileMatchesRecord": true,
+    "overCap": false,
+    "proposer": {
+     "rounds": 2,
+     "journalUsd": 0.009831,
+     "recordUsd": 0.009831,
+     "ledgerUsd": 0.009831,
+     "failedCalls": 0
+    },
+    "boundCharges": []
+   },
+   {
+    "run": "live-20261008-r4/rec",
+    "recordSpent": 0.295271,
+    "cap": 1,
+    "fileSpent": 0.295271,
+    "fileMatchesRecord": true,
+    "overCap": false,
+    "proposer": {
+     "rounds": 4,
+     "journalUsd": 0.092208,
+     "recordUsd": 0.092208,
+     "ledgerUsd": 0.092208,
+     "failedCalls": 0
+    },
+    "boundCharges": []
+   },
+   {
+    "run": "live-20261008-r4/cfx",
+    "recordSpent": 0.918097,
+    "cap": 1.6,
+    "fileSpent": 0.918097,
+    "fileMatchesRecord": true,
+    "overCap": false,
+    "proposer": {
+     "rounds": 4,
+     "journalUsd": 0.199355,
+     "recordUsd": 0.199355,
+     "ledgerUsd": 0.199355,
+     "failedCalls": 0
+    },
+    "boundCharges": []
+   }
+  ],
+  "fresh": [
+   {
+    "file": "fresh-16548-78z38.sqlite",
+    "n": 9,
+    "usd": 0.553934,
+    "failed": 0
+   },
+   {
+    "file": "fresh-27710-ycya3.sqlite",
+    "n": 10,
+    "usd": 0.7187424,
+    "failed": 0
+   },
+   {
+    "file": "fresh-4501-gf7ty.sqlite",
+    "n": 178,
+    "usd": 0.05800923,
+    "failed": 0
+   },
+   {
+    "file": "fresh-7611-b0vfs.sqlite",
+    "n": 8,
+    "usd": 0.345332,
+    "failed": 0
+   },
+   {
+    "file": "fresh-9516-3ilok.sqlite",
+    "n": 56,
+    "usd": 0.11915778,
+    "failed": 0
+   },
+   {
+    "file": "fresh-9520-tuycb.sqlite",
+    "n": 172,
+    "usd": 0.06150687,
+    "failed": 0
+   }
+  ]
+ },
+ "cfx": {
+  "baseFidelity": [
+   {
+    "trial": "F-haiku/codefix:dev:d3:s1/0",
+    "recordedPass": true,
+    "replayPass": true,
+    "recordedScore": 1,
+    "replayScore": 1
+   },
+   {
+    "trial": "F-haiku/codefix:dev:d3:s2/0",
+    "recordedPass": true,
+    "replayPass": true,
+    "recordedScore": 1,
+    "replayScore": 1
+   },
+   {
+    "trial": "F-haiku/codefix:dev:d3:s3/0",
+    "recordedPass": true,
+    "replayPass": true,
+    "recordedScore": 1,
+    "replayScore": 1
+   },
+   {
+    "trial": "F-haiku/codefix:test:d3:s6001/0",
+    "recordedPass": false,
+    "replayPass": false,
+    "recordedScore": 0,
+    "replayScore": 0
+   },
+   {
+    "trial": "F-haiku/codefix:test:d3:s6001/1",
+    "recordedPass": true,
+    "replayPass": true,
+    "recordedScore": 1,
+    "replayScore": 1
+   },
+   {
+    "trial": "F-haiku/codefix:test:d3:s6002/0",
+    "recordedPass": true,
+    "replayPass": true,
+    "recordedScore": 1,
+    "replayScore": 1
+   },
+   {
+    "trial": "F-haiku/codefix:test:d3:s6002/1",
+    "recordedPass": true,
+    "replayPass": true,
+    "recordedScore": 1,
+    "replayScore": 1
+   },
+   {
+    "trial": "F-haiku/codefix:test:d3:s6003/0",
+    "recordedPass": true,
+    "replayPass": true,
+    "recordedScore": 1,
+    "replayScore": 1
+   },
+   {
+    "trial": "F-haiku/codefix:test:d3:s6003/1",
+    "recordedPass": true,
+    "replayPass": true,
+    "recordedScore": 1,
+    "replayScore": 1
+   },
+   {
+    "trial": "F-haiku/codefix:test:d3:s6004/0",
+    "recordedPass": false,
+    "replayPass": false,
+    "recordedScore": 0.9565217391304348,
+    "replayScore": 0.956522
+   },
+   {
+    "trial": "F-haiku/codefix:test:d3:s6004/1",
+    "recordedPass": false,
+    "replayPass": false,
+    "recordedScore": 0.9565217391304348,
+    "replayScore": 0.956522
+   }
+  ],
+  "candidates": [
+   {
+    "run": "live-20261008-r2",
+    "proposal": "p-4e3456da-r3",
+    "errors": [],
+    "candidateHash": "87de882332ea40d5",
+    "verifiedHash": "87de882332ea40d5",
+    "hashMatches": true,
+    "v3": [
+     {
+      "trial": "F-haiku/codefix:test:d3:s6001/0",
+      "base": false,
+      "cand": true,
+      "candScore": 1,
+      "candCalls": 1,
+      "live": 0,
+      "err": null
+     },
+     {
+      "trial": "F-haiku/codefix:test:d3:s6004/0",
+      "base": false,
+      "cand": true,
+      "candScore": 1,
+      "candCalls": 1,
+      "live": 0,
+      "err": null
+     },
+     {
+      "trial": "F-haiku/codefix:test:d3:s6004/1",
+      "base": false,
+      "cand": true,
+      "candScore": 1,
+      "candCalls": 1,
+      "live": 0,
+      "err": null
+     }
+    ],
+    "v4": {
+     "n": 8,
+     "candPass": 8,
+     "regressions": [],
+     "live": 0
+    },
+    "costRatio": 0.588,
+    "anyLive": false
+   },
+   {
+    "run": "live-20261008-r3",
+    "proposal": "p-dfd855f4-r2",
+    "errors": [],
+    "candidateHash": "816473b566fbd758",
+    "verifiedHash": "816473b566fbd758",
+    "hashMatches": true,
+    "v3": [
+     {
+      "trial": "F-haiku/codefix:test:d3:s6001/0",
+      "base": false,
+      "cand": true,
+      "candScore": 1,
+      "candCalls": 1,
+      "live": 0,
+      "err": null
+     },
+     {
+      "trial": "F-haiku/codefix:test:d3:s6004/0",
+      "base": false,
+      "cand": true,
+      "candScore": 1,
+      "candCalls": 1,
+      "live": 0,
+      "err": null
+     },
+     {
+      "trial": "F-haiku/codefix:test:d3:s6004/1",
+      "base": false,
+      "cand": true,
+      "candScore": 1,
+      "candCalls": 1,
+      "live": 0,
+      "err": null
+     }
+    ],
+    "v4": {
+     "n": 8,
+     "candPass": 8,
+     "regressions": [],
+     "live": 0
+    },
+    "costRatio": 0.588,
+    "anyLive": false
+   },
+   {
+    "run": "live-20261008-r4",
+    "proposal": "p-a3336190-r4",
+    "errors": [],
+    "candidateHash": "ee5ab623355dbd97",
+    "verifiedHash": "ee5ab623355dbd97",
+    "hashMatches": true,
+    "v3": [
+     {
+      "trial": "F-haiku/codefix:test:d3:s6001/0",
+      "base": false,
+      "cand": true,
+      "candScore": 1,
+      "candCalls": 1,
+      "live": 0,
+      "err": null
+     },
+     {
+      "trial": "F-haiku/codefix:test:d3:s6004/0",
+      "base": false,
+      "cand": true,
+      "candScore": 1,
+      "candCalls": 1,
+      "live": 0,
+      "err": null
+     },
+     {
+      "trial": "F-haiku/codefix:test:d3:s6004/1",
+      "base": false,
+      "cand": true,
+      "candScore": 1,
+      "candCalls": 1,
+      "live": 0,
+      "err": null
+     }
+    ],
+    "v4": {
+     "n": 8,
+     "candPass": 8,
+     "regressions": [],
+     "live": 0
+    },
+    "costRatio": 0.588,
+    "anyLive": false
+   }
+  ]
+ },
+ "fresh": [
+  {
+   "record": "state/live1-p1/m-b8d4c58754.json",
+   "proposal": "m-b8d4c58754",
+   "base": "ec311a3b49",
+   "cand": "6bc2eec9b7",
+   "rows": [
+    {
+     "seed": 1003,
+     "recorded": {
+      "base": true,
+      "cand": true,
+      "stratum": null
+     },
+     "replay": {
+      "base": true,
+      "cand": true,
+      "baseErr": null,
+      "candErr": null,
+      "journal": "fresh-9520-tuycb.sqlite",
+      "liveCalls": 0
+     },
+     "stratum": null,
+     "agrees": true
+    },
+    {
+     "seed": 1004,
+     "recorded": {
+      "base": true,
+      "cand": true,
+      "stratum": null
+     },
+     "replay": {
+      "base": true,
+      "cand": true,
+      "baseErr": null,
+      "candErr": null,
+      "journal": "fresh-9520-tuycb.sqlite",
+      "liveCalls": 0
+     },
+     "stratum": null,
+     "agrees": true
+    },
+    {
+     "seed": 1005,
+     "recorded": {
+      "base": true,
+      "cand": true,
+      "stratum": null
+     },
+     "replay": {
+      "base": true,
+      "cand": true,
+      "baseErr": null,
+      "candErr": null,
+      "journal": "fresh-9520-tuycb.sqlite",
+      "liveCalls": 0
+     },
+     "stratum": null,
+     "agrees": true
+    },
+    {
+     "seed": 1007,
+     "recorded": {
+      "base": true,
+      "cand": true,
+      "stratum": null
+     },
+     "replay": {
+      "base": true,
+      "cand": true,
+      "baseErr": null,
+      "candErr": null,
+      "journal": "fresh-9520-tuycb.sqlite",
+      "liveCalls": 0
+     },
+     "stratum": null,
+     "agrees": true
+    }
+   ],
+   "allAgree": true,
+   "base_pass": 4,
+   "cand_pass": 4
+  },
+  {
+   "record": "state/live1-p1/p-ff6251d1-r2.json",
+   "proposal": "p-ff6251d1-r2",
+   "base": "6bc2eec9b7",
+   "cand": "309dccb6c5",
+   "rows": [
+    {
+     "seed": 1008,
+     "recorded": {
+      "base": true,
+      "cand": true,
+      "stratum": null
+     },
+     "replay": {
+      "base": true,
+      "cand": true,
+      "baseErr": null,
+      "candErr": null,
+      "journal": "fresh-4501-gf7ty.sqlite",
+      "liveCalls": 0
+     },
+     "stratum": null,
+     "agrees": true
+    },
+    {
+     "seed": 1009,
+     "recorded": {
+      "base": true,
+      "cand": true,
+      "stratum": null
+     },
+     "replay": {
+      "base": true,
+      "cand": true,
+      "baseErr": null,
+      "candErr": null,
+      "journal": "fresh-4501-gf7ty.sqlite",
+      "liveCalls": 0
+     },
+     "stratum": null,
+     "agrees": true
+    },
+    {
+     "seed": 1010,
+     "recorded": {
+      "base": true,
+      "cand": true,
+      "stratum": null
+     },
+     "replay": {
+      "base": true,
+      "cand": true,
+      "baseErr": null,
+      "candErr": null,
+      "journal": "fresh-4501-gf7ty.sqlite",
+      "liveCalls": 0
+     },
+     "stratum": null,
+     "agrees": true
+    },
+    {
+     "seed": 1011,
+     "recorded": {
+      "base": true,
+      "cand": true,
+      "stratum": null
+     },
+     "replay": {
+      "base": true,
+      "cand": true,
+      "baseErr": null,
+      "candErr": null,
+      "journal": "fresh-4501-gf7ty.sqlite",
+      "liveCalls": 0
+     },
+     "stratum": null,
+     "agrees": true
+    }
+   ],
+   "allAgree": true,
+   "base_pass": 4,
+   "cand_pass": 4
+  },
+  {
+   "record": "state/live1-rec/m-26e42833db.json",
+   "proposal": "m-26e42833db",
+   "base": "887c68c248",
+   "cand": "2d84e1165b",
+   "rows": [
+    {
+     "seed": 1001,
+     "recorded": {
+      "base": true,
+      "cand": true,
+      "stratum": "mdy"
+     },
+     "replay": {
+      "base": true,
+      "cand": true,
+      "baseErr": null,
+      "candErr": null,
+      "journal": "fresh-9516-3ilok.sqlite",
+      "liveCalls": 0
+     },
+     "stratum": "mdy",
+     "agrees": true
+    },
+    {
+     "seed": 1002,
+     "recorded": {
+      "base": true,
+      "cand": true,
+      "stratum": "mdy"
+     },
+     "replay": {
+      "base": true,
+      "cand": true,
+      "baseErr": null,
+      "candErr": null,
+      "journal": "fresh-9516-3ilok.sqlite",
+      "liveCalls": 0
+     },
+     "stratum": "mdy",
+     "agrees": true
+    },
+    {
+     "seed": 1006,
+     "recorded": {
+      "base": false,
+      "cand": false,
+      "stratum": "dmy"
+     },
+     "replay": {
+      "base": false,
+      "cand": false,
+      "baseErr": null,
+      "candErr": null,
+      "journal": "fresh-9516-3ilok.sqlite",
+      "liveCalls": 0
+     },
+     "stratum": "dmy",
+     "agrees": true
+    },
+    {
+     "seed": 1012,
+     "recorded": {
+      "base": true,
+      "cand": true,
+      "stratum": "dmy"
+     },
+     "replay": {
+      "base": true,
+      "cand": true,
+      "baseErr": null,
+      "candErr": null,
+      "journal": "fresh-9516-3ilok.sqlite",
+      "liveCalls": 0
+     },
+     "stratum": "dmy",
+     "agrees": true
+    }
+   ],
+   "allAgree": true,
+   "base_pass": 3,
+   "cand_pass": 3
+  },
+  {
+   "record": "state/live2-cfx/p-4e3456da-r3.json",
+   "proposal": "p-4e3456da-r3",
+   "base": "a7649828e1",
+   "cand": "87de882332",
+   "rows": [
+    {
+     "seed": 1001,
+     "recorded": {
+      "base": true,
+      "cand": true,
+      "stratum": null
+     },
+     "replay": {
+      "base": true,
+      "cand": true,
+      "baseErr": null,
+      "candErr": null,
+      "journal": "fresh-16548-78z38.sqlite",
+      "liveCalls": 0
+     },
+     "stratum": "no-wrong-default",
+     "agrees": false
+    },
+    {
+     "seed": 1002,
+     "recorded": {
+      "base": true,
+      "cand": true,
+      "stratum": null
+     },
+     "replay": {
+      "base": true,
+      "cand": true,
+      "baseErr": null,
+      "candErr": null,
+      "journal": "fresh-16548-78z38.sqlite",
+      "liveCalls": 0
+     },
+     "stratum": "no-wrong-default",
+     "agrees": false
+    },
+    {
+     "seed": 1003,
+     "recorded": {
+      "base": true,
+      "cand": true,
+      "stratum": null
+     },
+     "replay": {
+      "base": true,
+      "cand": true,
+      "baseErr": null,
+      "candErr": null,
+      "journal": "fresh-16548-78z38.sqlite",
+      "liveCalls": 0
+     },
+     "stratum": "no-wrong-default",
+     "agrees": false
+    },
+    {
+     "seed": 1004,
+     "recorded": {
+      "base": true,
+      "cand": true,
+      "stratum": null
+     },
+     "replay": {
+      "base": true,
+      "cand": true,
+      "baseErr": null,
+      "candErr": null,
+      "journal": "fresh-16548-78z38.sqlite",
+      "liveCalls": 0
+     },
+     "stratum": "has-wrong-default",
+     "agrees": false
+    }
+   ],
+   "allAgree": false,
+   "base_pass": 4,
+   "cand_pass": 4
+  },
+  {
+   "record": "state/live3-cfx/p-dfd855f4-r2.json",
+   "proposal": "p-dfd855f4-r2",
+   "base": "a7649828e1",
+   "cand": "816473b566",
+   "rows": [
+    {
+     "seed": 1005,
+     "recorded": {
+      "base": true,
+      "cand": true,
+      "stratum": null
+     },
+     "replay": {
+      "base": true,
+      "cand": true,
+      "baseErr": null,
+      "candErr": null,
+      "journal": "fresh-7611-b0vfs.sqlite",
+      "liveCalls": 0
+     },
+     "stratum": "no-wrong-default",
+     "agrees": false
+    },
+    {
+     "seed": 1006,
+     "recorded": {
+      "base": true,
+      "cand": true,
+      "stratum": null
+     },
+     "replay": {
+      "base": true,
+      "cand": true,
+      "baseErr": null,
+      "candErr": null,
+      "journal": "fresh-7611-b0vfs.sqlite",
+      "liveCalls": 0
+     },
+     "stratum": "no-wrong-default",
+     "agrees": false
+    },
+    {
+     "seed": 1007,
+     "recorded": {
+      "base": true,
+      "cand": true,
+      "stratum": null
+     },
+     "replay": {
+      "base": true,
+      "cand": true,
+      "baseErr": null,
+      "candErr": null,
+      "journal": "fresh-7611-b0vfs.sqlite",
+      "liveCalls": 0
+     },
+     "stratum": "no-wrong-default",
+     "agrees": false
+    },
+    {
+     "seed": 1008,
+     "recorded": {
+      "base": true,
+      "cand": true,
+      "stratum": null
+     },
+     "replay": {
+      "base": true,
+      "cand": true,
+      "baseErr": null,
+      "candErr": null,
+      "journal": "fresh-7611-b0vfs.sqlite",
+      "liveCalls": 0
+     },
+     "stratum": "no-wrong-default",
+     "agrees": false
+    }
+   ],
+   "allAgree": false,
+   "base_pass": 4,
+   "cand_pass": 4
+  },
+  {
+   "record": "state/live4-cfx/p-a3336190-r4.json",
+   "proposal": "p-a3336190-r4",
+   "base": "a7649828e1",
+   "cand": "ee5ab62335",
+   "rows": [
+    {
+     "seed": 1009,
+     "recorded": {
+      "base": true,
+      "cand": true,
+      "stratum": "no-wrong-default"
+     },
+     "replay": {
+      "base": true,
+      "cand": true,
+      "baseErr": null,
+      "candErr": null,
+      "journal": "fresh-27710-ycya3.sqlite",
+      "liveCalls": 0
+     },
+     "stratum": "no-wrong-default",
+     "agrees": true
+    },
+    {
+     "seed": 1010,
+     "recorded": {
+      "base": false,
+      "cand": true,
+      "stratum": "has-wrong-default"
+     },
+     "replay": {
+      "base": false,
+      "cand": true,
+      "baseErr": null,
+      "candErr": null,
+      "journal": "fresh-27710-ycya3.sqlite",
+      "liveCalls": 0
+     },
+     "stratum": "has-wrong-default",
+     "agrees": true
+    },
+    {
+     "seed": 1011,
+     "recorded": {
+      "base": false,
+      "cand": true,
+      "stratum": "has-wrong-default"
+     },
+     "replay": {
+      "base": false,
+      "cand": true,
+      "baseErr": null,
+      "candErr": null,
+      "journal": "fresh-27710-ycya3.sqlite",
+      "liveCalls": 0
+     },
+     "stratum": "has-wrong-default",
+     "agrees": true
+    },
+    {
+     "seed": 1012,
+     "recorded": {
+      "base": true,
+      "cand": true,
+      "stratum": "no-wrong-default"
+     },
+     "replay": {
+      "base": true,
+      "cand": true,
+      "baseErr": null,
+      "candErr": null,
+      "journal": "fresh-27710-ycya3.sqlite",
+      "liveCalls": 0
+     },
+     "stratum": "no-wrong-default",
+     "agrees": true
+    }
+   ],
+   "allAgree": true,
+   "base_pass": 2,
+   "cand_pass": 4
+  }
+ ],
+ "lineage": {
+  "lines": [
+   {
+    "incident": "rec",
+    "type": "promote",
+    "proposal": "m-26e42833db",
+    "kind": "lint-debt",
+    "version": 2,
+    "decision": "promote",
+    "proposer": {
+     "mechanical": [
+      "ACCEPTANCE_EXISTENCE_ONLY",
+      "VERIFY_NOT_GATING",
+      "ERROR_COLLECTION"
+     ]
+    },
+    "waivers": []
+   },
+   {
+    "incident": "p1",
+    "type": "promote",
+    "proposal": "m-b8d4c58754",
+    "kind": "lint-debt",
+    "version": 2,
+    "decision": "promote",
+    "proposer": {
+     "mechanical": [
+      "ACCEPTANCE_EXISTENCE_ONLY",
+      "VERIFY_NOT_GATING",
+      "ERROR_COLLECTION",
+      "ERROR_CONTINUATION"
+     ]
+    },
+    "waivers": []
+   },
+   {
+    "incident": "p1",
+    "type": "promote",
+    "proposal": "p-ff6251d1-r2",
+    "kind": "defect",
+    "version": 3,
+    "decision": "promote",
+    "proposer": {
+     "modelId": "claude-haiku-5-5",
+     "class": "M",
+     "briefHash": "ff6251d13d76400ff3efb98f251e4a565dc6d15601e185199682f9b850580b44"
+    },
+    "waivers": [
+     {
+      "code": "CLASS_ABOVE_DEFAULT_UNJUSTIFIED",
+      "node": "judge__esc",
+      "codeWritten": true
+     }
+    ]
+   }
+  ],
+  "redecided": [
+   {
+    "record": "state/live1-p1/m-b8d4c58754.json",
+    "recorded": "promote",
+    "now": "promote",
+    "reasons": []
+   },
+   {
+    "record": "state/live1-p1/p-ff6251d1-r2.json",
+    "recorded": "promote",
+    "now": "promote",
+    "reasons": []
+   },
+   {
+    "record": "state/live1-rec/m-26e42833db.json",
+    "recorded": "promote",
+    "now": "promote",
+    "reasons": []
+   },
+   {
+    "record": "state/live1-rec/p-79398c16-r4.json",
+    "recorded": "pending",
+    "now": "pending",
+    "reasons": [
+     "V3:HEAL_BUDGET_EXHAUSTED"
+    ]
+   },
+   {
+    "record": "state/live2-cfx/p-4e3456da-r3.json",
+    "recorded": "blocked",
+    "now": "blocked",
+    "reasons": [
+     "lint errors remain on the candidate: heal the lint debt first"
+    ]
+   },
+   {
+    "record": "state/live3-cfx/p-dfd855f4-r2.json",
+    "recorded": "blocked",
+    "now": "blocked",
+    "reasons": [
+     "lint errors remain on the candidate: heal the lint debt first"
+    ]
+   },
+   {
+    "record": "state/live4-cfx/p-a3336190-r4.json",
+    "recorded": "blocked",
+    "now": "blocked",
+    "reasons": [
+     "lint errors remain on the candidate: heal the lint debt first"
+    ]
+   }
+  ]
+ }
+}
