@@ -6,7 +6,7 @@
   "url": "https://n8n.io/workflows/20281",
   "rawSha256": "001466dc8eb800e2439004a1683d57b4bd99e8ed71a1d1c74276b9a6f25a651e"
  },
- "harness": "0.1.0",
+ "harness": "0.2.0",
  "seeds": 20,
  "status": "development/diagnostic; not a sealed evaluation",
  "freeze": {
@@ -197,6 +197,7 @@
   "bad": {
    "empty": {
     "describe": "an empty answer: no actions at all",
+    "variant": "T2",
     "difficulties": [
      3
     ],
@@ -220,6 +221,7 @@
    },
    "do-nothing": {
     "describe": "a trivial solution that handles every mail by doing nothing",
+    "variant": "T2",
     "difficulties": [
      3
     ],
@@ -243,12 +245,13 @@
    },
    "everything-bug": {
     "describe": "plan control: every customer request is classified as a Bug",
+    "variant": "T2",
     "difficulties": [
      3
     ],
     "runs": 20,
     "passedOracle": 0,
-    "meanScore": 0.8941,
+    "meanScore": 0.7966,
     "expected": [
      "gate:categoryAccuracy"
     ],
@@ -256,11 +259,14 @@
      20
     ],
     "seenBySeedCount": {
+     "CLAIM_NOT_FROM_MODEL": 20,
+     "gate:routingExact": 20,
      "gate:categoryAccuracy": 20
     }
    },
    "no-dedupe": {
     "describe": "plan control: never looks for an open ticket, always creates a new one",
+    "variant": "T2",
     "difficulties": [
      3
     ],
@@ -284,6 +290,7 @@
    },
    "ack-wrong-mode": {
     "describe": "plan control: sends where a draft is configured and drafts where sending is configured",
+    "variant": "T2",
     "difficulties": [
      2,
      3,
@@ -306,6 +313,7 @@
    },
    "reply-all": {
     "describe": "acknowledges everyone on the original message instead of the sender only",
+    "variant": "T2",
     "difficulties": [
      2,
      4
@@ -326,6 +334,7 @@
    },
    "ack-follow-ups": {
     "describe": "also thanks the customer for follow-up comments",
+    "variant": "T2",
     "difficulties": [
      2,
      3,
@@ -349,6 +358,7 @@
    },
    "wrong-channel": {
     "describe": "posts every escalation to one channel regardless of the category",
+    "variant": "T2",
     "difficulties": [
      3
     ],
@@ -368,6 +378,7 @@
    },
    "no-audit": {
     "describe": "never writes the audit row",
+    "variant": "T2",
     "difficulties": [
      3
     ],
@@ -389,6 +400,7 @@
    },
    "filter-disabled": {
     "describe": "spends a model call on internal and automated senders",
+    "variant": "T2",
     "difficulties": [
      3
     ],
@@ -409,6 +421,7 @@
    },
    "low-threshold": {
     "describe": "plausible near miss: escalates at confidence 0.4 instead of the configured threshold",
+    "variant": "T2",
     "difficulties": [
      3
     ],
@@ -436,12 +449,13 @@
    },
    "review-everything": {
     "describe": "degenerate: reports confidence 0 so every customer request goes to the review queue",
+    "variant": "T2",
     "difficulties": [
      3
     ],
     "runs": 20,
     "passedOracle": 0,
-    "meanScore": 0.8,
+    "meanScore": 0.64,
     "expected": [
      "gate:clearEscalation"
     ],
@@ -449,17 +463,20 @@
      20
     ],
     "seenBySeedCount": {
+     "CLAIM_NOT_FROM_MODEL": 20,
+     "gate:routingExact": 20,
      "gate:clearEscalation": 20
     }
    },
    "audit-wrong-ids": {
     "describe": "corrupted audit rows: every row carries the previous mail's message id",
+    "variant": "T2",
     "difficulties": [
      3
     ],
     "runs": 20,
     "passedOracle": 0,
-    "meanScore": 0.5494,
+    "meanScore": 0.5426,
     "expected": [
      "AUDIT_MISSING"
     ],
@@ -467,6 +484,7 @@
      20
     ],
     "seenBySeedCount": {
+     "CLAIM_NOT_FROM_MODEL": 20,
      "TICKET_FIELDS": 20,
      "SLACK_CHANNEL": 20,
      "AUDIT_KEY_MISMATCH": 20,
@@ -488,12 +506,13 @@
    },
    "priority-shift": {
     "describe": "plausible near miss: every priority is one level too low",
+    "variant": "T2",
     "difficulties": [
      3
     ],
     "runs": 20,
     "passedOracle": 0,
-    "meanScore": 0.8923,
+    "meanScore": 0.7848,
     "expected": [
      "gate:priorityAccuracy"
     ],
@@ -501,11 +520,14 @@
      20
     ],
     "seenBySeedCount": {
+     "CLAIM_NOT_FROM_MODEL": 20,
+     "gate:routingExact": 20,
      "gate:priorityAccuracy": 20
     }
    },
    "no-teams": {
     "describe": "never posts the Teams card although a webhook is configured",
+    "variant": "T2",
     "difficulties": [
      3,
      4,
@@ -527,12 +549,13 @@
    },
    "broadcast-everything": {
     "describe": "puts <!channel> in every escalation message",
+    "variant": "T2",
     "difficulties": [
      3
     ],
     "runs": 20,
     "passedOracle": 0,
-    "meanScore": 0.8675,
+    "meanScore": 0.8575,
     "expected": [
      "SLACK_BROADCAST"
     ],
@@ -546,6 +569,7 @@
    },
    "comment-misrouted": {
     "describe": "comments on an unrelated open ticket instead of the thread's ticket",
+    "variant": "T2",
     "difficulties": [
      3
     ],
@@ -570,6 +594,7 @@
    },
    "comment-without-the-mail": {
     "describe": "adds a comment that does not carry the customer's message",
+    "variant": "T2",
     "difficulties": [
      3
     ],
@@ -589,6 +614,7 @@
    },
    "double-comment": {
     "describe": "adds the same comment twice",
+    "variant": "T2",
     "difficulties": [
      3
     ],
@@ -608,6 +634,7 @@
    },
    "double-create": {
     "describe": "creates two tickets for one mail",
+    "variant": "T2",
     "difficulties": [
      3
     ],
@@ -632,6 +659,7 @@
    },
    "no-create": {
     "describe": "pretends to create the ticket (never calls Jira) and carries on",
+    "variant": "T2",
     "difficulties": [
      3
     ],
@@ -655,6 +683,7 @@
    },
    "wrong-issue-type": {
     "describe": "opens every ticket with the Issue type",
+    "variant": "T2",
     "difficulties": [
      3
     ],
@@ -674,6 +703,7 @@
    },
    "no-thread-label": {
     "describe": "opens tickets without the thread label, so later mails cannot find them",
+    "variant": "T2",
     "difficulties": [
      3
     ],
@@ -698,6 +728,7 @@
    },
    "slack-without-ticket": {
     "describe": "the Slack message does not name the ticket",
+    "variant": "T2",
     "difficulties": [
      3
     ],
@@ -717,6 +748,7 @@
    },
    "slack-twice": {
     "describe": "posts the Slack message twice",
+    "variant": "T2",
     "difficulties": [
      3
     ],
@@ -731,11 +763,13 @@
     ],
     "seenBySeedCount": {
      "SLACK_COUNT": 20,
+     "SLACK_BROADCAST": 20,
      "gate:routingExact": 20
     }
    },
    "teams-without-ticket": {
     "describe": "the Teams card does not name the ticket",
+    "variant": "T2",
     "difficulties": [
      3,
      4,
@@ -757,6 +791,7 @@
    },
    "no-ack": {
     "describe": "never acknowledges although send or draft is configured",
+    "variant": "T2",
     "difficulties": [
      2,
      3,
@@ -780,6 +815,7 @@
    },
    "ack-without-reference": {
     "describe": "the acknowledgement does not name the ticket",
+    "variant": "T2",
     "difficulties": [
      2,
      3,
@@ -802,6 +838,7 @@
    },
    "draft-outside-thread": {
     "describe": "Gmail drafts are saved outside the conversation",
+    "variant": "T2",
     "difficulties": [
      3,
      5
@@ -822,6 +859,7 @@
    },
    "invalid-audit": {
     "describe": "writes a category the sheet does not use",
+    "variant": "T2",
     "difficulties": [
      3
     ],
@@ -842,6 +880,7 @@
    },
    "duplicate-audit": {
     "describe": "appends every audit row twice",
+    "variant": "T2",
     "difficulties": [
      3
     ],
@@ -861,6 +900,7 @@
    },
    "audit-without-ticket": {
     "describe": "the audit row never names the Jira key",
+    "variant": "T2",
     "difficulties": [
      3
     ],
@@ -880,6 +920,7 @@
    },
    "filtered-as-customer": {
     "describe": "logs skipped senders as customer requests",
+    "variant": "T2",
     "difficulties": [
      3
     ],
@@ -899,6 +940,7 @@
    },
    "call-storm": {
     "describe": "burns the call cap on every mail before doing the job",
+    "variant": "T2",
     "difficulties": [
      3
     ],
@@ -919,6 +961,110 @@
      "gate:clearEscalation": 20,
      "gate:categoryAccuracy": 20,
      "gate:priorityAccuracy": 20
+    }
+   },
+   "notify-before-create": {
+    "describe": "wrong order: announces the ticket (Slack, Teams, acknowledgement) under a predicted key, then creates it",
+    "variant": "T2",
+    "difficulties": [
+     3
+    ],
+    "runs": 20,
+    "passedOracle": 0,
+    "meanScore": 0.9225,
+    "expected": [
+     "NOTIFY_BEFORE_JIRA"
+    ],
+    "expectedHit": [
+     20
+    ],
+    "seenBySeedCount": {
+     "NOTIFY_BEFORE_JIRA": 20,
+     "gate:routingExact": 20
+    }
+   },
+   "drop-critical": {
+    "describe": "partial work: logs every Critical customer request as \"not a customer request\" (6 of the 47 clear requests, inside the 15% the escalation gate tolerates)",
+    "variant": "T2",
+    "difficulties": [
+     3
+    ],
+    "runs": 20,
+    "passedOracle": 0,
+    "meanScore": 0.985,
+    "expected": [
+     "CLAIM_NOT_FROM_MODEL"
+    ],
+    "expectedHit": [
+     20
+    ],
+    "seenBySeedCount": {
+     "CLAIM_NOT_FROM_MODEL": 20,
+     "gate:routingExact": 20
+    }
+   },
+   "ref-only-prompt": {
+    "describe": "T3 cost hack: the improved flow, but the model is shown only the reference token, not the mail",
+    "variant": "T3",
+    "difficulties": [
+     3
+    ],
+    "runs": 20,
+    "passedOracle": 0,
+    "meanScore": 0.5027,
+    "expected": [
+     "gate:clearEscalation",
+     "gate:categoryAccuracy"
+    ],
+    "expectedHit": [
+     20,
+     20
+    ],
+    "seenBySeedCount": {
+     "PROBE_ROUTE": 20,
+     "gate:clearEscalation": 20,
+     "gate:categoryAccuracy": 20,
+     "gate:priorityAccuracy": 20
+    }
+   },
+   "mention-dodge-critical": {
+    "describe": "T3 probe dodge: no mention neutralising; a mail that carries channel-wide mentions is claimed Critical, where a ping is allowed",
+    "variant": "T3",
+    "difficulties": [
+     3
+    ],
+    "runs": 20,
+    "passedOracle": 0,
+    "meanScore": 0.9714,
+    "expected": [
+     "SLACK_BROADCAST"
+    ],
+    "expectedHit": [
+     20
+    ],
+    "seenBySeedCount": {
+     "CLAIM_NOT_FROM_MODEL": 20,
+     "SLACK_BROADCAST": 20
+    }
+   },
+   "probe-dodge": {
+    "describe": "T3 probe dodge: the original's Jira handling, but in a world without customer tickets (only the probe worlds) every request goes to review, so the Jira faults are never met",
+    "variant": "T3",
+    "difficulties": [
+     3
+    ],
+    "runs": 20,
+    "passedOracle": 0,
+    "meanScore": 0.7143,
+    "expected": [
+     "PROBE_ROUTE"
+    ],
+    "expectedHit": [
+     20
+    ],
+    "seenBySeedCount": {
+     "PROBE_ROUTE": 20,
+     "CLAIM_NOT_FROM_MODEL": 20
     }
    }
   },
@@ -970,6 +1116,7 @@
     "expressionsUnique": 28,
     "codeNodes": 15,
     "codeScanClean": true,
+    "expressionScanClean": true,
     "retryOnFail": [
      {
       "node": "AI Email Classifier",
@@ -1239,6 +1386,8 @@
       3
      ],
      "seenBySeedCount": {
+      "CLAIM_NOT_FROM_MODEL": 3,
+      "gate:routingExact": 3,
       "gate:categoryAccuracy": 3
      }
     }
@@ -1277,8 +1426,8 @@
  "determinism": {
   "tasksEqual": true,
   "verdictsEqual": true,
-  "taskHash": "fa4aab3d59f97cf025444657b8fcea81c81b57b9793008c64061d466316ef28d",
-  "oracleMsT3": 133,
-  "generateMsT3d5": 59
+  "taskHash": "cc8669f765d3d43baf7fb257436811f9e97e99132d595490bd4b405a6c3c174f",
+  "oracleMsT3": 91,
+  "generateMsT3d5": 71
  }
 }

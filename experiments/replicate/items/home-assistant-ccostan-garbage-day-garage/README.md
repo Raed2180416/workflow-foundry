@@ -98,7 +98,7 @@ a correct design that schedules all three announcements up front 267; a once-a-s
 | --- | --- |
 | **original** (the author's YAML on `original-engine.mjs`, documented condition scope) | T2/T1 battery **65/65 pass**, 0 interpreter errors. T3: core 15/15 pass, the four probes fail on 65/65 (the original is the T3 baseline, not a failure) |
 | `makeFaithful` (hand transcription) | T1 65/65, T2 65/65 |
-| `makeImproved` | T3 65/65 (core + probes + cost 184 <= 278) |
+| `makeImproved` | T3 65/65 (core + probes + cost 203 <= 310) |
 | `alternative.mjs` (kv-only state, own ids, own wake ids, message split over value1/value2 with a typographic apostrophe, buttons in the other order, numeric duration, async) | passes T2 and T3 (ordinary + probes + cost) on seeds 0..5 at d1,3,5 (in `item.test.mjs`); it is the evidence that the oracle does not judge construction |
 | `makeFaithful({lastChangedDebounce})` (one wake per opening, debounce from the group's `last_changed`) | passes T2 and T3 on 20 seeds (`item.test.mjs`, "verifier probes"); failed `wed-flap` on 24/120 instances under v0.1.0 |
 | 10 mutants of the original YAML (drop `for`, drop the weekday / door / timer conditions, `mode: single`, delays as absolute offsets, recycling always, 2h = 30m, no logbook, and v0.2.0 `stop-on-failed-check`: what the author's comment says) | all rejected 65/65, each on the scenarios that expose it |
@@ -112,7 +112,7 @@ tolerance edges (+0.9 s passes, +1.1 s fails), freeze hashes, and that the commi
 
 ## Known limits
 
-Read before using a number from this item. The first five are the verification's (2026-10-08); the rest were the builder's and still hold.
+Read before using a number from this item. Bullets 2 to 7 come from the adversarial verification (2026-10-08); the others are the builder's and still hold.
 
 - **Not run on Home Assistant.** The interpreter implements the semantics in `inputs.haSemantics`; nothing was observed on a real instance. The real-HA control
   (`pytest-homeassistant-custom-component`, about 6 h by the SELECTION estimate) is still the only way to turn the semantics below into observations.
@@ -149,9 +149,33 @@ Read before using a number from this item. The first five are the verification's
   The failure responses in `fixtures/recorded-responses.json` are synthetic.
 - The helper scripts and the phone are mocks at the service-call boundary: `script.notify_engine_two_button` is a recorder that shows a push; its internals (templates, icon presets, `input_boolean.text_notifications`) are out of scope. The companion app's event carries only `{action}` here.
 - No latency is modelled (calls take no virtual time), so the real-world drift of a blocking `script.speech_engine` / Alexa announce in the original is not measured. Timezone and DST are not modelled (naive local clock).
-- Script-solvable by construction (see above). Task size is small (T2 inputs about 15 KB, prompt about 2 KB), below the contract's 6-15K-token aim for level 3.
+- Script-solvable by construction (see above). Task size is small (T2 task about 18 KB, prompt about 2 KB), below the contract's 6-15K-token aim for level 3.
 - The T3 cost cap is calibrated on the original running on this protocol (in-memory interpreter). Whether "no more expensive than the original" is the right bar for a Foundry design is the owner's call.
 - `experiments/lib/beds.mjs` loads only `beds/<id>/index.mjs`; this item needs a loader shim (SELECTION 6.2). Interactive arms in `b0-agent.mjs` would step the env with `{call, args}` actions; `output` is `{actions: [...]}` as `outputSchema` says.
+
+## Verification (2026-10-08, v0.2.0)
+
+Adversarial pass by a second agent (not the builder). The builder's 35 tests passed on v0.1.0 (53 s). Probes were written independently of `controls/reference.mjs`
+(scratch: `/var/tmp/foundry-work/replicate/garbage-verify/attacks.mjs`, not part of the item) and run on dev+test seeds 0..19 at d1, 3, 5 (120 instances per variant):
+
+| probe | kind | v0.1.0 (T2) | v0.2.0 (T2 / T3) |
+| --- | --- | --- | --- |
+| naive debounce ("open 20 s after opening") | wrong | **passes 96/120** | fails 120/120 (`wed-flap`) |
+| start gate from the handler's own snooze memory | wrong | **passes 120/120** | fails 120/120 (`wed-external-snooze`) |
+| stop-for-good after a failed check (the v0.1.0 reading) | wrong under the docs | passes (was the reference) | fails 120/120 (`wed-stop-then-reopen`) |
+| skip the round after a failed check (documented HA) | correct | **fails 120/120** | passes 120/120 |
+| push buttons in the other order | correct | **fails 120/120** | passes |
+| typographic apostrophe in the message | correct | **fails 120/120** | passes |
+| debounce from `last_changed`, one wake per opening | correct | **fails** (`wed-flap` 24/120, plus the semantics) | passes (T3 cost max 275 <= 310) |
+| all three announcement wakes scheduled up front | correct | passes (T3 262 <= 278) | passes (T3 cost max 267 <= 310) |
+| cancel the timer, then start it | equivalent effect | fails | fails (kept: an extra effect; see Known limits) |
+
+Also checked, no defect found: hard-coding is not possible from the task (scenario ids, start times, fault windows and expected traces are absent from every
+variant; the T2 worked examples are a different data set and agree with the original); a failed call (status >= 400) has no effect in the mock; a solver cannot
+unschedule world items or timer expiries (`sched.cancel` touches only its own wake ids); the mocks use no wall clock or `Math.random` and nothing in the item
+touches the network or spawns processes; the MIT YAML and its LICENSE are byte-identical to the corpus (sha256 above); the shared-service env adapter keeps
+snapshots server-side. Verdict: **usable with limits** (development/diagnostic replication-fidelity item; not a judgement item; not sealed; the original is
+judged under documented, not observed, Home Assistant semantics and without the helper scripts' latency).
 
 ## Reusing the mock (the four other Home Assistant items)
 
@@ -178,4 +202,4 @@ Provenance of the committed original: URL and pinned revision in `item.json` (gi
   (`PROBLEM snooze-ignored-by-sequence 0 65 {"sun-snooze2h":46,"wed-external-snooze":65,"wed-snooze30-then-expiry":53}`; fixed by keeping the door open through those checks); a first T3 cost metric counted kv operations and rejected a correct stateless design (412 > cap 278), so kv is no longer counted;
   five of my own test expectations were wrong (`8 !== 9`, `true !== false`, a factory passed where a thunk was expected, `no error recorded` for a condition key the interpreter does not validate, a poller whose episode exceeds the schema size cap).
 - The working tree is shared: `git status` lists many modified files from other workers under `beds/`, `experiments/kev-data/` and sibling `experiments/replicate/items/*`; none were touched. Git state was not changed.
-- Corpus tools: the corpus Home Assistant forum dump has nothing on the condition/restart semantics (the one text match, `forum/559732.yaml`, is a Frigate notification thread), so the key assumption above stays unverified.
+- Corpus tools: the corpus Home Assistant forum dump has nothing on the condition/restart semantics (the one text match, `forum/559732.yaml`, is a Frigate notification thread), so the key assumption above stays unverified. (The verification later found it answered, the other way, in the corpus's Home Assistant documentation clone; see Known limits.)

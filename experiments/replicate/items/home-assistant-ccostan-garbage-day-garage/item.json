@@ -3,10 +3,10 @@
   "id": "home-assistant:CCOSTAN/Home-AssistantConfig/config/automation/Speech/garbage_day_garage.yaml#0",
   "safeId": "home-assistant-ccostan-garbage-day-garage",
   "title": "Garage Garbage Day Reminders",
-  "harnessVersion": "0.1.0",
+  "harnessVersion": "0.2.0",
   "builtOn": "2026-10-08",
   "pilotSlot": "P4",
-  "status": "development/diagnostic harness; no sealed evaluation set; not yet run by any solver arm",
+  "status": "development/diagnostic harness; no sealed evaluation set; not yet run by any solver arm; adversarially verified 2026-10-08 (v0.2.0): usable with limits (see README Known limits)",
   "source": {
     "platform": "home-assistant",
     "url": "https://github.com/CCOSTAN/Home-AssistantConfig/blob/71ffa6120b8b649508c3ffe312f6d09792c7b37b/config/automation/Speech/garbage_day_garage.yaml",
@@ -27,10 +27,10 @@
   },
   "scenarios": { "core": 15, "coreIds": "see scenarios.mjs CORE_IDS", "probes": 4, "probeIds": "see scenarios.mjs PROBE_IDS" },
   "controls": {
-    "original": "the author's YAML executed on controls/original-engine.mjs (an interpreter for the YAML subset it uses), NOT on Home Assistant core (not installed)",
+    "original": "the author's YAML executed on controls/original-engine.mjs (an interpreter for the YAML subset it uses, documented Home Assistant condition scope since v0.2.0), NOT on Home Assistant core (not installed)",
     "references": "controls/reference.mjs makeFaithful (T1/T2) and makeImproved (T3)",
     "independentSolution": "controls/alternative.mjs (kv-based, own ids, async)",
-    "broken": "controls/broken.mjs (25 controls + 2 T3-only), controls/original.mjs MUTANTS (9 mutants of the YAML)",
+    "broken": "controls/broken.mjs (27 controls + 2 T3-only), controls/original.mjs MUTANTS (10 mutants of the YAML)",
     "report": "controls/report.json"
   },
   "frozen": "fixtures/frozen.json (scenario battery hashes for 24 instances, T3 cost cap)"
