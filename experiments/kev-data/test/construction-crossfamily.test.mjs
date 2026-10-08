@@ -15,9 +15,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadSpec } from '../lib/contracts.mjs';
 import { questionOf } from '../lib/render.mjs';
-import { skeleton, skeletonBucket, stateHash, worldHash } from '../lib/hash.mjs';
-import { SpanRegistry, WordingGuard } from '../lib/leakage.mjs';
-import { measureRecords, quantile } from '../lib/tokens.mjs';
+import { sentences as sentencesOf, skeleton, skeletonBucket, stateHash, worldHash } from '../lib/hash.mjs';
+import { SpanRegistry, WordingGuard, stringLeaves } from '../lib/leakage.mjs';
+import { measureRecords, quantile, kevBatch } from '../lib/tokens.mjs';
 import { capRatio, counts, checkPositionUniform, positionHistogram } from '../lib/balance.mjs';
 import { trainProbe, evaluate } from '../lib/probe.mjs';
 import { buildKev, checkRecord, sliceDef, seedsFor, verifyBuildDir, SLICE_IDS } from '../build.mjs';
@@ -337,6 +337,32 @@ test('unit: stub beds: negated framings, wordings, skeleton buckets and options:
   assert.ok(checkPositionUniform(pos, { tolerance: 0.05, minPerK: 1000 }).ok, JSON.stringify(pos));
 });
 
+test('unit: stub beds: the no-task sentences and carriers of a slice are in its skeleton bucket; the registered authored surfaces of an OOD slice appear in no other slice', async t => {
+  const BUCKET = { train: 'train', 'calib-in': 'train', 'dev-select': 'train', 'test-in': 'train', 'calib-ood': 'calib-ood', 'dev-ood': 'dev-ood', 'test-ood': 'test-ood' };
+  const bare = text => sentencesOf(text).map(x => x.replace(/^- [A-Za-z_]+: /, '')).filter(x => !/^(Task statement:|Inputs:)$/.test(x));
+  const registry = new SpanRegistry(), n = {};
+  for (const slice of ALL_SLICES) {
+    const recs = x5(await STUB_RECS(slice));
+    for (const r of recs) {
+      if (r.meta.bedtype.stateBed === null) for (const sent of bare(r.state.source_text)) assert.equal(skeletonBucket(skeleton(sent)), r.meta.axis === 'family' || r.meta.axis === 'paraphrase' ? 'train' : BUCKET[slice], `${slice}/${r.meta.axis}: ${sent}`);
+      if (r.meta.bedtype.carrier) assert.equal(skeletonBucket(skeleton(r.meta.bedtype.carrier.text)), BUCKET[slice]);
+    }
+    n[slice] = BT.registerOod(registry, recs, slice);
+  }
+  assert.ok(n['calib-ood'] > 20 && n['dev-ood'] > 20 && n['test-ood'] > 100, JSON.stringify(n));
+  // no state of train, calib-in, dev-select or test-in, and no state of another OOD slice, contains a registered sentence
+  let scanned = 0;
+  for (const slice of ALL_SLICES) for (const r of await STUB_RECS(slice)) {
+    scanned++;
+    const hits = registry.scanState(r.state, { names: r.meta.masks.names, markers: r.meta.masks.markers, slice });
+    assert.deepEqual(hits.map(h => h.sentence), [], `${slice}: ${JSON.stringify(hits[0]?.entry)}`);
+  }
+  // the scan is not vacuous: a sentence of the test-ood paragraphs placed in a train state is found
+  const planted = x5(await STUB_RECS('test-ood')).find(r => r.meta.bedtype.stateBed === null);
+  assert.ok(registry.scanState({ source_text: bare(planted.state.source_text)[0] }, { slice: 'train' }).length > 0);
+  t.diagnostic(`registered ${JSON.stringify(n)}; ${scanned} stub states scanned`);
+});
+
 test('unit: a record with a reserved world (dev seed 101) fails the build\'s record checks in train; a held-out family fails outside test-ood', async () => {
   const r = structuredClone(x5(await STUB_RECS('train'))[0]);
   r.meta.seed = 101; r.meta.worldHash = worldHash({ prompt: 'x', inputs: {} });
@@ -504,17 +530,18 @@ test('real beds: kinetics and runbook descriptions, README paragraphs and prompt
   const test = await REAL_RECS('test-ood', { ports: ['X5'] }), held = test.filter(r => r.meta.heldOut.length);
   assert.ok(held.length > 0 && test.filter(r => r.meta.axis === 'family').every(r => r.meta.heldOut.length > 0));
   const registry = new SpanRegistry();
-  const n = BT.registerHeldoutBeds(registry, facts) + gen.registerHeldout(registry, test);
+  let n = BT.registerHeldoutBeds(registry, facts) + gen.registerHeldout(registry, test);
+  for (const sl of OOD) n += BT.registerOod(registry, await REAL_RECS(sl, { ports: ['X5'] }), sl);
   assert.ok(n >= 100 && registry.size >= 50, `${n} spans registered (${registry.size} entries)`);
   // no state of train, calib-in, dev-select, test-in, calib-ood or dev-ood contains a registered span (the registry scan every build runs)
   let states = 0, hits = 0;
-  for (const slice of NON_TEST_OOD) for (const r of await REAL_RECS(slice)) {
+  for (const slice of ALL_SLICES) for (const r of await REAL_RECS(slice)) {
     states++;
     const found = registry.scanState(r.state, { names: r.meta.masks.names, markers: r.meta.masks.markers, slice });
     hits += found.length;
     assert.deepEqual(found.map(h => h.sentence), [], `${slice}: ${JSON.stringify(found[0])}`);
   }
-  t.diagnostic(`${n} held-out spans registered; ${states} states of 6 slices scanned: ${hits} hits; ${held.length} of ${test.length} test-ood records bear the held-out family`);
+  t.diagnostic(`${n} held-out and authored OOD spans registered; ${states} states of all 7 slices scanned (each slice against the entries that leak into it): ${hits} hits; ${held.length} of ${test.length} test-ood records bear the held-out family`);
   // the same registry flags a planted span in a train record, through the build's own check
   const plant = structuredClone(x5(await REAL_RECS('train'))[0]);
   const heldRec = held.find(r => r.meta.bedtype.stateBed && HELD.includes(r.meta.bedtype.stateBed));
@@ -694,6 +721,21 @@ test('determinism: two runs give the same records in every slice (generation tim
   t.diagnostic(`generation ${JSON.stringify(times)}`);
 });
 
+test('decidability: masked-state collisions: rows with the same masked state and the same question never carry two labels (< 1% of groups)', async t => {
+  const rep = {};
+  for (const slice of ALL_SLICES) {
+    const groups = new Map();
+    for (const r of await REAL_RECS(slice)) for (const [qid, q] of Object.entries(r.questions)) {
+      const key = `${qid.split('~')[0]}|${skeleton(stringLeaves(r.state).map(x => x.text).join('\n'))}|${questionOf(q.instructions).replace(/\s+/g, ' ')}`;
+      (groups.get(key) ?? groups.set(key, new Set()).get(key)).add(q.label);
+    }
+    const multi = [...groups.values()].filter(v => v.size > 1).length;
+    rep[slice] = `${multi}/${groups.size}`;
+    assert.ok(multi / groups.size < 0.01, `${slice}: ${multi} of ${groups.size} groups carry two labels`);
+  }
+  t.diagnostic(`masked-state groups with more than one label: ${JSON.stringify(rep)}`);
+});
+
 test('shortcut battery: a state-only or an assumption-only predictor cannot tell holds from violated (paired rows); a state-only predictor does recognise not_stated; the bag-of-words reads the overlap', async t => {
   const train = rowsOf(x5(await REAL_RECS('train', { ports: ['X5'] }))), out = {};
   const view = { state: x => x.r.state.source_text, assumption: x => questionOf(x.q.instructions), both: x => `${x.r.state.source_text}\n${questionOf(x.q.instructions)}` };
@@ -742,6 +784,7 @@ const BUILD_REPO = once(() => {
 const buildCfg = (slices, opts = {}) => async () => {
   const registry = new SpanRegistry();
   BT.registerHeldoutBeds(registry, await BT.loadBedFacts(BEDS()));
+  for (const sl of OOD) BT.registerOod(registry, await REAL_RECS(sl, { ports: ['X5'] }), sl);
   return { root: BUILD_REPO(), outRoot: H.tempDir('kev-cx-build-'), generators: [GEN_FILE], slices, seeds: {}, opts: { wordings: { X5: STUB_WORDINGS }, ...opts }, wordings: GUARD(), registry };
 };
 
@@ -761,6 +804,16 @@ test('build: this generator builds a verified Kev dataset from a frozen bed copy
     assert.ok(meta.every(x => (x.seed ?? 401) >= 401 && x.reserved === false), slice);
     assert.equal(/"src":"kevdata_/.test(readFileSync(path.join(build.dir, 'kev', `${slice}.jsonl`), 'utf8')), true);
     if (slice !== 'test-ood') assert.ok(meta.every(x => !(x.heldOut?.length)), `${slice}: held-out family outside test-ood`);
+  }
+  // every written line loads through Kev's own loader, materialises and fits at the job's maxState
+  const loaded = kevBatch(ALL_SLICES.map(sl => ({ op: 'load_file', path: path.join(build.dir, 'kev', `${sl}.jsonl`), maxState: m.jobMaxState })));
+  loaded.forEach((x, i) => { assert.equal(x.records, m.slices[ALL_SLICES[i]].records); assert.ok(x.results.every(r => r.ok !== false && r.fits), `${ALL_SLICES[i]}: a line does not fit`); });
+  // the held-out family's descriptions, README paragraphs and prompt openings are in no written file but test-ood
+  const facts = await BT.loadBedFacts(BEDS()), texts = BT.heldoutTexts(facts).map(x => x.text);
+  for (const slice of NON_TEST_OOD) {
+    const body = readFileSync(path.join(build.dir, 'kev', `${slice}.jsonl`), 'utf8');
+    for (const t of texts) assert.ok(!body.includes(t.replace(/"/g, '\\"')), `${slice}: a held-out text`);
+    for (const b of HELD) assert.ok(!SB.OPENINGS[b].test(body.replace(/\\n/g, '\n')), `${slice}: a ${b} prompt opening`);
   }
   assert.equal(Object.keys(m.slices['test-ood'].perPort).join(), 'X5');
   assert.equal(Object.keys(m.slices.train.perPort).sort().join(), 'C1,C2,C7,C8,C9,X5');
@@ -786,7 +839,7 @@ test('seeded defect: this file runs alone with node --test and fails on seeded d
     { name: 'a permutation round has a fixed point', mutations: [{ file: 'ports/crossfamily-bedtype.mjs', from: "['ownerci', 'gridquest'], ['gridquest', 'records']]),", to: "['ownerci', 'gridquest'], ['gridquest', 'gridquest']])," }] },
     { name: 'the kit puts the assumption in the state', mutations: [{ file: 'judges/bedtype.mjs', from: "return stateOf(task, { window: slots.window ?? 'standard', reference: slots.reference ?? null }); },", to: "return { ...stateOf(task, { window: slots.window ?? 'standard', reference: slots.reference ?? null }), assumption: slots.assumption }; }," }] },
     { name: 'test-ood reads the train skeleton bucket', mutations: [{ file: 'ports/crossfamily-pools.mjs', from: "'test-ood': 'test-ood', 'real-reserve'", to: "'test-ood': 'train', 'real-reserve'" }] },
-    { name: 'the cross-type tag is never set', mutations: [{ file: 'ports/crossfamily-bedtype.mjs', from: "const crossType = c.label === 'violated' && !c.negated", to: "const crossType = false && c.label === 'violated' && !c.negated" }] },
+    { name: 'the cross-type tag is never set', mutations: [{ file: 'ports/crossfamily-bedtype.mjs', from: "const crossType = label === 'violated' && !c.negated", to: "const crossType = false && label === 'violated' && !c.negated" }] },
     { name: 'a high-risk phrase no longer implies a hand-off', mutations: [{ file: 'ports/crossfamily-c1.mjs', from: "export const IMPLIES = Object.freeze({ 'high-risk-not-model-owned': ['human-gate'],", to: "export const IMPLIES = Object.freeze({ 'high-risk-not-model-owned': []," }] },
     { name: 'the C7 rules stop reading encoded paths', mutations: [{ file: 'solve/construction.mjs', from: "const decoded = decodeTokens(text);", to: "const decoded = [];" }] },
     { name: 'a reserved world is no longer reserved', mutations: [{ file: 'lib/registry.mjs', from: 'seeds: [1, 400]', to: 'seeds: [1, 100]' }] },

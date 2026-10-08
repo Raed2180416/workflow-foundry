@@ -99,7 +99,7 @@ export function buildManifest(model, outDir = HELDOUT_DIR, { spec = loadSpec() }
     twoModelFilter: { models: FILTER_MODEL_IDS, run: Object.values(model.surface).flat().some(u => u.filter), admitted: statusCounts(model.surface).admitted,
       state: statusCounts(model.surface).admitted ? 'partially-run' : 'not-run: deferred to the hosted-arms group (filter.mjs is the harness); every selected line is pending-filter',
       rejectLog: 'reject-log.jsonl' },
-    copyFilter: copy ? { threshold: copy.threshold, bedCorpus: copy.bedCorpus, trainPools: copy.trainPools, checked: copy.checked, maxJaccard: copy.maxJaccard, failing: copy.failing?.length ?? 0, sha256: sha(canonical(copy)) } : { state: 'not run' },
+    copyFilter: copy ? { threshold: copy.threshold, skeletonRule: copy.skeletonRule ?? null, bedCorpus: copy.bedCorpus, trainPools: copy.trainPools, checked: copy.checked, maxJaccard: copy.maxJaccard, failing: copy.failing?.length ?? 0, sha256: sha(canonical(copy)) } : { state: 'not run' },
     topUp: topup ? { rounds: topup.rounds } : { rounds: [] },
     namedRegisters: NAMED_REGISTERS,
     isolation: 'Written from spec/ports.json and JUDGE-PROGRAM.md only. No file under beds/, no frozen copy and no training pool was read by the author; copy-filter.mjs reads them and reports ids and counts.',

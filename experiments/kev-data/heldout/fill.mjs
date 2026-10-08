@@ -26,7 +26,9 @@ export function slotsFor(unit, { cities = [], salt = '', order: orderOverride = 
   const slots = { S, S2: pick(others, `${key}:S2`), token: pick(NEUTRAL_TOKENS, `${key}:t`), w0, w1, field: pick(UPDATE_FIELDS, `${key}:f`) };
   const order = orderOverride ?? (unit.label === 'dmy' || unit.label === 'mdy' ? unit.label : (unit.tagMap?.V === 'dmy' || unit.tagMap?.V === 'mdy' ? unit.tagMap.V : null));
   if (placeholdersOf(unit.text ?? '').some(p => p === 'city' || p === 'country')) {
-    const pool = cities.filter(c => c.order === order);
+    // cities of the unit's own slice first (cities.json slices the held-out list by name hash), then any
+    const ordered = cities.filter(c => c.order === order), own = ordered.filter(c => c.slice && c.slice === unit.slice);
+    const pool = own.length ? own : ordered;
     if (pool.length) { const c = pick(pool, `${key}:c`); slots.city = c.city; slots.country = COUNTRIES[c.cc]; }
   }
   return slots;

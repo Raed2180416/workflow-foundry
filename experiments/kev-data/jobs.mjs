@@ -1,38 +1,46 @@
 // Bridge job writer, file router, J0 analysis and laptop-time budget (JUDGE-PROGRAM.md §4.1, §7.4, §7.5;
 // JUDGE-BUILD-PLAN.json group served-scorer-jobs). Nothing in this module submits a job on import, and the
-// only code path that talks to the laptop bridge is runPlan() with an explicit client (CLI: `submit
-// --confirm-submit`). bridge/ is imported read-only and lazily, only to validate specs (validateStages).
+// only code path that talks to the laptop bridge is runPlan() with an explicit client and `confirm: true` (CLI:
+// `submit --confirm-submit`). bridge/ is imported read-only and lazily, only to validate specs (validateStages)
+// and to connect (the CLI). Served reads are experiments/kev-data/score-served.mjs.
 //
 // A PLAN is an ordered list of STAGES. Bridge-job stages carry exactly the POST /jobs body the daemon will
 // validate (kind + params); the others are the steps around them:
 //   kev.train | kev.benchmark | kev.serve   a bridge job (params as bridge/laptop/jobs.mjs KINDS)
 //   serve.stop                               cancel the running kev.serve of stage `serve`, wait until it is gone
-//   score                                    experiments/kev-data/score-served.mjs against that service
-//   observe                                  a fact only the laptop agent can give (`free -m`): the runner
-//                                            asks for it in a file, it does not guess
+//   score                                    score-served.mjs against that service (all questions of a record in one
+//                                            request; role 'latency' = concurrency 1, every request twice: fresh and cached)
+//   permute                                  POST /v1/systemone/permute on n items (§6.4 item 4)
+//   observe                                  a fact only the laptop agent can give (`free -m`): the runner asks for it
+//                                            in a file, it does not guess
 // `{{stage-id}}` inside a run reference ("runs/{{J2-5000-s1}}") is replaced by the job id that stage got.
 //
 //   J0   throughput (§7.4): J0a three training jobs at about 300 / 2K / 8K real tokens, J0b shared_prefix A/B
 //        (the plan's cut line), J0k kernel-path probe, J0c served throughput at concurrency 1 and 4
-//   J1   stock reads      J2 curve points      J3 reads of a J2 run      J4 grid      J5 final read
-// The router sends a file to kev.benchmark only when every record fits Kev's training context; every other
-// file goes through the served scorer. The sequence check refuses a plan that starts a second kev.serve or
-// queues a GPU job while a service runs (8 GB card; one served model at a time).
+//   J1   stock reads      J2 curve points (nestedPrefixes)      J3 reads of a J2 run      J4 grid      J5 final read
+//   the writers:  j0Stages, j1Stages, j2Stage, j2FinalStage, j3Stages, j4Stage, j5Stages, curveStages/finalStages (from a build
+//                 directory: buildInfo, readUnits, batteryUnits), assemblePlan
+//   the router:   routeFile / routeFiles / routeFromResults: a file goes to kev.benchmark only if every record fits Kev's training
+//                 context (kev.model.fits at state 384 / branch 1,024 / packed 2,048); every other file goes to the served scorer
+//   checks:       checkSequence (never a second kev.serve, never a GPU job queued while a service runs, one served model at a
+//                 time), validateStages (bridge validateParams + buildCommand + the real Kev argparse), checkTrainJob,
+//                 checkBenchmarkReport
+//   analysis:     analyzeJ0 (seconds per record and per forward token, tokens/s, peak RSS and device bytes, free -m, free disk,
+//                 kernel path, served throughput, J0b verdict) -> buildSchedule / renderScheduleTable (the §7.4 table, the priority
+//                 order, the reduced plan below 1,500 tokens/s), BudgetTracker, reconcileJ2 (after J2 at 5K)
 //
-// Assumptions recorded where they are made; the ones that resolve program ambiguities are listed in the
-// header of test/served-scorer-jobs.test.mjs and in the final report of the group.
+// Assumptions recorded where they are made; the ones that resolve program ambiguities are listed in the header of
+// test/served-scorer-jobs.test.mjs and in the final report of the group.
 import { spawnSync } from 'node:child_process';
-import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, statSync, writeFileSync, appendFileSync, realpathSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { FoundryError } from '../../src/data.mjs';
 import { canonical, sha256 } from './lib/hash.mjs';
-import { HF_HOME, KEV, PYTHON, TOKENIZER, checkKevPin, countTokens, jobMaxState, measureRecords, validateKevFile } from './lib/tokens.mjs';
+import { HF_HOME, KEV, PYTHON, TOKENIZER, checkKevPin, kevBatch, measureRecords, validateKevFile } from './lib/tokens.mjs';
 
 const fail = (code, message, details) => new FoundryError(code, message, details);
 const round = (x, d = 3) => (Number.isFinite(x) ? Math.round(x * 10 ** d) / 10 ** d : null);
-const here = path.dirname(new URL(import.meta.url).pathname);
-export const REPO_ROOT = path.resolve(here, '..', '..');
 
 // ---- pins and the recipe (§7.1, §7.2) ------------------------------------------------------------------------------
 
@@ -42,6 +50,12 @@ export const PINS = Object.freeze({
   initFrom: 'jaredpalmer/kev-0.8b@v1.0',
   replaySuite: 'evals/v7/decision-v7', replaySuiteRepo: 'jaredpalmer/kev-suites@cc4bac803e73112689ec327ffa481c519cbc7a05'
 });
+// Kev records `suite_sha256` = sha256 of the suite's manifest.json (kev.suite.digest) in training_config.json; the expected value is
+// the manifest of the pinned checkout, so a laptop checkout with another suite is caught (acceptance: "checks its hash").
+export function suiteSha256(kevRoot = KEV.root, suite = PINS.replaySuite) {
+  const file = path.join(kevRoot, suite, 'manifest.json');
+  return existsSync(file) ? sha256(readFileSync(file)) : null;
+}
 // lora_targets all, head_dim 256, p_none 0.1, p_none_distract 0.12 and p_distract 0.15 are Kev's own defaults
 // at the pinned commit (kev/train.py); head_dim, p_none* and p_distract are not bridge parameters.
 export const RECIPE = Object.freeze({ epochs: 1, lr: 2e-5, batch: 1, accum: 8, dtype: 'bf16', checkpointing: 1, lora: 16, replay: 2000, pNonePair: 0.25, seed: 1, loraTargets: 'all', longRowBudget: 16384 });
@@ -221,11 +235,22 @@ export function routeFromResults(results, { file = null } = {}) {
       : `${over.length} of ${results.length} records exceed the training context (largest state ${Math.max(...states)} tokens): kev.benchmark would reject them, so the file is scored through kev.serve`
   };
 }
+const needFile = file => { if (!existsSync(file)) throw fail('ROUTE_INVALID', `${file} does not exist`); };
 export function routeFile(file, { measure = validateKevFile } = {}) {
+  needFile(file);
   let loaded;
   try { loaded = measure(file, { maxState: TRAINING_CONTEXT.maxState }); }
   catch (error) { throw fail('ROUTE_INVALID', `${file} does not load as a Kev file: ${String(error.message).replace(/^KEV_PYTHON: /, '').slice(0, 300)}`); }
   return { file, ...routeFromResults(loaded.results, { file }), sha256: sha256(readFileSync(file)) };
+}
+// Many files, one Python process (Kev's import costs seconds): [{file, route, ...}] in the order given.
+export function routeFiles(files, { batch = kevBatch } = {}) {
+  if (!files.length) return [];
+  files.forEach(needFile);
+  let loaded;
+  try { loaded = batch(files.map(file => ({ op: 'load_file', path: file, maxState: TRAINING_CONTEXT.maxState }))); }
+  catch (error) { throw fail('ROUTE_INVALID', `a file does not load as a Kev file: ${String(error.message).replace(/^KEV_PYTHON: /, '').slice(0, 300)}`); }
+  return files.map((file, i) => ({ file, ...routeFromResults(loaded[i].results, { file }), sha256: sha256(readFileSync(file)) }));
 }
 export function routeRecords(records, { measure = measureRecords } = {}) {
   return routeFromResults(measure(records, { maxState: TRAINING_CONTEXT.maxState }));
@@ -283,28 +308,32 @@ export function j0Stages({ data = unbuiltJ0Data(), port = 8008, concurrency = [1
 }
 
 // One read of a set of files by one model: benchmark-routed files first (no service running), then one
-// kev.serve for all served files, then stop. `reads`: [{id, file, sha256, bytes?, route?}] with the route
-// already decided (routeFile) or decided here with `router`.
+// kev.serve for all served files, then stop. `reads`: [{id, file, sha256, bytes?, route?, role?}] with the route
+// already decided (routeFile) or decided here with `router`. A unit with role 'latency' (the LAT gate, §6.5: fresh and
+// cached p50/p90 at concurrency 1) or 'permute' (§6.4 item 4: /permute flip rate on 200 items) needs the service,
+// whatever its size, and is never routed to kev.benchmark.
 export function readStages({ tag, run, reads, router = routeFile, port = 8008, concurrency = 4, expectRun = run, budgetStep = null }) {
   const stages = [], bench = [], served = [];
   for (const r of reads) {
-    const route = r.route ?? router(r.file);
+    const route = r.role ? { route: 'served', reason: `a ${r.role} read needs the service` } : (r.route ?? router(r.file));
     (route.route === 'benchmark' ? bench : served).push({ ...r, routeInfo: route });
   }
   const pathFor = r => ({ local: r.file, remote: remoteName(r.sha256 ?? sha256(readFileSync(r.file)), r.id), sha256: r.sha256 ?? null, bytes: r.bytes ?? null });
+  const job = tag.split('-')[0];
   for (const r of bench) {
     const f = pathFor(r);
-    stages.push({ id: `${tag}-bench-${r.id}`, job: tag.split('-')[0], kind: 'kev.benchmark', params: { run, data: f.remote, rotations: 1 }, files: [f], needs: [], fetch: ['report.json', 'rows.json'],
+    stages.push({ id: `${tag}-bench-${r.id}`, job, kind: 'kev.benchmark', params: { run, data: f.remote, rotations: 1 }, files: [f], needs: [], fetch: ['report.json', 'rows.json'],
       accept: { kind: 'benchmark' }, budgetStep, read: { id: r.id, route: 'benchmark', reason: r.routeInfo.reason } });
   }
   if (served.length) {
     const serveId = `${tag}-serve`;
-    stages.push({ id: serveId, job: tag.split('-')[0], kind: 'kev.serve', params: { run, port }, needs: [] });
+    stages.push({ id: serveId, job, kind: 'kev.serve', params: { run, port }, needs: [] });
     for (const r of served) {
-      stages.push({ id: `${tag}-score-${r.id}`, job: tag.split('-')[0], kind: 'score', serve: serveId, data: r.file, dataSha256: r.sha256 ?? null, rows: `rows/${tag}/${r.id}.jsonl`,
-        concurrency: r.role === 'latency' ? 1 : concurrency, expectRun, reread: r.reread ?? 0, needs: [serveId], budgetStep, read: { id: r.id, route: 'served', reason: r.routeInfo.reason } });
+      const common = { id: `${tag}-${r.role ?? 'score'}-${r.id}`, job, serve: serveId, data: r.file, dataSha256: r.sha256 ?? null, expectRun, needs: [serveId], budgetStep, read: { id: r.id, route: 'served', role: r.role ?? null, reason: r.routeInfo.reason } };
+      if (r.role === 'permute') stages.push({ ...common, kind: 'permute', out: `rows/${tag}/${r.id}.permute.json`, n: r.n ?? 200, nPerm: r.nPerm ?? 6 });
+      else stages.push({ ...common, kind: 'score', rows: `rows/${tag}/${r.id}.jsonl`, concurrency: r.role === 'latency' ? 1 : concurrency, repeat: r.role === 'latency' ? 2 : 1, reread: r.reread ?? 0 });
     }
-    stages.push({ id: `${tag}-stop`, job: tag.split('-')[0], kind: 'serve.stop', serve: serveId, needs: [serveId] });
+    stages.push({ id: `${tag}-stop`, job, kind: 'serve.stop', serve: serveId, needs: [serveId] });
   }
   return stages;
 }
@@ -329,7 +358,7 @@ export function trainStage({ id, job = 'J2', train, maxState, seed = RECIPE.seed
   const replay = params.extra.replay;
   return { id, job, kind: 'kev.train', params, files: [{ local: train.file, remote: params.dataset, sha256: train.sha256 ?? null, bytes: train.bytes ?? null }], needs, budgetStep: id,
     fetch: ['training_metrics.json', 'training_config.json'],
-    accept: { kind: 'train', fileRecords: train.records, replay, rows: train.rows ?? null, datasetSha256: train.sha256 ?? null, epochs: params.epochs, initFrom: params.initFrom, baseRevision: PINS.baseRevision, maxState },
+    accept: { kind: 'train', fileRecords: train.records, replay, rows: train.rows ?? null, datasetSha256: train.sha256 ?? null, parentSha256: train.parentSha256 ?? null, epochs: params.epochs, initFrom: params.initFrom, baseRevision: PINS.baseRevision, maxState },
     plan: { rows: train.rows ?? train.records, replay, epochs: params.epochs } };
 }
 export const j2Stage = ({ point, seed = RECIPE.seed, train, maxState, longStates = false }) => trainStage({ id: `J2-${POINT_ROWS[point] ?? point}-s${seed}`, job: 'J2', train, maxState, seed, longStates });
@@ -337,6 +366,12 @@ export const j4Stage = ({ config, train, maxState, longStates = false }) => {
   const g = GRID[config];
   if (!g) throw fail('PLAN_GRID', `unknown grid config ${config}; known: ${Object.keys(GRID).join(', ')}`);
   return trainStage({ id: `J4-${g.label}`, job: 'J4', train, maxState, seed: RECIPE.seed, change: g.change, longStates });
+};
+
+// The final retrain at the N the curve selects, with the winning grid config's change (null = base): the step the budget calls J2-final.
+export const j2FinalStage = ({ train, maxState, config = null, longStates = false, seed = RECIPE.seed }) => {
+  if (config !== null && !GRID[config]) throw fail('PLAN_GRID', `unknown grid config ${config}; known: ${Object.keys(GRID).join(', ')}`);
+  return trainStage({ id: 'J2-final', job: 'J2', train, maxState, seed, change: config ? GRID[config].change : {}, longStates });
 };
 
 // Nested curve files (§4.4: each larger set contains the smaller one in the same seed order). The train file is
@@ -355,10 +390,81 @@ export function nestedPrefixes(trainFile, { points = CURVE_POINTS, outDir, names
     let k = 0; while (k < lines.length && cum[k] <= target) k++;
     const body = k ? lines.slice(0, k).join('\n') + '\n' : '', rows = k ? cum[k - 1] : 0, file = path.join(outDir, names(target));
     writeFileSync(file, body);
-    out.push({ point, targetRows: target, rows, records: k, exact: rows === target, shortfall: acc < target, file, sha256: sha256(body), bytes: Buffer.byteLength(body) });
+    out.push({ point, targetRows: target, rows, records: k, exact: rows === target, shortfall: acc < target, file, sha256: sha256(body), bytes: Buffer.byteLength(body), parentSha256: sha256(text) });
   }
   for (let i = 1; i < out.length; i++) if (!readFileSync(out[i].file, 'utf8').startsWith(readFileSync(out[i - 1].file, 'utf8'))) throw fail('PLAN_NESTED', `${out[i].point} does not contain ${out[i - 1].point} as a prefix`);
   return out;
+}
+
+// ---- from a build directory (build.mjs) and from Kev's own suites ---------------------------------------------------------
+// The build manifest names every slice file and its digest; a file whose bytes differ from the manifest is refused (the dataset
+// sha256 that reaches the laptop is the build's). Files are hashed here, never opened as records (test slices stay unread).
+export function buildInfo(buildDir) {
+  const manifestFile = path.join(buildDir, 'manifest.json');
+  let manifest;
+  try { manifest = JSON.parse(readFileSync(manifestFile, 'utf8')); } catch (error) { throw fail('PLAN_BUILD', `cannot read ${manifestFile}: ${error.code ?? error.message}`); }
+  if (manifest.schema !== 'kev-data/build@1') throw fail('PLAN_BUILD', `${manifestFile} is not a kev-data build manifest`);
+  if (!Number.isInteger(manifest.jobMaxState)) throw fail('PLAN_BUILD_UNMEASURED', 'the build was made without real-token measurement (no jobMaxState); a training job needs the build\'s p99.9');
+  const slices = {};
+  for (const [slice, def] of Object.entries(manifest.slices ?? {})) {
+    const file = path.join(buildDir, def.files.kev.path), body = readFileSync(file), digest = sha256(body);
+    if (`sha256:${digest}` !== def.files.kev.sha256) throw fail('PLAN_BUILD_DIGEST', `${def.files.kev.path}: sha256 ${digest} differs from the manifest's ${def.files.kev.sha256}`);
+    slices[slice] = { id: slice, file, sha256: digest, bytes: body.length, records: def.records, questions: def.questions };
+  }
+  const tokenMax = Math.max(0, ...Object.values(manifest.slices?.train?.perPort ?? {}).map(p => p.stateTokens?.max ?? 0));
+  return { buildId: manifest.buildId, manifest, slices, jobMaxState: manifest.jobMaxState, longStates: tokenMax > 2048, maxStateTokens: tokenMax, dir: buildDir };
+}
+export function readUnits(info, ids) {
+  return ids.map(id => { const s = info.slices[id]; if (!s) throw fail('PLAN_BUILD', `the build has no ${id} slice`); return { id, file: s.file, sha256: s.sha256, bytes: s.bytes, records: s.records }; });
+}
+// The forgetting battery's files (§3.6, §6.4): Kev's own development partitions, read from the checkout at the pinned
+// commit. test.jsonl is "one read, ever": refused here by name.
+export const BATTERY_FILES = Object.freeze([
+  { id: 'battery-decision-v7', file: 'evals/v7/decision-v7/development.jsonl', note: 'reported, flagged in-distribution (replay draws from decision-v7 train)' },
+  { id: 'battery-transfer-v4', file: 'evals/v4/transfer-v4/development.jsonl', note: 'mandatory, never replayed' },
+  { id: 'battery-hard-v1', file: 'evals/hard-v1/development.jsonl', note: 'mandatory, never replayed' }
+]);
+export function batteryUnits({ kevRoot = KEV.root, files = BATTERY_FILES } = {}) {
+  return files.map(f => {
+    if (/(^|[\\/])test\.jsonl$/.test(f.file)) throw fail('PLAN_BATTERY_TEST', `${f.file}: Kev's test partitions are never read ("one read, ever")`);
+    const file = path.join(kevRoot, f.file), body = readFileSync(file);
+    return { id: f.id, file, sha256: sha256(body), bytes: body.length, records: body.toString('utf8').split('\n').filter(Boolean).length, note: f.note };
+  });
+}
+// The curve and the grid as stages (J2 with its J3 reads, seed 2 at 5K and 20K, J4), from a build and its nested files.
+// dev-select is read at 5K, 20K and 40K only (§4.3); every point also reads the battery.
+// sha256 -> route for the units that carry none. The default router batches (one Python process); a test double is called per file.
+function preRoute(units, router) {
+  const todo = [...new Map(units.filter(u => !u.route).map(u => [u.sha256, u])).values()];
+  const routes = router === routeFile ? routeFiles(todo.map(u => u.file)) : todo.map(u => router(u.file));
+  return new Map(todo.map((u, i) => [u.sha256, routes[i]]));
+}
+export function curveStages({ info, nested, battery = [], router = routeFile, seeds = { '5K': [1, 2], '20K': [1, 2], '2.5K': [1], '10K': [1] }, grid = true }) {
+  const routes = preRoute([...readUnits(info, ['calib-ood', 'dev-select', 'dev-ood']), ...battery], router);      // each file is routed once, however many models read it
+  const routed = u => ({ ...u, route: u.route ?? routes.get(u.sha256) });
+  const reads = rows => [...readUnits(info, ['calib-ood', ...(rows === 5000 || rows === 20000 || rows === 40000 ? ['dev-select'] : []), 'dev-ood']), ...battery].map(routed);
+  const stages = [], by = Object.fromEntries(nested.map(n => [n.point, n]));
+  for (const point of CURVE_POINTS) {
+    const n = by[point];
+    if (!n) throw fail('PLAN_BUILD', `no nested file for the ${point} point`);
+    if (n.parentSha256 !== info.slices.train.sha256) throw fail('PLAN_NESTED_PARENT', `the ${point} file was cut from a train file that is not the build's (sha256 ${n.parentSha256})`);
+    for (const seed of seeds[point] ?? [1]) {
+      const stage = j2Stage({ point, seed, train: { file: n.file, sha256: n.sha256, bytes: n.bytes, records: n.records, rows: n.rows, parentSha256: n.parentSha256 }, maxState: info.jobMaxState, longStates: info.longStates });
+      stages.push(stage, ...j3Stages({ of: stage.id, reads: reads(n.targetRows), router }));
+    }
+  }
+  if (grid) for (const config of Object.keys(GRID)) {
+    const n = by['5K'], stage = j4Stage({ config, train: { file: n.file, sha256: n.sha256, bytes: n.bytes, records: n.records, rows: n.rows, parentSha256: n.parentSha256 }, maxState: info.jobMaxState, longStates: info.longStates });
+    stages.push(stage, ...j3Stages({ of: stage.id, reads: reads(5000), router }));
+  }
+  return stages;
+}
+// J5: test-in, test-OOD and calib-in, the permutation read and the latency read, stock then candidate.
+export function finalStages({ info, candidate, permuteFile, latencyFile, router = routeFile, ...opts }) {
+  const units = readUnits(info, ['test-in', 'test-ood', 'calib-in']), routes = preRoute(units, router);
+  const reads = units.map(u => ({ ...u, route: routes.get(u.sha256) }));
+  const extra = [permuteFile && { ...permuteFile, id: 'permute', role: 'permute' }, latencyFile && { ...latencyFile, id: 'latency', role: 'latency' }].filter(Boolean);
+  return j5Stages({ reads: [...reads, ...extra], candidate, router, ...opts });
 }
 
 // ---- the sequence check: one service at a time, nothing queued behind it -------------------------------------------
@@ -389,7 +495,8 @@ export function checkSequence(stages, { allowBenchmarkDuringService = false } = 
         else service = null;
         break;
       case 'score':
-        if (!service || service.id !== s.serve) errors.push(`${where}: scores against ${s.serve}, which is not the running service`);
+      case 'permute':
+        if (!service || service.id !== s.serve) errors.push(`${where}: reads ${s.serve}, which is not the running service`);
         else if (s.expectRun !== service.run) errors.push(`${where}: expects ${s.expectRun} but the service runs ${service.run} (one served model at a time)`);
         break;
       case 'kev.train':
@@ -641,10 +748,24 @@ async function defaultScorer({ stage, dir, client, jobIds }) {
   const { records, sha256: digest } = loadKevRecords(path.resolve(dir, stage.data));
   if (stage.dataSha256 && String(stage.dataSha256).replace(/^sha256:/, '') !== digest) throw fail('RUNNER_DATASET_SHA', `${stage.data}: sha256 ${digest} differs from the plan's ${stage.dataSha256}`);
   return scoreServed({ records, served, url, fetchImpl: client.bridgeFetch, rowsFile: path.join(dir, 'results', stage.rows), concurrency: stage.concurrency, expectRun: resolveRefs(stage.expectRun, jobIds),
-    reread: stage.reread ?? 0, inputFile: path.basename(stage.data), inputSha256: digest });
+    reread: stage.reread ?? 0, repeat: stage.repeat ?? 1, inputFile: path.basename(stage.data), inputSha256: digest });
+}
+// POST /v1/systemone/permute on n items of a file (§6.4 item 4); writes the flip rate to results/<stage.out>
+async function defaultPermuter({ stage, dir, client, jobIds }) {
+  const { loadKevRecords, permuteRead, describeServed, servedClient, runMatches } = await import('./score-served.mjs');
+  const url = `${client.endpoint}/svc/kev`, served = servedClient({ url, fetchImpl: client.bridgeFetch });
+  const identity = await describeServed(served), expect = resolveRefs(stage.expectRun, jobIds);
+  if (!runMatches(identity.run, expect)) throw fail('SERVED_MODEL_MISMATCH', `the service runs ${identity.run}, expected ${expect}`);
+  const { records, sha256: digest } = loadKevRecords(path.resolve(dir, stage.data));
+  const result = await permuteRead({ records, url, fetchImpl: client.bridgeFetch, n: stage.n, nPerm: stage.nPerm });
+  const after = await describeServed(served);
+  if (after.run !== identity.run) throw fail('SERVED_MODEL_CHANGED', `the service changed from ${identity.run} to ${after.run} during the permutation read`);
+  const out = { schema: 'kev-data/served-permute@1', input: { file: path.basename(stage.data), sha256: digest }, served: { identity }, ...result };
+  writeJson(path.join(dir, 'results', stage.out), out);
+  return out;
 }
 
-export async function runPlan(plan, { client, dir, confirm = false, log = () => {}, scorer = defaultScorer, waitOpts = {}, only = null, tracker = null, continueOnReject = false } = {}) {
+export async function runPlan(plan, { client, dir, confirm = false, log = () => {}, scorer = defaultScorer, permuter = defaultPermuter, waitOpts = {}, only = null, tracker = null, continueOnReject = false, suiteSha256: expectedSuite = suiteSha256() } = {}) {
   if (confirm !== true) throw fail('RUN_NOT_CONFIRMED', 'runPlan submits jobs to the laptop; pass confirm: true (the owner decides when a plan runs)');
   if (!client || typeof client.submitJob !== 'function') throw fail('RUN_CLIENT', 'runPlan needs a BridgeClient');
   checkSequence(plan.stages);
@@ -679,6 +800,12 @@ export async function runPlan(plan, { client, dir, confirm = false, log = () => 
       if (!report.valid) { mark('invalid', { verdict }); throw fail('RUN_SCORE_INVALID', `${stage.id}: the served read is invalid (${JSON.stringify(report.coverage)})`, { verdict }); }
       mark('done', { endedAt: new Date().toISOString(), verdict });
       tracker?.record(stage.budgetStep, (report.timing?.wall_seconds ?? 0) / 3600);
+      continue;
+    }
+
+    if (stage.kind === 'permute') {
+      const result = await permuter({ stage, plan, dir, client, jobIds, serveJobId: serveJobs[stage.serve] });
+      mark('done', { endedAt: new Date().toISOString(), verdict: { items: result.items, flip_rate: result.flip_rate } });
       continue;
     }
 
@@ -726,7 +853,7 @@ export async function runPlan(plan, { client, dir, confirm = false, log = () => 
     let acceptance = { ok: true, errors: [] };
     if (stage.accept?.kind === 'train') {
       const read = n => (fetched[n] ? JSON.parse(readFileSync(fetched[n], 'utf8')) : null);
-      acceptance = checkTrainJob({ log: text, config: read('training_config.json'), metrics: read('training_metrics.json'), job: end, expect: { ...stage.accept, jobId: id, uploadedSha256: uploadedShas[0], manifestSha256: stage.accept.datasetSha256 } });
+      acceptance = checkTrainJob({ log: text, config: read('training_config.json'), metrics: read('training_metrics.json'), job: end, expect: { ...stage.accept, jobId: id, uploadedSha256: uploadedShas[0], manifestSha256: stage.accept.datasetSha256, ...(stage.params.extra?.suite && expectedSuite ? { suiteSha256: expectedSuite } : {}) } });
     } else if (stage.accept?.kind === 'benchmark') {
       acceptance = checkBenchmarkReport(JSON.parse(readFileSync(fetched['report.json'], 'utf8')));
     }
@@ -906,6 +1033,16 @@ export function analyzeJ0(obs, { budgetHours = BUDGET.hours } = {}) {
     j0b: j0bVerdict({ A: obs.j0b?.A, B: obs.j0b?.B }), schedule, schedule_table: scheduleTable
   };
 }
+// J0 "with and without fla" (§7.4, if the owner installs it, O3): two J0 reports compared per class. The kernel paths must differ, or
+// the comparison says so instead of reporting a speed-up of nothing.
+export function compareJ0Kernels(without, withFla) {
+  const classes = Object.keys(without.jobs).filter(k => withFla.jobs[k]);
+  const per = Object.fromEntries(classes.map(k => [k, { tokens_per_second: { without: without.jobs[k].tokens_per_second, with: withFla.jobs[k].tokens_per_second },
+    speedup: round(withFla.jobs[k].tokens_per_second / without.jobs[k].tokens_per_second, 3), peak_device_bytes: { without: without.jobs[k].peak_device_bytes, with: withFla.jobs[k].peak_device_bytes } }]));
+  const differ = without.kernel_path.fast !== null && withFla.kernel_path.fast !== null && without.kernel_path.fast !== withFla.kernel_path.fast;
+  return { comparable: differ, reason: differ ? null : 'the two reports have the same (or an unknown) kernel path', without: { fast: without.kernel_path.fast, fallback: without.kernel_path.fallback_warnings }, with: { fast: withFla.kernel_path.fast, flash_linear_attention: withFla.kernel_path.flash_linear_attention }, per_class: per };
+}
+
 // Reads what the runner fetched into <dir> (results/<stage>/..., observations/..., results/rows/*.report.json).
 export function loadJ0Observations(dir) {
   const read = f => (existsSync(f) ? readFileSync(f, 'utf8') : null), json = f => { const t = read(f); return t === null ? null : JSON.parse(t); };
@@ -1042,6 +1179,8 @@ export function reconcileJ2({ model, point = '5K', rows = POINT_ROWS[point], rep
 // ---- CLI ---------------------------------------------------------------------------------------------------------------
 //   data --out <dir> [--only 0300,2k]       build the J0 throughput files (pinned tokenizer, one Python process per pass)
 //   plan-j0 --data <dir> --out <plan.json>  write the J0 plan (validated: sequence only)
+//   plan-curve --build <dir> --out <plan.json> [--no-battery]   J1 + the curve, seed 2 and the grid from a build (nested files next to the plan)
+//   plan-final --build <dir> --candidate runs/<jobId> --out <plan.json> [--permute f] [--latency f]   J5
 //   validate [--plan <plan.json>]           bridge validateParams + buildCommand + the real Kev argparse on every bridge-job stage
 //   route <file...>                         kev.benchmark or served, per file
 //   report-j0 <run dir>                     the J0 report and the regenerated schedule
@@ -1066,6 +1205,21 @@ async function cli(argv) {
       const plan = assemblePlan(j0Stages({ data: manifest }), { id: 'J0' });
       if (o.out) writeJson(String(o.out), plan);
       out({ planId: plan.planId, stages: plan.stages.map(s => `${s.id} (${s.kind})`) }); return 0;
+    }
+    case 'plan-curve': {
+      if (!o.build || !o.out) throw fail('USAGE', '--build <build dir> and --out <plan.json> are required');
+      const info = buildInfo(path.resolve(String(o.build))), outDir = path.dirname(path.resolve(String(o.out)));
+      const nested = nestedPrefixes(info.slices.train.file, { outDir: path.join(outDir, 'nested') });
+      const battery = o['no-battery'] ? [] : batteryUnits();
+      const plan = assemblePlan([...j1Stages({ reads: [...readUnits(info, ['calib-ood', 'dev-select', 'dev-ood']), ...battery] }), ...curveStages({ info, nested, battery })], { id: `curve-${info.buildId}` });
+      writeJson(String(o.out), plan);
+      out({ planId: plan.planId, stages: plan.stages.length, nested: nested.map(n => ({ point: n.point, rows: n.rows, exact: n.exact, shortfall: n.shortfall })) }); return 0;
+    }
+    case 'plan-final': {
+      if (!o.build || !o.out || !o.candidate) throw fail('USAGE', '--build, --candidate runs/<jobId> and --out are required');
+      const info = buildInfo(path.resolve(String(o.build)));
+      const plan = assemblePlan(finalStages({ info, candidate: String(o.candidate), permuteFile: o.permute ? { file: String(o.permute) } : undefined, latencyFile: o.latency ? { file: String(o.latency) } : undefined }), { id: `final-${info.buildId}` });
+      writeJson(String(o.out), plan); out({ planId: plan.planId, stages: plan.stages.length }); return 0;
     }
     case 'validate': {
       const stages = o.plan ? JSON.parse(readFileSync(String(o.plan), 'utf8')).stages : j0Stages();

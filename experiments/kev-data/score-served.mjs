@@ -26,7 +26,10 @@
 // compareReads, floorAndRenormalize, servedClient, bridgeServedClient, readRows. CLI:
 //   node experiments/kev-data/score-served.mjs --data <kev.jsonl> --out <rows.jsonl> \
 //        (--url http://127.0.0.1:8008 | --bridge) [--concurrency 1] [--expect-run <run>] [--reread 20] \
-//        [--limit N] [--resume] [--timeout-ms 120000]
+//        [--limit N] [--resume] [--timeout-ms 120000] [--repeat 2]
+//   node experiments/kev-data/score-served.mjs --data <kev.jsonl> --out <permute.json> --permute 200 (--url ... | --bridge)
+// --repeat 2 sends every request twice in a row (the second is answered from kev.serve's prefix cache): fresh and cached latency (§6.5).
+// --permute N runs POST /v1/systemone/permute on N items and writes the flip rate (§6.4 item 4) instead of scoring.
 // --url is the kev.serve base (for a local service); --bridge connects through bridge/cloud/client.mjs
 // (FOUNDRY_BRIDGE_URL or discovery) and signs every request. Exit 0 = valid run, 3 = invalid, 2 = usage.
 import { appendFileSync, existsSync, mkdirSync, readFileSync, renameSync, truncateSync, writeFileSync } from 'node:fs';
@@ -189,7 +192,7 @@ export async function describeServed(served, { signal } = {}) {
   const { raw } = await served.describe({ signal });
   return identityOf(raw);
 }
-const runMatches = (run, expect) => expect === undefined || expect === null || (expect instanceof RegExp ? expect.test(run) : run === expect || run.endsWith(`/${expect}`));
+export const runMatches = (run, expect) => expect === undefined || expect === null || (expect instanceof RegExp ? expect.test(run) : run === expect || run.endsWith(`/${expect}`));
 
 // ---- clients ---------------------------------------------------------------------------------------------------------
 
@@ -215,6 +218,32 @@ export async function rawRead({ url, fetchImpl = globalThis.fetch, request, mode
   const text = await res.text();
   if (res.status !== 200) throw fail('SERVED_RAW', `POST /v1/systemone returned ${res.status}: ${text.slice(0, 200)}`, { status: res.status });
   try { return JSON.parse(text); } catch { throw fail('SERVED_RAW', 'POST /v1/systemone returned non-JSON'); }
+}
+
+// ---- the permutation read (§6.4 item 4: /permute on 200 items) --------------------------------------------------------
+
+// kev.serve's POST /v1/systemone/permute re-runs one choice question under n_perm option orders (the first is the given
+// order, the rest shuffled from `seed`). The flip rate is the share of items whose argmax is not the same under every
+// order. One question per record, the first choice question, records in the order of a hash of their id; n items.
+export async function permuteRead({ records, url, fetchImpl = globalThis.fetch, n = 200, nPerm = 6, seed = 0, model = SERVED_MODEL, timeoutMs = 120_000, signal } = {}) {
+  const pick = records.map(r => ({ r, qid: Object.keys(r.questions).find(q => r.questions[q].type === 'choice' && Object.keys(r.questions[q].criteria).length >= 2) })).filter(x => x.qid)
+    .sort((a, b) => (sha256(a.r._meta.id) < sha256(b.r._meta.id) ? -1 : 1)).slice(0, n);
+  if (!pick.length) throw fail('SERVED_INPUT', 'the permutation read needs choice questions with at least two options');
+  const items = [];
+  for (const { r, qid } of pick) {
+    const request = requestOf(r), timeout = AbortSignal.timeout(timeoutMs);
+    const res = await fetchImpl(`${url.replace(/\/+$/, '')}/v1/systemone/permute`, { method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ request: { state: request.state, model, questions: { [qid]: request.questions[qid] } }, question: qid, n_perm: nPerm, seed }), signal: signal ? AbortSignal.any([signal, timeout]) : timeout });
+    const text = await res.text();
+    if (res.status !== 200) throw fail('SERVED_RAW', `POST /v1/systemone/permute returned ${res.status}: ${text.slice(0, 200)}`, { status: res.status });
+    const body = JSON.parse(text);
+    if (!Array.isArray(body.runs) || body.runs.length !== nPerm || typeof body.argmax_stable !== 'boolean') throw fail('SERVED_ANSWER', 'the permute answer is not {runs[n_perm], argmax_stable, spread}');
+    if (body.truncated === true) throw fail('SERVED_ANSWER', 'the permute answer is truncated');
+    const spread = Math.max(...Object.values(body.spread ?? {}).map(Number));
+    items.push({ id: r._meta.id, question: qid, stable: body.argmax_stable, max_spread: round(spread, 4) });
+  }
+  const flips = items.filter(x => !x.stable).length;
+  return { items: items.length, n_perm: nPerm, seed, flips, flip_rate: round(flips / items.length, 4), mean_max_spread: round(items.reduce((a, x) => a + x.max_spread, 0) / items.length, 4), max_spread: round(Math.max(...items.map(x => x.max_spread)), 4), per_item: items };
 }
 
 // ---- comparing two reads of the same requests ------------------------------------------------------------------
@@ -265,7 +294,7 @@ async function mapOrdered(items, concurrency, work, commit) {
 
 const RETRYABLE = new Set(['MODEL_UNAVAILABLE', 'MODEL_TIMEOUT', 'MODEL_QUOTA']);
 const quantile = (xs, q) => { if (!xs.length) return null; const s = [...xs].sort((a, b) => a - b); return s[Math.min(s.length - 1, Math.max(0, Math.ceil(q * s.length) - 1))]; };
-const stats = xs => (xs.length ? { median: round(quantile(xs, 0.5)), p95: round(quantile(xs, 0.95)), mean: round(xs.reduce((a, b) => a + b, 0) / xs.length), max: round(Math.max(...xs)) } : null);
+const stats = xs => (xs.length ? { median: round(quantile(xs, 0.5)), p90: round(quantile(xs, 0.9)), p95: round(quantile(xs, 0.95)), mean: round(xs.reduce((a, b) => a + b, 0) / xs.length), max: round(Math.max(...xs)) } : null);
 
 // Reads rows already written (resume): a record is done when all its questions have a row. A torn last line is cut.
 export function readRows(file, { repair = false } = {}) {
@@ -285,7 +314,7 @@ export function readRows(file, { repair = false } = {}) {
 
 export async function scoreServed({
   records, served, rowsFile = null, fetchImpl = globalThis.fetch, url = null, concurrency = 1, expectRun = null, reread = 0, resume = false,
-  retry = {}, signal = null, onProgress = null, pingRounds = 3, maxConsecutiveFailures = 8, inputFile = null, inputSha256 = null, model = SERVED_MODEL, timeoutMs = 120_000
+  retry = {}, signal = null, onProgress = null, pingRounds = 3, maxConsecutiveFailures = 8, inputFile = null, inputSha256 = null, model = SERVED_MODEL, timeoutMs = 120_000, repeat = 1
 } = {}) {
   if (!Array.isArray(records) || !records.length) throw fail('SERVED_INPUT', 'scoreServed needs records');
   if (!served) throw fail('SERVED_INPUT', 'scoreServed needs a SystemOneClient (servedClient or bridgeServedClient)');
@@ -316,7 +345,7 @@ export async function scoreServed({
   const todo = records.filter(r => !doneIds.has(r._meta.id));
   const coverage = { requested_records: records.length, requested_questions: questionCount, evaluated_records: doneIds.size,
     evaluated_questions: [...doneIds].reduce((n, id) => n + rowsByRecord.get(id).length, 0), rejected_records: 0, failed_records: 0, truncated_records: 0 };
-  const rejected = [], failed = [], truncated = [], samples = [], inputTokens = [];
+  const rejected = [], failed = [], truncated = [], samples = [], inputTokens = [], cachedSamples = [];
   const allRows = [...doneIds].flatMap(id => rowsByRecord.get(id));
   let consecutiveFailures = 0;
 
@@ -326,7 +355,11 @@ export async function scoreServed({
       const t = performance.now();
       try {
         const body = await served.ask({ state: request.state, questions: request.questions, signal });
-        return { body, rq, wallMs: performance.now() - t };
+        const wallMs = performance.now() - t;
+        // repeat 2 (the latency gate, §6.5): the same request again straight away, which the server answers from its state-prefix cache
+        let cached = null;
+        if (repeat > 1) { const t2 = performance.now(), again = await served.ask({ state: request.state, questions: request.questions, signal }); cached = { wallMs: performance.now() - t2, serverMs: typeof again.latency_ms === 'number' ? again.latency_ms : null }; }
+        return { body, rq, wallMs, cached };
       } catch (error) {
         if (signal?.aborted || error.code === 'CANCELLED') throw error;
         if (error.code === 'MODEL_AUTH') throw error;                                       // a refused credential ends the run
@@ -337,25 +370,33 @@ export async function scoreServed({
     }
   };
 
+  const tScore = performance.now();
   await mapOrdered(todo, concurrency, async record => ({ record, ...(await ask(record)) }), async result => {
-    const { record, body, rq, wallMs } = result, id = record._meta.id;
+    const { record, body, rq, wallMs, cached } = result, id = record._meta.id;
     if (result.rejected) { coverage.rejected_records++; rejected.push({ id, error: result.rejected }); return; }
     if (result.failed) {
       coverage.failed_records++; failed.push({ id, ...result.failed });
       if (++consecutiveFailures >= maxConsecutiveFailures) throw fail('SERVED_UNAVAILABLE', `${consecutiveFailures} records in a row failed (last: ${result.failed.code}); the service is not answering`);
       return;
     }
-    consecutiveFailures = 0;
     if (body.truncated === true) { coverage.truncated_records++; truncated.push({ id, state_tokens: body.usage?.state_tokens ?? null, used: body.usage?.state_tokens_used ?? null }); return; }
-    const rows = rowsOf(record, body, { rq, latency_ms: body.latency_ms ?? null, wall_ms: round(wallMs, 1), input_tokens: body.usage?.input_tokens ?? null, path: 'served', run: identity.run });
+    let rows;
+    try { rows = rowsOf(record, body, { rq, latency_ms: body.latency_ms ?? null, wall_ms: round(wallMs, 1), input_tokens: body.usage?.input_tokens ?? null, path: 'served', run: identity.run }); }
+    catch (error) {                          // an answer that is not a valid distribution is a failed record, counted and listed
+      coverage.failed_records++; failed.push({ id, code: error.code ?? 'SERVED_ANSWER', message: String(error.message).slice(0, 300) });
+      if (++consecutiveFailures >= maxConsecutiveFailures) throw fail('SERVED_UNAVAILABLE', `${consecutiveFailures} records in a row failed (last: ${error.code}); the service is not answering sensibly`);
+      return;
+    }
+    consecutiveFailures = 0;
     if (rowsFile) appendFileSync(rowsFile, rows.map(r => JSON.stringify(r)).join('\n') + '\n');
     allRows.push(...rows);
     coverage.evaluated_records++; coverage.evaluated_questions += rows.length;
     samples.push({ wall: wallMs, server: typeof body.latency_ms === 'number' ? body.latency_ms : null });
+    if (cached) cachedSamples.push(cached);
     if (typeof body.usage?.input_tokens === 'number') inputTokens.push(body.usage.input_tokens);
     if (onProgress) onProgress({ done: coverage.evaluated_records + coverage.rejected_records + coverage.failed_records + coverage.truncated_records, total: records.length });
   });
-  const scoringSeconds = (performance.now() - t0) / 1000;
+  const scoringSeconds = (performance.now() - tScore) / 1000;      // the scoring phase only: not the identity reads, the pings or the re-read
 
   // the raw API re-read: records in a fixed order (hash of id), through a plain fetch, compared to the rows just written
   let rereadReport = null;
@@ -382,7 +423,7 @@ export async function scoreServed({
     input: { file: inputFile, sha256: inputSha256, records: records.length, questions: questionCount },
     rows: { file: rowsFile, sha256: rowsSha, n: allRows.length },
     served: { endpoint: url ? new URL(url).origin : null, requested_model: model, identity, identity_after: after, same_model: sameModel, expected_run: expectRun === null ? null : String(expectRun) },
-    concurrency, retry: { max: maxRetries, base_ms: baseMs }, coverage,
+    concurrency, repeat, retry: { max: maxRetries, base_ms: baseMs }, coverage,
     rejected, failed, truncated,
     reread: rereadReport,
     timing: {
@@ -391,7 +432,8 @@ export async function scoreServed({
       requests_per_second: samples.length ? round(samples.length / scoringSeconds, 3) : null,
       wall_ms: stats(samples.map(x => x.wall)), server_latency_ms: stats(samples.filter(x => x.server !== null).map(x => x.server)),
       overhead_ms: stats(samples.filter(x => x.server !== null && x.wall >= x.server).map(x => x.wall - x.server)),
-      rtt_ms: stats(rtts), input_tokens_per_request: stats(inputTokens)
+      rtt_ms: stats(rtts), input_tokens_per_request: stats(inputTokens),
+      ...(cachedSamples.length ? { cached_wall_ms: stats(cachedSamples.map(x => x.wallMs)), cached_server_latency_ms: stats(cachedSamples.filter(x => x.serverMs !== null).map(x => x.serverMs)) } : {})
     },
     valid: coverage.rejected_records === 0 && coverage.failed_records === 0 && coverage.truncated_records === 0 && coverage.evaluated_records === coverage.requested_records && sameModel
       && (!rereadReport || rereadReport.agree)
@@ -406,7 +448,7 @@ function writeJsonAtomic(file, value) { const tmp = `${file}.tmp`; writeFileSync
 // ---- CLI ---------------------------------------------------------------------------------------------------------
 
 function parseArgs(argv) {
-  const o = { concurrency: 1, reread: 0, resume: false, bridge: false, timeoutMs: 120_000 };
+  const o = { concurrency: 1, reread: 0, repeat: 1, permute: 0, resume: false, bridge: false, timeoutMs: 120_000 };
   const take = (i, name) => { if (i + 1 >= argv.length) throw fail('USAGE', `${name} needs a value`); return argv[i + 1]; };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -416,6 +458,8 @@ function parseArgs(argv) {
     else if (a === '--bridge') o.bridge = true;
     else if (a === '--concurrency') o.concurrency = Number(take(i++, a));
     else if (a === '--reread') o.reread = Number(take(i++, a));
+    else if (a === '--repeat') o.repeat = Number(take(i++, a));
+    else if (a === '--permute') o.permute = Number(take(i++, a));
     else if (a === '--limit') o.limit = Number(take(i++, a));
     else if (a === '--expect-run') o.expectRun = take(i++, a);
     else if (a === '--timeout-ms') o.timeoutMs = Number(take(i++, a));
@@ -424,7 +468,7 @@ function parseArgs(argv) {
   }
   if (!o.data || !o.out) throw fail('USAGE', '--data and --out are required');
   if (!!o.url === o.bridge) throw fail('USAGE', 'give exactly one of --url or --bridge');
-  for (const k of ['concurrency', 'reread', 'timeoutMs']) if (!Number.isInteger(o[k]) || o[k] < 0 || (k !== 'reread' && o[k] < 1)) throw fail('USAGE', `--${k.replace(/[A-Z]/g, c => `-${c.toLowerCase()}`)} must be a positive integer`);
+  for (const k of ['concurrency', 'reread', 'timeoutMs', 'repeat', 'permute']) if (!Number.isInteger(o[k]) || o[k] < 0 || (!['reread', 'permute'].includes(k) && o[k] < 1)) throw fail('USAGE', `--${k.replace(/[A-Z]/g, c => `-${c.toLowerCase()}`)} must be a positive integer`);
   return o;
 }
 
@@ -436,8 +480,17 @@ async function main(argv) {
   let served, url, fetchImpl;
   if (o.bridge) ({ served, url, fetchImpl } = await bridgeServedClient({ timeoutMs: o.timeoutMs }));
   else { url = o.url.replace(/\/+$/, ''); fetchImpl = globalThis.fetch; served = servedClient({ url, fetchImpl, timeoutMs: o.timeoutMs }); }
+  if (o.permute) {
+    const identity = await describeServed(served);
+    if (!runMatches(identity.run, o.expectRun ?? null)) throw fail('SERVED_MODEL_MISMATCH', `the service runs ${identity.run}, expected ${o.expectRun}`);
+    const result = await permuteRead({ records: subset, url, fetchImpl, n: o.permute, timeoutMs: o.timeoutMs });
+    mkdirSync(path.dirname(path.resolve(o.out)), { recursive: true });
+    writeJsonAtomic(o.out, { schema: 'kev-data/served-permute@1', input: { file: path.basename(o.data), sha256: inputSha256 }, served: { identity }, ...result });
+    console.log(JSON.stringify({ items: result.items, flips: result.flips, flip_rate: result.flip_rate, mean_max_spread: result.mean_max_spread }, null, 2));
+    return 0;
+  }
   let last = 0;
-  const { report } = await scoreServed({ records: subset, served, url, fetchImpl, rowsFile: o.out, concurrency: o.concurrency, expectRun: o.expectRun ?? null, reread: o.reread, resume: o.resume,
+  const { report } = await scoreServed({ records: subset, served, url, fetchImpl, rowsFile: o.out, concurrency: o.concurrency, expectRun: o.expectRun ?? null, reread: o.reread, repeat: o.repeat, resume: o.resume,
     inputFile: path.basename(o.data), inputSha256, timeoutMs: o.timeoutMs, onProgress: ({ done, total }) => { if (done - last >= 50 || done === total) { last = done; console.error(`scored ${done}/${total}`); } } });
   console.log(JSON.stringify({ valid: report.valid, coverage: report.coverage, timing: { seconds_per_request: report.timing.seconds_per_request }, reread: report.reread, rows: report.rows }, null, 2));
   return report.valid ? 0 : 3;

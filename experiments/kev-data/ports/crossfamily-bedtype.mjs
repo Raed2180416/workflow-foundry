@@ -230,27 +230,31 @@ function insertCarrier(sourceText, carrier, key) {
 // counterfactual, carrier, tag, extra, qkeys }
 function makeRecord(env, c) {
   const contract = env.contract, { slice, opts } = env;
+  // The label is the relation of the two family ids (a state with no task content has no family): relation() decides, and the
+  // cluster's design (c.label: the label the cluster was built to give this record) must agree, or the generator stops.
+  const label = relation(c.aBed, c.st.bed, { negated: c.negated });
+  if (label !== c.label) throw fail('LABEL_CONSTRUCTION', `${c.key}: the family ids give ${label}, the cluster was designed for ${c.label}`);
   const assumption = assumptionOf(c.framing, c.atext.text);
   const ws = wordingsFor(contract, slice, c.key, opts, { paraphrase: c.paraphrase });
   const names = Object.keys(contract.options);
   const questions = {};
   ws.forEach((w, n) => {
     const qid = ws.length > 1 ? questionId('X5', w.id === 'Q0' && n === 0 ? 'Q0' : w.id) : questionId('X5');
-    questions[qid] = labelledQuestion(contract, { label: c.label, wording: w.wording, wordingText: w.wordingText, slots: { assumption }, optionOrder: optionOrder(names, `${c.key}|${qid}`) });
+    questions[qid] = labelledQuestion(contract, { label, wording: w.wording, wordingText: w.wordingText, slots: { assumption }, optionOrder: optionOrder(names, `${c.key}|${qid}`) });
   });
   const st = c.st, state = c.carrierState ?? st.state;
   const heldA = HELD.has(c.aBed), heldS = st.bed !== null && HELD.has(st.bed);
   const famBed = heldA ? c.aBed : heldS ? st.bed : (st.bed ?? c.aBed);
   const own = st.bed === null || st.bed === famBed;
-  const crossType = c.label === 'violated' && !c.negated && st.bed !== null && st.bed !== c.aBed;
+  const crossType = label === 'violated' && !c.negated && st.bed !== null && st.bed !== c.aBed;
   const heldOut = [...(heldA ? [`description:${c.aBed}`] : []), ...(heldS ? [`prompt:${st.bed}`] : [])];
   const meta = {
     family: `bedtype:${famBed}`, bed: famBed, variant: c.variant, labelSource: st.bed === null ? 'composer' : 'generator', needsWorldKnowledge: false,
     wordingId: ws.map(w => w.id).join('+'), formId: skeleton(assumption), surface: { source: st.bed === null ? 'authored-composer' : 'bed+authored-framing', slice, lineHash: spanHash(assumption) },
-    counterfactual: c.counterfactual ?? null, pairId: c.pairId ?? null, masks: st.masks, axis: c.axis, crossType, hard: c.label !== 'not_stated' && st.bed !== null && isHard(c.aBed, st.bed), hardDeclared: st.bed !== null && isDeclaredHard(c.aBed, st.bed),
+    counterfactual: c.counterfactual ?? null, pairId: c.pairId ?? null, masks: st.masks, axis: c.axis, crossType, hard: label !== 'not_stated' && st.bed !== null && isHard(c.aBed, st.bed), hardDeclared: st.bed !== null && isDeclaredHard(c.aBed, st.bed),
     heldOut,
     bedtype: { assumptionBed: c.aBed, assumptionSource: c.atext.source, assumptionText: c.atext.text, framing: c.framing.id, negated: Boolean(c.negated), stateBed: st.bed, stateSeed: st.seed, stateDifficulty: st.difficulty, stateWorldKey: st.worldKey, stateWorldHash: st.worldHash,
-      window: st.window, relation: c.label, heldoutSpans: st.heldSpans, ...(st.bed === null ? { adjacent: Boolean(st.adjacent) } : {}), ...(c.extra ?? {}) },
+      window: st.window, relation: label, heldoutSpans: st.heldSpans, ...(st.bed === null ? { adjacent: Boolean(st.adjacent) } : {}), ...(c.extra ?? {}) },
   };
   if (own) Object.assign(meta, { seed: st.seed, difficulty: st.difficulty, worldHash: st.worldHash });
   else meta.worlds = [st.worldKey];
@@ -326,7 +330,7 @@ function* realizeCluster(env, c, seeds, gi) {
       const dirty = insertCarrier(st.state.source_text, carrier, key);
       const variant0 = kind === 'not_stated' ? 'unknowable' : 'clean';
       yield rec('clean', { aBed, ...a, st, label: kind, variant: variant0, pairId, counterfactual: null });
-      yield rec('inj', { aBed, ...a, st, carrierState: dirty, label: kind, variant: 'injection', pairId, counterfactual: { swapped: false, inserted: 'carrier', urged, path: 'source_text' }, extra: { carrier: { urged, hash: spanHash(carrier) } } });
+      yield rec('inj', { aBed, ...a, st, carrierState: dirty, label: kind, variant: 'injection', pairId, counterfactual: { swapped: false, inserted: 'carrier', urged, path: 'source_text' }, extra: { carrier: { urged, hash: spanHash(carrier), text: carrier } } });
       return;
     }
     case 'notstated': {
@@ -404,6 +408,26 @@ export function heldoutHeadSpans(facts, { seeds = Array.from({ length: 30 }, (_,
 export function registerHeldoutBeds(registry, facts, opts) {
   let n = 0;
   for (const x of heldoutHeadSpans(facts, opts)) { registry.add(x.text, { slice: 'heldout', source: 'crossfamily-bedtype', port: 'X5', kind: x.kind, names: x.masks.names, markers: x.masks.markers }); n++; }
+  return n;
+}
+
+// ---- authored surfaces of the OOD slices, for the span registry ------------------------------------------------------------------
+// The sentences this group authored for an OOD slice (the no-task paragraphs and the injection carriers of a state) must not reach
+// training or another OOD slice (§2.3 rule 7). `slice` is the slice the records were built for; test-ood material is registered as
+// 'heldout' (test-OOD-only), calib-ood and dev-ood under their own names.
+const BARE = /^(?:- [A-Za-z_]+: )/;
+export function oodSpans(record) {
+  const b = record.meta?.bedtype;
+  if (!b) return [];
+  const out = [];
+  if (b.stateBed === null) for (const t of sentences(record.state.source_text)) { const bare = t.replace(BARE, ''); if (!/^(Task statement:|Inputs:)$/.test(bare) && bare.split(/\s+/).length >= 5) out.push({ text: bare, kind: 'authored-paragraph' }); }
+  if (b.carrier?.text) out.push({ text: b.carrier.text, kind: 'authored-carrier' });
+  return out;
+}
+export function registerOod(registry, recs, slice) {
+  if (!['calib-ood', 'dev-ood', 'test-ood'].includes(slice)) return 0;
+  let n = 0;
+  for (const r of recs) for (const x of oodSpans(r)) { registry.add(x.text, { slice: slice === 'test-ood' ? 'heldout' : slice, source: 'crossfamily-bedtype', port: 'X5', kind: x.kind, names: r.meta.masks?.names ?? [], markers: r.meta.masks?.markers ?? [] }); n++; }
   return n;
 }
 export function stats(records) {

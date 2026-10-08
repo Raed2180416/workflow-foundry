@@ -29,22 +29,22 @@
  },
  "authored": {
   "files": 109,
-  "sha256": "6f075ad1e36b429efde3b9d5065e67e3916dae70de2f9685f2df496841484d8c"
+  "sha256": "3deef4b8e4726a049bdb9bafc0cced51a74aea5979d6551352088001c28c1109"
  },
  "files": {
   "cities.json": {
-   "sha256": "6978589a13694a37e6c97ff5a2feacc632bd9ca9f64363fbd3127505473e1cda",
-   "bytes": 17377,
-   "lines": 1121
+   "sha256": "3ded9f2943bc0278dff4e3fe9726b1102f78dd5406a331aa763476d05db5be57",
+   "bytes": 19592,
+   "lines": 1174
   },
   "copy-filter.json": {
-   "sha256": "1b7917b7f61aca3f8c98da9ae375de9773d13fb833c3d72d9bfcf2cbcbb1e271",
-   "bytes": 283,
-   "lines": 16
+   "sha256": "bdd70388ffd16854bfb35a3ecfbe63f35b57dd3518a163c38c08f0e49e42dde1",
+   "bytes": 402,
+   "lines": 22
   },
   "registry.json": {
-   "sha256": "85397ad59a9addd71f4a81fbaf098fd2c247028115154acd442d569dd1e40f86",
-   "bytes": 1114780,
+   "sha256": "69f981a78a74b048bcc5c7dc486be280edacbd8a76843d90aac5db517f999c0e",
+   "bytes": 1143938,
    "lines": 1
   },
   "reject-log.jsonl": {
@@ -78,9 +78,9 @@
    "lines": 20
   },
   "surface/R1.jsonl": {
-   "sha256": "e84bda35b399ec4dfd4401d72b069679a8c1e70ad02e492edff71eea90307c1a",
-   "bytes": 617407,
-   "lines": 948
+   "sha256": "18174982d7bcb8139d61fb0166ed1b2c7f5bb995680c5f91021ef60b2dc30e5d",
+   "bytes": 616759,
+   "lines": 947
   },
   "surface/R2.jsonl": {
    "sha256": "b8025d301c6afca04e35068aa96e1f0ebc0690912dbdd703efc9c9c23232efd1",
@@ -88,8 +88,8 @@
    "lines": 688
   },
   "surface/R3.jsonl": {
-   "sha256": "2c5bf7cf51db10dd5936278451e32ed4f77bc0ef24a3dd9fcd884175c2fb341b",
-   "bytes": 405028,
+   "sha256": "f9ef9abd7c64bddd5327884f3e49632a0f4ca112a58450ede8ae0b129ea30c76",
+   "bytes": 405027,
    "lines": 630
   },
   "surface/R4.jsonl": {
@@ -103,14 +103,14 @@
    "lines": 32
   },
   "surface/S5.jsonl": {
-   "sha256": "10e686fdc14052e095c6c2e8e8f0d8b4396b6afcb15afc05634f6dc5db400401",
-   "bytes": 46025,
-   "lines": 93
+   "sha256": "f1a44d65ae5c7d27e884b6840b97310756311d57be28234db8afbe1cf0480edd",
+   "bytes": 45512,
+   "lines": 92
   },
   "surface/X1.jsonl": {
-   "sha256": "4cf3987d3cdedd60d79cff7ffacd75368795dd57baa6af6d20f0512bfb439bac",
-   "bytes": 395051,
-   "lines": 624
+   "sha256": "8859356b1825b99bbb737426a41cd6f0f931a0dfb6e6e76c629341f4fbf33f03",
+   "bytes": 393879,
+   "lines": 622
   },
   "surface/X3.jsonl": {
    "sha256": "9ed826f95f18758c51422a3d1dd09e938db00b4cd9f80a19952b08e34989cec0",
@@ -118,8 +118,8 @@
    "lines": 35
   },
   "surface/X5.jsonl": {
-   "sha256": "5b24b90b4e6ee18ee621dbf2e46467cbe1314c56a1acc6be849e56e177b07f61",
-   "bytes": 579094,
+   "sha256": "8945a0274872e2b049414fc037a45543602f6a865844bbf8da4828adc3aefc42",
+   "bytes": 578056,
    "lines": 723
   },
   "surface/X8.jsonl": {
@@ -245,7 +245,7 @@
      "classes": {
       "all": 40
      },
-     "proxyHard": 5
+     "proxyHard": 4
     },
     "dev-ood": {
      "authored": 66,
@@ -258,9 +258,9 @@
      "proxyHard": 6
     },
     "test-ood": {
-     "authored": 133,
+     "authored": 132,
      "selected": 100,
-     "reserve": 33,
+     "reserve": 32,
      "shortfall": 0,
      "classes": {
       "all": 100
@@ -412,9 +412,9 @@
      "proxyHard": 1
     },
     "dev-ood": {
-     "authored": 72,
+     "authored": 73,
      "selected": 60,
-     "reserve": 12,
+     "reserve": 13,
      "shortfall": 0,
      "classes": {
       "all": 60
@@ -422,9 +422,9 @@
      "proxyHard": 5
     },
     "test-ood": {
-     "authored": 137,
+     "authored": 136,
      "selected": 100,
-     "reserve": 37,
+     "reserve": 36,
      "shortfall": 0,
      "classes": {
       "all": 100
@@ -540,15 +540,15 @@
   "X1": {
    "yes": {
     "calib-ood": {
-     "authored": 65,
+     "authored": 64,
      "selected": 40,
-     "reserve": 25,
+     "reserve": 24,
      "shortfall": 0,
      "classes": {
       "noaddr": 33,
       "addr": 7
      },
-     "proxyHard": 2
+     "proxyHard": 1
     },
     "dev-ood": {
      "authored": 95,
@@ -562,9 +562,9 @@
      "proxyHard": 7
     },
     "test-ood": {
-     "authored": 140,
+     "authored": 139,
      "selected": 100,
-     "reserve": 40,
+     "reserve": 39,
      "shortfall": 0,
      "classes": {
       "noaddr": 76,
@@ -594,7 +594,7 @@
       "addr": 22,
       "noaddr": 38
      },
-     "proxyHard": 4
+     "proxyHard": 3
     },
     "test-ood": {
      "authored": 167,
@@ -746,14 +746,14 @@
     "calib-ood": {
      "n": 120,
      "declaredHard": 0.25,
-     "probeWrong": 0.408,
+     "probeWrong": 0.4,
      "ruleWrong": 0.525,
-     "probeAndRuleWrong": 0.275
+     "probeAndRuleWrong": 0.267
     },
     "dev-ood": {
      "n": 180,
      "declaredHard": 0.25,
-     "probeWrong": 0.339,
+     "probeWrong": 0.344,
      "ruleWrong": 0.55,
      "probeAndRuleWrong": 0.228
     },
@@ -806,7 +806,7 @@
     "test-ood": {
      "n": 200,
      "declaredHard": 0.21,
-     "probeWrong": 0.36,
+     "probeWrong": 0.365,
      "ruleWrong": 0.335,
      "probeAndRuleWrong": 0.17
     }
@@ -838,16 +838,16 @@
     "calib-ood": {
      "n": 80,
      "declaredHard": 0,
-     "probeWrong": 0.175,
+     "probeWrong": 0.163,
      "ruleWrong": 0.512,
-     "probeAndRuleWrong": 0.1
+     "probeAndRuleWrong": 0.087
     },
     "dev-ood": {
      "n": 120,
      "declaredHard": 0,
      "probeWrong": 0.258,
-     "ruleWrong": 0.333,
-     "probeAndRuleWrong": 0.092
+     "ruleWrong": 0.325,
+     "probeAndRuleWrong": 0.083
     },
     "test-ood": {
      "n": 200,
@@ -860,7 +860,7 @@
   }
  },
  "surfaceUnits": {
-  "R1": 948,
+  "R1": 947,
   "R2": 688,
   "R3": 630,
   "R4": 623,
@@ -868,29 +868,29 @@
   "I2": 32,
   "S2": 32,
   "Q4": 20,
-  "X1": 624,
+  "X1": 622,
   "X3": 35,
   "X5": 723,
   "X8": 237,
   "F1": 48,
-  "S5": 93,
+  "S5": 92,
   "Q2": 112
  },
  "status": {
   "admitted": 0,
-  "pending-filter": 3634,
-  "reserve": 928,
+  "pending-filter": 3633,
+  "reserve": 925,
   "rejected": 0,
   "carrier": 355
  },
  "cities": {
-  "n": 186,
-  "mdy": 76,
-  "dmy": 110
+  "n": 167,
+  "mdy": 71,
+  "dmy": 96
  },
  "registry": {
-  "entries": 6139,
-  "digest": "sha256:6a44ecd4552329e7ccf5ee5f73f6ab36434a9e7beff2422b87f878571ae1585f",
+  "entries": 6302,
+  "digest": "sha256:48efcec6c719ba8887662f83b90466a4fadc06f7d5ed02034cc2a9cd48f45fca",
   "masks": {
    "names": [
     "ATLAS",
@@ -915,19 +915,25 @@
  },
  "copyFilter": {
   "threshold": 0.3,
+  "skeletonRule": {
+   "minWords": 5,
+   "minContentWords": 3,
+   "masks": "lib/leakage.mjs defaultMasks",
+   "hits": 0
+  },
   "bedCorpus": {
-   "files": 171,
-   "strings": 41544
+   "files": 174,
+   "strings": 42137
   },
   "trainPools": {
    "present": true,
    "files": 6,
    "strings": 18152
   },
-  "checked": 6232,
+  "checked": 6227,
   "maxJaccard": 0.3,
   "failing": 0,
-  "sha256": "e13ee63d40c565065cf6cee7e38c8bcf968a7db20e915671986bc93c24f3cd8b"
+  "sha256": "28d9e1b54acb82381c9ef3a0b44c2fa8b6b7fd72afbe467b40967e00614eeb79"
  },
  "topUp": {
   "rounds": []

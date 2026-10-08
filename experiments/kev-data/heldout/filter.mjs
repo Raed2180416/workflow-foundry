@@ -38,17 +38,30 @@ export async function askBoth(providers, models, req) {
 
 // Filter units: each unit passes only if every request it implies passes with both models.
 // Returns {units (with .filter set), rejects}. Units already admitted or rejected are skipped.
+// Polarity pairs (X5 holds/violated, same pairId) are admitted or rejected as one: a pair is admitted
+// only if every member passed; if one member fails, every member is rejected and logged (the member
+// that passed with `pairRejected: <failing ids>`), so a twin is never admitted alone.
 export async function runTwoModelFilter(units, { contracts, providers, cities = [], models = resolveFilterModels(), only = u => u.status === 'pending-filter' } = {}) {
   if (typeof providers?.sonnet !== 'function' || typeof providers?.opus !== 'function') throw new AuthorError('FILTER_PROVIDERS', 'both a sonnet and an opus provider are required (the hosted-arms group supplies them)');
-  const rejects = [];
+  const rejects = [], results = [];
   for (const u of units) {
     if (!only(u)) continue;
     const checked = [];
     for (const req of filterRequests(u, contracts, { cities })) checked.push({ id: req.id, ...(await askBoth(providers, models, req)) });
-    const ok = checked.every(c => c.ok);
     u.filter = { sonnet: checked.map(c => c.sonnet), opus: checked.map(c => c.opus), expect: checked.map(c => c.expect), models };
-    u.status = ok ? 'admitted' : 'rejected';
-    if (!ok) rejects.push({ id: u.id, port: u.port, label: u.label ?? null, role: u.role ?? 'decisive', text: u.text, checked, models });
+    results.push({ u, checked, ok: checked.every(c => c.ok) });
+  }
+  const failedPair = new Map();
+  for (const r of results) if (!r.ok && r.u.pairId) failedPair.set(r.u.pairId, [...(failedPair.get(r.u.pairId) ?? []), r.u.id]);
+  // a pair member already decided earlier (admitted) loses that status when its twin fails now
+  for (const u of units) if (u.pairId && failedPair.has(u.pairId) && u.status === 'admitted' && !results.some(r => r.u === u)) {
+    u.status = 'rejected';
+    rejects.push({ id: u.id, port: u.port, label: u.label ?? null, role: u.role ?? 'decisive', text: u.text, checked: (u.filter?.expect ?? []).map((e, i) => ({ id: u.id, sonnet: u.filter.sonnet[i], opus: u.filter.opus[i], expect: e, ok: true })), models, pairRejected: failedPair.get(u.pairId) });
+  }
+  for (const { u, checked, ok } of results) {
+    const pairFail = !!(u.pairId && failedPair.has(u.pairId));
+    u.status = ok && !pairFail ? 'admitted' : 'rejected';
+    if (u.status === 'rejected') rejects.push({ id: u.id, port: u.port, label: u.label ?? null, role: u.role ?? 'decisive', text: u.text, checked, models, ...(ok ? { pairRejected: failedPair.get(u.pairId) } : {}) });
   }
   return { units, rejects };
 }

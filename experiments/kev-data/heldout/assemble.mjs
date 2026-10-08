@@ -100,10 +100,16 @@ export function selectPool(port, units, errors, stats) {
     for (const slice of OOD_SLICES) {
       const cands = base.filter(u => u.slice === slice);
       if (port === 'X5' && label === 'violated') {
-        // mirror the pair selection: a pair is selected, admitted or rejected as one
+        // mirror the pair selection: a pair is selected as one. A status the two-model filter set
+        // (admitted / rejected; filter.mjs decides a pair as one) is never overwritten here: an unfiltered
+        // twin follows its holds unit's selection, and a filter-rejected holds unit's twin leaves the pool.
         const holds = decisive.filter(u => u.label === 'holds' && u.slice === slice);
         const byPair = new Map(holds.map(u => [u.pairId, u]));
-        for (const u of cands) { const h = byPair.get(u.pairId); if (h && u.status !== 'admitted') u.status = h.status; if (h?.status === 'rejected') u.status = 'rejected'; }
+        for (const u of cands) {
+          const h = byPair.get(u.pairId);
+          if (!h || u.status === 'admitted' || u.status === 'rejected') continue;
+          u.status = h.status === 'admitted' ? 'pending-filter' : h.status === 'rejected' ? 'reserve' : h.status;
+        }
         stats[port][label] ??= {}; stats[port][label][slice] = { authored: cands.length, selected: cands.filter(u => u.status !== 'reserve' && u.status !== 'rejected').length, reserve: cands.filter(u => u.status === 'reserve').length, shortfall: 0, classes: {} };
         continue;
       }
@@ -132,7 +138,9 @@ export function assemble(authoredDir, { spec = loadSpec(), masks = defaultMasks(
     const found = lookup(city);
     if (found.length !== 1 || found[0] !== cc) errors.push(`${where}: ${city} maps to [${found.join(',')}] in the gazetteer, not exactly ${cc}`);
     if (!COUNTRY_ORDER[cc]) errors.push(`${where}: ${cc} has no customary order in the bed's rule (use US or a day-first country)`);
-    cities.push({ city, cc, country: COUNTRIES[cc], order: COUNTRY_ORDER[cc] });
+    // a held-out entity list is sliced like the lines (by the skeleton hash of the name), so a consumer can keep
+    // test-OOD cities out of calib-OOD and dev-OOD items, and each name is registered in one slice (§2.3 rule 7)
+    cities.push({ city, cc, country: COUNTRIES[cc], order: COUNTRY_ORDER[cc], slice: oodSliceOfHash(skeletonOf(city, masks)) });
   }
   if (new Set(cities.map(c => c.city.toLowerCase())).size !== cities.length) errors.push('cities: duplicate city');
 
@@ -152,17 +160,24 @@ export function assemble(authoredDir, { spec = loadSpec(), masks = defaultMasks(
   }
   // X5
   {
+    // The assumption bank is sliced like every authored line: an assumption belongs to the OOD slice of its own
+    // skeleton hash and is only paired with situation lines of that slice, so no assumption phrasing (X5's
+    // gating template axis is "authored assumption and conventions lines", §3.3) is shared across slices.
     const systems = systemsOf('X5'), raw = [], bank = {};
     for (const e of A.x5bank) {
       errors.push(...lintEntry('X5', 'bank', e, { systems }));
-      const t = e.meta.tags; (bank[`${t.K}/${t.V}`] ??= []).push(e.fields[0]);
+      const t = e.meta.tags; ((bank[`${t.K}/${t.V}`] ??= {})[oodSliceOfHash(skeletonOf(e.fields[0], masks))] ??= []).push(e.fields[0]);
     }
-    const fromBank = (K, V, key, where) => { const list = bank[`${K}/${V}`]; if (!list?.length) { errors.push(`${where}: no assumption in the bank for K=${K} V=${V}`); return ''; } return list[parseInt(hash8(key), 16) % list.length]; };
+    const fromBank = (K, V, slice, key, where) => {
+      const list = bank[`${K}/${V}`]?.[slice];
+      if (!list?.length) { errors.push(`${where}: no ${slice} assumption in the bank for K=${K} V=${V} (author one whose skeleton falls in ${slice})`); return ''; }
+      return list[parseInt(hash8(key), 16) % list.length];
+    };
     for (const e of A.x5pairs) {
       errors.push(...lintEntry('X5', 'pair', e, { systems }));
       const t = e.meta.tags, h = hash8(e.fields[0]), where = `${e.file}:${e.lineNo}`;
-      const text = e.fields[0];
-      const a1 = e.fields[1] ?? fromBank(t.K, t.V, `${text}|H`, where), a2 = e.fields[2] ?? fromBank(t.K, t.W, `${text}|V`, where);
+      const text = e.fields[0], slice = oodSliceOfHash(skeletonOf(text, masks));
+      const a1 = e.fields[1] ?? fromBank(t.K, t.V, slice, `${text}|H`, where), a2 = e.fields[2] ?? fromBank(t.K, t.W, slice, `${text}|V`, where);
       for (const [label, assumption, av] of [['holds', a1, t.V], ['violated', a2, t.W]]) {
         const u = makeUnit('X5', label, { ...e, fields: [text] }, { systems, masks });
         Object.assign(u, { id: `X5-${label}-${h}`, role: 'decisive', status: 'reserve', filter: null, pairId: `X5-P-${h}`, assumption, kind: t.K, value: t.V, assumptionValue: av, ns: null });
@@ -171,7 +186,7 @@ export function assemble(authoredDir, { spec = loadSpec(), masks = defaultMasks(
     }
     for (const e of A.x5ns) {
       errors.push(...lintEntry('X5', 'not_stated', e, { systems }));
-      const text = e.fields[0], t = e.meta.tags, ph = placeholdersOf(text), assumption = e.fields[1] ?? fromBank(t.K, t.V, `${text}|N`, `${e.file}:${e.lineNo}`);
+      const text = e.fields[0], t = e.meta.tags, ph = placeholdersOf(text), assumption = e.fields[1] ?? fromBank(t.K, t.V, oodSliceOfHash(skeletonOf(text, masks)), `${text}|N`, `${e.file}:${e.lineNo}`);
       if (t.ns === 'other-system' && !(ph.includes('S2') && ph.includes('S'))) errors.push(`${e.file}:${e.lineNo}: other-system needs {S} (a non-deciding mention) and {S2} (the other system's sentence)`);
       if (t.ns === 'other-convention' && (!ph.includes('S') || !t.about || t.about === t.K || !X5_KINDS[t.about])) errors.push(`${e.file}:${e.lineNo}: other-convention needs {S} and about=<a kind other than K=${t.K}>`);
       if (t.ns === 'absent-system' && (ph.includes('S') || !ph.includes('S2'))) errors.push(`${e.file}:${e.lineNo}: absent-system names {S2} only, never {S}`);
@@ -250,13 +265,14 @@ export function assemble(authoredDir, { spec = loadSpec(), masks = defaultMasks(
 
   for (const port of Object.keys(surface)) surface[port].sort((a, b) => (a.role < b.role ? -1 : a.role > b.role ? 1 : (a.label ?? '') < (b.label ?? '') ? -1 : (a.label ?? '') > (b.label ?? '') ? 1 : byHash(a, b)));
   const registry = buildRegistry({ surface, wordings, cities }, masks);
+  errors.push(...registrySliceConflicts(registry));
   if (errors.length && !lenient) { const e = new AuthorError('AUTHOR_LINT', `${errors.length} problem(s):\n  ${errors.slice(0, 60).join('\n  ')}${errors.length > 60 ? `\n  ... ${errors.length - 60} more` : ''}`); e.errors = errors; throw e; }
   return { wordings, surface, cities, registry, errors, stats, contractsHash: spec.hash };
 }
 
 // The span-skeleton registry (§2.3 rule 7): hashes only, never text. Every authored line, assumption,
 // carrier, type name, cue and wording is registered with the slice it belongs to.
-export function buildRegistry({ surface, wordings }, masks = defaultMasks()) {
+export function buildRegistry({ surface, wordings, cities = [] }, masks = defaultMasks()) {
   const reg = new SpanRegistry([], { masks });
   const add = (text, slice, port, kind, source) => { if (text && String(text).trim()) reg.add(text, { slice, source, port, kind }); };
   for (const [port, units] of Object.entries(surface)) {
@@ -268,5 +284,14 @@ export function buildRegistry({ surface, wordings }, masks = defaultMasks()) {
     }
   }
   for (const w of wordings) add(w.text, w.slice, w.port, 'wording', `heldout:${w.port}/${w.id}`);
+  for (const c of cities) add(c.city, c.slice, 'R1', 'entity', `heldout:city-${hash8(c.city)}`);
   return reg;
+}
+// A registered skeleton belongs to one OOD slice: the same masked form in two slices would leak one slice's
+// material into the other (and make the build's cross-slice span check contradict itself).
+export function registrySliceConflicts(registry) {
+  const bySkel = new Map();
+  for (const e of registry.entries()) (bySkel.get(e.hash) ?? bySkel.set(e.hash, new Map()).get(e.hash)).set(e.slice, e);
+  return [...bySkel.entries()].filter(([, m]) => m.size > 1)
+    .map(([h, m]) => `registry: skeleton ${h.slice(7, 19)} is registered in ${[...m.keys()].sort().join(' and ')} (${[...m.values()].map(e => `${e.port}/${e.kind} ${e.source}`).join('; ')})`);
 }

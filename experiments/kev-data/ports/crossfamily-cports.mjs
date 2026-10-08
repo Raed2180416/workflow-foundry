@@ -70,12 +70,15 @@ function* c2(slice, seeds, rows, ctx) {
 }
 
 // ---- C7 ------------------------------------------------------------------------------------------------------------------------
+// train and dev-select share the pool of composed calls: a call belongs to dev-select when the hash of its text falls in the first fifth, so the two
+// files never hold the same state (the build keeps one copy of a state across slices and would drop the other)
+const owns = (slice, text) => (slice === 'dev-select' ? hnum(`own|${text}`) % 5 === 0 : slice !== 'train' || hnum(`own|${text}`) % 5 !== 0);
 function* c7(slice, seeds, rows, ctx) {
   const contract = ctx.contracts.C7, seen = new Set();
   for (let i = 0; i < rows; i++) {
     const label = i % 2 === 0 ? 'gaming' : 'legitimate';
     let call = null;
-    for (let a = 0; a < 40; a++) { call = composeCall(`${slice}|C7|${i}|${a}`, label); if (!seen.has(JSON.stringify([call.tool, call.input]))) break; }
+    for (let a = 0; a < 200; a++) { call = composeCall(`${slice}|C7|${i}|${a}`, label); const k = JSON.stringify([call.tool, call.input]); if (!seen.has(k) && owns(slice, k)) break; }
     seen.add(JSON.stringify([call.tool, call.input]));
     const state = kits.C7.buildState({ tool: call.tool, input: call.input });
     yield { state, questions: { [questionId('C7')]: question(contract, `${slice}|C7|${i}`, label) }, meta: base(slice, seeds[i], JSON.stringify(call.input)) };

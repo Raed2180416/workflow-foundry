@@ -35,10 +35,10 @@
 //    with 1,500 tokens/s; the reduced plan counts 6 point reads, the program says 7 (it appears to count the grid's "base" twice).
 //  - Strict priority when cutting: the first item that does not fit and every later item are cut; J5 is reserved first.
 //  - "free RAM" for the 80% rule is `available` from `free -m`.
-import test from 'node:test';
+import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { spawn, spawnSync } from 'node:child_process';
 import net from 'node:net';
 import os from 'node:os';
@@ -177,6 +177,15 @@ test('unit: a 422 is a rejection, a truncated answer is not a read, a dead servi
   assert.equal(dead.calls.ask, 5);
   // a refused credential ends it at once
   await assert.rejects(SS.scoreServed({ records: tinyRecords(3), served: fakeServed({ answer: () => { throw err('MODEL_AUTH', 'refused'); } }), pingRounds: 0 }), e => e.code === 'MODEL_AUTH');
+});
+
+test('unit: an answer that is not a distribution is a failed record, counted and listed, not a crash', async () => {
+  const bad = fakeServed({ answer: ({ questions, n }) => { const a = defaultAnswer(questions); if (n === 2) a.answers.A.probabilities = { x: 0.2, y: 0.2, z: 0.2 }; return a; } });
+  const { report, rows } = await SS.scoreServed({ records: tinyRecords(4), served: bad, pingRounds: 0 });
+  assert.equal(report.coverage.failed_records, 1); assert.equal(report.failed[0].code, 'SERVED_ANSWER'); assert.match(report.failed[0].message, /invalid probability sum/);
+  assert.equal(report.coverage.evaluated_records, 3); assert.equal(rows.length, 6); assert.equal(report.valid, false);
+  const garbage = fakeServed({ answer: ({ questions }) => { const a = defaultAnswer(questions); a.answers.A.probabilities = { x: 0, y: 0, z: 0 }; return a; } });
+  await assert.rejects(SS.scoreServed({ records: tinyRecords(20), served: garbage, pingRounds: 0, maxConsecutiveFailures: 5 }), e => e.code === 'SERVED_UNAVAILABLE');
 });
 
 test('unit: transient errors are retried with backoff, a timeout once', async () => {
@@ -375,6 +384,9 @@ test('unit: train acceptance: no "dropped" line, N training requests = file reco
   bad({ config: GOOD_CONFIG({ args: { max_state: 384 } }) }, /max_state is 384, expected 8192/);
   bad({ expect: { uploadedSha256: 'b'.repeat(64) } }, /differs from the uploaded sha256/);
   bad({ expect: { manifestSha256: 'sha256:' + 'c'.repeat(64) } }, /differs from the build manifest sha256/);
+  bad({ expect: { suiteSha256: 'a8'.repeat(32) } }, /suite_sha256 is d{64}, expected (a8){32}/);
+  assert.deepEqual(check({ expect: { suiteSha256: 'd'.repeat(64) } }).errors, []);
+  assert.match(J.suiteSha256(), /^[0-9a-f]{64}$/, 'the pinned checkout\'s decision-v7 manifest digest');
   bad({ metrics: { ...GOOD_METRICS, rejected_records: 2 } }, /rejected_records is 2/);
   bad({ metrics: { ...GOOD_METRICS, optimizer_steps: 0 } }, /no optimizer step/);
   // a candidate run as the warm start: runs/<jobId> resolves to the daemon's absolute path
@@ -475,6 +487,17 @@ test('unit: the J0 report names what is missing and does not fill it in', () => 
   writeFileSync(path.join(dir, 'observations', 'free-m.txt'), FREE_M); writeFileSync(path.join(dir, 'observations', 'info.json'), JSON.stringify(o.host.info));
   const back = J.analyzeJ0(J.loadJ0Observations(dir));
   assert.equal(back.complete, true, JSON.stringify(back.missing)); assert.deepEqual(back.jobs, J.analyzeJ0(o).jobs);
+});
+
+test('unit: J0 with and without fla: the kernel paths must differ for the comparison to mean anything', () => {
+  const slow = j0Obs({ scale: 1.3, drop: ['kernel'] });
+  slow.kernel = { report: { environment: { packages: { torch: '2.8.0+cu126', 'flash-linear-attention': null, 'causal-conv1d': null }, backend: 'torch' } } };
+  const a = J.analyzeJ0(slow), b = J.analyzeJ0(j0Obs());
+  const c = J.compareJ0Kernels(a, b);
+  assert.equal(c.comparable, true); assert.equal(c.without.fast, false); assert.equal(c.with.fast, true); assert.equal(c.with.flash_linear_attention, '0.5.2');
+  assert.ok(Math.abs(c.per_class['2k'].speedup - 1.3) < 0.02, JSON.stringify(c.per_class['2k']));
+  const same = J.compareJ0Kernels(b, b);
+  assert.equal(same.comparable, false); assert.match(same.reason, /same \(or an unknown\) kernel path/);
 });
 
 test('unit: J0b adopts shared_prefix only if >= 1.5x faster and the 50-step losses match within 1%', () => {
@@ -616,7 +639,7 @@ class FakeBridge {
     const [, id, name] = /^runs\/([^/]+)\/(.+)$/.exec(rel), j = this.jobsById.get(id);
     mkdirSync(path.dirname(dest), { recursive: true });
     const n = this.files.get(j.params.dataset ?? j.params.data)?.records ?? 0, replay = j.params.extra?.replay ?? 0;
-    const body = { 'training_config.json': { args: { init_from: j.params.initFrom?.startsWith('runs/') ? `/w/${j.params.initFrom}` : j.params.initFrom, max_state: j.params.maxState, epochs: j.params.epochs, replay }, base_revision: TOKENIZER.revision, suite_sha256: 'e'.repeat(64) },
+    const body = { 'training_config.json': { args: { init_from: j.params.initFrom?.startsWith('runs/') ? `/w/${j.params.initFrom}` : j.params.initFrom, max_state: j.params.maxState, epochs: j.params.epochs, replay }, base_revision: TOKENIZER.revision, suite_sha256: J.suiteSha256() },
       'training_metrics.json': { wall_seconds: 100, records_seen: n + replay, forward_tokens: 100000, optimizer_steps: 5, rejected_records: 0, truncated_records: 0, step_seconds: [3, 2, 2, 2, 2], peak_device_bytes: 3e9, peak_rss_bytes: 8e9 },
       'report.json': { coverage: { requested_records: n, evaluated_records: n - this.benchmarkRejected, rejected_records: this.benchmarkRejected, truncated_records: 0 } }, 'rows.json': [] }[name];
     if (!body) throw Object.assign(new Error(`no ${name}`), { status: 404 });
@@ -629,6 +652,11 @@ class FakeBridge {
       if (!j) return json(502, { error: 'service_not_running' });
       const run = j.params.run.startsWith('runs/') ? `/w/${j.params.run}` : j.params.run;
       return json(200, { models: ['kev-latest', 'jev-latest'].map(name => ({ name, run, base: 'Qwen/Qwen3.5-0.8B-Base', lora: 16, device: 'cuda', backend: 'torch', dtype: 'torch.bfloat16', temperature: 2.35, max_state_tokens: 65536, truncate_states: false })) });
+    }
+    if (u.pathname === '/svc/kev/v1/systemone/permute' && init.method === 'POST') {
+      if (!j) return json(502, { error: 'service_not_running' });
+      const b = JSON.parse(init.body), keys = Object.keys(b.request.questions[b.question].criteria);
+      return json(200, { runs: Array.from({ length: b.n_perm }, (_, i) => ({ order: keys, probabilities: Object.fromEntries(keys.map(k => [k, 1 / keys.length])), choice: keys[0], latency_ms: 1 })), argmax_stable: true, spread: Object.fromEntries(keys.map(k => [k, 0.002])) });
     }
     if (u.pathname === '/svc/kev/v1/systemone' && init.method === 'POST') {
       if (!j) return json(502, { error: 'service_not_running' });
@@ -646,7 +674,8 @@ function tinyPlan(dir, { reads = true, port = 8008 } = {}) {
   const recs = (prefix, n, lines) => Array.from({ length: n }, (_, i) => logRecord(prefix, i, lines, { questions: 1 }));
   const data = { '0300': mk('j0-0300.jsonl', recs('p/a', 6, 3)), '2k': mk('j0-2k.jsonl', recs('p/b', 6, 6)), '8k': mk('j0-8k.jsonl', recs('p/c', 4, 8)), '0300-q4': mk('j0-0300-q4.jsonl', Array.from({ length: 6 }, (_, i) => logRecord('p/d', i, 3, { questions: 4 }))), kernel: mk('j0-kernel.jsonl', recs('p/e', 4, 2)) };
   const readFiles = [mk('read-short.jsonl', recs('p/r1', 5, 3)), mk('read-long.jsonl', recs('p/r2', 5, 30))];
-  const readList = [{ id: 'short', file: readFiles[0].file, sha256: readFiles[0].sha256, route: { route: 'benchmark', reason: 'every record fits the training context' } }, { id: 'long', file: readFiles[1].file, sha256: readFiles[1].sha256, route: { route: 'served', reason: 'a state is over 384 tokens' } }];
+  const readList = [{ id: 'short', file: readFiles[0].file, sha256: readFiles[0].sha256, route: { route: 'benchmark', reason: 'every record fits the training context' } }, { id: 'long', file: readFiles[1].file, sha256: readFiles[1].sha256, route: { route: 'served', reason: 'a state is over 384 tokens' } },
+    { id: 'latency', file: readFiles[1].file, sha256: readFiles[1].sha256, role: 'latency' }, { id: 'permute', file: readFiles[0].file, sha256: readFiles[0].sha256, role: 'permute', n: 3, nPerm: 4 }];
   const trainFile = mk('train-5000.jsonl', recs('p/t', 8, 3), { rows: 8 });
   const stages = [...J.j0Stages({ data, port }), ...(reads ? J.j1Stages({ reads: readList, port }) : []), J.j2Stage({ point: '5K', train: { file: trainFile.file, sha256: trainFile.sha256, records: trainFile.records, rows: 8, bytes: trainFile.bytes }, maxState: 1024 })];
   if (reads) stages.push(...J.j3Stages({ of: 'J2-5000-s1', reads: readList, port }), ...J.j5Stages({ reads: readList, candidate: 'runs/{{J2-5000-s1}}', port }));
@@ -724,10 +753,8 @@ test('kev: J0 records land on their real-token targets, fit the job maxState, an
   const targets = [300, 2000, 8000];
   const { records, stateTokens, results } = J.buildProbeRecords({ prefix: 'j0/test', targets, questions: 4 });
   stateTokens.forEach((n, i) => assert.ok(Math.abs(n - targets[i]) <= 0.02 * targets[i], `record ${i}: ${n} tokens for a target of ${targets[i]}`));
-  assert.ok(results.every(r => r.fits === true || r.fits === false) && results.every(r => r.packedTokens > r.stateTokens));
-  const at8192 = measureRecords(records, { maxState: 8192 });
-  assert.ok(at8192.every(r => r.fits), 'every J0 record fits maxState 8192 (state, branch and packed limits)');
-  assert.ok(at8192[2].stateTokens > 7800 && at8192[2].stateTokens < 8192, `the 8K record has ${at8192[2].stateTokens} state tokens`);
+  assert.ok(results.every(r => r.fits === true && r.packedTokens > r.stateTokens), 'every J0 record fits maxState 8192 (state, branch and packed limits; measured at 8192)');
+  assert.ok(results[2].stateTokens > 7800 && results[2].stateTokens < 8192, `the 8K record has ${results[2].stateTokens} state tokens`);
   records.forEach(rec => { const t = J.scanLog(rec.state.log.split('\n')); assert.equal(rec.questions.first_error.label, t.firstErrorService); assert.equal(rec.questions.last_level.label, t.lastLevel); });
   const dir = H.tempDir('served-j0data-');
   const m = J.buildJ0Data({ dir, only: ['kernel'] });
@@ -749,7 +776,7 @@ function allStages(dir) {
     if (point !== '40K') stages.push(...J.j3Stages({ of: id, reads }));
   }
   for (const g of Object.keys(J.GRID)) { const s = J.j4Stage({ config: g, train: { ...tr, rows: 5000 }, maxState: 1536 }); stages.push(s, ...J.j3Stages({ of: s.id, reads })); }
-  stages.push(...J.j5Stages({ reads, candidate: 'runs/{{J2-5000-s1}}' }));
+  stages.push(...J.j5Stages({ reads: [...reads, { id: 'latency', ...long, role: 'latency' }, { id: 'permute', ...short, role: 'permute' }], candidate: 'runs/{{J2-5000-s1}}' }));
   return stages;
 }
 
@@ -788,28 +815,28 @@ test('kev: every J-spec passes the bridge\'s validateParams and buildCommand and
 test('kev: the router sends a file to kev.benchmark only if every state fits 384 tokens (Kev\'s fits(), the benchmark\'s own rule)', { timeout: 10 * 60_000 }, () => {
   const dir = H.tempDir('served-router-');
   const text = k => Array.from({ length: k }, () => 'the').join(' ');                  // one token per word
-  const rec = (state, id, extra = {}) => ({ state, questions: { Q: choice(['a', 'b']) , ...extra }, _meta: { id } });
-  const probe = measureRecords([rec(text(383), 'p383'), rec(text(384), 'p384'), rec(text(385), 'p385')], { maxState: 384 });
-  assert.deepEqual(probe.map(p => [p.stateTokens, p.fits]), [[384, true], [385, false], [386, false]], 'a state of 383 tokens plus the <state> token is the last that fits');
+  const rec = (state, id) => ({ state, questions: { Q: choice(['a', 'b']) }, _meta: { id } });
   const write = (name, recs) => { const f = path.join(dir, name); writeFileSync(f, jsonl(recs)); return f; };
+  // the boundary: 383 words + the <state> token = 384 fits; 384 words does not
   const fitting = write('fits.jsonl', [rec('short', 'a'), rec(text(383), 'b'), ...at2Records().slice(2, 5).map(r => ({ ...r, _meta: { id: `f/${r._meta.id}` } }))]);
-  const r1 = J.routeFile(fitting);
-  assert.equal(r1.route, 'benchmark'); assert.equal(r1.overflowing, 0); assert.equal(r1.records, 5); assert.equal(r1.maxStateTokens, 384);
+  const wide = { state: 'short', questions: { Q: { type: 'choice', instructions: 'Which?', criteria: Object.fromEntries(Array.from({ length: 80 }, (_, i) => [`opt_${i}`, text(30)])), label: 'opt_3', src: 'unit_choice' } }, _meta: { id: 'wide' } };
+  const mixed = write('mixed.jsonl', at2Records().slice(0, 40).map(r => ({ ...r, _meta: { id: `m/${r._meta.id}` } })));
+  const [r1, r3, r4] = J.routeFiles([fitting, write('wide.jsonl', [wide]), mixed]);      // three files, one Python process
+  assert.equal(r1.route, 'benchmark'); assert.equal(r1.overflowing, 0); assert.equal(r1.records, 5); assert.equal(r1.maxStateTokens, 384, 'a state of 383 tokens plus the <state> token is the last that fits');
+  assert.equal(r1.sha256, sha(readFileSync(fitting)));
   const over = write('over.jsonl', [rec('short', 'a'), rec(text(384), 'b')]);
   const r2 = J.routeFile(over);
-  assert.equal(r2.route, 'served'); assert.equal(r2.overflowing, 1); assert.equal(r2.over384, 1); assert.match(r2.reason, /1 of 2 records exceed the training context/);
+  assert.equal(r2.route, 'served'); assert.equal(r2.overflowing, 1); assert.equal(r2.over384, 1); assert.equal(r2.maxStateTokens, 385); assert.match(r2.reason, /1 of 2 records exceed the training context/);
   // the branch: a short state with a question that is too long is rejected by the benchmark too
-  const wide = { state: 'short', questions: { Q: { type: 'choice', instructions: 'Which?', criteria: Object.fromEntries(Array.from({ length: 80 }, (_, i) => [`opt_${i}`, text(30)])), label: 'opt_3', src: 'unit_choice' } }, _meta: { id: 'wide' } };
-  const r3 = J.routeFile(write('wide.jsonl', [wide]));
   assert.equal(r3.route, 'served'); assert.equal(r3.over384, 0, 'the state itself fits'); assert.equal(r3.overflowing, 1);
   // a single long state sends the whole file to the served scorer, whatever the other records are
-  const mixed = write('mixed.jsonl', [...at2Records().slice(0, 40).map(r => ({ ...r, _meta: { id: `m/${r._meta.id}` } }))]);
-  const r4 = J.routeFile(mixed), measured = measureRecords(at2Records().slice(0, 40), { maxState: 384 });
-  assert.equal(r4.route, 'served'); assert.equal(r4.overflowing, measured.filter(m => !m.fits).length); assert.equal(r4.records, 40);
-  assert.deepEqual(J.routeRecords(at2Records().slice(2, 5)).route, 'benchmark');
+  const measured = at2Measured().slice(0, 40);
+  assert.equal(r4.route, 'served'); assert.equal(r4.overflowing, measured.filter(m => !m.fits).length); assert.equal(r4.records, 40); assert.ok(r4.overflowing > 0 && r4.overflowing < 40);
   // a file that is not a Kev file is refused, not routed
   assert.throws(() => J.routeFile(write('bad.jsonl', [{ state: 'x' }])), e => e.code === 'ROUTE_INVALID');
   assert.throws(() => J.routeFile(path.join(dir, 'missing.jsonl')), e => e.code === 'ROUTE_INVALID');
+  assert.throws(() => J.routeFiles([fitting, path.join(dir, 'missing.jsonl')]), e => e.code === 'ROUTE_INVALID');
+  assert.deepEqual(J.routeFiles([]), []);
 });
 
 // =============================================================================================================
@@ -886,6 +913,7 @@ print("stub ready", flush=True)
 uvicorn.run(S.app, host="127.0.0.1", port=port, log_level="warning")
 `;
 let stub = null;
+after(() => { stub?.stop(); });                // the child would keep this test process alive after the last test
 async function stubKev() {
   if (stub) return stub;
   const dir = H.tempDir('served-stub-'), script = path.join(dir, 'stub_serve.py');
@@ -893,7 +921,8 @@ async function stubKev() {
   const port = await freePort(), child = spawn(PYTHON, ['-I', script, KEV.root, String(port)], { env: pyEnv(), stdio: ['ignore', 'pipe', 'pipe'] });
   let log = ''; child.stdout.on('data', d => { log += d; }); child.stderr.on('data', d => { log += d; });
   const url = `http://127.0.0.1:${port}`;
-  stub = { url, run: 'stub/kev-forwardless@test', stop: () => child.kill('SIGKILL'), jitter: amount => fetch(`${url}/stub/jitter`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ amount }) }).then(r => r.json()) };
+  child.unref(); child.stdout.unref?.(); child.stderr.unref?.();
+  stub = { url, run: 'stub/kev-forwardless@test', stop: () => { child.kill('SIGKILL'); child.stdout.destroy(); child.stderr.destroy(); }, jitter: amount => fetch(`${url}/stub/jitter`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ amount }) }).then(r => r.json()) };
   process.once('exit', () => child.kill('SIGKILL'));
   for (let i = 0; i < 360; i++) {
     if (child.exitCode !== null) throw new Error(`the stub server exited: ${log.slice(-1200)}`);
@@ -923,7 +952,7 @@ test('kev: 200-record file, 40% of states 400-2,000 tokens: kev.benchmark --data
   const bench = dryBenchmark(file, path.join(dir, 'bench'));
   assert.ok(bench.coverage.rejected_records > 0, 'kev.benchmark --data silently skips states over 384 tokens'); assert.equal(bench.coverage.rejected_records, 80);
   assert.equal(bench.coverage.evaluated_records, 120); assert.equal(bench.coverage.requested_records, 200);
-  const route = J.routeFile(file);
+  const route = J.routeFromResults(measured);                   // the router's decision on Kev's own fits() of every record (routeFile on the file is tested below)
   assert.equal(route.route, 'served', 'so the router does not send this file to kev.benchmark'); assert.equal(route.overflowing, bench.coverage.rejected_records, 'the router predicts exactly what the benchmark rejects');
 
   // (b) score-served against Kev's FastAPI app: every record is served
@@ -1016,7 +1045,7 @@ if (mod === 'kev.train') {
   console.log((n + used) + " training requests (holdout=), questions by type {'choice': " + (n + used) + '}');
   fs.mkdirSync(out, { recursive: true });
   for (let s = 10; s <= 30; s += 10) console.log('ep0 step ' + s + '/50 loss ' + (1 / s * 9).toFixed(3) + ' kl 0.000 anchor 0.000 0.1s/rec');
-  fs.writeFileSync(path.join(out, 'training_config.json'), JSON.stringify({ args: { init_from: opt('--init_from') ?? '', max_state: Number(opt('--max_state')), epochs: Number(opt('--epochs')), replay, seed: Number(opt('--seed') ?? 0) }, base_revision: opt('--base_revision') ?? '', suite_sha256: 'f'.repeat(64) }));
+  fs.writeFileSync(path.join(out, 'training_config.json'), JSON.stringify({ args: { init_from: opt('--init_from') ?? '', max_state: Number(opt('--max_state')), epochs: Number(opt('--epochs')), replay, seed: Number(opt('--seed') ?? 0) }, base_revision: opt('--base_revision') ?? '', suite_sha256: fs.existsSync(opt('--suite') + '/manifest.json') ? crypto.createHash('sha256').update(fs.readFileSync(opt('--suite') + '/manifest.json')).digest('hex') : null }));
   fs.writeFileSync(path.join(out, 'training_metrics.json'), JSON.stringify({ wall_seconds: 2, records_seen: n + used, requested_records: n + used, rejected_records: 0, truncated_records: 0, optimizer_steps: 3, forward_tokens: 900 * (n + used), step_seconds: [0.9, 0.5, 0.5], peak_device_bytes: 3.2e9, peak_rss_bytes: 7.5e9, device: 'cuda', dtype: 'bf16' }));
   fs.writeFileSync(path.join(out, 'head.pt'), Buffer.alloc(256, crypto.randomBytes(1)[0]));
   fs.writeFileSync(path.join(out, 'adapter_model.safetensors'), Buffer.alloc(1024, 3));
@@ -1035,6 +1064,10 @@ if (mod === 'kev.train') {
     req.on('end', () => {
       const send = (status, obj) => { res.writeHead(status, { 'content-type': 'application/json' }); res.end(JSON.stringify(obj)); };
       if (req.method === 'GET' && req.url === '/v1/models') return send(200, { models: [card('kev-latest'), card('jev-latest')] });
+      if (req.method === 'POST' && req.url === '/v1/systemone/permute') {
+        const b = JSON.parse(body), keys = Object.keys(b.request.questions[b.question].criteria);
+        return send(200, { runs: Array.from({ length: b.n_perm }, () => ({ order: keys, probabilities: Object.fromEntries(keys.map(k => [k, 1 / keys.length])), choice: keys[0], latency_ms: 1 })), argmax_stable: true, spread: Object.fromEntries(keys.map(k => [k, 0.002])) });
+      }
       if (req.method === 'POST' && req.url === '/v1/systemone') {
         const j = JSON.parse(body), answers = {};
         for (const [qid, q] of Object.entries(j.questions)) {
@@ -1054,7 +1087,7 @@ const freeServePort = async () => { for (let p = 8031; p < 8099; p++) { try { aw
 
 test('bridge: a plan runs against the bridge\'s own daemon: one service at a time, nothing queued behind it, signed served reads', { timeout: 5 * 60_000 }, async t => {
   const helpers = await import('../../../bridge/test/helpers.mjs'), { BridgeClient } = await import('../../../bridge/cloud/client.mjs');
-  const root = helpers.scratch(t, 'served-jobs'), bin = path.join(root, 'bin');
+  const root = helpers.scratch(t, 'served-jobs'), bin = path.join(root, 'kevbin');     // not bin/: testConfig writes its own python stand-in there
   mkdirSync(bin, { recursive: true }); writeFileSync(path.join(bin, 'fake-kev.mjs'), FAKE_KEV_JS);
   const python = path.join(bin, 'python'); writeFileSync(python, `#!/bin/sh\nexec "${process.execPath}" "${path.join(bin, 'fake-kev.mjs')}" "$@"\n`, { mode: 0o755 });
   const cfg = helpers.testConfig(root, { python, timeouts: { 'sys.selftest': 30, 'kev.train': 60, 'kev.benchmark': 60 } });
@@ -1068,17 +1101,23 @@ test('bridge: a plan runs against the bridge\'s own daemon: one service at a tim
   const foreign = await client.submitJob('kev.serve', { run: 'jaredpalmer/kev-0.8b@v1.0', port });
   await client.waitJob(foreign.id, { pollMs: 50, timeoutMs: 30_000 });
   const before = (await client.jobs()).jobs.length;
-  await assert.rejects(J.runPlan(plan, { client, dir, confirm: true, waitOpts: { pollMs: 50, timeoutMs: 60_000 } }), e => e.code === 'RUN_SERVICE_LIVE');
+  await assert.rejects(J.runPlan(plan, { client, dir, confirm: true, suiteSha256: sha('{}'), waitOpts: { pollMs: 50, timeoutMs: 60_000 } }), e => e.code === 'RUN_SERVICE_LIVE');
   assert.equal((await client.jobs()).jobs.length, before, 'nothing was submitted behind the live service');
   await client.cancel(foreign.id); await client.waitJob(foreign.id, { pollMs: 50, timeoutMs: 30_000, until: 'terminal' });
 
   // the whole plan
-  const { state } = await J.runPlan(plan, { client, dir, confirm: true, waitOpts: { pollMs: 50, timeoutMs: 60_000 } });
+  let state;
+  try { ({ state } = await J.runPlan(plan, { client, dir, confirm: true, suiteSha256: sha('{}'), waitOpts: { pollMs: 50, timeoutMs: 60_000 } })); }   // the fake suite manifest is '{}'
+  catch (error) {
+    const st = JSON.parse(readFileSync(path.join(dir, 'state.json'), 'utf8')).stages, last = Object.entries(st).filter(([, v]) => v.jobId).at(-1);
+    if (last) t.diagnostic(`last job ${last[0]} ${JSON.stringify(last[1])}\n${(await client.log(last[1].jobId, 0)).data.slice(-1500)}\n${JSON.stringify(await client.job(last[1].jobId)).slice(0, 800)}`);
+    throw error;
+  }
   assert.ok(Object.values(state.stages).every(s => s.status === 'done'), JSON.stringify(Object.entries(state.stages).filter(([, s]) => s.status !== 'done')));
   const jobs = (await client.jobs()).jobs.filter(j => j.id !== foreign.id), full = await Promise.all(jobs.map(j => client.job(j.id)));
   assert.ok(full.every(j => ['succeeded', 'stopped'].includes(j.state)), full.map(j => `${j.kind}:${j.state}`).join());
   const services = full.filter(j => j.class === 'service'), gpu = full.filter(j => j.class === 'gpu');
-  assert.equal(services.length, 5); assert.ok(gpu.length >= 12);
+  assert.equal(services.length, 5); assert.equal(gpu.length, 11, 'J0 6 + J1 1 + J2 1 + J3 1 + J5 2 GPU jobs');
   const span = j => [Date.parse(j.startedAt), Date.parse(j.endedAt)];
   const overlap = (a, b) => span(a)[0] < span(b)[1] && span(b)[0] < span(a)[1];
   for (const [i, a] of services.entries()) for (const b of services.slice(i + 1)) assert.equal(overlap(a, b), false, 'two services never ran at once');
@@ -1094,4 +1133,177 @@ test('bridge: a plan runs against the bridge\'s own daemon: one service at a tim
   const report = J.analyzeJ0(J.loadJ0Observations(dir));
   assert.ok(report.jobs['0300'].seconds_per_record > 0 && report.host.free_m.available === 11444 && report.host.free_disk.freeBytes > 0, JSON.stringify(report.missing));
   assert.equal(report.kernel_path.fast, true);
+});
+
+// =============================================================================================================
+// seeded defects: the unit tests must fail when the machinery is broken
+// =============================================================================================================
+test('seeded defects: each mutation of the scorer, the router, the sequence check and the schedule fails the unit tests', { skip: MUTANT_RUN && 'runs the unit tests itself', timeout: 15 * 60_000 }, t => {
+  const m = (name, file, from, to, expect) => ({ name, mutations: [{ file, from, to }], expect });
+  const mutants = [
+    m('a second kev.serve is allowed', 'jobs.mjs', "if (service) errors.push(`${where}: a second kev.serve", "if (false) errors.push(`${where}: a second kev.serve", /^unit: sequence/),
+    m('a kev.train may queue behind a service', 'jobs.mjs', "if (service) errors.push(`${where}: a kev.train is queued", "if (false) errors.push(`${where}: a kev.train is queued", /^unit: sequence/),
+    m('the runner queues behind a live service', 'jobs.mjs', "if (stage.kind !== 'kev.serve' && live.length) {", 'if (false) {', /^unit: the runner refuses/),
+    m('the route decision tolerates one overflowing record', 'jobs.mjs', "const route = over.length === 0 ? 'benchmark' : 'served';", "const route = over.length <= 1 ? 'benchmark' : 'served';", /^unit: the route decision/),
+    m('a "dropped" line passes acceptance', 'jobs.mjs', 'if (p.dropped.length) errors.push(', 'if (false) errors.push(', /^unit: train acceptance/),
+    m('N training requests is not compared', 'jobs.mjs', 'else if (p.requests !== wanted) errors.push(', 'else if (false) errors.push(', /^unit: train acceptance/),
+    m('outputs may sit anywhere', 'jobs.mjs', 'if (job.outputDir !== dir) errors.push(', 'if (false) errors.push(', /^unit: train acceptance/),
+    m('J2 tolerance 20% becomes 50%', 'jobs.mjs', 'measured, tolerance = 0.2, logFile = null, schedule = {} }', 'measured, tolerance = 0.5, logFile = null, schedule = {} }', /^unit: J2 reconciliation/),
+    m('the reduced-plan floor drops to 500 tokens/s', 'jobs.mjs', "plan = forcePlan ?? (measuredRate < floor ? 'reduced' : 'full')", "plan = forcePlan ?? (measuredRate < 500 ? 'reduced' : 'full')", /^unit: the schedule is regenerated/),
+    m('later items may slip in after a cut', 'jobs.mjs', "else if (cutFrom) status = 'cut';", "else if (false) status = 'cut';", /^unit: the budget/),
+    m('the warm-up step is not dropped from the J0 rate', 'jobs.mjs', 'export function steadyState(metrics, { warmupSteps = 1 } = {})', 'export function steadyState(metrics, { warmupSteps = 0 } = {})', /^unit: the J0 report has/),
+    m('J0b adopts at any speed-up', 'jobs.mjs', 'const adopt = speedup >= 1.5 &&', 'const adopt = speedup >= 1.0 &&', /^unit: J0b/),
+    m('a 422 is not counted as a rejection', 'score-served.mjs', 'coverage.rejected_records++; rejected.push({ id, error: result.rejected });', 'rejected.push({ id, error: result.rejected });', /^unit: a 422/),
+    m('a truncated answer is scored', 'score-served.mjs', 'if (body.truncated === true) {', 'if (false) {', /^unit: a 422/),
+    m('the re-read tolerance becomes 0.5', 'score-served.mjs', 'export const STABLE_DP = 0.01;', 'export const STABLE_DP = 0.5;', /^unit: two reads/),
+    m('a swapped model goes unnoticed', 'score-served.mjs', 'const sameModel = after.run === identity.run;', 'const sameModel = true;', /^unit: one served model/),
+    m('index-like option names are reordered silently', 'score-served.mjs', 'if (bad.length) throw fail(\'SERVED_KEYS\'', 'if (false) throw fail(\'SERVED_KEYS\'', /^unit: option names/),
+    m('resume scores a record twice', 'score-served.mjs', 'const todo = records.filter(r => !doneIds.has(r._meta.id));', 'const todo = records;', /^unit: a run resumes/),
+    m('the label of a record is sent to the server', 'score-served.mjs', "for (const k of ['type', 'instructions', 'criteria']) if (k in q) out[k] = q[k];", "for (const k of ['type', 'instructions', 'criteria', 'label']) if (k in q) out[k] = q[k];", /^unit: kev files parse/)
+  ];
+  const pattern = '^unit: ', t0 = Date.now();
+  const r = H.seededDefect({ file: TEST_FILE, pattern, mutants, env: { KEV_DATA_MUTANT_RUN: '1' } });
+  assert.equal(r.control.status, 0, `the unmutated copy passes:\n${r.control.stdout.split('\n').filter(l => /not ok/.test(l)).join('\n')}\n${r.control.stderr.slice(-1500)}`);
+  assert.deepEqual(r.control.failed, []);
+  assert.ok(r.control.passed.length >= 25, `${r.control.passed.length} unit tests passed in the control run`);
+  r.mutants.forEach((run, i) => {
+    assert.notEqual(run.status, 0, `${mutants[i].name} was not caught`);
+    assert.ok(run.failed.some(n => mutants[i].expect.test(n)), `${mutants[i].name}: failed ${JSON.stringify(run.failed)}`);
+  });
+  t.diagnostic(`control passed ${r.control.passed.length}; ${r.mutants.length} mutants caught (${Date.now() - t0} ms)`);
+});
+
+// =============================================================================================================
+// the group never writes where it must not, and never submits
+// =============================================================================================================
+test('unit: nothing under src/, web/, bin/, schemas/, policy/, skills/, beds/ or bridge/ is written by this group, and the modules import no live bed', () => {
+  const read = f => readFileSync(path.join(HERE, '..', f), 'utf8');
+  for (const f of ['jobs.mjs', 'score-served.mjs']) {
+    const text = read(f);
+    assert.ok(!/from ['"][^'"]*beds\//.test(text) && !/import\(['"][^'"]*beds\//.test(text), `${f} imports no bed`);
+    assert.ok(!/beds\/sealed/.test(text.replace(/\/\/.*$/gm, '')), `${f} never names beds/sealed outside comments`);
+    assert.ok(!/Math\.random|Date\.now\(\)|process\.env\.[A-Z_]*(KEY|TOKEN|SECRET)/.test(text.replace(/\/\/.*$/gm, '')), `${f}: no Math.random, no credential variable (clock use is limited to timings)`);
+  }
+  // bridge/ is imported lazily, read-only: no static import of a bridge module in either file
+  for (const f of ['jobs.mjs', 'score-served.mjs']) assert.ok(!/^import .*bridge\//m.test(read(f)), `${f} has no static bridge import`);
+  // importing the modules submits nothing and opens no connection
+  assert.equal(typeof J.runPlan, 'function'); assert.equal(typeof SS.scoreServed, 'function');
+});
+
+// =============================================================================================================
+// unit: latency, permutation, builds, Kev's own battery
+// =============================================================================================================
+
+test('unit: the latency read sends each request twice in a row (fresh, then cached) and scores only the first (§6.5)', async () => {
+  const records = tinyRecords(10), sent = [];
+  const served = fakeServed({ answer: ({ questions, state }) => { sent.push(JSON.stringify(state)); return { ...defaultAnswer(questions), latency_ms: sent.length % 2 ? 80 : 5 }; } });
+  const { report, rows } = await SS.scoreServed({ records, served, concurrency: 1, repeat: 2, pingRounds: 0 });
+  assert.equal(served.calls.ask, 20); assert.equal(rows.length, 20, 'one row per question, from the first answer');
+  assert.deepEqual(sent.filter((_, i) => i % 2 === 0), sent.filter((_, i) => i % 2 === 1), 'the same request twice in a row');
+  assert.equal(report.repeat, 2); assert.equal(report.timing.server_latency_ms.median, 80); assert.equal(report.timing.cached_server_latency_ms.median, 5);
+  assert.ok(report.timing.wall_ms.p90 >= report.timing.wall_ms.median && report.timing.cached_wall_ms.p90 >= 0, 'p50 and p90, fresh and cached');
+  assert.equal(report.coverage.evaluated_records, 10); assert.equal(report.valid, true);
+  const plain = await SS.scoreServed({ records, served: fakeServed(), pingRounds: 0 });
+  assert.equal(plain.report.timing.cached_wall_ms, undefined, 'no repeat, no cached figures');
+});
+
+test('unit: the permutation read reports the share of items whose argmax moves under n option orders (§6.4 item 4)', async () => {
+  const records = Array.from({ length: 30 }, (_, i) => ({ state: `s${i}`, questions: { Q: choice(['a', 'b', 'c'], 'a') }, _meta: { id: `p/${i}` } }));
+  const calls = [];
+  const fetchImpl = async (url, init) => {
+    const b = JSON.parse(init.body); calls.push({ url, b });
+    const stable = sha(b.request.state).charCodeAt(0) % 4 !== 0;                 // about a quarter move
+    return new Response(JSON.stringify({ runs: Array.from({ length: b.n_perm }, () => ({ order: ['a', 'b', 'c'], probabilities: { a: 0.5, b: 0.3, c: 0.2 }, choice: 'a', latency_ms: 1 })), argmax_stable: stable, spread: { a: stable ? 0.01 : 0.2, b: 0.02, c: 0.01 } }), { status: 200 });
+  };
+  const r = await SS.permuteRead({ records, url: 'http://kev.invalid/', fetchImpl, n: 20, nPerm: 6 });
+  assert.equal(r.items, 20); assert.equal(calls.length, 20); assert.ok(calls.every(c => c.url === 'http://kev.invalid/v1/systemone/permute' && c.b.n_perm === 6 && c.b.seed === 0 && c.b.question === 'Q'));
+  assert.ok(calls.every(c => !('label' in c.b.request.questions.Q)), 'no label leaves the machine');
+  assert.equal(r.flips, r.per_item.filter(x => !x.stable).length); assert.equal(r.flip_rate, Math.round(r.flips / 20 * 1e4) / 1e4); assert.ok(r.flips > 0 && r.flips < 20);
+  assert.ok(r.max_spread >= 0.2 - 1e-9 === (r.flips > 0));
+  const again = await SS.permuteRead({ records, url: 'http://kev.invalid', fetchImpl, n: 20, nPerm: 6 });
+  assert.deepEqual(again.per_item.map(x => x.id), r.per_item.map(x => x.id), 'the same items every time (hash order)');
+  await assert.rejects(SS.permuteRead({ records, url: 'http://kev.invalid', fetchImpl: async () => new Response('{"runs":[],"argmax_stable":true}', { status: 200 }), n: 2 }), e => e.code === 'SERVED_ANSWER');
+  await assert.rejects(SS.permuteRead({ records, url: 'http://kev.invalid', fetchImpl: async () => new Response('nope', { status: 422 }), n: 2 }), e => e.code === 'SERVED_RAW');
+  await assert.rejects(SS.permuteRead({ records: tinyRecords(2).map(r => ({ ...r, questions: { B: r.questions.B } })), url: 'http://kev.invalid', fetchImpl, n: 2 }), e => e.code === 'SERVED_INPUT');
+});
+
+// a build directory shaped like build.mjs writes it (manifest.json + kev/<slice>.jsonl); the content is synthetic
+function fakeBuild({ jobMaxState = 1280, tokenMax = 900, trainRecords = 20500 } = {}) {
+  const dir = H.tempDir('served-build-'), manifest = { schema: 'kev-data/build@1', buildId: 'b-test', jobMaxState, slices: {} };
+  mkdirSync(path.join(dir, 'kev'), { recursive: true });
+  for (const slice of ['train', 'calib-in', 'calib-ood', 'dev-select', 'dev-ood', 'test-in', 'test-ood']) {
+    const n = slice === 'train' ? trainRecords : 12;
+    const body = jsonl(Array.from({ length: n }, (_, i) => ({ state: { system: 'ATLAS', note: `${slice} ${i}` }, questions: { Q: choice(['a', 'b']) }, _meta: { id: `${slice}/${i}` } })));
+    writeFileSync(path.join(dir, 'kev', `${slice}.jsonl`), body);
+    manifest.slices[slice] = { records: n, questions: n, perPort: { R1: { stateTokens: { p50: 300, p90: 600, max: slice === 'train' ? tokenMax : 500 } } }, files: { kev: { path: `kev/${slice}.jsonl`, sha256: `sha256:${sha(body)}` }, meta: { path: `kev/${slice}.meta.jsonl`, sha256: `sha256:${'0'.repeat(64)}` } } };
+  }
+  writeFileSync(path.join(dir, 'manifest.json'), JSON.stringify(manifest, null, 2));
+  return dir;
+}
+
+const readUnits0 = info => J.readUnits(info, ['dev-ood']);
+test('unit: a build feeds the writers: digests are the manifest\'s, maxState is the build\'s p99.9, dev-select only at 5K and 20K, the curve is nested', () => {
+  const dir = fakeBuild(), info = J.buildInfo(dir);
+  assert.equal(info.jobMaxState, 1280); assert.equal(info.longStates, false); assert.equal(Object.keys(info.slices).length, 7);
+  assert.equal(info.slices['dev-ood'].sha256, sha(readFileSync(path.join(dir, 'kev', 'dev-ood.jsonl'))));
+  const nested = J.nestedPrefixes(info.slices.train.file, { outDir: path.join(dir, 'nested') });
+  assert.deepEqual(nested.map(n => [n.point, n.rows, n.exact]), [['2.5K', 2500, true], ['5K', 5000, true], ['10K', 10000, true], ['20K', 20000, true]]);
+  const route = f => ({ route: /dev-ood|decision/.test(f) ? 'served' : 'benchmark', reason: 'test double' });
+  const battery = [{ id: 'battery-x', file: path.join(dir, 'kev', 'calib-in.jsonl'), sha256: info.slices['calib-in'].sha256, bytes: 1, records: 12 }];
+  const stages = J.curveStages({ info, nested, battery, router: route });
+  const plan = J.assemblePlan(stages);                                                        // sequence-valid
+  const j2 = stages.filter(s => s.job === 'J2'), j4 = stages.filter(s => s.job === 'J4');
+  assert.deepEqual(j2.map(s => s.id), ['J2-2500-s1', 'J2-5000-s1', 'J2-5000-s2', 'J2-10000-s1', 'J2-20000-s1', 'J2-20000-s2']);
+  assert.deepEqual(j4.map(s => s.id), ['J4-lr4', 'J4-ep2', 'J4-rp6', 'J4-np0']);
+  assert.ok([...j2, ...j4].every(s => s.params.maxState === 1280 && !('row_budget' in s.params.extra)), 'the job maxState is the build\'s; no long-row flags for a short-state build');
+  const dataset = id => stages.find(s => s.id === id).params.dataset;
+  assert.equal(dataset('J2-5000-s1'), dataset('J2-5000-s2'), 'one upload for both seeds');
+  assert.match(dataset('J2-5000-s1'), new RegExp(`-${nested[1].sha256.slice(0, 12)}\\.jsonl$`)); assert.equal(stages.find(s => s.id === 'J2-5000-s1').files[0].sha256, nested[1].sha256);
+  const readsOf = tag => stages.filter(s => s.id.startsWith(tag) && ['score', 'kev.benchmark'].includes(s.kind)).map(s => s.read.id).sort();
+  assert.deepEqual(readsOf('J3-2500-s1'), ['battery-x', 'calib-ood', 'dev-ood'], 'no dev-select at 2.5K');
+  assert.deepEqual(readsOf('J3-5000-s1'), ['battery-x', 'calib-ood', 'dev-ood', 'dev-select']);
+  assert.deepEqual(readsOf('J3-10000-s1'), ['battery-x', 'calib-ood', 'dev-ood']);
+  assert.deepEqual(readsOf('J3-20000-s2'), ['battery-x', 'calib-ood', 'dev-ood', 'dev-select']);
+  assert.equal(stages.find(s => s.id === 'J3-5000-s1-serve').params.run, 'runs/{{J2-5000-s1}}');
+  // the chain: manifest digest -> train.jsonl -> the nested prefix that is uploaded
+  assert.ok(stages.filter(s => s.accept?.kind === 'train').every(s => s.accept.parentSha256 === info.slices.train.sha256));
+  assert.throws(() => J.curveStages({ info, nested: nested.map(n => ({ ...n, parentSha256: 'e'.repeat(64) })), router: route }), e => e.code === 'PLAN_NESTED_PARENT');
+  assert.ok(plan.timeline.length === stages.length);
+  // a long-state build trains with row_budget and length_sort
+  const long = J.buildInfo(fakeBuild({ tokenMax: 3100, trainRecords: 5100 }));
+  assert.equal(long.longStates, true);
+  const n2 = J.nestedPrefixes(long.slices.train.file, { points: ['2.5K', '5K'], outDir: path.join(dir, 'nested2') });
+  const s2 = J.j2Stage({ point: '5K', train: { file: n2[1].file, sha256: n2[1].sha256, records: n2[1].records, rows: n2[1].rows }, maxState: long.jobMaxState, longStates: long.longStates });
+  assert.equal(s2.params.extra.row_budget, 16384); assert.equal(s2.params.extra.length_sort, 1);
+  // the final retrain at the selected N, with the winning config (or the base), and its reads
+  const fin = J.j2FinalStage({ train: { file: nested[3].file, sha256: nested[3].sha256, records: nested[3].records, rows: nested[3].rows }, maxState: info.jobMaxState, config: 'lr4' });
+  assert.equal(fin.id, 'J2-final'); assert.equal(fin.params.lr, 4e-5); assert.equal(fin.budgetStep, 'J2-final'); assert.equal(J.j2FinalStage({ train: { file: nested[3].file, sha256: nested[3].sha256, records: 1, rows: 1 }, maxState: 1280 }).params.lr, 2e-5);
+  assert.throws(() => J.j2FinalStage({ train: { file: 'x', sha256: 'a'.repeat(64), records: 1 }, maxState: 1280, config: 'nope' }), e => e.code === 'PLAN_GRID');
+  const finalReads = J.j3Stages({ of: 'J2-final', reads: readUnits0(info).map(u => ({ ...u, route: route(u.file) })) });
+  assert.doesNotThrow(() => J.checkSequence([fin, ...finalReads]));
+  assert.equal(finalReads.find(s => s.kind === 'score').budgetStep, 'read:J2-final', 'the budget step the schedule uses for its reads');
+  // refused: a file that is not the manifest's, a build made without real-token measurement
+  const bad = fakeBuild(); appendFileSync(path.join(bad, 'kev', 'dev-ood.jsonl'), ' ');
+  assert.throws(() => J.buildInfo(bad), e => e.code === 'PLAN_BUILD_DIGEST');
+  const unmeasured = fakeBuild({ jobMaxState: null });
+  assert.throws(() => J.buildInfo(unmeasured), e => e.code === 'PLAN_BUILD_UNMEASURED');
+  assert.throws(() => J.buildInfo(H.tempDir('served-nobuild-')), e => e.code === 'PLAN_BUILD');
+  // J5: the test slices, stock then candidate, plus the permutation and latency reads
+  const j5 = J.finalStages({ info, candidate: 'runs/j-20261008-111044-e2112b', router: route, permuteFile: { file: info.slices['dev-select'].file, sha256: info.slices['dev-select'].sha256 }, latencyFile: { file: info.slices['dev-select'].file, sha256: info.slices['dev-select'].sha256 } });
+  assert.doesNotThrow(() => J.checkSequence(j5));
+  assert.deepEqual(j5.filter(s => s.kind === 'kev.serve').map(s => s.params.run), ['jaredpalmer/kev-0.8b@v1.0', 'runs/j-20261008-111044-e2112b']);
+  assert.deepEqual(j5.filter(s => s.id.startsWith('J5-stock') && ['score', 'permute', 'kev.benchmark'].includes(s.kind)).map(s => s.read.id).sort(), ['calib-in', 'latency', 'permute', 'test-in', 'test-ood']);
+  const lat = j5.find(s => s.id === 'J5-stock-latency-latency'), perm = j5.find(s => s.kind === 'permute');
+  assert.deepEqual([lat.kind, lat.concurrency, lat.repeat], ['score', 1, 2]); assert.deepEqual([perm.n, perm.nPerm], [200, 6]);
+});
+
+test('unit: Kev\'s battery is its development partitions; its test partitions are never read', () => {
+  const units = J.batteryUnits();
+  assert.deepEqual(units.map(u => [u.id, u.records]), [['battery-decision-v7', 1204], ['battery-transfer-v4', 764], ['battery-hard-v1', 700]], '§3.6: 1,204 + 764 + 700 development records');
+  assert.ok(units.every(u => /development\.jsonl$/.test(u.file) && /^[0-9a-f]{64}$/.test(u.sha256)));
+  assert.throws(() => J.batteryUnits({ files: [{ id: 'x', file: 'evals/v7/decision-v7/test.jsonl' }] }), e => e.code === 'PLAN_BATTERY_TEST');
+  assert.throws(() => J.batteryUnits({ files: [{ id: 'x', file: 'evals/hard-v1/test.jsonl' }] }), e => e.code === 'PLAN_BATTERY_TEST');
+  // the suite files route to kev.benchmark under Kev's own rule only if every record fits: a unit that does not is read through the server
+  const reads = J.readStages({ tag: 'J1', run: 'jaredpalmer/kev-0.8b@v1.0', reads: units.map(u => ({ ...u, route: { route: 'benchmark', reason: 'suite records are admitted to the training context' } })) });
+  assert.deepEqual(reads.map(s => s.kind), ['kev.benchmark', 'kev.benchmark', 'kev.benchmark']);
 });

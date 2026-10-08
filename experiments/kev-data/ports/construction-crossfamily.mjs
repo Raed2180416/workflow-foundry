@@ -21,7 +21,7 @@
 //   wordings   { X5: [{id, text}] | { slice: [{id, text}] } } the held-out wordings of THIS slice, or of every slice by name (required in
 //              calib-ood, dev-ood, test-ood)
 //   readmeAnchors  the README anchors of the beds (default: README_ANCHORS of crossfamily-bedtype.mjs; tests with stub beds pass theirs)
-import { bedtypeRecords, GENERATOR_VERSION as BEDTYPE_VERSION, heldoutSpans as bedHeldoutSpans, registerHeldout as bedRegisterHeldout } from './crossfamily-bedtype.mjs';
+import { bedtypeRecords, GENERATOR_VERSION as BEDTYPE_VERSION, heldoutSpans as bedHeldoutSpans, registerHeldout as bedRegisterHeldout, registerHeldoutBeds, registerOod } from './crossfamily-bedtype.mjs';
 import { cRecords, C_PORTS, C_SLICES } from './crossfamily-cports.mjs';
 
 export const group = 'construction-crossfamily';
@@ -43,3 +43,4 @@ export async function* records(slice, seeds, opts = {}, ctx) {
 
 export const heldoutSpans = bedHeldoutSpans;
 export const registerHeldout = bedRegisterHeldout;
+export { registerHeldoutBeds, registerOod };

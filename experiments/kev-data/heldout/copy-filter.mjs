@@ -10,17 +10,25 @@
 // collapsed to one token, so a pool line with {S} compares equal to a template with ${S}. Jaccard
 // is |A n B| / |A u B| over the 4-gram sets; a text of fewer than four words is one gram (its
 // whole self), which only matches an identical short string.
+//
+// Span skeletons (added by the 2026-10-08 review): a Jaccard over a whole line or template is diluted when one
+// side is long, so every authored sentence is also compared, by its lib/hash.mjs span skeleton (the masks the
+// span-skeleton registry uses), with every sentence of every corpus string. An equal skeleton fails the text
+// (kind 'skeleton') when the authored sentence has at least SKELETON_MIN_WORDS words and its skeleton keeps at
+// least SKELETON_MIN_CONTENT unmasked words (so "slack: <q>"-style frames that are all masks do not count).
 import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { REPO_ROOT } from '../lib/contracts.mjs';
 import { BED_ALLOWLIST, freezeBeds, frozenBeds } from '../lib/pin.mjs';
-import { canonical, sha256 } from '../lib/hash.mjs';
+import { canonical, sentences, sha256, skeleton, skeletonText } from '../lib/hash.mjs';
+import { defaultMasks } from '../lib/leakage.mjs';
 import { jaccard, ngramSet } from './pools.mjs';
 import { assemble } from './assemble.mjs';
 import { HELDOUT_DIR, AUTHORED_DIR, refreshManifest } from './author.mjs';
 
 export const COPY_THRESHOLD = 0.3;
+export const SKELETON_MIN_WORDS = 5, SKELETON_MIN_CONTENT = 3;
 const TEXT_EXT = /\.(?:mjs|js|cjs|md|json|txt)$/i;
 const MIN_WORDS = 4;
 
@@ -100,23 +108,38 @@ export function textsOf(u) {
   if (u.role === 'type-name') return [u.type_label, u.title];
   return [u.text, u.assumption].filter(Boolean);
 }
-export function runCopyFilter({ units, wordings = [], corpora, threshold = COPY_THRESHOLD }) {
+const contentWords = sk => (sk.replace(/<[a-z]>/g, ' ').match(/\p{L}+/gu) ?? []).length;
+// Skeleton hashes of every sentence of a corpus (the registry's masks).
+export function sentenceSkeletons(strings, masks = defaultMasks()) {
+  const out = new Set();
+  for (const s of strings) for (const x of sentences(s)) out.add(skeleton(x, masks));
+  return out;
+}
+// The sentences of an authored text that count for the skeleton check, with their skeleton hashes.
+export function checkableSentences(text, masks = defaultMasks()) {
+  return sentences(text).filter(x => (x.match(/[\p{L}\p{N}]+/gu) ?? []).length >= SKELETON_MIN_WORDS && contentWords(skeletonText(x, masks)) >= SKELETON_MIN_CONTENT).map(x => skeleton(x, masks));
+}
+export function runCopyFilter({ units, wordings = [], corpora, threshold = COPY_THRESHOLD, masks = defaultMasks() }) {
   const idx = Object.fromEntries(Object.entries(corpora).filter(([, c]) => c.strings.length).map(([k, c]) => [k, buildIndex(c.strings)]));
-  const failing = []; let checked = 0, max = 0;
+  const skel = Object.fromEntries(Object.entries(corpora).filter(([, c]) => c.strings.length).map(([k, c]) => [k, sentenceSkeletons(c.strings, masks)]));
+  const failing = []; let checked = 0, max = 0, skeletonHits = 0;
   const lookup = new Map(Object.entries(corpora).map(([k, c]) => [k, new Set(c.strings.map(s => s.toLowerCase().trim()))]));
   const check = (id, port, role, texts) => {
     for (const t of texts) {
       checked++;
+      const own = checkableSentences(t, masks);
       for (const [k, ix] of Object.entries(idx)) {
         const j = maxOverlap(t, ix); max = Math.max(max, j);
         const exact = role === 'type-name' && t === texts[0] && lookup.get(k).has(t.toLowerCase().trim());
-        if (j > threshold || exact) failing.push({ id, port, role, against: k, jaccard: exact ? 1 : Number(j.toFixed(3)) });
+        const sk = own.some(h => skel[k].has(h));
+        if (sk) skeletonHits++;
+        if (j > threshold || exact || sk) failing.push({ id, port, role, against: k, kind: exact ? 'exact' : j > threshold ? 'jaccard' : 'skeleton', jaccard: exact ? 1 : Number(j.toFixed(3)) });
       }
     }
   };
   for (const u of units) check(u.id, u.port, u.role, textsOf(u));
   for (const w of wordings) check(`${w.port}/${w.id}`, w.port, 'wording', [w.text]);
-  return { threshold, checked, maxJaccard: Number(max.toFixed(3)), failing,
+  return { threshold, skeletonRule: { minWords: SKELETON_MIN_WORDS, minContentWords: SKELETON_MIN_CONTENT, masks: 'lib/leakage.mjs defaultMasks', hits: skeletonHits }, checked, maxJaccard: Number(max.toFixed(3)), failing,
     bedCorpus: { files: corpora.bed?.files ?? 0, strings: corpora.bed?.strings.length ?? 0 },
     trainPools: { present: corpora.trainPools?.present ?? false, files: corpora.trainPools?.files ?? 0, strings: corpora.trainPools?.strings.length ?? 0 } };
 }
