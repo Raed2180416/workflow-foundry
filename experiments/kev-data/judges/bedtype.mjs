@@ -16,11 +16,11 @@ import { loadSpec } from '../lib/contracts.mjs';
 
 export const KIT_VERSION = 'bedtype@1';
 
-// Windows of the task text a state carries (real Qwen3.5 tokens: standard ~450-800, long <= ~3.3K; measured by the
-// group's test, §2.3 rule 6; the contract's budget is 600 typical / 4K max, windowed).
+// Windows of the task text a state carries (real Qwen3.5 tokens: standard p50 ~400 and max ~700, long up to ~3.6K; measured by
+// the group's test, §2.3 rule 6; the contract's budget is 600 typical / 4K max, windowed).
 export const WINDOWS = Object.freeze({
   standard: Object.freeze({ promptChars: 1100, keys: 5, valueChars: 180 }),
-  long: Object.freeze({ promptChars: 3200, keys: 8, valueChars: 520 }),
+  long: Object.freeze({ promptChars: 8000, keys: 9, valueChars: 1100 }),
 });
 // The reference block of a slot-swap state (a second, earlier task shown for reference only).
 export const REFERENCE_WINDOW = Object.freeze({ promptChars: 420 });

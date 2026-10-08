@@ -223,7 +223,13 @@ test('exec: prior_runs counts only runs journaled before the failing run (no rep
     assert.ok(r.failure.priorRuns.length <= at, `${r.key}: prior_runs never counts more than the earlier runs`);
     const s = f1State(r.failure);
     assert.equal(s.prior_runs.passes + s.prior_runs.failures, r.failure.priorRuns.length);
+    // the history that ran is the history that was planned, for every cause: a defect or an unsatisfiable contract that "never passed" would
+    // make "has a passing earlier run" a shortcut for naming those two causes (the earlier passes are runs of the previous workflow version)
+    const planned = [...plans[i].prior.pattern].filter(c => c === 'P').length;
+    assert.equal(r.failure.priorRuns.filter(x => x.ok).length, planned, `${r.key} (${r.cause}): passes in the history`);
   }
+  const hist = outs.filter(r => r.audit && ['defect', 'impossible'].includes(r.cause) && r.failure.priorRuns.length);
+  assert.ok(hist.length >= 6 && hist.some(r => r.failure.priorRuns.some(x => x.ok)), 'defect and impossible rows have histories with passes');
 });
 
 test('no F1 state field holds a current replay, resample or control-build result; a prior_runs-only predictor scores <= majority + 10 pp', async t => {

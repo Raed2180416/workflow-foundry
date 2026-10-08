@@ -184,8 +184,8 @@ const worldKeyOf = (bed, split, difficulty, seed) => `${bed}:${split}:d${difficu
 function wordingsFor(contract, slice, key, opts, { paraphrase = false } = {}) {
   const held = (contract.heldoutWordings?.[slice] ?? 0) > 0;
   if (held) {
-    const list = opts.wordings?.[contract.id] ?? [];
-    if (!list.length) throw fail('HELDOUT_WORDINGS_MISSING', `${contract.id} in ${slice} uses the slice's held-out wordings: pass opts.wordings.${contract.id} = [{id, text}] (the assembly reads them from the held-out store; this generator does not)`);
+    const raw = opts.wordings?.[contract.id], list = (Array.isArray(raw) ? raw : raw?.[slice]) ?? [];
+    if (!list.length) throw fail('HELDOUT_WORDINGS_MISSING', `${contract.id} in ${slice} uses the slice's held-out wordings: pass opts.wordings.${contract.id} = [{id, text}] or {slice: [{id, text}]} (the assembly reads them from the held-out store; this generator does not)`);
     if (paraphrase) {
       if (list.length < 2) throw fail('HELDOUT_WORDINGS_MISSING', `a paraphrase record needs two ${slice} wordings of ${contract.id}`);
       const a = hnum(`${key}|pw`) % list.length, b = (a + 1 + (hnum(`${key}|pw2`) % (list.length - 1))) % list.length;
@@ -239,7 +239,7 @@ function makeRecord(env, c) {
   const heldOut = [...(heldA ? [`description:${c.aBed}`] : []), ...(heldS ? [`prompt:${st.bed}`] : [])];
   const meta = {
     family: `bedtype:${famBed}`, bed: famBed, variant: c.variant, labelSource: st.bed === null ? 'composer' : 'generator', needsWorldKnowledge: false,
-    wordingId: ws.map(w => w.id).join('+'), formId: skeleton(assumption), surface: { source: c.surfaceSource ?? 'bed+authored-framing', slice, lineHash: spanHash(assumption) },
+    wordingId: ws.map(w => w.id).join('+'), formId: skeleton(assumption), surface: { source: st.bed === null ? 'authored-composer' : 'bed+authored-framing', slice, lineHash: spanHash(assumption) },
     counterfactual: c.counterfactual ?? null, pairId: c.pairId ?? null, masks: st.masks, axis: c.axis, crossType, hard: c.label !== 'not_stated' && st.bed !== null && isHard(c.aBed, st.bed), hardDeclared: st.bed !== null && isDeclaredHard(c.aBed, st.bed),
     heldOut,
     bedtype: { assumptionBed: c.aBed, assumptionSource: c.atext.source, assumptionText: c.atext.text, framing: c.framing.id, negated: Boolean(c.negated), stateBed: st.bed, stateSeed: st.seed, stateDifficulty: st.difficulty, stateWorldKey: st.worldKey, stateWorldHash: st.worldHash,
@@ -379,6 +379,25 @@ export function registerHeldout(registry, recs) {
 // The texts of the held-out family a train-like file must never contain (descriptions, README paragraphs): the question side.
 export function heldoutTexts(facts) {
   return HELD_OUT_BEDS.flatMap(b => facts[b].texts.map(t => ({ bed: b, source: t.source, text: t.text.replace(/[.\s]+$/, '') })));
+}
+
+// The held-out family seen from the beds themselves: the sentences of the kinetics and runbook prompt heads over several dev worlds
+// (so the registry covers the bed's own templates, not only the worlds one build happened to draw) and the held-out descriptions
+// and README paragraphs. The assembly registers them with registry.add(text, {slice: 'heldout', ...}); a sentence that also occurs
+// in a train bed's prompt is not family-specific and is left out.
+export function heldoutHeadSpans(facts, { seeds = Array.from({ length: 30 }, (_, i) => 401 + i), difficulties = [1, 2, 3, 4, 5] } = {}) {
+  const trainSkel = trainSentenceSkeletons(facts), out = [];
+  for (const bed of HELD_OUT_BEDS) for (const d of difficulties) for (const seed of seeds) {
+    const head = taskHead(facts[bed].generate({ seed, split: 'dev', difficulty: d })), masks = maskTerms(head);
+    for (const text of sentences(promptPart(head))) if (text.length >= 40 && !trainSkel.has(skeleton(text))) out.push({ text, bed, masks, kind: 'family-span' });
+  }
+  for (const t of heldoutTexts(facts)) for (const text of sentences(t.text)) if (text.split(/\s+/).length >= 6) out.push({ text, bed: t.bed, masks: { names: [], markers: [] }, kind: 'family-description' });
+  return out;
+}
+export function registerHeldoutBeds(registry, facts, opts) {
+  let n = 0;
+  for (const x of heldoutHeadSpans(facts, opts)) { registry.add(x.text, { slice: 'heldout', source: 'crossfamily-bedtype', port: 'X5', kind: x.kind, names: x.masks.names, markers: x.masks.markers }); n++; }
+  return n;
 }
 export function stats(records) {
   const out = { records: records.length, labels: {}, axes: {}, hard: 0, violated: 0, crossType: 0, forms: new Set(), states: new Set() };

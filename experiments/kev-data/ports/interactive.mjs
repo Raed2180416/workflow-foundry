@@ -486,8 +486,10 @@ async function* gameqaX1(G, qa, seed, difficulty, perWorld) {
   for (const x of chosen) {
     const state = kits.gameqa.X1.buildState(task, x.slots);
     const key = `${G.slice}|X1|${seed}|${x.id}`;
-    yield makeRecord({ contract: G.contracts.X1, slice: G.slice, opts: G.opts, key, state, label: x.label,
+    const rec = makeRecord({ contract: G.contracts.X1, slice: G.slice, opts: G.opts, key, state, label: x.label,
       meta: meta({ variant: 'clean', formId: x.form, labelSource: x.labelSource, surface: { source: x.source, slice: G.slice, lineHash: spanHash(x.slots.append ?? x.slots.text ?? state.text) }, kit: { port: 'X1', slots: x.slots }, x1: { kind: x.kind, hard: x.hard, addressee: x.addressee, line: x.line ?? null } }) });
+    yield rec;
+    if (G.test && unit(`${key}|para`) < G.share.paraphrase) { const p = paraphraseOf(rec, G.contracts.X1, G.slice, G.opts, key); if (p) yield p; }
   }
   // the long variant: the span inside a window of the tracker (about 6 reports)
   if (unit(`${G.slice}|X1long|${seed}`) < (G.opts.longShare ?? 0.15) && reports.length >= 6) {
@@ -540,8 +542,11 @@ async function* gridquestX1(G, mod, seed, difficulty, perWorld) {
   for (const x of chosen) {
     const long = x.slots.observation && unit(`${G.slice}|X1gqlong|${seed}|${x.id}`) < (G.opts.longShare ?? 0.15);
     const slots = long ? { ...x.slots, long: true } : x.slots, state = kits.gridquest.X1.buildState(task, slots);
-    yield makeRecord({ contract: G.contracts.X1, slice: G.slice, opts: G.opts, key: `${G.slice}|X1gq|${seed}|${x.id}`, state, label: x.label,
+    const key = `${G.slice}|X1gq|${seed}|${x.id}`;
+    const rec = makeRecord({ contract: G.contracts.X1, slice: G.slice, opts: G.opts, key, state, label: x.label,
       meta: meta({ variant: long ? 'long' : 'clean', formId: x.form, surface: { source: 'bed', slice: G.slice, lineHash: spanHash(x.sentence) }, kit: { port: 'X1', slots }, x1: { kind: x.kind, hard: x.kind === 'ordinary' ? null : 'in-world-text', addressee: QA.hasAddressee(x.sentence), span: x.sentence } }) });
+    yield rec;
+    if (G.test && !long && unit(`${key}|para`) < G.share.paraphrase) { const p = paraphraseOf(rec, G.contracts.X1, G.slice, G.opts, key); if (p) yield p; }
   }
 }
 
@@ -662,7 +667,7 @@ async function* recordsOf(G, slice, seeds, opts, ctx) {
     if (jobs.includes('Q4:gridquest') && perWorld['Q4:gridquest']) yield* gridquestQ4(G, mod, seed, GQ.difficultyOf(seed, diffs.gridquest), perWorld['Q4:gridquest']);
     if (jobs.includes('Q1') && perWorld.Q1 && smoke('Q1', seed)) yield* gridquestQ1(G, mod, seed, GQ.difficultyOf(seed, diffs.gridquest), perWorld.Q1);
     if (jobs.includes('Q2') && perWorld.Q2 && smoke('Q2', seed)) yield* gridquestQ2(G, mod, seed, GQ.difficultyOf(seed, diffs.gridquest.filter(d => d >= 2)), perWorld.Q2);
-    if (jobs.includes('X1:gridquest') && perWorld['X1:gridquest']) yield* gridquestX1(G, mod, seed, GQ.difficultyOf(seed, diffs.gridquest.filter(d => d >= 3)), perWorld['X1:gridquest']);
+    if (jobs.includes('X1:gridquest') && perWorld['X1:gridquest']) yield* gridquestX1(G, mod, seed, GQ.difficultyOf(seed, diffs.gridquest.filter(d => d >= 4)), perWorld['X1:gridquest']);
     if (jobs.includes('X1:gameqa') && perWorld['X1:gameqa']) yield* gameqaX1(G, qa, seed, QA.difficultyOf(seed, diffs.gameqa.filter(d => d >= 3)), perWorld['X1:gameqa']);
     if (jobs.includes('X6:gameqa') && perWorld['X6:gameqa'] && smoke('X6', seed)) yield* gameqaX6(G, qa, seed, QA.difficultyOf(seed, diffs.gameqa), perWorld['X6:gameqa']);
     if (jobs.includes('Q5:gameqa') && perWorld['Q5:gameqa'] && smoke('Q5', seed)) yield* gameqaQ5(G, qa, seed, QA.difficultyOf(seed, diffs.gameqa), perWorld['Q5:gameqa']);
@@ -679,10 +684,14 @@ const TEST_LIKE_SLICES = new Set(['test-in', 'test-ood']);
 export async function* records(slice, seeds, opts = {}, ctx) {
   const G = makeContext(slice, opts, ctx), seen = new Set();
   for await (const r of recordsOf(G, slice, seeds, opts, ctx)) {
-    if (TEST_LIKE_SLICES.has(slice) && r.meta.variant !== 'paraphrase' && (r.meta.pairId === undefined || r.meta.pairId === null)) {
-      const k = `${Object.keys(r.questions).map(q => q.split('~')[0]).sort().join('+')}|${stateHash(r.state)}`;
-      if (seen.has(k)) { bump(G, 'test:repeated-state'); continue; }
-      seen.add(k);
+    if (TEST_LIKE_SLICES.has(slice)) {
+      const ports = Object.keys(r.questions).map(q => q.split('~')[0]).sort().join('+');
+      // a state asked once per port (rule 5); a paraphrase cluster is the one exception, and one per state
+      const k = r.meta.variant === 'paraphrase' ? `paraphrase|${ports}|${stateHash(r.state)}` : (r.meta.pairId === undefined || r.meta.pairId === null) ? `${ports}|${stateHash(r.state)}` : null;
+      if (k !== null) {
+        if (seen.has(k)) { bump(G, 'test:repeated-state'); continue; }
+        seen.add(k);
+      }
     }
     yield r;
   }

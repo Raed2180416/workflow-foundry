@@ -662,6 +662,11 @@ test('X1 gridquest: a sentence that a room description says twice is skipped, no
   assert.ok(recs.length > 400);
   // every kept span stands once in the text the judge reads (a long state is the whole description)
   for (const r of recs.filter(x => x.meta.x1.span && x.meta.variant !== 'long')) assert.equal(r.state.text, r.meta.x1.span);
+  // paraphrase clusters (test-ood): Q0 and two held-out wordings on one state, one cluster per state
+  const para = recs.filter(r => r.meta.variant === 'paraphrase');
+  assert.ok(para.length > 20, `${para.length} paraphrase clusters`);
+  assert.ok(para.every(r => Object.keys(r.questions).length === 3));
+  assert.equal(new Set(para.map(r => stateHash(r.state))).size, para.length, 'one paraphrase cluster per state');
 });
 
 test('states: every state <= 8192 real tokens and fits Kev; per-port p50/p90/max are printed (the budgets of §1.1)', async t => {

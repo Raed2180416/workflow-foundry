@@ -92,11 +92,16 @@ export async function runScenario(rt, plan) {
     const runs = [];                                    // earlier runs: { ok, code }
     let lastPassFp = null;
     const targetKey = recipe.targetRoot ? 'root' : plan.shape.wrap === 'map' ? `root/${plan.ids.map}:0/${plan.ids.core}` : `root/${plan.ids.core}`;
-    // earlier runs of the node
+    // earlier runs of the node. A defect or an unsatisfiable contract is in the workflow itself, so a run that passed was a run of the
+    // previous version (the same workflow before the edit that broke it): without that, those two causes would be the only ones that never
+    // have a passing run in their history, and "has a passing run" would name them.
+    const workflowLevel = rb.fault.type === 'none' && plan.cause !== 'routed';
+    let prevId = null;
     for (let i = 0; i < plan.prior.pattern.length; i++) {
       const wantPass = plan.prior.pattern[i] === 'P';
       if (stochastic) world.force(wantPass ? 'pass' : 'fail'); else world.setPhase(wantPass ? 'healthy' : 'faulty');
-      const sum = await execute(world, plan.workflowId, input, { salt: `prior${i}`, kind: 'prior' });
+      if (wantPass && workflowLevel && !prevId) { const prev = buildWorkflow(plan, rb, { fixed: true }); prev.id = `${plan.workflowId}-prev`; world.foundry.save(prev); prevId = prev.id; }
+      const sum = await execute(world, wantPass && workflowLevel ? prevId : plan.workflowId, input, { salt: `prior${i}`, kind: 'prior' });
       out.stats.runs++;
       const oc = outcomeIn(sum, targetKey);
       if (oc === 'pass') { runs.push({ ok: true, code: null }); lastPassFp = world.fingerprint(); }
