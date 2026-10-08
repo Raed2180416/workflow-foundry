@@ -62,8 +62,10 @@ Every phase still ends with a capability number against a simple baseline and a
   two exceptions:
   - **Usage rule (D14):** a proposal awaiting the owner, not adopted. The owner chose
     "Full speed".
-  - **Kev (D13):** dataset building continues; laptop training waits for the
-    Kev-vs-Haiku-5.5 comparison; the hosted $450 approval is held.
+  - **Kev (D13):** superseded by the owner's full approval on 2026-10-08 ("eveything is
+    okayed"): dataset building continues, laptop training is approved once the wave-1
+    datasets pass review, the Kev-vs-Haiku-5.5 comparison runs alongside as the promotion
+    gate, and the hosted Kev budget (up to $450 after a 50-call pilot) is approved.
 - Lane reports:
   - [01 requirements](research/review-20261007/01-requirements.md);
   - [02 IR expressiveness](research/review-20261007/02-ir-expressiveness.md);
@@ -83,7 +85,7 @@ Every phase still ends with a capability number against a simple baseline and a
 | Corpus and R-bench | [Workflow corpus](research/corpus-20261006/COVERAGE.md): 1,342 items from 27 platforms. Agent-framework slice: 220 items from 22 framework sources (08:45), being integrated now. R-bench: a 30-item shortlist ([selection](research/replicate-20261008/SELECTION.md)); the pilot (`experiments/replicate/`) is in progress, with no oracle frozen yet | `research/corpus-20261006/`, `research/replicate-20261008/` |
 | Beds | 9 Tier-A families and 4 sealed families. The sealed families have never been used. Audited: records 3.0.0, incident 4.2.0, synth 3.0.0, kinetics 4.0.0, gridquest 2.0.0, ownerci 1.1.0 and codefix 1.1.0 (partial). Not audited: gameqa, runbook | `beds/*/AUDIT.md` |
 | 3 Cheap execution (C1) | Assignment search is built. Its design still names Haiku 4.5 and needs the Haiku 5.5 update ([C0 dev report §6.4](research/construction-20261006/REPORT-dev.md)) | [design draft](research/distill-20261007/DESIGN.md) |
-| 4 Typed judgments | The Kev engine, laptop bridge and contracts library are built; nothing is trained. Kev dataset building continues (`experiments/kev-data/`). Laptop training waits for the Kev-vs-Haiku-5.5 comparison; the hosted $450 approval is held (THESIS D13) | `src/judgment.mjs`, [Kev research](research/kev-20261007/) |
+| 4 Typed judgments | The Kev engine, laptop bridge and contracts library are built; nothing is trained. Kev dataset building continues (`experiments/kev-data/`). Wave-A datasets (9 groups) built and adversarially reviewed (340/341 tests); wave B (incident, synth) in progress. Laptop training is approved (owner, 2026-10-08) once the datasets pass review, with the Kev-vs-Haiku-5.5 comparison as the promotion gate (THESIS D13 as superseded) | `src/judgment.mjs`, [Kev research](research/kev-20261007/) |
 | 5–6 | Not started. `call` (IR stage S1) and the `wide` operator are planned for week 6 of the plan | see [ROADMAP §5](docs/ROADMAP.md) |
 
 **Layers of the vision** (moved from synthesis §2 and updated; [M] measured, [D] documented):
