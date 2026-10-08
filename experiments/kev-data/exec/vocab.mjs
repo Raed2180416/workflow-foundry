@@ -73,13 +73,13 @@ export const PERSISTENT_DOWN = Object.freeze([
 export const MODEL_TRANSIENT = Object.freeze([
   { code: 'MODEL_RATE_LIMIT', msg: () => 'claude CLI exited 1: API Error: 429 {"type":"error","error":{"type":"rate_limit_error"}}' },
   { code: 'MODEL_RATE_LIMIT', msg: () => 'claude CLI exited 1: API Error: 529 {"type":"error","error":{"type":"overloaded_error"}}' },
-  { code: 'MODEL_TIMEOUT', msg: () => 'claude CLI Subprocess cancelled after the call timeout' },
+  { code: 'MODEL_TIMEOUT', msg: () => 'claude CLI call cancelled after the call timeout' },
   { code: 'MODEL_TIMEOUT', msg: () => 'request aborted after 120000 ms (slot busy)' },
   { code: 'MODEL_UNAVAILABLE', msg: () => 'claude CLI exited 1: API Error: Connection error. (temporary DNS failure resolving the API host, EAI_AGAIN)' },
   { code: 'MODEL_UNAVAILABLE', msg: () => 'fetch failed: read ECONNRESET (socket hang up) while posting to the model gateway' },
 ]);
 export const MODEL_DOWN = Object.freeze([
-  { code: 'MODEL_UNAVAILABLE', msg: () => 'llama-server was not healthy within 120000 ms (model file missing: /opt/models/*.gguf)' },
+  { code: 'MODEL_UNAVAILABLE', msg: () => 'local model server did not become healthy within 120000 ms (model file missing: /opt/models/*.gguf)' },
   { code: 'MODEL_UNAVAILABLE', msg: () => 'claude CLI exited 1: Invalid API key. Please run /login' },
   { code: 'MODEL_UNAVAILABLE', msg: s => `connect ECONNREFUSED ${s.host}:${s.port}` },
   { code: 'MODEL_UNAVAILABLE', msg: () => 'Killed (exit 137): the process hit its memory limit while loading the model' },

@@ -48,7 +48,8 @@ export const VARIANTS = Object.freeze(['T1', 'T2', 'T3']);
 // T1 is judged on how the original behaves (including on odd input), T2 and T3 on the maintainers' intent (README section 3).
 export const MODE_OF = Object.freeze({ T1: 'original', T2: 'intent', T3: 'intent' });
 
-// T3 target as fractions of the original's measured numbers (fixtures/baseline.json). Frozen with the fixtures.
-export const T3_TARGET_RULE = Object.freeze({ modelUsdMax: 0, externalCallsMax: 1.0, latencyMsMax: 1.0 });
+// T3 target: no model call per run, and the solver's own wall time no longer than the original's median (fixtures/baseline.json). Frozen with the fixtures.
+// The host's fetch and pull-request calls are the same for every plan, so they are not part of the target.
+export const T3_TARGET_RULE = Object.freeze({ modelUsdMax: 0, latencyMsMax: 1.0 });
 
 export const STATUSES = Object.freeze(['updated', 'unchanged', 'failed']);

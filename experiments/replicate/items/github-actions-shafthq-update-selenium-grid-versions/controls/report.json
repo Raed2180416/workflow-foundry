@@ -1,0 +1,612 @@
+{
+ "schema": "rbench-item-controls/1",
+ "item": "github-actions:shafthq/shaft_engine/.github/workflows/update-selenium-grid-versions.yml",
+ "harnessVersion": "0.1.0",
+ "host": {
+  "node": "v24.21.0",
+  "cpus": 4,
+  "isolation": "mount-ns",
+  "dockerCompose": "5.6.0"
+ },
+ "originalExecuted": {
+  "runs": 140,
+  "passOriginalMode": 140,
+  "passIntentMode": 90,
+  "wallMs": {
+   "n": 140,
+   "median": 358,
+   "p90": 589,
+   "mean": 362,
+   "max": 920
+  },
+  "byKind": {
+   "bump-all": {
+    "runs": 10,
+    "originalMode": 10,
+    "intentMode": 10,
+    "intentViolations": {},
+    "portIdentical": 10
+   },
+   "bump-some": {
+    "runs": 10,
+    "originalMode": 10,
+    "intentMode": 10,
+    "intentViolations": {},
+    "portIdentical": 10
+   },
+   "no-change": {
+    "runs": 10,
+    "originalMode": 10,
+    "intentMode": 10,
+    "intentViolations": {},
+    "portIdentical": 10
+   },
+   "prerelease-reducible": {
+    "runs": 10,
+    "originalMode": 10,
+    "intentMode": 10,
+    "intentViolations": {},
+    "portIdentical": 10
+   },
+   "open-pr-update": {
+    "runs": 10,
+    "originalMode": 10,
+    "intentMode": 10,
+    "intentViolations": {},
+    "portIdentical": 10
+   },
+   "open-pr-no-change": {
+    "runs": 10,
+    "originalMode": 10,
+    "intentMode": 10,
+    "intentViolations": {},
+    "portIdentical": 10
+   },
+   "repo-missing-image": {
+    "runs": 10,
+    "originalMode": 10,
+    "intentMode": 10,
+    "intentViolations": {},
+    "portIdentical": 10
+   },
+   "duplicate-lines": {
+    "runs": 10,
+    "originalMode": 10,
+    "intentMode": 10,
+    "intentViolations": {},
+    "portIdentical": 10
+   },
+   "prerelease-unreducible": {
+    "runs": 10,
+    "originalMode": 10,
+    "intentMode": 10,
+    "intentViolations": {},
+    "portIdentical": 10
+   },
+   "reference-malformed": {
+    "runs": 10,
+    "originalMode": 10,
+    "intentMode": 0,
+    "intentViolations": {
+     "MESSAGE": 10
+    },
+    "portIdentical": 10
+   },
+   "reference-missing-image": {
+    "runs": 10,
+    "originalMode": 10,
+    "intentMode": 0,
+    "intentViolations": {
+     "MESSAGE": 10
+    },
+    "portIdentical": 10
+   },
+   "reference-unreachable": {
+    "runs": 10,
+    "originalMode": 10,
+    "intentMode": 0,
+    "intentViolations": {
+     "MESSAGE": 10
+    },
+    "portIdentical": 10
+   },
+   "commented-image-line": {
+    "runs": 10,
+    "originalMode": 10,
+    "intentMode": 0,
+    "intentViolations": {
+     "VERSIONS": 10,
+     "FILE_CONTENT": 10,
+     "PR_COMMIT_MESSAGE": 10,
+     "PR_BODY": 10
+    },
+    "portIdentical": 10
+   },
+   "quoted-image-refs": {
+    "runs": 10,
+    "originalMode": 10,
+    "intentMode": 0,
+    "intentViolations": {
+     "STATUS": 4,
+     "STATUS_CLAIM": 4,
+     "VERSIONS": 10,
+     "PR_UNEXPECTED": 4,
+     "FILE_CONTENT": 6,
+     "PR_COMMIT_MESSAGE": 5,
+     "PR_BODY": 5
+    },
+    "portIdentical": 10
+   }
+  }
+ },
+ "portVsExecuted": {
+  "compared": 140,
+  "identicalEffects": 140,
+  "differences": []
+ },
+ "mutants": [
+  {
+   "id": "prerelease-filter-dropped",
+   "describe": "the four \"if echo ... grep -qiE nightly|beta|dev\" blocks are removed: pre-release tags are used as they are",
+   "instances": 28,
+   "failedOn": [
+    "prerelease-reducible",
+    "prerelease-unreducible"
+   ],
+   "passedOn": [
+    "bump-all",
+    "bump-some",
+    "no-change",
+    "open-pr-update",
+    "open-pr-no-change",
+    "repo-missing-image",
+    "duplicate-lines",
+    "reference-malformed",
+    "reference-missing-image",
+    "reference-unreachable",
+    "commented-image-line",
+    "quoted-image-refs"
+   ],
+   "failedCount": 4,
+   "wrongVerdicts": []
+  },
+  {
+   "id": "pr-guard-inverted",
+   "describe": "the Create Pull Request step runs when nothing changed instead of when something did",
+   "instances": 28,
+   "failedOn": [
+    "bump-all",
+    "bump-some",
+    "open-pr-update",
+    "repo-missing-image",
+    "duplicate-lines",
+    "commented-image-line",
+    "quoted-image-refs",
+    "prerelease-reducible"
+   ],
+   "passedOn": [
+    "no-change",
+    "prerelease-reducible",
+    "open-pr-no-change",
+    "prerelease-unreducible",
+    "reference-malformed",
+    "reference-missing-image",
+    "reference-unreachable"
+   ],
+   "failedCount": 15,
+   "wrongVerdicts": []
+  },
+  {
+   "id": "only-chrome-updated",
+   "describe": "the Edge, Firefox and Hub update blocks are removed: only Chrome is ever rewritten",
+   "instances": 28,
+   "failedOn": [
+    "bump-all",
+    "bump-some",
+    "open-pr-update",
+    "repo-missing-image",
+    "duplicate-lines",
+    "commented-image-line",
+    "quoted-image-refs"
+   ],
+   "passedOn": [
+    "no-change",
+    "prerelease-reducible",
+    "open-pr-no-change",
+    "prerelease-unreducible",
+    "reference-malformed",
+    "reference-missing-image",
+    "reference-unreachable"
+   ],
+   "failedCount": 14,
+   "wrongVerdicts": []
+  },
+  {
+   "id": "last-match-instead-of-first",
+   "describe": "step 2 reads the LAST matching line of the reference (tail -1) instead of the first",
+   "instances": 28,
+   "failedOn": [
+    "duplicate-lines",
+    "commented-image-line"
+   ],
+   "passedOn": [
+    "bump-all",
+    "bump-some",
+    "no-change",
+    "prerelease-reducible",
+    "open-pr-update",
+    "open-pr-no-change",
+    "repo-missing-image",
+    "prerelease-unreducible",
+    "reference-malformed",
+    "reference-missing-image",
+    "reference-unreachable",
+    "quoted-image-refs"
+   ],
+   "failedCount": 4,
+   "wrongVerdicts": []
+  },
+  {
+   "id": "sed-first-occurrence-only",
+   "describe": "EQUIVALENT variant: the four seds lose their g flag; no instance has two occurrences of an image on one line, so every instance must still pass (the oracle must not reject a different but equivalent workflow)",
+   "instances": 28,
+   "failedOn": [],
+   "passedOn": [
+    "bump-all",
+    "bump-some",
+    "no-change",
+    "prerelease-reducible",
+    "open-pr-update",
+    "open-pr-no-change",
+    "repo-missing-image",
+    "duplicate-lines",
+    "prerelease-unreducible",
+    "reference-malformed",
+    "reference-missing-image",
+    "reference-unreachable",
+    "commented-image-line",
+    "quoted-image-refs"
+   ],
+   "failedCount": 0,
+   "wrongVerdicts": []
+  },
+  {
+   "id": "validation-removed",
+   "describe": "the docker compose validation step is removed: a corrupted file goes to review",
+   "instances": 28,
+   "failedOn": [
+    "reference-malformed",
+    "reference-missing-image"
+   ],
+   "passedOn": [
+    "bump-all",
+    "bump-some",
+    "no-change",
+    "prerelease-reducible",
+    "open-pr-update",
+    "open-pr-no-change",
+    "repo-missing-image",
+    "duplicate-lines",
+    "prerelease-unreducible",
+    "reference-unreachable",
+    "commented-image-line",
+    "quoted-image-refs"
+   ],
+   "failedCount": 4,
+   "wrongVerdicts": []
+  },
+  {
+   "id": "branch-input-removed",
+   "describe": "the branch input is removed: the action falls back to its default branch, so an open bot pull request is never updated",
+   "instances": 28,
+   "failedOn": [
+    "bump-all",
+    "bump-some",
+    "open-pr-update",
+    "repo-missing-image",
+    "duplicate-lines",
+    "commented-image-line",
+    "quoted-image-refs",
+    "prerelease-reducible"
+   ],
+   "passedOn": [
+    "no-change",
+    "prerelease-reducible",
+    "open-pr-no-change",
+    "prerelease-unreducible",
+    "reference-malformed",
+    "reference-missing-image",
+    "reference-unreachable"
+   ],
+   "failedCount": 15,
+   "wrongVerdicts": []
+  },
+  {
+   "id": "labels-removed",
+   "describe": "the labels input is removed",
+   "instances": 28,
+   "failedOn": [
+    "bump-all",
+    "bump-some",
+    "open-pr-update",
+    "repo-missing-image",
+    "duplicate-lines",
+    "commented-image-line",
+    "quoted-image-refs",
+    "prerelease-reducible"
+   ],
+   "passedOn": [
+    "no-change",
+    "prerelease-reducible",
+    "open-pr-no-change",
+    "prerelease-unreducible",
+    "reference-malformed",
+    "reference-missing-image",
+    "reference-unreachable"
+   ],
+   "failedCount": 15,
+   "wrongVerdicts": []
+  },
+  {
+   "id": "pr-without-change",
+   "describe": "the job always reports changes and touches the file (\"last checked\"), so a pull request is opened every week",
+   "instances": 28,
+   "failedOn": [
+    "no-change",
+    "prerelease-reducible",
+    "open-pr-no-change"
+   ],
+   "passedOn": [
+    "bump-all",
+    "bump-some",
+    "open-pr-update",
+    "repo-missing-image",
+    "duplicate-lines",
+    "prerelease-unreducible",
+    "reference-malformed",
+    "reference-missing-image",
+    "reference-unreachable",
+    "commented-image-line",
+    "quoted-image-refs",
+    "prerelease-reducible"
+   ],
+   "failedCount": 5,
+   "wrongVerdicts": []
+  },
+  {
+   "id": "wrong-reference-url",
+   "describe": "the curl URL names docker-compose-v2.yml: a call the recorded mock does not serve (the curl shim blocks it)",
+   "instances": 28,
+   "failedOn": [
+    "bump-all",
+    "bump-some",
+    "no-change",
+    "prerelease-reducible",
+    "open-pr-update",
+    "open-pr-no-change",
+    "repo-missing-image",
+    "duplicate-lines",
+    "prerelease-unreducible",
+    "reference-malformed",
+    "reference-missing-image",
+    "reference-unreachable",
+    "commented-image-line",
+    "quoted-image-refs"
+   ],
+   "passedOn": [],
+   "failedCount": 28,
+   "wrongVerdicts": []
+  }
+ ],
+ "referenceSolves": {
+  "T1.d1": "28/28",
+  "T1.d2": "28/28",
+  "T1.d3": "28/28",
+  "T1.d4": "28/28",
+  "T1.d5": "28/28",
+  "T2.d1": "28/28",
+  "T2.d2": "28/28",
+  "T2.d3": "28/28",
+  "T2.d4": "28/28",
+  "T2.d5": "28/28",
+  "T3.d1": "28/28",
+  "T3.d2": "28/28",
+  "T3.d3": "28/28",
+  "T3.d4": "28/28",
+  "T3.d5": "28/28"
+ },
+ "badControls": {
+  "empty": {
+   "applied": 420,
+   "rejected": 420,
+   "meanScore": 0
+  },
+  "do-nothing": {
+   "applied": 420,
+   "rejected": 420,
+   "meanScore": 0.41
+  },
+  "corrupted": {
+   "applied": 420,
+   "rejected": 420,
+   "meanScore": 0.81
+  },
+  "shuffled-file": {
+   "applied": 247,
+   "rejected": 247,
+   "meanScore": 0.93
+  },
+  "only-chrome-updated": {
+   "applied": 223,
+   "rejected": 223,
+   "meanScore": 0.73
+  },
+  "wrong-branch": {
+   "applied": 247,
+   "rejected": 247,
+   "meanScore": 0.44
+  },
+  "versions-misreported": {
+   "applied": 363,
+   "rejected": 363,
+   "meanScore": 0.9
+  },
+  "pr-without-change": {
+   "applied": 116,
+   "rejected": 116,
+   "meanScore": 0.5
+  },
+  "prerelease-filter-dropped": {
+   "applied": 60,
+   "rejected": 60,
+   "meanScore": 0.55
+  },
+  "error-swallowed": {
+   "applied": 57,
+   "rejected": 57,
+   "meanScore": 0.53
+  },
+  "blanked-tags": {
+   "applied": 24,
+   "rejected": 24,
+   "meanScore": 0.36
+  },
+  "improved-instead-of-original": {
+   "applied": 4,
+   "rejected": 4,
+   "meanScore": 0.62
+  },
+  "transcription-of-the-original": {
+   "applied": 32,
+   "rejected": 32,
+   "meanScore": 0.79
+  }
+ },
+ "foundryCodeNode": {
+  "runs": 14,
+  "pass": 14,
+  "wallMs": {
+   "n": 14,
+   "median": 1672,
+   "p90": 1951,
+   "mean": 1717,
+   "max": 2509
+  },
+  "originalMedianWallMs": 358,
+  "runsWithinT3Latency": 0,
+  "rows": [
+   {
+    "kind": "bump-all",
+    "ran": true,
+    "pass": true,
+    "wallMs": 1564,
+    "foundryVerdict": "unverified",
+    "costUsd": 0
+   },
+   {
+    "kind": "bump-some",
+    "ran": true,
+    "pass": true,
+    "wallMs": 1519,
+    "foundryVerdict": "unverified",
+    "costUsd": 0
+   },
+   {
+    "kind": "no-change",
+    "ran": true,
+    "pass": true,
+    "wallMs": 1951,
+    "foundryVerdict": "unverified",
+    "costUsd": 0
+   },
+   {
+    "kind": "prerelease-reducible",
+    "ran": true,
+    "pass": true,
+    "wallMs": 1633,
+    "foundryVerdict": "unverified",
+    "costUsd": 0
+   },
+   {
+    "kind": "open-pr-update",
+    "ran": true,
+    "pass": true,
+    "wallMs": 1827,
+    "foundryVerdict": "unverified",
+    "costUsd": 0
+   },
+   {
+    "kind": "open-pr-no-change",
+    "ran": true,
+    "pass": true,
+    "wallMs": 2509,
+    "foundryVerdict": "unverified",
+    "costUsd": 0
+   },
+   {
+    "kind": "repo-missing-image",
+    "ran": true,
+    "pass": true,
+    "wallMs": 1629,
+    "foundryVerdict": "unverified",
+    "costUsd": 0
+   },
+   {
+    "kind": "duplicate-lines",
+    "ran": true,
+    "pass": true,
+    "wallMs": 1672,
+    "foundryVerdict": "unverified",
+    "costUsd": 0
+   },
+   {
+    "kind": "prerelease-unreducible",
+    "ran": true,
+    "pass": true,
+    "wallMs": 1806,
+    "foundryVerdict": "unverified",
+    "costUsd": 0
+   },
+   {
+    "kind": "reference-malformed",
+    "ran": true,
+    "pass": true,
+    "wallMs": 1766,
+    "foundryVerdict": "unverified",
+    "costUsd": 0
+   },
+   {
+    "kind": "reference-missing-image",
+    "ran": true,
+    "pass": true,
+    "wallMs": 1515,
+    "foundryVerdict": "unverified",
+    "costUsd": 0
+   },
+   {
+    "kind": "reference-unreachable",
+    "ran": true,
+    "pass": true,
+    "wallMs": 1714,
+    "foundryVerdict": "unverified",
+    "costUsd": 0
+   },
+   {
+    "kind": "commented-image-line",
+    "ran": true,
+    "pass": true,
+    "wallMs": 1716,
+    "foundryVerdict": "unverified",
+    "costUsd": 0
+   },
+   {
+    "kind": "quoted-image-refs",
+    "ran": true,
+    "pass": true,
+    "wallMs": 1223,
+    "foundryVerdict": "unverified",
+    "costUsd": 0
+   }
+  ]
+ }
+}

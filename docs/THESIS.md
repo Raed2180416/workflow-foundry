@@ -4,16 +4,35 @@
 [`research/landscape-20261006/`](../research/landscape-20261006/) (R01–R11 below).
 Read this before [ROADMAP.md](ROADMAP.md), which turns it into a buildable plan.*
 
+*Amended 2026-10-08 (design review): T-1 and T-2 (§1), T-3 (§2), T-4 and T-5 (§4), T-6 (§10),
+as proposed in
+[`research/review-20261007/ROADMAP-AMENDMENTS.md`](../research/review-20261007/ROADMAP-AMENDMENTS.md).
+They apply the default owner decisions of
+[`00-SYNTHESIS.md`](../research/review-20261007/00-SYNTHESIS.md) §6, with two exceptions
+recorded in §10: the Kev row (D13) records the decision taken instead of the default pause, and
+the usage rule (D14) is a proposal awaiting the owner, not adopted, because the owner chose
+"Full speed".*
+
 ## 1. The answer in one paragraph
 
 Foundry gives agents the ability to **construct small, bounded, typed workflows for a
 specific task**, then run them durably, adapt them while they run, judge them against
 contracts the workflow cannot game, and **keep only the few that earn reuse**. Code owns
-procedure and models make narrow judgments, so these workflows let **cheap open-weight
-models do work that today needs a frontier agent**, and they make agent work
-inspectable and repairable. **ARC and AMP are the harness. Foundry is the workflow layer
+procedure and models make narrow judgments, so these workflows let **cheap models (Haiku
+5.5 today; open-weight models once a GPU route exists) do work that today needs a frontier
+agent**, and they make agent work inspectable and repairable. The goal is the best possible
+workflow for any task; for many tasks the best workflow is none, one call or one agent, and
+the need router says so. **ARC and AMP are the harness. Foundry is the workflow layer
 inside it.** It is not a giant meta-harness to evolve, a general agent loop, or a
 LangGraph/n8n competitor.
+
+**The owner's ambition (2026-10-07), in his words.** "a mini harness … something that can
+allow us to build focussed systems to execute tasks", able to "represent any and all
+workflows independent of a harness", with "the best possibel workflow for any tas" as "the
+ultimate goal". A cheap model constructs, edits and runs the workflows from templates; Kev
+makes quick semantic calls, including whether a task needs a workflow at all; workflows
+nest, iterate, run in parallel or as swarms, and stay efficient and auditable. His sentence
+"it becomes essentially …" is unfinished and is left open here until he completes it.
 
 ## 2. Terms
 
@@ -26,6 +45,11 @@ LangGraph/n8n competitor.
 | **Typed judgment** | A bounded decision with a probability attached: yes/no, choose one of N, or an ordered score. Jev is the default engine. |
 | **ARC** | The owner's agent runtime substrate (`~/.agentic-os`). It is unrelated to **ARC-AGI-3**, the ARC Prize benchmark. |
 | **AMP** | The owner's memory and context authority, also called Hippocampus. It is not Sourcegraph Amp. |
+| **Coverage** | How much of a corpus of real workflows the IR represents. *Declared*: the constructs exist. *Compiled*: the item lowers to valid IR under the production label policy. *Executed*: it reproduces the original on fixtures (measured only on items with an oracle). Every item is represented exactly or rejected with a named reason. |
+| **Need router** | The selection step that decides whether a task needs a workflow at all, and how much: direct call, agent, reuse, template, construct, or construct+ (multi-stage). Hard requirements force structure; otherwise expected value decides. |
+| **Slider** | The owner's setting for "how much is a correct result worth?", from cost first to reliability first. Underneath it is the dollar value of one verified success. |
+| **Run board** | A run-scoped set of typed topics with reducers and declared writers and readers, read at a fixed sequence number. Not chat, and not memory across runs. |
+| **Wild ladder** | Evaluation rungs that Claude did not write or tune on: sealed families, replication of real hand-built workflows (R-bench), external benchmarks, owner-written tasks, the owner's real recurring tasks. |
 
 ## 3. The state of the world (October 2026), and the problem left over
 
@@ -82,10 +106,17 @@ LangGraph/n8n competitor.
 ## 4. What Foundry is, and is not
 
 **Is:**
+- a **workflow language** (the IR) meant to represent any real workflow exactly or reject
+  it with a named reason; its written semantics and conformance suite are the target that
+  makes it harness-independent (today it runs only on Foundry's runtime);
 - a **workflow constructor**, used by agents through MCP;
+- a **need router** that decides whether a task needs a workflow at all, and how much;
 - a **runtime** with durable records, async primitives and record/replay;
 - a **context system**: private by default, shared by contract;
-- a **model layer**: frontier models author, cheap models execute, escalation follows rules;
+- a **model layer**: frontier models write the template library, build the most complex
+  workflows and take escalations; cheap models (Haiku 5.5 today) construct from templates,
+  edit through replay-proven proposals, and execute; escalation follows rules;
+- a **read-only run viewer**, the face of the audit ledger;
 - a **typed judgment layer**;
 - a **verdict and repair system**;
 - a **selective library** that keeps only workflows that have earned reuse.
@@ -94,8 +125,11 @@ LangGraph/n8n competitor.
 - a global harness to evolve;
 - a general agent loop (use the vendors');
 - a visual builder or connector catalog;
-- a memory store (that is AMP);
-- a provider/model gateway;
+- a memory store (that is AMP). Cross-run application state (a cursor, a dedupe set, a chat
+  session) is a typed state capability behind the ContextPort; cross-run lessons become a
+  replay-proven workflow version or an AMP claim;
+- a provider/model gateway. (A minimal host-side egress proxy for executor model calls, with
+  no routing and no provider choice, is a security boundary, not a gateway.)
 - a second authority, lifecycle or completion system (that is ARC);
 - a LangGraph, n8n or Temporal replacement.
 
@@ -318,6 +352,20 @@ These failure patterns recur across ARC, AMP, Neural Core and the Foundry repo i
 | D5 | Container image pulls and local model downloads in the cloud and locally | Allow, within a disk/size cap |
 | D6 | Delete the LangGraph/n8n export adapters (serial subsets, no role in the vision) | **Decided 2026-10-06: deleted** (owner delegated the call); git history keeps them |
 | D7 | Jev access for the cloud session (API key via env), and permission to fine-tune a judge | Provision; fine-tuning after Phase 4 data exists |
+| D8 | Coverage goal: ~100% of real workflows, exact or rejected with a named reason; headline = compiled + executed (executed ÷ oracle-eligible) on a fresh held-out sample after the IR freeze; declared reported alongside; agent frameworks included | Approve (default; applied 2026-10-08) |
+| D9 | Model roles: Haiku 5.5 runs, constructs from templates and edits by replay-proven proposals; Opus writes the library, builds `construct+` and takes escalations; local generative models parked; Kev is the candidate local judge, kept per port only where it beats Haiku 5.5 and rules | Approve (default; applied 2026-10-08) |
+| D10 | Executor model access through a host-side egress proxy, which likely needs an owner-provisioned API key | Default **no** (owner rule against new authentication; applied 2026-10-08): no executor reads third-party text; R-bench uses the in-runtime structured builder |
+| D11 | No mutable cross-run store in Foundry (amends ROADMAP §2.2 and the §3 wording) | Approve (default; applied 2026-10-08) |
+| D12 | Keep building toward ~100% representation even if new constructs don't help a cheap builder | Yes, at lower priority than the wild ladder (default; applied 2026-10-08) |
+| D13 | Kev while Haiku 5.5 answers typed calls in about 1–1.5 s for under $0.001 (ROADMAP §2.4) | **Recorded 2026-10-08, instead of the default pause:** Kev dataset building continues; laptop training waits for the Kev-vs-Haiku-5.5 comparison; the hosted spend approval (up to $450) is held, not spent, until then |
+| D14 | Usage rule: ≤ 4 concurrent agents (≤ 2 for review or orchestration fan-out); under a 7-day warning only in-flight pre-registered runs; heavy runs after resets; weekly allowance budgets | **Proposal awaiting the owner; not adopted.** The owner chose "Full speed", and this rule would override that choice, so it applies only if he adopts it (ROADMAP §6) |
+| D15 | R-bench enablers: builders may read third-party task text under provenance taint with no effects, no egress and mocks (ROADMAP §2.9); R-bench oracles up to 60 s per scenario and a runner shim | Approve (default; applied 2026-10-08) |
+| D16 | Phases interleave in a dated plan instead of running 1→6 in order | Approve (default; applied 2026-10-08) |
+
+D8–D16 are the design review's decisions 2–7, 13, 14 and 15
+([`00-SYNTHESIS.md`](../research/review-20261007/00-SYNTHESIS.md) §6), in that order. Its
+operational decisions (finishing the ambition sentence, closing C0 dev, the owner's own tasks,
+the Haiku 4.5 stress arm, recurring tasks, Rust) are in README's decisions table.
 
 ## Sources
 

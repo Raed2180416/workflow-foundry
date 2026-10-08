@@ -37,6 +37,8 @@ export function personFactory(R, difficulty, domain = 'mail.example') {
     };
   };
 }
+// Every mapped field except the email (the join key).
+export const EDITABLE = ['first', 'last', 'phone', 'mobile', 'homePhone', 'fax', 'dob', 'street', 'city', 'state', 'zip', 'country'];
 // A few field changes for an edit step.
 function change(R, person, keys) {
   const pickers = {
@@ -125,9 +127,9 @@ function build(id, title, kind, { setup = [], steps }) {
   return { id, title, kind, setup, steps: out };
 }
 const A = {
-  zCreate: (ref, person, segs) => ({ sys: 'zoho', op: 'create', ref, person, segs }),
+  zCreate: (ref, person, segs, segCase) => ({ sys: 'zoho', op: 'create', ref, person, segs, ...(segCase ? { segCase } : {}) }),
   zForm: (ref, person) => ({ sys: 'zoho', op: 'form', ref, person }),
-  zEdit: (ref, set, addSegs) => ({ sys: 'zoho', op: 'edit', ref, set, addSegs }),
+  zEdit: (ref, set, addSegs, segCase) => ({ sys: 'zoho', op: 'edit', ref, set, addSegs, ...(segCase ? { segCase } : {}) }),
   zDelete: ref => ({ sys: 'zoho', op: 'delete', ref }),
   zSeed: (ref, person, segs) => ({ sys: 'zoho', op: 'seed', ref, person, segs }),
   kCreate: (ref, person, o = {}) => ({ sys: 'kt', op: 'create', ref, person, activate: true, ...o }),
@@ -152,18 +154,20 @@ export function coreScenarios({ seed, split, difficulty }) {
     const a = P();
     return { steps: [step('zoho: create', A.zCreate('a', a))] };
   });
-  add('S02', 'an edit in Zoho (including an email change) updates the same KlickTipp subscriber', (r, P) => {
-    const a = P(), ch = change(r, a, ['phone', 'last', 'city', 'zip']);
-    return { steps: [step('zoho: create', A.zCreate('a', a)), step('zoho: edit', A.zEdit('a', { ...ch, email: P().email }))] };
+  // S02/S06 change EVERY mapped field and clear one (v0.2.0): with only a few fields changing, a solution whose update path forgets
+  // fields, or never propagates an emptied field, passed (adversarial verification 2026-10-08).
+  add('S02', 'an edit in Zoho (every mapped field, an email change and a cleared field) updates the same KlickTipp subscriber', (r, P) => {
+    const a = P(), ch = change(r, a, EDITABLE.filter(k => k !== 'mobile'));
+    return { steps: [step('zoho: create', A.zCreate('a', a)), step('zoho: edit', A.zEdit('a', { ...ch, mobile: '', email: P().email }))] };
   });
   add('S03', 'a Zoho web-form submission creates a Pending subscriber on the double opt-in list', (r, P) => ({ steps: [step('zoho: form', A.zForm('a', P()))] }));
   add('S04', 'confirming the double opt-in in KlickTipp flips the opt-out in Zoho without duplicating anything', (r, P) => ({
     steps: [step('zoho: form', A.zForm('a', P())), step('klicktipp: confirm', A.kConfirm('a'))],
   }));
   add('S05', 'a subscriber tagged for sync in KlickTipp becomes a cross-linked Zoho contact', (r, P) => ({ steps: [step('klicktipp: create+activate', A.kCreate('a', P()))] }));
-  add('S06', 'an edit in KlickTipp (including an email change) updates the same Zoho contact', (r, P) => {
-    const a = P(), ch = change(r, a, ['phone', 'first', 'street', 'mobile']);
-    return { steps: [step('klicktipp: create+activate', A.kCreate('a', a)), step('klicktipp: edit+activate', A.kEdit('a', { ...ch, email: P().email }))] };
+  add('S06', 'an edit in KlickTipp (every mapped field, an email change and a cleared field) updates the same Zoho contact', (r, P) => {
+    const a = P(), ch = change(r, a, EDITABLE.filter(k => k !== 'state'));
+    return { steps: [step('klicktipp: create+activate', A.kCreate('a', a)), step('klicktipp: edit+activate', A.kEdit('a', { ...ch, state: '', email: P().email }))] };
   });
   add('S07', 'unsubscribing in KlickTipp sets the Zoho opt-out and keeps both records', (r, P) => ({
     steps: [step('zoho: create', A.zCreate('a', P())), step('klicktipp: unsubscribe', A.kUnsub('a'))],
@@ -186,15 +190,22 @@ export function coreScenarios({ seed, split, difficulty }) {
   add('S12', 'a KlickTipp subscriber without a last name is not sent to Zoho', (r, P) => ({
     steps: [step('klicktipp: create+activate a (no last name), b', A.kCreate('a', P({ last: '' })), A.kCreate('b', P()))],
   }));
+  // v0.2.0: the people in the Zoho UI type the tag names in varying case (the title always claimed case-insensitive matching, but every
+  // tag used the configured spelling, so an exact-case matcher passed), and S14 gains an edit step (KlickTipp -> Zoho tags on edit were
+  // only covered by the soak's random walk).
   add('S13', 'Zoho segment tags carry over to KlickTipp segment tags (case-insensitive, on create and on edit)', (r, P) => ({
     steps: [
-      step('zoho: create c1..c4', A.zCreate('c1', P(), ['online']), A.zCreate('c2', P(), ['abc']), A.zCreate('c3', P(), ['online', 'abc']), A.zCreate('c4', P())),
-      step('zoho: tag c4 ABC and edit', A.zEdit('c4', change(r, P(), ['phone']), ['abc'])),
+      step('zoho: create c1..c4', A.zCreate('c1', P(), ['online'], 'lower'), A.zCreate('c2', P(), ['abc']), A.zCreate('c3', P(), ['online', 'abc'], 'upper'), A.zCreate('c4', P())),
+      step('zoho: tag c4 abc and edit', A.zEdit('c4', change(r, P(), ['phone']), ['abc'], 'lower')),
     ],
   }));
-  add('S14', 'KlickTipp segment tags carry over to Zoho tags', (r, P) => ({
-    steps: [step('klicktipp: create+activate d1..d4', A.kCreate('d1', P(), { tags: ['online'] }), A.kCreate('d2', P(), { tags: ['abc'] }), A.kCreate('d3', P(), { tags: ['online', 'abc'] }), A.kCreate('d4', P()))],
-  }));
+  add('S14', 'KlickTipp segment tags carry over to Zoho tags (on create and on edit)', (r, P) => {
+    const d4 = P();
+    return { steps: [
+      step('klicktipp: create+activate d1..d4', A.kCreate('d1', P(), { tags: ['online'] }), A.kCreate('d2', P(), { tags: ['abc'] }), A.kCreate('d3', P(), { tags: ['online', 'abc'] }), A.kCreate('d4', d4)),
+      step('klicktipp: tag d4 ABC and edit+activate', A.kEdit('d4', change(r, d4, ['phone']), { tags: ['abc'] })),
+    ] };
+  });
   add('S15', 'a mixed run of creates, edits, opt-outs, deletions and re-creations from both sides stays consistent', (r, P) => soak(r, P, difficulty));
   return out;
 }

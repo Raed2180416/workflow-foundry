@@ -13,3 +13,13 @@ export const toKtFields = p => Object.fromEntries(Object.entries(p).filter(([k])
 export const zohoNeutral = rec => Object.fromEntries(NEUTRAL.map(k => [k, nz(rec[ZOHO_OF[k]])]));
 export const ktNeutral = snap => ({ email: nz(snap.email), ...Object.fromEntries(Object.keys(KT_OF).map(k => [k, k === 'dob' ? unixToIso(snap.fieldBirthday) : nz(snap[KT_OF[k]])])) });
 export { isoToUnix };
+// KlickTipp keeps a date as unix seconds; which midnight it stands for is not observable offline (A9, A11). The judge accepts the UTC
+// reading (what the mock stores for an ISO write) and the Europe/Berlin reading (the original's own conversion, the account's zone), so a
+// solution that writes local-midnight seconds is not failed for an incidental convention (v0.2.0).
+export const KT_DATE_ZONE = 'Europe/Berlin';
+export function ktDobReadings(unix) {
+  const utc = unixToIso(unix);
+  if (utc === '' || utc.startsWith('invalid:')) return [utc];
+  const local = new Intl.DateTimeFormat('en-CA', { timeZone: KT_DATE_ZONE, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(Number(unix) * 1000));
+  return local === utc ? [utc] : [utc, local];
+}

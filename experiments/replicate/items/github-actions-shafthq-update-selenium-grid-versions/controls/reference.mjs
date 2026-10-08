@@ -45,7 +45,7 @@ function sedReplaceAll(text, pattern, replacement) {
   return text.replace(re, () => replacement);
 }
 
-export function solveFaithful(inputs) {
+export function solveFaithful(inputs, flags = {}) {
   const repo = inputs.repo_files[COMPOSE_PATH];
   const ref = referenceOf(inputs);
   // Step "Fetch Latest Selenium Docker Compose Reference": curl -s ... > file (no -f: an error page is just a body; a dead connection fails the step)
@@ -76,7 +76,7 @@ export function solveFaithful(inputs) {
     if (latest[t.key] !== current[t.key]) { text = sedReplaceAll(text, `${t.image}:${current[t.key]}`, `${t.image}:${latest[t.key]}`); changes = true; }
   }
   if (!changes) return { status: 'unchanged', versions: versionsOf(current, latest), files: {}, pull_request: { open: false }, message: 'No changes needed - versions are up to date' };
-  const verdict = validateCompose(text);                            // Step "Validate Docker Compose File": docker compose -f FILE config
+  const verdict = flags.skipValidation ? { ok: true } : validateCompose(text);   // Step "Validate Docker Compose File": docker compose -f FILE config
   if (!verdict.ok) return failedPlan(verdict.message, current, latest);
   const pr = renderPrText(current, latest);
   return {
@@ -101,7 +101,7 @@ export function yamlFirstTag(text, image) {
   return '';
 }
 
-export function solveImproved(inputs) {
+export function solveImproved(inputs, flags = {}) {
   const repo = inputs.repo_files[COMPOSE_PATH];
   const ref = referenceOf(inputs);
   const cannot = (why, current, latest) => failedPlan(`cannot update: the Selenium reference file (${REFERENCE_URL}) ${why}`, current, latest);
@@ -111,7 +111,7 @@ export function solveImproved(inputs) {
   for (const t of TRACKED) { latest[t.key] = yamlFirstTag(ref.body, t.image); if (!latest[t.key]) missing.push(t.image); }
   if (missing.length) return cannot(`has no image line for ${missing.join(', ')}, so it is not the compose file this job reads`, {}, latest);
   for (const t of TRACKED) {
-    if (!PRERELEASE_RE.test(latest[t.key])) continue;
+    if (flags.keepPrerelease || !PRERELEASE_RE.test(latest[t.key])) continue;
     const core = latest[t.key].match(STABLE_CORE_RE);
     if (core?.length !== 1) return failedPlan(`cannot update: the reference tag "${latest[t.key]}" of ${t.image} is a pre-release (nightly/beta/dev) with no stable X.Y.Z-DATE version to use instead`, {}, latest);
     latest[t.key] = core[0];

@@ -88,7 +88,9 @@ export function buildTask({ seed, split, difficulty, taskType }) {
     return { ...base, prompt: [
       'TASK T2 (rebuild from intent). A bioinformatician built a Galaxy workflow for this job; you do not get its definition. You get the',
       "author's own description (description.md) and three worked examples (examples/example-N: job.json, the sample VCFs, and the four output tables",
-      'the original produced; in job.json the "vcf" field names the file under samples/ instead of holding its text). Build a solution that does the same job for any job. The three examples use different thresholds and inputs;',
+      'for that job; in job.json the "vcf" field names the file under samples/ instead of holding its text). The original cannot run here, so the example tables',
+      "were computed by this benchmark's re-implementation of the workflow, which reproduces the author's published test outputs byte for byte.",
+      'Build a solution that does the same job for any job. The three examples use different thresholds and inputs;',
       'infer the exact behaviour (which records are flagged, how tables are built, labelled, ordered) from them.',
       '', INTERFACE].join('\n'), inputs: { ...interfaceNote, task: 'rebuild', examples: 3 },
     files: { 'description.md': authorDescription() + '\n', ...exampleFiles(seed, split, difficulty) }, budget: { maxActions: 60, maxTokens: 250000 } };

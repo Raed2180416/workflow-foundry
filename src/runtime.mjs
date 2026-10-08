@@ -72,7 +72,7 @@ function seal(run, workflow, store) {
   run.verdict = verdictOf(run, { workflow });
   if (run.identity) {
     const decision = { schema: 'foundry-decision/1', id: `${run.id}:verdict:${run.eventHead?.seq ?? 0}`, at: Date.now(), kind: 'verdict', identity: run.identity,
-      features: { status: run.status, errorCode: run.error?.code ?? null, discovery: workflow?.discovery === true, findings: (run.findings ?? []).length, steps: run.steps },
+      features: { status: run.status, errorCode: run.error?.code ?? null, discovery: workflow?.discovery === true, findings: (run.findings ?? []).length, steps: run.steps, ...(run.verdict.acceptance ? { acceptance: run.verdict.acceptance } : {}) },
       action: run.verdict.verdict, alternatives: [], propensity: 1, rationale: run.verdict.reason, costUsd: run.cost };
     try { store.recordDecision(run.id, validateDecision(decision)); }
     catch (error) { run.verdict.decisionError = errorData(error); }

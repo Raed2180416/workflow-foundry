@@ -28,15 +28,18 @@ const definitions = {
   , 'outcome-repair': { type: 'boolean' }
   , policy: { type: 'string' }, 'model-mode': { type: 'string' }, salt: { type: 'string' }, 'max-cost': { type: 'string' }, assignment: { type: 'string' }
   , 'tick-interval': { type: 'string' }
+  , strict: { type: 'boolean' }, 'fail-on': { type: 'string' }
 };
 // Model-run options (DESIGN §5.1): which commands accept them.
 const runOnly = ['model-mode', 'salt', 'max-cost', 'assignment'];
 const modelCommands = new Set(['run', 'resume', 'tick']);
 function checkModelArguments(command, args) {
   const misplaced = [...runOnly.filter(name => args[name] !== undefined && command !== 'run'),
-    ...(args.policy !== undefined && !modelCommands.has(command) && command !== 'validate' ? ['policy'] : []), ...(args['tick-interval'] !== undefined && command !== 'serve' ? ['tick-interval'] : [])];
+    ...(args.policy !== undefined && !modelCommands.has(command) && command !== 'validate' && command !== 'lint' ? ['policy'] : []), ...(args['tick-interval'] !== undefined && command !== 'serve' ? ['tick-interval'] : []),
+    ...(args.strict !== undefined && command !== 'validate' ? ['strict'] : []), ...(args['fail-on'] !== undefined && command !== 'lint' ? ['fail-on'] : [])];
   if (misplaced.length) throw new FoundryError('CLI_ARGUMENT', `--${misplaced[0]} is not supported by ${command}. Use --help.`);
   if (args['max-cost'] !== undefined && !/^(0|[1-9][0-9]{0,6})(\.[0-9]{1,6})?$/.test(args['max-cost'])) throw new FoundryError('CLI_ARGUMENT', '--max-cost must be a non-negative decimal number of USD');
+  if (args['fail-on'] !== undefined && !['error', 'warning'].includes(args['fail-on'])) throw new FoundryError('CLI_ARGUMENT', '--fail-on must be error or warning');
   if (args['tick-interval'] !== undefined && !/^(0|[1-9][0-9]{0,4})$/.test(args['tick-interval'])) throw new FoundryError('CLI_ARGUMENT', '--tick-interval must be a whole number of seconds (0 turns the timer scan off)');
 }
 // The host (this CLI), never Foundry itself, wires a ModelPort: the owner policy, a journal in the workspace
@@ -114,7 +117,8 @@ const usage = `Workflow Foundry 0.1.0 — experimental, source/evidence qualifie
 `  foundry doctor | schema | capabilities | skills\n` +
 `  foundry install --project PATH --client opencode|claude|cursor|codex|generic [--dry-run] [--no-hooks]\n` +
 `  foundry uninstall INSTALL_ID --project PATH [--dry-run]\n` +
-`  foundry validate WORKFLOW.json [--components TRUSTED_MANIFEST.json]\n` +
+`  foundry validate WORKFLOW.json [--components TRUSTED_MANIFEST.json] [--policy MODEL_POLICY.json] [--strict]\n` +
+`  foundry lint WORKFLOW.json [--components TRUSTED_MANIFEST.json] [--policy MODEL_POLICY.json] [--fail-on error|warning]  (strict construction lint; coded findings with repairs)\n` +
 `  foundry import WORKFLOW.json [--expected-hash HASH] --workspace PATH\n` +
 `  foundry prompt --task TEXT [--domain sre] [--out prompt.txt]\n` +
 `  foundry request --text TEXT [--workflow ID] --workspace PATH\n` +
@@ -225,14 +229,19 @@ async function main() {
   let foundry, persistent = false;
   try {
     if (command === 'capabilities') { print({ capabilities: registry.list(), registryHash: registry.hash() }); return; }
-    if (command === 'validate') {
+    if (command === 'validate' || command === 'lint') {
       const workflow = readJson(args.file ?? item);
       let modelPolicy;
-      if (modelNodes(workflow).length || args.policy !== undefined) {
+      // The lint orders model classes by the owner policy, so it loads it even for a workflow without model nodes.
+      if (modelNodes(workflow).length || args.policy !== undefined || command === 'lint') {
         const { loadPolicy } = await import('../src/models/policy.mjs');
         modelPolicy = loadPolicy(args.policy === undefined ? undefined : path.resolve(args.policy));
       }
-      const result = validateWorkflow(workflow, { registry, ...(modelPolicy ? { modelPolicy } : {}) }); print(result); if (!result.valid) process.exitCode = 1; return;
+      const strict = command === 'lint' || args.strict === true;
+      const result = validateWorkflow(workflow, { registry, ...(modelPolicy ? { modelPolicy } : {}), ...(strict ? { strict: true } : {}) });
+      print(result);
+      if (!result.valid || (command === 'lint' && args['fail-on'] === 'warning' && result.warnings.length)) process.exitCode = 1;
+      return;
     }
     if (command === 'construct-compare') {
       const { runConstructionProgram, bundledConstructionProgram } = await import('../src/construction.mjs');

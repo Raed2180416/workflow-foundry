@@ -1,0 +1,77 @@
+{
+ "kind": "repo-missing-image",
+ "seed": 6,
+ "split": "dev",
+ "difficulty": 5,
+ "trigger": "schedule",
+ "composePath": "src/main/resources/docker-compose/selenium4.yml",
+ "fetch": {
+  "status": 200,
+  "bodyFile": "recorded/reference.yml"
+ },
+ "openPullRequests": [],
+ "truth": {
+  "original": {
+   "status": "updated",
+   "versions": {
+    "current": {
+     "chrome": "4.36.0-20250422",
+     "edge": "4.36.0-20250422",
+     "firefox": "",
+     "hub": "4.36.0-20250422"
+    },
+    "latest": {
+     "chrome": "4.36.0-20250422",
+     "edge": "4.38.0-20250514",
+     "firefox": "4.38.0-20250430",
+     "hub": "4.36.0-20250422"
+    }
+   },
+   "changed": [
+    {
+     "key": "edge",
+     "from": "4.36.0-20250422",
+     "to": "4.38.0-20250514"
+    }
+   ],
+   "prAction": "created",
+   "prNumber": null,
+   "message": null,
+   "composeAfter": "expected-original.yml"
+  },
+  "intent": {
+   "status": "updated",
+   "versions": {
+    "current": {
+     "chrome": "4.36.0-20250422",
+     "edge": "4.36.0-20250422",
+     "firefox": "",
+     "hub": "4.36.0-20250422"
+    },
+    "latest": {
+     "chrome": "4.36.0-20250422",
+     "edge": "4.38.0-20250514",
+     "firefox": "4.38.0-20250430",
+     "hub": "4.36.0-20250422"
+    }
+   },
+   "changed": [
+    {
+     "key": "edge",
+     "from": "4.36.0-20250422",
+     "to": "4.38.0-20250514"
+    }
+   ],
+   "prAction": "created",
+   "prNumber": null,
+   "message": null,
+   "composeAfter": "expected-intent.yml"
+  }
+ },
+ "meta": {
+  "missing": "firefox",
+  "bump": [
+   "edge"
+  ]
+ }
+}

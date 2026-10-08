@@ -189,11 +189,6 @@ export function proposeOps(mod, route, k, key) {
     const e = w.edges[ei], to = e.a === cell ? e.b : e.a;
     if (e.from !== cell) out.push({ op: 'one-way-entry', action: `go ${d}`, expect: { kind: 'enter', room: nameAt(to) }, truth: { kind: 'enter', cell: to }, detail: { direction: d, style: e.style } });
   }
-  if (step && step.cmd.verb === 'go') {
-    // after the step the plan has crossed a one-way edge; the plan believes the passage runs both ways
-    const ex0 = mod.render.exitsOf(w, step.pre.pos), e0 = w.edges[ex0[step.cmd.dir]];
-    if (e0?.kind === 'oneway' && e0.from === step.pre.pos) { /* handled below at k + 1 */ }
-  }
   // wrong room: the plan names another room for a move that works
   if (step && step.cmd.verb === 'go') {
     const here = step.post.pos, pool = [];
@@ -223,7 +218,7 @@ export function proposeOps(mod, route, k, key) {
   }
   // an item the plan believes lies here
   {
-    const present = new Set(w.keys.filter(kk => kk.room === cell && kk.hide < 0).map(kk => `${kk.color} key`));
+    const present = new Set(w.keys.filter(kk => kk.room === cell && (kk.hide < 0 || pre.revealed.includes(kk.hide))).map(kk => `${kk.color} key`));
     const absent = [...new Set(w.keys.map(kk => `${kk.color} key`))].filter(x => !present.has(x) && !pre.inv.some(id => mod.render.itemName(w, id) === x));
     if (absent.length) { const item = pickBy(absent, `${key}|ai`); out.push({ op: 'absent-item', action: `take ${item}`, expect: { kind: 'take', item }, truth: { kind: 'take', item }, detail: { item } }); }
   }
@@ -357,4 +352,37 @@ export function containerSentences(mod, task) {
     }
   }
   return { items: out, stats };
+}
+
+// ================================================================================================================
+// Q3: the equally optimal next actions (BFS over the abstract model, from any state)
+// ================================================================================================================
+export function remainingMoves(mod, m, s0) {
+  const { successors } = mod.solver, pos = s => s & 63, prev = new Set([s0]);
+  let frontier = [s0], d = 0;
+  const buf = [];
+  while (frontier.length) {
+    d++;
+    const next = [];
+    for (const s of frontier) {
+      if (pos(s) === m.T) return d;                    // take treasure
+      for (const [, t] of successors(m, s, buf)) if (!prev.has(t)) { prev.add(t); next.push(t); }
+    }
+    frontier = next;
+  }
+  return Infinity;
+}
+// the canonical actions after which the shortest win is one shorter: the reference solver's equally good next actions
+export function bestActions(mod, W, st) {
+  const m = W.model, { successors } = mod.solver;
+  // abstract state bits from the engine state: position, keys held, hides searched, doors unlocked, mechanisms
+  let s = st.pos | (st.mech.reduce((b, o, i) => (o ? b | (1 << i) : b), 0) << m.oM);
+  m.keyName.forEach((name, k) => { if (st.inv.some(id => mod.render.itemName(W.w, id) === name && id === `key:${k}`)) s |= 1 << (m.oK + k); });
+  st.revealed.forEach(h => { s |= 1 << (m.oH + h); });
+  st.unlocked.forEach(dr => { s |= 1 << (m.oD + dr); });
+  const here = remainingMoves(mod, m, s), out = [];
+  if ((s & 63) === m.T) out.push('take treasure');
+  const buf = [];
+  for (const [a, t] of successors(m, s, buf).map(x => [x[0], x[1]])) if (remainingMoves(mod, m, t) === here - 1) out.push(a);
+  return out;
 }

@@ -1,6 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { AUTHORITY, AUTHORITY_FLAGS, authorityOf, ENV_FAULT_CODES, INCONCLUSIVE_CODES, VERDICTS, verdictOf } from '../src/verdict.mjs';
+import { AUTHORITY, AUTHORITY_FLAGS, authorityOf, ENV_FAULT_CODES, INCONCLUSIVE_CODES, UNVERIFIED_CODES, VERDICTS, verdictOf } from '../src/verdict.mjs';
+
+// R-17: a succeeded run is a pass only if its acceptance can fail a wrong answer. These tests are about the verdict mapping, so
+// the workflows they pass in hold a predicate that gates.
+const gating = { nodes: [{ id: 'a', kind: 'code' }], acceptance: [{ op: 'eq', left: { $ref: 'nodes.a.total' }, right: 3 }] };
 
 const failed = code => ({ status: 'failed', error: code ? { code, message: 'x' } : null });
 const check = (run, verdict, code, options) => {
@@ -20,11 +24,42 @@ test('verdict: succeeded discovery run with a confirmed finding is a finding', (
   check({ status: 'succeeded' }, 'finding', null, { discovery: true, findings: 3 });
 });
 
-test('verdict: succeeded is pass (including discovery without confirmed findings)', () => {
-  check({ status: 'succeeded', error: null }, 'pass', null);
-  check({ status: 'succeeded', findings: [{ confirmed: false }] }, 'pass', null, { workflow: { discovery: true } });
-  check({ status: 'succeeded', findings: [{ confirmed: true }] }, 'pass', null, { workflow: { discovery: false } });
-  check({ status: 'succeeded' }, 'pass', null, { workflow: { discovery: true } });
+test('verdict: succeeded with a gating acceptance is pass (including discovery without confirmed findings)', () => {
+  const pass = check({ status: 'succeeded', error: null }, 'pass', null, { workflow: gating });
+  assert.equal(pass.acceptance, 'gating');
+  check({ status: 'succeeded', findings: [{ confirmed: false }] }, 'pass', null, { workflow: { ...gating, discovery: true } });
+  check({ status: 'succeeded', findings: [{ confirmed: true }] }, 'pass', null, { workflow: { ...gating, discovery: false } });
+  check({ status: 'succeeded' }, 'pass', null, { workflow: { ...gating, discovery: true } });
+});
+
+// Changed with R-17. These used to expect `pass` for a bare succeeded run, which is the defect: a verdict computed without the
+// acceptance contract, or from an acceptance that only checks that an answer exists, certified runs nothing had checked.
+test('verdict: a succeeded run is unverified unless its acceptance gates; evidence against the answer is reported first', () => {
+  const existence = { nodes: [], acceptance: [{ op: 'exists', value: { $ref: 'nodes.answer.records' } }] };
+  const v = check({ status: 'succeeded', error: null }, 'unverified', 'ACCEPTANCE_UNASSESSED');
+  assert.equal(v.acceptance, 'unassessed');
+  assert.equal(v.authority, 'unresolved');
+  check({ status: 'succeeded' }, 'unverified', 'ACCEPTANCE_UNASSESSED', { workflow: { discovery: true } });
+  assert.equal(check({ status: 'succeeded' }, 'unverified', 'ACCEPTANCE_EXISTENCE_ONLY', { workflow: existence }).acceptance, 'existence-only');
+  assert.match(check({ status: 'succeeded' }, 'unverified', 'NO_ORACLE_DECLARED', { workflow: { ...existence, oracle: { mode: 'none', reason: 'A person reads the brief against the source.' } } }).reason, /A person reads the brief/);
+  assert.equal(check({ status: 'succeeded' }, 'unverified', 'NO_ORACLE_DECLARED', { workflow: { ...gating, oracle: { mode: 'none', reason: 'Declared, so the run cannot claim more.' } } }).acceptance, 'no-oracle');
+
+  // A non-gating verify that recorded a failure, at the root or in a map frame, and a collecting map whose failed count nothing reads.
+  const withVerify = { nodes: [{ id: 'a', kind: 'code' }, { id: 'check', kind: 'verify', gate: false }], acceptance: gating.acceptance };
+  check({ status: 'succeeded', outputs: { check: { pass: false } } }, 'unverified', 'VERIFY_FAILED_NONBLOCKING', { workflow: withVerify });
+  check({ status: 'succeeded', outputs: {}, frames: { 'root/m:0': { outputs: { check: { pass: false } } } } }, 'unverified', 'VERIFY_FAILED_NONBLOCKING', { workflow: withVerify });
+  check({ status: 'succeeded', outputs: { check: { pass: true } } }, 'pass', null, { workflow: withVerify });
+  const collecting = { nodes: [{ id: 'a', kind: 'code' }, { id: 'rows', kind: 'map', failure: 'collect' }], acceptance: gating.acceptance };
+  check({ status: 'succeeded', nodes: { rows: { failedItems: 2 } } }, 'unverified', 'ERROR_COLLECTED', { workflow: collecting });
+  check({ status: 'succeeded', nodes: { rows: { failedItems: 0 } } }, 'pass', null, { workflow: collecting });
+  const owned = { ...collecting, acceptance: [...gating.acceptance, { op: 'lte', left: { $ref: 'nodes.rows.failed' }, right: 3 }] };
+  check({ status: 'succeeded', nodes: { rows: { failedItems: 2 } } }, 'pass', null, { workflow: owned });
+  // Evidence against the answer outranks the lack of evidence for it.
+  check({ status: 'succeeded', outputs: { check: { pass: false } } }, 'unverified', 'VERIFY_FAILED_NONBLOCKING', { workflow: { ...withVerify, acceptance: existence.acceptance } });
+  // A confirmed discovery finding is still a finding, and failures are untouched.
+  check({ status: 'succeeded', findings: [{ confirmed: true }] }, 'finding', null, { workflow: { ...existence, discovery: true } });
+  check({ status: 'failed', error: { code: 'VERIFY_FAILED' } }, 'inconclusive', 'VERIFY_FAILED', { workflow: existence });
+  assert.deepEqual([...UNVERIFIED_CODES], ['VERIFY_FAILED_NONBLOCKING', 'ERROR_COLLECTED', 'ACCEPTANCE_EXISTENCE_ONLY', 'NO_ORACLE_DECLARED', 'ACCEPTANCE_UNASSESSED']);
 });
 
 test('verdict: checks, loops, budgets and deadlines are inconclusive', () => {
@@ -58,7 +93,7 @@ test('verdict: cancelled runs are inconclusive; non-terminal runs have no verdic
 });
 
 test('verdict: authority vocabulary maps to ARC states and never grants authority', () => {
-  assert.deepEqual({ ...AUTHORITY }, { pass: 'supported', finding: 'supported', inconclusive: 'unresolved', harness_fault: 'unresolved', env_fault: 'unresolved', uncertain: 'in-doubt' });
+  assert.deepEqual({ ...AUTHORITY }, { pass: 'supported', finding: 'supported', unverified: 'unresolved', inconclusive: 'unresolved', harness_fault: 'unresolved', env_fault: 'unresolved', uncertain: 'in-doubt' });
   assert.deepEqual(Object.keys(AUTHORITY).sort(), [...VERDICTS].sort());
   for (const v of VERDICTS) assert.equal(authorityOf(v), AUTHORITY[v]);
   assert.throws(() => authorityOf('maybe'), { code: 'UNKNOWN_VERDICT' });

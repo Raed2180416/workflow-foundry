@@ -1,0 +1,72 @@
+{
+ "kind": "quoted-image-refs",
+ "seed": 13,
+ "split": "dev",
+ "difficulty": 5,
+ "trigger": "schedule",
+ "composePath": "src/main/resources/docker-compose/selenium4.yml",
+ "fetch": {
+  "status": 200,
+  "bodyFile": "recorded/reference.yml"
+ },
+ "openPullRequests": [],
+ "truth": {
+  "original": {
+   "status": "updated",
+   "versions": {
+    "current": {
+     "chrome": "4.20.0-20250606",
+     "edge": "",
+     "firefox": "4.20.0-20250601",
+     "hub": "4.20.0-20250601"
+    },
+    "latest": {
+     "chrome": "4.20.0-20250606",
+     "edge": "4.21.0-20250607",
+     "firefox": "4.20.0-20250601",
+     "hub": "4.20.0-20250601"
+    }
+   },
+   "changed": [
+    {
+     "key": "edge",
+     "from": "",
+     "to": "4.21.0-20250607"
+    }
+   ],
+   "prAction": "created",
+   "prNumber": null,
+   "message": null,
+   "composeAfter": "expected-original.yml"
+  },
+  "intent": {
+   "status": "unchanged",
+   "versions": {
+    "current": {
+     "chrome": "4.20.0-20250606",
+     "edge": "4.21.0-20250607",
+     "firefox": "4.20.0-20250601",
+     "hub": "4.20.0-20250601"
+    },
+    "latest": {
+     "chrome": "4.20.0-20250606",
+     "edge": "4.21.0-20250607",
+     "firefox": "4.20.0-20250601",
+     "hub": "4.20.0-20250601"
+    }
+   },
+   "changed": [],
+   "prAction": null,
+   "prNumber": null,
+   "message": null,
+   "composeAfter": null
+  }
+ },
+ "meta": {
+  "q": "'",
+  "quoted": [
+   "edge"
+  ],
+  "noop": true
+ }
+}

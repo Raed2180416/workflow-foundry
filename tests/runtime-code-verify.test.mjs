@@ -83,7 +83,9 @@ test('verify: a failing gate stops the run as inconclusive; gate:false records t
     const run = await h.runtime.execute(h.run.id);
     assert.equal(run.status, 'succeeded', JSON.stringify(run.error));
     assert.equal(run.outputs.check.pass, false);
-    assert.equal(run.verdict.verdict, 'pass', 'the workflow chose not to gate; its own acceptance decides');
+    // Changed with R-17. This used to expect `pass` ("the workflow chose not to gate; its own acceptance decides"). Its acceptance is
+    // `exists nodes.check.pass`, which a failed verify satisfies, so the verdict certified a run whose own verifier said fail.
+    assert.deepEqual([run.verdict.verdict, run.verdict.code], ['unverified', 'VERIFY_FAILED_NONBLOCKING'], 'the verifier said fail and nothing gated on it');
   });
 });
 
@@ -149,7 +151,9 @@ test('verify: a passing verifier in a discovery workflow is a confirmed finding'
   const confirm = { id: 'confirm', kind: 'verify', needs: ['candidate'], description: 'Reproduce the candidate', method: 'code', lang: 'js', independence: 'execution', gate: false,
     subject: { $ref: 'nodes.candidate.total' }, source: 'export default ({ subject }) => ({ pass: subject > 5 })' };
   const acceptance = [{ op: 'exists', value: { $ref: 'nodes.confirm.pass' } }];
-  for (const [value, verdict, count] of [[7, 'finding', 1], [3, 'pass', 0]]) {
+  // Changed with R-17: without a confirmed finding, a discovery run is judged like any other, and this acceptance (`exists nodes.confirm.pass`)
+  // is satisfied by a failed confirmer. "Searched and found nothing" is not a pass; it is unverified.
+  for (const [value, verdict, count] of [[7, 'finding', 1], [3, 'unverified', 0]]) {
     await t.test(`${verdict}`, async t => {
       const h = harness(t, base([parse, candidate, confirm], acceptance, { discovery: true }), {
         codeRunner: fakeCode([{ rows: [{ name: 'a', n: 7 }] }, spec => ({ pass: spec.input.subject > 5 })]), script: { [S]: [{ value: { total: value } }] } });

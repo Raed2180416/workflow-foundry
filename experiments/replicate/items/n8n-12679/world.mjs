@@ -67,7 +67,11 @@ export class World {
   }
   tagIds(keys) { return (keys ?? []).map(k => this.cfg.klicktipp.tags[k].id); }
   segTagIds(keys) { return (keys ?? []).map(k => this.cfg.klicktipp.tags[this.cfg.segments.find(s => s.key === k).klicktippTag].id); }
-  segNames(keys) { return (keys ?? []).map(k => this.cfg.segments.find(s => s.key === k).zohoTag); }
+  // Zoho tag names as a person types them: the configured spelling, or (segCase) all lower / upper case.
+  segNames(keys, segCase) {
+    const typed = n => (segCase === 'lower' ? n.toLowerCase() : segCase === 'upper' ? n.toUpperCase() : n);
+    return (keys ?? []).map(k => typed(this.cfg.segments.find(s => s.key === k).zohoTag));
+  }
   // Returns { skipped: reason } when the target record is not there (the candidate failed to create it), else {}.
   ui(a) {
     const out = {};
@@ -75,7 +79,7 @@ export class World {
     switch (`${a.sys}.${a.op}`) {
       case 'zoho.seed': case 'zoho.create': case 'zoho.form': {
         const muted = this.muted; this.muted = a.op === 'seed';
-        const r = this.zoho.create(toZoho(a.person), this.actor(), { trigger: a.op === 'form' ? 'zoho-form' : 'zoho-created-or-updated', tags: this.segNames(a.segs) });
+        const r = this.zoho.create(toZoho(a.person), this.actor(), { trigger: a.op === 'form' ? 'zoho-form' : 'zoho-created-or-updated', tags: this.segNames(a.segs, a.segCase) });
         this.muted = muted;
         if (r.status !== 201) throw new Error(`scenario error: ${a.op} ${a.ref} -> ${JSON.stringify(r.body)}`);
         this.refs[a.ref] = { ...(this.refs[a.ref] ?? {}), zohoId: r.body.data[0].details.id, email: a.person.email };
@@ -83,7 +87,7 @@ export class World {
       }
       case 'zoho.edit': {
         const id = this.zohoIdOf(a.ref); if (!need(id, 'Zoho contact')) break;
-        const r = this.zoho.update(id, toZoho(a.set ?? {}), this.actor(), { addTags: this.segNames(a.addSegs) });
+        const r = this.zoho.update(id, toZoho(a.set ?? {}), this.actor(), { addTags: this.segNames(a.addSegs, a.segCase) });
         if (r.status !== 200) throw new Error(`scenario error: edit ${a.ref} -> ${JSON.stringify(r.body)}`);
         if (a.set?.email) this.refs[a.ref].email = a.set.email;
         break;

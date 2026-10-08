@@ -8,7 +8,7 @@
 // held-out directory is not opened (one test proves the generator does not open it either).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadSpec } from '../lib/contracts.mjs';
@@ -18,8 +18,7 @@ import { sliceDef, seedsFor } from '../build.mjs';
 import { measureForJob, KEV_MAX_STATE } from '../lib/tokens.mjs';
 import { trainProbe, evaluate } from '../lib/probe.mjs';
 import { renderState } from '../lib/render.mjs';
-import { replaceSentence } from '../lib/counterfactual.mjs';
-import { sentences, skeleton, canonical, sha256 } from '../lib/hash.mjs';
+import { sentences, canonical, sha256 } from '../lib/hash.mjs';
 import { toSystemOneQuestion } from '../../../src/judgment.mjs';
 import * as H from '../lib/harness.mjs';
 import * as gen from '../ports/records-notes.mjs';
@@ -102,7 +101,7 @@ async function collect(slice, { count, scale = 1, ports = WAVE1, ...extra }) {
 const SIZES = { train: [150, 0.3], 'calib-in': [100, 0.5], 'calib-ood': [150, 0.5], 'dev-select': [100, 0.5], 'dev-ood': [150, 0.5], 'test-in': [100, 0.5], 'test-ood': [250, 0.2] };
 const SLICE = slice => collect(slice, { count: SIZES[slice][0], scale: SIZES[slice][1] });
 const SMOKE = once(() => collect('train', { count: 60, scale: 0.2, ports: ['R5', 'X2'] }));
-const NATURAL = once(() => collect('train', { count: 120, scale: 0.4, ports: WAVE1, control: 'natural' }));
+const NATURAL = once(() => collect('train', { count: 200, scale: 1, ports: WAVE1, control: 'natural', targets: Object.fromEntries(WAVE1.map(p => [p, p === 'X5' ? { pair: 260 } : { clean: 230 }])) }));
 
 const solverContext = once(async () => makeSolverContext(await BED(), [...gen.builtinLines(await BED(), true), ...OOD_SLICES.flatMap(s => stubLines(s))], { cities: STUB_CITIES }));
 
@@ -153,7 +152,7 @@ test('interface: group, ports, pure and deterministic, opts are data, the factor
 // ============================================================================================================================================
 // 1. kit equality: the factory state is the kit on the bed's own task
 // ============================================================================================================================================
-test('acceptance 1: 200 natural-control records per port: factory state == kit.buildState(bed task) byte for byte; the question == kit.request', async () => {
+test('acceptance 1: 200 natural-control records per port: factory state == kit.buildState(bed task) byte for byte; the question == kit.request', async t => {
   const bed = await BED(), recs = await NATURAL(), idx = await BEDS().import('beds/records/index.mjs');
   const UF = bed.render.UPDATE_FIELD, tasks = new Map();
   const taskFor = r => { const k = `${r.meta.seed}:${r.meta.difficulty}`; if (!tasks.has(k)) tasks.set(k, idx.generate({ seed: r.meta.seed, split: 'dev', difficulty: r.meta.difficulty })); return tasks.get(k); };
@@ -166,7 +165,7 @@ test('acceptance 1: 200 natural-control records per port: factory state == kit.b
   const per = {};
   for (const p of WAVE1) {
     const pure = recs.filter(r => portOf(r) === p && r.meta.variant === 'clean' && r.meta.axis === 'clean' && (p !== 'X1' || r.meta.x1?.memoSource === 'bed') && (p !== 'X8' || r.meta.counterfactual?.kind !== 'line')).slice(0, 200);
-    assert.ok(pure.length >= (p === 'X1' ? 20 : 100), `${p}: ${pure.length} natural clean records`);
+    assert.ok(pure.length >= (p === 'X1' ? 60 : p === 'X5' ? 150 : 200), `${p}: ${pure.length} natural clean records`);
     for (const r of pure) {
       const task = taskFor(r), slots = slotsOf(p, r);
       assert.deepEqual(kit.buildState(task, slots, p), r.state, `${p} seed ${r.meta.seed} d${r.meta.difficulty}: state`);
@@ -181,7 +180,8 @@ test('acceptance 1: 200 natural-control records per port: factory state == kit.b
     }
     per[p] = pure.length;
   }
-  assert.ok(Object.keys(per).length === 7);
+  t.diagnostic(`natural clean records compared per port: ${JSON.stringify(per)}`);
+  assert.equal(Object.keys(per).length, 7);
 });
 
 test('kit: states of every port, slots, errors and the forbidden-key rule', async () => {
@@ -209,7 +209,7 @@ test('kit: states of every port, slots, errors and the forbidden-key rule', asyn
 // ============================================================================================================================================
 // 2-3. counterfactual balancing
 // ============================================================================================================================================
-const BALANCE_SLICES = ['train', 'calib-ood', 'dev-ood', 'test-ood'];
+const BALANCE_SLICES = MUTANT_RUN ? ['train'] : ['train', 'calib-ood', 'dev-ood', 'test-ood'];     // a mutant run needs one slice to see the defect
 test('acceptance 2: per (port, system) cell: binary labels 45-55% (R1 within 5 pp of uniform) in train, calib-ood, dev-ood and test-ood; a system-only rule is at most majority + 3 pp', async () => {
   const worst = {};
   for (const slice of BALANCE_SLICES) {
@@ -230,7 +230,7 @@ test('acceptance 2: per (port, system) cell: binary labels 45-55% (R1 within 5 p
       assert.ok(acc <= maj + 0.03, `${slice} ${p}: system-only ${acc.toFixed(3)} vs majority ${maj.toFixed(3)}`);
     }
   }
-  assert.ok(Object.keys(worst).length === 4);
+  assert.equal(Object.keys(worst).length, BALANCE_SLICES.length);
 });
 
 test('acceptance 3: R4 date-window rule is at most majority + 3 pp on every split; R1 ymd is a label at d >= 3 for BRIGHTDESK, ATLAS and VENDEX', async t => {
@@ -351,8 +351,8 @@ function twinsOf(recs, ports = R_PORTS) {
   return recs.filter(r => ports.includes(portOf(r)) && (r.meta.axis === 'unknowable' || r.meta.axis === 'unknowable-stated'));
 }
 test('acceptance 6: presence-matched unknowables replace the decisive sentence and never delete it; their stated twin has the same sentence count', async () => {
-  for (const slice of ['train', 'dev-select', 'test-in', 'test-ood']) {
-    const recs = await SLICE(slice), pairs = pairsOf(twinsOf(recs), 'unknowable').concat(pairsOf(twinsOf(recs), 'clean'));
+  for (const slice of MUTANT_RUN ? ['train'] : ['train', 'dev-select', 'test-in', 'test-ood']) {
+    const recs = await SLICE(slice);
     const byId = new Map();
     for (const r of twinsOf(recs)) (byId.get(r.meta.pairId) ?? byId.set(r.meta.pairId, []).get(r.meta.pairId)).push(r);
     let n = 0;
@@ -374,7 +374,6 @@ test('acceptance 6: presence-matched unknowables replace the decisive sentence a
       n++;
     }
     assert.ok(n >= 6, `${slice}: ${n} unknowable pairs`);
-    void pairs;
   }
 });
 
@@ -404,26 +403,23 @@ test('acceptance 6b: a train-fitted bag-of-words probe separates stated from unk
 // ============================================================================================================================================
 const REGISTRY = once(async () => {
   const reg = new SpanRegistry();
-  const held = await SLICE('test-ood');
-  for (const r of held.filter(x => x.meta.axis === 'bed-template' && R_PORTS.includes(portOf(x)))) {
-    const names = r.meta.masks.names, markers = r.meta.masks.markers;
-    for (const d of r.meta.decisive) reg.add(d, { slice: 'heldout', source: 'bed-template', port: portOf(r), names, markers });
-  }
-  const bed = await BED();
+  // the held-out bed templates, rendered from the frozen bed by the generator's own helper (the held-out author never sees bed templates)
+  for (const e of await gen.heldOutBedSpans(BEDS(), { seeds: range(401, 24) })) reg.add(e.text, { slice: 'heldout', source: 'bed-template', port: e.port, names: e.masks.names, markers: e.masks.markers });
+  // the stand-in OOD lines of every OOD slice, filled with one plausible set of slot values
   for (const slice of OOD_SLICES) for (const l of stubLines(slice)) {
     if (l.kind === 'carrier' || l.kind === 'nondeciding') continue;
     const text = gen.fillLine({ ...l, text: l.text }, { S: 'KOBO', token: 'XQ', field: 'updated', w0: '3 September 2024', w1: '29 September 2024', live_ref: 'live', void_ref: 'void' });
     reg.add(text, { slice, source: l.id, port: l.port, names: [...gen.SYSTEMS], markers: ['XQ'] });
   }
-  void bed;
   return reg;
 });
 
 test('acceptance 7: no held-out bed template or registered skeleton in train, calib-in, dev-select or any other slice; span overlap is reported per axis', async t => {
   const reg = await REGISTRY();
   assert.ok(reg.size >= 100, `registry holds ${reg.size} spans`);
+  assert.equal(reg.entries().filter(e => e.slice === 'heldout').length >= 30, true, 'the held-out bed templates (R1 6, R2 16, R3 8, R4 12 skeletons) are registered');
   const rows = [];
-  for (const slice of SLICES) {
+  for (const slice of MUTANT_RUN ? ['train'] : SLICES) {
     const recs = await SLICE(slice);
     const errs = H.checkRecords(recs, { slice, wordings: OOD_SLICES.includes(slice) ? GUARD() : null, registry: slice === 'test-in' ? null : reg });
     assert.deepEqual(errs.slice(0, 3), [], `${slice}: ${errs.length} record-check errors`);
@@ -442,7 +438,11 @@ test('acceptance 7: no held-out bed template or registered skeleton in train, ca
     assert.ok(Object.values(byAxis).every(v => v.leak === 0), `${slice}: no span leaks into the slice`);
   }
   const held = Object.fromEntries(rows)['test-ood'];
-  assert.ok(held['bed-template'] >= 0.95, `the bed-template axis carries the registered skeletons: ${held['bed-template']}`);
+  if (held) assert.ok(held['bed-template'] >= 0.95, `the bed-template axis carries the registered skeletons: ${held['bed-template']}`);
+  else {                                                                           // the bed-template records themselves carry the registered skeletons
+    const bt = await collect('test-ood', { count: 80, scale: 1, ports: R_PORTS, targets: Object.fromEntries(R_PORTS.map(p => [p, { 'bed-template': 150 }])) });
+    assert.ok(bt.filter(r => reg.scanState(r.state, { names: r.meta.masks.names, markers: r.meta.masks.markers }).length).length / bt.length >= 0.95);
+  }
   for (const [slice, byAxis] of rows) if (TRAIN_LIKE.includes(slice) || slice === 'test-in') assert.ok(Object.values(byAxis).every(v => v === 0), `${slice}: every axis has zero overlap`);
   t.diagnostic(`span overlap (share of states with a registered span) per slice and axis: ${JSON.stringify(rows)}`);
 });
@@ -541,7 +541,7 @@ test('acceptance 9a: second code path for R1: a reference parse of day <= 12 bir
 
 test('acceptance 9b: second code path for X8: the near-miss value is the date read in the other order; the bed\'s resolveGroup gives the truth (200 day <= 12 records)', async () => {
   const W = await WORLD();
-  const recs = (await collect('train', { count: 300, scale: 1, ports: ['X8'], targets: { X8: { clean: 700 } }, x8Fields: ['birth_date'] })).filter(r => r.meta.x8?.stratum === 'date-day<=12' && r.meta.x8.kind === 'order-swap');
+  const recs = (await collect('train', { count: 220, scale: 1, ports: ['X8'], targets: { X8: { clean: 700 } }, x8Fields: ['birth_date'] })).filter(r => r.meta.x8?.stratum === 'date-day<=12' && r.meta.x8.kind === 'order-swap');
   const rows = [...new Map(recs.map(r => [r.state.source_line + r.state.extracted_value, r])).values()].slice(0, 200);
   assert.equal(rows.length, 200, `${rows.length} records`);
   let wrongValues = 0, consistent = 0, inconsistent = 0;
@@ -681,6 +681,20 @@ test('surface diversity: distinct forms per (port, label) in train, the surface 
   t.diagnostic(JSON.stringify(out));
 });
 
+const POOL_DIR = path.join(H.REPO_ROOT, '.foundry', 'kev-data', 'pools', 'train');
+test('train pools integration: the built train pools plus the built-in carriers give record-check-clean rows and more distinct forms than the built-in stand-ins', { skip: MUTANT_RUN ? 'inside a mutant run' : !existsSync(path.join(POOL_DIR, 'R1.jsonl')) && 'the train pools are not built (node experiments/kev-data/pools/train-pools.mjs build)' }, async t => {
+  const { digest, lines } = gen.readPoolDir(POOL_DIR);
+  assert.ok(lines.length > 500);
+  const recs = await collect('train', { count: 150, scale: 0.3, pools: { dir: POOL_DIR, digest }, builtin: ['carriers'] });
+  assert.deepEqual(H.checkRecords(recs, { slice: 'train' }).slice(0, 3), []);
+  assert.ok(recs.some(r => r.meta.surface.source === 'train-pool') && !recs.some(r => r.meta.surface.source === 'builtin'), 'the pool lines replace the built-in stand-ins');
+  const forms = rs => { const m = {}; for (const r of rs) if (R_PORTS.includes(portOf(r)) && !isSoft(r) && r.meta.decisiveRole === 'stated') (m[`${portOf(r)}|${firstQ(r).label}`] ??= new Set()).add(r.meta.formId); return m; };
+  const a = forms(await SLICE('train')), b = forms(recs);
+  for (const k of Object.keys(a)) assert.ok(b[k].size >= (/^R4\||R1\|ymd/.test(k) ? 1.5 : 1) * a[k].size, `${k}: ${b[k].size} forms with the pools, ${a[k].size} with the built-in stand-ins`);
+  t.diagnostic(`distinct decisive forms per (port, label): ${JSON.stringify(Object.fromEntries(Object.keys(b).map(k => [k, [a[k]?.size, b[k].size]])))}`);
+  for (const l of ['dmy', 'mdy', 'ymd']) assert.ok(recs.filter(r => portOf(r) === 'R1' && !isSoft(r) && firstQ(r).label === l).length > 40);
+});
+
 test('train pools: opts.pools reads <dir>/<port>.jsonl and refuses a digest mismatch', () => {
   const dir = H.tempDir('records-pools-'), line = { id: 'R3:KOBO:same:0#001', port: 'R3', group: 'paraphrase', kind: 'paraphrase', templateId: 'R3:KOBO:same:0', system: 'KOBO', label: 'same', text: 'KOBO amounts are shown as in the master.' };
   mkdirSync(dir, { recursive: true });
@@ -696,7 +710,7 @@ test('train pools: opts.pools reads <dir>/<port>.jsonl and refuses a digest mism
 // ============================================================================================================================================
 test('seeded defect: this file runs alone and fails on seeded defects (a KOBO-only void flag left unbalanced, held-out templates not scrubbed, unknowables built by deletion)', { skip: MUTANT_RUN ? 'inside a mutant run' : false, timeout: 15 * 60 * 1000 }, () => {
   const f = REAL().frozen, env = { KEV_DATA_MUTANT_RUN: '1', KEV_RECORDS_FROZEN: JSON.stringify({ dir: f.dir, pin: f.pin, commit: f.commit }) };
-  const pattern = '^(acceptance 2:|acceptance 7:|acceptance 6:|acceptance 6b:)';
+  const pattern = '^(acceptance 2:|acceptance 6:|acceptance 7:)';
   const mutants = [
     { name: 'KOBO void flag left unbalanced (always void)', pattern: '^acceptance 2:', mutations: [{ file: 'ports/records-notes.mjs',
       from: "return { target: leastCommon(cellCount(G, `${job.cellPrefix ?? port}|${u.sys}`), labs, 'target', ...key) };",
@@ -704,11 +718,11 @@ test('seeded defect: this file runs alone and fails on seeded defects (a KOBO-on
     { name: 'held-out bed templates are not scrubbed from train-like slices', pattern: '^acceptance 7:', mutations: [{ file: 'ports/records-notes.mjs',
       from: "if (G.control === 'natural' || G.control === 'deletion-unknowable') return { edits: [], units: W.pool.map(u => ({ ...u })) };",
       to: "if (true) return { edits: [], units: W.pool.map(u => ({ ...u })) };" }] },
-    { name: 'unknowables are built by deleting the decisive sentence', pattern: '^(acceptance 6:|acceptance 6b:)', mutations: [{ file: 'ports/records-notes.mjs',
+    { name: 'unknowables are built by deleting the decisive sentence', pattern: '^acceptance 6:', mutations: [{ file: 'ports/records-notes.mjs',
       from: "const deleting = G.control === 'deletion-unknowable';", to: 'const deleting = true;' }] },
   ];
   const r = H.seededDefect({ file: TEST_FILE, pattern, mutants, env });
   assert.equal(r.control.status, 0, r.control.stdout.split('\n').filter(l => /not ok/.test(l)).join('\n') + r.control.stderr.slice(0, 600));
-  assert.ok(r.control.passed.length >= 4, `${r.control.passed.length} tests passed in the control run`);
+  assert.ok(r.control.passed.length >= 3, `${r.control.passed.length} tests passed in the control run`);
   for (const m of r.mutants) assert.ok(m.failed.length > 0 && m.status !== 0, `mutant "${m.name}" was not caught (${m.passed.length} passed, ${m.failed.length} failed)`);
 });

@@ -1,0 +1,48 @@
+# Reference Docker Compose file for a Selenium Grid (synthetic stand-in for the docker-selenium project's file).
+version: '3'
+services:
+  chrome:
+    # image: selenium/node-chrome:4.2.0-20210201
+    image: selenium/node-chrome:4.38.0-20251010  
+    shm_size: 2gb
+    depends_on:
+      - selenium-hub
+    environment:
+      - SE_EVENT_BUS_HOST=selenium-hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+    ports:
+      - "6900:5900"
+  selenium-hub:
+    # image: selenium/hub:4.4.0-20210613
+    image: selenium/hub:4.38.0-20250927  
+    ports:
+      - "4442:4442"
+      - "4443:4443"
+      - "4444:4444"
+  firefox:
+    image: selenium/node-firefox:4.37.0-20251022  
+    shm_size: 2gb
+    depends_on:
+      - selenium-hub
+    environment:
+      - SE_EVENT_BUS_HOST=selenium-hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+    ports:
+      - "6902:5900"
+  edge:
+    image: selenium/node-edge:4.37.0-20251102  
+    shm_size: 2gb
+    depends_on:
+      - selenium-hub
+    environment:
+      - SE_EVENT_BUS_HOST=selenium-hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+    ports:
+      - "6901:5900"
+  video:
+    image: selenium/video:ffmpeg-7.1-20250909
+    volumes:
+      - ./videos:/videos

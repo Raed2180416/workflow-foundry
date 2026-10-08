@@ -32,14 +32,15 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { labelledQuestion, questionId, uniformTarget } from '../lib/render.mjs';
 import { optionOrder } from '../lib/balance.mjs';
-import { worldHash, skeleton, skeletonBucket, spanHash, canonical } from '../lib/hash.mjs';
+import { worldHash, skeleton, skeletonBucket, spanHash, canonical, stateHash } from '../lib/hash.mjs';
 import { stringLeaves } from '../lib/leakage.mjs';
 import {
-  kits, compactObservation, parseObservation, describeExpectation, parseExpectation, descriptionSentences, lowerFirst,
+  kits, compactObservation, parseObservation, describeExpectation, parseExpectation, descriptionSentences, lowerFirst, DIRECTIONS,
 } from '../judges/interactive.mjs';
 import * as GQ from './interactive-gq.mjs';
 import * as QA from './interactive-qa.mjs';
 import { Q4_CARRIERS, NEUTRAL_INSCRIPTIONS, BENIGN_PINNED } from './interactive-lines.mjs';
+import * as TAP from '../taps/interactive.mjs';
 import { GRIDQUEST_INJECTIONS, GRIDQUEST_JOURNAL_INJECTIONS, isInjectionSentence, alignReports, stripPadding, GAMEQA_INJECTIONS, roomSentenceKinds as roomSentenceKindsOf } from '../taps/interactive.mjs';
 import { solveQ4Gridquest, toggleEffectsOf } from '../solve/Q4.mjs';
 
@@ -62,6 +63,7 @@ export const JOBS = Object.freeze({
   Q1: ['train', 'dev-select'], Q2: ['train', 'dev-select'], 'Q5:gameqa': ['train', 'dev-select'], 'Q6:gameqa': ['train', 'dev-select'], 'X6:gameqa': ['train', 'dev-select'],
   Q3: [],
 });
+const DEFAULT_Q3 = 3;
 export const HELD_OUT_JOBS = Object.freeze(['Q4:gameqa', 'X1:gridquest', 'X2:gameqa']);
 export const SMOKE_JOBS = Object.freeze(['Q1', 'Q2', 'Q5:gameqa', 'Q6:gameqa', 'X6:gameqa', 'X2:gameqa', 'Q3']);
 const BED_OF = job => (job.endsWith(':gameqa') || /^Q[56]/.test(job) || job === 'X6:gameqa' ? 'gameqa' : 'gridquest');
@@ -144,8 +146,11 @@ function q4Carriers(G) {
 }
 
 // ---- the generation context ---------------------------------------------------------------------------------------------------------------
+// opts.wordings is {port: [{id, text}]} (the same for every OOD slice a call asks) or {slice: {port: [...]}}
+const wordingsOf = (o, slice) => (o.wordings && o.wordings[slice] && typeof o.wordings[slice] === 'object' && !Array.isArray(o.wordings[slice]) ? o.wordings[slice] : (o.wordings ?? {}));
 function makeContext(slice, opts, ctx) {
-  const o = opts ?? {};
+  const o = { ...(opts ?? {}) };
+  o.wordings = wordingsOf(o, slice);
   return { slice, ctx, contracts: ctx.contracts, def: ctx.slice, opts: o, ood: OOD.has(slice), test: slice === 'test-ood', share: { ...DEFAULT_SHARE, ...(o.share ?? {}) }, counts: {}, notes: {} };
 }
 const bump = (G, k, n = 1) => { G.counts[k] = (G.counts[k] ?? 0) + n; };
@@ -189,7 +194,9 @@ export function sameNameDistractor({ sentence, observation, believedRoom }) {
 // One candidate row of a world: an OK step of the true route or a drifting proposal.
 function q4Candidates(mod, route, task, G, seed) {
   const { W, w, rows } = route, out = [];
-  const feature = (cell, key) => (unit(`${key}|feat`) < 0.35 ? GQ.featureFor(mod, route, cell, `${key}|f`) : undefined);
+  // whether an expectation names a fixture of its room is decided per step, for the true row and its drifting siblings alike: the clause is not a hint of the label
+  const featureAt = k => unit(`${G.slice}|Q4|${seed}|feat|${k}`) < FEATURE_SHARE;
+  const feature = (cell, k, key) => (featureAt(k) ? GQ.featureFor(mod, route, cell, `${key}|f`) : undefined);
   const mk = (base) => {
     const { expect, observation } = base;
     const feat = expect.kind === 'enter' ? base.feature : undefined;
@@ -202,7 +209,7 @@ function q4Candidates(mod, route, task, G, seed) {
     const cell = row.truth.kind === 'enter' ? row.truth.cell : null;
     let remote = false;
     if (row.expect.kind === 'toggle' && row.switchIndex >= 0) remote = w.switches[row.switchIndex].targets.every(mi => { const e = w.edges[w.mechs[mi].edge]; return e.a !== row.pre.pos && e.b !== row.pre.pos; });
-    out.push(mk({ id: `ok:${row.k}`, role: 'ok', k: row.k, op: null, action: row.action, expect: row.expect, truth: row.truth, observation: row.observation, label: 'as_expected', feature: cell === null ? undefined : feature(cell, key), key, kind: row.expect.kind, pre: row.pre, post: row.post, remote }));
+    out.push(mk({ id: `ok:${row.k}`, role: 'ok', k: row.k, op: null, action: row.action, expect: row.expect, truth: row.truth, observation: row.observation, label: 'as_expected', feature: cell === null ? undefined : feature(cell, row.k, key), key, kind: row.expect.kind, pre: row.pre, post: row.post, remote }));
   }
   for (let k = 0; k < rows.length; k++) {
     const props = [...GQ.proposeOps(mod, route, k, `${seed}|${k}`)];
@@ -213,16 +220,16 @@ function q4Candidates(mod, route, task, G, seed) {
       if (run.label !== 'drifted') continue;                     // a proposal the world happens to satisfy is not a drift
       const key = `${G.slice}|Q4|${seed}|${p.op}|${k}`;
       const cell = p.truth.kind === 'enter' ? p.truth.cell : null;
-      // a wrong-room drift always names a fixture of the believed room (the distractor variant needs it)
-      const feat = cell === null ? undefined : (p.op === 'wrong-room' || unit(`${key}|feat`) < 0.35 ? GQ.featureFor(mod, route, cell, `${key}|f`) : undefined);
+      const feat = cell === null ? undefined : feature(cell, k, key);
       out.push(mk({ id: `${p.op}:${k}`, role: 'drift', k, op: p.op, action: p.action, expect: p.expect, truth: p.truth, observation: run.observation, label: 'drifted', feature: feat, key, kind: p.expect.kind, pre: run.pre, post: run.post, detail: p.detail }));
     }
   }
   return out;
 }
 
-const OP_WEIGHTS = Object.freeze({ 'wrong-exit': 1, 'locked-door': 8, 'wrong-key': 10, 'one-way-return': 20, 'one-way-entry': 8, 'wrong-room': 1, 'unaware-coupling': 30, 'empty-container': 1, 'wrong-key-found': 10, 'absent-item': 0.5, 'no-treasure': 0.4 });
+const OP_WEIGHTS = Object.freeze({ 'wrong-exit': 1, 'locked-door': 8, 'wrong-key': 10, 'one-way-return': 20, 'one-way-entry': 8, 'wrong-room': 2.5, 'unaware-coupling': 30, 'empty-container': 1, 'wrong-key-found': 10, 'absent-item': 0.5, 'no-treasure': 0.4 });
 const FLIP_OPS = new Set(['wrong-room', 'unaware-coupling']);
+const FEATURE_SHARE = 0.4;
 function weightedDraw(items, weight, n, key) {
   const left = [...items].sort((a, b) => byHash(sha(`${key}|${a.id}`), sha(`${key}|${b.id}`))), out = [];
   for (let slot = 0; slot < n && left.length; slot++) {
@@ -275,28 +282,25 @@ async function* gridquestQ4(G, mod, seed, difficulty, perWorld) {
   }
   const test = G.test, carriers = q4Carriers(G);
   for (const { c, pair } of picked) {
-    const rec = q4Record(c, ctx0, pair ? { variant: 'flip', meta: { pairId: pair } } : {});
+    // the twins of a row (a cosmetic re-render, a carrier) and the row itself are one cluster: they share a pairId, fixed before the row is yielded
+    const wantPerm = unit(`${c.key}|inv`) < G.share.invariance, wantInj = unit(`${c.key}|inj`) < G.share.injection && (carriers[c.label === 'drifted' ? 'as_expected' : 'drifted'].length > 0);
+    const cluster = pair ?? (wantPerm || wantInj ? `gq4:${G.slice}:${seed}:${c.id}` : undefined);
+    const rec = q4Record(c, ctx0, { variant: pair ? 'flip' : 'clean', meta: { ...(cluster ? { pairId: cluster } : {}), rowId: `${seed}:${c.id}` } });
     yield rec;
     const obs = rec.state.observation;
-    // a cosmetic re-render (the room is the same): the label does not move
-    if (unit(`${c.key}|inv`) < G.share.invariance) {
+    if (wantPerm) {
       const p = GQ.permuteDescription(obs, `${c.key}|perm`);
-      if (p) { const twin = q4Record(c, ctx0, { observation: p, tag: 'perm', variant: 'invariance', meta: { pairId: `gq4:${G.slice}:${seed}:${c.id}:perm`, counterfactual: { swapped: true, from: 'sentence order', to: 'permuted', path: 'observation' } } }); if (rec.meta.pairId === undefined) rec.meta.pairId = twin.meta.pairId; yield twin; }
+      if (p) yield q4Record(c, ctx0, { observation: p, tag: 'perm', variant: 'invariance', meta: { pairId: cluster, rowId: `${seed}:${c.id}`, counterfactual: { swapped: true, from: 'sentence order', to: 'permuted', path: 'observation' } } });
     }
-    // a carrier urging the wrong answer, inserted at a sentence boundary (paired with the clean row)
-    if (unit(`${c.key}|inj`) < G.share.injection) {
-      const pool = carriers[c.label === 'drifted' ? 'as_expected' : 'drifted'];
-      if (pool.length) {
-        const text = pickBy(pool, `${c.key}|carrier`), ins = GQ.insertSentence(obs, text, `${c.key}|carrier`);
-        const pairId = rec.meta.variant === 'clean' ? (rec.meta.pairId ??= `gq4:${G.slice}:${seed}:${c.id}:inj`) : `gq4:${G.slice}:${seed}:${c.id}:inj`;
-        yield q4Record(c, ctx0, { observation: ins, tag: 'inj', variant: 'injection', source: OOD.has(G.slice) ? 'authored' : 'authored-builtin', meta: { pairId, counterfactual: { swapped: false, from: null, to: 'carrier', path: 'observation' }, carrier: spanHash(text) } });
-      }
-    }
+    if (wantInj) {
+      const text = pickBy(carriers[c.label === 'drifted' ? 'as_expected' : 'drifted'], `${c.key}|carrier`), ins = GQ.insertSentence(obs, text, `${c.key}|carrier`);
+      yield q4Record(c, ctx0, { observation: ins, tag: 'inj', variant: 'injection', source: OOD.has(G.slice) ? 'authored' : 'authored-builtin', meta: { pairId: cluster, rowId: `${seed}:${c.id}`, counterfactual: { swapped: false, from: null, to: 'carrier', path: 'observation' }, carrier: spanHash(text) } });
+    } else if (unit(`${c.key}|inj`) < G.share.injection) bump(G, 'q4:carrier-missing');
     if (test && unit(`${c.key}|para`) < G.share.paraphrase) { const p = paraphraseOf(rec, G.contracts.Q4, G.slice, G.opts, c.key); if (p) yield p; }
     // the same room name for a different room: kept only where the observation tells the rooms apart
     if (c.op === 'wrong-room' && unit(`${c.key}|same`) < G.share.sameName) {
       const believed = c.expect.room, d = sameNameDistractor({ sentence: c.sentence, observation: obs, believedRoom: believed });
-      if (!d.kept) bump(G, 'q4:samename-dropped'); else { bump(G, 'q4:samename-kept'); yield q4Record(c, ctx0, { observation: d.observation, tag: 'same', variant: 'distractor', meta: { counterfactual: { swapped: true, from: 'header', to: believed, path: 'observation' }, sameName: true } }); }
+      if (!d.kept) bump(G, 'q4:samename-dropped'); else { bump(G, 'q4:samename-kept'); yield q4Record(c, ctx0, { observation: d.observation, tag: 'same', variant: 'distractor', meta: { rowId: `${seed}:${c.id}`, counterfactual: { swapped: true, from: 'header', to: believed, path: 'observation' }, sameName: true } }); }
     }
   }
   // presence-matched unknowable (§2.5): the remote effects of a switch are reported only in the result line; replace it by
@@ -318,7 +322,8 @@ async function* gridquestQ1(G, mod, seed, difficulty, perWorld) {
   const task = mod.index.generate({ seed, split: G.def.bedSplit, difficulty }), wh = worldHash(task), masks = GQ.masksOf(mod, task);
   const W = mod.index._internal.world(task), route = GQ.trueRoute(mod, task);
   // states along the reference route in distinct rooms (up to perWorld)
-  const ks = shuffled([...route.snaps.keys()], `${G.slice}|Q1|${seed}|ks`), seenCells = new Set(), chosen = [];
+  // the state after the winning action is terminal (the engine ignores every action once the treasure is taken): a Q1 there has no answer to read
+  const ks = shuffled([...route.snaps.keys()].filter(k => k < W.solution.length), `${G.slice}|Q1|${seed}|ks`), seenCells = new Set(), chosen = [];
   for (const k of ks) {
     const cell = route.snaps[k].st.pos;
     if (seenCells.has(cell)) continue;
@@ -367,7 +372,9 @@ const Q4_TEMPLATE_WEIGHT = Object.freeze({ crash_action: 1, stale_hud: 0.25, pur
 async function* gameqaQ4(G, qa, seed, difficulty, perWorld) {
   const task = qa.index.generate({ seed, split: G.def.bedSplit, difficulty }), c = qa.case.caseFor(task);
   const wh = worldHash(task), masks = QA.masksOf(c);
-  const { steps } = QA.q4Steps(qa, task, c);
+  const { steps, dropped, droppedBy } = QA.q4Steps(qa, task, c);
+  bump(G, 'q4qa:steps', steps.length); bump(G, 'q4qa:dropped-invisible', dropped.invisible); bump(G, 'q4qa:dropped-unexplained', dropped.unexplained);
+  for (const [t, n] of Object.entries(droppedBy)) bump(G, `q4qa:invisible:${t}`, n);
   const drifts = steps.filter(x => x.label === 'drifted').map((x, j) => ({ ...x, id: `d${j}` })), oks = steps.filter(x => x.label === 'as_expected').map((x, j) => ({ ...x, id: `o${j}` }));
   const chosen = weightedDraw(drifts, d => Math.min(...d.firedTemplates.map(t => Q4_TEMPLATE_WEIGHT[t] ?? 1)), perWorld, `${G.slice}|Q4qa|${seed}|drift`);
   const used = new Set();
@@ -417,24 +424,24 @@ async function* gameqaX1(G, qa, seed, difficulty, perWorld) {
     const body = stripPadding(a.report.body);
     if (a.injection) {
       const form = formOf(a.injection, masks), text = a.mode === 'pinned' ? 'pinned' : 'appended';
-      cand.push({ id: `bed:${a.id}`, label: 'yes', slots: { report: a.id }, form, source: 'bed', kind: a.mode === 'pinned' ? 'pinned-injection' : 'appended-injection', hard: null, addressee: QA.hasAddressee(a.injection), labelSource: 'generator', weight: 1 });
+      cand.push({ id: `bed:${a.id}`, label: 'yes', slots: { report: a.id }, form, source: 'bed', kind: a.mode === 'pinned' ? 'pinned-injection' : 'appended-injection', hard: null, addressee: QA.hasAddressee(a.injection), labelSource: 'generator', weight: 0.7 });
     } else {
       const span = `${a.report.title} ${body}`, form = formOf(span, masks), hard = QA.hardNegativeKind(span);
-      cand.push({ id: `bed:${a.id}`, label: 'no', slots: { report: a.id }, form, source: 'bed', kind: `report-${a.kind}`, hard, addressee: QA.hasAddressee(span), labelSource: 'generator', weight: hard ? 2.5 : 1 });
+      cand.push({ id: `bed:${a.id}`, label: 'no', slots: { report: a.id }, form, source: 'bed', kind: `report-${a.kind}`, hard, addressee: QA.hasAddressee(span), labelSource: 'generator', weight: hard ? 2.5 : 0.7 });
     }
   }
   const hosts = reports.filter(a => !a.injection && a.report.source !== 'telemetry' && a.kind !== 'instruction');
   const composed = (l, j) => {
     const host = hosts.length ? pickBy(hosts, `${G.slice}|X1|${seed}|host|${lineKey(l)}|${j}`) : null;
     if (!host) return null;
-    return { id: `line:${lineKey(l)}:${host.id}`, label: l.label, slots: { report: host.id, append: l.text }, form: formOf(l.text, masks), source: 'authored', kind: `line-${l.role ?? 'decisive'}`, hard: l.label === 'no' ? QA.hardNegativeKind(l.text) : null, addressee: QA.hasAddressee(l.text), labelSource: 'authored-brief', weight: l.label === 'yes' ? (QA.hasAddressee(l.text) ? 1 : 2.4) : (QA.hasAddressee(l.text) ? 3 : 1.2), line: lineKey(l) };
+    return { id: `line:${lineKey(l)}:${host.id}`, label: l.label, slots: { report: host.id, append: l.text }, form: formOf(l.text, masks), source: 'authored', kind: `line-${l.role ?? 'decisive'}`, hard: l.label === 'no' ? QA.hardNegativeKind(l.text) : null, addressee: QA.hasAddressee(l.text), labelSource: 'authored-brief', weight: l.label === 'yes' ? (QA.hasAddressee(l.text) ? 1 : 4) : (QA.hasAddressee(l.text) ? 6 : 1.2), line: lineKey(l) };
   };
   const posLines = shuffled(lines.positive, `${G.slice}|X1|${seed}|lp`).slice(0, 4), negLines = shuffled(lines.negative, `${G.slice}|X1|${seed}|ln`).slice(0, 6);
   posLines.forEach((l, j) => { const x = composed(l, j); if (x) cand.push(x); });
   negLines.forEach((l, j) => { const x = composed(l, j); if (x) cand.push(x); });
   if (pinnedOn) {
     shuffled(BENIGN_PINNED.map((t, j) => ({ t, j })), `${G.slice}|X1|${seed}|bp`).slice(0, 4).forEach(({ t: [title, body], j }) => {
-      cand.push({ id: `pinned:${j}`, label: 'no', slots: { text: `${title}\n${body}`, source_kind: 'tracker post' }, form: formOf(`${title} ${body}`, masks), source: 'authored-builtin', kind: 'benign-pinned', hard: QA.hardNegativeKind(body) ?? 'pinned', addressee: QA.hasAddressee(body), labelSource: 'authored-brief', weight: 2 });
+      cand.push({ id: `pinned:${j}`, label: 'no', slots: { text: `${title}\n${body}`, source_kind: 'tracker post' }, form: formOf(`${title} ${body}`, masks), source: 'authored-builtin', kind: 'benign-pinned', hard: QA.hardNegativeKind(body) ?? 'pinned', addressee: QA.hasAddressee(body), labelSource: 'authored-brief', weight: 3 });
     });
   }
   const usable = cand.filter(x => bucketAllows(G.slice, x.form));
@@ -503,10 +510,104 @@ async function* gridquestX1(G, mod, seed, difficulty, perWorld) {
 }
 
 // ================================================================================================================
+// wave-2 smoke on gameqa: X6 report_triage, Q5 bug_class, Q6 spec_violation, X2 same_entity (held-out family)
+// ================================================================================================================
+const X6_WEIGHTS = Object.freeze({ instruction: 6, duplicate: 3, stale: 1.5, designed: 1, noise: 1, lead: 1 });
+async function* gameqaX6(G, qa, seed, difficulty, perWorld) {
+  const task = qa.index.generate({ seed, split: G.def.bedSplit, difficulty }), c = qa.case.caseFor(task), wh = worldHash(task), masks = QA.masksOf(c);
+  const { reports } = alignReports(task);
+  const cands = [];
+  for (const a of reports) {
+    if (a.injection && a.mode === 'appended') { bump(G, 'x6:mixed-dropped'); continue; }        // a lead with an injection appended is both: no single label
+    const form = formOf(`${a.report.title} ${stripPadding(a.report.body)}`, masks);
+    if (!bucketAllows(G.slice, form)) continue;
+    cands.push({ id: a.id, label: a.kind, form, report: a.report });
+  }
+  const chosen = weightedDraw(cands, x => X6_WEIGHTS[x.label] ?? 1, perWorld, `${G.slice}|X6|${seed}`);
+  for (const x of chosen) {
+    const slots = { report: x.id }, state = kits.gameqa.X6.buildState(task, slots);
+    yield makeRecord({ contract: G.contracts.X6, slice: G.slice, opts: G.opts, key: `${G.slice}|X6|${seed}|${x.id}`, state, label: x.label,
+      meta: { family: 'gameqa', bed: 'gameqa', seed, difficulty, worldHash: wh, variant: 'clean', formId: x.form, labelSource: 'generator', surface: { source: 'bed', slice: G.slice, lineHash: spanHash(state.report) }, masks, kit: { port: 'X6', slots }, x6: { kind: x.label } } });
+  }
+}
+async function* gameqaQ5(G, qa, seed, difficulty, perWorld) {
+  const task = qa.index.generate({ seed, split: G.def.bedSplit, difficulty }), c = qa.case.caseFor(task), wh = worldHash(task), masks = QA.masksOf(c);
+  const eff = QA.triggerEffects(qa, task, c).filter(x => x.effect).map(x => ({ ...x, id: x.bug.id }));
+  const cands = eff.map(x => ({ ...x, form: formOf(`${x.effect} // ${x.last}`, masks) })).filter(x => bucketAllows(G.slice, x.form));
+  for (const x of weightedDraw(cands, () => 1, perWorld, `${G.slice}|Q5|${seed}`)) {
+    const slots = { actions: x.actions, observed_effect: x.effect }, state = kits.gameqa.Q5.buildState(task, slots);
+    yield makeRecord({ contract: G.contracts.Q5, slice: G.slice, opts: G.opts, key: `${G.slice}|Q5|${seed}|${x.id}`, state, label: x.bug.cls,
+      meta: { family: 'gameqa', bed: 'gameqa', seed, difficulty, worldHash: wh, variant: 'clean', formId: x.form, labelSource: 'generator', surface: { source: 'bed', slice: G.slice, lineHash: spanHash(state.observed_effect) }, masks, kit: { port: 'Q5', slots }, q5: { template: x.bug.template, variant: x.bug.variant ?? null } } });
+  }
+}
+async function* gameqaQ6(G, qa, seed, difficulty, perWorld) {
+  const task = qa.index.generate({ seed, split: G.def.bedSplit, difficulty }), c = qa.case.caseFor(task), wh = worldHash(task), masks = QA.masksOf(c);
+  const { reports } = alignReports(task);
+  const cands = [...QA.defectBehaviours(qa, task, c, TAP), ...QA.designedBehaviours(task, c, reports, TAP, stripPadding)]
+    .map(x => ({ ...x, form: formOf(x.behaviour, masks) })).filter(x => bucketAllows(G.slice, x.form));
+  const defects = cands.filter(x => x.label === 'defect'), designed = cands.filter(x => x.label === 'designed'), nDef = Math.ceil(perWorld / 2);
+  for (const x of [...weightedDraw(defects, () => 1, nDef, `${G.slice}|Q6|${seed}|d`), ...weightedDraw(designed, () => 1, perWorld - nDef, `${G.slice}|Q6|${seed}|s`)]) {
+    const slots = { sections: x.sections, behaviour: x.behaviour, ...(x.floor ? { floor: x.floor } : {}) }, state = kits.gameqa.Q6.buildState(task, slots);
+    yield makeRecord({ contract: G.contracts.Q6, slice: G.slice, opts: G.opts, key: `${G.slice}|Q6|${seed}|${x.id}`, state, label: x.label,
+      meta: { family: 'gameqa', bed: 'gameqa', seed, difficulty, worldHash: wh, variant: 'clean', formId: x.form, labelSource: 'generator', surface: { source: 'bed', slice: G.slice, lineHash: spanHash(x.behaviour) }, masks, kit: { port: 'Q6', slots }, q6: { template: x.template ?? null, title: x.title ?? null } } });
+  }
+}
+// X2:gameqa (held-out family): two references to the game's things in the words of the design document and of the players
+// (the bed's ALIAS table), the same thing or two different ones of the same kind.
+const X2_KINDS = Object.freeze({ colour: ['amber', 'blue', 'crimson', 'dusk'], item: ['gem', 'potion', 'coins'], enemy: ['crawler', 'moth'], gear: ['sword', 'lantern'] });
+async function* gameqaX2(G, qa, seed, difficulty, perWorld) {
+  const task = qa.index.generate({ seed, split: G.def.bedSplit, difficulty }), c = qa.case.caseFor(task), wh = worldHash(task), masks = QA.masksOf(c);
+  const phrase = (kind, key, alias, k) => (kind === 'colour' ? `the ${alias} ${pickBy(['door', 'key'], `${k}|noun`)}` : `the ${alias}`);
+  const out = [];
+  for (let j = 0; j < perWorld * 3; j++) {
+    const k = `${G.slice}|X2|${seed}|${j}`, kind = pickBy(Object.keys(X2_KINDS), `${k}|kind`), keys = X2_KINDS[kind];
+    const same = unit(`${k}|same`) < 0.5, ka = pickBy(keys, `${k}|ka`), kb = same ? ka : pickBy(keys.filter(x => x !== ka), `${k}|kb`);
+    const aliasA = pickBy(TAP.GAMEQA_ALIAS[ka], `${k}|aa`), aliasB = pickBy(TAP.GAMEQA_ALIAS[kb].filter(x => !same || x !== aliasA), `${k}|ab`);
+    if (!aliasB || (same && aliasA === aliasB)) continue;
+    const noun = pickBy(['door', 'key'], `${k}|noun`);
+    const a = kind === 'colour' ? `the ${aliasA} ${noun}` : `the ${aliasA}`, b = kind === 'colour' ? `the ${aliasB} ${noun}` : `the ${aliasB}`;
+    out.push({ id: `x2:${j}`, a, b, label: same ? 'same' : 'different', kind, form: formOf(`${a} // ${b}`, masks) });
+  }
+  const seen = new Set();
+  for (const x of out.filter(x => !seen.has(`${x.a}|${x.b}`) && seen.add(`${x.a}|${x.b}`)).slice(0, perWorld)) {
+    const slots = { a: x.a, b: x.b }, state = kits.gameqa.X2.buildState(task, slots);
+    yield makeRecord({ contract: G.contracts.X2, slice: G.slice, opts: G.opts, key: `${G.slice}|X2|${seed}|${x.id}`, state, label: x.label,
+      meta: { family: 'gameqa', bed: 'gameqa', seed, difficulty, worldHash: wh, variant: 'clean', formId: x.form, labelSource: 'generator', surface: { source: 'bed', slice: G.slice, lineHash: spanHash(`${x.a}\n${x.b}`) }, masks, kit: { port: 'X2', slots }, x2: { kind: x.kind } } });
+  }
+}
+
+// ----------------------------------------------------------------------------------------------------------------
+// Q3 next_action (wave 3, skeleton only): the reference solver's next action over at most 15 legal actions, a soft target
+// over the equally optimal ones. The label is a ranking prior: the observation does not determine it (§1.2 Q3).
+// ----------------------------------------------------------------------------------------------------------------
+async function* gridquestQ3(G, mod, seed, difficulty, perWorld) {
+  const task = mod.index.generate({ seed, split: G.def.bedSplit, difficulty }), wh = worldHash(task), masks = GQ.masksOf(mod, task);
+  const route = GQ.trueRoute(mod, task), W = route.W;
+  const ks = shuffled([...route.rows.keys()], `${G.slice}|Q3|${seed}`).slice(0, perWorld);
+  for (const k of ks) {
+    route.walker.restore(route.snaps[k]);
+    const legal = route.walker.env.actions(), label = W.solution[k];
+    if (!legal.includes(label)) continue;
+    const best = GQ.bestActions(mod, W, route.snaps[k].st).filter(a => legal.includes(a));
+    if (!best.includes(label)) { bump(G, 'q3:label-not-best'); continue; }
+    const others = shuffled(legal.filter(a => !best.includes(a)), `${G.slice}|Q3|${seed}|${k}|others`).slice(0, Math.max(0, 14 - best.length));
+    const options = [...new Set([...best, ...others])].sort();
+    const history = route.rows.slice(Math.max(0, k - 4), k).map(r => ({ action: r.action, result: parseObservation(r.observation).lastAction }));
+    const observation = scrubFamilySpans(route.observations[k], seed, G.slice), slots = { observation, history }, state = kits.gridquest.Q3.buildState(task, slots);
+    const form = formOf(parseObservation(observation).description, masks);
+    if (!bucketAllows(G.slice, form)) continue;
+    const target = best.length > 1 ? Object.fromEntries(best.map(a => [a, 1 / best.length])) : undefined;
+    const w = wordingFor(G.contracts.Q3, G.slice, `${G.slice}|Q3|${seed}|${k}`, G.opts), key = `${G.slice}|Q3|${seed}|${k}`;
+    const q = labelledQuestion(G.contracts.Q3, { label, ...(target ? { target } : {}), wording: w.wording, wordingText: w.wordingText, options, optionOrder: optionOrder(options, key) });
+    yield { state, questions: { Q3: q }, meta: { family: 'gridquest', bed: 'gridquest', seed, difficulty, worldHash: wh, variant: 'clean', formId: form, labelSource: 'simulator', needsWorldKnowledge: false, wordingId: w.wordingId, surface: { source: 'bed', slice: G.slice, lineHash: spanHash(state.observation) }, masks, kit: { port: 'Q3', slots, options }, q3: { k, best: best.length, options: options.length } } };
+  }
+}
+
+// ================================================================================================================
 // the generator
 // ================================================================================================================
-export async function* records(slice, seeds, opts = {}, ctx) {
-  const G = makeContext(slice, opts, ctx), def = ctx.slice;
+async function* recordsOf(G, slice, seeds, opts, ctx) {
+  const def = ctx.slice;
   const wanted = (opts.ports ?? SLICE_PORTS[slice] ?? []).flatMap(p => {
     const s = String(p);
     if (s.includes(':')) return [s];
@@ -515,7 +616,7 @@ export async function* records(slice, seeds, opts = {}, ctx) {
   const jobs = [...new Set(wanted)];
   for (const j of jobs) if (HELD_OUT_JOBS.includes(j) && slice !== 'test-ood') throw fail('HELDOUT_FAMILY', `${j} is a held-out family (test-ood only, §3.4); it is not generated in ${slice}`);
   if (!jobs.length) return;
-  const perWorld = { ...(PER_WORLD[slice] ?? {}), ...(opts.perWorld ?? {}) };
+  const perWorld = { Q3: DEFAULT_Q3, ...(PER_WORLD[slice] ?? {}), ...(opts.perWorld ?? {}) };
   const diffs = Array.isArray(opts.difficulties) ? { gridquest: opts.difficulties, gameqa: opts.difficulties } : { gridquest: [1, 2, 3, 4, 5], gameqa: [2, 3, 4, 5], ...(opts.difficulties ?? {}) };
   const need = bed => jobs.some(j => BED_OF(j) === bed);
   const mod = need('gridquest') ? await GQ.loadGq(ctx.beds) : null;
@@ -527,7 +628,80 @@ export async function* records(slice, seeds, opts = {}, ctx) {
     if (jobs.includes('Q2') && perWorld.Q2 && smoke('Q2', seed)) yield* gridquestQ2(G, mod, seed, GQ.difficultyOf(seed, diffs.gridquest.filter(d => d >= 2)), perWorld.Q2);
     if (jobs.includes('X1:gridquest') && perWorld['X1:gridquest']) yield* gridquestX1(G, mod, seed, GQ.difficultyOf(seed, diffs.gridquest.filter(d => d >= 3)), perWorld['X1:gridquest']);
     if (jobs.includes('X1:gameqa') && perWorld['X1:gameqa']) yield* gameqaX1(G, qa, seed, QA.difficultyOf(seed, diffs.gameqa.filter(d => d >= 3)), perWorld['X1:gameqa']);
+    if (jobs.includes('X6:gameqa') && perWorld['X6:gameqa'] && smoke('X6', seed)) yield* gameqaX6(G, qa, seed, QA.difficultyOf(seed, diffs.gameqa), perWorld['X6:gameqa']);
+    if (jobs.includes('Q5:gameqa') && perWorld['Q5:gameqa'] && smoke('Q5', seed)) yield* gameqaQ5(G, qa, seed, QA.difficultyOf(seed, diffs.gameqa), perWorld['Q5:gameqa']);
+    if (jobs.includes('Q6:gameqa') && perWorld['Q6:gameqa'] && smoke('Q6', seed)) yield* gameqaQ6(G, qa, seed, QA.difficultyOf(seed, diffs.gameqa), perWorld['Q6:gameqa']);
+    if (jobs.includes('X2:gameqa') && perWorld['X2:gameqa']) yield* gameqaX2(G, qa, seed, QA.difficultyOf(seed, diffs.gameqa), perWorld['X2:gameqa']);
+    if (jobs.includes('Q3') && perWorld.Q3 && smoke('Q3', seed)) yield* gridquestQ3(G, mod, seed, GQ.difficultyOf(seed, diffs.gridquest), perWorld.Q3);
     if (jobs.includes('Q4:gameqa') && perWorld['Q4:gameqa']) yield* gameqaQ4(G, qa, seed, QA.difficultyOf(seed, diffs.gameqa), perWorld['Q4:gameqa']);
   }
 }
-export const describe = G => G.counts;
+// Test slices ask one question per port per state (§2.3 rule 5; the build refuses a second one): a state a world
+// repeats (the bed's fixed injection sentences, the same alias pair in two worlds) is emitted once. Pair and
+// paraphrase records are the clusters the build excepts.
+const TEST_LIKE_SLICES = new Set(['test-in', 'test-ood']);
+export async function* records(slice, seeds, opts = {}, ctx) {
+  const G = makeContext(slice, opts, ctx), seen = new Set();
+  for await (const r of recordsOf(G, slice, seeds, opts, ctx)) {
+    if (TEST_LIKE_SLICES.has(slice) && r.meta.variant !== 'paraphrase' && (r.meta.pairId === undefined || r.meta.pairId === null)) {
+      const k = `${Object.keys(r.questions).map(q => q.split('~')[0]).sort().join('+')}|${stateHash(r.state)}`;
+      if (seen.has(k)) { bump(G, 'test:repeated-state'); continue; }
+      seen.add(k);
+    }
+    yield r;
+  }
+  REPORT.counts = G.counts; REPORT.labeller = G.labellerLog ?? [];
+}
+// ---- the rows the plan asks of this group (JUDGE-BUILD-PLAN.json estimatedRecords; derivation: JUDGE-PROGRAM.md §4.3) -----------------
+// Train rows at the 20K curve point: a hard port (Q4, X1) gets 1,935, split evenly over its train families (Q4 two: gridquest and
+// runbook; X1 six). Evaluation sets per port: calib-in 300, calib-ood 500 (X1 600), dev-select 200, dev-ood 600, test-in 500;
+// test-ood per axis (Q4: template 600, paraphrase 400, gameqa family 600, adversarial 800 rows, unknowable 300; X1: authored 600,
+// paraphrase 400, gridquest family 600, long 150, natural rate 3,000). Wave-2 smoke sets: about 300 train and 100 dev-select rows.
+export const TARGETS = Object.freeze({
+  'Q4:gridquest': Object.freeze({ train: 967, 'calib-in': 150, 'calib-ood': 250, 'dev-select': 100, 'dev-ood': 300, 'test-in': 250, 'test-ood': 1050 }),
+  'X1:gameqa': Object.freeze({ train: 322, 'calib-in': 50, 'calib-ood': 100, 'dev-select': 33, 'dev-ood': 100, 'test-in': 83, 'test-ood': 692 }),
+  'Q4:gameqa': Object.freeze({ 'test-ood': 600 }), 'X1:gridquest': Object.freeze({ 'test-ood': 600 }),
+  Q1: Object.freeze({ train: 300, 'dev-select': 100 }), Q2: Object.freeze({ train: 300, 'dev-select': 100 }), Q5: Object.freeze({ train: 300, 'dev-select': 100 }),
+  Q6: Object.freeze({ train: 300, 'dev-select': 100 }), X6: Object.freeze({ train: 300, 'dev-select': 100 }), 'X2:gameqa': Object.freeze({ 'test-ood': 100 }),
+});
+export const PLAN_ROWS = Object.freeze({ train: 1291, calib: 550, testIn: 333, testOOD: 2942, dev: 533 });
+
+// diagnostics of the last records() run (counts of drops and kept variants, the Q1 labeller log): read by tests and reports
+export const REPORT = { counts: {}, labeller: [] };
+export const describe = () => REPORT;
+
+// ---- the label-bearing spans of the held-out families, for the span registry (§2.3 rule 7) -------------------------------------
+// Q4:gameqa: the plan's expected-effect sentence and the observation block. X1:gridquest: the injection texts (the
+// family-specific, label-bearing spans; its negatives are bed prose shared with the train gridquest ports and are not
+// held-out surfaces). X2:gameqa: the two references. The assembly registers them with
+// registry.add(text, { slice: 'heldout', source: 'interactive', port, kind, names, markers }).
+export function heldoutSpans(record) {
+  const masks = record.meta?.masks ?? { names: [], markers: [] }, out = [];
+  const ports = Object.keys(record.questions).map(q => q.split('~')[0]), fam = record.meta?.family;
+  if (fam === 'gameqa' && ports.includes('Q4')) out.push({ text: record.state.expected_effect, port: 'Q4', kind: 'family-span', masks }, { text: record.state.observation, port: 'Q4', kind: 'family-span', masks });
+  if (fam === 'gridquest' && ports.includes('X1') && ['injection', 'journal-injection'].includes(record.meta.x1?.kind)) out.push({ text: record.meta.x1.span ?? record.state.text, port: 'X1', kind: 'family-span', masks });
+  if (fam === 'gameqa' && ports.includes('X2')) out.push({ text: record.state.a, port: 'X2', kind: 'family-span', masks }, { text: record.state.b, port: 'X2', kind: 'family-span', masks });
+  return out.filter(x => x.text);
+}
+export function registerHeldout(registry, recs) {
+  let n = 0;
+  for (const r of recs) for (const x of heldoutSpans(r)) { registry.add(x.text, { slice: 'heldout', source: 'interactive', port: x.port, kind: x.kind, names: x.masks.names, markers: x.masks.markers }); n++; }
+  return n;
+}
+
+// ---- class support (§2.7 step 8): label x difficulty, forms = distinct masked surface forms ---------------------------------------
+export function classSupport(recs, { minForms = 30, label = r => Object.values(r.questions)[0].label } = {}) {
+  const cells = {};
+  for (const r of recs) {
+    const l = label(r), d = `d${r.meta.difficulty}`, c = ((cells[l] ??= {})[d] ??= { rows: 0, forms: new Set(), worlds: new Set() });
+    c.rows++; c.forms.add(r.meta.formId); c.worlds.add(r.meta.seed);
+  }
+  const out = {};
+  for (const [l, byD] of Object.entries(cells)) for (const [d, c] of Object.entries(byD)) (out[l] ??= {})[d] = { rows: c.rows, forms: c.forms.size, worlds: c.worlds.size, diagnostic: c.forms.size < minForms };
+  return out;
+}
+export const formsPerLabel = (recs, label = r => Object.values(r.questions)[0].label) => {
+  const m = {};
+  for (const r of recs) (m[label(r)] ??= new Set()).add(r.meta.formId);
+  return Object.fromEntries(Object.entries(m).map(([k, v]) => [k, v.size]));
+};

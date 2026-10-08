@@ -9,11 +9,13 @@
 //   FIELD_MISMATCH:<side>.<field>  a mapped field differs                CONVERGENCE:<field>     systems disagree after concurrent edits
 //   OPTOUT_MISMATCH                Zoho Email_Opt_Out != (KlickTipp status is not Subscribed)
 //   STATUS_WRONG / LIST_WRONG / TAG_MISSING:<key>   KlickTipp status, opt-in list, creation tag
+//   TAG_UNEXPECTED:createdViaForm   the web-form creation tag on a subscriber not created through the form
+//   TAG_UNEXPECTED:zoho             a Zoho tag that is not one of the segment tags (the job writes no other tags)
 //   SEGMENT_MISMATCH:<side>        segment tags differ from the expectation          ID_UNSTABLE   a record was replaced instead of updated
 //   ECHO_LOOP                      events were still being generated after the run cap   ECHO_WRITE   a write made while handling an API-origin event
 import { replay, scenarioList, driveSync, LIMITS } from './env.mjs';
 import { CONFIG } from './scenarios.mjs';
-import { zohoNeutral, ktNeutral, NEUTRAL } from './spec.mjs';
+import { zohoNeutral, ktNeutral, ktDobReadings, NEUTRAL } from './spec.mjs';
 import { normEmail } from './mocks/common.mjs';
 import { makeFaithful } from './controls/reference.mjs';
 
@@ -50,6 +52,7 @@ function judgeState(exp, state, refs, prev, cfg, add) {
   const zClaim = new Set(), kClaim = new Set();
   const segsOfZoho = zr => cfg.segments.filter(s => zr.Tag.some(t => String(t.name).toLowerCase() === s.zohoTag.toLowerCase())).map(s => s.key).sort();
   const segsOfKt = kr => cfg.segments.filter(s => kr.tags.includes(K[s.klicktippTag].id)).map(s => s.key).sort();
+  const segNames = new Set(cfg.segments.map(s => s.zohoTag.toLowerCase()));
 
   for (const [ref, p] of Object.entries(exp.people)) {
     let zr = null, kr = null;
@@ -68,6 +71,8 @@ function judgeState(exp, state, refs, prev, cfg, add) {
       else { if (c.length > 1) add('DUP_KT', `${ref}: ${c.length} subscribers share ${em}`); kr = c[0]; }
     }
     const zn = zr && zohoNeutral(zr), kn = kr && ktNeutral(kr);
+    // KlickTipp birthday: either midnight convention reads as the intended date (see spec.mjs ktDobReadings); use the reading that matches.
+    if (kn) { const want = p.converge ? (zn ? [zn.dob] : []) : [p.k.f.dob]; const hit = ktDobReadings(kr.fieldBirthday).find(d => want.some(w => norm('dob', w) === d)); if (hit !== undefined) kn.dob = hit; }
     for (const k of NEUTRAL) {
       if (p.converge) {
         const ok = side => side && p.converge[k].some(x => norm(k, x) === norm(k, side[k]));
@@ -83,9 +88,12 @@ function judgeState(exp, state, refs, prev, cfg, add) {
       if (kr.status !== p.k.status) add('STATUS_WRONG', `${ref}: status ${kr.status}, expected ${p.k.status}`);
       if (kr.listId !== cfg.klicktipp.lists[p.k.list].id) add('LIST_WRONG', `${ref}: list ${kr.listId}, expected ${p.k.list} (${cfg.klicktipp.lists[p.k.list].id})`);
       for (const t of p.k.tags) if (!kr.tags.includes(K[t].id)) add(`TAG_MISSING:${t}`, `${ref}: subscriber lacks the ${t} tag`);
+      // v0.2.0: the web-form marker on a subscriber that did not come from the form (it would start the form's opt-in automation).
+      if (kr.tags.includes(K.createdViaForm.id) && !p.k.tags.includes('createdViaForm')) add('TAG_UNEXPECTED:createdViaForm', `${ref}: subscriber carries the created-via-form tag but was not created through the web form`);
       if (!setEq(segsOfKt(kr), p.k.segs)) add('SEGMENT_MISMATCH:klicktipp', `${ref}: segments ${JSON.stringify(segsOfKt(kr))}, expected ${JSON.stringify(p.k.segs)}`);
     }
     if (zr && !setEq(segsOfZoho(zr), p.z.segs)) add('SEGMENT_MISMATCH:zoho', `${ref}: segments ${JSON.stringify(segsOfZoho(zr))}, expected ${JSON.stringify(p.z.segs)}`);
+    if (zr) { const junk = zr.Tag.filter(t => !segNames.has(String(t.name).toLowerCase())).map(t => t.name); if (junk.length) add('TAG_UNEXPECTED:zoho', `${ref}: Zoho contact carries tags that are not segment tags: ${JSON.stringify(junk.slice(0, 3))}`); }
     if (p.linked && zr && kr) {
       if (String(zr.KlickTipp_ID ?? '') !== kr.id) add('LINK_BROKEN', `${ref}: Zoho KlickTipp_ID=${zr.KlickTipp_ID} but the subscriber id is ${kr.id}`);
       if (String(kr[zf] ?? '') !== zr.id) add('LINK_BROKEN', `${ref}: subscriber ${zf}=${kr[zf]} but the Zoho id is ${zr.id}`);

@@ -322,96 +322,83 @@ export function buildX4(task, slots) {
 
 // ---------------------------------------------------------------------------------------------
 // Q4 expectation_met: { action, expected_effect, observation }
-// The plan's expected effect is one sentence written from a small effect description; the same effect has
-// several phrasings (the factory samples one per record, a runtime node uses phrasing 0).
+// The plan's expected effect is one indicative sentence written from a small effect description. Each effect has
+// several cores and several leads; core x lead is a phrasing (the factory samples one per record, a runtime node
+// uses phrasing 0). The sentence names no outcome of the check: it is what the plan expects, whatever happens.
 const num = x => String(x);
+export const LEADS = Object.freeze(['', 'the plan expects that ', 'as planned, ', 'at this step, ', 'per the runbook, ', 'by design, ', 'in this change, ', 'once the action is done, ']);
+const on = v => (v === true || v === 'true' ? 'on' : 'off');
 export const EFFECTS = Object.freeze({
-  restart: { params: ['service', 'node'], text: [
+  restart: { params: ['service', 'node'], cores: [
     e => `${e.service} restarts on ${e.node} and the process comes back up`,
     e => `the restart of ${e.service} on ${e.node} succeeds`,
     e => `${e.node} accepts the ${e.service} restart and starts the process`,
-    e => `expect ${e.service} to be running again on ${e.node} after the restart`,
+    e => `${e.service} is running again on ${e.node} after the restart`,
     e => `restarting ${e.service} on ${e.node} completes without an error`,
     e => `${e.service} on ${e.node} restarts cleanly`,
-    e => `the plan expects a successful ${e.service} restart on ${e.node}`,
+    e => `the ${e.service} restart on ${e.node} goes through`,
     e => `${e.node} restarts ${e.service} and reports the process as started`,
   ] },
-  apply: { params: ['key', 'value'], text: [
+  apply: { params: ['key', 'value'], cores: [
     e => `the config store applies ${e.key} = ${e.value}`,
     e => `${e.key} is set to ${e.value}`,
     e => `the config store accepts ${e.value} for ${e.key}`,
     e => `applying ${e.value} to ${e.key} succeeds and the old and new values are reported`,
     e => `${e.key} takes the value ${e.value}`,
-    e => `expect the change of ${e.key} to ${e.value} to be stored`,
-    e => `the plan expects ${e.key} to become ${e.value}`,
+    e => `the change of ${e.key} to ${e.value} is stored`,
+    e => `${e.key} becomes ${e.value}`,
     e => `apply_config writes ${e.value} to ${e.key}`,
   ] },
-  'node-verify': { params: ['node', 'service', 'version'], text: [
+  'node-verify': { params: ['node', 'service', 'version'], cores: [
     e => `${e.node} reports ${e.service} ${e.version} with health=ok`,
     e => `${e.node} runs build ${e.version} and the service is healthy`,
     e => `${e.service} on ${e.node} is on ${e.version} and reads health=ok`,
-    e => `expect ${e.node} to show version ${e.version} and health ok after the restart`,
+    e => `${e.node} shows version ${e.version} and health ok after the restart`,
     e => `${e.node} is back on ${e.version} with a healthy service`,
     e => `the restarted node ${e.node} serves ${e.version} in good health`,
-    e => `after its restart ${e.node} should report version ${e.version} and be healthy`,
+    e => `after its restart ${e.node} reports version ${e.version} and is healthy`,
     e => `the status of ${e.node} reads version ${e.version}, health ok`,
   ] },
-  lag: { params: ['limit'], text: [
+  lag: { params: ['limit'], cores: [
     e => `replication lag is at or below ${num(e.limit)} s`,
     e => `the replica is within ${num(e.limit)} seconds of the primary`,
     e => `lag on the replica does not exceed ${num(e.limit)} s`,
-    e => `expect replication lag of at most ${num(e.limit)} s`,
+    e => `replication lag is at most ${num(e.limit)} s`,
     e => `the replica has caught up to ${num(e.limit)} s or less`,
     e => `replica lag reads ${num(e.limit)} s or lower`,
-    e => `the plan expects the replication delay to be no more than ${num(e.limit)} seconds`,
+    e => `the replication delay is no more than ${num(e.limit)} seconds`,
     e => `the replica lags the primary by ${num(e.limit)} s at most`,
   ] },
-  'error-rate': { params: ['service', 'limit'], text: [
+  'error-rate': { params: ['service', 'limit'], cores: [
     e => `the error rate of ${e.service} stays at or below ${num(e.limit)}%`,
     e => `${e.service} shows no more than ${num(e.limit)}% errors`,
     e => `error_rate for ${e.service} does not exceed ${num(e.limit)}%`,
-    e => `expect an error rate of ${num(e.limit)}% or lower for ${e.service}`,
+    e => `the error rate for ${e.service} is ${num(e.limit)}% or lower`,
     e => `${e.service} keeps its errors at ${num(e.limit)}% or less after the flag is on`,
-    e => `the plan expects errors on ${e.service} to remain within ${num(e.limit)}%`,
+    e => `errors on ${e.service} remain within ${num(e.limit)}%`,
     e => `no more than ${num(e.limit)}% of requests to ${e.service} fail`,
     e => `${e.service} error rate stays within the ${num(e.limit)}% limit`,
   ] },
-  drain: { params: ['node', 'pool'], text: [
-    e => `${e.node} leaves ${e.pool} and takes no new connections`,
-    e => `drain stops new connections to ${e.node}`,
-    e => `${e.node} goes out of rotation in ${e.pool}`,
-  ] },
-  undrain: { params: ['node', 'pool'], text: [
-    e => `${e.node} returns to ${e.pool}`,
-    e => `undrain puts ${e.node} back into rotation`,
-    e => `${e.node} is serving in ${e.pool} again`,
-  ] },
-  flag: { params: ['name', 'value'], text: [
-    e => `the flag ${e.name} is switched ${e.value === true || e.value === 'true' ? 'on' : 'off'}`,
-    e => `${e.name} reads ${e.value === true || e.value === 'true' ? 'true' : 'false'} afterwards`,
-    e => `set_flag turns ${e.name} ${e.value === true || e.value === 'true' ? 'on' : 'off'}`,
-  ] },
-  rollback: { params: ['key'], text: [
-    e => `${e.key} goes back to its previous value`,
-    e => `rollback_config restores ${e.key}`,
-    e => `the earlier value of ${e.key} is back`,
-  ] },
+  drain: { params: ['node', 'pool'], cores: [e => `${e.node} leaves ${e.pool} and takes no new connections`, e => `drain stops new connections to ${e.node}`, e => `${e.node} goes out of rotation in ${e.pool}`] },
+  undrain: { params: ['node', 'pool'], cores: [e => `${e.node} returns to ${e.pool}`, e => `undrain puts ${e.node} back into rotation`, e => `${e.node} is serving in ${e.pool} again`] },
+  flag: { params: ['name', 'value'], cores: [e => `the flag ${e.name} is switched ${on(e.value)}`, e => `${e.name} is ${on(e.value)} afterwards`, e => `set_flag turns ${e.name} ${on(e.value)}`] },
+  rollback: { params: ['key'], cores: [e => `${e.key} goes back to its previous value`, e => `rollback_config restores ${e.key}`, e => `the earlier value of ${e.key} is back`] },
   // an effect about something the observation does not show (the presence-matched unknowable of Q4)
-  unobserved: { params: ['subject', 'attribute'], text: [
-    e => `${e.subject} shows ${e.attribute}`,
-    e => `expect ${e.subject} to report ${e.attribute}`,
-    e => `${e.subject} is confirmed to have ${e.attribute}`,
-    e => `the plan expects ${e.attribute} on ${e.subject}`,
+  unobserved: { params: ['subject', 'attribute'], cores: [
+    e => `${e.subject} shows ${e.attribute}`, e => `${e.subject} reports ${e.attribute}`, e => `${e.subject} is confirmed to have ${e.attribute}`,
+    e => `${e.subject} comes with ${e.attribute}`, e => `${e.attribute} is present on ${e.subject}`, e => `${e.subject} is found with ${e.attribute}`,
   ] },
-  page: { params: [], text: [e => 'the page reaches the on-call escalation', e => 'the on-call engineer is paged', e => 'page_human raises the incident bridge'] },
-  wait: { params: ['seconds'], text: [e => `${e.seconds} seconds pass`, e => `the clock moves ahead by ${e.seconds} s`, e => `waiting ${e.seconds} s lets time pass`] },
+  page: { params: [], cores: [() => 'the page reaches the on-call escalation', () => 'the on-call engineer is paged', () => 'page_human raises the incident bridge'] },
+  wait: { params: ['seconds'], cores: [e => `${e.seconds} seconds pass`, e => `the clock moves ahead by ${e.seconds} s`, e => `waiting ${e.seconds} s lets time pass`] },
 });
+export const phrasingCount = kind => (EFFECTS[kind]?.cores.length ?? 0) * LEADS.length;
 export function expectedEffect(effect, phrasing = 0) {
   const spec = EFFECTS[effect?.kind];
   if (!spec) throw fail('KIT_SLOT', `unknown effect kind ${JSON.stringify(effect?.kind)} (one of ${Object.keys(EFFECTS).join(', ')})`);
   for (const k of spec.params) if (effect[k] === undefined || effect[k] === null || effect[k] === '') throw fail('KIT_SLOT', `effect ${effect.kind} needs ${k}`);
   if (!Number.isInteger(phrasing) || phrasing < 0) throw fail('KIT_SLOT', 'phrasing is a non-negative integer');
-  return spec.text[phrasing % spec.text.length](effect);
+  const p = phrasing % phrasingCount(effect.kind), n = spec.cores.length;
+  return `${LEADS[Math.floor(p / n)]}${spec.cores[p % n](effect)}`;
 }
 export function normalizeAction(action) {
   if (!action || typeof action !== 'object' || Array.isArray(action) || !OPS.includes(action.op)) throw fail('KIT_SLOT', `an action is an object with op in ${OPS.join(', ')}`);

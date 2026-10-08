@@ -2,7 +2,7 @@
 // (healer checks run by the frozen runtime), the rewritten probe templates (train only, at most 20% of the rows),
 // and the gameqa crash texts replayed on the bed's engine. Then, over the whole slice: the 3:1 label cap (train),
 // masked-state collision groups with soft targets, injection twins and paraphrase records.
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { allocate, capRatio, counts } from '../lib/balance.mjs';
 import { skeletonText, spanHash, worldHash } from '../lib/hash.mjs';
@@ -47,17 +47,18 @@ const EXEC_DIR = path.dirname(fileURLToPath(import.meta.url));
 let sourceHash = null;
 export function execSourceHash() {
   if (sourceHash) return sourceHash;
-  const files = [...readdirSync(EXEC_DIR).filter(f => f.endsWith('.mjs')).map(f => path.join(EXEC_DIR, f)), path.join(EXEC_DIR, '..', 'judges', 'failures.mjs'), path.join(EXEC_DIR, '..', 'lib', 'hash.mjs')].sort();
+  // the files whose code decides what a scenario run returns (not the row builders, which only read it)
+  const files = ['plan', 'recipes', 'vocab', 'world', 'workflow', 'scenario', 'healer', 'sut', 'util'].map(f => path.join(EXEC_DIR, `${f}.mjs`)).concat(path.join(EXEC_DIR, '..', 'judges', 'failures.mjs')).sort();
   return (sourceHash = sha(files.map(f => `${path.basename(f)}\0${readFileSync(f, 'utf8')}`).join('\n')).slice(0, 16));
 }
-async function runCached(rt, frozen, plan, cacheDir) {
+export async function runCached(rt, frozen, plan, cacheDir) {
   const file = cacheDir ? path.join(cacheDir, `${sha(`${EXEC_VERSION}|${execSourceHash()}|${frozen.commit}|${plan.key}`).slice(0, 40)}.json`) : null;
   if (file && existsSync(file)) { try { return JSON.parse(readFileSync(file, 'utf8')); } catch { /* a torn cache file is recomputed */ } }
   let lastError;
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
       const r = await runScenario(rt, plan);
-      if (file) { mkdirSync(cacheDir, { recursive: true }); writeFileSync(`${file}.${process.pid}.tmp`, JSON.stringify(r)); try { writeFileSync(file, JSON.stringify(r)); } catch { /* a concurrent writer wrote it */ } }
+      if (file) { mkdirSync(cacheDir, { recursive: true }); const tmp = `${file}.${process.pid}.tmp`; writeFileSync(tmp, JSON.stringify(r)); try { renameSync(tmp, file); } catch { /* a concurrent writer wrote it */ } }
       return r;
     } catch (e) { lastError = e; if (e.code !== 'EXEC_INFRA') break; }
   }
@@ -256,6 +257,12 @@ export async function f1Records({ slice, seeds, opts, ctx, rt, frozen }) {
   const coll = applyCollisionTargets(all);
   stat.rows = all.reduce((s, r) => s + Object.keys(r.questions).length, 0); stat.records = all.length; stat.families = counts(all, r => r.meta.family);
   stat.labels = counts(all, r => Object.values(r.questions)[0].label); stat.collision = coll; stat.variants = counts(all, r => r.meta.variant);
+  // the workflow-shape axis (§3.3, §6.0): distinct shapes per label among the exec-injected rows; under 30 per label it is diagnostic
+  const shapes = {};
+  for (const r of all.filter(r => r.meta.family === 'exec-injected')) (shapes[Object.values(r.questions)[0].label] ??= new Set()).add(r.meta.formId);
+  const perLabel = Object.fromEntries(F1_OPTIONS.map(o => [o, shapes[o]?.size ?? 0])), minShapes = Math.min(...Object.values(perLabel));
+  stat.shapeAxis = { perLabel, min: minShapes, gating: minShapes >= 30, status: minShapes >= 30 ? 'gating' : `diagnostic: n_forms = ${minShapes}` };
+  if (slice === 'test-ood') for (const r of all) if (r.meta.family === 'exec-injected') r.meta.axis = { name: 'workflow-shape', unit: 'shape', status: stat.shapeAxis.status };
   stat.templateShare = all.length ? (stat.families.templates ?? 0) / all.length : 0; stat.axes = { base: nBase, adversarialPairs: nAdv / 2, paraphraseStates: nParaStates };
   return all.sort((a, b) => byHash(sha(`${a.meta.family}|${a.meta.seed}|${a.meta.scenario ?? ''}|${a.meta.variant}|${canonical(a.state)}`), sha(`${b.meta.family}|${b.meta.seed}|${b.meta.scenario ?? ''}|${b.meta.variant}|${canonical(b.state)}`)));
 }

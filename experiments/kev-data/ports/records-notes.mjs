@@ -29,7 +29,7 @@
 //   scale  1              multiplies every default target
 //   lines  [...]          pool lines (train-pools schema, pools/train-pools.mjs toLine) and OOD lines; a line
 //                         carries slice ('train' | 'calib-ood' | 'dev-ood' | 'test-ood'; default 'train')
-//   pools  {dir, digest}  train pool files <dir>/<port>.jsonl, verified against the digest (POOL_DIGEST)
+//   pools  {dir?, digest} train pool files <dir>/<port>.jsonl (dir defaults to ctx.poolsDir), verified against the digest (POOL_DIGEST)
 //   builtin true          built-in fallback lines for train-like slices (bed-derived surgery, a few authored
 //                         forms); production builds pass the train pools and set builtin: false
 //   wordings {port: [{id, text}]}   the slice's held-out wordings (OOD slices only; required there)
@@ -191,6 +191,34 @@ export function allowedIndices(bed, W, u, label, { avoid = [], allowHeldOut = fa
     if (variantSentence(bed, W, u, { label, index: i })) out.push(i);
   }
   return out;
+}
+
+// The held-out bed templates rendered as text, for the span registry (JUDGE-PROGRAM.md §2.3 rule 7). The held-out author never reads
+// bed templates, so the registry's bed-template entries come from here: every held-out template of the rule above, rendered in the
+// worlds of `seeds` (every flag token, referenced system and example date the worlds draw) and deduplicated by text.
+// Returns [{ text, port, pool, sys, label, index, masks: {names, markers} }]; add each as
+//   registry.add(e.text, { slice: 'heldout', source: 'bed-template', port: e.port, names: e.masks.names, markers: e.masks.markers }).
+// One entry per distinct skeleton (lib/hash.mjs skeleton under the world's masks), sorted by text.
+export async function heldOutBedSpans(beds, { seeds = Array.from({ length: 80 }, (_, i) => 401 + i), difficulties = [3, 4, 5], split = 'dev' } = {}) {
+  const bed = await loadBed(beds), seen = new Map(), { render } = bed;
+  for (const seed of seeds) for (const d of difficulties) {
+    const W = modelWorld(bed, seed, split, d);
+    if (!W) continue;
+    const masks = { names: [...W.names], markers: [...W.markers] };
+    const add = (s, port) => {
+      const text = renderSentence(bed, W, s);
+      const key = text && skeleton(sentences(text).join(' '), masks);                // the registry's own key: one entry per distinct skeleton
+      if (text && !seen.has(key)) seen.set(key, { text, port, pool: s.pool, sys: s.sys, label: s.label, index: s.index, masks });
+    };
+    for (const sys of ['BRIGHTDESK', 'ATLAS', 'VENDEX']) for (const label of ['dmy', 'mdy']) {
+      const index = render.ORDER_NOTE[sys][label].length - 1;
+      for (const ref of render.ORDER_NOTE[sys][label][index].ref ? ['LEDGR', 'BRIGHTDESK'].filter(r => r !== sys) : [undefined]) add({ pool: 'order', sys, label, index, ref }, 'R1');
+    }
+    W.conv.flags.forEach((f, flagIndex) => { for (const label of ['void', 'live']) for (const index of [6, 7]) add({ pool: 'flag', sys: f.system, label, index, token: f.token, flagIndex }, 'R2'); });
+    for (const sys of Object.keys(render.PERSP_NOTE)) for (const label of ['same', 'opposite']) add({ pool: 'persp', sys, label, index: 3 }, 'R3');
+    for (const sys of SYSTEMS) { add({ pool: 'mirror', sys, label: 'restamped', index: 4 }, 'R4'); add({ pool: 'reliable', sys, label: 'reliable', index: 4 }, 'R4'); }
+  }
+  return [...seen.values()].sort((a, b) => (a.text < b.text ? -1 : 1));
 }
 
 // ---- edits: exact sentence replacement / insertion on the source notes ------------------------------------------
@@ -384,7 +412,11 @@ const SYSTEM_SLOT = new Set(SYSTEMS);
 export function makeContext(slice, opts, ctx, bed) {
   const o = opts ?? {};
   let raw = [...(o.lines ?? [])], poolDigest = null;
-  if (o.pools?.dir) { const p = readPoolDir(o.pools.dir, o.pools.digest); raw = [...p.lines, ...raw]; poolDigest = p.digest; }
+  if (o.pools) {                                      // {dir?, digest}: dir defaults to ctx.poolsDir; the digest pins the files (and so the build id)
+    const dir = o.pools.dir ?? ctx.poolsDir;
+    if (!dir) { const e = new Error('POOLS_DIR: opts.pools names no dir and the build gives no poolsDir'); e.code = 'POOLS_DIR'; throw e; }
+    const p = readPoolDir(dir, o.pools.digest); raw = [...p.lines, ...raw]; poolDigest = p.digest;
+  }
   const builtinOn = o.builtin === undefined ? true : o.builtin;
   if (builtinOn && TRAIN_LIKE.has(slice) || (builtinOn && OOD.has(slice))) raw = [...builtinLines(bed, builtinOn), ...raw];
   const bank = new LineBank(raw, { slice });

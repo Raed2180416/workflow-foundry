@@ -1,0 +1,33 @@
+{
+  "schema": "rbench-item/1",
+  "id": "github-actions:shafthq/shaft_engine/.github/workflows/update-selenium-grid-versions.yml",
+  "safeId": "github-actions-shafthq-update-selenium-grid-versions",
+  "title": "Update Selenium Grid Docker Versions",
+  "harnessVersion": "0.1.0",
+  "builtOn": "2026-10-08",
+  "status": "development/diagnostic harness; no sealed evaluation set; not yet run by any solver arm",
+  "source": {
+    "platform": "github-actions",
+    "url": "https://github.com/shafthq/shaft_engine/blob/3b2eae51248d2cf58146a64c48265259ee077a0a/.github/workflows/update-selenium-grid-versions.yml",
+    "revision": "3b2eae51248d2cf58146a64c48265259ee077a0a",
+    "retrievedAt": "2026-10-06",
+    "license": "MIT (Copyright (c) 2018 Mohab Mohie)",
+    "redistributable": true,
+    "rawPath": "/opt/corpus/github-actions/raw/shafthq__shaft_engine@3b2eae51248d2cf58146a64c48265259ee077a0a/.github/workflows/update-selenium-grid-versions.yml",
+    "rawFileSha256": "dff6b15a22a2e6350a68805e1779eb7b3d6a0a42143cc2df8614c3aef50facef",
+    "committed": "the workflow, byte-identical, with its LICENSE and PROVENANCE.md under fixtures/original/. src/main/resources/docker-compose/selenium4.yml of the same revision was NOT acquired (not in the corpus; no network call to a third party was allowed): every compose fixture is authored and synthetic."
+  },
+  "variants": {
+    "T1": "original workflow + output contract; judged on the ORIGINAL's behaviour (odd inputs included)",
+    "T2": "author's description + 8 maintainers' rules + 3 worked examples + output contract; judged on the maintainers' intent",
+    "T3": "original workflow + description + the same rules + a cost/latency target (budget.target); judged on the intent, efficiency judged apart (meetsTarget)"
+  },
+  "scenarios": { "kinds": 14, "canonical": "seeds 0-13 at difficulty 5, split dev (fixtures/scenarios/)", "defectKinds": ["reference-malformed", "reference-missing-image", "reference-unreachable", "commented-image-line", "quoted-image-refs"] },
+  "controls": {
+    "original": "the vendored workflow executed by runner.mjs (bash -e steps, shimmed curl and docker, recording create-pull-request stub, private /tmp)",
+    "transcription": "controls/reference.mjs solveFaithful = referenceSolve for T1",
+    "improved": "controls/reference.mjs solveImproved = referenceSolve for T2/T3; controls/foundry-workflow.mjs is the same behaviour as a one-node Foundry workflow",
+    "broken": "controls/mutants.mjs (9 broken variants of the workflow and 1 equivalent one) and controls/broken.mjs (13 plan-level bad controls)",
+    "report": "controls/report.json"
+  }
+}

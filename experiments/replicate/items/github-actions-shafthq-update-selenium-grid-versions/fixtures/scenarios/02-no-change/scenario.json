@@ -1,0 +1,60 @@
+{
+ "kind": "no-change",
+ "seed": 2,
+ "split": "dev",
+ "difficulty": 5,
+ "trigger": "workflow_dispatch",
+ "composePath": "src/main/resources/docker-compose/selenium4.yml",
+ "fetch": {
+  "status": 200,
+  "bodyFile": "recorded/reference.yml"
+ },
+ "openPullRequests": [],
+ "truth": {
+  "original": {
+   "status": "unchanged",
+   "versions": {
+    "current": {
+     "chrome": "4.26.0-20250821",
+     "edge": "4.27.0-20250820",
+     "firefox": "4.27.0-20250825",
+     "hub": "4.27.0-20250820"
+    },
+    "latest": {
+     "chrome": "4.26.0-20250821",
+     "edge": "4.27.0-20250820",
+     "firefox": "4.27.0-20250825",
+     "hub": "4.27.0-20250820"
+    }
+   },
+   "changed": [],
+   "prAction": null,
+   "prNumber": null,
+   "message": null,
+   "composeAfter": null
+  },
+  "intent": {
+   "status": "unchanged",
+   "versions": {
+    "current": {
+     "chrome": "4.26.0-20250821",
+     "edge": "4.27.0-20250820",
+     "firefox": "4.27.0-20250825",
+     "hub": "4.27.0-20250820"
+    },
+    "latest": {
+     "chrome": "4.26.0-20250821",
+     "edge": "4.27.0-20250820",
+     "firefox": "4.27.0-20250825",
+     "hub": "4.27.0-20250820"
+    }
+   },
+   "changed": [],
+   "prAction": null,
+   "prNumber": null,
+   "message": null,
+   "composeAfter": null
+  }
+ },
+ "meta": {}
+}

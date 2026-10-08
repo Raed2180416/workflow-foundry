@@ -85,6 +85,7 @@ export function failsThresholds(r, p, mutation) {
 // One sample: steps 4 to 13 of the workflow.
 export function processSample(vcf, p, mutation) {
   const label = filterLabel(p), extracted = [], processed = [];
+  let lastGroup = null; // step 10 groups CONSECUTIVE rows on 10 columns (datamash without -s), so adjacent identical records merge into one row
   for (const r of parseVcf(vcf)) {
     const dp = Number(r.info.get('DP'));
     if (!(dp >= 1) && mutation !== 'no-dp-prefilter') continue; // step 4: SnpSift Filter "DP >= 1"
@@ -99,6 +100,13 @@ export function processSample(vcf, p, mutation) {
     extracted.push(...rows);
     // steps 10 to 13: collapse effects of one variant, keep the first (highest-impact) one, rename AF columns.
     const first = rows[0];
+    // Adjacent records equal on the grouping columns (CHROM POS FILTER REF ALT DP AFrecalc AF DP4 SB) collapse into the earlier row and the
+    // regex of step 11 keeps its first effect, so the later record adds no row. Added by the verification (the .ga emulator does this);
+    // no battery case contains such a duplicate, so it changes no expected table.
+    const group = [r.chrom, r.pos, filter, r.ref, r.alt, String(dp), recalc, af, r.info.get('DP4'), r.info.get('SB')].join('\t');
+    const merged = mutation !== 'one-row-per-effect' && group === lastGroup;
+    lastGroup = group;
+    if (merged) continue;
     const kept = mutation === 'one-row-per-effect' ? rows : [first];
     for (const row of kept) {
       processed.push([row[0], row[1], row[2], row[3], row[4], row[5], recalc, af, row[7], row[8], ...row.slice(9, 16)]);

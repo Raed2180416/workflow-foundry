@@ -1,0 +1,54 @@
+{
+ "kind": "prerelease-unreducible",
+ "seed": 8,
+ "split": "dev",
+ "difficulty": 5,
+ "trigger": "workflow_dispatch",
+ "composePath": "src/main/resources/docker-compose/selenium4.yml",
+ "fetch": {
+  "status": 200,
+  "bodyFile": "recorded/reference.yml"
+ },
+ "openPullRequests": [],
+ "truth": {
+  "original": {
+   "status": "failed",
+   "versions": null,
+   "changed": [],
+   "prAction": null,
+   "prNumber": null,
+   "message": null,
+   "composeAfter": null
+  },
+  "intent": {
+   "status": "failed",
+   "versions": null,
+   "changed": [],
+   "prAction": null,
+   "prNumber": null,
+   "message": {
+    "allOf": [
+     [
+      "pre-release",
+      "prerelease",
+      "nightly",
+      "beta",
+      "dev"
+     ]
+    ]
+   },
+   "composeAfter": null
+  }
+ },
+ "meta": {
+  "bad": [
+   "chrome"
+  ],
+  "raw": {
+   "chrome": "4.36-dev-20250915",
+   "edge": "4.35.0-20250614",
+   "firefox": "4.37.0-20250603",
+   "hub": "4.36.0-20250624"
+  }
+ }
+}

@@ -1,0 +1,102 @@
+{
+ "kind": "bump-all",
+ "seed": 0,
+ "split": "dev",
+ "difficulty": 5,
+ "trigger": "schedule",
+ "composePath": "src/main/resources/docker-compose/selenium4.yml",
+ "fetch": {
+  "status": 200,
+  "bodyFile": "recorded/reference.yml"
+ },
+ "openPullRequests": [],
+ "truth": {
+  "original": {
+   "status": "updated",
+   "versions": {
+    "current": {
+     "chrome": "4.33.0-20250610",
+     "edge": "4.35.0-20250529",
+     "firefox": "4.35.0-20250607",
+     "hub": "4.35.0-20250530"
+    },
+    "latest": {
+     "chrome": "4.34.0-20250806",
+     "edge": "4.37.0-20250723",
+     "firefox": "4.38.0-20250802",
+     "hub": "4.36.0-20250619"
+    }
+   },
+   "changed": [
+    {
+     "key": "chrome",
+     "from": "4.33.0-20250610",
+     "to": "4.34.0-20250806"
+    },
+    {
+     "key": "edge",
+     "from": "4.35.0-20250529",
+     "to": "4.37.0-20250723"
+    },
+    {
+     "key": "firefox",
+     "from": "4.35.0-20250607",
+     "to": "4.38.0-20250802"
+    },
+    {
+     "key": "hub",
+     "from": "4.35.0-20250530",
+     "to": "4.36.0-20250619"
+    }
+   ],
+   "prAction": "created",
+   "prNumber": null,
+   "message": null,
+   "composeAfter": "expected-original.yml"
+  },
+  "intent": {
+   "status": "updated",
+   "versions": {
+    "current": {
+     "chrome": "4.33.0-20250610",
+     "edge": "4.35.0-20250529",
+     "firefox": "4.35.0-20250607",
+     "hub": "4.35.0-20250530"
+    },
+    "latest": {
+     "chrome": "4.34.0-20250806",
+     "edge": "4.37.0-20250723",
+     "firefox": "4.38.0-20250802",
+     "hub": "4.36.0-20250619"
+    }
+   },
+   "changed": [
+    {
+     "key": "chrome",
+     "from": "4.33.0-20250610",
+     "to": "4.34.0-20250806"
+    },
+    {
+     "key": "edge",
+     "from": "4.35.0-20250529",
+     "to": "4.37.0-20250723"
+    },
+    {
+     "key": "firefox",
+     "from": "4.35.0-20250607",
+     "to": "4.38.0-20250802"
+    },
+    {
+     "key": "hub",
+     "from": "4.35.0-20250530",
+     "to": "4.36.0-20250619"
+    }
+   ],
+   "prAction": "created",
+   "prNumber": null,
+   "message": null,
+   "composeAfter": "expected-intent.yml"
+  }
+ },
+ "meta": {}
+}

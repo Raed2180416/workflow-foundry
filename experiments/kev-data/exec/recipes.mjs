@@ -18,7 +18,7 @@ import { R } from './workflow.mjs';
 
 export const CAUSES = Object.freeze(['flake', 'variance', 'defect', 'env', 'impossible', 'finding']);
 export const mkErr = (code, message) => Object.assign(new Error(message), { code });
-const task = (id, needs, description, tool, args, extra = {}) => ({ id, kind: 'task', needs, description, tool, args, timeoutMs: 3000, retry: { maxAttempts: 1, backoffMs: 0 }, ...extra });
+const task = (id, needs, description, tool, args, extra = {}) => ({ id, kind: 'task', needs, description, tool, args, timeoutMs: 15000, retry: { maxAttempts: 1, backoffMs: 0 }, ...extra });
 const withRetry = (P, extra = {}) => ({ retry: { maxAttempts: P.A, backoffMs: 0 }, ...extra });
 const rowsRef = c => (c.inMap ? R('item') : R(`${c.P}.rows`));
 const codeNode = (c, lang, source, extra = {}) => ({ id: c.id, kind: 'code', needs: c.needs, description: 'Compute a derived value from the rows', lang, source, timeoutMs: 20000,
@@ -304,9 +304,11 @@ Object.assign(RECIPES, {
     },
   },
   'routed.budget': {
-    cause: 'routed', weight: 1, kind: 'task', label: 'task:identity', persistence: 'persistent',
-    build() {
-      return { fault: { type: 'none' }, scope: [], budget: { maxSteps: 2 },
+    cause: 'routed', weight: 1, kind: 'task', label: 'task:identity', forceTail: 'load', persistence: 'persistent',
+    build(P) {
+      // one step fewer than the workflow has nodes, so the last node is the one the budget stops (a map wrapper only adds steps)
+      const maxSteps = Math.max(1, P.ids.up.length + P.ids.down.length);
+      return { fault: { type: 'none' }, scope: [], budget: { maxSteps },
         core: c => [task(c.id, c.needs, 'Carry the rows forward', 'core.identity', { rows: R(`${c.P}.rows`) })] };
     },
   },

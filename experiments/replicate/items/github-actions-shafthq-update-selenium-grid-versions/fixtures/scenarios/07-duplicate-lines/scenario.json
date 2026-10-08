@@ -1,0 +1,99 @@
+{
+ "kind": "duplicate-lines",
+ "seed": 7,
+ "split": "dev",
+ "difficulty": 5,
+ "trigger": "schedule",
+ "composePath": "src/main/resources/docker-compose/selenium4.yml",
+ "fetch": {
+  "status": 200,
+  "bodyFile": "recorded/reference.yml"
+ },
+ "openPullRequests": [],
+ "truth": {
+  "original": {
+   "status": "updated",
+   "versions": {
+    "current": {
+     "chrome": "4.24.0-20250806",
+     "edge": "4.24.0-20250806",
+     "firefox": "4.24.0-20250806",
+     "hub": "4.24.0-20250806"
+    },
+    "latest": {
+     "chrome": "4.25.0-20250816",
+     "edge": "4.26.0-20250920",
+     "firefox": "4.26.0-20250819",
+     "hub": "4.24.0-20250806"
+    }
+   },
+   "changed": [
+    {
+     "key": "chrome",
+     "from": "4.24.0-20250806",
+     "to": "4.25.0-20250816"
+    },
+    {
+     "key": "edge",
+     "from": "4.24.0-20250806",
+     "to": "4.26.0-20250920"
+    },
+    {
+     "key": "firefox",
+     "from": "4.24.0-20250806",
+     "to": "4.26.0-20250819"
+    }
+   ],
+   "prAction": "created",
+   "prNumber": null,
+   "message": null,
+   "composeAfter": "expected-original.yml"
+  },
+  "intent": {
+   "status": "updated",
+   "versions": {
+    "current": {
+     "chrome": "4.24.0-20250806",
+     "edge": "4.24.0-20250806",
+     "firefox": "4.24.0-20250806",
+     "hub": "4.24.0-20250806"
+    },
+    "latest": {
+     "chrome": "4.25.0-20250816",
+     "edge": "4.26.0-20250920",
+     "firefox": "4.26.0-20250819",
+     "hub": "4.24.0-20250806"
+    }
+   },
+   "changed": [
+    {
+     "key": "chrome",
+     "from": "4.24.0-20250806",
+     "to": "4.25.0-20250816"
+    },
+    {
+     "key": "edge",
+     "from": "4.24.0-20250806",
+     "to": "4.26.0-20250920"
+    },
+    {
+     "key": "firefox",
+     "from": "4.24.0-20250806",
+     "to": "4.26.0-20250819"
+    }
+   ],
+   "prAction": "created",
+   "prNumber": null,
+   "message": null,
+   "composeAfter": "expected-intent.yml"
+  }
+ },
+ "meta": {
+  "dup": "edge",
+  "bump": [
+   "edge",
+   "firefox",
+   "chrome"
+  ]
+ }
+}

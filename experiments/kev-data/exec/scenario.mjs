@@ -16,7 +16,7 @@ import { BUDGET_CODES, MODEL_OUTPUT_CODES, routeByCode } from '../judges/failure
 export { BUDGET_CODES, MODEL_OUTPUT_CODES, routeByCode };
 
 // facet kinds a pre-failure environment capture can read (directory permissions and free space are only seen by the healer)
-export const INFRA_CODES = Object.freeze(['CODE_TIMEOUT', 'SANDBOX_UNAVAILABLE', 'CANCELLED', 'DEADLINE']);
+export const INFRA_CODES = Object.freeze(['CODE_TIMEOUT', 'SANDBOX_UNAVAILABLE', 'CANCELLED', 'DEADLINE', 'TOOL_TIMEOUT']);
 export const PRE_KINDS = Object.freeze(['module', 'credential', 'service', 'tool']);
 
 export function planP(plan) {
@@ -41,6 +41,7 @@ export async function execute(world, wfId, input, { salt, mode = 'live', kind })
   const run = world.foundry.createRun(wfId, input, { sampleSalt: salt, modelMode: mode });
   await world.foundry.startRun(run.id);
   const ins = world.foundry.inspectRun(run.id);
+  world.logRun({ id: run.id, kind, mode, salt, status: ins.status });
   // a sandbox that timed out or could not start is the host's fault, never an injected cause: the scenario is retried
   if (INFRA_CODES.includes(ins.error?.code)) throw Object.assign(new Error(`infrastructure fault (${ins.error.code}) during a ${kind} run`), { code: 'EXEC_INFRA' });
   return { id: run.id, status: ins.status, error: ins.error ?? null, nodes: flatten(ins), outputs: ins.outputs ?? {}, events: ins.events };
@@ -118,6 +119,7 @@ export async function runScenario(rt, plan) {
     if (!node) { out.invalid = 'no-failure'; out.status = failing.status; return out; }
     if (plan.cause !== 'routed' && node.key !== targetKey && !(recipe.targetRoot && node.key === 'root')) { out.invalid = `unexpected-failure-node:${node.key}`; out.failure = { node: node.key, code: node.error?.code }; return out; }
     const code = node.error?.code ?? failing.error?.code ?? 'ERROR';
+    out.audit = { runs: [...world.runLog] };                               // every run in creation order, with its kind
     out.failure = { node: { kind: node.kind, attempts: node.attempts ?? 0, error: { code, message: world.clean(node.error?.message ?? failing.error?.message ?? '') } }, events: eventsOf(failing),
       priorRuns: runs, envDiff: lastPassFp ? World.diff(Object.fromEntries(Object.entries(lastPassFp).filter(([k]) => PRE_KINDS.includes(k.split(' ')[0]))), pre) : [] };
     const route = routeByCode(code);

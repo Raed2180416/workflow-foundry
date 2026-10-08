@@ -5,6 +5,9 @@
 // Reads items.jsonl + merge-log.json (from merge-items.mjs) and writes, next to items.jsonl:
 //   COVERAGE.md          counts, licences, complexity quantiles, IR verdicts and missing constructs, the 30 most complex
 //                        items, mined motifs vs skills/micro-harness/references/operators.md, oracles, pilot shortlist
+//                        (sections 1-9: the four original clusters only, so their tables do not move when a cluster is
+//                        added); section 10: the agentic cluster, its first-party slice apart, coverage under the 19
+//                        original constructs vs all registry constructs, and a combined greedy order
 //   MANIFEST.json        sources, revisions, licences, counts, sha256 of items.jsonl and the other files
 //   items-sample.jsonl   <= 5 MB of redistributable items for git (written only when items.jsonl > 5 MB)
 // Deterministic for a given items.jsonl. Corpus text is untrusted data: descriptions are quoted as data, escaped, cut.
@@ -12,7 +15,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { CONSTRUCTS, CONSTRUCT_IDS, parseVerdict, CATEGORIES } from './check-items.mjs';
+import { CONSTRUCTS, CONSTRUCT_IDS, ORIGINAL_CONSTRUCT_COUNT, REFUSALS, FIRST_PARTY_PLATFORMS, parseVerdict, notesNeeds, isFirstParty, CATEGORIES } from './check-items.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(HERE, '..');
@@ -25,23 +28,34 @@ const rel = p => path.relative(ROOT, p).split(path.sep).join('/');
 
 const itemsBuf = fs.readFileSync(ITEMS);
 const lines = itemsBuf.toString('utf8').split('\n').filter(Boolean);
-const items = lines.map(l => JSON.parse(l));
-const lineBytes = new Map(items.map((it, i) => [it.id, Buffer.byteLength(lines[i]) + 1]));
+const allItems = lines.map(l => JSON.parse(l));
+const lineOf = new Map(allItems.map((it, i) => [it.id, lines[i]]));
+const lineBytes = new Map(allItems.map((it, i) => [it.id, Buffer.byteLength(lines[i]) + 1]));
 const mergeLog = JSON.parse(fs.readFileSync(path.join(ROOT, 'merge-log.json'), 'utf8'));
-const CLUSTERS = ['automation', 'orchestration', 'science', 'consumer-creative'];
+// ORIG_CLUSTERS: the 1,342-item corpus of sections 1-9. AGENTIC: agent frameworks (parts/agentic.jsonl, section 10).
+const ORIG_CLUSTERS = ['automation', 'orchestration', 'science', 'consumer-creative'];
+const CLUSTERS = [...ORIG_CLUSTERS, 'agentic'];
 const clusterOf = new Map();
+const partNotes = new Map();   // full ir.notes of agentic items (items.jsonl cuts notes at 2,000 characters)
 {
   // cluster membership from the part files (an item's id is unique across parts)
   for (const c of CLUSTERS) {
     const f = path.join(ROOT, 'parts', `${c}.jsonl`);
     if (!fs.existsSync(f)) continue;
-    for (const l of fs.readFileSync(f, 'utf8').split('\n')) if (l.trim()) clusterOf.set(JSON.parse(l).id, c);
+    for (const l of fs.readFileSync(f, 'utf8').split('\n')) if (l.trim()) { const it = JSON.parse(l); clusterOf.set(it.id, c); if (c === 'agentic') partNotes.set(it.id, it.ir.notes); }
   }
 }
-for (const it of items) it._cluster = clusterOf.get(it.id) ?? 'unknown';
-const platforms = [...new Set(items.map(i => i.source.platform))];
-const platformCluster = new Map(items.map(i => [i.source.platform, i._cluster]));
-platforms.sort((a, b) => CLUSTERS.indexOf(platformCluster.get(a)) - CLUSTERS.indexOf(platformCluster.get(b)) || a.localeCompare(b));
+for (const it of allItems) it._cluster = clusterOf.get(it.id) ?? 'unknown';
+const items = allItems.filter(i => ORIG_CLUSTERS.includes(i._cluster));
+const agentic = allItems.filter(i => i._cluster === 'agentic');
+const isOrigCluster = c => ORIG_CLUSTERS.includes(c);
+const byPlatformOrder = list => {
+  const pc = new Map(list.map(i => [i.source.platform, i._cluster]));
+  return [...new Set(list.map(i => i.source.platform))].sort((a, b) => CLUSTERS.indexOf(pc.get(a)) - CLUSTERS.indexOf(pc.get(b)) || a.localeCompare(b));
+};
+const platforms = byPlatformOrder(items);
+const allPlatforms = byPlatformOrder(allItems);
+const platformCluster = new Map(allItems.map(i => [i.source.platform, i._cluster]));
 
 // ---------------------------------------------------------------- helpers
 const count = (arr, key) => { const m = new Map(); for (const x of arr) { const k = key(x); m.set(k, (m.get(k) ?? 0) + 1); } return m; };
@@ -64,6 +78,9 @@ function quantile(sorted, q) {
 const fmt = x => Number.isInteger(x) ? String(x) : x >= 100 ? x.toFixed(0) : x.toFixed(1);
 const constructsOf = it => parseVerdict(it.ir.verdict)?.tokens ?? [];
 const verdictKind = it => parseVerdict(it.ir.verdict)?.kind ?? 'invalid';
+// native | via-extension | refused-by-design (owner refusal, representable) | unsupported (not expressible) | invalid
+const verdictClass = it => { const v = parseVerdict(it.ir.verdict); return !v ? 'invalid' : v.kind === 'unsupported' && v.byDesign ? 'refused-by-design' : v.kind; };
+const REPRODUCE = 'cd research/corpus-20261006 && node scripts/agentic-assemble.mjs && node scripts/merge-items.mjs && node scripts/check-items.mjs items.jsonl --canonical && node scripts/coverage-report.mjs';
 
 function licenceFamily(l) {
   if (l === 'unknown') return 'unknown';
@@ -110,7 +127,7 @@ function graphMetrics(it) {
   while (q.length) { const c = q.shift(); for (const d of cadj[c]) { depth[d] = Math.max(depth[d], depth[c] + 1); maxDepth = Math.max(maxDepth, depth[d]); if (!--indeg[d]) q.push(d); } }
   return { depth: maxDepth, maxFanIn: Math.max(0, ...preds.map(p => p.size)), categories: new Set(it.graph.nodes.map(x => x.category)).size };
 }
-for (const it of items) it._m = graphMetrics(it);
+for (const it of allItems) it._m = graphMetrics(it);
 
 const log2 = x => Math.log2(1 + x);
 function complexity(it) {
@@ -118,7 +135,7 @@ function complexity(it) {
   return log2(f.nodeCount) + log2(f.edgeCount) + 1.5 * log2(f.branching) + 1.5 * log2(f.loops) + 2 * log2(f.humanSteps) + f.async.length
     + log2(f.subworkflows) + 0.5 * it._m.categories + 0.5 * constructsOf(it).length + (f.hasModelCalls ? 1 : 0) + (f.hasCode ? 0.5 : 0) + log2(it._m.depth);
 }
-for (const it of items) it._score = complexity(it);
+for (const it of allItems) it._score = complexity(it);
 
 // ---------------------------------------------------------------- motif mining
 const LABEL_OF = n => {
@@ -288,8 +305,8 @@ const ORACLE_PLAN = {
   'home-assistant': 'mock state machine + service registry; scripted entity/event sequence; pass = same service calls (domain, service, target, data) in order',
   'apple-shortcuts': 'device actions become mocks; scripted menu/ask answers; pass = same action/effect trace and final output',
 };
-const AGENTIC = ['dify', 'langflow', 'flowise', 'coze', 'activepieces', 'zapier', 'node-red'];
-const planFor = it => ORACLE_PLAN[it.source.platform] ?? (AGENTIC.includes(it.source.platform)
+const LLM_APP_BUILDERS = ['dify', 'langflow', 'flowise', 'coze', 'activepieces', 'zapier', 'node-red'];
+const planFor = it => ORACLE_PLAN[it.source.platform] ?? (LLM_APP_BUILDERS.includes(it.source.platform)
   ? 'LLM nodes get scripted responses (recorded once), code nodes run in the sandbox, connectors are mocked; pass = same final answer/effect trace for fixed inputs'
   : 'mock every effectful node; pass = same effect trace and outputs');
 const MOCKABLE = new Set(['schedule-trigger', 'webhook-trigger', 'event-trigger', 'poll-trigger', 'subworkflow-call', 'error-branch', 'completion-hook', 'signal-wait']);
@@ -327,7 +344,7 @@ let pilot = [];
       pilot.push(c); perPlat.set(p, (perPlat.get(p) ?? 0) + 1); perCluster.set(cl, (perCluster.get(cl) ?? 0) + 1);
     }
   }
-  pilot = pilot.sort((a, b) => CLUSTERS.indexOf(a.it._cluster) - CLUSTERS.indexOf(b.it._cluster) || a.it.source.platform.localeCompare(b.it.source.platform) || b.score - a.score);
+  pilot = pilot.sort((a, b) => ORIG_CLUSTERS.indexOf(a.it._cluster) - ORIG_CLUSTERS.indexOf(b.it._cluster) || a.it.source.platform.localeCompare(b.it.source.platform) || b.score - a.score);
 }
 
 // ---------------------------------------------------------------- the 30 most complex
@@ -361,13 +378,14 @@ if (itemsBuf.length > SAMPLE_LIMIT) {
     }
   }
   sample = items.filter(it => chosen.has(it.id));
-  const body = sample.map(it => lines[items.indexOf(it)]).join('\n') + '\n';
+  const body = sample.map(it => lineOf.get(it.id)).join('\n') + '\n';
   fs.writeFileSync(path.join(ROOT, 'items-sample.jsonl'), body);
 }
 
 // ---------------------------------------------------------------- manifest
 function originOf(url) {
   let u; try { u = new URL(url); } catch { return 'unparseable'; }
+  if (u.protocol === 'local:') return 'local (first-party session scripts, no public location)';
   const seg = u.pathname.split('/').filter(Boolean).map(s => decodeURIComponent(s));
   if (u.hostname === 'github.com' || u.hostname === 'gitlab.com' || u.hostname === 'raw.githubusercontent.com') return `${u.hostname}/${seg.slice(0, 2).join('/')}`;
   if (u.hostname === 'huggingface.co') return `${u.hostname}/${seg.slice(0, seg[0] === 'datasets' ? 3 : 2).join('/')}`;
@@ -376,10 +394,10 @@ function originOf(url) {
 }
 const SHA_RX = /\b[0-9a-f]{40}\b/g;
 const sources = new Map();
-for (const it of items) {
+for (const it of allItems) {
   const o = originOf(it.source.url);
   const k = `${it.source.platform}|${o}`;
-  if (!sources.has(k)) sources.set(k, { platform: it.source.platform, cluster: it._cluster, origin: o, items: 0, redistributable: 0, licences: {}, revisions: new Set(), retrievedAt: new Set() });
+  if (!sources.has(k)) sources.set(k, { platform: it.source.platform, cluster: it._cluster, ...(isFirstParty(it) ? { party: 'first-party' } : {}), origin: o, items: 0, redistributable: 0, licences: {}, revisions: new Set(), retrievedAt: new Set() });
   const s = sources.get(k);
   s.items++; if (it.source.redistributable) s.redistributable++;
   s.licences[it.source.license] = (s.licences[it.source.license] ?? 0) + 1;
@@ -394,27 +412,36 @@ const manifest = {
   itemSchema: 'foundry-corpus-item/1 (ITEM-SCHEMA.md)',
   generatedAt: mergeLog.generatedAt,
   status: 'development/diagnostic corpus; not sealed evaluation evidence. Graphs, features and IR verdicts are static-analysis heuristics, not compiled or executed.',
-  generators: ['scripts/merge-items.mjs', 'scripts/check-items.mjs', 'scripts/coverage-report.mjs'],
-  reproduce: 'cd research/corpus-20261006 && node scripts/merge-items.mjs && node scripts/check-items.mjs items.jsonl --canonical && node scripts/coverage-report.mjs',
+  generators: ['scripts/agentic-assemble.mjs', 'scripts/merge-items.mjs', 'scripts/check-items.mjs', 'scripts/coverage-report.mjs'],
+  reproduce: REPRODUCE,
+  restore: 'node research/corpus-20261006/scripts/unpack.mjs (restores items.jsonl and parts/*.jsonl from the .gz copies in git and checks every sha256 below)',
+  pack: 'node research/corpus-20261006/scripts/unpack.mjs --pack (rewrites a .gz only when its content differs from the manifest hash; gzip level 9, no name or timestamp)',
   files: {
     items: { ...fileInfo(ITEMS), inGit: itemsBuf.length <= SAMPLE_LIMIT, distribution: itemsBuf.length > SAMPLE_LIMIT
       ? 'too large for git (> 5 MB): publish as a release asset; it includes redistributable:false items reduced to URL + derived graph + features, which needs the owner\'s confirmation before publishing' : 'in git' },
     ...(sample.length ? { sample: { ...fileInfo(path.join(ROOT, 'items-sample.jsonl')), inGit: true,
       selection: 'redistributable items only: the pilot shortlist, the redistributable items among the 30 most complex (lines <= 250 kB), then a round-robin over platforms at even complexity strides, up to 5 MB' } } : {}),
     mergeLog: fileInfo(path.join(ROOT, 'merge-log.json')),
-    parts: mergeLog.inputs.map(p => ({ ...p, ledger: `parts/${p.cluster}-ledger.md`, inGit: p.bytes <= SAMPLE_LIMIT ? 'small enough' : 'over 5 MB: release asset recommended' })),
+    parts: mergeLog.inputs.map(p => {
+      const ledger = path.join(ROOT, 'parts', `${p.cluster}-ledger.md`);
+      const lb = fs.existsSync(ledger) ? fs.readFileSync(ledger) : null;
+      return { ...p, gz: `${p.part}.gz`, ledger: `parts/${p.cluster}-ledger.md`, ...(lb ? { ledgerBytes: lb.length, ledgerSha256: sha256(lb) } : {}),
+        inGit: p.bytes <= SAMPLE_LIMIT ? 'small enough' : 'over 5 MB: release asset recommended' };
+    }),
   },
   counts: {
-    items: items.length,
-    byCluster: Object.fromEntries(CLUSTERS.map(c => [c, items.filter(i => i._cluster === c).length])),
-    byPlatform: Object.fromEntries(platforms.map(p => [p, items.filter(i => i.source.platform === p).length])),
-    redistributable: items.filter(i => i.source.redistributable).length,
-    byLicence: Object.fromEntries(sortedEntries(count(items, i => i.source.license))),
-    byLicenceFamily: Object.fromEntries(sortedEntries(count(items, i => licenceFamily(i.source.license)))),
-    byVerdict: Object.fromEntries(sortedEntries(count(items, verdictKind))),
-    byOracle: Object.fromEntries(sortedEntries(count(items, i => i.oracle.kind))),
+    items: allItems.length,
+    byCluster: Object.fromEntries(CLUSTERS.map(c => [c, allItems.filter(i => i._cluster === c).length])),
+    byPlatform: Object.fromEntries(allPlatforms.map(p => [p, allItems.filter(i => i.source.platform === p).length])),
+    firstParty: { platforms: FIRST_PARTY_PLATFORMS, items: allItems.filter(isFirstParty).length,
+      note: 'workflows written by this project\'s own agent: not independent evidence, reported apart from third-party items and never pooled with them' },
+    redistributable: allItems.filter(i => i.source.redistributable).length,
+    byLicence: Object.fromEntries(sortedEntries(count(allItems, i => i.source.license))),
+    byLicenceFamily: Object.fromEntries(sortedEntries(count(allItems, i => licenceFamily(i.source.license)))),
+    byVerdict: Object.fromEntries(sortedEntries(count(allItems, verdictClass))),
+    byOracle: Object.fromEntries(sortedEntries(count(allItems, i => i.oracle.kind))),
     droppedInvalid: mergeLog.drops.length, droppedDuplicates: mergeLog.dedupe.dropped.length,
-    nodes: items.reduce((a, i) => a + i.features.nodeCount, 0), edges: items.reduce((a, i) => a + i.features.edgeCount, 0),
+    nodes: allItems.reduce((a, i) => a + i.features.nodeCount, 0), edges: allItems.reduce((a, i) => a + i.features.edgeCount, 0),
   },
   sources: [...sources.values()].sort((a, b) => CLUSTERS.indexOf(a.cluster) - CLUSTERS.indexOf(b.cluster) || a.platform.localeCompare(b.platform) || b.items - a.items)
     .map(s => ({ ...s, revisions: [...s.revisions].slice(0, 5), revisionCount: s.revisions.size, retrievedAt: [...s.retrievedAt].sort(),
@@ -427,36 +454,56 @@ fs.writeFileSync(path.join(ROOT, 'MANIFEST.json'), JSON.stringify(manifest, null
 const W = []; const w = (...s) => W.push(...s);
 const N = items.length;
 const nRedis = items.filter(i => i.source.redistributable).length;
+const NA = agentic.length, NFP = agentic.filter(isFirstParty).length;
 w('# Workflow corpus coverage (corpus-20261006)', '',
-  `*Generated by \`scripts/coverage-report.mjs\` from \`items.jsonl\` (${N} items, sha256 \`${sha256(itemsBuf).slice(0, 16)}…\`; see MANIFEST.json). ` +
+  `*Generated by \`scripts/coverage-report.mjs\` from \`items.jsonl\` (${allItems.length} items, sha256 \`${sha256(itemsBuf).slice(0, 16)}…\`; see MANIFEST.json). ` +
+  `Sections 1–9 cover the ${N} items of the four original clusters (automation, orchestration, science, consumer-creative) and are computed ` +
+  `from those items only, so adding a cluster does not move them. Section 10 covers the agentic cluster (${NA} items from agent frameworks: ` +
+  `${NA - NFP} third-party, and ${NFP} first-party items reported apart because this project's own agent wrote them). ` +
   'Status: development/diagnostic corpus for ROADMAP §4.4, not sealed evaluation evidence. Every graph, feature and IR verdict ' +
   'below is a static-analysis heuristic over normalized graphs. Nothing was compiled into Foundry IR or executed, and no oracle was run.*', '',
-  'Reproduce: `cd research/corpus-20261006 && node scripts/merge-items.mjs && node scripts/check-items.mjs items.jsonl --canonical && node scripts/coverage-report.mjs`.', '');
+  `Reproduce: \`${REPRODUCE}\` (from a fresh clone, first \`node scripts/unpack.mjs\`; without the staging directory the assembler keeps the committed agentic part).`, '');
+
+// merge-log.json restricted to the original clusters (sections 1-9); section 10 reads the agentic share.
+const partCluster = new Map(mergeLog.inputs.map(p => [p.part.replace(/^parts\//, ''), p.cluster]));
+// (a log written before fixes carried byCluster holds the original clusters only)
+const fixCount = (v, keep) => v.byCluster ? Object.entries(v.byCluster).filter(([c]) => keep(c)).reduce((a, [, n]) => a + n, 0) : (keep(ORIG_CLUSTERS[0]) ? v.count : 0);
+const mergeLogFor = keep => ({
+  inputs: mergeLog.inputs.filter(p => keep(p.cluster)),
+  fixes: Object.fromEntries(Object.entries(mergeLog.fixes).map(([k, v]) => [k, { ...v, count: fixCount(v, keep) }]).filter(([, v]) => v.count > 0)),
+  drops: mergeLog.drops.filter(d => keep(partCluster.get(d.part))),
+  dedupe: { dropped: mergeLog.dedupe.dropped.filter(d => keep(clusterOf.get(d.dropped))), shapeTwinsKept: mergeLog.dedupe.shapeTwinsKept.filter(g => keep(clusterOf.get(g[0]))) },
+  featureChanges: Object.fromEntries(Object.entries(mergeLog.featureChanges).map(([k, v]) => [k, Object.fromEntries(Object.entries(v).filter(([c]) => keep(c)))]).filter(([, v]) => Object.keys(v).length)),
+  verdict: { changed: Object.entries(mergeLog.verdict.byCluster).filter(([c]) => keep(c)).reduce((a, [, n]) => a + n, 0),
+    kindTransitions: Object.fromEntries(Object.entries(mergeLog.verdict.kindTransitions).filter(([k]) => keep(k.split(':')[0]))) },
+  cycleArtifacts: mergeLog.cycleArtifacts.filter(id => keep(clusterOf.get(id))),
+});
+const ml = mergeLogFor(isOrigCluster);
 
 w('## 1. Merge', '');
-const tr = mergeLog.verdict.kindTransitions;
+const tr = ml.verdict.kindTransitions;
 const toNative = Object.entries(tr).filter(([k]) => k.endsWith('via-extension -> native')).reduce((a, [, v]) => a + v, 0);
-w(`- **Inputs:** ${mergeLog.inputs.map(p => `\`${p.part}\` ${p.lines}`).join(', ')} lines (${mergeLog.inputs.reduce((a, p) => a + p.lines, 0)} total).`,
+w(`- **Inputs:** ${ml.inputs.map(p => `\`${p.part}\` ${p.lines}`).join(', ')} lines (${ml.inputs.reduce((a, p) => a + p.lines, 0)} total).`,
   `- **Checker:** \`scripts/check-items.mjs\` validates every line against ITEM-SCHEMA.md (keys, enums, URL/date/licence fields, dangling or duplicate edges, ` +
   'summary length, credential-shaped strings, non-redistributable text) and, with `--canonical`, the merged conventions below. The only failures in the parts were ' +
-  `${mergeLog.fixes['url-percent-encoded']?.count ?? 0} URLs containing spaces (Langflow starter projects, a few ComfyUI files), fixed by percent-encoding. ` +
-  `All repairs: ${Object.entries(mergeLog.fixes).map(([k, v]) => `${k} ${v.count}`).join(', ') || 'none'} (examples in merge-log.json).`,
-  `- **Dropped:** ${mergeLog.drops.length} invalid lines; ${mergeLog.dedupe.dropped.length} duplicates (same platform, identical normalized graph and the same title or description): ` +
-  mergeLog.dedupe.dropped.map(d => `\`${cut(d.dropped, 70)}\``).join(', ') + '. ' +
-  `${mergeLog.dedupe.shapeTwinsKept.length} groups of identical graphs with different titles and descriptions were kept (e.g. Argo conditional-artifacts/-parameters).`,
+  `${ml.fixes['url-percent-encoded']?.count ?? 0} URLs containing spaces (Langflow starter projects, a few ComfyUI files), fixed by percent-encoding. ` +
+  `All repairs: ${Object.entries(ml.fixes).map(([k, v]) => `${k} ${v.count}`).join(', ') || 'none'} (examples in merge-log.json).`,
+  `- **Dropped:** ${ml.drops.length} invalid lines; ${ml.dedupe.dropped.length} duplicates (same platform, identical normalized graph and the same title or description): ` +
+  ml.dedupe.dropped.map(d => `\`${cut(d.dropped, 70)}\``).join(', ') + '. ' +
+  `${ml.dedupe.shapeTwinsKept.length} groups of identical graphs with different titles and descriptions were kept (e.g. Argo conditional-artifacts/-parameters).`,
   `- **One redistribution policy:** the consumer-creative converters treated GPL-3.0 as redistributable while the orchestration and science converters ` +
   `did not. The merge applies the conservative rule everywhere (copyleft, share-alike and non-commercial licences keep only URL, title, a written description, ` +
-  `the derived graph with type-level summaries and features): ${mergeLog.fixes['copyleft-made-non-redistributable']?.count ?? 0} items changed ` +
+  `the derived graph with type-level summaries and features): ${ml.fixes['copyleft-made-non-redistributable']?.count ?? 0} items changed ` +
   `(ComfyUI and Home Assistant GPL-3.0, one MPL-2.0 GitLab project).`,
   `- **Features recomputed** from the graph for every item: nodeCount, edgeCount, maxFanOut (distinct successors), humanSteps, effects, hasCode, hasModelCalls. ` +
   'Source-derived features (branching guards, runtime fan-outs, inlined sub-workflows, connectors, domains) cannot be recovered from the graph and are carried ' +
   'from the converters, floored at the graph counts (branching >= condition nodes, loops >= loop nodes, subworkflows >= sub-workflow nodes); `async` gains `wait` ' +
-  `when the graph has wait nodes and the trigger kind of every trigger construct. Changed values: ${Object.entries(mergeLog.featureChanges).map(([k, v]) => `${k} ${Object.entries(v).map(([c, n]) => `${c} ${n}`).join(', ')}`).join('; ') || 'none'}.`,
-  `- **IR verdicts recomputed** with one vocabulary (section 4). ${mergeLog.verdict.changed} verdict strings changed, most of them only renamed or reformatted; ` +
+  `when the graph has wait nodes and the trigger kind of every trigger construct. Changed values: ${Object.entries(ml.featureChanges).map(([k, v]) => `${k} ${Object.entries(v).map(([c, n]) => `${c} ${n}`).join(', ')}`).join('; ') || 'none'}.`,
+  `- **IR verdicts recomputed** with one vocabulary (section 4). ${ml.verdict.changed} verdict strings changed, most of them only renamed or reformatted; ` +
   `${toNative} items moved from via-extension to native and none moved the other way: Airflow \`schedule=@once\` system tests (a one-shot start is a run input), ` +
   'sub-workflows that converters inline at compile time (KFP nested pipelines, ComfyUI subgraphs), fixed-count retries (n8n/Dify/Activepieces fit IR `retry`), ' +
   'runtime list fan-out (IR `map`), and the 500-node limit applied to the normalized graph rather than to the source action count.',
-  `- **Graph artefacts:** ${mergeLog.cycleArtifacts.length} graphs have cycles over data/control edges that come from static edge inference (Snakemake wildcard ` +
+  `- **Graph artefacts:** ${ml.cycleArtifacts.length} graphs have cycles over data/control edges that come from static edge inference (Snakemake wildcard ` +
   'matching, ComfyUI subgraph instance wiring, one GitLab stage barrier), not from loops in the source. They are kept as converted and noted in `ir.notes`; ' +
   'they do not count as `unstructured-cycle`.', '');
 
@@ -470,8 +517,8 @@ const platRows = platforms.map(p => {
 });
 w(table(['platform', 'cluster', 'items', 'redistributable', 'top licences', 'with shipped oracle'], platRows), '');
 w(`Totals: ${N} items, ${nRedis} redistributable (${pct(nRedis, N)}), ${N - nRedis} kept as URL + derived graph + features only. ` +
-  `${manifest.counts.nodes.toLocaleString('en')} nodes and ${manifest.counts.edges.toLocaleString('en')} edges.`, '');
-w(table(['cluster', 'items', 'redistributable', 'native', 'via-extension', 'unsupported', 'description original / recovered / written'], CLUSTERS.map(c => {
+  `${items.reduce((a, i) => a + i.features.nodeCount, 0).toLocaleString('en')} nodes and ${items.reduce((a, i) => a + i.features.edgeCount, 0).toLocaleString('en')} edges.`, '');
+w(table(['cluster', 'items', 'redistributable', 'native', 'via-extension', 'unsupported', 'description original / recovered / written'], ORIG_CLUSTERS.map(c => {
   const its = items.filter(i => i._cluster === c); const v = count(its, verdictKind); const d = count(its, i => i.description.provenance);
   return [c, its.length, its.filter(i => i.source.redistributable).length, v.get('native') ?? 0, v.get('via-extension') ?? 0, v.get('unsupported') ?? 0,
     `${d.get('original') ?? 0} / ${d.get('recovered-by-model') ?? 0} / ${d.get('written') ?? 0}`];
@@ -498,7 +545,7 @@ w(table(['metric', 'p10', 'p25', 'p50', 'p75', 'p90', 'p99', 'max', 'mean'], MET
   return [name, ...QS.map(q => fmt(quantile(v, q))), v.at(-1), fmt(v.reduce((a, b) => a + b, 0) / v.length)];
 })), '');
 w('Median / p90 / max per cluster:', '');
-w(table(['metric', ...CLUSTERS], METRICS.map(([name, fn]) => [name, ...CLUSTERS.map(c => {
+w(table(['metric', ...ORIG_CLUSTERS], METRICS.map(([name, fn]) => [name, ...ORIG_CLUSTERS.map(c => {
   const v = items.filter(i => i._cluster === c).map(fn).sort((a, b) => a - b);
   return `${fmt(quantile(v, 0.5))} / ${fmt(quantile(v, 0.9))} / ${v.at(-1)}`;
 })])), '');
@@ -507,8 +554,8 @@ const PREV = [['branching > 0', i => i.features.branching > 0], ['loops / runtim
   ['external effects', i => i.features.effects.external > 0], ['write effects', i => i.features.effects.write > 0], ['sub-workflows', i => i.features.subworkflows > 0],
   ['error edges', i => i.graph.edges.some(e => e.kind === 'error')], ['> 100 nodes', i => i.features.nodeCount > 100], ['> 500 nodes', i => i.features.nodeCount > 500]];
 w('Prevalence (share of items):', '');
-w(table(['feature', 'all', ...CLUSTERS], PREV.map(([name, fn]) => [name, pct(items.filter(fn).length, N),
-  ...CLUSTERS.map(c => { const its = items.filter(i => i._cluster === c); return pct(its.filter(fn).length, its.length); })])), '');
+w(table(['feature', 'all', ...ORIG_CLUSTERS], PREV.map(([name, fn]) => [name, pct(items.filter(fn).length, N),
+  ...ORIG_CLUSTERS.map(c => { const its = items.filter(i => i._cluster === c); return pct(its.filter(fn).length, its.length); })])), '');
 w('Async kinds: ' + sortedEntries(count(items.flatMap(i => i.features.async), x => x)).map(([k, n]) => `${k} ${n}`).join(', ') + ' (items).', '');
 w('Caveats: definitions of `branching` and `loops` differ by cluster at the source level (guards vs condition nodes; runtime fan-out vs iteration) ' +
   'and are stated in each ledger; Nextflow and Snakemake edges are may-flow over-approximations; Home Assistant node counts include expanded YAML aliases ' +
@@ -639,17 +686,17 @@ w('Mining is over node labels: the category, with actions split by effect (`read
   'merged (so a chain of ten writes counts as one `write`), length 2–4; support = number of items containing the motif. Each motif is counted once per item.', '');
 const seqSupport = support(it => it._mo.seqs);
 const TRIVIAL = new Set(['read', 'write', 'ext-call', 'action', 'transform', 'script', 'other']);
-const clusterSize = new Map(CLUSTERS.map(c => [c, items.filter(i => i._cluster === c).length]));
-const macro = key => CLUSTERS.reduce((a, c) => a + (key.byCluster.get(c) ?? 0) / clusterSize.get(c), 0) / CLUSTERS.length;
+const clusterSize = new Map(ORIG_CLUSTERS.map(c => [c, items.filter(i => i._cluster === c).length]));
+const macro = key => ORIG_CLUSTERS.reduce((a, c) => a + (key.byCluster.get(c) ?? 0) / clusterSize.get(c), 0) / ORIG_CLUSTERS.length;
 const nonTrivial = seqSupport.filter(([s, r]) => s.split('>').length >= 3 && s.split('>').some(l => !TRIVIAL.has(l)) && r.platforms.size >= 3)
   .sort((a, b) => macro(b[1]) - macro(a[1]) || b[1].items - a[1].items);
 w('**Top path motifs** (length 3–4, at least one non-plumbing label, >= 3 platforms), ranked by the mean over the four clusters of the share of items ' +
   'containing the motif, so that no cluster dominates by size or graph density:', '');
-w(table(['motif', 'items', 'platforms', 'mean cluster share', ...CLUSTERS.map(c => `${c} share`), 'examples'], nonTrivial.slice(0, 25).map(([s, r]) =>
-  [`\`${s.replace(/>/g, ' → ')}\``, r.items, r.platforms.size, pct(macro(r) * 1000, 1000), ...CLUSTERS.map(c => pct(r.byCluster.get(c) ?? 0, clusterSize.get(c))),
+w(table(['motif', 'items', 'platforms', 'mean cluster share', ...ORIG_CLUSTERS.map(c => `${c} share`), 'examples'], nonTrivial.slice(0, 25).map(([s, r]) =>
+  [`\`${s.replace(/>/g, ' → ')}\``, r.items, r.platforms.size, pct(macro(r) * 1000, 1000), ...ORIG_CLUSTERS.map(c => pct(r.byCluster.get(c) ?? 0, clusterSize.get(c))),
     r.examples.map(x => `\`${idc(cut(x, 50))}\``).join(' ')])), '');
 w('Top motifs within each cluster (share of the cluster\'s items):', '');
-w(table(['cluster', 'top non-plumbing motifs'], CLUSTERS.map(c => [c, seqSupport.filter(([s]) => s.split('>').length >= 3 && s.split('>').some(l => !TRIVIAL.has(l)))
+w(table(['cluster', 'top non-plumbing motifs'], ORIG_CLUSTERS.map(c => [c, seqSupport.filter(([s]) => s.split('>').length >= 3 && s.split('>').some(l => !TRIVIAL.has(l)))
   .map(([s, r]) => [s, (r.byCluster.get(c) ?? 0)]).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 5)
   .map(([s, n]) => `\`${s.replace(/>/g, ' → ')}\` ${pct(n, clusterSize.get(c))}`).join('; ')])), '');
 w('**Plumbing motifs** (only fetch/write/call/transform/script labels), for scale: ' + seqSupport.filter(([s]) => s.split('>').length >= 3 && s.split('>').every(l => TRIVIAL.has(l)))
@@ -738,7 +785,224 @@ w('## 9. Limits and unknowns', '',
   '- Licences were read from repository LICENSE files, package metadata, dataset cards or platform terms; per-template authors\' terms inside marketplaces were not verified.',
   '- Domain tags are keyword heuristics and over-tag.',
   `- The corpus is development/diagnostic material. Sealed evaluation needs fresh items selected and frozen before any builder is tuned on this set.`, '');
+// ---------------------------------------------------------------- 10. agentic cluster
+// Third-party and first-party items are never pooled: every count below names its slice.
+const tp = agentic.filter(i => !isFirstParty(i)), fp = agentic.filter(isFirstParty);
+const NT = tp.length;
+const ORIG_IDS = CONSTRUCT_IDS.slice(0, ORIGINAL_CONSTRUCT_COUNT), NEW_IDS = CONSTRUCT_IDS.slice(ORIGINAL_CONSTRUCT_COUNT);
+const isNewId = c => NEW_IDS.includes(c);
+const fullNotes = it => partNotes.get(it.id) ?? it.ir.notes;
+const refusalsOf = it => parseVerdict(it.ir.verdict)?.refusals ?? [];
+const needsOf = it => verdictClass(it) === 'refused-by-design' ? (notesNeeds(fullNotes(it)) ?? []) : constructsOf(it);
+const cls = list => count(list, verdictClass);
+const n = (m, k) => m.get(k) ?? 0;
+const with19 = it => verdictClass(it) === 'native' || (verdictClass(it) === 'via-extension' && constructsOf(it).every(c => ORIG_IDS.includes(c)));
+const withAll = it => ['native', 'via-extension'].includes(verdictClass(it));
+const cnt = (list, fn) => list.filter(fn).length;
+const nc = (k, total) => `${k} (${pct(k, total)})`;
+const fmtCounts = m => sortedEntries(m).map(([k, v]) => `${k} ${v}`).join(', ');
+const mla = mergeLogFor(c => c === 'agentic');
+const ga = mergeLog.agentic ?? { graphEvidenceNotApplied: [], modelDrivenCycles: [] };
+const agenticPart = mergeLog.inputs.find(p => p.cluster === 'agentic');
+const ledgerPath = path.join(ROOT, 'parts', 'agentic-ledger.md');
+const assembled = fs.existsSync(ledgerPath) ? /^- Result: (\d+) kept, (\d+) dropped/m.exec(fs.readFileSync(ledgerPath, 'utf8')) : null;
+
+w('## 10. Agentic cluster (agent frameworks)', '');
+w(`${NA} items: ${NT} third-party items from ${new Set(tp.map(i => i.source.platform)).size} source platforms and ` +
+  `${NFP} first-party items (${FIRST_PARTY_PLATFORMS.map(p => `\`${p}\``).join(', ')}). ` +
+  'Source: `parts/agentic.jsonl`, assembled by `scripts/agentic-assemble.mjs` from the verified and harmonised staging files; the acquisition record, ' +
+  'with a header table per platform (repositories, revisions, licences, items kept and dropped, verification outcome), the harmonisation log and every platform ledger, ' +
+  'is `parts/agentic-ledger.md`.', '',
+  'How these verdicts differ from sections 1–9: they are **model readings of pinned source** (`source.extraction`: method `model-read-source`, the spans read, the ' +
+  'extractor, and a pointer to the independent verifier pass), re-labelled to one convention, `AGENTIC-CONVENTIONS.md`. That convention adds twelve registry ' +
+  `constructs after the original ${ORIGINAL_CONSTRUCT_COUNT} (${NEW_IDS.map(c => `\`${c}\``).join(', ')}), retires topology labels as tokens ` +
+  '(`llm-router`, `supervisor-delegation`, handoff and chat patterns are native lowerings, counted in 10.7), and introduces owner design refusals, ' +
+  '`unsupported:by-design-group-chat` and `unsupported:by-design-full-history-handoff`. A refused item is representable with a turn cap but refused by design ' +
+  '("share decisions and artifacts, not transcripts"; ROADMAP-AMENDMENTS text not yet merged into docs/ROADMAP.md), so it is counted apart from `unsupported` ' +
+  'items, which are not expressible at all. Nothing was compiled or executed. **First-party items** are workflow scripts written by this project\'s own ' +
+  'orchestrating agent: they are not independent evidence of what workflows need, so every table keeps them in their own row or column (10.8).', '');
+
+w('### 10.1 Merge', '');
+const evid = ga.graphEvidenceNotApplied;
+const evErr = evid.filter(e => e.evidence.some(x => /error edge/.test(x))).length, evSub = evid.filter(e => e.evidence.some(x => /sub-workflow node/.test(x))).length;
+const cutNotes = agentic.filter(i => i.ir.notes.length >= 2000).length;
+w(`- **Input:** \`parts/agentic.jsonl\` ${agenticPart?.lines ?? 0} lines (sha256 \`${(agenticPart?.sha256 ?? '').slice(0, 16)}…\`); ${NA} items in \`items.jsonl\`. ` +
+  `Dropped by the checker: ${mla.drops.length}${mla.drops.length ? ` (${mla.drops.map(d => `\`${cut(d.id ?? `line ${d.line}`, 60)}\` ${d.reason}: ${cut(d.detail, 120)}`).join('; ')})` : ''}; ` +
+  `duplicates: ${mla.dedupe.dropped.length}. ` + (assembled ? `Before the merge, \`agentic-assemble.mjs\` kept ${assembled[1]} and dropped ${assembled[2]} staged items ` +
+  '(its checks and any drops are listed in `parts/agentic-ledger.md`).' : 'The assembler ledger `parts/agentic-ledger.md` is missing.'),
+  `- **Checker:** canonical mode passes for every agentic item. It now accepts the optional provenance object \`source.extraction\` (method, spans, extractor, verifier; ` +
+  'shape validated, other keys still rejected), the twelve agentic registry ids, `unsupported:by-design-*` verdicts with a known refusal and a `Needs:` list or ' +
+  '"No further construct would be needed", and `local:<path>` URLs for first-party platforms only (the first-party scripts have no public location).',
+  `- **Repairs:** ${Object.entries(mla.fixes).map(([k, v]) => `${k} ${v.count}`).join(', ') || 'none'}. Features recomputed as for every cluster; ` +
+  `changed values: ${Object.entries(mla.featureChanges).map(([k, v]) => `${k} ${Object.values(v).reduce((a, b) => a + b, 0)}`).join(', ') || 'none'} ` +
+  '(connector lists sorted and de-duplicated).',
+  `- **Verdicts:** ${mla.verdict.changed} changed by the merge. Agentic tokens map by identity (\`TOKEN_MAPS.agentic\` in merge-items.mjs; a retired or unknown token ` +
+  `stops the merge). Transitions: ${Object.entries(mla.verdict.kindTransitions).map(([k, v]) => `${k.replace(/^agentic: /, '')} ${v}`).join(', ')}.`,
+  `- **Graph evidence recorded, not applied:** the converter clusters turn every error edge into \`error-branch\` and every by-reference sub-workflow node into ` +
+  `\`subworkflow-call\`. Here the readers judged those nodes (for example \`onError:"continue"\` retries, a workflow-level \`onError\` hook read as \`completion-hook\`, ` +
+  `sub-applications inlined as a \`map\` body, agents called as tools), so ${evid.length} items keep their verdicts (${evErr} with error edges, ${evSub} with sub-workflow ` +
+  'nodes); `ir.notes` and `merge-log.json` (`agentic.graphEvidenceNotApplied`) record the evidence. Applying the converter rule would add `error-branch` or ' +
+  '`subworkflow-call` to them.',
+  `- **Cycles:** ${ga.modelDrivenCycles.length} graphs have a cycle over data/control edges without a \`loop\` edge. These are model-driven loops (tool loops, chat ` +
+  're-entry, handoff or speaker meshes, capped retries) that the verdict carries through a construct, a refusal or a named cap (rules BL, UC); none is an ' +
+  'edge-inference artefact and none counts as `unstructured-cycle`.',
+  `- **Notes length:** the merge cuts \`ir.notes\` at 2,000 characters for every cluster; ${cutNotes} of ${NA} agentic notes reach the cut, so part of the ` +
+  'extractor and verifier record is missing from `items.jsonl`. The convention header (verdict, refusal, `Needs:`, changes, native patterns) survives in every item, ' +
+  'the full notes are in `parts/agentic.jsonl`, and the source spans in `source.extraction.spans`.', '');
+
+w('### 10.2 Counts', '');
+const aPlatforms = allPlatforms.filter(p => platformCluster.get(p) === 'agentic').sort((a, b) =>
+  Number(FIRST_PARTY_PLATFORMS.includes(a)) - Number(FIRST_PARTY_PLATFORMS.includes(b)) || a.localeCompare(b));
+w(table(['platform', 'party', 'items', 'redistributable', 'top licences', 'native', 'via-extension', 'refused: group chat / full-history handoff', 'most frequent constructs (tokens)'],
+  aPlatforms.map(p => {
+    const its = agentic.filter(i => i.source.platform === p), c = cls(its);
+    const lic = sortedEntries(count(its, i => i.source.license)).slice(0, 3).map(([l, k]) => `${cell(cut(l, 40))} ${k}`).join(', ');
+    const rf = r => its.filter(i => refusalsOf(i).includes(r)).length;
+    const top = sortedEntries(count(its.flatMap(constructsOf), x => x)).slice(0, 3).map(([k, v]) => `${k} ${v}`).join(', ');
+    return [p, FIRST_PARTY_PLATFORMS.includes(p) ? 'first-party' : 'third-party', its.length, its.filter(i => i.source.redistributable).length, lic,
+      n(c, 'native'), n(c, 'via-extension'), `${rf('group-chat')} / ${rf('full-history-handoff')}`, top || '-'];
+  })), '');
+const sliceRow = (name, its) => {
+  const c = cls(its), d = count(its, i => i.description.provenance);
+  return [name, its.length, new Set(its.map(i => i.source.platform)).size, its.filter(i => i.source.redistributable).length, n(c, 'native'), n(c, 'via-extension'),
+    n(c, 'refused-by-design'), n(c, 'unsupported'), `${n(d, 'original')} / ${n(d, 'recovered-by-model')} / ${n(d, 'written')}`];
+};
+w(table(['slice', 'items', 'source platforms', 'redistributable', 'native', 'via-extension', 'refused by design', 'unsupported (not expressible)', 'description original / recovered / written'],
+  [sliceRow('original corpus (sections 1–9)', items), sliceRow('agentic, third-party', tp), sliceRow('agentic, first-party', fp)]), '');
+w(`Licences, third-party: ${fmtCounts(count(tp, i => i.source.license))}; first-party: ${fmtCounts(count(fp, i => i.source.license))} (no licence file; ` +
+  'kept as URL + derived graph + features only). Declared oracles: third-party ' + fmtCounts(count(tp, i => i.oracle.kind)) + '; first-party ' +
+  fmtCounts(count(fp, i => i.oracle.kind)) + '. None was run.', '');
+w('Median / p90 / max:', '');
+const mq = (list, fn) => { const v = list.map(fn).sort((a, b) => a - b); return v.length ? `${fmt(quantile(v, 0.5))} / ${fmt(quantile(v, 0.9))} / ${v.at(-1)}` : '-'; };
+w(table(['metric', 'original corpus', 'agentic, third-party', 'agentic, first-party'], METRICS.map(([name, fn]) => [name, mq(items, fn), mq(tp, fn), mq(fp, fn)])), '');
+w('Prevalence (share of items):', '');
+w(table(['feature', 'original corpus', 'agentic, third-party', 'agentic, first-party'], PREV.map(([name, fn]) =>
+  [name, pct(cnt(items, fn), N), pct(cnt(tp, fn), NT), pct(cnt(fp, fn), NFP)])), '');
+
+w('### 10.3 Coverage: declared, with the 19 original constructs, with all registry constructs', '');
+w(`*Declared native* is the verdict as recorded. *With the ${ORIGINAL_CONSTRUCT_COUNT} original constructs* counts the items that become expressible once every ` +
+  `construct of the original registry exists (native, plus via-extension items whose tokens are all among the ${ORIGINAL_CONSTRUCT_COUNT}). *With all ${CONSTRUCT_IDS.length}* ` +
+  `adds the twelve agentic constructs (native plus every via-extension item). Refused items stay out of every column; lifting a refusal would need its ` +
+  '`Needs:` list plus a construct for the history fork or the shared transcript, which the registry does not have. First-party items are shown but not pooled.', '');
+const covRow = (name, its) => {
+  const c = cls(its);
+  return [name, its.length, nc(n(c, 'native'), its.length), nc(cnt(its, with19), its.length), nc(cnt(its, withAll), its.length), n(c, 'refused-by-design'), n(c, 'unsupported')];
+};
+const combined = [...items, ...tp];
+w(table(['slice', 'items', 'declared native', `with the ${ORIGINAL_CONSTRUCT_COUNT} original constructs`, `with all ${CONSTRUCT_IDS.length} constructs`, 'refused by design', 'unsupported (not expressible)'],
+  [covRow('original corpus', items), covRow('agentic, third-party', tp), covRow('combined (original + agentic third-party)', combined), covRow('agentic, first-party (not pooled)', fp)]), '');
+const tpVia = tp.filter(i => verdictClass(i) === 'via-extension');
+const needNew = tpVia.filter(i => constructsOf(i).some(isNewId));
+const onlyNew = tpVia.filter(i => constructsOf(i).every(isNewId));
+w(`Of the ${tpVia.length} third-party via-extension items, ${needNew.length} (${pct(needNew.length, tpVia.length)}) need at least one agentic construct and ` +
+  `${onlyNew.length} need agentic constructs only; ${tpVia.length - needNew.length} need original constructs only (most often ` +
+  sortedEntries(count(tpVia.filter(i => !constructsOf(i).some(isNewId)).flatMap(constructsOf), x => x)).slice(0, 3).map(([k, v]) => `\`${k}\` ${v}`).join(', ') +
+  '). The original corpus uses none of the agentic constructs, so its two right-hand columns are equal. Counting the refused items\' `Needs:` lists as if the ' +
+  `refusals were lifted (and ignoring the missing transcript construct), ${cnt(tp.filter(i => verdictClass(i) === 'refused-by-design'), i => needsOf(i).some(isNewId))} of ` +
+  `${cnt(tp, i => verdictClass(i) === 'refused-by-design')} refused items would need an agentic construct too.`, '');
+
+w('### 10.4 Missing constructs in the agentic slice', '');
+w('Third-party items needing each construct (verdict tokens), and in brackets the count when the `Needs:` lists of refused items are added. "Only blocker" ' +
+  'counts third-party items for which this construct is the single thing between them and `native`. The original-corpus column is the count from section 4.', '');
+const tpFreq = count(tp.flatMap(constructsOf), x => x);
+const tpNeedFreq = count(tp.flatMap(needsOf), x => x);
+const tpSole = count(tp.filter(i => verdictClass(i) === 'via-extension' && constructsOf(i).length === 1), i => constructsOf(i)[0]);
+const fpFreq = count(fp.flatMap(constructsOf), x => x);
+const origFreq = count(items.flatMap(constructsOf), x => x);
+const consRows = CONSTRUCT_IDS.filter(c => n(tpNeedFreq, c) || n(fpFreq, c) || isNewId(c))
+  .sort((a, b) => n(tpFreq, b) - n(tpFreq, a) || n(tpNeedFreq, b) - n(tpNeedFreq, a) || CONSTRUCT_IDS.indexOf(a) - CONSTRUCT_IDS.indexOf(b));
+w(table(['#', 'construct', 'registry', 'third-party items (with refused needs)', 'share of third-party', 'only blocker', 'platforms (with refused needs)', 'first-party items', 'original corpus items', 'ROADMAP coverage', 'Phase 1 IR today'],
+  consRows.map((c, i) => {
+    const def = CONSTRUCTS.find(x => x.id === c);
+    const plats = new Set(tp.filter(it => needsOf(it).includes(c)).map(it => it.source.platform)).size;
+    return [i + 1, `\`${c}\``, isNewId(c) ? 'agentic' : 'original', `${n(tpFreq, c)} (${n(tpNeedFreq, c)})`, pct(n(tpFreq, c), NT), n(tpSole, c), plats, n(fpFreq, c), n(origFreq, c), cell(def.roadmap), cell(def.today)];
+  })), '');
+
+function greedyOrder(pool) {
+  const remaining = new Set(pool.filter(i => verdictClass(i) === 'via-extension'));
+  const added = new Set(); const steps = []; let cum = cnt(pool, i => verdictClass(i) === 'native');
+  while (remaining.size) {
+    let best = null, bestGain = -1, bestFreq = -1;
+    for (const c of CONSTRUCT_IDS) {
+      if (added.has(c)) continue;
+      let gain = 0, freq = 0;
+      for (const it of remaining) { const t = constructsOf(it); if (!t.includes(c)) continue; freq++; if (t.every(x => x === c || added.has(x))) gain++; }
+      if (gain > bestGain || (gain === bestGain && freq > bestFreq)) { best = c; bestGain = gain; bestFreq = freq; }
+    }
+    if (!best || bestFreq === 0) break;
+    added.add(best);
+    const newly = [...remaining].filter(it => constructsOf(it).every(x => added.has(x)));
+    for (const it of newly) remaining.delete(it);
+    cum += newly.length;
+    steps.push({ c: best, newly, cum });
+  }
+  return steps;
+}
+w('### 10.5 Greedy extension order', '');
+w(`Same rule as section 4 (each step adds the construct that makes the most additional items expressible; ties go to the more frequent construct, then registry ` +
+  `order), over all ${CONSTRUCT_IDS.length} registry constructs. Refused and unsupported items never become expressible.`, '');
+w('Agentic third-party slice:', '');
+w(table(['step', 'add', 'registry', 'newly expressible', 'cumulative expressible'], greedyOrder(tp).map((s, i) =>
+  [i + 1, `\`${s.c}\``, isNewId(s.c) ? 'agentic' : 'original', s.newly.length, `${s.cum} (${pct(s.cum, NT)})`])), '');
+w(`Combined, the original corpus and the agentic third-party slice (${combined.length} items; first-party excluded):`, '');
+let cumO = cnt(items, i => verdictClass(i) === 'native'), cumA = cnt(tp, i => verdictClass(i) === 'native');
+w(`Start: ${cumO + cumA} declared native (${pct(cumO + cumA, combined.length)}): original ${cumO}, agentic ${cumA}.`, '');
+w(table(['step', 'add', 'registry', 'newly expressible: original', 'newly expressible: agentic', 'cumulative: original', 'cumulative: agentic', 'cumulative: combined'],
+  greedyOrder(combined).map((s, i) => {
+    const o = s.newly.filter(it => isOrigCluster(it._cluster)).length, a = s.newly.length - o;
+    cumO += o; cumA += a;
+    return [i + 1, `\`${s.c}\``, isNewId(s.c) ? 'agentic' : 'original', o, a, `${cumO} (${pct(cumO, N)})`, `${cumA} (${pct(cumA, NT)})`, `${s.cum} (${pct(s.cum, combined.length)})`];
+  })), '');
+
+w('### 10.6 Design refusals', '');
+const refused = tp.filter(i => verdictClass(i) === 'refused-by-design');
+w(table(['refusal', 'items', 'platforms', 'needs if lifted (most frequent)', 'needing no further construct'], REFUSALS.map(r => {
+  const its = refused.filter(i => refusalsOf(i).includes(r));
+  return [`\`unsupported:by-design-${r}\``, its.length, fmtCounts(count(its, i => i.source.platform)),
+    sortedEntries(count(its.flatMap(needsOf), x => x)).slice(0, 6).map(([k, v]) => `${k} ${v}`).join(', ') || '-', its.filter(i => !needsOf(i).length).length];
+})), '');
+w(`${refused.length} third-party items (${pct(refused.length, NT)}) are refused; no first-party item is. Rule GC refuses a shared transcript whose next speaker a model ` +
+  'picks; a chat whose speaker order code fixes stays native. Rule HO refuses a model-initiated transfer to an agent that continues the same conversation; ' +
+  'transfers chosen by code, typed handoffs without the transcript and transfers into task pipelines are routing. The refusals rest on proposed text ' +
+  '(ROADMAP-AMENDMENTS); if the owner lifts one, its items move to via-extension with their `Needs:` list plus a history-fork or shared-transcript construct.', '');
+
+w('### 10.7 Native patterns recorded in the notes', '');
+const PATTERNS = ['llm-router', 'supervisor-delegation', 'code-selected-chat', 'task-pipeline transfer', 'typed-handoff'];
+const patternText = it => /Native patterns, no token: (.*?)(?: The record below predates|$)/s.exec(fullNotes(it))?.[1] ?? '';
+w('Topologies that need no IR mechanism of their own are not verdict tokens; each item names them after "Native patterns, no token:" with source spans ' +
+  '(AGENTIC-CONVENTIONS.md §4), so they stay countable. Lowerings: `llm-router` is an `agent` with `role:"route"` and an enum output followed by `when` guards; ' +
+  '`supervisor-delegation` is a capped route loop or `agent-tool-loop`+`agent-as-tool`; a code-selected chat is a capped loop over `when`-guarded agents with ' +
+  'the transcript as an explicit input; typed and task-pipeline transfers are routing.', '');
+w(table(['pattern', 'third-party items', 'platforms', 'of them refused by design', 'first-party items'], PATTERNS.map(p => {
+  const its = tp.filter(i => patternText(i).includes(p));
+  return [`\`${p}\``, its.length, new Set(its.map(i => i.source.platform)).size, its.filter(i => verdictClass(i) === 'refused-by-design').length, cnt(fp, i => patternText(i).includes(p))];
+})), '');
+w(`Items naming at least one native pattern: third-party ${cnt(tp, i => patternText(i))}, first-party ${cnt(fp, i => patternText(i))}.`, '');
+
+w('### 10.8 First-party slice (not pooled)', '');
+w(`${NFP} \`claude-code-workflows\` items: dynamic workflow scripts written by this project's own orchestrating agent during earlier sessions, read from local ` +
+  'copies (`local:` URLs, sha256 revisions). They show what this project\'s agent builds for itself, which is not evidence of what third-party workflows need, ' +
+  'and models of the same family wrote, extracted and verified them. Licence unknown (no licence file), so only URL, a written description, the derived graph and ' +
+  'features are kept.', '');
+w(table(['item', 'nodes / edges', 'verdict', 'description (one line)'], fp.map(it =>
+  [`\`${idc(cut(it.id.replace(/^claude-code-workflows:claude-session\/workflows\/scripts\//, ''), 60))}\``, `${it.features.nodeCount} / ${it.features.edgeCount}`,
+    verdictKind(it) === 'native' ? 'native' : cell(constructsOf(it).join(', ')), esc(oneLine(it))])), '');
+
+w('### 10.9 Limits', '',
+  '- The verdicts are static model readings, checked by a second model pass and re-labelled by a third; none was compiled into Foundry IR or executed. ' +
+  'Agreement between passes is not ground truth.',
+  '- The items are framework examples, tutorials and templates chosen to cover each framework\'s orchestration features, not a random sample of deployed ' +
+  'agent workflows. Construct frequencies describe this purposive sample.',
+  '- The convention fixes four contested calls that change counts (AGENTIC-CONVENTIONS.md §9): the refusals rest on unmerged ROADMAP text; three ADK transfers ' +
+  'into task pipelines are routing, not refusals; code-selected shared-transcript chats are native; chat history counts as `cross-run-state` and scripted ' +
+  'sessions as `chat-session`.',
+  `- The registry groups all twelve agentic constructs under \`agentic\`; AGENTIC-CONVENTIONS.md §3.3 proposed state, async and dynamism groups for six of them.`,
+  '- `state-reducer` has no item in this slice; it stays in the registry for the planned board mechanism.', '');
 fs.writeFileSync(path.join(ROOT, 'COVERAGE.md'), W.join('\n'));
 
 console.log(JSON.stringify({ items: N, redistributable: nRedis, verdicts: Object.fromEntries(V), pilot: pilot.length, candidates: candidates.length,
-  sampleItems: sample.length, sampleBytes: sample.length ? fs.statSync(path.join(ROOT, 'items-sample.jsonl')).size : 0, tiers: Object.fromEntries(tierCount) }));
+  sampleItems: sample.length, sampleBytes: sample.length ? fs.statSync(path.join(ROOT, 'items-sample.jsonl')).size : 0, tiers: Object.fromEntries(tierCount),
+  agentic: { items: NA, thirdParty: NT, firstParty: NFP, thirdPartyVerdicts: Object.fromEntries(cls(tp)), firstPartyVerdicts: Object.fromEntries(cls(fp)) },
+  coverage: Object.fromEntries([['original', items], ['agenticThirdParty', tp], ['combined', combined], ['firstParty', fp]].map(([k, its]) =>
+    [k, { items: its.length, declaredNative: cnt(its, i => verdictClass(i) === 'native'), with19: cnt(its, with19), withAll: cnt(its, withAll),
+      refusedByDesign: cnt(its, i => verdictClass(i) === 'refused-by-design'), unsupported: cnt(its, i => verdictClass(i) === 'unsupported') }])) }));

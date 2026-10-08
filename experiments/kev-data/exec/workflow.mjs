@@ -13,7 +13,7 @@ export const STAGE_LABEL = Object.freeze({
 const PAYLOAD_STAGES = new Set(['load', 'ident']);
 
 export const R = (path) => ({ $ref: path });
-const task = (id, needs, description, tool, args, extra = {}) => ({ id, kind: 'task', needs, description, tool, args, timeoutMs: 3000, retry: { maxAttempts: 1, backoffMs: 0 }, ...extra });
+const task = (id, needs, description, tool, args, extra = {}) => ({ id, kind: 'task', needs, description, tool, args, timeoutMs: 15000, retry: { maxAttempts: 1, backoffMs: 0 }, ...extra });
 
 // One upstream stage -> its node. `P` is the payload reference ('input' or 'nodes.<id>').
 export function stageNode(stage, id, needs, P, plan) {

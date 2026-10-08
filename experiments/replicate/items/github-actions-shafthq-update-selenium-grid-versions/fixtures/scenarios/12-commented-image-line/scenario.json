@@ -1,0 +1,111 @@
+{
+ "kind": "commented-image-line",
+ "seed": 12,
+ "split": "dev",
+ "difficulty": 5,
+ "trigger": "schedule",
+ "composePath": "src/main/resources/docker-compose/selenium4.yml",
+ "fetch": {
+  "status": 200,
+  "bodyFile": "recorded/reference.yml"
+ },
+ "openPullRequests": [],
+ "truth": {
+  "original": {
+   "status": "updated",
+   "versions": {
+    "current": {
+     "chrome": "4.35.0-20250909",
+     "edge": "4.35.0-20250909",
+     "firefox": "4.35.0-20250909",
+     "hub": "4.35.0-20250909"
+    },
+    "latest": {
+     "chrome": "4.2.0-20210201",
+     "edge": "4.37.0-20251102",
+     "firefox": "4.37.0-20251022",
+     "hub": "4.4.0-20210613"
+    }
+   },
+   "changed": [
+    {
+     "key": "chrome",
+     "from": "4.35.0-20250909",
+     "to": "4.2.0-20210201"
+    },
+    {
+     "key": "edge",
+     "from": "4.35.0-20250909",
+     "to": "4.37.0-20251102"
+    },
+    {
+     "key": "firefox",
+     "from": "4.35.0-20250909",
+     "to": "4.37.0-20251022"
+    },
+    {
+     "key": "hub",
+     "from": "4.35.0-20250909",
+     "to": "4.4.0-20210613"
+    }
+   ],
+   "prAction": "created",
+   "prNumber": null,
+   "message": null,
+   "composeAfter": "expected-original.yml"
+  },
+  "intent": {
+   "status": "updated",
+   "versions": {
+    "current": {
+     "chrome": "4.35.0-20250909",
+     "edge": "4.35.0-20250909",
+     "firefox": "4.35.0-20250909",
+     "hub": "4.35.0-20250909"
+    },
+    "latest": {
+     "chrome": "4.38.0-20251010",
+     "edge": "4.37.0-20251102",
+     "firefox": "4.37.0-20251022",
+     "hub": "4.38.0-20250927"
+    }
+   },
+   "changed": [
+    {
+     "key": "chrome",
+     "from": "4.35.0-20250909",
+     "to": "4.38.0-20251010"
+    },
+    {
+     "key": "edge",
+     "from": "4.35.0-20250909",
+     "to": "4.37.0-20251102"
+    },
+    {
+     "key": "firefox",
+     "from": "4.35.0-20250909",
+     "to": "4.37.0-20251022"
+    },
+    {
+     "key": "hub",
+     "from": "4.35.0-20250909",
+     "to": "4.38.0-20250927"
+    }
+   ],
+   "prAction": "created",
+   "prNumber": null,
+   "message": null,
+   "composeAfter": "expected-intent.yml"
+  }
+ },
+ "meta": {
+  "commented": [
+   "hub",
+   "chrome"
+  ],
+  "old": {
+   "hub": "4.4.0-20210613",
+   "chrome": "4.2.0-20210201"
+  }
+ }
+}

@@ -245,21 +245,20 @@ export function buildX1Gameqa(task, slots = {}) {
 }
 export const BUILD_INFO = (task) => {
   const log = String(task?.inputs?.changelog ?? '');
-  const title = /^# (.+?) — release notes/m.exec(log);
+  const title = /^# (.+?) (\d+\.\d+\.\d+) \(build (\d+)\) — release notes/m.exec(log);
   const fixed = [];
   let inFixed = false;
   for (const line of log.split('\n')) {
     if (/^## /.test(line)) inFixed = /^## Fixed/.test(line);
     else if (inFixed && /^- /.test(line)) fixed.push(line.slice(2));
   }
-  return { build: title ? title[1] : null, fixed };
+  return { build: title ? `${title[2]} (build ${title[3]})` : null, fixed };
 };
 export function buildX6(task, slots = {}) {
   const reports = reportsOf(task), r = reportById(task, needStr(slots.report, 'slots.report'));
   const earlier = reports.slice(0, reports.indexOf(r)).slice(-8).map(x => x.title);
   const info = BUILD_INFO(task);
-  const cur = r.build ? null : null;
-  return { report: reportText(r, { replies: false }), known_reports: earlier, build_info: `Current build ${info.build}. Reported against build ${r.build}. Fixed since earlier builds: ${info.fixed.join('; ') || 'nothing listed'}.${cur ?? ''}` };
+  return { report: reportText(r, { replies: false }), known_reports: earlier, build_info: `Current build ${info.build}. This report was filed against build ${r.build}. Fixed since earlier builds: ${info.fixed.length ? info.fixed.join(' ') : 'nothing listed'}` };
 }
 
 // ---- Q6: the specification excerpt chosen by topic ----------------------------------------------------------------
@@ -291,31 +290,43 @@ export function specExcerpt(task, numbers, { errata = true } = {}) {
   }
   return parts.join('\n');
 }
+// the secret-passage sentences of one floor's notes (the part of the floor notes the walls rule refers to)
+export function floorSecrets(task, floorName) {
+  const f = (task?.inputs?.floor_notes ?? []).find(x => x.name === floorName);
+  if (!f) throw fail('KIT_SLOT', `the floor notes have no floor ${JSON.stringify(floorName)}`);
+  const sent = String(f.notes).match(/(?:Secret passage: [^.]*\.|Every other wall stone on this floor is solid\.|This floor has no secret passage: every wall stone on it is solid\.)/g) ?? [];
+  return sent.join(' ');
+}
 export function buildQ6(task, slots = {}) {
   const nums = Array.isArray(slots.sections) ? slots.sections : [];
   if (!nums.length) throw fail('KIT_SLOT', 'slots.sections must list the specification sections of the topic');
-  return { spec_excerpt: specExcerpt(task, nums), behaviour: needStr(slots.behaviour, 'slots.behaviour') };
+  const floor = slots.floor ? `\nFloor notes (${slots.floor}): ${floorSecrets(task, slots.floor)}` : '';
+  return { spec_excerpt: specExcerpt(task, nums) + floor, behaviour: needStr(slots.behaviour, 'slots.behaviour') };
 }
 
 // ---- Q5 and X2: findings -----------------------------------------------------------------------------------------
 // A repro as a run-length summary: "S x6, E x4, USE:potion".
-export function summariseRepro(actions) {
+export function summariseRepro(actions, { tail = 12 } = {}) {
   if (!Array.isArray(actions) || !actions.length || !actions.every(a => typeof a === 'string')) throw fail('KIT_SLOT', 'slots.actions must be a non-empty list of actions');
   const out = [];
   for (const a of actions) {
     const last = out.at(-1);
     if (last && last.a === a) last.n++; else out.push({ a, n: 1 });
   }
-  return out.map(x => (x.n > 1 ? `${x.a} x${x.n}` : x.a)).join(', ');
+  const shown = out.slice(-tail), hidden = out.slice(0, -tail).reduce((n, x) => n + x.n, 0);
+  return `${hidden ? `${hidden} earlier actions, then ` : ''}${shown.map(x => (x.n > 1 ? `${x.a} x${x.n}` : x.a)).join(', ')}`;
 }
 export function buildQ5(task, slots = {}) {
-  const o = slots.observed;
-  if (!o || typeof o.events !== 'string' || typeof o.hud !== 'string') throw fail('KIT_SLOT', 'slots.observed needs events and hud (the replay observation)');
-  const effect = typeof slots.effect === 'string' ? slots.effect : needStr(slots.observed_effect, 'slots.observed_effect');
-  return { repro_summary: `${slots.actions.length} actions from a fresh start: ${summariseRepro(slots.actions)}`, observed_effect: effect };
+  return { repro_summary: `${slots.actions?.length} actions from a fresh start: ${summariseRepro(slots.actions)}`, observed_effect: needStr(slots.observed_effect, 'slots.observed_effect') };
+}
+// the legend sentence of the design document: the glyphs and names the references are about (context of X2)
+export function legendContext(task) {
+  const m = /^Legend: ([^\n]+)$/m.exec(String(task?.inputs?.design_doc ?? '').replace(/\n\n/g, '\n'));
+  if (!m) throw fail('KIT_TASK', 'the design document has no legend');
+  return `Legend: ${m[1]}`;
 }
 export function buildX2(task, slots = {}) {
-  return { a: needStr(slots.a, 'slots.a'), b: needStr(slots.b, 'slots.b'), context: needStr(slots.context, 'slots.context') };
+  return { a: needStr(slots.a, 'slots.a'), b: needStr(slots.b, 'slots.b'), context: legendContext(task) };
 }
 
 // ================================================================================================================

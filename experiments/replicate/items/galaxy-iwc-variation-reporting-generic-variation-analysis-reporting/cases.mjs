@@ -98,6 +98,35 @@ const infoText = (src, o, eff) => {
 
 const BASES = ['A', 'C', 'G', 'T'];
 
+// SnpEff writes the effects of one variant sorted by putative impact, highest first (documented for ANN; observed for the classic EFF
+// format in all 321 multi-effect records of the seven SnpEff-annotated IWC SARS-CoV-2 test VCFs under /opt/corpus, none of which mixes
+// impacts). Generated multi-effect lists follow that order (stable inside one impact), so "keep the first effect" (what the .ga does)
+// and "keep the highest-impact effect" (what its step label says) agree, as they do on real SnpEff output. Family v1 used random order.
+const IMPACT_RANK = { HIGH: 0, MODERATE: 1, LOW: 2, MODIFIER: 3 };
+const impactOf = e => IMPACT_RANK[e.slice(e.indexOf('(') + 1).split('|')[0]] ?? 4;
+export const snpEffOrder = list => list.map((e, i) => [e, i]).sort((a, b) => impactOf(a[0]) - impactOf(b[0]) || a[1] - b[1]).map(x => x[0]);
+const funclassOf = e => e.slice(e.indexOf('(') + 1).split('|')[1] ?? '';
+
+// Probes added by the adversarial verification (family version 2), drawn from their own random stream `r2` so the other records of a
+// case keep their v1 values:
+//  * zero-dp       : a record with DP=0. Only step 4 ("DP >= 1") removes it; a solution that skips the prefilter keeps a row for it.
+//  * multi-allelic : two SNVs at one POS, both clearly passing, with different FUNCLASS (the shape of the shipped VCF at POS 32029,
+//                    135598 and 177899, which never pass there). by_variant_report groups by POS:REF>ALT, combined_variant_report
+//                    computes its statistics per POS; a solution that conflates the two now fails every derived case, not one in three.
+function probes(r2, effects, used, nSamples) {
+  const out = [];
+  const freePos = () => { let pos; do { pos = r2.int(1000, 195000); } while (used.has(pos)); used.add(pos); return pos; };
+  const targets = () => r2.sample([...Array(nSamples).keys()], Math.min(nSamples, r2.int(1, 2)));
+  { const ref = r2.pick(BASES), alt = r2.pick(BASES.filter(b => b !== ref));
+    out.push({ tag: 'zero-dp', targets: targets(), recs: [{ pos: freePos(), ref, alt, o: { dp: 0, af: (0).toFixed(6), sb: 0, dp4: [0, 0, 0, 0] }, eff: null }] }); }
+  { const pos = freePos(), ref = r2.pick(BASES), alts = r2.sample(BASES.filter(b => b !== ref), 2), dp = r2.pick([100, 120, 150, 200]);
+    const e1 = r2.pick(effects), others = effects.filter(e => funclassOf(e) !== funclassOf(e1));
+    out.push({ tag: 'multi-allelic', targets: targets(), recs: [
+      { pos, ref, alt: alts[0], o: mk(dp, 0.5, dp / 2), eff: e1 },
+      { pos, ref, alt: alts[1], o: mk(dp, 0.3, Math.round(0.3 * dp)), eff: others.length ? r2.pick(others) : null }] }); }
+  return out;
+}
+
 // Observation with DP4 summing to dp, alt reads `alt`, caller AF `af` (the filter expression treats AF and DP4 independently).
 const mk = (dp, af, alt) => {
   const ref = dp - alt, refF = Math.floor(ref / 2), altF = Math.floor(alt / 2);
@@ -136,8 +165,8 @@ const PARAM_SETS = {
 };
 const SIZES = { universe: [18, 40, 90, 160, 280] }; // variants per case by difficulty 1..5 (level 3 is the plan's setting)
 
-// opts: { universe, nSamples, params, preflagged, multiEffect }
-function build(r, opts) {
+// opts: { universe, nSamples, params, preflagged, multiEffect }; r2: the probes' own random stream (v2)
+function build(r, opts, r2) {
   const { recs, effects } = pool();
   const defaults = SHIPPED_PARAMS, defaultLabel = filterLabel(defaults), p = opts.params;
   const universe = r.sample(recs, opts.universe).sort((a, b) => a.pos - b.pos);
@@ -149,7 +178,7 @@ function build(r, opts) {
   const effOf = new Map();
   for (const v of universe) {
     const own = v.info.find(([n]) => n === 'EFF')?.[1];
-    if (opts.multiEffect && r.chance(0.22)) effOf.set(v, [own ?? r.pick(effects), ...r.sample(effects, r.int(1, 2))].join(','));
+    if (opts.multiEffect && r.chance(0.22)) effOf.set(v, snpEffOrder([own ?? r.pick(effects), ...r.sample(effects, r.int(1, 2))]).join(','));
     else effOf.set(v, own ?? null);
   }
   const perSample = sampleIds.map(() => []);
@@ -169,16 +198,20 @@ function build(r, opts) {
     for (const si of targets) perSample[si].push({ pos, chrom: 'KP849471', ref: e.ref, alt: e.alt, qual: '100.0', o: e.o, src: { info: [['DP', ''], ['AF', ''], ['SB', ''], ['DP4', '']] }, eff: null });
     tags.push(e.tag);
   }
+  for (const pr of probes(r2, effects, used, sampleIds.length)) {
+    for (const si of pr.targets) for (const x of pr.recs) perSample[si].push({ ...x, chrom: 'KP849471', qual: '100.0', filter0: 'PASS', probe: true, src: { info: [['DP', ''], ['AF', ''], ['SB', ''], ['DP4', '']] } });
+    tags.push(pr.tag);
+  }
   const samples = sampleIds.map((id, si) => {
     const recsS = perSample[si].sort((a, b) => a.pos - b.pos);
     const body = recsS.map(x => {
-      let filter = r.chance(0.05) ? 'sb_fdr' : 'PASS';
+      let filter = x.filter0 ?? (r.chance(0.05) ? 'sb_fdr' : 'PASS'); // probes take no draw from r
       const probe = { info: new Map([['DP', String(x.o.dp)], ['AF', x.o.af], ['DP4', x.o.dp4.join(',')]]) };
       if (opts.preflagged && failsThresholds(probe, defaults)) filter = filter === 'PASS' ? defaultLabel : `${filter};${defaultLabel}`;
       return [x.chrom, x.pos, '.', x.ref, x.alt, x.qual, filter, infoText(x.src, x.o, x.eff)].join('\t');
     });
     const header = [...HEADER_BASE, ...(opts.preflagged ? [PREFLAG_HEADER] : []), COLS];
-    return { id, vcf: [...header, ...body].join('\n') + '\n', n: recsS.length };
+    return { id, vcf: [...header, ...body].join('\n') + '\n', n: recsS.filter(x => !x.probe).length };
   });
   return { samples, tags };
 }
@@ -187,8 +220,9 @@ function build(r, opts) {
 function make(seed, split, difficulty, label, index, choose) {
   for (let attempt = 0; attempt < 40; attempt++) {
     const r = rng('rbench', 'galaxy-variation-reporting', seed, split, difficulty, label, index, attempt);
+    const r2 = rng('rbench', 'galaxy-variation-reporting', 'probes-v2', seed, split, difficulty, label, index, attempt);
     const opts = choose(r);
-    const { samples, tags } = build(r, opts);
+    const { samples, tags } = build(r, opts, r2);
     if (samples.some(s => s.n < 8)) continue;
     const inputs = { params: opts.params, samples: samples.map(({ id, vcf }) => ({ id, vcf })) };
     const passRows = runJob(inputs).combined_variant_report.split('\n').length - 2;
@@ -200,8 +234,14 @@ function make(seed, split, difficulty, label, index, choose) {
   throw new Error(`galaxy-variation-reporting: no valid ${label} case for index ${index}`);
 }
 
+// v2: the AF threshold of the 15 shifted cases is stratified (each value in 3 cases) instead of drawn, so a fault that only shows for one
+// AF value (e.g. the label printed as min_af_0.10 instead of Python's min_af_0.1) fails at least 3 derived cases and cannot hide inside the
+// 18-of-20 tolerance. The draw is still made, so the rest of the case's random stream is unchanged.
+const AF_STRATA = [0.02, 0.1, 0.2, 0.25, 0.05];
 const chooseDerived = (index, difficulty) => r => {
-  const params = index % 4 === 0 ? { ...SHIPPED_PARAMS } : { af: r.pick(PARAM_SETS.af), dp: r.pick(PARAM_SETS.dp), dp_alt: r.pick(PARAM_SETS.dp_alt) };
+  let params;
+  if (index % 4 === 0) params = { ...SHIPPED_PARAMS };
+  else { r.pick(PARAM_SETS.af); params = { af: AF_STRATA[(index - 1 - Math.floor(index / 4)) % AF_STRATA.length], dp: r.pick(PARAM_SETS.dp), dp_alt: r.pick(PARAM_SETS.dp_alt) }; }
   if (index % 4 !== 0 && params.af === 0.05 && params.dp === 1 && params.dp_alt === 10) params.dp = 5; // "shifted": never the defaults
   return { universe: SIZES.universe[difficulty - 1] + r.int(-3, 8), nSamples: 2 + (index % 4), params,
     preflagged: index % 2 === 0 || index % 3 === 0, multiEffect: index % 2 === 1 };

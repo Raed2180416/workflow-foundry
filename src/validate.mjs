@@ -5,6 +5,7 @@ import { analyzeDataflow, bindOutput, OUTPUT_KEY } from './dataflow.mjs';
 import { portableSchemaViolations, quarantinedSchemaViolations } from './schema-subset.mjs';
 import { inheritedLabel, joinLabels } from './context.mjs';
 import { classIndex, modelById, modelsForClass } from './models/policy.mjs';
+import { lintWorkflow } from './lint.mjs';
 
 export { bindOutput, OUTPUT_KEY };
 
@@ -143,7 +144,9 @@ function effectTaint(workflow, registry, add) {
   walk(workflow, { ...(workflow.labels ?? {}) }, 'workflow');
 }
 
-export function validateWorkflow(workflow, { registry, maxNodes = 2000, modelPolicy = null } = {}) {
+// strict: also run the construction lint (lint.mjs). Its error findings make the workflow invalid, its warnings are
+// appended to `warnings`, and the structured report is returned as `lint`. Default validation is unchanged.
+export function validateWorkflow(workflow, { registry, maxNodes = 2000, modelPolicy = null, strict = false } = {}) {
   const errors = [], warnings = [];
   try { checkData(workflow); } catch (e) { return { valid: false, errors: [{ code: e.code, message: e.message }], warnings }; }
   if (!shape(workflow)) return { valid: false, errors: shape.errors.map(e => ({ code: 'SCHEMA', path: e.instancePath, message: `${e.message} ${JSON.stringify(e.params)}` })), warnings };
@@ -161,6 +164,7 @@ export function validateWorkflow(workflow, { registry, maxNodes = 2000, modelPol
     return { entry, first: entry ?? modelsForClass(policy, base)[0], range: policy.classOrder.slice(classIndex(policy, base), classIndex(policy, top) + 1) };
   };
   if (/^[0-9a-f]{64}$/.test(workflow.id)) add('AMBIGUOUS_WORKFLOW_ID', 'Workflow ids cannot use the immutable SHA-256 address namespace', '/id');
+  if (policy && workflow.defaultClass !== undefined) try { classIndex(policy, workflow.defaultClass); } catch (e) { add(e.code ?? 'MODEL_POLICY', e.message, '/defaultClass'); }
   const walk = (flow, prefix, depth = 0, locals = new Set()) => {
     if (depth > 6) { add('NESTING_LIMIT', 'Nested flow depth exceeds 6', prefix); return; }
     const byId = new Map();
@@ -275,7 +279,15 @@ export function validateWorkflow(workflow, { registry, maxNodes = 2000, modelPol
     try { effectTaint(workflow, registry, add); } catch (e) { add(e.code ?? 'VALIDATION_ERROR', e.message, 'workflow'); }
   }
   if (total > workflow.budget.maxSteps) warnings.push({ code: 'SMALL_BUDGET', message: 'The declared step budget is smaller than the static node count' });
-  return { valid: errors.length === 0, errors, warnings, nodeCount: total, ...(errors.length ? {} : { hash: digest(workflow) }) };
+  let lint;
+  if (strict) {
+    lint = lintWorkflow(workflow, { modelPolicy: policy });
+    // The strict ERROR_COLLECTION rule replaces the advisory warning of the same code: it is an error when the failed count is
+    // not gated and silent when it is, so keeping both would report one problem twice under one code.
+    for (let i = warnings.length - 1; i >= 0; i--) if (warnings[i].code === 'ERROR_COLLECTION') warnings.splice(i, 1);
+    for (const { severity, ...finding } of lint.findings) (severity === 'error' ? errors : warnings).push({ ...finding, severity });
+  }
+  return { valid: errors.length === 0, errors, warnings, nodeCount: total, ...(strict ? { strict: true, lint } : {}), ...(errors.length ? {} : { hash: digest(workflow) }) };
 }
 
 export function requireWorkflow(workflow, options) {

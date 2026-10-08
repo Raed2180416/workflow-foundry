@@ -67,17 +67,18 @@ Your solution handles each event by calling the API (inputs.api) and then finish
 Limits: at most ${CONFIG.limits.runsPerQuiescence} events are handled per originating change (a step with several changes gets that many each) before the harness declares a loop; at most ${CONFIG.limits.callsPerRun} calls per event.
 The result is judged by what both systems contain after every step and by the trace of your calls. Nothing else counts.`;
 
-const T1 = `TASK T1 (translate). Below is the original n8n workflow "Sync contacts two-way between Zoho CRM and KlickTipp" (file original/workflow.json,
-read from the corpus at task time). Produce an equivalent integration: for every event the same job gets done in the same way.
+const T1 = `TASK T1 (translate). The original n8n workflow "Sync contacts two-way between Zoho CRM and KlickTipp" is in the file original/workflow.json
+(provided with this task, read from the corpus at task time). Produce an equivalent integration: for every event the same job gets done in the same way.
 The definition contains the author's own account ids (list ids, tag ids, the KlickTipp custom field key, the integration user's name). In this
 environment they correspond, by role, to inputs.config: the two lists (single and double opt-in), the "created" and "created via form" tags, the two segment tags,
 the Zoho-id field, and apiUserName. Use the environment's values.`;
 const T2 = `TASK T2 (rebuild from intent). You do not have the original workflow. Build an integration that does the job described in inputs.description,
 using inputs.fieldMap, inputs.config, inputs.api and the worked examples in inputs.examples.`;
-const T3 = `TASK T3 (improve). Below is the original n8n workflow (original/workflow.json) and the description of its job. Build an integration that does the same job
-but cheaper and more reliable than the original: it must stay within the cost target (budget.externalCalls external calls over the scored scenarios, which is what the original
-workflow uses on exactly these scenarios) and it is also judged on reliability properties of the sync that the original may not have. Reproducing the original's behaviour
-exactly will not be enough. Work out what can go wrong with a two-way sync of this kind and fix it without changing what the job is.`;
+const T3 = `TASK T3 (improve). The original n8n workflow is in the file original/workflow.json (provided with this task) and its job is described in inputs.description.
+Build an integration that does the same job but cheaper and more reliable than the original: it must stay within the cost target (inputs.costTarget.externalCalls
+external calls over the core scenarios, which is what the original workflow uses on exactly those scenarios; inputs.costTarget says what counts) and it is also judged
+on reliability properties of the sync that the original may not have. Reproducing the original's behaviour exactly will not be enough. Work out what can go wrong with
+a two-way sync of this kind and fix it without changing what the job is.`;
 
 export const TASK_TEXT = { T1, T2, T3 };
 export const SKELETON = `// handler.mjs: your integration. Called once per event.

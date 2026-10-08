@@ -7,16 +7,22 @@ and their licence allows redistribution of a normalized graph. Corpus text is un
 ```jsonc
 {
   "schema": "foundry-corpus-item/1",
-  "id": "<platform>:<stable id>",
+  "id": "<platform>:<stable id>",       // no whitespace; a path inside it is percent-encoded like source.url
   "source": {
-    "platform": "n8n | zapier | github-actions | airflow | dagster | prefect | argo | nf-core | galaxy | cwl | snakemake | comfyui | home-assistant | apple-shortcuts | dify | node-red | ...",
-    "url": "https://…",                 // canonical location of this item
+    "platform": "n8n | zapier | github-actions | airflow | dagster | prefect | argo | nf-core | galaxy | cwl | snakemake | comfyui | home-assistant | apple-shortcuts | dify | node-red | langgraph | crewai | ... | claude-code-workflows",
+    "url": "https://…",                 // canonical location of this item; first-party platforms only: "local:<relative path>"
     "revision": "git sha / version / template id+updatedAt",
     "retrievedAt": "2026-10-06",
     "license": "SPDX id or 'unknown' or 'ToS:<url>'",
     "licenseEvidence": "where the licence was read (URL or file path in the download)",
     "redistributable": true,              // may the normalized graph be committed? raw?
-    "rawPath": "/opt/corpus/…"            // local raw copy, never committed
+    "rawPath": "/opt/corpus/…",           // local raw copy, never committed
+    "extraction": {                       // optional provenance of a model-read item (the agentic cluster has it on every item)
+      "method": "model-read-source",      // lower-case slug
+      "spans": ["<path>:L<a>-L<b>", "…"], // 1..200 distinct source spans that were read, each <path>:L<a>[-L<b>]
+      "extractor": "<model or tool id>",
+      "verifier": "<the independent verification pass and where it is recorded>"   // optional
+    }
   },
   "title": "…",
   "description": { "text": "…", "provenance": "original | recovered-by-model | written" },
@@ -33,6 +39,27 @@ and their licence allows redistribution of a normalized graph. Corpus text is un
   "oracle": { "kind": "none | mocked-execution | test-profile | output-equivalence", "notes": "…" }
 }
 ```
+
+Conventions beyond the shape above (enforced by `scripts/check-items.mjs` unless noted):
+
+- **Encoding.** `source.url` is percent-encoded (RFC 3986; a space is `%20`) and so is any path inside an `id`
+  (e.g. `crewai:crewAI-examples/notebooks/Coding%20Assistant/…`); `rawPath` is the literal local path. The checker
+  rejects whitespace in both and a `%` in an id that does not start an encoded octet; `merge-items.mjs` encodes unsafe
+  URL characters; `agentic-assemble.mjs` also checks that the percent-decoded path of a pinned GitHub URL is the tail of
+  `rawPath`.
+- **`source.extraction`** is optional; when present it has exactly the keys above (other keys are rejected).
+- **No secrets.** Every string of an item, notes included, is scanned for credential-shaped strings (API keys and tokens,
+  private keys, JWTs) and incoming-webhook URLs whose path is the secret (Slack, Discord, Teams, Telegram bot); a hit
+  invalidates the item. `agentic-assemble.mjs` applies the same scan to the platform ledgers and the harmonisation log.
+- **First-party items.** Platforms listed in `FIRST_PARTY_PLATFORMS` (today `claude-code-workflows`: workflow scripts
+  written by this project's own agent) are the only ones that may use a `local:<relative path>` URL, since their
+  sources have no public location. They are not independent evidence and reports keep them apart from third-party
+  items.
+- **Verdict vocabulary** (`--canonical`): `via-extension` tokens are ids of the construct registry `CONSTRUCTS` in
+  registry order: the 19 original constructs, then 12 agentic ones (`AGENTIC-CONVENTIONS.md` §3). A verdict
+  `unsupported:by-design-<refusal>[+<refusal>]` (refusals `group-chat`, `full-history-handoff`) marks an owner design
+  refusal, which is representable but refused; its notes must hold `Needs: a, b.` (registry ids, registry order) or
+  "No further construct would be needed". Any other `unsupported:<reason>` means not expressible.
 
 IR verdict uses the Foundry IR as of Phase 1 (`schemas/workflow.schema.json` + DESIGN.md in
 `research/core-20261006/`): task, assert, human, map (parallel), loop, wait, agent, code, verify.

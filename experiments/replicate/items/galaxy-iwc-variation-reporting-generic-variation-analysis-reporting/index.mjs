@@ -21,7 +21,7 @@ export const corpusItem = Object.freeze({
 export const family = {
   id: FAMILY_ID,
   domain: 'science / tabular variant reporting (R-bench replicate item)',
-  version: '1',
+  version: '2', // v2 (2026-10-08, adversarial verification): SnpEff-ordered multi-effect lists, zero-dp and multi-allelic probes, stratified AF, honest T2 wording
   kind: 'oneshot',
   description: 'Rebuild a published 35-step Galaxy reporting workflow (SnpSift, datamash, joins, sorts over a sample collection). Tasks T1 translate, T2 rebuild from intent, T3 improve; '
     + 'judged by four tables on the shipped test job and 20 seeded derived multi-sample jobs. Controls: shipped tables / .ga emulator pass, mutated reference and trivial outputs fail.',

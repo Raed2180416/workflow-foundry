@@ -1,0 +1,46 @@
+{
+ "kind": "reference-malformed",
+ "seed": 9,
+ "split": "dev",
+ "difficulty": 5,
+ "trigger": "schedule",
+ "composePath": "src/main/resources/docker-compose/selenium4.yml",
+ "fetch": {
+  "status": 500,
+  "bodyFile": "recorded/reference.yml"
+ },
+ "openPullRequests": [],
+ "truth": {
+  "original": {
+   "status": "failed",
+   "versions": null,
+   "changed": [],
+   "prAction": null,
+   "prNumber": null,
+   "message": null,
+   "composeAfter": null
+  },
+  "intent": {
+   "status": "failed",
+   "versions": null,
+   "changed": [],
+   "prAction": null,
+   "prNumber": null,
+   "message": {
+    "allOf": [
+     [
+      "reference",
+      "docker-compose-v3",
+      "raw.githubusercontent",
+      "fetch",
+      "download"
+     ]
+    ]
+   },
+   "composeAfter": null
+  }
+ },
+ "meta": {
+  "variant": "json"
+ }
+}

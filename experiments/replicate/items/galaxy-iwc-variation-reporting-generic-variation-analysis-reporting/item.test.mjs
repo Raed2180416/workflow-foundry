@@ -10,7 +10,8 @@ import { pyFloat, javaFloat, g14, pyRound6 } from './formats.mjs';
 import { compilePython, compileSnpSift } from './miniexpr.mjs';
 import { runJob, MUTATIONS, parseVcf } from './reference.mjs';
 import { runOriginalWorkflow, loadGa } from './original-emulator.mjs';
-import { batteryInputs, exampleCase, shippedCase, TABLES, N_DERIVED } from './cases.mjs';
+import { batteryInputs, exampleCase, shippedCase, TABLES, N_DERIVED, snpEffOrder } from './cases.mjs';
+import { solve as independentSolve } from './independent-solve.mjs';
 import { battery, expectedOf, judgeCase } from './oracle.mjs';
 import { compareTable, diffLineCount } from './compare.mjs';
 import { snapshot } from './freeze.mjs';
@@ -59,6 +60,19 @@ test('the .ga emulator (original control) reproduces the shipped tables exactly 
     const a = runJob(c.inputs), b = runOriginalWorkflow(c.inputs);
     for (const t of TABLES.slice(1)) assert.equal(a[t], b[t], `${c.caseId} ${t} (seed ${seed})`);
     assert.deepEqual(a.af_recalculated, b.af_recalculated, `${c.caseId} af_recalculated (seed ${seed})`);
+  }
+});
+
+test('reference and .ga emulator agree off the battery too: adjacent duplicate records collapse at step 10 (verification fix)', () => {
+  const s = shippedCase(), lines = s.inputs.samples[0].vcf.split('\n');
+  for (const pos of ['689', '7304']) {
+    const dup = [...lines], i = dup.findIndex(l => l.startsWith(`KP849471\t${pos}\t`));
+    dup.splice(i + 1, 0, dup[i]);
+    const job = { params: s.inputs.params, samples: [{ id: 'filtered variants ERR1', vcf: dup.join('\n') }, { id: 'filtered variants ERR2', vcf: lines.join('\n') }] };
+    const a = runJob(job), b = runOriginalWorkflow(job);
+    for (const t of TABLES.slice(1)) assert.equal(a[t], b[t], `${pos} ${t}`);
+    assert.deepEqual(a.af_recalculated, b.af_recalculated);
+    assert.equal(a.all_variants_all_samples.split('\n').length, 2 * 595 + 2, 'the duplicate adds no all_variants row');
   }
 });
 
@@ -187,6 +201,49 @@ test('kill matrix: some faults are invisible on the shipped job and only the der
   // dp-boundary-inclusive: only the derived boundary records can catch it
   const dpb = item.oracle(t, mutationControl('dp-boundary-inclusive').make(t));
   assert.equal(dpb.pass, false); assert.ok(dpb.details.derived.strict <= 17);
+  // v2 probes: these three passed every v1 seed (or all but a few) and now fail every derived case, while the shipped job cannot see them
+  for (const m of ['no-dp-prefilter', 'variant-key-pos', 'combined-stats-by-variant']) {
+    const v = item.oracle(t, mutationControl(m).make(t));
+    assert.equal(v.details.shipped.strict, true, `${m} is invisible on the shipped job`);
+    assert.equal(v.details.derived.strict, 0, `${m} fails every derived case`);
+  }
+});
+
+test('v2 battery realism and probes: SnpEff-ordered effects, a DP=0 record and a passing multi-allelic site in every derived case, stratified AF', () => {
+  const effLists = text => [...text.matchAll(/EFF=([^;\t\n]+)/g)].map(m => { const o = []; let d = 0, st = 0; const e = m[1]; for (let i = 0; i < e.length; i++) { if (e[i] === '(') d++; else if (e[i] === ')') d--; else if (e[i] === ',' && !d) { o.push(e.slice(st, i)); st = i + 1; } } o.push(e.slice(st)); return o; });
+  for (const seed of [1, 2, 3]) {
+    const derived = batteryInputs({ seed, split: 'test', difficulty: 3 }).slice(1), examples = [0, 1, 2].map(index => exampleCase({ seed, split: 'dev', difficulty: 3, index }));
+    let multi = 0;
+    for (const c of [...derived, ...examples]) for (const s of c.inputs.samples) for (const l of effLists(s.vcf)) { if (l.length > 1) multi++; assert.deepEqual(l, snpEffOrder(l), 'multi-effect list not in SnpEff impact order'); }
+    assert.ok(multi > 20, `seed ${seed}: multi-effect records present (${multi})`);
+    const afCount = {};
+    for (const c of derived) {
+      assert.ok(c.features.engineered.includes('zero-dp') && c.features.engineered.includes('multi-allelic'), c.caseId);
+      assert.ok(c.inputs.samples.some(s => /\tDP=0;AF=0\.000000;SB=0;DP4=0,0,0,0/.test(s.vcf)), `${c.caseId} carries a DP=0 record`);
+      const out = runJob(c.inputs);
+      for (const tbl of Object.values(out.af_recalculated)) assert.ok(!/\t0\t0\.0\t0,0,0,0\t/.test(tbl), 'the DP=0 record never reaches a table');
+      const byPos = new Map();
+      for (const row of out.by_variant_report.split('\n').slice(1).filter(Boolean)) { const pos = row.split('\t')[0]; byPos.set(pos, (byPos.get(pos) ?? 0) + 1); }
+      assert.ok([...byPos.values()].some(n => n >= 2), `${c.caseId}: a multi-allelic site passes, so by_variant_report has two rows at one POS`);
+      if (c.inputs.params.af !== 0.05 || c.inputs.params.dp !== 1 || c.inputs.params.dp_alt !== 10) afCount[c.inputs.params.af] = (afCount[c.inputs.params.af] ?? 0) + 1;
+    }
+    for (const af of [0.02, 0.1, 0.2, 0.25]) assert.ok(afCount[af] >= 3, `seed ${seed}: AF ${af} in ${afCount[af] ?? 0} shifted cases`);
+  }
+});
+
+test('an independently written solution passes, a correct alternative reading passes, and partial or wrong variants of it fail', () => {
+  const t = task(), run = opts => { const cases = {}; for (const c of item.evalInputs(t)) cases[c.caseId] = independentSolve(structuredClone(c.inputs), opts); return item.oracle(t, { cases }); };
+  const faithful = run({});
+  assert.equal(faithful.pass, true); assert.equal(faithful.score, 1);
+  // the .ga keeps the first effect, its step label says "highest impact": on SnpEff-ordered input both are the same job (v1 failed this 10/20)
+  assert.equal(run({ effectPick: 'maxImpact' }).pass, true, 'highest-impact reading');
+  for (const [name, opts] of Object.entries({ labelFixed2: { labelAf: 'fixed2' }, noPrefilter: { prefilter: false }, byVariantByPos: { byVariantKey: 'pos' },
+    posCountsOne: { posCounts: 'one' }, minmaxPassOnly: { minmaxPassOnly: true }, countPassOnly: { countPassOnly: true }, combinedPassOnly: { combinedPassOnly: true },
+    combinedPosFirst: { combinedPosFirst: true } })) {
+    const v = run(opts);
+    assert.equal(v.pass, false, name);
+    if (name !== 'labelFixed2') assert.equal(v.details.shipped.strict, true, `${name}: the shipped job alone cannot see it`);
+  }
 });
 
 test('shipped looseness is real: Galaxy lines_diff 6 accepts a corrupted cell that the strict oracle rejects', () => {

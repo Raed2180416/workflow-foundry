@@ -47,7 +47,7 @@ export class Foundry {
     this.trialRunner = new TrialRunner(this, trialPolicy);
   }
   async close() { await this.trialRunner.close(); await Promise.allSettled([...this.active.values()].map(x => x.promise)); this.store.close(); }
-  validate(workflow) { return validateWorkflow(workflow, { registry: this.registry, modelPolicy: this.modelPolicy }); }
+  validate(workflow, { strict = false } = {}) { return validateWorkflow(workflow, { registry: this.registry, modelPolicy: this.modelPolicy, ...(strict ? { strict: true } : {}) }); }
   save(workflow, expectedHash = null) {
     const validation = requireWorkflow(workflow, { registry: this.registry, modelPolicy: this.modelPolicy });
     return { ...this.store.saveWorkflow(workflow, { expectedHash }), validation, qualification: 'candidate; execution and independent task evaluation required' };

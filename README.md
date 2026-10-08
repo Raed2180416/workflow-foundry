@@ -8,35 +8,217 @@ Everything else is linked from it.
 Foundry lets agents **construct small, bounded, typed workflows for a specific task**
 (micro harnesses), run them durably, adapt them while they run, judge them against
 contracts they cannot game, and keep only the few that earn reuse. Code owns procedure
-and models make narrow judgments, so these workflows let **cheap open-weight models do
-work that today needs a frontier agent**. **ARC and AMP are the harness; Foundry is the
-workflow layer inside it.** The full argument, including what is and isn't novel, is in
-[docs/THESIS.md](docs/THESIS.md).
+and models make narrow judgments, so these workflows let **cheap models (Haiku 5.5 today;
+open-weight models once a GPU route exists) do work that today needs a frontier agent**.
+For many tasks the best workflow is none, one call or one agent. **ARC and AMP are the
+harness; Foundry is the workflow layer inside it.** The full argument, including what is
+and isn't novel, is in [docs/THESIS.md](docs/THESIS.md).
 
 What exists today is a local-first research system:
-- a typed workflow IR and a persistent SQLite runtime;
-- an MCP server, a CLI and a visual web UI;
+- a typed workflow IR (9 node kinds, including narrow `agent` judgments, sandboxed `code`
+  and `verify`) and a persistent SQLite runtime with parallel `map`, timers and a
+  record/replay journal;
+- an MCP server, a CLI and a visual web UI, plus a read-only run-viewer prototype
+  (`tools/run-view/`);
 - portable skills;
-- a large adversarial test suite.
+- a large adversarial test suite, and task beds with independent oracles.
 
-It has no model node, no async wake-ups and no reuse layer yet. A valid schema, a
-successful model response and a verified task outcome are three different results.
+It has no call-by-hash, no need router, no honest acceptance gate and no reuse layer yet.
+A valid schema, a successful model response and a verified task outcome are three
+different results.
 
 ## Status
 
-**Current phase: 1 (core nodes).** Phase 0 finished 2026-10-06 in the cloud session that took
-over from the 2026-10-06 plan rewrite (start HEAD `6e1c06c`). Every phase ends with a
-capability number against a simple baseline and a `research/<topic>-<date>/REPORT.md`.
+*Amended 2026-10-08 (design review): X-1 of
+[ROADMAP-AMENDMENTS.md](research/review-20261007/ROADMAP-AMENDMENTS.md) (status table, review
+links, model-role wording, cost ledger, operational decisions), with P1 and C0 dev at their
+final numbers. Following ROADMAP §6.1, this section takes over the status table of the
+review synthesis. Everything below is development and diagnostic evidence: nothing is a
+sealed or claim-bearing result.*
+
+**Where we are.**
+- **Phase 0** finished 2026-10-06 (start HEAD `6e1c06c`).
+- **Phase 1's exit experiment (P1)** finished 2026-10-08 for model classes M and L; class S
+  (local generative models) is parked.
+- **The C0 dev round of Phase 2** finished 2026-10-08 and is closed at `records` and
+  `codefix`.
+- **Phases now interleave** in a dated six-week plan, 2026-10-08 → 2026-11-24
+  ([synthesis §5](research/review-20261007/00-SYNTHESIS.md); THESIS D16). Its first
+  engineering step is the stage-1 engine bump: the store rewrite first, acceptance that must
+  gate, taint, hash-chain binding, and `foundry cancel` plus stop-all. That work started on
+  2026-10-08 and has not landed. It ends in a named engine freeze, E1, before any new
+  comparative run.
+
+Every phase still ends with a capability number against a simple baseline and a
+`research/<topic>-<date>/REPORT.md`.
+
+**Design review (2026-10-07/08).**
+- [Synthesis, revision 2](research/review-20261007/00-SYNTHESIS.md): where we stand, answers
+  to the owner's questions, the plan (§5), the decisions (§6) and the security gating table
+  (§7). Its P1 figures are interim (08:44, 242 of 288 trials); the final ones are below.
+- [Amendments](research/review-20261007/ROADMAP-AMENDMENTS.md), applied on 2026-10-08 to
+  [THESIS](docs/THESIS.md), [ROADMAP](docs/ROADMAP.md), this README and
+  [AGENTS.md](AGENTS.md), with the synthesis' default decisions (THESIS §10, D8–D16), with
+  two exceptions:
+  - **Usage rule (D14):** a proposal awaiting the owner, not adopted. The owner chose
+    "Full speed".
+  - **Kev (D13):** dataset building continues; laptop training waits for the
+    Kev-vs-Haiku-5.5 comparison; the hosted $450 approval is held.
+- Lane reports:
+  - [01 requirements](research/review-20261007/01-requirements.md);
+  - [02 IR expressiveness](research/review-20261007/02-ir-expressiveness.md);
+  - [03 swarms and frontier](research/review-20261007/03-swarms-frontier.md);
+  - [04 efficiency and Rust](research/review-20261007/04-efficiency-rust.md);
+  - [05 router and constructor](research/review-20261007/05-router-constructor.md);
+  - [06 UI](research/review-20261007/06-ui.md);
+  - [07 context, subagents and audit](research/review-20261007/07-context-subagents-audit.md).
+- Critiques: [alignment](research/review-20261007/00-CRITIQUE-alignment.md) and
+  [rigor](research/review-20261007/00-CRITIQUE-rigor.md).
 
 | Phase | State | Evidence |
 |---|---|---|
 | 0 Unblock | **done** | [env probe](research/env-20261006/ENV.md), suite 605 tests: 590 pass, 0 fail, 15 skip (all with recorded reasons: `node research/list-skips.mjs`) |
-| 1 Core nodes | **built and reviewed; exit experiment pending** | [design](research/core-20261006/DESIGN.md), [pre-registration](research/core-20261006/PREREG.md); 10 adversarial-review findings fixed and verified; suite 765 tests: 747 pass, 0 fail, 18 recorded skips |
-| 2 Construction (C0) | harness built, dev round pre-registered (draft); [workflow corpus](research/corpus-20261006/COVERAGE.md) complete: 1,342 items from 27 platforms with a 30-item pilot shortlist | [design](research/construction-20261006/DESIGN.md), [dev prereg](research/construction-20261006/PREREG-dev.md) |
-| Beds | 8 Tier-A families + 4 sealed families built; independent audits: gridquest and codefix done, records, incident, synth, kinetics in progress, owner family `ownerci` being built | `beds/*/AUDIT.md` |
-| 3 Cheap execution (C1) | assignment search built, local pilot running | [design draft](research/distill-20261007/DESIGN.md) |
-| 4 Typed judgments | System One engine (Kev/Jev) + calibration ledger built; live on Kev-0.8B (CPU) | `src/judgment.mjs` |
-| 5–6 | not started | see [ROADMAP §5](docs/ROADMAP.md) |
+| 1 Core nodes | **built and reviewed; exit experiment P1 done** (classes M and L; S parked) | [design](research/core-20261006/DESIGN.md), [pre-registration](research/core-20261006/PREREG.md), [**P1 report**](research/core-20261006/REPORT.md); 10 adversarial-review findings fixed and verified; suite at the Phase 1 review: 765 tests, 747 pass, 0 fail, 18 recorded skips |
+| 2 Construction (C0) | **dev round done and closed** at `records` and `codefix`, 2 of the 5 pre-registered families (review decision 8, default). Next: the strict construction lint and oracle discovery, structured builder v0, the R-bench pilots, then the sealed round on E1 (`PREREG-sealed.md` not yet written) | [design](research/construction-20261006/DESIGN.md), [dev prereg](research/construction-20261006/PREREG-dev.md), [**C0 dev report**](research/construction-20261006/REPORT-dev.md) |
+| Corpus and R-bench | [Workflow corpus](research/corpus-20261006/COVERAGE.md): 1,342 items from 27 platforms. Agent-framework slice: 220 items from 22 framework sources (08:45), being integrated now. R-bench: a 30-item shortlist ([selection](research/replicate-20261008/SELECTION.md)); the pilot (`experiments/replicate/`) is in progress, with no oracle frozen yet | `research/corpus-20261006/`, `research/replicate-20261008/` |
+| Beds | 9 Tier-A families and 4 sealed families. The sealed families have never been used. Audited: records 3.0.0, incident 4.2.0, synth 3.0.0, kinetics 4.0.0, gridquest 2.0.0, ownerci 1.1.0 and codefix 1.1.0 (partial). Not audited: gameqa, runbook | `beds/*/AUDIT.md` |
+| 3 Cheap execution (C1) | Assignment search is built. Its design still names Haiku 4.5 and needs the Haiku 5.5 update ([C0 dev report §6.4](research/construction-20261006/REPORT-dev.md)) | [design draft](research/distill-20261007/DESIGN.md) |
+| 4 Typed judgments | The Kev engine, laptop bridge and contracts library are built; nothing is trained. Kev dataset building continues (`experiments/kev-data/`). Laptop training waits for the Kev-vs-Haiku-5.5 comparison; the hosted $450 approval is held (THESIS D13) | `src/judgment.mjs`, [Kev research](research/kev-20261007/) |
+| 5–6 | Not started. `call` (IR stage S1) and the `wide` operator are planned for week 6 of the plan | see [ROADMAP §5](docs/ROADMAP.md) |
+
+**Layers of the vision** (moved from synthesis §2 and updated; [M] measured, [D] documented):
+
+| Layer | Status | Evidence and caveat |
+|---|---|---|
+| IR: represent any workflow | **Partial.** 9 node kinds; no `call`, triggers, error branches, signals, sessions or board | 476/1,342 corpus items (35%) declared native; **0 compiled, 0 executed** [M lane 2]. Declared coverage counts converter tokens and compiles nothing |
+| Agent-framework slice | Being curated and integrated | 220 items (08:45): 20% native; 36% with the 19 planned constructs; 61% need an agent tool loop [M]. Sonnet-extracted; no independent re-check recorded yet |
+| Runtime | Built. Fast enough today; breaks at fan-out | 1–3% of real-run wall time (2 runs); a 1,000-item map adds 73–135 s of pure overhead [M lane 4]. The store rewrite is the first engine fix |
+| Cheap execution (P1) | **First directional number, final** | See Results. A hand-written ceiling on one synthetic family |
+| Construction by Haiku (C0 dev) | **Partial; too small to call** | See Results. 2 families, one construction per cell |
+| Honest run verdicts | **Broken** | The run verdict said "pass" on all 5 failed F trials in C0 dev and on fhand-haiku's only P1 failure. Acceptance is "an answer exists" in all 7 constructed artifacts [M]. The fix is the strict construction lint and acceptance that must gate (ROADMAP §2.5 step 5, §2.6) |
+| Need router and slider | Design only | Built only if the RX1 headroom sweep finds something to route for (ROADMAP §2.8) |
+| Kev (typed judgments) | Engine, laptop bridge and contracts library built; nothing trained | Stock Kev-0.8B is at or below the rule baseline on 4 of 5 ports; CPU latency 2.5–13.7 s [M]. A Haiku 5.5 typed call takes about 1–1.5 s for under $0.001 |
+| Composition | Static nesting only (depth ≤ 6) | `src/validate.mjs` [D] |
+| Subagents (`executor`) | An adapter used by experiments; not an IR node | The network is not isolated, and the CLI login is readable in the sandbox. Under THESIS D10, no executor reads third-party text |
+| Board and private notes | Not built | — |
+| Audit | Hash chain, model journal and receipts exist; **gaps** | Responses, decisions and transcripts are not bound into the chain, and there is no external anchor [D lane 7]; a stage-1 fix |
+| UI | **Prototype** read-only run viewer (`tools/run-view/`) | 19 unit tests and 74 browser checks pass. The owner has not reviewed it yet; the game-QA screenshots are a scripted fixture |
+| Security | Labels, quarantine and sandbox exist; **gaps** | An effect gated by `when` on untrusted data passes validation [M lane 7]. Each fix gates the first run that needs it ([synthesis §7](research/review-20261007/00-SYNTHESIS.md)) |
+| Evaluation validity | **Weakest link** | Every bed is synthetic and Claude-written; the sealed families are unused; nothing external has run. Next is the wild ladder (ROADMAP §4.2) |
+| Reuse library | Not started | Phase 5 |
+
+Counts over these 14 layers:
+- built and tested, with known gaps: 6;
+- partly built: 3;
+- not built: 5;
+- measured on held-out tasks of development families: 2 (P1 and C0 dev);
+- measured on sealed or wild tasks: 0.
+
+### Results
+
+**P1, Phase 1 exit (`p1-records-v3`), final.**
+- **What ran:** 288 of 288 trials, ending 2026-10-08 09:18 UTC: 12 held-out `records` v3.0.0
+  test tasks (d3 and d4) × K = 3 × 8 arms.
+- **Reproduce:** `node experiments/p1/analyze.mjs experiments/runs/p1/results.jsonl`.
+- **Report:** [research/core-20261006/REPORT.md](research/core-20261006/REPORT.md). The d3
+  and d4 splits come from its post-hoc script.
+
+| arm | success | 95% CI | d3 | d4 | pass^3 | $/trial | CPS |
+|---|---|---|---|---|---|---|---|
+| `fhand-haiku`: hand-written workflow, Haiku 5.5 nodes | **35/36** | [0.86, 1.00] | 17/18 | 18/18 | 0.917 | 0.0158 | **0.0162** |
+| `fhand-sonnet`: the same workflow, Sonnet 5.5 nodes | 36/36 | [0.90, 1.00] | 18/18 | 18/18 | 1.000 | 0.2132 | 0.2132 |
+| `b0call-sonnet-med`: one Sonnet 5.5 call | 28/36 | [0.62, 0.88] | 13/18 | 15/18 | 0.417 | 0.2469 | 0.3175 |
+| `b0agent-haiku`: Claude Code with tools, Haiku 5.5 | 29/36 | [0.65, 0.90] | 12/18 | 17/18 | 0.667 | 0.1108 | 0.1376 |
+| `b0call-haiku-none`: one Haiku 5.5 call, thinking off | 25/36 | [0.53, 0.82] | 14/18 | 11/18 (4 TO) | 0.417 | 0.0303 | 0.0437 |
+| `b0call-haiku-med`: one Haiku 5.5 call, effort medium | 23/36 | [0.48, 0.78] | 16/18 | 7/18 (11 TO) | 0.417 | 0.0257 | 0.0402 |
+| `b0ncall-haiku-med`: the same, plus notes (B0+N) | 17/36 | [0.32, 0.63] | 13/18 (1 TO) | 4/18 (14 TO) | 0.167 | 0.0252 | 0.0534 |
+| `b0call-haiku45-none`: one Haiku 4.5 call | 0/36 | [0.00, 0.10] | 0/18 | 0/18 | 0.000 | 0.0551 | ∞ |
+
+TO is a single call cut off by the 300 s per-call timeout. CPS is the recorded dollars per
+verified success.
+
+**Pre-registered rule: supported, directionally.**
+- **Success.** fhand-haiku's interval [0.86, 1.00] overlaps Sonnet's single call
+  [0.62, 0.88]. The difference is +0.194 [0.056, 0.361], but McNemar gives p = 1.000.
+- **Cost.** The CPS ratio is 0.051 [0.044, 0.063], so the workflow costs about 1/19 as much
+  per success.
+- **Reading.** The workflow on Haiku is *at least as good as* one Sonnet call at a much
+  lower cost per success; "beats" is not shown.
+- **Other paired comparisons:**
+  - fhand-haiku against the Haiku agent: +0.167 [0.000, 0.389], CPS ratio 0.118
+    [0.093, 0.229];
+  - a Haiku 5.5 single call against a Haiku 4.5 single call: +0.694 [0.472, 0.889],
+    p = 0.004. This is the only success difference P1 resolves cleanly.
+
+**Caveats.**
+- **A hand-written ceiling workflow.** An Opus agent wrote `fhand` after studying the
+  family on dev seeds. P1 tests neither construction (that is C0) nor C1's assignment search.
+- **One synthetic family.** 12 tasks, K = 3. The study is powered only for success gaps above
+  about 35 points, and it supports no transfer claim.
+- **d4 single-call timeouts.**
+  - The Haiku 5.5 single calls ran under a 300 s per-call limit that the pre-registration
+    never stated. It is the default in `src/models`.
+  - 30 of 108 such trials timed out, 29 of them at d4. They count as failures.
+  - Against the same model in a single call, the workflow's success advantage is therefore
+    largely an artefact of the harness. At d3, with one timeout in 54, the workflow scored
+    17/18 against 13–16/18 (post-hoc, directional).
+  - The cost advantage holds: at d3 the workflow's CPS is 0.29–0.40× that of the same-model
+    single calls.
+  - The timed-out calls were recorded at $0. Charged at their $1 bound, as PREREG §3
+    requires, P1's total is $56.09.
+- **Haiku 5.5 vs Haiku 4.5.** This gap is confounded with how much each model reasons under
+  "thinking off". 22 of Haiku 4.5's 36 failures break one structural rule: a row assigned to
+  several records.
+- **False pass.** The workflow's own verdict said "pass" on its only failure.
+- **Burned seeds.** The post-run diagnoses inspected test seeds 5001–5006. They are burned
+  and must never be held out again.
+
+**C0 dev round (`records`, `codefix`), closed.**
+- **Report:** [research/construction-20261006/REPORT-dev.md](research/construction-20261006/REPORT-dev.md).
+- **Reproduce:** `node experiments/c0/analyze.mjs experiments/runs/c0-dev`.
+- **What ran:** 8 constructions (K_c = 1 per cell), 24 probes and 96 evaluation trials, on
+  test seeds 6001–6004 at d3 with K = 2.
+
+| arm | builder → artifact | records | codefix | all | exec $/trial | construction $ | CPS amortised |
+|---|---|---|---|---|---|---|---|
+| F-opus | Opus 5.5 → workflow.json | 8/8 | 8/8 | **16/16** | 0.0750 | 4.51 | 0.357 |
+| B1-opus | Opus 5.5 → solve.mjs | 8/8 | 4/8 | 12/16 | 0.2683 | 6.24 | 0.878 |
+| F-haiku | Haiku 5.5 → workflow.json | 6/8 | 5/8 | 11/16 | 0.1062 | 1.91 | 0.328 |
+| B1-haiku | Haiku 5.5 → solve.mjs | 8/8 | 8/8 | **16/16** | 0.0780 | 2.21 | 0.216 |
+| B0-opus | none (Opus 5.5 agent) | 8/8 | 8/8 | **16/16** | 0.5056 | 0 | 0.506 |
+| B0-haiku | none (Haiku 5.5 agent) | 4/8 | 8/8 | 12/16 | 0.1188 | 0 | 0.158 |
+
+- **Directional only.** PREREG-dev §4 says "directional only; no claim is made from this
+  round".
+  - The round covers 2 of the 5 families, with one construction per cell and 8 trials per
+    family cell.
+  - The family-clustered bootstrap has only 2 clusters, so its intervals describe spread,
+    not inference.
+- **Haiku as builder.**
+  - F-haiku − F-opus = −0.31 [−0.63, 0.00].
+  - The F substrate did not help the Haiku builder relative to scripts: F-haiku scored 11/16
+    and B1-haiku 16/16.
+  - Most defects were gaps in the kit, the templates and the validator, not in Haiku. The
+    over-strict check also appeared in Opus builds (B1-opus 4/8 on codefix, latent in
+    F-opus).
+  - Report §6.1 lists the validator warnings that would have prevented each defect. They
+    feed the strict construction lint (ROADMAP §2.5 step 5).
+- **Directionally supported.**
+  - F-opus executes much cheaper than B0-opus at equal success: 16/16 each, execution CPS
+    ratio 0.148 [0.064, 0.370].
+  - Payback against the same model solving directly with Claude Code comes after:
+    - Opus-built: 3.8 successes on records and 9.6 on codefix;
+    - Haiku-built: 2.9 on records, and never on codefix.
+- **Probes and verdicts.**
+  - Probes passed 24/24 and still did not predict the evaluation.
+  - The F run verdict was "pass" on 32/32 trials, including the 5 oracle failures.
+- **codefix at d3 does not discriminate.** B0-haiku solved it 8/8 at $0.035 per trial, the
+  cheapest arm.
+- **Burned seeds.** Test seeds 6001–6004 at d3 were inspected by the diagnoses and are
+  burned.
+- **Spend.** $35.32 recorded, plus at most $4 unrecorded.
+
+### Earlier history
 
 **Phase 1 (core nodes), what exists now:** `agent` nodes (one narrow, typed model judgment, with
 escalation E1/E2/E7), sandboxed `code` nodes (JS/Python in user+mount+pid+net namespaces),
@@ -47,7 +229,8 @@ Claude models through `claude -p` and local CPU models through llama.cpp, all id
 `policy/models.json`. A live smoke run (three parallel Haiku agent nodes, a sandboxed code node and a
 verifier) passed in 6.4 s for $0.009.
 
-**First measurements (development evidence, `records` bed, K = 1, small n):**
+**First measurements (2026-10-06/07, before P1; development evidence, `records` bed, K = 1,
+small n; superseded by the P1 results above):**
 - A single Sonnet 5.5 call already solves `records` at d1–d3 (6/6, ≈ $0.08–0.18 per task); a
   single Haiku 4.5 call does not (0/6).
 - A hand-written Foundry workflow (code owns parsing and rules, Haiku makes one narrow judgment per
@@ -63,7 +246,8 @@ verifier) passed in 6.4 s for $0.009.
 workflows (bed building, corpus acquisition, reviews) exhausted the plan's weekly limit; 14 agents
 failed and their work was redone after the reset. Subagents and `claude -p` experiment calls draw on
 the same plan allowance ([docs](https://code.claude.com/docs/en/costs)); usage credits are off, so
-the effect is a pause, not a charge. Agent fan-out is now kept small.
+the effect is a pause, not a charge. Agent fan-out is now kept small. A formal usage rule
+is proposed (THESIS D14) but not adopted: the owner chose "Full speed".
 
 What Phase 0 changed:
 - **Node 24.21.0** from the pinned official tarball (`scripts/setup-node24.sh`, sha256-checked).
@@ -107,11 +291,26 @@ reported separately. Orchestration by this session and its subagents is not item
 | 2026-10-06 | Records calibration pilot (single call, d1–d3) | Haiku, Sonnet | 12 | 1.36 |
 | 2026-10-07 | Records hand-workflow pilots (thinking on/off, code-side parsing, d2–d3, local Qwen) | Haiku, Sonnet, Qwen | 142 | 2.25 |
 | 2026-10-07 | Live smoke runs (CLI agent workflow, gateway, Haiku-builder construction) | Haiku, Sonnet | ~60 | 0.85 |
-| | **Total measured (experiment calls)** | | | **4.86** |
+| | *Subtotal at the previous ledger update (2026-10-07 15:08 UTC)* | | | *4.86* |
+| 2026-10-07 | C1 assignment-search local pilot (`experiments/runs/distill-pilot/journal.sqlite`; the Qwen/Granite calls cost $0) | Haiku 4.5, local Qwen/Granite | 15 | 0.02 |
+| 2026-10-07 | records-v3 hand-workflow development for P1, dev seeds only (`/var/tmp/foundry-work/records-v3/journal.sqlite`, outside the repo) | Haiku 4.5, Haiku 5.5, Sonnet | 6,752 | 24.91 |
+| 2026-10-07 | Kev probe (`experiments/runs/kev-probe/journal.sqlite`) | Sonnet | 398 | 2.56 |
+| 2026-10-07/08 | C0 dev round: 8 constructions $14.86, 24 probes $2.02, 96 trials $18.43 ([REPORT-dev §5](research/construction-20261006/REPORT-dev.md)) | Opus, Sonnet, Haiku 5.5 | 768 journaled + 40 CLI sessions | 35.32 |
+| 2026-10-07/08 | P1, 288 trials ([REPORT §7](research/core-20261006/REPORT.md)), including the $0.064 orphan run | Haiku 5.5, Haiku 4.5, Sonnet | 1,863 journaled + 36 CLI sessions | 26.09 |
+| | **Total recorded (experiment calls)** | | | **93.76** |
+| | Not recorded: 3 C0 B0 sessions killed at a restart (bound $4, estimate $0.3–1.0); 30 P1 single calls cut off by the timeout (bound $30, estimate ~$1.35); P1 work killed at the owner stop (bound ≥ $5) | | | about 2 (estimate); at least 39 more at the bounds |
 
-List price as computed by the CLI. On this subscription it is a yardstick, not a charge (usage
-credits are off). Orchestration by this session and its subagents (millions of tokens) is not
-itemised here; it counts against the same plan allowance.
+Totals are recomputed from the named journals and results files (`cost_usd` per call; the B0
+and builder sessions are CLI-reported). List price as computed by the CLI. On this subscription
+it is a yardstick, not a charge (usage credits are off).
+
+**Orchestration is the main driver of usage and is not itemised.** As of about 08:50 UTC on
+2026-10-08, the session journal recorded 25.8 million subagent tokens across 28 completed
+workflows and agents ([synthesis §2](research/review-20261007/00-SYNTHESIS.md)). That figure
+excludes the main session and later workflows, and has no dollar value because the model mix
+per token is not recorded. It counts against the same weekly plan allowance, which is the
+binding limit, not money. The six-week plan's experiment calls are estimated at about
+$560–825 at list price (synthesis §5).
 
 ## Owner decisions needed
 
@@ -123,8 +322,27 @@ itemised here; it counts against the same plan allowance.
 | D7 | No `TYPESAFE_API_KEY`: hosted Jev is unavailable. Kev (open weights on Hugging Face) will be used for the typed-judgment engine on CPU. | Provision the key if hosted Jev should be compared. | No |
 | PR #1 | Phase 0 is in [PR #1](https://github.com/Raed2180416/workflow-foundry/pull/1). The session's permission policy does not let the agent merge without review, so later phases stack on the same branch as separate commits. | Review and merge when convenient. | No |
 | Haiku 5.5 (noted) | 2026-10-07: Anthropic replaced Haiku 4.5 with Haiku 5.5 (`claude-haiku-5-5`, $0.10/$0.50 per MTok, 20x below Sonnet 5.5). Added to the policy as the first class-M model; CLI route verified (typed call ~1.5 s, ~$0.0005 vs Haiku 4.5 ~6-10 s, ~$0.004). Experiments switch their weak model to Haiku 5.5 before any pre-registration is frozen. | None needed. | No |
-| Local models (decided) | 2026-10-07: local *generative* models (Qwen/Granite via llama.cpp) are parked: 268 s per call and 0.38–0.80 agreement on this 4-core CPU ([negative result](docs/RESEARCH.md)). Haiku 4.5 is the cheap executor; Kev stays as the local typed-judgment engine. C1's open-weight half is not measured here. | A GPU (any 16–24 GB card) would reopen the open-weight lane. | No |
+| Local models (decided) | 2026-10-07: local *generative* models (Qwen/Granite via llama.cpp) are parked: 268 s per call and 0.38–0.80 agreement on this 4-core CPU ([negative result](docs/RESEARCH.md)). Haiku 5.5 is the cheap executor and first-rung constructor; Kev is the candidate local typed-judgment engine, kept per port only where it beats Haiku 5.5 and rules. C1's open-weight half is not measured here. | A GPU (any 16–24 GB card) would reopen the open-weight lane. | No |
 | Remote compute | No Modal/Harbor credentials: Tier B/C container beds (SWE-bench Pro, Terminal-Bench) cannot run from here. | Provision if Tier B is wanted. | Only for Tier B/C |
+
+**Design review decisions (2026-10-08).** The docs-level ones are THESIS §10 D8–D16. Their
+defaults are applied, except D13 (Kev), which records the decision taken, and D14 (usage
+rule), which is a proposal awaiting the owner. Any default can still be overridden. The
+operational ones are listed here; the numbers are those of
+[synthesis §6](research/review-20261007/00-SYNTHESIS.md).
+
+| # | Question | Current state | Blocking? |
+|---|---|---|---|
+| Usage rule (D14; review decision 13) | At most 4 concurrent agents (2 for review or orchestration fan-out); only in-flight pre-registered runs while the 7-day meter warns; heavy runs after resets; weekly allowance budgets. | **Proposal awaiting the owner, not adopted.** The owner chose "Full speed". ROADMAP §6 shows it as a proposal. | No |
+| Kev (D13; review decision 7) | Pause Kev until a Kev-vs-Haiku-5.5 probe reports? | **Recorded, not the default pause:** Kev dataset building continues; laptop training waits for the Kev-vs-Haiku-5.5 comparison (planned for week 3); the hosted $450 approval is held. | No |
+| Executor egress proxy (D10; review decision 4) | Give executors model access only through a host-side proxy, which likely needs an owner-provisioned API key? | **Default no.** No executor reads third-party text. R-bench and the C0 sealed round use the structured builder. The free-builder arms, B0-agent on outside text, the injection slice and the executor experiment wait. Still to check: whether a proxy can work without a new credential. | Only for those arms |
+| Ambition sentence (review decision 1) | Finish "it becomes essentially …" | Left open (default); THESIS §1 quotes your words. | No |
+| Close C0 dev (review decision 8) | Stop dev rounds at `records` and `codefix`? | Default applied: closed. The lessons go into the kit before the sealed round. | No |
+| Your own tasks (review decision 9) | Write 20–30 tasks you want done, each with an acceptance check or input/output examples, sealed until the run (wild rung 3). | Waiting. If none arrive by 10-28, rung 3 is reported as missing (default). | No |
+| Haiku 4.5 stress arm (review decision 10) | Add a weak-constructor arm to CX3 and the C0 sealed round (about +$10–20)? | Default applied: yes. | No |
+| Recurring tasks (review decision 11) | List your 10 most frequent recurring tasks, or export a few weeks of ARC/AMP logs (redacted)? | Default: no list. "Workflows pay off on tasks that recur" stays unchecked, and reuse stays deferred. | No |
+| Rust (review decision 12) | Port the kernel to Rust? | Default confirmed: not now, except the reviewed 115-line sandbox launcher. | No |
+| Slider default; who activates triggers | — | Can wait until a router exists, and until IR stage S3. | No |
 
 ## Quickstart and commands
 
@@ -184,6 +402,9 @@ propose/apply and export. The repair walkthrough is in
 | `scripts/setup-node24.sh` | Idempotent, sha256-checked install of the pinned Node 24.21.0. |
 | `skills/` | Portable `SKILL.md` packs: construction, runtime, steering, evaluation, components, domains (software, browser, SRE, security, science, robotics, healthcare). |
 | `web/` | Visual workflow UI served by `foundry serve`. |
+| `tools/` | Developer tools, such as the read-only run-viewer prototype `tools/run-view/`. |
+| `beds/` | Task families (Tier A) and sealed families, with independent oracles and `AUDIT.md` files. Contract: `beds/CONTRACT.md`. |
+| `experiments/` | Experiment runners and analyzers: `p1/`, `c0/`, shared `lib/`, hand-written `workflows/`, `kev-data/`, `replicate/` (R-bench pilot). Run data lives in `experiments/runs/`. |
 | `examples/` | Hand-authored example workflows and the batch task/suite. |
 | `tests/` | `node:test` suite: regressions, adversarial audits, opt-in integration lanes. |
 | `evals/` | Actual-TUI harness, evidence gate and incident oracle. See [evals/README.md](evals/README.md). |
@@ -194,6 +415,10 @@ propose/apply and export. The repair walkthrough is in
 | `research/PREREGISTRATION-TEMPLATE.md` | Template every comparative experiment fills and commits before its first run. |
 | `research/checkpoint-20260917/` | Last research checkpoint: report, one-page summary, evidence hashes. |
 | `research/recheck-20261006/` | Raw test output from the 2026-10-06 re-verification. |
+| `research/core-20261006/` | Phase 1: design, P1 pre-registration, [P1 report](research/core-20261006/REPORT.md) and its diagnoses. |
+| `research/construction-20261006/` | Phase 2 (C0): design, dev pre-registration, [C0 dev report](research/construction-20261006/REPORT-dev.md), diagnoses and artifacts. |
+| `research/review-20261007/` | Design review: [synthesis](research/review-20261007/00-SYNTHESIS.md), [amendments](research/review-20261007/ROADMAP-AMENDMENTS.md), lane reports 01–07 and two critiques. |
+| `research/corpus-20261006/`, `research/replicate-20261008/`, `research/kev-20261007/`, `research/distill-20261007/` | Workflow corpus and coverage; R-bench selection; Kev dossier and judge program; C1 design. |
 | [docs/THESIS.md](docs/THESIS.md) | **Why and what**: the problem in Oct 2026, design principles, what is and isn't novel, typed judgments (Jev), fit with ARC/AMP, owner decisions. |
 | [docs/ROADMAP.md](docs/ROADMAP.md) | **How**: component specs, verification program, phased plan, cloud kickoff prompt. |
 | `research/landscape-20261006/` | The eleven research reports (R01–R11) behind THESIS and ROADMAP, every claim tagged verified or recalled. |

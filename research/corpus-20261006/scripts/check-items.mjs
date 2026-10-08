@@ -87,13 +87,24 @@ export const CONSTRUCT_IDS = CONSTRUCTS.map(c => c.id);
 const CONSTRUCT_ORDER = new Map(CONSTRUCT_IDS.map((id, i) => [id, i]));
 export const sortConstructs = list => [...new Set(list)].sort((a, b) => CONSTRUCT_ORDER.get(a) - CONSTRUCT_ORDER.get(b));
 
-// Credential-shaped strings that must never appear in committed corpus text.
+// Credential-shaped strings that must never appear in committed corpus text. Incoming-webhook URLs carry their secret in
+// the path (Slack, Discord, Teams, Telegram bot), so they count as credentials too.
 const SECRET_PATTERNS = [
   /\bsk-[A-Za-z0-9_-]{20,}/, /\bgh[pousr]_[A-Za-z0-9]{30,}/, /\bAKIA[0-9A-Z]{16}\b/, /\bxox[abpr]-[A-Za-z0-9-]{10,}/,
   /-----BEGIN [A-Z ]*PRIVATE KEY-----/, /\bAIza[0-9A-Za-z_-]{35}\b/, /\bglpat-[A-Za-z0-9_-]{20,}/,
   /\beyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{10,}/,
+  /hooks\.slack\.com\/(?:services|workflows|triggers)\/[A-Za-z0-9_/-]{8,}/i, /discord(?:app)?\.com\/api\/webhooks\/\d+\/[A-Za-z0-9_-]{20,}/i,
+  /\.webhook\.office\.com\/webhookb2\/[^\s"'<>]{20,}/i, /api\.telegram\.org\/bot\d{6,}:[A-Za-z0-9_-]{30,}/i,
+  /\bhf_[A-Za-z0-9]{30,}/, /\b[rs]k_live_[A-Za-z0-9]{16,}/,
 ];
 export const findSecret = s => SECRET_PATTERNS.find(rx => rx.test(String(s ?? '')));
+// Every string value of an item with its JSON path (the secret scan covers all of them, notes included).
+const stringLeaves = (v, p = '', out = []) => {
+  if (typeof v === 'string') out.push([p, v]);
+  else if (Array.isArray(v)) v.forEach((x, i) => stringLeaves(x, `${p}[${i}]`, out));
+  else if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) stringLeaves(x, p ? `${p}.${k}` : k, out);
+  return out;
+};
 
 // One redistribution policy for every cluster (the conservative one the orchestration and science converters used):
 // copyleft, share-alike and non-commercial licences keep only URL + derived graph + features, like unknown/ToS items.
@@ -296,6 +307,11 @@ export function validateItem(item, { canonical = false } = {}) {
   const o = item.oracle;
   if (!isObj(o) || !ORACLE_KINDS.includes(o.kind) || typeof o.notes !== 'string' || Object.keys(o).some(k => !['kind', 'notes'].includes(k)))
     err('oracle', `oracle must be {kind: ${ORACLE_KINDS.join('|')}, notes}`);
+  // The secret scan above names the common text fields; this covers every other string (ir.notes, oracle.notes, licence
+  // evidence, node types, connectors, ...), which the model-read agentic items fill with long free text.
+  const named = /^(title|description\.text|graph\.nodes\[\d+\]\.summary|source\.extraction\.spans\[\d+\])$/;
+  const leak = stringLeaves(item).find(([p, v]) => !named.test(p) && findSecret(v));
+  if (leak) err('secret', `credential-shaped string or webhook URL in ${leak[0]}`);
   return errors;
 }
 
@@ -363,6 +379,10 @@ export function selfTest() {
     ['refusal with a retired token in needs', it => { it.ir.verdict = 'unsupported:by-design-group-chat'; it.ir.notes = 'Needs: llm-router.'; }, ['ir.needs']],
     ['refusal with needs out of order', it => { it.ir.verdict = 'unsupported:by-design-group-chat'; it.ir.notes = 'Needs: cross-run-state, chat-session.'; }, ['ir.needs']],
     ['expressibility failure keeps its own form', it => { it.ir.verdict = 'unsupported:interactive-dashboard-state'; it.ir.notes = 'Needs: external-state-store.'; }, []],
+    ['token in ir.notes', it => { it.ir.notes = `uses ${'ghp_'}${'a'.repeat(36)} to push`; }, ['secret']],
+    ['webhook URL in oracle notes', it => { it.oracle.notes = `posts to https://${'hooks.slack.com'}/services/T0000/B0000/${'x'.repeat(24)}`; }, ['secret']],
+    ['webhook URL in a node summary', it => { it.graph.nodes[1].summary = `POST https://discord.com/api/webhooks/123456/${'y'.repeat(30)}`; }, ['secret']],
+    ['webhook host without a path is fine', it => { it.ir.notes = 'notifies a Slack channel through hooks.slack.com (URL not recorded)'; }, []],
   ];
   let failed = 0, run = 0;
   for (const [name, mutate, want] of cases) {

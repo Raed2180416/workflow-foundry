@@ -111,6 +111,7 @@ export class World {
   }
   useBuild(build) { this.build = build; }
   beginRun(kind) { this.runKind = kind; this.calls = {}; }
+  logRun(entry) { (this.runLog ??= []).push(entry); }
   nth(cap) { return (this.calls[cap] = (this.calls[cap] ?? 0) + 1); }
 
   // The error an injected fault raises for a call of `cap`, or null.

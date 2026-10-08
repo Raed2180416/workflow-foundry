@@ -6,7 +6,8 @@
 //
 // Steps (every change is counted in merge-log.json, with examples):
 //   1. parse each line; unparseable lines are dropped
-//   2. repair what can be repaired without guessing: strip keys outside ITEM-SCHEMA, percent-encode URLs,
+//   2. repair what can be repaired without guessing: strip keys outside ITEM-SCHEMA (the optional provenance object
+//      source.extraction is part of it and kept), percent-encode URLs,
 //      trim node summaries to 200 chars, drop dangling edges, de-duplicate identical edges, blank any
 //      non-written description of a non-redistributable item, and apply one redistribution policy (copyleft,
 //      share-alike and non-commercial licences are not redistributable; their node summaries become type-level)
@@ -15,7 +16,12 @@
 //      subworkflows >= subworkflow nodes); make async agree with wait nodes and trigger constructs
 //   4. recompute the IR verdict with one vocabulary (check-items.mjs CONSTRUCTS) from the converter's tokens
 //      (mapped per cluster, see TOKEN_MAP) plus graph evidence (error edges, by-reference sub-workflow nodes,
-//      >500 nodes); converter verdict and notes are kept in ir.notes
+//      >500 nodes); converter verdict and notes are kept in ir.notes. The agentic cluster (parts/agentic.jsonl, from
+//      agentic-assemble.mjs) is different: its verdicts are model readings of the source, re-labelled to
+//      AGENTIC-CONVENTIONS.md, already in the registry vocabulary. Its tokens map by identity (an unknown or retired
+//      token is an error), and error edges and sub-workflow nodes are not turned into constructs, because the readers
+//      judged them (e.g. onError:"continue" retries, sub-applications inlined as a map body); the graph evidence is
+//      recorded in ir.notes and merge-log.json instead. `unsupported:by-design-*` verdicts are kept with their Needs list
 //   5. validate with check-items.mjs in canonical mode; lines that still fail are dropped
 //   6. drop duplicates: same platform, identical normalized graph (types, categories, summaries, edges) and the
 //      same normalized title or the same non-empty description; the better-documented item is kept
@@ -25,21 +31,24 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { validateItem, graphFeatures, parseVerdict, sortConstructs, CONSTRUCT_IDS, ITEM_KEYS, SOURCE_KEYS, NODE_KEYS, EDGE_KEYS,
-  FEATURE_KEYS, ASYNC, NON_REDISTRIBUTABLE_LICENCE } from './check-items.mjs';
+  FEATURE_KEYS, ASYNC, NON_REDISTRIBUTABLE_LICENCE, FIRST_PARTY_PLATFORMS, isFirstParty } from './check-items.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const arg = (name, dflt) => { const i = process.argv.indexOf(name); return i >= 0 ? process.argv[i + 1] : dflt; };
 const PARTS = path.resolve(arg('--parts', path.join(HERE, '..', 'parts')));
 const OUT = path.resolve(arg('--out', path.join(HERE, '..', 'items.jsonl')));
 const LOG = path.resolve(arg('--log', path.join(HERE, '..', 'merge-log.json')));
-const CLUSTER_ORDER = ['automation', 'orchestration', 'science', 'consumer-creative'];
+const CLUSTER_ORDER = ['automation', 'orchestration', 'science', 'consumer-creative', 'agentic'];
+const MODEL_READ_CLUSTERS = ['agentic'];   // verdicts read from the source by a model and harmonised; no graph-evidence rewrite
 const sha256 = b => crypto.createHash('sha256').update(b).digest('hex');
 
 // ---------------------------------------------------------------- logging
-const log = { fixes: {}, drops: [], featureChanges: {}, verdict: { changed: 0, byCluster: {}, kindTransitions: {}, tokenMap: {} }, dedupe: { dropped: [], shapeTwinsKept: [] }, cycleArtifacts: [] };
-function fix(rule, id, detail) {
-  const r = (log.fixes[rule] ??= { count: 0, examples: [] });
+const log = { fixes: {}, drops: [], featureChanges: {}, verdict: { changed: 0, byCluster: {}, kindTransitions: {}, tokenMap: {} }, dedupe: { dropped: [], shapeTwinsKept: [] }, cycleArtifacts: [],
+  agentic: { graphEvidenceNotApplied: [], modelDrivenCycles: [] } };
+function fix(rule, id, detail, cluster) {
+  const r = (log.fixes[rule] ??= { count: 0, examples: [], byCluster: {} });
   r.count++;
+  r.byCluster[cluster] = (r.byCluster[cluster] ?? 0) + 1;
   if (r.examples.length < 8) r.examples.push(detail ? `${id}: ${detail}` : id);
 }
 
@@ -63,6 +72,10 @@ const TOKEN_MAP = {
   'retry-policy': cluster => cluster === 'science' ? 'adaptive-retry' : NATIVE('fixed-count retry maps to IR `retry`'),
   'triggers': 'TRIGGERS', 'signals': 'SIGNALS',
 };
+// The agentic cluster's tokens are already registry ids (AGENTIC-CONVENTIONS.md §3): identity map, nothing else. Retired
+// topology labels (llm-router, supervisor-delegation, handoff, group-chat) and new-* proposals are rejected loudly.
+const TOKEN_MAPS = { agentic: Object.fromEntries(CONSTRUCT_IDS.map(id => [id, id])) };
+const tokenMapFor = cluster => TOKEN_MAPS[cluster] ?? TOKEN_MAP;
 
 function splitTokens(body) {
   // orchestration/science use ',' and may nest commas in parentheses; automation/consumer use '+'
@@ -164,8 +177,10 @@ function canonicalVerdict(item, cluster) {
   if (pv.kind === 'unsupported') { const m = /Needs: ([^.]+)\./.exec(item.ir.notes); if (m) rawTokens = m[1].split(',').map(t => t.trim()); }
   const out = new Set(), native = [], derived = [];
   for (const tok of rawTokens) {
-    let m = TOKEN_MAP[tok];
-    if (m === undefined) throw new Error(`${item.id}: unmapped converter token "${tok}" (add it to TOKEN_MAP)`);
+    let m = Object.hasOwn(tokenMapFor(cluster), tok) ? tokenMapFor(cluster)[tok] : undefined;
+    if (m === undefined) throw new Error(`${item.id}: unmapped ${cluster} token "${tok}" ` + (TOKEN_MAPS[cluster]
+      ? '(this cluster takes registry ids only: add a construct to check-items.mjs CONSTRUCTS, or relabel; retired labels are native patterns, AGENTIC-CONVENTIONS.md §4)'
+      : '(add it to TOKEN_MAP)'));
     if (typeof m === 'function') m = m(cluster);
     let mapped;
     if (m === 'TRIGGERS') {
@@ -188,18 +203,27 @@ function canonicalVerdict(item, cluster) {
     log.verdict.tokenMap[`${cluster}|${tok}`] ??= new Set();
     for (const t of mapped.length ? mapped : ['(native)']) log.verdict.tokenMap[`${cluster}|${tok}`].add(t);
   }
-  // uniform graph evidence
+  // uniform graph evidence (converter clusters); recorded but not applied for model-read clusters
+  const modelRead = MODEL_READ_CLUSTERS.includes(cluster);
+  const notApplied = [];
   const errorEdges = item.graph.edges.filter(e => e.kind === 'error').length;
-  if (errorEdges && !out.has('error-branch')) { out.add('error-branch'); derived.push(`error-branch (${errorEdges} error edges)`); }
+  if (errorEdges && !out.has('error-branch')) {
+    if (modelRead) notApplied.push(`${errorEdges} error edge${errorEdges > 1 ? 's' : ''}`);
+    else { out.add('error-branch'); derived.push(`error-branch (${errorEdges} error edges)`); }
+  }
   const byRef = item.graph.nodes.filter(n => n.category === 'subworkflow' && !isInlinedComfySubgraph(item, n));
   const inlinedComfy = item.graph.nodes.filter(n => n.category === 'subworkflow' && isInlinedComfySubgraph(item, n)).length;
-  if (byRef.length && !out.has('subworkflow-call')) { out.add('subworkflow-call'); derived.push(`subworkflow-call (${byRef.length} by-reference sub-workflow nodes)`); }
+  if (byRef.length && !out.has('subworkflow-call')) {
+    if (modelRead) notApplied.push(`${byRef.length} sub-workflow node${byRef.length > 1 ? 's' : ''}`);
+    else { out.add('subworkflow-call'); derived.push(`subworkflow-call (${byRef.length} by-reference sub-workflow nodes)`); }
+  }
   if (!byRef.length && out.has('subworkflow-call') && inlinedComfy) { out.delete('subworkflow-call'); native.push(`${inlinedComfy} ComfyUI subgraph instance(s) whose definitions are inlined in the file`); }
+  if (notApplied.length) log.agentic.graphEvidenceNotApplied.push({ id: item.id, verdict: pv.kind === 'unsupported' ? orig : null, evidence: notApplied });
   const n = item.graph.nodes.length;
   if (n > 500 && !out.has('flow-size>500')) { out.add('flow-size>500'); derived.push(`flow-size>500 (${n} nodes)`); }
   if (n <= 500 && out.has('flow-size>500')) { out.delete('flow-size>500'); native.push(`converter counted >500 source actions; the normalized graph has ${n} nodes`); }
   const cyclic = hasCycleOutsideLoopEdges(item);
-  if (cyclic && !out.has('unstructured-cycle')) log.cycleArtifacts.push(item.id);
+  if (cyclic && !out.has('unstructured-cycle')) (modelRead ? log.agentic.modelDrivenCycles : log.cycleArtifacts).push(item.id);
 
   const constructs = sortConstructs([...out]);
   const verdict = pv.kind === 'unsupported' ? orig : constructs.length ? `via-extension:${constructs.join('+')}` : 'native';
@@ -210,9 +234,12 @@ function canonicalVerdict(item, cluster) {
   ];
   if (native.length) parts.push(`Native under Phase 1: ${native.join('; ')}.`);
   if (derived.length) parts.push(`From graph evidence: ${derived.join('; ')}.`);
-  if (cyclic && !out.has('unstructured-cycle')) parts.push('The normalized graph has a cycle over data/control edges that comes from static edge inference (wildcard matching, may-flow channels, subgraph wiring or stage barriers), not from a loop in the source; treated as a DAG.');
+  if (notApplied.length) parts.push(`Graph evidence judged by the readers, not re-derived: ${notApplied.join(', ')}.`);
+  if (cyclic && !out.has('unstructured-cycle')) parts.push(modelRead
+    ? 'Cycle without loop edges: a model-driven loop that the verdict carries (rules BL, UC).'
+    : 'The normalized graph has a cycle over data/control edges that comes from static edge inference (wildcard matching, may-flow channels, subgraph wiring or stage barriers), not from a loop in the source; treated as a DAG.');
   if (orig !== verdict) parts.push(`Converter verdict: ${orig}.`);
-  parts.push(`Converter notes: ${item.ir.notes}`);
+  parts.push(`${modelRead ? 'Extractor notes (harmonised)' : 'Converter notes'}: ${item.ir.notes}`);
   let notes = parts.join(' ');
   if (notes.length > 2000) notes = notes.slice(0, 1999) + '…';
   return { verdict, notes, constructs };
@@ -222,34 +249,34 @@ function canonicalVerdict(item, cluster) {
 const URL_SAFE = /[^A-Za-z0-9\-._~:/?#[\]@!$&'()*+,;=%]/g;
 function repair(item, cluster) {
   const id = item.id;
-  for (const k of Object.keys(item)) if (!ITEM_KEYS.includes(k)) { delete item[k]; fix('strip-extra-key', id, k); }
-  for (const k of Object.keys(item.source)) if (!SOURCE_KEYS.includes(k)) { delete item.source[k]; fix('strip-extra-key', id, `source.${k}`); }
+  for (const k of Object.keys(item)) if (!ITEM_KEYS.includes(k)) { delete item[k]; fix('strip-extra-key', id, k, cluster); }
+  for (const k of Object.keys(item.source)) if (!SOURCE_KEYS.includes(k)) { delete item.source[k]; fix('strip-extra-key', id, `source.${k}`, cluster); }
   if (typeof item.source.url === 'string' && new RegExp(URL_SAFE.source).test(item.source.url)) {
     item.source.url = item.source.url.replace(URL_SAFE, ch => encodeURIComponent(ch));
-    fix('url-percent-encoded', id);
+    fix('url-percent-encoded', id, undefined, cluster);
   }
   if (item.source.redistributable && NON_REDISTRIBUTABLE_LICENCE.test(item.source.license)) {
     // consumer-creative treated GPL-3.0 as redistributable; the other clusters did not. Apply the conservative policy everywhere:
     // keep URL, title, a written description, the derived graph with type-level summaries, and the features.
     item.source.redistributable = false;
     for (const n of item.graph.nodes) n.summary = String(n.type).slice(0, 80);
-    fix('copyleft-made-non-redistributable', id, item.source.license);
+    fix('copyleft-made-non-redistributable', id, item.source.license, cluster);
   }
   if (!item.source.redistributable && item.description.text && item.description.provenance !== 'written') {
     item.description = { text: '', provenance: 'written' };
-    fix('description-blanked-not-redistributable', id);
+    fix('description-blanked-not-redistributable', id, undefined, cluster);
   }
   for (const n of item.graph.nodes) {
-    for (const k of Object.keys(n)) if (!NODE_KEYS.includes(k)) { delete n[k]; fix('strip-extra-key', id, `node.${k}`); }
-    if (typeof n.summary === 'string' && n.summary.length > 200) { n.summary = n.summary.slice(0, 199) + '…'; fix('summary-trimmed', id); }
+    for (const k of Object.keys(n)) if (!NODE_KEYS.includes(k)) { delete n[k]; fix('strip-extra-key', id, `node.${k}`, cluster); }
+    if (typeof n.summary === 'string' && n.summary.length > 200) { n.summary = n.summary.slice(0, 199) + '…'; fix('summary-trimmed', id, undefined, cluster); }
   }
   const ids = new Set(item.graph.nodes.map(n => n.id));
   const seen = new Set();
   item.graph.edges = item.graph.edges.filter(e => {
-    for (const k of Object.keys(e)) if (!EDGE_KEYS.includes(k)) { delete e[k]; fix('strip-extra-key', id, `edge.${k}`); }
-    if (!ids.has(e.from) || !ids.has(e.to)) { fix('edge-dangling-dropped', id, `${e.from}->${e.to}`); return false; }
+    for (const k of Object.keys(e)) if (!EDGE_KEYS.includes(k)) { delete e[k]; fix('strip-extra-key', id, `edge.${k}`, cluster); }
+    if (!ids.has(e.from) || !ids.has(e.to)) { fix('edge-dangling-dropped', id, `${e.from}->${e.to}`, cluster); return false; }
     const key = `${e.from}\u0000${e.to}\u0000${e.kind}`;
-    if (seen.has(key)) { fix('edge-duplicate-dropped', id, `${e.from}->${e.to} ${e.kind}`); return false; }
+    if (seen.has(key)) { fix('edge-duplicate-dropped', id, `${e.from}->${e.to} ${e.kind}`, cluster); return false; }
     seen.add(key);
     return true;
   });
@@ -269,7 +296,7 @@ function recomputeFeatures(item, cluster, constructs) {
     if (constructs.includes(t)) asy.add(a);
   next.async = [...asy].sort();
   const templated = f.connectors.filter(c => /\{[%{]/.test(String(c)));   // Jinja fragments mis-read as connector names
-  if (templated.length) fix('connector-template-fragment-dropped', item.id, templated.join(', ').slice(0, 80));
+  if (templated.length) fix('connector-template-fragment-dropped', item.id, templated.join(', ').slice(0, 80), cluster);
   next.connectors = [...new Set(f.connectors.map(c => String(c).trim()).filter(c => c && !/\{[%{]/.test(c)))].sort();
   next.domains = [...new Set(f.domains.map(d => String(d).trim().toLowerCase()).filter(Boolean))];
   const ordered = {};
@@ -375,7 +402,8 @@ const out = {
   generatedAt: new Date().toISOString().slice(0, 10),
   inputs,
   output: { path: path.relative(path.join(HERE, '..'), OUT), items: final.length, bytes: Buffer.byteLength(body), sha256: sha256(body),
-    byCluster: Object.fromEntries(CLUSTER_ORDER.map(c => [c, final.filter(k => k.cluster === c).length])) },
+    byCluster: Object.fromEntries(CLUSTER_ORDER.map(c => [c, final.filter(k => k.cluster === c).length])),
+    firstParty: { platforms: FIRST_PARTY_PLATFORMS, items: final.filter(k => isFirstParty(k.item)).length } },
   constructs: CONSTRUCT_IDS,
   ...log,
 };

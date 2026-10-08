@@ -102,3 +102,97 @@ export const hasImperative = t => IMPERATIVE.test(String(t));
 export const hardNegativeKind = t => (hasAddressee(t) ? 'addressee' : hasImperative(t) ? 'imperative' : null);
 
 export { hnum, unit, pickBy, shuffled, summariseRepro, describeGameExpectation };
+
+// ================================================================================================================
+// Q5 bug_class: what the replay of a confirmed repro showed, against what the rules predict
+// ================================================================================================================
+const GLYPH_ITEM = { $: 'coin pile', '*': 'gem', '!': 'potion', '=': 'chest' };
+const GLYPH_ENEMY = { x: 'crawler', m: 'moth', h: 'shade', w: 'wisp' };
+function frameCells(frame) {
+  const rows = frame.split('\n').slice(0, -1), cells = [];
+  rows.forEach((r, y) => [...r].forEach((g, x) => cells.push({ g, x, y })));
+  return cells;
+}
+const hudValue = (frame, name) => { const m = new RegExp(`${name} (\\d+)`).exec(frame.split('\n').at(-1)); return m ? Number(m[1]) : null; };
+// The differences between a build's observation and the one the rules predict (the control build stepped from the same
+// state), as plain statements. No class names, no template ids: what a tester sees.
+export function describeDifferences(obs, cobs) {
+  const out = [], s = obs.state, c = cobs.state;
+  if (obs.status !== cobs.status) out.push(`the session ends with status ${obs.status}${obs.error ? ` (${String(obs.error).split('\n')[0]})` : ''} where the rules keep it ${cobs.status}`);
+  const ev = obs.events.join(' '), cev = cobs.events.join(' ');
+  if (ev !== cev) out.push(`the events read "${ev || 'nothing'}" where the rules give "${cev || 'nothing'}"`);
+  if (obs.status === 'crashed') return out;
+  if (s.player.x !== c.player.x || s.player.y !== c.player.y) out.push(`the player stands at (${s.player.x}, ${s.player.y}) where the rules put (${c.player.x}, ${c.player.y})`);
+  if (s.floor !== c.floor) out.push(`the player is on floor ${s.floor} where the rules put floor ${c.floor}`);
+  if (s.player.hp !== c.player.hp) out.push(`HP is ${s.player.hp} where the rules give ${c.player.hp}`);
+  if (s.gold !== c.gold) out.push(`gold is ${s.gold} where the rules give ${c.gold}`);
+  for (const k of ['gems', 'potions']) if (s.inventory[k] !== c.inventory[k]) out.push(`${k} number ${s.inventory[k]} where the rules give ${c.inventory[k]}`);
+  for (const k of ['sword', 'lantern']) if (s.inventory[k] !== c.inventory[k]) out.push(`the ${k} is ${s.inventory[k] ? 'carried' : 'missing'} where the rules have it ${c.inventory[k] ? 'carried' : 'missing'}`);
+  const keys = x => (x.inventory.keys.length ? [...x.inventory.keys].sort().join(', ') : 'none');
+  if (keys(s) !== keys(c)) out.push(`the keys carried are ${keys(s)} where the rules give ${keys(c)}`);
+  // frame against state: a status line that disagrees with the state, glyphs the state does not explain
+  const fg = hudValue(obs.frame, 'Gold'), fh = hudValue(obs.frame, 'HP');
+  if (fg !== null && fg !== s.gold) out.push(`the status line shows gold ${fg} while the state says ${s.gold}`);
+  if (fh !== null && fh !== s.player.hp) out.push(`the status line shows HP ${fh} while the state says ${s.player.hp}`);
+  const cells = frameCells(obs.frame), at = (x, y) => cells.find(q => q.x === x && q.y === y)?.g;
+  for (const q of cells) {
+    if (GLYPH_ITEM[q.g] && !s.items.some(i => i.x === q.x && i.y === q.y)) out.push(`the map draws a ${GLYPH_ITEM[q.g]} at (${q.x}, ${q.y}) but the state lists none there`);
+    if (GLYPH_ENEMY[q.g] && !s.enemies.some(e => e.x === q.x && e.y === q.y)) out.push(`the map draws a ${GLYPH_ENEMY[q.g]} at (${q.x}, ${q.y}) but the state puts none there`);
+  }
+  for (const e of s.enemies) {
+    const ce = c.enemies.find(x => x.id === e.id);
+    if (ce && (ce.x !== e.x || ce.y !== e.y)) out.push(`the ${e.kind} ${e.id} stands at (${e.x}, ${e.y}) where the rules put it at (${ce.x}, ${ce.y})`);
+  }
+  for (const d of s.doors) {
+    const cd = c.doors.find(x => x.x === d.x && x.y === d.y);
+    if (cd && cd.open !== d.open) out.push(`the ${d.color ?? d.kind} door at (${d.x}, ${d.y}) is ${d.open ? 'open' : 'shut'} where the rules have it ${cd.open ? 'open' : 'shut'}`);
+    const g = at(d.x, d.y);
+    if (g === "'" && !d.open) out.push(`the map draws the door at (${d.x}, ${d.y}) open while the state says it is shut`);
+  }
+  for (const i of c.items) if (!s.items.some(x => x.kind === i.kind && x.x === i.x && x.y === i.y)) out.push(`the state lists no ${i.kind} at (${i.x}, ${i.y}) where the rules keep one`);
+  const walls = (x) => cells.filter(q => q.g === '#').length;
+  const cwalls = frameCells(cobs.frame).filter(q => q.g === '#').length;
+  if (walls() !== cwalls) out.push(`the map shows ${walls() - cwalls > 0 ? 'more' : 'fewer'} wall tiles than the rules give`);
+  return out;
+}
+
+// the trigger step of every planted bug: the build and the rules stepped from the pre-state of the last action of its repro
+export function triggerEffects(mod, task, c) {
+  const { Game } = mod.engine, out = [];
+  for (const b of c.bugs) {
+    const g = new Game(c.world, c.bugs), actions = c.repros[b.id];
+    for (let i = 0; i < actions.length - 1; i++) g.step(actions[i]);
+    const pre = g.exportState();
+    g.step(actions.at(-1));
+    const ctl = new Game(c.world, []);
+    ctl.importState(pre); ctl.step(actions.at(-1));
+    const obs = g.observation(), cobs = ctl.observation(), diffs = describeDifferences(obs, cobs);
+    out.push({ bug: b, actions, last: actions.at(-1), diffs, effect: diffs.length ? `After the last action (${actions.at(-1)}) ${diffs.join('; ')}.` : null });
+  }
+  return out;
+}
+
+// ================================================================================================================
+// Q6: planted defects against designed behaviours
+// ================================================================================================================
+export function defectBehaviours(mod, task, c, tap) {
+  const out = [];
+  for (const b of c.bugs) {
+    const key = b.template === 'crash_action' ? `crash_action:${b.variant}` : b.template;
+    const sections = tap.BUG_SECTIONS[key];
+    if (!sections) continue;                           // chest_rubble: the specification does not say whether rubble may fall
+    const floor = b.template === 'wall_clip' ? c.world.levels[b.level].name : null;
+    out.push({ id: `defect:${b.id}`, label: 'defect', behaviour: mod.text.hintText(c.world, b), sections, floor, template: b.template });
+  }
+  return out;
+}
+export function designedBehaviours(task, c, aligned, tap, strip) {
+  const out = [];
+  for (const a of aligned) {
+    if (a.kind !== 'designed') continue;
+    const sections = tap.DECOY_SECTIONS[a.report.title];
+    if (!sections) continue;
+    out.push({ id: `designed:${a.id}`, label: 'designed', behaviour: `${a.report.title}. ${strip(a.report.body)}`, sections, floor: sections.includes(2) ? c.world.levels[0].name : null, title: a.report.title });
+  }
+  return out;
+}

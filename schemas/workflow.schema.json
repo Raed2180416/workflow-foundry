@@ -37,6 +37,15 @@
     "acceptance": {"$ref": "#/definitions/checks"},
     "labels": {"type": "object", "maxProperties": 256, "propertyNames": {"maxLength": 512, "pattern": "^input(\\.[A-Za-z0-9_-]+)*$"}, "additionalProperties": {"$ref": "#/definitions/label"}},
     "discovery": {"type": "boolean"},
+    "defaultClass": {"type": "string", "minLength": 1, "maxLength": 16, "description": "The model class most nodes are expected to start on. A model node that starts above it needs model.justification (strict lint CLASS_ABOVE_DEFAULT_UNJUSTIFIED). Absent: the cheapest class any model node starts on."},
+    "oracle": {
+      "type": "object", "additionalProperties": false, "required": ["mode", "reason"],
+      "description": "Declares that no independent oracle exists for this task. Without it, acceptance that only checks that an answer exists is a strict-lint error. With it, a succeeded run ends with verdict \"unverified\", never \"pass\".",
+      "properties": {
+        "mode": {"const": "none"},
+        "reason": {"type": "string", "minLength": 20, "maxLength": 2000, "description": "Why no executable or independent check exists and what a person should check instead."}
+      }
+    },
     "metadata": {
       "type": "object", "additionalProperties": false,
       "properties": {
@@ -53,7 +62,8 @@
     "label": {"type": "string", "maxLength": 512, "pattern": "^(?:trusted|untrusted:[A-Za-z0-9_.:-]+(?:\\+[A-Za-z0-9_.:-]+)*)$"},
     "modelChoice": {
       "type": "object", "additionalProperties": false, "minProperties": 1,
-      "properties": {"class": {"type": "string", "minLength": 1, "maxLength": 16}, "id": {"type": "string", "minLength": 1, "maxLength": 128}, "maxClass": {"type": "string", "minLength": 1, "maxLength": 16}},
+      "properties": {"class": {"type": "string", "minLength": 1, "maxLength": 16}, "id": {"type": "string", "minLength": 1, "maxLength": 128}, "maxClass": {"type": "string", "minLength": 1, "maxLength": 16},
+        "justification": {"type": "string", "minLength": 10, "maxLength": 1000, "description": "Why this node starts on a class above the workflow default, ideally the result of a cheaper-class attempt."}},
       "anyOf": [{"required": ["class"]}, {"required": ["id"]}]
     },
     "contextInput": {

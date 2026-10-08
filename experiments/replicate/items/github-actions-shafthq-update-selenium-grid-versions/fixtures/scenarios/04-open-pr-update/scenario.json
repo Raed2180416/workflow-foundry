@@ -1,0 +1,125 @@
+{
+ "kind": "open-pr-update",
+ "seed": 4,
+ "split": "dev",
+ "difficulty": 5,
+ "trigger": "schedule",
+ "composePath": "src/main/resources/docker-compose/selenium4.yml",
+ "fetch": {
+  "status": 200,
+  "bodyFile": "recorded/reference.yml"
+ },
+ "openPullRequests": [
+  {
+   "number": 32,
+   "state": "open",
+   "head": "auto-update-selenium-grid-versions",
+   "base": "main",
+   "title": "Update Selenium Grid Docker images to latest stable versions",
+   "body": "Automated Docker Image Update (older run)",
+   "labels": [
+    "dependencies",
+    "automated"
+   ],
+   "commitMessage": "older run",
+   "files": {
+    "src/main/resources/docker-compose/selenium4.yml": {
+     "status": "modified",
+     "content": "# Selenium Grid 4 for the engine tests (synthetic fixture, shaped like the real file but not copied from it).\n# Browser nodes join the hub below; keep every image on the same dated release.\nservices:\n  selenium-hub:\n    image: selenium/hub:4.29.0-20250510\n    container_name: selenium-hub\n    ports:\n      - \"4442:4442\"\n      - \"4443:4443\"\n      - \"4444:4444\"\n  chrome:\n    image: selenium/node-chrome:4.29.0-20250510\n    shm_size: 2gb\n    depends_on:\n      - selenium-hub\n    environment:\n      - SE_EVENT_BUS_HOST=selenium-hub\n      - SE_EVENT_BUS_PUBLISH_PORT=4442\n      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443\n  edge:\n    image: selenium/node-edge:4.29.0-20250510\n    shm_size: 2gb\n    depends_on:\n      - selenium-hub\n    environment:\n      - SE_EVENT_BUS_HOST=selenium-hub\n      - SE_EVENT_BUS_PUBLISH_PORT=4442\n      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443\n  firefox:\n    image: selenium/node-firefox:4.29.0-20250510\n    shm_size: 2gb\n    depends_on:\n      - selenium-hub\n    environment:\n      - SE_EVENT_BUS_HOST=selenium-hub\n      - SE_EVENT_BUS_PUBLISH_PORT=4442\n      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443\n"
+    }
+   }
+  },
+  {
+   "number": 37,
+   "state": "open",
+   "head": "dependabot/maven/org.testng-testng-7.11.0",
+   "base": "main",
+   "title": "Bump org.testng:testng from 7.10.2 to 7.11.0",
+   "body": "",
+   "labels": [
+    "dependencies"
+   ],
+   "commitMessage": "Bump testng",
+   "files": {
+    "pom.xml": {
+     "status": "modified",
+     "content": "<!-- bumped testng -->\n"
+    }
+   }
+  }
+ ],
+ "truth": {
+  "original": {
+   "status": "updated",
+   "versions": {
+    "current": {
+     "chrome": "4.29.0-20250510",
+     "edge": "4.29.0-20250510",
+     "firefox": "4.29.0-20250510",
+     "hub": "4.29.0-20250510"
+    },
+    "latest": {
+     "chrome": "4.32.0-20250521",
+     "edge": "4.29.0-20250510",
+     "firefox": "4.30.0-20250520",
+     "hub": "4.29.0-20250510"
+    }
+   },
+   "changed": [
+    {
+     "key": "chrome",
+     "from": "4.29.0-20250510",
+     "to": "4.32.0-20250521"
+    },
+    {
+     "key": "firefox",
+     "from": "4.29.0-20250510",
+     "to": "4.30.0-20250520"
+    }
+   ],
+   "prAction": "updated",
+   "prNumber": 32,
+   "message": null,
+   "composeAfter": "expected-original.yml"
+  },
+  "intent": {
+   "status": "updated",
+   "versions": {
+    "current": {
+     "chrome": "4.29.0-20250510",
+     "edge": "4.29.0-20250510",
+     "firefox": "4.29.0-20250510",
+     "hub": "4.29.0-20250510"
+    },
+    "latest": {
+     "chrome": "4.32.0-20250521",
+     "edge": "4.29.0-20250510",
+     "firefox": "4.30.0-20250520",
+     "hub": "4.29.0-20250510"
+    }
+   },
+   "changed": [
+    {
+     "key": "chrome",
+     "from": "4.29.0-20250510",
+     "to": "4.32.0-20250521"
+    },
+    {
+     "key": "firefox",
+     "from": "4.29.0-20250510",
+     "to": "4.30.0-20250520"
+    }
+   ],
+   "prAction": "updated",
+   "prNumber": 32,
+   "message": null,
+   "composeAfter": "expected-intent.yml"
+  }
+ },
+ "meta": {
+  "bump": [
+   "firefox",
+   "chrome"
+  ]
+ }
+}

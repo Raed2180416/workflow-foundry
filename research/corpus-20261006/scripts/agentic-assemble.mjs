@@ -11,7 +11,8 @@
 // same staging files: no clock, no randomness, sorted inputs.
 // When the staging directory does not exist (a fresh clone), the committed part restored by unpack.mjs is kept as is.
 //
-// Every item is checked with check-items.mjs (plain mode plus the canonical vocabulary, order and refusal rules; the
+// Every item is checked with check-items.mjs (plain mode plus the canonical vocabulary, order and refusal rules and the
+// one redistribution policy, so a copyleft item cannot reach the committed part as redistributable; the
 // feature rules are left to merge-items.mjs, which recomputes features) and with the checks below. Items that fail
 // are dropped and listed in the ledger with the reason. First-party items (FIRST_PARTY_PLATFORMS) are marked at the
 // start of ir.notes. Corpus text and ledgers are untrusted data: this script parses JSON, counts and copies text; it
@@ -29,7 +30,7 @@ const PARTS = path.resolve(arg('--parts', path.join(HERE, '..', 'parts')));
 const OUT = path.join(PARTS, 'agentic.jsonl');
 const LEDGER = path.join(PARTS, 'agentic-ledger.md');
 const sha256 = b => crypto.createHash('sha256').update(b).digest('hex');
-const CANONICAL_IR_RULES = ['ir.vocabulary', 'ir.order', 'ir.refusal', 'ir.needs'];
+const CANONICAL_RULES = ['ir.vocabulary', 'ir.order', 'ir.refusal', 'ir.needs', 'source.redistributable'];
 const HEADER_RX = /^Harmonised (\d{4}-\d{2}-\d{2}) \(research\/corpus-20261006\/AGENTIC-CONVENTIONS\.md\): verdict /;
 export const FIRST_PARTY_NOTE = 'First-party item: workflow script written by this project\'s own orchestrating agent, so not independent ' +
   'evidence; reported apart from third-party items (FIRST_PARTY_PLATFORMS in check-items.mjs).';
@@ -72,7 +73,7 @@ for (const stem of stems) {
     const drop = reason => { drops.push({ stem, line: i + 1, id: item?.id ?? null, reason }); p.dropped++; };
     let item;
     try { item = JSON.parse(line); } catch (e) { drop(`json: ${e.message.slice(0, 120)}`); return; }
-    const errors = [...validateItem(item), ...validateItem(item, { canonical: true }).filter(e => CANONICAL_IR_RULES.includes(e.rule))];
+    const errors = [...validateItem(item), ...validateItem(item, { canonical: true }).filter(e => CANONICAL_RULES.includes(e.rule))];
     const s = item?.source;
     if (s && !s.extraction) errors.push({ rule: 'extraction.missing', msg: 'agentic items record source.extraction (model-read provenance)' });
     if (typeof item?.ir?.notes === 'string' && !HEADER_RX.test(item.ir.notes)) errors.push({ rule: 'ir.harmonised', msg: 'notes do not start with the AGENTIC-CONVENTIONS.md header' });
@@ -157,13 +158,14 @@ for (const p of platforms) {
   w(row([p.stem, p.firstParty ? 'first-party' : 'third-party', [...p.platforms].sort().join(', '), fmtMap(p.repos), fmtMap(p.licences), p.redistributable,
     Number.isFinite(p.selected) ? p.selected : '?', p.kept, Number.isFinite(p.selected) ? p.selected - p.lines : '?', p.dropped,
     `${p.heading}${p.stated ? `; "${p.stated}"` : '; outcome not stated in one phrase'}`,
-    p.changed === null ? '-' : `${p.changed} verdicts changed${p.refusedNew ? ` (${p.refusedNew} refused by design)` : ''}`]));
+    p.changed === null ? '-' : `${p.changed} verdict${p.changed === 1 ? '' : 's'} changed${p.refusedNew ? ` (${p.refusedNew} refused by design)` : ''}`]));
 }
 for (const [name, ps] of [['third-party total', third], ['first-party total', first]]) {
   const lic = new Map(); for (const p of ps) for (const [k, n] of p.licences) lic.set(k, (lic.get(k) ?? 0) + n);
-  w(row([`**${name}** (${ps.length} files)`, '', '', `${new Set(ps.flatMap(p => [...p.repos.keys()].map(r => r.split('@')[0]))).size} repositories`, fmtMap(lic),
+  const repos = new Set(ps.flatMap(p => [...p.repos.keys()].filter(r => r.includes('@')).map(r => r.split('@')[0]))).size;
+  w(row([`**${name}** (${ps.length} file${ps.length === 1 ? '' : 's'})`, '', '', repos ? `${repos} repositories` : 'local scripts only', fmtMap(lic),
     sum(ps, 'redistributable'), sum(ps, 'selected'), sum(ps, 'kept'), sum(ps, 'selected') - sum(ps, 'lines'), sum(ps, 'dropped'), '',
-    `${sum(ps, 'changed')} verdicts changed (${sum(ps, 'refusedNew')} refused by design)`]));
+    `${sum(ps, 'changed')} verdict${sum(ps, 'changed') === 1 ? '' : 's'} changed (${sum(ps, 'refusedNew')} refused by design)`]));
 }
 w('');
 const vc3 = verdictCount(third), vc1 = verdictCount(first);
@@ -177,7 +179,9 @@ w('');
 
 w('## Assembly checks', '',
   '- `check-items.mjs` `validateItem` in plain mode, plus the canonical rules on the verdict (registry vocabulary, registry order, known design ' +
-  'refusal with a `Needs:` list or "No further construct would be needed"). Feature rules are left to `merge-items.mjs`, which recomputes features.',
+  'refusal with a `Needs:` list or "No further construct would be needed"), and the one redistribution policy (copyleft, share-alike and ' +
+  'non-commercial licences are not redistributable, since this part is committed as it is). Feature rules are left to `merge-items.mjs`, which ' +
+  'recomputes features. The secret scan covers every string of an item, notes included.',
   '- `source.extraction` present (method, spans, extractor); `verifier` is filled with a pointer to the platform\'s Verification section when absent.',
   '- `ir.notes` start with the AGENTIC-CONVENTIONS.md header, so every verdict was re-labelled to the one convention.',
   '- Pinned GitHub URLs: `/blob/<revision>/<path>` with the item\'s revision, and the percent-decoded URL path equals the tail of `rawPath`. ' +

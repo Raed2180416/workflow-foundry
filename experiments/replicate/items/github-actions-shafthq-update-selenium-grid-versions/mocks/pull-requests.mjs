@@ -3,7 +3,9 @@
 //   * it compares the working tree with the checked-out base; with no difference it does nothing (operation "none");
 //   * otherwise it commits the difference to `branch` and opens a pull request from it into the base branch;
 //   * if an open pull request from that branch exists, it is UPDATED (same number), never duplicated;
-//   * inputs left out take the action's defaults; `labels` is a comma- or newline-separated list.
+//   * inputs left out take the action's defaults; `labels` is a comma- or newline-separated list;
+//   * simplification: on an update every field becomes what the run supplied (the real action only ADDS labels; here a run that supplies none
+//     is judged as having none).
 // Only the inputs the original uses are implemented; any other input throws, so a variant that relies on one is not silently flattened.
 import { PR } from '../spec.mjs';
 
@@ -65,7 +67,8 @@ export class PullRequestStore {
       created: this.events.filter(e => e.operation === 'created').length,
       updated: this.events.filter(e => e.operation === 'updated').length,
       requests: this.events.length,
-      othersChanged: this.before.filter(b => b.head !== PR.branch).some(b => JSON.stringify(b) !== JSON.stringify(this.pulls.find(p => p.number === b.number))),
+      touched: [...this.touched].sort((a, b) => a - b),
+      botBefore: structuredClone(this.before.find(b => b.head === PR.branch) ?? null),
     };
   }
 }

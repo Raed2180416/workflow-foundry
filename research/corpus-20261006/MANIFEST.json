@@ -2,20 +2,23 @@
  "schema": "foundry-corpus-manifest/1",
  "corpus": "corpus-20261006",
  "itemSchema": "foundry-corpus-item/1 (ITEM-SCHEMA.md)",
- "generatedAt": "2026-10-07",
+ "generatedAt": "2026-10-08",
  "status": "development/diagnostic corpus; not sealed evaluation evidence. Graphs, features and IR verdicts are static-analysis heuristics, not compiled or executed.",
  "generators": [
+  "scripts/agentic-assemble.mjs",
   "scripts/merge-items.mjs",
   "scripts/check-items.mjs",
   "scripts/coverage-report.mjs"
  ],
- "reproduce": "cd research/corpus-20261006 && node scripts/merge-items.mjs && node scripts/check-items.mjs items.jsonl --canonical && node scripts/coverage-report.mjs",
+ "reproduce": "cd research/corpus-20261006 && node scripts/agentic-assemble.mjs && node scripts/merge-items.mjs && node scripts/check-items.mjs items.jsonl --canonical && node scripts/coverage-report.mjs",
+ "restore": "node research/corpus-20261006/scripts/unpack.mjs (restores items.jsonl and parts/*.jsonl from the .gz copies in git and checks every sha256 below)",
+ "pack": "node research/corpus-20261006/scripts/unpack.mjs --pack (rewrites a .gz only when its content differs from the manifest hash; gzip level 9, no name or timestamp)",
  "files": {
   "items": {
    "path": "items.jsonl",
-   "bytes": 24736654,
-   "lines": 1342,
-   "sha256": "b968d16807847a0d2b1f1b3a66a4d1b393d86805f2235c805136a5437608b3a0",
+   "bytes": 26353889,
+   "lines": 1559,
+   "sha256": "e085e2ef829767ea3a55abbbc92c93a316125ef05b3df3f20c3ece05ffbdb33a",
    "inGit": false,
    "distribution": "too large for git (> 5 MB): publish as a release asset; it includes redistributable:false items reduced to URL + derived graph + features, which needs the owner's confirmation before publishing"
   },
@@ -29,9 +32,9 @@
   },
   "mergeLog": {
    "path": "merge-log.json",
-   "bytes": 10429,
-   "lines": 358,
-   "sha256": "4cc07d700369992042c036b738923c9989cd566619879e3c6c37ae7dc51619d5"
+   "bytes": 24142,
+   "lines": 829,
+   "sha256": "c3845e7929ea107d4cf8b8ead033ef415317a0922f215d5c0df37cdc8a32c195"
   },
   "parts": [
    {
@@ -40,7 +43,10 @@
     "lines": 396,
     "bytes": 3321251,
     "sha256": "c599838fea1b921f62aa74b3d6169ed783c137414458b8f1fbfe2ec47eb86264",
+    "gz": "parts/automation.jsonl.gz",
     "ledger": "parts/automation-ledger.md",
+    "ledgerBytes": 19312,
+    "ledgerSha256": "48a8b41edeefbd7e6a69022731e7daee2a41f5d13ee726b45bd5c42ffa227b4a",
     "inGit": "small enough"
    },
    {
@@ -49,7 +55,10 @@
     "lines": 400,
     "bytes": 3104069,
     "sha256": "a781c67e2e3e3f7c88b634c3c286308b289a623d4e235859defa7b97e22d5b95",
+    "gz": "parts/orchestration.jsonl.gz",
     "ledger": "parts/orchestration-ledger.md",
+    "ledgerBytes": 44136,
+    "ledgerSha256": "5fd46144864acd2a93a690c8dab770e600d1b9c23bb94dde7a566f5685dfc54e",
     "inGit": "small enough"
    },
    {
@@ -58,7 +67,10 @@
     "lines": 278,
     "bytes": 12208842,
     "sha256": "133439979cd47c0b76aa845269266e428cd55703afc8cf4c09d6f6d525408264",
+    "gz": "parts/science.jsonl.gz",
     "ledger": "parts/science-ledger.md",
+    "ledgerBytes": 103432,
+    "ledgerSha256": "a206dc2825322338bcbe7d59d2c520a29303236eab683b5bd85c97423086e48c",
     "inGit": "over 5 MB: release asset recommended"
    },
    {
@@ -67,18 +79,34 @@
     "lines": 273,
     "bytes": 7383293,
     "sha256": "47c4ba85a99adcef02bab74d9b65eb29d4d1cf7bdd8cab06ef2476a3a51ca57a",
+    "gz": "parts/consumer-creative.jsonl.gz",
     "ledger": "parts/consumer-creative-ledger.md",
+    "ledgerBytes": 26430,
+    "ledgerSha256": "12f51e25754fbd873ff39b11dbfcbf827ec88bc16077528586e6e267df34899a",
     "inGit": "over 5 MB: release asset recommended"
+   },
+   {
+    "part": "parts/agentic.jsonl",
+    "cluster": "agentic",
+    "lines": 217,
+    "bytes": 1789815,
+    "sha256": "5c78971803ea5d6380ba81a7776e63564f332fdf077906756475c6ad5b445148",
+    "gz": "parts/agentic.jsonl.gz",
+    "ledger": "parts/agentic-ledger.md",
+    "ledgerBytes": 962208,
+    "ledgerSha256": "babbf4983f8f63ecdc001a5be560aba7de347f772a3abe51261e1d407d54fefb",
+    "inGit": "small enough"
    }
   ]
  },
  "counts": {
-  "items": 1342,
+  "items": 1559,
   "byCluster": {
    "automation": 395,
    "orchestration": 396,
    "science": 278,
-   "consumer-creative": 273
+   "consumer-creative": 273,
+   "agentic": 217
   },
   "byPlatform": {
    "activepieces": 40,
@@ -107,18 +135,47 @@
    "apple-shortcuts": 79,
    "comfyui": 73,
    "home-assistant": 96,
-   "ifttt": 25
+   "ifttt": 25,
+   "ag2": 8,
+   "agno": 10,
+   "anthropic": 12,
+   "autogen": 14,
+   "burr": 8,
+   "camel": 3,
+   "claude-code-workflows": 10,
+   "crewai": 13,
+   "dspy": 10,
+   "google-adk": 15,
+   "haystack": 8,
+   "inngest-agentkit": 7,
+   "langgraph": 18,
+   "llamaindex-workflows": 10,
+   "mastra": 8,
+   "metagpt": 4,
+   "openai-agents": 18,
+   "openai-swarm": 6,
+   "pydantic-graph": 9,
+   "semantic-kernel": 9,
+   "smolagents": 6,
+   "strands": 11
   },
-  "redistributable": 850,
+  "firstParty": {
+   "platforms": [
+    "claude-code-workflows"
+   ],
+   "items": 10,
+   "note": "workflows written by this project's own agent: not independent evidence, reported apart from third-party items and never pooled with them"
+  },
+  "redistributable": 1042,
   "byLicence": {
-   "Apache-2.0": 467,
-   "MIT": 315,
-   "unknown": 148,
+   "Apache-2.0": 545,
+   "MIT": 422,
+   "unknown": 172,
    "ToS:https://n8n.io/legal/self-serve-terms/": 135,
    "GPL-3.0": 47,
    "ToS:https://www.activepieces.com/terms": 40,
    "ToS:https://marketplace.dify.ai/terms": 39,
-   "CC-BY-4.0": 25,
+   "CC-BY-4.0": 33,
    "ToS:https://ifttt.com/terms": 25,
    "ToS:https://zapier.com/legal/terms-of-service": 25,
    "BSD-3-Clause": 21,
@@ -144,28 +201,29 @@
    "MPL-2.0": 1
   },
   "byLicenceFamily": {
-   "permissive": 839,
+   "permissive": 1032,
    "terms of service": 264,
-   "unknown": 148,
+   "unknown": 172,
    "copyleft / share-alike": 72,
    "other / custom": 14,
    "non-commercial": 5
   },
   "byVerdict": {
-   "via-extension": 864,
-   "native": 476,
+   "via-extension": 1003,
+   "native": 521,
+   "refused-by-design": 33,
    "unsupported": 2
   },
   "byOracle": {
-   "none": 952,
-   "test-profile": 260,
-   "output-equivalence": 106,
-   "mocked-execution": 24
+   "none": 1121,
+   "test-profile": 277,
+   "output-equivalence": 108,
+   "mocked-execution": 53
   },
   "droppedInvalid": 0,
   "droppedDuplicates": 5,
-  "nodes": 78278,
-  "edges": 137325
+  "nodes": 80280,
+  "edges": 140209
  },
  "sources": [
   {
@@ -4197,6 +4255,661 @@
    ],
    "revisionCount": 25,
    "ledger": "parts/consumer-creative-ledger.md"
+  },
+  {
+   "platform": "ag2",
+   "cluster": "agentic",
+   "origin": "github.com/ag2ai/ag2",
+   "items": 8,
+   "redistributable": 8,
+   "licences": {
+    "Apache-2.0": 8
+   },
+   "revisions": [
+    "ac380f5c7962ad875f77c4f8310e3c1167bceeb7",
+    "e1c8857e933c3798903f1d7250ccc54d639bad24"
+   ],
+   "retrievedAt": [
+    "2026-10-07"
+   ],
+   "revisionCount": 2,
+   "ledger": "parts/agentic-ledger.md"
+  },
+  {
+   "platform": "agno",
+   "cluster": "agentic",
+   "origin": "github.com/agno-agi/agno",
+   "items": 10,
+   "redistributable": 10,
+   "licences": {
+    "Apache-2.0": 10
+   },
+   "revisions": [
+    "718ae26fb90f4c49bf4c4b6d302f4ef695196e7d"
+   ],
+   "retrievedAt": [
+    "2026-10-07"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/agentic-ledger.md"
+  },
+  {
+   "platform": "anthropic",
+   "cluster": "agentic",
+   "origin": "github.com/anthropics/claude-cookbooks",
+   "items": 11,
+   "redistributable": 11,
+   "licences": {
+    "MIT": 11
+   },
+   "revisions": [
+    "d7265d6ae994ccd8429db0594b000073b2f9ad43"
+   ],
+   "retrievedAt": [
+    "2026-10-07"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/agentic-ledger.md"
+  },
+  {
+   "platform": "anthropic",
+   "cluster": "agentic",
+   "origin": "github.com/anthropics/claude-agent-sdk-python",
+   "items": 1,
+   "redistributable": 0,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "f7b0b62c2a8d110d4da0eec0aa70cf795ec3afc4"
+   ],
+   "retrievedAt": [
+    "2026-10-07"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/agentic-ledger.md"
+  },
+  {
+   "platform": "autogen",
+   "cluster": "agentic",
+   "origin": "github.com/microsoft/autogen",
+   "items": 14,
+   "redistributable": 14,
+   "licences": {
+    "CC-BY-4.0": 8,
+    "MIT": 6
+   },
+   "revisions": [
+    "027ecf0a379bcc1d09956d46d12d44a3ad9cee14"
+   ],
+   "retrievedAt": [
+    "2026-10-07"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/agentic-ledger.md"
+  },
+  {
+   "platform": "burr",
+   "cluster": "agentic",
+   "origin": "github.com/apache/burr",
+   "items": 8,
+   "redistributable": 8,
+   "licences": {
+    "Apache-2.0": 8
+   },
+   "revisions": [
+    "8161159148e9b9c795f683625d6721f2c955f9d8"
+   ],
+   "retrievedAt": [
+    "2026-10-07"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/agentic-ledger.md"
+  },
+  {
+   "platform": "camel",
+   "cluster": "agentic",
+   "origin": "github.com/camel-ai/camel",
+   "items": 3,
+   "redistributable": 3,
+   "licences": {
+    "Apache-2.0": 3
+   },
+   "revisions": [
+    "24fde60ad739b4be8f8f533fea9ba54256fbc4a2"
+   ],
+   "retrievedAt": [
+    "2026-10-07"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/agentic-ledger.md"
+  },
+  {
+   "platform": "claude-code-workflows",
+   "cluster": "agentic",
+   "party": "first-party",
+   "origin": "local (first-party session scripts, no public location)",
+   "items": 10,
+   "redistributable": 0,
+   "licences": {
+    "unknown": 10
+   },
+   "revisions": [
+    "sha256:45e7109427fc4318",
+    "sha256:2b01de684e3d04a5",
+    "sha256:d095c05db6e80d00",
+    "sha256:6fbc2db7ec500a55",
+    "sha256:56b278503a19f9a8"
+   ],
+   "retrievedAt": [
+    "2026-10-07"
+   ],
+   "revisionCount": 10,
+   "ledger": "parts/agentic-ledger.md"
+  },
+  {
+   "platform": "crewai",
+   "cluster": "agentic",
+   "origin": "github.com/crewAIInc/crewAI-examples",
+   "items": 8,
+   "redistributable": 0,
+   "licences": {
+    "unknown": 8
+   },
+   "revisions": [
+    "da94a91e691e1cf5b3151416bb15b5b62729bea8"
+   ],
+   "retrievedAt": [
+    "2026-10-07"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/agentic-ledger.md"
+  },
+  {
+   "platform": "crewai",
+   "cluster": "agentic",
+   "origin": "github.com/crewAIInc/crewAI",
+   "items": 5,
+   "redistributable": 5,
+   "licences": {
+    "MIT": 5
+   },
+   "revisions": [
+    "d5efc4584781cba343d10e379f073f4e68454fe9"
+   ],
+   "retrievedAt": [
+    "2026-10-07"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/agentic-ledger.md"
+  },
+  {
+   "platform": "dspy",
+   "cluster": "agentic",
+   "origin": "github.com/stanfordnlp/dspy",
+   "items": 10,
+   "redistributable": 10,
+   "licences": {
+    "MIT": 10
+   },
+   "revisions": [
+    "a7e7edb8c6803d88aeb25c6a0412657c01835bc5"
+   ],
+   "retrievedAt": [
+    "2026-10-07"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/agentic-ledger.md"
+  },
+  {
+   "platform": "google-adk",
+   "cluster": "agentic",
+   "origin": "github.com/google/adk-python",
+   "items": 8,
+   "redistributable": 8,
+   "licences": {
+    "Apache-2.0": 8
+   },
+   "revisions": [
+    "7d190e6ebccf8b172c6c25583c3916b6352ca78a"
+   ],
+   "retrievedAt": [
+    "2026-10-07"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/agentic-ledger.md"
+  },
+  {
+   "platform": "google-adk",
+   "cluster": "agentic",
+   "origin": "github.com/google/adk-samples",
+   "items": 7,
+   "redistributable": 7,
+   "licences": {
+    "Apache-2.0": 7
+   },
+   "revisions": [
+    "c339821da836d05a366de7687c6c75f0b2c9c9af"
+   ],
+   "retrievedAt": [
+    "2026-10-07"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/agentic-ledger.md"
+  },
+  {
+   "platform": "haystack",
+   "cluster": "agentic",
+   "origin": "github.com/deepset-ai/haystack-cookbook",
+   "items": 6,
+   "redistributable": 0,
+   "licences": {
+    "unknown": 6
+   },
+   "revisions": [
+    "35212da9a2dfe6374b02f11c5f1a541265b09c1d"
+   ],
+   "retrievedAt": [
+    "2026-10-07"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/agentic-ledger.md"
+  },
+  {
+   "platform": "haystack",
+   "cluster": "agentic",
+   "origin": "github.com/deepset-ai/haystack-core-integrations",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "9f5334623f08d5a00c5976fd2c03817703d62570"
+   ],
+   "retrievedAt": [
+    "2026-10-07"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/agentic-ledger.md"
+  },
+  {
+   "platform": "haystack",
+   "cluster": "agentic",
+   "origin": "github.com/deepset-ai/haystack",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "6ca8349091c09af89ec0090aa13cb22de1d88bfb"
+   ],
+   "retrievedAt": [
+    "2026-10-07"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/agentic-ledger.md"
+  },
+  {
+   "platform": "inngest-agentkit",
+   "cluster": "agentic",
+   "origin": "github.com/inngest/agent-kit",
+   "items": 7,
+   "redistributable": 7,
+   "licences": {
+    "Apache-2.0": 7
+   },
+   "revisions": [
+    "6c9802fd79471bd77c0072a2978f45720dc1ca99"
+   ],
+   "retrievedAt": [
+    "2026-10-07"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/agentic-ledger.md"
+  },
+  {
+   "platform": "langgraph",
+   "cluster": "agentic",
+   "origin": "github.com/langchain-ai/langgraph",
+   "items": 13,
+   "redistributable": 13,
+   "licences": {
+    "MIT": 13
+   },
+   "revisions": [
+    "23961cff61a42b52525f3b20b4094d8d2fba1744"
+   ],
+   "retrievedAt": [
+    "2026-10-07"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/agentic-ledger.md"
+  },
+  {
+   "platform": "langgraph",
+   "cluster": "agentic",
+   "origin": "github.com/langchain-ai/data-enrichment",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "eb30528db9e738a2459f72f61dff075363a03a7c"
+   ],
+   "retrievedAt": [
+    "2026-10-07"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/agentic-ledger.md"
+  },
+  {
+   "platform": "langgraph",
+   "cluster": "agentic",
+   "origin": "github.com/langchain-ai/langgraph-supervisor-py",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "88859b34017ac3569bbd4a3092c7e77593a0a960"
+   ],
+   "retrievedAt": [
+    "2026-10-07"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/agentic-ledger.md"
+  },
+  {
+   "platform": "langgraph",
+   "cluster": "agentic",
+   "origin": "github.com/langchain-ai/langgraph-swarm-py",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "5442a15cdd0ed210589148900c9960c24c489d04"
+   ],
+   "retrievedAt": [
+    "2026-10-07"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/agentic-ledger.md"
+  },
+  {
+   "platform": "langgraph",
+   "cluster": "agentic",
+   "origin": "github.com/langchain-ai/memory-agent",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "c43fd200a54843a4d531ce252d053f351bd5633f"
+   ],
+   "retrievedAt": [
+    "2026-10-07"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/agentic-ledger.md"
+  },
+  {
+   "platform": "langgraph",
+   "cluster": "agentic",
+   "origin": "github.com/langchain-ai/react-agent",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "f5520937686b06d7139a165e71af1b86e291b866"
+   ],
+   "retrievedAt": [
+    "2026-10-07"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/agentic-ledger.md"
+  },
+  {
+   "platform": "llamaindex-workflows",
+   "cluster": "agentic",
+   "origin": "github.com/run-llama/llama_index",
+   "items": 9,
+   "redistributable": 9,
+   "licences": {
+    "MIT": 9
+   },
+   "revisions": [
+    "cb4c917ffe8ca575075b4869cf0e8bb42a20edb6"
+   ],
+   "retrievedAt": [
+    "2026-10-07"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/agentic-ledger.md"
+  },
+  {
+   "platform": "llamaindex-workflows",
+   "cluster": "agentic",
+   "origin": "github.com/run-llama/workflows-py",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "MIT": 1
+   },
+   "revisions": [
+    "39f2c5df404ce35bfe0d4fdf9268f76b6327cc6a"
+   ],
+   "retrievedAt": [
+    "2026-10-07"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/agentic-ledger.md"
+  },
+  {
+   "platform": "mastra",
+   "cluster": "agentic",
+   "origin": "github.com/mastra-ai/mastra",
+   "items": 8,
+   "redistributable": 8,
+   "licences": {
+    "Apache-2.0": 8
+   },
+   "revisions": [
+    "738d8add092a4712b3e07b1b4abfa1397c815694"
+   ],
+   "retrievedAt": [
+    "2026-10-07"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/agentic-ledger.md"
+  },
+  {
+   "platform": "metagpt",
+   "cluster": "agentic",
+   "origin": "github.com/FoundationAgents/MetaGPT",
+   "items": 4,
+   "redistributable": 4,
+   "licences": {
+    "MIT": 4
+   },
+   "revisions": [
+    "11cdf466d042aece04fc6cfd13b28e1a70341b1f"
+   ],
+   "retrievedAt": [
+    "2026-10-07"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/agentic-ledger.md"
+  },
+  {
+   "platform": "openai-agents",
+   "cluster": "agentic",
+   "origin": "github.com/openai/openai-agents-python",
+   "items": 16,
+   "redistributable": 16,
+   "licences": {
+    "MIT": 16
+   },
+   "revisions": [
+    "f007b3fb05e82ef2d2bea5646a0822769a52f7c9"
+   ],
+   "retrievedAt": [
+    "2026-10-07"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/agentic-ledger.md"
+  },
+  {
+   "platform": "openai-agents",
+   "cluster": "agentic",
+   "origin": "github.com/openai/openai-agents-js",
+   "items": 2,
+   "redistributable": 2,
+   "licences": {
+    "MIT": 2
+   },
+   "revisions": [
+    "05241c7aa3d5629acc7407dd8ee1105637fe0369"
+   ],
+   "retrievedAt": [
+    "2026-10-07"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/agentic-ledger.md"
+  },
+  {
+   "platform": "openai-swarm",
+   "cluster": "agentic",
+   "origin": "github.com/openai/swarm",
+   "items": 6,
+   "redistributable": 6,
+   "licences": {
+    "MIT": 6
+   },
+   "revisions": [
+    "6af0b4caf37dca4526dfd98e9fbd8ce36e7eeb22"
+   ],
+   "retrievedAt": [
+    "2026-10-07"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/agentic-ledger.md"
+  },
+  {
+   "platform": "pydantic-graph",
+   "cluster": "agentic",
+   "origin": "github.com/pydantic/pydantic-ai",
+   "items": 9,
+   "redistributable": 9,
+   "licences": {
+    "MIT": 9
+   },
+   "revisions": [
+    "5d43cfcc334a29222b0e6d23d797689dc3c2132c"
+   ],
+   "retrievedAt": [
+    "2026-10-07"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/agentic-ledger.md"
+  },
+  {
+   "platform": "semantic-kernel",
+   "cluster": "agentic",
+   "origin": "github.com/microsoft/semantic-kernel",
+   "items": 9,
+   "redistributable": 9,
+   "licences": {
+    "MIT": 9
+   },
+   "revisions": [
+    "cc8a15fa356f02dcb7bc64999392ca02f3167312"
+   ],
+   "retrievedAt": [
+    "2026-10-07"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/agentic-ledger.md"
+  },
+  {
+   "platform": "smolagents",
+   "cluster": "agentic",
+   "origin": "github.com/huggingface/smolagents",
+   "items": 6,
+   "redistributable": 6,
+   "licences": {
+    "Apache-2.0": 6
+   },
+   "revisions": [
+    "96f33faaf028479119ec8d34507b47694cf14e34"
+   ],
+   "retrievedAt": [
+    "2026-10-07"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/agentic-ledger.md"
+  },
+  {
+   "platform": "strands",
+   "cluster": "agentic",
+   "origin": "github.com/strands-agents/samples",
+   "items": 8,
+   "redistributable": 8,
+   "licences": {
+    "Apache-2.0": 8
+   },
+   "revisions": [
+    "11dd549c26c964a707de8189b7974a39603f2605"
+   ],
+   "retrievedAt": [
+    "2026-10-07"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/agentic-ledger.md"
+  },
+  {
+   "platform": "strands",
+   "cluster": "agentic",
+   "origin": "github.com/strands-agents/sdk-python",
+   "items": 2,
+   "redistributable": 2,
+   "licences": {
+    "Apache-2.0": 2
+   },
+   "revisions": [
+    "e519d67021b9c009e56e9309edcd94ab87e7156e"
+   ],
+   "retrievedAt": [
+    "2026-10-07"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/agentic-ledger.md"
+  },
+  {
+   "platform": "strands",
+   "cluster": "agentic",
+   "origin": "github.com/strands-agents/tools",
+   "items": 1,
+   "redistributable": 1,
+   "licences": {
+    "Apache-2.0": 1
+   },
+   "revisions": [
+    "1dd0465da8a748b0e8ac87ec5b3485bccb60d70e"
+   ],
+   "retrievedAt": [
+    "2026-10-07"
+   ],
+   "revisionCount": 1,
+   "ledger": "parts/agentic-ledger.md"
   }
  ],
  "rawData": {

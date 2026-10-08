@@ -8,6 +8,7 @@
 // UI operations model the KlickTipp automation (a person edits a subscriber, the automation applies the tag).
 import { normEmail, isEmail, isIsoDate, isoToUnix, res } from './common.mjs';
 
+const MAX_UNIX_S = 8.64e12;   // the JavaScript Date range in seconds; larger values are not a date
 export const KT_STD_FIELDS = ['fieldFirstName', 'fieldLastName', 'fieldPhone', 'fieldMobilePhone', 'fieldPrivatePhone', 'fieldFax', 'fieldBirthday', 'fieldCountry', 'fieldState', 'fieldCity', 'fieldStreet1', 'fieldZip'];
 
 export class KlickTippMock {
@@ -38,7 +39,7 @@ export class KlickTippMock {
     for (const [k, v] of Object.entries(fields)) {
       if (!this.fieldKeys.has(k)) return `unknown field ${k}`;
       if (v !== null && v !== undefined && !['string', 'number'].includes(typeof v)) return `field ${k} must be a string`;
-      if (k === 'fieldBirthday' && v !== '' && v !== null && v !== undefined && !(isIsoDate(String(v)) || /^-?\d+$/.test(String(v)))) return 'fieldBirthday must be a date or unix seconds';
+      if (k === 'fieldBirthday' && v !== '' && v !== null && v !== undefined && !(isIsoDate(String(v)) || (/^-?\d+$/.test(String(v)) && Math.abs(Number(v)) <= MAX_UNIX_S))) return 'fieldBirthday must be a date or unix seconds';
     }
     return null;
   }
@@ -66,7 +67,7 @@ export class KlickTippMock {
   // its status and list, receives the given field values, and gets the tag (A7).
   apiSubscribe({ email, listId, tagId, fields }) {
     if (!isEmail(email)) return this.err(400, 'INVALID_EMAIL', 'a valid email address is required');
-    const list = this.listById[String(listId)];
+    const list = Object.hasOwn(this.listById, String(listId)) ? this.listById[String(listId)] : null;   // no prototype keys ('toString')
     if (!list) return this.err(400, 'INVALID_LIST', 'unknown list');
     const tags = this.tagList(tagId);
     if (tags.some(t => !this.tagIds.has(t))) return this.err(400, 'INVALID_TAG', 'unknown tag');

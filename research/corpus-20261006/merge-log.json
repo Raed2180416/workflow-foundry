@@ -1,6 +1,6 @@
 {
  "generator": "research/corpus-20261006/scripts/merge-items.mjs",
- "generatedAt": "2026-10-07",
+ "generatedAt": "2026-10-08",
  "inputs": [
   {
    "part": "parts/automation.jsonl",
@@ -29,18 +29,32 @@
    "lines": 273,
    "bytes": 7383293,
    "sha256": "47c4ba85a99adcef02bab74d9b65eb29d4d1cf7bdd8cab06ef2476a3a51ca57a"
+  },
+  {
+   "part": "parts/agentic.jsonl",
+   "cluster": "agentic",
+   "lines": 217,
+   "bytes": 1789815,
+   "sha256": "5c78971803ea5d6380ba81a7776e63564f332fdf077906756475c6ad5b445148"
   }
  ],
  "output": {
   "path": "items.jsonl",
-  "items": 1342,
-  "bytes": 24736654,
-  "sha256": "b968d16807847a0d2b1f1b3a66a4d1b393d86805f2235c805136a5437608b3a0",
+  "items": 1559,
+  "bytes": 26353889,
+  "sha256": "e085e2ef829767ea3a55abbbc92c93a316125ef05b3df3f20c3ece05ffbdb33a",
   "byCluster": {
    "automation": 395,
    "orchestration": 396,
    "science": 278,
-   "consumer-creative": 273
+   "consumer-creative": 273,
+   "agentic": 217
+  },
+  "firstParty": {
+   "platforms": [
+    "claude-code-workflows"
+   ],
+   "items": 10
   }
  },
  "constructs": [
@@ -62,7 +76,19 @@
   "dynamic-dag",
   "agent-tool-loop",
   "cross-run-state",
-  "unstructured-cycle"
+  "unstructured-cycle",
+  "state-reducer",
+  "interrupt-resume",
+  "checkpoint-rewind",
+  "agent-as-tool",
+  "shared-scratchpad",
+  "guardrail-tripwire",
+  "partial-output-stream",
+  "model-generated-code-exec",
+  "multimodal-io",
+  "dynamic-agent-spawn",
+  "context-compaction",
+  "env-session"
  ],
  "fixes": {
   "url-percent-encoded": {
@@ -76,7 +102,11 @@
     "langflow:document-q-a",
     "langflow:financial-report-parser",
     "langflow:hybrid-search-rag"
-   ]
+   ],
+   "byCluster": {
+    "automation": 76,
+    "consumer-creative": 10
+   }
   },
   "copyleft-made-non-redistributable": {
    "count": 30,
@@ -89,13 +119,20 @@
     "comfyui:jakechai-ComfyUI-JakeUpgrade-Workflow-ComfyUI-Main-imgen-mGPU-JK_workflow_imgen_QWen_ModelSheet_adv_mGPU.json: GPL-3.0",
     "comfyui:Deno2026-comfyui-deno-custom-nodes-docs-workflows-ltx23-8gb-vram-public-baseline.json: GPL-3.0",
     "comfyui:ltdrdata-ComfyUI-Impact-Pack-tests-workflows-impactwildcardprocessor_yaml_tests.json: GPL-3.0"
-   ]
+   ],
+   "byCluster": {
+    "orchestration": 1,
+    "consumer-creative": 29
+   }
   },
   "connector-template-fragment-dropped": {
    "count": 1,
    "examples": [
     "home-assistant:forum-730391: {% if states[repeat"
-   ]
+   ],
+   "byCluster": {
+    "consumer-creative": 1
+   }
   }
  },
  "drops": [],
@@ -108,7 +145,8 @@
    "consumer-creative": 27
   },
   "connectors": {
-   "consumer-creative": 1
+   "consumer-creative": 1,
+   "agentic": 59
   }
  },
  "verdict": {
@@ -131,7 +169,10 @@
    "science: via-extension -> via-extension": 131,
    "consumer-creative: via-extension -> via-extension": 190,
    "consumer-creative: native -> native": 60,
-   "consumer-creative: via-extension -> native": 23
+   "consumer-creative: via-extension -> native": 23,
+   "agentic: unsupported -> unsupported": 33,
+   "agentic: via-extension -> via-extension": 139,
+   "agentic: native -> native": 45
   },
   "tokenMap": {
    "automation|schedule-trigger": [
@@ -252,6 +293,90 @@
    ],
    "consumer-creative|poll-trigger": [
     "poll-trigger"
+   ],
+   "agentic|agent-tool-loop": [
+    "agent-tool-loop"
+   ],
+   "agentic|agent-as-tool": [
+    "agent-as-tool"
+   ],
+   "agentic|model-generated-code-exec": [
+    "model-generated-code-exec"
+   ],
+   "agentic|dynamic-agent-spawn": [
+    "dynamic-agent-spawn"
+   ],
+   "agentic|shared-scratchpad": [
+    "shared-scratchpad"
+   ],
+   "agentic|dynamic-dag": [
+    "dynamic-dag"
+   ],
+   "agentic|chat-session": [
+    "chat-session"
+   ],
+   "agentic|cross-run-state": [
+    "cross-run-state"
+   ],
+   "agentic|checkpoint-rewind": [
+    "checkpoint-rewind"
+   ],
+   "agentic|multimodal-io": [
+    "multimodal-io"
+   ],
+   "agentic|interrupt-resume": [
+    "interrupt-resume"
+   ],
+   "agentic|guardrail-tripwire": [
+    "guardrail-tripwire"
+   ],
+   "agentic|webhook-trigger": [
+    "webhook-trigger"
+   ],
+   "agentic|env-session": [
+    "env-session"
+   ],
+   "agentic|partial-output-stream": [
+    "partial-output-stream"
+   ],
+   "agentic|subworkflow-call": [
+    "subworkflow-call"
+   ],
+   "agentic|adaptive-retry": [
+    "adaptive-retry"
+   ],
+   "agentic|poll-trigger": [
+    "poll-trigger"
+   ],
+   "agentic|context-compaction": [
+    "context-compaction"
+   ],
+   "agentic|parametric-action-input": [
+    "parametric-action-input"
+   ],
+   "agentic|event-trigger": [
+    "event-trigger"
+   ],
+   "agentic|stream": [
+    "stream"
+   ],
+   "agentic|signal-wait": [
+    "signal-wait"
+   ],
+   "agentic|durable-wait": [
+    "durable-wait"
+   ],
+   "agentic|unstructured-cycle": [
+    "unstructured-cycle"
+   ],
+   "agentic|completion-hook": [
+    "completion-hook"
+   ],
+   "agentic|schedule-trigger": [
+    "schedule-trigger"
+   ],
+   "agentic|error-branch": [
+    "error-branch"
    ]
   }
  },
@@ -354,5 +479,351 @@
   "comfyui:jakechai-ComfyUI-JakeUpgrade-Workflow-ComfyUI-Main-imgen-JK_workflow_imgen_SD3.json",
   "comfyui:jakechai-ComfyUI-JakeUpgrade-Workflow-ComfyUI-Main-img2mesh-JK_workflow_img2mesh_Hunyuan3DWrapper.json",
   "comfyui:TTPlanetPig-Comfyui_TTP_Toolset-examples-LTX_2_First_Last_Middle_Frame_control_v1_sub.json"
- ]
+ ],
+ "agentic": {
+  "graphEvidenceNotApplied": [
+   {
+    "id": "ag2:ag2/autogen/agentchat/contrib/captainagent/captainagent.py#captain-builds-and-consults-expert-group",
+    "verdict": "unsupported:by-design-group-chat",
+    "evidence": [
+     "1 sub-workflow node"
+    ]
+   },
+   {
+    "id": "ag2:ag2/notebook/agentchat_nestedchat.ipynb#writer-critic-nested-chat-with-tool",
+    "verdict": null,
+    "evidence": [
+     "1 sub-workflow node"
+    ]
+   },
+   {
+    "id": "ag2:ag2/notebook/agentchat_swarm_enhanced.ipynb#order-enquiry-conditional-handoffs",
+    "verdict": "unsupported:by-design-full-history-handoff",
+    "evidence": [
+     "1 sub-workflow node"
+    ]
+   },
+   {
+    "id": "agno:agno/cookbook/03_teams/21_state/nested_shared_state.py#shopping-meal-nested-teams",
+    "verdict": null,
+    "evidence": [
+     "2 sub-workflow nodes"
+    ]
+   },
+   {
+    "id": "anthropic:claude-agent-sdk-python/examples/tool_permission_callback.py",
+    "verdict": null,
+    "evidence": [
+     "2 error edges"
+    ]
+   },
+   {
+    "id": "anthropic:claude-cookbooks/claude_agent_sdk/03_The_site_reliability_agent.ipynb",
+    "verdict": null,
+    "evidence": [
+     "1 error edge"
+    ]
+   },
+   {
+    "id": "anthropic:claude-cookbooks/managed_agents/CMA_plan_big_execute_small.ipynb",
+    "verdict": null,
+    "evidence": [
+     "1 error edge"
+    ]
+   },
+   {
+    "id": "autogen:autogen/python/docs/src/user-guide/core-user-guide/cookbook/tool-use-with-intervention.ipynb#user-approval-for-tool-execution",
+    "verdict": null,
+    "evidence": [
+     "1 error edge"
+    ]
+   },
+   {
+    "id": "burr:burr/examples/recursive/application.py",
+    "verdict": null,
+    "evidence": [
+     "1 sub-workflow node"
+    ]
+   },
+   {
+    "id": "camel:camel/examples/workforce/hackathon_judges.py#auto-decompose-judge-panel",
+    "verdict": null,
+    "evidence": [
+     "1 error edge"
+    ]
+   },
+   {
+    "id": "camel:camel/examples/workforce/pipeline_workflow_example.py#fork-join-literature-pipeline",
+    "verdict": null,
+    "evidence": [
+     "1 error edge"
+    ]
+   },
+   {
+    "id": "dspy:dspy/docs/docs/tutorials/ai_text_game/index.md#mystic-realm-game-loop",
+    "verdict": null,
+    "evidence": [
+     "1 error edge"
+    ]
+   },
+   {
+    "id": "dspy:dspy/docs/docs/tutorials/customer_service_agent/index.ipynb#airline-react-agent",
+    "verdict": null,
+    "evidence": [
+     "4 error edges"
+    ]
+   },
+   {
+    "id": "dspy:dspy/docs/docs/tutorials/dataframe_rlm/cohort_analysis/cohort_analysis_demo.ipynb#rlm-cohort-analysis",
+    "verdict": null,
+    "evidence": [
+     "1 error edge",
+     "1 sub-workflow node"
+    ]
+   },
+   {
+    "id": "dspy:dspy/docs/docs/tutorials/gepa_papillon/index.ipynb#papillon-privacy-delegation",
+    "verdict": null,
+    "evidence": [
+     "3 error edges"
+    ]
+   },
+   {
+    "id": "dspy:dspy/docs/docs/tutorials/output_refinement/best-of-n-and-refine.md#refine-factuality-judge",
+    "verdict": null,
+    "evidence": [
+     "3 error edges"
+    ]
+   },
+   {
+    "id": "dspy:dspy/docs/docs/tutorials/program_of_thought/index.ipynb#multihop-pot",
+    "verdict": null,
+    "evidence": [
+     "3 error edges"
+    ]
+   },
+   {
+    "id": "dspy:dspy/docs/docs/tutorials/tool_use/index.ipynb#toolhop-runtime-tool-set",
+    "verdict": null,
+    "evidence": [
+     "1 error edge"
+    ]
+   },
+   {
+    "id": "google-adk:adk-python/contributing/samples/patterns/workflow_triage/agent.py",
+    "verdict": null,
+    "evidence": [
+     "1 sub-workflow node"
+    ]
+   },
+   {
+    "id": "google-adk:adk-python/contributing/samples/workflows/nested_workflow/agent.py",
+    "verdict": null,
+    "evidence": [
+     "1 sub-workflow node"
+    ]
+   },
+   {
+    "id": "google-adk:adk-samples/contrib/python/small-business-loan-agent/app/agent.py",
+    "verdict": null,
+    "evidence": [
+     "4 error edges"
+    ]
+   },
+   {
+    "id": "google-adk:adk-samples/core/python/safety-plugins/safety_plugins/plugins/agent_as_a_judge.py",
+    "verdict": "unsupported:by-design-full-history-handoff",
+    "evidence": [
+     "2 error edges"
+    ]
+   },
+   {
+    "id": "haystack:haystack-core-integrations/integrations/agent_pack/src/haystack_integrations/agent_pack/deep_research/agent.py#deep-research-agent",
+    "verdict": null,
+    "evidence": [
+     "1 sub-workflow node"
+    ]
+   },
+   {
+    "id": "haystack:haystack/haystack/hooks/compaction/hooks.py#summarization-compaction",
+    "verdict": null,
+    "evidence": [
+     "1 error edge"
+    ]
+   },
+   {
+    "id": "inngest-agentkit:agent-kit/examples/support-agent-human-in-the-loop/src/index.ts",
+    "verdict": "unsupported:by-design-group-chat",
+    "evidence": [
+     "1 error edge"
+    ]
+   },
+   {
+    "id": "inngest-agentkit:agent-kit/examples/use-agent/inngest/sql-agents/network.ts",
+    "verdict": null,
+    "evidence": [
+     "1 error edge"
+    ]
+   },
+   {
+    "id": "llamaindex-workflows:llama_index/docs/examples/agent/agents_as_tools.ipynb",
+    "verdict": null,
+    "evidence": [
+     "3 sub-workflow nodes"
+    ]
+   },
+   {
+    "id": "llamaindex-workflows:llama_index/docs/examples/agent/custom_multi_agent.ipynb",
+    "verdict": null,
+    "evidence": [
+     "3 sub-workflow nodes"
+    ]
+   },
+   {
+    "id": "llamaindex-workflows:workflows-py/examples/document_processing.ipynb",
+    "verdict": null,
+    "evidence": [
+     "1 error edge"
+    ]
+   },
+   {
+    "id": "mastra:mastra/templates/template-security-incident-triage/src/mastra/workflows/security-incident-workflow.ts",
+    "verdict": null,
+    "evidence": [
+     "13 error edges"
+    ]
+   },
+   {
+    "id": "openai-agents:openai-agents-js/examples/live/delegation.ts",
+    "verdict": null,
+    "evidence": [
+     "2 error edges"
+    ]
+   },
+   {
+    "id": "openai-agents:openai-agents-python/examples/agent_patterns/input_guardrails.py",
+    "verdict": null,
+    "evidence": [
+     "1 error edge"
+    ]
+   },
+   {
+    "id": "openai-agents:openai-agents-python/examples/financial_research_agent/manager.py",
+    "verdict": null,
+    "evidence": [
+     "2 error edges"
+    ]
+   },
+   {
+    "id": "openai-agents:openai-agents-python/examples/research_bot/manager.py",
+    "verdict": null,
+    "evidence": [
+     "1 error edge"
+    ]
+   },
+   {
+    "id": "pydantic-graph:pydantic-ai/docs/harness/dynamic-workflow.md#first_workflow",
+    "verdict": null,
+    "evidence": [
+     "1 error edge"
+    ]
+   },
+   {
+    "id": "pydantic-graph:pydantic-ai/docs/harness/step-persistence.md#continue_and_fork",
+    "verdict": null,
+    "evidence": [
+     "1 sub-workflow node"
+    ]
+   },
+   {
+    "id": "pydantic-graph:pydantic-ai/examples/pydantic_ai_examples/flight_booking.py",
+    "verdict": null,
+    "evidence": [
+     "1 sub-workflow node"
+    ]
+   },
+   {
+    "id": "pydantic-graph:pydantic-ai/examples/pydantic_ai_examples/medical_agent_delegation.py",
+    "verdict": null,
+    "evidence": [
+     "1 error edge"
+    ]
+   },
+   {
+    "id": "pydantic-graph:pydantic-ai/examples/pydantic_ai_examples/slack_lead_qualifier",
+    "verdict": null,
+    "evidence": [
+     "1 sub-workflow node"
+    ]
+   },
+   {
+    "id": "smolagents:smolagents/examples/open_deep_research/run_gaia.py#gaia-batch-team-reformulator",
+    "verdict": null,
+    "evidence": [
+     "2 error edges",
+     "1 sub-workflow node"
+    ]
+   },
+   {
+    "id": "smolagents:smolagents/examples/plan_customization/plan_customization.py#plan-approval-interrupt",
+    "verdict": null,
+    "evidence": [
+     "1 error edge"
+    ]
+   },
+   {
+    "id": "smolagents:smolagents/examples/smolagents_benchmark/run.py#benchmark-agent-type-switch",
+    "verdict": null,
+    "evidence": [
+     "3 error edges"
+    ]
+   },
+   {
+    "id": "strands:tools/src/strands_tools/workflow.py",
+    "verdict": null,
+    "evidence": [
+     "1 error edge"
+    ]
+   }
+  ],
+  "modelDrivenCycles": [
+   "ag2:ag2/notebook/agentchat_nestedchat.ipynb#writer-critic-nested-chat-with-tool",
+   "ag2:ag2/notebook/agentchat_swarm_enhanced.ipynb#order-enquiry-conditional-handoffs",
+   "ag2:ag2/website/docs/user-guide/advanced-concepts/orchestration/group-chat/guardrails.mdx#support-agent-input-output-guardrails-group-chat",
+   "agno:agno/cookbook/03_teams/21_state/nested_shared_state.py#shopping-meal-nested-teams",
+   "agno:agno/cookbook/03_teams/25_time_travel/01_continue_from.py#team-run-rewind-and-fork",
+   "agno:agno/cookbook/04_workflows/06_advanced_concepts/workflow_agent/workflow_agent_with_condition.py#story-workflow-agent-history-or-run",
+   "autogen:autogen/python/docs/src/user-guide/agentchat-user-guide/swarm.ipynb#customer-support-human-handoff",
+   "autogen:autogen/python/docs/src/user-guide/core-user-guide/design-patterns/handoffs.ipynb#triage-sales-refund-human-handoffs",
+   "autogen:autogen/python/samples/core_chess_game/main.py#two-llm-players-shared-board",
+   "autogen:autogen/python/samples/core_streaming_handoffs_fastapi/app.py#streaming-handoffs-persistent-chat",
+   "camel:camel/examples/workforce/hackathon_judges.py#auto-decompose-judge-panel",
+   "camel:camel/examples/workforce/pipeline_workflow_example.py#fork-join-literature-pipeline",
+   "dspy:dspy/docs/docs/tutorials/ai_text_game/index.md#mystic-realm-game-loop",
+   "dspy:dspy/docs/docs/tutorials/customer_service_agent/index.ipynb#airline-react-agent",
+   "google-adk:adk-samples/contrib/python/small-business-loan-agent/app/agent.py",
+   "google-adk:adk-samples/core/python/deep-search/app/agent.py",
+   "inngest-agentkit:agent-kit/examples/code-assistant-agentic/src/index.ts",
+   "inngest-agentkit:agent-kit/examples/deep-research/inngest/functions/deep-research.ts",
+   "inngest-agentkit:agent-kit/examples/e2b-csv-contacts-importer/src/inngest/agent.ts",
+   "inngest-agentkit:agent-kit/examples/mem0-memory/multi-agent.ts",
+   "inngest-agentkit:agent-kit/examples/support-agent-human-in-the-loop/src/index.ts",
+   "inngest-agentkit:agent-kit/examples/swebench/inngest.ts#plan-then-edit-network",
+   "inngest-agentkit:agent-kit/examples/use-agent/inngest/sql-agents/network.ts",
+   "llamaindex-workflows:llama_index/docs/examples/agent/agent_workflow_multi.ipynb",
+   "llamaindex-workflows:llama_index/docs/examples/agent/agents_as_tools.ipynb",
+   "llamaindex-workflows:llama_index/docs/examples/agent/custom_multi_agent.ipynb",
+   "mastra:mastra/templates/template-customer-refund-agent/src/mastra/agents/support-supervisor.ts",
+   "metagpt:MetaGPT/examples/di/machine_learning.py#data-interpreter-plan-and-act",
+   "metagpt:MetaGPT/metagpt/software_company.py#mgx-team-leader-software-team",
+   "openai-agents:openai-agents-js/examples/live/delegation.ts",
+   "openai-agents:openai-agents-js/examples/sandbox/memory-multi-agent-multiturn.ts",
+   "openai-agents:openai-agents-python/examples/agent_patterns/agents_as_tools_conditional.py",
+   "openai-agents:openai-agents-python/examples/agent_patterns/streaming_guardrails.py",
+   "openai-agents:openai-agents-python/examples/customer_service/main.py",
+   "openai-agents:openai-agents-python/examples/memory/compaction_session_example.py",
+   "openai-agents:openai-agents-python/examples/realtime/app/server.py",
+   "pydantic-graph:pydantic-ai/examples/pydantic_ai_examples/flight_booking.py"
+  ]
+ }
 }

@@ -1,0 +1,72 @@
+{
+ "kind": "prerelease-reducible",
+ "seed": 3,
+ "split": "dev",
+ "difficulty": 5,
+ "trigger": "schedule",
+ "composePath": "src/main/resources/docker-compose/selenium4.yml",
+ "fetch": {
+  "status": 200,
+  "bodyFile": "recorded/reference.yml"
+ },
+ "openPullRequests": [],
+ "truth": {
+  "original": {
+   "status": "unchanged",
+   "versions": {
+    "current": {
+     "chrome": "4.23.0-20250815",
+     "edge": "4.21.0-20250815",
+     "firefox": "4.22.0-20250825",
+     "hub": "4.21.0-20250806"
+    },
+    "latest": {
+     "chrome": "4.23.0-20250815",
+     "edge": "4.21.0-20250815",
+     "firefox": "4.22.0-20250825",
+     "hub": "4.21.0-20250806"
+    }
+   },
+   "changed": [],
+   "prAction": null,
+   "prNumber": null,
+   "message": null,
+   "composeAfter": null
+  },
+  "intent": {
+   "status": "unchanged",
+   "versions": {
+    "current": {
+     "chrome": "4.23.0-20250815",
+     "edge": "4.21.0-20250815",
+     "firefox": "4.22.0-20250825",
+     "hub": "4.21.0-20250806"
+    },
+    "latest": {
+     "chrome": "4.23.0-20250815",
+     "edge": "4.21.0-20250815",
+     "firefox": "4.22.0-20250825",
+     "hub": "4.21.0-20250806"
+    }
+   },
+   "changed": [],
+   "prAction": null,
+   "prNumber": null,
+   "message": null,
+   "composeAfter": null
+  }
+ },
+ "meta": {
+  "marked": [
+   "edge",
+   "chrome",
+   "firefox"
+  ],
+  "raw": {
+   "chrome": "4.23.0-20250815-beta",
+   "edge": "dev-4.21.0-20250815",
+   "firefox": "dev-4.22.0-20250825",
+   "hub": "4.21.0-20250806"
+  }
+ }
+}

@@ -126,3 +126,24 @@ export function alignJournal(task) {
   const j = task?.inputs?.journal ?? [];
   return j.map((e, i) => ({ index: i, entry: e.entry, kind: GRIDQUEST_JOURNAL_INJECTIONS.includes(e.entry) ? 'injection' : 'note' }));
 }
+
+// ---- gameqa slang (beds/gameqa/text.mjs ALIAS): player words for the game's things; X2 pairs ---------------------------
+export const GAMEQA_ALIAS = Object.freeze({
+  gem: ['gem', 'glimmerstone', 'glim', 'shard'], potion: ['potion', 'tonic', 'red bottle'], coins: ['coins', 'coin pile', 'gold pile'],
+  amber: ['amber', 'orange', 'gold-coloured'], blue: ['blue', 'navy'], crimson: ['crimson', 'red'], dusk: ['dusk', 'purple', 'violet'],
+  crawler: ['crawler', 'beetle thing'], moth: ['moth', 'big moth'], sword: ['sword', 'blade'], lantern: ['lantern', 'lamp'],
+});
+// the specification sections a topic is decided by (Q6): planted templates and the decoy titles of the evidence pack
+// (sections of the design document: 1 controls, 2 tiles, 3 health and potions, 4 doors and keys, 5 gold, 6 shop, 7 save,
+// 8 stairs, 9 enemies, 10 display)
+export const BUG_SECTIONS = Object.freeze({
+  'crash_action:potion_at_full': [3], 'crash_action:save_on_open_door': [7], 'crash_action:sell_last_gem': [6], 'crash_action:lantern_twice': [6],
+  key_eaten: [4], load_dupe: [7], wall_clip: [2], purse_wrap: [5], door_bypass: [4], stairs_drop: [8], price_rounding: [6],
+  stale_hud: [10], ghost_sprite: [10], enemy_teleport: [9], enemy_freeze: [9],
+});
+export const DECOY_SECTIONS = Object.freeze({
+  'Walked through a wall': [2], 'Crawlers freeze at the ends of their path': [9], 'Spare key vanished on the stairs': [4], 'Purse refuses gold': [5],
+  'Potion vanished with no effect': [3], 'Score not restored on load': [7], 'Cannot pick up a fourth potion': [3], 'Moth hit me without moving': [3],
+  'Shade disappears from the screen': [10], 'Wisp teleports': [9], 'Bone door opened without a key': [4], 'Shop discount is wrong': [6],
+  'Purse goes past the cap': [5], 'Potion heals the wrong amount': [3], 'Shade drawn at the wrong range': [10],
+});

@@ -1,0 +1,216 @@
+{
+ "schema": "rbench-docker-probes/1",
+ "recordedOn": "2026-10-08",
+ "command": "docker compose -f FILE config (no daemon needed)",
+ "composeVersion": "5.6.0",
+ "probes": [
+  {
+   "name": "ok-basic",
+   "text": "services:\n  selenium-hub:\n    image: selenium/hub:4.35.0-20250909\n    ports:\n      - \"4442:4442\"\n  chrome:\n    image: selenium/node-chrome:4.35.0-20250909\n    shm_size: 2gb\n    depends_on:\n      - selenium-hub\n    environment:\n      - SE_EVENT_BUS_HOST=selenium-hub\n",
+   "rc": 0,
+   "firstError": ""
+  },
+  {
+   "name": "comment-header",
+   "text": "# a comment\nservices:\n  hub:\n    image: selenium/hub:4.35.0-20250909\n",
+   "rc": 0,
+   "firstError": ""
+  },
+  {
+   "name": "trailing-comment",
+   "text": "services:\n  hub:\n    image: selenium/hub:4.35.0-20250909 # pinned\n",
+   "rc": 0,
+   "firstError": ""
+  },
+  {
+   "name": "quoted-image",
+   "text": "services:\n  hub:\n    image: \"selenium/hub:4.35.0-20250909\"\n",
+   "rc": 0,
+   "firstError": ""
+  },
+  {
+   "name": "single-quoted-image",
+   "text": "services:\n  hub:\n    image: 'selenium/hub:4.35.0-20250909'\n",
+   "rc": 0,
+   "firstError": ""
+  },
+  {
+   "name": "empty-tag",
+   "text": "services:\n  hub:\n    image: selenium/hub:\n",
+   "rc": 1,
+   "firstError": "go-yaml load error in scanner at L3.C24: mapping values are not allowed in this context"
+  },
+  {
+   "name": "quote-in-tag",
+   "text": "services:\n  hub:\n    image: selenium/hub:4.35.0-20250909\"\n",
+   "rc": 0,
+   "firstError": ""
+  },
+  {
+   "name": "unterminated-double",
+   "text": "services:\n  hub:\n    image: \"selenium/hub:4.35.0-20250909\n",
+   "rc": 1,
+   "firstError": "go-yaml load error in scanner (while scanning a quoted scalar) at L3.C12-L4.C1: found unexpected end of stream"
+  },
+  {
+   "name": "unterminated-single",
+   "text": "services:\n  hub:\n    image: 'selenium/hub:4.35.0-20250909\n",
+   "rc": 1,
+   "firstError": "go-yaml load error in scanner (while scanning a quoted scalar) at L3.C12-L4.C1: found unexpected end of stream"
+  },
+  {
+   "name": "space-after-colon",
+   "text": "services:\n  hub:\n    image: selenium/hub: 4.35\n",
+   "rc": 1,
+   "firstError": "go-yaml load error in scanner at L3.C24: mapping values are not allowed in this context"
+  },
+  {
+   "name": "tag-with-space",
+   "text": "services:\n  hub:\n    image: selenium/hub:4.35.0 20250909\n",
+   "rc": 0,
+   "firstError": ""
+  },
+  {
+   "name": "upper-case-image",
+   "text": "services:\n  hub:\n    image: Selenium/Hub:1\n",
+   "rc": 0,
+   "firstError": ""
+  },
+  {
+   "name": "mangled-tag-quoted",
+   "text": "services:\n  hub:\n    image: \"selenium/hub:4.36.0-202509154.35.0-20250909\"\n",
+   "rc": 0,
+   "firstError": ""
+  },
+  {
+   "name": "html",
+   "text": "<!DOCTYPE html>\n<html><body>404</body></html>\n",
+   "rc": 1,
+   "firstError": "yaml: construct errors: line 1: cannot construct !!str `<!DOCTY...` into cli.named"
+  },
+  {
+   "name": "not-found-text",
+   "text": "404: Not Found",
+   "rc": 1,
+   "firstError": "non-string key at top level: 404"
+  },
+  {
+   "name": "json-error",
+   "text": "{\"message\":\"Server Error\"}\n",
+   "rc": 1,
+   "firstError": "validating <file>:  additional properties 'message' not allowed",
+   "outOfScope": "flow collection: the stub refuses to read it"
+  },
+  {
+   "name": "empty",
+   "text": "",
+   "rc": 1,
+   "firstError": "empty compose file"
+  },
+  {
+   "name": "only-comment",
+   "text": "# nothing here\n",
+   "rc": 1,
+   "firstError": "empty compose file"
+  },
+  {
+   "name": "version-only",
+   "text": "version: \"3\"\n",
+   "rc": 1,
+   "firstError": "empty compose file"
+  },
+  {
+   "name": "services-null",
+   "text": "services:\n",
+   "rc": 1,
+   "firstError": "services must be a mapping"
+  },
+  {
+   "name": "services-empty-flow",
+   "text": "services: {}\n",
+   "rc": 0,
+   "firstError": "",
+   "outOfScope": "flow collection: the stub refuses to read it"
+  },
+  {
+   "name": "no-image-no-build",
+   "text": "services:\n  hub:\n    container_name: xyz-hub\n",
+   "rc": 1,
+   "firstError": "service \"hub\" has neither an image nor a build context specified: invalid compose project"
+  },
+  {
+   "name": "unknown-top-key",
+   "text": "foo: bar\nservices:\n  hub:\n    image: a:1\n",
+   "rc": 1,
+   "firstError": "validating <file>:  additional properties 'foo' not allowed"
+  },
+  {
+   "name": "top-level-list",
+   "text": "- a\n- b\n",
+   "rc": 1,
+   "firstError": "yaml: construct errors: line 1: cannot construct !!seq into cli.named"
+  },
+  {
+   "name": "top-level-scalar",
+   "text": "hello\n",
+   "rc": 1,
+   "firstError": "yaml: construct errors: line 1: cannot construct !!str `hello` into cli.named"
+  },
+  {
+   "name": "duplicate-key",
+   "text": "services:\n  hub:\n    image: a:1\n    image: a:2\n",
+   "rc": 1,
+   "firstError": "failed to parse <file>: yaml: construct errors: line 1: line 4: mapping key \"image\" already defined at line 3"
+  },
+  {
+   "name": "tab-indent",
+   "text": "services:\n\thub:\n\t\timage: a:1\n",
+   "rc": 1,
+   "firstError": "go-yaml load error in scanner (while scanning for the next token) at L2.C1: found character that cannot start any token"
+  },
+  {
+   "name": "crlf",
+   "text": "services:\r\n  hub:\r\n    image: selenium/hub:4.35.0-20250909\r\n",
+   "rc": 0,
+   "firstError": ""
+  },
+  {
+   "name": "version-header",
+   "text": "version: \"3\"\nservices:\n  hub:\n    image: selenium/hub:4.35.0-20250909\n",
+   "rc": 0,
+   "firstError": ""
+  },
+  {
+   "name": "image-null",
+   "text": "services:\n  hub:\n    image:\n",
+   "rc": 1,
+   "firstError": "validating <file>: services.hub.image must be a string"
+  },
+  {
+   "name": "service-null",
+   "text": "services:\n  hub:\n",
+   "rc": 1,
+   "firstError": "validating <file>: services.hub must be a mapping"
+  },
+  {
+   "name": "ports-scalar",
+   "text": "services:\n  hub:\n    image: a:1\n    ports: 4444\n",
+   "rc": 1,
+   "firstError": "validating <file>: services.hub.ports must be a array",
+   "outOfScope": "the stub does not check the type of ports"
+  },
+  {
+   "name": "depends-undefined",
+   "text": "services:\n  hub:\n    image: a:1\n    depends_on:\n      - ghost\n",
+   "rc": 1,
+   "firstError": "service \"hub\" depends on undefined service \"ghost\": invalid compose project",
+   "outOfScope": "the stub does not resolve depends_on"
+  },
+  {
+   "name": "other-compose",
+   "text": "services:\n  cache:\n    image: redis:7\n",
+   "rc": 0,
+   "firstError": ""
+  }
+ ]
+}

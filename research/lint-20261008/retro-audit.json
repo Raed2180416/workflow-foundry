@@ -1,0 +1,325 @@
+{
+  "generatedFor": "strict-construction/1",
+  "lintOver": [
+    {
+      "workflow": "F-haiku-codefix-k1",
+      "plainValid": true,
+      "plainWarningCodes": [],
+      "strictValid": false,
+      "acceptance": "existence-only",
+      "counts": {
+        "error": 1,
+        "warning": 1
+      },
+      "codes": {
+        "ACCEPTANCE_EXISTENCE_ONLY": 1,
+        "CLASS_ABOVE_DEFAULT_UNJUSTIFIED": 1
+      },
+      "findings": [
+        {
+          "code": "ACCEPTANCE_EXISTENCE_ONLY",
+          "severity": "error",
+          "path": "workflow.acceptance"
+        },
+        {
+          "code": "CLASS_ABOVE_DEFAULT_UNJUSTIFIED",
+          "severity": "warning",
+          "path": "workflow.repair"
+        }
+      ]
+    },
+    {
+      "workflow": "F-haiku-records-k1",
+      "plainValid": true,
+      "plainWarningCodes": [
+        "ERROR_COLLECTION"
+      ],
+      "strictValid": false,
+      "acceptance": "existence-only",
+      "counts": {
+        "error": 3,
+        "warning": 2
+      },
+      "codes": {
+        "ACCEPTANCE_EXISTENCE_ONLY": 1,
+        "VERIFY_NOT_GATING": 1,
+        "ERROR_COLLECTION": 1,
+        "ESCALATION_WITHOUT_CHECKS": 1,
+        "GLOBAL_READ_UNGUARDED": 1
+      },
+      "findings": [
+        {
+          "code": "ACCEPTANCE_EXISTENCE_ONLY",
+          "severity": "error",
+          "path": "workflow.acceptance"
+        },
+        {
+          "code": "VERIFY_NOT_GATING",
+          "severity": "error",
+          "path": "workflow.verify"
+        },
+        {
+          "code": "ERROR_COLLECTION",
+          "severity": "error",
+          "path": "workflow.extract"
+        },
+        {
+          "code": "ESCALATION_WITHOUT_CHECKS",
+          "severity": "warning",
+          "path": "workflow.conf"
+        },
+        {
+          "code": "GLOBAL_READ_UNGUARDED",
+          "severity": "warning",
+          "path": "workflow.conf",
+          "missing": [
+            "evidence-quote",
+            "k-sample-agreement",
+            "stronger-class"
+          ]
+        }
+      ]
+    },
+    {
+      "workflow": "F-opus-codefix-k1",
+      "plainValid": true,
+      "plainWarningCodes": [],
+      "strictValid": false,
+      "acceptance": "existence-only",
+      "counts": {
+        "error": 2,
+        "warning": 2
+      },
+      "codes": {
+        "ACCEPTANCE_EXISTENCE_ONLY": 1,
+        "VERIFY_NOT_GATING": 1,
+        "ESCALATION_WITHOUT_CHECKS": 2
+      },
+      "findings": [
+        {
+          "code": "ACCEPTANCE_EXISTENCE_ONLY",
+          "severity": "error",
+          "path": "workflow.acceptance"
+        },
+        {
+          "code": "VERIFY_NOT_GATING",
+          "severity": "error",
+          "path": "workflow.check"
+        },
+        {
+          "code": "ESCALATION_WITHOUT_CHECKS",
+          "severity": "warning",
+          "path": "workflow.audit"
+        },
+        {
+          "code": "ESCALATION_WITHOUT_CHECKS",
+          "severity": "warning",
+          "path": "workflow.review"
+        }
+      ]
+    },
+    {
+      "workflow": "F-opus-records-k1",
+      "plainValid": true,
+      "plainWarningCodes": [
+        "ERROR_COLLECTION"
+      ],
+      "strictValid": false,
+      "acceptance": "existence-only",
+      "counts": {
+        "error": 3,
+        "warning": 4
+      },
+      "codes": {
+        "ACCEPTANCE_EXISTENCE_ONLY": 1,
+        "VERIFY_NOT_GATING": 1,
+        "ERROR_COLLECTION": 1,
+        "ESCALATION_WITHOUT_CHECKS": 2,
+        "GLOBAL_READ_UNGUARDED": 1,
+        "CLASS_ABOVE_DEFAULT_UNJUSTIFIED": 1
+      },
+      "findings": [
+        {
+          "code": "ACCEPTANCE_EXISTENCE_ONLY",
+          "severity": "error",
+          "path": "workflow.acceptance"
+        },
+        {
+          "code": "VERIFY_NOT_GATING",
+          "severity": "error",
+          "path": "workflow.check"
+        },
+        {
+          "code": "ERROR_COLLECTION",
+          "severity": "error",
+          "path": "workflow.vendex"
+        },
+        {
+          "code": "ESCALATION_WITHOUT_CHECKS",
+          "severity": "warning",
+          "path": "workflow.config"
+        },
+        {
+          "code": "ESCALATION_WITHOUT_CHECKS",
+          "severity": "warning",
+          "path": "workflow.countries"
+        },
+        {
+          "code": "GLOBAL_READ_UNGUARDED",
+          "severity": "warning",
+          "path": "workflow.countries",
+          "missing": [
+            "evidence-quote",
+            "k-sample-agreement",
+            "stronger-class"
+          ]
+        },
+        {
+          "code": "CLASS_ABOVE_DEFAULT_UNJUSTIFIED",
+          "severity": "warning",
+          "path": "workflow.config"
+        }
+      ]
+    },
+    {
+      "workflow": "records-v3 (hand, buildRecordsV3Workflow())",
+      "plainValid": true,
+      "plainWarningCodes": [
+        "ERROR_COLLECTION",
+        "ERROR_CONTINUATION",
+        "ERROR_COLLECTION",
+        "ERROR_COLLECTION",
+        "ERROR_COLLECTION",
+        "ERROR_COLLECTION",
+        "ERROR_COLLECTION",
+        "ERROR_COLLECTION",
+        "ERROR_COLLECTION"
+      ],
+      "strictValid": false,
+      "acceptance": "existence-only",
+      "counts": {
+        "error": 10,
+        "warning": 0
+      },
+      "codes": {
+        "ACCEPTANCE_EXISTENCE_ONLY": 1,
+        "VERIFY_NOT_GATING": 1,
+        "ERROR_COLLECTION": 8
+      },
+      "findings": [
+        {
+          "code": "ACCEPTANCE_EXISTENCE_ONLY",
+          "severity": "error",
+          "path": "workflow.acceptance"
+        },
+        {
+          "code": "VERIFY_NOT_GATING",
+          "severity": "error",
+          "path": "workflow.check"
+        },
+        {
+          "code": "ERROR_COLLECTION",
+          "severity": "error",
+          "path": "workflow.dates"
+        },
+        {
+          "code": "ERROR_COLLECTION",
+          "severity": "error",
+          "path": "workflow.statuses"
+        },
+        {
+          "code": "ERROR_COLLECTION",
+          "severity": "error",
+          "path": "workflow.mirror"
+        },
+        {
+          "code": "ERROR_COLLECTION",
+          "severity": "error",
+          "path": "workflow.perspective"
+        },
+        {
+          "code": "ERROR_COLLECTION",
+          "severity": "error",
+          "path": "workflow.vendex"
+        },
+        {
+          "code": "ERROR_COLLECTION",
+          "severity": "error",
+          "path": "workflow.vendex_b"
+        },
+        {
+          "code": "ERROR_COLLECTION",
+          "severity": "error",
+          "path": "workflow.countries"
+        },
+        {
+          "code": "ERROR_COLLECTION",
+          "severity": "error",
+          "path": "workflow.adjudicate"
+        }
+      ]
+    }
+  ],
+  "c0DevFTrials": {
+    "rows": 32,
+    "oraclePass": 27,
+    "verdictBefore": {
+      "pass": 32
+    },
+    "verdictAfter": {
+      "unverified": 32
+    },
+    "falsePassBefore": 5,
+    "falsePassAfter": 0,
+    "byArm": {
+      "F-opus records": {
+        "trials": 8,
+        "oraclePass": 8,
+        "verdictBefore": {
+          "pass": 8
+        },
+        "verdictAfter": {
+          "unverified": 8
+        },
+        "falsePassBefore": 0,
+        "falsePassAfter": 0
+      },
+      "F-haiku records": {
+        "trials": 8,
+        "oraclePass": 6,
+        "verdictBefore": {
+          "pass": 8
+        },
+        "verdictAfter": {
+          "unverified": 8
+        },
+        "falsePassBefore": 2,
+        "falsePassAfter": 0
+      },
+      "F-opus codefix": {
+        "trials": 8,
+        "oraclePass": 8,
+        "verdictBefore": {
+          "pass": 8
+        },
+        "verdictAfter": {
+          "unverified": 8
+        },
+        "falsePassBefore": 0,
+        "falsePassAfter": 0
+      },
+      "F-haiku codefix": {
+        "trials": 8,
+        "oraclePass": 5,
+        "verdictBefore": {
+          "pass": 8
+        },
+        "verdictAfter": {
+          "unverified": 8
+        },
+        "falsePassBefore": 3,
+        "falsePassAfter": 0
+      }
+    }
+  }
+}

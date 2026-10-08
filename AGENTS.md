@@ -5,10 +5,16 @@ Then read [docs/THESIS.md](docs/THESIS.md) (what and why) and [docs/ROADMAP.md](
 (how, and the operating rules in §6, which take precedence over this file where they differ).
 The research history and negative results are in [docs/RESEARCH.md](docs/RESEARCH.md).
 
+*Amended 2026-10-08 (design review): X-2 from
+[research/review-20261007/ROADMAP-AMENDMENTS.md](research/review-20261007/ROADMAP-AMENDMENTS.md)
+(the objective's model roles, under THESIS D9's default; `tools/` in the layout). This is the
+owner's working-rules file, so the owner may still revise the edit.*
+
 ## Objective
 Build and measure a system that lets agents construct bounded, typed, task-scoped
-workflows, then run, adapt, verify and selectively reuse them. Cheap open-weight models
-execute what frontier models author. ARC and AMP are the harness; Foundry is the workflow
+workflows, then run, adapt, verify and selectively reuse them. Cheap models (Haiku 5.5
+today; open-weight models once a GPU route exists) construct from frontier-written templates
+and execute. ARC and AMP are the harness; Foundry is the workflow
 layer inside it. Executable contracts and independent evidence govern every promotion.
 Do not substitute a template demo or schema-valid output for task success. Capability
 comes first: every phase must produce a capability number against a simple baseline.
@@ -47,7 +53,7 @@ comes first: every phase must produce a capability number against a simple basel
 
 ## Layout
 See the repository map in README.md. In short: `src/` runtime and interfaces,
-`bin/` CLI, `schemas/` contracts, `policy/` the owner model policy, `skills/` portable skills, `web/` UI, `tests/` regression and failure probes, `evals/` TUI harness and
+`bin/` CLI, `schemas/` contracts, `policy/` the owner model policy, `skills/` portable skills, `web/` UI, `tools/` developer tools (such as the `run-view` prototype), `tests/` regression and failure probes, `evals/` TUI harness and
 oracles, `research/` acquisition manifests, dossiers and checkpoints, `docs/` reference
 docs. `corpus/` (upstream clones) and `.foundry/` (mutable run data in an explicit task
 workspace) are ignored and never committed.

@@ -16,7 +16,7 @@ import { ORIGINAL, loadOriginal } from './controls/original.mjs';
 import { buildExamples } from './examples.mjs';
 import { DESCRIPTION, FIELD_MAP, API, PROTOCOL, TASK_TEXT, SKELETON } from './prompts.mjs';
 
-export const VERSION = '0.1.0';
+export const VERSION = '0.2.0';   // 0.2.0 (2026-10-08, adversarial verification): S02/S06/S13/S14 strengthened, TAG_UNEXPECTED, cost target in inputs
 export const ITEM = Object.freeze({ id: 'n8n:12679', safeId: 'n8n-12679', title: 'Sync contacts two-way between Zoho CRM and KlickTipp', url: 'https://n8n.io/workflows/12679', rawSha256: ORIGINAL.sha256 });
 export const VARIANTS = Object.freeze(['T1', 'T2', 'T3']);
 
@@ -78,18 +78,33 @@ export function generate({ seed, split = 'dev', difficulty = 3, variant = 'T2' }
     budget: { maxEventsPerChange: LIMITS.runsPerQuiescence, maxCallsPerEvent: LIMITS.callsPerRun },
   };
   if (variant !== 'T2') task.attachments = [{ path: 'original/workflow.json', source: ORIGINAL.rawPath, sha256: ORIGINAL.sha256, how: 'gunzip, take .workflow.workflow (n8n workflow object); read at task time, never committed (n8n ToS)' }];
-  if (variant === 'T3') task.budget.externalCalls = baselineCalls(task);
+  if (variant === 'T3') {
+    task.budget.externalCalls = baselineCalls(task);
+    // The generic renderers (experiments/lib/beds.mjs solverView / inlineRender) show prompt, inputs and files only, so the number the
+    // T3 prompt refers to must be in inputs (v0.2.0; before, a T3 solver never saw its cost target).
+    inputs.costTarget = { externalCalls: task.budget.externalCalls, counts: 'every call other than state.* (failed and unknown calls included), summed over the 15 core scenarios; state.* calls are free; the reliability checks are judged but their calls are not counted' };
+  }
   return task;
+}
+
+// T1/T3: the definition as solver files, read from the corpus at call time ({'original/workflow.json': text}). The generic renderers do
+// not know about task.attachments, so an arm must add these files itself (and must never persist or commit them: n8n ToS).
+export function solverFiles(task) {
+  const out = {};
+  for (const a of task.attachments ?? []) {
+    const wf = loadOriginal({ rawPath: a.source, sha256: a.sha256 });
+    out[a.path] = JSON.stringify({ name: ITEM.title, nodes: wf.nodes, connections: wf.connections, settings: wf.settings }, null, 1);
+  }
+  return out;
 }
 
 // T1/T3: write the original definition into the solver's workspace. Needs the corpus file; verifies its sha256.
 export function materialize(task, dir) {
   const written = [];
-  for (const a of task.attachments ?? []) {
-    const wf = loadOriginal({ rawPath: a.source, sha256: a.sha256 });
-    const file = path.join(dir, a.path);
+  for (const [rel, text] of Object.entries(solverFiles(task))) {
+    const file = path.join(dir, rel);
     mkdirSync(path.dirname(file), { recursive: true });
-    writeFileSync(file, JSON.stringify({ name: ITEM.title, nodes: wf.nodes, connections: wf.connections, settings: wf.settings }, null, 1));
+    writeFileSync(file, text);
     written.push(file);
   }
   return written;

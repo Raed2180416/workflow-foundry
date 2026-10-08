@@ -1,0 +1,12 @@
+{
+ "schema": "rbench-baseline/1",
+ "measuredOn": "2026-10-08",
+ "what": "wall time of one run of the original workflow on the mocks (runner.mjs), canonical-suite kinds, d5 dev seeds",
+ "runs": 56,
+ "wallMsMedian": 241,
+ "wallMsP90": 358,
+ "wallMsMean": 232,
+ "wallMsMax": 519,
+ "isolation": "mount-ns",
+ "note": "Machine-dependent: bash, curl and (where used) unshare start-up dominate. Includes the runner's own overhead (a local mock server, a private /tmp)."
+}

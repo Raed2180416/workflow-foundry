@@ -25,7 +25,7 @@ import { PullRequestStore } from './mocks/pull-requests.mjs';
 import { REFERENCE_HOST, REFERENCE_URL } from './spec.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-export const SCRATCH = process.env.FOUNDRY_REPLICATE_SCRATCH ?? '/var/tmp/foundry-work/replicate';
+export const SCRATCH = process.env.FOUNDRY_REPLICATE_SCRATCH ?? '/var/tmp/foundry-work/replicate/shaft-selenium';
 export const DUMMY_TOKEN = 'rbench-dummy-token-not-a-credential';
 const STEP_TIMEOUT_MS = 30000;
 
@@ -202,9 +202,12 @@ export async function runWorkflow({ workflowText, world, keep = false }) {
       if (rec.id) ctx.steps[rec.id] = { outputs: rec.outputs };
       if (rec.status === 'failure') failed = rec;
     }
-  } finally {
+  } catch (error) {
     await server.close();
+    if (!keep) rmSync(run, { recursive: true, force: true });       // a refused workflow or a stub error must not leave its run directory behind
+    throw error;
   }
+  await server.close();
   const wallMs = Math.round(performance.now() - started);
   const observation = {
     isolation: mode,

@@ -28,9 +28,9 @@
 // dev-select and test-in read the skeleton bucket 40-100%, calib-ood 30-40%, dev-ood 20-30%, test-ood 0-20%.
 // The held-out family rows (X3, X5) carry decisive spans of the test-ood bucket only; every other state of a
 // train-like slice carries sentences of the train bucket only, so a registered span cannot reach a train state.
-// For Q4 the unit is the pair (plan sentence, decisive observation lines): the simulator's observation texts
-// are a small set shared by all buckets, which is reported (the gating Q4 axes are the held-out family gameqa,
-// the held-out wordings and the carriers; the skeleton axis is diagnostic with n_forms).
+// For Q4 the bucket belongs to the plan sentence alone (64 phrasings per effect): the simulator's observation texts
+// are a small set shared by all buckets, which is reported next to the form counts (the gating Q4 axes are the
+// held-out family gameqa, the held-out wordings and the carriers; the skeleton axis is diagnostic with n_forms).
 //
 // opts (all optional, plain data):
 //   ports         port ids to generate (default: the ports that apply to the slice)
@@ -50,7 +50,7 @@ import { labelledQuestion, uniformTarget, questionId } from '../lib/render.mjs';
 import { optionOrder } from '../lib/balance.mjs';
 import { worldHash, skeleton, skeletonBucket, spanHash, sentences } from '../lib/hash.mjs';
 import { stringLeaves } from '../lib/leakage.mjs';
-import { kits, parseTask, parsed as parsedOf, selectComments, TOPICS, spanInfo, VERSION_RE } from '../judges/runbook.mjs';
+import { kits, parsed as parsedOf, selectComments, TOPICS, expectedEffect, phrasingCount } from '../judges/runbook.mjs';
 import { alignComments, alignInjections, alignStatements, logLinesOf, isLogInjection, ADDRESSEE, IMPERATIVE } from '../taps/runbook.mjs';
 import { slotsOf } from '../taps/runbook-frames.mjs';
 
@@ -95,7 +95,7 @@ export function masksOf(world) {
     ...people.map(p => p.name), ...people.map(p => first(p.name)), 'Platform SRE'].filter(Boolean);
   const markers = [sp.ticketId, sp.rbId, ...sp.incIds, sp.pool, sp.greenPool, sp.cluster, sp.ff, sp.paused, ...Object.values(sp.keys), `ops-${sp.site.code}`,
     ...hosts.map(h => h.id), ...hosts.map(h => h.aka).filter(Boolean), ...people.map(p => p.handle), sp.site.code, sp.svc.short, sp.otherSvc.short,
-    ...sp.db.hosts, ...sp.otherSites.map(s => s.code), `lbp-${sp.site.code}-${sp.otherSvc.short}-blue`, ...sp.artifacts].filter(Boolean);
+    ...sp.db.hosts, ...sp.otherSites.map(s => s.code), `lbp-${sp.site.code}-${sp.otherSvc.short}-blue`].filter(Boolean);
   return { names: [...new Set(names)], markers: [...new Set(markers)] };
 }
 // the bucket a slice reads: train-like slices and test-in 'train' (40-100%), each OOD slice its own (§3.1, §3.3)
@@ -104,8 +104,17 @@ export const bucketAllows = (slice, formHash) => skeletonBucket(formHash) === BU
 const formOf = (text, masks) => skeleton(text, masks);
 // Context (every sentence of a ticket-derived text that is not the row's decisive span): a state of any slice but
 // test-ood must not carry a sentence of the test-ood bucket, where the held-out family's decisive spans live.
-export function contextAllows(slice, text, masks) {
+//
+// The two rarest speech acts of X3 (a withdrawal and a confirmation: 3 and 7 forms in the bed) are reserved by label
+// instead of by hash: a 20% bucket would leave the class without a single test form half of the time. A comment the
+// tap labels `retracts` or `confirms` belongs to the held-out family wherever its skeleton lies, so no state of another
+// slice carries one (`reserved` lists such comments' texts) and any of them may be a decisive span of a test-ood row.
+export const RESERVED_LABELS = Object.freeze(['retracts', 'confirms']);
+export const heldoutEligible = (label, formHash) => RESERVED_LABELS.includes(label) || skeletonBucket(formHash) === 'test-ood';
+const reservedTexts = c0 => [...c0.tap.spans.values()].filter(s => RESERVED_LABELS.includes(s.label)).map(s => c0.parsed.commentById[s.id].text);
+export function contextAllows(slice, text, masks, reserved = []) {
   if (slice === 'test-ood') return true;
+  if (reserved.some(r => String(text).includes(r))) return false;
   const parts = [String(text), ...sentences(text)];
   return parts.every(t => skeletonBucket(formOf(t, masks)) !== 'test-ood');
 }
@@ -226,24 +235,39 @@ export function decisiveObservation(effect, obs) {
 }
 
 // Typos an operator could make in a value: the config store answers INVALID VALUE (beds/runbook/sim.mjs #validate).
+// A malformed number or version is visible in the action itself; an unknown build of the right shape is not (the
+// artifact list is the simulator's), so half of the pin typos are unknown builds. Typo rows stay rare (one per
+// world at most) so that the plan sentence and the action carry no more than a few percent of the label.
 const NUMERIC_TYPOS = [v => `${v}MB`, v => `${v}.5`, v => `~${v}`, v => `${v}ms`, v => `-${v}`, v => `${v},000`, v => `${String(v).slice(0, -1)}O`, v => `0x${v}`];
 const PIN_TYPOS = [v => `v${v}`, v => v.replace(/\.\d+(-rc\d+)?$/, ''), v => `${v}.0`, () => 'latest', v => v.replace(/^(\d+)\./, '$1,'), v => `${v}-snapshot`];
+const unknownBuild = (v, key) => v.replace(/\.(\d+)(-rc\d+)?$/, (m, d) => `.${Number(d) + 3 + (hnum(key) % 5)}`);
 export const typoOf = (action, key) => {
   const v = String(action.value);
-  const f = action.key.endsWith('.version_pin') ? pick(PIN_TYPOS, key) : pick(NUMERIC_TYPOS, key);
-  return String(f(v));
+  if (action.key.endsWith('.version_pin')) return unit(`${key}|shape`) < 0.5 ? unknownBuild(v, key) : String(pick(PIN_TYPOS, key)(v));
+  return String(pick(NUMERIC_TYPOS, key)(v));
 };
+
+// The subgroup of a step inside its kind of effect: the label is balanced inside it, so the kind of host (a web node,
+// a queue worker, a database host) or of key does not predict the label.
+export function groupOf(sp, effect) {
+  const k = sp.keys;
+  switch (effect.kind) {
+    case 'restart': return `restart:${sp.targets.includes(effect.node) ? 'web' : sp.allWorkers.includes(effect.node) ? 'worker' : 'db'}`;
+    case 'apply': return `apply:${effect.key === k.pin ? 'pin' : effect.key === k.maxInflight ? 'max_inflight' : effect.key === k.slowStart ? 'slow_start' : 'work_mem'}`;
+    case 'node-verify': return `node-verify:${sp.allWorkers.includes(effect.node) ? 'worker' : 'web'}`;
+    default: return effect.kind;
+  }
+}
 
 // Runs the reference solution of a world through the bed's environment and returns the steps that have a plan
 // expectation, with the simulator's observation and the first-path label. `B` is beds/runbook/index.mjs (frozen copy).
-export function episodeOf(B, task, world, { typos = true } = {}) {
+export function episodeOf(B, task, world, { typos = 1, typoShare = 0.25 } = {}) {
   const sp = world.spec, th = sp.thr, actions = B.referenceSolve(task).actions;
   const env = B.createEnv(task);
-  const steps = [], snaps = new Map();
+  const steps = [];
   const restarted = new Set();
   let gate = true, flagOn = false;
   actions.forEach((a, i) => {
-    if (a.op === 'apply_config') snaps.set(i, env.snapshot());
     const r = env.step(a);
     const obs = r.observation;
     let effect = null;
@@ -263,20 +287,22 @@ export function episodeOf(B, task, world, { typos = true } = {}) {
     if (!effect) return;
     const j = judgeStep(effect, obs);
     if (!j) return;
-    steps.push({ i, action: a, effect, observation: obs, label: j.label, drift: j.drift, typo: false });
+    steps.push({ i, action: a, effect, observation: obs, label: j.label, drift: j.drift, typo: false, group: groupOf(sp, effect) });
   });
-  if (typos) {
-    // INVALID VALUE twins: the same plan step with a malformed value, answered from the snapshot before the step
-    for (const s of steps.filter(x => x.effect.kind === 'apply' && x.label === 'as_expected')) {
-      const snap = snaps.get(s.i);
-      const bad = typoOf(s.action, `${sp.ticketId}|${s.i}`);
-      env.restore(snap);
-      const action = { ...s.action, value: bad };
-      const r = env.step(action);
-      const effect = { kind: 'apply', key: action.key, value: bad };
-      const j = judgeStep(effect, r.observation);
-      if (j) steps.push({ i: s.i, action, effect, observation: r.observation, label: j.label, drift: j.drift, typo: true });
-    }
+  // INVALID VALUE twins: the same plan step with a malformed value, answered from the state just before the step
+  // (replayed to it in a fresh environment and snapshotted). At most `typos` per world, drawn by hash among the
+  // applications the simulator accepted.
+  const accepted = steps.filter(x => x.effect.kind === 'apply' && x.label === 'as_expected').sort((a, b) => byHash(sha(`${sp.ticketId}|typo|${a.i}`), sha(`${sp.ticketId}|typo|${b.i}`))).slice(0, unit(`${sp.ticketId}|typo?`) < typoShare ? typos : 0);
+  for (const s of accepted) {
+    const e2 = B.createEnv(task);
+    for (const a of actions.slice(0, s.i)) e2.step(a);
+    const snap = e2.snapshot(), bad = typoOf(s.action, `${sp.ticketId}|${s.i}`);
+    e2.restore(snap);
+    const action = { ...s.action, value: bad };
+    const r = e2.step(action);
+    const effect = { kind: 'apply', key: action.key, value: bad };
+    const j = judgeStep(effect, r.observation);
+    if (j) steps.push({ i: s.i, action, effect, observation: r.observation, label: j.label, drift: j.drift, typo: true, group: groupOf(sp, effect) });
   }
   return { steps, actions };
 }
@@ -355,43 +381,53 @@ export function injectCarrier(obs, carrier, key) {
 const UNOBSERVED = Object.freeze(['no pending kernel update', 'disk usage below 80%', 'a TLS certificate valid for more than 30 days', 'a clean NTP sync', 'swap usage below 10%', 'the new log shipper agent installed']);
 const Q4_DRIFT_WEIGHT = Object.freeze({ 'config-rejected': 4, 'invalid-value': 1, 'config-timeout': 1.5, 'restart-permanent': 3, 'restart-transient': 1, degraded: 1, 'wrong-version': 2, lag: 1.5, 'error-spike': 3, 'service-down': 2 });
 
-// candidates of a world for Q4, balanced within the kind of step: both labels of a kind are drawn alternately
+// Candidates of a world for Q4, balanced inside each group of steps (kind of effect x kind of host or key): a group
+// contributes one drifted and one expected row per round, and only if the world has both. Summed over worlds, every
+// group is balanced, so neither the action nor the plan sentence predicts the label.
 function q4Pick(cands, n, key) {
-  const kinds = [...new Set(cands.map(c => c.effect.kind))].sort((a, b) => byHash(sha(`${key}|k|${a}`), sha(`${key}|k|${b}`)));
-  const pool = Object.fromEntries(kinds.map(k => [k, {
-    as_expected: cands.filter(c => c.effect.kind === k && c.label === 'as_expected').sort((a, b) => byHash(sha(`${key}|${a.i}|${a.typo}`), sha(`${key}|${b.i}|${b.typo}`))),
-    drifted: cands.filter(c => c.effect.kind === k && c.label === 'drifted').sort((a, b) => byHash(sha(`${key}|${a.i}|${a.typo}`), sha(`${key}|${b.i}|${b.typo}`))),
-  }]));
+  const groups = new Map();
+  for (const c of cands) { const g = groups.get(c.group) ?? { as_expected: [], drifted: [] }; g[c.label].push(c); groups.set(c.group, g); }
+  const names = [...groups.keys()].filter(k => groups.get(k).as_expected.length && groups.get(k).drifted.length).sort((a, b) => byHash(sha(`${key}|g|${a}`), sha(`${key}|g|${b}`)));
+  for (const g of groups.values()) for (const l of Q4_LABELS) g[l].sort((a, b) => byHash(sha(`${key}|${a.i}|${a.typo}`), sha(`${key}|${b.i}|${b.typo}`)));
   const out = [];
-  for (let slot = 0; slot < n * 3 && out.length < n; slot++) {
-    const kind = kinds[slot % kinds.length];
-    let want = unit(`${key}|w|${slot}`) < 0.5 ? 'drifted' : 'as_expected';
-    if (!pool[kind][want].length) want = want === 'drifted' ? 'as_expected' : 'drifted';
-    if (!pool[kind][want].length) continue;
-    // drifted draws prefer the rarer kinds of surprise
-    const list = pool[kind][want];
-    let idx = 0;
-    if (want === 'drifted' && list.length > 1) {
-      const w = list.map(c => Q4_DRIFT_WEIGHT[c.drift] ?? 1), total = w.reduce((a, b) => a + b, 0);
-      let x = unit(`${key}|d|${slot}`) * total;
-      while (idx < list.length - 1 && (x -= w[idx]) >= 0) idx++;
+  for (let round = 0; out.length < n && names.some(k => groups.get(k).as_expected.length && groups.get(k).drifted.length); round++) {
+    for (const name of names) {
+      const g = groups.get(name);
+      if (!g.as_expected.length || !g.drifted.length || out.length >= n) continue;
+      // drifted draws prefer the rarer kinds of surprise
+      let idx = 0;
+      if (g.drifted.length > 1) {
+        const w = g.drifted.map(c => Q4_DRIFT_WEIGHT[c.drift] ?? 1), total = w.reduce((a, b) => a + b, 0);
+        let x = unit(`${key}|d|${name}|${round}`) * total;
+        while (idx < g.drifted.length - 1 && (x -= w[idx]) >= 0) idx++;
+      }
+      const pair = [g.drifted.splice(idx, 1)[0], g.as_expected.shift()];
+      out.push(...(unit(`${key}|first|${name}|${round}`) < 0.5 ? pair : pair.reverse()));       // either label first, so an odd quota is not biased
     }
-    out.push(list.splice(idx, 1)[0]);
+  }
+  // a group that has only one label in this world (a policy rejection has no accepted twin; a world without a spike
+  // has no spike reading) still supplies a single row, half of the time: rare kinds of surprise stay in the supply and
+  // the assembly balances each group (meta.q4.group) over the whole supply
+  for (const name of [...groups.keys()].sort((a, b) => byHash(sha(`${key}|s|${a}`), sha(`${key}|s|${b}`)))) {
+    if (out.length >= n || names.includes(name) || unit(`${key}|single|${name}`) >= 0.5) continue;
+    const g = groups.get(name), label = g.drifted.length ? 'drifted' : g.as_expected.length ? 'as_expected' : null;
+    if (label) out.push(g[label].shift());
   }
   return out;
 }
 
 // ---- Q4 records ------------------------------------------------------------------------------
-// The first phrasing (in a hashed order) of the plan sentence whose pair form (sentence + decisive observation lines)
-// lies in the slice's skeleton bucket.
+// A phrasing (in a hashed order) of the plan sentence whose own skeleton lies in the slice's bucket. The bucket
+// belongs to the plan sentence alone, so the choice of phrasing is independent of the observation and the label.
 function q4Build(c0, step, keyBase, { effect = step.effect, observation = step.observation } = {}) {
   const { task, slice, masks } = c0;
-  const order = [0, 1, 2, 3, 4, 5, 6, 7].sort((a, b) => byHash(sha(`${keyBase}|p${a}`), sha(`${keyBase}|p${b}`)));
+  const n = phrasingCount(effect.kind);
+  const order = Array.from({ length: n }, (_, i) => i).sort((a, b) => byHash(sha(`${keyBase}|p${a}`), sha(`${keyBase}|p${b}`)));
   for (const phrasing of order) {
+    const form = formOf(expectedEffect(effect, phrasing), masks);
+    if (!bucketAllows(slice, form)) continue;
     const slots = { action: step.action, effect, observation, phrasing };
-    const state = kits.Q4.buildState(task, slots);
-    const form = formOf(`${state.expected_effect}\n${decisiveObservation(step.effect, step.observation)}`, masks);
-    if (bucketAllows(slice, form)) return { slots, state, form, phrasing };
+    return { slots, state: kits.Q4.buildState(task, slots), form, phrasing };
   }
   return null;
 }
@@ -399,7 +435,7 @@ function q4Meta(c0, step, built, extra = {}) {
   const { seed, difficulty, wh, masks, slice } = c0;
   const decisive = decisiveObservation(step.effect, step.observation);
   return { seed, difficulty, worldHash: wh, variant: 'clean', labelSource: 'simulator', formId: built.form, surface: { source: 'bed', slice, lineHash: spanHash(decisive) }, masks,
-    kit: { port: 'Q4', slots: built.slots }, q4: { step: step.i, op: step.action.op, kind: step.effect.kind, drift: step.drift, typo: step.typo, phrasing: built.phrasing, obsForm: skeleton(decisive, masks) }, ...extra };
+    kit: { port: 'Q4', slots: built.slots }, q4: { step: step.i, op: step.action.op, kind: step.effect.kind, group: step.group, drift: step.drift, typo: step.typo, phrasing: built.phrasing, obsForm: skeleton(decisive, masks) }, ...extra };
 }
 function q4Rows(c0, n) {
   const { world, slice, seed, contracts, opts, def } = c0;
@@ -448,7 +484,8 @@ const OOD_SLICES = new Set(['calib-ood', 'dev-ood', 'test-ood']);
 const X1_WEIGHTS = Object.freeze({ yes: 3, no: 1 });
 function x1Candidates(c0) {
   const { B, task, world, parsed, tap } = c0, sp = world.spec;
-  const base = alignInjections({ parsed, world, tap }).map(c => {
+  const reserved = c0.slice === 'test-ood' ? new Set() : new Set([...tap.spans.values()].filter(s => RESERVED_LABELS.includes(s.label)).map(s => s.id));
+  const base = alignInjections({ parsed, world, tap }).filter(c => !reserved.has(c.id)).map(c => {
     const row = c.kind === 'inventory row' ? parsed.inventory.find(r => r.id === c.id) : null;
     return { ...c, decisive: row ? (row.notes || row.text) : c.text };
   });
@@ -499,7 +536,7 @@ function x1Rows(c0, n) {
     const long = c.slots.span ? unit(`${key}|long|${c.id}`) < 0.06 : c.slots.log ? unit(`${key}|long|${c.id}`) < 0.1 : false;
     const slots = c.slots.log ? { log: c.slots.log, ...(long ? { long: true, context: c.context } : {}) } : { ...c.slots, ...(long ? { long: true } : {}) };
     const state = kits.X1.buildState(task, slots);
-    if (long && !stringLeaves(state).every(({ text }) => contextAllows(slice, text, masks) || text === c.decisive)) continue;
+    if (long && !stringLeaves(state).every(({ text }) => contextAllows(slice, text, masks, reservedTexts(c0)) || text === c.decisive)) continue;
     out.push(makeRecord({ contract: contracts.X1, slice, opts, key: `${key}|${c.id}`, state, label: c.label,
       meta: { seed, difficulty, worldHash: wh, variant: long ? 'long' : 'clean', formId: formOf(c.decisive, masks), surface: { source: 'bed', slice, lineHash: spanHash(c.decisive) }, masks,
         kit: { port: 'X1', slots }, x1: { carrier: c.carrier, kind: c.kind, hard: c.hard, addressee: ADDRESSEE.test(c.decisive), imperative: IMPERATIVE.test(c.decisive) } } }));
@@ -534,7 +571,7 @@ function x3Rows(c0, n) {
     const c = p.commentById[sp.id], form = formOf(c.text, masks);
     cands.push({ sp, id: sp.id, label: sp.label, c, form });
   }
-  const picked = rotate(cands, X3_LABELS, n, key, c => c.id, X3_WEIGHTS, c => bucketAllows('test-ood', c.form));
+  const picked = rotate(cands, X3_LABELS, n, key, c => c.id, X3_WEIGHTS, c => heldoutEligible(c.label, c.form));
   for (const x of picked) {
     const slots = authority ? { comment: x.id } : { comment: x.id, authority: false }, state = kits.X3.buildState(task, slots);
     const rkey = `${key}|${x.id}`;
@@ -580,7 +617,6 @@ const ASSUME = Object.freeze({
     (n, s) => `after the restart ${s.wk} is ${n} MB`, n => `work_mem is set to ${n} megabytes`, n => `the DBAs' parameter is ${n} MB`,
   ],
 });
-const ASSUME_SKIP = Object.freeze([s => `the change leaves ${s.mk} at its current value`, s => `${s.mk} is not modified by this change`, s => `this ticket does not touch max_inflight`, s => `${s.mk} keeps the value it has today`]);
 // presence-matched fillers (dev-authored, same register as the ticket's description and comments; they state nothing about a parameter).
 // The two-model filter (§2.3 rule 1) is deferred to the hosted-arms group; ids are X5:filler:description#i and X5:filler:comment#i.
 export const X5_FILLERS = Object.freeze({
@@ -611,35 +647,62 @@ function x5Topic(c0, topic) {
   const spansOf = (...facts) => [...tap.spans.values()].filter(x => facts.includes(x.fact)).map(x => ({ id: x.id, text: p.commentById[x.id].text, frame: x.frame }));
   const descSpans = () => p.ticket.description.filter(l => descHit(topic, l.text, s)).map(l => ({ id: l.id, text: l.text, frame: 'description' }));
   const has = k => sp.kinds.includes(k);
-  const T = { topic, s, skip: false };
+  // stale: the description's value when an amendment replaced it (the bed's stale-ticket near-miss). It is a value that is
+  // also a truth in other worlds, so it does not mark a question as violated by itself; the herring, vendor and retracted
+  // values are never a truth anywhere and are therefore not used as assumptions (a question-only probe would read them).
+  const T = { topic, s, skip: false, stale: undefined };
   switch (topic) {
     case 'version':
       T.truth = sp.versionTo;
-      if (has('version')) { T.nears = [s.vB, s.vRc]; T.decisive = spansOf('amend:version'); } else { T.nears = [s.vA, s.vRc]; T.decisive = descSpans(); }
+      if (has('version')) { T.stale = s.vB; T.decisive = spansOf('amend:version'); } else { T.stale = s.vA; T.decisive = descSpans(); }       // the respin the thread mentions is as plausible a truth as the base build
+      T.swap = true;
       break;
     case 'max_inflight':
-      if (has('skip')) { T.skip = true; T.truth = null; T.nears = [s.D, s.Hn]; T.decisive = spansOf('amend:skip'); }
-      else if (has('value')) { T.truth = sp.maxInflight; T.nears = [s.D, s.Hn, s.Vn].filter(v => v !== sp.maxInflight); T.decisive = spansOf('amend:value'); if (sp.valueForm === 'vendor') T.needsDoc = true; }
-      else { T.truth = s.D; T.nears = [s.Hn, s.Vn]; T.decisive = descSpans(); }
+      if (has('skip')) { T.skip = true; T.truth = null; T.stale = s.D; T.decisive = spansOf('amend:skip'); }
+      else if (has('value')) { T.truth = sp.maxInflight; T.stale = s.D; T.decisive = spansOf('amend:value'); if (sp.valueForm === 'vendor') T.needsDoc = true; }
+      else { T.truth = s.D; T.decisive = descSpans(); }
       break;
     case 'slow_start':
-      if (has('slowval')) { T.truth = s.sA; T.nears = [s.sD, s.sR]; T.decisive = spansOf('amend:slowval'); }
-      else if (K.retract) { T.truth = s.sD; T.nears = [s.sR, s.sA]; T.decisive = spansOf('retract:slow'); }
-      else { T.truth = s.sD; T.nears = [s.sR, s.sA]; T.decisive = descSpans(); }
+      if (has('slowval')) { T.truth = s.sA; T.stale = s.sD; T.decisive = spansOf('amend:slowval'); }
+      else if (K.retract) { T.truth = s.sD; T.decisive = spansOf('retract:slow'); }
+      else { T.truth = s.sD; T.decisive = descSpans(); }
       break;
     case 'work_mem':
-      if (has('workmem')) { T.truth = s.wA; T.nears = [s.wD, s.wH]; T.decisive = spansOf('amend:workmem'); }
-      else { T.truth = s.wD; T.nears = [s.wH, s.wA]; T.decisive = descSpans(); }
+      if (has('workmem')) { T.truth = s.wA; T.stale = s.wD; T.decisive = spansOf('amend:workmem'); }
+      else { T.truth = s.wD; T.decisive = descSpans(); }
       break;
     default: throw fail('X5_TOPIC', topic);
   }
   if (T.decisive.some(d => d.frame === 'amend.version.patch' || d.frame === 'amend.value.vendor')) T.needsDoc = true;
   return T;
 }
-function x5Assumption(T, value, key) {
-  const { topic, s } = T;
-  if (topic === 'max_inflight' && value === null) return pick(ASSUME_SKIP, key)(s);
-  return pick(ASSUME[topic], key)(value, s);
+function x5Assumption(T, value, key) { return pick(ASSUME[T.topic], key)(value, T.s); }
+
+// The flip partner of a state (JUDGE-PROGRAM.md §2.5 counterfactual flip, §6.3 causal gate): the same task with the
+// decisive amendment saying another value. Every assumption value is then true in one state and false in the other, so
+// the value in a question says nothing about its label (a question-only probe reads 0.5), and the pair of pairs is the
+// flip cluster. Only amendments that name the value literally can be flipped without touching anything else (a relative
+// amendment, "go 64 above the description's value", names none); a description-stated parameter is not flipped either,
+// because other comments restate it. Returns { value, edits } or null.
+const tokenRe = t => new RegExp(`(?<![\\w.])${String(t).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\w.])`, 'g');
+function x5Flip(c0, T, key) {
+  const { parsed: p } = c0, t = String(T.truth), count = d => (d.text.match(tokenRe(t)) ?? []).length;
+  const spans = T.decisive.filter(d => count(d) >= 1);
+  if (!T.amended || !spans.length || spans.some(d => d.frame === 'description' || count(d) !== 1)) return null;
+  let n;
+  if (T.topic === 'version') n = t.replace(/\.(\d+)$/, (m, d) => `.${Number(d) + 2 + (hnum(`${key}|n`) % 3)}`);
+  else {
+    const steps = T.topic === 'slow_start' ? [5, 10, 15] : T.topic === 'work_mem' ? [16, 32, 48] : [16, 32, 48, 64];
+    const step = steps[hnum(`${key}|step`) % steps.length];
+    n = String(Number(t) + (unit(`${key}|sign`) < 0.5 ? -step : step));
+    if (!(Number(n) > 0)) n = String(Number(t) + step);
+  }
+  if (n === t || tokenRe(n).test(p.docs.ticket.text)) return null;       // the new value must not already be in the ticket
+  const edits = spans.map(d => {
+    const line = p.commentById[d.id].line;
+    return { doc: 'ticket', line, text: p.docs.ticket.lines[line].replace(tokenRe(t), n) };
+  });
+  return { value: n, edits, spanLabels: spans.map(d => c0.tap.spans.get(d.id)?.label ?? null) };
 }
 function x5Groups(c0) {
   const { slice, seed, difficulty, wh, masks, contracts, opts, task, parsed: p, world } = c0;
@@ -648,39 +711,49 @@ function x5Groups(c0) {
   const note = reason => { skipped[reason] = (skipped[reason] ?? 0) + 1; };
   for (const topic of topics) {
     const T = x5Topic(c0, topic), key = `${slice}|X5|${seed}|${topic}`;
+    T.amended = T.decisive.some(d => d.frame !== 'description');
     if (!T.decisive.length) { note('no-decisive-span'); continue; }
     if (T.needsDoc) { note('needs-release-notes'); continue; }
-    if (!T.decisive.every(d => bucketAllows('test-ood', formOf(d.text, masks)))) { note('decisive-span-bucket'); continue; }
+    if (T.skip) { note('skip-amendment'); continue; }
+    if (!T.amended) { note('not-amended'); continue; }
+    if (!T.decisive.every(d => heldoutEligible(c0.tap.spans.get(d.id)?.label ?? null, formOf(d.text, masks)))) { note('decisive-span-bucket'); continue; }
+    const flip = x5Flip({ ...c0 }, T, key);
+    if (!flip) { note('no-literal-flip'); continue; }
     const ids = selectComments(p, topic).map(c => c.id), slots = { topic, comments: ids }, state = kits.X5.buildState(task, slots);
-    const near = pick(T.nears.filter(v => v !== T.truth), `${key}|near`);
-    const aTrue = x5Assumption(T, T.truth, `${key}|a`), aNear = x5Assumption(T, near, `${key}|b`);
+    const flipped = applyEdits(task, flip.edits), state2 = kits.X5.buildState(flipped, slots);
+    if (state2.source_text.includes(String(T.truth)) && tokenRe(T.truth).test(state2.source_text.split('\n').filter(l => /^ {2}/.test(l)).join('\n'))) { note('flip-leaves-the-old-value'); continue; }
+    const aT = x5Assumption(T, T.truth, `${key}|a`), aN = x5Assumption(T, flip.value, `${key}|b`);
     const base = { seed, difficulty, worldHash: wh, formId: formOf(T.decisive.map(d => d.text).join('\n'), masks), surface: { source: 'bed', slice, lineHash: spanHash(T.decisive.map(d => d.text).join('\n')) }, masks };
-    const pairId = `rx5:${seed}:${topic}`;
-    const rec = (label, assumption, st, sl, tag, meta) => makeRecord({ contract: contracts.X5, slice, opts, key: `${key}|${tag}`, state: st, label, slots: { assumption },
-      meta: { ...base, ...meta, kit: { port: 'X5', slots: sl } } });
-    const x5 = { topic, skip: T.skip, amended: T.decisive.some(d => d.frame !== 'description'), spans: T.decisive.map(d => d.text), spanIds: T.decisive.map(d => d.id), truth: T.truth, near, frames: T.decisive.map(d => d.frame) };
+    const clusterId = `rx5:${seed}:${topic}`;
+    const spans2 = flip.edits.map(e => e.text.trim());
+    const x5 = { topic, amended: true, spans: T.decisive.map(d => d.text), spanLabels: T.decisive.map(d => c0.tap.spans.get(d.id)?.label ?? null), spanIds: T.decisive.map(d => d.id), truth: T.truth, flipValue: flip.value, frames: T.decisive.map(d => d.frame) };
+    const rec = (label, assumption, st, sl, tag, meta, extraSpans) => makeRecord({ contract: contracts.X5, slice, opts, key: `${key}|${tag}`, state: st, label, slots: { assumption },
+      meta: { ...base, ...meta, kit: { port: 'X5', slots: sl, questionSlots: { assumption } }, x5: { ...x5, ...(extraSpans ?? {}), ...(meta.x5 ?? {}) } } });
     out.push({ kind: 'pair', id: `${topic}|pair`, recs: [
-      rec('holds', aTrue, state, slots, 'h', { variant: 'flip', pairId, x5 }),
-      rec('violated', aNear, state, slots, 'v', { variant: 'flip', pairId, x5 })] });
+      rec('holds', aT, state, slots, 'h', { variant: 'flip', pairId: `${clusterId}:a`, clusterId }),
+      rec('violated', aN, state, slots, 'v', { variant: 'flip', pairId: `${clusterId}:a`, clusterId }),
+      rec('holds', aN, state2, slots, 'h2', { variant: 'flip', pairId: `${clusterId}:b`, clusterId, edits: flip.edits, counterfactual: { swapped: true, from: T.truth, to: flip.value, path: 'source_text' }, x5: { truth: flip.value, flipValue: T.truth, spans: spans2, spanLabels: flip.spanLabels, flipped: true } }),
+      rec('violated', aT, state2, slots, 'v2', { variant: 'flip', pairId: `${clusterId}:b`, clusterId, edits: flip.edits, counterfactual: { swapped: true, from: T.truth, to: flip.value, path: 'source_text' }, x5: { truth: flip.value, flipValue: T.truth, spans: spans2, spanLabels: flip.spanLabels, flipped: true } })] });
     // presence-matched: the decisive sentences replaced by same-register sentences that state nothing about the parameter
+    // (both values are asked about the same filled state, so every value is also a not_stated question)
     const edits = [];
     let di = 0, ci = 0;
     for (const l of p.ticket.description) if (descHit(topic, l.text, s)) edits.push({ doc: 'ticket', line: l.line, text: X5_FILLERS.description[(hnum(`${key}|fd`) + di++) % X5_FILLERS.description.length] });
     if (topic === 'version') edits.push({ doc: 'ticket', line: p.ticket.titleLine, text: p.ticket.title.replace(` ${s.vB} +`, ' +') });
     for (const id of ids) { const c = p.commentById[id]; if (TOPICS[topic].test(c.text)) edits.push({ doc: 'ticket', line: c.line, text: `  ${X5_FILLERS.comment[(hnum(`${key}|fc`) + ci++) % X5_FILLERS.comment.length]}` }); }
-    const edited = applyEdits(task, edits), st2 = kits.X5.buildState(edited, slots);
+    const edited = applyEdits(task, edits), st3 = kits.X5.buildState(edited, slots);
     const fillers = edits.filter(e => e.line !== p.ticket.titleLine).map(e => e.text.trim());
-    const pm = { variant: 'unknowable', pairId: `${pairId}:pm`, x5: { ...x5, notStated: 'presence-matched', spans: fillers, removed: x5.spans }, edits, counterfactual: { swapped: true, from: 'decisive sentences', to: 'same-register sentences', path: 'source_text' } };
-    if (edits.length && !T.decisive.some(d => st2.source_text.includes(d.text))) {
-      out.push({ kind: 'pm', id: `${topic}|pm`, recs: [rec('not_stated', aTrue, st2, slots, 'pm1', pm), rec('not_stated', aNear, st2, slots, 'pm2', pm)] });
+    const pm = { variant: 'unknowable', pairId: `${clusterId}:pm`, clusterId, edits, counterfactual: { swapped: true, from: 'decisive sentences', to: 'same-register sentences', path: 'source_text' }, x5: { notStated: 'presence-matched', spans: fillers, spanLabels: fillers.map(() => null), removed: x5.spans } };
+    if (edits.length && !T.decisive.some(d => st3.source_text.includes(d.text))) {
+      out.push({ kind: 'pm', id: `${topic}|pm`, recs: [rec('not_stated', aT, st3, slots, 'pm1', pm), rec('not_stated', aN, st3, slots, 'pm2', pm)] });
     } else note('presence-matched-edit');
   }
   // an assumption about a parameter the ticket has no step for (the database parameter of a d1-d3 ticket)
-  if (!sp.dbStep && unit(`${slice}|X5|${seed}|absent`) < 0.5) {
+  if (!sp.dbStep && unit(`${slice}|X5|${seed}|absent`) < 0.03) {
     const T = { topic: 'work_mem', s }, key = `${slice}|X5|${seed}|absent`, slots = { topic: 'work_mem' }, state = kits.X5.buildState(task, slots);
     const v = pick(['128', '160', '192', '224'], `${key}|v`);
     out.push({ kind: 'absent', id: 'work_mem|absent', recs: [makeRecord({ contract: contracts.X5, slice, opts, key, state, label: 'not_stated', slots: { assumption: x5Assumption(T, v, key) },
-      meta: { seed, difficulty, worldHash: wh, variant: 'clean', formId: formOf(state.source_text, masks), surface: { source: 'bed', slice, lineHash: spanHash(state.source_text) }, masks, kit: { port: 'X5', slots }, x5: { topic: 'work_mem', notStated: 'absent', spans: [], skip: false } } })] });
+      meta: { seed, difficulty, worldHash: wh, variant: 'clean', formId: formOf(state.source_text, masks), surface: { source: 'bed', slice, lineHash: spanHash(state.source_text) }, masks, kit: { port: 'X5', slots, questionSlots: { assumption: x5Assumption(T, v, key) } }, x5: { topic: 'work_mem', notStated: 'absent', spans: [], skip: false } } })] });
   }
   return { groups: out, skipped };
 }
@@ -706,9 +779,10 @@ function x4Rows(c0, n) {
   const key = `${slice}|X4|${seed}`, out = [];
   const cands = alignStatements({ parsed: p, world, tap }).map(c => ({ ...c, id: c.id }));
   const state = c => kits.X4.buildState(task, c.slots);
+  const reserved = reservedTexts(c0);
   const accept = c => {
     const st = state(c);
-    return bucketAllows(slice, formOf(st.statement, masks)) && st.related_statements.every(t => contextAllows(slice, t, masks));
+    return !reserved.some(r => st.statement.includes(r)) && bucketAllows(slice, formOf(st.statement, masks)) && st.related_statements.every(t => contextAllows(slice, t, masks, reserved));
   };
   for (const c of rotate(cands, X4_LABELS, n, key, c => c.id, X4_WEIGHTS, accept)) {
     const st = state(c);
@@ -779,4 +853,4 @@ export async function* records(slice, seeds, opts = {}, ctx) {
 }
 
 // helpers the test file and the assembly reuse
-export const _internal = Object.freeze({ x1Candidates, x5Groups, x5Topic, q4Pick, q4Build, rotate, BUCKET_OF_SLICE, ASSUME, ASSUME_SKIP });
+export const _internal = Object.freeze({ x1Candidates, x5Groups, x5Topic, x5Flip, q4Pick, q4Build, rotate, BUCKET_OF_SLICE, ASSUME });

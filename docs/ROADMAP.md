@@ -4,6 +4,18 @@
 meta-harness, an offline outer optimizer, LangGraph/n8n compilation) was dropped after
 the research in [`research/landscape-20261006/`](../research/landscape-20261006/).*
 
+*Amended 2026-10-08 (design review): R-1 (§1); R-2 to R-9 (§2.1); R-10 (§2.2); R-11 (§2.3);
+R-12 (§2.4); R-13 to R-16 (§2.5); R-17 (§2.6); R-18 (§2.8); R-19 and R-20 (§2.9); R-21
+(§2.10); R-22 (§2.11); R-23a–f (§3); R-24 to R-28 (§4); R-29 to R-31 (§5); R-32 (§6), except
+its usage-allowance rule; R-33 (§8). Proposed in
+[`research/review-20261007/ROADMAP-AMENDMENTS.md`](../research/review-20261007/ROADMAP-AMENDMENTS.md),
+applied with the default owner decisions of
+[`00-SYNTHESIS.md`](../research/review-20261007/00-SYNTHESIS.md) §6, recorded as THESIS
+D8–D16. **Held:** R-32's usage-allowance rule stays a proposal awaiting the owner, not adopted
+(he chose "Full speed"; THESIS D14); §6 shows it as a proposal. Under the default "no" for the
+executor egress proxy (THESIS D10), no executor reads third-party text (§2.1, §2.9). Kev follows
+THESIS D13, not the plan's default pause.*
+
 **Read order:**
 1. [README.md](../README.md): status, how to run.
 2. [THESIS.md](THESIS.md): what we build and why.
@@ -22,14 +34,14 @@ HEAD has moved. R01–R11 refer to the research reports listed at the end of THE
                               │
                               ▼
  ┌──────────────────────── SELECTION ────────────────────────┐
- │ signature → candidates (kept workflows + standard ops)     │
- │ hard guards (code) + applicability (typed judgment)        │
- │ choose: reuse W@v │ construct new │ delegate to executor   │
+ │ hard requirements (code + typed properties): add structure │
+ │ utility head per executor model + slider (value of success)│
+ │ choose: direct │ agent │ reuse W@v │ template │ construct(+)│
  │ logged with propensity                                     │
  └───────────────┬────────────────────────────────────────────┘
                  ▼
- CONSTRUCTION (when needed): probe environment → draft IR from operators →
- static checks (types, effects, budgets, labels, composition) → smoke run
+ CONSTRUCTION (when needed): cheap builder first, frontier on escalation and construct+:
+ intake → oracle discovery → skeleton + typed slots → lint → smoke run → patch by replay
                  ▼
  ┌──────────────────────── RUN (durable) ─────────────────────┐
  │ nodes: code · agent(narrow, typed) · tool/effect · verify ·│
@@ -113,9 +125,22 @@ proposals; settle them in the first PR of each phase.
 
 ### 2.1 Workflow IR extensions
 
-Today the schema supports `task`, `assert`, `human`, `map`, `loop` and `wait`
-(`schemas/workflow.schema.json`). The runtime has no model node, `map` runs serially,
-`wait` never wakes, and there is no call-by-hash.
+Today the schema has 9 node kinds: `task`, `assert`, `human`, `map`, `loop`, `wait`,
+`agent`, `code` and `verify` (`schemas/workflow.schema.json`). `map` runs in parallel and
+timers wake through `foundry tick`. There is no call-by-hash, trigger, error route or board.
+
+**Coverage goal (owner, 2026-10-07).** About 100% of real workflows, defined so it cannot be
+gamed: every workflow is represented exactly or rejected with a named reason, never silently
+flattened. Every IR stage reports three numbers: *declared* (the constructs exist),
+*compiled* (lowers to valid IR under the production label policy) and *executed* (reproduces
+the original on fixtures, reported as executed ÷ oracle-eligible). The headline is compiled
+plus executed on a fresh held-out sample (~300 items) collected after the IR freeze; the
+agent-framework slice is included. Bounded semantics: infinite processes become triggered
+runs, recursion has depth limits, loops have caps. Free group chat and full-history handoffs
+are refused by design choice and labelled so (representable with a turn cap if wanted).
+Whether a construct helps a cheap builder decides the build order and the builder's kit,
+not whether the IR gets it. Stages S0–S7 and their effort:
+`research/review-20261007/02-ir-expressiveness.md` §7.
 
 **Additions:**
 
@@ -124,6 +149,11 @@ Today the schema supports `task`, `assert`, `human`, `map`, `loop` and `wait`
     `tools` (`allow`, at most 5 by default), `model` (`class`, `maxClass`, `assignment`
     ref), `escalation`, `returns`, `independence`, `budget`.
   - The full field list is in R09 §C6.
+  - **Capped tool loop (`agent.tools`).** The IR represents a short tool loop: an
+    allowlist, at most 16 turns, every turn journaled. Its first implementation runs inside
+    the executor adapter. A Foundry-native loop needs a §3 amendment first.
+  - **Image inputs.** `media` inputs (kind, hash, bytes, size) render into the context and
+    are untrusted like text. Needed for the game-QA visual pass.
   - **Record/replay:**
     - The first execution journals the raw output, model id, provider and engine
       version, decoding settings and context receipt.
@@ -136,20 +166,49 @@ Today the schema supports `task`, `assert`, `human`, `map`, `loop` and `wait`
     ACP agent.
   - It is opaque inside but bounded outside:
     - a workspace handle;
-    - a budget;
-    - a timeout;
+    - a budget, reserved from the parent;
+    - a timeout and heartbeats;
     - an allowed capability set, enforced by sandbox;
+    - `egress: none` by default: a private network namespace, model calls only through a
+      host-side egress proxy (no routing, no provider choice), no CLI login inside the
+      sandbox, per-node budget-scoped revocable tokens;
+    - nested agents 0 by default; nested model use blocked up front, not detected after;
+    - a transcript whose hash enters the hash chain;
+    - effects marked `uncertain` when egress is on;
     - typed `returns`;
     - mandatory downstream `verify`.
+  - Limits: at most 2 running at once and 16 per run.
+  - No executor reads third-party text (corpus, benchmarks, owner repositories) until the
+    isolation canary test passes (§2.9).
+  - THESIS D10 is "no" by default (applied 2026-10-08): no proxy key is provisioned, so no
+    executor reads third-party text at all, and R-bench and the C0 sealed round use the
+    structured builder (§2.5). Whether a host-side proxy can work without any new
+    credential is still to be checked.
   - Used for open-ended subtasks ("fix this bug"), for interpreter-style first attempts,
     and as the L2 fallback.
   - Its output is labelled `executor:<name>`.
 - **`call`.** Invokes a child workflow by hash. The child gets its own run record, a
   budget carved from the parent's, and a delivery-bound result.
+  - Depth: default 3, hard policy ceiling 8; static nesting inside one document ≤ 6; at
+    most 1,000 runs per tree.
+  - Recursion only through `self` or local flows with `maxDepth` (a document cannot contain
+    its own hash). Each child gets a strictly smaller budget than its parent has left.
+  - Until sagas exist, callees may have only idempotent or approval-gated effects.
+  - Idempotency key = (callee hash, input hash, parent path); siblings share one
+    rate-limit gate.
+  - Human questions carry their path, workflow hash and question hash; stale answers are
+    rejected; no approval covers sibling items unless declared as a bounded batch.
+  - Every document carries an IR version; a revocation list overrides hash pins for
+    security defects.
 - **Search operators**, with typed fields and a `verifier` ref:
   - `best_of_n`, `tournament`, `loop_until_dry`;
   - `explore`, with `env` snapshot and fork, novelty or coverage selection, and a
-    persona set.
+    persona set;
+  - `wide` (the swarm operator): a planner emits a bounded, typed subtask list; code checks
+    it for overlap and gaps; a `map` of cheap typed workers; a code reducer; an independent
+    `verify`. Fan-out ≤ 32 without evidence. It becomes a default only after it beats
+    `best_of_n` with the same verifier (B5) at equal tokens;
+  - `panel`: independent verifiers with independence labels; vote, not debate.
 
   N and the stopping rule come from the allocator (§2.6), never a fixed constant.
 - **`plan/expand`: bounded runtime dynamism.**
@@ -188,8 +247,17 @@ Today the schema supports `task`, `assert`, `human`, `map`, `loop` and `wait`
   - `human` with timeout routing and single-use resume tokens;
   - `triggers`;
   - `saga` roles: compensable, pivot, retryable.
-- **Parallel `map`.** Fields `concurrency` and `failure: fail_fast|collect`. Outputs are
-  ordered by index.
+- **Error routes, `finally` and adaptive retry** (IR stage S2).
+- **Bounded `machine`** for cycles with several entry points (at most 1,000 transitions).
+  `loop` gains convergence criteria (`delta`, `patience`) and `onExhausted: best`, and is
+  capped at 1,000 iterations.
+- **Parallel `map`.** Fields `concurrency` and `failure: fail_fast|collect|quorum(k)`.
+  Outputs are ordered by index. The reducer receives typed coverage (done, failed,
+  cancelled, skipped). A run cannot be `pass` with collected errors unless its acceptance
+  says so. On budget exhaustion the map stops launching items: in-flight items keep their
+  reservation, unstarted items become `skipped: budget`, unused reservations return to the
+  parent, and the verdict is `inconclusive` (budget). A static check `BUDGET_TOO_SMALL`
+  rejects carving that leaves a leaf below one call's budget.
 - **Replay rules R1–R8 (R09 §B3).**
   - Control flow is a pure function of the hash, the input and the journal.
   - Every nondeterministic observation is journaled before it can influence control
@@ -199,7 +267,9 @@ Today the schema supports `task`, `assert`, `human`, `map`, `loop` and `wait`
   - Minimal resume: re-run only failed nodes, nodes whose input changed, and their
     dependents.
 - **Runtime debts to pay alongside this work:**
-  - per-node journal rows instead of rewriting the whole run blob (`src/store.mjs`);
+  - per-node journal rows instead of rewriting the whole run blob (`src/store.mjs`). It is
+    measured: a 1,000-item map adds 73–135 s of pure overhead. It lands in the first engine
+    bump, before any composition or swarm feature;
   - a timers table plus a wake scheduler, via `foundry serve` and a `foundry tick` cron
     entry;
   - epoch compaction for long runs.
@@ -258,11 +328,17 @@ A node needs a qualification run before it may exceed these.
   or `counter`), its writers, and optionally `writableFields`. `lww` writes carry
   `expectSeq`.
 - **Scopes:**
-  - `node`: private;
-  - `run`: the blackboard for one run;
-  - `workflow`: persists across runs and holds playbook deltas;
+  - `node`: private (the node's scratch notes; they leave only through a typed output);
+  - `run`: the blackboard for one run (tree-scoped for composed runs);
   - `library`: read-only, through the ContextPort;
   - `temp`.
+
+  There is no `workflow` scope. Cross-run knowledge ("lessons") becomes a replay-proven
+  workflow version or an AMP claim. Cross-run application state (a cursor, a dedupe set, a
+  chat session) is a typed state capability with compare-and-swap behind the ContextPort.
+  The run board is built only after a pre-registered experiment shows it beats plain edges
+  by at least 15% per dollar, and after its injection, confused-deputy and flooding tests
+  (§2.9).
 
 **Labels.**
 - Every segment has an integrity label (`trusted` or `untrusted:<src>`) and a
@@ -290,6 +366,15 @@ Foundry's own board. AMP's is an adapter, later (§2.11).
   - **F**: frontier, or 200B+ open models
 - The runtime uses no model id outside this file. A test proves it.
 
+**Model roles (2026-10-08).**
+- Cheap executor and first-rung constructor: Haiku 5.5 (class M). A weaker model (Haiku 4.5)
+  is kept as a stress arm, because Haiku 5.5 is no longer a "9B-like" stand-in.
+- Template library, the `construct+` tier and construction escalations: Opus 5.5 (class F).
+- Building Foundry itself: Opus and Sonnet.
+- Local generative models: parked until a GPU route exists (268 s per call on the cloud CPU).
+- Typed judgments: Kev is the candidate local engine, kept per port only where it beats
+  Haiku 5.5 and rules (§2.4).
+
 **Defaults by node role (R09 §C5):**
 
 | Role | Default class |
@@ -300,7 +385,9 @@ Foundry's own board. AMP's is an adapter, later (§2.11).
 | synthesis | L plus a verifier |
 | code edit | L coder, with tests as the oracle |
 | verifier | at least the generator's class, from a different model family |
-| `plan/expand` and construction | F |
+| `plan/expand` | F |
+| construction (`template`, `construct`) | M first (structured builder), escalating to F as a logged event |
+| construction (`construct+`: nested, multi-stage, waits or human steps) | F |
 | long-horizon constrained planning | no model: a `loop` with a checker |
 
 **Procedure distillation (assignment search).**
@@ -360,7 +447,10 @@ calibration report per port includes:
 - comparison against the `rule` and embedding baselines.
 
 **Promotion.** A port gates real decisions only after its Jev engine beats the baseline
-on held-out labelled data.
+on held-out labelled data. A local Kev port must also beat a typed call to the cheap hosted
+model (Haiku 5.5) on accuracy, calibration and latency; otherwise that port uses the hosted
+model or rules. (THESIS D13: Kev dataset building continues; laptop training waits for this
+Kev-vs-Haiku-5.5 comparison; the hosted spend approval is held until it reports.)
 
 **Fine-tuned judge (frontier bet, after Phase 4).** Train on the labelled ledger, then
 compare against stock Jev and `local-logit` per port. Keep it behind the same port.
@@ -370,8 +460,13 @@ That is what oracles, replay and ARC are for.
 
 ### 2.5 Construction
 
-Construction is a workflow too: a standard builder workflow that the frontier builder
-runs. Its steps:
+Construction is a workflow too: a standard builder workflow (the "structured builder")
+that a cheap builder (Haiku 5.5) runs first, escalating to a frontier builder as a logged
+event if no probe passes within budget. Frontier models write the operator skeletons (with
+typed slots and offline self-tests), worked examples and repair cookbook it uses, and build
+the `construct+` tier themselves. The structured builder runs inside Foundry as narrow,
+schema-constrained calls with no executor. One of its outcomes may be "no workflow: one
+call", which hands the task back to selection. Its steps:
 
 1. **Understand.** Parse the task. Draft the outcome contract: what counts as success,
    which checks are executable, what is subjective, what is ambiguous and consequential.
@@ -387,15 +482,26 @@ runs. Its steps:
      - explore-with-snapshots, repro-and-minimize;
      - map-reduce, cascade, one-writer edit loop.
    - Mined operators come later (A2Flow-style).
+   - Only reviewed skeletons enter the builder's trusted context; every retrieved snippet
+     carries a provenance label. Worked examples come from other families, never the
+     task's own. Any repository or template family that supplies an R-bench item is
+     excluded from mining and from worked examples (source firewall).
 4. **Draft.** IR plus contracts, context contracts, classes and budgets.
 5. **Check.** Types, effects and the effect lattice, budgets, labels, composition
    assume-guarantee checks, the one-writer rule, and the oracles' independence and
    controls. Every new oracle gets known-good, known-bad, mutant and double-mutant
-   controls before it is trusted.
+   controls before it is trusted. A strict construction lint treats these as errors:
+   acceptance that only checks that an answer exists (`ACCEPTANCE_EXISTENCE_ONLY`), verify
+   nodes that do not gate (`VERIFY_NOT_GATING`), silently collected errors
+   (`ERROR_COLLECTION`), reasoning on extraction nodes, and model classes assigned without
+   screening the cheaper class.
 6. **Smoke.** Run on 1–2 probe cases with full recording. Fix and repeat within the
    construction budget.
 7. **Hand off** to run, with the construction record. Construction qualification is kept
    separate from outcome qualification.
+8. **Edit.** Repairs to an existing workflow, including by a cheap model, are version-bound
+   proposals: a patch to one node, proven by replay of the failing run plus a regression
+   slice, applied by code, never inside a running run. Smoke runs replay unchanged nodes.
 
 **Building outcome contracts** is part of the system, not something the researcher
 supplies. This is the checkpoint's largest open problem. Its sources:
@@ -417,6 +523,8 @@ supplies. This is the checkpoint's largest open problem. Its sources:
 - `uncertain` (an effect whose outcome is unknown)
 
 A finding triggers reproduction, never a retry. Only `harness_fault` reaches repair.
+A run is `pass` only if its acceptance gates on an independent check. Every experiment
+report shows the run verdict against the independent oracle, per arm.
 
 **Classifier.** Run these checks in order. The typed failure-class judgment only sets the
 order of checks; replay decides.
@@ -506,11 +614,22 @@ retrieved per task.
 
 ### 2.8 Selection: simple first, measured always
 
-**Actions:**
-- reuse workflow W at version v;
-- construct;
-- delegate to executor X;
-- cascade (a cheap workflow → verify → escalate).
+**Actions (modes, by construction effort):** `direct` (one call); `agent` (delegate to
+executor X); `reuse` (workflow W at version v); `template` (one skeleton, slots filled);
+`construct` (a bespoke workflow); `construct+` (multi-stage or composed). A cascade (a cheap
+workflow → verify → escalate) is a policy over these modes.
+
+**Need gate.** Two stages. (1) Hard requirements (code guards plus typed task properties)
+force structure whatever the slider says: a durable wait, a schedule or trigger, human
+approval, effects with authority implications, or an audit trail beyond the model-call
+journal (approvals, effect records). This guard can only add structure. (2) A small
+calibrated head per executor model predicts success and cost per mode; the mode with the
+best expected value wins. The slider sets the dollar value of one verified success
+(owner-facing: "how much is a correct result worth?"); each position shows its measured
+operating point, or "uncalibrated". Typed judgments extract task properties; they do not
+pick the mode. The router is built only if a cross-fitted headroom sweep (RX1) finds that
+per-task choice beats the best fixed mode by at least 3 points of success or 20% of cost at
+the lower 95% bound; otherwise ship the fixed policy plus the hard guards.
 
 **Filters, applied first:**
 - hard guards;
@@ -539,8 +658,11 @@ returns a ranked advisory.
 
 ### 2.9 Security
 
-- Control flow is pinned (hash) before any untrusted byte is read. The builder's own
-  context must not contain untrusted content.
+- Control flow is pinned (hash) before any untrusted byte is read. A builder may read
+  third-party task text only as provenance-labelled data, with no effects, no egress and
+  mock capabilities. Workflow text derived from it is tainted, and a tainted workflow needs
+  owner approval before it may use effects or egress. The need router reads trusted fields
+  only.
 - Data labels and program-counter tainting: branch, loop and map counts, search scores
   and selection features that depend on untrusted data are tainted.
 - Sink policies per effect class: untrusted values can never become recipients, paths,
@@ -549,6 +671,18 @@ returns a ranked advisory.
 - `plan/expand` may only narrow privileges. `call` passes untrusted data on a labelled
   data channel.
 - One writer per resource.
+- Executors: `egress: none` by default, model calls only through a host-side egress proxy,
+  no login inside the sandbox, per-node revocable tokens (§2.1). (No proxy is provisioned
+  while THESIS D10 stays "no", so executors read no third-party text.)
+- A run-level declassification budget in bits. Effect arguments built from declassified
+  values must match an allowlist or enum.
+- Model-written code runs only as sandboxed `code` with no network, and its output is
+  untrusted.
+- Control-flow taint and the sink-field policy ship together, with a false-positive test:
+  honest "webhook → write row" workflows must still compile.
+- **Each security item gates the first run that needs it.** The gating table (item, first
+  run that needs it, test that must pass first) is kept with the current plan
+  (`research/review-20261007/00-SYNTHESIS.md` §7).
 - An OS sandbox underneath:
   - locally: Anthropic sandbox-runtime or bubblewrap;
   - stronger isolation: gVisor or Firecracker;
@@ -568,8 +702,18 @@ returns a ranked advisory.
 - in-toto/DSSE statements for promotions (subject = workflow hash; predicate = scores,
   oracle hashes, parent) and for deliveries.
 - Web UI decision cards for each selection, each escalation and each promotion: inputs,
-  alternatives with scores, evidence refs, independence labels. Exit criterion: the owner
-  can answer "why did this happen?" in under 2 minutes.
+  alternatives with scores, evidence refs, independence labels.
+- A **read-only run viewer**: each node a breathing state dot, a one-line live note, and
+  a drawer with its transcript (prompt, typed reply, checks, escalations, costs, receipts),
+  for recorded and live runs. It never approves, answers or resumes. Prototype:
+  `tools/run-view/`.
+- The chain binds `requestHash`/`responseHash` on every model call, decisions, executor
+  transcript hashes, and a journal root at seal (a board root once a board exists). Run
+  heads are anchored in committed experiment manifests. `foundry verify RUN` checks it all.
+- The owner acts through the CLI and the web UI: `foundry answer`, `foundry approve`,
+  `foundry cancel RUN` and a stop-all with process-group kill.
+- Exit criterion: the owner answers "why did this happen?" on 10 recorded failing runs in
+  under 2 minutes each, with and without the viewer.
 
 ### 2.11 Interfaces and ecosystem ports
 
@@ -590,6 +734,10 @@ returns a ranked advisory.
     hooks.
   - Hash the saved per-run scripts. That gives CC workflows the score history they lack.
   - Export Foundry cases in `claude plugin eval` format.
+  - Use real Claude Code workflow scripts as the B1-cc baseline and as executors, after a
+    headless feasibility smoke. A lowering from IR to a Claude Code workflow script, or a
+    second minimal interpreter for the conformance subset, is the cheap test of harness
+    independence.
 - **Agent Skills export.** Package kept workflows as skills, with `foundry.hash`,
   `foundry.contract` and `foundry.record` in metadata.
 - **Ports.** Fix these contracts in Phase 1; adapters come later:
@@ -617,16 +765,25 @@ returns a ranked advisory.
 ## 3. What we deliberately do not build
 
 - A global harness to evolve, or a Meta-Harness-style outer optimizer.
-- A general agent loop. Use executors.
+- A general agent loop. Use executors. (The IR may represent a capped `agent.tools` loop,
+  run inside the executor adapter. A Foundry-native loop requires amending this line first.)
 - A visual builder or connector catalog.
-- A memory store (AMP).
-- A model gateway or provider router.
+- A memory store (AMP). Cross-run application state is a typed state capability behind the
+  ContextPort, not a Foundry store.
+- A model gateway or provider router. (A minimal host-side egress proxy for executor model
+  calls, with no routing and no provider choice, is a security boundary and is allowed.)
 - Durable distributed execution: SQLite stays the evidence core, with DBOS behind an
   adapter if scale demands it.
-- Tracing UIs or a general eval platform: emit OTel, build only qualification rules.
+- Tracing UIs or a general eval platform: emit OTel, build only qualification rules and one
+  read-only run viewer (§2.10) that never approves, answers or resumes.
 - New protocols: use MCP, A2A, Agent Skills and AGENTS.md.
 - Plain LLM-judge rubric loops without hash binding and independence labels.
-- Runtime self-modification by small models.
+- A swarm subsystem, free group chat between agents, or default fan-outs above 32.
+  Swarms are an operator over the IR (`wide`) that must beat best-of-K with the same
+  verifier. Group chat and full-history handoffs are refused by design choice and stay
+  representable with a turn cap if the owner asks.
+- Runtime self-modification by small models. (Small models may propose edits offline as
+  version-bound patches that code applies only after replay; §2.5 step 8.)
 
 ---
 
@@ -637,11 +794,13 @@ returns a ranked advisory.
 | ID | Claim | Primary metric |
 |---|---|---|
 | **C0** construction | Given a fresh complex task, an agent with Foundry builds a working workflow more often, and at lower total cost, than the same agent alone or writing CC-workflow scripts. | task success; construction success; time and $ to first qualified workflow |
-| **C1** cheap execution | Frontier-authored workflows executed by assigned open-weight models reach non-inferior verified success at much lower cost than the frontier executing alone. | cost per verified success (CPS) at a non-inferiority margin; pass^k |
+| **C1** cheap execution | Frontier-authored workflows executed by assigned cheap models (Haiku 5.5 today; open-weight models once a GPU route exists) reach non-inferior verified success at much lower cost than the frontier executing alone. | cost per verified success (CPS) at a non-inferiority margin; pass^k |
 | **C2** safe reuse | On recurring families, kept workflows lower amortized CPS. They must beat B0+N, B2 and etchplan, not only B0, with wrong reuse ≤2%. | amortized CPS curve; wrong-reuse rate; deopt rate |
 | **C3** repair | Classify → intervene → patch → replay recovers more failures than retry or regeneration at equal budget, with no more regressions. | recoveries per $; regression count; verdict precision |
 | **C4** typed judgments | Jev-gated applicability, drift and failure-class decisions are calibrated and beat code/embedding baselines. | Brier score; false accepts/abstains; downstream wrong-reuse |
 | **C5** game loops | Per-task adaptive exploration with snapshots beats a plain agent loop at matched budget. | RHAE or levels per $; actions per level |
+| **C6** representation | The IR represents real workflows exactly or rejects them with a named reason, across platforms and agent frameworks. | declared, compiled and executed coverage on a fresh held-out sample; lowering-audit mismatch rate |
+| **C7** need routing | The need router beats the best fixed mode (always direct, always agent, always construct) on held-out families, with calibrated slider positions. | captured headroom and regret vs the best fixed mode; slider operating-point error |
 
 ### 4.2 Beds (R05)
 
@@ -673,15 +832,30 @@ returns a ranked advisory.
 
 **Workflow corpus (§4.4)** for C0 and for expressiveness.
 
+**Wild ladder** (beds Claude did not write or tune on; each rung harder to fool):
+0. Development beds.
+1. Sealed families (separate author, read once by one pre-registration).
+2. Real external material: (a) **R-bench**, replication of real hand-built workflows from
+   the corpus (§4.4 use 5); (b) external benchmarks, after an acquisition check (τ²-bench,
+   AppWorld, Spider 2.0 / BIRD, a SWE-bench Verified slice; GAIA if acquirable); (c) the
+   owner family `ownerci`.
+3. 20–30 owner-written tasks, sealed until the run. Each arrives with an acceptance check
+   or input/output examples, or is graded blind against a rubric frozen before the run
+   (recorded as human assistance). Stored like `beds/sealed/`, with a hash commitment.
+4. The owner's real recurring tasks from ARC/AMP logs, redacted before anything enters a
+   journal, the corpus or an export.
+
 ### 4.3 Protocol
 
 **Baselines.** All are frozen by hash, with the same tools and budget.
 
 | ID | Baseline |
 |---|---|
-| B0 | Plain executor |
+| B0 | Plain executor (Claude Code with tools; "B0-agent") |
+| B0-call | One direct model call with no tools |
 | B0+N | B0 plus append-only notes. Mandatory: naive accumulation beats memory systems on CL-Bench. |
 | B1 | A CC-workflow-style script, written by an independent subagent with an equal construction budget |
+| B1-cc | A real Claude Code workflow script, run headless (after a feasibility smoke) |
 | B2 | Memory/skills (AWM- or ACE-style) |
 | B5 | Best-of-K parallel sampling with the same verifier, at equal K and tokens |
 | etchplan | For C2 |
@@ -710,7 +884,19 @@ returns a ranked advisory.
 - Leakage control: library leakage scans for task literals, and a gold-patch probe on
   SWE beds.
 - Gate each bed with an oracle agent, a no-op agent, and known-good/known-bad controls.
-- No K=1 comparative claims. Gaps under 3 points are noise.
+- No K=1 comparative claims. Gaps under 3 points are noise; gaps over 3 points are not
+  thereby real. Every kill rule names a non-inferiority margin δ and a family-clustered CI,
+  with a power table. Below the powered size the outcome is "directional, no decision".
+- Comparative runs use a named engine freeze point. IR and engine work happens on a branch
+  and merges only after the round's last trial.
+- Each pre-registration records the engine hash and the CLI environment flags. Cost per
+  success is compared only within one setting; cross-setting comparisons also report cost
+  recomputed from journaled tokens at one fixed price table.
+- Separate builder model from builder method (a 2×2 design), as well as architect model,
+  executor model, tools, runtime and human assistance.
+- Sealed families are read once, by one pre-registration holding every arm. Inspected test
+  seeds are recorded as burned in a dated amendment.
+- Interim looks at a running experiment change neither its stopping rule nor its verdict.
 - Online-learning runs are never submitted as standard leaderboard entries.
 - Record every cost and every 429.
 
@@ -758,7 +944,10 @@ intricate as human-built ones, and whether the IR can *express* them.
 - Home Assistant automations;
 - Apple Shortcuts (the WorkflowLLM/WorkflowBench data);
 - Dify, Coze and n8n workflows as used by FlowFixer;
-- the owner's own repos.
+- the owner's own repos;
+- agent frameworks (LangGraph, CrewAI, AutoGen/AG2, OpenAI Agents SDK and Swarm, Google
+  ADK, Claude Code workflows and others), from official examples. Their descriptions are
+  model-written, so they never enter rebuild-from-description tasks or router labels.
 
 **Per-item record:**
 - source and licence;
@@ -777,6 +966,12 @@ intricate as human-built ones, and whether the IR can *express* them.
 3. **Operator mining.** Recurring subgraphs become candidate standard operators, admitted
    only by the same verify-before-store rules.
 4. **Seeds for the library**, admitted only after Foundry-side qualification.
+5. **R-bench** (wild rung 2a): each item yields *translate* (from the original definition),
+   *rebuild from intent* (from the author's original description and examples) and
+   *improve* tasks, judged by an executable oracle on hidden scenarios with original-passes
+   and broken-fails controls. Guards against recall: a memorisation probe per item,
+   perturbed twins, a preference for items newer than the builder's training cutoff, and a
+   source firewall that keeps R-bench families out of uses 3 and 4.
 
 **Rules:**
 - Store references and normalized graphs; vendor raw data only where the licence allows.
@@ -788,7 +983,11 @@ intricate as human-built ones, and whether the IR can *express* them.
 ## 5. Phased plan: capability first
 
 **How each phase runs:**
-- Each phase ends with a **measured number against a simple baseline** and a
+- Phases interleave. Work follows a dated plan (currently
+  `research/review-20261007/00-SYNTHESIS.md` §5), not strict phase order. Two parts of that
+  plan are not in force: its usage rule R1 is a proposal awaiting the owner (§6), and its
+  Kev pause is replaced by THESIS D13.
+- Each phase still ends with a **measured number against a simple baseline** and a
   `research/<topic>-<date>/REPORT.md`.
 - Each phase updates the README status section.
 - About 20% of each phase's budget goes to the **frontier-bets track** (§5.9): time-boxed
@@ -862,11 +1061,15 @@ suite.
 - standard operators;
 - static checkers (types, effects, labels, composition, the one-writer rule);
 - oracle controls;
-- the `executor` adapter for Claude Code headless and one more executor;
-- the workflow corpus pilot (100–200 items, with oracles where possible).
+- the `executor` adapter for Claude Code headless and one more executor, with isolation
+  (§2.1) before any third-party text;
+- the structured builder v0 (oracle discovery, strict lint, skeletons with typed slots);
+- the workflow corpus pilot (100–200 items, with oracles where possible), the agent-framework
+  slice, and the R-bench pilots (5 items, health-gated).
 
-**Exit:** C0 on Tier A families plus the corpus pilot, against B0 and B1, with
-construction cost reported. Run the τ^τ-bench one-task feasibility gate.
+**Exit:** C0 sealed on the one-shot sealed families (builder model × method, B0, B1, B1-cc
+if feasible), plus the R-bench pilot, against B0 and B1, with construction cost reported.
+Run the τ^τ-bench one-task feasibility gate.
 
 ### 5.3 Phase 3: cheap-model execution
 
@@ -904,8 +1107,9 @@ triggers, sagas), `call` by hash, `plan/expand`, `env` snapshot/fork, the compos
 checker and the blackboard.
 
 **Exit:**
-- A multi-workflow task (e.g. the game-QA reference) runs with streaming findings,
-  cancellation, and timers that wake after a restart.
+- A multi-workflow task runs with streaming findings, cancellation, and timers that wake
+  after a restart: `gridquest` until the env port and image inputs exist, then the game-QA
+  reference.
 - Conformance tests for every async primitive pass.
 - C5 on ARC-AGI-3 offline plus one procedural bed.
 
@@ -934,7 +1138,8 @@ Tier B, then Tier C, subject to D1 and each bed's feasibility gate.
 
 These replace the old ones.
 1. **README.md is the single entry point.** Update its status after every phase. Keep no
-   parallel status documents.
+   parallel status documents: a review synthesis is a review artifact that README links,
+   and its status table moves into README.
 2. **Evidence before claims.** Use the maturity ladder EXISTS → REACHABLE → DEFAULT-LIVE
    → OBSERVED → CAUSAL → PRODUCT-PROVEN. Every number has a command, a K and a cost.
    Negative results go into `docs/RESEARCH.md`.
@@ -957,10 +1162,20 @@ These replace the old ones.
     instructions.**
 11. **Git:** a named feature branch per phase, small PRs, no force-push to `main`, no
     rewriting of `research/` history.
+12. **No new subsystem** without a pre-registered experiment that needs it.
+13. **Engine freeze for comparisons.** No comparative run starts on an engine that is
+    still changing (§4.3).
+
+**Proposed, awaiting the owner (not adopted): usage allowance.** The owner chose "Full
+speed". This rule would override that choice, so it applies only if he adopts it (THESIS
+D14). Proposed text: "At most 4 concurrent agents, and at most 2 for review or
+orchestration fan-out. While the 7-day meter shows a warning, only pre-registered runs
+already in flight continue. Heavy runs start just after a reset. Every plan week has a
+budget in percent of the weekly allowance, not only in list-price dollars."
 
 ## 7. Owner decisions
 
-D1–D7 are listed with recommendations in [THESIS.md §10](THESIS.md#10-decisions-for-the-owner).
+D1–D16 are listed with recommendations in [THESIS.md §10](THESIS.md#10-decisions-for-the-owner).
 Raise them early, each with a recommendation. Continue any work that does not depend on
 them.
 
@@ -981,8 +1196,9 @@ Budget: <owner fills: wall-clock, tokens, $ envelope and model mix per D1>. Firs
    optimizer, a general agent loop, a visual builder, a memory store or a model router.
 3. Phase 0 (ROADMAP §5.0): environment probe (install Node 24), provider-pin allowlist (never
    open-ended detection), skip-listed cloud suite, pre-registration template.
-4. Then Phases 1→6 in order (ROADMAP §5). Each phase must end with a capability number against
-   a simple baseline (B0, B0+N, and others as listed) and a research/<topic>-<date>/REPORT.md.
+4. Then follow the dated plan; phases interleave (ROADMAP §5). Each phase must end with a
+   capability number against a simple baseline (B0, B0+N, and others as listed) and a
+   research/<topic>-<date>/REPORT.md.
    Capability first: no assurance machinery a phase does not need.
 5. Non-negotiables: code owns procedure, models make narrow typed judgments; private context by
    default with contracts and receipts; graders locked and hash-pinned; adaptations are
@@ -994,9 +1210,11 @@ Budget: <owner fills: wall-clock, tokens, $ envelope and model mix per D1>. Firs
    goes live only after it beats its baseline on held-out labels.
 7. Workflow corpus (ROADMAP §4.4): start the pilot in Phase 2: real, niche, complex workflows
    with executable oracles, licence-tracked, kept out of git when large.
-8. Use frontier and open-weight models within the budget. Frontier models construct; cheap
-   models execute, assigned per node by measurement. Record every cost and 429.
-9. Raise owner decisions D1–D7 (THESIS §10) early, each with a recommendation, then continue
+8. Use frontier and cheap models within the budget. Cheap models (Haiku 5.5 today) construct
+   from frontier-written templates, edit through replay-proven proposals, and execute,
+   assigned per node by measurement; frontier models write the templates, build the most
+   complex workflows and take escalations. Record every cost and 429.
+9. Raise owner decisions D1–D16 (THESIS §10) early, each with a recommendation, then continue
    any independent work. Stop and report on the triggers in ROADMAP §5.
 10. Spend ~20% on the frontier-bets track (ROADMAP §5.9), each bet time-boxed with a kill
     criterion. End the session with a handback note in README's status section.

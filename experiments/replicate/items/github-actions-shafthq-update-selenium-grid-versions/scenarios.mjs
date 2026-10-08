@@ -9,7 +9,7 @@
 // controls/ proves the by-construction truth right: the executed original reproduces truth.original, and an independent
 // reference implementation reproduces both.
 import { rng } from '../../../../beds/lib/rng.mjs';
-import { COMPOSE_PATH, KEYS, PR, TRACKED } from './spec.mjs';
+import { COMPOSE_PATH, KEYS, PR, REFERENCE_URL, TRACKED } from './spec.mjs';
 
 export const VERSION = '0.1.0';
 const IMAGE = Object.fromEntries(TRACKED.map(t => [t.key, t.image]));
@@ -255,3 +255,16 @@ export function buildKind(kindId, r, id = {}) {
 // The canonical authored suite: one instance of every kind (seeds 0..13 at difficulty 5, split dev), frozen under fixtures/scenarios/.
 export const CANONICAL = Object.freeze({ split: 'dev', difficulty: 5, seeds: Object.freeze(KINDS.map((_, i) => i)) });
 export const canonicalInstances = () => CANONICAL.seeds.map(seed => instanceFor({ seed, split: CANONICAL.split, difficulty: CANONICAL.difficulty }));
+
+/** What the solver is shown about an instance: the repository files, the answer to the fetch, the open pull requests. */
+export function inputsOf(instance) {
+  const { world } = instance;
+  return {
+    trigger: world.trigger,
+    repo_files: structuredClone(world.repo),
+    reference_fetch: world.http.error
+      ? { url: REFERENCE_URL, error: 'connection closed before any response was received' }
+      : { url: REFERENCE_URL, status: world.http.status, body: world.http.body },
+    open_pull_requests: summarisePulls(world.openPullRequests),
+  };
+}
