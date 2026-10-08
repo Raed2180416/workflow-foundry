@@ -1,0 +1,99 @@
+{
+ "schema": "heal-seed-ledger/1",
+ "entries": [
+  {
+   "family": "records",
+   "split": "dev",
+   "difficulty": 3,
+   "range": [
+    1,
+    3
+   ],
+   "by": "C0 construction probes"
+  },
+  {
+   "family": "codefix",
+   "split": "dev",
+   "difficulty": 3,
+   "range": [
+    1,
+    3
+   ],
+   "by": "C0 construction probes"
+  },
+  {
+   "family": "records",
+   "split": "dev",
+   "difficulty": 3,
+   "range": [
+    101,
+    160
+   ],
+   "by": "records-v3 development (experiments/workflows/records-v3-dev.mjs)"
+  },
+  {
+   "family": "records",
+   "split": "dev",
+   "difficulty": 4,
+   "range": [
+    101,
+    160
+   ],
+   "by": "records-v3 development"
+  },
+  {
+   "family": "records",
+   "split": "test",
+   "difficulty": 3,
+   "range": [
+    6001,
+    6004
+   ],
+   "by": "C0 test (INSPECTED)"
+  },
+  {
+   "family": "codefix",
+   "split": "test",
+   "difficulty": 3,
+   "range": [
+    6001,
+    6004
+   ],
+   "by": "C0 test (INSPECTED)"
+  },
+  {
+   "family": "records",
+   "split": "test",
+   "difficulty": 3,
+   "range": [
+    5001,
+    5006
+   ],
+   "by": "P1 test (INSPECTED)"
+  },
+  {
+   "family": "records",
+   "split": "test",
+   "difficulty": 4,
+   "range": [
+    5001,
+    5006
+   ],
+   "by": "P1 test (INSPECTED)"
+  },
+  {
+   "family": "records",
+   "split": "dev",
+   "difficulty": 3,
+   "seeds": [
+    1001,
+    1002,
+    1006,
+    1012
+   ],
+   "by": "heal fresh gate records-887c68c2",
+   "at": "2026-10-08T21:23:25.716Z"
+  }
+ ],
+ "referenceHashes": {}
+}

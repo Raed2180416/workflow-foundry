@@ -21,14 +21,24 @@ export const ROUND_CAP_USD = Object.freeze({ M: 0.02, L: 0.15, F: 0.6 });
 export const EXCERPT_MAX = 6, EXCERPT_WIDTH = 600;
 
 // ---- excerpts: quoted windows of what the localised node read ---------------------------------------------------------------------
-export function excerptsFrom(sources, tokens, { max = EXCERPT_MAX, width = EXCERPT_WIDTH } = {}) {
+// `always` sources (the task statement) yield a window even where no token occurs. `roundRobin` takes one window per source in turn, so
+// that a long module cannot crowd the documents out of the six slots (used for code-node roots, which have no journaled prompt).
+export function excerptsFrom(sources, tokens, { max = EXCERPT_MAX, width = EXCERPT_WIDTH, roundRobin = false } = {}) {
+  if (roundRobin) {
+    max = Math.max(max, 8);   // code roots carry the statement (two windows) and every input (one window each)
+    const per = sources.map(src => excerptsFrom([src], tokens, { max, width })), out = [];
+    sources.forEach((src, k) => { if (src.always) for (const e of per[k]) if (out.length < max) out.push({ ...e, label: src.label }); });
+    for (let i = 0; out.length < max && per.some(p => i < p.length); i++) for (const [k, p] of per.entries()) if (!sources[k].always && i < p.length && out.length < max) out.push({ ...p[i], label: sources[k].label });
+    return out.map(({ label, text }, k) => ({ id: `E${k + 1}`, label, text }));
+  }
   const out = [], want = [...new Set(tokens.filter(t => typeof t === 'string' && t.length >= 3))];
-  for (const { label, text } of sources) {
+  for (const { label, text, always } of sources) {
     if (typeof text !== 'string') continue;
     const marks = [];
     for (const t of want) { const i = text.toLowerCase().indexOf(t.toLowerCase()); if (i >= 0) marks.push(i); }
-    if (!marks.length && want.length) continue;
-    for (const i of marks.length ? marks.sort((a, b) => a - b) : [0]) {
+    if (!marks.length && want.length && !always) continue;
+    // a source with no token window: its first two windows (the task statement is short and every sentence of it is contract)
+    for (const i of marks.length ? marks.sort((a, b) => a - b) : (always ? [0, Math.floor(width * 1.5)].filter(x => x === 0 || x < text.length) : [0])) {
       const start = Math.max(0, i - Math.floor(width / 2)), end = Math.min(text.length, start + width);
       if (out.some(e => e.label === label && start < e.end && end > e.start)) continue;
       out.push({ label, start, end, text: text.slice(start, end) });
@@ -36,6 +46,19 @@ export function excerptsFrom(sources, tokens, { max = EXCERPT_MAX, width = EXCER
     }
   }
   return out.map(({ label, text }, k) => ({ id: `E${k + 1}`, label, text }));
+}
+
+// Evidence for a root that is a CODE node (a check): no model call was journaled for it, so the brief would be empty and the proposer
+// could not cite anything. Instead: the task statement and every string input of the failing task (windows around the identifiers the
+// node's own failure report names), and the node's recorded output. Untrusted run data, quoted, at most six windows of 600 characters.
+export const REPORT_FIELDS = Object.freeze(['problems', 'reasons', 'errors', 'failed', 'error', 'compile_error', 'test_error']);
+export function codeRootEvidence({ task, output }) {
+  const strings = [], collect = v => { if (typeof v === 'string') strings.push(v); else if (Array.isArray(v)) v.forEach(collect); else if (v && typeof v === 'object') Object.values(v).forEach(collect); };
+  if (output && typeof output === 'object') for (const f of REPORT_FIELDS) collect(output[f]);
+  const tokens = [...new Set(strings.flatMap(x => x.match(/[A-Za-z_][A-Za-z0-9_.]*/g) ?? []).flatMap(x => x.split('.')).filter(t => t.length >= 4 && /[A-Z_]/.test(t)))].slice(0, 12);
+  const sources = [{ label: 'task statement', text: task?.prompt, always: true },
+    ...Object.entries(task?.inputs ?? {}).filter(([, v]) => typeof v === 'string').map(([k, v]) => ({ label: `task input ${k}`, text: v }))];
+  return { sources, tokens, recordedOutput: output ?? null };
 }
 
 const neighbours = (workflow, ids) => workflow.nodes.filter(n => !ids.has(n.id)).map(n => ({ id: n.id, kind: n.kind, role: n.role ?? null, needs: n.needs }));
@@ -47,7 +70,7 @@ export const locusNodeIds = (loc, workflow) => {
 };
 
 // ---- the brief ---------------------------------------------------------------------------------------------------------------------
-export function buildBrief({ incidentId, workflow, signals = {}, classification, localisation, lint, classes, allowedOps, excerptSources = [], recordedOutput = null, priorRejects = [], budget = {} }) {
+export function buildBrief({ incidentId, workflow, signals = {}, classification, localisation, lint, classes, allowedOps, excerptSources = [], excerptTokens = [], roundRobin = false, recordedOutput = null, priorRejects = [], budget = {} }) {
   const root = localisation.root, loci = locusNodeIds(localisation, workflow);
   const locusIr = loci.map(l => ({ at: l.in ? `${l.in}/${l.node}` : l.node, node: (l.in ? workflow.nodes.find(n => n.id === l.in).body : workflow).nodes.find(n => n.id === l.node) }));
   const facts = [], fact = text => { const id = `F${facts.length + 1}`; facts.push({ id, text }); return id; };
@@ -60,10 +83,10 @@ export function buildBrief({ incidentId, workflow, signals = {}, classification,
     priorRejects, budget, ops: Object.fromEntries(allowedOps.map(o => [o, Object.keys(OPS[o].fields)])),
     localisation: { base: localisation.base, root: root ? { node: root.node, confidence: root.confidence, sample: { node: root.sample.node, path: root.sample.path, from: root.sample.from, to: root.sample.to } } : null,
       table: localisation.candidates.filter(c => c.flips || c.needsLive).slice(0, 12).map(c => ({ id: c.id, node: c.node, path: c.path, from: c.from, to: c.to, deltaScore: c.deltaScore, changedShare: c.changedShare, needsLive: c.needsLive })) } };
-  const tokens = [...Object.values(root?.sample?.identity ?? {}), ...(typeof root?.sample?.from === 'string' ? [root.sample.from] : [])];
-  const excerpts = excerptsFrom(excerptSources, tokens);
+  const tokens = [...Object.values(root?.sample?.identity ?? {}), ...(typeof root?.sample?.from === 'string' ? [root.sample.from] : []), ...excerptTokens];
+  const excerpts = excerptsFrom(excerptSources, tokens, { roundRobin });
   if (recordedOutput != null) excerpts.push({ id: `E${excerpts.length + 1}`, label: 'recorded output', text: canonical(recordedOutput).slice(0, EXCERPT_WIDTH) });
-  return { brief, locusIr, neighbours: neighbours(workflow, new Set(loci.map(l => l.node))), excerpts: excerpts.slice(0, EXCERPT_MAX), briefHash: digest({ brief, locusIr, excerpts: excerpts.map(e => e.id) }) };
+  return { brief, locusIr, neighbours: neighbours(workflow, new Set(loci.map(l => l.node))), excerpts: excerpts.slice(0, roundRobin ? 9 : EXCERPT_MAX), briefHash: digest({ brief, locusIr, excerpts: excerpts.map(e => e.id) }) };
 }
 
 // ---- the proposer's output schema (portable subset: no oneOf/$ref/pattern) ---------------------------------------------------------------

@@ -1,0 +1,378 @@
+{
+ "incident": {
+  "id": "codefix-a7649828",
+  "failing": [
+   "F-haiku/codefix:test:d3:s6001/0",
+   "F-haiku/codefix:test:d3:s6004/0",
+   "F-haiku/codefix:test:d3:s6004/1"
+  ],
+  "passing": 8,
+  "excluded": []
+ },
+ "schema": "heal-run/1",
+ "started": "2026-10-08T21:19:38.668Z",
+ "trial": {
+  "key": "F-haiku/codefix:test:d3:s6004/0",
+  "runId": "727cbd48-36e0-4eee-aed2-f19861263d7e",
+  "family": "codefix",
+  "split": "test",
+  "seed": 6004,
+  "pass": false,
+  "score": 0.9565217391304348
+ },
+ "kit": {
+  "hash": "7e8f0f83153c5efb",
+  "commit": "880c6b9",
+  "policyHash": "fe63f99b9fcdd5bbe53703ee0c1b2d079972bdecfe1ea940a959385190dee2e4"
+ },
+ "gate": {
+  "source": "pinned",
+  "commit": "13f7664",
+  "live": {
+   "importable": true,
+   "sameBlobAsPin": true
+  }
+ },
+ "mode": {
+  "live": true,
+  "promote": true,
+  "proposer": "claude"
+ },
+ "stages": {},
+ "proposals": [],
+ "decisions": [
+  {
+   "proposal": "p-aa9cac4d-r3",
+   "kind": "defect",
+   "ops": [
+    "add_probe"
+   ],
+   "decision": "reject",
+   "reasons": [
+    "HEAL_FAILING_CASE_STILL_FAILS"
+   ],
+   "rejectCode": "HEAL_FAILING_CASE_STILL_FAILS",
+   "stages": [
+    {
+     "id": "V0",
+     "ok": true,
+     "costUsd": 0
+    },
+    {
+     "id": "V1",
+     "ok": true,
+     "costUsd": 0
+    },
+    {
+     "id": "V2",
+     "ok": true,
+     "costUsd": 0
+    },
+    {
+     "id": "V3",
+     "ok": false,
+     "code": "HEAL_FAILING_CASE_STILL_FAILS",
+     "detail": "F-haiku/codefix:test:d3:s6001/0: 1/1 replicas fail (succeeded)",
+     "costUsd": 0
+    }
+   ],
+   "costUsd": 0.043932,
+   "costRatio": null
+  },
+  {
+   "proposal": "p-75963eb5-r4",
+   "kind": "defect",
+   "ops": [
+    "add_probe"
+   ],
+   "decision": "reject",
+   "reasons": [
+    "HEAL_FAILING_CASE_STILL_FAILS"
+   ],
+   "rejectCode": "HEAL_FAILING_CASE_STILL_FAILS",
+   "stages": [
+    {
+     "id": "V0",
+     "ok": true,
+     "costUsd": 0
+    },
+    {
+     "id": "V1",
+     "ok": true,
+     "costUsd": 0
+    },
+    {
+     "id": "V2",
+     "ok": true,
+     "costUsd": 0
+    },
+    {
+     "id": "V3",
+     "ok": false,
+     "code": "HEAL_FAILING_CASE_STILL_FAILS",
+     "detail": "F-haiku/codefix:test:d3:s6001/0: 1/1 replicas fail (succeeded)",
+     "costUsd": 0
+    }
+   ],
+   "costUsd": 0.124448,
+   "costRatio": null
+  }
+ ],
+ "evidence": {
+  "tier": "development/diagnostic",
+  "split": "test",
+  "seed": 6004,
+  "inspected": true,
+  "note": "the seed is already in the seed ledger (INSPECTED): this proves plumbing, not a fix rate"
+ },
+ "fidelity": {
+  "identical": true,
+  "checks": {
+   "taskHash": true,
+   "pass": true,
+   "score": true,
+   "verdict": true,
+   "calls": true
+  }
+ },
+ "signals": {
+  "ORACLE_FAILED": 1,
+  "VERDICT_ORACLE_MISMATCH": 1,
+  "UNVERIFIED_VERDICT": 1,
+  "LINT_FINDING": 1,
+  "COST_OUTLIER": 1,
+  "LATENCY_OUTLIER": 1
+ },
+ "lint": {
+  "counts": {
+   "error": 1,
+   "warning": 1
+  },
+  "codes": {
+   "ACCEPTANCE_EXISTENCE_ONLY": 1,
+   "CLASS_ABOVE_DEFAULT_UNJUSTIFIED": 1
+  }
+ },
+ "verdict": {
+  "pinned": "unverified",
+  "code": "ACCEPTANCE_EXISTENCE_ONLY"
+ },
+ "classification": {
+  "class": "workflow-defect",
+  "heal": true,
+  "allocatorOnly": false,
+  "varianceTested": false,
+  "reasons": [
+   "variance not tested (needs a live provider)"
+  ],
+  "early": "candidate"
+ },
+ "localisation": {
+  "root": {
+   "node": "check1",
+   "confidence": "high",
+   "locus": [
+    "check1",
+    "check2"
+   ],
+   "sample": {
+    "id": "c15",
+    "type": "pin",
+    "node": "check1",
+    "nodeKey": "root/check1",
+    "path": "ok",
+    "pathArr": [
+     "ok"
+    ],
+    "from": false,
+    "to": true
+   },
+   "flips": 1
+  },
+  "classes": [
+   {
+    "code": "OVERSTRICT_CHECK",
+    "node": "check1",
+    "locus": [
+     "check1",
+     "check2"
+    ],
+    "evidence": [
+     "c15"
+    ],
+    "routedTo": [
+     "repair",
+     "check2"
+    ],
+    "intermediatesPassing": [
+     "fix"
+    ]
+   },
+   {
+    "code": "CHECK_VETO_ROUTING",
+    "node": "check1",
+    "routedTo": [
+     "repair",
+     "check2"
+    ]
+   }
+  ],
+  "mode": "failure",
+  "coverage": {
+   "candidates": 33,
+   "ran": 33,
+   "needsLive": 0
+  },
+  "intermediates": [
+   {
+    "node": "fix",
+    "pass": true,
+    "score": 1
+   },
+   {
+    "node": "repair",
+    "pass": false,
+    "score": 0.9565217391304348
+   }
+  ],
+  "variance": null,
+  "flippers": [
+   "c15"
+  ],
+  "ms": 39843,
+  "blocked": null
+ },
+ "lintDebt": {
+  "ops": [],
+  "needsProposer": [
+   "ACCEPTANCE_EXISTENCE_ONLY"
+  ]
+ },
+ "proposer": {
+  "spec": "claude",
+  "allowed": [
+   "relax_check",
+   "edit_instructions",
+   "add_probe"
+  ],
+  "locus": [
+   "check1",
+   "check2"
+  ]
+ },
+ "proposerRounds": [
+  {
+   "round": 1,
+   "class": "M",
+   "ok": true,
+   "costUsd": 0.0021917,
+   "error": null,
+   "reject": "HEAL_OP_INVALID"
+  },
+  {
+   "round": 2,
+   "class": "M",
+   "ok": true,
+   "costUsd": 0.00198609,
+   "error": null,
+   "reject": "HEAL_OP_INVALID"
+  },
+  {
+   "round": 3,
+   "class": "L",
+   "ok": true,
+   "costUsd": 0.039754000000000005,
+   "error": null,
+   "reject": "HEAL_FAILING_CASE_STILL_FAILS",
+   "pending": false
+  },
+  {
+   "round": 4,
+   "class": "F",
+   "ok": true,
+   "costUsd": 0.080516,
+   "error": null,
+   "reject": "HEAL_FAILING_CASE_STILL_FAILS",
+   "pending": false
+  }
+ ],
+ "proposerEvents": [
+  {
+   "type": "heal.proposer_escalated",
+   "round": 3,
+   "from": "M",
+   "to": "L",
+   "after": [
+    "HEAL_OP_INVALID",
+    "HEAL_OP_INVALID"
+   ]
+  },
+  {
+   "type": "heal.proposer_escalated",
+   "round": 4,
+   "from": "L",
+   "to": "F",
+   "after": [
+    "HEAL_OP_INVALID",
+    "HEAL_OP_INVALID",
+    "HEAL_FAILING_CASE_STILL_FAILS"
+   ]
+  }
+ ],
+ "result": {
+  "decision": "exhausted",
+  "reasons": [
+   "HEAL_OP_INVALID",
+   "HEAL_OP_INVALID",
+   "HEAL_FAILING_CASE_STILL_FAILS",
+   "HEAL_FAILING_CASE_STILL_FAILS"
+  ]
+ },
+ "head": {
+  "hash": "a7649828e1e44a87419cd37be7fdd30df2d54dac56044a76fbfc8877ef27d50d",
+  "version": 1
+ },
+ "lesson": {
+  "id": "L-2-ff0eb762",
+  "lesson": "L-2",
+  "lintRule": {
+   "code": "CHECK_VETO_UNGATED",
+   "summary": "A code check can veto a candidate and route to a replacement that a selector prefers, with no gate comparing the two",
+   "implementation": "experiments/heal/lessons/rules/check-veto-ungated.mjs",
+   "severity": "warning",
+   "baseSeverity": "warning"
+  },
+  "firing": {
+   "onBase": 1,
+   "onHealed": null,
+   "firesOnBase": true,
+   "quietOnHealed": null,
+   "population": {
+    "n": 8,
+    "fires": 1,
+    "share": 0.125,
+    "where": [
+     "research/construction-20261006/artifacts/F-haiku-codefix-k1/workflow.json"
+    ]
+   }
+  },
+  "status": "proposed",
+  "file": "/home/user/workflow-foundry/experiments/heal/runs/live-20261008/lessons/L-2-ff0eb762.json"
+ },
+ "budget": {
+  "capUsd": 3,
+  "spentUsd": 0.124448,
+  "remainingUsd": 2.875552,
+  "lines": 6,
+  "campaignSpentUsd": 0.124448,
+  "campaignCapUsd": 8
+ },
+ "ms": 94875,
+ "runsDir": "/home/user/workflow-foundry/experiments/heal/runs/live-20261008/cfx",
+ "wallMs": 94892,
+ "campaign": {
+  "tag": "live1",
+  "incident": "H-cfx",
+  "cap": 3
+ }
+}

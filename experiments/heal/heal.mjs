@@ -29,7 +29,7 @@ import { allTrials, findTrial, loadWorkflow, p1Workflow, openCtx, replayRun, fid
 import { detect, classifyEarly, classifyLate } from './detect.mjs';
 import { localise, varianceTest } from './localise.mjs';
 import { allowedOpsFor } from './ops.mjs';
-import { buildBrief, locusNodeIds, mechanicalProposal, proposeLoop, scriptedProviders, liveProviders, bindOf } from './propose.mjs';
+import { buildBrief, codeRootEvidence, locusNodeIds, mechanicalProposal, proposeLoop, scriptedProviders, liveProviders, bindOf } from './propose.mjs';
 import { verify, gradersHash } from './verify.mjs';
 import { decide, Lineage } from './promote.mjs';
 import { lessonFor, writeLesson, LESSON_DIR, population as workflowPopulation } from './learn.mjs';
@@ -176,13 +176,17 @@ export async function healIncident(o) {
         const allowed = allowedOpsFor(loc.classes.map(c => c.code), { allocatorOnly: late.allocatorOnly });
         const loci = locusNodeIds(loc, head.workflow), locus = loci.map(l => l.in ? `${l.in}/${l.node}` : l.node);
         const lint = gate.lintWorkflow(head.workflow, { modelPolicy });
-        const excerptSources = loc.root.sample.rowId != null ? [{ label: 'what the node read', text: ctx0.journal.get(loc.root.sample.rowId)?.request?.prompt }] : [];
-        const recordedOutput = loc.root.sample.rowId != null ? ctx0.journal.get(loc.root.sample.rowId)?.response?.value : null;
+        // An agent root has a journaled prompt (what the node read). A code root (a check) has none: give it the task statement and inputs
+        // plus its own failure report (2026-10-08 live run 1 found the proposer blind there and falling back to a no-op probe).
+        const agentRoot = loc.root.sample.rowId != null, codeEv = agentRoot ? null : codeRootEvidence({ task: bed.task.task, output: base.outputs?.[loc.root.node] });
+        const excerptSources = agentRoot ? [{ label: 'what the node read', text: ctx0.journal.get(loc.root.sample.rowId)?.request?.prompt }] : codeEv.sources;
+        const recordedOutput = agentRoot ? ctx0.journal.get(loc.root.sample.rowId)?.response?.value : codeEv.recordedOutput;
+        const excerptTokens = codeEv?.tokens ?? [], roundRobin = !agentRoot;
         const proposerSpec = o.proposer ?? (o.live ? 'claude' : 'none');
         out.proposer = { spec: proposerSpec, allowed, locus };
         if (proposerSpec !== 'none' && (proposerSpec.startsWith('scripted:') || (o.live && budget.remaining() >= 0.05))) {
           const pp = proposerSpec.startsWith('scripted:') ? scriptedProviders(kit, JSON.parse(readFileSync(proposerSpec.slice(9), 'utf8'))) : providers;
-          const buildFor = priorRejects => buildBrief({ incidentId: incident.id, workflow: head.workflow, signals: det.byKind, classification: late, localisation: loc, lint, classes: loc.classes, allowedOps: allowed, excerptSources, recordedOutput, priorRejects, budget: { remainingUsd: +budget.remaining().toFixed(3) } });
+          const buildFor = priorRejects => buildBrief({ incidentId: incident.id, workflow: head.workflow, signals: det.byKind, classification: late, localisation: loc, lint, classes: loc.classes, allowedOps: allowed, excerptSources, excerptTokens, roundRobin, recordedOutput, priorRejects, budget: { remainingUsd: +budget.remaining().toFixed(3) } });
           const loop = await proposeLoop({ kit, gate, workflow: head.workflow, base: head.workflow, buildFor, allowed, locus, classes: loc.classes, providers: pp, journalDir: path.join(runsDir, 'proposer'), budget, maxRounds: o.maxRounds ?? 4, ...env,
             check: async proposal => { proposal.depth = lineage.depthOf(workflow.id); proposal.healedWithoutOracle = false; const { v, d } = await runVerify(proposal); proposal.__v = v; proposal.__d = d; return { ok: d.decision === 'promote' || d.decision === 'owner-review' || d.decision === 'blocked', pending: d.decision === 'pending', rejectCode: v.rejectCode }; } });
           out.proposerRounds = loop.attempts; out.proposerEvents = loop.events;

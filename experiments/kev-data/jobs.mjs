@@ -21,10 +21,11 @@
 //   the writers:  j0Stages, j1Stages, j2Stage, j2FinalStage, j3Stages, j4Stage, j5Stages, curveStages/finalStages (from a build
 //                 directory: buildInfo, readUnits, batteryUnits), assemblePlan
 //   the router:   routeFile / routeFiles / routeFromResults: a file goes to kev.benchmark only if every record fits Kev's training
-//                 context (kev.model.fits at state 384 / branch 1,024 / packed 2,048); every other file goes to the served scorer
+//                 context (kev.model.fits at state 384 / branch 1,024 / packed 2,048); every other file goes to the served scorer;
+//                 a kev.benchmark read gets a 300-row served companion read of the same file (§7.5, readStages)
 //   checks:       checkSequence (never a second kev.serve, never a GPU job queued while a service runs, one served model at a
-//                 time), validateStages (bridge validateParams + buildCommand + the real Kev argparse), checkTrainJob,
-//                 checkBenchmarkReport
+//                 time), validateStages (bridge validateParams + buildCommand + the real Kev argparse, the spec exactly, the
+//                 laptop limits), checkLaptopLimits, checkTrainJob, checkBenchmarkReport; runPlan adds the Kev pin (GET /info)
 //   analysis:     analyzeJ0 (seconds per record and per forward token, tokens/s, peak RSS and device bytes, free -m, free disk,
 //                 kernel path, served throughput, J0b verdict) -> buildSchedule / renderScheduleTable (the §7.4 table, the priority
 //                 order, the reduced plan below 1,500 tokens/s), BudgetTracker, reconcileJ2 (after J2 at 5K)
@@ -894,8 +895,11 @@ export async function runPlan(plan, { client, dir, confirm = false, log = () => 
     checkPin(now.info, now.infoError);
     const own = st.jobId ? now.services.find(s => s.id === st.jobId) : null;            // a restart: this stage's own service
     const others = now.services.filter(s => s !== own);
+    // this plan's own GPU jobs were waited to their end before the runner moved on; the daemon may still name the last one
+    // as running for the instant between its end and its record being saved, so only foreign GPU jobs count
+    const mine = new Set(Object.values(state.stages).map(x => x.jobId).filter(Boolean)), gpu = now.gpu.filter(id => !mine.has(id));
     if (stage.kind === 'kev.serve' && others.length) { mark('refused'); throw fail('RUN_SERVICE_EXISTS', `${stage.id}: ${others[0].kind} ${others[0].id} is running; refusing to request a second service`); }
-    if (stage.kind === 'kev.serve' && !own && now.gpu.length) { mark('refused'); throw fail('RUN_GPU_BUSY', `${stage.id}: GPU job ${now.gpu[0]} is running or queued; a service is never started beside training (§7.6)`); }
+    if (stage.kind === 'kev.serve' && !own && gpu.length) { mark('refused'); throw fail('RUN_GPU_BUSY', `${stage.id}: GPU job ${gpu[0]} is running or queued; a service is never started beside training (§7.6)`); }
     if (stage.kind !== 'kev.serve' && others.length) { mark('refused'); throw fail('RUN_SERVICE_LIVE', `${stage.id}: ${others[0].kind} ${others[0].id} is running; refusing to queue a ${stage.kind} behind it`); }
     if (!st.jobId) {
       const model = tracker?.model?.() ?? null;
@@ -1287,7 +1291,8 @@ export function modelFromJ0Report(report) {
 //   plan-j0 --data <dir> --out <plan.json>  write the J0 plan (validated: sequence only)
 //   plan-curve --build <dir> --out <plan.json> [--no-battery]   J1 + the curve, seed 2 and the grid from a build (nested files next to the plan)
 //   plan-final --build <dir> --candidate runs/<jobId> --out <plan.json> [--permute f] [--latency f]   J5
-//   validate [--plan <plan.json>]           bridge validateParams + buildCommand + the real Kev argparse on every bridge-job stage
+//   validate [--plan <plan.json>] [--j0-report f]   bridge validateParams + buildCommand + the real Kev argparse on every bridge-job
+//                                           stage, the spec exactly, the laptop limits (with a J0 report: the kev.train timeout too)
 //   route <file...>                         kev.benchmark or served, per file
 //   report-j0 <run dir>                     the J0 report and the regenerated schedule
 //   schedule [--rate N | --report <j0 report.json>] [--seconds-per-request s] [--budget h] [--40k]
@@ -1332,7 +1337,8 @@ async function cli(argv) {
     }
     case 'validate': {
       const stages = o.plan ? JSON.parse(readFileSync(String(o.plan), 'utf8')).stages : j0Stages();
-      const r = await validateStages(stages);
+      const model = o['j0-report'] ? modelFromJ0Report(JSON.parse(readFileSync(String(o['j0-report']), 'utf8'))) : null;   // adds the kev.train timeout check
+      const r = await validateStages(stages, { model });
       out({ ok: r.ok, stages: r.stages.map(s => ({ id: s.id, validated: s.validated, errors: s.errors })) }); return r.ok ? 0 : 3;
     }
     case 'route': { if (!o._.length) throw fail('USAGE', 'route needs files'); out(o._.map(f => routeFile(f))); return 0; }

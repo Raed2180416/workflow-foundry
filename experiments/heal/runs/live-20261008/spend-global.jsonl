@@ -1,0 +1,18 @@
+{"at":"2026-10-08T21:20:43.044Z","scope":"H-cfx","label":"proposer round 1 (M)","usd":0.002192}
+{"at":"2026-10-08T21:20:50.941Z","scope":"H-cfx","label":"proposer round 2 (M)","usd":0.001986}
+{"at":"2026-10-08T21:20:58.697Z","scope":"H-cfx","label":"proposer round 3 (L)","usd":0.039754}
+{"at":"2026-10-08T21:21:01.226Z","scope":"H-cfx","label":"V3 F-haiku/codefix:test:d3:s6001/0 r0","usd":0}
+{"at":"2026-10-08T21:21:11.092Z","scope":"H-cfx","label":"proposer round 4 (F)","usd":0.080516}
+{"at":"2026-10-08T21:21:13.284Z","scope":"H-cfx","label":"V3 F-haiku/codefix:test:d3:s6001/0 r0","usd":0}
+{"at":"2026-10-08T21:22:01.264Z","scope":"H-rec","label":"variance test","usd":0.009648}
+{"at":"2026-10-08T21:22:21.486Z","scope":"H-rec","label":"V3 F-haiku/records:test:d3:s6001/0 r0","usd":0}
+{"at":"2026-10-08T21:22:23.494Z","scope":"H-rec","label":"V3 F-haiku/records:test:d3:s6001/1 r0","usd":0}
+{"at":"2026-10-08T21:22:27.631Z","scope":"H-rec","label":"V4 F-haiku/records:dev:d3:s3/0","usd":0}
+{"at":"2026-10-08T21:22:27.948Z","scope":"H-rec","label":"V4 F-haiku/records:dev:d3:s2/0","usd":0}
+{"at":"2026-10-08T21:22:30.189Z","scope":"H-rec","label":"V4 F-haiku/records:dev:d3:s1/0","usd":0}
+{"at":"2026-10-08T21:22:32.594Z","scope":"H-rec","label":"V4 F-haiku/records:test:d3:s6002/1","usd":0}
+{"at":"2026-10-08T21:22:32.966Z","scope":"H-rec","label":"V4 F-haiku/records:test:d3:s6002/0","usd":0}
+{"at":"2026-10-08T21:22:34.842Z","scope":"H-rec","label":"V4 F-haiku/records:test:d3:s6003/0","usd":0}
+{"at":"2026-10-08T21:22:37.382Z","scope":"H-rec","label":"V4 F-haiku/records:test:d3:s6004/0","usd":0}
+{"at":"2026-10-08T21:22:37.515Z","scope":"H-rec","label":"V4 F-haiku/records:test:d3:s6003/1","usd":0}
+{"at":"2026-10-08T21:22:38.103Z","scope":"H-rec","label":"V4 F-haiku/records:test:d3:s6004/1","usd":0}

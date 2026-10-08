@@ -838,11 +838,14 @@ by the test or run named.*
 `node experiments/heal/incidents.mjs` writes `research/heal-20261008/runs/H-*.json` (ids, scores, counts and codes; no task text) and the
 lessons in `research/heal-20261008/lessons/`.
 
-### B.4 Resume check, 2026-10-08 19:13-19:50 UTC (policy-drift fix)
+### B.4 Resume check, 2026-10-08 19:13-21:15 UTC (two fixes found by running the prototype again)
 
-*Development/diagnostic evidence. Written after the session restart (resume of the paused build). Only `experiments/heal/kit.mjs`,
-`experiments/heal/test/kit-gate.test.mjs` and this appendix were changed; git state, `src/`, `policy/` and the other read-only paths
-were not touched.*
+*Development/diagnostic evidence. Written after the session restart (resume of the paused build). Changed: `experiments/heal/kit.mjs`,
+`verify.mjs`, `heal.mjs`, the tests `kit-gate`, `verify` and `p1`, the regenerated `runs/H-p1.json` and this appendix. `src/`, `policy/`
+and the other read-only paths were not touched, and neither was git state (concurrent workflows committed snapshots meanwhile, which
+include these edits).*
+
+**Fix 1: policy drift.**
 
 **Finding [M].** The first full run of the suite after the restart gave 76 tests, 27 pass, 49 fail, and 45 of the failures were one
 error: `HEAL_POLICY_DRIFT: policy/models.json differs from the frozen kit policy`. Cause: a concurrent workflow (engine stage-1
@@ -874,6 +877,40 @@ edit of the live policy.
 `tests/`):
 
 ```sh
-node --test --test-concurrency=2 experiments/heal/test/*.test.mjs     # 79 tests; 9m39s wall on 4 vCPUs (measured once)
-node experiments/heal/incidents.mjs --out /var/tmp/foundry-work/heal-scratch/incidents   # $0, replay only; ~4 min per incident
+node --test --test-concurrency=2 experiments/heal/test/*.test.mjs     # 81 tests, all pass; 14m57s wall on 4 vCPUs shared with other agents (load 10-17)
+node experiments/heal/incidents.mjs --out /var/tmp/foundry-work/heal-scratch/incidents   # $0, replay only; 14 min for all three at that load
 ```
+
+**Fix 2: V5 control harness (found by running `incidents.mjs` again; the unit tests had not exercised V5 on P1).** The refreshed
+P1 run rejected the mechanical lint-debt proposal at V5 with `HEAL_NO_DISCRIMINATION` ("the gating acceptance rejects none of the
+bed's 14 bad controls"), where the previously committed `H-p1.json` still showed an older `HEAL_OP_INVALID` at V0 (stale record, now
+refreshed). Looking at the per-control table showed that the reject was an artifact of two defects in my V5 harness, not a property of
+P1 [M, scratch scripts in the session scratchpad]:
+1. *The controls never reached the gate.* `pinChain` recognised a carrier of the answer only when the recorded output held the
+   answer keys at its root. In records-v3 the sink `answer` is `return input.answer`, and the gating verify `check` reads `merge`,
+   whose `answer` property holds `{records}`. So only `answer` was pinned, `check` judged the real recorded merge, and even the
+   string `"GARBAGE"` was accepted. Now a node also carries the answer when one nested object property equals the recorded answer
+   key by key (a look-alike object with other values is left alone; the new parameter is optional, so old callers are unchanged).
+2. *The host run's evidence disagreed with the truth.* With the first fix the candidate rejected all 14 bad controls **and the bed's
+   reference**: the controls were pinned into the failing run, whose `merge` evidence (voided tokens, conventions) comes from the run
+   that mis-judged a status, so a consistency check rightly refused the reference. The controls are now made from the task of a
+   recorded *passing* run (first by key) and pinned into that run; the failing run hosts them only when nothing passed.
+
+Result on P1 [M]: the reference is accepted; the gated `check` rejects 4 of the 14 bad controls (`empty`, `ignore-void-markers`,
+`status-meaning-flipped`, `unknown-status-live`) and accepts the other 10 (`shuffled-or-corrupted`, `no-dedup`, `birthdate-key`,
+`oldest-row-wins`, `atlas-order-flipped`, `brightdesk-order-flipped`, `vendex-order-flipped`, `unconverted-amounts`,
+`mirror-ignored`, `perspective-ignored`). So the lint-debt heal gives records-v3 a gating acceptance that is a *partial* contract:
+its structural verify cannot see a wrong date order or a missing dedup. V5 passes under the design's rule (at least one rejected, and
+none of the base's rejections lost), and the proposal stays `pending` only because V7 needs a live provider. It also sharpens lesson L-3:
+a verify node that checks structure is not evidence of correctness, and the share of bad controls it rejects (4/14) is a
+construction metric that is cheap to compute.
+
+**Offline results after both fixes [M]** (`node experiments/heal/incidents.mjs`, $0, regenerated `runs/H-*.json`): all three runs
+replay with identical fidelity; roots and classes are unchanged (H-rec `conf`, `UNGUARDED_GLOBAL_READ`; H-cfx `check1`,
+`OVERSTRICT_CHECK` + `CHECK_VETO_ROUTING`; H-p1 `statuses`, `CHECK_ESCAPE_HATCH`). The mechanical lint-debt proposals of H-rec and
+H-p1 pass V0-V6 offline and wait at V7 (`pending`, needs `--live`); H-cfx's lint debt needs a proposer-supplied check (no gating
+verify to strengthen), so it makes no lint-debt proposal offline. Nothing was spent and nothing was promoted.
+
+**Still not done.** Nothing in this appendix has made a live call. The live path (proposer through `claude -p`, V3/V4 changed nodes,
+V7 fresh tasks) is exercised only against scripted providers, so the design's $10-14 end-to-end cost estimate, and any fix rate,
+remain unmeasured.

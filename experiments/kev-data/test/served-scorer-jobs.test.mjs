@@ -9,12 +9,16 @@
 //
 // Acceptance tests (the group's list, in order) -> tests here:
 //   1 every J-spec passes validateParams/buildCommand and the real kev.train/benchmark/serve argparse
-//       -> "kev: every J-spec ..." (+ unit: the J0 specs carry the program's parameters)
+//       -> "kev: every J-spec ..." (+ unit: the J0 specs carry the program's parameters). Since the review: the validated value
+//          must equal the spec (no bridge default filled in), the plan must stay within the laptop's limits (upload size,
+//          kev.serve ports, the kev.train timeout: "unit: the laptop limits ..."), and the runner refuses a laptop whose Kev
+//          checkout is not the pin (GET /info kevCommit: "unit: the runner holds the laptop ...")
 //   2 200 records, 40% of states 400-2,000 tokens: kev.benchmark --data rejects, score-served rejects none, 20 re-reads agree
 //       -> "kev: 200-record file ..." (real kev.benchmark.evaluate_records + Kev's real FastAPI app, forward replaced);
 //          "kev-live: ..." runs the real CPU model (KEV_DATA_SERVED_LIVE=1)
 //   3 never a second kev.serve, never a kev.train queued while a service runs
-//       -> "unit: sequence ...", "unit: the runner ..." (stand-in daemon), "bridge: a plan runs against an in-process daemon"
+//       -> "unit: sequence ...", "unit: the runner ..." (stand-in daemon), "bridge: a plan runs against an in-process daemon";
+//          also never a kev.serve beside a running or queued GPU job, and a restart re-attaches to its own service
 //   4 the J0 report: s/record, s/token, tokens/s, peak_rss_bytes, peak_device_bytes, free -m, free disk, kernel path; schedule regenerated
 //       -> "unit: the J0 report ...", "unit: the schedule ..."
 //   5 the file router sends a file to kev.benchmark only if every state fits 384 tokens
@@ -22,8 +26,17 @@
 //   6 per training job: no "dropped" line, N training requests = file records + replay, outputs under runs/<jobId>
 //       -> "unit: train acceptance ...", "unit: the log patterns are Kev's own"
 //   7 after J2 at 5K, within 20% of the J0 prediction or the schedule is recomputed and the deviation logged
-//       -> "unit: J2 reconciliation ..."
+//       -> "unit: J2 reconciliation ..." (the function), "unit: J2 at 5K is reconciled in the run ..." (runPlan does it after the
+//          5K seed-1 stage when it has a tracker; CLI: submit --j0-report, reconcile-j2)
 // Cut line (J0b shared_prefix A/B): built and tested ("unit: J0b ...").
+// §7.5 beside the list: every kev.benchmark read has a 300-row served companion read of the same file ("unit: every
+// kev.benchmark read has ...").
+//
+// Review (2026-10-08, adversarial): added the Kev pin check, the GPU-busy and re-attach guards, the laptop limits (upload
+// size, kev.serve ports, kev.train timeout in the writers, the runner and the schedule; limits.jsonBytes in the served
+// scorer), the J2 reconciliation in the run, the §7.5 companion read, the args.data check (the job read the upload),
+// content-addressed J0 uploads, 400 rows for the 8K J0a class (§7.4), resumed served reads on a retry (no record, a test
+// record above all, is read twice), and ten seeded defects for them.
 //
 // Spec ambiguities resolved here (also in the group's final report):
 //  - "train.log" is the bridge job log (stdout and stderr of kev.train, logs/<jobId>.log); Kev writes no train.log file.
@@ -35,6 +48,12 @@
 //    with 1,500 tokens/s; the reduced plan counts 6 point reads, the program says 7 (it appears to count the grid's "base" twice).
 //  - Strict priority when cutting: the first item that does not fit and every later item are cut; J5 is reserved first.
 //  - "free RAM" for the 80% rule is `available` from `free -m`.
+//  - "the dataset sha256 matches the build manifest": the build manifest's train digest is checked when the plan is written
+//    (buildInfo, and every nested curve file's parent digest); at run time the uploaded bytes are the plan's, the daemon
+//    stores the same sha, and training_config.json args.data names that upload.
+//  - The laptop limits are bridge/laptop/config.mjs DEFAULTS, overridden by what GET /info reports (limits); the kev.train
+//    timeout (12 h) is not reported, so the default stands for it. A schedule step priced over it is cut like one that
+//    does not fit (strict priority).
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -258,6 +277,12 @@ test('unit: the J0 stages carry the program\'s parameters (§7.4)', () => {
   assert.deepEqual(by['J0c-serve'].params, { run: 'jaredpalmer/kev-0.8b@v1.0', port: 8008 });
   assert.deepEqual(stages.filter(s => s.kind === 'score').map(s => [s.data.split('/').pop(), s.concurrency]), [['j0-0300.jsonl', 1], ['j0-0300.jsonl', 4], ['j0-2k.jsonl', 1], ['j0-2k.jsonl', 4]]);
   assert.ok(!J.j0Stages({ includeJ0b: false }).some(s => s.job === 'J0b'), 'J0b (the cut line) can be dropped without touching the rest');
+  assert.deepEqual(['0300', '2k', '8k', '0300-q4'].map(k => J.J0_DATA[k].records), [400, 400, 400, 400], '§7.4: 400 rows per J0a class');
+  // built files are uploaded under content-addressed names (another plan's j0 file can never stand in for this one)
+  const built = Object.fromEntries(Object.entries(J.unbuiltJ0Data()).map(([k, d]) => [k, { ...d, sha256: sha(k), bytes: 1 }]));
+  const bj = Object.fromEntries(J.j0Stages({ data: built }).map(s => [s.id, s]));
+  assert.equal(bj['J0a-2k'].params.dataset, `data/j0-2k-${sha('2k').slice(0, 12)}.jsonl`); assert.equal(bj['J0a-2k'].files[0].remote, bj['J0a-2k'].params.dataset);
+  assert.equal(bj['J0k-kernels'].params.data, `data/j0-kernel-${sha('kernel').slice(0, 12)}.jsonl`);
   assert.doesNotThrow(() => J.assemblePlan(stages));
   // J2 / J4 recipe (§7.2, §7.4): as J0a without max_steps, maxState the build's p99.9, replay 2,000, p_none_pair 0.25
   const train = { file: 'x', sha256: 'a'.repeat(64), records: 5000, rows: 5000 };
@@ -709,6 +734,14 @@ test('unit: the runner submits a whole plan with no second service and nothing q
   assert.ok(existsSync(path.join(dir, 'results', 'rows', 'J0c-0300-c4.jsonl')) && existsSync(path.join(dir, 'results', 'rows', 'J0c-0300-c4.report.json')));
   assert.ok(existsSync(path.join(dir, 'observations', 'info.json')));
   assert.ok(tracker.usedHours > 0, 'the tracker was fed the hours of finished stages');
+  // §7.5: the kev.benchmark read of 'short' has its served companion, a fixed sample of at most 300 rows of the same file
+  for (const tag of ['J1', 'J3-5000-s1', 'J5-stock', 'J5-candidate']) {
+    const rows = readFileSync(path.join(dir, 'results', 'rows', tag, 'short.companion.jsonl'), 'utf8').trim().split('\n').map(l => JSON.parse(l));
+    assert.equal(rows.length, 5, `${tag}: a 5-record file is read whole`); assert.ok(rows.every(r => r.path === 'served'));
+  }
+  // §7.4: J2 at 5K was held against the J0 prediction (rate 1,300 tokens/s; the stand-in trains in 100 s), and the schedule recomputed
+  assert.equal(state.stages['J2-5000-s1'].reconcile.action, 'recompute');
+  assert.equal(readFileSync(path.join(dir, 'budget', 'j2-reconcile.jsonl'), 'utf8').trim().split('\n').length, 1);
   // a second run of the same plan submits nothing: every stage is done
   const before = bridge.submitted.length;
   await J.runPlan(plan, { client: bridge, dir, confirm: true });
@@ -735,6 +768,9 @@ test('unit: the runner stops at a job that fails acceptance, an invalid served r
   writeFileSync(path.join(dir, 'observations', 'free-m.txt'), FREE_M);
   await assert.rejects(J.runPlan(plan, { client: new FakeBridge({ dropLine: true }), dir, confirm: true }), e => e.code === 'RUN_ACCEPTANCE' && /"dropped" line/.test(e.message));
   assert.equal(JSON.parse(readFileSync(path.join(dir, 'state.json'), 'utf8')).stages['J0a-0300'].status, 'rejected');
+  // a job that trained on another file than the one uploaded
+  dir = H.tempDir('served-runner-acc1-'); ({ plan } = tinyPlan(dir, { reads: false })); mkdirSync(path.join(dir, 'observations'), { recursive: true }); writeFileSync(path.join(dir, 'observations', 'free-m.txt'), FREE_M);
+  await assert.rejects(J.runPlan(plan, { client: new FakeBridge({ readOther: true }), dir, confirm: true }), e => e.code === 'RUN_ACCEPTANCE' && /training_config\.json data is .*other\.jsonl.*expected the uploaded data\/j0-0300-/.test(e.message));
   // replay the suite cannot supply (a smaller pool)
   dir = H.tempDir('served-runner-acc2-'); ({ plan } = tinyPlan(dir, { reads: false })); mkdirSync(path.join(dir, 'observations'), { recursive: true }); writeFileSync(path.join(dir, 'observations', 'free-m.txt'), FREE_M);
   await assert.rejects(J.runPlan(plan, { client: new FakeBridge({ poolSize: 30 }), dir, confirm: true }), e => e.code === 'RUN_ACCEPTANCE' && /the suite supplied|training requests/.test(e.message));
@@ -746,6 +782,123 @@ test('unit: the runner stops at a job that fails acceptance, an invalid served r
   const bridge = new FakeBridge({ rejectContext: true });
   await assert.rejects(J.runPlan(plan, { client: bridge, dir, confirm: true }), e => e.code === 'RUN_SCORE_INVALID', JSON.stringify(plan.stages.filter(s => s.kind === 'score').map(s => s.id)));
   assert.deepEqual(bridge.violations, []);
+});
+
+const guardSetup = (o = { reads: false }) => { const dir = H.tempDir('served-runner-guard-'), { plan } = tinyPlan(dir, o); mkdirSync(path.join(dir, 'observations'), { recursive: true }); writeFileSync(path.join(dir, 'observations', 'free-m.txt'), FREE_M); return { dir, plan }; };
+const RUN0 = 'jaredpalmer/kev-0.8b@v1.0';
+test('unit: the runner holds the laptop to the pinned Kev commit, starts no service beside a GPU job, re-attaches to its own service after a restart, and keeps every job within the laptop limits', async () => {
+  // another Kev checkout on the laptop, none reported, or no GET /info at all: refused before anything is uploaded or submitted
+  for (const kevCommit of ['0'.repeat(40), null, 'no-info']) {
+    const { dir, plan } = guardSetup(), bridge = new FakeBridge({ kevCommit: kevCommit === 'no-info' ? KEV.commit : kevCommit });
+    if (kevCommit === 'no-info') bridge.info = async () => { throw new Error('GET /info -> 502'); };
+    await assert.rejects(J.runPlan(plan, { client: bridge, dir, confirm: true }), e => e.code === 'RUN_KEV_PIN' && /5e42a7a03f28134853dd3ff77461457e921e5ec1/.test(e.message), String(kevCommit));
+    assert.equal(bridge.submitted.length, 0); assert.equal(bridge.uploads.length, 0);
+  }
+  // a laptop whose checkout moves during the plan: the next bridge job is refused
+  { const { dir, plan } = guardSetup(), bridge = new FakeBridge(), submit = bridge.submitJob.bind(bridge);
+    bridge.submitJob = async (kind, params) => { const j = await submit(kind, params); bridge.kevCommit = 'f'.repeat(40); return j; };
+    await assert.rejects(J.runPlan(plan, { client: bridge, dir, confirm: true }), e => e.code === 'RUN_KEV_PIN');
+    assert.equal(bridge.submitted.length, 1); }
+  // a service is never started while a GPU job (someone else's training) runs or waits
+  const servePlan = J.assemblePlan([{ id: 's', kind: 'kev.serve', params: { run: RUN0, port: 8008 } }, { id: 'x', kind: 'serve.stop', serve: 's' }], { id: 'serve-only' });
+  { const bridge = new FakeBridge({ busyGpu: 'j-20261008-000000-aaaaaa' });
+    await assert.rejects(J.runPlan(servePlan, { client: bridge, dir: H.tempDir('served-runner-busy-'), confirm: true }), e => e.code === 'RUN_GPU_BUSY');
+    assert.equal(bridge.submitted.length, 0); }
+  // the daemon may name this plan's own just-finished GPU job as running for an instant: that is not a busy GPU
+  { const { dir, plan } = guardSetup(), bridge = new FakeBridge(), wait = bridge.waitJob.bind(bridge);
+    bridge.waitJob = async (id, o) => { const j = await wait(id, o); if (j.class === 'gpu') bridge.busyGpu = id; return j; };
+    const { state } = await J.runPlan(plan, { client: bridge, dir, confirm: true });
+    assert.equal(state.stages['J0c-serve'].status, 'done'); assert.ok(bridge.busyGpu); }
+  // a restart after the kev.serve was submitted re-attaches to that service: no refusal, no second service
+  { const bridge = new FakeBridge(), dir = H.tempDir('served-runner-reattach-'), svc = await bridge.submitJob('kev.serve', { run: RUN0, port: 8008 });
+    writeFileSync(path.join(dir, 'state.json'), JSON.stringify({ planId: servePlan.planId, stages: { s: { kind: 'kev.serve', status: 'submitted', jobId: svc.id } }, uploaded: {} }));
+    const { state } = await J.runPlan(servePlan, { client: bridge, dir, confirm: true });
+    assert.equal(bridge.submitted.length, 1, 'nothing submitted again'); assert.deepEqual(bridge.cancelled, [svc.id]); assert.equal(state.stages.s.status, 'done'); assert.equal(state.stages.x.status, 'done'); }
+  // an upload over the daemon's limits.fileBytes is refused before it is sent
+  { const { dir, plan } = guardSetup(), bridge = new FakeBridge({ limits: { fileBytes: 1000, jsonBytes: 1 << 20 } });
+    await assert.rejects(J.runPlan(plan, { client: bridge, dir, confirm: true }), e => e.code === 'RUN_LIMIT' && /upload limit of 1000/.test(e.message));
+    assert.equal(bridge.uploads.length, 0); assert.equal(bridge.submitted.length, 0); }
+  // a training stage the tracker's model prices over the bridge's kev.train timeout is not submitted
+  { const { dir, plan } = guardSetup(), bridge = new FakeBridge();
+    await assert.rejects(J.runPlan(plan, { client: bridge, dir, confirm: true, tracker: new J.BudgetTracker({ rate: 1 }) }), e => e.code === 'RUN_LIMIT' && /J2-5000-s1: predicted .* over the bridge's kev\.train timeout of 12 h/.test(e.message));
+    assert.ok(!bridge.submitted.some(x => /^data\/train-8-/.test(x.params.dataset ?? '')), 'the J2 job was not submitted'); }
+  // a served request over the daemon's limits.jsonBytes is a counted rejection (never sent), so the read is invalid
+  { const { dir, plan } = guardSetup(), bridge = new FakeBridge({ limits: { fileBytes: 1 << 28, jsonBytes: 200 } });
+    await assert.rejects(J.runPlan(plan, { client: bridge, dir, confirm: true }), e => e.code === 'RUN_SCORE_INVALID' && /"rejected_records":6/.test(e.message));
+    const rep = JSON.parse(readFileSync(path.join(dir, 'results', 'rows', 'J0c-0300-c1.report.json'), 'utf8'));
+    assert.match(rep.rejected[0].error, /over the bridge's 200-byte body limit/); assert.equal(rep.max_request_bytes, 200); }
+});
+
+test('unit: a served request over the bridge body limit is a counted rejection, never sent', async () => {
+  const served = fakeServed(), records = tinyRecords(3);
+  records[1].state = { system: 'ATLAS', note: 'x'.repeat(5000) };
+  const { report } = await SS.scoreServed({ records, served, pingRounds: 0, maxRequestBytes: 2000 });
+  assert.equal(served.calls.ask, 2, 'the large request never left'); assert.equal(report.coverage.rejected_records, 1); assert.equal(report.rejected[0].id, 'tiny/1');
+  assert.match(report.rejected[0].error, /over the bridge's 2000-byte body limit/); assert.equal(report.valid, false);
+  assert.equal((await SS.scoreServed({ records, served: fakeServed(), pingRounds: 0 })).report.valid, true, 'no limit given, nothing refused');
+});
+
+test('unit: J2 at 5K is reconciled in the run: within 20% keeps the schedule, otherwise it is recomputed and the deviation logged', async () => {
+  for (const [factor, action] of [[1.1, 'keep'], [0.5, 'recompute'], [1.5, 'recompute']]) {
+    const { dir, plan } = guardSetup(), tracker = new J.BudgetTracker({ file: path.join(dir, 'budget', 'budget.jsonl'), rate: 1600 });
+    const predicted = tracker.model().seconds({ rows: 8, replay: 2000 });
+    await J.runPlan(plan, { client: new FakeBridge({ wallSeconds: predicted * factor }), dir, confirm: true, tracker });
+    const lines = readFileSync(path.join(dir, 'budget', 'j2-reconcile.jsonl'), 'utf8').trim().split('\n').map(l => JSON.parse(l));
+    assert.equal(lines.length, 1, 'one comparison, after the 5K point'); assert.equal(lines[0].action, action); assert.equal(lines[0].point, '5K');
+    assert.ok(Math.abs(lines[0].deviation - (factor - 1)) < 1e-3, JSON.stringify(lines[0]));
+    assert.equal(JSON.parse(readFileSync(path.join(dir, 'state.json'), 'utf8')).stages['J2-5000-s1'].reconcile.action, action);
+    if (action === 'keep') assert.equal(tracker.opts.model, undefined, 'inside 20% the model stands');
+    else { assert.ok(Math.abs(tracker.model().scale - factor) < 1e-9, 'the remaining steps are re-priced at the measured rate'); assert.ok(tracker.events.some(e => e.type === 'model')); }
+    if (factor === 1.5) assert.equal(tracker.schedule().plan, 'reduced', '1,600 tokens/s measured as 1,067 switches the plan');
+  }
+  // only the first 5K point is the reconciliation stage
+  const train = { file: 'x', sha256: 'a'.repeat(64), records: 5000, rows: 5000 };
+  assert.equal(J.j2Stage({ point: '5K', train, maxState: 1024 }).reconcile, true);
+  assert.equal(J.j2Stage({ point: '5K', seed: 2, train, maxState: 1024 }).reconcile, undefined);
+  assert.equal(J.j2Stage({ point: '20K', train, maxState: 1024 }).reconcile, undefined);
+  assert.equal(J.j4Stage({ config: 'lr4', train, maxState: 1024 }).reconcile, undefined);
+});
+
+test('unit: every kev.benchmark read has a 300-row served companion of a fixed sample, by the same model (§7.5)', () => {
+  const recs = Array.from({ length: 400 }, (_, i) => ({ state: `s${i}`, questions: Object.fromEntries(Array.from({ length: 1 + (i % 2) }, (_, k) => [`Q${k}`, choice(['a', 'b'])])), _meta: { id: `c/${i}` } }));
+  const sub = SS.subsetRecords(recs, 300), rows = sub.reduce((n, r) => n + Object.keys(r.questions).length, 0);
+  assert.ok(rows >= 300 && rows <= 301, `${rows} rows`); assert.ok(sub.length < recs.length);
+  assert.deepEqual(sub.map(r => recs.indexOf(r)), [...sub.map(r => recs.indexOf(r))].sort((a, b) => a - b), 'in file order');
+  assert.deepEqual(SS.subsetRecords([...recs].reverse(), 300).map(r => r._meta.id).sort(), sub.map(r => r._meta.id).sort(), 'the same sample whatever the file order');
+  assert.notDeepEqual(sub.map(r => r._meta.id), recs.slice(0, sub.length).map(r => r._meta.id), 'a hash sample, not the head of the file');
+  assert.deepEqual(SS.subsetRecords(recs.slice(0, 10), 300), recs.slice(0, 10), 'a small file is read whole');
+  assert.throws(() => SS.subsetRecords(recs, 0), e => e.code === 'SERVED_INPUT');
+  const reads = [{ id: 'short', file: 'a.jsonl', sha256: 'b'.repeat(64), records: 12, route: { route: 'benchmark', reason: 'fits' } }, { id: 'long', file: 'b.jsonl', sha256: 'c'.repeat(64), route: { route: 'served', reason: 'long' } }];
+  for (const run of [RUN0, 'runs/{{J2-5000-s1}}']) {
+    const st = J.readStages({ tag: 'J1', run, reads });
+    assert.deepEqual(st.map(s => s.id), ['J1-bench-short', 'J1-serve', 'J1-score-long', 'J1-companion-short', 'J1-stop']);
+    const c = st.find(s => s.id === 'J1-companion-short');
+    assert.deepEqual([c.kind, c.serve, c.expectRun, c.data, c.dataSha256, c.subset.rows, c.companionOf, c.rows], ['score', 'J1-serve', run, 'a.jsonl', 'b'.repeat(64), 300, 'J1-bench-short', 'rows/J1/short.companion.jsonl']);
+    assert.equal(st[0].accept.expectRecords, 12);
+  }
+  // a read of benchmark files only still gets its service, for the companions alone
+  assert.deepEqual(J.readStages({ tag: 'J1', run: RUN0, reads: reads.slice(0, 1) }).map(s => s.kind), ['kev.benchmark', 'kev.serve', 'score', 'serve.stop']);
+  assert.doesNotThrow(() => J.checkSequence(J.readStages({ tag: 'J1', run: RUN0, reads: reads.slice(0, 1) })));
+});
+
+test('unit: the laptop limits: uploads within limits.fileBytes, kev.serve ports in range, no training step over the bridge\'s kev.train timeout (the schedule cuts it)', () => {
+  const t = J.j2Stage({ point: '20K', train: { file: 'x', sha256: 'a'.repeat(64), records: 20000, rows: 20000, bytes: 300 * 2 ** 20 }, maxState: 1536 });
+  assert.match(J.checkLaptopLimits([t]).join(), /J2-20000-s1: data\/train-20000-a{12}\.jsonl is 314572800 bytes, over the bridge's upload limit of 268435456/);
+  const ok = { ...t, files: [{ ...t.files[0], bytes: 10 }] };
+  assert.deepEqual(J.checkLaptopLimits([ok]), []);
+  assert.match(J.checkLaptopLimits([ok], { model: J.costModel({ rate: 300 }) }).join(), /J2-20000-s1: predicted 15\.\d+ h, over the bridge's kev\.train timeout of 12 h/);
+  assert.deepEqual(J.checkLaptopLimits([ok], { model: J.costModel({ rate: 525 }) }), [], '20K at the toy-smoke rate is 9 h');
+  assert.deepEqual(J.checkLaptopLimits([ok], { model: J.costModel({ rate: 525 }), limits: { trainTimeoutSeconds: 8 * 3600 } }).length, 1, 'an operator\'s shorter timeout counts');
+  assert.match(J.checkLaptopLimits([{ id: 's', kind: 'kev.serve', params: { run: RUN0, port: 8100 } }]).join(), /port 8100 is outside the bridge's kev\.serve range 8008-8099/);
+  assert.deepEqual(J.checkLaptopLimits(J.j0Stages()), [], 'the J0 plan (unbuilt: no sizes yet) is within the limits');
+  // the schedule: at 300 tokens/s the reduced plan's 20K point (15.7 h) cannot run on the laptop, so item 2 and everything after it are cut
+  const slow = J.buildSchedule({ rate: 300 });
+  assert.deepEqual(slow.over_timeout.map(o => o.step), ['J2-20000-s1']); assert.equal(slow.cut_from, 'P2');
+  assert.deepEqual(slow.items.map(i => i.status), ['scheduled', 'cut', 'cut', 'cut', 'reserved']);
+  assert.match(J.renderScheduleTable(slow), /Over the bridge's kev\.train timeout \(12 h\), so cut: J2-20000-s1 15\.7 h/);
+  assert.deepEqual(J.buildSchedule({ rate: 525 }).over_timeout, []);
+  assert.deepEqual(J.buildSchedule({ rate: 1500, triggered40K: true }).over_timeout, [], '40K at the full plan\'s floor rate is 6.1 h');
+  assert.deepEqual(J.buildSchedule({ rate: 1500, triggered40K: true, trainTimeoutHours: 6 }).over_timeout.map(o => o.step), ['J2-40000-s1']);
 });
 
 // =============================================================================================================
@@ -810,6 +963,17 @@ test('kev: every J-spec passes the bridge\'s validateParams and buildCommand and
   const bad = (id, params) => ({ id, kind: 'kev.train', params: { ...stages.find(s => s.id === 'J2-5000-s1').params, ...params }, files: stages.find(s => s.id === 'J2-5000-s1').files });
   const rb = await J.validateStages([bad('b1', { maxState: 100 }), bad('b2', { extra: { bogus: 1 } }), bad('b3', { dtype: 'fp16' }), bad('b4', { initFrom: 'runs/j-20261008-123456-abcdef' }), bad('b5', { lr: 0.5 }), bad('b6', { base: 'meta-llama/Llama-3-8B' })], { argparse: false });
   assert.equal(rb.ok, false); for (const s of rb.stages) assert.equal(s.validated, false, `${s.id} must be refused: ${s.errors}`);
+  // "exactly": a spec that leaves a parameter to a bridge default is refused (a changed default must not change a job), and so is
+  // a file over the bridge's upload limit
+  const j2s = stages.find(s => s.id === 'J2-5000-s1'), { checkpointing: _c, ...lean } = j2s.params;
+  const rd = await J.validateStages([{ ...j2s, id: 'lean', params: lean }, { ...j2s, id: 'big', files: [{ ...j2s.files[0], bytes: 300 * 2 ** 20 }] }], { argparse: false });
+  assert.equal(rd.ok, false);
+  assert.match(rd.stages.find(s => s.id === 'lean').errors.join(), /bridge defaults filled in: checkpointing/);
+  assert.match(rd.stages.find(s => s.id === 'big').errors.join(), /limits: .* over the bridge's upload limit/);
+  // the writers' limits are the bridge's own (bridge/laptop/config.mjs DEFAULTS, the kev.serve port schema)
+  const [{ DEFAULTS }, { KINDS }] = await Promise.all([import('../../../bridge/laptop/config.mjs'), import('../../../bridge/laptop/jobs.mjs')]);
+  assert.deepEqual([J.LAPTOP_LIMITS.fileBytes, J.LAPTOP_LIMITS.jsonBytes, J.LAPTOP_LIMITS.trainTimeoutSeconds, J.LAPTOP_LIMITS.benchmarkTimeoutSeconds, [...J.LAPTOP_LIMITS.servePorts]],
+    [DEFAULTS.limits.fileBytes, DEFAULTS.limits.jsonBytes, DEFAULTS.timeouts['kev.train'], DEFAULTS.timeouts['kev.benchmark'], [KINDS['kev.serve'].params.port.min, KINDS['kev.serve'].params.port.max]]);
   const direct = J.kevArgparse([{ id: 'u1', module: 'kev.train', argv: ['--bogus', '1'] }, { id: 'u2', module: 'kev.benchmark', argv: ['--run', 'x'] }, { id: 'u3', module: 'kev.serve', argv: ['--port', 'notanumber'] }, { id: 'u4', module: 'kev.train', argv: ['--epochs', '2'] }]);
   assert.deepEqual(direct.map(d => [d.id, d.error ? 'refused' : 'parsed']), [['u1', 'refused'], ['u2', 'refused'], ['u3', 'refused'], ['u4', 'parsed']]);
   assert.match(direct[0].error, /argparse exit 2/);
@@ -1051,7 +1215,7 @@ if (mod === 'kev.train') {
   console.log((n + used) + " training requests (holdout=), questions by type {'choice': " + (n + used) + '}');
   fs.mkdirSync(out, { recursive: true });
   for (let s = 10; s <= 30; s += 10) console.log('ep0 step ' + s + '/50 loss ' + (1 / s * 9).toFixed(3) + ' kl 0.000 anchor 0.000 0.1s/rec');
-  fs.writeFileSync(path.join(out, 'training_config.json'), JSON.stringify({ args: { init_from: opt('--init_from') ?? '', max_state: Number(opt('--max_state')), epochs: Number(opt('--epochs')), replay, seed: Number(opt('--seed') ?? 0) }, base_revision: opt('--base_revision') ?? '', suite_sha256: fs.existsSync(opt('--suite') + '/manifest.json') ? crypto.createHash('sha256').update(fs.readFileSync(opt('--suite') + '/manifest.json')).digest('hex') : null }));
+  fs.writeFileSync(path.join(out, 'training_config.json'), JSON.stringify({ args: { data, init_from: opt('--init_from') ?? '', max_state: Number(opt('--max_state')), epochs: Number(opt('--epochs')), replay, seed: Number(opt('--seed') ?? 0) }, base_revision: opt('--base_revision') ?? '', suite_sha256: fs.existsSync(opt('--suite') + '/manifest.json') ? crypto.createHash('sha256').update(fs.readFileSync(opt('--suite') + '/manifest.json')).digest('hex') : null }));
   fs.writeFileSync(path.join(out, 'training_metrics.json'), JSON.stringify({ wall_seconds: 2, records_seen: n + used, requested_records: n + used, rejected_records: 0, truncated_records: 0, optimizer_steps: 3, forward_tokens: 900 * (n + used), step_seconds: [0.9, 0.5, 0.5], peak_device_bytes: 3.2e9, peak_rss_bytes: 7.5e9, device: 'cuda', dtype: 'bf16' }));
   fs.writeFileSync(path.join(out, 'head.pt'), Buffer.alloc(256, crypto.randomBytes(1)[0]));
   fs.writeFileSync(path.join(out, 'adapter_model.safetensors'), Buffer.alloc(1024, 3));
@@ -1098,6 +1262,10 @@ test('bridge: a plan runs against the bridge\'s own daemon: one service at a tim
   const python = path.join(bin, 'python'); writeFileSync(python, `#!/bin/sh\nexec "${process.execPath}" "${path.join(bin, 'fake-kev.mjs')}" "$@"\n`, { mode: 0o755 });
   const cfg = helpers.testConfig(root, { python, timeouts: { 'sys.selftest': 30, 'kev.train': 60, 'kev.benchmark': 60 } });
   mkdirSync(path.join(cfg.kevDir, 'evals', 'v7', 'decision-v7'), { recursive: true }); writeFileSync(path.join(cfg.kevDir, 'evals', 'v7', 'decision-v7', 'manifest.json'), '{}');
+  // the stand-in checkout's HEAD is the pinned Kev commit (a detached HEAD; `git rev-parse HEAD` reads it), so the daemon's
+  // GET /info reports what a laptop at the pin reports and the runner's pin check runs against the real daemon
+  for (const d of ['objects', 'refs']) mkdirSync(path.join(cfg.kevDir, '.git', d), { recursive: true });
+  writeFileSync(path.join(cfg.kevDir, '.git', 'HEAD'), `${KEV.commit}\n`);
   const { key, url } = await helpers.startDaemon(t, { root, config: cfg });
   const client = new BridgeClient({ endpoint: url, key, env: { PATH: process.env.PATH } });
   const dir = H.tempDir('served-daemon-'), port = await freeServePort(), { plan } = tinyPlan(dir, { port });
@@ -1136,6 +1304,8 @@ test('bridge: a plan runs against the bridge\'s own daemon: one service at a tim
   const cand = JSON.parse(readFileSync(path.join(dir, 'results', 'rows', 'J5-candidate', 'long.report.json'), 'utf8'));
   assert.match(cand.served.identity.run, new RegExp(`/runs/${state.stages['J2-5000-s1'].jobId}$`), 'J5 read the candidate, named by the daemon\'s own path');
   // and the J0 report reads back what the runner fetched
+  assert.equal(JSON.parse(readFileSync(path.join(dir, 'observations', 'info.json'), 'utf8')).kevCommit, KEV.commit, 'the daemon reported the pinned Kev checkout');
+  for (const id of ['J0a-0300', 'J2-5000-s1']) assert.match(JSON.parse(readFileSync(path.join(dir, 'results', id, 'training_config.json'), 'utf8')).args.data, /\/data\/(j0-0300|train-8)-[0-9a-f]{12}\.jsonl$/, `${id} read its content-addressed upload`);
   const report = J.analyzeJ0(J.loadJ0Observations(dir));
   assert.ok(report.jobs['0300'].seconds_per_record > 0 && report.host.free_m.available === 11444 && report.host.free_disk.freeBytes > 0, JSON.stringify(report.missing));
   assert.equal(report.kernel_path.fast, true);
@@ -1212,6 +1382,14 @@ test('cli: score-served.mjs and jobs.mjs run as commands: exit codes, rows and r
   r = cmd('jobs.mjs', ['route', built.file, long]);
   assert.equal(r.status, 0, r.stderr);
   const routes = JSON.parse(r.stdout); assert.deepEqual(routes.map(x => x.route), ['benchmark', 'served']); assert.equal(routes[1].overflowing, 1); assert.equal(routes[1].fitting, 1);
+  // reconcile-j2: the J2 5K metrics against a J0 report, logged; submit refuses a plan-less command before it connects
+  const j0r = path.join(dir, 'j0-report.json'); writeFileSync(j0r, JSON.stringify(J.analyzeJ0(j0Obs())));
+  const pred = J.modelFromJ0Report(JSON.parse(readFileSync(j0r, 'utf8'))).seconds({ rows: 5000, replay: 2000 }), met = path.join(dir, 'j2-metrics.json'), dev = path.join(dir, 'dev.jsonl');
+  writeFileSync(met, JSON.stringify({ wall_seconds: pred * 1.5, forward_tokens: 5e6 }));
+  r = cmd('jobs.mjs', ['reconcile-j2', '--report', j0r, '--metrics', met, '--log', dev]);
+  assert.equal(r.status, 0, r.stderr); assert.match(r.stdout, /"action": "recompute"/); assert.match(r.stdout, /Plan: \*\*reduced\*\*/);
+  assert.equal(JSON.parse(readFileSync(dev, 'utf8').trim()).action, 'recompute');
+  assert.equal(cmd('jobs.mjs', ['submit', '--confirm-submit']).status, 2, '--plan and --dir are required');
 });
 
 // =============================================================================================================
@@ -1222,7 +1400,7 @@ test('seeded defects: each mutation of the scorer, the router, the sequence chec
   const mutants = [
     m('a second kev.serve is allowed', 'jobs.mjs', "if (service) errors.push(`${where}: a second kev.serve", "if (false) errors.push(`${where}: a second kev.serve", /^unit: sequence/),
     m('a kev.train may queue behind a service', 'jobs.mjs', "if (service) errors.push(`${where}: a kev.train is queued", "if (false) errors.push(`${where}: a kev.train is queued", /^unit: sequence/),
-    m('the runner queues behind a live service', 'jobs.mjs', "if (stage.kind !== 'kev.serve' && live.length) {", 'if (false) {', /^unit: the runner refuses/),
+    m('the runner queues behind a live service', 'jobs.mjs', "if (stage.kind !== 'kev.serve' && others.length) {", 'if (false) {', /^unit: the runner refuses/),
     m('the route decision tolerates one overflowing record', 'jobs.mjs', "const route = over.length === 0 ? 'benchmark' : 'served';", "const route = over.length <= 1 ? 'benchmark' : 'served';", /^unit: the route decision/),
     m('a "dropped" line passes acceptance', 'jobs.mjs', 'if (p.dropped.length) errors.push(', 'if (false) errors.push(', /^unit: train acceptance/),
     m('N training requests is not compared', 'jobs.mjs', 'else if (p.requests !== wanted) errors.push(', 'else if (false) errors.push(', /^unit: train acceptance/),
@@ -1238,13 +1416,25 @@ test('seeded defects: each mutation of the scorer, the router, the sequence chec
     m('a swapped model goes unnoticed', 'score-served.mjs', 'const sameModel = after.run === identity.run;', 'const sameModel = true;', /^unit: one served model/),
     m('index-like option names are reordered silently', 'score-served.mjs', 'if (bad.length) throw fail(\'SERVED_KEYS\'', 'if (false) throw fail(\'SERVED_KEYS\'', /^unit: option names/),
     m('resume scores a record twice', 'score-served.mjs', 'const todo = records.filter(r => !doneIds.has(r._meta.id));', 'const todo = records;', /^unit: a run resumes/),
-    m('the label of a record is sent to the server', 'score-served.mjs', "for (const k of ['type', 'instructions', 'criteria']) if (k in q) out[k] = q[k];", "for (const k of ['type', 'instructions', 'criteria', 'label']) if (k in q) out[k] = q[k];", /^unit: kev files parse/)
+    m('the label of a record is sent to the server', 'score-served.mjs', "for (const k of ['type', 'instructions', 'criteria']) if (k in q) out[k] = q[k];", "for (const k of ['type', 'instructions', 'criteria', 'label']) if (k in q) out[k] = q[k];", /^unit: kev files parse/),
+    // added by the adversarial review (2026-10-08)
+    m('the laptop\'s Kev commit is not checked', 'jobs.mjs', "if (!info || info.kevCommit !== kevCommit) throw fail('RUN_KEV_PIN'", "if (false) throw fail('RUN_KEV_PIN'", /^unit: the runner holds the laptop/),
+    m('a service may start beside a GPU job', 'jobs.mjs', "if (stage.kind === 'kev.serve' && !own && gpu.length) {", 'if (false) {', /^unit: the runner holds the laptop/),
+    m('the plan\'s own GPU jobs are not told apart from foreign ones', 'jobs.mjs', 'gpu = now.gpu.filter(id => !mine.has(id));', 'gpu = now.gpu;', /^unit: the runner holds the laptop/),
+    m('a restart asks for a second service instead of re-attaching', 'jobs.mjs', 'const own = st.jobId ? now.services.find(s => s.id === st.jobId) : null;', 'const own = null;', /^unit: the runner holds the laptop/),
+    m('J2 at 5K is never reconciled in a run', 'jobs.mjs', 'if (stage.reconcile && acceptance.ok && model && metrics?.wall_seconds > 0) {', 'if (false) {', /^unit: J2 at 5K is reconciled/),
+    m('a training step over the bridge timeout is scheduled', 'jobs.mjs', "else if (tooLong.length) { status = 'cut'; cutFrom = item.id; }", "else if (false) { status = 'cut'; cutFrom = item.id; }", /^unit: the laptop limits/),
+    m('a training stage over the bridge timeout passes the limits', 'jobs.mjs', 'if (hours > lim.trainTimeoutSeconds / 3600) errors.push(', 'if (false) errors.push(', /^unit: the laptop limits|^unit: the runner holds the laptop/),
+    m('an upload over limits.fileBytes passes the limits', 'jobs.mjs', 'if (bytes > lim.fileBytes) errors.push(', 'if (false) errors.push(', /^unit: the laptop limits/),
+    m('a kev.benchmark read has no served companion', 'jobs.mjs', 'companionRows = COMPANION_ROWS }) {', 'companionRows = 0 }) {', /^unit: every kev\.benchmark read has/),
+    m('a job that read another file passes acceptance', 'jobs.mjs', 'if (!got.endsWith(`/${expect.dataset}`)) errors.push(', 'if (false) errors.push(', /^unit: the runner stops at a job/),
+    m('a request over the bridge body limit is sent', 'score-served.mjs', 'if (bytes > maxRequestBytes) return { rejected:', 'if (false) return { rejected:', /^unit: a served request over the bridge body limit/)
   ];
   const pattern = '^unit: ', t0 = Date.now();
   const r = H.seededDefect({ file: TEST_FILE, pattern, mutants, env: { KEV_DATA_MUTANT_RUN: '1' } });
   assert.equal(r.control.status, 0, `the unmutated copy passes:\n${r.control.stdout.split('\n').filter(l => /not ok/.test(l)).join('\n')}\n${r.control.stderr.slice(-1500)}`);
   assert.deepEqual(r.control.failed, []);
-  assert.ok(r.control.passed.length >= 25, `${r.control.passed.length} unit tests passed in the control run`);
+  assert.ok(r.control.passed.length >= 37, `${r.control.passed.length} unit tests passed in the control run`);
   r.mutants.forEach((run, i) => {
     assert.notEqual(run.status, 0, `${mutants[i].name} was not caught`);
     assert.ok(run.failed.some(n => mutants[i].expect.test(n)), `${mutants[i].name}: failed ${JSON.stringify(run.failed)}`);

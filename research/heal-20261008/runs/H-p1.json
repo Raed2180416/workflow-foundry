@@ -8,7 +8,7 @@
   "excluded": []
  },
  "schema": "heal-run/1",
- "started": "2026-10-08T17:06:17.806Z",
+ "started": "2026-10-08T21:05:01.192Z",
  "trial": {
   "key": "fhand-haiku/records:test:d3:s5002/1",
   "runId": "18480c39-01b2-4cf3-8c83-7f7c8225c831",
@@ -107,24 +107,66 @@
     "gate_continuation",
     "strengthen_acceptance"
    ],
-   "decision": "reject",
+   "decision": "pending",
    "reasons": [
-    "HEAL_OP_INVALID"
+    "V7:HEAL_NEEDS_LIVE"
    ],
-   "rejectCode": "HEAL_OP_INVALID",
+   "rejectCode": null,
    "stages": [
     {
      "id": "V0",
-     "ok": false,
-     "code": "HEAL_OP_INVALID",
-     "detail": "at most 6 ops per proposal",
+     "ok": true,
+     "costUsd": 0
+    },
+    {
+     "id": "V1",
+     "ok": true,
+     "costUsd": 0
+    },
+    {
+     "id": "V2",
+     "ok": true,
+     "costUsd": 0
+    },
+    {
+     "id": "V3",
+     "ok": true,
+     "costUsd": 0
+    },
+    {
+     "id": "V4",
+     "ok": true,
+     "costUsd": 0
+    },
+    {
+     "id": "V5",
+     "ok": true,
+     "costUsd": 0
+    },
+    {
+     "id": "V6",
+     "ok": true,
+     "costUsd": 0
+    },
+    {
+     "id": "V7",
+     "ok": null,
+     "code": "HEAL_NEEDS_LIVE",
+     "detail": "the fresh-task gate needs a live provider",
      "costUsd": 0
     }
    ],
    "costUsd": 0,
-   "costRatio": null
+   "costRatio": 1
   }
  ],
+ "evidence": {
+  "tier": "development/diagnostic",
+  "split": "test",
+  "seed": 5002,
+  "inspected": true,
+  "note": "the seed is already in the seed ledger (INSPECTED): this proves plumbing, not a fix rate"
+ },
  "fidelity": {
   "identical": true,
   "checks": {
@@ -223,7 +265,7 @@
    "c39",
    "c40"
   ],
-  "ms": 332441,
+  "ms": 275342,
   "blocked": null
  },
  "lintDebt": {
@@ -275,7 +317,7 @@
    }
   ],
   "needsProposer": [],
-  "decision": "reject"
+  "decision": "pending"
  },
  "proposer": {
   "spec": "none",
@@ -328,7 +370,7 @@
   "capUsd": 0,
   "spentUsd": 0,
   "remainingUsd": 0,
-  "lines": 0
+  "lines": 36
  },
- "ms": 511088
+ "ms": 622115
 }

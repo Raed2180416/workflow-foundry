@@ -1,0 +1,6 @@
+{"at":"2026-10-08T21:20:43.044Z","label":"proposer round 1 (M)","usd":0.002192,"totalUsd":0.002192,"runId":"5af7b313-4e74-4145-b2d4-9fba09b226bf"}
+{"at":"2026-10-08T21:20:50.941Z","label":"proposer round 2 (M)","usd":0.001986,"totalUsd":0.004178,"runId":"d2779946-7f3a-40e5-ae02-a351016c9441"}
+{"at":"2026-10-08T21:20:58.697Z","label":"proposer round 3 (L)","usd":0.039754,"totalUsd":0.043932,"runId":"77314ac1-bee1-446d-b214-9f4193f673a6"}
+{"at":"2026-10-08T21:21:01.226Z","label":"V3 F-haiku/codefix:test:d3:s6001/0 r0","usd":0,"totalUsd":0.043932,"liveCalls":0}
+{"at":"2026-10-08T21:21:11.092Z","label":"proposer round 4 (F)","usd":0.080516,"totalUsd":0.124448,"runId":"cd5e6bb6-348b-4343-869f-bbcb1c4f767c"}
+{"at":"2026-10-08T21:21:13.284Z","label":"V3 F-haiku/codefix:test:d3:s6001/0 r0","usd":0,"totalUsd":0.124448,"liveCalls":0}
