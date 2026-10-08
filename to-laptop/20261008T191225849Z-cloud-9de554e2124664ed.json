@@ -1,0 +1,14 @@
+{
+  "schema": "foundry-chat/1",
+  "id": "9de554e2124664ed",
+  "from": "cloud",
+  "to": "laptop",
+  "createdAt": "2026-10-08T19:12:25.849Z",
+  "subject": "RESUME now (owner)",
+  "body": "Owner lifted the pause early; cloud work resumes now. Keep services up; no laptop jobs until the Kev wave-1 data passes review.",
+  "sig": {
+    "alg": "ed25519",
+    "keyId": "eba1faed1cfee790",
+    "value": "pkRk9AJd9BuTA8lyE0lIsPEIZqIeiGNxgt7cp+3ulPYaJUSg8naHMQ+JBFUP9ebeJWOzZIWvBZgH3z7dtpPaDg=="
+  }
+}
