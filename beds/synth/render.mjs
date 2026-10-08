@@ -2,7 +2,7 @@
 // free text) and the task prompt. Only rendered text and neutral metadata leave this module.
 import { rng } from '../lib/rng.mjs';
 import {
-  PROPS, VARIANTS, UNMODIFIED, ANAPHORS, TYPE_LABELS, MONTHS, NUM_WORDS, RETRACTION_REASONS, CONCERN_REASONS, KIND_PLURAL, SURNAMES, PREPRINT_SERVERS, condFor, METHOD_DETAIL,
+  PROPS, VARIANTS, UNMODIFIED, ANAPHORS, TYPE_LABELS, MONTHS, NUM_WORDS, RETRACTION_REASONS, CONCERN_REASONS, KIND_PLURAL, SURNAMES, PREPRINT_SERVERS, condFor, METHOD_DETAIL, tempText,
 } from './catalog.mjs';
 import { VERSION, fromDay, unitOf, isResearch, toCanon, relDiff, fromCanon as fromCanonR } from './world.mjs';
 
@@ -71,6 +71,17 @@ export function fmtValue(prop, value, unitId, rr, K, { sd = null, allowSd = fals
   if (!plainOnly && K.durations && rr.chance(K.durations)) { const dur = duration(prop, value, unitId); if (dur) return dur; }
   const sym = K.unitLevel === 1 ? u.sym[0] : u.w && K.unitWords && !plainOnly && rr.chance(K.unitWords) ? rr.pick(u.w) : rr.pick(u.sym);
   const num = fmtNumber(value, u, rr, K);
+  if (allowSd && K.replicates && !u.sci && !/,/.test(num) && rr.chance(K.replicates)) {
+    // the list of three replicate results: the claim is their mean
+    const f4 = x => Number(x.toPrecision(4));
+    const s1 = rr.float(0.02, 0.09), s2 = rr.float(0.02, 0.09);
+    const a = f4(value * (1 - s1)), b = f4(value * (1 + s2)), c = f4(3 * value - a - b);
+    const mean = (a + b + c) / 3;
+    if (c > 0 && Math.abs(mean - value) <= 0.0015 * Math.abs(value) && new Set([a, b, c]).size === 3) {
+      const order = rr.shuffle([a, b, c]);
+      return rr.pick([`${order[0]}, ${order[1]} and ${order[2]} ${sym} (three replicates)`, `${order[0]}, ${order[1]} and ${order[2]} ${sym} in three replicate runs`]);
+    }
+  }
   if (allowSd && sd && K.ranges && !u.sci && !/,/.test(num) && rr.chance(K.ranges)) {
     // a range and its mean: the mean is the value
     const dec = (num.split('.')[1] || '').length, f = x => x.toFixed(dec);
@@ -173,7 +184,53 @@ function quoteWho(c, world, ctx) {
   return { who: surname(c.quoteOf), year: fromDay(world.docMap.get(c.doc).date).y - c.quoteYearsBack };
 }
 
+// Qualifiers that carry a number or a temperature that is NOT the measurement condition (storage, calibration,
+// pre-treatment, sampling): they sit in the same sentence as the claim and must not be read as its condition.
+function decoyQualifier(c, rr) {
+  const T = tempText(rr.pick([4, 20, 37, 60, 80, -20, 120]), rr), n = rr.pick([2, 5, 10, 24, 48, 72, 100, 250]);
+  const common = [`sample stored at ${T} until use`, `after pre-equilibration at ${T}`, `instrument calibrated at ${T}`, `sample dried at ${T} beforehand`];
+  const own = {
+    'aqueous solubility': [`calibration standard ${n} mg/mL`, `stock solution ${n} mg/mL`], 'melting point': [`sample dried at ${T} beforehand`, `block pre-heated to ${T}`],
+    'plasma half-life': [`plasma sampled for ${n} h after dosing`, `last sample taken ${n} h post-dose`], 'enzyme IC50': [`reference inhibitor control at ${n} nM`, `compound pre-incubated at ${T} for 15 min`],
+    density: [`check standard ${rr.pick([2.7, 5.1, 7.87])} g/cm³`, `sample stored at ${T}`], 'tensile strength': [`reference steel checked at ${rr.pick([350, 500, 800])} MPa`, `sample stored at ${T}`],
+    'thermal conductivity': [`reference foam checked at ${rr.pick([0.04, 0.8, 15])} W/(m·K)`, `sample stored at ${T}`], 'band gap': [`spectra recorded up to ${rr.pick([4.5, 6.0, 7.2])} eV`, `sample stored at ${T}`],
+    'doubling time': [`optical density read every ${rr.pick([5, 10, 15])} min`, `inoculum grown overnight at ${T}`], 'genome size': [`contigs longer than ${rr.pick([5, 10, 50])} kbp retained`, `reads of ${rr.pick([8, 15, 30])} kbp`],
+    'cell length': [`scale bar ${rr.pick([1, 2, 5])} µm`, `calibration grid ${rr.pick([0.5, 1, 10])} µm`], 'optimal growth temperature': [`inoculum grown overnight at ${tempText(rr.pick([20, 25, 30, 37]), rr)}`, `stock kept at ${T}`],
+  }[c.prop] || common;
+  return rr.pick([...own, ...own, ...common]);
+}
+const BOUND_TEXT = {
+  below: [(pn, E, C, V) => `The ${pn} of ${E} ${C} was below ${V}, the limit of quantification.`, (pn, E, C, V) => `${cap(E)} gave ${an(pn)} below ${V} ${C}; the value could not be resolved.`,
+    (pn, E, C, V) => `We can only state that the ${pn} of ${E} ${C} did not exceed ${V}.`, (pn, E, C, V) => `No ${pn} could be quantified for ${E} ${C} (detection limit ${V}).`],
+  above: [(pn, E, C, V) => `The ${pn} of ${E} ${C} exceeded ${V}, the upper limit of the assay.`, (pn, E, C, V) => `${cap(E)} gave ${an(pn)} above ${V} ${C}; the value was off scale.`,
+    (pn, E, C, V) => `We can only state that the ${pn} of ${E} ${C} was at least ${V}.`, (pn, E, C, V) => `The ${pn} of ${E} ${C} was greater than ${V}, the highest level tested.`],
+};
+// Two sentences, the second referring to the entity as "Its": the pronoun means the entity named in the first.
+function pronounUnit(c, world, ctx, E, reference = false) {
+  const { rr, K } = ctx;
+  const pn = rr.pick(PROPS[c.prop].names), C = c.condText;
+  const V = fmtValue(c.prop, c.value, c.unit, rr, K, { sd: c.sd, allowSd: c.mode === 'measured' });
+  const lead = reference ? rr.pick([`${cap(E)} was included as a reference.`, `${cap(E)} served as the comparison sample.`, `${cap(E)} was run alongside as a control.`])
+    : rr.pick([`${cap(E)} was examined next.`, `${cap(E)} was characterised further.`, `${cap(E)} was the subject of a second series.`, `${cap(E)} was measured again.`]);
+  return `${lead} ${rr.pick([`Its ${pn} ${C} was ${V}.`, `Its ${pn}, ${C}, came to ${V}.`, `We found ${V} for its ${pn} ${C}.`])}`;
+}
 function claimSentence(c, world, ctx) {
+  const { rr, K } = ctx;
+  if (ctx.proto && ctx.proto.has(c)) return protoSentence(c, world, ctx);
+  if (ctx.pronounOk && c.mode === 'measured' && !c.variant && c.ent === ctx.docEnt && !(ctx.noCond && ctx.noCond.has(c)) && rr.chance(K.pronoun)) return pronounUnit(c, world, ctx, ctx.mention(c.ent, true));
+  const out = claimSentenceCore(c, world, ctx);
+  if (c.mode === 'measured' && !c.variant && K.decoyTemp && rr.chance(K.decoyTemp) && out.endsWith('.')) return `${out.slice(0, -1)} (${decoyQualifier(c, rr)}).`;
+  return out;
+}
+// A claim whose condition is defined once, by name, elsewhere in the document ("Protocol A").
+function protoSentence(c, world, ctx) {
+  const { rr, K, mention } = ctx;
+  const pn = rr.pick(PROPS[c.prop].names), E = mention(c.ent), L = ctx.proto.get(c);
+  const V = fmtValue(c.prop, c.value, c.unit, rr, K, { sd: c.sd, allowSd: true });
+  return rr.pick([`Under ${L}, the ${pn} of ${E} was ${V}.`, `The ${pn} of ${E} (${L}) was ${V}.`, `${L} gave ${an(pn)} of ${V} for ${E}.`, `${cap(E)} showed ${an(pn)} of ${V} in ${L}.`,
+    `${cap(L)}: ${pn} of ${E} = ${V}.`, `For ${E}, ${L} yielded ${an(pn)} of ${V}.`]);
+}
+function claimSentenceCore(c, world, ctx) {
   const { rr, K, mention } = ctx;
   const P = PROPS[c.prop], e = world.entMap.get(c.ent);
   const pn = rr.pick(P.names);
@@ -182,6 +239,7 @@ function claimSentence(c, world, ctx) {
   else if (c.mode === 'measured' && K.redHerrings && !isAnaphor(E, e) && rr.chance(K.redHerrings * 0.4)) E = rr.pick(UNMODIFIED[e.kind])(E);
   const V = fmtValue(c.prop, c.value, c.unit, rr, K, { sd: c.sd, allowSd: c.mode === 'measured' });
   const C = c.condText;
+  if (c.mode === 'bound') return rr.pick(BOUND_TEXT[c.boundDir])(pn, E, C, V);
   if (c.mode === 'quoted') {
     const { who, year } = quoteWho(c, world, ctx);
     const opts = [
@@ -370,7 +428,7 @@ function pairSentence(a0, b0, world, ctx) {
       () => `${cap(pn)} of ${E}: ${Va} (${Ca}); ${Vb} (${Cb}).`,
       () => `While the ${pn} of ${E} ${Ca} was ${Va}, ${Cb} it was ${Vb}.`,
       () => `${cap(Ca)} we found ${Va} for the ${pn} of ${E}; ${Cb} the value was ${Vb}.`,
-      () => `Changing from ${Ca} to ${Cb} took the ${pn} of ${E} from ${Va} to ${Vb}.`,
+      () => `Changing the setting from "${Ca}" to "${Cb}" took the ${pn} of ${E} from ${Va} to ${Vb}.`,
       () => `${cap(E)} was run twice for the ${pn}: ${Ca} (${Va}) and ${Cb} (${Vb}).`,
       () => `The ${pn} of ${E} came to ${Vb} ${Cb} but ${Va} ${Ca}.`,
     );
@@ -386,6 +444,23 @@ function tableLine(cs, world, ctx) {
     return `${rr.pick(PROPS[c.prop].names)} of ${E} | ${c.condText} | ${fmtValue(c.prop, c.value, c.unit, rr, K, { sd: c.sd, allowSd: true })}`;
   });
   return `Results (quantity | condition | value): ${rows.join('; ')}.`;
+}
+
+// A small results table: one measured claim per row, in one of four layouts (pipe table with the value and unit
+// together, with a unit column, condition first, or CSV). The caption names the entity.
+function tableBlock(cs, d, world, ctx) {
+  const { rr, K, mention } = ctx;
+  const style = rr.int(0, 3), E = mention(d.ent, true), n = rr.int(1, 3);
+  const cell = c => ({ pn: rr.pick(PROPS[c.prop].names), C: c.condText, u: unitOf(c.prop, c.unit) });
+  const rows = cs.map(c => ({ c, ...cell(c) }));
+  const sym = r => rr.pick(r.u.sym), num = r => fmtNumber(r.c.value, r.u, rr, K);
+  const cap1 = rr.pick([`Table ${n}. Measured values for ${E}.`, `Table ${n}. Results for ${E}.`, `Table ${n}: ${E}, measured quantities.`]);
+  let lines;
+  if (style === 0) lines = ['Property | Condition | Value', ...rows.map(r => `${r.pn} | ${r.C} | ${fmtValue(r.c.prop, r.c.value, r.c.unit, rr, K, { sd: r.c.sd, allowSd: true })}`)];
+  else if (style === 1) lines = ['Property | Conditions | Value | Unit', ...rows.map(r => `${r.pn} | ${r.C} | ${num(r)} | ${sym(r)}`)];
+  else if (style === 2) lines = ['Condition | Property | Value', ...rows.map(r => `${r.C} | ${r.pn} | ${fmtValue(r.c.prop, r.c.value, r.c.unit, rr, K, { sd: r.c.sd, allowSd: true })}`)];
+  else lines = ['property,condition,value,unit', ...rows.map(r => `"${r.pn}","${r.C}",${num(r)},${sym(r)}`)];
+  return `\n${cap1}\n${lines.join('\n')}\n`;
 }
 
 // Sample size. `nGross` documents state a gross count and the exclusions (the net count is n);
@@ -501,7 +576,7 @@ function renderResearch(d, world, ctx) {
     }
     return mentionFor.get(key)(plainOnly);
   };
-  const cx = { ...ctx, mention, terse: d.kind === 'labnote' };
+  const cx = { ...ctx, mention, terse: d.kind === 'labnote', docEnt: d.ent, pronounOk: K.pronoun > 0 && d.kind !== 'labnote' && !d.nomenclature };
   const out = [];
   const sup = world.supersessions.find(s => s.old === d.key);
   const supNew = world.supersessions.find(s => s.new === d.key);
@@ -561,7 +636,10 @@ function renderResearch(d, world, ctx) {
   const done = new Set();
   for (const o of measured.filter(x => x.compareWith != null)) {
     const m = measured.find(x => x.cid === o.compareWith);
-    if (m && !done.has(m)) { body.push(comparisonSentence(m, o, world, cx)); done.add(m); done.add(o); }
+    if (m && !done.has(m)) {
+      if (cx.pronounOk && rr.chance(K.pronoun * 1.5)) { body.push(pronounUnit(m, world, cx, mention(m.ent, true)), pronounUnit(o, world, cx, mention(o.ent, true), true)); } else body.push(comparisonSentence(m, o, world, cx));
+      done.add(m); done.add(o);
+    }
   }
   for (const q of claims.filter(x => x.quoteWith != null)) {
     const m = measured.find(x => x.cid === q.quoteWith);
@@ -576,15 +654,38 @@ function renderResearch(d, world, ctx) {
     }
   }
   const rest = measured.filter(c => !done.has(c));
+  // two named protocols: their conditions are given once, and two claims refer to them by name
+  if (K.protocols && !d.nomenclature && rest.length >= 2 && rr.chance(K.protocols)) {
+    const mine = rest.filter(c => !c.variant && c.ent === d.ent);
+    let pair = null;
+    for (const c of mine) { const o = mine.find(x => x !== c && x.prop === c.prop && x.cond !== c.cond); if (o) { pair = [c, o]; break; } }
+    if (!pair && mine.length >= 2) pair = rr.sample(mine, 2);
+    if (pair) {
+      const sc = rr.pick([['Protocol', 'A', 'B'], ['Series', 'I', 'II'], ['Run', '1', '2'], ['Condition set', 'A', 'B']]);
+      const labs = rr.chance(0.5) ? [sc[1], sc[2]] : [sc[2], sc[1]];
+      cx.proto = new Map(pair.map((c, i) => [c, `${sc[0]} ${labs[i]}`]));
+      const L = pair.map(c => cx.proto.get(c)), Cs = pair.map(c => c.condText);
+      const defs = rr.chance(0.5) ? [0, 1] : [1, 0];
+      body.push(rr.pick([`${L[defs[0]]}: ${Cs[defs[0]]}. ${L[defs[1]]}: ${Cs[defs[1]]}.`, `Two protocols were used. ${L[defs[0]]} means ${Cs[defs[0]]}; ${L[defs[1]]} means ${Cs[defs[1]]}.`,
+        `Conditions: ${L[defs[0]]} — ${Cs[defs[0]]}; ${L[defs[1]]} — ${Cs[defs[1]]}.`]));
+    }
+  }
   // a document-level default condition; one claim then gives no condition of its own
-  const plainRest = rest.filter(c => !c.variant && c.ent === d.ent);
+  const plainRest = rest.filter(c => !c.variant && c.ent === d.ent && !(cx.proto && cx.proto.has(c)));
   if (K.docDefault && plainRest.length && !(d.kind === 'labnote' && K.fancyNumbers) && rr.chance(K.docDefault)) {
     const c = rr.pick(plainRest);
     cx.noCond = new Set([c]);
     out.push(rr.pick([`Unless stated otherwise, all measurements below were made ${c.condText}.`, `Measurements were carried out ${c.condText} unless noted otherwise.`]));
   }
-  if (d.kind === 'labnote' && K.fancyNumbers && rest.length >= 2 && rr.chance(0.5)) body.push(tableLine(rest, world, cx));
-  else for (const c of rest) body.push(claimSentence(c, world, cx));
+  const tabled = K.tables && rr.chance(K.tables) ? rest.filter(c => !c.variant && c.ent === d.ent && !(cx.proto && cx.proto.has(c)) && !(cx.noCond && cx.noCond.has(c))) : [];
+  if (tabled.length >= 2) {
+    body.push(tableBlock(tabled, d, world, cx));
+    for (const c of rest) if (!tabled.includes(c)) body.push(claimSentence(c, world, cx));
+  } else if (d.kind === 'labnote' && K.fancyNumbers && rest.filter(c => !(cx.proto && cx.proto.has(c))).length >= 2 && rr.chance(0.5)) {
+    const plainOnes = rest.filter(c => !(cx.proto && cx.proto.has(c)));
+    body.push(tableLine(plainOnes, world, cx));
+    for (const c of rest) if (!plainOnes.includes(c)) body.push(claimSentence(c, world, cx));
+  } else for (const c of rest) body.push(claimSentence(c, world, cx));
   for (const c of claims.filter(x => x.mode !== 'measured' && !done.has(x))) body.push(claimSentence(c, world, cx));
   if (rr.chance(0.7)) body.push(rr.pick(NOISE[e.kind]));
   if (rr.chance(0.4)) body.push(rr.pick(NOISE[e.kind]));
@@ -674,6 +775,20 @@ function renderNotice(d, world, ctx) {
         `The ${pn} of ${M} ${C} is printed as ${oldV}; the number is correct, but the unit should be ${sym}.`,
         ...(V ? [`The ${pn} of ${M} ${C} appears as ${oldV}. Only the unit is wrong: the figure is to be read in ${sym}.`,
           `Unit error: ${oldV} for the ${pn} of ${M} ${C} should carry the unit ${sym}; the number itself stands.`] : [])])} ${rr.pick(['The authors apologise for the error.', 'The conclusions are unaffected.'])}`;
+    }
+    if (er.kind === 'cond') {
+      const oldV2 = fmtValue(er.prop, er.oldValue, er.oldUnit, rr, K, { plainOnly: true });
+      return `${head} ${rr.pick([`In the published version the ${pn} of ${M} was reported as ${oldV2} ${er.oldCond}. The sample was in fact measured ${er.newCond}; the value itself stands.`,
+        `The ${pn} of ${M} (${oldV2}) was stated to have been measured ${er.oldCond}. This is wrong: the measurement was made ${er.newCond}.`,
+        `Correction of the conditions: the ${oldV2} given for the ${pn} of ${M} ${er.oldCond} was actually obtained ${er.newCond}.`,
+        `The ${oldV2} reported for the ${pn} of ${M} ${er.oldCond} refers to a run ${er.newCond}; only the stated condition was wrong.`])} ${rr.pick(['The authors apologise for the error.', 'The number itself is unchanged.'])}`;
+    }
+    if (er.kind === 'factor') {
+      const F = er.factor;
+      const f = er.up ? [`The ${pn} of ${M} ${C} was printed as ${oldV}, which is too large by a factor of ${F}.`, `${cap(oldV)} for the ${pn} of ${M} ${C} should be divided by ${F}.`,
+        `The ${pn} of ${M} ${C} (${oldV}) is a factor ${F} too high.`] : [`The ${pn} of ${M} ${C} was printed as ${oldV}, which is too small by a factor of ${F}.`,
+        `${cap(oldV)} for the ${pn} of ${M} ${C} should be multiplied by ${F}.`, `The ${pn} of ${M} ${C} (${oldV}) is a factor ${F} too low.`];
+      return `${head} ${rr.pick(f)} ${rr.pick(['The authors apologise for the error.', 'The conclusions of the article are unaffected.'])}`;
     }
     const forms = [`In the published version the ${pn} of ${M} ${C} was given as ${oldV}. The correct value is ${newV}.`];
     if (!easy) {
@@ -839,13 +954,13 @@ export function renderPrompt(world) {
   for (const p of props) L.push(`- ${p}: ${PROPS[p].stdDesc}`);
   L.push('');
   L.push('## What counts as a claim');
-  L.push("A claim is a value that a document reports from its own measurement. Values a document quotes from other work, predictions, simulations, estimates, design targets, and instructions or assertions that are not measurements are not claims. A document that follows someone else's protocol but reports its own measurement does make a claim. A general measurement condition stated by a document (for example 'unless stated otherwise, ...') applies to every value it reports without a condition of its own. When a value is given with an uncertainty or as a range with a mean, the claim is the central value (the mean).");
+  L.push("A claim is a value that a document reports from its own measurement. Values a document quotes from other work, predictions, simulations, estimates, design targets, and instructions or assertions that are not measurements are not claims; neither is a bound (below, above, at least, did not exceed) or a detection or quantification limit. A document that follows someone else's protocol but reports its own measurement does make a claim. A general measurement condition stated by a document (for example 'unless stated otherwise, ...') applies to every value it reports without a condition of its own, and a named protocol, series or run defined in a document stands for the condition given in its definition. The condition of a claim is the condition under which the property was measured: temperatures, concentrations and durations that describe storage, pre-treatment, calibration, controls or sampling are not part of it, and neither are numbers that belong to the method rather than to the property. A row of a results table is a claim like a sentence, with the table's header giving the property, condition and unit columns. When a value is given with an uncertainty or as a range with a mean, the claim is the central value (the mean); when it is given as the list of its replicate results, the claim is their mean.");
   L.push('');
   L.push('## Document status');
   L.push('1. A retraction notice voids the document it retracts. An expression of concern voids nothing. A retraction of an article that is not in the corpus voids nothing in the corpus.');
   L.push('2. When a later version of the same work exists in the corpus (a revised preprint version, a revised memo, or the peer-reviewed journal version of a preprint), the earlier version is superseded and void. A version label on its own, or a mention of a version that is not in the corpus, makes nothing void.');
   L.push('3. Void documents are ignored entirely, including every value they report.');
-  L.push('4. An erratum (also called a correction or corrigendum) replaces exactly the value it corrects (that property, entity and condition) and nothing else. The corrected value belongs to the corrected document: cite that document, never the erratum. An erratum may instead correct a sample size; then the corrected n applies. An erratum to a void document changes nothing.');
+  L.push('4. An erratum (also called a correction or corrigendum) replaces exactly the value it corrects (that property, entity and condition) and nothing else; an erratum may instead correct the condition under which a value was measured, and the value then counts under the corrected condition. The corrected value belongs to the corrected document: cite that document, never the erratum. An erratum may instead correct a sample size, then the corrected n applies, or state that a printed value is too large or too small by a factor, then the corrected value is the printed one divided or multiplied by that factor. An erratum to a void document changes nothing.');
   L.push('5. Notices (errata, retraction notices, expressions of concern) are never sources themselves.');
   if (K.refStyles[0] !== 'id') L.push('6. Notices and documents identify the work they refer to by some of: its title or topic, authors, venue and publication date (or year). A reference refers to a corpus document only if every detail it gives matches that document; otherwise it refers to a document outside the corpus.');
   L.push('');

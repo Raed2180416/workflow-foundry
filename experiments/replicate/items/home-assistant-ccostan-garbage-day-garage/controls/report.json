@@ -1,0 +1,836 @@
+{
+ "schema": "rbench-controls-report/1",
+ "item": "home-assistant:CCOSTAN/Home-AssistantConfig/config/automation/Speech/garbage_day_garage.yaml#0",
+ "version": "0.1.0",
+ "generatedBy": "node controls/run-controls.mjs",
+ "instances": 65,
+ "instanceSpec": "dev seeds 0..19 x d1,3,5 + test seeds 0..4 x d3",
+ "evidenceStatus": "development/diagnostic. The original was executed on controls/original-engine.mjs (an interpreter for the YAML subset it uses), NOT on Home Assistant core, which is not installed here. Home Assistant semantics are as documented; nothing was observed on a real instance.",
+ "originalPinned": {
+  "sha256": "c7cae208c73ad49d929e18a43bc09b70760a44ec85f81c93118a31b194f0f62b",
+  "revision": "git 71ffa6120b8b649508c3ffe312f6d09792c7b37b (2026-10-05T21:48:56+00:00)",
+  "corpusCopyIdentical": true
+ },
+ "original": {
+  "T2_core": {
+   "runs": 65,
+   "pass": 65,
+   "meanScore": 1,
+   "failedScenarios": {}
+  },
+  "T3_with_probes": {
+   "runs": 65,
+   "pass": 0,
+   "meanScore": 0.8,
+   "failedScenarios": {
+    "p1-speech-outage": 65,
+    "p2-first-announcement-outage": 65,
+    "p3-push-outage": 65,
+    "p4-alexa-down-then-up": 65
+   },
+   "cost": {
+    "min": 222,
+    "max": 222
+   }
+  },
+  "yamlConstructsInterpreted": [
+   "action:choose",
+   "action:condition",
+   "action:delay",
+   "action:parallel",
+   "action:repeat",
+   "action:service",
+   "action:stop",
+   "action:variables",
+   "condition:state",
+   "condition:time",
+   "condition:trigger",
+   "trigger:event",
+   "trigger:state"
+  ]
+ },
+ "references": {
+  "faithful_T1": {
+   "runs": 65,
+   "pass": 65,
+   "meanScore": 1,
+   "failedScenarios": {}
+  },
+  "faithful_T2": {
+   "runs": 65,
+   "pass": 65,
+   "meanScore": 1,
+   "failedScenarios": {}
+  },
+  "improved_T3": {
+   "runs": 65,
+   "pass": 65,
+   "meanScore": 1,
+   "failedScenarios": {},
+   "cost": {
+    "min": 184,
+    "max": 184
+   }
+  }
+ },
+ "mutantsOfOriginal": [
+  {
+   "name": "no-debounce",
+   "describe": "drop `for: 00:00:20` from the state trigger",
+   "expectFail": [
+    "wed-flap"
+   ],
+   "runs": 65,
+   "pass": 0,
+   "meanScore": 0.0667,
+   "failedScenarios": {
+    "sun-full": 65,
+    "sun-snooze2h": 65,
+    "tue-midnight-starts-wed": 65,
+    "wed-close-before-first": 65,
+    "wed-external-snooze": 65,
+    "wed-flap": 65,
+    "wed-foreign-phone-action": 65,
+    "wed-full": 65,
+    "wed-midnight-ends-sequence": 65,
+    "wed-reopen-restarts-run": 65,
+    "wed-snooze-after-run-ended": 65,
+    "wed-snooze30-then-expiry": 65,
+    "wed-stop-then-reopen": 65,
+    "wed-two-doors": 65
+   },
+   "rejectedEverywhere": true,
+   "expectedFailuresSeenEverywhere": true
+  },
+  {
+   "name": "announces-on-any-day",
+   "describe": "delete the weekday condition before the reminder starts and in the loop",
+   "expectFail": [
+    "mon-open"
+   ],
+   "runs": 65,
+   "pass": 0,
+   "meanScore": 0.8667,
+   "failedScenarios": {
+    "mon-open": 65,
+    "wed-midnight-ends-sequence": 65
+   },
+   "rejectedEverywhere": true,
+   "expectedFailuresSeenEverywhere": true
+  },
+  {
+   "name": "no-door-check-in-loop",
+   "describe": "delete the group.garage_doors state condition inside the repeat",
+   "expectFail": [
+    "wed-close-before-first"
+   ],
+   "runs": 65,
+   "pass": 0,
+   "meanScore": 0.8,
+   "failedScenarios": {
+    "wed-close-before-first": 65,
+    "wed-snooze-after-run-ended": 65,
+    "wed-stop-then-reopen": 65
+   },
+   "rejectedEverywhere": true,
+   "expectedFailuresSeenEverywhere": true
+  },
+  {
+   "name": "no-timer-check-in-loop",
+   "describe": "delete the snooze-timer state condition inside the repeat",
+   "expectFail": [
+    "wed-external-snooze"
+   ],
+   "runs": 65,
+   "pass": 0,
+   "meanScore": 0.9333,
+   "failedScenarios": {
+    "wed-external-snooze": 65
+   },
+   "rejectedEverywhere": true,
+   "expectedFailuresSeenEverywhere": true
+  },
+  {
+   "name": "mode-single",
+   "describe": "mode: single instead of restart",
+   "expectFail": [
+    "wed-reopen-restarts-run"
+   ],
+   "runs": 65,
+   "pass": 0,
+   "meanScore": 0.8,
+   "failedScenarios": {
+    "sun-snooze2h": 65,
+    "wed-reopen-restarts-run": 65,
+    "wed-snooze30-then-expiry": 65
+   },
+   "rejectedEverywhere": true,
+   "expectedFailuresSeenEverywhere": true
+  },
+  {
+   "name": "delays-as-absolute-offsets",
+   "describe": "announcements at +30, +60, +90 instead of +30, +90, +180",
+   "expectFail": [
+    "wed-full",
+    "sun-full"
+   ],
+   "runs": 65,
+   "pass": 0,
+   "meanScore": 0.3333,
+   "failedScenarios": {
+    "sun-full": 65,
+    "sun-snooze2h": 65,
+    "tue-midnight-starts-wed": 65,
+    "wed-external-snooze": 39,
+    "wed-foreign-phone-action": 65,
+    "wed-full": 65,
+    "wed-midnight-ends-sequence": 26,
+    "wed-reopen-restarts-run": 65,
+    "wed-snooze30-then-expiry": 65,
+    "wed-stop-then-reopen": 65,
+    "wed-two-doors": 65
+   },
+   "rejectedEverywhere": true,
+   "expectedFailuresSeenEverywhere": true
+  },
+  {
+   "name": "recycling-always",
+   "describe": "drop the Wednesday condition from the message",
+   "expectFail": [
+    "sun-full"
+   ],
+   "runs": 65,
+   "pass": 0,
+   "meanScore": 0.8667,
+   "failedScenarios": {
+    "sun-full": 65,
+    "sun-snooze2h": 65
+   },
+   "rejectedEverywhere": true,
+   "expectedFailuresSeenEverywhere": true
+  },
+  {
+   "name": "snooze-2h-is-30m",
+   "describe": "the 2 hour button starts the 30 minute duration",
+   "expectFail": [
+    "sun-snooze2h"
+   ],
+   "runs": 65,
+   "pass": 0,
+   "meanScore": 0.9333,
+   "failedScenarios": {
+    "sun-snooze2h": 65
+   },
+   "rejectedEverywhere": true,
+   "expectedFailuresSeenEverywhere": true
+  },
+  {
+   "name": "snooze-not-logged",
+   "describe": "delete the logbook call in the snooze branch",
+   "expectFail": [
+    "wed-snooze30-then-expiry"
+   ],
+   "runs": 65,
+   "pass": 0,
+   "meanScore": 0.8,
+   "failedScenarios": {
+    "sun-snooze2h": 65,
+    "wed-snooze-after-run-ended": 65,
+    "wed-snooze30-then-expiry": 65
+   },
+   "rejectedEverywhere": true,
+   "expectedFailuresSeenEverywhere": true
+  }
+ ],
+ "brokenControls": [
+  {
+   "name": "empty",
+   "describe": "an empty episode record: the solver never answered",
+   "expectFail": [
+    "wed-full",
+    "sun-full"
+   ],
+   "runs": 65,
+   "pass": 0,
+   "meanScore": 0.1333,
+   "failedScenarios": {
+    "sun-full": 65,
+    "sun-snooze2h": 65,
+    "tue-midnight-starts-wed": 65,
+    "wed-close-before-first": 65,
+    "wed-external-snooze": 65,
+    "wed-foreign-phone-action": 65,
+    "wed-full": 65,
+    "wed-midnight-ends-sequence": 65,
+    "wed-reopen-restarts-run": 65,
+    "wed-snooze-after-run-ended": 65,
+    "wed-snooze30-then-expiry": 65,
+    "wed-stop-then-reopen": 65,
+    "wed-two-doors": 65
+   },
+   "rejectedEverywhere": true,
+   "expectedFailuresSeenEverywhere": true
+  },
+  {
+   "name": "do-nothing",
+   "describe": "a handler that ends every event without a single call (passes only the two scenarios where nothing should happen)",
+   "expectFail": [
+    "wed-full",
+    "sun-full",
+    "wed-snooze30-then-expiry",
+    "sun-snooze2h"
+   ],
+   "runs": 65,
+   "pass": 0,
+   "meanScore": 0.1333,
+   "failedScenarios": {
+    "sun-full": 65,
+    "sun-snooze2h": 65,
+    "tue-midnight-starts-wed": 65,
+    "wed-close-before-first": 65,
+    "wed-external-snooze": 65,
+    "wed-foreign-phone-action": 65,
+    "wed-full": 65,
+    "wed-midnight-ends-sequence": 65,
+    "wed-reopen-restarts-run": 65,
+    "wed-snooze-after-run-ended": 65,
+    "wed-snooze30-then-expiry": 65,
+    "wed-stop-then-reopen": 65,
+    "wed-two-doors": 65
+   },
+   "rejectedEverywhere": true,
+   "expectedFailuresSeenEverywhere": true
+  },
+  {
+   "name": "shuffled-or-corrupted",
+   "describe": "a correct episode with its actions shuffled (seeded), so calls land in the wrong runs",
+   "expectFail": [
+    "wed-full"
+   ],
+   "runs": 65,
+   "pass": 0,
+   "meanScore": 0.0215,
+   "failedScenarios": {
+    "mon-open": 45,
+    "sun-full": 65,
+    "sun-snooze2h": 65,
+    "tue-midnight-starts-wed": 65,
+    "wed-close-before-first": 65,
+    "wed-external-snooze": 65,
+    "wed-flap": 64,
+    "wed-foreign-phone-action": 65,
+    "wed-full": 65,
+    "wed-midnight-ends-sequence": 65,
+    "wed-reopen-restarts-run": 65,
+    "wed-snooze-after-run-ended": 65,
+    "wed-snooze30-then-expiry": 65,
+    "wed-stop-then-reopen": 65,
+    "wed-two-doors": 65
+   },
+   "rejectedEverywhere": true,
+   "expectedFailuresSeenEverywhere": true
+  },
+  {
+   "name": "plausible-but-wrong",
+   "describe": "treats the delay list [30, 60, 90] as offsets from the start (+30, +60, +90) instead of cumulative (+30, +90, +180)",
+   "expectFail": [
+    "wed-full",
+    "sun-full"
+   ],
+   "runs": 65,
+   "pass": 0,
+   "meanScore": 0.3333,
+   "failedScenarios": {
+    "sun-full": 65,
+    "sun-snooze2h": 65,
+    "tue-midnight-starts-wed": 65,
+    "wed-external-snooze": 39,
+    "wed-foreign-phone-action": 65,
+    "wed-full": 65,
+    "wed-midnight-ends-sequence": 26,
+    "wed-reopen-restarts-run": 65,
+    "wed-snooze30-then-expiry": 65,
+    "wed-stop-then-reopen": 65,
+    "wed-two-doors": 65
+   },
+   "rejectedEverywhere": true,
+   "expectedFailuresSeenEverywhere": true
+  },
+  {
+   "name": "no-debounce",
+   "describe": "starts the reminder the moment the door opens (no 20 s hold)",
+   "expectFail": [
+    "wed-flap",
+    "wed-full"
+   ],
+   "runs": 65,
+   "pass": 0,
+   "meanScore": 0.0667,
+   "failedScenarios": {
+    "sun-full": 65,
+    "sun-snooze2h": 65,
+    "tue-midnight-starts-wed": 65,
+    "wed-close-before-first": 65,
+    "wed-external-snooze": 65,
+    "wed-flap": 65,
+    "wed-foreign-phone-action": 65,
+    "wed-full": 65,
+    "wed-midnight-ends-sequence": 65,
+    "wed-reopen-restarts-run": 65,
+    "wed-snooze-after-run-ended": 65,
+    "wed-snooze30-then-expiry": 65,
+    "wed-stop-then-reopen": 65,
+    "wed-two-doors": 65
+   },
+   "rejectedEverywhere": true,
+   "expectedFailuresSeenEverywhere": true
+  },
+  {
+   "name": "weekday-ignored",
+   "describe": "no weekday check anywhere: reminds on every day",
+   "expectFail": [
+    "mon-open"
+   ],
+   "runs": 65,
+   "pass": 0,
+   "meanScore": 0.8667,
+   "failedScenarios": {
+    "mon-open": 65,
+    "wed-midnight-ends-sequence": 65
+   },
+   "rejectedEverywhere": true,
+   "expectedFailuresSeenEverywhere": true
+  },
+  {
+   "name": "weekday-at-door-open",
+   "describe": "judges the weekday when the door opened instead of when the reminder would start",
+   "expectFail": [
+    "tue-midnight-starts-wed"
+   ],
+   "runs": 65,
+   "pass": 0,
+   "meanScore": 0.9333,
+   "failedScenarios": {
+    "tue-midnight-starts-wed": 65
+   },
+   "rejectedEverywhere": true,
+   "expectedFailuresSeenEverywhere": true
+  },
+  {
+   "name": "no-weekday-recheck-in-loop",
+   "describe": "checks the weekday only at the start, so a sequence runs on past midnight",
+   "expectFail": [
+    "wed-midnight-ends-sequence"
+   ],
+   "runs": 65,
+   "pass": 0,
+   "meanScore": 0.9333,
+   "failedScenarios": {
+    "wed-midnight-ends-sequence": 65
+   },
+   "rejectedEverywhere": true,
+   "expectedFailuresSeenEverywhere": true
+  },
+  {
+   "name": "no-door-recheck",
+   "describe": "announces without checking that the door is still open",
+   "expectFail": [
+    "wed-close-before-first",
+    "wed-stop-then-reopen"
+   ],
+   "runs": 65,
+   "pass": 0,
+   "meanScore": 0.8,
+   "failedScenarios": {
+    "wed-close-before-first": 65,
+    "wed-snooze-after-run-ended": 65,
+    "wed-stop-then-reopen": 65
+   },
+   "rejectedEverywhere": true,
+   "expectedFailuresSeenEverywhere": true
+  },
+  {
+   "name": "no-timer-recheck",
+   "describe": "does not look at the snooze timer between announcements",
+   "expectFail": [
+    "wed-external-snooze"
+   ],
+   "runs": 65,
+   "pass": 0,
+   "meanScore": 0.9333,
+   "failedScenarios": {
+    "wed-external-snooze": 65
+   },
+   "rejectedEverywhere": true,
+   "expectedFailuresSeenEverywhere": true
+  },
+  {
+   "name": "no-snooze-gate-at-start",
+   "describe": "starts a reminder even while the snooze timer is running",
+   "expectFail": [
+    "wed-snooze30-then-expiry",
+    "sun-snooze2h",
+    "wed-snooze-after-run-ended"
+   ],
+   "runs": 65,
+   "pass": 0,
+   "meanScore": 0.8,
+   "failedScenarios": {
+    "sun-snooze2h": 65,
+    "wed-snooze-after-run-ended": 65,
+    "wed-snooze30-then-expiry": 65
+   },
+   "rejectedEverywhere": true,
+   "expectedFailuresSeenEverywhere": true
+  },
+  {
+   "name": "skip-instead-of-stop",
+   "describe": "a failed check skips that announcement but the sequence carries on (the original ends the whole run)",
+   "expectFail": [
+    "wed-stop-then-reopen"
+   ],
+   "runs": 65,
+   "pass": 0,
+   "meanScore": 0.9333,
+   "failedScenarios": {
+    "wed-stop-then-reopen": 65
+   },
+   "rejectedEverywhere": true,
+   "expectedFailuresSeenEverywhere": true
+  },
+  {
+   "name": "no-restart",
+   "describe": "a new reminder does not replace the old sequence: both keep announcing",
+   "expectFail": [
+    "wed-reopen-restarts-run"
+   ],
+   "runs": 65,
+   "pass": 0,
+   "meanScore": 0.9333,
+   "failedScenarios": {
+    "wed-reopen-restarts-run": 65
+   },
+   "rejectedEverywhere": true,
+   "expectedFailuresSeenEverywhere": true
+  },
+  {
+   "name": "single-mode",
+   "describe": "a new reminder is ignored while an older sequence is waiting (mode single)",
+   "expectFail": [
+    "wed-reopen-restarts-run"
+   ],
+   "runs": 65,
+   "pass": 0,
+   "meanScore": 0.9333,
+   "failedScenarios": {
+    "wed-reopen-restarts-run": 65
+   },
+   "rejectedEverywhere": true,
+   "expectedFailuresSeenEverywhere": true
+  },
+  {
+   "name": "snooze-ignored-by-sequence",
+   "describe": "the snooze tap neither cancels the sequence nor does the sequence look at the timer",
+   "expectFail": [
+    "wed-snooze30-then-expiry",
+    "sun-snooze2h"
+   ],
+   "runs": 65,
+   "pass": 0,
+   "meanScore": 0.8,
+   "failedScenarios": {
+    "sun-snooze2h": 65,
+    "wed-external-snooze": 65,
+    "wed-snooze30-then-expiry": 65
+   },
+   "rejectedEverywhere": true,
+   "expectedFailuresSeenEverywhere": true
+  },
+  {
+   "name": "snooze-without-timer",
+   "describe": "logs the snooze but never starts the timer",
+   "expectFail": [
+    "wed-snooze30-then-expiry",
+    "sun-snooze2h",
+    "wed-snooze-after-run-ended"
+   ],
+   "runs": 65,
+   "pass": 0,
+   "meanScore": 0.8,
+   "failedScenarios": {
+    "sun-snooze2h": 65,
+    "wed-snooze-after-run-ended": 65,
+    "wed-snooze30-then-expiry": 65
+   },
+   "rejectedEverywhere": true,
+   "expectedFailuresSeenEverywhere": true
+  },
+  {
+   "name": "snooze-without-logbook",
+   "describe": "starts the timer but writes no logbook entry",
+   "expectFail": [
+    "wed-snooze30-then-expiry",
+    "sun-snooze2h"
+   ],
+   "runs": 65,
+   "pass": 0,
+   "meanScore": 0.8,
+   "failedScenarios": {
+    "sun-snooze2h": 65,
+    "wed-snooze-after-run-ended": 65,
+    "wed-snooze30-then-expiry": 65
+   },
+   "rejectedEverywhere": true,
+   "expectedFailuresSeenEverywhere": true
+  },
+  {
+   "name": "snooze-always-30m",
+   "describe": "both buttons start the 30 minute timer",
+   "expectFail": [
+    "sun-snooze2h"
+   ],
+   "runs": 65,
+   "pass": 0,
+   "meanScore": 0.9333,
+   "failedScenarios": {
+    "sun-snooze2h": 65
+   },
+   "rejectedEverywhere": true,
+   "expectedFailuresSeenEverywhere": true
+  },
+  {
+   "name": "any-action-snoozes",
+   "describe": "every notification action from any app is taken as Snooze 30m",
+   "expectFail": [
+    "wed-foreign-phone-action"
+   ],
+   "runs": 65,
+   "pass": 0,
+   "meanScore": 0.2872,
+   "failedScenarios": {
+    "mon-open": 45,
+    "sun-full": 45,
+    "sun-snooze2h": 45,
+    "tue-midnight-starts-wed": 45,
+    "wed-close-before-first": 45,
+    "wed-external-snooze": 45,
+    "wed-flap": 45,
+    "wed-foreign-phone-action": 65,
+    "wed-full": 45,
+    "wed-midnight-ends-sequence": 45,
+    "wed-reopen-restarts-run": 45,
+    "wed-snooze-after-run-ended": 45,
+    "wed-snooze30-then-expiry": 45,
+    "wed-stop-then-reopen": 45,
+    "wed-two-doors": 45
+   },
+   "rejectedEverywhere": true,
+   "expectedFailuresSeenEverywhere": true
+  },
+  {
+   "name": "prefix-action-snoozes",
+   "describe": "any action starting with SNOOZE_GARBAGE_REMINDERS is a snooze (the near-miss SNOOZE_GARBAGE_REMINDERS_1H starts the 30 minute timer)",
+   "expectFail": [
+    "wed-foreign-phone-action"
+   ],
+   "runs": 65,
+   "pass": 0,
+   "meanScore": 0.9333,
+   "failedScenarios": {
+    "wed-foreign-phone-action": 65
+   },
+   "rejectedEverywhere": true,
+   "expectedFailuresSeenEverywhere": true
+  },
+  {
+   "name": "recycling-always",
+   "describe": "the message mentions recycling every day",
+   "expectFail": [
+    "sun-full"
+   ],
+   "runs": 65,
+   "pass": 0,
+   "meanScore": 0.8667,
+   "failedScenarios": {
+    "sun-full": 65,
+    "sun-snooze2h": 65
+   },
+   "rejectedEverywhere": true,
+   "expectedFailuresSeenEverywhere": true
+  },
+  {
+   "name": "recycling-never",
+   "describe": "the message never mentions recycling",
+   "expectFail": [
+    "wed-full"
+   ],
+   "runs": 65,
+   "pass": 0,
+   "meanScore": 0.2667,
+   "failedScenarios": {
+    "tue-midnight-starts-wed": 65,
+    "wed-close-before-first": 65,
+    "wed-external-snooze": 65,
+    "wed-foreign-phone-action": 65,
+    "wed-full": 65,
+    "wed-midnight-ends-sequence": 65,
+    "wed-reopen-restarts-run": 65,
+    "wed-snooze-after-run-ended": 65,
+    "wed-snooze30-then-expiry": 65,
+    "wed-stop-then-reopen": 65,
+    "wed-two-doors": 65
+   },
+   "rejectedEverywhere": true,
+   "expectedFailuresSeenEverywhere": true
+  },
+  {
+   "name": "no-push",
+   "describe": "no phone push",
+   "expectFail": [
+    "wed-full",
+    "sun-full"
+   ],
+   "runs": 65,
+   "pass": 0,
+   "meanScore": 0.1333,
+   "failedScenarios": {
+    "sun-full": 65,
+    "sun-snooze2h": 65,
+    "tue-midnight-starts-wed": 65,
+    "wed-close-before-first": 65,
+    "wed-external-snooze": 65,
+    "wed-foreign-phone-action": 65,
+    "wed-full": 65,
+    "wed-midnight-ends-sequence": 65,
+    "wed-reopen-restarts-run": 65,
+    "wed-snooze-after-run-ended": 65,
+    "wed-snooze30-then-expiry": 65,
+    "wed-stop-then-reopen": 65,
+    "wed-two-doors": 65
+   },
+   "rejectedEverywhere": true,
+   "expectedFailuresSeenEverywhere": true
+  },
+  {
+   "name": "no-inside-speech",
+   "describe": "no inside speech",
+   "expectFail": [
+    "wed-full",
+    "sun-full"
+   ],
+   "runs": 65,
+   "pass": 0,
+   "meanScore": 0.1333,
+   "failedScenarios": {
+    "sun-full": 65,
+    "sun-snooze2h": 65,
+    "tue-midnight-starts-wed": 65,
+    "wed-close-before-first": 65,
+    "wed-external-snooze": 65,
+    "wed-foreign-phone-action": 65,
+    "wed-full": 65,
+    "wed-midnight-ends-sequence": 65,
+    "wed-reopen-restarts-run": 65,
+    "wed-snooze-after-run-ended": 65,
+    "wed-snooze30-then-expiry": 65,
+    "wed-stop-then-reopen": 65,
+    "wed-two-doors": 65
+   },
+   "rejectedEverywhere": true,
+   "expectedFailuresSeenEverywhere": true
+  },
+  {
+   "name": "no-announcements",
+   "describe": "no Alexa announcements",
+   "expectFail": [
+    "wed-full",
+    "sun-full"
+   ],
+   "runs": 65,
+   "pass": 0,
+   "meanScore": 0.2667,
+   "failedScenarios": {
+    "sun-full": 65,
+    "sun-snooze2h": 65,
+    "tue-midnight-starts-wed": 65,
+    "wed-external-snooze": 65,
+    "wed-foreign-phone-action": 65,
+    "wed-full": 65,
+    "wed-midnight-ends-sequence": 65,
+    "wed-reopen-restarts-run": 65,
+    "wed-snooze30-then-expiry": 65,
+    "wed-stop-then-reopen": 65,
+    "wed-two-doors": 65
+   },
+   "rejectedEverywhere": true,
+   "expectedFailuresSeenEverywhere": true
+  }
+ ],
+ "t3Controls": [
+  {
+   "name": "abort-on-first-failure",
+   "describe": "the original behaviour: the first failed service call ends the whole sequence (this is the faithful transcription)",
+   "T2_core": {
+    "runs": 65,
+    "pass": 65,
+    "meanScore": 1,
+    "failedScenarios": {}
+   },
+   "T3": {
+    "runs": 65,
+    "pass": 0,
+    "meanScore": 0.8,
+    "failedScenarios": {
+     "p1-speech-outage": 65,
+     "p2-first-announcement-outage": 65,
+     "p3-push-outage": 65,
+     "p4-alexa-down-then-up": 65
+    },
+    "cost": {
+     "min": 222,
+     "max": 222
+    }
+   },
+   "passesCoreRejectedOnT3": true
+  },
+  {
+   "name": "polling",
+   "describe": "correct effects, but waits by polling once a second instead of scheduling the exact instants: far over the cost target",
+   "T2_core": {
+    "runs": 65,
+    "pass": 65,
+    "meanScore": 1,
+    "failedScenarios": {}
+   },
+   "T3": {
+    "runs": 65,
+    "pass": 0,
+    "meanScore": 0.95,
+    "failedScenarios": {},
+    "cost": {
+     "min": 4384,
+     "max": 4532
+    }
+   },
+   "passesCoreRejectedOnT3": true
+  }
+ ],
+ "semanticSensitivity": {
+  "assumption": "a false condition inside repeat/choose ends the WHOLE run (documented Home Assistant behaviour as recalled; not executed against Home Assistant)",
+  "alternativeReading": "a false condition inside a repeat ends only that iteration",
+  "scenariosThatDisagreeUnderTheAlternative": {
+   "wed-stop-then-reopen": 65
+  },
+  "runs": 65
+ },
+ "timing": {
+  "maxGenerateMs": 10.2,
+  "maxOracleMs": 97.7,
+  "note": "oracle time includes replaying the whole episode; contract limit is 2 s"
+ },
+ "t3CostCap": {
+  "factor": 1.25,
+  "cap": 278,
+  "frozen": true
+ }
+}

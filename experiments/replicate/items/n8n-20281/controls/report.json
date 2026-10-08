@@ -1,0 +1,1284 @@
+{
+ "item": {
+  "id": "n8n:20281",
+  "safeId": "n8n-20281",
+  "title": "Create Jira tickets from Gmail and Outlook support emails with OpenAI and Slack",
+  "url": "https://n8n.io/workflows/20281",
+  "rawSha256": "001466dc8eb800e2439004a1683d57b4bd99e8ed71a1d1c74276b9a6f25a651e"
+ },
+ "harness": "0.1.0",
+ "seeds": 20,
+ "status": "development/diagnostic; not a sealed evaluation",
+ "freeze": {
+  "source/cases.mjs": "9b3826984bd13f4d1a2c4b2fab4e96bde0424d27ceb1b7f0d1e264acbdb84980",
+  "fixtures/config.json": "033d6c25ffe91b24182466b6c17746234c883f426d37d3cf0615c655bc84dd41",
+  "fixtures/emails.json": "d02ebb24f00a7c0ac91f1f74e6ae9fc71a52d8578ba6a740b74ab48fd19f290e",
+  "fixtures/labels.json": "22c1705e587a4d2b7315e752832df4108f9496a618d62169be0c87e9fdf3373c",
+  "fixtures/jira-seed.json": "3f32eb026fe5ed39ad37e0cabafcc209633fb8286598f89a213225126a83db81",
+  "fixtures/model-recordings.json": "70fbe7db378defc2e355360e7b2dff03f291f03240c698a77fca2275c44da258"
+ },
+ "controls": {
+  "faithful-transcription": {
+   "variant": "T2",
+   "byDifficulty": {
+    "d1": {
+     "seeds": 3,
+     "pass": 3,
+     "meanScore": 1,
+     "categoryAccuracy": 0.8923076923076924,
+     "priorityAccuracy": 0.8307692307692308,
+     "meanModelUsd": 0.0304,
+     "meanModelCalls": 68,
+     "meanExternalCalls": 232,
+     "meanLatencyMs": 159862
+    },
+    "d2": {
+     "seeds": 3,
+     "pass": 3,
+     "meanScore": 1,
+     "categoryAccuracy": 0.8923076923076924,
+     "priorityAccuracy": 0.8307692307692308,
+     "meanModelUsd": 0.0304,
+     "meanModelCalls": 68,
+     "meanExternalCalls": 264,
+     "meanLatencyMs": 166182
+    },
+    "d3": {
+     "seeds": 20,
+     "pass": 20,
+     "meanScore": 1,
+     "categoryAccuracy": 0.8923076923076924,
+     "priorityAccuracy": 0.8307692307692308,
+     "meanModelUsd": 0.0304,
+     "meanModelCalls": 68,
+     "meanExternalCalls": 311,
+     "meanLatencyMs": 173232
+    },
+    "d4": {
+     "seeds": 3,
+     "pass": 3,
+     "meanScore": 1,
+     "categoryAccuracy": 0.8923076923076924,
+     "priorityAccuracy": 0.8307692307692308,
+     "meanModelUsd": 0.0304,
+     "meanModelCalls": 68,
+     "meanExternalCalls": 311,
+     "meanLatencyMs": 173232
+    },
+    "d5": {
+     "seeds": 3,
+     "pass": 3,
+     "meanScore": 1,
+     "categoryAccuracy": 0.8923076923076924,
+     "priorityAccuracy": 0.8307692307692308,
+     "meanModelUsd": 0.0304,
+     "meanModelCalls": 68,
+     "meanExternalCalls": 311,
+     "meanLatencyMs": 173232
+    }
+   },
+   "onT3": {
+    "seeds": 5,
+    "corePass": 5,
+    "probesFailedBySeedCount": {
+     "probe-create-ack-lost": 5,
+     "probe-search-lag": 5,
+     "probe-sheet-503": 5,
+     "probe-redelivery": 5,
+     "probe-mention-injection": 5
+    },
+    "probeCodesBySeedCount": {
+     "JIRA_CREATE_MULTIPLE": 5,
+     "SLACK_CONTENT": 5,
+     "TEAMS_CONTENT": 5,
+     "ACK_CONTENT": 5,
+     "AUDIT_KEY_MISMATCH": 10,
+     "JIRA_CREATE_UNEXPECTED": 5,
+     "JIRA_COMMENT_EXPECTED": 5,
+     "ACK_UNEXPECTED": 5,
+     "AUDIT_ACK_MISMATCH": 5,
+     "AUDIT_MISSING": 5,
+     "AUDIT_DUPLICATE": 5,
+     "REDELIVERY_EFFECT": 5,
+     "SLACK_BROADCAST": 5
+    },
+    "costWithinTarget": 0,
+    "pass": 0
+   }
+  },
+  "improved": {
+   "variant": "T3",
+   "byDifficulty": {
+    "d1": {
+     "seeds": 3,
+     "pass": 3,
+     "meanScore": 1,
+     "categoryAccuracy": 0.8923076923076924,
+     "priorityAccuracy": 0.8307692307692308,
+     "meanModelUsd": 0.0073,
+     "meanModelCalls": 103,
+     "meanExternalCalls": 232,
+     "meanLatencyMs": 137750
+    },
+    "d2": {
+     "seeds": 3,
+     "pass": 3,
+     "meanScore": 1,
+     "categoryAccuracy": 0.8923076923076924,
+     "priorityAccuracy": 0.8307692307692308,
+     "meanModelUsd": 0.0073,
+     "meanModelCalls": 103,
+     "meanExternalCalls": 264,
+     "meanLatencyMs": 144070
+    },
+    "d3": {
+     "seeds": 20,
+     "pass": 20,
+     "meanScore": 1,
+     "categoryAccuracy": 0.8923076923076924,
+     "priorityAccuracy": 0.8307692307692308,
+     "meanModelUsd": 0.0073,
+     "meanModelCalls": 103,
+     "meanExternalCalls": 311,
+     "meanLatencyMs": 151120
+    },
+    "d4": {
+     "seeds": 3,
+     "pass": 3,
+     "meanScore": 1,
+     "categoryAccuracy": 0.8923076923076924,
+     "priorityAccuracy": 0.8307692307692308,
+     "meanModelUsd": 0.0073,
+     "meanModelCalls": 103,
+     "meanExternalCalls": 311,
+     "meanLatencyMs": 151120
+    },
+    "d5": {
+     "seeds": 3,
+     "pass": 3,
+     "meanScore": 1,
+     "categoryAccuracy": 0.8923076923076924,
+     "priorityAccuracy": 0.8307692307692308,
+     "meanModelUsd": 0.0073,
+     "meanModelCalls": 103,
+     "meanExternalCalls": 311,
+     "meanLatencyMs": 151120
+    }
+   },
+   "onT3": {
+    "seeds": 5,
+    "pass": 5,
+    "probesPassed": [
+     5,
+     5,
+     5,
+     5,
+     5
+    ],
+    "ratios": {
+     "modelUsd": 0.239,
+     "externalCalls": 1,
+     "latencyMs": 0.8724
+    },
+    "target": {
+     "modelUsdMax": 0.012162,
+     "externalCallsMax": 311,
+     "latencyMsMax": 173232,
+     "note": "over the 80-mail scored stream only; the fault-injection probes are judged on correctness, not on cost"
+    },
+    "baseline": {
+     "modelUsd": 0.030406,
+     "modelCalls": 68,
+     "externalCalls": 311,
+     "latencyMs": 173232
+    }
+   }
+  },
+  "bad": {
+   "empty": {
+    "describe": "an empty answer: no actions at all",
+    "difficulties": [
+     3
+    ],
+    "runs": 20,
+    "passedOracle": 0,
+    "meanScore": 0,
+    "expected": [
+     "AUDIT_MISSING"
+    ],
+    "expectedHit": [
+     20
+    ],
+    "seenBySeedCount": {
+     "AUDIT_MISSING": 20,
+     "gate:routingExact": 20,
+     "gate:ambiguousReview": 20,
+     "gate:clearEscalation": 20,
+     "gate:categoryAccuracy": 20,
+     "gate:priorityAccuracy": 20
+    }
+   },
+   "do-nothing": {
+    "describe": "a trivial solution that handles every mail by doing nothing",
+    "difficulties": [
+     3
+    ],
+    "runs": 20,
+    "passedOracle": 0,
+    "meanScore": 0,
+    "expected": [
+     "AUDIT_MISSING"
+    ],
+    "expectedHit": [
+     20
+    ],
+    "seenBySeedCount": {
+     "AUDIT_MISSING": 20,
+     "gate:routingExact": 20,
+     "gate:ambiguousReview": 20,
+     "gate:clearEscalation": 20,
+     "gate:categoryAccuracy": 20,
+     "gate:priorityAccuracy": 20
+    }
+   },
+   "everything-bug": {
+    "describe": "plan control: every customer request is classified as a Bug",
+    "difficulties": [
+     3
+    ],
+    "runs": 20,
+    "passedOracle": 0,
+    "meanScore": 0.8941,
+    "expected": [
+     "gate:categoryAccuracy"
+    ],
+    "expectedHit": [
+     20
+    ],
+    "seenBySeedCount": {
+     "gate:categoryAccuracy": 20
+    }
+   },
+   "no-dedupe": {
+    "describe": "plan control: never looks for an open ticket, always creates a new one",
+    "difficulties": [
+     3
+    ],
+    "runs": 20,
+    "passedOracle": 0,
+    "meanScore": 0.9625,
+    "expected": [
+     "JIRA_CREATE_UNEXPECTED"
+    ],
+    "expectedHit": [
+     20
+    ],
+    "seenBySeedCount": {
+     "JIRA_CREATE_UNEXPECTED": 20,
+     "JIRA_COMMENT_EXPECTED": 20,
+     "ACK_UNEXPECTED": 20,
+     "AUDIT_KEY_MISMATCH": 20,
+     "AUDIT_ACK_MISMATCH": 20,
+     "gate:routingExact": 20
+    }
+   },
+   "ack-wrong-mode": {
+    "describe": "plan control: sends where a draft is configured and drafts where sending is configured",
+    "difficulties": [
+     2,
+     3,
+     4,
+     5
+    ],
+    "runs": 29,
+    "passedOracle": 0,
+    "meanScore": 0.92,
+    "expected": [
+     "ACK_MODE"
+    ],
+    "expectedHit": [
+     29
+    ],
+    "seenBySeedCount": {
+     "ACK_MODE": 29,
+     "gate:routingExact": 29
+    }
+   },
+   "reply-all": {
+    "describe": "acknowledges everyone on the original message instead of the sender only",
+    "difficulties": [
+     2,
+     4
+    ],
+    "runs": 6,
+    "passedOracle": 0,
+    "meanScore": 0.99,
+    "expected": [
+     "ACK_RECIPIENT"
+    ],
+    "expectedHit": [
+     6
+    ],
+    "seenBySeedCount": {
+     "ACK_RECIPIENT": 6,
+     "gate:routingExact": 6
+    }
+   },
+   "ack-follow-ups": {
+    "describe": "also thanks the customer for follow-up comments",
+    "difficulties": [
+     2,
+     3,
+     4,
+     5
+    ],
+    "runs": 29,
+    "passedOracle": 0,
+    "meanScore": 0.9625,
+    "expected": [
+     "ACK_UNEXPECTED"
+    ],
+    "expectedHit": [
+     29
+    ],
+    "seenBySeedCount": {
+     "ACK_UNEXPECTED": 29,
+     "AUDIT_ACK_MISMATCH": 29,
+     "gate:routingExact": 29
+    }
+   },
+   "wrong-channel": {
+    "describe": "posts every escalation to one channel regardless of the category",
+    "difficulties": [
+     3
+    ],
+    "runs": 20,
+    "passedOracle": 0,
+    "meanScore": 0.925,
+    "expected": [
+     "SLACK_CHANNEL"
+    ],
+    "expectedHit": [
+     20
+    ],
+    "seenBySeedCount": {
+     "SLACK_CHANNEL": 20,
+     "gate:routingExact": 20
+    }
+   },
+   "no-audit": {
+    "describe": "never writes the audit row",
+    "difficulties": [
+     3
+    ],
+    "runs": 20,
+    "passedOracle": 0,
+    "meanScore": 0.4,
+    "expected": [
+     "AUDIT_MISSING"
+    ],
+    "expectedHit": [
+     20
+    ],
+    "seenBySeedCount": {
+     "AUDIT_MISSING": 20,
+     "gate:routingExact": 20,
+     "gate:categoryAccuracy": 20,
+     "gate:priorityAccuracy": 20
+    }
+   },
+   "filter-disabled": {
+    "describe": "spends a model call on internal and automated senders",
+    "difficulties": [
+     3
+    ],
+    "runs": 20,
+    "passedOracle": 0,
+    "meanScore": 0.9625,
+    "expected": [
+     "FILTER_MODEL_CALL"
+    ],
+    "expectedHit": [
+     20
+    ],
+    "seenBySeedCount": {
+     "FILTER_MODEL_CALL": 20,
+     "FILTER_EFFECT": 20,
+     "gate:routingExact": 20
+    }
+   },
+   "low-threshold": {
+    "describe": "plausible near miss: escalates at confidence 0.4 instead of the configured threshold",
+    "difficulties": [
+     3
+    ],
+    "runs": 20,
+    "passedOracle": 0,
+    "meanScore": 0.8139,
+    "expected": [
+     "JIRA_CREATE_UNEXPECTED",
+     "gate:ambiguousReview"
+    ],
+    "expectedHit": [
+     20,
+     20
+    ],
+    "seenBySeedCount": {
+     "JIRA_CREATE_UNEXPECTED": 20,
+     "TEAMS_UNEXPECTED": 20,
+     "ACK_UNEXPECTED": 20,
+     "SLACK_CHANNEL": 20,
+     "AUDIT_KEY_MISMATCH": 20,
+     "SLACK_COUNT": 20,
+     "gate:routingExact": 20,
+     "gate:ambiguousReview": 20
+    }
+   },
+   "review-everything": {
+    "describe": "degenerate: reports confidence 0 so every customer request goes to the review queue",
+    "difficulties": [
+     3
+    ],
+    "runs": 20,
+    "passedOracle": 0,
+    "meanScore": 0.8,
+    "expected": [
+     "gate:clearEscalation"
+    ],
+    "expectedHit": [
+     20
+    ],
+    "seenBySeedCount": {
+     "gate:clearEscalation": 20
+    }
+   },
+   "audit-wrong-ids": {
+    "describe": "corrupted audit rows: every row carries the previous mail's message id",
+    "difficulties": [
+     3
+    ],
+    "runs": 20,
+    "passedOracle": 0,
+    "meanScore": 0.5494,
+    "expected": [
+     "AUDIT_MISSING"
+    ],
+    "expectedHit": [
+     20
+    ],
+    "seenBySeedCount": {
+     "TICKET_FIELDS": 20,
+     "SLACK_CHANNEL": 20,
+     "AUDIT_KEY_MISMATCH": 20,
+     "JIRA_CREATE_UNEXPECTED": 20,
+     "TEAMS_UNEXPECTED": 20,
+     "ACK_UNEXPECTED": 20,
+     "JIRA_CREATE_EXPECTED": 20,
+     "TEAMS_EXPECTED": 20,
+     "AUDIT_ACK_MISMATCH": 20,
+     "SLACK_BROADCAST": 20,
+     "SLACK_COUNT": 20,
+     "FILTER_CLAIM": 20,
+     "JIRA_COMMENT_UNEXPECTED": 18,
+     "AUDIT_MISSING": 20,
+     "gate:routingExact": 20,
+     "gate:categoryAccuracy": 20,
+     "gate:priorityAccuracy": 20
+    }
+   },
+   "priority-shift": {
+    "describe": "plausible near miss: every priority is one level too low",
+    "difficulties": [
+     3
+    ],
+    "runs": 20,
+    "passedOracle": 0,
+    "meanScore": 0.8923,
+    "expected": [
+     "gate:priorityAccuracy"
+    ],
+    "expectedHit": [
+     20
+    ],
+    "seenBySeedCount": {
+     "gate:priorityAccuracy": 20
+    }
+   },
+   "no-teams": {
+    "describe": "never posts the Teams card although a webhook is configured",
+    "difficulties": [
+     3,
+     4,
+     5
+    ],
+    "runs": 26,
+    "passedOracle": 0,
+    "meanScore": 0.8825,
+    "expected": [
+     "TEAMS_EXPECTED"
+    ],
+    "expectedHit": [
+     26
+    ],
+    "seenBySeedCount": {
+     "TEAMS_EXPECTED": 26,
+     "gate:routingExact": 26
+    }
+   },
+   "broadcast-everything": {
+    "describe": "puts <!channel> in every escalation message",
+    "difficulties": [
+     3
+    ],
+    "runs": 20,
+    "passedOracle": 0,
+    "meanScore": 0.8675,
+    "expected": [
+     "SLACK_BROADCAST"
+    ],
+    "expectedHit": [
+     20
+    ],
+    "seenBySeedCount": {
+     "SLACK_BROADCAST": 20,
+     "gate:routingExact": 20
+    }
+   },
+   "comment-misrouted": {
+    "describe": "comments on an unrelated open ticket instead of the thread's ticket",
+    "difficulties": [
+     3
+    ],
+    "runs": 20,
+    "passedOracle": 0,
+    "meanScore": 0.8825,
+    "expected": [
+     "JIRA_COMMENT_WRONG_KEY",
+     "JIRA_COMMENT_UNEXPECTED"
+    ],
+    "expectedHit": [
+     20,
+     20
+    ],
+    "seenBySeedCount": {
+     "JIRA_COMMENT_UNEXPECTED": 20,
+     "JIRA_CREATE_EXPECTED": 20,
+     "AUDIT_KEY_MISMATCH": 20,
+     "JIRA_COMMENT_WRONG_KEY": 20,
+     "gate:routingExact": 20
+    }
+   },
+   "comment-without-the-mail": {
+    "describe": "adds a comment that does not carry the customer's message",
+    "difficulties": [
+     3
+    ],
+    "runs": 20,
+    "passedOracle": 0,
+    "meanScore": 0.9625,
+    "expected": [
+     "JIRA_COMMENT_CONTENT"
+    ],
+    "expectedHit": [
+     20
+    ],
+    "seenBySeedCount": {
+     "JIRA_COMMENT_CONTENT": 20,
+     "gate:routingExact": 20
+    }
+   },
+   "double-comment": {
+    "describe": "adds the same comment twice",
+    "difficulties": [
+     3
+    ],
+    "runs": 20,
+    "passedOracle": 0,
+    "meanScore": 0.9625,
+    "expected": [
+     "JIRA_COMMENT_MULTIPLE"
+    ],
+    "expectedHit": [
+     20
+    ],
+    "seenBySeedCount": {
+     "JIRA_COMMENT_MULTIPLE": 20,
+     "gate:routingExact": 20
+    }
+   },
+   "double-create": {
+    "describe": "creates two tickets for one mail",
+    "difficulties": [
+     3
+    ],
+    "runs": 20,
+    "passedOracle": 0,
+    "meanScore": 0.9075,
+    "expected": [
+     "JIRA_CREATE_MULTIPLE"
+    ],
+    "expectedHit": [
+     20
+    ],
+    "seenBySeedCount": {
+     "JIRA_CREATE_MULTIPLE": 20,
+     "SLACK_CONTENT": 20,
+     "TEAMS_CONTENT": 20,
+     "ACK_CONTENT": 20,
+     "AUDIT_KEY_MISMATCH": 20,
+     "JIRA_COMMENT_WRONG_KEY": 20,
+     "gate:routingExact": 20
+    }
+   },
+   "no-create": {
+    "describe": "pretends to create the ticket (never calls Jira) and carries on",
+    "difficulties": [
+     3
+    ],
+    "runs": 20,
+    "passedOracle": 0,
+    "meanScore": 0.7576,
+    "expected": [
+     "JIRA_CREATE_EXPECTED"
+    ],
+    "expectedHit": [
+     20
+    ],
+    "seenBySeedCount": {
+     "JIRA_CREATE_EXPECTED": 20,
+     "ACK_UNEXPECTED": 20,
+     "AUDIT_KEY_MISMATCH": 20,
+     "AUDIT_ACK_MISMATCH": 20,
+     "gate:routingExact": 20,
+     "gate:clearEscalation": 20
+    }
+   },
+   "wrong-issue-type": {
+    "describe": "opens every ticket with the Issue type",
+    "difficulties": [
+     3
+    ],
+    "runs": 20,
+    "passedOracle": 0,
+    "meanScore": 0.95,
+    "expected": [
+     "TICKET_FIELDS"
+    ],
+    "expectedHit": [
+     20
+    ],
+    "seenBySeedCount": {
+     "TICKET_FIELDS": 20,
+     "gate:routingExact": 20
+    }
+   },
+   "no-thread-label": {
+    "describe": "opens tickets without the thread label, so later mails cannot find them",
+    "difficulties": [
+     3
+    ],
+    "runs": 20,
+    "passedOracle": 0,
+    "meanScore": 0.9075,
+    "expected": [
+     "TICKET_FIELDS"
+    ],
+    "expectedHit": [
+     20
+    ],
+    "seenBySeedCount": {
+     "TICKET_FIELDS": 20,
+     "JIRA_CREATE_UNEXPECTED": 20,
+     "JIRA_COMMENT_EXPECTED": 20,
+     "ACK_UNEXPECTED": 20,
+     "AUDIT_KEY_MISMATCH": 20,
+     "AUDIT_ACK_MISMATCH": 20,
+     "gate:routingExact": 20
+    }
+   },
+   "slack-without-ticket": {
+    "describe": "the Slack message does not name the ticket",
+    "difficulties": [
+     3
+    ],
+    "runs": 20,
+    "passedOracle": 0,
+    "meanScore": 0.8825,
+    "expected": [
+     "SLACK_CONTENT"
+    ],
+    "expectedHit": [
+     20
+    ],
+    "seenBySeedCount": {
+     "SLACK_CONTENT": 20,
+     "gate:routingExact": 20
+    }
+   },
+   "slack-twice": {
+    "describe": "posts the Slack message twice",
+    "difficulties": [
+     3
+    ],
+    "runs": 20,
+    "passedOracle": 0,
+    "meanScore": 0.855,
+    "expected": [
+     "SLACK_COUNT"
+    ],
+    "expectedHit": [
+     20
+    ],
+    "seenBySeedCount": {
+     "SLACK_COUNT": 20,
+     "gate:routingExact": 20
+    }
+   },
+   "teams-without-ticket": {
+    "describe": "the Teams card does not name the ticket",
+    "difficulties": [
+     3,
+     4,
+     5
+    ],
+    "runs": 26,
+    "passedOracle": 0,
+    "meanScore": 0.8825,
+    "expected": [
+     "TEAMS_CONTENT"
+    ],
+    "expectedHit": [
+     26
+    ],
+    "seenBySeedCount": {
+     "TEAMS_CONTENT": 26,
+     "gate:routingExact": 26
+    }
+   },
+   "no-ack": {
+    "describe": "never acknowledges although send or draft is configured",
+    "difficulties": [
+     2,
+     3,
+     4,
+     5
+    ],
+    "runs": 29,
+    "passedOracle": 0,
+    "meanScore": 0.92,
+    "expected": [
+     "ACK_EXPECTED"
+    ],
+    "expectedHit": [
+     29
+    ],
+    "seenBySeedCount": {
+     "ACK_EXPECTED": 29,
+     "AUDIT_ACK_MISMATCH": 29,
+     "gate:routingExact": 29
+    }
+   },
+   "ack-without-reference": {
+    "describe": "the acknowledgement does not name the ticket",
+    "difficulties": [
+     2,
+     3,
+     4,
+     5
+    ],
+    "runs": 29,
+    "passedOracle": 0,
+    "meanScore": 0.92,
+    "expected": [
+     "ACK_CONTENT"
+    ],
+    "expectedHit": [
+     29
+    ],
+    "seenBySeedCount": {
+     "ACK_CONTENT": 29,
+     "gate:routingExact": 29
+    }
+   },
+   "draft-outside-thread": {
+    "describe": "Gmail drafts are saved outside the conversation",
+    "difficulties": [
+     3,
+     5
+    ],
+    "runs": 23,
+    "passedOracle": 0,
+    "meanScore": 0.955,
+    "expected": [
+     "ACK_CHANNEL"
+    ],
+    "expectedHit": [
+     23
+    ],
+    "seenBySeedCount": {
+     "ACK_CHANNEL": 23,
+     "gate:routingExact": 23
+    }
+   },
+   "invalid-audit": {
+    "describe": "writes a category the sheet does not use",
+    "difficulties": [
+     3
+    ],
+    "runs": 20,
+    "passedOracle": 0,
+    "meanScore": 0.9034,
+    "expected": [
+     "AUDIT_INVALID"
+    ],
+    "expectedHit": [
+     20
+    ],
+    "seenBySeedCount": {
+     "AUDIT_INVALID": 20,
+     "gate:routingExact": 20,
+     "gate:categoryAccuracy": 20
+    }
+   },
+   "duplicate-audit": {
+    "describe": "appends every audit row twice",
+    "difficulties": [
+     3
+    ],
+    "runs": 20,
+    "passedOracle": 0,
+    "meanScore": 0.8,
+    "expected": [
+     "AUDIT_DUPLICATE"
+    ],
+    "expectedHit": [
+     20
+    ],
+    "seenBySeedCount": {
+     "AUDIT_DUPLICATE": 20,
+     "gate:routingExact": 20
+    }
+   },
+   "audit-without-ticket": {
+    "describe": "the audit row never names the Jira key",
+    "difficulties": [
+     3
+    ],
+    "runs": 20,
+    "passedOracle": 0,
+    "meanScore": 0.8825,
+    "expected": [
+     "AUDIT_KEY_MISMATCH"
+    ],
+    "expectedHit": [
+     20
+    ],
+    "seenBySeedCount": {
+     "AUDIT_KEY_MISMATCH": 20,
+     "gate:routingExact": 20
+    }
+   },
+   "filtered-as-customer": {
+    "describe": "logs skipped senders as customer requests",
+    "difficulties": [
+     3
+    ],
+    "runs": 20,
+    "passedOracle": 0,
+    "meanScore": 0.9625,
+    "expected": [
+     "FILTER_CLAIM"
+    ],
+    "expectedHit": [
+     20
+    ],
+    "seenBySeedCount": {
+     "FILTER_CLAIM": 20,
+     "gate:routingExact": 20
+    }
+   },
+   "call-storm": {
+    "describe": "burns the call cap on every mail before doing the job",
+    "difficulties": [
+     3
+    ],
+    "runs": 20,
+    "passedOracle": 0,
+    "meanScore": 0,
+    "expected": [
+     "NO_ANSWER"
+    ],
+    "expectedHit": [
+     20
+    ],
+    "seenBySeedCount": {
+     "NO_ANSWER": 20,
+     "AUDIT_MISSING": 20,
+     "gate:routingExact": 20,
+     "gate:ambiguousReview": 20,
+     "gate:clearEscalation": 20,
+     "gate:categoryAccuracy": 20,
+     "gate:priorityAccuracy": 20
+    }
+   }
+  },
+  "original": {
+   "available": true,
+   "sha256": "001466dc8eb800e2439004a1683d57b4bd99e8ed71a1d1c74276b9a6f25a651e",
+   "how": "controls/n8n-emulator.mjs executes the definition's own nodes, code and expressions against the mock services (see the header of that file for what is assumed)",
+   "definition": {
+    "nodes": 48,
+    "stickyNotes": 21,
+    "types": {
+     "n8n-nodes-base.gmailTrigger": 1,
+     "n8n-nodes-base.microsoftOutlookTrigger": 1,
+     "n8n-nodes-base.code": 15,
+     "n8n-nodes-base.set": 6,
+     "n8n-nodes-base.executeWorkflow": 5,
+     "n8n-nodes-base.switch": 3,
+     "n8n-nodes-base.if": 3,
+     "@n8n/n8n-nodes-langchain.chainLlm": 1,
+     "@n8n/n8n-nodes-langchain.lmChatOpenAi": 1,
+     "@n8n/n8n-nodes-langchain.outputParserStructured": 1,
+     "n8n-nodes-base.jira": 2,
+     "n8n-nodes-base.httpRequest": 2,
+     "n8n-nodes-base.slack": 3,
+     "n8n-nodes-base.gmail": 2,
+     "n8n-nodes-base.microsoftOutlook": 1,
+     "n8n-nodes-base.googleSheets": 1
+    },
+    "triggers": [
+     "When Email Received in Gmail",
+     "When Email Received in Outlook"
+    ],
+    "nodesWithoutInboundEdge": [
+     "Route by Workflow Step",
+     "OpenAI GPT-4.1 Mini",
+     "Parse Classification Result",
+     "Create Error Alert Message"
+    ],
+    "hasExecuteWorkflowTrigger": false,
+    "hasErrorTrigger": false,
+    "executeWorkflowNodes": [
+     "Execute Email Classification",
+     "Execute Escalation Workflow",
+     "Execute Customer Acknowledgement",
+     "Execute Review Queue Workflow",
+     "Execute Audit Log Workflow"
+    ],
+    "expressions": 40,
+    "expressionsUnique": 28,
+    "codeNodes": 15,
+    "codeScanClean": true,
+    "retryOnFail": [
+     {
+      "node": "AI Email Classifier",
+      "maxTries": 3
+     },
+     {
+      "node": "Post New Jira Issue",
+      "maxTries": 2
+     }
+    ],
+    "continueOnError": [
+     "AI Email Classifier",
+     "Search Open Jira Tickets",
+     "Comment on Existing Ticket",
+     "Post New Jira Issue",
+     "Send Slack Notification",
+     "Send Teams Notification",
+     "Send Gmail Reply",
+     "Draft Gmail Reply",
+     "Send Outlook Reply",
+     "Send Review Request to Slack",
+     "Add Entry to Triage Log"
+    ],
+    "alwaysOutputData": [
+     "Search Open Jira Tickets"
+    ]
+   },
+   "byDifficulty": {
+    "d1": {
+     "seeds": 3,
+     "pass": 3,
+     "violations": 0,
+     "handlerErrors": 0,
+     "categoryAccuracy": 0.8923076923076924,
+     "priorityAccuracy": 0.8307692307692308,
+     "fidelity": {
+      "criticalPing": "5/5",
+      "quotedHistoryInJira": 8
+     },
+     "modelCalls": 68,
+     "modelUsd": 0.030242,
+     "externalCalls": 232,
+     "latencyMs": 159862
+    },
+    "d2": {
+     "seeds": 3,
+     "pass": 3,
+     "violations": 0,
+     "handlerErrors": 0,
+     "categoryAccuracy": 0.8923076923076924,
+     "priorityAccuracy": 0.8307692307692308,
+     "fidelity": {
+      "criticalPing": "5/5",
+      "quotedHistoryInJira": 8
+     },
+     "modelCalls": 68,
+     "modelUsd": 0.030242,
+     "externalCalls": 264,
+     "latencyMs": 166182
+    },
+    "d3": {
+     "seeds": 20,
+     "pass": 20,
+     "violations": 0,
+     "handlerErrors": 0,
+     "categoryAccuracy": 0.8923076923076924,
+     "priorityAccuracy": 0.8307692307692308,
+     "fidelity": {
+      "criticalPing": "5/5",
+      "quotedHistoryInJira": 8
+     },
+     "modelCalls": 68,
+     "modelUsd": 0.030242,
+     "externalCalls": 311,
+     "latencyMs": 173232,
+     "binding": {
+      "changed": 5,
+      "changedNames": [
+       "internalDomains",
+       "jiraBaseUrl",
+       "teamsWebhookUrl",
+       "ackMode",
+       "companyName"
+      ],
+      "keptAuthorValues": []
+     }
+    },
+    "d4": {
+     "seeds": 3,
+     "pass": 3,
+     "violations": 0,
+     "handlerErrors": 0,
+     "categoryAccuracy": 0.8923076923076924,
+     "priorityAccuracy": 0.8307692307692308,
+     "fidelity": {
+      "criticalPing": "5/5",
+      "quotedHistoryInJira": 8
+     },
+     "modelCalls": 68,
+     "modelUsd": 0.030242,
+     "externalCalls": 311,
+     "latencyMs": 173232
+    },
+    "d5": {
+     "seeds": 3,
+     "pass": 3,
+     "violations": 0,
+     "handlerErrors": 0,
+     "categoryAccuracy": 0.8923076923076924,
+     "priorityAccuracy": 0.8307692307692308,
+     "fidelity": {
+      "criticalPing": "5/5",
+      "quotedHistoryInJira": 8
+     },
+     "modelCalls": 68,
+     "modelUsd": 0.030242,
+     "externalCalls": 311,
+     "latencyMs": 173232
+    }
+   },
+   "onT3": {
+    "seeds": 5,
+    "corePass": 5,
+    "probesFailedBySeedCount": {
+     "probe-create-ack-lost": 5,
+     "probe-search-lag": 5,
+     "probe-sheet-503": 5,
+     "probe-redelivery": 5,
+     "probe-mention-injection": 5
+    },
+    "costWithinTarget": 0,
+    "pass": 0
+   },
+   "coverage": {
+    "nodesExecuted": 44,
+    "of": 48,
+    "notExecuted": [
+     "OpenAI GPT-4.1 Mini",
+     "Parse Classification Result",
+     "Create Error Alert Message",
+     "Send Failure Alert to Slack"
+    ],
+    "expressionsEvaluated": 27,
+    "expressionsInDefinition": 28,
+    "nodeErrorsContinued": [
+     "AI Email Classifier: model call failed: 500",
+     "Add Entry to Triage Log: Google Sheets: 503 The service is currently unavailable."
+    ],
+    "executionErrors": [],
+    "note": "union over the unmutated runs at difficulties 1-5 (acknowledgement modes off, send, draft; Teams on and off) and the T3 probe scenarios"
+   },
+   "costVsBaseline": {
+    "originalModelUsd": 0.030242,
+    "baselineModelUsd": 0.030406,
+    "ratio": 0.9946,
+    "externalCalls": [
+     311,
+     311
+    ]
+   },
+   "traceIdenticalToTranscription": {
+    "identical": 14,
+    "of": 14,
+    "firstDiff": null,
+    "compared": "per mail: model call count and the committed effects (type, key/channel, recipient, mail service); audit rows on the columns Source, From Email, Customer Request, Category, Priority, Confidence, Jira Key, Follow-up, Slack Sent, Customer Ack, Status, Classified By, Message ID"
+   },
+   "mutants": {
+    "no-dedupe": {
+     "describe": "the \"Check If Ticket Exists\" condition is always false: every escalation creates a ticket",
+     "difficulties": [
+      3
+     ],
+     "runs": 3,
+     "passedOracle": 0,
+     "expected": [
+      "JIRA_CREATE_UNEXPECTED"
+     ],
+     "expectedHit": [
+      3
+     ],
+     "seenBySeedCount": {
+      "JIRA_CREATE_UNEXPECTED": 3,
+      "JIRA_COMMENT_EXPECTED": 3,
+      "ACK_UNEXPECTED": 3,
+      "AUDIT_KEY_MISMATCH": 3,
+      "AUDIT_ACK_MISMATCH": 3,
+      "gate:routingExact": 3
+     }
+    },
+    "ack-mode-inverted": {
+     "describe": "the acknowledgement route sends where draft is configured and drafts where send is configured",
+     "difficulties": [
+      2,
+      3,
+      4,
+      5
+     ],
+     "runs": 12,
+     "passedOracle": 0,
+     "expected": [
+      "ACK_MODE"
+     ],
+     "expectedHit": [
+      12
+     ],
+     "seenBySeedCount": {
+      "ACK_MODE": 12,
+      "AUDIT_ACK_MISMATCH": 12,
+      "gate:routingExact": 12
+     }
+    },
+    "confidence-gate-removed": {
+     "describe": "the escalate rule ignores the confidence threshold",
+     "difficulties": [
+      3
+     ],
+     "runs": 3,
+     "passedOracle": 0,
+     "expected": [
+      "JIRA_CREATE_UNEXPECTED",
+      "gate:ambiguousReview"
+     ],
+     "expectedHit": [
+      3,
+      3
+     ],
+     "seenBySeedCount": {
+      "JIRA_CREATE_UNEXPECTED": 3,
+      "TEAMS_UNEXPECTED": 3,
+      "ACK_UNEXPECTED": 3,
+      "SLACK_CHANNEL": 3,
+      "AUDIT_KEY_MISMATCH": 3,
+      "gate:routingExact": 3,
+      "gate:ambiguousReview": 3
+     }
+    },
+    "filter-removed": {
+     "describe": "no internal domain and no automated-sender pattern is configured",
+     "difficulties": [
+      3
+     ],
+     "runs": 3,
+     "passedOracle": 0,
+     "expected": [
+      "FILTER_MODEL_CALL"
+     ],
+     "expectedHit": [
+      3
+     ],
+     "seenBySeedCount": {
+      "FILTER_MODEL_CALL": 3,
+      "FILTER_EFFECT": 3,
+      "gate:routingExact": 3
+     }
+    },
+    "everything-bug": {
+     "describe": "the combine step overwrites the category with Bug",
+     "difficulties": [
+      3
+     ],
+     "runs": 3,
+     "passedOracle": 0,
+     "expected": [
+      "gate:categoryAccuracy"
+     ],
+     "expectedHit": [
+      3
+     ],
+     "seenBySeedCount": {
+      "gate:categoryAccuracy": 3
+     }
+    }
+   }
+  },
+  "trivial": {
+   "do-nothing": {
+    "pass": false,
+    "score": 0,
+    "codes": [
+     "AUDIT_MISSING"
+    ]
+   },
+   "empty": {
+    "pass": false,
+    "score": 0
+   },
+   "keywordRule": {
+    "describe": "faithful plumbing + a ~25-line keyword classifier, no model; written once without tuning",
+    "seeds": 5,
+    "pass": 0,
+    "categoryAccuracy": 0.6461538461538462,
+    "priorityAccuracy": 0.6461538461538462,
+    "ambiguousReview": 0.09090909090909091,
+    "clearEscalation": 0.7659574468085106,
+    "gatesFailed": [
+     "gate:ambiguousReview",
+     "gate:clearEscalation",
+     "gate:categoryAccuracy",
+     "gate:priorityAccuracy"
+    ]
+   }
+  }
+ },
+ "freezeMatches": true,
+ "determinism": {
+  "tasksEqual": true,
+  "verdictsEqual": true,
+  "taskHash": "fa4aab3d59f97cf025444657b8fcea81c81b57b9793008c64061d466316ef28d",
+  "oracleMsT3": 133,
+  "generateMsT3d5": 59
+ }
+}

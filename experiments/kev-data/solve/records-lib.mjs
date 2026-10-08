@@ -21,10 +21,12 @@ const MONTH_NO = Object.fromEntries(MONTHS.map((m, i) => [m.toLowerCase(), i + 1
 const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const DATE_RE = '\\d{1,2} [A-Z][a-z]+ \\d{4}';
 
-export function makeSolverContext(bed, lines = []) {
+// cities: held-out team cities [{city, order}] (gazetteer knowledge the port allows, like TEAM_CITIES)
+export function makeSolverContext(bed, lines = [], { cities = [] } = {}) {
   const { render, pools } = bed;
   const cityOrder = new Map();
   for (const [order, list] of Object.entries(pools.TEAM_CITIES)) for (const c of list) cityOrder.set(c, order);
+  for (const c of cities) cityOrder.set(c.city, c.order);
   return { render, pools, lines, cityOrder, cache: new Map() };
 }
 

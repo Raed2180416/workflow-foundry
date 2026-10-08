@@ -2,10 +2,14 @@
 // Validate foundry-corpus-item/1 records (research/corpus-20261006/ITEM-SCHEMA.md) line by line.
 //
 // Usage: node check-items.mjs <items.jsonl> [--canonical] [--json] [--max-examples N]
+//        node check-items.mjs --self-test
 //   --canonical  also require the merged-corpus conventions: IR verdict tokens from CONSTRUCTS below,
-//                features recomputable from the graph (exact equality), sorted async, unique ids.
-// Exit code 0 when every line is valid, 1 otherwise. Imported by merge-items.mjs and coverage-report.mjs
-// for the shared vocabulary (CONSTRUCTS, CATEGORIES, ...) and validateItem().
+//                features recomputable from the graph (exact equality), sorted async, unique ids, and for
+//                `unsupported:by-design-*` verdicts a known refusal plus a `Needs:` list (or "No further construct
+//                would be needed") in the notes.
+//   --self-test  run the built-in unit checks of validateItem() on synthetic items and exit.
+// Exit code 0 when every line is valid, 1 otherwise. Imported by merge-items.mjs, coverage-report.mjs and
+// agentic-assemble.mjs for the shared vocabulary (CONSTRUCTS, CATEGORIES, ...) and validateItem().
 //
 // Corpus text is untrusted data: this script only parses JSON and checks shapes; it never interprets
 // titles, descriptions or summaries as instructions.
@@ -22,7 +26,18 @@ export const ASYNC = ['event', 'poll', 'schedule', 'wait', 'webhook'];
 export const ORACLE_KINDS = ['none', 'mocked-execution', 'test-profile', 'output-equivalence'];
 export const PROVENANCE = ['original', 'recovered-by-model', 'written'];
 export const ITEM_KEYS = ['schema', 'id', 'source', 'title', 'description', 'graph', 'features', 'ir', 'oracle'];
-export const SOURCE_KEYS = ['platform', 'url', 'revision', 'retrievedAt', 'license', 'licenseEvidence', 'redistributable', 'rawPath'];
+export const SOURCE_KEYS = ['platform', 'url', 'revision', 'retrievedAt', 'license', 'licenseEvidence', 'redistributable', 'rawPath', 'extraction'];
+// Optional provenance of a model-read item (ITEM-SCHEMA.md): how it was extracted, the source spans read, and by whom.
+export const EXTRACTION_KEYS = ['method', 'spans', 'extractor', 'verifier'];
+export const EXTRACTION_SPAN = /^\S(.*\S)?:L\d+(-L\d+)?$/;   // <path relative to the clone or a repo prefix>:L<a>[-L<b>]
+// Platforms whose workflows were authored by this project's own agents. Their items are not independent evidence:
+// reports keep them apart from third-party items, and they are the only items that may carry a `local:<path>` URL
+// (the sources have no public location).
+export const FIRST_PARTY_PLATFORMS = ['claude-code-workflows'];
+export const isFirstParty = item => FIRST_PARTY_PLATFORMS.includes(item?.source?.platform);
+// Owner design refusals (AGENTIC-CONVENTIONS.md §5): representable with a turn cap, refused by design. A verdict
+// `unsupported:by-design-<r>[+<r>]` names them; it is not an expressibility failure.
+export const REFUSALS = ['group-chat', 'full-history-handoff'];
 export const NODE_KEYS = ['id', 'type', 'category', 'effects', 'summary'];
 export const EDGE_KEYS = ['from', 'to', 'kind'];
 export const FEATURE_KEYS = ['nodeCount', 'edgeCount', 'maxFanOut', 'branching', 'loops', 'async', 'humanSteps', 'effects',
@@ -51,7 +66,23 @@ export const CONSTRUCTS = [
   { id: 'agent-tool-loop', group: 'agentic', roadmap: '§2.1 `executor` or agent `tools`', today: '`agent` is one narrow typed call without tools' },
   { id: 'cross-run-state', group: 'state', roadmap: 'none (Phase 6 board is in-run)', today: 'none: state lives inside one run (conversation memory, key-value stores, static data)' },
   { id: 'unstructured-cycle', group: 'control', roadmap: 'none (rewrite into `loop`)', today: 'DAG + structured `loop` only' },
+  // Agentic constructs (AGENTIC-CONVENTIONS.md §3.2-§3.3; definitions and rule codes there), after the 19 above so the
+  // order of the original ids is unchanged. roadmap/today are §3.3's text; group is 'agentic' for all twelve.
+  { id: 'state-reducer', group: 'agentic', roadmap: '§2.2 board topics with reducers', today: 'none: map outputs are index-ordered arrays folded by code' },
+  { id: 'interrupt-resume', group: 'agentic', roadmap: '§2.1 human with resume tokens inside approval-gated agent tools', today: '`human` suspends only at node boundaries' },
+  { id: 'checkpoint-rewind', group: 'agentic', roadmap: '§2.3 checkpoint and fork', today: 'resume at the latest durable point only' },
+  { id: 'agent-as-tool', group: 'agentic', roadmap: '§2.1 `executor` / agent `tools` with `call` entries', today: 'none: `agent` has no tools' },
+  { id: 'shared-scratchpad', group: 'agentic', roadmap: '§2.2 run board', today: 'none: no board in src/' },
+  { id: 'guardrail-tripwire', group: 'agentic', roadmap: 'none explicit (verify gating inside executor/agent tools)', today: 'sequential checks only (code/assert/verify + when)' },
+  { id: 'partial-output-stream', group: 'agentic', roadmap: '§2.1 bounded streams', today: 'none: outputs are delivered on node completion' },
+  { id: 'model-generated-code-exec', group: 'agentic', roadmap: 'none explicit (sandboxed code from a model output, tainted)', today: '`code` runs authored source only' },
+  { id: 'multimodal-io', group: 'agentic', roadmap: 'none (typed media inputs)', today: 'agent inputs and outputs are JSON/text' },
+  { id: 'dynamic-agent-spawn', group: 'agentic', roadmap: '§2.1 plan/expand + detach/await handles', today: 'agents are fixed nodes; map over runtime items only' },
+  { id: 'context-compaction', group: 'agentic', roadmap: '§2.2 onOverflow summarizeWith/dropLowestPriority', today: '`onOverflow: truncate` on explicit inputs only' },
+  { id: 'env-session', group: 'agentic', roadmap: '§2.1 env capability contract', today: 'none: capabilities are stateless; no acquire/release or replay rule' },
 ];
+// The registry before the agentic extension (the vocabulary of the four original clusters).
+export const ORIGINAL_CONSTRUCT_COUNT = 19;
 export const CONSTRUCT_IDS = CONSTRUCTS.map(c => c.id);
 const CONSTRUCT_ORDER = new Map(CONSTRUCT_IDS.map((id, i) => [id, i]));
 export const sortConstructs = list => [...new Set(list)].sort((a, b) => CONSTRUCT_ORDER.get(a) - CONSTRUCT_ORDER.get(b));
@@ -79,8 +110,20 @@ export function parseVerdict(v) {
     const tokens = v.slice('via-extension:'.length).split('+');
     return tokens.every(t => t.length) ? { kind: 'via-extension', tokens } : null;
   }
-  if (v.startsWith('unsupported:') && v.length > 'unsupported:'.length) return { kind: 'unsupported', reason: v.slice('unsupported:'.length), tokens: [] };
+  if (v.startsWith('unsupported:') && v.length > 'unsupported:'.length) {
+    const reason = v.slice('unsupported:'.length);
+    const refusals = reason.startsWith('by-design-') ? reason.slice('by-design-'.length).split('+') : null;
+    return { kind: 'unsupported', reason, tokens: [], ...(refusals ? { byDesign: true, refusals } : { byDesign: false }) };
+  }
   return null;
+}
+
+// The `Needs: a, b.` list of an unsupported item's notes (the first one), [] for "No further construct would be needed",
+// null when neither is present. Tokens are returned as written (the original clusters list converter tokens here).
+export function notesNeeds(notes) {
+  const m = /Needs: ([^.]+)\./.exec(String(notes ?? ''));
+  if (m) return m[1].split(',').map(t => t.trim()).filter(Boolean);
+  return /No further construct would be needed/.test(String(notes ?? '')) ? [] : null;
 }
 
 // Graph-derived feature values (the merge recomputes these; --canonical requires equality).
@@ -117,7 +160,10 @@ export function validateItem(item, { canonical = false } = {}) {
   else {
     for (const k of Object.keys(s)) if (!SOURCE_KEYS.includes(k)) err('source.extra-key', `unexpected source.${k}`);
     if (!isStr(s.platform, 1) || !/^[a-z0-9][a-z0-9-]*$/.test(s.platform)) err('source.platform', 'platform must be a lower-case slug');
-    if (!isStr(s.url) || !/^https?:\/\/\S+$/.test(s.url)) err('source.url', 'url must be an http(s) URL');
+    if (isStr(s.url) && s.url.startsWith('local:')) {
+      if (!FIRST_PARTY_PLATFORMS.includes(s.platform)) err('source.url', `url must be an http(s) URL (local: only for first-party platforms ${FIRST_PARTY_PLATFORMS.join(', ')})`);
+      else if (!/^local:[^\s/][^\s]*$/.test(s.url)) err('source.url', 'a first-party local: url must be local:<relative path> without whitespace');
+    } else if (!isStr(s.url) || !/^https?:\/\/\S+$/.test(s.url)) err('source.url', 'url must be an http(s) URL');
     if (!isStr(s.revision, 1)) err('source.revision', 'revision must be non-empty');
     if (!isStr(s.retrievedAt) || !/^\d{4}-\d{2}-\d{2}$/.test(s.retrievedAt)) err('source.retrievedAt', 'retrievedAt must be YYYY-MM-DD');
     if (!isStr(s.license, 1)) err('source.license', 'license must be non-empty (SPDX id, unknown or ToS:<url>)');
@@ -130,8 +176,25 @@ export function validateItem(item, { canonical = false } = {}) {
       err('source.redistributable', `licence ${s.license} is copyleft/share-alike/non-commercial: not redistributable under the merged policy`);
     if (!isStr(s.rawPath) || !s.rawPath.startsWith('/opt/corpus/')) err('source.rawPath', 'rawPath must point under /opt/corpus/ (outside git)');
     if (isStr(item.id) && isStr(s.platform) && !item.id.startsWith(`${s.platform}:`)) err('id.platform', 'id must start with <source.platform>:');
+    if ('extraction' in s) {
+      const x = s.extraction;
+      if (!isObj(x)) err('source.extraction', 'extraction must be an object {method, spans, extractor[, verifier]}');
+      else {
+        for (const k of Object.keys(x)) if (!EXTRACTION_KEYS.includes(k)) err('source.extraction', `unexpected source.extraction.${k}`);
+        if (!isStr(x.method) || !/^[a-z][a-z0-9-]{0,63}$/.test(x.method)) err('source.extraction', 'extraction.method must be a lower-case slug (e.g. model-read-source)');
+        if (!Array.isArray(x.spans) || x.spans.length < 1 || x.spans.length > 200) err('source.extraction', 'extraction.spans must list 1..200 source spans');
+        else {
+          const bad = x.spans.filter(p => !isStr(p) || p.length > 300 || !EXTRACTION_SPAN.test(p) || findSecret(p));
+          if (bad.length) err('source.extraction', `extraction.spans entries must be <path>:L<a>[-L<b>] (<=300 chars), e.g. ${JSON.stringify(bad[0]).slice(0, 80)}`);
+          if (new Set(x.spans).size !== x.spans.length) err('source.extraction', 'extraction.spans must be distinct');
+        }
+        if (!isStr(x.extractor, 1) || x.extractor.length > 100) err('source.extraction', 'extraction.extractor must be a non-empty model or tool id (<=100 chars)');
+        if ('verifier' in x && (!isStr(x.verifier, 1) || x.verifier.length > 200)) err('source.extraction', 'extraction.verifier, when present, must be a non-empty string (<=200 chars)');
+      }
+    }
   }
   if (!isStr(item.id) || !/^[a-z0-9-]+:\S/.test(item.id) || /\s/.test(item.id)) err('id', 'id must be <platform>:<stable id> without whitespace');
+  else if (/%(?![0-9A-Fa-f]{2})/.test(item.id)) err('id', 'a % in an id must start a percent-encoded octet (paths are encoded like source.url)');
   if (!isStr(item.title, 1) || item.title.length > 300) err('title', 'title must be 1..300 chars');
   if (findSecret(item.title)) err('secret', 'credential-shaped string in title');
 
@@ -218,6 +281,15 @@ export function validateItem(item, { canonical = false } = {}) {
         for (const [t, a] of Object.entries(need)) if (v.tokens.includes(t) && !f.async.includes(a)) err('ir.async', `${t} without ${a} in features.async`);
       }
       if (isObj(f) && f.nodeCount > 500 && v.kind === 'native') err('ir.size', 'more than 500 nodes cannot be native (nodes.maxItems)');
+      if (v.kind === 'unsupported' && v.reason.startsWith('by-design')) {
+        const rs = v.refusals ?? [];
+        if (!rs.length || rs.some(r => !REFUSALS.includes(r))) err('ir.refusal', `unknown design refusal in ${ir.verdict} (known: ${REFUSALS.map(r => `by-design-${r}`).join(', ')})`);
+        else if (rs.join('+') !== [...new Set(rs)].sort((a, b) => REFUSALS.indexOf(a) - REFUSALS.indexOf(b)).join('+')) err('ir.refusal', 'refusals must be distinct and in REFUSALS order');
+        const needs = notesNeeds(ir.notes);
+        if (needs === null) err('ir.needs', 'a refused item must list `Needs: a, b.` or say "No further construct would be needed" in its notes');
+        else if (needs.some(t => !CONSTRUCT_IDS.includes(t))) err('ir.needs', `non-canonical construct(s) in Needs: ${needs.filter(t => !CONSTRUCT_IDS.includes(t)).join(', ')}`);
+        else if (needs.join('+') !== sortConstructs(needs).join('+')) err('ir.needs', 'Needs constructs must be distinct and in canonical order');
+      }
     }
   }
 
@@ -246,8 +318,75 @@ export function checkFile(file, { canonical = false } = {}) {
   return results;
 }
 
+// Unit checks on synthetic items (no corpus data): the base item is valid in both modes, and each mutation must
+// raise exactly the rule named next to it.
+export function selfTest() {
+  const base = () => ({
+    schema: SCHEMA, id: 'demo:repo/flow.py#main',
+    source: { platform: 'demo', url: 'https://example.org/repo/blob/abc/flow.py', revision: 'abc', retrievedAt: '2026-10-08',
+      license: 'MIT', licenseEvidence: 'LICENSE', redistributable: true, rawPath: '/opt/corpus/demo/flow.py' },
+    title: 'demo', description: { text: 'demo flow', provenance: 'original' },
+    graph: { nodes: [{ id: 'a', type: 't', category: 'model', effects: 'none', summary: '' }, { id: 'b', type: 't', category: 'action', effects: 'write', summary: '' }],
+      edges: [{ from: 'a', to: 'b', kind: 'data' }] },
+    features: { nodeCount: 2, edgeCount: 1, maxFanOut: 1, branching: 0, loops: 0, async: [], humanSteps: 0, effects: { read: 0, write: 1, external: 0 },
+      connectors: [], hasCode: false, hasModelCalls: true, subworkflows: 0, domains: [] },
+    ir: { verdict: 'native', notes: '' }, oracle: { kind: 'none', notes: '' },
+  });
+  const extraction = { method: 'model-read-source', spans: ['flow.py:L1-L9', '@lib/x.py:L3'], extractor: 'claude-sonnet' };
+  const cases = [
+    ['base item', it => it, []],
+    ['extraction allowed', it => { it.source.extraction = { ...extraction }; }, []],
+    ['extraction with verifier', it => { it.source.extraction = { ...extraction, verifier: 'independent model pass, 2026-10-08' }; }, []],
+    ['extraction extra key', it => { it.source.extraction = { ...extraction, model: 'x' }; }, ['source.extraction']],
+    ['extraction not an object', it => { it.source.extraction = 'model-read-source'; }, ['source.extraction']],
+    ['extraction bad method', it => { it.source.extraction = { ...extraction, method: 'Model Read' }; }, ['source.extraction']],
+    ['extraction empty spans', it => { it.source.extraction = { ...extraction, spans: [] }; }, ['source.extraction']],
+    ['extraction span without lines', it => { it.source.extraction = { ...extraction, spans: ['flow.py'] }; }, ['source.extraction']],
+    ['extraction duplicate spans', it => { it.source.extraction = { ...extraction, spans: ['flow.py:L1', 'flow.py:L1'] }; }, ['source.extraction']],
+    ['extraction missing extractor', it => { it.source.extraction = { method: 'model-read-source', spans: ['flow.py:L1'] }; }, ['source.extraction']],
+    ['other unknown source key still rejected', it => { it.source.notes = 'x'; }, ['source.extra-key']],
+    ['local: url for a third-party platform', it => { it.source.url = 'local:repo/flow.py'; }, ['source.url']],
+    ['local: url for a first-party platform', it => { it.id = 'claude-code-workflows:s/flow.js'; it.source.platform = 'claude-code-workflows'; it.source.url = 'local:s/flow.js';
+      it.source.license = 'unknown'; it.source.redistributable = false; it.description.provenance = 'written'; }, []],
+    ['absolute local: url', it => { it.id = 'claude-code-workflows:s/flow.js'; it.source.platform = 'claude-code-workflows'; it.source.url = 'local:/root/s/flow.js'; }, ['source.url']],
+    ['percent-encoded id', it => { it.id = 'demo:repo/Coding%20Assistant/a.ipynb#x'; }, []],
+    ['malformed % in id', it => { it.id = 'demo:repo/100%/a.py'; }, ['id']],
+    ['agentic construct is canonical', it => { it.ir.verdict = 'via-extension:agent-tool-loop+agent-as-tool+env-session'; }, []],
+    ['agentic constructs out of order', it => { it.ir.verdict = 'via-extension:env-session+agent-tool-loop'; }, ['ir.order']],
+    ['retired topology token', it => { it.ir.verdict = 'via-extension:llm-router'; }, ['ir.vocabulary']],
+    ['refusal with needs', it => { it.ir.verdict = 'unsupported:by-design-full-history-handoff'; it.ir.notes = 'Refused. Needs: chat-session, agent-tool-loop, cross-run-state.'; }, []],
+    ['refusal without further needs', it => { it.ir.verdict = 'unsupported:by-design-group-chat'; it.ir.notes = 'No further construct would be needed.'; }, []],
+    ['both refusals', it => { it.ir.verdict = 'unsupported:by-design-group-chat+full-history-handoff'; it.ir.notes = 'Needs: agent-tool-loop.'; }, []],
+    ['refusals out of order', it => { it.ir.verdict = 'unsupported:by-design-full-history-handoff+group-chat'; it.ir.notes = 'Needs: agent-tool-loop.'; }, ['ir.refusal']],
+    ['unknown refusal', it => { it.ir.verdict = 'unsupported:by-design-swarm'; it.ir.notes = 'Needs: agent-tool-loop.'; }, ['ir.refusal']],
+    ['refusal without a needs statement', it => { it.ir.verdict = 'unsupported:by-design-group-chat'; it.ir.notes = 'free group chat'; }, ['ir.needs']],
+    ['refusal with a retired token in needs', it => { it.ir.verdict = 'unsupported:by-design-group-chat'; it.ir.notes = 'Needs: llm-router.'; }, ['ir.needs']],
+    ['refusal with needs out of order', it => { it.ir.verdict = 'unsupported:by-design-group-chat'; it.ir.notes = 'Needs: cross-run-state, chat-session.'; }, ['ir.needs']],
+    ['expressibility failure keeps its own form', it => { it.ir.verdict = 'unsupported:interactive-dashboard-state'; it.ir.notes = 'Needs: external-state-store.'; }, []],
+  ];
+  let failed = 0, run = 0;
+  for (const [name, mutate, want] of cases) {
+    const it = base(); mutate(it);
+    for (const canonical of [false, true]) {
+      run++;
+      const got = [...new Set(validateItem(it, { canonical }).map(e => e.rule))].sort();
+      const expect = canonical ? want : want.filter(r => !['ir.order', 'ir.vocabulary', 'ir.refusal', 'ir.needs'].includes(r));
+      if (got.join() !== [...expect].sort().join()) { failed++; console.log(`FAIL ${name} (${canonical ? 'canonical' : 'plain'}): got [${got}] want [${expect}]`); }
+    }
+  }
+  if (CONSTRUCT_IDS.slice(0, ORIGINAL_CONSTRUCT_COUNT).join() !== ['schedule-trigger', 'webhook-trigger', 'event-trigger', 'poll-trigger', 'chat-session', 'signal-wait',
+    'durable-wait', 'run-concurrency-policy', 'stream', 'subworkflow-call', 'parametric-action-input', 'flow-size>500', 'error-branch', 'completion-hook',
+    'adaptive-retry', 'dynamic-dag', 'agent-tool-loop', 'cross-run-state', 'unstructured-cycle'].join()) { failed++; console.log('FAIL the 19 original constructs changed order'); }
+  run++;
+  if (new Set(CONSTRUCT_IDS).size !== CONSTRUCT_IDS.length || CONSTRUCTS.some(c => !c.roadmap || !c.today || !c.group)) { failed++; console.log('FAIL registry ids must be unique with group/roadmap/today'); }
+  run++;
+  console.log(`self-test: ${run - failed} of ${run} checks passed; registry ${CONSTRUCT_IDS.length} constructs (${ORIGINAL_CONSTRUCT_COUNT} original + ${CONSTRUCT_IDS.length - ORIGINAL_CONSTRUCT_COUNT} agentic)`);
+  return failed === 0;
+}
+
 function main(argv) {
   const args = argv.slice(2);
+  if (args.includes('--self-test')) process.exit(selfTest() ? 0 : 1);
   const file = args.find(a => !a.startsWith('--'));
   if (!file) { console.error('usage: node check-items.mjs <items.jsonl> [--canonical] [--json] [--max-examples N]'); process.exit(2); }
   const canonical = args.includes('--canonical');

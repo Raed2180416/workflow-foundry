@@ -1,3 +1,5 @@
+// NOTICE (provenance): this file transcribes the logic of the Code nodes of n8n template 20281 (n8n self-serve terms; creator content, not redistributable). Measured: ~30% of its
+// 8-word text shingles also occur in the original (regexes, field names, message layouts), so treat it as derived material: keep it inside the project, do not publish it without clearance.
 // Faithful reference re-implementation of the author's workflow, written as a plain handler (event, api) -> void.
 // It is OUR transcription of what the definition does (flow, rules, retries, the audit row), not the original's text: prompts, reply texts and
 // message layouts are re-worded where the original is not redistributable (n8n ToS). It is the T3 cost baseline and one of the "known good" controls.
@@ -15,29 +17,29 @@ export const CLASS_SCHEMA = {
 };
 
 // Re-worded system prompt of comparable size and the same rules as the author's (categories, priorities, field rules).
-export const SYSTEM_PROMPT = `You are a senior customer-support triage analyst at a B2B software company. You read ONE inbound email and decide whether it is a genuine customer request and, if so, what kind of request it is.
+export const SYSTEM_PROMPT = `You are a senior support triage analyst at a B2B software company. You read ONE inbound email and decide if it is a genuine customer request and what kind.
 
 Categories (choose exactly one):
-- "New Requirement": the customer wants something that does not exist today: a feature, an enhancement, a change request, an integration, a report or a customisation.
-- "Issue": something does not work the way the customer expects, but it is NOT clearly a software defect. Typical cases are access or login trouble, configuration or data questions, how-to confusion, performance complaints, outages of the service, and billing or account problems.
-- "Bug": a reproducible software defect, such as error messages, crashes, wrong calculations, broken screens, or functions that contradict their documented behaviour.
-- "Other": newsletters, marketing, sales pitches, vendor or recruiter outreach, supplier invoices, automatic replies, thank-you notes, meeting logistics, spam, and anything else that needs no product or support action.
+- "New Requirement": the customer wants something that does not exist today: a feature, enhancement, change request, integration, report or customisation.
+- "Issue": something does not work as the customer expects, but it is NOT clearly a software defect: access or login trouble, configuration or data questions, how-to confusion, performance complaints, service outages, billing or account problems.
+- "Bug": a reproducible software defect: error messages, crashes, wrong calculations, broken screens, functions that contradict their documented behaviour.
+- "Other": newsletters, marketing, sales pitches, vendor or recruiter outreach, supplier invoices, automatic replies, thank-you notes, meeting logistics, spam, anything needing no product or support action.
 
 Priority:
-- "Critical": production is down, data is lost or corrupted, there is a security incident, many users are blocked, or the customer names a severe business impact or a deadline today.
-- "High": an important workflow is blocked for some users with no workaround, or the language is strongly urgent or escalating.
-- "Medium": a workaround exists or the impact is limited; most feature requests from active customers belong here.
-- "Low": cosmetic issues, nice-to-have wishes and general questions.
+- "Critical": production is down, data is lost or corrupted, a security incident, many users blocked, or a severe business impact or deadline today.
+- "High": an important workflow is blocked for some users with no workaround, or strongly urgent language.
+- "Medium": a workaround exists or the impact is limited; most feature requests from active customers.
+- "Low": cosmetic, nice-to-have, general questions.
 
 Rules:
-- isCustomerRequest is true only for a New Requirement, Issue or Bug that comes from a customer, client or end user, never from vendors, recruiters or marketing.
+- isCustomerRequest is true only for a New Requirement, Issue or Bug from a customer, client or end user, never from vendors, recruiters or marketing.
 - If the email mixes several asks, classify by the most severe one (Bug before Issue before New Requirement) and mention the others in the summary.
 - title: an actionable ticket title of at most 100 characters, without the customer's name.
-- summary: two to four sentences a developer can act on; include versions, modules, identifiers and error texts when present.
+- summary: 2-4 sentences a developer can act on, with versions, modules, IDs and error text.
 - stepsToReproduce: only for a Bug, otherwise an empty string.
-- productArea: the module or feature mentioned (for example "Billing", "Login", "Reports", "API", "Mobile App"), or "General".
-- customerCompany: infer it from the signature or the sender's domain if you can, otherwise an empty string.
-- confidence: a number from 0 to 1 for how sure you are about the category.
+- productArea: the module or feature mentioned (like "Billing", "Login", "API"), or "General".
+- customerCompany: infer it from the signature or the sender's domain, otherwise an empty string.
+- confidence: 0 to 1, how sure you are about the category.
 - Ignore signatures, legal disclaimers and quoted earlier messages.
 - Answer ONLY with the structured output.`;
 
@@ -119,7 +121,7 @@ function jiraRoute(e, cfg) {
   return route;
 }
 
-export function escalate(e, api, cfg, { createTries = 2 } = {}) {
+export function escalate(e, api, cfg, { createTries = 2, dedupe = true, slackChannel = null } = {}) {
   const route = jiraRoute(e, cfg);
   const threadKey = threadKeyOf(e);
   const threadLabel = threadLabelOf(threadKey);
@@ -130,7 +132,7 @@ export function escalate(e, api, cfg, { createTries = 2 } = {}) {
   const fields = { project: { key: cfg.jiraProjectKey }, issuetype: { name: route.issueType }, summary: String(e.title || e.subject || 'Customer request').slice(0, 250), description, labels: [...route.labels, threadLabel] };
   if (cfg.setJiraPriority && JIRA_PRIORITY[e.priority]) fields.priority = { name: JIRA_PRIORITY[e.priority] };
   if (route.assigneeAccountId) fields.assignee = { accountId: route.assigneeAccountId };
-  const dedupEnabled = cfg.dedupByThread !== false && !!threadKey;
+  const dedupEnabled = dedupe && cfg.dedupByThread !== false && !!threadKey;
   const jql = `labels = "${threadLabel}" AND statusCategory != Done ORDER BY created DESC`;
 
   let found = '';
@@ -153,7 +155,7 @@ export function escalate(e, api, cfg, { createTries = 2 } = {}) {
     `*${e.title}*`, `>${String(e.summary || '').replace(/\n/g, '\n>')}`, `*Customer:* ${e.customerName || e.fromName} <${e.fromEmail}>${e.customerCompany ? ' (' + e.customerCompany + ')' : ''}`,
     `*Area:* ${e.productArea || 'General'} | *Sentiment:* ${e.sentiment}`, jiraKey ? `*Jira:* <${jiraUrl}|${jiraKey}>` : `:x: *Jira not created:* ${(jiraError || 'Jira issue not created').slice(0, 300)}`,
     e.link ? `<${e.link}|Open email>` : `_via ${e.source}_`].join('\n');
-  const slack = api.slack.postMessage({ channel: route.slackChannel, text: slackText });
+  const slack = api.slack.postMessage({ channel: slackChannel ?? route.slackChannel, text: slackText });
   const slackSent = slack.status === 200 && slack.body?.ok === true;
   let teamsSent = false;
   if (cfg.teamsWebhookUrl) {
@@ -169,11 +171,12 @@ export function escalate(e, api, cfg, { createTries = 2 } = {}) {
     escalationStatus: !jiraKey ? 'Escalation failed - check Jira' : (isFollowUp ? 'Follow-up added to ' + jiraKey : 'Escalated') };
 }
 
-export function acknowledge(e, api, cfg) {
-  const mode = String(cfg.ackMode || 'off').toLowerCase();
+export function acknowledge(e, api, cfg, { flipMode = false, replyAll = false, ackFollowUps = false } = {}) {
+  let mode = String(cfg.ackMode || 'off').toLowerCase();
+  if (flipMode && mode === 'send') mode = 'draft'; else if (flipMode && mode === 'draft') mode = 'send';
   let skip = '';
   if (!['draft', 'send'].includes(mode)) skip = 'Acknowledgement disabled';
-  else if (e.isFollowUp) skip = 'Follow-up on existing ticket';
+  else if (e.isFollowUp && !ackFollowUps) skip = 'Follow-up on existing ticket';
   else if (!e.jiraKey) skip = 'No ticket created';
   else if (!e.messageId) skip = 'No message ID';
   if (skip) return { ...e, ackStatus: 'Skipped: ' + skip };
@@ -184,8 +187,8 @@ export function acknowledge(e, api, cfg) {
   const text = [`Hi ${first},`, '', `Thank you for contacting ${company}. We have received your ${what} (reference: ${e.jiraKey}) and passed it to the right team.`,
     `You can expect an update within ${RESPONSE_TIME[e.priority] || '2 business days'}. Just reply to this email if you have anything to add.`, '', 'Kind regards,', `${company} ${cfg.ackSignature || ''}`.trim()].join('\n');
   let r;
-  if (e.source === 'Outlook') r = api.outlook.reply({ messageId: e.messageId, comment: text.split('\n').map(l => `<p style="margin:0">${l || '&nbsp;'}</p>`).join(''), saveAsDraft: mode === 'draft', replyToSenderOnly: true });
-  else if (mode === 'send') r = api.gmail.reply({ messageId: e.messageId, text, replyToSenderOnly: true });
+  if (e.source === 'Outlook') r = api.outlook.reply({ messageId: e.messageId, comment: text.split('\n').map(l => `<p style="margin:0">${l || '&nbsp;'}</p>`).join(''), saveAsDraft: mode === 'draft', replyToSenderOnly: !replyAll });
+  else if (mode === 'send') r = api.gmail.reply({ messageId: e.messageId, text, replyToSenderOnly: !replyAll });
   else r = api.gmail.createDraft({ to: e.fromEmail, subject: e.subject.startsWith('Re:') ? e.subject : 'Re: ' + e.subject, text, threadId: e.threadId });
   const okCall = r.status >= 200 && r.status < 300;
   return { ...e, ackStatus: !okCall ? 'Failed: ' + (r.body?.message || r.status) : (mode === 'draft' ? 'Draft created' : 'Sent') };
@@ -209,14 +212,17 @@ export function auditRow(e, at) {
   };
 }
 
-// The whole faithful flow for one mail.
+// The whole faithful flow for one mail. `opts` exists so the deliberately broken controls (broken.mjs) can be built from the same parts; the defaults are the faithful flow.
 export function makeFaithful(cfg, opts = {}) {
+  const { classifyOpts = {}, escalateOpts = {}, ackOpts = {}, route = routeOf, filter = true, audit = true, classifyHook = null } = opts;
   return function handle(event, api) {
-    const p = prepare(normalize(event), cfg);
-    let c = p.skipAI ? skipped(p) : classify(p, api, opts);
-    const route = routeOf(c, cfg);
-    if (route === 'escalate') c = acknowledge(escalate(c, api, cfg), api, cfg);
-    else if (route === 'review') c = review(c, api, cfg);
-    api.sheets.appendRow({ row: auditRow(c, event.at) });
+    let p = prepare(normalize(event), cfg);
+    if (!filter) p = { ...p, skipAI: false, skipReason: '' };
+    let c = p.skipAI ? skipped(p) : classify(p, api, classifyOpts);
+    if (classifyHook) c = classifyHook(c, p);
+    const r = route(c, cfg);
+    if (r === 'escalate') c = acknowledge(escalate(c, api, cfg, escalateOpts), api, cfg, ackOpts);
+    else if (r === 'review') c = review(c, api, cfg);
+    if (audit) api.sheets.appendRow({ row: auditRow(c, event.at) });
   };
 }

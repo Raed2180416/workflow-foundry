@@ -1,0 +1,37 @@
+{
+  "schema": "rbench-item/1",
+  "id": "home-assistant:CCOSTAN/Home-AssistantConfig/config/automation/Speech/garbage_day_garage.yaml#0",
+  "safeId": "home-assistant-ccostan-garbage-day-garage",
+  "title": "Garage Garbage Day Reminders",
+  "harnessVersion": "0.1.0",
+  "builtOn": "2026-10-08",
+  "pilotSlot": "P4",
+  "status": "development/diagnostic harness; no sealed evaluation set; not yet run by any solver arm",
+  "source": {
+    "platform": "home-assistant",
+    "url": "https://github.com/CCOSTAN/Home-AssistantConfig/blob/71ffa6120b8b649508c3ffe312f6d09792c7b37b/config/automation/Speech/garbage_day_garage.yaml",
+    "revision": "git 71ffa6120b8b649508c3ffe312f6d09792c7b37b (2026-10-05T21:48:56+00:00)",
+    "retrievedAt": "2026-10-06",
+    "license": "MIT (Copyright (c) 2018 Carlo Costanzo)",
+    "redistributable": true,
+    "rawPath": "/opt/corpus/home-assistant/git/CCOSTAN__Home-AssistantConfig/config/automation/Speech/garbage_day_garage.yaml",
+    "rawFileSha256": "c7cae208c73ad49d929e18a43bc09b70760a44ec85f81c93118a31b194f0f62b",
+    "licenseFileSha256": "e97616c691141d9e7c5e284299cba4e9ac13d02ff2c6b6c96e8039fdcf75248d",
+    "committed": "fixtures/original/garbage_day_garage.yaml and fixtures/original/LICENSE, byte-identical copies from the corpus (acquisition outcome: copied from the already-acquired corpus; sha256 verified by controls/original.mjs and by item.test.mjs)",
+    "notAcquired": "the helper scripts the automation calls (script.notify_engine_two_button, script.speech_engine, script.send_to_logbook) and the speech templates were read for context only; they are mocked services here, not committed"
+  },
+  "variants": {
+    "T1": "original definition + Home Assistant semantics + environment config + API",
+    "T2": "description + environment config + API + 4 worked examples (a different data set)",
+    "T3": "original definition + semantics + config + API + target (reliability under service failure, cost cap, +-1 s)"
+  },
+  "scenarios": { "core": 15, "coreIds": "see scenarios.mjs CORE_IDS", "probes": 4, "probeIds": "see scenarios.mjs PROBE_IDS" },
+  "controls": {
+    "original": "the author's YAML executed on controls/original-engine.mjs (an interpreter for the YAML subset it uses), NOT on Home Assistant core (not installed)",
+    "references": "controls/reference.mjs makeFaithful (T1/T2) and makeImproved (T3)",
+    "independentSolution": "controls/alternative.mjs (kv-based, own ids, async)",
+    "broken": "controls/broken.mjs (25 controls + 2 T3-only), controls/original.mjs MUTANTS (9 mutants of the YAML)",
+    "report": "controls/report.json"
+  },
+  "frozen": "fixtures/frozen.json (scenario battery hashes for 24 instances, T3 cost cap)"
+}

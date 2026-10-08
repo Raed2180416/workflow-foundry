@@ -100,7 +100,7 @@ function splitAnd(s) {
   out.push(cur);
   return out;
 }
-const unq = v => { v = v.trim(); if (v.startsWith('"') && v.endsWith('"') && v.length >= 2) return v.slice(1, -1); if (/^[A-Za-z0-9_.\- ]+$/.test(v) && !/\s/.test(v)) return v; throw new Error(`unexpected value ${v}`); };
+const unq = v => { v = v.trim(); if (v.startsWith('"')) { const m = v.match(/^"([^"]*)"$/); if (!m) throw new Error(`unexpected value ${v}`); return m[1]; } if (/^[A-Za-z0-9_.\-]+$/.test(v)) return v; throw new Error(`unexpected value ${v}`); };
 function parseJql(src) {
   let s = src.trim(); let order = null;
   const mo = s.match(/\s+order\s+by\s+(\w+)(?:\s+(asc|desc))?\s*$/i);

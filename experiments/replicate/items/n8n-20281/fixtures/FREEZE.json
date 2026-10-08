@@ -3,7 +3,7 @@
  "version": "0.1.0",
  "frozenAt": "2026-10-08T09:20:00Z",
  "beforeFirstRun": true,
- "note": "Single annotator. The two-annotator check of the pilot plan is NOT done (see fixtures/ANNOTATION.md).",
+ "note": "Single annotator. The two-annotator check of the pilot plan is NOT done (see fixtures/ANNOTATION.md). `files` and `thresholds` were frozen at frozenAt, before any control or solver ran; `tasks` (hashes of the canonical tasks, which embed the T3 baseline and targets computed from the controls) were frozen later, see tasksFrozenAt.",
  "files": {
   "source/cases.mjs": "9b3826984bd13f4d1a2c4b2fab4e96bde0424d27ceb1b7f0d1e264acbdb84980",
   "fixtures/config.json": "033d6c25ffe91b24182466b6c17746234c883f426d37d3cf0615c655bc84dd41",
@@ -16,5 +16,16 @@
   "categoryAccuracy": 0.85,
   "priorityAccuracy": 0.8,
   "clearEscalationRecall": 0.85
+ },
+ "canonicalTask": {
+  "seed": 1,
+  "split": "test",
+  "difficulty": 3
+ },
+ "tasksFrozenAt": "2026-10-08T09:48:09Z",
+ "tasks": {
+  "T1": "e024d9346c739813e8c2e3af8d90675f0f706cf484c66a17493931e88326c054",
+  "T2": "81c32329448719cce3cde396f62085e64cdf8c74ee9c946376b037fc844552d9",
+  "T3": "25749ab38b805368a7e78363821487f0386a728a9dc5b286bf228e135d9c30fd"
  }
 }

@@ -181,7 +181,7 @@ export function screen(candidates, { templates, bedStrings = [], thresholds = TH
     } else if (slots.length) { reasons.push('slots:placeholder-not-allowed'); extra.slots = { got: slots }; }
     if (c.port !== 'X1' && c.port !== 'X5') {
       const names = literalSystemNames(text); if (names.length) { reasons.push('literal-system-name'); extra.names = names; }
-      if (/\b(?:dmy|mdy|ymd)\b/i.test(text)) reasons.push('option-id-in-text');
+      if (/\b(?:dmy|mdy|ymd|restamped)\b/i.test(text)) reasons.push('option-id-in-text');   // an option id is code vocabulary, not note text
     }
     if (c.port === 'R4') {
       const w = isWindowed(text), lit = literalDates(text.replace(/\{[a-z0-9_]+\}/g, ' '));
@@ -523,6 +523,7 @@ export function manifestOf(res, outDirFiles) {
   };
 }
 
+export const rejectsDirOf = outDir => `${path.resolve(outDir)}-rejects`;
 export async function writeTrainPools(res, outDir = DEFAULT_OUT) {
   mkdirSync(outDir, { recursive: true });
   const files = {};
@@ -530,8 +531,11 @@ export async function writeTrainPools(res, outDir = DEFAULT_OUT) {
     const body = jsonl(res.pools[p]), f = `${p}.jsonl`;
     writeFileSync(path.join(outDir, f), body); files[f] = { sha256: sha(body), lines: res.pools[p].length };
   }
-  const rj = jsonl(res.rejects.slice().sort((a, b) => (a.key < b.key ? -1 : 1)));
-  writeFileSync(path.join(outDir, 'rejects.jsonl'), rj); files['rejects.jsonl'] = { sha256: sha(rj), lines: res.rejects.length };
+  // The reject log sits NEXT TO the pool directory, not in it: rejected candidates are not train-pool lines, and
+  // readers that scan the pool directory (the heldout copy filter reads every jsonl under it) must not see them.
+  const rj = jsonl(res.rejects.slice().sort((a, b) => (a.key < b.key ? -1 : 1))), rdir = rejectsDirOf(outDir);
+  mkdirSync(rdir, { recursive: true });
+  writeFileSync(path.join(rdir, 'rejects.jsonl'), rj); files['rejects.jsonl'] = { sha256: sha(rj), lines: res.rejects.length };
   return files;
 }
 

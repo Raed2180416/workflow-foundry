@@ -18,7 +18,7 @@ import { BED_ALLOWLIST, freezeBeds, frozenBeds } from '../lib/pin.mjs';
 import { canonical, sha256 } from '../lib/hash.mjs';
 import { jaccard, ngramSet } from './pools.mjs';
 import { assemble } from './assemble.mjs';
-import { HELDOUT_DIR, AUTHORED_DIR } from './author.mjs';
+import { HELDOUT_DIR, AUTHORED_DIR, refreshManifest } from './author.mjs';
 
 export const COPY_THRESHOLD = 0.3;
 const TEXT_EXT = /\.(?:mjs|js|cjs|md|json|txt)$/i;
@@ -138,6 +138,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const report = runCopyFilter({ units, wordings: model.wordings, corpora, threshold: Number(opt.threshold ?? COPY_THRESHOLD) });
   const out = path.join(heldout, 'copy-filter.json');
   writeFileSync(out, JSON.stringify({ ...report, sha256: sha256(canonical(report)) }, null, 1) + '\n');
+  if (heldout === path.resolve(HELDOUT_DIR)) refreshManifest(model, heldout);       // the report is a hashed output: keep the committed manifest in step
   console.log(JSON.stringify({ checked: report.checked, maxJaccard: report.maxJaccard, failing: report.failing.length, bedCorpus: report.bedCorpus, trainPools: report.trainPools }));
   process.exitCode = report.failing.length ? 1 : 0;
 }

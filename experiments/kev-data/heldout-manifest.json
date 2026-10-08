@@ -29,22 +29,22 @@
  },
  "authored": {
   "files": 109,
-  "sha256": "a118d6e5b173b55d0b350fabf2e9601e0a05df6a96f44d39d2331a85d6a95853"
+  "sha256": "6f075ad1e36b429efde3b9d5065e67e3916dae70de2f9685f2df496841484d8c"
  },
  "files": {
   "cities.json": {
-   "sha256": "ae7dd1eba4d5452958ca9aaf8f982259b23bbab08b9d5ae16c7a7518f9ded35d",
-   "bytes": 15896,
-   "lines": 1031
+   "sha256": "6978589a13694a37e6c97ff5a2feacc632bd9ca9f64363fbd3127505473e1cda",
+   "bytes": 17377,
+   "lines": 1121
   },
   "copy-filter.json": {
-   "sha256": "1011f40901a47fbef76070e1aea49868b7300a009f48fe37ed07ca7fb4c40596",
-   "bytes": 281,
+   "sha256": "1b7917b7f61aca3f8c98da9ae375de9773d13fb833c3d72d9bfcf2cbcbb1e271",
+   "bytes": 283,
    "lines": 16
   },
   "registry.json": {
-   "sha256": "7ed6b43221ba8cb542abb651bbaf23bdb6be767441751b0254c3362e7e07a9b1",
-   "bytes": 1114784,
+   "sha256": "85397ad59a9addd71f4a81fbaf098fd2c247028115154acd442d569dd1e40f86",
+   "bytes": 1114780,
    "lines": 1
   },
   "reject-log.jsonl": {
@@ -78,18 +78,18 @@
    "lines": 20
   },
   "surface/R1.jsonl": {
-   "sha256": "fc9693a68e9617b813d6185b2ea23ee587290c2008cb7a07068d604a15a2a28b",
-   "bytes": 617343,
+   "sha256": "e84bda35b399ec4dfd4401d72b069679a8c1e70ad02e492edff71eea90307c1a",
+   "bytes": 617407,
    "lines": 948
   },
   "surface/R2.jsonl": {
-   "sha256": "0b24eae6c0386cff88ec950b5ed488d3c4ba1aaa058c9f6da3c53907ffee80fe",
-   "bytes": 452054,
+   "sha256": "b8025d301c6afca04e35068aa96e1f0ebc0690912dbdd703efc9c9c23232efd1",
+   "bytes": 452068,
    "lines": 688
   },
   "surface/R3.jsonl": {
-   "sha256": "2a4b5991121fb00b4fac006a67fba8fb16e240d1ac99b7c27393bfc0c629eef7",
-   "bytes": 404966,
+   "sha256": "2c5bf7cf51db10dd5936278451e32ed4f77bc0ef24a3dd9fcd884175c2fb341b",
+   "bytes": 405028,
    "lines": 630
   },
   "surface/R4.jsonl": {
@@ -118,13 +118,13 @@
    "lines": 35
   },
   "surface/X5.jsonl": {
-   "sha256": "e600fde8c0c3c0dbd1849bb35bca41a7818187b1c89e0840072899ae9dbb4838",
-   "bytes": 577957,
+   "sha256": "5b24b90b4e6ee18ee621dbf2e46467cbe1314c56a1acc6be849e56e177b07f61",
+   "bytes": 579094,
    "lines": 723
   },
   "surface/X8.jsonl": {
-   "sha256": "7237a6127044ee763c53f0679a1ae051e74ef0266b5b02bff21b40ca0202bcdf",
-   "bytes": 265075,
+   "sha256": "6960bb6758b15bda481e929762e219d40e89be04d203700a1a16fa40160a90bb",
+   "bytes": 265115,
    "lines": 237
   },
   "wordings.json": {
@@ -245,7 +245,7 @@
      "classes": {
       "all": 40
      },
-     "proxyHard": 4
+     "proxyHard": 5
     },
     "dev-ood": {
      "authored": 66,
@@ -302,9 +302,9 @@
    },
    "ymd": {
     "calib-ood": {
-     "authored": 59,
+     "authored": 58,
      "selected": 40,
-     "reserve": 19,
+     "reserve": 18,
      "shortfall": 0,
      "classes": {
       "all": 40
@@ -319,26 +319,26 @@
      "classes": {
       "all": 60
      },
-     "proxyHard": 17
+     "proxyHard": 15
     },
     "test-ood": {
-     "authored": 118,
+     "authored": 119,
      "selected": 100,
-     "reserve": 18,
+     "reserve": 19,
      "shortfall": 0,
      "classes": {
       "all": 100
      },
-     "proxyHard": 23
+     "proxyHard": 24
     }
    }
   },
   "R2": {
    "void": {
     "calib-ood": {
-     "authored": 53,
+     "authored": 52,
      "selected": 40,
-     "reserve": 13,
+     "reserve": 12,
      "shortfall": 0,
      "classes": {
       "all": 40
@@ -356,14 +356,14 @@
      "proxyHard": 10
     },
     "test-ood": {
-     "authored": 150,
+     "authored": 151,
      "selected": 100,
-     "reserve": 50,
+     "reserve": 51,
      "shortfall": 0,
      "classes": {
       "all": 100
      },
-     "proxyHard": 25
+     "proxyHard": 26
     }
    },
    "live": {
@@ -412,19 +412,19 @@
      "proxyHard": 1
     },
     "dev-ood": {
-     "authored": 70,
+     "authored": 72,
      "selected": 60,
-     "reserve": 10,
+     "reserve": 12,
      "shortfall": 0,
      "classes": {
       "all": 60
      },
-     "proxyHard": 4
+     "proxyHard": 5
     },
     "test-ood": {
-     "authored": 139,
+     "authored": 137,
      "selected": 100,
-     "reserve": 39,
+     "reserve": 37,
      "shortfall": 0,
      "classes": {
       "all": 100
@@ -451,7 +451,7 @@
      "classes": {
       "all": 60
      },
-     "proxyHard": 19
+     "proxyHard": 18
     },
     "test-ood": {
      "authored": 120,
@@ -746,23 +746,23 @@
     "calib-ood": {
      "n": 120,
      "declaredHard": 0.25,
-     "probeWrong": 0.4,
+     "probeWrong": 0.408,
      "ruleWrong": 0.525,
-     "probeAndRuleWrong": 0.267
+     "probeAndRuleWrong": 0.275
     },
     "dev-ood": {
      "n": 180,
-     "declaredHard": 0.256,
-     "probeWrong": 0.35,
+     "declaredHard": 0.25,
+     "probeWrong": 0.339,
      "ruleWrong": 0.55,
-     "probeAndRuleWrong": 0.239
+     "probeAndRuleWrong": 0.228
     },
     "test-ood": {
      "n": 300,
      "declaredHard": 0.28,
      "probeWrong": 0.33,
      "ruleWrong": 0.573,
-     "probeAndRuleWrong": 0.187
+     "probeAndRuleWrong": 0.19
     }
    },
    "R2": {
@@ -782,10 +782,10 @@
     },
     "test-ood": {
      "n": 200,
-     "declaredHard": 0.285,
-     "probeWrong": 0.19,
-     "ruleWrong": 0.325,
-     "probeAndRuleWrong": 0.14
+     "declaredHard": 0.29,
+     "probeWrong": 0.195,
+     "ruleWrong": 0.33,
+     "probeAndRuleWrong": 0.145
     }
    },
    "R3": {
@@ -799,8 +799,8 @@
     "dev-ood": {
      "n": 120,
      "declaredHard": 0.225,
-     "probeWrong": 0.375,
-     "ruleWrong": 0.3,
+     "probeWrong": 0.383,
+     "ruleWrong": 0.308,
      "probeAndRuleWrong": 0.192
     },
     "test-ood": {
@@ -884,13 +884,13 @@
   "carrier": 355
  },
  "cities": {
-  "n": 171,
-  "mdy": 56,
-  "dmy": 115
+  "n": 186,
+  "mdy": 76,
+  "dmy": 110
  },
  "registry": {
   "entries": 6139,
-  "digest": "sha256:aa954889359a038ece50f75b73ccd2859b527facef0b50224883925ee6a7d13b",
+  "digest": "sha256:6a44ecd4552329e7ccf5ee5f73f6ab36434a9e7beff2422b87f878571ae1585f",
   "masks": {
    "names": [
     "ATLAS",
@@ -917,17 +917,17 @@
   "threshold": 0.3,
   "bedCorpus": {
    "files": 171,
-   "strings": 41445
+   "strings": 41544
   },
   "trainPools": {
-   "present": false,
-   "files": 0,
-   "strings": 0
+   "present": true,
+   "files": 6,
+   "strings": 18152
   },
-  "checked": 6087,
-  "maxJaccard": 0.25,
+  "checked": 6232,
+  "maxJaccard": 0.3,
   "failing": 0,
-  "sha256": "afebad15ddd135330b9a532583c0c704e750354aa99176dd2dd188eddf11ed58"
+  "sha256": "e13ee63d40c565065cf6cee7e38c8bcf968a7db20e915671986bc93c24f3cd8b"
  },
  "topUp": {
   "rounds": []

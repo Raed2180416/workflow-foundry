@@ -19,7 +19,7 @@ import { SLOT_VOCABULARY, assertInputClean, canonicalValues, extractTemplates, f
 import { hasAddressee, isWindowed, literalDates } from '../pools/filters.mjs';
 import { CUT_LINE_FAMILIES, DEFAULT_OUT, HELDOUT_MANIFEST_PATH, MANIFEST_PATH, PER_TEMPLATE_TARGET, POOL_PORTS, TRAIN_FAMILIES, applyTwoModelVerdicts, briefsFor,
   buildCandidates, buildTrainPools, checkAgainstHeldoutManifest, dropRegistryCollisions, expandPair, formGap, lineSkeleton, loadHeldoutManifest, manifestOf, providerLists, readJsonl, screen,
-  summarize, windowBalance, windowBalanced, windowSkeletons, writeTrainPools, x1Stats } from '../pools/train-pools.mjs';
+  rejectsDirOf, summarize, windowBalance, windowBalanced, windowSkeletons, writeTrainPools, x1Stats } from '../pools/train-pools.mjs';
 
 const TEST_FILE = fileURLToPath(import.meta.url);
 const KEV_DATA = path.resolve(path.dirname(TEST_FILE), '..');
@@ -258,7 +258,8 @@ test('pools: two-model filter DEFERRED to hosted-arms: every line is pending, br
     assert.equal(bs.length, l.port === 'X5' ? 2 : 1);
   }
   // the reject log lists every rejected candidate with its reasons
-  const rejects = readJsonl(path.join(b.out, 'rejects.jsonl'));
+  const rejects = readJsonl(path.join(rejectsDirOf(b.out), 'rejects.jsonl'));
+  assert.ok(!existsSync(path.join(b.out, 'rejects.jsonl')), 'the reject log is not inside the pool directory that other groups scan');
   assert.equal(rejects.length, b.res.rejects.length); assert.ok(rejects.length > 1000);
   assert.ok(rejects.every(r => r.key && r.text && Array.isArray(r.reasons) && r.reasons.length));
   const reasons = new Set(rejects.flatMap(r => r.reasons.map(x => x.replace(/:.*/, ''))));
@@ -403,7 +404,10 @@ test('pools: authored files are the only source of the pool: a rebuild is byte-i
   const a = await BUILT(), again = await buildTrainPools({ beds: a.beds }), out2 = H.tempDir('kev-pools-out2-');
   const f2 = await writeTrainPools(again, out2);
   assert.deepEqual(f2, a.files, 'every output file has the same digest and line count');
-  for (const f of Object.keys(f2)) assert.equal(readFileSync(path.join(out2, f), 'utf8'), readFileSync(path.join(a.out, f), 'utf8'), f);
+  for (const f of Object.keys(f2)) {
+    const [d1, d2] = f === 'rejects.jsonl' ? [rejectsDirOf(a.out), rejectsDirOf(out2)] : [a.out, out2];
+    assert.equal(readFileSync(path.join(d2, f), 'utf8'), readFileSync(path.join(d1, f), 'utf8'), f);
+  }
 });
 
 test('pools: the committed manifest matches the authored files and the pool they build', async () => {

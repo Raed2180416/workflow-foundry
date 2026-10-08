@@ -33,6 +33,11 @@
 //   builtin true          built-in fallback lines for train-like slices (bed-derived surgery, a few authored
 //                         forms); production builds pass the train pools and set builtin: false
 //   wordings {port: [{id, text}]}   the slice's held-out wordings (OOD slices only; required there)
+//   x8Fields [...]        restrict the X8 fields drawn (default birth_date, balance, status, family_name; a stratum probe)
+//   cities [{city, order: 'mdy' | 'dmy'}]   held-out team cities (OOD slices): every OOD notes text is re-rendered with
+//                         them in place of the bed's TEAM_CITIES (world knowledge is allowed knowledge, recall of the bed's
+//                         60 cities must not count); without them an OOD row keeps the bed's cities and is counted in
+//                         describe().notes.cityRerenderMissing
 // Shortfalls (a pool without lines, a quota the seeds cannot fill) are reported by describe(), never
 // padded.
 import { createHash } from 'node:crypto';
@@ -384,7 +389,9 @@ export function makeContext(slice, opts, ctx, bed) {
   if (builtinOn && TRAIN_LIKE.has(slice) || (builtinOn && OOD.has(slice))) raw = [...builtinLines(bed, builtinOn), ...raw];
   const bank = new LineBank(raw, { slice });
   const wordings = Object.fromEntries(Object.entries(o.wordings ?? {}).map(([p, list]) => [p, [...list].sort((a, b) => (a.id < b.id ? -1 : 1))]));
-  return { slice, bed, ctx, contracts: ctx.contracts, def: ctx.slice, opts: o, bank, wordings, control: o.control ?? null, poolDigest, ood: OOD.has(slice), seen: new Set(), cells: new Map(), counts: {}, notes: { skipped: {} } };
+  const cities = { mdy: [], dmy: [] };
+  for (const c of o.cities ?? []) if (c && typeof c.city === 'string' && cities[c.order]) cities[c.order].push(c.city);
+  return { slice, bed, ctx, contracts: ctx.contracts, def: ctx.slice, opts: o, bank, wordings, cities, control: o.control ?? null, poolDigest, ood: OOD.has(slice), seen: new Set(), cells: new Map(), counts: {}, notes: { skipped: {} } };
 }
 const bump = (G, k, n = 1) => { G.counts[k] = (G.counts[k] ?? 0) + n; };
 const cellCount = (G, key) => G.cells.get(key) ?? {};
@@ -472,7 +479,7 @@ export function decide(G, W, u, port, target, { mode, windowed, key }) {
     const line = cand[(H32('line', ...key) + k) % cand.length], f = tryFill(G, W, u, line);
     if (!f) continue;
     if (port === 'R4' && windowed !== undefined && hasDateWindow(f.text) !== windowed) continue;
-    return { text: f.text, source: mode === 'ood' ? 'ood-line' : sourceOfLine(line), index: null, label: target, line, from: line.id, ref: f.ref, windowed: hasDateWindow(f.text), wk: usesWorldKnowledge(line.text) };
+    return { text: f.text, source: mode === 'ood' ? 'ood-line' : sourceOfLine(line), index: null, label: target, line, from: line.id, ref: f.ref, windowed: hasDateWindow(f.text), wk: usesWorldKnowledge(line.text) || (line.needsWorldKnowledge ?? line.features?.needsWorldKnowledge) === true };
   }
   return null;
 }
@@ -506,13 +513,14 @@ const optionsOfPort = (G, port) => Object.keys(G.contracts[port].options);
 // bag-of-words probe at 0.82; deletion at 0.85):
 //   - both twins show the paragraph of T (same system names) and S's paragraph last, so the sentence under test is the
 //     end of the text and no junction bigram pairs its last word with a paragraph name;
-//   - D and F sit behind the same lead word ("Also:"), so the junction bigram with S's own text is the same;
+//   - D and F sit behind the same lead ("Also in S:" / "Also in T:"): the junction bigram with S's own text is the same,
+//     F may be any template of T (the lead attributes it), and the (name, first word) pairs of D and F are alike;
 //   - T is a system whose own sentence has D's label (R1, R2, R3: the label vocabulary and the pool-sentence count are
 //     the same in both twins; R2 needs a flag of T with D's polarity) or has no sentence of its own (R4: F has D's role,
 //     so a date window is in both or in neither).
 // Out-of-distribution slices read the slice's own 'nondeciding' lines (the line with {S} := T).
 function poolSystems(bed, port) {
-  return port === 'R1' ? ['BRIGHTDESK', 'ATLAS', 'VENDEX'] : port === 'R2' ? Object.keys(bed.render.FLAG_FORM) : port === 'R3' ? Object.keys(bed.render.PERSP_NOTE) : SYSTEMS;
+  return port === 'R1' ? ['BRIGHTDESK', 'ATLAS', 'VENDEX'] : port === 'R2' ? Object.keys(bed.render.FLAG_FORM) : port === 'R3' ? Object.keys(bed.render.PERSP_NOTE) : ['BRIGHTDESK', 'LEDGR', 'KOBO', 'VERITAS'];
 }
 const startsWithName = text => SYSTEMS.some(x => text.startsWith(`${x} `) || text.startsWith(`${x}'`) || text.startsWith(`${x}:`));
 const hasName = (text, sys) => new RegExp(`(?<![A-Za-z0-9_])${sys}(?![A-Za-z0-9_])`).test(text);
@@ -537,14 +545,12 @@ export function nonDeciding(G, W, units, u, port, key, { phrasing = 'known' } = 
       if (pool === 'order' && bed.render.ORDER_NOTE[T][label][i].ref) continue;
       const x = { ...u, sys: T, token, show: token ? bed.render.FLAG_FORM[T].show(token) : undefined };
       const v = variantSentence(bed, W, x, { label, index: i });
-      if (!v || (port !== 'R2' && !hasName(v.text, T))) continue;
+      if (!v) continue;
       options.push({ T, index: i, text: v.text, from: tplName(x, i, label), weight: i === u.index ? 4 : 1 });
     }
   }
-  // D and F start alike (a system name, or not): the first word behind the lead is then no cue
-  const alike = options.filter(o => startsWithName(o.text) === startsWithName(u.sentence));
-  if (!alike.length) return null;
-  const bag = alike.flatMap(o => Array(o.weight).fill(o)), pick = pickBy(bag, 'ndF', ...key);
+  if (!options.length) return null;
+  const bag = options.flatMap(o => Array(o.weight).fill(o)), pick = pickBy(bag, 'ndF', ...key);
   return { F1: pick.text, text: pick.text, from: pick.from, kind: 'other-system', phrasing: 'known', T1: pick.T };
 }
 
@@ -582,7 +588,9 @@ const optionsOf = (G, port) => Object.keys(G.contracts[port].options);
 export function realize(G, W, plan) {
   const A = applyEdits(W.task.inputs.source_notes, plan.edits);
   if (!A.ok) { bump(G, `drop:${plan.port}:${plan.axis}:edit-${A.reason}`); return null; }
-  let task = taskWith(W.task, A.notes);
+  const rc = cityRerender(G, W, A.notes);
+  if (rc) plan = { ...plan, decisive: plan.decisive.map(rc.text) };
+  let task = taskWith(W.task, rc ? rc.text(A.notes) : A.notes);
   for (const e of plan.exportEdits ?? []) {
     const r = replaceSentence(task.inputs.export, e.old, e.new);
     if (!r.ok) { bump(G, `drop:${plan.port}:${plan.axis}:export-${r.reason}`); return null; }
@@ -614,6 +622,20 @@ export function realize(G, W, plan) {
   if (!plan.soft) for (const [k, l] of plan.counts ?? []) cellAdd(G, k, l === '$window' ? String(hasDateWindow(plan.decisive[0])) : l);
   bump(G, `rows:${plan.port}:${plan.axis}`, Object.keys(questions).length);
   return G.out.at(-1);
+}
+
+// Held-out cities (OOD slices): the bed's two team cities of this world are replaced, throughout the notes, by held-out
+// cities of the same date order, chosen by hash. Labels are unchanged: the replacement keeps the order class.
+function cityRerender(G, W, notes) {
+  if (!G.ood) return null;
+  const used = [['cityUS', 'mdy'], ['cityEU', 'dmy']].filter(([k]) => W.choices[k] && notes.includes(W.choices[k]));
+  if (!used.length) return null;
+  if (!G.cities.mdy.length || !G.cities.dmy.length) { bump(G, 'notes:cityRerenderMissing'); G.notes.cityRerenderMissing = (G.notes.cityRerenderMissing ?? 0) + 1; return null; }
+  const pairs = used.map(([k, order]) => [W.choices[k], pickBy(G.cities[order], 'heldout-city', W.key, order)]);
+  const esc = t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const text = t => pairs.reduce((acc, [from, to]) => acc.replace(new RegExp(`(?<![A-Za-z])${esc(from)}(?![A-Za-z])`, 'g'), () => to), t);
+  bump(G, 'notes:cityRerendered');
+  return { text, pairs };
 }
 
 // ---- the clean plan of a unit -------------------------------------------------------------------------------------------
@@ -677,17 +699,58 @@ const naturalD = (G, W, u) => ({ text: u.sentence, source: 'bed', index: u.index
 function twinPair(key) { return pairIdOf(...key); }
 const withPair = (plans, key) => { const id = twinPair(key); plans.forEach((p, i) => { p.pairId = id; p.pairRole = 'ab'[i]; p.wordingKey = key; }); return plans; };
 
+// R4: the sentence of unit `u` for (label, date-window presence). The bed couples the two (a MIRROR_NOTE always carries the
+// migration window, a RELIABLE_NOTE never does), so the decoupled cells come from counterfactual lines.
+function r4Side(G, W, u, label, win, key) {
+  if (label === u.label && win === hasDateWindow(u.sentence)) return naturalD(G, W, u);
+  if (label !== u.label) {
+    const d = decide(G, W, u, 'R4', label, { mode: 'bed', key });
+    if (d && hasDateWindow(d.text) === win) return d;
+  }
+  return decide(G, W, u, 'R4', label, { mode: 'counterfactual', windowed: win, key });
+}
+// A twin pair differs in its decisive sentence only: when one sentence names another system (a `ref` template) the
+// pair's states carry the same paragraphs (the union of what each twin names), in notes order.
+function alignParagraphs(W, plans, sys) {
+  const per = plans.map(p => { const A = applyEdits(W.task.inputs.source_notes, p.edits); return A.ok ? groupParagraphs(A.notes, [sys]) : null; });
+  if (per.some(x => !x) || per.every(l => l.join() === per[0].join())) return plans;
+  const order = notesParagraphs(W.task.inputs.source_notes).order, rest = [...new Set(per.flat())].filter(x => x !== sys).sort((a, b) => order.indexOf(a) - order.indexOf(b));
+  return plans.map(p => ({ ...p, kitSlots: { ...p.kitSlots, paragraphs: [sys, ...rest] } }));
+}
+function r4FlipPlans(G, W, u, scr, job, key) {
+  const win = frac('r4flipw', ...key) < 0.5, other = OTHER.R4[u.label];
+  const dA = r4Side(G, W, u, u.label, win, [...key, 'A']), dB = r4Side(G, W, u, other, win, [...key, 'B']);
+  if (!dA || !dB) { bump(G, 'skip:R4:flip:no-side'); return null; }
+  const job2 = { ...job, variant: 'flip', axis: 'flip' };
+  return withPair([basePlan(G, W, 'R4', u, scr, job2, key, dA, u.label), basePlan(G, W, 'R4', u, scr, job2, key, dB, other)], key);
+}
+function r4InvariancePlans(G, W, u, scr, job, key) {
+  const label = u.label, win = frac('r4invw', ...key) < 0.5, dA = r4Side(G, W, u, label, win, [...key, 'A']);
+  if (!dA) return null;
+  let dB = null;
+  if (win === hasDateWindow(u.sentence)) {
+    const alt = allowedIndices(G.bed, W, u, label, { avoid: [u.index] });
+    const index = alt.length ? pickBy(alt, 'inv', ...key) : null, v = index === null ? null : variantSentence(G.bed, W, u, { index });
+    if (v && hasDateWindow(v.text) === win) dB = { text: v.text, source: 'bed', index, label, from: tplName(u, index), ref: v.spec.ref, wk: false };
+  }
+  for (let k = 0; !dB && k < 6; k++) { const d = decide(G, W, u, 'R4', label, { mode: 'counterfactual', windowed: win, key: [...key, 'B', k] }); if (d && d.text !== dA.text) dB = d; }
+  if (!dB) { bump(G, 'skip:R4:invariance:no-twin'); return null; }
+  const job2 = { ...job, variant: 'invariance', axis: 'invariance' };
+  return withPair([basePlan(G, W, 'R4', u, scr, job2, key, dA, label), basePlan(G, W, 'R4', u, scr, job2, key, dB, label)], key);
+}
 export function flipPlans(G, W, port, u, scr, job, key) {
+  if (port === 'R4') return r4FlipPlans(G, W, u, scr, job, key);
   if (port === 'R1' && !ORDERS.includes(u.label)) return null;
   const A = basePlan(G, W, port, u, scr, { ...job, variant: 'flip', axis: 'flip' }, key, naturalD(G, W, u), u.label);
   const other = port === 'R1' ? flipOrder(u.label) : OTHER[port][u.label];
   const d = decide(G, W, u, port, other, { mode: 'bed', key });
   if (!d || d.index !== u.index || d.unchanged) return null;
   const B = basePlan(G, W, port, u, scr, { ...job, variant: 'flip', axis: 'flip' }, key, d, other);
-  return withPair([A, B], key);
+  return withPair(alignParagraphs(W, [A, B], u.sys), key);
 }
 export function invariancePlans(G, W, port, u, scr, job, key) {
   if (u.label === 'ymd') return null;
+  if (port === 'R4') return r4InvariancePlans(G, W, u, scr, job, key);
   const lab = port === 'R4' ? u.label : u.label;
   const alt = allowedIndices(G.bed, W, u, lab, { avoid: [u.index] });
   if (!alt.length) return null;
@@ -696,7 +759,7 @@ export function invariancePlans(G, W, port, u, scr, job, key) {
   const d = { text: v.text, source: 'bed', index, label: lab, from: tplName(u, index), ref: v.spec.ref, wk: wkOf(W, { ...u, index }) };
   const A = basePlan(G, W, port, u, scr, { ...job, variant: 'invariance', axis: 'invariance' }, key, naturalD(G, W, u), u.label);
   const B = basePlan(G, W, port, u, scr, { ...job, variant: 'invariance', axis: 'invariance' }, key, d, u.label);
-  return withPair([A, B], key);
+  return withPair(alignParagraphs(W, [A, B], u.sys), key);
 }
 export function unknowablePlans(G, W, port, u, scr, job, key, units) {
   const phrasing = job.phrasing ?? (G.ood ? 'new' : 'known');
@@ -711,10 +774,10 @@ export function unknowablePlans(G, W, port, u, scr, job, key, units) {
   const options = optionsOf(G, port), para = stateNotes.ok ? paragraphsFor(stateNotes.notes, { system: u.sys })[0] : null;
   const sents = para ? sentences(para) : [];
   const anchor = [...sents].reverse().find(x => x !== u.sentence && countOcc(stateNotes.notes, x) === 1);
-  const LEAD = G.opts.unknowableLead ?? 'Also: ';
+  const lead = who => `Also in ${who}: `;
   const place = (who, text) => (deleting ? [{ old: u.sentence, new: '', delete: true, role: 'unknowable' }]
-    : !anchor ? [{ old: u.sentence, new: `${LEAD}${text}`, role: 'unknowable' }]
-      : [{ old: u.sentence, new: '', delete: true, role: 'move' }, { old: anchor, new: `${anchor} ${LEAD}${text}`, role: 'unknowable' }]);
+    : !anchor ? [{ old: u.sentence, new: `${lead(who)}${text}`, role: 'unknowable' }]
+      : [{ old: u.sentence, new: '', delete: true, role: 'move' }, { old: anchor, new: `${anchor} ${lead(who)}${text}`, role: 'unknowable' }]);
   const U = { ...stated, edits: [...scr.edits, ...place(nd.T1, nd.F1)], kitSlots: { ...stated.kitSlots, paragraphs }, variant: 'unknowable', axis: 'unknowable', soft: true, label: pickBy(options, 'unk', ...key),
     decisive: nd.F1 ? [nd.F1] : [], role: 'nondeciding', surface: { source: nd.phrasing === 'new' ? 'ood-line' : 'bed', line: null, from: nd.from },
     counterfactual: { swapped: true, kind: 'unknowable', from: tplName(u, u.index), to: nd.from, pool: u.pool, nondeciding: nd.kind, phrasing: nd.phrasing },
@@ -755,14 +818,18 @@ export function slotPlans(G, W, port, u, scr, job, key, units, { askBoth = false
     labelT = port === 'R1' ? flipOrder(T.label) : OTHER[port][T.label];
     dT = decide(G, W, T, port, labelT, { mode: 'bed', key: [...key, 'T'] });
     if (!dT || dT.unchanged || (port === 'R1' && !ORDERS.includes(labelT))) { bump(G, `skip:${port}:slot:partner-not-flippable`); return null; }
-    edits.push({ old: T.sentence, new: dT.text, role: 'partner' });
   } else if (port === 'R1' && !ORDERS.includes(T.label)) return null;
+  if (port === 'R4') {                                                // the partner's date window is a coin of its own: the window in the note must not follow the label
+    const wantW = frac('slotW', ...key) < 0.5;
+    if (wantW !== hasDateWindow(dT?.text ?? T.sentence)) { const d2 = r4Side(G, W, T, labelT, wantW, [...key, 'Tw']); if (d2) dT = d2.unchanged ? null : d2; }
+  }
+  if (dT && !dT.unchanged) edits.push({ old: T.sentence, new: dT.text, role: 'partner' });
   const mid = applyEdits(W.task.inputs.source_notes, edits);
   if (!mid.ok) return null;
   const groups = H32('slotorder', ...key) % 2 ? [u.sys, T.sys] : [T.sys, u.sys];
   const paragraphs = groupParagraphs(mid.notes, groups);
   const mk = (plan, asked, label, other, otherLabel) => ({ ...plan, edits, label, u: asked, system: asked.sys, kitSlots: { ...slotsOfUnit(G, port, asked), paragraphs }, qslots: slotsOfUnit(G, port, asked), variant: 'slot-swap', axis: 'slot',
-    cell: `${port}|${asked.sys}`, counts: countsOf(port, asked.sys, label, port === 'R4'), extra: { meta: { slot: { asked: asked.sys, other: other.sys, label, otherLabel, order: groups.join('>') } } }, decisive: [...A.decisive, dT?.text ?? T.sentence] });
+    cell: `${port}|${asked.sys}`, counts: countsOf(port, asked.sys, label, port === 'R4'), extra: { meta: { slot: { asked: asked.sys, other: other.sys, label, otherLabel, order: groups.join('>') } } }, decisive: asked === u ? [...A.decisive, dT?.text ?? T.sentence] : [dT?.text ?? T.sentence, ...A.decisive] });
   const plans = [mk(A, u, A.label, T, labelT)];
   if (askBoth) plans.push(mk(A, T, labelT, u, A.label));
   if (askBoth) return withPair(plans, key);
@@ -788,11 +855,11 @@ export const DEFAULT_ROWS = Object.freeze({
 });
 export const TEST_OOD_AXES = Object.freeze({
   R: { template: 600, 'bed-template': 150, paraphrase: 400, injection: 800, unknowable: 300, long: 150, flip: 400, invariance: 400, slot: 200 },
-  X5: { template: 1000, paraphrase: 400, injection: 800, long: 300, flip: 400, slot: 200, unknowable: 300, unrelated: 100, absent: 40 },
+  X5: { template: 1000, paraphrase: 400, injection: 800, long: 300, flip: 400, slot: 200, unknowable: 400, unrelated: 100, absent: 25 },
   X8: { template: 600, paraphrase: 400, injection: 800, flip: 400 },
   X1: { template: 100, paraphrase: 67, long: 25 },
 });
-const MIX_TRAIN = Object.freeze({ clean: 0.50, flip: 0.10, injection: 0.10, slot: 0.20, unknowable: 0.05, long: 0.05 });
+const MIX_TRAIN = Object.freeze({ clean: 0.48, flip: 0.10, injection: 0.10, slot: 0.22, unknowable: 0.05, long: 0.05 });
 const MIX_OOD = Object.freeze({ template: 0.70, slot: 0.10, unknowable: 0.10, injection: 0.10 });
 export const JOBS = Object.freeze({
   clean: { variant: 'clean', mode: 'mixed' }, template: { variant: 'clean', mode: 'ood' }, 'bed-template': { variant: 'clean', mode: 'heldout-bed' },
@@ -826,8 +893,6 @@ function scrubFor(G, W, keep) {
 // Produce (and count) the records of one unit for one job, or null.
 export function runJob(G, W, port, u, jobId, units) {
   const job = { id: jobId, ...JOBS[jobId], axis: jobId };
-  // an unknowable pair is presence-matched: its decisive sentence names its system like the foreign sentence does
-  if (jobId === 'unknowable' && port !== 'R2' && G.control !== 'deletion-unknowable' && !G.ood && !namesSystem(u.sentence, u.sys)) return null;
   if (G.ood && G.slice !== 'test-ood' && ['injection', 'slot', 'long'].includes(jobId)) job.mode = 'ood-pref';
   const key = jobKey(G.slice, W, port, u, jobId);
   const scr = scrubFor(G, W, jobId === 'bed-template' ? new Set([u.id]) : new Set());
@@ -864,8 +929,8 @@ export function runJob(G, W, port, u, jobId, units) {
 // system but settles nothing), or absent-system (a paragraph of another system only; at most 10%).
 const X5_KINDS = Object.freeze(['R1', 'R2', 'R3', 'R4']);
 const X5_LABELS = Object.freeze(['holds', 'violated', 'not_stated']);
-export const X5_MIX_TRAIN = Object.freeze({ pair: 0.50, unknowable: 0.15, unrelated: 0.04, absent: 0.02, injection: 0.10, slot: 0.14, long: 0.05 });
-export const X5_MIX_OOD = Object.freeze({ template: 0.60, unknowable: 0.15, unrelated: 0.05, absent: 0.02, slot: 0.08, injection: 0.10 });
+export const X5_MIX_TRAIN = Object.freeze({ pair: 0.46, unknowable: 0.20, unrelated: 0.04, absent: 0.01, injection: 0.10, slot: 0.14, long: 0.05 });
+export const X5_MIX_OOD = Object.freeze({ template: 0.56, unknowable: 0.20, unrelated: 0.05, absent: 0.01, slot: 0.08, injection: 0.10 });
 export const X5_JOB_ORDER = Object.freeze(['long', 'slot', 'unknowable', 'unrelated', 'absent', 'injection', 'flip', 'paraphrase', 'template', 'pair']);
 const kindValues = (G, kind) => (kind === 'R1' ? ['dmy', 'mdy', 'ymd'] : OPT_LABELS[kind]);
 function assumptionFor(G, W, u, kind, value, key, { ood = false } = {}) {
@@ -902,20 +967,16 @@ export function x5PairPlans(G, W, kind, u, scr, job, key) {
   return withPair(plans, key);
 }
 export function x5UnknowablePlans(G, W, kind, u, scr, job, key, units) {
-  const phrasing = job.phrasing ?? (G.ood ? 'new' : 'known');
-  const nd = nonDeciding(G, W, units, u, kind, key, { phrasing });
-  if (!nd) { bump(G, `skip:X5:unknowable:no-nondeciding`); return null; }
-  const value = pickBy(kindValues(G, kind), 'uv', ...key), a = assumptionFor(G, W, u, kind, value, [...key, 'u'], { ood: G.ood && phrasing === 'new' });
-  if (!a) { bump(G, `skip:X5:unknowable:no-assumption`); return null; }
-  a.value = value;
-  const stated = cleanPlan(G, W, kind, u, scr, { ...job, variant: 'clean', mode: 'bed', cellPrefix: `X5:${kind}` }, key, { target: u.label });
-  const P = { ...stated, edits: [...scr.edits, { old: u.sentence, new: nd.text, role: 'unknowable' }], decisive: [nd.text], role: 'nondeciding', counts: [],
-    surface: { source: nd.phrasing === 'new' ? 'ood-line' : 'bed', line: null, from: nd.from },
-    counterfactual: { swapped: true, kind: 'unknowable', from: tplName(u, u.index), to: nd.from, pool: u.pool, nondeciding: nd.kind, phrasing: nd.phrasing } };
-  const stateNotes = applyEdits(W.task.inputs.source_notes, scr.edits);
-  const X = x5Plan(G, W, kind, { ...P, kitSlots: { ...P.kitSlots, paragraphs: stateNotes.ok ? groupParagraphs(stateNotes.notes, [u.sys]) : undefined } }, 'not_stated', a, { counts: false, extraMeta: { notStated: 'presence-matched', phrasing: nd.phrasing, nondecidingKind: nd.kind } });
-  X.variant = 'unknowable'; X.axis = 'unknowable';
-  return [X];
+  const pair = unknowablePlans(G, W, kind, u, scr, { ...job, cellPrefix: `X5:${kind}` }, key, units);
+  if (!pair) return null;
+  const [S, U] = pair, ood = G.ood && U.counterfactual?.phrasing === 'new';
+  const value = pickBy(kindValues(G, kind), 'uv', ...key);
+  const aHold = assumptionFor(G, W, u, kind, u.label, [...key, 'h'], { ood: false }), aUnk = assumptionFor(G, W, u, kind, value, [...key, 'u'], { ood: false });
+  if (!aHold || !aUnk) { bump(G, `skip:X5:unknowable:no-assumption`); return null; }
+  aHold.value = u.label; aUnk.value = value;
+  const A = x5Plan(G, W, kind, S, 'holds', aHold, { counts: false }), B = x5Plan(G, W, kind, U, 'not_stated', aUnk, { counts: false, extraMeta: { notStated: 'presence-matched', phrasing: U.counterfactual.phrasing, nondecidingKind: U.counterfactual.nondeciding } });
+  A.variant = 'clean'; A.axis = 'unknowable-stated'; B.variant = 'unknowable'; B.axis = 'unknowable';
+  return withPair([A, B], key);
 }
 // not_stated by unrelated text: the notes' introduction (it names every system) and another system's paragraph
 // (preamble: true), or that paragraph alone (absent-system: the text does not even name the system).
@@ -1101,7 +1162,7 @@ const OTHER_CONV = (conv, c) => (conv.pool === 'order' ? flipOrder(c) : conv.poo
 const X8_PORT_OF = { order: 'R1', persp: 'R3', flag: 'R2' };
 function x8ChooseItem(G, W, units, job, key, { needConv = false, needInjection = false } = {}) {
   const rows = x8Rows(G, W).map(r => ({ r, h: H32('x8row', ...key, r.rowId) })).sort((a, b) => a.h - b.h);
-  const bag = []; for (const f of X8_FIELDS) for (let i = 0; i < Math.round(X8_FIELD_WEIGHT[f] * 20); i++) bag.push(f);
+  const bag = []; for (const f of (G.opts.x8Fields ?? X8_FIELDS)) for (let i = 0; i < Math.round(X8_FIELD_WEIGHT[f] * 20); i++) bag.push(f);
   for (const { r } of rows.slice(0, 40)) {
     if (needInjection && !r.row.advMemo) continue;
     const field = pickBy(bag, 'xf', ...key, r.rowId);

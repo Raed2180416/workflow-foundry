@@ -122,6 +122,13 @@ export function localDiagnostics(surface) {
   return out;
 }
 export function writeManifest(manifest, file = MANIFEST_PATH) { put(file, JSON.stringify(manifest, null, 1) + '\n'); return file; }
+// Rebuild the manifest after any output changed (the copy-filter report is one of the hashed files): the
+// committed copy (hashes and counts only) and the copy beside the outputs.
+export function refreshManifest(model, outDir = HELDOUT_DIR) {
+  const manifest = buildManifest(model, outDir);
+  writeManifest(manifest); put(path.join(outDir, 'manifest.json'), JSON.stringify(manifest, null, 1) + '\n');
+  return manifest;
+}
 
 // ---- CLI -------------------------------------------------------------------------------------------------------
 function report(model) {
@@ -145,6 +152,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     console.log(JSON.stringify({ status: manifest.status, wordings: Object.keys(manifest.wordings.perPort).length, registry: manifest.registry.entries }, null, 1));
   } else if (cmd === 'manifest') {
     const model = assemble(authored, { lenient: true });
-    const manifest = buildManifest(model, out); writeManifest(manifest); console.log(`wrote ${path.relative(REPO_ROOT, MANIFEST_PATH)}`);
+    refreshManifest(model, out); console.log(`wrote ${path.relative(REPO_ROOT, MANIFEST_PATH)}`);
   } else { console.error('usage: author.mjs check|build|manifest [--authored DIR] [--out DIR]'); process.exit(2); }
 }

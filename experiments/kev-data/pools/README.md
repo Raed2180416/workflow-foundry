@@ -11,9 +11,9 @@ the held-out surface:
 | Port | What the pool holds | Admitted lines (current build) |
 |---|---|---|
 | R1 `date_order` | paraphrases of the 38 non-held-out `ORDER_NOTE` templates (ATLAS, BRIGHTDESK, VENDEX; dmy and mdy); counterfactual year-first lines (label `ymd`) for the three systems | 1,182 |
-| R2 `status_meaning` | paraphrases of the 12 non-held-out `FLAG_NOTE` templates (live and void); KOBO live-flag lines | 360 |
+| R2 `status_meaning` | paraphrases of the 12 non-held-out `FLAG_NOTE` templates (live and void); KOBO live-flag lines | 376 |
 | R3 `sign_convention` | paraphrases of the 24 non-held-out `PERSP_NOTE` templates (BRIGHTDESK, ATLAS, LEDGR, KOBO; same and opposite) | 638 |
-| R4 `timestamp_reliability` | paraphrases of the 8 non-held-out `MIRROR_NOTE` / `RELIABLE_NOTE` templates; restamped lines without a date window; reliable lines with one; KOBO mirror lines | 480 |
+| R4 `timestamp_reliability` | paraphrases of the 8 non-held-out `MIRROR_NOTE` / `RELIABLE_NOTE` templates; restamped lines without a date window; reliable lines with one; KOBO mirror lines | 481 |
 | X1 `injected_instruction` | per train family (records, incident, synth, runbook, codefix, gameqa): positives (about 60% without addressee words), benign memos, decoys, hard negatives (about 38% of the negatives carry addressee words) | 843 |
 | X5 `precondition_holds` | records assumption phrasings (the `{assumption}` slot): one clause per convention asserted | 122 |
 
@@ -28,7 +28,8 @@ the held-out surface:
 | `authored/*.mjs` | the authored lines (data only, no imports): 1 file per logical part, `-2`, `-3` ... are top-ups |
 | `train-manifest.json` | committed: digests of the authored files and of every output file, counts, balance numbers, specGaps, deferrals. No pool line text |
 | `../test/train-pools.test.mjs` | the acceptance tests (`node --test experiments/kev-data/test/train-pools.test.mjs`, about 35 s) |
-| `.foundry/kev-data/pools/train/{R1,R2,R3,R4,X1,X5}.jsonl`, `rejects.jsonl` | built output, git-ignored |
+| `.foundry/kev-data/pools/train/{R1,R2,R3,R4,X1,X5}.jsonl` | built output, git-ignored. The directory holds pool lines only: other groups scan it (the heldout copy filter reads every string in it) |
+| `.foundry/kev-data/pools/train-rejects/rejects.jsonl` | the reject log, next to the pool directory and not in it: rejected candidates are not train-pool lines |
 
 Rebuild: `node experiments/kev-data/pools/train-pools.mjs build` (freezes the beds into a throw-away temp
 copy, writes the pool and the manifest). Both are deterministic: the same authored files and the same records
@@ -70,7 +71,7 @@ purpose, and are only correct when filled consistently: `{ex}` in the line's ord
   not a copy or a light edit of the source (4-gram Jaccard < 0.5 and unigram Jaccard < 0.85), no near duplicate
   inside a template, no skeleton shared across labels (except slot-carried flip twins), no copy of a bed sentence
   (X1: 4-gram Jaccard < 0.5 against every string of the train-family beds), skeleton bucket 40-100% (§3.1 "train
-  ... skeleton buckets 40-100%"). `rejects.jsonl` keeps every rejected candidate with all reasons.
+  ... skeleton buckets 40-100%"). `train-rejects/rejects.jsonl` keeps every rejected candidate with all reasons.
 * **Two-model filter: deferred to hosted-arms.** Every line is `filters.twoModel = "pending"`. `briefsFor(line)`
   builds the zero-shot question (the port's Q0 with the line as the note; two briefs for X5), `node train-pools.mjs
   briefs --pool DIR --out FILE` writes them all, and `applyTwoModelVerdicts` / `apply-verdicts` admit a line only

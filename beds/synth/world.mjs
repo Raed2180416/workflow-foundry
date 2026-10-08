@@ -28,6 +28,7 @@ export const POLICIES = {
 //   erratumDecoy  an erratum on the winner corrects its NON-standard value (the standard value stands),
 //   loserErratum  an erratum corrects a losing document (erratum targets are not always winners),
 //   supersededLoser a losing document that has an earlier (void) version,
+//   condErratum   a better-ranked document whose claim looks standard but whose erratum says it was measured under a non-standard condition,
 //   bound         a better-ranked document that only states a bound or a detection limit for the cell (not a value),
 //   quoteInDoc    the winner quotes another value for the same cell in the sentence that gives its own,
 //   comparison    the winner reports the same property for a comparator entity in the same sentence.
@@ -44,13 +45,15 @@ export const POLICIES = {
 //   tables: probability that a document reports its measured claims in a small table (header with units / conditions).
 //   replicates: probability that a measured value is given as the list of its replicate results (the mean is the claim).
 //   factorErratum: probability that a value erratum is an arithmetic one ("too large by a factor of 10").
+//   pronoun: probability that a claim (or a comparison) is rendered as a two-sentence unit whose second sentence refers to its entity as "Its".
+//   symmetry: probabilities that a non-winning candidate document gets an extra non-standard / quoted claim for its cell (counterweight to the winner's decoration).
 //   formVariety: extra sentence templates in every multi-value, erratum, status and sample-size family (a finite regex set does not cover them).
 //   redHerrings: probability of status-like red herrings (version labels on single versions, banners
 //                about journal submission, preprint mentions of out-of-corpus versions, measured-claim
 //                sentences that cite other work or say "as expected", explicitly unmodified forms).
 export const KNOBS = {
   1: {
-    formVariety: true, decoyTemp: 0, protocols: 0, tables: 0, replicates: 0, factorErratum: 0, entities: 2, cells: 4, policies: ['P1'], aliasInPrompt: true, nInMeta: true, mixedLabels: false, mixedDates: false,
+    formVariety: true, decoyTemp: 0, protocols: 0, tables: 0, replicates: 0, factorErratum: 0, pronoun: 0, symmetry: { nonstd: 0.3, quoted: 0.1, notice: 0.15, concern: 0.05 }, entities: 2, cells: 4, policies: ['P1'], aliasInPrompt: true, nInMeta: true, mixedLabels: false, mixedDates: false,
     unitLevel: 1, plusMinus: false, fancyNumbers: false, pairs: 0, spelledN: false, background: 1, entityFiller: 0, condLevel: 1,
     docDefault: 0, ranges: 0, methodNums: 0, contrast: 0, split: 0, addN: 0, durations: 0, unitWords: 0, anaphora: 0, nVariety: 0, decoyP: 0, refStyles: ['id'], redHerrings: 0, otherErrata: 0, oocCollide: false,
     filler: { retract: 0, errata: 0, press: 0, supersede: 0 }, ooc: 0, erratumOnVoid: false, unitErratum: false, injection: false,
@@ -58,7 +61,7 @@ export const KNOBS = {
     extras: { loser: 0.3 }, attachP: 0.2,
   },
   2: {
-    formVariety: true, decoyTemp: 0.1, protocols: 0, tables: 0, replicates: 0.08, factorErratum: 0, entities: 3, cells: 6, policies: ['P1'], aliasInPrompt: true, nInMeta: true, mixedLabels: false, mixedDates: false,
+    formVariety: true, decoyTemp: 0.1, protocols: 0, tables: 0, replicates: 0.08, factorErratum: 0, pronoun: 0, symmetry: { nonstd: 0.3, quoted: 0.1, notice: 0.15, concern: 0.05 }, entities: 3, cells: 6, policies: ['P1'], aliasInPrompt: true, nInMeta: true, mixedLabels: false, mixedDates: false,
     unitLevel: 2, plusMinus: false, fancyNumbers: false, pairs: 0, spelledN: false, background: 1, entityFiller: 1, condLevel: 2,
     docDefault: 0.05, ranges: 0.05, methodNums: 0.1, contrast: 0.1, split: 0.1, addN: 0.1, durations: 0.15, unitWords: 0.1, anaphora: 0.25, nVariety: 0.15, decoyP: 0.2, refStyles: ['id'], redHerrings: 0.1, otherErrata: 0, oocCollide: false,
     filler: { retract: 1, errata: 1, press: 0, supersede: 0 }, ooc: 0, erratumOnVoid: false, unitErratum: false, injection: false,
@@ -66,35 +69,35 @@ export const KNOBS = {
     extras: { loser: 0.3, press: 0.15, conditions: 0.15, nonstdSameDoc: 0.25, loserErratum: 0.1 }, attachP: 0.25,
   },
   3: {
-    formVariety: true, decoyTemp: 0.2, protocols: 0.3, tables: 0.3, replicates: 0.15, factorErratum: 0.3, entities: 4, cells: 9, policies: ['P1', 'P2', 'P3', 'P4'], aliasInPrompt: false, nInMeta: false, mixedLabels: true, mixedDates: true,
+    formVariety: true, decoyTemp: 0.2, protocols: 0.3, tables: 0.3, replicates: 0.15, factorErratum: 0.3, pronoun: 0.15, symmetry: { nonstd: 0.5, quoted: 0.25, notice: 0.27, concern: 0.1 }, entities: 4, cells: 9, policies: ['P1', 'P2', 'P3', 'P4'], aliasInPrompt: false, nInMeta: false, mixedLabels: true, mixedDates: true,
     unitLevel: 2, plusMinus: true, fancyNumbers: false, pairs: 0.5, spelledN: false, background: 1, entityFiller: 1, condLevel: 2,
     docDefault: 0.25, ranges: 0.12, methodNums: 0.3, contrast: 0.3, split: 0.25, addN: 0.2, durations: 0.3, unitWords: 0.15, anaphora: 0.4, nVariety: 0.35, decoyP: 0.6, refStyles: ['title', 'topic', 'date', 'vague', 'cite', 'bare'], redHerrings: 0.3, otherErrata: 1, oocCollide: false,
     filler: { retract: 1, errata: 1, press: 1, supersede: 1 }, ooc: 1, erratumOnVoid: false, unitErratum: false, injection: false,
     mandatory: ['pressOnly', 'retracted', 'erratum', 'press', 'conditions', 'superseded', 'unit', 'rank', 'concern', 'quoted', 'distractor', 'aliasOnly',
-      'grossN', 'erratumDecoy', 'comparison', 'bound'],
-    extras: { bound: 0.1, quoteInDoc: 0.3, comparison: 0.1, loser: 0.2, press: 0.1, conditions: 0.1, retracted: 0.1, rank: 0.15, quoted: 0.1, aliasOnly: 0.3, nonstdSameDoc: 0.3, erratum: 0.08,
+      'grossN', 'erratumDecoy', 'comparison', 'bound', 'condErratum'],
+    extras: { condErratum: 0.08, bound: 0.1, quoteInDoc: 0.3, comparison: 0.1, loser: 0.2, press: 0.1, conditions: 0.1, retracted: 0.1, rank: 0.15, quoted: 0.1, aliasOnly: 0.3, nonstdSameDoc: 0.3, erratum: 0.08,
       nErratum: 0.1, loserErratum: 0.12, supersededLoser: 0.12 },
     attachP: 0.3,
   },
   4: {
-    formVariety: true, decoyTemp: 0.25, protocols: 0.35, tables: 0.4, replicates: 0.18, factorErratum: 0.35, entities: 5, cells: 12, policies: ['P1', 'P2', 'P3', 'P4'], aliasInPrompt: false, nInMeta: false, mixedLabels: true, mixedDates: true,
+    formVariety: true, decoyTemp: 0.25, protocols: 0.35, tables: 0.4, replicates: 0.18, factorErratum: 0.35, pronoun: 0.2, symmetry: { nonstd: 0.5, quoted: 0.25, notice: 0.15, concern: 0.1 }, entities: 5, cells: 12, policies: ['P1', 'P2', 'P3', 'P4'], aliasInPrompt: false, nInMeta: false, mixedLabels: true, mixedDates: true,
     unitLevel: 3, plusMinus: true, fancyNumbers: true, pairs: 0.6, spelledN: true, background: 2, entityFiller: 1, condLevel: 2,
     docDefault: 0.3, ranges: 0.15, methodNums: 0.35, contrast: 0.3, split: 0.3, addN: 0.2, durations: 0.35, unitWords: 0.2, anaphora: 0.45, nVariety: 0.4, decoyP: 0.7, refStyles: ['title', 'topic', 'date', 'vague', 'cite', 'bare'], redHerrings: 0.35, otherErrata: 1, oocCollide: true,
     filler: { retract: 2, errata: 1, press: 1, supersede: 1 }, ooc: 1, erratumOnVoid: true, unitErratum: true, injection: false,
     mandatory: ['pressOnly', 'retracted', 'erratum', 'press', 'conditions', 'superseded', 'unit', 'rank', 'concern', 'quoted', 'distractor',
-      'aliasOnly', 'variant', 'predicted', 'distractor', 'grossN', 'erratumDecoy', 'nErratum', 'comparison', 'quoteInDoc', 'bound'],
-    extras: { bound: 0.08, quoteInDoc: 0.2, comparison: 0.1, loser: 0.1, press: 0.06, conditions: 0.06, retracted: 0.05, rank: 0.12, quoted: 0.06, aliasOnly: 0.35, variant: 0.04, predicted: 0.04,
+      'aliasOnly', 'variant', 'predicted', 'distractor', 'grossN', 'erratumDecoy', 'nErratum', 'comparison', 'quoteInDoc', 'bound', 'condErratum'],
+    extras: { condErratum: 0.06, bound: 0.08, quoteInDoc: 0.2, comparison: 0.1, loser: 0.1, press: 0.06, conditions: 0.06, retracted: 0.05, rank: 0.12, quoted: 0.06, aliasOnly: 0.35, variant: 0.04, predicted: 0.04,
       nonstdSameDoc: 0.3, erratum: 0.06, loserErratum: 0.06, supersededLoser: 0.06 },
     attachP: 0.3,
   },
   5: {
-    formVariety: true, decoyTemp: 0.25, protocols: 0.35, tables: 0.4, replicates: 0.18, factorErratum: 0.35, entities: 6, cells: 16, policies: ['P1', 'P2', 'P3', 'P4'], aliasInPrompt: false, nInMeta: false, mixedLabels: true, mixedDates: true,
+    formVariety: true, decoyTemp: 0.25, protocols: 0.35, tables: 0.4, replicates: 0.18, factorErratum: 0.35, pronoun: 0.2, symmetry: { nonstd: 0.5, quoted: 0.25, notice: 0.1, concern: 0.1 }, entities: 6, cells: 16, policies: ['P1', 'P2', 'P3', 'P4'], aliasInPrompt: false, nInMeta: false, mixedLabels: true, mixedDates: true,
     unitLevel: 3, plusMinus: true, fancyNumbers: true, pairs: 0.6, spelledN: true, background: 1, entityFiller: 1, condLevel: 2,
     docDefault: 0.3, ranges: 0.15, methodNums: 0.35, contrast: 0.3, split: 0.3, addN: 0.2, durations: 0.35, unitWords: 0.2, anaphora: 0.5, nVariety: 0.4, decoyP: 0.7, refStyles: ['title', 'topic', 'date', 'vague', 'cite', 'bare'], redHerrings: 0.35, otherErrata: 1, oocCollide: true,
     filler: { retract: 2, errata: 1, press: 1, supersede: 1 }, ooc: 1, erratumOnVoid: true, unitErratum: true, injection: true,
     mandatory: ['pressOnly', 'retracted', 'erratum', 'press', 'conditions', 'superseded', 'unit', 'rank', 'concern', 'quoted', 'distractor',
-      'aliasOnly', 'variant', 'predicted', 'distractor', 'retracted', 'erratum', 'grossN', 'erratumDecoy', 'nErratum', 'comparison', 'quoteInDoc', 'bound'],
-    extras: { bound: 0.08, quoteInDoc: 0.2, comparison: 0.1, loser: 0.08, press: 0.05, conditions: 0.05, retracted: 0.03, rank: 0.1, quoted: 0.05, aliasOnly: 0.4, variant: 0.03, predicted: 0.03,
+      'aliasOnly', 'variant', 'predicted', 'distractor', 'retracted', 'erratum', 'grossN', 'erratumDecoy', 'nErratum', 'comparison', 'quoteInDoc', 'bound', 'condErratum'],
+    extras: { condErratum: 0.06, bound: 0.08, quoteInDoc: 0.2, comparison: 0.1, loser: 0.08, press: 0.05, conditions: 0.05, retracted: 0.03, rank: 0.1, quoted: 0.05, aliasOnly: 0.4, variant: 0.03, predicted: 0.03,
       nonstdSameDoc: 0.3, erratum: 0.04, loserErratum: 0.05, supersededLoser: 0.05 },
     attachP: 0.3,
   },
@@ -159,22 +162,24 @@ export function resolve(world, o = {}) {
   const voidSet = new Set([...(o.keepRetracted ? [] : retracted), ...(o.keepSuperseded ? [] : superseded)]);
   // Errata correct one specific claim (identified by cid). `erratumByDoc` is the near miss that
   // applies a correction to the standard claim of the same document, entity and property.
-  const corr = new Map(), byDoc = new Map();
+  const corr = new Map(), byDoc = new Map(), condFix = new Set();
   if (!o.skipErrata) {
     for (const e of world.errata) {
+      if (e.kind === 'cond') { if (!o.skipCondErrata) condFix.add(e.cid); continue; }
       if (e.kind !== 'value' && e.kind !== 'unit' && e.kind !== 'factor') continue;
       corr.set(e.cid, e);
       byDoc.set(`${e.target}|${e.ent}|${e.prop}`, e);
     }
   }
+  const condOf = c => (condFix.has(c.cid) ? 'non' : c.cond); // a condition erratum says the claim was in fact measured under a non-standard condition
   const nOf = d => (o.printedN ? (d.nPrinted ?? d.n) : o.grossN ? (d.nGross ?? d.n) : d.n);
   const policy = o.policy || world.policy;
   const cells = world.requested.map(cell => {
     let cands = world.claims.filter(c => c.prop === cell.prop && c.ent === cell.ent
-      && (o.anyMode || c.mode === 'measured') && (o.ignoreConditions || c.cond === 'std') && (o.allowVariants || !c.variant)
+      && (o.anyMode || c.mode === 'measured' || (o.countBounds && c.mode === 'bound')) && (o.ignoreConditions || condOf(c) === 'std') && (o.allowVariants || !c.variant)
       && SOURCE_KINDS.has(docs.get(c.doc).kind) && !voidSet.has(c.doc));
     cands = cands.map(c => {
-      if (c.mode !== 'measured' || c.cond !== 'std' || c.variant) return c;
+      if (c.mode !== 'measured' || condOf(c) !== 'std' || c.variant) return c;
       const e = corr.get(c.cid) || (o.erratumByDoc ? byDoc.get(`${c.doc}|${c.ent}|${c.prop}`) : null);
       return e ? { ...c, value: e.value, unit: e.unit, corrected: e.doc } : c;
     });
@@ -260,7 +265,7 @@ export function buildWorld(seed, split, difficulty, attempt = 0) {
     const fs = cell.feats;
     if (['aliasOnly', 'pressOnly', 'distractor'].includes(f) && fs.has(f)) return false;
     if (fs.has('pressOnly') && ['erratum', 'superseded', 'rank', 'press', 'loser', 'concern', 'nonstdSameDoc', 'grossN', 'nErratum', 'erratumDecoy',
-      'loserErratum', 'supersededLoser', 'quoteInDoc', 'comparison', 'bound'].includes(f)) return false;
+      'loserErratum', 'supersededLoser', 'quoteInDoc', 'comparison', 'bound', 'condErratum'].includes(f)) return false;
     if (f === 'pressOnly' && fs.size) return false;
     if (N_FEATURES.has(f) && (pol.id === 'P2' || [...N_FEATURES].some(x => fs.has(x)))) return false;
     // under P3 a 'rank' cell has a non-journal winner; features that need a journal winner clash
@@ -310,10 +315,13 @@ export function buildWorld(seed, split, difficulty, attempt = 0) {
   const order = (a, b) => world.constraints.push([a.key, b.key]);
   const logUniform = ([lo, hi]) => Math.exp(r.float(Math.log(lo), Math.log(hi)));
   const truthFor = P => (P.tempLike ? r.float(P.range[0], P.range[1]) : logUniform(P.range));
+  // Every other value of a cell is the truth moved up or down. The direction is tilted per cell (all up, all down,
+  // mixed), so that the truth is not systematically the median of the cell's values.
+  let cellTilt = 0.5;
   const perturb = (prop, truth, lo = 0.08, hi = 0.45) => {
     const P = PROPS[prop];
     const u = P.tempLike ? r.float(0.06, 0.25) : r.float(lo, hi);
-    return r.chance(0.5) ? truth * (1 + u) : truth / (1 + u);
+    return r.chance(cellTilt) ? truth * (1 + u) : truth / (1 + u);
   };
   const pickUnit = (prop, pCanon = 0.5) => {
     const pool = unitPool(prop, K.unitLevel);
@@ -342,6 +350,13 @@ export function buildWorld(seed, split, difficulty, attempt = 0) {
       doc: E.key, target: T.key, kind: 'value', cid: claim.cid, ent: claim.ent, prop: claim.prop, oldValue: claim.value, oldUnit: claim.unit,
       value: newValue, unit: claim.unit, condText: claim.condText, ...extra,
     });
+    return E;
+  };
+  const addCondErratum = (T, claim, newCond) => {
+    const ent = world.entities.find(e => e.key === claim.ent);
+    const E = newDoc('erratum', ent, { role: 'notice', venue: T.venue, authors: T.authors });
+    E.date = after(T, 15, 300); order(T, E);
+    world.errata.push({ doc: E.key, target: T.key, kind: 'cond', cid: claim.cid, ent: claim.ent, prop: claim.prop, oldValue: claim.value, oldUnit: claim.unit, value: claim.value, unit: claim.unit, oldCond: claim.condText, newCond });
     return E;
   };
   // A trap document that would beat W under the policy if its claim were (wrongly) accepted.
@@ -406,7 +421,10 @@ export function buildWorld(seed, split, difficulty, attempt = 0) {
   for (const cell of cells) {
     const f = cell.feats, prop = cell.prop, P = PROPS[prop];
     const ent = world.entities.find(e => e.key === cell.ent);
+    cellTilt = r.pick([0.05, 0.25, 0.5, 0.75, 0.95]);
+    cell.tilt = cellTilt;
     const truth = truthFor(P);
+    cell.truth = truth;
     let wKind;
     if (f.has('pressOnly')) wKind = 'press';
     else if (f.has('rank') && P3) wKind = r.chance(0.6) ? 'preprint' : 'labnote';
@@ -453,6 +471,12 @@ export function buildWorld(seed, split, difficulty, attempt = 0) {
     if (f.has('conditions')) {
       const N = beater(W, ent);
       addClaim(N, ent, prop, perturb(prop, truth), pickUnit(prop), { cond: 'non' });
+    }
+    if (f.has('condErratum')) {
+      // a better-ranked document whose claim is printed under a standard-looking condition; its erratum says the sample was in fact measured under a non-standard one
+      const T = beater(W, ent);
+      const tc = addClaim(T, ent, prop, perturb(prop, truth), pickUnit(prop));
+      addCondErratum(T, tc, condFor(prop, false, r, K.condLevel));
     }
     if (f.has('rank')) {
       let L;
@@ -548,6 +572,43 @@ export function buildWorld(seed, split, difficulty, attempt = 0) {
       const u = r.float(0.2, 0.7);
       const ex = P.better === 'down' ? truth / (1 + u) : truth * (1 + u);
       addClaim(PR, ent, prop, ex, pickUnit(prop, 0.6));
+    }
+  }
+
+  // --- symmetry pass ----------------------------------------------------------------------
+  // The winner of a cell carries more decoration than the documents it beats (a second value for the same
+  // property under another condition, a quoted value, notices). Without a counterweight, "the document with the
+  // most values for the cell" would find the winner. Non-winning candidate documents therefore get the same kinds
+  // of extra same-cell claims at matching rates (the extras never count: non-standard condition or quoted).
+  for (const cell of cells) {
+    cellTilt = cell.tilt;
+    const ent = world.entities.find(e => e.key === cell.ent), P = PROPS[cell.prop];
+    const truthC = cell.truth; // the true canonical value (the winner's printed value may be erroneous)
+    if (truthC == null) continue;
+    for (const D of world.docs.filter(d => d.key !== cell.W && isResearch(d) && ['trap', 'loser', 'ntrap', 'rank'].includes(d.role) && d.ent === ent.key)) {
+      if (!stdClaimOf(D, ent, cell.prop) && !world.claims.some(c => c.doc === D.key && c.ent === ent.key && c.prop === cell.prop)) continue;
+      if (K.symmetry && r.chance(K.symmetry.nonstd) && !world.claims.some(c => c.doc === D.key && c.ent === ent.key && c.prop === cell.prop && c.cond === 'non' && c.mode === 'measured')) {
+        addClaim(D, ent, cell.prop, perturb(cell.prop, truthC), pickUnit(cell.prop), { cond: 'non' });
+      }
+      if (K.symmetry && r.chance(K.symmetry.quoted)) {
+        // like the winner's quoted value, it often echoes another document's value for the cell
+        const echo = world.claims.filter(c => c.ent === ent.key && c.prop === cell.prop && c.mode === 'measured' && c.cond === 'std' && !c.variant
+          && c.doc !== D.key && isResearch(docOf(c.doc)) && docOf(c.doc).date < D.date - 30);
+        const src = echo.length && r.chance(0.6) ? r.pick(echo) : null;
+        addClaim(D, ent, cell.prop, src ? toCanon(cell.prop, src.value, src.unit) : perturb(cell.prop, truthC), src ? src.unit : pickUnit(cell.prop),
+          { mode: 'quoted', quoteDoc: src ? src.doc : null, quoteOf: src ? null : `${r.pick(INITIALS)}. ${r.pick(SURNAMES)}`, quoteYearsBack: r.int(1, 4) });
+      }
+      // notices about the non-winner too ("the document that has a notice about it wins" must not be a rule)
+      if (K.symmetry && ['journal', 'preprint'].includes(D.kind) && r.chance(K.symmetry.notice) && !world.errata.some(x => x.target === D.key && x.kind === 'other')) {
+        const E = newDoc('erratum', ent, { role: 'notice', venue: D.venue, authors: D.authors });
+        E.date = after(D, 15, 300); order(D, E);
+        world.errata.push({ doc: E.key, target: D.key, kind: 'other', ent: D.ent, what: r.int(0, 99) });
+      }
+      if (K.symmetry && D.kind === 'journal' && r.chance(K.symmetry.concern) && !world.concerns.some(x => x.target === D.key)) {
+        const C = newDoc('concern', ent, { role: 'notice', venue: D.venue });
+        C.date = after(D, 30, 400); order(D, C);
+        world.concerns.push({ doc: C.key, target: D.key, reason: r.int(0, 99) });
+      }
     }
   }
 
@@ -676,10 +737,13 @@ export function buildWorld(seed, split, difficulty, attempt = 0) {
 
   // --- naming (aliases) ---------------------------------------------------------------------
   const phantoms = new Set(world.entities.filter(e => e.phantom).map(e => e.key));
+  // An entity whose winner is code-only is code-only in most of its documents (a research group's habit, not a
+  // marker of the winner): otherwise "the document that uses only the code" would find the winner.
+  const codeOnlyEnts = new Set(cells.filter(c => c.feats.has('aliasOnly')).map(c => c.ent));
   for (const d of world.docs) {
     if (!d.ent || phantoms.has(d.ent) || d.naming === 'alias') continue;
     if (d.role === 'superseded' || d.role === 'filler') continue;
-    d.naming = r.chance(0.45) ? 'name' : r.chance(0.55) ? 'alias' : 'both';
+    d.naming = codeOnlyEnts.has(d.ent) && isResearch(d) && r.chance(0.85) ? 'alias' : r.chance(0.45) ? 'name' : r.chance(0.55) ? 'alias' : 'both';
   }
   const voidKeys = new Set([...world.retractions.filter(x => x.target).map(x => x.target), ...world.supersessions.map(x => x.old)]);
   for (const e of world.entities) {

@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# rbench shim for curl: the ONLY URL that may leave this shim is the recorded reference URL, rewritten to the local mock server
+# (127.0.0.1, random port). Any other URL is logged as blocked and fails with curl's "could not connect" status (7). The real curl is
+# called without proxies and without a curlrc, so nothing from the host environment can redirect it.
+set -u
+args=(-q --noproxy '*')
+for a in "$@"; do
+  case "$a" in
+    http://*|https://*)
+      if [ "$a" = "${RBENCH_REFERENCE_URL:?RBENCH_REFERENCE_URL unset}" ]; then
+        printf 'allowed\t%s\n' "$a" >> "${RBENCH_OUT:?RBENCH_OUT unset}/curl.log"
+        args+=(-H "X-Rbench-Original-Url: $a" "http://127.0.0.1:${RBENCH_PORT:?RBENCH_PORT unset}${a#https://"$RBENCH_REFERENCE_HOST"}")
+      else
+        printf 'blocked\t%s\n' "$a" >> "${RBENCH_OUT:?RBENCH_OUT unset}/curl.log"
+        echo "rbench: curl blocked: $a is not the recorded reference URL" >&2
+        exit 7
+      fi ;;
+    *) args+=("$a") ;;
+  esac
+done
+exec "${RBENCH_CURL:?RBENCH_CURL unset}" "${args[@]}"

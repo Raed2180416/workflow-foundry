@@ -5,7 +5,7 @@
   "status": "development evidence: authored by a development agent; the two-model filter (Sonnet 5.5 + Opus 5.5 zero-shot) is deferred to the hosted-arms group and every line is filters.twoModel = \"pending\"",
   "author": "claude-sonnet-5-5 (development agent, this build session)",
   "bed": {
-    "pin": "sha256:d33a6d8e5f076cc0910eb2041b3c4825077b9bb7f9b2844a38827a405ccb2c97",
+    "pin": "sha256:27715273221d4a72b4afdca4fd0a019d319ba2a2ca4ac9fb587b0a64f8ea5e0d",
     "note": "content hash of the nine dev beds; the pool depends only on the consumed sources below",
     "sources": {
       "beds/records/render.mjs": "b7ed58416900952b926e92d10b7080463dad516e7ae2f98040af6e9ca56baae8",
@@ -31,7 +31,7 @@
       "beds/synth/heuristic.mjs": "6c94b00b3506dbd55b0d6556b7ee4c64c95f5c187e48cbc97bfd4a40133abd53",
       "beds/synth/index.mjs": "43c572ca91ef225c8a3a09f7a1666e28de36353ac914be490811aa91a8ffd15f",
       "beds/synth/render.mjs": "2de67209d9d9b51e149eceb47bd2e84d0f4111c174bebd3b73dfca86ceec4180",
-      "beds/synth/world.mjs": "ecac61f10c6565f9f822550ce9a8597d3d5f0bff1ce7d9dab6fe2d4ad9a90aae",
+      "beds/synth/world.mjs": "e6d12ccf7cd2743c97893cf1a7f7b013256f468ddfa5cb7169228e80f2578328",
       "beds/runbook/heuristic.mjs": "7248d6d95ae3769bb783b2a32e246233c0187cbc8345d2dfb756adba6511424e",
       "beds/runbook/index.mjs": "ad5d588b33990ea738ce7a6f79c9f55e7c8247f772b88841a98311b288cc60ca",
       "beds/runbook/judge.mjs": "dbec96a4f49466c2debab7ea832052cdf2425290d2a05cc4de70c6a06e4c538b",

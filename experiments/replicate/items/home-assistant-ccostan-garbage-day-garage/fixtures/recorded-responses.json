@@ -1,0 +1,20 @@
+{
+  "schema": "rbench-recorded-responses/1",
+  "provenance": "Synthetic. No real Home Assistant, Alexa or phone was called. Service calls made from inside an automation return no response data, so a success is an empty body; the failure shape is a plain error object chosen for this harness (a Home Assistant action that raises HomeAssistantError, which aborts the run unless continue_on_error is set).",
+  "ok": {
+    "default": { "status": 200, "body": {} }
+  },
+  "fail": {
+    "script.notify_engine_two_button": { "status": 500, "body": { "error": "SERVICE_FAILED", "message": "notify.mobile_app_carlo_maxpro: companion app unreachable (synthetic)" } },
+    "script.speech_engine": { "status": 500, "body": { "error": "SERVICE_FAILED", "message": "media_player.livingroomcc: chromecast not reachable (synthetic)" } },
+    "script.send_to_logbook": { "status": 500, "body": { "error": "SERVICE_FAILED", "message": "logbook.log failed (synthetic)" } },
+    "notify.alexa_media_garage": { "status": 500, "body": { "error": "SERVICE_FAILED", "message": "alexa_media: announce failed, device offline (synthetic)" } },
+    "timer.start": { "status": 500, "body": { "error": "SERVICE_FAILED", "message": "timer.start failed (synthetic)" } },
+    "default": { "status": 500, "body": { "error": "SERVICE_FAILED", "message": "service raised an error (synthetic)" } }
+  },
+  "errors": {
+    "SERVICE_NOT_FOUND": { "status": 404 },
+    "INVALID_DATA": { "status": 400 },
+    "ENTITY_NOT_FOUND": { "status": 404 }
+  }
+}

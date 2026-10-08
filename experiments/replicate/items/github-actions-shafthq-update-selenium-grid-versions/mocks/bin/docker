@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# rbench shim for `docker`: no daemon, no registry. The original only calls `docker compose -f FILE config`.
+exec "${RBENCH_NODE:?RBENCH_NODE unset}" "${RBENCH_MOCKS:?RBENCH_MOCKS unset}/docker.mjs" "$@"

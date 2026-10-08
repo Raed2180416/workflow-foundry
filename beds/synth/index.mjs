@@ -139,6 +139,8 @@ const WORLD_CONTROLS = [
   { name: 'plausible-but-wrong:near-name-merged', minDifficulty: 3, fromWorld: w => toOutput(w, resolve(mergeDistractors(w))) },
   { name: 'plausible-but-wrong:concern-as-retraction', minDifficulty: 3, fromWorld: w => { const res = resolve(w, { concernVoids: true }); return toOutput(w, res, { excluded: res.voided }); } },
   { name: 'plausible-but-wrong:erratum-applied-by-document', minDifficulty: 3, fromWorld: resolved({ erratumByDoc: true }) },
+  { name: 'plausible-but-wrong:cond-erratum-ignored', minDifficulty: 3, applies: hasFeat('condErratum'), fromWorld: resolved({ skipCondErrata: true }) },
+  { name: 'plausible-but-wrong:bounds-counted', minDifficulty: 3, applies: hasFeat('bound'), fromWorld: resolved({ countBounds: true }) },
   { name: 'plausible-but-wrong:gross-n', minDifficulty: 3, applies: hasFeat('grossN'), fromWorld: resolved({ grossN: true }) },
   { name: 'plausible-but-wrong:variants-counted', minDifficulty: 4, fromWorld: resolved({ allowVariants: true }) },
   { name: 'plausible-but-wrong:printed-n', minDifficulty: 4, applies: hasFeat('nErratum'), fromWorld: resolved({ printedN: true }) },
@@ -199,6 +201,7 @@ function checkWorld(world, rendered) {
   return null;
 }
 export function hidden({ seed, split, difficulty: diffIn }) {
+  if (!(Number.isSafeInteger(seed) && seed >= 0) && !(typeof seed === 'string' && seed.length > 0 && seed.length <= 64)) throw new TypeError(`seed must be a non-negative safe integer or a short non-empty string, got ${String(seed)}`);
   const difficulty = Number(diffIn);
   if (!Number.isInteger(difficulty) || difficulty < 1 || difficulty > 5) throw new Error(`difficulty must be an integer 1..5, got ${diffIn}`);
   if (!['dev', 'test'].includes(split)) throw new Error(`split must be dev or test, got ${split}`);
@@ -305,11 +308,11 @@ function oracleCore(world, output) {
 const rejected = (reason, key = 'schemaErrors') => ({ pass: false, score: 0, details: { [key]: [reason] } });
 function judge(task, rawOutput, wantFull) {
   let world;
-  try { world = hidden(task).world; } catch (error) { return { ...rejected(`cannot rebuild task: ${String(error?.message ?? error).slice(0, 200)}`, 'error'), full: null }; }
+  try { world = hidden(task).world; } catch (error) { return rejected(`cannot rebuild task: ${String(error?.message ?? error).slice(0, 200)}`, 'error'); }
   let output;
-  try { output = plainCopy(rawOutput); } catch (error) { const r = rejected(error.message); return { ...r, full: r.details }; }
+  try { output = plainCopy(rawOutput); } catch (error) { return rejected(error.message); }
   const v = oracleCore(world, output);
-  return wantFull ? { pass: v.pass, score: v.score, details: v.full } : { pass: v.pass, score: v.score, details: v.details };
+  return { pass: v.pass, score: v.score, details: wantFull ? v.full : v.details };
 }
 
 // The oracle never throws: whatever the task or the output, it returns a verdict. Details carry no truth.

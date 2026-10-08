@@ -1,0 +1,48 @@
+{
+  "schema": "rbench-ha-config/1",
+  "note": "The owner's Home Assistant, as far as this job can see it. Entity ids are the real ones from the author's config (packages/garadget.yaml: group.garage_doors holds the two garage covers; timer.garbage_reminder_snooze has duration 00:30:00). Everything else is a synthetic stand-in.",
+  "timezone": "naive local time; no DST handling (the mock clock is a virtual local clock)",
+  "entities": {
+    "covers": ["cover.large_garage_door", "cover.small_garage_door"],
+    "group": "group.garage_doors",
+    "snoozeTimer": "timer.garbage_reminder_snooze",
+    "family": "group.family"
+  },
+  "timer": { "entity_id": "timer.garbage_reminder_snooze", "defaultDuration": "0:30:00", "defaultSeconds": 1800 },
+  "phone": { "who": "carlo", "note": "Carlo's iPhone running the companion app. The mock shows a push only when script.notify_engine_two_button is called with who=carlo; a tap resolves a button title in the latest notification shown." },
+  "subscribe": {
+    "note": "The integration is told about changes of these entities and about these bus events; it can read any entity with ha.get_state.",
+    "states": ["group.garage_doors"],
+    "events": ["mobile_app_notification_action"]
+  },
+  "services": {
+    "script.notify_engine_two_button": {
+      "doc": "The owner's push helper. data: title, value1/value2/value3 (message parts, joined with spaces), who ('carlo' = Carlo's phone; the default is the whole family), group (notification group), tag (stable id: a new push with the same tag replaces the old one), level, title1/action1/icon1, title2/action2/icon2 (action buttons: a button exists only if its action is non-empty).",
+      "target": false
+    },
+    "script.speech_engine": {
+      "doc": "The owner's inside-speech helper (Chromecasts). data: value1 (text to speak). With no media_player it speaks in the living room. It speaks only when the family is home or guest/vacation mode is on, which is the helper's business, not the caller's.",
+      "target": false
+    },
+    "script.send_to_logbook": {
+      "doc": "Adds an Activity/logbook entry. data: topic (headline), message. Both must be non-blank or nothing is logged.",
+      "target": false
+    },
+    "notify.alexa_media_garage": {
+      "doc": "Alexa in the garage. data: message (text), data.type ('announce' plays it as an announcement).",
+      "target": false
+    },
+    "timer.start": {
+      "doc": "Starts a timer, or restarts it with the new duration if it is running. target.entity_id (a timer.*), data.duration ('HH:MM:SS' or seconds). Without a duration the timer's configured duration is used.",
+      "target": true
+    },
+    "timer.cancel": {
+      "doc": "Stops a timer: it goes idle at once. target.entity_id.",
+      "target": true
+    },
+    "timer.finish": {
+      "doc": "Ends a timer early: it goes idle at once. target.entity_id.",
+      "target": true
+    }
+  }
+}

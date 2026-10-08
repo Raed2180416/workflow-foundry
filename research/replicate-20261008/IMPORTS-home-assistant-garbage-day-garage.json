@@ -1,0 +1,28 @@
+{
+  "schema": "rbench-import-record/1",
+  "item": "home-assistant:CCOSTAN/Home-AssistantConfig/config/automation/Speech/garbage_day_garage.yaml#0",
+  "recordedOn": "2026-10-08",
+  "imports": [
+    {
+      "what": "garbage_day_garage.yaml (the automation under replication)",
+      "url": "https://github.com/CCOSTAN/Home-AssistantConfig/blob/71ffa6120b8b649508c3ffe312f6d09792c7b37b/config/automation/Speech/garbage_day_garage.yaml",
+      "revision": "git 71ffa6120b8b649508c3ffe312f6d09792c7b37b (2026-10-05T21:48:56+00:00)",
+      "retrieved": "2026-10-06 (research/corpus-20261006)",
+      "license": "MIT, Copyright (c) 2018 Carlo Costanzo",
+      "sha256": "c7cae208c73ad49d929e18a43bc09b70760a44ec85f81c93118a31b194f0f62b",
+      "outcome": "copied byte-identical from /opt/corpus/home-assistant/git/CCOSTAN__Home-AssistantConfig/ to experiments/replicate/items/home-assistant-ccostan-garbage-day-garage/fixtures/original/ ; read as data only, never executed as code or installed",
+      "redistributable": true
+    },
+    {
+      "what": "LICENSE of the same repository",
+      "sha256": "e97616c691141d9e7c5e284299cba4e9ac13d02ff2c6b6c96e8039fdcf75248d",
+      "outcome": "copied next to the YAML (MIT notice preserved)"
+    }
+  ],
+  "readForContextOnly": [
+    "config/script/notify_engine.yaml, speech_engine.yaml, send_to_logbook.yaml (helper scripts the automation calls; mocked as services, nothing copied)",
+    "config/packages/garadget.yaml (group.garage_doors members and the timer.garbage_reminder_snooze definition: duration 00:30:00, restore true)"
+  ],
+  "notAcquired": "Home Assistant core / pytest-homeassistant-custom-component: not installed (owner decision pending); the real-HA original-passes control is therefore not done",
+  "derived": "fixtures/original/parsed.pyyaml.json = PyYAML 6.0.1 safe_load of the YAML (python3 -I), used only to test the Node YAML reader"
+}
