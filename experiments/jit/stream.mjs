@@ -14,6 +14,7 @@ import { fileURLToPath } from 'node:url';
 import { canonical } from '../../beds/lib/canonical.mjs';
 import { loadPolicy } from '../../src/models/policy.mjs';
 import { ENV_FAULTS, metEnvFault } from '../lib/runner.mjs';
+import { createModelPort as createModelPortSync } from '../lib/models.mjs';
 
 const REPO = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 export const RUN_ROOT = path.join(REPO, 'experiments/runs/jit'), WORK_ROOT = '/var/tmp/foundry-work/jit';
@@ -154,19 +155,27 @@ export const armPaths = (runDir, slug) => {
     traces: path.join(dir, 'traces'), versions: path.join(dir, 'versions'), regressions: path.join(dir, 'regressions') };
 };
 
+// The fault class of a component result: its own error, a builder session's error, or a model call it made.
+const faultCode = r => r?.error?.code ?? r?.record?.builderError?.code ?? (Object.keys(r?.meta?.errors ?? {}).join(',') || null);
 class EnvFault extends Error {
   constructor(component, result) {
-    super(`${component}: environment fault ${result?.error?.code ?? Object.keys(result?.meta?.errors ?? {}).join(',')} (after one retry)`);
+    super(`${component}: environment fault ${faultCode(result)} (after one retry)`);
     this.code = 'ENV_FAULT'; this.component = component; this.result = result;
   }
 }
 class SpendStop extends Error { constructor(msg) { super(msg); this.code = 'SPEND_STOP'; } }
 
 // Default dependencies (the live ones). Tests inject fakes for all of them.
+// Each is imported on first use, so a dry run works before every module exists.
 async function liveDeps() {
-  const [{ interpret }, { runCompiled }, { compile }, beds, models] = await Promise.all([
-    import('./interpret.mjs'), import('./run-compiled.mjs'), import('./compile.mjs'), import('../lib/beds.mjs'), import('../lib/models.mjs')]);
-  return { interpret, runCompiled, compile, score: beds.score, makeTasks: beds.makeTasks, loadFamily: beds.loadFamily, createModelPort: models.createModelPort };
+  const beds = await import('../lib/beds.mjs');
+  return {
+    interpret: async a => (await import('./interpret.mjs')).interpret(a),
+    runCompiled: async a => (await import('./run-compiled.mjs')).runCompiled(a),
+    compile: async a => (await import('./compile.mjs')).compile(a),
+    createModelPort: a => createModelPortSync(a),
+    score: beds.score, makeTasks: beds.makeTasks, loadFamily: beds.loadFamily,
+  };
 }
 
 export async function streamTasks(config, deps) {
@@ -245,8 +254,8 @@ class ArmRun {
 
   fault(t, err) {
     appendFileSync(this.p.faults, JSON.stringify({ experiment: this.config.experiment, arm: this.arm.spec, idx: t.idx, taskKey: t.taskKey, component: err.component,
-      error: err.result?.error ?? null, metaErrors: err.result?.meta?.errors ?? null, builderError: err.result?.builderError ?? null, at: new Date().toISOString() }) + '\n');
-    this.event(t.idx, 'fault', { component: err.component, code: err.result?.error?.code ?? err.result?.builderError?.code ?? null });
+      error: err.result?.error ?? null, metaErrors: err.result?.meta?.errors ?? null, builderError: err.result?.record?.builderError ?? null, at: new Date().toISOString() }) + '\n');
+    this.event(t.idx, 'fault', { component: err.component, code: faultCode(err.result) });
     this.log(`${this.arm.slug} #${t.idx}: ENV FAULT in ${err.component} (not recorded as an outcome; a resume retries it)`);
   }
 
@@ -255,7 +264,7 @@ class ArmRun {
     for (let attempt = 0; ; attempt++) {
       const r = await fn(attempt);
       if (!isFault(r)) return r;
-      if (attempt === 0) { tr.ev('fault-retry', { component, code: r?.error?.code ?? r?.builderError?.code ?? Object.keys(r?.meta?.errors ?? {}).join(',') }); continue; }
+      if (attempt === 0) { tr.ev('fault-retry', { component, code: faultCode(r) }); continue; }
       throw new EnvFault(component, r);
     }
   }
@@ -333,7 +342,7 @@ class JitRun extends ArmRun {
       const builderUsd = rec.builderCostUsd ?? 0, gatewayUsd = rec.gatewayCostUsd ?? 0, total = rec.constructionCostUsd ?? builderUsd + gatewayUsd;
       tr.spend('compileBuilder', builderUsd, rec.builderCostUnknown); tr.spend('compileGateway', total - builderUsd, (rec.gatewayUnknownCalls ?? 0) > 0);
       return r;
-    }, r => ENV_FAULTS.has(r?.record?.builderError?.code) ? { builderError: r.record.builderError, error: r.record.builderError } : false);
+    }, r => ENV_FAULTS.has(r?.record?.builderError?.code));
     const rec = res.record ?? {};
     mkdirSync(vdir, { recursive: true });
     const hasSolve = !!(res.solvePath && existsSync(res.solvePath));
@@ -475,7 +484,7 @@ export async function runStream({ config: rawConfig, arms: filters = null, runRo
   const tasks = await streamTasks(config, deps);
   if (dry) {
     const plan = { experiment: config.experiment, runDir, workRoot: path.join(workRoot, config.experiment), familyId: config.familyId, split: config.split,
-      tasks: tasks.map(t => ({ idx: t.idx, taskKey: t.taskKey, taskHash: t.taskHash?.slice(0, 12) })),
+      tasks: tasks.map(t => `#${t.idx} ${t.taskKey} ${t.taskHash?.slice(0, 12)}`),
       arms: arms.map(a => ({ spec: a.spec, slug: a.slug, hash: a.hash, models: a.models, done: readJsonl(armPaths(runDir, a.slug).results).filter(r => r.experiment === config.experiment).length })),
       caps: { perTaskUsd: config.perTaskUsd, agentBudgetUsd: config.agentBudgetUsd, agentMinutes: config.agentMinutes, compile: config.compile, jit: config.jit, spendStopUsd: config.spendStopUsd },
       worstCaseUsd: Object.fromEntries(arms.map(a => [a.spec, worstCase(a, config, tasks.length)])) };
