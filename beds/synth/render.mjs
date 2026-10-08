@@ -192,7 +192,12 @@ function claimSentence(c, world, ctx) {
     if (K.redHerrings) {
       opts.push(`${who}'s group obtained ${V} for the ${pn} of ${E} ${C}, a value we use here only for comparison.`,
         `Literature value (${who}, ${year}): ${pn} of ${E} ${C} = ${V}; not re-measured here.`,
-        `Our data can be set against the ${V} listed for the ${pn} of ${E} ${C} by ${who} and colleagues in ${year}.`);
+        `Our data can be set against the ${V} listed for the ${pn} of ${E} ${C} by ${who} and colleagues in ${year}.`,
+        `Earlier work from ${who} and co-authors (${year}) put the ${pn} of ${E} ${C} at ${V}; we take that number from their paper.`,
+        `In the literature, ${V} is quoted for the ${pn} of ${E} ${C} (${who} et al., ${year}); no new measurement of it is reported here.`,
+        `According to ${who} et al. (${year}), the ${pn} of ${E} ${C} is ${V}. We cite this figure without having reproduced it.`,
+        `${who} et al. (${year}) measured ${V} for ${E} ${C} (${pn}); that result is quoted, not ours.`,
+        `The ${V} that ${who} and colleagues (${year}) published for the ${pn} of ${E} ${C} is reproduced here for reference only.`);
     }
     return rr.pick(opts);
   }
@@ -205,7 +210,11 @@ function claimSentence(c, world, ctx) {
     ];
     if (K.redHerrings) {
       opts.push(`Simulations put the ${pn} of ${E} ${C} at ${V}; no measurement has been made yet.`,
-        `Extrapolating from related ${KIND_PLURAL[e.kind]}, the ${pn} of ${E} ${C} should be close to ${V} (not measured).`);
+        `Extrapolating from related ${KIND_PLURAL[e.kind]}, the ${pn} of ${E} ${C} should be close to ${V} (not measured).`,
+        `${cap(an(m))} gives ${V} for the ${pn} of ${E} ${C}; we have not yet confirmed this experimentally.`,
+        `Model estimates suggest a ${pn} near ${V} for ${E} ${C}; experimental confirmation is pending.`,
+        `If the trend across related ${KIND_PLURAL[e.kind]} holds, ${E} should show ${an(pn)} of roughly ${V} ${C}; this is a forecast, not a result.`,
+        `We aim for ${an(pn)} of ${V} for ${E} ${C} in the next round; the current batches have not been tested against it.`);
     }
     return rr.pick(opts);
   }
@@ -218,10 +227,12 @@ function claimSentence(c, world, ctx) {
     ][c.style];
   }
   if (ctx.noCond && ctx.noCond.has(c)) {
-    return ctx.terse ? rr.pick([`${cap(pn)} of ${E} = ${V}.`, `Got ${V} for the ${pn} of ${E}.`])
-      : rr.pick([`The ${pn} of ${E} was ${V}.`, `We measured ${an(pn)} of ${V} for ${E}.`, `${cap(E)} showed ${an(pn)} of ${V}.`]);
+    return ctx.terse ? rr.pick([`${cap(pn)} of ${E} = ${V}.`, `Got ${V} for the ${pn} of ${E}.`, ...(K.formVariety ? [`${cap(pn)}: ${V} (${E}).`, `${cap(E)}, ${pn}: ${V}.`] : [])])
+      : rr.pick([`The ${pn} of ${E} was ${V}.`, `We measured ${an(pn)} of ${V} for ${E}.`, `${cap(E)} showed ${an(pn)} of ${V}.`,
+        ...(K.formVariety ? [`${cap(E)} gave ${V} for the ${pn}.`, `The ${pn} came to ${V} for ${E}.`, `We recorded ${V} as the ${pn} of ${E}.`] : [])]);
   }
-  if (ctx.terse) return rr.pick([`${cap(pn)} (${E}, ${C}): ${V}.`, `${cap(pn)} of ${E} ${C} = ${V}.`, `Got ${V} for the ${pn} of ${E} ${C}.`]);
+  if (ctx.terse) return rr.pick([`${cap(pn)} (${E}, ${C}): ${V}.`, `${cap(pn)} of ${E} ${C} = ${V}.`, `Got ${V} for the ${pn} of ${E} ${C}.`,
+    ...(K.formVariety ? [`${cap(E)} ${C}: ${pn} ${V}.`, `${cap(pn)}, ${C} (${E}): ${V}.`] : [])]);
   // a method detail with a number in the same unit family as the value
   if (K.methodNums && !c.variant && rr.chance(K.methodNums)) {
     const [pre, nums, u, post] = rr.pick(METHOD_DETAIL[c.prop]);
@@ -229,7 +240,8 @@ function claimSentence(c, world, ctx) {
     if (relDiff(canonX, toCanon(c.prop, c.value, c.unit)) > 0.05) {
       const M = `${pre} ${x} ${u}${post ? ` ${post}` : ''}`;
       return rr.pick([`${cap(M)}, the ${pn} of ${E} ${C} was ${V}.`, `We measured the ${pn} of ${E} ${C} ${M} and obtained ${V}.`,
-        `${cap(E)} gave ${an(pn)} of ${V} ${C} (${M}).`]);
+        `${cap(E)} gave ${an(pn)} of ${V} ${C} (${M}).`,
+        ...(K.formVariety ? [`${cap(M)}, ${E} gave ${an(pn)} of ${V} ${C}.`, `The ${pn} of ${E} ${C} (${M}) was ${V}.`, `We obtained ${V} for the ${pn} of ${E} ${C}, ${M}.`] : [])]);
     }
   }
   // a non-standard condition mentioned without a value next to a standard measurement (and vice versa)
@@ -240,16 +252,25 @@ function claimSentence(c, world, ctx) {
         `We measured the ${pn} of ${E} ${C} instead of ${N} and obtained ${V}.`,
         `The ${pn} of ${E} could not be determined ${N}, but ${C} it came to ${V}.`,
         `Rather than ${N}, the ${pn} of ${E} was measured ${C}: ${V}.`,
-        `A first attempt ${N} failed; a repeat ${C} gave ${an(pn)} of ${V} for ${E}.`]);
+        `A first attempt ${N} failed; a repeat ${C} gave ${an(pn)} of ${V} for ${E}.`,
+        ...(K.formVariety ? [`A trial ${N} was abandoned; the ${pn} of ${E} ${C} came to ${V}.`,
+          `The ${pn} of ${E} ${C} was ${V}; the same measurement ${N} did not give usable data.`,
+          `Although we also tried ${N}, only the run ${C} produced a result: ${V} for the ${pn} of ${E}.`,
+          `We did not obtain ${an(pn)} for ${E} ${N}, but ${C} it was ${V}.`] : [])]);
     }
     const S = condFor(c.prop, true, rr, K.condLevel);
     return rr.pick([`Although the standard protocol calls for measurement ${S}, the ${pn} of ${E} was determined ${C} and came to ${V}.`,
-      `No measurement ${S} was possible; ${C} the ${pn} of ${E} was ${V}.`]);
+      `No measurement ${S} was possible; ${C} the ${pn} of ${E} was ${V}.`,
+      ...(K.formVariety ? [`The ${pn} of ${E} could not be measured ${S}; ${C} it was ${V}.`,
+        `Since a measurement ${S} was not feasible, we determined the ${pn} of ${E} ${C}: ${V}.`,
+        `Instead of measuring ${S}, we measured the ${pn} of ${E} ${C} and found ${V}.`] : [])]);
   }
   // the value in a second sentence (kept together when the body is shuffled)
   if (K.split && rr.chance(K.split)) {
     return rr.pick([`We then determined the ${pn} of ${E} ${C}. The result was ${V}.`, `The ${pn} of ${E} was also measured ${C}. It came to ${V}.`,
-      `Next, the ${pn} of ${E} was determined ${C}; we found ${V}.`]);
+      `Next, the ${pn} of ${E} was determined ${C}; we found ${V}.`,
+      ...(K.formVariety ? [`A further run addressed the ${pn} of ${E} ${C}. The outcome was ${V}.`, `The next experiment concerned the ${pn} of ${E} ${C}. It gave ${V}.`,
+        `The ${pn} of ${E} ${C} was measured last. It was ${V}.`] : [])]);
   }
   const opts = [
     `The ${pn} of ${E} ${C} was ${V}.`,
@@ -258,12 +279,20 @@ function claimSentence(c, world, ctx) {
     `Measured ${C}, the ${pn} of ${E} came to ${V}.`,
     `${cap(C)}, ${E} had ${an(pn)} of ${V}.`,
   ];
+  if (K.formVariety) {
+    opts.push(`Our measurement of the ${pn} of ${E} ${C} gave ${V}.`, `${V} was recorded as the ${pn} of ${E} ${C}.`,
+      `${cap(E)} exhibited ${an(pn)} of ${V} ${C}.`, `We obtained ${V} as the ${pn} of ${E} ${C}.`,
+      `${cap(C)}, the ${pn} of ${E} was found to be ${V}.`, `The ${pn} determined for ${E} ${C} is ${V}.`,
+      `For ${E}, the ${pn} ${C} was ${V}.`, `${cap(E)}: ${pn} ${V} (${C}).`);
+  }
   if (K.redHerrings && rr.chance(K.redHerrings)) {
     const y = fromDay(world.docMap.get(c.doc).date).y - rr.int(1, 6);
     return rr.pick([
       `Following the protocol of ${rr.pick(SURNAMES)} et al. (${y}), we measured ${an(pn)} of ${V} for ${E} ${C}.`,
       `As expected, the ${pn} of ${E} ${C} was ${V}.`,
       `In our hands, ${E} gave ${an(pn)} of ${V} ${C}, close to earlier reports.`,
+      ...(K.formVariety ? [`Using the method of ${rr.pick(SURNAMES)} and co-workers (${y}), the ${pn} of ${E} ${C} was ${V}.`,
+        `As anticipated from earlier reports, ${E} gave ${V} for the ${pn} ${C}.`] : []),
     ]);
   }
   return rr.pick(opts);
@@ -288,6 +317,16 @@ function comparisonSentence(m, o, world, ctx) {
       const sym = rr.pick(unitOf(m.prop, m.unit).sym), other = fromCanonR(o.prop, toCanon(o.prop, o.value, o.unit), m.unit);
       return rr.chance(0.5) ? `${cap(pn)} values (${sym}) ${C}: ${m.value} for ${E1} and ${other} for ${E2}.` : `${cap(pn)} values (${sym}) ${C}: ${other} for ${E2} and ${m.value} for ${E1}.`;
     })()] : []),
+    ...(K.formVariety ? [
+      `${cap(C)}: ${Ea} gave ${Va}, ${Eb} ${Vb} (${pn}).`,
+      `For ${Ea}, the ${pn} ${C} was ${Va}; for ${Eb} it was ${Vb}.`,
+      `${cap(Eb)} (${Vb}) and ${Ea} (${Va}) were compared for ${pn} ${C}.`,
+      `The ${pn} ${C} was ${Va} for ${Ea} versus ${Vb} for ${Eb}.`,
+      `${cap(Ea)} reached ${Va} and ${Eb} ${Vb} in terms of ${pn} ${C}.`,
+      `Side by side ${C}, ${Ea} showed ${an(pn)} of ${Va} and ${Eb} one of ${Vb}.`,
+      `Relative to ${Eb} (${Vb}), ${Ea} gave ${Va} ${C} for the ${pn}.`,
+      `${cap(Eb)} had ${Vb} and ${Ea} had ${Va} for the ${pn} ${C}.`,
+    ] : []),
   ]);
 }
 // The document's own value and a value quoted from other work in one sentence.
@@ -303,18 +342,40 @@ function quoteOwnSentence(m, q, world, ctx) {
     `Our ${pn} for ${E} ${m.condText}, ${Vm}, is ${higher ? 'higher' : 'lower'} than the ${Vq} reported by ${who} and co-workers (${year}).`,
     `Whereas ${who}'s group found ${Vq}, we measured ${an(pn)} of ${Vm} for ${E} ${m.condText}.`,
     `We obtained ${Vm} for the ${pn} of ${E} ${m.condText}; ${who} et al. (${year}) had reported ${Vq}.`,
+    ...(K.formVariety ? [
+      `Contrary to ${who} et al. (${year}), who gave ${Vq}, we measured ${Vm} for the ${pn} of ${E} ${m.condText}.`,
+      `${who}'s ${year} value for the ${pn} of ${E} ${m.condText} was ${Vq}; ours is ${Vm}.`,
+      `We found ${Vm} for the ${pn} of ${E} ${m.condText}, against ${Vq} from ${who} and colleagues (${year}).`,
+      `Unlike the ${Vq} of ${who} et al. (${year}), our ${pn} for ${E} ${m.condText} came to ${Vm}.`,
+      `The ${pn} of ${E} ${m.condText} was ${Vm} here; ${who} et al. (${year}) obtained ${Vq}.`,
+      `Our ${Vm} for the ${pn} of ${E} ${m.condText} sits ${higher ? 'above' : 'below'} the ${Vq} quoted from ${who} et al. (${year}).`,
+    ] : []),
   ]);
 }
 
-function pairSentence(a, b, world, ctx) {
+function pairSentence(a0, b0, world, ctx) {
   const { rr, K, mention } = ctx;
+  const [a, b] = rr.chance(0.5) ? [a0, b0] : [b0, a0]; // either order: the standard value is not systematically first
   const pn = rr.pick(PROPS[a.prop].names);
   const E = mention(a.ent);
   const Va = fmtValue(a.prop, a.value, a.unit, rr, K, { sd: a.sd, allowSd: true });
   const Vb = fmtValue(b.prop, b.value, b.unit, rr, K, { sd: b.sd, allowSd: true });
-  return rr.chance(0.5)
-    ? `The ${pn} of ${E} was ${Va} ${a.condText} and ${Vb} ${b.condText}.`
-    : `${cap(b.condText)} the ${pn} of ${E} was ${Vb}, whereas ${a.condText} it was ${Va}.`;
+  const Ca = a.condText, Cb = b.condText;
+  const forms = [
+    () => `The ${pn} of ${E} was ${Va} ${Ca} and ${Vb} ${Cb}.`,
+    () => `${cap(Cb)} the ${pn} of ${E} was ${Vb}, whereas ${Ca} it was ${Va}.`,
+  ];
+  if (K.formVariety) {
+    forms.push(
+      () => `${cap(pn)} of ${E}: ${Va} (${Ca}); ${Vb} (${Cb}).`,
+      () => `While the ${pn} of ${E} ${Ca} was ${Va}, ${Cb} it was ${Vb}.`,
+      () => `${cap(Ca)} we found ${Va} for the ${pn} of ${E}; ${Cb} the value was ${Vb}.`,
+      () => `Changing from ${Ca} to ${Cb} took the ${pn} of ${E} from ${Va} to ${Vb}.`,
+      () => `${cap(E)} was run twice for the ${pn}: ${Ca} (${Va}) and ${Cb} (${Vb}).`,
+      () => `The ${pn} of ${E} came to ${Vb} ${Cb} but ${Va} ${Ca}.`,
+    );
+  }
+  return rr.pick(forms)();
 }
 function tableLine(cs, world, ctx) {
   const { rr, K, mention } = ctx;
@@ -332,35 +393,47 @@ function tableLine(cs, world, ctx) {
 function nSentence(d, world, ctx, noun, subjects) {
   const { rr, K } = ctx;
   const n = d.nPrinted ?? d.n;
+  const V = K.formVariety;
   if (d.nGross != null) {
     const G = d.nGross, k = d.nGross - d.n;
     const g = nText(G, rr, K), kk = nText(k, rr, K), nn = nText(d.n, rr, K);
     const was = k === 1 ? 'was' : 'were', it = k === 1 ? 'it' : 'they';
-    if (ctx.terse) return rr.pick([`Set up ${g} ${noun}; ${kk} failed QC and ${was} dropped.`, `${cap(g)} ${noun} started, ${kk} lost to contamination; values below from the rest.`]);
+    if (ctx.terse) return rr.pick([`Set up ${g} ${noun}; ${kk} failed QC and ${was} dropped.`, `${cap(g)} ${noun} started, ${kk} lost to contamination; values below from the rest.`,
+      ...(V ? [`${cap(g)} ${noun} in, ${kk} out (QC failures); the rest were measured.`, `Started with ${g} ${noun}; ${kk} ${was} scrapped before the runs.`] : [])]);
     if (subjects) return rr.pick([`${cap(g)} volunteers were enrolled; ${kk} withdrew before dosing and ${k === 1 ? 'is' : 'are'} not included in the analysis.`,
-      `Of the ${g} participants enrolled, ${kk} ${was} excluded before dosing; all values are based on the remaining ${nn}.`]);
+      `Of the ${g} participants enrolled, ${kk} ${was} excluded before dosing; all values are based on the remaining ${nn}.`,
+      ...(V ? [`${cap(kk)} of the ${g} participants dropped out before the first dose, so the analysis set is smaller than the enrolled cohort.`,
+        `We enrolled ${g} subjects, ${kk} of whom ${k === 1 ? 'was' : 'were'} excluded for protocol deviations; the remaining ${nn} form the analysis set.`] : [])]);
     return rr.pick([
       `Of the ${g} ${noun} prepared, ${kk} failed quality control and ${was} not measured.`,
       `${cap(g)} ${noun} were prepared; ${kk} ${was} lost before measurement, so every value below is based on the remaining ${nn}.`,
       `We started with ${g} ${noun}, but ${kk} had to be discarded because ${it} ${was} contaminated; the values below are means over the rest.`,
+      ...(V ? [`${cap(g)} ${noun} entered the study and ${kk} ${was} later excluded.`, `${cap(kk)} of the ${g} ${noun} ${was} unusable and left out of every mean below.`,
+        `Out of ${g} ${noun}, ${kk} ${was} dropped as outliers; the means below use the other ${nn}.`] : []),
     ]);
   }
   const nw = nText(n, rr, K);
-  if (ctx.terse) return rr.pick([`n = ${n}.`, `Replicates: ${nw}.`, `Ran ${nw} ${noun} this round.`]);
+  if (ctx.terse) return rr.pick([`n = ${n}.`, `Replicates: ${nw}.`, `Ran ${nw} ${noun} this round.`, ...(V ? [`Sample count ${n}.`, `${n} ${noun} in total.`] : [])]);
   if (K.addN && n >= 4 && rr.chance(K.addN)) {
     const a = rr.int(1, n - 1), b = n - a, [m1, m2] = rr.sample(MONTHS, 2);
+    if (V && rr.chance(0.35)) {
+      return subjects ? `${cap(nText(a, rr, K))} subjects took part in the first session and ${nText(b, rr, K)} in the second; all values pool both.`
+        : `The ${noun} comprised ${nText(a, rr, K)} from the first round and ${nText(b, rr, K)} from the second; all values below pool both rounds.`;
+    }
     return subjects ? `${cap(nText(a, rr, K))} subjects were dosed in a first cohort and ${nText(b, rr, K)} more in a second; all values pool both cohorts.`
       : `${cap(nText(a, rr, K))} ${noun} were measured in ${m1} and another ${nText(b, rr, K)} in ${m2}; all values below pool both sets.`;
   }
   if (K.nVariety && rr.chance(K.nVariety * 0.5)) {
     const m = rr.int(2, 6);
-    return rr.pick([`Measurements were made on ${nw} ${noun} collected over ${m} weeks.`, `The study pooled ${nw} ${noun} from ${m} laboratories.`]);
+    return rr.pick([`Measurements were made on ${nw} ${noun} collected over ${m} weeks.`, `The study pooled ${nw} ${noun} from ${m} laboratories.`,
+      ...(V ? [`${cap(nw)} ${noun} were gathered over ${m} months.`, `The data come from ${nw} ${noun} contributed by ${m} groups.`] : [])]);
   }
   return rr.pick([
     `All values below are means over n = ${n} ${noun}.`,
     `Measurements were made on ${nw} ${noun}.`,
     `The study used ${nw} ${noun} (n = ${n}).`,
     `Each reported value is the mean of ${nw} ${noun}.`,
+    ...(V ? [`Sample size: ${n} ${noun}.`, `${cap(nw)} ${noun} were used throughout.`, `Every value is based on ${nw} ${noun}.`, `We tested ${nw} ${noun} in total.`] : []),
   ]);
 }
 const nounFor = (d, world) => {
@@ -376,6 +449,7 @@ const authorsShort = d => (d.authors.length > 2 ? `${surname(d.authors[0])} et a
 // first author, venue, entity and property, no title), 'date' (first author, venue, exact
 // date). 'topic' is used only when exactly one corpus document fits it.
 function vagueKey(world, X) { return `${surname(X.authors[0])}|${fromDay(X.date).y}|${X.ent}`; }
+function citeKey(world, X) { return `${surname(X.authors[0])}|${fromDay(X.date).y}|${X.venue}`; }
 function topicKey(world, X) {
   const p = mainProp(world, X);
   return `${surname(X.authors[0])}|${X.venue}|${monthYear(X.date)}|${X.ent}|${p}`;
@@ -400,7 +474,13 @@ function refText(world, ctx, T, rr, style) {
     const kw = T.kind === 'preprint' ? 'preprint' : T.kind === 'labnote' ? 'memo' : rr.pick(['article', 'paper']);
     return { style, text: `${surname(T.authors[0])}'s ${fromDay(T.date).y} ${kw} on ${T.naming === 'alias' ? aliasText(e) : e.name}` };
   }
-  if (style === 'title' || style === 'vague') return { style: 'title', text: `"${t}" by ${authorsShort(T)} (${venue}, ${ctx.dateRef(T.date, rr)})` };
+  if (style === 'cite' && ctx.citeCount.get(citeKey(world, T)) === 1) {
+    return { style, text: `${authorsShort(T)} (${fromDay(T.date).y}, ${venue})` };
+  }
+  if (style === 'bare' && ctx.titleCount.get(t.toLowerCase()) === 1) {
+    return { style, text: `"${t}"` };
+  }
+  if (style === 'title' || style === 'vague' || style === 'cite' || style === 'bare') return { style: 'title', text: `"${t}" by ${authorsShort(T)} (${venue}, ${ctx.dateRef(T.date, rr)})` };
   const kw = T.kind === 'preprint' ? 'preprint' : T.kind === 'labnote' ? 'memo' : rr.pick(['article', 'paper']);
   return { style: 'date', text: `the ${kw} by ${T.authors[0]} and co-authors (${venue}, ${ctx.dateRef(T.date, rr)})` };
 }
@@ -429,7 +509,9 @@ function renderResearch(d, world, ctx) {
   if (sup && sup.style === 'banner') {
     const W = world.docMap.get(sup.new);
     out.push(rr.pick([`[Update from ${d.venue}: a peer-reviewed version of this preprint has since been published as ${ref(world, ctx, W, rr)}; this version is superseded.]`,
-      ...(easy ? [] : [`[${d.venue} notice: this preprint has been superseded by its published journal version, ${ref(world, ctx, W, rr)}.]`])]));
+      ...(easy ? [] : [`[${d.venue} notice: this preprint has been superseded by its published journal version, ${ref(world, ctx, W, rr)}.]`]),
+      ...(K.formVariety ? [`[${d.venue}: the authors have published the final version of this preprint as ${ref(world, ctx, W, rr)}. This posting is kept for the record but is replaced by that article.]`,
+        `[Note: this preprint was superseded when ${ref(world, ctx, W, rr)} appeared in print.]`] : [])]));
   }
   const inPair = sup || supNew;
   if (d.version === 1 && (easy || rr.chance(0.35))) out.push(d.kind === 'labnote' ? 'Revision 1.' : 'Version 1.');
@@ -443,12 +525,15 @@ function renderResearch(d, world, ctx) {
     const sd = ctx.dateRef(S.date, rr);
     if (d.kind === 'labnote') {
       out.push(easy ? `Revision 2 of this memo; it replaces revision 1 dated ${ctx.date(S.date)} [document ${S.id}].`
-        : rr.pick([`Revision 2 of this memo; it replaces revision 1 dated ${sd}.`, `Updated entry; it supersedes the entry of ${sd} on the same runs.`]));
+        : rr.pick([`Revision 2 of this memo; it replaces revision 1 dated ${sd}.`, `Updated entry; it supersedes the entry of ${sd} on the same runs.`,
+          ...(K.formVariety ? [`This entry replaces the memo of ${sd}, whose numbers it updates.`, `Revision 2 (supersedes the revision 1 entry of ${sd}).`] : [])]));
     } else {
       out.push(easy ? `Version 2. This version replaces version 1 of this preprint, posted on ${ctx.date(S.date)} [document ${S.id}].`
         : rr.pick([`Version 2. This version replaces version 1 of this preprint, posted on ${sd}.`,
           `This revised version supersedes the version first posted on ${sd}; it adds replicates and corrects the analysis.`,
-          `Second version of this preprint (first version posted ${sd}).`]));
+          `Second version of this preprint (first version posted ${sd}).`,
+          ...(K.formVariety ? [`Version 2, replacing the version that appeared on ${sd}.`, `This is the second posted version; the one of ${sd} is replaced by it.`,
+            `Supersedes the ${sd} posting of this preprint (version 1).`] : [])]));
     }
   }
   const claims = world.claims.filter(c => c.doc === d.key);
@@ -512,7 +597,10 @@ function renderResearch(d, world, ctx) {
     const S = world.docMap.get(supNew.old);
     out.push(easy ? `This article is the peer-reviewed version of the preprint ${ref(world, ctx, S, rr)}, which it supersedes.`
       : rr.pick([`This article is the peer-reviewed version of the preprint ${ref(world, ctx, S, rr)}, which it supersedes.`,
-        `An earlier version of this work was posted as ${ref(world, ctx, S, rr)}; this article supersedes it.`]));
+        `An earlier version of this work was posted as ${ref(world, ctx, S, rr)}; this article supersedes it.`,
+        ...(K.formVariety ? [`${cap(ref(world, ctx, S, rr))} has been superseded by the present article.`,
+          `This is the journal version of ${ref(world, ctx, S, rr)}, which it replaces.`,
+          `The text of ${ref(world, ctx, S, rr)} is superseded by this article.`] : [])]));
   } else if (d.kind === 'journal' && !easy && K.redHerrings && rr.chance(K.redHerrings * 0.6)) {
     // the preprint of this article exists, but outside the corpus
     out.push(`An earlier version of this work was posted as a preprint on ${rr.pick(PREPRINT_SERVERS)} on ${ctx.dateRef(ctx.freeDay(d.date - rr.int(60, 400)), rr)}.`);
@@ -557,16 +645,22 @@ function renderNotice(d, world, ctx) {
     const T = world.docMap.get(er.target);
     const easy = K.refStyles[0] === 'id';
     const R = ref(world, ctx, T, rr);
-    const head = easy || rr.chance(0.5) ? `${rr.pick(['Correction to', 'Erratum for', 'Corrigendum to'])} ${R}.`
-      : rr.pick([`This notice corrects ${R}.`, `The authors of ${R} have asked us to publish a correction.`, `An error has been identified in ${R}.`]);
+    const V = K.formVariety;
+    const head = easy || rr.chance(0.5) ? `${rr.pick(['Correction to', 'Erratum for', 'Corrigendum to', ...(V ? ['Correction notice for', 'Amendment to'] : [])])} ${R}.`
+      : rr.pick([`This notice corrects ${R}.`, `The authors of ${R} have asked us to publish a correction.`, `An error has been identified in ${R}.`,
+        ...(V ? [`We have been asked to correct ${R}.`, `${cap(R)} contains an error that is corrected here.`] : [])]);
     if (er.kind === 'other') {
       return `${head} ${rr.pick([`The affiliation of the ${rr.pick(ORD)} author was given incorrectly; it has been corrected online.`,
-        `The legend of Figure ${1 + (er.what % 4)} listed two panels in the wrong order.`, 'The funding statement was incomplete; the full statement now appears online.'])} ${rr.pick(['No reported values are affected.', 'The data and conclusions are unaffected.'])}`;
+        `The legend of Figure ${1 + (er.what % 4)} listed two panels in the wrong order.`, 'The funding statement was incomplete; the full statement now appears online.',
+        ...(V ? ['The title of Table 2 omitted the sample code.', 'Reference 14 was cited with the wrong year.', `A scale bar was missing from Figure ${1 + (er.what % 4)}.`] : [])])} ${rr.pick(['No reported values are affected.', 'The data and conclusions are unaffected.',
+        ...(V ? ['None of the measured values is affected.', 'This correction concerns presentation only.'] : [])])}`;
     }
     if (er.kind === 'n') {
       const { noun } = nounFor(T, world);
       return `${head} ${rr.pick([`The text states that the measurements were made on ${er.nOld} ${noun}; the correct number is ${er.nNew}.`,
-        `The number of ${noun} was misreported as ${er.nOld}; all values are in fact based on ${er.nNew} ${noun}.`])} ${rr.pick(['The reported values themselves are unchanged.', 'No other changes are needed.'])}`;
+        `The number of ${noun} was misreported as ${er.nOld}; all values are in fact based on ${er.nNew} ${noun}.`,
+        ...(V ? [`The sample size was stated incorrectly as ${er.nOld} ${noun}; the data come from ${er.nNew} ${noun}.`, `Please note that n should read ${er.nNew}, not ${er.nOld}.`,
+          `In the Methods, "${er.nOld} ${noun}" should be "${er.nNew} ${noun}"; no measured value changes.`] : [])])} ${rr.pick(['The reported values themselves are unchanged.', 'No other changes are needed.'])}`;
     }
     const e = world.entMap.get(er.ent);
     const mention = mentionFactory(e, d.naming, rr);
@@ -577,37 +671,47 @@ function renderNotice(d, world, ctx) {
     if (er.kind === 'unit') {
       const sym = rr.pick(unitOf(er.prop, er.unit).sym);
       return `${head} ${rr.pick([`In the published version the ${pn} of ${M} ${C} was given as ${oldV}. The number is right but the unit is wrong: it should read ${sym}${rr.chance(0.5) ? `, i.e. ${newV}` : ''}.`,
-        `The ${pn} of ${M} ${C} is printed as ${oldV}; the number is correct, but the unit should be ${sym}.`])} ${rr.pick(['The authors apologise for the error.', 'The conclusions are unaffected.'])}`;
+        `The ${pn} of ${M} ${C} is printed as ${oldV}; the number is correct, but the unit should be ${sym}.`,
+        ...(V ? [`The ${pn} of ${M} ${C} appears as ${oldV}. Only the unit is wrong: the figure is to be read in ${sym}.`,
+          `Unit error: ${oldV} for the ${pn} of ${M} ${C} should carry the unit ${sym}; the number itself stands.`] : [])])} ${rr.pick(['The authors apologise for the error.', 'The conclusions are unaffected.'])}`;
     }
     const forms = [`In the published version the ${pn} of ${M} ${C} was given as ${oldV}. The correct value is ${newV}.`];
     if (!easy) {
       forms.push(`Owing to a transcription error, the ${pn} of ${M} ${C} appears as ${oldV}; it should read ${newV}.`,
         `The value of ${oldV} given for the ${pn} of ${M} ${C} is incorrect and should be replaced by ${newV}.`,
         `Table 1 lists the ${pn} of ${M} ${C} as ${oldV}; the correct entry is ${newV}.`);
+      if (V) forms.push(`The ${pn} of ${M} ${C} should have been reported as ${newV} rather than ${oldV}.`, `${cap(oldV)} is wrong for the ${pn} of ${M} ${C}; the measured value is ${newV}.`,
+        `For the ${pn} of ${M} ${C}, read ${newV} instead of ${oldV}.`, `A calculation error led to ${oldV} being printed for the ${pn} of ${M} ${C}; the right figure is ${newV}.`);
     }
     return `${head} ${rr.pick(forms)} ${rr.pick(['The authors apologise for the error.', 'The conclusions of the article are unaffected.', 'All other values are unchanged.'])}`;
   }
   if (d.kind === 'retraction') {
     const rt = world.retractions.find(x => x.doc === d.key);
     const reason = RETRACTION_REASONS[rt.reason % RETRACTION_REASONS.length];
+    const V = K.formVariety;
     if (!rt.target) {
       const R = ctx.phantomRef.get(d.key);
       return rr.pick([`Retraction of ${R}. The editors retract this article because ${reason}. Its results should not be used.`,
-        ...(K.refStyles[0] === 'id' ? [] : [`${cap(R)} has been retracted because ${reason}; its results should not be used.`])]);
+        ...(K.refStyles[0] === 'id' ? [] : [`${cap(R)} has been retracted because ${reason}; its results should not be used.`,
+          ...(V ? [`We, the editors, have withdrawn ${R} from the record because ${reason}.`, `${cap(R)} is hereby retracted (${reason}). Readers should disregard its data.`] : [])])]);
     }
     const T = world.docMap.get(rt.target);
     const who = T.kind === 'preprint' ? 'The authors have withdrawn and retracted this preprint' : rr.pick(['The editors retract this article', 'At the request of the authors, this article is retracted', 'This article has been retracted by the publisher']);
     const R = ref(world, ctx, T, rr);
-    if (K.refStyles[0] === 'id' || rr.chance(0.5)) return `Retraction of ${R}. ${who} because ${reason}. Its results should not be used.`;
+    if (K.refStyles[0] === 'id' || rr.chance(V ? 0.35 : 0.5)) return `Retraction of ${R}. ${who} because ${reason}. Its results should not be used.`;
     return rr.pick([`${cap(R)} has been retracted because ${reason}; its results should not be used.`,
-      `${T.kind === 'preprint' ? `The authors and ${T.venue}` : `The editors of ${T.venue}`} have retracted ${R}: ${reason}. The findings should no longer be relied upon.`]);
+      `${T.kind === 'preprint' ? `The authors and ${T.venue}` : `The editors of ${T.venue}`} have retracted ${R}: ${reason}. The findings should no longer be relied upon.`,
+      ...(V ? [`We, the editors, have withdrawn ${R} from the record because ${reason}.`, `${cap(R)} is hereby retracted (${reason}). Readers should disregard its data.`,
+        `${T.kind === 'preprint' ? 'The preprint server' : `${T.venue}`} has removed ${R} from the record: ${reason}. Do not rely on its measurements.`] : [])]);
   }
   if (d.kind === 'concern') {
     const cn = world.concerns.find(x => x.doc === d.key);
     const T = world.docMap.get(cn.target);
     const reason = CONCERN_REASONS[cn.reason % CONCERN_REASONS.length];
     const R = ref(world, ctx, T, rr);
-    return `${K.refStyles[0] === 'id' || rr.chance(0.5) ? `Expression of concern regarding ${R}.` : `The editors are issuing an expression of concern about ${R}.`} The editors have received questions about ${reason}. An investigation is under way. This notice does not retract the article, which remains part of the published record${rr.chance(0.5) ? ' while the investigation continues' : ''}.`;
+    const V = K.formVariety;
+    return `${K.refStyles[0] === 'id' || rr.chance(0.5) ? `Expression of concern regarding ${R}.` : rr.pick([`The editors are issuing an expression of concern about ${R}.`,
+      ...(V ? [`The editors wish to draw readers' attention to concerns about ${R}.`, `${cap(R)} is the subject of an expression of concern.`] : [])])} The editors have received questions about ${reason}. An investigation is under way. ${rr.pick(['This notice does not retract the article, which remains part of the published record', ...(V ? ['The article has not been retracted and stays in the record', 'No decision on retraction has been taken; the article remains available'] : [])])}${rr.chance(0.5) ? ' while the investigation continues' : ''}.`;
   }
   throw new Error(`not a notice: ${d.kind}`);
 }
@@ -664,12 +768,16 @@ export function renderTask(world, attempt) {
     freeDay: day => { let x = day; while (usedDays.has(x)) x -= 1; usedDays.add(x); return x; },
     topicCount: new Map(),
     vagueCount: new Map(),
+    citeCount: new Map(),
+    titleCount: new Map(),
     phantomRef: new Map(),
     refLog: [],
   };
   for (const d of world.docs) dateStyleOf.set(d.date, K.mixedDates ? rr.pick(['iso', 'dmy', 'mdy', 'ymd']) : 'iso');
   for (const d of world.docs) if (isResearch(d) && mainProp(world, d)) { const k = topicKey(world, d); ctx.topicCount.set(k, (ctx.topicCount.get(k) || 0) + 1); }
   for (const d of world.docs) if (isResearch(d)) { const k = vagueKey(world, d); ctx.vagueCount.set(k, (ctx.vagueCount.get(k) || 0) + 1); }
+  for (const d of world.docs) if (isResearch(d)) { const k = citeKey(world, d); ctx.citeCount.set(k, (ctx.citeCount.get(k) || 0) + 1); }
+  for (const d of world.docs) if (isResearch(d)) { const k = titles.get(d.key).toLowerCase(); ctx.titleCount.set(k, (ctx.titleCount.get(k) || 0) + 1); }
   for (const rt of world.retractions) if (!rt.target) ctx.phantomRef.set(rt.doc, phantomRef(world, ctx, rt, rng('synth-phantom', VERSION, world.split, world.seed, world.difficulty, attempt, rt.doc)));
   const documents = world.docs.map(d => {
     const dr = rng('synth-doc', VERSION, world.split, world.seed, world.difficulty, attempt, d.key);
@@ -739,7 +847,7 @@ export function renderPrompt(world) {
   L.push('3. Void documents are ignored entirely, including every value they report.');
   L.push('4. An erratum (also called a correction or corrigendum) replaces exactly the value it corrects (that property, entity and condition) and nothing else. The corrected value belongs to the corrected document: cite that document, never the erratum. An erratum may instead correct a sample size; then the corrected n applies. An erratum to a void document changes nothing.');
   L.push('5. Notices (errata, retraction notices, expressions of concern) are never sources themselves.');
-  if (K.refStyles[0] !== 'id') L.push('6. Notices and documents identify the work they refer to by its title or topic, authors, venue and publication date. A reference refers to a corpus document only if all of these details match it; otherwise it refers to a document outside the corpus.');
+  if (K.refStyles[0] !== 'id') L.push('6. Notices and documents identify the work they refer to by some of: its title or topic, authors, venue and publication date (or year). A reference refers to a corpus document only if every detail it gives matches that document; otherwise it refers to a document outside the corpus.');
   L.push('');
   L.push('## Resolution policy');
   L.push('For each requested cell, collect the surviving claims: claims from non-void documents, made under the standard condition, about the entity itself, with errata applied.');

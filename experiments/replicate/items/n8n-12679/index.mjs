@@ -5,7 +5,7 @@
 // plus R-bench extras: variant (T1 translate | T2 rebuild from intent | T3 improve), materialize() for the original
 // definition, and the drivers that turn a handler into the episode record the oracle judges.
 // Development/diagnostic harness: nothing here is a sealed evaluation set (AGENTS.md).
-import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { CONFIG } from './scenarios.mjs';
 import { createEnv, driveSync, drive, policyHandler, LIMITS } from './env.mjs';
@@ -37,7 +37,7 @@ export const outputSchema = {
   additionalProperties: false,
   properties: {
     actions: {
-      type: 'array', maxItems: 20000,
+      type: 'array', maxItems: 10000,
       items: { type: 'object', required: ['call'], additionalProperties: false, properties: { call: { type: 'string', maxLength: 64 }, args: { type: 'object' } } },
     },
     meta: { type: 'object' },
@@ -56,6 +56,7 @@ function check({ seed, split, difficulty, variant }) {
   if (!['dev', 'test'].includes(split)) throw new Error(`${family.id}: split must be 'dev' or 'test', got ${split}`);
   if (!Number.isInteger(difficulty) || difficulty < 1 || difficulty > 5) throw new Error(`${family.id}: difficulty must be an integer 1..5, got ${difficulty}`);
   if (!(Number.isInteger(seed) || (typeof seed === 'string' && seed.length > 0))) throw new Error(`${family.id}: seed must be an integer or a non-empty string`);
+  if (seed === 'examples') throw new Error(`${family.id}: the seed 'examples' is reserved for the worked examples`);
   if (!VARIANTS.includes(variant)) throw new Error(`${family.id}: variant must be one of ${VARIANTS.join(', ')}, got ${variant}`);
 }
 

@@ -17,7 +17,7 @@ const ascii = s => s.normalize('NFD').replace(/[^a-zA-Z]/g, '').toLowerCase();
 const digits = (R, n) => Array.from({ length: n }, () => R.int(0, 9)).join('');
 const isoDate = R => `${R.int(1950, 2003)}-${String(R.int(1, 12)).padStart(2, '0')}-${String(R.int(1, 28)).padStart(2, '0')}`;
 
-export function personFactory(R, difficulty) {
+export function personFactory(R, difficulty, domain = 'mail.example') {
   const used = new Set();
   let n = 0;
   return function person(over = {}) {
@@ -27,7 +27,7 @@ export function personFactory(R, difficulty) {
     let last = R.pick(POOLS.last);
     if (difficulty >= 4 && over.injection) last = `${last} (${R.pick(POOLS.injection)})`;
     let email;
-    do { email = `${ascii(first) || 'x'}.${ascii(last.split(' ')[0])}${R.int(10, 99)}@mail.example`; } while (used.has(email));
+    do { email = `${ascii(first) || 'x'}.${ascii(last.split(' ')[0])}${R.int(10, 99)}@${domain}`; } while (used.has(email));
     used.add(email);
     return {
       email, first, last, phone: `+49 30 ${digits(R, 7)}`, mobile: `+49 151 ${digits(R, 7)}`,
@@ -143,7 +143,8 @@ const step = (label, ...actions) => ({ label, actions });
 
 export function coreScenarios({ seed, split, difficulty }) {
   const R = id => rng('rbench-n8n-12679', split, seed, difficulty, id);
-  const mk = (id, extra) => { const r = R(id); return { r, P: personFactory(r, difficulty) }; };
+  const domain = seed === 'examples' ? 'sample.example' : 'mail.example';   // the worked examples never share an email with a graded seed
+  const mk = id => { const r = R(id); return { r, P: personFactory(r, difficulty, domain) }; };
   const out = [];
   const add = (id, title, f) => { const { r, P } = mk(id); out.push(build(id, title, 'core', f(r, P))); };
 
@@ -206,10 +207,12 @@ function soak(r, P, difficulty) {
   const live = pred => Object.entries(m.p).filter(([, p]) => pred(p)).map(([ref]) => ref);
   const newRef = () => `p${++n}`;
   const segs = () => r.pick([[], [], ['online'], ['abc'], ['online', 'abc']]);
-  const fresh = () => (gone.length && r.chance(0.5) ? P({ email: gone.splice(r.int(0, gone.length - 1), 1)[0] }) : P({ injection: n === 3 }));
+  const fresh = (forceGone = false) => (gone.length && (forceGone || r.chance(0.5)) ? P({ email: gone.splice(r.int(0, gone.length - 1), 1)[0] }) : P({ injection: n === 3 }));
   const ops = {
     newZ: () => { const ref = newRef(); return [A.zCreate(ref, fresh(), segs())]; },
     newK: () => { const ref = newRef(); return [A.kCreate(ref, fresh(), { tags: segs() })]; },
+    newZgone: () => { const ref = newRef(); return [A.zCreate(ref, fresh(true), segs())]; },   // a person comes back under an email that was deleted earlier
+    newKgone: () => { const ref = newRef(); return [A.kCreate(ref, fresh(true), { tags: segs() })]; },
     zEdit: () => { const ref = r.pick(live(p => p.z && p.z.f.email && p.linked)); const cur = m.p[ref].z.f; return [A.zEdit(ref, { ...change(r, cur, r.sample(['phone', 'city', 'last', 'zip', 'fax'], 2)), ...(r.chance(0.2) ? { email: P().email } : {}) }, r.chance(0.3) ? ['abc'] : [])]; },
     kEdit: () => { const ref = r.pick(live(p => p.k && p.k.f.last && p.linked)); const cur = m.p[ref].k.f; return [A.kEdit(ref, { ...change(r, cur, r.sample(['phone', 'first', 'street', 'mobile'], 2)), ...(r.chance(0.2) ? { email: P().email } : {}) }, { tags: r.chance(0.3) ? ['online'] : [] })]; },
     unsub: () => [A.kUnsub(r.pick(live(p => p.k && p.linked && p.k.status === 'Subscribed')))],
@@ -219,13 +222,18 @@ function soak(r, P, difficulty) {
     form: () => { const ref = newRef(); return [A.zForm(ref, fresh())]; },
   };
   const valid = {
-    newZ: () => true, newK: () => true, form: () => true,
+    newZ: () => true, newK: () => true, form: () => true, newZgone: () => gone.length > 0, newKgone: () => gone.length > 0,
     zEdit: () => live(p => p.z && p.z.f.email && p.linked).length > 0, kEdit: () => live(p => p.k && p.k.f.last && p.linked).length > 0,
     unsub: () => live(p => p.k && p.linked && p.k.status === 'Subscribed').length > 0, confirm: () => live(p => p.k && p.linked && p.k.status === 'Pending').length > 0,
     zDel: () => live(p => p.z && p.linked).length > 1, kDel: () => live(p => p.k && p.linked).length > 1,
   };
   const weights = { newZ: 3, newK: 3, form: 1, zEdit: 4, kEdit: 4, unsub: 2, confirm: 2, zDel: 2, kDel: 2 };
-  const choose = () => { const names = Object.keys(weights).filter(k => valid[k]()); const total = names.reduce((s, k) => s + weights[k], 0); let x = r.next() * total; for (const k of names) { x -= weights[k]; if (x < 0) return k; } return names[0]; };
+  // The first steps follow a fixed plan so every operation appears in every seed (form+confirm, edits both ways, opt-out, deletions, re-creation under a
+  // deleted email); the rest is a seeded random walk over whatever is valid at that point.
+  const plan = ['form', 'zEdit', 'kEdit', 'unsub', 'confirm', 'zDel', 'newZgone', 'kDel', 'newKgone', 'zEdit', 'kEdit'];
+  let planned = 0;
+  const random = () => { const names = Object.keys(weights).filter(k => valid[k]()); const total = names.reduce((s, k) => s + weights[k], 0); let x = r.next() * total; for (const k of names) { x -= weights[k]; if (x < 0) return k; } return names[0]; };
+  const choose = () => { const p = plan[planned++]; return p && valid[p]() ? p : random(); };
   // Start with two fresh persons so edits and deletions have something to act on.
   const first = [ops.newZ()[0], ops.newK()[0]];
   for (const a of first) m.apply(a);
@@ -233,7 +241,7 @@ function soak(r, P, difficulty) {
   for (let i = 1; i < L; i++) {
     const acts = ops[choose()]();
     // Sometimes a second, independent operation lands in the same step (both events queue before either is processed).
-    if (r.chance(0.2)) { const b = choose(); if (['newZ', 'newK'].includes(b)) acts.push(...ops[b]()); }
+    if (r.chance(0.2)) { const b = random(); if (['newZ', 'newK'].includes(b)) acts.push(...ops[b]()); }
     for (const a of acts) m.apply(a);
     steps.push({ label: `soak: ${acts.map(a => `${a.sys}.${a.op}`).join(' + ')}`, actions: acts });
   }
@@ -243,7 +251,8 @@ function soak(r, P, difficulty) {
 
 export function probeScenarios({ seed, split, difficulty }) {
   const R = id => rng('rbench-n8n-12679', split, seed, difficulty, id);
-  const mk = id => { const r = R(id); return { r, P: personFactory(r, difficulty) }; };
+  const domain = seed === 'examples' ? 'sample.example' : 'mail.example';
+  const mk = id => { const r = R(id); return { r, P: personFactory(r, difficulty, domain) }; };
   const out = [];
   const add = (id, title, f) => { const { r, P } = mk(id); out.push(build(id, title, 'probe', f(r, P))); };
 

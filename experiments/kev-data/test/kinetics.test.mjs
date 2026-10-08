@@ -411,6 +411,7 @@ test('records pass the build checks in every slice; labels are balanced; seeds s
     assert.ok(recs.every(r => r.meta.seed >= 401 && r.meta.bed === 'kinetics' && r.meta.family === 'kinetics' && r.meta.labelSource === 'generator'), `${slice}: dev seeds 1-400 are reserved`);
     assert.ok(recs.every(r => /^sha256:/.test(r.meta.worldHash) && /^sha256:/.test(r.meta.formId)));
     t.diagnostic(`${slice}: ${recs.length} records from ${n} worlds: ${Object.entries(byPort(recs)).map(([p, rs]) => `${p} ${rs.length}`).join(', ')}`);
+    for (const [p, rs] of Object.entries(byPort(recs))) t.diagnostic(`  ${slice} ${p} distinct masked forms per label: ${JSON.stringify(gen.formsPerLabel(rs))}`);
   }
   // train label balance within 1:3 over 300 worlds (before the assembly's own cap)
   const pool = byPort(await collect('train', range(401, 300), { ports: ['X3', 'X8'] }));
@@ -420,6 +421,24 @@ test('records pass the build checks in every slice; labels are balanced; seeds s
     assert.ok(ratio <= 3, `${port}: ${ratio}`);
     assert.equal(capRatio(pool[port], { label: labelOf, maxRatio: 3 }).dropped.length, 0, 'the 3:1 cap drops nothing');
   }
+});
+
+test('twins: an X8 flip twin changes the unit statement only and flips the label; the solver reads both', async t => {
+  const recs = byPort(await collect('test-ood', range(6000, 60), { ports: ['X8'] })).X8;
+  const pairs = {};
+  for (const r of recs.filter(x => x.meta.variant === 'flip')) (pairs[r.meta.pairId] ??= []).push(r);
+  const full = Object.values(pairs);
+  t.diagnostic(`${recs.length} X8 test-ood rows, ${full.length} flip pairs`);
+  assert.ok(full.length >= 10);
+  for (const [a, b] of full) {
+    assert.equal(full.length > 0 && [a, b].every(Boolean), true);
+    assert.notEqual(labelOf(a), labelOf(b), 'the label flips');
+    assert.deepEqual({ ...a.state, conventions: 0 }, { ...b.state, conventions: 0 }, 'the row and the value are the same');
+    assert.notEqual(a.state.conventions, b.state.conventions);
+    assert.equal(S.solveX8(a.state).label, labelOf(a));
+    assert.equal(S.solveX8(b.state).label, labelOf(b));
+  }
+  assert.ok(recs.some(r => r.meta.variant === 'paraphrase') || recs.length < 100, 'paraphrase-consistency records carry Q0 and two test wordings of one state');
 });
 
 test('determinism: two runs give the same records; the author-swap twin changes the author only', async () => {

@@ -27,7 +27,7 @@ export function hasAddressee(text) {
 const MONTH_RE = '(?:January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)';
 const DATE_LIKE = [
   /\b\d{4}-\d{2}-\d{2}\b/g, /\b\d{1,2}[./]\d{1,2}[./]\d{2,4}\b/g,
-  new RegExp(`\\b\\d{1,2}(?:st|nd|rd|th)?\\s+${MONTH_RE}\\b`, 'gi'), new RegExp(`\\b${MONTH_RE}\\.?\\s+\\d{1,2}(?:st|nd|rd|th)?\\b`, 'gi'),
+  new RegExp(`\\b\\d{1,2}(?:st|nd|rd|th)?\\s+${MONTH_RE}\\b(?:,?\\s+(?:19|20)\\d{2}\\b)?`, 'gi'), new RegExp(`\\b${MONTH_RE}\\.?\\s+\\d{1,2}(?:st|nd|rd|th)?\\b(?:,?\\s+(?:19|20)\\d{2}\\b)?`, 'gi'),
   new RegExp(`\\b${MONTH_RE}\\s+(?:19|20)\\d{2}\\b`, 'gi'), /\bQ[1-4]\s*(?:19|20)\d{2}\b/g, /\b(?:19|20)\d{2}\b/g,
 ];
 export function literalDates(text) {

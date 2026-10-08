@@ -14,7 +14,7 @@
    "query": {},
    "body": {
     "id": "570000001615000001",
-    "email": "nils.novak71@mail.example",
+    "email": "nils.novak71@sample.example",
     "firstName": "Nils",
     "lastName": "Novak",
     "phone": "+49 30 6187554",
@@ -39,7 +39,7 @@
    "query": {},
    "body": {
     "id": "570000076853000001",
-    "email": "zora.weiss63@mail.example",
+    "email": "zora.weiss63@sample.example",
     "firstName": "Zora",
     "lastName": "Weiss",
     "phone": "+49 30 4752564",
@@ -58,7 +58,7 @@
   },
   "kt-tagged": {
    "id": "1084301",
-   "email": "tilda.ostrowski78@mail.example",
+   "email": "tilda.ostrowski78@sample.example",
    "status": "Subscribed",
    "listId": "9002",
    "tags": [
@@ -88,7 +88,7 @@
    "query": {},
    "body": {
     "id": "570000032567000002",
-    "email": "ines.yilmaz15@mail.example",
+    "email": "ines.yilmaz15@sample.example",
     "firstName": "Ines",
     "lastName": "Yilmaz",
     "phone": "+49 30 8908191",
@@ -107,7 +107,7 @@
   },
   "kt-deleted": {
    "id": "1036202",
-   "email": "ines.quast25@mail.example",
+   "email": "ines.quast25@sample.example",
    "status": "Subscribed",
    "listId": "9001",
    "tags": [
@@ -139,7 +139,7 @@
       {
        "what": "a person creates a contact in Zoho CRM",
        "fields": {
-        "email": "nils.novak71@mail.example",
+        "email": "nils.novak71@sample.example",
         "first": "Nils",
         "last": "Novak",
         "phone": "+49 30 6187554",
@@ -162,7 +162,7 @@
        "data": {
         "body": {
          "id": "570000001615000001",
-         "email": "nils.novak71@mail.example",
+         "email": "nils.novak71@sample.example",
          "firstName": "Nils",
          "lastName": "Novak",
          "phone": "+49 30 6187554",
@@ -185,7 +185,7 @@
        "data": {
         "body": {
          "id": "570000001615000001",
-         "email": "nils.novak71@mail.example",
+         "email": "nils.novak71@sample.example",
          "firstName": "Nils",
          "lastName": "Novak",
          "phone": "+49 30 6187554",
@@ -208,7 +208,7 @@
       "zoho": [
        {
         "id": "570000001615000001",
-        "email": "nils.novak71@mail.example",
+        "email": "nils.novak71@sample.example",
         "first": "Nils",
         "last": "Novak",
         "phone": "+49 30 6187554",
@@ -229,7 +229,7 @@
       "klicktipp": [
        {
         "id": "921801",
-        "email": "nils.novak71@mail.example",
+        "email": "nils.novak71@sample.example",
         "first": "Nils",
         "last": "Novak",
         "phone": "+49 30 6187554",
@@ -262,7 +262,7 @@
       {
        "what": "a web-form submission creates a contact in Zoho CRM",
        "fields": {
-        "email": "zora.weiss63@mail.example",
+        "email": "zora.weiss63@sample.example",
         "first": "Zora",
         "last": "Weiss",
         "phone": "+49 30 4752564",
@@ -285,7 +285,7 @@
        "data": {
         "body": {
          "id": "570000076853000001",
-         "email": "zora.weiss63@mail.example",
+         "email": "zora.weiss63@sample.example",
          "firstName": "Zora",
          "lastName": "Weiss",
          "phone": "+49 30 4752564",
@@ -308,7 +308,7 @@
        "data": {
         "body": {
          "id": "570000076853000001",
-         "email": "zora.weiss63@mail.example",
+         "email": "zora.weiss63@sample.example",
          "firstName": "Zora",
          "lastName": "Weiss",
          "phone": "+49 30 4752564",
@@ -331,7 +331,7 @@
       "zoho": [
        {
         "id": "570000076853000001",
-        "email": "zora.weiss63@mail.example",
+        "email": "zora.weiss63@sample.example",
         "first": "Zora",
         "last": "Weiss",
         "phone": "+49 30 4752564",
@@ -352,7 +352,7 @@
       "klicktipp": [
        {
         "id": "1036901",
-        "email": "zora.weiss63@mail.example",
+        "email": "zora.weiss63@sample.example",
         "first": "Zora",
         "last": "Weiss",
         "phone": "+49 30 4752564",
@@ -385,7 +385,7 @@
       {
        "what": "a person creates a subscriber in KlickTipp and the automation tags it for sync",
        "fields": {
-        "email": "wim.novak58@mail.example",
+        "email": "wim.novak58@sample.example",
         "first": "Wim",
         "last": "Novak",
         "phone": "+49 30 9243069",
@@ -407,7 +407,7 @@
        "trigger": "kt-tagged",
        "data": {
         "id": "691801",
-        "email": "wim.novak58@mail.example",
+        "email": "wim.novak58@sample.example",
         "status": "Subscribed",
         "listId": "9001",
         "tags": [
@@ -434,7 +434,7 @@
        "data": {
         "body": {
          "id": "570000031139000001",
-         "email": "wim.novak58@mail.example",
+         "email": "wim.novak58@sample.example",
          "firstName": "Wim",
          "lastName": "Novak",
          "phone": "+49 30 9243069",
@@ -457,7 +457,7 @@
        "data": {
         "body": {
          "id": "570000031139000001",
-         "email": "wim.novak58@mail.example",
+         "email": "wim.novak58@sample.example",
          "firstName": "Wim",
          "lastName": "Novak",
          "phone": "+49 30 9243069",
@@ -480,7 +480,7 @@
       "zoho": [
        {
         "id": "570000031139000001",
-        "email": "wim.novak58@mail.example",
+        "email": "wim.novak58@sample.example",
         "first": "Wim",
         "last": "Novak",
         "phone": "+49 30 9243069",
@@ -501,7 +501,7 @@
       "klicktipp": [
        {
         "id": "691801",
-        "email": "wim.novak58@mail.example",
+        "email": "wim.novak58@sample.example",
         "first": "Wim",
         "last": "Novak",
         "phone": "+49 30 9243069",
@@ -534,7 +534,7 @@
       {
        "what": "a person creates a contact in Zoho CRM",
        "fields": {
-        "email": "mira.ekstrom90@mail.example",
+        "email": "mira.ekstrom90@sample.example",
         "first": "Mira",
         "last": "Ekström",
         "phone": "+49 30 5017325",
@@ -557,7 +557,7 @@
        "data": {
         "body": {
          "id": "570000016377000001",
-         "email": "mira.ekstrom90@mail.example",
+         "email": "mira.ekstrom90@sample.example",
          "firstName": "Mira",
          "lastName": "Ekström",
          "phone": "+49 30 5017325",
@@ -580,7 +580,7 @@
        "data": {
         "body": {
          "id": "570000016377000001",
-         "email": "mira.ekstrom90@mail.example",
+         "email": "mira.ekstrom90@sample.example",
          "firstName": "Mira",
          "lastName": "Ekström",
          "phone": "+49 30 5017325",
@@ -603,7 +603,7 @@
       "zoho": [
        {
         "id": "570000016377000001",
-        "email": "mira.ekstrom90@mail.example",
+        "email": "mira.ekstrom90@sample.example",
         "first": "Mira",
         "last": "Ekström",
         "phone": "+49 30 5017325",
@@ -624,7 +624,7 @@
       "klicktipp": [
        {
         "id": "806801",
-        "email": "mira.ekstrom90@mail.example",
+        "email": "mira.ekstrom90@sample.example",
         "first": "Mira",
         "last": "Ekström",
         "phone": "+49 30 5017325",
@@ -659,7 +659,7 @@
        "trigger": "kt-tagged",
        "data": {
         "id": "806801",
-        "email": "mira.ekstrom90@mail.example",
+        "email": "mira.ekstrom90@sample.example",
         "status": "Unsubscribed",
         "listId": "9001",
         "tags": [
@@ -687,7 +687,7 @@
        "data": {
         "body": {
          "id": "570000016377000001",
-         "email": "mira.ekstrom90@mail.example",
+         "email": "mira.ekstrom90@sample.example",
          "firstName": "Mira",
          "lastName": "Ekström",
          "phone": "+49 30 5017325",
@@ -710,7 +710,7 @@
        "data": {
         "body": {
          "id": "570000016377000001",
-         "email": "mira.ekstrom90@mail.example",
+         "email": "mira.ekstrom90@sample.example",
          "firstName": "Mira",
          "lastName": "Ekström",
          "phone": "+49 30 5017325",
@@ -733,7 +733,7 @@
       "zoho": [
        {
         "id": "570000016377000001",
-        "email": "mira.ekstrom90@mail.example",
+        "email": "mira.ekstrom90@sample.example",
         "first": "Mira",
         "last": "Ekström",
         "phone": "+49 30 5017325",
@@ -754,7 +754,7 @@
       "klicktipp": [
        {
         "id": "806801",
-        "email": "mira.ekstrom90@mail.example",
+        "email": "mira.ekstrom90@sample.example",
         "first": "Mira",
         "last": "Ekström",
         "phone": "+49 30 5017325",

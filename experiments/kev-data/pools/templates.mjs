@@ -98,11 +98,19 @@ export function fillLine(line, values = {}) {
 
 // Deterministic example values for a line: used by the two-model brief and the tests. The same line
 // always fills the same way (a hash of its id), so a re-run asks the models the same question.
+// The systems a port's contract offers (spec/ports.json slots.system.values): a system-free pool line is
+// illustrated with one of them, chosen by a hash of the line id.
+export const PORT_SYSTEMS = Object.freeze({ R1: ['ATLAS', 'BRIGHTDESK', 'VENDEX'], R2: ['BRIGHTDESK', 'LEDGR', 'ATLAS', 'KOBO', 'VERITAS'], R3: ['BRIGHTDESK', 'ATLAS', 'LEDGR', 'KOBO'], R4: ['BRIGHTDESK', 'LEDGR', 'KOBO', 'VERITAS'] });
+export function systemFor(line) {
+  const port = line.assertsPort ?? line.port, ok = PORT_SYSTEMS[port] ?? SYSTEMS;
+  if (line.system && ok.includes(line.system)) return line.system;
+  return ok[parseInt(sha(`kev-data:train-pools:system:${line.id ?? line.text}`).slice(0, 4), 16) % ok.length];
+}
 export function canonicalValues(line, bedConsts = {}) {
   const h = sha(`kev-data:train-pools:fill:${line.id ?? line.text}`);
   const n = (i, mod) => parseInt(h.slice(i * 4, i * 4 + 4), 16) % mod;
   let m = 1 + n(0, 12), d = 1 + n(1, 12); if (d === m) d = (d % 12) + 1;
-  const S = line.system && SYSTEMS.includes(line.system) ? line.system : 'ATLAS';
+  const S = systemFor(line);
   const FF = bedConsts.FLAG_FORM?.[S], toks = bedConsts.FLAG_TOKENS?.[S];
   return {
     S, ex: { y: 1950 + n(2, 50), m, d },
@@ -111,7 +119,8 @@ export function canonicalValues(line, bedConsts = {}) {
     field: bedConsts.UPDATE_FIELD?.[S] ?? 'updated',
     w0: `${1 + n(4, 9)} March 2024`, w1: `${10 + n(5, 18)} April 2024`, year: 2019 + n(6, 6),
     ref: S === 'ATLAS' ? 'LEDGR' : 'ATLAS', server: ['Ireland', 'Germany', 'the Netherlands', 'Australia'][n(7, 4)],
-    city_us: ['Chicago', 'Denver', 'Seattle', 'Boston'][n(8, 4)], city_eu: ['Leeds', 'Lyon', 'Oslo', 'Cork'][n(9, 4)],
+    city_us: (bedConsts.TEAM_CITIES?.mdy ?? ['Chicago', 'Denver', 'Seattle', 'Boston'])[n(8, 30) % (bedConsts.TEAM_CITIES?.mdy?.length ?? 4)],
+    city_eu: (bedConsts.TEAM_CITIES?.dmy ?? ['Leeds', 'Lyon', 'Oslo', 'Cork'])[n(9, 30) % (bedConsts.TEAM_CITIES?.dmy?.length ?? 4)],
   };
 }
 
@@ -134,8 +143,12 @@ export function heldOutRule(t, extent) {
   }
 }
 
-export function extractTemplates(beds) {
-  return beds.import('beds/records/render.mjs').then(mod => buildTemplates(mod, beds.read('beds/records/render.mjs')));
+export async function extractTemplates(beds) {
+  const mod = await beds.import('beds/records/render.mjs'), pools = await beds.import('beds/records/pools.mjs');
+  const out = buildTemplates(mod, beds.read('beds/records/render.mjs'));
+  out.consts = { ...out.consts, FLAG_TOKENS: pools.FLAG_TOKENS, TEAM_CITIES: pools.TEAM_CITIES };
+  out.sources = { 'beds/records/render.mjs': sha(beds.read('beds/records/render.mjs')), 'beds/records/pools.mjs': sha(beds.read('beds/records/pools.mjs')) };
+  return out;
 }
 
 function buildTemplates(mod, renderSource) {

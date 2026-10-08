@@ -1,9 +1,9 @@
-// Known-good control handlers, written from the job description (not node by node from the definition).
-//   makeFaithful(cfg, {bugs})  the job as the author describes it, with roughly the author's call pattern.
-//                              Bug flags turn it into the plausible-but-wrong controls (controls/broken.mjs).
-//   makeImproved(cfg)          a T3 solution: reads the live record instead of the (possibly stale) event payload,
-//                              looks the counterpart up before creating, writes each side at most once per event.
-// Both are plain sync handlers (event, api) -> void; api is the same call surface candidates get.
+// Known-good control handlers (sync: (event, api) -> void; api is the same call surface candidates get).
+//   makeFaithful(cfg, {bugs})  a call-for-call TRANSCRIPTION of the original definition: same calls, same order, same arguments, including the
+//                              wasteful and failing ones. Verified against the executed definition (item.test.mjs, run-controls.mjs). It is the
+//                              T1/T2 reference solution, the T3 cost baseline, and, with one bug flag set, the near-miss bad controls.
+//   makeImproved(cfg)          a T3 solution written from the job, not from the graph: reads the live record instead of the (possibly stale)
+//                              event payload, looks the counterpart up before creating, writes each side only when something differs.
 import { unixToIso } from '../mocks/common.mjs';
 
 const nz = v => (v === null || v === undefined ? '' : String(v));

@@ -1,0 +1,1417 @@
+{
+ "schema": "rbench-n8n-20281-model-recordings/1",
+ "note": "Recorded answers of the mock classifier, keyed by the mail's reference token (the mock finds the token in the prompt). [isCustomerRequest, category, priority, confidence]. fail: permanent = every call fails, transient = the first call fails. Not evidence about any real model.",
+ "byRef": {
+  "MR-F865F": {
+   "area": "Invoices",
+   "sentiment": "Negative",
+   "fail": null,
+   "standard": [
+    true,
+    "Bug",
+    "High",
+    0.91
+   ],
+   "small": [
+    true,
+    "Bug",
+    "High",
+    0.87
+   ]
+  },
+  "MR-74C9F": {
+   "area": "Imports",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "Bug",
+    "Medium",
+    0.96
+   ],
+   "small": [
+    true,
+    "Bug",
+    "Low",
+    0.63
+   ]
+  },
+  "MR-04F0A": {
+   "area": "Notifications",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "Bug",
+    "Medium",
+    0.92
+   ],
+   "small": [
+    true,
+    "Bug",
+    "Medium",
+    0.88
+   ]
+  },
+  "MR-825FE": {
+   "area": "Mobile App",
+   "sentiment": "Negative",
+   "fail": null,
+   "standard": [
+    true,
+    "Bug",
+    "Medium",
+    0.91
+   ],
+   "small": [
+    true,
+    "Bug",
+    "Medium",
+    0.87
+   ]
+  },
+  "MR-33200": {
+   "area": "Login",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "Issue",
+    "Medium",
+    0.97
+   ],
+   "small": [
+    true,
+    "Issue",
+    "Medium",
+    0.93
+   ]
+  },
+  "MR-4D200": {
+   "area": "Login",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "Issue",
+    "Low",
+    0.85
+   ],
+   "small": [
+    true,
+    "New Requirement",
+    "Low",
+    0.5
+   ]
+  },
+  "MR-E8053": {
+   "area": "Billing",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "Issue",
+    "Medium",
+    0.9
+   ],
+   "small": [
+    true,
+    "Issue",
+    "Medium",
+    0.61
+   ]
+  },
+  "MR-38CFB": {
+   "area": "Invoices",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "New Requirement",
+    "Medium",
+    0.91
+   ],
+   "small": [
+    true,
+    "New Requirement",
+    "Medium",
+    0.87
+   ]
+  },
+  "MR-88647": {
+   "area": "Reports",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "New Requirement",
+    "Medium",
+    0.95
+   ],
+   "small": [
+    true,
+    "New Requirement",
+    "Medium",
+    0.91
+   ]
+  },
+  "MR-CFCC6": {
+   "area": "Invoices",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "New Requirement",
+    "Low",
+    0.96
+   ],
+   "small": [
+    true,
+    "New Requirement",
+    "Low",
+    0.92
+   ]
+  },
+  "MR-2232F": {
+   "area": "Reports",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "Issue",
+    "Low",
+    0.55
+   ],
+   "small": [
+    true,
+    "Issue",
+    "Low",
+    0.52
+   ]
+  },
+  "MR-C2418": {
+   "area": "Invoices",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "Issue",
+    "Low",
+    0.43
+   ],
+   "small": [
+    true,
+    "Issue",
+    "Low",
+    0.4
+   ]
+  },
+  "MR-352D3": {
+   "area": "Billing",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "Issue",
+    "Medium",
+    0.38
+   ],
+   "small": [
+    true,
+    "Issue",
+    "Medium",
+    0.35
+   ]
+  },
+  "MR-2445E": {
+   "area": "General",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "Issue",
+    "Low",
+    0.57
+   ],
+   "small": [
+    true,
+    "Issue",
+    "Low",
+    0.54
+   ]
+  },
+  "MR-CFA99": {
+   "area": "Reports",
+   "sentiment": "Positive",
+   "fail": null,
+   "standard": [
+    true,
+    "Other",
+    "Low",
+    0.48
+   ],
+   "small": [
+    true,
+    "Other",
+    "Low",
+    0.45
+   ]
+  },
+  "MR-D8943": {
+   "area": "Login",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "Issue",
+    "High",
+    0.46
+   ],
+   "small": [
+    true,
+    "Issue",
+    "High",
+    0.43
+   ]
+  },
+  "MR-65977": {
+   "area": "General",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "Issue",
+    "Medium",
+    0.5
+   ],
+   "small": [
+    true,
+    "Issue",
+    "Medium",
+    0.47
+   ]
+  },
+  "MR-58EE2": {
+   "area": "General",
+   "sentiment": "Angry",
+   "fail": null,
+   "standard": [
+    true,
+    "Issue",
+    "High",
+    0.55
+   ],
+   "small": [
+    true,
+    "Issue",
+    "High",
+    0.52
+   ]
+  },
+  "MR-43F1F": {
+   "area": "Imports",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "Issue",
+    "High",
+    0.45
+   ],
+   "small": [
+    true,
+    "Issue",
+    "High",
+    0.42
+   ]
+  },
+  "MR-812A7": {
+   "area": "Billing",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "Issue",
+    "Medium",
+    0.44
+   ],
+   "small": [
+    true,
+    "Issue",
+    "Medium",
+    0.41
+   ]
+  },
+  "MR-87082": {
+   "area": "Reports",
+   "sentiment": "Negative",
+   "fail": null,
+   "standard": [
+    true,
+    "Bug",
+    "High",
+    0.95
+   ],
+   "small": [
+    true,
+    "Bug",
+    "Medium",
+    0.66
+   ]
+  },
+  "MR-68B59": {
+   "area": "Invoices",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "Bug",
+    "Medium",
+    0.85
+   ],
+   "small": [
+    true,
+    "Issue",
+    "Medium",
+    0.57
+   ]
+  },
+  "MR-5F306": {
+   "area": "Mobile App",
+   "sentiment": "Negative",
+   "fail": null,
+   "standard": [
+    true,
+    "Bug",
+    "Medium",
+    0.87
+   ],
+   "small": [
+    true,
+    "Bug",
+    "Medium",
+    0.71
+   ]
+  },
+  "MR-E3FE2": {
+   "area": "API",
+   "sentiment": "Angry",
+   "fail": null,
+   "standard": [
+    true,
+    "Bug",
+    "Critical",
+    0.95
+   ],
+   "small": [
+    true,
+    "Bug",
+    "High",
+    0.64
+   ]
+  },
+  "MR-3C049": {
+   "area": "Reports",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "Bug",
+    "Low",
+    0.97
+   ],
+   "small": [
+    true,
+    "Issue",
+    "Low",
+    0.62
+   ]
+  },
+  "MR-FE8E5": {
+   "area": "Notifications",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "Bug",
+    "High",
+    0.86
+   ],
+   "small": [
+    true,
+    "Bug",
+    "High",
+    0.66
+   ]
+  },
+  "MR-DA514": {
+   "area": "Imports",
+   "sentiment": "Negative",
+   "fail": null,
+   "standard": [
+    true,
+    "Bug",
+    "Critical",
+    0.95
+   ],
+   "small": [
+    true,
+    "Bug",
+    "Critical",
+    0.91
+   ]
+  },
+  "MR-28C21": {
+   "area": "Reports",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "Issue",
+    "Medium",
+    0.74
+   ],
+   "small": [
+    true,
+    "Issue",
+    "Medium",
+    0.8
+   ]
+  },
+  "MR-1FD53": {
+   "area": "Invoices",
+   "sentiment": "Angry",
+   "fail": null,
+   "standard": [
+    true,
+    "Bug",
+    "Critical",
+    0.83
+   ],
+   "small": [
+    true,
+    "Bug",
+    "High",
+    0.68
+   ]
+  },
+  "MR-76209": {
+   "area": "Login",
+   "sentiment": "Negative",
+   "fail": null,
+   "standard": [
+    true,
+    "Issue",
+    "Critical",
+    0.82
+   ],
+   "small": [
+    true,
+    "Issue",
+    "Critical",
+    0.78
+   ]
+  },
+  "MR-F4B66": {
+   "area": "Login",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "Issue",
+    "Low",
+    0.9
+   ],
+   "small": [
+    true,
+    "New Requirement",
+    "Low",
+    0.55
+   ]
+  },
+  "MR-617CC": {
+   "area": "Billing",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "Issue",
+    "Medium",
+    0.86
+   ],
+   "small": [
+    true,
+    "Issue",
+    "Medium",
+    0.82
+   ]
+  },
+  "MR-8C8BF": {
+   "area": "Reports",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "Bug",
+    "Medium",
+    0.71
+   ],
+   "small": [
+    true,
+    "Bug",
+    "Medium",
+    0.76
+   ]
+  },
+  "MR-2D043": {
+   "area": "Login",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "Issue",
+    "Medium",
+    0.83
+   ],
+   "small": [
+    true,
+    "Issue",
+    "Medium",
+    0.61
+   ]
+  },
+  "MR-1B3B6": {
+   "area": "Invoices",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "Issue",
+    "Low",
+    0.9
+   ],
+   "small": [
+    true,
+    "New Requirement",
+    "Low",
+    0.52
+   ]
+  },
+  "MR-F1A35": {
+   "area": "Imports",
+   "sentiment": "Negative",
+   "fail": null,
+   "standard": [
+    true,
+    "Issue",
+    "Medium",
+    0.88
+   ],
+   "small": [
+    true,
+    "Issue",
+    "Medium",
+    0.84
+   ]
+  },
+  "MR-52B9A": {
+   "area": "Login",
+   "sentiment": "Negative",
+   "fail": null,
+   "standard": [
+    true,
+    "Issue",
+    "High",
+    0.82
+   ],
+   "small": [
+    true,
+    "Issue",
+    "Medium",
+    0.62
+   ]
+  },
+  "MR-A1040": {
+   "area": "Reports",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "New Requirement",
+    "Medium",
+    0.94
+   ],
+   "small": [
+    true,
+    "New Requirement",
+    "Low",
+    0.7
+   ]
+  },
+  "MR-240D7": {
+   "area": "Mobile App",
+   "sentiment": "Positive",
+   "fail": null,
+   "standard": [
+    true,
+    "New Requirement",
+    "Low",
+    0.88
+   ],
+   "small": [
+    true,
+    "Issue",
+    "Low",
+    0.6
+   ]
+  },
+  "MR-2DE18": {
+   "area": "API",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "New Requirement",
+    "Low",
+    0.92
+   ],
+   "small": [
+    true,
+    "New Requirement",
+    "Low",
+    0.88
+   ]
+  },
+  "MR-BE48F": {
+   "area": "Invoices",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "New Requirement",
+    "Medium",
+    0.93
+   ],
+   "small": [
+    true,
+    "Bug",
+    "Medium",
+    0.56
+   ]
+  },
+  "MR-86BB5": {
+   "area": "Imports",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "Issue",
+    "Medium",
+    0.78
+   ],
+   "small": [
+    true,
+    "Issue",
+    "Medium",
+    0.76
+   ]
+  },
+  "MR-9B92E": {
+   "area": "Reports",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "New Requirement",
+    "Medium",
+    0.88
+   ],
+   "small": [
+    true,
+    "New Requirement",
+    "Medium",
+    0.6
+   ]
+  },
+  "MR-C32D3": {
+   "area": "Customers",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "New Requirement",
+    "Low",
+    0.9
+   ],
+   "small": [
+    true,
+    "Issue",
+    "Low",
+    0.58
+   ]
+  },
+  "MR-56644": {
+   "area": "API",
+   "sentiment": "Negative",
+   "fail": null,
+   "standard": [
+    true,
+    "Bug",
+    "High",
+    0.88
+   ],
+   "small": [
+    true,
+    "Bug",
+    "High",
+    0.84
+   ]
+  },
+  "MR-4359D": {
+   "area": "API",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "Bug",
+    "High",
+    0.9
+   ],
+   "small": [
+    true,
+    "Bug",
+    "High",
+    0.86
+   ]
+  },
+  "MR-00225": {
+   "area": "Billing",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "Issue",
+    "Medium",
+    0.84
+   ],
+   "small": [
+    true,
+    "Issue",
+    "Medium",
+    0.67
+   ]
+  },
+  "MR-A3B2C": {
+   "area": "Billing",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "Issue",
+    "Medium",
+    0.82
+   ],
+   "small": [
+    true,
+    "Issue",
+    "Medium",
+    0.78
+   ]
+  },
+  "MR-9D55A": {
+   "area": "Reports",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "New Requirement",
+    "Medium",
+    0.83
+   ],
+   "small": [
+    true,
+    "Issue",
+    "Medium",
+    0.6
+   ]
+  },
+  "MR-0C95B": {
+   "area": "Reports",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "New Requirement",
+    "Medium",
+    0.96
+   ],
+   "small": [
+    true,
+    "New Requirement",
+    "Medium",
+    0.92
+   ]
+  },
+  "MR-424AD": {
+   "area": "Billing",
+   "sentiment": "Angry",
+   "fail": null,
+   "standard": [
+    true,
+    "Bug",
+    "Critical",
+    0.89
+   ],
+   "small": [
+    true,
+    "Bug",
+    "High",
+    0.65
+   ]
+  },
+  "MR-3FBE8": {
+   "area": "Billing",
+   "sentiment": "Angry",
+   "fail": null,
+   "standard": [
+    true,
+    "Bug",
+    "Critical",
+    0.82
+   ],
+   "small": [
+    true,
+    "Bug",
+    "Critical",
+    0.78
+   ]
+  },
+  "MR-FC76C": {
+   "area": "Customers",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "Issue",
+    "Low",
+    0.9
+   ],
+   "small": [
+    true,
+    "Issue",
+    "Low",
+    0.86
+   ]
+  },
+  "MR-7BAFB": {
+   "area": "Customers",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "Issue",
+    "Low",
+    0.88
+   ],
+   "small": [
+    true,
+    "Issue",
+    "Low",
+    0.84
+   ]
+  },
+  "MR-F78B8": {
+   "area": "Login",
+   "sentiment": "Negative",
+   "fail": null,
+   "standard": [
+    true,
+    "Bug",
+    "High",
+    0.93
+   ],
+   "small": [
+    true,
+    "Bug",
+    "Medium",
+    0.69
+   ]
+  },
+  "MR-4C817": {
+   "area": "Imports",
+   "sentiment": "Positive",
+   "fail": null,
+   "standard": [
+    true,
+    "New Requirement",
+    "Medium",
+    0.83
+   ],
+   "small": [
+    true,
+    "New Requirement",
+    "Medium",
+    0.79
+   ]
+  },
+  "MR-3B4EE": {
+   "area": "General",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    false,
+    "Other",
+    "Low",
+    0.9
+   ],
+   "small": [
+    false,
+    "Other",
+    "Low",
+    0.86
+   ]
+  },
+  "MR-19CDF": {
+   "area": "General",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    false,
+    "Other",
+    "Low",
+    0.92
+   ],
+   "small": [
+    false,
+    "Other",
+    "Low",
+    0.88
+   ]
+  },
+  "MR-DD17C": {
+   "area": "General",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    false,
+    "Other",
+    "Low",
+    0.91
+   ],
+   "small": [
+    false,
+    "Other",
+    "Low",
+    0.87
+   ]
+  },
+  "MR-33247": {
+   "area": "General",
+   "sentiment": "Positive",
+   "fail": null,
+   "standard": [
+    false,
+    "Other",
+    "Low",
+    0.88
+   ],
+   "small": [
+    false,
+    "Other",
+    "Low",
+    0.84
+   ]
+  },
+  "MR-21F9D": {
+   "area": "General",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    false,
+    "Other",
+    "Low",
+    0.96
+   ],
+   "small": [
+    false,
+    "Other",
+    "Low",
+    0.69
+   ]
+  },
+  "MR-2B9E0": {
+   "area": "General",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    false,
+    "Other",
+    "Low",
+    0.88
+   ],
+   "small": [
+    false,
+    "Other",
+    "Low",
+    0.84
+   ]
+  },
+  "MR-6B4C2": {
+   "area": "General",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    false,
+    "Other",
+    "Low",
+    0.89
+   ],
+   "small": [
+    false,
+    "Other",
+    "Low",
+    0.85
+   ]
+  },
+  "MR-2775E": {
+   "area": "Reports",
+   "sentiment": "Negative",
+   "fail": "permanent",
+   "standard": [
+    true,
+    "Bug",
+    "High",
+    0.96
+   ],
+   "small": [
+    true,
+    "Bug",
+    "High",
+    0.92
+   ]
+  },
+  "MR-AFA07": {
+   "area": "Reports",
+   "sentiment": "Neutral",
+   "fail": "transient",
+   "standard": [
+    true,
+    "Issue",
+    "Medium",
+    0.86
+   ],
+   "small": [
+    true,
+    "Issue",
+    "Medium",
+    0.82
+   ]
+  },
+  "MR-B8868": {
+   "area": "Notifications",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "Bug",
+    "Medium",
+    0.93
+   ],
+   "small": [
+    true,
+    "Bug",
+    "Medium",
+    0.89
+   ]
+  },
+  "MR-2D434": {
+   "area": "Imports",
+   "sentiment": "Negative",
+   "fail": null,
+   "standard": [
+    true,
+    "Bug",
+    "High",
+    0.9
+   ],
+   "small": [
+    true,
+    "Bug",
+    "High",
+    0.86
+   ]
+  },
+  "MR-E9554": {
+   "area": "Imports",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "Bug",
+    "High",
+    0.87
+   ],
+   "small": [
+    true,
+    "Bug",
+    "High",
+    0.83
+   ]
+  },
+  "MR-78EB9": {
+   "area": "Customers",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "Bug",
+    "Low",
+    0.93
+   ],
+   "small": [
+    true,
+    "Bug",
+    "Low",
+    0.89
+   ]
+  },
+  "MR-FD87E": {
+   "area": "General",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    false,
+    "Other",
+    "Low",
+    0.97
+   ],
+   "small": [
+    false,
+    "Other",
+    "Low",
+    0.93
+   ]
+  },
+  "MR-E178A": {
+   "area": "Invoices",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "New Requirement",
+    "Medium",
+    0.85
+   ],
+   "small": [
+    true,
+    "New Requirement",
+    "Medium",
+    0.81
+   ]
+  },
+  "MR-13D3D": {
+   "area": "Reports",
+   "sentiment": "Negative",
+   "fail": null,
+   "standard": [
+    true,
+    "Bug",
+    "High",
+    0.89
+   ],
+   "small": [
+    true,
+    "Bug",
+    "High",
+    0.85
+   ]
+  },
+  "MR-9422A": {
+   "area": "Invoices",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "New Requirement",
+    "Low",
+    0.84
+   ],
+   "small": [
+    true,
+    "New Requirement",
+    "Low",
+    0.8
+   ]
+  },
+  "MR-00AD2": {
+   "area": "General",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "Issue",
+    "Medium",
+    0.55
+   ],
+   "small": [
+    true,
+    "Issue",
+    "Medium",
+    0.52
+   ]
+  },
+  "MR-13A52": {
+   "area": "Reports",
+   "sentiment": "Angry",
+   "fail": null,
+   "standard": [
+    true,
+    "Bug",
+    "High",
+    0.92
+   ],
+   "small": [
+    true,
+    "Bug",
+    "High",
+    0.88
+   ]
+  },
+  "MR-82C5A": {
+   "area": "Invoices",
+   "sentiment": "Negative",
+   "fail": null,
+   "standard": [
+    true,
+    "Bug",
+    "High",
+    0.96
+   ],
+   "small": [
+    true,
+    "Bug",
+    "High",
+    0.92
+   ]
+  },
+  "MR-C64EB": {
+   "area": "Customers",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "New Requirement",
+    "Medium",
+    0.87
+   ],
+   "small": [
+    true,
+    "New Requirement",
+    "Medium",
+    0.83
+   ]
+  },
+  "MR-381DC": {
+   "area": "Invoices",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "Issue",
+    "Low",
+    0.83
+   ],
+   "small": [
+    true,
+    "Issue",
+    "Low",
+    0.79
+   ]
+  },
+  "MR-31E30": {
+   "area": "Reports",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "Bug",
+    "Medium",
+    0.92
+   ],
+   "small": [
+    true,
+    "Bug",
+    "Medium",
+    0.88
+   ]
+  },
+  "MR-A01D1": {
+   "area": "General",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    false,
+    "Other",
+    "Low",
+    0.92
+   ],
+   "small": [
+    false,
+    "Other",
+    "Low",
+    0.88
+   ]
+  },
+  "MR-4A633": {
+   "area": "Reports",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "Issue",
+    "Medium",
+    0.42
+   ],
+   "small": [
+    true,
+    "Issue",
+    "Medium",
+    0.39
+   ]
+  },
+  "MR-A1D1C": {
+   "area": "Invoices",
+   "sentiment": "Angry",
+   "fail": null,
+   "standard": [
+    true,
+    "Bug",
+    "Critical",
+    0.95
+   ],
+   "small": [
+    true,
+    "Bug",
+    "Critical",
+    0.91
+   ]
+  },
+  "MR-EE0FB": {
+   "area": "Notifications",
+   "sentiment": "Neutral",
+   "fail": null,
+   "standard": [
+    true,
+    "New Requirement",
+    "Low",
+    0.44
+   ],
+   "small": [
+    true,
+    "New Requirement",
+    "Low",
+    0.41
+   ]
+  }
+ }
+}

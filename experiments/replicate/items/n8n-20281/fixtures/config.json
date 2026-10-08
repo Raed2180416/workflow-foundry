@@ -1,0 +1,37 @@
+{
+  "_": "Deployment configuration presets. `base` is the author's Workflow Configuration node bound to our fictional deployment; `byDifficulty` overrides it per difficulty level (README). Values the author left as placeholders (Jira base URL, sheet, channels, company) are bound to the mock deployment.",
+  "base": {
+    "internalDomains": "brightlane.example",
+    "ignoreSenderPatterns": "noreply,no-reply,donotreply,mailer-daemon,notifications@,newsletter",
+    "minConfidence": 0.6,
+    "maxBodyChars": 6000,
+    "jiraBaseUrl": "https://brightlane.atlassian.example",
+    "jiraProjectKey": "SUP",
+    "bugIssueType": "Bug",
+    "issueIssueType": "Task",
+    "requirementIssueType": "Story",
+    "bugAssigneeAccountId": "",
+    "issueAssigneeAccountId": "",
+    "requirementAssigneeAccountId": "",
+    "setJiraPriority": true,
+    "dedupByThread": true,
+    "bugSlackChannel": "support-bugs",
+    "issueSlackChannel": "support-issues",
+    "requirementSlackChannel": "product-requests",
+    "reviewSlackChannel": "triage-review",
+    "teamsWebhookUrl": "",
+    "ackMode": "off",
+    "companyName": "Brightlane Systems",
+    "ackSignature": "Customer Success Team"
+  },
+  "byDifficulty": {
+    "1": { "ackMode": "off", "teamsWebhookUrl": "" },
+    "2": { "ackMode": "send", "teamsWebhookUrl": "" },
+    "3": { "ackMode": "draft", "teamsWebhookUrl": "https://brightlane.webhook.example/teams/support-escalations" },
+    "4": { "ackMode": "send", "teamsWebhookUrl": "https://brightlane.webhook.example/teams/support-escalations", "minConfidence": 0.7 },
+    "5": { "ackMode": "draft", "teamsWebhookUrl": "https://brightlane.webhook.example/teams/support-escalations", "minConfidence": 0.7,
+      "jiraProjectKey": "HELP", "bugIssueType": "Defect", "issueIssueType": "Support request", "requirementIssueType": "Improvement",
+      "bugSlackChannel": "cs-bugs", "issueSlackChannel": "cs-issues", "requirementSlackChannel": "cs-ideas", "reviewSlackChannel": "cs-review" }
+  },
+  "probe": { "ackMode": "send", "teamsWebhookUrl": "https://brightlane.webhook.example/teams/support-escalations" }
+}

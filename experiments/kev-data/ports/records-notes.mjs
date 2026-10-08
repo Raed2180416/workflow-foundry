@@ -498,51 +498,51 @@ const slotsOfUnit = (G, port, u) => {
 const optionsOfPort = (G, port) => Object.keys(G.contracts[port].options);
 
 // ---- non-deciding sentences (presence-matched unknowables) ----------------------------------------------------------
-// A same-register sentence that does not settle the question, replacing the decisive sentence (never a
-// deletion): the same convention for another system (that system's own sentence of this world), or, for
-// R2, another status value of the same system. Out-of-distribution slices read the slice's own
-// 'nondeciding' lines instead.
+// The decisive sentence D of system S is replaced by a same-register sentence F that does not settle the question: the
+// same convention of another system T, in D's own label (the label words match; only the system differs), worded by a
+// template of D's structure (T's template at D's own index where one exists), and naming T (a nameless sentence in S's
+// paragraph would read as a statement about S). The twins are built so that a bag of unigrams and bigrams carries as
+// little difference as the bed's templates allow (the naive pair, a state with and without F, is separated by a
+// bag-of-words probe at 0.82; deletion at 0.85):
+//   - both twins show the paragraph of T (same system names) and S's paragraph last, so the sentence under test is the
+//     end of the text and no junction bigram pairs its last word with a paragraph name;
+//   - D and F sit behind the same lead word ("Also:"), so the junction bigram with S's own text is the same;
+//   - T is a system whose own sentence has D's label (R1, R2, R3: the label vocabulary and the pool-sentence count are
+//     the same in both twins; R2 needs a flag of T with D's polarity) or has no sentence of its own (R4: F has D's role,
+//     so a date window is in both or in neither).
+// Out-of-distribution slices read the slice's own 'nondeciding' lines (the line with {S} := T).
+function poolSystems(bed, port) {
+  return port === 'R1' ? ['BRIGHTDESK', 'ATLAS', 'VENDEX'] : port === 'R2' ? Object.keys(bed.render.FLAG_FORM) : port === 'R3' ? Object.keys(bed.render.PERSP_NOTE) : SYSTEMS;
+}
+const hasName = (text, sys) => new RegExp(`(?<![A-Za-z0-9_])${sys}(?![A-Za-z0-9_])`).test(text);
 export function nonDeciding(G, W, units, u, port, key, { phrasing = 'known' } = {}) {
-  const { bed } = G;
+  const { bed } = G, label = u.label;
+  const Ts = poolSystems(bed, port).filter(x => x !== u.sys && W.systems.includes(x));
   if (phrasing === 'new') {
-    const cand = G.bank.find({ port, kind: 'nondeciding', system: u.sys, own: true });
+    const T = pickBy(Ts, 'ndT', ...key), cand = G.bank.find({ port, kind: 'nondeciding', own: true });
     for (let k = 0; k < Math.min(12, cand.length); k++) {
-      const line = cand[(H32('nd', ...key) + k) % cand.length], f = tryFill(G, W, u, line);
-      if (f) return { text: f.text, from: line.id, kind: 'ood-line', phrasing: 'new' };
+      const line = cand[(H32('nd', ...key) + k) % cand.length], f = tryFill(G, W, { ...u, sys: T }, line);
+      if (f) return { F1: f.text, text: f.text, from: line.id, kind: 'ood-line', phrasing: 'new', T1: T };
     }
     return null;
   }
-  const opts = [];
-  if (port === 'R2') {
-    for (const x of units.filter(x => x.pool === 'flag' && x.sys !== u.sys && x.sentence !== u.sentence)) opts.push({ text: x.sentence, from: `flag:${x.sys}`, kind: 'other-system', T: x.sys });
-  } else {
-    // another system's sentence of the same pool, one that names that system (a nameless sentence in S's
-    // paragraph would read as a statement about S and settle the question)
-    const pools = { R1: ['order'], R3: ['persp'], R4: ['mirror', 'reliable'] }[port];
-    for (const T of W.systems) {
-      if (T === u.sys) continue;
-      const named = new RegExp(`(?<![A-Za-z0-9_])${T}(?![A-Za-z0-9_])`);
-      for (const pool of pools) for (const label of pool === 'order' ? ORDERS : pool === 'persp' ? ['same', 'opposite'] : [pool === 'mirror' ? 'restamped' : 'reliable']) {
-        const n = POOL_LEN(bed, pool, T, label);
-        for (let i = 0; i < n; i++) {
-          if (isHeldOutBed(bed, pool, T, label, i) || (pool === 'order' && bed.render.ORDER_NOTE[T][label][i].ref)) continue;
-          const v = variantSentence(bed, W, { pool, sys: T, label, index: i }, {});
-          if (v && named.test(v.text) && v.text !== u.sentence && !units.some(x => x.sentence === v.text)) opts.push({ text: v.text, from: tplName({ pool, sys: T }, i, label), kind: 'other-system', T });
-        }
-      }
+  const options = [];
+  for (const T of Ts) {
+    const own = units.find(x => x.sys === T && (port === 'R4' ? (x.pool === 'mirror' || x.pool === 'reliable') : x.pool === u.pool && (port !== 'R2' || x.label === label)));
+    if (port === 'R4' ? own : !own || own.label !== label) continue;
+    const pool = u.pool, token = port === 'R2' ? own.token : undefined;
+    for (let i = 0, n = POOL_LEN(bed, pool, T, label); i < n; i++) {
+      if (isHeldOutBed(bed, pool, T, label, i) || (own && i === own.index && port !== 'R4')) continue;
+      if (pool === 'order' && bed.render.ORDER_NOTE[T][label][i].ref) continue;
+      const x = { ...u, sys: T, token, show: token ? bed.render.FLAG_FORM[T].show(token) : undefined };
+      const v = variantSentence(bed, W, x, { label, index: i });
+      if (!v || (port !== 'R2' && !hasName(v.text, T))) continue;
+      options.push({ T, index: i, text: v.text, from: tplName(x, i, label), weight: i === u.index ? 4 : 1 });
     }
   }
-  if (port === 'R2') {
-    const used = new Set(W.conv.flags.filter(f => f.system === u.sys).map(f => f.token)), F = bed.render.FLAG_FORM[u.sys];
-    const free = (bed.pools.FLAG_TOKENS[u.sys] ?? []).filter(t => !used.has(t));
-    if (free.length) {
-      const tok = pickBy(free, 'tok', ...key), pol = H32('pol', ...key) % 2 ? 'void' : 'live', idx = pickBy(allowedIndices(bed, W, { ...u, label: pol }, pol), 'ni', ...key);
-      if (idx !== undefined) opts.push({ text: bed.render.FLAG_NOTE[pol][idx](F.show(tok), F), from: `FLAG_NOTE.${pol}[${idx}]#${tok}`, kind: 'other-marker', T: pickBy(W.systems.filter(x => x !== u.sys), 'tsys', ...key) });
-    }
-  }
-  if (!opts.length) return null;
-  const pick = pickBy(opts, 'nd', ...key);
-  return { ...pick, phrasing: 'known' };
+  if (!options.length) return null;
+  const bag = options.flatMap(o => Array(o.weight).fill(o)), pick = pickBy(bag, 'ndF', ...key);
+  return { F1: pick.text, text: pick.text, from: pick.from, kind: 'other-system', phrasing: 'known', T1: pick.T };
 }
 
 // ---- injection carriers ---------------------------------------------------------------------------------------------
@@ -698,23 +698,25 @@ export function invariancePlans(G, W, port, u, scr, job, key) {
 export function unknowablePlans(G, W, port, u, scr, job, key, units) {
   const phrasing = job.phrasing ?? (G.ood ? 'new' : 'known');
   const deleting = G.control === 'deletion-unknowable';
-  const nd = deleting ? { text: '', from: 'deleted', kind: 'deletion', phrasing: 'known' } : nonDeciding(G, W, units, u, port, key, { phrasing });
+  const nd = deleting ? { F1: '', F2: '', text: '', from: 'deleted', kind: 'deletion', phrasing: 'known', T: null } : nonDeciding(G, W, units, u, port, key, { phrasing });
   if (!nd) { bump(G, `skip:${port}:unknowable:no-nondeciding`); return null; }
   const stated = basePlan(G, W, port, u, scr, { ...job, variant: 'clean', axis: 'unknowable-stated', mode: 'bed' }, key, naturalD(G, W, u), u.label);
-  // Presence-matched at the word level (a bag-of-words probe separates the naive pair at 0.82): both twins show the
-  // asked system's paragraph and the paragraph of the system T the non-deciding sentence is about, so both hold the
-  // same system names and the same number of pool sentences; the unknowable replaces the decisive sentence D by a
-  // sentence about T (never deletes it).
+  // see nonDeciding: T's paragraph first, S's last; D (stated) and F (unknowable) at the end of S's paragraph behind the same lead
   const stateNotes = applyEdits(W.task.inputs.source_notes, scr.edits);
-  const T = deleting ? null : (nd.T ?? pickBy(W.systems.filter(x => x !== u.sys), 'tsys', ...key));
-  const paragraphs = stateNotes.ok ? groupParagraphs(stateNotes.notes, H32('uorder', ...key) % 2 ? [u.sys, ...(T ? [T] : [])] : [...(T ? [T] : []), u.sys]) : undefined;
-  const options = optionsOf(G, port);
-  const edits = [...scr.edits, deleting ? { old: u.sentence, new: '', delete: true, role: 'unknowable' } : { old: u.sentence, new: nd.text, role: 'unknowable' }];
-  const U = { ...stated, edits, kitSlots: { ...stated.kitSlots, paragraphs }, variant: 'unknowable', axis: 'unknowable', soft: true, label: pickBy(options, 'unk', ...key),
-    decisive: nd.text ? [nd.text] : [], role: 'nondeciding', surface: { source: nd.phrasing === 'new' ? 'ood-line' : 'bed', line: null, from: nd.from },
+  const T = deleting ? null : nd.T1;
+  const paragraphs = stateNotes.ok ? (() => { const g = groupParagraphs(stateNotes.notes, [u.sys]); return [...(T ? groupParagraphs(stateNotes.notes, [T]) : []), ...g.slice(1), g[0]].filter((x, i, a) => a.indexOf(x) === i); })() : undefined;
+  const options = optionsOf(G, port), para = stateNotes.ok ? paragraphsFor(stateNotes.notes, { system: u.sys })[0] : null;
+  const sents = para ? sentences(para) : [];
+  const anchor = [...sents].reverse().find(x => x !== u.sentence && countOcc(stateNotes.notes, x) === 1);
+  const LEAD = G.opts.unknowableLead ?? 'Also: ';
+  const place = (who, text) => (deleting ? [{ old: u.sentence, new: '', delete: true, role: 'unknowable' }]
+    : !anchor ? [{ old: u.sentence, new: `${LEAD}${text}`, role: 'unknowable' }]
+      : [{ old: u.sentence, new: '', delete: true, role: 'move' }, { old: anchor, new: `${anchor} ${LEAD}${text}`, role: 'unknowable' }]);
+  const U = { ...stated, edits: [...scr.edits, ...place(nd.T1, nd.F1)], kitSlots: { ...stated.kitSlots, paragraphs }, variant: 'unknowable', axis: 'unknowable', soft: true, label: pickBy(options, 'unk', ...key),
+    decisive: nd.F1 ? [nd.F1] : [], role: 'nondeciding', surface: { source: nd.phrasing === 'new' ? 'ood-line' : 'bed', line: null, from: nd.from },
     counterfactual: { swapped: true, kind: 'unknowable', from: tplName(u, u.index), to: nd.from, pool: u.pool, nondeciding: nd.kind, phrasing: nd.phrasing },
-    cell: null, counts: [], extra: { meta: { phrasing: nd.phrasing, nondecidingKind: nd.kind, replaced: u.sentence, about: T } } };
-  const S = { ...stated, kitSlots: { ...stated.kitSlots, paragraphs } };
+    cell: null, counts: [], extra: { meta: { phrasing: nd.phrasing, nondecidingKind: nd.kind, replaced: u.sentence, about: nd.T1, distractor: null } } };
+  const S = { ...stated, kitSlots: { ...stated.kitSlots, paragraphs }, edits: deleting ? stated.edits : [...scr.edits, ...place(u.sys, u.sentence)] };
   return withPair([S, U], key);
 }
 export function injectionPlans(G, W, port, u, scr, job, key) {
@@ -821,8 +823,6 @@ function scrubFor(G, W, keep) {
 // Produce (and count) the records of one unit for one job, or null.
 export function runJob(G, W, port, u, jobId, units) {
   const job = { id: jobId, ...JOBS[jobId], axis: jobId };
-  // an unknowable pair is presence-matched: its decisive sentence names its system like the foreign sentence does
-  if (jobId === 'unknowable' && port !== 'R2' && G.control !== 'deletion-unknowable' && !namesSystem(u.sentence, u.sys)) return null;
   if (G.ood && G.slice !== 'test-ood' && ['injection', 'slot', 'long'].includes(jobId)) job.mode = 'ood-pref';
   const key = jobKey(G.slice, W, port, u, jobId);
   const scr = scrubFor(G, W, jobId === 'bed-template' ? new Set([u.id]) : new Set());

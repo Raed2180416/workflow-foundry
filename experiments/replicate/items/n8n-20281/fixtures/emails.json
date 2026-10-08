@@ -1,0 +1,3598 @@
+{
+ "schema": "rbench-n8n-20281-emails/1",
+ "note": "Synthetic. Provider-native trigger payloads (Gmail trigger item with simple=false, Microsoft Graph message). `date`/`receivedDateTime` is added by the task generator. No labels here.",
+ "scored": [
+  {
+   "caseId": "f01",
+   "provider": "gmail",
+   "ref": "MR-8EA79",
+   "thread": null,
+   "plain": "Forwarding this from Corvane. They say the CSV export drops rows and it is blocking their month end. Can someone from support pick it up?",
+   "mail": {
+    "id": "472cd5a6c715e0ad",
+    "threadId": "1df0b2c6413c2fca",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Tom Aldous",
+       "address": "tom.aldous@brightlane.example"
+      }
+     ],
+     "text": "Tom Aldous <tom.aldous@brightlane.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Fwd: customer says exports are broken",
+    "messageId": "<472cd5a6c715e0ad@mail.brightlane.example>",
+    "text": "Forwarding this from Corvane. They say the CSV export drops rows and it is blocking their month end. Can someone from support pick it up?\n\n--\nMsg-ref: MR-8EA79",
+    "textAsHtml": "<p>Forwarding this from Corvane. They say the CSV export drops rows and it is blocking their month end. Can someone from support pick it up?</p><p>--<br>Msg-ref: MR-8EA79</p>"
+   }
+  },
+  {
+   "caseId": "f02",
+   "provider": "gmail",
+   "ref": "MR-40335",
+   "thread": null,
+   "plain": "Moving our roadmap sync to Thursday 14:00. I will bring the Q1 list of integration requests.",
+   "mail": {
+    "id": "d261a4acd0abe2a0",
+    "threadId": "62f1c9e0c9d6bad0",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Priya Nair",
+       "address": "priya.nair@brightlane.example"
+      }
+     ],
+     "text": "Priya Nair <priya.nair@brightlane.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Re: roadmap sync",
+    "messageId": "<d261a4acd0abe2a0@mail.brightlane.example>",
+    "text": "Moving our roadmap sync to Thursday 14:00. I will bring the Q1 list of integration requests.\n\n--\nMsg-ref: MR-40335",
+    "textAsHtml": "<p>Moving our roadmap sync to Thursday 14:00. I will bring the Q1 list of integration requests.</p><p>--<br>Msg-ref: MR-40335</p>"
+   }
+  },
+  {
+   "caseId": "f03",
+   "provider": "outlook",
+   "ref": "MR-27617",
+   "thread": null,
+   "plain": "Attached the refreshed pipeline sheet. Please do not forward outside the team.",
+   "mail": {
+    "id": "AAMkADa71-FQhXdKEhXoWUgl4mxalggbn1X6GUJioAXJ3nAAA=",
+    "conversationId": "AAQkADJeRwdqgSAs1rl9Yop9DYEG0uLilAHt3OJCYyaZxYsvAAA=",
+    "subject": "Q4 pipeline numbers",
+    "bodyPreview": "Attached the refreshed pipeline sheet. Please do not forward outside the team.",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>Attached the refreshed pipeline sheet. Please do not forward outside the team.</p><p>Msg-ref: MR-27617</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Sales Ops",
+      "address": "salesops@brightlane.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Sales Ops",
+      "address": "salesops@brightlane.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": true,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<5172a611706676c6@mail.brightlane.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkADa71-FQhXdKEhXoWUgl4mxalggbn1X6GUJioAXJ3nAAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   }
+  },
+  {
+   "caseId": "f04",
+   "provider": "gmail",
+   "ref": "MR-2BD93",
+   "thread": null,
+   "plain": "Halden & Pryce are escalating again about the invoice PDF totals. Their CFO wants an answer today. Raising here so it is on the support radar.",
+   "mail": {
+    "id": "eda41c1388a457c3",
+    "threadId": "5521ebe20646889a",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Hannah Voss",
+       "address": "hannah.voss@Brightlane.Example"
+      }
+     ],
+     "text": "Hannah Voss <hannah.voss@Brightlane.Example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Customer escalation: Halden & Pryce",
+    "messageId": "<eda41c1388a457c3@mail.Brightlane.Example>",
+    "text": "Halden & Pryce are escalating again about the invoice PDF totals. Their CFO wants an answer today. Raising here so it is on the support radar.\n\n--\nMsg-ref: MR-2BD93",
+    "textAsHtml": "<p>Halden &amp; Pryce are escalating again about the invoice PDF totals. Their CFO wants an answer today. Raising here so it is on the support radar.</p><p>--<br>Msg-ref: MR-2BD93</p>"
+   }
+  },
+  {
+   "caseId": "f05",
+   "provider": "outlook",
+   "ref": "MR-D1560",
+   "thread": null,
+   "plain": "Your directory password expires in 5 days. Rotate it from the self-service portal.",
+   "mail": {
+    "id": "AAMkAD16LJdeoHGAqkbnY5W7r-jioZWFLcLLI8-KMrsks8AAA=",
+    "conversationId": "AAQkADc-I56FIeUc_HU51Ga2hi0yeiUfKga0MdNMdYjTr-XmAAA=",
+    "subject": "Password rotation reminder",
+    "bodyPreview": "Your directory password expires in 5 days. Rotate it from the self-service portal.",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>Your directory password expires in 5 days. Rotate it from the self-service portal.</p><p>Msg-ref: MR-D1560</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "IT Helpdesk",
+      "address": "it@brightlane.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "IT Helpdesk",
+      "address": "it@brightlane.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<046389889df9a49c@mail.brightlane.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkAD16LJdeoHGAqkbnY5W7r-jioZWFLcLLI8-KMrsks8AAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   }
+  },
+  {
+   "caseId": "f06",
+   "provider": "gmail",
+   "ref": "MR-E2AB8",
+   "thread": null,
+   "plain": "Thai place at 12:30 again?",
+   "mail": {
+    "id": "3bd600d6c1c088f8",
+    "threadId": "c15135abe6764d85",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Ravi Menon",
+       "address": "ravi.menon@brightlane.example"
+      }
+     ],
+     "text": "Ravi Menon <ravi.menon@brightlane.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "lunch?",
+    "messageId": "<3bd600d6c1c088f8@mail.brightlane.example>",
+    "text": "Thai place at 12:30 again?\n\n--\nMsg-ref: MR-E2AB8",
+    "textAsHtml": "<p>Thai place at 12:30 again?</p><p>--<br>Msg-ref: MR-E2AB8</p>"
+   }
+  },
+  {
+   "caseId": "f07",
+   "provider": "gmail",
+   "ref": "MR-81D7C",
+   "thread": null,
+   "plain": "We will perform database maintenance on Sunday between 02:00 and 03:00 UTC. Ledgerline stays available in read-only mode.",
+   "mail": {
+    "id": "fe02c4cffcadf8fb",
+    "threadId": "ec7733ad504185d4",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Ledgerline Status",
+       "address": "noreply@ledgerline-status.example"
+      }
+     ],
+     "text": "Ledgerline Status <noreply@ledgerline-status.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Scheduled maintenance: Sunday 02:00 UTC",
+    "messageId": "<fe02c4cffcadf8fb@mail.ledgerline-status.example>",
+    "text": "We will perform database maintenance on Sunday between 02:00 and 03:00 UTC. Ledgerline stays available in read-only mode.\n\n--\nMsg-ref: MR-81D7C",
+    "textAsHtml": "<p>We will perform database maintenance on Sunday between 02:00 and 03:00 UTC. Ledgerline stays available in read-only mode.</p><p>--<br>Msg-ref: MR-81D7C</p>"
+   }
+  },
+  {
+   "caseId": "f08",
+   "provider": "outlook",
+   "ref": "MR-F1CAB",
+   "thread": null,
+   "plain": "A payout of 1,240.00 EUR was sent to your account ending 4471. It should arrive within 1 business day.",
+   "mail": {
+    "id": "AAMkADlmyVuOvP-WHQt4d7lJPnO_ojLiknogr8NpDQRz-aAAA=",
+    "conversationId": "AAQkADISNf3CF919YpTi5Apb-nSNnKzOLpHeEzLee7hjKrcyAAA=",
+    "subject": "Your payout has been sent",
+    "bodyPreview": "A payout of 1,240.00 EUR was sent to your account ending 4471. It should arrive within 1 business day.",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>A payout of 1,240.00 EUR was sent to your account ending 4471. It should arrive within 1 business day.</p><p>Msg-ref: MR-F1CAB</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Paystream Payments",
+      "address": "no-reply@paystream.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Paystream Payments",
+      "address": "no-reply@paystream.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<5da45d1b6b53c8fc@mail.paystream.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkADlmyVuOvP-WHQt4d7lJPnO_ojLiknogr8NpDQRz-aAAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   }
+  },
+  {
+   "caseId": "f09",
+   "provider": "gmail",
+   "ref": "MR-4C27C",
+   "thread": null,
+   "plain": "This is the mail system at host mx1.corvane-logistics.example. I am sorry to inform you that your message could not be delivered to one or more recipients.",
+   "mail": {
+    "id": "18046eccea0dbe3b",
+    "threadId": "e410e204ce7cbd09",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Mail Delivery System",
+       "address": "MAILER-DAEMON@mx1.corvane-logistics.example"
+      }
+     ],
+     "text": "Mail Delivery System <MAILER-DAEMON@mx1.corvane-logistics.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Undelivered Mail Returned to Sender",
+    "messageId": "<18046eccea0dbe3b@mail.mx1.corvane-logistics.example>",
+    "text": "This is the mail system at host mx1.corvane-logistics.example. I am sorry to inform you that your message could not be delivered to one or more recipients.\n\n--\nMsg-ref: MR-4C27C",
+    "textAsHtml": "<p>This is the mail system at host mx1.corvane-logistics.example. I am sorry to inform you that your message could not be delivered to one or more recipients.</p><p>--<br>Msg-ref: MR-4C27C</p>"
+   }
+  },
+  {
+   "caseId": "f10",
+   "provider": "gmail",
+   "ref": "MR-F30D2",
+   "thread": null,
+   "plain": "The nightly build failed on main (commit 4be19c2). View the run on GitHub.",
+   "mail": {
+    "id": "633b1d6901bf2a0d",
+    "threadId": "912f2b32b13eafcb",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "GitHub",
+       "address": "notifications@github.example"
+      }
+     ],
+     "text": "GitHub <notifications@github.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "[brightlane/ledgerline] Run failed: nightly build",
+    "messageId": "<633b1d6901bf2a0d@mail.github.example>",
+    "text": "The nightly build failed on main (commit 4be19c2). View the run on GitHub.\n\n--\nMsg-ref: MR-F30D2",
+    "textAsHtml": "<p>The nightly build failed on main (commit 4be19c2). View the run on GitHub.</p><p>--<br>Msg-ref: MR-F30D2</p>"
+   }
+  },
+  {
+   "caseId": "f11",
+   "provider": "outlook",
+   "ref": "MR-035E0",
+   "thread": null,
+   "plain": "Thank you for your message. The team is out of office until Monday and will reply on return.",
+   "mail": {
+    "id": "AAMkADcSqR4-9PK7UWK3QgOkMBZUOth9CeHL1EU0GKNIpyAAA=",
+    "conversationId": "AAQkADg-hR9BpYDIqjL33sobtylG8W_wmLqTqGJReM1SRcN_AAA=",
+    "subject": "Automatic reply: Out of office",
+    "bodyPreview": "Thank you for your message. The team is out of office until Monday and will reply on return.",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>Thank you for your message. The team is out of office until Monday and will reply on return.</p><p>Msg-ref: MR-035E0</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Tessaly Foods",
+      "address": "donotreply@tessaly-foods.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Tessaly Foods",
+      "address": "donotreply@tessaly-foods.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<6a9f7930b7329258@mail.tessaly-foods.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkADcSqR4-9PK7UWK3QgOkMBZUOth9CeHL1EU0GKNIpyAAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   }
+  },
+  {
+   "caseId": "f12",
+   "provider": "gmail",
+   "ref": "MR-8B981",
+   "thread": null,
+   "plain": "Seven pricing pages teardown, a salary survey and our editor's picks. Unsubscribe at any time.",
+   "mail": {
+    "id": "d7f8173aa4f8d591",
+    "threadId": "5881e44bf4fb9f4c",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Cloud Weekly",
+       "address": "newsletter@cloudweekly.example"
+      }
+     ],
+     "text": "Cloud Weekly <newsletter@cloudweekly.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "This week in SaaS: pricing pages that convert",
+    "messageId": "<d7f8173aa4f8d591@mail.cloudweekly.example>",
+    "text": "Seven pricing pages teardown, a salary survey and our editor's picks. Unsubscribe at any time.\n\n--\nMsg-ref: MR-8B981",
+    "textAsHtml": "<p>Seven pricing pages teardown, a salary survey and our editor's picks. Unsubscribe at any time.</p><p>--<br>Msg-ref: MR-8B981</p>"
+   }
+  },
+  {
+   "caseId": "f13",
+   "provider": "outlook",
+   "ref": "MR-11AFE",
+   "thread": null,
+   "plain": "The incident affecting API latency has been resolved. Total duration: 22 minutes.",
+   "mail": {
+    "id": "AAMkADVHGFgVIr0Uz6nFpzhoEP0gqdGxHBfW6F7lb9jqjcAAA=",
+    "conversationId": "AAQkADk_hAa0P0IINPTS_M3OeLUqrd7z-Z23UZE5J9zcOPwcAAA=",
+    "subject": "Incident resolved: API latency",
+    "bodyPreview": "The incident affecting API latency has been resolved. Total duration: 22 minutes.",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>The incident affecting API latency has been resolved. Total duration: 22 minutes.</p><p>Msg-ref: MR-11AFE</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Statuspage Hosting",
+      "address": "no-reply@statuspage-hosting.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Statuspage Hosting",
+      "address": "no-reply@statuspage-hosting.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<c94454c6b03374c3@mail.statuspage-hosting.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkADVHGFgVIr0Uz6nFpzhoEP0gqdGxHBfW6F7lb9jqjcAAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   }
+  },
+  {
+   "caseId": "f14",
+   "provider": "gmail",
+   "ref": "MR-86967",
+   "thread": null,
+   "plain": "Your monthly invoice is ready. Amount due: 49.00 EUR. Pay before 20 Oct to avoid a late fee.",
+   "mail": {
+    "id": "f8ee041f3b2af47d",
+    "threadId": "75e812657895ae47",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Zenvoice Billing",
+       "address": "billing-noreply@zenvoice.example"
+      }
+     ],
+     "text": "Zenvoice Billing <billing-noreply@zenvoice.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Invoice #88213 is ready",
+    "messageId": "<f8ee041f3b2af47d@mail.zenvoice.example>",
+    "text": "Your monthly invoice is ready. Amount due: 49.00 EUR. Pay before 20 Oct to avoid a late fee.\n\n--\nMsg-ref: MR-86967",
+    "textAsHtml": "<p>Your monthly invoice is ready. Amount due: 49.00 EUR. Pay before 20 Oct to avoid a late fee.</p><p>--<br>Msg-ref: MR-86967</p>"
+   }
+  },
+  {
+   "caseId": "f15",
+   "provider": "outlook",
+   "ref": "MR-25FC5",
+   "thread": null,
+   "plain": "You have been invited to Support weekly. Join with the link in the invite. Reply yes, no or maybe.",
+   "mail": {
+    "id": "AAMkADY26QZ_oDcVd-CbzdHY_hAcYjC_9OmN8wmJFzm3sSAAA=",
+    "conversationId": "AAQkADP6bOqUGwDBI8jrSgVx1ASm5fzCj9d4NP5zJK_RfdVTAAA=",
+    "subject": "Invitation: Support weekly @ Thu 10:00",
+    "bodyPreview": "You have been invited to Support weekly. Join with the link in the invite. Reply yes, no or maybe.",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>You have been invited to Support weekly. Join with the link in the invite. Reply yes, no or maybe.</p><p>Msg-ref: MR-25FC5</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Calendar",
+      "address": "notifications@calendar-service.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Calendar",
+      "address": "notifications@calendar-service.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<54dbd553a9871805@mail.calendar-service.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkADY26QZ_oDcVd-CbzdHY_hAcYjC_9OmN8wmJFzm3sSAAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   }
+  },
+  {
+   "caseId": "d01",
+   "provider": "gmail",
+   "ref": "MR-F865F",
+   "thread": "D1",
+   "plain": "Still happening this morning. Three more invoices from the same batch show a total that does not match the lines. Attaching two examples.\n\nMarta Keller, Corvane Logistics",
+   "mail": {
+    "id": "e918ac33bf996dda",
+    "threadId": "3417a582ea4bc6d3",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Marta Keller",
+       "address": "marta.keller@corvane-logistics.example"
+      }
+     ],
+     "text": "Marta Keller <marta.keller@corvane-logistics.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Re: Invoice PDF totals wrong",
+    "messageId": "<e918ac33bf996dda@mail.corvane-logistics.example>",
+    "text": "Still happening this morning. Three more invoices from the same batch show a total that does not match the lines. Attaching two examples.\n\nMarta Keller, Corvane Logistics\n\n--\nMsg-ref: MR-F865F\n\nOn Mon, Oct 6, 2026 at 10:12 AM Brightlane Support <support@brightlane.example> wrote:\n> Hi Marta, thank you for the report. We have passed this to engineering and will update you here.",
+    "textAsHtml": "<p>Still happening this morning. Three more invoices from the same batch show a total that does not match the lines. Attaching two examples.</p><p>Marta Keller, Corvane Logistics</p><p>--<br>Msg-ref: MR-F865F</p><p>On Mon, Oct 6, 2026 at 10:12 AM Brightlane Support &lt;support@brightlane.example&gt; wrote:<br>&gt; Hi Marta, thank you for the report. We have passed this to engineering and will update you here.</p>",
+    "attachments": [
+     {
+      "filename": "attachment.png",
+      "contentType": "image/png",
+      "size": 48211
+     }
+    ]
+   }
+  },
+  {
+   "caseId": "d02",
+   "provider": "outlook",
+   "ref": "MR-74C9F",
+   "thread": "D2",
+   "plain": "Update from our side: the sync stopped again around 06:00 and restarts only when we reconnect the account by hand. No new error text.\n\nElena",
+   "mail": {
+    "id": "AAMkADyieJ5bZB5z545IRQ6dtl-H2XH-GTbFgmmUMqSV-CAAA=",
+    "conversationId": "AAQkADNTzXg5RNBXv3wyfiJpXUR4Fb2qLtRboc0W-OeCvomGAAA=",
+    "subject": "RE: Sync stops for Pennywise connector",
+    "bodyPreview": "Update from our side: the sync stopped again around 06:00 and restarts only when we reconnect the account by hand. No new error text. Elena",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>Update from our side: the sync stopped again around 06:00 and restarts only when we reconnect the account by hand. No new error text.</p><p>Elena</p><p>Msg-ref: MR-74C9F</p><hr><div><b>From:</b> Brightlane Support &lt;support@brightlane.example&gt;<br><b>Sent:</b> Monday, October 6, 2026 9:41 AM<br><b>To:</b> Brightlane Support<br><b>Subject:</b> RE: Sync stops for Pennywise connector</div><p>Hi Elena, we are looking into the connector. Please tell us if it stops again.</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Elena Brandt",
+      "address": "elena.brandt@marlow-freight.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Elena Brandt",
+      "address": "elena.brandt@marlow-freight.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<841a5266ebc43b74@mail.marlow-freight.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkADyieJ5bZB5z545IRQ6dtl-H2XH-GTbFgmmUMqSV-CAAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   }
+  },
+  {
+   "caseId": "d03",
+   "provider": "gmail",
+   "ref": "MR-04F0A",
+   "thread": "D3",
+   "plain": "Another example: the overdue reminder for invoice 5521 reached the customer at 17:40, scheduled for 09:00.\n\nArvid",
+   "mail": {
+    "id": "791fc1d5836f69de",
+    "threadId": "02fc87716ca4208b",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Arvid Solberg",
+       "address": "arvid@northgate-clinics.example"
+      }
+     ],
+     "text": "Arvid Solberg <arvid@northgate-clinics.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Re: Notification emails arrive hours late",
+    "messageId": "<791fc1d5836f69de@mail.northgate-clinics.example>",
+    "text": "Another example: the overdue reminder for invoice 5521 reached the customer at 17:40, scheduled for 09:00.\n\nArvid\n\n--\nMsg-ref: MR-04F0A\n\nOn Tue, Oct 7, 2026 at 8:55 AM Brightlane Support <support@brightlane.example> wrote:\n> Hello Arvid, thanks for flagging the delay. Engineering is checking the mail queue.",
+    "textAsHtml": "<p>Another example: the overdue reminder for invoice 5521 reached the customer at 17:40, scheduled for 09:00.</p><p>Arvid</p><p>--<br>Msg-ref: MR-04F0A</p><p>On Tue, Oct 7, 2026 at 8:55 AM Brightlane Support &lt;support@brightlane.example&gt; wrote:<br>&gt; Hello Arvid, thanks for flagging the delay. Engineering is checking the mail queue.</p>"
+   }
+  },
+  {
+   "caseId": "d04",
+   "provider": "outlook",
+   "ref": "MR-825FE",
+   "thread": "D4",
+   "plain": "Same error on a second phone (Pixel 8). Every receipt photo ends with \"Upload failed, try again\". Our accountants cannot book expenses at all now.\n\nSofia",
+   "mail": {
+    "id": "AAMkADtEvsCm31j0JuNqwurPH56S_yxE1YbBlPjsVpkfgKAAA=",
+    "conversationId": "AAQkADcffU23hPdm09m_HxmvTFkqbNfvwXgLrap_VFzaGKvgAAA=",
+    "subject": "RE: Receipt upload fails",
+    "bodyPreview": "Same error on a second phone (Pixel 8). Every receipt photo ends with \"Upload failed, try again\". Our accountants cannot book expenses at all now. Sofia",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>Same error on a second phone (Pixel 8). Every receipt photo ends with \"Upload failed, try again\". Our accountants cannot book expenses at all now.</p><p>Sofia</p><p>Msg-ref: MR-825FE</p><hr><div><b>From:</b> Brightlane Support &lt;support@brightlane.example&gt;<br><b>Sent:</b> Monday, October 6, 2026 3:20 PM<br><b>To:</b> Brightlane Support<br><b>Subject:</b> RE: Receipt upload fails</div><p>Hi Sofia, can you tell us your phone model and app version?</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Sofia Rinaldi",
+      "address": "sofia.rinaldi@orchard-dental.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Sofia Rinaldi",
+      "address": "sofia.rinaldi@orchard-dental.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<c1d682d2a0478bc6@mail.orchard-dental.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkADtEvsCm31j0JuNqwurPH56S_yxE1YbBlPjsVpkfgKAAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   }
+  },
+  {
+   "caseId": "d05",
+   "provider": "gmail",
+   "ref": "MR-33200",
+   "thread": "D5",
+   "plain": "Hi again, I tried the invite from the Users page as you suggested but the button stays grey. Anything else I should check?\n\nBen",
+   "mail": {
+    "id": "ac9427e3dcef94d3",
+    "threadId": "20a15651549116ef",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Ben Okafor",
+       "address": "ben.okafor@tessaly-foods.example"
+      }
+     ],
+     "text": "Ben Okafor <ben.okafor@tessaly-foods.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Re: Cannot invite new accountant",
+    "messageId": "<ac9427e3dcef94d3@mail.tessaly-foods.example>",
+    "text": "Hi again, I tried the invite from the Users page as you suggested but the button stays grey. Anything else I should check?\n\nBen\n\n--\nMsg-ref: MR-33200\n\nOn Tue, Oct 7, 2026 at 11:03 AM Brightlane Support <support@brightlane.example> wrote:\n> Hi Ben, invitations need the Admin role. Could you open Users and try again?",
+    "textAsHtml": "<p>Hi again, I tried the invite from the Users page as you suggested but the button stays grey. Anything else I should check?</p><p>Ben</p><p>--<br>Msg-ref: MR-33200</p><p>On Tue, Oct 7, 2026 at 11:03 AM Brightlane Support &lt;support@brightlane.example&gt; wrote:<br>&gt; Hi Ben, invitations need the Admin role. Could you open Users and try again?</p>"
+   }
+  },
+  {
+   "caseId": "d06",
+   "provider": "outlook",
+   "ref": "MR-4D200",
+   "thread": "D6",
+   "plain": "Thanks. One more question on the same topic: do nested groups in Azure AD count, or only direct members?\n\nThomas",
+   "mail": {
+    "id": "AAMkADZDbDLb8WHj-_2abpjm4lbRsfmgizIcMF_qj2rnquAAA=",
+    "conversationId": "AAQkADlYgykzMLZ3Ukt56pLSUFrHmqkiZjjcH6ujGWa6ytj7AAA=",
+    "subject": "RE: SSO group mapping unclear",
+    "bodyPreview": "Thanks. One more question on the same topic: do nested groups in Azure AD count, or only direct members? Thomas",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>Thanks. One more question on the same topic: do nested groups in Azure AD count, or only direct members?</p><p>Thomas</p><p>Msg-ref: MR-4D200</p><hr><div><b>From:</b> Brightlane Support &lt;support@brightlane.example&gt;<br><b>Sent:</b> Monday, October 6, 2026 1:10 PM<br><b>To:</b> Brightlane Support<br><b>Subject:</b> RE: SSO group mapping unclear</div><p>Hi Thomas, group claims map by name. We will send a short guide.</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Thomas Weiss",
+      "address": "thomas.weiss@halden-pryce.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Thomas Weiss",
+      "address": "thomas.weiss@halden-pryce.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<32bc65c365bc8405@mail.halden-pryce.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkADZDbDLb8WHj-_2abpjm4lbRsfmgizIcMF_qj2rnquAAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   }
+  },
+  {
+   "caseId": "d07",
+   "provider": "gmail",
+   "ref": "MR-E8053",
+   "thread": "D7",
+   "plain": "I changed the address in Settings on Monday but today's statement still shows the old one. Is there a cache?\n\nIngrid",
+   "mail": {
+    "id": "a55b225b6133a5c3",
+    "threadId": "8b409892de4338a8",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Ingrid Halvorsen",
+       "address": "ingrid@fjordline-supplies.example"
+      }
+     ],
+     "text": "Ingrid Halvorsen <ingrid@fjordline-supplies.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Re: Statement shows wrong address",
+    "messageId": "<a55b225b6133a5c3@mail.fjordline-supplies.example>",
+    "text": "I changed the address in Settings on Monday but today's statement still shows the old one. Is there a cache?\n\nIngrid\n\n--\nMsg-ref: MR-E8053\n\nOn Tue, Oct 7, 2026 at 2:47 PM Brightlane Support <support@brightlane.example> wrote:\n> Hello Ingrid, statements use the billing address, not the company address. Could you check Billing > Contacts?",
+    "textAsHtml": "<p>I changed the address in Settings on Monday but today's statement still shows the old one. Is there a cache?</p><p>Ingrid</p><p>--<br>Msg-ref: MR-E8053</p><p>On Tue, Oct 7, 2026 at 2:47 PM Brightlane Support &lt;support@brightlane.example&gt; wrote:<br>&gt; Hello Ingrid, statements use the billing address, not the company address. Could you check Billing &gt; Contacts?</p>"
+   }
+  },
+  {
+   "caseId": "d08",
+   "provider": "outlook",
+   "ref": "MR-38CFB",
+   "thread": "D8",
+   "plain": "To add to our request: we would need two approval levels above 5,000 EUR and an email to the approver. Happy to jump on a call.\n\nLucas",
+   "mail": {
+    "id": "AAMkADhEanPm2LtEIA_EtF9Zp8B1jDpb2PDzvdqAAvFYaZAAA=",
+    "conversationId": "AAQkADrOE2vpqjPGtszWyb-01n7JnNL5eQTHgC8lqi78uSErAAA=",
+    "subject": "RE: Request: approval workflow for invoices",
+    "bodyPreview": "To add to our request: we would need two approval levels above 5,000 EUR and an email to the approver. Happy to jump on a call. Lucas",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>To add to our request: we would need two approval levels above 5,000 EUR and an email to the approver. Happy to jump on a call.</p><p>Lucas</p><p>Msg-ref: MR-38CFB</p><hr><div><b>From:</b> Brightlane Support &lt;support@brightlane.example&gt;<br><b>Sent:</b> Monday, October 6, 2026 11:30 AM<br><b>To:</b> Brightlane Support<br><b>Subject:</b> RE: Request: approval workflow for invoices</div><p>Hi Lucas, thanks for the suggestion. We have logged it with product.</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Lucas Moreau",
+      "address": "lucas.moreau@marlow-freight.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Lucas Moreau",
+      "address": "lucas.moreau@marlow-freight.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<4cd61c44dc46bc47@mail.marlow-freight.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkADhEanPm2LtEIA_EtF9Zp8B1jDpb2PDzvdqAAvFYaZAAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   }
+  },
+  {
+   "caseId": "d09",
+   "provider": "gmail",
+   "ref": "MR-88647",
+   "thread": "D9",
+   "plain": "Any news on the XLSX export? No rush, just wondering if it is planned for this quarter.\n\nNadia",
+   "mail": {
+    "id": "5cda9500310ba5bf",
+    "threadId": "b8ac36a396fb0cc3",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Nadia Karim",
+       "address": "nadia.karim@corvane-logistics.example"
+      }
+     ],
+     "text": "Nadia Karim <nadia.karim@corvane-logistics.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Re: Request: export to XLSX",
+    "messageId": "<5cda9500310ba5bf@mail.corvane-logistics.example>",
+    "text": "Any news on the XLSX export? No rush, just wondering if it is planned for this quarter.\n\nNadia\n\n--\nMsg-ref: MR-88647\n\nOn Mon, Oct 6, 2026 at 4:02 PM Brightlane Support <support@brightlane.example> wrote:\n> Hi Nadia, thanks for the idea. It is with the product team.",
+    "textAsHtml": "<p>Any news on the XLSX export? No rush, just wondering if it is planned for this quarter.</p><p>Nadia</p><p>--<br>Msg-ref: MR-88647</p><p>On Mon, Oct 6, 2026 at 4:02 PM Brightlane Support &lt;support@brightlane.example&gt; wrote:<br>&gt; Hi Nadia, thanks for the idea. It is with the product team.</p>"
+   }
+  },
+  {
+   "caseId": "d10",
+   "provider": "outlook",
+   "ref": "MR-CFCC6",
+   "thread": "D10",
+   "plain": "Another reason for the portal: our clients keep asking for old PDFs by mail. A self-service page would remove that.\n\nOskar",
+   "mail": {
+    "id": "AAMkADB3TzPjGtLAPJxBRn8Ok5XsTN2sojAO7n44_HYP81AAA=",
+    "conversationId": "AAQkADxf38D6THsF8HCwr7rDOCN68_JzMaFEkrLmeo6o7pdaAAA=",
+    "subject": "RE: Idea: customer portal for invoices",
+    "bodyPreview": "Another reason for the portal: our clients keep asking for old PDFs by mail. A self-service page would remove that. Oskar",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>Another reason for the portal: our clients keep asking for old PDFs by mail. A self-service page would remove that.</p><p>Oskar</p><p>Msg-ref: MR-CFCC6</p><hr><div><b>From:</b> Brightlane Support &lt;support@brightlane.example&gt;<br><b>Sent:</b> Tuesday, October 7, 2026 10:15 AM<br><b>To:</b> Brightlane Support<br><b>Subject:</b> RE: Idea: customer portal for invoices</div><p>Hi Oskar, noted. We have added your use case to the request.</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Oskar Lindgren",
+      "address": "oskar.lindgren@northgate-clinics.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Oskar Lindgren",
+      "address": "oskar.lindgren@northgate-clinics.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<763167155910cf9e@mail.northgate-clinics.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkADB3TzPjGtLAPJxBRn8Ok5XsTN2sojAO7n44_HYP81AAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   }
+  },
+  {
+   "caseId": "a01",
+   "provider": "gmail",
+   "ref": "MR-2232F",
+   "thread": null,
+   "plain": "The export button on the invoice list does nothing for me about one time in five. Maybe I am doing something wrong. It would be nice if it at least warned me.\n\nGreta",
+   "mail": {
+    "id": "7646b8f901a77440",
+    "threadId": "60294746d52021ca",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Greta Lang",
+       "address": "greta.lang@orchard-dental.example"
+      }
+     ],
+     "text": "Greta Lang <greta.lang@orchard-dental.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "export button",
+    "messageId": "<7646b8f901a77440@mail.orchard-dental.example>",
+    "text": "The export button on the invoice list does nothing for me about one time in five. Maybe I am doing something wrong. It would be nice if it at least warned me.\n\nGreta\n\n--\nMsg-ref: MR-2232F",
+    "textAsHtml": "<p>The export button on the invoice list does nothing for me about one time in five. Maybe I am doing something wrong. It would be nice if it at least warned me.</p><p>Greta</p><p>--<br>Msg-ref: MR-2232F</p>"
+   }
+  },
+  {
+   "caseId": "a02",
+   "provider": "outlook",
+   "ref": "MR-C2418",
+   "thread": null,
+   "plain": "Our bank statement and the Ledgerline total differ by one cent on many invoices since the update. Is the new rounding on purpose? If yes ignore this.\n\nHugo",
+   "mail": {
+    "id": "AAMkAD1x803hRGTutoIwyE1H7DdPK8ni0XwDeIfDkJ_pMmAAA=",
+    "conversationId": "AAQkADfeks2Rlk-KVy-pfLij93R04xVDC7kcg0h1SAED9zZqAAA=",
+    "subject": "one cent difference",
+    "bodyPreview": "Our bank statement and the Ledgerline total differ by one cent on many invoices since the update. Is the new rounding on purpose? If yes ignore this. Hugo",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>Our bank statement and the Ledgerline total differ by one cent on many invoices since the update. Is the new rounding on purpose? If yes ignore this.</p><p>Hugo</p><p>Msg-ref: MR-C2418</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Hugo Ferreira",
+      "address": "hugo.ferreira@fjordline-supplies.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Hugo Ferreira",
+      "address": "hugo.ferreira@fjordline-supplies.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<cc986b170a2d6788@mail.fjordline-supplies.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkAD1x803hRGTutoIwyE1H7DdPK8ni0XwDeIfDkJ_pMmAAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   }
+  },
+  {
+   "caseId": "a03",
+   "provider": "gmail",
+   "ref": "MR-352D3",
+   "thread": null,
+   "plain": "Three things. 1) I sometimes get logged out after a few minutes. 2) Could you allow two logos on invoices? 3) Why was I charged 12 EUR for \"extra seat\" when we have not added anyone? Thanks.\n\nMira",
+   "mail": {
+    "id": "2a9cf90c6bcbcef0",
+    "threadId": "96aa7d10356ebaca",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Mira Patel",
+       "address": "mira.patel@tessaly-foods.example"
+      }
+     ],
+     "text": "Mira Patel <mira.patel@tessaly-foods.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "login, a wish, and a billing question",
+    "messageId": "<2a9cf90c6bcbcef0@mail.tessaly-foods.example>",
+    "text": "Three things. 1) I sometimes get logged out after a few minutes. 2) Could you allow two logos on invoices? 3) Why was I charged 12 EUR for \"extra seat\" when we have not added anyone? Thanks.\n\nMira\n\n--\nMsg-ref: MR-352D3",
+    "textAsHtml": "<p>Three things. 1) I sometimes get logged out after a few minutes. 2) Could you allow two logos on invoices? 3) Why was I charged 12 EUR for \"extra seat\" when we have not added anyone? Thanks.</p><p>Mira</p><p>--<br>Msg-ref: MR-352D3</p>"
+   }
+  },
+  {
+   "caseId": "a04",
+   "provider": "outlook",
+   "ref": "MR-2445E",
+   "thread": null,
+   "plain": "Since Tuesday everything feels slower. Hard to say what exactly. Maybe it is our network.\n\nPer",
+   "mail": {
+    "id": "AAMkADKqcxX6e8i3i5_vJxpdvbYVe6u4DtVL86qPzOG_NRAAA=",
+    "conversationId": "AAQkADIzIePCqCA-SIJM7jsZ3BZ49yxvw390nLVGGJGEiEfzAAA=",
+    "subject": "things feel slow",
+    "bodyPreview": "Since Tuesday everything feels slower. Hard to say what exactly. Maybe it is our network. Per",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>Since Tuesday everything feels slower. Hard to say what exactly. Maybe it is our network.</p><p>Per</p><p>Msg-ref: MR-2445E</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Per Andersson",
+      "address": "per.andersson@marlow-freight.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Per Andersson",
+      "address": "per.andersson@marlow-freight.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<7e3454443449ec5b@mail.marlow-freight.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkADKqcxX6e8i3i5_vJxpdvbYVe6u4DtVL86qPzOG_NRAAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   }
+  },
+  {
+   "caseId": "a05",
+   "provider": "gmail",
+   "ref": "MR-CFA99",
+   "thread": null,
+   "plain": "We are a long-time Ledgerline customer and would love to co-host a webinar with you. Separately, our reports page takes a while to open.\n\nDario Conti, Head of Partnerships",
+   "mail": {
+    "id": "2341ad29e8e7c45e",
+    "threadId": "cd65c723f3a91e85",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Dario Conti",
+       "address": "dario.conti@growthbridge-partners.example"
+      }
+     ],
+     "text": "Dario Conti <dario.conti@growthbridge-partners.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "partnership and quick note on reports",
+    "messageId": "<2341ad29e8e7c45e@mail.growthbridge-partners.example>",
+    "text": "We are a long-time Ledgerline customer and would love to co-host a webinar with you. Separately, our reports page takes a while to open.\n\nDario Conti, Head of Partnerships\n\n--\nMsg-ref: MR-CFA99",
+    "textAsHtml": "<p>We are a long-time Ledgerline customer and would love to co-host a webinar with you. Separately, our reports page takes a while to open.</p><p>Dario Conti, Head of Partnerships</p><p>--<br>Msg-ref: MR-CFA99</p>"
+   }
+  },
+  {
+   "caseId": "a06",
+   "provider": "outlook",
+   "ref": "MR-D8943",
+   "thread": null,
+   "plain": "Anja left in September and her login should have been removed. Today she still received a payment reminder. Can someone check what she still has access to? Also please confirm in writing.\n\nKatja",
+   "mail": {
+    "id": "AAMkAD9QuwH8NIUco9kbG2uXDekS7op0rMsDuP__bLpsG4AAA=",
+    "conversationId": "AAQkADU-S2jbjuNld5_Q8XKScdGUejHBIxqFVqGyWH4HenOYAAA=",
+    "subject": "access for a former colleague",
+    "bodyPreview": "Anja left in September and her login should have been removed. Today she still received a payment reminder. Can someone check what she still has access to? Also please confirm in writing. Katja",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>Anja left in September and her login should have been removed. Today she still received a payment reminder. Can someone check what she still has access to? Also please confirm in writing.</p><p>Katja</p><p>Msg-ref: MR-D8943</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Katja Nowak",
+      "address": "katja.nowak@halden-pryce.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Katja Nowak",
+      "address": "katja.nowak@halden-pryce.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<a876e333571cda44@mail.halden-pryce.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkAD9QuwH8NIUco9kbG2uXDekS7op0rMsDuP__bLpsG4AAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   }
+  },
+  {
+   "caseId": "a07",
+   "provider": "gmail",
+   "ref": "MR-65977",
+   "thread": null,
+   "plain": "Under GDPR article 17 we request deletion of the personal data of our former patient list and a confirmation. Please tell us who handles this on your side.\n\nJonas Eriksen, Data Protection Officer",
+   "mail": {
+    "id": "c88c21ee2687f415",
+    "threadId": "31f76b3156b5cebf",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Jonas Eriksen",
+       "address": "jonas.eriksen@northgate-clinics.example"
+      }
+     ],
+     "text": "Jonas Eriksen <jonas.eriksen@northgate-clinics.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "data deletion confirmation",
+    "messageId": "<c88c21ee2687f415@mail.northgate-clinics.example>",
+    "text": "Under GDPR article 17 we request deletion of the personal data of our former patient list and a confirmation. Please tell us who handles this on your side.\n\nJonas Eriksen, Data Protection Officer\n\n--\nMsg-ref: MR-65977",
+    "textAsHtml": "<p>Under GDPR article 17 we request deletion of the personal data of our former patient list and a confirmation. Please tell us who handles this on your side.</p><p>Jonas Eriksen, Data Protection Officer</p><p>--<br>Msg-ref: MR-65977</p>"
+   }
+  },
+  {
+   "caseId": "a08",
+   "provider": "outlook",
+   "ref": "MR-58EE2",
+   "thread": null,
+   "plain": "call me back today. very important.\n\nAnton",
+   "mail": {
+    "id": "AAMkADqrW0ZcpgvbOf3icqc2BHF5UWIXRdQIMt09kOOBTQAAA=",
+    "conversationId": "AAQkAD-6ddJU-4madn2rzRgf1IbZsNOR07gFCfuadO4K3ntjAAA=",
+    "subject": "URGENT!!!",
+    "bodyPreview": "call me back today. very important. Anton",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>call me back today. very important.</p><p>Anton</p><p>Msg-ref: MR-58EE2</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Anton Weber",
+      "address": "anton.weber@corvane-logistics.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Anton Weber",
+      "address": "anton.weber@corvane-logistics.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<0c33995d1ddb6c77@mail.corvane-logistics.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkADqrW0ZcpgvbOf3icqc2BHF5UWIXRdQIMt09kOOBTQAAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   }
+  },
+  {
+   "caseId": "a09",
+   "provider": "gmail",
+   "ref": "MR-43F1F",
+   "thread": null,
+   "plain": "Another provider offers automatic bank reconciliation with suggestions. Are you going to build something similar? Our renewal in January depends on the answer.\n\nYuki",
+   "mail": {
+    "id": "c2f5f3602072ea35",
+    "threadId": "eccbc7813ea8221b",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Yuki Tanaka",
+       "address": "yuki.tanaka@orchard-dental.example"
+      }
+     ],
+     "text": "Yuki Tanaka <yuki.tanaka@orchard-dental.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "competitor has this",
+    "messageId": "<c2f5f3602072ea35@mail.orchard-dental.example>",
+    "text": "Another provider offers automatic bank reconciliation with suggestions. Are you going to build something similar? Our renewal in January depends on the answer.\n\nYuki\n\n--\nMsg-ref: MR-43F1F",
+    "textAsHtml": "<p>Another provider offers automatic bank reconciliation with suggestions. Are you going to build something similar? Our renewal in January depends on the answer.</p><p>Yuki</p><p>--<br>Msg-ref: MR-43F1F</p>"
+   }
+  },
+  {
+   "caseId": "a10",
+   "provider": "outlook",
+   "ref": "MR-812A7",
+   "thread": null,
+   "plain": "Hallo, die letzte Rechnung zeigt einen anderen Betrag als das Angebot. Bitte pruefen. Danke.\n\nStefan Braun",
+   "mail": {
+    "id": "AAMkADqSbvNJAiuhLLRytjOFCTn8LPSkr5D3gB0lq2KH0pAAA=",
+    "conversationId": "AAQkADHJMALCen6gIjY6YWeZbS0q5b9Q8w_eSZ5Qxo_2Fb7xAAA=",
+    "subject": "Rechnung falsch?",
+    "bodyPreview": "Hallo, die letzte Rechnung zeigt einen anderen Betrag als das Angebot. Bitte pruefen. Danke. Stefan Braun",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>Hallo, die letzte Rechnung zeigt einen anderen Betrag als das Angebot. Bitte pruefen. Danke.</p><p>Stefan Braun</p><p>Msg-ref: MR-812A7</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Stefan Braun",
+      "address": "stefan.braun@fjordline-supplies.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Stefan Braun",
+      "address": "stefan.braun@fjordline-supplies.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<f64d331f617e565f@mail.fjordline-supplies.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkADqSbvNJAiuhLLRytjOFCTn8LPSkr5D3gB0lq2KH0pAAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   }
+  },
+  {
+   "caseId": "b01",
+   "provider": "gmail",
+   "ref": "MR-87082",
+   "thread": null,
+   "plain": "Hello, when I export the \"Open invoices\" report to CSV with more than 1000 rows the last row is missing. We noticed because the CSV total is smaller than the screen total. Reproduces every time on Chrome 129, report \"Open invoices\", filter \"all customers\".\n\nMarta Keller, Corvane Logistics",
+   "mail": {
+    "id": "671745f6840bb4b9",
+    "threadId": "7a77899e46c009cc",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Marta Keller",
+       "address": "marta.keller@corvane-logistics.example"
+      }
+     ],
+     "text": "Marta Keller <marta.keller@corvane-logistics.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Report CSV export loses the last row",
+    "messageId": "<671745f6840bb4b9@mail.corvane-logistics.example>",
+    "text": "Hello, when I export the \"Open invoices\" report to CSV with more than 1000 rows the last row is missing. We noticed because the CSV total is smaller than the screen total. Reproduces every time on Chrome 129, report \"Open invoices\", filter \"all customers\".\n\nMarta Keller, Corvane Logistics\n\n--\nMsg-ref: MR-87082",
+    "textAsHtml": "<p>Hello, when I export the \"Open invoices\" report to CSV with more than 1000 rows the last row is missing. We noticed because the CSV total is smaller than the screen total. Reproduces every time on Chrome 129, report \"Open invoices\", filter \"all customers\".</p><p>Marta Keller, Corvane Logistics</p><p>--<br>Msg-ref: MR-87082</p>"
+   }
+  },
+  {
+   "caseId": "b02",
+   "provider": "outlook",
+   "ref": "MR-68B59",
+   "thread": null,
+   "plain": "The PDF of invoice HP-2231 shows VAT 19.00 on a net of 99.99, while the screen shows 19.00 as well but the gross differs by a cent. The PDF seems to round twice. Screenshot attached.\n\nSven",
+   "mail": {
+    "id": "AAMkADeCiE0NIJZ_goJDFX-Pvj7CNdq939qE_KljbJXKojAAA=",
+    "conversationId": "AAQkADYmQhLesmL39tm65gDVAu-cfy7PcDD6n7-TXFCkGlBrAAA=",
+    "subject": "VAT rounding on invoice PDF",
+    "bodyPreview": "The PDF of invoice HP-2231 shows VAT 19.00 on a net of 99.99, while the screen shows 19.00 as well but the gross differs by a cent. The PDF seems to round twice. Screenshot attached. Sven",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>The PDF of invoice HP-2231 shows VAT 19.00 on a net of 99.99, while the screen shows 19.00 as well but the gross differs by a cent. The PDF seems to round twice. Screenshot attached.</p><p>Sven</p><p>Msg-ref: MR-68B59</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Sven Larsen",
+      "address": "sven.larsen@halden-pryce.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Sven Larsen",
+      "address": "sven.larsen@halden-pryce.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": true,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<8c286b9f80ad5e1e@mail.halden-pryce.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkADeCiE0NIJZ_goJDFX-Pvj7CNdq939qE_KljbJXKojAAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   }
+  },
+  {
+   "caseId": "b03",
+   "provider": "gmail",
+   "ref": "MR-5F306",
+   "thread": null,
+   "plain": "On Android 14 (Galaxy S23, app 5.8.2) the app closes as soon as I tap \"Attach receipt\" and choose the camera. Gallery works. Happens every time since the last update.\n\nAyesha",
+   "mail": {
+    "id": "c81dd40f6eb66a92",
+    "threadId": "92f525f73b596ef9",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Ayesha Rahman",
+       "address": "ayesha@tessaly-foods.example"
+      }
+     ],
+     "text": "Ayesha Rahman <ayesha@tessaly-foods.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "App crashes when attaching a receipt",
+    "messageId": "<c81dd40f6eb66a92@mail.tessaly-foods.example>",
+    "text": "On Android 14 (Galaxy S23, app 5.8.2) the app closes as soon as I tap \"Attach receipt\" and choose the camera. Gallery works. Happens every time since the last update.\n\nAyesha\n\n--\nMsg-ref: MR-5F306",
+    "textAsHtml": "<p>On Android 14 (Galaxy S23, app 5.8.2) the app closes as soon as I tap \"Attach receipt\" and choose the camera. Gallery works. Happens every time since the last update.</p><p>Ayesha</p><p>--<br>Msg-ref: MR-5F306</p>"
+   }
+  },
+  {
+   "caseId": "b04",
+   "provider": "gmail",
+   "ref": "MR-E3FE2",
+   "thread": null,
+   "plain": "Since 07:30 UTC POST /v2/invoices returns HTTP 500 whenever the payload has more than one tax line. Our billing run for all 14 clinics is blocked and invoices go out at 12:00. Request id req_91f3a2c7. This is urgent.\n\nDaniel Reyes, IT Lead",
+   "mail": {
+    "id": "b51d4e82205f10f7",
+    "threadId": "fedae514c7368766",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Daniel Reyes",
+       "address": "daniel.reyes@orchard-dental.example"
+      }
+     ],
+     "text": "Daniel Reyes <daniel.reyes@orchard-dental.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "API returns 500 for invoices with several tax lines",
+    "messageId": "<b51d4e82205f10f7@mail.orchard-dental.example>",
+    "text": "Since 07:30 UTC POST /v2/invoices returns HTTP 500 whenever the payload has more than one tax line. Our billing run for all 14 clinics is blocked and invoices go out at 12:00. Request id req_91f3a2c7. This is urgent.\n\nDaniel Reyes, IT Lead\n\n--\nMsg-ref: MR-E3FE2",
+    "textAsHtml": "<p>Since 07:30 UTC POST /v2/invoices returns HTTP 500 whenever the payload has more than one tax line. Our billing run for all 14 clinics is blocked and invoices go out at 12:00. Request id req_91f3a2c7. This is urgent.</p><p>Daniel Reyes, IT Lead</p><p>--<br>Msg-ref: MR-E3FE2</p>"
+   }
+  },
+  {
+   "caseId": "b05",
+   "provider": "outlook",
+   "ref": "MR-3C049",
+   "thread": null,
+   "plain": "One of our customers (Fjordline) reports that the date picker on the Reports page shows November when October is selected. Only Safari 17 on macOS. Chrome is fine. Cosmetic, they can still type the date.\n\nKai, Brightlane partner desk",
+   "mail": {
+    "id": "AAMkADoRO7RvlfzdxhdthPvL225mStJJ4FqW7NOp80OgcFAAA=",
+    "conversationId": "AAQkADE_jxiE4vxp1eSA2rVDn5FkLueYvcAeR8iIzzUedH9OAAA=",
+    "subject": "Partner report: date picker shows wrong month in Safari",
+    "bodyPreview": "One of our customers (Fjordline) reports that the date picker on the Reports page shows November when October is selected. Only Safari 17 on macOS. Chrome is fine. Cosmetic, they can still type the da",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>One of our customers (Fjordline) reports that the date picker on the Reports page shows November when October is selected. Only Safari 17 on macOS. Chrome is fine. Cosmetic, they can still type the date.</p><p>Kai, Brightlane partner desk</p><p>Msg-ref: MR-3C049</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Kai Lindqvist",
+      "address": "kai@brightlane-partners.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Kai Lindqvist",
+      "address": "kai@brightlane-partners.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<f393639592a01e75@mail.brightlane-partners.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkADoRO7RvlfzdxhdthPvL225mStJJ4FqW7NOp80OgcFAAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   }
+  },
+  {
+   "caseId": "b06",
+   "provider": "gmail",
+   "ref": "MR-FE8E5",
+   "thread": null,
+   "plain": "Since yesterday each scheduled payment reminder goes out two times, a few seconds apart. Three of our customers already complained. Schedule is \"daily 09:00\".\n\nIsabel",
+   "mail": {
+    "id": "3dc99d8f977f62cb",
+    "threadId": "d700f3108553cc2c",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Isabel Cruz",
+       "address": "isabel.cruz@marlow-freight.example"
+      }
+     ],
+     "text": "Isabel Cruz <isabel.cruz@marlow-freight.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Scheduled reminders are sent twice",
+    "messageId": "<3dc99d8f977f62cb@mail.marlow-freight.example>",
+    "text": "Since yesterday each scheduled payment reminder goes out two times, a few seconds apart. Three of our customers already complained. Schedule is \"daily 09:00\".\n\nIsabel\n\n--\nMsg-ref: MR-FE8E5",
+    "textAsHtml": "<p>Since yesterday each scheduled payment reminder goes out two times, a few seconds apart. Three of our customers already complained. Schedule is \"daily 09:00\".</p><p>Isabel</p><p>--<br>Msg-ref: MR-FE8E5</p>",
+    "cc": {
+     "value": [
+      {
+       "name": "Lucas Moreau",
+       "address": "lucas.moreau@marlow-freight.example"
+      }
+     ],
+     "text": "Lucas Moreau <lucas.moreau@marlow-freight.example>"
+    }
+   }
+  },
+  {
+   "caseId": "b07",
+   "provider": "outlook",
+   "ref": "MR-DA514",
+   "thread": null,
+   "plain": "After the update on 3 October the bank import creates every transaction twice. We use the CAMT.053 upload. About 300 duplicates so far and our reconciliation is blocked.\n\nTobias",
+   "mail": {
+    "id": "AAMkADXsl1BvlI2LKdVat8Hh4ErAVKEMmoaWXCEb5lrxtKAAA=",
+    "conversationId": "AAQkADxg90ID5kDx_io7e8F5q46LKhPlHye-a4It_C3ZZ9ymAAA=",
+    "subject": "Bank import creates duplicate transactions",
+    "bodyPreview": "After the update on 3 October the bank import creates every transaction twice. We use the CAMT.053 upload. About 300 duplicates so far and our reconciliation is blocked. Tobias",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>After the update on 3 October the bank import creates every transaction twice. We use the CAMT.053 upload. About 300 duplicates so far and our reconciliation is blocked.</p><p>Tobias</p><p>Msg-ref: MR-DA514</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Tobias Wright",
+      "address": "tobias.wright@northgate-clinics.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Tobias Wright",
+      "address": "tobias.wright@northgate-clinics.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<c2ad7e2b6947ff95@mail.northgate-clinics.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkADXsl1BvlI2LKdVat8Hh4ErAVKEMmoaWXCEb5lrxtKAAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   }
+  },
+  {
+   "caseId": "b08",
+   "provider": "gmail",
+   "ref": "MR-28C21",
+   "thread": null,
+   "plain": "The dashboard tile \"Revenue this month\" shows 41,310.52 while the exported report for the same period sums to 41,310.50. Two cents off. Same filters, I checked.\n\nElif",
+   "mail": {
+    "id": "600d7fda73856bf1",
+    "threadId": "b6a6ca1ddf41b8ab",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Elif Demir",
+       "address": "elif.demir@fjordline-supplies.example"
+      }
+     ],
+     "text": "Elif Demir <elif.demir@fjordline-supplies.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Dashboard total differs from export",
+    "messageId": "<600d7fda73856bf1@mail.fjordline-supplies.example>",
+    "text": "The dashboard tile \"Revenue this month\" shows 41,310.52 while the exported report for the same period sums to 41,310.50. Two cents off. Same filters, I checked.\n\nElif\n\n--\nMsg-ref: MR-28C21",
+    "textAsHtml": "<p>The dashboard tile \"Revenue this month\" shows 41,310.52 while the exported report for the same period sums to 41,310.50. Two cents off. Same filters, I checked.</p><p>Elif</p><p>--<br>Msg-ref: MR-28C21</p>"
+   }
+  },
+  {
+   "caseId": "b09",
+   "provider": "outlook",
+   "ref": "MR-1FD53",
+   "thread": null,
+   "plain": "Since 08:40 nobody in our company (about 60 users) can open any invoice. The page shows \"Something went wrong E-4012\". We cannot send invoices to customers, month-end closing is today. Please help immediately.\n\nMichael Foster, CFO",
+   "mail": {
+    "id": "AAMkADJr-DAIYtfnVY4ktY87F3mVUqJORslDdMVKuyw7NGAAA=",
+    "conversationId": "AAQkADa9I5hwdiMMw2Jv2RYSchOmlbOjxO7D1Y-gNfrwxNAjAAA=",
+    "subject": "Nobody can open invoices - production down",
+    "bodyPreview": "Since 08:40 nobody in our company (about 60 users) can open any invoice. The page shows \"Something went wrong E-4012\". We cannot send invoices to customers, month-end closing is today. Please help imm",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>Since 08:40 nobody in our company (about 60 users) can open any invoice. The page shows \"Something went wrong E-4012\". We cannot send invoices to customers, month-end closing is today. Please help immediately.</p><p>Michael Foster, CFO</p><p>Msg-ref: MR-1FD53</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Michael Foster",
+      "address": "michael.foster@halden-pryce.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Michael Foster",
+      "address": "michael.foster@halden-pryce.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<76ce2c1ee9dc2351@mail.halden-pryce.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkADJr-DAIYtfnVY4ktY87F3mVUqJORslDdMVKuyw7NGAAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   }
+  },
+  {
+   "caseId": "i01",
+   "provider": "gmail",
+   "ref": "MR-76209",
+   "thread": null,
+   "plain": "I cannot log in and the password reset email does not arrive, not even in spam. Two colleagues have the same problem since this morning. We are all blocked on the month-end report.\n\nLaura",
+   "mail": {
+    "id": "64f5af3341fcce8d",
+    "threadId": "aa8d57a279216972",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Laura Bianchi",
+       "address": "laura.bianchi@tessaly-foods.example"
+      }
+     ],
+     "text": "Laura Bianchi <laura.bianchi@tessaly-foods.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Password reset email never arrives",
+    "messageId": "<64f5af3341fcce8d@mail.tessaly-foods.example>",
+    "text": "I cannot log in and the password reset email does not arrive, not even in spam. Two colleagues have the same problem since this morning. We are all blocked on the month-end report.\n\nLaura\n\n--\nMsg-ref: MR-76209",
+    "textAsHtml": "<p>I cannot log in and the password reset email does not arrive, not even in spam. Two colleagues have the same problem since this morning. We are all blocked on the month-end report.</p><p>Laura</p><p>--<br>Msg-ref: MR-76209</p>",
+    "cc": {
+     "value": [
+      {
+       "name": "Ben Okafor",
+       "address": "ben.okafor@tessaly-foods.example"
+      }
+     ],
+     "text": "Ben Okafor <ben.okafor@tessaly-foods.example>"
+    }
+   }
+  },
+  {
+   "caseId": "i02",
+   "provider": "outlook",
+   "ref": "MR-F4B66",
+   "thread": null,
+   "plain": "We are setting up single sign-on with Azure AD. Which claim should carry the group, and how do roles in Ledgerline map to our groups? A short how-to would be enough.\n\nFelix",
+   "mail": {
+    "id": "AAMkADvVvhJ2OaqluqdK0WFvtVJW-Ir1sQAhxkwtdl1xlaAAA=",
+    "conversationId": "AAQkADO8DhgZX6MLL2s7h4PcyK2ROHE6MfegxGsQeyBiZM90AAA=",
+    "subject": "How do we map Azure AD groups?",
+    "bodyPreview": "We are setting up single sign-on with Azure AD. Which claim should carry the group, and how do roles in Ledgerline map to our groups? A short how-to would be enough. Felix",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>We are setting up single sign-on with Azure AD. Which claim should carry the group, and how do roles in Ledgerline map to our groups? A short how-to would be enough.</p><p>Felix</p><p>Msg-ref: MR-F4B66</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Felix Hartmann",
+      "address": "felix.hartmann@corvane-logistics.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Felix Hartmann",
+      "address": "felix.hartmann@corvane-logistics.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<98dc67693cd67c66@mail.corvane-logistics.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkADvVvhJ2OaqluqdK0WFvtVJW-Ir1sQAhxkwtdl1xlaAAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   }
+  },
+  {
+   "caseId": "i03",
+   "provider": "gmail",
+   "ref": "MR-617CC",
+   "thread": null,
+   "plain": "The invoice we received from you for October shows our old address in Bergen. Please correct our billing profile and send a corrected invoice.\n\nCarla Mendes, Finance",
+   "mail": {
+    "id": "378023007f22f621",
+    "threadId": "ca6489853bf3fa6d",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Carla Mendes",
+       "address": "carla.mendes@fjordline-supplies.example"
+      }
+     ],
+     "text": "Carla Mendes <carla.mendes@fjordline-supplies.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Our Brightlane invoice has the wrong company address",
+    "messageId": "<378023007f22f621@mail.fjordline-supplies.example>",
+    "text": "The invoice we received from you for October shows our old address in Bergen. Please correct our billing profile and send a corrected invoice.\n\nCarla Mendes, Finance\n\n--\nMsg-ref: MR-617CC",
+    "textAsHtml": "<p>The invoice we received from you for October shows our old address in Bergen. Please correct our billing profile and send a corrected invoice.</p><p>Carla Mendes, Finance</p><p>--<br>Msg-ref: MR-617CC</p>"
+   }
+  },
+  {
+   "caseId": "i04",
+   "provider": "outlook",
+   "ref": "MR-8C8BF",
+   "thread": null,
+   "plain": "Since about a month the \"Aged receivables\" report needs 40 seconds to open, before it was 5. Same on all our PCs. It still works, it is just slow.\n\nNoah",
+   "mail": {
+    "id": "AAMkAD3XN973QskYaujeKaAwMYpjddKrriXKxvPLIla775AAA=",
+    "conversationId": "AAQkADqNR7K-WkKMFNXRNHp8RsHVd4tgXChEBC6P8gL6tnilAAA=",
+    "subject": "Reports take 40 seconds to open",
+    "bodyPreview": "Since about a month the \"Aged receivables\" report needs 40 seconds to open, before it was 5. Same on all our PCs. It still works, it is just slow. Noah",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>Since about a month the \"Aged receivables\" report needs 40 seconds to open, before it was 5. Same on all our PCs. It still works, it is just slow.</p><p>Noah</p><p>Msg-ref: MR-8C8BF</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Noah Fischer",
+      "address": "noah.fischer@northgate-clinics.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Noah Fischer",
+      "address": "noah.fischer@northgate-clinics.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<69f3326e52d9edc6@mail.northgate-clinics.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkAD3XN973QskYaujeKaAwMYpjddKrriXKxvPLIla775AAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   }
+  },
+  {
+   "caseId": "i05",
+   "provider": "gmail",
+   "ref": "MR-2D043",
+   "thread": null,
+   "plain": "I added Zoe to our account as Bookkeeper yesterday but she does not see the Imports menu. Is that a permission we have to switch on? I could not find it.\n\nPetra",
+   "mail": {
+    "id": "552ceb45622efd4b",
+    "threadId": "b959642870c39b88",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Petra Novak",
+       "address": "petra.novak@orchard-dental.example"
+      }
+     ],
+     "text": "Petra Novak <petra.novak@orchard-dental.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "New colleague cannot see the Imports menu",
+    "messageId": "<552ceb45622efd4b@mail.orchard-dental.example>",
+    "text": "I added Zoe to our account as Bookkeeper yesterday but she does not see the Imports menu. Is that a permission we have to switch on? I could not find it.\n\nPetra\n\n--\nMsg-ref: MR-2D043",
+    "textAsHtml": "<p>I added Zoe to our account as Bookkeeper yesterday but she does not see the Imports menu. Is that a permission we have to switch on? I could not find it.</p><p>Petra</p><p>--<br>Msg-ref: MR-2D043</p>"
+   }
+  },
+  {
+   "caseId": "i06",
+   "provider": "outlook",
+   "ref": "MR-1B3B6",
+   "thread": null,
+   "plain": "Could you explain how to set up a recurring invoice that increases by 3 percent every January? I found the repeat option but not the increase.\n\nOlivia",
+   "mail": {
+    "id": "AAMkADygl98sZNOFZJMFqWpts7hyz4ryvcQmszs-kT30DNAAA=",
+    "conversationId": "AAQkADp_sUo-mA8g7dHSIlHCKfy05wYeMVjBDK5-kdLo1yILAAA=",
+    "subject": "Setting up recurring invoices",
+    "bodyPreview": "Could you explain how to set up a recurring invoice that increases by 3 percent every January? I found the repeat option but not the increase. Olivia",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>Could you explain how to set up a recurring invoice that increases by 3 percent every January? I found the repeat option but not the increase.</p><p>Olivia</p><p>Msg-ref: MR-1B3B6</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Olivia Grant",
+      "address": "olivia.grant@marlow-freight.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Olivia Grant",
+      "address": "olivia.grant@marlow-freight.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<33fa497c9ed56882@mail.marlow-freight.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkADygl98sZNOFZJMFqWpts7hyz4ryvcQmszs-kT30DNAAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   }
+  },
+  {
+   "caseId": "i07",
+   "provider": "gmail",
+   "ref": "MR-F1A35",
+   "thread": null,
+   "plain": "Connecting our bank feed fails: the bank asks for a consent link that has already expired when it opens. We tried three times today. Without the feed nobody can reconcile.\n\nViktor",
+   "mail": {
+    "id": "95a5fdc993dc6fd9",
+    "threadId": "a49b9367ec72038b",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Viktor Horvat",
+       "address": "viktor.horvat@halden-pryce.example"
+      }
+     ],
+     "text": "Viktor Horvat <viktor.horvat@halden-pryce.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Bank feed will not connect",
+    "messageId": "<95a5fdc993dc6fd9@mail.halden-pryce.example>",
+    "text": "Connecting our bank feed fails: the bank asks for a consent link that has already expired when it opens. We tried three times today. Without the feed nobody can reconcile.\n\nViktor\n\n--\nMsg-ref: MR-F1A35",
+    "textAsHtml": "<p>Connecting our bank feed fails: the bank asks for a consent link that has already expired when it opens. We tried three times today. Without the feed nobody can reconcile.</p><p>Viktor</p><p>--<br>Msg-ref: MR-F1A35</p>"
+   }
+  },
+  {
+   "caseId": "i08",
+   "provider": "gmail",
+   "ref": "MR-52B9A",
+   "thread": null,
+   "plain": "I changed my phone and now the 2FA codes are rejected. I cannot reach anyone with admin rights and payroll exports are due tomorrow morning. Can you reset the second factor?\n\nAmelie",
+   "mail": {
+    "id": "89e8a12a260a4baa",
+    "threadId": "d34d7955b99448ca",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Amelie Dubois",
+       "address": "amelie.dubois@tessaly-foods.example"
+      }
+     ],
+     "text": "Amelie Dubois <amelie.dubois@tessaly-foods.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Locked out after changing phone",
+    "messageId": "<89e8a12a260a4baa@mail.tessaly-foods.example>",
+    "text": "I changed my phone and now the 2FA codes are rejected. I cannot reach anyone with admin rights and payroll exports are due tomorrow morning. Can you reset the second factor?\n\nAmelie\n\n--\nMsg-ref: MR-52B9A",
+    "textAsHtml": "<p>I changed my phone and now the 2FA codes are rejected. I cannot reach anyone with admin rights and payroll exports are due tomorrow morning. Can you reset the second factor?</p><p>Amelie</p><p>--<br>Msg-ref: MR-52B9A</p>"
+   }
+  },
+  {
+   "caseId": "n01",
+   "provider": "gmail",
+   "ref": "MR-A1040",
+   "thread": null,
+   "plain": "We started selling in Poland. Could you add a VAT report that uses PLN and the official NBP rate on the invoice date? Today we compute it in a spreadsheet.\n\nZofia",
+   "mail": {
+    "id": "5e4267d23e1693c8",
+    "threadId": "81144a85d5aed4e1",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Zofia Kowalska",
+       "address": "zofia.kowalska@fjordline-supplies.example"
+      }
+     ],
+     "text": "Zofia Kowalska <zofia.kowalska@fjordline-supplies.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Polish zloty VAT report",
+    "messageId": "<5e4267d23e1693c8@mail.fjordline-supplies.example>",
+    "text": "We started selling in Poland. Could you add a VAT report that uses PLN and the official NBP rate on the invoice date? Today we compute it in a spreadsheet.\n\nZofia\n\n--\nMsg-ref: MR-A1040",
+    "textAsHtml": "<p>We started selling in Poland. Could you add a VAT report that uses PLN and the official NBP rate on the invoice date? Today we compute it in a spreadsheet.</p><p>Zofia</p><p>--<br>Msg-ref: MR-A1040</p>"
+   }
+  },
+  {
+   "caseId": "n02",
+   "provider": "outlook",
+   "ref": "MR-240D7",
+   "thread": null,
+   "plain": "A dark mode in the mobile app would be appreciated, I use it late in the evening. Not important, just a wish.\n\nMax",
+   "mail": {
+    "id": "AAMkADr0L07sC2Fh13_l7eENhwgoeA63gvoHJhDH7VESBAAAA=",
+    "conversationId": "AAQkADunNp_FLpy9adc3jpDRF4lKOI1Zite6-dazvEyZ_I_MAAA=",
+    "subject": "Dark mode for the mobile app",
+    "bodyPreview": "A dark mode in the mobile app would be appreciated, I use it late in the evening. Not important, just a wish. Max",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>A dark mode in the mobile app would be appreciated, I use it late in the evening. Not important, just a wish.</p><p>Max</p><p>Msg-ref: MR-240D7</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Max Berger",
+      "address": "max.berger@orchard-dental.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Max Berger",
+      "address": "max.berger@orchard-dental.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<825b04daadbd21c8@mail.orchard-dental.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkADr0L07sC2Fh13_l7eENhwgoeA63gvoHJhDH7VESBAAAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   }
+  },
+  {
+   "caseId": "n03",
+   "provider": "gmail",
+   "ref": "MR-2DE18",
+   "thread": null,
+   "plain": "We sync invoices through the API but there is no endpoint that lists credit notes. Could you add GET /v2/credit-notes with the same filters as invoices? We would build the sync on it in Q4.\n\nHenrik",
+   "mail": {
+    "id": "b8e8267d23822387",
+    "threadId": "7979e8a5c8e44498",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Henrik Dahl",
+       "address": "henrik.dahl@corvane-logistics.example"
+      }
+     ],
+     "text": "Henrik Dahl <henrik.dahl@corvane-logistics.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "API endpoint to list credit notes",
+    "messageId": "<b8e8267d23822387@mail.corvane-logistics.example>",
+    "text": "We sync invoices through the API but there is no endpoint that lists credit notes. Could you add GET /v2/credit-notes with the same filters as invoices? We would build the sync on it in Q4.\n\nHenrik\n\n--\nMsg-ref: MR-2DE18",
+    "textAsHtml": "<p>We sync invoices through the API but there is no endpoint that lists credit notes. Could you add GET /v2/credit-notes with the same filters as invoices? We would build the sync on it in Q4.</p><p>Henrik</p><p>--<br>Msg-ref: MR-2DE18</p>"
+   }
+  },
+  {
+   "caseId": "n04",
+   "provider": "outlook",
+   "ref": "MR-BE48F",
+   "thread": null,
+   "plain": "We often have to move the due date of 50 invoices after a customer agreement. Could the invoice list get a bulk action \"change due date\"?\n\nRosa",
+   "mail": {
+    "id": "AAMkADu-zaM4hUWGeFqQdGDLx7BpVBxAw4qoDsSvCey9pUAAA=",
+    "conversationId": "AAQkADAyWcqC3MlqpobghPH7a9K-HwokSCZMeqxI9LSvdZ1wAAA=",
+    "subject": "Bulk edit of due dates",
+    "bodyPreview": "We often have to move the due date of 50 invoices after a customer agreement. Could the invoice list get a bulk action \"change due date\"? Rosa",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>We often have to move the due date of 50 invoices after a customer agreement. Could the invoice list get a bulk action \"change due date\"?</p><p>Rosa</p><p>Msg-ref: MR-BE48F</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Rosa Alvarez",
+      "address": "rosa.alvarez@northgate-clinics.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Rosa Alvarez",
+      "address": "rosa.alvarez@northgate-clinics.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<ff0778f332c1c9a8@mail.northgate-clinics.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkADu-zaM4hUWGeFqQdGDLx7BpVBxAw4qoDsSvCey9pUAAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   }
+  },
+  {
+   "caseId": "n05",
+   "provider": "gmail",
+   "ref": "MR-86BB5",
+   "thread": null,
+   "plain": "Do you plan a connector for Pennywise payroll? We would like to book payroll journals automatically. We would pay for it if needed.\n\nEmil",
+   "mail": {
+    "id": "c99dfc960eb4f4ef",
+    "threadId": "e36d6e1d12aa7027",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Emil Strand",
+       "address": "emil.strand@marlow-freight.example"
+      }
+     ],
+     "text": "Emil Strand <emil.strand@marlow-freight.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Integration with Pennywise payroll",
+    "messageId": "<c99dfc960eb4f4ef@mail.marlow-freight.example>",
+    "text": "Do you plan a connector for Pennywise payroll? We would like to book payroll journals automatically. We would pay for it if needed.\n\nEmil\n\n--\nMsg-ref: MR-86BB5",
+    "textAsHtml": "<p>Do you plan a connector for Pennywise payroll? We would like to book payroll journals automatically. We would pay for it if needed.</p><p>Emil</p><p>--<br>Msg-ref: MR-86BB5</p>"
+   }
+  },
+  {
+   "caseId": "n06",
+   "provider": "outlook",
+   "ref": "MR-9B92E",
+   "thread": null,
+   "plain": "Can reports be scheduled and mailed as PDF every Monday to a list of recipients? Today someone has to export and send them by hand.\n\nChiara",
+   "mail": {
+    "id": "AAMkADDIXd1a-Xj0w77atczNHfPAZFap2Cxn2zOE3q3mw_AAA=",
+    "conversationId": "AAQkADdR5BCOVrIP6pPgDgibGTQwg6qwx4CsIV7FifZUOXerAAA=",
+    "subject": "Weekly PDF report by email",
+    "bodyPreview": "Can reports be scheduled and mailed as PDF every Monday to a list of recipients? Today someone has to export and send them by hand. Chiara",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>Can reports be scheduled and mailed as PDF every Monday to a list of recipients? Today someone has to export and send them by hand.</p><p>Chiara</p><p>Msg-ref: MR-9B92E</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Chiara Moretti",
+      "address": "chiara.moretti@tessaly-foods.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Chiara Moretti",
+      "address": "chiara.moretti@tessaly-foods.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<81c170077182f522@mail.tessaly-foods.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkADDIXd1a-Xj0w77atczNHfPAZFap2Cxn2zOE3q3mw_AAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   }
+  },
+  {
+   "caseId": "n07",
+   "provider": "gmail",
+   "ref": "MR-C32D3",
+   "thread": null,
+   "plain": "It would help to have custom fields on the customer record, for example a contract number. Nice to have.\n\nLiam",
+   "mail": {
+    "id": "63478fe2160565f5",
+    "threadId": "1341028b1022742f",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Liam O'Connor",
+       "address": "liam.oconnor@halden-pryce.example"
+      }
+     ],
+     "text": "Liam O'Connor <liam.oconnor@halden-pryce.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Custom fields on customers",
+    "messageId": "<63478fe2160565f5@mail.halden-pryce.example>",
+    "text": "It would help to have custom fields on the customer record, for example a contract number. Nice to have.\n\nLiam\n\n--\nMsg-ref: MR-C32D3",
+    "textAsHtml": "<p>It would help to have custom fields on the customer record, for example a contract number. Nice to have.</p><p>Liam</p><p>--<br>Msg-ref: MR-C32D3</p>"
+   }
+  },
+  {
+   "caseId": "p1a",
+   "provider": "gmail",
+   "ref": "MR-56644",
+   "thread": "P1",
+   "plain": "Our webhook endpoint receives the first 100 invoice events of a day and then nothing until midnight. Delivery log in Ledgerline shows \"queued\". Endpoint is healthy.\n\nJakob",
+   "mail": {
+    "id": "c1e10036604e3635",
+    "threadId": "e21e76aea4da4c1f",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Jakob Meyer",
+       "address": "jakob.meyer@northgate-clinics.example"
+      }
+     ],
+     "text": "Jakob Meyer <jakob.meyer@northgate-clinics.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Webhook deliveries stop after 100 events",
+    "messageId": "<c1e10036604e3635@mail.northgate-clinics.example>",
+    "text": "Our webhook endpoint receives the first 100 invoice events of a day and then nothing until midnight. Delivery log in Ledgerline shows \"queued\". Endpoint is healthy.\n\nJakob\n\n--\nMsg-ref: MR-56644",
+    "textAsHtml": "<p>Our webhook endpoint receives the first 100 invoice events of a day and then nothing until midnight. Delivery log in Ledgerline shows \"queued\". Endpoint is healthy.</p><p>Jakob</p><p>--<br>Msg-ref: MR-56644</p>"
+   }
+  },
+  {
+   "caseId": "p1b",
+   "provider": "gmail",
+   "ref": "MR-4359D",
+   "thread": "P1",
+   "plain": "Update: the same happens on our sandbox account, so it is not related to production traffic.\n\nJakob",
+   "mail": {
+    "id": "4054575b8e4f6718",
+    "threadId": "e21e76aea4da4c1f",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Jakob Meyer",
+       "address": "jakob.meyer@northgate-clinics.example"
+      }
+     ],
+     "text": "Jakob Meyer <jakob.meyer@northgate-clinics.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Re: Webhook deliveries stop after 100 events",
+    "messageId": "<4054575b8e4f6718@mail.northgate-clinics.example>",
+    "text": "Update: the same happens on our sandbox account, so it is not related to production traffic.\n\nJakob\n\n--\nMsg-ref: MR-4359D\n\nOn Wed, Oct 8, 2026 at 8:05 AM Jakob Meyer <jakob.meyer@northgate-clinics.example> wrote:\n> Our webhook endpoint receives the first 100 invoice events of a day and then nothing until midnight.",
+    "textAsHtml": "<p>Update: the same happens on our sandbox account, so it is not related to production traffic.</p><p>Jakob</p><p>--<br>Msg-ref: MR-4359D</p><p>On Wed, Oct 8, 2026 at 8:05 AM Jakob Meyer &lt;jakob.meyer@northgate-clinics.example&gt; wrote:<br>&gt; Our webhook endpoint receives the first 100 invoice events of a day and then nothing until midnight.</p>"
+   }
+  },
+  {
+   "caseId": "p2a",
+   "provider": "outlook",
+   "ref": "MR-00225",
+   "thread": "P2",
+   "plain": "I want to change the billing contact to our new finance manager but the field is read-only. Do I need a special role?\n\nClara",
+   "mail": {
+    "id": "AAMkADrdj0Fakqc43oFF0FW_0Y4xnmQ28HKve_Mz5PTcZeAAA=",
+    "conversationId": "AAQkADxLl2A9nDsv7FYWM4JUHf-51sHzKwOaw2_Qr7WyaeBOAAA=",
+    "subject": "Cannot change the billing contact",
+    "bodyPreview": "I want to change the billing contact to our new finance manager but the field is read-only. Do I need a special role? Clara",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>I want to change the billing contact to our new finance manager but the field is read-only. Do I need a special role?</p><p>Clara</p><p>Msg-ref: MR-00225</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Clara Neumann",
+      "address": "clara.neumann@fjordline-supplies.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Clara Neumann",
+      "address": "clara.neumann@fjordline-supplies.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<fcafbc8ab1fbd714@mail.fjordline-supplies.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkADrdj0Fakqc43oFF0FW_0Y4xnmQ28HKve_Mz5PTcZeAAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   }
+  },
+  {
+   "caseId": "p2b",
+   "provider": "outlook",
+   "ref": "MR-A3B2C",
+   "thread": "P2",
+   "plain": "I tried a different browser and a different computer, same result.\n\nClara",
+   "mail": {
+    "id": "AAMkADZgdem3B3ZrrzsA53M9jEbD22a81h61f9srpPoE_vAAA=",
+    "conversationId": "AAQkADxLl2A9nDsv7FYWM4JUHf-51sHzKwOaw2_Qr7WyaeBOAAA=",
+    "subject": "RE: Cannot change the billing contact",
+    "bodyPreview": "I tried a different browser and a different computer, same result. Clara",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>I tried a different browser and a different computer, same result.</p><p>Clara</p><p>Msg-ref: MR-A3B2C</p><hr><div><b>From:</b> Clara Neumann &lt;clara.neumann@fjordline-supplies.example&gt;<br><b>Sent:</b> Wednesday, October 8, 2026 8:20 AM<br><b>To:</b> Brightlane Support<br><b>Subject:</b> RE: Cannot change the billing contact</div><p>I want to change the billing contact to our new finance manager but the field is read-only.</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Clara Neumann",
+      "address": "clara.neumann@fjordline-supplies.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Clara Neumann",
+      "address": "clara.neumann@fjordline-supplies.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<1ac34befb31f1413@mail.fjordline-supplies.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkADZgdem3B3ZrrzsA53M9jEbD22a81h61f9srpPoE_vAAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   }
+  },
+  {
+   "caseId": "p3a",
+   "provider": "gmail",
+   "ref": "MR-9D55A",
+   "thread": "P3",
+   "plain": "Could customer statements show the balance in the customer's own currency next to ours? Many of our customers ask for it.\n\nAnders",
+   "mail": {
+    "id": "fbe5e5e9433351d0",
+    "threadId": "c7480dd5654998eb",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Anders Holm",
+       "address": "anders.holm@corvane-logistics.example"
+      }
+     ],
+     "text": "Anders Holm <anders.holm@corvane-logistics.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Request: multi-currency customer statements",
+    "messageId": "<fbe5e5e9433351d0@mail.corvane-logistics.example>",
+    "text": "Could customer statements show the balance in the customer's own currency next to ours? Many of our customers ask for it.\n\nAnders\n\n--\nMsg-ref: MR-9D55A",
+    "textAsHtml": "<p>Could customer statements show the balance in the customer's own currency next to ours? Many of our customers ask for it.</p><p>Anders</p><p>--<br>Msg-ref: MR-9D55A</p>"
+   }
+  },
+  {
+   "caseId": "p3b",
+   "provider": "gmail",
+   "ref": "MR-0C95B",
+   "thread": "P3",
+   "plain": "Adding to my earlier mail: we would need EUR and CHF at first.\n\nAnders",
+   "mail": {
+    "id": "9e2cad220834e1ce",
+    "threadId": "c7480dd5654998eb",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Anders Holm",
+       "address": "anders.holm@corvane-logistics.example"
+      }
+     ],
+     "text": "Anders Holm <anders.holm@corvane-logistics.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Re: Request: multi-currency customer statements",
+    "messageId": "<9e2cad220834e1ce@mail.corvane-logistics.example>",
+    "text": "Adding to my earlier mail: we would need EUR and CHF at first.\n\nAnders\n\n--\nMsg-ref: MR-0C95B\n\nOn Wed, Oct 8, 2026 at 8:40 AM Anders Holm <anders.holm@corvane-logistics.example> wrote:\n> Could customer statements show the balance in the customer's own currency next to ours?",
+    "textAsHtml": "<p>Adding to my earlier mail: we would need EUR and CHF at first.</p><p>Anders</p><p>--<br>Msg-ref: MR-0C95B</p><p>On Wed, Oct 8, 2026 at 8:40 AM Anders Holm &lt;anders.holm@corvane-logistics.example&gt; wrote:<br>&gt; Could customer statements show the balance in the customer's own currency next to ours?</p>"
+   }
+  },
+  {
+   "caseId": "p4a",
+   "provider": "outlook",
+   "ref": "MR-424AD",
+   "thread": "P4",
+   "plain": "The Payments page shows \"Error 502\" and our payouts since yesterday evening stay on \"processing\". 12 suppliers are waiting for their money today. We need a fix or a workaround now.\n\nSandra Vogel, Finance Director",
+   "mail": {
+    "id": "AAMkAD58PUUGc4_z2oWEBdW2LtldZT6A259k8KWjx--7LhAAA=",
+    "conversationId": "AAQkADv8jzdtFD_xlz5my9JfsineZgFSwbYL2sHS4tcF5Y7oAAA=",
+    "subject": "Payments page throws an error, payouts stuck",
+    "bodyPreview": "The Payments page shows \"Error 502\" and our payouts since yesterday evening stay on \"processing\". 12 suppliers are waiting for their money today. We need a fix or a workaround now. Sandra Vogel, Finan",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>The Payments page shows \"Error 502\" and our payouts since yesterday evening stay on \"processing\". 12 suppliers are waiting for their money today. We need a fix or a workaround now.</p><p>Sandra Vogel, Finance Director</p><p>Msg-ref: MR-424AD</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Sandra Vogel",
+      "address": "sandra.vogel@halden-pryce.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Sandra Vogel",
+      "address": "sandra.vogel@halden-pryce.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<b6dc3aaa681b2d50@mail.halden-pryce.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkAD58PUUGc4_z2oWEBdW2LtldZT6A259k8KWjx--7LhAAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   }
+  },
+  {
+   "caseId": "p4b",
+   "provider": "outlook",
+   "ref": "MR-3FBE8",
+   "thread": "P4",
+   "plain": "Still stuck. Several suppliers are calling us now. Please give us a status.\n\nSandra",
+   "mail": {
+    "id": "AAMkADXkLUVKoxks0zi0vPO43XQLPnqgu1uh-QQIML-HZDAAA=",
+    "conversationId": "AAQkADv8jzdtFD_xlz5my9JfsineZgFSwbYL2sHS4tcF5Y7oAAA=",
+    "subject": "RE: Payments page throws an error, payouts stuck",
+    "bodyPreview": "Still stuck. Several suppliers are calling us now. Please give us a status. Sandra",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>Still stuck. Several suppliers are calling us now. Please give us a status.</p><p>Sandra</p><p>Msg-ref: MR-3FBE8</p><hr><div><b>From:</b> Sandra Vogel &lt;sandra.vogel@halden-pryce.example&gt;<br><b>Sent:</b> Wednesday, October 8, 2026 8:55 AM<br><b>To:</b> Brightlane Support<br><b>Subject:</b> RE: Payments page throws an error, payouts stuck</div><p>The Payments page shows \"Error 502\" and our payouts since yesterday evening stay on \"processing\".</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Sandra Vogel",
+      "address": "sandra.vogel@halden-pryce.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Sandra Vogel",
+      "address": "sandra.vogel@halden-pryce.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<837ab60aa915e989@mail.halden-pryce.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkADXkLUVKoxks0zi0vPO43XQLPnqgu1uh-QQIML-HZDAAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   }
+  },
+  {
+   "caseId": "p5a",
+   "provider": "gmail",
+   "ref": "MR-FC76C",
+   "thread": "P5",
+   "plain": "We have 400 customers we no longer work with. Is there a way to archive them so they disappear from the lists?\n\nMatteo",
+   "mail": {
+    "id": "79a0a38ed6f438ee",
+    "threadId": "9906e852c7bbade6",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Matteo Rossi",
+       "address": "matteo.rossi@tessaly-foods.example"
+      }
+     ],
+     "text": "Matteo Rossi <matteo.rossi@tessaly-foods.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "How do I archive old customers?",
+    "messageId": "<79a0a38ed6f438ee@mail.tessaly-foods.example>",
+    "text": "We have 400 customers we no longer work with. Is there a way to archive them so they disappear from the lists?\n\nMatteo\n\n--\nMsg-ref: MR-FC76C",
+    "textAsHtml": "<p>We have 400 customers we no longer work with. Is there a way to archive them so they disappear from the lists?</p><p>Matteo</p><p>--<br>Msg-ref: MR-FC76C</p>"
+   }
+  },
+  {
+   "caseId": "p5b",
+   "provider": "gmail",
+   "ref": "MR-7BAFB",
+   "thread": "P5",
+   "plain": "Found the setting, thanks. One more question: does archiving remove their invoice history from the reports?\n\nMatteo",
+   "mail": {
+    "id": "0b8207d95a70a562",
+    "threadId": "9906e852c7bbade6",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Matteo Rossi",
+       "address": "matteo.rossi@tessaly-foods.example"
+      }
+     ],
+     "text": "Matteo Rossi <matteo.rossi@tessaly-foods.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Re: How do I archive old customers?",
+    "messageId": "<0b8207d95a70a562@mail.tessaly-foods.example>",
+    "text": "Found the setting, thanks. One more question: does archiving remove their invoice history from the reports?\n\nMatteo\n\n--\nMsg-ref: MR-7BAFB\n\nOn Wed, Oct 8, 2026 at 9:10 AM Matteo Rossi <matteo.rossi@tessaly-foods.example> wrote:\n> We have 400 customers we no longer work with. Is there a way to archive them?",
+    "textAsHtml": "<p>Found the setting, thanks. One more question: does archiving remove their invoice history from the reports?</p><p>Matteo</p><p>--<br>Msg-ref: MR-7BAFB</p><p>On Wed, Oct 8, 2026 at 9:10 AM Matteo Rossi &lt;matteo.rossi@tessaly-foods.example&gt; wrote:<br>&gt; We have 400 customers we no longer work with. Is there a way to archive them?</p>"
+   }
+  },
+  {
+   "caseId": "x01",
+   "provider": "gmail",
+   "ref": "MR-F78B8",
+   "thread": "DONE1",
+   "plain": "The login loop on Safari is back after yesterday's update. I enter the code, the page reloads and asks again. Chrome works.\n\nGreta",
+   "mail": {
+    "id": "1a8284eaf565b067",
+    "threadId": "703970e62688e1ff",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Greta Lang",
+       "address": "greta.lang@orchard-dental.example"
+      }
+     ],
+     "text": "Greta Lang <greta.lang@orchard-dental.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Re: Login loop on Safari",
+    "messageId": "<1a8284eaf565b067@mail.orchard-dental.example>",
+    "text": "The login loop on Safari is back after yesterday's update. I enter the code, the page reloads and asks again. Chrome works.\n\nGreta\n\n--\nMsg-ref: MR-F78B8\n\nOn Fri, Sep 19, 2026 at 3:30 PM Brightlane Support <support@brightlane.example> wrote:\n> Hi Greta, the login loop is fixed in release 5.8.1. Please tell us if it comes back.",
+    "textAsHtml": "<p>The login loop on Safari is back after yesterday's update. I enter the code, the page reloads and asks again. Chrome works.</p><p>Greta</p><p>--<br>Msg-ref: MR-F78B8</p><p>On Fri, Sep 19, 2026 at 3:30 PM Brightlane Support &lt;support@brightlane.example&gt; wrote:<br>&gt; Hi Greta, the login loop is fixed in release 5.8.1. Please tell us if it comes back.</p>"
+   }
+  },
+  {
+   "caseId": "x02",
+   "provider": "outlook",
+   "ref": "MR-4C817",
+   "thread": "DONE2",
+   "plain": "Thanks for the CSV import, it works. Could you also support XLSX files with several sheets? We receive our customer lists in that format.\n\nNils",
+   "mail": {
+    "id": "AAMkADsW02Zh-qjw_qHCi_Sd-F427z0s58EJIgOucE1dcgAAA=",
+    "conversationId": "AAQkAD68eobubNJjCvfW38-Se3I8vIvwx2ZA6OeOF9HGqipbAAA=",
+    "subject": "RE: CSV import for contacts",
+    "bodyPreview": "Thanks for the CSV import, it works. Could you also support XLSX files with several sheets? We receive our customer lists in that format. Nils",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>Thanks for the CSV import, it works. Could you also support XLSX files with several sheets? We receive our customer lists in that format.</p><p>Nils</p><p>Msg-ref: MR-4C817</p><hr><div><b>From:</b> Brightlane Support &lt;support@brightlane.example&gt;<br><b>Sent:</b> Monday, September 29, 2026 9:05 AM<br><b>To:</b> Brightlane Support<br><b>Subject:</b> RE: CSV import for contacts</div><p>Hi Nils, CSV import for contacts is live in release 5.7.</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Nils Berg",
+      "address": "nils.berg@northgate-clinics.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Nils Berg",
+      "address": "nils.berg@northgate-clinics.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<0538fb48cae409d4@mail.northgate-clinics.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkADsW02Zh-qjw_qHCi_Sd-F427z0s58EJIgOucE1dcgAAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   }
+  },
+  {
+   "caseId": "o01",
+   "provider": "gmail",
+   "ref": "MR-3B4EE",
+   "thread": null,
+   "plain": "Hi team, we help B2B SaaS companies book 3x more demos with outbound that does not feel like outbound. Open to a 15 minute call this week?\n\nJordan Blake, GrowthLift",
+   "mail": {
+    "id": "f7f76117a9cbbc4a",
+    "threadId": "82d93bac9fadf302",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Jordan Blake",
+       "address": "jordan@growthlift-agency.example"
+      }
+     ],
+     "text": "Jordan Blake <jordan@growthlift-agency.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Triple your demo bookings in 30 days",
+    "messageId": "<f7f76117a9cbbc4a@mail.growthlift-agency.example>",
+    "text": "Hi team, we help B2B SaaS companies book 3x more demos with outbound that does not feel like outbound. Open to a 15 minute call this week?\n\nJordan Blake, GrowthLift\n\n--\nMsg-ref: MR-3B4EE",
+    "textAsHtml": "<p>Hi team, we help B2B SaaS companies book 3x more demos with outbound that does not feel like outbound. Open to a 15 minute call this week?</p><p>Jordan Blake, GrowthLift</p><p>--<br>Msg-ref: MR-3B4EE</p>"
+   }
+  },
+  {
+   "caseId": "o02",
+   "provider": "outlook",
+   "ref": "MR-19CDF",
+   "thread": null,
+   "plain": "We have three senior backend engineers open to new roles, all with fintech experience. Shall I send profiles?\n\nRebecca, TalentBridge Recruiting",
+   "mail": {
+    "id": "AAMkADz00anpdJWKpp9FitsBEcuCr8fEEBsAarOwy6aAp9AAA=",
+    "conversationId": "AAQkADfi-xGkItvXoiZnucZ4-S8rXqQjeIRoabwoZ_4nh7rEAAA=",
+    "subject": "Senior backend engineers available",
+    "bodyPreview": "We have three senior backend engineers open to new roles, all with fintech experience. Shall I send profiles? Rebecca, TalentBridge Recruiting",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>We have three senior backend engineers open to new roles, all with fintech experience. Shall I send profiles?</p><p>Rebecca, TalentBridge Recruiting</p><p>Msg-ref: MR-19CDF</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Rebecca Hall",
+      "address": "rebecca.hall@talentbridge.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Rebecca Hall",
+      "address": "rebecca.hall@talentbridge.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<78845a85b2cab0da@mail.talentbridge.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkADz00anpdJWKpp9FitsBEcuCr8fEEBsAarOwy6aAp9AAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   }
+  },
+  {
+   "caseId": "o03",
+   "provider": "gmail",
+   "ref": "MR-DD17C",
+   "thread": null,
+   "plain": "Please find invoice 2231 (1,180.00 EUR) for the brand brochures delivered on 29 September. Payment terms 14 days.",
+   "mail": {
+    "id": "d01c1de38249fa23",
+    "threadId": "20e59b742041cb07",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Accounts",
+       "address": "accounts@pixelprint.example"
+      }
+     ],
+     "text": "Accounts <accounts@pixelprint.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Invoice 2231 for brand brochures",
+    "messageId": "<d01c1de38249fa23@mail.pixelprint.example>",
+    "text": "Please find invoice 2231 (1,180.00 EUR) for the brand brochures delivered on 29 September. Payment terms 14 days.\n\n--\nMsg-ref: MR-DD17C",
+    "textAsHtml": "<p>Please find invoice 2231 (1,180.00 EUR) for the brand brochures delivered on 29 September. Payment terms 14 days.</p><p>--<br>Msg-ref: MR-DD17C</p>",
+    "attachments": [
+     {
+      "filename": "attachment.png",
+      "contentType": "image/png",
+      "size": 48211
+     }
+    ]
+   }
+  },
+  {
+   "caseId": "o04",
+   "provider": "outlook",
+   "ref": "MR-33247",
+   "thread": null,
+   "plain": "Just a note: the issue with the export is solved since this morning. Thanks for the fast help.\n\nSven",
+   "mail": {
+    "id": "AAMkADceApzvxEMvn3teKHQXaXis-ZX51H-FG6lu5X6l9dAAA=",
+    "conversationId": "AAQkADLe7LF5m9qK2KMWE9f4j94zkrRi1LkxKm_GhkB8beHsAAA=",
+    "subject": "Fixed, thank you!",
+    "bodyPreview": "Just a note: the issue with the export is solved since this morning. Thanks for the fast help. Sven",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>Just a note: the issue with the export is solved since this morning. Thanks for the fast help.</p><p>Sven</p><p>Msg-ref: MR-33247</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Sven Larsen",
+      "address": "sven.larsen@halden-pryce.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Sven Larsen",
+      "address": "sven.larsen@halden-pryce.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<74618e52b3fb718f@mail.halden-pryce.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkADceApzvxEMvn3teKHQXaXis-ZX51H-FG6lu5X6l9dAAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   }
+  },
+  {
+   "caseId": "o05",
+   "provider": "gmail",
+   "ref": "MR-21F9D",
+   "thread": null,
+   "plain": "Hi, could we move our Thursday call to 15:00? Same dial-in. Let me know if that works.\n\nAndrea",
+   "mail": {
+    "id": "7e6be09adbaaaadc",
+    "threadId": "e5b6da6c0753a312",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Andrea Costa",
+       "address": "andrea.costa@growthbridge-partners.example"
+      }
+     ],
+     "text": "Andrea Costa <andrea.costa@growthbridge-partners.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Move Thursday call to 15:00?",
+    "messageId": "<7e6be09adbaaaadc@mail.growthbridge-partners.example>",
+    "text": "Hi, could we move our Thursday call to 15:00? Same dial-in. Let me know if that works.\n\nAndrea\n\n--\nMsg-ref: MR-21F9D",
+    "textAsHtml": "<p>Hi, could we move our Thursday call to 15:00? Same dial-in. Let me know if that works.</p><p>Andrea</p><p>--<br>Msg-ref: MR-21F9D</p>"
+   }
+  },
+  {
+   "caseId": "o06",
+   "provider": "outlook",
+   "ref": "MR-2B9E0",
+   "thread": null,
+   "plain": "Your mailbox is 99% full. Verify your account within 24 hours at the link below or your emails will be deleted. http://secure-verify-center.example/verify",
+   "mail": {
+    "id": "AAMkADKXzVHfOkY9Sqi9m_oP9Qsd79ony-XoX0kXaEKZXnAAA=",
+    "conversationId": "AAQkADqcPTdwzjt90nIusA-Y6C5yN8gAtZzsq6Uf3YIcNWuFAAA=",
+    "subject": "Your mailbox storage is full - verify now",
+    "bodyPreview": "Your mailbox is 99% full. Verify your account within 24 hours at the link below or your emails will be deleted. http://secure-verify-center.example/verify",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>Your mailbox is 99% full. Verify your account within 24 hours at the link below or your emails will be deleted. http://secure-verify-center.example/verify</p><p>Msg-ref: MR-2B9E0</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Mailbox Service",
+      "address": "mailbox-service@secure-verify-center.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Mailbox Service",
+      "address": "mailbox-service@secure-verify-center.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<f0e9a529d2bd8615@mail.secure-verify-center.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkADKXzVHfOkY9Sqi9m_oP9Qsd79ony-XoX0kXaEKZXnAAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   }
+  },
+  {
+   "caseId": "o07",
+   "provider": "gmail",
+   "ref": "MR-6B4C2",
+   "thread": null,
+   "plain": "I am out of office until 14 October with limited access to email. For urgent matters please contact my colleague Thomas Weiss.\n\nJonas",
+   "mail": {
+    "id": "7a9c58ef958c1feb",
+    "threadId": "2ba3401d863fdf29",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Jonas Klein",
+       "address": "jonas.klein@halden-pryce.example"
+      }
+     ],
+     "text": "Jonas Klein <jonas.klein@halden-pryce.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Out of office until 14 Oct",
+    "messageId": "<7a9c58ef958c1feb@mail.halden-pryce.example>",
+    "text": "I am out of office until 14 October with limited access to email. For urgent matters please contact my colleague Thomas Weiss.\n\nJonas\n\n--\nMsg-ref: MR-6B4C2",
+    "textAsHtml": "<p>I am out of office until 14 October with limited access to email. For urgent matters please contact my colleague Thomas Weiss.</p><p>Jonas</p><p>--<br>Msg-ref: MR-6B4C2</p>"
+   }
+  },
+  {
+   "caseId": "m01",
+   "provider": "gmail",
+   "ref": "MR-2775E",
+   "thread": null,
+   "plain": "Whenever I save a report in the report builder with a grouped column, the browser tab freezes and I lose my work. Chrome 129, report \"Revenue by customer\". Happens every time, since Monday.\n\nPhilipp",
+   "mail": {
+    "id": "8bc521cc1d0664f8",
+    "threadId": "724ce195e090de0c",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Philipp Roth",
+       "address": "philipp.roth@corvane-logistics.example"
+      }
+     ],
+     "text": "Philipp Roth <philipp.roth@corvane-logistics.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Report builder crashes on save",
+    "messageId": "<8bc521cc1d0664f8@mail.corvane-logistics.example>",
+    "text": "Whenever I save a report in the report builder with a grouped column, the browser tab freezes and I lose my work. Chrome 129, report \"Revenue by customer\". Happens every time, since Monday.\n\nPhilipp\n\n--\nMsg-ref: MR-2775E",
+    "textAsHtml": "<p>Whenever I save a report in the report builder with a grouped column, the browser tab freezes and I lose my work. Chrome 129, report \"Revenue by customer\". Happens every time, since Monday.</p><p>Philipp</p><p>--<br>Msg-ref: MR-2775E</p>"
+   }
+  },
+  {
+   "caseId": "m02",
+   "provider": "outlook",
+   "ref": "MR-AFA07",
+   "thread": null,
+   "plain": "Our tax advisor needs last year's annual export in the DATEV format. I cannot find where to generate it for 2025. Could you point me to it?\n\nHelena",
+   "mail": {
+    "id": "AAMkADcOCTQaDLnp9M0TMlv-iLEvR9XGnN6LhnCv7wIae_AAA=",
+    "conversationId": "AAQkADUIRIPERv-ihgivycXyTVoapK2-1MtIGwcKhGofTxzRAAA=",
+    "subject": "Where do I find last year's tax export?",
+    "bodyPreview": "Our tax advisor needs last year's annual export in the DATEV format. I cannot find where to generate it for 2025. Could you point me to it? Helena",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>Our tax advisor needs last year's annual export in the DATEV format. I cannot find where to generate it for 2025. Could you point me to it?</p><p>Helena</p><p>Msg-ref: MR-AFA07</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Helena Svensson",
+      "address": "helena.svensson@orchard-dental.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Helena Svensson",
+      "address": "helena.svensson@orchard-dental.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<c1004565af848a46@mail.orchard-dental.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkADcOCTQaDLnp9M0TMlv-iLEvR9XGnN6LhnCv7wIae_AAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   }
+  }
+ ],
+ "probes": [
+  {
+   "caseId": "q1a",
+   "provider": "gmail",
+   "ref": "MR-B8868",
+   "thread": null,
+   "plain": "Invoice emails for our customer Bergen Marine are sent to a contact that left in 2024 even though we changed the contact in July. Please fix the routing.\n\nOla",
+   "mail": {
+    "id": "c930d85d0cadd03e",
+    "threadId": "6dc78408ef7ccb2f",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Ola Nordmann",
+       "address": "ola.nordmann@fjordline-supplies.example"
+      }
+     ],
+     "text": "Ola Nordmann <ola.nordmann@fjordline-supplies.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Invoice emails go to the wrong contact",
+    "messageId": "<c930d85d0cadd03e@mail.fjordline-supplies.example>",
+    "text": "Invoice emails for our customer Bergen Marine are sent to a contact that left in 2024 even though we changed the contact in July. Please fix the routing.\n\nOla\n\n--\nMsg-ref: MR-B8868",
+    "textAsHtml": "<p>Invoice emails for our customer Bergen Marine are sent to a contact that left in 2024 even though we changed the contact in July. Please fix the routing.</p><p>Ola</p><p>--<br>Msg-ref: MR-B8868</p>"
+   }
+  },
+  {
+   "caseId": "q2a",
+   "provider": "gmail",
+   "ref": "MR-2D434",
+   "thread": "Q2",
+   "plain": "Importing our supplier bills from the CSV template fails at row 1 with \"invalid header\". The template is the one from your help center, unchanged.\n\nInes",
+   "mail": {
+    "id": "8c8ca5aff0159615",
+    "threadId": "2eb392a24a86efc7",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Ines Garcia",
+       "address": "ines.garcia@corvane-logistics.example"
+      }
+     ],
+     "text": "Ines Garcia <ines.garcia@corvane-logistics.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Import of supplier bills fails",
+    "messageId": "<8c8ca5aff0159615@mail.corvane-logistics.example>",
+    "text": "Importing our supplier bills from the CSV template fails at row 1 with \"invalid header\". The template is the one from your help center, unchanged.\n\nInes\n\n--\nMsg-ref: MR-2D434",
+    "textAsHtml": "<p>Importing our supplier bills from the CSV template fails at row 1 with \"invalid header\". The template is the one from your help center, unchanged.</p><p>Ines</p><p>--<br>Msg-ref: MR-2D434</p>"
+   }
+  },
+  {
+   "caseId": "q2b",
+   "provider": "gmail",
+   "ref": "MR-E9554",
+   "thread": "Q2",
+   "plain": "Sorry, one detail: the same file imports fine when I open it in Excel and save it again.\n\nInes",
+   "mail": {
+    "id": "adda48b9378b66ee",
+    "threadId": "2eb392a24a86efc7",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Ines Garcia",
+       "address": "ines.garcia@corvane-logistics.example"
+      }
+     ],
+     "text": "Ines Garcia <ines.garcia@corvane-logistics.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Re: Import of supplier bills fails",
+    "messageId": "<adda48b9378b66ee@mail.corvane-logistics.example>",
+    "text": "Sorry, one detail: the same file imports fine when I open it in Excel and save it again.\n\nInes\n\n--\nMsg-ref: MR-E9554\n\nOn Wed, Oct 8, 2026 at 9:31 AM Ines Garcia <ines.garcia@corvane-logistics.example> wrote:\n> Importing our supplier bills from the CSV template fails at row 1.",
+    "textAsHtml": "<p>Sorry, one detail: the same file imports fine when I open it in Excel and save it again.</p><p>Ines</p><p>--<br>Msg-ref: MR-E9554</p><p>On Wed, Oct 8, 2026 at 9:31 AM Ines Garcia &lt;ines.garcia@corvane-logistics.example&gt; wrote:<br>&gt; Importing our supplier bills from the CSV template fails at row 1.</p>"
+   }
+  },
+  {
+   "caseId": "q3a",
+   "provider": "outlook",
+   "ref": "MR-78EB9",
+   "thread": null,
+   "plain": "On the customer list the column \"Balance\" cannot be sorted, clicking the header does nothing. Other columns sort fine.\n\nLina",
+   "mail": {
+    "id": "AAMkADazZS6Cg7seBn1GtM_wGMaw7sw08GYiGwr11SQtUGAAA=",
+    "conversationId": "AAQkADrWgd8rc5N33oZRGMZIJ5SLXwhzysCu-1TDMqaw7TKHAAA=",
+    "subject": "Customer list cannot be sorted by balance",
+    "bodyPreview": "On the customer list the column \"Balance\" cannot be sorted, clicking the header does nothing. Other columns sort fine. Lina",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>On the customer list the column \"Balance\" cannot be sorted, clicking the header does nothing. Other columns sort fine.</p><p>Lina</p><p>Msg-ref: MR-78EB9</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Lina Berg",
+      "address": "lina.berg@tessaly-foods.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Lina Berg",
+      "address": "lina.berg@tessaly-foods.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<745fb077f67e6320@mail.tessaly-foods.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkADazZS6Cg7seBn1GtM_wGMaw7sw08GYiGwr11SQtUGAAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   }
+  },
+  {
+   "caseId": "q3b",
+   "provider": "gmail",
+   "ref": "MR-FD87E",
+   "thread": null,
+   "plain": "Brochures, flyers and business cards at 40% off until Friday. Reply to this mail for a quote.",
+   "mail": {
+    "id": "6f4e740e7c1263dd",
+    "threadId": "be4656eb0400a2ff",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Quick Offers",
+       "address": "deals@bulkprinting-offers.example"
+      }
+     ],
+     "text": "Quick Offers <deals@bulkprinting-offers.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Printing 40% off this week",
+    "messageId": "<6f4e740e7c1263dd@mail.bulkprinting-offers.example>",
+    "text": "Brochures, flyers and business cards at 40% off until Friday. Reply to this mail for a quote.\n\n--\nMsg-ref: MR-FD87E",
+    "textAsHtml": "<p>Brochures, flyers and business cards at 40% off until Friday. Reply to this mail for a quote.</p><p>--<br>Msg-ref: MR-FD87E</p>"
+   }
+  },
+  {
+   "caseId": "q3c",
+   "provider": "outlook",
+   "ref": "MR-E178A",
+   "thread": null,
+   "plain": "Could Ledgerline show a PDF preview before an invoice is sent? We have sent invoices with typos twice this month.\n\nDmitri",
+   "mail": {
+    "id": "AAMkADkNHlkGTrZNJ4aMSTJAA78bt60PM6D0PkTWUxIXuEAAA=",
+    "conversationId": "AAQkADf4yJdJTeqgR4zUeh4igLTDDS4P39eqb9Rd2n4BEDFuAAA=",
+    "subject": "Add a PDF preview before sending invoices",
+    "bodyPreview": "Could Ledgerline show a PDF preview before an invoice is sent? We have sent invoices with typos twice this month. Dmitri",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>Could Ledgerline show a PDF preview before an invoice is sent? We have sent invoices with typos twice this month.</p><p>Dmitri</p><p>Msg-ref: MR-E178A</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Dmitri Volkov",
+      "address": "dmitri.volkov@northgate-clinics.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Dmitri Volkov",
+      "address": "dmitri.volkov@northgate-clinics.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<7d3d2c42da50d01c@mail.northgate-clinics.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkADkNHlkGTrZNJ4aMSTJAA78bt60PM6D0PkTWUxIXuEAAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   }
+  },
+  {
+   "caseId": "q4a",
+   "provider": "gmail",
+   "ref": "MR-13D3D",
+   "thread": null,
+   "plain": "The October VAT report does not include credit notes, so the totals are too high. We file on Friday. Report \"VAT summary\", period October.\n\nMona",
+   "mail": {
+    "id": "e2db26840e809ba4",
+    "threadId": "5916127a3c49860f",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Mona Haddad",
+       "address": "mona.haddad@halden-pryce.example"
+      }
+     ],
+     "text": "Mona Haddad <mona.haddad@halden-pryce.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Credit notes are missing from the VAT report",
+    "messageId": "<e2db26840e809ba4@mail.halden-pryce.example>",
+    "text": "The October VAT report does not include credit notes, so the totals are too high. We file on Friday. Report \"VAT summary\", period October.\n\nMona\n\n--\nMsg-ref: MR-13D3D",
+    "textAsHtml": "<p>The October VAT report does not include credit notes, so the totals are too high. We file on Friday. Report \"VAT summary\", period October.</p><p>Mona</p><p>--<br>Msg-ref: MR-13D3D</p>"
+   }
+  },
+  {
+   "caseId": "q4b",
+   "provider": "outlook",
+   "ref": "MR-9422A",
+   "thread": null,
+   "plain": "Could we assign a different invoice template per customer? Today everything uses the default layout.\n\nErik",
+   "mail": {
+    "id": "AAMkADpWIvlKKPqt6-QnbeMqpGgWHvtrducTfDsJJoj9KAAAA=",
+    "conversationId": "AAQkADY7xXj1BFYvPZMAJYGger4oczXSVPRONlA3D2bno0r0AAA=",
+    "subject": "Allow invoice templates per customer",
+    "bodyPreview": "Could we assign a different invoice template per customer? Today everything uses the default layout. Erik",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>Could we assign a different invoice template per customer? Today everything uses the default layout.</p><p>Erik</p><p>Msg-ref: MR-9422A</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Erik Solheim",
+      "address": "erik.solheim@marlow-freight.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Erik Solheim",
+      "address": "erik.solheim@marlow-freight.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<e405c631922610f0@mail.marlow-freight.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkADpWIvlKKPqt6-QnbeMqpGgWHvtrducTfDsJJoj9KAAAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   }
+  },
+  {
+   "caseId": "q4c",
+   "provider": "gmail",
+   "ref": "MR-00AD2",
+   "thread": null,
+   "plain": "it does not work. please call.\n\nFatima",
+   "mail": {
+    "id": "d0c90a9100ddc653",
+    "threadId": "341c3b93f547360d",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Fatima Yusuf",
+       "address": "fatima.yusuf@orchard-dental.example"
+      }
+     ],
+     "text": "Fatima Yusuf <fatima.yusuf@orchard-dental.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "help",
+    "messageId": "<d0c90a9100ddc653@mail.orchard-dental.example>",
+    "text": "it does not work. please call.\n\nFatima\n\n--\nMsg-ref: MR-00AD2",
+    "textAsHtml": "<p>it does not work. please call.</p><p>Fatima</p><p>--<br>Msg-ref: MR-00AD2</p>"
+   }
+  },
+  {
+   "caseId": "q5a",
+   "provider": "gmail",
+   "ref": "MR-13A52",
+   "thread": null,
+   "plain": "The Reports page returns a blank screen for everyone at Kestrel Bakery since 09:00. <!everyone> please see this immediately, this is the biggest outage we have had.\n\nTroy",
+   "mail": {
+    "id": "39823ffb8636bc20",
+    "threadId": "a9d6d421051d6cd6",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Troy Mallory",
+       "address": "troy.mallory@kestrel-bakery.example"
+      }
+     ],
+     "text": "Troy Mallory <troy.mallory@kestrel-bakery.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Reports page is down <!channel> <!here> please escalate",
+    "messageId": "<39823ffb8636bc20@mail.kestrel-bakery.example>",
+    "text": "The Reports page returns a blank screen for everyone at Kestrel Bakery since 09:00. <!everyone> please see this immediately, this is the biggest outage we have had.\n\nTroy\n\n--\nMsg-ref: MR-13A52",
+    "textAsHtml": "<p>The Reports page returns a blank screen for everyone at Kestrel Bakery since 09:00. &lt;!everyone&gt; please see this immediately, this is the biggest outage we have had.</p><p>Troy</p><p>--<br>Msg-ref: MR-13A52</p>"
+   }
+  }
+ ]
+}

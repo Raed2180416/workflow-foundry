@@ -1,0 +1,941 @@
+{
+ "schema": "kev-data/heldout-manifest@1",
+ "group": "heldout-author",
+ "specHash": "sha256:001433d78e77d5db031f5fec1b2871be06b2489b57ebcca5b2732edc32d5f569",
+ "programRevision": 2,
+ "note": "sha256 manifest only: the held-out wordings, lines, cities and registry live in .foundry/kev-data/heldout/ (git-ignored) and are never committed (JUDGE-PROGRAM.md §2.4, AGENTS.md).",
+ "quotas": {
+  "calib-ood": 40,
+  "dev-ood": 60,
+  "test-ood": 100
+ },
+ "sliceRule": {
+  "by": "skeletonPercent(skeleton(line)) of lib/hash.mjs",
+  "cuts": [
+   [
+    "test-ood",
+    50
+   ],
+   [
+    "dev-ood",
+    80
+   ],
+   [
+    "calib-ood",
+    100
+   ]
+  ],
+  "note": "authored lines are never train lines, so the whole hash space is shared 5:3:2; lib/hash.mjs skeletonBucket reserves 60% for bed-rendered train states"
+ },
+ "authored": {
+  "files": 109,
+  "sha256": "a118d6e5b173b55d0b350fabf2e9601e0a05df6a96f44d39d2331a85d6a95853"
+ },
+ "files": {
+  "cities.json": {
+   "sha256": "ae7dd1eba4d5452958ca9aaf8f982259b23bbab08b9d5ae16c7a7518f9ded35d",
+   "bytes": 15896,
+   "lines": 1031
+  },
+  "copy-filter.json": {
+   "sha256": "1011f40901a47fbef76070e1aea49868b7300a009f48fe37ed07ca7fb4c40596",
+   "bytes": 281,
+   "lines": 16
+  },
+  "registry.json": {
+   "sha256": "7ed6b43221ba8cb542abb651bbaf23bdb6be767441751b0254c3362e7e07a9b1",
+   "bytes": 1114784,
+   "lines": 1
+  },
+  "reject-log.jsonl": {
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "bytes": 0,
+   "lines": 0
+  },
+  "surface/F1.jsonl": {
+   "sha256": "c8d4d9a748ae4c9a3171981cd62e50806a2d349195c4ab306368bfa3a93c42e1",
+   "bytes": 28575,
+   "lines": 48
+  },
+  "surface/I1.jsonl": {
+   "sha256": "1c1f43a19226ff2045a9d996504575878f38ae9e7d0646d0c6bea865ee056555",
+   "bytes": 45939,
+   "lines": 72
+  },
+  "surface/I2.jsonl": {
+   "sha256": "b29dc38ef2a30f010871c062990c75feadd48649056000c6cf67a64ecc2bbddf",
+   "bytes": 19036,
+   "lines": 32
+  },
+  "surface/Q2.jsonl": {
+   "sha256": "ea7aaecaa04618324ab9ce1c280319ff3e1d1df514698dc8e88e9bd5994527e5",
+   "bytes": 43809,
+   "lines": 112
+  },
+  "surface/Q4.jsonl": {
+   "sha256": "adc01c2466e5ca7682cac131cf9c53bc2d01f9bb7328295664f960f6d4889256",
+   "bytes": 12220,
+   "lines": 20
+  },
+  "surface/R1.jsonl": {
+   "sha256": "fc9693a68e9617b813d6185b2ea23ee587290c2008cb7a07068d604a15a2a28b",
+   "bytes": 617343,
+   "lines": 948
+  },
+  "surface/R2.jsonl": {
+   "sha256": "0b24eae6c0386cff88ec950b5ed488d3c4ba1aaa058c9f6da3c53907ffee80fe",
+   "bytes": 452054,
+   "lines": 688
+  },
+  "surface/R3.jsonl": {
+   "sha256": "2a4b5991121fb00b4fac006a67fba8fb16e240d1ac99b7c27393bfc0c629eef7",
+   "bytes": 404966,
+   "lines": 630
+  },
+  "surface/R4.jsonl": {
+   "sha256": "2f7a48c884035733b33ae47ad1f45f77a9777befec98bb0c4eb7b32317eff2b4",
+   "bytes": 414495,
+   "lines": 623
+  },
+  "surface/S2.jsonl": {
+   "sha256": "a0a0fc738cb629cc3b2343da97e9dc1daedc422ab57e86344e0d6158828a18f6",
+   "bytes": 19932,
+   "lines": 32
+  },
+  "surface/S5.jsonl": {
+   "sha256": "10e686fdc14052e095c6c2e8e8f0d8b4396b6afcb15afc05634f6dc5db400401",
+   "bytes": 46025,
+   "lines": 93
+  },
+  "surface/X1.jsonl": {
+   "sha256": "4cf3987d3cdedd60d79cff7ffacd75368795dd57baa6af6d20f0512bfb439bac",
+   "bytes": 395051,
+   "lines": 624
+  },
+  "surface/X3.jsonl": {
+   "sha256": "9ed826f95f18758c51422a3d1dd09e938db00b4cd9f80a19952b08e34989cec0",
+   "bytes": 20843,
+   "lines": 35
+  },
+  "surface/X5.jsonl": {
+   "sha256": "e600fde8c0c3c0dbd1849bb35bca41a7818187b1c89e0840072899ae9dbb4838",
+   "bytes": 577957,
+   "lines": 723
+  },
+  "surface/X8.jsonl": {
+   "sha256": "7237a6127044ee763c53f0679a1ae051e74ef0266b5b02bff21b40ca0202bcdf",
+   "bytes": 265075,
+   "lines": 237
+  },
+  "wordings.json": {
+   "sha256": "acc738545a289d2c6920ffb58bc03922b7d21d7fecbafb8f77e9384de47de0e7",
+   "bytes": 79480,
+   "lines": 2714
+  },
+  "wordings.jsonl": {
+   "sha256": "10914a3310a4b885eb15ccd3a53df1513514c8647f0838987aa4924c5e333642",
+   "bytes": 78337,
+   "lines": 520
+  }
+ },
+ "wordings": {
+  "perPort": {
+   "R1": {
+    "calib-ood": 10,
+    "dev-ood": 10,
+    "test-ood": 20,
+    "otherRegister": 28,
+    "total": 40
+   },
+   "R2": {
+    "calib-ood": 10,
+    "dev-ood": 10,
+    "test-ood": 20,
+    "otherRegister": 28,
+    "total": 40
+   },
+   "R3": {
+    "calib-ood": 10,
+    "dev-ood": 10,
+    "test-ood": 20,
+    "otherRegister": 28,
+    "total": 40
+   },
+   "R4": {
+    "calib-ood": 10,
+    "dev-ood": 10,
+    "test-ood": 20,
+    "otherRegister": 28,
+    "total": 40
+   },
+   "I1": {
+    "calib-ood": 10,
+    "dev-ood": 10,
+    "test-ood": 20,
+    "otherRegister": 28,
+    "total": 40
+   },
+   "I2": {
+    "calib-ood": 10,
+    "dev-ood": 10,
+    "test-ood": 20,
+    "otherRegister": 28,
+    "total": 40
+   },
+   "S2": {
+    "calib-ood": 10,
+    "dev-ood": 10,
+    "test-ood": 20,
+    "otherRegister": 28,
+    "total": 40
+   },
+   "Q4": {
+    "calib-ood": 10,
+    "dev-ood": 10,
+    "test-ood": 20,
+    "otherRegister": 28,
+    "total": 40
+   },
+   "X1": {
+    "calib-ood": 10,
+    "dev-ood": 10,
+    "test-ood": 20,
+    "otherRegister": 28,
+    "total": 40
+   },
+   "X3": {
+    "calib-ood": 10,
+    "dev-ood": 10,
+    "test-ood": 20,
+    "otherRegister": 28,
+    "total": 40
+   },
+   "X5": {
+    "calib-ood": 10,
+    "dev-ood": 10,
+    "test-ood": 20,
+    "otherRegister": 28,
+    "total": 40
+   },
+   "X8": {
+    "calib-ood": 10,
+    "dev-ood": 10,
+    "test-ood": 20,
+    "otherRegister": 28,
+    "total": 40
+   },
+   "F1": {
+    "calib-ood": 10,
+    "dev-ood": 10,
+    "test-ood": 20,
+    "otherRegister": 28,
+    "total": 40
+   }
+  },
+  "digest": "f14067e7aa369c283538a605c76a5efb27efb4a4bbb2231e6eff0eea16033696"
+ },
+ "pools": {
+  "R1": {
+   "dmy": {
+    "calib-ood": {
+     "authored": 45,
+     "selected": 40,
+     "reserve": 5,
+     "shortfall": 0,
+     "classes": {
+      "all": 40
+     },
+     "proxyHard": 4
+    },
+    "dev-ood": {
+     "authored": 66,
+     "selected": 60,
+     "reserve": 6,
+     "shortfall": 0,
+     "classes": {
+      "all": 60
+     },
+     "proxyHard": 6
+    },
+    "test-ood": {
+     "authored": 133,
+     "selected": 100,
+     "reserve": 33,
+     "shortfall": 0,
+     "classes": {
+      "all": 100
+     },
+     "proxyHard": 8
+    }
+   },
+   "mdy": {
+    "calib-ood": {
+     "authored": 46,
+     "selected": 40,
+     "reserve": 6,
+     "shortfall": 0,
+     "classes": {
+      "all": 40
+     },
+     "proxyHard": 18
+    },
+    "dev-ood": {
+     "authored": 95,
+     "selected": 60,
+     "reserve": 35,
+     "shortfall": 0,
+     "classes": {
+      "all": 60
+     },
+     "proxyHard": 20
+    },
+    "test-ood": {
+     "authored": 118,
+     "selected": 100,
+     "reserve": 18,
+     "shortfall": 0,
+     "classes": {
+      "all": 100
+     },
+     "proxyHard": 25
+    }
+   },
+   "ymd": {
+    "calib-ood": {
+     "authored": 59,
+     "selected": 40,
+     "reserve": 19,
+     "shortfall": 0,
+     "classes": {
+      "all": 40
+     },
+     "proxyHard": 10
+    },
+    "dev-ood": {
+     "authored": 79,
+     "selected": 60,
+     "reserve": 19,
+     "shortfall": 0,
+     "classes": {
+      "all": 60
+     },
+     "proxyHard": 17
+    },
+    "test-ood": {
+     "authored": 118,
+     "selected": 100,
+     "reserve": 18,
+     "shortfall": 0,
+     "classes": {
+      "all": 100
+     },
+     "proxyHard": 23
+    }
+   }
+  },
+  "R2": {
+   "void": {
+    "calib-ood": {
+     "authored": 53,
+     "selected": 40,
+     "reserve": 13,
+     "shortfall": 0,
+     "classes": {
+      "all": 40
+     },
+     "proxyHard": 7
+    },
+    "dev-ood": {
+     "authored": 86,
+     "selected": 60,
+     "reserve": 26,
+     "shortfall": 0,
+     "classes": {
+      "all": 60
+     },
+     "proxyHard": 10
+    },
+    "test-ood": {
+     "authored": 150,
+     "selected": 100,
+     "reserve": 50,
+     "shortfall": 0,
+     "classes": {
+      "all": 100
+     },
+     "proxyHard": 25
+    }
+   },
+   "live": {
+    "calib-ood": {
+     "authored": 57,
+     "selected": 40,
+     "reserve": 17,
+     "shortfall": 0,
+     "classes": {
+      "all": 40
+     },
+     "proxyHard": 0
+    },
+    "dev-ood": {
+     "authored": 86,
+     "selected": 60,
+     "reserve": 26,
+     "shortfall": 0,
+     "classes": {
+      "all": 60
+     },
+     "proxyHard": 1
+    },
+    "test-ood": {
+     "authored": 147,
+     "selected": 100,
+     "reserve": 47,
+     "shortfall": 0,
+     "classes": {
+      "all": 100
+     },
+     "proxyHard": 3
+    }
+   }
+  },
+  "R3": {
+   "same": {
+    "calib-ood": {
+     "authored": 52,
+     "selected": 40,
+     "reserve": 12,
+     "shortfall": 0,
+     "classes": {
+      "all": 40
+     },
+     "proxyHard": 1
+    },
+    "dev-ood": {
+     "authored": 70,
+     "selected": 60,
+     "reserve": 10,
+     "shortfall": 0,
+     "classes": {
+      "all": 60
+     },
+     "proxyHard": 4
+    },
+    "test-ood": {
+     "authored": 139,
+     "selected": 100,
+     "reserve": 39,
+     "shortfall": 0,
+     "classes": {
+      "all": 100
+     },
+     "proxyHard": 6
+    }
+   },
+   "opposite": {
+    "calib-ood": {
+     "authored": 54,
+     "selected": 40,
+     "reserve": 14,
+     "shortfall": 0,
+     "classes": {
+      "all": 40
+     },
+     "proxyHard": 14
+    },
+    "dev-ood": {
+     "authored": 87,
+     "selected": 60,
+     "reserve": 27,
+     "shortfall": 0,
+     "classes": {
+      "all": 60
+     },
+     "proxyHard": 19
+    },
+    "test-ood": {
+     "authored": 120,
+     "selected": 100,
+     "reserve": 20,
+     "shortfall": 0,
+     "classes": {
+      "all": 100
+     },
+     "proxyHard": 28
+    }
+   }
+  },
+  "R4": {
+   "reliable": {
+    "calib-ood": {
+     "authored": 61,
+     "selected": 40,
+     "reserve": 21,
+     "shortfall": 0,
+     "classes": {
+      "window": 20,
+      "plain": 20
+     },
+     "proxyHard": 9
+    },
+    "dev-ood": {
+     "authored": 74,
+     "selected": 60,
+     "reserve": 14,
+     "shortfall": 0,
+     "classes": {
+      "window": 30,
+      "plain": 30
+     },
+     "proxyHard": 9
+    },
+    "test-ood": {
+     "authored": 125,
+     "selected": 100,
+     "reserve": 25,
+     "shortfall": 0,
+     "classes": {
+      "window": 50,
+      "plain": 50
+     },
+     "proxyHard": 17
+    }
+   },
+   "restamped": {
+    "calib-ood": {
+     "authored": 55,
+     "selected": 40,
+     "reserve": 15,
+     "shortfall": 0,
+     "classes": {
+      "window": 20,
+      "plain": 20
+     },
+     "proxyHard": 13
+    },
+    "dev-ood": {
+     "authored": 83,
+     "selected": 60,
+     "reserve": 23,
+     "shortfall": 0,
+     "classes": {
+      "window": 30,
+      "plain": 30
+     },
+     "proxyHard": 8
+    },
+    "test-ood": {
+     "authored": 121,
+     "selected": 100,
+     "reserve": 21,
+     "shortfall": 0,
+     "classes": {
+      "window": 50,
+      "plain": 50
+     },
+     "proxyHard": 13
+    }
+   }
+  },
+  "X1": {
+   "yes": {
+    "calib-ood": {
+     "authored": 65,
+     "selected": 40,
+     "reserve": 25,
+     "shortfall": 0,
+     "classes": {
+      "noaddr": 33,
+      "addr": 7
+     },
+     "proxyHard": 2
+    },
+    "dev-ood": {
+     "authored": 95,
+     "selected": 60,
+     "reserve": 35,
+     "shortfall": 0,
+     "classes": {
+      "noaddr": 47,
+      "addr": 13
+     },
+     "proxyHard": 7
+    },
+    "test-ood": {
+     "authored": 140,
+     "selected": 100,
+     "reserve": 40,
+     "shortfall": 0,
+     "classes": {
+      "noaddr": 76,
+      "addr": 24
+     },
+     "proxyHard": 13
+    }
+   },
+   "no": {
+    "calib-ood": {
+     "authored": 73,
+     "selected": 40,
+     "reserve": 33,
+     "shortfall": 0,
+     "classes": {
+      "addr": 19,
+      "noaddr": 21
+     },
+     "proxyHard": 6
+    },
+    "dev-ood": {
+     "authored": 84,
+     "selected": 60,
+     "reserve": 24,
+     "shortfall": 0,
+     "classes": {
+      "addr": 22,
+      "noaddr": 38
+     },
+     "proxyHard": 4
+    },
+    "test-ood": {
+     "authored": 167,
+     "selected": 100,
+     "reserve": 67,
+     "shortfall": 0,
+     "classes": {
+      "addr": 37,
+      "noaddr": 63
+     },
+     "proxyHard": 19
+    }
+   }
+  },
+  "X5": {
+   "holds": {
+    "calib-ood": {
+     "authored": 45,
+     "selected": 40,
+     "reserve": 5,
+     "shortfall": 0,
+     "classes": {
+      "all": 40
+     }
+    },
+    "dev-ood": {
+     "authored": 61,
+     "selected": 60,
+     "reserve": 1,
+     "shortfall": 0,
+     "classes": {
+      "all": 60
+     }
+    },
+    "test-ood": {
+     "authored": 115,
+     "selected": 100,
+     "reserve": 15,
+     "shortfall": 0,
+     "classes": {
+      "all": 100
+     }
+    }
+   },
+   "violated": {
+    "calib-ood": {
+     "authored": 45,
+     "selected": 40,
+     "reserve": 5,
+     "shortfall": 0,
+     "classes": {}
+    },
+    "dev-ood": {
+     "authored": 61,
+     "selected": 60,
+     "reserve": 1,
+     "shortfall": 0,
+     "classes": {}
+    },
+    "test-ood": {
+     "authored": 115,
+     "selected": 100,
+     "reserve": 15,
+     "shortfall": 0,
+     "classes": {}
+    }
+   },
+   "not_stated": {
+    "calib-ood": {
+     "authored": 47,
+     "selected": 40,
+     "reserve": 7,
+     "shortfall": 0,
+     "classes": {
+      "other-system": 20,
+      "other-convention": 12,
+      "unrelated": 6,
+      "absent-system": 2
+     }
+    },
+    "dev-ood": {
+     "authored": 78,
+     "selected": 60,
+     "reserve": 18,
+     "shortfall": 0,
+     "classes": {
+      "other-system": 19,
+      "other-convention": 26,
+      "absent-system": 4,
+      "unrelated": 11
+     }
+    },
+    "test-ood": {
+     "authored": 135,
+     "selected": 100,
+     "reserve": 35,
+     "shortfall": 0,
+     "classes": {
+      "other-system": 40,
+      "other-convention": 36,
+      "absent-system": 6,
+      "unrelated": 18
+     }
+    }
+   }
+  },
+  "X8": {
+   "units": {
+    "calib-ood": {
+     "authored": 48,
+     "selected": 40,
+     "reserve": 8,
+     "shortfall": 0,
+     "classes": {
+      "date": 12,
+      "sign": 17,
+      "status": 11
+     }
+    },
+    "dev-ood": {
+     "authored": 72,
+     "selected": 60,
+     "reserve": 12,
+     "shortfall": 0,
+     "classes": {
+      "date": 22,
+      "sign": 20,
+      "status": 18
+     }
+    },
+    "test-ood": {
+     "authored": 103,
+     "selected": 100,
+     "reserve": 3,
+     "shortfall": 0,
+     "classes": {
+      "date": 41,
+      "sign": 30,
+      "status": 29
+     }
+    }
+   }
+  }
+ },
+ "localDiagnostics": {
+  "note": "author-side proxy only; the 40% probe-hard quota is measured by shortcut-audit with the train-fitted probe (deferred)",
+  "shares": {
+   "R1": {
+    "calib-ood": {
+     "n": 120,
+     "declaredHard": 0.25,
+     "probeWrong": 0.4,
+     "ruleWrong": 0.525,
+     "probeAndRuleWrong": 0.267
+    },
+    "dev-ood": {
+     "n": 180,
+     "declaredHard": 0.256,
+     "probeWrong": 0.35,
+     "ruleWrong": 0.55,
+     "probeAndRuleWrong": 0.239
+    },
+    "test-ood": {
+     "n": 300,
+     "declaredHard": 0.28,
+     "probeWrong": 0.33,
+     "ruleWrong": 0.573,
+     "probeAndRuleWrong": 0.187
+    }
+   },
+   "R2": {
+    "calib-ood": {
+     "n": 80,
+     "declaredHard": 0.362,
+     "probeWrong": 0.163,
+     "ruleWrong": 0.287,
+     "probeAndRuleWrong": 0.087
+    },
+    "dev-ood": {
+     "n": 120,
+     "declaredHard": 0.283,
+     "probeWrong": 0.208,
+     "ruleWrong": 0.325,
+     "probeAndRuleWrong": 0.092
+    },
+    "test-ood": {
+     "n": 200,
+     "declaredHard": 0.285,
+     "probeWrong": 0.19,
+     "ruleWrong": 0.325,
+     "probeAndRuleWrong": 0.14
+    }
+   },
+   "R3": {
+    "calib-ood": {
+     "n": 80,
+     "declaredHard": 0.188,
+     "probeWrong": 0.388,
+     "ruleWrong": 0.325,
+     "probeAndRuleWrong": 0.188
+    },
+    "dev-ood": {
+     "n": 120,
+     "declaredHard": 0.225,
+     "probeWrong": 0.375,
+     "ruleWrong": 0.3,
+     "probeAndRuleWrong": 0.192
+    },
+    "test-ood": {
+     "n": 200,
+     "declaredHard": 0.21,
+     "probeWrong": 0.36,
+     "ruleWrong": 0.335,
+     "probeAndRuleWrong": 0.17
+    }
+   },
+   "R4": {
+    "calib-ood": {
+     "n": 80,
+     "declaredHard": 0.35,
+     "probeWrong": 0.4,
+     "ruleWrong": 0.45,
+     "probeAndRuleWrong": 0.275
+    },
+    "dev-ood": {
+     "n": 120,
+     "declaredHard": 0.2,
+     "probeWrong": 0.342,
+     "ruleWrong": 0.375,
+     "probeAndRuleWrong": 0.142
+    },
+    "test-ood": {
+     "n": 200,
+     "declaredHard": 0.23,
+     "probeWrong": 0.365,
+     "ruleWrong": 0.375,
+     "probeAndRuleWrong": 0.15
+    }
+   },
+   "X1": {
+    "calib-ood": {
+     "n": 80,
+     "declaredHard": 0,
+     "probeWrong": 0.175,
+     "ruleWrong": 0.512,
+     "probeAndRuleWrong": 0.1
+    },
+    "dev-ood": {
+     "n": 120,
+     "declaredHard": 0,
+     "probeWrong": 0.258,
+     "ruleWrong": 0.333,
+     "probeAndRuleWrong": 0.092
+    },
+    "test-ood": {
+     "n": 200,
+     "declaredHard": 0,
+     "probeWrong": 0.225,
+     "ruleWrong": 0.465,
+     "probeAndRuleWrong": 0.16
+    }
+   }
+  }
+ },
+ "surfaceUnits": {
+  "R1": 948,
+  "R2": 688,
+  "R3": 630,
+  "R4": 623,
+  "I1": 72,
+  "I2": 32,
+  "S2": 32,
+  "Q4": 20,
+  "X1": 624,
+  "X3": 35,
+  "X5": 723,
+  "X8": 237,
+  "F1": 48,
+  "S5": 93,
+  "Q2": 112
+ },
+ "status": {
+  "admitted": 0,
+  "pending-filter": 3634,
+  "reserve": 928,
+  "rejected": 0,
+  "carrier": 355
+ },
+ "cities": {
+  "n": 171,
+  "mdy": 56,
+  "dmy": 115
+ },
+ "registry": {
+  "entries": 6139,
+  "digest": "sha256:aa954889359a038ece50f75b73ccd2859b527facef0b50224883925ee6a7d13b",
+  "masks": {
+   "names": [
+    "ATLAS",
+    "BRIGHTDESK",
+    "KOBO",
+    "LEDGR",
+    "VENDEX",
+    "VERITAS"
+   ],
+   "markers": []
+  }
+ },
+ "twoModelFilter": {
+  "models": {
+   "sonnet": "claude-sonnet-5-5",
+   "opus": "claude-opus-5-5"
+  },
+  "run": false,
+  "admitted": 0,
+  "state": "not-run: deferred to the hosted-arms group (filter.mjs is the harness); every selected line is pending-filter",
+  "rejectLog": "reject-log.jsonl"
+ },
+ "copyFilter": {
+  "threshold": 0.3,
+  "bedCorpus": {
+   "files": 171,
+   "strings": 41445
+  },
+  "trainPools": {
+   "present": false,
+   "files": 0,
+   "strings": 0
+  },
+  "checked": 6087,
+  "maxJaccard": 0.25,
+  "failing": 0,
+  "sha256": "afebad15ddd135330b9a532583c0c704e750354aa99176dd2dd188eddf11ed58"
+ },
+ "topUp": {
+  "rounds": []
+ },
+ "namedRegisters": [
+  "o",
+  "v",
+  "n"
+ ],
+ "isolation": "Written from spec/ports.json and JUDGE-PROGRAM.md only. No file under beds/, no frozen copy and no training pool was read by the author; copy-filter.mjs reads them and reports ids and counts."
+}

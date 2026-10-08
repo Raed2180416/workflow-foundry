@@ -1,0 +1,1117 @@
+{
+  "schema": "kev-data/train-pools-manifest/1",
+  "group": "train-pools",
+  "version": 1,
+  "status": "development evidence: authored by a development agent; the two-model filter (Sonnet 5.5 + Opus 5.5 zero-shot) is deferred to the hosted-arms group and every line is filters.twoModel = \"pending\"",
+  "author": "claude-sonnet-5-5 (development agent, this build session)",
+  "bed": {
+    "pin": "sha256:b1f5171244a727cdc0bc6734ffeae8bc9ab72419bdb905db79809e55915029f8",
+    "note": "content hash of the nine dev beds; the pool depends only on the consumed sources below",
+    "sources": {
+      "beds/records/render.mjs": "b7ed58416900952b926e92d10b7080463dad516e7ae2f98040af6e9ca56baae8",
+      "beds/records/pools.mjs": "ff2825746dbec768ded1b4043511fe07796b38ef20a44bfd9fe891b1012fbe1e",
+      "beds/records/index.mjs": "951ea4172b04b593969f8306e18767fdd23481d9dfa1e1b3b8778666e237a04d",
+      "beds/records/measure.mjs": "14919cfe256db621d5aadd8848410a936ce50962980095cfd1f9765018b0c394",
+      "beds/records/score.mjs": "e6dabdabe6631ae1d926da083b17e76bb94afaaa01377d4db51249065ff18679",
+      "beds/records/solve-text.mjs": "98d2149991b2d6703609b9355bfa0f0e24df9f196eed9d98b2460fd2c4f5e82a",
+      "beds/records/world.mjs": "890243b55443015323843779a597c86c31b9b285d7a7467b0a7e297f751ff4d0",
+      "beds/incident/attack.mjs": "dcce3a1ec84b321e65f1a38b94586551793d13652cf6adc7ade960f3f29c5bf8",
+      "beds/incident/baseline.mjs": "412081de7a61e0d313939021f122953a4e07183f820bd0aac19b6a687cf550ad",
+      "beds/incident/catalog.mjs": "2c8c4987f0aa6f6b7074373f669f64f53cd958eb5b1e8e8becefa0aaf425c7d3",
+      "beds/incident/gen.mjs": "e2e8fe560d44f828cd83f9c27ef4e6471fe6e96977e43477af1054fa086014e3",
+      "beds/incident/heuristic-ceiling.mjs": "701b004c2381750bdcfd945654b92c4819e244e96bde7e7604508a57fd85034b",
+      "beds/incident/heuristic-ceiling2.mjs": "19263201892143105afe3d3d9efa1370b891e41fb84f8c04f64ea4816f3df48d",
+      "beds/incident/heuristic.mjs": "57e8d06577e134653f6c01c9db8cc7ad09ef7eb7e5dbac445e273073c13d15e0",
+      "beds/incident/heuristic2.mjs": "6a2f8ee377624428a46c5a81f48179dcc75c3bda5e08ab2f2c17292394c440d5",
+      "beds/incident/heuristic4.mjs": "ed774ba1241090176fd9c0c1872d3e34436cc5950df27429700bda9acf285e63",
+      "beds/incident/heuristic5.mjs": "f82610c95baa3a2f53d2e21acef037c1e9c19fff3719f78caa008cc5f16bdd95",
+      "beds/incident/heuristic6.mjs": "a8fcbe9b1d8540cdc78e1bf7c5992ccb9de0a19561a4481ac7cfd6bd96abd46f",
+      "beds/incident/index.mjs": "9ae922023ca813643aab03cc17e51dece6d412831ecfdb03a29f2307d00ba8c1",
+      "beds/synth/catalog.mjs": "e78fb5678e30438e1e95b90a53b65da5ef84c3bfdad55a28359d96b2729bcce0",
+      "beds/synth/heuristic.mjs": "6c94b00b3506dbd55b0d6556b7ee4c64c95f5c187e48cbc97bfd4a40133abd53",
+      "beds/synth/index.mjs": "43c572ca91ef225c8a3a09f7a1666e28de36353ac914be490811aa91a8ffd15f",
+      "beds/synth/render.mjs": "015de5cef4de1c1acffc3aa12e43e3d75baeb3e5b1ebf18dcdb667e1c24be587",
+      "beds/synth/world.mjs": "9623a8debcc52a216fa785221c1d87af23a81ed48dcb81365cb002fb063a83c5",
+      "beds/runbook/heuristic.mjs": "7248d6d95ae3769bb783b2a32e246233c0187cbc8345d2dfb756adba6511424e",
+      "beds/runbook/index.mjs": "ad5d588b33990ea738ce7a6f79c9f55e7c8247f772b88841a98311b288cc60ca",
+      "beds/runbook/judge.mjs": "dbec96a4f49466c2debab7ea832052cdf2425290d2a05cc4de70c6a06e4c538b",
+      "beds/runbook/render.mjs": "bf60e9ad10a892f060970fd689a6fd4524fb99be56115b7c9cb225da9952e80d",
+      "beds/runbook/sim.mjs": "a9c760c630dd26bdb282fab6dbc8be05dbc25e13157e80ab0cdc6e0aeb64f09c",
+      "beds/runbook/solve.mjs": "2f56917b07ddb73305693b2d2760e1a765676f4cddbe053db703ee8471e6a3be",
+      "beds/runbook/world.mjs": "f3a62246b0e213b128e909b27634bca1347d343c9a4e01f8bc141680f91182e7",
+      "beds/codefix/build.mjs": "d0d6298487dd41aa465799a649f1f714e146785ccb158f95f6e6ced1ac831edd",
+      "beds/codefix/controls-suite.mjs": "a4ba22fae1605b75af1ccd7fb262ecc330d2c46c9eba9ab6e5267576f8071384",
+      "beds/codefix/index.mjs": "e0c883985daf281bededcdd32ba4593aa837af68c9f5a0a78005e5ca7a71a16f",
+      "beds/codefix/measure.mjs": "20c33995915a60c065f164629db52d2c6ff9d54c742cfac20e03f0ecf0b34305",
+      "beds/codefix/render.mjs": "84a24f2844220a4011720194e76ee0d248dc2651a5849d277c4034d5e4f85fab",
+      "beds/codefix/report.mjs": "77c0370362cf1a18c83b6a89092b04fcc99d72ac3e4e30a8aa1b46cd8cad13b4",
+      "beds/codefix/sandbox.mjs": "1d7171c318b8aaf276a4d9b1c467da76a88d1038670922750720f002d69b508b",
+      "beds/gameqa/bugs.mjs": "7a1efbb5b73c3bf1d1b318a8ddd877da05e0a2db56ee2a70a0b499d3ea0e5e1f",
+      "beds/gameqa/case.mjs": "2b8551fdf8e4c40906a49400ed473d93cb6bc614c8bab7eac30d46df4bc55f39",
+      "beds/gameqa/decoys.mjs": "c11bab9c01502893472dd43351afd4da897654a0b6f2b81eab4924dd54b0be82",
+      "beds/gameqa/driver.mjs": "b31c061494b0006e553737dd95c83592f3a3bb8375e61a18361044d1fbb3ccf6",
+      "beds/gameqa/engine.mjs": "a14bdf8c08c0e365a3a84f405b44ded75353857723b27cb098b963a7c6d8511d",
+      "beds/gameqa/index.mjs": "9ab6749ca7a959c8daef88559af32ff41be6ed3185ef8323c2b4e0234814c9e2",
+      "beds/gameqa/planner.mjs": "2b0dab4ad3ebb4f2f625cbc51dc5122ae3312b6c2d923c655e7a5ed0a3b1e3f3",
+      "beds/gameqa/sessions.mjs": "060c759f6255a2e72e0cda256ce46dab5ea043aa09103972d250714a9e00751c",
+      "beds/gameqa/text.mjs": "0698999c68edf1fa8776a968a7ba625ff82348f0fc4c02f1c654eca15bc68f6b",
+      "beds/gameqa/world.mjs": "2347cfc082dbd0b76bdd2f393c8c90ca4cad0c652acb2623fb4382f77d153759"
+    }
+  },
+  "authored": {
+    "r1-atlas-2.mjs": {
+      "sha256": "c1bf5c51512e3249be9bf275ba3542dc3db95ef382650d2cce39524fb3d9876f",
+      "bytes": 12376
+    },
+    "r1-atlas.mjs": {
+      "sha256": "227b7b2c03538676de2524a31194e2bf2a87ab988c0eefa6a0a33e30b329f385",
+      "bytes": 28558
+    },
+    "r1-bd-vendex-2.mjs": {
+      "sha256": "74570a8c85b277f7807ab5a08c295a0517c9f504bdf005117b6177d9706d7f09",
+      "bytes": 13820
+    },
+    "r1-brightdesk.mjs": {
+      "sha256": "dd294f7d7f9e042215d1d5532742482ba58a84506f1fdaf350a174d2d71a2dbb",
+      "bytes": 28839
+    },
+    "r1-vendex.mjs": {
+      "sha256": "2a51ad00bb01c546251c3fc5479f82495dbe8bff6e01df3b226098d095699342",
+      "bytes": 28586
+    },
+    "r1-ymd-2.mjs": {
+      "sha256": "53925bb3e1d6d68fb3f97471dcd9cf772f12cbb436b2496ee610762a144f6130",
+      "bytes": 5647
+    },
+    "r1-ymd.mjs": {
+      "sha256": "9721992b32cdb094ca4052fad1df9c47b8551551b4c83da3ebb2efe38605092f",
+      "bytes": 15161
+    },
+    "r2-flags-2.mjs": {
+      "sha256": "e832057c1a11be8982e3bcde5026e35e7bedde8e3f3f3dced296c3eae0a91914",
+      "bytes": 15518
+    },
+    "r2-flags-3.mjs": {
+      "sha256": "114668aba64798f8ec96a17af98bb7f0149807b56ce0ee76bc56bc119685a483",
+      "bytes": 2242
+    },
+    "r2-flags.mjs": {
+      "sha256": "39de5d612e05bcf9eeb65605c9e50d4728e185c89116e16b1e0732395d938072",
+      "bytes": 44258
+    },
+    "r3-2.mjs": {
+      "sha256": "69c47a11aaca776745bdeda7a0e49961d39bf63ac6136d6a673cc9e24f282967",
+      "bytes": 22799
+    },
+    "r3-brightdesk-atlas.mjs": {
+      "sha256": "c488d2d1f4fca734ca08e2b912e9707e7dd09dcc893fcf776d4b0121f2cdff6d",
+      "bytes": 46577
+    },
+    "r3-ledgr-kobo.mjs": {
+      "sha256": "af57bd1d1042cabbbbff968c24ab5267ea0566d8e0689e2c3da42be8d08ee109",
+      "bytes": 44701
+    },
+    "r4-2.mjs": {
+      "sha256": "c9460b27bede093d88173b597488e29c4f4bd3d15344527fdab41354da3036c7",
+      "bytes": 10642
+    },
+    "r4-cf-2.mjs": {
+      "sha256": "3e89df5e319628e6055f0f7fe5334cf6acd0bd43576f70fe011a51c3497ff98f",
+      "bytes": 18614
+    },
+    "r4-cf.mjs": {
+      "sha256": "310a91b836c795a58c493023eea7a1520ee96c99c1db4d35e069dcc2c060a07c",
+      "bytes": 37315
+    },
+    "r4-paraphrases.mjs": {
+      "sha256": "c21e38ac4fb4608bef203b4f678bacb48b2839b88c52da2c837745ca6dce0f6e",
+      "bytes": 42940
+    },
+    "x1-codefix-2.mjs": {
+      "sha256": "f578e7f14e9f375c76b8e2948d2da3f82d2a79cd64147d6d4f12cd8c5a93a5b1",
+      "bytes": 3514
+    },
+    "x1-codefix.mjs": {
+      "sha256": "64b4b3fbec5e9f4e319415746faa4f99b49b2c8d7e68dd974a2d98032427b61b",
+      "bytes": 10393
+    },
+    "x1-gameqa-2.mjs": {
+      "sha256": "af67c6e46d83fe6f04ef14f0e1e0c422399fa13a1cdbb1c578833eb0aa874601",
+      "bytes": 3544
+    },
+    "x1-gameqa.mjs": {
+      "sha256": "6eb4363d2e55b9a0ea20742c22d55853cdeb40dbb9b42e091e3068d00eba3cfe",
+      "bytes": 10153
+    },
+    "x1-incident-2.mjs": {
+      "sha256": "a620fa5cff6dd9488bef914a4420adc034f07ee5c843a4141a5bdc56fcde3ce7",
+      "bytes": 7536
+    },
+    "x1-incident-3.mjs": {
+      "sha256": "4034b0707f84ea29664ce5886fd5e2848502b03ee6ad2cc780f6986f34ca47af",
+      "bytes": 3268
+    },
+    "x1-incident.mjs": {
+      "sha256": "970cf23996fc3abcd650d4a3fb4aa438d65a16c11895ffc8f30e6369003ef550",
+      "bytes": 15975
+    },
+    "x1-records-2.mjs": {
+      "sha256": "16303cf67ad41e72f29bda16e854df70573d75fa3834b4179e56dffe5b842ef6",
+      "bytes": 13910
+    },
+    "x1-records-3.mjs": {
+      "sha256": "0434cd2f111dd854a212d67365ce8a448e6159d6adaf7109fa89d14824c24875",
+      "bytes": 8590
+    },
+    "x1-records-4.mjs": {
+      "sha256": "b04a734249367d56f3e6ddbcae8be7f868f3d095014bcd63bb88257361e2309c",
+      "bytes": 4827
+    },
+    "x1-records.mjs": {
+      "sha256": "250bb49a329a773842b61ea74e23b5a5e85d2bcd6e8e5585366be4d999577d73",
+      "bytes": 15337
+    },
+    "x1-runbook-2.mjs": {
+      "sha256": "cf7d6dc7ca398e0f58ca68ebfc89f8953a6ffe25f7f1d7b50201194060e7ea0e",
+      "bytes": 3721
+    },
+    "x1-runbook.mjs": {
+      "sha256": "4620c0f3e98d3ec40329759f1814c2307e98bbc05cf073ea0c89f2fc76641624",
+      "bytes": 10567
+    },
+    "x1-synth-2.mjs": {
+      "sha256": "09ef0c449d6f62e84beb67bfe08a603afb9fc17bc1fb0045eeafa8daaaface92",
+      "bytes": 3691
+    },
+    "x1-synth.mjs": {
+      "sha256": "0e33d39ca92bf9f7db39075efacf5a581f8811a78acdb817fad4f0dc122ea356",
+      "bytes": 12439
+    },
+    "x5.mjs": {
+      "sha256": "ae477b22d0987036ab2f0990339afd18693d22e9bcacc07deb312255d7a2e6d5",
+      "bytes": 14556
+    }
+  },
+  "slotVocabulary": {
+    "S": "the system the sentence is about (BRIGHTDESK, ATLAS, VENDEX, LEDGR, KOBO, VERITAS)",
+    "token": "the extra status value as displayed in that system's rows (FLAG_FORM[S].show(token))",
+    "w0": "first date of the mirror rebuild window, as the bed writes it (\"3 March 2024\")",
+    "w1": "last date of the mirror rebuild window",
+    "field": "the update-date field of the system (UPDATE_FIELD[S])",
+    "year": "a calendar year (the vendor audit year, RELIABLE_NOTE)",
+    "live_ref": "FLAG_FORM[S].live: the fixed live marker the sentence compares the status value to",
+    "void_ref": "FLAG_FORM[S].void: the fixed void marker the sentence compares the status value to",
+    "ref": "another system whose numeric date order this system shares (c.ref)",
+    "ex": "the numeric example date written in the line's order (\"03/11/1987\" day first, \"11/03/1987\" month first, \"1987/11/03\" year first)",
+    "ex_long": "the same example date in words, \"3 November 1987\"",
+    "month": "the example date's month name",
+    "day": "the example date's day number",
+    "server": "the country where the system's servers stand (SERVER_DMY)",
+    "city_us": "a US team city (TEAM_CITIES.mdy)",
+    "city_eu": "a day-first-country team city (TEAM_CITIES.dmy)"
+  },
+  "addresseeRegex": "(?<![\\p{L}\\p{N}_])AI(?![\\p{L}\\p{N}_]) | (?<![\\p{L}\\p{N}_])(?:llm|automated|automation|assistants?|agents?|bots?|chatbots?|overrid(?:e|es|den|ing)|overrode)(?![\\p{L}\\p{N}_]) (flags iu) | (?<![\\p{L}\\p{N}_])SYSTEM\\s*: (flags i)",
+  "thresholds": {
+    "copyOfSource": 0.5,
+    "copyOfSourceUnigram": 0.85,
+    "heldOutTemplate": 0.5,
+    "bedSentence": 0.5,
+    "nearDuplicateUnigram": 0.85,
+    "windowShareTolerance": 0.05
+  },
+  "perTemplateTarget": 20,
+  "outputs": {
+    "R1.jsonl": {
+      "sha256": "c61ea88eb07597af7e1b300048aa20abde65ad1de3fd07872a4457d0af948b1a",
+      "lines": 1182
+    },
+    "R2.jsonl": {
+      "sha256": "de32777a91c791ca37a485c0db292f87cc3a83ea94b205ddbf8f101860526308",
+      "lines": 376
+    },
+    "R3.jsonl": {
+      "sha256": "e3d543d1727d41e848bdd2419fa08da62a338f79074b88e00df4a6b2aaa2e7f1",
+      "lines": 638
+    },
+    "R4.jsonl": {
+      "sha256": "808e8887a29122b2fb33fb6504feeb49634ce250906515c4e503c1dbef6a7866",
+      "lines": 481
+    },
+    "X1.jsonl": {
+      "sha256": "92139d3b7f56740562b5c4ec40e1cda2fe5138c367fad549ac7516be7dcebe1e",
+      "lines": 843
+    },
+    "X5.jsonl": {
+      "sha256": "8841f0f2a97547a1921965cd13dbb63bf63c6fa8087ec38f5cb3f5101c6a2114",
+      "lines": 122
+    },
+    "rejects.jsonl": {
+      "sha256": "92b4426742833d97e06307d167db833a70f0cf269dcead710a347cf75c9d40dc",
+      "lines": 2602
+    }
+  },
+  "summary": {
+    "ports": {
+      "R1": {
+        "lines": 1182,
+        "byGroup": {
+          "counterfactual": 125,
+          "paraphrase": 1057
+        },
+        "byKind": {
+          "paraphrase": 1057,
+          "year-first": 125
+        },
+        "byLabel": {
+          "dmy": 531,
+          "mdy": 526,
+          "ymd": 125
+        },
+        "bySystem": {
+          "ATLAS": 455,
+          "BRIGHTDESK": 303,
+          "VENDEX": 424
+        },
+        "bucket": {
+          "train": 1182
+        },
+        "twoModelPending": 1182
+      },
+      "R2": {
+        "lines": 376,
+        "byGroup": {
+          "counterfactual": 36,
+          "paraphrase": 340
+        },
+        "byKind": {
+          "kobo-live-flag": 36,
+          "paraphrase": 340
+        },
+        "byLabel": {
+          "live": 212,
+          "void": 164
+        },
+        "bySystem": {
+          "-": 340,
+          "KOBO": 36
+        },
+        "bucket": {
+          "train": 376
+        },
+        "twoModelPending": 376
+      },
+      "R3": {
+        "lines": 638,
+        "byGroup": {
+          "paraphrase": 638
+        },
+        "byKind": {
+          "paraphrase": 638
+        },
+        "byLabel": {
+          "opposite": 326,
+          "same": 312
+        },
+        "bySystem": {
+          "ATLAS": 169,
+          "BRIGHTDESK": 160,
+          "KOBO": 159,
+          "LEDGR": 150
+        },
+        "bucket": {
+          "train": 638
+        },
+        "twoModelPending": 638
+      },
+      "R4": {
+        "lines": 481,
+        "byGroup": {
+          "counterfactual": 272,
+          "paraphrase": 209
+        },
+        "byKind": {
+          "kobo-mirror": 50,
+          "paraphrase": 209,
+          "reliable-with-window": 119,
+          "restamped-no-window": 103
+        },
+        "byLabel": {
+          "reliable": 228,
+          "restamped": 253
+        },
+        "bySystem": {
+          "-": 431,
+          "KOBO": 50
+        },
+        "bucket": {
+          "train": 481
+        },
+        "twoModelPending": 481
+      },
+      "X1": {
+        "lines": 843,
+        "byGroup": {
+          "authored": 843
+        },
+        "byKind": {
+          "benign": 267,
+          "decoy": 121,
+          "hard-negative": 262,
+          "positive": 193
+        },
+        "byLabel": {
+          "no": 650,
+          "yes": 193
+        },
+        "bySystem": {
+          "-": 843
+        },
+        "bucket": {
+          "train": 843
+        },
+        "twoModelPending": 843
+      },
+      "X5": {
+        "lines": 122,
+        "byGroup": {
+          "authored": 122
+        },
+        "byKind": {
+          "assumption": 122
+        },
+        "byLabel": {
+          "dmy": 11,
+          "live": 14,
+          "mdy": 12,
+          "opposite": 13,
+          "reliable": 14,
+          "restamped": 19,
+          "same": 16,
+          "void": 11,
+          "ymd": 12
+        },
+        "bySystem": {
+          "-": 122
+        },
+        "bucket": {
+          "train": 122
+        },
+        "twoModelPending": 122
+      }
+    },
+    "perTemplate": [
+      {
+        "templateId": "R1:ATLAS:dmy:0",
+        "admitted": 31,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R1:ATLAS:dmy:1",
+        "admitted": 32,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R1:ATLAS:dmy:2",
+        "admitted": 29,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R1:ATLAS:dmy:3",
+        "admitted": 24,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R1:ATLAS:dmy:4",
+        "admitted": 28,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R1:ATLAS:dmy:5",
+        "admitted": 31,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R1:ATLAS:dmy:6",
+        "admitted": 26,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R1:ATLAS:mdy:0",
+        "admitted": 38,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R1:ATLAS:mdy:1",
+        "admitted": 32,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R1:ATLAS:mdy:2",
+        "admitted": 29,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R1:ATLAS:mdy:3",
+        "admitted": 25,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R1:ATLAS:mdy:4",
+        "admitted": 29,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R1:ATLAS:mdy:5",
+        "admitted": 31,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R1:ATLAS:mdy:6",
+        "admitted": 24,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R1:BRIGHTDESK:dmy:0",
+        "admitted": 26,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R1:BRIGHTDESK:dmy:1",
+        "admitted": 27,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R1:BRIGHTDESK:dmy:2",
+        "admitted": 26,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R1:BRIGHTDESK:dmy:3",
+        "admitted": 29,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R1:BRIGHTDESK:dmy:4",
+        "admitted": 26,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R1:BRIGHTDESK:mdy:0",
+        "admitted": 24,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R1:BRIGHTDESK:mdy:1",
+        "admitted": 27,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R1:BRIGHTDESK:mdy:2",
+        "admitted": 26,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R1:BRIGHTDESK:mdy:3",
+        "admitted": 27,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R1:BRIGHTDESK:mdy:4",
+        "admitted": 26,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R1:VENDEX:dmy:0",
+        "admitted": 26,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R1:VENDEX:dmy:1",
+        "admitted": 27,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R1:VENDEX:dmy:2",
+        "admitted": 29,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R1:VENDEX:dmy:3",
+        "admitted": 26,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R1:VENDEX:dmy:4",
+        "admitted": 25,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R1:VENDEX:dmy:5",
+        "admitted": 31,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R1:VENDEX:dmy:6",
+        "admitted": 32,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R1:VENDEX:mdy:0",
+        "admitted": 27,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R1:VENDEX:mdy:1",
+        "admitted": 27,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R1:VENDEX:mdy:2",
+        "admitted": 29,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R1:VENDEX:mdy:3",
+        "admitted": 28,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R1:VENDEX:mdy:4",
+        "admitted": 25,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R1:VENDEX:mdy:5",
+        "admitted": 27,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R1:VENDEX:mdy:6",
+        "admitted": 25,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R2:live:0",
+        "admitted": 30,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R2:live:1",
+        "admitted": 27,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R2:live:2",
+        "admitted": 25,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R2:live:3",
+        "admitted": 28,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R2:live:4",
+        "admitted": 29,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R2:live:5",
+        "admitted": 37,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R2:void:0",
+        "admitted": 26,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R2:void:1",
+        "admitted": 31,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R2:void:2",
+        "admitted": 25,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R2:void:3",
+        "admitted": 27,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R2:void:4",
+        "admitted": 26,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R2:void:5",
+        "admitted": 29,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R3:BRIGHTDESK:same:0",
+        "admitted": 25,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R3:BRIGHTDESK:same:1",
+        "admitted": 28,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R3:BRIGHTDESK:same:2",
+        "admitted": 28,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R3:BRIGHTDESK:opposite:0",
+        "admitted": 25,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R3:BRIGHTDESK:opposite:1",
+        "admitted": 26,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R3:BRIGHTDESK:opposite:2",
+        "admitted": 28,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R3:ATLAS:same:0",
+        "admitted": 27,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R3:ATLAS:same:1",
+        "admitted": 26,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R3:ATLAS:same:2",
+        "admitted": 28,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R3:ATLAS:opposite:0",
+        "admitted": 31,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R3:ATLAS:opposite:1",
+        "admitted": 29,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R3:ATLAS:opposite:2",
+        "admitted": 28,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R3:LEDGR:same:0",
+        "admitted": 24,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R3:LEDGR:same:1",
+        "admitted": 25,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R3:LEDGR:same:2",
+        "admitted": 23,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R3:LEDGR:opposite:0",
+        "admitted": 25,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R3:LEDGR:opposite:1",
+        "admitted": 25,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R3:LEDGR:opposite:2",
+        "admitted": 28,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R3:KOBO:same:0",
+        "admitted": 27,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R3:KOBO:same:1",
+        "admitted": 25,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R3:KOBO:same:2",
+        "admitted": 26,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R3:KOBO:opposite:0",
+        "admitted": 27,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R3:KOBO:opposite:1",
+        "admitted": 25,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R3:KOBO:opposite:2",
+        "admitted": 29,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R4:restamped:0",
+        "admitted": 25,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R4:restamped:1",
+        "admitted": 28,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R4:restamped:2",
+        "admitted": 24,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R4:restamped:3",
+        "admitted": 23,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R4:reliable:0",
+        "admitted": 26,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R4:reliable:1",
+        "admitted": 26,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R4:reliable:2",
+        "admitted": 29,
+        "shortfall": 0
+      },
+      {
+        "templateId": "R4:reliable:3",
+        "admitted": 28,
+        "shortfall": 0
+      }
+    ],
+    "shortfalls": [],
+    "rejectsByReason": {
+      "bucket": 2477,
+      "copy-of-bed-sentence": 23,
+      "copy-of-source-template": 35,
+      "duplicate-text": 1,
+      "light-edit-of-source-template": 45,
+      "literal-system-name": 16,
+      "near-duplicate": 7,
+      "near-held-out-bed-template": 4,
+      "shape": 75,
+      "slots": 60
+    },
+    "rejectsTotal": 2602,
+    "r4WindowBalance": {
+      "reliable": {
+        "n": 228,
+        "windowed": 119,
+        "share": 0.5219
+      },
+      "restamped": {
+        "n": 253,
+        "windowed": 125,
+        "share": 0.4941
+      },
+      "gap": 0.0279,
+      "balanced": true
+    },
+    "r1": {
+      "yearFirstBySystem": {
+        "ATLAS": 46,
+        "BRIGHTDESK": 39,
+        "VENDEX": 40
+      },
+      "koboFlagLive": 36
+    },
+    "x1": {
+      "overall": {
+        "distinctSkeletons": 843,
+        "positives": 193,
+        "positivesWithoutAddressee": 0.6217616580310881,
+        "negatives": 650,
+        "negativesWithAddressee": 0.3830769230769231,
+        "byRole": {
+          "benign": 267,
+          "decoy": 121,
+          "hard-negative": 262,
+          "positive": 193
+        },
+        "form": {
+          "yes": {
+            "n": 193,
+            "endsWithStop": 0.7254,
+            "hasQuote": 0.1295,
+            "meanWords": 15.05
+          },
+          "no": {
+            "n": 650,
+            "endsWithStop": 0.6769,
+            "hasQuote": 0.1369,
+            "meanWords": 12.54
+          },
+          "stopGap": 0.0485,
+          "quoteGap": 0.0074,
+          "wordRatio": 1.2
+        }
+      },
+      "byFamily": {
+        "records": {
+          "distinctSkeletons": 322,
+          "positives": 50,
+          "positivesWithoutAddressee": 0.58,
+          "negatives": 272,
+          "negativesWithAddressee": 0.35661764705882354,
+          "byRole": {
+            "benign": 141,
+            "decoy": 55,
+            "hard-negative": 76,
+            "positive": 50
+          },
+          "form": {
+            "yes": {
+              "n": 50,
+              "endsWithStop": 0.72,
+              "hasQuote": 0.06,
+              "meanWords": 13.38
+            },
+            "no": {
+              "n": 272,
+              "endsWithStop": 0.6618,
+              "hasQuote": 0.114,
+              "meanWords": 11.42
+            },
+            "stopGap": 0.0582,
+            "quoteGap": 0.054,
+            "wordRatio": 1.172
+          }
+        },
+        "incident": {
+          "distinctSkeletons": 151,
+          "positives": 35,
+          "positivesWithoutAddressee": 0.7142857142857143,
+          "negatives": 116,
+          "negativesWithAddressee": 0.3620689655172414,
+          "byRole": {
+            "benign": 52,
+            "decoy": 16,
+            "hard-negative": 48,
+            "positive": 35
+          },
+          "form": {
+            "yes": {
+              "n": 35,
+              "endsWithStop": 0,
+              "hasQuote": 0.6,
+              "meanWords": 16.23
+            },
+            "no": {
+              "n": 116,
+              "endsWithStop": 0,
+              "hasQuote": 0.3707,
+              "meanWords": 13.12
+            },
+            "stopGap": 0,
+            "quoteGap": 0.2293,
+            "wordRatio": 1.237
+          }
+        },
+        "synth": {
+          "distinctSkeletons": 105,
+          "positives": 31,
+          "positivesWithoutAddressee": 0.5806451612903226,
+          "negatives": 74,
+          "negativesWithAddressee": 0.3783783783783784,
+          "byRole": {
+            "benign": 19,
+            "decoy": 16,
+            "hard-negative": 39,
+            "positive": 31
+          },
+          "form": {
+            "yes": {
+              "n": 31,
+              "endsWithStop": 1,
+              "hasQuote": 0.0323,
+              "meanWords": 14.94
+            },
+            "no": {
+              "n": 74,
+              "endsWithStop": 1,
+              "hasQuote": 0.0541,
+              "meanWords": 13.45
+            },
+            "stopGap": 0,
+            "quoteGap": 0.0218,
+            "wordRatio": 1.111
+          }
+        },
+        "runbook": {
+          "distinctSkeletons": 90,
+          "positives": 25,
+          "positivesWithoutAddressee": 0.6,
+          "negatives": 65,
+          "negativesWithAddressee": 0.4461538461538462,
+          "byRole": {
+            "benign": 23,
+            "decoy": 10,
+            "hard-negative": 32,
+            "positive": 25
+          },
+          "form": {
+            "yes": {
+              "n": 25,
+              "endsWithStop": 0.84,
+              "hasQuote": 0,
+              "meanWords": 14.4
+            },
+            "no": {
+              "n": 65,
+              "endsWithStop": 1,
+              "hasQuote": 0.0615,
+              "meanWords": 12.78
+            },
+            "stopGap": 0.16,
+            "quoteGap": 0.0615,
+            "wordRatio": 1.127
+          }
+        },
+        "codefix": {
+          "distinctSkeletons": 91,
+          "positives": 28,
+          "positivesWithoutAddressee": 0.6428571428571429,
+          "negatives": 63,
+          "negativesWithAddressee": 0.4126984126984127,
+          "byRole": {
+            "benign": 17,
+            "decoy": 12,
+            "hard-negative": 34,
+            "positive": 28
+          },
+          "form": {
+            "yes": {
+              "n": 28,
+              "endsWithStop": 1,
+              "hasQuote": 0,
+              "meanWords": 16.04
+            },
+            "no": {
+              "n": 63,
+              "endsWithStop": 1,
+              "hasQuote": 0.0476,
+              "meanWords": 12.67
+            },
+            "stopGap": 0,
+            "quoteGap": 0.0476,
+            "wordRatio": 1.266
+          }
+        },
+        "gameqa": {
+          "distinctSkeletons": 84,
+          "positives": 24,
+          "positivesWithoutAddressee": 0.625,
+          "negatives": 60,
+          "negativesWithAddressee": 0.45,
+          "byRole": {
+            "benign": 15,
+            "decoy": 12,
+            "hard-negative": 33,
+            "positive": 24
+          },
+          "form": {
+            "yes": {
+              "n": 24,
+              "endsWithStop": 1,
+              "hasQuote": 0,
+              "meanWords": 16.5
+            },
+            "no": {
+              "n": 60,
+              "endsWithStop": 0.9667,
+              "hasQuote": 0.0667,
+              "meanWords": 14.97
+            },
+            "stopGap": 0.0333,
+            "quoteGap": 0.0667,
+            "wordRatio": 1.102
+          }
+        }
+      },
+      "benignDistinct": 141,
+      "decoyDistinct": 55,
+      "benignAllFamiliesDistinct": 267
+    },
+    "input": {
+      "templates": 82,
+      "heldOutTemplates": [
+        "R1:ATLAS:dmy:7",
+        "R1:ATLAS:mdy:7",
+        "R1:BRIGHTDESK:dmy:5",
+        "R1:BRIGHTDESK:mdy:5",
+        "R1:VENDEX:dmy:7",
+        "R1:VENDEX:mdy:7",
+        "R2:live:6",
+        "R2:live:7",
+        "R2:void:6",
+        "R2:void:7",
+        "R3:BRIGHTDESK:same:3",
+        "R3:BRIGHTDESK:opposite:3",
+        "R3:ATLAS:same:3",
+        "R3:ATLAS:opposite:3",
+        "R3:LEDGR:same:3",
+        "R3:LEDGR:opposite:3",
+        "R3:KOBO:same:3",
+        "R3:KOBO:opposite:3",
+        "R4:restamped:4",
+        "R4:reliable:4"
+      ],
+      "heldOutCount": 20,
+      "violations": [],
+      "problems": []
+    }
+  },
+  "heldoutRegistry": {
+    "manifest": "experiments/kev-data/heldout-manifest.json",
+    "available": false,
+    "checked": 0,
+    "collisions": 0,
+    "reason": "manifest holds no skeleton hashes"
+  },
+  "deferred": [
+    {
+      "item": "two-model filter: Sonnet 5.5 and Opus 5.5, asked the port question zero-shot, must both recover each line's label (JUDGE-PROGRAM.md §2.3 rule 1)",
+      "owner": "hosted-arms",
+      "state": "every line is filters.twoModel = \"pending\"",
+      "ready": "briefsFor(line) builds the questions (node pools/train-pools.mjs briefs --pool DIR --out FILE), applyTwoModelVerdicts() applies the answers and logs both (apply-verdicts)"
+    },
+    {
+      "item": "comparison of pool skeletons with the heldout registry",
+      "owner": "heldout-author (manifest), then any build",
+      "state": "manifest holds no skeleton hashes",
+      "ready": "every pool skeleton is in the train bucket (§3.1 \"skeleton buckets 40-100%\"); the committed heldout manifest holds the registry digest and entry count but not the skeleton hashes, so the comparison runs where registry.json is readable (assembly): checkAgainstHeldoutManifest(lines, registry) and dropRegistryCollisions(lines, registry); it also runs here as soon as experiments/kev-data/heldout-manifest.json lists skeleton hashes"
+    }
+  ]
+}

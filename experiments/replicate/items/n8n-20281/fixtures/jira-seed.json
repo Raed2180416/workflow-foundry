@@ -1,0 +1,157 @@
+{
+ "schema": "rbench-n8n-20281-jira-seed/1",
+ "nextIssueNumber": 1100,
+ "note": "Tickets that exist before the stream. key = <project key>-<n>. `threadId` is the raw thread id of the mail thread the ticket belongs to (its label is derived with the author's convention).",
+ "tickets": [
+  {
+   "id": "S1",
+   "n": 1041,
+   "category": "Bug",
+   "summary": "Invoice PDF totals do not match line items",
+   "status": "In Progress",
+   "statusCategory": "indeterminate",
+   "threadId": "3417a582ea4bc6d3",
+   "provider": "g"
+  },
+  {
+   "id": "S2",
+   "n": 1042,
+   "category": "Bug",
+   "summary": "Pennywise connector sync stops overnight",
+   "status": "To Do",
+   "statusCategory": "new",
+   "threadId": "AAQkADNTzXg5RNBXv3wyfiJpXUR4Fb2qLtRboc0W-OeCvomGAAA=",
+   "provider": "o"
+  },
+  {
+   "id": "S3",
+   "n": 1043,
+   "category": "Bug",
+   "summary": "Notification emails arrive hours late",
+   "status": "In Progress",
+   "statusCategory": "indeterminate",
+   "threadId": "02fc87716ca4208b",
+   "provider": "g"
+  },
+  {
+   "id": "S4",
+   "n": 1044,
+   "category": "Bug",
+   "summary": "Receipt upload fails on Android",
+   "status": "To Do",
+   "statusCategory": "new",
+   "threadId": "AAQkADcffU23hPdm09m_HxmvTFkqbNfvwXgLrap_VFzaGKvgAAA=",
+   "provider": "o"
+  },
+  {
+   "id": "S5",
+   "n": 1045,
+   "category": "Issue",
+   "summary": "Cannot invite new accountant",
+   "status": "To Do",
+   "statusCategory": "new",
+   "threadId": "20a15651549116ef",
+   "provider": "g"
+  },
+  {
+   "id": "S6",
+   "n": 1046,
+   "category": "Issue",
+   "summary": "SSO group mapping question",
+   "status": "In Progress",
+   "statusCategory": "indeterminate",
+   "threadId": "AAQkADlYgykzMLZ3Ukt56pLSUFrHmqkiZjjcH6ujGWa6ytj7AAA=",
+   "provider": "o"
+  },
+  {
+   "id": "S7",
+   "n": 1047,
+   "category": "Issue",
+   "summary": "Statement shows old billing address",
+   "status": "To Do",
+   "statusCategory": "new",
+   "threadId": "8b409892de4338a8",
+   "provider": "g"
+  },
+  {
+   "id": "S8",
+   "n": 1048,
+   "category": "New Requirement",
+   "summary": "Approval workflow for invoices",
+   "status": "To Do",
+   "statusCategory": "new",
+   "threadId": "AAQkADrOE2vpqjPGtszWyb-01n7JnNL5eQTHgC8lqi78uSErAAA=",
+   "provider": "o"
+  },
+  {
+   "id": "S9",
+   "n": 1049,
+   "category": "New Requirement",
+   "summary": "Export reports to XLSX",
+   "status": "To Do",
+   "statusCategory": "new",
+   "threadId": "b8ac36a396fb0cc3",
+   "provider": "g"
+  },
+  {
+   "id": "S10",
+   "n": 1050,
+   "category": "New Requirement",
+   "summary": "Customer portal for invoices",
+   "status": "To Do",
+   "statusCategory": "new",
+   "threadId": "AAQkADxf38D6THsF8HCwr7rDOCN68_JzMaFEkrLmeo6o7pdaAAA=",
+   "provider": "o"
+  },
+  {
+   "id": "S11",
+   "n": 1021,
+   "category": "Bug",
+   "summary": "Login loop on Safari",
+   "status": "Done",
+   "statusCategory": "done",
+   "threadId": "703970e62688e1ff",
+   "provider": "g"
+  },
+  {
+   "id": "S12",
+   "n": 1022,
+   "category": "New Requirement",
+   "summary": "CSV import for contacts",
+   "status": "Done",
+   "statusCategory": "done",
+   "threadId": "AAQkAD68eobubNJjCvfW38-Se3I8vIvwx2ZA6OeOF9HGqipbAAA=",
+   "provider": "o"
+  },
+  {
+   "id": "S13",
+   "n": 1030,
+   "category": "Issue",
+   "summary": "Unrelated: invoice numbering gap",
+   "status": "In Progress",
+   "statusCategory": "indeterminate",
+   "threadId": "be48c6cd0fa0811c",
+   "provider": "g"
+  },
+  {
+   "id": "S14",
+   "n": 1031,
+   "category": "Bug",
+   "summary": "Unrelated: PDF font missing on Windows",
+   "status": "To Do",
+   "statusCategory": "new",
+   "threadId": "723e23b0bd7bdfa3",
+   "provider": "g"
+  },
+  {
+   "id": "S15",
+   "n": 1032,
+   "category": "New Requirement",
+   "summary": "Unrelated: Slack integration",
+   "status": "To Do",
+   "statusCategory": "new",
+   "threadId": "a4cd66a0f1c11572",
+   "provider": "g"
+  }
+ ]
+}

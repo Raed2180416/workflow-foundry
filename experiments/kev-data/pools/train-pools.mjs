@@ -8,7 +8,7 @@
 // The lines are AUTHORED by a development agent (experiments/kev-data/pools/authored/*.mjs). Labels
 // are inherited from the brief a line was written to, never assigned by a model. The two-model
 // filter (Sonnet 5.5 and Opus 5.5 must both recover the label zero-shot, §2.3 rule 1) is deferred to
-// the hosted-arms group: every line carries filters.twoModel = "pending", filterBrief() builds the
+// the hosted-arms group: every line carries filters.twoModel = "pending", briefsFor() builds the
 // zero-shot question for it and applyTwoModelVerdicts() applies the answers (reject log included).
 // What runs here is the deterministic local filter (pools/filters.mjs).
 //
@@ -28,7 +28,7 @@ import { freezeBeds, frozenBeds } from '../lib/pin.mjs';
 import { canonical, sentences, skeleton, skeletonBucket, skeletonPercent } from '../lib/hash.mjs';
 import { defaultMasks } from '../lib/leakage.mjs';
 import { renderQuestion } from '../lib/render.mjs';
-import { SLOT_VOCABULARY, SYSTEMS, assertInputClean, canonicalValues, extractTemplates, fillLine, paraphraseInput, slotsOf, templateSkeleton } from './templates.mjs';
+import { SLOT_VOCABULARY, SYSTEMS, assertInputClean, canonicalValues, extractTemplates, fillLine, paraphraseInput, slotsOf, systemFor, templateSkeleton } from './templates.mjs';
 import { ADDRESSEE_REGEX_SOURCE, grams, hasAddressee, isWindowed, jaccardSets, jaccard1, literalDates, literalSystemNames, maxJaccard4, prepGrams, shapeProblems, sourceStrings } from './filters.mjs';
 
 export const POOLS_VERSION = 1;
@@ -43,9 +43,10 @@ export const TRAIN_FAMILIES = Object.freeze(['records', 'incident', 'synth', 'ru
 export const CUT_LINE_FAMILIES = Object.freeze(['codefix', 'gameqa', 'runbook']);   // plan cutLine: X1 pools for these may be cut
 // Thresholds of the local copy filters (4-gram Jaccard). The program's OOD copy filter is 0.3 against
 // train-pool lines; for train-pool lines themselves the comparisons below are the paraphrase checks.
-export const THRESHOLDS = Object.freeze({ copyOfSource: 0.5, heldOutTemplate: 0.5, bedSentence: 0.5, nearDuplicateUnigram: 0.85, windowShareTolerance: 0.05 });
+export const THRESHOLDS = Object.freeze({ copyOfSource: 0.5, copyOfSourceUnigram: 0.85, heldOutTemplate: 0.5, bedSentence: 0.5, nearDuplicateUnigram: 0.85, windowShareTolerance: 0.05 });
 
 const sha = x => createHash('sha256').update(x).digest('hex');
+const R = (n, d = 4) => (n === null || n === undefined ? null : Number(n.toFixed(d)));
 export const sha256File = file => sha(readFileSync(file));
 const MASKS = () => defaultMasks();
 export const lineSkeleton = text => skeleton(sentences(text).join(' '), MASKS());
@@ -169,7 +170,7 @@ export function screen(candidates, { templates, bedStrings = [], thresholds = TH
     const reasons = [], extra = {};
     const text = c.text;
     const multi = c.port === 'X1' ? 3 : 1;
-    for (const p of shapeProblems(text, { maxSentences: multi, minChars: c.port === 'X1' ? 8 : 12, maxChars: c.port === 'X1' ? 600 : 480, requireTerminal: c.port !== 'X1' })) reasons.push(`shape:${p}`);
+    for (const p of shapeProblems(text, { maxSentences: multi, minChars: c.port === 'X1' ? 8 : 12, maxChars: c.port === 'X1' ? 600 : 480, requireTerminal: c.port !== 'X1' && c.port !== 'X5' })) reasons.push(`shape:${p}`);
     const slots = slotsOf(text);
     if (c.expectSlots) {
       if (slots.length !== c.expectSlots.length || slots.some((s, i) => s !== c.expectSlots[i])) { reasons.push('slots'); extra.slots = { got: slots, want: c.expectSlots }; }
@@ -189,14 +190,20 @@ export function screen(candidates, { templates, bedStrings = [], thresholds = TH
       if (!w && lit >= 2) reasons.push('window:literal-date-range');
       if (c.window === 'yes' && !w) reasons.push('window:expected-window'); if (c.window === 'no' && (w || w0 || w1)) reasons.push('window:unexpected-window');
     }
-    if (c.port === 'X1' || c.port === 'X5') { /* no placeholders; handled via allow = [] */ }
+    if (c.port === 'X5') {   // the {assumption} slot of Q0-Q3 takes a clause
+      if (/[.!?]$/.test(text)) reasons.push('x5:trailing-full-stop');
+      if (/^[A-Z][a-z]/.test(text)) reasons.push('x5:capitalised-start');
+    }
     const sk = lineSkeleton(text), bucket = skeletonBucket(sk);
     if (trainBucketOnly && bucket !== 'train') reasons.push(`bucket:${bucket}`);
     if (heldOutSk.has(sk)) { reasons.push('skeleton-of-held-out-bed-template'); extra.heldOut = heldOutSk.get(sk); }
     const g = grams(text, 4);
     if (c.port.startsWith('R')) {
       const src = c.templateId ? byId.get(c.templateId) : null;
-      if (src) { const j = jaccardSets(g, grams(src.text, 4)); if (j >= thresholds.copyOfSource) { reasons.push('copy-of-source-template'); extra.copy = Number(j.toFixed(3)); } }
+      if (src) {
+        const j = jaccardSets(g, grams(src.text, 4)); if (j >= thresholds.copyOfSource) { reasons.push('copy-of-source-template'); extra.copy = Number(j.toFixed(3)); }
+        const u = jaccard1(text, src.text); if (u >= thresholds.copyOfSourceUnigram) { reasons.push('light-edit-of-source-template'); extra.lightEdit = Number(u.toFixed(3)); }   // a word or two changed is not a paraphrase
+      }
       let best = 0, at = null; for (const h of heldOutGrams) { const j = jaccardSets(g, h.grams); if (j > best) { best = j; at = h.id; } }
       if (best >= thresholds.heldOutTemplate) { reasons.push('near-held-out-bed-template'); extra.nearHeldOut = { id: at, jaccard: Number(best.toFixed(3)) }; }
     }
@@ -282,8 +289,21 @@ export function addresseeStats(lines) {
   const frac = (rows, f) => (rows.length ? rows.filter(f).length / rows.length : null);
   return { positives: pos.length, positivesWithoutAddressee: frac(pos, l => !l.addressee), negatives: neg.length, negativesWithAddressee: frac(neg, l => l.addressee) };
 }
+// Surface shortcuts of one label's lines: share ending in a full stop / question / exclamation mark, share
+// containing a quote character, mean words. The shortcut-audit group runs the real partial-input battery;
+// these are the cheap guards the pool is checked against before it ships.
+export function formStats(rows) {
+  if (!rows.length) return { n: 0, endsWithStop: null, hasQuote: null, meanWords: null };
+  const share = f => rows.filter(f).length / rows.length;
+  return { n: rows.length, endsWithStop: R(share(l => /[.!?]$/.test(l.text))), hasQuote: R(share(l => /["'“”]/.test(l.text))), meanWords: R(rows.reduce((a, l) => a + l.text.split(/\s+/).length, 0) / rows.length, 2) };
+}
+export function formGap(rows) {
+  const yes = formStats(rows.filter(l => l.label === 'yes')), no = formStats(rows.filter(l => l.label === 'no'));
+  if (!yes.n || !no.n) return null;
+  return { yes, no, stopGap: R(Math.abs(yes.endsWithStop - no.endsWithStop)), quoteGap: R(Math.abs(yes.hasQuote - no.hasQuote)), wordRatio: R(Math.max(yes.meanWords, no.meanWords) / Math.min(yes.meanWords, no.meanWords), 3) };
+}
 export function x1Stats(lines) {
-  const stat = rows => ({ distinctSkeletons: new Set(rows.map(l => l.skeleton)).size, ...addresseeStats(rows), byRole: tally(rows, l => l.role) });
+  const stat = rows => ({ distinctSkeletons: new Set(rows.map(l => l.skeleton)).size, ...addresseeStats(rows), byRole: tally(rows, l => l.role), form: formGap(rows) });
   const byFamily = {}; for (const f of TRAIN_FAMILIES) byFamily[f] = stat(lines.filter(l => l.family === f));
   const records = lines.filter(l => l.family === 'records');
   return {
@@ -317,6 +337,12 @@ export function checkAgainstHeldoutManifest(lines, manifest) {
   }
   return { available: true, checked: hashes.size, collisions };
 }
+// For the one group allowed to read the registry (assembly): drop the pool lines whose skeleton window equals a
+// registered held-out span, and say which were dropped. `registry` is SpanRegistry.toJSON() output.
+export function dropRegistryCollisions(lines, registry) {
+  const r = checkAgainstHeldoutManifest(lines, registry), bad = new Set(r.collisions.map(c => c.id));
+  return { kept: lines.filter(l => !bad.has(l.id)), dropped: lines.filter(l => bad.has(l.id)).map(l => l.id), available: r.available, checked: r.checked };
+}
 export function loadHeldoutManifest(file = HELDOUT_MANIFEST_PATH) {
   if (!existsSync(file)) return null;
   try { return JSON.parse(readFileSync(file, 'utf8')); } catch { return null; }
@@ -336,37 +362,62 @@ export function providerLists(lines, valuesFor) {
 }
 
 // ---- the deferred two-model filter ---------------------------------------------------------------
-// The zero-shot brief for a line: the port question and state a model is asked, and the label the line
-// was written to. Both models must answer `expected` for the line to be admitted.
-export function filterBrief(line, { contracts = loadSpec().contracts, consts = {} } = {}) {
-  const v = canonicalValues(line, consts);
-  const q = (port, slots, wording = 'Q0') => renderQuestion(contracts[port], { wording, slots });
-  let state, question;
-  if (line.port === 'R1' || line.port === 'R3' || line.port === 'R4') {
-    const S = line.system ?? v.S; const text = fillLine(line, { ...v, S });
-    state = { system: S, source_note: text };
-    question = q(line.port, line.port === 'R4' ? { system: S === 'ATLAS' || S === 'VENDEX' ? 'BRIGHTDESK' : S, field: v.field } : { system: S }, 'Q0');
-    if (line.port === 'R4') { state.system = S === 'ATLAS' || S === 'VENDEX' ? 'BRIGHTDESK' : S; state.source_note = fillLine(line, { ...v, S: state.system, field: consts.UPDATE_FIELD?.[state.system] ?? v.field }); question = q('R4', { system: state.system, field: consts.UPDATE_FIELD?.[state.system] ?? v.field }); }
-  } else if (line.port === 'R2') {
-    const S = line.system ?? 'LEDGR'; const vv = canonicalValues({ ...line, system: S }, consts);
-    state = { system: S, marker: vv.token, source_note: fillLine(line, { ...vv, S }) };
-    question = q('R2', { system: S, value: vv.token });
-  } else if (line.port === 'X1') {
-    state = { source_kind: line.sourceKind, text: line.text };
-    question = q('X1', {});
-  } else throw new Error(`filterBrief: no brief for port ${line.port}`);
-  return { id: line.id, port: line.port, expected: line.label, question, state };
+// §2.3 rule 1: a pool line is admitted only if BOTH Sonnet 5.5 and Opus 5.5, asked the port question
+// zero-shot, recover the label the line was written to. That needs hosted calls, so it belongs to the
+// hosted-arms group: every line carries filters.twoModel = "pending". This module builds the briefs and
+// applies the verdicts (a filter on text, never a labeller).
+//   briefsFor(line)         the zero-shot questions for a line: {id, lineId, port, expected, question, state}.
+//                           One brief for R1-R4 and X1; two for X5 (the assumption must be confirmed ("holds")
+//                           by a source sentence that states the convention and contradicted ("violated") by
+//                           one that states the opposite, so a line is admitted only if it really asserts the
+//                           convention it was written for).
+//   applyTwoModelVerdicts   verdicts [{id: briefId, sonnet, opus}] -> {admitted, rejected, pending}
+const ORDER_WORDS = { dmy: 'day/month/year', mdy: 'month/day/year', ymd: 'year/month/day' };
+// The sentence a brief appends when a line names another system's order ({ref}) whose own sentence lives
+// elsewhere in a real note: the zero-shot reader needs it to decide.
+const refSentence = (ref, order) => `Numeric birth dates in ${ref} are ${ORDER_WORDS[order]}.`;
+export function briefsFor(line, { contracts = loadSpec().contracts, consts = {} } = {}) {
+  const ask = (port, slots) => renderQuestion(contracts[port], { wording: 'Q0', slots });
+  const one = (id, expected, port, question, state) => ({ id, lineId: line.id, port, expected, question, state });
+  if (line.port === 'X1') return [one(line.id, line.label, 'X1', ask('X1', {}), { source_kind: line.sourceKind, text: line.text })];
+  if (line.port === 'R1' || line.port === 'R2' || line.port === 'R3' || line.port === 'R4') {
+    const S = systemFor(line), v = canonicalValues({ ...line, system: S }, consts);
+    const fields = { ...v, S, ...(line.port === 'R4' ? { field: consts.UPDATE_FIELD?.[S] ?? v.field } : {}) };
+    let note = fillLine(line, fields);
+    if (line.port === 'R1' && line.slots.includes('ref')) note += ` ${refSentence(fields.ref, line.label)}`;
+    if (line.port === 'R1') return [one(line.id, line.label, 'R1', ask('R1', { system: S }), { system: S, source_note: note })];
+    if (line.port === 'R2') return [one(line.id, line.label, 'R2', ask('R2', { system: S, value: v.token }), { system: S, marker: v.token, source_note: note })];
+    if (line.port === 'R3') return [one(line.id, line.label, 'R3', ask('R3', { system: S }), { system: S, source_note: note })];
+    return [one(line.id, line.label, 'R4', ask('R4', { system: S }), { system: S, source_note: note })];
+  }
+  if (line.port === 'X5') {
+    const port = line.assertsPort, S = systemFor(line), v = canonicalValues({ ...line, system: S }, consts), field = consts.UPDATE_FIELD?.[S] ?? v.field;
+    const assumption = fillLine(line, { ...v, S, field });
+    const stating = {
+      R1: o => `${S} writes numeric birth dates ${ORDER_WORDS[o]}.`,
+      R2: o => (o === 'void' ? `${v.token} marks a void row in ${S}; such rows must not be migrated.` : `${v.token} marks a live account in ${S}; such rows must be migrated.`),
+      R3: o => (o === 'same' ? `${S} prints balances the same way as the master; the sign is kept.` : `${S} prints balances the opposite way to the master; the sign is flipped.`),
+      R4: o => (o === 'reliable' ? `The ${field} of ${S} is the real date of the last change.` : `The ${field} of ${S} is only a copy date, not a change date.`),
+    }[port];
+    const opposite = { R1: { dmy: 'mdy', mdy: 'dmy', ymd: 'dmy' }, R2: { void: 'live', live: 'void' }, R3: { same: 'opposite', opposite: 'same' }, R4: { reliable: 'restamped', restamped: 'reliable' } }[port][line.label];
+    const q = renderQuestion(contracts.X5, { wording: 'Q0', slots: { assumption } });
+    return [one(`${line.id}/holds`, 'holds', 'X5', q, { source_text: stating(line.label) }), one(`${line.id}/violated`, 'violated', 'X5', q, { source_text: stating(opposite) })];
+  }
+  throw new Error(`briefsFor: no brief for port ${line.port}`);
 }
-// verdicts: [{id, sonnet, opus}] (the option each model chose, zero-shot). A line is admitted only if
-// both recovered `label`. Lines without a verdict stay pending. The reject log lists both answers.
-export function applyTwoModelVerdicts(lines, verdicts) {
+// verdicts: [{id, sonnet, opus}], id a brief id (a line id for single-brief lines): the option each model
+// chose. A line is admitted only if both models answered every one of its briefs with the expected label.
+// A line with a missing verdict stays pending. The reject log lists both answers per brief.
+export function applyTwoModelVerdicts(lines, verdicts, { briefs = l => briefsFor(l) } = {}) {
   const by = new Map(verdicts.map(v => [v.id, v]));
   const admitted = [], rejected = [], pending = [];
   for (const l of lines) {
-    const v = by.get(l.id);
-    if (!v) { pending.push(l); continue; }
-    if (v.sonnet === l.label && v.opus === l.label) admitted.push({ ...l, filters: { ...l.filters, twoModel: 'passed' } });
-    else rejected.push({ id: l.id, port: l.port, templateId: l.templateId, label: l.label, text: l.text, reasons: ['two-model'], answers: { sonnet: v.sonnet ?? null, opus: v.opus ?? null } });
+    const bs = briefs(l), got = bs.map(b => [b, by.get(b.id)]);
+    if (got.some(([, v]) => !v)) { pending.push(l); continue; }
+    const bad = got.filter(([b, v]) => v.sonnet !== b.expected || v.opus !== b.expected);
+    if (!bad.length) admitted.push({ ...l, filters: { ...l.filters, twoModel: 'passed' } });
+    else rejected.push({ id: l.id, port: l.port, templateId: l.templateId ?? null, label: l.label, text: l.text, reasons: ['two-model'],
+      answers: Object.fromEntries(got.map(([b, v]) => [b.id, { expected: b.expected, sonnet: v.sonnet ?? null, opus: v.opus ?? null }])) });
   }
   return { admitted, rejected, pending };
 }
@@ -394,7 +445,7 @@ export async function buildTrainPools({ root = REPO_ROOT, beds = null, authoredD
     frozen = freezeBeds(root, { outRoot: tmp }); beds = frozenBeds(frozen);
   }
   try {
-    const { templates, extent, source, consts } = await extractTemplates(beds);
+    const { templates, extent, source, sources, consts } = await extractTemplates(beds);
     const { data: authored, digest: authoredDigest } = await loadAuthored(authoredDir);
     const { candidates, problems, input } = buildCandidates({ templates, authored });
     const x = (await import('./x-pools.mjs')).buildXCandidates({ authored });
@@ -404,12 +455,14 @@ export async function buildTrainPools({ root = REPO_ROOT, beds = null, authoredD
     const corpus = bedSourceStrings(beds);
     const { admitted, rejects } = screen(candidates, { templates, bedStrings: corpus.strings });
     const lines = linkTwins(admitted.map(toLine)).sort((a, b) => (a.id < b.id ? -1 : 1));
+    // a filled example of every R and X5 line (deterministic values), so that readers who compare wording (the
+    // heldout copy filter, the shortcut audit) see a sentence and not placeholders
+    for (const l of lines) if (l.slots.length) l.example = fillLine(l, canonicalValues(l, consts));
     const pools = Object.fromEntries(POOL_PORTS.map(p => [p, lines.filter(l => l.port === p)]));
-    return { pools, rejects, problems, violations, input, templates, extent, consts, source, authoredDigest, corpusDigest: corpus.digest, bedPin: beds.pin, bedCommit: beds.commit, heldoutManifest: loadHeldoutManifest(heldoutManifestPath) };
+    return { pools, rejects, problems, violations, input, templates, extent, consts, source, authoredDigest, corpusDigest: corpus.digest, sources, bedPin: beds.pin, bedCommit: beds.commit, heldoutManifest: loadHeldoutManifest(heldoutManifestPath) };
   } finally { if (tmp) rmSync(tmp, { recursive: true, force: true }); }
 }
 
-const R = (n, d = 4) => (n === null || n === undefined ? null : Number(n.toFixed(d)));
 export function summarize(res) {
   const { pools, rejects, input, templates, violations, problems } = res;
   const ports = {};
@@ -436,7 +489,7 @@ export function manifestOf(res, outDirFiles) {
     schema: 'kev-data/train-pools-manifest/1', group: 'train-pools', version: POOLS_VERSION,
     status: 'development evidence: authored by a development agent; the two-model filter (Sonnet 5.5 + Opus 5.5 zero-shot) is deferred to the hosted-arms group and every line is filters.twoModel = "pending"',
     author: 'claude-sonnet-5-5 (development agent, this build session)',
-    bed: { pin: res.bedPin, note: 'content hash of the nine dev beds; the pool depends only on the consumed sources below', sources: { [res.source.file]: res.source.sha256, ...res.corpusDigest } },
+    bed: { pin: res.bedPin, note: 'content hash of the nine dev beds; the pool depends only on the consumed sources below', sources: { ...res.sources, ...res.corpusDigest } },
     authored: res.authoredDigest,
     slotVocabulary: SLOT_VOCABULARY,
     addresseeRegex: ADDRESSEE_REGEX_SOURCE,
@@ -444,7 +497,12 @@ export function manifestOf(res, outDirFiles) {
     outputs: outDirFiles,
     summary: s,
     heldoutRegistry: { manifest: 'experiments/kev-data/heldout-manifest.json', available: ho.available, checked: ho.checked, collisions: ho.collisions.length, reason: ho.reason ?? null },
-    deferred: [],
+    deferred: [
+      { item: 'two-model filter: Sonnet 5.5 and Opus 5.5, asked the port question zero-shot, must both recover each line\'s label (JUDGE-PROGRAM.md §2.3 rule 1)', owner: 'hosted-arms',
+        state: 'every line is filters.twoModel = "pending"', ready: 'briefsFor(line) builds the questions (node pools/train-pools.mjs briefs --pool DIR --out FILE), applyTwoModelVerdicts() applies the answers and logs both (apply-verdicts)' },
+      ...(ho.available ? [] : [{ item: 'comparison of pool skeletons with the heldout registry', owner: 'heldout-author (manifest), then any build', state: ho.reason,
+        ready: 'every pool skeleton is in the train bucket (§3.1 "skeleton buckets 40-100%"); the committed heldout manifest holds the registry digest and entry count but not the skeleton hashes, so the comparison runs where registry.json is readable (assembly): checkAgainstHeldoutManifest(lines, registry) and dropRegistryCollisions(lines, registry); it also runs here as soon as experiments/kev-data/heldout-manifest.json lists skeleton hashes' }]),
+    ],
   };
 }
 
@@ -478,15 +536,15 @@ async function main(argv) {
   if (cmd === 'briefs') {
     const dir = path.resolve(arg(argv, '--pool')), out = path.resolve(arg(argv, '--out'));
     const res = await buildTrainPools(); const consts = res.consts;
-    const lines = POOL_PORTS.filter(p => p !== 'X5').flatMap(p => loadTrainPool(dir, p));
-    writeFileSync(out, jsonl(lines.map(l => filterBrief(l, { consts }))));
-    console.log(`${lines.length} briefs -> ${out}`); return;
+    const lines = POOL_PORTS.flatMap(p => loadTrainPool(dir, p)), briefs = lines.flatMap(l => briefsFor(l, { consts }));
+    writeFileSync(out, jsonl(briefs));
+    console.log(`${lines.length} lines, ${briefs.length} briefs -> ${out}`); return;
   }
   if (cmd === 'apply-verdicts') {
     const dir = path.resolve(arg(argv, '--pool')), out = path.resolve(arg(argv, '--out')), verdicts = readJsonl(path.resolve(arg(argv, '--verdicts')));
-    mkdirSync(out, { recursive: true }); const rejected = [];
+    mkdirSync(out, { recursive: true }); const rejected = [], consts = (await buildTrainPools()).consts;
     for (const p of POOL_PORTS) {
-      const r = applyTwoModelVerdicts(loadTrainPool(dir, p), verdicts);
+      const r = applyTwoModelVerdicts(loadTrainPool(dir, p), verdicts, { briefs: l => briefsFor(l, { consts }) });
       writeFileSync(path.join(out, `${p}.jsonl`), jsonl([...r.admitted, ...r.pending].sort((a, b) => (a.id < b.id ? -1 : 1)))); rejected.push(...r.rejected);
     }
     writeFileSync(path.join(out, 'two-model-rejects.jsonl'), jsonl(rejected)); console.log(`${rejected.length} lines rejected by the two-model filter`); return;

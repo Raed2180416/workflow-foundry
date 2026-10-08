@@ -32,6 +32,7 @@ const put = (file, body) => { mkdirSync(path.dirname(file), { recursive: true })
 export function serializeUnit(u) {
   const o = { id: u.id, port: u.port, role: u.role, label: u.label ?? null, slice: u.slice, status: u.status, text: u.text };
   for (const k of ['labels', 'assumption', 'pairId', 'kind', 'value', 'assumptionValue', 'ns', 'about', 'target', 'sourceKind', 'type_label', 'venue', 'title', 'items']) if (u[k] !== undefined && u[k] !== null) o[k] = u[k];
+  if (u.proxy) o.proxy = u.proxy;
   Object.assign(o, { register: u.register, systems: u.systems, tags: u.tagMap, hard: u.hard, features: u.features, skeleton: u.skeleton, source: u.source, filter: u.filter ?? null });
   return o;
 }
@@ -90,6 +91,7 @@ export function buildManifest(model, outDir = HELDOUT_DIR, { spec = loadSpec() }
     files: describeFiles(outDir),
     wordings: { perPort: wordings, digest: sha(canonical(model.wordings.map(({ port, id, slice, text }) => ({ port, id, slice, text })).sort((a, b) => (`${a.port}/${a.slice}/${a.id}` < `${b.port}/${b.slice}/${b.id}` ? -1 : 1)))) },
     pools: model.stats,
+    localDiagnostics: { note: 'author-side proxy only; the 40% probe-hard quota is measured by shortcut-audit with the train-fitted probe (deferred)', shares: localDiagnostics(model.surface) },
     surfaceUnits: Object.fromEntries(HELDOUT_SURFACE_PORTS.map(p => [p, model.surface[p].length])),
     status: statusCounts(model.surface),
     cities: { n: model.cities.length, mdy: model.cities.filter(c => c.order === 'mdy').length, dmy: model.cities.filter(c => c.order === 'dmy').length },
@@ -102,6 +104,22 @@ export function buildManifest(model, outDir = HELDOUT_DIR, { spec = loadSpec() }
     namedRegisters: NAMED_REGISTERS,
     isolation: 'Written from spec/ports.json and JUDGE-PROGRAM.md only. No file under beds/, no frozen copy and no training pool was read by the author; copy-filter.mjs reads them and reports ids and counts.',
   };
+}
+// Author-side diagnostics (NOT the shortcut-audit measure): per port and slice, among the selected decisive lines,
+// the share the author tagged as hard (neg / ctr / wr / cmp) and the shares a local cross-slice bag-of-words probe
+// and a contract-derived keyword rule miss (hardness.mjs). The audit's train-fitted probe governs the 40% quota.
+export function localDiagnostics(surface) {
+  const out = {};
+  for (const [port, units] of Object.entries(surface)) {
+    const sel = units.filter(u => u.role === 'decisive' && ['pending-filter', 'admitted'].includes(u.status) && u.proxy);
+    if (!sel.length) continue;
+    out[port] = {};
+    for (const slice of OOD_SLICES) {
+      const t = sel.filter(u => u.slice === slice), n = t.length || 1, pct = k => Number((t.filter(k).length / n).toFixed(3));
+      out[port][slice] = { n: t.length, declaredHard: pct(u => u.hard.length > 0), probeWrong: pct(u => u.proxy.probeWrong), ruleWrong: pct(u => u.proxy.ruleWrong), probeAndRuleWrong: pct(u => u.proxy.hard) };
+    }
+  }
+  return out;
 }
 export function writeManifest(manifest, file = MANIFEST_PATH) { put(file, JSON.stringify(manifest, null, 1) + '\n'); return file; }
 

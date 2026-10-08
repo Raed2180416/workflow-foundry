@@ -18,7 +18,7 @@ export function scenarioList(task) {
 export function createEnv(task) {
   const list = scenarioList(task);
   const cfg = CONFIG;
-  let si = 0, stepIdx = -1, world = null, current = null, runsInBlock = 0, callsInRun = 0, blockOpen = false, blockCapped = false, skipped = [], done = false, last = null;
+  let si = 0, stepIdx = -1, world = null, current = null, runsInBlock = 0, blockBudget = 0, callsInRun = 0, blockOpen = false, blockCapped = false, skipped = [], done = false, last = null;
   let records = [], sr = null, runRec = null, episode = [];
 
   const startScenario = i => {
@@ -33,6 +33,7 @@ export function createEnv(task) {
   const openStep = i => {
     stepIdx = i; runsInBlock = 0; blockOpen = true; blockCapped = false; skipped = [];
     for (const a of list[si].steps[i].actions) { const r = world.ui(a); if (r.skipped) skipped.push(r.skipped); }
+    blockBudget = LIMITS.runsPerQuiescence * Math.max(1, world.queue.length);   // 20 runs per originating change
   };
   const closeBlock = () => {
     sr.steps.push({ label: list[si].steps[stepIdx].label, state: world.dump(), refs: clone(world.refs), capped: blockCapped, runs: runsInBlock, skipped });
@@ -42,7 +43,7 @@ export function createEnv(task) {
     for (;;) {
       if (current) return;
       if (world.queue.length) {
-        if (runsInBlock >= LIMITS.runsPerQuiescence) { blockCapped = true; world.queue.length = 0; continue; }
+        if (runsInBlock >= blockBudget) { blockCapped = true; world.queue.length = 0; continue; }
         current = world.queue.shift(); runsInBlock++; callsInRun = 0; sr.runs++;
         runRec = { step: stepIdx, seq: current.seq, trigger: current.trigger, origin: current.actor === 'api' ? 'api' : 'ui' };
         sr.events.push({ ...runRec, data: current.data });
@@ -83,10 +84,10 @@ export function createEnv(task) {
       return out({ outcome: 'call', status: response.status });
     },
     actions: () => (done ? [] : [...API_OPS, 'done'].sort()),
-    snapshot: () => clone({ si, stepIdx, world: world.snapshot(), current, runsInBlock, callsInRun, blockOpen, blockCapped, skipped, done, last, records, runRec, episode }),
+    snapshot: () => clone({ si, stepIdx, world: world.snapshot(), current, runsInBlock, blockBudget, callsInRun, blockOpen, blockCapped, skipped, done, last, records, runRec, episode }),
     restore(s) {
       const c = clone(s);
-      si = c.si; stepIdx = c.stepIdx; current = c.current; runsInBlock = c.runsInBlock; callsInRun = c.callsInRun; blockOpen = c.blockOpen; blockCapped = c.blockCapped; skipped = c.skipped;
+      si = c.si; stepIdx = c.stepIdx; current = c.current; runsInBlock = c.runsInBlock; blockBudget = c.blockBudget; callsInRun = c.callsInRun; blockOpen = c.blockOpen; blockCapped = c.blockCapped; skipped = c.skipped;
       done = c.done; last = c.last; records = c.records; runRec = c.runRec; episode = c.episode;
       world = new World({ cfg, seed: task.seed, scenarioId: list[si].id }); world.restore(c.world);
       sr = records[si];
@@ -136,7 +137,7 @@ export async function drive(task, handler) {
   const env = createEnv(task);
   let obs = env.reset();
   const handlerErrors = [];
-  const api = makeApi((name, args) => Promise.resolve(clone(env.step({ call: name, args: clone(args ?? {}) }).observation.response)));
+  const api = makeApi((name, args) => clone(env.step({ call: name, args: clone(args ?? {}) }).observation.response));   // calls are synchronous; `await` on them is harmless
   while (!obs.done) {
     try { await handler(clone(obs.event), api); } catch (e) { handlerErrors.push(String(e?.message ?? e).slice(0, 200)); }
     obs = env.step({ call: 'done' }).observation;
@@ -156,5 +157,23 @@ export function policyHandler(policy, { maxSteps = LIMITS.callsPerRun } = {}) {
       const response = api[svc]?.[op] ? api[svc][op](next.args) : { status: 400, body: { error: 'UNKNOWN_CALL' } };
       history.push({ call: next.call, args: next.args, response });
     }
+  };
+}
+
+// The reverse transform, to show the pure-policy protocol can express any sync handler: policyFromHandler(h) is a pure function of
+// {event, history} that replays h against the recorded responses and returns the first call it makes beyond the history (or done).
+// h must be deterministic in its calls and must not swallow exceptions.
+export function policyFromHandler(handler) {
+  return ({ event, history }) => {
+    let i = 0;
+    const api = makeApi((name, args) => {
+      if (i < history.length) {
+        const h = history[i++];
+        if (h.call !== name || JSON.stringify(h.args ?? {}) !== JSON.stringify(args ?? {})) throw new Error('handler is not deterministic in its calls');
+        return clone(h.response);
+      }
+      throw Object.assign(new Error('NEED_CALL'), { need: { call: name, args: clone(args ?? {}) } });
+    });
+    try { handler(clone(event), api); return { done: true }; } catch (e) { if (e.need) return e.need; throw e; }
   };
 }

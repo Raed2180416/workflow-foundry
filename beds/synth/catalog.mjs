@@ -188,9 +188,11 @@ export const NUM_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 
 
 export const RETRACTION_REASONS = ['an error in the instrument calibration invalidated the reported measurements',
   'the authors could not reproduce the key measurements', 'duplicated figure panels were identified during an institutional review',
-  'the samples were found to be contaminated', 'the analysis relied on a mislabelled sample set'];
+  'the samples were found to be contaminated', 'the analysis relied on a mislabelled sample set',
+  'the raw instrument files could not be matched to the reported tables', 'a spreadsheet error propagated into the summary statistics'];
 export const CONCERN_REASONS = ['the provenance of some raw data files', 'possible image duplication in a supplementary figure',
-  'an undeclared competing interest', 'the statistical treatment of replicate measurements'];
+  'an undeclared competing interest', 'the statistical treatment of replicate measurements',
+  'the identity of one reagent lot', 'the handling of outlying replicates'];
 
 // ---------------------------------------------------------------------------------------
 // Parametric measurement conditions (difficulty >= 2). A condition is built from parts; the

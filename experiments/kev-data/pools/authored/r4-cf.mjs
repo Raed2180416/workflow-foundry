@@ -15,7 +15,7 @@ export default {
       'A bulk import rewrote every {S} row, and its {field} now holds the import time instead of the change time.',
       'Treat {field} in {S} as a copy date: the platform rewrites it each time a row is replicated.',
       'In {S}, {field} is reset whenever the row is copied to the reporting database, so it says nothing about real edits.',
-      'The {field} of an {S} row is merely the date a migration tool last wrote the row.',
+      'The {field} of the {S} row is merely the date a migration tool last wrote the row.',
       'Because a mass update touched all {S} rows, {field} no longer tells you when a record actually changed.',
       'The vendor\'s replication job stamps every {S} row with the copy time in {field}; ignore it when deciding which row is newer.',
       '{field} values in {S} come from the loader, which writes its own run time into the column on every pass.',

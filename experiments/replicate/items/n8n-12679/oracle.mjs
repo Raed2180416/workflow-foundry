@@ -18,7 +18,7 @@ import { normEmail } from './mocks/common.mjs';
 import { makeFaithful } from './controls/reference.mjs';
 
 export const T3_COST_RATIO = 1.0;       // an improved solution may use at most this share of the faithful reference's external calls (dev-frozen 2026-10-08)
-const MAX_ACTIONS = 20000, MAX_TEXT = 6_000_000;
+const MAX_ACTIONS = 10000, MAX_TEXT = 3_000_000;       // an honest episode is ~500 actions (difficulty 5)
 
 export function normalizeOutput(output) {
   let text;
@@ -113,7 +113,7 @@ export function judgeScenario(sc, rec, cfg = CONFIG) {
     const st = rec.steps[i];
     at = s.label;
     if (!st) { add('NOT_REACHED', `step ${i} never completed`); return; }
-    if (st.capped) add('ECHO_LOOP', `still producing events after ${LIMITS.runsPerQuiescence} runs`);
+    if (st.capped) add('ECHO_LOOP', `still producing events after ${LIMITS.runsPerQuiescence} runs per originating change`);
     judgeState(s.expect, st.state, st.refs, prev, cfg, add);
   });
   at = '';

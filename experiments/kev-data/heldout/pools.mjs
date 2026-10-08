@@ -235,10 +235,12 @@ export { byHash };
 // hold: exact {cls: share} (rounded counts), min {cls: share} (at least ceil), max {cls: share} (at
 // most floor); `forced` units (already admitted) are taken first and count toward the classes.
 // Returns {selected, shortfall, counts}.
-export function selectQuota(candidates, quota, { classOf = () => 'all', exact = null, min = {}, max = {}, forced = [] } = {}) {
+export function selectQuota(candidates, quota, { classOf = () => 'all', exact = null, min = {}, max = {}, forced = [], prefer = null, preferShare = 0 } = {}) {
   const ordered = [...candidates].sort(byHash), chosen = new Set(), counts = {};
   for (const u of forced) { if (!chosen.has(u)) { chosen.add(u); counts[classOf(u)] = (counts[classOf(u)] ?? 0) + 1; } }
-  const take = (pred, n) => { let c = 0; for (const u of ordered) { if (c >= n) break; if (chosen.has(u) || !pred(u)) continue; chosen.add(u); counts[classOf(u)] = (counts[classOf(u)] ?? 0) + 1; c++; } return c; };
+  const pass = (pred, n) => { let c = 0; for (const u of ordered) { if (c >= n) break; if (chosen.has(u) || !pred(u)) continue; chosen.add(u); counts[classOf(u)] = (counts[classOf(u)] ?? 0) + 1; c++; } return c; };
+  // `prefer` (e.g. the local probe-hard proxy) only reorders: up to preferShare of every step goes to preferred units first.
+  const take = (pred, n) => { if (!(prefer && preferShare > 0 && n > 0)) return pass(pred, n); const got = pass(u => pred(u) && prefer(u), Math.ceil(n * preferShare)); return got + pass(pred, n - got); };
   const caps = Object.fromEntries(Object.entries(max).map(([k, s]) => [k, Math.floor(s * quota)]));
   if (exact) {
     const names = Object.keys(exact); let left = quota;

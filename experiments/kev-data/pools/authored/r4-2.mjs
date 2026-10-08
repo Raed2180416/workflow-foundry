@@ -4,7 +4,7 @@ export default {
   paraphrase: {
     'restamped:0': [
       'This {S} extract was produced by a read-only mirror that was rebuilt between {w0} and {w1}; for each {S} row the {field} is the time the mirror copied it, not the time the record last changed.',
-      'The {S} extract is a read-only mirror copy, rebuilt between {w0} and {w1}, and the {field} of an {S} row therefore records the copy and not the last change.',
+      'The {S} extract is a read-only mirror copy, rebuilt between {w0} and {w1}, and the {field} of the {S} row therefore records the copy and not the last change.',
       'A read-only mirror rebuilt between {w0} and {w1} is where this {S} extract comes from; its {field} column holds the copy time of each {S} row, which says nothing about the last change.',
       'Between {w0} and {w1} the mirror that feeds this {S} extract was rebuilt as a read-only copy, so {field} on every {S} row is just the copy time.',
       'You are looking at a {S} extract from a mirror (read-only, rebuilt between {w0} and {w1}); the {field} of every {S} row marks when the mirror copied it and not when the record changed.',
@@ -17,7 +17,7 @@ export default {
       'In this {S} extract, {field} is the time at which the mirror, read-only and rebuilt between {w0} and {w1}, copied each {S} row; it is not a change date.',
       'Rebuilt between {w0} and {w1}, the read-only mirror that this {S} extract was taken from gave all {S} rows a {field} equal to the copy time.',
       'Every {S} row in the extract has a {field} set by the read-only mirror when it was rebuilt between {w0} and {w1}, which makes the field a copy time and not a change time.',
-      'The {S} extract comes from a mirror, which is read-only and was rebuilt between {w0} and {w1}; accordingly {field} for an {S} row means "copied at", not "changed at".',
+      'The {S} extract comes from a mirror, which is read-only and was rebuilt between {w0} and {w1}; accordingly {field} for the {S} row means "copied at", not "changed at".',
       'A mirror (read-only, rebuilt between {w0} and {w1}) is the source of this {S} extract, so the {field} of each {S} row is its copy time.',
       'For the {S} rows of this extract, {field} was set by a read-only mirror that was rebuilt between {w0} and {w1}, and it stands for the copy time.',
       'The read-only mirror that provided this {S} extract was rebuilt between {w0} and {w1}; as a consequence the {field} of the {S} rows is when they were mirrored.',

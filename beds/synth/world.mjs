@@ -8,7 +8,7 @@ import {
   INSTITUTES, COMPANIES, VARIANTS, ENTITY_CLASS, ENTITY_ORIGIN, condFor,
 } from './catalog.mjs';
 
-export const VERSION = '2.0.0';
+export const VERSION = '3.0.0';
 
 // Ranking policies. `order` is the lexicographic ranking key; `tiers` is 2 (journal above
 // preprint = lab note) or 3 (journal > preprint > lab note). Press releases are tier 0.
@@ -37,13 +37,14 @@ export const POLICIES = {
 //   anaphora: probability that a later mention of a document's own entity is "the compound" etc.
 //   nVariety: probability that a research document states its n as a gross count minus exclusions.
 //   decoyP: probability that a notice target shares first author and venue with another document.
-//   refStyles: how notices cite their target ('id' adds [document Dxx]; 'title', 'topic', 'date').
+//   refStyles: how notices cite their target ('id' adds [document Dxx]; 'title', 'topic', 'date', 'vague', 'cite', 'bare').
+//   formVariety: extra sentence templates in every multi-value, erratum, status and sample-size family (a finite regex set does not cover them).
 //   redHerrings: probability of status-like red herrings (version labels on single versions, banners
 //                about journal submission, preprint mentions of out-of-corpus versions, measured-claim
 //                sentences that cite other work or say "as expected", explicitly unmodified forms).
 export const KNOBS = {
   1: {
-    entities: 2, cells: 4, policies: ['P1'], aliasInPrompt: true, nInMeta: true, mixedLabels: false, mixedDates: false,
+    formVariety: true, entities: 2, cells: 4, policies: ['P1'], aliasInPrompt: true, nInMeta: true, mixedLabels: false, mixedDates: false,
     unitLevel: 1, plusMinus: false, fancyNumbers: false, pairs: 0, spelledN: false, background: 1, entityFiller: 0, condLevel: 1,
     docDefault: 0, ranges: 0, methodNums: 0, contrast: 0, split: 0, addN: 0, durations: 0, unitWords: 0, anaphora: 0, nVariety: 0, decoyP: 0, refStyles: ['id'], redHerrings: 0, otherErrata: 0, oocCollide: false,
     filler: { retract: 0, errata: 0, press: 0, supersede: 0 }, ooc: 0, erratumOnVoid: false, unitErratum: false, injection: false,
@@ -51,7 +52,7 @@ export const KNOBS = {
     extras: { loser: 0.3 }, attachP: 0.2,
   },
   2: {
-    entities: 3, cells: 6, policies: ['P1'], aliasInPrompt: true, nInMeta: true, mixedLabels: false, mixedDates: false,
+    formVariety: true, entities: 3, cells: 6, policies: ['P1'], aliasInPrompt: true, nInMeta: true, mixedLabels: false, mixedDates: false,
     unitLevel: 2, plusMinus: false, fancyNumbers: false, pairs: 0, spelledN: false, background: 1, entityFiller: 1, condLevel: 2,
     docDefault: 0.05, ranges: 0.05, methodNums: 0.1, contrast: 0.1, split: 0.1, addN: 0.1, durations: 0.15, unitWords: 0.1, anaphora: 0.25, nVariety: 0.15, decoyP: 0.2, refStyles: ['id'], redHerrings: 0.1, otherErrata: 0, oocCollide: false,
     filler: { retract: 1, errata: 1, press: 0, supersede: 0 }, ooc: 0, erratumOnVoid: false, unitErratum: false, injection: false,
@@ -59,9 +60,9 @@ export const KNOBS = {
     extras: { loser: 0.3, press: 0.15, conditions: 0.15, nonstdSameDoc: 0.25, loserErratum: 0.1 }, attachP: 0.25,
   },
   3: {
-    entities: 4, cells: 9, policies: ['P1', 'P2', 'P3', 'P4'], aliasInPrompt: false, nInMeta: false, mixedLabels: true, mixedDates: true,
+    formVariety: true, entities: 4, cells: 9, policies: ['P1', 'P2', 'P3', 'P4'], aliasInPrompt: false, nInMeta: false, mixedLabels: true, mixedDates: true,
     unitLevel: 2, plusMinus: true, fancyNumbers: false, pairs: 0.5, spelledN: false, background: 1, entityFiller: 1, condLevel: 2,
-    docDefault: 0.25, ranges: 0.12, methodNums: 0.3, contrast: 0.3, split: 0.25, addN: 0.2, durations: 0.3, unitWords: 0.15, anaphora: 0.4, nVariety: 0.35, decoyP: 0.6, refStyles: ['title', 'topic', 'date', 'vague'], redHerrings: 0.3, otherErrata: 1, oocCollide: false,
+    docDefault: 0.25, ranges: 0.12, methodNums: 0.3, contrast: 0.3, split: 0.25, addN: 0.2, durations: 0.3, unitWords: 0.15, anaphora: 0.4, nVariety: 0.35, decoyP: 0.6, refStyles: ['title', 'topic', 'date', 'vague', 'cite', 'bare'], redHerrings: 0.3, otherErrata: 1, oocCollide: false,
     filler: { retract: 1, errata: 1, press: 1, supersede: 1 }, ooc: 1, erratumOnVoid: false, unitErratum: false, injection: false,
     mandatory: ['pressOnly', 'retracted', 'erratum', 'press', 'conditions', 'superseded', 'unit', 'rank', 'concern', 'quoted', 'distractor', 'aliasOnly',
       'grossN', 'erratumDecoy', 'comparison'],
@@ -70,9 +71,9 @@ export const KNOBS = {
     attachP: 0.3,
   },
   4: {
-    entities: 5, cells: 12, policies: ['P1', 'P2', 'P3', 'P4'], aliasInPrompt: false, nInMeta: false, mixedLabels: true, mixedDates: true,
+    formVariety: true, entities: 5, cells: 12, policies: ['P1', 'P2', 'P3', 'P4'], aliasInPrompt: false, nInMeta: false, mixedLabels: true, mixedDates: true,
     unitLevel: 3, plusMinus: true, fancyNumbers: true, pairs: 0.6, spelledN: true, background: 2, entityFiller: 1, condLevel: 2,
-    docDefault: 0.3, ranges: 0.15, methodNums: 0.35, contrast: 0.3, split: 0.3, addN: 0.2, durations: 0.35, unitWords: 0.2, anaphora: 0.45, nVariety: 0.4, decoyP: 0.7, refStyles: ['title', 'topic', 'date', 'vague'], redHerrings: 0.35, otherErrata: 1, oocCollide: true,
+    docDefault: 0.3, ranges: 0.15, methodNums: 0.35, contrast: 0.3, split: 0.3, addN: 0.2, durations: 0.35, unitWords: 0.2, anaphora: 0.45, nVariety: 0.4, decoyP: 0.7, refStyles: ['title', 'topic', 'date', 'vague', 'cite', 'bare'], redHerrings: 0.35, otherErrata: 1, oocCollide: true,
     filler: { retract: 2, errata: 1, press: 1, supersede: 1 }, ooc: 1, erratumOnVoid: true, unitErratum: true, injection: false,
     mandatory: ['pressOnly', 'retracted', 'erratum', 'press', 'conditions', 'superseded', 'unit', 'rank', 'concern', 'quoted', 'distractor',
       'aliasOnly', 'variant', 'predicted', 'distractor', 'grossN', 'erratumDecoy', 'nErratum', 'comparison', 'quoteInDoc'],
@@ -81,9 +82,9 @@ export const KNOBS = {
     attachP: 0.3,
   },
   5: {
-    entities: 6, cells: 16, policies: ['P1', 'P2', 'P3', 'P4'], aliasInPrompt: false, nInMeta: false, mixedLabels: true, mixedDates: true,
+    formVariety: true, entities: 6, cells: 16, policies: ['P1', 'P2', 'P3', 'P4'], aliasInPrompt: false, nInMeta: false, mixedLabels: true, mixedDates: true,
     unitLevel: 3, plusMinus: true, fancyNumbers: true, pairs: 0.6, spelledN: true, background: 1, entityFiller: 1, condLevel: 2,
-    docDefault: 0.3, ranges: 0.15, methodNums: 0.35, contrast: 0.3, split: 0.3, addN: 0.2, durations: 0.35, unitWords: 0.2, anaphora: 0.5, nVariety: 0.4, decoyP: 0.7, refStyles: ['title', 'topic', 'date', 'vague'], redHerrings: 0.35, otherErrata: 1, oocCollide: true,
+    docDefault: 0.3, ranges: 0.15, methodNums: 0.35, contrast: 0.3, split: 0.3, addN: 0.2, durations: 0.35, unitWords: 0.2, anaphora: 0.5, nVariety: 0.4, decoyP: 0.7, refStyles: ['title', 'topic', 'date', 'vague', 'cite', 'bare'], redHerrings: 0.35, otherErrata: 1, oocCollide: true,
     filler: { retract: 2, errata: 1, press: 1, supersede: 1 }, ooc: 1, erratumOnVoid: true, unitErratum: true, injection: true,
     mandatory: ['pressOnly', 'retracted', 'erratum', 'press', 'conditions', 'superseded', 'unit', 'rank', 'concern', 'quoted', 'distractor',
       'aliasOnly', 'variant', 'predicted', 'distractor', 'retracted', 'erratum', 'grossN', 'erratumDecoy', 'nErratum', 'comparison', 'quoteInDoc'],

@@ -237,6 +237,22 @@ export function sheetParts(sheet) {
   return { format, dataStart, preamble, unitLines: preamble.filter(isUnitSentence), header, headerIndex: hdrAt, unitComment, rows };
 }
 
+// The lines of a sheet that state its units (or point to the sheet that does): a unit sentence of the preamble, the
+// "# units:" comment, a column header that carries units, the "Units on this sheet" line, and for a bench log the
+// first paragraph (units follow the values). The decimal-comma notice carries no unit. These are the label-bearing
+// spans of K3, X8 and X5 (their skeleton buckets decide which slice a sheet's rows may enter).
+const UNIT_BEARING = [/^Same template as last week, so the rates below are /, /^\(Units today: /, /^I'm writing substrate in /, /^Units on this sheet: /,
+  /^Same reader template as /, /^Units: as on /, /set up the template for both of us;/, /^Slopes are ΔA340 in mAU\/min/, /^Conc column: the plate map mixes/];
+const HEADER_UNITS = { mdtable: /\[S\] \(/, csv: /,S_\w+,rate_/, semicolon: /;S_\w+;rate_/, reader: /Slope\(mAU\/min\)/ };
+export function unitBearingLines(sheet) {
+  const parts = sheetParts(sheet), lines = parts.unitLines.filter(l => UNIT_BEARING.some(re => re.test(l)));
+  if (parts.unitComment) lines.push(parts.unitComment);
+  if (parts.header && HEADER_UNITS[sheet.format]?.test(parts.header)) lines.push(parts.header);
+  if (sheet.format === 'grouped') { const u = sheet.lines.find(l => /^Units on this sheet: /.test(l)); if (u) lines.push(u); }
+  if (sheet.format === 'prose' && !lines.length) { const first = sheet.lines.find(l => /^\d{2}:\d{2} /.test(l)); if (first) lines.push(first.slice(0, 320)); }
+  return lines;
+}
+
 // The printed number of a rate cell (render.mjs fmtRate: plain, e, E, x10 and decimal-comma styles).
 export function parseRate(text) {
   const t = String(text).trim().replace('×10^', 'e').replace(/,/g, '.');

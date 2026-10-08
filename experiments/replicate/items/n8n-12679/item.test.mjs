@@ -5,12 +5,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import * as bed from './index.mjs';
-import { CONFIG } from './scenarios.mjs';
+import { CONFIG, scenariosFor } from './scenarios.mjs';
+import { ZOHO_OF, KT_OF } from './spec.mjs';
 import { World, API_OPS } from './world.mjs';
-import { createEnv, driveSync, drive, policyHandler, replay } from './env.mjs';
+import { createEnv, driveSync, drive, policyHandler, policyFromHandler, replay } from './env.mjs';
 import { makeFaithful, makeImproved } from './controls/reference.mjs';
 import { ORIGINAL, originalAvailable, loadOriginal, rebind, makeOriginalHandler, expressionsOf, classifyExpression, evalExpression, UnreviewedExpression, MUTANTS } from './controls/original.mjs';
 import { buildAll, NODE_KIND_TO_CALL } from './build-fixtures.mjs';
@@ -59,6 +62,7 @@ test('generate rejects bad arguments', () => {
   assert.throws(() => bed.generate({ seed: 1, split: 'dev', difficulty: 6, variant: 'T2' }), /difficulty/);
   assert.throws(() => bed.generate({ seed: 1.5, split: 'dev', difficulty: 3, variant: 'T2' }), /seed/);
   assert.throws(() => bed.generate({ seed: 1, split: 'dev', difficulty: 3, variant: 'T4' }), /variant/);
+  assert.throws(() => bed.generate({ seed: 'examples', split: 'dev', difficulty: 3, variant: 'T2' }), /reserved/);
 });
 
 test('what each variant gives the solver (README table)', () => {
@@ -116,7 +120,7 @@ test('KlickTipp mock: upsert by email, status follows the list, dates are unix s
   assert.equal(kt('subscribe', { email: '', listId: K.lists.soi.id }).response.status, 400);
   assert.equal(kt('subscribe', { email: 'a@b.example', listId: 'nope' }).response.status, 400);
   const s = kt('subscribe', { email: 'a@b.example', listId: K.lists.soi.id, tagId: K.tags.created.id, fields: { fieldBirthday: '1990-05-17', [K.fields.zohoContactId]: '77' } }).response.body;
-  assert.equal(s.status, 'Subscribed'); assert.equal(s.fieldBirthday, '642384000'); assert.equal(s[K.fields.zohoContactId], '77'); assert.equal(s.fieldPhone, '', 'unset fields are empty strings');
+  assert.equal(s.status, 'Subscribed'); assert.equal(s.fieldBirthday, String(Date.UTC(1990, 4, 17) / 1000)); assert.equal(s[K.fields.zohoContactId], '77'); assert.equal(s.fieldPhone, '', 'unset fields are empty strings');
   assert.equal(w.queue.length, 0, 'an ordinary tag fires nothing');
   const d = kt('subscribe', { email: 'D@b.example', listId: K.lists.doi.id }).response.body; assert.equal(d.status, 'Pending');
   const again = kt('subscribe', { email: 'A@B.example', listId: K.lists.doi.id, fields: { fieldPhone: '5' } }).response.body;
@@ -181,21 +185,41 @@ test('a handler that throws still lets the episode finish (drive records the err
   assert.match(driveSync(gen(1, 1), async () => {}).meta.handlerErrors[0], /promise/, 'a sync driver refuses a handler that returns a promise');
 });
 
-test('a pure step policy (what a Foundry code node can express today) can be driven', () => {
-  // kt-deleted: one call, then done. Everything else: nothing. Enough to show the adapter replays history and stops.
-  const policy = ({ event, history }) => (event.trigger === 'kt-deleted' && history.length === 0 && event.data[CONFIG.klicktipp.fields.zohoContactId] ? { call: 'zoho.deleteContact', args: { id: event.data[CONFIG.klicktipp.fields.zohoContactId] } } : { done: true });
-  const out = driveSync(gen(1, 1), policyHandler(policy));
-  const calls = out.actions.filter(a => a.call !== 'done');
-  assert.ok(calls.length >= 2 && calls.every(a => a.call === 'zoho.deleteContact'));
-  const seen = []; policyHandler(({ history }) => { seen.push(history.length); return history.length < 2 ? { call: 'state.get', args: { key: 'x' } } : { done: true }; })({ trigger: 'x', data: {} }, { state: { get: () => ({ status: 404, body: {} }) } });
+test('drive() runs async handlers and records the same episode as driveSync', async () => {
+  const t = gen(2, 2, 'T2'), h = makeFaithful(CONFIG);
+  const a = await drive(t, async (e, api) => { await Promise.resolve(); return h(e, api); });
+  assert.equal(canonical(a.actions), canonical(driveSync(t, h).actions));
+  assert.equal(a.meta.handlerErrorCount, 0);
+});
+
+test('run-handler.mjs scores a handler module from the command line (exit 0 on pass)', () => {
+  const run = (file, ...args) => { try { return { code: 0, out: JSON.parse(execFileSync('node', [fileURLToPath(new URL('./run-handler.mjs', here)), fileURLToPath(new URL(file, here)), ...args], { encoding: 'utf8' })) }; } catch (e) { return { code: e.status, out: JSON.parse(e.stdout) }; } };
+  const good = run('./controls/improved-handler.mjs', '--variant', 'T3', '--seed', '2');
+  assert.equal(good.code, 0); assert.equal(good.out.pass, true); assert.equal(good.out.task, 'rbench:n8n-12679:T3:dev:d3:s2');
+  const orig = run('./controls/faithful-handler.mjs', '--variant', 'T3', '--seed', '2');
+  assert.equal(orig.code, 1); assert.deepEqual(orig.out.probesFailed, ['P1', 'P2', 'P3', 'P4']); assert.deepEqual(orig.out.coreFailed, []);
+});
+
+test('a pure step policy (what a Foundry code node can express today) can express the whole job', () => {
+  // The adapter replays history: a policy that makes one read per event, then stops.
+  const seen = [];
+  policyHandler(({ history }) => { seen.push(history.length); return history.length < 2 ? { call: 'state.get', args: { key: 'x' } } : { done: true }; })({ trigger: 'x', data: {} }, { state: { get: () => ({ status: 404, body: {} }) } });
   assert.deepEqual(seen, [0, 1, 2]);
+  // Any deterministic sync handler becomes a pure {event, history} -> {call}|{done} function; driving it gives the same episode and verdict.
+  for (const [variant, h] of [['T2', makeFaithful(CONFIG)], ['T3', makeImproved(CONFIG)]]) {
+    const t = gen(3, 2, variant);
+    const direct = driveSync(t, h), viaPolicy = driveSync(t, policyHandler(policyFromHandler(h)));
+    assert.equal(canonical(viaPolicy.actions), canonical(direct.actions));
+    assert.ok(bed.oracle(t, viaPolicy).pass);
+  }
+  assert.throws(() => policyFromHandler((e, api) => { api.state.get({ key: Math.random().toString() }); })({ event: { trigger: 'x', data: {} }, history: [{ call: 'state.get', args: { key: 'fixed' }, response: { status: 404, body: {} } }] }), /not deterministic/);
 });
 
 // ------------------------------------------------------------------------------------------------ oracle health
 test('oracle rejects schema-invalid output', () => {
   const t = gen(1);
   const bad = [null, undefined, 5, 'x', [], {}, { actions: 'x' }, { actions: [null] }, { actions: [{}] }, { actions: [{ call: 5 }] }, { actions: [{ call: 'x'.repeat(65) }] },
-    { actions: [{ call: 'done', args: [] }] }, { actions: [{ call: 'done', extra: 1 }] }, { actions: [], extra: 1 }, { actions: Array(20001).fill({ call: 'done' }) }, { actions: [{ call: 'done', args: { a: 'y'.repeat(7e6) } }] }];
+    { actions: [{ call: 'done', args: [] }] }, { actions: [{ call: 'done', extra: 1 }] }, { actions: [], extra: 1 }, { actions: Array(10001).fill({ call: 'done' }) }, { actions: [{ call: 'done', args: { a: 'y'.repeat(4e6) } }] }];
   for (const o of bad) { const r = bed.oracle(t, o); assert.equal(r.pass, false); assert.equal(r.score, 0); assert.match(r.details.reason, /^schema:/); }
   const circular = { actions: [] }; circular.self = circular;
   assert.equal(bed.oracle(t, circular).pass, false);
@@ -236,6 +260,55 @@ test('near misses are close: they fail only the scenarios their one defect touch
   assert.ok(failed.includes('S08') && failed.every(id => ['S08', 'S15'].includes(id)), `only the scenarios where an unsubscribed person is edited in Zoho: ${failed}`);
 });
 
+test('oracle sensitivity: dropping any one mapped field, in either direction or both, is caught', () => {
+  const wrap = (api, f) => {
+    const out = { state: api.state };
+    for (const svc of ['zoho', 'klicktipp']) out[svc] = Object.fromEntries(Object.entries(api[svc]).map(([k, fn]) => [k, a => fn(f(`${svc}.${k}`, structuredClone(a)))]));
+    return out;
+  };
+  const base = makeFaithful(CONFIG);
+  for (const [key, zohoName] of Object.entries(ZOHO_OF)) {
+    if (key === 'email') continue;                                    // the email is the join key: without it nothing is synced at all
+    const ktName = KT_OF[key];
+    const drop = (toKt, toZoho) => (e, api) => base(e, wrap(api, (name, a) => {
+      if (toKt && ['klicktipp.subscribe', 'klicktipp.updateSubscriber'].includes(name) && a.fields) delete a.fields[ktName];
+      if (toZoho && ['zoho.createContact', 'zoho.updateContact'].includes(name) && a.fields) delete a.fields[zohoName];
+      return a;
+    }));
+    for (const [label, h] of [['to KlickTipp', drop(true, false)], ['to Zoho', drop(false, true)], ['both', drop(true, true)]]) for (const seed of [0, 1, 2]) {
+      const t = gen(seed, 3, 'T2'), r = bed.oracle(t, driveSync(t, h));
+      assert.equal(r.pass, false, `dropping ${key} ${label} (seed ${seed}) was not noticed`);
+      if (key !== 'last') assert.ok([...codesOf(r)].some(c => c.startsWith('FIELD_MISMATCH:') && c.endsWith(`.${key}`)), `dropping ${key} ${label}: ${[...codesOf(r)].slice(0, 5)}`);   // Last_Name is mandatory in Zoho, so dropping it breaks creation instead
+    }
+  }
+});
+
+test('the soak scenario exercises every operation in every seed from difficulty 3 up, and the plan scales with difficulty', () => {
+  const want = ['zoho.create', 'kt.create', 'zoho.form', 'zoho.edit', 'kt.edit', 'kt.unsubscribe', 'kt.confirm', 'zoho.delete', 'kt.delete'];
+  const sizes = [];
+  for (const d of [1, 3, 5]) {
+    let n = 0;
+    for (const seed of SEEDS) {
+      const { core } = scenariosFor({ seed, split: 'dev', difficulty: d }), s15 = core.find(s => s.id === 'S15');
+      n += s15.steps.length;
+      const ops = new Set(s15.steps.flatMap(st => st.actions.map(a => `${a.sys}.${a.op}`)));
+      if (d >= 3) for (const o of want) assert.ok(ops.has(o), `d${d} seed ${seed} lacks ${o}`);
+      // re-creation under an email deleted earlier
+      if (d >= 3) {
+        const email = {}, gone = new Set(); let again = false;
+        for (const st of s15.steps) for (const a of st.actions) {
+          if (a.person) { again ||= gone.has(a.person.email); email[a.ref] = a.person.email; }
+          if (a.set?.email) email[a.ref] = a.set.email;
+          if (a.op === 'delete') gone.add(email[a.ref]);
+        }
+        assert.ok(again, `d${d} seed ${seed}: no person comes back under a deleted email`);
+      }
+    }
+    sizes.push(n / SEEDS.length);
+  }
+  assert.ok(sizes[0] < sizes[1] && sizes[1] < sizes[2], `soak length by difficulty: ${sizes}`);
+});
+
 test('a do-nothing solution fails, however it says so', () => {
   for (const t of [gen(1, 3, 'T1'), gen(1, 3, 'T2'), gen(1, 3, 'T3')]) {
     for (const out of [{ actions: [] }, { actions: Array(400).fill({ call: 'done' }) }, { actions: [{ call: 'state.put', args: { key: 'a', value: 1 } }] }]) {
@@ -274,6 +347,12 @@ test('an alternative valid design (always read live, write unconditionally) pass
     if (tags.length) api.zoho.addTags({ ids: [zid], tags });
   };
   for (const seed of SEEDS) { const t = gen(seed, 3, 'T2'); const r = bed.oracle(t, driveSync(t, alt)); assert.ok(r.pass, `seed ${seed}: ${JSON.stringify(r.details.scenarios.filter(s => !s.pass).slice(0, 2))}`); }
+});
+
+test('a chatty but correct solution (every idempotent write sent twice) is not mistaken for an echo loop', () => {
+  const base = makeFaithful(CONFIG), twice = new Set(['updateContact', 'bulkUpdate', 'addTags', 'updateSubscriber', 'tag']);
+  const chatty = (e, api) => base(e, Object.fromEntries(['zoho', 'klicktipp', 'state'].map(svc => [svc, Object.fromEntries(Object.entries(api[svc]).map(([k, fn]) => [k, a => { const r = fn(a); if (twice.has(k)) fn(a); return r; }]))])));
+  for (const seed of [0, 1, 2]) { const t = gen(seed, 3, 'T2'), r = bed.oracle(t, driveSync(t, chatty)); assert.ok(r.pass, `seed ${seed}: ${JSON.stringify(r.details.scenarios.filter(s => !s.pass).slice(0, 2))}`); assert.ok(r.details.cost.externalCalls > 250); }
 });
 
 test('hidden truth does not leak: nothing the oracle expects for a graded seed appears in any task text', () => {
@@ -341,7 +420,7 @@ test('no vendor data or credentials in the fixtures or the item; only the pin of
   for (const f of dirScan) {
     const text = readFileSync(new URL(f, here), 'utf8');
     assert.ok(!/api[_-]?key|secret|password|bearer |token/i.test(text.replace(/"note"[^\n]*/g, '')), `${f}: credential-like text`);
-    assert.ok(!/@(?!mail\.example)[a-z0-9-]+\.[a-z]{2,}/i.test(text.replace(/"@/g, '')) || f === 'item.json', `${f}: non-synthetic email domain`);
+    assert.ok(!/@(?!mail\.example|sample\.example)[a-z0-9-]+\.[a-z]{2,}/i.test(text.replace(/"@/g, '')) || f === 'item.json', `${f}: non-synthetic email domain`);
   }
 });
 
@@ -372,7 +451,10 @@ test('original: an expression that is not on the allowlist is refused, never eva
   const wf = rebind(loadOriginal(), CONFIG);
   const evil = structuredClone(wf); evil.nodes.find(n => n.name === 'Check for email address').parameters.conditions.conditions[0].leftValue = "={{ process.mainModule.require('fs').readFileSync('/etc/passwd') }}";
   const h = makeOriginalHandler(evil, CONFIG);
-  assert.throws(() => driveSync(gen(1, 1), h), UnreviewedExpression);
+  const out = driveSync(gen(1, 1), h);
+  assert.ok(out.meta.handlerErrors.some(m => /reviewed allowlist/.test(m)), 'the doctored node threw UnreviewedExpression instead of evaluating');
+  assert.equal(out.actions.filter(a => a.call === 'klicktipp.subscribe' && a.args.listId === CONFIG.klicktipp.lists.soi.id).length, 0, 'the subscribe that sits behind the doctored node was never reached');
+  assert.ok(out.actions.some(a => a.call === 'klicktipp.subscribe' && a.args.listId === CONFIG.klicktipp.lists.doi.id), 'while the untouched web-form path still ran');
   assert.throws(() => evalExpression('$json.a.b.constructor.constructor("return 1")()', { json: {}, node: () => ({}) }), UnreviewedExpression);
 });
 

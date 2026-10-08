@@ -34,9 +34,11 @@ import { optionOrder } from '../lib/balance.mjs';
 import { worldHash, skeleton, skeletonBucket, spanHash } from '../lib/hash.mjs';
 import {
   parsed as parsedOf, buildX3, buildX8, buildK1, buildK2, buildK3, buildX1, buildX5, buildX4, buildX7, sheetParts, parseRate, rowCells, normalizeConds,
-  registerBench, resolveCondition, describeCondition, referencedSheet, X8_FIELD, RATE_FACTOR, RATE_LABELS, RATE_WORDS, CONC_LABELS, CONC_WORDS, UNIT_CODES, isUnitSentence, headerOf,
+  registerBench, resolveCondition, describeCondition, referencedSheet, unitBearingLines, X8_FIELD, RATE_FACTOR, RATE_LABELS, RATE_WORDS, CONC_LABELS, CONC_WORDS, UNIT_CODES, isUnitSentence, headerOf,
 } from '../judges/kinetics.mjs';
 import { alignMessages, harvestAliases, alignNotes, alignInjections, alignStatements } from '../taps/kinetics.mjs';
+import { CHAT_INJECTIONS, NOTEBOOK_INJECTIONS } from '../taps/kinetics-frames.mjs';
+import { stringLeaves } from '../lib/leakage.mjs';
 
 export const group = 'kinetics';
 export const ports = ['X3:kinetics', 'X8:kinetics', 'X5:kinetics', 'X1:kinetics', 'K1', 'K2', 'K3', 'X4:kinetics', 'X7:kinetics'];
@@ -85,6 +87,12 @@ export function masksOf(world) {
 const BUCKET_OF_SLICE = { train: 'train', 'calib-in': 'train', 'dev-select': 'train', 'test-in': 'train', 'calib-ood': 'calib-ood', 'dev-ood': 'dev-ood', 'test-ood': 'test-ood' };
 export const bucketAllows = (slice, formHash) => skeletonBucket(formHash) === BUCKET_OF_SLICE[slice];
 const formOf = (text, masks) => skeleton(text, masks);
+// A row whose label-bearing span is several lines (the unit statement and its header) enters a slice only if
+// every one of those lines is in the slice's skeleton bucket: a held-out line then never sits in a train state.
+const linesAllow = (slice, lines, masks) => lines.length > 0 && lines.every(l => bucketAllows(slice, formOf(l, masks)));
+// The held-out family's injection lines must not reach any slice but test-ood, whatever port's state they are in.
+const HELD_OUT_TEXT = [...CHAT_INJECTIONS, ...NOTEBOOK_INJECTIONS];
+const carriesHeldOut = state => stringLeaves(state).some(({ text }) => HELD_OUT_TEXT.some(t => text.includes(t)));
 
 // ---- wording and records ---------------------------------------------------------------------
 function wordingFor(contract, slice, key, opts, taken = []) {
@@ -212,12 +220,50 @@ function makeX8(c, ctx, wantConsistent) {
     extracted = fmtValue(c.printed / RATE_FACTOR[wrong]);
   }
   const slots = { sample: c.id, field: X8_FIELD, value: extracted };
-  const state = buildX8(task, slots), form = formOf(state.conventions, masks);
-  if (!bucketAllows(slice, form)) return null;
+  const state = buildX8(task, slots), bearing = unitBearingLines(c.sheet), form = formOf(bearing.join('\n'), masks);
+  if (!linesAllow(slice, bearing, masks)) return null;
   const key = `${slice}|X8|${seed}|${c.id}`;
   return makeRecord({ contract: contracts.X8, slice, opts, key, state, label: wantConsistent ? 'consistent' : 'inconsistent', slots: { field: state.field, value: state.extracted_value },
     meta: { seed, difficulty, worldHash: wh, variant: 'clean', formId: form, surface: { source: 'bed', slice, lineHash: spanHash(state.conventions) }, masks,
       kit: { port: 'X8', slots }, x8: { sheet: c.sheet.id, format: c.sheet.format, rateUnit: trueUnit, wrongUnit: wrong, printed: c.printed } } });
+}
+
+// A flip twin (§2.5): the same row and the same extracted value, with the sheet's unit statement naming another
+// rate unit. Only the decisive sentence differs; the value that was right under the first unit is wrong under the
+// second (and the other way round). Returns the new conventions, or null when the statement cannot be swapped.
+const labelOf = (units, text) => Object.entries(units).find(([, l]) => l.includes(text.trim()))?.[0] ?? null;
+export function swapRateUnit(conventions, from, to, key) {
+  const lab = pick(RATE_LABELS[to], `${key}|label`), words = RATE_WORDS[to], [prefix, time] = to.split('/');
+  const rules = [
+    [/(v0 \()([^)]+)(\))/, (m, a, l, z) => (labelOf(RATE_LABELS, l) === from ? a + lab + z : null)],
+    [/(# units: S in .+?, rate in )(.+)$/m, (m, a, l) => (labelOf(RATE_LABELS, l) === from ? a + lab : null)],
+    [/(\brate_)([A-Za-z]+_per_(?:s|min))(\b)/, (m, a, c, z) => (c.replace('_per_', '/') === from ? `${a}${prefix}_per_${time}${z}` : null)],
+    [/(\(Units today: \[S\] in .+?, initial rates in )(.+?)(\. I did not repeat)/, (m, a, l, z) => (labelOf(RATE_LABELS, l) === from ? a + lab + z : null)],
+    [/(rates below are )(.+?)( and substrate)/, (m, a, w, z) => (RATE_WORDS[from] === w ? a + words + z : null)],
+    [/(rates in )(.+?)( throughout this page)/, (m, a, w, z) => (RATE_WORDS[from] === w ? a + words + z : null)],
+  ];
+  let out = conventions, hits = 0;
+  for (const [re, f] of rules) {
+    const m = re.exec(out);
+    if (!m) continue;
+    const r = f(...m);
+    if (r !== null) { out = out.replace(re, () => r); hits++; }
+  }
+  return hits === 1 ? out : null;
+}
+function flipTwin(rec, c, ctx) {
+  const { slice, contracts, opts, seed, task } = ctx, trueUnit = c.doc.rateUnit;
+  const others = UNIT_CODES.filter(u => u !== trueUnit);
+  // a consistent value becomes wrong under another unit; a wrong value becomes right under the unit it was converted with
+  const to = Object.values(rec.questions)[0].label === 'consistent' ? pick(others, `${slice}|flip|${seed}|${c.id}`) : rec.meta.x8.wrongUnit;
+  const conv = swapRateUnit(rec.state.conventions, trueUnit, to, `${slice}|flipconv|${seed}|${c.id}`);
+  if (!conv) return null;
+  const value = Number(rec.state.extracted_value), label = Math.abs(value - c.printed / RATE_FACTOR[to]) <= 2e-3 * Math.abs(value) ? 'consistent' : 'inconsistent';
+  const state = { ...rec.state, conventions: conv };
+  const pairId = `kx8:${slice}:${seed}:${c.id}`;
+  rec.meta.variant = 'flip'; rec.meta.pairId = pairId;
+  return makeRecord({ contract: contracts.X8, slice, opts, key: `${slice}|X8|${seed}|${c.id}|flip`, state, label, slots: { field: state.field, value: state.extracted_value },
+    meta: { ...rec.meta, variant: 'flip', pairId, formId: formOf(conv, ctx.masks), surface: { source: 'bed', slice, lineHash: spanHash(conv) }, counterfactual: { swapped: true, from: trueUnit, to, path: 'conventions' } } });
 }
 
 // ---- K3 / K2 / K1 (wave-2 smoke) ---------------------------------------------------------------
@@ -228,9 +274,8 @@ function k3Candidates({ task, world, masks, slice }) {
     if (trapDocs.has(doc.index)) continue;           // the header is wrong until a later correction: not decidable from header and preamble
     const sheet = p.sheets.find(s => s.author === doc.author && s.date === doc.date);
     if (!sheet || !sheet.format) continue;
-    const slots = { document: sheet.id }, state = buildK3(task, slots);
-    const form = formOf([state.header, ...sheetParts(sheet).unitLines].join('\n'), masks);
-    if (!bucketAllows(slice, form)) continue;
+    const slots = { document: sheet.id }, state = buildK3(task, slots), bearing = [...unitBearingLines(sheet), ...(state.referenced_header ? state.referenced_header.split('\n') : [])], form = formOf(bearing.join('\n'), masks);
+    if (!linesAllow(slice, bearing, masks) || (slice !== 'test-ood' && carriesHeldOut(state))) continue;
     out.push({ id: sheet.id, slots, state, form, label: doc.rateUnit, doc });
   }
   return out;
@@ -303,16 +348,15 @@ function x5UnitRows(task, world, masks, ctx) {
     if (!sheet || doc.format === 'reader' || doc.mixedRowUnits || trapDocs.has(doc.index)) continue;
     const kindKey = `${slice}|X5|${seed}|${doc.index}`, kind = pick(['rate', 'rate', 'rate', 'conc'], `${kindKey}|kind`);
     const slots = { document: sheet.id, rows: 5 }, state = buildX5(task, slots);
-    const span = unitSpan(sheet) || sheetParts(sheet).preamble.join('\n');
-    const form = formOf(span, masks);
-    if (!bucketAllows('test-ood', form)) continue;                       // the family's spans stay in the 0-20% skeleton bucket: apart from the train ports' spans
+    const bearing = unitBearingLines(sheet), span = bearing.join('\n'), form = formOf(span, masks);
+    if (!linesAllow('test-ood', bearing, masks)) continue;               // the family's spans stay in the 0-20% skeleton bucket: apart from the train ports' spans
     const settled = doc.unitPlacement !== 'ref';
     const makeAssumption = (u, which) => {
       if (kind === 'rate') return pick(RATE_PHRASES, `${kindKey}|${which}|rp`)({ label: pick(RATE_LABELS[u], `${kindKey}|${which}|rl`), words: RATE_WORDS[u] });
       return pick(CONC_PHRASES, `${kindKey}|${which}|cp`)({ label: pick(CONC_LABELS[u], `${kindKey}|${which}|cl`), words: CONC_WORDS[u] });
     };
     const truth = kind === 'rate' ? doc.rateUnit : doc.concUnit, wrong = pick(kind === 'rate' ? OTHER_RATE(truth) : OTHER_CONC(truth), `${kindKey}|wrong`);
-    const base = { seed, difficulty, worldHash: wh, formId: form, surface: { source: 'bed', slice, lineHash: spanHash(span) }, masks, x5: { kind, sheet: sheet.id, placement: doc.unitPlacement, format: doc.format } };
+    const base = { seed, difficulty, worldHash: wh, formId: form, surface: { source: 'bed', slice, lineHash: spanHash(span) }, masks, x5: { kind, sheet: sheet.id, placement: doc.unitPlacement, format: doc.format, spans: bearing } };
     const rec = (label, assumption, st, extra = {}) => makeRecord({ contract: contracts.X5, slice, opts, key: `${kindKey}|${label}|${extra.tag ?? ''}`, state: st, label, slots: { assumption },
       meta: { ...base, variant: 'clean', kit: { port: 'X5', slots }, ...extra.meta } });
     if (!settled) {
@@ -404,11 +448,8 @@ export function heldoutSpans(record) {
   if (ports.includes('X5')) {
     const x5 = record.meta.x5 ?? {};
     const text = record.state.source_text;
-    if (x5.kind === 'sop') out.push(...text.split('\n').slice(0, 2).map(t => ({ text: t, port: 'X5', kind: 'family-span', masks })));
-    else {
-      const decisive = text.split('\n').filter(l => isUnitSentence(l) || /^\| Sample \||^sample[_;]|^# units:|^Well {2}Sample /.test(l)).join('\n');
-      out.push({ text: decisive || text.split('\n')[0], port: 'X5', kind: 'family-span', masks });
-    }
+    if (x5.kind === 'sop') { if (x5.notStated === undefined) out.push(...text.split('\n').slice(0, 2).map(t => ({ text: t, port: 'X5', kind: 'family-span', masks }))); }       // an SOP head; an unrelated excerpt carries no label-bearing span
+    else if (x5.notStated !== 'presence-matched') out.push(...(x5.spans ?? []).map(t => ({ text: t, port: 'X5', kind: 'family-span', masks })));
   }
   if (ports.includes('X7')) out.push({ text: record.state.item.replace(/^[^:]+: /, ''), port: 'X7', kind: 'family-span', masks });
   return out.filter(s => s.text);
@@ -430,7 +471,7 @@ export async function* records(slice, seeds, opts = {}, ctx) {
   const diffs = opts.difficulties ?? [1, 2, 3, 4, 5], smokeEvery = 12, swapShare = opts.authorSwap ?? 0.15, authority = opts.x3Authority !== false;
   const x3Wave = opts.x3Wave ?? 1;            // 2: the tap missed its gate (taps/kinetics.mjs tapStatus); X3 is then a wave-2 smoke set
   const test = slice === 'test-ood';
-  for (const seed of seeds) {
+  async function* oneWorld(seed) {
     const difficulty = difficultyOf(seed, diffs);
     const task = K.generate({ seed, split: def.bedSplit, difficulty });
     const { world, shown } = K._internals(task);
@@ -457,7 +498,9 @@ export async function* records(slice, seeds, opts = {}, ctx) {
         const rec = makeX8(c, c0, unit(`${slice}|${c.key}|label`) < 0.5);
         if (!rec) continue;
         made++;
-        yield test && unit(`${slice}|para|${c.key}`) < 0.15 ? paraphraseOf(rec, contracts.X8, slice, opts, `${slice}|X8|${seed}|${c.id}`, { field: rec.state.field, value: rec.state.extracted_value }) ?? rec : rec;
+        const twin = test && unit(`${slice}|flip|${c.key}`) < 0.2 ? flipTwin(rec, c, c0) : null;
+        yield test && !twin && unit(`${slice}|para|${c.key}`) < 0.15 ? paraphraseOf(rec, contracts.X8, slice, opts, `${slice}|X8|${seed}|${c.id}`, { field: rec.state.field, value: rec.state.extracted_value }) ?? rec : rec;
+        if (twin) yield twin;
       }
     }
     if (wanted.includes('K3') && perWorld.K3 && smoke('K3')) {
@@ -470,7 +513,7 @@ export async function* records(slice, seeds, opts = {}, ctx) {
       for (const c of rotate(cands, [...new Set(cands.map(x => x.label))], perWorld.K2, `${slice}|K2|${seed}`, c => c.slots.description)) {
         const state = buildK2(task, c.slots), options = c.conds.map(x => x.id).sort(), optionDescriptions = Object.fromEntries(c.conds.map(x => [x.id, describeCondition(x)]));
         yield makeRecord({ contract: contracts.K2, slice, opts, key: `${slice}|K2|${seed}|${c.slots.description}`, state, label: c.label, options, optionDescriptions,
-          meta: { seed, difficulty, worldHash: wh, variant: 'clean', formId: c.form, surface: { source: 'bed', slice, lineHash: spanHash(c.slots.description) }, masks, kit: { port: 'K2', slots: c.slots } } });
+          meta: { seed, difficulty, worldHash: wh, variant: 'clean', formId: c.form, surface: { source: 'bed', slice, lineHash: spanHash(c.slots.description) }, masks, kit: { port: 'K2', slots: c.slots }, needsWorldKnowledge: /\d\s?K\b/.test(c.slots.description) } });
       }
     }
     if (wanted.includes('K1') && perWorld.K1 && smoke('K1')) {
@@ -512,6 +555,11 @@ export async function* records(slice, seeds, opts = {}, ctx) {
           meta: { seed, difficulty, worldHash: wh, variant: 'clean', formId: formOf(state.item, masks), surface: { source: 'bed', slice, lineHash: spanHash(state.item) }, masks, kit: { port: 'X7', slots: { message: c.id } }, x7: { factType: c.sp.factType } } });
       }
     }
+  }
+  for (const seed of seeds) for await (const r of oneWorld(seed)) {
+    // the held-out family's injection lines belong to test-ood only, whatever port's state they are in
+    if (slice !== 'test-ood' && carriesHeldOut(r.state)) continue;
+    yield r;
   }
 }
 // X7: whether a message is needed to answer a study-level sub-question. A message is needed when the bed

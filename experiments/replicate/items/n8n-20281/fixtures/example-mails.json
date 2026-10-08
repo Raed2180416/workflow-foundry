@@ -1,0 +1,500 @@
+{
+ "schema": "rbench-n8n-20281-example-mails/1",
+ "mails": [
+  {
+   "caseId": "ex01",
+   "provider": "gmail",
+   "ref": "MR-82C5A",
+   "thread": null,
+   "plain": "In Ledgerline the invoice list shows every invoice from September twice since this morning. Filtering by \"paid\" shows the same. Chrome 129.\n\nNora Fields, Kestrel Bakery",
+   "mail": {
+    "id": "365977309c75a5cc",
+    "threadId": "b4252d053e137e53",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Nora Fields",
+       "address": "nora.fields@kestrel-bakery.example"
+      }
+     ],
+     "text": "Nora Fields <nora.fields@kestrel-bakery.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Invoice list shows last month twice",
+    "messageId": "<365977309c75a5cc@mail.kestrel-bakery.example>",
+    "text": "In Ledgerline the invoice list shows every invoice from September twice since this morning. Filtering by \"paid\" shows the same. Chrome 129.\n\nNora Fields, Kestrel Bakery\n\n--\nMsg-ref: MR-82C5A",
+    "textAsHtml": "<p>In Ledgerline the invoice list shows every invoice from September twice since this morning. Filtering by \"paid\" shows the same. Chrome 129.</p><p>Nora Fields, Kestrel Bakery</p><p>--<br>Msg-ref: MR-82C5A</p>"
+   },
+   "labels": {
+    "cr": true,
+    "cat": "Bug",
+    "pri": "High",
+    "route": "ticket-new",
+    "area": "Invoices",
+    "sent": "Negative"
+   }
+  },
+  {
+   "caseId": "ex02",
+   "provider": "outlook",
+   "ref": "MR-C64EB",
+   "thread": null,
+   "plain": "Some of our customers pay in two currencies. Could a customer have a second default currency? Today we make a second customer record for it.\n\nTariq",
+   "mail": {
+    "id": "AAMkADrqzaCii2Q1dnNAZ-6zssQTnltUNyEAXW075nTl5EAAA=",
+    "conversationId": "AAQkADE4_zoxZtOXeBo_Pypx9LjR79y-5dggm1VK3V-0DWPRAAA=",
+    "subject": "Allow two currencies per customer",
+    "bodyPreview": "Some of our customers pay in two currencies. Could a customer have a second default currency? Today we make a second customer record for it. Tariq",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>Some of our customers pay in two currencies. Could a customer have a second default currency? Today we make a second customer record for it.</p><p>Tariq</p><p>Msg-ref: MR-C64EB</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Tariq Aziz",
+      "address": "tariq.aziz@lumen-optics.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Tariq Aziz",
+      "address": "tariq.aziz@lumen-optics.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<24d7aa65c616953d@mail.lumen-optics.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkADrqzaCii2Q1dnNAZ-6zssQTnltUNyEAXW075nTl5EAAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   },
+   "labels": {
+    "cr": true,
+    "cat": "New Requirement",
+    "pri": "Medium",
+    "route": "ticket-new",
+    "area": "Customers",
+    "sent": "Neutral"
+   }
+  },
+  {
+   "caseId": "ex03",
+   "provider": "gmail",
+   "ref": "MR-381DC",
+   "thread": null,
+   "plain": "Quick question: where can I change the footer text that appears on our invoice PDFs? I looked in Settings.\n\nBeth",
+   "mail": {
+    "id": "c4d98a36c7227a7a",
+    "threadId": "3745827d7ae1bf1e",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Beth Armstrong",
+       "address": "beth.armstrong@harbor-books.example"
+      }
+     ],
+     "text": "Beth Armstrong <beth.armstrong@harbor-books.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "How do I change the invoice footer?",
+    "messageId": "<c4d98a36c7227a7a@mail.harbor-books.example>",
+    "text": "Quick question: where can I change the footer text that appears on our invoice PDFs? I looked in Settings.\n\nBeth\n\n--\nMsg-ref: MR-381DC",
+    "textAsHtml": "<p>Quick question: where can I change the footer text that appears on our invoice PDFs? I looked in Settings.</p><p>Beth</p><p>--<br>Msg-ref: MR-381DC</p>"
+   },
+   "labels": {
+    "cr": true,
+    "cat": "Issue",
+    "pri": "Low",
+    "route": "ticket-new",
+    "area": "Invoices",
+    "sent": "Neutral"
+   }
+  },
+  {
+   "caseId": "ex04",
+   "provider": "outlook",
+   "ref": "MR-31E30",
+   "thread": "EXD1",
+   "plain": "Update: it also fails for the October period. The file has only the header line.\n\nTariq",
+   "mail": {
+    "id": "AAMkADTS63Zhtf_XWHIPPi0e0i0qhBnQBX6xF9n-Qih179AAA=",
+    "conversationId": "AAQkAD1P2dbgYuolo1TNf3jdCiI-5HaB7IleNBtzThk1BAj2AAA=",
+    "subject": "RE: Statement export is empty",
+    "bodyPreview": "Update: it also fails for the October period. The file has only the header line. Tariq",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>Update: it also fails for the October period. The file has only the header line.</p><p>Tariq</p><p>Msg-ref: MR-31E30</p><hr><div><b>From:</b> Brightlane Support &lt;support@brightlane.example&gt;<br><b>Sent:</b> Monday, October 6, 2026 9:15 AM<br><b>To:</b> Brightlane Support<br><b>Subject:</b> RE: Statement export is empty</div><p>Hi Tariq, thanks. We are checking why the statement export returns no rows.</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Tariq Aziz",
+      "address": "tariq.aziz@lumen-optics.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Tariq Aziz",
+      "address": "tariq.aziz@lumen-optics.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<42896214f0e9dd8d@mail.lumen-optics.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkADTS63Zhtf_XWHIPPi0e0i0qhBnQBX6xF9n-Qih179AAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   },
+   "labels": {
+    "cr": true,
+    "cat": "Bug",
+    "pri": "Medium",
+    "route": "ticket-followup",
+    "dup": "ES1",
+    "area": "Reports",
+    "sent": "Neutral"
+   }
+  },
+  {
+   "caseId": "ex05",
+   "provider": "gmail",
+   "ref": "MR-821EF",
+   "thread": null,
+   "plain": "Your message was delivered to the recipient.",
+   "mail": {
+    "id": "d09520eeaacbcb4a",
+    "threadId": "c41c07a1e1d92acc",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Support Bot",
+       "address": "noreply@kestrel-bakery.example"
+      }
+     ],
+     "text": "Support Bot <noreply@kestrel-bakery.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Delivery status notification",
+    "messageId": "<d09520eeaacbcb4a@mail.kestrel-bakery.example>",
+    "text": "Your message was delivered to the recipient.\n\n--\nMsg-ref: MR-821EF",
+    "textAsHtml": "<p>Your message was delivered to the recipient.</p><p>--<br>Msg-ref: MR-821EF</p>"
+   },
+   "labels": {
+    "cr": false,
+    "cat": "Other",
+    "pri": "Low",
+    "route": "filtered",
+    "area": "",
+    "sent": "Neutral"
+   }
+  },
+  {
+   "caseId": "ex06",
+   "provider": "outlook",
+   "ref": "MR-02178",
+   "thread": null,
+   "plain": "Forwarding a refund request from Harbor Books for the support queue.",
+   "mail": {
+    "id": "AAMkADEGw4P3YxstgL9HcynzHlUAz4m-6iRPETdeWBjaVTAAA=",
+    "conversationId": "AAQkADpLUWd3H3k3nJwrrNloesLduMSgsh-yEfcE8GBUBnQIAAA=",
+    "subject": "Customer asks for refund",
+    "bodyPreview": "Forwarding a refund request from Harbor Books for the support queue.",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>Forwarding a refund request from Harbor Books for the support queue.</p><p>Msg-ref: MR-02178</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Wei Zhang",
+      "address": "wei.zhang@brightlane.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Wei Zhang",
+      "address": "wei.zhang@brightlane.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<c5bff28363549acf@mail.brightlane.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkADEGw4P3YxstgL9HcynzHlUAz4m-6iRPETdeWBjaVTAAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   },
+   "labels": {
+    "cr": false,
+    "cat": "Other",
+    "pri": "Low",
+    "route": "filtered",
+    "area": "",
+    "sent": "Neutral"
+   }
+  },
+  {
+   "caseId": "ex07",
+   "provider": "gmail",
+   "ref": "MR-A01D1",
+   "thread": null,
+   "plain": "Hi, I noticed you are hiring support staff. We help SaaS teams outsource tier-1 support at half the cost. Open to a chat?\n\nSam, LeadSmith",
+   "mail": {
+    "id": "79ced1cc697fe8e5",
+    "threadId": "e79bc1b9e6ed8dc5",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Sam Patel",
+       "address": "sam@leadsmith-outreach.example"
+      }
+     ],
+     "text": "Sam Patel <sam@leadsmith-outreach.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "Quick question about your onboarding",
+    "messageId": "<79ced1cc697fe8e5@mail.leadsmith-outreach.example>",
+    "text": "Hi, I noticed you are hiring support staff. We help SaaS teams outsource tier-1 support at half the cost. Open to a chat?\n\nSam, LeadSmith\n\n--\nMsg-ref: MR-A01D1",
+    "textAsHtml": "<p>Hi, I noticed you are hiring support staff. We help SaaS teams outsource tier-1 support at half the cost. Open to a chat?</p><p>Sam, LeadSmith</p><p>--<br>Msg-ref: MR-A01D1</p>"
+   },
+   "labels": {
+    "cr": false,
+    "cat": "Other",
+    "pri": "Low",
+    "route": "ignore",
+    "area": "",
+    "sent": "Neutral"
+   }
+  },
+  {
+   "caseId": "ex08",
+   "provider": "outlook",
+   "ref": "MR-4A633",
+   "thread": null,
+   "plain": "Our totals look odd compared with last week. Maybe it is the new tax setting or maybe a bug. Can someone have a look?\n\nGina",
+   "mail": {
+    "id": "AAMkADGTc6Voc-dYCEMmmQUP8AEUedKLweeWvuF534BGy1AAA=",
+    "conversationId": "AAQkADBHpQEYTnJ9Tng8SSYb5Jv3exEBGmk6eVG8wxo2ttlUAAA=",
+    "subject": "something odd with our totals",
+    "bodyPreview": "Our totals look odd compared with last week. Maybe it is the new tax setting or maybe a bug. Can someone have a look? Gina",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>Our totals look odd compared with last week. Maybe it is the new tax setting or maybe a bug. Can someone have a look?</p><p>Gina</p><p>Msg-ref: MR-4A633</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Gina Rossi",
+      "address": "gina.rossi@harbor-books.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Gina Rossi",
+      "address": "gina.rossi@harbor-books.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<d54f6dfb5476b7ff@mail.harbor-books.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkADGTc6Voc-dYCEMmmQUP8AEUedKLweeWvuF534BGy1AAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   },
+   "labels": {
+    "cr": true,
+    "cat": "Issue",
+    "pri": "Medium",
+    "route": "review",
+    "amb": true,
+    "area": "Reports",
+    "sent": "Neutral"
+   }
+  },
+  {
+   "caseId": "ex09",
+   "provider": "gmail",
+   "ref": "MR-A1D1C",
+   "thread": null,
+   "plain": "Nobody at Lumen Optics can send invoices since 10:15, the dialog shows \"E-5001 service unavailable\". We have 200 invoices due out today. Please treat as urgent.\n\nDev Mehta, Operations",
+   "mail": {
+    "id": "3fe2cd15344826b1",
+    "threadId": "d4138909f5314daa",
+    "labelIds": [
+     "INBOX",
+     "UNREAD"
+    ],
+    "from": {
+     "value": [
+      {
+       "name": "Dev Mehta",
+       "address": "dev.mehta@lumen-optics.example"
+      }
+     ],
+     "text": "Dev Mehta <dev.mehta@lumen-optics.example>"
+    },
+    "to": {
+     "value": [
+      {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     ],
+     "text": "Brightlane Support <support@brightlane.example>"
+    },
+    "subject": "All invoice sending fails with error E-5001",
+    "messageId": "<3fe2cd15344826b1@mail.lumen-optics.example>",
+    "text": "Nobody at Lumen Optics can send invoices since 10:15, the dialog shows \"E-5001 service unavailable\". We have 200 invoices due out today. Please treat as urgent.\n\nDev Mehta, Operations\n\n--\nMsg-ref: MR-A1D1C",
+    "textAsHtml": "<p>Nobody at Lumen Optics can send invoices since 10:15, the dialog shows \"E-5001 service unavailable\". We have 200 invoices due out today. Please treat as urgent.</p><p>Dev Mehta, Operations</p><p>--<br>Msg-ref: MR-A1D1C</p>"
+   },
+   "labels": {
+    "cr": true,
+    "cat": "Bug",
+    "pri": "Critical",
+    "route": "ticket-new",
+    "area": "Invoices",
+    "sent": "Angry"
+   }
+  },
+  {
+   "caseId": "ex10",
+   "provider": "outlook",
+   "ref": "MR-EE0FB",
+   "thread": null,
+   "plain": "I am not sure if this is for you, but could the app remind us when a customer has not paid after 30 days? We do that with sticky notes now.\n\nRuth",
+   "mail": {
+    "id": "AAMkADP48MrHBWEb0FEaVxTOy5AW0GOZPWUhvpBa4PQcCnAAA=",
+    "conversationId": "AAQkADTdmqhXt8PVnDFpVJ3PGz5EBSXBMXR8JSRTrapDlXaGAAA=",
+    "subject": "maybe a feature request",
+    "bodyPreview": "I am not sure if this is for you, but could the app remind us when a customer has not paid after 30 days? We do that with sticky notes now. Ruth",
+    "body": {
+     "contentType": "html",
+     "content": "<html><head><style>p{margin:0 0 8px}</style></head><body><p>I am not sure if this is for you, but could the app remind us when a customer has not paid after 30 days? We do that with sticky notes now.</p><p>Ruth</p><p>Msg-ref: MR-EE0FB</p></body></html>"
+    },
+    "from": {
+     "emailAddress": {
+      "name": "Ruth Becker",
+      "address": "ruth.becker@kestrel-bakery.example"
+     }
+    },
+    "sender": {
+     "emailAddress": {
+      "name": "Ruth Becker",
+      "address": "ruth.becker@kestrel-bakery.example"
+     }
+    },
+    "toRecipients": [
+     {
+      "emailAddress": {
+       "name": "Brightlane Support",
+       "address": "support@brightlane.example"
+      }
+     }
+    ],
+    "ccRecipients": [],
+    "hasAttachments": false,
+    "isRead": false,
+    "importance": "normal",
+    "internetMessageId": "<b60aaa9e37a3f6fe@mail.kestrel-bakery.example>",
+    "webLink": "https://outlook.office.example/owa/?ItemID=AAMkADP48MrHBWEb0FEaVxTOy5AW0GOZPWUhvpBa4PQcCnAAA%3D&exvsurl=1&viewmodel=ReadMessageItem"
+   },
+   "labels": {
+    "cr": true,
+    "cat": "New Requirement",
+    "pri": "Low",
+    "route": "review",
+    "amb": true,
+    "area": "Notifications",
+    "sent": "Neutral"
+   }
+  }
+ ],
+ "seeds": [
+  {
+   "id": "ES1",
+   "n": 940,
+   "category": "Bug",
+   "summary": "Statement export returns an empty file",
+   "status": "In Progress",
+   "statusCategory": "indeterminate",
+   "threadId": "AAQkAD1P2dbgYuolo1TNf3jdCiI-5HaB7IleNBtzThk1BAj2AAA=",
+   "provider": "o"
+  }
+ ]
+}

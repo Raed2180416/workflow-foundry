@@ -7,6 +7,7 @@ import { loadSpec } from '../lib/contracts.mjs';
 import { SpanRegistry, defaultMasks } from '../lib/leakage.mjs';
 import { COUNTRY_ORDER, lookup, COUNTRIES } from './gazetteer.mjs';
 import { x8Items } from './x8.mjs';
+import { RULES, hardness } from './hardness.mjs';
 import { WORDING_PORTS, buildWordings, parseWordings } from './wordings.mjs';
 import {
   AuthorError, CARRIER_PORTS, NS_KINDS, OOD_SLICES, POOLS, PRESENCE_MATCHED, QUOTA, SELECTION, WAVE1_UNKNOWABLE, X5_KINDS, X8_KINDS, REGISTERS,
@@ -68,17 +69,22 @@ function dupChecks(units, errors, { sameLabelThreshold = 0.5, crossLabelThreshol
   });
 }
 
-function selectPool(port, units, errors, stats) {
+export function selectPool(port, units, errors, stats) {
   const decisive = units.filter(u => u.role === 'decisive');
   const labels = POOLS[port].labels;
   stats[port] = {};
+  // local probe-hard proxy (hardness.mjs): a tie-break that biases which authored lines fill a slice
+  const proxy = RULES[port] ? hardness(port, decisive) : null;
+  if (proxy) for (const u of decisive) u.proxy = proxy.get(u.id);
+  const hardOpts = proxy ? { prefer: u => u.proxy?.hard === true, preferShare: 0.5 } : {};
   const apply = (cands, label, slice, opts) => {
     const live = cands.filter(u => u.status !== 'rejected');
     const forced = live.filter(u => u.status === 'admitted' || u.tagMap?.tu);      // top-up lines (tag tu=1|2) replace the tail of the hash order
-    const r = selectQuota(live, QUOTA[slice], { ...opts, forced });
+    const r = selectQuota(live, QUOTA[slice], { ...hardOpts, ...opts, forced });
     const chosen = new Set(r.selected);
     for (const u of live) if (u.status !== 'admitted') u.status = chosen.has(u) ? 'pending-filter' : 'reserve';
-    stats[port][label] ??= {}; stats[port][label][slice] = { authored: cands.length, selected: r.selected.length, reserve: live.length - r.selected.length, shortfall: r.shortfall, classes: r.counts };
+    stats[port][label] ??= {}; stats[port][label][slice] = { authored: cands.length, selected: r.selected.length, reserve: live.length - r.selected.length, shortfall: r.shortfall, classes: r.counts,
+      ...(proxy ? { proxyHard: r.selected.filter(u => u.proxy?.hard).length } : {}) };
     if (r.shortfall > 0) errors.push(`${port}/${label}/${slice}: ${live.length} usable lines for a quota of ${QUOTA[slice]} (author ${r.shortfall} more, or relax the class mix ${JSON.stringify(r.counts)})`);
   };
   if (port === 'X8') {
@@ -218,7 +224,7 @@ export function assemble(authoredDir, { spec = loadSpec(), masks = defaultMasks(
       Object.assign(u, { id: `${port}-C-${hash8(`${t.t}|${e.fields[0]}`)}`, label: null, role: 'carrier', target: t.t, status: 'carrier', filter: null });
       surface[port].push(u);
     }
-    dupChecks(surface[port].filter(u => u.role === 'carrier'), errors, { label: `${port} carriers`, sameLabelThreshold: 0.5, crossLabelThreshold: 0.5 });
+    dupChecks(surface[port].filter(u => u.role === 'carrier'), errors, { label: `${port} carriers`, sameLabelThreshold: 0.85, crossLabelThreshold: 0.85 });
   }
   // S5 unseen type names
   for (const e of A.s5) {

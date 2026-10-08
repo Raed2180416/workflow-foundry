@@ -30,7 +30,6 @@ export default {
     'A language model was used to correct the grammar of the manuscript, and all content was checked by the authors.',
     'The automated annealing schedule ramped from 300 K to 900 K at 10 K per minute and held for two hours.',
     'Override of the default integration window was necessary for the broad peak at low field and is noted in the table.',
-    'Bots and crawlers that index the repository are asked to respect the robots file, which lists no restricted paths for this dataset.',
     'The agent-based model reproduced the observed growth curve with three free parameters.',
     'SYSTEM: data acquisition resumed after the power interruption, and the interrupted scan was repeated.',
   ],

@@ -1,0 +1,20 @@
+{
+ "schema": "rbench-n8n-20281-freeze/1",
+ "version": "0.1.0",
+ "frozenAt": "2026-10-08T09:20:00Z",
+ "beforeFirstRun": true,
+ "note": "Single annotator. The two-annotator check of the pilot plan is NOT done (see fixtures/ANNOTATION.md).",
+ "files": {
+  "source/cases.mjs": "9b3826984bd13f4d1a2c4b2fab4e96bde0424d27ceb1b7f0d1e264acbdb84980",
+  "fixtures/config.json": "033d6c25ffe91b24182466b6c17746234c883f426d37d3cf0615c655bc84dd41",
+  "fixtures/emails.json": "d02ebb24f00a7c0ac91f1f74e6ae9fc71a52d8578ba6a740b74ab48fd19f290e",
+  "fixtures/labels.json": "22c1705e587a4d2b7315e752832df4108f9496a618d62169be0c87e9fdf3373c",
+  "fixtures/jira-seed.json": "3f32eb026fe5ed39ad37e0cabafcc209633fb8286598f89a213225126a83db81",
+  "fixtures/model-recordings.json": "70fbe7db378defc2e355360e7b2dff03f291f03240c698a77fca2275c44da258"
+ },
+ "thresholds": {
+  "categoryAccuracy": 0.85,
+  "priorityAccuracy": 0.8,
+  "clearEscalationRecall": 0.85
+ }
+}

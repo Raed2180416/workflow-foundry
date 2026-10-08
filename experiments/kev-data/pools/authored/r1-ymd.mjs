@@ -53,7 +53,7 @@ export default {
       'An {S} row "born {ex}" belongs to someone born in {month}, because the month is the middle number.',
       'Take {ex} from {S}: its first part is the year, its middle part the month ({month}), its last part the day.',
       'In {S}, the birth date {ex_long} is stored as {ex}, i.e. year, month, day.',
-      'A {S} row reading "born {ex}" gives {day} as the day of birth, the last number of the date.',
+      'An {S} row reading "born {ex}" gives {day} as the day of birth, the last number of the date.',
       'Numeric birth dates such as {ex} in {S} start with the year and end with the day.',
       'For a numeric birth date like {ex} in {S}, the final number, {day}, is the day of the month.',
       'When {S} prints {ex}, it means {ex_long}: year first, then month, then day.',

@@ -64,7 +64,7 @@ except through what the event contains. Events: {seq, trigger, data} with trigge
 Your solution handles each event by calling the API (inputs.api) and then finishes that run. Provide it as an ES module with
 \`export default function handle(event, api)\` (api.zoho.getContact({id}) etc., synchronous), or, if you can only express pure functions, as
 \`policy({event, history}) -> {call, args} | {done: true}\` which the harness calls repeatedly with the growing history of {call, args, response}.
-Limits: at most ${CONFIG.limits.runsPerQuiescence} events are handled per change before the harness declares a loop; at most ${CONFIG.limits.callsPerRun} calls per event.
+Limits: at most ${CONFIG.limits.runsPerQuiescence} events are handled per originating change (a step with several changes gets that many each) before the harness declares a loop; at most ${CONFIG.limits.callsPerRun} calls per event.
 The result is judged by what both systems contain after every step and by the trace of your calls. Nothing else counts.`;
 
 const T1 = `TASK T1 (translate). Below is the original n8n workflow "Sync contacts two-way between Zoho CRM and KlickTipp" (file original/workflow.json,
