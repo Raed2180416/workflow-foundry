@@ -12,7 +12,7 @@ import { runCode } from './sandbox.mjs';
 import { classIndex, modelById, modelsForClass, nextClass, validatePolicy } from './models/policy.mjs';
 import { MODES } from './models/port.mjs';
 import { AUDIT, identityChanges, journalSeal } from './audit.mjs';
-import { MATERIALIZE, STATE_BYTES } from './run-rows.mjs';
+import { MATERIALIZE, STATE_BYTES, STATE_ITEMS } from './run-rows.mjs';
 
 const finished = new Set(['succeeded', 'failed', 'cancelled']);
 // Is the ModelPort's journal the store's database? The same handle, or another handle on the same database file (an in-memory database
@@ -230,7 +230,7 @@ export class Runtime {
       target.state.status = decision ? 'pending' : 'failed';
       if (!decision) { r.status = 'cancelled'; r.error = { code: 'APPROVAL_REJECTED', message: 'User rejected the operation' }; seal(r, null, this.store); }
       else r.status = 'ready';
-    }, run => [...(run.status === 'cancelled' && run.verdict ? [this.verdictEvent(run)] : []), { type: 'approval.decided', approvalId, approved: decision, actor }]);
+    }, run => [...(run.status === 'cancelled' && run.verdict ? [this.verdictEvent(run)] : []), { type: 'approval.decided', approvalId, approved: decision, actor }], { final: !decision });
   }
   // DESIGN §5.4: resume every run that has a due wait timer. Timers live in the store, so any Runtime instance
   // (a new process after a restart included) can do this. A timer whose node no longer waits is pruned; a run
@@ -292,12 +292,13 @@ class Invocation {
     try { return await scopes.run({ owner: this, controller }, () => fn(controller)); }
     finally { parent.removeEventListener('abort', forward); }
   }
-  // `result: 'run'` returns the whole record afterwards (only the run's final update needs it).
-  update(mutate, event, { result = 'header' } = {}) {
+  // `result: 'run'` returns the whole record afterwards (only the run's final update needs it); `final` marks that terminal update (the
+  // seal or failure receipt may use the headroom the store keeps below its absolute state bounds).
+  update(mutate, event, { result = 'header', final = false } = {}) {
     return this.store.updateRun(this.runId, r => {
       if (r.owner?.token !== this.token) throw new FoundryError('STALE_RUNNER', 'Execution ownership changed');
       mutate(r);
-    }, event, { result });
+    }, event, { result, final });
   }
   eventNode(frameKey, nodeId, mutate, type, extra = {}) {
     return this.update(r => mutate(frameOf(r, frameKey), r), { type, nodeKey: `${frameKey}/${nodeId}`, ...extra });
@@ -307,8 +308,10 @@ class Invocation {
     if (Date.now() >= run.deadline) throw new FoundryError('DEADLINE', 'Run deadline exhausted');
     if (run.steps >= Math.min(run.policy.maxSteps, this.workflow.budget.maxSteps)) throw new FoundryError('STEP_BUDGET', 'Run step budget exhausted');
     if (run.cost + cost > Math.min(run.policy.maxCost, this.workflow.budget.maxCost ?? run.policy.maxCost) + 1e-12) throw new FoundryError('COST_BUDGET', 'Run cost budget exhausted');
-    // The stored size of the run (kept by the store as rows change), not a re-serialisation of it.
-    if ((run[STATE_BYTES] ?? this.rows.raw(this.runId).bytes) > this.store.limits.budgetBytes) throw new FoundryError('STATE_BUDGET', 'Run state budget exhausted; reserved space remains for the failure receipt');
+    // The stored size and JSON value count of the run (kept by the store as rows change), not a re-serialisation of it.
+    let bytes = run[STATE_BYTES], items = run[STATE_ITEMS];
+    if (bytes === undefined || items === undefined) ({ bytes, items } = this.rows.raw(this.runId));
+    if (bytes > this.store.limits.budgetBytes || (items ?? 0) > this.store.limits.budgetItems) throw new FoundryError('STATE_BUDGET', 'Run state budget exhausted; reserved space remains for the failure receipt');
   }
   charge(frameKey, node, cost = 0, intent = {}) {
     this.eventNode(frameKey, node.id, (f, r) => {
@@ -388,6 +391,9 @@ class Invocation {
       if (changed.length) throw new FoundryError('RUN_BINDING_CORRUPT', `The run record no longer matches its immutable creation event (${changed.join(', ')}): the record was edited, so the run is not resumed`, { changed });
       const forged = forgedAnswers(this.workflow, run, log);
       if (forged.length) throw new FoundryError('CHECKPOINT_TAMPERED', `The run record holds human answers its chain did not record (${forged.slice(0, 5).join(', ')}): the record was edited, so the run is not resumed`, { nodeKeys: forged });
+      // The node rows' status and label columns decide what runs and what taint a reference inherits; they must still repeat the node states.
+      const mismatched = this.rows.mismatchedRows(this.runId);
+      if (mismatched.length) throw new FoundryError('CHECKPOINT_TAMPERED', `The run's node rows were edited (${mismatched.slice(0, 3).map(m => `${m.nodeKey}: ${m.reason}`).join('; ')}), so the run is not resumed`, { nodeKeys: mismatched.map(m => m.nodeKey) });
       this.store.updateRun(this.runId, r => {
         if (r.owner && alive(r.owner)) throw new FoundryError('RUN_BUSY', 'Another live runner owns this run');
         if ((r.resumeCount ?? 0) >= (r.policy.maxResumes ?? 1000)) throw new FoundryError('RESUME_BUDGET', 'Run resume budget exhausted');
@@ -405,14 +411,14 @@ class Invocation {
       if (this.rows.anyWithStatus(this.runId, 'awaiting_approval')) status = 'awaiting_approval';
       if (this.rows.anyWithStatus(this.runId, 'uncertain')) status = 'uncertain';
       if (status === 'succeeded' && Date.now() >= this.head().deadline) throw new FoundryError('DEADLINE', 'Run deadline exhausted before completion was committed');
-      return this.update(r => { r.status = status; r.owner = null; seal(r, this.workflow, this.store); }, r => [...(r.verdict ? [this.runtime.verdictEvent(r)] : []), { type: `run.${status}` }], { result: 'run' });
+      return this.update(r => { r.status = status; r.owner = null; seal(r, this.workflow, this.store); }, r => [...(r.verdict ? [this.runtime.verdictEvent(r)] : []), { type: `run.${status}` }], { result: 'run', final: true });
     } catch (error) {
       this.abort.abort();
       if (!owned) throw error;
       return this.update(r => {
         r.status = this.rows.anyWithStatus(this.runId, 'uncertain') ? 'uncertain' : (this.userCancelled || error.code === 'CANCELLED' ? 'cancelled' : 'failed');
         r.error = errorData(error); r.owner = null; seal(r, this.workflow, this.store);
-      }, r => [...(r.verdict ? [this.runtime.verdictEvent(r)] : []), { type: 'run.stopped', error: errorData(error) }], { result: 'run' });
+      }, r => [...(r.verdict ? [this.runtime.verdictEvent(r)] : []), { type: 'run.stopped', error: errorData(error) }], { result: 'run', final: true });
     } finally { this.outerSignal?.removeEventListener('abort', this.onAbort); }
   }
   recover() {

@@ -93,7 +93,40 @@
    ],
    "by": "heal fresh gate records-887c68c2",
    "at": "2026-10-08T21:23:25.716Z"
+  },
+  {
+   "family": "codefix",
+   "split": "dev",
+   "difficulty": 3,
+   "seeds": [
+    1001,
+    1002,
+    1003,
+    1004
+   ],
+   "by": "heal fresh gate codefix-a7649828",
+   "at": "2026-10-08T21:27:14.758Z"
+  },
+  {
+   "family": "records",
+   "split": "dev",
+   "difficulty": 3,
+   "seeds": [
+    1003,
+    1004,
+    1005,
+    1007
+   ],
+   "by": "heal fresh gate records-ec311a3b",
+   "at": "2026-10-08T21:31:41.465Z"
   }
  ],
- "referenceHashes": {}
+ "referenceHashes": {
+  "codefix": {
+   "dev:d3:s1001": "a06a0215052a4e6abe291efdf1f606f3f799137febe4ff7c27e41217d141db4a",
+   "dev:d3:s1002": "a126589e4f00ee3d6ade213913281db9e9ba3c475ac8d856454ac461899de6f1",
+   "dev:d3:s1003": "d0ab333121788bc52fedbc2783cecd7c15a9f210b6c667dd2db8f5dd484a9ffd",
+   "dev:d3:s1004": "ddc72d69bba90a5ea9c17277bd22c2aa994d4d7ae4c12e0b2182109cd8d27769"
+  }
+ }
 }

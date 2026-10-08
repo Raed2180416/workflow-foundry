@@ -65,6 +65,9 @@ function check(store, runId, { journalDb: given = null, expectHead = null, ancho
     }
   }
 
+  // 1a. The run's node rows (src/run-rows.mjs): the runtime acts on their status and label columns (which nodes run, the taint a reference
+  // inherits) while the seal below hashes the node states, so a column that no longer repeats its state was edited on its own.
+  for (const row of store.rows?.mismatchedRows?.(runId) ?? []) add('error', 'STATE_ROW_EDITED', `Node row ${row.nodeKey}: ${row.reason}; the run's state rows were edited`, { nodeKey: row.nodeKey });
   if (given && !external && !error) add('warn', 'JOURNAL_ARGUMENT_IGNORED', 'This run journaled its model calls in the workspace database (its birth event says so); it is checked against that, not against the journal that was passed');
   bound = events[0]?.audit === AUDIT;
   if (!bound) {

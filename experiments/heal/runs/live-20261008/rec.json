@@ -1,0 +1,423 @@
+{
+ "incident": {
+  "id": "records-887c68c2",
+  "failing": [
+   "F-haiku/records:test:d3:s6001/0",
+   "F-haiku/records:test:d3:s6001/1"
+  ],
+  "passing": 9,
+  "excluded": []
+ },
+ "schema": "heal-run/1",
+ "started": "2026-10-08T21:19:39.040Z",
+ "trial": {
+  "key": "F-haiku/records:test:d3:s6001/0",
+  "runId": "2fb12d69-12dd-4413-9b6a-36167a36bbe2",
+  "family": "records",
+  "split": "test",
+  "seed": 6001,
+  "pass": false,
+  "score": 0.789197
+ },
+ "kit": {
+  "hash": "7e8f0f83153c5efb",
+  "commit": "880c6b9",
+  "policyHash": "fe63f99b9fcdd5bbe53703ee0c1b2d079972bdecfe1ea940a959385190dee2e4"
+ },
+ "gate": {
+  "source": "pinned",
+  "commit": "13f7664",
+  "live": {
+   "importable": true,
+   "sameBlobAsPin": true
+  }
+ },
+ "mode": {
+  "live": true,
+  "promote": true,
+  "proposer": "claude"
+ },
+ "stages": {},
+ "proposals": [
+  {
+   "id": "m-26e42833db",
+   "kind": "lint-debt",
+   "ops": [
+    {
+     "op": "gate_verify",
+     "node": "verify"
+    },
+    {
+     "op": "gate_failed_count",
+     "node": "extract"
+    },
+    {
+     "op": "strengthen_acceptance",
+     "via": "verify",
+     "node": "verify"
+    }
+   ]
+  }
+ ],
+ "decisions": [
+  {
+   "proposal": "m-26e42833db",
+   "kind": "lint-debt",
+   "ops": [
+    "gate_verify",
+    "gate_failed_count",
+    "strengthen_acceptance"
+   ],
+   "decision": "promote",
+   "reasons": [],
+   "rejectCode": null,
+   "stages": [
+    {
+     "id": "V0",
+     "ok": true,
+     "costUsd": 0
+    },
+    {
+     "id": "V1",
+     "ok": true,
+     "costUsd": 0
+    },
+    {
+     "id": "V2",
+     "ok": true,
+     "costUsd": 0
+    },
+    {
+     "id": "V3",
+     "ok": true,
+     "costUsd": 0
+    },
+    {
+     "id": "V4",
+     "ok": true,
+     "costUsd": 0
+    },
+    {
+     "id": "V5",
+     "ok": true,
+     "costUsd": 0
+    },
+    {
+     "id": "V6",
+     "ok": true,
+     "costUsd": 0
+    },
+    {
+     "id": "V7",
+     "ok": true,
+     "costUsd": 0.119158
+    },
+    {
+     "id": "V8",
+     "ok": true,
+     "costUsd": 0
+    }
+   ],
+   "costUsd": 0.128806,
+   "costRatio": 1,
+   "promoted": {
+    "hash": "2d84e1165bcfc46e59336194d1d9ab3d42b70f2b037d5f6bfaf04f178eed9c2e",
+    "version": 2,
+    "parentHash": "887c68c2483ad81948b610932bb8943fda3dfbe450e7206f9841ed55614bd5b6"
+   }
+  },
+  {
+   "proposal": "p-b802a16a-r3",
+   "kind": "defect",
+   "ops": [
+    "edit_instructions",
+    "k_sample_agreement"
+   ],
+   "decision": "reject",
+   "reasons": [
+    "HEAL_LITERAL_LEAK"
+   ],
+   "rejectCode": "HEAL_LITERAL_LEAK",
+   "stages": [
+    {
+     "id": "V0",
+     "ok": false,
+     "code": "HEAL_LITERAL_LEAK",
+     "detail": "rule 3 at conf__s1.returns",
+     "costUsd": 0
+    }
+   ],
+   "costUsd": 0.157262,
+   "costRatio": null
+  }
+ ],
+ "evidence": {
+  "tier": "development/diagnostic",
+  "split": "test",
+  "seed": 6001,
+  "inspected": true,
+  "note": "the seed is already in the seed ledger (INSPECTED): this proves plumbing, not a fix rate"
+ },
+ "fidelity": {
+  "identical": true,
+  "checks": {
+   "taskHash": true,
+   "pass": true,
+   "score": true,
+   "verdict": true,
+   "calls": true
+  }
+ },
+ "signals": {
+  "ORACLE_FAILED": 1,
+  "VERDICT_ORACLE_MISMATCH": 1,
+  "UNVERIFIED_VERDICT": 1,
+  "LINT_FINDING": 5
+ },
+ "lint": {
+  "counts": {
+   "error": 3,
+   "warning": 2
+  },
+  "codes": {
+   "ACCEPTANCE_EXISTENCE_ONLY": 1,
+   "VERIFY_NOT_GATING": 1,
+   "ERROR_COLLECTION": 1,
+   "ESCALATION_WITHOUT_CHECKS": 1,
+   "GLOBAL_READ_UNGUARDED": 1
+  }
+ },
+ "verdict": {
+  "pinned": "unverified",
+  "code": "ACCEPTANCE_EXISTENCE_ONLY"
+ },
+ "classification": {
+  "class": "workflow-defect",
+  "heal": true,
+  "allocatorOnly": false,
+  "varianceTested": true,
+  "reasons": [
+   "wilson lower 0 <= tau 0.2"
+  ],
+  "early": "candidate"
+ },
+ "localisation": {
+  "root": {
+   "node": "conf",
+   "confidence": "high",
+   "locus": [
+    "conf"
+   ],
+   "sample": {
+    "id": "c6",
+    "type": "inject",
+    "node": "conf",
+    "nodeKey": "root/conf",
+    "path": "orders.0.numeric_order",
+    "pathArr": [
+     "orders",
+     0,
+     "numeric_order"
+    ],
+    "rowId": 432,
+    "from": "MDY",
+    "to": "DMY",
+    "identity": {
+     "system": "BRIGHTDESK"
+    }
+   },
+   "flips": 1
+  },
+  "classes": [
+   {
+    "code": "UNGUARDED_GLOBAL_READ",
+    "node": "conf",
+    "field": "orders.0.numeric_order",
+    "locus": [
+     "conf"
+    ],
+    "evidence": [
+     "c6"
+    ],
+    "guardedFields": []
+   }
+  ],
+  "mode": "failure",
+  "coverage": {
+   "candidates": 43,
+   "ran": 43,
+   "needsLive": 0
+  },
+  "intermediates": [
+   {
+    "node": "merge",
+    "pass": false,
+    "score": 0.789197
+   }
+  ],
+  "variance": null,
+  "flippers": [
+   "c6"
+  ],
+  "ms": 88943,
+  "blocked": null
+ },
+ "variance": {
+  "k": 8,
+  "errors": 0,
+  "hits": 0,
+  "rate": 0,
+  "wilsonLower": 0,
+  "tau": 0.2,
+  "class": "workflow-defect",
+  "costUsd": 0.00964843
+ },
+ "lintDebt": {
+  "ops": [
+   {
+    "op": "gate_verify",
+    "node": "verify"
+   },
+   {
+    "op": "gate_failed_count",
+    "node": "extract"
+   },
+   {
+    "op": "strengthen_acceptance",
+    "via": "verify",
+    "node": "verify"
+   }
+  ],
+  "needsProposer": [],
+  "decision": "promote"
+ },
+ "proposer": {
+  "spec": "claude",
+  "allowed": [
+   "add_evidence_field",
+   "k_sample_agreement",
+   "escalate_class",
+   "edit_instructions",
+   "add_check",
+   "add_probe"
+  ],
+  "locus": [
+   "conf"
+  ]
+ },
+ "proposerRounds": [
+  {
+   "round": 1,
+   "class": "M",
+   "ok": true,
+   "costUsd": 0.00250591,
+   "error": null,
+   "reject": "HEAL_OP_INVALID"
+  },
+  {
+   "round": 2,
+   "class": "M",
+   "ok": true,
+   "costUsd": 0.00207759,
+   "error": null,
+   "reject": "HEAL_OP_INVALID"
+  },
+  {
+   "round": 3,
+   "class": "L",
+   "ok": true,
+   "costUsd": 0.023872,
+   "error": null,
+   "reject": "HEAL_LITERAL_LEAK",
+   "pending": false
+  },
+  {
+   "round": 4,
+   "class": "F",
+   "ok": true,
+   "costUsd": 0.05656,
+   "error": null,
+   "reject": "HEAL_OP_INVALID"
+  }
+ ],
+ "proposerEvents": [
+  {
+   "type": "heal.proposer_escalated",
+   "round": 3,
+   "from": "M",
+   "to": "L",
+   "after": [
+    "HEAL_OP_INVALID",
+    "HEAL_OP_INVALID"
+   ]
+  },
+  {
+   "type": "heal.proposer_escalated",
+   "round": 4,
+   "from": "L",
+   "to": "F",
+   "after": [
+    "HEAL_OP_INVALID",
+    "HEAL_OP_INVALID",
+    "HEAL_LITERAL_LEAK"
+   ]
+  }
+ ],
+ "result": {
+  "decision": "exhausted",
+  "reasons": [
+   "HEAL_OP_INVALID",
+   "HEAL_OP_INVALID",
+   "HEAL_LITERAL_LEAK",
+   "HEAL_OP_INVALID"
+  ]
+ },
+ "head": {
+  "hash": "2d84e1165bcfc46e59336194d1d9ab3d42b70f2b037d5f6bfaf04f178eed9c2e",
+  "version": 2
+ },
+ "lesson": {
+  "id": "L-1-22014e09",
+  "lesson": "L-1",
+  "lintRule": {
+   "code": "FRAGILE_GLOBAL_READ",
+   "summary": "An unguarded model read of a per-entity convention table changes at least 5% of the answer when one entry flips",
+   "implementation": "experiments/heal/lessons/rules/fragile-global-read.mjs",
+   "severity": "warning",
+   "baseSeverity": "error"
+  },
+  "firing": {
+   "onBase": 1,
+   "onHealed": null,
+   "firesOnBase": true,
+   "quietOnHealed": null,
+   "population": {
+    "n": 8,
+    "fires": 2,
+    "share": 0.25,
+    "where": [
+     "research/construction-20261006/artifacts/F-haiku-records-k1/workflow.json",
+     "research/construction-20261006/artifacts/F-opus-records-k1/workflow.json"
+    ]
+   }
+  },
+  "status": "proposed",
+  "file": "/home/user/workflow-foundry/experiments/heal/runs/live-20261008/lessons/L-1-22014e09.json"
+ },
+ "budget": {
+  "capUsd": 2,
+  "spentUsd": 0.213822,
+  "remainingUsd": 1.786178,
+  "lines": 24,
+  "campaignSpentUsd": 0.579243,
+  "campaignCapUsd": 8
+ },
+ "ms": 505770,
+ "runsDir": "/home/user/workflow-foundry/experiments/heal/runs/live-20261008/rec",
+ "wallMs": 505791,
+ "campaign": {
+  "tag": "live1",
+  "incident": "H-rec",
+  "cap": 2
+ }
+}

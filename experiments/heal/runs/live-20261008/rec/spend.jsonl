@@ -10,3 +10,15 @@
 {"at":"2026-10-08T21:22:37.382Z","label":"V4 F-haiku/records:test:d3:s6004/0","usd":0,"totalUsd":0.009648,"liveCalls":0}
 {"at":"2026-10-08T21:22:37.515Z","label":"V4 F-haiku/records:test:d3:s6003/1","usd":0,"totalUsd":0.009648,"liveCalls":0}
 {"at":"2026-10-08T21:22:38.103Z","label":"V4 F-haiku/records:test:d3:s6004/1","usd":0,"totalUsd":0.009648,"liveCalls":0}
+{"at":"2026-10-08T21:24:21.515Z","label":"V7 base 1001#0","usd":0.030681,"totalUsd":0.04033}
+{"at":"2026-10-08T21:24:23.880Z","label":"V7 cand 1001#0","usd":0,"totalUsd":0.04033}
+{"at":"2026-10-08T21:25:16.589Z","label":"V7 base 1002#0","usd":0.028658,"totalUsd":0.068988}
+{"at":"2026-10-08T21:25:19.743Z","label":"V7 cand 1002#0","usd":0,"totalUsd":0.068988}
+{"at":"2026-10-08T21:26:17.063Z","label":"V7 base 1006#0","usd":0.030113,"totalUsd":0.099101}
+{"at":"2026-10-08T21:26:19.440Z","label":"V7 cand 1006#0","usd":0,"totalUsd":0.099101}
+{"at":"2026-10-08T21:27:20.423Z","label":"V7 base 1012#0","usd":0.029705,"totalUsd":0.128806}
+{"at":"2026-10-08T21:27:24.007Z","label":"V7 cand 1012#0","usd":0,"totalUsd":0.128806}
+{"at":"2026-10-08T21:27:35.852Z","label":"proposer round 1 (M)","usd":0.002506,"totalUsd":0.131312,"runId":"996dc79d-2dcd-4cb5-9499-e11f7777de30"}
+{"at":"2026-10-08T21:27:46.743Z","label":"proposer round 2 (M)","usd":0.002078,"totalUsd":0.13339,"runId":"5a22de58-8220-46f4-adf4-2f8895713cd2"}
+{"at":"2026-10-08T21:27:52.982Z","label":"proposer round 3 (L)","usd":0.023872,"totalUsd":0.157262,"runId":"e1bbcebe-7515-4969-95be-40330f601527"}
+{"at":"2026-10-08T21:28:04.071Z","label":"proposer round 4 (F)","usd":0.05656,"totalUsd":0.213822,"runId":"f9902add-29ce-4cd3-9989-bb0cbb644cbb"}

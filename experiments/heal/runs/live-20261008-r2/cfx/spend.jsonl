@@ -1,0 +1,22 @@
+{"at":"2026-10-08T21:25:57.800Z","label":"proposer round 1 (M)","usd":0.004108,"totalUsd":0.004108,"runId":"98a6c151-e9ae-4b6b-a018-a31821a41bfa"}
+{"at":"2026-10-08T21:26:08.639Z","label":"proposer round 2 (M)","usd":0.002762,"totalUsd":0.00687,"runId":"6dfc2276-d7ea-4f2b-94a5-282febac6fcd"}
+{"at":"2026-10-08T21:26:26.768Z","label":"proposer round 3 (L)","usd":0.066728,"totalUsd":0.073597,"runId":"7bcc2532-dfd3-47d1-b765-45105eafe91f"}
+{"at":"2026-10-08T21:26:39.705Z","label":"V3 F-haiku/codefix:test:d3:s6001/0 r0","usd":0,"totalUsd":0.073597,"liveCalls":0}
+{"at":"2026-10-08T21:26:41.787Z","label":"V3 F-haiku/codefix:test:d3:s6004/0 r0","usd":0,"totalUsd":0.073597,"liveCalls":0}
+{"at":"2026-10-08T21:26:43.917Z","label":"V3 F-haiku/codefix:test:d3:s6004/1 r0","usd":0,"totalUsd":0.073597,"liveCalls":0}
+{"at":"2026-10-08T21:26:46.345Z","label":"V4 F-haiku/codefix:dev:d3:s3/0","usd":0,"totalUsd":0.073597,"liveCalls":0}
+{"at":"2026-10-08T21:26:46.964Z","label":"V4 F-haiku/codefix:dev:d3:s2/0","usd":0,"totalUsd":0.073597,"liveCalls":0}
+{"at":"2026-10-08T21:26:47.407Z","label":"V4 F-haiku/codefix:dev:d3:s1/0","usd":0,"totalUsd":0.073597,"liveCalls":0}
+{"at":"2026-10-08T21:26:49.228Z","label":"V4 F-haiku/codefix:test:d3:s6001/1","usd":0,"totalUsd":0.073597,"liveCalls":0}
+{"at":"2026-10-08T21:26:49.727Z","label":"V4 F-haiku/codefix:test:d3:s6002/1","usd":0,"totalUsd":0.073597,"liveCalls":0}
+{"at":"2026-10-08T21:26:50.212Z","label":"V4 F-haiku/codefix:test:d3:s6002/0","usd":0,"totalUsd":0.073597,"liveCalls":0}
+{"at":"2026-10-08T21:26:51.795Z","label":"V4 F-haiku/codefix:test:d3:s6003/0","usd":0,"totalUsd":0.073597,"liveCalls":0}
+{"at":"2026-10-08T21:26:52.030Z","label":"V4 F-haiku/codefix:test:d3:s6003/1","usd":0,"totalUsd":0.073597,"liveCalls":0}
+{"at":"2026-10-08T21:27:36.509Z","label":"V7 base 1001#0","usd":0.084428,"totalUsd":0.158025}
+{"at":"2026-10-08T21:27:38.845Z","label":"V7 cand 1001#0","usd":0,"totalUsd":0.158025}
+{"at":"2026-10-08T21:28:00.525Z","label":"V7 base 1002#0","usd":0.078778,"totalUsd":0.236803}
+{"at":"2026-10-08T21:28:03.130Z","label":"V7 cand 1002#0","usd":0,"totalUsd":0.236803}
+{"at":"2026-10-08T21:28:24.727Z","label":"V7 base 1003#0","usd":0.075272,"totalUsd":0.312075}
+{"at":"2026-10-08T21:28:26.464Z","label":"V7 cand 1003#0","usd":0,"totalUsd":0.312075}
+{"at":"2026-10-08T21:29:33.319Z","label":"V7 base 1004#0","usd":0.315456,"totalUsd":0.627531}
+{"at":"2026-10-08T21:29:35.791Z","label":"V7 cand 1004#0","usd":0,"totalUsd":0.627531}

@@ -139,9 +139,10 @@ export class Store {
    * Compare-and-swap update of one run: `mutate(run)` sees the run through lazily loaded rows (it reads and writes `run.nodes[id]`, `run.frames[key]`,
    * `run.outputs[id]` and the header fields as before), and only the rows it changed are written, with the events, in one transaction. The chain
    * head, every row's revision and the run's byte bound are checked first. `event` is an event, a function of the run returning events, or a list.
-   * Returns the run record afterwards; `{ result: 'header' }` returns only its own fields (the hot path never needs the rest).
+   * Returns the run record afterwards; `{ result: 'header' }` returns only its own fields (the hot path never needs the rest). `final`: a
+   * terminal update (the verdict seal or failure receipt), which may use the headroom kept below the absolute whole-run bounds (run-rows.mjs).
    */
-  updateRun(id, mutate, event, { result = 'run' } = {}) {
+  updateRun(id, mutate, event, { result = 'run', final = false } = {}) {
     return this.transaction(() => {
       const session = this.rows.open(id), run = session.draft;
       const tail = this.#tail(id);
@@ -166,7 +167,7 @@ export class Store {
         previous = this.#event(id, item, previous);
         run.eventHead = { seq: previous.seq, hash: previous.hash };
       }
-      const header = session.flush();
+      const header = session.flush({ final });
       return result === 'header' ? header : this.rows.run(id);
     });
   }

@@ -119,7 +119,9 @@ function literalsOf(value, out = []) {
 export function addedContent(base, cand) {
   const out = [], bn = flat(base), cn = flat(cand);
   for (const [path, n] of cn) {
-    const b = bn.get(path);
+    // A k-sample sibling (`<id>__s1`, `__s2`, `__esc`) is a copy of base node `<id>`: what it repeats is not added by the patch
+    // (live run 1, 2026-10-08: the clone's whole `returns` was scanned as new and rule 3 fired on the schema's own enum values).
+    const b = bn.get(path) ?? bn.get(path.replace(/__(?:s\d+|esc)$/, ''));
     for (const field of ['instructions', 'source', 'description']) {
       if (typeof n[field] !== 'string') continue;
       const old = new Set(lines(b?.[field]).map(l => l.trim()));

@@ -42,7 +42,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   const key = arg('incident'), inc = INCIDENTS[key];
   if (!inc) { console.error('usage: live.mjs --incident rec|cfx|p1 --cap-usd N'); process.exit(2); }
   const outDir = path.resolve(arg('out-dir', path.join(REPO, 'experiments/heal/runs/live-20261008'))), tag = arg('tag', 'live1');
-  const runsDir = path.join(outDir, key), globalFile = path.join(outDir, 'spend-global.jsonl');
+  const runsDir = path.join(outDir, key), globalFile = path.resolve(arg('global-file', path.join(outDir, 'spend-global.jsonl')));
   mkdirSync(runsDir, { recursive: true });
   const budget = new CampaignBudget(Number(arg('cap-usd', '2')), { file: path.join(runsDir, 'spend.jsonl'), globalFile, globalCapUsd: Number(arg('global-cap-usd', '8')), scope: inc.id });
   const started = Date.now();
@@ -50,10 +50,10 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
     run: inc.run, workflow: inc.workflow.startsWith('preset:') ? inc.workflow : path.join(REPO, inc.workflow), budget, live: true, promote: !has('no-promote'),
     proposer: 'claude', lintDebt: arg('lint-debt', has('no-promote') ? 'defer' : 'strict'), maxRounds: Number(arg('max-rounds', '4')),
     freshOpts: { n: Number(arg('fresh-n', '4')), k: Number(arg('fresh-k', '1')) }, writeLessons: true, lessonsDir: path.join(outDir, 'lessons'), progress: true,
-    stateDir: path.join(WORK_ROOT, 'state', `${tag}-${key}`), lineageFile: path.join(outDir, `${key}.lineage.jsonl`), runsDir,
+    stateDir: path.join(WORK_ROOT, 'state', `${tag}-${key}`), lineageFile: path.resolve(arg('lineage-file', path.join(outDir, `${key}.lineage.jsonl`))), runsDir,
   });
   out.wallMs = Date.now() - started; out.campaign = { tag, incident: inc.id, cap: budget.capUsd };
-  writeFileSync(path.join(outDir, `${key}.json`), JSON.stringify({ incident: inc.id, ...out }, null, 1) + '\n');
+  writeFileSync(path.join(outDir, `${key}.json`), JSON.stringify(out, null, 1) + '\n');
   console.log(JSON.stringify({ incident: inc.id, class: out.classification?.class, root: out.localisation?.root?.node, result: out.result, decisions: out.decisions.map(d => [d.kind, d.decision, d.rejectCode]), budget: out.budget, wallS: Math.round(out.wallMs / 1000) }, null, 1));
   process.exit(0);
 }

@@ -16,3 +16,140 @@
 {"at":"2026-10-08T21:22:37.382Z","scope":"H-rec","label":"V4 F-haiku/records:test:d3:s6004/0","usd":0}
 {"at":"2026-10-08T21:22:37.515Z","scope":"H-rec","label":"V4 F-haiku/records:test:d3:s6003/1","usd":0}
 {"at":"2026-10-08T21:22:38.103Z","scope":"H-rec","label":"V4 F-haiku/records:test:d3:s6004/1","usd":0}
+{"at":"2026-10-08T21:24:21.515Z","scope":"H-rec","label":"V7 base 1001#0","usd":0.030681}
+{"at":"2026-10-08T21:24:23.880Z","scope":"H-rec","label":"V7 cand 1001#0","usd":0}
+{"at":"2026-10-08T21:24:34.924Z","scope":"H-p1","label":"variance test","usd":0.00417}
+{"at":"2026-10-08T21:25:16.589Z","scope":"H-rec","label":"V7 base 1002#0","usd":0.028658}
+{"at":"2026-10-08T21:25:19.743Z","scope":"H-rec","label":"V7 cand 1002#0","usd":0}
+{"at":"2026-10-08T21:25:57.800Z","scope":"H-cfx","label":"proposer round 1 (M)","usd":0.004108}
+{"at":"2026-10-08T21:26:08.639Z","scope":"H-cfx","label":"proposer round 2 (M)","usd":0.002762}
+{"at":"2026-10-08T21:26:17.063Z","scope":"H-rec","label":"V7 base 1006#0","usd":0.030113}
+{"at":"2026-10-08T21:26:19.440Z","scope":"H-rec","label":"V7 cand 1006#0","usd":0}
+{"at":"2026-10-08T21:26:26.768Z","scope":"H-cfx","label":"proposer round 3 (L)","usd":0.066728}
+{"at":"2026-10-08T21:26:39.705Z","scope":"H-cfx","label":"V3 F-haiku/codefix:test:d3:s6001/0 r0","usd":0}
+{"at":"2026-10-08T21:26:41.787Z","scope":"H-cfx","label":"V3 F-haiku/codefix:test:d3:s6004/0 r0","usd":0}
+{"at":"2026-10-08T21:26:43.917Z","scope":"H-cfx","label":"V3 F-haiku/codefix:test:d3:s6004/1 r0","usd":0}
+{"at":"2026-10-08T21:26:46.345Z","scope":"H-cfx","label":"V4 F-haiku/codefix:dev:d3:s3/0","usd":0}
+{"at":"2026-10-08T21:26:46.964Z","scope":"H-cfx","label":"V4 F-haiku/codefix:dev:d3:s2/0","usd":0}
+{"at":"2026-10-08T21:26:47.354Z","scope":"H-p1","label":"V3 fhand-haiku/records:test:d3:s5002/1 r0","usd":0}
+{"at":"2026-10-08T21:26:47.407Z","scope":"H-cfx","label":"V4 F-haiku/codefix:dev:d3:s1/0","usd":0}
+{"at":"2026-10-08T21:26:49.228Z","scope":"H-cfx","label":"V4 F-haiku/codefix:test:d3:s6001/1","usd":0}
+{"at":"2026-10-08T21:26:49.727Z","scope":"H-cfx","label":"V4 F-haiku/codefix:test:d3:s6002/1","usd":0}
+{"at":"2026-10-08T21:26:50.212Z","scope":"H-cfx","label":"V4 F-haiku/codefix:test:d3:s6002/0","usd":0}
+{"at":"2026-10-08T21:26:51.795Z","scope":"H-cfx","label":"V4 F-haiku/codefix:test:d3:s6003/0","usd":0}
+{"at":"2026-10-08T21:26:52.030Z","scope":"H-cfx","label":"V4 F-haiku/codefix:test:d3:s6003/1","usd":0}
+{"at":"2026-10-08T21:27:01.881Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d3:s5001/2","usd":0}
+{"at":"2026-10-08T21:27:02.462Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d3:s5001/0","usd":0}
+{"at":"2026-10-08T21:27:03.606Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d3:s5001/1","usd":0}
+{"at":"2026-10-08T21:27:13.943Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d3:s5002/0","usd":0}
+{"at":"2026-10-08T21:27:15.193Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d3:s5002/2","usd":0}
+{"at":"2026-10-08T21:27:15.780Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d3:s5003/0","usd":0}
+{"at":"2026-10-08T21:27:20.423Z","scope":"H-rec","label":"V7 base 1012#0","usd":0.029705}
+{"at":"2026-10-08T21:27:24.007Z","scope":"H-rec","label":"V7 cand 1012#0","usd":0}
+{"at":"2026-10-08T21:27:26.735Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d3:s5003/1","usd":0}
+{"at":"2026-10-08T21:27:28.461Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d3:s5003/2","usd":0}
+{"at":"2026-10-08T21:27:34.874Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d3:s5004/0","usd":0}
+{"at":"2026-10-08T21:27:35.852Z","scope":"H-rec","label":"proposer round 1 (M)","usd":0.002506}
+{"at":"2026-10-08T21:27:36.509Z","scope":"H-cfx","label":"V7 base 1001#0","usd":0.084428}
+{"at":"2026-10-08T21:27:38.845Z","scope":"H-cfx","label":"V7 cand 1001#0","usd":0}
+{"at":"2026-10-08T21:27:46.743Z","scope":"H-rec","label":"proposer round 2 (M)","usd":0.002078}
+{"at":"2026-10-08T21:27:51.465Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d3:s5004/1","usd":0}
+{"at":"2026-10-08T21:27:52.628Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d3:s5004/2","usd":0}
+{"at":"2026-10-08T21:27:52.982Z","scope":"H-rec","label":"proposer round 3 (L)","usd":0.023872}
+{"at":"2026-10-08T21:28:00.525Z","scope":"H-cfx","label":"V7 base 1002#0","usd":0.078778}
+{"at":"2026-10-08T21:28:01.440Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d3:s5005/0","usd":0}
+{"at":"2026-10-08T21:28:03.130Z","scope":"H-cfx","label":"V7 cand 1002#0","usd":0}
+{"at":"2026-10-08T21:28:04.071Z","scope":"H-rec","label":"proposer round 4 (F)","usd":0.05656}
+{"at":"2026-10-08T21:28:07.613Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d3:s5005/2","usd":0}
+{"at":"2026-10-08T21:28:08.039Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d3:s5005/1","usd":0}
+{"at":"2026-10-08T21:28:14.723Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d3:s5006/0","usd":0}
+{"at":"2026-10-08T21:28:20.556Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d3:s5006/1","usd":0}
+{"at":"2026-10-08T21:28:21.458Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d3:s5006/2","usd":0}
+{"at":"2026-10-08T21:28:24.727Z","scope":"H-cfx","label":"V7 base 1003#0","usd":0.075272}
+{"at":"2026-10-08T21:28:26.464Z","scope":"H-cfx","label":"V7 cand 1003#0","usd":0}
+{"at":"2026-10-08T21:28:30.591Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d4:s5001/0","usd":0}
+{"at":"2026-10-08T21:28:31.772Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d4:s5001/1","usd":0}
+{"at":"2026-10-08T21:28:41.896Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d4:s5001/2","usd":0}
+{"at":"2026-10-08T21:28:47.844Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d4:s5002/0","usd":0}
+{"at":"2026-10-08T21:28:48.695Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d4:s5002/1","usd":0}
+{"at":"2026-10-08T21:28:53.090Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d4:s5002/2","usd":0}
+{"at":"2026-10-08T21:29:02.064Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d4:s5003/0","usd":0}
+{"at":"2026-10-08T21:29:02.581Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d4:s5003/1","usd":0}
+{"at":"2026-10-08T21:29:03.125Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d4:s5003/2","usd":0}
+{"at":"2026-10-08T21:29:15.755Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d4:s5004/0","usd":0}
+{"at":"2026-10-08T21:29:17.012Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d4:s5004/2","usd":0}
+{"at":"2026-10-08T21:29:17.473Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d4:s5004/1","usd":0}
+{"at":"2026-10-08T21:29:30.864Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d4:s5005/0","usd":0}
+{"at":"2026-10-08T21:29:31.623Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d4:s5005/2","usd":0}
+{"at":"2026-10-08T21:29:32.162Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d4:s5005/1","usd":0}
+{"at":"2026-10-08T21:29:33.319Z","scope":"H-cfx","label":"V7 base 1004#0","usd":0.315456}
+{"at":"2026-10-08T21:29:35.791Z","scope":"H-cfx","label":"V7 cand 1004#0","usd":0}
+{"at":"2026-10-08T21:29:44.351Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d4:s5006/0","usd":0}
+{"at":"2026-10-08T21:29:44.661Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d4:s5006/1","usd":0}
+{"at":"2026-10-08T21:29:44.767Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d4:s5006/2","usd":0}
+{"at":"2026-10-08T21:32:19.611Z","scope":"H-p1","label":"V7 base 1003#0","usd":0.020798}
+{"at":"2026-10-08T21:32:25.892Z","scope":"H-p1","label":"V7 cand 1003#0","usd":0}
+{"at":"2026-10-08T21:32:58.259Z","scope":"H-p1","label":"V7 base 1004#0","usd":0.014153}
+{"at":"2026-10-08T21:33:04.399Z","scope":"H-p1","label":"V7 cand 1004#0","usd":0}
+{"at":"2026-10-08T21:33:38.119Z","scope":"H-p1","label":"V7 base 1005#0","usd":0.013989}
+{"at":"2026-10-08T21:33:43.516Z","scope":"H-p1","label":"V7 cand 1005#0","usd":0}
+{"at":"2026-10-08T21:34:15.005Z","scope":"H-p1","label":"V7 base 1007#0","usd":0.012567}
+{"at":"2026-10-08T21:34:20.639Z","scope":"H-p1","label":"V7 cand 1007#0","usd":0}
+{"at":"2026-10-08T21:34:29.548Z","scope":"H-p1","label":"proposer round 1 (M)","usd":0.001926}
+{"at":"2026-10-08T21:34:35.780Z","scope":"H-p1","label":"proposer round 2 (M)","usd":0.001413}
+{"at":"2026-10-08T21:34:46.204Z","scope":"H-p1","label":"V3 fhand-haiku/records:test:d3:s5002/1 r0","usd":0.002045}
+{"at":"2026-10-08T21:34:56.073Z","scope":"H-rec","label":"variance test","usd":0.00943}
+{"at":"2026-10-08T21:34:56.920Z","scope":"H-p1","label":"V3 fhand-haiku/records:test:d3:s5002/1 r1","usd":0.001877}
+{"at":"2026-10-08T21:35:15.075Z","scope":"H-p1","label":"V3 fhand-haiku/records:test:d3:s5002/1 r2","usd":0.001818}
+{"at":"2026-10-08T21:35:29.082Z","scope":"H-rec","label":"proposer round 1 (M)","usd":0.001682}
+{"at":"2026-10-08T21:35:33.394Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d3:s5001/2","usd":0.001737}
+{"at":"2026-10-08T21:35:36.285Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d3:s5001/1","usd":0.001752}
+{"at":"2026-10-08T21:35:36.982Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d3:s5001/0","usd":0.001763}
+{"at":"2026-10-08T21:35:48.839Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d3:s5002/0","usd":0.0018}
+{"at":"2026-10-08T21:35:51.623Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d3:s5002/2","usd":0.001864}
+{"at":"2026-10-08T21:35:52.838Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d3:s5003/0","usd":0.001807}
+{"at":"2026-10-08T21:35:54.958Z","scope":"H-rec","label":"V3 F-haiku/records:test:d3:s6001/0 r0","usd":0.028059}
+{"at":"2026-10-08T21:36:06.255Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d3:s5003/1","usd":0.001777}
+{"at":"2026-10-08T21:36:09.005Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d3:s5004/0","usd":0.001805}
+{"at":"2026-10-08T21:36:09.939Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d3:s5003/2","usd":0.013516}
+{"at":"2026-10-08T21:36:21.783Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d3:s5004/1","usd":0.001824}
+{"at":"2026-10-08T21:36:22.706Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d3:s5004/2","usd":0.001873}
+{"at":"2026-10-08T21:36:25.340Z","scope":"H-rec","label":"V3 F-haiku/records:test:d3:s6001/0 r1","usd":0.022633}
+{"at":"2026-10-08T21:36:29.781Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d3:s5005/0","usd":0.008392}
+{"at":"2026-10-08T21:36:38.739Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d3:s5005/1","usd":0.001683}
+{"at":"2026-10-08T21:36:41.439Z","scope":"H-rec","label":"V3 F-haiku/records:test:d3:s6001/0 r2","usd":0.002164}
+{"at":"2026-10-08T21:36:43.030Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d3:s5005/2","usd":0.001677}
+{"at":"2026-10-08T21:36:46.443Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d3:s5006/0","usd":0.001655}
+{"at":"2026-10-08T21:36:48.645Z","scope":"H-rec","label":"proposer round 2 (M)","usd":0.001386}
+{"at":"2026-10-08T21:36:56.908Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d3:s5006/1","usd":0.001674}
+{"at":"2026-10-08T21:37:00.649Z","scope":"H-rec","label":"proposer round 3 (L)","usd":0.035253}
+{"at":"2026-10-08T21:37:02.295Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d3:s5006/2","usd":0.001683}
+{"at":"2026-10-08T21:37:04.008Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d4:s5001/0","usd":0.00267}
+{"at":"2026-10-08T21:37:12.252Z","scope":"H-rec","label":"V3 F-haiku/records:test:d3:s6001/0 r0","usd":0.001569}
+{"at":"2026-10-08T21:37:17.604Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d4:s5001/1","usd":0.002603}
+{"at":"2026-10-08T21:37:21.383Z","scope":"H-rec","label":"V3 F-haiku/records:test:d3:s6001/0 r1","usd":0.001308}
+{"at":"2026-10-08T21:37:22.398Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d4:s5001/2","usd":0.002637}
+{"at":"2026-10-08T21:37:25.563Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d4:s5002/0","usd":0.002498}
+{"at":"2026-10-08T21:37:31.953Z","scope":"H-rec","label":"V3 F-haiku/records:test:d3:s6001/0 r2","usd":0.001302}
+{"at":"2026-10-08T21:37:38.031Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d4:s5002/1","usd":0.002477}
+{"at":"2026-10-08T21:37:42.851Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d4:s5002/2","usd":0.002477}
+{"at":"2026-10-08T21:37:43.116Z","scope":"H-rec","label":"proposer round 4 (F)","usd":0.051662}
+{"at":"2026-10-08T21:37:46.101Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d4:s5003/0","usd":0.002793}
+{"at":"2026-10-08T21:37:56.479Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d4:s5003/1","usd":0.00269}
+{"at":"2026-10-08T21:38:01.527Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d4:s5003/2","usd":0.002749}
+{"at":"2026-10-08T21:38:04.980Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d4:s5004/0","usd":0.002671}
+{"at":"2026-10-08T21:38:19.183Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d4:s5004/1","usd":0.00271}
+{"at":"2026-10-08T21:38:19.779Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d4:s5004/2","usd":0.002754}
+{"at":"2026-10-08T21:38:22.035Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d4:s5005/0","usd":0.002627}
+{"at":"2026-10-08T21:38:37.903Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d4:s5005/1","usd":0.002635}
+{"at":"2026-10-08T21:38:40.341Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d4:s5005/2","usd":0.002636}
+{"at":"2026-10-08T21:38:41.399Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d4:s5006/0","usd":0.002756}
+{"at":"2026-10-08T21:38:53.343Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d4:s5006/1","usd":0.002693}
+{"at":"2026-10-08T21:38:54.482Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d4:s5006/2","usd":0.002762}
+{"at":"2026-10-08T21:40:19.933Z","scope":"H-p1","label":"proposer round 3 (L)","usd":0.02657}
+{"at":"2026-10-08T21:40:27.363Z","scope":"H-p1","label":"V3 fhand-haiku/records:test:d3:s5002/1 r0","usd":0.001802}
+{"at":"2026-10-08T21:40:35.191Z","scope":"H-p1","label":"V3 fhand-haiku/records:test:d3:s5002/1 r1","usd":0.001781}
+{"at":"2026-10-08T21:40:42.588Z","scope":"H-p1","label":"V3 fhand-haiku/records:test:d3:s5002/1 r2","usd":0.001822}
+{"at":"2026-10-08T21:40:55.091Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d3:s5001/1","usd":0.001726}
+{"at":"2026-10-08T21:40:59.479Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d3:s5001/0","usd":0.001755}
+{"at":"2026-10-08T21:41:00.315Z","scope":"H-p1","label":"V4 fhand-haiku/records:test:d3:s5001/2","usd":0.010778}

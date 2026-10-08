@@ -1,0 +1,11 @@
+{"at":"2026-10-08T21:34:56.073Z","label":"variance test","usd":0.00943,"totalUsd":0.00943}
+{"at":"2026-10-08T21:35:29.082Z","label":"proposer round 1 (M)","usd":0.001682,"totalUsd":0.011111,"runId":"ac2b0230-fc83-4062-bace-47fef1cbc33c"}
+{"at":"2026-10-08T21:35:54.958Z","label":"V3 F-haiku/records:test:d3:s6001/0 r0","usd":0.028059,"totalUsd":0.03917,"liveCalls":2}
+{"at":"2026-10-08T21:36:25.340Z","label":"V3 F-haiku/records:test:d3:s6001/0 r1","usd":0.022633,"totalUsd":0.061803,"liveCalls":2}
+{"at":"2026-10-08T21:36:41.439Z","label":"V3 F-haiku/records:test:d3:s6001/0 r2","usd":0.002164,"totalUsd":0.063967,"liveCalls":1}
+{"at":"2026-10-08T21:36:48.645Z","label":"proposer round 2 (M)","usd":0.001386,"totalUsd":0.065353,"runId":"385dc9b9-f526-4d2e-a00e-067efa7d6030"}
+{"at":"2026-10-08T21:37:00.649Z","label":"proposer round 3 (L)","usd":0.035253,"totalUsd":0.100606,"runId":"8a8b129e-5675-49e0-8010-be2cd71985b2"}
+{"at":"2026-10-08T21:37:12.252Z","label":"V3 F-haiku/records:test:d3:s6001/0 r0","usd":0.001569,"totalUsd":0.102175,"liveCalls":1}
+{"at":"2026-10-08T21:37:21.383Z","label":"V3 F-haiku/records:test:d3:s6001/0 r1","usd":0.001308,"totalUsd":0.103482,"liveCalls":1}
+{"at":"2026-10-08T21:37:31.953Z","label":"V3 F-haiku/records:test:d3:s6001/0 r2","usd":0.001302,"totalUsd":0.104784,"liveCalls":1}
+{"at":"2026-10-08T21:37:43.116Z","label":"proposer round 4 (F)","usd":0.051662,"totalUsd":0.156447,"runId":"112a5d68-102a-453a-9964-d92c48b31160"}
