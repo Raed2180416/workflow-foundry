@@ -37,6 +37,20 @@ const definitions = {
   , strict: { type: 'boolean' }, 'fail-on': { type: 'string' }
   , 'check-anchors': { type: 'string' }, 'append-anchor': { type: 'string' }, 'expect-head': { type: 'string' }, 'require-bound': { type: 'boolean' }, journal: { type: 'string' }
 };
+// Ctrl-C or SIGTERM while a command executes runs in this process. The command stops as a crash would (each run stays resumable with
+// `foundry resume RUN`; a non-idempotent effect that was in flight is recorded uncertain on resume), but it first aborts every execution
+// it owns: the abort reaches each running node's signal synchronously, and that kills its sandboxed code and model-CLI process groups.
+// They run detached and a sandbox's wall-clock limit is a timer in this process, so without this they outlive the CLI (a busy loop
+// keeps a CPU until it ends by itself). A SIGKILL of the CLI cannot be handled here.
+const executing = new Set(['run', 'resume', 'tick', 'trial']);
+function interruptOnSignal(foundry, halt) {
+  const handler = (name, code) => () => {
+    halt.abort();
+    try { process.stderr.write(JSON.stringify({ interrupted: name, runs: [...foundry.active.keys()], resumable: true }) + '\n'); } catch {}
+    process.exit(code);
+  };
+  process.once('SIGINT', handler('SIGINT', 130)); process.once('SIGTERM', handler('SIGTERM', 143));
+}
 // Model-run options (DESIGN §5.1): which commands accept them.
 const runOnly = ['model-mode', 'salt', 'max-cost', 'assignment'];
 const modelCommands = new Set(['run', 'resume', 'tick']);
@@ -326,6 +340,8 @@ async function main() {
     const host = modelCommands.has(command) ? await modelHost(args, command) : null;
     const maxCost = args['max-cost'] === undefined ? undefined : Number(args['max-cost']);
     foundry = new Foundry(workspace, { registry, ...(host ? { modelPolicy: host.modelPolicy, models: host.models } : {}), ...(maxCost === undefined ? {} : { policy: { maxCost } }) });
+    const halt = new AbortController();
+    if (executing.has(command)) interruptOnSignal(foundry, halt);
     // Ordinary routes retain their existing behavior for ordinary requests.
     // Outcome descendants require the coordinator's live evidence checks.
     if (['propose', 'apply', 'prompt', 'generate'].includes(command) && !args['outcome-repair']) {
@@ -405,7 +421,7 @@ async function main() {
     if (command === 'trial') {
       if (args.input === undefined) throw new FoundryError('TRIAL_INPUT', 'Specify the exact diagnostic input with --input, including {} when empty');
       const candidate = readJson(args.file ?? item), workflow = candidate.workflow ?? candidate;
-      print(await foundry.trial({ requestId: args.request, workflow, input: jsonValue(args.input) })); return;
+      print(await foundry.trial({ requestId: args.request, workflow, input: jsonValue(args.input) }, { signal: halt.signal })); return;
     }
     if (command === 'inspect-trial') { print(foundry.inspectTrial(item)); return; }
     if (command === 'repair-request') { print(foundry.requestRepair({ requestId: args.request, failedRunId: args['failed-run'], expectedHash: args['expected-hash'], diagnostic: args.diagnostic ?? '' })); return; }
@@ -424,7 +440,7 @@ async function main() {
     }
     if (command === 'apply') { print(foundry.apply(item)); return; }
     if (command === 'inspect') { const view = foundry.inspectRun(item); print({ ...view, anchor: anchorInWorkspace(foundry.store, { runId: view.id, events: view.events, status: view.status }) }); return; }
-    if (command === 'tick') { print(await foundry.tick()); return; }
+    if (command === 'tick') { print(await foundry.tick({ signal: halt.signal })); return; }
     if (command === 'calls') {
       if (!args.run?.trim()) throw new FoundryError('CLI_ARGUMENT', 'calls requires --run RUN_ID');
       foundry.store.run(args.run);
@@ -456,7 +472,7 @@ async function main() {
         const options = { modelMode: host.mode, ...(args.salt === undefined ? {} : { sampleSalt: args.salt }), ...(assignment === undefined ? {} : { assignment }) };
         run = foundry.runtime.create(workflow, jsonValue(args.input), { ...(args.fixture ? { fixture: readJson(args.fixture) } : {}), ...options });
       }
-      const result = await foundry.startRun(run.id), log = foundry.store.events(run.id), anchor = anchorInWorkspace(foundry.store, { runId: run.id, events: log, status: result.status });
+      const result = await foundry.startRun(run.id, { signal: halt.signal }), log = foundry.store.events(run.id), anchor = anchorInWorkspace(foundry.store, { runId: run.id, events: log, status: result.status });
       // The anchor is the chain head to keep outside the database; --append-anchor writes it to an append-only file.
       // A failure to anchor never hides the run it would have anchored: the run is printed with the error, and the exit code is nonzero.
       const anchored = args['append-anchor'] === undefined ? undefined : anchorTo(args['append-anchor'], anchor);

@@ -37,7 +37,7 @@ export function compare(got, want, { maxDiffs = 20 } = {}) {
   const memo = new WeakMap();
   const canon = v => { if (v === null || typeof v !== 'object') return canonical(v); let c = memo.get(v); if (c === undefined) { c = canonical(v); memo.set(v, c); } return c; };
   const diffs = [];
-  const note = (p, g, w) => { if (diffs.length < maxDiffs) diffs.push({ path: p || '$', got: g, want: w }); };
+  const note = (p, g, w) => { if (diffs.length < maxDiffs) diffs.push({ path: p, got: g, want: w }); };
   function cmp(a, b, p, record) {
     if (canon(a) === canon(b)) { const n = leaves(b); return { m: n, n }; }
     if (isObj(a) && isObj(b)) {
@@ -77,7 +77,7 @@ export function compare(got, want, { maxDiffs = 20 } = {}) {
     for (const i of restA) if (!pairedA.has(i)) { n += leaves(a[i]); if (record) note(`${p}[got ${i}]`, a[i], EXTRA); }
     return { m, n };
   }
-  const r = cmp(got, want, '', true);
+  const r = cmp(got, want, '$', true);
   return { exact: canon(got) === canon(want), partial: r.n ? r.m / r.n : 1, matched: r.m, compared: r.n, diffs };
 }
 
@@ -123,7 +123,9 @@ export async function runCase(c, { root, out, toolsDir, timeoutMs }) {
   let costUsd = 0;
   try { for (const l of readFileSync(path.join(tools, 'calls.jsonl'), 'utf8').split('\n').filter(Boolean)) costUsd += JSON.parse(l).costUsd ?? 0; } catch {}
   const base = { id: c.id, kind: c.kind, exitCode: code, ms: Date.now() - started, costUsd: Math.round(costUsd * 1e6) / 1e6 };
-  const tail = stderr.trim().split('\n').filter(l => !l.startsWith('[model]')).slice(-1)[0] ?? '';
+  // The error line of a crash (Node prints the stack, then its version): the last 'SomeError: ...' line, else the last line.
+  const lines = stderr.trim().split('\n').filter(l => l.trim() && !l.startsWith('[model]') && !/^Node\.js v\d/.test(l) && !/^\s+at /.test(l));
+  const tail = [...lines].reverse().find(l => /^\w*Error\b|^Uncaught/.test(l)) ?? lines.at(-1) ?? '';
   if (timedOut) return { ...base, status: 'timeout', note: `killed after ${Math.round(timeoutMs / 1000)} s` };
   if (code === DEOPT_EXIT) {
     const d = readJson(path.join(dir, 'deopt.json'));

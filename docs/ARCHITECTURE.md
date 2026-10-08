@@ -120,6 +120,14 @@ running nodes finish, nothing else starts. An open human question or approval ho
 back only its own dependents; independent branches keep going until nothing is left to
 run, and the run then waits.
 
+Sandboxed code and model-CLI subprocesses run in detached process groups whose
+wall-clock limits are timers in the Foundry process, so they would outlive a CLI killed by
+a signal. `foundry run`, `resume`, `tick` and `trial` therefore handle SIGINT and SIGTERM:
+they abort every execution they own (the abort reaches each node's signal synchronously
+and kills those groups), report the interrupted runs on stderr and exit 130/143 as a crash
+would, so each run stays resumable (`tests/cli-interrupt.test.mjs`). A SIGKILL of the CLI
+still leaves them running until they end by themselves: the sandbox sets no CPU-time limit.
+
 ## Run state
 
 A run is stored as rows (`src/run-rows.mjs`), not as one JSON blob: `runs.body` is the run

@@ -141,7 +141,8 @@ export function renderMarkdown(rep) {
   const maxN = Math.max(0, ...rep.arms.map(a => a.curve.length));
   if (maxN) {
     L.push('', '## Cumulative curves (successes / $ by task index)', '', `| idx | ${rep.arms.map(a => short(a.spec)).join(' | ')} |`, `|---|${rep.arms.map(() => '---').join('|')}|`);
-    for (let i = 0; i < maxN; i++) L.push(`| ${i} | ${rep.arms.map(a => { const p = a.curve[i]; return p?.done ? `${p.cumSuccesses} / ${usd(p.cumUsd)}${p.pass ? '' : ' ✗'}` : '–'; }).join(' | ')} |`);
+    for (let i = 0; i < maxN; i++) L.push(`| ${i} | ${rep.arms.map(a => { const p = a.curve[i]; return p?.done ? `${p.cumSuccesses} / ${usd(p.cumUsd)}${p.pass ? '' : ' *'}` : '–'; }).join(' | ')} |`);
+    L.push('', '`*` marks a failed task at that index.');
   }
   const integrity = rep.arms.filter(a => a.counts.nestedModelAttempts || a.counts.hiddenPathAttempts || a.counts.voided || a.costUnknownRows);
   if (integrity.length) {
