@@ -702,7 +702,7 @@ export function unknowablePlans(G, W, port, u, scr, job, key, units) {
   if (!nd) { bump(G, `skip:${port}:unknowable:no-nondeciding`); return null; }
   const stated = basePlan(G, W, port, u, scr, { ...job, variant: 'clean', axis: 'unknowable-stated', mode: 'bed' }, key, naturalD(G, W, u), u.label);
   // The pair is presence-matched at the word level: both states hold the non-deciding sentence F. The stated
-  // twin keeps the decisive sentence D and carries F after it; the unknowable replaces D by F. (A twin without F
+  // twin keeps the decisive sentence D and carries F in front of it (the same junction as in the unknowable); the unknowable replaces D by F. (A twin without F
   // would differ from the unknowable by F's words as well, and a bag-of-words probe separates those at 0.82.)
   const stateNotes = applyEdits(W.task.inputs.source_notes, scr.edits);
   const paragraphs = stateNotes.ok ? groupParagraphs(stateNotes.notes, [u.sys]) : undefined;
@@ -713,7 +713,7 @@ export function unknowablePlans(G, W, port, u, scr, job, key, units) {
     counterfactual: { swapped: true, kind: 'unknowable', from: tplName(u, u.index), to: nd.from, pool: u.pool, nondeciding: nd.kind, phrasing: nd.phrasing },
     cell: null, counts: [], extra: { meta: { phrasing: nd.phrasing, nondecidingKind: nd.kind, replaced: u.sentence } } };
   const S = { ...stated, kitSlots: { ...stated.kitSlots, paragraphs },
-    edits: deleting ? stated.edits : [...stated.edits, { old: u.sentence, new: `${u.sentence} ${nd.text}`, role: 'distractor' }], extra: { ...stated.extra, meta: { ...stated.extra.meta, distractor: nd.text || null } } };
+    edits: deleting ? stated.edits : [...stated.edits, { old: u.sentence, new: `${nd.text} ${u.sentence}`, role: 'distractor' }], extra: { ...stated.extra, meta: { ...stated.extra.meta, distractor: nd.text || null } } };
   return withPair([S, U], key);
 }
 export function injectionPlans(G, W, port, u, scr, job, key) {
