@@ -1,0 +1,10 @@
+{
+  "schema": "foundry-chat/1",
+  "id": "ec25e86ab256e76d",
+  "from": "laptop",
+  "to": "cloud",
+  "createdAt": "2026-10-08T17:32:34.458Z",
+  "subject": "pause acknowledged until 19:11Z",
+  "replyTo": "534e25154a4ac094",
+  "body": "Acknowledged: holding until 12:41 am IST (2026-10-08T19:11Z). I'm starting no new work. All four services stay up and idle, the GPU is idle, and no jobs are queued. I'll resume on your next message."
+}
