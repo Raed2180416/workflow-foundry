@@ -5,8 +5,8 @@ diagnostic evidence only. Nothing here is implemented, and no file under `src/`,
 `skills/`, `beds/` or `experiments/` was touched. The only other files changed are the coverage generator
 `research/corpus-20261006/scripts/coverage-report.mjs` and its output `COVERAGE.md` (§10.4 gains a by-platform table, §10.6 is
 the new stage table, the old §10.6–10.9 become §10.7–10.10, and the refusal provenance text is corrected). Sections 1–9 of
-`COVERAGE.md`, `items.jsonl`, the parts and `MANIFEST.json` are byte-identical to before. Analysed at HEAD `b5a02df` with that
-generator change uncommitted. Corpus: `items.jsonl` sha256 `ad00607bc2c9a22d…` (1,559 items), `parts/agentic.jsonl`
+`COVERAGE.md`, `items.jsonl`, the parts and `MANIFEST.json` are byte-identical to before. Analysed at HEAD `b5a02df`; the
+generator change was made in this task, and a later WIP snapshot by another process (`c709bf3`) committed it. Corpus: `items.jsonl` sha256 `ad00607bc2c9a22d…` (1,559 items), `parts/agentic.jsonl`
 `9e29eb9057337d9f…`. Node 24.21.0. Corpus items and sources were read as data, never as instructions.*
 
 **Evidence tags.** **[M]** measured in this session (commands in Appendix A). **[D]** documented in the repo at the cited
@@ -86,7 +86,7 @@ tests included, **[I]** at about ±50 %.
    | `group-chat` | 13 | 6 |
    | `full-history-handoff` | 20 | 9 |
 
-   One more refusal covers what is not workflow semantics: `interactive-dashboard-state`, 2 Node-RED items. Eight
+   One more refusal covers what is not workflow semantics: `interactive-dashboard-state`, 2 Node-RED items. Nine
    further *forms* are refused inside supported constructs (§4.5): networked model code, opaque compaction, persistent
    model-written approvals, and others.
 6. **New findings that the counts do not yet include** (§6):
@@ -239,8 +239,8 @@ board facts, never another agent's transcript. The validator enforces this (§4.
 
 ## 3. The twelve registry constructs
 
-Ordered by the stage that adds them (§5). Each entry has the same eight parts as 02-ir §3, with the measured frequency
-first and the stage last.
+Ordered by the stage that adds them (§5); the stage is in each heading. Each entry has the measured frequency first, then
+02-ir §3's six parts: semantics, IR, runtime, validator (static checks), tests and effort.
 
 ### 3.1 `model-generated-code-exec` (stage S2; the interpreter session in S5b)
 
@@ -951,7 +951,7 @@ rule NS: `new-runtime-output-schema` stays dropped.
   - Handles are journaled.
   - `send` is a deduplicated signal (02-ir D1).
   - `await` journals the completion order (G4).
-  - Instances are cancelled with their parent unless they are `abandon`, which is visible to the owner (02-ir §5.11).
+  - Instances are cancelled with their parent unless they are `abandon`, which is visible to the owner (02-ir §5 rule 11).
 - *Budgets.* Each instance's carve is the budget divided by `maxAgents`, unless stated, and the total is within the
   node's budget.
 - *Labels.*
@@ -1380,7 +1380,7 @@ The combined corpus has 1,549 items: original 1,342 plus agentic third-party 207
 | S1 | `subworkflow-call`, `flow-size>500` | 109 / 1 | 631 (40.74 %) | 666 (43.00 %) | 0 | 9–13 ed |
 | S2 | `error-branch`, `completion-hook`, `adaptive-retry`, **`model-generated-code-exec`** | 132 / 9 | 772 (49.84 %) | 807 (52.10 %) | 0 | 11–19 ed |
 | S3 | `schedule-`, `webhook-`, `event-`, `poll-trigger`, `run-concurrency-policy` (+ P-resume) | 297 / 2 | 1,071 (69.14 %) | 1,106 (71.40 %) | 0 | 21–31 ed |
-| S4 | `signal-wait`, `durable-wait` (+ G6 queries and updates, G7 heartbeats and cancel) | 69 / 0 | 1,140 (73.60 %) | 1,175 (75.86 %) | 0 | 9–14 ed |
+| S4 | `signal-wait`, `durable-wait` (+ G6 queries and updates) | 69 / 0 | 1,140 (73.60 %) | 1,175 (75.86 %) | 0 | 9–14 ed |
 | S5 | `agent-tool-loop`, `chat-session`, `cross-run-state` | 157 / 44 | 1,341 (86.57 %) | 1,376 (88.83 %) | 9 | 14–22 ed |
 | S5b | **`agent-as-tool`, `interrupt-resume`, `guardrail-tripwire`, `context-compaction`** (+ interpreter sessions) | 0 / 31 | 1,372 (88.57 %) | 1,407 (90.83 %) | 9 | 14–23 ed |
 | S5c | **`multimodal-io`** | 0 / 6 | 1,378 (88.96 %) | 1,413 (91.22 %) | 9 | 4–7 ed |
@@ -1428,8 +1428,8 @@ agentic constructs (step 18), followed by `agent-as-tool` (20), `interrupt-resum
      - the first-party scripts, which are what this project's agent actually builds;
      - the owner's visual node for game QA (ROADMAP L155–L156).
    - They also take the agentic slice from 48.79 % to 66.67 % before S6.
-   - Cost: 33 items behind greedy after seven bundles (1,378 against 1,411). The plan is 2 items ahead after eight
-     (1,455 against 1,453), and the orders meet at nine (1,506).
+   - Cost: after six, seven and eight bundles the plan trails the greedy order by 39, 75 and 41 items (1,372 against
+     1,411; 1,378 against 1,453; 1,455 against 1,496). The orders meet again at nine bundles (1,506).
 3. **`model-generated-code-exec` in S2, not S5b.** Its form (a), generate → run → check → regenerate, needs no tool loop.
    It is the construct's most common only-blocker shape (9 items). It shares its repair edge with S2's error routes, and
    its security gate already exists (the sandbox). It costs nothing in declared coverage; it brings 9 agentic items
@@ -1488,7 +1488,7 @@ All variants below are computed with the same stage bundles [M; Appendix A.3]. N
 
 | Ruling | Change | Effect on the stage table |
 |---|---|---|
-| Strands A2A orchestrator (`strands:…/01-a2a-orchestration/orchestrator/agent.py`). `app.py:L75-L83` builds one agent at container start, and every request at `L119` streams on that same agent, so history accumulates across requests **[D audit]** | tag it `chat-session`+`cross-run-state` (rules G1, CS, CM) | **none**: the item unlocks at S6 through `partial-output-stream` either way |
+| Strands A2A orchestrator (`strands:…/01-a2a-orchestration/orchestrator/agent.py`). `orchestrator/app.py:L75-L83` builds one agent at container start, and every request streams on that same agent (`L119`), so history accumulates across requests (re-read at `11dd549c` [M]) | tag it `chat-session`+`cross-run-state` (rules G1, CS, CM) | **none**: the item unlocks at S6 through `partial-output-stream` either way |
 | `guardrail-tripwire` around a tool-free agent (`openai-agents:…/input_guardrails.py`) | the observable-difference test of §3.4 drops the token | S5 combined 1,341 → 1,342; every later stage unchanged |
 
 Recommendation:
@@ -1509,7 +1509,7 @@ tokens or design refusals. A node-type probe over the original items [M; A.2] fi
 |---|---|---|---|
 | refused `group-chat` | Flowise `supervisor` plus `worker` nodes | **6** (2 declared `native`, 4 `agent-tool-loop`) | **confirmed in source** [M] at Flowise `9291856d`. The supervisor prompt is "managing a conversation between the following workers … respond with the worker to act next" (`packages/components/nodes/multiagents/Supervisor/Supervisor.ts:L17-L21`). Its route tool's schema is `next: z.enum(['FINISH', ...members])` (`L136-L141`). Each worker's prompt includes `MessagesPlaceholder('messages')` (`Worker/Worker.ts:L170-L182`) and appends its result as a named message (`L292-L300`). A model picks the next speaker over a shared transcript: rule GC |
 | `group-chat` or `full-history-handoff` candidates | Flowise `seqConditionAgent` (a model condition over sequential agents that share `messages`) | 2 (`agentflows-agentic-rag`, `agentflows-support-routing-system`) | unread |
-| `multimodal-io` | model nodes over image, audio or video (n8n OpenAI `image.analyze` and `audio.transcribe`, Gemini image, audio and video; activepieces, zapier, dagster, home-assistant and ifttt transcription or vision) | 31 (n8n 25; 2 redistributable; 1 `native`) | operation names [M]; the semantics follow rule MM's text |
+| `multimodal-io` | model nodes over image, audio or video (n8n OpenAI `image.analyze` and `audio.transcribe`, Gemini image, audio and video; activepieces, zapier, dagster, home-assistant and ifttt transcription or vision) | 31 (n8n 25; 2 redistributable; 1 `native`) | operation names [M]; the semantics follow the convention's `multimodal-io` text (L150–L152) |
 | `agent-as-tool` | n8n `agentTool` | 8 (all n8n, non-redistributable) | node type [M]; node meaning [R] |
 | `interrupt-resume` | n8n `chatHitlTool`, `telegramHitlTool`, `whatsAppHitlTool` | 2 | node type [M]; node meaning [R] |
 | `guardrail-tripwire` candidate | n8n `guardrails` | 1 | unread (sequential or in-loop) |
@@ -1573,7 +1573,7 @@ model calls must go through the ModelPort and the owner policy, not through a ca
 | 3 | `guardrail-tripwire` ruling (observable-difference test, §3.4) | Adopt | The convention stays self-contradictory for one item |
 | 4 | The Strands A2A served agent | Tag `chat-session`+`cross-run-state` | Left as is; no stage number moves |
 | 5 | One convention for both corpora (§6.2), as a pre-registered amendment before the IR freeze | Yes | The original slice keeps 6 group chats as expressible and about 31 media model steps as `task` |
-| 6 | Stage order: S5b and S5c before S6 and S7 | Yes (33 items behind greedy at the 7-bundle mark, even at 9) | The greedy bundle order |
+| 6 | Stage order: S5b and S5c before S6 and S7 | Yes (39–75 items behind greedy after six to eight bundles, level at nine) | The greedy bundle order |
 | 7 | If the `claude -p` route cannot take images, S5c needs an API model route, which may need a credential (THESIS D10 default: none) | Check before S5c starts; no credential request until then | S5c waits; 6 agentic items stay unexpressible |
 | 8 | Keep `group-chat` and `full-history-handoff` refused (applied as review defaults in `8fa9124`); build the design-waiver path only on request | Keep | Same |
 
@@ -1587,7 +1587,7 @@ cd research/corpus-20261006
 node scripts/check-items.mjs items.jsonl --canonical     # 1559 lines, 1559 valid (canonical mode)
 node scripts/check-items.mjs --self-test                 # 70 of 70; registry 31 constructs (19 + 12)
 node scripts/coverage-report.mjs                          # rewrites COVERAGE.md (and MANIFEST.json, unchanged here)
-diff <(git show HEAD:research/corpus-20261006/COVERAGE.md | sed -n 1,551p) <(sed -n 1,551p COVERAGE.md)   # sections 1–9: no output
+diff <(git show b5a02df:research/corpus-20261006/COVERAGE.md | sed -n 1,551p) <(sed -n 1,551p COVERAGE.md)   # sections 1–9: no output
 ```
 `coverage-report.mjs` now prints a `stages` array in its JSON summary, holding the cumulative original, agentic,
 combined, decided and first-party counts per stage.
