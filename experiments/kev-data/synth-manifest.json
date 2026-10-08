@@ -1,0 +1,234 @@
+{
+  "group": "synth",
+  "generator": "synth@1",
+  "kit": 1,
+  "tapVersion": 1,
+  "bed": {
+    "id": "synth",
+    "version": "3.0.0"
+  },
+  "tapThreshold": 0.95,
+  "tap": {
+    "tapVersion": 1,
+    "threshold": 0.95,
+    "worlds": 200,
+    "claims": 15500,
+    "aligned": 15428,
+    "missing": 22,
+    "ambiguous": 46,
+    "shared": 4,
+    "rate": 0.9953548387096774,
+    "population": {
+      "claims": 13216,
+      "aligned": 13150,
+      "rate": 0.9950060532687651
+    },
+    "pass": true,
+    "byDifficulty": {
+      "3": {
+        "claims": 4415,
+        "aligned": 4397
+      },
+      "4": {
+        "claims": 5234,
+        "aligned": 5207
+      },
+      "5": {
+        "claims": 5851,
+        "aligned": 5824
+      }
+    },
+    "byMode": {
+      "measured": {
+        "claims": 13118,
+        "aligned": 13070
+      },
+      "quoted": {
+        "claims": 1761,
+        "aligned": 1741
+      },
+      "bound": {
+        "claims": 357,
+        "aligned": 354
+      },
+      "predicted": {
+        "claims": 198,
+        "aligned": 197
+      },
+      "injection": {
+        "claims": 66,
+        "aligned": 66
+      }
+    },
+    "byKind": {
+      "pm": 1710,
+      "plain": 10347,
+      "csv": 189,
+      "concise": 853,
+      "replicates": 1770,
+      "duration": 304,
+      "pipe": 204,
+      "bare": 51
+    },
+    "byPress": {
+      "press": {
+        "claims": 742,
+        "aligned": 742
+      },
+      "research": {
+        "claims": 14758,
+        "aligned": 14686
+      }
+    },
+    "lost": {
+      "ambiguous:measured": 23,
+      "ambiguous:quoted": 20,
+      "missing:measured": 22,
+      "ambiguous:bound": 2,
+      "shared:measured": 3,
+      "ambiguous:predicted": 1,
+      "shared:bound": 1
+    },
+    "s2Wave": 1,
+    "s3Wave": 2,
+    "s3Size": "smoke",
+    "switched": false
+  },
+  "contingency": {
+    "s2Wave": 1,
+    "s3Wave": 2,
+    "s3Size": "smoke",
+    "switched": false
+  },
+  "naturalRates": {
+    "pinned": {
+      "own_measurement": 0.8502,
+      "quoted": 0.1304,
+      "projected": 0.0144,
+      "instruction_like": 0.0051
+    },
+    "measured": {
+      "worlds": 270,
+      "first": 701,
+      "claims": 17894,
+      "rates": {
+        "own_measurement": 0.85045,
+        "quoted": 0.13016,
+        "projected": 0.01436,
+        "instruction_like": 0.00503
+      }
+    }
+  },
+  "targets": {
+    "S2": {
+      "train": 1935,
+      "calib-in": 300,
+      "calib-ood": 500,
+      "dev-select": 200,
+      "dev-ood": 600,
+      "test-in": 500,
+      "test-ood": 2500
+    },
+    "X5:synth": {
+      "train": 484,
+      "calib-in": 75,
+      "calib-ood": 250,
+      "dev-select": 50,
+      "dev-ood": 250,
+      "test-in": 125,
+      "test-ood": 775
+    },
+    "X1:synth": {
+      "train": 322,
+      "calib-in": 50,
+      "calib-ood": 100,
+      "dev-select": 33,
+      "dev-ood": 100,
+      "test-in": 83,
+      "test-ood": 692
+    },
+    "X8:synth": {
+      "test-ood": 600
+    }
+  },
+  "planRows": {
+    "train": 2742,
+    "calib": 1275,
+    "testIn": 708,
+    "testOOD": 4567,
+    "dev": 1233
+  },
+  "slicePorts": {
+    "train": [
+      "S2",
+      "X5:synth",
+      "X1:synth",
+      "S3",
+      "S4",
+      "S1",
+      "S5",
+      "X2:synth",
+      "X4:synth",
+      "X7:synth"
+    ],
+    "calib-in": [
+      "S2",
+      "X5:synth",
+      "X1:synth"
+    ],
+    "calib-ood": [
+      "S2",
+      "X5:synth",
+      "X1:synth"
+    ],
+    "dev-select": [
+      "S2",
+      "X5:synth",
+      "X1:synth",
+      "S3",
+      "S4",
+      "S1",
+      "S5",
+      "X2:synth",
+      "X4:synth",
+      "X7:synth"
+    ],
+    "dev-ood": [
+      "S2",
+      "X5:synth",
+      "X1:synth"
+    ],
+    "test-in": [
+      "S2",
+      "X5:synth",
+      "X1:synth"
+    ],
+    "test-ood": [
+      "S2",
+      "X5:synth",
+      "X1:synth",
+      "X8:synth"
+    ],
+    "real-reserve": [],
+    "e2e-reserve": []
+  },
+  "heldOutPorts": [
+    "X8:synth"
+  ],
+  "specGaps": [
+    "S2 option \"bound\": the bed has a fifth claim mode (a bound) that the contract has no option for; a bound claim is left out of S2 with a count (s2:excluded:bound), never mapped. mapLabel refuses it.",
+    "The tap's \"exactly one passage\": a claim is aligned when exactly one occurrence of any written form of its value (plain, grouped, scientific, +/- , (n), unit words, h min, replicate lists, range means, pipe/csv table rows, bare numbers of \"Half-life values (days)\" sentences) lies in its document, no other claim reads that span, and the value round-trips through the port kit. The 95% gate is on all claims AND on the S2 population (requested, labelled).",
+    "Passage = the value's sentence plus its neighbours (sentence-level, kit judges/synth.mjs sentenceSpans); not at \"et al.\", initials after \"by\", inside [brackets] (the injection banner is one sentence), line breaks end sentences.",
+    "Bed natural mode rates are measured on this bed pin (synth 3.0.0): 85.0 / 13.0 / 1.4 / 0.5 % (own / quoted / projected / instruction_like). The program's 90.1 / 7.7 / 1.6 / 0.5 % are for synth 2.0.0; the pinned rates here are the ones used for natural sets and importance weights.",
+    "Strict bucket rule: every sentence of an S2/S4/X1-window/X4 state must be of the slice's own skeleton bucket (train 40-100%; the label-bearing sentence of an OOD slice of that slice's bucket); relaxed rule for whole documents (X1 long, X7): no sentence of the test-ood bucket, where the held-out family takes its spans.",
+    "Train 3:1 (rule 9) under a thin class: S2 train rows are capped at 3x the rarest label present after the draws (instruction_like exists only at d5 and only where a 3-sentence passage is of the train bucket); the surplus of the larger labels is dropped from the plain axis and counted (report.cap).",
+    "instruction_like only at d5 and projected from d4 (the bed plants them there); the class support table is label x difficulty with forms (distinct masked sentences) and cells under 30 forms marked diagnostic.",
+    "X8 synth: unit rows (a converted value, an unconverted one, a wrong-factor one, a decimal slip) and erratum lines (the corrected value vs the printed one); a held-out family appears in test-ood only; its spans are registered; wordings slots collide (X8 state slot \"located\" is the source value, \"value\" the extracted value and the wording slot).",
+    "Contingency (tap < 95%): S2 is a wave-2 smoke set in train and dev-select only; S3 is produced at S2's wave-1 size in every slice S2 was in, marked meta.wave on the rows.",
+    "Wave-2 smoke sets (S1, S3, S4, X2, X4, X7) are 300 train and 100 dev-select rows; S5 is the wave-3 document-kind set; S5 in test-ood is only the unseen type names supplied through opts.unseenNames.",
+    "Unknowable S2 rows (presence-matched twins) carry a soft uniform target and are not reproducible by the kit (reproducible: false).",
+    "X5 axes not built: the adversarial, long and slot axes of the program's X5 table (the policy and condition axes with flip pairs and one not_stated per group, presence-matched, are).",
+    "Partial-input ceilings (PART): the metadata-only baseline of S2 is within majority + 3 pp; value-only, length-only and context-only baselines are above it on the dev sample (see supply/part in the test diagnostics). S2 is not frozen on that axis.",
+    "Held-out wordings, carriers and unseen names reach the generator only through opts (stub fixtures here and in the tests); the OOD adversarial and paraphrase axes are therefore counted on stubs."
+  ]
+}

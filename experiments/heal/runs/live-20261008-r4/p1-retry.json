@@ -1,0 +1,183 @@
+{
+ "schema": "heal-retry-control/1",
+ "incident": "H-p1",
+ "trial": "fhand-haiku/records:test:d3:s5002/1",
+ "recordedPass": false,
+ "healedHash": "309dccb6c5458c38314f77bfdfa202fd98da51696f2b54e2cf2c6948e1dd15c9",
+ "healedVersion": 3,
+ "base": {
+  "n": 8,
+  "pass": 8,
+  "verdictPass": 8,
+  "usd": 0.0893
+ },
+ "healed": {
+  "n": 8,
+  "pass": 8,
+  "verdictPass": 8,
+  "usd": 0.1033
+ },
+ "spentUsd": 0.1926,
+ "runs": [
+  {
+   "arm": "base",
+   "i": 0,
+   "pass": true,
+   "score": 1,
+   "status": "succeeded",
+   "verdict": "pass",
+   "calls": 18,
+   "usd": 0.01093
+  },
+  {
+   "arm": "base",
+   "i": 1,
+   "pass": true,
+   "score": 1,
+   "status": "succeeded",
+   "verdict": "pass",
+   "calls": 18,
+   "usd": 0.01126
+  },
+  {
+   "arm": "base",
+   "i": 2,
+   "pass": true,
+   "score": 1,
+   "status": "succeeded",
+   "verdict": "pass",
+   "calls": 18,
+   "usd": 0.01119
+  },
+  {
+   "arm": "base",
+   "i": 3,
+   "pass": true,
+   "score": 1,
+   "status": "succeeded",
+   "verdict": "pass",
+   "calls": 18,
+   "usd": 0.01138
+  },
+  {
+   "arm": "base",
+   "i": 4,
+   "pass": true,
+   "score": 1,
+   "status": "succeeded",
+   "verdict": "pass",
+   "calls": 18,
+   "usd": 0.01127
+  },
+  {
+   "arm": "base",
+   "i": 5,
+   "pass": true,
+   "score": 1,
+   "status": "succeeded",
+   "verdict": "pass",
+   "calls": 18,
+   "usd": 0.01102
+  },
+  {
+   "arm": "base",
+   "i": 6,
+   "pass": true,
+   "score": 1,
+   "status": "succeeded",
+   "verdict": "pass",
+   "calls": 18,
+   "usd": 0.01116
+  },
+  {
+   "arm": "base",
+   "i": 7,
+   "pass": true,
+   "score": 1,
+   "status": "succeeded",
+   "verdict": "pass",
+   "calls": 18,
+   "usd": 0.0111
+  },
+  {
+   "arm": "healed",
+   "i": 0,
+   "pass": true,
+   "score": 1,
+   "status": "succeeded",
+   "verdict": "pass",
+   "calls": 22,
+   "usd": 0.01295
+  },
+  {
+   "arm": "healed",
+   "i": 1,
+   "pass": true,
+   "score": 1,
+   "status": "succeeded",
+   "verdict": "pass",
+   "calls": 22,
+   "usd": 0.0131
+  },
+  {
+   "arm": "healed",
+   "i": 2,
+   "pass": true,
+   "score": 1,
+   "status": "succeeded",
+   "verdict": "pass",
+   "calls": 22,
+   "usd": 0.01308
+  },
+  {
+   "arm": "healed",
+   "i": 3,
+   "pass": true,
+   "score": 1,
+   "status": "succeeded",
+   "verdict": "pass",
+   "calls": 22,
+   "usd": 0.01295
+  },
+  {
+   "arm": "healed",
+   "i": 4,
+   "pass": true,
+   "score": 1,
+   "status": "succeeded",
+   "verdict": "pass",
+   "calls": 22,
+   "usd": 0.01307
+  },
+  {
+   "arm": "healed",
+   "i": 5,
+   "pass": true,
+   "score": 1,
+   "status": "succeeded",
+   "verdict": "pass",
+   "calls": 22,
+   "usd": 0.01287
+  },
+  {
+   "arm": "healed",
+   "i": 6,
+   "pass": true,
+   "score": 1,
+   "status": "succeeded",
+   "verdict": "pass",
+   "calls": 22,
+   "usd": 0.01232
+  },
+  {
+   "arm": "healed",
+   "i": 7,
+   "pass": true,
+   "score": 1,
+   "status": "succeeded",
+   "verdict": "pass",
+   "calls": 22,
+   "usd": 0.01299
+  }
+ ]
+}

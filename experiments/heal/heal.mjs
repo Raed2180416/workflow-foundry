@@ -33,7 +33,7 @@ import { buildBrief, codeRootEvidence, locusNodeIds, mechanicalProposal, propose
 import { verify, gradersHash } from './verify.mjs';
 import { decide, Lineage } from './promote.mjs';
 import { lessonFor, writeLesson, LESSON_DIR, population as workflowPopulation } from './learn.mjs';
-import { buildLeakIndex } from './scan.mjs';
+import { buildLeakIndex, taskTexts } from './scan.mjs';
 import { Budget } from './budget.mjs';
 import { loadLedger, saveLedger, isUsed } from './seeds.mjs';
 import { resolveNode, shapeKey, digest, canonical, getAt } from './ir.mjs';
@@ -78,11 +78,15 @@ export async function buildIncident({ kit, trial, workflow, pool, localisation, 
   // run hosts them only when no recorded run of this workflow passed.
   const host = passing[0] ?? trial, hostTask = host.key === trial.key ? bed.task.task : tasks[host.key].task;
   const controls = { answerKeys, trialKey: host.key, items: [{ name: 'reference', expect: 'accept', output: fam.referenceSolve(hostTask) }, ...fam.badControls.map(c => { try { return { name: c.name, expect: 'reject', output: c.make(hostTask) }; } catch { return null; } }).filter(Boolean)] };
-  const other = await lib.makeTasks(trial.family, { split: 'dev', seeds: [9101, 9102], difficulty: trial.difficulty });
+  // Public text of the family: its description and output schema; plus the FULL text (prompt, inputs, files) of six other tasks. A phrase or
+  // number that recurs in ALL of those tasks is a template constant, not a literal of the failing task (live run 1, 2026-10-08: rule 1
+  // rejected "the system's name" and "source notes" as copied task text). Text shared with only some tasks (a convention sentence that
+  // two tasks happen to share) is still a literal (review 2026-10-08).
+  const other = await lib.makeTasks(trial.family, { split: 'dev', seeds: [9101, 9102, 9103, 9104, 9105, 9106], difficulty: trial.difficulty });
   const flips = localisation.suspects?.[0]?.flips ?? [];
   const leakIndex = buildLeakIndex({ tasks: failing.map(t => tasks[t.key].task), outputs: failing.map(t => baseRuns[t.key].outputs), truthStrings: [JSON.stringify(reference)],
     truthPairs: flips.filter(f => f.identity && f.to != null).flatMap(f => Object.values(f.identity).map(id => ({ id, value: String(f.to) }))),
-    publicTexts: [fam.family?.description ?? '', JSON.stringify(fam.outputSchema ?? {}), ...other.map(o => o.task.prompt)], baseWorkflow: workflow });
+    publicTexts: [fam.family?.description ?? '', JSON.stringify(fam.outputSchema ?? {})], familyTasks: other.map(o => taskTexts(o.task)), baseWorkflow: workflow });
   const costs = [...failing, ...passing].map(t => t.costUsd);
   return { family: trial.family, oracle: true, failing, passing, tasks, baseRuns, excluded, recorded, checkInputs, controls, leakIndex, gradersBefore: gradersHash(trial.family),
     sample: localisation.root?.sample ?? null, classes: (localisation.classes ?? []).map(c => c.code), meanBaseCostUsd: costs.reduce((s, c) => s + c, 0) / Math.max(1, costs.length), id: null };
@@ -108,6 +112,7 @@ export async function healIncident(o) {
 
   // ---- 1. base replay, DETECT, CLASSIFY (early) ------------------------------------------------------------------------------------
   const ctx0 = await openCtx(trial.source, { kit, name: 'base' });
+  let incidentRef = null;   // closed in the finally below: its fresh-task journal handle (V7) must be released so the WAL is checkpointed
   try {
     const bed = { task: await taskOf(trial) };
     const base = await replayRun(ctx0, workflow, trial, { task: bed.task });
@@ -125,7 +130,7 @@ export async function healIncident(o) {
     out.localisation = { root: loc.root, classes: loc.classes, mode: loc.mode, coverage: loc.coverage, intermediates: loc.intermediates, variance: loc.variance, flippers: loc.flippers, ms: loc.ms, blocked: loc.blocked ?? null };
     let variance = null;
     // the per-call cap of the claude -p route never exceeds what the driver may still spend
-    const providers = o.providers ?? (o.live ? liveProviders(kit, undefined, Math.min(1, Math.max(0.01, budget.capUsd))) : null);
+    const providers = o.providers ?? (o.live ? liveProviders(kit, undefined, Math.min(o.perCallCapUsd ?? 1, Math.max(0.01, budget.capUsd))) : null);
     if (loc.root?.sample?.type === 'inject' && providers && o.live && budget.remaining() >= 0.1) {
       const j = kit.emptyJournal(path.join(runsDir, 'variance', 'journal.sqlite'));
       const port = new kit.ModelPort({ policy: ctx0.policy, providers, journal: j.journal, mode: 'live' });
@@ -134,8 +139,9 @@ export async function healIncident(o) {
     }
     const late = classifyLate({ localisation: loc, variance });
     out.classification = { ...late, early: early.class };
-    const incident = await buildIncident({ kit, trial, workflow, pool: population, localisation: loc, ctx0, base, bed });
+    const incident = incidentRef = await buildIncident({ kit, trial, workflow, pool: population, localisation: loc, ctx0, base, bed });
     incident.id = `${trial.family}-${digest(workflow).slice(0, 8)}`;
+    incident.freshDir = path.join(runsDir, 'fresh');   // the V7 journal is evidence: keep it with the run, not only in the work root
     out.incident = { id: incident.id, failing: incident.failing.map(t => t.key), passing: incident.passing.length, excluded: incident.excluded };
 
     // ---- 3. lineage, lint debt first ---------------------------------------------------------------------------------------------------
@@ -146,7 +152,8 @@ export async function healIncident(o) {
       const policy = { lintDebt: o.lintDebt ?? (o.promote ? 'strict' : 'defer'), fresh: { enabled: o.fresh !== false, ...(o.freshOpts ?? {}) }, ...(o.verifyPolicy ?? {}) };
       const stages = o.stages ? o.stages.split(',') : null;
       const runVerify = async proposal => {
-        const v = await verify({ kit, gate, budget, base: { workflow: head.workflow, hash: head.hash }, proposal, incident, providers: o.live ? providers : (o.providers ?? null), policy, hooks: o.hooks ?? {}, stages, sourcePolicy: modelPolicy });
+        const v = await verify({ kit, gate, budget, base: { workflow: head.workflow, hash: head.hash }, proposal, incident, providers: o.live ? providers : (o.providers ?? null), policy, hooks: o.hooks ?? {}, stages, sourcePolicy: modelPolicy,
+          evidenceFile: path.join(runsDir, 'verify-live', `${proposal.id}.sqlite`) });
         const d = decide(v, proposal, o.decidePolicy);
         out.decisions.push({ proposal: proposal.id, kind: proposal.kind, ops: proposal.ops.map(x => x.op), decision: d.decision, reasons: d.reasons, rejectCode: v.rejectCode, stages: v.stages.map(s => ({ id: s.id, ok: s.ok, code: s.code, detail: s.detail, costUsd: s.costUsd })), costUsd: v.costUsd, costRatio: v.costRatio ?? null });
         return { v, d };
@@ -186,7 +193,7 @@ export async function healIncident(o) {
         out.proposer = { spec: proposerSpec, allowed, locus };
         if (proposerSpec !== 'none' && (proposerSpec.startsWith('scripted:') || (o.live && budget.remaining() >= 0.05))) {
           const pp = proposerSpec.startsWith('scripted:') ? scriptedProviders(kit, JSON.parse(readFileSync(proposerSpec.slice(9), 'utf8'))) : providers;
-          const buildFor = priorRejects => buildBrief({ incidentId: incident.id, workflow: head.workflow, signals: det.byKind, classification: late, localisation: loc, lint, classes: loc.classes, allowedOps: allowed, excerptSources, excerptTokens, roundRobin, recordedOutput, failingRunKeys: incident.failing.map(t => t.key), priorRejects, budget: { remainingUsd: +budget.remaining().toFixed(3) } });
+          const buildFor = priorRejects => buildBrief({ incidentId: incident.id, workflow: head.workflow, signals: det.byKind, classification: late, localisation: loc, lint, classes: loc.classes, allowedOps: allowed, excerptSources, excerptTokens, roundRobin, recordedOutput, failingRunKeys: incident.failing.map(t => t.key), variance, priorRejects, budget: { remainingUsd: +budget.remaining().toFixed(3) } });
           const loop = await proposeLoop({ kit, gate, workflow: head.workflow, base: head.workflow, buildFor, allowed, locus, classes: loc.classes, providers: pp, journalDir: path.join(runsDir, 'proposer'), budget, maxRounds: o.maxRounds ?? 4, ...env,
             check: async proposal => { proposal.depth = lineage.depthOf(workflow.id); proposal.healedWithoutOracle = false; const { v, d } = await runVerify(proposal); proposal.__v = v; proposal.__d = d; return { ok: d.decision === 'promote' || d.decision === 'owner-review' || d.decision === 'blocked', pending: d.decision === 'pending', rejectCode: v.rejectCode }; } });
           out.proposerRounds = loop.attempts; out.proposerEvents = loop.events;
@@ -212,7 +219,7 @@ export async function healIncident(o) {
     const lesson = lessonFor({ incidentId: incident.id, classes: loc.classes, base: workflow, healed: out.healedWorkflow ?? null, population: pop, fragility, probes, signalCounts: det.byKind, vacuity: det.vacuity ?? [] });
     if (lesson) { out.lesson = { id: lesson.id, lesson: lesson.lesson, lintRule: lesson.lintRule, firing: lesson.firing, status: lesson.status }; if (o.writeLessons) out.lesson.file = writeLesson(lesson, o.lessonsDir ?? LESSON_DIR); }
     return done();
-  } finally { ctx0.close(); }
+  } finally { ctx0.close(); try { incidentRef?.freshCtx?.close(); } catch { /* already closed */ } }
 }
 
 // ---- CLI ---------------------------------------------------------------------------------------------------------------------------------
@@ -233,8 +240,8 @@ async function main() {
     const kit = await loadKit(), lineage = new Lineage({ kit, dir: a.state ?? path.join(WORK_ROOT, 'state', a.stateName ?? 'default'), file: a.lineageFile });
     try {
       if (a._[0] === 'approve') {
-        const f = path.join(lineage.dir, 'proposals', `${a.proposal}.json`), { proposal, verification } = JSON.parse(readFileSync(f, 'utf8'));
-        console.log(JSON.stringify(lineage.approveReview({ proposal, verification, owner: a.owner }), null, 1));
+        const f = path.join(lineage.dir, 'proposals', `${a.proposal}.json`), { proposal, verification, decision } = JSON.parse(readFileSync(f, 'utf8'));
+        console.log(JSON.stringify(lineage.approveReview({ proposal, verification, owner: a.owner, decision }), null, 1));
       } else console.log(JSON.stringify(lineage.rollback({ id: a.workflowId, toHash: a.to, reason: a.reason ?? 'manual rollback' }), null, 1));
     } finally { lineage.close(); }
     return;

@@ -260,19 +260,22 @@ test('spec: bed-derived option sets and the I2 tag table match the frozen beds a
   const gen = await beds.import('beds/incident/gen.mjs'), lm = p.I2.labelMap;
   assert.deepEqual(mapLabel(p.I2, 'dep', { bedVersion: gen.VERSION }), { label: 'relay' });
   assert.ok(mapLabel(p.I2, 'echo').excluded);
-  assert.throws(() => mapLabel(p.I2, 'shadow'), e => e.code === 'LABEL_UNMAPPED' && /recorded as unmapped/.test(e.message));
+  // the incident group mapped the four tags the program's 24-row table lacked (collateral, shadow, rival, blip-rival)
+  assert.ok(mapLabel(p.I2, 'shadow').excluded);
+  assert.deepEqual(mapLabel(p.I2, 'rival', { bedVersion: gen.VERSION }), { label: 'unrelated' });
+  assert.deepEqual(mapLabel(p.I2, 'collateral'), { label: 'relay' });
   assert.throws(() => mapLabel(p.I2, 'no-such-tag'), e => e.code === 'LABEL_UNMAPPED');
   assert.throws(() => mapLabel(p.I2, 'dep', { bedVersion: '9.9.9' }), e => e.code === 'LABEL_BED_VERSION');
   assert.deepEqual(mapLabel(p.R3, 'recv'), { label: 'same' });
   assert.throws(() => mapLabel(p.R3, 'both'), e => e.code === 'LABEL_UNMAPPED');
-  assert.equal(Object.keys(lm.tags).length, 24);
-  // the frozen bed emits no tag outside the table and the recorded unmapped tags (30 train-range worlds), and the
-  // recorded unmapped tags are still emitted
+  assert.equal(Object.keys(lm.tags).length, 28, "the program's 24 rows plus the incident group's four");
+  assert.equal(lm.unmapped, undefined, 'no tag is left unmapped');
+  // the frozen bed emits no tag outside the table (30 train-range worlds), and the four tags the incident group added are still emitted
   const seen = new Set();
   for (let seed = 401; seed <= 410; seed++) for (const d of [3, 4, 5]) for (const tag of Object.keys(gen.build(seed, 'dev', d).truth.idsByTag)) seen.add(tag);
-  const known = new Set([...Object.keys(lm.tags), ...Object.keys(lm.unmapped ?? {})]);
+  const known = new Set(Object.keys(lm.tags));
   assert.deepEqual([...seen].filter(tag => !known.has(tag)).sort(), [], 'a tag the I2 contract does not know');
-  assert.deepEqual(Object.keys(lm.unmapped ?? {}).filter(tag => !seen.has(tag)), [], 'a recorded unmapped tag is no longer emitted');
+  assert.deepEqual(['collateral', 'shadow', 'rival', 'blip-rival'].filter(tag => !seen.has(tag)), [], 'a tag the incident group added is no longer emitted');
   // the pin the option sets were last checked at is the spec's bedPin (validateSpec enforces it)
   for (const c of Object.values(p)) if (c.optionsFrom?.commit) assert.equal(c.optionsFrom.pin, SPEC().spec.bedPin.pin, c.id);
 });

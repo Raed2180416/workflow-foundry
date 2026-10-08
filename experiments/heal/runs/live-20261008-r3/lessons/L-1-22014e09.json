@@ -1,0 +1,371 @@
+{
+ "schema": "heal-lesson/1",
+ "id": "L-1-22014e09",
+ "lesson": "L-1",
+ "from": "records-887c68c2",
+ "title": "Read a convention once, guard it, and probe every value of it",
+ "pattern": {
+  "defectClasses": [
+   "UNGUARDED_GLOBAL_READ"
+  ],
+  "signature": {
+   "code": "FRAGILE_GLOBAL_READ",
+   "node": "conf",
+   "details": {
+    "leaves": [
+     {
+      "array": "orders",
+      "field": "numeric_order",
+      "identifier": "system",
+      "domain": [
+       "MDY",
+       "DMY",
+       "YMD",
+       "NONE"
+      ]
+     },
+     {
+      "array": "orders",
+      "field": "sign_flip",
+      "identifier": "system",
+      "domain": [
+       1,
+       -1
+      ]
+     }
+    ],
+    "measured": 0.4167,
+    "consumers": [
+     "merge"
+    ]
+   }
+  }
+ },
+ "lintRule": {
+  "code": "FRAGILE_GLOBAL_READ",
+  "summary": "An unguarded model read of a per-entity convention table changes at least 5% of the answer when one entry flips",
+  "implementation": "experiments/heal/lessons/rules/fragile-global-read.mjs",
+  "severity": "warning",
+  "baseSeverity": "error"
+ },
+ "templateDiff": {
+  "target": "skills/micro-harness",
+  "applied": false,
+  "text": "skills/micro-harness: add to the \"global reads\" section. (1) A model read that conditions every item (a date order, a sign convention, a currency) returns a verbatim evidence quote and a check reads it. (2) State the rule \"a worked example in the notes decides the order; a locale name does not\" in its instructions. (3) Read it twice with distinct reader tags and compare, escalating on disagreement, or start it one class up. (4) Construction probes must exercise each value of a global setting: across the probes each enum field of a global read takes two values, or the construction record lists the untested branch."
+ },
+ "probeRequirement": "PROBE_VALUE_COVERAGE: across the construction probes, every enum field of an unguarded-or-guarded global read takes at least two values, or the construction record names it as an untested branch.",
+ "firing": {
+  "onBase": 1,
+  "onHealed": 0,
+  "firesOnBase": true,
+  "quietOnHealed": true,
+  "population": {
+   "n": 8,
+   "fires": 2,
+   "share": 0.25,
+   "where": [
+    "research/construction-20261006/artifacts/F-haiku-records-k1/workflow.json",
+    "research/construction-20261006/artifacts/F-opus-records-k1/workflow.json"
+   ]
+  }
+ },
+ "evidence": {
+  "signals": {
+   "ORACLE_FAILED": 1,
+   "VERDICT_ORACLE_MISMATCH": 1,
+   "UNVERIFIED_VERDICT": 1,
+   "LINT_FINDING": 5
+  },
+  "vacuity": [],
+  "probes": {
+   "returns": {
+    "type": "object",
+    "properties": {
+     "orders": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "system": {
+         "type": "string",
+         "enum": [
+          "BRIGHTDESK",
+          "LEDGR",
+          "ATLAS",
+          "VENDEX",
+          "KOBO",
+          "VERITAS"
+         ]
+        },
+        "numeric_order": {
+         "type": "string",
+         "enum": [
+          "MDY",
+          "DMY",
+          "YMD",
+          "NONE"
+         ]
+        },
+        "sign_flip": {
+         "type": "integer",
+         "enum": [
+          1,
+          -1
+         ]
+        }
+       },
+       "required": [
+        "system",
+        "numeric_order",
+        "sign_flip"
+       ],
+       "additionalProperties": false
+      }
+     }
+    },
+    "required": [
+     "orders"
+    ],
+    "additionalProperties": false
+   },
+   "outputs": [
+    {
+     "orders": [
+      {
+       "numeric_order": "MDY",
+       "sign_flip": -1,
+       "system": "BRIGHTDESK"
+      },
+      {
+       "numeric_order": "DMY",
+       "sign_flip": 1,
+       "system": "LEDGR"
+      },
+      {
+       "numeric_order": "MDY",
+       "sign_flip": -1,
+       "system": "ATLAS"
+      },
+      {
+       "numeric_order": "MDY",
+       "sign_flip": 1,
+       "system": "VENDEX"
+      },
+      {
+       "numeric_order": "YMD",
+       "sign_flip": 1,
+       "system": "KOBO"
+      },
+      {
+       "numeric_order": "YMD",
+       "sign_flip": 1,
+       "system": "VERITAS"
+      }
+     ]
+    },
+    {
+     "orders": [
+      {
+       "numeric_order": "MDY",
+       "sign_flip": -1,
+       "system": "BRIGHTDESK"
+      },
+      {
+       "numeric_order": "DMY",
+       "sign_flip": -1,
+       "system": "LEDGR"
+      },
+      {
+       "numeric_order": "DMY",
+       "sign_flip": -1,
+       "system": "ATLAS"
+      },
+      {
+       "numeric_order": "MDY",
+       "sign_flip": 1,
+       "system": "VENDEX"
+      },
+      {
+       "numeric_order": "YMD",
+       "sign_flip": 1,
+       "system": "KOBO"
+      },
+      {
+       "numeric_order": "YMD",
+       "sign_flip": 1,
+       "system": "VERITAS"
+      }
+     ]
+    },
+    {
+     "orders": [
+      {
+       "numeric_order": "MDY",
+       "sign_flip": 1,
+       "system": "BRIGHTDESK"
+      },
+      {
+       "numeric_order": "DMY",
+       "sign_flip": 1,
+       "system": "LEDGR"
+      },
+      {
+       "numeric_order": "MDY",
+       "sign_flip": -1,
+       "system": "ATLAS"
+      },
+      {
+       "numeric_order": "DMY",
+       "sign_flip": 1,
+       "system": "VENDEX"
+      },
+      {
+       "numeric_order": "YMD",
+       "sign_flip": 1,
+       "system": "KOBO"
+      },
+      {
+       "numeric_order": "YMD",
+       "sign_flip": 1,
+       "system": "VERITAS"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "status": "proposed",
+ "reviewer": null,
+ "caveats": [
+  "Rules written from these artifacts: firing on them describes them and predicts nothing until it fires on workflows built after the rule was frozen (docs/LINT.md).",
+  "Reaches the constructor only through a new kit hash; held until after EX1 so CX3 and EX1 do not share a moving kit (owner decision 4, default)."
+ ],
+ "probeCoverage": {
+  "code": "PROBE_VALUE_COVERAGE",
+  "probes": 3,
+  "rows": [
+   {
+    "entity": "BRIGHTDESK",
+    "field": "numeric_order",
+    "values": [
+     "MDY"
+    ],
+    "domain": 4,
+    "covered": false
+   },
+   {
+    "entity": "LEDGR",
+    "field": "numeric_order",
+    "values": [
+     "DMY"
+    ],
+    "domain": 4,
+    "covered": false
+   },
+   {
+    "entity": "ATLAS",
+    "field": "numeric_order",
+    "values": [
+     "MDY",
+     "DMY"
+    ],
+    "domain": 4,
+    "covered": true
+   },
+   {
+    "entity": "VENDEX",
+    "field": "numeric_order",
+    "values": [
+     "MDY",
+     "DMY"
+    ],
+    "domain": 4,
+    "covered": true
+   },
+   {
+    "entity": "KOBO",
+    "field": "numeric_order",
+    "values": [
+     "YMD"
+    ],
+    "domain": 4,
+    "covered": false
+   },
+   {
+    "entity": "VERITAS",
+    "field": "numeric_order",
+    "values": [
+     "YMD"
+    ],
+    "domain": 4,
+    "covered": false
+   },
+   {
+    "entity": "BRIGHTDESK",
+    "field": "sign_flip",
+    "values": [
+     -1,
+     1
+    ],
+    "domain": 2,
+    "covered": true
+   },
+   {
+    "entity": "LEDGR",
+    "field": "sign_flip",
+    "values": [
+     1,
+     -1
+    ],
+    "domain": 2,
+    "covered": true
+   },
+   {
+    "entity": "ATLAS",
+    "field": "sign_flip",
+    "values": [
+     -1
+    ],
+    "domain": 2,
+    "covered": false
+   },
+   {
+    "entity": "VENDEX",
+    "field": "sign_flip",
+    "values": [
+     1
+    ],
+    "domain": 2,
+    "covered": false
+   },
+   {
+    "entity": "KOBO",
+    "field": "sign_flip",
+    "values": [
+     1
+    ],
+    "domain": 2,
+    "covered": false
+   },
+   {
+    "entity": "VERITAS",
+    "field": "sign_flip",
+    "values": [
+     1
+    ],
+    "domain": 2,
+    "covered": false
+   }
+  ],
+  "uncovered": [
+   "BRIGHTDESK.numeric_order",
+   "LEDGR.numeric_order",
+   "KOBO.numeric_order",
+   "VERITAS.numeric_order",
+   "ATLAS.sign_flip",
+   "VENDEX.sign_flip",
+   "KOBO.sign_flip",
+   "VERITAS.sign_flip"
+  ]
+ }
+}

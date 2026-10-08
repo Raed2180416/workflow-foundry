@@ -120,7 +120,8 @@ is not), `FAMILY_ID`, `deepFreeze`, `PORT_IDS`, `LEDGER_IDS`, `WAVE1`, and the f
 ```js
 mapLabel(contracts.I2, 'dep', { bedVersion: gen.VERSION })   // { label: 'relay' }
 mapLabel(contracts.I2, 'echo')                                // { excluded: '<reason>' }  (count it, drop the row)
-mapLabel(contracts.I2, 'shadow')                              // throws LABEL_UNMAPPED (recorded as unmapped)
+mapLabel(contracts.I2, 'shadow')                              // { excluded: '<reason>' }  (a shadow pod's episodes)
+mapLabel(contracts.I2, 'some-new-tag')                        // throws LABEL_UNMAPPED (a tag the table lacks fails the build)
 mapLabel(contracts.I2, 'dep', { bedVersion: '9.9.9' })        // throws LABEL_BED_VERSION
 mapLabel(contracts.R3, 'recv')                                // { label: 'same' }
 ```
@@ -465,11 +466,13 @@ entry for every deviation from the program text); cross-cutting ones in `convent
   Q1-Q3, and the K1, K3, C3-C6, C8 and C9 option descriptions are authored here.
 - **I2 tag table.** The program's explicit table has 24 rows. On dev seeds 401-500 × d3-d5 the incident
   bed emits 26 tags at VERSION 4.0.0 and 4.1.0 (also `collateral` and `shadow`) and 28 at 4.2.0 (also
-  `rival`, 8,704 lines, and `blip-rival`, 2,413). The 24 rows are frozen as written; the four extra
-  tags are in `labelMap.unmapped` with a proposal each, **not applied**, and a build fails closed on
-  them until the `incident` group maps them. The incident acceptance test "exactly the 24 tags" cannot
-  pass as written. `bedVersion` moved 4.0.0 -> 4.1.0 -> 4.2.0 after re-measuring at each pin; the drift
-  test and every build that asks I2 re-check the version.
+  `rival` and `blip-rival`). The 24 rows are frozen as written; the `incident` group (2026-10-08)
+  applied the four proposals: `collateral` -> relay, `rival` and `blip-rival` -> unrelated, `shadow` excluded
+  (an episode on a test, load-test or shadow pod named only by a note: not a function of the line; mapping
+  it to unrelated would push the masked-skeleton collision rate from 0.5% to 1.5% of groups). The table has
+  28 rows and `labelMap.unmapped` is gone; a tag outside the table still fails the build. The incident
+  acceptance test "exactly the 24 tags" is run as 24 + 4 = 28. `bedVersion` moved 4.0.0 -> 4.1.0 -> 4.2.0
+  after re-measuring at each pin; the drift test and every build that asks I2 re-check the version.
 - **Families.** The program writes families as prose; they are identifiers here, with qualifiers in
   `families.notes`. §3.4 holds out "codefix: 2 domains" without naming them: `codefix:routing` and
   `codefix:ratelimit` (the last two of `DOMAINS`) are pre-registered for F2.
@@ -496,9 +499,6 @@ entry for every deviation from the program text); cross-cutting ones in `convent
 
 ## Open items
 
-- The incident group maps (or excludes) `collateral`, `shadow`, `rival` and `blip-rival` in the I2
-  tag table; until then any I2 record whose line carries one of them cannot be labelled
-  (`mapLabel` throws `LABEL_UNMAPPED`).
 - The incident bed keeps moving (4.2.0 committed on 2026-10-08, further uncommitted edits). Each
   version bump fails the drift test and I2 builds closed until the inventory is re-measured and the
   table re-pinned (`spec/ports.json` `bedPin`, `optionsFrom`, `I2.labelMap.bedVersion`).

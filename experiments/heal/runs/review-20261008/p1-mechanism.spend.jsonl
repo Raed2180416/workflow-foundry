@@ -1,0 +1,33 @@
+{"at":"2026-10-08T22:53:03.777Z","label":"A V3 replica 0","usd":0.001789,"totalUsd":0.001789}
+{"at":"2026-10-08T22:53:14.295Z","label":"A V3 replica 1","usd":0.001777,"totalUsd":0.003566}
+{"at":"2026-10-08T22:53:25.755Z","label":"A V3 replica 2","usd":0.001773,"totalUsd":0.005339}
+{"at":"2026-10-08T22:53:59.826Z","label":"B healed fhand-haiku/records:test:d3:s5001/1 item 1","usd":0.001766,"totalUsd":0.007105}
+{"at":"2026-10-08T22:54:00.929Z","label":"B healed fhand-haiku/records:test:d3:s5001/2 item 0","usd":0.001782,"totalUsd":0.008886}
+{"at":"2026-10-08T22:54:04.440Z","label":"B healed fhand-haiku/records:test:d3:s5001/0 item 0","usd":0.001758,"totalUsd":0.010644}
+{"at":"2026-10-08T22:54:27.747Z","label":"B healed fhand-haiku/records:test:d3:s5001/1 item 0","usd":0,"totalUsd":0.010644}
+{"at":"2026-10-08T22:54:28.983Z","label":"B healed fhand-haiku/records:test:d3:s5001/2 item 1","usd":0,"totalUsd":0.010644}
+{"at":"2026-10-08T22:54:34.600Z","label":"B healed fhand-haiku/records:test:d3:s5001/0 item 1","usd":0,"totalUsd":0.010644}
+{"at":"2026-10-08T22:54:52.599Z","label":"B healed fhand-haiku/records:test:d3:s5002/0 item 0","usd":0.001779,"totalUsd":0.012423}
+{"at":"2026-10-08T22:54:55.863Z","label":"B healed fhand-haiku/records:test:d3:s5002/2 item 0","usd":0.001786,"totalUsd":0.014209}
+{"at":"2026-10-08T22:55:02.123Z","label":"B healed fhand-haiku/records:test:d3:s5003/0 item 0","usd":0.001795,"totalUsd":0.016004}
+{"at":"2026-10-08T22:55:16.604Z","label":"B healed fhand-haiku/records:test:d3:s5002/0 item 1","usd":0,"totalUsd":0.016004}
+{"at":"2026-10-08T22:55:22.427Z","label":"B healed fhand-haiku/records:test:d3:s5002/2 item 1","usd":0,"totalUsd":0.016004}
+{"at":"2026-10-08T22:55:27.227Z","label":"B healed fhand-haiku/records:test:d3:s5003/0 item 1","usd":0,"totalUsd":0.016004}
+{"at":"2026-10-08T22:55:44.571Z","label":"B healed fhand-haiku/records:test:d3:s5003/1 item 0","usd":0.001788,"totalUsd":0.017793}
+{"at":"2026-10-08T22:55:48.522Z","label":"B healed fhand-haiku/records:test:d3:s5003/2 item 0","usd":0.001857,"totalUsd":0.019649}
+{"at":"2026-10-08T22:55:55.061Z","label":"B healed fhand-haiku/records:test:d3:s5004/0 item 0","usd":0.001884,"totalUsd":0.021533}
+{"at":"2026-10-08T22:56:08.171Z","label":"B healed fhand-haiku/records:test:d3:s5003/1 item 1","usd":0,"totalUsd":0.021533}
+{"at":"2026-10-08T22:56:10.791Z","label":"B healed fhand-haiku/records:test:d3:s5003/2 item 1","usd":0,"totalUsd":0.021533}
+{"at":"2026-10-08T22:56:18.639Z","label":"B healed fhand-haiku/records:test:d3:s5004/0 item 1","usd":0,"totalUsd":0.021533}
+{"at":"2026-10-08T22:56:38.308Z","label":"B healed fhand-haiku/records:test:d3:s5004/1 item 0","usd":0.001873,"totalUsd":0.023407}
+{"at":"2026-10-08T22:56:44.504Z","label":"B healed fhand-haiku/records:test:d3:s5004/2 item 0","usd":0.001835,"totalUsd":0.025242}
+{"at":"2026-10-08T22:56:45.879Z","label":"B healed fhand-haiku/records:test:d3:s5005/0 item 0","usd":0.001621,"totalUsd":0.026864}
+{"at":"2026-10-08T22:57:06.439Z","label":"B healed fhand-haiku/records:test:d3:s5004/1 item 1","usd":0,"totalUsd":0.026864}
+{"at":"2026-10-08T22:57:07.379Z","label":"B healed fhand-haiku/records:test:d3:s5004/2 item 1","usd":0,"totalUsd":0.026864}
+{"at":"2026-10-08T22:57:18.367Z","label":"B healed fhand-haiku/records:test:d3:s5005/0 item 1","usd":0,"totalUsd":0.026864}
+{"at":"2026-10-08T22:57:41.461Z","label":"B healed fhand-haiku/records:test:d3:s5005/1 item 1","usd":0.001673,"totalUsd":0.028536}
+{"at":"2026-10-08T22:57:45.401Z","label":"B healed fhand-haiku/records:test:d3:s5005/2 item 0","usd":0.001658,"totalUsd":0.030194}
+{"at":"2026-10-08T22:57:50.772Z","label":"B healed fhand-haiku/records:test:d3:s5006/0 item 0","usd":0.001734,"totalUsd":0.031928}
+{"at":"2026-10-08T22:58:16.729Z","label":"B healed fhand-haiku/records:test:d3:s5005/1 item 0","usd":0,"totalUsd":0.031928}
+{"at":"2026-10-08T22:58:18.299Z","label":"B healed fhand-haiku/records:test:d3:s5006/0 item 1","usd":0,"totalUsd":0.031928}
+{"at":"2026-10-08T22:58:21.459Z","label":"B healed fhand-haiku/records:test:d3:s5005/2 item 1","usd":0,"totalUsd":0.031928}

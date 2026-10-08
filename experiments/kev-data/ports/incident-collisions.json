@@ -1,0 +1,161 @@
+{
+ "schema": "kev-data/incident-collisions@1",
+ "generator": "incident@1",
+ "bed": {
+  "version": "4.2.0",
+  "pin": "sha256:d5ea27242a3e8cfbe68f5577707dd203dc36383c6810e4e30459e32b64347ed3"
+ },
+ "tagTable": "8c463785e514f2c9bdeb6f17f87ed1f37d51d7f6d4ea77b33b15ada41a11f21f",
+ "reference": {
+  "split": "dev",
+  "seeds": [
+   501,
+   560
+  ],
+  "difficulties": [
+   3,
+   4,
+   5
+  ],
+  "rate": 6,
+  "worlds": 180,
+  "lines": 66718,
+  "signatures": 280,
+  "collisionSignatures": 19
+ },
+ "signatures": {
+  "BASELINE.connection_pool_exhaustion|BASELINE_AFTER.connection_pool_exhaustion|STRAY_STATS.connection_pool_exhaustion|TREND.connection_pool_exhaustion.step": {
+   "n": 84,
+   "labels": {
+    "origin": 0.131,
+    "unrelated": 0.869
+   }
+  },
+  "BASELINE.disk_full|BASELINE_AFTER.disk_full|FAULTS.disk_full.blip|RECOVER_ALT.disk_full|STRAY_STATS.disk_full|TREND.disk_full.step": {
+   "n": 138,
+   "labels": {
+    "origin": 0.0507,
+    "unrelated": 0.9493
+   }
+  },
+  "BLIP_ONSET.connection_pool_exhaustion|CONSEQUENCE|FAULTS.connection_pool_exhaustion.onset|STRAY.connection_pool_exhaustion": {
+   "n": 82,
+   "labels": {
+    "origin": 0.0122,
+    "unrelated": 0.9878
+   }
+  },
+  "BLIP_ONSET.memory_leak_oom|FAULTS.memory_leak_oom.onset": {
+   "n": 59,
+   "labels": {
+    "origin": 0.0339,
+    "unrelated": 0.9661
+   }
+  },
+  "CANARY|DEPLOY.start": {
+   "n": 7,
+   "labels": {
+    "origin": 0.1429,
+    "unrelated": 0.8571
+   }
+  },
+  "CERT_RENEWED.warn|FAULTS.certificate_expiry.precursor": {
+   "n": 14,
+   "labels": {
+    "origin": 0.3571,
+    "unrelated": 0.6429
+   }
+  },
+  "COLLATERAL|DEP_FAIL|SOFT_ERR": {
+   "n": 123,
+   "labels": {
+    "fallback": 0.4228,
+    "relay": 0.5772
+   }
+  },
+  "DEPLOY.done|DEPLOY_PREV.done": {
+   "n": 57,
+   "labels": {
+    "origin": 0.0702,
+    "unrelated": 0.9298
+   }
+  },
+  "DEPLOY.ready": {
+   "n": 94,
+   "labels": {
+    "origin": 0.0638,
+    "unrelated": 0.9362
+   }
+  },
+  "DEPLOY.start|FAULTS.bad_config_deploy.onset|STRAY.bad_config_deploy": {
+   "n": 7,
+   "labels": {
+    "origin": 0.1429,
+    "unrelated": 0.8571
+   }
+  },
+  "DEP_FAIL|SOFT_ERR": {
+   "n": 228,
+   "labels": {
+    "fallback": 0.6096,
+    "relay": 0.3904
+   }
+  },
+  "FAULTS.certificate_expiry.onset|STRAY.certificate_expiry": {
+   "n": 88,
+   "labels": {
+    "origin": 0.0227,
+    "unrelated": 0.9773
+   }
+  },
+  "FAULTS.clock_skew.rootReq|GEN.requestOk": {
+   "n": 39,
+   "labels": {
+    "origin": 0.0513,
+    "unrelated": 0.9487
+   }
+  },
+  "FAULTS.connection_pool_exhaustion.onset|STRAY.connection_pool_exhaustion": {
+   "n": 32,
+   "labels": {
+    "origin": 0.0625,
+    "unrelated": 0.9375
+   }
+  },
+  "FAULTS.poisoned_cache.onset|STRAY.poisoned_cache": {
+   "n": 30,
+   "labels": {
+    "origin": 0.1,
+    "unrelated": 0.9
+   }
+  },
+  "FAULTS.upstream_rate_limiting.onset|STRAY.upstream_rate_limiting": {
+   "n": 22,
+   "labels": {
+    "origin": 0.0909,
+    "unrelated": 0.9091
+   }
+  },
+  "ONSET_MORE.poisoned_cache": {
+   "n": 7,
+   "labels": {
+    "origin": 0.1429,
+    "unrelated": 0.8571
+   }
+  },
+  "ONSET_X.poisoned_cache": {
+   "n": 7,
+   "labels": {
+    "origin": 0.4286,
+    "unrelated": 0.5714
+   }
+  },
+  "STRAY.disk_full|TREND.disk_full.onset": {
+   "n": 46,
+   "labels": {
+    "origin": 0.0217,
+    "unrelated": 0.9783
+   }
+  }
+ }
+}

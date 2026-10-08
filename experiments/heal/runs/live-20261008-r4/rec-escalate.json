@@ -1,0 +1,104 @@
+{
+ "schema": "heal-retry-control/1",
+ "incident": "H-rec",
+ "trial": "F-haiku/records:test:d3:s6001/0",
+ "recordedPass": false,
+ "healedHash": null,
+ "healedVersion": null,
+ "arm2": "escalate-conf:L",
+ "base": {
+  "n": 4,
+  "pass": 0,
+  "verdictPass": 4,
+  "usd": 0.2068
+ },
+ "healed": {
+  "n": 4,
+  "pass": 0,
+  "verdictPass": 4,
+  "usd": 0.1842
+ },
+ "spentUsd": 0.391,
+ "runs": [
+  {
+   "arm": "base",
+   "i": 0,
+   "pass": false,
+   "score": 0.789197,
+   "status": "succeeded",
+   "verdict": "pass",
+   "calls": 7,
+   "usd": 0.03042
+  },
+  {
+   "arm": "base",
+   "i": 1,
+   "pass": false,
+   "score": 0.789197,
+   "status": "succeeded",
+   "verdict": "pass",
+   "calls": 7,
+   "usd": 0.03143
+  },
+  {
+   "arm": "base",
+   "i": 2,
+   "pass": false,
+   "score": 0.789197,
+   "status": "succeeded",
+   "verdict": "pass",
+   "calls": 7,
+   "usd": 0.03144
+  },
+  {
+   "arm": "base",
+   "i": 3,
+   "pass": false,
+   "score": 0.789197,
+   "status": "succeeded",
+   "verdict": "pass",
+   "calls": 8,
+   "usd": 0.11347
+  },
+  {
+   "arm": "escalate-conf:L",
+   "i": 0,
+   "pass": false,
+   "score": 0.789197,
+   "status": "succeeded",
+   "verdict": "pass",
+   "calls": 7,
+   "usd": 0.04835
+  },
+  {
+   "arm": "escalate-conf:L",
+   "i": 1,
+   "pass": false,
+   "score": 0.789197,
+   "status": "succeeded",
+   "verdict": "pass",
+   "calls": 7,
+   "usd": 0.04691
+  },
+  {
+   "arm": "escalate-conf:L",
+   "i": 2,
+   "pass": false,
+   "score": 0.789197,
+   "status": "succeeded",
+   "verdict": "pass",
+   "calls": 7,
+   "usd": 0.04424
+  },
+  {
+   "arm": "escalate-conf:L",
+   "i": 3,
+   "pass": false,
+   "score": 0.789197,
+   "status": "succeeded",
+   "verdict": "pass",
+   "calls": 7,
+   "usd": 0.0447
+  }
+ ]
+}

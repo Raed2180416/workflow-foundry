@@ -110,10 +110,15 @@ export function codeSafety(addedText, lang) {
 
 // ---- what a patch adds -----------------------------------------------------------------------------------------------------------
 const lines = s => String(s ?? '').split('\n');
+// Size and retry bounds are structure, not task values: a proposer-chosen `maxLength: 600` is not "a number from a failing task" even when
+// some task happens to contain 600 (live run 2, 2026-10-08: rule 2 fired on exactly that). Value bounds (`minimum`, `maximum`) are NOT
+// structural: they constrain what a field may say, so a year, an amount or an id of a failing task placed there is a literal leak
+// (review 2026-10-08: the first version of this fix exempted them too).
+const STRUCTURAL = new Set(['maxLength', 'minLength', 'maxItems', 'minItems', 'maxTokens', 'maxEscalations', 'schemaRetries']);
 function literalsOf(value, out = []) {
   if (typeof value === 'string') out.push(value); else if (typeof value === 'number') out.push(String(value));
   else if (Array.isArray(value)) value.forEach(x => literalsOf(x, out));
-  else if (value && typeof value === 'object') for (const [k, x] of Object.entries(value)) { if (k === '$ref') continue; literalsOf(x, out); }
+  else if (value && typeof value === 'object') for (const [k, x] of Object.entries(value)) { if (k === '$ref' || (STRUCTURAL.has(k) && typeof x === 'number')) continue; literalsOf(x, out); }
   return out;
 }
 export function addedContent(base, cand) {
@@ -147,12 +152,20 @@ const trigramsOf = toks => { const out = new Set(); for (let i = 0; i + 3 <= tok
 const numbersOf = s => new Set(String(s).match(/\d{3,}/g) ?? []);
 
 // The index is built by the scanner, never shown to the proposer: failing tasks' prompts/inputs/files, their recorded node
-// outputs, and the bed's hidden truth for them. `publicText` = family description + schemas + text common to the family.
-export function buildLeakIndex({ tasks = [], outputs = [], truthStrings = [], truthPairs = [], publicTexts = [], baseWorkflow = null, familyConstant = () => false }) {
+// outputs, and the bed's hidden truth for them. `publicTexts` = family description + schemas (exempt as a whole).
+// `familyTasks` = the full texts of other tasks of the family, one array of strings per task. A trigram, number or token from them is
+// a TEMPLATE CONSTANT, and exempt, only when it occurs in EVERY one of those tasks (review 2026-10-08: the live-run fix exempted anything
+// that occurred in ANY other task, so a convention sentence that recurs whenever another task happens to share the convention would have
+// been waved through by rule 1; the two observed false positives, "the system's name" and "source notes", occur in all six).
+const intersect = sets => sets.length ? sets.reduce((a, b) => new Set([...a].filter(x => b.has(x)))) : new Set();
+export function buildLeakIndex({ tasks = [], outputs = [], truthStrings = [], truthPairs = [], publicTexts = [], familyTasks = [], baseWorkflow = null, familyConstant = () => false }) {
   const taskText = [...tasks.flatMap(taskTexts), ...outputs.map(o => typeof o === 'string' ? o : JSON.stringify(o)), ...truthStrings].join('\n');
   const exempt = [...publicTexts, baseWorkflow ? JSON.stringify(baseWorkflow) : ''].join('\n');
-  return { tri: trigramsOf(tokens(taskText)), exemptTri: trigramsOf(tokens(exempt)), nums: numbersOf(taskText), exemptNums: numbersOf(exempt), tokens: new Set(tokens(taskText)), exemptTokens: new Set(tokens(exempt)),
-    pairs: truthPairs, familyConstant };
+  const per = familyTasks.map(texts => (Array.isArray(texts) ? texts : [texts]).join('\n'));
+  const union = (a, b) => new Set([...a, ...b]);
+  return { tri: trigramsOf(tokens(taskText)), exemptTri: union(trigramsOf(tokens(exempt)), intersect(per.map(t => trigramsOf(tokens(t))))),
+    nums: numbersOf(taskText), exemptNums: union(numbersOf(exempt), intersect(per.map(numbersOf))), tokens: new Set(tokens(taskText)),
+    exemptTokens: union(new Set(tokens(exempt)), intersect(per.map(t => new Set(tokens(t))))), pairs: truthPairs, familyConstant };
 }
 export function scanLeaks(base, cand, index, { maxTable = 8 } = {}) {
   const out = [];

@@ -76,8 +76,26 @@ export async function openCtx(source, { name = 'ctx', scratch = path.join(WORK_R
   const copy = kit.copyJournal(file, path.join(scratch, `${source}-${name}-${process.pid}-${Math.random().toString(36).slice(2, 8)}.sqlite`));
   const policy = kit.sessionPolicy(models ?? src.models);
   const port = new kit.ModelPort({ policy, providers, journal: copy.journal, mode: 'replay', concurrency: { 'claude-cli': 8 } });
-  return { kit, source, policy, port, journal: copy.journal, db: copy.db, file: copy.file, runtime: src.runtime,
+  const baseMaxId = copy.db.prepare('SELECT COALESCE(MAX(id), 0) AS m FROM model_calls').get().m;
+  return { kit, source, policy, port, journal: copy.journal, db: copy.db, file: copy.file, runtime: src.runtime, baseMaxId,
     close() { try { copy.db.close(); } catch { /* already closed */ } rmSync(copy.file, { force: true }); rmSync(`${copy.file}-wal`, { force: true }); rmSync(`${copy.file}-shm`, { force: true }); } };
+}
+// Every call a context made LIVE (a row it added that is not a replay of a recorded row: answered, failed or cancelled) is copied into a
+// kept evidence journal before the throwaway copy is deleted. Review 2026-10-08: the V3/V4/V5 replicas of the live runs journaled their
+// live calls only into copies that close() deletes, so the raw outputs behind "2 of 3 replicas pass", the node-check failures and the
+// two bound-charged cancelled calls were gone; only the spend lines remained.
+export function keepLiveRows(ctx, file, tag = null) {
+  if (!file) return 0;
+  const rows = ctx.db.prepare('SELECT * FROM model_calls WHERE id > ? ORDER BY id').all(ctx.baseMaxId ?? 0).filter(r => { try { return !JSON.parse(r.request ?? '{}').replayOf; } catch { return true; } });
+  if (!rows.length) return 0;
+  mkdirSync(path.dirname(file), { recursive: true });
+  const kept = ctx.kit.emptyJournal(file);   // creates the kit's journal schema
+  try {
+    const cols = Object.keys(rows[0]).filter(c => c !== 'id');
+    const ins = kept.db.prepare(`INSERT INTO model_calls(${cols.join(',')}) VALUES(${cols.map(() => '?').join(',')})`);
+    for (const r of rows) ins.run(...cols.map(c => c === 'request' && tag ? JSON.stringify({ ...JSON.parse(r.request ?? '{}'), healEvidence: tag }) : r[c]));
+  } finally { kept.db.close(); }
+  return rows.length;
 }
 export function setProviders(ctx, providers) { ctx.port.providers = providers; ctx.port.semaphores = new Map(); }
 

@@ -16,6 +16,7 @@ import { Runtime } from '../src/runtime.mjs';
 import { createDefaultRegistry } from '../src/capabilities.mjs';
 import { validateWorkflow } from '../src/validate.mjs';
 import { verifyRun } from '../src/verify-run.mjs';
+import { verdictOf } from '../src/verdict.mjs';
 import { canonical, digest } from '../src/data.mjs';
 import { MATERIALIZE, ROWS_VERSION, STATE_BYTES, STATE_ITEMS, STATE_LIMITS } from '../src/run-rows.mjs';
 
@@ -155,7 +156,9 @@ test('compatibility: the same workflow and input on the current store produce th
   const wanted = fixture.events.map(e => JSON.parse(e.body)), got = store.events(run.id);
   const key = e => `${e.type} ${e.nodeKey ?? ''}`;
   assert.deepEqual(got.map(key).sort(), wanted.map(key).sort(), 'the same events (concurrent items may interleave differently)');
-  const fields = e => Object.keys(e).filter(name => name !== 'hash').sort().join();
+  // `dispatch` is the scheduler's addition to a node's first event (src/runtime.mjs dispatchOrder; tests/runtime-scheduler.test.mjs), not the
+  // store's: the fixture predates it, and this test is about the store producing what the whole-run store did.
+  const fields = e => Object.keys(e).filter(name => name !== 'hash' && name !== 'dispatch').sort().join();
   assert.deepEqual(got.map(fields).sort(), wanted.map(fields).sort(), 'with the same fields');
   assert.deepEqual(got.filter(e => !e.nodeKey?.includes(':')).map(key), wanted.filter(e => !e.nodeKey?.includes(':')).map(key), 'and the root order');
   assert.equal(verifyRun(store, run.id).ok, true);
@@ -179,7 +182,13 @@ test('layout: a run is a header, an input row, frame rows and node rows; store.r
     ['root/check=completed', 'root/each=completed', 'root/each:0/echo=completed', 'root/each:1/echo=completed', 'root/each:2/echo=completed', 'root/first=completed']);
   assert.deepEqual(Object.keys(finished.nodes), ['check', 'each', 'first'], 'key order is the stored (sorted) order');
   const sortedKeys = value => Array.isArray(value) ? value.every(sortedKeys) : !value || typeof value !== 'object' || (Object.keys(value).every((key, i, all) => !i || all[i - 1] < key) && Object.values(value).every(sortedKeys));
-  assert.equal(sortedKeys(finished), true, 'every object of the record has its keys in sorted order, as when it was one canonical blob (printed output keeps its order)');
+  assert.equal(sortedKeys(store.run(run.id)), true, 'every object of the stored record has its keys in sorted order, as when it was one canonical blob');
+  // What an update returns (and `foundry run` prints) keeps the whole-run store's order: stored keys sorted, keys the update added after them,
+  // and objects the update built (the verdict) in their own order.
+  assert.deepEqual(Object.keys(finished).slice(-1), ['verdict']);
+  assert.deepEqual(Object.keys(finished).slice(0, -1), Object.keys(finished).slice(0, -1).sort());
+  assert.deepEqual(Object.keys(finished.verdict), Object.keys(verdictOf(store.run(run.id), { workflow })));
+  assert.deepEqual(finished, store.run(run.id));
   assert.deepEqual(Object.keys(finished.frames), ['root/each:0', 'root/each:1', 'root/each:2']);
   assert.equal(store.db.prepare("SELECT output FROM run_nodes WHERE run_id=? AND node_key='root/check'").get(run.id).output, canonical({ passed: true }));
   // The columns the runtime queries repeat the state they were taken from.
@@ -404,6 +413,143 @@ test('atomicity: an append over evidence that is missing is refused: a gone tail
     for (let i = 1; i <= 70 && !refusedAt; i++) { try { touch(store, run.id); } catch (error) { assert.equal(error.code, 'CORRUPT_EVENTS'); refusedAt = i; } }
     assert.ok(refusedAt >= 1 && refusedAt <= 65, `refused at update ${refusedAt}`);
   }
+});
+
+// ---- review fixes (adversarial review of the rows store) ------------------------------------------------------------------------------------------
+const countValues = v => { let n = 0; for (const stack = [v]; stack.length;) { const x = stack.pop(); n++; if (x && typeof x === 'object') for (const c of Object.values(x)) stack.push(c); } return n; };
+
+test('bounds: the whole record stays one value data.mjs accepts (its JSON value count and depth): a node write that would break it fails the node, and the run closes with a sealed receipt', async t => {
+  // The whole-run store refused such a write (checkData of the whole run); per-row checks alone let it through, and the seal, which hashes the
+  // whole record, then threw on every attempt: the run stayed `running`, owned, with no failure receipt, and digest(run) threw.
+  const identity = (id, needs = []) => echo(id, { value: ref('input.big') }, needs);
+  { // value count (the limits lowered so the test is quick; the real bounds are 195,000 and 200,000 of checkData's)
+    const { store, runtime, run } = environment(t, base([identity('a'), identity('b', ['a']), identity('c', ['b']), identity('d', ['c'])], [{ op: 'exists', value: ref('nodes.d.value') }]),
+      { big: Array.from({ length: 400 }, (_, i) => i % 10) });
+    Object.assign(store.limits, { totalItems: 1500, finalItems: 1700 });
+    const result = await runtime.execute(run.id);
+    assert.equal(result.status, 'failed'); assert.equal(result.error.code, 'DATA_LIMIT'); assert.equal(result.verdict.verdict, 'harness_fault');
+    assert.equal(result.owner, null, 'the run is closed, not left owned');
+    const stored = store.db.prepare('SELECT items FROM runs WHERE id=?').get(run.id).items;
+    assert.equal(stored, countValues(store.run(run.id))); assert.ok(stored <= 1700);
+    assert.equal(verifyRun(store, run.id).ok, true);
+  }
+  { // depth: a 38-level value is a valid input (record.input.deep is 2 down) but not a node output (record.outputs.a.value is 3 down)
+    let deep = 0; for (let i = 0; i < 38; i++) deep = [deep];
+    const { store, runtime, run } = environment(t, base([echo('a', { value: ref('input.deep') })], [{ op: 'exists', value: ref('nodes.a.value') }]), { deep });
+    const result = await runtime.execute(run.id);
+    assert.equal(result.status, 'failed'); assert.equal(result.error.code, 'DATA_LIMIT'); assert.equal(result.verdict.verdict, 'harness_fault');
+    assert.doesNotThrow(() => digest(store.run(run.id)), 'the record can be hashed whole (outcome receipts do)');
+    assert.equal(verifyRun(store, run.id).ok, true);
+  }
+});
+
+test('bounds: a terminal update may use the headroom between the regular and the absolute whole-run bounds, nothing else may', t => {
+  const { store, run } = environment(t, chain(1));
+  const items = () => store.db.prepare('SELECT items FROM runs WHERE id=?').get(run.id).items;
+  Object.assign(store.limits, { totalItems: items() + 20, finalItems: items() + 60 });
+  const pad = n => Array.from({ length: n }, () => 0);
+  assert.throws(() => store.updateRun(run.id, r => { r.extra = { pad: pad(40) }; }, { type: 'probe' }), { code: 'DATA_LIMIT' });
+  store.updateRun(run.id, r => { r.extra = { pad: pad(40) }; }, { type: 'probe.final' }, { final: true });
+  assert.throws(() => store.updateRun(run.id, r => { r.extra = { pad: pad(80) }; }, { type: 'probe.final' }, { final: true }), { code: 'DATA_LIMIT' }, 'not past the absolute bound');
+  assert.equal(items(), countValues(store.run(run.id)));
+  // and the draft says how many values the run holds (the runtime's soft budget)
+  store.updateRun(run.id, r => { assert.equal(r[STATE_ITEMS], items()); }, { type: 'probe' }, { final: true });
+});
+
+test('draft: a frame or a map replaced by a copy of itself keeps its rows (the copy holds views of the rows being replaced)', t => {
+  const { store, run } = environment(t, chain(1));
+  store.updateRun(run.id, r => { r.frames['root/m:0'] = { nodes: { x: { status: 'completed' } }, outputs: { x: 1 }, contextHash: 'h' }; r.nodes.k = { status: 'completed' }; r.outputs.k = 2; }, { type: 'probe' });
+  store.updateRun(run.id, r => { r.frames['root/m:0'] = { ...r.frames['root/m:0'], result: 'completed' }; }, { type: 'probe' });
+  assert.deepEqual(store.run(run.id).frames['root/m:0'], { contextHash: 'h', nodes: { x: { status: 'completed' } }, outputs: { x: 1 }, result: 'completed' });
+  store.updateRun(run.id, r => { r.nodes = r.nodes; r.outputs = { ...r.outputs }; }, { type: 'probe' });
+  store.updateRun(run.id, r => { r.frames = { ...r.frames }; }, { type: 'probe' });
+  const after = store.run(run.id);
+  assert.deepEqual([after.nodes, after.outputs], [{ k: { status: 'completed' } }, { k: 2 }]);
+  assert.deepEqual(after.frames['root/m:0'].nodes, { x: { status: 'completed' } });
+  assert.equal(store.db.prepare('SELECT items FROM runs WHERE id=?').get(run.id).items, countValues(after));
+});
+
+test('legacy: tick and answer see a paused run that is still one whole-run record (they read its node states before any write splits it)', async t => {
+  const workflow = base([{ id: 'w', kind: 'wait', needs: [], description: 'wait', delayMs: 40 }, { id: 'q', kind: 'human', needs: [], description: 'ask', question: 'ok?', answerSchema: { type: 'boolean' } }],
+    [{ op: 'exists', value: ref('nodes.q') }]);
+  const { store, runtime, run } = environment(t, workflow);
+  assert.equal((await runtime.execute(run.id)).status, 'awaiting_human');
+  const record = store.run(run.id); // as the whole-run store kept it: the record in runs.body, no rows
+  store.db.prepare('UPDATE runs SET body=?, bytes=0, items=NULL WHERE id=?').run(canonical(record), run.id);
+  for (const table of ['run_nodes', 'run_frames', 'run_input']) store.db.prepare(`DELETE FROM ${table} WHERE run_id=?`).run(run.id);
+  assert.equal(store.rows.nodeState(run.id, 'root', 'q').status, 'awaiting_human');
+  assert.deepEqual(store.rows.nodeOutput(run.id, 'root', 'nope'), undefined);
+  await new Promise(resolve => setTimeout(resolve, 60));
+  const ticked = await runtime.tick();
+  assert.deepEqual(ticked.runs.map(r => r.status), ['awaiting_human'], 'the due timer resumed the run instead of being pruned as stale');
+  assert.equal(runtime.answer(run.id, 'root/q', true).status, 'ready');
+  assert.equal((await runtime.execute(run.id)).status, 'succeeded');
+});
+
+test('integrity: an edit of a node row\'s status or label column alone is reported by verify-run and refused by resume', async t => {
+  const workflow = base([echo('a', { value: ref('input.x') }), { id: 'q', kind: 'human', needs: ['a'], description: 'ask', question: 'ok?', answerSchema: { type: 'boolean' } }],
+    [{ op: 'exists', value: ref('nodes.q') }]);
+  workflow.labels = { 'input.x': 'untrusted:web' };
+  const { store, runtime, run } = environment(t, workflow, { x: 'payload' });
+  await runtime.execute(run.id);
+  assert.deepEqual(store.rows.mismatchedRows(run.id), []);
+  assert.equal(verifyRun(store, run.id).ok, true);
+  // Laundering the taint: the runtime reads the label column, the seal hashes the body.
+  store.db.prepare("UPDATE run_nodes SET label=NULL WHERE run_id=? AND node_key='root/a'").run(run.id);
+  const report = verifyRun(store, run.id);
+  assert.equal(report.ok, false); assert.deepEqual(report.findings.filter(f => f.severity === 'error').map(f => f.code), ['STATE_ROW_EDITED']);
+  runtime.answer(run.id, 'root/q', true);
+  await assert.rejects(runtime.execute(run.id), { code: 'CHECKPOINT_TAMPERED' });
+  store.db.prepare("UPDATE run_nodes SET label='untrusted:web' WHERE run_id=? AND node_key='root/a'").run(run.id);
+  store.db.prepare("UPDATE run_nodes SET status='skipped' WHERE run_id=? AND node_key='root/q'").run(run.id); // the body says completed (answered)
+  assert.deepEqual(store.rows.mismatchedRows(run.id).map(m => m.nodeKey), ['root/q']);
+  await assert.rejects(runtime.execute(run.id), { code: 'CHECKPOINT_TAMPERED' });
+  store.db.prepare("UPDATE run_nodes SET status='completed' WHERE run_id=? AND node_key='root/q'").run(run.id);
+  store.db.prepare("INSERT INTO run_nodes(run_id,node_key,frame_key,node_id,status,body,rev) VALUES(?,'root/x:0/y','root/x:0','y','uncertain','{\"status\":\"uncertain\"}',0)").run(run.id);
+  assert.deepEqual(store.rows.mismatchedRows(run.id), [{ nodeKey: 'root/x:0/y', reason: 'the row belongs to no frame' }]);
+  store.db.prepare("DELETE FROM run_nodes WHERE run_id=? AND node_key='root/x:0/y'").run(run.id);
+  assert.equal((await runtime.execute(run.id)).status, 'succeeded');
+});
+
+test('legacy: a store written by the first rows layout (no items column) is upgraded and each run recounted by its next write', t => {
+  const { dir, store, run } = environment(t, chain(1));
+  store.updateRun(run.id, r => { r.frames['root/m:0'] = { nodes: { x: { status: 'completed' } }, outputs: { x: [1, 2] }, contextHash: 'h' }; r.outputs.o = { v: 'x'.repeat(30) }; }, { type: 'probe' });
+  store.db.exec('ALTER TABLE runs DROP COLUMN items; PRAGMA user_version = 2;');
+  store.close();
+  const reopened = opened(t, dir);
+  assert.equal(reopened.db.prepare('PRAGMA user_version').get().user_version, ROWS_VERSION);
+  assert.equal(reopened.db.prepare('SELECT items FROM runs WHERE id=?').get(run.id).items, null);
+  reopened.updateRun(run.id, r => { r.steps = 1; }, { type: 'probe' });
+  const stored = reopened.db.prepare('SELECT bytes, items FROM runs WHERE id=?').get(run.id), record = reopened.run(run.id);
+  assert.equal(stored.items, countValues(record));
+  assert.ok(stored.bytes >= canonical(record).length && stored.bytes <= canonical(record).length + 16, `${stored.bytes} bytes counted, ${canonical(record).length} in the record`);
+});
+
+test('bounds: the byte and value counters equal a fresh count of the record after any sequence of draft edits', t => {
+  const { store, run } = environment(t, chain(1), { q: 1 });
+  let seed = 7; const rnd = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648, pick = a => a[Math.floor(rnd() * a.length)];
+  const value = d => d > 3 || rnd() < 0.4 ? pick([1, 'x', null, true, 'y'.repeat(Math.floor(rnd() * 40))]) : rnd() < 0.5 ? Array.from({ length: Math.floor(rnd() * 4) }, () => value(d + 1)) : Object.fromEntries(Array.from({ length: Math.floor(rnd() * 4) }, (_, i) => [`k${i}`, value(d + 1)]));
+  const ids = ['a', 'b', 'cc'], frames = ['root/m:0', 'root/m:1', 'root/m:1/n:0'];
+  for (let step = 0; step < 150; step++) {
+    store.updateRun(run.id, r => {
+      for (let k = 0; k < 3; k++) {
+        const op = Math.floor(rnd() * 9), f = rnd() < 0.5 ? r : (r.frames[pick(frames)] ?? r);
+        if (op === 0) f.nodes[pick(ids)] = { status: pick(['completed', 'running']), v: value(0), ...(rnd() < 0.3 ? { outputLabel: 'untrusted:x' } : {}) };
+        else if (op === 1) f.outputs[pick(ids)] = value(0);
+        else if (op === 2) delete f.nodes[pick(ids)];
+        else if (op === 3) delete f.outputs[pick(ids)];
+        else if (op === 4) r.frames[pick(frames)] = { nodes: { a: { status: 'completed' } }, outputs: { a: value(0) }, contextHash: 'h' };
+        else if (op === 5) delete r.frames[pick(frames)];
+        else if (op === 6) r.extra = { pad: value(0) };
+        else if (op === 7) { const fk = pick(frames); if (r.frames[fk]) r.frames[fk] = { ...r.frames[fk], result: 'completed' }; }
+        else { const s = f.nodes[pick(ids)]; if (s) s.more = value(0); }
+      }
+    }, { type: 'probe.fuzz', step }, { result: 'header' });
+    const stored = store.db.prepare('SELECT bytes, items FROM runs WHERE id=?').get(run.id), record = store.run(run.id), text = canonical(record);
+    assert.equal(stored.items, countValues(record), `items after step ${step}`);
+    assert.ok(stored.bytes >= text.length && stored.bytes <= text.length + 4 + 3 * Object.keys(record.frames).length, `bytes after step ${step}: ${stored.bytes} counted, ${text.length} in the record`);
+  }
+  assert.deepEqual(store.rows.mismatchedRows(run.id), []);
 });
 
 // ---- cost -------------------------------------------------------------------------------------------------------------------------------------

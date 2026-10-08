@@ -914,3 +914,65 @@ verify to strengthen), so it makes no lint-debt proposal offline. Nothing was sp
 **Still not done.** Nothing in this appendix has made a live call. The live path (proposer through `claude -p`, V3/V4 changed nodes,
 V7 fresh tasks) is exercised only against scripted providers, so the design's $10-14 end-to-end cost estimate, and any fix rate,
 remain unmeasured.
+
+### B.5 First live runs, 2026-10-08 21:19-22:30 UTC (`claude -p` route, journaled, $6.41 of the $8 cap) [M]
+
+*Development/diagnostic evidence.* All three incidents are already-inspected test seeds; the fresh-task gate drew its seeds from the dev
+pool 1001+ through the seed ledger (`seed-ledger.json`), 4 per family and run, K = 1, paired. Raw data: `experiments/heal/runs/live-20261008*/`
+(`<incident>.json` records, `spend-global.jsonl` = every charge of every process, `*/proposer/round-N/journal.sqlite` = every proposer call,
+`archive/` = full verification records and the fresh-task journals, `lessons/`). The driver is `experiments/heal/live.mjs`
+(`retry-control.mjs` = the "retry unchanged" control; `summarise-live.mjs` prints a text-free digest). The recorded failing runs replay
+exactly (same fidelity as B.3). Run 1 used the code as built in B.4; runs 2-4 used the fixes listed below, so they are separate samples.
+
+| run | incident | outcome | $ | wall |
+|---|---|---|---|---|
+| 1 | H-rec | lint-debt **promoted** (v2); defect: 4 rounds, `HEAL_OP_INVALID` x3 and `HEAL_LITERAL_LEAK` (false positive, below) | 0.21 | 506 s |
+| 1 | H-cfx | 4 rounds: `HEAL_OP_INVALID` x2, then `add_probe` (a no-op) twice: `HEAL_FAILING_CASE_STILL_FAILS` | 0.12 | 95 s |
+| 1 | H-p1 | lint-debt **promoted** (v2); defect: 3 `k_sample_agreement` patches passed V0-V4 and failed V5 `HEAL_NO_DISCRIMINATION` (false reject, below) | 0.45 | 1,808 s |
+| 2 | H-rec | 4 rounds: V3 2 of 3 replicas pass; leak (false positive) x2; V3 0/3 | 0.16 | 306 s |
+| 2 | H-cfx | Sonnet `relax_check`: V0-V8 all pass, `blocked` by open lint debt | 0.63 | 282 s |
+| 2 | H-p1 | Haiku round 2 `k_sample_agreement` (k = 3): V0-V8 pass, **promoted** (v3) | 0.16 | 1,052 s |
+| 3 | H-rec | 4 rounds fail V3; round 4 pending: two cancelled in-flight calls charged at the $1 per-call bound | 2.44 | 385 s |
+| 3 | H-cfx | Haiku `relax_check`: V0-V8 pass, `blocked` by lint debt | 0.36 | 242 s |
+| 4 | H-rec | 4 rounds: 3 fail V3, 1 `HEAL_LINT_NOT_CLEARED`; no patch | 0.30 | 313 s |
+| 4 | H-cfx | Opus `relax_check` (rounds 1-3 invalid): V0-V8 pass with a stratified V7, `blocked` by lint debt | 0.92 | 265 s |
+| - | controls | P1 retry unchanged 8/8 vs healed v3 8/8; H-rec retry 0/4 vs `conf` on class L 0/4 | 0.58 | - |
+
+**Defects the live runs exposed, all fixed (tests in `test/live-fixes.test.mjs`, `test/verify.test.mjs`; 86/86 pass):**
+1. *Code-node roots got an empty brief.* A check has no journaled prompt, so the proposer saw no evidence and fell back to `add_probe`.
+   Now the brief carries the task statement, the task inputs (windows around the identifiers the check's failure report names) and the
+   check's recorded output (`codeRootEvidence`).
+2. *The brief gave field names but not their grammar.* 6 of 8 early proposer rounds died at compile (a `source` that is not a context
+   ref, an invented `conditionJson`, `compare` with dotted paths). `brief.guide` now states the grammar with the valid values at the locus.
+3. *Scanner false positives.* (a) A k-sample clone was scanned as new content (rule 3 fired on the schema's own enum values): a clone is
+   now compared with the node it copies. (b) Rule 1 flagged "the system's name" and "source notes": text that recurs in other tasks of
+   the family (6 dev tasks, full text) is a template constant. (c) Rule 2 flagged `maxLength: 600`: schema bounds are structure. A
+   planted task-only sentence and a task-only constant are still caught (tests).
+4. *V5 read an indeterminate outcome as "not rejected".* A candidate with new reader nodes cannot replay the bed controls strictly
+   (`REPLAY_MISS`), so all 14 controls came back unknown and counted as accepted. The candidate's controls now share one journal copy
+   with a provider (changed nodes run live once); without a provider the stage is pending.
+5. *V7 for codefix drew tasks at random.* Only 1 of 4 seeds had a wrong-default bug, so the healed check was untested. The fresh set is
+   now stratified by "has a wrong-default bug" (oracle side).
+6. *The variance test was not in the brief.* Added as a typed fact (bias vs noise).
+7. *Spend control.* `--call-cap-usd` bounds an unobservable call; the V3 first replica is still not reserved (a run can overshoot its
+   cap: run 3 of H-rec reached $2.44 against $2.0).
+
+**What the numbers say.**
+- *Localisation matched the human diagnoses on all three incidents* (root node, mechanism, clone group, the downstream routing) at $0
+  and 32-292 s.
+- *H-cfx is the one patch that is demonstrably a fix:* three independent proposers (Sonnet, Haiku, Opus) wrote a 1-9 line change to
+  `check1` that compares names, kinds and the number of defaults and lets default values change; all pass the 13-mutant battery, the
+  3 failing runs, 8 regressions and cost ratio 0.588. On stratified fresh tasks the original fails 0/2 wrong-default tasks and the
+  healed workflow passes 2/2; the other stratum is 2/2 vs 2/2 (run 4). It is `blocked`, not promoted: the base has
+  `ACCEPTANCE_EXISTENCE_ONLY`, no op can build a gating verifier, and `needsProposer` lint debt is never sent to the proposer.
+- *H-p1's promotion is not evidence of a fix.* The failure is sampling noise (resamples 8/8 right); the original passes the failing task
+  8/8 on a fresh salt, as does the healed head. V3 cannot tell a patch from a re-roll on a variance incident; the +15% cost is the
+  measurable effect.
+- *The two promoted lint-debt versions (H-rec v2, H-p1 v2) do not catch the incident.* The failing H-rec run is still a `pass` verdict
+  after the heal; the gating acceptance rejects 2 of 14 (H-rec) and 4 of 14 (H-p1) bad controls, none of them the date-order ones.
+- *H-rec was not healed in 4 runs x 4 rounds.* Six of the 16 candidates had V3 replicas that ended `failed` (a node check, not a wrong answer); the one
+  probed (run 4, round 4: evidence field + check) failed `NODE_CHECK_FAILED` on Haiku and then on Sonnet, but which of its two checks
+  (the verbatim quote or the proposer's own) was not isolated [I]. The others pass V3 at most 2 of 3 replicas; `escalate_class` alone is refused by V1 (`ESCALATION_WITHOUT_CHECKS`) and
+  would not have worked (conf on class L: 0/4 pass, as the original). The closed condition grammar cannot iterate over array items,
+  so no per-row guard can be written for a root array.
+- V7 at 4 seeds x K = 1 is directional only; V5 on codefix is vacuous (existence-only acceptance).

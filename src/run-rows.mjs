@@ -41,9 +41,10 @@ export const STATE_LIMITS = Object.freeze({
   headerBytes: 4 * 1024 * 1024, inputBytes: 2 * 1024 * 1024, nodeStateBytes: 1024 * 1024, nodeOutputBytes: 2 * 1024 * 1024, frameBytes: 64 * 1024,
   // Checked by the runtime before it starts a node, so room remains for the failure receipt; the hard bound applies to every write.
   budgetBytes: 10 * 1024 * 1024, totalBytes: 12 * 1024 * 1024,
-  // JSON values in the whole record: the soft bound the runtime checks before it starts a node, the bound every write keeps, and the
-  // absolute bound (data.mjs checkData's) that only a terminal update may reach. Bytes have the same headroom below 16 MiB (finalBytes).
-  budgetItems: 180000, totalItems: 195000, finalItems: 200000, finalBytes: 15 * 1024 * 1024
+  // JSON values in the whole record: the bound the runtime checks before it starts a node, the bound every write keeps, and the absolute
+  // bound (data.mjs checkData's, which the whole-run store applied to every write) that only a terminal update may reach: its receipt (status,
+  // error, verdict) needs a few dozen values. Bytes have the same headroom below canonical()'s 16 MiB (finalBytes).
+  budgetItems: 198000, totalItems: 198000, finalItems: 200000, finalBytes: 15 * 1024 * 1024
 });
 /** `draft[STATE_BYTES]`: the stored size of the run when the update began (what checkBudget compares with STATE_LIMITS.budgetBytes). */
 export const STATE_BYTES = Symbol('foundry.run.stateBytes');
@@ -294,6 +295,32 @@ class Session {
     run.frames = Object.fromEntries([...this.frames].filter(([, frame]) => frame.exists()).sort(([a], [b]) => a < b ? -1 : 1).map(([key, frame]) => [key, { ...frame.head.fields, ...plain(frame) }]));
     return JSON.parse(JSON.stringify(run));
   }
+  // The record after this update, in the key order the whole-run store returned from an update (it parsed the canonical record, let the
+  // mutation edit that object, and returned it): what was stored keeps its sorted place, what this update added follows in the order it was
+  // added, and objects the mutation built keep their own order. `foundry run`, `answer` and `approve` print this.
+  record() {
+    this.loadAll();
+    const ordered = (keys, had) => [...keys.filter(key => had.has(key)).sort(), ...keys.filter(key => !had.has(key))];
+    const map = (frame, side) => {
+      const ids = [...frame.rows].filter(([, row]) => row[side] !== undefined), stored = row => (side === 'state' ? row.origState : row.origOutput) !== null;
+      return Object.fromEntries([...ids.filter(([, row]) => stored(row)).map(([id]) => id).sort(), ...ids.filter(([, row]) => !stored(row)).map(([id]) => id)].map(id => [id, frame.rows.get(id)[side]]));
+    };
+    const frameObject = frame => {
+      const fields = frame.object ?? frame.head.fields, had = new Set(frame.head.exists ? [...Object.keys(JSON.parse(frame.head.text)), ...FRAME_SPECIAL] : []);
+      const keys = frame.head.exists ? ordered([...Object.keys(fields).filter(key => !FRAME_SPECIAL.has(key)), ...FRAME_SPECIAL], had) : [...Object.keys(fields).filter(key => !FRAME_SPECIAL.has(key)), ...FRAME_SPECIAL].sort();
+      return Object.fromEntries(keys.map(key => [key, key === 'nodes' ? map(frame, 'state') : key === 'outputs' ? map(frame, 'output') : fields[key]]));
+    };
+    const frames = () => {
+      const live = [...this.frames.values()].filter(frame => frame.exists());
+      return Object.fromEntries([...live.filter(frame => frame.head.exists).map(frame => frame.key).sort(), ...live.filter(frame => !frame.head.exists).map(frame => frame.key)].map(key => [key, frameObject(this.frames.get(key))]));
+    };
+    const run = {}, had = new Set([...Object.keys(JSON.parse(this.text)), ...SPECIAL]);
+    for (const key of ordered(Object.keys(this.header), had)) {
+      if (key === 'input') { if (this.getInput() !== undefined) run.input = this.input.value; }
+      else run[key] = key === 'nodes' ? map(this.root, 'state') : key === 'outputs' ? map(this.root, 'output') : key === 'frames' ? frames() : this.header[key];
+    }
+    return JSON.parse(JSON.stringify(run));
+  }
   // Write what changed. Returns the header as stored (a plain object). `final`: a terminal update (seal, failure receipt), which may use the
   // headroom between the regular whole-run bounds and the absolute ones.
   flush({ final = false } = {}) {
@@ -420,9 +447,10 @@ export class RunRows {
     return isLegacy(header) ? without(header, SPECIAL) : header;
   }
   // A run still held as one whole-run record (written by the earlier store, not yet split) has no rows: a point read that finds no row looks
-  // there, so answering a question or ticking a timer of such a run sees the record (its first write splits it).
+  // there, so answering a question or ticking a timer of such a run sees the record (its first write splits it). Such a run has never been
+  // counted (items IS NULL), so a run in rows costs this lookup nothing but an index probe.
   #legacyFrame(id, frameKey) {
-    const row = this.stmt("SELECT body FROM runs WHERE id=? AND json_type(body, '$.nodes') IS NOT NULL").get(id);
+    const row = this.stmt("SELECT body FROM runs WHERE id=? AND items IS NULL AND json_type(body, '$.nodes') IS NOT NULL").get(id);
     if (!row) return undefined;
     const record = JSON.parse(row.body);
     return frameKey === 'root' ? record : record.frames?.[frameKey];

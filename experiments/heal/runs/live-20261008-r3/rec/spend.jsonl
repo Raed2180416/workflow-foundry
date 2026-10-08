@@ -1,0 +1,16 @@
+{"at":"2026-10-08T21:47:32.721Z","label":"variance test","usd":0.009592,"totalUsd":0.009592}
+{"at":"2026-10-08T21:47:56.915Z","label":"proposer round 1 (M)","usd":0.001412,"totalUsd":0.011004,"runId":"e00d79c9-8939-43c6-bc87-8887d8c859d8"}
+{"at":"2026-10-08T21:48:17.784Z","label":"V3 F-haiku/records:test:d3:s6001/0 r0","usd":0.072578,"totalUsd":0.083582,"liveCalls":6}
+{"at":"2026-10-08T21:48:49.383Z","label":"V3 F-haiku/records:test:d3:s6001/0 r1","usd":0.091772,"totalUsd":0.175354,"liveCalls":7}
+{"at":"2026-10-08T21:49:09.501Z","label":"V3 F-haiku/records:test:d3:s6001/0 r2","usd":0.066627,"totalUsd":0.241981,"liveCalls":6}
+{"at":"2026-10-08T21:49:16.146Z","label":"proposer round 2 (M)","usd":0.001344,"totalUsd":0.243325,"runId":"3c5646e1-b9ad-4912-81c2-6193af826c50"}
+{"at":"2026-10-08T21:49:35.583Z","label":"V3 F-haiku/records:test:d3:s6001/0 r0","usd":0.027191,"totalUsd":0.270516,"liveCalls":2}
+{"at":"2026-10-08T21:49:55.040Z","label":"V3 F-haiku/records:test:d3:s6001/0 r1","usd":0.022993,"totalUsd":0.293509,"liveCalls":2}
+{"at":"2026-10-08T21:50:14.490Z","label":"V3 F-haiku/records:test:d3:s6001/0 r2","usd":0.02374,"totalUsd":0.317249,"liveCalls":2}
+{"at":"2026-10-08T21:50:19.416Z","label":"proposer round 3 (L)","usd":0.020055,"totalUsd":0.337304,"runId":"c166960b-61d3-42d2-abea-db1bd7a2075b"}
+{"at":"2026-10-08T21:50:27.948Z","label":"V3 F-haiku/records:test:d3:s6001/0 r0","usd":0.003978,"totalUsd":0.341282,"liveCalls":3}
+{"at":"2026-10-08T21:50:36.794Z","label":"V3 F-haiku/records:test:d3:s6001/0 r1","usd":0.003744,"totalUsd":0.345027,"liveCalls":3}
+{"at":"2026-10-08T21:50:45.054Z","label":"V3 F-haiku/records:test:d3:s6001/0 r2","usd":0.003607,"totalUsd":0.348633,"liveCalls":3}
+{"at":"2026-10-08T21:50:55.475Z","label":"proposer round 4 (F)","usd":0.048915,"totalUsd":0.397549,"runId":"999d8e46-3855-4702-b001-7f0a79399a84"}
+{"at":"2026-10-08T21:51:08.678Z","label":"V3 F-haiku/records:test:d3:s6001/0 r0","usd":1.021926,"totalUsd":1.419474,"liveCalls":4}
+{"at":"2026-10-08T21:51:23.667Z","label":"V3 F-haiku/records:test:d3:s6001/0 r1","usd":1.022841,"totalUsd":2.442315,"liveCalls":4}

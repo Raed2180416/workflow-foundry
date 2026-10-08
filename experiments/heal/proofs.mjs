@@ -57,6 +57,9 @@ export function mutantBattery(moduleSource, { maxFunctions = 3 } = {}) {
     if (real.length >= 2) { const idx = params.indexOf(real[0]), jdx = params.indexOf(real[1]), ps = [...params]; [ps[idx], ps[jdx]] = [ps[jdx], ps[idx]]; emit('reordered', build(name, ps)); }
     emit('removed', build(name, params.filter(p => p !== real.at(-1))));
     emit('added', build(name, [...params, 'extra_zz=None']));
+    // a public top-level function that became a class (review 2026-10-08: a relaxed check that compares parameter lists can crash on the
+    // string "class" where the old check flagged the change; the battery had no mutant of this kind, so V2 accepted it)
+    if (!indent) emit('kind_changed', `class ${name}:`);
     const defaulted = real.filter(p => p.includes('='));
     if (defaulted.length) {
       const last = defaulted.at(-1);
@@ -90,13 +93,15 @@ export async function relaxProof({ proof, kit, node, args, moduleSource, taskTex
   if (proof.target !== 'source' || proof.battery !== 'python-signature' || proof.lang !== 'python') { out.violations.push('no mutant battery exists for this check; owner review only'); return out; }
   const battery = mutantBattery(moduleSource);
   if (!battery.length) { out.violations.push('the module has no public signature to mutate'); return out; }
+  // A check that crashes is not a check: a mutant the old source judged and the new source crashes on is a violation (review 2026-10-08).
+  const judge = async (src, text) => { try { return { value: await runCheck({ kit, node: { ...node, source: src }, args, candidate: text }) }; } catch (error) { return { crashed: String(error.code ?? error.message ?? error).slice(0, 80) }; } };
   for (const m of battery) {
-    const oldNode = { ...node, source: proof.before }, newNode = { ...node, source: proof.after };
-    const [o, n] = await Promise.all([runCheck({ kit, node: oldNode, args, candidate: m.text }), runCheck({ kit, node: newNode, args, candidate: m.text })]);
-    if (o.compile_error) continue;
-    const row = { id: m.id, class: m.class, oldKills: flagged(o), newKills: flagged(n), justified: JUSTIFIABLE[proof.justifiedClass] === m.class };
+    const [o, n] = await Promise.all([judge(proof.before, m.text), judge(proof.after, m.text)]);
+    if (o.crashed || o.value?.compile_error) continue;
+    const row = { id: m.id, class: m.class, oldKills: flagged(o.value), newKills: !n.crashed && flagged(n.value), newCrashed: !!n.crashed, justified: JUSTIFIABLE[proof.justifiedClass] === m.class };
     out.mutants.push(row);
-    if (row.oldKills && !row.newKills && !row.justified) out.violations.push(`mutant ${m.id} was caught by the old check and is accepted by the new one`);
+    if (n.crashed) out.violations.push(`mutant ${m.id}: the new check crashes where the old one judged it`);
+    else if (row.oldKills && !row.newKills && !row.justified) out.violations.push(`mutant ${m.id} was caught by the old check and is accepted by the new one`);
   }
   if (!out.mutants.some(m => m.oldKills)) out.violations.push('the old check kills no mutant: the battery proves nothing');
   out.ok = out.quoteFound && out.violations.length === 0;

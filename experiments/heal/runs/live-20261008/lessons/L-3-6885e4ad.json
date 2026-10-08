@@ -1,0 +1,85 @@
+{
+ "schema": "heal-lesson/1",
+ "id": "L-3-6885e4ad",
+ "lesson": "L-3",
+ "from": "records-ec311a3b",
+ "title": "No self-exemption in a check",
+ "pattern": {
+  "defectClasses": [
+   "CHECK_ESCAPE_HATCH"
+  ],
+  "signature": {
+   "code": "CHECK_SELF_EXEMPTION",
+   "node": "judge",
+   "details": {
+    "exemptedBy": "basis",
+    "fields": [
+     "same_as_system"
+    ]
+   }
+  }
+ },
+ "lintRule": {
+  "code": "CHECK_SELF_EXEMPTION",
+  "summary": "A check branch lets the model choose a value that exempts it from checking the decision field its sibling branches constrain",
+  "implementation": "experiments/heal/lessons/rules/check-self-exemption.mjs",
+  "severity": "warning",
+  "baseSeverity": "warning"
+ },
+ "templateDiff": {
+  "target": "skills/micro-harness",
+  "applied": false,
+  "text": "skills/micro-harness: add to the \"node checks\" section. A check with an `any` must constrain the decision field in every branch; a branch that tests only a field the model itself chose (for example relation \"none\") exempts the output from checking the field that matters. Give decisive fields an unconditional check or a second independent read, and report the check-vacuity rate (share of outputs where no check constrained the decision field) as a construction metric."
+ },
+ "probeRequirement": "Check-vacuity rate over the construction probes at or below 25% for every decision field.",
+ "firing": {
+  "onBase": 7,
+  "onHealed": null,
+  "firesOnBase": true,
+  "quietOnHealed": null,
+  "population": {
+   "n": 8,
+   "fires": 2,
+   "share": 0.25,
+   "where": [
+    "records-v3(M)",
+    "records-v3(L)"
+   ]
+  }
+ },
+ "evidence": {
+  "signals": {
+   "ORACLE_FAILED": 1,
+   "VERDICT_ORACLE_MISMATCH": 1,
+   "UNVERIFIED_VERDICT": 1,
+   "LINT_FINDING": 11,
+   "CHECK_VACUOUS": 2
+  },
+  "vacuity": [
+   {
+    "nodeKey": "root/dates/judge",
+    "node": "judge",
+    "field": "order",
+    "outputs": 108,
+    "unconstrained": 87,
+    "share": 0.806,
+    "distinctValues": 2
+   },
+   {
+    "nodeKey": "root/statuses/judge",
+    "node": "judge",
+    "field": "meaning",
+    "outputs": 90,
+    "unconstrained": 59,
+    "share": 0.656,
+    "distinctValues": 2
+   }
+  ]
+ },
+ "status": "proposed",
+ "reviewer": null,
+ "caveats": [
+  "Rules written from these artifacts: firing on them describes them and predicts nothing until it fires on workflows built after the rule was frozen (docs/LINT.md).",
+  "Reaches the constructor only through a new kit hash; held until after EX1 so CX3 and EX1 do not share a moving kit (owner decision 4, default)."
+ ]
+}

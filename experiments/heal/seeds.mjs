@@ -34,17 +34,49 @@ export const isUsed = (ledger, family, split, difficulty, seed) => ledger.entrie
 
 export const referenceHash = async (family, task) => { const fam = await (await bedsLib()).loadFamily(family); return digest(fam.referenceSolve(task)); };
 
+// Every task the ledger already names for a deduplicated family (the inspected test seeds, the construction probes, earlier fresh
+// draws), as `split:dN:sS` keys. Review 2026-10-08: `draw` used to dedupe a codefix draw only against earlier FRESH draws, so a dev seed
+// whose task equals an inspected test task (the d1-d3 dev/test overlap, beds/codefix AUDIT F2) could have been served as "fresh".
+export function usedTaskKeys(ledger, family) {
+  const out = [];
+  for (const e of ledger.entries.filter(x => x.family === family)) {
+    const seeds = e.range ? Array.from({ length: e.range[1] - e.range[0] + 1 }, (_, i) => e.range[0] + i) : e.seeds ?? [];
+    for (const s of seeds) out.push({ split: e.split, difficulty: e.difficulty, seed: s, key: `${e.split}:d${e.difficulty}:s${s}` });
+  }
+  return out;
+}
+// Hash every used task of the family into ledger.referenceHashes (cached there, so each task is built once).
+export async function hashUsedTasks(ledger, family, { maxRange = 200 } = {}) {
+  const lib = await bedsLib(), hashes = ledger.referenceHashes[family] ??= {};
+  for (const u of usedTaskKeys(ledger, family)) {
+    if (hashes[u.key]) continue;
+    const entry = ledger.entries.find(e => e.family === family && e.split === u.split && e.difficulty === u.difficulty && e.range && u.seed >= e.range[0] && u.seed <= e.range[1]);
+    if (entry && entry.range[1] - entry.range[0] + 1 > maxRange) continue;   // a wide pre-registered range is excluded by seed, not by task
+    const [t] = await lib.makeTasks(family, { split: u.split, seeds: [u.seed], difficulty: u.difficulty });
+    hashes[u.key] = await referenceHash(family, t.task ?? t);
+  }
+  return hashes;
+}
+
 // Draw `n` fresh seeds from a pool. `keep(task)` may veto a seed (for example to balance strata); vetoed seeds stay unused.
 // The draw is recorded before it is returned: a seed that reached a gate is consumed even if the run is abandoned.
 export async function draw({ ledger, family, split = 'dev', difficulty, n, by, pool = 'heal', keep = null, scan = 400, makeTask }) {
   const range = POOLS[pool]?.[family];
   if (!range) throw new Error(`HEAL_SEED_POOL: no ${pool} pool for ${family}`);
-  const seeds = [], dedupe = family === 'codefix', seen = new Set(Object.values(ledger.referenceHashes?.[family] ?? {}));
+  const dedupe = family === 'codefix';
+  ledger.referenceHashes ??= {};
+  if (dedupe) await hashUsedTasks(ledger, family);
+  // Only the hashes of tasks that were USED count: a seed a stratum vetoed is cached in referenceHashes too, and it must stay drawable
+  // (it used to be skipped forever as a "duplicate" of its own cached hash).
+  const usedKeys = new Set(usedTaskKeys(ledger, family).map(u => u.key));
+  const seeds = [], seen = new Set(Object.entries(ledger.referenceHashes?.[family] ?? {}).filter(([k]) => usedKeys.has(k)).map(([, h]) => h));
   for (let seed = range[0]; seed <= range[1] && seeds.length < n && seed - range[0] < scan; seed++) {
     if (isUsed(ledger, family, split, difficulty, seed)) continue;
     const task = await makeTask(seed);
-    if (dedupe) { const h = await referenceHash(family, task.task ?? task); if (seen.has(h)) continue; seen.add(h); (ledger.referenceHashes[family] ??= {})[`${split}:d${difficulty}:s${seed}`] = h; }
+    let h = null;
+    if (dedupe) { h = await referenceHash(family, task.task ?? task); (ledger.referenceHashes[family] ??= {})[`${split}:d${difficulty}:s${seed}`] = h; if (seen.has(h)) continue; }
     if (keep && !(await keep(task, seeds))) { continue; }
+    if (h) seen.add(h);
     seeds.push(seed);
   }
   if (seeds.length < n) throw Object.assign(new Error(`HEAL_SEED_POOL_EXHAUSTED: ${seeds.length}/${n} fresh ${family} ${split} d${difficulty} seeds left in pool ${pool}`), { code: 'HEAL_SEED_POOL_EXHAUSTED' });

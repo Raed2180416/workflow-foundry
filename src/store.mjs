@@ -168,7 +168,10 @@ export class Store {
         run.eventHead = { seq: previous.seq, hash: previous.hash };
       }
       const header = session.flush({ final });
-      return result === 'header' ? header : this.rows.run(id);
+      if (result === 'header') return header;
+      // A run still held as a whole-run record was split by open(); either way the result is the record after the update, in the key order
+      // the whole-run store returned (session.record()).
+      return session.record();
     });
   }
   /** The seal a `run.verdict` event carries: the Merkle root of the run's journal rows (in `journalDb`, default this database) and the hash of
@@ -188,7 +191,9 @@ export class Store {
   }
   // The verified event chain of a run, or the first place it breaks: {events, error: {seq, message, reason} | null}. `events` holds the
   // events up to (not including) the break. events() throws on a break; verifyRun (src/verify-run.mjs) reports it.
-  chain(id) {
+  // One read snapshot: the head and the events it names are read together (a writer in another process could otherwise append in between).
+  chain(id) { return this.rows.snapshot(() => this.#chain(id)); }
+  #chain(id) {
     const head = this.rows.header(id).eventHead;
     let previousHash = null;
     const events = [];

@@ -59,3 +59,21 @@ test('opGuide: valid refs and field names come from the locus node; every field 
   const relax = opGuide({ workflow: wf.codefix, loci: [{ node: 'check1' }], allowedOps: ['relax_check'], failingRunKeys: ['arm/key/0'] });
   assert.ok(relax.relax_check.includes('arm/key/0') && relax.relax_check.includes('default-value-changed'));
 });
+
+test('scan precision: a phrase that recurs across the family and a schema bound are not leaks; a task-only phrase and a task-only constant still are', { skip: skipReason }, async () => {
+  const { kit, gate, wf } = await world(), { env } = envOf(kit, gate);
+  const failing = { prompt: 'Merge the legacy lists.', inputs: { source_notes: 'The system\'s name is printed first. Quarterly zebra ledger amounts: 6417 and 600 units.' }, files: {} };
+  const othersTask = { prompt: 'Merge the legacy lists.', inputs: { source_notes: 'The system\'s name is printed first. Another table with 600 rows.' }, files: {} };
+  const mk = publicTexts => buildLeakIndex({ tasks: [failing], publicTexts: publicTexts.flatMap(t => taskTextsOf(t)), baseWorkflow: null });
+  const taskTextsOf = t => [t.prompt, ...Object.values(t.inputs)];
+  const scan = (index, ops) => { const c = compileOps(wf.records, ops, env); assert.deepEqual(c.errors, [], JSON.stringify(c.errors)); return scanLeaks(wf.records, c.workflow, index); };
+  const template = [{ op: 'edit_instructions', node: 'conf', mode: 'append', text: 'Quote the sentence that says how the system\'s name is printed.' }];
+  assert.equal(scan(mk([]), template)[0]?.rule, 1, 'without the other tasks the shared phrase looks copied');
+  assert.deepEqual(scan(mk([othersTask]), template), [], 'a phrase that also occurs in another task of the family is a template constant');
+  const secret = [{ op: 'edit_instructions', node: 'conf', mode: 'append', text: 'Remember the quarterly zebra ledger amounts.' }];
+  assert.equal(scan(mk([othersTask]), secret)[0]?.rule, 1, 'a phrase only the failing task has is still a leak');
+  const bound = [{ op: 'add_evidence_field', node: 'conf', field: 'order_quote', maxLength: 600, instruction: 'Copy the deciding sentence.', source: 'input.inputs.source_notes' }];
+  assert.deepEqual(scan(mk([]), bound), [], 'maxLength 600 is a schema bound, not a number of the failing task');
+  const constant = [{ op: 'add_check', node: 'conf', conditionJson: JSON.stringify({ op: 'ne', left: { $ref: 'output.orders' }, right: '6417' }) }];
+  assert.equal(scan(mk([]), constant)[0]?.rule, 2, 'a check constant equal to a number of the failing task is still a leak');
+});

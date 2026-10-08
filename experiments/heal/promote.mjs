@@ -68,7 +68,7 @@ export class Lineage {
   append(line) { mkdirSync(path.dirname(this.file), { recursive: true }); appendFileSync(this.file, JSON.stringify({ schema: LINEAGE, at: new Date().toISOString(), ...line }) + '\n'); return line; }
 
   // Compare-and-swap promotion: only the decision 'promote' can pass; a lost swap is STALE_WORKFLOW (another heal moved the head).
-  promote({ proposal, verification, decision, kitHash, lintPin, policyHash }) {
+  promote({ proposal, verification, decision, kitHash, lintPin, policyHash, approval = null }) {
     if (decision?.decision !== 'promote') throw Object.assign(new Error(`HEAL_NOT_PROMOTABLE: decision is ${decision?.decision}`), { code: 'HEAL_NOT_PROMOTABLE' });
     if (verification.candidateHash !== digest(proposal.workflow)) throw Object.assign(new Error('HEAL_CANDIDATE_CHANGED: the verified candidate is not the proposal workflow'), { code: 'HEAL_CANDIDATE_CHANGED' });
     const head = this.head(proposal.workflow.id);
@@ -78,16 +78,24 @@ export class Lineage {
     this.append({ type: 'promote', workflowId: proposal.workflow.id, proposalId: proposal.id, kind: proposal.kind, parentHash: head.hash, newHash: saved.hash, newVersion: proposal.workflow.version,
       ops: proposal.ops.map(o => o.op), proposer: proposal.proposer?.mechanical ? { mechanical: proposal.proposer.mechanical } : { modelId: proposal.proposer?.modelId, class: proposal.proposer?.class, briefHash: proposal.proposer?.briefHash },
       verification: { digest: digest(verification.stages.map(s => [s.id, s.ok, s.code ?? null])), costUsd: verification.costUsd, costRatio: verification.costRatio ?? null, stages: verification.stages.map(s => ({ id: s.id, ok: s.ok })) },
-      decision: decision.decision, healedWithoutOracle: !!proposal.healedWithoutOracle, kitHash, lintPin, policyHash, waivers: proposal.waivers ?? [], probes: proposal.probes ?? [] });
+      decision: decision.decision, reasons: decision.reasons ?? [], ...(approval ? { approval } : {}), healedWithoutOracle: !!proposal.healedWithoutOracle, kitHash, lintPin, policyHash, waivers: proposal.waivers ?? [], probes: proposal.probes ?? [] });
     return { hash: saved.hash, version: proposal.workflow.version, parentHash: head.hash };
   }
   // A proposal that passed every gate but needs a person: queued, no head change. Approval is an explicit owner action.
   queueReview({ proposal, verification, decision }) {
     return this.append({ type: 'review', workflowId: proposal.workflow.id, proposalId: proposal.id, kind: proposal.kind, baseHash: verification.baseHash, candidateHash: verification.candidateHash, ops: proposal.ops, reasons: decision.reasons, status: 'awaiting-owner' });
   }
-  approveReview({ proposal, verification, owner }) {
+  // An owner can approve what the gate could not auto-promote, but only a candidate whose verification PASSED: decision `owner-review`, or
+  // `blocked` (every stage passed, lint debt of the base still open; the approval says so in the lineage). Review 2026-10-08: approval used
+  // to promote any proposal file it was pointed at, including a `pending` one (V3 not run to the end) or a rejected lint-debt proposal.
+  approveReview({ proposal, verification, owner, decision = null }) {
     if (typeof owner !== 'string' || !owner) throw Object.assign(new Error('HEAL_OWNER_REQUIRED: approval is an explicit owner action'), { code: 'HEAL_OWNER_REQUIRED' });
-    return this.promote({ proposal, verification, decision: { decision: 'promote', reasons: [`approved by ${owner}`] }, kitHash: null, lintPin: null, policyHash: null });
+    const verified = verification?.schema === 'heal-verification/1' && verification.ok === true && !verification.pending && !verification.rejectCode && !verification.partial;
+    if (!verified) throw Object.assign(new Error(`HEAL_NOT_VERIFIED: ${proposal?.id} did not pass V0..V8 (${verification?.rejectCode ?? (verification?.pending ? 'pending' : 'incomplete')}); an owner cannot approve an unverified candidate`), { code: 'HEAL_NOT_VERIFIED' });
+    const was = decision?.decision ?? null;
+    if (was && !['owner-review', 'blocked'].includes(was)) throw Object.assign(new Error(`HEAL_NOT_APPROVABLE: decision ${was} is not owner-review or blocked`), { code: 'HEAL_NOT_APPROVABLE' });
+    const reasons = [`approved by ${owner}`, ...(was === 'blocked' ? [`over the gate's block: ${(decision.reasons ?? []).join('; ')}`] : [])];
+    return this.promote({ proposal, verification, decision: { decision: 'promote', reasons }, kitHash: null, lintPin: null, policyHash: null, approval: { owner, over: was } });
   }
   rollback({ id, toHash, reason }) {
     const head = this.head(id), parent = this.store.workflow(toHash);

@@ -1,0 +1,21 @@
+{"at":"2026-10-08T21:46:07.844Z","label":"proposer round 1 (M)","usd":0.00278,"totalUsd":0.00278,"runId":"5f4bbbc5-c7a1-4695-90b5-9935b36621f4"}
+{"at":"2026-10-08T21:46:39.695Z","label":"proposer round 2 (M)","usd":0.007051,"totalUsd":0.009831,"runId":"f111cb31-4a8e-4f7a-a0c7-57d2bf46d146"}
+{"at":"2026-10-08T21:46:51.105Z","label":"V3 F-haiku/codefix:test:d3:s6001/0 r0","usd":0,"totalUsd":0.009831,"liveCalls":0}
+{"at":"2026-10-08T21:46:52.868Z","label":"V3 F-haiku/codefix:test:d3:s6004/0 r0","usd":0,"totalUsd":0.009831,"liveCalls":0}
+{"at":"2026-10-08T21:46:54.416Z","label":"V3 F-haiku/codefix:test:d3:s6004/1 r0","usd":0,"totalUsd":0.009831,"liveCalls":0}
+{"at":"2026-10-08T21:46:56.653Z","label":"V4 F-haiku/codefix:dev:d3:s3/0","usd":0,"totalUsd":0.009831,"liveCalls":0}
+{"at":"2026-10-08T21:46:57.080Z","label":"V4 F-haiku/codefix:dev:d3:s2/0","usd":0,"totalUsd":0.009831,"liveCalls":0}
+{"at":"2026-10-08T21:46:57.668Z","label":"V4 F-haiku/codefix:dev:d3:s1/0","usd":0,"totalUsd":0.009831,"liveCalls":0}
+{"at":"2026-10-08T21:47:00.450Z","label":"V4 F-haiku/codefix:test:d3:s6002/0","usd":0,"totalUsd":0.009831,"liveCalls":0}
+{"at":"2026-10-08T21:47:00.950Z","label":"V4 F-haiku/codefix:test:d3:s6002/1","usd":0,"totalUsd":0.009831,"liveCalls":0}
+{"at":"2026-10-08T21:47:01.400Z","label":"V4 F-haiku/codefix:test:d3:s6001/1","usd":0,"totalUsd":0.009831,"liveCalls":0}
+{"at":"2026-10-08T21:47:03.705Z","label":"V4 F-haiku/codefix:test:d3:s6003/0","usd":0,"totalUsd":0.009831,"liveCalls":0}
+{"at":"2026-10-08T21:47:04.131Z","label":"V4 F-haiku/codefix:test:d3:s6003/1","usd":0,"totalUsd":0.009831,"liveCalls":0}
+{"at":"2026-10-08T21:47:50.479Z","label":"V7 base 1005#0","usd":0.090994,"totalUsd":0.100825}
+{"at":"2026-10-08T21:47:52.455Z","label":"V7 cand 1005#0","usd":0,"totalUsd":0.100825}
+{"at":"2026-10-08T21:48:14.119Z","label":"V7 base 1006#0","usd":0.083118,"totalUsd":0.183943}
+{"at":"2026-10-08T21:48:15.716Z","label":"V7 cand 1006#0","usd":0,"totalUsd":0.183943}
+{"at":"2026-10-08T21:48:36.030Z","label":"V7 base 1007#0","usd":0.079814,"totalUsd":0.263757}
+{"at":"2026-10-08T21:48:37.483Z","label":"V7 cand 1007#0","usd":0,"totalUsd":0.263757}
+{"at":"2026-10-08T21:48:59.549Z","label":"V7 base 1008#0","usd":0.091406,"totalUsd":0.355163}
+{"at":"2026-10-08T21:49:00.368Z","label":"V7 cand 1008#0","usd":0,"totalUsd":0.355163}

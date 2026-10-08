@@ -91,7 +91,7 @@ export function opGuide({ workflow, loci, allowedOps, failingRunKeys = [] }) {
 }
 
 // ---- the brief ---------------------------------------------------------------------------------------------------------------------
-export function buildBrief({ incidentId, workflow, signals = {}, classification, localisation, lint, classes, allowedOps, excerptSources = [], excerptTokens = [], roundRobin = false, recordedOutput = null, failingRunKeys = [], priorRejects = [], budget = {} }) {
+export function buildBrief({ incidentId, workflow, signals = {}, classification, localisation, lint, classes, allowedOps, excerptSources = [], excerptTokens = [], roundRobin = false, recordedOutput = null, failingRunKeys = [], variance = null, priorRejects = [], budget = {} }) {
   const root = localisation.root, loci = locusNodeIds(localisation, workflow);
   const locusIr = loci.map(l => ({ at: l.in ? `${l.in}/${l.node}` : l.node, node: (l.in ? workflow.nodes.find(n => n.id === l.in).body : workflow).nodes.find(n => n.id === l.node) }));
   const facts = [], fact = text => { const id = `F${facts.length + 1}`; facts.push({ id, text }); return id; };
@@ -99,6 +99,8 @@ export function buildBrief({ incidentId, workflow, signals = {}, classification,
   for (const f of flips.slice(0, 4)) if (f.type !== 'recorded-alt') fact(`Replaying the run with ${f.node}.${f.path} ${JSON.stringify(f.from)} -> ${JSON.stringify(f.to)}${f.identity ? ` (${Object.entries(f.identity).map(([k, v]) => `${k}=${v}`).join(', ')})` : ''} and everything else unchanged turns the oracle result from fail to pass (score +${f.deltaScore}); it changes ${(f.changedShare * 100).toFixed(1)}% of the answer.`);
   if (flips.some(f => f.type === 'recorded-alt')) fact(`${flips.filter(f => f.type === 'recorded-alt').length} other recorded sample(s) of the same prompt gave an output that also turns the run into a pass (model variance is plausible).`);
   for (const c of classes) fact(`Defect class ${c.code} at ${c.node}${c.field ? ` field ${c.field}` : ''}${c.routedTo?.length ? `; the flag routes to ${c.routedTo.join(', ')}` : ''}${c.intermediatesPassing?.length ? `; the output of ${c.intermediatesPassing.join(', ')} already passes the oracle on its own` : ''}.`);
+  // The resampling test (DESIGN §5 step 6) is computed by code and is the one measurement that tells noise from bias.
+  if (variance && !variance.skipped) fact(`Resampling the localised node ${variance.k - (variance.errors ?? 0)} more times with the same prompt and class, ${variance.hits} took the value that makes the run pass (Wilson lower bound ${variance.wilsonLower}). ${variance.class === 'model-variance' ? 'The recorded failure looks like sampling noise at this class.' : 'The misreading is stable at this class: another sample of the same prompt will not fix it, so change what the node is told or reads, or run it on a stronger class.'}`);
   for (const f of lint.findings.slice(0, 6)) fact(`Lint ${f.code} (${f.severity}) at ${f.path}: ${f.repair?.action ?? 'none'}.`);
   const brief = { schema: BRIEF, incident: { id: incidentId, class: classification.class, defectClasses: classes.map(c => c.code), signals, confidence: root?.confidence ?? null }, facts, allowedOps, locus: loci.map(l => l.in ? `${l.in}/${l.node}` : l.node),
     priorRejects, budget, ops: Object.fromEntries(allowedOps.map(o => [o, Object.keys(OPS[o].fields)])), guide: opGuide({ workflow, loci, allowedOps, failingRunKeys }),

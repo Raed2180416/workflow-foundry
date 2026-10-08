@@ -7,7 +7,7 @@ import { verify, gradersHash, pinChain } from '../verify.mjs';
 import { decide, Lineage } from '../promote.mjs';
 import { Budget } from '../budget.mjs';
 import { mechanicalProposal } from '../propose.mjs';
-import { openCtx, replayRun } from '../replay.mjs';
+import { openCtx, replayRun, bedsLib } from '../replay.mjs';
 import { digest } from '../ir.mjs';
 import { REPO } from '../kit.mjs';
 import { world, skipReason, journalScript, notesKey } from './helpers.mjs';
@@ -53,10 +53,19 @@ test('records: the same patch under strict lint is refused until the lint debt i
 test('records: V0 rejects a literal leak, an unsafe addition and a candidate that is not the compilation of its ops', { skip: skipReason }, async () => {
   const w = await incidentFor(KEY, 'records', recordsFlip), { wf, trial, incident } = w;
   const task = incident.tasks[trial.key].task;
-  const sentence = task.inputs.source_notes.split('\n').find(l => /BRIGHTDESK/.test(l) && l.length > 60).slice(0, 160);
+  // The scanner exempts text that recurs in other tasks of the family (a template constant: live run 1 showed it rejecting "source notes" and
+  // "the system's name"), so the planted sentence must be one that only this task has; the family header must pass.
+  const others = await (await bedsLib()).makeTasks('records', { split: 'dev', seeds: [9101, 9102, 9103, 9104, 9105, 9106], difficulty: 3 });
+  const norm = x => x.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(), pub = norm(others.map(o => `${o.task.prompt} ${Object.values(o.task.inputs).filter(v => typeof v === 'string').join(' ')}`).join(' '));
+  const unique = sent => { const w = norm(sent).split(' '); let n = 0; for (let k = 0; k + 3 <= w.length; k++) if (!pub.includes(w.slice(k, k + 3).join(' '))) n++; return n; };
+  const sentences = task.inputs.source_notes.split(/(?<=[.!?])\s+/).filter(x => x.length > 50);
+  const sentence = sentences.sort((a, b) => unique(b) - unique(a))[0].slice(0, 160), header = task.inputs.source_notes.split('\n').find(l => /BRIGHTDESK/.test(l)).slice(0, 160);   // "The export merges N systems: BRIGHTDESK (US sales CRM), ..."
+  assert.ok(unique(sentence) >= 6, 'the planted sentence is specific to this task');
   const leaky = proposalFrom(w, wf.records, [{ op: 'edit_instructions', node: 'conf', mode: 'append', text: `Remember: ${sentence}` }]);
   const v = await runVerify(w, { base: wf.records, proposal: leaky, extra: { stages: ['V0'] } });
   assert.equal(v.rejectCode, 'HEAL_LITERAL_LEAK'); assert.match(v.stages[0].detail, /rule 1/);
+  const tmpl = proposalFrom(w, wf.records, [{ op: 'edit_instructions', node: 'conf', mode: 'append', text: `Remember: ${header}` }]);
+  assert.equal((await runVerify(w, { base: wf.records, proposal: tmpl, extra: { stages: ['V0'] } })).stages[0].ok, true, 'a sentence every task of the family has is a template constant');
   const pair = proposalFrom(w, wf.records, [{ op: 'edit_instructions', node: 'conf', mode: 'append', text: 'BRIGHTDESK is always DMY, so read its numeric dates day first.' }]);
   assert.equal((await runVerify(w, { base: wf.records, proposal: pair, extra: { stages: ['V0'] } })).rejectCode, 'HEAL_LITERAL_LEAK');
   const general = proposalFrom(w, wf.records, [{ op: 'edit_instructions', node: 'conf', mode: 'append', text: 'A worked example in the notes decides a system numeric date order; the name of a locale does not.' }]);

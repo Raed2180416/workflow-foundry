@@ -48,7 +48,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   const started = Date.now();
   const out = await healIncident({
     run: inc.run, workflow: inc.workflow.startsWith('preset:') ? inc.workflow : path.join(REPO, inc.workflow), budget, live: true, promote: !has('no-promote'),
-    proposer: 'claude', lintDebt: arg('lint-debt', has('no-promote') ? 'defer' : 'strict'), maxRounds: Number(arg('max-rounds', '4')),
+    proposer: 'claude', perCallCapUsd: Number(arg('call-cap-usd', '1')), lintDebt: arg('lint-debt', has('no-promote') ? 'defer' : 'strict'), maxRounds: Number(arg('max-rounds', '4')),
     freshOpts: { n: Number(arg('fresh-n', '4')), k: Number(arg('fresh-k', '1')) }, writeLessons: true, lessonsDir: path.join(outDir, 'lessons'), progress: true,
     stateDir: path.join(WORK_ROOT, 'state', `${tag}-${key}`), lineageFile: path.resolve(arg('lineage-file', path.join(outDir, `${key}.lineage.jsonl`))), runsDir,
   });

@@ -1,0 +1,450 @@
+{
+ "schema": "heal-run/1",
+ "started": "2026-10-08T22:05:27.734Z",
+ "trial": {
+  "key": "F-haiku/records:test:d3:s6001/0",
+  "runId": "2fb12d69-12dd-4413-9b6a-36167a36bbe2",
+  "family": "records",
+  "split": "test",
+  "seed": 6001,
+  "pass": false,
+  "score": 0.789197
+ },
+ "kit": {
+  "hash": "7e8f0f83153c5efb",
+  "commit": "880c6b9",
+  "policyHash": "fe63f99b9fcdd5bbe53703ee0c1b2d079972bdecfe1ea940a959385190dee2e4"
+ },
+ "gate": {
+  "source": "pinned",
+  "commit": "13f7664",
+  "live": {
+   "importable": true,
+   "sameBlobAsPin": true
+  }
+ },
+ "mode": {
+  "live": true,
+  "promote": true,
+  "proposer": "claude"
+ },
+ "stages": {},
+ "proposals": [],
+ "decisions": [
+  {
+   "proposal": "p-d038ff71-r1",
+   "kind": "defect",
+   "ops": [
+    "edit_instructions",
+    "add_evidence_field",
+    "add_check"
+   ],
+   "decision": "reject",
+   "reasons": [
+    "HEAL_FAILING_CASE_STILL_FAILS"
+   ],
+   "rejectCode": "HEAL_FAILING_CASE_STILL_FAILS",
+   "stages": [
+    {
+     "id": "V0",
+     "ok": true,
+     "costUsd": 0
+    },
+    {
+     "id": "V1",
+     "ok": true,
+     "costUsd": 0
+    },
+    {
+     "id": "V2",
+     "ok": true,
+     "costUsd": 0
+    },
+    {
+     "id": "V3",
+     "ok": false,
+     "code": "HEAL_FAILING_CASE_STILL_FAILS",
+     "detail": "F-haiku/records:test:d3:s6001/0: 3/3 replicas fail (succeeded,failed,failed)",
+     "costUsd": 0.053704
+    }
+   ],
+   "costUsd": 0.066058,
+   "costRatio": null
+  },
+  {
+   "proposal": "p-8afc8e06-r2",
+   "kind": "defect",
+   "ops": [
+    "add_evidence_field",
+    "escalate_class",
+    "add_check"
+   ],
+   "decision": "reject",
+   "reasons": [
+    "HEAL_FAILING_CASE_STILL_FAILS"
+   ],
+   "rejectCode": "HEAL_FAILING_CASE_STILL_FAILS",
+   "stages": [
+    {
+     "id": "V0",
+     "ok": true,
+     "costUsd": 0
+    },
+    {
+     "id": "V1",
+     "ok": true,
+     "costUsd": 0
+    },
+    {
+     "id": "V2",
+     "ok": true,
+     "costUsd": 0
+    },
+    {
+     "id": "V3",
+     "ok": false,
+     "code": "HEAL_FAILING_CASE_STILL_FAILS",
+     "detail": "F-haiku/records:test:d3:s6001/0: 3/3 replicas fail (failed,failed,failed)",
+     "costUsd": 0.073001
+    }
+   ],
+   "costUsd": 0.140533,
+   "costRatio": null
+  },
+  {
+   "proposal": "p-ebb084e0-r3",
+   "kind": "defect",
+   "ops": [
+    "edit_instructions",
+    "escalate_class"
+   ],
+   "decision": "reject",
+   "reasons": [
+    "HEAL_LINT_NOT_CLEARED"
+   ],
+   "rejectCode": "HEAL_LINT_NOT_CLEARED",
+   "stages": [
+    {
+     "id": "V0",
+     "ok": true,
+     "costUsd": 0
+    },
+    {
+     "id": "V1",
+     "ok": false,
+     "code": "HEAL_LINT_NOT_CLEARED",
+     "detail": "ESCALATION_WITHOUT_CHECKS@conf",
+     "costUsd": 0
+    }
+   ],
+   "costUsd": 0.167879,
+   "costRatio": null
+  },
+  {
+   "proposal": "p-9c05aec3-r4",
+   "kind": "defect",
+   "ops": [
+    "add_evidence_field",
+    "edit_instructions",
+    "add_check"
+   ],
+   "decision": "reject",
+   "reasons": [
+    "HEAL_FAILING_CASE_STILL_FAILS"
+   ],
+   "rejectCode": "HEAL_FAILING_CASE_STILL_FAILS",
+   "stages": [
+    {
+     "id": "V0",
+     "ok": true,
+     "costUsd": 0
+    },
+    {
+     "id": "V1",
+     "ok": true,
+     "costUsd": 0
+    },
+    {
+     "id": "V2",
+     "ok": true,
+     "costUsd": 0
+    },
+    {
+     "id": "V3",
+     "ok": false,
+     "code": "HEAL_FAILING_CASE_STILL_FAILS",
+     "detail": "F-haiku/records:test:d3:s6001/0: 3/3 replicas fail (failed,failed,failed)",
+     "costUsd": 0.066628
+    }
+   ],
+   "costUsd": 0.295271,
+   "costRatio": null
+  }
+ ],
+ "evidence": {
+  "tier": "development/diagnostic",
+  "split": "test",
+  "seed": 6001,
+  "inspected": true,
+  "note": "the seed is already in the seed ledger (INSPECTED): this proves plumbing, not a fix rate"
+ },
+ "fidelity": {
+  "identical": true,
+  "checks": {
+   "taskHash": true,
+   "pass": true,
+   "score": true,
+   "verdict": true,
+   "calls": true
+  }
+ },
+ "signals": {
+  "ORACLE_FAILED": 1,
+  "VERDICT_ORACLE_MISMATCH": 1,
+  "UNVERIFIED_VERDICT": 1,
+  "LINT_FINDING": 5
+ },
+ "lint": {
+  "counts": {
+   "error": 3,
+   "warning": 2
+  },
+  "codes": {
+   "ACCEPTANCE_EXISTENCE_ONLY": 1,
+   "VERIFY_NOT_GATING": 1,
+   "ERROR_COLLECTION": 1,
+   "ESCALATION_WITHOUT_CHECKS": 1,
+   "GLOBAL_READ_UNGUARDED": 1
+  }
+ },
+ "verdict": {
+  "pinned": "unverified",
+  "code": "ACCEPTANCE_EXISTENCE_ONLY"
+ },
+ "classification": {
+  "class": "workflow-defect",
+  "heal": true,
+  "allocatorOnly": false,
+  "varianceTested": true,
+  "reasons": [
+   "wilson lower 0 <= tau 0.2"
+  ],
+  "early": "candidate"
+ },
+ "localisation": {
+  "root": {
+   "node": "conf",
+   "confidence": "high",
+   "locus": [
+    "conf"
+   ],
+   "sample": {
+    "id": "c6",
+    "type": "inject",
+    "node": "conf",
+    "nodeKey": "root/conf",
+    "path": "orders.0.numeric_order",
+    "pathArr": [
+     "orders",
+     0,
+     "numeric_order"
+    ],
+    "rowId": 432,
+    "from": "MDY",
+    "to": "DMY",
+    "identity": {
+     "system": "BRIGHTDESK"
+    }
+   },
+   "flips": 1
+  },
+  "classes": [
+   {
+    "code": "UNGUARDED_GLOBAL_READ",
+    "node": "conf",
+    "field": "orders.0.numeric_order",
+    "locus": [
+     "conf"
+    ],
+    "evidence": [
+     "c6"
+    ],
+    "guardedFields": []
+   }
+  ],
+  "mode": "failure",
+  "coverage": {
+   "candidates": 43,
+   "ran": 43,
+   "needsLive": 0
+  },
+  "intermediates": [
+   {
+    "node": "merge",
+    "pass": false,
+    "score": 0.789197
+   }
+  ],
+  "variance": null,
+  "flippers": [
+   "c6"
+  ],
+  "ms": 68969,
+  "blocked": null
+ },
+ "variance": {
+  "k": 8,
+  "errors": 0,
+  "hits": 0,
+  "rate": 0,
+  "wilsonLower": 0,
+  "tau": 0.2,
+  "class": "workflow-defect",
+  "costUsd": 0.00973032
+ },
+ "incident": {
+  "id": "records-887c68c2",
+  "failing": [
+   "F-haiku/records:test:d3:s6001/0",
+   "F-haiku/records:test:d3:s6001/1"
+  ],
+  "passing": 9,
+  "excluded": []
+ },
+ "lintDebt": {
+  "ops": [],
+  "needsProposer": []
+ },
+ "proposer": {
+  "spec": "claude",
+  "allowed": [
+   "add_evidence_field",
+   "k_sample_agreement",
+   "escalate_class",
+   "edit_instructions",
+   "add_check",
+   "add_probe"
+  ],
+  "locus": [
+   "conf"
+  ]
+ },
+ "proposerRounds": [
+  {
+   "round": 1,
+   "class": "M",
+   "ok": true,
+   "costUsd": 0.0026235300000000002,
+   "error": null,
+   "reject": "HEAL_FAILING_CASE_STILL_FAILS",
+   "pending": false
+  },
+  {
+   "round": 2,
+   "class": "M",
+   "ok": true,
+   "costUsd": 0.00147411,
+   "error": null,
+   "reject": "HEAL_FAILING_CASE_STILL_FAILS",
+   "pending": false
+  },
+  {
+   "round": 3,
+   "class": "L",
+   "ok": true,
+   "costUsd": 0.027346,
+   "error": null,
+   "reject": "HEAL_LINT_NOT_CLEARED",
+   "pending": false
+  },
+  {
+   "round": 4,
+   "class": "F",
+   "ok": true,
+   "costUsd": 0.060764,
+   "error": null,
+   "reject": "HEAL_FAILING_CASE_STILL_FAILS",
+   "pending": false
+  }
+ ],
+ "proposerEvents": [
+  {
+   "type": "heal.proposer_escalated",
+   "round": 3,
+   "from": "M",
+   "to": "L",
+   "after": [
+    "HEAL_FAILING_CASE_STILL_FAILS",
+    "HEAL_FAILING_CASE_STILL_FAILS"
+   ]
+  },
+  {
+   "type": "heal.proposer_escalated",
+   "round": 4,
+   "from": "L",
+   "to": "F",
+   "after": [
+    "HEAL_FAILING_CASE_STILL_FAILS",
+    "HEAL_FAILING_CASE_STILL_FAILS",
+    "HEAL_LINT_NOT_CLEARED"
+   ]
+  }
+ ],
+ "result": {
+  "decision": "exhausted",
+  "reasons": [
+   "HEAL_FAILING_CASE_STILL_FAILS",
+   "HEAL_FAILING_CASE_STILL_FAILS",
+   "HEAL_LINT_NOT_CLEARED",
+   "HEAL_FAILING_CASE_STILL_FAILS"
+  ]
+ },
+ "head": {
+  "hash": "2d84e1165bcfc46e59336194d1d9ab3d42b70f2b037d5f6bfaf04f178eed9c2e",
+  "version": 2
+ },
+ "lesson": {
+  "id": "L-1-22014e09",
+  "lesson": "L-1",
+  "lintRule": {
+   "code": "FRAGILE_GLOBAL_READ",
+   "summary": "An unguarded model read of a per-entity convention table changes at least 5% of the answer when one entry flips",
+   "implementation": "experiments/heal/lessons/rules/fragile-global-read.mjs",
+   "severity": "warning",
+   "baseSeverity": "error"
+  },
+  "firing": {
+   "onBase": 1,
+   "onHealed": null,
+   "firesOnBase": true,
+   "quietOnHealed": null,
+   "population": {
+    "n": 8,
+    "fires": 2,
+    "share": 0.25,
+    "where": [
+     "research/construction-20261006/artifacts/F-haiku-records-k1/workflow.json",
+     "research/construction-20261006/artifacts/F-opus-records-k1/workflow.json"
+    ]
+   }
+  },
+  "status": "proposed",
+  "file": "/home/user/workflow-foundry/experiments/heal/runs/live-20261008-r4/lessons/L-1-22014e09.json"
+ },
+ "budget": {
+  "capUsd": 1,
+  "spentUsd": 0.295271,
+  "remainingUsd": 0.704729,
+  "lines": 14,
+  "campaignSpentUsd": 4.879555,
+  "campaignCapUsd": 8
+ },
+ "ms": 313070,
+ "runsDir": "/home/user/workflow-foundry/experiments/heal/runs/live-20261008-r4/rec",
+ "wallMs": 313092,
+ "campaign": {
+  "tag": "live1",
+  "incident": "H-rec",
+  "cap": 1
+ }
+}

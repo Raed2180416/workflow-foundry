@@ -869,7 +869,7 @@
         "dev-ood": 10,
         "test-ood": 20
       },
-      "labelSource": "truth.idsByTag through the explicit tag table (labelMap.tags: the program's 24 rows); a tag outside the table, including the two labelMap.unmapped tags, fails the build; echo and consequence are excluded and counted",
+      "labelSource": "truth.idsByTag through the explicit tag table (labelMap.tags: the program's 24 rows plus the incident group's four: collateral, shadow, rival, blip-rival); a tag outside the table fails the build; echo, consequence and shadow are excluded and counted",
       "labelMap": {
         "bedVersion": "4.2.0",
         "tags": {
@@ -896,32 +896,37 @@
           "renew": "unrelated",
           "stray": "unrelated",
           "echo": null,
-          "consequence": null
+          "consequence": null,
+          "collateral": "relay",
+          "shadow": null,
+          "rival": "unrelated",
+          "blip-rival": "unrelated"
         },
         "excluded": {
           "echo": "callers' own failure/fallback lines during a blip (K.blipEcho), same templates as dep/soft: not a function of the state",
-          "consequence": "a healthy callee rejecting the root's bad requests (C.CALLEE_REJECT): no option fits"
-        },
-        "unmapped": {
-          "collateral": "emitted at d3-d5 since incident 4.0.0: a direct caller stuck on the root times out calling a healthy callee (C.COLLATERAL; the bed counts these lines in truth.depIds). Not in the program's 24-row table, so a build fails closed on it. Proposal for the incident group, not applied: relay (the line reports a failing call to another service).",
-          "shadow": "emitted at d3-d5 since incident 4.0.0: an episode on a test or shadow pod that serves no customers, named only by a task note (K.shadow). Not in the program's 24-row table, so a build fails closed on it. Proposal for the incident group, not applied: excluded and counted like echo (the I2 state {line, emitting_service, calls} does not carry the note, so origin against unrelated is not a function of the state).",
-          "rival": "emitted at d3-d5 since incident 4.2.0 (second audit, F-29): a sustained, never-recovering anomaly of another fault class in an unrelated resource of a non-root service that keeps serving; nothing fails because of it. Not in the program's 24-row table, so a build fails closed on it. Proposal for the incident group, not applied: excluded and counted like echo (a rival line has the form of an origin line, and the I2 state {line, emitting_service, calls} does not carry the cascade that tells them apart); unrelated, like stray, if the incident group shows the line form differs.",
-          "blip-rival": "emitted at d3-d5 since incident 4.2.0 (F-29): blip lines of the rival class (before the rival service's episode, and in a third service). Not in the program's 24-row table, so a build fails closed on it. Proposal for the incident group, not applied: unrelated, as the program maps \"the blip-* tags\"."
+          "consequence": "a healthy callee rejecting the root's bad requests (C.CALLEE_REJECT): no option fits",
+          "shadow": "episodes on a test, load-test or shadow pod named only by a task note (K.shadow): they have the form of origin lines of any class, the I2 state {line, emitting_service, calls} does not carry the note, and mapping them to unrelated would put origin-form lines in the unrelated class (the incident group measured 1.96% masked-line collision groups with shadow mapped to unrelated against 0.59% with it excluded)"
         },
         "inventory": {
-          "measured": "2026-10-08 by contracts-lib (development evidence)",
+          "measured": "2026-10-08 by the incident group (development evidence)",
           "worlds": "dev seeds 401-500 x d3-d5 (300 worlds, train range; no reserved or test seed)",
-          "beds": "incident VERSION 4.2.0 at bed pin sha256:b85fef533c844f9632945ff88c22f42a4f9de22199a235c995ad456ed8e7c86f (commit 8e1c782); earlier: 4.1.0 at sha256:e70f36eb (26 tags), 4.0.0 at commit 70df598",
+          "beds": "incident VERSION 4.2.0 at bed pin sha256:d5ea27242a3e8cfbe68f5577707dd203dc36383c6810e4e30459e32b64347ed3 (commit 37e53e1); the 24 tags of VERSION 4.0.0 plus collateral and shadow (4.0.0, 4.1.0) and rival and blip-rival (4.2.0)",
           "tags": 28,
-          "inTable": 24,
-          "unmappedLines": {
+          "inTable": 28,
+          "newTagLines": {
             "collateral": 927,
             "shadow": 4657,
-            "rival": 8704,
-            "blip-rival": 2413
+            "rival": 7188,
+            "blip-rival": 2433
+          },
+          "decisions": {
+            "collateral": "relay: the line reports a failing call to another service (the bed counts these lines in truth.depIds); adds no collision group",
+            "shadow": "excluded and counted (above)",
+            "rival": "unrelated, like stray: a sustained anomaly in an unrelated resource of a service that keeps serving; its templates (STRAY, RIVAL_MORE) differ from the origin pools, adding no collision group",
+            "blip-rival": "unrelated, as the program maps the blip-* tags"
           }
         },
-        "owner": "the incident group regenerates the inventory on 300 dev worlds and writes the final table (JUDGE-BUILD-PLAN.json, group incident); contracts-lib only pins it"
+        "owner": "the incident group (JUDGE-BUILD-PLAN.json, group incident) regenerated the inventory on 300 dev worlds and wrote the final table; contracts-lib pins it"
       },
       "unknowable": "n/a",
       "causal": [],
@@ -929,7 +934,7 @@
       "perWorld": "8 sampled: 2 origin, 2 relay, <= 1 fallback, 3 unrelated (>= 2 hard negatives)",
       "status": "in-plan",
       "specGaps": [
-        "The program's 24-row table ([M crit-G G9]) is short by four tags at the current pin: incident VERSION 4.0.0 and 4.1.0 emit 26 tags on dev seeds 401-500 x d3-d5 (collateral and shadow are the extra two), VERSION 4.2.0 emits 28 (also rival and blip-rival, second audit F-29). All four are recorded in labelMap.unmapped with a proposal each and fail closed until the incident group maps them; the incident acceptance test \"exactly the 24 tags emitted by bed VERSION 4.0.0\" cannot pass as written. bedVersion was moved 4.0.0 -> 4.1.0 -> 4.2.0 after re-measuring at each pin (the 24 mapped tags keep their meaning)."
+        "The program's 24-row table ([M crit-G G9]) is short by four tags at VERSION 4.2.0: collateral and shadow (emitted since 4.0.0) and rival and blip-rival (4.2.0, second audit F-29). The incident group measured the line forms on 300 dev worlds (seeds 401-500 x d3-d5) and mapped them: collateral -> relay, rival -> unrelated, blip-rival -> unrelated, shadow -> excluded (counted). The incident acceptance test 'exactly the 24 tags emitted by bed VERSION 4.0.0' is therefore tested as 'exactly the tags the bed emits (28 at 4.2.0), the program's 24 rows unchanged plus these four'. bedVersion moved 4.0.0 -> 4.1.0 -> 4.2.0 after re-measuring at each pin (the 24 program tags keep their meaning)."
       ]
     },
     "I3": {

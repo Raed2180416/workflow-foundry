@@ -1,0 +1,64 @@
+{"at":"2026-10-08T21:59:00.125Z","label":"variance test","usd":0.003873,"totalUsd":0.003873}
+{"at":"2026-10-08T22:01:44.376Z","label":"proposer round 1 (M)","usd":0.00146,"totalUsd":0.005333,"runId":"2418b7ea-bcd6-4d7a-bf6d-73c4bc73dcae"}
+{"at":"2026-10-08T22:01:51.247Z","label":"proposer round 2 (M)","usd":0.001443,"totalUsd":0.006776,"runId":"bbe4b199-c404-499a-b74f-bb36e87d9218"}
+{"at":"2026-10-08T22:02:04.388Z","label":"V3 fhand-haiku/records:test:d3:s5002/1 r0","usd":0.001762,"totalUsd":0.008538,"liveCalls":4}
+{"at":"2026-10-08T22:02:15.331Z","label":"V3 fhand-haiku/records:test:d3:s5002/1 r1","usd":0.001836,"totalUsd":0.010374,"liveCalls":4}
+{"at":"2026-10-08T22:02:25.568Z","label":"V3 fhand-haiku/records:test:d3:s5002/1 r2","usd":0.001758,"totalUsd":0.012132,"liveCalls":4}
+{"at":"2026-10-08T22:02:47.893Z","label":"V4 fhand-haiku/records:test:d3:s5001/2","usd":0.001795,"totalUsd":0.013927,"liveCalls":4}
+{"at":"2026-10-08T22:02:51.574Z","label":"V4 fhand-haiku/records:test:d3:s5001/0","usd":0.001766,"totalUsd":0.015693,"liveCalls":4}
+{"at":"2026-10-08T22:02:52.279Z","label":"V4 fhand-haiku/records:test:d3:s5001/1","usd":0.001802,"totalUsd":0.017494,"liveCalls":4}
+{"at":"2026-10-08T22:03:05.763Z","label":"V4 fhand-haiku/records:test:d3:s5002/0","usd":0.001821,"totalUsd":0.019316,"liveCalls":4}
+{"at":"2026-10-08T22:03:06.703Z","label":"V4 fhand-haiku/records:test:d3:s5003/0","usd":0.001825,"totalUsd":0.02114,"liveCalls":4}
+{"at":"2026-10-08T22:03:07.139Z","label":"V4 fhand-haiku/records:test:d3:s5002/2","usd":0.001843,"totalUsd":0.022983,"liveCalls":4}
+{"at":"2026-10-08T22:03:21.995Z","label":"V4 fhand-haiku/records:test:d3:s5003/1","usd":0.001803,"totalUsd":0.024786,"liveCalls":4}
+{"at":"2026-10-08T22:03:25.343Z","label":"V4 fhand-haiku/records:test:d3:s5003/2","usd":0.001856,"totalUsd":0.026642,"liveCalls":4}
+{"at":"2026-10-08T22:03:26.158Z","label":"V4 fhand-haiku/records:test:d3:s5004/0","usd":0.001845,"totalUsd":0.028487,"liveCalls":4}
+{"at":"2026-10-08T22:03:36.691Z","label":"V4 fhand-haiku/records:test:d3:s5004/1","usd":0.001854,"totalUsd":0.030341,"liveCalls":4}
+{"at":"2026-10-08T22:03:41.668Z","label":"V4 fhand-haiku/records:test:d3:s5004/2","usd":0.001872,"totalUsd":0.032213,"liveCalls":4}
+{"at":"2026-10-08T22:03:47.550Z","label":"V4 fhand-haiku/records:test:d3:s5005/0","usd":0.008372,"totalUsd":0.040585,"liveCalls":5}
+{"at":"2026-10-08T22:03:52.073Z","label":"V4 fhand-haiku/records:test:d3:s5005/1","usd":0.001677,"totalUsd":0.042262,"liveCalls":4}
+{"at":"2026-10-08T22:03:55.589Z","label":"V4 fhand-haiku/records:test:d3:s5005/2","usd":0.001711,"totalUsd":0.043973,"liveCalls":4}
+{"at":"2026-10-08T22:04:04.343Z","label":"V4 fhand-haiku/records:test:d3:s5006/0","usd":0.001708,"totalUsd":0.04568,"liveCalls":4}
+{"at":"2026-10-08T22:04:09.265Z","label":"V4 fhand-haiku/records:test:d3:s5006/1","usd":0.001692,"totalUsd":0.047372,"liveCalls":4}
+{"at":"2026-10-08T22:04:13.383Z","label":"V4 fhand-haiku/records:test:d3:s5006/2","usd":0.001798,"totalUsd":0.049171,"liveCalls":4}
+{"at":"2026-10-08T22:04:25.443Z","label":"V4 fhand-haiku/records:test:d4:s5001/0","usd":0.002653,"totalUsd":0.051824,"liveCalls":6}
+{"at":"2026-10-08T22:04:30.380Z","label":"V4 fhand-haiku/records:test:d4:s5001/1","usd":0.002606,"totalUsd":0.05443,"liveCalls":6}
+{"at":"2026-10-08T22:04:31.889Z","label":"V4 fhand-haiku/records:test:d4:s5001/2","usd":0.002602,"totalUsd":0.057032,"liveCalls":6}
+{"at":"2026-10-08T22:04:44.398Z","label":"V4 fhand-haiku/records:test:d4:s5002/0","usd":0.002477,"totalUsd":0.059509,"liveCalls":6}
+{"at":"2026-10-08T22:04:47.807Z","label":"V4 fhand-haiku/records:test:d4:s5002/1","usd":0.002497,"totalUsd":0.062006,"liveCalls":6}
+{"at":"2026-10-08T22:04:50.307Z","label":"V4 fhand-haiku/records:test:d4:s5002/2","usd":0.002512,"totalUsd":0.064517,"liveCalls":6}
+{"at":"2026-10-08T22:05:00.388Z","label":"V4 fhand-haiku/records:test:d4:s5003/0","usd":0.002787,"totalUsd":0.067305,"liveCalls":6}
+{"at":"2026-10-08T22:05:03.743Z","label":"V4 fhand-haiku/records:test:d4:s5003/1","usd":0.002764,"totalUsd":0.070068,"liveCalls":6}
+{"at":"2026-10-08T22:05:07.115Z","label":"V4 fhand-haiku/records:test:d4:s5003/2","usd":0.002725,"totalUsd":0.072793,"liveCalls":6}
+{"at":"2026-10-08T22:05:18.817Z","label":"V4 fhand-haiku/records:test:d4:s5004/0","usd":0.002736,"totalUsd":0.075529,"liveCalls":6}
+{"at":"2026-10-08T22:05:23.231Z","label":"V4 fhand-haiku/records:test:d4:s5004/1","usd":0.002734,"totalUsd":0.078263,"liveCalls":6}
+{"at":"2026-10-08T22:05:24.611Z","label":"V4 fhand-haiku/records:test:d4:s5004/2","usd":0.002675,"totalUsd":0.080938,"liveCalls":6}
+{"at":"2026-10-08T22:05:41.476Z","label":"V4 fhand-haiku/records:test:d4:s5005/0","usd":0.002626,"totalUsd":0.083564,"liveCalls":6}
+{"at":"2026-10-08T22:05:44.238Z","label":"V4 fhand-haiku/records:test:d4:s5005/2","usd":0.002649,"totalUsd":0.086212,"liveCalls":6}
+{"at":"2026-10-08T22:05:45.407Z","label":"V4 fhand-haiku/records:test:d4:s5005/1","usd":0.002628,"totalUsd":0.088841,"liveCalls":6}
+{"at":"2026-10-08T22:05:58.398Z","label":"V4 fhand-haiku/records:test:d4:s5006/0","usd":0.002757,"totalUsd":0.091598,"liveCalls":6}
+{"at":"2026-10-08T22:06:01.159Z","label":"V4 fhand-haiku/records:test:d4:s5006/1","usd":0.00273,"totalUsd":0.094328,"liveCalls":6}
+{"at":"2026-10-08T22:06:02.652Z","label":"V4 fhand-haiku/records:test:d4:s5006/2","usd":0.002804,"totalUsd":0.097132,"liveCalls":6}
+{"at":"2026-10-08T22:06:17.656Z","label":"V5 reference","usd":0.001791,"totalUsd":0.098923,"liveCalls":4}
+{"at":"2026-10-08T22:06:28.597Z","label":"V5 empty","usd":0,"totalUsd":0.098923,"liveCalls":0}
+{"at":"2026-10-08T22:06:40.108Z","label":"V5 shuffled-or-corrupted","usd":0,"totalUsd":0.098923,"liveCalls":0}
+{"at":"2026-10-08T22:06:52.466Z","label":"V5 no-dedup","usd":0,"totalUsd":0.098923,"liveCalls":0}
+{"at":"2026-10-08T22:07:00.936Z","label":"V5 birthdate-key","usd":0,"totalUsd":0.098923,"liveCalls":0}
+{"at":"2026-10-08T22:07:08.401Z","label":"V5 ignore-void-markers","usd":0,"totalUsd":0.098923,"liveCalls":0}
+{"at":"2026-10-08T22:07:16.766Z","label":"V5 oldest-row-wins","usd":0,"totalUsd":0.098923,"liveCalls":0}
+{"at":"2026-10-08T22:07:24.763Z","label":"V5 atlas-order-flipped","usd":0,"totalUsd":0.098923,"liveCalls":0}
+{"at":"2026-10-08T22:07:36.308Z","label":"V5 unconverted-amounts","usd":0,"totalUsd":0.098923,"liveCalls":0}
+{"at":"2026-10-08T22:07:48.773Z","label":"V5 brightdesk-order-flipped","usd":0,"totalUsd":0.098923,"liveCalls":0}
+{"at":"2026-10-08T22:07:57.926Z","label":"V5 vendex-order-flipped","usd":0,"totalUsd":0.098923,"liveCalls":0}
+{"at":"2026-10-08T22:08:09.032Z","label":"V5 status-meaning-flipped","usd":0,"totalUsd":0.098923,"liveCalls":0}
+{"at":"2026-10-08T22:08:17.479Z","label":"V5 unknown-status-live","usd":0,"totalUsd":0.098923,"liveCalls":0}
+{"at":"2026-10-08T22:08:30.428Z","label":"V5 mirror-ignored","usd":0,"totalUsd":0.098923,"liveCalls":0}
+{"at":"2026-10-08T22:08:38.743Z","label":"V5 perspective-ignored","usd":0,"totalUsd":0.098923,"liveCalls":0}
+{"at":"2026-10-08T22:09:12.091Z","label":"V7 base 1008#0","usd":0.014194,"totalUsd":0.113117}
+{"at":"2026-10-08T22:09:21.515Z","label":"V7 cand 1008#0","usd":0.001733,"totalUsd":0.11485}
+{"at":"2026-10-08T22:09:49.717Z","label":"V7 base 1009#0","usd":0.013084,"totalUsd":0.127934}
+{"at":"2026-10-08T22:09:56.477Z","label":"V7 cand 1009#0","usd":0.001708,"totalUsd":0.129642}
+{"at":"2026-10-08T22:10:22.240Z","label":"V7 base 1010#0","usd":0.011229,"totalUsd":0.140871}
+{"at":"2026-10-08T22:10:31.476Z","label":"V7 cand 1010#0","usd":0.001743,"totalUsd":0.142614}
+{"at":"2026-10-08T22:10:59.556Z","label":"V7 base 1011#0","usd":0.012399,"totalUsd":0.155013}
+{"at":"2026-10-08T22:11:06.864Z","label":"V7 cand 1011#0","usd":0.001919,"totalUsd":0.156932}

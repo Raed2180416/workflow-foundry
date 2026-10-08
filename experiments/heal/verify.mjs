@@ -12,7 +12,7 @@ import path from 'node:path';
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { REPO, HEAL_DIR, PINS_FILE, sha256, walk, WORK_ROOT } from './kit.mjs';
-import { openCtx, replayRun, readsOf, bedsLib, pmap, fidelity } from './replay.mjs';
+import { openCtx, replayRun, readsOf, bedsLib, pmap, fidelity, keepLiveRows } from './replay.mjs';
 import { weakening, scanLeaks, unsafeAdditions, taskTexts } from './scan.mjs';
 import { tightenProof, relaxProof } from './proofs.mjs';
 import { compileOps } from './ops.mjs';
@@ -28,10 +28,11 @@ const GATE_CODES = ['ACCEPTANCE_FAILED', 'VERIFY_FAILED', 'ASSERTION_FAILED', 'N
 const needsLive = r => r.error?.code === 'MODEL_PROVIDER_MISSING' || r.error?.code === 'REPLAY_MISS';
 const pinnedVerdict = (gate, r, workflow) => { try { return gate.verdictOf(r.run, { workflow })?.verdict ?? null; } catch { return null; } };
 
-// One replica = one fresh copy of the recorded journal: unchanged nodes hit it, changed nodes go to the provider table.
-async function replica({ kit, trial, workflow, providers, task, source }) {
+// One replica = one fresh copy of the recorded journal: unchanged nodes hit it, changed nodes go to the provider table. The calls it made
+// live are copied to `keep` (an evidence journal) before the copy is deleted.
+async function replica({ kit, trial, workflow, providers, task, source, keep = null, tag = null }) {
   const ctx = await openCtx(trial.source ?? source, { kit, name: 'verify', providers: providers ?? {} });
-  try { return await replayRun(ctx, workflow, trial, { mode: 'replay-or-live', task }); } finally { ctx.close(); }
+  try { return await replayRun(ctx, workflow, trial, { mode: 'replay-or-live', task }); } finally { try { keepLiveRows(ctx, keep, tag); } catch { /* evidence copy is best effort; the spend line stays */ } ctx.close(); }
 }
 
 // ---- grader hashes (V8) --------------------------------------------------------------------------------------------------------
@@ -74,14 +75,18 @@ export function pinChain(workflow, baseOutputs, answerKeys, control, baseAnswer 
   return { workflow: { ...workflow, nodes }, pinned: [...ids] };
 }
 
-async function controlOutcome({ kit, trial, workflow, baseOutputs, baseAnswer, answerKeys, control, task, policy }) {
-  const ctx = await openCtx(trial.source, { kit, name: 'control' });
+// `shared` (a context with providers) lets the candidate's CHANGED nodes (new k-sample readers, a stronger class) run live once and then
+// replay for every later control; without it the run is strict replay and a changed node is an indeterminate outcome, never a verdict
+// (live run 1, 2026-10-08: an indeterminate outcome was counted as "not rejected" and a k-sample candidate failed HEAL_NO_DISCRIMINATION).
+async function controlOutcome({ kit, trial, workflow, baseOutputs, baseAnswer, answerKeys, control, task, policy, shared = null }) {
+  const own = shared ? null : await openCtx(trial.source, { kit, name: 'control' }), ctx = shared ?? own;
   try {
     const { workflow: pinned } = pinChain(workflow, baseOutputs, answerKeys, control, baseAnswer);
-    const r = await replayRun(ctx, pinned, trial, { mode: 'replay', task });
-    if (needsLive(r)) return { accepted: null, indeterminate: true, code: r.error?.code };
-    return { accepted: accepted(r), status: r.status, code: r.error?.code ?? null };
-  } finally { ctx.close(); }
+    const r = await replayRun(ctx, pinned, trial, { mode: shared ? 'replay-or-live' : 'replay', task });
+    const spend = { liveUsd: r.liveUsd ?? 0, unknownUpperUsd: r.unknownUpperUsd ?? 0, liveCalls: r.liveCalls ?? 0 };
+    if (needsLive(r)) return { accepted: null, indeterminate: true, code: r.error?.code, ...spend };
+    return { accepted: accepted(r), status: r.status, code: r.error?.code ?? null, ...spend };
+  } finally { own?.close(); }
 }
 
 // ---- strata for V7 (oracle-side; never shown to the proposer) --------------------------------------------------------------------------
@@ -93,10 +98,19 @@ export const STRATA = {
     const w = buildWorld(task.seed, task.split, task.difficulty), sys = identity?.system, conv = w.ctx?.conv;
     return ({ BRIGHTDESK: conv?.bd, ATLAS: conv?.atlas, VENDEX: conv?.vendex })[sys] ?? null;
   },
+  // codefix: the localised defect (a check that flags a changed default value) only matters on tasks whose bug list contains a
+  // wrong-default bug, so a fresh set drawn at random can leave the healed check untested (live run 2, 2026-10-08: 1 of 4 seeds had one).
+  // `global`: the stratum does not depend on the localised field's identity.
+  async codefix(task) {
+    const { build } = await import(path.join(REPO, 'beds/codefix/build.mjs'));
+    const b = build({ seed: task.seed, split: task.split, difficulty: task.difficulty });
+    return b.bugs.some(id => b.domain.sites[id]?.op === 'wrong-default') ? 'has-wrong-default' : 'no-wrong-default';
+  },
 };
+STRATA.codefix.global = true;
 
 // ---- the verifier ---------------------------------------------------------------------------------------------------------------------
-export async function verify({ kit, gate, budget, base, proposal, incident, providers = null, policy = {}, hooks = {}, stages = null, sourcePolicy = null }) {
+export async function verify({ kit, gate, budget, base, proposal, incident, providers = null, policy = {}, hooks = {}, stages = null, sourcePolicy = null, evidenceFile = null }) {
   const P = { ...DEFAULT_POLICY, ...policy, fresh: { ...DEFAULT_POLICY.fresh, ...(policy.fresh ?? {}) } };
   const cand = proposal.workflow, baseWf = base.workflow, kind = proposal.kind ?? 'defect';
   const modelPolicy = sourcePolicy ?? kit.sessionPolicy(['claude-haiku-5-5', 'claude-sonnet-5-5', 'claude-opus-5-5']);
@@ -181,9 +195,11 @@ export async function verify({ kit, gate, budget, base, proposal, incident, prov
       let reps = [];
       for (let k = 0; k < P.K; k++) {
         let release = () => {};
-        if (k > 0) { try { release = budget.reserve(Math.max(P.replicaEstimateUsd, reps.at(-1)?.liveUsd ?? 0), `V3 replica ${k + 1} of ${trial.key}`); } catch (e) { return { ok: null, code: 'HEAL_BUDGET_EXHAUSTED', detail: e.message }; } }
+        // every replica that can go live is reserved first, the first one included (review 2026-10-08: the first replica was not, and
+        // H-rec run 3 ended at $2.44 of a $2 cap)
+        if (budget && providers) { try { release = budget.reserve(Math.max(P.replicaEstimateUsd, reps.at(-1)?.liveUsd ?? 0), `V3 replica ${k + 1} of ${trial.key}`); } catch (e) { return { ok: null, code: 'HEAL_BUDGET_EXHAUSTED', detail: e.message }; } }
         let r;
-        try { r = await replica({ kit, trial, workflow: cand, providers, task }); } finally { release(); }
+        try { r = await replica({ kit, trial, workflow: cand, providers, task, keep: evidenceFile, tag: { stage: 'V3', trial: trial.key, replica: k } }); } finally { release(); }
         budget?.chargeRun(r, `V3 ${trial.key} r${k}`);
         if (needsLive(r)) return { ok: null, code: 'HEAL_NEEDS_LIVE', detail: `${trial.key}: a changed node needs a live call and no provider was supplied (${r.error?.code})` };
         reps.push(r);
@@ -216,14 +232,14 @@ export async function verify({ kit, gate, budget, base, proposal, incident, prov
       let release = () => {};
       try { release = budget && providers ? budget.reserve(0.01, 'V4') : release; } catch (e) { stop = { ok: null, code: 'HEAL_BUDGET_EXHAUSTED', detail: e.message }; return null; }
       let r;
-      try { r = await replica({ kit, trial, workflow: cand, providers, task }); } finally { release(); }
+      try { r = await replica({ kit, trial, workflow: cand, providers, task, keep: evidenceFile, tag: { stage: 'V4', trial: trial.key } }); } finally { release(); }
       budget?.chargeRun(r, `V4 ${trial.key}`);
       if (needsLive(r)) { stop = { ok: null, code: 'HEAL_NEEDS_LIVE', detail: `${trial.key}: a changed node needs a live call and no provider was supplied` }; return null; }
       // A run the candidate's own gates stop (acceptance, a gating verify, an assert, a node check) is a verdict false alarm, not an oracle
       // regression: the answer it would have produced is unknown, and the recorded one passes the oracle by definition.
       const gateStopped = !accepted(r) && GATE_CODES.includes(r.error?.code);
       let reruns = [];
-      if (!r.pass && !gateStopped && incident.oracle) for (let i = 0; i < P.regressionRerun && r.liveCalls > 0; i++) reruns.push(await replica({ kit, trial, workflow: cand, providers, task }));
+      if (!r.pass && !gateStopped && incident.oracle) for (let i = 0; i < P.regressionRerun && r.liveCalls > 0; i++) reruns.push(await replica({ kit, trial, workflow: cand, providers, task, keep: evidenceFile, tag: { stage: 'V4-rerun', trial: trial.key, i } }));
       for (const x of reruns) budget?.chargeRun(x, `V4 rerun ${trial.key}`);
       let regression = incident.oracle && !gateStopped && !r.pass && !(reruns.length === P.regressionRerun && reruns.every(x => x.pass)), infidelity = false;
       if (regression) {   // does the BASE reproduce this recorded pass? If not, the record is not a baseline to regress against.
@@ -250,10 +266,27 @@ export async function verify({ kit, gate, budget, base, proposal, incident, prov
     if (!c?.items?.length) return { ok: true, skipped: true, note: 'no bed controls available' };
     // the controls were derived from one task: pin them into the recorded run of THAT task
     const trial = [...failing, ...(incident.passing ?? [])].find(t => t.key === c.trialKey) ?? failing[0] ?? incident.passing?.[0], task = incident.tasks?.[trial.key], baseOutputs = incident.baseRuns?.[trial.key]?.outputs, baseAnswer = incident.baseRuns?.[trial.key]?.answer;
-    const run = (workflow, control) => controlOutcome({ kit, trial, workflow, baseOutputs, baseAnswer, answerKeys: c.answerKeys, control, task, policy: P });
+    const run = (workflow, control, shared = null) => controlOutcome({ kit, trial, workflow, baseOutputs, baseAnswer, answerKeys: c.answerKeys, control, task, policy: P, shared });
     const table = [];
-    table.push(...await pmap(c.items, P.concurrency, async item => ({ name: item.name, expect: item.expect, base: await run(baseWf, item.output), cand: await run(cand, item.output) })));
+    // The candidate's controls share one journal copy when a provider is available: its changed nodes go live in the first control that
+    // needs them and replay for the rest, so the controls are run serially (parallel runs would all pay for the same live calls).
+    let shared = null, release = () => {};
+    if (providers && budget) {
+      try { release = budget.reserve(0.1, 'V5 controls'); } catch (e) { return { ok: null, code: 'HEAL_BUDGET_EXHAUSTED', detail: e.message }; }
+      shared = await openCtx(trial.source, { kit, name: 'control-cand', providers });
+    }
+    try {
+      if (shared) {
+        for (const item of c.items) {
+          const b = await run(baseWf, item.output), k = await run(cand, item.output, shared);
+          budget.charge((k.liveUsd ?? 0) + (k.unknownUpperUsd ?? 0), `V5 ${item.name}`, { liveCalls: k.liveCalls });
+          table.push({ name: item.name, expect: item.expect, base: b, cand: k });
+        }
+      } else table.push(...await pmap(c.items, P.concurrency, async item => ({ name: item.name, expect: item.expect, base: await run(baseWf, item.output), cand: await run(cand, item.output) })));
+    } finally { release(); if (shared) { try { keepLiveRows(shared, evidenceFile, { stage: 'V5' }); } catch { /* best effort */ } shared.close(); } }
     data.controls = table;
+    const unresolved = table.filter(t => t.cand.accepted === null);
+    if (unresolved.length) return { ok: null, code: 'HEAL_NEEDS_LIVE', detail: `${unresolved.length} control runs of the candidate need a changed node to run live and no provider was supplied (${unresolved[0].cand.code})` };
     const grade = gate.assessWorkflow(cand).acceptance.grade;
     const ref = table.find(t => t.expect === 'accept'), bad = table.filter(t => t.expect === 'reject');
     if (ref && ref.cand.accepted === false) return { ok: false, code: 'HEAL_REFERENCE_REJECTED', detail: 'the candidate rejects the bed reference answer' };
@@ -293,8 +326,8 @@ async function freshGate({ kit, base, cand, incident, providers, budget, P, hook
   const ref = incident.failing[0] ?? incident.passing[0], { n, k } = P.fresh;
   const ledger = hooks.ledger ?? loadLedger(), lib = await bedsLib();
   const makeTask = async seed => (await lib.makeTasks(ref.family, { split: 'dev', seeds: [seed], difficulty: ref.difficulty }))[0];
-  const adapter = STRATA[ref.family], stratum = async t => adapter && sample?.identity ? adapter(t.task, sample.identity) : null;
-  const counts = new Map(), perStratum = adapter && sample?.identity ? Math.ceil(n / 2) : n;
+  const adapter = STRATA[ref.family], stratified = !!adapter && !!(sample?.identity || adapter.global), stratum = async t => stratified ? adapter(t.task, sample?.identity) : null;
+  const counts = new Map(), perStratum = stratified ? Math.ceil(n / 2) : n;
   const seeds = await draw({ ledger, family: ref.family, split: 'dev', difficulty: ref.difficulty, n, by: `heal fresh gate ${incident.id ?? ''}`.trim(), makeTask,
     keep: async task => { const s = await stratum(task); if (s == null) return true; const c = counts.get(s) ?? 0; if (c >= perStratum) return false; counts.set(s, c + 1); return true; } });
   (hooks.saveLedger ?? saveLedger)(ledger);
@@ -303,7 +336,7 @@ async function freshGate({ kit, base, cand, incident, providers, budget, P, hook
   try { release = hooks.runTask ? () => {} : budget.reserve(estimate, 'V7 fresh tasks'); } catch (e) { return { ok: null, code: 'HEAL_BUDGET_EXHAUSTED', detail: e.message, seeds: seeds.length }; }
   const runTask = hooks.runTask ?? (async ({ workflow, task, salt, seed, arm }) => {
     const pseudo = { source: ref.source, family: ref.family, split: 'dev', difficulty: ref.difficulty, seed, armId: `heal-fresh-${arm}`, trial: 0, key: `fresh/${seed}` };
-    const ctx = incident.freshCtx ??= await openFreshCtx(kit, ref, providers, modelPolicy);
+    const ctx = incident.freshCtx ??= await openFreshCtx(kit, ref, providers, modelPolicy, incident.freshDir);
     const r = await replayRun(ctx, workflow, pseudo, { mode: 'replay-or-live', salt, task });
     return { pass: r.pass, costUsd: r.liveUsd + (r.unknownUpperUsd ?? 0), accepted: accepted(r) };
   });
@@ -331,8 +364,9 @@ async function freshGate({ kit, base, cand, incident, providers, budget, P, hook
   if (worse.length) return { ok: false, code: 'HEAL_FRESH_STRATUM_WORSE', detail: `stratum ${worse.map(s => s.stratum).join(', ')} got worse`, ...result };
   return { ok: true, ...result };
 }
-async function openFreshCtx(kit, ref, providers, modelPolicy) {
-  const file = path.join(WORK_ROOT, 'fresh', `fresh-${process.pid}-${Math.random().toString(36).slice(2, 7)}.sqlite`);
+async function openFreshCtx(kit, ref, providers, modelPolicy, dir = path.join(WORK_ROOT, 'fresh')) {
+  // the fresh-task journal is evidence (every V7 call): heal.mjs points `incident.freshDir` into the run directory
+  const file = path.join(dir, `fresh-${process.pid}-${Math.random().toString(36).slice(2, 7)}.sqlite`);
   const j = kit.emptyJournal(file), port = new kit.ModelPort({ policy: modelPolicy, providers: providers ?? {}, journal: j.journal, mode: 'replay-or-live', concurrency: { 'claude-cli': 8 } });
   return { kit, source: ref.source, policy: modelPolicy, port, journal: j.journal, db: j.db, file, runtime: { maxCost: 2, maxConcurrency: 8, maxDurationMs: 20 * 60 * 1000 }, close() { j.db.close(); } };
 }

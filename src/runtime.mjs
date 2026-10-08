@@ -262,12 +262,23 @@ export function locateNode(run, nodeKey) {
   return state ? { frame, state, id, frameKey } : null;
 }
 
+/**
+ * The node keys of a run in the order the scheduler dispatched them. Each dispatch takes the next run-wide number (1, 2, ... continuing
+ * across resumes), carried as `dispatch` on the node's first chain event after it was dispatched, so the order is part of the hash chain.
+ * A node dispatched again by a resumed invocation appears again. A dispatch that wrote no event (a node already waiting on a human or an
+ * approval) leaves a gap in the numbers and no entry here.
+ */
+export const dispatchOrder = events => events.filter(e => Number.isInteger(e.dispatch)).sort((a, b) => a.dispatch - b.dispatch).map(e => e.nodeKey);
+
 class Invocation {
   constructor(runtime, runId, signal) {
     this.store = runtime.store; this.registry = runtime.registry; this.runId = runId; this.runtime = runtime; this.rows = runtime.store.rows;
     this.abort = new AbortController(); this.token = randomUUID(); this.outerSignal = signal;
     this.flowDefinitions = new Map(); this.frameLabels = new Map(); this.frameControl = new Map(); this.nodeControl = new Map();
     this.userCancelled = false; this.replaySources = new Map();
+    // The scheduler's dispatch counter (run-wide; execute() continues it from the chain) and the number each dispatched node is still to
+    // record on its first event (eventNode).
+    this.dispatched = 0; this.dispatchMark = new Map();
     this.onAbort = () => { this.userCancelled = true; this.abort.abort(); };
     signal?.addEventListener('abort', this.onAbort, { once: true });
     if (signal?.aborted) this.onAbort();
@@ -301,7 +312,10 @@ class Invocation {
     }, event, { result, final });
   }
   eventNode(frameKey, nodeId, mutate, type, extra = {}) {
-    return this.update(r => mutate(frameOf(r, frameKey), r), { type, nodeKey: `${frameKey}/${nodeId}`, ...extra });
+    const nodeKey = `${frameKey}/${nodeId}`, dispatch = this.dispatchMark.get(nodeKey);
+    const result = this.update(r => mutate(frameOf(r, frameKey), r), { type, nodeKey, ...(dispatch === undefined ? {} : { dispatch }), ...extra });
+    this.dispatchMark.delete(nodeKey); // recorded: only a refused update (budget) leaves the number for the node's next event
+    return result;
   }
   checkBudget(run = this.head(), cost = 0) {
     if (this.signal().aborted) throw new FoundryError('CANCELLED', 'Execution cancelled');
@@ -378,6 +392,7 @@ class Invocation {
       if (run.registryHash !== this.registry.hash()) throw new FoundryError('CAPABILITY_DRIFT', 'Capabilities changed since run creation');
       const log = this.store.events(this.runId); // Verify the chain before trusting a checkpoint.
       if (finished.has(run.status)) return run;
+      for (const e of log) if (Number.isInteger(e.dispatch) && e.dispatch > this.dispatched) this.dispatched = e.dispatch;
       const closed = closingSeal(log);
       if (closed) throw closedError(closed, run.status);
       if (!run.engineHash) throw new FoundryError('ENGINE_UNBOUND', 'This historical run has no native engine binding. Inspect it or use its original frozen runtime; do not silently resume it under changed semantics.');
@@ -444,38 +459,78 @@ class Invocation {
       if (old && old.contextHash !== contextHash) throw new FoundryError('FRAME_DRIFT', 'Nested execution context changed');
       if (!old) this.update(r => { r.frames[frameKey] = { nodes: {}, outputs: {}, contextHash }; }, { type: 'frame.created', frameKey, contextHash });
     }
-    // A failing node cancels its own frame's in-flight siblings; its caller (a parent flow or a map) decides what else stops.
+    // Work-conserving dispatch. A node starts as soon as every node it needs is done and fewer than `cap` of this frame's nodes are running,
+    // not when a batch it was not part of has finished; a freed slot goes to the next ready node at once. Ready nodes are taken in the order
+    // the workflow declares them, so what runs next depends only on the DAG and on which nodes have finished. Each dispatch takes the next
+    // run-wide number, recorded on the node's first chain event (dispatchOrder). Capability calls are bounded separately, by the semaphore.
+    // A failing node cancels its own frame's in-flight siblings; its caller (a parent flow or a map) decides what else stops. The frame then
+    // starts nothing, waits for its running nodes to settle (no node of a frame runs after the frame has returned or thrown), and throws the
+    // first real failure in declaration order (a cancellation only if every failure is one).
     return this.scoped(async scope => {
-      const attempted = new Set();
-      while (true) {
-        const run = this.head();
-        if (scope.signal.aborted) throw new FoundryError('CANCELLED', 'Run cancellation was requested; completed effects remain in the evidence ledger');
-        if (Date.now() >= run.deadline) throw new FoundryError('DEADLINE', 'Run deadline exhausted');
-        if (this.rows.anyWithStatus(this.runId, 'uncertain')) return { done: false, outputs: this.rows.frameOutputs(this.runId, frameKey) };
-        const statuses = this.rows.statuses(this.runId, frameKey);
-        if (flow.nodes.every(n => nodeDone.has(statuses.get(n.id)))) {
-          const ctx = this.context(frameKey, input, locals);
-          if (!flow.acceptance.every(c => condition(c, ctx))) throw new FoundryError('ACCEPTANCE_FAILED', `Acceptance failed for ${frameKey}`);
-          if (Date.now() >= this.head().deadline) throw new FoundryError('DEADLINE', 'Run deadline exhausted during acceptance evaluation');
-          return { done: true, outputs: this.rows.frameOutputs(this.runId, frameKey) };
+      const attempted = new Set(), running = new Set(), settled = [], failures = [], position = new Map(flow.nodes.map((n, i) => [n.id, i]));
+      let wake = null;
+      const finish = result => { settled.push(result); const resume = wake; wake = null; resume?.(); };
+      const collect = () => {
+        while (settled.length) {
+          const result = settled.shift();
+          running.delete(result.id); this.dispatchMark.delete(`${frameKey}/${result.id}`);
+          if (result.error) failures.push(result);
         }
-        const ready = flow.nodes.filter(n => !attempted.has(n.id) && !nodeDone.has(statuses.get(n.id)) && n.needs.every(dep => nodeDone.has(statuses.get(dep))));
-        if (!ready.length) return { done: false, outputs: this.rows.frameOutputs(this.runId, frameKey) };
-        // Limit concurrent node continuations as well as actual capability calls.
-        const batch = ready.slice(0, Math.min(this.workflow.budget.maxConcurrency, run.policy.maxConcurrency));
-        batch.forEach(n => attempted.add(n.id));
-        const results = await Promise.allSettled(batch.map(async n => {
-          try { return await this.node(n, frameKey, input, locals); }
-          catch (error) {
+      };
+      const sleep = () => new Promise(resolve => { wake = resolve; });
+      const idle = async () => { while (running.size) { if (!settled.length) await sleep(); collect(); } };
+      const failure = fallback => {
+        const ordered = failures.toSorted((a, b) => position.get(a.id) - position.get(b.id));
+        return (ordered.find(x => !cancelled(x.error))?.error) ?? fallback ?? ordered[0].error;
+      };
+      const launch = n => {
+        attempted.add(n.id); running.add(n.id);
+        this.dispatchMark.set(`${frameKey}/${n.id}`, ++this.dispatched);
+        this.node(n, frameKey, input, locals).then(() => finish({ id: n.id }), error => {
+          let reported = error;
+          try {
             this.eventNode(frameKey, n.id, frame => {
               if (frame.nodes[n.id]?.status !== 'uncertain') frame.nodes[n.id] = { ...(frame.nodes[n.id] ?? { kind: n.kind, attempts: 0 }), status: 'failed', error: errorData(error) };
             }, 'node.failed', { error: errorData(error) });
-            scope.abort();
-            throw error;
+          } catch (recording) { reported = recording; }
+          scope.abort();
+          finish({ id: n.id, error: reported });
+        });
+      };
+      try {
+        while (true) {
+          collect();
+          if (failures.length) { await idle(); throw failure(); }
+          if (scope.signal.aborted) { await idle(); throw failure(new FoundryError('CANCELLED', 'Run cancellation was requested; completed effects remain in the evidence ledger')); }
+          const run = this.head();
+          if (Date.now() >= run.deadline) { scope.abort(); await idle(); throw failure(new FoundryError('DEADLINE', 'Run deadline exhausted')); }
+          if (this.rows.anyWithStatus(this.runId, 'uncertain')) {
+            await idle();
+            if (failures.length) throw failure();
+            return { done: false, outputs: this.rows.frameOutputs(this.runId, frameKey) };
           }
-        }));
-        const failure = results.find(x => x.status === 'rejected' && !cancelled(x.reason)) ?? results.find(x => x.status === 'rejected');
-        if (failure) throw failure.reason;
+          const statuses = this.rows.statuses(this.runId, frameKey);
+          if (flow.nodes.every(n => nodeDone.has(statuses.get(n.id)))) {
+            await idle();
+            if (failures.length) throw failure();
+            const ctx = this.context(frameKey, input, locals);
+            if (!flow.acceptance.every(c => condition(c, ctx))) throw new FoundryError('ACCEPTANCE_FAILED', `Acceptance failed for ${frameKey}`);
+            if (Date.now() >= this.head().deadline) throw new FoundryError('DEADLINE', 'Run deadline exhausted during acceptance evaluation');
+            return { done: true, outputs: this.rows.frameOutputs(this.runId, frameKey) };
+          }
+          // Limit concurrent node continuations as well as actual capability calls.
+          const cap = Math.min(this.workflow.budget.maxConcurrency, run.policy.maxConcurrency);
+          for (const n of flow.nodes) {
+            if (running.size >= cap) break;
+            if (!attempted.has(n.id) && !nodeDone.has(statuses.get(n.id)) && n.needs.every(dep => nodeDone.has(statuses.get(dep)))) launch(n);
+          }
+          if (!running.size) return { done: false, outputs: this.rows.frameOutputs(this.runId, frameKey) };
+          if (!settled.length) await sleep();
+        }
+      } catch (error) {
+        // Whatever stops the frame (a failure above, or a fault of the scheduler's own reads and writes), no node of it runs on afterwards.
+        scope.abort(); await idle();
+        throw error;
       }
     });
   }

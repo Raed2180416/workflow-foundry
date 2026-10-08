@@ -1,0 +1,32 @@
+{"at":"2026-10-08T22:16:40.619Z","label":"proposer round 1 (M)","usd":0.00257,"totalUsd":0.00257,"runId":"2c9ff008-c577-464a-8051-a249d2ef7fb2"}
+{"at":"2026-10-08T22:16:48.092Z","label":"proposer round 2 (M)","usd":0.002571,"totalUsd":0.00514,"runId":"52851c64-dfaa-4078-9823-b82837454964"}
+{"at":"2026-10-08T22:16:55.981Z","label":"proposer round 3 (L)","usd":0.047648,"totalUsd":0.052789,"runId":"80b5defa-43c2-4333-b42b-5e73ed4327e3"}
+{"at":"2026-10-08T22:17:26.641Z","label":"proposer round 4 (F)","usd":0.146566,"totalUsd":0.199355,"runId":"f859720d-ea1f-4310-89eb-6af67a8902ed"}
+{"at":"2026-10-08T22:17:30.377Z","label":"V3 F-haiku/codefix:test:d3:s6001/0 r0","usd":0,"totalUsd":0.199355,"liveCalls":0}
+{"at":"2026-10-08T22:17:31.220Z","label":"V3 F-haiku/codefix:test:d3:s6004/0 r0","usd":0,"totalUsd":0.199355,"liveCalls":0}
+{"at":"2026-10-08T22:17:32.083Z","label":"V3 F-haiku/codefix:test:d3:s6004/1 r0","usd":0,"totalUsd":0.199355,"liveCalls":0}
+{"at":"2026-10-08T22:17:33.140Z","label":"V4 F-haiku/codefix:dev:d3:s1/0","usd":0,"totalUsd":0.199355,"liveCalls":0}
+{"at":"2026-10-08T22:17:33.369Z","label":"V4 F-haiku/codefix:dev:d3:s2/0","usd":0,"totalUsd":0.199355,"liveCalls":0}
+{"at":"2026-10-08T22:17:33.615Z","label":"V4 F-haiku/codefix:dev:d3:s3/0","usd":0,"totalUsd":0.199355,"liveCalls":0}
+{"at":"2026-10-08T22:17:34.307Z","label":"V4 F-haiku/codefix:test:d3:s6001/1","usd":0,"totalUsd":0.199355,"liveCalls":0}
+{"at":"2026-10-08T22:17:34.529Z","label":"V4 F-haiku/codefix:test:d3:s6002/1","usd":0,"totalUsd":0.199355,"liveCalls":0}
+{"at":"2026-10-08T22:17:34.752Z","label":"V4 F-haiku/codefix:test:d3:s6002/0","usd":0,"totalUsd":0.199355,"liveCalls":0}
+{"at":"2026-10-08T22:17:35.331Z","label":"V4 F-haiku/codefix:test:d3:s6003/0","usd":0,"totalUsd":0.199355,"liveCalls":0}
+{"at":"2026-10-08T22:17:35.475Z","label":"V4 F-haiku/codefix:test:d3:s6003/1","usd":0,"totalUsd":0.199355,"liveCalls":0}
+{"at":"2026-10-08T22:17:37.520Z","label":"V5 reference","usd":0,"totalUsd":0.199355,"liveCalls":0}
+{"at":"2026-10-08T22:17:40.040Z","label":"V5 empty","usd":0,"totalUsd":0.199355,"liveCalls":0}
+{"at":"2026-10-08T22:17:42.622Z","label":"V5 shuffled-or-corrupted","usd":0,"totalUsd":0.199355,"liveCalls":0}
+{"at":"2026-10-08T22:17:45.333Z","label":"V5 unchanged-buggy","usd":0,"totalUsd":0.199355,"liveCalls":0}
+{"at":"2026-10-08T22:17:47.325Z","label":"V5 near-miss-fix-one","usd":0,"totalUsd":0.199355,"liveCalls":0}
+{"at":"2026-10-08T22:17:49.296Z","label":"V5 near-miss-all-but-one","usd":0,"totalUsd":0.199355,"liveCalls":0}
+{"at":"2026-10-08T22:17:51.263Z","label":"V5 followed-red-herring","usd":0,"totalUsd":0.199355,"liveCalls":0}
+{"at":"2026-10-08T22:17:53.952Z","label":"V5 test-detection-hack","usd":0,"totalUsd":0.199355,"liveCalls":0}
+{"at":"2026-10-08T22:17:56.742Z","label":"V5 signature-drift","usd":0,"totalUsd":0.199355,"liveCalls":0}
+{"at":"2026-10-08T22:18:15.956Z","label":"V7 base 1009#0","usd":0.087696,"totalUsd":0.287051}
+{"at":"2026-10-08T22:18:16.739Z","label":"V7 cand 1009#0","usd":0,"totalUsd":0.287051}
+{"at":"2026-10-08T22:19:17.678Z","label":"V7 base 1010#0","usd":0.275355,"totalUsd":0.562406}
+{"at":"2026-10-08T22:19:18.414Z","label":"V7 cand 1010#0","usd":0,"totalUsd":0.562406}
+{"at":"2026-10-08T22:20:12.482Z","label":"V7 base 1011#0","usd":0.278721,"totalUsd":0.841127}
+{"at":"2026-10-08T22:20:13.348Z","label":"V7 cand 1011#0","usd":0,"totalUsd":0.841127}
+{"at":"2026-10-08T22:20:35.237Z","label":"V7 base 1012#0","usd":0.07697,"totalUsd":0.918097}
+{"at":"2026-10-08T22:20:36.017Z","label":"V7 cand 1012#0","usd":0,"totalUsd":0.918097}

@@ -89,6 +89,37 @@ concurrently. Attempts, retries, costs, deadline and nested work are durably
 accounted. Completed work is not rerun on ordinary resume. Capability/schema
 changes invalidate incompatible execution rather than silently changing meaning.
 
+### Scheduling
+
+Dispatch is work-conserving, per flow frame (the root, each map item, each loop
+iteration). A node starts as soon as every node it `needs` is done and fewer than
+`min(workflow budget.maxConcurrency, run policy maxConcurrency)` of the frame's nodes
+are running; it does not wait for a batch it was not part of (the earlier dispatcher
+ran up to that many ready nodes and waited for all of them, which cost 6.5-8.8 % of
+wall on the records-v3 DAG shape, `research/review-20261007/04-efficiency-rust.md`
+section 3.6). Composite nodes (map, loop) occupy a continuation slot in their own
+frame only; the actual capability, model and code calls are bounded by the run-wide
+semaphore of the same size. Budget reservation is unchanged: every start charges its
+step and cost in one compare-and-swap update, so concurrent starts cannot overdraw.
+
+Ready nodes are taken in the order the workflow declares them, so what runs next
+depends only on the DAG and on which nodes have finished. Each dispatch takes the next
+run-wide number (1, 2, ... continuing across resumes), recorded as `dispatch` on the
+node's first chain event after the dispatch (`dispatchOrder(events)` in
+`src/runtime.mjs` returns the order). The number is part of the hash chain, so a
+replay's order can be compared with the recording's. It is a record, not yet an
+enforced schedule: a replay serves model calls from the journal by node key and
+attempt, so its outputs do not depend on the order, but its event interleaving can
+differ from the live run's when the completion order does.
+
+A failing node aborts its frame's scope. The frame then starts nothing, waits for the
+nodes it has running to settle (nothing runs on after a frame returns or throws), and
+throws the first real failure in declaration order (a cancellation only when every
+failure is one). A node that ends `uncertain` stops new dispatch in the whole run:
+running nodes finish, nothing else starts. An open human question or approval holds
+back only its own dependents; independent branches keep going until nothing is left to
+run, and the run then waits.
+
 ## Run state
 
 A run is stored as rows (`src/run-rows.mjs`), not as one JSON blob: `runs.body` is the run
@@ -103,16 +134,29 @@ reads statuses, labels and outputs by key and never re-reads the whole record.
   transaction as the chain event. The chain head, the owner token and the revisions are
   independent checks.
 - **Bounds.** Each row has a byte bound (node state 1 MiB, output 2 MiB, frame 64 KiB, header
-  4 MiB, input 2 MiB), the run has a stored-size counter with a 10 MiB soft bound (no node starts
-  above it: `STATE_BUDGET`, leaving room for the failure receipt) and a 12 MiB hard bound. The
-  JSON-structure bound (200,000 nodes) now applies per row; the verdict seal still hashes the
-  whole run once at the end (`verdictInputsHash`).
+  4 MiB, input 2 MiB). The whole record must stay one value `data.mjs` accepts, because the
+  verdict seal (`verdictInputsHash`), `verify-run` and outcome receipts (`digest(run)`) hash it
+  whole: the run keeps two counters, its canonical size (`bytes`, rows plus the keys that place
+  them) and its JSON value count (`items`), and each row's nesting is bounded by its depth in the
+  record (40 levels in all). A soft bound (10 MiB) stops new nodes (`STATE_BUDGET`); every write
+  keeps the hard bounds (12 MiB, 198,000 values); only the terminal update (the seal or failure
+  receipt, `updateRun(..., { final: true })`) may use the headroom up to 15 MiB and checkData's
+  200,000 values, so a run that fills its state still closes with a sealed receipt instead of
+  staying `running`.
+- **Integrity.** The `status` and `label` columns of a node row repeat its state so the runtime
+  can query them; the seal hashes the states. `store.rows.mismatchedRows(id)` lists rows whose
+  columns no longer repeat their state (or that belong to no frame): resume refuses such a run
+  (`CHECKPOINT_TAMPERED`) and `verify-run` reports `STATE_ROW_EDITED`. As before, an edit made
+  while a run is live and undone before the next check is not detected.
 - **The record is unchanged.** `store.run(id)` returns exactly the record the whole-run store
-  returned (same fields, sorted keys, same digest), and the CLI, HTTP API, MCP tools, replay
-  keys and the event hash chain are byte-for-byte the same. A workspace written by the earlier
-  store opens as it is; its runs are split into rows by their first write, or all at once with
-  `foundry migrate-store`. Code that reads `runs.body` directly sees only the header: use
-  `store.run()`, `store.rows.*` or `tools/run-view/store-adapter.mjs`.
+  returned (same fields, sorted keys, same digest), and the CLI, HTTP API, MCP tools, replay keys
+  and the event hash chain are the same. What an update returns (and `foundry run`, `answer` and
+  `approve` print) keeps that store's key order too: stored keys sorted, keys the update added
+  (such as `verdict`) after them (`Session.record()`). A workspace written by the earlier store
+  opens as it is; its runs are split into rows by their first write, or all at once with
+  `foundry migrate-store`. A store written by the first rows layout gains the `items` column, and
+  each run is recounted by its next write. Code that reads `runs.body` directly sees only the
+  header: use `store.run()`, `store.rows.*` or `tools/run-view/store-adapter.mjs`.
 
 ## Interfaces
 
