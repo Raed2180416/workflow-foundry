@@ -475,6 +475,13 @@ test('acceptance: R1-R4, X1, X5-records and X8-conventions pools hold 200 select
   assert.ok(x8.filter(SELECTED).length >= 200, 'X8: 200 conventions lines, each with a consistent and an inconsistent item');
   assert.equal(new Set(x8.map(u => u.skeleton)).size, x8.length);
   for (const port of SURFACE_PORTS) { const sk = new Map(); for (const u of surface[port]) { const s = sk.get(u.skeleton); if (s && s !== u.slice) assert.fail(`${port}: skeleton in two slices`); sk.set(u.skeleton, u.slice); } }
+  // every registered skeleton (lines, X5 assumptions, carriers, wordings, cities) belongs to one slice
+  const regSlices = new Map(); for (const e of registry.entries) (regSlices.get(e.hash) ?? regSlices.set(e.hash, new Set()).get(e.hash)).add(e.slice);
+  assert.deepEqual([...regSlices.entries()].filter(([, s]) => s.size > 1).map(([h, s]) => `${h.slice(7, 19)}:${[...s].join('+')}`), [], 'no registered skeleton in two slices');
+  // X5's template axis is the assumption as well as the situation line: an assumption phrasing lives in the unit's slice only
+  const x5a = surface.X5.filter(u => u.assumption);
+  assert.ok(x5a.length >= 600);
+  for (const u of x5a) { assert.equal(oodSliceOfHash(skeletonOf(u.assumption, masks)), u.slice, `${u.id}: assumption in its own slice`); assert.ok((regHashes.get(skeletonOf(u.assumption, masks)) ?? []).includes(u.slice), `${u.id}: assumption registered`); }
 });
 
 test('acceptance: registers: the three named other registers carry most of every label and each is really present; local hardness diagnostics are recorded', { skip: MUTANT_RUN && 'needs the real outputs' }, (t) => {
@@ -523,6 +530,8 @@ test('acceptance: copy filter: no authored text is within 4-gram Jaccard 0.3 of 
   else assert.ok(rep.trainPools.strings > 0);
   const committed = existsSync(path.join(DIR, 'copy-filter.json')) ? JSON.parse(readFileSync(path.join(DIR, 'copy-filter.json'), 'utf8')) : null;
   assert.ok(committed && committed.failing.length === 0 && committed.maxJaccard <= 0.3, 'the CLI report (copy-filter.json) agrees');
+  assert.equal(rep.skeletonRule.hits, 0, 'no authored sentence has the span skeleton of a bed or train-pool sentence');
+  assert.ok(committed.skeletonRule && committed.skeletonRule.hits === 0, 'the CLI report ran the span-skeleton rule too');
 });
 
 test('acceptance: X1 OOD slices: at least 50% of positives contain no addressee word and at least 30% of negatives contain one', { skip: MUTANT_RUN && 'needs the real outputs' }, () => {
@@ -571,6 +580,11 @@ test('acceptance: held-out cities map to exactly one country in the code gazette
   assert.ok(flat.size >= 40, 'TEAM_CITIES was read');
   const clash = cities.filter(c => flat.has(c.city.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase())).map(c => c.city);
   assert.deepEqual(clash, [], 'held-out cities are not in TEAM_CITIES');
+  // the entity list is sliced by name hash and registered (§2.3 rule 7: "every held-out entity list")
+  const { registry } = real(), entities = registry.entries.filter(e => e.kind === 'entity');
+  assert.equal(entities.length, cities.length, 'every held-out city is in the registry');
+  for (const c of cities) assert.equal(c.slice, oodSliceOfHash(skeletonOf(c.city)), `${c.city}: slice by hash`);
+  for (const slice of OOD_SLICES) for (const order of ['mdy', 'dmy']) assert.ok(cities.filter(c => c.slice === slice && c.order === order).length >= 8, `${slice}: at least 8 ${order} cities`);
   const know = surface.R1.filter(u => u.role === 'knowledge');
   assert.ok(know.length >= 60 && know.every(u => u.label === null && u.labels.join() === 'dmy,mdy' && u.features.needsWorldKnowledge));
   for (const slice of OOD_SLICES) assert.ok(know.filter(u => u.slice === slice).length >= 10, `knowledge lines in ${slice}`);
@@ -597,6 +611,16 @@ test('acceptance: files exist only under .foundry/kev-data/heldout/, only a sha2
     const src = readFileSync(path.join(KEV_DATA, 'heldout', f), 'utf8');
     for (const s of sample(texts, 400)) assert.ok(!src.includes(s.slice(0, 50)), `${f} contains authored text`);
   }
+  // no held-out text in any file git tracks or would track (all of the repository, not only this group's code); the
+  // first version had four held-out lines verbatim in this test file (retired by the 2026-10-08 review)
+  const heldTexts = [...new Set([...Object.values(surface).flat().flatMap(u => [u.text, u.assumption, u.title, u.venue, u.type_label]), ...wordings.map(w => w.text)].filter(t => typeof t === 'string'))];
+  const pf = path.join(H.tempDir('kev-heldout-pat-'), 'patterns.txt'); writeFileSync(pf, heldTexts.filter(t => t.length >= 20).join('\n') + '\n');
+  let grepHits = '';
+  try { grepHits = execFileSync('git', ['-C', REPO, 'grep', '-F', '-l', '--untracked', '-f', pf, '--', '.'], { encoding: 'utf8', maxBuffer: 1 << 26 }); } catch (e) { if (e.status !== 1) throw e; }
+  assert.deepEqual(grepHits.trim().split('\n').filter(Boolean), [], 'held-out text found in repository files');
+  const norm = t => String(t).toLowerCase().replace(/\s+/g, ' ').trim(), shortSet = new Set(heldTexts.filter(t => t.length >= 12).map(norm));
+  for (const f of [TEST_FILE, ...readdirSync(path.join(KEV_DATA, 'heldout')).filter(n => n.endsWith('.mjs')).map(n => path.join(KEV_DATA, 'heldout', n))])
+    for (const lit of jsStrings(readFileSync(f, 'utf8'))) assert.ok(!shortSet.has(norm(lit)), `${path.basename(f)} carries a held-out text as a string literal`);
   assert.deepEqual(scanForHeldout(KEV_DATA), [], 'ports/ and taps/ never import or read the held-out path');
   // isolation of the group's own code: only copy-filter.mjs touches beds or train pools
   for (const f of readdirSync(path.join(KEV_DATA, 'heldout')).filter(n => n.endsWith('.mjs') && n !== 'copy-filter.mjs')) {
@@ -664,10 +688,15 @@ test('seeded defects: each mutation of the machinery fails the unit tests', { sk
       { name: 'wording equals Q0', mutations: [{ file: 'heldout/wordings.mjs', from: 'if (qNorm.includes(n))', to: 'if (false)' }] },
       { name: 'X8 status truth', mutations: [{ file: 'heldout/x8.mjs', from: "good = V === 'void' ? 'no' : 'yes'", to: "good = V === 'void' ? 'yes' : 'no'" }] },
       { name: 'R1 example lint', mutations: [{ file: 'heldout/pools.mjs', from: 'x.order !== label && !isHard(tags)', to: 'false' }] },
+      { name: 'X5 bank borrows across slices', mutations: [{ file: 'heldout/assemble.mjs', from: 'const list = bank[`${K}/${V}`]?.[slice];', to: 'const list = Object.values(bank[`${K}/${V}`] ?? {}).flat();' }] },
+      { name: 'registry slice check off', mutations: [{ file: 'heldout/assemble.mjs', from: '.filter(([, m]) => m.size > 1)', to: '.filter(([, m]) => m.size > 9)' }] },
+      { name: 'pair twin admitted alone', mutations: [{ file: 'heldout/filter.mjs', from: "u.status = ok && !pairFail ? 'admitted' : 'rejected';", to: "u.status = ok ? 'admitted' : 'rejected';" }] },
+      { name: 'pair mirror overwrites the filter', mutations: [{ file: 'heldout/assemble.mjs', from: "if (!h || u.status === 'admitted' || u.status === 'rejected') continue;", to: 'if (!h) continue;' }] },
+      { name: 'copy filter skeleton rule off', mutations: [{ file: 'heldout/copy-filter.mjs', from: 'const sk = own.some(h => skel[k].has(h));', to: 'const sk = false;' }] },
     ],
   });
   assert.deepEqual(r.control.failed, [], `the unmutated copy passes: ${r.control.failed.join('; ')}\n${r.control.stderr.slice(-400)}`);
-  assert.ok(r.control.passed.length >= 12, `the control ran ${r.control.passed.length} unit tests`);
+  assert.ok(r.control.passed.length >= 16, `the control ran ${r.control.passed.length} unit tests`);
   const survivors = r.mutants.filter(m => m.failed.length === 0).map(m => m.name);
   assert.deepEqual(survivors, [], `seeded defects survived the unit tests: ${survivors.join('; ')}`);
 });

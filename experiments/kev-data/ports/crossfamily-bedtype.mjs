@@ -217,7 +217,7 @@ function bedState(env, bed, seed, difficulty, { window = 'standard', reference =
 function noTaskState(env, aBed, seed, key, bucket, { adjacent }) {
   const pseudo = paragraphTask(key, bucket, { adjacent });
   const difficulty = 1 + (hnum(`${key}|pd`) % 5);
-  return { bed: null, seed, difficulty, task: pseudo, state: stateOf(pseudo), worldHash: worldHash(pseudo), worldKey: worldKeyOf(aBed, env.bedSplit, difficulty, seed), masks: maskTerms(promptPart(taskHead(pseudo))), heldSpans: [], window: 'standard', adjacent: pseudo.adjacent };
+  return { bed: null, seed, difficulty, task: pseudo, state: stateOf(pseudo), worldHash: worldHash(pseudo), worldKey: worldKeyOf(aBed, env.bedSplit, difficulty, seed), masks: { names: [], markers: [] }, heldSpans: [], window: 'standard', adjacent: pseudo.adjacent };    // no world names: a paragraph's words are its form, and the buckets hash them unmasked
 }
 function insertCarrier(sourceText, carrier, key) {
   const at = sourceText.indexOf('\n\nInputs:'), head = at >= 0 ? sourceText.slice(0, at) : sourceText, rest = at >= 0 ? sourceText.slice(at) : '';
@@ -254,7 +254,7 @@ function makeRecord(env, c) {
     counterfactual: c.counterfactual ?? null, pairId: c.pairId ?? null, masks: st.masks, axis: c.axis, crossType, hard: label !== 'not_stated' && st.bed !== null && isHard(c.aBed, st.bed), hardDeclared: st.bed !== null && isDeclaredHard(c.aBed, st.bed),
     heldOut,
     bedtype: { assumptionBed: c.aBed, assumptionSource: c.atext.source, assumptionText: c.atext.text, framing: c.framing.id, negated: Boolean(c.negated), stateBed: st.bed, stateSeed: st.seed, stateDifficulty: st.difficulty, stateWorldKey: st.worldKey, stateWorldHash: st.worldHash,
-      window: st.window, relation: label, heldoutSpans: st.heldSpans, ...(st.bed === null ? { adjacent: Boolean(st.adjacent) } : {}), ...(c.extra ?? {}) },
+      window: st.window, bucket: c.bucket, relation: label, heldoutSpans: st.heldSpans, ...(st.bed === null ? { adjacent: Boolean(st.adjacent) } : {}), ...(c.extra ?? {}) },
   };
   if (own) Object.assign(meta, { seed: st.seed, difficulty: st.difficulty, worldHash: st.worldHash });
   else meta.worlds = [st.worldKey];
@@ -273,7 +273,7 @@ function* realizeCluster(env, c, seeds, gi) {
   const d = difficultyOf(gi);
   const bucket = c.axis === 'family' || c.axis === 'paraphrase' || c.axis === 'flip' || c.axis === 'slot' || c.axis === 'long' ? 'train' : env.bucket;
   const A = (aBed, k, o = {}) => assumptionFor(env, aBed, `${key}|${k}`, { bucket, ...o });
-  const rec = (k, o) => makeRecord(env, { key: `${key}|${k}`, axis: c.axis, ...o });
+  const rec = (k, o) => makeRecord(env, { key: `${key}|${k}`, axis: c.axis, bucket, ...o });
   switch (c.kind) {
     case 'pair': case 'long': {
       const lp = c.kind === 'long', { state, partner } = permPair(c.i);
@@ -420,6 +420,8 @@ export function oodSpans(record) {
   const b = record.meta?.bedtype;
   if (!b) return [];
   const out = [];
+  // an axis that isolates one factor draws its sentences from the train bucket (they are ordinary training text, not authored for the slice)
+  if (b.bucket === 'train') return out;
   if (b.stateBed === null) for (const t of sentences(record.state.source_text)) { const bare = t.replace(BARE, ''); if (!/^(Task statement:|Inputs:)$/.test(bare) && bare.split(/\s+/).length >= 5) out.push({ text: bare, kind: 'authored-paragraph' }); }
   if (b.carrier?.text) out.push({ text: b.carrier.text, kind: 'authored-carrier' });
   return out;

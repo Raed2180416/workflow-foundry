@@ -344,8 +344,10 @@ test('unit: stub beds: the no-task sentences and carriers of a slice are in its 
   for (const slice of ALL_SLICES) {
     const recs = x5(await STUB_RECS(slice));
     for (const r of recs) {
-      if (r.meta.bedtype.stateBed === null) for (const sent of bare(r.state.source_text)) assert.equal(skeletonBucket(skeleton(sent)), r.meta.axis === 'family' || r.meta.axis === 'paraphrase' ? 'train' : BUCKET[slice], `${slice}/${r.meta.axis}: ${sent}`);
+      if (r.meta.bedtype.stateBed === null) for (const sent of bare(r.state.source_text)) assert.equal(skeletonBucket(skeleton(sent)), r.meta.bedtype.bucket, `${slice}/${r.meta.axis}: ${sent}`);
+      if (r.meta.bedtype.bucket !== 'train') assert.equal(r.meta.bedtype.bucket, BUCKET[slice]);
       if (r.meta.bedtype.carrier) assert.equal(skeletonBucket(skeleton(r.meta.bedtype.carrier.text)), BUCKET[slice]);
+      if (slice === 'test-ood' && ['family', 'paraphrase', 'flip', 'slot', 'long'].includes(r.meta.axis)) assert.equal(r.meta.bedtype.bucket, 'train', 'the axes that isolate one factor read the train bucket');
     }
     n[slice] = BT.registerOod(registry, recs, slice);
   }

@@ -63,29 +63,32 @@ function walkFiles(root, rel, accept) {
   return out;
 }
 // The frozen bed copy: every allow-listed text file (beds/sealed/ is not on the allow-list).
+// `strings` (at least MIN_WORDS words) feed the n-gram and skeleton checks; `short` keeps every string of any
+// length for the exact type-label check (an S5 bed label such as a two-word type name is shorter than MIN_WORDS:
+// the first version dropped them, so an "unseen" name equal to a bed label passed).
 export function bedCorpus(beds) {
-  const strings = []; let files = 0;
+  const strings = [], short = []; let files = 0;
   for (const dir of BED_ALLOWLIST) {
     const rels = dir.endsWith('.md') ? [dir] : walkFiles(beds.dir, dir, r => TEXT_EXT.test(r));
     for (const rel of rels) {
       let src; try { src = beds.read(rel); } catch { continue; }
       files++;
       const ss = /\.(?:mjs|js|cjs)$/i.test(rel) ? jsStrings(src) : /\.json$/i.test(rel) ? jsonStrings(src) : proseStrings(src);
-      for (const s of ss) if (keep(s)) strings.push(s);
+      for (const s of ss) { if (keep(s)) strings.push(s); else if (s.trim()) short.push(s); }
     }
   }
-  return { strings, files };
+  return { strings, short, files };
 }
 export function trainPoolCorpus(dir) {
   if (!dir || !existsSync(dir)) return { present: false, strings: [], files: 0 };
   const rels = walkFiles(dir, '.', r => /\.(?:jsonl|json|txt|md)$/i.test(r));
-  const strings = [];
+  const strings = [], short = [];
   for (const rel of rels) {
     const src = readFileSync(path.join(dir, rel), 'utf8');
     const ss = /\.jsonl$/i.test(rel) ? src.split('\n').filter(Boolean).flatMap(jsonStrings) : /\.json$/i.test(rel) ? jsonStrings(src) : proseStrings(src);
-    for (const s of ss) if (keep(s)) strings.push(s);
+    for (const s of ss) { if (keep(s)) strings.push(s); else if (s.trim()) short.push(s); }
   }
-  return { present: true, strings, files: rels.length };
+  return { present: true, strings, short, files: rels.length };
 }
 
 // ---- the check ----------------------------------------------------------------------------------------
@@ -123,15 +126,15 @@ export function runCopyFilter({ units, wordings = [], corpora, threshold = COPY_
   const idx = Object.fromEntries(Object.entries(corpora).filter(([, c]) => c.strings.length).map(([k, c]) => [k, buildIndex(c.strings)]));
   const skel = Object.fromEntries(Object.entries(corpora).filter(([, c]) => c.strings.length).map(([k, c]) => [k, sentenceSkeletons(c.strings, masks)]));
   const failing = []; let checked = 0, max = 0, skeletonHits = 0;
-  const lookup = new Map(Object.entries(corpora).map(([k, c]) => [k, new Set(c.strings.map(s => s.toLowerCase().trim()))]));
+  const lookup = new Map(Object.entries(corpora).map(([k, c]) => [k, new Set([...c.strings, ...(c.short ?? [])].map(s => s.toLowerCase().trim()))]));
   const check = (id, port, role, texts) => {
     for (const t of texts) {
       checked++;
       const own = checkableSentences(t, masks);
-      for (const [k, ix] of Object.entries(idx)) {
-        const j = maxOverlap(t, ix); max = Math.max(max, j);
+      for (const k of Object.keys(corpora)) {
+        const ix = idx[k], j = ix ? maxOverlap(t, ix) : 0; max = Math.max(max, j);
         const exact = role === 'type-name' && t === texts[0] && lookup.get(k).has(t.toLowerCase().trim());
-        const sk = own.some(h => skel[k].has(h));
+        const sk = !!skel[k] && own.some(h => skel[k].has(h));
         if (sk) skeletonHits++;
         if (j > threshold || exact || sk) failing.push({ id, port, role, against: k, kind: exact ? 'exact' : j > threshold ? 'jaccard' : 'skeleton', jaccard: exact ? 1 : Number(j.toFixed(3)) });
       }
