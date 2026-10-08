@@ -72,7 +72,12 @@ export async function buildIncident({ kit, trial, workflow, pool, localisation, 
     try { const args = kit.data.resolve(n.args ?? {}, { input: { prompt: bed.task.task.prompt, inputs: bed.task.task.inputs ?? {} }, nodes: base.outputs }); checkInputs[n.id] = { args, moduleSource: args.source ?? null, texts: [bed.task.task.prompt, ...Object.values(bed.task.task.inputs ?? {}).filter(v => typeof v === 'string')] }; } catch { /* a node whose args need a map frame has no battery */ }
   }
   const reference = fam.referenceSolve(bed.task.task);
-  const controls = { answerKeys, trialKey: trial.key, items: [{ name: 'reference', expect: 'accept', output: reference }, ...fam.badControls.map(c => { try { return { name: c.name, expect: 'reject', output: c.make(bed.task.task) }; } catch { return null; } }).filter(Boolean)] };
+  // The controls are pinned into one recorded run (V5), so that run's other evidence must agree with the truth: a failing run's evidence
+  // is partly wrong by definition (P1: a mis-judged status in merge), and a consistency check would then rightly reject the bed's own
+  // reference answer. So the host is a recorded PASSING run (first by key) and the controls are made from that run's task; the failing
+  // run hosts them only when no recorded run of this workflow passed.
+  const host = passing[0] ?? trial, hostTask = host.key === trial.key ? bed.task.task : tasks[host.key].task;
+  const controls = { answerKeys, trialKey: host.key, items: [{ name: 'reference', expect: 'accept', output: fam.referenceSolve(hostTask) }, ...fam.badControls.map(c => { try { return { name: c.name, expect: 'reject', output: c.make(hostTask) }; } catch { return null; } }).filter(Boolean)] };
   const other = await lib.makeTasks(trial.family, { split: 'dev', seeds: [9101, 9102], difficulty: trial.difficulty });
   const flips = localisation.suspects?.[0]?.flips ?? [];
   const leakIndex = buildLeakIndex({ tasks: failing.map(t => tasks[t.key].task), outputs: failing.map(t => baseRuns[t.key].outputs), truthStrings: [JSON.stringify(reference)],

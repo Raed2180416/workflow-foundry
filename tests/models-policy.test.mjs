@@ -5,7 +5,7 @@ import { mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { DEFAULT_POLICY_PATH, loadPolicy, validatePolicy, resolve, classIndex, nextClass, modelsForClass, assertPolicyUnchanged, modelById } from '../src/models/policy.mjs';
+import { DEFAULT_POLICY_PATH, CHILD_ENV_ALLOWED, loadPolicy, validatePolicy, resolve, classIndex, nextClass, modelsForClass, assertPolicyUnchanged, modelById } from '../src/models/policy.mjs';
 import { ModelPort } from '../src/models/port.mjs';
 import { ScriptedProvider } from '../src/models/providers/scripted.mjs';
 import { Journal } from '../src/journal.mjs';
@@ -100,8 +100,9 @@ test('no model id outside this file: runtime source names only policy ids', () =
   // Legacy exemption: src/ollama-local.mjs is the pre-Phase-1 diagnostic Ollama adapter; it is not
   // reachable from ModelPort and is listed here so any new hard-coded id elsewhere fails this test.
   const legacy = new Map([['src/ollama-local.mjs', /^(qwen3\.5-9b:itb|qwen35(\.[a-z_]+)?)$/]]);
-  // Provider names, the CLI binary and the executor label are not model ids.
-  const allowed = new Set([...policy.models.map(m => m.id), ...Object.keys(policy.providers), ...Object.values(policy.providers).map(p => p.binary).filter(Boolean), 'claude-code']);
+  // Provider names, the CLI binary, the executor label and the closed list of claude-cli child environment variable names
+  // (CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC is an env var, not a model id) are not model ids.
+  const allowed = new Set([...policy.models.map(m => m.id), ...Object.keys(policy.providers), ...Object.values(policy.providers).map(p => p.binary).filter(Boolean), 'claude-code', ...CHILD_ENV_ALLOWED]);
   const literal = /['"`]((?:claude|qwen|granite|gpt|llama|gemma|mistral|phi|deepseek|haiku|sonnet|opus)[A-Za-z0-9._:-]*)['"`]/gi;
   const files = [];
   const walk = dir => { for (const name of readdirSync(dir)) { const p = path.join(dir, name); if (statSync(p).isDirectory()) walk(p); else if (p.endsWith('.mjs')) files.push(p); } };

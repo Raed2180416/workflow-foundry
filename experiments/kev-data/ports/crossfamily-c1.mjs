@@ -33,7 +33,7 @@ const CONFLICTS = Object.freeze([
 const P = (pos, nocue, neg, decoy) => ({ pos: [...pos, ...nocue], posCue: pos, posNoCue: nocue, neg, decoy });
 export const PHRASES = Object.freeze({
   'human-gate': P(
-    ['A person on the team has to approve the result before anything is released.', 'Get a sign-off from the project lead before the work is published.', 'The final version needs a supervisor\'s approval.', 'A reviewer must accept the draft before it is sent anywhere.', 'Anything unusual is escalated to a human operator.'],
+    ['A person on the team has to approve the result before anything is released.', 'Get a sign-off from the project lead before the work is published.', 'The final version needs a supervisor\'s approval.', 'A reviewer must accept the draft before it is sent anywhere.', 'A human operator has to approve the output before anyone relies on it.'],
     ['Someone on the team has to look it over and say go before it leaves the building.', 'Nothing gets published until the project lead has given the green light.', 'The result goes to a colleague for a final yes or no.', 'A teammate takes the final decision on whether it goes out.'],
     ['No approval step is needed; it can go out directly.', 'There is no need for a human in the loop here.', 'Nobody has to sign off on this; the system may release it by itself.'],
     ['Quote last quarter\'s approval rate in the summary.', 'Report how many requests were escalated last week.', 'Mention that the human resources team has moved to the second floor.']),
@@ -58,7 +58,7 @@ export const PHRASES = Object.freeze({
     ['There is only one path through the work; nothing depends on any condition.', 'No branching is required.'],
     ['Open the report for the Elm Street branch and summarise its sales.', 'The poster says "if found, please return", and that wording should be kept verbatim.', 'Keep the quote "what else can we do?" exactly as written in the speech.']),
   recovery: P(
-    ['Retry the upload up to three times when it times out.', 'Recover gracefully from network failures.', 'Flaky calls should be tried again a few times before giving up.', 'Messages that keep failing are moved to a dead-letter queue.', 'Retrying a failed step once is fine.'],
+    ['Retry the upload up to three times when it times out.', 'Recover gracefully from network failures.', 'Recover from a crash by resuming where the run stopped.', 'Messages that keep failing are moved to a dead-letter queue.', 'Retrying a failed step once is fine.'],
     ['A failed download should be attempted again up to three times.', 'Keep going when a single record cannot be processed and come back to it afterwards.', 'Make a second and third attempt before reporting the failure.', 'The run must survive temporary outages of the data service.'],
     ['Do not retry failed steps; report them immediately.', 'A single attempt is enough; nothing needs to be tried again.'],
     ['Add a section on how coral reefs recover after storms.', 'Summarise the plot of the novel Poison Pen for the newsletter.', 'Attach the parks department\'s schedule to the message.']),

@@ -7,12 +7,22 @@
 //   label, by construction from family ids only (never a model):
 //       the state's task is of the assumption's family            holds
 //       it is a task of another family                            violated
-//       the state is a paragraph with no task content             not_stated
+//       the state does not say what the task is                   not_stated
 //     (a NEGATED framing, "the task does not belong to the family ...", flips holds and violated: the §1.2 X5 "negated
 //      statements" adversarial variant; not_stated is unchanged)
 //
+// not_stated states (§1.2 X5 "not_stated items", §2.5 presence-matched unknowables):
+//   presence-matched   a filed-task state (judges/bedtype.mjs filedState): two real bed tasks are on file and the request's
+//                      statement points at a task id that is not on file. Its twin points at a listed task (holds or
+//                      violated) and is otherwise identical: the same filed tasks, the same pointer sentence, another id. The
+//                      state holds task text of the same register in both arms, so a state-only probe cannot tell the arms
+//                      apart (the group's test: <= 0.65, §2.5); revision 1 of this file used office paragraphs with one
+//                      assignment-register sentence, which a train-fitted probe separated from stated rows at 1.000.
+//   unrelated          a paragraph with no task content (office notices, chat, boilerplate; half with an assignment-register
+//                      sentence). At most half of the not_stated rows of a slice (§1.2 X5: "unrelated paragraphs make up the rest").
+//
 // Held-out (§3.4): the kinetics and runbook descriptions, README paragraphs and prompt heads appear in test-ood files only.
-// A pair whose assumption or state is kinetics or runbook is family bedtype:kinetics / bedtype:runbook (see familyBedOf).
+// A pair whose assumption or state is kinetics or runbook is family bedtype:kinetics / bedtype:runbook.
 //
 // The axes of test-ood (JUDGE-PROGRAM.md §4.3, a quarter of X5's shared axes plus the bedtype family axis):
 //   family 600 (held-out kinetics/runbook) + skeleton 250 + paraphrase ~100 + adversarial 200 (clean/injected twins and
@@ -25,10 +35,10 @@ import { createHash } from 'node:crypto';
 import { labelledQuestion, questionId } from '../lib/render.mjs';
 import { optionOrder } from '../lib/balance.mjs';
 import { worldHash, skeleton, spanHash, sentences } from '../lib/hash.mjs';
-import { stateOf, taskHead } from '../judges/bedtype.mjs';
-import { assumptionOf, BUCKET_OF_SLICE, carrierFor, framingFor, paragraphTask, pick } from './crossfamily-pools.mjs';
+import { FILED_WINDOW, filedState, headOf, stateOf, taskHead } from '../judges/bedtype.mjs';
+import { assumptionOf, BUCKET_OF_SLICE, carrierFor, filedId, fillPointer, framingFor, paragraphTask, pick, pointerTemplateFor } from './crossfamily-pools.mjs';
 
-export const GENERATOR_VERSION = 'construction-crossfamily-bedtype@1';
+export const GENERATOR_VERSION = 'construction-crossfamily-bedtype@2';
 export const TRAIN_BEDS = Object.freeze(['records', 'incident', 'synth', 'gameqa', 'gridquest', 'codefix', 'ownerci']);
 export const HELD_OUT_BEDS = Object.freeze(['kinetics', 'runbook']);
 export const ALL_BEDS = Object.freeze([...TRAIN_BEDS, ...HELD_OUT_BEDS]);
@@ -136,11 +146,12 @@ const othersOf = x => ALL_BEDS.filter(b => b !== x && b !== hardPartner(x));
 export const partnerSeq = (x, j) => (j % 2 === 0 ? hardPartner(x) : othersOf(x)[(j >> 1) % othersOf(x).length]);
 
 // Row shares / counts per slice. `perCluster` is the number of records a cluster yields (questions for a paraphrase cluster).
+// A pm cluster is a presence-matched twin: one stated row (holds or violated, alternating) and its not_stated twin.
 const SHARES = {
-  train: [['in-family', 'pair', 0.50, 2], ['in-family', 'notstated', 0.20, 1], ['adversarial', 'injection', 0.10, 2], ['slot', 'slot', 0.10, 2], ['long', 'long', 0.06, 2], ['adversarial', 'negpair', 0.04, 2]],
-  'test-in': [['in-family', 'pair', 0.80, 2], ['in-family', 'notstated', 0.20, 1]],
-  'calib-ood': [['skeleton', 'pair', 0.80, 2], ['skeleton', 'notstated', 0.20, 1]],
-  'dev-ood': [['skeleton', 'pair', 0.80, 2], ['skeleton', 'notstated', 0.20, 1]],
+  train: [['in-family', 'pair', 0.40, 2], ['in-family', 'pm', 0.26, 2], ['in-family', 'notstated', 0.08, 1], ['adversarial', 'injection', 0.10, 2], ['slot', 'slot', 0.08, 2], ['long', 'long', 0.05, 2], ['adversarial', 'negpair', 0.03, 2]],
+  'test-in': [['in-family', 'pair', 0.60, 2], ['in-family', 'pm', 0.30, 2], ['in-family', 'notstated', 0.10, 1]],
+  'calib-ood': [['skeleton', 'pair', 0.60, 2], ['skeleton', 'pm', 0.30, 2], ['skeleton', 'notstated', 0.10, 1]],
+  'dev-ood': [['skeleton', 'pair', 0.60, 2], ['skeleton', 'pm', 0.30, 2], ['skeleton', 'notstated', 0.10, 1]],
 };
 SHARES['calib-in'] = SHARES.train; SHARES['dev-select'] = SHARES.train;
 const TEST_OOD_ROWS = Object.freeze({ family: 600, skeleton: 250, paraphrase: 102, adversarial: 200, long: 72, flip: 100, slot: 50 });
@@ -158,10 +169,12 @@ export function planBedtype(slice, rows = DEFAULT_ROWS[slice]) {
   const out = [], add = (axis, kind, n, extra = {}) => { for (let i = 0; i < n; i++) out.push({ axis, kind, i, ...extra }); };
   if (slice === 'test-ood') {
     const k = rows / DEFAULT_ROWS['test-ood'], r = x => Math.max(0, evenDown(Math.round(x * k)));
-    const fam = r(TEST_OOD_ROWS.family), famN = Math.round(fam * 0.2), famPairs = fam - famN;          // 60 / 20 / 20 %
-    add('family', 'fam-sx', Math.round(famPairs / 4)); add('family', 'fam-ax', Math.round(famPairs / 4)); add('family', 'notstated', famN, { held: true });
-    const sk = r(TEST_OOD_ROWS.skeleton), skN = Math.round(sk * 0.2);
-    add('skeleton', 'pair', Math.round((sk - skN) / 2)); add('skeleton', 'notstated', skN);
+    // family: state-X pairs, assumption-X pairs (40% each), presence-matched twins with an X task on file (about 23%),
+    // unrelated not_stated rows (the rest, about 10%)
+    const fam = r(TEST_OOD_ROWS.family), famPm = Math.round(fam * 70 / 600), famPairs = Math.floor((fam - 2 * famPm - Math.round(fam * 0.1)) / 4), famN = fam - 2 * famPm - 4 * famPairs;
+    add('family', 'fam-sx', famPairs); add('family', 'fam-ax', famPairs); add('family', 'fam-pm', famPm); add('family', 'notstated', famN, { held: true });
+    const sk = r(TEST_OOD_ROWS.skeleton), skPm = Math.round(sk * 0.15), skPairs = Math.floor((sk - 2 * skPm - Math.round(sk * 0.1)) / 2), skN = sk - 2 * skPm - 2 * skPairs;
+    add('skeleton', 'pair', skPairs); add('skeleton', 'pm', skPm); add('skeleton', 'notstated', skN);
     add('paraphrase', 'paraphrase', Math.round(TEST_OOD_ROWS.paraphrase * k / 3));
     const adv = r(TEST_OOD_ROWS.adversarial);
     add('adversarial', 'injection', Math.round(adv * 0.7 / 2)); add('adversarial', 'negpair', Math.round(adv * 0.3 / 2));
@@ -180,8 +193,10 @@ export function planBedtype(slice, rows = DEFAULT_ROWS[slice]) {
   want.forEach((w, i) => add(w.axis, w.kind, n[i]));
   return out;
 }
-// seeds a cluster consumes (a state-flip and a slot cluster read two tasks)
-const seedsNeeded = c => (c.kind === 'statepair' || c.kind === 'slot' || c.kind === 'fam-ax' ? 2 : 1);
+// seeds a cluster consumes (two tasks: a state flip, a slot state, an assumption-X pair). A filed-task twin reads two tasks of two
+// different beds from ONE seed: a world is (bed, split, difficulty, seed), so the two are different worlds.
+const TWO_SEEDS = new Set(['statepair', 'slot', 'fam-ax']);
+const seedsNeeded = c => (TWO_SEEDS.has(c.kind) ? 2 : 1);
 
 // ---- records -------------------------------------------------------------------------------------------------------------------
 const DIFFICULTY_CYCLE = [1, 2, 3, 3, 4, 4, 5, 5];
@@ -206,21 +221,40 @@ function wordingsFor(contract, slice, key, opts, { paraphrase = false } = {}) {
   return [{ id: q, wording: q }];
 }
 
+// the held-out sentences of a held-out bed's prompt text (>= 40 characters, not shared with a train bed's prompt)
+const heldSpansOf = (env, bed, promptText) => (HELD.has(bed) ? sentences(promptText).filter(s => s.length >= 40 && !env.trainSkel.has(skeleton(s))) : []);
 // A state from a bed task: the world, its head, its masks.
 function bedState(env, bed, seed, difficulty, { window = 'standard', reference = null } = {}) {
   const task = env.facts[bed].generate({ seed, split: env.bedSplit, difficulty });
   const state = stateOf(task, { window, reference: reference?.task ?? null });
-  const heldSpans = HELD.has(bed) ? sentences(promptPart(taskHead(task, window))).filter(s => s.length >= 40 && !env.trainSkel.has(skeleton(s))) : [];
-  return { bed, seed, difficulty, task, state, worldHash: worldHash(task), worldKey: worldKeyOf(bed, env.bedSplit, difficulty, seed), masks: maskTerms(state.source_text), heldSpans, window };
+  return { bed, seed, difficulty, task, state, worldHash: worldHash(task), worldKey: worldKeyOf(bed, env.bedSplit, difficulty, seed), masks: maskTerms(state.source_text), heldSpans: heldSpansOf(env, bed, promptPart(taskHead(task, window))), window };
 }
 // A state with no task content: a pseudo task (prompt paragraph and inputs) through the same kit.
 function noTaskState(env, aBed, seed, key, bucket, { adjacent }) {
   const pseudo = paragraphTask(key, bucket, { adjacent });
   const difficulty = 1 + (hnum(`${key}|pd`) % 5);
-  return { bed: null, seed, difficulty, task: pseudo, state: stateOf(pseudo), worldHash: worldHash(pseudo), worldKey: worldKeyOf(aBed, env.bedSplit, difficulty, seed), masks: { names: [], markers: [] }, heldSpans: [], window: 'standard', adjacent: pseudo.adjacent };    // no world names: a paragraph's words are its form, and the buckets hash them unmasked
+  return { bed: null, seed, difficulty, task: pseudo, state: stateOf(pseudo), worldHash: worldHash(pseudo), worldKey: worldKeyOf(aBed, env.bedSplit, difficulty, seed), masks: { names: [], markers: [] }, heldSpans: [], window: 'standard', adjacent: pseudo.adjacent, notStated: 'unrelated' };    // no world names: a paragraph's words are its form, and the buckets hash them unmasked
+}
+// A presence-matched twin: two filed bed tasks (the state bed's and the partner's), one pointer sentence; the stated arm points
+// at the state bed's task, the unknowable arm at an id that is not on file. Both arms draw on the same two worlds (two beds, one seed).
+function filedTwin(env, sBed, partner, seed, [dA, dB], key, bucket) {
+  if (sBed === partner) throw fail('PLAN', `a filed-task twin needs two different beds (${sBed})`);
+  const mk = (bed, seed, d) => { const task = env.facts[bed].generate({ seed, split: env.bedSplit, difficulty: d }); return { bed, seed, difficulty: d, task, worldHash: worldHash(task), worldKey: worldKeyOf(bed, env.bedSplit, d, seed), heldSpans: heldSpansOf(env, bed, headOf(task.prompt, FILED_WINDOW.promptChars)) }; };
+  const a = mk(sBed, seed, dA), b = mk(partner, seed, dB);
+  const ids = [];
+  for (let k = 0; ids.length < 3; k++) { const id = filedId(`${key}|${k}`); if (!ids.includes(id)) ids.push(id); }
+  const [idA, idB, idX] = ids, filed = hnum(`${key}|order`) % 2 === 0 ? [{ id: idA, task: a.task }, { id: idB, task: b.task }] : [{ id: idB, task: b.task }, { id: idA, task: a.task }];
+  const tpl = pointerTemplateFor(bucket, key);
+  const pointerStated = fillPointer(tpl, idA), pointerAbsent = fillPointer(tpl, idX);
+  const common = { seed: a.seed, difficulty: a.difficulty, task: a.task, worldHash: a.worldHash, worldKey: a.worldKey, worlds: [a.worldKey, b.worldKey], filedBeds: [sBed, partner], heldSpans: [...a.heldSpans, ...b.heldSpans], window: 'filed' };
+  const stated = { ...common, bed: sBed, state: filedState(pointerStated, filed), pointer: { template: tpl.text, id: idA, listed: [idA, idB], text: pointerStated }, notStated: null };
+  const absent = { ...common, bed: null, state: filedState(pointerAbsent, filed), pointer: { template: tpl.text, id: idX, listed: [idA, idB], text: pointerAbsent }, notStated: 'presence-matched' };
+  stated.masks = maskTerms(stated.state.source_text); absent.masks = maskTerms(absent.state.source_text);
+  return { stated, absent };
 }
 function insertCarrier(sourceText, carrier, key) {
-  const at = sourceText.indexOf('\n\nInputs:'), head = at >= 0 ? sourceText.slice(0, at) : sourceText, rest = at >= 0 ? sourceText.slice(at) : '';
+  const ends = [sourceText.indexOf('\n\nInputs:'), sourceText.indexOf('\n\nFiled task ')].filter(i => i >= 0), at = ends.length ? Math.min(...ends) : -1;
+  const head = at >= 0 ? sourceText.slice(0, at) : sourceText, rest = at >= 0 ? sourceText.slice(at) : '';
   const start = head.indexOf('\n') + 1, bounds = [...head.slice(start).matchAll(/(?<=[.!?])\s+(?=\S)/g)].map(m => start + m.index + m[0].length).slice(0, 4);
   const pos = bounds.length ? bounds[hnum(`${key}|ipos`) % bounds.length] : head.length;
   return { source_text: `${head.slice(0, pos)}${pos < head.length ? '' : ' '}${carrier} ${head.slice(pos)}`.replace(/ {2,}/g, ' ').replace(/ \n/g, '\n').trimEnd() + rest };
@@ -243,21 +277,24 @@ function makeRecord(env, c) {
     questions[qid] = labelledQuestion(contract, { label, wording: w.wording, wordingText: w.wordingText, slots: { assumption }, optionOrder: optionOrder(names, `${c.key}|${qid}`) });
   });
   const st = c.st, state = c.carrierState ?? st.state;
-  const heldA = HELD.has(c.aBed), heldS = st.bed !== null && HELD.has(st.bed);
-  const famBed = heldA ? c.aBed : heldS ? st.bed : (st.bed ?? c.aBed);
-  const own = st.bed === null || st.bed === famBed;
+  // the beds whose task text is in the state: the state's own task, or every filed task of a filed-task state
+  const stBeds = st.filedBeds ?? (st.bed !== null ? [st.bed] : []);
+  const heldA = HELD.has(c.aBed), heldSBed = stBeds.find(b => HELD.has(b)) ?? null;
+  const famBed = heldA ? c.aBed : heldSBed ?? (st.bed ?? c.aBed);
+  const own = !st.worlds && (st.bed === null || st.bed === famBed);
   const crossType = label === 'violated' && !c.negated && st.bed !== null && st.bed !== c.aBed;
-  const heldOut = [...(heldA ? [`description:${c.aBed}`] : []), ...(heldS ? [`prompt:${st.bed}`] : [])];
+  const heldOut = [...(heldA ? [`description:${c.aBed}`] : []), ...stBeds.filter(b => HELD.has(b)).map(b => `prompt:${b}`)];
   const meta = {
     family: `bedtype:${famBed}`, bed: famBed, variant: c.variant, labelSource: st.bed === null ? 'composer' : 'generator', needsWorldKnowledge: false,
     wordingId: ws.map(w => w.id).join('+'), formId: skeleton(assumption), surface: { source: st.bed === null ? 'authored-composer' : 'bed+authored-framing', slice, lineHash: spanHash(assumption) },
     counterfactual: c.counterfactual ?? null, pairId: c.pairId ?? null, masks: st.masks, axis: c.axis, crossType, hard: label !== 'not_stated' && st.bed !== null && isHard(c.aBed, st.bed), hardDeclared: st.bed !== null && isDeclaredHard(c.aBed, st.bed),
     heldOut,
     bedtype: { assumptionBed: c.aBed, assumptionSource: c.atext.source, assumptionText: c.atext.text, framing: c.framing.id, negated: Boolean(c.negated), stateBed: st.bed, stateSeed: st.seed, stateDifficulty: st.difficulty, stateWorldKey: st.worldKey, stateWorldHash: st.worldHash,
-      window: st.window, bucket: c.bucket, relation: label, heldoutSpans: st.heldSpans, ...(st.bed === null ? { adjacent: Boolean(st.adjacent) } : {}), ...(c.extra ?? {}) },
+      window: st.window, bucket: c.bucket, relation: label, heldoutSpans: st.heldSpans, notStated: label === 'not_stated' ? st.notStated : null,
+      ...(st.filedBeds ? { filedBeds: st.filedBeds, pointer: st.pointer } : {}), ...(st.bed === null && !st.filedBeds ? { adjacent: Boolean(st.adjacent) } : {}), ...(c.extra ?? {}) },
   };
   if (own) Object.assign(meta, { seed: st.seed, difficulty: st.difficulty, worldHash: st.worldHash });
-  else meta.worlds = [st.worldKey];
+  else meta.worlds = st.worlds ?? [st.worldKey];
   if (c.referenceKey) meta.worlds = [...(meta.worlds ?? []), c.referenceKey];
   return { state, questions, meta };
 }
@@ -274,6 +311,14 @@ function* realizeCluster(env, c, seeds, gi) {
   const bucket = c.axis === 'family' || c.axis === 'paraphrase' || c.axis === 'flip' || c.axis === 'slot' || c.axis === 'long' ? 'train' : env.bucket;
   const A = (aBed, k, o = {}) => assumptionFor(env, aBed, `${key}|${k}`, { bucket, ...o });
   const rec = (k, o) => makeRecord(env, { key: `${key}|${k}`, axis: c.axis, bucket, ...o });
+  // a presence-matched twin: the stated arm (holds when the assumption is the pointed task's family, else violated) and its
+  // not_stated arm, under one assumption
+  function* twin(sBed, partner, aBed) {
+    const { stated, absent } = filedTwin(env, sBed, partner, seeds[0], [d, difficultyOf(gi + 3)], key, bucket), a = A(aBed, 'a'), pairId = `bt:${key}`;
+    const label = aBed === sBed ? 'holds' : 'violated';
+    yield rec('s', { aBed, ...a, st: stated, label, variant: 'distractor', pairId, counterfactual: { swapped: true, from: absent.pointer.id, to: stated.pointer.id, path: 'pointer' } });
+    yield rec('u', { aBed, ...a, st: absent, label: 'not_stated', variant: 'unknowable', pairId, counterfactual: { swapped: true, from: stated.pointer.id, to: absent.pointer.id, path: 'pointer' } });
+  }
   switch (c.kind) {
     case 'pair': case 'long': {
       const lp = c.kind === 'long', { state, partner } = permPair(c.i);
@@ -281,6 +326,16 @@ function* realizeCluster(env, c, seeds, gi) {
       for (const [role, aBed, label] of [['h', state, 'holds'], ['v', partner, 'violated']]) {
         yield rec(role, { aBed, ...A(aBed, role), st, label, variant: 'flip', pairId, counterfactual: { swapped: true, from: role === 'h' ? partner : state, to: aBed, path: 'assumption' } });
       }
+      return;
+    }
+    case 'pm': {                                                   // presence-matched twin of two train beds
+      const { state, partner } = permPair(c.i);
+      yield* twin(state, partner, c.i % 2 === 0 ? state : partner);
+      return;
+    }
+    case 'fam-pm': {                                               // presence-matched twin with a held-out task on file
+      const x = c.i % 2 === 0 ? 'kinetics' : 'runbook', j = Math.floor(c.i / 2), partner = partnerSeq(x, j);
+      yield* twin(x, partner, j % 2 === 0 ? x : partner);
       return;
     }
     case 'fam-sx': case 'fam-ax': {
@@ -324,7 +379,8 @@ function* realizeCluster(env, c, seeds, gi) {
       const { state, partner } = permPair(c.i), pairId = `bt:${key}`;
       const kind = (slice === 'test-ood' ? INJECTION_MIX_TEST : INJECTION_MIX_TRAIN)[c.i % 5];
       const aBed = kind === 'violated' ? partner : state;
-      const st = kind === 'not_stated' ? noTaskState(env, aBed, seeds[0], `${key}|np`, bucket, { adjacent: c.i % 2 === 0 }) : bedState(env, state, seeds[0], d);
+      // a not_stated item is the unknowable arm of a filed-task twin (presence-matched); the others are a bed task's head
+      const st = kind === 'not_stated' ? filedTwin(env, state, partner, seeds[0], [d, difficultyOf(gi + 3)], `${key}|np`, bucket).absent : bedState(env, state, seeds[0], d);
       const a = A(aBed, 'a'), urged = kind === 'holds' ? 'violated' : 'holds';
       const carrier = carrierFor(urged, env.bucket, `${key}|carrier`);
       const dirty = insertCarrier(st.state.source_text, carrier, key);
@@ -412,9 +468,9 @@ export function registerHeldoutBeds(registry, facts, opts) {
 }
 
 // ---- authored surfaces of the OOD slices, for the span registry ------------------------------------------------------------------
-// The sentences this group authored for an OOD slice (the no-task paragraphs and the injection carriers of a state) must not reach
-// training or another OOD slice (§2.3 rule 7). `slice` is the slice the records were built for; test-ood material is registered as
-// 'heldout' (test-OOD-only), calib-ood and dev-ood under their own names.
+// The sentences this group authored for an OOD slice (the no-task paragraphs, the pointer sentences of filed-task states and the
+// injection carriers of a state) must not reach training or another OOD slice (§2.3 rule 7). `slice` is the slice the records were
+// built for; test-ood material is registered as 'heldout' (test-OOD-only), calib-ood and dev-ood under their own names.
 const BARE = /^(?:- [A-Za-z_]+: )/;
 export function oodSpans(record) {
   const b = record.meta?.bedtype;
@@ -422,14 +478,15 @@ export function oodSpans(record) {
   const out = [];
   // an axis that isolates one factor draws its sentences from the train bucket (they are ordinary training text, not authored for the slice)
   if (b.bucket === 'train') return out;
-  if (b.stateBed === null) for (const t of sentences(record.state.source_text)) { const bare = t.replace(BARE, ''); if (!/^(Task statement:|Inputs:)$/.test(bare) && bare.split(/\s+/).length >= 5) out.push({ text: bare, kind: 'authored-paragraph' }); }
+  if (b.stateBed === null && !b.filedBeds) for (const t of sentences(record.state.source_text)) { const bare = t.replace(BARE, ''); if (!/^(Task statement:|Inputs:)$/.test(bare) && bare.split(/\s+/).length >= 5) out.push({ text: bare, kind: 'authored-paragraph' }); }
+  if (b.pointer?.text) out.push({ text: b.pointer.text, kind: 'authored-pointer', markers: [b.pointer.id] });
   if (b.carrier?.text) out.push({ text: b.carrier.text, kind: 'authored-carrier' });
   return out;
 }
 export function registerOod(registry, recs, slice) {
   if (!['calib-ood', 'dev-ood', 'test-ood'].includes(slice)) return 0;
   let n = 0;
-  for (const r of recs) for (const x of oodSpans(r)) { registry.add(x.text, { slice: slice === 'test-ood' ? 'heldout' : slice, source: 'crossfamily-bedtype', port: 'X5', kind: x.kind, names: r.meta.masks?.names ?? [], markers: r.meta.masks?.markers ?? [] }); n++; }
+  for (const r of recs) for (const x of oodSpans(r)) { registry.add(x.text, { slice: slice === 'test-ood' ? 'heldout' : slice, source: 'crossfamily-bedtype', port: 'X5', kind: x.kind, names: r.meta.masks?.names ?? [], markers: [...(r.meta.masks?.markers ?? []), ...(x.markers ?? [])] }); n++; }
   return n;
 }
 export function stats(records) {

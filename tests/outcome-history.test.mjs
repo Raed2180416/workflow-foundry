@@ -318,7 +318,8 @@ test('tampered receipt, contract, request, proposal, workflow, run and event ide
     ['request ID', h => mutate(h, 'requests', h.request.id, q => { q.id = 'forged'; })],
     ['proposal goal', h => mutate(h, 'proposals', h.proposal.id, p => { p.workflow.goal = 'Different goal'; })],
     ['workflow criteria', h => mutate(h, 'workflows', h.proposal.workflowHash, w => { w.envelope.successCriteria = ['weaker']; }, 'hash')],
-    ['run input', h => mutate(h, 'runs', h.run.id, r => { r.input.record.count = 100; })],
+    // The run's input is its own row (run_input), not part of runs.body.
+    ['run input', h => mutate(h, 'run_input', h.run.id, input => { input.record.count = 100; }, 'run_id')],
     ['run status', h => mutate(h, 'runs', h.run.id, r => { r.status = 'waiting'; })],
     ['event bytes', h => h.store.db.prepare("UPDATE events SET body='{}' WHERE run_id=? AND seq=2").run(h.run.id)],
     ['event truncation', h => h.store.db.prepare('DELETE FROM events WHERE run_id=? AND seq=?').run(h.run.id, h.run.eventHead.seq)],

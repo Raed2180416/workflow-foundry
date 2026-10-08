@@ -26,7 +26,7 @@ import { cRecords, C_PORTS, C_SLICES } from './crossfamily-cports.mjs';
 
 export const group = 'construction-crossfamily';
 export const ports = ['X5:bedtype', 'C1', 'C2', 'C7', 'C8', 'C9'];
-export const GENERATOR_VERSION = `construction-crossfamily@1+${BEDTYPE_VERSION}`;
+export const GENERATOR_VERSION = `construction-crossfamily@2+${BEDTYPE_VERSION}`;
 export const CUT_LINE_PORTS = Object.freeze(['C8', 'C9']);
 
 // Which ports a slice asks for by default. X5 bedtype in every slice but the reserves; the smoke sets of C1, C2, C7, C8, C9 in

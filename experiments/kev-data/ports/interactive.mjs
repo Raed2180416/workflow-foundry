@@ -40,7 +40,7 @@
 //   - Q4 unknowable: gridquest reports every effect of a switch, so the only unknowable it gives is a GAP (the remote effects deleted
 //     from the result line). §2.5 forbids gaps and a bag-of-words probe separates them from stated rows at 1.000, so none is trained
 //     (UNKNOWABLE_GAP) or built by default; an evaluation slice may opt in to a labelled diagnostic (meta.unkAxis.kind 'gap'). The
-//     presence-matched Q4 unknowable is an open item (another family, or an owner decision). Every row of every other variant lies in
+//     presence-matched Q4 unknowable comes from Q4's other train family (ports/runbook.mjs builds it); gridquest has none. Every row of every other variant lies in
 //     its slice's skeleton bucket (a same-name distractor is re-bucketed by its own form).
 //   - Q4 drifts are drawn only with an as_expected row of the same pairing signature (kind; the direction of a move or unlock;
 //     whether a fixture is named; the container searched), and a switch's plan may list one effect too few (unaware coupling) or,
@@ -51,7 +51,13 @@
 //     build (rule 7). Repeated states in test-in and test-ood are dropped here.
 //   - X1:gridquest registers the injection spans only (negatives are shared bed prose); X1:gameqa has bed injection forms in the train
 //     bucket only, so an OOD slice has X1:gameqa positives only from slice-tagged held-out lines in opts.lines. Those lines belong to
-//     their slice by the held-out store's own rule (heldout/pools.mjs oodSliceOfHash) and are not re-bucketed here.
+//     their slice by the held-out store's own rule (heldout/pools.mjs oodSliceOfHash) and are not re-bucketed here. Where an OOD slice
+//     has such positives, its X1:gameqa negatives are held-out negative lines appended the same way (no plain bed report, no tracker
+//     window): every row has one shape, recorded in meta.x1.format ('appended', 'post', 'report', 'window') in every slice.
+//   - X1:gridquest rows come in pairs of one format (a sentence, or the room description) and one source (room, journal), matched in
+//     length; a description negative is a room with no inscription. Its nine positive sentences are asked once per test slice.
+//   - Q5 holds out 3 of the 13 bug templates (q5HeldoutTemplates: in each class the bed plants with more than one template, the
+//     last one; chest_rubble, enemy_freeze, stale_hud), never built in a train-like slice (§3.3).
 //   - X2:gameqa pairs the bed's ALIAS words, keeping only pairs a reader decides from the legend and plain English (X2_READABLE):
 //     the bed's slang is knowledge the port does not declare. The program's gameqa source (findings, bugs[].id) is an open item.
 //   - formId of Q1, Q2 and Q3 is the skeleton of the whole description (or sentence): their form counts over-count; they are smoke sets.
@@ -502,6 +508,9 @@ function x1Lines(G) {
   return out;
 }
 const lineKey = l => l.id ?? sha(l.text).slice(0, 12);
+// the shape of an X1:gameqa state, for stratified draws: a report with a paragraph appended (a composed line, the bed's appended
+// injection), a standalone post (a pinned post), a plain report, or a tracker window (the long variant)
+const x1Format = x => (x.slots.append !== undefined || x.kind === 'appended-injection' ? 'appended' : x.slots.text !== undefined || x.kind === 'pinned-injection' ? 'post' : 'report');
 
 // 70% of the posts to train, 10% each to calib-in, dev-select and test-in
 const PINNED_PARTS = Object.freeze([['calib-in', 0.1], ['dev-select', 0.2], ['test-in', 0.3]]);
@@ -546,7 +555,14 @@ async function* gameqaX1(G, qa, seed, difficulty, perWorld) {
   // the whole skeleton space shared 5:3:2 among the OOD slices, not lib/hash.mjs skeletonBucket), and x1Lines kept only this
   // slice's lines: re-bucketing them by skeletonBucket would drop every calib-ood and dev-ood line and 60% of the test-ood ones.
   // Bed spans and train-pool lines are bucketed as everywhere else.
-  const usable = cand.filter(x => (x.source === 'authored' && OOD.has(G.slice) && x.lineSlice === G.slice) || bucketAllows(G.slice, x.form));
+  // In an OOD slice every positive is a held-out line appended to a host report (the bed's injection forms are train-bucket forms),
+  // so a plain bed report there would be a negative by its format alone: on 100 dev-ood worlds with stand-in lines, 'the body ends
+  // in an appended paragraph' was true of every positive and of 74% of the negatives (balanced accuracy 0.63 for that reader). Where
+  // the slice has held-out positive lines, its negatives are the held-out negative lines appended the same way (oodMatched) and the
+  // tracker-window variant (bed text, negative-only there) is not built; without held-out lines the bed negatives stay.
+  const oodMatched = OOD.has(G.slice) && lines.positive.length > 0;
+  const usable = cand.filter(x => (x.source === 'authored' && OOD.has(G.slice) && x.lineSlice === G.slice) || (!oodMatched && bucketAllows(G.slice, x.form)));
+  if (oodMatched) bump(G, 'x1:ood-format-matched');
   bump(G, 'x1:candidates', cand.length); bump(G, 'x1:usable', usable.length);
   const pos = usable.filter(x => x.label === 'yes'), neg = usable.filter(x => x.label === 'no');
   const nPos = Math.max(1, Math.round(perWorld * 0.4));
@@ -555,22 +571,23 @@ async function* gameqaX1(G, qa, seed, difficulty, perWorld) {
     const state = kits.gameqa.X1.buildState(task, x.slots);
     const key = `${G.slice}|X1|${seed}|${x.id}`;
     const rec = makeRecord({ contract: G.contracts.X1, slice: G.slice, opts: G.opts, key, state, label: x.label,
-      meta: meta({ variant: 'clean', formId: x.form, labelSource: x.labelSource, surface: { source: x.source, slice: G.slice, lineHash: spanHash(x.slots.append ?? x.slots.text ?? state.text), ...(x.source === 'bed' ? {} : { filter: x.filter ?? 'pending' }) }, kit: { port: 'X1', slots: x.slots }, x1: { kind: x.kind, hard: x.hard, addressee: x.addressee, line: x.line ?? null } }) });
+      meta: meta({ variant: 'clean', formId: x.form, labelSource: x.labelSource, surface: { source: x.source, slice: G.slice, lineHash: spanHash(x.slots.append ?? x.slots.text ?? state.text), ...(x.source === 'bed' ? {} : { filter: x.filter ?? 'pending' }) }, kit: { port: 'X1', slots: x.slots }, x1: { kind: x.kind, hard: x.hard, addressee: x.addressee, line: x.line ?? null, format: x1Format(x) } }) });
     yield rec;
     if (G.test && unit(`${key}|para`) < G.share.paraphrase) { const p = paraphraseOf(rec, G.contracts.X1, G.slice, G.opts, key); if (p) yield p; }
   }
   // the long variant: the span inside a window of the tracker (about 6 reports)
-  if (unit(`${G.slice}|X1long|${seed}`) < (G.opts.longShare ?? 0.15) && reports.length >= 6) {
+  if (!oodMatched && unit(`${G.slice}|X1long|${seed}`) < (G.opts.longShare ?? 0.15) && reports.length >= 6) {
     const all = task.inputs.reports, pickPos = unit(`${G.slice}|X1longpos|${seed}`) < 0.5, injReports = reports.filter(a => a.injection);
     const startMax = all.length - 6;
     let start = hnum(`${G.slice}|X1longwin|${seed}`) % (startMax + 1);
     if (pickPos && injReports.length) { const at = all.findIndex(r => r.id === pickBy(injReports, `${G.slice}|X1longinj|${seed}`).id); start = Math.max(0, Math.min(startMax, at - (hnum(`${G.slice}|X1longoff|${seed}`) % 6))); }
-    const ids = all.slice(start, start + 6).map(r => r.id), win = reports.filter(a => ids.includes(a.id)), has = win.some(a => a.injection);
-    const span = has ? win.find(a => a.injection).injection : `${win[0].report.title}`, form = formOf(span, masks);
+    // the label reads every report of the window (aligned or not): a window holding any injection text is a positive
+    const winAll = all.slice(start, start + 6), ids = winAll.map(r => r.id), injText = winAll.map(r => TAP.injectionIn(r.body)).find(Boolean) ?? null, has = injText !== null;
+    const span = has ? injText : winAll[0].title, form = formOf(span, masks);
     if (bucketAllows(G.slice, form)) {
       const slots = { reports: ids }, state = kits.gameqa.X1.buildState(task, slots);
       yield makeRecord({ contract: G.contracts.X1, slice: G.slice, opts: G.opts, key: `${G.slice}|X1|${seed}|long`, state, label: has ? 'yes' : 'no',
-        meta: meta({ variant: 'long', formId: form, labelSource: 'generator', surface: { source: 'bed', slice: G.slice, lineHash: spanHash(state.text) }, kit: { port: 'X1', slots }, x1: { kind: has ? 'window-with-injection' : 'window', hard: null, addressee: has ? QA.hasAddressee(span) : false, line: null } }) });
+        meta: meta({ variant: 'long', formId: form, labelSource: 'generator', surface: { source: 'bed', slice: G.slice, lineHash: spanHash(state.text) }, kit: { port: 'X1', slots }, x1: { kind: has ? 'window-with-injection' : 'window', hard: null, addressee: has ? QA.hasAddressee(span) : false, line: null, format: 'window' } }) });
     }
   }
 }
@@ -579,42 +596,93 @@ const alignJournalEntry = entry => GRIDQUEST_JOURNAL_INJECTIONS.includes(entry);
 // ----------------------------------------------------------------------------------------------------------------
 // X1:gridquest (held-out family): the injection inscriptions and the journal injections against graffiti, journal notes and
 // ordinary room sentences. Registered spans (heldoutSpans) are the injections: the label-bearing, family-specific text.
+//
+// Two formats: the SENTENCE (one room sentence, or one journal entry) and the room DESCRIPTION (the long variant: the whole
+// description the inscription stands in). Every positive row comes with a negative row of the same format and the same source
+// (room or journal) from the same world, matched in length, so neither the format, the length nor source_kind tells the label
+// (§2.7 step 7). The bed has nine positive sentences in all (six inscriptions, three journal injections) and a test slice asks a
+// state once, so a sentence pair is emitted only while its positive state is new in this run; a description pair always (a
+// description names the world's rooms). Measured before this rule, on 400 dev worlds read as test-ood: 126 of 144 positives were
+// descriptions and 196 of 1392 negatives, and a length-only reader separated the labels.
+// A description negative is a room with NO injection inscription: a description that holds one is a positive whatever sentence
+// was drawn (the earlier per-row long draw labelled 8 of 196 such descriptions 'no').
 // ----------------------------------------------------------------------------------------------------------------
+const X1GQ_SOURCE = x => (x.cell === null ? 'journal' : 'room');
+// A length-matched negative for a positive of `target` characters: of the five candidates nearest in length (ties: hard negatives
+// first, then the hash of the key), the one that brings the run's running length difference (G.x1gqLenBias, per format) closest
+// to zero. The nearest alone left positives 2% longer on average (an inscription room has one long sentence more), and a
+// length-threshold reader then reached 0.53-0.54 balanced accuracy out of sample (400 dev worlds read as test-ood, split by seed);
+// with the running balance 0.515-0.518 (test/interactive.test.mjs holds it under 0.53).
+function nearestByLength(G, format, list, target, key, hardOf = () => false) {
+  const ranked = list.map(x => ({ x, d: x.text.length - target, h: hardOf(x) ? 0 : 1, k: sha(`${key}|${x.id}`) }))
+    .sort((a, b) => Math.abs(a.d) - Math.abs(b.d) || a.h - b.h || (a.k < b.k ? -1 : a.k > b.k ? 1 : 0)).slice(0, 5);
+  if (!ranked.length) return null;
+  const bias = (G.x1gqLenBias ??= {})[format] ?? 0;
+  const pick = ranked.reduce((a, b) => (Math.abs(bias + b.d) < Math.abs(bias + a.d) ? b : a));
+  G.x1gqLenBias[format] = bias + pick.d;
+  return pick.x;
+}
 async function* gridquestX1(G, mod, seed, difficulty, perWorld) {
   const task = mod.index.generate({ seed, split: G.def.bedSplit, difficulty }), wh = worldHash(task), masks = GQ.masksOf(mod, task);
   const W = mod.index._internal.world(task), w = W.w;
   const st = { pos: 0, inv: [], revealed: [], unlocked: [], mech: w.mechs.map(m => m.open0), swCount: w.switches.map(() => 0), steps: 0, won: false };
-  const cand = [];
+  const sents = [], rooms = [];
   const meta = (extra) => ({ family: 'gridquest', bed: 'gridquest', seed, difficulty, worldHash: wh, masks, labelSource: 'generator', ...extra });
   for (let cell = 0; cell < w.n * w.n; cell++) {
     st.pos = cell;
     const observation = mod.render.observationText(w, st, W.budget, 'You go north.');
     const o = parseObservation(observation), kinds = roomSentenceKindsOf(o.description);
-    for (const k of kinds) {
-      // a sentence the description says twice has no single span to point at (the kit needs exactly one occurrence)
-      if (kinds.filter(x => x.sentence === k.sentence).length !== 1) { bump(G, 'x1gq:repeated-sentence'); continue; }
-      if (k.kind === 'ordinary' && unit(`${G.slice}|X1gq|${seed}|${cell}|${k.sentence}`) > 0.06) continue;
-      const label = k.kind === 'injection' ? 'yes' : 'no';
-      cand.push({ id: `room:${cell}:${sha(k.sentence).slice(0, 8)}`, label, kind: k.kind, sentence: k.sentence, observation, slots: { observation, sentence: k.sentence }, form: formOf(k.sentence, masks) });
-    }
+    // a sentence the description says twice has no single span to point at (the kit needs exactly one occurrence)
+    const once = kinds.filter(k => kinds.filter(x => x.sentence === k.sentence).length === 1);
+    bump(G, 'x1gq:repeated-sentence', kinds.length - once.length);
+    const anchor = once.find(k => k.kind === 'graffiti' || k.kind === 'fake-treasure') ?? once[0];
+    rooms.push({ id: `desc:${cell}`, cell, observation, text: o.description, injection: kinds.some(k => k.kind === 'injection'), hard: kinds.some(k => k.kind === 'graffiti' || k.kind === 'fake-treasure'), anchor: anchor?.sentence ?? null });
+    for (const k of once) sents.push({ id: `room:${cell}:${sha(k.sentence).slice(0, 8)}`, label: k.kind === 'injection' ? 'yes' : 'no', kind: k.kind, text: k.sentence, cell, slots: { observation, sentence: k.sentence }, form: formOf(k.sentence, masks) });
   }
   (task.inputs.journal ?? []).forEach((e, i) => {
     const inj = alignJournalEntry(e.entry);
-    cand.push({ id: `journal:${i}`, label: inj ? 'yes' : 'no', kind: inj ? 'journal-injection' : 'journal-note', sentence: e.entry, slots: { journal: i }, form: formOf(e.entry, masks) });
+    sents.push({ id: `journal:${i}`, label: inj ? 'yes' : 'no', kind: inj ? 'journal-injection' : 'journal-note', text: e.entry, cell: null, slots: { journal: i }, form: formOf(e.entry, masks) });
   });
-  if (!cand.length) return;
-  const pos = cand.filter(x => x.label === 'yes'), neg = cand.filter(x => x.label === 'no');
-  const nPos = Math.max(1, Math.round(perWorld * 0.4));
-  const hardW = x => (x.kind === 'ordinary' ? 0.5 : 2);
-  const chosen = [...weightedDraw(pos, () => 1, nPos, `${G.slice}|X1gq|${seed}|pos`), ...weightedDraw(neg, hardW, perWorld - nPos, `${G.slice}|X1gq|${seed}|neg`)];
-  for (const x of chosen) {
-    const long = x.slots.observation && unit(`${G.slice}|X1gqlong|${seed}|${x.id}`) < (G.opts.longShare ?? 0.15);
-    const slots = long ? { ...x.slots, long: true } : x.slots, state = kits.gridquest.X1.buildState(task, slots);
-    const key = `${G.slice}|X1gq|${seed}|${x.id}`;
-    const rec = makeRecord({ contract: G.contracts.X1, slice: G.slice, opts: G.opts, key, state, label: x.label,
-      meta: meta({ variant: long ? 'long' : 'clean', formId: x.form, surface: { source: 'bed', slice: G.slice, lineHash: spanHash(x.sentence) }, kit: { port: 'X1', slots }, x1: { kind: x.kind, hard: x.kind === 'ordinary' ? null : 'in-world-text', addressee: QA.hasAddressee(x.sentence), span: x.sentence } }) });
+  const pos = sents.filter(x => x.label === 'yes');
+  if (!pos.length) return;
+  const testLike = TEST_LIKE_SLICES.has(G.slice), seen = (G.x1gqSeen ??= new Set()), usedS = new Set(), usedR = new Set(), usedP = new Set();
+  const stateOf = slots => kits.gridquest.X1.buildState(task, slots);
+  const fresh = slots => !testLike || !seen.has(stateHash(stateOf(slots)));
+  const hardS = x => x.kind !== 'ordinary';
+  const row = function* (x, { long = false, label, kind, hard, span, form }) {
+    const slots = long ? { ...x.slots, long: true } : x.slots, state = stateOf(slots);
+    if (testLike) seen.add(stateHash(state));
+    const key = `${G.slice}|X1gq|${seed}|${long ? 'desc' : 'sent'}|${x.id}`;
+    const rec = makeRecord({ contract: G.contracts.X1, slice: G.slice, opts: G.opts, key, state, label,
+      meta: meta({ variant: long ? 'long' : 'clean', formId: form, surface: { source: 'bed', slice: G.slice, lineHash: spanHash(span ?? state.text) }, kit: { port: 'X1', slots },
+        x1: { kind, hard, addressee: QA.hasAddressee(state.text), span, format: long ? 'description' : 'sentence', source: X1GQ_SOURCE(x) } }) });
     yield rec;
-    if (G.test && !long && unit(`${key}|para`) < G.share.paraphrase) { const p = paraphraseOf(rec, G.contracts.X1, G.slice, G.opts, key); if (p) yield p; }
+    if (G.test && unit(`${key}|para`) < G.share.paraphrase) { const p = paraphraseOf(rec, G.contracts.X1, G.slice, G.opts, key); if (p) yield p; }
+  };
+  // room inscriptions first (each gives a description pair), journal injections after
+  const nPos = Math.max(1, Math.round(perWorld / 4));
+  for (const p of weightedDraw(pos, x => (x.cell === null ? 1 : 3), nPos, `${G.slice}|X1gq|${seed}|pos`)) {
+    // the sentence pair: a negative sentence of the same source, nearest in length, not used, whose state is new in a test slice
+    if (!fresh(p.slots)) bump(G, 'x1gq:sentence-pair-repeated');
+    else {
+      const n = nearestByLength(G, 'sentence', sents.filter(x => x.label === 'no' && X1GQ_SOURCE(x) === X1GQ_SOURCE(p) && !usedS.has(x.id) && fresh(x.slots)), p.text.length, `${G.slice}|X1gq|${seed}|${p.id}|ns`, hardS);
+      if (!n) bump(G, 'x1gq:no-sentence-negative');
+      else {
+        usedS.add(n.id);
+        yield* row(p, { label: 'yes', kind: p.kind, hard: null, span: p.text, form: p.form });
+        yield* row(n, { label: 'no', kind: n.kind, hard: n.kind === 'ordinary' ? null : 'in-world-text', span: n.text, form: n.form });
+      }
+    }
+    // the description pair: the room of the inscription against a room with no inscription, nearest in length (one pair per room:
+    // a room with two inscriptions is one description)
+    if (p.cell === null || usedP.has(p.cell)) continue;
+    const room = rooms[p.cell];
+    if (!fresh({ ...p.slots, long: true })) { bump(G, 'x1gq:description-pair-repeated'); continue; }
+    const n = nearestByLength(G, 'description', rooms.filter(r => !r.injection && r.anchor && !usedR.has(r.cell) && fresh({ observation: r.observation, sentence: r.anchor, long: true })), room.text.length, `${G.slice}|X1gq|${seed}|${p.id}|nd`, r => r.hard);
+    if (!n) { bump(G, 'x1gq:no-description-negative'); continue; }
+    usedR.add(n.cell); usedP.add(p.cell);
+    yield* row(p, { long: true, label: 'yes', kind: p.kind, hard: null, span: p.text, form: p.form });
+    yield* row({ id: n.id, cell: n.cell, slots: { observation: n.observation, sentence: n.anchor } }, { long: true, label: 'no', kind: 'room-description', hard: n.hard ? 'in-world-text' : null, span: null, form: formOf(n.text, masks) });
   }
 }
 
@@ -639,9 +707,24 @@ async function* gameqaX6(G, qa, seed, difficulty, perWorld) {
       meta: { family: 'gameqa', bed: 'gameqa', seed, difficulty, worldHash: wh, variant: 'clean', formId: x.form, labelSource: 'generator', surface: { source: 'bed', slice: G.slice, lineHash: spanHash(state.report) }, masks, kit: { port: 'X6', slots }, x6: { kind: x.label } } });
   }
 }
+// Q5's template axis (§3.3; spec/ports.json Q5 holdouts.templateAxis: "3 of 13 bugs[].template ids, each from a class keeping a
+// training template"), pre-registered by rule: in every class the bed plants with more than one template, the LAST of them in
+// beds/gameqa/bugs.mjs TEMPLATES order (the records group's rule is the same: the highest index). At the pinned bed: chest_rubble
+// (softlock keeps key_eaten), enemy_freeze (enemy_ai keeps enemy_teleport), stale_hud (render_mismatch keeps ghost_sprite).
+// Held-out templates never enter a train-like slice: Q5 is a wave-2 smoke set of train and dev-select, so a held-out template's row
+// is not built (counted 'q5:heldout-template'); the test-OOD template axis that reads them is built with Q5's OOD slices (not yet).
+export function q5HeldoutTemplates(templates) {
+  const byClass = new Map();
+  for (const t of templates) { if (!byClass.has(t.cls)) byClass.set(t.cls, []); byClass.get(t.cls).push(t.id); }
+  return Object.freeze([...byClass.values()].filter(ids => ids.length > 1).map(ids => ids.at(-1)).sort());
+}
+export const Q5_HELDOUT_TEMPLATES = Object.freeze(['chest_rubble', 'enemy_freeze', 'stale_hud']);
+export const q5Admits = (template, slice) => slice === 'test-ood' || !Q5_HELDOUT_TEMPLATES.includes(template);
 async function* gameqaQ5(G, qa, seed, difficulty, perWorld) {
+  const held = q5HeldoutTemplates(qa.bugs.TEMPLATES);
+  if (held.join(',') !== Q5_HELDOUT_TEMPLATES.join(',')) throw fail('Q5_HELDOUT_DRIFT', `the bed's templates give the held-out set ${held.join(', ')}, the pre-registered set is ${Q5_HELDOUT_TEMPLATES.join(', ')}`);
   const task = qa.index.generate({ seed, split: G.def.bedSplit, difficulty }), c = qa.case.caseFor(task), wh = worldHash(task), masks = QA.masksOf(c);
-  const eff = QA.triggerEffects(qa, task, c).filter(x => x.effect).map(x => ({ ...x, id: x.bug.id }));
+  const eff = QA.triggerEffects(qa, task, c).filter(x => x.effect).filter(x => q5Admits(x.bug.template, G.slice) || (bump(G, 'q5:heldout-template'), false)).map(x => ({ ...x, id: x.bug.id }));
   const cands = eff.map(x => ({ ...x, form: formOf(`${x.effect} // ${x.last}`, masks) })).filter(x => bucketAllows(G.slice, x.form));
   for (const x of weightedDraw(cands, () => 1, perWorld, `${G.slice}|Q5|${seed}`)) {
     const slots = { actions: x.actions, observed_effect: x.effect }, state = kits.gameqa.Q5.buildState(task, slots);

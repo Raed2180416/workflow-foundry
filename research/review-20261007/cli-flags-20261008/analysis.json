@@ -1,0 +1,25 @@
+{
+  "reconstructionMaxAbsErrorUsd": 5.42e-20,
+  "shapes": {
+    "shared": {
+      "offMeanUsd": 0.0002053,
+      "onMeanUsd": 0.0001188,
+      "savingUsd": 0.0000866,
+      "savingPct": 42.2,
+      "priceTierShareOfSavingPct": 76,
+      "shorterPromptShareOfSavingPct": 24,
+      "cacheWriteTokensOffMean": 877,
+      "cacheWriteTokensOnMean": 711
+    },
+    "unique": {
+      "offMeanUsd": 0.0002864,
+      "onMeanUsd": 0.0001678,
+      "savingUsd": 0.0001186,
+      "savingPct": 41.4,
+      "priceTierShareOfSavingPct": 82,
+      "shorterPromptShareOfSavingPct": 18,
+      "cacheWriteTokensOffMean": 1304,
+      "cacheWriteTokensOnMean": 1137
+    }
+  }
+}

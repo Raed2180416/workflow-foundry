@@ -158,6 +158,7 @@ const usage = `Workflow Foundry 0.1.0 — experimental, source/evidence qualifie
 `  foundry inspect RUN_ID --workspace PATH  (the run, its verified events and its chain-head anchor)\n` +
 `  foundry verify-run RUN_ID --workspace PATH [--check-anchors FILE] [--append-anchor FILE] [--expect-head SEQ:HASH] [--require-bound] [--journal FILE]\n` +
 `      (recompute what the run's hash chain binds: journal rows, decisions, verdict inputs, transcripts; exit 1 on any edit)\n` +
+`  foundry migrate-store --workspace PATH  (split run records written by the earlier whole-run store into per-node rows; they also load, and migrate on their first write, without this)\n` +
 `  foundry resume RUN_ID [--policy MODEL_POLICY.json] [--append-anchor FILE] --workspace PATH\n` +
 `  foundry tick [--policy MODEL_POLICY.json] --workspace PATH  (resume runs whose wait timers are due)\n` +
 `  foundry calls --run RUN_ID --workspace PATH  (journaled model calls with cost)\n` +
@@ -234,6 +235,14 @@ async function main() {
   if (command === 'hook') {
     let text = ''; for await (const chunk of process.stdin) { text += chunk; if (text.length > 2 * 1024 * 1024) throw new FoundryError('HOOK_INPUT_LIMIT', 'Hook input is too large'); }
     print(claudeHookResult(workspace, JSON.parse(text))); return;
+  }
+  if (command === 'migrate-store') {
+    if (positionals.length !== 1) throw new FoundryError('CLI_ARGUMENT', 'migrate-store takes no argument besides --workspace. Use --help.');
+    if (!existsSync(path.join(workspace, '.foundry', 'foundry.sqlite'))) throw new FoundryError('NO_STATE', 'No Foundry state in this workspace; pass --workspace PATH');
+    const { Store } = await import('../src/store.mjs');
+    const store = new Store(workspace);
+    try { print({ workspace, ...store.migrateRuns() }); } finally { store.close(); }
+    return;
   }
   if (command === 'verify-run') {
     if (positionals.length !== 2 || !item?.trim()) throw new FoundryError('CLI_ARGUMENT', 'verify-run requires exactly one RUN_ID. Use --help.');

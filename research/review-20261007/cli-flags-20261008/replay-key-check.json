@@ -1,0 +1,45 @@
+{
+  "policyVersion": "2026-10-08.1",
+  "policyHash": "68fefacbe500a009974f3a6207409eb0dc1ab94f964c37d87f27cea98edd9178",
+  "childEnv": {
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "FORCE_PROMPT_CACHING_5M": "1"
+  },
+  "journals": [
+    {
+      "file": "../../../experiments/runs/p1/journal.sqlite",
+      "claudeCliRows": 1863,
+      "matched": 1863,
+      "notMatched": 0,
+      "notChecked": 0
+    },
+    {
+      "file": "../../../experiments/runs/kev-probe/journal.sqlite",
+      "claudeCliRows": 398,
+      "matched": 398,
+      "notMatched": 0,
+      "notChecked": 0
+    },
+    {
+      "file": "../../../experiments/runs/c0-smoke/journal.sqlite",
+      "claudeCliRows": 4,
+      "matched": 0,
+      "notMatched": 4,
+      "notChecked": 0
+    },
+    {
+      "file": "../../../experiments/runs/records-hand-pilot/journal.sqlite",
+      "claudeCliRows": 141,
+      "matched": 0,
+      "notMatched": 141,
+      "notChecked": 0
+    },
+    {
+      "file": "../../../experiments/runs/calibration/records.journal.sqlite",
+      "claudeCliRows": 12,
+      "matched": 0,
+      "notMatched": 12,
+      "notChecked": 0
+    }
+  ]
+}

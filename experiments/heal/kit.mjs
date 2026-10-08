@@ -49,6 +49,40 @@ export function verifyKit({ kitDir = KIT_DIR, pins = readPins() } = {}) {
 // listed ids. Same construction as experiments/lib/models.mjs subsetPolicy, on the kit's validator.
 const freeze = v => { if (v && typeof v === 'object') { for (const c of Object.values(v)) freeze(c); Object.freeze(v); } return v; };
 
+// ---- policy drift ------------------------------------------------------------------------------------------------------------------
+// The recorded C0/P1 evidence was made under one policy, and model ids may only come from the owner file. "The owner file still
+// agrees with the frozen kit" is therefore judged on what can change a model choice or a replay, not on bytes:
+//   - `policyVersion` and `notes` are prose (a bumped version or a new note changes no call);
+//   - a provider key that no file of the frozen kit mentions cannot change a call the kit makes. Today that is `childEnv`, which the
+//     engine lane added to claude-cli on 2026-10-08 for the `claude -p` child environment. The exemption is proved, not assumed: it
+//     lapses as soon as any kit source mentions the key.
+// Anything else (a model id, class, price, digest, decoding, provider invocation, class order, escalation) is blocking drift.
+// The run itself always uses the kit's own policy of record (below), so its policy hash, its replay keys and its call costs stay
+// those of the recorded runs (the 2026-10-08 flags lower the reported cost per call; synthesis rule R3 makes those costs incomparable).
+export const PROSE_FIELDS = Object.freeze(['policyVersion', 'notes']);
+export const PROVIDER_KEYS_UNREAD_BY_KIT = Object.freeze(['childEnv']);
+const stable = v => JSON.stringify(v, (_, x) => (x && typeof x === 'object' && !Array.isArray(x) ? Object.fromEntries(Object.keys(x).sort().map(k => [k, x[k]])) : x));
+const diffPaths = (a, b, at = '') => {
+  const obj = x => x !== null && typeof x === 'object' && !Array.isArray(x);
+  if (obj(a) && obj(b)) return [...new Set([...Object.keys(a), ...Object.keys(b)])].sort().flatMap(k => diffPaths(a[k], b[k], at ? `${at}.${k}` : k));
+  return stable(a) === stable(b) ? [] : [at || '(root)'];
+};
+export function policyDrift(live, frozen, { kitSources = [] } = {}) {
+  const L = structuredClone(live), F = structuredClone(frozen), ignored = [];
+  for (const k of PROSE_FIELDS) { if (stable(L[k]) !== stable(F[k])) ignored.push(k); delete L[k]; delete F[k]; }
+  for (const key of PROVIDER_KEYS_UNREAD_BY_KIT) {
+    if (kitSources.some(text => text.includes(key))) continue;      // the kit reads it: any difference stays blocking
+    for (const name of new Set([...Object.keys(L.providers ?? {}), ...Object.keys(F.providers ?? {})])) {
+      const a = L.providers?.[name], b = F.providers?.[name];
+      if (stable(a?.[key]) !== stable(b?.[key])) ignored.push(`providers.${name}.${key}`);
+      if (a) delete a[key]; if (b) delete b[key];
+    }
+  }
+  const blocking = diffPaths(L, F);
+  return { bytesIdentical: false, blocking, ignored, ok: blocking.length === 0 };
+}
+const kitSourceTexts = kitDir => walk(path.join(kitDir, 'src')).filter(f => /\.(mjs|js|json)$/.test(f)).map(f => readFileSync(f, 'utf8'));
+
 let cached;
 export async function loadKit({ kitDir = KIT_DIR, pins = readPins(), verify = true } = {}) {
   if (cached && cached.dir === kitDir) return cached;
@@ -58,10 +92,17 @@ export async function loadKit({ kitDir = KIT_DIR, pins = readPins(), verify = tr
   const [foundry, port, journal, policy, store, data, validate, scripted, cli, ctx, sandbox, caps] = await Promise.all(['src/foundry.mjs', 'src/models/port.mjs', 'src/journal.mjs',
     'src/models/policy.mjs', 'src/store.mjs', 'src/data.mjs', 'src/validate.mjs', 'src/models/providers/scripted.mjs', 'src/models/providers/claude-cli.mjs', 'src/context.mjs',
     'src/sandbox.mjs', 'src/capabilities.mjs'].map(imp));
-  const ownerFile = path.join(REPO, 'policy/models.json');
-  const policyIdentical = existsSync(ownerFile) && blobOf(ownerFile) === blobOf(path.join(kitDir, 'policy/models.json'));
-  if (verify && !policyIdentical) throw Object.assign(new Error('HEAL_POLICY_DRIFT: policy/models.json differs from the frozen kit policy'), { code: 'HEAL_POLICY_DRIFT' });
-  const owner = policy.loadPolicy(ownerFile).policy;
+  // The owner file is checked against the kit's policy of record; the run uses the policy of record (see "policy drift" above).
+  const ownerFile = path.join(REPO, 'policy/models.json'), recordFile = path.join(kitDir, 'policy/models.json');
+  let drift;
+  if (!existsSync(ownerFile)) drift = { bytesIdentical: false, blocking: ['(owner policy file missing)'], ignored: [], ok: false };
+  else {
+    drift = policyDrift(JSON.parse(readFileSync(ownerFile, 'utf8')), JSON.parse(readFileSync(recordFile, 'utf8')), { kitSources: kitSourceTexts(kitDir) });
+    drift.bytesIdentical = blobOf(ownerFile) === blobOf(recordFile);
+  }
+  const policyIdentical = drift.ok;
+  if (verify && !policyIdentical) throw Object.assign(new Error(`HEAL_POLICY_DRIFT: policy/models.json differs from the frozen kit policy in: ${drift.blocking.join(', ')}`), { code: 'HEAL_POLICY_DRIFT', drift });
+  const owner = policy.loadPolicy(recordFile).policy;
   const sessionPolicy = ids => {
     const missing = ids.filter(id => !owner.models.some(m => m.id === id));
     if (missing.length) throw new Error(`model ids not in the owner policy: ${missing.join(', ')}`);
@@ -84,7 +125,7 @@ export async function loadKit({ kitDir = KIT_DIR, pins = readPins(), verify = tr
     return { db, journal: new journal.Journal(db), file };
   };
   cached = {
-    dir: kitDir, check, kitHash: check.kitHash ?? pins.kit.kitHash, commit: pins.kit.commit, pins, ownerPolicy: owner, ownerPolicyHash: policy.policyHash(owner), policyIdentical,
+    dir: kitDir, check, kitHash: check.kitHash ?? pins.kit.kitHash, commit: pins.kit.commit, pins, ownerPolicy: owner, ownerPolicyHash: policy.policyHash(owner), policyIdentical, policyDrift: drift,
     Foundry: foundry.Foundry, ModelPort: port.ModelPort, Journal: journal.Journal, Store: store.Store, ScriptedProvider: scripted.ScriptedProvider,
     ClaudeCliProvider: cli.ClaudeCliProvider, policy, data, validate, context: ctx, sandbox, createRegistry: caps.createDefaultRegistry, sessionPolicy, copyJournal, emptyJournal,
     digest: data.digest, canonical: data.canonical, policyHash: policy.policyHash,

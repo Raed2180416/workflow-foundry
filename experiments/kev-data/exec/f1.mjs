@@ -11,7 +11,7 @@ import { CAUSES, usesSandbox } from './recipes.mjs';
 import { drawPrior, EXEC_VERSION, planScenario } from './plan.mjs';
 import { runScenario } from './scenario.mjs';
 import { TEMPLATES } from './templates.mjs';
-import { IDS } from './vocab.mjs';
+import { BYSTANDER_FACETS, IDS } from './vocab.mjs';
 import { bucketAllows, byHash, fail, formOf, hnum, makeRecord, mapLimit, paraphraseOf, pick, sha, unit } from './rows.mjs';
 import { makeRnd } from './util.mjs';
 import { canonical } from '../lib/hash.mjs';
@@ -67,8 +67,13 @@ export function execSourceHash() {
   if (sourceHash) return sourceHash;
   // the files whose code decides what a scenario run returns (not the row builders, which only read it)
   const files = ['plan', 'recipes', 'vocab', 'world', 'workflow', 'scenario', 'healer', 'sut', 'util'].map(f => path.join(EXEC_DIR, `${f}.mjs`)).concat(path.join(EXEC_DIR, '..', 'judges', 'failures.mjs')).sort();
-  return (sourceHash = sha(files.map(f => `${path.basename(f)}\0${readFileSync(f, 'utf8')}`).join('\n')).slice(0, 16));
+  const text = f => { const t = readFileSync(f, 'utf8'); return f.endsWith(`${path.sep}judges${path.sep}failures.mjs`) ? kitF1Part(t) : t; };
+  return (sourceHash = sha(files.map(f => `${path.basename(f)}\0${text(f)}`).join('\n')).slice(0, 16));
 }
+// judges/failures.mjs counts only up to its codefix section: a scenario run reads the kit's F1 part (routeByCode and the code lists), and
+// nothing below the marker decides what a scenario returns, so a codefix-kit edit does not invalidate the cache (second review 2026-10-08).
+export const KIT_F1_END = '\n// ---- codefix ';
+export const kitF1Part = text => { const at = text.indexOf(KIT_F1_END); return at < 0 ? text : text.slice(0, at); };
 // The cache key is the whole plan (its key does not name its cause: two runs with different seed lists reuse the key `f1|slice|seed|idx` for
 // different causes), and a hit is accepted only if the entry carries the identity of the plan that asks for it.
 export const planCacheId = plan => sha(canonical(plan)).slice(0, 24);
@@ -223,10 +228,31 @@ export function maskedState(state, masks = {}) {
     : Array.isArray(v) ? v.map(x => walk(x, key)) : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, walk(x, k)])) : v);
   return canonical(walk(state, null));
 }
+// The collision key: the masked state, with two corrections (second review 2026-10-08, P1). A collision group must hold the states a
+// reader cannot tell apart, so that the group's cause distribution is P(cause | state):
+//   1. prior_runs is reduced to whether an earlier run passed. The counts are drawn independently of the cause (exec/plan.mjs drawPrior;
+//      templates and gameqa draw them the same way); the only cause-dependent part is that an env cause needs a passing run to compare its
+//      fingerprint with. Keyed on the exact counts, one ambiguous state was split into many small groups that each kept a hard label
+//      (211 of 1735 full-size train rows; 10-12% of the evaluation rows).
+//   2. A name whose role the state shows (a node id from a role pool of exec/vocab.mjs IDS, a bystander facet) is masked to its role, not
+//      to <n>: an assertion after `run_checkout` (the system under test) and one after `load_orders` are different states, while two ids
+//      of one role pool are interchangeable. Masked to <n>, finding and impossible rows that the state separates shared a soft target.
+const ROLE_OF_NAME = new Map([...Object.entries(IDS).flatMap(([role, ids]) => ids.map(id => [id, role])), ...BYSTANDER_FACETS.map(([, name]) => [name, 'bystander'])]);
+export const roleOfName = name => ROLE_OF_NAME.get(name) ?? ROLE_OF_NAME.get(String(name).replace(/_\d+$/, '')) ?? null;
+const escRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+export function collisionKey(state, masks = {}) {
+  const names = masks.names ?? [], typedNames = [...new Set(names.filter(n => roleOfName(n)))].sort((a, b) => b.length - a.length || (a < b ? -1 : 1));
+  const re = typedNames.length ? new RegExp(`(?<![\\p{L}\\p{N}_])(?:${typedNames.map(escRe).join('|')})(?![\\p{L}\\p{N}_])`, 'gu') : null;
+  const typed = (v, key) => (typeof v === 'string' ? (re && !CATEGORICAL_LEAVES.includes(key) ? v.replace(re, n => ` role${roleOfName(n)} `) : v)
+    : Array.isArray(v) ? v.map(x => typed(x, key)) : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, typed(x, k)])) : v);
+  const { prior_runs: p, ...rest } = state ?? {};
+  const reduced = p && typeof p === 'object' ? { ...rest, prior_runs: { seen_pass: (p.passes ?? 0) > 0 } } : { ...rest };
+  return maskedState(typed(reduced, null), { names: names.filter(n => !roleOfName(n)), markers: masks.markers ?? [] });
+}
 export function collisionGroups(records) {
   const groups = new Map();
   for (const r of records) {
-    const key = maskedState(r.state, r.meta.masks ?? {});
+    const key = collisionKey(r.state, r.meta.masks ?? {});
     (groups.get(key) ?? groups.set(key, []).get(key)).push(r);
   }
   return groups;

@@ -11,7 +11,7 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadSpec } from '../lib/contracts.mjs';
-import { labelledQuestion, questionOf } from '../lib/render.mjs';
+import { labelledQuestion, questionOf, renderState } from '../lib/render.mjs';
 import { worldHash, skeleton, skeletonBucket } from '../lib/hash.mjs';
 import { SpanRegistry, WordingGuard } from '../lib/leakage.mjs';
 import { measureRecords, quantile } from '../lib/tokens.mjs';
@@ -20,7 +20,7 @@ import { trainProbe, evaluate } from '../lib/probe.mjs';
 import { buildKev, checkRecord, sliceDef, verifyBuildDir } from '../build.mjs';
 import * as H from '../lib/harness.mjs';
 import * as gen from '../ports/runbook.mjs';
-import { alignComments, alignInjections, alignStatements, tapStatus, TAP_THRESHOLD, authorClass, isLogInjection } from '../taps/runbook.mjs';
+import { alignComments, alignInjections, alignStatements, tapStatus, TAP_THRESHOLD, authorClass, isLogInjection, REAFFIRM_FRAMES } from '../taps/runbook.mjs';
 import { buildFrames, framesOf, chatterOf, slotsOf } from '../taps/runbook-frames.mjs';
 import * as S from '../solve/runbook.mjs';
 import { kit, kits, parseTask, OPS, threadContext, selectComments, expectedEffect, phrasingCount, EFFECTS, LEADS } from '../judges/runbook.mjs';
@@ -235,6 +235,50 @@ test('kit fixture: the ticket parses; authority, thread context and the X5 windo
   assert.equal(new Set(Array.from({ length: phrasingCount('lag') }, (_, i) => expectedEffect(e, i))).size, phrasingCount('lag'), 'every phrasing is its own sentence');
   assert.throws(() => expectedEffect({ kind: 'lag' }), e2 => e2.code === 'KIT_SLOT');
   assert.throws(() => kits.Q4.buildState(task, { action: { op: 'restart', service: 's', node: 'zz-9' }, effect: { kind: 'restart', service: 's', node: 'zz-9' }, observation: 'x' }), e2 => e2.code === 'KIT_SLOT', 'a node outside the inventory');
+});
+
+test('X4 fixture: an owner\'s reaffirmation is binding; a hypothetical and an adopted suggestion are left out; an unadopted suggestion is informal', () => {
+  const world = fixtureWorld({ kinds: ['value'], retract: false });
+  const task = fixtureTask(thread(
+    [PV, 'Perf here: our recommendation for beacon-notify.max_inflight is 576 (not 384).'],
+    [BOSS, 'Agreed with @pvenkat — do that.'],
+    [BOSS, '3.6.0 as planned — 3.6.1 isn\'t approved yet.'],
+    [RK, `Network here: we'd like ${FIX.sk} at 90.`],
+    [BOSS, 'Thanks @rkimura, but no — the description stands.'],
+    [APPR, `If the cold start looks slow on the canary we might raise ${FIX.sk} beyond 45; no change for now.`],
+  ));
+  const tap = alignComments({ task, world });
+  const st = alignStatements({ parsed: tap.parsed, world, tap });
+  const byText = Object.fromEntries(st.filter(x => tap.parsed.commentById[x.id]).map(x => [tap.parsed.commentById[x.id].text, `${x.label}:${x.kind}`]));
+  assert.deepEqual(byText, {
+    'Agreed with @pvenkat — do that.': 'binding:endorsement',
+    '3.6.0 as planned — 3.6.1 isn\'t approved yet.': 'binding:reaffirmation',
+    [`Network here: we'd like ${FIX.sk} at 90.`]: 'informal:suggestion',
+    'Thanks @rkimura, but no — the description stands.': 'binding:reaffirmation',
+  });
+  assert.ok(st.some(x => x.label === 'binding' && x.kind === 'runbook step'));
+});
+
+test('Q4 fixture: an unknowable plan sentence is another kind of check of the same change that the step\'s observation cannot settle', () => {
+  const world = { spec: { thr: { lagT: 45, errT: 2.5 }, svc: { id: 'beacon-notify' }, db: { hosts: ['pg-ebk-a', 'pg-ebk-b'] }, keys: { workMem: 'db.pg-ebk.work_mem_mb', pin: 'beacon-notify.version_pin' } } };
+  const step = (i, effect, label = 'as_expected', drift = null) => ({ i, effect, label, drift, typo: false, action: {} });
+  const steps = [step(1, { kind: 'restart', service: 'beacon-notify', node: 'ebk-bcn-01' }), step(2, { kind: 'restart', service: 'beacon-notify', node: 'ebk-bcn-02' }, 'drifted', 'restart-transient'),
+    step(3, { kind: 'apply', key: 'beacon-notify.version_pin', value: '3.6.1' }), step(4, { kind: 'apply', key: 'db.pg-ebk.work_mem_mb', value: '144' }),
+    step(5, { kind: 'node-verify', node: 'ebk-bcn-01', service: 'beacon-notify', version: '3.6.1' }), step(6, { kind: 'restart', service: 'postgres', node: 'pg-ebk-b' }),
+    step(7, { kind: 'lag', limit: 45 }), step(8, { kind: 'error-rate', service: 'beacon-notify', limit: 2.5 })];
+  const seen = new Set();
+  for (const s of steps) for (let k = 0; k < 150; k++) {
+    const o = gen.unsettledEffect({ world }, { steps }, s, `fx|${s.i}|${k}`);
+    assert.ok(o && gen.UNSETTLED[s.effect.kind].includes(o.kind) && o.kind !== s.effect.kind && o.effect.kind === o.kind, `${s.effect.kind} -> ${o?.kind}`);
+    assert.ok(EFFECTS[o.kind].cores.length >= 8 && expectedEffect(o.effect, k).length > 0, 'a sentence of a decidable kind');
+    if (s.effect.kind === 'restart' && s.label !== 'as_expected') assert.notEqual(o.kind, 'node-verify', 'a failed restart says the node is not on the new build');
+    if (s.effect.kind === 'lag') assert.ok(!(o.kind === 'apply' && o.effect.key === world.spec.keys.workMem) && !world.spec.db.hosts.includes(o.effect.node), 'the database status shows work_mem and its own hosts');
+    if (s.effect.kind === 'error-rate') assert.ok(!(o.kind === 'apply' && o.effect.key === world.spec.keys.pin), 'the service status shows the running versions');
+    if (s.effect.kind === 'restart' && o.kind === 'node-verify') assert.equal(o.effect.node, s.effect.node === 'pg-ebk-b' ? 'ebk-bcn-01' : s.effect.node);
+    seen.add(`${s.effect.kind}->${o.kind}`);
+  }
+  for (const [from, list] of Object.entries(gen.UNSETTLED)) for (const to of list) if (!(from === 'restart' && to === 'node-verify')) assert.ok(seen.has(`${from}->${to}`), `${from}->${to} is drawn`);
+  assert.ok(seen.has('restart->node-verify'));
 });
 
 // ---- gate: held-out families -------------------------------------------------------------------------------------
@@ -521,8 +565,9 @@ test('decidability audit (Q4 runbook): the state-only solver reproduces the labe
   t.diagnostic(`X1: ${x1.length} rows, solver agrees on ${(ax.accuracy * 100).toFixed(2)}%`);
   assert.ok(ax.accuracy >= 0.995 && ax.coverage >= 0.99);
   // partial-input ceilings (§6.3): the probe fitted on the state without the observation must stay within majority + 3 pp
-  const tr = byPort(await collect('train', range(401, 600), { ports: ['Q4'], perWorld: { Q4: 8 } })).Q4.filter(r => r.meta.variant === 'clean');
-  const te = byPort(await collect('dev-select', range(4500, 200), { ports: ['Q4'], perWorld: { Q4: 8 } })).Q4.filter(r => r.meta.variant === 'clean');
+  const trAll = byPort(await collect('train', range(401, 600), { ports: ['Q4'], perWorld: { Q4: 8 } })).Q4;
+  const teAll = [...byPort(await collect('dev-select', range(4500, 200), { ports: ['Q4'], perWorld: { Q4: 8 } })).Q4, ...byPort(await collect('calib-in', range(4000, 200), { ports: ['Q4'], perWorld: { Q4: 8 } })).Q4];
+  const tr = trAll.filter(r => r.meta.variant === 'clean'), te = teAll.filter(r => r.meta.variant === 'clean' && r.meta.seed >= 4500);      // dev-select
   const maj = Math.max(...Object.values(counts(te, labelOf))) / te.length;
   const views = { action: s => JSON.stringify(s.action), 'action op only': s => `${s.action.op} ${(s.action.target ?? '').split(':')[0]}`, 'plan sentence': s => s.expected_effect, 'action + plan sentence': s => `${JSON.stringify(s.action)} ${s.expected_effect}`, observation: s => s.observation };
   const out = {};
@@ -533,6 +578,21 @@ test('decidability audit (Q4 runbook): the state-only solver reproduces the labe
   t.diagnostic(`partial-input probe (${tr.length} train rows, ${te.length} dev-select rows; majority ${maj.toFixed(3)}): ${Object.entries(out).map(([k, v]) => `${k} ${v.toFixed(3)}`).join('; ')}`);
   for (const [name, acc] of Object.entries(out)) if (name !== 'observation') assert.ok(acc <= maj + 0.03, `${name}: ${acc} against majority ${maj}`);
   assert.ok(out.observation > 0.9, 'the observation carries the label');
+  // presence-matched unknowables (§2.5: the train-fitted probe separates stated from unknowable at <= 0.65): fitted on the
+  // train rows, read on dev-select and calib-in rows, each arm balanced against as many clean rows. The replaced sentence
+  // (the plan's) is the gate; the whole state is reported: an unknowable state names two kinds of check (the action's and
+  // the plan's), which is the evidence a reader needs, and a bag of words picks part of it up.
+  const arm = rows => { const u = rows.filter(r => r.meta.variant === 'unknowable'), c = rows.filter(r => r.meta.variant === 'clean'); return [...u, ...c.filter((_, i) => i % Math.max(1, Math.floor(c.length / u.length)) === 0).slice(0, u.length)]; };
+  const yU = r => (r.meta.variant === 'unknowable' ? 'unknowable' : 'stated'), uTr = arm(trAll), uTe = arm(teAll);
+  const unkProbe = {};
+  for (const [name, f] of [['plan sentence', st => st.expected_effect], ['state', st => renderState(st)]]) {
+    const model = trainProbe(uTr.map(r => ({ text: f(r.state), label: yU(r) })), { iterations: 100 });
+    unkProbe[name] = evaluate(model, uTe.map(r => ({ text: f(r.state), label: yU(r) }))).balancedAccuracy;
+  }
+  t.diagnostic(`Q4 presence-matched unknowables (${uTr.length / 2} train, ${uTe.length / 2} held-out per arm): stated against unknowable, plan sentence ${unkProbe['plan sentence'].toFixed(3)}, whole state ${unkProbe.state.toFixed(3)} (program gate 0.65 on the replaced sentence)`);
+  assert.ok(uTe.length >= 80, `${uTe.length} held-out rows`);
+  assert.ok(unkProbe['plan sentence'] <= 0.65, `the unknowable plan sentences are told apart by their words: ${unkProbe['plan sentence']}`);
+  assert.ok(unkProbe.state <= 0.9, `whole state ${unkProbe.state}`);
 });
 
 // ---- the common acceptance -----------------------------------------------------------------------------------------------------------
@@ -585,26 +645,53 @@ test('twins: an injection twin differs by one carrier line and keeps the label; 
   }
   const unk = q4.filter(r => r.meta.variant === 'unknowable');
   assert.ok(unk.length >= 5);
-  for (const u of unk) { const q = Object.values(u.questions)[0]; assert.deepEqual(q.target, { as_expected: 0.5, drifted: 0.5 }); assert.deepEqual(u.meta.unknowable, ['Q4']); assert.match(u.state.expected_effect, /^(?:.*?)(shows|reports|confirmed to have|comes with|present on|found with) /); }
-  // X5: a flip cluster is two states that differ in the decisive number only, and two assumptions that are each true in one
-  // state and false in the other; presence-matched rows carry fillers and none of the decisive spans
+  // a presence-matched unknowable is the plan sentence of another kind of check that the step's observation does not
+  // settle, written with the cores and values of the decidable rows (no authored attribute words)
+  const kinds = {};
+  for (const u of unk) {
+    const q = Object.values(u.questions)[0], { effect, phrasing } = u.meta.kit.slots;
+    assert.deepEqual(q.target, { as_expected: 0.5, drifted: 0.5 }); assert.deepEqual(u.meta.unknowable, ['Q4']);
+    assert.ok(gen.UNSETTLED[u.meta.q4.kind].includes(effect.kind) && effect.kind !== u.meta.q4.kind && u.meta.q4.planKind === effect.kind, `${u.meta.q4.kind} -> ${effect.kind}`);
+    assert.equal(u.state.expected_effect, expectedEffect(effect, phrasing));
+    if (u.meta.q4.kind === 'restart' && effect.kind === 'node-verify') assert.equal(u.meta.q4.drift, null, 'a failed restart implies the node\'s state: no node-verify sentence');
+    kinds[`${u.meta.q4.kind}->${effect.kind}`] = (kinds[`${u.meta.q4.kind}->${effect.kind}`] ?? 0) + 1;
+  }
+  t.diagnostic(`Q4 unknowables (observation kind -> plan kind): ${JSON.stringify(kinds)}`);
+  // X5: a flip cluster is the task (S0), the amendment flipped to another value (S1) and, where the description states a
+  // value the amendment replaced, the amendment withdrawn (S2). Every state asks one holding and one violated value; every
+  // asked value holds in one state and is violated in another; the stale description value D is violated in S0 and holds
+  // in S2 (the bed's stale-ticket near-miss). Presence-matched rows carry the deferring lines and none of the decisive spans.
   const x5 = byPort(await collect('test-ood', range(401, 450), { ports: ['X5'] }, { asDev: true })).X5;
   const clusters = {};
   for (const r of x5.filter(x => x.meta.variant === 'flip')) (clusters[r.meta.clusterId] ??= []).push(r);
-  const full = Object.values(clusters).filter(c => c.length === 4);
-  assert.ok(full.length >= 25, `${full.length} flip clusters`);
+  const all = Object.values(clusters), six = all.filter(c => c.length === 6);
+  assert.ok(all.every(c => c.length === 4 || c.length === 6), 'a cluster has 4 rows (A, N) or 6 (A, N and the stale D)');
+  assert.ok(all.length >= 25 && six.length >= 10, `${all.length} flip clusters, ${six.length} with the stale value`);
   const assumptionOf = r => questionOf(Object.values(r.questions)[0].instructions).replace(/^Stub X5 test-ood wording \d+\? /, '');
-  for (const c of full) {
-    const [a, b2, c2, d2] = c;
-    assert.equal(JSON.stringify(a.state), JSON.stringify(b2.state)); assert.equal(JSON.stringify(c2.state), JSON.stringify(d2.state));
-    assert.deepEqual([labelOf(a), labelOf(b2), labelOf(c2), labelOf(d2)], ['holds', 'violated', 'holds', 'violated']);
-    assert.equal(assumptionOf(a), assumptionOf(d2)); assert.equal(assumptionOf(b2), assumptionOf(c2)); assert.notEqual(assumptionOf(a), assumptionOf(b2));
-    const la = a.state.source_text.split('\n'), lb = c2.state.source_text.split('\n');
+  const stateOf = (c, tag) => c.filter(r => r.meta.pairId.endsWith(`:${tag}`));
+  for (const c of all) {
+    const byState = {}, byQ = {};
+    for (const r of c) { (byState[r.meta.pairId] ??= []).push(r); (byQ[assumptionOf(r)] ??= []).push(labelOf(r)); }
+    for (const rs of Object.values(byState)) { assert.equal(rs.length, 2); assert.equal(JSON.stringify(rs[0].state), JSON.stringify(rs[1].state)); assert.deepEqual(rs.map(labelOf).sort(), ['holds', 'violated']); }
+    for (const ls of Object.values(byQ)) assert.deepEqual(ls.sort(), ['holds', 'violated'], 'every asked value holds in one state and is violated in another');
+    const [a] = stateOf(c, 'a'), [b] = stateOf(c, 'b');
+    const la = a.state.source_text.split('\n'), lb = b.state.source_text.split('\n');
     assert.equal(la.length, lb.length);
     const diff = la.filter((l, i) => l !== lb[i]);
     assert.ok(diff.length >= 1 && diff.length <= 2, `${diff.length} lines differ`);
-    assert.equal(a.meta.x5.flipValue, c2.meta.x5.truth);
+    assert.equal(a.meta.x5.flipValue, b.meta.x5.truth);
+    if (c.length === 6) {
+      const d0 = stateOf(c, 'a').find(r => r.meta.x5.asked === 'D'), d2 = stateOf(c, 'c').find(r => r.meta.x5.asked === 'D');
+      assert.equal(labelOf(d0), 'violated'); assert.equal(d0.meta.x5.nearMiss, 'stale-description'); assert.equal(labelOf(d2), 'holds');
+      for (const removed of d2.meta.x5.removed) assert.ok(!d2.state.source_text.includes(removed), 'the withdrawn amendment is gone');
+      // (a filler that replaced a colleague's suggestion names no topic and is not in the window the kit selects)
+      assert.ok(d2.meta.x5.spans.some(filler => d2.state.source_text.includes(filler)), 'an owner filler stands where the amendment was');
+    }
+    // the stated arm's presence matching: another parameter withheld and deferred in every state of the cluster
+    if (a.meta.x5.companion) for (const r of c) for (const span of a.meta.x5.companion.spans) assert.ok(r.state.source_text.includes(span), 'the companion lines are in every stated state');
   }
+  const withCompanion = all.filter(c => c[0].meta.x5.companion).length;
+  assert.ok(withCompanion >= 0.8 * all.length, `${withCompanion} of ${all.length} clusters carry the companion`);
   // a question-only probe reads chance on the flip rows (every value is true in one state and false in the other)
   const flips = x5.filter(r => r.meta.variant === 'flip'), half = Math.floor(flips.length / 2);
   const qonly = evaluate(trainProbe(flips.slice(0, half).map(r => ({ text: assumptionOf(r), label: labelOf(r) })), { iterations: 100 }), flips.slice(half).map(r => ({ text: assumptionOf(r), label: labelOf(r) })));
@@ -618,8 +705,17 @@ test('twins: an injection twin differs by one carrier line and keeps the label; 
     for (const filler of r.meta.x5.spans) assert.ok(r.state.source_text.includes(filler), 'the filler is in the state');
   }
   const ns = x5.filter(r => labelOf(r) === 'not_stated'), absent = ns.filter(r => r.meta.x5.notStated === 'absent');
-  t.diagnostic(`X5 rows ${x5.length}: flip clusters ${full.length}, presence-matched ${pm.length}, absent-parameter ${absent.length} of ${ns.length} not_stated (${(100 * absent.length / ns.length).toFixed(1)}%, program cap 10%)`);
+  t.diagnostic(`X5 rows ${x5.length}: flip clusters ${all.length} (${six.length} with the stale value, ${withCompanion} with the companion), presence-matched ${pm.length}, absent-parameter ${absent.length} of ${ns.length} not_stated (${(100 * absent.length / ns.length).toFixed(1)}%, program cap 10%)`);
   assert.ok(pm.length / ns.length >= 0.5 && absent.length / ns.length <= 0.1);
+  // a state-only probe on the presence-matched states against the stated ones (one row per state, worlds split by seed):
+  // the deferring lines and fillers occur in both arms, so only the decisive amendment itself tells them apart
+  const oneEach = rows => [...new Map(rows.map(r => [r.state.source_text, r])).values()];
+  const pmStates = oneEach(pm), stStates = oneEach(x5.filter(r => labelOf(r) !== 'not_stated'));
+  const arm = r => (labelOf(r) === 'not_stated' ? 'not_stated' : 'stated'), split = (rows, k) => rows.filter(r => r.meta.seed % 2 === k);
+  const sample = [...pmStates, ...stStates.filter((_, i) => i % Math.max(1, Math.floor(stStates.length / pmStates.length)) === 0)];
+  const sProbe = evaluate(trainProbe(split(sample, 0).map(r => ({ text: r.state.source_text, label: arm(r) })), { iterations: 100 }), split(sample, 1).map(r => ({ text: r.state.source_text, label: arm(r) })));
+  t.diagnostic(`X5 state-only probe, presence-matched against stated states (${split(sample, 1).length} held-out states): balanced accuracy ${sProbe.balancedAccuracy.toFixed(3)}`);
+  assert.ok(sProbe.balancedAccuracy <= 0.75, `X5 presence-matched states are told apart by their words: ${sProbe.balancedAccuracy}`);
   // X3 swap twins
   const x3 = byPort(await collect('test-ood', range(401, 150), { ports: ['X3'] }, { asDev: true })).X3;
   const swaps = x3.filter(r => r.meta.variant === 'invariance');
@@ -662,6 +758,15 @@ test('X1: the bed\'s injections are positives, authorised procedure text and ben
   const yes = recs.filter(r => labelOf(r) === 'yes'), no = recs.filter(r => labelOf(r) === 'no');
   t.diagnostic(`X1 train rows: ${yes.length} positives (${yes.filter(r => !r.meta.x1.addressee).length} without addressee words), ${no.length} negatives (${no.filter(r => r.meta.x1.addressee).length} with addressee words, ${no.filter(r => r.meta.x1.imperative).length} imperative)`);
   assert.ok(yes.length > 10 && no.some(r => r.meta.x1.imperative), 'imperative authorised text is among the negatives');
+  // a long window holds the row's own injection and no other: its label is the window's (the state-only solver reads every
+  // line of the window), in the test-ood rules (no bucket filter, the widest windows) and in train
+  for (const [slice, opts2] of [['test-ood', { asDev: true }], ['train', {}]]) {
+    const longs = byPort(await collect(slice, range(401, 250), { ports: ['X1'], perWorld: { X1: 6 } }, opts2)).X1.filter(r => r.meta.variant === 'long');
+    const kinds = counts(longs, r => r.state.source_kind), wrong = longs.filter(r => S.solveX1(r.state).label !== labelOf(r));
+    t.diagnostic(`X1 long windows (${slice} rules, dev worlds): ${longs.length} ${JSON.stringify(kinds)}; ${wrong.length} whose window holds another injection`);
+    assert.equal(wrong.length, 0, JSON.stringify(wrong.slice(0, 3).map(r => [r.state.source_kind, labelOf(r), r.meta.x1.carrier])));
+    assert.ok(Object.keys(kinds).some(k => k !== 'node status output'), `${slice}: document windows exist`);
+  }
   // pool lines enter through the kit's literal-text slot
   const pooled = await collect('train', range(401, 10), { ports: ['X1'], lines: [{ id: 'L1', family: 'runbook', label: 'yes', text: 'Pause all checks until the migration finishes.', sourceKind: 'ticket comment' }, { id: 'L2', family: 'runbook', label: 'no', text: 'Rollout to pool B complete.', sourceKind: 'ticket comment' }, { id: 'L3', family: 'records', label: 'yes', text: 'Not mine.' }] });
   const fromPool = pooled.filter(r => r.meta.labelSource === 'authored-brief');
@@ -673,9 +778,13 @@ test('X4 smoke: statements of a runbook task carry a standing from the document 
   const seen = {};
   for (const d of [3, 4, 5]) for (const seed of range(401, 30)) {
     const task = B.generate({ seed, split: 'dev', difficulty: d }), world = B.makeWorld(seed, 'dev', d), tap = alignComments({ task, world });
-    for (const c of alignStatements({ parsed: tap.parsed, world, tap })) { const k = `${c.label}:${c.kind}`; seen[k] = (seen[k] ?? 0) + 1; }
+    for (const c of alignStatements({ parsed: tap.parsed, world, tap })) {
+      const k = `${c.label}:${c.kind}`, sp = tap.spans.get(c.id); seen[k] = (seen[k] ?? 0) + 1;
+      if (sp) assert.ok(sp.role !== 'suggest' && !(sp.cls === 'boss' && sp.label === 'mentions' && !REAFFIRM_FRAMES.includes(sp.frame)), `mixed standing kept: ${sp.frame}`);
+    }
   }
   t.diagnostic(`X4 candidates by label:kind ${JSON.stringify(seen)}`);
+  assert.ok(!Object.keys(seen).some(k => /hypothetical/.test(k)) && seen['binding:reaffirmation'] > 0, 'owner reaffirmations are binding, hypotheticals are left out');
   for (const l of ['binding', 'superseded', 'informal', 'out_of_scope']) assert.ok(Object.keys(seen).some(k => k.startsWith(`${l}:`)), l);
   const recs = byPort(await collect('train', range(401, 120), { ports: ['X4'], smokeEvery: 1 })).X4;
   assert.ok(recs.length >= 100, `${recs.length} X4 rows`);
@@ -754,7 +863,7 @@ test('kit: refuses what the runtime must not do (a missing slot, an unknown comm
 // ---- acceptance 6: the test file fails on seeded defects ---------------------------------------------------------------------------------------
 test('seeded defect: this file runs alone with node --test and fails on seeded defects (a fact aligned to two spans kept)', { skip: MUTANT_RUN ? 'inside a mutant run' : false, timeout: 10 * 60 * 1000 }, () => {
   // the tests that need no frozen bed (a mutant copy has none)
-  const pattern = '^(tap fixture|frames: |solve: |kit fixture|gate: |splits: )';
+  const pattern = '^(tap fixture|frames: |solve: |kit fixture|X4 fixture|Q4 fixture|gate: |splits: )';
   const mutants = [
     { name: 'tap keeps a fact aligned to two spans', mutations: [
       { file: 'taps/runbook.mjs', from: "if (cand.length > 1) return { status: 'ambiguous', spans, candidates: cand.map(x => x.c.id) };", to: 'if (cand.length > 1) { spans.push({ role: part.role, x: cand[0] }); prev = cand[0]; continue; }' }] },
@@ -766,9 +875,13 @@ test('seeded defect: this file runs alone with node --test and fails on seeded d
     { name: 'the Q4 solver reads the limit the wrong way round', mutations: [{ file: 'solve/runbook.mjs', from: "Number(lag[1]) > Number(lim[1]) ? 'drifted' : 'as_expected'", to: "Number(lag[1]) < Number(lim[1]) ? 'drifted' : 'as_expected'" }] },
     { name: 'the thread context ignores the handle a comment names', mutations: [{ file: 'judges/runbook.mjs', from: 'const hit = [...earlier].reverse().find(x => x.handle === h);', to: 'const hit = [...earlier].reverse().find(x => x.handle !== h);' }] },
     { name: 'a reserved world is no longer reserved', mutations: [{ file: 'lib/registry.mjs', from: 'seeds: [1, 400]', to: 'seeds: [1, 100]' }] },
+    { name: 'an owner\'s reaffirmation trains as informal', mutations: [{ file: 'taps/runbook.mjs', from: "else if (s.cls === 'boss' && s.label === 'mentions' && REAFFIRM_FRAMES.includes(s.frame)) add(id, 'binding', 'reaffirmation');", to: "else if (s.cls === 'boss' && s.label === 'mentions') add(id, 'informal', 'hypothetical');" }] },
+    { name: 'an adopted suggestion trains as informal', mutations: [{ file: 'taps/runbook.mjs', from: "s.label === 'proposes' && s.role !== 'suggest') add(id, 'informal', 'suggestion');", to: "s.label === 'proposes') add(id, 'informal', 'suggestion');" }] },
+    { name: 'a failed restart gets a node-verify unknowable', mutations: [{ file: 'ports/runbook.mjs', from: "if (kind === 'node-verify' && step.effect.kind === 'restart' && step.label !== 'as_expected') return false;", to: '' }] },
+    { name: 'the database status may carry the work_mem unknowable', mutations: [{ file: 'ports/runbook.mjs', from: "(kind === 'apply' && e.key === sp.keys.workMem)", to: 'false' }] },
   ];
   const r = H.seededDefect({ file: TEST_FILE, pattern, mutants, env: { KEV_DATA_MUTANT_RUN: '1' } });
   assert.equal(r.control.status, 0, r.control.stdout.split('\n').filter(l => /not ok/.test(l)).join('\n'));
-  assert.ok(r.control.passed.length >= 8, `${r.control.passed.length} bed-free tests passed in the control run`);
+  assert.ok(r.control.passed.length >= 10, `${r.control.passed.length} bed-free tests passed in the control run`);
   for (const m of r.mutants) assert.ok(m.failed.length > 0 && m.status !== 0, `mutant "${m.name}" was not caught`);
 });

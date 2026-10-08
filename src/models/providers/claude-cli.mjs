@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { FoundryError } from '../../data.mjs';
 import { runProcess } from '../../process.mjs';
-import { isPolicyModel, validateChildEnv } from '../policy.mjs';
+import { CHILD_ENV_ALLOWED, isPolicyModel, validateChildEnv } from '../policy.mjs';
 import { DECODING_BY_KIND, THINKING } from '../port.mjs';
 import { SCRUBBED_ENV } from '../../executors/claude-code.mjs';
 
@@ -35,11 +35,15 @@ export function claudeEnv(env = process.env) {
 }
 
 // Child-process tuning that applies when the policy's provider config has no `childEnv` block (research/review-20261007/
-// 04-efficiency-rust.md, change 1: about -0.6 to -0.8 s wall and -17 to -31 % cost per call, measured; re-measured in
-// research/review-20261007/cli-flags-20261008.md). Neither variable touches the sample, so neither is in the replay key: the first
-// drops the CLI's non-essential startup traffic (updates, telemetry, feature-flag fetches), the second makes the CLI write its
-// prompt cache at the 5-minute price instead of the 1-hour one. Both change the reported cost, so cost per success before and
-// after this default is not comparable (synthesis rule R3).
+// 04-efficiency-rust.md, change 1: about -0.6 to -0.8 s wall and -17 to -31 % cost per call; re-measured through this provider in
+// research/review-20261007/cli-flags-20261008/: median wall -1.3 to -1.5 s and cost -41 to -42 % on trivial Haiku 5.5 calls, n=5 per
+// cell, under heavy VM load). Neither variable changes the decoding (temperature, max tokens, effort, thinking budget), so neither is in
+// the replay key: the first drops the CLI's non-essential startup work (updates, telemetry, feature-flag fetches), the second makes the
+// CLI write its prompt cache at the 5-minute price instead of the 1-hour one. The first also changes what the CLI loads (its builtin
+// telemetry plugin is absent from the init event) and the prompt it builds is about 165 tokens shorter (init-probe.json; the cause was
+// not isolated and the text was not inspected). A CLI version change moves that boilerplate too: the journal records the engine version
+// and, per call, the closed-list variables the child saw (providerRequest.env, childEnvRecord below). Both flags change the reported cost,
+// so cost per success before and after this default is not comparable (synthesis rule R3).
 export const DEFAULT_CHILD_ENV = Object.freeze({ CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1', FORCE_PROMPT_CACHING_5M: '1' });
 
 /** The child process environment: the caller's, minus credentials and the parent session's identity; then the `childEnv` block
@@ -48,6 +52,16 @@ export function claudeChildEnv(env = process.env, childEnv = DEFAULT_CHILD_ENV, 
   const out = claudeEnv(env);
   for (const [name, value] of Object.entries(childEnv)) { if (value === null) delete out[name]; else out[name] = value; }
   if (thinkingTokens !== undefined) out.MAX_THINKING_TOKENS = String(thinkingTokens);
+  return out;
+}
+
+/** The journal's record of the child environment (providerRequest.env): every closed-list variable that the block names or that the
+ *  child inherits, with the value the child sees (null: absent). The record is the child's state, not the configuration: a variable the
+ *  block leaves alone passes through from the caller and is recorded verbatim (the CLI reads some of these by presence, so "0" can mean
+ *  set; see CHILD_ENV_ALLOWED). Only these names are recorded; the rest of the environment is never logged. */
+export function childEnvRecord(childProcessEnv, block = {}) {
+  const out = {};
+  for (const name of CHILD_ENV_ALLOWED) if (Object.hasOwn(block, name) || Object.hasOwn(childProcessEnv, name)) out[name] = childProcessEnv[name] ?? null;
   return out;
 }
 
@@ -78,20 +92,21 @@ export function interpretResult(result, { modelId, stderr = '' } = {}) {
 }
 
 export class ClaudeCliProvider {
-  // childEnv: replaces the policy's `childEnv` block (an A/B measurement can pass nulls to switch the flags off); absent, the
-  // policy block applies, and absent there the DEFAULT_CHILD_ENV.
+  // childEnv: replaces the policy's `childEnv` block (an A/B measurement can pass nulls to switch the flags off); absent (undefined), the
+  // policy block applies, and absent there the DEFAULT_CHILD_ENV. An explicit null is not "absent": it is refused like any non-object.
   constructor({ policy, providerName = 'claude-cli', binary, maxBudgetUsd = 1, timeoutMs = 300000, env = process.env, maxOutputBytes = 8 * 1024 * 1024, childEnv } = {}) {
     const config = policy?.providers?.[providerName];
     if (!config || config.kind !== 'claude-cli') throw new FoundryError('MODEL_POLICY_INVALID', `Policy has no claude-cli provider named ${providerName}`);
     if (config.invocation.some(a => a === '--fallback-model' || a.startsWith('--fallback-model='))) throw new FoundryError('MODEL_POLICY_INVALID', '--fallback-model is never passed');
     if (typeof maxBudgetUsd !== 'number' || !(maxBudgetUsd > 0 && maxBudgetUsd <= 25)) throw new FoundryError('MODEL_REQUEST', 'maxBudgetUsd must be in (0, 25]');
-    const block = validateChildEnv(childEnv ?? config.childEnv ?? DEFAULT_CHILD_ENV, childEnv === undefined ? `provider ${providerName} childEnv` : 'childEnv');
+    const block = childEnv === undefined ? validateChildEnv(config.childEnv ?? DEFAULT_CHILD_ENV, `provider ${providerName} childEnv`) : validateChildEnv(childEnv, 'childEnv');
     Object.assign(this, { policy, providerName, binary: binary ?? config.binary, invocation: [...config.invocation], maxBudgetUsd, timeoutMs, env, maxOutputBytes, childEnv: Object.freeze({ ...block }) });
   }
 
   async engineVersion() {
     if (!versions.has(this.binary)) {
-      const probe = runProcess(this.binary, ['--version'], { env: claudeEnv(this.env), timeoutMs: 30000, maxBytes: 64 * 1024 })
+      // Same child environment as a call (minus the thinking budget), so the probe does no non-essential startup traffic either.
+      const probe = runProcess(this.binary, ['--version'], { env: claudeChildEnv(this.env, this.childEnv), timeoutMs: 30000, maxBytes: 64 * 1024 })
         .then(r => `claude-code ${r.stdout.trim().split(/\s+/)[0]}`);
       versions.set(this.binary, probe);
       probe.catch(() => versions.delete(this.binary));
@@ -114,13 +129,14 @@ export class ClaudeCliProvider {
     try { engineVersion = await this.engineVersion(); }
     catch (error) { throw fail('MODEL_UNAVAILABLE', `claude CLI version probe failed: ${error.code ?? error.message}`); }
     const args = this.args({ modelEntry, system, schema, decoding }), applied = claudeCliDecoding(decoding);
+    const childProcessEnv = claudeChildEnv(this.env, this.childEnv, applied.thinkingTokens);
     const request = { binary: path.basename(this.binary), args: args.map(a => a === system ? '<system>' : a), temperature: applied.temperature,
       maxTokens: applied.maxTokens, effort: applied.effort, thinkingTokens: applied.thinkingTokens, maxBudgetUsd: this.maxBudgetUsd,
-      env: { ...this.childEnv } };
+      env: childEnvRecord(childProcessEnv, this.childEnv) };
     const cwd = mkdtempSync(path.join(tmpdir(), 'foundry-claude-'));
     let processResult, launchError;
     try {
-      processResult = await runProcess(this.binary, args, { cwd, env: claudeChildEnv(this.env, this.childEnv, applied.thinkingTokens), input: prompt, timeoutMs: Math.min(timeoutMs, 3600000), signal, maxBytes: this.maxOutputBytes });
+      processResult = await runProcess(this.binary, args, { cwd, env: childProcessEnv, input: prompt, timeoutMs: Math.min(timeoutMs, 3600000), signal, maxBytes: this.maxOutputBytes });
     } catch (error) {
       launchError = error; processResult = error.processResult;
     } finally { rmSync(cwd, { recursive: true, force: true }); }

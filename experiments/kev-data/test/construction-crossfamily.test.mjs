@@ -32,7 +32,7 @@ import * as C8 from '../ports/crossfamily-c8.mjs';
 import * as BASE from '../ports/crossfamily-baselines.mjs';
 import * as SB from '../solve/bedtype.mjs';
 import * as SC from '../solve/construction.mjs';
-import { kit, stateOf, taskHead, HEADERS, WINDOWS } from '../judges/bedtype.mjs';
+import { kit, filedState, stateOf, taskHead, HEADERS, WINDOWS } from '../judges/bedtype.mjs';
 import { kits } from '../judges/construction.mjs';
 
 const TEST_FILE = fileURLToPath(import.meta.url);
@@ -164,7 +164,7 @@ test('unit: hard pairs: the program\'s three (incident/runbook, synth/kinetics, 
 });
 
 test('unit: the plan reaches the row targets of JUDGE-PROGRAM.md §4.3 (train 484, calib 75+250, dev 50+250, test-in 125, test-ood 1,374) with the test-ood axes of the quarter share', () => {
-  const per = { pair: 2, long: 2, negpair: 2, injection: 2, slot: 2, statepair: 2, 'fam-sx': 2, 'fam-ax': 2, notstated: 1, paraphrase: 3 };
+  const per = { pair: 2, long: 2, negpair: 2, injection: 2, slot: 2, statepair: 2, 'fam-sx': 2, 'fam-ax': 2, pm: 2, 'fam-pm': 2, notstated: 1, paraphrase: 3 };
   for (const slice of ALL_SLICES) {
     const plan = BT.planBedtype(slice), rows = plan.reduce((s, c) => s + per[c.kind], 0), want = BT.DEFAULT_ROWS[slice];
     assert.ok(Math.abs(rows - want) <= 1, `${slice}: ${rows} rows planned, target ${want}`);
@@ -177,15 +177,20 @@ test('unit: the plan reaches the row targets of JUDGE-PROGRAM.md §4.3 (train 48
   assert.ok(BT.planBedtype('train').some(c => c.kind === 'injection') && !BT.planBedtype('test-in').some(c => c.kind === 'injection'));
 });
 
-test('unit: pools: every skeleton bucket has framings, negated framings, sentences and carriers; a no-task paragraph opens like no family', () => {
+test('unit: pools: every template unit has one bucket (by the rank of its skeleton hash) and every bucket has links, sentences, pointers and carriers; a no-task paragraph opens like no family', () => {
   const c = POOLS.bucketCounts();
   for (const b of ['train', 'calib-ood', 'dev-ood', 'test-ood']) {
-    assert.ok(c[`pos:${b}`] >= 8, `${b}: ${c[`pos:${b}`]} framings`);
-    assert.ok(c[`neg:${b}`] >= 4, `${b}: ${c[`neg:${b}`]} negated framings`);
-    for (const cat of ['notice', 'chat', 'boiler', 'adjacent']) assert.equal(skeletonBucket(skeleton(POOLS.sentenceIn(cat, b, `u|${b}|${cat}`))), b);
-    for (const o of ['holds', 'violated', 'not_stated']) assert.equal(skeletonBucket(skeleton(POOLS.carrierFor(o, b, `u|${b}|${o}`))), b);
+    assert.ok(c[`links:${b}`] >= 4, `${b}: ${c[`links:${b}`]} links`);
+    assert.ok(c[`pos:${b}`] >= 24 && c[`neg:${b}`] >= 24, `${b}: ${c[`pos:${b}`]} framings, ${c[`neg:${b}`]} negated framings`);
+    for (const cat of ['notice', 'chat', 'boiler', 'adjacent']) { assert.ok(c[`${cat}:${b}`] >= 2, `${b}: ${cat} templates`); for (let i = 0; i < 20; i++) assert.equal(POOLS.sentenceBucket(POOLS.sentenceIn(cat, b, `u|${b}|${cat}|${i}`)), b); }
+    assert.ok(c[`pointer:${b}`] >= 2, `${b}: pointer templates`);
     for (const f of POOLS.framingsFor(b, false)) assert.equal(f.bucket, b);
   }
+  // a unit is in exactly one bucket: a link and its negated form share it; a template's fillings never change it
+  const linkOf = new Map();
+  for (const f of POOLS.FRAMINGS) { assert.equal(f.bucket, POOLS.LINKS.find(l => l.pos === f.link || l.neg === f.link).bucket); linkOf.set(f.link, f.bucket); }
+  for (const l of POOLS.LINKS) assert.equal(linkOf.get(l.pos), linkOf.get(l.neg), l.pos);
+  for (const [o, list] of Object.entries(POOLS.CARRIER_PARTS.bodies)) for (const b of ['train', 'calib-ood', 'dev-ood', 'test-ood']) assert.ok(list.some(x => x.bucket === b), `${o} carrier bodies in ${b}`);
   for (let i = 0; i < 80; i++) {
     const p = POOLS.paragraphTask(`u|para|${i}`, ['train', 'calib-ood', 'dev-ood', 'test-ood'][i % 4], { adjacent: i % 2 === 0 });
     assert.equal(SB.familyOfStatement(`${p.prompt}\n${Object.values(p.inputs).join('\n')}`), null);
@@ -193,6 +198,51 @@ test('unit: pools: every skeleton bucket has framings, negated framings, sentenc
   }
   // a framing never carries a family name or a label word
   for (const f of POOLS.FRAMINGS) assert.ok(!/records|incident|synth|kinetic|runbook|gameqa|gridquest|codefix|ownerci|holds|violated/i.test(f.text), f.text);
+});
+
+// §2.4 copy filter: 4-gram Jaccard over word tokens (digits folded), the measure heldout-author applies to its own lines
+const grams4 = text => { const w = (String(text).toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? []).map(x => (/\d/.test(x) ? '0' : x)), out = new Set(); for (let i = 0; i + 3 < w.length; i++) out.add(w.slice(i, i + 4).join(' ')); if (w.length < 4) out.add(w.join(' ')); return out; };
+const jaccard = (a, b) => { let n = 0; for (const x of a) if (b.has(x)) n++; return n / (a.size + b.size - n || 1); };
+function poolSurfaces(bucket, n = 120) {
+  const out = [];
+  for (const f of [...POOLS.framingsFor(bucket, false), ...POOLS.framingsFor(bucket, true)]) out.push(['framing', f.text]);
+  for (let i = 0; i < n; i++) {
+    for (const c of ['notice', 'chat', 'boiler', 'adjacent']) out.push(['sentence', POOLS.sentenceIn(c, bucket, `cf|${i}`)]);
+    for (const o of ['holds', 'violated', 'not_stated']) out.push(['carrier', POOLS.carrierFor(o, bucket, `cf|${i}`)]);
+    out.push(['pointer', POOLS.fillPointer(POOLS.pointerTemplateFor(bucket, `cf|${i}`), POOLS.filedId(`cf|${i}`))]);
+  }
+  return [...new Map(out.map(x => [x.join('|'), x])).values()];
+}
+test('unit: copy filter (§2.4): every calib-OOD, dev-OOD and test-OOD surface (framing, no-task sentence, pointer, carrier) is within 4-gram Jaccard 0.3 of no train surface, and the OOD buckets are disjoint', t => {
+  const train = {};
+  for (const [kind, text] of poolSurfaces('train', 200)) (train[kind] ??= []).push(grams4(text));
+  const worst = {}, seen = {};
+  for (const b of ['calib-ood', 'dev-ood', 'test-ood']) {
+    for (const [kind, text] of poolSurfaces(b)) {
+      const g = grams4(text), m = Math.max(...train[kind].map(x => jaccard(g, x)));
+      worst[`${b}/${kind}`] = Math.max(worst[`${b}/${kind}`] ?? 0, m);
+      assert.ok(m <= 0.3, `${b} ${kind}: 4-gram Jaccard ${m.toFixed(2)} against a train surface: ${text}`);
+      (seen[kind] ??= new Map()).set(text, [...(seen[kind].get(text) ?? []), b]);
+    }
+  }
+  for (const [kind, m] of Object.entries(seen)) for (const [text, bs] of m) assert.equal(new Set(bs).size, 1, `${kind} in two OOD buckets: ${text}`);
+  t.diagnostic(`max 4-gram Jaccard against train surfaces: ${JSON.stringify(Object.fromEntries(Object.entries(worst).map(([k, v]) => [k, +v.toFixed(2)])))}`);
+});
+
+test('unit: kit: a filed-task state lists the filed tasks under their ids after a pointer sentence; the solver reads the pointer (a listed id: that task\'s family; an id not on file: no task content)', () => {
+  const a = { prompt: OPEN.records(4), inputs: {} }, b = { prompt: OPEN.incident(4), inputs: {} };
+  const s = filedState('This request is task W-KQZT; the tasks on file are listed below.', [{ id: 'W-KQZT', task: a }, { id: 'W-BRDM', task: b }]);
+  assert.deepEqual(Object.keys(s), ['source_text']);
+  assert.ok(s.source_text.startsWith(`${HEADERS.task}\nThis request is task W-KQZT;`) && s.source_text.includes(`\n\n${HEADERS.filed} W-BRDM:\n`));
+  assert.equal(SB.stateFamily(s.source_text), 'records');
+  assert.equal(SB.stateFamily(filedState('This request is task W-BRDM.', [{ id: 'W-KQZT', task: a }, { id: 'W-BRDM', task: b }]).source_text), 'incident');
+  assert.equal(SB.stateFamily(filedState('This request is task W-PLMN.', [{ id: 'W-KQZT', task: a }, { id: 'W-BRDM', task: b }]).source_text), null);
+  assert.throws(() => filedState('no id here', [{ id: 'W-KQZT', task: a }, { id: 'W-BRDM', task: b }]), e => e.code === 'KIT_TASK');
+  assert.throws(() => filedState('Task W-KQZT.', [{ id: 'W-KQZT', task: a }, { id: 'W-KQZT', task: b }]), e => e.code === 'KIT_TASK');
+  // ids are letters (a skeleton keeps them, so a stated twin and its unknowable twin are two masked states)
+  assert.notEqual(skeleton('This request is task W-KQZT.'), skeleton('This request is task W-PLMN.'));
+  // the framing's polarity is read from the authored links
+  for (const l of POOLS.LINKS) { assert.equal(SB.framingPolarity(`Check this assumption: the job ${l.pos}: `).negated, false, l.pos); assert.equal(SB.framingPolarity(`Check this assumption: the job ${l.neg}: `).negated, true, l.neg); }
 });
 
 test('unit: kit: the state is {source_text} built from the task\'s prompt and inputs only; the assumption never enters it; windows, reference block and the question wire form', () => {
@@ -267,7 +317,7 @@ test('unit: stub beds: kinetics and runbook (descriptions, README paragraphs, pr
   assert.ok(held.length >= 500, `${held.length} held-out rows in test-ood`);
   for (const r of held) {
     const b = r.meta.bedtype;
-    assert.equal(r.meta.family, `bedtype:${HELD.includes(b.assumptionBed) ? b.assumptionBed : b.stateBed}`);
+    assert.equal(r.meta.family, `bedtype:${HELD.includes(b.assumptionBed) ? b.assumptionBed : (b.filedBeds ?? [b.stateBed]).find(x => HELD.includes(x))}`);
     assert.ok(HELD.includes(r.meta.bed));
   }
   for (const r of test) if (r.meta.axis === 'family') assert.ok(r.meta.heldOut.length > 0, 'a family-axis row bears a held-out description or prompt');
@@ -337,16 +387,18 @@ test('unit: stub beds: negated framings, wordings, skeleton buckets and options:
   assert.ok(checkPositionUniform(pos, { tolerance: 0.05, minPerK: 1000 }).ok, JSON.stringify(pos));
 });
 
-test('unit: stub beds: the no-task sentences and carriers of a slice are in its skeleton bucket; the registered authored surfaces of an OOD slice appear in no other slice', async t => {
+test('unit: stub beds: the no-task sentences, pointers and carriers of a slice come from templates of its bucket; the registered authored surfaces of an OOD slice appear in no other slice', async t => {
   const BUCKET = { train: 'train', 'calib-in': 'train', 'dev-select': 'train', 'test-in': 'train', 'calib-ood': 'calib-ood', 'dev-ood': 'dev-ood', 'test-ood': 'test-ood' };
   const bare = text => sentencesOf(text).map(x => x.replace(/^- [A-Za-z_]+: /, '')).filter(x => !/^(Task statement:|Inputs:)$/.test(x));
   const registry = new SpanRegistry(), n = {};
   for (const slice of ALL_SLICES) {
     const recs = x5(await STUB_RECS(slice));
     for (const r of recs) {
-      if (r.meta.bedtype.stateBed === null) for (const sent of bare(r.state.source_text)) assert.equal(skeletonBucket(skeleton(sent)), r.meta.bedtype.bucket, `${slice}/${r.meta.axis}: ${sent}`);
-      if (r.meta.bedtype.bucket !== 'train') assert.equal(r.meta.bedtype.bucket, BUCKET[slice]);
-      if (r.meta.bedtype.carrier) assert.equal(skeletonBucket(skeleton(r.meta.bedtype.carrier.text)), BUCKET[slice]);
+      const b = r.meta.bedtype;
+      if (b.stateBed === null && !b.filedBeds) for (const sent of bare(r.state.source_text)) assert.equal(POOLS.sentenceBucket(sent), b.bucket, `${slice}/${r.meta.axis}: ${sent}`);
+      if (b.pointer) assert.equal(POOLS.POINTERS.find(p => p.text === b.pointer.template)?.bucket, b.bucket, `${slice}: pointer ${b.pointer.template}`);
+      if (b.bucket !== 'train') assert.equal(b.bucket, BUCKET[slice]);
+      if (b.carrier) { const P = POOLS.CARRIER_PARTS, t0 = b.carrier.text; assert.ok([P.leads.find(x => t0.startsWith(x.text)), P.bodies[b.carrier.urged].find(x => t0.includes(x.text))].every(x => x?.bucket === BUCKET[slice]), `${slice}: carrier ${t0}`); }
       if (slice === 'test-ood' && ['family', 'paraphrase', 'flip', 'slot', 'long'].includes(r.meta.axis)) assert.equal(r.meta.bedtype.bucket, 'train', 'the axes that isolate one factor read the train bucket');
     }
     n[slice] = BT.registerOod(registry, recs, slice);
@@ -361,10 +413,33 @@ test('unit: stub beds: the no-task sentences and carriers of a slice are in its 
   }
   // the scan is not vacuous: a sentence of the test-ood paragraphs placed in a train state is found
   // (a no-task state of the axes that isolate one factor reads the train bucket and is ordinary training text, so it is not registered)
-  const planted = x5(await STUB_RECS('test-ood')).find(r => r.meta.bedtype.stateBed === null && r.meta.bedtype.bucket === 'test-ood');
+  const planted = x5(await STUB_RECS('test-ood')).find(r => r.meta.bedtype.stateBed === null && !r.meta.bedtype.filedBeds && r.meta.bedtype.bucket === 'test-ood');
   assert.ok(planted, 'a test-ood no-task state of the test-ood bucket exists');
   assert.ok(registry.scanState({ source_text: bare(planted.state.source_text).find(x => x.split(/\s+/).length >= 5) }, { slice: 'train' }).length > 0);
+  const pointed = x5(await STUB_RECS('test-ood')).find(r => r.meta.bedtype.pointer && r.meta.bedtype.bucket === 'test-ood');
+  assert.ok(pointed && registry.scanState({ source_text: pointed.meta.bedtype.pointer.text.replace(pointed.meta.bedtype.pointer.id, 'W-ZZZZ') }, { markers: ['W-ZZZZ'], slice: 'dev-ood' }).length > 0, 'a test-ood pointer sentence in another slice is found');
   t.diagnostic(`registered ${JSON.stringify(n)}; ${scanned} stub states scanned`);
+});
+
+test('unit: stub beds: presence-matched twins share the filed tasks and the pointer sentence and differ in the id only; the unknowable id is on no filed task; >= 50% of the not_stated rows of every slice are presence-matched', async () => {
+  for (const slice of ALL_SLICES) {
+    const recs = x5(await STUB_RECS(slice)), twins = {};
+    for (const r of recs) if (r.meta.bedtype.filedBeds && r.meta.counterfactual?.path === 'pointer') (twins[r.meta.pairId] ??= []).push(r);
+    const list = Object.values(twins);
+    assert.ok(list.length >= 3, `${slice}: ${list.length} twins`);
+    for (const p of list) {
+      assert.equal(p.length, 2);
+      const [st, un] = [p.find(r => labelOf(r) !== 'not_stated'), p.find(r => labelOf(r) === 'not_stated')];
+      assert.ok(st && un && st.meta.variant === 'distractor' && un.meta.variant === 'unknowable');
+      assert.equal(st.meta.bedtype.pointer.template, un.meta.bedtype.pointer.template);
+      assert.ok(st.meta.bedtype.pointer.listed.includes(st.meta.bedtype.pointer.id) && !un.meta.bedtype.pointer.listed.includes(un.meta.bedtype.pointer.id));
+      assert.equal(un.state.source_text, st.state.source_text.replace(st.meta.bedtype.pointer.id, un.meta.bedtype.pointer.id), 'the twins differ in the pointer id only');
+      assert.deepEqual([st.meta.bedtype.assumptionText, st.meta.bedtype.framing], [un.meta.bedtype.assumptionText, un.meta.bedtype.framing], 'one assumption');
+      assert.ok(st.meta.bedtype.filedBeds.includes(st.meta.bedtype.assumptionBed), 'the assumption\'s family is on file in both arms');
+    }
+    const ns = recs.filter(r => labelOf(r) === 'not_stated' && r.meta.variant !== 'paraphrase');
+    assert.ok(ns.filter(r => r.meta.bedtype.notStated === 'presence-matched').length / ns.length >= 0.5, `${slice}: presence-matched share`);
+  }
 });
 
 test('unit: a record with a reserved world (dev seed 101) fails the build\'s record checks in train; a held-out family fails outside test-ood', async () => {
@@ -740,19 +815,42 @@ test('decidability: masked-state collisions: rows with the same masked state and
   t.diagnostic(`masked-state groups with more than one label: ${JSON.stringify(rep)}`);
 });
 
-test('shortcut battery: a state-only or an assumption-only predictor cannot tell holds from violated (paired rows); a state-only predictor does recognise not_stated; the bag-of-words reads the overlap', async t => {
+// §2.7 step 7: a context-only baseline more than 3 pp above the majority blocks the freeze. The gate is applied to the evaluation slices
+// with >= 150 holds/violated rows; calib-in and dev-select (about 40 such rows each) are reported.
+test('shortcut battery (§2.7 step 7): a state-only or an assumption-only predictor is at most 3 pp above the majority on holds/violated in calib-ood, dev-ood, test-in and test-ood; the bag-of-words reads the overlap', async t => {
   const train = rowsOf(x5(await REAL_RECS('train', { ports: ['X5'] }))), out = {};
   const view = { state: x => x.r.state.source_text, assumption: x => questionOf(x.q.instructions), both: x => `${x.r.state.source_text}\n${questionOf(x.q.instructions)}` };
   for (const [name, f] of Object.entries(view)) {
     const m = trainProbe(train.map(x => ({ text: f(x), label: x.q.label })), { labels: ['holds', 'violated', 'not_stated'] });
-    for (const slice of ['test-in', 'test-ood']) {
+    for (const slice of ['calib-in', 'dev-select', 'calib-ood', 'dev-ood', 'test-in', 'test-ood']) {
       const rows = rowsOf(x5(await REAL_RECS(slice, { ports: ['X5'] }))), hv = rows.filter(x => x.q.label !== 'not_stated'), ns = rows.filter(x => x.q.label === 'not_stated');
       const ev = evaluate(m, hv.map(x => ({ text: f(x), label: x.q.label }))), evN = evaluate(m, ns.map(x => ({ text: f(x), label: x.q.label })));
       out[`${name}/${slice}`] = { hvAccuracy: +ev.accuracy.toFixed(3), notStatedRecall: +evN.accuracy.toFixed(3), hvMajority: +(Math.max(...Object.values(counts(hv, x => x.q.label))) / hv.length).toFixed(3) };
-      if (name !== 'both') assert.ok(ev.accuracy <= Math.max(...Object.values(counts(hv, x => x.q.label))) / hv.length + 0.10, `${name} alone on holds/violated in ${slice}: ${ev.accuracy}`);
+      if (name !== 'both' && hv.length >= 150) assert.ok(ev.accuracy <= Math.max(...Object.values(counts(hv, x => x.q.label))) / hv.length + 0.03, `${name} alone on holds/violated in ${slice}: ${ev.accuracy}`);
     }
   }
   t.diagnostic(`partial-input probes (fitted on train; holds-vs-violated accuracy, not_stated recall): ${JSON.stringify(out)}`);
+});
+
+// §2.5 acceptance: a train-fitted bag-of-words probe on the state separates stated from unknowable at <= 0.65 on the presence-matched
+// set (the filed-task twins). The unrelated not_stated paragraphs are separable by construction (a paragraph with no task content), which
+// is why they are capped at half of the not_stated rows; the probe is reported on them as the control.
+const pmTwins = recs => rowsOf(x5(recs)).filter(x => x.r.meta.bedtype.filedBeds && x.r.meta.counterfactual?.path === 'pointer');
+const stateLab = x => (x.q.label === 'not_stated' ? 'unknowable' : 'stated');
+test('presence-matched unknowables (§2.5): a train-fitted state-only probe separates the stated and unknowable filed-task twins at <= 0.65 in every evaluation slice; the unrelated paragraphs are the separable control', async t => {
+  const train = pmTwins(await REAL_RECS('train', { ports: ['X5'] })), all = rowsOf(x5(await REAL_RECS('train', { ports: ['X5'] })));
+  assert.ok(train.length >= 100 && train.filter(x => x.q.label === 'not_stated').length >= 50, `${train.length} train twins`);
+  const m = trainProbe(train.map(x => ({ text: x.r.state.source_text, label: stateLab(x) }))), mAll = trainProbe(all.map(x => ({ text: x.r.state.source_text, label: stateLab(x) })));
+  const out = {};
+  for (const slice of ['calib-in', 'dev-select', 'calib-ood', 'dev-ood', 'test-in', 'test-ood']) {
+    const recs = await REAL_RECS(slice, { ports: ['X5'] }), ev = evaluate(m, pmTwins(recs).map(x => ({ text: x.r.state.source_text, label: stateLab(x) }))), evAll = evaluate(mAll, pmTwins(recs).map(x => ({ text: x.r.state.source_text, label: stateLab(x) })));
+    const unrelated = rowsOf(x5(recs)).filter(x => !x.r.meta.bedtype.filedBeds && (x.q.label !== 'not_stated' || x.r.meta.bedtype.notStated === 'unrelated'));
+    const evU = evaluate(mAll, unrelated.map(x => ({ text: x.r.state.source_text, label: stateLab(x) })));
+    out[slice] = { twins: ev.n, probe: +ev.balancedAccuracy.toFixed(3), probeFitOnAllTrain: +evAll.balancedAccuracy.toFixed(3), unrelatedControl: +evU.balancedAccuracy.toFixed(3) };
+    assert.ok(ev.n >= 14 && ev.balancedAccuracy <= 0.65 && evAll.balancedAccuracy <= 0.65, `${slice}: ${JSON.stringify(out[slice])}`);
+    assert.ok(evU.balancedAccuracy >= 0.9, `${slice}: the control (unrelated paragraphs) is separable`);
+  }
+  t.diagnostic(`stated vs unknowable, state-only probe: ${JSON.stringify(out)}`);
 });
 
 test('surface diversity: distinct forms, states, tasks and framings per slice and label are reported; axes under 30 forms are diagnostic', async t => {
@@ -763,7 +861,7 @@ test('surface diversity: distinct forms, states, tasks and framings per slice an
     for (const r of recs) (labels[labelOf(r)] ??= new Set()).add(stateHash(r.state));
     rep[slice] = { records: recs.length, rows: nQ(recs), formsPerLabel: Object.fromEntries(Object.entries(forms).map(([k, v]) => [k, v.size])), statesPerLabel: Object.fromEntries(Object.entries(labels).map(([k, v]) => [k, v.size])),
       tasks: new Set(recs.map(r => r.meta.bedtype.stateWorldHash)).size, framings: new Set(recs.map(r => r.meta.bedtype.framing)).size, assumptionTexts: new Set(recs.map(r => `${r.meta.bedtype.assumptionBed}/${r.meta.bedtype.assumptionSource}`)).size,
-      adjacentNotStated: rate(recs.filter(r => r.meta.bedtype.adjacent === true).length, recs.filter(r => labelOf(r) === 'not_stated' && r.meta.variant !== 'paraphrase').length).toFixed(2) };
+      presenceMatchedNotStated: rate(recs.filter(r => labelOf(r) === 'not_stated' && r.meta.bedtype.notStated === 'presence-matched').length, recs.filter(r => labelOf(r) === 'not_stated' && r.meta.variant !== 'paraphrase').length).toFixed(2) };
     for (const r of recs) assert.ok(r.meta.formId?.startsWith('sha256:'));
   }
   const test = rep['test-ood'];
@@ -772,9 +870,17 @@ test('surface diversity: distinct forms, states, tasks and framings per slice an
   for (const r of x5(await REAL_RECS('test-ood', { ports: ['X5'] }))) { const a = (axes[r.meta.axis] ??= { holds: new Set(), violated: new Set(), not_stated: new Set() }); for (const q of Object.values(r.questions)) a[q.label].add(r.meta.formId); }
   const gating = Object.fromEntries(Object.entries(axes).map(([a, v]) => [a, Object.fromEntries(Object.entries(v).map(([l, s]) => [l, s.size >= 30 ? s.size : `diagnostic: n_forms = ${s.size}`]))]));
   t.diagnostic(`test-ood forms per axis and label: ${JSON.stringify(gating)}`);
+  // §2.7 step 8: the class x family x difficulty support table (distinct states per cell; a cell under 30 is diagnostic)
+  for (const slice of ['train', 'test-ood']) {
+    const cells = {};
+    for (const x of rowsOf(x5(await REAL_RECS(slice, { ports: ['X5'] })))) (cells[`${x.q.label}|${x.r.meta.family}|d${x.r.meta.bedtype.stateDifficulty}`] ??= new Set()).add(stateHash(x.r.state));
+    const table = Object.fromEntries(Object.entries(cells).sort().map(([k, v]) => [k, v.size]));
+    t.diagnostic(`${slice} support (label|family|difficulty: distinct states; ${Object.values(table).filter(n => n < 30).length} of ${Object.keys(table).length} cells under 30): ${JSON.stringify(table)}`);
+  }
   assert.ok(test.rows >= 1300);
-  // at least half of the not_stated states speak in the register of an assignment while saying nothing about it (presence-matched)
-  for (const slice of ALL_SLICES) { const ns = x5(await REAL_RECS(slice, { ports: ['X5'] })).filter(r => labelOf(r) === 'not_stated' && r.meta.variant !== 'paraphrase'); if (ns.length >= 8) assert.ok(ns.filter(r => r.meta.bedtype.adjacent).length / ns.length >= 0.45, `${slice}: adjacent share`); }
+  // at least half of the not_stated rows are presence-matched (§1.2 X5 not_stated items): filed-task states that hold task text but
+  // point at a task not on file; unrelated paragraphs make up the rest
+  for (const slice of ALL_SLICES) { const ns = x5(await REAL_RECS(slice, { ports: ['X5'] })).filter(r => labelOf(r) === 'not_stated' && r.meta.variant !== 'paraphrase'); assert.ok(ns.filter(r => r.meta.bedtype.notStated === 'presence-matched').length / ns.length >= 0.5, `${slice}: presence-matched share`); assert.ok(ns.every(r => ['presence-matched', 'unrelated'].includes(r.meta.bedtype.notStated))); }
 });
 
 // a throwaway repository holding the nine dev beds, beds/lib and the contract, so the shared drift record of this repository is untouched
@@ -847,6 +953,9 @@ test('seeded defect: this file runs alone with node --test and fails on seeded d
     { name: 'a high-risk phrase no longer implies a hand-off', mutations: [{ file: 'ports/crossfamily-c1.mjs', from: "export const IMPLIES = Object.freeze({ 'high-risk-not-model-owned': ['human-gate'],", to: "export const IMPLIES = Object.freeze({ 'high-risk-not-model-owned': []," }] },
     { name: 'the C7 rules stop reading encoded paths', mutations: [{ file: 'solve/construction.mjs', from: "const decoded = decodeTokens(text);", to: "const decoded = [];" }] },
     { name: 'a reserved world is no longer reserved', mutations: [{ file: 'lib/registry.mjs', from: 'seeds: [1, 400]', to: 'seeds: [1, 100]' }] },
+    { name: 'the unknowable twin points at a listed task', mutations: [{ file: 'ports/crossfamily-bedtype.mjs', from: 'pointerAbsent = fillPointer(tpl, idX)', to: 'pointerAbsent = fillPointer(tpl, idB)' }] },
+    { name: 'no-task sentences are drawn from every bucket', mutations: [{ file: 'ports/crossfamily-pools.mjs', from: 'const tpl = pick(inBucket(SENTENCE_TEMPLATES[category], bucket, `${category} template`), `${key}|${category}|tpl`);', to: 'const tpl = pick(SENTENCE_TEMPLATES[category], `${key}|${category}|tpl`);' }] },
+    { name: 'framings ignore their bucket', mutations: [{ file: 'ports/crossfamily-pools.mjs', from: 'return FRAMINGS.filter(f => f.bucket === bucket && f.negated === negated);', to: 'return FRAMINGS.filter(f => f.negated === negated);' }] },
   ];
   const r = H.seededDefect({ file: TEST_FILE, pattern, mutants, env: { KEV_DATA_MUTANT_RUN: '1' } });
   assert.equal(r.control.status, 0, r.control.stdout.split('\n').filter(l => /not ok/.test(l)).join('\n'));

@@ -18,7 +18,9 @@ const hnum = s => parseInt(sha(s).slice(0, 8), 16);
 const pick = (list, key) => list[hnum(key) % list.length];
 const ranked = (list, key) => list.map(x => ({ x, h: sha(`${key}|${typeof x === 'string' ? x : JSON.stringify(x)}`) })).sort((a, b) => (a.h < b.h ? -1 : 1)).map(o => o.x);
 
-// name, what the listing says, clauses (imperative sentences asking for it), a look-alike that does something else
+// name, what the listing says, clauses (imperative sentences asking for it), a look-alike that does something else. No capability is
+// something the model does by itself (translation is a model-only clause), and none subsumes another (a general shell would run any
+// test suite, so there is none): a missing tool is missing for every listing.
 export const CAPABILITIES = Object.freeze([
   { name: 'web.fetch', desc: 'download the text of a web page from its address', alike: 'web.search', clauses: ['Download the page at the address in the request.', 'Read the contents of the web page that was linked.', 'Fetch the article from its link.'] },
   { name: 'web.search', desc: 'search the web and return a list of result links', alike: 'web.fetch', clauses: ['Search the web for recent coverage of the topic.', 'Look the company up on a search engine.', 'Find pages online that mention the product name.'] },
@@ -34,12 +36,11 @@ export const CAPABILITIES = Object.freeze([
   { name: 'pdf.extract', desc: 'extract the text from a PDF document', alike: 'file.read', clauses: ['Pull the text out of the attached PDF.', 'Extract the wording of the contract PDF.', 'Get the text from the PDF invoice.'] },
   { name: 'image.describe', desc: 'describe the content of an image', alike: 'image.generate', clauses: ['Describe what is in the attached photo.', 'Say what the screenshot shows.', 'Tell me what the uploaded picture contains.'] },
   { name: 'image.generate', desc: 'generate an image from a text prompt', alike: 'image.describe', clauses: ['Create an illustration for the post.', 'Generate a banner image for the campaign.', 'Draw a simple diagram for the slide.'] },
-  { name: 'speech.transcribe', desc: 'transcribe an audio recording to text', alike: 'translate.text', clauses: ['Transcribe the recording of the call.', 'Turn the voice memo into text.', 'Write down what is said in the audio file.'] },
-  { name: 'translate.text', desc: 'translate text from one language to another', alike: 'speech.transcribe', clauses: ['Translate the notice into Spanish.', 'Put the announcement into German.', 'Render the product description in French.'] },
+  { name: 'speech.transcribe', desc: 'transcribe an audio recording to text', alike: 'image.describe', clauses: ['Transcribe the recording of the call.', 'Turn the voice memo into text.', 'Write down what is said in the audio file.'] },
+  { name: 'print.document', desc: 'print a document on the office printer', alike: 'file.write', clauses: ['Print the final report on the office printer.', 'Send the agenda to the printer in reception.', 'Print two copies of the signed contract.'] },
   { name: 'ticket.create', desc: 'open a ticket in the issue tracker', alike: 'chat.post', clauses: ['Open a ticket for the broken export.', 'File an issue in the tracker for the outage.', 'Create a tracker ticket for each defect found.'] },
   { name: 'payment.charge', desc: 'charge a saved payment method', alike: 'db.update', clauses: ['Charge the customer\'s saved card.', 'Take the payment from the stored payment method.', 'Bill the saved card for the renewal.'] },
-  { name: 'shell.run', desc: 'run a shell command in a sandbox', alike: 'code.test', clauses: ['Run the build script.', 'Execute the conversion command in a shell.', 'Run the data clean-up script.'] },
-  { name: 'code.test', desc: 'run a test suite and return the results', alike: 'shell.run', clauses: ['Run the unit tests and report the results.', 'Execute the test suite for the module.', 'Run the regression tests on the new build.'] },
+  { name: 'code.test', desc: 'run a test suite and return the results', alike: 'file.read', clauses: ['Run the unit tests and report the results.', 'Execute the test suite for the module.', 'Run the regression tests on the new build.'] },
   { name: 'spreadsheet.edit', desc: 'edit cells in a spreadsheet', alike: 'file.write', clauses: ['Update the totals in the spreadsheet.', 'Fill in the missing cells of the sheet.', 'Correct the figures in the budget spreadsheet.'] },
   { name: 'map.route', desc: 'compute a driving route between two places', alike: 'web.search', clauses: ['Work out the driving route for the delivery.', 'Find the best road route between the two depots.', 'Plan the drive from the warehouse to the client.'] },
   { name: 'phone.call', desc: 'place a voice call to a phone number', alike: 'sms.send', clauses: ['Phone the supplier and confirm the order.', 'Call the client to ask about the delay.', 'Ring the shop to check their opening hours.'] },
@@ -48,7 +49,7 @@ export const CAPABILITY_BY_NAME = Object.freeze(Object.fromEntries(CAPABILITIES.
 export const listingLine = c => `${c.name}: ${c.desc}`;
 
 // Clauses the model does by itself: they need no tool.
-export const MODEL_ONLY = Object.freeze(['Summarise it in two short paragraphs.', 'Rewrite the message in a friendlier tone.', 'Classify the sentiment as positive, neutral or negative.', 'Draft three subject lines.', 'Pick the most urgent item and explain why.', 'Turn the bullet points into a short paragraph.', 'Extract the names and dates mentioned in the text.', 'Suggest a clearer title.']);
+export const MODEL_ONLY = Object.freeze(['Translate the short notice into Spanish.', 'Summarise it in two short paragraphs.', 'Rewrite the message in a friendlier tone.', 'Classify the sentiment as positive, neutral or negative.', 'Draft three subject lines.', 'Pick the most urgent item and explain why.', 'Turn the bullet points into a short paragraph.', 'Extract the names and dates mentioned in the text.', 'Suggest a clearer title.']);
 
 // Clauses that no registry can list (software cannot do them). `regex`: the baseline's cue families (telepathy, magic) catch them.
 export const IMPOSSIBLE = Object.freeze([

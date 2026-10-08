@@ -13,15 +13,19 @@ const freeze = v => { if (v && typeof v === 'object') { for (const child of Obje
 
 // Environment variables a claude-cli provider config may set in (or remove from, with null) the child process. A closed list:
 // an environment variable can change what the CLI sends (model, thinking budget, base URL, caching), and a variable that changes
-// the decoding would have to enter the replay key. Everything here is transport, telemetry or cache-pricing tuning; none touches
-// the sample (measured in research/review-20261007/04-efficiency-rust.md §2.4). Values are "0" or "1".
+// the decoding would have to enter the replay key. Everything here is transport, telemetry or cache-pricing tuning; none changes
+// the decoding (research/review-20261007/04-efficiency-rust.md §2.4; CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC also shortens the prompt the
+// CLI builds by about 165 tokens, see research/review-20261007/cli-flags-20261008/). A value is "1" (set) or null (removed from the child).
+// "0" is rejected: the CLI tests some of these variables for presence, so "0" does not reliably mean off (measured 2026-10-08:
+// CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=0 behaves exactly as =1, FORCE_PROMPT_CACHING_5M=0 as absent; cli-flags-20261008/zero-probe.json).
 export const CHILD_ENV_ALLOWED = Object.freeze(['CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC', 'FORCE_PROMPT_CACHING_5M', 'DISABLE_TELEMETRY', 'DISABLE_ERROR_REPORTING', 'DISABLE_AUTOUPDATER']);
-/** Check a childEnv block ({ NAME: "0" | "1" | null }); `where` names it in the error. Returns the block. */
+/** Check a childEnv block ({ NAME: "1" | null }); `where` names it in the error. Returns the block. */
 export function validateChildEnv(childEnv, where = 'childEnv') {
-  if (!isObject(childEnv)) invalid(`${where} must be an object of environment variables`);
+  // A plain object only: a Map or class instance has no enumerable entries and would pass as an empty block.
+  if (!isObject(childEnv) || ![Object.prototype, null].includes(Object.getPrototypeOf(childEnv))) invalid(`${where} must be a plain object of environment variables`);
   for (const [name, value] of Object.entries(childEnv)) {
     if (!CHILD_ENV_ALLOWED.includes(name)) invalid(`${where} may not set ${JSON.stringify(name)}; allowed: ${CHILD_ENV_ALLOWED.join(', ')}`);
-    if (value !== null && value !== '0' && value !== '1') invalid(`${where}.${name} must be "0", "1" or null (remove)`);
+    if (value !== null && value !== '1') invalid(`${where}.${name} must be "1" (set) or null (removed); "0" is not "off" for every variable here, so use null`);
   }
   return childEnv;
 }
@@ -36,6 +40,8 @@ export function validatePolicy(policy) {
   for (const [name, p] of Object.entries(policy.providers)) {
     if (!ID.test(name) || !isObject(p) || !nonEmpty(p.kind)) invalid(`provider ${name} needs a kind`);
     if (p.imputedComputeUsdPerHour !== undefined && !money(p.imputedComputeUsdPerHour)) invalid(`provider ${name} imputedComputeUsdPerHour must be a non-negative number`);
+    // Only the claude-cli provider reads childEnv. Elsewhere the block would be inert and still kept out of the replay key, so it is refused.
+    if (p.childEnv !== undefined && p.kind !== 'claude-cli') invalid(`provider ${name} (kind ${p.kind}) does not support childEnv`);
     if (p.kind === 'claude-cli') {
       if (!nonEmpty(p.binary) || !Array.isArray(p.invocation) || p.invocation.some(a => typeof a !== 'string')) invalid(`provider ${name} needs binary and a string invocation list`);
       if (p.invocation.some(a => a === '--fallback-model' || a.startsWith('--fallback-model='))) invalid(`provider ${name} may not configure --fallback-model (no silent fallback)`);

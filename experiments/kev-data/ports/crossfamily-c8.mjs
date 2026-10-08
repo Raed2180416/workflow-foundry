@@ -1,7 +1,7 @@
 // C8 `notes_leak` notes composer (JUDGE-PROGRAM.md §1.2 C8, wave 3; plan group "construction-crossfamily", the group's cut line).
 //
 // The B0+N baseline lets a model rewrite a short notes file after every task. Notes are
-//   leaky    at least one line records an answer or value specific to a task instance: "for task INC-1597 the root service is
+//   leaky    at least one line records an answer or value specific to a task instance: "for task TK-5521 the root service is
 //            checkout-api and the fault class is memory exhaustion". The composer templates truth values into "lessons".
 //   general  every line is a lesson that applies across instances. General lessons also carry numbers, ids and names as examples
 //            ("task ids look like CHG-12345; the number carries no meaning"), so digits do not decide.
@@ -60,7 +60,8 @@ export const GENERAL = Object.freeze([
 
 const SVC = ['checkout-api', 'profile-svc', 'shipping-svc', 'rewards-api', 'inventory-svc', 'search-svc', 'auth-svc', 'edge-gateway'];
 const FAULT = ['memory exhaustion', 'a bad config push', 'a slow dependency', 'connection pool exhaustion', 'a certificate expiry', 'a disk filling up'];
-const IDS = ['INC-1597', 'INC-2231', 'CHG-74250', 'CHG-60794', 'CV-K93', 'MW-K79', 'RB-835', 'QA-1613'];
+// fictional ids (none is copied from a bed's text: the kinetics and runbook ids are the held-out family's surface)
+const IDS = ['TK-5521', 'TK-6630', 'REQ-90412', 'REQ-71185', 'JOB-3308', 'AB-7713', 'ST-618', 'QX-204'];
 const NAMES = ['Megumi Kobayashi', 'Niccolo Ferraro', 'Ryota Kono', 'Siobhan Maguire', 'Anselm Brandt', 'Ilse Vandermeer'];
 const MODS = ['shiftgrid.py', 'billing_math.py', 'src/context.mjs', 'experiments/lib/stats.mjs', 'slotbook.py'];
 export const LEAKY = Object.freeze([

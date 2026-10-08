@@ -837,3 +837,43 @@ by the test or run named.*
 
 `node experiments/heal/incidents.mjs` writes `research/heal-20261008/runs/H-*.json` (ids, scores, counts and codes; no task text) and the
 lessons in `research/heal-20261008/lessons/`.
+
+### B.4 Resume check, 2026-10-08 19:13-19:50 UTC (policy-drift fix)
+
+*Development/diagnostic evidence. Written after the session restart (resume of the paused build). Only `experiments/heal/kit.mjs`,
+`experiments/heal/test/kit-gate.test.mjs` and this appendix were changed; git state, `src/`, `policy/` and the other read-only paths
+were not touched.*
+
+**Finding [M].** The first full run of the suite after the restart gave 76 tests, 27 pass, 49 fail, and 45 of the failures were one
+error: `HEAL_POLICY_DRIFT: policy/models.json differs from the frozen kit policy`. Cause: a concurrent workflow (engine stage-1
+lanes, `research/review-20261007/cli-flags-20261008/`) has an **uncommitted** edit of the live `policy/models.json`: `policyVersion`
+2026-10-07.1 to 2026-10-08.1, one new note, and a new `providers.claude-cli.childEnv` key (two `claude -p` child environment
+variables). The loader compared the owner file with the kit's policy by git blob id, so any edit blocked every replay, although the
+edit changes nothing the frozen kit does: no file of the kit mentions `childEnv`, and the kit's `ClaudeCliProvider` builds the child
+environment from `process.env` only [D: kit `src/models/providers/claude-cli.mjs:33,102`].
+
+**Fix (`kit.mjs`).** `policyDrift(live, frozen, {kitSources})` replaces the byte comparison:
+- ignored and *reported* (`kit.policyDrift.ignored`): `policyVersion`, `notes`, and a provider key that no kit source mentions
+  (`childEnv` today). The key exemption lapses as soon as any kit source mentions the key;
+- blocking (`HEAL_POLICY_DRIFT`, with the differing paths in the message): everything else, i.e. any model id, class, price, digest,
+  decoding, provider invocation, class order or escalation setting.
+
+The run itself still uses the kit's own policy of record, so `ownerPolicyHash` stays `fe63f99b...` (the value in every committed
+`runs/H-*.json`), replay keys are untouched, and heal's live calls keep the pre-2026-10-08 pricing basis. That matters for V6: the new
+flags "lower the reported cost per call" and make costs from before and after incomparable (synthesis rule R3), so a candidate priced
+under the new flags would be compared with baselines priced without them. Model ids still come only from the owner file: the check
+fails if the live file would choose a different model. This is a reading of "policy identical" that the owner may want to confirm. The
+stricter reading (byte identity) is one line in `loadKit` and would block heal again whenever any lane edits the policy.
+
+**Tests.** Three new tests in `test/kit-gate.test.mjs` (prose and unread key reported not blocking; six kinds of blocking drift, and
+the lapse when the kit reads the key; the loaded kit reports its drift and carries no `childEnv`). They use synthetic policies, so
+they do not depend on the state of the live file. The `loadKit` refusal itself is not exercised end to end because that would need an
+edit of the live policy.
+
+**How to run the suite.** Node 24's runner does not accept a directory, so use the glob (this is the form `npm test` uses for
+`tests/`):
+
+```sh
+node --test --test-concurrency=2 experiments/heal/test/*.test.mjs     # 79 tests; 9m39s wall on 4 vCPUs (measured once)
+node experiments/heal/incidents.mjs --out /var/tmp/foundry-work/heal-scratch/incidents   # $0, replay only; ~4 min per incident
+```

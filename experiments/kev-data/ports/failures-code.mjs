@@ -31,7 +31,8 @@ import { threadSegments } from '../judges/failures.mjs';
 
 export const group = 'failures-code';
 export const ports = ['F1', 'X1:codefix', 'F2', 'X6:codefix', 'Q6:codefix'];
-export const GENERATOR_VERSION = 'failures-code@2';      // @2 (review 2026-10-08): F1 masked-state collision key, held-out carriers, codefix registry-key forms
+export const GENERATOR_VERSION = 'failures-code@3';      // @2 (review 2026-10-08): F1 masked-state collision key, held-out carriers, codefix registry-key forms;
+// @3 (second review 2026-10-08): F1 collision key (seen_pass, node roles), X6 known_reports of an issue's first report, model-output routing codes
 export const HELD_OUT_PORTS = Object.freeze(['X6', 'Q6']);
 export const SMOKE_PORTS = Object.freeze(['F2', 'X6', 'Q6']);
 

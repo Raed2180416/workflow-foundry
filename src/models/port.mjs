@@ -40,7 +40,7 @@ export const promptHashOf = ({ system, prompt, schema }) => digest({ system, pro
 export const modelDigestOf = (entry, config) => {
   // Excluded: accounting (price, imputed compute), routing (class, port, auth) and documentation (knownGaps) fields, and the
   // claude CLI child environment (childEnv: a closed list of transport/telemetry/cache-pricing variables that never change
-  // the sample, validated in policy.mjs; it is recorded in the journal request instead).
+  // the decoding, validated in policy.mjs; it is recorded in the journal request instead, like the CLI engine version).
   const { price, class: _class, port: _port, ...model } = entry, { imputedComputeUsdPerHour, auth, knownGaps, childEnv, ...provider } = config ?? {};
   return digest({ model, provider });
 };

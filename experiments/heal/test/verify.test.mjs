@@ -124,6 +124,23 @@ test('V5 pins the answer chain: records pins merge, codefix pins fix, repair and
   assert.equal(c.workflow.nodes.find(n => n.id === 'answer').join, 'all_resolved');
 });
 
+test('V5 pins a nested answer carrier (records-v3: merge.answer) so controls reach the gating verify; a look-alike object is not a carrier', { skip: skipReason }, async () => {
+  const { wf } = await world();
+  const answer = { records: [{ id: 1 }, { id: 2 }] };
+  const outputs = { merge: { answer, rowIds: [1, 2], conventions: { records: 'not the answer' } }, check: { pass: true }, answer };
+  // without the recorded answer the nested form is not recognised: only the sink is pinned (the old behaviour, kept for old callers)
+  assert.deepEqual(pinChain(wf.p1, outputs, ['records'], { records: [] }).pinned, ['answer']);
+  const r = pinChain(wf.p1, outputs, ['records'], { records: [] }, answer);
+  assert.deepEqual(r.pinned.sort(), ['answer', 'merge'], 'merge holds the answer in its `answer` property; conventions.records is a different value and is left alone');
+  const merge = r.workflow.nodes.find(n => n.id === 'merge');
+  assert.equal(merge.kind, 'code');
+  const out = JSON.parse(/return (.*);/s.exec(merge.source)[1]);
+  assert.deepEqual(out.answer, { records: [] }, 'the control replaces the nested answer');
+  assert.deepEqual(out.rowIds, [1, 2], 'the other recorded fields stay, so the verify still sees the real evidence');
+  assert.deepEqual(out.conventions, { records: 'not the answer' });
+  assert.deepEqual(r.workflow.nodes.find(n => n.id === 'check').kind, 'verify', 'the gating verify is not pinned: it runs on the control');
+});
+
 test('V8: the grader hash covers the bed, the shared libraries and the pinned gate; a changed grader rejects', { skip: skipReason }, async () => {
   const w = await incidentFor(KEY, 'records', recordsFlip), { wf } = w;
   const a = gradersHash('records'), b = gradersHash('records'), c = gradersHash('codefix');

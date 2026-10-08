@@ -19,7 +19,7 @@
 import { parseTask, isAuthorised } from '../judges/runbook.mjs';
 import { framesOf, chatterStanding, slotsOf } from './runbook-frames.mjs';
 
-export const TAP_VERSION = 1;
+export const TAP_VERSION = 2;      // 2: X4 standing of reaffirmations, hypotheticals and adopted suggestions (review fix)
 export const TAP_THRESHOLD = 0.95;
 
 const AMEND = { version: 'amend.version.*', value: 'amend.value.*', slowval: 'amend.slowval.*', workmem: 'amend.workmem.*', skip: 'amend.skip', include: 'amend.include', exclude: 'amend.exclude', window: 'amend.window.*' };
@@ -176,12 +176,19 @@ export function logLinesOf(observation) {
 
 // ---- X4: the standing of a statement ------------------------------------------------------------------
 // binding      the runbook's procedure steps and safety rules, an authorised decision (and an endorsement of a
-//              suggestion), the approver's acknowledgement
+//              suggestion), the approver's acknowledgement, and the owner's or approver's reaffirmation of the
+//              description (a kept value, a declined suggestion, "No to <rc>, ... <build> it is")
 // superseded   the runbook's legacy notes, a decision the owner later withdrew, a CMDB role that a failover drill
 //              replaced
-// informal     colleagues' suggestions and questions, declined or hypothetical remarks, the handover's hearsay,
-//              field tips, the vendor's tuning suggestion that the ticket overrides
+// informal     colleagues' suggestions and questions that nobody adopted, the handover's hearsay, field tips, the
+//              vendor's tuning suggestion that the ticket overrides, a colleague's failover tip
 // out_of_scope other sites and services: chatter about them, the handover's alerts and "not ours" lines
+// Left out (mixed standing, §2.7 step 5) [review fix]: the owner's hypotheticals ("may respin ... until then <build>
+// stands", "if INC-x gets closed ... otherwise leave it out", "we might raise ...; no change for now") carry a forecast
+// and a binding reaffirmation at once; a suggestion the owner endorsed is a proposal whose content became binding; the
+// "don't mix the two up" note is about another pool but addressed to this change's executor. The earlier mapping called
+// every owner hypothetical and decline "informal", so a reaffirmation by the change owner trained as hearsay.
+export const REAFFIRM_FRAMES = Object.freeze(['herring.version.keep', 'herring.version.rc.a', 'herring.value.keep', 'decline', 'decline.window']);
 export function alignStatements({ parsed, world, tap }) {
   const sp = world.spec, out = [];
   const add = (id, label, kind) => out.push({ id, slots: { statement: id }, label, kind });
@@ -196,8 +203,8 @@ export function alignStatements({ parsed, world, tap }) {
     if (s.cls === 'boss' && s.label === 'changes') add(id, s.retracted ? 'superseded' : 'binding', 'decision');
     else if (s.cls === 'boss' && s.label === 'confirms') add(id, 'binding', 'endorsement');
     else if (s.cls === 'boss' && s.frame === 'approver.ack') add(id, 'binding', 'approval');
-    else if (s.cls === 'other' && s.label === 'proposes') add(id, 'informal', 'suggestion');
-    else if (s.cls === 'boss' && s.label === 'mentions') add(id, 'informal', 'hypothetical');
+    else if (s.cls === 'other' && s.label === 'proposes' && s.role !== 'suggest') add(id, 'informal', 'suggestion');
+    else if (s.cls === 'boss' && s.label === 'mentions' && REAFFIRM_FRAMES.includes(s.frame)) add(id, 'binding', 'reaffirmation');
     else if (s.role === 'chatter' && standing[c.text]) add(id, standing[c.text], 'chatter');
   }
   // CMDB role notes after a failover drill: replaced by the drill's outcome

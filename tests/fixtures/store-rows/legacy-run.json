@@ -1,0 +1,138 @@
+{
+ "about": "A finished run written by the whole-run store (before src/run-rows.mjs): runs.body holds the entire record. Generated once; do not regenerate (the engine hash and times are part of the evidence).",
+ "status": "succeeded",
+ "runId": "f6a786b2-304d-48ee-9c93-bd0909a7de02",
+ "workflowHash": "ec4edb905bcb14f89593f6ddda7428767f6c6b6510a01d171b05fe4907484311",
+ "workflow": {
+  "hash": "ec4edb905bcb14f89593f6ddda7428767f6c6b6510a01d171b05fe4907484311",
+  "id": "LegacyRows",
+  "version": 1,
+  "body": "{\"acceptance\":[{\"left\":{\"$ref\":\"nodes.each.count\"},\"op\":\"eq\",\"right\":3},{\"left\":{\"$ref\":\"nodes.check.passed\"},\"op\":\"eq\",\"right\":true}],\"budget\":{\"maxConcurrency\":2,\"maxCost\":0,\"maxDurationMs\":20000,\"maxSteps\":100},\"domain\":\"diagnostic\",\"envelope\":{\"assumptions\":[\"Synthetic local capabilities only\"],\"risks\":[],\"successCriteria\":[\"The map echoed every item.\"]},\"goal\":\"Produce a finished run with a chain, a map with nested frames and an assertion, in the whole-run store format.\",\"id\":\"LegacyRows\",\"nodes\":[{\"args\":{\"notes\":{\"$ref\":\"input.notes\"}},\"description\":\"Echo the notes\",\"id\":\"first\",\"kind\":\"task\",\"needs\":[],\"retry\":{\"maxAttempts\":1},\"timeoutMs\":5000,\"tool\":\"core.identity\"},{\"body\":{\"acceptance\":[{\"op\":\"exists\",\"value\":{\"$ref\":\"nodes.echo.value\"}}],\"nodes\":[{\"args\":{\"index\":{\"$ref\":\"index\"},\"value\":{\"$ref\":\"item\"}},\"description\":\"Echo one item\",\"id\":\"echo\",\"kind\":\"task\",\"needs\":[],\"retry\":{\"maxAttempts\":1},\"timeoutMs\":5000,\"tool\":\"core.identity\"}]},\"concurrency\":2,\"description\":\"Echo each item\",\"id\":\"each\",\"items\":{\"$ref\":\"input.items\"},\"kind\":\"map\",\"maxItems\":10,\"needs\":[\"first\"]},{\"checks\":[{\"left\":{\"$ref\":\"nodes.each.count\"},\"op\":\"eq\",\"right\":3}],\"description\":\"Every item came back\",\"id\":\"check\",\"kind\":\"assert\",\"needs\":[\"each\"]}],\"schemaVersion\":\"1.0\",\"title\":\"Legacy run record fixture\",\"version\":1}",
+  "created": "2026-10-08T20:40:19.020Z"
+ },
+ "runBody": "{\"approvals\":{},\"assignment\":{},\"assignmentHash\":\"44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a\",\"cost\":0,\"createdAt\":1791492019041,\"deadline\":1791492039041,\"engineHash\":\"25a7f8b44e94ffd2c8254aa88ebe08b482fda485bc429d4d67391f54b49ae181\",\"error\":null,\"eventHead\":{\"hash\":\"e5f280930e1e6f75009aef6de83e531976130b97805a17b9b5432e0c04e3bd2c\",\"seq\":23},\"extra\":{},\"frames\":{\"root/each:0\":{\"contextHash\":\"7fe1fcde604bcc8d638e767ed18613fe9c6fec42c0fbae6c9d9b9f45bb1a477e\",\"nodes\":{\"echo\":{\"argsHash\":\"00447eb9ecd20a354be17ab5ed99e7f4a833399859f10a83b76569414348216b\",\"attempts\":1,\"completedAt\":1791492019104,\"completedSequence\":10,\"effects\":\"none\",\"idempotencyKey\":\"63c9d0fb485b3cd18bd43b5b196a11226f1b2879f16a5e279fa0973d30a82c87\",\"kind\":\"task\",\"outputHash\":\"00447eb9ecd20a354be17ab5ed99e7f4a833399859f10a83b76569414348216b\",\"startedAt\":1791492019096,\"startedSequence\":8,\"status\":\"completed\",\"tool\":\"core.identity\"}},\"outputs\":{\"echo\":{\"index\":0,\"value\":\"a\"}},\"result\":\"completed\"},\"root/each:1\":{\"contextHash\":\"9a463a7b945713c06ac233845d2b0fb4dccfeb482319092851935e264bf8d15d\",\"nodes\":{\"echo\":{\"argsHash\":\"f254a646bd40e0390639c56f5e6281b211ca82db7d33778ecc95ed3de1ba6ae7\",\"attempts\":1,\"completedAt\":1791492019108,\"completedSequence\":11,\"effects\":\"none\",\"idempotencyKey\":\"3c61b03fdf94b3fcc2e324c251ca72c618a8eef2c458c6eb4cf3d921a7bc7e58\",\"kind\":\"task\",\"outputHash\":\"f254a646bd40e0390639c56f5e6281b211ca82db7d33778ecc95ed3de1ba6ae7\",\"startedAt\":1791492019097,\"startedSequence\":9,\"status\":\"completed\",\"tool\":\"core.identity\"}},\"outputs\":{\"echo\":{\"index\":1,\"value\":\"b\"}},\"result\":\"completed\"},\"root/each:2\":{\"contextHash\":\"8467ca7ce49a14f7d398a6dcbb0a65dd7135c90522f00c068c0a7136b7ce58bf\",\"nodes\":{\"echo\":{\"argsHash\":\"92d1d6ba60472d4bb68c8a34b71ec693c56c08492a66509db7f40a4052c136a9\",\"attempts\":1,\"completedAt\":1791492019128,\"completedSequence\":16,\"effects\":\"none\",\"idempotencyKey\":\"c641c44a8944431762581a8c6d32b66707a6e66add11595847648736fbeb0d0e\",\"kind\":\"task\",\"outputHash\":\"92d1d6ba60472d4bb68c8a34b71ec693c56c08492a66509db7f40a4052c136a9\",\"startedAt\":1791492019124,\"startedSequence\":15,\"status\":\"completed\",\"tool\":\"core.identity\"}},\"outputs\":{\"echo\":{\"index\":2,\"value\":\"c\"}},\"result\":\"completed\"}},\"id\":\"f6a786b2-304d-48ee-9c93-bd0909a7de02\",\"identity\":{\"foundry\":{\"engineHash\":\"25a7f8b44e94ffd2c8254aa88ebe08b482fda485bc429d4d67391f54b49ae181\",\"policyHash\":\"743874dc59bcbd3e3257926a739c866813d6604f924f906342983b4bb871caa7\",\"registryHash\":\"2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77\",\"runId\":\"f6a786b2-304d-48ee-9c93-bd0909a7de02\",\"workflowHash\":\"ec4edb905bcb14f89593f6ddda7428767f6c6b6510a01d171b05fe4907484311\"}},\"input\":{\"items\":[\"a\",\"b\",\"c\"],\"notes\":\"legacy store\"},\"modelMode\":\"live\",\"modelPolicyHash\":null,\"nodes\":{\"check\":{\"attempts\":1,\"completedAt\":1791492019144,\"completedSequence\":20,\"kind\":\"assert\",\"outputHash\":\"11c11db30f4b3f6c758722ba3e27eea08145b7d212f6a157451e364b48475280\",\"startedAt\":1791492019140,\"startedSequence\":19,\"status\":\"completed\"},\"each\":{\"attempts\":1,\"completedAt\":1791492019136,\"completedSequence\":18,\"kind\":\"map\",\"outputHash\":\"21dec497f465995f3cb2f8875368968bc2b9824624918419ddebbc8256d347be\",\"startedAt\":1791492019084,\"startedSequence\":5,\"status\":\"completed\"},\"first\":{\"argsHash\":\"8866c76030724abe78fdf6b02e7790c72d8af11e12c43e41c4b253137940d074\",\"attempts\":1,\"completedAt\":1791492019080,\"completedSequence\":4,\"effects\":\"none\",\"idempotencyKey\":\"d917a8093fb43ff06e46006652b99bc68b16d71f80f940bf1b02ec3093d96480\",\"kind\":\"task\",\"outputHash\":\"8866c76030724abe78fdf6b02e7790c72d8af11e12c43e41c4b253137940d074\",\"startedAt\":1791492019078,\"startedSequence\":3,\"status\":\"completed\",\"tool\":\"core.identity\"}},\"outputs\":{\"check\":{\"passed\":true},\"each\":{\"count\":3,\"items\":[{\"echo\":{\"index\":0,\"value\":\"a\"}},{\"echo\":{\"index\":1,\"value\":\"b\"}},{\"echo\":{\"index\":2,\"value\":\"c\"}}]},\"first\":{\"notes\":\"legacy store\"}},\"owner\":null,\"policy\":{\"allowedCapabilities\":[\"core.identity\",\"core.validate\",\"core.json\",\"core.pluck\",\"core.aggregate\",\"core.template\",\"core.collect\",\"core.artifact\",\"core.fail\",\"core.sleep\",\"fixture.observe\",\"fixture.diagnose\",\"fixture.remediate\",\"fixture.verify\"],\"maxConcurrency\":4,\"maxCost\":0,\"maxDurationMs\":3600000,\"maxResumes\":1000,\"maxSteps\":5000},\"registryHash\":\"2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77\",\"resumeCount\":1,\"sampleSalt\":\"f6a786b2-304d-48ee-9c93-bd0909a7de02\",\"status\":\"succeeded\",\"steps\":6,\"updatedAt\":1791492019152,\"verdict\":{\"acceptance\":\"gating\",\"authority\":\"supported\",\"code\":null,\"establishesCompletion\":false,\"grantsActionAuthority\":false,\"reason\":\"Run succeeded and its acceptance gated on a check that a wrong answer can fail\",\"verdict\":\"pass\"},\"workflowHash\":\"ec4edb905bcb14f89593f6ddda7428767f6c6b6510a01d171b05fe4907484311\",\"workflowId\":\"LegacyRows\"}",
+ "events": [
+  {
+   "seq": 1,
+   "body": "{\"assignmentHash\":\"44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a\",\"at\":1791492019041,\"audit\":\"foundry-audit/1\",\"engineHash\":\"25a7f8b44e94ffd2c8254aa88ebe08b482fda485bc429d4d67391f54b49ae181\",\"identityHash\":\"c16ae68e6d7b3fa4c54da845543fd3627bfdfed98643eb98460d3854c733ca40\",\"inputHash\":\"8be76e859b4439e763bcbe3781df87d4a394b6cc5e205443bc7695fee3876437\",\"modelMode\":\"live\",\"modelPolicyHash\":null,\"policyHash\":\"743874dc59bcbd3e3257926a739c866813d6604f924f906342983b4bb871caa7\",\"previousHash\":null,\"registryHash\":\"2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77\",\"sampleSalt\":\"f6a786b2-304d-48ee-9c93-bd0909a7de02\",\"seq\":1,\"type\":\"run.created\",\"workflowHash\":\"ec4edb905bcb14f89593f6ddda7428767f6c6b6510a01d171b05fe4907484311\"}",
+   "hash": "c670ff84cd6b2c485dd9e2a5c4ec5bbd35ff67360a24ae7774bcc866fd97c46d"
+  },
+  {
+   "seq": 2,
+   "body": "{\"at\":1791492019051,\"previousHash\":\"c670ff84cd6b2c485dd9e2a5c4ec5bbd35ff67360a24ae7774bcc866fd97c46d\",\"seq\":2,\"token\":\"a02242fd-aea5-4ff6-b0bf-0e43e4ba9774\",\"type\":\"runner.acquired\"}",
+   "hash": "e296d73e388872f4cd2bd6c0055704aeb633f26d091e5f5b0c8eb8890ffa8c7b"
+  },
+  {
+   "seq": 3,
+   "body": "{\"argsHash\":\"8866c76030724abe78fdf6b02e7790c72d8af11e12c43e41c4b253137940d074\",\"at\":1791492019078,\"effects\":\"none\",\"idempotencyKey\":\"d917a8093fb43ff06e46006652b99bc68b16d71f80f940bf1b02ec3093d96480\",\"kind\":\"task\",\"nodeKey\":\"root/first\",\"previousHash\":\"e296d73e388872f4cd2bd6c0055704aeb633f26d091e5f5b0c8eb8890ffa8c7b\",\"reservedCost\":0,\"seq\":3,\"tool\":\"core.identity\",\"type\":\"tool.intent\"}",
+   "hash": "bcbf087bb511277af2aae973d78506ceef3805640a4e44e4fbdff76796d43380"
+  },
+  {
+   "seq": 4,
+   "body": "{\"at\":1791492019080,\"nodeKey\":\"root/first\",\"output\":{\"notes\":\"legacy store\"},\"outputHash\":\"8866c76030724abe78fdf6b02e7790c72d8af11e12c43e41c4b253137940d074\",\"previousHash\":\"bcbf087bb511277af2aae973d78506ceef3805640a4e44e4fbdff76796d43380\",\"seq\":4,\"type\":\"node.completed\"}",
+   "hash": "6db07524be2655339df5af86c59e3789d002831047bd0bb5d65cdcd94b862ca0"
+  },
+  {
+   "seq": 5,
+   "body": "{\"at\":1791492019084,\"kind\":\"map\",\"nodeKey\":\"root/each\",\"previousHash\":\"6db07524be2655339df5af86c59e3789d002831047bd0bb5d65cdcd94b862ca0\",\"reservedCost\":0,\"seq\":5,\"type\":\"node.started\"}",
+   "hash": "425b17a2c13185005e186cc86599b9d04e46225a86aea33b25081bb038d38188"
+  },
+  {
+   "seq": 6,
+   "body": "{\"at\":1791492019089,\"contextHash\":\"7fe1fcde604bcc8d638e767ed18613fe9c6fec42c0fbae6c9d9b9f45bb1a477e\",\"frameKey\":\"root/each:0\",\"previousHash\":\"425b17a2c13185005e186cc86599b9d04e46225a86aea33b25081bb038d38188\",\"seq\":6,\"type\":\"frame.created\"}",
+   "hash": "f953f91e3fccf1c2c5bd762a9d65673c3daaa576f747a7ccea05a31efdb3dea8"
+  },
+  {
+   "seq": 7,
+   "body": "{\"at\":1791492019093,\"contextHash\":\"9a463a7b945713c06ac233845d2b0fb4dccfeb482319092851935e264bf8d15d\",\"frameKey\":\"root/each:1\",\"previousHash\":\"f953f91e3fccf1c2c5bd762a9d65673c3daaa576f747a7ccea05a31efdb3dea8\",\"seq\":7,\"type\":\"frame.created\"}",
+   "hash": "c2b67c668e673f6d84564b5ceacd882c9e53f265d7f571004f23aced21480e99"
+  },
+  {
+   "seq": 8,
+   "body": "{\"argsHash\":\"00447eb9ecd20a354be17ab5ed99e7f4a833399859f10a83b76569414348216b\",\"at\":1791492019096,\"effects\":\"none\",\"idempotencyKey\":\"63c9d0fb485b3cd18bd43b5b196a11226f1b2879f16a5e279fa0973d30a82c87\",\"kind\":\"task\",\"nodeKey\":\"root/each:0/echo\",\"previousHash\":\"c2b67c668e673f6d84564b5ceacd882c9e53f265d7f571004f23aced21480e99\",\"reservedCost\":0,\"seq\":8,\"tool\":\"core.identity\",\"type\":\"tool.intent\"}",
+   "hash": "4ff71f023fb4e1a86ffc853b087000538c8d12ef33fe69c00ea5e352a5b16504"
+  },
+  {
+   "seq": 9,
+   "body": "{\"argsHash\":\"f254a646bd40e0390639c56f5e6281b211ca82db7d33778ecc95ed3de1ba6ae7\",\"at\":1791492019097,\"effects\":\"none\",\"idempotencyKey\":\"3c61b03fdf94b3fcc2e324c251ca72c618a8eef2c458c6eb4cf3d921a7bc7e58\",\"kind\":\"task\",\"nodeKey\":\"root/each:1/echo\",\"previousHash\":\"4ff71f023fb4e1a86ffc853b087000538c8d12ef33fe69c00ea5e352a5b16504\",\"reservedCost\":0,\"seq\":9,\"tool\":\"core.identity\",\"type\":\"tool.intent\"}",
+   "hash": "e418e202b25cf5bd54185abdd65e696bd55645a91c35fc6bd528efec57e22ed9"
+  },
+  {
+   "seq": 10,
+   "body": "{\"at\":1791492019104,\"nodeKey\":\"root/each:0/echo\",\"output\":{\"index\":0,\"value\":\"a\"},\"outputHash\":\"00447eb9ecd20a354be17ab5ed99e7f4a833399859f10a83b76569414348216b\",\"previousHash\":\"e418e202b25cf5bd54185abdd65e696bd55645a91c35fc6bd528efec57e22ed9\",\"seq\":10,\"type\":\"node.completed\"}",
+   "hash": "8b87865c81cce95fbd1c0b9b89293043b177efd984461bc3f777de0442df66d4"
+  },
+  {
+   "seq": 11,
+   "body": "{\"at\":1791492019108,\"nodeKey\":\"root/each:1/echo\",\"output\":{\"index\":1,\"value\":\"b\"},\"outputHash\":\"f254a646bd40e0390639c56f5e6281b211ca82db7d33778ecc95ed3de1ba6ae7\",\"previousHash\":\"8b87865c81cce95fbd1c0b9b89293043b177efd984461bc3f777de0442df66d4\",\"seq\":11,\"type\":\"node.completed\"}",
+   "hash": "9cabde6d5ec9ab96b2242b2e3221f7724a6f609ddf801684dc3f2c85ad1db973"
+  },
+  {
+   "seq": 12,
+   "body": "{\"at\":1791492019112,\"index\":0,\"nodeKey\":\"root/each\",\"previousHash\":\"9cabde6d5ec9ab96b2242b2e3221f7724a6f609ddf801684dc3f2c85ad1db973\",\"seq\":12,\"type\":\"map.item.completed\"}",
+   "hash": "4e8c966cbf69fd9eb1e13925644c776636f12a13f2a9332a2a6dd7ca1f371f84"
+  },
+  {
+   "seq": 13,
+   "body": "{\"at\":1791492019116,\"contextHash\":\"8467ca7ce49a14f7d398a6dcbb0a65dd7135c90522f00c068c0a7136b7ce58bf\",\"frameKey\":\"root/each:2\",\"previousHash\":\"4e8c966cbf69fd9eb1e13925644c776636f12a13f2a9332a2a6dd7ca1f371f84\",\"seq\":13,\"type\":\"frame.created\"}",
+   "hash": "72b3fad700c211447d1d2623109d61bcef51d328e28f7cf5da6b1f897d477d52"
+  },
+  {
+   "seq": 14,
+   "body": "{\"at\":1791492019120,\"index\":1,\"nodeKey\":\"root/each\",\"previousHash\":\"72b3fad700c211447d1d2623109d61bcef51d328e28f7cf5da6b1f897d477d52\",\"seq\":14,\"type\":\"map.item.completed\"}",
+   "hash": "e666a24fba79863412f9ce674cbcfa833264865a19c0c9057f781b1ea217e626"
+  },
+  {
+   "seq": 15,
+   "body": "{\"argsHash\":\"92d1d6ba60472d4bb68c8a34b71ec693c56c08492a66509db7f40a4052c136a9\",\"at\":1791492019124,\"effects\":\"none\",\"idempotencyKey\":\"c641c44a8944431762581a8c6d32b66707a6e66add11595847648736fbeb0d0e\",\"kind\":\"task\",\"nodeKey\":\"root/each:2/echo\",\"previousHash\":\"e666a24fba79863412f9ce674cbcfa833264865a19c0c9057f781b1ea217e626\",\"reservedCost\":0,\"seq\":15,\"tool\":\"core.identity\",\"type\":\"tool.intent\"}",
+   "hash": "7baca2f5945f2bb5abecbe31cdc1237598b2fcecf430bd0bafc0e416ecdb2a91"
+  },
+  {
+   "seq": 16,
+   "body": "{\"at\":1791492019128,\"nodeKey\":\"root/each:2/echo\",\"output\":{\"index\":2,\"value\":\"c\"},\"outputHash\":\"92d1d6ba60472d4bb68c8a34b71ec693c56c08492a66509db7f40a4052c136a9\",\"previousHash\":\"7baca2f5945f2bb5abecbe31cdc1237598b2fcecf430bd0bafc0e416ecdb2a91\",\"seq\":16,\"type\":\"node.completed\"}",
+   "hash": "b6de70688843f7cb0104f80ce8061acb05c7764280b8b4467bbbc956eba16efe"
+  },
+  {
+   "seq": 17,
+   "body": "{\"at\":1791492019132,\"index\":2,\"nodeKey\":\"root/each\",\"previousHash\":\"b6de70688843f7cb0104f80ce8061acb05c7764280b8b4467bbbc956eba16efe\",\"seq\":17,\"type\":\"map.item.completed\"}",
+   "hash": "7b598974d3589a3e9db165c8fb022807043fa753bd4bfe82262911b6aed53976"
+  },
+  {
+   "seq": 18,
+   "body": "{\"at\":1791492019136,\"nodeKey\":\"root/each\",\"output\":{\"count\":3,\"items\":[{\"echo\":{\"index\":0,\"value\":\"a\"}},{\"echo\":{\"index\":1,\"value\":\"b\"}},{\"echo\":{\"index\":2,\"value\":\"c\"}}]},\"outputHash\":\"21dec497f465995f3cb2f8875368968bc2b9824624918419ddebbc8256d347be\",\"previousHash\":\"7b598974d3589a3e9db165c8fb022807043fa753bd4bfe82262911b6aed53976\",\"seq\":18,\"type\":\"node.completed\"}",
+   "hash": "c205d644fdc4bdea064ccd6b380c3e57b4ce1102c82f435adfe7d74315cb0c13"
+  },
+  {
+   "seq": 19,
+   "body": "{\"at\":1791492019140,\"kind\":\"assert\",\"nodeKey\":\"root/check\",\"previousHash\":\"c205d644fdc4bdea064ccd6b380c3e57b4ce1102c82f435adfe7d74315cb0c13\",\"reservedCost\":0,\"seq\":19,\"type\":\"node.started\"}",
+   "hash": "06eb0039b7d17bded82911a61d7e1809c8503b969a55081920c52639ad1f00e0"
+  },
+  {
+   "seq": 20,
+   "body": "{\"at\":1791492019144,\"nodeKey\":\"root/check\",\"output\":{\"passed\":true},\"outputHash\":\"11c11db30f4b3f6c758722ba3e27eea08145b7d212f6a157451e364b48475280\",\"previousHash\":\"06eb0039b7d17bded82911a61d7e1809c8503b969a55081920c52639ad1f00e0\",\"seq\":20,\"type\":\"node.completed\"}",
+   "hash": "dfaed545a08213f98f7055c725a53fcf46774f996cd53b5b8aecbe8e6490462e"
+  },
+  {
+   "seq": 21,
+   "body": "{\"at\":1791492019153,\"decisionHash\":\"ec0ac7527d4b033d22260d5d7b251a375ed5aece48b0a4c33c561ffe73c172e2\",\"id\":\"f6a786b2-304d-48ee-9c93-bd0909a7de02:verdict:20\",\"kind\":\"verdict\",\"previousHash\":\"dfaed545a08213f98f7055c725a53fcf46774f996cd53b5b8aecbe8e6490462e\",\"seq\":21,\"type\":\"decision.recorded\"}",
+   "hash": "c362f8917a1fbdfbb1d0f6fda4e5df9f701eb0319c368333be0c73d634c8e2cc"
+  },
+  {
+   "seq": 22,
+   "body": "{\"acceptance\":\"gating\",\"at\":1791492019153,\"authority\":\"supported\",\"boardRoot\":null,\"code\":null,\"establishesCompletion\":false,\"grantsActionAuthority\":false,\"journalCalls\":0,\"journalMaxId\":0,\"journalRoot\":null,\"previousHash\":\"c362f8917a1fbdfbb1d0f6fda4e5df9f701eb0319c368333be0c73d634c8e2cc\",\"reason\":\"Run succeeded and its acceptance gated on a check that a wrong answer can fail\",\"seq\":22,\"type\":\"run.verdict\",\"verdict\":\"pass\",\"verdictInputsHash\":\"405f90185b7359353a33568a54d5bd693ca10092147989027478a8338cb26bc0\"}",
+   "hash": "70e372be80936bb93046d87c683eb3c60a7c73a53839dc523daf9a4523c20753"
+  },
+  {
+   "seq": 23,
+   "body": "{\"at\":1791492019153,\"previousHash\":\"70e372be80936bb93046d87c683eb3c60a7c73a53839dc523daf9a4523c20753\",\"seq\":23,\"type\":\"run.succeeded\"}",
+   "hash": "e5f280930e1e6f75009aef6de83e531976130b97805a17b9b5432e0c04e3bd2c"
+  }
+ ],
+ "decisions": [
+  {
+   "id": "f6a786b2-304d-48ee-9c93-bd0909a7de02:verdict:20",
+   "kind": "verdict",
+   "body": "{\"action\":\"pass\",\"alternatives\":[],\"at\":1791492019151,\"costUsd\":0,\"features\":{\"acceptance\":\"gating\",\"discovery\":false,\"errorCode\":null,\"findings\":0,\"status\":\"succeeded\",\"steps\":6},\"id\":\"f6a786b2-304d-48ee-9c93-bd0909a7de02:verdict:20\",\"identity\":{\"foundry\":{\"engineHash\":\"25a7f8b44e94ffd2c8254aa88ebe08b482fda485bc429d4d67391f54b49ae181\",\"policyHash\":\"743874dc59bcbd3e3257926a739c866813d6604f924f906342983b4bb871caa7\",\"registryHash\":\"2026f54332d7f67bfb2e858b17129387835b80be9e48e8eb31f15c4210651f77\",\"runId\":\"f6a786b2-304d-48ee-9c93-bd0909a7de02\",\"workflowHash\":\"ec4edb905bcb14f89593f6ddda7428767f6c6b6510a01d171b05fe4907484311\"}},\"kind\":\"verdict\",\"propensity\":1,\"rationale\":\"Run succeeded and its acceptance gated on a check that a wrong answer can fail\",\"schema\":\"foundry-decision/1\"}"
+  }
+ ]
+}

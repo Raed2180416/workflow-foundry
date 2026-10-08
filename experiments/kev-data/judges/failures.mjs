@@ -32,7 +32,9 @@ const fail = (code, message) => { const e = new Error(`${code}: ${message}`); e.
 export const F1_OPTIONS = Object.freeze(['flake', 'variance', 'defect', 'env', 'impossible', 'finding']);
 // Decided by code before F1 is asked (JUDGE-PROGRAM.md §1.2 F1 "Taxonomy"): schema-invalid, truncated or refused model
 // output (D:B1 retry on schema failure, D:C7 provider error class) and the runtime's budget stops. They are never F1 rows.
-export const MODEL_OUTPUT_CODES = Object.freeze(['MODEL_SCHEMA', 'MODEL_TRUNCATED', 'MODEL_REFUSAL', 'MODEL_PROTOCOL', 'MODEL_ESCALATION_EXHAUSTED']);
+// (second review 2026-10-08: MODEL_OUTPUT_LIMIT and MODEL_RESPONSE_LIMIT, an oversized provider response, and JUDGMENT_PROTOCOL, a judgment
+// answer that is not one offered option, are model-output failures the frozen runtime raises; they were missing)
+export const MODEL_OUTPUT_CODES = Object.freeze(['MODEL_SCHEMA', 'MODEL_TRUNCATED', 'MODEL_REFUSAL', 'MODEL_PROTOCOL', 'MODEL_ESCALATION_EXHAUSTED', 'MODEL_OUTPUT_LIMIT', 'MODEL_RESPONSE_LIMIT', 'JUDGMENT_PROTOCOL']);
 export const BUDGET_CODES = Object.freeze(['COST_BUDGET', 'STEP_BUDGET', 'STATE_BUDGET', 'DEADLINE', 'MODEL_BUDGET', 'RESUME_BUDGET', 'RETRY_EXHAUSTED', 'LOOP_EXHAUSTED', 'MAP_BOUND']);
 export function routeByCode(code) {
   if (MODEL_OUTPUT_CODES.includes(code)) return 'model_output';
@@ -162,7 +164,10 @@ export function codefixState(task, slots = {}, port = slots.port) {
       const { n } = spanOf(slots, ['thread']), segs = threadSegments(inp.bug_report), seg = segs[n];
       if (!seg) throw fail('CODEFIX_SLOTS', `no thread segment ${n}`);
       const head = segs[0], changelog = typeof inp.changelog === 'string' ? inp.changelog.split('\n').filter(Boolean).slice(1, 4).join(' ') : null;
-      return { report: seg.body, known_reports: head.title ? [head.title] : [], build_info: { component: head.component, version: head.version, changelog } };
+      // known_reports are the EARLIER reports at triage time (spec X6 state provenance): a comment is triaged after its issue was filed,
+      // so the issue's title is known; the issue's own first report has no earlier report in this thread. Second review 2026-10-08 (P1):
+      // segment 0 used to list its own title as a known report, which makes a genuine lead read as "repeats an existing report".
+      return { report: seg.body, known_reports: n > 0 && head.title ? [head.title] : [], build_info: { component: head.component, version: head.version, changelog } };
     }
     case 'Q6': {
       const { n } = spanOf(slots, ['thread']), seg = threadSegments(inp.bug_report)[n], sec = designSections(inp.design_notes)[slots.section];

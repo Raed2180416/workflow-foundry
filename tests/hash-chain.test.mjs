@@ -117,7 +117,7 @@ test('hash chain: a model run binds its journal rows, decisions and verdict inpu
   assert.deepEqual([report.ok, report.clean, report.bound, report.audit], [true, true, true, AUDIT], JSON.stringify(report.findings));
   assert.deepEqual(report.head, { seq: log.length, hash: log.at(-1).hash });
   assert.deepEqual(report.head, run.eventHead);
-  assert.deepEqual(report.checks.journal, { boundCalls: 4, referencedRows: 4, unreferencedLate: 0 });
+  assert.deepEqual(report.checks.journal, { boundCalls: 4, referencedRows: 4, unreferencedLate: 0, unreferencedSealed: 0 });
   assert.deepEqual(report.checks.decisions, { bound: 2, rows: 2 });
   assert.equal(report.anchor.headHash, log.at(-1).hash);
   assert.deepEqual([report.anchor.journalRoot, report.anchor.journalCalls, report.anchor.journalMaxId, report.anchor.schema], [seal.journalRoot, 4, seal.journalMaxId, 'foundry-anchor/1']);
@@ -283,7 +283,7 @@ test('hash chain: an anchor taken while a run is paused still holds after the ru
   const later = verifyRun(store, paused.id, { anchors: [early.anchor] });
   assert.deepEqual([later.ok, later.clean], [true, true], JSON.stringify(later.findings));
   assert.ok(later.head.seq > early.head.seq);
-  assert.deepEqual(later.checks.state, { outputsCompared: 1 }, 'a human answer is checked against its answerHash');
+  assert.deepEqual(later.checks.state, { outputsCompared: 1, approvalsCompared: 0 }, 'a human answer is checked against its answerHash');
   const run = store.run(paused.id); run.outputs.ask = { answer: false };
   sql(store, 'UPDATE runs SET body=? WHERE id=?', canonical(run), paused.id);
   assert.ok(codes(verifyRun(store, paused.id)).includes('STATE_OUTPUT_EDITED'));
@@ -486,8 +486,10 @@ test('replay: a forged row under a run that is still open (no seal, no event bin
   assert.match(third.error.message, /written after run .* was sealed/);
 });
 
-test('replay: from a ModelPort journal in another database, a row its run only sealed is checked in that database', async t => {
+test('replay: from a ModelPort journal in another database, a row its run only sealed is checked in that database, and served unverified', async t => {
   // Regression: the sealed root was recomputed in the store's database, which holds no journal here, so a genuine row was refused.
+  // (Review fix: a row its run only sealed, that no event of it charged, is served as recorded but not as verified provenance; it was
+  // check 'sealed' and verified clean, which let a row planted under a run while it was open pass as that run's.)
   const { root, store } = space(t), journalDb = new DatabaseSync(path.join(root, 'elsewhere.sqlite'));
   t.after(() => { try { journalDb.close(); } catch {} });
   const port = (scriptOrFn) => { const provider = new ScriptedProvider(scriptOrFn);
@@ -499,8 +501,12 @@ test('replay: from a ModelPort journal in another database, a row its run only s
     rechain(store, live.id, event.seq, e => { delete e.journalId; delete e.journalRowHash; delete e.requestHash; delete e.responseHash; });
   const replayer = port(silent), second = await replayer.execute(replayer.create(workflow, { raw: 'five dollars' }, { modelMode: 'replay', sampleSalt: 'chain:1' }).id);
   assert.equal(second.status, 'succeeded', JSON.stringify(second.error));
-  assert.ok(events(store, second.id, 'model.called').every(e => e.replaySource?.check === 'sealed'));
-  assert.equal(verifyRun(store, second.id, { journalDb }).clean, true);
+  assert.ok(events(store, second.id, 'model.called').every(e => e.replaySource?.check === 'unverified' && e.replaySource.sealed === true && /sealed the row/.test(e.replaySource.reason)));
+  const replayReport = verifyRun(store, second.id, { journalDb });
+  assert.deepEqual([replayReport.ok, replayReport.clean, [...new Set(codes(replayReport))]], [true, false, ['REPLAY_UNVERIFIED']], JSON.stringify(replayReport.findings));
+  assert.equal(verifyRun(store, second.id, { journalDb, requireBound: true }).ok, false);
+  const sourceReport = verifyRun(store, live.id, { journalDb });
+  assert.deepEqual([sourceReport.ok, [...new Set(codes(sourceReport))]], [true, ['JOURNAL_ROW_UNREFERENCED']], 'the recording run says its sealed rows were never charged');
   // And an edit under the seal is still refused there.
   journalDb.prepare("UPDATE model_calls SET response=replace(response,'\"amount\":10','\"amount\":11') WHERE run_id=? AND ok=1 AND response LIKE '%\"amount\":10%'").run(live.id);
   const third = await replayer.execute(replayer.create(workflow, { raw: 'five dollars' }, { modelMode: 'replay', sampleSalt: 'chain:1' }).id);
@@ -716,4 +722,203 @@ test('http: GET /api/runs/ID/verify returns the report and the run view carries 
   assert.equal(view.anchor.headHash, foundry.store.run(run.id).eventHead.hash);
   const missing = await fetch(`${service.origin}/api/runs/nope/verify`);
   assert.equal(missing.status, 404);
+});
+
+// ---- adversarial review (2026-10-08): each of these passed (verified clean, or ran) before its fix -------------------------------
+
+// Append events at the tail consistently, as any writer with access to the database can: no rewrite, so no anchor exposes it.
+function append(store, runId, items, editRun = () => {}) {
+  const run = store.run(runId);
+  let previous = store.db.prepare('SELECT seq, hash FROM events WHERE run_id=? ORDER BY seq DESC LIMIT 1').get(runId);
+  editRun(run);
+  for (const item of items) {
+    const event = { seq: previous.seq + 1, at: Date.now(), previousHash: previous.hash, ...(typeof item === 'function' ? item(run) : item) };
+    const hash = digest(event);
+    sql(store, 'INSERT INTO events VALUES(?,?,?,?)', runId, event.seq, canonical(event), hash);
+    previous = { seq: event.seq, hash };
+  }
+  run.eventHead = previous;
+  sql(store, 'UPDATE runs SET body=? WHERE id=?', canonical(run), runId);
+}
+
+test('review: a closed run re-sealed by appended events (edited output and verdict) is detected, with or without an anchor', async t => {
+  const { store, run } = await finished(t), anchors = [verifyRun(store, run.id).anchor], forged = { amount: 1e6 };
+  append(store, run.id, [
+    { type: 'node.completed', nodeKey: 'root/twice', outputHash: digest(forged), output: forged },
+    r => ({ type: 'run.verdict', ...r.verdict, ...store.sealBinding(run.id, r) }),
+    { type: 'run.succeeded' },
+  ], r => { r.outputs.twice = forged; r.nodes.twice.outputHash = digest(forged); r.verdict = { ...r.verdict, reason: 'forged' }; });
+  for (const report of [verifyRun(store, run.id), verifyRun(store, run.id, { anchors })]) {
+    assert.equal(report.ok, false, JSON.stringify(report.findings));
+    for (const code of ['RUN_EXTENDED', 'VERDICT_INPUTS_MISMATCH', 'VERDICT_EDITED']) assert.ok(codes(report).includes(code), `${code} in ${codes(report)}`);
+    assert.ok(!codes(report).includes('ANCHOR_MISMATCH'), 'appending is not a rewrite: the anchored head is still in the chain');
+  }
+  // A replay does not take the source's bindings or seal from past its close: a row bound only by an appended event is not "bound".
+  const { store: other, run: closed } = await finished(t);
+  forge(other, "run_id=? AND node_key='root/twice' AND ok=1", [closed.id], row => ({ ...row, response: row.response.replace('"amount":10', '"amount":999') }));
+  const plantedId = other.db.prepare('SELECT MAX(id) AS id FROM model_calls').get().id;
+  append(other, closed.id, [{ type: 'model.called', nodeKey: 'root/twice', journalId: plantedId, ...bindRow(other.db.prepare('SELECT * FROM model_calls WHERE id=?').get(plantedId)) }]);
+  assert.ok(codes(verifyRun(other, closed.id)).includes('RUN_EXTENDED'));
+  const replaying = runtimeOn(other, silent);
+  const replayed = await replaying.runtime.execute(replaying.runtime.create(workflow, { raw: 'five dollars' }, { modelMode: 'replay', sampleSalt: 'chain:1' }).id);
+  assert.deepEqual([replayed.status, replayed.error?.code, replayed.outputs.twice], ['failed', 'JOURNAL_TAMPERED', undefined]);
+  assert.match(replayed.error.message, /written after run .* was sealed/);
+});
+
+test('review: annotations bound after the close are reported, not errors; a second terminal event is an error', async t => {
+  const { store, run } = await finished(t);
+  store.recordDecision(run.id, { schema: 'foundry-decision/1', id: `${run.id}:note:late`, kind: 'note', at: 1 });
+  const report = verifyRun(store, run.id);
+  assert.deepEqual([report.ok, report.clean], [true, false]);
+  assert.deepEqual(report.findings.map(f => [f.severity, f.code]), [['warn', 'BOUND_AFTER_CLOSE']]);
+  store.updateRun(run.id, () => {}, { type: 'run.succeeded' });
+  assert.ok(codes(verifyRun(store, run.id)).includes('RUN_EXTENDED'));
+});
+
+test('review: a replayable row planted under a run while it was open is not vouched for by the seal that later covers it', async t => {
+  const { store } = space(t);
+  const flow = wrap('Planted', [agent('norm'), { id: 'ask', kind: 'human', needs: ['norm'], description: 'Ask', question: 'Proceed?', answerSchema: { type: 'boolean' } }],
+    [{ op: 'eq', left: { $ref: 'nodes.ask.answer' }, right: true }]);
+  store.saveWorkflow(flow);
+  // A reference recording supplies the replay key the victim will look up.
+  const reference = runtimeOn(store, { [S]: [{ value: { amount: 10 } }] });
+  const recorded = await reference.runtime.execute(reference.runtime.create(flow, { raw: 'five dollars' }, { sampleSalt: 'victim' }).id);
+  // Another run waits for a human; a row with the victim's key and a forged answer is planted under it, then it finishes and seals.
+  const source = runtimeOn(store, { [S]: [{ value: { amount: 3 } }] });
+  const open = await source.runtime.execute(source.runtime.create(flow, { raw: 'five dollars' }, { sampleSalt: 'source' }).id);
+  assert.equal(open.status, 'awaiting_human');
+  forge(store, 'run_id=? AND ok=1', [recorded.id], row => ({ ...row, run_id: open.id, response: row.response.replace('"amount":10', '"amount":999') }));
+  source.runtime.answer(open.id, 'root/ask', true);
+  assert.equal((await source.runtime.execute(open.id)).status, 'succeeded');
+  const sourceReport = verifyRun(store, open.id);
+  assert.deepEqual([sourceReport.ok, sourceReport.clean, codes(sourceReport)], [true, false, ['JOURNAL_ROW_UNREFERENCED']]);
+  assert.equal(sourceReport.findings[0].replayable, true);
+  const replaying = runtimeOn(store, silent);
+  const victim = await replaying.runtime.execute(replaying.runtime.create(flow, { raw: 'five dollars' }, { sampleSalt: 'victim', modelMode: 'replay' }).id);
+  const [called] = events(store, victim.id, 'model.called');
+  assert.deepEqual([called.replaySource.check, called.replaySource.sealed, called.replaySource.runId], ['unverified', true, open.id]);
+  const report = verifyRun(store, victim.id);
+  assert.deepEqual([report.ok, report.clean, codes(report)], [true, false, ['REPLAY_UNVERIFIED']]);
+  assert.equal(verifyRun(store, victim.id, { requireBound: true }).ok, false, 'a claim-bearing run cannot rest on it');
+});
+
+test('review: a journal passed for a run that journaled in the workspace cannot stand in for the workspace journal', async t => {
+  const { root, store, run } = await finished(t);
+  store.db.exec('PRAGMA wal_checkpoint(TRUNCATE)');
+  const copy = path.join(root, 'pristine.sqlite');
+  writeFileSync(copy, readFileSync(path.join(store.directory, 'foundry.sqlite')));
+  sql(store, "UPDATE model_calls SET response=replace(response,'\"amount\":5','\"amount\":6') WHERE ok=1");
+  const pristine = new DatabaseSync(copy, { readOnly: true });
+  t.after(() => pristine.close());
+  const report = verifyRun(store, run.id, { journalDb: pristine });
+  assert.equal(report.ok, false);
+  for (const code of ['JOURNAL_ARGUMENT_IGNORED', 'JOURNAL_ROW_EDITED', 'JOURNAL_ROOT_MISMATCH']) assert.ok(codes(report).includes(code), code);
+});
+
+test('review: a transcript event is never read as a device, outside the workspace, or without a hash; a planted copy is refused', async t => {
+  const { root, store, run } = await finished(t);
+  append(store, run.id, [
+    { type: 'executor.finished', nodeKey: 'root/a', location: { kind: 'external', path: '/etc/hostname' } },
+    { type: 'executor.finished', nodeKey: 'root/b', transcriptHash: 'a'.repeat(64), location: { kind: 'workspace', path: '../../../../../../etc/hostname' } },
+    { type: 'executor.finished', nodeKey: 'root/c', transcriptHash: 'a'.repeat(64), location: { kind: 'external', path: '/dev/null' } },
+    { type: 'executor.finished', nodeKey: 'root/d', transcriptHash: 'a'.repeat(64), location: { kind: 'external', path: root } },
+  ]);
+  const report = verifyRun(store, run.id), by = key => report.findings.filter(f => f.nodeKey === key).map(f => `${f.severity}:${f.code}`);
+  assert.deepEqual([by('root/a'), by('root/b'), by('root/c'), by('root/d')],
+    [['error:TRANSCRIPT_UNBOUND'], ['error:TRANSCRIPT_LOCATION'], ['warn:TRANSCRIPT_UNCHECKED'], ['warn:TRANSCRIPT_UNCHECKED']]);
+  // bindTranscript: the copy's name comes from its hash, so another file already there is refused rather than bound over.
+  const { store: fresh, run: other } = await finished(t), file = path.join(root, 'session.jsonl');
+  writeFileSync(file, 'genuine\n');
+  const target = path.join(fresh.directory, 'artifacts', other.id, 'transcripts', `${sha256(readFileSync(file)).slice(0, 16)}.jsonl`);
+  mkdirSync(path.dirname(target), { recursive: true });
+  writeFileSync(target, 'planted\n');
+  assert.throws(() => fresh.bindTranscript(other.id, { nodeKey: 'root/norm', file }), { code: 'TRANSCRIPT', message: /different file/ });
+  writeFileSync(target, 'genuine\n');
+  assert.equal(fresh.bindTranscript(other.id, { nodeKey: 'root/norm', file }).location.kind, 'workspace', 'the same transcript bound again reuses its copy');
+});
+
+const gatedRegistry = (calls) => new CapabilityRegistry().register({ name: 'audit.operation', version: '1', implementation: 'hash-chain-fixture', description: 'Local mock operation',
+  inputSchema: { type: 'object' }, outputSchema: { type: 'object' }, effects: 'idempotent', risk: 'high', requiresApproval: true, maxTimeoutMs: 1000, cost: 0,
+  cancellation: 'cooperative', execute: async () => { calls.push(1); return { committed: true }; } });
+const operate = (needs = []) => ({ id: 'effect', kind: 'task', needs, description: 'Operate', tool: 'audit.operation', args: { target: 'mock' }, timeoutMs: 1000, retry: { maxAttempts: 1 } });
+const ask = { id: 'ask', kind: 'human', needs: [], description: 'Ask', question: 'Proceed?', answerSchema: { type: 'boolean' } };
+
+test('review: an approval granted only in the run record fires nothing; approve refuses a request edited in the record', async t => {
+  const root = mkdtempSync(path.join(tmpdir(), 'foundry-chain-')), store = new Store(root), calls = [];
+  t.after(() => { store.close(); rmSync(root, { recursive: true, force: true }); });
+  const runtime = new Runtime(store, gatedRegistry(calls), { allowedCapabilities: ['audit.operation'] });
+  const gated = wrap('RecordApproval', [operate()], [{ op: 'eq', left: { $ref: 'nodes.effect.committed' }, right: true }]);
+  store.saveWorkflow(gated);
+  // 1. Paused awaiting approval; the record is flipped to approved.
+  const paused = await runtime.execute(runtime.create(gated, {}).id), id = Object.keys(paused.approvals)[0];
+  assert.deepEqual(events(store, paused.id, 'approval.requested').map(e => [e.argsLabel, e.controlLabel]), [['trusted', 'trusted']], 'the request binds the labels the approver sees');
+  const rewrite = (runId, edit) => { const r = store.run(runId); edit(r); sql(store, 'UPDATE runs SET body=? WHERE id=?', canonical(r), runId); };
+  rewrite(paused.id, r => { Object.assign(r.approvals[id], { status: 'approved', actor: 'user' }); r.nodes.effect.status = 'pending'; r.status = 'ready'; });
+  assert.ok(codes(verifyRun(store, paused.id)).includes('APPROVAL_EDITED'));
+  const refused = await runtime.execute(paused.id);
+  assert.deepEqual([refused.status, refused.error.code, calls.length], ['failed', 'APPROVAL_TAMPERED', 0]);
+
+  // 2. Planted ahead: approvalId is deterministic, so a granted approval can be written into a run that has not reached the gate yet.
+  const later = wrap('PlantedApproval', [ask, operate(['ask'])], [{ op: 'eq', left: { $ref: 'nodes.effect.committed' }, right: true }]);
+  store.saveWorkflow(later);
+  const waiting = await runtime.execute(runtime.create(later, {}).id), w = store.run(waiting.id), args = { target: 'mock' }, nodeKey = 'root/effect';
+  const idempotencyKey = digest({ runId: waiting.id, nodeKey, workflowHash: w.workflowHash, args });
+  const approvalId = digest({ workflowHash: w.workflowHash, registryHash: w.registryHash, nodeKey, tool: 'audit.operation', args, idempotencyKey });
+  rewrite(waiting.id, r => { r.approvals[approvalId] = { id: approvalId, nodeKey, tool: 'audit.operation', args, idempotencyKey, status: 'approved', actor: 'user', risk: 'high' }; });
+  assert.ok(codes(verifyRun(store, waiting.id)).includes('APPROVAL_UNBOUND'));
+  runtime.answer(waiting.id, 'root/ask', true);
+  const planted = await runtime.execute(waiting.id);
+  assert.deepEqual([planted.status, planted.error.code, calls.length], ['failed', 'APPROVAL_TAMPERED', 0]);
+
+  // 3. The approver is shown the record's copy of the request: one edited to show other arguments is refused, not decided.
+  const shown = await runtime.execute(runtime.create(gated, {}).id), shownId = Object.keys(shown.approvals)[0];
+  rewrite(shown.id, r => { r.approvals[shownId].args = { target: 'harmless' }; });
+  assert.throws(() => runtime.approve(shown.id, shownId, true), { code: 'APPROVAL_TAMPERED' });
+  rewrite(shown.id, r => { r.approvals[shownId].args = { target: 'mock' }; });
+  assert.equal(runtime.approve(shown.id, shownId, true).status, 'ready', 'restored, the genuine request is decided as before');
+  assert.equal((await runtime.execute(shown.id)).status, 'succeeded');
+  assert.equal(calls.length, 1);
+  assert.deepEqual([verifyRun(store, shown.id).ok, verifyRun(store, shown.id).clean], [true, true]);
+});
+
+test('review: resume refuses a record whose identity or human answers were edited (policy widened, answer planted)', async t => {
+  const root = mkdtempSync(path.join(tmpdir(), 'foundry-chain-')), store = new Store(root), calls = [];
+  t.after(() => { store.close(); rmSync(root, { recursive: true, force: true }); });
+  const registry = new CapabilityRegistry().register({ name: 'audit.effect', version: '1', implementation: 'hash-chain-fixture', description: 'Local mock effect',
+    inputSchema: { type: 'object' }, outputSchema: { type: 'object' }, effects: 'idempotent', risk: 'low', requiresApproval: false, maxTimeoutMs: 1000, cost: 0,
+    cancellation: 'cooperative', execute: async () => { calls.push(1); return { committed: true }; } });
+  const runtime = new Runtime(store, registry, { allowedCapabilities: [] });
+  const flow = wrap('Widened', [ask, { ...operate(['ask']), tool: 'audit.effect' }], [{ op: 'eq', left: { $ref: 'nodes.effect.committed' }, right: true }]);
+  store.saveWorkflow(flow);
+  const rewrite = (runId, edit) => { const r = store.run(runId); edit(r); sql(store, 'UPDATE runs SET body=? WHERE id=?', canonical(r), runId); };
+  const paused = await runtime.execute(runtime.create(flow, {}).id);
+  rewrite(paused.id, r => { r.policy.allowedCapabilities = ['audit.effect']; });
+  runtime.answer(paused.id, 'root/ask', true);
+  await assert.rejects(runtime.execute(paused.id), e => e.code === 'RUN_BINDING_CORRUPT' && e.details.changed.includes('policy'));
+  assert.equal(calls.length, 0);
+
+  const human = wrap('PlantedAnswer', [ask], [{ op: 'eq', left: { $ref: 'nodes.ask.answer' }, right: true }]);
+  store.saveWorkflow(human);
+  const asked = await runtime.execute(runtime.create(human, {}).id);
+  rewrite(asked.id, r => { r.nodes.ask.status = 'completed'; r.outputs.ask = { answer: true }; r.status = 'ready'; });
+  assert.ok(codes(verifyRun(store, asked.id)).includes('STATE_OUTPUT_UNBOUND'));
+  await assert.rejects(runtime.execute(asked.id), e => e.code === 'CHECKPOINT_TAMPERED' && e.details.nodeKeys[0] === 'root/ask');
+  assert.equal(store.events(asked.id).at(-1).type, 'run.awaiting_human', 'nothing was appended');
+  rewrite(asked.id, r => { r.nodes.ask.status = 'awaiting_human'; delete r.outputs.ask; r.status = 'awaiting_human'; });
+  runtime.answer(asked.id, 'root/ask', true);
+  assert.equal((await runtime.execute(asked.id)).status, 'succeeded', 'a genuine answer resumes as before');
+});
+
+test('review: a ModelPort journal on another handle to the workspace database file is the workspace journal', async t => {
+  const { store } = space(t), handle = new DatabaseSync(path.join(store.directory, 'foundry.sqlite'));
+  t.after(() => { try { handle.close(); } catch {} });
+  handle.exec('PRAGMA busy_timeout=5000');
+  const provider = new ScriptedProvider(script());
+  const models = new ModelPort({ policy: loaded.policy, providers: { 'llama-server': provider, 'claude-cli': provider }, journal: new Journal(handle) });
+  const runtime = new Runtime(store, createDefaultRegistry(), { maxCost: 1, maxDurationMs: 60000 }, { models, modelPolicy: loaded });
+  const run = await runtime.execute(runtime.create(workflow, { raw: 'five dollars' }).id);
+  assert.equal(run.status, 'succeeded', JSON.stringify(run.error));
+  assert.equal(store.events(run.id)[0].journal, 'workspace');
+  const report = verifyRun(store, run.id);
+  assert.deepEqual([report.ok, report.clean, report.checks.journal.boundCalls], [true, true, 4], JSON.stringify(report.findings));
 });

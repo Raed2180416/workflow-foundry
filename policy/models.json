@@ -1,12 +1,13 @@
 {
-  "policyVersion": "2026-10-07.1",
+  "policyVersion": "2026-10-08.2",
   "owner": "Raed2180416 (decision D1, granted 2026-10-06: free choice of Haiku 4.5 / Sonnet 5.5 / Opus 5.5 plus open-weight models for any role)",
   "notes": [
     "This file is the ONLY source of model ids for the Foundry runtime. Any id not listed here is rejected (tests/model-policy.test.mjs).",
     "Classes are capability/cost tiers. For open-weight models they follow ROADMAP \u00a72.3 parameter bands; hosted Anthropic models have no public parameter count, so they are placed by price tier and must be justified by measurement (research/*/REPORT.md).",
     "No silent fallback: the runtime never substitutes a model. Escalation moves up the class order only through logged events (rules E1-E7).",
     "Costs: hosted calls record the provider-reported list-price USD (claude CLI total_cost_usd, costBasis=list). Local CPU calls record API cost 0 plus an imputed compute cost = wall seconds x imputedComputeUsdPerHour/3600.",
-    "2026-10-07: Claude Haiku 5.5 (claude-haiku-5-5) added as the first class-M model (owner notice: Anthropic replaced Haiku 4.5 with Haiku 5.5). Class M resolves to it; Haiku 4.5 stays listed by id for earlier pilots and tests only. Local S-class models are parked (owner decision 2026-10-07) but stay listed."
+    "2026-10-07: Claude Haiku 5.5 (claude-haiku-5-5) added as the first class-M model (owner notice: Anthropic replaced Haiku 4.5 with Haiku 5.5). Class M resolves to it; Haiku 4.5 stays listed by id for earlier pilots and tests only. Local S-class models are parked (owner decision 2026-10-07) but stay listed.",
+    "2026-10-08: claude-cli.childEnv sets CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 and FORCE_PROMPT_CACHING_5M=1 for every claude -p child (research/review-20261007/04-efficiency-rust.md change 1; re-measured in research/review-20261007/cli-flags-20261008/). Closed list of transport/telemetry/cache-pricing variables, validated in src/models/policy.mjs; each journal request records the closed-list variables the child saw (providerRequest.env). Excluded from replay keys because neither changes the decoding; the first does shorten the prompt the CLI builds (about 165 tokens; the CLI's telemetry plugin is not loaded), as a CLI version change can. The flags lower the reported cost per call, so cost per success before and after 2026-10-08 is not comparable (synthesis rule R3). A value is \"1\" (set) or null (removed from the child); \"0\" is refused because the CLI reads CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=0 as set (zero-probe.json). Version 2026-10-08.2 corrects this note only; the measurements in that directory ran under 2026-10-08.1."
   ],
   "classOrder": [
     "S",
@@ -42,6 +43,10 @@
         "jsonSchema": true,
         "toolChoiceRequired": false,
         "reasoningThenFormat": true
+      },
+      "childEnv": {
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+        "FORCE_PROMPT_CACHING_5M": "1"
       }
     },
     "llama-server": {

@@ -201,7 +201,9 @@ test('X2 gameqa: only pairs a reader decides from the state and plain English ar
   for (const [key, classes] of Object.entries(gen.X2_READABLE)) for (const w of classes.flat()) assert.ok(TAP.GAMEQA_ALIAS[key].includes(w), `${key}/${w}`);
   const slang = ['glimmerstone', 'glim', 'shard', 'tonic', 'red bottle', 'beetle thing', 'gold-coloured'];
   const pairs = [], counts0 = {};
-  for (let s = 0; s < 400; s++) pairs.push(...gen.x2Pairs(`test-ood|X2|${6000 + s}`, 3, counts0));
+  // x2Pairs is a function of its key alone: probe keys of this test, never the keys of the test-ood slice (whose pairs a failure
+  // message would print)
+  for (let s = 0; s < 400; s++) pairs.push(...gen.x2Pairs(`probe|X2|${s}`, 3, counts0));
   assert.ok(pairs.length >= 1000 && counts0['x2:needs-slang'] > 0, `${pairs.length} pairs, ${counts0['x2:needs-slang']} slang pairs dropped`);
   for (const p of pairs) {
     for (const a of p.aliases) assert.ok(!slang.includes(a), `${p.a} / ${p.b}`);
@@ -213,6 +215,17 @@ test('X2 gameqa: only pairs a reader decides from the state and plain English ar
   assert.equal(gen.x2Decidable('dusk', 'dusk', 'dusk', 'violet'), false, 'that dusk is violet is the bed\'s convention');
   assert.equal(gen.x2Decidable('dusk', 'purple', 'dusk', 'violet'), true);
   assert.equal(gen.x2Decidable('gem', 'glim', 'coins', 'gold pile'), false);
+});
+
+test('Q5 templates: the held-out rule keeps one training template in every class it holds one out of, and train-like slices admit none', () => {
+  // the rule on a stand-in template table: in every class with more than one template, the last one in table order
+  const table = [{ id: 'a1', cls: 'A' }, { id: 'b1', cls: 'B' }, { id: 'a2', cls: 'A' }, { id: 'c1', cls: 'C' }, { id: 'c2', cls: 'C' }, { id: 'c3', cls: 'C' }];
+  assert.deepEqual(gen.q5HeldoutTemplates(table), ['a2', 'c3']);
+  // the pre-registered set: three templates, three classes (the bed's pin is checked against the rule by the Q5 bed test)
+  assert.deepEqual([...gen.Q5_HELDOUT_TEMPLATES], ['chest_rubble', 'enemy_freeze', 'stale_hud']);
+  for (const slice of ['train', 'calib-in', 'dev-select', 'test-in', 'calib-ood', 'dev-ood']) for (const t of gen.Q5_HELDOUT_TEMPLATES) assert.equal(gen.q5Admits(t, slice), false, `${t} in ${slice}`);
+  for (const t of gen.Q5_HELDOUT_TEMPLATES) assert.equal(gen.q5Admits(t, 'test-ood'), true, 'the template axis reads them in test-ood');
+  for (const t of ['crash_action', 'key_eaten', 'enemy_teleport', 'ghost_sprite']) assert.equal(gen.q5Admits(t, 'train'), true, t);
 });
 
 test('labeller: Q1 probes with the lifetime ledger lifted, and says so (a fake environment with a ledger)', () => {
@@ -778,7 +791,9 @@ test('X1 gameqa in an OOD slice: slice-tagged held-out lines supply the positive
   t.diagnostic(`${recs.length} rows, ${yes.length} positives, sources ${JSON.stringify(counts(recs, r => r.meta.surface.source))}`);
   assert.ok(yes.length >= 10 && yes.length < recs.length);
   assert.ok(yes.every(r => r.meta.surface.source === 'authored' && r.meta.labelSource === 'authored-brief' && r.meta.surface.filter === 'pending'), 'a positive of an OOD slice is a held-out line, its filter status carried');
-  assert.ok(recs.filter(r => r.meta.surface.source === 'bed').every(r => skeletonBucket(r.meta.formId) === 'dev-ood'), 'bed spans keep the skeleton bucket');
+  // both labels have one shape: a host report with a held-out line appended (a plain bed report would be a negative by its shape alone)
+  assert.deepEqual(counts(recs, r => `${r.meta.x1.format}|${r.meta.surface.source}`), { 'appended|authored': recs.length }, 'no plain bed report and no window beside the appended positives');
+  assert.ok(recs.filter(r => labelOf(r) === 'no').length >= 10, 'negatives are held-out lines appended the same way');
   assert.ok(yes.some(r => skeletonBucket(r.meta.formId) !== 'dev-ood'), 'held-out lines are admitted by their slice tag, not re-bucketed');
   // no held-out line of another slice and no train line enters; with no lines at all the slice has no positive
   const none = (await collect('dev-ood', range(4700, 30), { ports: ['X1:gameqa'] })).filter(r => portOf(r) === 'X1');
@@ -793,13 +808,35 @@ test('X1 gridquest: a sentence that a room description says twice is skipped, no
   t.diagnostic(`${recs.length} rows; ${repeated} repeated-sentence candidates skipped; labels ${JSON.stringify(counts(recs, labelOf))}`);
   assert.ok(repeated > 0, 'the sample contains a room that repeats a sentence');
   assert.ok(recs.length > 400);
-  // every kept span stands once in the text the judge reads (a long state is the whole description)
-  for (const r of recs.filter(x => x.meta.x1.span && x.meta.variant !== 'long')) assert.equal(r.state.text, r.meta.x1.span);
+  // every kept span stands once in the text the judge reads: a sentence row is the span, a description row holds it once
+  for (const r of recs.filter(x => x.meta.x1.span)) {
+    if (r.meta.x1.format === 'sentence') assert.equal(r.state.text, r.meta.x1.span);
+    else assert.equal(r.state.text.split(r.meta.x1.span).length, 2);
+  }
   // paraphrase clusters (test-ood): Q0 and two held-out wordings on one state, one cluster per state
   const para = recs.filter(r => r.meta.variant === 'paraphrase');
   assert.ok(para.length > 20, `${para.length} paraphrase clusters`);
   assert.ok(para.every(r => Object.keys(r.questions).length === 3));
   assert.equal(new Set(para.map(r => stateHash(r.state))).size, para.length, 'one paraphrase cluster per state');
+});
+
+test('X1 gridquest (held-out family): no negative holds an injection text; format, source and length do not tell the label (§2.7 step 7)', async t => {
+  const recs = (await collectDevAsTestOod(range(401, 400), { ports: ['X1:gridquest'] })).filter(r => portOf(r) === 'X1' && r.meta.variant !== 'paraphrase');
+  const injections = [...TAP.GRIDQUEST_INJECTIONS, ...TAP.GRIDQUEST_JOURNAL_INJECTIONS], holds = r => injections.some(i => r.state.text.includes(i));
+  // the label is the text's: a room description that holds an inscription is a positive, whatever sentence was drawn
+  assert.equal(recs.filter(r => labelOf(r) === 'no' && holds(r)).length, 0, 'a negative never holds an injection text');
+  assert.equal(recs.filter(r => labelOf(r) === 'yes' && !holds(r)).length, 0);
+  const cells = counts(recs, r => `${r.meta.x1.format}|${r.state.source_kind}|${labelOf(r)}`);
+  t.diagnostic(`${recs.length} rows (format|source_kind|label): ${JSON.stringify(cells)}`);
+  for (const f of ['sentence', 'description']) for (const s of ['room description', 'expedition journal entry']) assert.equal(cells[`${f}|${s}|yes`] ?? 0, cells[`${f}|${s}|no`] ?? 0, `${f}/${s}: as many negatives as positives`);
+  assert.ok((cells['description|room description|yes'] ?? 0) >= 400, 'the description pairs carry the family');
+  // a length-threshold reader, fitted on half of the worlds and read on the other half, stays within 3 pp of chance
+  const rows = recs.map(r => ({ l: r.state.text.length, y: labelOf(r) === 'yes', s: r.meta.seed }));
+  const bal = (m, xs) => { const p = xs.filter(x => x.y).length, n = xs.length - p; let tp = 0, tn = 0; for (const x of xs) { const pred = m.dir * x.l >= m.dir * m.t; if (pred && x.y) tp++; if (!pred && !x.y) tn++; } return (tp / p + tn / n) / 2; };
+  const fit = xs => { let best = { ba: -1 }; for (const v of [...new Set(xs.map(x => x.l))]) for (const dir of [1, -1]) { const ba = bal({ t: v, dir }, xs); if (ba > best.ba) best = { ba, t: v, dir }; } return best; };
+  const even = rows.filter(x => x.s % 2 === 0), odd = rows.filter(x => x.s % 2 === 1), out = [bal(fit(even), odd), bal(fit(odd), even)];
+  t.diagnostic(`length-threshold reader, out of sample: ${out.map(x => x.toFixed(3)).join(', ')}`);
+  for (const ba of out) assert.ok(ba < 0.53, `length predicts the label: ${ba.toFixed(3)}`);
 });
 
 test('states: every state <= 8192 real tokens and fits Kev; per-port p50/p90/max are printed (the budgets of §1.1)', async t => {
@@ -838,6 +875,25 @@ test('wave-2 smoke sets (Q1, Q2, Q5, Q6, X6) and the Q3 skeleton: records build,
   for (const r of per['Q5:gameqa']) assert.ok(!/\b(crash|softlock|item_duplication|wall_clip|integer_overflow|enemy_ai|render_mismatch|door_without_key|transition_inventory_loss|shop_rounding)\b/.test(r.state.observed_effect) || /stopped responding/.test(r.state.observed_effect));
   // Q6: the excerpt carries the section the topic is decided by, errata included
   for (const r of per['Q6:gameqa'].slice(0, 30)) assert.ok(r.state.spec_excerpt.length > 100 && r.state.behaviour.length > 20);
+});
+
+test('Q5 (wave-2 smoke): the held-out bug templates (§3.3: 3 of 13, each class keeping a training template) never reach train or dev-select', async t => {
+  const qa = await MODQ(), T = qa.bugs.TEMPLATES;
+  assert.equal(T.length, 13);
+  assert.deepEqual(gen.q5HeldoutTemplates(T), [...gen.Q5_HELDOUT_TEMPLATES], 'the rule on the pinned bed gives the pre-registered set');
+  const clsOf = id => T.find(x => x.id === id).cls;
+  assert.equal(new Set(gen.Q5_HELDOUT_TEMPLATES.map(clsOf)).size, 3, 'three classes');
+  const kept = T.filter(x => !gen.Q5_HELDOUT_TEMPLATES.includes(x.id));
+  for (const h of gen.Q5_HELDOUT_TEMPLATES) assert.ok(kept.some(x => x.cls === clsOf(h)), `${clsOf(h)} keeps a training template`);
+  for (const [slice, first] of [['train', 401], ['dev-select', 4500]]) {
+    const recs = (await collect(slice, range(first, 150), { ports: ['Q5'], smokeEvery: 1 })).filter(r => portOf(r) === 'Q5');
+    const dropped = gen.REPORT.counts['q5:heldout-template'] ?? 0, tmpl = counts(recs, r => r.meta.q5.template);
+    t.diagnostic(`${slice}: ${recs.length} Q5 rows, ${dropped} held-out template rows not built; templates ${JSON.stringify(tmpl)}`);
+    assert.ok(dropped > 0, `${slice}: the held-out templates occur in the bed and are dropped`);
+    for (const h of gen.Q5_HELDOUT_TEMPLATES) assert.equal(tmpl[h] ?? 0, 0, `${slice} carries the held-out template ${h}`);
+    for (const k of ['key_eaten', 'enemy_teleport', 'ghost_sprite']) assert.ok(tmpl[k] > 0, `${slice}: the class's training template ${k} is there`);
+    assert.equal(Object.keys(counts(recs, labelOf)).length >= 9, true, 'the classes stay');
+  }
 });
 
 // ---- determinism and the build -------------------------------------------------------------------------------------------------------------
@@ -902,7 +958,7 @@ test('build: this generator builds a verified Kev dataset from a frozen bed copy
 // ---- acceptance 7: the test file fails on seeded defects ---------------------------------------------------------------------------------------------
 test('seeded defect: this file runs alone with node --test and fails on seeded defects (an indistinguishable same-name room kept)', { skip: MUTANT_RUN ? 'inside a mutant run' : false, timeout: 10 * 60 * 1000 }, t => {
   // the tests that need no frozen bed (a mutant copy has none)
-  const pattern = '^(kit: the expectation|solve: |same-name rooms|labeller: |gate: |splits: |spans: |authored lines|unknowable: |carriers: |X2 gameqa: only)';
+  const pattern = '^(kit: the expectation|solve: |same-name rooms|labeller: |gate: |splits: |spans: |authored lines|unknowable: |carriers: |X2 gameqa: only|Q5 templates: )';
   const mutants = [
     { name: 'an indistinguishable same-name room is kept', mutations: [{ file: 'ports/interactive.mjs', from: "const distinguishes = verdict.label === 'drifted';", to: 'const distinguishes = true;' }] },
     { name: 'a same-name row outside its slice bucket is kept', mutations: [{ file: 'ports/interactive.mjs', from: 'inBucket = slice === null || bucketAllows(slice, form);', to: 'inBucket = true;' }] },
@@ -917,6 +973,8 @@ test('seeded defect: this file runs alone with node --test and fails on seeded d
     { name: 'a retraction of a sentence: the expectation grammar drifts', mutations: [{ file: 'judges/interactive.mjs', from: "case 'take': return `you pick up the ${needStr(e.item, 'expect.item')}`;", to: "case 'take': return `you take up the ${needStr(e.item, 'expect.item')}`;" }] },
     { name: 'the toggle regex reads across sentences', mutations: [{ file: 'solve/Q4.mjs', from: "[/the portcullis between ([^.]+?) and ([^.]+?) drops shut\\./g, 'drops', 'portcullis'],", to: "[/the portcullis between (.+?) and (.+?) drops shut\\./g, 'drops', 'portcullis']," }] },
     { name: 'a reserved world is no longer reserved', mutations: [{ file: 'lib/registry.mjs', from: 'seeds: [1, 400]', to: 'seeds: [1, 100]' }] },
+    { name: 'a held-out Q5 template is admitted to train', mutations: [{ file: 'ports/interactive.mjs', from: "export const q5Admits = (template, slice) => slice === 'test-ood' || !Q5_HELDOUT_TEMPLATES.includes(template);", to: 'export const q5Admits = () => true;' }] },
+    { name: 'the Q5 held-out rule keeps the first template of a class', mutations: [{ file: 'ports/interactive.mjs', from: '.filter(ids => ids.length > 1).map(ids => ids.at(-1)).sort());', to: '.filter(ids => ids.length > 1).map(ids => ids[0]).sort());' }] },
   ];
   const r = H.seededDefect({ file: TEST_FILE, pattern, mutants, env: { KEV_DATA_MUTANT_RUN: '1' } });
   assert.equal(r.control.status, 0, r.control.stdout.split('\n').filter(l => /not ok/.test(l)).join('\n'));

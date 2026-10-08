@@ -46,21 +46,38 @@ export function gradersHash(family) {
 }
 
 // ---- controls (V5): pin the answer chain ------------------------------------------------------------------------------------------
-// Pin every root node that carries the answer's keys (an agent whose schema has them, or a code node whose recorded output does) so
-// the bed's reference / bad answer flows through the gates exactly where the real answer would; unpinned nodes replay.
-export function pinChain(workflow, baseOutputs, answerKeys, control) {
+// Pin every root node that carries the answer so the bed's reference / bad answer flows through the gates exactly where the real
+// answer would; unpinned nodes replay. A node carries the answer when it is an agent whose schema has the answer's keys, or a code node
+// whose recorded output has them at its root, or (when the recorded answer is known) holds in one nested object property an object
+// equal to the recorded answer key by key. The nested form matters: in records-v3 the sink is `answer`, but the gating verify `check`
+// reads `merge`, whose `answer` property is the answer. Pinning the sink alone lets every control skip the gate (a garbage string was
+// "accepted"), which made V5 reject a sound acceptance as non-discriminating.
+const isPlain = v => v !== null && typeof v === 'object' && !Array.isArray(v);
+export function pinChain(workflow, baseOutputs, answerKeys, control, baseAnswer = null) {
   const fields = Object.fromEntries(answerKeys.map(k => [k, control[k]]));
-  const chain = workflow.nodes.filter(n => n.id === 'answer' || (n.kind === 'agent' ? answerKeys.every(k => n.returns?.properties?.[k]) : baseOutputs?.[n.id] && typeof baseOutputs[n.id] === 'object' && answerKeys.every(k => Object.hasOwn(baseOutputs[n.id], k))));
+  // undefined: the output does not carry the answer; null: at its root; a string: in that nested property
+  const carrierProp = out => {
+    if (!isPlain(out)) return undefined;
+    if (answerKeys.every(k => Object.hasOwn(out, k))) return null;
+    if (!isPlain(baseAnswer)) return undefined;
+    return Object.keys(out).find(p => isPlain(out[p]) && answerKeys.every(k => Object.hasOwn(out[p], k) && canonical(out[p][k]) === canonical(baseAnswer[k])));
+  };
+  const chain = workflow.nodes.filter(n => n.id === 'answer' || (n.kind === 'agent' ? answerKeys.every(k => n.returns?.properties?.[k]) : carrierProp(baseOutputs?.[n.id]) !== undefined));
   const ids = new Set(chain.map(n => n.id));
-  const nodes = workflow.nodes.map(n => !ids.has(n.id) ? n : { id: n.id, kind: 'code', lang: 'js', needs: n.needs ?? [], ...(n.when ? { when: n.when } : {}), ...(n.join ? { join: n.join } : {}),
-    description: `heal control pin of ${n.id}`, args: readsOf(n), source: `export default function main() { return ${JSON.stringify({ ...(n.kind === 'agent' ? {} : baseOutputs?.[n.id] ?? {}), ...fields })}; }`, timeoutMs: 20000 });
+  const nodes = workflow.nodes.map(n => {
+    if (!ids.has(n.id)) return n;
+    const recorded = n.kind === 'agent' ? {} : baseOutputs?.[n.id] ?? {}, prop = n.kind === 'agent' ? null : carrierProp(baseOutputs?.[n.id]);
+    const value = typeof prop === 'string' ? { ...recorded, [prop]: { ...recorded[prop], ...fields } } : { ...recorded, ...fields };
+    return { id: n.id, kind: 'code', lang: 'js', needs: n.needs ?? [], ...(n.when ? { when: n.when } : {}), ...(n.join ? { join: n.join } : {}),
+      description: `heal control pin of ${n.id}`, args: readsOf(n), source: `export default function main() { return ${JSON.stringify(value)}; }`, timeoutMs: 20000 };
+  });
   return { workflow: { ...workflow, nodes }, pinned: [...ids] };
 }
 
-async function controlOutcome({ kit, trial, workflow, baseOutputs, answerKeys, control, task, policy }) {
+async function controlOutcome({ kit, trial, workflow, baseOutputs, baseAnswer, answerKeys, control, task, policy }) {
   const ctx = await openCtx(trial.source, { kit, name: 'control' });
   try {
-    const { workflow: pinned } = pinChain(workflow, baseOutputs, answerKeys, control);
+    const { workflow: pinned } = pinChain(workflow, baseOutputs, answerKeys, control, baseAnswer);
     const r = await replayRun(ctx, pinned, trial, { mode: 'replay', task });
     if (needsLive(r)) return { accepted: null, indeterminate: true, code: r.error?.code };
     return { accepted: accepted(r), status: r.status, code: r.error?.code ?? null };
@@ -232,8 +249,8 @@ export async function verify({ kit, gate, budget, base, proposal, incident, prov
     const c = incident.controls;
     if (!c?.items?.length) return { ok: true, skipped: true, note: 'no bed controls available' };
     // the controls were derived from one task: pin them into the recorded run of THAT task
-    const trial = [...failing, ...(incident.passing ?? [])].find(t => t.key === c.trialKey) ?? failing[0] ?? incident.passing?.[0], task = incident.tasks?.[trial.key], baseOutputs = incident.baseRuns?.[trial.key]?.outputs;
-    const run = (workflow, control) => controlOutcome({ kit, trial, workflow, baseOutputs, answerKeys: c.answerKeys, control, task, policy: P });
+    const trial = [...failing, ...(incident.passing ?? [])].find(t => t.key === c.trialKey) ?? failing[0] ?? incident.passing?.[0], task = incident.tasks?.[trial.key], baseOutputs = incident.baseRuns?.[trial.key]?.outputs, baseAnswer = incident.baseRuns?.[trial.key]?.answer;
+    const run = (workflow, control) => controlOutcome({ kit, trial, workflow, baseOutputs, baseAnswer, answerKeys: c.answerKeys, control, task, policy: P });
     const table = [];
     table.push(...await pmap(c.items, P.concurrency, async item => ({ name: item.name, expect: item.expect, base: await run(baseWf, item.output), cand: await run(cand, item.output) })));
     data.controls = table;

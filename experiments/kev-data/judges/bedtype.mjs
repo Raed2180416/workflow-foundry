@@ -26,7 +26,11 @@ export const WINDOWS = Object.freeze({
 });
 // The reference block of a slot-swap state (a second, earlier task shown for reference only).
 export const REFERENCE_WINDOW = Object.freeze({ promptChars: 420 });
-export const HEADERS = Object.freeze({ task: 'Task statement:', inputs: 'Inputs:', reference: 'Reference material (a different, earlier task; not this one):' });
+// A filed task of a filed-task state (the prompt head only).
+export const FILED_WINDOW = Object.freeze({ promptChars: 1400 });
+export const HEADERS = Object.freeze({ task: 'Task statement:', inputs: 'Inputs:', reference: 'Reference material (a different, earlier task; not this one):', filed: 'Filed task' });
+// the id of a filed task: W- and four consonants (W-KQZT)
+export const FILED_ID = /\bW-[BCDFGHJKLMNPQRSTVWXZ]{4}\b/;
 const CUT = ' […]';
 
 const fail = (code, message) => { const e = new Error(`${code}: ${message}`); e.code = code; return e; };
@@ -60,6 +64,23 @@ export function stateOf(task, { window = 'standard', reference = null } = {}) {
   let text = taskHead(task, window);
   if (reference) text += `\n\n${HEADERS.reference}\n${taskHead(reference, REFERENCE_WINDOW).replace(`${HEADERS.task}\n`, '')}`;
   return { source_text: text };
+}
+
+// A filed-task state (factory only; the runtime serves stateOf): the request's statement is a pointer sentence that names a
+// filed task by id, followed by the filed tasks, each under "Filed task <id>:" with its prompt head. When the pointer names a
+// listed task the state settles the request's type (that task's); when it names a task that is not on file, the state holds
+// task text of the same register but does not settle it (the presence-matched unknowable of JUDGE-PROGRAM.md §2.5).
+//   { source_text: "Task statement:\n<pointer>\n\nFiled task W-KQZT:\n<prompt head>\n\nFiled task W-BRDM:\n<prompt head>" }
+export function filedState(pointer, filed) {
+  if (typeof pointer !== 'string' || !FILED_ID.test(pointer)) throw fail('KIT_TASK', 'a filed-task state needs a pointer sentence with a task id');
+  if (!Array.isArray(filed) || filed.length < 2) throw fail('KIT_TASK', 'a filed-task state lists at least two tasks');
+  const blocks = filed.map(f => {
+    if (!FILED_ID.test(f?.id ?? '') || f.id !== f.id.match(FILED_ID)[0]) throw fail('KIT_TASK', `a filed task needs an id like W-KQZT (got ${JSON.stringify(f?.id)})`);
+    if (!f.task || typeof f.task.prompt !== 'string' || !f.task.prompt.trim()) throw fail('KIT_TASK', 'a filed task needs a prompt');
+    return `${HEADERS.filed} ${f.id}:\n${headOf(f.task.prompt, FILED_WINDOW.promptChars)}`;
+  });
+  if (new Set(filed.map(f => f.id)).size !== filed.length) throw fail('KIT_TASK', 'filed task ids must differ');
+  return { source_text: `${HEADERS.task}\n${pointer.trim()}\n\n${blocks.join('\n\n')}` };
 }
 
 const { contracts } = loadSpec();

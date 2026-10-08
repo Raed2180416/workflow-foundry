@@ -109,11 +109,13 @@ export function chatterOf(s, difficulty) {
     : `No failovers on ${s.cluster} this quarter, for what it's worth.`);
   return out;
 }
-// the chatter that is about another site or service (X4 out_of_scope), and the one hearsay line (X4 informal)
+// the chatter that is about another site (X4 out_of_scope), and the one hearsay line (X4 informal). The note that the
+// other service's pool sits on the same racks ("don't mix the two up", #14) is about another pool but addressed to this
+// change's executor: mixed standing, left out [review fix].
 export function chatterStanding(s, difficulty) {
   const list = chatterOf(s, difficulty), out = {};
   list.forEach((t, i) => {
-    if (i === 6 || i === 14 || i === 23) out[t] = 'out_of_scope';
+    if (i === 6 || i === 23) out[t] = 'out_of_scope';
     else if (difficulty >= 4 && i === list.length - 1 && s.staleDb) out[t] = 'informal';
   });
   return out;

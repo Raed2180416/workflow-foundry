@@ -8,9 +8,9 @@ import { DatabaseSync } from 'node:sqlite';
 import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { loadPolicy, validatePolicy } from '../src/models/policy.mjs';
+import { CHILD_ENV_ALLOWED, loadPolicy, validatePolicy } from '../src/models/policy.mjs';
 import { ModelPort, modelDigestOf } from '../src/models/port.mjs';
-import { ClaudeCliProvider, DEFAULT_CHILD_ENV, claudeChildEnv } from '../src/models/providers/claude-cli.mjs';
+import { ClaudeCliProvider, DEFAULT_CHILD_ENV, claudeChildEnv, childEnvRecord } from '../src/models/providers/claude-cli.mjs';
 import { Journal } from '../src/journal.mjs';
 
 const { policy } = loadPolicy();
@@ -26,7 +26,7 @@ let input = '';
 process.stdin.on('data', d => { input += d; });
 process.stdin.on('end', () => {
   const seen = {};
-  for (const k of ['CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC', 'FORCE_PROMPT_CACHING_5M', 'DISABLE_TELEMETRY', 'MAX_THINKING_TOKENS', 'GH_TOKEN']) seen[k] = process.env[k] ?? null;
+  for (const k of ['CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC', 'FORCE_PROMPT_CACHING_5M', 'DISABLE_TELEMETRY', 'DISABLE_AUTOUPDATER', 'MAX_THINKING_TOKENS', 'GH_TOKEN']) seen[k] = process.env[k] ?? null;
   fs.appendFileSync(process.env.FAKE_CLAUDE_LOG, JSON.stringify(seen) + '\n');
   const model = argv[argv.indexOf('--model') + 1];
   process.stdout.write(JSON.stringify({ type: 'result', subtype: 'success', is_error: false, stop_reason: 'end_turn', total_cost_usd: 0.0001, structured_output: { label: 'x' },
@@ -34,13 +34,14 @@ process.stdin.on('end', () => {
 });
 `;
 
-function rig(t, { policy: pol = policy, ambient = {}, ...options } = {}) {
+function rig(t, { policy: pol = policy, ambient = {}, script = FAKE, ...options } = {}) {
   const dir = mkdtempSync(path.join(tmpdir(), 'foundry-fake-env-'));
   t.after(() => rmSync(dir, { recursive: true, force: true }));
   const binary = path.join(dir, 'claude'), log = path.join(dir, 'log.jsonl');
-  writeFileSync(binary, FAKE); chmodSync(binary, 0o755); writeFileSync(log, '');
+  writeFileSync(binary, script); chmodSync(binary, 0o755); writeFileSync(log, '');
   const env = { ...process.env, FAKE_CLAUDE_LOG: log, GH_TOKEN: 'placeholder', ...ambient };
-  for (const k of [NE, CACHE, 'DISABLE_TELEMETRY']) if (!(k in ambient)) delete env[k];
+  // Every closed-list variable comes from `ambient` only (the session running the tests may export some, e.g. DISABLE_AUTOUPDATER).
+  for (const k of CHILD_ENV_ALLOWED) if (!(k in ambient)) delete env[k];
   const provider = new ClaudeCliProvider({ policy: pol, binary, env, ...options });
   const journal = new Journal(new DatabaseSync(':memory:'));
   const port = new ModelPort({ policy: pol, journal, providers: { 'claude-cli': provider } });
@@ -64,6 +65,54 @@ test('the owner policy carries the two flags, and the child process sees them by
   assert.deepEqual(journal.get(r.journalId).request.providerRequest.env, { [NE]: '1', [CACHE]: '1' }, 'the flags are auditable in the journal request');
 });
 
+// A CLI that dies without a result object, and one that is cancelled mid-call: the journal row of a failed call names the flags too.
+const DYING = FAKE.replace("process.stdout.write(JSON.stringify({ type: 'result'", "process.stderr.write('boom'); process.exit(3); process.stdout.write(JSON.stringify({ type: 'result'");
+// The slow CLI ignores SIGTERM and starts a helper in its process group that ignores SIGTERM too: only the SIGKILL escalation to the whole
+// group ends them, and cancellation must leave neither behind.
+const SLOW = String.raw`#!/usr/bin/env node
+const fs = require('node:fs'), { spawn } = require('node:child_process');
+if (process.argv[2] === '--version') { console.log('9.9.9 (Claude Code)'); process.exit(0); }
+process.on('SIGTERM', () => {});
+const helper = spawn(process.execPath, ['-e', "process.on('SIGTERM', () => {}); require('node:fs').appendFileSync(process.env.FAKE_CLAUDE_LOG, JSON.stringify({ helper: process.pid }) + '\\n'); setInterval(() => {}, 1000);"], { stdio: 'ignore' });
+process.stdin.resume();
+process.stdin.on('end', () => {
+  fs.appendFileSync(process.env.FAKE_CLAUDE_LOG, JSON.stringify({ CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: process.env.CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC ?? null, pid: process.pid, helperPid: helper.pid }) + '\n');
+  setInterval(() => {}, 1000);
+});
+`;
+// Alive = present and not a zombie (an orphaned zombie waits for a reaper but runs nothing).
+const alive = pid => {
+  try { return !/^[ZX]/.test(readFileSync(`/proc/${pid}/stat`, 'utf8').split(') ').at(-1)); }
+  catch (error) { if (error.code !== 'ENOENT') { try { process.kill(pid, 0); return true; } catch { return false; } } return false; }
+};
+const until = async (check, what, ms = 10000) => { const end = Date.now() + ms; while (!check()) { if (Date.now() > end) throw new Error(`timed out waiting for ${what}`); await new Promise(r => setTimeout(r, 20)); } };
+
+test('a failed or cancelled call records the flags in its journal row as well; a cancelled CLI leaves no process behind', { timeout: 30000 }, async t => {
+  const dying = rig(t, { script: DYING });
+  const failed = await dying.call();
+  assert.equal(failed.ok, false); assert.equal(failed.error.code, 'MODEL_PROTOCOL');
+  assert.deepEqual(dying.journal.get(failed.journalId).request.providerRequest.env, { [NE]: '1', [CACHE]: '1' });
+  assert.equal(dying.seen()[0][NE], '1', 'the dying child still ran with the flags');
+
+  const slow = rig(t, { script: SLOW });
+  const controller = new AbortController();
+  t.after(() => controller.abort());   // an early assertion failure must not leave the slow CLI running
+  const pending = slow.call({ signal: controller.signal });
+  await until(() => slow.seen().some(l => l.pid) && slow.seen().some(l => l.helper), 'the slow CLI and its helper');
+  const { pid, helperPid } = slow.seen().find(l => l.pid);
+  t.after(() => { for (const p of [pid, helperPid]) try { process.kill(p, 'SIGKILL'); } catch {} });
+  assert.equal(slow.seen().find(l => l.pid)[NE], '1');
+  assert.ok(alive(pid) && alive(helperPid), 'both processes run before the cancellation');
+  controller.abort();
+  await assert.rejects(pending, error => {
+    assert.equal(error.code, 'CANCELLED');
+    assert.deepEqual(slow.journal.get(error.details.journalId).request.providerRequest.env, { [NE]: '1', [CACHE]: '1' });
+    return true;
+  });
+  // No orphan: the CLI and its helper both ignore SIGTERM; the group SIGKILL ends them (allow the kernel a moment).
+  await until(() => !alive(pid) && !alive(helperPid), 'the cancelled CLI and its helper to exit', 3000);
+});
+
 test('a policy without a childEnv block still gets the defaults; an empty block sets nothing', async t => {
   const absent = rig(t, { policy: withChildEnv(undefined) });
   await absent.call();
@@ -75,14 +124,29 @@ test('a policy without a childEnv block still gets the defaults; an empty block 
   assert.deepEqual(empty.journal.get(r.journalId).request.providerRequest.env, {});
 });
 
-test('the policy overrides per flag: "0" sets it off, null removes an ambient value; the ambient value never wins', async t => {
-  const pol = withChildEnv({ [NE]: null, [CACHE]: '0', DISABLE_TELEMETRY: '1' });
-  const { call, seen, journal } = rig(t, { policy: pol, ambient: { [NE]: '1', [CACHE]: '1' } });
+test('the journal records what the child saw: a closed-list variable the block leaves alone is inherited and recorded verbatim', async t => {
+  // An empty block under a parent that exports two closed-list variables: the child runs with them, and the record says so
+  // (before this, the record was the configured block, {}, and the inherited flags were invisible to an audit).
+  const empty = rig(t, { policy: withChildEnv({}), ambient: { [NE]: '0', DISABLE_AUTOUPDATER: '1' } });
+  const r = await empty.call();
+  assert.equal(empty.seen()[0][NE], '0'); assert.equal(empty.seen()[0].DISABLE_AUTOUPDATER, '1');
+  assert.deepEqual(empty.journal.get(r.journalId).request.providerRequest.env, { [NE]: '0', DISABLE_AUTOUPDATER: '1' });
+  // The default block plus an inherited DISABLE_AUTOUPDATER: both flags and the inherited variable are on the record.
+  const dflt = rig(t, { ambient: { DISABLE_AUTOUPDATER: '1' } });
+  const d = await dflt.call();
+  assert.deepEqual(dflt.journal.get(d.journalId).request.providerRequest.env, { [NE]: '1', [CACHE]: '1', DISABLE_AUTOUPDATER: '1' });
+  // Only closed-list names are ever recorded; the rest of the environment (credentials included) never is.
+  assert.deepEqual(childEnvRecord({ PATH: '/bin', GH_TOKEN: 'x', ANTHROPIC_BASE_URL: 'http://x', [CACHE]: '1' }, { [NE]: null }), { [NE]: null, [CACHE]: '1' });
+});
+
+test('the policy overrides per flag: null removes an ambient value, "1" sets it; for a named variable the ambient value never wins', async t => {
+  const pol = withChildEnv({ [NE]: null, [CACHE]: null, DISABLE_TELEMETRY: '1' });
+  const { call, seen, journal } = rig(t, { policy: pol, ambient: { [NE]: '1', [CACHE]: '0' } });
   const r = await call();
   const child = seen()[0];
   assert.equal(child[NE], null, 'null removes the variable from the child even when the parent exports it');
-  assert.equal(child[CACHE], '0'); assert.equal(child.DISABLE_TELEMETRY, '1');
-  assert.deepEqual(journal.get(r.journalId).request.providerRequest.env, { [NE]: null, [CACHE]: '0', DISABLE_TELEMETRY: '1' });
+  assert.equal(child[CACHE], null); assert.equal(child.DISABLE_TELEMETRY, '1');
+  assert.deepEqual(journal.get(r.journalId).request.providerRequest.env, { [NE]: null, [CACHE]: null, DISABLE_TELEMETRY: '1' });
 
   const dflt = rig(t, { ambient: { [NE]: '0', [CACHE]: '0' } });
   await dflt.call();
@@ -97,6 +161,11 @@ test('the constructor option replaces the policy block (an A/B measurement can s
   assert.deepEqual(off.journal.get(r.journalId).request.providerRequest.env, { [NE]: null, [CACHE]: null });
   assert.throws(() => new ClaudeCliProvider({ policy, childEnv: { ANTHROPIC_MODEL: 'x' } }), { code: 'MODEL_POLICY_INVALID' });
   assert.throws(() => new ClaudeCliProvider({ policy, childEnv: 'yes' }), { code: 'MODEL_POLICY_INVALID' });
+  assert.throws(() => new ClaudeCliProvider({ policy, childEnv: { [NE]: '0' } }), { code: 'MODEL_POLICY_INVALID' }, '"0" is ambiguous');
+  // An explicit null is a mistake, not "use the policy" (it used to fall through to the policy block silently).
+  assert.throws(() => new ClaudeCliProvider({ policy, childEnv: null }), { code: 'MODEL_POLICY_INVALID' });
+  // A Map has no enumerable entries: it must not pass as an empty block (which would silently switch the flags off).
+  assert.throws(() => new ClaudeCliProvider({ policy, childEnv: new Map([[NE, '1']]) }), { code: 'MODEL_POLICY_INVALID' });
 });
 
 test('claudeChildEnv: scrubbed base, then the block, then the per-call thinking budget', () => {
@@ -104,10 +173,17 @@ test('claudeChildEnv: scrubbed base, then the block, then the per-call thinking 
   assert.deepEqual(env, { PATH: '/bin', [NE]: '1', [CACHE]: '1', MAX_THINKING_TOKENS: '1024' });
 });
 
-test('the policy validator accepts only known non-decoding variables with "0", "1" or null', () => {
+test('the policy validator accepts only known non-decoding variables with "1" or null, and only on claude-cli', () => {
   const ok = childEnv => { const p = structuredClone(policy); p.providers['claude-cli'].childEnv = childEnv; return validatePolicy(p); };
   assert.doesNotThrow(() => ok({}));
-  assert.doesNotThrow(() => ok({ [NE]: '1', [CACHE]: '0', DISABLE_TELEMETRY: null, DISABLE_ERROR_REPORTING: '1', DISABLE_AUTOUPDATER: '1' }));
+  assert.doesNotThrow(() => ok({ [NE]: '1', [CACHE]: null, DISABLE_TELEMETRY: null, DISABLE_ERROR_REPORTING: '1', DISABLE_AUTOUPDATER: '1' }));
+  // "0" is refused: the CLI reads CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=0 as set (research/review-20261007/cli-flags-20261008/zero-probe.json).
+  for (const name of CHILD_ENV_ALLOWED) assert.throws(() => ok({ [name]: '0' }), { code: 'MODEL_POLICY_INVALID' }, `${name}="0"`);
+  // Another provider kind never reads childEnv: an inert block (still kept out of the replay key) is refused, not ignored.
+  const other = structuredClone(policy), local = Object.keys(other.providers).find(n => other.providers[n].kind !== 'claude-cli');
+  assert.ok(local, 'the owner policy lists a non-claude-cli provider');
+  other.providers[local].childEnv = { [NE]: '1' };
+  assert.throws(() => validatePolicy(other), { code: 'MODEL_POLICY_INVALID' });
   const bad = {
     'not an object': 'yes', 'array': [NE], 'null block': null,
     'model override': { ANTHROPIC_MODEL: 'claude-opus-5-5' }, 'base url': { ANTHROPIC_BASE_URL: 'http://x' }, 'api key': { ANTHROPIC_API_KEY: 'k' },

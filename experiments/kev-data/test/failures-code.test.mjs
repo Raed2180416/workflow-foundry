@@ -36,7 +36,7 @@ import { RESAMPLE_K, TAU, contractOf, evaluateContract } from '../exec/healer.mj
 import { wilsonLower } from '../exec/util.mjs';
 import { BUCKET_OF_SLICE, bucketAllows, makeRecord, mapLimit } from '../exec/rows.mjs';
 import { toSystemOneQuestion } from '../lib/render.mjs';
-import { CARRIERS_TRAIN, F1_MIX, F1_ROWS, TEMPLATE_CAP, applyCollisionTargets, cacheFile, execSourceHash, heldoutCarriers, maskedState, planCacheId, runCached, trainCarriers } from '../exec/f1.mjs';
+import { CARRIERS_TRAIN, F1_MIX, F1_ROWS, KIT_F1_END, TEMPLATE_CAP, applyCollisionTargets, cacheFile, collisionGroups, collisionKey, execSourceHash, heldoutCarriers, kitF1Part, maskedState, planCacheId, roleOfName, runCached, trainCarriers } from '../exec/f1.mjs';
 import { bucketOfSpan, codefixRecords, containerOk, poolLines, spanBuckets, spanForm } from '../exec/codefix-rows.mjs';
 import { maskNames } from '../taps/codefix.mjs';
 import { TEMPLATES, TEMPLATE_COUNTS } from '../exec/templates.mjs';
@@ -319,15 +319,53 @@ test('unit: the masked state skeletonises every text leaf and keeps codes and co
   assert.ok(Object.values(r4.questions).every(q => q.target?.flake === 0.5 && q.target?.variance === 0.5), 'every question of a multi-question record carries the target');
 });
 
+test('unit: the collision key keeps what the state shows: whether an earlier run passed (not the counts), and a node id\'s role (not just <n>) (second review P1)', () => {
+  const m = (...names) => ({ names, markers: [] });
+  const a = { node_kind: 'task', attempt: 2, error_code: 'ECONNRESET', message: 'connect ECONNRESET 10.0.3.17:5432', prior_runs: { passes: 1, failures: 1, distinct_error_codes: 1 },
+    last_events: ['tool.intent fetch_quotes (task)', 'tool.failed fetch_quotes (task) [ECONNRESET]'], env_diff: [] };
+  const masks = m('fetch_quotes', 'quotes_api');
+  // 1. the prior_runs counts are drawn independently of the cause (exec/plan.mjs drawPrior); whether an earlier run passed is not (env needs one)
+  assert.equal(collisionKey(a, masks), collisionKey({ ...a, prior_runs: { passes: 4, failures: 0, distinct_error_codes: 0 } }, masks), 'the counts are not a reason to split a group');
+  assert.notEqual(collisionKey(a, masks), collisionKey({ ...a, prior_runs: { passes: 0, failures: 2, distinct_error_codes: 1 } }, masks), 'no passing earlier run is kept apart');
+  assert.notEqual(maskedState(a, masks), maskedState({ ...a, prior_runs: { ...a.prior_runs, passes: 4 } }, masks), 'the masked state itself still shows the counts');
+  // 2. a node id is masked to its role pool: two ids of one pool are interchangeable, two pools are not
+  const gate = (up, g) => ({ node_kind: 'assert', attempt: 1, error_code: 'ASSERTION_FAILED', message: `Assertion ${g} failed`, prior_runs: { passes: 1, failures: 0, distinct_error_codes: 0 },
+    last_events: [`node.completed ${up} (task)`, `node.started ${g} (assert)`, `node.failed ${g} (assert) [ASSERTION_FAILED]`], env_diff: [] });
+  const sutA = gate('run_checkout', 'check_totals'), sutB = gate('call_service', 'guard_range'), load = gate('load_orders', 'check_totals');
+  assert.equal(collisionKey(sutA, m('run_checkout', 'check_totals')), collisionKey(sutB, m('call_service', 'guard_range')), 'two ids of one role pool are interchangeable');
+  assert.notEqual(collisionKey(sutA, m('run_checkout', 'check_totals')), collisionKey(load, m('load_orders', 'check_totals')), 'a gate after the system under test is not a gate after a load');
+  assert.equal(maskedState(sutA, m('run_checkout', 'check_totals')), maskedState(load, m('load_orders', 'check_totals')), '(masked to <n>, they were one state)');
+  assert.notEqual(collisionKey({ ...a, env_diff: ['service audit_sink: up -> down'] }, m('fetch_quotes', 'audit_sink', 'quotes_api')),
+    collisionKey({ ...a, env_diff: ['service quotes_api: up -> down'] }, m('fetch_quotes', 'audit_sink', 'quotes_api')), 'a bystander facet is not the node\'s own service');
+  assert.equal(roleOfName('fetch_quotes_2'), 'fetch');
+  assert.equal(roleOfName('quotes_api'), null);
+  // planted records: one visible state with two causes and different counts shares a target; the gate after a load keeps its hard label
+  const mk = (state, label, mm) => makeRecord({ contract: C().F1, slice: 'train', opts: {}, key: `unit|coll2|${label}|${JSON.stringify(state)}`, state, label, meta: { family: 'exec-injected', variant: 'clean', labelSource: 'replay', seed: 401, masks: mm } });
+  const r1 = mk(sutA, 'finding', m('run_checkout', 'check_totals')), r2 = mk({ ...sutB, prior_runs: { passes: 3, failures: 2, distinct_error_codes: 1 } }, 'impossible', m('call_service', 'guard_range'));
+  const r3 = mk(load, 'impossible', m('load_orders', 'check_totals'));
+  const st = applyCollisionTargets([r1, r2, r3]);
+  assert.deepEqual({ groups: st.groups, multi: st.multiLabelGroups, rows: st.rowsInMultiLabelGroups }, { groups: 2, multi: 1, rows: 2 });
+  assert.deepEqual(Object.values(r2.questions)[0].target, { flake: 0, variance: 0, defect: 0, env: 0, impossible: 0.5, finding: 0.5 });
+  assert.equal(Object.values(r3.questions)[0].target, undefined);
+});
+
 test('masked-state collision groups carry the empirical cause distribution as a soft target; single-cause groups carry none', async t => {
   const recs = f1Of(await TRAIN()), bases = recs.filter(r => r.meta.variant !== 'injection');
   const st = applyCollisionTargets(bases.map(r => ({ ...r, questions: JSON.parse(JSON.stringify(r.questions)), meta: { ...r.meta } })));
   t.diagnostic(`train fixture: ${bases.length} clean and paraphrase records, ${JSON.stringify(st)}`);
-  // §2.7 step 2; and the P0 of the 2026-10-08 review: the old key (the skeleton of the JSON) put 264 of 300 rows in 8 multi-label groups
-  assert.ok(st.multiLabelShare < 0.01, `the share of collision groups with more than one label is under 1% (${st.multiLabelShare})`);
-  assert.ok(st.rowsInMultiLabelGroups <= 0.1 * bases.length, `a soft target is the exception, not the rule: ${st.rowsInMultiLabelGroups} of ${bases.length} rows`);
-  assert.ok(st.groups > 0.8 * bases.length, `${st.groups} masked states for ${bases.length} rows`);
-  assert.ok(st.multiLabelGroups >= 1, 'the fixture has at least one ambiguous masked state');
+  // §2.7 step 2 for F1: a state with several causes trains on its cause distribution (§1.2 F1 "Determinacy", §2.7 step 1 "soft target (F1)"),
+  // so the gate is that a group holds the states a reader cannot tell apart. (a) The P0 of the first review (the skeleton of the JSON put 264
+  // of 300 rows in 8 groups) cannot come back; (b) no group merges rows the state-only rule tells apart (second review: masked to <n>, a gate
+  // after the system under test and a gate after a load shared a target, 16 of 48 full-size train groups); (c) soft targets stay a minority.
+  // (Full-size train at the second review: 915 groups for 1735 rows, 16 with more than one cause, 211 rows.)
+  assert.ok(st.groups > 0.4 * bases.length, `${st.groups} collision groups for ${bases.length} rows`);
+  assert.ok(st.multiLabelShare < 0.05, `the share of collision groups with more than one label (${st.multiLabelShare})`);
+  assert.ok(st.rowsInMultiLabelGroups <= 0.2 * bases.length, `a soft target is the exception, not the rule: ${st.rowsInMultiLabelGroups} of ${bases.length} rows`);
+  assert.ok(st.multiLabelGroups >= 1, 'the fixture has at least one ambiguous state');
+  for (const g of collisionGroups(bases).values()) {
+    if (new Set(g.map(labelOf)).size < 2) continue;
+    assert.equal(new Set(g.map(r => solveF1(r.state).label)).size, 1, `a collision group never merges states the state-only rule tells apart: ${JSON.stringify(g.map(r => [labelOf(r), solveF1(r.state).label]))}`);
+  }
   let withTarget = 0;
   for (const r of recs) {
     const q = Object.values(r.questions)[0], c = r.meta.collision;
@@ -584,14 +622,19 @@ test('held-out family spans (X6, Q6, the F2 held-out domains) reach no train, ca
   assert.ok(checked >= 100);
 });
 
-test('decidability (§2.7 step 1): the state-only X1:codefix solver reproduces >= 99.5% of the X1 codefix labels in train, calib-ood, dev-ood and test-ood', async t => {
+test('decidability (§2.7 steps 1-2): the state-only X1:codefix solver reproduces >= 99.5% of the X1 codefix labels in train, calib-ood, dev-ood and test-ood; under 1% of masked X1 states carry two labels', async t => {
   const pool = poolLines(existsSync(POOLS) ? POOLS : null);
   for (const [slice, recs] of Object.entries({ train: await TRAIN(), 'calib-ood': await X1OOD('calib-ood'), 'dev-ood': await X1OOD('dev-ood'), 'test-ood': await TESTOOD() })) {
     const x1 = recs.filter(r => portOf(r) === 'X1');
     let right = 0, undecided = 0;
     for (const r of x1) { const s = solveX1Codefix(r.state, { pool }); if (s.label === null) undecided++; else if (s.label === labelOf(r)) right++; }
-    t.diagnostic(`${slice}: ${right}/${x1.length} X1 codefix labels reproduced, ${undecided} undecided`);
+    // §2.7 step 2 (added by the second review): masked-state collisions, the skeleton of every state value under the record's masks
+    const groups = new Map();
+    for (const r of x1) { const k = Object.values(r.state).map(v => skeleton(String(v), r.meta.masks ?? {})).join('|'); (groups.get(k) ?? groups.set(k, new Set()).get(k)).add(labelOf(r)); }
+    const multi = [...groups.values()].filter(ls => ls.size > 1).length;
+    t.diagnostic(`${slice}: ${right}/${x1.length} X1 codefix labels reproduced, ${undecided} undecided; ${groups.size} masked states, ${multi} with more than one label`);
     assert.ok(x1.length >= 50 && right / x1.length >= 0.995, `${slice}: ${right}/${x1.length}`);
+    assert.ok(multi / groups.size < 0.01, `${slice}: ${multi} of ${groups.size} masked X1 states carry more than one label`);
   }
   // the solver is not vacuous: it answers yes only on a frame
   assert.equal(solveX1Codefix({ source_kind: 'issue comment', text: THREAD_INJECTIONS[0].replace('{fn}', 'Ledger.receive()') }).label, 'yes');
@@ -599,6 +642,29 @@ test('decidability (§2.7 step 1): the state-only X1:codefix solver reproduces >
 });
 
 // ===== wave 2: F2, X6, Q6 =====================================================================================================================================
+test('unit: X6 codefix: known_reports are the reports filed before this one: an issue\'s own first report lists none, a comment lists its issue (second review P1)', () => {
+  const report = ['# Issue #7: nearest() picks the wrong depot\n\n**Reporter:** A B (QA)  \n**Component:** netpath.py  \n**Version:** 1.2.3\n\nctx.\n\nnearest() breaks ties towards the wrong depot.',
+    '### Comment by C D (ops)\n\nRelated: toll_cost() charges the wrong direction.'].join('\n\n---\n\n');
+  const task = { inputs: { bug_report: report, source: 'def nearest():\n    pass\n', changelog: '# Changelog\n\n## 1.2.3\n- Fixed the cache.' } };
+  const s0 = codefixKit.buildState(task, { span: 'thread:0' }, 'X6'), s1 = codefixKit.buildState(task, { span: 'thread:1' }, 'X6');
+  assert.equal(s0.report, 'ctx.\n\nnearest() breaks ties towards the wrong depot.');
+  assert.deepEqual(s0.known_reports, [], 'the issue\'s first report is not an earlier report of itself (spec X6: "earlier reports in the same tracker")');
+  assert.ok(!JSON.stringify(s0).includes('picks the wrong depot'), 'its own title never reaches its state');
+  assert.deepEqual(s1.known_reports, ['nearest() picks the wrong depot'], 'a comment is triaged after its issue was filed');
+  assert.deepEqual(codefixKit.request('X6', task, { span: 'thread:0' }, {}).state, s0, 'the served request carries the same state');
+});
+
+test('unit: the exec cache hashes the F1 part of the kit only: a codefix-kit edit keeps the cache, an F1 routing edit does not', () => {
+  const kit = readFileSync(path.join(KEV_DATA, 'judges', 'failures.mjs'), 'utf8');
+  assert.equal(kit.split(KIT_F1_END).length, 2, 'the codefix marker is in the kit exactly once');
+  const f1 = kitF1Part(kit);
+  assert.ok(f1.includes('export function routeByCode') && f1.includes('export const MODEL_OUTPUT_CODES') && f1.includes('export function f1State'));
+  assert.ok(!f1.includes('export function codefixState') && kit.includes('export function codefixState'));
+  assert.equal(kitF1Part(kit.replace('known_reports:', 'known_reports :')), f1, 'an edit below the marker does not reach the hash input');
+  assert.notEqual(kitF1Part(kit.replace("'MODEL_SCHEMA', ", '')), f1, 'an edit of the routing does');
+  assert.match(execSourceHash(), /^[0-9a-f]{16}$/);
+});
+
 test('F2: four training domains in train, the two held-out domains (routing, ratelimit) in test-ood only; X6 and Q6 codefix are test-ood only (held-out family)', async () => {
   const train = await TRAIN(), tst = await TESTOOD();
   const f2tr = train.filter(r => portOf(r) === 'F2'), f2te = tst.filter(r => portOf(r) === 'F2');
@@ -748,9 +814,16 @@ test('seeded defect: this file runs alone with node --test and fails on seeded d
     { name: 'the masked state is the skeleton of the JSON again (every string masked)', mutations: [{ file: 'exec/f1.mjs', from: '  return canonical(walk(state, null));\n', to: '  return skeletonText(canonical(state), m);\n' }] },
     { name: 'codefix span forms are the raw-text skeleton again', mutations: [{ file: 'exec/codefix-rows.mjs', from: "export const spanForm = (text, masks) => skeleton(sentences(text).join(' '), masks);", to: 'export const spanForm = (text, masks) => skeleton(text, masks);' }] },
     { name: 'a span is bucketed by its whole text, not by the symptom texts it carries', mutations: [{ file: 'exec/codefix-rows.mjs', from: '(span.labelTexts?.length ? span.labelTexts : [span.text]).map(', to: '[span.text].map(' }] },
-    { name: 'a container state ignores the comments it embeds', mutations: [{ file: 'exec/codefix-rows.mjs', from: 'export function containerOk(slice, segs, masks, decisive = []) {\n', to: 'export function containerOk(slice, segs, masks, decisive = []) {\n  return true;\n' }] },
+    // second review 2026-10-08: this mutant named the old parameter `segs`; the source says `spans`, so the copy refused to build and the whole
+    // seeded-defect test failed before any mutant ran
+    { name: 'a container state ignores the comments it embeds', mutations: [{ file: 'exec/codefix-rows.mjs', from: 'export function containerOk(slice, spans, masks, decisive = []) {\n', to: 'export function containerOk(slice, spans, masks, decisive = []) {\n  return true;\n' }] },
     { name: 'train carriers keep OOD-bucket forms', mutations: [{ file: 'exec/f1.mjs', from: "list.filter(t => skeletonBucket(skeleton(t, {})) === 'train');", to: '[...list];' }] },
     { name: 'an OOD slice takes another slice\'s carriers', mutations: [{ file: 'exec/f1.mjs', from: '    if ((l.slice ?? slice) !== slice) continue;\n', to: '' }] },
+    // second review 2026-10-08
+    { name: 'the collision key keeps the exact prior_runs counts again', mutations: [{ file: 'exec/f1.mjs', from: 'prior_runs: { seen_pass: (p.passes ?? 0) > 0 } }', to: 'prior_runs: p }' }] },
+    { name: 'the collision key masks a node id to <n> again, not to its role', mutations: [{ file: 'exec/f1.mjs', from: 'v.replace(re, n => ` role${roleOfName(n)} `)', to: "v.replace(re, ' <n> ')" }] },
+    { name: 'an issue\'s first report lists its own title as a known report again', mutations: [{ file: 'judges/failures.mjs', from: 'known_reports: n > 0 && head.title ? [head.title] : []', to: 'known_reports: head.title ? [head.title] : []' }] },
+    { name: 'the exec cache hashes the whole kit again', mutations: [{ file: 'exec/f1.mjs', from: 'return at < 0 ? text : text.slice(0, at); };', to: 'return text; };' }] },
   ];
   const r = H.seededDefect({ file: TEST_FILE, pattern, mutants, env: { KEV_DATA_MUTANT_RUN: '1' } });
   assert.equal(r.control.status, 0, r.control.stdout.split('\n').filter(l => /not ok/.test(l)).join('\n'));

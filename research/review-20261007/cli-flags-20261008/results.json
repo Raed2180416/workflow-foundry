@@ -1,0 +1,492 @@
+{
+  "measuredAt": "2026-10-08T19:16:30.864Z",
+  "claude": "claude-code 2.1.294",
+  "node": "v24.21.0",
+  "platform": "linux",
+  "cpus": 4,
+  "policyHash": "68fefacbe500a009974f3a6207409eb0dc1ab94f964c37d87f27cea98edd9178",
+  "policyVersion": "2026-10-08.1",
+  "model": "claude-haiku-5-5",
+  "ambient": {
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": null,
+    "FORCE_PROMPT_CACHING_5M": null
+  },
+  "n": 5,
+  "spentUsd": 0.003891,
+  "summary": {
+    "shared/off": {
+      "n": 5,
+      "allCorrect": true,
+      "wallMsMedian": 2910,
+      "wallMsMean": 3088,
+      "apiMsMedian": 574,
+      "nonApiMsMedian": 2195,
+      "childCpuMsMedian": 1110,
+      "costUsdMean": 0.0002053,
+      "costUsdMeanWarm": 0.0001857,
+      "cacheWriteMean": 877,
+      "cacheReadMean": 413,
+      "outputTokensMean": 51
+    },
+    "shared/on": {
+      "n": 5,
+      "allCorrect": true,
+      "wallMsMedian": 1666,
+      "wallMsMean": 1690,
+      "apiMsMedian": 714,
+      "nonApiMsMedian": 814,
+      "childCpuMsMedian": 860,
+      "costUsdMean": 0.0001188,
+      "costUsdMeanWarm": 0.0001069,
+      "cacheWriteMean": 711,
+      "cacheReadMean": 413,
+      "outputTokensMean": 51
+    },
+    "unique/off": {
+      "n": 5,
+      "allCorrect": true,
+      "wallMsMedian": 2994,
+      "wallMsMean": 3297,
+      "apiMsMedian": 793,
+      "nonApiMsMedian": 2201,
+      "childCpuMsMedian": 930,
+      "costUsdMean": 0.0002864,
+      "costUsdMeanWarm": 0.0002864,
+      "cacheWriteMean": 1304,
+      "cacheReadMean": 0,
+      "outputTokensMean": 51
+    },
+    "unique/on": {
+      "n": 5,
+      "allCorrect": true,
+      "wallMsMedian": 1471,
+      "wallMsMean": 1460,
+      "apiMsMedian": 841,
+      "nonApiMsMedian": 531,
+      "childCpuMsMedian": 700,
+      "costUsdMean": 0.0001678,
+      "costUsdMeanWarm": 0.0001678,
+      "cacheWriteMean": 1137,
+      "cacheReadMean": 0,
+      "outputTokensMean": 51
+    }
+  },
+  "pairs": {
+    "shared": {
+      "wallMsDiffMedian": -1295,
+      "wallMsOnFasterInPairs": 5,
+      "cpuMsDiffMedian": -290,
+      "costUsdOnCheaperInPairs": 5,
+      "costUsdDiffMean": -0.0000866
+    },
+    "unique": {
+      "wallMsDiffMedian": -1523,
+      "wallMsOnFasterInPairs": 5,
+      "cpuMsDiffMedian": -230,
+      "costUsdOnCheaperInPairs": 5,
+      "costUsdDiffMean": -0.0001186
+    }
+  },
+  "rows": [
+    {
+      "shape": "shared",
+      "arm": "off",
+      "i": 0,
+      "ok": true,
+      "correct": true,
+      "wallMs": 2656,
+      "apiMs": 568,
+      "childCpuMs": 1260,
+      "costUsd": 0.0002839,
+      "input": 2,
+      "output": 51,
+      "cacheRead": 0,
+      "cacheWrite": 1291,
+      "load1": 7.22,
+      "journalEnv": {
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": null,
+        "FORCE_PROMPT_CACHING_5M": null
+      }
+    },
+    {
+      "shape": "shared",
+      "arm": "on",
+      "i": 0,
+      "ok": true,
+      "correct": true,
+      "wallMs": 2034,
+      "apiMs": 997,
+      "childCpuMs": 900,
+      "costUsd": 0.000166075,
+      "input": 2,
+      "output": 51,
+      "cacheRead": 0,
+      "cacheWrite": 1123,
+      "load1": 7.22,
+      "journalEnv": {
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+        "FORCE_PROMPT_CACHING_5M": "1"
+      }
+    },
+    {
+      "shape": "shared",
+      "arm": "on",
+      "i": 1,
+      "ok": true,
+      "correct": true,
+      "wallMs": 1353,
+      "apiMs": 587,
+      "childCpuMs": 750,
+      "costUsd": 0.00010698499999999999,
+      "input": 2,
+      "output": 51,
+      "cacheRead": 516,
+      "cacheWrite": 609,
+      "load1": 7.53,
+      "journalEnv": {
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+        "FORCE_PROMPT_CACHING_5M": "1"
+      }
+    },
+    {
+      "shape": "shared",
+      "arm": "off",
+      "i": 1,
+      "ok": true,
+      "correct": true,
+      "wallMs": 2648,
+      "apiMs": 574,
+      "childCpuMs": 1040,
+      "costUsd": 0.00018546000000000003,
+      "input": 2,
+      "output": 51,
+      "cacheRead": 516,
+      "cacheWrite": 773,
+      "load1": 7.53,
+      "journalEnv": {
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": null,
+        "FORCE_PROMPT_CACHING_5M": null
+      }
+    },
+    {
+      "shape": "shared",
+      "arm": "off",
+      "i": 2,
+      "ok": true,
+      "correct": true,
+      "wallMs": 2910,
+      "apiMs": 520,
+      "childCpuMs": 1110,
+      "costUsd": 0.00018606,
+      "input": 2,
+      "output": 51,
+      "cacheRead": 516,
+      "cacheWrite": 776,
+      "load1": 7.53,
+      "journalEnv": {
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": null,
+        "FORCE_PROMPT_CACHING_5M": null
+      }
+    },
+    {
+      "shape": "shared",
+      "arm": "on",
+      "i": 2,
+      "ok": true,
+      "correct": true,
+      "wallMs": 1666,
+      "apiMs": 667,
+      "childCpuMs": 940,
+      "costUsd": 0.00010698499999999999,
+      "input": 2,
+      "output": 51,
+      "cacheRead": 516,
+      "cacheWrite": 609,
+      "load1": 7.8,
+      "journalEnv": {
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+        "FORCE_PROMPT_CACHING_5M": "1"
+      }
+    },
+    {
+      "shape": "shared",
+      "arm": "on",
+      "i": 3,
+      "ok": true,
+      "correct": true,
+      "wallMs": 1528,
+      "apiMs": 714,
+      "childCpuMs": 790,
+      "costUsd": 0.00010686,
+      "input": 2,
+      "output": 51,
+      "cacheRead": 516,
+      "cacheWrite": 608,
+      "load1": 7.8,
+      "journalEnv": {
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+        "FORCE_PROMPT_CACHING_5M": "1"
+      }
+    },
+    {
+      "shape": "shared",
+      "arm": "off",
+      "i": 3,
+      "ok": true,
+      "correct": true,
+      "wallMs": 3958,
+      "apiMs": 1209,
+      "childCpuMs": 1160,
+      "costUsd": 0.00018526000000000003,
+      "input": 2,
+      "output": 51,
+      "cacheRead": 516,
+      "cacheWrite": 772,
+      "load1": 7.74,
+      "journalEnv": {
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": null,
+        "FORCE_PROMPT_CACHING_5M": null
+      }
+    },
+    {
+      "shape": "shared",
+      "arm": "off",
+      "i": 4,
+      "ok": true,
+      "correct": true,
+      "wallMs": 3270,
+      "apiMs": 1075,
+      "childCpuMs": 1000,
+      "costUsd": 0.00018585999999999999,
+      "input": 2,
+      "output": 51,
+      "cacheRead": 516,
+      "cacheWrite": 775,
+      "load1": 7.52,
+      "journalEnv": {
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": null,
+        "FORCE_PROMPT_CACHING_5M": null
+      }
+    },
+    {
+      "shape": "shared",
+      "arm": "on",
+      "i": 4,
+      "ok": true,
+      "correct": true,
+      "wallMs": 1871,
+      "apiMs": 1125,
+      "childCpuMs": 860,
+      "costUsd": 0.00010686,
+      "input": 2,
+      "output": 51,
+      "cacheRead": 516,
+      "cacheWrite": 608,
+      "load1": 7.52,
+      "journalEnv": {
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+        "FORCE_PROMPT_CACHING_5M": "1"
+      }
+    },
+    {
+      "shape": "unique",
+      "arm": "off",
+      "i": 0,
+      "ok": true,
+      "correct": true,
+      "wallMs": 2994,
+      "apiMs": 793,
+      "childCpuMs": 930,
+      "costUsd": 0.00028590000000000006,
+      "input": 2,
+      "output": 51,
+      "cacheRead": 0,
+      "cacheWrite": 1301,
+      "load1": 7.24,
+      "journalEnv": {
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": null,
+        "FORCE_PROMPT_CACHING_5M": null
+      }
+    },
+    {
+      "shape": "unique",
+      "arm": "on",
+      "i": 0,
+      "ok": true,
+      "correct": true,
+      "wallMs": 1471,
+      "apiMs": 842,
+      "childCpuMs": 710,
+      "costUsd": 0.0001677,
+      "input": 2,
+      "output": 51,
+      "cacheRead": 0,
+      "cacheWrite": 1136,
+      "load1": 7.24,
+      "journalEnv": {
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+        "FORCE_PROMPT_CACHING_5M": "1"
+      }
+    },
+    {
+      "shape": "unique",
+      "arm": "on",
+      "i": 1,
+      "ok": true,
+      "correct": true,
+      "wallMs": 1190,
+      "apiMs": 659,
+      "childCpuMs": 690,
+      "costUsd": 0.000167825,
+      "input": 2,
+      "output": 51,
+      "cacheRead": 0,
+      "cacheWrite": 1137,
+      "load1": 7.24,
+      "journalEnv": {
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+        "FORCE_PROMPT_CACHING_5M": "1"
+      }
+    },
+    {
+      "shape": "unique",
+      "arm": "off",
+      "i": 1,
+      "ok": true,
+      "correct": true,
+      "wallMs": 5314,
+      "apiMs": 2236,
+      "childCpuMs": 1010,
+      "costUsd": 0.00028649999999999997,
+      "input": 2,
+      "output": 51,
+      "cacheRead": 0,
+      "cacheWrite": 1304,
+      "load1": 7.22,
+      "journalEnv": {
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": null,
+        "FORCE_PROMPT_CACHING_5M": null
+      }
+    },
+    {
+      "shape": "unique",
+      "arm": "off",
+      "i": 2,
+      "ok": true,
+      "correct": true,
+      "wallMs": 3031,
+      "apiMs": 573,
+      "childCpuMs": 1020,
+      "costUsd": 0.0002867,
+      "input": 2,
+      "output": 51,
+      "cacheRead": 0,
+      "cacheWrite": 1305,
+      "load1": 7.04,
+      "journalEnv": {
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": null,
+        "FORCE_PROMPT_CACHING_5M": null
+      }
+    },
+    {
+      "shape": "unique",
+      "arm": "on",
+      "i": 2,
+      "ok": true,
+      "correct": true,
+      "wallMs": 1352,
+      "apiMs": 841,
+      "childCpuMs": 660,
+      "costUsd": 0.000167825,
+      "input": 2,
+      "output": 51,
+      "cacheRead": 0,
+      "cacheWrite": 1137,
+      "load1": 7.04,
+      "journalEnv": {
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+        "FORCE_PROMPT_CACHING_5M": "1"
+      }
+    },
+    {
+      "shape": "unique",
+      "arm": "on",
+      "i": 3,
+      "ok": true,
+      "correct": true,
+      "wallMs": 1529,
+      "apiMs": 1005,
+      "childCpuMs": 700,
+      "costUsd": 0.000167825,
+      "input": 2,
+      "output": 51,
+      "cacheRead": 0,
+      "cacheWrite": 1137,
+      "load1": 7.04,
+      "journalEnv": {
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+        "FORCE_PROMPT_CACHING_5M": "1"
+      }
+    },
+    {
+      "shape": "unique",
+      "arm": "off",
+      "i": 3,
+      "ok": true,
+      "correct": true,
+      "wallMs": 2524,
+      "apiMs": 900,
+      "childCpuMs": 930,
+      "costUsd": 0.0002871,
+      "input": 2,
+      "output": 51,
+      "cacheRead": 0,
+      "cacheWrite": 1307,
+      "load1": 7.04,
+      "journalEnv": {
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": null,
+        "FORCE_PROMPT_CACHING_5M": null
+      }
+    },
+    {
+      "shape": "unique",
+      "arm": "off",
+      "i": 4,
+      "ok": true,
+      "correct": true,
+      "wallMs": 2620,
+      "apiMs": 768,
+      "childCpuMs": 930,
+      "costUsd": 0.00028590000000000006,
+      "input": 2,
+      "output": 51,
+      "cacheRead": 0,
+      "cacheWrite": 1301,
+      "load1": 7.04,
+      "journalEnv": {
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": null,
+        "FORCE_PROMPT_CACHING_5M": null
+      }
+    },
+    {
+      "shape": "unique",
+      "arm": "on",
+      "i": 4,
+      "ok": true,
+      "correct": true,
+      "wallMs": 1759,
+      "apiMs": 813,
+      "childCpuMs": 980,
+      "costUsd": 0.0001677,
+      "input": 2,
+      "output": 51,
+      "cacheRead": 0,
+      "cacheWrite": 1136,
+      "load1": 7.11,
+      "journalEnv": {
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+        "FORCE_PROMPT_CACHING_5M": "1"
+      }
+    }
+  ]
+}

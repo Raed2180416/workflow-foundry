@@ -383,11 +383,6 @@ export const EFFECTS = Object.freeze({
   undrain: { params: ['node', 'pool'], cores: [e => `${e.node} returns to ${e.pool}`, e => `undrain puts ${e.node} back into rotation`, e => `${e.node} is serving in ${e.pool} again`] },
   flag: { params: ['name', 'value'], cores: [e => `the flag ${e.name} is switched ${on(e.value)}`, e => `${e.name} is ${on(e.value)} afterwards`, e => `set_flag turns ${e.name} ${on(e.value)}`] },
   rollback: { params: ['key'], cores: [e => `${e.key} goes back to its previous value`, e => `rollback_config restores ${e.key}`, e => `the earlier value of ${e.key} is back`] },
-  // an effect about something the observation does not show (the presence-matched unknowable of Q4)
-  unobserved: { params: ['subject', 'attribute'], cores: [
-    e => `${e.subject} shows ${e.attribute}`, e => `${e.subject} reports ${e.attribute}`, e => `${e.subject} is confirmed to have ${e.attribute}`,
-    e => `${e.subject} comes with ${e.attribute}`, e => `${e.attribute} is present on ${e.subject}`, e => `${e.subject} is found with ${e.attribute}`,
-  ] },
   page: { params: [], cores: [() => 'the page reaches the on-call escalation', () => 'the on-call engineer is paged', () => 'page_human raises the incident bridge'] },
   wait: { params: ['seconds'], cores: [e => `${e.seconds} seconds pass`, e => `the clock moves ahead by ${e.seconds} s`, e => `waiting ${e.seconds} s lets time pass`] },
 });

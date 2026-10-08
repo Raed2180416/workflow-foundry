@@ -4,6 +4,7 @@ import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { canonical, clone, digest, FoundryError, checkData } from './data.mjs';
 import { AUDIT, journalSeal, sha256, verdictInputsHash } from './audit.mjs';
+import { installRunTables, MATERIALIZE, RunRows, rowText, STATE_LIMITS } from './run-rows.mjs';
 
 const processStart = pid => { try { return readFileSync(`/proc/${pid}/stat`, 'utf8').split(') ')[1].split(' ')[19]; } catch { return null; } };
 function liveJobOwner(job) {
@@ -49,6 +50,9 @@ export class Store {
       CREATE TABLE IF NOT EXISTS timers(run_id TEXT NOT NULL, node_key TEXT NOT NULL, wake_at INTEGER NOT NULL, PRIMARY KEY(run_id,node_key));
       CREATE INDEX IF NOT EXISTS timers_due ON timers(wake_at);
     `);
+    // Run state is per-node rows (src/run-rows.mjs). `limits` are the state bounds; an instance may lower them (tests do).
+    installRunTables(this.db);
+    this.limits = { ...STATE_LIMITS }; this.rows = new RunRows(this);
   }
   close() { this.db.close(); }
   transaction(fn) {
@@ -116,61 +120,67 @@ export class Store {
     const bound = binding ? { modelPolicyHash: binding.modelPolicyHash ?? null, modelMode: binding.modelMode ?? null, sampleSalt: binding.sampleSalt ?? null,
       assignmentHash: binding.assignmentHash ?? null, identityHash: binding.identity ? digest(binding.identity) : null } : {};
     this.transaction(() => {
-      this.db.prepare('INSERT INTO runs VALUES(?,?)').run(id, canonical(run));
+      this.rows.insert(run);
       if (fixture) this.db.prepare('INSERT INTO fixtures VALUES(?,?)').run(id, canonical({ ...fixture, actions: [], wrongActions: 0 }));
       const event = this.#event(id, { type: 'run.created', audit: AUDIT, ...(journal ? { journal } : {}), workflowHash, registryHash, engineHash, inputHash: digest(input), policyHash: digest(policy), ...bound });
       run.eventHead = { seq: event.seq, hash: event.hash };
-      this.db.prepare('UPDATE runs SET body=? WHERE id=?').run(canonical(run), id);
+      this.rows.setHeader(run);
     });
     return run;
   }
-  run(id) {
-    const row = this.db.prepare('SELECT body FROM runs WHERE id=?').get(id);
-    if (!row) throw new FoundryError('NOT_FOUND', 'Run not found');
-    return JSON.parse(row.body);
-  }
-  runs() { return this.db.prepare('SELECT body FROM runs ORDER BY rowid DESC LIMIT 100').all().map(r => JSON.parse(r.body)); }
-  updateRun(id, mutate, event) {
+  /** The whole run record: header, input, nodes, outputs and frames. Reads every row of the run; the runtime's hot path uses `store.rows` instead. */
+  run(id) { return this.rows.run(id); }
+  runs() { return this.db.prepare('SELECT id FROM runs ORDER BY rowid DESC LIMIT 100').all().map(r => this.rows.run(r.id)); }
+  /** Split every run record written by the whole-run store into rows (they are also split by the first write to them). */
+  migrateRuns() { return this.rows.migrateAll(); }
+  /**
+   * Compare-and-swap update of one run: `mutate(run)` sees the run through lazily loaded rows (it reads and writes `run.nodes[id]`, `run.frames[key]`,
+   * `run.outputs[id]` and the header fields as before), and only the rows it changed are written, with the events, in one transaction. The chain
+   * head, every row's revision and the run's byte bound are checked first. `event` is an event, a function of the run returning events, or a list.
+   * Returns the run record afterwards; `{ result: 'header' }` returns only its own fields (the hot path never needs the rest).
+   */
+  updateRun(id, mutate, event, { result = 'run' } = {}) {
     return this.transaction(() => {
-      const run = this.run(id);
-      const tail = this.db.prepare('SELECT seq,hash FROM events WHERE run_id=? ORDER BY seq DESC LIMIT 1').get(id);
-      const count = this.db.prepare('SELECT COUNT(*) AS count FROM events WHERE run_id=?').get(id).count;
+      const session = this.rows.open(id), run = session.draft;
+      const tail = this.#tail(id);
+      const count = this.rows.stmt('SELECT COUNT(*) AS count FROM events WHERE run_id=?').get(id).count;
       if (!run.eventHead || tail?.seq !== run.eventHead.seq || tail?.hash !== run.eventHead.hash || count !== run.eventHead.seq) throw new FoundryError('CORRUPT_EVENTS', 'Refusing to append over missing or truncated checkpoint evidence');
       const scope = this.#scope = { runId: id, decisions: [] };
       let items;
       try {
         mutate(run); run.updatedAt = Date.now();
-        checkData(run, { maxBytes: 12 * 1024 * 1024 });
         items = [event].flat().flatMap(e => typeof e === 'function' ? [e(run)].flat() : [e]).filter(Boolean);
       } finally { this.#scope = null; }
       // Audit binding (src/audit.mjs): a decision recorded in this update gets its chain event ahead of the update's own events, and a verdict
       // event that the writer did not seal itself (the runtime does, against its own journal) is sealed here against this database's journal.
+      let previous = tail;
       for (const item of [...scope.decisions, ...items.map(item => item.type === 'run.verdict' && item.journalRoot === undefined ? { ...item, ...this.sealBinding(id, run) } : item)]) {
-        const receipt = this.#event(id, item);
-        run.eventHead = { seq: receipt.seq, hash: receipt.hash };
+        previous = this.#event(id, item, previous);
+        run.eventHead = { seq: previous.seq, hash: previous.hash };
       }
-      this.db.prepare('UPDATE runs SET body=? WHERE id=?').run(canonical(run), id);
-      return clone(run);
+      const header = session.flush();
+      return result === 'header' ? header : this.rows.run(id);
     });
   }
   /** The seal a `run.verdict` event carries: the Merkle root of the run's journal rows (in `journalDb`, default this database) and the hash of
    *  the state the verdict was computed from. */
   sealBinding(id, run, journalDb = this.db) {
     const seal = journalSeal(journalDb, id);
-    return { journalRoot: seal.root, journalCalls: seal.calls, journalMaxId: seal.maxId, boardRoot: null, verdictInputsHash: verdictInputsHash(run) };
+    return { journalRoot: seal.root, journalCalls: seal.calls, journalMaxId: seal.maxId, boardRoot: null, verdictInputsHash: verdictInputsHash(run[MATERIALIZE]?.() ?? run) };
   }
-  #event(id, data) {
+  #tail(id) { return this.rows.stmt('SELECT seq,hash FROM events WHERE run_id=? ORDER BY seq DESC LIMIT 1').get(id); }
+  // Append one event to the chain after `prev` (default: the stored tail). The hash is the digest() of the event: sha256 of its canonical text.
+  #event(id, data, prev = this.#tail(id)) {
     checkData(data, { maxBytes: 1024 * 1024 });
-    const prev = this.db.prepare('SELECT seq,hash FROM events WHERE run_id=? ORDER BY seq DESC LIMIT 1').get(id);
     const event = { seq: (prev?.seq ?? 0) + 1, at: Date.now(), previousHash: prev?.hash ?? null, ...data };
-    const hash = digest(event);
-    this.db.prepare('INSERT INTO events VALUES(?,?,?,?)').run(id, event.seq, canonical(event), hash);
+    const text = rowText(event), hash = sha256(text);
+    this.rows.stmt('INSERT INTO events VALUES(?,?,?,?)').run(id, event.seq, text, hash);
     return { ...event, hash };
   }
   // The verified event chain of a run, or the first place it breaks: {events, error: {seq, message, reason} | null}. `events` holds the
   // events up to (not including) the break. events() throws on a break; verifyRun (src/verify-run.mjs) reports it.
   chain(id) {
-    const head = this.run(id).eventHead;
+    const head = this.rows.header(id).eventHead;
     let previousHash = null;
     const events = [];
     const broken = (seq, reason, message = 'Event chain verification failed') => ({ events, error: { seq, reason, message } });
@@ -213,7 +223,7 @@ export class Store {
     const chained = this.#scope?.runId !== runId && this.#depth === 0 && this.db.prepare("SELECT 1 FROM runs WHERE id=? AND json_extract(body,'$.eventHead.seq') IS NOT NULL").get(runId);
     if (!chained) return insert();
     let inserted = false;
-    this.updateRun(runId, () => { inserted = insert(); }, []);
+    this.updateRun(runId, () => { inserted = insert(); }, [], { result: 'header' });
     return inserted;
   }
   decisions(runId) { return this.db.prepare('SELECT body FROM decisions WHERE run_id=? ORDER BY rowid').all(runId).map(row => JSON.parse(row.body)); }
@@ -241,10 +251,15 @@ export class Store {
       mkdirSync(path.dirname(target), { recursive: true, mode: 0o700 });
       // The copy stays inside the workspace state directory: a symlinked artifacts/ or run directory must not redirect it.
       if (!realpathSync(path.dirname(target)).startsWith(this.directory + path.sep)) throw new FoundryError('TRANSCRIPT', 'The transcript directory resolves outside the workspace state directory');
+      // The name is derived from the hash, so an existing copy is this transcript bound before; anything else there is refused, not bound.
       if (!existsSync(target)) writeFileSync(target, data, { flag: 'wx', mode: 0o600 });
+      else {
+        const held = lstatSync(target);
+        if (!held.isFile() || held.size !== data.length || sha256(readFileSync(target)) !== transcriptHash) throw new FoundryError('TRANSCRIPT', 'A different file already occupies this transcript\'s workspace copy');
+      }
       location = { kind: 'workspace', path: relative };
     }
-    const bound = this.updateRun(runId, () => {}, { type: 'executor.finished', nodeKey, label, transcriptHash, bytes: data.length, location });
+    const bound = this.updateRun(runId, () => {}, { type: 'executor.finished', nodeKey, label, transcriptHash, bytes: data.length, location }, { result: 'header' });
     return { runId, nodeKey, label, transcriptHash, bytes: data.length, location, seq: bound.eventHead.seq };
   }
   // Durable wake-ups for wait nodes (DESIGN §5.4). The runtime writes them inside its updateRun

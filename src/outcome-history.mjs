@@ -47,7 +47,25 @@ export function inspectOutcomeHistory(store, { receiptId, currentRegistryHash } 
   checkData(c.expected, { maxBytes });
   requireEvidence(b && contracted.scope === digest([c.rootRequestId, c.inputHash, c.artifactName]) &&
     observed.binding_key === digest({ requestId: b.requestId, proposalId: b.proposalId, runId: b.runId, contractId: r.contractId }), 'Ledger scope or binding key mismatch');
-  const request = record('requests', b.requestId), proposal = record('proposals', b.proposalId), run = record('runs', b.runId);
+  // A run is stored as a header (runs.body) plus per-node rows (see src/run-rows.mjs); a record written by the earlier whole-run store holds
+  // `nodes` in runs.body and is used as it is. This inspector reads with SELECTs only and imports nothing else, so it assembles the record itself.
+  const runRecord = id => {
+    const header = parse(row('runs', id).body);
+    requireEvidence(header.id === id, 'runs body/row identity mismatch');
+    if (Object.hasOwn(header, 'nodes')) return header;
+    const value = { ...header }, input = store.db.prepare('SELECT body FROM run_input WHERE run_id=?').get(id);
+    if (input) value.input = parse(input.body);
+    value.nodes = {}; value.outputs = {}; value.frames = {};
+    for (const frame of store.db.prepare('SELECT frame_key, body FROM run_frames WHERE run_id=? ORDER BY frame_key').all(id)) value.frames[frame.frame_key] = { ...parse(frame.body), nodes: {}, outputs: {} };
+    for (const node of store.db.prepare('SELECT frame_key, node_id, body, output FROM run_nodes WHERE run_id=? ORDER BY frame_key, node_id').all(id)) {
+      const target = node.frame_key === 'root' ? value : value.frames[node.frame_key];
+      if (!target) continue;
+      if (node.body !== null) target.nodes[node.node_id] = parse(node.body);
+      if (node.output !== null) target.outputs[node.node_id] = parse(node.output);
+    }
+    return value;
+  };
+  const request = record('requests', b.requestId), proposal = record('proposals', b.proposalId), run = runRecord(b.runId);
   const workflowRow = row('workflows', run.workflowHash, 'hash'), workflow = parse(workflowRow.body);
   requireEvidence(digest(workflow) === run.workflowHash && workflowRow.id === workflow.id && workflowRow.version === workflow.version, 'Immutable workflow identity mismatch');
   const lineage = [], seen = new Set(); let root = request;

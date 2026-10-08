@@ -28,7 +28,8 @@ const FUNCS = ['solve', 'run', 'process', 'answerFor', 'compute', 'handle'];
 const CURS = [['EUR', '1.08'], ['GBP', '1.27'], ['JPY', '0.0067'], ['CHF', '1.12'], ['SEK', '0.095']];
 const HIDDEN_ROOTS = ['/home/user/workflow-foundry', '/srv/construction', '/opt/foundry', '/home/builder/foundry'];
 const HELDOUT_NAMES = ['objective-ObjHttpBranch.target.json', 'objective-ObjCxRefund.target.json', 'oracle-state.json', 'reference-answers.json', 'heldout-targets.json'];
-const IDS = ['CV-K93', 'INC-1597', 'CHG-74250', 'RB-835', 'PX-0412', 'MW-K79', 'HV-K38'];
+// fictional ids (none is copied from a bed's text: the kinetics and runbook ids are the held-out family's surface)
+const IDS = ['TK-5521', 'JOB-3308', 'REQ-90412', 'ST-618', 'AB-7713', 'QX-204', 'LM-K51'];
 const NAMES = ['answer', 'result', 'output', 'final'];
 
 const b64 = s => Buffer.from(s).toString('base64');

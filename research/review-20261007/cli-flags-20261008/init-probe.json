@@ -1,0 +1,127 @@
+{
+  "probedAt": "2026-10-08T19:18:07.250Z",
+  "rows": [
+    {
+      "variant": "off",
+      "childEnv": {
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": null,
+        "FORCE_PROMPT_CACHING_5M": null
+      },
+      "plugins": [
+        "cc-plugin-agents-md",
+        "cc-plugin-telemetry",
+        "cc-plugin-plugin-authoring"
+      ],
+      "tools": [
+        "StructuredOutput"
+      ],
+      "agents": [
+        "claude",
+        "claude-code-guide",
+        "Explore",
+        "general-purpose",
+        "Plan"
+      ],
+      "hasScratchpadPath": true,
+      "hasUiInvalidateEvent": false,
+      "cacheWriteTokens": 1243,
+      "cacheReadTokens": 0,
+      "outputTokens": 51,
+      "costUsd": 0.0002743,
+      "answer": {
+        "n": 7
+      }
+    },
+    {
+      "variant": "nonessentialOnly",
+      "childEnv": {
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+        "FORCE_PROMPT_CACHING_5M": null
+      },
+      "plugins": [
+        "cc-plugin-agents-md",
+        "cc-plugin-plugin-authoring"
+      ],
+      "tools": [
+        "StructuredOutput"
+      ],
+      "agents": [
+        "claude",
+        "claude-code-guide",
+        "Explore",
+        "general-purpose",
+        "Plan"
+      ],
+      "hasScratchpadPath": false,
+      "hasUiInvalidateEvent": true,
+      "cacheWriteTokens": 1084,
+      "cacheReadTokens": 0,
+      "outputTokens": 51,
+      "costUsd": 0.00024249999999999999,
+      "answer": {
+        "n": 7
+      }
+    },
+    {
+      "variant": "cacheOnly",
+      "childEnv": {
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": null,
+        "FORCE_PROMPT_CACHING_5M": "1"
+      },
+      "plugins": [
+        "cc-plugin-agents-md",
+        "cc-plugin-telemetry",
+        "cc-plugin-plugin-authoring"
+      ],
+      "tools": [
+        "StructuredOutput"
+      ],
+      "agents": [
+        "claude",
+        "claude-code-guide",
+        "Explore",
+        "general-purpose",
+        "Plan"
+      ],
+      "hasScratchpadPath": true,
+      "hasUiInvalidateEvent": false,
+      "cacheWriteTokens": 1249,
+      "cacheReadTokens": 0,
+      "outputTokens": 51,
+      "costUsd": 0.000181825,
+      "answer": {
+        "n": 7
+      }
+    },
+    {
+      "variant": "on",
+      "childEnv": {
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+        "FORCE_PROMPT_CACHING_5M": "1"
+      },
+      "plugins": [
+        "cc-plugin-agents-md",
+        "cc-plugin-plugin-authoring"
+      ],
+      "tools": [
+        "StructuredOutput"
+      ],
+      "agents": [
+        "claude",
+        "claude-code-guide",
+        "Explore",
+        "general-purpose",
+        "Plan"
+      ],
+      "hasScratchpadPath": false,
+      "hasUiInvalidateEvent": true,
+      "cacheWriteTokens": 356,
+      "cacheReadTokens": 722,
+      "outputTokens": 51,
+      "costUsd": 0.00007742,
+      "answer": {
+        "n": 7
+      }
+    }
+  ]
+}

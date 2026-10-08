@@ -60,6 +60,25 @@ export function journalRowsAfter(db, runId, afterId) {
   return db.prepare('SELECT id, ok, error_code FROM model_calls WHERE run_id=? AND id>? ORDER BY id').all(runId, afterId);
 }
 
+/** The identity fields of a run record that no longer match its immutable birth event: the workflow, input, policy, engine, registry and
+ *  model binding the run was created with. Nothing rewrites these after creation, so every name returned is an edit of the record (the
+ *  runtime refuses to resume such a run; verify-run reports it). A field the birth event does not carry (an older run) is not compared. */
+export function identityChanges(run, birth) {
+  const changed = [];
+  const same = (name, actual, expected) => { if (expected !== undefined && (actual ?? null) !== (expected ?? null)) changed.push(name); };
+  same('workflowHash', run.workflowHash, birth?.workflowHash);
+  same('registryHash', run.registryHash, birth?.registryHash);
+  same('engineHash', run.engineHash, birth?.engineHash);
+  same('input', digest(run.input ?? null), birth?.inputHash);
+  same('policy', digest(run.policy ?? null), birth?.policyHash);
+  if (birth && Object.hasOwn(birth, 'modelPolicyHash')) {
+    for (const key of ['modelPolicyHash', 'modelMode', 'sampleSalt', 'assignmentHash']) same(key, run[key], birth[key]);
+    if (birth.assignmentHash != null) same('assignment', digest(run.assignment ?? null), birth.assignmentHash);
+    same('identity', run.identity ? digest(run.identity) : null, birth.identityHash);
+  }
+  return changed;
+}
+
 /** What the verdict was computed from: the run's identity, terminal status, error, findings and every node state and output. */
 export const verdictInputsHash = run => digest({ v: 1, workflowHash: run.workflowHash, status: run.status, error: run.error ?? null, findings: run.findings ?? [],
   steps: run.steps ?? 0, cost: run.cost ?? 0, nodes: run.nodes ?? {}, outputs: run.outputs ?? {}, frames: run.frames ?? {} });
@@ -68,7 +87,8 @@ export const verdictInputsHash = run => digest({ v: 1, workflowHash: run.workflo
  *  run's evidence only (no clock): the head, the run's status and the journal root of its latest seal (or, before any seal, the journal's
  *  current rows when a journal database is given). `events` must be a verified chain (store.events or verifyRun's own check). */
 export function anchorOfEvents({ runId, events, status, journalDb = null }) {
-  const head = events.at(-1), seal = events.findLast(e => e.type === 'run.verdict');
+  // The seal in force: the final one that closed the run (nothing after it is the run's), else the latest 'uncertain' one.
+  const head = events.at(-1), seal = events.find(e => e.type === 'run.verdict' && e.verdict !== 'uncertain') ?? events.findLast(e => e.type === 'run.verdict');
   const journal = seal ? { root: seal.journalRoot ?? null, calls: seal.journalCalls ?? 0, maxId: seal.journalMaxId ?? 0 }
     : journalDb ? journalSeal(journalDb, runId) : { root: null, calls: 0, maxId: 0 };
   return { schema: ANCHOR_SCHEMA, runId, headSeq: head.seq, headHash: head.hash, headAt: head.at, journalRoot: journal.root, journalCalls: journal.calls, journalMaxId: journal.maxId,
