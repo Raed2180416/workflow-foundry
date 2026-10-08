@@ -449,7 +449,7 @@ test('regression (v3 traps stay solvable): every optional call documented, dated
     // overview resolves uniquely) that states its current behaviour; a dated pair's later note matches the truth.
     const what = new Map([...sys.matchAll(/(\S+) \(team \S+\) provides ([^;.]+)/g)].map(m => [m[1], m[2]]));
     for (const w of what.values()) assert.equal([...what.values()].filter(x => x === w).length, 1, `${task.id}: '${w}' names two services`);
-    const mentions = (text, svc) => text.includes(svc) || (what.has(svc) && DESCRIBE.some(f => text.includes(f(what.get(svc)))));
+    const mentions = (text, svc) => text.includes(svc) || (what.has(svc) && DESCRIBE.some(f => text.toLowerCase().includes(f(what.get(svc)))));
     for (const [from, to, , provider] of truth.softEdges) {
       const docs = truth.edgeDocs.filter(d => d.from === from && d.to === to);
       assert.ok(docs.length >= 1 && docs.every(d => sys.includes(d.text) && mentions(d.text, from) && mentions(d.text, to)), `${task.id}: soft edge ${from}->${to} undocumented`);

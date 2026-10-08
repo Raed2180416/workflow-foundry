@@ -1228,6 +1228,8 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   // v4 round 3: from d3 a note may name a service by what it provides (K.describe per mention); the overview says
   // which service provides what. Round 2 added NOTES_MORE paraphrases to the optional, hard and provider pools.
   const nm = key => (K.describe && rs.chance(K.describe) ? rs.pick(C.DESCRIBE)(S[key].role.what) : S[key].name);
+  // v4.2 (D-5): a note that opens with such a description starts with a capital letter (v4.1: '- the service behind ...').
+  const cap = t => (t.startsWith('the ') ? `T${t.slice(1)}` : t);
   const pool2 = kind => (K.partialMore ? [...C.NOTES[kind], ...C.NOTES_MORE[kind]] : C.NOTES[kind]);
   const tableEdges = edges.map(e => ({ ...e }));
   const notes = [];
@@ -1240,7 +1242,7 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   const monthName = rs.pick(['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September']);
   for (const e of added) {
     tableEdges.find(x => x.from === e.from && x.to === e.to).inTable = false;
-    notes.push(note(C.NOTES.added, nm(e.from), nm(e.to), { month: monthName, what: S[e.to].role.what }));
+    notes.push(cap(note(C.NOTES.added, nm(e.from), nm(e.to), { month: monthName, what: S[e.to].role.what })));
   }
   // Stale table rows: listed calls that no longer happen.
   const stale = [];
@@ -1257,11 +1259,11 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
     if (!best.length) break;
     const pick = rs.pick(best);
     stale.push(pick);
-    notes.push(note(C.NOTES.stale, nm(pick.from), nm(pick.to), { ver: S[pick.from].oldVer }));
+    notes.push(cap(note(C.NOTES.stale, nm(pick.from), nm(pick.to), { ver: S[pick.from].oldVer })));
   }
   // Which note documents which call (for the tests; never shown to solvers).
   const edgeDocs = [];
-  const doc = (e, kind, text) => { edgeDocs.push({ from: S[e.from].name, to: S[e.to].name, kind, soft: e.soft, text }); notes.push(text); };
+  const doc = (e, kind, raw) => { const text = cap(raw); edgeDocs.push({ from: S[e.from].name, to: S[e.to].name, kind, soft: e.soft, text }); notes.push(text); };
   // v3 (audit): dated pairs of notes about one call whose callee could have a fallback (d3+): the older
   // note states the opposite of the current behaviour; the notes are shuffled, so only the months tell.
   const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September'];
@@ -1283,7 +1285,7 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
     if (K.mixedNotes && hardSib.length && rs.chance(K.mixedNotes)) {
       const h = rs.pick(hardSib);
       mixedUsed.add(h);
-      const text = rs.pick(C.NOTE_MIXED)(nm(e.from), nm(e.to), nm(h.to), { fallback: S[e.to].role.fallback });
+      const text = cap(rs.pick(C.NOTE_MIXED)(nm(e.from), nm(e.to), nm(h.to), { fallback: S[e.to].role.fallback }));
       doc(e, 'mixed', text);
       edgeDocs.push({ from: S[h.from].name, to: S[h.to].name, kind: 'mixed', soft: false, text });
       continue;

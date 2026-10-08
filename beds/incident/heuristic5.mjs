@@ -16,7 +16,7 @@ export function cascadeHeuristicSolve(task, cheat = {}) {
     al.set(n, n); if (tier === 'batch') batch.add(n); calls.set(n, new Set(c.trim() === '-' ? [] : c.split(',').map(x => x.trim().replace(' (optional)', '')))); for (const x of o.split(',').map(y => y.trim().replace(/'/g, ''))) if (x !== '-') al.set(x, n); }
   for (const [, n, a] of system.matchAll(/^- ([a-z0-9-]+): (\S+)$/gm)) if (calls.has(n)) al.set(a, n);
   const svcs = [...calls.keys()], what = [...system.matchAll(/(\S+) \(team \S+\) provides ([^;.]+)/g)].sort((a, b) => b[2].length - a[2].length);
-  for (let s of system.split('\n').filter(l => l.startsWith('- ')).map(l => l.slice(2))) {
+  for (let s of system.split('\n').filter(l => l.startsWith('- ')).map(l => l.slice(2).replace(/^The /, 'the '))) {
     for (const [, n, w] of what) s = s.replaceAll(`the service that provides ${w}`, n).replaceAll(`the service behind ${w}`, n).replaceAll(`the ${w} service`, n);
     const ns = svcs.filter(n => W(n).test(s)).sort((a, b) => s.search(W(a)) - s.search(W(b))), q = /'([a-z0-9-]+)'/.exec(s), mo = /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep)\w+/.exec(s), k = `${ns[0]}>${ns[1]}`;
     if (ns.length === 1 && q && /name/.test(s)) al.set(q[1], ns[0]);

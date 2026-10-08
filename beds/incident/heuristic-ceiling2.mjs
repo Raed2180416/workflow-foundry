@@ -1,6 +1,7 @@
 // Fixture (second audit pass 2, 2026-10-08): over-budget ceiling attacker from the interrupted first attempt of the
 // second audit (its file a8full.mjs, kept verbatim below this header; 44 code lines, about 12k characters, white-box
 // against the v4 phrase catalog). A diagnostic tripwire like heuristic-ceiling.mjs, not a compliant 40-line script.
+// One adaptation for v4.2: notes that open with "The service ..." are lower-cased before matching (v4.2 capitalises them).
 // A5 (second audit, white-box against v4): A4's note parser and blame descent plus a bridge from anonymous callers,
 // class vote over the root's fault-worded lines, T = first fault-worded root line after the root's last recovery
 // and its callers' last "succeeding again" line, skipping lookalike/stray resources; snapshot and version rules.
@@ -23,7 +24,7 @@ export function eighthHeuristicSolve(task) {
     for (const x of o.split(',').map(y => y.trim().replace(/'/g, ''))) if (x !== '-') alias.set(x, n); }
   for (const m of system.matchAll(/^- (\S+): (\d+\.\d+\.\d+\.\d+:\d+)$/gm)) alias.set(m[2], m[1]); const svcs = [...calls.keys()], inS = s => svcs.filter(n => word(n).test(s)).sort((a, b) => s.search(word(a)) - s.search(word(b)));
   const what = [...system.matchAll(/(\S+) \(team \S+\) provides ([^;.]+)/g)].map(m => [m[2], m[1]]).sort((a, b) => b[0].length - a[0].length);
-  for (let sent of system.split('\n').filter(l => l.startsWith('- ')).map(l => l.slice(2))) { for (const [w, n] of what) sent = sent.split(`the service that provides ${w}`).join(n).split(`the service behind ${w}`).join(n).split(`the ${w} service`).join(n);
+  for (let sent of system.split('\n').filter(l => l.startsWith('- ')).map(l => l.slice(2).replace(/^The /, 'the '))) { for (const [w, n] of what) sent = sent.split(`the service that provides ${w}`).join(n).split(`the service behind ${w}`).join(n).split(`the ${w} service`).join(n);
     const ns = inS(sent), q = /'([a-z0-9-]+)'/.exec(sent), mo = /\b(January|February|March|April|May|June|July|August|September)\b/.exec(sent), h = /(?:no fallback for|failure of|needs|unlike when) (\S+)/.exec(sent)?.[1];
     if (ns.length === 1 && q && /name|called/.test(sent)) alias.set(q[1], ns[0]);
     else if (ns.length === 2 && /refactor|straight from \S+ in|predates|pending|show yet|missing from|not listed|began calling/.test(sent)) calls.get(ns[0]).add(ns[1]);

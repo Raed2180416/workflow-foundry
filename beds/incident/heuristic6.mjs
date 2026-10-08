@@ -1,6 +1,7 @@
 // Fixture (second audit pass 2, 2026-10-08): the strongest attacker within the 40-code-line budget among those the
 // interrupted first attempt of the second audit wrote against v4 (its file a10b.mjs, kept verbatim below this header;
 // about 9.6k characters, white-box: it encodes most of the v4 phrase catalog). It reads only task.inputs.
+// One adaptation for v4.2: notes that open with "The service ..." are lower-cased before matching (v4.2 capitalises them).
 // A8 (budgeted): root = the service with the most fault-worded lines after its own last recovery-worded line
 // (shadow pods, lookalikes and strays filtered by phrase); class = vote; T = the root's first such line;
 // impacted = closure over the table with added/stale/optional/provider notes (names resolved from descriptions).
@@ -25,7 +26,7 @@ export function tenthBudgetSolve(task) {
   }
   const svcs = [...calls.keys()], inS = s => svcs.filter(n => W(n).test(s)).sort((a, b) => s.search(W(a)) - s.search(W(b)));
   const what = [...system.matchAll(/(\S+) \(team \S+\) provides ([^;.]+)/g)].sort((a, b) => b[2].length - a[2].length);
-  for (let s of system.split('\n').filter(l => l.startsWith('- ')).map(l => l.slice(2))) {
+  for (let s of system.split('\n').filter(l => l.startsWith('- ')).map(l => l.slice(2).replace(/^The /, 'the '))) {
     for (const [, n, w] of what) s = s.split(`the service that provides ${w}`).join(n).split(`the service behind ${w}`).join(n).split(`the ${w} service`).join(n);
     const ns = inS(s), q = /'([a-z0-9-]+)'/.exec(s);
     if (ns.length === 1 && q && /name|called/.test(s)) al.set(q[1], ns[0]);

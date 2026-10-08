@@ -925,7 +925,7 @@ export const NOTES = {
     (a, b, x) => `Calls from ${a} to ${b} are not optional; there is no degraded mode for ${x.what}.`,
     (a, b, x) => `A cached fallback for ${b} inside ${a} was proposed but never built, so ${a} cannot serve without it.`,
     // v3 (audit): hard dependencies stated with the vocabulary of optional ones (read the whole sentence).
-    (a, b, x) => `${a} used to fall back to a cached copy when ${b} failed, but that fallback was removed in ${x.ver}; today every failure of ${b} fails ${a}'s requests.`,
+    (a, b, x) => `${a} used to fall back to a cached copy when ${b} failed, but that fallback was removed in ${x.ver}; today every failure of ${b} fails the requests of ${a}.`,
     (a, b, x) => `${a} still has an 'optional' flag for ${b} in its config, but the flag has been ignored since ${x.ver}: ${a} cannot answer without ${b}.`,
     (a, b, x) => `Unlike its other dependencies, ${b} is not something ${a} can do without; there is no degraded mode for ${x.what}.`,
     (a, b, x) => `The planned fallback for ${b} in ${a} (serving stale ${x.what}) was never switched on, so ${a} errors whenever ${b} does.`,
@@ -1116,12 +1116,12 @@ export const NOTE_DATED = {
   ],
   hardThen: [
     (a, b, x) => `As of ${x.m1}, ${a} could not serve without ${b}.`,
-    (a, b, x) => `In ${x.m1}, every failure of ${b} also failed ${a}'s requests.`,
+    (a, b, x) => `In ${x.m1}, every failure of ${b} also failed the requests of ${a}.`,
     (a, b, x) => `The ${x.m1} dependency review listed ${b} as a hard dependency of ${a}.`,
   ],
   // The edge is hard now; the older note describes the fallback that no longer exists.
   hardNow: [
-    (a, b, x) => `In ${x.m2}, ${a}'s fallback for ${b} was switched off; since then ${a} fails whenever ${b} does.`,
+    (a, b, x) => `In ${x.m2}, the fallback of ${a} for ${b} was switched off; since then ${a} fails whenever ${b} does.`,
     (a, b, x) => `As of ${x.m2}, ${a} needs ${b} for every request (the fallback to ${x.fallback} was retired).`,
     (a, b, x) => `${a} was changed in ${x.m2} so that it no longer tolerates ${b} being down.`,
   ],
@@ -1484,7 +1484,7 @@ export const NOTES_MORE = {
   ],
   provider: [
     (a, b, x) => `When ${b} errors, ${a} goes to ${x.provider} for ${x.what} itself; ${a} is only down if ${x.provider} is down as well.`,
-    (a, b, x) => `${a}'s answer to a ${b} outage is to ask ${x.provider} directly; that only helps while ${x.provider} is up.`,
+    (a, b, x) => `The answer of ${a} to an outage of ${b} is to ask ${x.provider} directly; that only helps while ${x.provider} is up.`,
   ],
 };
 
