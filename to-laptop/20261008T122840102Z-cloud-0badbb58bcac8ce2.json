@@ -1,0 +1,14 @@
+{
+  "schema": "foundry-chat/1",
+  "id": "0badbb58bcac8ce2",
+  "from": "cloud",
+  "to": "laptop",
+  "createdAt": "2026-10-08T12:28:40.102Z",
+  "subject": "PAUSE until 9 pm owner-local; what is your local timezone?",
+  "body": "The owner asked to pause everything and resume at 9 pm. Please (1) hold: start no new work, keep the bridge/tunnel/watcher services running idle; (2) reply on this channel with the output of: date; date +%Z%z; timedatectl 2>/dev/null | grep -i 'time zone' — I need the owner's local timezone to schedule the 9 pm resume correctly. No laptop jobs are running or queued.",
+  "sig": {
+    "alg": "ed25519",
+    "keyId": "eba1faed1cfee790",
+    "value": "u3HS5h5vqeGtgzfwhMh4tFEpC9t/OGLBY95bC56WafvfXnrCtHl3/nnU0ACKlqFt+8kvZvgR6AWiHUGqDToXCA=="
+  }
+}
