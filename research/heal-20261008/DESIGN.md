@@ -917,6 +917,11 @@ remain unmeasured.
 
 ### B.5 First live runs, 2026-10-08 21:19-22:30 UTC (`claude -p` route, journaled, $6.41 of the $8 cap) [M]
 
+*An adversarial review (B.6) recomputed these results from the raw data and corrects four statements below: the H-p1 promotion was
+**not** sampling luck (V3 held the recorded wrong read fixed and the new readers outvoted it); one of the three H-cfx candidates fails a
+completed mutant proof; the H-rec round tally is 3 invalid / 3 leak / 8 V3 / 1 V1 / 1 pending; and `approve` could promote any proposal
+file, blocked or not. B.6 also lists the defects fixed.*
+
 *Development/diagnostic evidence.* All three incidents are already-inspected test seeds; the fresh-task gate drew its seeds from the dev
 pool 1001+ through the seed ledger (`seed-ledger.json`), 4 per family and run, K = 1, paired. Raw data: `experiments/heal/runs/live-20261008*/`
 (`<incident>.json` records, `spend-global.jsonl` = every charge of every process, `*/proposer/round-N/journal.sqlite` = every proposer call,

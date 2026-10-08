@@ -430,3 +430,7 @@
 {"at":"2026-10-08T22:58:16.729Z","scope":"review-p1-mechanism","label":"B healed fhand-haiku/records:test:d3:s5005/1 item 0","usd":0}
 {"at":"2026-10-08T22:58:18.299Z","scope":"review-p1-mechanism","label":"B healed fhand-haiku/records:test:d3:s5006/0 item 1","usd":0}
 {"at":"2026-10-08T22:58:21.459Z","scope":"review-p1-mechanism","label":"B healed fhand-haiku/records:test:d3:s5005/2 item 1","usd":0}
+{"at":"2026-10-08T22:58:51.489Z","scope":"review-p1-mechanism","label":"B healed fhand-haiku/records:test:d3:s5006/1 item 0","usd":0.001699}
+{"at":"2026-10-08T22:58:52.183Z","scope":"review-p1-mechanism","label":"B healed fhand-haiku/records:test:d3:s5006/2 item 1","usd":0.00169}
+{"at":"2026-10-08T22:58:59.799Z","scope":"review-p1-mechanism","label":"B healed fhand-haiku/records:test:d4:s5001/0 item 0","usd":0.002724}
+{"at":"2026-10-08T22:59:18.051Z","scope":"review-p1-mechanism","label":"B healed fhand-haiku/records:test:d3:s5006/1 item 1","usd":0}
