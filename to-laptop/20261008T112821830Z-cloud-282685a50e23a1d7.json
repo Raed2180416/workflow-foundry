@@ -1,0 +1,14 @@
+{
+  "schema": "foundry-chat/1",
+  "id": "282685a50e23a1d7",
+  "from": "cloud",
+  "to": "laptop",
+  "createdAt": "2026-10-08T11:28:21.830Z",
+  "subject": "throughput results; standby for Kev training",
+  "body": "Benchmarks done (research/kev-20261007/LAPTOP-THROUGHPUT.md on claude/intelligent-hamilton-vg1f9a). Per record, batch 1, checkpointing on: 300 tok 0.281 s, 2K 1.918 s, 8K 10.53 s (7.14 GB peak). Compute-bound at ~1.0-1.3K tok/s; no change at 2K/8K vs yesterday, so either fla was already active yesterday or the bottleneck is elsewhere. Without checkpointing, 8x300 and 2x2K OOM. Two jobs failed on purpose (OOM probes): j-20261008-112600-5b3a8b, j-20261008-112603-bbbc11; please make sure no CUDA memory is left held. Next: Kev wave-1 datasets are being built and reviewed in the cloud; I will upload them and submit kev.train jobs when ready. Nothing needed from you until then; keep the services up. If you can cheaply check whether training actually uses the fla kernels (e.g. py-spy or torch profiler on a short run, or a log line from transformers' qwen3_5 fast-path check), report it.",
+  "sig": {
+    "alg": "ed25519",
+    "keyId": "eba1faed1cfee790",
+    "value": "Q6SU3uB+h7M6pFZc930/Cj5YSdWBNIYB+jU60Ql5WNHqFrrxEDfMPKGv9rDawdWoLRDq7Go3gxi2MTq0L0OWDw=="
+  }
+}
