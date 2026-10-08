@@ -142,6 +142,14 @@ const tamper = [
   ['run status/error edited', (s, { run }) => { const r = s.run(run.id); r.error = { code: 'FORGED', message: 'x' }; sql(s, 'UPDATE runs SET body=? WHERE id=?', canonical(r), run.id); }, ['VERDICT_INPUTS_MISMATCH']],
   ['event body edited', (s, { run }) => sql(s, "UPDATE events SET body=replace(body,'\"type\":\"model.called\"','\"type\":\"model.callad\"') WHERE run_id=? AND seq=(SELECT MIN(seq) FROM events WHERE run_id=? AND body LIKE '%model.called%')", run.id, run.id), ['CHAIN_BROKEN']],
   ['event removed (tail)', (s, { run }) => sql(s, 'DELETE FROM events WHERE run_id=? AND seq=(SELECT MAX(seq) FROM events WHERE run_id=?)', run.id, run.id), ['CHAIN_BROKEN']],
+  // Review fixes (adversarial pass): each of these verified clean before.
+  ['decision kind column (body untouched)', (s) => sql(s, "UPDATE decisions SET kind='note' WHERE kind='escalation'"), ['DECISION_EDITED']],
+  ['run input', (s, { run }) => { const r = s.run(run.id); r.input = { raw: 'nine dollars' }; sql(s, 'UPDATE runs SET body=? WHERE id=?', canonical(r), run.id); }, ['RUN_IDENTITY_EDITED']],
+  ['run policy', (s, { run }) => { const r = s.run(run.id); r.policy.maxCost = 1000; sql(s, 'UPDATE runs SET body=? WHERE id=?', canonical(r), run.id); }, ['RUN_IDENTITY_EDITED']],
+  ['run model binding (sample salt)', (s, { run }) => { const r = s.run(run.id); r.sampleSalt = 'other'; sql(s, 'UPDATE runs SET body=? WHERE id=?', canonical(r), run.id); }, ['RUN_IDENTITY_EDITED']],
+  ['workflow body the run executed', (s, { run }) => sql(s, "UPDATE workflows SET body=replace(body,'Return twice the amount.','Return thrice the amount.') WHERE hash=?", run.workflowHash), ['WORKFLOW_EDITED']],
+  ['closed run status set back to a non-terminal one', (s, { run }) => { const r = s.run(run.id); r.status = 'waiting'; sql(s, 'UPDATE runs SET body=? WHERE id=?', canonical(r), run.id); }, ['VERDICT_INPUTS_MISMATCH']],
+  ['chain tail with its seal removed, checkpoint head moved back to match', (s, { run }) => truncate(s, run.id, s.events(run.id).length - 3), ['SEAL_MISSING']],
 ];
 for (const [name, edit, expected] of tamper) {
   test(`hash chain: editing ${name} is detected`, async t => {
@@ -194,6 +202,13 @@ test('hash chain: executor transcripts are bound by hash and re-checked', async 
   mkdirSync(path.join(ctx.root, 'x')); symlinkSync(copy, path.join(ctx.root, 'x', 'link'));
   assert.throws(() => ctx.store.bindTranscript(ctx.run.id, { nodeKey: 'root/norm', file: path.join(ctx.root, 'x', 'link') }), { code: 'TRANSCRIPT' });
   assert.throws(() => ctx.store.bindTranscript(ctx.run.id, { nodeKey: '', file }), { code: 'TRANSCRIPT' });
+  // The workspace copy cannot be redirected outside the state directory through a symlinked run directory.
+  const outside = mkdtempSync(path.join(tmpdir(), 'foundry-chain-outside-'));
+  t.after(() => rmSync(outside, { recursive: true, force: true }));
+  rmSync(path.join(ctx.store.directory, 'artifacts', ctx.run.id), { recursive: true, force: true });
+  symlinkSync(outside, path.join(ctx.store.directory, 'artifacts', ctx.run.id));
+  writeFileSync(file, 'transcript\n');
+  assert.throws(() => ctx.store.bindTranscript(ctx.run.id, { nodeKey: 'root/norm', file }), { code: 'TRANSCRIPT', message: /outside the workspace state directory/ });
 });
 
 test('hash chain: a decision recorded on its own enters the chain; one for no run is stored unbound as before', async t => {
@@ -208,6 +223,10 @@ test('hash chain: a decision recorded on its own enters the chain; one for no ru
   assert.equal(verifyRun(store, run.id).ok, true);
   assert.equal(store.recordDecision('no-such-run', { id: 'x', kind: 'note' }), true);
   assert.equal(store.decisions('no-such-run').length, 1);
+  // A row planted under this run's next decision id, but for another run, would swallow the decision unseen: it is refused.
+  sql(store, "INSERT INTO decisions VALUES(?, 'elsewhere', 'note', '{}')", `${run.id}:note:2`);
+  assert.throws(() => store.recordDecision(run.id, { ...decision, id: `${run.id}:note:2` }), { code: 'DECISION_CONFLICT' });
+  assert.equal(store.events(run.id).length, before + 1, 'nothing was appended');
 });
 
 test('hash chain: anchors outside the database expose a consistent rewrite and a truncation that the chain alone accepts', async t => {
@@ -384,6 +403,7 @@ test('replay: a replayed run serves the recorded responses, binds its own replay
   for (const id of [live.id, second.id]) { const report = verifyRun(store, id); assert.deepEqual([report.ok, report.clean], [true, true], JSON.stringify(report.findings)); }
   const replayed = events(store, second.id, 'model.called');
   assert.ok(replayed.every(e => e.replayed === true && e.journalRowHash && e.requestHash && e.responseHash));
+  assert.ok(replayed.every(e => e.replaySource?.check === 'bound' && e.replaySource.runId === live.id && e.replaySource.journalId === e.replayedFrom), 'each replayed response records that its recording was checked against the chain that bound it');
   assert.notDeepEqual(replayed.map(e => e.journalId), events(store, live.id, 'model.called').map(e => e.journalId), 'a replay is journaled as rows of its own');
   assert.equal(journal.forRun(second.id).length, 4);
 });
@@ -410,6 +430,121 @@ test('replay: a recording that has no binding cannot be checked, so it is served
   assert.equal(second.status, 'succeeded', JSON.stringify(second.error));
   assert.deepEqual(second.outputs.twice, { amount: 11 }, 'the edited response of a legacy recording is served as recorded: nothing committed to it');
   assert.deepEqual([verifyRun(store, live.id).bound, verifyRun(store, second.id).ok], [false, true]);
+  // ...and the replaying run says so: nothing vouched for the responses it served.
+  assert.ok(events(store, second.id, 'model.called').every(e => e.replaySource?.check === 'unverified'));
+  assert.ok(codes(verifyRun(store, second.id)).includes('REPLAY_UNVERIFIED'));
+  assert.equal(verifyRun(store, second.id, { requireBound: true }).ok, false);
+});
+
+// A forged row needs no edit: insert a copy of a recorded row with another answer, newer than the original, so lookup serves it.
+function forge(store, where, params, edit) {
+  const raw = store.db.prepare(`SELECT * FROM model_calls WHERE ${where} ORDER BY id DESC LIMIT 1`).get(...params);
+  const columns = Object.keys(raw).filter(c => c !== 'id'), forged = edit({ ...raw });
+  sql(store, `INSERT INTO model_calls(${columns.join(',')}) VALUES(${columns.map(() => '?').join(',')})`, ...columns.map(c => forged[c]));
+}
+test('replay: a forged row under a run this store does not hold is served as recorded, but the event and verify-run flag it', async t => {
+  const { store, run: live } = await finished(t);
+  forge(store, "run_id=? AND node_key='root/twice' AND ok=1", [live.id], row => ({ ...row, run_id: 'ghost', response: row.response.replace('"amount":10', '"amount":999') }));
+  const replaying = runtimeOn(store, silent);
+  const second = await replaying.runtime.execute(replaying.runtime.create(workflow, { raw: 'five dollars' }, { modelMode: 'replay', sampleSalt: 'chain:1' }).id);
+  assert.equal(second.status, 'succeeded', JSON.stringify(second.error));
+  assert.deepEqual(second.outputs.twice, { amount: 999 }, 'lookup served the forged row (replay serves what is journaled)');
+  const twice = events(store, second.id, 'model.called').find(e => e.nodeKey === 'root/twice');
+  assert.deepEqual([twice.replaySource.check, twice.replaySource.runId], ['unverified', 'ghost']);
+  assert.match(twice.replaySource.reason, /not in this store/);
+  const report = verifyRun(store, second.id);
+  assert.deepEqual([report.ok, report.clean], [true, false]);
+  assert.deepEqual(report.findings.filter(f => f.code === 'REPLAY_UNVERIFIED').map(f => f.seq), [twice.seq]);
+  const strict = verifyRun(store, second.id, { requireBound: true });
+  assert.deepEqual([strict.ok, strict.findings.find(f => f.code === 'REPLAY_UNVERIFIED').severity], [false, 'error'], 'a claim-bearing run cannot rest on an unverified recording');
+  assert.equal(verifyRun(store, live.id).clean, true, 'the recording run itself is untouched');
+});
+
+test('replay: a forged row under a run that is still open (no seal, no event binds it) is flagged; one under a closed run is refused', async t => {
+  const { store } = space(t);
+  const paused = wrap('OpenSource', [agent('norm'), { id: 'ask', kind: 'human', needs: ['norm'], description: 'Ask', question: 'Proceed?', answerSchema: { type: 'boolean' } }],
+    [{ op: 'eq', left: { $ref: 'nodes.ask.answer' }, right: true }]);
+  store.saveWorkflow(paused);
+  const live = runtimeOn(store, { [S]: [{ value: { amount: 10 } }] });
+  const open = await live.runtime.execute(live.runtime.create(paused, { raw: 'five dollars' }, { sampleSalt: 'chain:2' }).id);
+  assert.equal(open.status, 'awaiting_human');
+  forge(store, 'run_id=? AND ok=1', [open.id], row => ({ ...row, response: row.response.replace('"amount":10', '"amount":999') }));
+  const replaying = runtimeOn(store, silent);
+  const second = await replaying.runtime.execute(replaying.runtime.create(paused, { raw: 'five dollars' }, { modelMode: 'replay', sampleSalt: 'chain:2' }).id);
+  assert.deepEqual([second.status, second.outputs.norm], ['awaiting_human', { amount: 999 }]);
+  const [called] = events(store, second.id, 'model.called');
+  assert.deepEqual([called.replaySource.check, called.replaySource.runId], ['unverified', open.id]);
+  assert.match(called.replaySource.reason, /still open/);
+  assert.ok(codes(verifyRun(store, second.id)).includes('REPLAY_UNVERIFIED'));
+
+  // Once the source run is sealed, a row of it that no event binds and that is newer than the seal is refused outright.
+  live.runtime.answer(open.id, 'root/ask', true);
+  assert.equal((await live.runtime.execute(open.id)).status, 'succeeded');
+  forge(store, 'run_id=? AND ok=1', [open.id], row => ({ ...row, response: row.response.replace('"amount":10', '"amount":777') }));
+  const third = await replaying.runtime.execute(replaying.runtime.create(paused, { raw: 'five dollars' }, { modelMode: 'replay', sampleSalt: 'chain:2' }).id);
+  assert.deepEqual([third.status, third.error.code], ['failed', 'JOURNAL_TAMPERED']);
+  assert.match(third.error.message, /written after run .* was sealed/);
+});
+
+test('replay: from a ModelPort journal in another database, a row its run only sealed is checked in that database', async t => {
+  // Regression: the sealed root was recomputed in the store's database, which holds no journal here, so a genuine row was refused.
+  const { root, store } = space(t), journalDb = new DatabaseSync(path.join(root, 'elsewhere.sqlite'));
+  t.after(() => { try { journalDb.close(); } catch {} });
+  const port = (scriptOrFn) => { const provider = new ScriptedProvider(scriptOrFn);
+    return new Runtime(store, createDefaultRegistry(), { maxCost: 1, maxDurationMs: 60000 }, { models: new ModelPort({ policy: loaded.policy, providers: { 'llama-server': provider, 'claude-cli': provider }, journal: new Journal(journalDb) }), modelPolicy: loaded }); };
+  const recorder = port(script()), live = await recorder.execute(recorder.create(workflow, { raw: 'five dollars' }, { sampleSalt: 'chain:1' }).id);
+  assert.equal(live.status, 'succeeded', JSON.stringify(live.error));
+  // Leave the rows named by no event (only the sealed journal root covers them), consistently re-chained.
+  for (const event of store.events(live.id).filter(e => e.type === 'model.called'))
+    rechain(store, live.id, event.seq, e => { delete e.journalId; delete e.journalRowHash; delete e.requestHash; delete e.responseHash; });
+  const replayer = port(silent), second = await replayer.execute(replayer.create(workflow, { raw: 'five dollars' }, { modelMode: 'replay', sampleSalt: 'chain:1' }).id);
+  assert.equal(second.status, 'succeeded', JSON.stringify(second.error));
+  assert.ok(events(store, second.id, 'model.called').every(e => e.replaySource?.check === 'sealed'));
+  assert.equal(verifyRun(store, second.id, { journalDb }).clean, true);
+  // And an edit under the seal is still refused there.
+  journalDb.prepare("UPDATE model_calls SET response=replace(response,'\"amount\":10','\"amount\":11') WHERE run_id=? AND ok=1 AND response LIKE '%\"amount\":10%'").run(live.id);
+  const third = await replayer.execute(replayer.create(workflow, { raw: 'five dollars' }, { modelMode: 'replay', sampleSalt: 'chain:1' }).id);
+  assert.deepEqual([third.status, third.error.code], ['failed', 'JOURNAL_TAMPERED']);
+});
+
+// ---- closed runs ------------------------------------------------------------------------------------------------------------------
+
+const rewrite = (store, runId, edit) => { const r = store.run(runId); edit(r); sql(store, 'UPDATE runs SET body=? WHERE id=?', canonical(r), runId); };
+test('closed runs: a final verdict closes the run; editing its record to reopen it is refused by resume, answer and approve, and verify-run names it', async t => {
+  // Resume: a passed run whose record is edited back to ready, with a node to run again.
+  const { store, run } = await finished(t);
+  rewrite(store, run.id, r => { r.status = 'ready'; r.nodes.twice.status = 'pending'; delete r.outputs.twice; });
+  const again = runtimeOn(store, silent);
+  await assert.rejects(again.runtime.execute(run.id), e => e.code === 'RUN_CLOSED' && /final verdict \(pass\)/.test(e.message));
+  assert.equal(store.events(run.id).at(-1).type, 'run.succeeded', 'nothing was appended');
+  assert.ok(codes(verifyRun(store, run.id)).includes('VERDICT_INPUTS_MISMATCH'), 'the edit is detected without a resume');
+  // A store-level writer that appends a resume anyway (an older engine, or a hand edit) leaves a chain verify-run rejects.
+  store.updateRun(run.id, () => {}, { type: 'runner.acquired', token: 'forged' });
+  assert.ok(codes(verifyRun(store, run.id)).includes('RUN_REOPENED'));
+
+  // Answer: a finished human run edited back to awaiting the answer.
+  const human = wrap('ClosedHuman', [{ id: 'ask', kind: 'human', needs: [], description: 'Ask', question: 'Proceed?', answerSchema: { type: 'boolean' } }], [{ op: 'eq', left: { $ref: 'nodes.ask.answer' }, right: true }]);
+  store.saveWorkflow(human);
+  const runtime = new Runtime(store, createDefaultRegistry(), {});
+  const asked = await runtime.execute(runtime.create(human, {}).id);
+  runtime.answer(asked.id, 'root/ask', true);
+  assert.equal((await runtime.execute(asked.id)).status, 'succeeded');
+  rewrite(store, asked.id, r => { r.status = 'awaiting_human'; r.nodes.ask.status = 'awaiting_human'; r.nodes.ask.answerSchema = { type: 'boolean' }; delete r.outputs.ask; });
+  assert.throws(() => runtime.answer(asked.id, 'root/ask', false), { code: 'RUN_CLOSED' });
+
+  // Approve: a rejected (cancelled) approval edited back to pending.
+  const registry = new CapabilityRegistry().register({ name: 'audit.operation', version: '1', implementation: 'hash-chain-fixture', description: 'Local mock operation',
+    inputSchema: { type: 'object' }, outputSchema: { type: 'object' }, effects: 'idempotent', risk: 'high', requiresApproval: true, maxTimeoutMs: 1000, cost: 0,
+    cancellation: 'cooperative', execute: async () => ({ committed: true }) });
+  const gatedRuntime = new Runtime(store, registry, { allowedCapabilities: ['audit.operation'] });
+  const gated = wrap('ClosedApproval', [{ id: 'effect', kind: 'task', needs: [], description: 'Operate', tool: 'audit.operation', args: { target: 'mock' }, timeoutMs: 1000, retry: { maxAttempts: 1 } }],
+    [{ op: 'eq', left: { $ref: 'nodes.effect.committed' }, right: true }]);
+  store.saveWorkflow(gated);
+  const waiting = await gatedRuntime.execute(gatedRuntime.create(gated, {}).id), approvalId = Object.keys(waiting.approvals)[0];
+  assert.equal(gatedRuntime.approve(waiting.id, approvalId, false).status, 'cancelled');
+  rewrite(store, waiting.id, r => { r.status = 'awaiting_approval'; r.error = null; r.approvals[approvalId].status = 'pending'; r.nodes.effect.status = 'awaiting_approval'; });
+  assert.throws(() => gatedRuntime.approve(waiting.id, approvalId, true), { code: 'RUN_CLOSED' });
+  assert.equal(store.events(waiting.id).at(-1).type, 'approval.decided', 'nothing was appended');
 });
 
 test('replay: a copy replayed earlier cannot be edited to change what later replays serve', async t => {
@@ -456,6 +591,33 @@ test('crash recovery: the row committed before a crash is bound by the recovery 
   assert.equal(report.checks.journal.boundCalls, 3);
   sql(store, "UPDATE model_calls SET response=replace(response,'five','nine') WHERE id=?", recovered.journalId);
   assert.ok(codes(verifyRun(store, created.id)).includes('JOURNAL_ROW_EDITED'), 'the recovered row is covered too');
+});
+
+test('crash recovery: a row seeded for a future call while the run is paused is not "recovered" (it predates the attempt)', async t => {
+  // Recovery serves a row journaled for (run, node, attempt) without a provider call; a forged row planted for a call the run has not
+  // made yet would be served and bound as genuine. The attempt's first context.compiled event records the journal's high-water mark.
+  const seeded = () => wrap('Preseed', [{ id: 'ask', kind: 'human', needs: [], description: 'Ask', question: 'Proceed?', answerSchema: { type: 'boolean' } },
+    agent('norm', { needs: ['ask'] })], [{ op: 'gte', left: { $ref: 'nodes.norm.amount' }, right: 0 }]);
+  const reference = space(t); reference.store.saveWorkflow(seeded());
+  const recorder = runtimeOn(reference.store, { [S]: [{ value: { amount: 5 } }] });
+  const first = await recorder.runtime.execute(recorder.runtime.create(seeded(), { raw: 'five dollars' }, { sampleSalt: 'seed' }).id);
+  recorder.runtime.answer(first.id, 'root/ask', true);
+  assert.equal((await recorder.runtime.execute(first.id)).status, 'succeeded');
+  const genuine = reference.store.db.prepare('SELECT * FROM model_calls WHERE ok=1').get();
+  const [compiled] = events(reference.store, first.id, 'context.compiled');
+  assert.ok(Number.isSafeInteger(compiled.journalMark) && genuine.id > compiled.journalMark, 'a genuine row postdates the mark of its attempt');
+
+  const { store } = space(t); store.saveWorkflow(seeded());
+  const victim = runtimeOn(store, silent), paused = await victim.runtime.execute(victim.runtime.create(seeded(), { raw: 'five dollars' }, { sampleSalt: 'seed' }).id);
+  assert.equal(paused.status, 'awaiting_human');
+  new Journal(store);
+  const columns = Object.keys(genuine).filter(c => c !== 'id'), forged = { ...genuine, run_id: paused.id, response: genuine.response.replace('"amount":5', '"amount":999') };
+  sql(store, `INSERT INTO model_calls(${columns.join(',')}) VALUES(${columns.map(() => '?').join(',')})`, ...columns.map(c => forged[c]));
+  victim.runtime.answer(paused.id, 'root/ask', true);
+  const run = await victim.runtime.execute(paused.id);
+  assert.deepEqual([run.status, run.error.code, victim.provider.calls.length], ['failed', 'JOURNAL_TAMPERED', 0]);
+  assert.match(run.error.message, /predates attempt 1 of root\/norm/);
+  assert.equal(run.outputs.norm, undefined, 'the seeded answer was not used');
 });
 
 // ---- command line and server ----------------------------------------------------------------------------------------------------
@@ -512,6 +674,33 @@ test('cli: run and inspect print the chain head as an anchor, and run can append
   const checked = spawnSync(process.execPath, [cli, 'verify-run', out.id, '--workspace', root, '--check-anchors', anchors, '--require-bound'], { encoding: 'utf8', env });
   assert.equal(checked.status, 0, checked.stderr);
   assert.equal(spawnSync(process.execPath, [cli, 'run', file, '--input', '{}', '--workspace', root, '--check-anchors', anchors], { encoding: 'utf8', env }).status, 1, '--check-anchors belongs to verify-run');
+  // An anchor file that cannot be appended to never hides the run: it is printed with the error, and the exit code says so.
+  const broken = `${root}-broken.jsonl`;
+  t.after(() => rmSync(broken, { force: true }));
+  writeFileSync(broken, 'not json\n');
+  const unanchored = spawnSync(process.execPath, [cli, 'run', file, '--input', '{"b":2}', '--workspace', root, '--append-anchor', broken], { encoding: 'utf8', env });
+  assert.equal(unanchored.status, 1);
+  const printed = JSON.parse(unanchored.stdout);
+  assert.deepEqual([printed.status, printed.anchored.appended, printed.anchored.error.code], ['succeeded', false, 'ANCHOR_FILE']);
+});
+
+test('anchors: writers of one anchor file take turns, so parallel appends never fork it; a lock left by a dead writer is taken over', async t => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'foundry-anchor-lock-')), file = path.join(dir, 'anchors.jsonl');
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const audit = JSON.stringify(new URL('../src/audit.mjs', import.meta.url).href);
+  const writer = who => `import { appendAnchor } from ${audit};
+for (let i = 0; i < 15; i++) appendAnchor(${JSON.stringify(file)}, { schema: 'foundry-anchor/1', runId: '${who}-' + i, headSeq: 1, headHash: 'a'.repeat(64), journalRoot: null, status: 'succeeded' });`;
+  const { spawn } = await import('node:child_process');
+  const codesOf = await Promise.all(['w0', 'w1', 'w2', 'w3'].map(who => new Promise(resolve =>
+    spawn(process.execPath, ['--input-type=module', '-e', writer(who)], { stdio: 'ignore', env: { PATH: process.env.PATH, NODE_NO_WARNINGS: '1' } }).on('exit', resolve))));
+  assert.deepEqual(codesOf, [0, 0, 0, 0]);
+  assert.equal(readAnchors(file).length, 60, 'every line continues the one before it');
+  const lock = `${file}.lock`;
+  writeFileSync(lock, '999999');
+  const { utimesSync, existsSync } = await import('node:fs');
+  utimesSync(lock, new Date(Date.now() - 60000), new Date(Date.now() - 60000));
+  assert.equal(appendAnchor(file, { schema: 'foundry-anchor/1', runId: 'late', headSeq: 1, headHash: 'b'.repeat(64), journalRoot: null, status: 'succeeded' }).appended, true);
+  assert.equal(existsSync(lock), false);
 });
 
 test('http: GET /api/runs/ID/verify returns the report and the run view carries its anchor', async t => {

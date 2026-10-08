@@ -63,7 +63,9 @@ test('k_sample_agreement keeps the original id on the final pick, gives each sib
     assert.ok(['conf', 'conf__s1', 'conf__s2', 'conf__s3', 'conf__agree'].every(id => ids.includes(id)), ids.join());
     const readers = ['conf__s1', 'conf__s2', 'conf__s3'].map(id => c.workflow.nodes.find(n => n.id === id).instructions);
     assert.equal(new Set(readers).size, 3, 'reader tags make the prompts distinct (replay keys omit the node id)');
-    assert.equal(readers[0], wf.records.nodes.find(n => n.id === 'conf').instructions, 'reader 1 keeps the original prompt so its recorded calls still replay');
+    const orig = wf.records.nodes.find(n => n.id === 'conf'), s1 = c.workflow.nodes.find(n => n.id === 'conf__s1');
+    assert.equal(readers[0], orig.instructions, 'reader 1 keeps the original prompt so its recorded calls still replay');
+    assert.deepEqual([s1.description, s1.context, s1.returns, s1.model, s1.decoding], [orig.description, orig.context, orig.returns, orig.model, orig.decoding], 'the description is part of the prompt too');
     assert.equal(c.workflow.nodes.find(n => n.id === 'conf').kind, 'code');
     assert.equal(c.workflow.nodes.find(n => n.id === 'merge').needs.includes('conf'), true, 'downstream references are untouched');
     assert.deepEqual(weakening(wf.records, c.workflow), []);

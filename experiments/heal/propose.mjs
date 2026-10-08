@@ -13,6 +13,9 @@ import { digest, canonical, clone } from './ir.mjs';
 import { OPS, compileOps, mechanicalOps, allowedOpsFor, validateOp, locusIdOf } from './ops.mjs';
 
 export const BRIEF = 'heal-brief/1', PROPOSAL = 'heal-proposal/1';
+// Version binding (DESIGN §7.2): a proposal is valid only against this exact base workflow, frozen kit, lint pin and model policy.
+export const bindOf = ({ kit, gate, workflow, hash = digest(workflow), briefHash = null }) => ({ workflowId: workflow.id, version: workflow.version, hash, kitHash: kit.kitHash, kitCommit: kit.commit,
+  lintPin: { commit: gate.commit, blobs: gate.blobs }, policyHash: kit.ownerPolicyHash, briefHash });
 export const LADDER = Object.freeze(['M', 'M', 'L', 'F']);                                   // DESIGN §7.5: rounds 1-2 Haiku, 3 Sonnet, 4 Opus
 export const ROUND_CAP_USD = Object.freeze({ M: 0.02, L: 0.15, F: 0.6 });
 export const EXCERPT_MAX = 6, EXCERPT_WIDTH = 600;
@@ -135,13 +138,19 @@ export async function proposeLoop({ kit, gate, workflow, base, buildFor, allowed
     if (round > 1 && cls !== LADDER[round - 2]) { events.push({ type: 'heal.proposer_escalated', round, from: LADDER[round - 2], to: cls, after: priorRejects.slice() }); log(`proposer escalates ${LADDER[round - 2]} -> ${cls}`); }
     const built = buildFor(priorRejects);
     const schema = proposerSchema({ allowedOps: allowed, locus, factIds: built.brief.facts.map(f => f.id), sources: built.sources ?? [] });
-    const r = await runProposer({ kit, built, schema, round, cls, providers, journalFile: path.join(journalDir, `round-${round}`, 'journal.sqlite'), budget });
+    let r;
+    try { r = await runProposer({ kit, built, schema, round, cls, providers, journalFile: path.join(journalDir, `round-${round}`, 'journal.sqlite'), budget }); }
+    catch (error) {
+      if (error.code !== 'HEAL_BUDGET_EXHAUSTED') throw error;
+      attempts.push({ round, class: cls, ok: false, costUsd: 0, error: { code: error.code, message: error.message } });
+      return { proposal: null, verdict: { ok: false, rejectCode: 'HEAL_EXHAUSTED' }, attempts, events, priorRejects: [...priorRejects, 'HEAL_BUDGET_EXHAUSTED'], exhausted: true };
+    }
     const att = { round, class: cls, ok: r.ok, costUsd: r.costUsd, error: r.error };
     attempts.push(att);
     if (!r.ok) { priorRejects.push(`PROPOSER_${r.error?.code ?? 'FAILED'}`); continue; }
     const ops = r.output.ops, compiled = compileOps(base, ops, { classOrder, classOf, isStrong, allowed: new Set(allowed), locus: new Set(locus) });
     if (compiled.errors.length) { att.reject = compiled.errors[0].code; priorRejects.push(compiled.errors[0].code); continue; }
-    const proposal = { schema: PROPOSAL, id: `p-${r.proposer.briefHash.slice(0, 8)}-r${round}`, kind: 'defect', base: { workflowId: base.id, version: base.version }, ops, workflow: compiled.workflow, candidateHash: compiled.candidateHash,
+    const proposal = { schema: PROPOSAL, id: `p-${r.proposer.briefHash.slice(0, 8)}-r${round}`, kind: 'defect', base: bindOf({ kit, gate, workflow: base, briefHash: r.proposer.briefHash }), ops, workflow: compiled.workflow, candidateHash: compiled.candidateHash,
       proofs: compiled.proofs, waivers: compiled.waivers, probes: compiled.probes, touched: compiled.touched, locus, allowed, classes: classes.map(c => c.code), proposer: r.proposer,
       rationale: String(r.output.rationale ?? '').slice(0, 1200), citations: r.output.citations ?? [], status: 'proposed', round };
     const verdict = await check(proposal);
@@ -153,13 +162,13 @@ export async function proposeLoop({ kit, gate, workflow, base, buildFor, allowed
 }
 
 // ---- mechanical proposals (lint debt) -----------------------------------------------------------------------------------------------------
-export function mechanicalProposal({ base, baseHash, lint, env }) {
+export function mechanicalProposal({ base, baseHash, lint, env, bind = null }) {
   const m = mechanicalOps(lint, base);
   if (!m.ops.length) return { proposal: null, needsProposer: m.needsProposer };
-  const compiled = compileOps(base, m.ops, { ...env, allowed: null, locus: null });
+  const compiled = compileOps(base, m.ops, { ...env, allowed: null, locus: null, maxOps: 64 });
   if (compiled.errors.length) return { proposal: null, errors: compiled.errors, needsProposer: m.needsProposer };
-  return { proposal: { schema: PROPOSAL, id: `m-${digest(m.ops).slice(0, 10)}`, kind: 'lint-debt', base: { workflowId: base.id, version: base.version, hash: baseHash }, ops: m.ops, workflow: compiled.workflow,
-    candidateHash: compiled.candidateHash, proofs: compiled.proofs, waivers: compiled.waivers, probes: [], touched: compiled.touched, locus: ['@acceptance', ...m.ops.map(o => o.node).filter(Boolean)],
+  return { proposal: { schema: PROPOSAL, id: `m-${digest(m.ops).slice(0, 10)}`, kind: 'lint-debt', base: bind ?? { workflowId: base.id, version: base.version, hash: baseHash }, ops: m.ops, workflow: compiled.workflow,
+    candidateHash: compiled.candidateHash, maxOps: 64, proofs: compiled.proofs, waivers: compiled.waivers, probes: [], touched: compiled.touched, locus: ['@acceptance', ...m.ops.map(o => o.node).filter(Boolean)],
     allowed: m.ops.map(o => o.op), classes: ['lint-debt'], proposer: { mechanical: [...new Set(lint.findings.filter(f => f.severity === 'error').map(f => f.code))] }, rationale: 'Mechanical repairs from the strict lint repair actions.', citations: [], status: 'proposed' },
     needsProposer: m.needsProposer };
 }

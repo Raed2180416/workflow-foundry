@@ -120,7 +120,8 @@ const APPLY = {
     // An explicit onCheckFail "escalate" is the runtime default; a copy with no checks would only trip ESCALATION_WITHOUT_CHECKS, so the
     // copies drop the redundant setting (behaviour-neutral: the default is the same).
     const dup = (extra = {}) => { const c = { ...clone(n), ...extra }; if (c.escalation?.onCheckFail === 'escalate' && !(c.checks ?? []).length) { const { onCheckFail, maxResamples, ...rest } = c.escalation; c.escalation = rest; } return c; };
-    const first = { ...dup(), id: s1, description: `Independent read 1 of ${op.k} of ${op.node}.` };
+    // reader 1 keeps EVERYTHING the prompt is built from (instructions, description, context, schema), so its recorded calls still replay
+    const first = { ...dup(), id: s1 };
     const created = [first];
     sibs.forEach((id, i) => created.push({ ...dup(), id, description: `Independent read ${i + 2} of ${op.k} of ${op.node}.`, instructions: `${n.instructions}\n\nIndependent reader ${i + 2} of ${op.k}: read the input afresh and answer on your own.` }));
     created.push({ id: agree, kind: 'code', lang: 'js', needs: [s1, ...sibs], description: `Agreement of ${op.k} independent reads of ${op.node}.`,
@@ -241,7 +242,8 @@ const APPLY = {
 export function compileOps(base, ops, env = {}) {
   const errors = [], applied = [], proofs = [], waivers = [], probes = [], created = [];
   if (!Array.isArray(ops) || !ops.length) return { workflow: null, errors: [{ code: 'HEAL_OP_INVALID', message: 'a proposal needs at least one op' }] };
-  if (ops.length > MAX_OPS) return { workflow: null, errors: [{ code: 'HEAL_OP_INVALID', message: `at most ${MAX_OPS} ops per proposal` }] };
+  const maxOps = env.maxOps ?? MAX_OPS;   // model proposals are capped; mechanical lint-debt repairs name one op per finding
+  if (ops.length > maxOps) return { workflow: null, errors: [{ code: 'HEAL_OP_INVALID', message: `at most ${maxOps} ops per proposal` }] };
   const wf = clone(base), touched = new Set();
   for (const [i, op] of ops.entries()) {
     const problems = validateOp(op);

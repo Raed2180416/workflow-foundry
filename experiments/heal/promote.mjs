@@ -21,6 +21,7 @@ export function decide(verification, proposal, policy = {}) {
   if (verification.rejectCode) return { decision: 'reject', reasons: [verification.rejectCode] };
   if (verification.pending) return { decision: 'pending', reasons: verification.stages.filter(s => s.ok === null).map(s => `${s.id}:${s.code}`) };
   if (!verification.ok) return { decision: 'reject', reasons: ['a stage did not pass'] };
+  if (verification.partial) return { decision: 'pending', reasons: [`partial verification (stages ${verification.stages.map(s => s.id).join(',')}): a promotion needs V0..V8`] };
   if ((proposal.depth ?? 0) > MAX_DEPTH) return { decision: 'exhausted', reasons: [`lineage depth ${proposal.depth} exceeds ${MAX_DEPTH}`] };
   if (verification.lintDebtOpen && proposal.kind === 'defect') return { decision: 'blocked', reasons: ['lint errors remain on the candidate: heal the lint debt first'] };
   const reasons = reviewReasons(proposal.ops ?? [], { costRatio: verification.costRatio ?? 1 });
@@ -71,6 +72,7 @@ export class Lineage {
     if (decision?.decision !== 'promote') throw Object.assign(new Error(`HEAL_NOT_PROMOTABLE: decision is ${decision?.decision}`), { code: 'HEAL_NOT_PROMOTABLE' });
     if (verification.candidateHash !== digest(proposal.workflow)) throw Object.assign(new Error('HEAL_CANDIDATE_CHANGED: the verified candidate is not the proposal workflow'), { code: 'HEAL_CANDIDATE_CHANGED' });
     const head = this.head(proposal.workflow.id);
+    if (proposal.base?.hash && proposal.base.hash !== verification.baseHash) throw Object.assign(new Error('HEAL_BASE_MISMATCH: the proposal is bound to a different base than the one that was verified'), { code: 'HEAL_BASE_MISMATCH' });
     if (head.hash !== verification.baseHash) throw Object.assign(new Error('STALE_WORKFLOW: the lineage head moved since this proposal was verified'), { code: 'STALE_WORKFLOW', details: { expectedHash: verification.baseHash, currentHash: head.hash } });
     const saved = this.store.saveWorkflow(proposal.workflow, { expectedHash: head.hash });
     this.append({ type: 'promote', workflowId: proposal.workflow.id, proposalId: proposal.id, kind: proposal.kind, parentHash: head.hash, newHash: saved.hash, newVersion: proposal.workflow.version,

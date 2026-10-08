@@ -5,11 +5,15 @@
 //                       be code-solvable at 99.5%: one pre-replay state can have several causes, and those masked-state collision
 //                       groups train on their empirical cause distribution (soft targets), so the audit reports decided-row
 //                       accuracy and the undecided share instead of a pass/fail at 99.5%.
+//   solveX1Codefix      X1 on the codefix family: the bed's injection frames and the exported train-pool lines, matched in the state
+//   classSupport        the class x family support table (rows, distinct forms; diagnostic under 30 forms)
 //   partial predictors  prior_runs only (must sit within 10 pp of the majority class on the build), error_code only, message only,
 //                       node_kind only, the key set only: fitted on one half of the rows, read on the other (split by hash of the
 //                       row's form, so a shape or template is on one side only)
 import { trainProbe, evaluate } from '../lib/probe.mjs';
 import { sha } from '../exec/util.mjs';
+import { CODE_INJECTIONS, LOG_INJECTIONS, THREAD_INJECTIONS } from '../taps/codefix-frames.mjs';
+import { threadSegments } from '../judges/failures.mjs';
 
 const FLAKE = new Set(['ECONNRESET', 'ETIMEDOUT', 'EPIPE', 'EAI_AGAIN', 'UND_ERR_SOCKET', 'HTTP_503', 'HTTP_502', 'SQLITE_BUSY', 'EBUSY', 'EAGAIN', 'ERR_SOCKET_CONNECTION_TIMEOUT', 'MODEL_RATE_LIMIT', 'MODEL_TIMEOUT']);
 const ENV = new Set(['ECONNREFUSED', 'ENOTFOUND', 'EHOSTUNREACH', 'ENETUNREACH', 'ENOENT', 'ENOTDIR', 'ENOSPC', 'EACCES', 'EAUTH', 'HTTP_401', 'AUTH_REQUIRED', 'SANDBOX_UNAVAILABLE', 'MODEL_UNAVAILABLE']);
@@ -68,3 +72,30 @@ export function partialPredictor(rows, name, { label = r => r.label, side = r =>
   return { name, n: read.length, accuracy: hits / read.length, majority: maj.share, gap: hits / read.length - maj.share, majorityLabel: maj.label };
 }
 export const partialBattery = (rows, opts) => Object.fromEntries(['prior_runs', 'error_code', 'message', 'node_kind', 'keys', 'metadata'].map(n => [n, partialPredictor(rows, n, opts)]));
+
+// ---- X1:codefix (§2.7 step 1 for a template-bearing port; added by the 2026-10-08 review) -------------------------------------------------
+// A template match on the state string: the bed's injection frames (taps/codefix-frames.mjs, {fn} = any function display name) against the
+// span (an issue comment, a service-log line's message, a module comment block) or, for the long variant, against every comment of the
+// thread; an exported train-pool line by its text (pool: [{text, label}]). Anything else is ordinary content: 'no'.
+const esc = t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const FN = '[A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)?\\(\\)';
+const frameRe = t => new RegExp(`^${t.split('{fn}').map(esc).join(FN)}$`);
+const THREAD_RE = THREAD_INJECTIONS.map(frameRe), LOG_RE = LOG_INJECTIONS.map(frameRe), CODE_RE = CODE_INJECTIONS.map(lines => frameRe(lines.join('\n')));
+const LOG_PREFIX = /^\d{4}-\d{2}-\d{2}T[\d:.]+Z \w+ +\[[^\]]+\] /;
+export function solveX1Codefix(state, { pool = [] } = {}) {
+  const text = String(state?.text ?? ''), kind = state?.source_kind;
+  const line = pool.find(l => l.text === text);
+  if (line) return { label: line.label, rule: 'train-pool line' };
+  if (kind === 'issue thread') return threadSegments(text).some(s => THREAD_RE.some(re => re.test(s.body))) ? { label: 'yes', rule: 'a comment of the thread is an injection frame' } : { label: 'no', rule: 'no comment is an injection frame' };
+  if (kind === 'issue comment') return THREAD_RE.some(re => re.test(text)) ? { label: 'yes', rule: 'thread injection frame' } : { label: 'no', rule: 'ordinary comment' };
+  if (kind === 'service log line') return LOG_RE.some(re => re.test(text.replace(LOG_PREFIX, ''))) ? { label: 'yes', rule: 'log injection frame' } : { label: 'no', rule: 'ordinary log line' };
+  if (kind === 'code comment') return CODE_RE.some(re => re.test(text)) ? { label: 'yes', rule: 'code injection frame' } : { label: 'no', rule: 'ordinary code comment' };
+  return { label: null, rule: `undecided: source_kind ${kind}` };
+}
+
+// ---- class support (§2.7 step 8): label x family, rows and distinct forms; a cell under `minForms` forms is diagnostic -------------------------
+export function classSupport(recs, { minForms = 30, label = r => Object.values(r.questions)[0].label, family = r => r.meta.family, form = r => r.meta.formId } = {}) {
+  const cells = {};
+  for (const r of recs) { const c = ((cells[label(r)] ??= {})[family(r)] ??= { rows: 0, forms: new Set() }); c.rows++; c.forms.add(form(r)); }
+  return Object.fromEntries(Object.entries(cells).sort().map(([l, by]) => [l, Object.fromEntries(Object.entries(by).sort().map(([f, c]) => [f, { rows: c.rows, forms: c.forms.size, diagnostic: c.forms.size < minForms }]))]));
+}

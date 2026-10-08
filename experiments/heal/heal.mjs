@@ -29,12 +29,13 @@ import { allTrials, findTrial, loadWorkflow, p1Workflow, openCtx, replayRun, fid
 import { detect, classifyEarly, classifyLate } from './detect.mjs';
 import { localise, varianceTest } from './localise.mjs';
 import { allowedOpsFor } from './ops.mjs';
-import { buildBrief, locusNodeIds, mechanicalProposal, proposeLoop, scriptedProviders, liveProviders } from './propose.mjs';
+import { buildBrief, locusNodeIds, mechanicalProposal, proposeLoop, scriptedProviders, liveProviders, bindOf } from './propose.mjs';
 import { verify, gradersHash } from './verify.mjs';
 import { decide, Lineage } from './promote.mjs';
 import { lessonFor, writeLesson, LESSON_DIR, population as workflowPopulation } from './learn.mjs';
 import { buildLeakIndex } from './scan.mjs';
 import { Budget } from './budget.mjs';
+import { loadLedger, saveLedger, isUsed } from './seeds.mjs';
 import { resolveNode, shapeKey, digest, canonical, getAt } from './ir.mjs';
 
 export const RUN = 'heal-run/1';
@@ -71,7 +72,7 @@ export async function buildIncident({ kit, trial, workflow, pool, localisation, 
     try { const args = kit.data.resolve(n.args ?? {}, { input: { prompt: bed.task.task.prompt, inputs: bed.task.task.inputs ?? {} }, nodes: base.outputs }); checkInputs[n.id] = { args, moduleSource: args.source ?? null, texts: [bed.task.task.prompt, ...Object.values(bed.task.task.inputs ?? {}).filter(v => typeof v === 'string')] }; } catch { /* a node whose args need a map frame has no battery */ }
   }
   const reference = fam.referenceSolve(bed.task.task);
-  const controls = { answerKeys, items: [{ name: 'reference', expect: 'accept', output: reference }, ...fam.badControls.map(c => { try { return { name: c.name, expect: 'reject', output: c.make(bed.task.task) }; } catch { return null; } }).filter(Boolean)] };
+  const controls = { answerKeys, trialKey: trial.key, items: [{ name: 'reference', expect: 'accept', output: reference }, ...fam.badControls.map(c => { try { return { name: c.name, expect: 'reject', output: c.make(bed.task.task) }; } catch { return null; } }).filter(Boolean)] };
   const other = await lib.makeTasks(trial.family, { split: 'dev', seeds: [9101, 9102], difficulty: trial.difficulty });
   const flips = localisation.suspects?.[0]?.flips ?? [];
   const leakIndex = buildLeakIndex({ tasks: failing.map(t => tasks[t.key].task), outputs: failing.map(t => baseRuns[t.key].outputs), truthStrings: [JSON.stringify(reference)],
@@ -94,6 +95,10 @@ export async function healIncident(o) {
   const workflow = typeof o.workflow === 'string' && PRESETS[o.workflow] ? await PRESETS[o.workflow]() : await loadWorkflow(o.workflow);
   const out = { schema: RUN, started: new Date().toISOString(), trial: { key: trial.key, runId: trial.runId, family: trial.family, split: trial.split, seed: trial.seed, pass: trial.pass, score: trial.score }, kit: { hash: kit.kitHash, commit: kit.commit, policyHash: kit.ownerPolicyHash },
     gate: { source: gate.source, commit: gate.commit, live: gate.live }, mode: { live: !!o.live, promote: !!o.promote, proposer: o.proposer ?? 'none' }, stages: {}, proposals: [], decisions: [] };
+  // Evidence tier (AGENTS.md): every heal is development/diagnostic. A seed the ledger does not know is consumed by this heal, never fresh again.
+  const ledger = o.ledger ?? loadLedger(), inspected = isUsed(ledger, trial.family, trial.split, trial.difficulty, trial.seed);
+  out.evidence = { tier: 'development/diagnostic', split: trial.split, seed: trial.seed, inspected, note: inspected ? 'the seed is already in the seed ledger (INSPECTED): this proves plumbing, not a fix rate' : 'the seed was not in the seed ledger: it is consumed by this heal and can never be fresh again' };
+  if (!inspected) { ledger.entries.push({ family: trial.family, split: trial.split, difficulty: trial.difficulty, seeds: [trial.seed], by: `heal incident ${trial.key}`, at: new Date().toISOString() }); (o.saveLedger ?? saveLedger)(ledger); }
   const done = () => { out.budget = budget.summary(); out.ms = Date.now() - started; out.runsDir = runsDir; return out; };
 
   // ---- 1. base replay, DETECT, CLASSIFY (early) ------------------------------------------------------------------------------------
@@ -114,7 +119,8 @@ export async function healIncident(o) {
     const loc = await localise({ trial, workflow, kit, trials, concurrency: o.concurrency ?? 3, onProgress: o.progress ? (d, n) => log(`candidate ${d}/${n}`) : null });
     out.localisation = { root: loc.root, classes: loc.classes, mode: loc.mode, coverage: loc.coverage, intermediates: loc.intermediates, variance: loc.variance, flippers: loc.flippers, ms: loc.ms, blocked: loc.blocked ?? null };
     let variance = null;
-    const providers = o.providers ?? (o.live ? liveProviders(kit) : null);
+    // the per-call cap of the claude -p route never exceeds what the driver may still spend
+    const providers = o.providers ?? (o.live ? liveProviders(kit, undefined, Math.min(1, Math.max(0.01, budget.capUsd))) : null);
     if (loc.root?.sample?.type === 'inject' && providers && o.live && budget.remaining() >= 0.1) {
       const j = kit.emptyJournal(path.join(runsDir, 'variance', 'journal.sqlite'));
       const port = new kit.ModelPort({ policy: ctx0.policy, providers, journal: j.journal, mode: 'live' });
@@ -151,8 +157,8 @@ export async function healIncident(o) {
         return {};
       };
 
-      const mech = mechanicalProposal({ base: head.workflow, baseHash: head.hash, lint: gate.lintWorkflow(head.workflow, { modelPolicy }), env });
-      out.lintDebt = { ops: mech.proposal?.ops ?? [], needsProposer: mech.needsProposer };
+      const mech = mechanicalProposal({ base: head.workflow, baseHash: head.hash, lint: gate.lintWorkflow(head.workflow, { modelPolicy }), env, bind: bindOf({ kit, gate, workflow: head.workflow, hash: head.hash }) });
+      out.lintDebt = { ops: mech.proposal?.ops ?? [], needsProposer: mech.needsProposer, ...(mech.errors ? { errors: mech.errors } : {}) };
       if (mech.proposal) {
         out.proposals.push({ id: mech.proposal.id, kind: 'lint-debt', ops: mech.proposal.ops });
         const { v, d } = await runVerify(mech.proposal);

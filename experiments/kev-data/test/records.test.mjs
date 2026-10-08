@@ -417,7 +417,7 @@ async function twinTexts(slice, perPort, count, extra = {}) {
   const recs = await collect(slice, { count, scale: 1, ports: R_PORTS, targets, ...extra });
   return twinsOf(recs).map(r => ({ text: renderState(r.state), label: r.meta.axis === 'unknowable' ? 'unk' : 'stated', port: portOf(r) }));
 }
-test('acceptance 6b: a train-fitted bag-of-words probe separates stated from unknowable twins at no more than 0.65 (dev-select); the deletion construction is detected', async t => {
+test('acceptance 6b: a train-fitted bag-of-words probe separates stated from unknowable twins at no more than 0.65 (dev-select, overall and per port); the deletion construction is detected', async t => {
   const tr = await twinTexts('train', 250, 450), dv = await twinTexts('dev-select', 120, 200);
   assert.ok(tr.length >= 1500 && dv.length >= 700, `${tr.length} train twins, ${dv.length} dev twins`);
   const model = trainProbe(tr), ev = evaluate(model, dv);
@@ -426,6 +426,7 @@ test('acceptance 6b: a train-fitted bag-of-words probe separates stated from unk
   const perPort = Object.fromEntries(Object.entries(per).map(([k, v]) => [k, +(v.hit / v.n).toFixed(3)]));
   t.diagnostic(`probe stated-vs-unknowable: balanced ${ev.balancedAccuracy.toFixed(3)}, per port ${JSON.stringify(perPort)}`);
   assert.ok(ev.balancedAccuracy <= 0.65, `balanced accuracy ${ev.balancedAccuracy.toFixed(3)} per port ${JSON.stringify(perPort)}`);
+  for (const [p, v] of Object.entries(perPort)) assert.ok(v <= 0.65, `${p}: the probe separates its twins at ${v} (each port's unknowables are a gate input)`);
   // the control: the revision-1 construction (delete the sentence) is what this probe exists to catch
   const trD = await twinTexts('train', 120, 250, { control: 'deletion-unknowable' }), dvD = await twinTexts('dev-select', 60, 120, { control: 'deletion-unknowable' });
   const evD = evaluate(trainProbe(trD), dvD);

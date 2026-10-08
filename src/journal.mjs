@@ -58,6 +58,7 @@ export class Journal {
       attempt: handle.prepare('SELECT * FROM model_calls WHERE run_id=? AND node_key=? AND attempt=? ORDER BY id'),
       run: handle.prepare('SELECT * FROM model_calls WHERE run_id=? ORDER BY id'),
       get: handle.prepare('SELECT * FROM model_calls WHERE id=?'),
+      highWater: handle.prepare('SELECT COALESCE(MAX(id),0) AS id FROM model_calls'),
       cost: handle.prepare(`SELECT COUNT(*) AS calls, COALESCE(SUM(cost_usd),0) AS cost, COALESCE(SUM(imputed_usd),0) AS imputed,
         COALESCE(SUM(input_tokens),0) AS input, COALESCE(SUM(output_tokens),0) AS output, COALESCE(SUM(cache_read_tokens),0) AS cache_read,
         COALESCE(SUM(cache_write_tokens),0) AS cache_write, COALESCE(SUM(ok=0),0) AS errors,
@@ -86,6 +87,9 @@ export class Journal {
     const raw = this.statements.get.get(id);
     return raw ? { ...bindRow(raw), runId: raw.run_id } : null;
   }
+  /** The highest row id so far. A call journals its row after this was read, so its row id is higher (the runtime records this mark on
+   *  context.compiled, and refuses to "recover" a row of an attempt that predates the attempt: a row seeded in advance). */
+  highWater() { return this.statements.highWater.get().id; }
   /** Latest replayable row for a key (ok, or a model-behaviour error); environment faults are skipped. */
   lookup(replayKey) { return row(this.statements.lookup.get(replayKey)); }
   forAttempt(runId, nodeKey, attempt) { return this.statements.attempt.all(runId, nodeKey, attempt).map(row); }

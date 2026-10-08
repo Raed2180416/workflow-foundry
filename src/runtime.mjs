@@ -83,6 +83,10 @@ function seal(run, workflow, store) {
     catch (error) { run.verdict.decisionError = errorData(error); }
   }
 }
+// The seal that closed a run for good: a final verdict (anything but 'uncertain', which reconciliation may resume). Once the chain holds
+// one, the run is never resumed, answered or approved again, whatever its record says (an edited status cannot reopen it).
+const closingSeal = events => events.find(e => e.type === 'run.verdict' && e.verdict !== 'uncertain') ?? null;
+const closedError = (seal, status) => new FoundryError('RUN_CLOSED', `The run's chain closed it with a final verdict (${seal.verdict}) at event ${seal.seq}, but its record says ${status}: the record was edited. A closed run is never reopened.`, { seq: seal.seq });
 const policyDefaults = registry => ({
   allowedCapabilities: registry.list().filter(c => c.risk === 'low').map(c => c.name),
   maxSteps: 5000, maxConcurrency: 4, maxDurationMs: 3600000, maxCost: 0, maxResumes: 1000
@@ -146,6 +150,8 @@ export class Runtime {
   answer(runId, nodeKey, answer) {
     const run = this.store.run(runId);
     if (finished.has(run.status)) throw new FoundryError('RUN_CLOSED', 'A terminal run cannot accept answers');
+    const closed = closingSeal(this.store.events(runId));
+    if (closed) throw closedError(closed, run.status);
     const target = locateNode(run, nodeKey);
     if (!target || target.state.status !== 'awaiting_human') throw new FoundryError('NO_QUESTION', 'No pending question exists at this node');
     validateData(target.state.answerSchema, answer, 'human answer');
@@ -160,6 +166,8 @@ export class Runtime {
     if (typeof decision !== 'boolean' || actor !== 'user') throw new FoundryError('APPROVAL_AUTHORITY', 'An explicit user approval decision is required');
     return this.store.updateRun(runId, r => {
       if (finished.has(r.status)) throw new FoundryError('RUN_CLOSED', 'The run is already terminal');
+      const closed = closingSeal(this.store.events(runId));
+      if (closed) throw closedError(closed, r.status);
       const approval = r.approvals[approvalId];
       if (!approval || approval.status !== 'pending') throw new FoundryError('APPROVAL_CONFLICT', 'No matching pending approval');
       approval.status = decision ? 'approved' : 'rejected'; approval.actor = actor; approval.decidedAt = Date.now();
@@ -298,11 +306,13 @@ class Invocation {
       if (modelBound && run.modelPolicyHash !== this.runtime.modelPolicyHash) throw new FoundryError('MODEL_POLICY_DRIFT', 'The model policy changed since this run was created; resume is blocked', { recorded: run.modelPolicyHash ?? null, current: this.runtime.modelPolicyHash });
       requireWorkflow(this.workflow, { registry: this.registry, modelPolicy: this.runtime.modelPolicy });
       if (run.registryHash !== this.registry.hash()) throw new FoundryError('CAPABILITY_DRIFT', 'Capabilities changed since run creation');
-      this.store.events(this.runId); // Verify the chain before trusting a checkpoint.
+      const log = this.store.events(this.runId); // Verify the chain before trusting a checkpoint.
       if (finished.has(run.status)) return run;
+      const closed = closingSeal(log);
+      if (closed) throw closedError(closed, run.status);
       if (!run.engineHash) throw new FoundryError('ENGINE_UNBOUND', 'This historical run has no native engine binding. Inspect it or use its original frozen runtime; do not silently resume it under changed semantics.');
       if (run.engineHash !== engineHash) throw new FoundryError('ENGINE_DRIFT', 'The native execution engine differs from the version that created this run. Resume with the original engine or create a separately reviewed new run.', { recorded: run.engineHash, current: engineHash });
-      const birth = this.store.events(this.runId)[0];
+      const birth = log[0];
       if (birth?.engineHash !== run.engineHash) throw new FoundryError('ENGINE_BINDING_CORRUPT', 'Run engine identity does not match its immutable creation event');
       if (modelBound && (birth?.modelPolicyHash ?? null) !== run.modelPolicyHash) throw new FoundryError('MODEL_POLICY_BINDING_CORRUPT', 'Run model policy binding does not match its immutable creation event');
       this.store.updateRun(this.runId, r => {
@@ -632,7 +642,9 @@ class Invocation {
     while (true) {
       const compiled = compileContext({ node, workflow: this.workflow, inputs, classBudget: policy.inputBudgetTokensByClass?.[entry.class], retryNote, schema: returns });
       const selected = { modelId: entry.id, modelClass: entry.class, sampleIndex, escalations, receiptHash: compiled.receiptHash };
-      this.eventNode(frameKey, node.id, (f, r) => { this.preflight(r); Object.assign(f.nodes[node.id], selected); }, 'context.compiled', { ...selected, attempt, retry: retries, receipt: compiled.receipt });
+      // journalMark: the journal's highest row id before this call, so a row this attempt "recovers" can be shown to postdate the attempt.
+      const journalMark = typeof models.journal?.highWater === 'function' ? models.journal.highWater() : undefined;
+      this.eventNode(frameKey, node.id, (f, r) => { this.preflight(r); Object.assign(f.nodes[node.id], selected); }, 'context.compiled', { ...selected, attempt, retry: retries, receipt: compiled.receipt, ...(journalMark === undefined ? {} : { journalMark }) });
       const signal = this.signal(), stop = this.untilDeadline(signal);
       await this.semaphore.take(signal);
       let result;
@@ -680,7 +692,9 @@ class Invocation {
   // Charges one journaled model call to its node and the run, once per journal row (a crash may replay the commit).
   // run.cost is known spend; a call whose spend is unknown adds its bound to costUnknownUpperUsd (DESIGN §2).
   chargeModel(frameKey, node, call, type, event) {
-    if (call.replayed === true && call.recovered !== true && call.replayedFrom != null) this.checkReplay(call);
+    // A replayed response carries the outcome of its provenance check into the event, so verify-run can flag one nothing vouched for.
+    if (call.replayed === true && call.recovered !== true) event = { ...event, replaySource: this.checkReplay(call) };
+    if (call.recovered === true && call.journalId != null) this.checkRecovered(`${frameKey}/${node.id}`, event.attempt, call.journalId);
     // The event binds the journal row as persisted (request and response hashes, row digest), so editing the row later is detectable.
     const { journalRowHash, requestHash, responseHash } = (call.journalId != null ? this.runtime.models?.journal?.binding?.(call.journalId) : null) ?? {};
     if (journalRowHash) event = { ...event, journalRowHash, requestHash, responseHash };
@@ -694,40 +708,63 @@ class Invocation {
     }, type, event);
   }
   // A replayed call must reproduce what an earlier run's hash chain committed to (src/audit.mjs), or replay would launder an edited
-  // response into this run's evidence. Two checks, skipped for a recording that predates the binding or whose run is gone: the copy
-  // journaled for this call equals the original row, and the original is what its run's chain (or, if no event names it, its sealed
-  // journal root) bound. A mismatch stops the run before the response is used.
+  // response into this run's evidence. The copy journaled for this call must equal the original row, and the original must be what its
+  // run's chain bound (an event naming the row) or sealed (the journal root of a closed run). A mismatch stops the run before the response
+  // is used. A recording that cannot be checked (its row or run is gone or in another store, its run predates the binding, or its run is
+  // still open and no event names the row) is served as recorded, and the event says so: {check: 'unverified', reason}. verify-run flags it.
   checkReplay(call) {
-    const journal = this.runtime.models?.journal;
-    if (typeof journal?.binding !== 'function') return;
-    const original = journal.get(call.replayedFrom), served = call.journalId == null ? null : journal.get(call.journalId);
-    if (!original) return;
-    const tampered = reason => new FoundryError('JOURNAL_TAMPERED', `Replay refused: journal row ${call.replayedFrom} ${reason}`, { journalId: call.replayedFrom, runId: original.runId });
+    const journal = this.runtime.models?.journal, from = call.replayedFrom ?? null;
+    const unverified = (reason, runId = null) => ({ journalId: from, runId, check: 'unverified', reason });
+    if (from == null) return unverified('the replayed call names no recording');
+    if (typeof journal?.binding !== 'function' || typeof journal?.get !== 'function') return unverified('the journal cannot bind rows');
+    const original = journal.get(from), served = call.journalId == null ? null : journal.get(call.journalId);
+    if (!original) return unverified(`journal row ${from} it was replayed from is gone`);
+    const tampered = reason => new FoundryError('JOURNAL_TAMPERED', `Replay refused: journal row ${from} ${reason}`, { journalId: from, runId: original.runId });
     if (served) {
       const { replayedFrom, ...copy } = served.response ?? {}, { replayedFrom: _, ...first } = original.response ?? {};
       if (served.ok !== original.ok || served.errorCode !== original.errorCode || digest(copy) !== digest(first)) throw tampered(`differs from the copy replayed from it (row ${call.journalId})`);
     }
     const origin = this.replaySource(original.runId);
-    if (!origin) return;
-    const bound = origin.rows.get(call.replayedFrom), row = journal.binding(call.replayedFrom);
-    if (bound !== undefined) { if (bound !== row.journalRowHash) throw tampered(`was edited after run ${original.runId} bound it`); return; }
-    // Not named by any event of its run: it is covered only by that run's sealed journal root, and only if it predates the seal.
-    if (!origin.seal) return;
-    if (call.replayedFrom > origin.seal.journalMaxId) throw tampered(`was written after run ${original.runId} was sealed and no event of it binds the row`);
+    if (!origin) return unverified(`run ${original.runId} that recorded it is not in this store, or predates audit binding`, original.runId);
+    const bound = origin.rows.get(from), row = journal.binding(from);
+    if (bound !== undefined) {
+      if (bound !== row.journalRowHash) throw tampered(`was edited after run ${original.runId} bound it`);
+      return { journalId: from, runId: original.runId, check: 'bound' };
+    }
+    // Not named by any event of its run: only that run's sealed journal root covers it, and only if it predates the seal.
+    const seal = origin.seal;
+    if (!seal || from > seal.journalMaxId) {
+      if (origin.closed) throw tampered(`was written after run ${original.runId} was sealed and no event of it binds the row`);
+      return unverified(`run ${original.runId} is still open and no event of it binds the row`, original.runId);
+    }
     if (!origin.rootChecked) {
-      const now = journalSeal(this.store.db, original.runId, origin.seal.journalMaxId);
-      if (now.root !== origin.seal.journalRoot || now.calls !== origin.seal.journalCalls) throw tampered(`belongs to a run whose sealed journal (event ${origin.seal.seq}) no longer matches its rows`);
+      // The root is recomputed in the database the rows live in: the ModelPort's journal, which may not be the store's.
+      const now = journalSeal(journal.db ?? this.store.db, original.runId, seal.journalMaxId);
+      if (now.root !== seal.journalRoot || now.calls !== seal.journalCalls) throw tampered(`belongs to a run whose sealed journal (event ${seal.seq}) no longer matches its rows`);
       origin.rootChecked = true;
     }
+    return { journalId: from, runId: original.runId, check: 'sealed' };
+  }
+  // Crash recovery serves a row this (run, node, attempt) journaled before a crash. Such a row was written after the attempt's first
+  // context.compiled event, whose journalMark is the journal's high-water mark at that moment; a row at or below it existed before the
+  // attempt began, so this attempt did not write it (a forged answer seeded while the run was paused). Runs without marks are not checked.
+  checkRecovered(nodeKey, attempt, journalId) {
+    const first = this.store.events(this.runId).find(e => e.type === 'context.compiled' && e.nodeKey === nodeKey && e.attempt === attempt);
+    if (Number.isSafeInteger(first?.journalMark) && journalId <= first.journalMark)
+      throw new FoundryError('JOURNAL_TAMPERED', `Recovery refused: journal row ${journalId} predates attempt ${attempt} of ${nodeKey} (event ${first.seq}), so that attempt did not write it`, { journalId, nodeKey, attempt });
   }
   // What a replay source run's verified chain says about its journal rows; null when the run is gone or predates the binding.
+  // `closed`: its latest seal is final (or it is terminal and was not resumed since), so no further row of it can be legitimate.
+  // This run's own rows (a replay-or-live call can hit an earlier identical call of the same run) are re-read each time: its chain grows.
   replaySource(runId) {
-    if (this.replaySources.has(runId)) return this.replaySources.get(runId);
+    if (runId !== this.runId && this.replaySources.has(runId)) return this.replaySources.get(runId);
     let source = null;
     try { this.store.run(runId); } catch (error) { if (error.code === 'NOT_FOUND') { this.replaySources.set(runId, null); return null; } throw error; }
     const log = this.store.events(runId); // a corrupt source chain stops the run (CORRUPT_EVENTS) rather than feeding it
     if (log[0]?.audit === AUDIT) {
-      source = { rows: new Map(log.filter(e => e.journalId != null && e.journalRowHash).map(e => [e.journalId, e.journalRowHash])), seal: log.findLast(e => e.type === 'run.verdict') ?? null, rootChecked: false };
+      const seal = log.findLast(e => e.type === 'run.verdict') ?? null;
+      const closed = !!seal && (seal.verdict !== 'uncertain' || !log.slice(log.indexOf(seal) + 1).some(e => e.type === 'runner.acquired'));
+      source = { rows: new Map(log.filter(e => e.journalId != null && e.journalRowHash).map(e => [e.journalId, e.journalRowHash])), seal, closed, rootChecked: false };
     }
     this.replaySources.set(runId, source);
     return source;

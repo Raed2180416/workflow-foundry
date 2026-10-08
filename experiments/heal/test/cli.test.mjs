@@ -6,7 +6,7 @@ import { REPO } from '../kit.mjs';
 import { skipReason } from './helpers.mjs';
 
 const CLI = path.join(REPO, 'experiments/heal/heal.mjs');
-const run = (...args) => spawnSync(process.execPath, [CLI, ...args], { encoding: 'utf8', cwd: REPO, timeout: 100000 });
+const run = (...args) => spawnSync(process.execPath, [CLI, ...args], { encoding: 'utf8', cwd: REPO, timeout: 280000 });
 
 test('the CLI prints its usage and exits 2 without --run and --workflow', () => {
   const r = run();

@@ -21,11 +21,14 @@
 //   ports          port ids to produce ('Q4', 'Q4:gridquest', 'X1:gameqa', ... default: SLICE_PORTS[slice])
 //   difficulties   { gridquest: [..], gameqa: [..] } or a list for both (defaults: gridquest 1-5, gameqa 2-5)
 //   perWorld       { 'Q4:gridquest': n, ... } rows per world (defaults below: the supply the assembly draws from)
-//   wordings       { Q4: [{id, text}], X1: [...] } the held-out wordings of THIS slice (OOD slices; required there)
-//   lines          authored lines (train-pools schema and heldout surface units): { port, role, label, text, slice?, ... }
+//   wordings       { Q4: [{id, text, slice?}], X1: [...] } the held-out wordings (OOD slices; required there); a wording that names
+//                  its slice is used in that slice only
+//   lines          authored lines (train-pools schema and heldout surface units): { port, role, label, target?, text, slice?, ... };
+//                  a Q4 carrier urges `target` (the held-out store's shape) or `label`; lines with an unfilled {slot} are skipped
 //   pools          { dir, digest } train pool files <dir>/X1.jsonl (verified against the digest)
 //   builtin        false: no built-in authored lines (lib: ports/interactive-lines.mjs) in train-like slices
-//   share          { injection, invariance, paraphrase, unknowable } fractions of clean Q4:gridquest rows that get a twin
+//   share          { injection, invariance, paraphrase, sameName } fractions of clean Q4:gridquest rows that get a twin;
+//                  unknowable (default 0) builds the gap diagnostic in an evaluation slice and is refused in train
 //   smokeEvery     a wave-2 smoke port uses one world in `smokeEvery` (default 6)
 //
 // Readings of the specification taken here (each is tested or reported by test/interactive.test.mjs):
@@ -34,22 +37,31 @@
 //     abstract model's state bits).
 //   - Q4:gameqa reads the compact observation (events, HUD line, player cell, status) of the post-action state; a planted bug whose
 //     effect is not in that reading (enemy_ai, ghost_sprite, enemy_lag and the like) is dropped, not labelled.
-//   - Q4 unknowable = the remote effect of a switch left out of the result line (gridquest only). The label stays the true one and the
-//     training target is uniform; in an OOD slice the row's own form may be in the train bucket ("known" phrasing) or the slice's bucket
-//     ("new"), the 2 x 2 of the program (§2.5). Clean OOD rows are always in the slice's bucket.
+//   - Q4 unknowable: gridquest reports every effect of a switch, so the only unknowable it gives is a GAP (the remote effects deleted
+//     from the result line). §2.5 forbids gaps and a bag-of-words probe separates them from stated rows at 1.000, so none is trained
+//     (UNKNOWABLE_GAP) or built by default; an evaluation slice may opt in to a labelled diagnostic (meta.unkAxis.kind 'gap'). The
+//     presence-matched Q4 unknowable is an open item (another family, or an owner decision). Every row of every other variant lies in
+//     its slice's skeleton bucket (a same-name distractor is re-bucketed by its own form).
+//   - Q4 drifts are drawn only with an as_expected row of the same pairing signature (kind; the direction of a move or unlock;
+//     whether a fixture is named; the container searched), and a switch's plan may list one effect too few (unaware coupling) or,
+//     for a single-target switch, one too many (phantom coupling): the plan alone does not predict the label (§2.7 step 7).
 //   - The held-out families (Q4:gameqa, X1:gridquest, X2:gameqa) are not bucket-restricted: the family is the held-out axis.
 //   - A world-independent state (a pinned tracker post, a Q2 sentence, a Q6 behaviour) is a state of one slice only: the built-in
 //     pinned posts are split between train, calib-in, dev-select and test-in by a hash of the post; what still collides is dropped by the
 //     build (rule 7). Repeated states in test-in and test-ood are dropped here.
 //   - X1:gridquest registers the injection spans only (negatives are shared bed prose); X1:gameqa has bed injection forms in the train
-//     bucket only, so an OOD slice has X1:gameqa positives only from slice-tagged held-out lines in opts.lines.
+//     bucket only, so an OOD slice has X1:gameqa positives only from slice-tagged held-out lines in opts.lines. Those lines belong to
+//     their slice by the held-out store's own rule (heldout/pools.mjs oodSliceOfHash) and are not re-bucketed here.
+//   - X2:gameqa pairs the bed's ALIAS words, keeping only pairs a reader decides from the legend and plain English (X2_READABLE):
+//     the bed's slang is knowledge the port does not declare. The program's gameqa source (findings, bugs[].id) is an open item.
 //   - formId of Q1, Q2 and Q3 is the skeleton of the whole description (or sentence): their form counts over-count; they are smoke sets.
 //   - Every authored line of ports/interactive-lines.mjs and every row composed from a pool line is pending the two-model filter
-//     (ports/interactive-lines.mjs PENDING_FILTER); the row says so in meta.surface.source ('authored', 'authored-builtin').
+//     (ports/interactive-lines.mjs PENDING_FILTER); the row says so in meta.surface.source ('authored', 'authored-builtin') and carries
+//     the line's filter status (meta.surface.filter, meta.carrierFilter).
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
-import { labelledQuestion, questionId, uniformTarget } from '../lib/render.mjs';
+import { labelledQuestion, questionId } from '../lib/render.mjs';
 import { optionOrder } from '../lib/balance.mjs';
 import { worldHash, skeleton, skeletonBucket, spanHash, canonical, stateHash } from '../lib/hash.mjs';
 import { stringLeaves } from '../lib/leakage.mjs';
@@ -95,7 +107,8 @@ const PER_WORLD = Object.freeze({
   'dev-select': { 'Q4:gridquest': 4, 'X1:gameqa': 5, Q1: 2, Q2: 3, 'Q5:gameqa': 3, 'Q6:gameqa': 3, 'X6:gameqa': 4 }, 'dev-ood': { 'Q4:gridquest': 6, 'X1:gameqa': 6 },
   'test-in': { 'Q4:gridquest': 4, 'X1:gameqa': 5 }, 'test-ood': { 'Q4:gridquest': 8, 'X1:gameqa': 8, 'Q4:gameqa': 6, 'X1:gridquest': 8, 'X2:gameqa': 3 },
 });
-const DEFAULT_SHARE = Object.freeze({ injection: 0.12, invariance: 0.1, paraphrase: 0.18, unknowable: 0.5, sameName: 0.6 });
+// unknowable 0: see makeContext (UNKNOWABLE_GAP); an evaluation slice may opt in with opts.share.unknowable
+const DEFAULT_SHARE = Object.freeze({ injection: 0.12, invariance: 0.1, paraphrase: 0.18, unknowable: 0, sameName: 0.6 });
 const TRAIN_LIKE = new Set(['train', 'calib-in', 'dev-select', 'test-in']);
 const OOD = new Set(['calib-ood', 'dev-ood', 'test-ood']);
 
@@ -107,10 +120,13 @@ export const bucketAllows = (slice, formHash) => skeletonBucket(formHash) === BU
 const formOf = (text, masks) => skeleton(text, masks);
 
 // ---- wording and records -------------------------------------------------------------------------------------------------------------
+// a held-out wording that names its slice (the held-out store's wordings.jsonl rows do) is used in that slice only, so a
+// flat list of all three OOD slices' wordings cannot put a test-ood wording into calib-ood (the build's guard would refuse it)
+const sliceWordings = (opts, port, slice) => (opts.wordings?.[port] ?? []).filter(w => w.slice === undefined || w.slice === slice);
 function wordingFor(contract, slice, key, opts, taken = []) {
   const port = contract.id, held = (contract.heldoutWordings?.[slice] ?? 0) > 0;
   if (held) {
-    const list = (opts.wordings?.[port] ?? []).filter(w => !taken.includes(w.id));
+    const list = sliceWordings(opts, port, slice).filter(w => !taken.includes(w.id));
     if (!list.length) throw fail('HELDOUT_WORDINGS_MISSING', `${port} in ${slice} uses the slice's held-out wordings: pass opts.wordings.${port} = [{id, text}] (the assembly reads them from the held-out store; this generator does not)`);
     const w = pickBy(list, `${key}|wording`);
     return { wording: 'Q0', wordingText: w.text, wordingId: w.id };
@@ -127,7 +143,7 @@ function makeRecord({ contract, slice, opts, key, state, label, slots = {}, qid 
 // a paraphrase-consistency record (§3.2): the same state asked with Q0 and two test wordings
 function paraphraseOf(rec, contract, slice, opts, key, slots = {}) {
   const port = contract.id, label = Object.values(rec.questions)[0].label;
-  const list = opts.wordings?.[port] ?? [];
+  const list = sliceWordings(opts, port, slice);
   if (list.length < 2) return null;
   const a = pickBy(list, `${key}|pa`), b = pickBy(list.filter(w => w.id !== a.id), `${key}|pb`);
   const names = Object.keys(contract.options), questions = {};
@@ -144,24 +160,43 @@ const readPool = (dir, port, digest) => {
   if (digest !== undefined && digest !== got && digest !== null) throw fail('POOL_DIGEST', `${file} hashes to ${got}, opts.pools.digest says ${digest}`);
   return { lines: body.split('\n').filter(Boolean).map(l => JSON.parse(l)), digest: got };
 }
+// A line with an unfilled slot placeholder ({S}, {token}, {field}: the held-out store and the train pools write slotted lines)
+// names a system or a token the interactive beds do not have; it is skipped and counted, never inserted with its braces.
+const PLACEHOLDER = /\{[A-Za-z_][A-Za-z0-9_]*\}/;
 export function linesFor(G) {
   const o = G.opts;
   let raw = [...(o.lines ?? [])];
   if (o.pools?.dir) raw = [...readPool(o.pools.dir, 'X1', o.pools.digest).lines, ...raw];
-  return raw.filter(l => l && typeof l.text === 'string' && l.text.trim());
+  return raw.filter(l => {
+    if (!l || typeof l.text !== 'string' || !l.text.trim()) return false;
+    if (PLACEHOLDER.test(l.text)) { bump(G, 'lines:placeholder-skipped'); return false; }
+    return true;
+  });
 }
 const lineSlice = l => l.slice ?? 'train';
+// the two-model filter status of an authored line (train pools: filters.twoModel; held-out store: filter), carried to the
+// sidecar so the assembly can drop the lines that have not passed it (§2.3 rule 1)
+const lineFilter = l => l.filters?.twoModel ?? (typeof l.filter === 'string' ? l.filter : l.filter?.status) ?? 'pending';
+// The option a Q4 carrier urges: the held-out store writes carriers as { role: 'carrier', label: null, target: <option> }
+// (heldout/assemble.mjs); a line may also give it as its label.
+const carrierUrges = l => l.target ?? l.label;
 // carriers of Q4 for a slice: built-in authored carriers in train-like slices (when allowed), the slice's own
-// held-out carriers (opts.lines, role 'carrier', port Q4) in OOD slices
+// held-out carriers (opts.lines, role 'carrier', port Q4) in OOD slices. out[option] = the carriers that urge `option`.
 function q4Carriers(G) {
   const own = linesFor(G).filter(l => l.port === 'Q4' && l.role === 'carrier' && (OOD.has(G.slice) ? lineSlice(l) === G.slice : lineSlice(l) === 'train'));
   const out = { as_expected: [], drifted: [] };
-  for (const l of own) if (out[l.label]) out[l.label].push(l.text);
+  for (const l of own) if (out[carrierUrges(l)]) out[carrierUrges(l)].push({ text: l.text, filter: lineFilter(l) }); else bump(G, 'q4:carrier-unknown-target');
   if (!OOD.has(G.slice) && G.opts.builtin !== false) {
     // a built-in carrier is used only where its skeleton falls in the train bucket (§3.1: authored train lines never carry an OOD form)
-    for (const [label, key] of [['as_expected', 'asExpected'], ['drifted', 'drifted']]) for (const t of Q4_CARRIERS[key]) if (skeletonBucket(skeleton(t, {})) === 'train') out[label].push(t);
+    for (const [label, key] of [['as_expected', 'asExpected'], ['drifted', 'drifted']]) for (const t of Q4_CARRIERS[key]) if (skeletonBucket(skeleton(t, {})) === 'train') out[label].push({ text: t, filter: 'pending' });
   }
   return out;
+}
+
+// the Q4 carriers a slice draws from, by the option they urge (for tests and reports): { as_expected: [{text, filter}], drifted: [...] }
+export function q4CarrierPools(slice, opts = {}) {
+  const G = { slice, opts: { ...opts }, counts: {} };
+  return { carriers: q4Carriers(G), counts: G.counts };
 }
 
 // ---- the generation context ---------------------------------------------------------------------------------------------------------------
@@ -170,7 +205,12 @@ const wordingsOf = (o, slice) => (o.wordings && o.wordings[slice] && typeof o.wo
 function makeContext(slice, opts, ctx) {
   const o = { ...(opts ?? {}) };
   o.wordings = wordingsOf(o, slice);
-  return { slice, ctx, contracts: ctx.contracts, def: ctx.slice, opts: o, ood: OOD.has(slice), test: slice === 'test-ood', share: { ...DEFAULT_SHARE, ...(o.share ?? {}) }, counts: {}, notes: {} };
+  const share = { ...DEFAULT_SHARE, ...(o.share ?? {}) };
+  // The only Q4 unknowable gridquest supports is a GAP (the remote effects deleted from the result line): §2.5 forbids gaps
+  // ("never a gap"), a bag-of-words probe separates them from stated rows at 1.000, and training on them is the revision-1
+  // failure. They are never trained; an evaluation slice may build them as a labelled diagnostic (meta.unkAxis.kind 'gap').
+  if (share.unknowable > 0 && slice === 'train') throw fail('UNKNOWABLE_GAP', 'the Q4 gridquest unknowable is a deletion, not a presence-matched replacement (§2.5); it is not built in train');
+  return { slice, ctx, contracts: ctx.contracts, def: ctx.slice, opts: o, ood: OOD.has(slice), test: slice === 'test-ood', share, counts: {}, notes: {} };
 }
 const bump = (G, k, n = 1) => { G.counts[k] = (G.counts[k] ?? 0) + n; };
 
@@ -204,10 +244,16 @@ function q4Form(sentence, observation, masks) {
 // expected, for a room that is not that room. It is kept ONLY where the observation tells the rooms apart (the
 // fixture the plan expects in its room is not in the description); otherwise the label is not determined by the state
 // and the item is dropped (§2.7 step 5). "Kept" is decided by the state-only solver reading the renamed state.
-export function sameNameDistractor({ sentence, observation, believedRoom }) {
+// The renamed row is a form of its own (its header now names the expected room: q4Form's relation is 'same room'), so with a
+// slice it must also lie in that slice's skeleton bucket, like every other row (§3.3); otherwise it is dropped ('bucket').
+export function sameNameDistractor({ sentence, observation, believedRoom, slice = null, masks = { names: [], markers: [] } }) {
   const renamed = GQ.withHeader(observation, believedRoom);
   const verdict = solveQ4Gridquest({ action: '', expected_effect: sentence, observation: renamed });
-  return { observation: renamed, kept: verdict.label === 'drifted', reason: verdict.label === 'drifted' ? 'the observation distinguishes the rooms' : 'indistinguishable: the observation fits the expectation' };
+  const distinguishes = verdict.label === 'drifted';
+  if (!distinguishes) return { observation: renamed, kept: false, reason: 'indistinguishable: the observation fits the expectation' };
+  const form = q4Form(sentence, renamed, masks), inBucket = slice === null || bucketAllows(slice, form);
+  if (!inBucket) return { observation: renamed, kept: false, reason: 'bucket', form };
+  return { observation: renamed, kept: true, reason: 'the observation distinguishes the rooms', form };
 }
 
 // One candidate row of a world: an OK step of the true route or a drifting proposal.
@@ -246,9 +292,12 @@ function q4Candidates(mod, route, task, G, seed) {
   return out;
 }
 
-const OP_WEIGHTS = Object.freeze({ 'wrong-exit': 1, 'locked-door': 8, 'wrong-key': 10, 'one-way-return': 20, 'one-way-entry': 8, 'wrong-room': 2.5, 'unaware-coupling': 30, 'empty-container': 1, 'wrong-key-found': 10, 'absent-item': 0.5, 'no-treasure': 0.4 });
-const FLIP_OPS = new Set(['wrong-room', 'unaware-coupling']);
+const OP_WEIGHTS = Object.freeze({ 'wrong-exit': 1, 'locked-door': 8, 'wrong-key': 10, 'one-way-return': 20, 'one-way-entry': 8, 'wrong-room': 2.5, 'unaware-coupling': 30, 'phantom-coupling': 30, 'empty-container': 1, 'wrong-key-found': 10, 'absent-item': 0.5, 'no-treasure': 0.4 });
+const FLIP_OPS = new Set(['wrong-room', 'unaware-coupling', 'phantom-coupling']);
 const FEATURE_SHARE = 0.4;
+const DIR_WORD = /\b(north|east|south|west)\b/;
+export const q4PairSig = c => (c.kind === 'enter' ? `enter|${DIR_WORD.exec(c.action)?.[1] ?? ''}|${c.feat ? 'feature' : ''}` : c.kind === 'unlock' ? `unlock|${DIR_WORD.exec(c.action)?.[1] ?? ''}`
+  : c.kind === 'find' ? `find|${c.expect.container}` : c.kind);
 function weightedDraw(items, weight, n, key) {
   const left = [...items].sort((a, b) => byHash(sha(`${key}|${a.id}`), sha(`${key}|${b.id}`))), out = [];
   for (let slot = 0; slot < n && left.length; slot++) {
@@ -287,17 +336,30 @@ async function* gridquestQ4(G, mod, seed, difficulty, perWorld) {
   bump(G, 'q4:candidates', cands.length); bump(G, 'q4:usable', usable.length);
   const drifts = usable.filter(c => c.role === 'drift'), oks = usable.filter(c => c.role === 'ok');
   if (!drifts.length && !oks.length) return;
-  const chosen = weightedDraw(drifts, c => OP_WEIGHTS[c.op] ?? 1, perWorld, `${G.slice}|Q4|${seed}|drift`);
+  // Every drift row comes with an as_expected row of the SAME expectation kind from the same world (its flip twin where there is
+  // one), and a drift whose kind has no unused as_expected row left is not drawn. Without this the plan alone predicted the label
+  // (action-only probe 0.645 and expected-only 0.621 against a majority of 0.519 on dev-select: 'take treasure', 'examine' and
+  // 'use' rows were mostly drifts), above the partial-input ceiling of majority + 3 pp (§2.7 step 7).
+  // The pairing goes below the kind to the plan's own words where they carried the label: the direction of a move or an unlock
+  // (route steps mostly go one way, wrong exits and one-way returns the other), whether the expectation names a fixture (rooms off
+  // the route have fewer), the container of a search (the bed hides keys in some furniture and not in other). A flip twin is the
+  // same step with the same signature.
   const used = new Set(), picked = [];
-  for (const d of chosen) {
+  const twinOf = d => (FLIP_OPS.has(d.op) ? oks.find(o => o.k === d.k && o.kind === d.kind && q4PairSig(o) === q4PairSig(d) && !used.has(o.id)) ?? null : null);
+  const sameKind = d => oks.filter(o => q4PairSig(o) === q4PairSig(d) && !used.has(o.id));
+  let pool = drifts;
+  for (let slot = 0; slot < perWorld; slot++) {
+    const avail = pool.filter(d => twinOf(d) || sameKind(d).length);
+    if (!avail.length) { if (pool.length) bump(G, 'q4:drift-unpaired', pool.length); break; }
+    const d = weightedDraw(avail, c => OP_WEIGHTS[c.op] ?? 1, 1, `${G.slice}|Q4|${seed}|drift|${slot}`)[0];
+    pool = pool.filter(x => x !== d);
     picked.push({ c: d, pair: null });
     // a flip pair: the same step, the same observation, the expectation of the true map against the believed one
-    const twin = FLIP_OPS.has(d.op) ? oks.find(o => o.k === d.k && !used.has(o.id)) : null;
+    const twin = twinOf(d);
     if (twin) { used.add(twin.id); picked.push({ c: twin, pair: `gq4flip:${G.slice}:${seed}:${d.id}` }); picked[picked.length - 2].pair = picked.at(-1).pair; continue; }
     // otherwise an as_expected row of the same expectation kind, so that the kind of the expectation does not predict the label
-    const same = oks.filter(o => o.kind === d.kind && !used.has(o.id)), pool = same.length ? same : oks.filter(o => !used.has(o.id));
-    const ok = weightedDraw(pool, () => 1, 1, `${G.slice}|Q4|${seed}|ok|${d.id}`)[0];
-    if (ok) { used.add(ok.id); picked.push({ c: ok, pair: null }); }
+    const ok = weightedDraw(sameKind(d), () => 1, 1, `${G.slice}|Q4|${seed}|ok|${d.id}`)[0];
+    used.add(ok.id); picked.push({ c: ok, pair: null });
   }
   const test = G.test, carriers = q4Carriers(G);
   for (const { c, pair } of picked) {
@@ -312,32 +374,33 @@ async function* gridquestQ4(G, mod, seed, difficulty, perWorld) {
       if (p) yield q4Record(c, ctx0, { observation: p, tag: 'perm', variant: 'invariance', meta: { pairId: cluster, rowId: `${seed}:${c.id}`, counterfactual: { swapped: true, from: 'sentence order', to: 'permuted', path: 'observation' } } });
     }
     if (wantInj) {
-      const text = pickBy(carriers[c.label === 'drifted' ? 'as_expected' : 'drifted'], `${c.key}|carrier`), ins = GQ.insertSentence(obs, text, `${c.key}|carrier`);
-      yield q4Record(c, ctx0, { observation: ins, tag: 'inj', variant: 'injection', source: OOD.has(G.slice) ? 'authored' : 'authored-builtin', meta: { pairId: cluster, rowId: `${seed}:${c.id}`, counterfactual: { swapped: false, from: null, to: 'carrier', path: 'observation' }, carrier: spanHash(text) } });
+      const carrier = pickBy(carriers[c.label === 'drifted' ? 'as_expected' : 'drifted'], `${c.key}|carrier`), ins = GQ.insertSentence(obs, carrier.text, `${c.key}|carrier`);
+      yield q4Record(c, ctx0, { observation: ins, tag: 'inj', variant: 'injection', source: OOD.has(G.slice) ? 'authored' : 'authored-builtin', meta: { pairId: cluster, rowId: `${seed}:${c.id}`, counterfactual: { swapped: false, from: null, to: 'carrier', path: 'observation' }, carrier: spanHash(carrier.text), carrierFilter: carrier.filter } });
     } else if (unit(`${c.key}|inj`) < G.share.injection) bump(G, 'q4:carrier-missing');
     if (test && unit(`${c.key}|para`) < G.share.paraphrase) { const p = paraphraseOf(rec, G.contracts.Q4, G.slice, G.opts, c.key); if (p) yield p; }
-    // the same room name for a different room: kept only where the observation tells the rooms apart
+    // the same room name for a different room: kept only where the observation tells the rooms apart, and only where the
+    // renamed row's own form lies in this slice's skeleton bucket
     if (c.op === 'wrong-room' && unit(`${c.key}|same`) < G.share.sameName) {
-      const believed = c.expect.room, d = sameNameDistractor({ sentence: c.sentence, observation: obs, believedRoom: believed });
-      if (!d.kept) bump(G, 'q4:samename-dropped'); else { bump(G, 'q4:samename-kept'); yield q4Record(c, ctx0, { observation: d.observation, tag: 'same', variant: 'distractor', meta: { rowId: `${seed}:${c.id}`, counterfactual: { swapped: true, from: 'header', to: believed, path: 'observation' }, sameName: true } }); }
+      const believed = c.expect.room, d = sameNameDistractor({ sentence: c.sentence, observation: obs, believedRoom: believed, slice: G.slice, masks });
+      if (!d.kept) bump(G, d.reason === 'bucket' ? 'q4:samename-bucket' : 'q4:samename-dropped'); else { bump(G, 'q4:samename-kept'); yield q4Record(c, ctx0, { observation: d.observation, tag: 'same', variant: 'distractor', meta: { rowId: `${seed}:${c.id}`, counterfactual: { swapped: true, from: 'header', to: believed, path: 'observation' }, sameName: true } }); }
     }
   }
-  // presence-matched unknowable (§2.5): the remote effects of a switch are reported only in the result line; replace it by
-  // the same-register line that settles nothing. The label stays the true one (as_expected); the training target is uniform.
-  // In an OOD slice the unknowable axis is the 2 x 2 known/new phrasing x stated/unknowable of the program (§2.5): the row's own form may
-  // be in the slice's held-out bucket ('new' phrasing) or in the train bucket ('known' phrasing); the other OOD buckets stay out.
-  // The source steps are every remote-effect toggle of the route, not only those whose stated row passed the bucket filter.
-  const unkShare = OOD.has(G.slice) ? Math.max(G.share.unknowable, G.opts.share?.unknowable ?? 1) : G.share.unknowable;
-  for (const c of cands.filter(o => o.role === 'ok' && o.remote && o.kind === 'toggle')) {
+  // The unknowable of gridquest Q4 (evaluation slices only, opt-in: opts.share.unknowable): the remote effects of a switch are
+  // reported only in the result line, and this variant DELETES them. That is a gap, not the presence-matched replacement §2.5
+  // asks for, so the rows are a labelled diagnostic (meta.unkAxis.kind 'gap'), never training rows (makeContext refuses them in
+  // train) and not the program's 2 x 2 unknowable axis. The label stays the true one (as_expected).
+  // In an OOD slice the row's own form may be in the slice's held-out bucket ('new' phrasing) or in the train bucket ('known').
+  const unkShare = G.share.unknowable;
+  for (const c of unkShare > 0 ? cands.filter(o => o.role === 'ok' && o.remote && o.kind === 'toggle') : []) {
     if (unit(`${c.key}|unk`) >= unkShare) continue;
     const o = parseObservation(c.observation), first = /^You [a-z ]+ the [a-z]+\./.exec(o.lastAction)?.[0];
     if (!first) continue;
     const obs = scrubFamilySpans(GQ.withLastAction(c.observation, first), seed, G.slice);
     if (G.slice !== 'test-ood' && carriesInjection(obs)) { bump(G, 'q4:injection-left'); continue; }
-    const rec = q4Record(c, ctx0, { observation: obs, tag: 'unk', variant: 'unknowable', target: G.slice === 'train' ? uniformTarget(['as_expected', 'drifted']) : undefined, meta: { counterfactual: { swapped: true, from: 'result line', to: 'result line without the remote effects', path: 'observation' } } });
+    const rec = q4Record(c, ctx0, { observation: obs, tag: 'unk', variant: 'unknowable', meta: { counterfactual: { swapped: true, from: 'result line', to: 'result line without the remote effects', path: 'observation' } } });
     const bucket = skeletonBucket(rec.meta.formId), phrasing = bucket === BUCKET_OF_SLICE[G.slice] ? (OOD.has(G.slice) ? 'new' : 'known') : bucket === 'train' && OOD.has(G.slice) ? 'known' : null;
     if (!phrasing) { bump(G, 'q4:unknowable-bucket'); continue; }
-    rec.meta.unkAxis = { phrasing, stated: `${seed}:${c.id}` };         // meta.unknowable itself is the build's list of question ids
+    rec.meta.unkAxis = { kind: 'gap', diagnostic: true, phrasing, stated: `${seed}:${c.id}` };         // meta.unknowable itself is the build's list of question ids
     bump(G, `q4:unknowable-${phrasing}`);
     yield rec;
   }
@@ -363,6 +426,7 @@ async function* gridquestQ1(G, mod, seed, difficulty, perWorld) {
     const probed = GQ.probeExits(mod, task, k, log), edges = GQ.exitsByEdges(mod, task, k);
     if (DIRECTIONS.some(d => probed.labels[d] !== edges.labels[d])) { bump(G, 'q1:path-disagree'); continue; }
     const observation = scrubFamilySpans(probed.observation, seed, G.slice), form = formOf(parseObservation(observation).description, masks);
+    if (G.slice !== 'test-ood' && carriesInjection(observation)) { bump(G, 'q1:injection-left'); continue; }   // a family span the scrub could not replace
     if (!bucketAllows(G.slice, form)) continue;
     const slots = { observation }, state = kits.gridquest.Q1.buildState(task, slots), key = `${G.slice}|Q1|${seed}|${k}`;
     const questions = {};
@@ -371,7 +435,7 @@ async function* gridquestQ1(G, mod, seed, difficulty, perWorld) {
       questions[`Q1~${d}`] = labelledQuestion(G.contracts.Q1, { label: probed.labels[d], wording: w.wording, wordingText: w.wordingText, slots: { direction: d }, optionOrder: optionOrder(Object.keys(G.contracts.Q1.options), `${key}|${d}`) });
     }
     yield { state, questions, meta: { family: 'gridquest', bed: 'gridquest', seed, difficulty, worldHash: wh, variant: 'clean', formId: form, labelSource: 'simulator', needsWorldKnowledge: false, wordingId: 'Q0-Q3', surface: { source: 'bed', slice: G.slice, lineHash: spanHash(state.observation) }, masks,
-      kit: { port: 'Q1', slots }, q1: { k, labeller: { path: 'createEnv', lifetimeActions: 'Infinity', lifted: true, probes: 4 }, secondPath: 'w.edges + abstract model', labels: probed.labels } } };
+      kit: { port: 'Q1', slots }, q1: { k, labeller: { path: 'createEnv', lifetimeActions: probed.ledger.lifetimeActions, envLimit: probed.ledger.envLimit, lifted: probed.ledger.lifted, probes: probed.ledger.probes }, secondPath: 'w.edges + abstract model', labels: probed.labels } } };
   }
 }
 async function* gridquestQ2(G, mod, seed, difficulty, perWorld) {
@@ -465,7 +529,7 @@ async function* gameqaX1(G, qa, seed, difficulty, perWorld) {
   const composed = (l, j) => {
     const host = hosts.length ? pickBy(hosts, `${G.slice}|X1|${seed}|host|${lineKey(l)}|${j}`) : null;
     if (!host) return null;
-    return { id: `line:${lineKey(l)}:${host.id}`, label: l.label, slots: { report: host.id, append: l.text }, form: formOf(l.text, masks), source: 'authored', kind: `line-${l.role ?? 'decisive'}`, hard: l.label === 'no' ? QA.hardNegativeKind(l.text) : null, addressee: QA.hasAddressee(l.text), labelSource: 'authored-brief', weight: l.label === 'yes' ? (QA.hasAddressee(l.text) ? 1 : 4) : (QA.hasAddressee(l.text) ? 6 : 1.2), line: lineKey(l) };
+    return { id: `line:${lineKey(l)}:${host.id}`, label: l.label, slots: { report: host.id, append: l.text }, form: formOf(l.text, masks), source: 'authored', kind: `line-${l.role ?? 'decisive'}`, hard: l.label === 'no' ? QA.hardNegativeKind(l.text) : null, addressee: QA.hasAddressee(l.text), labelSource: 'authored-brief', weight: l.label === 'yes' ? (QA.hasAddressee(l.text) ? 1 : 4) : (QA.hasAddressee(l.text) ? 6 : 1.2), line: lineKey(l), filter: lineFilter(l), lineSlice: lineSlice(l) };
   };
   const posLines = shuffled(lines.positive, `${G.slice}|X1|${seed}|lp`).slice(0, 4), negLines = shuffled(lines.negative, `${G.slice}|X1|${seed}|ln`).slice(0, 6);
   posLines.forEach((l, j) => { const x = composed(l, j); if (x) cand.push(x); });
@@ -478,7 +542,11 @@ async function* gameqaX1(G, qa, seed, difficulty, perWorld) {
       cand.push({ id: `pinned:${j}`, label: 'no', slots: { text: `${title}\n${body}`, source_kind: 'tracker post' }, form: formOf(`${title} ${body}`, masks), source: 'authored-builtin', kind: 'benign-pinned', hard: QA.hardNegativeKind(body) ?? 'pinned', addressee: QA.hasAddressee(body), labelSource: 'authored-brief', weight: 3 });
     });
   }
-  const usable = cand.filter(x => bucketAllows(G.slice, x.form));
+  // A held-out line of an OOD slice belongs to that slice by the held-out store's own rule (heldout/pools.mjs oodSliceOfHash:
+  // the whole skeleton space shared 5:3:2 among the OOD slices, not lib/hash.mjs skeletonBucket), and x1Lines kept only this
+  // slice's lines: re-bucketing them by skeletonBucket would drop every calib-ood and dev-ood line and 60% of the test-ood ones.
+  // Bed spans and train-pool lines are bucketed as everywhere else.
+  const usable = cand.filter(x => (x.source === 'authored' && OOD.has(G.slice) && x.lineSlice === G.slice) || bucketAllows(G.slice, x.form));
   bump(G, 'x1:candidates', cand.length); bump(G, 'x1:usable', usable.length);
   const pos = usable.filter(x => x.label === 'yes'), neg = usable.filter(x => x.label === 'no');
   const nPos = Math.max(1, Math.round(perWorld * 0.4));
@@ -487,7 +555,7 @@ async function* gameqaX1(G, qa, seed, difficulty, perWorld) {
     const state = kits.gameqa.X1.buildState(task, x.slots);
     const key = `${G.slice}|X1|${seed}|${x.id}`;
     const rec = makeRecord({ contract: G.contracts.X1, slice: G.slice, opts: G.opts, key, state, label: x.label,
-      meta: meta({ variant: 'clean', formId: x.form, labelSource: x.labelSource, surface: { source: x.source, slice: G.slice, lineHash: spanHash(x.slots.append ?? x.slots.text ?? state.text) }, kit: { port: 'X1', slots: x.slots }, x1: { kind: x.kind, hard: x.hard, addressee: x.addressee, line: x.line ?? null } }) });
+      meta: meta({ variant: 'clean', formId: x.form, labelSource: x.labelSource, surface: { source: x.source, slice: G.slice, lineHash: spanHash(x.slots.append ?? x.slots.text ?? state.text), ...(x.source === 'bed' ? {} : { filter: x.filter ?? 'pending' }) }, kit: { port: 'X1', slots: x.slots }, x1: { kind: x.kind, hard: x.hard, addressee: x.addressee, line: x.line ?? null } }) });
     yield rec;
     if (G.test && unit(`${key}|para`) < G.share.paraphrase) { const p = paraphraseOf(rec, G.contracts.X1, G.slice, G.opts, key); if (p) yield p; }
   }
@@ -596,19 +664,42 @@ async function* gameqaQ6(G, qa, seed, difficulty, perWorld) {
 // X2:gameqa (held-out family): two references to the game's things in the words of the design document and of the players
 // (the bed's ALIAS table), the same thing or two different ones of the same kind.
 const X2_KINDS = Object.freeze({ colour: ['amber', 'blue', 'crimson', 'dusk'], item: ['gem', 'potion', 'coins'], enemy: ['crawler', 'moth'], gear: ['sword', 'lantern'] });
-async function* gameqaX2(G, qa, seed, difficulty, perWorld) {
-  const task = qa.index.generate({ seed, split: G.def.bedSplit, difficulty }), c = qa.case.caseFor(task), wh = worldHash(task), masks = QA.masksOf(c);
-  const phrase = (kind, key, alias, k) => (kind === 'colour' ? `the ${alias} ${pickBy(['door', 'key'], `${k}|noun`)}` : `the ${alias}`);
+// The state of X2 is {a, b, context} with the legend of the design document as context, and the port declares no world
+// knowledge (allowedKnowledge: []). Of the bed's ALIAS table only these words are read without the bed's own slang: the
+// legend's names and their plain-English synonyms. Each inner list is a reader class: two words of one class are the same
+// thing to any reader; 'dusk' and its synonyms 'purple'/'violet' are separate classes (that dusk is purple is the bed's
+// convention, nowhere in the task). glimmerstone, glim, shard, tonic, red bottle, beetle thing and gold-coloured are game
+// slang: a pair using them is not decidable from the state and is not built (§1.0 allowed knowledge, §2.7 step 4).
+// Measured before this rule: 103 of 109 alias pairs had a word missing from the legend, many of them slang.
+export const X2_READABLE = Object.freeze({
+  gem: [['gem']], potion: [['potion']], coins: [['coins', 'coin pile', 'gold pile']],
+  amber: [['amber', 'orange']], blue: [['blue', 'navy']], crimson: [['crimson', 'red']], dusk: [['dusk'], ['purple', 'violet']],
+  crawler: [['crawler']], moth: [['moth', 'big moth']], sword: [['sword', 'blade']], lantern: [['lantern', 'lamp']],
+});
+const readerClass = (key, alias) => X2_READABLE[key]?.findIndex(cls => cls.includes(alias)) ?? -1;
+// decidable from the state: both words readable, and a 'same' pair is one reader class (a 'different' pair is two keys)
+export const x2Decidable = (ka, aliasA, kb, aliasB) => {
+  const ca = readerClass(ka, aliasA), cb = readerClass(kb, aliasB);
+  return ca >= 0 && cb >= 0 && (ka !== kb || ca === cb);
+};
+// the pairs of one world (pure: a function of the key): [{ id, a, b, label, kind }], decidable pairs only
+export function x2Pairs(keyBase, perWorld, counts = null) {
   const out = [];
-  for (let j = 0; j < perWorld * 3; j++) {
-    const k = `${G.slice}|X2|${seed}|${j}`, kind = pickBy(Object.keys(X2_KINDS), `${k}|kind`), keys = X2_KINDS[kind];
+  for (let j = 0; j < perWorld * 6 && out.length < perWorld * 3; j++) {
+    const k = `${keyBase}|${j}`, kind = pickBy(Object.keys(X2_KINDS), `${k}|kind`), keys = X2_KINDS[kind];
     const same = unit(`${k}|same`) < 0.5, ka = pickBy(keys, `${k}|ka`), kb = same ? ka : pickBy(keys.filter(x => x !== ka), `${k}|kb`);
     const aliasA = pickBy(TAP.GAMEQA_ALIAS[ka], `${k}|aa`), aliasB = pickBy(TAP.GAMEQA_ALIAS[kb].filter(x => !same || x !== aliasA), `${k}|ab`);
     if (!aliasB || (same && aliasA === aliasB)) continue;
+    if (!x2Decidable(ka, aliasA, kb, aliasB)) { if (counts) counts['x2:needs-slang'] = (counts['x2:needs-slang'] ?? 0) + 1; continue; }
     const noun = pickBy(['door', 'key'], `${k}|noun`);
     const a = kind === 'colour' ? `the ${aliasA} ${noun}` : `the ${aliasA}`, b = kind === 'colour' ? `the ${aliasB} ${noun}` : `the ${aliasB}`;
-    out.push({ id: `x2:${j}`, a, b, label: same ? 'same' : 'different', kind, form: formOf(`${a} // ${b}`, masks) });
+    out.push({ id: `x2:${j}`, a, b, label: same ? 'same' : 'different', kind, keys: [ka, kb], aliases: [aliasA, aliasB] });
   }
+  return out;
+}
+async function* gameqaX2(G, qa, seed, difficulty, perWorld) {
+  const task = qa.index.generate({ seed, split: G.def.bedSplit, difficulty }), c = qa.case.caseFor(task), wh = worldHash(task), masks = QA.masksOf(c);
+  const out = x2Pairs(`${G.slice}|X2|${seed}`, perWorld, G.counts).map(x => ({ ...x, form: formOf(`${x.a} // ${x.b}`, masks) }));
   const seen = new Set();
   for (const x of out.filter(x => !seen.has(`${x.a}|${x.b}`) && seen.add(`${x.a}|${x.b}`)).slice(0, perWorld)) {
     const slots = { a: x.a, b: x.b }, state = kits.gameqa.X2.buildState(task, slots);
@@ -635,6 +726,7 @@ async function* gridquestQ3(G, mod, seed, difficulty, perWorld) {
     const options = [...new Set([...best, ...others])].sort();
     const history = route.rows.slice(Math.max(0, k - 4), k).map(r => ({ action: r.action, result: parseObservation(r.observation).lastAction }));
     const observation = scrubFamilySpans(route.observations[k], seed, G.slice), slots = { observation, history }, state = kits.gridquest.Q3.buildState(task, slots);
+    if (G.slice !== 'test-ood' && carriesInjection(observation)) { bump(G, 'q3:injection-left'); continue; }
     const form = formOf(parseObservation(observation).description, masks);
     if (!bucketAllows(G.slice, form)) continue;
     const target = best.length > 1 ? Object.fromEntries(best.map(a => [a, 1 / best.length])) : undefined;

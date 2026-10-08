@@ -110,6 +110,9 @@ test('proposeLoop: the ladder is M, M, L, F; each move up is an event; ids come 
     assert.match(provider.calls[3].prompt, /HEAL_REGRESSION/, 'only the reject code goes back to the proposer');
     // an op outside the allowed set never compiles, and the proposal that compiled carries the candidate and its hash
     assert.equal(loop.proposal.workflow.version, 2); assert.equal(loop.proposal.candidateHash.length, 64);
+    // version binding: the exact base, frozen kit, lint pin, model policy and brief
+    const b = loop.proposal.base;
+    assert.deepEqual([b.workflowId, b.version, b.hash, b.kitHash, b.kitCommit, b.lintPin.commit, b.policyHash, b.briefHash.length], [wf.records.id, 1, (await import('../ir.mjs')).digest(wf.records), kit.kitHash, '880c6b9', '13f7664', kit.ownerPolicyHash, 64]);
   } finally { ctx.close(); }
 });
 
@@ -129,6 +132,11 @@ test('mechanicalProposal: lint-debt ops come from code, with no model', { skip: 
   const m = mechanicalProposal({ base: wf.records, baseHash: 'h', lint: gate.lintWorkflow(wf.records, { modelPolicy: policy }), env });
   assert.equal(m.proposal.kind, 'lint-debt'); assert.deepEqual(m.proposal.proposer.mechanical.sort(), ['ACCEPTANCE_EXISTENCE_ONLY', 'ERROR_COLLECTION', 'VERIFY_NOT_GATING']);
   assert.equal(m.proposal.workflow.version, 2); assert.equal(m.proposal.ops.length, 3);
+  // records-v3 (P1): eleven repairs in one proposal (the model-op cap does not apply to mechanical repairs)
+  const p1 = mechanicalProposal({ base: wf.p1, baseHash: 'h', lint: gate.lintWorkflow(wf.p1, { modelPolicy: policy }), env });
+  assert.equal(p1.proposal.ops.length, 11); assert.deepEqual(p1.needsProposer, []);
+  assert.deepEqual(p1.proposal.ops.map(o => o.op).filter((o, i, a) => a.indexOf(o) === i).sort(), ['gate_continuation', 'gate_failed_count', 'gate_verify', 'strengthen_acceptance']);
+  assert.equal(gate.lintWorkflow(p1.proposal.workflow, { modelPolicy: policy }).counts.error, 0, 'the lint debt of records-v3 is cleared mechanically');
   const none = mechanicalProposal({ base: wf.codefix, baseHash: 'h', lint: gate.lintWorkflow(wf.codefix, { modelPolicy: policy }), env });
   assert.equal(none.proposal, null); assert.deepEqual(none.needsProposer, ['ACCEPTANCE_EXISTENCE_ONLY']);
 });

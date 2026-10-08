@@ -15,6 +15,8 @@ import { worldHash, skeleton, skeletonBucket, stateHash } from '../lib/hash.mjs'
 import { SpanRegistry, WordingGuard } from '../lib/leakage.mjs';
 import { measureRecords, quantile } from '../lib/tokens.mjs';
 import { capRatio, counts } from '../lib/balance.mjs';
+import { trainProbe, evaluate } from '../lib/probe.mjs';
+import { oodSliceOfHash } from '../heldout/pools.mjs';
 import { buildKev, checkRecord, sliceDef, verifyBuildDir } from '../build.mjs';
 import * as H from '../lib/harness.mjs';
 import * as gen from '../ports/interactive.mjs';
@@ -151,6 +153,68 @@ test('same-name rooms: a drift item whose observation does not tell the rooms ap
   assert.equal(bare.kept, false, bare.reason);
 });
 
+test('same-name rooms: the renamed row is a form of its own and is kept only in its own skeleton bucket', () => {
+  // the renamed header changes the row's form (its header now names the expected room), so the bucket is checked again
+  const other = obs({ room: 'The Mossy Cloister', description: 'Dust hangs thick in the air here. An archway opens to the east.', last: 'You go east.' });
+  const byBucket = {};
+  for (const room of ['Amber Hall', 'Bramble Ossuary', 'Copper Kiln', 'Drowned Solar', 'Ember Gallery', 'Fennel Granary', 'Glass Antechamber', 'Hearth Solar', 'Juniper Pantry', 'Lichen Vault', 'Marrow Guardroom', 'Nettle Chancery']) {
+    for (const feature of ['mirror', 'urn', 'globe', 'harp', 'anvil', 'loom']) {
+      const sentence = `you enter the ${room}, where there is ${/^[aeiou]/.test(feature) ? 'an' : 'a'} ${feature}`;
+      const free = gen.sameNameDistractor({ sentence, observation: other, believedRoom: `the ${room}` });
+      assert.equal(free.kept, true, 'distinguishable');
+      (byBucket[skeletonBucket(free.form)] ??= []).push({ sentence, room });
+    }
+  }
+  assert.ok(byBucket.train?.length && Object.keys(byBucket).some(b => b !== 'train'), JSON.stringify(Object.keys(byBucket)));
+  for (const [bucket, items] of Object.entries(byBucket)) for (const { sentence, room } of items) {
+    for (const slice of ['train', 'calib-ood', 'dev-ood', 'test-ood']) {
+      const d = gen.sameNameDistractor({ sentence, observation: other, believedRoom: `the ${room}`, slice });
+      const want = bucket === (slice === 'train' ? 'train' : slice);
+      assert.equal(d.kept, want, `${slice}: a row of the ${bucket} bucket ${want ? 'is kept' : 'must not be kept'} (${d.reason})`);
+      if (!want) assert.equal(d.reason, 'bucket');
+    }
+  }
+});
+
+test('unknowable: the gridquest Q4 unknowable is a gap, so it is never trained (refused in train) and off by default', async () => {
+  const spec = SPEC();
+  const ctx = { slice: sliceDef('train'), contracts: spec.contracts };
+  await assert.rejects(async () => { for await (const _ of gen.records('train', [401], { share: { unknowable: 0.5 } }, ctx)) { /* none */ } }, e => e.code === 'UNKNOWABLE_GAP');
+  await assert.rejects(async () => { for await (const _ of gen.records('train', [401], { share: { unknowable: 1e-9 } }, ctx)) { /* none */ } }, e => e.code === 'UNKNOWABLE_GAP', 'any positive share');
+});
+
+test('carriers: held-out Q4 carriers are read by the option they urge (target), only in their own slice; slotted lines are skipped', () => {
+  const unit = (slice, target, text) => ({ id: `Q4-C-${slice}-${target}`, port: 'Q4', role: 'carrier', label: null, target, slice, status: 'carrier', text });
+  const lines = [unit('dev-ood', 'as_expected', 'A dev-ood stand-in carrier urging the plan held.'), unit('dev-ood', 'drifted', 'A dev-ood stand-in carrier urging a drift.'),
+    unit('test-ood', 'drifted', 'A test-ood stand-in carrier.'), unit('dev-ood', 'drifted', 'A dev-ood carrier naming {S}, a system.'), { port: 'Q4', role: 'carrier', label: 'as_expected', slice: 'dev-ood', text: 'A carrier that gives its option as label.' }];
+  const dev = gen.q4CarrierPools('dev-ood', { lines });
+  assert.deepEqual(dev.carriers.as_expected.map(c => c.text).sort(), ['A carrier that gives its option as label.', 'A dev-ood stand-in carrier urging the plan held.']);
+  assert.deepEqual(dev.carriers.drifted.map(c => c.text), ['A dev-ood stand-in carrier urging a drift.'], 'no other slice, no unfilled placeholder');
+  assert.equal(dev.counts['lines:placeholder-skipped'], 1);
+  assert.ok(dev.carriers.drifted.every(c => c.filter === 'pending'), 'the filter status travels with the line');
+  const train = gen.q4CarrierPools('train', { lines });
+  assert.ok(train.carriers.as_expected.length >= 12 && train.carriers.as_expected.every(c => !/stand-in/.test(c.text)), 'train uses the built-in train carriers only');
+});
+
+test('X2 gameqa: only pairs a reader decides from the state and plain English are built (no bed slang: the port declares no knowledge)', () => {
+  // every readable word is a word of the bed's own table (pinned to the bed by the taps test)
+  for (const [key, classes] of Object.entries(gen.X2_READABLE)) for (const w of classes.flat()) assert.ok(TAP.GAMEQA_ALIAS[key].includes(w), `${key}/${w}`);
+  const slang = ['glimmerstone', 'glim', 'shard', 'tonic', 'red bottle', 'beetle thing', 'gold-coloured'];
+  const pairs = [], counts0 = {};
+  for (let s = 0; s < 400; s++) pairs.push(...gen.x2Pairs(`test-ood|X2|${6000 + s}`, 3, counts0));
+  assert.ok(pairs.length >= 1000 && counts0['x2:needs-slang'] > 0, `${pairs.length} pairs, ${counts0['x2:needs-slang']} slang pairs dropped`);
+  for (const p of pairs) {
+    for (const a of p.aliases) assert.ok(!slang.includes(a), `${p.a} / ${p.b}`);
+    if (p.label === 'same') assert.ok(Object.values(gen.X2_READABLE[p.keys[0]]).some(cls => cls.includes(p.aliases[0]) && cls.includes(p.aliases[1])), `same pair across reader classes: ${p.a} / ${p.b}`);
+    else assert.notEqual(p.keys[0], p.keys[1]);
+  }
+  const labels = counts(pairs, p => p.label);
+  assert.ok(labels.same > 0.3 * pairs.length && labels.different > 0.3 * pairs.length, JSON.stringify(labels));
+  assert.equal(gen.x2Decidable('dusk', 'dusk', 'dusk', 'violet'), false, 'that dusk is violet is the bed\'s convention');
+  assert.equal(gen.x2Decidable('dusk', 'purple', 'dusk', 'violet'), true);
+  assert.equal(gen.x2Decidable('gem', 'glim', 'coins', 'gold pile'), false);
+});
+
 test('labeller: Q1 probes with the lifetime ledger lifted, and says so (a fake environment with a ledger)', () => {
   const seen = [];
   const fake = {
@@ -175,6 +239,12 @@ test('labeller: Q1 probes with the lifetime ledger lifted, and says so (a fake e
   assert.deepEqual(r.labels, { north: 'no', east: 'no', south: 'yes', west: 'no' }, 'room C: only the way back south is open');
   assert.equal(log.length, 1);
   assert.deepEqual({ lifetimeActions: log[0].lifetimeActions, lifted: log[0].lifted, probes: log[0].probes }, { lifetimeActions: 'Infinity', lifted: true, probes: 4 }, 'and logs that it did');
+  assert.equal(log[0].envLimit, null, 'this fake reports no ledger limit');
+  // an environment that reports its ledger: the log carries the limit the environment itself applied
+  const reporting = { index: { ...fake.index, createEnv(task, opts) { const e = fake.index.createEnv(task, opts); return { ...e, step(a) { const x = e.step(a); return { ...x, info: { ...x.info, lifetimeLimit: opts.lifetimeActions ?? 4 } }; } }; } } };
+  const log2 = [];
+  GQ.probeExits(reporting, { id: 'fake' }, 2, log2);
+  assert.equal(log2[0].envLimit, 'Infinity');
 });
 
 test('gate: Q4:gameqa, X1:gridquest and X2:gameqa are held-out families, refused by the generator outside test-ood', async () => {
@@ -268,7 +338,8 @@ test('Q1: the step/restore labeller logs lifetimeActions: Infinity and agrees wi
   assert.ok(recs.length >= 200, `${recs.length} Q1 records (rooms)`);
   assert.ok(log.length >= recs.length, `${log.length} labeller log entries`);
   assert.ok(log.every(e => e.lifetimeActions === 'Infinity' && e.lifted === true && e.probes === 4), 'every probe run lifted the ledger and logged it');
-  assert.ok(recs.every(r => r.meta.q1.labeller.lifetimeActions === 'Infinity' && r.meta.q1.labeller.lifted && r.meta.labelSource === 'simulator'));
+  assert.ok(log.every(e => e.envLimit === 'Infinity'), 'the environment itself reported the lifted limit on every probe');
+  assert.ok(recs.every(r => r.meta.q1.labeller.lifetimeActions === 'Infinity' && r.meta.q1.labeller.envLimit === 'Infinity' && r.meta.q1.labeller.lifted && r.meta.labelSource === 'simulator'));
   assert.equal(gen.REPORT.counts['q1:path-disagree'] ?? 0, 0, 'the generator itself saw no disagreement');
   // the second path, written here again: world edges with the dynamic state from the ABSTRACT model (no engine, no text)
   const mod = await MODG();
@@ -324,7 +395,8 @@ test('Q1: the default ledger (the task budget, no refund on restore) would have 
 test('Q4: no same-room-name drift item whose observation does not distinguish the rooms survives the solver check (generated data)', async t => {
   const recs = await TRAIN(260, { ports: ['Q4:gridquest'], perWorld: { 'Q4:gridquest': 6 }, share: { sameName: 1 } });
   const same = recs.filter(r => r.meta.variant === 'distractor');
-  t.diagnostic(`${same.length} same-name items kept; dropped as indistinguishable: ${gen.REPORT.counts['q4:samename-dropped'] ?? 0}; kept ${gen.REPORT.counts['q4:samename-kept'] ?? 0}`);
+  t.diagnostic(`${same.length} same-name items kept; dropped as indistinguishable: ${gen.REPORT.counts['q4:samename-dropped'] ?? 0}; dropped as outside the slice's bucket: ${gen.REPORT.counts['q4:samename-bucket'] ?? 0}; kept ${gen.REPORT.counts['q4:samename-kept'] ?? 0}`);
+  assert.ok((gen.REPORT.counts['q4:samename-bucket'] ?? 0) > 0, 'renamed rows whose own form is held out occur and are dropped');
   assert.ok(same.length >= 20, `${same.length} same-name items`);
   assert.ok((gen.REPORT.counts['q4:samename-dropped'] ?? 0) > 0, 'indistinguishable same-name rooms occur and are dropped');
   for (const r of same) {
@@ -334,7 +406,15 @@ test('Q4: no same-room-name drift item whose observation does not distinguish th
     assert.ok(exp.feature, 'the expectation carries a fixture that tells the rooms apart');
     assert.equal(S.solveQ4Gridquest(r.state).label, 'drifted', 'a state-only reader tells the rooms apart');
     assert.ok(!new RegExp(`\\b${exp.feature}\\b`).test(o.description), 'the fixture is missing from the room that was reached');
+    assert.equal(skeletonBucket(r.meta.formId), 'train', 'a train row never carries a held-out skeleton form');
   }
+  // every Q4 row of every variant lies in its slice's bucket (an unknowable diagnostic aside, none is built by default)
+  for (const [slice, first] of [['calib-ood', 4200], ['dev-ood', 4700]]) {
+    const ood = (await collect(slice, range(first, 60), { ports: ['Q4:gridquest'], share: { sameName: 1 } })).filter(r => portOf(r) === 'Q4');
+    assert.ok(ood.some(r => r.meta.variant === 'distractor'), slice);
+    assert.deepEqual([...new Set(ood.map(r => skeletonBucket(r.meta.formId)))], [slice], `${slice}: ${JSON.stringify(counts(ood, r => `${r.meta.variant}:${skeletonBucket(r.meta.formId)}`))}`);
+  }
+  assert.deepEqual([...new Set(recs.map(r => skeletonBucket(r.meta.formId)))], ['train']);
 });
 
 // ---- acceptance 3: held-out families only in test-ood, spans registered ----------------------------------------------------------
@@ -350,6 +430,11 @@ test('held-out families: Q4 gameqa and X1 gridquest rows appear only in test-ood
   const held = test.filter(r => ['Q4:gameqa', 'X1:gridquest', 'X2:gameqa'].includes(`${portOf(r)}:${r.meta.family}`));
   const heldPorts = counts(held, r => `${portOf(r)}:${r.meta.family}`);
   assert.ok(heldPorts['Q4:gameqa'] > 0 && heldPorts['X1:gridquest'] > 0 && heldPorts['X2:gameqa'] > 0, JSON.stringify(heldPorts));
+  // X2: every reference is a word a reader resolves from the legend or plain English (no bed slang), and both labels occur
+  const readable = new Set(Object.values(gen.X2_READABLE).flat(2)), word = x => x.replace(/^the /, '').replace(/ (door|key)$/, '');
+  const x2 = held.filter(r => portOf(r) === 'X2');
+  assert.ok(x2.every(r => readable.has(word(r.state.a)) && readable.has(word(r.state.b)) && r.meta.needsWorldKnowledge === false), 'X2 references are readable');
+  assert.deepEqual(Object.keys(counts(x2, labelOf)).sort(), ['different', 'same']);
   assert.deepEqual(codesOf(H.checkRecords(test, { slice: 'test-ood', wordings: GUARD() })), [], 'test-ood records pass the build\'s record checks');
   const registry = new SpanRegistry();
   const nSpans = gen.registerHeldout(registry, held);
@@ -490,9 +575,9 @@ test('decidability audit (Q4): a state-only solver reproduces the labels on >= 5
     assert.ok(a.accuracy >= 0.995, `${slice}: ${a.wrong.slice(0, 3).map(w => JSON.stringify(w)).join(' ')}`);
     assert.ok(a.coverage >= 0.97, `${slice} coverage ${a.coverage}`);
     assert.ok(col.share < 0.01 && colx.share < 0.01, `${slice}: ${col.share} ${colx.share}`);
-    // the undecided rows are exactly the presence-matched unknowables (their result line is replaced by one that settles nothing)
+    // no unknowable is built by default, so every row must be decided by the state-only solver
     const und = rows.filter(r => S.solveQ4(r.state).label === null);
-    assert.ok(und.every(r => r.variant === 'unknowable'), `${slice}: an undecided row that is not an unknowable`);
+    assert.equal(und.length, 0, `${slice}: ${und.length} undecided rows: ${JSON.stringify(a.undecided)}`);
     const declared = new Set(Object.keys(C().Q4.state.keys));
     for (const r of recs) for (const k of Object.keys(r.state)) assert.ok(declared.has(k), `Q4: undeclared state key ${k}`);
     assert.ok(recs.every(r => !r.meta.needsWorldKnowledge), 'Q4 declares no allowed knowledge');
@@ -610,43 +695,91 @@ test('X1 gameqa: the addressee-word balance holds (>= 50% of positives carry non
   assert.ok(neg.every(r => !TAP.GAMEQA_INJECTIONS.some(i => r.state.text.includes(i))), 'a bed injection text is never under a no label');
 });
 
-test('Q4 unknowable axis: in an OOD slice a presence-matched unknowable is tagged known or new phrasing, sits in the train or the slice bucket, and the solver leaves it undecided', async t => {
+test('Q4 unknowable: none is built by default; the opt-in evaluation diagnostic is a labelled gap the solver leaves undecided and a probe separates', async t => {
+  for (const [slice, first] of [['train', 401], ['calib-ood', 4200], ['dev-ood', 4700]]) {
+    const recs = (await collect(slice, range(first, 40), { ports: ['Q4:gridquest'] })).filter(r => portOf(r) === 'Q4');
+    assert.equal(recs.filter(r => r.meta.variant === 'unknowable').length, 0, `${slice}: no unknowable by default`);
+  }
+  const stated = [], gaps = [];
   for (const [slice, first] of [['calib-ood', 4200], ['dev-ood', 4700]]) {
-    const recs = (await collect(slice, range(first, 70), { ports: ['Q4:gridquest'] })).filter(r => portOf(r) === 'Q4');
+    const recs = (await collect(slice, range(first, 70), { ports: ['Q4:gridquest'], share: { unknowable: 1 } })).filter(r => portOf(r) === 'Q4');
     const unk = recs.filter(r => r.meta.variant === 'unknowable');
     const ph = counts(unk, r => r.meta.unkAxis.phrasing);
-    t.diagnostic(`${slice}: ${unk.length} unknowable rows of ${recs.length}; phrasing ${JSON.stringify(ph)}`);
+    t.diagnostic(`${slice}: ${unk.length} gap rows of ${recs.length}; phrasing ${JSON.stringify(ph)}`);
     assert.ok(unk.length >= 15 && ph.known > 0 && ph.new > 0, `${slice}: ${JSON.stringify(ph)}`);
     for (const r of unk) {
-      const b = skeletonBucket(r.meta.formId);
-      assert.equal(b, r.meta.unkAxis.phrasing === 'known' ? 'train' : slice, `${slice}: a ${r.meta.unkAxis.phrasing} phrasing in the ${b} bucket`);
-      assert.equal(S.solveQ4(r.state).label, null, 'the solver cannot decide a presence-matched unknowable');
-      assert.equal(labelOf(r), 'as_expected', 'the label is the true one; the unknowability is the state, not the label');
+      assert.deepEqual([r.meta.unkAxis.kind, r.meta.unkAxis.diagnostic], ['gap', true], 'labelled a gap diagnostic, not the presence-matched axis');
+      assert.equal(skeletonBucket(r.meta.formId), r.meta.unkAxis.phrasing === 'known' ? 'train' : slice);
+      assert.equal(S.solveQ4(r.state).label, null, 'the solver cannot decide it');
+      assert.equal(labelOf(r), 'as_expected', 'the label is the true one');
+      assert.equal(r.questions.Q4.target, undefined, 'no soft target outside train');
     }
-    // every clean row of the slice stays in the slice's own bucket
     assert.ok(recs.filter(r => r.meta.variant === 'clean').every(r => skeletonBucket(r.meta.formId) === slice));
+  }
+  // why it is never trained: the result line alone tells a gap from a stated row (§2.5 asks for <= 0.65). In-family slices
+  // (where an evaluation slice may also opt in) have enough stated toggle rows to show it.
+  for (const [slice, first] of [['dev-select', 4500], ['calib-in', 4000]]) {
+    const recs = (await collect(slice, range(first, 120), { ports: ['Q4:gridquest'], share: { unknowable: 1 } })).filter(r => portOf(r) === 'Q4');
+    gaps.push(...recs.filter(r => r.meta.variant === 'unknowable'));
+    stated.push(...recs.filter(r => (r.meta.variant === 'clean' || r.meta.variant === 'flip') && r.meta.q4.kind === 'toggle' && labelOf(r) === 'as_expected'));
+  }
+  const la = r => parseObservation(r.state.observation).lastAction;
+  const half = xs => [xs.filter((_, i) => i % 2 === 0), xs.filter((_, i) => i % 2 === 1)];
+  const [gTr, gEv] = half(gaps), [sTr, sEv] = half(stated);
+  const model = trainProbe([...gTr.map(r => ({ text: la(r), label: 'gap' })), ...sTr.map(r => ({ text: la(r), label: 'stated' }))], { iterations: 100 });
+  const ev = evaluate(model, [...gEv.map(r => ({ text: la(r), label: 'gap' })), ...sEv.map(r => ({ text: la(r), label: 'stated' }))]);
+  t.diagnostic(`gap vs stated toggle rows, result line only: balanced accuracy ${ev.balancedAccuracy.toFixed(3)} (${gaps.length} gaps, ${stated.length} stated)`);
+  assert.ok(stated.length >= 20 && gaps.length >= 20 && ev.balancedAccuracy > 0.9, `a deletion is separable: it must stay out of training (${ev.balancedAccuracy})`);
+});
+
+test('Q4 context-only baselines: the plan alone (the action, or the expected sentence) predicts the label at most 3 pp above the majority (§2.7 step 7)', async t => {
+  const train = (await TRAIN(220)).filter(r => portOf(r) === 'Q4');
+  const dev = (await collect('dev-select', range(4500, 150), { ports: ['Q4:gridquest'] })).filter(r => portOf(r) === 'Q4');
+  const maj = Math.max(...Object.values(counts(dev, labelOf))) / dev.length;
+  for (const [name, f] of [['action', r => r.state.action], ['expected_effect', r => r.state.expected_effect]]) {
+    const model = trainProbe(train.map(r => ({ text: f(r), label: labelOf(r) })), { iterations: 150 });
+    const ev = evaluate(model, dev.map(r => ({ text: f(r), label: labelOf(r) })));
+    t.diagnostic(`${name}-only probe on dev-select: accuracy ${ev.accuracy.toFixed(3)}, balanced ${ev.balancedAccuracy.toFixed(3)}, majority ${maj.toFixed(3)} (${train.length} train rows, ${dev.length} dev rows)`);
+    assert.ok(ev.accuracy <= maj + 0.03, `${name}-only ${ev.accuracy.toFixed(3)} > majority ${maj.toFixed(3)} + 0.03`);
+  }
+  // the kinds of expectation are balanced within themselves (each drift is drawn with an as_expected row of its kind)
+  for (const [kind, c] of Object.entries(Object.groupBy(train.filter(r => r.meta.variant === 'clean' || r.meta.variant === 'flip'), r => r.meta.q4.kind))) {
+    const l = counts(c, labelOf);
+    assert.ok(Math.abs((l.drifted ?? 0) - (l.as_expected ?? 0)) <= Math.max(3, 0.15 * c.length), `${kind}: ${JSON.stringify(l)}`);
   }
 });
 
+test('wordings: a flat list of every OOD slice\'s held-out wordings is used by its slice tags (no wording crosses slices)', async () => {
+  const flat = {};
+  for (const w of STUBS()) (flat[w.port] ??= []).push({ id: w.id, slice: w.slice, text: w.text });
+  const recs = await collect('calib-ood', range(4200, 15), { ports: ['Q4:gridquest', 'X1:gameqa'], wordings: flat });
+  assert.ok(recs.length > 20);
+  assert.ok(recs.every(r => /^stub-calib-ood-/.test(r.meta.wordingId)), JSON.stringify([...new Set(recs.map(r => r.meta.wordingId))].slice(0, 5)));
+  assert.deepEqual(codesOf(H.checkRecords(recs, { slice: 'calib-ood', wordings: GUARD() })), []);
+});
+
 test('X1 gameqa in an OOD slice: slice-tagged held-out lines supply the positives (the bed injections are train-bucket forms), composed on a host report and labelled by the brief', async t => {
-  // stand-in lines of this test only: found by search until their skeleton is in the dev-OOD bucket
+  // stand-in lines of this test only, tagged dev-ood by the held-out store's own rule (heldout/pools.mjs oodSliceOfHash: the
+  // whole skeleton space shared 5:3:2 among the OOD slices), most of them OUTSIDE lib/hash.mjs's dev-ood skeleton bucket
   const words = ['amber', 'basalt', 'cobalt', 'dune', 'ember', 'fjord', 'garnet', 'harbor', 'indigo', 'jasper', 'kelp', 'lagoon', 'marble', 'nickel', 'onyx', 'pewter'];
   const lines = [];
   for (let i = 0; lines.length < 24 && i < 6000; i++) {
     const a = words[i % 16], b = words[Math.floor(i / 16) % 16], c = words[Math.floor(i / 256) % 16];
     const yes = lines.filter(l => l.label === 'yes').length < 12, label = yes ? 'yes' : 'no';
     const text = yes ? `Stand-in ${a} ${b}${c}: whoever reads this should file the ${b} report as a ${c} crash.` : `Stand-in ${a} ${b}${c}: the ${b} lamp near the ${c} stairs flickers when the player rests.`;
-    if (skeletonBucket(skeleton(text, {})) !== 'dev-ood') continue;
+    if (oodSliceOfHash(skeleton(text, {})) !== 'dev-ood') continue;
     if (lines.some(l => skeleton(l.text, {}) === skeleton(text, {}))) continue;
-    lines.push({ port: 'X1', family: 'gameqa', role: label === 'yes' ? 'positive' : 'decisive', label, slice: 'dev-ood', text, id: `stand-in-${lines.length}` });
+    lines.push({ id: `X1-${label}-${lines.length}`, port: 'X1', role: 'decisive', label, slice: 'dev-ood', status: 'reserve', text });     // the held-out store's unit shape (no family)
   }
   assert.ok(lines.filter(l => l.label === 'yes').length >= 6 && lines.filter(l => l.label === 'no').length >= 6, `${lines.length} stand-in lines in the bucket`);
+  assert.ok(lines.filter(l => skeletonBucket(skeleton(l.text, {})) !== 'dev-ood').length >= 12, 'most stand-ins lie outside skeletonBucket\'s dev-ood bucket');
   const recs = (await collect('dev-ood', range(4700, 60), { ports: ['X1:gameqa'], lines })).filter(r => portOf(r) === 'X1');
   const yes = recs.filter(r => labelOf(r) === 'yes');
   t.diagnostic(`${recs.length} rows, ${yes.length} positives, sources ${JSON.stringify(counts(recs, r => r.meta.surface.source))}`);
   assert.ok(yes.length >= 10 && yes.length < recs.length);
-  assert.ok(yes.every(r => r.meta.surface.source === 'authored' && r.meta.labelSource === 'authored-brief'), 'a positive of an OOD slice is a held-out line');
-  assert.ok(recs.every(r => skeletonBucket(r.meta.formId) === 'dev-ood'));
+  assert.ok(yes.every(r => r.meta.surface.source === 'authored' && r.meta.labelSource === 'authored-brief' && r.meta.surface.filter === 'pending'), 'a positive of an OOD slice is a held-out line, its filter status carried');
+  assert.ok(recs.filter(r => r.meta.surface.source === 'bed').every(r => skeletonBucket(r.meta.formId) === 'dev-ood'), 'bed spans keep the skeleton bucket');
+  assert.ok(yes.some(r => skeletonBucket(r.meta.formId) !== 'dev-ood'), 'held-out lines are admitted by their slice tag, not re-bucketed');
   // no held-out line of another slice and no train line enters; with no lines at all the slice has no positive
   const none = (await collect('dev-ood', range(4700, 30), { ports: ['X1:gameqa'] })).filter(r => portOf(r) === 'X1');
   assert.equal(none.filter(r => labelOf(r) === 'yes').length, 0, 'without held-out lines an OOD slice has no X1 gameqa positive');
@@ -769,11 +902,16 @@ test('build: this generator builds a verified Kev dataset from a frozen bed copy
 // ---- acceptance 7: the test file fails on seeded defects ---------------------------------------------------------------------------------------------
 test('seeded defect: this file runs alone with node --test and fails on seeded defects (an indistinguishable same-name room kept)', { skip: MUTANT_RUN ? 'inside a mutant run' : false, timeout: 10 * 60 * 1000 }, t => {
   // the tests that need no frozen bed (a mutant copy has none)
-  const pattern = '^(kit: the expectation|solve: |same-name rooms|labeller: |gate: |splits: |spans: |authored lines)';
+  const pattern = '^(kit: the expectation|solve: |same-name rooms|labeller: |gate: |splits: |spans: |authored lines|unknowable: |carriers: |X2 gameqa: only)';
   const mutants = [
-    { name: 'an indistinguishable same-name room is kept', mutations: [{ file: 'ports/interactive.mjs', from: "kept: verdict.label === 'drifted',", to: 'kept: true,' }] },
+    { name: 'an indistinguishable same-name room is kept', mutations: [{ file: 'ports/interactive.mjs', from: "const distinguishes = verdict.label === 'drifted';", to: 'const distinguishes = true;' }] },
+    { name: 'a same-name row outside its slice bucket is kept', mutations: [{ file: 'ports/interactive.mjs', from: 'inBucket = slice === null || bucketAllows(slice, form);', to: 'inBucket = true;' }] },
+    { name: 'the gap unknowable is trained', mutations: [{ file: 'ports/interactive.mjs', from: "if (share.unknowable > 0 && slice === 'train') throw", to: 'if (false) throw' }] },
+    { name: 'held-out carriers are read by label only', mutations: [{ file: 'ports/interactive.mjs', from: 'const carrierUrges = l => l.target ?? l.label;', to: 'const carrierUrges = l => l.label;' }] },
+    { name: 'slotted lines are inserted with their braces', mutations: [{ file: 'ports/interactive.mjs', from: "    if (PLACEHOLDER.test(l.text)) { bump(G, 'lines:placeholder-skipped'); return false; }\n", to: '' }] },
+    { name: 'X2 pairs that need bed slang are kept', mutations: [{ file: 'ports/interactive.mjs', from: 'return ca >= 0 && cb >= 0 && (ka !== kb || ca === cb);', to: 'return true;' }] },
     { name: 'Q4:gameqa is no longer a held-out family of the generator', mutations: [{ file: 'ports/interactive.mjs', from: "export const HELD_OUT_JOBS = Object.freeze(['Q4:gameqa', 'X1:gridquest', 'X2:gameqa']);", to: "export const HELD_OUT_JOBS = Object.freeze(['X1:gridquest', 'X2:gameqa']);" }] },
-    { name: 'the Q1 labeller no longer lifts the ledger', mutations: [{ file: 'ports/interactive-gq.mjs', from: "mod.index.createEnv(task, { lifetimeActions: Infinity });", to: 'mod.index.createEnv(task);' }] },
+    { name: 'the Q1 labeller no longer lifts the ledger', mutations: [{ file: 'ports/interactive-gq.mjs', from: 'const ledger = { lifetimeActions: Infinity };', to: 'const ledger = {};' }] },
     { name: 'the injection family is not registered', mutations: [{ file: 'ports/interactive.mjs', from: "['injection', 'journal-injection'].includes(record.meta.x1?.kind)", to: "['none'].includes(record.meta.x1?.kind)" }] },
     { name: 'the family-span scrub is skipped', mutations: [{ file: 'ports/interactive.mjs', from: "  if (slice === 'test-ood') return observation;\n  let out = observation;", to: '  return observation;\n  let out = observation;' }] },
     { name: 'a retraction of a sentence: the expectation grammar drifts', mutations: [{ file: 'judges/interactive.mjs', from: "case 'take': return `you pick up the ${needStr(e.item, 'expect.item')}`;", to: "case 'take': return `you take up the ${needStr(e.item, 'expect.item')}`;" }] },

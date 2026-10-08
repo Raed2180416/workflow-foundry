@@ -11,6 +11,21 @@ const nonEmpty = v => typeof v === 'string' && v.trim().length > 0;
 const money = v => typeof v === 'number' && Number.isFinite(v) && v >= 0;
 const freeze = v => { if (v && typeof v === 'object') { for (const child of Object.values(v)) freeze(child); Object.freeze(v); } return v; };
 
+// Environment variables a claude-cli provider config may set in (or remove from, with null) the child process. A closed list:
+// an environment variable can change what the CLI sends (model, thinking budget, base URL, caching), and a variable that changes
+// the decoding would have to enter the replay key. Everything here is transport, telemetry or cache-pricing tuning; none touches
+// the sample (measured in research/review-20261007/04-efficiency-rust.md §2.4). Values are "0" or "1".
+export const CHILD_ENV_ALLOWED = Object.freeze(['CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC', 'FORCE_PROMPT_CACHING_5M', 'DISABLE_TELEMETRY', 'DISABLE_ERROR_REPORTING', 'DISABLE_AUTOUPDATER']);
+/** Check a childEnv block ({ NAME: "0" | "1" | null }); `where` names it in the error. Returns the block. */
+export function validateChildEnv(childEnv, where = 'childEnv') {
+  if (!isObject(childEnv)) invalid(`${where} must be an object of environment variables`);
+  for (const [name, value] of Object.entries(childEnv)) {
+    if (!CHILD_ENV_ALLOWED.includes(name)) invalid(`${where} may not set ${JSON.stringify(name)}; allowed: ${CHILD_ENV_ALLOWED.join(', ')}`);
+    if (value !== null && value !== '0' && value !== '1') invalid(`${where}.${name} must be "0", "1" or null (remove)`);
+  }
+  return childEnv;
+}
+
 export function validatePolicy(policy) {
   try { checkData(policy, { maxBytes: 1024 * 1024 }); } catch (error) { invalid(error.message); }
   if (!isObject(policy)) invalid('must be a JSON object');
@@ -25,6 +40,7 @@ export function validatePolicy(policy) {
       if (!nonEmpty(p.binary) || !Array.isArray(p.invocation) || p.invocation.some(a => typeof a !== 'string')) invalid(`provider ${name} needs binary and a string invocation list`);
       if (p.invocation.some(a => a === '--fallback-model' || a.startsWith('--fallback-model='))) invalid(`provider ${name} may not configure --fallback-model (no silent fallback)`);
       if (p.invocation.some(a => a === '--model' || a.startsWith('--model='))) invalid(`provider ${name} invocation may not fix a model; ids come from models[]`);
+      if (p.childEnv !== undefined) validateChildEnv(p.childEnv, `provider ${name} childEnv`);
     }
     if (p.kind === 'openai-compatible-http' && (!nonEmpty(p.baseUrlTemplate) || !p.baseUrlTemplate.includes('{port}'))) invalid(`provider ${name} needs a baseUrlTemplate with {port}`);
   }

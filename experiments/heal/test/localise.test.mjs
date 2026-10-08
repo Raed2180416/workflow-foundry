@@ -1,4 +1,7 @@
 import test from 'node:test';
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import assert from 'node:assert/strict';
 import { localise, finish, defectClasses, wilsonLower, generateCandidates, varianceTest, DEFAULTS } from '../localise.mjs';
 import { openCtx } from '../replay.mjs';
@@ -104,7 +107,7 @@ test('varianceTest resamples the recorded call K times through a journaled port 
     good.orders[0].numeric_order = 'DMY'; bad.orders[0].numeric_order = 'MDY';
     let i = 0;
     const provider = new kit.ScriptedProvider(() => ({ value: i++ % 2 ? good : bad, costUsd: 0.01 }));
-    const j = kit.emptyJournal('/var/tmp/foundry-work/heal/test-variance.sqlite');
+    const j = kit.emptyJournal(path.join(mkdtempSync(path.join(tmpdir(), 'heal-var-')), 'journal.sqlite'));   // a fresh journal: an already-journaled attempt is recovered, never paid twice
     const port = new kit.ModelPort({ policy: ctx.policy, providers: { 'claude-cli': provider }, journal: j.journal, mode: 'live' });
     const v = await varianceTest({ journal: ctx.journal, port, workflow: wf.records, trial, rowId: row.id, path: ['orders', 0, 'numeric_order'], passingValue: 'DMY', k: 8 });
     assert.equal(v.k, 8); assert.equal(v.hits, 4); assert.equal(v.errors, 0); assert.equal(v.class, 'model-variance'); assert.ok(v.wilsonLower > 0.2);

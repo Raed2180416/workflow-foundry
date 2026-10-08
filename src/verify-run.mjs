@@ -20,7 +20,8 @@ const differing = (actual, expected) => Object.keys(expected).filter(key => actu
  * @param opts.journalDb  database holding the journal (default: the store's, unless the run's birth event says its journal is external)
  * @param opts.expectHead {seq, hash} the chain must contain this event (a head recorded elsewhere)
  * @param opts.anchors    anchor records (readAnchors; null when none were supplied): the chain must contain every anchored head
- * @param opts.requireBound  a run without the audit marker is an error, not a warning (for claim-bearing runs)
+ * @param opts.requireBound  for claim-bearing runs: a run without the audit marker, and evidence the chain binds but this check could not
+ *                           re-read (an external journal not supplied, a missing external transcript, an unverified replay source), are errors
  */
 export function verifyRun(store, runId, options = {}) {
   // One read snapshot, so a run another process is still writing to is judged on a single consistent state.
@@ -63,11 +64,39 @@ function check(store, runId, { journalDb: given = null, expectHead = null, ancho
     add(requireBound ? 'error' : 'warn', 'LEGACY_UNBOUND', `This run predates audit binding (its birth event has no ${AUDIT} marker): only its event chain is verified, not its model responses, decisions or verdict`);
     return result();
   }
+  // Evidence the chain binds but this check could not re-read (another database, a missing external file, an unverifiable replay
+  // source) is a warning, and an error for a claim-bearing run (requireBound).
+  const unchecked = requireBound ? 'error' : 'warn';
+
+  // 1b. The run record's identity against its immutable birth event: the workflow, input, policy, engine, registry and model binding
+  // the run was created with. Nothing rewrites these after creation, so any difference is an edit (07 §4.4).
+  const birth = events[0], identity = [];
+  const same = (name, actual, expected) => { if (expected !== undefined && (actual ?? null) !== (expected ?? null)) identity.push(name); };
+  same('workflowHash', run.workflowHash, birth.workflowHash);
+  same('registryHash', run.registryHash, birth.registryHash);
+  same('engineHash', run.engineHash, birth.engineHash);
+  same('input', digest(run.input ?? null), birth.inputHash);
+  same('policy', digest(run.policy ?? null), birth.policyHash);
+  if (Object.hasOwn(birth, 'modelPolicyHash')) {
+    for (const key of ['modelPolicyHash', 'modelMode', 'sampleSalt', 'assignmentHash']) same(key, run[key], birth[key]);
+    if (birth.assignmentHash != null) same('assignment', digest(run.assignment ?? null), birth.assignmentHash);
+    same('identity', run.identity ? digest(run.identity) : null, birth.identityHash);
+  }
+  if (identity.length) add('error', 'RUN_IDENTITY_EDITED', `The run record no longer matches its birth event (${identity.join(', ')})`, { changed: identity });
+  // The workflow the run executed, by its content hash: an edited or deleted body cannot be the one the chain names.
+  let workflow = null;
+  try { workflow = store.workflow(birth.workflowHash).workflow; }
+  catch (cause) {
+    if (cause.code === 'CORRUPT_WORKFLOW') add('error', 'WORKFLOW_EDITED', `The stored workflow ${String(birth.workflowHash).slice(0, 12)} no longer hashes to the hash the birth event names`);
+    else if (cause.code === 'NOT_FOUND') add('error', 'WORKFLOW_MISSING', `The workflow ${String(birth.workflowHash).slice(0, 12)} the run executed is gone from the store`);
+    else throw cause;
+  }
+  if (workflow && run.workflowId !== undefined && run.workflowId !== workflow.id) add('error', 'RUN_IDENTITY_EDITED', `The run record names workflow ${run.workflowId}, not ${workflow.id}`, { changed: ['workflowId'] });
 
   // 2. Journal rows: each model call event commits to the row it charged.
   const referenced = new Set(), perCall = { bound: 0 };
   if (!journalDb && events.some(e => CALL_EVENTS.has(e.type) && e.journalId != null))
-    add('warn', 'JOURNAL_EXTERNAL', 'This run journaled its model calls in another database (its birth event says so); pass that database (--journal FILE) to check its responses and the sealed journal root');
+    add(unchecked, 'JOURNAL_EXTERNAL', 'This run journaled its model calls in another database (its birth event says so); pass that database (--journal FILE) to check its responses and the sealed journal root');
   for (const event of events) {
     if (!journalDb || !CALL_EVENTS.has(event.type) || event.journalId == null) continue;
     referenced.add(event.journalId);
@@ -78,6 +107,17 @@ function check(store, runId, { journalDb: given = null, expectHead = null, ancho
     const changed = differing(bindRow(raw), { journalRowHash: event.journalRowHash, requestHash: event.requestHash, responseHash: event.responseHash });
     if (changed.length) add('error', 'JOURNAL_ROW_EDITED', `Journal row ${event.journalId} (event ${event.seq}, ${event.nodeKey}) was edited after the chain bound it (${changed.join(', ')})`, { seq: event.seq, journalId: event.journalId, changed });
     else perCall.bound++;
+  }
+
+  // 2b. Replayed responses: the runtime checked each against what its recording run's chain committed to, and recorded the outcome
+  // (replaySource). A response whose recording could not be checked (its run is not in this store, predates the binding or never
+  // sealed the row) is unverified provenance: a forged journal row can only enter a run that way.
+  for (const event of events) {
+    if (!CALL_EVENTS.has(event.type) || event.replayed !== true) continue;
+    const source = event.replaySource ?? null;
+    if (source?.check === 'bound' || source?.check === 'sealed') continue;
+    add(unchecked, 'REPLAY_UNVERIFIED', `Event ${event.seq} (${event.nodeKey}) served a replayed response from journal row ${event.replayedFrom ?? '?'} that nothing verified${source?.reason ? `: ${source.reason}` : ' (no replay provenance was recorded)'}`,
+      { seq: event.seq, journalId: event.journalId ?? null, replayedFrom: event.replayedFrom ?? null });
   }
 
   // 3. Seals: the journal root and the verdict inputs committed when the run reached a terminal state.
@@ -95,10 +135,18 @@ function check(store, runId, { journalDb: given = null, expectHead = null, ancho
   for (const row of late) add('warn', 'JOURNAL_ROW_LATE', `Journal row ${row.id}${row.error_code ? ` (${row.error_code})` : ''} was written after the run was sealed and no event binds it${replayable(row) ? '; replay lookup could serve it' : ''}`, { journalId: row.id, replayable: replayable(row) });
   checks.journal = { boundCalls: perCall.bound, referencedRows: referenced.size, unreferencedLate: late.length };
   checks.seals = seals.length;
-  if (TERMINAL.has(run.status) && !last) add('warn', 'SEAL_MISSING', `The run is ${run.status} but its chain holds no verdict seal`);
+  // The runtime seals every terminal state of a bound run in the commit that sets it, so a terminal record without a seal had its tail removed.
+  if (TERMINAL.has(run.status) && !last) add('error', 'SEAL_MISSING', `The run is ${run.status} but its chain holds no verdict seal (the tail of its chain was removed, or its status was edited)`);
+  // A final verdict (anything but 'uncertain', which reconciliation may resume) closes the run: the runtime never resumes, answers or
+  // continues it afterwards. Events that continue it mean the record was edited to reopen it (or a writer raced the seal).
+  const closing = seals.find(seal => seal.verdict !== 'uncertain');
+  const reopened = closing ? events.slice(events.indexOf(closing) + 1).find(e => e.type === 'runner.acquired' || e.type === 'human.answered') : null;
+  if (reopened) add('error', 'RUN_REOPENED', `The run was closed with a final verdict (${closing.verdict}) at event ${closing.seq}, but event ${reopened.seq} (${reopened.type}) continues it`, { seq: reopened.seq, closedAt: closing.seq });
 
-  // The current seal is the last one, if the run has not been resumed since (a resume appends runner.acquired).
-  const current = last && TERMINAL.has(run.status) && !events.slice(lastIndex + 1).some(e => e.type === 'runner.acquired') ? last : null;
+  // The current seal is the last one. A final seal stays current whatever the record's status now says (a closed run's status cannot
+  // change); an 'uncertain' one is current while the run is terminal and has not been resumed since (a resume appends runner.acquired).
+  const current = !last ? null : last.verdict !== 'uncertain' ? last
+    : TERMINAL.has(run.status) && !events.slice(lastIndex + 1).some(e => e.type === 'runner.acquired') ? last : null;
   if (current && current.verdictInputsHash !== undefined) {
     const inputsMatch = verdictInputsHash(run) === current.verdictInputsHash;
     if (!inputsMatch) add('error', 'VERDICT_INPUTS_MISMATCH', `The run record (status, error, node states or outputs) differs from the state its verdict was sealed on at event ${current.seq}`, { seq: current.seq });
@@ -108,10 +156,12 @@ function check(store, runId, { journalDb: given = null, expectHead = null, ancho
     if (edited.length) add('error', 'VERDICT_EDITED', `The run's stored verdict differs from the verdict sealed in the chain at event ${current.seq} (${edited.join(', ')})`, { seq: current.seq, changed: edited });
     else if (inputsMatch) {
       // Informational unless the engine is unchanged: a later engine may grade the same evidence differently.
+      // The engine identity comes from the birth event, not the (editable) run record.
+      const sameEngine = birth.engineHash === engineHash;
       let recomputed = null;
-      try { recomputed = verdictOf(run, { workflow: store.workflow(run.workflowHash).workflow }); } catch (cause) { add('warn', 'VERDICT_NOT_RECOMPUTED', `The verdict could not be recomputed: ${cause.code ?? cause.message}`); }
+      if (workflow) try { recomputed = verdictOf(run, { workflow }); } catch (cause) { add('warn', 'VERDICT_NOT_RECOMPUTED', `The verdict could not be recomputed: ${cause.code ?? cause.message}`); }
       if (recomputed && ['verdict', 'code', 'authority'].some(key => (recomputed[key] ?? null) !== (current[key] ?? null)))
-        add(run.engineHash === engineHash ? 'error' : 'warn', 'VERDICT_RECOMPUTE_DIFFERS', `Recomputing the verdict from the recorded state gives ${recomputed.verdict} (${recomputed.code ?? 'no code'}), not the sealed ${current.verdict} (${current.code ?? 'no code'})${run.engineHash === engineHash ? '' : '; the engine changed since the run'}`, { seq: current.seq });
+        add(sameEngine ? 'error' : 'warn', 'VERDICT_RECOMPUTE_DIFFERS', `Recomputing the verdict from the recorded state gives ${recomputed.verdict} (${recomputed.code ?? 'no code'}), not the sealed ${current.verdict} (${current.code ?? 'no code'})${sameEngine ? '' : '; the engine changed since the run'}`, { seq: current.seq });
     }
   }
 
@@ -124,7 +174,7 @@ function check(store, runId, { journalDb: given = null, expectHead = null, ancho
     if (!event) { add('error', 'DECISION_UNBOUND', `Decision ${row.id} (${row.kind}) is stored for this run but no chain event binds it`, { id: row.id }); continue; }
     let body = null;
     try { body = JSON.parse(row.body); } catch { /* reported as edited */ }
-    if (sha256(row.body) !== event.decisionHash || body?.id !== row.id || body?.kind !== event.kind) add('error', 'DECISION_EDITED', `Decision ${row.id} was edited after event ${event.seq} bound it`, { id: row.id, seq: event.seq });
+    if (sha256(row.body) !== event.decisionHash || body?.id !== row.id || body?.kind !== event.kind || row.kind !== event.kind) add('error', 'DECISION_EDITED', `Decision ${row.id} was edited after event ${event.seq} bound it`, { id: row.id, seq: event.seq });
   }
   for (const [id, event] of recorded) if (!seen.has(id)) add('error', 'DECISION_MISSING', `Decision ${id} (event ${event.seq}) is gone`, { id, seq: event.seq });
   checks.decisions = { bound: recorded.size, rows: rows.length };
@@ -133,7 +183,7 @@ function check(store, runId, { journalDb: given = null, expectHead = null, ancho
   const transcripts = events.filter(e => e.type === 'executor.finished'), workspaceRoot = store.directory;
   for (const event of transcripts) {
     const file = event.location?.kind === 'workspace' ? path.join(workspaceRoot, event.location.path) : event.location?.path;
-    if (!file || !existsSync(file)) { add(event.location?.kind === 'workspace' ? 'error' : 'warn', event.location?.kind === 'workspace' ? 'TRANSCRIPT_MISSING' : 'TRANSCRIPT_UNCHECKED', `Transcript of ${event.nodeKey} (event ${event.seq}) is not at ${event.location?.path ?? 'its recorded location'}; its hash ${event.transcriptHash.slice(0, 12)} is bound but could not be re-checked`, { seq: event.seq, nodeKey: event.nodeKey }); continue; }
+    if (!file || !existsSync(file)) { add(event.location?.kind === 'workspace' ? 'error' : unchecked, event.location?.kind === 'workspace' ? 'TRANSCRIPT_MISSING' : 'TRANSCRIPT_UNCHECKED', `Transcript of ${event.nodeKey} (event ${event.seq}) is not at ${event.location?.path ?? 'its recorded location'}; its hash ${event.transcriptHash.slice(0, 12)} is bound but could not be re-checked`, { seq: event.seq, nodeKey: event.nodeKey }); continue; }
     if (sha256(readFileSync(file)) !== event.transcriptHash) add('error', 'TRANSCRIPT_EDITED', `Transcript of ${event.nodeKey} (event ${event.seq}) no longer matches the hash the chain bound`, { seq: event.seq, nodeKey: event.nodeKey });
   }
   checks.transcripts = { bound: transcripts.length };

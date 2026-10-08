@@ -27,13 +27,17 @@ the held-out surface:
 | `x-pools.mjs` | candidate builders for X1 and X5 |
 | `authored/*.mjs` | the authored lines (data only, no imports): 1 file per logical part, `-2`, `-3` ... are top-ups |
 | `train-manifest.json` | committed: digests of the authored files and of every output file, counts, balance numbers, specGaps, deferrals. No pool line text |
-| `../test/train-pools.test.mjs` | the acceptance tests (`node --test experiments/kev-data/test/train-pools.test.mjs`, about 35 s) |
+| `../test/train-pools.test.mjs` | the acceptance tests (`node --test experiments/kev-data/test/train-pools.test.mjs`, about 85 s; 18 seeded mutants) |
 | `.foundry/kev-data/pools/train/{R1,R2,R3,R4,X1,X5}.jsonl` | built output, git-ignored. The directory holds pool lines only: other groups scan it (the heldout copy filter reads every string in it) |
 | `.foundry/kev-data/pools/train-rejects/rejects.jsonl` | the reject log, next to the pool directory and not in it: rejected candidates are not train-pool lines |
 
 Rebuild: `node experiments/kev-data/pools/train-pools.mjs build` (freezes the beds into a throw-away temp
 copy, writes the pool and the manifest). Both are deterministic: the same authored files and the same records
 bed templates give byte-identical files.
+
+Top-up rounds: brief the paraphrasing author with `node experiments/kev-data/pools/train-pools.mjs input --out FILE`
+only (the 82 non-held-out templates; the held-out ones are counted, never written; the command refuses an unclean
+input). Never hand an author `beds/records/render.mjs`.
 
 ## Line format (one JSON object per line, sorted by `id`)
 
@@ -46,9 +50,13 @@ order       R1: dmy | mdy | ymd, the order {ex} is written in;  exYear: the year
 windowed    R4: carries {w0} and {w1};  slotCarried: the label sits in the slot values, not in the words (below)
 pairKey, pairIndex, twin   flip twin: the admitted opposite-label line of the same template index and authored position
 family, sourceKind, role, addressee      X1;   assertsPort      X5 (the port whose option the clause asserts)
-skeleton, percent, bucket                lib/hash.mjs skeleton of the line under the contracts' masks; always the train bucket
+skeleton, percent, bucket                lib/hash.mjs skeleton of the line's PLACEHOLDER form under the contracts' masks; always the train bucket
+                                         (filled with values the masks do not cover, a line has another skeleton: use the stored one as its form id)
 filters     { local: 'pass', twoModel: 'pending' }
 ```
+
+`loadTrainPool(dir, port, { requirePassed: true })` returns only the lines the two-model filter admitted (none until
+hosted-arms runs it).
 
 `fillLine(line, values)` fills a line (`values`: `S, token, w0, w1, field, year, live_ref, void_ref, ref, server,
 city_us, city_eu, ex: {y, m, d}`); `{ex}` takes the line's own `order`. `providerLists(lines, valuesFor)` turns lines
@@ -65,17 +73,30 @@ purpose, and are only correct when filled consistently: `{ex}` in the line's ord
 * **Paraphrases** are written by the authoring agent from the 82 non-held-out templates; the 20 held-out bed
   templates (`ORDER_NOTE` highest index per system and order, `FLAG_NOTE` 6 and 7, `PERSP_NOTE` 3, `MIRROR_NOTE` 4,
   `RELIABLE_NOTE` 4: §3.3) are excluded from the input by id and by skeleton. The authoring agent had also read the
-  source of `beds/records/render.mjs` (the held-out templates included) while taking the task in; the local filter
-  therefore rejects any line that is a near copy of a held-out template (4-gram Jaccard >= 0.5) or has its skeleton.
+  source of `beds/records/render.mjs` (the held-out templates included) while taking the task in, so acceptance 1
+  holds for the extracted input, not for what that author saw. The local filter therefore rejects any line that has a
+  held-out template's skeleton or sits at 4-gram Jaccard >= 0.3 (the program's copy-filter value) to one; on the
+  admitted lines the largest 4-gram Jaccard to a held-out template is 0.167 and the pool test asserts it directly.
+  Only a clean re-authoring (from `train-pools.mjs input`) removes the exposure entirely.
 * **Local filter** (deterministic): placeholders equal to the template's, one sentence, no literal system name,
   not a copy or a light edit of the source (4-gram Jaccard < 0.5 and unigram Jaccard < 0.85), no near duplicate
   inside a template, no skeleton shared across labels (except slot-carried flip twins), no copy of a bed sentence
-  (X1: 4-gram Jaccard < 0.5 against every string of the train-family beds), skeleton bucket 40-100% (§3.1 "train
-  ... skeleton buckets 40-100%"). `train-rejects/rejects.jsonl` keeps every rejected candidate with all reasons.
+  (4-gram Jaccard < 0.5 against every string of the train-family beds, read recursively), no near copy of a string of
+  the port's held-out families (§3.4; 4-gram Jaccard < 0.3: X1 against kinetics and gridquest, X5 against kinetics and
+  runbook), skeleton bucket 40-100% (§3.1 "train ... skeleton buckets 40-100%"). `train-rejects/rejects.jsonl` keeps
+  every rejected candidate with all reasons. The pool test checks the copy properties directly on the admitted lines.
+* **Label guards** (checks on text; they never assign a label). Labels are the brief's. Until the two-model filter
+  runs, `labelGuard` checks that the text says what the brief says: every R1-R3 paraphrase pair is oriented against
+  its two source templates (`filters.mjs pairOrientation`: the words in which the two sides differ against the words
+  in which the templates differ), and single-label sections (year-first, KOBO, R4) and the pairs orientation cannot
+  decide are checked with label cue words (`cueVerdict`). The pool test fails on a crossed share above 2% per port, a
+  template pair with as many crossed as straight pairs, or a unit with cue agreement under 0.6. Current build: 445
+  decided pairs straight, 0 crossed; slot-carried pairs (the label sits in the fill) rest on `fillLine`'s tests.
 * **Two-model filter: deferred to hosted-arms.** Every line is `filters.twoModel = "pending"`. `briefsFor(line)`
   builds the zero-shot question (the port's Q0 with the line as the note; two briefs for X5), `node train-pools.mjs
   briefs --pool DIR --out FILE` writes them all, and `applyTwoModelVerdicts` / `apply-verdicts` admit a line only
-  if both models recovered its label and log both answers for every rejected line.
+  if both models recovered its label and log both answers for every rejected line (`apply-verdicts` writes them to
+  `<out>-rejects/two-model-rejects.jsonl`, next to the pool directory, like the local reject log).
 * **Heldout registry comparison.** The committed `experiments/kev-data/heldout-manifest.json` holds the registry's
   digest and entry count, not its skeleton hashes, so `checkAgainstHeldoutManifest(lines, manifest)` reports
   `available: false` today. Where `registry.json` is readable (assembly) call

@@ -73,8 +73,8 @@ async function controlOutcome({ kit, trial, workflow, baseOutputs, answerKeys, c
 export const STRATA = {
   async records(task, identity) {
     const { buildWorld } = await import(path.join(REPO, 'beds/records/world.mjs'));
-    const w = buildWorld(task.seed, task.split, task.difficulty), sys = identity?.system;
-    return ({ BRIGHTDESK: w.conv?.bd, ATLAS: w.conv?.atlas, VENDEX: w.conv?.vendex })[sys] ?? null;
+    const w = buildWorld(task.seed, task.split, task.difficulty), sys = identity?.system, conv = w.ctx?.conv;
+    return ({ BRIGHTDESK: conv?.bd, ATLAS: conv?.atlas, VENDEX: conv?.vendex })[sys] ?? null;
   },
 };
 
@@ -95,12 +95,12 @@ export async function verify({ kit, gate, budget, base, proposal, incident, prov
     if (r.ok !== true) { if (r.ok === null) rec.pending = true; else rec.rejectCode = r.code ?? `HEAL_${id}_FAILED`; }
     return r;
   };
-  const finish = () => { rec.ok = rec.stages.length > 0 && rec.stages.every(s => s.ok === true) && !rec.pending && !rec.rejectCode; rec.costUsd = +(budget?.spent ?? 0).toFixed(6); rec.data = summarise(data); return rec; };
+  const finish = () => { rec.partial = !!stages; rec.ok = rec.stages.length > 0 && rec.stages.every(s => s.ok === true) && !rec.pending && !rec.rejectCode; rec.costUsd = +(budget?.spent ?? 0).toFixed(6); rec.data = summarise(data); return rec; };
   const halt = r => r.ok !== true;
 
   // V0 ---------------------------------------------------------------------------------------------------------------------------------
   if (halt(await stage('V0', 'static', async () => {
-    const again = compileOps(baseWf, proposal.ops, { classOrder: modelPolicy.classOrder, classOf: id => kit.policy.modelById(modelPolicy, id).class, isStrong: gate.isStrong, allowed: proposal.allowed ? new Set(proposal.allowed) : null, locus: proposal.locus ? new Set(proposal.locus) : null });
+    const again = compileOps(baseWf, proposal.ops, { classOrder: modelPolicy.classOrder, classOf: id => kit.policy.modelById(modelPolicy, id).class, isStrong: gate.isStrong, allowed: proposal.allowed ? new Set(proposal.allowed) : null, locus: proposal.locus ? new Set(proposal.locus) : null, ...(proposal.maxOps ? { maxOps: proposal.maxOps } : {}) });
     if (again.errors.length) return { ok: false, code: again.errors[0].code, detail: again.errors[0].message };
     if (digest(again.workflow) !== rec.candidateHash) return { ok: false, code: 'HEAL_COMPILE_INVALID', detail: 'the candidate is not the compilation of its ops' };
     const v = kit.validateWorkflow(cand, modelPolicy);
@@ -202,12 +202,12 @@ export async function verify({ kit, gate, budget, base, proposal, incident, prov
       try { r = await replica({ kit, trial, workflow: cand, providers, task }); } finally { release(); }
       budget?.chargeRun(r, `V4 ${trial.key}`);
       if (needsLive(r)) { stop = { ok: null, code: 'HEAL_NEEDS_LIVE', detail: `${trial.key}: a changed node needs a live call and no provider was supplied` }; return null; }
-      let reruns = [];
-      if (!r.pass && incident.oracle) for (let i = 0; i < P.regressionRerun && r.liveCalls > 0; i++) reruns.push(await replica({ kit, trial, workflow: cand, providers, task }));
-      for (const x of reruns) budget?.chargeRun(x, `V4 rerun ${trial.key}`);
       // A run the candidate's own gates stop (acceptance, a gating verify, an assert, a node check) is a verdict false alarm, not an oracle
       // regression: the answer it would have produced is unknown, and the recorded one passes the oracle by definition.
       const gateStopped = !accepted(r) && GATE_CODES.includes(r.error?.code);
+      let reruns = [];
+      if (!r.pass && !gateStopped && incident.oracle) for (let i = 0; i < P.regressionRerun && r.liveCalls > 0; i++) reruns.push(await replica({ kit, trial, workflow: cand, providers, task }));
+      for (const x of reruns) budget?.chargeRun(x, `V4 rerun ${trial.key}`);
       let regression = incident.oracle && !gateStopped && !r.pass && !(reruns.length === P.regressionRerun && reruns.every(x => x.pass)), infidelity = false;
       if (regression) {   // does the BASE reproduce this recorded pass? If not, the record is not a baseline to regress against.
         const b = await replica({ kit, trial, workflow: baseWf, providers: null, task });
@@ -231,7 +231,8 @@ export async function verify({ kit, gate, budget, base, proposal, incident, prov
   if (halt(await stage('V5', 'acceptance discrimination', async () => {
     const c = incident.controls;
     if (!c?.items?.length) return { ok: true, skipped: true, note: 'no bed controls available' };
-    const trial = failing[0] ?? incident.passing?.[0], task = incident.tasks?.[trial.key], baseOutputs = incident.baseRuns?.[trial.key]?.outputs;
+    // the controls were derived from one task: pin them into the recorded run of THAT task
+    const trial = [...failing, ...(incident.passing ?? [])].find(t => t.key === c.trialKey) ?? failing[0] ?? incident.passing?.[0], task = incident.tasks?.[trial.key], baseOutputs = incident.baseRuns?.[trial.key]?.outputs;
     const run = (workflow, control) => controlOutcome({ kit, trial, workflow, baseOutputs, answerKeys: c.answerKeys, control, task, policy: P });
     const table = [];
     table.push(...await pmap(c.items, P.concurrency, async item => ({ name: item.name, expect: item.expect, base: await run(baseWf, item.output), cand: await run(cand, item.output) })));
@@ -278,11 +279,11 @@ async function freshGate({ kit, base, cand, incident, providers, budget, P, hook
   const adapter = STRATA[ref.family], stratum = async t => adapter && sample?.identity ? adapter(t.task, sample.identity) : null;
   const counts = new Map(), perStratum = adapter && sample?.identity ? Math.ceil(n / 2) : n;
   const seeds = await draw({ ledger, family: ref.family, split: 'dev', difficulty: ref.difficulty, n, by: `heal fresh gate ${incident.id ?? ''}`.trim(), makeTask,
-    keep: async task => { const s = await stratum(task); const c = counts.get(s) ?? 0; if (c >= perStratum) return false; counts.set(s, c + 1); return true; } });
+    keep: async task => { const s = await stratum(task); if (s == null) return true; const c = counts.get(s) ?? 0; if (c >= perStratum) return false; counts.set(s, c + 1); return true; } });
   (hooks.saveLedger ?? saveLedger)(ledger);
   const estimate = seeds.length * k * ((incident.meanBaseCostUsd ?? 0.05) * 1.1 + 0.02);
   let release;
-  try { release = budget.reserve(estimate, 'V7 fresh tasks'); } catch (e) { return { ok: null, code: 'HEAL_BUDGET_EXHAUSTED', detail: e.message, seeds: seeds.length }; }
+  try { release = hooks.runTask ? () => {} : budget.reserve(estimate, 'V7 fresh tasks'); } catch (e) { return { ok: null, code: 'HEAL_BUDGET_EXHAUSTED', detail: e.message, seeds: seeds.length }; }
   const runTask = hooks.runTask ?? (async ({ workflow, task, salt, seed, arm }) => {
     const pseudo = { source: ref.source, family: ref.family, split: 'dev', difficulty: ref.difficulty, seed, armId: `heal-fresh-${arm}`, trial: 0, key: `fresh/${seed}` };
     const ctx = incident.freshCtx ??= await openFreshCtx(kit, ref, providers, modelPolicy);

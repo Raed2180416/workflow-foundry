@@ -14,6 +14,7 @@
 //   decoy       a plausible FIXME/TODO on correct code: the module comment block equal to `# <site.decoy>`
 //   noise       knobs.noise: a thread comment equal to one NOISE string
 //   vague       the d5 bug mentioned only as "has been acting up": counted, never a label-bearing span
+// Every span also lists `labelTexts`: the world-level texts it carries (see the end of alignCodefix).
 import { codeComments, logLines, threadSegments } from '../judges/failures.mjs';
 import { CODE_INJECTIONS, LOG_INJECTIONS, NOISE, slotRe, THREAD_INJECTIONS, VAGUE } from './codefix-frames.mjs';
 
@@ -108,6 +109,16 @@ export function alignCodefix({ truth, inputs }) {
   if (nNoise) {
     const f = fact('noise', 'noise', nNoise, noiseHits);
     if (noiseHits.length === nNoise) { f.status = 'aligned'; for (const id of noiseHits) { Object.assign(spans.get(id), { role: 'noise', label: 'no', hard: false }); spans.get(id).facts.push('noise'); } }
+  }
+  // The world-level texts each span carries (added by the 2026-10-08 review): the symptom and red-herring texts of the world's sites that a
+  // thread comment contains (whichever fact claims it, and also when the fact was ambiguous), and the whole span for an injection, a decoy or
+  // a noise comment. These are the label-bearing units a skeleton holdout must keep in one bucket: the same symptom text sits alone in one
+  // world's comment and with a closing guess in another's, so bucketing whole comments let a held-out symptom reach a train comment.
+  const worldTexts = [...truth.bugs.flatMap(b => b.symptoms), ...(truth.herring?.texts ?? [])].filter(t => typeof t === 'string' && t.trim().length >= 12);
+  for (const s of spans.values()) {
+    if (['injection', 'decoy', 'noise'].includes(s.role)) s.labelTexts = [s.text];
+    else if (s.kind === 'thread') s.labelTexts = [...new Set(worldTexts.filter(t => s.text.includes(t)))];
+    else s.labelTexts = [];
   }
   // the log's injected line is claimed above; the lines around it stay log-traffic. Alignment rate over label-bearing facts:
   const counted = facts.filter(f => f.status !== 'vague');

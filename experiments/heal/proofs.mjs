@@ -81,6 +81,9 @@ export async function runCheck({ kit, node, args, candidate, timeoutMs = 30000 }
   return value;
 }
 
+// The classes a justification may name, and the mutant class each one covers.
+const JUSTIFIABLE = { 'default-value-changed': 'default_value' };
+
 // Relaxation proof: the new source kills every mutant the old one killed, except mutants of the justified class.
 export async function relaxProof({ proof, kit, node, args, moduleSource, taskTexts }) {
   const out = { quoteFound: quoteInContract(proof.quote, taskTexts), battery: proof.battery, mutants: [], violations: [], ok: false };
@@ -91,12 +94,12 @@ export async function relaxProof({ proof, kit, node, args, moduleSource, taskTex
     const oldNode = { ...node, source: proof.before }, newNode = { ...node, source: proof.after };
     const [o, n] = await Promise.all([runCheck({ kit, node: oldNode, args, candidate: m.text }), runCheck({ kit, node: newNode, args, candidate: m.text })]);
     if (o.compile_error) continue;
-    const row = { id: m.id, class: m.class, oldKills: flagged(o), newKills: flagged(n), justified: m.class === proof.justifiedClass };
+    const row = { id: m.id, class: m.class, oldKills: flagged(o), newKills: flagged(n), justified: JUSTIFIABLE[proof.justifiedClass] === m.class };
     out.mutants.push(row);
     if (row.oldKills && !row.newKills && !row.justified) out.violations.push(`mutant ${m.id} was caught by the old check and is accepted by the new one`);
   }
   if (!out.mutants.some(m => m.oldKills)) out.violations.push('the old check kills no mutant: the battery proves nothing');
   out.ok = out.quoteFound && out.violations.length === 0;
-  if (!out.quoteFound) out.violations.push('the quoted justification is not in the task contract');
+  if (!out.quoteFound) out.violations.unshift('the quoted justification is not in the task contract');
   return out;
 }

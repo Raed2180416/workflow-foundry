@@ -4,11 +4,11 @@
 // world truth; states come from the codefix kit (judges/failures.mjs). Beds are read through ctx.beds only.
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
-import { spanHash, worldHash } from '../lib/hash.mjs';
+import { sentences, skeleton, skeletonBucket, spanHash, worldHash } from '../lib/hash.mjs';
 import { alignCodefix, maskNames, truthOf } from '../taps/codefix.mjs';
 import { codefixKit, MAX_SPAN_CHARS, moduleOutline, threadSegments } from '../judges/failures.mjs';
 import { hasAddressee } from '../pools/filters.mjs';
-import { bucketAllows, byHash, fail, formOf, makeRecord, paraphraseOf, pick, sha, unit } from './rows.mjs';
+import { BUCKET_OF_SLICE, byHash, fail, makeRecord, paraphraseOf, pick, sha, unit } from './rows.mjs';
 
 export const X1_ROWS = Object.freeze({ train: 323, 'calib-in': 50, 'calib-ood': 100, 'dev-select': 33, 'dev-ood': 100, 'test-in': 83, 'test-ood': 692 });
 export const X1_TEST_OOD = Object.freeze({ template: 100, paraphrase: 67, long: 25, natural: 500 });
@@ -18,6 +18,36 @@ export const HELDOUT_DOMAINS = Object.freeze(['routing', 'ratelimit']);
 const X1_DIFFS = [3, 4, 4, 5, 5], ANY_DIFFS = [1, 2, 3, 3, 4, 4, 5, 5];
 const POOL_SPLIT = { train: [0, 8], 'calib-in': [8, 9], 'dev-select': [9, 10] };      // pool lines by hash: 80% / 10% / 10%
 export const stats = {};
+
+// The form of a codefix span: the span registry's own key (lib/leakage.mjs SpanRegistry.add: the skeleton of the span's sentences joined by
+// a space, under the world's masks). Review 2026-10-08 (P1): forms used to be the skeleton of the raw text, which differs from the registry
+// key for multi-line comments (a code fence's backticks pair up across the line break only once the lines are joined), so a train span and
+// a held-out X6/Q6 span of the same registry key could sit in different buckets: 14 train records of a 300-world sample hit a registry of
+// held-out family spans.
+export const spanForm = (text, masks) => skeleton(sentences(text).join(' '), masks);
+export const bucketOfSpan = (text, masks) => skeletonBucket(spanForm(text, masks));
+// The buckets of a tap span: one per world-level text it carries (taps/codefix.mjs labelTexts: a site's symptom or red-herring text, an
+// injection frame, a decoy, a noise comment), or the span's own form when it carries none. A span belongs to a slice only if every one is
+// the slice's bucket. Review 2026-10-08 (P1): bucketing whole comments put one world's comment (a symptom text alone) in test-ood and
+// another world's comment (the same symptom text plus a closing guess) in train, and the registry's sentence windows found the first inside
+// the second.
+export const spanBuckets = (span, masks) => (span.labelTexts?.length ? span.labelTexts : [span.text]).map(t => bucketOfSpan(t, masks));
+export const formOfTapSpan = (span, masks) => spanForm(span.labelTexts?.length ? span.labelTexts.join(' ') : span.text, masks);
+const spanOk = (slice, span, masks) => spanBuckets(span, masks).every(b => b === BUCKET_OF_SLICE[slice]);
+// A container state (the X1 long variant: the issue thread; F2 'all': the whole report) embeds every comment of the thread, so its own
+// skeleton bucket says nothing about the spans inside it. Review 2026-10-08 (P1): train long-variant positives carried calib-ood and dev-ood
+// injection frames, and F2 'all' train states carried comments of the OOD buckets. Rule: in a train-like slice every comment is a train-
+// bucket span; in an OOD slice the decisive comments (`decisive`, span ids) are in the slice's own bucket and the others in the train bucket
+// or the slice's own (train material may appear in an evaluation slice; another OOD slice's material may not). `spans` are tap spans
+// ({id, text, labelTexts}) of the thread's comments.
+export function containerOk(slice, spans, masks, decisive = []) {
+  const own = BUCKET_OF_SLICE[slice];
+  for (const s of spans) {
+    const bs = spanBuckets(s, masks);
+    if (decisive.includes(s.id) ? bs.some(b => b !== own) : bs.some(b => b !== 'train' && b !== own)) return false;
+  }
+  return true;
+}
 
 const kindOfLine = text => (/^\s*#/.test(text) ? 'code comment' : /^\d{4}-\d{2}-\d{2}T/.test(text) || /^(WARN|INFO|ERROR|DEBUG) /.test(text) ? 'service log line' : 'issue comment');
 
@@ -67,15 +97,15 @@ export async function codefixRecords({ slice, seeds, opts, ctx, ports }) {
     st.worlds++; st.tap.facts += tap.stats.facts; st.tap.aligned += tap.stats.aligned;
     const base = { family: 'codefix', bed: 'codefix', seed, difficulty, worldHash: wh, masks };
     const stateOf = (port, slots) => codefixKit.buildState(task, slots, port);
-    const spanForm = s => formOf(s.text, masks);
+    const formOfSpan = s => formOfTapSpan(s, masks), threadSpans = [...tap.spans.values()].filter(s => s.kind === 'thread');
 
     // ---- X1 -------------------------------------------------------------------------------------------------------------
     if (wantX1) {
       const mk = (span, label, extra = {}) => {
         const text = span.text;
         if (text.length > MAX_SPAN_CHARS) { drop('too-long', 'X1'); return null; }
-        const form = spanForm(span);
-        if (!bucketAllows(slice, form)) { drop('wrong-bucket', 'X1'); return null; }
+        const form = formOfSpan(span);
+        if (!spanOk(slice, span, masks)) { drop('wrong-bucket', 'X1'); return null; }
         const state = stateOf('X1', { span: span.id });
         if (!fresh('X1', state)) return null;
         return makeRecord({ contract: contracts.X1, slice, opts, key: `${slice}|X1|${seed}|${span.id}${extra.axis ?? ''}`, state, label,
@@ -99,8 +129,8 @@ export async function codefixRecords({ slice, seeds, opts, ctx, ports }) {
         for (const s of yes.slice(0, 1)) if (ax(x1Plan.natural, 'natural') && unit(`${slice}|nat|${seed}|${s.id}`) < 0.3) bump('natural', mk(s, 'yes', { axis: 'natural' }));
         // long variant: the injected span inside its whole thread (label by whether the thread carries one)
         if (ax(x1Plan.long, 'long')) {
-          const text = task.inputs.bug_report, form = formOf(text, masks);
-          if (bucketAllows(slice, form) && text.length <= 4000) {
+          const text = task.inputs.bug_report, form = spanForm(text, masks), inj = spans.filter(s => s.kind === 'thread' && s.role === 'injection').map(s => s.id);
+          if (containerOk(slice, threadSpans, masks, inj) && text.length <= 4000) {
             const label = (b.knobs.injections ?? 0) > 0 ? 'yes' : 'no', state = stateOf('X1', { span: 'thread:all' });
             if (fresh('X1', state)) bump('long', makeRecord({ contract: contracts.X1, slice, opts, key: `${slice}|X1|${seed}|long`, state, label,
               meta: { ...base, variant: 'long', formId: form, surface: { source: 'bed', slice, lineHash: spanHash(text) }, kit: { port: 'X1', slots: { span: 'thread:all' } }, x1: { role: label === 'yes' ? 'injection' : 'thread', hard: false, addressee: hasAddressee(text), source: 'bed', span: 'thread:all', axis: 'long' } } }));
@@ -108,7 +138,7 @@ export async function codefixRecords({ slice, seeds, opts, ctx, ports }) {
         }
         // paraphrase-consistency: a few template-axis states asked with three held-out wordings
         if ((have.X1['ax:paraphrase'] ?? 0) < x1Plan.paraphrase) {
-          const cand = [...yes, ...hard].find(s => bucketAllows(slice, spanForm(s)) && s.text.length <= MAX_SPAN_CHARS);
+          const cand = [...yes, ...hard].find(s => spanOk(slice, s, masks) && s.text.length <= MAX_SPAN_CHARS);
           if (cand) {
             const r = mk(cand, cand.label, { axis: 'paraphrase' }), p = r ? paraphraseOf(r, contracts.X1, opts, `${slice}|X1|${seed}|${cand.id}|para`) : null;
             if (p) { p.meta.x1.axis = 'paraphrase'; out.push(p); have.X1.rows += 3; have.X1['ax:paraphrase'] = (have.X1['ax:paraphrase'] ?? 0) + 3; }
@@ -123,8 +153,9 @@ export async function codefixRecords({ slice, seeds, opts, ctx, ports }) {
         for (const s of sorted(plain).slice(0, 2)) if (have.X1.no < Math.ceil(need.X1 * (1 - wantYes)) && room() > 0) add(mk(s, 'no'));
         // the long variant is 5% of the training rows
         if (slice === 'train' && unit(`${slice}|long|${seed}`) < 0.1 && room() > 0 && task.inputs.bug_report.length <= 4000) {
-          const text = task.inputs.bug_report, form = formOf(text, masks);
-          if (bucketAllows(slice, form) && fresh('X1', stateOf('X1', { span: 'thread:all' }))) {
+          const text = task.inputs.bug_report, form = spanForm(text, masks), inj = spans.filter(s => s.kind === 'thread' && s.role === 'injection').map(s => s.id);
+          if (!containerOk(slice, threadSpans, masks, inj)) drop('long-container-bucket', 'X1');
+          else if (fresh('X1', stateOf('X1', { span: 'thread:all' }))) {
             const label = (b.knobs.injections ?? 0) > 0 ? 'yes' : 'no';
             add(makeRecord({ contract: contracts.X1, slice, opts, key: `${slice}|X1|${seed}|long`, state: stateOf('X1', { span: 'thread:all' }), label,
               meta: { ...base, variant: 'long', formId: form, surface: { source: 'bed', slice, lineHash: spanHash(text) }, kit: { port: 'X1', slots: { span: 'thread:all' } }, x1: { role: label === 'yes' ? 'injection' : 'thread', hard: false, addressee: hasAddressee(text), source: 'bed', span: 'thread:all', axis: 'long' } } }));
@@ -137,7 +168,7 @@ export async function codefixRecords({ slice, seeds, opts, ctx, ports }) {
           for (const l of take) {
             const wantL = l.label === 'yes' ? have.X1.yes < Math.ceil(need.X1 * wantYes) : have.X1.no < Math.ceil(need.X1 * (1 - wantYes));
             if (!wantL || room() <= 0) continue;
-            const form = formOf(l.text, masks);
+            const form = spanForm(l.text, masks);
             const state = { source_kind: kindOfLine(l.text), text: l.text };
             if (!fresh('X1', state)) continue;
             add(makeRecord({ contract: contracts.X1, slice, opts, key: `${slice}|X1|${seed}|pool|${l.id}`, state, label: l.label,
@@ -165,12 +196,14 @@ export async function codefixRecords({ slice, seeds, opts, ctx, ports }) {
         if (b.bugs.length === 1) rows.push({ span: 'all', label: rows[0]?.label, site: b.bugs[0] });
         for (const rw of rows.filter(r => r.label)) {
           if (have.F2 >= need.F2) break;
-          const state = stateOf('F2', { span: rw.span }), text = state.bug_report, form = formOf(text, masks);
+          const state = stateOf('F2', { span: rw.span }), text = state.bug_report, form = rw.span === 'all' ? spanForm(text, masks) : formOfTapSpan(tap.spans.get(rw.span), masks);
+          // the decisive comment of an 'all' record: the aligned symptom span of its one bug
+          const decisive = rw.span === 'all' ? bugsOf.filter(f => f.site === rw.site).map(f => f.candidates[0]) : [rw.span];
+          if (rw.span !== 'all' && !spanOk(slice, tap.spans.get(rw.span), masks)) { drop('wrong-bucket', 'F2'); continue; }
+          if (rw.span === 'all' && (decisive.length !== 1 || !containerOk(slice, threadSpans, masks, decisive))) { drop('container-bucket', 'F2'); continue; }
           if (!fresh('F2', state)) continue;
-          if (!bucketAllows(slice, form) && rw.span !== 'all') { drop('wrong-bucket', 'F2'); continue; }
-          if (rw.span === 'all' && !bucketAllows(slice, formOf(text.slice(0, 600), masks))) { drop('wrong-bucket', 'F2'); continue; }
           out.push(makeRecord({ contract: contracts.F2, slice, opts, key: `${slice}|F2|${seed}|${rw.span}|${rw.site}`, state, label: rw.label, options: names, optionDescriptions: descriptions,
-            meta: { ...base, family, variant: 'clean', formId: form, surface: { source: 'bed', slice, lineHash: spanHash(text) }, kit: { port: 'F2', slots: { span: rw.span } }, f2: { domain, site: rw.site, options: names.length, op: b.domain.sites[rw.site].op, span: rw.span } } }));
+            meta: { ...base, family, variant: 'clean', formId: form, surface: { source: 'bed', slice, lineHash: spanHash(text) }, kit: { port: 'F2', slots: { span: rw.span } }, f2: { domain, site: rw.site, options: names.length, op: b.domain.sites[rw.site].op, span: rw.span, decisive } } }));
           have.F2++;
         }
       } else drop('outline-size', 'F2');
@@ -185,8 +218,8 @@ export async function codefixRecords({ slice, seeds, opts, ctx, ports }) {
       for (const s of pickable) {
         const label = LABEL[s.role];
         if ((have.X6[label] ?? 0) >= per) continue;
-        const form = spanForm(s);
-        if (!bucketAllows(slice, form)) { drop('wrong-bucket', 'X6'); continue; }
+        const form = formOfSpan(s);
+        if (!spanOk(slice, s, masks)) { drop('wrong-bucket', 'X6'); continue; }
         if (!fresh('X6', stateOf('X6', { span: s.id }))) continue;
         out.push(makeRecord({ contract: contracts.X6, slice, opts, key: `${slice}|X6|${seed}|${s.id}`, state: stateOf('X6', { span: s.id }), label,
           meta: { ...base, variant: 'clean', formId: form, surface: { source: 'bed', slice, lineHash: spanHash(s.text) }, kit: { port: 'X6', slots: { span: s.id } }, x6: { role: s.role } } }));
@@ -202,8 +235,8 @@ export async function codefixRecords({ slice, seeds, opts, ctx, ports }) {
       for (const s of pickable) {
         const label = LABEL[s.role];
         if ((have.Q6[label] ?? 0) >= per) continue;
-        const form = spanForm(s);
-        if (!bucketAllows(slice, form)) { drop('wrong-bucket', 'Q6'); continue; }
+        const form = formOfSpan(s);
+        if (!spanOk(slice, s, masks)) { drop('wrong-bucket', 'Q6'); continue; }
         let state;
         try { state = stateOf('Q6', { span: s.id, section: s.section }); } catch { drop('no-design-section', 'Q6'); continue; }
         if (!fresh('Q6', state)) continue;

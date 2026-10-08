@@ -1,5 +1,6 @@
 // Noninterference check for control-flow taint (ROADMAP §2.9). A seeded generator builds small random workflows over an untrusted
-// input (guards, joins, maps, loops, ungated effects, and a task that really fails under onError "continue"). Every workflow the
+// input (guards, joins, maps, collect maps, loops, ungated effects, a task that really fails under onError "continue", and asserts in
+// map and loop bodies, which inside a collect map end one item rather than the run). Every workflow the
 // validator ACCEPTS is run with different untrusted input values; the set of effects that fired must not depend on them (termination
 // excepted: only runs that all succeed are compared). Also checks the dispatcher is never stricter than the validator.
 // Measured 2026-10-08 on seeds 21, 7 and 99 with 400 workflows each (FOUNDRY_FUZZ_SEED / FOUNDRY_FUZZ_COUNT; the committed default is a
@@ -8,8 +9,13 @@
 // (onError continuation, the needs chain, map items, loop until, the guard itself, the output label) are each caught, four by this
 // fuzz at 300 workflows and all six at 1500, and all six by the static tests in control-taint.test.mjs. The smoke size does not catch
 // every mutant; run the larger size after changing the rule.
-// Local mock tools only. Development/diagnostic evidence, not a proof: the generator covers task, map and loop nodes only (no human,
-// agent, verify or assert nodes; a failed assert or verify stops the run, which is the termination channel the rule does not track).
+// Adversarial review 2026-10-08 added collect maps and body asserts to the generator (so the numbers above are for the earlier
+// generator). With seeds 21, 7 and 99 at 400 workflows each, the validator of HEAD c983182 accepted 15 workflows that interfered
+// (first at index 47, 40 and 57, so the default 80 catches it on every seed): a body assert over the untrusted input ended one item
+// of a collect map, and the write after it fired or not. The fixed validator accepted 549, ran 418 comparable ones, none interfered,
+// and the dispatcher refused none.
+// Local mock tools only. Development/diagnostic evidence, not a proof: the generator covers task, assert (in bodies), map and loop
+// nodes only (no human, agent or verify nodes; a top-level assert would stop the run, the termination channel the rule does not track).
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync } from 'node:fs';
@@ -34,12 +40,15 @@ function generator(seed) {
       const source = () => pick(['input.doc', 'input.mode', ...locals, ...needs.map(dep => `nodes.${dep}.v`)]);
       const guard = () => chance(0.3) ? { op: 'exists', value: ref(source()) } : { op: 'eq', left: ref(source(), '-'), right: pick(['go', 'stop']) };
       const base = { id, needs, description: id, ...(chance(0.35) ? { when: guard() } : {}), ...(chance(0.2) ? { join: 'all_resolved' } : {}) };
-      const kind = pick(['id', 'id', 'check', 'effect', 'effect', ...(depth > 0 ? [] : ['map', 'loop'])]);
+      // An assert fails its frame when its guard is false. At the top level that ends the run (termination, not compared); inside a
+      // map with failure "collect" it ends only its item, and the rest of the item does not run: a skip that the run survives.
+      const kind = pick(['id', 'id', 'check', 'effect', 'effect', ...(depth > 0 ? ['assert', 'assert'] : ['map', 'map', 'loop'])]);
       if (kind === 'id') nodes.push({ ...base, kind: 'task', tool: 'core.identity', args: { v: chance(0.6) ? ref(source(), '-') : 'lit' }, timeoutMs: 1000, retry: { maxAttempts: 1 }, ...(chance(0.15) ? { onError: 'continue' } : {}) });
       // core.pluck fails when a row has no field x: it succeeds on rows [] and fails on rows ['a', 'b'], and onError continue turns the failure into a skip.
       else if (kind === 'check') nodes.push({ ...base, kind: 'task', tool: 'core.pluck', args: { items: ref('input.rows'), field: 'x' }, timeoutMs: 1000, retry: { maxAttempts: 1 }, onError: 'continue' });
       else if (kind === 'effect') nodes.push({ ...base, kind: 'task', tool: 'core.artifact', args: { name: `a-${id}.txt`, content: 'fixed' }, timeoutMs: 1000, retry: { maxAttempts: 1 } });
-      else if (kind === 'map') nodes.push({ ...base, kind: 'map', items: chance(0.5) ? ref('input.rows') : [1, 2], maxItems: 5, body: flow(depth + 1, `${id}b`, ['item']) });
+      else if (kind === 'assert') nodes.push({ ...base, kind: 'assert', checks: [chance(0.6) ? { op: 'eq', left: ref('input.doc'), right: pick(['go', 'stop']) } : guard()] });
+      else if (kind === 'map') nodes.push({ ...base, kind: 'map', items: chance(0.5) ? ref('input.rows') : [1, 2], maxItems: 5, ...(chance(0.5) ? { failure: 'collect' } : {}), body: flow(depth + 1, `${id}b`, ['item']) });
       else {
         const body = flow(depth + 1, `${id}b`, ['iteration', 'previous']);
         nodes.push({ ...base, kind: 'loop', maxIterations: 3, initial: { v: chance(0.5) ? ref('input.doc') : 'seed' },

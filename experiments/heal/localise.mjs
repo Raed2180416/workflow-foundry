@@ -148,7 +148,7 @@ export function finish({ head, rows, workflow, base = {}, intermediates = [], o 
   const root = suspects[0] ?? null;
   const classes = root ? defectClasses({ root, rows, workflow, head, basePass, intermediates }) : [];
   // Offline variance evidence: the same call, other recorded samples of the same prompt. Decisive only with 4+ samples (the live test uses 8).
-  const alts = root ? rows.filter(r => r.type === 'recorded-alt' && r.ran !== false && !r.needsLive && r.node === root.sample.node) : [];
+  const alts = root ? rows.filter(r => r.type === 'recorded-alt' && r.ran !== false && !r.needsLive && r.node === root.sample.node && key(r) === root.node) : [];
   const variance = alts.length ? { source: 'recorded', n: alts.length, hits: alts.filter(r => r.pass).length, wilsonLower: +wilsonLower(alts.filter(r => r.pass).length, alts.length).toFixed(4), tau: o.tau, decisive: alts.length >= 4 } : null;
   return { ...head, candidates: rows, intermediates, flippers: pool.map(r => r.id), suspects, root: root ? { node: root.node, confidence, locus: root.locus, sample: root.sample, flips: root.flips.length } : null,
     classes, variance, needsLive: live, coverage: { candidates: rows.length, ran: rows.filter(r => r.ran !== false).length, needsLive: rows.filter(r => r.needsLive).length },

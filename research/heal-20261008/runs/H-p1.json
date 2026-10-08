@@ -1,0 +1,334 @@
+{
+ "incident": {
+  "id": "records-ec311a3b",
+  "failing": [
+   "fhand-haiku/records:test:d3:s5002/1"
+  ],
+  "passing": 35,
+  "excluded": []
+ },
+ "schema": "heal-run/1",
+ "started": "2026-10-08T17:06:17.806Z",
+ "trial": {
+  "key": "fhand-haiku/records:test:d3:s5002/1",
+  "runId": "18480c39-01b2-4cf3-8c83-7f7c8225c831",
+  "family": "records",
+  "split": "test",
+  "seed": 5002,
+  "pass": false,
+  "score": 0.945946
+ },
+ "kit": {
+  "hash": "7e8f0f83153c5efb",
+  "commit": "880c6b9",
+  "policyHash": "fe63f99b9fcdd5bbe53703ee0c1b2d079972bdecfe1ea940a959385190dee2e4"
+ },
+ "gate": {
+  "source": "pinned",
+  "commit": "13f7664",
+  "live": {
+   "importable": true,
+   "sameBlobAsPin": true
+  }
+ },
+ "mode": {
+  "live": false,
+  "promote": false,
+  "proposer": "none"
+ },
+ "stages": {},
+ "proposals": [
+  {
+   "id": "m-b8d4c58754",
+   "kind": "lint-debt",
+   "ops": [
+    {
+     "op": "gate_verify",
+     "node": "check"
+    },
+    {
+     "op": "gate_failed_count",
+     "node": "dates"
+    },
+    {
+     "op": "gate_failed_count",
+     "node": "statuses"
+    },
+    {
+     "op": "gate_failed_count",
+     "node": "mirror"
+    },
+    {
+     "op": "gate_failed_count",
+     "node": "perspective"
+    },
+    {
+     "op": "gate_failed_count",
+     "node": "vendex"
+    },
+    {
+     "op": "gate_failed_count",
+     "node": "vendex_b"
+    },
+    {
+     "op": "gate_failed_count",
+     "node": "countries"
+    },
+    {
+     "op": "gate_failed_count",
+     "node": "adjudicate"
+    },
+    {
+     "op": "gate_continuation",
+     "node": "atlas_switch"
+    },
+    {
+     "op": "strengthen_acceptance",
+     "via": "verify",
+     "node": "check"
+    }
+   ]
+  }
+ ],
+ "decisions": [
+  {
+   "proposal": "m-b8d4c58754",
+   "kind": "lint-debt",
+   "ops": [
+    "gate_verify",
+    "gate_failed_count",
+    "gate_failed_count",
+    "gate_failed_count",
+    "gate_failed_count",
+    "gate_failed_count",
+    "gate_failed_count",
+    "gate_failed_count",
+    "gate_failed_count",
+    "gate_continuation",
+    "strengthen_acceptance"
+   ],
+   "decision": "reject",
+   "reasons": [
+    "HEAL_OP_INVALID"
+   ],
+   "rejectCode": "HEAL_OP_INVALID",
+   "stages": [
+    {
+     "id": "V0",
+     "ok": false,
+     "code": "HEAL_OP_INVALID",
+     "detail": "at most 6 ops per proposal",
+     "costUsd": 0
+    }
+   ],
+   "costUsd": 0,
+   "costRatio": null
+  }
+ ],
+ "fidelity": {
+  "identical": true,
+  "checks": {
+   "taskHash": true,
+   "pass": true,
+   "score": true,
+   "verdict": true,
+   "calls": true
+  }
+ },
+ "signals": {
+  "ORACLE_FAILED": 1,
+  "VERDICT_ORACLE_MISMATCH": 1,
+  "UNVERIFIED_VERDICT": 1,
+  "LINT_FINDING": 11,
+  "CHECK_VACUOUS": 2
+ },
+ "lint": {
+  "counts": {
+   "error": 11,
+   "warning": 0
+  },
+  "codes": {
+   "ACCEPTANCE_EXISTENCE_ONLY": 1,
+   "VERIFY_NOT_GATING": 1,
+   "ERROR_COLLECTION": 8,
+   "ERROR_CONTINUATION": 1
+  }
+ },
+ "verdict": {
+  "pinned": "unverified",
+  "code": "ACCEPTANCE_EXISTENCE_ONLY"
+ },
+ "classification": {
+  "class": "workflow-defect",
+  "heal": true,
+  "allocatorOnly": false,
+  "varianceTested": false,
+  "reasons": [
+   "variance not tested (needs a live provider)"
+  ],
+  "early": "candidate"
+ },
+ "localisation": {
+  "root": {
+   "node": "statuses",
+   "confidence": "high",
+   "locus": [
+    "statuses"
+   ],
+   "sample": {
+    "id": "c36",
+    "type": "inject",
+    "node": "judge",
+    "nodeKey": "root/statuses:1/judge",
+    "path": "meaning",
+    "pathArr": [
+     "meaning"
+    ],
+    "rowId": 220,
+    "from": "live",
+    "to": "void"
+   },
+   "flips": 3
+  },
+  "classes": [
+   {
+    "code": "CHECK_ESCAPE_HATCH",
+    "node": "statuses",
+    "bodyNode": "judge",
+    "field": "meaning",
+    "evidence": [
+     "c36",
+     "c39",
+     "c40"
+    ]
+   }
+  ],
+  "mode": "failure",
+  "coverage": {
+   "candidates": 96,
+   "ran": 96,
+   "needsLive": 27
+  },
+  "intermediates": [],
+  "variance": {
+   "source": "recorded",
+   "n": 2,
+   "hits": 2,
+   "wilsonLower": 0.3424,
+   "tau": 0.2,
+   "decisive": false
+  },
+  "flippers": [
+   "c36",
+   "c39",
+   "c40"
+  ],
+  "ms": 332441,
+  "blocked": null
+ },
+ "lintDebt": {
+  "ops": [
+   {
+    "op": "gate_verify",
+    "node": "check"
+   },
+   {
+    "op": "gate_failed_count",
+    "node": "dates"
+   },
+   {
+    "op": "gate_failed_count",
+    "node": "statuses"
+   },
+   {
+    "op": "gate_failed_count",
+    "node": "mirror"
+   },
+   {
+    "op": "gate_failed_count",
+    "node": "perspective"
+   },
+   {
+    "op": "gate_failed_count",
+    "node": "vendex"
+   },
+   {
+    "op": "gate_failed_count",
+    "node": "vendex_b"
+   },
+   {
+    "op": "gate_failed_count",
+    "node": "countries"
+   },
+   {
+    "op": "gate_failed_count",
+    "node": "adjudicate"
+   },
+   {
+    "op": "gate_continuation",
+    "node": "atlas_switch"
+   },
+   {
+    "op": "strengthen_acceptance",
+    "via": "verify",
+    "node": "check"
+   }
+  ],
+  "needsProposer": [],
+  "decision": "reject"
+ },
+ "proposer": {
+  "spec": "none",
+  "allowed": [
+   "tighten_check",
+   "add_check",
+   "add_evidence_field",
+   "k_sample_agreement",
+   "escalate_class",
+   "add_probe"
+  ],
+  "locus": [
+   "statuses/judge"
+  ],
+  "skipped": "no proposer selected (offline run: localisation and lint debt only)"
+ },
+ "head": {
+  "hash": "ec311a3b495a45df7cbddae22fe4773e9b83daec18ad8decd0bd27179d0e15e9",
+  "version": 1
+ },
+ "lesson": {
+  "id": "L-3-6885e4ad",
+  "lesson": "L-3",
+  "lintRule": {
+   "code": "CHECK_SELF_EXEMPTION",
+   "summary": "A check branch lets the model choose a value that exempts it from checking the decision field its sibling branches constrain",
+   "implementation": "experiments/heal/lessons/rules/check-self-exemption.mjs",
+   "severity": "warning",
+   "baseSeverity": "warning"
+  },
+  "firing": {
+   "onBase": 7,
+   "onHealed": null,
+   "firesOnBase": true,
+   "quietOnHealed": null,
+   "population": {
+    "n": 8,
+    "fires": 2,
+    "share": 0.25,
+    "where": [
+     "records-v3(M)",
+     "records-v3(L)"
+    ]
+   }
+  },
+  "status": "proposed",
+  "file": "/home/user/workflow-foundry/research/heal-20261008/lessons/L-3-6885e4ad.json"
+ },
+ "budget": {
+  "capUsd": 0,
+  "spentUsd": 0,
+  "remainingUsd": 0,
+  "lines": 0
+ },
+ "ms": 511088
+}

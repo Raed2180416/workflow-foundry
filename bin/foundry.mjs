@@ -11,6 +11,11 @@ import { claudeHookResult } from '../src/hooks.mjs';
 import { errorData, FoundryError, checkData } from '../src/data.mjs';
 import { anchorInWorkspace, appendAnchor } from '../src/audit.mjs';
 
+// --append-anchor: append to the chained anchor file (src/audit.mjs); an unreadable or locked file is reported, not thrown.
+function anchorTo(file, anchor) {
+  try { return { file, appended: appendAnchor(file, anchor).appended }; }
+  catch (error) { return { file, appended: false, error: errorData(error) }; }
+}
 const definitions = {
   workspace: { type: 'string' }, project: { type: 'string' }, client: { type: 'string' },
   'no-hooks': { type: 'boolean' }, 'dry-run': { type: 'boolean' },
@@ -234,7 +239,7 @@ async function main() {
     if (positionals.length !== 2 || !item?.trim()) throw new FoundryError('CLI_ARGUMENT', 'verify-run requires exactly one RUN_ID. Use --help.');
     // Read-only: never create a workspace just to verify a run in it.
     if (!existsSync(path.join(workspace, '.foundry', 'foundry.sqlite'))) throw new FoundryError('NO_STATE', 'No Foundry state in this workspace; pass --workspace PATH');
-    const [{ Store }, { verifyRun }, { appendAnchor, readAnchors }] = await Promise.all([import('../src/store.mjs'), import('../src/verify-run.mjs'), import('../src/audit.mjs')]);
+    const [{ Store }, { verifyRun }, { readAnchors }] = await Promise.all([import('../src/store.mjs'), import('../src/verify-run.mjs'), import('../src/audit.mjs')]);
     let expectHead = null;
     if (args['expect-head'] !== undefined) {
       const match = /^([1-9][0-9]{0,8}):([0-9a-f]{64})$/.exec(args['expect-head']);
@@ -258,10 +263,10 @@ async function main() {
       const report = verifyRun(store, item, { expectHead, anchors, requireBound: !!args['require-bound'], journalDb: journal });
       // Anchoring a head that does not verify would pin the tampered state; only a verified head is appended.
       const anchored = args['append-anchor'] === undefined ? undefined
-        : report.ok && report.anchor ? { file: args['append-anchor'], appended: appendAnchor(args['append-anchor'], report.anchor).appended }
+        : report.ok && report.anchor ? anchorTo(args['append-anchor'], report.anchor)
           : { file: args['append-anchor'], appended: false, reason: 'verification failed' };
       print({ ...report, ...(anchored ? { anchored } : {}) });
-      if (!report.ok) process.exitCode = 1;
+      if (!report.ok || anchored?.error) process.exitCode = 1;
     } finally { store.close(); journal?.close(); }
     return;
   }
@@ -444,9 +449,10 @@ async function main() {
       }
       const result = await foundry.startRun(run.id), log = foundry.store.events(run.id), anchor = anchorInWorkspace(foundry.store, { runId: run.id, events: log, status: result.status });
       // The anchor is the chain head to keep outside the database; --append-anchor writes it to an append-only file.
-      const anchored = args['append-anchor'] === undefined ? undefined : { file: args['append-anchor'], appended: appendAnchor(args['append-anchor'], anchor).appended };
+      // A failure to anchor never hides the run it would have anchored: the run is printed with the error, and the exit code is nonzero.
+      const anchored = args['append-anchor'] === undefined ? undefined : anchorTo(args['append-anchor'], anchor);
       print({ ...foundry.publicRun(result), events: log, anchor, ...(anchored ? { anchored } : {}) });
-      if (result.status === 'failed') process.exitCode = 1;
+      if (result.status === 'failed' || anchored?.error) process.exitCode = 1;
       else if (result.status === 'uncertain') process.exitCode = 2;
       return;
     }

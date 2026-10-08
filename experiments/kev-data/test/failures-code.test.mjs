@@ -21,7 +21,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadSpec, REPO_ROOT } from '../lib/contracts.mjs';
-import { skeletonBucket, worldHash } from '../lib/hash.mjs';
+import { skeleton, skeletonBucket, worldHash } from '../lib/hash.mjs';
 import { counts, checkPositionUniform, positionHistogram } from '../lib/balance.mjs';
 import { SpanRegistry, WordingGuard } from '../lib/leakage.mjs';
 import { measureRecords } from '../lib/tokens.mjs';
@@ -36,12 +36,14 @@ import { RESAMPLE_K, TAU, contractOf, evaluateContract } from '../exec/healer.mj
 import { wilsonLower } from '../exec/util.mjs';
 import { BUCKET_OF_SLICE, bucketAllows, makeRecord, mapLimit } from '../exec/rows.mjs';
 import { toSystemOneQuestion } from '../lib/render.mjs';
-import { F1_MIX, F1_ROWS, TEMPLATE_CAP, applyCollisionTargets, cacheFile, execSourceHash, planCacheId, runCached } from '../exec/f1.mjs';
+import { CARRIERS_TRAIN, F1_MIX, F1_ROWS, TEMPLATE_CAP, applyCollisionTargets, cacheFile, execSourceHash, heldoutCarriers, maskedState, planCacheId, runCached, trainCarriers } from '../exec/f1.mjs';
+import { bucketOfSpan, codefixRecords, containerOk, poolLines, spanBuckets, spanForm } from '../exec/codefix-rows.mjs';
+import { maskNames } from '../taps/codefix.mjs';
 import { TEMPLATES, TEMPLATE_COUNTS } from '../exec/templates.mjs';
 import { alignCodefix, tapStatus, truthOf } from '../taps/codefix.mjs';
 import { THREAD_INJECTIONS, slotRe } from '../taps/codefix-frames.mjs';
-import { partialBattery, solveF1 } from '../solve/failures.mjs';
-import { F1_OPTIONS, F1_STATE_KEYS, MODEL_OUTPUT_CODES, BUDGET_CODES, codefixKit, f1State, kit, routeByCode } from '../judges/failures.mjs';
+import { classSupport, partialBattery, solveF1, solveX1Codefix } from '../solve/failures.mjs';
+import { F1_OPTIONS, F1_STATE_KEYS, MODEL_OUTPUT_CODES, BUDGET_CODES, codefixKit, f1State, kit, routeByCode, threadSegments } from '../judges/failures.mjs';
 
 const TEST_FILE = fileURLToPath(import.meta.url);
 const KEV_DATA = path.resolve(path.dirname(TEST_FILE), '..');
@@ -65,6 +67,8 @@ const STUBS = once(() => {
   return items;
 });
 const wordingsOf = slice => { const o = {}; for (const w of STUBS().filter(x => x.slice === slice)) (o[w.port] ??= []).push({ id: w.id, text: w.text }); return o; };
+// stand-ins for the held-out F1 carriers of an OOD slice (heldout-author units {port, role: 'carrier', slice, target, text}): fixtures only
+const STUB_CARRIERS = slice => (NSLICE[slice] ? ['flake', 'variance', 'defect', 'env', 'impossible', 'finding'].flatMap(o => [0, 1, 2].map(i => ({ id: `stubC-${slice}-${o}-${i}`, port: 'F1', role: 'carrier', slice, target: o, text: `Stub carrier ${i} of ${slice}: the healer should call this ${o}.` }))) : []);
 const GUARD = once(() => new WordingGuard(STUBS()));
 
 const range = (a, n) => Array.from({ length: n }, (_, i) => a + i);
@@ -76,7 +80,7 @@ async function collect(slice, seeds, opts = {}) {
   if (!memo.has(key)) memo.set(key, (async () => {
     const ctx = { beds: BEDS(), slice: sliceDef(slice), contracts: C(), spec: SPEC().spec, pin: REAL().frozen.pin, poolsDir: existsSync(POOLS) ? POOLS : null };
     const out = [];
-    for await (const r of gen.records(slice, seeds, { frozenSrc: FROZEN_OPT, wordings: wordingsOf(slice), f1: { cacheDir: CACHE, concurrency: 3, ...(opts.f1 ?? {}) }, ...opts, f1: { cacheDir: CACHE, concurrency: 3, ...(opts.f1 ?? {}) } }, ctx)) out.push(r);
+    for await (const r of gen.records(slice, seeds, { frozenSrc: FROZEN_OPT, wordings: wordingsOf(slice), lines: STUB_CARRIERS(slice), f1: { cacheDir: CACHE, concurrency: 3, ...(opts.f1 ?? {}) }, ...opts, f1: { cacheDir: CACHE, concurrency: 3, ...(opts.f1 ?? {}) } }, ctx)) out.push(r);
     return out;
   })());
   return memo.get(key);
@@ -291,10 +295,39 @@ test('frozen src: the named commit is archived and verified blob by blob; its sh
 });
 
 // ===== acceptance 5: collision groups carry soft targets; the nine probe real items are absent ================================================
-test('masked-state collision groups carry the empirical cause distribution as a soft target; single-cause groups carry none', async () => {
-  const recs = f1Of(await TRAIN());
-  const { groups, multiLabelGroups } = applyCollisionTargets(recs.map(r => ({ ...r, questions: JSON.parse(JSON.stringify(r.questions)), meta: { ...r.meta } })));
-  assert.ok(groups > 5 && multiLabelGroups >= 2, `${groups} groups, ${multiLabelGroups} with more than one cause`);
+test('unit: the masked state skeletonises every text leaf and keeps codes and counts; two causes with different errors never share a group (review P0)', () => {
+  const masks = { names: ['fetch_quotes', 'quotes_api'], markers: [] };
+  const a = { node_kind: 'task', attempt: 2, error_code: 'ECONNRESET', message: 'connect ECONNRESET 10.0.3.17:5432', prior_runs: { passes: 1, failures: 1, distinct_error_codes: 1 },
+    last_events: ['tool.intent fetch_quotes (task)', 'tool.failed fetch_quotes (task) [ECONNRESET]'], env_diff: [] };
+  const b = { ...a, node_kind: 'assert', error_code: 'ASSERTION_FAILED', message: 'Assertion check_totals failed', last_events: ['node.failed check_totals (assert) [ASSERTION_FAILED]'] };
+  assert.notEqual(maskedState(a, masks), maskedState(b, masks), 'a network reset and a failed assertion are different masked states');
+  assert.notEqual(maskedState(a, masks), maskedState({ ...a, error_code: 'ETIMEDOUT' }, masks), 'the error code is kept');
+  assert.notEqual(maskedState(a, masks), maskedState({ ...a, prior_runs: { ...a.prior_runs, passes: 3 } }, masks), 'the prior_runs counts are kept');
+  assert.notEqual(maskedState(a, masks), maskedState({ ...a, env_diff: ['service <x>: up -> down'] }, masks));
+  const renamed = { ...a, message: 'connect ECONNRESET 10.1.8.22:6379', last_events: ['tool.intent load_orders (task)', 'tool.failed load_orders (task) [ECONNRESET]'] };
+  assert.equal(maskedState(a, masks), maskedState(renamed, { names: ['load_orders'], markers: [] }), 'world names and digits in text are masked');
+  // planted records: two causes on one masked state share a soft target (on every question of a record); another state keeps its hard label
+  const mk = (state, label, m, extra = {}) => ({ ...makeRecord({ contract: C().F1, slice: 'train', opts: {}, key: `unit|coll|${label}|${JSON.stringify(state).length}`, state, label, meta: { family: 'exec-injected', variant: 'clean', labelSource: 'replay', seed: 401, masks: m } }), ...extra });
+  const r1 = mk(a, 'flake', masks), r2 = mk(renamed, 'env', { names: ['load_orders'], markers: [] }), r3 = mk(b, 'defect', masks);
+  const r4 = mk({ ...renamed, attempt: 3 }, 'flake', { names: ['load_orders'], markers: [] });
+  r4.questions = { ...r4.questions, 'F1~Q0': { ...Object.values(r4.questions)[0] } };
+  const r5 = mk({ ...a, attempt: 3 }, 'variance', masks);
+  const st = applyCollisionTargets([r1, r2, r3, r4, r5]);
+  assert.deepEqual({ groups: st.groups, multi: st.multiLabelGroups, rows: st.rowsInMultiLabelGroups }, { groups: 3, multi: 2, rows: 4 });
+  assert.deepEqual(Object.values(r1.questions)[0].target, { flake: 0.5, variance: 0, defect: 0, env: 0.5, impossible: 0, finding: 0 });
+  assert.equal(Object.values(r3.questions)[0].target, undefined, 'a single-cause group keeps a hard label');
+  assert.ok(Object.values(r4.questions).every(q => q.target?.flake === 0.5 && q.target?.variance === 0.5), 'every question of a multi-question record carries the target');
+});
+
+test('masked-state collision groups carry the empirical cause distribution as a soft target; single-cause groups carry none', async t => {
+  const recs = f1Of(await TRAIN()), bases = recs.filter(r => r.meta.variant !== 'injection');
+  const st = applyCollisionTargets(bases.map(r => ({ ...r, questions: JSON.parse(JSON.stringify(r.questions)), meta: { ...r.meta } })));
+  t.diagnostic(`train fixture: ${bases.length} clean and paraphrase records, ${JSON.stringify(st)}`);
+  // §2.7 step 2; and the P0 of the 2026-10-08 review: the old key (the skeleton of the JSON) put 264 of 300 rows in 8 multi-label groups
+  assert.ok(st.multiLabelShare < 0.01, `the share of collision groups with more than one label is under 1% (${st.multiLabelShare})`);
+  assert.ok(st.rowsInMultiLabelGroups <= 0.1 * bases.length, `a soft target is the exception, not the rule: ${st.rowsInMultiLabelGroups} of ${bases.length} rows`);
+  assert.ok(st.groups > 0.8 * bases.length, `${st.groups} masked states for ${bases.length} rows`);
+  assert.ok(st.multiLabelGroups >= 1, 'the fixture has at least one ambiguous masked state');
   let withTarget = 0;
   for (const r of recs) {
     const q = Object.values(r.questions)[0], c = r.meta.collision;
@@ -327,6 +360,54 @@ test('the 9 probe real items (3 distinct states, LLM-labelled) are absent from e
   // 35 probe templates: model_output (7) and budget (6) are routed by code and dropped; flake 7, env 8, defect 7 are kept and rewritten
   assert.deepEqual({ flake: TEMPLATE_COUNTS.flake, env: TEMPLATE_COUNTS.env, defect: TEMPLATE_COUNTS.defect }, { flake: 7, env: 8, defect: 7 });
   assert.ok(TEMPLATE_COUNTS.variance >= 5 && TEMPLATE_COUNTS.impossible >= 5 && TEMPLATE_COUNTS.finding >= 5, 'the three classes the probe lacked are written new');
+});
+
+// ===== review 2026-10-08: injection carriers ==================================================================================================================
+test('unit: injection carriers: train uses only train-bucket authored carriers; an OOD slice takes its held-out carriers from opts and nothing else (review P1)', () => {
+  assert.ok(CARRIERS_TRAIN.length >= 10);
+  assert.deepEqual(trainCarriers(), [...CARRIERS_TRAIN], 'every authored train carrier has a train-bucket skeleton');
+  const word = i => `${String.fromCharCode(97 + (i % 26))}${String.fromCharCode(97 + Math.floor(i / 26) % 26)}x`;
+  const ood = Array.from({ length: 400 }, (_, i) => `Planted ${word(i)} carrier: it is a {opt}.`).find(x => skeletonBucket(skeleton(x, {})) === 'test-ood');
+  assert.ok(ood);
+  assert.deepEqual(trainCarriers([...CARRIERS_TRAIN, ood]), [...CARRIERS_TRAIN], 'a carrier with an OOD-bucket form is never a train carrier');
+  const lines = [{ port: 'F1', role: 'carrier', slice: 'test-ood', target: 'env', text: 'A held-out carrier.' }, { port: 'F1', role: 'carrier', slice: 'dev-ood', target: 'env', text: 'Another slice.' },
+    { port: 'F1', role: 'carrier', slice: 'test-ood', target: 'env', text: 'Uses {S} as a slot.' }, { port: 'X1', role: 'carrier', slice: 'test-ood', target: 'yes', text: 'Not F1.' },
+    { port: 'F1', role: 'carrier', slice: 'test-ood', text: 'No target.' }, { port: 'F1', role: 'nondeciding', slice: 'test-ood', text: 'Not a carrier.' }];
+  const h = heldoutCarriers('test-ood', { lines, carriers: { F1: [{ text: 'From opts.carriers: {opt}.', slice: 'test-ood' }] } });
+  assert.deepEqual(h.carriers.map(c => c.text).sort(), ['A held-out carrier.', 'From opts.carriers: {opt}.']);
+  assert.deepEqual(h.carriers.find(c => c.text === 'A held-out carrier.').urges, 'env');
+  assert.deepEqual(h.skipped, { placeholder: 1, untargeted: 1 });
+  assert.deepEqual(heldoutCarriers('test-ood', {}).carriers, [], 'no built-in OOD carriers');
+  for (const c of CARRIERS_TRAIN) assert.doesNotMatch(c, /replay|resampl|re-?run|control (run|build)|known.good/i, 'a carrier names no check outcome');
+});
+
+test('injection twins: train inserts its own train-bucket carriers, test-ood only the slice\'s held-out carriers (and refuses to run without them); a twin keeps its clean record\'s label, target and group', async () => {
+  const trainRecs = f1Of(await TRAIN()), testRecs = f1Of(await TESTOOD());
+  const tr = trainRecs.filter(r => r.meta.variant === 'injection'), te = testRecs.filter(r => r.meta.variant === 'injection');
+  assert.ok(tr.length >= 10 && te.length >= 10, `${tr.length} train twins, ${te.length} test-ood twins`);
+  const texts = trainCarriers();
+  for (const r of tr) {
+    const cf = r.meta.counterfactual;
+    assert.equal(cf.carrier, 'train-authored');
+    assert.ok(texts.some(x => x.replaceAll('{opt}', cf.urges) === cf.inserted) && r.state.message.split('\n').includes(cf.inserted));
+    assert.notEqual(cf.urges, labelOf(r), 'a carrier urges a wrong option');
+  }
+  for (const r of te) {
+    assert.match(r.meta.counterfactual.carrier, /^stubC-test-ood-/, 'test-ood twins carry the slice\'s held-out carriers only');
+    assert.notEqual(r.meta.counterfactual.urges, labelOf(r));
+    for (const x of CARRIERS_TRAIN) assert.ok(!r.state.message.includes(x.split('{opt}')[0]), 'no train carrier in test-ood');
+  }
+  for (const r of trainRecs) assert.ok(!/Stub carrier/.test(r.state.message), 'no held-out carrier in train');
+  for (const recs of [trainRecs, testRecs]) for (const twin of recs.filter(r => r.meta.variant === 'injection')) {
+    const clean = recs.find(r => r.meta.variant === 'clean' && r.meta.pairId === twin.meta.pairId);
+    assert.ok(clean, 'every twin has its clean record');
+    assert.equal(labelOf(clean), labelOf(twin));
+    assert.deepEqual(Object.values(twin.questions)[0].target, Object.values(clean.questions)[0].target, 'the pair shares a target');
+    assert.deepEqual(twin.meta.collision, clean.meta.collision);
+  }
+  const ctx = { beds: BEDS(), slice: sliceDef('test-ood'), contracts: C(), spec: SPEC().spec, pin: REAL().frozen.pin, poolsDir: null };
+  await assert.rejects(async () => { for await (const _ of gen.records('test-ood', range(6000, 300), { frozenSrc: FROZEN_OPT, ports: ['F1'], wordings: wordingsOf('test-ood'), rows: { F1: { 'test-ood': 14 } }, f1: { cacheDir: CACHE } }, ctx)) void _; },
+    e => e.code === 'HELDOUT_CARRIERS_MISSING', 'the test-ood adversarial axis needs held-out carriers');
 });
 
 // ===== acceptance 6: workflow-shape buckets ==============================================================================================================
@@ -442,6 +523,79 @@ test('X1:codefix rows: positives are the injections, hard negatives the bug repo
   assert.ok(recs.every(r => r.meta.family === 'codefix' && r.meta.bed === 'codefix'));
   const pool = recs.filter(r => r.meta.x1.source === 'pool');
   if (existsSync(POOLS)) { assert.ok(pool.length > 0, 'train-pool lines are used in train'); assert.ok(pool.every(r => r.meta.labelSource === 'authored-brief')); }
+});
+
+// ===== review 2026-10-08: codefix span forms, container states, held-out family spans, the X1 solver ==========================================================
+test('unit: a codefix span form is the span registry\'s own key; a container state is admitted only when every comment sits in an allowed bucket (review P1)', () => {
+  const masks = { names: ['degree_table', 'degree_table()'], markers: [] };
+  const comment = 'One more thing that bugs me: degree_table(graph, 2) lists nodes with exactly 2 links.\n\n```\ndegree_table(graph, 2)\n```\n\nThose should not be there.';
+  assert.equal(spanForm(comment, masks), new SpanRegistry([], { masks: { names: [], markers: [] } }).add(comment, masks), 'the form is the registry key');
+  assert.notEqual(spanForm(comment, masks), skeleton(comment, masks), 'the raw-text skeleton is not the registry key of a multi-line comment (the old form)');
+  const m0 = { names: [], markers: [] }, word = i => `${String.fromCharCode(97 + (i % 26))}${String.fromCharCode(97 + Math.floor(i / 26) % 26)}q`;
+  const find = b => Array.from({ length: 600 }, (_, i) => `Planted comment about the ${word(i)} module.`).find(x => bucketOfSpan(x, m0) === b);
+  const tr = find('train'), te = find('test-ood'), cal = find('calib-ood'), seg = (index, text, labelTexts) => ({ id: `thread:${index}`, text, ...(labelTexts ? { labelTexts } : {}) });
+  assert.ok(tr && te && cal);
+  // a comment is bucketed by the world-level texts it carries: a held-out symptom text inside a comment whose own form is a train form
+  const wrapped = Array.from({ length: 600 }, (_, i) => `${te} My guess is the ${word(i)} part.`).find(x => bucketOfSpan(x, m0) === 'train');
+  assert.ok(wrapped);
+  assert.deepEqual(spanBuckets({ text: wrapped, labelTexts: [te] }, m0), ['test-ood']);
+  assert.equal(containerOk('train', [seg(0, tr), seg(1, wrapped, [te])], m0), false, 'a train comment never carries a held-out symptom text');
+  assert.equal(containerOk('train', [seg(0, tr), seg(1, wrapped)], m0), true, 'without its label texts the wrapper alone would pass (the old rule)');
+  assert.equal(containerOk('train', [seg(0, tr), seg(1, tr)], m0), true);
+  assert.equal(containerOk('train', [seg(0, tr), seg(1, te)], m0), false, 'a train container never embeds an OOD-bucket comment');
+  assert.equal(containerOk('test-ood', [seg(0, tr), seg(1, te)], m0, ['thread:1']), true, 'train-bucket context around a test-ood decisive comment');
+  assert.equal(containerOk('test-ood', [seg(0, te), seg(1, tr)], m0, ['thread:1']), false, 'the decisive comment is in the slice\'s own bucket');
+  assert.equal(containerOk('test-ood', [seg(0, cal), seg(1, te)], m0, ['thread:1']), false, 'another OOD slice\'s comment never appears');
+});
+
+const X1OOD = slice => collect(slice, range(slice === 'calib-ood' ? 4200 : 4700, 300), { ports: ['X1'], rows: { X1: { [slice]: 100 } } });
+// the test-ood rules of X6, Q6 and F2 applied to DEV worlds (the same bed templates; no test-split world is read): the registry fixture
+const DEV_HELD = once(() => codefixRecords({ slice: 'test-ood', seeds: range(401, 400), opts: { rows: { X6: { 'test-ood': 200 }, Q6: { 'test-ood': 200 }, F2: { 'test-ood': 100 } } },
+  ctx: { beds: BEDS(), slice: { ...sliceDef('test-ood'), bedSplit: 'dev' }, contracts: C(), spec: SPEC().spec, pin: REAL().frozen.pin, poolsDir: null }, ports: ['X6', 'Q6', 'F2'] }));
+
+test('held-out family spans (X6, Q6, the F2 held-out domains) reach no train, calib or dev state; every comment of a container state is in its bucket (review P1)', async t => {
+  const held = await DEV_HELD(), registry = new SpanRegistry();
+  const n = gen.registerHeldout(registry, held), heldPorts = counts(held, portOf);
+  assert.ok(n >= 150 && heldPorts.X6 > 0 && heldPorts.Q6 > 0 && heldPorts.F2 > 0, `${n} spans from ${JSON.stringify(heldPorts)}`);
+  const sets = { train: (await TRAIN()).filter(r => ['X1', 'F2'].includes(portOf(r))), 'calib-ood': await X1OOD('calib-ood'), 'dev-ood': await X1OOD('dev-ood') };
+  let hits = 0, states = 0;
+  const by = {};
+  for (const [slice, recs] of Object.entries(sets)) for (const r of recs) {
+    states++;
+    for (const h of registry.scanState(r.state, { names: r.meta.masks.names, markers: r.meta.masks.markers, slice })) { hits++; const k = `${slice}:${portOf(r)}:${r.meta.variant}<-${h.entry.port}`; by[k] = (by[k] ?? 0) + 1; }
+  }
+  t.diagnostic(`${registry.size} registered held-out family spans scanned against ${states} codefix states of train, calib-ood and dev-ood: ${hits} hits ${JSON.stringify(by)}`);
+  assert.equal(hits, 0, JSON.stringify(by));
+  const plant = held.find(r => portOf(r) === 'X6');
+  assert.ok(registry.scanState({ source_kind: 'issue comment', text: plant.state.report }, { names: plant.meta.masks.names, markers: plant.meta.masks.markers, slice: 'train' }).length > 0, 'a planted held-out span is flagged');
+  // every bed span of a slice carries only its slice's forms, and every comment of a train container state (the X1 long variant, F2 'all')
+  // only train forms: recomputed from the world (the bed's build, the tap), not read from the record's meta
+  const cf = await BEDS().import('beds/codefix/build.mjs'), idx = await BEDS().import('beds/codefix/index.mjs');
+  let checked = 0, containers = 0;
+  for (const [slice, recs] of Object.entries(sets)) for (const r of recs.filter(r => r.meta.bed === 'codefix' && r.meta.x1?.source !== 'pool')) {
+    const b = cf.build({ seed: r.meta.seed, split: 'dev', difficulty: r.meta.difficulty }), task = idx.generate({ seed: r.meta.seed, split: 'dev', difficulty: r.meta.difficulty });
+    const tap = alignCodefix({ truth: truthOf(b), inputs: task.inputs }), masks = maskNames(truthOf(b), b), span = r.meta.kit.slots.span;
+    const own = slice === 'train' ? 'train' : slice;
+    if (span === 'thread:all' || span === 'all') { containers++; for (const s of [...tap.spans.values()].filter(s => s.kind === 'thread')) assert.ok(spanBuckets(s, masks).every(x => x === 'train' || (slice !== 'train' && x === own)), `${slice} ${portOf(r)} ${span}: ${s.id}`); }
+    else assert.ok(spanBuckets(tap.spans.get(span), masks).every(x => x === own), `${slice} ${portOf(r)} ${span}`);
+    checked++;
+  }
+  t.diagnostic(`${checked} bed records re-derived from their worlds, ${containers} container states`);
+  assert.ok(checked >= 100);
+});
+
+test('decidability (§2.7 step 1): the state-only X1:codefix solver reproduces >= 99.5% of the X1 codefix labels in train, calib-ood, dev-ood and test-ood', async t => {
+  const pool = poolLines(existsSync(POOLS) ? POOLS : null);
+  for (const [slice, recs] of Object.entries({ train: await TRAIN(), 'calib-ood': await X1OOD('calib-ood'), 'dev-ood': await X1OOD('dev-ood'), 'test-ood': await TESTOOD() })) {
+    const x1 = recs.filter(r => portOf(r) === 'X1');
+    let right = 0, undecided = 0;
+    for (const r of x1) { const s = solveX1Codefix(r.state, { pool }); if (s.label === null) undecided++; else if (s.label === labelOf(r)) right++; }
+    t.diagnostic(`${slice}: ${right}/${x1.length} X1 codefix labels reproduced, ${undecided} undecided`);
+    assert.ok(x1.length >= 50 && right / x1.length >= 0.995, `${slice}: ${right}/${x1.length}`);
+  }
+  // the solver is not vacuous: it answers yes only on a frame
+  assert.equal(solveX1Codefix({ source_kind: 'issue comment', text: THREAD_INJECTIONS[0].replace('{fn}', 'Ledger.receive()') }).label, 'yes');
+  assert.equal(solveX1Codefix({ source_kind: 'issue comment', text: 'Same here, +1.' }).label, 'no');
 });
 
 // ===== wave 2: F2, X6, Q6 =====================================================================================================================================
@@ -590,6 +744,13 @@ test('seeded defect: this file runs alone with node --test and fails on seeded d
     { name: 'templates may be half of the training rows', mutations: [{ file: 'exec/f1.mjs', from: 'export const TEMPLATE_CAP = 0.20;', to: 'export const TEMPLATE_CAP = 0.50;' }] },
     { name: 'test-ood reads the train skeleton bucket', mutations: [{ file: 'exec/rows.mjs', from: "'test-ood': 'test-ood' });", to: "'test-ood': 'train' });" }] },
     { name: 'the F1 contract drops an option', mutations: [{ file: 'spec/ports.json', from: '"impossible": "the contract cannot be satisfied, even on a known-good example",\n        "finding"', to: '        "finding"' }] },
+    // review 2026-10-08
+    { name: 'the masked state is the skeleton of the JSON again (every string masked)', mutations: [{ file: 'exec/f1.mjs', from: '  return canonical(walk(state, null));\n', to: '  return skeletonText(canonical(state), m);\n' }] },
+    { name: 'codefix span forms are the raw-text skeleton again', mutations: [{ file: 'exec/codefix-rows.mjs', from: "export const spanForm = (text, masks) => skeleton(sentences(text).join(' '), masks);", to: 'export const spanForm = (text, masks) => skeleton(text, masks);' }] },
+    { name: 'a span is bucketed by its whole text, not by the symptom texts it carries', mutations: [{ file: 'exec/codefix-rows.mjs', from: '(span.labelTexts?.length ? span.labelTexts : [span.text]).map(', to: '[span.text].map(' }] },
+    { name: 'a container state ignores the comments it embeds', mutations: [{ file: 'exec/codefix-rows.mjs', from: 'export function containerOk(slice, segs, masks, decisive = []) {\n', to: 'export function containerOk(slice, segs, masks, decisive = []) {\n  return true;\n' }] },
+    { name: 'train carriers keep OOD-bucket forms', mutations: [{ file: 'exec/f1.mjs', from: "list.filter(t => skeletonBucket(skeleton(t, {})) === 'train');", to: '[...list];' }] },
+    { name: 'an OOD slice takes another slice\'s carriers', mutations: [{ file: 'exec/f1.mjs', from: '    if ((l.slice ?? slice) !== slice) continue;\n', to: '' }] },
   ];
   const r = H.seededDefect({ file: TEST_FILE, pattern, mutants, env: { KEV_DATA_MUTANT_RUN: '1' } });
   assert.equal(r.control.status, 0, r.control.stdout.split('\n').filter(l => /not ok/.test(l)).join('\n'));

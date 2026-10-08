@@ -20,15 +20,18 @@
 //   rows        { F1: {slice: n}, X1: {...}, F2: {...}, X6: {...}, Q6: {...} } row targets per slice (defaults: JUDGE-PROGRAM.md §4.3)
 //   f1          { rows, mix: {templates, gameqa, twins, paraphrase, adversarial}, concurrency, cacheDir, noSandbox }
 //   wordings    { F1: [{id, text}], X1: [...] } the held-out wordings of THIS slice (required in calib-ood, dev-ood, test-ood)
+//   carriers    { F1: [{id?, text, target, slice?}] } held-out injection carriers of THIS slice (required where F1 makes injection twins in an
+//               OOD slice: the test-ood adversarial axis); or the same units in opts.lines as {port: 'F1', role: 'carrier', slice, target, text}
 import { stringLeaves } from '../lib/leakage.mjs';
 import { f1Records, stats as f1Stats } from '../exec/f1.mjs';
 import { codefixRecords, stats as cfStats } from '../exec/codefix-rows.mjs';
 import { freezeSrc, loadRuntime } from '../exec/frozen-src.mjs';
 import { fail } from '../exec/rows.mjs';
+import { threadSegments } from '../judges/failures.mjs';
 
 export const group = 'failures-code';
 export const ports = ['F1', 'X1:codefix', 'F2', 'X6:codefix', 'Q6:codefix'];
-export const GENERATOR_VERSION = 'failures-code@1';
+export const GENERATOR_VERSION = 'failures-code@2';      // @2 (review 2026-10-08): F1 masked-state collision key, held-out carriers, codefix registry-key forms
 export const HELD_OUT_PORTS = Object.freeze(['X6', 'Q6']);
 export const SMOKE_PORTS = Object.freeze(['F2', 'X6', 'Q6']);
 
@@ -64,15 +67,24 @@ export async function* records(slice, seeds, opts = {}, ctx) {
   if (cfPorts.length) for (const r of await codefixRecords({ slice, seeds, opts, ctx, ports: cfPorts })) yield r;
 }
 
-// ---- label-bearing spans of the held-out family (for the span registry, §2.3 rule 7) ---------------------------------------------------------------
-// X6 and Q6 codefix: the report / behaviour text. The assembly registers them with registry.add(text, {slice: 'heldout', ...}).
+// ---- label-bearing spans of the held-out families (for the span registry, §2.3 rule 7) -----------------------------------------------------------
+// X6 and Q6 codefix: the report / behaviour text. F2's held-out domains (codefix:routing, codefix:ratelimit): the bug comment a record is
+// decided by (the span itself, or for an 'all' record its decisive comment). The assembly registers them with
+// registry.add(text, {slice: 'heldout', ...}). The codefix train rows (X1, F2) keep to the train skeleton bucket under the registry's own key
+// (exec/codefix-rows.mjs spanForm), so these entries never match one of them (test: "held-out family spans ...").
 export function heldoutSpans(record) {
   const masks = record.meta?.masks ?? { names: [], markers: [] }, out = [];
   const ports = Object.keys(record.questions).map(q => q.split('~')[0]);
   if (ports.includes('X6')) out.push({ text: record.state.report, port: 'X6', kind: 'family-span', masks });
   if (ports.includes('Q6')) out.push({ text: record.state.behaviour, port: 'Q6', kind: 'family-span', masks });
+  if (ports.includes('F2') && HELDOUT_F2_FAMILIES.includes(record.meta?.family)) {
+    const f2 = record.meta.f2 ?? {};
+    if (f2.span === 'all') { const segs = threadSegments(record.state.bug_report); for (const id of f2.decisive ?? []) { const s = segs[Number(String(id).split(':')[1])]; if (s) out.push({ text: s.body, port: 'F2', kind: 'family-span', masks }); } }
+    else out.push({ text: record.state.bug_report, port: 'F2', kind: 'family-span', masks });
+  }
   return out.filter(s => s.text);
 }
+export const HELDOUT_F2_FAMILIES = Object.freeze(['codefix:routing', 'codefix:ratelimit']);
 export function registerHeldout(registry, recs) {
   let n = 0;
   for (const r of recs) for (const s of heldoutSpans(r)) { registry.add(s.text, { slice: 'heldout', source: 'failures-code', port: s.port, kind: s.kind, names: s.masks.names, markers: s.masks.markers }); n++; }

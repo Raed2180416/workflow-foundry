@@ -154,7 +154,7 @@ function expectationOf(mod, W, step, cmd) {
 // ---- perturbed beliefs ------------------------------------------------------------------------------------------------------
 // Each operator proposes, for the state after k route steps, an action the plan issues and the effect it expects,
 // on a map the plan believes wrongly. The environment decides whether the effect happens (holds()).
-export const OPS = Object.freeze(['wrong-exit', 'locked-door', 'wrong-key', 'one-way-return', 'one-way-entry', 'wrong-room', 'unaware-coupling', 'empty-container', 'wrong-key-found', 'absent-item', 'no-treasure']);
+export const OPS = Object.freeze(['wrong-exit', 'locked-door', 'wrong-key', 'one-way-return', 'one-way-entry', 'wrong-room', 'unaware-coupling', 'phantom-coupling', 'empty-container', 'wrong-key-found', 'absent-item', 'no-treasure']);
 
 function colourOfDoor(w, d) { return w.doors[d].color; }
 
@@ -201,6 +201,21 @@ export function proposeOps(mod, route, k, key) {
   if (step && step.cmd.verb === 'toggle' && step.switchIndex >= 0 && w.switches[step.switchIndex].targets.length > 1) {
     const { effects, flips } = toggleEffects(mod, W, step.pre, step.post, step.switchIndex);
     out.push({ op: 'unaware-coupling', action: step.action, expect: { kind: 'toggle', noun: w.switches[step.switchIndex].noun, effects: effects.slice(0, 1).map(({ mech, ...e }) => e) }, truth: { kind: 'toggle', flips: flips.slice(0, 1) }, detail: { targets: flips.length } });
+  }
+  // phantom coupling: the plan believes the switch also moves a mechanism it does not move (the mirror of unaware-coupling, so
+  // that the number of effects the plan lists does not predict the label: drifts list one fewer or one more than the switch moves)
+  // (single-target switches only: no switch of the bed moves three mechanisms, so a three-effect plan would be a drift by its length)
+  if (step && step.cmd.verb === 'toggle' && step.switchIndex >= 0 && w.switches[step.switchIndex].targets.length === 1) {
+    const sw = w.switches[step.switchIndex], others = w.mechs.map((m, i) => i).filter(i => !sw.targets.includes(i));
+    if (others.length) {
+      const { effects, flips } = toggleEffects(mod, W, step.pre, step.post, step.switchIndex);
+      // a coupled switch of the bed opens one way and shuts another, so the phantom effect is a shutting one where the keep has an
+      // open mechanism to shut (otherwise the change word of the extra effect alone would tell the phantom from a real coupling)
+      const shut = others.filter(i => step.pre.mech[i]);
+      const mi = pickBy(shut.length ? shut : others, `${key}|pc`), m = w.mechs[mi], e = w.edges[m.edge], open = !step.pre.mech[mi];
+      const extra = { type: m.type === 'bridge' ? 'bridge' : 'portcullis', change: m.type === 'bridge' ? (open ? 'lowers' : 'raises') : (open ? 'raises' : 'drops'), a: roomName(w, e.a), b: roomName(w, e.b) };
+      out.push({ op: 'phantom-coupling', action: step.action, expect: { kind: 'toggle', noun: sw.noun, effects: [...effects.map(({ mech, ...x }) => x), extra] }, truth: { kind: 'toggle', flips: [...flips, { mech: mi, open }] }, detail: { targets: flips.length, phantom: mi } });
+    }
   }
   // containers: the plan believes an empty (or differently stocked) container holds a key
   {
@@ -297,21 +312,27 @@ const headerOf = obs => /^\[(.+)\]/.exec(obs)?.[1] ?? null;
 // First path: the environment itself. createEnv with the lifetime ledger LIFTED (the default cap is the task budget
 // and restore() does not refund it, so the revision-1 labeller stopped part-way, §1.2 Q1); the lift is explicit and
 // logged. For every direction: snapshot, step(go <direction>), did the room change?, restore.
+// The log records the option as passed and the limit the environment itself reports on every probe (info.lifetimeLimit of
+// the bed's ledger), so "lifted" is evidence, not a constant.
 export function probeExits(mod, task, k, log = []) {
   const W = mod.index._internal.world(task);
-  const env = mod.index.createEnv(task, { lifetimeActions: Infinity });
+  const ledger = { lifetimeActions: Infinity };
+  const env = mod.index.createEnv(task, ledger);
   env.reset();
   for (const a of W.solution.slice(0, k)) env.step(a);
-  const observation = env.observe(), head = headerOf(observation), labels = {};
+  const observation = env.observe(), head = headerOf(observation), labels = {}, envLimits = new Set();
   let probes = 0;
   for (const d of DIRECTIONS) {
     const snap = env.snapshot(), r = env.step(`go ${d}`);
+    if (r.info?.lifetimeLimit !== undefined) envLimits.add(String(r.info.lifetimeLimit));
     labels[d] = headerOf(r.observation) !== head ? 'yes' : 'no';
     env.restore(snap);
     probes++;
   }
-  log.push({ task: task.id, k, lifetimeActions: 'Infinity', lifted: true, probes, spent: env.spent() });
-  return { observation, labels };
+  const entry = { task: task.id, k, lifetimeActions: String(ledger.lifetimeActions), envLimit: envLimits.size === 1 ? [...envLimits][0] : envLimits.size ? [...envLimits].join('|') : null,
+    lifted: ledger.lifetimeActions === Infinity, probes, spent: env.spent() };
+  log.push(entry);
+  return { observation, labels, ledger: entry };
 }
 // Second path: the world structure (_internal.world(task).w.edges) with the dynamic state (position, unlocked
 // doors, mechanisms) read from the ABSTRACT model of the bed (solver.mjs simulate over state bits), so neither the

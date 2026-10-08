@@ -18,6 +18,7 @@ test('decide(): a pure function of the verification record', () => {
   const pend = decide(ver({ ok: false, pending: true, stages: [{ id: 'V7', ok: null, code: 'HEAL_FRESH_NOT_RUN' }] }), prop([]));
   assert.deepEqual(pend, { decision: 'pending', reasons: ['V7:HEAL_FRESH_NOT_RUN'] });
   assert.equal(decide(ver({ rejectCode: 'HEAL_EXHAUSTED', ok: false }), prop([])).decision, 'exhausted');
+  assert.equal(decide(ver({ partial: true }), prop([{ op: 'add_check' }])).decision, 'pending', 'a stage subset can never promote');
   assert.equal(decide(ver(), prop([], { depth: 4 })).decision, 'exhausted');
   // review, never auto-promotion
   assert.equal(decide(ver(), prop([{ op: 'relax_check' }])).decision, 'owner-review');
@@ -60,6 +61,7 @@ test('Lineage: compare-and-swap promotion, lineage record, rollback to the paren
     const cand = clone(base); cand.version = 2; cand.nodes.find(n => n.id === 'fix').instructions += '\nExtra.';
     const proposal = { id: 'p1', kind: 'defect', ops: [{ op: 'edit_instructions' }], workflow: cand, proposer: { modelId: 'claude-haiku-5-5', class: 'M', briefHash: 'b' }, waivers: [], probes: [] };
     const verification = ver({ baseHash: head0.hash, candidateHash: digest(cand), costUsd: 0.01, stages: [{ id: 'V0', ok: true }] });
+    assert.throws(() => lineage.promote({ proposal: { ...proposal, base: { hash: 'some-other-base' } }, verification, decision: { decision: 'promote' } }), /HEAL_BASE_MISMATCH/, 'a proposal is bound to the base it was verified against');
     assert.throws(() => lineage.promote({ proposal, verification, decision: { decision: 'owner-review' } }), /HEAL_NOT_PROMOTABLE/);
     assert.throws(() => lineage.promote({ proposal, verification: { ...verification, candidateHash: 'x' }, decision: { decision: 'promote' } }), /HEAL_CANDIDATE_CHANGED/);
     const r = lineage.promote({ proposal, verification, decision: decide(verification, proposal), kitHash: kit.kitHash, lintPin: { commit: '13f7664' }, policyHash: 'p' });

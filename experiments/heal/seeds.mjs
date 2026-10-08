@@ -43,7 +43,7 @@ export async function draw({ ledger, family, split = 'dev', difficulty, n, by, p
   for (let seed = range[0]; seed <= range[1] && seeds.length < n && seed - range[0] < scan; seed++) {
     if (isUsed(ledger, family, split, difficulty, seed)) continue;
     const task = await makeTask(seed);
-    if (dedupe) { const h = await referenceHash(family, task); if (seen.has(h)) continue; seen.add(h); (ledger.referenceHashes[family] ??= {})[`${split}:d${difficulty}:s${seed}`] = h; }
+    if (dedupe) { const h = await referenceHash(family, task.task ?? task); if (seen.has(h)) continue; seen.add(h); (ledger.referenceHashes[family] ??= {})[`${split}:d${difficulty}:s${seed}`] = h; }
     if (keep && !(await keep(task, seeds))) { continue; }
     seeds.push(seed);
   }

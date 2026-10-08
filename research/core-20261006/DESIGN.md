@@ -175,7 +175,14 @@ model_calls(id INTEGER PRIMARY KEY, replay_key TEXT, run_id TEXT, node_key TEXT,
   quarantined judgment declassifies its data, never the control that decided whether it ran. The
   runtime repeats the check at dispatch and records `controlLabel` in the node state (only when
   untrusted). Termination (a failed assert or verify) and wait delays (schema literals) are not
-  tracked; tests pin both decisions. A quarantined judgment that fails under `onError: "continue"`
+  tracked; tests pin both decisions. Inside a map with `failure: "collect"` a failure is not
+  termination: it ends one item and the run goes on, so there every label that can decide a body
+  failure (body node labels, assert checks, nested acceptance) is control for the whole body, and the
+  map's output (`failed`, `$error`) carries those labels, its body acceptance and every label the
+  item could read (adversarial review 2026-10-08). An agent's `checks` are read by the node (a failed
+  check escalates, resamples or fails it), so what they read, other than the node's own output,
+  joins its data label, quarantined or not: a quarantine declassifies only its context inputs, which
+  the receipt records. A quarantined judgment that fails under `onError: "continue"`
   is treated as one more value of its bounded decision, not as untrusted control. Routes that
   clear it: a `human` answer, a `quarantined` bounded-enum judgment, or an approval-gated
   capability.

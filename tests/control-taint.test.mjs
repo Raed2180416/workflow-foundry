@@ -199,7 +199,71 @@ test('map: a control label set by an enclosing guard reaches the body effect', (
   assert.deepEqual(rules(nested), ['UNTRUSTED_CONTROL@workflow.each.body.mark']);
 });
 
-const loopOver = (body, until, extra = {}) => ({ id: 'again', kind: 'loop', needs: [], description: 'Repeat until done', maxIterations: 3, initial: { seed: 0 }, until, body: { nodes: body, acceptance: [{ op: 'exists', value: ref(`nodes.${body[0].id}`) }] }, ...extra });
+// Adversarial review 2026-10-08: a failure is termination only where it stops the run. Inside a map with failure "collect" it ends
+// one item and the run goes on, so a failure decided by untrusted data was a skip channel the rule did not see. Before the fix the
+// validator accepted each workflow below and the dispatcher ran it: with input doc "a" the body write of item 0 fired, with "zzz" no
+// write fired, and both runs succeeded.
+const assertOn = (id, condition, extra = {}) => ({ id, kind: 'assert', needs: [], description: `Check ${id}`, checks: [condition], ...extra });
+const mark = (extra = {}) => task('mark', 'core.artifact', { name: 'mark.txt', content: 'fixed text' }, extra);
+const collect = (body, extra = {}) => mapOver(['a', 'b'], body, { failure: 'collect', ...extra });
+
+test('collect map: a body failure decided by untrusted data stops the rest of its item, so it is control for the body', () => {
+  const chk = assertOn('chk', { op: 'eq', left: ref('input.doc'), right: ref('item') });
+  const after = flow([collect([chk, mark({ needs: ['chk'] })])], { labels: untrustedDoc });
+  assert.deepEqual(rules(after), ['UNTRUSTED_CONTROL@workflow.each.body.mark']);
+  assert.match(policyErrors(after)[0].via[0], /map each collects item failures.*assert chk reads input\.doc/);
+  assert.deepEqual(rules(flow([collect([chk, mark()])], { labels: untrustedDoc })), ['UNTRUSTED_CONTROL@workflow.each.body.mark'], 'a failing sibling cancels a write that has not started yet');
+  assert.deepEqual(codes(flow([mapOver(['a', 'b'], [chk, mark({ needs: ['chk'] })])], { labels: untrustedDoc })), [], 'under fail_fast the failure stops the run: termination, the documented residual');
+  assert.deepEqual(codes(flow([collect([chk, mark({ needs: ['chk'] })])])), [], 'the same graph over unlabelled input is valid');
+  // A failure deep inside the item counts too: an inner fail_fast map whose acceptance reads the document fails the item.
+  const inner = mapOver([1], [task('peek', 'core.identity', { value: 1 })], { id: 'inner', body: { nodes: [task('peek', 'core.identity', { value: 1 })], acceptance: [eq('input.doc', 'go')] } });
+  assert.deepEqual(rules(flow([collect([inner, mark()])], { labels: untrustedDoc })), ['UNTRUSTED_CONTROL@workflow.each.body.mark']);
+  // A nested collect map contains its own failures: only the write inside it is controlled, not the write next to it.
+  const nested = collect([{ ...collect([chk, mark({ needs: ['chk'] })]), id: 'inner' }, task('beside', 'core.artifact', { name: 'beside.txt', content: 'fixed text' })]);
+  assert.deepEqual(rules(flow([nested], { labels: untrustedDoc })), ['UNTRUSTED_CONTROL@workflow.each.body.inner.body.mark']);
+});
+
+test('collect map: an agent over untrusted data fails its item; a quarantined judgment is the bounded decision it already is', () => {
+  const summarise = { ...judge({ quarantined: false }), id: 'sum' };
+  assert.deepEqual(rules(flow([collect([summarise, mark({ needs: ['sum'] })])], { labels: untrustedDoc })), ['UNTRUSTED_CONTROL@workflow.each.body.mark']);
+  assert.deepEqual(codes(flow([collect([judge(), mark({ needs: ['judge'] })])], { labels: untrustedDoc })), [], 'quarantined: failing is one more value of the bounded decision');
+});
+
+test('collect map: the failed count and the $error entries carry what decided the failures, the body acceptance included', () => {
+  const ok = fixedWrite({ needs: ['each'], when: { op: 'eq', left: ref('nodes.each.failed'), right: 0 } });
+  const byAssert = collect([assertOn('chk', eq('input.doc', 'go'))]);
+  assert.deepEqual(rules(flow([byAssert, ok], { labels: untrustedDoc })), ['UNTRUSTED_CONTROL@workflow.write']);
+  const byAcceptance = collect([task('peek', 'core.identity', { value: 1 })], { body: { nodes: [task('peek', 'core.identity', { value: 1 })], acceptance: [eq('input.doc', 'go')] } });
+  assert.deepEqual(rules(flow([byAcceptance, ok], { labels: untrustedDoc })), ['UNTRUSTED_CONTROL@workflow.write']);
+  // Deliberately conservative, as the runtime is: once an item fails, its $error text may quote anything the item could read, so the
+  // map output carries every label in the body's scope even when no body node reads it.
+  const unread = collect([task('peek', 'core.identity', { value: ref('item') })]);
+  assert.deepEqual(rules(flow([unread, ok], { labels: untrustedDoc })), ['UNTRUSTED_CONTROL@workflow.write']);
+  assert.deepEqual(codes(flow([unread, ok])), [], 'unlabelled input');
+});
+
+test('agent checks are read by the node: what they read joins its data label, quarantined or not', () => {
+  // A failed check escalates, resamples or fails the node, so a check over untrusted data decides which model answered and, under
+  // onError continue, whether the node failed. A quarantine declassifies its context inputs (recorded in the receipt), not its checks.
+  const checked = (extra = {}) => judge({ needs: ['read'], context: { inputs: [{ name: 'note', value: 'Proceed?', render: 'text' }] }, checks: [eq('nodes.read.value', 'go')], escalation: { onCheckFail: 'fail' }, onError: 'continue', ...extra });
+  for (const quarantined of [false, true]) {
+    const result = flow([read, checked({ quarantined }), fixedWrite({ needs: ['judge'] })], { labels: untrustedDoc });
+    assert.deepEqual(rules(result), ['UNTRUSTED_CONTROL@workflow.write'], `quarantined ${quarantined}`);
+    assert.match(policyErrors(result)[0].via[0], /judge continues on error over untrusted:web data/);
+  }
+  const chosen = flow([read, checked({ onError: undefined, escalation: { onCheckFail: 'escalate' } }), fixedWrite({ needs: ['judge'], when: eq('nodes.judge.verdict', 'go') })].map(n => JSON.parse(JSON.stringify(n))), { labels: untrustedDoc });
+  assert.deepEqual(rules(chosen), ['UNTRUSTED_CONTROL@workflow.write'], 'which model produced the verdict was decided by the untrusted check');
+  const ownOutput = judge({ checks: [{ op: 'ne', left: ref('output.verdict'), right: 'maybe' }], onError: 'continue' });
+  assert.deepEqual(codes(flow([ownOutput, fixedWrite({ needs: ['judge'] })], { labels: untrustedDoc })), [], 'a check on the bounded output itself adds nothing');
+});
+
+test('runtime: a workflow whose collect-map write depended on an untrusted assert is refused before it runs', t => {
+  const env = environment(t);
+  const workflow = flow([collect([assertOn('chk', { op: 'eq', left: ref('input.doc'), right: ref('item') }), mark({ needs: ['chk'] })])], { labels: untrustedDoc });
+  assert.throws(() => env.runtime.create(workflow, { doc: 'a' }), e => e.code === 'INVALID_WORKFLOW' && e.details.some(d => d.rule === 'UNTRUSTED_CONTROL' && d.path === 'workflow.each.body.mark'));
+});
+
+const loopOver = (body, until, extra = {}) =>({ id: 'again', kind: 'loop', needs: [], description: 'Repeat until done', maxIterations: 3, initial: { seed: 0 }, until, body: { nodes: body, acceptance: [{ op: 'exists', value: ref(`nodes.${body[0].id}`) }] }, ...extra });
 
 test('loop: an until decided by untrusted data decides how often a body effect fires', () => {
   const body = [task('check', 'core.identity', { value: ref('input.doc') }), task('mark', 'core.artifact', { name: 'mark.txt', content: 'fixed text' })];

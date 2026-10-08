@@ -613,7 +613,11 @@ export function nonDeciding(G, W, units, u, port, key, { phrasing = 'known', d =
     }
   }
   if (!options.length) return null;
-  const bag = options.flatMap(o => Array(o.weight).fill(o)), pick = pickBy(bag, 'ndF', ...key);
+  // the system named behind the unknowable twin's lead: the one named least often there relative to the stated twins' leads, so the
+  // names behind "Also in" have one distribution in both arms (a bag of words sees the name, never whether it is the asked system)
+  const lead = cellCount(G, `lead|${port}`), excess = T => (lead[`T:${T}`] ?? 0) - (lead[`S:${T}`] ?? 0);
+  const least = Math.min(...options.map(o => excess(o.T))), near = options.filter(o => excess(o.T) === least);
+  const bag = near.flatMap(o => Array(o.weight).fill(o)), pick = pickBy(bag, 'ndF', ...key);
   return { F1: pick.text, text: pick.text, from: pick.from, kind: 'other-system', phrasing: 'known', T1: pick.T };
 }
 
@@ -849,7 +853,7 @@ export function invariancePlans(G, W, port, u, scr, job, key) {
   const B = basePlan(G, W, port, u, scr, { ...job, variant: 'invariance', axis: 'invariance' }, key, d, u.label);
   return withPair(alignParagraphs(W, [A, B], u.sys), key);
 }
-// The stated twin's decisive sentence. Its label (and, for R4, date-window presence) is balanced like every other row of the axis:
+// The stated twin's decisive sentence (R2-R4). Its label (and, for R4, date-window presence) is balanced like every other row of the axis:
 // a same-index flip of the bed template where the label changes, for R4 the bed or a counterfactual line of the wanted window.
 // The natural sentence carried the bed's priors into the axis (R2 KOBO stated twins all void; R4 stated twins windowed iff
 // restamped, so the date-window rule read this axis at 1.000 and the balancer paid it back on the next axis).
@@ -861,8 +865,10 @@ function statedSide(G, W, port, u, job, key) {
     const { target, windowed } = chooseTarget(G, W, port, u, sjob, key);
     return r4Side(G, W, u, target, windowed, [...key, 'stated']) ?? nat;
   }
-  if (port === 'R1' && !ORDERS.includes(u.label)) return nat;
-  const target = balancedLabel(G, port === 'R1' ? [...ORDERS] : OPT_LABELS[port], job.cellPrefix ?? port, u.sys, job.cellPrefix ? null : 'unknowable-stated', 'stated', key);
+  // R1 keeps the natural sentence: its natural orders are near even within each system, and a flipped stated twin narrows the systems
+  // the non-deciding sentence can name (T must state the same order), which made the twins' system names separable (probe 0.683)
+  if (port === 'R1') return nat;
+  const target = balancedLabel(G, OPT_LABELS[port], job.cellPrefix ?? port, u.sys, job.cellPrefix ? null : 'unknowable-stated', 'stated', key);
   if (target === u.label) return nat;
   const d = decide(G, W, u, port, target, { mode: 'bed', key: [...key, 'stated'] });
   return d && !d.unchanged && d.index === u.index && (d.ref ?? null) === (u.ref ?? null) ? d : nat;   // a new reference target would need another paragraph
@@ -894,6 +900,7 @@ export function unknowablePlans(G, W, port, u, scr, job, key, units) {
     counterfactual: { swapped: true, kind: 'unknowable', from: tplName(u, u.index), to: nd.from, pool: u.pool, nondeciding: nd.kind, phrasing: nd.phrasing },
     cell: null, counts: [], extra: { meta: { phrasing: nd.phrasing, nondecidingKind: nd.kind, replaced: u.sentence, about: nd.T1, distractor: null } } };
   const S = { ...stated, kitSlots: { ...stated.kitSlots, paragraphs }, edits: deleting ? stated.edits : [...scr.edits, ...place(u.sys, d.text)] };
+  if (!deleting) { cellAdd(G, `lead|${port}`, `S:${u.sys}`); cellAdd(G, `lead|${port}`, `T:${nd.T1}`); }
   return withPair([S, U], key);
 }
 // The option a carrier urges. OOD slices (the adversarial test axes): always a wrong option (§2.5). Train-like

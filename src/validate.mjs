@@ -111,6 +111,15 @@ export const controlPolicyMessage = (tool, label, via = []) => `${tool} has effe
 // and absence (exists, default) is itself a read of the guard. A quarantined judgment declassifies its data, never the
 // control that decided whether it ran. Termination (a failed assert or verify stops the run) is not tracked; only
 // skip and iteration decisions are. Wait delays are schema literals, so there is nothing to taint.
+// A map with failure "collect" turns termination into a skip: a failing body node ends only its item, the rest of the item
+// does not run, and the run goes on with the failure recorded as an $error entry and a failed count. So inside such a body
+// every label that can decide a body failure (each body node's failure label: its data for task, code, verify and agent
+// nodes, an assert's checks, a nested fail_fast body's failures and acceptance) is control for the whole body, and the map's
+// output carries those labels and the body's own acceptance (the runtime adds every label the item could read once an item
+// has failed; the static label matches it). A nested collect map contains its own failures. Conservative: an effect that
+// runs before every fallible body node (an ancestor of all of them) is controlled too.
+// An agent's checks are read by the node: a failed check escalates, resamples or fails it, so the labels of what its checks
+// read (other than its own output) join its data label, quarantined or not; a quarantine declassifies only its inputs.
 const TRUSTED = 'trusted';
 const NO_CONTROL = Object.freeze({ label: TRUSTED, via: Object.freeze([]) });
 const joinControl = parts => {
@@ -135,6 +144,10 @@ function effectTaint(workflow, registry, add) {
     if (!memo.has(flow)) memo.set(flow, new Map());
     if (memo.get(flow).has(memoKey)) return memo.get(flow).get(memoKey);
     const byId = new Map(flow.nodes.map(n => [n.id, n])), data = new Map(), control = new Map(), outs = new Map(), findings = [];
+    // fail: the join of every label that decides whether a node of this flow fails (each node's failure label, below); failBy
+    // names up to three of the nodes it comes from.
+    let fail = TRUSTED;
+    const failBy = [], failing = (label, why) => { if (label === TRUSTED) return; fail = joinLabels([fail, label]); if (failBy.length < 3) failBy.push(why()); };
     const visit = id => {
       if (outs.has(id)) return;
       outs.set(id, TRUSTED); data.set(id, TRUSTED); control.set(id, NO_CONTROL);
@@ -146,19 +159,35 @@ function effectTaint(workflow, registry, add) {
           const through = joinControl([control.get(dep), byId.get(dep).onError === 'continue' ? controlFrom(data.get(dep), () => `${dep} continues on error over ${data.get(dep)} data`) : NO_CONTROL]);
           return through.label === TRUSTED ? through : { label: through.label, via: through.via.map(step => `${node.id} needs ${dep} <- ${step}`.slice(0, 300)) };
         }) : [])]);
-      let label = TRUSTED;
+      // label: the node's data label. failure: what decides whether the node fails, beyond its control label (a when that cannot be
+      // evaluated fails the node): its data for task, code, verify and agent nodes, the checks of an assert, the items, input and
+      // initial of a map or loop, and the failure and acceptance of a body whose failure propagates (not of a collect body).
+      let label = TRUSTED, failure = TRUSTED;
       const inputs = () => joinLabels((node.context?.inputs ?? []).map(spec => joinLabels([spec.label ?? TRUSTED, Object.hasOwn(spec, 'ref') ? inheritedLabel(spec.ref, own) : TRUSTED])));
-      if (node.kind === 'agent') label = node.quarantined === true ? TRUSTED : inputs();
+      if (node.kind === 'agent') label = joinLabels([node.quarantined === true ? TRUSTED : inputs(), labelOf(bindOutput(node.checks ?? []), own)]);
+      else if (node.kind === 'assert') failure = labelOf(node.checks, own);
       else if (node.kind === 'verify') label = joinLabels([labelOf(node.subject, own), labelOf(node.args ?? null, own), inputs()]);
       else if (node.kind === 'task' || node.kind === 'code') label = labelOf(node.args ?? null, own);
       else if (node.body) {
         const input = Object.hasOwn(node, 'input') ? entry('input', labelOf(node.input, own)) : only(own, 'input');
         const bodyPrefix = `${prefix}.${node.id}.body`;
         if (node.kind === 'map') {
-          const items = labelOf(node.items, own);
-          const child = walk(node.body, { ...input, ...entry('item', items) }, bodyPrefix, joinControl([nodeControl, controlFrom(items, () => `map ${node.id} iterates over ${untrustedRefs(node.items, own)}`)]));
+          const items = labelOf(node.items, own), childScope = { ...input, ...entry('item', items) };
+          const base = joinControl([nodeControl, controlFrom(items, () => `map ${node.id} iterates over ${untrustedRefs(node.items, own)}`)]);
+          let collected = NO_CONTROL, child = walk(node.body, childScope, bodyPrefix, base);
+          if (node.failure === 'collect') {
+            // The body's control includes what decides a body failure, and the body's labels depend on its control: a fixpoint.
+            for (let pass = 0; ; pass++) {
+              const decides = child.fail, known = joinLabels([base.label, collected.label]);
+              if (joinLabels([known, decides]) === known) break;
+              if (pass >= FIXPOINT_PASSES) throw new FoundryError('TAINT_FIXPOINT', `Label analysis of map ${node.id} did not converge in ${FIXPOINT_PASSES} passes`);
+              collected = joinControl([collected, controlFrom(decides, () => `map ${node.id} collects item failures, so a body failure over ${decides} data stops the rest of its item and the run goes on (${child.failBy.join('; ')}); fail_fast would end the run instead`.slice(0, 300))]);
+              child = walk(node.body, childScope, bodyPrefix, joinControl([base, collected]));
+            }
+          }
           findings.push(...child.findings);
-          label = joinLabels([items, child.label]);
+          failure = joinLabels([items, Object.hasOwn(node, 'input') ? labelOf(node.input, own) : TRUSTED, ...(node.failure === 'collect' ? [] : [child.fail, child.accept])]);
+          label = node.failure === 'collect' ? joinLabels([items, child.label, child.fail, child.accept, ...Object.values(childScope)]) : joinLabels([items, child.label]);
         } else {
           // The body's control label includes what decides how many iterations run (the until label), and until reads body
           // outputs, so the two feed each other; the label lattice is finite, so a fixpoint exists.
@@ -172,6 +201,7 @@ function effectTaint(workflow, registry, add) {
           }
           if (!settled) throw new FoundryError('TAINT_FIXPOINT', `Label analysis of loop ${node.id} did not converge in ${FIXPOINT_PASSES} passes`);
           findings.push(...child.findings);
+          failure = joinLabels([labelOf(node.initial, own), Object.hasOwn(node, 'input') ? labelOf(node.input, own) : TRUSTED, child.fail, child.accept]);
           label = previous; nodeControl = joinControl([nodeControl, exits()]);
         }
       }
@@ -188,9 +218,13 @@ function effectTaint(workflow, registry, add) {
         }
       }
       data.set(id, label); control.set(id, nodeControl); outs.set(id, joinLabels([label, nodeControl.label]));
+      if (['task', 'code', 'verify', 'agent'].includes(node.kind)) failure = joinLabels([failure, label]);
+      failing(joinLabels([failure, nodeControl.label]), () => node.kind === 'assert' && failure !== TRUSTED ? `assert ${node.id} reads ${untrustedRefs(node.checks, own)}` : `${node.id} can fail over ${joinLabels([failure, nodeControl.label])} data`);
     };
     for (const id of byId.keys()) visit(id);
-    const result = { label: joinLabels([...outs.values()]), outs, findings };
+    // accept: the label of this flow's acceptance, which decides whether the flow (a map item, a loop iteration) fails.
+    const accept = labelOf(flow.acceptance ?? [], { ...scope, ...outEntries(outs) });
+    const result = { label: joinLabels([...outs.values()]), outs, findings, fail, failBy, accept };
     memo.get(flow).set(memoKey, result);
     return result;
   };

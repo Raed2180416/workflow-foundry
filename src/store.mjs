@@ -197,6 +197,12 @@ export class Store {
     const insert = () => {
       const text = canonical(decision);
       const inserted = this.db.prepare('INSERT OR IGNORE INTO decisions VALUES(?,?,?,?)').run(decision.id, runId, decision.kind, text).changes === 1;
+      // First write wins only within one run (a recovered replay of the same decision). A row under this id that belongs to another run
+      // would silently swallow this run's decision, so it is refused (decision ids begin with their run id; a collision is a planted row).
+      if (!inserted) {
+        const owner = this.db.prepare('SELECT run_id FROM decisions WHERE id=?').get(decision.id)?.run_id;
+        if (owner !== undefined && owner !== runId) throw new FoundryError('DECISION_CONFLICT', `Decision ${String(decision.id).slice(0, 120)} is already recorded for another run`);
+      }
       // The decision enters the run's hash chain in the same commit: its id, kind and the hash of the stored text (src/audit.mjs).
       // (Named decisionHash, not hash: events() puts the event's own chain hash in `hash`.)
       if (inserted && this.#scope?.runId === runId) this.#scope.decisions.push({ type: 'decision.recorded', id: decision.id, kind: decision.kind, decisionHash: sha256(text) });
@@ -233,6 +239,8 @@ export class Store {
       const relative = path.join('artifacts', runId, 'transcripts', `${transcriptHash.slice(0, 16)}${path.extname(source).replace(/[^.A-Za-z0-9]/g, '')}`);
       const target = path.join(this.directory, relative);
       mkdirSync(path.dirname(target), { recursive: true, mode: 0o700 });
+      // The copy stays inside the workspace state directory: a symlinked artifacts/ or run directory must not redirect it.
+      if (!realpathSync(path.dirname(target)).startsWith(this.directory + path.sep)) throw new FoundryError('TRANSCRIPT', 'The transcript directory resolves outside the workspace state directory');
       if (!existsSync(target)) writeFileSync(target, data, { flag: 'wx', mode: 0o600 });
       location = { kind: 'workspace', path: relative };
     }

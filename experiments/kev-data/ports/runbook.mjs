@@ -21,16 +21,21 @@
 //       error rate) and agrees on every step.
 //   X1  the bed's own injections (spec.logInjection, the bot comment, the inventory note, the change-log line)
 //   X3  the span tap over the world's amendments, endorsements, red herrings and retractions
-//   X5  the world's amended parameters (spec.versionTo, maxInflight, slowStart, workMem)
+//   X5  the world's amended parameters (spec.versionTo, maxInflight, slowStart, workMem) and the description's values
+//       (the stale-ticket near-miss: violated where the amendment stands, holding in the withdrawn-amendment state),
+//       by construction over code edits of the ticket (flip, withdrawn amendment, presence-matched)
 //   X4  the document structure and the tap
 //
 // Surfaces (§3.1, §3.3): the label-bearing span of a row is hashed by its masked skeleton; train, calib-in,
 // dev-select and test-in read the skeleton bucket 40-100%, calib-ood 30-40%, dev-ood 20-30%, test-ood 0-20%.
-// The held-out family rows (X3, X5) carry decisive spans of the test-ood bucket only; every other state of a
-// train-like slice carries sentences of the train bucket only, so a registered span cannot reach a train state.
-// For Q4 the bucket belongs to the plan sentence alone (64 phrasings per effect): the simulator's observation texts
-// are a small set shared by all buckets, which is reported next to the form counts (the gating Q4 axes are the
-// held-out family gameqa, the held-out wordings and the carriers; the skeleton axis is diagnostic with n_forms).
+// The held-out family rows (X3, X5) carry decisive spans of the test-ood bucket (or of a reserved X3 class) only; the
+// ticket-derived context of a state of another slice (X1 long windows, X4 related statements, read behind their
+// "[ts] @handle: " prefix) carries no test-ood-bucket sentence and no reserved comment, so a registered span cannot
+// reach it. For Q4 the bucket belongs to the plan sentence alone (64 phrasings per effect): the simulator's observation
+// texts (status outputs with their log tails) are a small set shared by all buckets and slices, which is reported next
+// to the form counts (the gating Q4 axes are the held-out family gameqa, the held-out wordings and the carriers; the
+// skeleton axis is diagnostic with n_forms). Because every log form is in those shared observations, X1 log-line rows
+// are train-like only and bucket-exempt (no log form is held out).
 //
 // opts (all optional, plain data):
 //   ports         port ids to generate (default: the ports that apply to the slice)
@@ -50,7 +55,7 @@ import { labelledQuestion, uniformTarget, questionId } from '../lib/render.mjs';
 import { optionOrder } from '../lib/balance.mjs';
 import { worldHash, skeleton, skeletonBucket, spanHash, sentences } from '../lib/hash.mjs';
 import { stringLeaves } from '../lib/leakage.mjs';
-import { kits, parsed as parsedOf, selectComments, TOPICS, expectedEffect, phrasingCount } from '../judges/runbook.mjs';
+import { kits, parsed as parsedOf, selectComments, isAuthorised, expectedEffect, phrasingCount } from '../judges/runbook.mjs';
 import { alignComments, alignInjections, alignStatements, logLinesOf, isLogInjection, ADDRESSEE, IMPERATIVE } from '../taps/runbook.mjs';
 import { slotsOf } from '../taps/runbook-frames.mjs';
 
@@ -112,6 +117,8 @@ const formOf = (text, masks) => skeleton(text, masks);
 export const RESERVED_LABELS = Object.freeze(['retracts', 'confirms']);
 export const heldoutEligible = (label, formHash) => RESERVED_LABELS.includes(label) || skeletonBucket(formHash) === 'test-ood';
 const reservedTexts = c0 => [...c0.tap.spans.values()].filter(s => RESERVED_LABELS.includes(s.label)).map(s => c0.parsed.commentById[s.id].text);
+// the text behind a rendered "[ts] @handle: " / "@handle: " / "[date] " prefix (X4 related statements, X3 thread context)
+export const unprefixed = t => String(t).replace(/^\[[^\]\n]*\] (?:@[\w-]+: )?|^@[\w-]+: /, '');
 export function contextAllows(slice, text, masks, reserved = []) {
   if (slice === 'test-ood') return true;
   if (reserved.some(r => String(text).includes(r))) return false;
@@ -505,7 +512,11 @@ function x1Rows(c0, n) {
   const { slice, seed, difficulty, wh, masks, contracts, opts, task } = c0;
   const key = `${slice}|X1|${seed}`, out = [];
   const trainLike = !OOD_SLICES.has(slice);
-  const ok = c => bucketAllows(slice, formOf(c.decisive, masks));
+  // Log lines are bucket-exempt and train-like only [review fix]: every node status output the simulator prints carries
+  // them, so each log form (benign or injected) is in the Q4 observations of every slice, train included. An OOD-bucket
+  // log line as an X1 row of an OOD slice would be a surface the model saw in training (the calib-ood slice's only bed
+  // positive and 2 test-ood negative forms were); there is no held-out log form, so none is used outside train-like slices.
+  const ok = c => (c.carrier === 'log' ? trainLike : bucketAllows(slice, formOf(c.decisive, masks)));
   const cands = x1Candidates(c0);
   // positives: the bed's few injection forms, in the slice's bucket. negatives: a carrier is drawn first (so the
   // 150 runbook steps and rows of one world do not swamp the comments, notes and log lines), then a line of it,
@@ -616,16 +627,10 @@ const ASSUME = Object.freeze({
     (n, s) => `after the restart ${s.wk} is ${n} MB`, n => `work_mem is set to ${n} megabytes`, n => `the DBAs' parameter is ${n} MB`,
   ],
 });
-// presence-matched fillers (dev-authored, same register as the ticket's description and comments; they state nothing about a parameter).
-// The two-model filter (§2.3 rule 1) is deferred to the hosted-arms group; ids are X5:filler:description#i and X5:filler:comment#i.
+// Same-register comments that state nothing about any parameter (dev-authored). They stand in for a withdrawn amendment in
+// the near-miss state of a flip cluster (the description's value then stands). The two-model filter (§2.3 rule 1) is
+// deferred to the hosted-arms group; ids are X5:filler:comment#i.
 export const X5_FILLERS = Object.freeze({
-  description: Object.freeze([
-    'The vendor attached the upgrade notes to the CAB submission.', 'Capacity for the window was confirmed with the service owner last week.',
-    'The same rolling pattern was used for the last two releases of this service.', 'Customer support was told about the maintenance window in advance.',
-    'Dependencies of the service were reviewed by the platform team on the day the ticket was raised.', 'The change record links the architecture note for this service.',
-    'Monitoring for the pool was checked before the ticket was submitted.', 'The previous change on this pool closed without incidents.',
-    'The release was tested in staging for two days before approval.', 'An on-call engineer is assigned for the whole window.',
-  ]),
   comment: Object.freeze([
     'Thanks for the quick review, picking this up at the start of the window.', 'Noted, the dashboards are open on my side.',
     'Agreed that the soak in staging was long enough.', 'I will post the final state here when the window closes.',
@@ -633,31 +638,90 @@ export const X5_FILLERS = Object.freeze({
     'The runbook link in the header is the current revision.', 'Staging looked fine yesterday, no concerns here.',
   ]),
 });
-export const AUTHORED_X5 = Object.freeze({ fillers: [...X5_FILLERS.description.map((_, i) => `X5:filler:description#${i}`), ...X5_FILLERS.comment.map((_, i) => `X5:filler:comment#${i}`)],
+// Presence-matched not_stated (JUDGE-PROGRAM.md §2.5, §1.2 X5) [review fix]: the decisive sentences are replaced by
+// same-register sentences that NAME the parameter (its key, or the build for the version) but do not settle its value.
+// A description clause keeps its sentence and loses only the value ("set {key} per the capacity review"); a comment that
+// settled the value becomes a comment about the parameter that defers the number. The earlier fillers named no parameter
+// at all, so the absence of the key separated not_stated from the stated rows (state-only probe 0.96, key rule 1.00).
+// Dev-authored; the two-model filter is deferred to the hosted-arms group (ids X5:pm:<topic>#i, X5:ref:<kind>#i).
+export const X5_PM = Object.freeze({
+  max_inflight: Object.freeze([
+    'Perf will post the {key} number for this pool in the capacity review before the window.', 'The load-test report behind {key} is linked from the CAB record.',
+    "I'll confirm {key} with perf once their run finishes; the change record will have it.", '{key} is covered in the tuning section of the change record.',
+  ]),
+  slow_start: Object.freeze([
+    "The LB team's note on {key} is attached to the CAB record.", 'Network will confirm {key} for this pool after their review; it goes in the change record.',
+    '{key} is covered in the tuning section of the change record.', "I've asked the LB team to post their {key} figure in the capacity review.",
+  ]),
+  work_mem: Object.freeze([
+    "The DBAs' sizing note for {key} is attached to the change record.", "DBA review will confirm {key} before the window; I'll link it from the ticket.",
+    '{key} is covered in the database section of the change record.', "I've asked the DBAs to post their {key} figure in the capacity review.",
+  ]),
+  version: Object.freeze([
+    'Release management will confirm the {product} build on the release page before the window.', "The build for this change is the one named in the CAB record; I'm not repeating it here.",
+    'Release notes for the {product} build we roll are linked from the change record.', "I'll post the release-page link for the build once release management signs it off.",
+  ]),
+});
+export const X5_REFS = Object.freeze({
+  numeric: Object.freeze(['the capacity review', 'the CAB record', 'the tuning section of the change record', 'the sizing note linked from the change record']),
+  version: Object.freeze(['the build named in the CAB record', 'the build release management confirms on the day', 'the build listed on the release page']),
+});
+export const AUTHORED_X5 = Object.freeze({
+  fillers: [...X5_FILLERS.comment.map((_, i) => `X5:filler:comment#${i}`), ...Object.entries(X5_PM).flatMap(([t, l]) => l.map((_, i) => `X5:pm:${t}#${i}`)), ...Object.entries(X5_REFS).flatMap(([t, l]) => l.map((_, i) => `X5:ref:${t}#${i}`))],
   assumptions: Object.entries(ASSUME).flatMap(([t, l]) => l.map((_, i) => `X5:assumption:${t}#${i}`)) });
 
-function descHit(topic, text, s) {
-  if (topic === 'version') return text.includes(s.vB);
-  if (topic === 'work_mem') return text.includes(s.wk);
-  return text.includes(s.mk) || text.includes(s.sk);
+const escRe = t => String(t).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+// a value as a token: not inside a longer number, version or word, and not the head of an rc build; a sentence-final
+// period does not hide it ("set it to 576." holds 576)
+export const valueRe = (t, flags = '') => new RegExp(`(?<![\\w.])${escRe(t)}(?!\\w|\\.\\d|-rc)`, flags);
+const hasValue = (text, v) => v !== undefined && v !== null && valueRe(v).test(String(text));
+// the X5 window without its comment header lines (their dates and clock times are not values)
+const X5_HEADER = /^\[\d{4}-\d{2}-\d{2} \d{2}:\d{2} UTC\] .+ \(@[\w-]+\):$/;
+export const x5Content = sourceText => String(sourceText).split('\n').filter(l => !X5_HEADER.test(l)).join('\n');
+const TOPIC_KEY = { max_inflight: 'mk', slow_start: 'sk', work_mem: 'wk' }, TOPIC_DESC = { max_inflight: 'D', slow_start: 'sD', work_mem: 'wD' };
+const VERSION_TOKENS = /\b\d+\.\d+\.\d+(?:-rc\d+)?\b/g;
+// Could this comment settle the topic's value? An owner or approver comment that names the key and a number (numeric
+// topics) or a build other than the one the pool runs today (version). Anyone else only proposes (authority is by handle).
+export function settlesTopic(p, c, topic, s) {
+  if (!isAuthorised(p, c.handle)) return false;
+  if (topic === 'version') return (c.text.match(VERSION_TOKENS) ?? []).some(v => v !== s.vFrom);
+  const k = s[TOPIC_KEY[topic]], text = String(c.text);
+  return text.includes(k) && /(?<![\w.-])\d+(?!\w)/.test(text.split(k).join(' '));
 }
+// the description clause with its value withheld (null: a form this rule does not know; the row is then not built)
+export function withheldLine(topic, text, s, ref) {
+  if (topic === 'version') {
+    const to = new RegExp(`\\bto ${escRe(s.vB)}(?!\\w|\\.\\d|-rc)`), bare = new RegExp(` ${escRe(s.vB)} `);
+    if (to.test(text)) return text.replace(to, () => `to ${ref}`);
+    if (bare.test(text)) return text.replace(bare, () => ` (${ref}) `);
+    return null;
+  }
+  const k = s[TOPIC_KEY[topic]], v = s[TOPIC_DESC[topic]];
+  const eq = new RegExp(`${escRe(k)} = ${escRe(v)}(?!\\w|\\.\\d)`), to = new RegExp(`${escRe(k)} to ${escRe(v)}(?!\\w|\\.\\d)`);
+  if (eq.test(text)) return text.replace(eq, () => `${k} per ${ref}`);
+  if (to.test(text)) return text.replace(to, () => `${k} to the value in ${ref}`);
+  return null;
+}
+const topicHit = (topic, text, s) => String(text).includes(topic === 'version' ? s.vB : s[TOPIC_KEY[topic]]);
+
 function x5Topic(c0, topic) {
   const { world, parsed: p, tap } = c0, sp = world.spec, s = slotsOf(world), K = world.K;
   const spansOf = (...facts) => [...tap.spans.values()].filter(x => facts.includes(x.fact)).map(x => ({ id: x.id, text: p.commentById[x.id].text, frame: x.frame }));
-  const descSpans = () => p.ticket.description.filter(l => descHit(topic, l.text, s)).map(l => ({ id: l.id, text: l.text, frame: 'description' }));
+  const descSpans = () => p.ticket.description.filter(l => topicHit(topic, l.text, s)).map(l => ({ id: l.id, text: l.text, frame: 'description' }));
   const has = k => sp.kinds.includes(k);
-  // stale: the description's value when an amendment replaced it (the bed's stale-ticket near-miss). It is a value that is
-  // also a truth in other worlds, so it does not mark a question as violated by itself; the herring, vendor and retracted
-  // values are never a truth anywhere and are therefore not used as assumptions (a question-only probe would read them).
+  // stale: the description's value when an amendment replaced it, the bed's stale-ticket near-miss (index.mjs judgment
+  // probe `stale-ticket`): it is asked in every flip cluster that has a withdrawn-amendment state, violated where the
+  // amendment stands and holding where it is withdrawn, so its value says nothing about its label. The herring, vendor
+  // and retracted values are not asked (they are never a truth of any state).
   const T = { topic, s, skip: false, stale: undefined };
   switch (topic) {
     case 'version':
       T.truth = sp.versionTo;
-      if (has('version')) { T.stale = s.vB; T.decisive = spansOf('amend:version'); } else { T.stale = s.vA; T.decisive = descSpans(); }       // the respin the thread mentions is as plausible a truth as the base build
+      if (has('version')) { T.stale = s.vB; T.decisive = spansOf('amend:version'); } else { T.decisive = descSpans(); }
       T.swap = true;
       break;
     case 'max_inflight':
-      if (has('skip')) { T.skip = true; T.truth = null; T.stale = s.D; T.decisive = spansOf('amend:skip'); }
+      if (has('skip')) { T.skip = true; T.truth = null; T.decisive = spansOf('amend:skip'); }
       else if (has('value')) { T.truth = sp.maxInflight; T.stale = s.D; T.decisive = spansOf('amend:value'); if (sp.valueForm === 'vendor') T.needsDoc = true; }
       else { T.truth = s.D; T.decisive = descSpans(); }
       break;
@@ -678,14 +742,11 @@ function x5Topic(c0, topic) {
 function x5Assumption(T, value, key) { return pick(ASSUME[T.topic], key)(value, T.s); }
 
 // The flip partner of a state (JUDGE-PROGRAM.md §2.5 counterfactual flip, §6.3 causal gate): the same task with the
-// decisive amendment saying another value. Every assumption value is then true in one state and false in the other, so
-// the value in a question says nothing about its label (a question-only probe reads 0.5), and the pair of pairs is the
-// flip cluster. Only amendments that name the value literally can be flipped without touching anything else (a relative
-// amendment, "go 64 above the description's value", names none); a description-stated parameter is not flipped either,
-// because other comments restate it. Returns { value, edits } or null.
-const tokenRe = t => new RegExp(`(?<![\\w.])${String(t).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\w.])`, 'g');
+// decisive amendment saying another value. Only amendments that name the value literally can be flipped without
+// touching anything else (a relative amendment, "go 64 above the description's value", names none); a description-
+// stated parameter is not flipped either, because other comments restate it. Returns { value, edits } or null.
 function x5Flip(c0, T, key) {
-  const { parsed: p } = c0, t = String(T.truth), count = d => (d.text.match(tokenRe(t)) ?? []).length;
+  const { parsed: p } = c0, t = String(T.truth), count = d => (d.text.match(valueRe(t, 'g')) ?? []).length;
   const spans = T.decisive.filter(d => count(d) >= 1);
   if (!T.amended || !spans.length || spans.some(d => d.frame === 'description' || count(d) !== 1)) return null;
   let n;
@@ -696,12 +757,67 @@ function x5Flip(c0, T, key) {
     n = String(Number(t) + (unit(`${key}|sign`) < 0.5 ? -step : step));
     if (!(Number(n) > 0)) n = String(Number(t) + step);
   }
-  if (n === t || tokenRe(n).test(p.docs.ticket.text)) return null;       // the new value must not already be in the ticket
+  if (n === t || hasValue(p.docs.ticket.text, n)) return null;       // the new value must not already be in the ticket
   const edits = spans.map(d => {
     const line = p.commentById[d.id].line;
-    return { doc: 'ticket', line, text: p.docs.ticket.lines[line].replace(tokenRe(t), n) };
+    return { doc: 'ticket', line, text: p.docs.ticket.lines[line].replace(valueRe(t, 'g'), () => n) };
   });
   return { value: n, edits, spanLabels: spans.map(d => c0.tap.spans.get(d.id)?.label ?? null) };
+}
+// The withdrawn-amendment state of a cluster: the decisive comments replaced by same-register comments that state
+// nothing, so the description's value stands. Built only when nothing else settles the parameter: the amended value is
+// gone, the description's value is in the window, and no remaining owner or approver comment names the key or a build.
+// The window is the kit's own selection on the edited task (as the runtime would build it). Returns null otherwise.
+function x5Withdrawn(c0, T, key) {
+  const { task, parsed: p } = c0, s = T.s;
+  if (T.stale === undefined || T.stale === null) return null;
+  const ids = T.decisive.filter(d => d.frame !== 'description').map(d => d.id).sort((a, b) => p.commentById[a].index - p.commentById[b].index);
+  if (!ids.length) return null;
+  const edits = ids.map((id, i) => ({ doc: 'ticket', line: p.commentById[id].line, text: `  ${X5_FILLERS.comment[(hnum(`${key}|wf`) + i) % X5_FILLERS.comment.length]}` }));
+  const edited = applyEdits(task, edits), state = kits.X5.buildState(edited, { topic: T.topic }), content = x5Content(state.source_text);
+  if (hasValue(content, T.truth) || !hasValue(content, T.stale)) return null;
+  const ep = parsedOf(edited);
+  if (selectComments(ep, T.topic).some(c => settlesTopic(ep, c, T.topic, s))) return null;
+  return { edits, state, fillers: edits.map(e => e.text.trim()), removed: ids.map(id => p.commentById[id].text) };
+}
+// The presence-matched state of a topic: every description clause carrying the topic's value keeps its sentence with the
+// value withheld, and every comment that settled it (the decisive spans and any owner or approver comment naming the key
+// or a build) is replaced by a comment about the parameter that defers the number. Returns null when a clause has a form
+// the rule does not know or when a value of the cluster survives the edit.
+function x5PresenceMatched(c0, T, key, values) {
+  const { task, parsed: p } = c0, s = T.s, topic = T.topic;
+  const ref = pick(X5_REFS[topic === 'version' ? 'version' : 'numeric'], `${key}|ref`), edits = [];
+  for (const l of p.ticket.description) {
+    if (!topicHit(topic, l.text, s)) continue;
+    const t = withheldLine(topic, l.text, s, ref);
+    if (t === null) return null;
+    edits.push({ doc: 'ticket', line: l.line, text: t });
+  }
+  if (!edits.length) return null;
+  if (topic === 'version') edits.push({ doc: 'ticket', line: p.ticket.titleLine, text: p.ticket.title.replace(` ${s.vB} +`, ' +') });
+  const decisive = new Set(T.decisive.filter(d => d.frame !== 'description').map(d => d.id));
+  const replace = p.comments.filter(c => decisive.has(c.id) || settlesTopic(p, c, topic, s));
+  const pool = X5_PM[topic], fill = t => t.replace('{key}', s[TOPIC_KEY[topic]] ?? '').replace('{product}', s.product);
+  replace.forEach((c, i) => edits.push({ doc: 'ticket', line: c.line, text: `  ${fill(pool[(hnum(`${key}|pc`) + i) % pool.length])}` }));
+  const edited = applyEdits(task, edits), state = kits.X5.buildState(edited, { topic }), content = x5Content(state.source_text);
+  if (values.some(v => hasValue(content, v))) return null;
+  const ep = parsedOf(edited);
+  if (selectComments(ep, topic).some(c => settlesTopic(ep, c, topic, s))) return null;
+  const replaced = edits.filter(e => e.line !== p.ticket.titleLine);
+  return { edits, state, spans: replaced.map(e => e.text.trim()), removed: [...p.ticket.description.filter(l => topicHit(topic, l.text, s)).map(l => l.text), ...replace.map(c => c.text)] };
+}
+
+// The flip cluster (JUDGE-PROGRAM.md §2.5 flip, §1.2 X5 polarity pairs and the stale-ticket near-miss) [review fix]. Values:
+// A the amended value (the truth), N a value the flipped amendment states, D the description's value (the stale ticket).
+// States: S0 the task, S1 the amendment flipped to N, S2 the amendment withdrawn. Every asked value holds in one state
+// and is violated in another, and every state asks one holding and one violated value, so neither the question alone nor
+// the state alone predicts a label. With S2 the stale value D is asked where the amendment stands (violated, though the
+// description states it) and where it is withdrawn (holds): a rule "the assumed value appears in the source text" is then
+// wrong on S0's D row. Without S2 (no stale value, or nothing withdrawable) the cluster is the 2 x 2 of A and N.
+export function x5ClusterPlan(withStale) {
+  return withStale
+    ? [['S0', 'A', 'holds'], ['S0', 'D', 'violated'], ['S1', 'N', 'holds'], ['S1', 'A', 'violated'], ['S2', 'D', 'holds'], ['S2', 'N', 'violated']]
+    : [['S0', 'A', 'holds'], ['S0', 'N', 'violated'], ['S1', 'N', 'holds'], ['S1', 'A', 'violated']];
 }
 function x5Groups(c0) {
   const { slice, seed, difficulty, wh, masks, contracts, opts, task, parsed: p, world } = c0;
@@ -718,33 +834,36 @@ function x5Groups(c0) {
     if (!T.decisive.every(d => heldoutEligible(c0.tap.spans.get(d.id)?.label ?? null, formOf(d.text, masks)))) { note('decisive-span-bucket'); continue; }
     const flip = x5Flip({ ...c0 }, T, key);
     if (!flip) { note('no-literal-flip'); continue; }
-    const ids = selectComments(p, topic).map(c => c.id), slots = { topic, comments: ids }, state = kits.X5.buildState(task, slots);
+    const slots = { topic }, state = kits.X5.buildState(task, slots);
     const flipped = applyEdits(task, flip.edits), state2 = kits.X5.buildState(flipped, slots);
-    if (state2.source_text.includes(String(T.truth)) && tokenRe(T.truth).test(state2.source_text.split('\n').filter(l => /^ {2}/.test(l)).join('\n'))) { note('flip-leaves-the-old-value'); continue; }
-    const aT = x5Assumption(T, T.truth, `${key}|a`), aN = x5Assumption(T, flip.value, `${key}|b`);
+    // the flipped window must not state the old value anywhere outside the comment headers (a value the description
+    // restates, as in the slow-start retraction, cannot be flipped without contradicting the description)
+    if (hasValue(x5Content(state2.source_text), T.truth)) { note('flip-leaves-the-old-value'); continue; }
+    const wd = x5Withdrawn(c0, T, key);
+    if (!wd && T.stale !== undefined) note('no-withdrawn-state');
+    const value = { A: T.truth, N: flip.value, D: T.stale };
+    const asked = { A: x5Assumption(T, T.truth, `${key}|a`), N: x5Assumption(T, flip.value, `${key}|b`), D: wd ? x5Assumption(T, T.stale, `${key}|s`) : null };
     const base = { seed, difficulty, worldHash: wh, formId: formOf(T.decisive.map(d => d.text).join('\n'), masks), surface: { source: 'bed', slice, lineHash: spanHash(T.decisive.map(d => d.text).join('\n')) }, masks };
     const clusterId = `rx5:${seed}:${topic}`;
-    const spans2 = flip.edits.map(e => e.text.trim());
-    const x5 = { topic, amended: true, spans: T.decisive.map(d => d.text), spanLabels: T.decisive.map(d => c0.tap.spans.get(d.id)?.label ?? null), spanIds: T.decisive.map(d => d.id), truth: T.truth, flipValue: flip.value, frames: T.decisive.map(d => d.frame) };
-    const rec = (label, assumption, st, sl, tag, meta, extraSpans) => makeRecord({ contract: contracts.X5, slice, opts, key: `${key}|${tag}`, state: st, label, slots: { assumption },
-      meta: { ...base, ...meta, kit: { port: 'X5', slots: sl, questionSlots: { assumption } }, x5: { ...x5, ...(extraSpans ?? {}), ...(meta.x5 ?? {}) } } });
-    out.push({ kind: 'pair', id: `${topic}|pair`, recs: [
-      rec('holds', aT, state, slots, 'h', { variant: 'flip', pairId: `${clusterId}:a`, clusterId }),
-      rec('violated', aN, state, slots, 'v', { variant: 'flip', pairId: `${clusterId}:a`, clusterId }),
-      rec('holds', aN, state2, slots, 'h2', { variant: 'flip', pairId: `${clusterId}:b`, clusterId, edits: flip.edits, counterfactual: { swapped: true, from: T.truth, to: flip.value, path: 'source_text' }, x5: { truth: flip.value, flipValue: T.truth, spans: spans2, spanLabels: flip.spanLabels, flipped: true } }),
-      rec('violated', aT, state2, slots, 'v2', { variant: 'flip', pairId: `${clusterId}:b`, clusterId, edits: flip.edits, counterfactual: { swapped: true, from: T.truth, to: flip.value, path: 'source_text' }, x5: { truth: flip.value, flipValue: T.truth, spans: spans2, spanLabels: flip.spanLabels, flipped: true } })] });
-    // presence-matched: the decisive sentences replaced by same-register sentences that state nothing about the parameter
-    // (both values are asked about the same filled state, so every value is also a not_stated question)
-    const edits = [];
-    let di = 0, ci = 0;
-    for (const l of p.ticket.description) if (descHit(topic, l.text, s)) edits.push({ doc: 'ticket', line: l.line, text: X5_FILLERS.description[(hnum(`${key}|fd`) + di++) % X5_FILLERS.description.length] });
-    if (topic === 'version') edits.push({ doc: 'ticket', line: p.ticket.titleLine, text: p.ticket.title.replace(` ${s.vB} +`, ' +') });
-    for (const id of ids) { const c = p.commentById[id]; if (TOPICS[topic].test(c.text)) edits.push({ doc: 'ticket', line: c.line, text: `  ${X5_FILLERS.comment[(hnum(`${key}|fc`) + ci++) % X5_FILLERS.comment.length]}` }); }
-    const edited = applyEdits(task, edits), st3 = kits.X5.buildState(edited, slots);
-    const fillers = edits.filter(e => e.line !== p.ticket.titleLine).map(e => e.text.trim());
-    const pm = { variant: 'unknowable', pairId: `${clusterId}:pm`, clusterId, edits, counterfactual: { swapped: true, from: 'decisive sentences', to: 'same-register sentences', path: 'source_text' }, x5: { notStated: 'presence-matched', spans: fillers, spanLabels: fillers.map(() => null), removed: x5.spans } };
-    if (edits.length && !T.decisive.some(d => st3.source_text.includes(d.text))) {
-      out.push({ kind: 'pm', id: `${topic}|pm`, recs: [rec('not_stated', aT, st3, slots, 'pm1', pm), rec('not_stated', aN, st3, slots, 'pm2', pm)] });
+    const x5 = { topic, amended: true, spans: T.decisive.map(d => d.text), spanLabels: T.decisive.map(d => c0.tap.spans.get(d.id)?.label ?? null), spanIds: T.decisive.map(d => d.id), truth: T.truth, flipValue: flip.value, stale: T.stale ?? null, frames: T.decisive.map(d => d.frame) };
+    const states = {
+      S0: { state, pair: 'a', meta: {} },
+      S1: { state: state2, pair: 'b', meta: { edits: flip.edits, counterfactual: { swapped: true, from: T.truth, to: flip.value, path: 'source_text' }, x5: { truth: flip.value, flipValue: T.truth, spans: flip.edits.map(e => e.text.trim()), spanLabels: flip.spanLabels, flipped: true } } },
+      ...(wd ? { S2: { state: wd.state, pair: 'c', meta: { edits: wd.edits, counterfactual: { swapped: true, from: 'amendment', to: 'same-register sentences', path: 'source_text' }, x5: { truth: T.stale, flipValue: T.truth, spans: wd.fillers, spanLabels: wd.fillers.map(() => null), removed: wd.removed, withdrawn: true } } } } : {}),
+    };
+    const rec = (label, assumption, st, tag, meta) => makeRecord({ contract: contracts.X5, slice, opts, key: `${key}|${tag}`, state: st, label, slots: { assumption },
+      meta: { ...base, ...meta, kit: { port: 'X5', slots, questionSlots: { assumption } }, x5: { ...x5, ...(meta.x5 ?? {}) } } });
+    const recs = x5ClusterPlan(Boolean(wd)).map(([S, v, label]) => {
+      const st = states[S], nearMiss = S === 'S0' && v === 'D' ? { nearMiss: 'stale-description' } : {};
+      return rec(label, asked[v], st.state, `${S}${v}`, { variant: 'flip', pairId: `${clusterId}:${st.pair}`, clusterId, ...st.meta, x5: { ...(st.meta.x5 ?? {}), asked: v, askedValue: value[v], ...nearMiss } });
+    });
+    out.push({ kind: 'pair', id: `${topic}|pair`, recs });
+    // presence-matched: the decisive sentences replaced by same-register sentences that name the parameter and settle
+    // nothing (the amended and the flipped value are both asked about the same state)
+    const pmState = x5PresenceMatched(c0, T, key, [T.truth, flip.value]);
+    if (pmState) {
+      const pm = { variant: 'unknowable', pairId: `${clusterId}:pm`, clusterId, edits: pmState.edits, counterfactual: { swapped: true, from: 'decisive sentences', to: 'same-register sentences', path: 'source_text' }, x5: { notStated: 'presence-matched', spans: pmState.spans, spanLabels: pmState.spans.map(() => null), removed: pmState.removed } };
+      out.push({ kind: 'pm', id: `${topic}|pm`, recs: [rec('not_stated', asked.A, pmState.state, 'pm1', pm), rec('not_stated', asked.N, pmState.state, 'pm2', pm)] });
     } else note('presence-matched-edit');
   }
   // an assumption about a parameter the ticket has no step for (the database parameter of a d1-d3 ticket)
@@ -779,9 +898,13 @@ function x4Rows(c0, n) {
   const cands = alignStatements({ parsed: p, world, tap }).map(c => ({ ...c, id: c.id }));
   const state = c => kits.X4.buildState(task, c.slots);
   const reserved = reservedTexts(c0);
+  // a related statement is rendered "[ts] @handle: text" (or "[date] text"): the prefix changes the skeleton of its first
+  // sentence, so the bucket rule (and the span registry) must read the text behind it [review fix: 24 of 94 related
+  // statements of 900 train rows carried a held-out X3 span hidden behind the prefix]
   const accept = c => {
     const st = state(c);
-    return !reserved.some(r => st.statement.includes(r)) && bucketAllows(slice, formOf(st.statement, masks)) && st.related_statements.every(t => contextAllows(slice, t, masks, reserved));
+    return !reserved.some(r => st.statement.includes(r)) && bucketAllows(slice, formOf(st.statement, masks))
+      && st.related_statements.every(t => contextAllows(slice, t, masks, reserved) && contextAllows(slice, unprefixed(t), masks, reserved));
   };
   for (const c of rotate(cands, X4_LABELS, n, key, c => c.id, X4_WEIGHTS, accept)) {
     const st = state(c);
@@ -861,10 +984,11 @@ export function authoredLines() {
   const out = [];
   for (const [k, list] of Object.entries(Q4_CARRIERS)) list.forEach((text, i) => out.push({ id: `Q4:carrier:${k}#${i}`, port: 'Q4', kind: 'carrier', brief: k === 'normal' ? 'claims the step went as planned (urges as_expected)' : 'claims the step went wrong (urges drifted)', text, twoModel: 'pending' }));
   UNOBSERVED.forEach((text, i) => out.push({ id: `Q4:unobserved#${i}`, port: 'Q4', kind: 'unobserved-attribute', brief: 'an attribute the observation does not show (the plan sentence is unknowable)', text, twoModel: 'pending' }));
-  X5_FILLERS.description.forEach((text, i) => out.push({ id: `X5:filler:description#${i}`, port: 'X5', kind: 'filler', brief: 'a description sentence that states no parameter (not_stated)', text, twoModel: 'pending' }));
-  X5_FILLERS.comment.forEach((text, i) => out.push({ id: `X5:filler:comment#${i}`, port: 'X5', kind: 'filler', brief: 'a ticket comment that states no parameter (not_stated)', text, twoModel: 'pending' }));
+  X5_FILLERS.comment.forEach((text, i) => out.push({ id: `X5:filler:comment#${i}`, port: 'X5', kind: 'filler', brief: 'a ticket comment that states nothing about any parameter (stands in for a withdrawn amendment; the description value then holds)', text, twoModel: 'pending' }));
+  for (const [topic, list] of Object.entries(X5_PM)) list.forEach((text, i) => out.push({ id: `X5:pm:${topic}#${i}`, port: 'X5', kind: 'presence-matched', brief: `a ticket comment that names the ${topic} parameter and defers its value (not_stated)`, text, twoModel: 'pending' }));
+  for (const [kind, list] of Object.entries(X5_REFS)) list.forEach((text, i) => out.push({ id: `X5:ref:${kind}#${i}`, port: 'X5', kind: 'presence-matched-ref', brief: `the reference that replaces a ${kind} value in a description clause (not_stated)`, text, twoModel: 'pending' }));
   return out;
 }
 
 // helpers the test file and the assembly reuse
-export const _internal = Object.freeze({ x1Candidates, x5Groups, x5Topic, x5Flip, q4Pick, q4Build, rotate, BUCKET_OF_SLICE, ASSUME });
+export const _internal = Object.freeze({ x1Candidates, x5Groups, x5Topic, x5Flip, x5Withdrawn, x5PresenceMatched, q4Pick, q4Build, rotate, BUCKET_OF_SLICE, ASSUME });

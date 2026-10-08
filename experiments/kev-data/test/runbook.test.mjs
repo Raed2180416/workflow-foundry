@@ -6,6 +6,7 @@
 // over test-split seeds but only count and compare metadata: no test-split text is printed or inspected.
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -63,6 +64,9 @@ const range = (a, n) => Array.from({ length: n }, (_, i) => a + i);
 const portOf = r => Object.keys(r.questions)[0].split('~')[0];
 const labelOf = r => Object.values(r.questions)[0].label;
 const byPort = recs => { const m = {}; for (const r of recs) (m[portOf(r)] ??= []).push(r); return m; };
+const digest = x => createHash('sha256').update(JSON.stringify(x)).digest('hex');
+// every string leaf with a leading "[ts] @handle: ", "[date] " or "@handle: " prefix taken off (gen.unprefixed)
+const unprefixState = v => (typeof v === 'string' ? gen.unprefixed(v) : Array.isArray(v) ? v.map(unprefixState) : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, unprefixState(x)])) : v);
 const memo = new Map();
 const TRAIN = (n = 150) => { const k = `train${n}`; if (!memo.has(k)) memo.set(k, collect('train', range(401, n), { smokeEvery: 1 })); return memo.get(k); };
 const taskOf = async r => (await BED()).generate({ seed: r.meta.seed, split: 'dev', difficulty: r.meta.difficulty });
@@ -386,16 +390,22 @@ test('held-out families: X3 and X5 runbook rows appear only in test-ood files; t
   for (const recs of [...Object.values(trainLike), ...Object.values(oodOthers)]) for (const r of recs) {
     states++;
     const slice = r.meta.split;
-    const h = registry.scanState(r.state, { names: r.meta.masks.names, markers: r.meta.masks.markers, slice });
-    hits += h.length;
-    for (const x of h) { const k = `${portOf(r)}<-${x.entry.port}`; hitPorts[k] = (hitPorts[k] ?? 0) + 1; }
+    // the state as it is, and with every "[ts] @handle: " prefix taken off (a prefix hides the first sentence of a
+    // related statement from the sentence-wise registry)
+    for (const st of [r.state, unprefixState(r.state)]) {
+      const h = registry.scanState(st, { names: r.meta.masks.names, markers: r.meta.masks.markers, slice });
+      hits += h.length;
+      for (const x of h) { const k = `${portOf(r)}<-${x.entry.port}`; hitPorts[k] = (hitPorts[k] ?? 0) + 1; }
+    }
   }
   t.diagnostic(`held-out rows ${JSON.stringify(heldPorts)}; ${registry.size} registered spans scanned against ${states} states of train, calib-in, dev-select, test-in, calib-ood and dev-ood: ${hits} hits`);
   assert.equal(hits, 0, `no registered span of X3 or X5 runbook is in another slice's state: ${JSON.stringify(hitPorts)}`);
   // the same registry flags a planted span: the scan is not vacuous
   const plant = held.find(r => portOf(r) === 'X3');
   assert.ok(registry.scanState({ text: plant.state.message }, { names: plant.meta.masks.names, markers: plant.meta.masks.markers, slice: 'train' }).length > 0);
-  const plant5 = held.find(r => portOf(r) === 'X5' && r.meta.x5.spans.length && r.meta.variant === 'flip');
+  const plant5 = held.find(r => portOf(r) === 'X5' && r.meta.x5.spans.length && r.meta.variant === 'flip' && !r.meta.x5.withdrawn);
+  // the prefix the X4 kit puts on a related statement does not hide a registered span from the scan this test runs
+  assert.ok(registry.scanState(unprefixState({ related_statements: [`[2027-01-01 00:00 UTC] @someone: ${plant.state.message}`] }), { names: plant.meta.masks.names, markers: plant.meta.masks.markers, slice: 'train' }).length > 0);
   assert.ok(registry.scanState({ text: plant5.meta.x5.spans[0] }, { names: plant5.meta.masks.names, markers: plant5.meta.masks.markers, slice: 'calib-ood' }).length > 0);
   // the build's record check refuses the planted span in a train record
   const spec = SPEC();
@@ -405,10 +415,11 @@ test('held-out families: X3 and X5 runbook rows appear only in test-ood files; t
   // every decisive span of a held-out row is in the test-ood skeleton bucket, or is a comment of a reserved class
   // (a withdrawal or a confirmation: reserved by label, because a 20% bucket would leave those classes without a form)
   const reservedLabels = new Set(gen.RESERVED_LABELS);
-  for (const r of held) {
-    if (portOf(r) === 'X3') assert.ok(skeletonBucket(skeleton(r.state.message, r.meta.masks)) === 'test-ood' || reservedLabels.has(labelOf(r)), `X3 ${labelOf(r)}`);
-    else if (r.meta.x5.notStated !== 'presence-matched') r.meta.x5.spans.forEach((x, i) => assert.ok(skeletonBucket(skeleton(x, r.meta.masks)) === 'test-ood' || reservedLabels.has(r.meta.x5.spanLabels[i]), x.slice(0, 60)));
-  }
+  // (failure messages name the row index and label only: these are test-split rows)
+  held.forEach((r, j) => {
+    if (portOf(r) === 'X3') assert.ok(skeletonBucket(skeleton(r.state.message, r.meta.masks)) === 'test-ood' || reservedLabels.has(labelOf(r)), `X3 row ${j} ${labelOf(r)}`);
+    else if (r.meta.x5.notStated === undefined && !r.meta.x5.withdrawn) r.meta.x5.spans.forEach((x, i) => assert.ok(skeletonBucket(skeleton(x, r.meta.masks)) === 'test-ood' || reservedLabels.has(r.meta.x5.spanLabels[i]), `X5 row ${j} span ${i}`));
+  });
   const reservedHeld = wide.filter(r => portOf(r) === 'X3' && reservedLabels.has(labelOf(r)));
   assert.ok(reservedHeld.some(r => labelOf(r) === 'retracts') && reservedHeld.some(r => labelOf(r) === 'confirms'), 'withdrawals and confirmations have test rows');
 });
@@ -675,7 +686,8 @@ test('X4 smoke: statements of a runbook task carry a standing from the document 
 test('determinism: two runs give the same records in every slice', async () => {
   for (const slice of ['train', 'dev-ood', 'test-ood']) {
     const a = await collect(slice, range(sliceDef(slice).seeds[0], 12), { smokeEvery: 1 }), b = await collect(slice, range(sliceDef(slice).seeds[0], 12), { smokeEvery: 1 });
-    assert.equal(JSON.stringify(a), JSON.stringify(b), slice);
+    // compared by digest: a failure must not print test-split text
+    assert.equal(digest(a), digest(b), slice);
   }
 });
 
@@ -716,7 +728,9 @@ test('authored lines: every line this group wrote is listed with its brief, is u
   }
   // every line the generator can put in a state is in the register: the carriers, the unobserved attributes, the X5 fillers
   for (const k of Object.keys(gen.Q4_CARRIERS)) for (const t of gen.Q4_CARRIERS[k]) assert.ok(texts.includes(t), `carrier not listed: ${t}`);
-  for (const t of [...gen.X5_FILLERS.description, ...gen.X5_FILLERS.comment]) assert.ok(texts.includes(t), `filler not listed: ${t}`);
+  for (const t of [...gen.X5_FILLERS.comment, ...Object.values(gen.X5_PM).flat(), ...Object.values(gen.X5_REFS).flat()]) assert.ok(texts.includes(t), `X5 line not listed: ${t}`);
+  // the presence-matched comments name their parameter and carry no value
+  for (const [topic, list] of Object.entries(gen.X5_PM)) for (const t of list) { assert.ok(topic === 'version' ? /\b(?:build|release)\b/.test(t) : t.includes('{key}'), t); assert.ok(!/\d/.test(t), t); }
   assert.deepEqual([...new Set(lines.map(l => l.port))].sort(), ['Q4', 'X5']);
 });
 

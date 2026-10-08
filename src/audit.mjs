@@ -1,14 +1,17 @@
 // Audit binding (research/review-20261007/07 §4.4, ROADMAP-AMENDMENTS R-21). The per-run event hash chain commits to its own
 // events; this module defines what else the chain binds, so editing it afterwards is detectable (`foundry verify-run`):
-//   - every model call: the journal row's request/response hashes and a digest of the whole row, on the event that charges it;
-//   - every decision record: `decision.recorded {id, kind, hash}`;
+//   - every model call: the journal row's request/response hashes and a digest of the whole row, on the event that charges it; a replayed
+//     call also records whether its recording was checked (replaySource), and each attempt's context.compiled the journal's high-water
+//     mark (journalMark), so a "recovered" row seeded before the attempt is refused;
+//   - every decision record: `decision.recorded {id, kind, decisionHash}`;
+//   - the run's identity: verify-run compares the run record with its birth event (workflow, input, policy, engine, model binding);
 //   - every executor transcript: `executor.finished {transcriptHash}`;
 //   - the seal: `run.verdict` carries a Merkle root over the run's journal rows and a hash of the state the verdict was computed from;
 //   - the chain head, exported as an anchor record that can be stored outside the database file.
 // Threat model (07 §4.4): accidental corruption, buggy code and an agent editing evidence; not a privileged attacker who
 // rewrites the database AND every copy of the anchors.
 import { createHash } from 'node:crypto';
-import { appendFileSync, existsSync, readFileSync } from 'node:fs';
+import { appendFileSync, closeSync, existsSync, openSync, readFileSync, rmSync, statSync, writeSync } from 'node:fs';
 import { digest, FoundryError } from './data.mjs';
 
 export const AUDIT = 'foundry-audit/1';
@@ -94,13 +97,35 @@ export function readAnchors(file) {
   }
   return anchors;
 }
+// Writers of one anchor file (parallel runs, several verify-run processes) take turns: each line names the hash of the line before it,
+// so two writers that read the same tail would fork the file and every later read would reject it. The lock is an exclusive lock file
+// next to it; one left by a writer that died is taken over after STALE_LOCK_MS.
+const LOCK_WAIT_MS = 15000, STALE_LOCK_MS = 30000;
+const pause = ms => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+function withAnchorLock(file, fn) {
+  const lock = `${file}.lock`, deadline = Date.now() + LOCK_WAIT_MS;
+  for (;;) {
+    try { const fd = openSync(lock, 'wx', 0o600); try { writeSync(fd, String(process.pid)); } finally { closeSync(fd); } break; }
+    catch (error) {
+      if (error.code !== 'EEXIST') throw error;
+      let age = 0;
+      try { age = Date.now() - statSync(lock).mtimeMs; } catch { continue; } // released between the two calls
+      if (age > STALE_LOCK_MS) { rmSync(lock, { force: true }); continue; }
+      if (Date.now() > deadline) throw new FoundryError('ANCHOR_FILE', `The anchor file is locked by another writer (${lock})`);
+      pause(10 + Math.floor(Math.random() * 20));
+    }
+  }
+  try { return fn(); } finally { rmSync(lock, { force: true }); }
+}
 /** Append an anchor, stamped with the time it was taken, to an append-only file (created 0600). A repeat of the run's latest anchor (same head and journal root) is not written twice. */
 export function appendAnchor(file, anchor) {
-  const anchors = readAnchors(file);
-  const latest = anchors.findLast(a => a.runId === anchor.runId);
-  if (latest && latest.headHash === anchor.headHash && latest.journalRoot === anchor.journalRoot && latest.status === anchor.status) return { appended: false, anchor: latest };
-  const lines = readLines(file);
-  const line = JSON.stringify({ ...anchor, at: Date.now(), previous: lines.length ? sha256(lines.at(-1)) : null });
-  appendFileSync(file, `${line}\n`, { flag: 'a', mode: 0o600 });
-  return { appended: true, anchor: JSON.parse(line) };
+  return withAnchorLock(file, () => {
+    const anchors = readAnchors(file);
+    const latest = anchors.findLast(a => a.runId === anchor.runId);
+    if (latest && latest.headHash === anchor.headHash && latest.journalRoot === anchor.journalRoot && latest.status === anchor.status) return { appended: false, anchor: latest };
+    const lines = readLines(file);
+    const line = JSON.stringify({ ...anchor, at: Date.now(), previous: lines.length ? sha256(lines.at(-1)) : null });
+    appendFileSync(file, `${line}\n`, { flag: 'a', mode: 0o600 });
+    return { appended: true, anchor: JSON.parse(line) };
+  });
 }

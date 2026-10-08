@@ -782,3 +782,58 @@ The gate-closure check (§1.2) was run in scratch:
 
 The probe ran at load average about 8 on a 4-vCPU machine shared with other agents, so its timings carry that caveat. Every other
 number is deterministic replay.
+
+---
+
+## Appendix B. Implementation status (prototype built the same day, 2026-10-08)
+
+*Development and diagnostic evidence. Built under `experiments/heal/` (about 2,500 lines of code, 1,300 of tests; the §14 estimate was
+1,500-2,000 for the code). Nothing outside `experiments/heal/` and `research/heal-20261008/` was written, and git state was not touched.
+Every test runs on recorded data and scripted providers; no test makes a live call. Evidence tags as above; **[M]** here means measured
+by the test or run named.*
+
+### B.1 What was built, against §14
+
+| §14 file | Built as | Notes |
+|---|---|---|
+| `kit.mjs`, `pin-gate.mjs` | `kit.mjs`, `pin-gate.mjs`, `pins.json`, `pinned/src/*` | `pins.json` holds the 87 kit blob ids (from `git ls-tree 880c6b9`) and the six gate blob ids (13f7664); `loadKit()` refuses a kit that differs. `loadGate()` uses the pinned copy and falls back to the live `src/lint.mjs` only if every live gate file has its pinned blob id (it does today: `live.sameBlobAsPin` is true) |
+| `index.mjs`, `replay.mjs` | `replay.mjs` | trial index over `results.jsonl` + `probes.jsonl` (116 Foundry-workflow trials: 22 C0 F-haiku, 36 P1 fhand-haiku, others), run id or `ARM/TASKKEY/TRIAL` lookup, journal copies, `pin`, `inject`, strict and `replay-or-live` execution |
+| `detect.mjs`, `classify.mjs` | `detect.mjs` | signals of §4 except `PROBE_REGRESSION`; classification before and after localisation |
+| `localise.mjs` | `localise.mjs` | enum/boolean flips (`inject`), recorded alternatives, boolean flips of code nodes (`pin`), intermediates scored by the oracle, ranking, defect classes, offline and live variance |
+| `ops.mjs`, `scan.mjs` | `ops.mjs`, `scan.mjs`, `proofs.mjs`, `ir.mjs` | 13 ops, compiled on the frozen schema; V2 weakening scan; literal-leak scanner; tighten and relax proofs with a Python signature mutant battery |
+| `brief.mjs`, `proposer.workflow.mjs`, `propose.mjs` | `propose.mjs` | brief, flat op schema (portable subset), proposer workflow, one round, the M-M-L-F ladder, mechanical lint-debt proposals, scripted and live provider tables |
+| `verify.mjs`, `seeds.mjs` | `verify.mjs`, `seeds.mjs`, `budget.mjs` | V0-V8, seed ledger with reference-hash dedupe, spend ledger |
+| `gate.mjs`, `ledger.mjs` | `promote.mjs` | pure `decide`, circuit breaker, `Lineage` (kit `Store` compare-and-swap, `lineage.jsonl`, rollback, owner-review queue) |
+| `learn.mjs`, `lessons/rules/*.mjs` | same | three reference rules, population measurement, lesson records |
+| `cli.mjs` | `heal.mjs` (+ `incidents.mjs`, `smoke-proposer.mjs`) | `heal --run RUN --workflow PATH --budget-usd N`, plus `approve` and `rollback` subcommands |
+
+### B.2 What the tests show [M]
+
+- **Kit and gate.** All 87 kit files match `880c6b9`; a tampered pin is refused. The pinned lint reproduces
+  `research/lint-20261008/retro-audit.json` exactly (codes, counts, paths) on both F-haiku artifacts, and gives 11 errors on records-v3.
+- **Replay.** All 22 recorded F-haiku trials (16 test, 6 construction probes) and the P1 failure replay identically: task hash, oracle
+  score, verdict, call count, and the recorded cost recovered from the replayed rows. A pin that keeps its reads reproduces the run; one
+  that drops them misses (P-1). A call missing from the journal is `REPLAY_MISS` and costs $0.
+- **Localisation.** H-rec: of 24 flips of `conf` exactly one fixes the run (BRIGHTDESK MDY->DMY), confidence high, class
+  `UNGUARDED_GLOBAL_READ`. H-cfx: `check1.ok` false->true is the only fixing single-node change, locus `check1`+`check2` (identical
+  sources), classes `OVERSTRICT_CHECK` + `CHECK_VETO_ROUTING` (routed to `repair`, `check2`), and the output of `fix` alone already passes
+  the oracle. H-p1: the `meaning` flip fixes it, `relation` flips are escalation-dependent (`needsLive`), class `CHECK_ESCAPE_HATCH`. On a
+  passing run (s6002 t0) the latent mode finds the answer-changing date-order flips and LEDGR flips change nothing.
+- **Detection.** The signals of §4 fire as listed there for H-cfx (including `CHECK_MODEL_DISAGREEMENT` on the lucky pass and the cost
+  outliers), H-rec s6004 t1 is classified `working-as-designed`, and the check-vacuity trace finds 59 of 90 P1 status judgments with
+  `meaning` unconstrained.
+- **Verification on recorded runs with a scripted model.** A `k_sample_agreement` patch to `conf` passes V0-V8 (3 replicas each on 2
+  failing trials, 9 regression runs, fresh-task hook): reader 1 replays from the journal, reader 2 and the escalated read go live
+  (Haiku and Sonnet, from the owner policy), and the decision is `blocked` because lint debt is open. Wrong live answers fail V3; a
+  broken passing run fails V4 as a regression; no provider leaves V3 `pending`.
+- **The designed H-cfx sequence, at $0.** Lint debt (a proposer-supplied acceptance on the visible tests, owner-reviewed) then
+  `relax_check` on the clone group with the task's own words and the mutant battery: V0-V8 pass, all three failed trials pass without
+  the Opus repair, no false alarms, cost ratio below 1, decision `owner-review`, then an explicit approval moves the head. An
+  over-relaxed check, an unquoted justification and a patch to an over-strict check are each refused in V2.
+- **Gates.** Literal leaks (all four rules), unsafe code additions, every loosening in §7.1's forbidden list, the stage-subset rule, the
+  paired fresh-task rules (worse, lost task, worse stratum) and the ladder are each exercised by a test.
+
+### B.3 Offline runs on the three incidents ($0, replay only) [M]
+
+`node experiments/heal/incidents.mjs` writes `research/heal-20261008/runs/H-*.json` (ids, scores, counts and codes; no task text) and the
+lessons in `research/heal-20261008/lessons/`.

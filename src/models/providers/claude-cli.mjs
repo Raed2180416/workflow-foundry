@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { FoundryError } from '../../data.mjs';
 import { runProcess } from '../../process.mjs';
-import { isPolicyModel } from '../policy.mjs';
+import { isPolicyModel, validateChildEnv } from '../policy.mjs';
 import { DECODING_BY_KIND, THINKING } from '../port.mjs';
 import { SCRUBBED_ENV } from '../../executors/claude-code.mjs';
 
@@ -32,6 +32,23 @@ export const claudeCliDecoding = DECODING_BY_KIND['claude-cli'];
 
 export function claudeEnv(env = process.env) {
   return Object.fromEntries(Object.entries(env).filter(([k, v]) => typeof v === 'string' && !SCRUBBED.test(k)));
+}
+
+// Child-process tuning that applies when the policy's provider config has no `childEnv` block (research/review-20261007/
+// 04-efficiency-rust.md, change 1: about -0.6 to -0.8 s wall and -17 to -31 % cost per call, measured; re-measured in
+// research/review-20261007/cli-flags-20261008.md). Neither variable touches the sample, so neither is in the replay key: the first
+// drops the CLI's non-essential startup traffic (updates, telemetry, feature-flag fetches), the second makes the CLI write its
+// prompt cache at the 5-minute price instead of the 1-hour one. Both change the reported cost, so cost per success before and
+// after this default is not comparable (synthesis rule R3).
+export const DEFAULT_CHILD_ENV = Object.freeze({ CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1', FORCE_PROMPT_CACHING_5M: '1' });
+
+/** The child process environment: the caller's, minus credentials and the parent session's identity; then the `childEnv` block
+ *  ("0"/"1" sets, null removes, so a policy value always wins over an inherited one); then the per-call thinking budget. */
+export function claudeChildEnv(env = process.env, childEnv = DEFAULT_CHILD_ENV, thinkingTokens) {
+  const out = claudeEnv(env);
+  for (const [name, value] of Object.entries(childEnv)) { if (value === null) delete out[name]; else out[name] = value; }
+  if (thinkingTokens !== undefined) out.MAX_THINKING_TOKENS = String(thinkingTokens);
+  return out;
 }
 
 /** Map one parsed CLI result object to provider facts, or throw a classified FoundryError. */
@@ -61,12 +78,15 @@ export function interpretResult(result, { modelId, stderr = '' } = {}) {
 }
 
 export class ClaudeCliProvider {
-  constructor({ policy, providerName = 'claude-cli', binary, maxBudgetUsd = 1, timeoutMs = 300000, env = process.env, maxOutputBytes = 8 * 1024 * 1024 } = {}) {
+  // childEnv: replaces the policy's `childEnv` block (an A/B measurement can pass nulls to switch the flags off); absent, the
+  // policy block applies, and absent there the DEFAULT_CHILD_ENV.
+  constructor({ policy, providerName = 'claude-cli', binary, maxBudgetUsd = 1, timeoutMs = 300000, env = process.env, maxOutputBytes = 8 * 1024 * 1024, childEnv } = {}) {
     const config = policy?.providers?.[providerName];
     if (!config || config.kind !== 'claude-cli') throw new FoundryError('MODEL_POLICY_INVALID', `Policy has no claude-cli provider named ${providerName}`);
     if (config.invocation.some(a => a === '--fallback-model' || a.startsWith('--fallback-model='))) throw new FoundryError('MODEL_POLICY_INVALID', '--fallback-model is never passed');
     if (typeof maxBudgetUsd !== 'number' || !(maxBudgetUsd > 0 && maxBudgetUsd <= 25)) throw new FoundryError('MODEL_REQUEST', 'maxBudgetUsd must be in (0, 25]');
-    Object.assign(this, { policy, providerName, binary: binary ?? config.binary, invocation: [...config.invocation], maxBudgetUsd, timeoutMs, env, maxOutputBytes });
+    const block = validateChildEnv(childEnv ?? config.childEnv ?? DEFAULT_CHILD_ENV, childEnv === undefined ? `provider ${providerName} childEnv` : 'childEnv');
+    Object.assign(this, { policy, providerName, binary: binary ?? config.binary, invocation: [...config.invocation], maxBudgetUsd, timeoutMs, env, maxOutputBytes, childEnv: Object.freeze({ ...block }) });
   }
 
   async engineVersion() {
@@ -95,11 +115,12 @@ export class ClaudeCliProvider {
     catch (error) { throw fail('MODEL_UNAVAILABLE', `claude CLI version probe failed: ${error.code ?? error.message}`); }
     const args = this.args({ modelEntry, system, schema, decoding }), applied = claudeCliDecoding(decoding);
     const request = { binary: path.basename(this.binary), args: args.map(a => a === system ? '<system>' : a), temperature: applied.temperature,
-      maxTokens: applied.maxTokens, effort: applied.effort, thinkingTokens: applied.thinkingTokens, maxBudgetUsd: this.maxBudgetUsd };
+      maxTokens: applied.maxTokens, effort: applied.effort, thinkingTokens: applied.thinkingTokens, maxBudgetUsd: this.maxBudgetUsd,
+      env: { ...this.childEnv } };
     const cwd = mkdtempSync(path.join(tmpdir(), 'foundry-claude-'));
     let processResult, launchError;
     try {
-      processResult = await runProcess(this.binary, args, { cwd, env: { ...claudeEnv(this.env), MAX_THINKING_TOKENS: String(applied.thinkingTokens) }, input: prompt, timeoutMs: Math.min(timeoutMs, 3600000), signal, maxBytes: this.maxOutputBytes });
+      processResult = await runProcess(this.binary, args, { cwd, env: claudeChildEnv(this.env, this.childEnv, applied.thinkingTokens), input: prompt, timeoutMs: Math.min(timeoutMs, 3600000), signal, maxBytes: this.maxOutputBytes });
     } catch (error) {
       launchError = error; processResult = error.processResult;
     } finally { rmSync(cwd, { recursive: true, force: true }); }

@@ -1,0 +1,67 @@
+{
+ "schema": "heal-lesson/1",
+ "id": "L-2-ff0eb762",
+ "lesson": "L-2",
+ "from": "codefix-a7649828",
+ "title": "A check encodes the contract, and a veto must be gated",
+ "pattern": {
+  "defectClasses": [
+   "OVERSTRICT_CHECK",
+   "CHECK_VETO_ROUTING"
+  ],
+  "signature": {
+   "code": "CHECK_VETO_UNGATED",
+   "node": "check1",
+   "details": {
+    "router": "repair",
+    "selectors": [
+     "answer"
+    ]
+   }
+  }
+ },
+ "lintRule": {
+  "code": "CHECK_VETO_UNGATED",
+  "summary": "A code check can veto a candidate and route to a replacement that a selector prefers, with no gate comparing the two",
+  "implementation": "experiments/heal/lessons/rules/check-veto-ungated.mjs",
+  "severity": "warning",
+  "baseSeverity": "warning"
+ },
+ "templateDiff": {
+  "target": "skills/micro-harness",
+  "applied": false,
+  "text": "skills/micro-harness: add to the \"code checks\" section. (1) Every heuristic code check ships a self-test: a documented-legal change, cited from the task contract, must pass it. (2) A selector prefers the earliest candidate that passes the GATING checks; a heuristic check may only add evidence. (3) A repair prompt may not forbid what a named defect class requires (a wrong-default fix changes a default value). (4) The construction probe set covers each defect operator the task family names."
+ },
+ "probeRequirement": "A documented-legal edit of each kind the contract names must pass the check (documented_legal_edit probe).",
+ "firing": {
+  "onBase": 1,
+  "onHealed": null,
+  "firesOnBase": true,
+  "quietOnHealed": null,
+  "population": {
+   "n": 8,
+   "fires": 1,
+   "share": 0.125,
+   "where": [
+    "research/construction-20261006/artifacts/F-haiku-codefix-k1/workflow.json"
+   ]
+  }
+ },
+ "evidence": {
+  "signals": {
+   "ORACLE_FAILED": 1,
+   "VERDICT_ORACLE_MISMATCH": 1,
+   "UNVERIFIED_VERDICT": 1,
+   "LINT_FINDING": 1,
+   "COST_OUTLIER": 1,
+   "LATENCY_OUTLIER": 1
+  },
+  "vacuity": []
+ },
+ "status": "proposed",
+ "reviewer": null,
+ "caveats": [
+  "Rules written from these artifacts: firing on them describes them and predicts nothing until it fires on workflows built after the rule was frozen (docs/LINT.md).",
+  "Reaches the constructor only through a new kit hash; held until after EX1 so CX3 and EX1 do not share a moving kit (owner decision 4, default)."
+ ]
+}
