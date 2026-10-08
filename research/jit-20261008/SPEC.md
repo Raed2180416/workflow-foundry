@@ -202,3 +202,25 @@ Per arm:
 - break-even index against each agent arm.
 
 Write `report.md` and `report.json`. With K=1 per stream, any gap under 3 points is noise, and the report must say so.
+
+## Addenda (2026-10-08 23:20 UTC, main session, sent to both builders)
+1. **Dev arms.**
+   - `agent:` Haiku 5.5, Sonnet 5.5 and Opus 5.5;
+   - `static:` the C0 B1-haiku records solver;
+   - `jit:` with the interpreter set to Haiku, Sonnet or Opus and the compiler fixed to Haiku 5.5.
+
+   The frontier model only *demonstrates* (warmup, deopts, shadows); Haiku compiles and executes.
+2. Shadow and adjudicator runs use the arm's interpreter model. The static arm's fallback is the Haiku 5.5 agent.
+3. Arms run as separate processes (`--arms`). Each arm writes its own results, events and journal files, and `report.mjs` merges them.
+4. **Noisy pseudo-labels.** A Haiku interpreter solves records d3 about half the time (C0 B0-haiku 4/8). The compiler therefore treats the task's
+   prompt/spec/notes as authoritative, and treats traces as evidence of formats, procedure and typical judgments, not ground truth.
+   - Deterministic procedure goes into code: this is where a cheap agent slips. Evidence: fhand-haiku 35/36 vs b0agent-haiku 29/36.
+   - Prose-dependent decisions stay as checked `flow.judge` calls.
+   - Each disagreement with a trace is settled from the spec and logged in `BUILD-NOTES.md`.
+
+   **Acceptance** is:
+   - no crash or deopt on any case;
+   - all regressions pass;
+   - every remaining disagreement explained.
+
+   check-traces agreement is recorded as a diagnostic.
