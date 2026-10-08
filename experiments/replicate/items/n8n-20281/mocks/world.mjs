@@ -8,7 +8,7 @@ import { Teams } from './teams.mjs';
 import { Sheets } from './sheets.mjs';
 import { Gmail } from './gmail.mjs';
 import { Outlook } from './outlook.mjs';
-import { Model, companyOf } from './model.mjs';
+import { Model, companyOf, pricedAnswer } from './model.mjs';
 import { LATENCY_MS, CATEGORY_KEY, threadLabelOf } from '../spec.mjs';
 
 export const API_OPS = Object.freeze(['gmail.reply', 'gmail.createDraft', 'outlook.reply', 'jira.search', 'jira.createIssue', 'jira.addComment', 'jira.getIssue',
@@ -106,7 +106,8 @@ export class World {
       case 'model.complete': {
         this.stats.modelCalls++;
         let r;
-        if (this.modelTape) r = this.modelTape.shift() ?? fail(500, 'TAPE_EXHAUSTED', 'replay has no recorded model answer left');
+        // A replayed tape supplies only the answer (status, content); usage, cost and latency are recomputed from the request and that content.
+        if (this.modelTape) r = pricedAnswer(a, this.modelTape.shift() ?? fail(500, 'TAPE_EXHAUSTED', 'replay has no recorded model answer left'));
         else if (this.modelBackend) r = this.modelBackend(a);
         else r = this.model.complete(a);
         res = { status: r.status, body: r.body };

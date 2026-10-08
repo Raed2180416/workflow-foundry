@@ -6,7 +6,9 @@ const read = rel => JSON.parse(readFileSync(new URL(rel, import.meta.url), 'utf8
 export const CONFIG = Object.freeze(read('./fixtures/config.json'));
 export const RECORDED = Object.freeze(read('./fixtures/recorded-responses.json'));
 
-export const VERSION = '0.1.0';
+// 0.2.0 (2026-10-08, adversarial verification): documented condition scope inside repeat (wed-stop-then-reopen expects the R+180
+// announcement), harder wed-flap and wed-external-snooze, button order and typographic quotes no longer judged, last_changed as local ISO.
+export const VERSION = '0.2.0';
 
 export const SPEC = Object.freeze({
   // Timing of every judged call must be within this many seconds of the nominal instant.
@@ -27,8 +29,9 @@ export const SPEC = Object.freeze({
   logbookTopic: 'GARBAGE',
 });
 
-// Whitespace-insensitive comparison of user-visible text (the author's template leaves double spaces).
-export const norm = s => String(s ?? '').replace(/\s+/g, ' ').trim();
+// Whitespace-insensitive comparison of user-visible text (the author's template leaves double spaces). Typographic apostrophes and quotes
+// read as their ASCII forms (it's / it’s are one text when spoken or shown).
+export const norm = s => String(s ?? '').replace(/[\u2018\u2019\u02BC]/g, "'").replace(/[\u201C\u201D]/g, '"').replace(/\s+/g, ' ').trim();
 
 export const TEXT = Object.freeze({
   // Wednesday also says the recycling goes out; Sunday does not.

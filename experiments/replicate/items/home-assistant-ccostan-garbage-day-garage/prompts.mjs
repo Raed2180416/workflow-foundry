@@ -24,8 +24,9 @@ The message is: "Reminder: it's garbage day." then, on Wednesday only, "Both rec
 
 NAGGING. Alexa in the garage (notify.alexa_media_garage, data.type "announce", the same message) announces ${SPEC.announceOffsets.join(' s, ')} s after the
 reminder start. Right before each announcement three things are checked again: the group is still 'open', it is still Wednesday or Sunday, and
-the snooze timer is still idle. If any check fails, that announcement and all the later ones of this reminder are cancelled for good (the
-sequence ends there and does not resume if the door opens again; only a new ${SPEC.debounceSeconds} s opening starts a new reminder).
+the snooze timer is still idle. If any check fails, THAT announcement is skipped; the reminder still checks again at its next announcement time
+and announces if all three checks pass then (so a door that was shut at the 90 s check but is open again at the 180 s check gets the 180 s
+announcement). After the ${SPEC.announceOffsets.at(-1)} s check the reminder is over.
 A new reminder that starts while an older one is still waiting for its next announcement REPLACES it: the older one's remaining announcements
 never happen (the push and the inside speech go out again for the new one).
 
@@ -40,8 +41,9 @@ export const HA_SEMANTICS = `Home Assistant semantics the original definition re
 - A state trigger with from/to/for fires when the entity has been in the new state for the whole 'for' period after a matching transition. Any state change of the entity disposes of a pending 'for'; a new matching transition starts a fresh one.
 - An event trigger fires when the event type matches and every key in event_data is equal.
 - mode: restart: when a trigger fires while an earlier run of the same automation is still going (for instance waiting in a delay), the earlier run is stopped at once, before the new run evaluates anything. mode: single would ignore the new trigger instead.
-- Actions run in order. A delay waits. A condition used as an action ends the WHOLE run, quietly, when it is false, also when it sits inside choose or repeat. A stop action ends the run. parallel runs its branches and fails afterwards if any branch failed. repeat/for_each runs its sequence for each list item.
+- Actions run in order. A delay waits. A condition used as an action stops, quietly, only the sequence it is in when it is false: at the top level that is the whole run; inside a repeat it ends only the current round (the next round still runs); inside a choose option only that option's actions; inside a parallel branch only that branch. A stop action ends the whole run. parallel runs its branches and fails afterwards if any branch failed. repeat/for_each runs its sequence for each list item.
 - A service call that fails ends the run with an error (unless continue_on_error is set on it); later actions do not run.
+- The automation has no top-level conditions block, so in restart mode every trigger that fires (including a door opening on a non-garbage day or during a snooze) stops a run in progress before the action conditions are checked.
 - The weekday and now() are the local time at the moment the action runs (a run that waits sees the time move).
 - Called scripts (script.notify_engine_two_button, script.speech_engine, script.send_to_logbook) and notify.alexa_media_garage are services of the owner's setup; here they are mocks that record the call.`;
 
@@ -54,7 +56,7 @@ export const API = {
     wake: '{type:"wake", id}  (a wake-up you scheduled with sched.set)',
   },
   calls: {
-    'ha.get_state': { args: '{entity_id}', ok: '200 {entity_id, state, attributes, last_changed}; 404 unknown entity. Readable: the two covers, the group, the snooze timer ("idle" | "active"), group.family.' },
+    'ha.get_state': { args: '{entity_id}', ok: '200 {entity_id, state, attributes, last_changed}; 404 unknown entity. last_changed is the local time of the last state change, in the format of at.iso. Readable: the two covers, the group, the snooze timer ("idle" | "active"), group.family.' },
     'ha.call_service': { args: '{service, target?, data?}', ok: '200 {}; 404 SERVICE_NOT_FOUND; 400 INVALID_DATA; 500 SERVICE_FAILED (the service raised an error). The services are listed in config.services.' },
     'sched.set': { args: '{id, afterSeconds}', ok: '200 {id, at}. You get a wake event with that id afterSeconds of virtual time later (fractions allowed). Setting an id that is pending replaces it.' },
     'sched.cancel': { args: '{id}', ok: '200 {cancelled: boolean}' },

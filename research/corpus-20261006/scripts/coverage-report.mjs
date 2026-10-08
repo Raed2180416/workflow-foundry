@@ -806,6 +806,30 @@ const ga = mergeLog.agentic ?? { graphEvidenceNotApplied: [], modelDrivenCycles:
 const agenticPart = mergeLog.inputs.find(p => p.cluster === 'agentic');
 const ledgerPath = path.join(ROOT, 'parts', 'agentic-ledger.md');
 const assembled = fs.existsSync(ledgerPath) ? /^- Result: (\d+) kept, (\d+) dropped/m.exec(fs.readFileSync(ledgerPath, 'utf8')) : null;
+// Where the design refusals are written down. They were proposed in research/review-20261007/ROADMAP-AMENDMENTS.md; the WIP
+// commit 8fa9124 (2026-10-08, "amendments applied (design review defaults)", unreviewed) copied them into docs/ROADMAP.md.
+const REFUSAL_TEXT = 'docs/ROADMAP.md §2.1 coverage goal and §3, applied from ROADMAP-AMENDMENTS as review defaults in WIP commit 8fa9124, not yet owner-reviewed';
+// Stage bundles of the staged plan in research/review-20261007/02b-agentic-constructs.md §5: lane 2's stages S1–S7
+// (research/review-20261007/02-ir-expressiveness.md §7) with the twelve agentic constructs placed by mechanism. This
+// report only computes their declared coverage; the plan, its order and its reasons are in 02b.
+const STAGES = [
+  ['S1', 'call by hash, local flows, `self`; flow size', ['subworkflow-call', 'flow-size>500']],
+  ['S2', 'error routes, `finally`, adaptive retry; model-written code in the sandbox', ['error-branch', 'completion-hook', 'adaptive-retry', 'model-generated-code-exec']],
+  ['S3', 'triggers and run admission', ['schedule-trigger', 'webhook-trigger', 'event-trigger', 'poll-trigger', 'run-concurrency-policy']],
+  ['S4', 'signals, event and long waits', ['signal-wait', 'durable-wait']],
+  ['S5', 'state capability, chat sessions, capped tool loop', ['agent-tool-loop', 'chat-session', 'cross-run-state']],
+  ['S5b', 'inside the tool loop: agents as tools, approvals with resume, guards, compaction', ['agent-as-tool', 'interrupt-resume', 'guardrail-tripwire', 'context-compaction']],
+  ['S5c', 'media inputs and outputs', ['multimodal-io']],
+  ['S6', 'bounded machine, streams, partial outputs', ['unstructured-cycle', 'stream', 'partial-output-stream']],
+  ['S7', 'flow params, plan/expand, agent spawn, fork', ['parametric-action-input', 'dynamic-dag', 'dynamic-agent-spawn', 'checkpoint-rewind']],
+  ['S8', 'run board', ['shared-scratchpad', 'state-reducer']],
+  ['S9', 'environment sessions', ['env-session']],
+];
+{
+  const staged = STAGES.flatMap(s => s[2]);
+  if (staged.length !== CONSTRUCT_IDS.length || new Set(staged).size !== staged.length || staged.some(c => !CONSTRUCT_IDS.includes(c)))
+    throw new Error('STAGES must place every registry construct exactly once');
+}
 
 w('## 10. Agentic cluster (agent frameworks)', '');
 w(`${NA} items: ${NT} third-party items from ${new Set(tp.map(i => i.source.platform)).size} source platforms and ` +
@@ -816,11 +840,11 @@ w(`${NA} items: ${NT} third-party items from ${new Set(tp.map(i => i.source.plat
   'How these verdicts differ from sections 1–9: they are **model readings of pinned source** (`source.extraction`: method `model-read-source`, the spans read, the ' +
   'extractor, and a pointer to the independent verifier pass), re-labelled to one convention, `AGENTIC-CONVENTIONS.md`. That convention adds twelve registry ' +
   `constructs after the original ${ORIGINAL_CONSTRUCT_COUNT} (${NEW_IDS.map(c => `\`${c}\``).join(', ')}), retires topology labels as tokens ` +
-  '(`llm-router`, `supervisor-delegation`, handoff and chat patterns are native lowerings, counted in 10.7), and introduces owner design refusals, ' +
+  '(`llm-router`, `supervisor-delegation`, handoff and chat patterns are native lowerings, counted in 10.8), and introduces owner design refusals, ' +
   '`unsupported:by-design-group-chat` and `unsupported:by-design-full-history-handoff`. A refused item is representable with a turn cap but refused by design ' +
-  '("share decisions and artifacts, not transcripts"; ROADMAP-AMENDMENTS text not yet merged into docs/ROADMAP.md), so it is counted apart from `unsupported` ' +
+  `("share decisions and artifacts, not transcripts"; ${REFUSAL_TEXT}), so it is counted apart from \`unsupported\` ` +
   'items, which are not expressible at all. Nothing was compiled or executed. **First-party items** are workflow scripts written by this project\'s own ' +
-  'orchestrating agent: they are not independent evidence of what workflows need, so every table keeps them in their own row or column (10.8).', '');
+  'orchestrating agent: they are not independent evidence of what workflows need, so every table keeps them in their own row or column (10.9).', '');
 
 w('### 10.1 Merge', '');
 const evid = ga.graphEvidenceNotApplied;
@@ -917,6 +941,22 @@ w(table(['#', 'construct', 'registry', 'third-party items (with refused needs)',
     const plats = new Set(tp.filter(it => needsOf(it).includes(c)).map(it => it.source.platform)).size;
     return [i + 1, `\`${c}\``, isNewId(c) ? 'agentic' : 'original', `${n(tpFreq, c)} (${n(tpNeedFreq, c)})`, pct(n(tpFreq, c), NT), n(tpSole, c), plats, n(fpFreq, c), n(origFreq, c), cell(def.roadmap), cell(def.today)];
   })), '');
+w('The twelve agentic registry constructs and the two design refusals by source platform (third-party items; for a construct, verdict tokens and in ' +
+  'brackets the count with the `Needs:` lists of refused items; for a refusal, refused items). First-party items are counted in their own column. ' +
+  'The original corpus has none of these tokens (its converters never emitted them; see 02b §6 for a node-type probe).', '');
+{
+  const byPlat = (list, has, hasNeed) => {
+    const m = new Map();
+    for (const it of list) { if (!hasNeed(it)) continue; const p = it.source.platform; const e = m.get(p) ?? [0, 0]; e[1]++; if (has(it)) e[0]++; m.set(p, e); }
+    return [...m.entries()].sort((a, b) => b[1][1] - a[1][1] || b[1][0] - a[1][0] || a[0].localeCompare(b[0]))
+      .map(([p, [a, b]]) => a === b ? `${p} ${a}` : `${p} ${a} (${b})`).join(', ') || '-';
+  };
+  const rows = [...NEW_IDS.map(c => [`\`${c}\``, byPlat(tp, it => constructsOf(it).includes(c), it => needsOf(it).includes(c)),
+      new Set(tp.filter(it => needsOf(it).includes(c)).map(it => it.source.platform)).size, n(fpFreq, c)]),
+    ...REFUSALS.map(r => { const has = it => refusalsOf(it).includes(r);
+      return [`refused: \`${r}\``, byPlat(tp, has, has), new Set(tp.filter(has).map(it => it.source.platform)).size, cnt(fp, has)]; })];
+  w(table(['construct or refusal', 'third-party items by platform', 'platforms', 'first-party items'], rows), '');
+}
 
 function greedyOrder(pool) {
   const remaining = new Set(pool.filter(i => verdictClass(i) === 'via-extension'));
@@ -954,7 +994,57 @@ w(table(['step', 'add', 'registry', 'newly expressible: original', 'newly expres
     return [i + 1, `\`${s.c}\``, isNewId(s.c) ? 'agentic' : 'original', o, a, `${cumO} (${pct(cumO, N)})`, `${cumA} (${pct(cumA, NT)})`, `${s.cum} (${pct(s.cum, combined.length)})`];
   })), '');
 
-w('### 10.6 Design refusals', '');
+w('### 10.6 Staged plan to full declared coverage', '');
+const pct2 = (a, b) => b ? `${(100 * a / b).toFixed(2)}%` : '-';
+const expressibleWith = (it, have) => verdictClass(it) === 'native' || (verdictClass(it) === 'via-extension' && constructsOf(it).every(c => have.has(c)));
+const namedRefusals = combined.filter(i => ['refused-by-design', 'unsupported'].includes(verdictClass(i)));
+const stageRows = []; const stageJson = [];
+{
+  const have = new Set();
+  let prev = { o: cnt(items, i => expressibleWith(i, have)), a: cnt(tp, i => expressibleWith(i, have)), f: cnt(fp, i => expressibleWith(i, have)) };
+  const push = (id, what, cs, cur) => {
+    const c = cur.o + cur.a;
+    stageRows.push([id, cell(what), cs.length ? cs.map(x => `\`${x}\``).join(', ') : '-', cs.length ? cur.o - prev.o : '-', cs.length ? cur.a - prev.a : '-',
+      `${cur.o} (${pct2(cur.o, N)})`, `${cur.a} (${pct2(cur.a, NT)})`, `${c} (${pct2(c, combined.length)})`,
+      `${c + namedRefusals.length} (${pct2(c + namedRefusals.length, combined.length)})`, `${cur.f} of ${NFP}`]);
+    stageJson.push({ stage: id, adds: cs, original: cur.o, agenticThirdParty: cur.a, combined: c, decided: c + namedRefusals.length, firstParty: cur.f });
+  };
+  push('S0', 'start: declared native', [], prev);
+  for (const [id, what, cs] of STAGES) {
+    for (const c of cs) have.add(c);
+    const cur = { o: cnt(items, i => expressibleWith(i, have)), a: cnt(tp, i => expressibleWith(i, have)), f: cnt(fp, i => expressibleWith(i, have)) };
+    push(id, what, cs, cur);
+    prev = cur;
+  }
+}
+w(`Stage bundles from \`research/review-20261007/02b-agentic-constructs.md\` §5 (lane 2's S1–S7 of \`02-ir-expressiveness.md\` §7, with the twelve ` +
+  'agentic constructs placed by mechanism); this report only computes their declared coverage. A stage adds its constructs to every earlier one. ' +
+  '*Expressible* counts native items plus via-extension items whose tokens are all added. *Decided* adds the items already rejected with a named reason ' +
+  `(${namedRefusals.length} in the combined corpus: ${fmtCounts(count(namedRefusals, i => i.ir.verdict.replace(/^unsupported:/, '')))}), which is the ROADMAP ` +
+  '§2.1 coverage goal ("represented exactly or rejected with a named reason"). Declared only: nothing here is compiled or executed. First-party items ' +
+  'are shown in the last column and are not part of any other column.', '');
+w(table(['stage', 'adds (02b)', 'constructs', 'newly expressible: original', 'newly expressible: agentic third-party', 'cumulative: original',
+  'cumulative: agentic third-party', 'cumulative: combined expressible', 'combined decided (expressible + named refusals)', 'first-party expressible (not pooled)'], stageRows), '');
+{
+  const rem = new Set(combined.filter(i => verdictClass(i) === 'via-extension')); const have = new Set(); const used = new Set(); const steps = [];
+  let cum = cnt(combined, i => verdictClass(i) === 'native');
+  while (used.size < STAGES.length) {
+    let best = null, gain = -1;
+    for (const s of STAGES) {
+      if (used.has(s[0])) continue;
+      const next = new Set([...have, ...s[2]]);
+      const g = [...rem].filter(i => constructsOf(i).every(c => next.has(c))).length;
+      if (g > gain) { gain = g; best = s; }
+    }
+    used.add(best[0]); for (const c of best[2]) have.add(c);
+    for (const i of [...rem]) if (constructsOf(i).every(c => have.has(c))) rem.delete(i);
+    cum += gain; steps.push(`${best[0]} +${gain} (${pct(cum, combined.length)})`);
+  }
+  w(`Greedy order over the same bundles (combined corpus; each step adds the bundle that makes the most additional items expressible): ${steps.join(' → ')}. ` +
+    'Where the plan order differs, 02b §5 gives the dependency or capability reason.', '');
+}
+
+w('### 10.7 Design refusals', '');
 const refused = tp.filter(i => verdictClass(i) === 'refused-by-design');
 w(table(['refusal', 'items', 'platforms', 'needs if lifted (most frequent)', 'needing no further construct'], REFUSALS.map(r => {
   const its = refused.filter(i => refusalsOf(i).includes(r));
@@ -963,10 +1053,10 @@ w(table(['refusal', 'items', 'platforms', 'needs if lifted (most frequent)', 'ne
 })), '');
 w(`${refused.length} third-party items (${pct(refused.length, NT)}) are refused; no first-party item is. Rule GC refuses a shared transcript whose next speaker a model ` +
   'picks; a chat whose speaker order code fixes stays native. Rule HO refuses a model-initiated transfer to an agent that continues the same conversation; ' +
-  'transfers chosen by code, typed handoffs without the transcript and transfers into task pipelines are routing. The refusals rest on proposed text ' +
-  '(ROADMAP-AMENDMENTS); if the owner lifts one, its items move to via-extension with their `Needs:` list plus a history-fork or shared-transcript construct.', '');
+  `transfers chosen by code, typed handoffs without the transcript and transfers into task pipelines are routing. The refusals rest on ${REFUSAL_TEXT}; ` +
+  'if the owner lifts one, its items move to via-extension with their `Needs:` list plus a history-fork or shared-transcript construct.', '');
 
-w('### 10.7 Native patterns recorded in the notes', '');
+w('### 10.8 Native patterns recorded in the notes', '');
 const PATTERNS = ['llm-router', 'supervisor-delegation', 'code-selected-chat', 'task-pipeline transfer', 'typed-handoff'];
 const patternText = it => /Native patterns, no token: (.*?)(?: The record below predates|$)/s.exec(fullNotes(it))?.[1] ?? '';
 w('Topologies that need no IR mechanism of their own are not verdict tokens; each item names them after "Native patterns, no token:" with source spans ' +
@@ -979,7 +1069,7 @@ w(table(['pattern', 'third-party items', 'platforms', 'of them refused by design
 })), '');
 w(`Items naming at least one native pattern: third-party ${cnt(tp, i => patternText(i))}, first-party ${cnt(fp, i => patternText(i))}.`, '');
 
-w('### 10.8 First-party slice (not pooled)', '');
+w('### 10.9 First-party slice (not pooled)', '');
 w(`${NFP} \`claude-code-workflows\` items: dynamic workflow scripts written by this project's own orchestrating agent during earlier sessions, read from local ` +
   'copies (`local:` URLs, sha256 revisions). They show what this project\'s agent builds for itself, which is not evidence of what third-party workflows need, ' +
   'and models of the same family wrote, extracted and verified them. Licence unknown (no licence file), so only URL, a written description, the derived graph and ' +
@@ -988,16 +1078,21 @@ w(table(['item', 'nodes / edges', 'verdict', 'description (one line)'], fp.map(i
   [`\`${idc(cut(it.id.replace(/^claude-code-workflows:claude-session\/workflows\/scripts\//, ''), 60))}\``, `${it.features.nodeCount} / ${it.features.edgeCount}`,
     verdictKind(it) === 'native' ? 'native' : cell(constructsOf(it).join(', ')), esc(oneLine(it))])), '');
 
-w('### 10.9 Limits', '',
+w('### 10.10 Limits', '',
   '- The verdicts are static model readings, checked by a second model pass and re-labelled by a third; none was compiled into Foundry IR or executed. ' +
   'Agreement between passes is not ground truth.',
   '- The items are framework examples, tutorials and templates chosen to cover each framework\'s orchestration features, not a random sample of deployed ' +
   'agent workflows. Construct frequencies describe this purposive sample.',
-  '- The convention fixes four contested calls that change counts (AGENTIC-CONVENTIONS.md §9): the refusals rest on unmerged ROADMAP text; three ADK transfers ' +
+  '- The convention fixes four contested calls that change counts (AGENTIC-CONVENTIONS.md §9): the refusals rest on ROADMAP text applied as review defaults in an unreviewed WIP commit (8fa9124); three ADK transfers ' +
   'into task pipelines are routing, not refusals; code-selected shared-transcript chats are native; chat history counts as `cross-run-state` and scripted ' +
   'sessions as `chat-session`.',
   `- The registry groups all twelve agentic constructs under \`agentic\`; AGENTIC-CONVENTIONS.md §3.3 proposed state, async and dynamism groups for six of them.`,
-  '- `state-reducer` has no item in this slice; it stays in the registry for the planned board mechanism.', '');
+  '- `state-reducer` has no item in this slice; it stays in the registry for the planned board mechanism.',
+  '- Open rulings that would move single items (not the totals of 10.3 or the last row of 10.6) are listed in 02b §6: the Strands A2A orchestrator ' +
+  '(served chat agent, `chat-session`+`cross-run-state` or not) and `guardrail-tripwire` around a tool-free agent.',
+  '- The original clusters were labelled before this convention. Their converters never emit agentic tokens or design refusals, so sections 1–9 hold ' +
+  'none; 02b §6 lists a node-type probe of the original items the convention would re-label. Any re-labelling of the frozen original corpus needs a ' +
+  'pre-registered amendment (02-ir-expressiveness.md §8).', '');
 fs.writeFileSync(path.join(ROOT, 'COVERAGE.md'), W.join('\n'));
 
 console.log(JSON.stringify({ items: N, redistributable: nRedis, verdicts: Object.fromEntries(V), pilot: pilot.length, candidates: candidates.length,
@@ -1005,4 +1100,5 @@ console.log(JSON.stringify({ items: N, redistributable: nRedis, verdicts: Object
   agentic: { items: NA, thirdParty: NT, firstParty: NFP, thirdPartyVerdicts: Object.fromEntries(cls(tp)), firstPartyVerdicts: Object.fromEntries(cls(fp)) },
   coverage: Object.fromEntries([['original', items], ['agenticThirdParty', tp], ['combined', combined], ['firstParty', fp]].map(([k, its]) =>
     [k, { items: its.length, declaredNative: cnt(its, i => verdictClass(i) === 'native'), with19: cnt(its, with19), withAll: cnt(its, withAll),
-      refusedByDesign: cnt(its, i => verdictClass(i) === 'refused-by-design'), unsupported: cnt(its, i => verdictClass(i) === 'unsupported') }])) }));
+      refusedByDesign: cnt(its, i => verdictClass(i) === 'refused-by-design'), unsupported: cnt(its, i => verdictClass(i) === 'unsupported') }])),
+  stages: stageJson }));

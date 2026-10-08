@@ -113,7 +113,9 @@ export class HAMock {
 
   // ---- state machine
   init(id, state, attributes = {}) { this.states.set(id, { state, attributes: clone(attributes), last_changed: 0 }); }
-  getState(id) { const s = this.states.get(id); return s ? { entity_id: id, ...clone(s) } : null; }
+  // last_changed is kept internally in scenario seconds and read out, as Home Assistant does, as a timestamp: here the naive local time in
+  // the same format as event.at.iso (v0.2.0; before, it leaked the scenario-relative seconds, which no solution could relate to event.at).
+  getState(id) { const s = this.states.get(id); return s ? { entity_id: id, ...clone(s), last_changed: formatLocal(this.t0 + s.last_changed) } : null; }
   setState(id, state, attributes) {
     const old = this.states.get(id);
     if (!old) { this.states.set(id, { state, attributes: clone(attributes ?? {}), last_changed: this.t }); this.stateLog.push({ t: this.t, entity_id: id, old: null, new: state }); this.outbox.push({ type: 'state_changed', entity_id: id, old_state: null, new_state: state }); return true; }

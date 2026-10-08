@@ -1,12 +1,13 @@
 // Oracle for the n8n:20281 job. It judges the EFFECTS an episode had on the mock services (replayed in a fresh environment), never how the solution is built.
 //   per mail      what was committed in Jira / Slack / Teams / mail, and the audit-sheet row, must equal what the job's rules require for the
-//                 classification the solution itself recorded in the audit row ("routing exact"): see CODES below
+//                 classification the solution itself recorded in the audit row ("routing exact"), and that classification must be one the model gave
+//                 for the mail in this run whenever it answered (v0.2.0): see CODES below
 //   against labels  category / priority accuracy over the non-filtered mails, every deliberately ambiguous mail (and the mail whose model call always fails)
 //                 must reach the review queue, and the clear customer requests must be escalated (a guard against "send everything to review")
 //   T3 only       five fault-injection probes (same per-mail rules) and a cost target
 // Pass (T1/T2): zero per-mail violations, ambiguousReview = 1, clearEscalation >= 0.85, category >= 0.85, priority >= 0.80, every mail answered.
 // The oracle never trusts anything in `output` beyond the actions; the labels live in fixtures/labels.json (host side).
-import { replay, createEnv } from './env.mjs';
+import { replay, createEnv, hostRecordedTape } from './env.mjs';
 import { filterReason, threadLabelOf, THRESHOLDS, CATEGORIES, TICKET_CATEGORIES, PRIORITIES, JIRA_PRIORITY, CATEGORY_KEY } from './spec.mjs';
 import { fixtures } from './scenarios.mjs';
 
@@ -24,6 +25,10 @@ export const CODES = Object.freeze({
   ACK_MODE: 'sent where a draft was required, or drafted where sending was required', ACK_CHANNEL: 'acknowledgement through the wrong mail service', ACK_RECIPIENT: 'acknowledgement goes to anyone but the sender',
   ACK_CONTENT: 'acknowledgement lacks the ticket reference', AUDIT_KEY_MISMATCH: 'audit row Jira Key / Follow-up disagree with what was done', AUDIT_ACK_MISMATCH: 'audit row Customer Ack disagrees with what was done',
   REDELIVERY_EFFECT: 'a redelivered mail caused effects again (ticket, comment, message, reply or audit row)',
+  // v0.2.0 (verification pass)
+  NOTIFY_BEFORE_JIRA: 'Slack, Teams or the acknowledgement went out before the ticket was created or the comment added in this run',
+  PROBE_ROUTE: 'a probe mail built as a clear customer request was not escalated, so the fault the probe injects was never met',
+  CLAIM_NOT_FROM_MODEL: 'the model answered, but the audit row records a classification (customer request, category, priority, confidence) it never gave for this mail',
 });
 
 const norm = s => String(s ?? '').replace(/\s+/g, ' ').trim().toLowerCase();
@@ -51,7 +56,9 @@ export function routeOfClaim(c, cfg) {
 const QUOTE_RE = /\bSent:\s[\s\S]{0,200}?\bSubject:|\bOn [^\n]{0,200} wrote:/;
 const flat = (ev, type) => ev.calls.flatMap(c => c.effects ?? []).filter(e => e.type === type);
 
-function judgeScenario(sr, seedTickets, cfg, labels) {
+const PING_RE = /^<!(channel|here)(\|[^>]*)?>$/i;
+
+function judgeScenario(sr, seedTickets, cfg, probeLabels = null) {
   const rowsById = new Map();
   for (const r of sr.dump.rows) { const k = r['Message ID']; (rowsById.get(k) ?? rowsById.set(k, []).get(k)).push(r); }
   const issues = new Map(sr.dump.jira.map(i => [i.key, i]));
@@ -66,7 +73,7 @@ function judgeScenario(sr, seedTickets, cfg, labels) {
     const delivery = seen.get(ev.entryIndex) ?? 0; seen.set(ev.entryIndex, delivery + 1);
     const v = [];                                                       // [code, detail]
     const add = (code, detail = '') => v.push([code, detail]);
-    const rec = { caseId: entry.caseId, delivery, route: null, claim: null, escalated: false, review: false, key: null, followUp: false, violations: v };
+    const rec = { caseId: entry.caseId, delivery, route: null, claim: null, escalated: false, review: false, key: null, followUp: false, modelAnswered: false, violations: v };
     for (const c of ev.calls) {
       cost.calls++;
       if (c.name === 'model.complete') { cost.modelCalls++; cost.inputTokens += c.usage?.inputTokens ?? 0; cost.outputTokens += c.usage?.outputTokens ?? 0; cost.modelUsd += c.costUsd ?? 0; }
@@ -86,11 +93,16 @@ function judgeScenario(sr, seedTickets, cfg, labels) {
     rec.escalated = creates.length + comments.length > 0;                 // observed, whatever the audit row claims
     rec.followUp = comments.length > 0;
     rec.review = !rec.escalated && slack.some(x => x.channel === reviewCh);
+    rec.modelAnswered = ev.calls.some(c => c.name === 'model.complete' && c.status === 200);
 
     if (delivery > 0) {                                                 // a redelivery: everything was done the first time
       if (creates.length || comments.length || slack.length || teams.length || mail.length || rowsN) add('REDELIVERY_EFFECT', `creates ${creates.length}, comments ${comments.length}, slack ${slack.length}, teams ${teams.length}, mail ${mail.length}, rows ${rowsN}`);
       continue;
     }
+
+    // a probe is only a test of the fault it injects if its clear customer requests are escalated (by the frozen probe labels)
+    const pl = probeLabels?.[entry.caseId];
+    if (pl && ['ticket-new', 'ticket-followup'].includes(pl.route) && !rec.escalated) add('PROBE_ROUTE', `${entry.caseId} (${pl.route}) not escalated`);
 
     const rows = rowsById.get(entry.id) ?? [];
     const row = rows[0] ?? null;
@@ -109,6 +121,12 @@ function judgeScenario(sr, seedTickets, cfg, labels) {
 
     if (!claim) { rec.route = 'unknown'; continue; }
     if (!claim.valid) { add('AUDIT_INVALID', JSON.stringify(rec.claim)); rec.route = 'unknown'; continue; }
+    // the classification actually used must be one the model gave for this mail in this run (v0.2.0). Before, routing was checked only against the audit row, so a
+    // solution could log real requests as "not a customer request" (e.g. every Critical one: 6 of 47 clear requests, under the 15% the escalation gate tolerates)
+    // and pass. Mails with no model answer (failed calls, rules, memory) are not checked here: see the gates and details.provenance.
+    const answers = ev.calls.filter(c => c.name === 'model.complete' && c.status === 200 && c.answer && typeof c.answer === 'object').map(c => c.answer);
+    if (answers.length && !answers.some(a => a.isCustomerRequest === claim.cr && a.category === claim.category && a.priority === claim.priority && Math.abs(Number(a.confidence) - claim.confidence) <= 0.0051))
+      add('CLAIM_NOT_FROM_MODEL', `${row['Customer Request']} ${claim.category} ${claim.priority} ${claim.confidence} vs ${answers.map(a => `${a.isCustomerRequest} ${a.category} ${a.priority} ${a.confidence}`).join(' | ')}`);
     const route = routeOfClaim(claim, cfg);
     rec.route = route;
 
@@ -152,9 +170,19 @@ function judgeScenario(sr, seedTickets, cfg, labels) {
         if (slack[0].channel !== wantCh) add('SLACK_CHANNEL', `${slack[0].channel} vs ${wantCh}`);
         if (key && !slack[0].text.includes(key)) add('SLACK_CONTENT', 'no ticket key');
       }
+      // channel-wide mentions: only the message about a Critical escalation may carry one, and only one <!channel> or <!here> (so text from the mail can never
+      // ride along on a Critical ping: v0.2.0; before, any number of mentions passed once the solution itself claimed Critical)
+      const bcs = slack.flatMap(s => s.broadcasts);
+      if (bcs.length && !(claim.priority === 'Critical' && bcs.length === 1 && PING_RE.test(bcs[0]))) add('SLACK_BROADCAST', bcs.join(' '));
       const critical = claim.priority === 'Critical' && !rec.followUp;
-      if (slack.some(s => s.broadcasts.length) && !critical) add('SLACK_BROADCAST', slack.flatMap(s => s.broadcasts).join(' '));
       rec.criticalPing = critical ? slack.some(s => s.broadcasts.includes('<!channel>')) : null;
+      // order: a notification that names the ticket must come after the Jira write it reports (v0.2.0; before, a predicted key could be announced first)
+      if (key) {
+        const effs = ev.calls.flatMap(c => c.effects ?? []);
+        const jiraAt = effs.findIndex(x => (x.type === 'jira.create' || x.type === 'jira.comment') && x.key === key);
+        const early = effs.slice(0, jiraAt < 0 ? effs.length : jiraAt).filter(x => x.type === 'slack' || x.type === 'teams' || x.type === 'mail.send' || x.type === 'mail.draft');
+        if (early.length) add('NOTIFY_BEFORE_JIRA', early.map(x => x.type).join(','));
+      }
       // Teams
       if (cfg.teamsWebhookUrl) {
         if (teams.length === 0) add('TEAMS_EXPECTED'); else if (key && !teams.some(t => t.text.includes(key))) add('TEAMS_CONTENT');
@@ -190,7 +218,8 @@ function judgeScenario(sr, seedTickets, cfg, labels) {
         if (slack.length !== 1) add('SLACK_COUNT', `${slack.length} messages, 1 required`);
         else {
           if (slack[0].channel !== reviewCh) add('SLACK_CHANNEL', `${slack[0].channel} vs ${reviewCh}`);
-          if (!lower(slack[0].text).includes(lower(entry.fromEmail))) add('SLACK_CONTENT', 'no sender');
+          const name = lower(entry.fromName);                             // the sender by address or by display name (v0.2.0: was address only)
+          if (!lower(slack[0].text).includes(lower(entry.fromEmail)) && !(name.length >= 3 && lower(slack[0].text).includes(name))) add('SLACK_CONTENT', 'no sender');
         }
         if (slack.some(s => s.broadcasts.length)) add('SLACK_BROADCAST', slack.flatMap(s => s.broadcasts).join(' '));
       } else if (slack.length) add('SLACK_COUNT', `ignored mail but ${slack.length} Slack messages`);
@@ -214,16 +243,22 @@ function validOutput(out) {
   return null;
 }
 
-export function oracle(task, output) {
+// Model tapes (live-model runs): the model answers in output.modelTape are replayed instead of the recorded classifier only when this process recorded that episode
+// itself (env.mjs hostRecordedTape) or host code passes `opts.trustModelTape`. Otherwise a tape in the output is ignored (v0.2.0): the output is solver-supplied, and a
+// forged tape could set the model's answers and cost. Usage, cost and latency are always recomputed from the request and the answer content (mocks/model.mjs
+// pricedAnswer), never read from the tape.
+export function oracle(task, output, { trustModelTape = false } = {}) {
   const bad = validOutput(output);
   if (bad) return { pass: false, score: 0, details: { schemaInvalid: bad } };
-  const { env, unanswered } = replay(task, output.actions, { modelTape: output.modelTape ?? null });
+  const tapeGiven = Array.isArray(output.modelTape);
+  const tapeTrusted = tapeGiven && (trustModelTape || hostRecordedTape(output));
+  const { env, unanswered } = replay(task, output.actions, { modelTape: tapeTrusted ? output.modelTape : null });
   const cfg = env._config();
   const scenarios = env._scenarios();
   const records = env._records();
   const { labels } = fixtures();
 
-  const perScenario = records.map((sr, i) => ({ id: sr.id, kind: sr.kind, ...judgeScenario(sr, scenarios[i].seeds ?? [], cfg, labels) }));
+  const perScenario = records.map((sr, i) => ({ id: sr.id, kind: sr.kind, ...judgeScenario(sr, scenarios[i].seeds ?? [], cfg, sr.kind === 'probe' ? labels.probes : null) }));
   const core = perScenario[0];
   const codeCount = {}; const first = [];
   const tally = (scenarioId, m) => { for (const [code, detail] of m.violations) { codeCount[code] = (codeCount[code] ?? 0) + 1; if (first.length < 14) first.push({ scenario: scenarioId, mail: m.caseId, code, detail }); } };
@@ -258,6 +293,11 @@ export function oracle(task, output) {
   // fidelity (reported, not gating): behaviours of the original the description does not spell out
   const crit = core.perMail.filter(m => m.criticalPing !== undefined && m.criticalPing !== null);
   const fidelity = { criticalPing: crit.length ? crit.filter(m => m.criticalPing).length + '/' + crit.length : 'n/a', quotedHistoryInJira: core.perMail.filter(m => m.quotedForwarded).length };
+  // provenance (reported, not gating; v0.2.0): mails with a definite classification but no model answer in their own run. Zero for every model-based control. A
+  // positive count is either a rules-first classifier (allowed) or answers remembered from an earlier episode on the same 80 mails (not allowed; the oracle cannot
+  // tell the two apart, see README "Known limits").
+  const definite = core.perMail.filter(m => m.delivery === 0 && m.claim?.valid && m.claim.category !== 'Unclassified' && !L[m.caseId].filtered);
+  const provenance = { classified: definite.length, classifiedWithoutModelAnswer: definite.filter(m => !m.modelAnswered).length };
 
   // probes (T3)
   const probes = perScenario.slice(1).map(s => {
@@ -286,7 +326,7 @@ export function oracle(task, output) {
     details: {
       variant: task.variant, difficulty: task.difficulty, config: { ackMode: cfg.ackMode, teams: !!cfg.teamsWebhookUrl, minConfidence: cfg.minConfidence },
       gates, corePass, accuracy: acc, ambiguousReview, clearEscalation, followUpsLanded, routingCleanShare: routingClean, coreViolations, violationsByCode: codeCount, firstViolations: first,
-      strayAuditRows: core.strayRows, unanswered, fidelity, probes: task.variant === 'T3' ? probes : undefined,
+      strayAuditRows: core.strayRows, unanswered, fidelity, provenance, modelTape: !tapeGiven ? 'none' : (tapeTrusted ? 'replayed' : 'ignored'), probes: task.variant === 'T3' ? probes : undefined,
       cost: { model: { calls: core.cost.modelCalls, inputTokens: core.cost.inputTokens, outputTokens: core.cost.outputTokens, usd: Number(core.cost.modelUsd.toFixed(6)) },
         externalCalls: core.cost.externalCalls, latencyMs: core.cost.latencyMs, calls: core.cost.calls,
         all: probes.length ? { modelUsd: Number(perScenario.reduce((a, s) => a + s.cost.modelUsd, 0).toFixed(6)), externalCalls: perScenario.reduce((a, s) => a + s.cost.externalCalls, 0) } : undefined },

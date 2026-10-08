@@ -1,7 +1,7 @@
 {
  "schema": "rbench-controls-report/1",
  "item": "home-assistant:CCOSTAN/Home-AssistantConfig/config/automation/Speech/garbage_day_garage.yaml#0",
- "version": "0.1.0",
+ "version": "0.2.0",
  "generatedBy": "node controls/run-controls.mjs",
  "instances": 65,
  "instanceSpec": "dev seeds 0..19 x d1,3,5 + test seeds 0..4 x d3",
@@ -29,8 +29,8 @@
     "p4-alexa-down-then-up": 65
    },
    "cost": {
-    "min": 222,
-    "max": 222
+    "min": 248,
+    "max": 248
    }
   },
   "yamlConstructsInterpreted": [
@@ -68,8 +68,8 @@
    "meanScore": 1,
    "failedScenarios": {},
    "cost": {
-    "min": 184,
-    "max": 184
+    "min": 203,
+    "max": 203
    }
   }
  },
@@ -240,6 +240,21 @@
    },
    "rejectedEverywhere": true,
    "expectedFailuresSeenEverywhere": true
+  },
+  {
+   "name": "stop-on-failed-check",
+   "describe": "what the author's comment says (\"Stop if the door closed ...\"): the three checks in the repeat become a choose that `stop`s the whole run when any fails, instead of conditions that only end the round",
+   "expectFail": [
+    "wed-stop-then-reopen"
+   ],
+   "runs": 65,
+   "pass": 0,
+   "meanScore": 0.9333,
+   "failedScenarios": {
+    "wed-stop-then-reopen": 65
+   },
+   "rejectedEverywhere": true,
+   "expectedFailuresSeenEverywhere": true
   }
  ],
  "brokenControls": [
@@ -309,15 +324,15 @@
    ],
    "runs": 65,
    "pass": 0,
-   "meanScore": 0.0215,
+   "meanScore": 0.0174,
    "failedScenarios": {
-    "mon-open": 45,
+    "mon-open": 48,
     "sun-full": 65,
     "sun-snooze2h": 65,
     "tue-midnight-starts-wed": 65,
     "wed-close-before-first": 65,
     "wed-external-snooze": 65,
-    "wed-flap": 64,
+    "wed-flap": 65,
     "wed-foreign-phone-action": 65,
     "wed-full": 65,
     "wed-midnight-ends-sequence": 65,
@@ -474,9 +489,10 @@
    ],
    "runs": 65,
    "pass": 0,
-   "meanScore": 0.8,
+   "meanScore": 0.7333,
    "failedScenarios": {
     "sun-snooze2h": 65,
+    "wed-external-snooze": 65,
     "wed-snooze-after-run-ended": 65,
     "wed-snooze30-then-expiry": 65
    },
@@ -484,8 +500,8 @@
    "expectedFailuresSeenEverywhere": true
   },
   {
-   "name": "skip-instead-of-stop",
-   "describe": "a failed check skips that announcement but the sequence carries on (the original ends the whole run)",
+   "name": "stop-for-good",
+   "describe": "a failed check ends the whole reminder (the author's comment; v0.1.0 of this item). Documented Home Assistant: a condition inside a repeat ends only that round, so the original still announces at a later check that passes",
    "expectFail": [
     "wed-stop-then-reopen"
    ],
@@ -494,6 +510,36 @@
    "meanScore": 0.9333,
    "failedScenarios": {
     "wed-stop-then-reopen": 65
+   },
+   "rejectedEverywhere": true,
+   "expectedFailuresSeenEverywhere": true
+  },
+  {
+   "name": "naive-debounce",
+   "describe": "starts if the door is open 20 s after an opening, without requiring it to have stayed open (a flap that reopens inside the 20 s starts a reminder)",
+   "expectFail": [
+    "wed-flap"
+   ],
+   "runs": 65,
+   "pass": 0,
+   "meanScore": 0.9333,
+   "failedScenarios": {
+    "wed-flap": 65
+   },
+   "rejectedEverywhere": true,
+   "expectedFailuresSeenEverywhere": true
+  },
+  {
+   "name": "start-gate-from-memory",
+   "describe": "the start gate trusts the handler's memory of its own snooze taps instead of reading the shared timer, so a timer started by something else does not stop a new reminder",
+   "expectFail": [
+    "wed-external-snooze"
+   ],
+   "runs": 65,
+   "pass": 0,
+   "meanScore": 0.9333,
+   "failedScenarios": {
+    "wed-external-snooze": 65
    },
    "rejectedEverywhere": true,
    "expectedFailuresSeenEverywhere": true
@@ -787,8 +833,8 @@
      "p4-alexa-down-then-up": 65
     },
     "cost": {
-     "min": 222,
-     "max": 222
+     "min": 248,
+     "max": 248
     }
    },
    "passesCoreRejectedOnT3": true
@@ -808,29 +854,29 @@
     "meanScore": 0.95,
     "failedScenarios": {},
     "cost": {
-     "min": 4384,
-     "max": 4532
+     "min": 5529,
+     "max": 5677
     }
    },
    "passesCoreRejectedOnT3": true
   }
  ],
  "semanticSensitivity": {
-  "assumption": "a false condition inside repeat/choose ends the WHOLE run (documented Home Assistant behaviour as recalled; not executed against Home Assistant)",
-  "alternativeReading": "a false condition inside a repeat ends only that iteration",
+  "assumption": "a false condition inside repeat ends only the current round; inside choose only that option; inside parallel only that branch (documented: home-assistant.io source/_docs/scripts.markdown lines 538-542 and 1504-1506, corpus revision be62035471100102de772b812ac90bf92f786dfc, 2026-10-06; not executed against Home Assistant)",
+  "alternativeReading": "a false condition inside a repeat ends the WHOLE run (v0.1.0 of this item, from recall; contradicted by the documentation)",
   "scenariosThatDisagreeUnderTheAlternative": {
    "wed-stop-then-reopen": 65
   },
   "runs": 65
  },
  "timing": {
-  "maxGenerateMs": 10.2,
-  "maxOracleMs": 97.7,
+  "maxGenerateMs": 19.5,
+  "maxOracleMs": 203,
   "note": "oracle time includes replaying the whole episode; contract limit is 2 s"
  },
  "t3CostCap": {
   "factor": 1.25,
-  "cap": 278,
+  "cap": 310,
   "frozen": true
  }
 }

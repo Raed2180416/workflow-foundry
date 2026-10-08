@@ -6,6 +6,12 @@ import { World, API_OPS, WRITE_OPS } from './mocks/world.mjs';
 import { scenariosFor, fixtures } from './scenarios.mjs';
 import { CALL_CAP, MODEL_CALL_CAP } from './spec.mjs';
 import { clone } from './mocks/common.mjs';
+import { hashOf } from '../../../../beds/lib/canonical.mjs';
+
+// Records of live-model episodes made by THIS process (host side). The oracle replays a model tape only from such a record (or when host code passes
+// trustModelTape): a tape in a solver-supplied output is otherwise ignored, so it cannot set the model's answers or cost (v0.2.0).
+const HOST_TAPES = new Set();
+export const hostRecordedTape = out => Array.isArray(out?.modelTape) && Array.isArray(out?.actions) && HOST_TAPES.has(hashOf({ actions: out.actions, modelTape: out.modelTape }));
 
 export { API_OPS };
 export const LIMITS = Object.freeze({ callsPerRun: CALL_CAP, modelCallsPerRun: MODEL_CALL_CAP });
@@ -24,6 +30,7 @@ export function createEnv(task, { modelBackend = null, modelTape = null } = {}) 
     world = new World({ config, entries: sc.entries, recordings, seeds: sc.seeds, nextIssueNumber: sc.nextIssueNumber, faults: sc.faults, modelBackend, modelTape });
     sr = { id: sc.id, kind: sc.kind, entries: sc.entries.map(e => ({ caseId: e.caseId, ref: e.ref, provider: e.provider, thread: e.thread, id: e.provider === 'gmail' ? e.mail.id : e.mail.id,
       threadId: e.provider === 'gmail' ? e.mail.threadId : e.mail.conversationId, fromEmail: e.provider === 'gmail' ? e.mail.from.value[0].address : e.mail.from.emailAddress.address,
+      fromName: (e.provider === 'gmail' ? e.mail.from.value[0].name : e.mail.from.emailAddress.name) ?? '',
       subject: e.mail.subject, plain: e.plain })), events: [], dump: null };
     records.push(sr);
   };
@@ -68,7 +75,8 @@ export function createEnv(task, { modelBackend = null, modelTape = null } = {}) 
       const { response, meta } = world.call(name, args);
       last = response;
       if (name === 'model.complete' && modelBackend) tape.push(clone({ status: response.status, body: response.body, latencyMs: meta.latencyMs }));
-      er.calls.push({ name, args: clone(args), status: response.status, known: meta.known, latencyMs: meta.latencyMs, usage: meta.usage, costUsd: meta.costUsd, effects: meta.effects, write: WRITE_OPS.has(name) });
+      er.calls.push({ name, args: clone(args), status: response.status, known: meta.known, latencyMs: meta.latencyMs, usage: meta.usage, costUsd: meta.costUsd, effects: meta.effects, write: WRITE_OPS.has(name),
+        ...(name === 'model.complete' && response.status === 200 ? { answer: clone(response.body?.content ?? null) } : {}) });
       return out({ outcome: 'call', status: response.status });
     },
     actions: () => (done ? [] : [...API_OPS, 'done'].sort()),
@@ -81,7 +89,11 @@ export function createEnv(task, { modelBackend = null, modelTape = null } = {}) 
       world.restore(c.world);
       sr = records[si]; er = sr.events[sr.events.length - 1] ?? null;
     },
-    record: () => ({ actions: clone(episode), ...(modelBackend ? { modelTape: clone(tape) } : {}) }),
+    record: () => {
+      const r = { actions: clone(episode), ...(modelBackend ? { modelTape: clone(tape) } : {}) };
+      if (modelBackend) HOST_TAPES.add(hashOf(r));
+      return r;
+    },
     // Host side only (never hand these to a solver).
     _records: () => records,
     _config: () => config,

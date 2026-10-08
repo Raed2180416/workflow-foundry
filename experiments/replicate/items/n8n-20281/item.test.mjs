@@ -212,18 +212,21 @@ describe('mock services', () => {
     assert.equal(o.reply({ messageId: 'm1', comment: '<p>x</p>', saveAsDraft: true }).status, 201); assert.equal(o.reply({ messageId: 'm1', comment: '<p>x</p>', replyToSenderOnly: true }).status, 202);
     assert.equal(o.state.drafts.length, 1); assert.equal(o.state.sent.length, 1); assert.deepEqual(o.state.sent[0].cc, []);
   });
-  test('Model: recognises the mail by its token, charges tokens, fails on request, projects the schema', () => {
+  test('Model: recognises the mail by its token and its text, charges tokens, fails on request, projects the schema', () => {
     const e = FX.emails.scored.find(x => x.caseId === 'b04'), m2 = FX.emails.scored.find(x => x.caseId === 'm01'), m3 = FX.emails.scored.find(x => x.caseId === 'm02');
     const info = Object.fromEntries(FX.emails.scored.map(x => [x.ref, { subject: x.mail.subject, fromName: 'N', company: 'C', plain: x.plain }]));
     const m = new Model({ recordings: FX.recordings.byRef, infoByRef: info });
-    const full = m.complete({ prompt: `Classify. ${e.ref}` });
+    const P = x => `Classify.\n${x.plain}\nMsg-ref: ${x.ref}`;
+    const full = m.complete({ prompt: P(e) });
     assert.equal(full.status, 200); assert.equal(full.body.content.category, 'Bug'); assert.equal(full.body.content.priority, 'Critical'); assert.ok(full.body.usage.inputTokens > 0 && full.body.costUsd > 0);
-    const slim = m.complete({ prompt: `x ${e.ref}`, schema: { properties: { category: {}, confidence: {} } } });
+    const slim = m.complete({ prompt: P(e), schema: { properties: { category: {}, confidence: {} } } });
     assert.deepEqual(Object.keys(slim.body.content), ['category', 'confidence']); assert.ok(slim.body.costUsd < full.body.costUsd);
-    assert.ok(m.complete({ prompt: `x ${e.ref}`, tier: 'small' }).body.costUsd < full.body.costUsd);
-    assert.equal(m.complete({ prompt: 'no mail here' }).status, 422); assert.equal(m.complete({ prompt: `${e.ref} ${m2.ref}` }).status, 422); assert.equal(m.complete({ prompt: e.ref, tier: 'huge' }).status, 400);
-    assert.equal(m.complete({ prompt: m2.ref }).status, 500); assert.equal(m.complete({ prompt: m2.ref }).status, 500);
-    assert.equal(m.complete({ prompt: m3.ref }).status, 503); assert.equal(m.complete({ prompt: m3.ref }).status, 200);
+    assert.ok(m.complete({ prompt: P(e), tier: 'small' }).body.costUsd < full.body.costUsd);
+    assert.equal(m.complete({ prompt: 'no mail here' }).status, 422); assert.equal(m.complete({ prompt: `${e.ref} ${m2.ref}` }).status, 422); assert.equal(m.complete({ prompt: P(e), tier: 'huge' }).status, 400);
+    // v0.2.0: the token without the text is a cassette miss (the 0.1.0 mock answered it: a T3 cost hack); the subject is not the text
+    assert.equal(m.complete({ prompt: `Msg-ref: ${e.ref}` }).status, 422); assert.equal(m.complete({ prompt: `${e.mail.subject}\nMsg-ref: ${e.ref}` }).status, 422);
+    assert.equal(m.complete({ prompt: P(m2) }).status, 500); assert.equal(m.complete({ prompt: P(m2) }).status, 500);
+    assert.equal(m.complete({ prompt: P(m3) }).status, 503); assert.equal(m.complete({ prompt: P(m3) }).status, 200);
   });
   test('World: state port is compare-and-swap; snapshots restore exactly; unknown calls are refused', () => {
     const t = task(1, 3, 'T2'); const sc = scenariosFor({ seed: 1, split: 'dev', difficulty: 3, variant: 'T2' }).scenarios[0];
@@ -269,16 +272,21 @@ describe('environment', () => {
     assert.deepEqual(scenariosFor({ seed: 1, split: 'dev', difficulty: 3, variant: 'T3' }).scenarios.map(s => s.id), ['core', 'probe-create-ack-lost', 'probe-search-lag', 'probe-sheet-503', 'probe-redelivery', 'probe-mention-injection']);
     for (const v of ['T1', 'T2']) assert.deepEqual(scenariosFor({ seed: 1, split: 'dev', difficulty: 3, variant: v }).scenarios.map(s => s.id), ['core']);
   });
-  test('a live model: the episode keeps the observed answers (modelTape) and the oracle replays them', () => {
+  test('a live model: the episode keeps the observed answers (modelTape); the oracle replays only a tape this process recorded (or one host code trusts), priced from tokens', () => {
     const t = task(2, 3, 'T2'), cfg = configFor(3);
     const full = { isCustomerRequest: true, category: 'Bug', priority: 'High', confidence: 0.9, productArea: 'API', title: 't', summary: 's', customerName: 'n', customerCompany: 'c', sentiment: 'Neutral', stepsToReproduce: '', reasoning: '' };
     const backend = () => ({ status: 200, body: { content: full, usage: { inputTokens: 100, outputTokens: 50 }, costUsd: 0.001 }, latencyMs: 900 });
     const rec = driveSync(t, makeFaithful(cfg), { modelBackend: backend });
     assert.ok(rec.modelTape.length > 0);
-    const withTape = oracle(t, rec), withoutTape = oracle(t, { actions: rec.actions });
-    assert.equal(withTape.details.cost.model.usd, Number((rec.modelTape.length * 0.001).toFixed(6)));
-    assert.notEqual(withoutTape.details.cost.model.usd, withTape.details.cost.model.usd);
-    assert.equal(withTape.details.gates.categoryAccuracy, false);                   // the live model called everything a Bug
+    const hostRec = oracle(t, rec), withoutTape = oracle(t, { actions: rec.actions });
+    assert.equal(hostRec.details.modelTape, 'replayed'); assert.equal(withoutTape.details.modelTape, 'none');
+    assert.equal(hostRec.details.violationsByCode.CLAIM_NOT_FROM_MODEL, undefined);   // the claims are the live answers
+    assert.notEqual(hostRec.details.cost.model.usd, Number((rec.modelTape.length * 0.001).toFixed(6)));   // the tape's own cost figure is not used
+    const forged = { ...rec, modelTape: rec.modelTape.map(x => ({ ...x, body: { ...x.body, usage: { inputTokens: 0, outputTokens: 0 }, costUsd: 0 }, latencyMs: 0 })) };
+    const ignored = oracle(t, forged);
+    assert.equal(ignored.details.modelTape, 'ignored'); assert.equal(ignored.details.cost.model.usd, withoutTape.details.cost.model.usd);   // a solver-made tape changes nothing
+    assert.equal(oracle(t, forged, { trustModelTape: true }).details.cost.model.usd, hostRec.details.cost.model.usd);                      // and even a trusted one cannot set the price
+    assert.equal(hostRec.details.gates.categoryAccuracy, false);                    // the live model called everything a Bug
   });
 });
 
@@ -297,7 +305,7 @@ describe('oracle health', () => {
     for (const c of bed.badControls) {
       const hits = Object.fromEntries(c.expect.map(e => [e, 0]));
       for (const d of c.appliesAt ?? [3]) for (const s of seeds(d === 3 || (c.appliesAt ?? [3]).length === 1 ? 20 : 4)) {
-        const t = task(s, d, 'T2'); const r = oracle(t, c.make(t));
+        const t = task(s, d, c.variant ?? 'T2'); const r = oracle(t, c.make(t));
         assert.equal(r.pass, false, `${c.name} d${d} seed ${s} passed`);
         const seen = new Set([...Object.keys(r.details.violationsByCode), ...Object.entries(r.details.gates).filter(([, v]) => !v).map(([k]) => `gate:${k}`)]);
         for (const e of c.expect) if (seen.has(e)) hits[e]++;
@@ -359,7 +367,7 @@ describe('the original definition (executed in the emulator)', { skip: originalA
     assert.equal(a.hasExecuteWorkflowTrigger, false); assert.equal(a.hasErrorTrigger, false);
     assert.ok(a.nodesWithoutInboundEdge.includes('Route by Workflow Step') && a.nodesWithoutInboundEdge.includes('Create Error Alert Message'));
     assert.deepEqual(a.retryOnFail, [{ node: 'AI Email Classifier', maxTries: 3 }, { node: 'Post New Jira Issue', maxTries: 2 }]);
-    assert.equal(a.codeScanClean, true);
+    assert.equal(a.codeScanClean, true); assert.equal(a.expressionScanClean, true);
   });
   test('it passes the oracle at every difficulty (the original-passes control)', () => {
     for (const d of [1, 2, 3, 4, 5]) { const cfg = configFor(d); const t = task(d, d); const h = makeOriginalHandler(rebind(def, cfg), cfg); const rec = driveSync(t, h); assert.equal(rec.meta.handlerErrorCount, 0); const r = oracle(t, rec); assert.ok(r.pass, `d${d}: ${JSON.stringify(r.details.firstViolations)}`); }
@@ -397,9 +405,46 @@ describe('the original definition (executed in the emulator)', { skip: originalA
       assert.throws(() => bed.loadOriginal({ sha256: '0'.repeat(64) }), /sha256/);
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
-  test('the emulator refuses code that mentions I/O or escape identifiers', () => {
+  test('the emulator refuses code and expressions that mention I/O or escape identifiers', () => {
     const cfg = configFor(3), wf = rebind(def, cfg); wf.nodes.find(x => x.name === 'Filter and Prepare for AI').parameters.jsCode = 'return { json: { x: process.env } };';
     const t = task(0, 3); const rec = driveSync(t, makeOriginalHandler(wf, cfg)); assert.ok(rec.meta.handlerErrorCount > 0);
+    const wf2 = rebind(def, cfg); const sw = wf2.nodes.find(x => x.name === 'Set Workflow Configuration').parameters.assignments.assignments.find(a => a.name === 'minConfidence');
+    sw.value = "={{ this.constructor.constructor('return 0.6')() }}";
+    const rec2 = driveSync(t, makeOriginalHandler(wf2, cfg)); assert.ok(rec2.meta.handlerErrorCount > 0);
+  });
+});
+
+describe('adversarial verification (v0.2.0): attacks that passed 0.1.0, and correct alternatives the oracle must accept', () => {
+  test('a forged model tape in the output changes nothing (0.1.0 took the model cost from it: cost 0, T3 pass)', () => {
+    const t = task(0, 3, 'T3'), rec = driveSync(t, makeImproved(configFor(3)));
+    const forged = rec.actions.filter(a => a.call === 'model.complete').map(() => ({ status: 200, body: { content: {}, usage: { inputTokens: 0, outputTokens: 0 }, costUsd: 0 }, latencyMs: 0 }));
+    const honest = oracle(t, rec), withForged = oracle(t, { ...rec, modelTape: forged });
+    assert.equal(withForged.details.modelTape, 'ignored'); assert.equal(withForged.details.cost.model.usd, honest.details.cost.model.usd); assert.ok(honest.details.cost.model.usd > 0);
+  });
+  test('provenance: answers remembered from an earlier episode are flagged (they still pass: README "Known limits")', () => {
+    const table = {}; const t0 = task(99, 3, 'T2', 'test');
+    driveSync(t0, (ev, api) => makeFaithful(configFor(3))(ev, { ...api, model: { complete: a => { const r = api.model.complete(a); const ref = String(a.prompt).match(/MR-[0-9A-F]{5}/)?.[0]; if (ref) table[ref] = r; return r; } } }));
+    const t = task(3, 3, 'T2'); const imp = makeImproved(configFor(3));
+    const r = oracle(t, driveSync(t, (ev, api) => imp(ev, { ...api, model: { complete: a => table[String(a.prompt).match(/MR-[0-9A-F]{5}/)?.[0]] ?? { status: 422, body: {} } } })));
+    assert.equal(r.details.cost.model.calls, 0); assert.ok(r.details.provenance.classifiedWithoutModelAnswer > 50);
+    assert.equal(oracle(t, bed.referenceSolve(t)).details.provenance.classifiedWithoutModelAnswer, 0);
+  });
+  test('partial work: logging every Critical request as "not a customer request" passed 0.1.0 (6 of 47 clear requests); the claim must be the model\'s answer', () => {
+    const t = task(0, 3), cfg = configFor(3);
+    const r = oracle(t, driveSync(t, makeFaithful(cfg, { classifyHook: c => (c.classifiedBy === 'AI' && c.isCustomerRequest && c.priority === 'Critical' ? { ...c, isCustomerRequest: false } : c) })));
+    assert.equal(r.pass, false); assert.ok(r.details.violationsByCode.CLAIM_NOT_FROM_MODEL >= 6); assert.ok(r.details.clearEscalation >= THRESHOLDS.clearEscalationRecall);   // the gate alone would not have caught it
+  });
+  test('correct alternatives pass: comment without the token, review message naming the sender by name only, a Critical follow-up ping, a 300-character prompt', () => {
+    const cfg = configFor(3), t = task(0, 3), h = makeFaithful(cfg);
+    const noToken = driveSync(t, (ev, api) => h(ev, { ...api, jira: { ...api.jira, addComment: a => api.jira.addComment({ ...a, body: a.body.replace(/Msg-ref: MR-[0-9A-F]{5}/g, '') }) } }));
+    assert.ok(oracle(t, noToken).pass);
+    const byName = driveSync(t, (ev, api) => h(ev, { ...api, slack: { postMessage: a => api.slack.postMessage({ ...a, text: a.channel.includes('review') ? a.text.replace(/<[^<>@\s]+@[^<>\s]+>/g, '') : a.text }) } }));
+    assert.ok(oracle(t, byName).pass, JSON.stringify(oracle(t, byName).details.firstViolations));
+    const pingAll = driveSync(t, (ev, api) => h(ev, { ...api, slack: { postMessage: a => api.slack.postMessage({ ...a, text: / \/ Critical\b/.test(a.text.split('\n')[0]) && !a.channel.includes('review') ? '<!here> ' + a.text : a.text }) } }));
+    assert.ok(oracle(t, pingAll).pass, JSON.stringify(oracle(t, pingAll).details.firstViolations));
+    const t3 = task(0, 3, 'T3'), imp = makeImproved(cfg);
+    const short = driveSync(t3, (ev, api) => imp(ev, { ...api, model: { complete: a => { const ref = String(a.prompt).match(/MR-[0-9A-F]{5}/)?.[0] ?? ''; const p = a.prompt.slice(0, 300); return api.model.complete({ ...a, prompt: p.includes(ref) ? p : `${p}\nMsg-ref: ${ref}` }); } } }));
+    assert.ok(oracle(t3, short).pass);
   });
 });
 

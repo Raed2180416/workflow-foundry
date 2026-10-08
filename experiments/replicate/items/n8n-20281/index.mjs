@@ -15,7 +15,7 @@ import { buildExamples } from './examples.mjs';
 import { ORIGINAL, loadOriginal } from './controls/n8n-emulator.mjs';
 import { DESCRIPTION, API, PROTOCOL, TASK_TEXT, SKELETON } from './prompts.mjs';
 
-export const VERSION = '0.1.0';
+export const VERSION = '0.2.0';   // 0.2.0: adversarial verification fixes (README "Verification")
 export { ORIGINAL };
 export const ITEM = Object.freeze({ id: 'n8n:20281', safeId: 'n8n-20281', title: 'Create Jira tickets from Gmail and Outlook support emails with OpenAI and Slack', url: 'https://n8n.io/workflows/20281', rawSha256: ORIGINAL.sha256 });
 export const VARIANTS = Object.freeze(['T1', 'T2', 'T3']);
@@ -107,6 +107,6 @@ export function referenceSolve(task) {
   const cfg = configFor(task.difficulty);
   return driveSync(task, task.variant === 'T3' ? makeImproved(cfg) : makeFaithful(cfg));
 }
-export const badControls = BROKEN.map(({ name, describe, expect, appliesAt, make }) => ({ name, describe, expect, appliesAt, make }));
+export const badControls = BROKEN.map(({ name, describe, expect, appliesAt, variant, make }) => ({ name, describe, expect, appliesAt, variant, make }));
 
 export { oracle, createEnv, driveSync, drive, policyHandler, replay, LIMITS, CODES, THRESHOLDS, SKELETON };

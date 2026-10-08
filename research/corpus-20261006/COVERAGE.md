@@ -553,7 +553,7 @@ Tier mix: T1 5, T2 10, T3 15. T1 items can be graded as soon as their shipped te
 
 217 items: 207 third-party items from 21 source platforms and 10 first-party items (`claude-code-workflows`). Source: `parts/agentic.jsonl`, assembled by `scripts/agentic-assemble.mjs` from the verified and harmonised staging files; the acquisition record, with a header table per platform (repositories, revisions, licences, items kept and dropped, verification outcome), the harmonisation log and every platform ledger, is `parts/agentic-ledger.md`.
 
-How these verdicts differ from sections 1–9: they are **model readings of pinned source** (`source.extraction`: method `model-read-source`, the spans read, the extractor, and a pointer to the independent verifier pass), re-labelled to one convention, `AGENTIC-CONVENTIONS.md`. That convention adds twelve registry constructs after the original 19 (`state-reducer`, `interrupt-resume`, `checkpoint-rewind`, `agent-as-tool`, `shared-scratchpad`, `guardrail-tripwire`, `partial-output-stream`, `model-generated-code-exec`, `multimodal-io`, `dynamic-agent-spawn`, `context-compaction`, `env-session`), retires topology labels as tokens (`llm-router`, `supervisor-delegation`, handoff and chat patterns are native lowerings, counted in 10.7), and introduces owner design refusals, `unsupported:by-design-group-chat` and `unsupported:by-design-full-history-handoff`. A refused item is representable with a turn cap but refused by design ("share decisions and artifacts, not transcripts"; ROADMAP-AMENDMENTS text not yet merged into docs/ROADMAP.md), so it is counted apart from `unsupported` items, which are not expressible at all. Nothing was compiled or executed. **First-party items** are workflow scripts written by this project's own orchestrating agent: they are not independent evidence of what workflows need, so every table keeps them in their own row or column (10.8).
+How these verdicts differ from sections 1–9: they are **model readings of pinned source** (`source.extraction`: method `model-read-source`, the spans read, the extractor, and a pointer to the independent verifier pass), re-labelled to one convention, `AGENTIC-CONVENTIONS.md`. That convention adds twelve registry constructs after the original 19 (`state-reducer`, `interrupt-resume`, `checkpoint-rewind`, `agent-as-tool`, `shared-scratchpad`, `guardrail-tripwire`, `partial-output-stream`, `model-generated-code-exec`, `multimodal-io`, `dynamic-agent-spawn`, `context-compaction`, `env-session`), retires topology labels as tokens (`llm-router`, `supervisor-delegation`, handoff and chat patterns are native lowerings, counted in 10.8), and introduces owner design refusals, `unsupported:by-design-group-chat` and `unsupported:by-design-full-history-handoff`. A refused item is representable with a turn cap but refused by design ("share decisions and artifacts, not transcripts"; docs/ROADMAP.md §2.1 coverage goal and §3, applied from ROADMAP-AMENDMENTS as review defaults in WIP commit 8fa9124, not yet owner-reviewed), so it is counted apart from `unsupported` items, which are not expressible at all. Nothing was compiled or executed. **First-party items** are workflow scripts written by this project's own orchestrating agent: they are not independent evidence of what workflows need, so every table keeps them in their own row or column (10.9).
 
 ### 10.1 Merge
 
@@ -685,6 +685,25 @@ Third-party items needing each construct (verdict tokens), and in brackets the c
 | 28 | `error-branch` | original | 0 (1) | 0% | 0 | 1 | 0 | 220 | none explicit (§2.1 saga roles cover compensation only) | partial: node-level routes via `onError:"continue"` (output `{ok:false,error}`) + `when` guards on that output |
 | 29 | `state-reducer` | agentic | 0 (0) | 0% | 0 | 0 | 0 | 0 | §2.2 board topics with reducers | none: map outputs are index-ordered arrays folded by code |
 
+The twelve agentic registry constructs and the two design refusals by source platform (third-party items; for a construct, verdict tokens and in brackets the count with the `Needs:` lists of refused items; for a refusal, refused items). First-party items are counted in their own column. The original corpus has none of these tokens (its converters never emitted them; see 02b §6 for a node-type probe).
+
+| construct or refusal | third-party items by platform | platforms | first-party items |
+| --- | --- | --- | --- |
+| `state-reducer` | - | 0 | 0 |
+| `interrupt-resume` | google-adk 2 (3), anthropic 2, camel 2, autogen 1 (2), haystack 1 (2), langgraph 1 (2), openai-agents 1 (2), agno 1, mastra 1, pydantic-graph 1, smolagents 1, strands 1, inngest-agentkit 0 (1), metagpt 0 (1), semantic-kernel 0 (1) | 15 | 0 |
+| `checkpoint-rewind` | agno 1, burr 1, langgraph 1, pydantic-graph 1 | 4 | 0 |
+| `agent-as-tool` | openai-agents 5, agno 4, pydantic-graph 4, google-adk 3, strands 3, anthropic 2, crewai 2, mastra 2, smolagents 2, dspy 1, haystack 1, llamaindex-workflows 1, ag2 0 (1) | 13 | 0 |
+| `shared-scratchpad` | google-adk 2, agno 1, llamaindex-workflows 1, strands 1, ag2 0 (1), langgraph 0 (1), metagpt 0 (1) | 7 | 1 |
+| `guardrail-tripwire` | anthropic 2, openai-agents 2, google-adk 1 (2), strands 1 | 4 | 0 |
+| `partial-output-stream` | openai-agents 2 (3), inngest-agentkit 2, llamaindex-workflows 2, strands 2, burr 1, google-adk 1, pydantic-graph 1, autogen 0 (1) | 8 | 0 |
+| `model-generated-code-exec` | smolagents 6, ag2 3 (4), autogen 2 (3), langgraph 2 (3), metagpt 2 (3), openai-agents 2 (3), anthropic 2, camel 2, dspy 2, strands 2, semantic-kernel 0 (2), burr 1, crewai 1, haystack 1, inngest-agentkit 1, llamaindex-workflows 1, pydantic-graph 1 | 17 | 10 |
+| `multimodal-io` | google-adk 4 (5), smolagents 3, openai-agents 1 (2), autogen 0 (2), agno 1, burr 1, dspy 1, langgraph 1, mastra 1, pydantic-graph 1 | 10 | 0 |
+| `dynamic-agent-spawn` | camel 2, anthropic 1, dspy 1, openai-agents 1, strands 1, ag2 0 (1) | 6 | 0 |
+| `context-compaction` | dspy 1, haystack 1, openai-agents 1 | 3 | 0 |
+| `env-session` | dspy 1, langgraph 1, smolagents 1, autogen 0 (1), google-adk 0 (1), metagpt 0 (1) | 6 | 0 |
+| refused: `group-chat` | semantic-kernel 4, ag2 3, autogen 3, inngest-agentkit 1, langgraph 1, metagpt 1 | 6 | 0 |
+| refused: `full-history-handoff` | openai-agents 4, autogen 3, google-adk 3, langgraph 3, openai-swarm 3, ag2 1, haystack 1, llamaindex-workflows 1, semantic-kernel 1 | 9 | 0 |
+
 ### 10.5 Greedy extension order
 
 Same rule as section 4 (each step adds the construct that makes the most additional items expressible; ties go to the more frequent construct, then registry order), over all 31 registry constructs. Refused and unsupported items never become expressible.
@@ -756,16 +775,37 @@ Start: 521 declared native (34%): original 476, agentic 45.
 | 29 | `context-compaction` | agentic | 0 | 3 | 1340 (100%) | 171 (83%) | 1511 (98%) |
 | 30 | `env-session` | agentic | 0 | 3 | 1340 (100%) | 174 (84%) | 1514 (98%) |
 
-### 10.6 Design refusals
+### 10.6 Staged plan to full declared coverage
+
+Stage bundles from `research/review-20261007/02b-agentic-constructs.md` §5 (lane 2's S1–S7 of `02-ir-expressiveness.md` §7, with the twelve agentic constructs placed by mechanism); this report only computes their declared coverage. A stage adds its constructs to every earlier one. *Expressible* counts native items plus via-extension items whose tokens are all added. *Decided* adds the items already rejected with a named reason (35 in the combined corpus: by-design-full-history-handoff 20, by-design-group-chat 13, interactive-dashboard-state 2), which is the ROADMAP §2.1 coverage goal ("represented exactly or rejected with a named reason"). Declared only: nothing here is compiled or executed. First-party items are shown in the last column and are not part of any other column.
+
+| stage | adds (02b) | constructs | newly expressible: original | newly expressible: agentic third-party | cumulative: original | cumulative: agentic third-party | cumulative: combined expressible | combined decided (expressible + named refusals) | first-party expressible (not pooled) |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| S0 | start: declared native | - | - | - | 476 (35.47%) | 45 (21.74%) | 521 (33.63%) | 556 (35.89%) | 0 of 10 |
+| S1 | call by hash, local flows, `self`; flow size | `subworkflow-call`, `flow-size>500` | 109 | 1 | 585 (43.59%) | 46 (22.22%) | 631 (40.74%) | 666 (43.00%) | 0 of 10 |
+| S2 | error routes, `finally`, adaptive retry; model-written code in the sandbox | `error-branch`, `completion-hook`, `adaptive-retry`, `model-generated-code-exec` | 132 | 9 | 717 (53.43%) | 55 (26.57%) | 772 (49.84%) | 807 (52.10%) | 0 of 10 |
+| S3 | triggers and run admission | `schedule-trigger`, `webhook-trigger`, `event-trigger`, `poll-trigger`, `run-concurrency-policy` | 297 | 2 | 1014 (75.56%) | 57 (27.54%) | 1071 (69.14%) | 1106 (71.40%) | 0 of 10 |
+| S4 | signals, event and long waits | `signal-wait`, `durable-wait` | 69 | 0 | 1083 (80.70%) | 57 (27.54%) | 1140 (73.60%) | 1175 (75.86%) | 0 of 10 |
+| S5 | state capability, chat sessions, capped tool loop | `agent-tool-loop`, `chat-session`, `cross-run-state` | 157 | 44 | 1240 (92.40%) | 101 (48.79%) | 1341 (86.57%) | 1376 (88.83%) | 9 of 10 |
+| S5b | inside the tool loop: agents as tools, approvals with resume, guards, compaction | `agent-as-tool`, `interrupt-resume`, `guardrail-tripwire`, `context-compaction` | 0 | 31 | 1240 (92.40%) | 132 (63.77%) | 1372 (88.57%) | 1407 (90.83%) | 9 of 10 |
+| S5c | media inputs and outputs | `multimodal-io` | 0 | 6 | 1240 (92.40%) | 138 (66.67%) | 1378 (88.96%) | 1413 (91.22%) | 9 of 10 |
+| S6 | bounded machine, streams, partial outputs | `unstructured-cycle`, `stream`, `partial-output-stream` | 64 | 13 | 1304 (97.17%) | 151 (72.95%) | 1455 (93.93%) | 1490 (96.19%) | 9 of 10 |
+| S7 | flow params, plan/expand, agent spawn, fork | `parametric-action-input`, `dynamic-dag`, `dynamic-agent-spawn`, `checkpoint-rewind` | 36 | 15 | 1340 (99.85%) | 166 (80.19%) | 1506 (97.22%) | 1541 (99.48%) | 9 of 10 |
+| S8 | run board | `shared-scratchpad`, `state-reducer` | 0 | 5 | 1340 (99.85%) | 171 (82.61%) | 1511 (97.55%) | 1546 (99.81%) | 10 of 10 |
+| S9 | environment sessions | `env-session` | 0 | 3 | 1340 (99.85%) | 174 (84.06%) | 1514 (97.74%) | 1549 (100.00%) | 10 of 10 |
+
+Greedy order over the same bundles (combined corpus; each step adds the bundle that makes the most additional items expressible): S3 +204 (47%) → S2 +192 (59%) → S5 +178 (71%) → S1 +176 (82%) → S4 +70 (87%) → S6 +70 (91%) → S7 +42 (94%) → S5b +43 (97%) → S5c +10 (97%) → S8 +5 (98%) → S9 +3 (98%). Where the plan order differs, 02b §5 gives the dependency or capability reason.
+
+### 10.7 Design refusals
 
 | refusal | items | platforms | needs if lifted (most frequent) | needing no further construct |
 | --- | --- | --- | --- | --- |
 | `unsupported:by-design-group-chat` | 13 | semantic-kernel 4, ag2 3, autogen 3, inngest-agentkit 1, langgraph 1, metagpt 1 | agent-tool-loop 9, model-generated-code-exec 6, interrupt-resume 3, env-session 2, multimodal-io 2, shared-scratchpad 2 | 3 |
 | `unsupported:by-design-full-history-handoff` | 20 | openai-agents 4, autogen 3, google-adk 3, langgraph 3, openai-swarm 3, ag2 1, haystack 1, llamaindex-workflows 1, semantic-kernel 1 | agent-tool-loop 19, chat-session 12, cross-run-state 12, interrupt-resume 5, multimodal-io 2, partial-output-stream 2 | 0 |
 
-33 third-party items (16%) are refused; no first-party item is. Rule GC refuses a shared transcript whose next speaker a model picks; a chat whose speaker order code fixes stays native. Rule HO refuses a model-initiated transfer to an agent that continues the same conversation; transfers chosen by code, typed handoffs without the transcript and transfers into task pipelines are routing. The refusals rest on proposed text (ROADMAP-AMENDMENTS); if the owner lifts one, its items move to via-extension with their `Needs:` list plus a history-fork or shared-transcript construct.
+33 third-party items (16%) are refused; no first-party item is. Rule GC refuses a shared transcript whose next speaker a model picks; a chat whose speaker order code fixes stays native. Rule HO refuses a model-initiated transfer to an agent that continues the same conversation; transfers chosen by code, typed handoffs without the transcript and transfers into task pipelines are routing. The refusals rest on docs/ROADMAP.md §2.1 coverage goal and §3, applied from ROADMAP-AMENDMENTS as review defaults in WIP commit 8fa9124, not yet owner-reviewed; if the owner lifts one, its items move to via-extension with their `Needs:` list plus a history-fork or shared-transcript construct.
 
-### 10.7 Native patterns recorded in the notes
+### 10.8 Native patterns recorded in the notes
 
 Topologies that need no IR mechanism of their own are not verdict tokens; each item names them after "Native patterns, no token:" with source spans (AGENTIC-CONVENTIONS.md §4), so they stay countable. Lowerings: `llm-router` is an `agent` with `role:"route"` and an enum output followed by `when` guards; `supervisor-delegation` is a capped route loop or `agent-tool-loop`+`agent-as-tool`; a code-selected chat is a capped loop over `when`-guarded agents with the transcript as an explicit input; typed and task-pipeline transfers are routing.
 
@@ -779,7 +819,7 @@ Topologies that need no IR mechanism of their own are not verdict tokens; each i
 
 Items naming at least one native pattern: third-party 62, first-party 0.
 
-### 10.8 First-party slice (not pooled)
+### 10.9 First-party slice (not pooled)
 
 10 `claude-code-workflows` items: dynamic workflow scripts written by this project's own orchestrating agent during earlier sessions, read from local copies (`local:` URLs, sha256 revisions). They show what this project's agent builds for itself, which is not evidence of what third-party workflows need, and models of the same family wrote, extracted and verified them. Licence unknown (no licence file), so only URL, a written description, the derived graph and features are kept.
 
@@ -796,10 +836,12 @@ Items naming at least one native pattern: third-party 62, first-party 0.
 | `phase0-unblock-wf_1095386b-893.js` | 6 / 7 | agent-tool-loop, shared-scratchpad, model-generated-code-exec | Three subagents each own a disjoint set of files and run at once: removing two export adapters, hardening a binary allowlist with recorded skip gatin… |
 | `workflow-corpus-acquisition-wf_c6d2acc2-f96.js` | 5 / 4 | agent-tool-loop, model-generated-code-exec | Script that maps a literal table of four platform clusters onto four research-and-acquire subagents run in parallel; their reports are templated into… |
 
-### 10.9 Limits
+### 10.10 Limits
 
 - The verdicts are static model readings, checked by a second model pass and re-labelled by a third; none was compiled into Foundry IR or executed. Agreement between passes is not ground truth.
 - The items are framework examples, tutorials and templates chosen to cover each framework's orchestration features, not a random sample of deployed agent workflows. Construct frequencies describe this purposive sample.
-- The convention fixes four contested calls that change counts (AGENTIC-CONVENTIONS.md §9): the refusals rest on unmerged ROADMAP text; three ADK transfers into task pipelines are routing, not refusals; code-selected shared-transcript chats are native; chat history counts as `cross-run-state` and scripted sessions as `chat-session`.
+- The convention fixes four contested calls that change counts (AGENTIC-CONVENTIONS.md §9): the refusals rest on ROADMAP text applied as review defaults in an unreviewed WIP commit (8fa9124); three ADK transfers into task pipelines are routing, not refusals; code-selected shared-transcript chats are native; chat history counts as `cross-run-state` and scripted sessions as `chat-session`.
 - The registry groups all twelve agentic constructs under `agentic`; AGENTIC-CONVENTIONS.md §3.3 proposed state, async and dynamism groups for six of them.
 - `state-reducer` has no item in this slice; it stays in the registry for the planned board mechanism.
+- Open rulings that would move single items (not the totals of 10.3 or the last row of 10.6) are listed in 02b §6: the Strands A2A orchestrator (served chat agent, `chat-session`+`cross-run-state` or not) and `guardrail-tripwire` around a tool-free agent.
+- The original clusters were labelled before this convention. Their converters never emit agentic tokens or design refusals, so sections 1–9 hold none; 02b §6 lists a node-type probe of the original items the convention would re-label. Any re-labelling of the frozen original corpus needs a pre-registered amendment (02-ir-expressiveness.md §8).

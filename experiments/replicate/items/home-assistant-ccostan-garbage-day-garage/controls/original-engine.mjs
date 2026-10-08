@@ -8,10 +8,13 @@
 //   - event trigger: event_type equal and every event_data key equal (a list value matches any element).
 //   - `mode`: restart stops the running instance as soon as a new trigger fires (before its conditions are looked at); single
 //     ignores the new trigger. queued/parallel are rejected.
-//   - actions run in order; `delay` waits (here: a scheduled wake-up); `condition` as an action ends the WHOLE run quietly when false,
-//     also inside choose/repeat (the failure bubbles up through sub-sequences); `stop` ends the run quietly; `parallel` runs its
-//     branches (a branch that waits is rejected) and re-raises the first error after all branches ran; `repeat.for_each` runs
-//     its sequence per item; a service call that fails ends the run with an error unless continue_on_error is set.
+//   - actions run in order; `delay` waits (here: a scheduled wake-up); `condition` as an action stops, quietly, only the sequence it
+//     is in: at the top level that is the whole run, inside a `repeat` only the current round (the next round still runs), inside a
+//     `choose` option only that option's actions, inside a `parallel` branch only that branch (documented: home-assistant.io
+//     source/_docs/scripts.markdown, 'Good to know about Condition', pinned corpus revision be620354, 2026-10-06; v0.1.0 of this item
+//     assumed the opposite, see README); `stop` ends the whole run quietly; `parallel` runs its branches (a branch that waits is
+//     rejected) and re-raises the first error after all branches ran; `repeat.for_each` runs its sequence per item; a service call
+//     that fails ends the run with an error unless continue_on_error is set.
 //   - templates: native rendering of a single {{ }}, otherwise a trimmed string (controls/minijinja.mjs).
 // Anything not listed throws UnsupportedSemantics instead of being guessed.
 import { render, evalCondition } from './minijinja.mjs';
@@ -26,9 +29,12 @@ const asList = v => (v === undefined || v === null ? [] : Array.isArray(v) ? v :
 const deepRender = (v, ctx) => (typeof v === 'string' ? render(v, ctx) : Array.isArray(v) ? v.map(x => deepRender(x, ctx)) : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, deepRender(x, ctx)])) : v);
 const COMMON_KEYS = ['alias', 'enabled', 'continue_on_error'];
 
-// options.iterationLocalConditions is NOT Home Assistant as documented here; it is the alternative reading (a false condition inside a
-// repeat ends only that iteration) used to measure how much of the oracle rests on the documented reading.
-export function createAutomationHandler(automation, { coverage = new Set(), iterationLocalConditions = false } = {}) {
+// options.conditionScope: 'sequence' (default) is the documented behaviour above. 'run' is NOT Home Assistant as documented: a false
+// condition anywhere ends the whole run (the reading v0.1.0 of this item used); it is kept only to measure how much of the oracle
+// rests on the documented reading.
+export function createAutomationHandler(automation, { coverage = new Set(), conditionScope = 'sequence' } = {}) {
+  if (!['sequence', 'run'].includes(conditionScope)) throw new UnsupportedSemantics(`conditionScope ${conditionScope}`);
+  const local = conditionScope === 'sequence';
   const mode = automation.mode ?? 'single';
   if (!['restart', 'single'].includes(mode)) throw new UnsupportedSemantics(`mode ${mode}`);
   const triggers = asList(automation.trigger ?? automation.triggers);
@@ -76,10 +82,11 @@ export function createAutomationHandler(automation, { coverage = new Set(), iter
       if ('choose' in a) {
         only(a, ['choose', 'default']);
         coverage.add('action:choose');
+        const sub = function* (list) { try { yield* sequence(list, scope); } catch (e) { if (!(local && e instanceof ConditionFail)) throw e; } };
         for (const opt of asList(a.choose)) {
-          if (asList(opt.conditions).every(c => condition(c, scope))) { yield* sequence(opt.sequence, scope); return; }
+          if (asList(opt.conditions).every(c => condition(c, scope))) { yield* sub(opt.sequence); return; }
         }
-        if (a.default) yield* sequence(a.default, scope);
+        if (a.default) yield* sub(a.default);
       } else if ('variables' in a) {
         only(a, ['variables']);
         coverage.add('action:variables');
@@ -109,6 +116,7 @@ export function createAutomationHandler(automation, { coverage = new Set(), iter
             for (;;) { const r = it.next(); if (r.done) break; throw new UnsupportedSemantics('a delay inside a parallel branch'); }
           } catch (e) {
             if (e instanceof ActionError) firstError ??= e;
+            else if (e instanceof ConditionFail && local) { /* documented: a false condition stops only its own branch */ }
             else if (e instanceof StopRun || e instanceof ConditionFail) throw new UnsupportedSemantics('stop/condition inside a parallel branch');
             else throw e;
           }
@@ -124,7 +132,7 @@ export function createAutomationHandler(automation, { coverage = new Set(), iter
         for (let i = 0; i < items.length; i++) {
           try {
             yield* sequence(rep.sequence, { ...scope, vars: scope.vars, repeat: { item: items[i], index: i + 1, first: i === 0, last: i === items.length - 1 } });
-          } catch (e) { if (!(iterationLocalConditions && e instanceof ConditionFail)) throw e; }
+          } catch (e) { if (!(local && e instanceof ConditionFail)) throw e; }      // documented: a false condition ends only this round
         }
       } else if ('delay' in a) {
         only(a, ['delay']);

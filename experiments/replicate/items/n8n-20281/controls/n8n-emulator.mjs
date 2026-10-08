@@ -55,7 +55,7 @@ export function analyse(def) {
   return {
     nodes: real.length, stickyNotes: def.nodes.length - real.length, types: Object.fromEntries([...new Set(real.map(n => n.type))].map(t => [t, real.filter(n => n.type === t).length])),
     triggers: real.filter(isTrigger).map(n => n.name), nodesWithoutInboundEdge: noInbound, hasExecuteWorkflowTrigger: real.some(n => /executeWorkflowTrigger/i.test(n.type)), hasErrorTrigger: real.some(n => /errorTrigger/i.test(n.type)),
-    executeWorkflowNodes: selfCalls, expressions: exprs.length, expressionsUnique: new Set(exprs.map(e => e.expr)).size, codeNodes: codeNodes.length, codeScanClean: codeNodes.every(n => !DENY.test(n.parameters.jsCode)),
+    executeWorkflowNodes: selfCalls, expressions: exprs.length, expressionsUnique: new Set(exprs.map(e => e.expr)).size, codeNodes: codeNodes.length, codeScanClean: codeNodes.every(n => !DENY.test(n.parameters.jsCode)), expressionScanClean: exprs.every(e => !DENY.test(e.expr)),
     retryOnFail: real.filter(n => n.retryOnFail).map(n => ({ node: n.name, maxTries: n.maxTries ?? 3 })),
     continueOnError: real.filter(n => n.onError === 'continueRegularOutput').map(n => n.name), alwaysOutputData: real.filter(n => n.alwaysOutputData).map(n => n.name),
     byName,
@@ -112,6 +112,8 @@ export function makeOriginalHandler(def, cfg, opts = {}) {
       for (const m of body.matchAll(/\{\{([\s\S]*?)\}\}/g)) { parts.push({ lit: body.slice(last, m.index) }); parts.push({ expr: m[1].trim() }); last = m.index + m[0].length; }
       parts.push({ lit: body.slice(last) });
       const single = parts.filter(p => p.expr !== undefined);
+      // v0.2.0: expressions get the same deny-list scan as Code nodes (the host objects put into the context make node:vm no security boundary)
+      if (single.some(p => DENY.test(p.expr))) throw new Error('emulator refuses to run an expression that mentions an I/O or escape identifier');
       return withScope(nodeScope(exec, item), () => {
         if (single.length === 1 && parts.every(p => p.expr !== undefined || p.lit === '')) return jsonClone(runIn(ctx, `(${single[0].expr})`));
         return parts.map(p => (p.expr !== undefined ? (v => (v !== null && typeof v === 'object' ? JSON.stringify(v) : String(v ?? '')))(runIn(ctx, `(${p.expr})`)) : p.lit)).join('');

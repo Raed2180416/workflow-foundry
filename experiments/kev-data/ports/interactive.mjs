@@ -337,7 +337,7 @@ async function* gridquestQ4(G, mod, seed, difficulty, perWorld) {
     const rec = q4Record(c, ctx0, { observation: obs, tag: 'unk', variant: 'unknowable', target: G.slice === 'train' ? uniformTarget(['as_expected', 'drifted']) : undefined, meta: { counterfactual: { swapped: true, from: 'result line', to: 'result line without the remote effects', path: 'observation' } } });
     const bucket = skeletonBucket(rec.meta.formId), phrasing = bucket === BUCKET_OF_SLICE[G.slice] ? (OOD.has(G.slice) ? 'new' : 'known') : bucket === 'train' && OOD.has(G.slice) ? 'known' : null;
     if (!phrasing) { bump(G, 'q4:unknowable-bucket'); continue; }
-    rec.meta.unknowable = { phrasing, stated: `${seed}:${c.id}` };
+    rec.meta.unkAxis = { phrasing, stated: `${seed}:${c.id}` };         // meta.unknowable itself is the build's list of question ids
     bump(G, `q4:unknowable-${phrasing}`);
     yield rec;
   }

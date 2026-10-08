@@ -41,7 +41,6 @@ const WRONG = label => F1_OPTIONS.filter(o => o !== label);
 export const stats = {};      // per slice, filled by f1Records (the generator is a stream; the test and the assembly read this)
 
 // ---- the exec cache ---------------------------------------------------------------------------------------------------------
-import { readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 const EXEC_DIR = path.dirname(fileURLToPath(import.meta.url));
 let sourceHash = null;

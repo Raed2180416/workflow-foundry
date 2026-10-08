@@ -1,6 +1,7 @@
 // Reference solutions written by hand from the job description (NOT by interpreting the YAML; that is controls/original-engine.mjs).
 //   makeFaithful(opts)  a transcription of the author's logic as an event handler. With default options it behaves like the original
-//                       under Home Assistant semantics, including aborting the whole run at the first failed action.
+//                       under documented Home Assistant semantics: a failed check skips only that announcement (a condition inside a
+//                       repeat ends only that round), and the first failed service call aborts the whole run.
 //   makeImproved(opts)  the T3 reference: the same job, but a failed service call does not end the sequence, door state is tracked from
 //                       the events instead of being re-read, and old runs are cancelled explicitly by generation.
 // The options exist so that broken controls (controls/broken.mjs) are the same code with one decision changed.
@@ -9,10 +10,13 @@ import { SPEC, TEXT } from '../spec.mjs';
 
 const DEFAULTS = Object.freeze({
   debounce: SPEC.debounceSeconds,   // 0: no debounce, the reminder starts when the door opens
+  naiveDebounce: false,             // true: start if the door is open 20 s after it opened, without requiring it to have STAYED open
+  lastChangedDebounce: false,       // true (a correct alternative): one wake per opening; start if the group is open and its last_changed is >= 20 s ago
   weekdayRule: 'at-fire',           // 'at-fire' | 'at-open' | 'never'
   startTimerCheck: true,
+  startGateFromMemory: false,       // true: the start gate trusts the handler's memory of its own snoozes instead of reading the timer
   loopDoor: true, loopWeekday: true, loopTimer: true,
-  stopOnFail: true,                 // false: a failed check skips that announcement and the run goes on
+  stopOnFail: false,                // documented HA: a failed check skips that announcement and the next round runs; true: the run ends
   restartKills: true,               // a new reminder cancels the one in progress
   singleMode: false,                // a new reminder is ignored while one is in progress
   snoozeKills: true,                // a snooze tap cancels the reminder in progress
@@ -34,7 +38,7 @@ const ok = r => r && r.status < 400;
 export function makeFaithful(options = {}) {
   const o = { ...DEFAULTS, ...options };
   return function create() {
-    let pendingDebounce = false, openedWeekday = null, doorOpen = null, nextRun = 0;
+    let pendingDebounce = false, openedWeekday = null, doorOpen = null, nextRun = 0, openings = 0, snoozedUntil = -Infinity;
     const runs = new Map();           // run id -> {step, message, startedAt}
     const text = wd => (o.message === 'always-recycling' ? TEXT.reminder('wed') : o.message === 'never-recycling' ? TEXT.reminder('sun') : TEXT.reminder(wd));
     const service = (api, service, data, target) => api.ha.call_service({ service, ...(target ? { target } : {}), data });
@@ -46,7 +50,8 @@ export function makeFaithful(options = {}) {
       const wd = event.at.weekday;
       if (runs.size) { if (o.singleMode) return; if (o.restartKills) killAll(api); }      // mode: a new trigger acts before its conditions are evaluated
       if (o.weekdayRule !== 'never' && !SPEC.garbageDays.includes(o.weekdayRule === 'at-open' ? openedWeekday : wd)) return;
-      if (o.startTimerCheck) { const t = api.ha.get_state({ entity_id: SPEC.ids.timer }); if (!ok(t) || t.body.state !== 'idle') return; }
+      if (o.startTimerCheck && o.startGateFromMemory) { if (event.at.epoch < snoozedUntil) return; }
+      else if (o.startTimerCheck) { const t = api.ha.get_state({ entity_id: SPEC.ids.timer }); if (!ok(t) || t.body.state !== 'idle') return; }
       const id = ++nextRun;
       const message = text(wd);
       runs.set(id, { step: 0, message });
@@ -101,6 +106,7 @@ export function makeFaithful(options = {}) {
       if (o.snoozeKills) killAll(api);
       if (o.snoozeStartsTimer) {
         const r = service(api, 'timer.start', { duration: durationText(o.snoozeSeconds[key]) }, { entity_id: SPEC.ids.timer });
+        if (ok(r)) snoozedUntil = event.at.epoch + o.snoozeSeconds[key];
         if (!ok(r) && o.abortOnError) return;
       }
       if (o.logbook) service(api, 'script.send_to_logbook', { topic: SPEC.logbookTopic, message: TEXT.snoozeLog(TEXT.label[key]) });
@@ -109,6 +115,7 @@ export function makeFaithful(options = {}) {
     return (event, api) => {
       if (event.type === 'state_changed' && event.entity_id === SPEC.ids.group) {
         doorOpen = event.new_state === 'open';
+        if (o.naiveDebounce || o.lastChangedDebounce) { if (event.old_state === 'closed' && event.new_state === 'open') api.sched.set({ id: `debounce-${o.naiveDebounce ? 'naive' : 'lc'}:${++openings}`, afterSeconds: o.debounce }); return; }
         if (pendingDebounce) { api.sched.cancel({ id: 'debounce' }); pendingDebounce = false; }
         if (event.old_state === 'closed' && event.new_state === 'open') {
           openedWeekday = event.at.weekday;
@@ -117,6 +124,12 @@ export function makeFaithful(options = {}) {
         }
       } else if (event.type === 'wake') {
         if (event.id === 'debounce') { pendingDebounce = false; startRun(event, api); }
+        else if (event.id.startsWith('debounce-naive:')) { const d = api.ha.get_state({ entity_id: SPEC.ids.group }); if (ok(d) && d.body.state === 'open') startRun(event, api); }
+        else if (event.id.startsWith('debounce-lc:')) {
+          const d = api.ha.get_state({ entity_id: SPEC.ids.group });
+          const since = ok(d) ? event.at.epoch - Date.parse(`${d.body.last_changed}Z`) / 1000 : -1;      // local times on both sides
+          if (ok(d) && d.body.state === 'open' && since >= o.debounce - 1e-6) startRun(event, api);
+        }
         else if (event.id.startsWith('seq:')) onSeq(event, api, Number(event.id.slice(4)));
       } else if (event.type === 'event' && event.event_type === SPEC.ids.snoozeEvent) onAction(event, api);
     };

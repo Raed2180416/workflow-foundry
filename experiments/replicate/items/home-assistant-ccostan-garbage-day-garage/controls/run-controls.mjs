@@ -5,7 +5,7 @@ import { writeFileSync } from 'node:fs';
 import { performance } from 'node:perf_hooks';
 import { driveSync } from '../env.mjs';
 import { oracle } from '../oracle.mjs';
-import { makeOriginal, makeOriginalIterationLocal, MUTANTS, makeMutant, ORIGINAL, corpusMatches } from './original.mjs';
+import { makeOriginal, makeOriginalWholeRunConditions, MUTANTS, makeMutant, ORIGINAL, corpusMatches } from './original.mjs';
 import { makeFaithful, makeImproved } from './reference.mjs';
 import { BROKEN, T3_ONLY } from './broken.mjs';
 import { VERSION, T3_COST } from '../spec.mjs';
@@ -58,11 +58,11 @@ report.t3Controls = T3_ONLY.map(b => {
   const t2 = judge('T2', task => b.make(task)), t3 = judge('T3', task => b.make(task));
   return { name: b.name, describe: b.describe, T2_core: t2, T3: t3, passesCoreRejectedOnT3: t2.pass === t2.runs && t3.pass === 0 };
 });
-// How much of the oracle rests on the documented reading of "a false condition inside repeat ends the whole run"? Run the original under the
-// alternative reading (it ends only that iteration) and list the scenarios on which the oracle then disagrees.
-{ const alt = judge('T2', task => driveSync(task, makeOriginalIterationLocal()));
-  report.semanticSensitivity = { assumption: 'a false condition inside repeat/choose ends the WHOLE run (documented Home Assistant behaviour as recalled; not executed against Home Assistant)',
-    alternativeReading: 'a false condition inside a repeat ends only that iteration', scenariosThatDisagreeUnderTheAlternative: alt.failedScenarios, runs: alt.runs }; }
+// How much of the oracle rests on the documented reading of "a false condition inside repeat ends only that round"? Run the original under the
+// other reading (v0.1.0 of this item: it ends the whole run) and list the scenarios on which the oracle then disagrees.
+{ const alt = judge('T2', task => driveSync(task, makeOriginalWholeRunConditions()));
+  report.semanticSensitivity = { assumption: 'a false condition inside repeat ends only the current round; inside choose only that option; inside parallel only that branch (documented: home-assistant.io source/_docs/scripts.markdown lines 538-542 and 1504-1506, corpus revision be62035471100102de772b812ac90bf92f786dfc, 2026-10-06; not executed against Home Assistant)',
+    alternativeReading: 'a false condition inside a repeat ends the WHOLE run (v0.1.0 of this item, from recall; contradicted by the documentation)', scenariosThatDisagreeUnderTheAlternative: alt.failedScenarios, runs: alt.runs }; }
 report.timing = { maxGenerateMs: Number(maxGenerateMs.toFixed(1)), maxOracleMs: Number(maxOracleMs.toFixed(1)), note: 'oracle time includes replaying the whole episode; contract limit is 2 s' };
 report.t3CostCap = { ...T3_COST };
 writeFileSync(new URL('./report.json', import.meta.url), JSON.stringify(report, null, 1) + '\n');

@@ -1,7 +1,8 @@
 // An independently structured valid solution, to show the oracle judges effects and not construction: no closure state (everything lives
 // in kv, so a fresh process per event would do), its own button action ids, its own wake ids, run cancellation by generation instead of
-// sched.cancel, the message split over value1/value2, an explicit media_player, the snooze entity in data instead of target, the
-// duration as a number of seconds, icons on the buttons. Async handler. Passes the same batteries as the faithful reference.
+// sched.cancel, the message split over value1/value2 (with a typographic apostrophe), the buttons in the other order, an explicit
+// media_player, the snooze entity in data instead of target, the duration as a number of seconds, icons on the buttons. Async handler.
+// Passes the same batteries as the faithful reference.
 const GARBAGE = ['wed', 'sun'];
 const IDS = { half: 'SNZ_HALF_HOUR', two: 'SNZ_TWO_HOURS' };
 const TIMER = 'timer.garbage_reminder_snooze', GROUP = 'group.garage_doors';
@@ -25,10 +26,10 @@ export function makeAlternative() {
       if (!GARBAGE.includes(event.at.weekday) || stateOf(TIMER) !== 'idle') return;
       const gen = (read('gen') ?? 0) + 1;
       write('gen', gen);
-      const first = "Reminder: it's garbage day.";
+      const first = 'Reminder: it\u2019s garbage day.';             // typographic apostrophe (v0.2.0: read as ASCII by the oracle)
       const rest = [event.at.weekday === 'wed' ? 'Both recycling and regular garbage go out today.' : null, 'Please take the cans to the curb before you leave.'].filter(Boolean).join(' ');
       write('run', { gen, text: `${first} ${rest}` });
-      api.ha.call_service({ service: 'script.notify_engine_two_button', data: { title: 'Garbage Day Reminder', value1: first, value2: rest, who: 'carlo', group: 'Garbage_Reminders', tag: 'garbage_day_reminder', level: 'active', title1: 'Snooze 30m', action1: IDS.half, icon1: 'sfsymbols:clock', title2: 'Snooze 2h', action2: IDS.two, icon2: 'sfsymbols:clock.badge.checkmark' } });
+      api.ha.call_service({ service: 'script.notify_engine_two_button', data: { title: 'Garbage Day Reminder', value1: first, value2: rest, who: 'carlo', group: 'Garbage_Reminders', tag: 'garbage_day_reminder', level: 'active', title1: 'Snooze 2h', action1: IDS.two, icon1: 'sfsymbols:clock.badge.checkmark', title2: 'Snooze 30m', action2: IDS.half, icon2: 'sfsymbols:clock' } });
       api.ha.call_service({ service: 'script.speech_engine', data: { value1: `${first} ${rest}`, media_player: 'media_player.livingroomcc' } });
       api.sched.set({ id: `ann:${gen}:0`, afterSeconds: 30 });
       return;
@@ -37,8 +38,9 @@ export function makeAlternative() {
       const [, g, s] = event.id.split(':').map(Number).length === 3 ? ['', ...event.id.split(':').slice(1).map(Number)] : [];
       const run = read('run');
       if (!run || run.gen !== g) return;                  // replaced or stopped
-      if (stateOf(GROUP) !== 'open' || !GARBAGE.includes(event.at.weekday) || stateOf(TIMER) !== 'idle') { write('run', null); return; }
-      api.ha.call_service({ service: 'notify.alexa_media_garage', data: { message: run.text, data: { type: 'announce' } } });
+      // a failed check skips only this announcement (documented Home Assistant: a condition inside repeat ends the round)
+      const pass = stateOf(GROUP) === 'open' && GARBAGE.includes(event.at.weekday) && stateOf(TIMER) === 'idle';
+      if (pass) api.ha.call_service({ service: 'notify.alexa_media_garage', data: { message: run.text, data: { type: 'announce' } } });
       if (s < 2) api.sched.set({ id: `ann:${g}:${s + 1}`, afterSeconds: [60, 90][s] });
       else write('run', null);
       return;

@@ -1,7 +1,7 @@
 # R-bench item: Support-email triage (n8n:20281)
 
 `n8n:20281` "Create Jira tickets from Gmail and Outlook support emails with OpenAI and Slack", pilot P3 in `research/replicate-20261008/SELECTION.md`.
-Harness built 2026-10-08. **Status: development/diagnostic harness. Nothing here is a sealed evaluation** (one author wrote mails, labels, oracle and controls; see "Limits and unknowns").
+Harness built 2026-10-08, version 0.2.0 after an adversarial verification pass the same day (see "Verification" and "Known limits"). **Status: development/diagnostic harness. Nothing here is a sealed evaluation** (one author wrote mails, labels, oracle and controls; see "Limits and unknowns").
 
 ## The job, in the author's terms
 
@@ -34,15 +34,17 @@ Deployment presets (`fixtures/config.json`): d1 ack `off`; d2 ack `send`; d3 (de
 **Interface.** Beds contract (`beds/CONTRACT.md`), interactive: `createEnv(task)`, `generate`, `oracle`, `referenceSolve`, `badControls`, `outputSchema`; plus `materialize(task, dir)` (writes the original definition for T1/T3), `driveSync`/`drive`/`policyHandler`/`replay`.
 The environment plays the scenarios against fresh mock services and hands the solution **one message at a time** (`{seq, trigger, at, data}`: a Gmail trigger item or a Graph message). The solution answers with service calls
 (`model.complete`, `jira.search`, `jira.createIssue`, `jira.addComment`, `jira.getIssue`, `slack.postMessage`, `teams.post`, `sheets.appendRow(s)`, `gmail.reply`, `gmail.createDraft`, `outlook.reply`, `state.get/put`) and ends the run with `{call:'done'}`.
-The episode record is `{actions: [{call, args}...]}` (plus `modelTape` when a live model was used). A solution is an ES module `handle(event, api)`, a pure step policy `policy({event, history})` (what a Foundry `code` node can express today: code nodes are pure, so the
+The episode record is `{actions: [{call, args}...]}` (plus `modelTape` when a live model was used; the oracle replays a tape only if this process recorded that episode itself, `env.mjs` `hostRecordedTape`, or host code calls `oracle(task, output, {trustModelTape: true})`; any other tape is ignored, and model usage, cost and latency are always recomputed from the request and the answer, never read from a tape). A solution is an ES module `handle(event, api)`, a pure step policy `policy({event, history})` (what a Foundry `code` node can express today: code nodes are pure, so the
 model call and the services have to be ports; no such port adapter exists in the frozen `src/` yet), or any process that produces the record. Caps: 60 calls (6 model calls) per message.
 
 **The oracle never trusts the record.** It replays the actions in a fresh environment and judges what the services *committed* (a ticket whose creation was acknowledged with a 504 still counts), never how the solution is built.
+The mock model answers only a prompt that carries the mail's reference token **and** the mail's own text (at least half of the content words of its first 200 characters).
 
-*Per message* (all 80, in order): the effects must equal what the job's rules require for the classification the solution itself wrote in the audit row (`Customer Request`, `Category`, `Priority`, `Confidence`). 32 violation codes
+*Per message* (all 80, in order): the effects must equal what the job's rules require for the classification the solution itself wrote in the audit row (`Customer Request`, `Category`, `Priority`, `Confidence`), and when the model answered, that classification must be one of the answers it gave for this mail in this run (`CLAIM_NOT_FROM_MODEL`). 35 violation codes
 (`CODES` in `oracle.mjs`), grouped: filtered senders (no model call, no effect, not logged as customers); Jira (create exactly once or comment exactly once on the thread's open ticket, a Done ticket does not count, ticket fields by the conventions: project, issue type by category, priority,
-labels incl. the thread label, summary, sender in the description, comment carries the mail); Slack (exactly one message in the right channel naming the ticket; review: sender named; no channel-wide mention unless a Critical new ticket); Teams (a card naming the ticket iff a webhook is configured);
-acknowledgement (only for a new ticket, only in send/draft mode, the right service, send vs draft, sender only, names the ticket, Gmail draft inside the thread); the audit row (exactly one per message, valid values, Jira Key / Follow-up / Customer Ack consistent with what happened); redelivered mails cause no effect.
+labels incl. the thread label, summary, sender in the description, comment carries the mail); Slack (exactly one message in the right channel naming the ticket; review: sender named by address or display name; channel-wide mentions only in the message about a Critical escalation, at most one `<!channel>` or `<!here>`); order (a Slack message, Teams card or acknowledgement naming the ticket goes out after the Jira write it reports); Teams (a card naming the ticket iff a webhook is configured);
+acknowledgement (only for a new ticket, only in send/draft mode, the right service, send vs draft, sender only, names the ticket, Gmail draft inside the thread); the audit row (exactly one per message, valid values, Jira Key / Follow-up / Customer Ack consistent with what happened); redelivered mails cause no effect;
+in the T3 probes, every probe mail built as a clear customer request must be escalated (`PROBE_ROUTE`), so a probe cannot be passed by routing around the fault it injects.
 
 *Against the frozen labels* (65 non-filtered mails): category accuracy >= 0.85 and priority accuracy >= 0.80 (the pilot plan); every deliberately ambiguous mail and the mail whose model call always fails reaches the review queue; and, as a guard against the degenerate "send everything to review",
 >= 0.85 of the clear customer requests are escalated (our addition, not in the plan).
@@ -50,7 +52,7 @@ acknowledgement (only for a new ticket, only in send/draft mode, the right servi
 **Pass (T1/T2)** = zero per-message violations, ambiguous-to-review = 1, clear-escalation >= 0.85, category >= 0.85, priority >= 0.80, every message answered. `score` is the mean of the gate scores, 1 on pass, capped at 0.99 otherwise.
 **Pass (T3)** = the above on the core stream **and** all five probes **and** model cost, external calls and virtual latency within `budget.target`.
 
-*Reported, not gating* (`details.fidelity`): whether a Critical new ticket pings the channel as the original does; how many tickets/comments carry quoted older mail (a weakness of the original, see below).
+*Reported, not gating* (`details.fidelity`): whether a Critical new ticket pings the channel as the original does; how many tickets/comments carry quoted older mail (a weakness of the original, see below). `details.provenance`: how many non-filtered mails got a definite classification without any model answer in their own run (0 for every model-based control; see "Known limits").
 
 **T3 probes** (each runs in its own world; the same per-message rules apply): (1) the first Jira create is committed but answered 504; (2) the search index lags three searches behind, a customer replies at once; (3) the second sheet append fails once with 503;
 (4) three mails are delivered twice; (5) a mail whose subject and body carry `<!channel> <!here> <!everyone>`.
@@ -99,6 +101,43 @@ Cost: the full 12-field answer and the long prompt are paid for on every mail, a
 - The oracle's expectations about audit-row conventions and the thread label come from the original; a T2 solver gets them in `inputs.api` (`sheet`, `jiraNotes`) and the examples. The test "T2 sufficiency" checks that the examples show the conventions the oracle enforces.
 - Not scored: the Slack failure alert, the per-mail `Notes` text, ticket title and summary quality, reply wording, the order of calls, wall-clock time of a solver, human assistance (none was used by any control).
 
+## Verification (adversarial pass, 2026-10-08: v0.1.0 -> v0.2.0)
+
+A separate verification session attacked the builder's v0.1.0 (48/48 tests passing). The attack scripts and their logs are scratch (`/var/tmp/foundry-work/replicate/n8n-20281-verify/`, not committed); every attack that mattered is now a control in `controls/broken.mjs` or a test in `item.test.mjs` ("adversarial verification").
+
+**Wrong solutions that passed v0.1.0** (all now fail):
+
+| attack | v0.1.0 verdict | fix | v0.2.0 |
+| --- | --- | --- | --- |
+| T3 cost hack: show the model only `Msg-ref: MR-xxxxx` (the API said the mock recognises a mail by that token), improved flow otherwise | **T3 pass**, model cost $0.00185 = 0.06 x baseline (target 0.40 x) | the mock answers only if the prompt also carries the mail's text (`mocks/model.mjs` `textCoverage`); API text says so | 422 for every mail, fails (control `ref-only-prompt`) |
+| forged `modelTape` in the output with zero usage and cost | **T3 pass at model cost $0** (the oracle replayed any tape and read its cost) | a tape is replayed only if this process recorded it or host code trusts it; usage, cost and latency recomputed from request and answer | verdict identical to the honest run (test) |
+| partial work: log every Critical customer request as "not a customer request" | **T1/T2 pass** (6 of 47 clear requests dropped, clear escalation 0.872 >= 0.85; routing was checked only against the audit row) | `CLAIM_NOT_FROM_MODEL`: the recorded classification must be one the model gave | fails (control `drop-critical`) |
+| wrong order: announce the ticket in Slack, Teams and the acknowledgement under a predicted key, then create it | **pass** | `NOTIFY_BEFORE_JIRA` | fails (control `notify-before-create`) |
+| probe 5 dodge: no mention neutralising, claim the mail with the mentions Critical (where a ping was allowed) | **probe passes** (and the T3 run passed) | at most one `<!channel>`/`<!here>`, only in the message about a Critical escalation | fails (control `mention-dodge-critical`) |
+| probes 1-2 dodge: the original's Jira handling, but when Jira holds no customer tickets (true only in the probe worlds) send every request to review | **all five probes pass** | `PROBE_ROUTE`: probe mails built as clear requests must be escalated | fails (control `probe-dodge`) |
+
+Partial-work attempts that already failed v0.1.0 (clear-escalation gate): dropping Low priority, New Requirement, Issue, all Outlook mail, all follow-ups (0.55 to 0.79). Dropping Critical (0.872) or Critical Bugs (0.894) passed; see above.
+
+**Correct alternatives v0.1.0 wrongly failed** (now accepted): a review message that names the sender by display name only (v0.1.0: `SLACK_CONTENT` x11); a `<!here>` ping on a Critical *follow-up* (v0.1.0 rule: a ping only on a Critical *new* ticket, which the description never states; one Critical follow-up, p4b, in the stream).
+**Correct alternatives accepted by both versions:** a Jira comment without the reference token (the first-30-characters fallback holds for all Outlook mails, also without HTML-entity decoding); a prompt cut to 300 characters (T3 pass); state-port dedupe and thread memory (the improved control); extra labels or an assignee on tickets.
+**A correct alternative still failed** (harness artefact, see Known limits 4): stripping the signature block before classifying removes the token, so the mock cannot answer (category 0.431).
+
+**Checked and found sound:** T2 leakage (no scored mail id, token, seeded ticket key or label field in any task or event; the 10 worked examples share no content 6-grams with the 80 scored mails, the largest overlap, 11 of 58 for example 4, is the Outlook quoted-header boilerplate; no scored subject appears); determinism (mocks have no clock or randomness; generation, snapshot/restore and the oracle are deterministic in the tests); network (no network module or `fetch` in the item; all hosts end in `.example`; the emulator throws on any HTTP request it has no mock for); licence (the original is read from `/opt/corpus` at run time, sha-pinned, never committed; 8-word-shingle overlap of every committed file with it: `controls/reference.mjs` 32.8%, `controls/improved.mjs` 7.7%, `spec.mjs` 19 shingles (the sheet column names), `prompts.mjs` 16, all others <= 9, as `fixtures/PROVENANCE.md` says); the emulator now applies its deny-list to expressions as well as Code nodes (the pinned file's 40 expressions and 15 Code nodes are clean).
+
+Verdict of the pass: **usable with limits** (below).
+
+## Known limits
+
+1. **Memorisation passes (the "hard-coded fixture outputs" attack).** The same 80 mails, tokens and message ids serve every seed, split and difficulty. A solution that remembers the classifier's answers from one earlier episode passes T1 and T2 with **zero model calls** (measured), and T3 once it has also seen the probe mails. The oracle cannot tell remembered answers from a rules-first classifier; `details.provenance.classifiedWithoutModelAnswer` flags both (0 for every control, >50 for such a run). So: one episode per solver per mail set; a learning arm must not carry per-mail answers across tasks of this item; a T3 result with a non-zero provenance count needs a manual look. A sealed run needs mails the solver has never seen.
+2. **Repository access is the answer key.** `fixtures/labels.json` and `fixtures/model-recordings.json` sit next to the harness. Solvers must run without access to this directory (the runner's sandboxed arms hide the repository).
+3. **The recorded classifier ignores prompt quality** beyond the text floor: a prompt with the token and half the words of the mail's first 200 characters gets the full-mail answer. T3 savings from shorter prompts cost no accuracy here and would with a real model. Claims about prompt quality need a live model.
+4. **The reference token is a harness artefact the solver must keep.** It sits in the signature block; a solution that strips signatures before classifying (as the job itself suggests) loses every answer. The API text says to keep it; a solver that ignores that fails for a harness reason, not a job reason.
+5. **Claim fidelity covers only mails the model answered.** A solution that does not call the model for some mails is judged on them only by the label gates, which tolerate 15% missed clear escalations (7 of 47). A live-model record scored in another process needs `oracle(task, output, {trustModelTape: true})` from host code; otherwise the recorded classifier is replayed and the live claims fail `CLAIM_NOT_FROM_MODEL` (by design: an untrusted tape cannot be checked). `experiments/lib` scoring calls the oracle with two arguments, so live runs must be scored in the process that recorded them.
+6. **The T3 external-call target has no slack**: the improved control sits at exactly 1.00 x baseline, so a design that adds one verification call per mail (for example a `getIssue` after each create) fails the target. Deliberate ("no more calls than the original"), but it penalises some robust designs.
+7. **What is not judged:** audit rows are judged from the final sheet, so rows buffered and written in a later run pass (would be lost if a real deployment stopped); call order beyond "notify after the Jira write" (an audit row written before the effects passes); a mail that injects exactly one `<!channel>` and is claimed Critical could still ping (the probe mail carries three mentions); a duplicate-delivery audit row counts as `REDELIVERY_EFFECT` (strict reading of "exactly one row per message").
+8. **The emulator runs third-party code in `node:vm`**, which is not a security boundary (host objects are put into the context). The deny-list scan and disabled string code generation make it acceptable only for the sha-pinned file; do not point it at other corpus definitions without review.
+9. Everything in "Limits and unknowns" above still holds (single author and annotator, recorded classifier accuracy by construction, one mail set for all seeds, the emulator is not n8n, mocks far smaller than the vendors' APIs).
+
 ## Layout
 
 ```
@@ -120,7 +159,7 @@ node experiments/replicate/items/n8n-20281/freeze.mjs [--write] [--tasks]  # com
 
 ## Freezing
 
-`fixtures/FREEZE.json`: the authored source, config, mails, labels, seeds and recordings and the thresholds were frozen at 2026-10-08T09:20Z, before any control or solver ran (the test fails if they drift). The hashes of the canonical tasks (seed 1, split test, d3; they embed the task
+`fixtures/FREEZE.json`: the authored source, config, mails, labels, seeds and recordings and the thresholds were frozen at 2026-10-08T09:20Z, before any control or solver ran (the test fails if they drift). v0.2.0 (verification pass) changed no fixture, label, seed, recording or threshold; it changed the API text given to solvers (the model's text requirement, the mention and order rules, the audit classification rule), so the canonical task hashes were re-frozen after the controls ran again; the v0.1.0 hashes are kept under `history` in `FREEZE.json`. The hashes of the canonical tasks (seed 1, split test, d3; they embed the task
 text, the delivery order and the T3 baseline and targets, which are computed from the controls) were frozen later, after the controls had run, so they are *not* pre-run evidence. Re-freeze only with a version bump and a note here.
 
 ## Effort and obstacles (measured while building this harness, 2026-10-08)

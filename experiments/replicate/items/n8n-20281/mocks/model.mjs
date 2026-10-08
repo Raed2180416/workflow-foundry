@@ -2,7 +2,8 @@
 //   complete {system?, prompt, schema?, tier?='standard'} -> 200 {content:{...}, usage:{inputTokens,outputTokens}, costUsd, tier}
 //                                                            422 NO_RECORDING / AMBIGUOUS_INPUT   500 / 503 injected failures (input tokens are still charged)
 // The mock does not read the instructions: it finds the mail's reference token ("MR-xxxxx", part of every synthetic mail) in system+prompt and answers
-// with the recorded classification of that mail for the chosen tier. A prompt that does not contain the mail therefore gets no answer, like a cassette miss.
+// with the recorded classification of that mail for the chosen tier, provided the prompt also carries the mail's own text (textCoverage below). A prompt that
+// does not contain the mail therefore gets no answer, like a cassette miss. The answer does not degrade with a worse prompt: prompt quality is not modelled.
 // With `schema.properties` only those properties are returned (and charged). Tokens are estimated as utf8 bytes / 4.
 // Live runs replace this mock by a real model through createEnv({ modelBackend }); the episode record then carries the observed answers (modelTape).
 import { ok, fail } from './common.mjs';
@@ -13,6 +14,30 @@ const REF_RE = /MR-[0-9A-F]{5}/g;
 const words = s => s.split(/(?<=[.!?])\s+/).filter(Boolean);
 const titleCase = s => s.split(/[-\s]+/).map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
 export const round8 = x => Math.round(x * 1e8) / 1e8;
+
+// v0.2.0 (verification pass): the token alone is not enough. A prompt must also carry the message's own text: at least TEXT_COVERAGE_MIN of the content words
+// (4+ letters or digits) of the first TEXT_HEAD_CHARS characters of the mail's new text. Before this, a prompt of just "MR-xxxxx" got the full recorded answer,
+// which let a T3 solution meet the cost target without ever showing the model the mail. Measured on the controls: every faithful, improved and original prompt
+// carries >= 0.95 of those words; the subject alone carries <= 0.38; a 300-character truncation of the cleaned body still passes.
+export const TEXT_HEAD_CHARS = 200, TEXT_COVERAGE_MIN = 0.5;
+const contentWords = s => new Set(String(s ?? '').toLowerCase().match(/[a-z0-9]{4,}/g) ?? []);
+export function textCoverage(plain, text) {
+  const want = contentWords(String(plain ?? '').slice(0, TEXT_HEAD_CHARS));
+  if (!want.size) return 1;
+  const have = contentWords(text);
+  let n = 0; for (const w of want) if (have.has(w)) n++;
+  return n / want.size;
+}
+// The price of a model answer recomputed from the request and the returned content (the oracle never takes usage, cost or latency from a recorded tape).
+export function pricedAnswer({ system, prompt, tier = 'standard' } = {}, r) {
+  const t = MODEL_TIERS[tier] ?? MODEL_TIERS.standard;
+  const inputTokens = estimateTokens(`${typeof system === 'string' ? system : ''}\n${typeof prompt === 'string' ? prompt : ''}`);
+  const status = Number.isInteger(r?.status) ? r.status : 500;
+  const content = status === 200 && r?.body?.content && typeof r.body.content === 'object' ? r.body.content : null;
+  const outputTokens = content ? estimateTokens(JSON.stringify(content)) : 0;
+  const costUsd = round8(inputTokens * t.inputPerMTok / 1e6 + outputTokens * t.outputPerMTok / 1e6);
+  return { status, body: { ...(r?.body && typeof r.body === 'object' ? r.body : {}), usage: { inputTokens, outputTokens }, costUsd }, latencyMs: LATENCY_MS.modelBase + outputTokens * LATENCY_MS.modelPerOutputToken };
+}
 
 export class Model {
   constructor({ recordings, infoByRef }) { this.opts = { recordings, infoByRef }; this.state = { attempts: {}, calls: 0 }; }
@@ -32,6 +57,11 @@ export class Model {
     }
     const ref = known[0];
     const rec = this.opts.recordings[ref];
+    const info0 = this.opts.infoByRef[ref];
+    if (info0 && textCoverage(info0.plain, text) < TEXT_COVERAGE_MIN) {
+      const res = fail(422, 'NO_RECORDING', 'the prompt carries the reference token but not the message text');
+      return { status: res.status, body: { ...res.body, usage: { inputTokens, outputTokens: 0 }, costUsd: charge(0).costUsd }, latencyMs: LATENCY_MS.modelBase };
+    }
     const attempt = this.state.attempts[ref] = (this.state.attempts[ref] ?? 0) + 1;
     if (rec.fail === 'permanent' || (rec.fail === 'transient' && attempt === 1)) {
       const status = rec.fail === 'permanent' ? 500 : 503;

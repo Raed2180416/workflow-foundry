@@ -25,10 +25,12 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const file = here('fixtures/FREEZE.json');
   if (process.argv.includes('--write')) {
     const old = (() => { try { return JSON.parse(readFileSync(file, 'utf8')); } catch { return {}; } })();
-    const out = { schema: 'rbench-n8n-20281-freeze/1', version: '0.1.0',
+    const { VERSION } = await import('./index.mjs');
+    const out = { schema: 'rbench-n8n-20281-freeze/1', version: VERSION,
       frozenAt: old.frozenAt ?? '2026-10-08T09:20:00Z', beforeFirstRun: old.beforeFirstRun ?? true,
-      note: 'Single annotator. The two-annotator check of the pilot plan is NOT done (see fixtures/ANNOTATION.md). `files` and `thresholds` were frozen at frozenAt, before any control or solver ran; `tasks` (hashes of the canonical tasks, which embed the T3 baseline and targets computed from the controls) were frozen later, see tasksFrozenAt.',
-      ...snap, canonicalTask: CANONICAL, tasksFrozenAt: process.argv.includes('--tasks') ? new Date().toISOString().slice(0, 19) + 'Z' : old.tasksFrozenAt, tasks: process.argv.includes('--tasks') ? await taskHashes() : old.tasks };
+      note: 'Single annotator. The two-annotator check of the pilot plan is NOT done (see fixtures/ANNOTATION.md). `files` and `thresholds` were frozen at frozenAt, before any control or solver ran; `tasks` (hashes of the canonical tasks, which embed the T3 baseline and targets computed from the controls) were frozen later, see tasksFrozenAt. v0.2.0 (adversarial verification, README "Verification"): files and thresholds unchanged; tasks re-frozen because the API text given to solvers changed; the v0.1.0 task hashes are kept in history.',
+      ...snap, canonicalTask: CANONICAL, tasksFrozenAt: process.argv.includes('--tasks') ? new Date().toISOString().slice(0, 19) + 'Z' : old.tasksFrozenAt, tasks: process.argv.includes('--tasks') ? await taskHashes() : old.tasks,
+      ...(old.history || process.argv.includes('--tasks') ? { history: [...(old.history ?? []), ...(process.argv.includes('--tasks') && old.tasks ? [{ version: old.version, tasksFrozenAt: old.tasksFrozenAt, tasks: old.tasks }] : [])] } : {}) };
     writeFileSync(file, JSON.stringify(out, null, 1) + '\n');
     console.log('wrote fixtures/FREEZE.json');
   } else {

@@ -2,7 +2,8 @@
 // scenario expects; neither side depends on how a solution produced its calls.
 //  - Only the effect-relevant data counts (icons, interruption sound and similar cosmetics are ignored).
 //  - Defaults are applied (an absent level is 'active'; an absent timer duration is the timer's configured 30 minutes).
-//  - Durations are compared in seconds, text is compared with whitespace collapsed.
+//  - Durations are compared in seconds, text is compared with whitespace collapsed and typographic quotes read as ASCII ones.
+//  - The two push buttons are compared as a set of titles (their order on the phone is not judged).
 import { canonical } from '../../../../beds/lib/canonical.mjs';
 import { parseDuration } from './mocks/ha-core.mjs';
 import { CONFIG, SPEC, TEXT, norm } from './spec.mjs';
@@ -16,7 +17,8 @@ export function normalizeCall(rec) {
       return {
         service: rec.service, who: norm(d.who ?? 'family'), title: norm(d.title), text: norm([d.value1, d.value2, d.value3].filter(x => x != null && x !== '').join(' ')),
         group: norm(d.group), tag: norm(d.tag), level: norm(d.level || 'active'),
-        buttons: [[d.title1, d.action1], [d.title2, d.action2]].filter(([, a]) => a != null && String(a) !== '').map(([t]) => norm(t)),
+        // v0.2.0: the button titles as a set (sorted); which button comes first on the phone is not part of the job.
+        buttons: [[d.title1, d.action1], [d.title2, d.action2]].filter(([, a]) => a != null && String(a) !== '').map(([t]) => norm(t)).sort(),
       };
     case 'script.speech_engine': {
       const mp = [].concat(d.media_player ?? []).flatMap(x => String(x).split(',')).map(x => x.trim()).filter(Boolean);
@@ -38,7 +40,7 @@ export const keyOf = n => canonical(n);
 
 // Expected-call constructors (what the author's automation does, in the normal form above).
 export const E = {
-  push: (t, weekday) => ({ t, norm: { service: 'script.notify_engine_two_button', who: SPEC.push.who, title: SPEC.push.title, text: TEXT.reminder(weekday), group: SPEC.push.group, tag: SPEC.push.tag, level: SPEC.push.level, buttons: [SPEC.buttons['30m'], SPEC.buttons['2h']] } }),
+  push: (t, weekday) => ({ t, norm: { service: 'script.notify_engine_two_button', who: SPEC.push.who, title: SPEC.push.title, text: TEXT.reminder(weekday), group: SPEC.push.group, tag: SPEC.push.tag, level: SPEC.push.level, buttons: [SPEC.buttons['30m'], SPEC.buttons['2h']].map(norm).sort() } }),
   speech: (t, weekday) => ({ t, norm: { service: 'script.speech_engine', text: TEXT.reminder(weekday), player: '' } }),
   announce: (t, weekday) => ({ t, norm: { service: 'notify.alexa_media_garage', text: TEXT.reminder(weekday), type: 'announce' } }),
   timerStart: (t, key) => ({ t, norm: { service: 'timer.start', entities: [SPEC.ids.timer], seconds: SPEC.snooze[key] } }),

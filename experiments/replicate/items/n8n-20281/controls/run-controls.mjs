@@ -54,9 +54,9 @@ for (const [name, variant, mk] of [['faithful-transcription', 'T2', cfg => makeF
 report.controls.bad = {};
 for (const c of bed.badControls) {
   const diffs = c.appliesAt ?? [3];
-  const runs = diffs.flatMap(d => seeds.slice(0, d === 3 ? N : 3).map(s => { const t = task(s, d, 'T2'); return { d, r: bed.oracle(t, c.make(t)) }; }));
+  const runs = diffs.flatMap(d => seeds.slice(0, d === 3 ? N : 3).map(s => { const t = task(s, d, c.variant ?? 'T2'); return { d, r: bed.oracle(t, c.make(t)) }; }));
   const codes = {}; for (const { r } of runs) merge(codes, [...codesOf(r), ...gatesFailed(r)]);
-  report.controls.bad[c.name] = { describe: c.describe, difficulties: diffs, runs: runs.length, passedOracle: tally(runs, x => x.r.pass), meanScore: avg(runs, x => x.r.score), expected: c.expect,
+  report.controls.bad[c.name] = { describe: c.describe, variant: c.variant ?? 'T2', difficulties: diffs, runs: runs.length, passedOracle: tally(runs, x => x.r.pass), meanScore: avg(runs, x => x.r.score), expected: c.expect,
     expectedHit: c.expect.map(e => tally(runs, x => [...codesOf(x.r), ...gatesFailed(x.r)].includes(e))), seenBySeedCount: codes };
 }
 

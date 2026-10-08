@@ -1,9 +1,9 @@
 {
  "schema": "rbench-n8n-20281-freeze/1",
- "version": "0.1.0",
+ "version": "0.2.0",
  "frozenAt": "2026-10-08T09:20:00Z",
  "beforeFirstRun": true,
- "note": "Single annotator. The two-annotator check of the pilot plan is NOT done (see fixtures/ANNOTATION.md). `files` and `thresholds` were frozen at frozenAt, before any control or solver ran; `tasks` (hashes of the canonical tasks, which embed the T3 baseline and targets computed from the controls) were frozen later, see tasksFrozenAt.",
+ "note": "Single annotator. The two-annotator check of the pilot plan is NOT done (see fixtures/ANNOTATION.md). `files` and `thresholds` were frozen at frozenAt, before any control or solver ran; `tasks` (hashes of the canonical tasks, which embed the T3 baseline and targets computed from the controls) were frozen later, see tasksFrozenAt. v0.2.0 (adversarial verification, README \"Verification\"): files and thresholds unchanged; tasks re-frozen because the API text given to solvers changed; the v0.1.0 task hashes are kept in history.",
  "files": {
   "source/cases.mjs": "9b3826984bd13f4d1a2c4b2fab4e96bde0424d27ceb1b7f0d1e264acbdb84980",
   "fixtures/config.json": "033d6c25ffe91b24182466b6c17746234c883f426d37d3cf0615c655bc84dd41",
@@ -22,10 +22,21 @@
   "split": "test",
   "difficulty": 3
  },
- "tasksFrozenAt": "2026-10-08T09:48:09Z",
+ "tasksFrozenAt": "2026-10-08T11:08:01Z",
  "tasks": {
-  "T1": "e024d9346c739813e8c2e3af8d90675f0f706cf484c66a17493931e88326c054",
-  "T2": "81c32329448719cce3cde396f62085e64cdf8c74ee9c946376b037fc844552d9",
-  "T3": "25749ab38b805368a7e78363821487f0386a728a9dc5b286bf228e135d9c30fd"
- }
+  "T1": "d8becca93d92a2fe9e90e472fc9eb3c41aa0b49017f65ecef8fc855828e5ef89",
+  "T2": "5a173e5167baa8c0b66edec98f847035203e61b81612dda3728ea2f3021e0514",
+  "T3": "fc666c182bcb9d9c201c8a2e3f300023be8debadc796e01de66a8364207d28fb"
+ },
+ "history": [
+  {
+   "version": "0.1.0",
+   "tasksFrozenAt": "2026-10-08T09:48:09Z",
+   "tasks": {
+    "T1": "e024d9346c739813e8c2e3af8d90675f0f706cf484c66a17493931e88326c054",
+    "T2": "81c32329448719cce3cde396f62085e64cdf8c74ee9c946376b037fc844552d9",
+    "T3": "25749ab38b805368a7e78363821487f0386a728a9dc5b286bf228e135d9c30fd"
+   }
+  }
+ ]
 }

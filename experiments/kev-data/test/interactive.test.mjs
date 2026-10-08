@@ -614,12 +614,12 @@ test('Q4 unknowable axis: in an OOD slice a presence-matched unknowable is tagge
   for (const [slice, first] of [['calib-ood', 4200], ['dev-ood', 4700]]) {
     const recs = (await collect(slice, range(first, 70), { ports: ['Q4:gridquest'] })).filter(r => portOf(r) === 'Q4');
     const unk = recs.filter(r => r.meta.variant === 'unknowable');
-    const ph = counts(unk, r => r.meta.unknowable.phrasing);
+    const ph = counts(unk, r => r.meta.unkAxis.phrasing);
     t.diagnostic(`${slice}: ${unk.length} unknowable rows of ${recs.length}; phrasing ${JSON.stringify(ph)}`);
     assert.ok(unk.length >= 15 && ph.known > 0 && ph.new > 0, `${slice}: ${JSON.stringify(ph)}`);
     for (const r of unk) {
       const b = skeletonBucket(r.meta.formId);
-      assert.equal(b, r.meta.unknowable.phrasing === 'known' ? 'train' : slice, `${slice}: a ${r.meta.unknowable.phrasing} phrasing in the ${b} bucket`);
+      assert.equal(b, r.meta.unkAxis.phrasing === 'known' ? 'train' : slice, `${slice}: a ${r.meta.unkAxis.phrasing} phrasing in the ${b} bucket`);
       assert.equal(S.solveQ4(r.state).label, null, 'the solver cannot decide a presence-matched unknowable');
       assert.equal(labelOf(r), 'as_expected', 'the label is the true one; the unknowability is the state, not the label');
     }

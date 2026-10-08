@@ -35,8 +35,10 @@ const CORE = [
     const o = rn.int(3, 9);
     return { start: `${dateOf('mon', week)}T${morning(rn)}`, script: [open(o, door)], until: o + 420, expect: [] };
   }],
-  ['wed-flap', 'Wednesday: the door flaps open for 10-15 s three times; it never stays open for 20 s.', (rn, week, door) => {
-    const o = rn.int(3, 9), d1 = rn.int(10, 15), d2 = rn.int(10, 15), d3 = rn.int(10, 15), g1 = rn.int(8, 20), g2 = rn.int(8, 20);
+  ['wed-flap', 'Wednesday: the door flaps three times (open 5-8 s, shut 3-6 s, open 14-17 s, shut 8-20 s, open 10-15 s); it is open 20 s after the first opening but never STAYS open for 20 s.', (rn, week, door) => {
+    // v0.2.0: the first flap reopens 8-14 s after the opening and stays open until 22-31 s after it, so a debounce that only asks
+    // "is the door open 20 s after it opened?" (without "and it stayed open") starts a reminder here on every instance.
+    const o = rn.int(3, 9), d1 = rn.int(5, 8), g1 = rn.int(3, 6), d2 = rn.int(14, 17), d3 = rn.int(10, 15), g2 = rn.int(8, 20);
     const t2 = o + d1 + g1, t3 = t2 + d2 + g2;
     return { start: `${dateOf('wed', week)}T${morning(rn)}`, script: [open(o, door), close(o + d1, door), open(t2, door), close(t2 + d2, door), open(t3, door), close(t3 + d3, door)], until: t3 + d3 + 400, expect: [] };
   }],
@@ -48,9 +50,11 @@ const CORE = [
     const o = rn.int(3, 9), R = o + DEBOUNCE;
     return { start: `${dateOf('sun', week)}T${morning(rn)}`, script: [open(o, door)], until: R + 240, expect: sequence(R, 'sun') };
   }],
-  ['wed-stop-then-reopen', 'Wednesday: the door closes after the first announcement and is closed at the second check, so the run ends; it reopens before the third check would have been due and a new reminder starts 20 s later.', (rn, week, door) => {
+  ['wed-stop-then-reopen', 'Wednesday: the door closes after the first announcement and is closed at the second check, so that announcement is skipped; it reopens before the third check, which passes and announces (a false condition inside the repeat ends only that round); a new reminder starts 20 s after the reopening.', (rn, week, door) => {
+    // v0.2.0: documented Home Assistant semantics (a condition inside repeat stops only the current round), so the third round of the
+    // first run still announces at R+180. v0.1.0 expected no announcement there (the whole run ended at the failed check).
     const o = rn.int(3, 9), R = o + DEBOUNCE, c = R + rn.int(40, 80), r = R + rn.int(165, 175), R2 = r + DEBOUNCE;
-    return { start: `${dateOf('wed', week)}T${morning(rn)}`, script: [open(o, door), close(c, door), open(r, door)], until: R2 + 240, expect: [...sequence(R, 'wed', 1), ...sequence(R2, 'wed')] };
+    return { start: `${dateOf('wed', week)}T${morning(rn)}`, script: [open(o, door), close(c, door), open(r, door)], until: R2 + 240, expect: [...sequence(R, 'wed', 1), E.announce(R + A[2], 'wed'), ...sequence(R2, 'wed')] };
   }],
   ['wed-close-before-first', 'Wednesday: the door closes 8-20 s after the reminder started, before the first announcement is due.', (rn, week, door) => {
     const o = rn.int(3, 9), R = o + DEBOUNCE;
@@ -72,9 +76,10 @@ const CORE = [
     const o = rn.int(3, 9), R = o + DEBOUNCE, c = R + rn.int(8, 20), X = R + rn.int(250, 400), r = X + rn.int(40, 120);
     return { start: `${dateOf('wed', week)}T${morning(rn)}`, script: [open(o, door), close(c, door), tap(X, '30m'), open(r, door)], until: r + DEBOUNCE + 300, expect: [...sequence(R, 'wed', 0), ...snooze(X, '30m')] };
   }],
-  ['wed-external-snooze', 'Wednesday: something else (another automation) starts the shared snooze timer between the first and the second announcement; the next check sees it running and the run ends.', (rn, week, door) => {
-    const o = rn.int(3, 9), R = o + DEBOUNCE, X = R + rn.int(40, 80);
-    return { start: `${dateOf('wed', week)}T${morning(rn)}`, script: [open(o, door), externalSnooze(X, 600)], until: R + 400, expect: sequence(R, 'wed', 1) };
+  ['wed-external-snooze', 'Wednesday: something else (another automation) starts the shared snooze timer between the first and the second announcement; the later checks see it running and announce nothing; then the door closes and reopens while that timer still runs, and no new reminder starts.', (rn, week, door) => {
+    // v0.2.0: the close/reopen inside the external snooze checks the START gate against a timer the solution did not start itself.
+    const o = rn.int(3, 9), R = o + DEBOUNCE, X = R + rn.int(40, 80), c = R + rn.int(200, 260), r = c + rn.int(20, 60);
+    return { start: `${dateOf('wed', week)}T${morning(rn)}`, script: [open(o, door), externalSnooze(X, 600), close(c, door), open(r, door)], until: r + DEBOUNCE + 240, expect: sequence(R, 'wed', 1) };
   }],
   ['wed-midnight-ends-sequence', 'Wednesday evening: midnight falls between the first and the second announcement; the day is no longer a garbage day at the second check.', (rn, week, door) => {
     const o = rn.int(3, 9), R = o + DEBOUNCE, m = R + rn.int(35, 85);

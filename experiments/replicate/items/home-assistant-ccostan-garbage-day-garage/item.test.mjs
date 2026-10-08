@@ -18,7 +18,7 @@ import { oracle, checkOutput, judgeScenario } from './oracle.mjs';
 import { makeFaithful, makeImproved } from './controls/reference.mjs';
 import { makeAlternative } from './controls/alternative.mjs';
 import { BROKEN, T3_ONLY } from './controls/broken.mjs';
-import { ORIGINAL, originalText, corpusMatches, loadOriginal, makeOriginal, makeOriginalIterationLocal, MUTANTS, makeMutant, sha256 } from './controls/original.mjs';
+import { ORIGINAL, originalText, corpusMatches, loadOriginal, makeOriginal, makeOriginalWholeRunConditions, MUTANTS, makeMutant, sha256 } from './controls/original.mjs';
 import { parseYaml, YamlUnsupported } from './controls/miniyaml.mjs';
 import { render, TemplateUnsupported } from './controls/minijinja.mjs';
 import { createAutomationHandler, UnsupportedSemantics } from './controls/original-engine.mjs';
@@ -126,6 +126,10 @@ test('ha-core: queue order (world, then internal, then solver wake-ups at the sa
   assert.deepEqual(w.queue.map(q => q.kind + (q.id ?? '')), ['wakeearly', 'script', 'timer_expire', 'wakew']);
   const d = w.dump(); const w2 = new HAMock({ start: '2026-10-07T07:30:00' }); w2.load(d);
   assert.deepEqual(w2.dump(), d);
+  // last_changed reads out as local time in the format of event.at.iso (v0.2.0), so a solution can relate it to event.at
+  w2.init('group.x', 'closed'); w2.t = 12.5; w2.setState('group.x', 'open'); w2.t = 40; w2.setState('group.x', 'open');
+  assert.equal(w2.getState('group.x').last_changed, '2026-10-07T07:30:12.500');
+  assert.equal(w2.getState('group.x').last_changed, w2.at(12.5).iso);
 });
 
 test('timer helper: start, restart with a new duration, expire to idle, cancel; invalid calls', () => {
@@ -282,6 +286,10 @@ test('trace normal form: what counts and what is ignored', () => {
   // icons, id values and a missing level (default active) do not matter; message split over value1/value2 does not matter
   const { level, icon1, icon2, ...rest } = push;
   assert.deepEqual(normalizeCall(call('script.notify_engine_two_button', { ...rest, action1: 'ZZZ', value1: 'Reminder: it\'s garbage day.', value2: TEXT.reminder('wed').slice('Reminder: it\'s garbage day. '.length) })), base);
+  // v0.2.0: the order of the two buttons and typographic quotes do not matter either
+  assert.deepEqual(normalizeCall(call('script.notify_engine_two_button', { ...push, title1: push.title2, action1: push.action2, title2: push.title1, action2: push.action1 })), base);
+  assert.deepEqual(normalizeCall(call('script.notify_engine_two_button', { ...push, value1: TEXT.reminder('wed').replace("it's", 'it\u2019s') })), base);
+  assert.notDeepEqual(normalizeCall(call('script.notify_engine_two_button', { ...push, title2: push.title1 })), base, 'two 30m buttons are not the pair');
   // but these do matter
   for (const bad of [{ who: 'family' }, { group: 'information' }, { tag: 'other' }, { title: 'Reminder' }, { title1: 'Snooze 1h' }, { action2: '' }, { value1: TEXT.reminder('sun') }, { level: 'passive' }]) {
     assert.notDeepEqual(normalizeCall(call('script.notify_engine_two_button', { ...push, ...bad })), base, JSON.stringify(bad));
@@ -325,6 +333,19 @@ test('oracle judges effects, not construction or the order of same-instant calls
   // same decisions, every same-instant batch of service calls issued in reverse order
   const reversed = inner => () => { const h = inner(); return (event, api) => { const buf = []; const api2 = { ...api, ha: { ...api.ha, call_service: a => { buf.push(a); return { status: 200, body: {} }; } } }; h(event, api2); for (const a of buf.reverse()) api.ha.call_service(a); }; };
   for (const seed of SEEDS.slice(0, 5)) { const t = task(seed); assert.equal(oracle(t, driveSync(t, reversed(makeFaithful()))).pass, true); }
+});
+
+test('verifier probes (v0.2.0): designs the v0.1.0 oracle misjudged', () => {
+  for (const seed of SEEDS) for (const variant of ['T2', 'T3']) {
+    const t = gen(seed, 3, variant, seed % 2 ? 'dev' : 'test');
+    // a debounce built on the group's last_changed (one wake per opening) is a correct design; v0.1.0 leaked scenario seconds there
+    const lc = oracle(t, driveSync(t, makeFaithful({ lastChangedDebounce: true, ...(variant === 'T3' ? { abortOnError: false } : {}) })));
+    assert.equal(lc.pass, true, `last_changed debounce ${variant} s${seed}: ${lc.details.failed} ${JSON.stringify(lc.details.cost)}`);
+  }
+  // documented strictness, kept on purpose: cancelling the timer before starting it is an extra effect (it fires timer.cancelled)
+  const t = gen(0, 3, 'T2');
+  const cancelFirst = () => { const h = makeFaithful()(); return (event, api) => h(event, { ...api, ha: { ...api.ha, call_service: a => { if (a.service === 'timer.start') api.ha.call_service({ service: 'timer.cancel', target: a.target }); return api.ha.call_service(a); } } }); };
+  assert.deepEqual(oracle(t, driveSync(t, cancelFirst)).details.failed.sort(), ['sun-snooze2h', 'wed-snooze-after-run-ended', 'wed-snooze30-then-expiry']);
 });
 
 test('oracle timing tolerance end to end: +0.9 s passes, +1.1 s fails', () => {
@@ -546,14 +567,27 @@ test('original engine: runs every construct the YAML uses and refuses what it do
   refuse(d => { d.action[5].mystery = 1; }, /action key mystery/);
 });
 
-test('original engine semantics: restart ordering, failed condition bubbles out of repeat, failed service call ends the run, single mode', () => {
+test('original engine semantics: restart ordering, a failed condition ends only the repeat round, failed service call ends the run, single mode', () => {
   const doc = loadOriginal();
   const scenarios = scenariosFor({ seed: 0, split: 'dev', difficulty: 1 });
   const byId = id => [...scenarios.core, ...scenarios.probes].find(s => s.id === id);
   const runOn = (handlerFactory, ids) => { const scs = ids.map(byId); const t = task(0, 'T3', 1); const ep = driveSync(t, handlerFactory, scs); return replay(t, ep.actions, scs).env._records(); };
-  // a failed condition inside the repeat ends the whole run (wed-stop-then-reopen: no announcement at the third check)
+  // documented: a failed condition inside the repeat ends only that round (wed-stop-then-reopen: the third check passes and announces at R+180);
+  // the v0.1.0 reading (the whole run ends) gives a different trace on the same scenario
+  const sc = byId('wed-stop-then-reopen');
+  const traceOf = rec => rec.calls.map(c => ({ t: c.t, norm: normalizeCall(c) }));
   const stop = runOn(createAutomationHandler(doc), ['wed-stop-then-reopen'])[0];
-  assert.equal(matchTraces(byId('wed-stop-then-reopen').expect, stop.calls.map(c => ({ t: c.t, norm: normalizeCall(c) }))).ok, true);
+  assert.equal(matchTraces(sc.expect, traceOf(stop)).ok, true);
+  assert.equal(stop.calls.filter(c => c.service === 'notify.alexa_media_garage').length, 5, 'R+30 and R+180 of the first run, three of the second');
+  const whole = runOn(createAutomationHandler(doc, { conditionScope: 'run' }), ['wed-stop-then-reopen'])[0];
+  assert.equal(matchTraces(sc.expect, traceOf(whole)).ok, false);
+  assert.throws(() => createAutomationHandler(doc, { conditionScope: 'iteration' }), UnsupportedSemantics);
+  // a false condition inside a choose option ends only that option; the run goes on after the choose
+  const chooseDoc = structuredClone(doc);
+  chooseDoc.action.splice(1, 0, { choose: [{ conditions: [{ condition: 'trigger', id: 'garage_open' }], sequence: [{ condition: 'state', entity_id: SPEC.ids.group, state: 'closed' }, { stop: 'never reached' }] }] });
+  const ch = runOn(createAutomationHandler(chooseDoc), ['wed-full'])[0];
+  assert.equal(matchTraces(byId('wed-full').expect, traceOf(ch)).ok, true, 'the failed condition inside the option did not end the run');
+  assert.equal(runOn(createAutomationHandler(chooseDoc, { conditionScope: 'run' }), ['wed-full'])[0].calls.length, 0, 'under the whole-run reading it would have');
   // mode: restart kills the older run, mode: single keeps it
   const restart = runOn(createAutomationHandler(doc), ['wed-reopen-restarts-run'])[0];
   const single = runOn(createAutomationHandler({ ...doc, mode: 'single' }), ['wed-reopen-restarts-run'])[0];
@@ -568,9 +602,9 @@ test('original engine semantics: restart ordering, failed condition bubbles out 
   assert.equal(kept.calls.filter(c => c.service === 'notify.alexa_media_garage' && c.status === 200).length, 2);
 });
 
-test('sensitivity: exactly one scenario rests on "a false condition inside repeat ends the whole run" (the least verified assumption)', () => {
+test('sensitivity: exactly one scenario rests on "a false condition inside repeat ends only that round" (documented, not executed)', () => {
   const failed = new Set();
-  for (const seed of SEEDS) { const t = gen(seed, 3, 'T2'); for (const id of oracle(t, driveSync(t, makeOriginalIterationLocal())).details.failed) failed.add(id); }
+  for (const seed of SEEDS) { const t = gen(seed, 3, 'T2'); for (const id of oracle(t, driveSync(t, makeOriginalWholeRunConditions())).details.failed) failed.add(id); }
   assert.deepEqual([...failed], ['wed-stop-then-reopen']);
 });
 

@@ -1,9 +1,11 @@
 // Deliberately broken solutions ("badControls" of the bed contract): each is the faithful flow with one defect, or a degenerate answer. The oracle must fail every one.
 // `expect` lists what must show up in the verdict: a violation code, or "gate:<name>" for a failed aggregate gate. `appliesAt` limits the difficulties where the defect
-// is observable at all (for example a wrong acknowledgement mode cannot show when acknowledgements are off).
+// is observable at all (for example a wrong acknowledgement mode cannot show when acknowledgements are off). `variant` (default T2) is the task variant the control is
+// judged on: the T3 ones attack the probes and the cost target, which exist only in T3.
 import { driveSync } from '../env.mjs';
 import { configFor, PRIORITIES } from '../spec.mjs';
 import { makeFaithful, routeOf } from './reference.mjs';
+import { makeImproved } from './improved.mjs';
 
 const run = (task, opts) => driveSync(task, makeFaithful(configFor(task.difficulty), typeof opts === 'function' ? opts(configFor(task.difficulty)) : opts));
 const shiftDown = p => PRIORITIES[Math.min(PRIORITIES.length - 1, PRIORITIES.indexOf(p) + 1)];
@@ -60,4 +62,39 @@ export const BROKEN = [
   { name: 'filtered-as-customer', describe: 'logs skipped senders as customer requests', expect: ['FILTER_CLAIM'], make: task => withApi(task, api => over(api, 'sheets', 'appendRow', ({ row }) => api.sheets.appendRow({ row: row['Classified By'] === 'rules' ? { ...row, 'Customer Request': 'Yes' } : row }))) },
   { name: 'call-storm', describe: 'burns the call cap on every mail before doing the job', expect: ['NO_ANSWER'],
     make: task => { const cfg = configFor(task.difficulty); const h = makeFaithful(cfg); return driveSync(task, (event, api) => { for (let i = 0; i < 70; i++) api.state.get({ key: 'x' }); h(event, api); }); } },
+
+  // ---- v0.2.0: wrong solutions found by the adversarial verification that PASSED the 0.1.0 oracle (README "Verification") ----
+  { name: 'notify-before-create', describe: 'wrong order: announces the ticket (Slack, Teams, acknowledgement) under a predicted key, then creates it', expect: ['NOTIFY_BEFORE_JIRA'],
+    make: task => {
+      const cfg = configFor(task.difficulty); let next = null;
+      return driveSync(task, (event, api) => {
+        const real = { ...api, jira: { ...api.jira, createIssue: a => { const r = api.jira.createIssue(a); if (r.status === 201) next = Number(r.body.key.split('-').at(-1)) + 1; return r; } } };
+        if (next === null) return makeFaithful(cfg)(event, real);
+        const queued = [];
+        makeFaithful(cfg)(event, { ...real, jira: { ...real.jira, createIssue: a => { queued.push(a); return { status: 201, body: { id: '0', key: `${cfg.jiraProjectKey}-${next}`, self: '' } }; } } });
+        for (const a of queued) real.jira.createIssue(a);
+      });
+    } },
+  { name: 'drop-critical', describe: 'partial work: logs every Critical customer request as "not a customer request" (6 of the 47 clear requests, inside the 15% the escalation gate tolerates)', expect: ['CLAIM_NOT_FROM_MODEL'],
+    make: task => run(task, { classifyHook: c => (c.classifiedBy === 'AI' && c.isCustomerRequest && c.priority === 'Critical' ? { ...c, isCustomerRequest: false } : c) }) },
+  { name: 'ref-only-prompt', variant: 'T3', describe: 'T3 cost hack: the improved flow, but the model is shown only the reference token, not the mail', expect: ['gate:clearEscalation', 'gate:categoryAccuracy'],
+    make: task => { const imp = makeImproved(configFor(task.difficulty)); return driveSync(task, (event, api) => imp(event, { ...api, model: { complete: a => api.model.complete({ ...a, prompt: (String(a.prompt).match(/MR-[0-9A-F]{5}/) ?? [a.prompt])[0] }) } })); } },
+  { name: 'mention-dodge-critical', variant: 'T3', describe: 'T3 probe dodge: no mention neutralising; a mail that carries channel-wide mentions is claimed Critical, where a ping is allowed', expect: ['SLACK_BROADCAST'],
+    make: task => { const imp = makeImproved(configFor(task.difficulty)); return driveSync(task, (event, api) => imp(event, { ...api,
+      model: { complete: a => { const r = api.model.complete(a); if (r.status === 200 && /<!(channel|here|everyone)/.test(String(a.prompt))) r.body.content.priority = 'Critical'; return r; } },
+      slack: { postMessage: a => api.slack.postMessage({ ...a, text: String(a.text).replace(/\[(channel|here|everyone)\]/g, '<!$1>') }) } })); } },
+  { name: 'probe-dodge', variant: 'T3', describe: 'T3 probe dodge: the original\'s Jira handling, but in a world without customer tickets (only the probe worlds) every request goes to review, so the Jira faults are never met', expect: ['PROBE_ROUTE'],
+    make: task => {
+      const cfg = configFor(task.difficulty); const h = makeFaithful(cfg);
+      const neutral = s => String(s).replace(/<!(channel|here|everyone)(\|[^>]*)?>/gi, '[$1]');
+      return driveSync(task, (event, api) => {
+        if (api.state.put({ key: `seen:${event.data.id}`, value: 1, ifVersion: 0 }).status === 409) return;
+        let pw = api.state.get({ key: 'probe-world' });
+        if (pw.status === 404) { const v = api.jira.search({ jql: 'labels = "customer-email"', limit: 1 }).body.total === 0; api.state.put({ key: 'probe-world', value: v }); pw = { body: { value: v } }; }
+        h(event, { ...api,
+          model: { complete: a => { const r = api.model.complete(a); if (pw.body.value === true && r.status === 200) r.body.content.confidence = 0.1; return r; } },
+          slack: { postMessage: a => api.slack.postMessage({ ...a, text: a.text.startsWith('<!channel> ') ? '<!channel> ' + neutral(a.text.slice(11)) : neutral(a.text) }) },
+          sheets: { ...api.sheets, appendRow: a => { let r; for (let i = 0; i < 3; i++) { r = api.sheets.appendRow(a); if (r.status < 500) break; } return r; } } });
+      });
+    } },
 ];

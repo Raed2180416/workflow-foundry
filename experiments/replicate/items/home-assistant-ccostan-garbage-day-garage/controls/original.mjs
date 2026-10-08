@@ -32,8 +32,9 @@ export function loadOriginal() {
   return doc[0];
 }
 export const makeOriginal = (coverage) => createAutomationHandler(loadOriginal(), { coverage });
-// The alternative reading of Home Assistant's condition semantics (see original-engine.mjs); a sensitivity probe, not a control.
-export const makeOriginalIterationLocal = () => createAutomationHandler(loadOriginal(), { iterationLocalConditions: true });
+// The v0.1.0 reading of Home Assistant's condition semantics (a false condition inside repeat ends the WHOLE run), which the Home Assistant
+// documentation contradicts (see original-engine.mjs and the README); a sensitivity probe, not a control.
+export const makeOriginalWholeRunConditions = () => createAutomationHandler(loadOriginal(), { conditionScope: 'run' });
 
 // Mutants of the original definition: one decision changed each. The expectation says which core scenarios must fail.
 const walk = (node, fn) => { if (Array.isArray(node)) node.forEach(x => walk(x, fn)); else if (node && typeof node === 'object') { fn(node); Object.values(node).forEach(x => walk(x, fn)); } };
@@ -57,6 +58,8 @@ export const MUTANTS = [
     mutate: a => { walk(a.action, n => { if (n.variables?.snooze_duration) n.variables.snooze_duration = "{{ '00:30:00' }}"; }); } },
   { name: 'snooze-not-logged', describe: 'delete the logbook call in the snooze branch', expectFail: ['wed-snooze30-then-expiry'],
     mutate: a => { a.action[0].choose[0].sequence = a.action[0].choose[0].sequence.filter(x => x.service !== 'script.send_to_logbook'); } },
+  { name: 'stop-on-failed-check', describe: 'what the author\'s comment says ("Stop if the door closed ..."): the three checks in the repeat become a choose that `stop`s the whole run when any fails, instead of conditions that only end the round', expectFail: ['wed-stop-then-reopen'],
+    mutate: a => { const r = loopOf(a); const checks = r.sequence.filter(x => x.condition); r.sequence = [...r.sequence.filter(x => !x.condition && !x.service), { choose: [{ conditions: [{ condition: 'not', conditions: [{ condition: 'and', conditions: checks }] }], sequence: [{ stop: 'checks failed' }] }] }, ...r.sequence.filter(x => x.service)]; } },
 ];
 export function makeMutant(m) {
   const doc = structuredClone(loadOriginal());
