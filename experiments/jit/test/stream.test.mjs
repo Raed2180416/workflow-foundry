@@ -53,7 +53,8 @@ function fakeDeps(plan, hooks = {}) {
       const workdir = path.join(a.workRoot, a.label); mkdirSync(workdir, { recursive: true });
       const solvePath = path.join(workdir, 'solve.mjs'); writeFileSync(solvePath, `// ${a.label}\n`);
       const checkTraces = plan.checks(callNo, a);
-      return { record: { checkTraces, builderCostUsd: 1, gatewayCostUsd: 0.5, constructionCostUsd: 1.5, nestedModelAttempts: 0, builderError: plan.builderError?.(callNo) ?? null }, workdir, solvePath };
+      return { record: { checkTraces, builderCostUsd: 1, gatewayCostUsd: 0.5, checkCostUsd: 0.25, constructionCostUsd: 1.5, compileCostUsd: 1.75, nestedModelAttempts: 0,
+        builderError: plan.builderError?.(callNo) ?? null }, workdir, solvePath };
     },
   };
   return { deps, calls };
@@ -147,12 +148,12 @@ test('JIT state machine: warmup, compile with Opus fallback, shadows, deopt/cras
   // the gateway port is per arm, with the arm's models only
   assert.equal(calls.port.journalFile, path.join(root, 'runs/jit-fake/jit-claude-sonnet-5-5--claude-haiku-5-5/journal.sqlite'));
   assert.deepEqual(calls.port.allowedModels, [...POLICY_MODELS].sort());
-  // costs: 11 interpretations x $0.1, 10 compiled runs x $0.01, 4 compile attempts x ($1 builder + $0.5 gateway)
+  // costs: 11 interpretations x $0.1, 10 compiled runs x $0.01, 4 compile attempts x ($1 builder + $0.5 gateway + $0.25 check)
   const total = rows.reduce((s, r) => s + r.costUsd, 0);
-  close(total, 11 * 0.1 + 10 * 0.01 + 4 * 1.5, 'total');
+  close(total, 11 * 0.1 + 10 * 0.01 + 4 * 1.75, 'total');
   const comp = k => rows.reduce((s, r) => s + (r.costBreakdown[k] ?? 0), 0);
   close(comp('interpreter'), 0.4, 'interpreter'); close(comp('shadow'), 0.4, 'shadow'); close(comp('adjudicator'), 0.3, 'adjudicator');
-  close(comp('compiled'), 0.1, 'compiled'); close(comp('compileBuilder'), 4, 'builder'); close(comp('compileGateway'), 2, 'gateway');
+  close(comp('compiled'), 0.1, 'compiled'); close(comp('compileBuilder'), 4, 'builder'); close(comp('compileGateway'), 2, 'gateway'); close(comp('compileCheck'), 1, 'check');
   // every row's cost is the sum of its spend events
   const p = armPaths(path.join(root, 'runs/jit-fake'), 'jit-claude-sonnet-5-5--claude-haiku-5-5');
   const spends = readJsonl(p.events).filter(e => e.kind === 'spend');
@@ -195,9 +196,9 @@ test('resume after crashes mid-stream: finished rows are skipped, state and the 
   checkScenario(rows, calls);
   assert.ok(kinds(rows[8]).includes('compile-reused'), 'the v3 compile finished before the crash and is reused');
   // the crashed attempts' spend is billed to the row that finished the index: idx 5's first compiled run, idx 8's compile
-  close(rows[5].orphanUsd, 0.01, 'idx 5 orphan'); close(rows[8].orphanUsd, 1.5, 'idx 8 orphan');
+  close(rows[5].orphanUsd, 0.01, 'idx 5 orphan'); close(rows[8].orphanUsd, 1.75, 'idx 8 orphan');
   const total = rows.reduce((s, r) => s + r.costUsd, 0);
-  close(total, 11 * 0.1 + 10 * 0.01 + 4 * 1.5 + 0.01, 'total includes the crashed attempt');
+  close(total, 11 * 0.1 + 10 * 0.01 + 4 * 1.75 + 0.01, 'total includes the crashed attempt');
   const p = armPaths(path.join(root, 'runs/jit-fake'), 'jit-claude-sonnet-5-5--claude-haiku-5-5');
   close(readJsonl(p.events).filter(e => e.kind === 'spend').reduce((s, e) => s + e.costUsd, 0), total, 'events = rows');
   assert.equal(readJsonl(p.results).length, 12, 'no row written twice');
@@ -282,6 +283,16 @@ test('helpers: trace selection keeps every deopt kind, acceptance, worse-on-old-
   assert.equal(worseOnOld(ct(['a', 'b', 'c'], [1, 1, 0]), ct(['a', 'b'], [1, 1])), false, 'a new case failing is not worse on the old cases');
   assert.equal(worseOnOld({ exact: 0.5 }, { exact: 0.8 }), true, 'aggregate fallback without per-case ids');
   assert.equal(worseOnOld(null, { exact: 0.8 }), true);
+  // compile.mjs records: positional ids (trace-<i>, newest first) with ref = traceId/caseId, exact as a count, exactRate
+  const rec = (pairs, regs = []) => ({ exact: pairs.filter(p => p[1] === 'exact').length, exactRate: pairs.filter(p => p[1] === 'exact').length / pairs.length,
+    perCase: pairs.map(([ref, status], i) => ({ id: regs.includes(ref) ? `case-${i}` : `trace-${i}`, ref, kind: regs.includes(ref) ? 'regression' : 'trace', status, ...(status === 'exact' || status === 'diff' ? { exact: status === 'exact' } : {}) })),
+    regressions: regs.length, regressionsPassed: pairs.filter(p => regs.includes(p[0]) && p[1] === 'exact').length });
+  const oldRec = rec([['t1', 'exact'], ['t0', 'exact']]);
+  assert.equal(exactOf(rec([['t2', 'exact'], ['t1', 'exact'], ['t0', 'deopt'], ['t9', 'exact']])), 0.75);
+  assert.equal(worseOnOld(rec([['t2', 'exact'], ['t1', 'exact'], ['t0', 'deopt']]), oldRec), true, 'matched by ref although trace-1 moved');
+  assert.equal(worseOnOld(rec([['t2', 'diff'], ['t1', 'exact'], ['t0', 'exact']]), oldRec), false);
+  assert.equal(accepted(rec([['r1', 'diff'], ['t1', 'exact'], ['t0', 'exact'], ['t2', 'exact'], ['t3', 'exact']], ['r1'])), false, 'the regression case must pass');
+  assert.equal(accepted(rec([['r1', 'exact'], ['t1', 'exact'], ['t0', 'exact'], ['t2', 'diff']], ['r1'])), true);
   assert.equal(sameAnswer({ a: [1, 2], b: 1 }, { b: 1, a: [1, 2] }), true);
   assert.equal(sameAnswer({ a: [1, 2] }, { a: [2, 1] }), false);
   assert.equal(sameAnswer({ a: [1, 2] }, { a: [2, 1] }, 'unordered'), true);

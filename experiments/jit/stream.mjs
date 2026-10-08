@@ -213,7 +213,6 @@ class ArmRun {
       if (e.kind === 'spend' && !billed.has(e.id)) { if (!this.unbilled.has(e.idx)) this.unbilled.set(e.idx, []); this.unbilled.get(e.idx).push(e); }
       if (e.kind === 'compile-attempt' && e.key) this.compileDone.set(e.key, e);
     }
-    this.seq = 0;
   }
 
   event(idx, kind, data = {}) {
@@ -570,5 +569,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const filters = arg('arms')?.split(',').map(s => s.trim()).filter(Boolean) ?? null;
   const res = await runStream({ config, arms: filters, dry: process.argv.includes('--dry'), runRoot: path.resolve(arg('run-root', RUN_ROOT)), workRoot: path.resolve(arg('work-root', WORK_ROOT)) });
   if (res.arms.length) console.log(JSON.stringify(res.arms, null, 1));
-  process.exit(res.arms.some(a => a.errors.length) ? 1 : 0);
+  // 1: a harness error stopped an arm; 3: an environment fault stopped work (a resume continues it); 0: done.
+  process.exit(res.arms.some(a => a.errors.length) ? 1 : res.arms.some(a => a.faults) ? 3 : 0);
 }

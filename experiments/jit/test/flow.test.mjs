@@ -188,3 +188,15 @@ flow.done(v);`, { on: () => ok({ ok: true }) });
   assert.equal(j.truncated, true); assert.equal(j.prompt.length, 2048); assert.match(j.promptSha256, /^[0-9a-f]{64}$/); assert.equal(j.system, '');
   assert.equal(requests[0].prompt.length, 70000, 'the model still got the whole prompt');
 });
+
+test('judges inside map run concurrently and each is charged its own call; the total is exact', async t => {
+  const r = await run(t, `const flow = createFlow({ budgetUsd: 1 });
+const schema = { type: 'object', properties: { i: { type: 'integer' } }, required: ['i'] };
+const out = await flow.map([0, 1, 2, 3, 4, 5], i => flow.judge('item', { tiers: ['${HAIKU}'], prompt: 'item ' + i, schema, check: v => (v.i === i ? null : 'wrong item') }), { concurrency: 3 });
+flow.done(out.map(v => v.i));`, { on: async b => { const i = Number(b.prompt.split(' ')[1]); await new Promise(res => setTimeout(res, 5 + ((i * 7) % 4) * 15)); return ok({ i }, (i + 1) / 1000); } });
+  assert.equal(r.code, 0, r.stderr); assert.deepEqual(r.output, [0, 1, 2, 3, 4, 5]);
+  const judges = r.trace.filter(e => e.kind === 'judge');
+  assert.equal(judges.length, 6);
+  for (const j of judges) assert.equal(j.costUsd, (j.value.i + 1) / 1000, `judge ${j.prompt} charged its own call`);
+  assert.equal(r.trace.at(-1).spentUsd, 0.021); assert.equal(r.trace.at(-1).calls, 6);
+});

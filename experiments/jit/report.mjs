@@ -59,7 +59,7 @@ export function summarizeArm({ meta, rows, events, faults }) {
     deliveredBy: count(rows, r => r.delivered),
     counts: {
       compiles: ev.filter(e => e.kind === 'compile' || e.kind === 'recompile').length, recompiles: ev.filter(e => e.kind === 'recompile').length,
-      compileAttempts: ev.filter(e => e.kind === 'compile-attempt').length, fallbackCompiles: ev.filter(e => e.kind === 'fallback-compile').length,
+      compileAttempts: ev.filter(e => e.kind === 'compile-attempt' || e.kind === 'compile-reused').length, fallbackCompiles: ev.filter(e => e.kind === 'fallback-compile').length,
       compileFailed: ev.filter(e => e.kind === 'compile-failed').length, rejected: ev.filter(e => e.kind === 'rejected').length, voided: ev.filter(e => e.kind === 'void').length,
       deoptsByKind: count(ev.filter(e => e.kind === 'deopt'), e => e.deoptKind ?? 'unknown'),
       crashes: ev.filter(e => e.kind === 'crash').length, timeouts: ev.filter(e => e.kind === 'timeout').length, invalid: ev.filter(e => e.kind === 'invalid').length,

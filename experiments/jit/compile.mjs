@@ -134,18 +134,20 @@ export async function hostCheck({ dir, solveSource, traces, regressions = [], mo
 
 // runner: the session runner (tests wrap runClaudeCode to plant a stand-in CLI binary in the workdir).
 export async function compile({ familyId, traces, previous = null, regressions = [], builderModel = 'claude-haiku-5-5', builderEffort = 'high', builderBudgetUsd = 3,
-  gatewayUsd = 1.5, minutes = 30, perTaskUsd = 1, modelPort, workRoot, label, models, version = 1, checkMinutes = 30, checkCaseSeconds = 600, runner = runClaudeCode }) {
+  gatewayUsd = 1.5, minutes = 30, perTaskUsd = 1, modelPort, workRoot, label, models, version = 1, checkUsd = gatewayUsd, checkMinutes = 30, checkCaseSeconds = 600,
+  runner = runClaudeCode }) {
   if (!Array.isArray(traces) || !traces.length) throw new Error('compile: at least one trace is required');
   if (!label || /[/\\]|^\.\.?$/.test(label)) throw new Error(`compile: label must be a plain directory name, got ${label}`);
   // The port must hold exactly the session's models: the gateway allow-list and execution then agree.
   const portIds = modelPort.policy.models.map(m => m.id);
   if (!sameSet(portIds, models)) throw new Error(`compile: the model port policy (${portIds.join(', ')}) must be exactly the session models (${models.join(', ')})`);
   const fam = await loadFamily(familyId);
+  caseFiles(traces, regressions);   // a malformed trace or case fails here, before anything is started
+  const workdir = path.join(workRoot, label);
+  rmSync(workdir, { recursive: true, force: true }); mkdirSync(workdir, { recursive: true });
   const ledger = new Ledger({ capUsd: gatewayUsd, label });
   // No familyId and no probes: the gateway has no score route and no env route in this session.
   const svc = await startServices({ modelPort, ledger, scoreLimit: 0, runId: `compile:${label}:${randomUUID()}`, allowedModels: models });
-  const workdir = path.join(workRoot, label);
-  rmSync(workdir, { recursive: true, force: true }); mkdirSync(workdir, { recursive: true });
   const files = compileFiles({ outputSchema: fam.outputSchema, traces, regressions, previous, gateway: { url: svc.url, token: svc.token } });
   const kind = previous ? 'recompile' : 'compile';
   const prompt = builderPrompt(kind, { traces: traces.length, regressions: regressions.length, minutes, gatewayUsd, perTaskUsd, models });
@@ -164,7 +166,7 @@ export async function compile({ familyId, traces, previous = null, regressions =
   const solvePath = path.join(workdir, 'solve.mjs'), solveSource = existsSync(solvePath) ? readFileSync(solvePath, 'utf8') : null;
   const notes = existsSync(path.join(workdir, 'BUILD-NOTES.md')) ? readFileSync(path.join(workdir, 'BUILD-NOTES.md'), 'utf8') : null;
   const check = solveSource
-    ? await hostCheck({ dir: path.join(workdir, '.host-check'), solveSource, traces, regressions, modelPort, models, capUsd: gatewayUsd, label, timeoutMs: checkMinutes * 60 * 1000, caseSeconds: checkCaseSeconds })
+    ? await hostCheck({ dir: path.join(workdir, '.host-check'), solveSource, traces, regressions, modelPort, models, capUsd: checkUsd, label, timeoutMs: checkMinutes * 60 * 1000, caseSeconds: checkCaseSeconds })
     : { summary: null, error: { code: 'NO_ARTIFACT' }, costUsd: 0, calls: 0, unknownCalls: 0, refusals: {}, durationMs: null };
   const s = check.summary;
   // A disagreement with an agent answer is acceptable only when BUILD-NOTES.md names that case (SPEC addendum 4).
