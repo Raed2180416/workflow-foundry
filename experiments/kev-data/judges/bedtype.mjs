@@ -16,10 +16,12 @@ import { loadSpec } from '../lib/contracts.mjs';
 
 export const KIT_VERSION = 'bedtype@1';
 
-// Windows of the task text a state carries (real Qwen3.5 tokens: standard p50 ~400 and max ~700, long up to ~3.6K; measured by
-// the group's test, §2.3 rule 6; the contract's budget is 600 typical / 4K max, windowed).
+// Windows of the task text a state carries (real Qwen3.5 tokens: standard p50 ~600 and max ~1K, long up to ~3.6K; measured by
+// the group's test, §2.3 rule 6; the contract's budget is 600 typical / 4K max, windowed). The standard window reaches past the
+// first 1,100 characters on purpose: shorter heads of ownerci and gridquest tasks are identical across seeds (six ownerci heads in
+// all), so states would repeat across slices; with 2,600 characters and six inputs every bed's head is unique per seed.
 export const WINDOWS = Object.freeze({
-  standard: Object.freeze({ promptChars: 1100, keys: 5, valueChars: 180 }),
+  standard: Object.freeze({ promptChars: 2600, keys: 6, valueChars: 200 }),
   long: Object.freeze({ promptChars: 8000, keys: 9, valueChars: 1100 }),
 });
 // The reference block of a slot-swap state (a second, earlier task shown for reference only).

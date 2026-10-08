@@ -626,6 +626,13 @@ export const benchmarkRowsToServedShape = (rows, { run = null } = {}) => rows.ma
 
 const TERMINAL = new Set(['succeeded', 'failed', 'cancelled', 'stopped', 'lost']);
 const isLive = j => j.class === 'service' && !TERMINAL.has(j.state);
+// GET /info lists the live services (jobs.services()); GET /jobs is {jobs, queue} and only the 50 newest, so it is the fallback.
+async function liveServices(client) {
+  const info = typeof client.info === 'function' ? await client.info() : null;
+  if (Array.isArray(info?.services)) return info.services.filter(s => !TERMINAL.has(s.state));
+  const r = await client.jobs();
+  return (Array.isArray(r) ? r : r?.jobs ?? []).filter(isLive);
+}
 const writeJson = (file, value) => { mkdirSync(path.dirname(file), { recursive: true }); const tmp = `${file}.tmp`; writeFileSync(tmp, JSON.stringify(value, null, 2) + '\n'); renameSync(tmp, file); };
 
 async function defaultScorer({ stage, dir, client, jobIds }) {
@@ -686,7 +693,7 @@ export async function runPlan(plan, { client, dir, confirm = false, log = () => 
     }
 
     // a bridge job. Never queue behind a service, never ask for a second one.
-    const live = (await client.jobs()).filter(isLive);
+    const live = await liveServices(client);
     if (stage.kind === 'kev.serve' && live.length) { mark('refused'); throw fail('RUN_SERVICE_EXISTS', `${stage.id}: ${live[0].kind} ${live[0].id} is running; refusing to request a second service`); }
     if (stage.kind !== 'kev.serve' && live.length) { mark('refused'); throw fail('RUN_SERVICE_LIVE', `${stage.id}: ${live[0].kind} ${live[0].id} is running; refusing to queue a ${stage.kind} behind it`); }
 

@@ -121,6 +121,14 @@ test('a skip decided by untrusted data propagates through needs, directly and tr
   assert.deepEqual(rules(flow([read, gate, middle, fixedWrite({ needs: ['middle'] })], { labels: untrustedDoc })), ['UNTRUSTED_CONTROL@workflow.write']);
 });
 
+test('a wait guarded by untrusted data controls what follows it; the delay itself is a schema literal, so there is nothing else to taint', () => {
+  const pause = { id: 'pause', kind: 'wait', needs: ['read'], description: 'Wait before writing', delayMs: 10, when: eq('nodes.read.value', 'go') };
+  assert.deepEqual(rules(flow([read, pause, fixedWrite({ needs: ['pause'] })], { labels: untrustedDoc })), ['UNTRUSTED_CONTROL@workflow.write']);
+  assert.deepEqual(codes(flow([read, { ...pause, when: undefined }, fixedWrite({ needs: ['pause'] })].map(n => JSON.parse(JSON.stringify(n))), { labels: untrustedDoc })), [], 'an unguarded wait is trusted control');
+  const schema = JSON.stringify(JSON.parse(readFileSync(new URL('../schemas/workflow.schema.json', import.meta.url), 'utf8')).definitions.node.properties.delayMs);
+  assert.equal(schema, '{"type":"integer","minimum":0,"maximum":3600000}', 'delayMs cannot be a reference');
+});
+
 test('plain data dependence on an untrusted node is not a control dependence', () => {
   // The write runs whenever the read succeeded, whatever the document says. Termination is not a tracked channel.
   assert.deepEqual(codes(flow([read, fixedWrite({ needs: ['read'] })], { labels: untrustedDoc })), []);
@@ -195,6 +203,13 @@ test('loop: a quarantined verdict as the until is a declassified decision, and t
   const counted = fixedWrite({ needs: ['again'], when: { op: 'gt', left: ref('nodes.again.iterations'), right: 1 } });
   const untrusted = loopOver([task('check', 'core.identity', { value: ref('input.doc') })], eq('nodes.check.value', 'done'));
   assert.deepEqual(rules(flow([untrusted, counted], { labels: untrustedDoc })), ['UNTRUSTED_CONTROL@workflow.write'], 'the iteration count is a function of the untrusted until');
+});
+
+test('nesting: a loop with an untrusted until inside a map body is found at its own path', () => {
+  const inner = loopOver([task('check', 'core.identity', { value: ref('input.doc') }), task('mark', 'core.artifact', { name: 'mark.txt', content: 'fixed text' })], eq('nodes.check.value', 'done'), { id: 'inner' });
+  const outer = mapOver(ref('input.rows'), [inner], { id: 'outer' });
+  assert.deepEqual(rules(flow([outer], { labels: untrustedDoc })), ['UNTRUSTED_CONTROL@workflow.outer.body.inner.body.mark']);
+  assert.deepEqual(codes(flow([outer], { labels: {} })), [], 'the same nesting over trusted input is valid');
 });
 
 // ---- no false positives on honest workflows --------------------------------------------------------------------------

@@ -259,19 +259,22 @@ class Invocation {
     }, status === 'handled_error' ? 'node.handled_error' : 'node.completed', { outputHash: digest(output), output, ...state });
   }
   costLimit(run) { return Math.min(run.policy.maxCost, this.workflow.budget.maxCost ?? run.policy.maxCost); }
-  labelScope(frameKey) {
+  labelScope(frameKey, states = frameOf(this.current(), frameKey).nodes) {
     const scope = { ...(this.frameLabels.get(frameKey) ?? {}) };
-    for (const [id, state] of Object.entries(frameOf(this.current(), frameKey).nodes)) if (state.outputLabel && state.outputLabel !== 'trusted') scope[`nodes.${id}`] = state.outputLabel;
+    for (const [id, state] of Object.entries(states)) if (state.outputLabel && state.outputLabel !== 'trusted') scope[`nodes.${id}`] = state.outputLabel;
     return scope;
   }
   // The control label of a node about to run or be skipped (see controlState). onError "continue" lets a predecessor's data decide
   // whether it completes, so its whole output label counts. A predecessor joined with all_resolved never changes whether this node runs.
-  controlLabel(node, frameKey) {
-    const scope = this.labelScope(frameKey), states = frameOf(this.current(), frameKey).nodes, definitions = this.flowDefinitions.get(frameKey).nodes;
-    const parts = [this.frameControl.get(frameKey) ?? 'trusted', node.when ? labelOf(node.when, scope) : 'trusted'];
-    if ((node.join ?? 'all_success') === 'all_success') for (const dep of node.needs) {
-      parts.push(states[dep]?.controlLabel ?? 'trusted');
-      if (definitions.find(n => n.id === dep)?.onError === 'continue') parts.push(states[dep]?.outputLabel ?? 'trusted');
+  controlLabel(node, frameKey, states) {
+    const parts = [this.frameControl.get(frameKey) ?? 'trusted'];
+    if (node.when) parts.push(labelOf(node.when, this.labelScope(frameKey, states)));
+    if ((node.join ?? 'all_success') === 'all_success' && node.needs.length) {
+      const definitions = this.flowDefinitions.get(frameKey).nodes;
+      for (const dep of node.needs) {
+        parts.push(states[dep]?.controlLabel ?? 'trusted');
+        if (definitions.find(n => n.id === dep)?.onError === 'continue') parts.push(states[dep]?.outputLabel ?? 'trusted');
+      }
     }
     return joinLabels(parts);
   }
@@ -394,7 +397,7 @@ class Invocation {
     if (['awaiting_human', 'awaiting_approval', 'uncertain'].includes(state?.status)) return;
     const ctx = this.context(frameKey, input, locals);
     const predecessors = frameOf(this.current(), frameKey).nodes;
-    const control = this.controlLabel(node, frameKey);
+    const control = this.controlLabel(node, frameKey, predecessors);
     this.nodeControl.set(`${frameKey}/${node.id}`, control);
     if (!state && (node.join ?? 'all_success') === 'all_success' && node.needs.some(id => predecessors[id]?.status !== 'completed')) {
       this.eventNode(frameKey, node.id, f => { f.nodes[node.id] = { kind: node.kind, status: 'skipped', attempts: 0, reason: 'required predecessor did not succeed', ...controlState(control) }; }, 'node.skipped', { reason: 'required predecessor did not succeed' });

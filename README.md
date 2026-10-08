@@ -103,7 +103,7 @@ Every phase still ends with a capability number against a simple baseline and a
 | Board and private notes | Not built | — |
 | Audit | Hash chain, model journal and receipts exist; **gaps** | Responses, decisions and transcripts are not bound into the chain, and there is no external anchor [D lane 7]; a stage-1 fix |
 | UI | **Prototype** read-only run viewer (`tools/run-view/`) | 19 unit tests and 74 browser checks pass. The owner has not reviewed it yet; the game-QA screenshots are a scripted fixture |
-| Security | Labels, quarantine and sandbox exist; **gaps** | An effect gated by `when` on untrusted data passes validation [M lane 7]. Each fix gates the first run that needs it ([synthesis §7](research/review-20261007/00-SYNTHESIS.md)) |
+| Security | Labels, quarantine and sandbox exist; control-flow taint landed 2026-10-08; **gaps** | Landed: an ungated effect whose firing depends on untrusted data (`when`, loop `until`, map items, a skip chain, `onError` continuation) is rejected `LABEL_POLICY` / `UNTRUSTED_CONTROL` by the validator and again at dispatch (`tests/control-taint.test.mjs`; lane-7 probe B now fails; 0 of 393 test-suite workflows newly rejected [M]). Still open: the sink-field policy (untrusted data cannot fill even a data field of an ungated effect), the declassification budget, builder provenance taint, executor isolation. Each fix gates the first run that needs it ([synthesis §7](research/review-20261007/00-SYNTHESIS.md)) |
 | Evaluation validity | **Weakest link** | Every bed is synthetic and Claude-written; the sealed families are unused; nothing external has run. Next is the wild ladder (ROADMAP §4.2) |
 | Reuse library | Not started | Phase 5 |
 

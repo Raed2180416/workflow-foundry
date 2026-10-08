@@ -752,7 +752,10 @@ test('build: this generator builds a verified Kev dataset from a frozen bed copy
   assert.ok(verifyBuildDir(build.dir).ok);
   for (const s of ALL_SLICES) assert.ok(m.slices[s].questions > 0, s);
   const dropped = Object.values(m.slices).flatMap(x => Object.keys(x.dropped));
-  assert.deepEqual(dropped.filter(k => k !== 'duplicate' && !k.startsWith('state-in-')), [], `only duplicates and states claimed by another slice are dropped: ${JSON.stringify(Object.fromEntries(Object.entries(m.slices).map(([s, x]) => [s, x.dropped])))}`);
+  // the build drops exact duplicates, states claimed by an evaluation slice, and the few records above the job's p99.9 state size (the long variants)
+  assert.deepEqual(dropped.filter(k => k !== 'duplicate' && k !== 'misfit-job-max-state' && !k.startsWith('state-in-')), [], `unexpected drops: ${JSON.stringify(Object.fromEntries(Object.entries(m.slices).map(([s, x]) => [s, x.dropped])))}`);
+  const lost = Object.values(m.slices).reduce((s, x) => s + Object.values(x.dropped).reduce((a, d) => a + Object.values(d).reduce((b, c) => b + c, 0), 0), 0), kept = Object.values(m.slices).reduce((s, x) => s + x.records, 0);
+  assert.ok(lost / (kept + lost) <= 0.03, `${lost} of ${kept + lost} records dropped by the build`);
   for (const slice of ALL_SLICES) {
     const meta = readFileSync(path.join(build.dir, 'kev', `${slice}.meta.jsonl`), 'utf8').trim().split('\n').map(l => JSON.parse(l).meta);
     assert.ok(meta.every(x => (x.seed ?? 401) >= 401 && x.reserved === false), slice);

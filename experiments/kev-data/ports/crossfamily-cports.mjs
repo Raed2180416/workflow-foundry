@@ -99,12 +99,17 @@ async function* c9(slice, seeds, rows, ctx) {
   const contract = ctx.contracts.C9, split = ctx.slice.bedSplit, mods = {}, seen = new Set();
   for (const b of TRAIN_BEDS) mods[b] = await ctx.beds.import(`beds/${b}/index.mjs`);
   const difficulty = i => [1, 2, 3, 3, 4, 4, 5, 5][i % 8], wk = (b, d, s) => `${b}:${split}:d${d}:s${s}`;
+  // a bed whose prompt never changes (incident) has one same-family state: a few records in train, none in dev-select
+  const constant = new Set();
+  for (const b of TRAIN_BEDS) if (new Set([401, 402, 403].map(sd => mods[b].generate({ seed: sd, split, difficulty: 3 }).prompt.slice(0, 1400))).size === 1) constant.add(b);
+  const quota = { n: slice === 'train' ? 3 : 0 };
   let at = 0, diff = 0;
   for (let i = 0; i < rows; i++) {
     const same = i % 2 === 0, j = Math.floor(i / 2), label = same ? 'same' : 'different';
     // a same-family pair of a bed whose prompt never changes (incident) can only give a handful of distinct states: the next bed takes over
     for (let o = 0; o < (same ? TRAIN_BEDS.length : 1); o++) {
       const bedA = same ? TRAIN_BEDS[(j + o) % TRAIN_BEDS.length] : permPair(j).state, bedB = same ? bedA : permPair(j).partner;
+      if (same && constant.has(bedA) && quota.n-- <= 0) continue;
       if (at + 2 > seeds.length) throw fail('SEEDS', `${slice}: C9 needs 2 seeds per record, ${seeds.length} given`);
       const sa = seeds[at++], sb = seeds[at++], da = difficulty(diff++), db = difficulty(diff++);
       const ta = mods[bedA].generate({ seed: sa, split, difficulty: da }), tb = mods[bedB].generate({ seed: sb, split, difficulty: db });
