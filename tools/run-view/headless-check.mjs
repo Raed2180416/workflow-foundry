@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// Headless verification of web/run-view with Playwright + the preinstalled Chromium. Development evidence, not a product test suite.
-//   node web/run-view/headless-check.mjs --data run.json [--shots research/review-20261007] [--synthetic 1000] [--report report.json]
-// It serves web/run-view over loopback http with the SAME Content-Security-Policy shape as src/http.mjs (no inline script or style),
+// Headless verification of tools/run-view with Playwright + the preinstalled Chromium. Development evidence, not a product test suite.
+//   node tools/run-view/headless-check.mjs --data run.json [--shots research/review-20261007] [--synthetic 1000] [--report report.json]
+// It serves tools/run-view over loopback http with the SAME Content-Security-Policy shape as src/http.mjs (no inline script or style),
 // loads the run, steps the replay to three timeline points (screenshots), opens a node transcript (screenshot), and fails on:
 // any console error or warning, page error, failed request, CSP violation, unexpected state at a timeline point, or a missed reachability check.
 // Extra checks: static rules shared with tests/ui-contract.test.mjs, hostile-text rendering, reduced motion, keyboard, contrast of the

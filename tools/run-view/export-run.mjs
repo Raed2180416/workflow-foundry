@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-// Export one recorded Foundry run as "run-view" JSON for web/run-view/index.html (a read-only run inspector).
+// Export one recorded Foundry run as "run-view" JSON for tools/run-view/index.html (a read-only run inspector).
 //
-//   node web/run-view/export-run.mjs --workspace DIR [--run RUN_ID|latest] [--journal FILE] [--results FILE.jsonl]
+//   node tools/run-view/export-run.mjs --workspace DIR [--run RUN_ID|latest] [--journal FILE] [--results FILE.jsonl]
 //        [--out run.json] [--bundle run.html] [--max-string 3000] [--max-prompt 40000] [--no-redact]
-//   node web/run-view/export-run.mjs --db FILE.sqlite ...      (instead of --workspace DIR; DIR/.foundry/foundry.sqlite)
+//   node tools/run-view/export-run.mjs --db FILE.sqlite ...      (instead of --workspace DIR; DIR/.foundry/foundry.sqlite)
 //
 // Read-only: SQLite files are opened with { readOnly: true } and nothing is written but --out / --bundle (mode 0600).
 // It reads the three durable records of a run and folds them into one document:
@@ -218,7 +218,7 @@ function main() {
   if (digest(workflow) !== run.workflowHash) { console.error('Stored workflow does not match its hash; refusing to export'); process.exit(2); }
   const scrubber = makeScrubber({ redact: !a['no-redact'], maxString: Number(a['max-string']) });
   const data = foldRun({ db, journalDb, run, workflow, scrubber, maxPrompt: Number(a['max-prompt']),
-    results: readResults(a.results, run.id), source: { workspace: path.basename(path.resolve(a.workspace ?? path.dirname(path.dirname(dbFile)))), journal: a.journal ? path.basename(a.journal) : 'workspace', exporter: 'web/run-view/export-run.mjs' } });
+    results: readResults(a.results, run.id), source: { workspace: path.basename(path.resolve(a.workspace ?? path.dirname(path.dirname(dbFile)))), journal: a.journal ? path.basename(a.journal) : 'workspace', exporter: 'tools/run-view/export-run.mjs' } });
   if (a.out) { writeFileSync(a.out, JSON.stringify(data), { mode: 0o600 }); chmodSync(a.out, 0o600); }
   if (a.bundle) { writeFileSync(a.bundle, bundleHtml(data), { mode: 0o600 }); chmodSync(a.bundle, 0o600); }
   const bytes = a.out ? readFileSync(a.out).length : readFileSync(a.bundle).length;
