@@ -198,13 +198,14 @@
       "strictValid": false,
       "acceptance": "existence-only",
       "counts": {
-        "error": 10,
+        "error": 11,
         "warning": 0
       },
       "codes": {
         "ACCEPTANCE_EXISTENCE_ONLY": 1,
         "VERIFY_NOT_GATING": 1,
-        "ERROR_COLLECTION": 8
+        "ERROR_COLLECTION": 8,
+        "ERROR_CONTINUATION": 1
       },
       "findings": [
         {
@@ -256,6 +257,11 @@
           "code": "ERROR_COLLECTION",
           "severity": "error",
           "path": "workflow.adjudicate"
+        },
+        {
+          "code": "ERROR_CONTINUATION",
+          "severity": "error",
+          "path": "workflow.atlas_switch"
         }
       ]
     }

@@ -237,6 +237,45 @@ test('oracle: any wording of the pull request text that names each change passes
   assert.equal(bed.oracle(t, plan).pass, true);
 });
 
+test('oracle (verifier 2026-10-08): the pull-request text may give old and new in any order or on a short block, but not as a change backwards', () => {
+  const t = task(seedOfKind('bump-all'), 'T2'), changes = bed.instanceOf(t).truth.intent.changed;
+  const label = c => TRACKED.find(x => x.key === c.key).label;
+  const texts = {
+    was: changes.map(c => `- ${label(c)} now ${c.to} (was ${c.from})`).join('\n'),
+    newFirstTable: ['| Image | New | Old |', '|---|---|---|', ...changes.map(c => `| ${label(c)} | ${c.to} | ${c.from} |`)].join('\n'),
+    block: changes.map(c => `### ${label(c)}\n- old: ${c.from}\n- new: ${c.to}`).join('\n\n'),
+  };
+  for (const [name, text] of Object.entries(texts)) {
+    const r = bed.oracle(t, withPlan(t, p => { p.pull_request.body = text; p.pull_request.commit_message = `Bump\n\n${text}`; }));
+    assert.equal(r.pass, true, `${name}: ${JSON.stringify(r.details.violations)}`);
+  }
+  const backwards = changes.map(c => `- ${label(c)}: ${c.to} -> ${c.from}`).join('\n');
+  assert.deepEqual(violationsOf(t, withPlan(t, p => { p.pull_request.body = backwards; })), ['PR_BODY'], 'a text that says new -> old does not name the change');
+  // a block may not borrow the tags of the next image: the section ends at a line naming another image
+  const [a, b] = changes;
+  const borrowed = `### ${label(a)}\n- old: ${a.from}\n### ${label(b)}\n- new: ${a.to}\n- old: ${b.from}\n- new: ${b.to}`;
+  assert.ok(violationsOf(t, withPlan(t, p => { p.pull_request.body = borrowed; })).includes('PR_BODY'));
+});
+
+test('oracle (verifier 2026-10-08): pull-request labels are a set: naming a label twice is the same request', () => {
+  const t = task(seedOfKind('bump-all'), 'T2');
+  assert.equal(bed.oracle(t, withPlan(t, p => { p.pull_request.labels = ['dependencies', 'automated', 'dependencies']; })).pass, true);
+  assert.ok(violationsOf(t, withPlan(t, p => { p.pull_request.labels = ['dependencies', 'dependencies']; })).includes('PR_LABELS'), 'a missing label is still caught');
+});
+
+test('ADVERSARIAL (verifier 2026-10-08): correct alternatives pass, wrong solutions fail, and the documented known limits are still exactly the ones listed', async () => {
+  const { ADVERSARIAL } = await import('./controls/adversarial.mjs');
+  for (const a of ADVERSARIAL) {
+    let pass = 0, n = 0;
+    for (const variant of ['T2', 'T3']) for (const split of ['dev', 'test']) for (let d = 1; d <= 5; d++) for (let seed = 0; seed < 14; seed++) {
+      const t = bed.generate({ seed, split, difficulty: d, variant });
+      n++; if (bed.oracle(t, a.solve(structuredClone(t.inputs))).pass) pass++;
+    }
+    if (a.expect === 'pass') assert.equal(pass, n, `${a.name}: expected to pass every task (${a.why}), passed ${pass}/${n}`);
+    else assert.ok(pass < n, `${a.name}: expected to fail some task (${a.why}), passed ${pass}/${n}`);
+  }
+});
+
 test('oracle: an open bot pull request is updated, never duplicated; other pull requests are never touched', () => {
   const t = task(seedOfKind('open-pr-update'), 'T2'), inst = bed.instanceOf(t), bot = inst.world.openPullRequests[0], other = inst.world.openPullRequests[1];
   const good = bed.referenceSolve(t);
@@ -258,7 +297,10 @@ test('oracle: failure kinds need a visible failure, no effects and (intent) a me
     assert.equal(bed.oracle(t, bed.referenceSolve(t)).pass, true, kind);
     assert.ok(violationsOf(t, withPlan(t, p => { p.message = 'error'; })).includes('MESSAGE'), `${kind}: a failure without a cause`);
     assert.ok(violationsOf(t, withPlan(t, p => { p.status = 'unchanged'; })).includes('STATUS'), `${kind}: failure not raised`);
-    assert.ok(violationsOf(t, withPlan(t, p => { p.files[COMPOSE_PATH] = 'x'; p.pull_request = { open: true, branch: PR.branch }; })).includes('FAILED_WITH_EFFECTS'), `${kind}: effects on a failed run`);
+    // the contract says a failed plan's files and pull request are discarded by the host, so leftovers are not a violation (verifier change)
+    const leftovers = bed.oracle(t, withPlan(t, p => { p.files[COMPOSE_PATH] = 'x'; p.pull_request = { open: true, branch: PR.branch }; }));
+    assert.equal(leftovers.pass, true, `${kind}: a failed plan's leftovers are discarded, not judged`);
+    assert.equal(leftovers.details.discardedEffects, true, `${kind}: the leftovers are reported for diagnosis`);
     // T1 (original mode) does not ask for a message: the original has none to give for some of these
     const t1 = task(seedOfKind(kind), 'T1');
     assert.equal(bed.oracle(t1, withPlan(t1, p => { p.message = ''; })).pass, true, `${kind}: T1 does not judge the message`);
@@ -393,6 +435,17 @@ test('reference server and curl shim: the recorded response is served, the call 
   await direct.close();
 });
 
+test('curl shim (verifier 2026-10-08): nothing but the recorded URL leaves it, whatever the spelling; anything else lands on the mock or is blocked', SLOW, async () => {
+  const wf = ['name: t', 'on: push', 'jobs:', '  p:', '    runs-on: x', '    steps:', '      - name: get', '        run: |',
+    '          curl -s 127.0.0.1:9/scheme-less || echo "rc1=$?"', '          curl -s HTTP://Rbench.INVALID/x || echo "rc2=$?"', '          curl -s file:///etc/hostname || echo "rc3=$?"',
+    '          curl -s -K /dev/null || echo "rc4=$?"', '          curl -s --connect-to ::rbench.invalid:443 http://x/ || echo "rc5=$?"', '          curl -sx 127.0.0.1:9 http://x/ || echo "rc6=$?"', ''].join('\n');
+  const obs = await runWorkflow({ workflowText: wf, world: { repo: { 'README.md': 'x' }, http: { status: 200, body: 'ok' }, openPullRequests: [] } });
+  const out = obs.steps[0].output;
+  for (const rc of ['rc2=7', 'rc3=7', 'rc4=7', 'rc5=7', 'rc6=7']) assert.ok(out.includes(rc), `${rc} missing in ${out}`);
+  assert.deepEqual(obs.curl.map(c => c.verdict), ['blocked', 'blocked', 'blocked', 'blocked', 'blocked']);
+  assert.deepEqual(obs.http.map(h => [h.path, h.originalUrl]), [['/scheme-less', null]], 'the scheme-less URL reached the mock (127.0.0.1:9 was re-routed), not the network');
+});
+
 test('pull-request stub: no diff does nothing, a diff opens, the same branch updates, other inputs are refused', () => {
   const base = { 'a.txt': '1\n', 'b.txt': '1\n' };
   const s = new PullRequestStore({ base, openPullRequests: [{ number: 5, head: 'other', base: 'main', title: 't', body: '', labels: [], files: {} }] });
@@ -405,6 +458,9 @@ test('pull-request stub: no diff does nothing, a diff opens, the same branch upd
   assert.deepEqual(snap.touched, [6]);
   assert.equal(snap.pulls.find(p => p.number === 6).title, 'Changes by create-pull-request action', 'inputs left out take the action\'s default (here the second call left the title out)');
   assert.deepEqual(snap.pulls.find(p => p.number === 6).labels, [], 'on update every field is what the run supplied: no labels supplied, none kept (a simplification of the real action, which only adds)');
+  const dup = new PullRequestStore({ base, openPullRequests: [] });
+  assert.equal(dup.createPullRequest({ workspace: { ...base, 'a.txt': '2\n' }, inputs: { branch: 'z', labels: 'l1\nl2\nl1' } }).operation, 'created');
+  assert.deepEqual(dup.snapshot().pulls[0].labels, ['l1', 'l2'], 'labels are a set on GitHub: a label named twice is applied once');
   assert.deepEqual(s.pulls.find(p => p.number === 5), { number: 5, state: 'open', head: 'other', base: 'main', title: 't', body: '', labels: [], files: {}, commitMessage: '' }, 'the unrelated pull request is untouched');
   const c2 = new PullRequestStore({ base, openPullRequests: [] }).createPullRequest({ workspace: { ...base, 'a.txt': '2\n' }, inputs: { branch: 'y', labels: 'l1\nl2\n, l3' } });
   assert.equal(c2.operation, 'created');

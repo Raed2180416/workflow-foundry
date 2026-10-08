@@ -3,7 +3,9 @@
 //   * it compares the working tree with the checked-out base; with no difference it does nothing (operation "none");
 //   * otherwise it commits the difference to `branch` and opens a pull request from it into the base branch;
 //   * if an open pull request from that branch exists, it is UPDATED (same number), never duplicated;
-//   * inputs left out take the action's defaults; `labels` is a comma- or newline-separated list;
+//   * inputs left out take the action's defaults; `labels` is a comma- or newline-separated list; a pull request's labels are a SET on
+//     GitHub, so a label named twice is applied once (verifier change 2026-10-08: the first version kept the duplicate and the oracle then
+//     failed a correct plan that listed a label twice);
 //   * simplification: on an update every field becomes what the run supplied (the real action only ADDS labels; here a run that supplies none
 //     is judged as having none).
 // Only the inputs the original uses are implemented; any other input throws, so a variant that relies on one is not silently flattened.
@@ -46,7 +48,7 @@ export class PullRequestStore {
     const changed = diffTrees(this.base, workspace);
     const branch = value('branch');
     if (!Object.keys(changed).length) { const event = { operation: 'none', number: null, branch, reason: 'no changes in the working tree' }; this.events.push(event); return event; }
-    const fields = { head: branch, base: this.baseBranch, title: value('title'), body: value('body'), commitMessage: value('commit-message'), labels: splitList(inputs.labels), files: changed };
+    const fields = { head: branch, base: this.baseBranch, title: value('title'), body: value('body'), commitMessage: value('commit-message'), labels: [...new Set(splitList(inputs.labels))], files: changed };
     const existing = this.pulls.find(p => p.state === 'open' && p.head === branch);
     let event;
     if (existing) { Object.assign(existing, fields); this.touched.add(existing.number); event = { operation: 'updated', number: existing.number, branch }; }

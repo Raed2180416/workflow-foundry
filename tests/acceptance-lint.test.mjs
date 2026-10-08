@@ -536,3 +536,111 @@ test('retro-audit: the lint over the four C0 dev F workflows fires existence-onl
     assert.equal(assessWorkflow(workflow).acceptance.grade, 'existence-only');
   }
 });
+
+// ---- adversarial review (2026-10-08): bypasses of the gate found after the first implementation -------------------------------------
+// Each of these produced verdict "pass" (and a clean strict lint) on a run that nothing able to fail a wrong answer had checked.
+
+test('review: predicates that read no node output, or that a reference default satisfies, are presence tests', () => {
+  const weak = [
+    { op: 'eq', left: ref('input.mode'), right: 'x' },                                       // checks the input, not the answer
+    { op: 'eq', left: ref('input.a'), right: ref('input.b') },
+    { op: 'not', condition: exists('input.zzz') },                                             // absent from the input whatever the answer
+    eq({ $ref: 'nodes.check.ok', default: true }, true),                                        // missing value -> default -> holds
+    { op: 'not', condition: eq({ $ref: 'nodes.check.bad', default: false }, true) },
+    eq('nodes.answer.value', { $ref: 'nodes.answer.value', default: 0 }),                       // itself, spelled with a default
+    { op: 'contains', left: ref('nodes.answer.text'), right: '' },                              // every string contains ""
+    { op: 'gte', left: ref('nodes.rows.failed'), right: 0 },                                    // a count is never negative
+    { op: 'lt', left: -1, right: ref('nodes.rows.failed') }
+  ];
+  weak.forEach((condition, i) => assert.equal(isStrong(condition), false, `weak ${i}: ${JSON.stringify(condition)}`));
+  const strong = [
+    eq({ $ref: 'nodes.check.ok', default: false }, true),                                       // a missing value fails it
+    { op: 'gt', left: ref('nodes.rows.failed'), right: 0 },                                     // "some failed" can be false
+    { op: 'lte', left: ref('nodes.rows.failed'), right: 0 },
+    { op: 'contains', left: ref('nodes.answer.text'), right: 'total' },
+    { op: 'eq', left: ref('previous.answer.n'), right: 3 }
+  ];
+  strong.forEach((condition, i) => assert.equal(isStrong(condition), true, `strong ${i}: ${JSON.stringify(condition)}`));
+  // A verify of the input vouches for nothing the run produced.
+  const inputVerify = wf([verify('check', [], ref('input.task')), code('answer', ['check'])], [exists('nodes.answer.value')]);
+  assert.equal(gradeAcceptance(inputVerify).grade, 'existence-only');
+  // An assert's output is {passed:true} whenever it ran, so reading it is no check; a weak assert stays weak.
+  const weakAssert = { id: 'inv', kind: 'assert', needs: ['answer'], description: 'presence only', checks: [exists('nodes.answer.value')] };
+  assert.equal(gradeAcceptance(wf([code('answer'), weakAssert], [eq('nodes.inv.passed', true)])).grade, 'existence-only');
+});
+
+test('review lint: presence reads do not consume a verify or a failed count, vacuous bounds do not gate, continuations need a gate', () => {
+  // A side node whose when only asks whether the verify said anything.
+  const v = verify('check', ['prep'], ref('nodes.prep'), { gate: false });
+  const side = wf([code('prep'), v, { ...code('log', ['check']), when: exists('nodes.check.pass') }, code('answer', ['prep', 'check'])], [eq('nodes.answer.value', 1)]);
+  assert.ok(codesOf(strict(side)).includes('VERIFY_NOT_GATING'));
+  // Failed counts: gte 0 and an upper bound at or above maxItems hold for every run; a bound below it can fail.
+  const rows = map('rows', ['prep'], ref('nodes.prep.input'), { failure: 'collect', maxItems: 10 });
+  const collect = acceptance => wf([code('prep'), rows, code('answer', ['rows'])], [eq('nodes.answer.value', 1), ...acceptance]);
+  for (const vacuous of [{ op: 'gte', left: ref('nodes.rows.failed'), right: 0 }, { op: 'lte', left: ref('nodes.rows.failed'), right: 10 }, { op: 'lt', left: ref('nodes.rows.failed'), right: 1000 },
+    { op: 'gte', left: 10, right: ref('nodes.rows.failed') }, { op: 'not', condition: { op: 'gt', left: ref('nodes.rows.failed'), right: 10 } }]) {
+    assert.ok(codesOf(strict(collect([vacuous]))).includes('ERROR_COLLECTION'), JSON.stringify(vacuous));
+  }
+  assert.equal(codesOf(strict(collect([{ op: 'lte', left: ref('nodes.rows.failed'), right: 9 }]))).includes('ERROR_COLLECTION'), false);
+  assert.ok(codesOf(strict(wf([code('prep'), rows, { ...code('log', ['rows']), when: exists('nodes.rows.failed') }, code('answer', ['rows'])], [eq('nodes.answer.value', 1)]))).includes('ERROR_COLLECTION'));
+
+  // onError:"continue": an error in strict mode unless something that can fail reads the outcome; the base warning is replaced.
+  const item = agent('ex', { onError: 'continue', context: { inputs: [{ name: 'item', ref: 'item' }] } });
+  const continued = body => wf([map('rows', [], ref('input.items'), { failure: 'fail_fast', body })], [eq('nodes.rows.count', 2)], { inputSchema: { type: 'object' } });
+  const silent = strict(continued({ nodes: [item], acceptance: [exists('nodes.ex')] }));
+  assert.equal(silent.valid, false);
+  const [f] = find(silent, 'ERROR_CONTINUATION');
+  assert.deepEqual([f.severity, f.path, f.node, f.repair.action], ['error', 'workflow.rows.body.ex', 'ex', 'gate-continuation']);
+  assert.equal(silent.warnings.filter(w => w.code === 'ERROR_CONTINUATION').length, 0);
+  assert.equal(plain(continued({ nodes: [item], acceptance: [exists('nodes.ex')] })).warnings.filter(w => w.code === 'ERROR_CONTINUATION').length, 1, 'default validation still only warns');
+  assert.equal(codesOf(strict(continued({ nodes: [item], acceptance: [{ op: 'not', condition: exists('nodes.ex.error') }] }))).includes('ERROR_CONTINUATION'), false);
+
+  // GATE_CONDITIONAL: every gate can be skipped and nothing else gates.
+  const conditionalVerify = verify('check', ['prod'], ref('nodes.prod'), { when: eq('input.strictMode', true) });
+  const onlyConditional = wf([code('prod'), conditionalVerify, code('answer', ['prod'])], [exists('nodes.answer.value')], { inputSchema: { type: 'object' } });
+  const report = strict(onlyConditional);
+  assert.equal(report.valid, true, 'a warning: the verdict, not the lint, decides whether the gate ran');
+  assert.deepEqual(find(report, 'GATE_CONDITIONAL').map(x => [x.severity, x.repair.action]), [['warning', 'unconditional-gate']]);
+  assert.deepEqual(gradeAcceptance(onlyConditional).gates, [{ type: 'verify', node: 'check', independence: 'execution', conditional: true }]);
+  const continuedUpstream = wf([agent('prod', { onError: 'continue' }), verify('check', ['prod'], ref('nodes.prod')), code('answer', ['prod', 'check'], {}, { join: 'all_resolved' })], [exists('nodes.answer.value')]);
+  assert.ok(codesOf(strict(continuedUpstream)).includes('GATE_CONDITIONAL'));
+  assert.equal(codesOf(strict(wf([code('prod'), verify('check', ['prod'], ref('nodes.prod')), code('answer', ['prod'])], [exists('nodes.answer.value')]))).includes('GATE_CONDITIONAL'), false);
+});
+
+test('review runtime: a gate that did not run, or a failure absorbed by onError:"continue", never yields pass', async t => {
+  const prod = code('prod'), answerSource = 'export default function main(input) { return { id: "answer", value: 1 }; } // review';
+  const failing = verify('check', ['prod'], ref('nodes.prod'), { when: eq('input.strictMode', true), source: 'export default () => ({ pass: false, score: 0, reasons: ["wrong"] }) // review' });
+  const results = new Map([[prod.source, { id: 'prod', value: 1 }], [failing.source, { pass: false, score: 0, reasons: ['wrong'] }], [answerSource, { id: 'answer', value: 1 }]]);
+  const answer = needs => ({ ...code('answer', needs), source: answerSource });
+  const skipped = wf([prod, failing, answer(['prod'])], [exists('nodes.answer.value')], { inputSchema: { type: 'object' } });
+  // The verify that would have failed is skipped by its when: before the review this run was a pass.
+  const h1 = harness(t, skipped, { codeRunner: fakeCode(results), input: { strictMode: false } });
+  const r1 = await h1.runtime.execute(h1.run.id);
+  assert.deepEqual([r1.status, r1.nodes.check.status, r1.verdict.verdict, r1.verdict.code, r1.verdict.acceptance], ['succeeded', 'skipped', 'unverified', 'GATE_NOT_RUN', 'gating']);
+  // When it runs, it stops the run; a passing one that ran is a pass.
+  const h2 = harness(t, skipped, { codeRunner: fakeCode(results), input: { strictMode: true } });
+  assert.deepEqual([(await h2.runtime.execute(h2.run.id)).error.code], ['VERIFY_FAILED']);
+  const passing = { ...failing, source: 'export default () => ({ pass: true, score: 1, reasons: [] }) // review' };
+  const h3 = harness(t, wf([prod, passing, answer(['prod'])], [exists('nodes.answer.value')], { inputSchema: { type: 'object' } }),
+    { codeRunner: fakeCode(new Map([...results, [passing.source, { pass: true, score: 1, reasons: [] }]])), input: { strictMode: true } });
+  assert.deepEqual([(await h3.runtime.execute(h3.run.id)).verdict.verdict], ['pass']);
+
+  // A per-item verify in a map over zero items checked nothing.
+  const each = { ...verify('each', ['w'], ref('nodes.w')), source: 'export default () => ({ pass: true, score: 1, reasons: [] }) // each' };
+  const w = { ...code('w'), source: 'export default function main(input) { return { v: 1 }; } // w' };
+  const perItem = wf([map('rows', [], ref('input.items'), { body: { nodes: [w, each], acceptance: [exists('nodes.w')] } }), answer(['rows'])], [exists('nodes.answer.value')], { inputSchema: { type: 'object' } });
+  const mapResults = new Map([[w.source, { v: 1 }], [each.source, { pass: true, score: 1, reasons: [] }], [answerSource, { id: 'answer', value: 1 }]]);
+  const h4 = harness(t, perItem, { codeRunner: fakeCode(mapResults), input: { items: [] } });
+  assert.deepEqual([(await h4.runtime.execute(h4.run.id)).verdict.code], ['GATE_NOT_RUN']);
+  const h5 = harness(t, perItem, { codeRunner: fakeCode(mapResults), input: { items: [1, 2] } });
+  assert.deepEqual([(await h5.runtime.execute(h5.run.id)).verdict.verdict], ['pass']);
+
+  // A model item that fails into onError:"continue" inside a fail_fast map: the item "succeeds" with {ok:false,error}.
+  const ex = agent('ex', { onError: 'continue', context: { inputs: [{ name: 'item', ref: 'item' }] } });
+  const dropping = wf([map('rows', [], ref('input.items'), { failure: 'fail_fast', body: { nodes: [ex], acceptance: [exists('nodes.ex')] } })], [eq('nodes.rows.count', 2)], { inputSchema: { type: 'object' } });
+  const h6 = harness(t, dropping, { script: () => ({ value: { not: 'x' } }), codeRunner: fakeCode(new Map()), input: { items: [1, 2] } });
+  const r6 = await h6.runtime.execute(h6.run.id);
+  assert.equal(r6.status, 'succeeded', JSON.stringify(r6.error));
+  assert.deepEqual([r6.verdict.verdict, r6.verdict.code], ['unverified', 'ERROR_CONTINUED']);
+  assert.match(r6.verdict.reason, /ex \(2 handled errors\)/);
+});

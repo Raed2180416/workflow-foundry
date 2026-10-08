@@ -59,7 +59,27 @@ test('verdict: a succeeded run is unverified unless its acceptance gates; eviden
   // A confirmed discovery finding is still a finding, and failures are untouched.
   check({ status: 'succeeded', findings: [{ confirmed: true }] }, 'finding', null, { workflow: { ...existence, discovery: true } });
   check({ status: 'failed', error: { code: 'VERIFY_FAILED' } }, 'inconclusive', 'VERIFY_FAILED', { workflow: existence });
-  assert.deepEqual([...UNVERIFIED_CODES], ['VERIFY_FAILED_NONBLOCKING', 'ERROR_COLLECTED', 'ACCEPTANCE_EXISTENCE_ONLY', 'NO_ORACLE_DECLARED', 'ACCEPTANCE_UNASSESSED']);
+  // Review 2026-10-08 added ERROR_CONTINUED (a handled onError:"continue" failure nothing gated) and GATE_NOT_RUN (every assert or
+  // verify gate was skipped); both were false passes before.
+  assert.deepEqual([...UNVERIFIED_CODES], ['VERIFY_FAILED_NONBLOCKING', 'ERROR_COLLECTED', 'ERROR_CONTINUED', 'ACCEPTANCE_EXISTENCE_ONLY', 'NO_ORACLE_DECLARED', 'GATE_NOT_RUN', 'ACCEPTANCE_UNASSESSED']);
+  // A gate that is an assert or verify node vouches only if it ran: skipped (no state) or skipped in some map frame is not a pass.
+  const verified = { nodes: [{ id: 'a', kind: 'code' }, { id: 'check', kind: 'verify', needs: ['a'], subject: { $ref: 'nodes.a' } }, { id: 'answer', kind: 'code', needs: ['check'] }],
+    acceptance: [{ op: 'exists', value: { $ref: 'nodes.answer.x' } }] };
+  check({ status: 'succeeded', nodes: { check: { status: 'completed' } } }, 'pass', null, { workflow: verified });
+  check({ status: 'succeeded', nodes: { check: { status: 'skipped' } } }, 'unverified', 'GATE_NOT_RUN', { workflow: verified });
+  check({ status: 'succeeded' }, 'unverified', 'GATE_NOT_RUN', { workflow: verified });
+  const perItem = { nodes: [{ id: 'rows', kind: 'map', body: { nodes: [{ id: 'w', kind: 'code' }, { id: 'each', kind: 'verify', needs: ['w'], subject: { $ref: 'nodes.w' } }] } }, { id: 'answer', kind: 'code', needs: ['rows'] }],
+    acceptance: [{ op: 'exists', value: { $ref: 'nodes.answer.x' } }] };
+  const frames = (...states) => Object.fromEntries(states.map((status, i) => [`root/rows:${i}`, { nodes: { each: { status } } }]));
+  check({ status: 'succeeded', frames: frames('completed', 'completed') }, 'pass', null, { workflow: perItem });
+  check({ status: 'succeeded', frames: frames('completed', 'skipped') }, 'unverified', 'GATE_NOT_RUN', { workflow: perItem });
+  check({ status: 'succeeded', frames: {} }, 'unverified', 'GATE_NOT_RUN', { workflow: perItem });
+  // A continued failure that nothing reads is reported; one that a gate reads is the author's.
+  const continuing = { nodes: [{ id: 'a', kind: 'code' }, { id: 'b', kind: 'agent', onError: 'continue' }], acceptance: gating.acceptance };
+  check({ status: 'succeeded', nodes: { b: { status: 'handled_error' } } }, 'unverified', 'ERROR_CONTINUED', { workflow: continuing });
+  check({ status: 'succeeded', nodes: { b: { status: 'completed' } } }, 'pass', null, { workflow: continuing });
+  const read = { ...continuing, acceptance: [...gating.acceptance, { op: 'not', condition: { op: 'exists', value: { $ref: 'nodes.b.error' } } }] };
+  check({ status: 'succeeded', nodes: { b: { status: 'handled_error' } } }, 'pass', null, { workflow: read });
 });
 
 test('verdict: checks, loops, budgets and deadlines are inconclusive', () => {

@@ -34,15 +34,18 @@ Result shape (`lint`):
 
 `code`, `severity`, `path` (the validator's path syntax) and `repair.action` are stable and meant for a repair loop. `message`
 and `repair.hint` are prose. Error findings are copied into `errors` (the workflow is then invalid and has no `hash`), warning
-findings into `warnings`. The advisory base warning `ERROR_COLLECTION` is replaced by the strict rule of the same code.
+findings into `warnings`. The advisory base warnings `ERROR_COLLECTION` and `ERROR_CONTINUATION` are replaced by the strict rules of
+the same codes.
 
 ## Rules
 
 | Code | Severity | Fires when | Repair action |
 |---|---|---|---|
 | `ACCEPTANCE_EXISTENCE_ONLY` | error | The root acceptance holds only presence predicates and no gating `assert` or independent gating `verify` covers the answer (a gating verify inside a map or loop body the answer depends on counts too, unless a collecting map swallows its failures). Cleared by a strong predicate, or by the `oracle` declaration below | `strengthen-acceptance` |
-| `VERIFY_NOT_GATING` | error (warning under `oracle: none`; never in a `discovery` workflow) | A `verify` node has `gate:false` and no acceptance, `assert`, `when` or loop `until` condition reads its result. `exists nodes.V.pass` does not count: the key exists when `pass` is false | `gate-verify` |
-| `ERROR_COLLECTION` | error | A `map` has `failure:"collect"` and nothing gates on `nodes.M.failed` (acceptance, `assert`, `when`), nor does a gating `verify` read the map. Failed items and batches would be dropped silently | `gate-failed-count` |
+| `VERIFY_NOT_GATING` | error (warning under `oracle: none`; never in a `discovery` workflow) | A `verify` node has `gate:false` and no acceptance, `assert`, `when` or loop `until` condition reads its result through a strong predicate. `exists nodes.V.pass` does not count, in acceptance or in a `when`: the key exists when `pass` is false | `gate-verify` |
+| `ERROR_COLLECTION` | error | A `map` has `failure:"collect"` and nothing gates on `nodes.M.failed` (a strong acceptance, `assert`, `when` or `until` predicate), nor does a gating `verify` read the map. A bound that every failed count 0..`maxItems` satisfies (`gte nodes.M.failed 0`, `lte nodes.M.failed 1000` on a map of 10) is no gate. Failed items and batches would be dropped silently | `gate-failed-count` |
+| `ERROR_CONTINUATION` | error | A `task` or `agent` node has `onError:"continue"` and no strong predicate (acceptance, `assert`, `when`, `until`) or gating `verify` reads its outcome. Its failure becomes an `{ok:false,error}` output that the flow, or a map item, can accept: a silent drop with no recorded count | `gate-continuation` |
+| `GATE_CONDITIONAL` | warning | The acceptance has no strong predicate and every `assert`/`verify` gate can be skipped while the run succeeds: it has a `when`, or a node it needs (transitively) has a `when` or `onError:"continue"`. A run in which no gate ran ends `unverified` (`GATE_NOT_RUN`) | `unconditional-gate` |
 | `ESCALATION_WITHOUT_CHECKS` | warning | A model node sets `escalation.onCheckFail` to `escalate` or `resample` but has no `checks`. Only schema failures (E1) can still escalate it | `add-checks-or-drop-escalation` |
 | `GLOBAL_READ_UNGUARDED` | warning | A root-flow `agent` with role extract, classify, judge or route is read by a `map` or by a node that also reads a map (one read conditions every item), and has none of: an evidence-quote field in `returns` that a check (or a gating `verify`) reads; k-sample agreement (two or more sibling agents with the same role, schema and inputs that one later node compares); a start class above the workflow default | `guard-global-read` |
 | `CLASS_ABOVE_DEFAULT_UNJUSTIFIED` | warning | A model node starts on a class above the workflow default and has no `model.justification`. The default is `defaultClass` if declared, otherwise the cheapest class any model node starts on | `justify-class` |
@@ -51,9 +54,18 @@ findings into `warnings`. The advisory base warning `ERROR_COLLECTION` is replac
 | `LINT_RULE_SKIPPED` | warning | A rule threw on a malformed workflow. Reported, never swallowed; fix the validation errors first | `fix-workflow` |
 
 What counts as a **presence predicate** (not a gate): `exists X`; `ne X null|""|[]|{}`; `gt X.length 0` and `gte X.count 1`
-(and mirrors); comparing a value with itself; any condition without a reference. `all` is as strong as its strongest branch,
-`any` as strong as its weakest, `not` flips the polarity (`not exists X` can fail, so it is strong). A verify with
-`independence: same-model` never counts as an independent gate: a producer cannot certify itself.
+(and mirrors); `contains X ""`; `gte X.failed 0`; comparing a value with itself (a reference's `default` ignored); a comparison
+that a reference's `default` satisfies when the value is missing (`eq {"$ref":"nodes.A.ok","default":true} true`); any condition
+that reads no node output (only `input`, `item`, `index`, `iteration` or constants: the same for a right and a wrong answer).
+`all` is as strong as its strongest branch, `any` as strong as its weakest, `not` flips the polarity (`not exists nodes.X.error`
+can fail, so it is strong; `not exists input.Y` reads no node and is not). A verify counts only if its subject is a node's output,
+and a verify with `independence: same-model` never counts as an independent gate: a producer cannot certify itself.
+
+Known gaps (structural lint): a strong-looking predicate can still be vacuous in ways the lint cannot see without types or data,
+for example `not exists nodes.answer.field_it_never_emits`, `ne nodes.answer.status "some-value-it-never-takes"`, an `in` list
+that holds every possible value, a check of a code node whose arguments read nothing (its output is a constant), or a verifier
+whose code always passes. Reading an `assert` or `wait` node's own output (`eq nodes.inv.passed true`) is recognized as constant.
+The rules recognize the declared form of a guard.
 
 The lint is **structural**. It recognizes the declared form of a guard, not whether the guard is any good, and it grades only
 the root flow's acceptance (map and loop bodies carry per-item acceptance, whose job is local). Its rules were written from the
@@ -87,8 +99,10 @@ For a succeeded run, in order:
 | `finding` | A discovery workflow with at least one confirmed finding (unchanged) |
 | `VERIFY_FAILED_NONBLOCKING` | A `gate:false` verify that nothing reads recorded `pass:false`. The answer needs review |
 | `ERROR_COLLECTED` | A collecting `map` whose failed count is not gated recorded failed items |
+| `ERROR_CONTINUED` | A node with `onError:"continue"` whose outcome nothing gates ended `handled_error` (at the root or in any frame) |
 | `ACCEPTANCE_EXISTENCE_ONLY` | The acceptance only checks that an answer exists |
 | `NO_ORACLE_DECLARED` | The workflow declares `oracle: none` |
+| `GATE_NOT_RUN` | The acceptance has no strong predicate and none of its `assert`/`verify` gates ran: each was skipped (`when`, or a skipped or continued predecessor), or, for a gate in a map or loop body, it did not complete in every frame of that body (or the body never ran, for example a map over zero items) |
 | `ACCEPTANCE_UNASSESSED` | `verdictOf` was not given the workflow, so the acceptance cannot be read |
 | (`pass`) | None of the above: the acceptance holds a gate |
 

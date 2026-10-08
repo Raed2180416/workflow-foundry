@@ -66,7 +66,7 @@ in the T3 probes, every probe mail built as a clear customer request must be esc
 **10 deliberately ambiguous**, 7 non-requests that no sender rule catches (cold outreach, recruiter, supplier invoice, thank-you, meeting logistics, phishing, a human out-of-office), 36 clear customer requests (24 single, 5 two-mail threads, 2 whose earlier ticket is Done, so a new ticket is needed),
 and 2 whose model call fails (one for good, one on the first attempt). Mails, labels, seeded tickets and the recorded classifier are frozen in `fixtures/` (`FREEZE.json`, sha256); see `fixtures/PROVENANCE.md` and `fixtures/ANNOTATION.md`.
 The mock model answers from recordings (two tiers) and recognises a mail by the `Msg-ref: MR-xxxxx` token every message carries, so a prompt that drops the mail gets a 422 "cassette miss". It is a stand-in, not a model: its accuracy (category 0.892, priority 0.831 over the 65) is by construction.
-For a live run, pass a real model as `createEnv(task, { modelBackend })`; the observed answers are kept in the record's `modelTape` and replayed by the oracle.
+For a live run, pass a real model as `createEnv(task, { modelBackend })`; the observed answers are kept in the record's `modelTape` and replayed by the oracle when the same process recorded them (or host code passes `trustModelTape`; see "Known limits" 5).
 
 ## Controls and results (`controls/report.json`, produced by `controls/run-controls.mjs --seeds 20`)
 
@@ -75,7 +75,7 @@ For a live run, pass a real model as `createEnv(task, { modelBackend })`; the ob
 | **original definition, executed** (`n8n-emulator.mjs`) | the nodes, 15 Code nodes, 27 of its 28 distinct expressions (the one left is in the unreachable error branch), Set/IF/Switch rules, wiring, retries and continue-on-error of the real file run against the mocks | **passes** at d1-d5 (20 seeds at d3, 3 at the others); its committed effects and audit rows equal the independent transcription's on 14 of 14 (seed, difficulty) pairs |
 | faithful transcription (`reference.mjs`) | our plain-Node re-implementation, the T3 baseline | passes 20/20 at d3, 3/3 at every other difficulty |
 | 5 broken variants of the original | no dedupe; ack mode inverted; confidence gate removed; no sender filter; category forced to Bug | all fail (0 of 3 or 12 runs pass), each with its expected code or gate |
-| 34 broken handlers (`broken.mjs`) | plan controls (everything-Bug, no dedupe, ack in the wrong mode) plus one defect per violation code and near misses (threshold 0.4, priorities one level low, "review everything") | 0 of 20+ runs pass for every one; each shows its expected code or gate; every one of the 32 codes is exercised |
+| 39 broken handlers (`broken.mjs`) | plan controls (everything-Bug, no dedupe, ack in the wrong mode) plus one defect per violation code and near misses (threshold 0.4, priorities one level low, "review everything"); since v0.2.0 also the five attacks that passed v0.1.0 (`notify-before-create`, `drop-critical`, and on T3 `ref-only-prompt`, `mention-dodge-critical`, `probe-dodge`) | 0 of 20+ runs pass for every one; each shows its expected code or gate; every one of the 35 codes is exercised |
 | do-nothing, empty answer | | fail (AUDIT_MISSING x 80) |
 | keyword rule, no model | triviality attack: faithful plumbing + a ~25-line keyword classifier, written once, not tuned | fails: category 0.646, priority 0.646, ambiguous-to-review 0.09, clear escalation 0.77 |
 | improved solution (`improved.mjs`) | T3 control: small-model-first cascade, compact prompt, idempotent intake, thread memory, create-lookup before retry, audit retry, mention neutralising | passes core, all 5 probes and the targets (5 seeds at d1/d3/d5): model cost 0.239 x baseline, external calls 1.00, latency 0.872 |
@@ -165,7 +165,7 @@ text, the delivery order and the T3 baseline and targets, which are computed fro
 ## Effort and obstacles (measured while building this harness, 2026-10-08)
 
 - Wall time: 09:05:30Z to about 09:52Z, roughly 46 minutes, one agent, no human help. Output: 37 files; 3,150 lines of `.mjs` (2,795 without the authored mails in `source/cases.mjs`; 406 of them tests), 179 lines of Markdown, 229 KB of JSON (139 KB of it the mails).
-  Test suite: 48 tests, about 62 s. `controls/run-controls.mjs --seeds 20`: about 105 s.
+  Test suite: 48 tests, about 62 s (v0.2.0 after verification: 52 tests, about 3 min on a loaded machine). `controls/run-controls.mjs --seeds 20`: about 105 s.
 - Obstacles met, verbatim where they were errors:
   - the published definition has no Execute Workflow Trigger node and no Error Trigger node (`nodesWithoutInboundEdge` = Route by Workflow Step, OpenAI GPT-4.1 Mini, Parse Classification Result, Create Error Alert Message), so the original cannot be run by a real n8n as published; the emulator follows the author's intent;
   - no n8n, no network and no live model in this environment: the original runs only in our interpreter, the classifier is recorded;

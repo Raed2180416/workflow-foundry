@@ -1,7 +1,7 @@
 {
  "schema": "rbench-item-controls/1",
  "item": "github-actions:shafthq/shaft_engine/.github/workflows/update-selenium-grid-versions.yml",
- "harnessVersion": "0.1.0",
+ "harnessVersion": "0.1.1",
  "host": {
   "node": "v24.21.0",
   "cpus": 4,
@@ -14,10 +14,10 @@
   "passIntentMode": 90,
   "wallMs": {
    "n": 140,
-   "median": 358,
-   "p90": 589,
-   "mean": 362,
-   "max": 920
+   "median": 236,
+   "p90": 348,
+   "mean": 234,
+   "max": 665
   },
   "byKind": {
    "bump-all": {
@@ -424,12 +424,12 @@
   "do-nothing": {
    "applied": 420,
    "rejected": 420,
-   "meanScore": 0.41
+   "meanScore": 0.35
   },
   "corrupted": {
    "applied": 420,
    "rejected": 420,
-   "meanScore": 0.81
+   "meanScore": 0.77
   },
   "shuffled-file": {
    "applied": 247,
@@ -439,47 +439,47 @@
   "only-chrome-updated": {
    "applied": 223,
    "rejected": 223,
-   "meanScore": 0.73
+   "meanScore": 0.71
   },
   "wrong-branch": {
    "applied": 247,
    "rejected": 247,
-   "meanScore": 0.44
+   "meanScore": 0.4
   },
   "versions-misreported": {
    "applied": 363,
    "rejected": 363,
-   "meanScore": 0.9
+   "meanScore": 0.89
   },
   "pr-without-change": {
    "applied": 116,
    "rejected": 116,
-   "meanScore": 0.5
+   "meanScore": 0.4
   },
   "prerelease-filter-dropped": {
    "applied": 60,
    "rejected": 60,
-   "meanScore": 0.55
+   "meanScore": 0.47
   },
   "error-swallowed": {
    "applied": 57,
    "rejected": 57,
-   "meanScore": 0.53
+   "meanScore": 0.43
   },
   "blanked-tags": {
    "applied": 24,
    "rejected": 24,
-   "meanScore": 0.36
+   "meanScore": 0.22
   },
   "improved-instead-of-original": {
    "applied": 4,
    "rejected": 4,
-   "meanScore": 0.62
+   "meanScore": 0.59
   },
   "transcription-of-the-original": {
    "applied": 32,
    "rejected": 32,
-   "meanScore": 0.79
+   "meanScore": 0.76
   }
  },
  "foundryCodeNode": {
@@ -487,19 +487,19 @@
   "pass": 14,
   "wallMs": {
    "n": 14,
-   "median": 1672,
-   "p90": 1951,
-   "mean": 1717,
-   "max": 2509
+   "median": 723,
+   "p90": 1381,
+   "mean": 884,
+   "max": 1458
   },
-  "originalMedianWallMs": 358,
+  "originalMedianWallMs": 236,
   "runsWithinT3Latency": 0,
   "rows": [
    {
     "kind": "bump-all",
     "ran": true,
     "pass": true,
-    "wallMs": 1564,
+    "wallMs": 968,
     "foundryVerdict": "unverified",
     "costUsd": 0
    },
@@ -507,7 +507,7 @@
     "kind": "bump-some",
     "ran": true,
     "pass": true,
-    "wallMs": 1519,
+    "wallMs": 852,
     "foundryVerdict": "unverified",
     "costUsd": 0
    },
@@ -515,7 +515,7 @@
     "kind": "no-change",
     "ran": true,
     "pass": true,
-    "wallMs": 1951,
+    "wallMs": 898,
     "foundryVerdict": "unverified",
     "costUsd": 0
    },
@@ -523,7 +523,7 @@
     "kind": "prerelease-reducible",
     "ran": true,
     "pass": true,
-    "wallMs": 1633,
+    "wallMs": 682,
     "foundryVerdict": "unverified",
     "costUsd": 0
    },
@@ -531,7 +531,7 @@
     "kind": "open-pr-update",
     "ran": true,
     "pass": true,
-    "wallMs": 1827,
+    "wallMs": 660,
     "foundryVerdict": "unverified",
     "costUsd": 0
    },
@@ -539,7 +539,7 @@
     "kind": "open-pr-no-change",
     "ran": true,
     "pass": true,
-    "wallMs": 2509,
+    "wallMs": 637,
     "foundryVerdict": "unverified",
     "costUsd": 0
    },
@@ -547,7 +547,7 @@
     "kind": "repo-missing-image",
     "ran": true,
     "pass": true,
-    "wallMs": 1629,
+    "wallMs": 711,
     "foundryVerdict": "unverified",
     "costUsd": 0
    },
@@ -555,7 +555,7 @@
     "kind": "duplicate-lines",
     "ran": true,
     "pass": true,
-    "wallMs": 1672,
+    "wallMs": 664,
     "foundryVerdict": "unverified",
     "costUsd": 0
    },
@@ -563,7 +563,7 @@
     "kind": "prerelease-unreducible",
     "ran": true,
     "pass": true,
-    "wallMs": 1806,
+    "wallMs": 695,
     "foundryVerdict": "unverified",
     "costUsd": 0
    },
@@ -571,7 +571,7 @@
     "kind": "reference-malformed",
     "ran": true,
     "pass": true,
-    "wallMs": 1766,
+    "wallMs": 723,
     "foundryVerdict": "unverified",
     "costUsd": 0
    },
@@ -579,7 +579,7 @@
     "kind": "reference-missing-image",
     "ran": true,
     "pass": true,
-    "wallMs": 1515,
+    "wallMs": 862,
     "foundryVerdict": "unverified",
     "costUsd": 0
    },
@@ -587,7 +587,7 @@
     "kind": "reference-unreachable",
     "ran": true,
     "pass": true,
-    "wallMs": 1714,
+    "wallMs": 1458,
     "foundryVerdict": "unverified",
     "costUsd": 0
    },
@@ -595,7 +595,7 @@
     "kind": "commented-image-line",
     "ran": true,
     "pass": true,
-    "wallMs": 1716,
+    "wallMs": 1188,
     "foundryVerdict": "unverified",
     "costUsd": 0
    },
@@ -603,7 +603,7 @@
     "kind": "quoted-image-refs",
     "ran": true,
     "pass": true,
-    "wallMs": 1223,
+    "wallMs": 1381,
     "foundryVerdict": "unverified",
     "costUsd": 0
    }

@@ -52,13 +52,31 @@ function firstDiff(expected, actual) {
   return null;
 }
 const sameSet = (a, b) => a.length === b.length && new Set(a).size === a.length && a.every(x => b.includes(x));
-// Does some line of `text` name the image and show `from` before `to`? (Table row, bullet, prose: the format is not prescribed.)
+// Does the text name the image together with its old and its new tag? (Table row, bullet, prose, a short block under a heading: the format
+// is not prescribed, R5 asks only that every changed image is listed "with its old and its new tag".)
+// A "section" is a line that names the image plus the following lines up to SECTION_LINES in all, stopping at a line that names another
+// tracked image. The section must contain both tags, in either order, EXCEPT that "new <arrow> old" (→ -> => ⇒ "to") is a text that
+// claims the change goes backwards and does not count. Verifier change 2026-10-08: the first version demanded old-before-new on ONE line,
+// which rejected correct texts such as "Chrome now NEW (was OLD)", a "| Image | New | Old |" table or a heading followed by old:/new: lines.
+const SECTION_LINES = 4;
+const BACKWARDS = /→|->|=>|⇒|\bto\b/i;
 function mentionsChange(text, label, from, to) {
-  return String(text ?? '').split('\n').some(line => {
-    if (!line.toLowerCase().includes(label.toLowerCase())) return false;
-    const i = line.indexOf(from);
-    return i >= 0 && line.indexOf(to, i + from.length) >= 0;
-  });
+  const lines = String(text ?? '').split('\n'), low = s => s.toLowerCase();
+  const others = TRACKED.map(t => low(t.label)).filter(l => l !== low(label));
+  for (let i = 0; i < lines.length; i++) {
+    if (!low(lines[i]).includes(low(label))) continue;
+    let j = i + 1;
+    while (j < lines.length && j < i + SECTION_LINES && !others.some(o => low(lines[j]).includes(o))) j++;
+    const s = lines.slice(i, j).join('\n');
+    const f = s.indexOf(from);
+    if (f >= 0 && s.indexOf(to, f + from.length) >= 0) return true;                 // old ... new
+    const t = s.indexOf(to);
+    if (t >= 0) {                                                                   // new ... old, unless it reads "new -> old"
+      const g = s.indexOf(from, t + to.length);
+      if (g >= 0 && !BACKWARDS.test(s.slice(t + to.length, g))) return true;
+    }
+  }
+  return false;
 }
 
 /** Judge one outcome against an instance's truth in a mode ('original' | 'intent'). Never throws on a malformed outcome. */
@@ -74,7 +92,9 @@ export function judge(instance, mode, outcome) {
 
   check('STATUS', derived === truth.status, { expected: truth.status, derived });
   check('STATUS_CLAIM', outcome.claimedStatus === truth.status, { expected: truth.status, claimed: outcome.claimedStatus });
-  check('FAILED_WITH_EFFECTS', !outcome.contradictory, 'a failed run must not carry files or a pull-request request');
+  // A failed plan that still carries files or a pull-request request is NOT a violation: the contract tells the solver that the host discards
+  // them, and the oracle judges effects. (Verifier change 2026-10-08; the first version failed such plans with FAILED_WITH_EFFECTS.) It is
+  // reported in details.discardedEffects for diagnosis only.
   check('OTHER_PR_TOUCHED', others.length === 0, { touched: others });
 
   if (truth.status === 'failed') {
@@ -119,7 +139,7 @@ export function judge(instance, mode, outcome) {
   }
   const passed = checks.filter(c => c.ok).length;
   const violations = checks.filter(c => !c.ok).map(c => c.code);
-  return { pass: violations.length === 0, score: Number((passed / checks.length).toFixed(4)), details: { mode, kind: instance.kind, expected: truth.status, derived, violations, checks: checks.filter(c => !c.ok) } };
+  return { pass: violations.length === 0, score: Number((passed / checks.length).toFixed(4)), details: { mode, kind: instance.kind, expected: truth.status, derived, violations, checks: checks.filter(c => !c.ok), discardedEffects: !!outcome.contradictory } };
 }
 
 /** Judge a plan: schema, then outcome, then checks. */

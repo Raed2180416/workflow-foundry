@@ -16,9 +16,11 @@ export const LINT_RULES = Object.freeze({
   ACCEPTANCE_EXISTENCE_ONLY: { severity: 'error', summary: 'Acceptance only checks that an answer exists' },
   VERIFY_NOT_GATING: { severity: 'error', summary: 'A verify node with gate:false that nothing reads cannot block the answer' },
   ERROR_COLLECTION: { severity: 'error', summary: 'A map collects item failures and nothing gates on the recorded failed count' },
+  ERROR_CONTINUATION: { severity: 'error', summary: 'A node continues on error (onError:"continue") and nothing gates on its outcome' },
   ESCALATION_WITHOUT_CHECKS: { severity: 'warning', summary: 'Check-triggered escalation or resampling is configured on a node that has no checks' },
   GLOBAL_READ_UNGUARDED: { severity: 'warning', summary: 'One model read conditions every item and has no evidence quote, no k-sample agreement and no stronger class' },
   CLASS_ABOVE_DEFAULT_UNJUSTIFIED: { severity: 'warning', summary: 'A model node starts above the workflow default class without model.justification' },
+  GATE_CONDITIONAL: { severity: 'warning', summary: 'Every gate of the acceptance is an assert or verify that can be skipped while the run still succeeds' },
   NO_ORACLE_DECLARED: { severity: 'warning', summary: 'The workflow declares that no oracle exists; its runs end "unverified"' },
   ORACLE_DECLARATION_REDUNDANT: { severity: 'warning', summary: 'The workflow declares no oracle although its acceptance already holds a gating check' },
   LINT_RULE_SKIPPED: { severity: 'warning', summary: 'A lint rule could not run on this workflow' }
@@ -103,6 +105,18 @@ const rules = {
     return ungatedCollectMaps.map(({ id, path }) => finding('ERROR_COLLECTION', path,
       `Map ${id} collects item failures (failure:"collect") but nothing gates on nodes.${id}.failed; failed items and batches are dropped silently`, { node: id,
         repair: { action: 'gate-failed-count', hint: `Add an acceptance condition or assert node on nodes.${id}.failed (for example lte nodes.${id}.failed 0), read it in a when condition that retries, or use failure:"fail_fast"` } }));
+  },
+  errorContinuation({ assessment: { ungatedContinuations } }) {
+    return ungatedContinuations.map(({ id, path }) => finding('ERROR_CONTINUATION', path,
+      `Node ${id} has onError:"continue", so a failure becomes an {ok:false,error} output, and nothing gates on nodes.${id}; a failed item or step is dropped silently and the run can still succeed`, { node: id,
+        repair: { action: 'gate-continuation', hint: `Remove onError:"continue" so the failure stops the flow (inside a map, failure:"collect" then records a count that can be gated), or read the outcome where it can fail: an assert or acceptance condition such as not exists nodes.${id}.error, or a when condition that routes the failure` } }));
+  },
+  conditionalGates({ assessment: { acceptance } }) {
+    if (acceptance.grade !== 'gating' || !acceptance.gates.length || !acceptance.gates.every(g => g.conditional === true)) return [];
+    return [finding('GATE_CONDITIONAL', 'workflow.acceptance',
+      `Every gate (${acceptance.gates.map(g => g.node).join(', ')}) can be skipped while the run succeeds (it has a when, or something it needs has a when or continues on error); a run in which no gate ran is "unverified", not "pass"`, {
+        repair: { action: 'unconditional-gate', hint: 'Add an acceptance condition that a wrong answer can fail, or make one gate unconditional (no when on it or on what it needs, no onError:"continue" upstream)' },
+        details: { gates: acceptance.gates.map(g => g.node) } })];
   },
   escalation({ modelNodes }) {
     const out = [];

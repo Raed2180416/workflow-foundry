@@ -52,8 +52,9 @@ This is "execution authority outside the model" (AGENTS.md) and it is also the o
 * **Oracle** (`oracle.mjs`): judges *effects* only. It applies the plan through the same pull-request stub the executed original uses, then checks: the run's status (and that the plan's own claim
   agrees), no pull request on failure or no change, **exactly one** pull-request operation when something changed with the right action (created, or updated for the existing number), exactly one open bot
   pull request, base, exact title, label set, changed files = only `selenium4.yml`, **its content byte-equal to the expected edit**, a commit message and a body that name every changed image with old
-  and new tag (any wording), other pull requests untouched, the reported `versions`; and, for an executed workflow, that the fetch went to the recorded URL and nothing was blocked. On a failure in
-  intent mode the message must name the cause. Violation codes: `SCHEMA STATUS STATUS_CLAIM FAILED_WITH_EFFECTS OTHER_PR_TOUCHED PR_ON_FAILURE MESSAGE VERSIONS PR_UNEXPECTED PR_OPERATIONS PR_ACTION PR_SINGLE_BOT PR_BASE PR_TITLE PR_LABELS PR_FILES FILE_CONTENT PR_COMMIT_MESSAGE PR_BODY FETCH NO_BLOCKED_CALLS`. `score` = share of checks passed; `pass` = all.
+  and new tag (any wording and either order, on one line or in a short block under the image's name; "new -> old" does not count: verifier change, section 11), other pull requests untouched, the reported `versions`; and, for an executed workflow, that the fetch went to the recorded URL and nothing was blocked. On a failure in
+  intent mode the message must name the cause. A failed plan's files and pull-request request are discarded by the host, as the contract says, and are not judged (`details.discardedEffects` reports them; the builder's `FAILED_WITH_EFFECTS` check was removed by the verifier, section 11).
+  Violation codes: `SCHEMA STATUS STATUS_CLAIM OTHER_PR_TOUCHED PR_ON_FAILURE MESSAGE VERSIONS PR_UNEXPECTED PR_OPERATIONS PR_ACTION PR_SINGLE_BOT PR_BASE PR_TITLE PR_LABELS PR_FILES FILE_CONTENT PR_COMMIT_MESSAGE PR_BODY FETCH NO_BLOCKED_CALLS`. `score` = share of checks passed; `pass` = all.
 * **Two truths per instance, built by construction** (the generator planted the tags): `original` (what the vendored workflow does; judges T1) and `intent` (what the maintainers evidently want; judges T2/T3).
   They are equal except on the five defect kinds below.
 * **Why `versions` is in the plan:** the original prints "Latest versions found:" and "Current versions:". Reporting them is part of the job's visible output and it makes a do-nothing plan fail every task, including the ones where nothing is to be done.
@@ -83,7 +84,7 @@ T1 gets none of them: the original is its specification.
 
 ## 4. Controls
 
-Raw numbers: `controls/report.json` (regenerate: `node controls/run-controls.mjs --per-kind 4 --mutant-seeds 2 --foundry --write --baseline`).
+Raw numbers: `controls/report.json` (regenerate: `node controls/run-controls.mjs --per-kind 10 --mutant-seeds 2 --foundry --write`, plus `--baseline` to re-measure the frozen T3 baseline). The verifier regenerated the report on 2026-10-08 after the oracle change (section 11) without `--baseline`: every pass/fail count below is unchanged; mean scores moved slightly (one check fewer), and that run measured the original's median at 236 ms and `foundry run` at 0.72 s median (1.46 s max).
 
 | Control | Result |
 |---|---|
@@ -91,8 +92,8 @@ Raw numbers: `controls/report.json` (regenerate: `node controls/run-controls.mjs
 | JavaScript port of the original's bash (`solveFaithful` = `referenceSolve` for T1) vs the executed original | identical effects (status, PR fields, texts, file bytes, versions) on **140/140** instances |
 | `solveImproved` (= `referenceSolve` for T2/T3) | passes 28/28 seeds at each difficulty 1-5 for T2 and T3; `solveFaithful` 28/28 for T1 (420 plan checks) |
 | Both references disagree exactly on the 5 defect kinds | tested: the faithful port fails 5/14 in intent mode, the improved reference fails 2/14 in original mode (the two non-message defects) |
-| **Do-nothing** (schema-valid: unchanged, nothing, no versions) | fails 420/420 tasks (mean score 0.41); on the unchanged-kinds the only violation is `VERSIONS` |
-| `empty`, `corrupted` (one digit of one tag), `shuffled-file`, `only-chrome-updated`, `wrong-branch`, `pr-without-change`, `prerelease-filter-dropped`, `error-swallowed`, `blanked-tags`, `versions-misreported` (right effects, wrong report: score 0.90), `transcription-of-the-original` (T2/T3), `improved-instead-of-original` (T1) | 13 controls, **rejected on every task they apply to** (applicable counts 4-420 over seeds 0-27 x 3 variants x 5 difficulties; the test sweeps 168 seeds at d5 x 3 variants and requires >= 20 applications each) |
+| **Do-nothing** (schema-valid: unchanged, nothing, no versions) | fails 420/420 tasks (mean score 0.35; 0.41 before the verifier's oracle change); on the unchanged-kinds the only violation is `VERSIONS` |
+| `empty`, `corrupted` (one digit of one tag), `shuffled-file`, `only-chrome-updated`, `wrong-branch`, `pr-without-change`, `prerelease-filter-dropped`, `error-swallowed`, `blanked-tags`, `versions-misreported` (right effects, wrong report: mean score 0.89), `transcription-of-the-original` (T2/T3), `improved-instead-of-original` (T1) | 13 controls, **rejected on every task they apply to** (applicable counts 4-420 over seeds 0-27 x 3 variants x 5 difficulties; the test sweeps 168 seeds at d5 x 3 variants and requires >= 20 applications each) |
 | 9 **broken variants of the ORIGINAL** (`controls/mutants.mjs`): pre-release filter dropped; PR guard inverted; only Chrome updated; last match instead of first; validation step removed; `branch:` input removed; `labels:` removed; PR opened every week (file touched); curl URL changed | each fails on exactly the instances it breaks and **passes the others** (28 instances each; `wrong-reference-url` fails everywhere by design: the shim blocks it, the mock sees nothing, `FETCH` and `NO_BLOCKED_CALLS` fire) |
 | 1 EQUIVALENT variant (`sed` without `g`: no instance has two occurrences on a line) | passes 28/28: the oracle does not prescribe the text of the workflow |
 | An independently written solution of a different shape (line-based, own tag reader) | passes 56/56 (T2/T3, 28 seeds each) |

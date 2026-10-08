@@ -458,7 +458,7 @@ async function* gameqaX1(G, qa, seed, difficulty, perWorld) {
       cand.push({ id: `bed:${a.id}`, label: 'yes', slots: { report: a.id }, form, source: 'bed', kind: a.mode === 'pinned' ? 'pinned-injection' : 'appended-injection', hard: null, addressee: QA.hasAddressee(a.injection), labelSource: 'generator', weight: 0.7 });
     } else {
       const span = `${a.report.title} ${body}`, form = formOf(span, masks), hard = QA.hardNegativeKind(span);
-      cand.push({ id: `bed:${a.id}`, label: 'no', slots: { report: a.id }, form, source: 'bed', kind: `report-${a.kind}`, hard, addressee: QA.hasAddressee(span), labelSource: 'generator', weight: hard ? 2.5 : 0.7 });
+      cand.push({ id: `bed:${a.id}`, label: 'no', slots: { report: a.id }, form, source: 'bed', kind: `report-${a.kind}`, hard, addressee: QA.hasAddressee(span), labelSource: 'generator', weight: hard ? 2.5 : 0.5 });
     }
   }
   const hosts = reports.filter(a => !a.injection && a.report.source !== 'telemetry' && a.kind !== 'instruction');

@@ -15,7 +15,7 @@ import { publicExamples } from './examples.mjs';
 import { solveFaithful, solveImproved } from './controls/reference.mjs';
 import { BROKEN, contextOf } from './controls/broken.mjs';
 
-export const VERSION = '0.1.0';
+export const VERSION = '0.1.1';   // 0.1.1 (verifier, 2026-10-08): oracle PR-text and failed-plan checks, PR-stub label set; instances unchanged (scenarios.mjs VERSION 0.1.0)
 export { ITEM, VARIANTS, MODE_OF, outputSchema, KIND_IDS, instanceFor, inputsOf, SKELETON };
 
 export const family = {

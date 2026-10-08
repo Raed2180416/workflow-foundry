@@ -282,9 +282,9 @@ export function validateWorkflow(workflow, { registry, maxNodes = 2000, modelPol
   let lint;
   if (strict) {
     lint = lintWorkflow(workflow, { modelPolicy: policy });
-    // The strict ERROR_COLLECTION rule replaces the advisory warning of the same code: it is an error when the failed count is
-    // not gated and silent when it is, so keeping both would report one problem twice under one code.
-    for (let i = warnings.length - 1; i >= 0; i--) if (warnings[i].code === 'ERROR_COLLECTION') warnings.splice(i, 1);
+    // The strict ERROR_COLLECTION and ERROR_CONTINUATION rules replace the advisory warnings of the same codes: each is an error when
+    // the outcome is not gated and silent when it is, so keeping both would report one problem twice under one code.
+    for (let i = warnings.length - 1; i >= 0; i--) if (warnings[i].code === 'ERROR_COLLECTION' || warnings[i].code === 'ERROR_CONTINUATION') warnings.splice(i, 1);
     for (const { severity, ...finding } of lint.findings) (severity === 'error' ? errors : warnings).push({ ...finding, severity });
   }
   return { valid: errors.length === 0, errors, warnings, nodeCount: total, ...(strict ? { strict: true, lint } : {}), ...(errors.length ? {} : { hash: digest(workflow) }) };

@@ -1,21 +1,36 @@
 #!/usr/bin/env bash
 # rbench shim for curl: the ONLY URL that may leave this shim is the recorded reference URL, rewritten to the local mock server
-# (127.0.0.1, random port). Any other URL is logged as blocked and fails with curl's "could not connect" status (7). The real curl is
-# called without proxies and without a curlrc, so nothing from the host environment can redirect it.
+# (127.0.0.1, random port). Any other argument that names a URL scheme ("://", any case, any scheme: https, HTTP, file, ftp, ...) is
+# logged as blocked and fails with curl's "could not connect" status (7), as do the options that could re-route or reset the transfer
+# (-K/--config, -:/--next, -x/--proxy, --connect-to, --resolve, unix sockets, --proto, --doh-url). Whatever is left (for example a
+# scheme-less "host:port/path", which curl would otherwise fetch from the network) can still only reach the mock: the real curl gets
+# --proto =http and --connect-to ::127.0.0.1:PORT appended, so every connection lands on the mock, which records it (and the oracle's
+# FETCH check rejects any request that is not the recorded URL). The real curl runs without proxies and without a curlrc (-q).
+# Verifier fix 2026-10-08: the first version only matched lower-case "http://" / "https://" prefixes, so "127.0.0.1:PORT/x",
+# "HTTP://host/x" and "file:///..." went to the real curl unlogged (README, Known limits).
 set -u
+: "${RBENCH_REFERENCE_URL:?RBENCH_REFERENCE_URL unset}" "${RBENCH_OUT:?RBENCH_OUT unset}" "${RBENCH_PORT:?RBENCH_PORT unset}"
+: "${RBENCH_REFERENCE_HOST:?RBENCH_REFERENCE_HOST unset}" "${RBENCH_CURL:?RBENCH_CURL unset}"
+block() {
+  printf 'blocked\t%s\n' "$1" >> "$RBENCH_OUT/curl.log"
+  echo "rbench: curl blocked: $1 ${2:-is not the recorded reference URL}" >&2
+  exit 7
+}
 args=(-q --noproxy '*')
 for a in "$@"; do
+  if [ "$a" = "$RBENCH_REFERENCE_URL" ]; then
+    printf 'allowed\t%s\n' "$a" >> "$RBENCH_OUT/curl.log"
+    args+=(-H "X-Rbench-Original-Url: $a" "http://127.0.0.1:${RBENCH_PORT}${a#https://"$RBENCH_REFERENCE_HOST"}")
+    continue
+  fi
   case "$a" in
-    http://*|https://*)
-      if [ "$a" = "${RBENCH_REFERENCE_URL:?RBENCH_REFERENCE_URL unset}" ]; then
-        printf 'allowed\t%s\n' "$a" >> "${RBENCH_OUT:?RBENCH_OUT unset}/curl.log"
-        args+=(-H "X-Rbench-Original-Url: $a" "http://127.0.0.1:${RBENCH_PORT:?RBENCH_PORT unset}${a#https://"$RBENCH_REFERENCE_HOST"}")
-      else
-        printf 'blocked\t%s\n' "$a" >> "${RBENCH_OUT:?RBENCH_OUT unset}/curl.log"
-        echo "rbench: curl blocked: $a is not the recorded reference URL" >&2
-        exit 7
-      fi ;;
+    *://*) block "$a" ;;
+    --config|--config=*|--next|--proxy|--proxy=*|--preproxy*|--connect-to*|--resolve*|--unix-socket*|--abstract-unix-socket*|--proto|--proto=*|--proto-redir*|--proto-default*|--doh-url*|--socks*)
+      block "$a" "is an option the sandbox does not allow" ;;
+    --*) args+=("$a") ;;
+    -*[Kx:]*) block "$a" "is an option the sandbox does not allow" ;;
     *) args+=("$a") ;;
   esac
 done
-exec "${RBENCH_CURL:?RBENCH_CURL unset}" "${args[@]}"
+args+=(--proto =http --proto-redir =http --connect-to "::127.0.0.1:${RBENCH_PORT}")
+exec "$RBENCH_CURL" "${args[@]}"

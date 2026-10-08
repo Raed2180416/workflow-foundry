@@ -752,7 +752,7 @@ test('build: this generator builds a verified Kev dataset from a frozen bed copy
 });
 
 // ---- acceptance 7: the test file fails on seeded defects ---------------------------------------------------------------------------------------------
-test('seeded defect: this file runs alone with node --test and fails on seeded defects (an indistinguishable same-name room kept)', { skip: MUTANT_RUN ? 'inside a mutant run' : false, timeout: 10 * 60 * 1000 }, () => {
+test('seeded defect: this file runs alone with node --test and fails on seeded defects (an indistinguishable same-name room kept)', { skip: MUTANT_RUN ? 'inside a mutant run' : false, timeout: 10 * 60 * 1000 }, t => {
   // the tests that need no frozen bed (a mutant copy has none)
   const pattern = '^(kit: the expectation|solve: |same-name rooms|labeller: |gate: |splits: |spans: |authored lines)';
   const mutants = [
@@ -768,5 +768,7 @@ test('seeded defect: this file runs alone with node --test and fails on seeded d
   const r = H.seededDefect({ file: TEST_FILE, pattern, mutants, env: { KEV_DATA_MUTANT_RUN: '1' } });
   assert.equal(r.control.status, 0, r.control.stdout.split('\n').filter(l => /not ok/.test(l)).join('\n'));
   assert.ok(r.control.passed.length >= 7, `${r.control.passed.length} bed-free tests passed in the control run`);
+  t.diagnostic(`control: ${r.control.passed.length} bed-free tests pass; ${r.mutants.length} mutants`);
+  for (const m of r.mutants) t.diagnostic(`mutant "${m.name}": ${m.failed.length} failing test(s) (${m.failed.map(f => f.slice(0, 40)).join(' | ')})`);
   for (const m of r.mutants) assert.ok(m.failed.length > 0 && m.status !== 0, `mutant "${m.name}" was not caught`);
 });
