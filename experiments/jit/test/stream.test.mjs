@@ -298,3 +298,60 @@ test('helpers: trace selection keeps every deopt kind, acceptance, worse-on-old-
   assert.equal(sameAnswer({ a: [1, 2] }, { a: [2, 1] }, 'unordered'), true);
   assert.equal(sameAnswer(null, null), false, 'a missing answer never votes');
 });
+
+// ---- the stream through the real interpret() and runCompiled(): stand-in CLI in each workdir, scripted gateway ----
+import { chmodSync, copyFileSync } from 'node:fs';
+import { DatabaseSync } from 'node:sqlite';
+import { sandboxAvailable } from '../../../src/executors/claude-code.mjs';
+import { loadPolicy } from '../../../src/models/policy.mjs';
+import { ModelPort } from '../../../src/models/port.mjs';
+import { Journal } from '../../../src/journal.mjs';
+import { ScriptedProvider } from '../../../src/models/providers/scripted.mjs';
+import { subsetPolicy } from '../../lib/models.mjs';
+import { interpret as realInterpret } from '../interpret.mjs';
+import { runCompiled as realRunCompiled } from '../run-compiled.mjs';
+
+test('stream with the real interpret and runCompiled: static deopt and crash fall back to the agent; costs flow from the CLI and the gateway', { skip: sandboxAvailable() ? false : 'no user namespaces' }, async t => {
+  const root = tmp(t);
+  const cli = path.join(root, 'fake-claude');
+  writeFileSync(cli, `#!/bin/sh
+cat > /dev/null
+seed=$(grep -o '"seed": [0-9]*' inputs.json | grep -o '[0-9]*$')
+printf 'print(%s)\\n' "$seed" > work.py
+printf '{"records":[{"id":%s}]}' "$seed" > answer.json
+echo '{"type":"system","subtype":"init","session_id":"s"}'
+echo '{"type":"assistant","message":{"id":"m1","content":[{"type":"tool_use","name":"Bash","input":{"command":"python3 work.py"}}]}}'
+echo '{"type":"result","subtype":"success","is_error":false,"result":"ok","total_cost_usd":0.05,"num_turns":1}'
+`); chmodSync(cli, 0o755);
+  const solve = path.join(root, 'B1-t', 'solve.mjs'); mkdirSync(path.dirname(solve));
+  writeFileSync(solve, `import { readFileSync, writeFileSync } from 'node:fs';
+import { callModel } from './tools/model.mjs';
+const task = JSON.parse(readFileSync(process.argv[2], 'utf8')), seed = task.inputs.seed;
+if (seed === 2) { writeFileSync('deopt.json', JSON.stringify({ kind: 'guard', name: 'seed-two' })); process.exit(75); }
+if (seed === 3) throw new Error('unexpected input');
+if (seed === 4) await callModel({ model: 'claude-haiku-5-5', prompt: 'x' });
+console.log(JSON.stringify({ records: [{ id: seed }] }));`);
+  const MODELS = [...POLICY_MODELS];
+  const port = new ModelPort({ policy: subsetPolicy(loadPolicy().policy, MODELS), journal: new Journal(new DatabaseSync(':memory:')),
+    providers: { 'claude-cli': new ScriptedProvider(() => ({ value: { text: 'ok' }, costUsd: 0.02 })) } });
+  const { deps } = fakeDeps({ compiled: () => null, checks: () => null });
+  Object.assign(deps, {
+    outputSchema: { type: 'object', required: ['records'], properties: { records: { type: 'array' } } },
+    score: async (f, task, output) => ({ pass: output?.records?.[0]?.id === task.seed, score: 1 }),
+    createModelPort: () => ({ port }),
+    // the real interpreter, with the stand-in CLI planted in its workdir (the sandbox shows the workdir only)
+    interpret: async a => { copyFileSync(cli, path.join(a.workdir, 'fake-claude')); chmodSync(path.join(a.workdir, 'fake-claude'), 0o755); return realInterpret({ ...a, binary: path.join(a.workdir, 'fake-claude') }); },
+    runCompiled: realRunCompiled,
+  });
+  const config = { ...CONFIG, experiment: 'live-shape', segments: [{ difficulty: 3, seeds: [1, 2, 3, 4] }], arms: ['agent:claude-haiku-5-5', `static:${solve}`], concurrency: 2, agentMinutes: 1, compiledMinutes: 1 };
+  const res = await runStream({ config, deps, runRoot: path.join(root, 'runs'), workRoot: path.join(root, 'work'), log: () => {} });
+  assert.ok(res.arms.every(a => a.errors.length === 0 && a.done === 4), JSON.stringify(res.arms));
+  const st = res.rows.filter(r => r.kind === 'static').sort((a, b) => a.idx - b.idx);
+  assert.deepEqual(st.map(r => [r.delivered, r.compiledStatus, r.pass]), [['compiled', 'ok', true], ['interpreter', 'deopt', true], ['interpreter', 'crash', true], ['compiled', 'ok', true]]);
+  assert.equal(st[1].deoptKind, 'guard');
+  close(st.reduce((s, r) => s + r.costUsd, 0), 0.02 + 2 * 0.05, 'static: one gateway call and two fallback sessions');
+  const ag = res.rows.filter(r => r.kind === 'agent');
+  assert.ok(ag.every(r => r.pass)); close(ag.reduce((s, r) => s + r.costUsd, 0), 4 * 0.05, 'agent');
+  const trace = JSON.parse(readFileSync(path.join(root, 'runs/live-shape/agent-claude-haiku-5-5/traces', `${ag[0].traceId}.json`), 'utf8'));
+  assert.deepEqual(trace.scripts.map(s => s.path), ['work.py']); assert.deepEqual(trace.commands, ['python3 work.py']);
+});
