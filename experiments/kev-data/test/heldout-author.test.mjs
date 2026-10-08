@@ -267,8 +267,9 @@ test('unit: an X5 polarity pair is admitted or rejected as one by the filter rou
   assert.ok(pend.some(u => u.label === 'holds') && pend.some(u => u.label === 'violated'));
   // both models recover every holds unit; both answer 'holds' for the violated twins of every other pair
   const victim = new Set(pend.filter(u => u.label === 'violated').filter((_, i) => i % 2 === 0).map(u => u.pairId));
+  const unitOf = new Map(); for (const u of pend) for (const r of filterRequests(u, C, { cities: [] })) unitOf.set(JSON.stringify(r.request), u);
   const provider = async ({ request }) => {
-    const u = pend.find(x => request.state.source_text && request.question.includes(x.assumption.replace(/\{S\}.*$/, '').trim()) && request.state.source_text.includes(x.text.split('{S}')[1].trim().slice(0, 25)));
+    const u = unitOf.get(JSON.stringify(request));
     if (!u) return { answer: 'not_stated' };
     return { answer: u.label === 'violated' && victim.has(u.pairId) ? 'holds' : u.label };
   };
