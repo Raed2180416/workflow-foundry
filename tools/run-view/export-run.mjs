@@ -253,6 +253,9 @@ function main() {
   if (!a.out && !a.bundle) { console.error('Need --out FILE.json and/or --bundle FILE.html'); process.exit(2); }
   const db = openReadOnly(dbFile);
   const journalDb = a.journal ? openReadOnly(a.journal) : null;
+  // One read transaction for the run header AND the event chain: a run that is still being written would otherwise show an event head newer than the header
+  // and be refused with "checkpoint head does not match" (found by reading; tests/adapter.test.mjs reproduces the race at the adapter level).
+  db.exec('BEGIN');
   const row = a.run === 'latest' ? db.prepare('SELECT body FROM runs ORDER BY rowid DESC LIMIT 1').get() : db.prepare('SELECT body FROM runs WHERE id=?').get(a.run);
   if (!row) { console.error(`No such run: ${a.run}`); process.exit(2); }
   const run = JSON.parse(row.body);
@@ -265,6 +268,7 @@ function main() {
   const label = a.label ?? (results[0] ? [results[0].experiment, results[0].arm, results[0].taskKey].filter(Boolean).join(' · ') : null);
   const data = foldRun({ db, journalDb, run, workflow, scrubber, maxPrompt: Number(a['max-prompt']),
     results, source: { ...(label ? { label } : {}), workspace: path.basename(path.resolve(a.workspace ?? path.dirname(path.dirname(dbFile)))), journal: a.journal ? path.basename(a.journal) : 'workspace', exporter: 'tools/run-view/export-run.mjs' } });
+  db.exec('COMMIT');
   if (a.hints) data.viewHints = readHints(a.hints);
   if (a.out) { writeFileSync(a.out, JSON.stringify(data), { mode: 0o600 }); chmodSync(a.out, 0o600); }
   if (a.bundle) { writeFileSync(a.bundle, bundleHtml(data), { mode: 0o600 }); chmodSync(a.bundle, 0o600); }

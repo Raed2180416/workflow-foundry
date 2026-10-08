@@ -21,6 +21,113 @@ the state colours, the transcript drawer and the security rules. They are reused
 
 ---
 
+## Implementation status (added 2026-10-08, build lane; development evidence)
+
+*Everything below was built under `tools/run-view/` only. `src/`, `web/`, `bin/`, `schemas/`, `policy/`, `skills/`, `beds/`, `experiments/` were read (imports and read-only SQLite) and not changed; nothing was committed. Load average on this machine was 15 to 22 on 4 vCPU (other agents running), so every time carries that caveat. Tags as above: **[M]** measured here, **[I]** inferred.*
+
+**What exists** (build plan steps in section 10):
+
+| Step | Built | Where |
+|---|---|---|
+| 2 store adapter, discovery, joins, scan cache | yes, with the deviations below | `store-adapter.mjs`, `index-runs.mjs` |
+| 3 deterministic facts and summary | yes (worked example reproduces from the recorded lane-6 events) | `history-core.js` (`foldFacts`, `factList`, `summarise`) |
+| 4 runs list, summary card, task matrix, static export | yes | `history.html/js/css`, `export-history.mjs`, `run-doc.mjs` |
+| 5 timeline lanes, density band, critical path, table alternative | yes; no overview brush, no replay cursor | `history-core.js` `buildLanes`, `history.js` |
+| 6 compare | yes (header diff with deltas, aligned nodes, first divergence by output hash, version diff, stacked timelines) | `history-core.js` `compareDocs` |
+| 7 messages page, drawer, in-run search | yes | `history.js` |
+| 8 live index mode (`serve.mjs --index`) | **not built** | |
+| 9 model summary | yes, CLI only; the frozen-set evaluation of section 4.3 was **not run** (3 demonstration summaries only) | `summarise.mjs` |
+| 10 screenshots | yes | `research/review-20261007/ui-history-*.png` |
+
+**Deviations from the design, and why**
+- The scan cache is one JSON file keyed by (size, mtime, WAL size) per source, not `index.sqlite`. Per-run incremental chain checks and the `labels.json` CLI are not built. [M] A rescan with nothing new costs 0.19 s (977 rows), against 2.3 to 3.1 s for a first build.
+- Three scripts (`index-runs.mjs`, `summarise.mjs`, `export-history.mjs`) instead of one `history.mjs` with subcommands.
+- `history-core.js` is a new file; `run-view.js` was not split (build step 1 skipped, no behaviour risk). `foldFacts` is a second, smaller fold of the same events; `test/summary.test.mjs` asserts it equals the viewer's reducer (calls, escalations, check failures, retries, cost to 1e-9, failed instances) on three real-runtime fixtures, and `sanitizeDisplay` is tested equal to the viewer's on a corpus, so the copies cannot drift unnoticed.
+- The history page has no "Graph" tab; the single-run graph stays in `index.html`.
+- Run data is read from SQLite tables (`events`, `workflows`, `model_calls`) through the adapter, not through `bin/foundry.mjs`: every `foundry` command opens a `Store`, which writes to the workspace. Decision H-7 (a read-only command) still stands.
+
+**Findings while building**
+1. **Opening a WAL database read-only creates files.** [M] `node:sqlite` with `readOnly: true` on a WAL store with no `-wal` (a cleanly closed store) leaves empty `-wal` and `-shm` files next to it. The adapter opens such files `immutable=1` (nothing created) and uses the plain read-only open only when WAL data exists. `test/adapter.test.mjs` asserts the directory listing and every byte are unchanged after reading.
+2. **The latent race in `export-run.mjs` is real.** [M] Reproduced deterministically at adapter level (header read, a writer commits, events read: "checkpoint head does not match the event chain"), and fixed by one read transaction around both reads in the adapter, in `run-doc.mjs` and in the `export-run.mjs` command line. Section 2.2 said "not reproduced"; it is now.
+3. **The engine already changed what `pass` means.** [M] The current `src/verdict.mjs` returns `unverified` (code `ACCEPTANCE_EXISTENCE_ONLY`) for an existence-only acceptance, where the recorded lane-6 run says `pass`. The summariser handles both: Foundry `pass` + oracle fail is a MISMATCH; `unverified` + oracle fail is "agree" with likely cause `weak_acceptance` and the text "Foundry marked this run unverified ... it did not claim success". The test fixtures needed a gating acceptance to get a `pass` from today's engine. Honesty rates must be read per engine hash.
+4. **The per-node-row store has not landed.** `src/store.mjs` still creates `runs(id, body)` (the engine lane's working-tree diff at the time adds audit sealing to it; per-node rows are not in that diff). `rows-v2` is a synthetic fixture built from the P-store description (index-only run body plus a `run_nodes` table, or header columns), and a pending test runs the REAL new `Store` and fails loudly if its shape is `unknown`; it skips with a TODO until the shape changes. If the real table or column names differ, `NODE_TABLES` and `HEADER_COLUMNS` in `store-adapter.mjs` are the only lines to change; an unrecognised shape degrades to a header derived from the event chain and says so.
+5. **The survey numbers reproduce.** [M] On today's records: 86 stores, 164 store runs, 977 index rows (164 full, 693 journal-only, 120 result-only), 19 Foundry-pass/oracle-fail runs (13 development, 6 test), as in section 0. The data is live: another lane's scratch journal copy added 139 rows for a few minutes and then vanished, so row counts move.
+
+**Measured** [M], load average 15 to 22, 4 vCPU:
+
+| What | Value |
+|---|---|
+| Index build, first (86 stores, 164 runs, 56 journals, 17 result files) | 2.3 to 3.1 s total: walk 40 to 80 ms, stores 1.6 to 1.8 s (about 10 ms per run, including chain verification), journals 0.35 to 0.85 s, results 0.15 s, join 0.1 s |
+| Index rescan with nothing new | 0.19 s (323 cached sources, 0 rescanned) |
+| Index file | 1.46 MB with local paths (977 rows, about 1.4 KB per row); 1.34 MB in the bundle |
+| Bundle build (`export-history.mjs`) | 3.7 s, of which 3.3 s embedding 140 runs (about 24 ms per run: chain check, fold, scrub, gzip) |
+| Sample bundle `samples/history/history.html` | 3,255,150 bytes, one file, no external reference; 977 rows; 140 records embedded (48 with content, 92 held-out `test` runs structure-only), 6.40 MB raw, 1.64 MB gzip + base64 |
+| Page: first render of the list (file://) | 313 ms to the first table row |
+| Page: largest embedded record (216 events, 27 calls) | 71 KB base64, 326 KB raw, 15.5 ms to decode and parse |
+| 10,000-row index (real rows cloned) | filter 0.7 to 6.6 ms, sort by cost 12.4 ms, sort by start 4.5 ms, aggregate 9 ms (targets 20 and 30 ms); the 13.8 MB file loads in 0.85 s; a 100-row page is 2,757 DOM elements |
+| A real 1000-item map run (written by the real runtime, scripted provider; 6,419 events, 829 KB run blob; took 7.1 min to write on the whole-blob store at load 20) | indexed in 0.39 s, embedded in 1.0 s (4.9 MB raw, 772 KB gzip), timeline opens in 52 ms, `buildLanes` 10.6 ms, 321 SVG elements collapsed to one density band, 623 with the first 50 items opened, zoom 39 ms |
+| Tests | `node --test 'tools/run-view/test/*.test.mjs' tools/run-view/core.test.mjs`: 77 tests, 76 pass, 1 pending (the real new store), 28 s |
+| Headless check (`headless-history.mjs`, Chromium) | 60 checks, 0 failed, 0 console errors, warnings, page errors, failed requests, dialogs or CSP violations |
+
+**Model summary, three runs** (real calls, `claude-haiku-5-5` resolved from `policy/models.json` as class M, reasoning off, `--per-run-usd 0.01 --batch-usd 0.05`; `samples/history/model-summaries.json`): total $0.0034 (0.0013, 0.0007, 0.0013), 6.5 to 9.4 s per call, 3 + 0 + 3 excerpts sent, all three schema-valid, 0 unsupported citations. [M] Cost per run matches the section 4.2 estimate ($0.001 to 0.003). What the checks caught and did not:
+- Run `b6d33a19` (the lane-6 mismatch): the model said `execution_judgment`; the deterministic class is `weak_acceptance`; the page marks it "disagrees with the records" and keeps the deterministic class. Its text also named the weak acceptance rule, so the two are compatible, but the class label is the model's own guess.
+- Run `d596401e` (C0 F-haiku codefix, mismatch, no failed node so no excerpt): the model wrote that the cost was "far above the stated $0.01 USD budget remaining". No fact says that. The post-checks verify citations, the class and oracle contradictions, **not** whether a sentence is true, so an invented detail passed. This is the reason the model summary stays off by default and is shown collapsed under "may be wrong" (decision H-3: not until section 4.3 passes).
+- Run `3ba2ee6d` (environment fault control): agrees with the deterministic `env_fault`, quotes the HTTP 429 from an excerpt, and says the facts do not show why the oracle failed.
+These are three demonstrations, not an evaluation: the 13-run frozen set and the kill criterion of section 4.3 are untouched.
+
+**Not done / open**: live mode and `foundry serve` integration (H-6, after E1); the in-page summarise button (H-4); the builder transcript (2.6 v2); the ROADMAP 2.10 exit test with the owner (needs the owner); focus was not trapped inside the drawer (fixed by the review below) and Home/End row navigation is absent; a screen-reader session was not run; reduced-motion has nothing to stop (no animation). A real new-store run of the adapter tests waits for the engine change.
+
+## Review (adversarial, 2026-10-08; development evidence)
+
+*A second lane attacked the build above and fixed what got through, inside `tools/run-view/` only (plus this section); nothing was committed. Load average 13 to 22 on 4 vCPU throughout, so times carry that caveat. **[M]** measured here.*
+
+**Method.** `tools/run-view/headless-adversarial.mjs` (new; Chromium through Playwright) puts hostile text in every index field, every run-record field (node ids, model ids, codes, kinds, prompts, replies, outputs, workflow node ids and instructions), the manifest and the model summary, adds run keys named like Object members (`__proto__`, `constructor`, `toString`), visits 19 routes, opens lanes, drawers and messages; tries malformed routes; walks the keyboard and the accessibility tree at 1360 and 390 px; computes the contrast of every visible text node against its composited background in both themes; and times 10,000 distinct synthetic rows and a synthetic 1,000-node run. Before the fixes it reported 3 checks passed, 8 failed; after, 14 of 14 pass [M]. Numbers were recomputed independently (own SQLite queries and result-line parsing, no `tools/run-view` code) for 8 rows of the real index (2 full mismatch runs, 1 full C0 run, journal-only J1 rows of P1, records-v3-dev and records-v3-review, a J2 P1 baseline, a result-only trial) and, after the fix, for all 48 B1 rows: cost, calls, verdict, status, oracle pass and score all equal [M]. Every raw Foundry-pass/oracle-fail result line (23 lines = 19 distinct trials; 4 are `dev-log.jsonl` repeats) is flagged MISMATCH, before and after; no full run had "succeeded, no verdict, oracle fail".
+
+**Defects found and fixed** (each has a regression test in `test/review.test.mjs`, R1 to R14):
+
+| # | Sev. | Defect | Evidence [M] | Fix |
+|---|---|---|---|---|
+| V1 | P1 | 48 B1 script-arm trials listed twice: a journal-only row with no oracle and a result-only row. The B1 journal run id is `${arm}:${task}:t${trial}:${uuid}` (`experiments/lib/arms/b1-script.mjs:21`), which J2 did not match | 978 rows instead of 930; the totals line counted $6.79 twice ($98.16 instead of $91.37); 48 rows wrongly "no oracle" | J2 accepts the uuid suffix and takes the trial's result line written at or after the journal's last call (nearest first, each line used once) |
+| V2 | P1 | Runs from different workspaces mixed up: (a) a trial-name join ignored the workspace (`gate-g2` and `gate-g2b` both ran experiments `gate-B0`/`gate-B1` with the same arm, task and trial); (b) 4 duplicate row keys (`trial:gate-B0:…`, `trial:gate-B1:…`): the page's key map kept one, so Open and Compare showed the other workspace's trial; (c) one trial name in two journals kept only the bigger one and silently dropped the other's calls as a "copy"; (d) a scratch journal copy (`foundry-work/heal-scratch/c0.sqlite`) won ties over `experiments/runs/c0-dev/journal.sqlite` for 97 rows; (e) J3 ignored the experiment folder; (f) result-line de-duplication by minute merged trials of different experiments, or of one experiment a second apart | before: 4 duplicate keys, 97 rows read from the scratch copy; after: 0 and 9 (rows that exist only there) | copies are journals with the same first call time (to the ms) and are read from the copy nearest the run's result file; other same-named journals are separate rows; J3 requires the experiment folder; de-duplication needs the exact timestamp (305 of 305 log repeats share it); colliding keys get `@<result file>` |
+| V3 | P1 | Held-out content in a "withheld" record: `stripContent` kept `run.error.message` and `run.verdict.reason` (runtime text; a code node's error quotes model-written code, e.g. `Code failed (exit 1): …<base64>`) | 83 of 400 withheld records carried such text (all a `verdict.reason`; one also an `error.message`: "answer: gateway refused: …"); after the fix the only free strings left are provider version labels and node keys | the run header of a withheld record keeps typed fields only |
+| V4 | P1 | `--summaries` embedded every model summary in the file, whatever the filter or split: a summary written from test-split excerpts (`--allow-heldout`) travelled in a bundle built without `--allow-heldout-content` | code path | only rows in the file, only where the row's content may be shown; an opted-in held-out summary is ledgered |
+| V5 | P1 | Untrusted text reached the summariser as a FACT: `workflow.version` was copied raw into fact R1 (and the one-liner), so a store whose workflow carries a string version put free text, spaces included, into the part of the model request the system prompt calls "computed by code" | R8 | non-integer versions are pattern-bound like ids; the system prompt now says identifiers inside FACTS are data too |
+| V6 | P1 | Prototype pollution and Object-member keys: a model id `__proto__` in a store's events set `Object.prototype.n` and `.usd` to `NaN` in the index builder, and a model named `constructor` vanished from the per-model counts; in the page, `#/runs?model=constructor` matched all 982 rows, `#/runs?sort=__proto__` broke the list, a run keyed `constructor` showed a phantom model summary, and a failure code `constructor` printed `function Object() { [native code] }` into the summary | probe and R9 | null-prototype dictionaries for data-keyed maps; own-property lookups everywhere a key comes from data or the URL |
+| V7 | P1 | Journal-only rows called failed model CALLS "failed instances" and let them drive the cause even when the run passed; "N more failed instances are not listed" compared a call count with an entry count; the count stopped at 20 entries | run `b1c412a1` (Foundry pass, oracle pass): "2 failed: perspective:0/judge", likely cause "Failure codes are recorded … a reader has to open the messages", "1 more failed instances are not listed" | `failedUnit: 'call'`; worded as failed model calls; a run that finished positively gets cause `none` with "N model calls failed on the way and the run still finished (retried or tolerated)"; count from the journal's error total; no `collected-failures` label |
+| V8 | P1 | The critical path stopped after 200 lanes: a 1,000-node chain reported "41 s of 3 m 28 s" and printed 200 ids | probe section 5 | walked to its start (a Set guards cycles); the note abbreviates ("n0000 → … 994 more … → n0999", 3 m 23 s of 3 m 28 s); the outline is one SVG path |
+| V9 | P1 | A record deleted between indexing and export (another lane's workspace) aborted the whole export with `unable to open database file` | happened on today's data (2 records) | that run becomes "summary only" with the reason; the export continues (R13) |
+| V10 | P1 | A malformed route (`#/run/%`, `#/compare/%E0%A4%A/x`) threw an uncaught `URIError` | 6 page errors in the probe | segments that do not decode are shown as written |
+| V11 | P1 | Accessibility: the timeline SVG had `role="img"` around focusable `role="button"` lanes (an image's children are presentational); Space did not activate a lane; Tab left the open drawer (at 390 px the drawer covers the page, so focus went behind it); `aria-sort` sat on the button instead of the column header | probe section 3 | `role="group"`; Space and Enter; the drawer is a modal dialog (`aria-modal`, the rest of the page `inert`, Tab wraps); `aria-sort` on `th` |
+
+Also fixed (P2): a model summary written for an earlier state of the run (its `runDigest` differs) now says so in its collapsed line; a full run whose store has no verdict takes the result line's verdict and says so (0 such rows today, but the MISMATCH flag would have been missed); a task-matrix cell that pools trials from several experiments or result files says so; the `?data=` parameter is checked by the URL parser's origin (a `\\host/x` value resolved to another host; the served page's `connect-src 'self'` already blocked it); the timeline redraws at most once per frame and only when its width changes.
+
+**Held, not defects** [M]: no element, handler, script, non-hash link or CSP violation on any of the 19 hostile routes (the page builds DOM only with `createElement`, text nodes and `setAttribute`; the data block escapes `<` and U+2028/9); contrast of every visible text node meets AA in both themes on 7 routes (palette minimum 4.65:1); 0 console errors, warnings, page errors, failed requests or dialogs after V10; `headless-history.mjs` 60 of 60.
+
+**Measured** [M] (same probe before and after; load 13 to 18):
+
+| What | Before | After |
+|---|---|---|
+| Real index rows / duplicate keys / total cost | 978 / 4 / $98.16 | 930 to 941 (live data) / 0 / $91.37 |
+| Index build, first / rescan with cache / join | 1.9 s / 0.19 s / 85 ms | 3.6 s at load 17 / 0.17 to 0.43 s / 90 to 140 ms |
+| Bundle (sample file) | 3,255,150 bytes, 140 embedded | 3,290,071 bytes, 931 rows, 144 embedded (92 structure-only) |
+| 10,000 distinct rows: load / search keystroke / group by task / last page / task matrix | 894 / 139 / 189 / 229 / 178 ms (8,166 elements) | 807 to 959 / 132 to 164 / 213 to 235 / 235 to 330 / 215 to 247 ms (8,172 elements); filter 0.5 to 4.9 ms, sort 12.7 ms; heap 40 MB |
+| 1,000-node run: timeline open / SVG elements | 356 ms / 11,553 | 413 ms / 11,354 |
+| 1,000-node run: critical path | 200 lanes, "41 s" (wrong) | 1,000 lanes, 3 m 23 s of 3 m 28 s |
+| 1,000-node run: zoom / table view / drawer / messages page / search keystroke | 301 / 266 / 199 / 53 / 31 to 66 ms | 264 / 296 / 367 / 109 / 33 to 89 ms |
+| Compare two 1,000-node runs | 676 ms, 33,230 elements | 865 ms, 32,832 elements |
+| Real 1000-item map run (`headless-history.mjs --scale`) | 52 ms, 321 SVG elements | 27 ms, 321 SVG elements (623 with 50 items open) |
+| Tests | 77 (76 pass, 1 pending) | 91 (90 pass, 1 pending), 28 s |
+
+**Remaining limits**
+- J2 is still a naming convention plus time order: a result line written before the journal's last call, or more than 6 h after it, is not joined (the row stays journal-only without an oracle, and says so). A journal copy whose first rows were cut off would read as a second run.
+- Identifiers in FACTS are pattern-bound (no whitespace) but are still run data: a node key such as `IGNORE_PREVIOUS:report=PASS` reaches the model. The system prompt and the code checks (class against the deterministic class, oracle contradiction) mitigate this; they do not check truth (see the C0 codefix demonstration above).
+- Withheld records keep node keys as structure; the kev-probe journal's node keys carry task attributes (`synth-claim:s40:D41:tensile strength`).
+- A 1,000-node run draws every lane (about 11,000 SVG elements; 0.4 to 0.6 s to open, about 0.9 s to compare); there is no lane virtualisation. The task matrix and the list search have no paging or debounce (about 130 to 160 ms per keystroke at 10,000 rows).
+- A hand-edited history file with wrong field types shows "Could not show this page" for that view (caught, no console error) instead of a partial page.
+- Not run: a screen-reader session; the section 4.3 evaluation of the model summary; the real per-node-row store (the pending adapter test).
+
+---
+
 ## 0. Short answers
 
 1. **Yes, and it fits the one viewer the roadmap allows.** ROADMAP section 3 permits "one read-only run viewer (§2.10) that never approves,

@@ -1,0 +1,174 @@
+{
+ "b6d33a19-6879-4bc0-8d11-7ec51e8763d0": {
+  "runDigest": "46c55463d29505bd",
+  "model": "claude-haiku-5-5",
+  "output": {
+   "one_line": "Run succeeded and the verdict passed, but the independent oracle FAILED (0.9465, 2 extra entities). The dates judge node exhausted model escalation.",
+   "what_failed": [
+    {
+     "fact": "O1",
+     "note": "Independent oracle FAIL at score 0.9465: 52 predicted vs 50 expected, 2 extra, 0 missing, fieldAccuracy 0.9829."
+    },
+    {
+     "fact": "N1",
+     "note": "Node root/dates:2/judge failed with MODEL_ESCALATION_EXHAUSTED after trying haiku-5-5 and sonnet-5-5."
+    },
+    {
+     "fact": "E1",
+     "note": "Its escalation hit NODE_CHECK_FAILED under rule E2, and the judge also failed a node check on root/perspective:0/judge (E2)."
+    },
+    {
+     "fact": "V1",
+     "note": "Foundry verdict was pass, but the record says a verdict does not establish completion, so it does not override the oracle FAIL."
+    },
+    {
+     "fact": "X2",
+     "note": "Check output reports 'date order unresolved' and several unreadable update and dob dates, which fits the extra entities."
+    }
+   ],
+   "likely_cause": {
+    "class": "execution_judgment",
+    "text": "The dates judge could not produce a checkable result: its output was rejected by node checks and escalation was exhausted (E1, N1). The oracle then found 2 extra entities. The check output shows unresolved date order and unparseable dates (X2). The weak acceptance rule (A1, exists-only) let the verdict pass anyway.",
+    "evidence": [
+     "O1",
+     "N1",
+     "E1",
+     "E2",
+     "X2",
+     "A1",
+     "T1"
+    ]
+   },
+   "suggested_fix": {
+    "kind": "node_check",
+    "text": "Do not treat this run as complete. Fix the dates judge's date-order handling and its node check, then rerun. Also add value-level acceptance predicates, since the current exists-only check cannot catch extra entities."
+   }
+  },
+  "checks": {
+   "unsupported": [],
+   "disagrees": true,
+   "contradicts": false,
+   "containsUrlOrEmail": false,
+   "deterministicClass": "weak_acceptance",
+   "authorityNote": "Untrusted model output: shown as text, never acted on."
+  },
+  "costUsd": 0.0013444,
+  "replayed": false,
+  "createdAt": "2026-10-08T15:13:30.813Z",
+  "journalId": 1,
+  "excerptsSent": 3
+ },
+ "d596401e-0fe0-4285-a38b-a4f816a503d7": {
+  "runDigest": "f7640ab92dbd9909",
+  "model": "claude-haiku-5-5",
+  "output": {
+   "one_line": "Run succeeded and Foundry passed it, but the independent oracle failed (score 0); acceptance only checks that values exist, so it could not catch the defect.",
+   "what_failed": [
+    {
+     "fact": "R1",
+     "note": "Run status is succeeded (1m 08s, module-defect-fixer v1, arm F-haiku, test task codefix:test:d3:s6001). Status alone does not mean the fix is correct."
+    },
+    {
+     "fact": "O1",
+     "note": "Independent oracle FAIL with score 0. This is the authoritative correctness result, and it is a failure."
+    },
+    {
+     "fact": "V1",
+     "note": "Foundry verdict was pass, but the record says a verdict does not establish completion, so the pass conflicts with the oracle result."
+    },
+    {
+     "fact": "A1",
+     "note": "Acceptance has a single exists predicate. It checks only that a value is present, not that it is correct, so it accepts a wrong fix."
+    },
+    {
+     "fact": "C1",
+     "note": "Run cost $0.3553, far above the stated $0.01 USD budget remaining. Repair ($0.2570) was the largest node cost, fix $0.0983."
+    }
+   ],
+   "likely_cause": {
+    "class": "weak_acceptance",
+    "text": "The acceptance check is a single exists predicate that only confirms a value is present (A1). It let the run pass Foundry (V1) even though the independent oracle scored it 0 (O1). The failure comes from acceptance being too weak to test correctness, not from the run's execution status (R1).",
+    "evidence": [
+     "A1",
+     "V1",
+     "O1",
+     "R1"
+    ]
+   },
+   "suggested_fix": {
+    "kind": "acceptance",
+    "text": "Add predicates that check behavior against the test oracle (for example, run the failing test or compare outputs), not just existence. Treat a Foundry pass as insufficient unless the independent oracle also passes. Also review budget enforcement, since run cost (C1) exceeded the remaining budget."
+   }
+  },
+  "checks": {
+   "unsupported": [],
+   "disagrees": false,
+   "contradicts": false,
+   "containsUrlOrEmail": false,
+   "deterministicClass": "weak_acceptance",
+   "authorityNote": "Untrusted model output: shown as text, never acted on."
+  },
+  "costUsd": 0.0007154300000000001,
+  "replayed": false,
+  "createdAt": "2026-10-08T15:13:37.359Z",
+  "journalId": 2,
+  "excerptsSent": 0
+ },
+ "3ba2ee6d-297a-4045-9fe1-7c619686e62e": {
+  "runDigest": "f67ed42349f2a38a",
+  "model": "claude-haiku-5-5",
+  "output": {
+   "one_line": "Run failed: model rate limiting (HTTP 429) on the dates fan-out cascaded into cancellations; independent oracle also FAILED (score 0).",
+   "what_failed": [
+    {
+     "fact": "R1",
+     "note": "Run 3ba2ee6d failed after 5.6 s on workflow records-v3-hand, task records:dev:d4:s110."
+    },
+    {
+     "fact": "O1",
+     "note": "Independent oracle FAIL, score 0. The run is not successful."
+    },
+    {
+     "fact": "N1",
+     "note": "Map node root/dates failed with MODEL_RATE_LIMIT."
+    },
+    {
+     "fact": "N4",
+     "note": "root/dates:2/judge hit MODEL_RATE_LIMIT (X1: HTTP 429) on haiku-4-5."
+    },
+    {
+     "fact": "N2",
+     "note": "Siblings root/dates:0 and :1 judge nodes were CANCELLED (X2), as were root/atlas_switch and 8 more instances (N+)."
+    }
+   ],
+   "likely_cause": {
+    "class": "env_fault",
+    "text": "The primary fault is provider rate limiting (429 / MODEL_RATE_LIMIT) on the dates judge calls (N1, N4, X1). Other failures are CANCELLED, which looks like downstream fallout from the failed map (N2, N3, N5, X2, X3). The facts do not show why the oracle failed. The verdict is env_fault with authority unresolved (V1), so completion is not established.",
+    "evidence": [
+     "V1",
+     "N1",
+     "N4",
+     "X1",
+     "X2"
+    ]
+   },
+   "suggested_fix": {
+    "kind": "rerun",
+    "text": "Rerun after the rate-limit window clears, or with lower concurrency or a retry/backoff on the dates judge. Separately, inspect why the oracle scored 0 and tighten acceptance: the single exists predicate (A1) would pass a value that is merely present, so it does not check correctness."
+   }
+  },
+  "checks": {
+   "unsupported": [],
+   "disagrees": false,
+   "contradicts": false,
+   "containsUrlOrEmail": false,
+   "deterministicClass": "env_fault",
+   "authorityNote": "Untrusted model output: shown as text, never acted on."
+  },
+  "costUsd": 0.0013443600000000002,
+  "replayed": false,
+  "createdAt": "2026-10-08T15:13:45.311Z",
+  "journalId": 3,
+  "excerptsSent": 3
+ }
+}

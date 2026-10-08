@@ -1,0 +1,52 @@
+{
+ "splitOverrides": [
+  {
+   "taskKey": "records:test:d3:s6001",
+   "split": "test",
+   "inspected": true,
+   "reason": "research/construction-20261006/REPORT-dev.md: the failure diagnoses inspected these test-split seeds; they are no longer held out"
+  },
+  {
+   "taskKey": "records:test:d3:s6002",
+   "split": "test",
+   "inspected": true,
+   "reason": "research/construction-20261006/REPORT-dev.md: the failure diagnoses inspected these test-split seeds; they are no longer held out"
+  },
+  {
+   "taskKey": "records:test:d3:s6003",
+   "split": "test",
+   "inspected": true,
+   "reason": "research/construction-20261006/REPORT-dev.md: the failure diagnoses inspected these test-split seeds; they are no longer held out"
+  },
+  {
+   "taskKey": "records:test:d3:s6004",
+   "split": "test",
+   "inspected": true,
+   "reason": "research/construction-20261006/REPORT-dev.md: the failure diagnoses inspected these test-split seeds; they are no longer held out"
+  },
+  {
+   "taskKey": "codefix:test:d3:s6001",
+   "split": "test",
+   "inspected": true,
+   "reason": "research/construction-20261006/REPORT-dev.md: the failure diagnoses inspected these test-split seeds; they are no longer held out"
+  },
+  {
+   "taskKey": "codefix:test:d3:s6002",
+   "split": "test",
+   "inspected": true,
+   "reason": "research/construction-20261006/REPORT-dev.md: the failure diagnoses inspected these test-split seeds; they are no longer held out"
+  },
+  {
+   "taskKey": "codefix:test:d3:s6003",
+   "split": "test",
+   "inspected": true,
+   "reason": "research/construction-20261006/REPORT-dev.md: the failure diagnoses inspected these test-split seeds; they are no longer held out"
+  },
+  {
+   "taskKey": "codefix:test:d3:s6004",
+   "split": "test",
+   "inspected": true,
+   "reason": "research/construction-20261006/REPORT-dev.md: the failure diagnoses inspected these test-split seeds; they are no longer held out"
+  }
+ ]
+}
