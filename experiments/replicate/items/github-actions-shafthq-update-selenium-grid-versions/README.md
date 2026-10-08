@@ -192,3 +192,64 @@ Built 2026-10-08 in one agent session: about **52 minutes of wall time** (09:51 
 and 3.8 K lines of generated or recorded material (68 scenario files, 1.7 K lines of YAML, 2.1 K lines of JSON: the 14 scenario descriptions, the docker probes, the controls report, the freeze). The largest parts: `scenarios.mjs` (kinds and truth, 270 lines),
 `runner.mjs` (workflow executor, 228), `miniyaml.mjs` (168), `controls/reference.mjs` (132), `oracle.mjs` (130). Roughly a third of the time went into the runner and its shims, a third into scenarios, truth and controls, a third into tests, the Foundry check and this file (estimate, not logged).
 
+
+## 11. Known limits (adversarial verification, 2026-10-08)
+
+A second agent tried to break this harness after it was built. That agent also wrote this section; everything above it is the builder's, with edits marked "verifier". Development/diagnostic evidence only: no solver arm has run on the item.
+Scratch probes are in `/var/tmp/foundry-work/replicate/verify-shaft/`, which is not committed. The probes worth keeping are in `controls/adversarial.mjs`, and the `ADVERSARIAL` test in `item.test.mjs` pins what they do.
+
+**Verdict: usable with limits.** The core judgement is sound. The edited file is compared byte for byte, and the pull-request effects go through the same stub the executed original uses. Each wrong solution of the kinds the task names failed:
+* partial work: only Chrome, or image lines only;
+* the wrong reference line: the last one;
+* a dropped pre-release rule;
+* a skipped PR, a wrong branch, or a PR with no change;
+* a swallowed failure;
+* wrong ordering in an executed workflow: the validation step moved after the PR step fails with `PR_ON_FAILURE` on the bad-reference kinds;
+* the original's defects, judged against the intent.
+
+What the verifier re-ran:
+* the full test suite;
+* the controls, in a fresh `controls/report.json`: the original passes 140/140 in original mode and 90/140 in intent mode, the port has identical effects on 140/140, the 9 broken variants fail exactly where they are broken and the equivalent one passes everywhere, all 13 bad controls are rejected, and the Foundry node passes 14/14;
+* a determinism check across processes, time zones and locales (same sha256 over 900 tasks with their truths and reference solves);
+* a check of the licence and of the vendored file's hash against `/opt/corpus` (MIT; the LICENSE is kept; byte-identical, sha256 `dff6b15a…`).
+
+**Fixed by the verifier.** Instances, task text and canonical task hashes are unchanged; `fixtures/FREEZE.json` was re-frozen with a note and a `previousFreeze` record, and `index.mjs` VERSION is now 0.1.1.
+1. *Over-specification: the PR-text order.* `oracle.mjs` `mentionsChange` required the old tag before the new tag on one line, but R5 only asks that each change is listed "with its old and its new tag". Three correct texts failed on all 246 'updated' tasks of 420 (T2):
+   * "Chrome now NEW (was OLD)";
+   * a `| Image | New | Old |` table;
+   * a heading per image with `old:`/`new:` lines.
+   The check now takes either order, in a section of up to 4 lines that starts at the image's name and ends at the next image's name. "NEW -> OLD" (an arrow or "to" pointing backwards) still fails. Tests: `oracle (verifier …): the pull-request text …` and `ADVERSARIAL`.
+2. *Over-specification: a failed plan's leftovers.* The contract tells the solver that "a plan with status failed has no effects: its files and pull request are discarded". The oracle nevertheless failed such a plan with `FAILED_WITH_EFFECTS`. That check judged the plan's content, not effects, and is removed. Leftovers are reported in `details.discardedEffects`.
+3. *Over-specification: duplicate labels.* A label listed twice failed `PR_LABELS`. A pull request's labels are a set on GitHub (an A1-class modelling assumption), so the stub `mocks/pull-requests.mjs` now dedupes.
+4. *Network sandbox hole in `mocks/bin/curl`.* The shim rewrote or blocked only arguments starting with lower-case `http://` or `https://`. A probe with a local listener showed what went to the real curl, unlogged:
+   * `127.0.0.1:PORT/x`, with no scheme;
+   * `HTTP://…`;
+   * `file:///etc/hostname`, which was read.
+   With a real host name, the first two could have reached the network wherever egress is open. The original and the builder's mutants never use these forms, so no earlier run was affected. The shim now:
+   * blocks and logs every `://` argument except the recorded URL, and the options that re-route or reset a transfer (`-K`, `--next`, `-x`, `--connect-to`, `--resolve`, `--proto`, …);
+   * appends `--proto =http --connect-to ::127.0.0.1:PORT`, so whatever is left can only reach the mock, which logs it, and the `FETCH` check rejects it.
+   Test: `curl shim (verifier …)`. It names only `.invalid` hosts and `127.0.0.1`, and contacts nothing but the local mock.
+
+**Limits that remain** (not fixed: each needs a change to the rules or the generator, so a scenarios VERSION bump that regenerates every instance, or a decision by the owner):
+* **MESSAGE is a keyword check that follows R7's wording.** One fixed message for every failure passes all 560 T2/T3 tasks (`LIMIT-catch-all-misleading-message`), even where it is false, such as for a dead connection:
+  "The reference tag is a nightly pre-release for node-chrome, node-edge, node-firefox and hub". A message that only says "reference" fails on the pre-release and missing-image kinds. The intent score for failure messages therefore measures "used the right words", not "said what is wrong". A stricter check needs a stricter R7 or a judged rubric.
+* **PR texts can be stuffed.** One line with every label and every tag passes the text checks (`LIMIT-stuffed-pr-text`). Images the run did not change are not checked, so a bogus extra claim also passes.
+* **The generator never separates "first real line" from "highest tag".** Commented reference lines are always older (2021) than the real line, and the duplicate reference line always comes second and is older. A solver can break R1 by reading commented lines and still pass 560/560 by taking the highest tag (`LIMIT-reads-commented-lines-takes-max`). Only "first line, comments included" (the original's own defect) and "last line" are caught.
+* **Rules that are never exercised in intent mode:**
+  * R7's "the edited file would not load". A solution with no validation at all passes everything, because no valid reference tag breaks the file.
+  * Downgrades. A refuse-to-downgrade policy and a blind rewrite both pass.
+  * An HTTP status that disagrees with the body. Every non-2xx answer comes with an unusable body, so ignoring the status passes.
+  * R1's trailing comment on an image line.
+* **Harness integrity depends on the arm's sandbox.** A solver with read access to this directory can rebuild the hidden truth. A lookup solver that imports `scenarios.mjs` and matches the inputs passes 420/420 with no job logic. Two things make this worse:
+  * `fixtures/scenarios/` holds the expected files for split `dev`, difficulty 5, seeds 0-13;
+  * those are exactly `run-solution.mjs`'s default seeds, and `run-solution.mjs` runs a `.mjs` solver in its own process.
+  Scored runs must execute model-written code without read access to `experiments/replicate/` and should use split `test`.
+* **T3 cost is not measured for in-process solvers.** `run-solution.mjs` passes `costUsd: 0` for every `.mjs` solver, so an arm must measure model spend itself.
+* **`runner.mjs` is a sandbox for the reviewed original and its in-memory mutants, not for untrusted workflows.** Only `curl` and `docker` are shimmed. `/usr/bin/wget`, `python3` and `nc` are on the step's PATH, and bash `/dev/tcp` works, so network isolation for anything else rests on the host's egress policy. Do not run an arm's GitHub Actions translation through it without network namespacing.
+* The builder's remaining limits:
+  * O1, `loadFamily`: `runExperiment` cannot take these tasks yet;
+  * A1, the PR stub is modelled on documentation recalled from memory;
+  * A8, every compose fixture is synthetic;
+  * the item has little judgement, so it measures replication fidelity, not judgement.
+
+Tests after verification: 47 (46 pass, 0 fail, 1 `todo` for O1), 39 s on this machine.

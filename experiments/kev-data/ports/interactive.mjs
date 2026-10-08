@@ -519,8 +519,10 @@ async function* gridquestX1(G, mod, seed, difficulty, perWorld) {
   for (let cell = 0; cell < w.n * w.n; cell++) {
     st.pos = cell;
     const observation = mod.render.observationText(w, st, W.budget, 'You go north.');
-    const o = parseObservation(observation);
-    for (const k of roomSentenceKindsOf(o.description)) {
+    const o = parseObservation(observation), kinds = roomSentenceKindsOf(o.description);
+    for (const k of kinds) {
+      // a sentence the description says twice has no single span to point at (the kit needs exactly one occurrence)
+      if (kinds.filter(x => x.sentence === k.sentence).length !== 1) { bump(G, 'x1gq:repeated-sentence'); continue; }
       if (k.kind === 'ordinary' && unit(`${G.slice}|X1gq|${seed}|${cell}|${k.sentence}`) > 0.06) continue;
       const label = k.kind === 'injection' ? 'yes' : 'no';
       cand.push({ id: `room:${cell}:${sha(k.sentence).slice(0, 8)}`, label, kind: k.kind, sentence: k.sentence, observation, slots: { observation, sentence: k.sentence }, form: formOf(k.sentence, masks) });

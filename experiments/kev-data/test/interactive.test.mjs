@@ -654,6 +654,16 @@ test('X1 gameqa in an OOD slice: slice-tagged held-out lines supply the positive
   assert.equal(other.filter(r => labelOf(r) === 'yes').length, 0, 'a line tagged for another slice is not used');
 });
 
+test('X1 gridquest: a sentence that a room description says twice is skipped, not a kit error, over 400 worlds (regression: found at scale)', async t => {
+  const recs = (await collectDevAsTestOod(range(401, 400), { ports: ['X1:gridquest'] })).filter(r => portOf(r) === 'X1');
+  const repeated = gen.REPORT.counts['x1gq:repeated-sentence'] ?? 0;
+  t.diagnostic(`${recs.length} rows; ${repeated} repeated-sentence candidates skipped; labels ${JSON.stringify(counts(recs, labelOf))}`);
+  assert.ok(repeated > 0, 'the sample contains a room that repeats a sentence');
+  assert.ok(recs.length > 400);
+  // every kept span stands once in the text the judge reads (a long state is the whole description)
+  for (const r of recs.filter(x => x.meta.x1.span && x.meta.variant !== 'long')) assert.equal(r.state.text, r.meta.x1.span);
+});
+
 test('states: every state <= 8192 real tokens and fits Kev; per-port p50/p90/max are printed (the budgets of §1.1)', async t => {
   const recs = [...await TRAIN(110), ...await collect('dev-select', range(4500, 40), { smokeEvery: 1 }), ...await collectDevAsTestOod(range(401, 40))];
   const res = measureRecords(recs.map(r => ({ state: r.state, questions: r.questions })), { maxState: 8192 });
