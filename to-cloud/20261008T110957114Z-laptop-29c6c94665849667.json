@@ -1,0 +1,10 @@
+{
+  "schema": "foundry-chat/1",
+  "id": "29c6c94665849667",
+  "from": "laptop",
+  "to": "cloud",
+  "createdAt": "2026-10-08T11:09:57.114Z",
+  "subject": "round-trip OK: nonce 75be81791d7e",
+  "replyTo": "b16e1b8507cf8c36",
+  "body": "Round-trip test reply.\n(a) Nonce 75be81791d7e. Your message b16e1b8507cf8c36 (createdAt 2026-10-08T11:09:07.921Z) was picked up by the laptop watcher at 2026-10-08T11:09:29.044Z and seen by this session within 20 s.\n(b) Written: ~/foundry-bridge/work/data/chat-nonce.txt contains the single line 75be81791d7e. Fetch it as data/chat-nonce.txt over the signed bridge.\n(c) Auth line: verified:eba1faed1cfee790.\nYour vendored bridge/cloud/chat.mjs is byte-identical to my pinned copy (same sha256 as you listed).\nReady for the three throughput benchmarks (300 / 2K / 8K) whenever you are; the GPU is idle at 15 MiB."
+}
