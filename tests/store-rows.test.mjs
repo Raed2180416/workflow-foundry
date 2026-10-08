@@ -379,13 +379,31 @@ test('atomicity: a process killed after the node rows and the event were written
   } finally { reopened.close(); }
 });
 
-test('atomicity: a checkpoint head that disagrees with the chain still refuses the append', t => {
-  const { store, run } = environment(t, chain(1));
-  store.updateRun(run.id, r => { r.steps = 1; }, { type: 'probe.one' });
-  store.db.prepare('DELETE FROM events WHERE run_id=? AND seq=2').run(run.id); // a hole in the middle: the tail is still there
-  assert.throws(() => store.updateRun(run.id, () => {}, { type: 'probe.two' }), { code: 'CORRUPT_EVENTS' });
-  store.db.prepare('DELETE FROM events WHERE run_id=? AND seq=3').run(run.id); // the tail
-  assert.throws(() => store.updateRun(run.id, () => {}, { type: 'probe.three' }), { code: 'CORRUPT_EVENTS' });
+test('atomicity: an append over evidence that is missing is refused: a gone tail at once, a hole when a Store first takes the run (or within 64 updates)', t => {
+  const started = () => { // events 1..4: the birth event and three updates
+    const made = environment(t, chain(1));
+    for (let i = 0; i < 3; i++) made.store.updateRun(made.run.id, r => { r.steps = i + 1; }, { type: `probe.${i}` }, { result: 'header' });
+    return made;
+  };
+  const touch = (store, id) => store.updateRun(id, () => {}, { type: 'probe.next' }, { result: 'header' });
+  { // the tail is gone: the checkpoint names a head the chain no longer has
+    const { store, run } = started();
+    store.db.prepare('DELETE FROM events WHERE run_id=? AND seq=4').run(run.id);
+    assert.throws(() => touch(store, run.id), { code: 'CORRUPT_EVENTS' });
+  }
+  { // a hole in the middle with the tail in place: a Store that takes the run refuses at its first update
+    const { dir, store, run } = started();
+    store.db.prepare('DELETE FROM events WHERE run_id=? AND seq=2').run(run.id); store.close();
+    const taker = new Store(dir);
+    try { assert.throws(() => touch(taker, run.id), { code: 'CORRUPT_EVENTS' }); } finally { taker.close(); }
+  }
+  { // the same hole, found by a Store that was already updating the run, within the counting interval
+    const { store, run } = started();
+    store.db.prepare('DELETE FROM events WHERE run_id=? AND seq=2').run(run.id);
+    let refusedAt = 0;
+    for (let i = 1; i <= 70 && !refusedAt; i++) { try { touch(store, run.id); } catch (error) { assert.equal(error.code, 'CORRUPT_EVENTS'); refusedAt = i; } }
+    assert.ok(refusedAt >= 1 && refusedAt <= 65, `refused at update ${refusedAt}`);
+  }
 });
 
 // ---- cost -------------------------------------------------------------------------------------------------------------------------------------

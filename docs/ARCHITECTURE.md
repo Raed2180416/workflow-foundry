@@ -89,6 +89,31 @@ concurrently. Attempts, retries, costs, deadline and nested work are durably
 accounted. Completed work is not rerun on ordinary resume. Capability/schema
 changes invalidate incompatible execution rather than silently changing meaning.
 
+## Run state
+
+A run is stored as rows (`src/run-rows.mjs`), not as one JSON blob: `runs.body` is the run
+header (status, steps, cost, event head, owner, policy, approvals, verdict ...), `run_input`
+holds the immutable input, `run_frames` one row per nested frame (a map item, a loop
+iteration) and `run_nodes` one row per node instance (state plus output). An event reads and
+writes only the rows it touches, so its cost does not grow with the run; the runtime's loop
+reads statuses, labels and outputs by key and never re-reads the whole record.
+
+- **Compare-and-swap.** Every row carries a revision; an update writes a row only if the
+  revision it read is still current (`STATE_CONFLICT` otherwise), inside the same IMMEDIATE
+  transaction as the chain event. The chain head, the owner token and the revisions are
+  independent checks.
+- **Bounds.** Each row has a byte bound (node state 1 MiB, output 2 MiB, frame 64 KiB, header
+  4 MiB, input 2 MiB), the run has a stored-size counter with a 10 MiB soft bound (no node starts
+  above it: `STATE_BUDGET`, leaving room for the failure receipt) and a 12 MiB hard bound. The
+  JSON-structure bound (200,000 nodes) now applies per row; the verdict seal still hashes the
+  whole run once at the end (`verdictInputsHash`).
+- **The record is unchanged.** `store.run(id)` returns exactly the record the whole-run store
+  returned (same fields, sorted keys, same digest), and the CLI, HTTP API, MCP tools, replay
+  keys and the event hash chain are byte-for-byte the same. A workspace written by the earlier
+  store opens as it is; its runs are split into rows by their first write, or all at once with
+  `foundry migrate-store`. Code that reads `runs.body` directly sees only the header: use
+  `store.run()`, `store.rows.*` or `tools/run-view/store-adapter.mjs`.
+
 ## Interfaces
 
 - CLI: validate, prompt, import, run/resume, inspect, request/propose/apply,

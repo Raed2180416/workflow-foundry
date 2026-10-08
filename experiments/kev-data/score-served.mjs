@@ -22,11 +22,11 @@
 // never called for anything but the file's own requests (api_request: state and typed questions only, never
 // labels, targets or metadata).
 //
-// Library: parseKevText, loadKevRecords, requestOf, questionKeys, scoreServed, describeServed, rawRead,
-// compareReads, floorAndRenormalize, servedClient, bridgeServedClient, readRows. CLI:
+// Library: parseKevText, loadKevRecords, subsetRecords, requestOf, questionKeys, scoreServed, describeServed, rawRead,
+// compareReads, floorAndRenormalize, servedClient, bridgeServedClient, readRows, permuteRead. CLI:
 //   node experiments/kev-data/score-served.mjs --data <kev.jsonl> --out <rows.jsonl> \
 //        (--url http://127.0.0.1:8008 | --bridge) [--concurrency 1] [--expect-run <run>] [--reread 20] \
-//        [--limit N] [--resume] [--timeout-ms 120000] [--repeat 2]
+//        [--limit N] [--resume] [--timeout-ms 120000] [--repeat 2] [--max-request-bytes N (default with --bridge: the daemon's limits.jsonBytes)]
 //   node experiments/kev-data/score-served.mjs --data <kev.jsonl> --out <permute.json> --permute 200 (--url ... | --bridge)
 // --repeat 2 sends every request twice in a row (the second is answered from kev.serve's prefix cache): fresh and cached latency (§6.5).
 // --permute N runs POST /v1/systemone/permute on N items and writes the flip rate (§6.4 item 4) instead of scoring.
@@ -126,6 +126,20 @@ function targetVector(q, keys) {
   const t = keys.map(k => Number(q.target[k] ?? 0));
   const s = t.reduce((a, b) => a + b, 0);
   return s > 0 ? t.map(x => x / s) : null;
+}
+
+// A fixed sample of a file: its records in the order of sha256(id), taken until their questions reach `rows` (every record
+// when the file has fewer), returned in file order. The same sample for every model that reads the file (§7.5: the 300-row
+// served re-read beside kev.benchmark's fp32 read of a file that fits the training context).
+export function subsetRecords(records, rows) {
+  if (!Number.isInteger(rows) || rows < 1) throw fail('SERVED_INPUT', 'a subset needs a positive number of rows');
+  const keep = new Set();
+  let n = 0;
+  for (const r of [...records].sort((a, b) => (sha256(a._meta.id) < sha256(b._meta.id) ? -1 : 1))) {
+    if (n >= rows) break;
+    keep.add(r); n += Object.keys(r.questions).length;
+  }
+  return records.filter(r => keep.has(r));
 }
 
 // ---- output: the served answer of one question, checked like kev.benchmark.validate_distribution --------------------
@@ -314,7 +328,8 @@ export function readRows(file, { repair = false } = {}) {
 
 export async function scoreServed({
   records, served, rowsFile = null, fetchImpl = globalThis.fetch, url = null, concurrency = 1, expectRun = null, reread = 0, resume = false,
-  retry = {}, signal = null, onProgress = null, pingRounds = 3, maxConsecutiveFailures = 8, inputFile = null, inputSha256 = null, model = SERVED_MODEL, timeoutMs = 120_000, repeat = 1
+  retry = {}, signal = null, onProgress = null, pingRounds = 3, maxConsecutiveFailures = 8, inputFile = null, inputSha256 = null, model = SERVED_MODEL, timeoutMs = 120_000, repeat = 1,
+  maxRequestBytes = null      // the bridge's limits.jsonBytes: a larger request is a counted rejection, never sent (the daemon would answer 413)
 } = {}) {
   if (!Array.isArray(records) || !records.length) throw fail('SERVED_INPUT', 'scoreServed needs records');
   if (!served) throw fail('SERVED_INPUT', 'scoreServed needs a SystemOneClient (servedClient or bridgeServedClient)');
@@ -351,6 +366,10 @@ export async function scoreServed({
 
   const ask = async record => {
     const request = requestOf(record), rq = sha256(canonical(request)).slice(0, 16);
+    if (maxRequestBytes) {
+      const bytes = Buffer.byteLength(JSON.stringify({ state: request.state, model, questions: request.questions }));
+      if (bytes > maxRequestBytes) return { rejected: `the request is ${bytes} bytes, over the bridge's ${maxRequestBytes}-byte body limit (limits.jsonBytes)`, rq };
+    }
     for (let attempt = 0; ; attempt++) {
       const t = performance.now();
       try {
@@ -423,7 +442,7 @@ export async function scoreServed({
     input: { file: inputFile, sha256: inputSha256, records: records.length, questions: questionCount },
     rows: { file: rowsFile, sha256: rowsSha, n: allRows.length },
     served: { endpoint: url ? new URL(url).origin : null, requested_model: model, identity, identity_after: after, same_model: sameModel, expected_run: expectRun === null ? null : String(expectRun) },
-    concurrency, repeat, retry: { max: maxRetries, base_ms: baseMs }, coverage,
+    concurrency, repeat, retry: { max: maxRetries, base_ms: baseMs }, max_request_bytes: maxRequestBytes, coverage,
     rejected, failed, truncated,
     reread: rereadReport,
     timing: {
@@ -448,7 +467,7 @@ function writeJsonAtomic(file, value) { const tmp = `${file}.tmp`; writeFileSync
 // ---- CLI ---------------------------------------------------------------------------------------------------------
 
 function parseArgs(argv) {
-  const o = { concurrency: 1, reread: 0, repeat: 1, permute: 0, resume: false, bridge: false, timeoutMs: 120_000 };
+  const o = { concurrency: 1, reread: 0, repeat: 1, permute: 0, resume: false, bridge: false, timeoutMs: 120_000, maxRequestBytes: 0 };
   const take = (i, name) => { if (i + 1 >= argv.length) throw fail('USAGE', `${name} needs a value`); return argv[i + 1]; };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -463,12 +482,13 @@ function parseArgs(argv) {
     else if (a === '--limit') o.limit = Number(take(i++, a));
     else if (a === '--expect-run') o.expectRun = take(i++, a);
     else if (a === '--timeout-ms') o.timeoutMs = Number(take(i++, a));
+    else if (a === '--max-request-bytes') o.maxRequestBytes = Number(take(i++, a));
     else if (a === '--resume') o.resume = true;
     else throw fail('USAGE', `unknown argument ${a}`);
   }
   if (!o.data || !o.out) throw fail('USAGE', '--data and --out are required');
   if (!!o.url === o.bridge) throw fail('USAGE', 'give exactly one of --url or --bridge');
-  for (const k of ['concurrency', 'reread', 'timeoutMs', 'repeat', 'permute']) if (!Number.isInteger(o[k]) || o[k] < 0 || (!['reread', 'permute'].includes(k) && o[k] < 1)) throw fail('USAGE', `--${k.replace(/[A-Z]/g, c => `-${c.toLowerCase()}`)} must be a positive integer`);
+  for (const k of ['concurrency', 'reread', 'timeoutMs', 'repeat', 'permute', 'maxRequestBytes']) if (!Number.isInteger(o[k]) || o[k] < 0 || (!['reread', 'permute', 'maxRequestBytes'].includes(k) && o[k] < 1)) throw fail('USAGE', `--${k.replace(/[A-Z]/g, c => `-${c.toLowerCase()}`)} must be a positive integer`);
   return o;
 }
 
@@ -477,9 +497,12 @@ async function main(argv) {
   try { o = parseArgs(argv); } catch (error) { console.error(`score-served: ${error.message}`); return 2; }
   const { records, sha256: inputSha256 } = loadKevRecords(o.data);
   const subset = o.limit ? records.slice(0, o.limit) : records;
-  let served, url, fetchImpl;
-  if (o.bridge) ({ served, url, fetchImpl } = await bridgeServedClient({ timeoutMs: o.timeoutMs }));
-  else { url = o.url.replace(/\/+$/, ''); fetchImpl = globalThis.fetch; served = servedClient({ url, fetchImpl, timeoutMs: o.timeoutMs }); }
+  let served, url, fetchImpl, maxRequestBytes = o.maxRequestBytes || null;
+  if (o.bridge) {
+    let client;
+    ({ client, served, url, fetchImpl } = await bridgeServedClient({ timeoutMs: o.timeoutMs }));
+    maxRequestBytes ??= (await client.info().catch(() => null))?.limits?.jsonBytes ?? 1024 * 1024;   // the daemon's body limit (bridge default 1 MiB)
+  } else { url = o.url.replace(/\/+$/, ''); fetchImpl = globalThis.fetch; served = servedClient({ url, fetchImpl, timeoutMs: o.timeoutMs }); }
   if (o.permute) {
     const identity = await describeServed(served);
     if (!runMatches(identity.run, o.expectRun ?? null)) throw fail('SERVED_MODEL_MISMATCH', `the service runs ${identity.run}, expected ${o.expectRun}`);
@@ -491,7 +514,7 @@ async function main(argv) {
   }
   let last = 0;
   const { report } = await scoreServed({ records: subset, served, url, fetchImpl, rowsFile: o.out, concurrency: o.concurrency, expectRun: o.expectRun ?? null, reread: o.reread, repeat: o.repeat, resume: o.resume,
-    inputFile: path.basename(o.data), inputSha256, timeoutMs: o.timeoutMs, onProgress: ({ done, total }) => { if (done - last >= 50 || done === total) { last = done; console.error(`scored ${done}/${total}`); } } });
+    inputFile: path.basename(o.data), inputSha256, timeoutMs: o.timeoutMs, maxRequestBytes, onProgress: ({ done, total }) => { if (done - last >= 50 || done === total) { last = done; console.error(`scored ${done}/${total}`); } } });
   console.log(JSON.stringify({ valid: report.valid, coverage: report.coverage, timing: { seconds_per_request: report.timing.seconds_per_request }, reread: report.reread, rows: report.rows }, null, 2));
   return report.valid ? 0 : 3;
 }

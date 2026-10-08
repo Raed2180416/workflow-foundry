@@ -78,7 +78,7 @@ const retryable = new Set(['MODEL_SCHEMA', 'MODEL_TRUNCATED']);
 // onError:"continue" and map failure:"collect" never hide an environment fault, a budget stop, a cancellation,
 // a policy violation or a harness integrity failure.
 const unhandled = new Set([...environmentFaults, ...providerFaults, 'CANCELLED', 'ABORT_ERR', 'SANDBOX_UNAVAILABLE', 'COST_BUDGET', 'STEP_BUDGET',
-  'DEADLINE', 'STATE_BUDGET', 'STALE_RUNNER', 'REPLAY_MISS', 'MODEL_PORT_REQUIRED', 'VERIFY_INDEPENDENCE', 'ASSIGNMENT_INVALID',
+  'DEADLINE', 'STATE_BUDGET', 'STATE_CONFLICT', 'STALE_RUNNER', 'REPLAY_MISS', 'MODEL_PORT_REQUIRED', 'VERIFY_INDEPENDENCE', 'ASSIGNMENT_INVALID',
   'LABEL_POLICY', 'FRAME_DRIFT', 'CORRUPT_EVENTS', 'MODEL_POLICY_DRIFT', 'JOURNAL_TAMPERED', 'APPROVAL_TAMPERED']);
 const cancelled = error => ['CANCELLED', 'ABORT_ERR'].includes(error?.code);
 // A call cut short because the run deadline, not its own timeout, set its limit is the deadline's outcome.

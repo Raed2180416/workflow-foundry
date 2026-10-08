@@ -375,6 +375,10 @@ node bin/foundry.mjs serve --workspace /tmp/fdemo --port 4177   # visual UI
 node bin/foundry.mjs verify-run RUN_ID --workspace /tmp/fdemo \
   --append-anchor /abs/path/outside/workspace/anchors.jsonl     # keep the head outside the DB
 node bin/foundry.mjs verify-run RUN_ID --workspace /tmp/fdemo --check-anchors /abs/path/anchors.jsonl
+
+# run state is per-node rows (src/run-rows.mjs); a workspace written by the earlier whole-run
+# store still opens, and its runs are split into rows by their first write or all at once:
+node bin/foundry.mjs migrate-store --workspace /tmp/fdemo
 ```
 
 Install the skills and MCP into a task project. The client can be `opencode`,

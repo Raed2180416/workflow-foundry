@@ -32,7 +32,7 @@
 // Assumptions recorded where they are made; the ones that resolve program ambiguities are listed in the header of
 // test/served-scorer-jobs.test.mjs and in the final report of the group.
 import { spawnSync } from 'node:child_process';
-import { appendFileSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readFileSync, renameSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { FoundryError } from '../../src/data.mjs';
@@ -69,11 +69,16 @@ export const GRID = Object.freeze({
   rp6: { label: 'rp6', change: { extra: { replay: 6000 } } },
   np0: { label: 'np0', change: { extra: { p_none_pair: 0 } } }
 });
+// §7.4: "400 rows at about 300 / 2K / 8K real tokens" for each J0a class (one question per record: a record is a row).
 const J0_CLASSES = Object.freeze({
   '0300': { tokens: 300, records: 400, maxSteps: 50, long: false },
   '2k': { tokens: 2000, records: 400, maxSteps: 30, long: true },
-  '8k': { tokens: 8000, records: 120, maxSteps: 10, long: true, weightsDtype: 'bf16' }
+  '8k': { tokens: 8000, records: 400, maxSteps: 10, long: true, weightsDtype: 'bf16' }
 });
+// The laptop's limits: bridge/laptop/config.mjs DEFAULTS (GET /info reports the operator's `limits`; the kev.train and
+// kev.benchmark timeouts are not reported, so the defaults stand for them). A job over one of them is refused (upload 413)
+// or killed (timeout) by the daemon, so the writers and the runner check them first. The test compares them with the bridge.
+export const LAPTOP_LIMITS = Object.freeze({ fileBytes: 256 * 1024 * 1024, jsonBytes: 1024 * 1024, trainTimeoutSeconds: 43_200, benchmarkTimeoutSeconds: 14_400, servePorts: Object.freeze([8008, 8099]) });
 export const J0_DATA = Object.freeze({
   ...J0_CLASSES,
   '0300-q4': { tokens: 300, records: 400, questions: 4 },
@@ -275,14 +280,16 @@ export const unbuiltJ0Data = () => Object.fromEntries(Object.entries(J0_DATA).ma
 
 export function j0Stages({ data = unbuiltJ0Data(), port = 8008, concurrency = [1, 4], includeJ0b = true } = {}) {
   const stages = [];
-  const up = (klass) => [fileOf(data[klass], `data/${data[klass].name}`)];
+  // content-addressed once the files are built (another plan's j0 file of the same name can never stand in for this one)
+  const remoteOf = klass => (data[klass].sha256 ? remoteName(data[klass].sha256, `j0-${klass}`) : `data/${data[klass].name}`);
+  const up = (klass) => [fileOf(data[klass], remoteOf(klass))];
   stages.push({ id: 'J0-observe-host', job: 'J0', kind: 'observe', observe: 'free-m',
     request: 'On the laptop, with kev.serve stopped and no training running, run `free -m` and save the output to observations/free-m.txt in the plan directory (the bridge has no job that reports free memory).', file: 'observations/free-m.txt', needs: [] });
   for (const [klass, def] of Object.entries(J0_CLASSES)) {
     const extra = { max_steps: def.maxSteps, seed: RECIPE.seed, suite: PINS.replaySuite, replay: 50 };
     if (def.long) { extra.row_budget = RECIPE.longRowBudget; extra.length_sort = 1; }
     if (def.weightsDtype) extra.weights_dtype = def.weightsDtype;        // the long-state probe only, never a curve point (§7.2)
-    stages.push({ id: `J0a-${klass}`, job: 'J0a', kind: 'kev.train', params: trainParams({ dataset: `data/${data[klass].name}`, maxState: 8192, extra }), files: up(klass), needs: [], budgetStep: 'J0',
+    stages.push({ id: `J0a-${klass}`, job: 'J0a', kind: 'kev.train', params: trainParams({ dataset: remoteOf(klass), maxState: 8192, extra }), files: up(klass), needs: [], budgetStep: 'J0',
       fetch: ['training_metrics.json', 'training_config.json'], accept: { kind: 'train', fileRecords: data[klass].records, replay: 50, throughputProbe: true } });
   }
   if (includeJ0b) {
@@ -290,12 +297,12 @@ export function j0Stages({ data = unbuiltJ0Data(), port = 8008, concurrency = [1
     // 50-step losses match within 1%. Both arms are run on one file, so the comparison is between arms, not between files.
     for (const [arm, sp] of [['A', 0], ['B', 1]]) {
       const extra = { max_steps: J0_CLASSES['0300'].maxSteps, seed: RECIPE.seed, suite: PINS.replaySuite, replay: 50, shared_prefix: sp };
-      stages.push({ id: `J0b-${arm}`, job: 'J0b', kind: 'kev.train', params: trainParams({ dataset: `data/${data['0300-q4'].name}`, maxState: 8192, extra }), files: up('0300-q4'), needs: [], budgetStep: 'J0',
+      stages.push({ id: `J0b-${arm}`, job: 'J0b', kind: 'kev.train', params: trainParams({ dataset: remoteOf('0300-q4'), maxState: 8192, extra }), files: up('0300-q4'), needs: [], budgetStep: 'J0',
         fetch: ['training_metrics.json', 'training_config.json'], accept: { kind: 'train', fileRecords: data['0300-q4'].records, replay: 50, throughputProbe: true } });
     }
   }
   // kernel-path probe: kev.benchmark records its kernel environment (packages, the DeltaNet forward) in report.json
-  stages.push({ id: 'J0k-kernels', job: 'J0k', kind: 'kev.benchmark', params: { run: PINS.initFrom, data: `data/${data.kernel.name}`, rotations: 1 }, files: up('kernel'), needs: [], budgetStep: 'J0',
+  stages.push({ id: 'J0k-kernels', job: 'J0k', kind: 'kev.benchmark', params: { run: PINS.initFrom, data: remoteOf('kernel'), rotations: 1 }, files: up('kernel'), needs: [], budgetStep: 'J0',
     fetch: ['report.json'], accept: { kind: 'benchmark' } });
   // J0c: stock kev.serve, then the served scorer on the 300- and 2K-token files at each concurrency; then stop
   stages.push({ id: 'J0c-serve', job: 'J0c', kind: 'kev.serve', params: { run: PINS.initFrom, port }, needs: [] });
@@ -312,7 +319,11 @@ export function j0Stages({ data = unbuiltJ0Data(), port = 8008, concurrency = [1
 // already decided (routeFile) or decided here with `router`. A unit with role 'latency' (the LAT gate, §6.5: fresh and
 // cached p50/p90 at concurrency 1) or 'permute' (§6.4 item 4: /permute flip rate on 200 items) needs the service,
 // whatever its size, and is never routed to kev.benchmark.
-export function readStages({ tag, run, reads, router = routeFile, port = 8008, concurrency = 4, expectRun = run, budgetStep = null }) {
+// §7.5: "kev.benchmark --data remains for files that fit 384 tokens entirely, where its fp32 numbers are reported beside a
+// 300-row served re-read of the same file". Every benchmark-routed read therefore gets a served companion read of a fixed
+// 300-row sample (score-served.mjs subsetRecords: records in sha256(id) order) by the same model, in the same block.
+export const COMPANION_ROWS = 300;
+export function readStages({ tag, run, reads, router = routeFile, port = 8008, concurrency = 4, expectRun = run, budgetStep = null, companionRows = COMPANION_ROWS }) {
   const stages = [], bench = [], served = [];
   for (const r of reads) {
     const route = r.role ? { route: 'served', reason: `a ${r.role} read needs the service` } : (r.route ?? router(r.file));
@@ -323,7 +334,8 @@ export function readStages({ tag, run, reads, router = routeFile, port = 8008, c
   for (const r of bench) {
     const f = pathFor(r);
     stages.push({ id: `${tag}-bench-${r.id}`, job, kind: 'kev.benchmark', params: { run, data: f.remote, rotations: 1 }, files: [f], needs: [], fetch: ['report.json', 'rows.json'],
-      accept: { kind: 'benchmark' }, budgetStep, read: { id: r.id, route: 'benchmark', reason: r.routeInfo.reason } });
+      accept: { kind: 'benchmark', expectRecords: r.records ?? null }, budgetStep, read: { id: r.id, route: 'benchmark', reason: r.routeInfo.reason } });
+    if (companionRows > 0) served.push({ ...r, role: 'companion', companionOf: `${tag}-bench-${r.id}`, routeInfo: { route: 'served', reason: `§7.5: a ${companionRows}-row served re-read beside kev.benchmark's fp32 read of the same file` } });
   }
   if (served.length) {
     const serveId = `${tag}-serve`;
@@ -331,6 +343,7 @@ export function readStages({ tag, run, reads, router = routeFile, port = 8008, c
     for (const r of served) {
       const common = { id: `${tag}-${r.role ?? 'score'}-${r.id}`, job, serve: serveId, data: r.file, dataSha256: r.sha256 ?? null, expectRun, needs: [serveId], budgetStep, read: { id: r.id, route: 'served', role: r.role ?? null, reason: r.routeInfo.reason } };
       if (r.role === 'permute') stages.push({ ...common, kind: 'permute', out: `rows/${tag}/${r.id}.permute.json`, n: r.n ?? 200, nPerm: r.nPerm ?? 6 });
+      else if (r.role === 'companion') stages.push({ ...common, kind: 'score', rows: `rows/${tag}/${r.id}.companion.jsonl`, subset: { rows: companionRows, order: 'sha256(id)' }, companionOf: r.companionOf, concurrency, repeat: 1, reread: 0 });
       else stages.push({ ...common, kind: 'score', rows: `rows/${tag}/${r.id}.jsonl`, concurrency: r.role === 'latency' ? 1 : concurrency, repeat: r.role === 'latency' ? 2 : 1, reread: r.reread ?? 0 });
     }
     stages.push({ id: `${tag}-stop`, job, kind: 'serve.stop', serve: serveId, needs: [serveId] });
@@ -349,7 +362,8 @@ export function j5Stages({ reads, candidate, ...opts }) {
 
 // J2 / J4: one training stage. `train` = {file, sha256, bytes, records (file records), rows}. `maxState` is the build's
 // job maxState (p99.9 of real state tokens, clamped to [384, 8192]).
-export function trainStage({ id, job = 'J2', train, maxState, seed = RECIPE.seed, change = {}, longStates = false, needs = [] }) {
+// `reconcile`: the stage whose measured time is held against the J0 prediction (§7.4 acceptance: "after J2 at 5K"); runPlan does it.
+export function trainStage({ id, job = 'J2', train, maxState, seed = RECIPE.seed, change = {}, longStates = false, needs = [], reconcile = false }) {
   if (!Number.isInteger(maxState)) throw fail('PLAN_MAXSTATE', 'a training stage needs the build\'s job maxState');
   const extra = { seed, suite: PINS.replaySuite, replay: RECIPE.replay, p_none_pair: RECIPE.pNonePair, lora_targets: RECIPE.loraTargets, ...(change.extra ?? {}) };
   if (longStates) { extra.row_budget = RECIPE.longRowBudget; extra.length_sort = 1; }                  // states over 2K real tokens (§7.2)
@@ -359,9 +373,9 @@ export function trainStage({ id, job = 'J2', train, maxState, seed = RECIPE.seed
   return { id, job, kind: 'kev.train', params, files: [{ local: train.file, remote: params.dataset, sha256: train.sha256 ?? null, bytes: train.bytes ?? null }], needs, budgetStep: id,
     fetch: ['training_metrics.json', 'training_config.json'],
     accept: { kind: 'train', fileRecords: train.records, replay, rows: train.rows ?? null, datasetSha256: train.sha256 ?? null, parentSha256: train.parentSha256 ?? null, epochs: params.epochs, initFrom: params.initFrom, baseRevision: PINS.baseRevision, maxState },
-    plan: { rows: train.rows ?? train.records, replay, epochs: params.epochs } };
+    plan: { rows: train.rows ?? train.records, replay, epochs: params.epochs }, ...(reconcile ? { reconcile: true } : {}) };
 }
-export const j2Stage = ({ point, seed = RECIPE.seed, train, maxState, longStates = false }) => trainStage({ id: `J2-${POINT_ROWS[point] ?? point}-s${seed}`, job: 'J2', train, maxState, seed, longStates });
+export const j2Stage = ({ point, seed = RECIPE.seed, train, maxState, longStates = false }) => trainStage({ id: `J2-${POINT_ROWS[point] ?? point}-s${seed}`, job: 'J2', train, maxState, seed, longStates, reconcile: point === '5K' && seed === RECIPE.seed });
 export const j4Stage = ({ config, train, maxState, longStates = false }) => {
   const g = GRID[config];
   if (!g) throw fail('PLAN_GRID', `unknown grid config ${config}; known: ${Object.keys(GRID).join(', ')}`);
@@ -514,6 +528,26 @@ export function checkSequence(stages, { allowBenchmarkDuringService = false } = 
   return timeline;
 }
 
+// The laptop's limits over a plan: every uploaded file within limits.fileBytes (the daemon answers 413 above it), every
+// kev.serve port in the bridge's range, and, given a cost model, every training stage's predicted hours within the bridge's
+// kev.train timeout (the daemon kills the job there: the hours are spent and nothing is saved). -> error strings.
+export function checkLaptopLimits(stages, { limits = LAPTOP_LIMITS, model = null, statFile = f => (existsSync(f) ? statSync(f).size : null) } = {}) {
+  const errors = [], lim = { ...LAPTOP_LIMITS, ...limits };
+  for (const s of stages) {
+    for (const f of s.files ?? []) {
+      const bytes = Number.isFinite(f.bytes) ? f.bytes : statFile(f.local);
+      if (bytes === null || bytes === undefined) continue;   // not built yet: runPlan checks the real size before it uploads
+      if (bytes > lim.fileBytes) errors.push(`${s.id}: ${f.remote} is ${bytes} bytes, over the bridge's upload limit of ${lim.fileBytes} (limits.fileBytes)`);
+    }
+    if (s.kind === 'kev.serve' && !(s.params?.port >= lim.servePorts[0] && s.params?.port <= lim.servePorts[1])) errors.push(`${s.id}: port ${s.params?.port} is outside the bridge's kev.serve range ${lim.servePorts.join('-')}`);
+    if (s.kind === 'kev.train' && s.plan && model) {
+      const hours = model.seconds(s.plan) / 3600;
+      if (hours > lim.trainTimeoutSeconds / 3600) errors.push(`${s.id}: predicted ${round(hours, 2)} h, over the bridge's kev.train timeout of ${lim.trainTimeoutSeconds / 3600} h (the daemon would kill it with nothing saved)`);
+    }
+  }
+  return errors;
+}
+
 export function assemblePlan(stages, { id = null, note = null } = {}) {
   const timeline = checkSequence(stages);
   const body = { schema: 'kev-data/jobs-plan@1', pins: PINS, recipe: RECIPE, stages };
@@ -593,7 +627,10 @@ function expectedArgs(kind, value, resolved, out, cfg, kevRoot) {
 }
 const sameValue = (got, want) => (typeof want === 'number' ? Number(got) === want : String(got) === String(want));
 
-export async function validateStages(stages, { python = PYTHON, kevRoot = KEV.root, device = 'cuda', argparse = true, scratch = process.env.KEV_DATA_SCRATCH ?? undefined } = {}) {
+// Also: a spec must name every parameter itself (the value the bridge validates is exactly the spec, no bridge default filled
+// in, so a changed bridge default cannot change a job), and the plan stays within the laptop's limits (checkLaptopLimits;
+// `model` adds the kev.train timeout).
+export async function validateStages(stages, { python = PYTHON, kevRoot = KEV.root, device = 'cuda', argparse = true, scratch = process.env.KEV_DATA_SCRATCH ?? undefined, limits = LAPTOP_LIMITS, model = null } = {}) {
   const [{ KINDS, validateParams, buildCommand, JobManager }, { normalizeConfig }] = await Promise.all([import('../../bridge/laptop/jobs.mjs'), import('../../bridge/laptop/config.mjs')]);
   const { mkdtempSync, mkdirSync: mk, rmSync } = await import('node:fs');
   const { tmpdir } = await import('node:os');
@@ -624,6 +661,8 @@ export async function validateStages(stages, { python = PYTHON, kevRoot = KEV.ro
       try {
         const params = resolveRefs(s.params, ids);
         const { value, resolved } = await validateParams(KINDS[s.kind].params, params, jm);
+        const filled = [...new Set([...Object.keys(value), ...Object.keys(value.extra ?? {}).map(k => `extra.${k}`)])].filter(k => (k.startsWith('extra.') ? !Object.hasOwn(params.extra ?? {}, k.slice(6)) : !Object.hasOwn(params, k)));
+        if (filled.length || canonical(value) !== canonical(params)) entry.errors.push(`bridge: the validated parameters differ from the spec${filled.length ? ` (bridge defaults filled in: ${filled.join(', ')})` : ''}`);
         const out = s.kind === 'kev.serve' ? null : path.join(workdir, 'runs', 'j-20261008-999999-abcdef');
         const built = buildCommand(s.kind, { params: value }, resolved, cfg, out);
         entry.validated = true; entry.argv = built.args.slice(2);
@@ -639,6 +678,10 @@ export async function validateStages(stages, { python = PYTHON, kevRoot = KEV.ro
         for (const [k, want] of Object.entries(c.expect)) if (!sameValue(p.args[k], want)) entry.errors.push(`kev argparse: --${k} is ${JSON.stringify(p.args[k])}, the spec asked for ${JSON.stringify(want)}`);
       }
     }
+    for (const e of checkLaptopLimits(stages, { limits, model })) {
+      const id = e.slice(0, e.indexOf(':')), entry = report.find(r => r.id === id);
+      if (entry) entry.errors.push(`limits: ${e.slice(id.length + 2)}`); else report.push({ id, kind: stages.find(s => s.id === id)?.kind ?? null, validated: false, errors: [`limits: ${e.slice(id.length + 2)}`] });
+    }
     return { ok: report.every(r => !r.errors.length), stages: report, kev: { commit: KEV.commit }, plantedRuns: ids };
   } finally { rmSync(root, { recursive: true, force: true }); }
 }
@@ -646,7 +689,7 @@ export async function validateStages(stages, { python = PYTHON, kevRoot = KEV.ro
 // ---- per-job acceptance (§7.4 "Acceptance per job" [crit G17]) --------------------------------------------------------
 
 export function parseTrainLog(text) {
-  const lines = String(text ?? '').split('\n');
+  const lines = String(text ?? '').split(/\r\n|\r|\n/);      // a progress bar's carriage return also ends a line
   const dropped = lines.filter(l => /^dropped \d+ of \d+ records that exceed the training context/.test(l));
   const req = /^(\d+) training requests\b/m.exec(text ?? '');
   const rep = /^replay: (\d+) of (\d+) suite training records mixed with (\d+) from /m.exec(text ?? '');
@@ -687,6 +730,8 @@ export function checkTrainJob({ log, config = null, metrics = null, job = null, 
   }
   if (config) {
     const a = config.args ?? {};
+    // the job read the file that was uploaded (args.data is the daemon's absolute path of data/<name>)
+    if (expect.dataset) { const got = String(a.data ?? '').replace(/\\/g, '/'); if (!got.endsWith(`/${expect.dataset}`)) errors.push(`training_config.json data is ${JSON.stringify(a.data ?? null)}, expected the uploaded ${expect.dataset}`); }
     if (config.base_revision !== (expect.baseRevision ?? PINS.baseRevision)) errors.push(`training_config.json base_revision is ${config.base_revision}, pinned ${expect.baseRevision ?? PINS.baseRevision}`);
     const init = expect.initFrom ?? PINS.initFrom;
     if (init) { const got = a.init_from ?? ''; if (!(got === init || (init.startsWith('runs/') && got.endsWith(`/${init}`)))) errors.push(`training_config.json init_from is ${JSON.stringify(got)}, expected ${init}`); }
@@ -726,29 +771,43 @@ export const benchmarkRowsToServedShape = (rows, { run = null } = {}) => rows.ma
 // runPlan() is the only code here that talks to the bridge, and only through the client it is given
 // (bridge/cloud/client.mjs BridgeClient in production, a stand-in in tests). It needs `confirm: true`: the owner (or
 // the orchestrator on the owner's behalf) decides when a plan is submitted; writing a plan never submits it.
-// Guards, on top of the plan's own sequence check: before a kev.train or kev.benchmark it asks the daemon whether a
-// service is live and refuses to queue behind it; before a kev.serve it asks the same and refuses to request a second
-// one (the daemon would answer 409 service_exists). State is kept in <dir>/state.json so a restart re-attaches to
-// a submitted job instead of submitting it again.
+// Guards, on top of the plan's own sequence check, each from GET /info before every bridge job:
+//  - the laptop's Kev checkout is the pinned commit (§7.1 "on both sides"): every spec was validated against the pinned
+//    argparse and every acceptance check reads the pinned log lines, so another commit is refused before anything is sent;
+//  - before a kev.train or kev.benchmark: no service is live (it would share the 8 GB card); never queued behind one;
+//  - before a kev.serve: no other service (the daemon would answer 409 service_exists) and no GPU job running or queued
+//    (§7.6 "no service runs during training"); its own service, after a restart, is re-attached instead;
+//  - every upload within the daemon's limits.fileBytes, every training stage's predicted hours (with a tracker) within the
+//    bridge's kev.train timeout, every served request within limits.jsonBytes (score-served counts a larger one rejected).
+// After the J2 stage marked `reconcile` (5K, seed 1) it holds the measured time against the tracker's J0 model
+// (reconcileJ2: within 20% or the schedule is recomputed, the deviation logged in <dir>/budget/j2-reconcile.jsonl).
+// State is kept in <dir>/state.json so a restart re-attaches to a submitted job instead of submitting it again; a served
+// read that is retried resumes from its rows file, so no record (a test record above all) is read twice.
 
 const TERMINAL = new Set(['succeeded', 'failed', 'cancelled', 'stopped', 'lost']);
 const isLive = j => j.class === 'service' && !TERMINAL.has(j.state);
-// GET /info lists the live services (jobs.services()); GET /jobs is {jobs, queue} and only the 50 newest, so it is the fallback.
-async function liveServices(client) {
-  const info = typeof client.info === 'function' ? await client.info() : null;
-  if (Array.isArray(info?.services)) return info.services.filter(s => !TERMINAL.has(s.state));
-  const r = await client.jobs();
-  return (Array.isArray(r) ? r : r?.jobs ?? []).filter(isLive);
+// GET /info lists the live services (jobs.services()) and the GPU queue; GET /jobs is {jobs, queue} and only the 50 newest,
+// so it is the fallback for the services when /info lists none.
+async function laptopState(client) {
+  let info = null, infoError = null;
+  try { info = await client.info(); } catch (error) { infoError = error; }
+  let services;
+  if (Array.isArray(info?.services)) services = info.services.filter(s => !TERMINAL.has(s.state));
+  else { const r = await client.jobs(); services = (Array.isArray(r) ? r : r?.jobs ?? []).filter(isLive); }
+  const q = info?.queue ?? (await client.jobs().catch(() => null))?.queue ?? null;
+  const gpu = q ? [q.running, ...(q.queued ?? [])].filter(Boolean) : [];
+  return { info, infoError, services, gpu };
 }
 const writeJson = (file, value) => { mkdirSync(path.dirname(file), { recursive: true }); const tmp = `${file}.tmp`; writeFileSync(tmp, JSON.stringify(value, null, 2) + '\n'); renameSync(tmp, file); };
 
-async function defaultScorer({ stage, dir, client, jobIds }) {
-  const { loadKevRecords, scoreServed, servedClient } = await import('./score-served.mjs');
+async function defaultScorer({ stage, dir, client, jobIds, resume = false, maxRequestBytes = null }) {
+  const { loadKevRecords, scoreServed, servedClient, subsetRecords } = await import('./score-served.mjs');
   const url = `${client.endpoint}/svc/kev`, served = servedClient({ url, fetchImpl: client.bridgeFetch });
-  const { records, sha256: digest } = loadKevRecords(path.resolve(dir, stage.data));
+  const { records: all, sha256: digest } = loadKevRecords(path.resolve(dir, stage.data));
   if (stage.dataSha256 && String(stage.dataSha256).replace(/^sha256:/, '') !== digest) throw fail('RUNNER_DATASET_SHA', `${stage.data}: sha256 ${digest} differs from the plan's ${stage.dataSha256}`);
+  const records = stage.subset ? subsetRecords(all, stage.subset.rows) : all;
   return scoreServed({ records, served, url, fetchImpl: client.bridgeFetch, rowsFile: path.join(dir, 'results', stage.rows), concurrency: stage.concurrency, expectRun: resolveRefs(stage.expectRun, jobIds),
-    reread: stage.reread ?? 0, repeat: stage.repeat ?? 1, inputFile: path.basename(stage.data), inputSha256: digest });
+    reread: stage.reread ?? 0, repeat: stage.repeat ?? 1, inputFile: path.basename(stage.data), inputSha256: digest, resume, maxRequestBytes });
 }
 // POST /v1/systemone/permute on n items of a file (§6.4 item 4); writes the flip rate to results/<stage.out>
 async function defaultPermuter({ stage, dir, client, jobIds }) {
@@ -765,7 +824,8 @@ async function defaultPermuter({ stage, dir, client, jobIds }) {
   return out;
 }
 
-export async function runPlan(plan, { client, dir, confirm = false, log = () => {}, scorer = defaultScorer, permuter = defaultPermuter, waitOpts = {}, only = null, tracker = null, continueOnReject = false, suiteSha256: expectedSuite = suiteSha256() } = {}) {
+export async function runPlan(plan, { client, dir, confirm = false, log = () => {}, scorer = defaultScorer, permuter = defaultPermuter, waitOpts = {}, only = null, tracker = null, continueOnReject = false,
+  suiteSha256: expectedSuite = suiteSha256(), kevCommit = PINS.kevCommit, limits = LAPTOP_LIMITS } = {}) {
   if (confirm !== true) throw fail('RUN_NOT_CONFIRMED', 'runPlan submits jobs to the laptop; pass confirm: true (the owner decides when a plan runs)');
   if (!client || typeof client.submitJob !== 'function') throw fail('RUN_CLIENT', 'runPlan needs a BridgeClient');
   checkSequence(plan.stages);
@@ -777,7 +837,16 @@ export async function runPlan(plan, { client, dir, confirm = false, log = () => 
   const jobIds = Object.fromEntries(Object.entries(state.stages).filter(([, s]) => s.kind === 'kev.train' && s.jobId).map(([id, s]) => [id, s.jobId]));
   const serveJobs = Object.fromEntries(Object.entries(state.stages).filter(([, s]) => s.kind === 'kev.serve' && s.jobId).map(([id, s]) => [id, s.jobId]));
   const results = {};
-  try { writeJson(path.join(dir, 'observations', 'info.json'), await client.info()); } catch (error) { log(`GET /info failed: ${error.message}`); }   // free disk, GPU, memory total, kernel-relevant versions
+  // the pinned Kev commit on the laptop (§7.1); kevCommit: null switches the check off (tests of a stand-in daemon only)
+  const checkPin = (info, infoError) => {
+    if (kevCommit === null) return;
+    if (!info || info.kevCommit !== kevCommit) throw fail('RUN_KEV_PIN', `the laptop's Kev checkout is ${info ? info.kevCommit ?? 'unknown (GET /info names no kevCommit)' : `unknown (GET /info failed: ${infoError?.message ?? 'no info'})`}; the plan is pinned to ${kevCommit} (§7.1): every spec was validated against that commit's argparse and every acceptance check reads its log lines`);
+  };
+  const first = await laptopState(client);
+  if (first.info) writeJson(path.join(dir, 'observations', 'info.json'), first.info);   // free disk, GPU, memory total, the Kev commit, the limits
+  else log(`GET /info failed: ${first.infoError?.message}`);
+  checkPin(first.info, first.infoError);
+  const lim = { ...LAPTOP_LIMITS, ...limits, ...(first.info?.limits ?? {}) };   // the operator's limits as the daemon reports them
 
   for (const stage of plan.stages) {
     if (only && !only.includes(stage.id)) continue;
@@ -795,7 +864,8 @@ export async function runPlan(plan, { client, dir, confirm = false, log = () => 
     }
 
     if (stage.kind === 'score') {
-      const { report } = await scorer({ stage, plan, dir, client, jobIds, serveJobId: serveJobs[stage.serve] });
+      st.attempts = (st.attempts ?? 0) + 1; save();
+      const { report } = await scorer({ stage, plan, dir, client, jobIds, serveJobId: serveJobs[stage.serve], resume: st.attempts > 1, maxRequestBytes: lim.jsonBytes });
       const verdict = { valid: report.valid, coverage: report.coverage, seconds_per_request: report.timing?.seconds_per_request ?? null, rows: report.rows?.file ?? null };
       if (!report.valid) { mark('invalid', { verdict }); throw fail('RUN_SCORE_INVALID', `${stage.id}: the served read is invalid (${JSON.stringify(report.coverage)})`, { verdict }); }
       mark('done', { endedAt: new Date().toISOString(), verdict });
@@ -819,15 +889,25 @@ export async function runPlan(plan, { client, dir, confirm = false, log = () => 
       continue;
     }
 
-    // a bridge job. Never queue behind a service, never ask for a second one.
-    const live = await liveServices(client);
-    if (stage.kind === 'kev.serve' && live.length) { mark('refused'); throw fail('RUN_SERVICE_EXISTS', `${stage.id}: ${live[0].kind} ${live[0].id} is running; refusing to request a second service`); }
-    if (stage.kind !== 'kev.serve' && live.length) { mark('refused'); throw fail('RUN_SERVICE_LIVE', `${stage.id}: ${live[0].kind} ${live[0].id} is running; refusing to queue a ${stage.kind} behind it`); }
+    // a bridge job. The pinned Kev, never queued behind a service, never a second one, never a service beside a GPU job.
+    const now = await laptopState(client);
+    checkPin(now.info, now.infoError);
+    const own = st.jobId ? now.services.find(s => s.id === st.jobId) : null;            // a restart: this stage's own service
+    const others = now.services.filter(s => s !== own);
+    if (stage.kind === 'kev.serve' && others.length) { mark('refused'); throw fail('RUN_SERVICE_EXISTS', `${stage.id}: ${others[0].kind} ${others[0].id} is running; refusing to request a second service`); }
+    if (stage.kind === 'kev.serve' && !own && now.gpu.length) { mark('refused'); throw fail('RUN_GPU_BUSY', `${stage.id}: GPU job ${now.gpu[0]} is running or queued; a service is never started beside training (§7.6)`); }
+    if (stage.kind !== 'kev.serve' && others.length) { mark('refused'); throw fail('RUN_SERVICE_LIVE', `${stage.id}: ${others[0].kind} ${others[0].id} is running; refusing to queue a ${stage.kind} behind it`); }
+    if (!st.jobId) {
+      const model = tracker?.model?.() ?? null;
+      const over = checkLaptopLimits([stage], { limits: lim, model, statFile: f => statSync(path.resolve(dir, f)).size });
+      if (over.length) { mark('refused', { error: over.join('; ') }); throw fail('RUN_LIMIT', over.join('; ')); }
+    }
 
     const uploadedShas = [];
     for (const f of stage.files ?? []) {
       const local = path.resolve(dir, f.local), body = readFileSync(local), digest = sha256(body);
       if (f.sha256 && String(f.sha256).replace(/^sha256:/, '') !== digest) throw fail('RUNNER_DATASET_SHA', `${f.local}: sha256 ${digest} differs from the plan's ${f.sha256}`);
+      if (body.length > lim.fileBytes) { mark('refused'); throw fail('RUN_LIMIT', `${stage.id}: ${f.remote} is ${body.length} bytes, over the daemon's limits.fileBytes ${lim.fileBytes}`); }
       if (state.uploaded[f.remote] !== digest) { const up = await client.upload(local, f.remote, { overwrite: true }); if (up.sha256 !== digest) throw fail('RUNNER_UPLOAD', `${f.remote}: the daemon stored sha256 ${up.sha256}, expected ${digest}`); state.uploaded[f.remote] = digest; save(); }
       uploadedShas.push(digest);
     }
@@ -850,12 +930,14 @@ export async function runPlan(plan, { client, dir, confirm = false, log = () => 
     if (end.state !== 'succeeded') { mark('failed', { error: end.error ?? end.state }); throw fail('RUN_JOB_FAILED', `${stage.id}: ${end.state} (${end.error ?? 'no error'})`, { tail: text.slice(-1500) }); }
     const fetched = {};
     for (const name of stage.fetch ?? []) { const dest = path.join(out, name); await client.download(`runs/${id}/${name}`, dest); fetched[name] = dest; }
-    let acceptance = { ok: true, errors: [] };
+    const read = n => (fetched[n] ? JSON.parse(readFileSync(fetched[n], 'utf8')) : null);
+    let acceptance = { ok: true, errors: [] }, metrics = null;
     if (stage.accept?.kind === 'train') {
-      const read = n => (fetched[n] ? JSON.parse(readFileSync(fetched[n], 'utf8')) : null);
-      acceptance = checkTrainJob({ log: text, config: read('training_config.json'), metrics: read('training_metrics.json'), job: end, expect: { ...stage.accept, jobId: id, uploadedSha256: uploadedShas[0], manifestSha256: stage.accept.datasetSha256, ...(stage.params.extra?.suite && expectedSuite ? { suiteSha256: expectedSuite } : {}) } });
+      metrics = read('training_metrics.json');
+      // the dataset: the bytes uploaded are the plan's (checked above, and the daemon's stored sha), and the job read that upload
+      acceptance = checkTrainJob({ log: text, config: read('training_config.json'), metrics, job: end, expect: { ...stage.accept, jobId: id, uploadedSha256: uploadedShas[0], dataset: params.dataset, ...(stage.params.extra?.suite && expectedSuite ? { suiteSha256: expectedSuite } : {}) } });
     } else if (stage.accept?.kind === 'benchmark') {
-      acceptance = checkBenchmarkReport(JSON.parse(readFileSync(fetched['report.json'], 'utf8')));
+      acceptance = checkBenchmarkReport(read('report.json'), { expectRecords: stage.accept.expectRecords ?? null });
     }
     if (!acceptance.ok) {
       mark('rejected', { acceptance });
@@ -863,6 +945,16 @@ export async function runPlan(plan, { client, dir, confirm = false, log = () => 
     } else mark('done', { endedAt: new Date().toISOString(), acceptance });
     const hours = end.startedAt && end.endedAt ? (Date.parse(end.endedAt) - Date.parse(end.startedAt)) / 3.6e6 : null;
     if (hours !== null) tracker?.record(stage.budgetStep ?? stage.id, hours);
+    // §7.4 acceptance: after J2 at 5K, the measured time against the J0 prediction (within 20%, or recompute and log)
+    const model = tracker?.model?.() ?? null;
+    if (stage.reconcile && acceptance.ok && model && metrics?.wall_seconds > 0) {
+      const { model: _m, rate: _r, ...scheduleOpts } = tracker.opts;
+      const r = reconcileJ2({ model, rows: stage.plan.rows, replay: stage.plan.replay, epochs: stage.plan.epochs, measured: { wallSeconds: metrics.wall_seconds, forwardTokens: metrics.forward_tokens ?? null },
+        logFile: path.join(dir, 'budget', 'j2-reconcile.jsonl'), schedule: { ...scheduleOpts, completed: tracker.completed } });
+      mark(st.status, { reconcile: r.entry });
+      if (!r.within) tracker.update({ model: r.model });
+      log(`${stage.id}: measured ${r.entry.measured_seconds} s against the J0 prediction ${r.entry.predicted_seconds} s (${r.entry.action})`);
+    }
     results[stage.id] = state.stages[stage.id];
   }
   return { state, results };
@@ -1091,8 +1183,10 @@ function planItems({ reduced, triggered40K, finalRows }) {
 // -> the schedule: the plan chosen by the measured rate, the items in priority order with their hours, J5 reserved first,
 // and everything that does not fit cut from the bottom (strict priority: the first item that does not fit and every
 // item after it are cut, a later small item is never slipped in). `completed` {stepId: actual hours} replaces estimates.
+// A training step the model prices over the bridge's kev.train timeout cannot finish on the laptop (the daemon kills it with
+// nothing saved), so its item is cut like an item that does not fit, and listed in over_timeout.
 export function buildSchedule({ model = null, rate = null, secondsPerRequest = BUDGET.secondsPerRequestDefault, budgetHours = BUDGET.hours, triggered40K = false, finalRows = POINT_ROWS['20K'],
-  completed = {}, forcePlan = null, floor = BUDGET.rateFloor, j0Hours: j0 = BUDGET.j0Hours } = {}) {
+  completed = {}, forcePlan = null, floor = BUDGET.rateFloor, j0Hours: j0 = BUDGET.j0Hours, trainTimeoutHours = LAPTOP_LIMITS.trainTimeoutSeconds / 3600 } = {}) {
   const m = model ?? (rate ? costModel({ rate }) : null);
   if (!m) throw fail('SCHEDULE_MODEL', 'buildSchedule needs a cost model (analyzeJ0) or a rate');
   const measuredRate = rateAt(m), plan = forcePlan ?? (measuredRate < floor ? 'reduced' : 'full'), reduced = plan === 'reduced';
@@ -1107,13 +1201,17 @@ export function buildSchedule({ model = null, rate = null, secondsPerRequest = B
   const spent = Object.values(completed).reduce((a, b) => a + b, 0);
   const available = budgetHours - spent - j5Hours;
   let cum = 0, cutFrom = null;
+  const overTimeout = [];
   const items = planItems({ reduced, triggered40K, finalRows }).map((item, i) => {
     const steps = item.steps.map(s => ({ id: s.id, kind: s.kind, ...hoursOf(s) }));
+    const tooLong = steps.filter(s => s.kind === 'train' && !s.done && s.hours > trainTimeoutHours + 1e-9);
+    overTimeout.push(...tooLong.map(s => ({ item: item.id, step: s.id, hours: round(s.hours, 3) })));
     const hours = steps.reduce((a, s) => a + s.hours, 0), trainHours = steps.filter(s => s.kind === 'train').reduce((a, s) => a + s.hours, 0);
     const tokens = steps.reduce((a, s) => a + (s.tokens ?? 0), 0), reads = steps.filter(s => s.reads && !s.done).length;
     let status;
     if (hours === 0 && steps.every(s => s.done)) status = 'done';
     else if (cutFrom) status = 'cut';
+    else if (tooLong.length) { status = 'cut'; cutFrom = item.id; }
     else if (i === 0 || cum + hours <= available + 1e-9) { status = 'scheduled'; cum += hours; }
     else { status = 'cut'; cutFrom = item.id; }
     const readHours = steps.filter(s => s.kind === 'read').reduce((a, s) => a + s.hours, 0);
@@ -1125,7 +1223,7 @@ export function buildSchedule({ model = null, rate = null, secondsPerRequest = B
   return {
     plan, switched: reduced, rule: `reduced below ${floor} tokens/s`, rate: { tokens_per_second: round(measuredRate, 1), reference: '5K point mix', model: m.kind, scale: m.scale ?? 1 },
     budget_hours: budgetHours, spent_hours: round(spent, 3), reserved_j5_hours: round(j5Hours, 3), available_hours: round(available, 3), items, scheduled_hours: round(scheduled.reduce((a, i) => a + i.hours, 0) + spent, 3),
-    cut_from: cutFrom, over_budget: scheduled.reduce((a, i) => a + i.hours, 0) + spent > budgetHours + 1e-9, training_tokens_p2_p4: programmeTokens, seconds_per_request: secondsPerRequest,
+    cut_from: cutFrom, train_timeout_hours: trainTimeoutHours, over_timeout: overTimeout, over_budget: scheduled.reduce((a, i) => a + i.hours, 0) + spent > budgetHours + 1e-9, training_tokens_p2_p4: programmeTokens, seconds_per_request: secondsPerRequest,
     longest_training_hours: round(Math.max(...items.flatMap(i => i.steps).filter(s => s.kind === 'train').map(s => s.hours), 0), 3),
     points: Object.entries(POINT_ROWS).map(([point, rows]) => {
       const tokens = rows * TOKEN_MODEL.perRow + RECIPE.replay * TOKEN_MODEL.perReplay, hours = m.seconds({ rows, replay: RECIPE.replay }) / 3600;
@@ -1142,6 +1240,7 @@ export function renderScheduleTable(s) {
   lines.push('', `Budget ${s.budget_hours} h (spent ${s.spent_hours} h, J5 reserved ${s.reserved_j5_hours} h, available ${s.available_hours} h)`, '', '| Priority | Item | Status | Hours | Training tokens | Point reads |', '|---|---|---|---|---|---|');
   for (const i of s.items) lines.push(`| ${i.priority} | ${i.name} | ${i.status} | ${i.hours} | ${i.tokens ? `${(i.tokens / 1e6).toFixed(1)}M` : '-'} | ${i.reads || '-'} |`);
   lines.push('', `Scheduled ${s.scheduled_hours} h of ${s.budget_hours} h${s.cut_from ? `; cut from ${s.cut_from}` : ''}${s.over_budget ? '; OVER BUDGET' : ''}.`);
+  if (s.over_timeout?.length) lines.push('', `Over the bridge's kev.train timeout (${s.train_timeout_hours} h), so cut: ${s.over_timeout.map(o => `${o.step} ${fmtH(o.hours)}`).join(', ')}.`);
   return lines.join('\n');
 }
 
@@ -1154,6 +1253,8 @@ export class BudgetTracker {
   // a new measured model, served rate or trigger: the remaining steps are re-priced, and a switch of plan is logged
   update(opts) { const before = this.schedule().plan; Object.assign(this.opts, opts); const after = this.schedule().plan; this.#log({ type: 'model', plan_before: before, plan_after: after }); if (before !== after) this.#log({ type: 'switch', from: before, to: after }); return after; }
   schedule() { return buildSchedule({ ...this.opts, completed: this.completed }); }
+  // the cost model the schedule prices with (runPlan: the kev.train timeout check and the J2 reconciliation)
+  model() { return this.opts.model ?? (this.opts.rate ? costModel({ rate: this.opts.rate }) : null); }
   get usedHours() { return Object.values(this.completed).reduce((a, b) => a + b, 0); }
 }
 
@@ -1176,6 +1277,11 @@ export function reconcileJ2({ model, point = '5K', rows = POINT_ROWS[point], rep
   return out;
 }
 
+// The cost model of a J0 report (analyzeJ0): the two-parameter fit when it was accepted, the measured classes otherwise.
+export function modelFromJ0Report(report) {
+  return costModel({ fit: report?.fit?.ok ? report.fit : null, perClass: Object.values(report?.jobs ?? {}).map(j => ({ secondsPerRecord: j.seconds_per_record, tokensPerRecord: j.tokens_per_record })) });
+}
+
 // ---- CLI ---------------------------------------------------------------------------------------------------------------
 //   data --out <dir> [--only 0300,2k]       build the J0 throughput files (pinned tokenizer, one Python process per pass)
 //   plan-j0 --data <dir> --out <plan.json>  write the J0 plan (validated: sequence only)
@@ -1186,7 +1292,10 @@ export function reconcileJ2({ model, point = '5K', rows = POINT_ROWS[point], rep
 //   report-j0 <run dir>                     the J0 report and the regenerated schedule
 //   schedule [--rate N | --report <j0 report.json>] [--seconds-per-request s] [--budget h] [--40k]
 //   check-train --log f [--config f] [--metrics f] --records N [--replay M]
-//   submit --plan <plan.json> --dir <dir> --confirm-submit   (the only command that talks to the laptop)
+//   reconcile-j2 --report <j0-report.json> --metrics <J2 5K training_metrics.json> [--rows 5000] [--replay 2000] [--log f]
+//   submit --plan <plan.json> --dir <dir> [--j0-report <j0-report.json>] --confirm-submit   (the only command that talks to the laptop;
+//          with a J0 report the budget is tracked in <dir>/budget/budget.jsonl, training stages are held to the bridge's
+//          timeout and J2 at 5K is reconciled against the J0 prediction)
 function cliArgs(argv) {
   const o = { _: [] };
   for (let i = 0; i < argv.length; i++) {
@@ -1234,7 +1343,7 @@ async function cli(argv) {
     }
     case 'schedule': {
       let model, sReq = o['seconds-per-request'] ? Number(o['seconds-per-request']) : undefined;
-      if (o.report) { const r = JSON.parse(readFileSync(String(o.report), 'utf8')); model = costModel({ fit: r.fit?.ok ? r.fit : null, perClass: Object.values(r.jobs).map(j => ({ secondsPerRecord: j.seconds_per_record, tokensPerRecord: j.tokens_per_record })) }); sReq ??= r.served?.seconds_per_request_at_reference ?? undefined; }
+      if (o.report) { const r = JSON.parse(readFileSync(String(o.report), 'utf8')); model = modelFromJ0Report(r); sReq ??= r.served?.seconds_per_request_at_reference ?? undefined; }
       else if (o.rate) model = costModel({ rate: Number(o.rate) });
       else throw fail('USAGE', 'give --rate tokens-per-second or --report <j0-report.json>');
       const s = buildSchedule({ model, secondsPerRequest: sReq, budgetHours: o.budget ? Number(o.budget) : BUDGET.hours, triggered40K: !!o['40k'] });
@@ -1245,15 +1354,28 @@ async function cli(argv) {
       const r = checkTrainJob({ log: read('log') ?? '', config: read('config') ? JSON.parse(read('config')) : null, metrics: read('metrics') ? JSON.parse(read('metrics')) : null, expect: { fileRecords: Number(o.records), replay: Number(o.replay ?? 0), maxState: o['max-state'] ? Number(o['max-state']) : undefined } });
       out(r); return r.ok ? 0 : 3;
     }
+    case 'reconcile-j2': {
+      if (!o.report || !o.metrics) throw fail('USAGE', '--report <j0-report.json> and --metrics <training_metrics.json> are required');
+      const report = JSON.parse(readFileSync(String(o.report), 'utf8')), metrics = JSON.parse(readFileSync(String(o.metrics), 'utf8'));
+      const r = reconcileJ2({ model: modelFromJ0Report(report), rows: o.rows ? Number(o.rows) : POINT_ROWS['5K'], replay: o.replay ? Number(o.replay) : RECIPE.replay,
+        measured: { wallSeconds: metrics.wall_seconds, forwardTokens: metrics.forward_tokens ?? null }, logFile: o.log ? String(o.log) : null });
+      out(r.entry); if (r.schedule) out(renderScheduleTable(r.schedule)); return 0;
+    }
     case 'submit': {
       if (o['confirm-submit'] !== true) throw fail('USAGE', 'submit talks to the laptop bridge; add --confirm-submit (the owner decides when a plan runs)');
+      if (!o.plan || !o.dir) throw fail('USAGE', '--plan <plan.json> and --dir <dir> are required');
+      const plan = JSON.parse(readFileSync(String(o.plan), 'utf8')), dir = path.resolve(String(o.dir));
+      let tracker = null;
+      if (o['j0-report']) {
+        const report = JSON.parse(readFileSync(String(o['j0-report']), 'utf8'));
+        tracker = new BudgetTracker({ file: path.join(dir, 'budget', 'budget.jsonl'), model: modelFromJ0Report(report), secondsPerRequest: report.served?.seconds_per_request_at_reference ?? undefined });
+      }
       const { connect } = await import('../../bridge/cloud/client.mjs');
       const { client } = await connect();
-      const plan = JSON.parse(readFileSync(String(o.plan), 'utf8'));
-      const r = await runPlan(plan, { client, dir: path.resolve(String(o.dir)), confirm: true, log: m => console.error(m) });
+      const r = await runPlan(plan, { client, dir, confirm: true, tracker, log: m => console.error(m) });
       out({ stages: Object.fromEntries(Object.entries(r.state.stages).map(([k, v]) => [k, v.status])) }); return 0;
     }
-    default: console.error('usage: jobs.mjs data|plan-j0|validate|route|report-j0|schedule|check-train|submit ...'); return 2;
+    default: console.error('usage: jobs.mjs data|plan-j0|plan-curve|plan-final|validate|route|report-j0|schedule|check-train|reconcile-j2|submit ...'); return 2;
   }
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

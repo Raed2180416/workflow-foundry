@@ -1,7 +1,8 @@
-// The store adapter reads the run header in three shapes (blob-v1 today, rows-v2 from the per-node-row design, unknown) and always agrees with the event chain.
+// The store adapter reads the run header in three shapes (blob-v1, the earlier whole-run store; rows-v2, the per-node-row store; unknown) and always agrees with the event chain.
 //   node --test tools/run-view/test/adapter.test.mjs
-// blob-v1 is written by today's real Store. rows-v2 is a SYNTHETIC fixture built from the design (the engine change has not landed in src/store.mjs): when it does, the
-// last test runs the REAL new store and fails loudly if its shape is not recognised. Development evidence only.
+// The real Store writes rows-v2 (src/run-rows.mjs). blob-v1 is derived from what it writes (toBlobV1: the whole record back in runs.body), which the Store still reads; the
+// other rows-v2 shapes are SYNTHETIC variants built from it (an index-only body, header columns). The last test runs the REAL store and fails loudly if its shape is not
+// recognised. Development evidence only.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
@@ -9,14 +10,16 @@ import { readdirSync, copyFileSync, mkdirSync, writeFileSync, readFileSync } fro
 import path from 'node:path';
 import { Store } from '../../../src/store.mjs';
 import { StoreReader, NODE_TABLES } from '../store-adapter.mjs';
-import { tempDir, writeRun, storeFile, finished, nested, toRowsV2, treeDigest } from './fixtures.mjs';
+import { tempDir, writeRun, storeFile, finished, nested, toBlobV1, toRowsV2, treeDigest } from './fixtures.mjs';
 await import('../run-view.js');
 await import('../history-core.js');
 const C = globalThis.RunViewCore, H = globalThis.HistoryCore;
 
 const near = (a, b) => Math.abs(a - b) < 1e-9;
+// A workspace in the earlier whole-run store's shape (the source the synthetic variants are built from).
 async function fixture(t, build = nested) {
   const ws = tempDir(t), spec = build(), written = await writeRun(ws, spec.workflow, spec);
+  toBlobV1(ws);
   return { ws, ...written };
 }
 // The header read through the adapter must equal what the event chain says (status, workflow hash, cost to 1e-9, event head).
@@ -43,7 +46,7 @@ function assertAgreesWithEvents(reader, runId, { expectShape, expectSource }) {
   });
 }
 
-test('blob-v1: a store written by today\'s real Store is recognised and its header agrees with the event chain', async t => {
+test('blob-v1: a store written by the earlier whole-run store is recognised and its header agrees with the event chain', async t => {
   const { ws, runId } = await fixture(t);
   const reader = StoreReader.open(storeFile(ws));
   t.after(() => reader.close());
@@ -149,18 +152,19 @@ test('a workflow body that does not match its hash is never used', async t => {
   assert.match(w.reason, /does not match its hash/);
 });
 
-test('PENDING until the engine change lands: the REAL new Store must be recognised (a shape change fails loudly instead of degrading silently)', async t => {
-  // TODO(engine stage-1): when src/store.mjs writes per-node rows, this test starts running by itself. Until then the current store is blob-v1 and the test is skipped.
-  const ws = tempDir(t), store = new Store(ws);
-  const spec = nested(); store.saveWorkflow(spec.workflow);
-  const run = store.createRun(store.workflow(spec.workflow.id).hash, {}, 'r', { maxCost: 1, maxDurationMs: 60000, maxSteps: 100, maxConcurrency: 2 });
+test('the REAL Store (per-node rows) is recognised as rows-v2: its header agrees with the event chain and its node rows with the reducer', async t => {
+  const ws = tempDir(t), spec = nested(), { runId } = await writeRun(ws, spec.workflow, spec);
+  const reader = StoreReader.open(storeFile(ws)); t.after(() => reader.close());
+  assert.notEqual(reader.shape, 'unknown', `the Store's layout is not recognised (tables: ${[...reader.tables]}): update NODE_TABLES / HEADER_COLUMNS in store-adapter.mjs`);
+  assertAgreesWithEvents(reader, runId, { expectShape: 'rows-v2', expectSource: 'blob' });
+  assert.equal(reader.nodeTable, 'run_nodes');
+  assert.deepEqual(reader.runIds(), [runId]);
+  // A run another process is still writing: header and chain come from one snapshot, so they agree after every event.
+  const store = new Store(ws), run = store.createRun(store.workflow(spec.workflow.id).hash, {}, 'r', { maxCost: 1, maxDurationMs: 60000, maxSteps: 100, maxConcurrency: 2 });
   store.updateRun(run.id, r => { r.status = 'running'; }, { type: 'runner.acquired' });
   store.close();
-  const reader = StoreReader.open(storeFile(ws)); t.after(() => reader.close());
-  if (reader.shape === 'blob-v1') return t.skip('PENDING: src/store.mjs still writes runs(id, body) with the whole-run blob; the engine stage-1 store has not landed');
-  assert.notEqual(reader.shape, 'unknown', `the new Store's layout is not recognised (tables: ${[...reader.tables]}): update NODE_TABLES / HEADER_COLUMNS in store-adapter.mjs`);
-  assert.equal(reader.shape, 'rows-v2');
-  const header = reader.snapshot(() => reader.header(run.id));
+  const live = StoreReader.open(storeFile(ws)); t.after(() => live.close());
+  const header = live.snapshot(() => live.header(run.id));
   assert.equal(header.workflowHash, run.workflowHash);
-  assert.ok(reader.snapshot(() => reader.events(run.id, { header })).ok);
+  assert.ok(live.snapshot(() => live.events(run.id, { header })).ok);
 });

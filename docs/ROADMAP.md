@@ -269,7 +269,9 @@ not whether the IR gets it. Stages S0–S7 and their effort:
 - **Runtime debts to pay alongside this work:**
   - per-node journal rows instead of rewriting the whole run blob (`src/store.mjs`). It is
     measured: a 1,000-item map adds 73–135 s of pure overhead. It lands in the first engine
-    bump, before any composition or swarm feature;
+    bump, before any composition or swarm feature. *Landed 2026-10-08 (engine bump): the run is
+    a header plus per-node rows with a compare-and-swap revision per row (`src/run-rows.mjs`,
+    ARCHITECTURE "Run state"); a 1,000-item map costs about 3–6 CPU-seconds, flat per node;*
   - a timers table plus a wake scheduler, via `foundry serve` and a `foundry tick` cron
     entry;
   - epoch compaction for long runs.

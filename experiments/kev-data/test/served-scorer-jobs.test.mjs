@@ -589,8 +589,8 @@ test('unit: J2 reconciliation: within 20% of the J0 prediction, or the schedule 
 const GPU = new Set(['kev.train', 'kev.benchmark']);
 class FakeBridge {
   endpoint = 'https://fake-laptop.invalid';
-  constructor({ liveService = null, dropLine = false, poolSize = 3000, rejectContext = false, benchmarkRejected = 0 } = {}) {
-    Object.assign(this, { dropLine, poolSize, rejectContext, benchmarkRejected });
+  constructor({ liveService = null, dropLine = false, poolSize = 3000, rejectContext = false, benchmarkRejected = 0, kevCommit = KEV.commit, busyGpu = null, limits = null, wallSeconds = 100, readOther = false } = {}) {
+    Object.assign(this, { dropLine, poolSize, rejectContext, benchmarkRejected, kevCommit, busyGpu, limits, wallSeconds, readOther });
     this.files = new Map(); this.jobsById = new Map(); this.submitted = []; this.violations = []; this.uploads = []; this.cancelled = []; this.maxLive = 0; this.n = 0;
     this.bridgeFetch = this.bridgeFetch.bind(this);
     if (liveService) this.#add({ kind: 'kev.serve', class: 'service', state: 'running', params: { run: liveService, port: 8008 } });
@@ -598,7 +598,10 @@ class FakeBridge {
   #id() { return `j-20261008-${String(120000 + this.n++).slice(0, 6)}-${createHash('sha1').update(String(this.n)).digest('hex').slice(0, 6)}`; }
   #add(job) { const j = { id: this.#id(), createdAt: '2026-10-08T12:00:00.000Z', startedAt: '2026-10-08T12:00:00.000Z', endedAt: null, outputDir: null, outputs: null, error: null, ...job }; this.jobsById.set(j.id, j); this.maxLive = Math.max(this.maxLive, this.#live().length); return j; }
   #live() { return [...this.jobsById.values()].filter(j => j.class === 'service' && !['stopped', 'failed', 'cancelled'].includes(j.state)); }
-  async info() { return { version: 'fake', disk: { freeBytes: 412e9, totalBytes: 953e9 }, os: { memoryTotalMiB: 15321 }, gpu: { available: true }, services: this.#live().map(j => ({ id: j.id, kind: j.kind, class: j.class, state: j.state })) }; }
+  async info() {
+    return { version: 'fake', kevCommit: this.kevCommit, disk: { freeBytes: 412e9, totalBytes: 953e9 }, os: { memoryTotalMiB: 15321 }, gpu: { available: true }, services: this.#live().map(j => ({ id: j.id, kind: j.kind, class: j.class, state: j.state })),
+      queue: { running: this.busyGpu, queued: [] }, ...(this.limits ? { limits: this.limits } : {}) };
+  }
   async upload(local, rel, { overwrite = false } = {}) {
     const body = readFileSync(local);
     if (this.files.has(rel) && !overwrite) throw Object.assign(new Error('exists'), { status: 409 });
@@ -639,8 +642,8 @@ class FakeBridge {
     const [, id, name] = /^runs\/([^/]+)\/(.+)$/.exec(rel), j = this.jobsById.get(id);
     mkdirSync(path.dirname(dest), { recursive: true });
     const n = this.files.get(j.params.dataset ?? j.params.data)?.records ?? 0, replay = j.params.extra?.replay ?? 0;
-    const body = { 'training_config.json': { args: { init_from: j.params.initFrom?.startsWith('runs/') ? `/w/${j.params.initFrom}` : j.params.initFrom, max_state: j.params.maxState, epochs: j.params.epochs, replay }, base_revision: TOKENIZER.revision, suite_sha256: J.suiteSha256() },
-      'training_metrics.json': { wall_seconds: 100, records_seen: n + replay, forward_tokens: 100000, optimizer_steps: 5, rejected_records: 0, truncated_records: 0, step_seconds: [3, 2, 2, 2, 2], peak_device_bytes: 3e9, peak_rss_bytes: 8e9 },
+    const body = { 'training_config.json': { args: { data: `/w/work/${this.readOther ? 'data/other.jsonl' : j.params.dataset}`, init_from: j.params.initFrom?.startsWith('runs/') ? `/w/${j.params.initFrom}` : j.params.initFrom, max_state: j.params.maxState, epochs: j.params.epochs, replay }, base_revision: TOKENIZER.revision, suite_sha256: J.suiteSha256() },
+      'training_metrics.json': { wall_seconds: this.wallSeconds, records_seen: n + replay, forward_tokens: 100000, optimizer_steps: 5, rejected_records: 0, truncated_records: 0, step_seconds: [3, 2, 2, 2, 2], peak_device_bytes: 3e9, peak_rss_bytes: 8e9 },
       'report.json': { coverage: { requested_records: n, evaluated_records: n - this.benchmarkRejected, rejected_records: this.benchmarkRejected, truncated_records: 0 } }, 'rows.json': [] }[name];
     if (!body) throw Object.assign(new Error(`no ${name}`), { status: 404 });
     writeFileSync(dest, JSON.stringify(body));
@@ -1335,7 +1338,12 @@ test('unit: a build feeds the writers: digests are the manifest\'s, maxState is 
   const dataset = id => stages.find(s => s.id === id).params.dataset;
   assert.equal(dataset('J2-5000-s1'), dataset('J2-5000-s2'), 'one upload for both seeds');
   assert.match(dataset('J2-5000-s1'), new RegExp(`-${nested[1].sha256.slice(0, 12)}\\.jsonl$`)); assert.equal(stages.find(s => s.id === 'J2-5000-s1').files[0].sha256, nested[1].sha256);
-  const readsOf = tag => stages.filter(s => s.id.startsWith(tag) && ['score', 'kev.benchmark'].includes(s.kind)).map(s => s.read.id).sort();
+  const readsOf = tag => stages.filter(s => s.id.startsWith(tag) && ['score', 'kev.benchmark'].includes(s.kind) && s.read.role !== 'companion').map(s => s.read.id).sort();
+  // §7.5: every kev.benchmark read has its 300-row served companion, by the same model, in the same block
+  for (const b of stages.filter(s => s.kind === 'kev.benchmark')) {
+    const tag = b.id.slice(0, b.id.indexOf('-bench-')), c = stages.find(s => s.companionOf === b.id);
+    assert.ok(c && c.kind === 'score' && c.subset.rows === 300 && c.dataSha256 === b.files[0].sha256 && c.serve === `${tag}-serve` && c.expectRun === b.params.run, `${b.id} has a served companion`);
+  }
   assert.deepEqual(readsOf('J3-2500-s1'), ['battery-x', 'calib-ood', 'dev-ood'], 'no dev-select at 2.5K');
   assert.deepEqual(readsOf('J3-5000-s1'), ['battery-x', 'calib-ood', 'dev-ood', 'dev-select']);
   assert.deepEqual(readsOf('J3-10000-s1'), ['battery-x', 'calib-ood', 'dev-ood']);
@@ -1368,7 +1376,7 @@ test('unit: a build feeds the writers: digests are the manifest\'s, maxState is 
   const j5 = J.finalStages({ info, candidate: 'runs/j-20261008-111044-e2112b', router: route, permuteFile: { file: info.slices['dev-select'].file, sha256: info.slices['dev-select'].sha256 }, latencyFile: { file: info.slices['dev-select'].file, sha256: info.slices['dev-select'].sha256 } });
   assert.doesNotThrow(() => J.checkSequence(j5));
   assert.deepEqual(j5.filter(s => s.kind === 'kev.serve').map(s => s.params.run), ['jaredpalmer/kev-0.8b@v1.0', 'runs/j-20261008-111044-e2112b']);
-  assert.deepEqual(j5.filter(s => s.id.startsWith('J5-stock') && ['score', 'permute', 'kev.benchmark'].includes(s.kind)).map(s => s.read.id).sort(), ['calib-in', 'latency', 'permute', 'test-in', 'test-ood']);
+  assert.deepEqual(j5.filter(s => s.id.startsWith('J5-stock') && ['score', 'permute', 'kev.benchmark'].includes(s.kind) && s.read.role !== 'companion').map(s => s.read.id).sort(), ['calib-in', 'latency', 'permute', 'test-in', 'test-ood']);
   const lat = j5.find(s => s.id === 'J5-stock-latency-latency'), perm = j5.find(s => s.kind === 'permute');
   assert.deepEqual([lat.kind, lat.concurrency, lat.repeat], ['score', 1, 2]); assert.deepEqual([perm.n, perm.nPerm], [200, 6]);
 });
@@ -1381,5 +1389,9 @@ test('unit: Kev\'s battery is its development partitions; its test partitions ar
   assert.throws(() => J.batteryUnits({ files: [{ id: 'x', file: 'evals/hard-v1/test.jsonl' }] }), e => e.code === 'PLAN_BATTERY_TEST');
   // the suite files route to kev.benchmark under Kev's own rule only if every record fits: a unit that does not is read through the server
   const reads = J.readStages({ tag: 'J1', run: 'jaredpalmer/kev-0.8b@v1.0', reads: units.map(u => ({ ...u, route: { route: 'benchmark', reason: 'suite records are admitted to the training context' } })) });
-  assert.deepEqual(reads.map(s => s.kind), ['kev.benchmark', 'kev.benchmark', 'kev.benchmark']);
+  // each with its 300-row served companion (§7.5), in one service block after the benchmark jobs
+  assert.deepEqual(reads.map(s => s.kind), ['kev.benchmark', 'kev.benchmark', 'kev.benchmark', 'kev.serve', 'score', 'score', 'score', 'serve.stop']);
+  assert.ok(reads.filter(s => s.kind === 'score').every(s => s.read.role === 'companion' && s.subset.rows === 300 && /\.companion\.jsonl$/.test(s.rows)));
+  assert.deepEqual(reads.filter(s => s.kind === 'kev.benchmark').map(s => s.accept.expectRecords), [1204, 764, 700], 'the report must account for every record of the file');
+  assert.deepEqual(J.readStages({ tag: 'J1', run: 'jaredpalmer/kev-0.8b@v1.0', companionRows: 0, reads: units.map(u => ({ ...u, route: { route: 'benchmark', reason: 'x' } })) }).map(s => s.kind), ['kev.benchmark', 'kev.benchmark', 'kev.benchmark']);
 });

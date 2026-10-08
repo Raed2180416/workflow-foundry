@@ -8,6 +8,7 @@ import { createHash } from 'node:crypto';
 import { validateWorkflow } from '../../../src/validate.mjs';
 import { loadPolicy } from '../../../src/models/policy.mjs';
 import { Journal } from '../../../src/journal.mjs';
+import { Store } from '../../../src/store.mjs';
 import { registryWith, environment, finishedWorkflow, finishedScript, nestedWorkflow, envfaultWorkflow } from '../make-fixtures.mjs';
 
 export const loaded = loadPolicy();
@@ -35,6 +36,22 @@ export const envfault = () => ({
   workflow: envfaultWorkflow(), input: {},
   script: { 'claude-haiku-5-5': async a => /Describe the arena frames/.test(a.prompt) ? { error: { code: 'MODEL_RATE_LIMIT', message: 'x' } } : { value: { objects: ['a'], anomaly: false, confidence: 0.9 }, usage: { inputTokens: 10, outputTokens: 2 } } }
 });
+
+// ---------------------------------------------------------------------------------------------------------------- the whole-run store's shape
+/** Turn a workspace written by the real Store (per-node rows since src/run-rows.mjs) into the shape the earlier whole-run store wrote: runs.body holds the
+ *  entire record, there are no run_* tables and no user_version. The current Store still reads such a workspace, and so does the adapter ('blob-v1'). */
+export function toBlobV1(workspace) {
+  const db = new DatabaseSync(storeFile(workspace));
+  const run = db.prepare('SELECT run_id AS id FROM run_nodes GROUP BY run_id').all();
+  db.close();
+  const store = new Store(workspace), records = store.runs();
+  store.close();
+  const raw = new DatabaseSync(storeFile(workspace));
+  for (const record of records) raw.prepare('UPDATE runs SET body=? WHERE id=?').run(JSON.stringify(record), record.id);
+  raw.exec('DROP TABLE run_nodes; DROP TABLE run_frames; DROP TABLE run_input; PRAGMA user_version = 0;');
+  raw.close();
+  return run.length;
+}
 
 // ---------------------------------------------------------------------------------------------------------------- synthetic new-shape stores
 const COPY = ['workflows', 'heads', 'events', 'decisions', 'model_calls'];

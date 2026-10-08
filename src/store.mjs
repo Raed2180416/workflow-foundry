@@ -13,12 +13,14 @@ function liveJobOwner(job) {
   return !job.processStart || !observed || observed === job.processStart;
 }
 
+const COUNT_EVERY = 64;
 const timerRow = row => ({ runId: row.run_id, nodeKey: row.node_key, wakeAt: row.wake_at });
 
 export class Store {
   // The updateRun in progress (its run id and the decisions recorded during it), so a decision commits with its chain event.
   #scope = null;
   #depth = 0;
+  #sinceCount = new Map();
   constructor(workspace) {
     mkdirSync(workspace, { recursive: true });
     this.workspace = realpathSync(workspace);
@@ -143,8 +145,14 @@ export class Store {
     return this.transaction(() => {
       const session = this.rows.open(id), run = session.draft;
       const tail = this.#tail(id);
-      const count = this.rows.stmt('SELECT COUNT(*) AS count FROM events WHERE run_id=?').get(id).count;
+      // The tail must be the head the checkpoint names, on every update. That the chain below it has no hole (as many events as the head's
+      // sequence number) is a scan of the run's events, so it is made on a Store's first update of a run and then every COUNT_EVERY updates
+      // (resume and verify-run check the whole chain regardless); doing it on every event made each one cost in proportion to the run.
+      const since = this.#sinceCount.get(id), full = since === undefined || since >= COUNT_EVERY;
+      const count = full ? this.rows.stmt('SELECT COUNT(*) AS count FROM events WHERE run_id=?').get(id).count : run.eventHead?.seq;
       if (!run.eventHead || tail?.seq !== run.eventHead.seq || tail?.hash !== run.eventHead.hash || count !== run.eventHead.seq) throw new FoundryError('CORRUPT_EVENTS', 'Refusing to append over missing or truncated checkpoint evidence');
+      this.#sinceCount.delete(id); this.#sinceCount.set(id, full ? 0 : since + 1);
+      if (this.#sinceCount.size > 256) this.#sinceCount.delete(this.#sinceCount.keys().next().value);
       const scope = this.#scope = { runId: id, decisions: [] };
       let items;
       try {

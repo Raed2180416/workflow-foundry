@@ -9,7 +9,7 @@
   "excluded": []
  },
  "schema": "heal-run/1",
- "started": "2026-10-08T16:48:13.439Z",
+ "started": "2026-10-08T21:01:43.155Z",
  "trial": {
   "key": "F-haiku/records:test:d3:s6001/0",
   "runId": "2fb12d69-12dd-4413-9b6a-36167a36bbe2",
@@ -121,6 +121,13 @@
    "costRatio": 1
   }
  ],
+ "evidence": {
+  "tier": "development/diagnostic",
+  "split": "test",
+  "seed": 6001,
+  "inspected": true,
+  "note": "the seed is already in the seed ledger (INSPECTED): this proves plumbing, not a fix rate"
+ },
  "fidelity": {
   "identical": true,
   "checks": {
@@ -222,7 +229,7 @@
   "flippers": [
    "c6"
   ],
-  "ms": 110220,
+  "ms": 73724,
   "blocked": null
  },
  "lintDebt": {
@@ -297,5 +304,5 @@
   "remainingUsd": 0,
   "lines": 11
  },
- "ms": 241285
+ "ms": 159681
 }

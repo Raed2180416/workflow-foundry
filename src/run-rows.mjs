@@ -37,7 +37,6 @@ export const MATERIALIZE = Symbol('foundry.run.materialize');
 
 const SPECIAL = new Set(['input', 'nodes', 'outputs', 'frames']);
 const FRAME_SPECIAL = new Set(['nodes', 'outputs']);
-const OPEN_STATUSES = ['uncertain', 'running', 'awaiting_human', 'awaiting_approval', 'waiting'];
 // The same key-sorted JSON as data.mjs `canonical` (which also validates); callers validate first.
 const sorted = v => Array.isArray(v) ? v.map(sorted) : v && typeof v === 'object' ? Object.fromEntries(Object.keys(v).sort().map(k => [k, sorted(v[k])])) : v;
 export const rowText = value => JSON.stringify(sorted(value));
@@ -49,7 +48,6 @@ const isLegacy = header => Object.hasOwn(header, 'nodes');
 // Own enumerable fields except `drop`. Reads only the kept keys: the dropped ones may be lazy accessors on a draft.
 const without = (object, drop) => Object.fromEntries(Object.keys(object).filter(key => !drop.has(key)).map(key => [key, object[key]]));
 const conflict = what => new FoundryError('STATE_CONFLICT', `The ${what} changed while it was being updated (compare-and-swap on its revision failed); nothing was written`);
-const tooBig = (what, limit) => new FoundryError('DATA_LIMIT', `JSON bytes exceed the supported limit (${what} is over ${limit} bytes)`);
 
 // Creates the run tables, or upgrades a store written by the whole-run store (its `runs` table gains rev and bytes). Does nothing, and takes no
 // write lock, when the store is already current.
@@ -348,7 +346,6 @@ export class RunRows {
     return states;
   }
   nodeOutput(id, frameKey, nodeId) { return parse(this.stmt('SELECT output FROM run_nodes WHERE run_id=? AND node_key=?').get(id, `${frameKey}/${nodeId}`)?.output); }
-  hasOutput(id, frameKey, nodeId) { return this.stmt('SELECT 1 AS found FROM run_nodes WHERE run_id=? AND node_key=? AND output IS NOT NULL').get(id, `${frameKey}/${nodeId}`) !== undefined; }
   /** Map(node id -> status) for the nodes of one frame (an index-only scan). */
   statuses(id, frameKey) {
     const statuses = new Map();
@@ -386,7 +383,7 @@ export class RunRows {
     const rows = exact
       ? [...this.stmt('SELECT DISTINCT label FROM run_nodes WHERE run_id=? AND frame_key=? AND label IS NOT NULL').all(id, prefix),
         ...this.stmt('SELECT DISTINCT label FROM run_nodes WHERE run_id=? AND frame_key>=? AND frame_key<? AND label IS NOT NULL').all(id, `${prefix}/`, `${prefix}0`)]
-      : this.stmt('SELECT DISTINCT label FROM run_nodes WHERE run_id=? AND frame_key>=? AND frame_key<? AND label IS NOT NULL').all(id, prefix, `${prefix}￿`);
+      : this.stmt('SELECT DISTINCT label FROM run_nodes WHERE run_id=? AND frame_key>=? AND frame_key<? AND label IS NOT NULL').all(id, prefix, `${prefix}\uffff`);
     return [...new Set(rows.map(r => r.label))];
   }
 
@@ -446,4 +443,3 @@ export class RunRows {
   }
 }
 
-export { OPEN_STATUSES };
