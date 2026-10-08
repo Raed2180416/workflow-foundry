@@ -113,15 +113,20 @@ export function selectTraces(pool, max) {
   return picked.sort((a, b) => b.idx - a.idx || b.seq - a.seq);
 }
 
-// check-traces records: {exact, partial, deopts, crashes, perCase}. exact/partial may be fractions or counts;
-// perCase entries carry a case id (id | case | traceId | regressionId | name) and exact (bool or 0..1).
-const caseId = e => e?.id ?? e?.case ?? e?.traceId ?? e?.regressionId ?? e?.name ?? null;
+// check-traces records (compile.mjs): {exact (count), exactRate, partial, deopts, crashes, regressions, regressionsPassed,
+// perCase: [{id: 'trace-<i>'|'case-<i>', ref: traceId|caseId, kind: 'trace'|'regression', status: exact|diff|deopt|crash|
+// timeout|unlabeled, exact?, partial?}]}. Cases are matched across compiles by ref (the positional id changes).
+const caseId = e => e?.ref ?? e?.traceId ?? e?.regressionId ?? e?.caseId ?? e?.id ?? e?.name ?? null;
+const compactCheck = ct => (ct ? { exact: ct.exact ?? null, exactRate: ct.exactRate ?? null, partial: ct.partial ?? null, deopts: ct.deopts ?? null, crashes: ct.crashes ?? null,
+  regressions: ct.regressions ?? null, regressionsPassed: ct.regressionsPassed ?? null, accepted: ct.accepted ?? null, error: ct.error ?? null,
+  perCase: perCaseList(ct).map(e => ({ id: e.id ?? null, ref: caseId(e), kind: e.kind ?? null, status: e.status ?? null, exact: caseExact(e) === 1, partial: e.partial ?? null })) } : null);
 const caseExact = e => (typeof e?.exact === 'boolean' ? (e.exact ? 1 : 0) : typeof e?.exact === 'number' ? (e.exact >= 1 ? 1 : 0) : e?.status === 'exact' ? 1 : 0);
 const casePartial = e => { const p = Number(e?.partial ?? (caseExact(e) ? 1 : 0)); return p > 1 ? p / 100 : p; };
 const perCaseList = ct => (Array.isArray(ct?.perCase) ? ct.perCase : ct?.perCase && typeof ct.perCase === 'object' ? Object.entries(ct.perCase).map(([id, v]) => ({ id, ...(typeof v === 'object' ? v : { exact: v }) })) : []);
 export function exactOf(ct) {
   if (!ct) return 0;
-  const cases = perCaseList(ct);
+  if (typeof ct.exactRate === 'number') return ct.exactRate;
+  const cases = perCaseList(ct).filter(e => e.status !== 'unlabeled');
   if (cases.length) return cases.reduce((s, e) => s + caseExact(e), 0) / cases.length;
   const n = Number(ct.cases ?? ct.total ?? 0), x = Number(ct.exact ?? 0);
   return x > 1 && n ? x / n : x > 1 ? 1 : x;
@@ -129,7 +134,8 @@ export function exactOf(ct) {
 export function accepted(ct, { threshold = 0.75, regressionIds = [] } = {}) {
   if (!ct) return false;
   const cases = perCaseList(ct);
-  const failingRegression = cases.some(e => regressionIds.includes(caseId(e)) && !caseExact(e));
+  const failingRegression = cases.some(e => (e.kind === 'regression' || regressionIds.includes(caseId(e))) && !caseExact(e))
+    || (typeof ct.regressions === 'number' && typeof ct.regressionsPassed === 'number' && ct.regressionsPassed < ct.regressions);
   return exactOf(ct) + 1e-9 >= threshold && !failingRegression;
 }
 // SPEC §6.2.4: the new version is worse when, on the old version's cases (by id), it has fewer exact cases (then lower
@@ -337,21 +343,24 @@ class JitRun extends ArmRun {
     const res = await this.retrying(tr, 'compile', async attempt => {
       const r = await this.deps.compile({ familyId: this.config.familyId, traces: inputs.traces, previous: inputs.previous, regressions: inputs.regressions, builderModel,
         builderEffort: settings.builderEffort, builderBudgetUsd: settings.builderBudgetUsd, gatewayUsd: settings.gatewayUsd, minutes: settings.minutes, perTaskUsd: this.config.perTaskUsd,
-        modelPort: this.port, workRoot: path.join(this.work, 'compile'), label: `v${n}-${tag}${attempt ? `-r${attempt}` : ''}`, models: this.arm.models });
+        modelPort: this.port, workRoot: path.join(this.work, 'compile'), label: `v${n}-${tag}${attempt ? `-r${attempt}` : ''}`, models: this.arm.models, version: n });
       const rec = r.record ?? {};
-      const builderUsd = rec.builderCostUsd ?? 0, gatewayUsd = rec.gatewayCostUsd ?? 0, total = rec.constructionCostUsd ?? builderUsd + gatewayUsd;
-      tr.spend('compileBuilder', builderUsd, rec.builderCostUnknown); tr.spend('compileGateway', total - builderUsd, (rec.gatewayUnknownCalls ?? 0) > 0);
+      // Every dollar of the compile: the builder session, its gateway calls, and the host acceptance check.
+      tr.spend('compileBuilder', rec.builderCostUsd ?? 0, rec.builderCostUnknown);
+      tr.spend('compileGateway', rec.gatewayCostUsd ?? 0, (rec.gatewayUnknownCalls ?? 0) > 0);
+      if (rec.checkCostUsd) tr.spend('compileCheck', rec.checkCostUsd, (rec.checkTraces?.unknownCalls ?? 0) > 0);
       return r;
-    }, r => ENV_FAULTS.has(r?.record?.builderError?.code));
+    }, r => ENV_FAULTS.has(r?.record?.builderError?.code) || ENV_FAULTS.has(r?.record?.checkTraces?.error?.code));
     const rec = res.record ?? {};
     mkdirSync(vdir, { recursive: true });
     const hasSolve = !!(res.solvePath && existsSync(res.solvePath));
     if (hasSolve) copyFileSync(res.solvePath, path.join(vdir, 'solve.mjs'));
     if (res.workdir && existsSync(path.join(res.workdir, 'BUILD-NOTES.md'))) copyFileSync(path.join(res.workdir, 'BUILD-NOTES.md'), path.join(vdir, 'BUILD-NOTES.md'));
     writeFileSync(path.join(vdir, 'compile.json'), JSON.stringify({ ...rec, inputs: { traceIds: inputs.traces.map(x => x.traceId), regressionIds: inputs.regressions.map(x => x.regressionId), previousSha: inputs.previous ? sha(inputs.previous) : null } }, null, 1));
-    const result = { version: n, builderModel, hasSolve, solveSha: hasSolve ? sha(readFileSync(path.join(vdir, 'solve.mjs'))) : null, checkTraces: rec.checkTraces ?? null,
-      nestedModelAttempts: rec.nestedModelAttempts ?? 0, hiddenPathAttempts: rec.hiddenPathAttempts ?? 0, costUsd: rec.constructionCostUsd ?? (rec.builderCostUsd ?? 0) + (rec.gatewayCostUsd ?? 0),
-      builderError: rec.builderError?.code ?? null };
+    const result = { version: n, builderModel, hasSolve, solveSha: hasSolve ? sha(readFileSync(path.join(vdir, 'solve.mjs'))) : null, checkTraces: compactCheck(rec.checkTraces),
+      nestedModelAttempts: rec.nestedModelAttempts ?? 0, hiddenPathAttempts: rec.hiddenPathAttempts ?? 0,
+      costUsd: rec.compileCostUsd ?? (rec.builderCostUsd ?? 0) + (rec.gatewayCostUsd ?? 0) + (rec.checkCostUsd ?? 0),
+      builderError: rec.builderError?.code ?? null, checkError: rec.checkTraces?.error?.code ?? null, builderAccepted: rec.checkTraces?.accepted ?? null };
     const e = this.event(t.idx, 'compile-attempt', { key, result });
     this.compileDone.set(key, e);
     tr.events.push({ kind: 'compile-attempt', key, version: n, builderModel, exact: exactOf(result.checkTraces), hasSolve, costUsd: result.costUsd });
@@ -450,7 +459,7 @@ class JitRun extends ArmRun {
           // Compiled answer in the minority: deliver the majority, keep the case (never the oracle's verdict).
           delivered = 'adjudicated'; output = s1.answer;
           const regressionId = `reg-${String(t.idx).padStart(3, '0')}-${randomUUID().slice(0, 6)}`;
-          writeFileSync(path.join(this.p.regressions, `${regressionId}.json`), JSON.stringify({ ...s1, regressionId, expected: s1.answer, compiledOutput: rc.output, version,
+          writeFileSync(path.join(this.p.regressions, `${regressionId}.json`), JSON.stringify({ ...s1, regressionId, caseId: regressionId, expected: s1.answer, compiledOutput: rc.output, version,
             shadowTraceId: s1.traceId, adjudicatorTraceId: s2.traceId, idx: t.idx }));
           state.regressions.push(regressionId);
           this.addTrace(state, s1, t, 'shadow', 'shadow');
