@@ -37,7 +37,7 @@ import { BEDS, parseWorldKey, reservationOf, reservedViolation, worldKey } from 
 import { checkPositionUniform, positionHistogram } from './lib/balance.mjs';
 import { checkDriftRecord, freezeBeds, frozenBeds } from './lib/pin.mjs';
 import { BED_DERIVED, checkBedDerived } from './lib/bedsync.mjs';
-import { KEV, KEV_MAX_STATE, TOKENIZER, jobMaxState, measureRecords, quantile } from './lib/tokens.mjs';
+import { KEV, KEV_MAX_STATE, TOKENIZER, jobMaxState, measureForJob, quantile } from './lib/tokens.mjs';
 import { exportKev, fileDigest, readKevFile, softTargetPort, TRAIN_SLICE, unknowableQuestions } from './export-kev.mjs';
 
 export const FACTORY_VERSION = 'kev-data-factory@1';
@@ -285,7 +285,7 @@ export function liveBedImports(file, liveBedsDir, { seen = new Set() } = {}) {
       if (!spec.startsWith('.') && !spec.startsWith('/') && !spec.startsWith('file:')) continue;   // builtins and packages
       let abs;
       try { abs = spec.startsWith('file:') ? fileURLToPath(spec) : path.resolve(path.dirname(f), spec); } catch { continue; }
-      if (inLive(abs)) { out.push(chain.length ? `${spec} (imported by ${[...chain, f].map(x => path.basename(x)).join(' -> ')})` : spec); continue; }
+      if (inLive(abs)) { out.push(chain.length ? `${spec} (via ${[...chain, f].map(x => path.basename(x)).join(' -> ')})` : spec); continue; }
       if (/\.(?:mjs|js|cjs)$/.test(abs)) visit(abs, [...chain, f]);
     }
   };
@@ -329,7 +329,7 @@ const statsOf = xs => xs.length ? { n: xs.length, p50: quantile(xs, 0.5), p90: q
 //   An empty guard or registry is allowed (the manifest records n: 0); a missing one is refused.
 export async function buildKev({
   root = REPO_ROOT, outRoot = path.join(root, '.foundry', 'kev-data'), generators = [], slices = ['train'], seeds = {}, opts = {},
-  spec = loadSpec(), wordings = null, registry = null, measure = measureRecords, maxState = KEV_MAX_STATE.bridge, expectPin = null,
+  spec = loadSpec(), wordings = null, registry = null, measure = measureForJob, maxState = KEV_MAX_STATE.bridge, expectPin = null,
   enforcePositions = true, heldoutDir = null, poolsDir = null, log = () => {},
 } = {}) {
   const t0 = Date.now(), timing = { generate: {}, measureMs: null, writeMs: null };
@@ -405,21 +405,25 @@ export async function buildKev({
     if (es.length) throw fail('BED_CONTRACT_DRIFT', `${es.length} bed-derived contract part(s) differ from the frozen beds at ${frozen.pin}: ${es[0]}`, es);
   }
 
-  // Kev's own fits() (rule 6), one Python process per pass: at the bridge maxState, then at the job
-  // maxState (the admitted records' p99.9, clamped to [384, maxState]); a record that misfits either is
-  // dropped and counted, so every written record fits the job and Kev drops none.
+  // Kev's own fits() (rule 6) at the bridge maxState, then at the job maxState (the admitted records'
+  // p99.9, clamped to [384, maxState]); a record that misfits either is dropped and counted, so every
+  // written record fits the job and Kev drops none. measure(records, {maxState}) returns the results at
+  // maxState (and is then called again at the job maxState), or { results, job: { maxState, results } }
+  // with both passes (lib/tokens.mjs measureForJob: one Python process).
   let job = null;
   if (measure) {
-    const tm = Date.now();
-    const measured = all.length ? measure(all.map(r => ({ state: r.state, questions: r.questions })), { maxState }) : [];
+    const tm = Date.now(), plain = rs => rs.map(r => ({ state: r.state, questions: r.questions }));
+    const m = all.length ? measure(plain(all), { maxState }) : [];
+    const measured = Array.isArray(m) ? m : m.results, pass = Array.isArray(m) ? null : m.job;
     if (measured.length !== all.length) throw fail('MEASURE', 'the measure call returned a different number of results');
     all.forEach((r, i) => { r.tokens = measured[i]; });
     const fit = all.filter(r => r.tokens.fits);
     if (fit.length) {
       job = Math.min(maxState, jobMaxState(fit.map(r => r.tokens.stateTokens)));
+      if (pass && pass.maxState !== job) throw fail('MEASURE', `the measure call fitted the job at maxState ${pass.maxState}; the build's p99.9 is ${job}`);
       if (job < maxState) {
-        const again = measure(fit.map(r => ({ state: r.state, questions: r.questions })), { maxState: job });
-        if (again.length !== fit.length) throw fail('MEASURE', 'the measure call returned a different number of results');
+        const again = pass ? pass.results : measure(plain(fit), { maxState: job });
+        if (!Array.isArray(again) || again.length !== fit.length) throw fail('MEASURE', 'the job-maxState pass returned a different number of results');
         fit.forEach((r, i) => { r.jobTokens = again[i]; });
       }
     }

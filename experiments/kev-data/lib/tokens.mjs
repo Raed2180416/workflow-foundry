@@ -6,6 +6,8 @@
 //   count     len(kev.model.user_tokens(tok, text)) per text (no special tokens)
 //   measure   kev.data.materialize(record), then kev.model.fits(rec, tok, **training_context(max_state))
 //             - the factory's admission rule - plus the state and packed token counts
+//   measure_job  measure at max_state, then the job max_state (the fitting records' p99.9 state tokens,
+//             clamped to [floor, max_state]) and fits() again at it, in the same process (§2.3 rule 6)
 //   load_file kev.data.load_records(path) + materialize + fits for every line of a Kev JSONL file
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
@@ -18,7 +20,7 @@ export const KEV_MAX_STATE = Object.freeze({ training: 384, bridge: 8192, served
 
 const MARK = '@@KEV_DATA_JSON@@';
 const PY = String.raw`
-import sys, json
+import sys, json, math
 kev_root, repo, rev, mark = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
 sys.path.insert(0, kev_root)
 req = json.loads(sys.stdin.read())
@@ -52,6 +54,26 @@ for op in req["ops"]:
                 res.append({"ok": False, "fits": False, "error": type(e).__name__ + ": " + str(e)[:300]}); continue
             res.append(measure(rec, ctx, op.get("render", False)))
         results.append({"results": res, "context": ctx})
+    elif kind == "measure_job":
+        from kev.data import materialize
+        ms = op["maxState"]; ctx = training_context(ms); res = []; recs = []
+        for r in op["records"]:
+            for q in r.get("questions", {}).values():
+                if isinstance(q, dict): q.setdefault("src", "kevdata_" + q.get("type", "choice"))
+            try:
+                rec = materialize(r)
+            except Exception as e:
+                res.append({"ok": False, "fits": False, "error": type(e).__name__ + ": " + str(e)[:300]}); recs.append(None); continue
+            res.append(measure(rec, ctx, False)); recs.append(rec)
+        xs = sorted(x["stateTokens"] for x in res if x["fits"])
+        job, jres = None, None
+        if xs:
+            n = len(xs); i = min(n - 1, max(0, math.ceil(op["q"] * n) - 1))
+            job = min(ms, op["cap"], max(op["floor"], xs[i]))
+            if job < ms:
+                jctx = training_context(job)
+                jres = [measure(rec, jctx, False) for rec, x in zip(recs, res) if x["fits"]]
+        results.append({"results": res, "context": ctx, "job": {"maxState": job, "results": jres}})
     elif kind == "load_file":
         from kev.data import load_records, materialize
         ctx = training_context(op["maxState"])
@@ -97,6 +119,14 @@ export function kevBatch(ops, { timeoutMs = 20 * 60 * 1000 } = {}) {
 export const countTokens = texts => kevBatch([{ op: 'count', texts }])[0].counts;
 export const measureRecords = (records, { maxState = KEV_MAX_STATE.bridge, render = false } = {}) => kevBatch([{ op: 'measure', records, maxState, render }])[0].results;
 export const fitsRecords = (records, opts) => measureRecords(records, opts).map(r => r.fits);
+// Both admission passes of a build in one Python process: { results (at maxState), job: { maxState, results }
+// } where job.results is aligned to the records that fit at maxState (null when the job maxState is
+// maxState itself). The job maxState is jobMaxState() of the fitting records' state tokens; the build
+// recomputes it in JS and refuses a mismatch.
+export function measureForJob(records, { maxState = KEV_MAX_STATE.bridge } = {}) {
+  const [r] = kevBatch([{ op: 'measure_job', records, maxState, q: JOB_QUANTILE, floor: KEV_MAX_STATE.training, cap: KEV_MAX_STATE.bridge }]);
+  return { results: r.results, job: r.job };
+}
 export const validateKevFile = (path, { maxState = KEV_MAX_STATE.bridge, source = 'custom' } = {}) => kevBatch([{ op: 'load_file', path, maxState, source }])[0];
 
 // The documented estimate the program replaces (beds/lib/canonical.mjs estimateTokens).
@@ -107,4 +137,5 @@ export function quantile(xs, q) {
 }
 // A job's maxState (§2.3 rule 6): the build's 99.9th percentile of real state tokens, within Kev's
 // training range [384, 65536] and the bridge's 8192.
-export const jobMaxState = stateTokens => Math.min(KEV_MAX_STATE.bridge, Math.max(KEV_MAX_STATE.training, quantile(stateTokens, 0.999)));
+export const JOB_QUANTILE = 0.999;
+export const jobMaxState = stateTokens => Math.min(KEV_MAX_STATE.bridge, Math.max(KEV_MAX_STATE.training, quantile(stateTokens, JOB_QUANTILE)));

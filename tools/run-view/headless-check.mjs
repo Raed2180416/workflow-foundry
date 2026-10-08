@@ -206,6 +206,19 @@ try {
   await rm.close();
   const anim2 = await page.evaluate(i => { RunView.seekIndex(i); const d = document.querySelector('.dot.a-breathe .core, .dot.a-slow .core'); return d ? getComputedStyle(d).animationName : 'no-animated-dot'; }, at.calling);
   check('motion on: a calling dot really breathes (a CSS animation is attached)', /breathe/.test(anim2), anim2);
+  // The breathing itself: eight clips of one "waiting for the model" dot, 350 ms apart (one cycle is 2.6 s), at 3x so the ring and the pulse are visible.
+  {
+    const sctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 3, colorScheme: 'dark' });
+    const sp = await openPage(sctx, realServer, 'breathing');
+    await sp.evaluate(i => RunView.seekIndex(i), at.calling);
+    const dot = sp.locator('.card.s-calling .dot').first(), clips = [];
+    for (let i = 0; i < 8; i++) { const box = await dot.boundingBox(); clips.push((await sp.screenshot({ clip: { x: box.x - 8, y: box.y - 8, width: box.width + 16, height: box.height + 16 } })).toString('base64')); await sp.waitForTimeout(350); }
+    check('breathing: the same dot looks different at different moments of its cycle (at least 4 distinct renderings in 8 clips)', new Set(clips).size >= 4, `${new Set(clips).size} distinct`);
+    const mp = await sctx.newPage();
+    await mp.setContent(`<body style="margin:0;background:#0d1118;color:#a3b2c6;font:14px system-ui;padding:14px"><div style="margin-bottom:8px">Breathing dot, state "waiting for the model", clips 350 ms apart (one cycle 2.6 s), 3x</div><div style="display:flex;gap:10px">${clips.map((c, i) => `<figure style="margin:0;text-align:center"><img style="width:96px;height:96px;image-rendering:pixelated;border:1px solid #2b3648" src="data:image/png;base64,${c}"><figcaption>${(i * 0.35).toFixed(2)} s</figcaption></figure>`).join('')}</div></body>`);
+    await mp.screenshot({ path: path.join(shots, 'ui-16-breathing.png'), clip: { x: 0, y: 0, width: 920, height: 190 } });
+    await sctx.close();
+  }
   report.measured.dotColours = await page.evaluate(() => { const out = {}; for (const el of document.querySelectorAll('.card .dot')) { const c = getComputedStyle(el.querySelector('.core')).fill; out[[...el.classList].find(c => c.startsWith('s-'))] = c; } return out; });
   check('state colours reach the dots (not all one neutral grey)', new Set(Object.values(report.measured.dotColours)).size >= 3, JSON.stringify(report.measured.dotColours));
 

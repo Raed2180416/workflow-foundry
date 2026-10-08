@@ -620,7 +620,7 @@ test('frozen copy: builds import beds only from .foundry/kev-data/frozen/<pin>/;
   writeFileSync(kitFile, `import { note, where } from ${JSON.stringify(pathToFileURL(path.join(repo, 'beds', 'records', 'index.mjs')).href)};\nexport const buildState = s => ({ system: s, source_note: note(s, 'dmy', 401) });\nexport const bedUrl = where;\n`);
   writeFileSync(genFile, `import { buildState } from './records-kit.mjs';\nexport const group = 'kit-user';\nexport function* records() {}\n`);
   assert.ok((await import(pathToFileURL(kitFile).href)).bedUrl.startsWith(pathToFileURL(path.join(repo, 'beds')).href), 'the kit was loaded from the live tree');
-  await assert.rejects(buildKev({ root: repo, outRoot, generators: [genFile], measure: false, ...HE() }), e => e.code === 'LIVE_BED_IMPORT' && /imported by records-kit\.mjs/.test(e.message));
+  await assert.rejects(buildKev({ root: repo, outRoot, generators: [genFile], measure: false, ...HE() }), e => e.code === 'LIVE_BED_IMPORT' && /via gen\.mjs -> records-kit\.mjs/.test(e.message));
   const objectWithFiles = { group: 'kit-object', files: [kitFile], *records() {} };
   await assert.rejects(buildKev({ root: repo, outRoot, generators: [objectWithFiles], measure: false, ...HE() }), e => e.code === 'LIVE_BED_IMPORT');
   assert.equal(b.manifest.generators[0].scan, 'runtime', 'an object generator without files is recorded as runtime-guarded only');

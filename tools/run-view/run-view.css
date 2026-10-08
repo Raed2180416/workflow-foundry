@@ -81,7 +81,7 @@ code { font-size: .88em; background: var(--panel2); padding: 0 .3em; border-radi
 .card .label { font-weight: 650; flex: 1; min-width: 0; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; line-height: 1.25; }
 .card .count { font-size: .75rem; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 0 7px; white-space: nowrap; }
 .card .line { font-size: .8rem; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.4em; overflow-wrap: anywhere; }
-.card .chips { display: flex; flex-wrap: wrap; gap: 3px 5px; font-size: .72rem; color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 3px 5px; font-size: .72rem; color: var(--muted); }
 .chip { border: 1px solid var(--line); border-radius: 5px; padding: 0 5px; background: var(--panel2); white-space: nowrap; }
 .chip.violet { border-color: var(--violet); color: var(--violet); }
 .chip.amber { border-color: var(--amber); color: var(--amber); }
