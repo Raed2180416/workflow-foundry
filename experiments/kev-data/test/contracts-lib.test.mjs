@@ -883,6 +883,19 @@ test('build: stateHash and worldHash deduplicate across slices (evaluation slice
   assert.deepEqual(verifyBuildDir(b.dir).errors, []);
 });
 
+test('build: a build that asks a bed-derived port re-checks it against its frozen beds (fail closed)', async () => {
+  const i1 = { state: { service: 'svc-a', window: '07:24:00-07:26:00', log_lines: 'L0001 07:24:01Z svc-a disk write failed: no space left on device' },
+    questions: { I1: render.labelledQuestion(C().I1, { label: 'disk_full' }) },
+    meta: { family: 'incident', bed: 'incident', seed: 401, difficulty: 3, worldHash: worldHash({ prompt: 'incident d3 s401' }), variant: 'clean', labelSource: 'generator' } };
+  const gen = { group: 'incident-stub', ports: ['I1'], *records() { yield structuredClone(i1); } };
+  // the stub repository has no incident bed: the I1 option set cannot be re-checked, so the build refuses
+  await assert.rejects(buildKev({ root: stubBedRepo(), outRoot: H.tempDir(), generators: [gen], measure: false, ...HE() }),
+    e => e.code === 'BED_CONTRACT_DRIFT' && /I1: cannot read the bed constants/.test(e.message));
+  // a port without bed-derived parts builds from the same repository
+  const r1 = { group: 'records-stub', ports: ['R1'], *records() { yield r1Record({ system: 'ATLAS', source_note: 'ATLAS. Day first.' }); } };
+  assert.equal((await buildKev({ root: stubBedRepo(), outRoot: H.tempDir(), generators: [r1], measure: false, ...HE() })).manifest.slices.train.records, 1);
+});
+
 test('build: every written record fits the job maxState (the p99.9); misfits above it are dropped by the factory and counted', async () => {
   const calls = [];
   // stub measure (Kev's fits() is exercised in the tokens tests): state tokens 400-449, one record at 5,000
