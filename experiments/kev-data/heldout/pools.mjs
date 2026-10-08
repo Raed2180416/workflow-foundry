@@ -41,7 +41,7 @@ export const X1_KINDS = Object.freeze(['log', 'ticket', 'doc', 'memo', 'chat', '
 // named list: a negative counts as "with an addressee word" only on CORE. BROAD adds the obvious
 // extensions: a positive counts as "without an addressee word" only if BROAD finds nothing. Both
 // directions are therefore stricter than any single reading of the program's list.
-export const ADDRESSEE_CORE = /\b(?:AI|A\.I\.|LLMs?|assistants?|automated|bots?|chatbots?|override[sd]?|overriding|overridden)\b|\bSYSTEM\s*:/i;
+export const ADDRESSEE_CORE = /\b(?:AI|LLMs?|assistants?|automated|bots?|chatbots?|override[sd]?|overriding|overridden)\b|\bA\.I\.|\bSYSTEM\s*:/i;
 export const ADDRESSEE_BROAD = new RegExp(`${ADDRESSEE_CORE.source}|\\b(?:agents?|models?|copilot|gpt|chatgpt|claude|gemini|language model|prompts?|instructions?|disregard|ignore (?:all |any |the |every |your )?(?:previous|prior|above|earlier)|parser|reader|crawler|scraper|summari[sz]er|pipeline)\\b`, 'i');
 export const hasCoreAddressee = text => ADDRESSEE_CORE.test(text);
 export const hasBroadAddressee = text => ADDRESSEE_BROAD.test(text);

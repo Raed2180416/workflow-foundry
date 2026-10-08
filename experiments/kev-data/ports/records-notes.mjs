@@ -514,6 +514,7 @@ const optionsOfPort = (G, port) => Object.keys(G.contracts[port].options);
 function poolSystems(bed, port) {
   return port === 'R1' ? ['BRIGHTDESK', 'ATLAS', 'VENDEX'] : port === 'R2' ? Object.keys(bed.render.FLAG_FORM) : port === 'R3' ? Object.keys(bed.render.PERSP_NOTE) : SYSTEMS;
 }
+const startsWithName = text => SYSTEMS.some(x => text.startsWith(`${x} `) || text.startsWith(`${x}'`) || text.startsWith(`${x}:`));
 const hasName = (text, sys) => new RegExp(`(?<![A-Za-z0-9_])${sys}(?![A-Za-z0-9_])`).test(text);
 export function nonDeciding(G, W, units, u, port, key, { phrasing = 'known' } = {}) {
   const { bed } = G, label = u.label;
@@ -540,8 +541,10 @@ export function nonDeciding(G, W, units, u, port, key, { phrasing = 'known' } = 
       options.push({ T, index: i, text: v.text, from: tplName(x, i, label), weight: i === u.index ? 4 : 1 });
     }
   }
-  if (!options.length) return null;
-  const bag = options.flatMap(o => Array(o.weight).fill(o)), pick = pickBy(bag, 'ndF', ...key);
+  // D and F start alike (a system name, or not): the first word behind the lead is then no cue
+  const alike = options.filter(o => startsWithName(o.text) === startsWithName(u.sentence));
+  if (!alike.length) return null;
+  const bag = alike.flatMap(o => Array(o.weight).fill(o)), pick = pickBy(bag, 'ndF', ...key);
   return { F1: pick.text, text: pick.text, from: pick.from, kind: 'other-system', phrasing: 'known', T1: pick.T };
 }
 
@@ -823,6 +826,8 @@ function scrubFor(G, W, keep) {
 // Produce (and count) the records of one unit for one job, or null.
 export function runJob(G, W, port, u, jobId, units) {
   const job = { id: jobId, ...JOBS[jobId], axis: jobId };
+  // an unknowable pair is presence-matched: its decisive sentence names its system like the foreign sentence does
+  if (jobId === 'unknowable' && port !== 'R2' && G.control !== 'deletion-unknowable' && !G.ood && !namesSystem(u.sentence, u.sys)) return null;
   if (G.ood && G.slice !== 'test-ood' && ['injection', 'slot', 'long'].includes(jobId)) job.mode = 'ood-pref';
   const key = jobKey(G.slice, W, port, u, jobId);
   const scr = scrubFor(G, W, jobId === 'bed-template' ? new Set([u.id]) : new Set());

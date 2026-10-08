@@ -365,7 +365,7 @@ test('port kit byte-identity: the factory state equals kit.buildState on the tas
   for (const p of ['X3', 'X8', 'K1', 'K2', 'K3', 'X4']) assert.ok(seenPorts.has(p), p);
 });
 
-test('decidability audit: state-only solvers reproduce the X3 and X8 labels; masked-state collisions under 1%; every state key is declared', async t => {
+test('decidability audit: state-only solvers reproduce the X3 and X8 labels; exact-state collisions under 1% (X3 masked too); every state key is declared', async t => {
   const reports = [];
   for (const [slice, first, n] of [['train', 401, 160], ['dev-select', 4500, 200], ['calib-in', 4000, 150]]) {
     const recs = byPort(await collect(slice, range(first, n), { perWorld: { X3: 6, X8: 6 }, ports: ['X3', 'X8'] }));

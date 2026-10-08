@@ -482,6 +482,22 @@ export function summarize(res) {
     input: { templates: input.length, heldOutTemplates: heldOut.map(t => t.id), heldOutCount: heldOut.length, violations, problems },
   };
 }
+// Every place this group fills in or departs from the program text / plan.
+export const SPEC_GAPS = Object.freeze([
+  'Slots: the plan lists {S}, {token}, {w0}, {w1}, {field}; the ORDER_NOTE, FLAG_NOTE and RELIABLE_NOTE templates also carry example dates, a referenced system, the servers\' country, two team cities, an audit year and the FLAG_FORM comparison descriptors, so SLOT_VOCABULARY has 16 names. "Preserved exactly" is the multiset of placeholders of the source template (a dropped, repeated or extra placeholder rejects the line; {S} included).',
+  'R4 "date-window presence balanced within each label to +/- 5 pp" is read as: inside each label the windowed share is 45-55%, and the two labels differ by at most 5 pp. A line is windowed iff it carries {w0} and {w1}; a plain line may not hide a window in two or more literal dates.',
+  '"Slot-carried" templates (18 bed templates, in R1 and R2): the flip partner has the same masked skeleton, because the label sits in the slot values. Their lines share a skeleton across labels on purpose and are only correct when filled consistently (fillLine does so for {ex}; city and reference slots follow the placeholder name).',
+  'Train skeleton bucket: JUDGE-PROGRAM.md §3.1 lists "skeleton buckets 40-100%" for train-pool lines; lines whose skeleton hash falls in 0-40% are rejected and logged (about 45% of authored candidates). The heldout-author manifest slices its OOD lines over the whole hash space (5:3:2), so this does not by itself keep the two sets disjoint; the registry comparison does (deferred, below).',
+  '20 admitted paraphrases per template means 20 lines that passed the local filter; every admitted line is kept, so most templates hold more than 20 (surplus is intended: the records group draws from it).',
+  'The addressee regex of JUDGE-CRITIQUE-shortcuts.md Q14 is not printed ("AI, AUTOMATED, ASSISTANT, SYSTEM:, bot, override, ..."); filters.mjs ADDRESSEE_WORDS is the explicit list used here and should be adopted or replaced by shortcut-audit and heldout-author together.',
+  'X1 "distinct benign / decoy forms" are counted on the records family (the bed pools the plan names: BENIGN_MEMOS, DECOY_MEMOS), by skeleton (digits, dates, quoted strings and placeholders masked). Roles: benign (ordinary), decoy (reuses the vocabulary of the positive class or of a void marker without being one; in runbook it holds authorised procedure steps), hard-negative (quoted injections, imperative but benign notes, ordinary uses of the addressee words), positive.',
+  'X1 "1 bed template per bed" held out (§3.3): the program does not say which one; no X1 line is a near copy (4-gram Jaccard >= 0.5) of any string of the train-family beds, which covers whichever it is.',
+  'X5 is not named in the plan scope text but is in the plan\'s ports list and in §2.4 ("X5 records assumptions"): a pool of assumption clauses (one per convention: R1 dmy/mdy/ymd, R2 void/live, R3 same/opposite, R4 reliable/restamped) is provided. A clause has no capital letter or full stop of its own because it is spliced into Q0-Q3. Negated, sibling-system and injected "this workflow applies" assumptions are not covered.',
+  'The authoring agent read beds/records/render.mjs (held-out templates included) while taking the task in, through the frozen copy only; "the paraphrase input contains no held-out template" is asserted on the extracted input, and the local filter rejects near copies of, and lines with the skeleton of, a held-out template.',
+  'The two-model filter (§2.3 rule 1) is deferred to hosted-arms: every line is filters.twoModel = "pending"; the plan acceptance "every admitted line passed the two-model filter" is therefore not met. The reject log kept here is the local filter\'s.',
+  'The registry comparison is deferred: the committed heldout manifest has the registry digest and entry count but no skeleton hashes (plan: "checked against the committed hash manifest only"). It runs as soon as the manifest lists hashes, and in assembly through dropRegistryCollisions().',
+  'Authored lines are committed as data under experiments/kev-data/pools/authored/ (about 0.6 MB) although the plan lists only the built pool as output: the tests rebuild the pool from them in any checkout, and they hold no secret (unlike the heldout lines). Move them under .foundry/ if the owner prefers; the manifest digests would then be checked against that path.',
+]);
 export function manifestOf(res, outDirFiles) {
   const s = summarize(res);
   const ho = checkAgainstHeldoutManifest(Object.values(res.pools).flat(), res.heldoutManifest);
@@ -497,6 +513,7 @@ export function manifestOf(res, outDirFiles) {
     outputs: outDirFiles,
     summary: s,
     heldoutRegistry: { manifest: 'experiments/kev-data/heldout-manifest.json', available: ho.available, checked: ho.checked, collisions: ho.collisions.length, reason: ho.reason ?? null },
+    specGaps: SPEC_GAPS,
     deferred: [
       { item: 'two-model filter: Sonnet 5.5 and Opus 5.5, asked the port question zero-shot, must both recover each line\'s label (JUDGE-PROGRAM.md §2.3 rule 1)', owner: 'hosted-arms',
         state: 'every line is filters.twoModel = "pending"', ready: 'briefsFor(line) builds the questions (node pools/train-pools.mjs briefs --pool DIR --out FILE), applyTwoModelVerdicts() applies the answers and logs both (apply-verdicts)' },

@@ -79,7 +79,8 @@ test('unit: slice rule: authored lines are shared out 50 / 30 / 20 percent of th
   assert.equal(at(0), 'test-ood'); assert.equal(at(49.9), 'test-ood'); assert.equal(at(50.1), 'dev-ood');
   assert.equal(at(79.9), 'dev-ood'); assert.equal(at(80.1), 'calib-ood'); assert.equal(at(99.9), 'calib-ood');
   const counts = { 'test-ood': 0, 'dev-ood': 0, 'calib-ood': 0 };
-  for (let i = 0; i < 6000; i++) counts[oodSliceOfHash(skeleton(`line number ${i} about nothing in particular ${'x'.repeat(i % 7)}`))]++;
+  const word = i => { let w = ''; let n = i + 17; do { w += 'abcdefghijklmnopqrstuvwxyz'[n % 26]; n = Math.floor(n / 26); } while (n); return w; };
+  for (let i = 0; i < 6000; i++) counts[oodSliceOfHash(skeleton(`line about ${word(i)} and ${word(i * 7 + 3)} in particular`))]++;
   assert.ok(Math.abs(counts['test-ood'] / 6000 - 0.5) < 0.03 && Math.abs(counts['dev-ood'] / 6000 - 0.3) < 0.03 && Math.abs(counts['calib-ood'] / 6000 - 0.2) < 0.03, JSON.stringify(counts));
   assert.deepEqual(QUOTA, { 'calib-ood': 40, 'dev-ood': 60, 'test-ood': 100 });
   assert.equal(oodSliceOfHash(skeleton('{S} writes dates day first', defaultMasks())), oodSliceOfHash(skeleton('ATLAS writes dates day first', defaultMasks())), 'a placeholder line and its filled form share a slice');
@@ -160,7 +161,7 @@ test('unit: top-up lines (tag tu=1) replace the tail of the hash order and a thi
 test('unit: held-out wordings are checked against the contract, Q0-Q3 and each other', () => {
   const c = C.R1, ok = n => Array.from({ length: n }, (_, i) => `Which part of a ${'very '.repeat(i % 3)}numeric birth date does {system} write number ${i} first, in sample ${'x'.repeat(i)}?`);
   const entry = (code, reg, t) => `${code},${reg}@@${t}`;
-  const good = [...ok(10).map(t => entry('cal', 't', t)), ...ok(10).map(t => entry('dev', 'f', t + ' ok')), ...ok(20).map(t => entry('tst', 's', t + ' fine'))];
+  const good = [...ok(10).map(t => entry('cal', 't', t)), ...ok(10).map(t => entry('dev', 'f', t + ' ok')), ...ok(20).map((t, i) => entry('tst', i % 2 ? 't' : 's', t + ' fine'))];
   const run = text => buildWordings('R1', parseWordings(text, 'R1'), c);
   assert.deepEqual(run(good.join('\n')).errors.filter(e => !/word-3-gram|duplicates/.test(e)), [], 'a conforming set passes');
   const withQ0 = [...good.slice(0, 39), entry('tst', 't', c.wordings.Q0)];
@@ -307,7 +308,7 @@ function scanForHeldout(root) {
         const imp = /(?:import\s[^;]*?from\s*|import\s*\(\s*|require\s*\(\s*)['"`][^'"`]*heldout[^'"`]*['"`]/.test(src);
         const lit = /['"`][^'"`\n]*kev-data[\\/]+heldout[^'"`\n]*['"`]/.test(src);
         const rd = /\b(?:readFile|readFileSync|readdirSync|readdir|createReadStream|openSync|existsSync|statSync|import)\s*\(([^()]|\([^()]*\))*heldoutDir/.test(src) || /\bjoin\s*\([^)]*heldoutDir[^)]*\)/.test(src) && /\b(?:readFile|readFileSync|readdirSync|createReadStream)\b/.test(src);
-        if (imp || lit || rd) hits.push({ file: rel, imp, lit, rd });
+        if (imp || lit || rd) hits.push({ file: r, imp, lit, rd });
       }
     }
   };

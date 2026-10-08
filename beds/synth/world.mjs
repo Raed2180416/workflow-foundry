@@ -28,6 +28,7 @@ export const POLICIES = {
 //   erratumDecoy  an erratum on the winner corrects its NON-standard value (the standard value stands),
 //   loserErratum  an erratum corrects a losing document (erratum targets are not always winners),
 //   supersededLoser a losing document that has an earlier (void) version,
+//   bound         a better-ranked document that only states a bound or a detection limit for the cell (not a value),
 //   quoteInDoc    the winner quotes another value for the same cell in the sentence that gives its own,
 //   comparison    the winner reports the same property for a comparator entity in the same sentence.
 
@@ -38,13 +39,18 @@ export const POLICIES = {
 //   nVariety: probability that a research document states its n as a gross count minus exclusions.
 //   decoyP: probability that a notice target shares first author and venue with another document.
 //   refStyles: how notices cite their target ('id' adds [document Dxx]; 'title', 'topic', 'date', 'vague', 'cite', 'bare').
+//   decoyTemp: probability that a measured-claim sentence carries a qualifier with a number or temperature that is not the measurement (storage, calibration, pre-treatment).
+//   protocols: probability that a document defines two named protocols (conditions given once) and its claims refer to them by name.
+//   tables: probability that a document reports its measured claims in a small table (header with units / conditions).
+//   replicates: probability that a measured value is given as the list of its replicate results (the mean is the claim).
+//   factorErratum: probability that a value erratum is an arithmetic one ("too large by a factor of 10").
 //   formVariety: extra sentence templates in every multi-value, erratum, status and sample-size family (a finite regex set does not cover them).
 //   redHerrings: probability of status-like red herrings (version labels on single versions, banners
 //                about journal submission, preprint mentions of out-of-corpus versions, measured-claim
 //                sentences that cite other work or say "as expected", explicitly unmodified forms).
 export const KNOBS = {
   1: {
-    formVariety: true, entities: 2, cells: 4, policies: ['P1'], aliasInPrompt: true, nInMeta: true, mixedLabels: false, mixedDates: false,
+    formVariety: true, decoyTemp: 0, protocols: 0, tables: 0, replicates: 0, factorErratum: 0, entities: 2, cells: 4, policies: ['P1'], aliasInPrompt: true, nInMeta: true, mixedLabels: false, mixedDates: false,
     unitLevel: 1, plusMinus: false, fancyNumbers: false, pairs: 0, spelledN: false, background: 1, entityFiller: 0, condLevel: 1,
     docDefault: 0, ranges: 0, methodNums: 0, contrast: 0, split: 0, addN: 0, durations: 0, unitWords: 0, anaphora: 0, nVariety: 0, decoyP: 0, refStyles: ['id'], redHerrings: 0, otherErrata: 0, oocCollide: false,
     filler: { retract: 0, errata: 0, press: 0, supersede: 0 }, ooc: 0, erratumOnVoid: false, unitErratum: false, injection: false,
@@ -52,7 +58,7 @@ export const KNOBS = {
     extras: { loser: 0.3 }, attachP: 0.2,
   },
   2: {
-    formVariety: true, entities: 3, cells: 6, policies: ['P1'], aliasInPrompt: true, nInMeta: true, mixedLabels: false, mixedDates: false,
+    formVariety: true, decoyTemp: 0.1, protocols: 0, tables: 0, replicates: 0.08, factorErratum: 0, entities: 3, cells: 6, policies: ['P1'], aliasInPrompt: true, nInMeta: true, mixedLabels: false, mixedDates: false,
     unitLevel: 2, plusMinus: false, fancyNumbers: false, pairs: 0, spelledN: false, background: 1, entityFiller: 1, condLevel: 2,
     docDefault: 0.05, ranges: 0.05, methodNums: 0.1, contrast: 0.1, split: 0.1, addN: 0.1, durations: 0.15, unitWords: 0.1, anaphora: 0.25, nVariety: 0.15, decoyP: 0.2, refStyles: ['id'], redHerrings: 0.1, otherErrata: 0, oocCollide: false,
     filler: { retract: 1, errata: 1, press: 0, supersede: 0 }, ooc: 0, erratumOnVoid: false, unitErratum: false, injection: false,
@@ -60,35 +66,35 @@ export const KNOBS = {
     extras: { loser: 0.3, press: 0.15, conditions: 0.15, nonstdSameDoc: 0.25, loserErratum: 0.1 }, attachP: 0.25,
   },
   3: {
-    formVariety: true, entities: 4, cells: 9, policies: ['P1', 'P2', 'P3', 'P4'], aliasInPrompt: false, nInMeta: false, mixedLabels: true, mixedDates: true,
+    formVariety: true, decoyTemp: 0.2, protocols: 0.3, tables: 0.3, replicates: 0.15, factorErratum: 0.3, entities: 4, cells: 9, policies: ['P1', 'P2', 'P3', 'P4'], aliasInPrompt: false, nInMeta: false, mixedLabels: true, mixedDates: true,
     unitLevel: 2, plusMinus: true, fancyNumbers: false, pairs: 0.5, spelledN: false, background: 1, entityFiller: 1, condLevel: 2,
     docDefault: 0.25, ranges: 0.12, methodNums: 0.3, contrast: 0.3, split: 0.25, addN: 0.2, durations: 0.3, unitWords: 0.15, anaphora: 0.4, nVariety: 0.35, decoyP: 0.6, refStyles: ['title', 'topic', 'date', 'vague', 'cite', 'bare'], redHerrings: 0.3, otherErrata: 1, oocCollide: false,
     filler: { retract: 1, errata: 1, press: 1, supersede: 1 }, ooc: 1, erratumOnVoid: false, unitErratum: false, injection: false,
     mandatory: ['pressOnly', 'retracted', 'erratum', 'press', 'conditions', 'superseded', 'unit', 'rank', 'concern', 'quoted', 'distractor', 'aliasOnly',
-      'grossN', 'erratumDecoy', 'comparison'],
-    extras: { quoteInDoc: 0.3, comparison: 0.1, loser: 0.2, press: 0.1, conditions: 0.1, retracted: 0.1, rank: 0.15, quoted: 0.1, aliasOnly: 0.3, nonstdSameDoc: 0.3, erratum: 0.08,
+      'grossN', 'erratumDecoy', 'comparison', 'bound'],
+    extras: { bound: 0.1, quoteInDoc: 0.3, comparison: 0.1, loser: 0.2, press: 0.1, conditions: 0.1, retracted: 0.1, rank: 0.15, quoted: 0.1, aliasOnly: 0.3, nonstdSameDoc: 0.3, erratum: 0.08,
       nErratum: 0.1, loserErratum: 0.12, supersededLoser: 0.12 },
     attachP: 0.3,
   },
   4: {
-    formVariety: true, entities: 5, cells: 12, policies: ['P1', 'P2', 'P3', 'P4'], aliasInPrompt: false, nInMeta: false, mixedLabels: true, mixedDates: true,
+    formVariety: true, decoyTemp: 0.25, protocols: 0.35, tables: 0.4, replicates: 0.18, factorErratum: 0.35, entities: 5, cells: 12, policies: ['P1', 'P2', 'P3', 'P4'], aliasInPrompt: false, nInMeta: false, mixedLabels: true, mixedDates: true,
     unitLevel: 3, plusMinus: true, fancyNumbers: true, pairs: 0.6, spelledN: true, background: 2, entityFiller: 1, condLevel: 2,
     docDefault: 0.3, ranges: 0.15, methodNums: 0.35, contrast: 0.3, split: 0.3, addN: 0.2, durations: 0.35, unitWords: 0.2, anaphora: 0.45, nVariety: 0.4, decoyP: 0.7, refStyles: ['title', 'topic', 'date', 'vague', 'cite', 'bare'], redHerrings: 0.35, otherErrata: 1, oocCollide: true,
     filler: { retract: 2, errata: 1, press: 1, supersede: 1 }, ooc: 1, erratumOnVoid: true, unitErratum: true, injection: false,
     mandatory: ['pressOnly', 'retracted', 'erratum', 'press', 'conditions', 'superseded', 'unit', 'rank', 'concern', 'quoted', 'distractor',
-      'aliasOnly', 'variant', 'predicted', 'distractor', 'grossN', 'erratumDecoy', 'nErratum', 'comparison', 'quoteInDoc'],
-    extras: { quoteInDoc: 0.2, comparison: 0.1, loser: 0.1, press: 0.06, conditions: 0.06, retracted: 0.05, rank: 0.12, quoted: 0.06, aliasOnly: 0.35, variant: 0.04, predicted: 0.04,
+      'aliasOnly', 'variant', 'predicted', 'distractor', 'grossN', 'erratumDecoy', 'nErratum', 'comparison', 'quoteInDoc', 'bound'],
+    extras: { bound: 0.08, quoteInDoc: 0.2, comparison: 0.1, loser: 0.1, press: 0.06, conditions: 0.06, retracted: 0.05, rank: 0.12, quoted: 0.06, aliasOnly: 0.35, variant: 0.04, predicted: 0.04,
       nonstdSameDoc: 0.3, erratum: 0.06, loserErratum: 0.06, supersededLoser: 0.06 },
     attachP: 0.3,
   },
   5: {
-    formVariety: true, entities: 6, cells: 16, policies: ['P1', 'P2', 'P3', 'P4'], aliasInPrompt: false, nInMeta: false, mixedLabels: true, mixedDates: true,
+    formVariety: true, decoyTemp: 0.25, protocols: 0.35, tables: 0.4, replicates: 0.18, factorErratum: 0.35, entities: 6, cells: 16, policies: ['P1', 'P2', 'P3', 'P4'], aliasInPrompt: false, nInMeta: false, mixedLabels: true, mixedDates: true,
     unitLevel: 3, plusMinus: true, fancyNumbers: true, pairs: 0.6, spelledN: true, background: 1, entityFiller: 1, condLevel: 2,
     docDefault: 0.3, ranges: 0.15, methodNums: 0.35, contrast: 0.3, split: 0.3, addN: 0.2, durations: 0.35, unitWords: 0.2, anaphora: 0.5, nVariety: 0.4, decoyP: 0.7, refStyles: ['title', 'topic', 'date', 'vague', 'cite', 'bare'], redHerrings: 0.35, otherErrata: 1, oocCollide: true,
     filler: { retract: 2, errata: 1, press: 1, supersede: 1 }, ooc: 1, erratumOnVoid: true, unitErratum: true, injection: true,
     mandatory: ['pressOnly', 'retracted', 'erratum', 'press', 'conditions', 'superseded', 'unit', 'rank', 'concern', 'quoted', 'distractor',
-      'aliasOnly', 'variant', 'predicted', 'distractor', 'retracted', 'erratum', 'grossN', 'erratumDecoy', 'nErratum', 'comparison', 'quoteInDoc'],
-    extras: { quoteInDoc: 0.2, comparison: 0.1, loser: 0.08, press: 0.05, conditions: 0.05, retracted: 0.03, rank: 0.1, quoted: 0.05, aliasOnly: 0.4, variant: 0.03, predicted: 0.03,
+      'aliasOnly', 'variant', 'predicted', 'distractor', 'retracted', 'erratum', 'grossN', 'erratumDecoy', 'nErratum', 'comparison', 'quoteInDoc', 'bound'],
+    extras: { bound: 0.08, quoteInDoc: 0.2, comparison: 0.1, loser: 0.08, press: 0.05, conditions: 0.05, retracted: 0.03, rank: 0.1, quoted: 0.05, aliasOnly: 0.4, variant: 0.03, predicted: 0.03,
       nonstdSameDoc: 0.3, erratum: 0.04, loserErratum: 0.05, supersededLoser: 0.05 },
     attachP: 0.3,
   },
@@ -156,7 +162,7 @@ export function resolve(world, o = {}) {
   const corr = new Map(), byDoc = new Map();
   if (!o.skipErrata) {
     for (const e of world.errata) {
-      if (e.kind !== 'value' && e.kind !== 'unit') continue;
+      if (e.kind !== 'value' && e.kind !== 'unit' && e.kind !== 'factor') continue;
       corr.set(e.cid, e);
       byDoc.set(`${e.target}|${e.ent}|${e.prop}`, e);
     }
@@ -254,7 +260,7 @@ export function buildWorld(seed, split, difficulty, attempt = 0) {
     const fs = cell.feats;
     if (['aliasOnly', 'pressOnly', 'distractor'].includes(f) && fs.has(f)) return false;
     if (fs.has('pressOnly') && ['erratum', 'superseded', 'rank', 'press', 'loser', 'concern', 'nonstdSameDoc', 'grossN', 'nErratum', 'erratumDecoy',
-      'loserErratum', 'supersededLoser', 'quoteInDoc', 'comparison'].includes(f)) return false;
+      'loserErratum', 'supersededLoser', 'quoteInDoc', 'comparison', 'bound'].includes(f)) return false;
     if (f === 'pressOnly' && fs.size) return false;
     if (N_FEATURES.has(f) && (pol.id === 'P2' || [...N_FEATURES].some(x => fs.has(x)))) return false;
     // under P3 a 'rank' cell has a non-journal winner; features that need a journal winner clash
@@ -422,6 +428,11 @@ export function buildWorld(seed, split, difficulty, attempt = 0) {
         wClaim = addClaim(W, ent, prop, truth, unit);
         wClaim.value = x; wClaim.unit = wrong;
         addValueErratum(W, wClaim, x, { kind: 'unit', unit });
+      } else if (K.factorErratum && !P.tempLike && r.chance(K.factorErratum)) {
+        // arithmetic erratum: the printed value is too large (or too small) by a factor; the new value is old / factor
+        const F = r.pick([2, 5, 10, 100, 1000]), up = r.chance(0.5);
+        wClaim = addClaim(W, ent, prop, up ? truth * F : truth / F, unit);
+        addValueErratum(W, wClaim, fromCanon(prop, truth, unit), { kind: 'factor', factor: F, up });
       } else {
         wClaim = addClaim(W, ent, prop, perturb(prop, truth, 0.09, 0.4), unit);
         addValueErratum(W, wClaim, fromCanon(prop, truth, unit));
@@ -506,6 +517,10 @@ export function buildWorld(seed, split, difficulty, attempt = 0) {
     if (f.has('predicted')) {
       const Pd = beater(W, ent);
       addClaim(Pd, ent, prop, perturb(prop, truth), pickUnit(prop), { mode: 'predicted' });
+    }
+    if (f.has('bound')) {
+      const B = beater(W, ent);
+      addClaim(B, ent, prop, perturb(prop, truth), pickUnit(prop), { mode: 'bound', boundDir: r.pick(['below', 'above']), boundStyle: r.int(0, 3) });
     }
     if (f.has('variant')) {
       const V = beater(W, ent);
