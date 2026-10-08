@@ -24,13 +24,13 @@ export const HELDOUT_SURFACE_PORTS = Object.freeze([...WORDING_PORTS, 'S5', 'Q2'
 
 export function loadAuthored(authoredDir) {
   ROOT = authoredDir;
-  const A = { pools: {}, x5pairs: [], x5ns: [], x8: [], nondeciding: {}, carriers: {}, cities: [], s5: [], q2: {}, wordings: {} };
+  const A = { pools: {}, x5pairs: [], x5ns: [], x5bank: [], x8: [], nondeciding: {}, carriers: {}, cities: [], s5: [], q2: {}, wordings: {} };
   for (const port of ['R1', 'R2', 'R3', 'R4', 'X1']) {
     const dir = path.join(authoredDir, port); A.pools[port] = {};
     for (const f of listTxt(dir)) (A.pools[port][stemLabel(f)] ??= []).push(...readEntries(dir, f));
   }
   const x5 = path.join(authoredDir, 'X5');
-  for (const f of listTxt(x5)) (stemLabel(f) === 'pairs' ? A.x5pairs : stemLabel(f) === 'not_stated' ? A.x5ns : (() => { throw new AuthorError('AUTHOR_FILE', `X5/${f}: expected pairs*.txt or not_stated*.txt`); })()).push(...readEntries(x5, f));
+  for (const f of listTxt(x5)) (stemLabel(f) === 'pairs' ? A.x5pairs : stemLabel(f) === 'not_stated' ? A.x5ns : stemLabel(f) === 'assumptions' ? A.x5bank : (() => { throw new AuthorError('AUTHOR_FILE', `X5/${f}: expected pairs*.txt, not_stated*.txt or assumptions*.txt`); })()).push(...readEntries(x5, f));
   const x8 = path.join(authoredDir, 'X8');
   for (const f of listTxt(x8)) A.x8.push(...readEntries(x8, f));
   for (const [dirName, target] of [['nondeciding', A.nondeciding], ['carriers', A.carriers], ['wordings', A.wordings]]) {
@@ -146,10 +146,17 @@ export function assemble(authoredDir, { spec = loadSpec(), masks = defaultMasks(
   }
   // X5
   {
-    const systems = systemsOf('X5'), raw = [];
+    const systems = systemsOf('X5'), raw = [], bank = {};
+    for (const e of A.x5bank) {
+      errors.push(...lintEntry('X5', 'bank', e, { systems }));
+      const t = e.meta.tags; (bank[`${t.K}/${t.V}`] ??= []).push(e.fields[0]);
+    }
+    const fromBank = (K, V, key, where) => { const list = bank[`${K}/${V}`]; if (!list?.length) { errors.push(`${where}: no assumption in the bank for K=${K} V=${V}`); return ''; } return list[parseInt(hash8(key), 16) % list.length]; };
     for (const e of A.x5pairs) {
       errors.push(...lintEntry('X5', 'pair', e, { systems }));
-      const [text, a1, a2] = e.fields, t = e.meta.tags, h = hash8(text);
+      const t = e.meta.tags, h = hash8(e.fields[0]), where = `${e.file}:${e.lineNo}`;
+      const text = e.fields[0];
+      const a1 = e.fields[1] ?? fromBank(t.K, t.V, `${text}|H`, where), a2 = e.fields[2] ?? fromBank(t.K, t.W, `${text}|V`, where);
       for (const [label, assumption, av] of [['holds', a1, t.V], ['violated', a2, t.W]]) {
         const u = makeUnit('X5', label, { ...e, fields: [text] }, { systems, masks });
         Object.assign(u, { id: `X5-${label}-${h}`, role: 'decisive', status: 'reserve', filter: null, pairId: `X5-P-${h}`, assumption, kind: t.K, value: t.V, assumptionValue: av, ns: null });
@@ -158,7 +165,7 @@ export function assemble(authoredDir, { spec = loadSpec(), masks = defaultMasks(
     }
     for (const e of A.x5ns) {
       errors.push(...lintEntry('X5', 'not_stated', e, { systems }));
-      const [text, assumption] = e.fields, t = e.meta.tags, ph = placeholdersOf(text);
+      const text = e.fields[0], t = e.meta.tags, ph = placeholdersOf(text), assumption = e.fields[1] ?? fromBank(t.K, t.V, `${text}|N`, `${e.file}:${e.lineNo}`);
       if (t.ns === 'other-system' && !(ph.includes('S2') && ph.includes('S'))) errors.push(`${e.file}:${e.lineNo}: other-system needs {S} (a non-deciding mention) and {S2} (the other system's sentence)`);
       if (t.ns === 'other-convention' && (!ph.includes('S') || !t.about || t.about === t.K || !X5_KINDS[t.about])) errors.push(`${e.file}:${e.lineNo}: other-convention needs {S} and about=<a kind other than K=${t.K}>`);
       if (t.ns === 'absent-system' && (ph.includes('S') || !ph.includes('S2'))) errors.push(`${e.file}:${e.lineNo}: absent-system names {S2} only, never {S}`);

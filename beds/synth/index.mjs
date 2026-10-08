@@ -1,5 +1,6 @@
 // `synth` bed: research synthesis over a corpus of fictional documents (articles, preprints,
 // lab notes, press releases, errata, retractions). See README.md and beds/CONTRACT.md.
+import { types } from 'node:util';
 import { estimateTokens } from '../lib/canonical.mjs';
 import { PROPS } from './catalog.mjs';
 import { VERSION, KNOBS, buildWorld, resolve, toOutput, toCanon, relDiff } from './world.mjs';
@@ -15,31 +16,35 @@ export const family = {
     + 'also list the void (retracted or superseded) documents.',
 };
 
-const str = { type: 'string' };
+// Bounds are part of the portable subset (maxItems / maxLength): a legitimate answer has at most 16 rows
+// (difficulty 5), a few dozen void documents and short strings; anything larger is a hostile or degenerate output.
+const str = { type: 'string', maxLength: 200 };
 export const outputSchema = {
   type: 'object',
   required: ['table', 'conflicts', 'excluded_doc_ids'],
   additionalProperties: false,
   properties: {
     table: {
-      type: 'array',
+      type: 'array', maxItems: 200,
       items: {
         type: 'object', required: ['entity', 'property', 'value', 'source_doc_id'], additionalProperties: false,
         properties: { entity: str, property: str, value: { type: 'number' }, source_doc_id: str },
       },
     },
     conflicts: {
-      type: 'array',
+      type: 'array', maxItems: 200,
       items: {
         type: 'object', required: ['entity', 'property', 'doc_ids'], additionalProperties: false,
-        properties: { entity: str, property: str, doc_ids: { type: 'array', items: str } },
+        properties: { entity: str, property: str, doc_ids: { type: 'array', items: str, maxItems: 200 } },
       },
     },
-    excluded_doc_ids: { type: 'array', items: str },
+    excluded_doc_ids: { type: 'array', items: str, maxItems: 400 },
   },
 };
 
-// Minimal validator for the portable JSON-Schema subset used above.
+// Minimal validator for the portable JSON-Schema subset used above. Property lookups use own
+// properties only: `schema.properties['constructor']` is a function, and a JSON key such as
+// "__proto__", "constructor" or "toString" must be rejected as an unexpected field like any other.
 export function validate(schema, v, path = '$') {
   const errs = [];
   const t = schema.type;
@@ -51,15 +56,50 @@ export function validate(schema, v, path = '$') {
             : t === 'boolean' ? typeof v === 'boolean'
               : t === 'null' ? v === null : true;
   if (!typeOk) return [`${path}: expected ${t}`];
+  if (t === 'string' && schema.maxLength != null && v.length > schema.maxLength) errs.push(`${path}: longer than ${schema.maxLength}`);
   if (t === 'object') {
     for (const k of schema.required || []) if (!Object.hasOwn(v, k)) errs.push(`${path}: missing ${k}`);
     for (const [k, val] of Object.entries(v)) {
-      if (schema.properties && schema.properties[k]) errs.push(...validate(schema.properties[k], val, `${path}.${k}`));
+      if (schema.properties && Object.hasOwn(schema.properties, k)) errs.push(...validate(schema.properties[k], val, `${path}.${k}`));
       else if (schema.additionalProperties === false) errs.push(`${path}: unexpected property ${k}`);
     }
   }
-  if (t === 'array' && schema.items) v.forEach((x, i) => errs.push(...validate(schema.items, x, `${path}[${i}]`)));
+  if (t === 'array') {
+    if (schema.maxItems != null && v.length > schema.maxItems) return [`${path}: more than ${schema.maxItems} items`];
+    // an index loop, not forEach: holes in a sparse array must be seen (as undefined) and rejected
+    if (schema.items) for (let i = 0; i < v.length; i++) errs.push(...validate(schema.items, v[i], `${path}[${i}]`));
+  }
   return errs;
+}
+
+// The output is copied once into plain JSON data before anything reads it: accessors, proxies, sparse
+// arrays, symbol keys, exotic prototypes, deep nesting and huge arrays make it invalid instead of
+// throwing or answering differently on a second read. defineProperty keeps a literal "__proto__" key
+// as an own field (it is then rejected as an unexpected property).
+function plainCopy(value, depth = 0) {
+  if (value === null || typeof value === 'string' || typeof value === 'boolean') return value;
+  if (typeof value === 'number') return value;
+  if (typeof value !== 'object' || depth > 6 || types.isProxy(value)) throw new TypeError('output is not plain JSON data');
+  if (Array.isArray(value)) {
+    if (Object.getPrototypeOf(value) !== Array.prototype || value.length > 1000) throw new TypeError('output contains a non-plain or oversized array');
+    const out = [];
+    for (let i = 0; i < value.length; i++) {
+      const d = Object.getOwnPropertyDescriptor(value, i);
+      if (!d || !('value' in d)) throw new TypeError('output contains a sparse array or an accessor');
+      out.push(plainCopy(d.value, depth + 1));
+    }
+    return out;
+  }
+  const proto = Object.getPrototypeOf(value);
+  if (proto !== Object.prototype && proto !== null) throw new TypeError('output contains a non-plain object');
+  const out = {};
+  for (const key of Reflect.ownKeys(value)) {
+    if (typeof key !== 'string') throw new TypeError('output contains a symbol key');
+    const d = Object.getOwnPropertyDescriptor(value, key);
+    if (!('value' in d)) throw new TypeError(`output field '${key}' is an accessor`);
+    Object.defineProperty(out, key, { value: plainCopy(d.value, depth + 1), enumerable: true, writable: true, configurable: true });
+  }
+  return out;
 }
 
 // ---------------------------------------------------------------------------------------
@@ -210,9 +250,11 @@ export const gatedControls = WORLD_CONTROLS.filter(c => c.minDifficulty > 1 || c
 const norm = s => String(s).trim().toLowerCase().replace(/\s+/g, ' ');
 const normId = s => String(s).trim().toUpperCase();
 
+// Score a plain, schema-valid-or-not output against the hidden world. `full` carries the answer-bearing
+// breakdown (truth values, source ids, missing/extra void ids); the public details drop it (see `oracle`).
 function oracleCore(world, output) {
   const schemaErrors = validate(outputSchema, output);
-  if (schemaErrors.length) return { pass: false, score: 0, details: { schemaErrors: schemaErrors.slice(0, 20) } };
+  if (schemaErrors.length) return { pass: false, score: 0, details: { schemaErrors: schemaErrors.slice(0, 20) }, full: { schemaErrors: schemaErrors.slice(0, 20) } };
   const truth = resolve(world);
   const entKey = new Map();
   for (const e of world.entities) if (!e.distractorOf && !e.background) {
@@ -246,19 +288,38 @@ function oracleCore(world, output) {
   const got = new Set(output.conflicts.map(x => `${entKey.get(norm(x.entity))}|${propKey.get(norm(x.property))}|${[...new Set(x.doc_ids.map(normId))].sort().join(',')}`));
   const hit = [...got].filter(x => want.has(x)).length;
   const correct = cells.filter(c => c.ok).length;
+  const conflicts = { expected: want.size, reported: got.size, matched: hit, precision: got.size ? hit / got.size : want.size ? 0 : 1, recall: want.size ? hit / want.size : 1 };
   return {
     pass: correct === cells.length && excludedOk,
     score: correct / cells.length,
+    // Public details: flags and counts only. Nothing here is a value, a source id or a void id of the truth,
+    // so a verdict can be logged, stored or fed back to an arm without leaking the answer.
     details: {
-      cells, correct, total: cells.length, excludedOk, missingExcluded: missingEx, extraExcluded: extraEx,
-      conflicts: { expected: want.size, reported: got.size, matched: hit, precision: got.size ? hit / got.size : want.size ? 0 : 1, recall: want.size ? hit / want.size : 1 },
+      cells: cells.map(c => ({ entity: c.entity, property: c.property, ok: c.ok, valueOk: c.valueOk ?? false, srcOk: c.srcOk ?? false, ...(c.why ? { why: c.why } : {}) })),
+      correct, total: cells.length, excludedOk, missingExcluded: missingEx.length, extraExcluded: extraEx.length, conflicts,
     },
+    full: { cells, correct, total: cells.length, excludedOk, missingExcluded: missingEx, extraExcluded: extraEx, conflicts },
   };
 }
 
+const rejected = (reason, key = 'schemaErrors') => ({ pass: false, score: 0, details: { [key]: [reason] } });
+function judge(task, rawOutput, wantFull) {
+  let world;
+  try { world = hidden(task).world; } catch (error) { return { ...rejected(`cannot rebuild task: ${String(error?.message ?? error).slice(0, 200)}`, 'error'), full: null }; }
+  let output;
+  try { output = plainCopy(rawOutput); } catch (error) { const r = rejected(error.message); return { ...r, full: r.details }; }
+  const v = oracleCore(world, output);
+  return wantFull ? { pass: v.pass, score: v.score, details: v.full } : { pass: v.pass, score: v.score, details: v.details };
+}
+
+// The oracle never throws: whatever the task or the output, it returns a verdict. Details carry no truth.
 export function oracle(task, output) {
-  const { world } = hidden(task);
-  return oracleCore(world, output);
+  try { return judge(task, output, false); } catch (error) { return rejected(`oracle could not read the output: ${String(error?.message ?? error).slice(0, 200)}`); }
+}
+// Analyst view: the same verdict with the answer-bearing breakdown (truth value and source id per cell,
+// missing and extra void ids). Never hand this to an arm.
+export function explain(task, output) {
+  try { return judge(task, output, true); } catch (error) { return rejected(`oracle could not read the output: ${String(error?.message ?? error).slice(0, 200)}`); }
 }
 
 export { KNOBS, relDiff };

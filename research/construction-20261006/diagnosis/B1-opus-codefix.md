@@ -207,7 +207,8 @@ On the two wrong-default tasks (4 trials per arm):
 | F-haiku (Haiku) | defaults included (`check1`/`check2`) | Opus repair obeys the check: it reverts the default or adds a `__defaults__` hack (`F-haiku-codefix.md`) | 1/4 | 5/8 |
 | **B1-opus (Opus)** | defaults included (`solve.mjs:114`) | hard gate, then the fallback returns the **original** | **0/4** | 4/8 |
 
-Here the Haiku builder did better than the Opus builder in two ways:
+In the B1 arm, the one Haiku-built script avoided both defects of the one Opus-built script. This is one
+construction per builder (K_c = 1) on one family, so it describes these two artifacts, not the builder models:
 
 1. **Its check matches the oracle's contract.** It compares parameter names and order, not defaults.
 2. **Its fallback cannot regress below the patch.** `best` starts with the patched candidate and keeps
@@ -217,7 +218,7 @@ Here the Haiku builder did better than the Opus builder in two ways:
 The Opus artifact is more elaborate: witnesses, a two-step ladder and a witness-gated audit. But its
 gates are strict enough that one false positive vetoes a fully verified patch. It also ignores the
 positive evidence it collects itself: both witnesses fail on the original and pass on the candidate.
-Three of the four codefix builders wrote a default-sensitive signature check (F-haiku, F-opus,
+Three of the four codefix constructions have a default-sensitive signature check (F-haiku, F-opus,
 B1-opus). The consequence depended entirely on how much authority the check had.
 
 ## Fixes (for builder guidance or kit, not applied: the artifact is frozen)

@@ -33,6 +33,9 @@
 //                binding tests: two systems' paragraphs in one state); default [system, ...named]
 //   scope        'notes': source_note is the whole source notes text (the long variant, windowed by the
 //                notes' own size, about 1.8K real tokens)
+//   preamble     X5: put the notes' introduction (it names every system) and the General paragraph before
+//                the system paragraphs (text that mentions a system without describing its conventions)
+//   context      X1, X8: neighbouring export lines on each side of the row (the long variant)
 import { definePortKit } from './kit.mjs';
 import { loadSpec } from '../lib/contracts.mjs';
 
@@ -88,14 +91,16 @@ export function sourceText(task, slots = {}) {
   const notes = text(task, 'source_notes');
   if (slots.scope === 'notes') return notes.trim();
   const P = notesParagraphs(notes);
+  const pre = slots.preamble ? P.blocks.filter(b => !SYSTEM_PARA.test(b) && !/^SOURCE NOTES/.test(b)) : [];
+  const join = parts => [...pre, ...parts].join('\n\n');
   const wanted = Array.isArray(slots.paragraphs) && slots.paragraphs.length ? slots.paragraphs
     : (Array.isArray(slots.systems) ? slots.systems : [slots.system]).filter(Boolean);
   const present = wanted.filter(s => P.para[s]);
   if (present.length) {
-    if (Array.isArray(slots.paragraphs) && slots.paragraphs.length) return present.map(s => P.para[s]).join('\n\n');
+    if (Array.isArray(slots.paragraphs) && slots.paragraphs.length) return join(present.map(s => P.para[s]));
     const out = [];
     for (const s of present) for (const q of [s, ...namedSystems(P.para[s], s, P.order)]) if (!out.includes(q)) out.push(q);
-    return out.map(s => P.para[s]).join('\n\n');
+    return join(out.map(s => P.para[s]));
   }
   return [P.general, ...P.order.slice(0, 2).map(s => P.para[s])].filter(Boolean).join('\n\n');
 }
@@ -110,8 +115,12 @@ export function parseRowLine(line) {
   for (const [re, system] of ROW_ID) { const m = re.exec(line); if (m) return { id: Number(m[1]), system }; }
   return null;
 }
-export function rowLine(task, id) {
-  for (const line of text(task, 'export').split('\n')) { const r = parseRowLine(line); if (r && r.id === Number(id)) return { line, system: r.system, id: r.id }; }
+export function rowLine(task, id, context = 0) {
+  const lines = text(task, 'export').split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    const r = parseRowLine(lines[i]);
+    if (r && r.id === Number(id)) return { line: lines.slice(Math.max(0, i - context), i + context + 1).join('\n'), row: lines[i], system: r.system, id: r.id };
+  }
   throw new Error(`records kit: the export has no row ${id}`);
 }
 
@@ -127,9 +136,10 @@ export function locationText(line, system) {
     case 'KOBO': return 'Japan (implicit: KOBO serves customers resident in Japan)';
     case 'VERITAS': return /"country":(null|"[^"]*")/.exec(line)?.[1]?.replace(/^"|"$/g, '') ?? '';
     case 'VENDEX': {
-      const m = /based in ([^;,.()]+?)(?:[,;.]| \(|$)/.exec(line) ?? /\(([^()]+)\), (?:born|DOB|date of birth|b\.|birth date|DOB unknown)/i.exec(line)
-        ?? /(?:an?|the) ([A-Z][a-z]+) supplier/.exec(line) ?? / — ([^—]+?) — /.exec(line);
-      return m ? m[1].trim() : '';
+      const body = line.replace(/^Vendex \d+ — /, '');
+      const m = /(?:, |\()based in ([^;,.()]+?)(?:[,;.)]| \(|$)/.exec(body) ?? /: [^()]*? \(([^()]+)\), /.exec(body) ?? /, (?:an?|the) ([A-Z][a-z]+) (?:supplier|contact)/.exec(body)
+        ?? /^[^—]+ — ([^—]+?) — /.exec(body);
+      return m && !/^location not stated$/.test(m[1]) ? m[1].trim() : '';
     }
     default: return '';
   }
@@ -149,14 +159,14 @@ export function buildState(task, slots = {}, port = slots.port) {
       return { source_line: r.line, conventions: conv, field: needStr(slots.field, 'slots.field'), extracted_value: needStr(slots.value, 'slots.value (the extracted value)') };
     }
     case 'X1':
-      return { source_kind: KIT_SOURCE_KIND, text: slots.text !== undefined ? needStr(slots.text, 'slots.text') : rowLine(task, slots.row).line };
+      return { source_kind: KIT_SOURCE_KIND, text: slots.text !== undefined ? needStr(slots.text, 'slots.text') : rowLine(task, slots.row, slots.context ?? 0).line };
     case 'R5': {
       const r = rowLine(task, slots.row);
       return { system: slots.system ?? r.system, location_text: locationText(r.line, r.system), row_line: r.line };
     }
     case 'X2': {
       const a = rowLine(task, slots.rowA), b = rowLine(task, slots.rowB);
-      return { a: a.line, b: b.line, context: sourceNote(task, { system: a.system }) };
+      return { a: a.line, b: b.line, context: sourceNote(task, { paragraphs: [...new Set([a.system, b.system])] }) };
     }
     default: throw new Error(`records kit: no state for port ${port}`);
   }

@@ -16,7 +16,7 @@
   - The shared model journal `experiments/runs/c0-dev/journal.sqlite` (`model_calls`, ids below).
   - The builder transcript `/var/tmp/foundry-work/c0-dev/construct/F-haiku-records-k1/.executor-transcript.jsonl`.
   - The bed `beds/records/{index.mjs,world.mjs,README.md,AUDIT.md}` (v3.0.0; read and executed, not edited).
-  - Retention limits: the runner deletes passing trials' work dirs (`experiments/lib/runner.mjs:85`), so evidence
+  - Retention limits: the runner deletes passing trials' work dirs (`experiments/lib/runner.mjs:86`), so evidence
     for passing trials comes from the journal only. F trials write no stdout/stderr files; the work dir holds only `ws/.foundry`.
 
 ## Verdict
@@ -119,9 +119,10 @@ checks held", event seq 53 in both stores; decision `…:verdict:52`) and the `v
 
 Deterministic in what was observed: 2 of 2 independent live `conf` calls returned the same wrong value, and
 `merge` is pure. Replaying all 8 F-haiku trials from journal outputs reproduces every recorded score exactly.
-At the model level the error is stochastic but strongly biased. B0-haiku (Haiku solving directly, xhigh) made
-the same BRIGHTDESK misread on s6001 t1: its oracle shows the same entity_id and birth_date mismatch signature
-(score 0.756). It read the date correctly on t0. Haiku's prior for "US sales CRM" beats the by-example statement.
+At the model level the error is stochastic and looks biased, but the sample is one note on one task: Haiku read
+it wrong in 3 of 4 observed readings. B0-haiku (Haiku solving directly, xhigh) made the same BRIGHTDESK misread on
+s6001 t1: its oracle shows the same entity_id and birth_date mismatch signature (score 0.756). It read the date
+correctly on t0. Inference, not measured: Haiku's prior for "US sales CRM" outweighs the by-example statement.
 
 ## Latent in the passed trials?
 
@@ -161,7 +162,7 @@ notes, cheap extraction, deterministic resolve. Its config node differs in the w
 The same Haiku builder, in the B1 arm (`artifacts/B1-haiku-records-k1/solve.mjs:101-114`), routed the config read
 to **Sonnet → Opus** (`judge([MID, TOP], …)`). Its prompt says "a worked example (a sample numeric date and the month
 or day it stands for) decides it" (`:108`), and it passed s6001 2/2. So Haiku as a builder can produce the right
-design. In the F arm it followed the kit's "start every agent node at the cheapest class" rule
+design (one construction each, K_c = 1: this shows it is possible, not how often it happens). In the F arm it followed the kit's "start every agent node at the cheapest class" rule
 (`skills/micro-harness/SKILL.md:41-47`) for a node where escalation can never fire.
 
 ## Classification

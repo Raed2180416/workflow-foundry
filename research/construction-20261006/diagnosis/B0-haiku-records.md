@@ -189,7 +189,9 @@ All four are **stochastic**. The paired trial of the same task passed or got tha
 | s6002 t0 line-number ids | s6002 t1 passed, 0.996324, entity_id accuracy 1.0 | result row |
 | s6004 t1 Serrano merge | s6004 t0 passed, 1.0, pairF1 1 | result row |
 
-At the model level the errors are biased, not random:
+At the model level the errors fall where a bias would put them, but the counts are far too small to show one
+(2 errors in 16 twin decisions; if both errors were placed at random among the 16, the chance that both land in the
+10 shared-phone decisions is 45/120 ≈ 0.38):
 - **Near-twins sharing a phone.** Over the 8 trials Haiku made 16 twin-pair decisions (2 pairs per task; listed from
   `buildWorld`). Both errors were near-twins that also share a phone (2 of 10 such decisions); the 6 decisions on
   pairs without a shared phone were all right. Passing trials have predicted = E and pairF1 = 1, so they resolved
@@ -238,11 +240,13 @@ B0 has no builder, so there is no "Opus-built artifact" for this arm. The closes
   `dl()` OSA distance and `namesMatch() … <= 1` (`artifacts/B1-haiku-records-k1/solve.mjs:281-312`). That makes the
   near-twin merges in s6001 t0 and s6004 t1 impossible: a group is whatever the rule produces, never a hand-written
   list. The model extracts `row` per line into a typed schema, which removes the line-number confusion. Per the
-  F-haiku diagnosis, it also routes the per-task configuration read to Sonnet → Opus, which removes the BRIGHTDESK
-  misread. F-opus (8/8) and B1-opus (8/8) likewise apply the identity rule deterministically (`osa(` in F-opus's
+  F-haiku diagnosis, it also routes the per-task configuration read to Sonnet → Opus, which read the BRIGHTDESK
+  note correctly here (s6001 2/2; one construction, so this shows the design works on this task, not that it always
+  does). F-opus (8/8) and B1-opus (8/8) likewise apply the identity rule deterministically (`osa(` in F-opus's
   workflow `merge` source; `osa`/`namesMatch` in `B1-opus-records-k1/solve.mjs:67-84`).
 - **F-haiku (6/8)** failed only on the BRIGHTDESK reading (both s6001 trials). B0-haiku shares that weakness 1/2, and
-  adds two failure types that structured execution removes: identity rules applied by hand, and id bookkeeping.
+  adds two failure types that the constructed arms did not show in this round (identity rules applied by hand, and id
+  bookkeeping); the rule-in-code part excludes the near-twin merges by construction, the rest is observed on 8 trials.
 
 What the constructed arms did that B0-haiku did not:
 1. Clustering is computed by the spec's rule in code, not decided in reasoning and typed out.
@@ -277,8 +281,9 @@ B0-haiku took a halfway route: in s6001 t1 it wrote a rule checker, but treated 
 ## Implications (not applied; everything here is frozen for this round)
 
 1. **For the C0 interpretation.** B0-haiku's records failures are mostly of the kind that typed, code-backed execution
-   removes (2 identity-rule merges + 1 id error = 3 of 4). The remaining one (a prose convention read against the
-   model's prior) defeats Haiku whether it runs as an agent or as a workflow node. This supports routing per-task
+   avoided in this round (2 identity-rule merges + 1 id error = 3 of 4). The remaining one (a prose convention read
+   against the model's prior) tripped Haiku both as an agent and as a workflow node (3 of 4 readings of one note on
+   one task). This supports routing per-task
    configuration judgments to a stronger class, or giving them an evidence quote and a consistency check, in the
    kits (see `F-haiku-records.md`, fix 1–2). It does not by itself support a claim about F vs B0. With 4 tasks × 2
    trials the comparison is directional only (PREREG-dev).

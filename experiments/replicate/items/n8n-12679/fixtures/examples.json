@@ -1,0 +1,784 @@
+{
+ "task": {
+  "seed": "examples",
+  "split": "dev",
+  "difficulty": 2,
+  "variant": "T2"
+ },
+ "eventSamples": {
+  "zoho-created-or-updated": {
+   "headers": {
+    "content-type": "application/json"
+   },
+   "params": {},
+   "query": {},
+   "body": {
+    "id": "570000001615000001",
+    "email": "nils.novak71@mail.example",
+    "firstName": "Nils",
+    "lastName": "Novak",
+    "phone": "+49 30 6187554",
+    "mobile": "+49 151 9606107",
+    "homePhone": "+49 30 9839901",
+    "fax": "",
+    "dateOfBirth": "1982-01-16",
+    "mailingCountry": "Austria",
+    "mailingState": "Ostgau",
+    "mailingCity": "Seehausen",
+    "mailingStreet": "Am Hafen 27",
+    "mailingZip": "46599",
+    "klicktippId": "",
+    "modifiedBy": "Mara Lindqvist"
+   }
+  },
+  "zoho-form": {
+   "headers": {
+    "content-type": "application/json"
+   },
+   "params": {},
+   "query": {},
+   "body": {
+    "id": "570000076853000001",
+    "email": "zora.weiss63@mail.example",
+    "firstName": "Zora",
+    "lastName": "Weiss",
+    "phone": "+49 30 4752564",
+    "mobile": "+49 151 3908936",
+    "homePhone": "+49 30 8880501",
+    "fax": "",
+    "dateOfBirth": "1976-02-09",
+    "mailingCountry": "Switzerland",
+    "mailingState": "Nordmark",
+    "mailingCity": "Rotenau",
+    "mailingStreet": "Ringstraße 5",
+    "mailingZip": "90095",
+    "klicktippId": "",
+    "modifiedBy": "Mara Lindqvist"
+   }
+  },
+  "kt-tagged": {
+   "id": "1084301",
+   "email": "tilda.ostrowski78@mail.example",
+   "status": "Subscribed",
+   "listId": "9002",
+   "tags": [
+    "9102",
+    "9105"
+   ],
+   "fullname": "Tilda Ostrowski",
+   "fieldFirstName": "Tilda",
+   "fieldLastName": "Ostrowski",
+   "fieldPhone": "+49 30 7693418",
+   "fieldMobilePhone": "+49 151 0265567",
+   "fieldPrivatePhone": "",
+   "fieldFax": "",
+   "fieldBirthday": "490924800",
+   "fieldCountry": "Switzerland",
+   "fieldState": "Westheide",
+   "fieldCity": "Rotenau",
+   "fieldStreet1": "Gartenallee 77",
+   "fieldZip": "58827",
+   "field9301": "570000083520000001"
+  },
+  "zoho-deleted": {
+   "headers": {
+    "content-type": "application/json"
+   },
+   "params": {},
+   "query": {},
+   "body": {
+    "id": "570000032567000002",
+    "email": "ines.yilmaz15@mail.example",
+    "firstName": "Ines",
+    "lastName": "Yilmaz",
+    "phone": "+49 30 8908191",
+    "mobile": "+49 151 3505585",
+    "homePhone": "+49 30 5108435",
+    "fax": "",
+    "dateOfBirth": "1970-05-07",
+    "mailingCountry": "Germany",
+    "mailingState": "Westheide",
+    "mailingCity": "Altbach",
+    "mailingStreet": "Weidenstieg 35",
+    "mailingZip": "72200",
+    "klicktippId": "481902",
+    "modifiedBy": "Mara Lindqvist"
+   }
+  },
+  "kt-deleted": {
+   "id": "1036202",
+   "email": "ines.quast25@mail.example",
+   "status": "Subscribed",
+   "listId": "9001",
+   "tags": [
+    "9105",
+    "9106"
+   ],
+   "fullname": "Ines Quast",
+   "fieldFirstName": "Ines",
+   "fieldLastName": "Quast",
+   "fieldPhone": "+49 30 4835815",
+   "fieldMobilePhone": "+49 151 0616982",
+   "fieldPrivatePhone": "+49 30 7099628",
+   "fieldFax": "",
+   "fieldBirthday": "306633600",
+   "fieldCountry": "Switzerland",
+   "fieldState": "Nordmark",
+   "fieldCity": "Kleinwald",
+   "fieldStreet1": "Ringstraße 69",
+   "fieldZip": "83540",
+   "field9301": "570000022037000002"
+  }
+ },
+ "scenarios": [
+  {
+   "title": "a contact created in Zoho appears in KlickTipp on the single opt-in list, cross-linked",
+   "steps": [
+    {
+     "happens": [
+      {
+       "what": "a person creates a contact in Zoho CRM",
+       "fields": {
+        "email": "nils.novak71@mail.example",
+        "first": "Nils",
+        "last": "Novak",
+        "phone": "+49 30 6187554",
+        "mobile": "+49 151 9606107",
+        "homePhone": "+49 30 9839901",
+        "fax": "",
+        "dob": "1982-01-16",
+        "street": "Am Hafen 27",
+        "city": "Seehausen",
+        "state": "Ostgau",
+        "zip": "46599",
+        "country": "Austria"
+       },
+       "contact": "a"
+      }
+     ],
+     "eventsDelivered": [
+      {
+       "trigger": "zoho-created-or-updated",
+       "data": {
+        "body": {
+         "id": "570000001615000001",
+         "email": "nils.novak71@mail.example",
+         "firstName": "Nils",
+         "lastName": "Novak",
+         "phone": "+49 30 6187554",
+         "mobile": "+49 151 9606107",
+         "homePhone": "+49 30 9839901",
+         "fax": "",
+         "dateOfBirth": "1982-01-16",
+         "mailingCountry": "Austria",
+         "mailingState": "Ostgau",
+         "mailingCity": "Seehausen",
+         "mailingStreet": "Am Hafen 27",
+         "mailingZip": "46599",
+         "klicktippId": "",
+         "modifiedBy": "Mara Lindqvist"
+        }
+       }
+      },
+      {
+       "trigger": "zoho-created-or-updated",
+       "data": {
+        "body": {
+         "id": "570000001615000001",
+         "email": "nils.novak71@mail.example",
+         "firstName": "Nils",
+         "lastName": "Novak",
+         "phone": "+49 30 6187554",
+         "mobile": "+49 151 9606107",
+         "homePhone": "+49 30 9839901",
+         "fax": "",
+         "dateOfBirth": "1982-01-16",
+         "mailingCountry": "Austria",
+         "mailingState": "Ostgau",
+         "mailingCity": "Seehausen",
+         "mailingStreet": "Am Hafen 27",
+         "mailingZip": "46599",
+         "klicktippId": "921801",
+         "modifiedBy": "Integration Bot"
+        }
+       }
+      }
+     ],
+     "resultingState": {
+      "zoho": [
+       {
+        "id": "570000001615000001",
+        "email": "nils.novak71@mail.example",
+        "first": "Nils",
+        "last": "Novak",
+        "phone": "+49 30 6187554",
+        "mobile": "+49 151 9606107",
+        "homePhone": "+49 30 9839901",
+        "fax": "",
+        "dob": "1982-01-16",
+        "street": "Am Hafen 27",
+        "city": "Seehausen",
+        "state": "Ostgau",
+        "zip": "46599",
+        "country": "Austria",
+        "KlickTipp_ID": "921801",
+        "Email_Opt_Out": false,
+        "tags": []
+       }
+      ],
+      "klicktipp": [
+       {
+        "id": "921801",
+        "email": "nils.novak71@mail.example",
+        "first": "Nils",
+        "last": "Novak",
+        "phone": "+49 30 6187554",
+        "mobile": "+49 151 9606107",
+        "homePhone": "+49 30 9839901",
+        "fax": "",
+        "dob": "1982-01-16",
+        "street": "Am Hafen 27",
+        "city": "Seehausen",
+        "state": "Ostgau",
+        "zip": "46599",
+        "country": "Austria",
+        "status": "Subscribed",
+        "listId": "9001",
+        "tags": [
+         "9101"
+        ],
+        "field9301": "570000001615000001"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "title": "a Zoho web-form submission creates a Pending subscriber on the double opt-in list",
+   "steps": [
+    {
+     "happens": [
+      {
+       "what": "a web-form submission creates a contact in Zoho CRM",
+       "fields": {
+        "email": "zora.weiss63@mail.example",
+        "first": "Zora",
+        "last": "Weiss",
+        "phone": "+49 30 4752564",
+        "mobile": "+49 151 3908936",
+        "homePhone": "+49 30 8880501",
+        "fax": "",
+        "dob": "1976-02-09",
+        "street": "Ringstraße 5",
+        "city": "Rotenau",
+        "state": "Nordmark",
+        "zip": "90095",
+        "country": "Switzerland"
+       },
+       "contact": "a"
+      }
+     ],
+     "eventsDelivered": [
+      {
+       "trigger": "zoho-form",
+       "data": {
+        "body": {
+         "id": "570000076853000001",
+         "email": "zora.weiss63@mail.example",
+         "firstName": "Zora",
+         "lastName": "Weiss",
+         "phone": "+49 30 4752564",
+         "mobile": "+49 151 3908936",
+         "homePhone": "+49 30 8880501",
+         "fax": "",
+         "dateOfBirth": "1976-02-09",
+         "mailingCountry": "Switzerland",
+         "mailingState": "Nordmark",
+         "mailingCity": "Rotenau",
+         "mailingStreet": "Ringstraße 5",
+         "mailingZip": "90095",
+         "klicktippId": "",
+         "modifiedBy": "Mara Lindqvist"
+        }
+       }
+      },
+      {
+       "trigger": "zoho-created-or-updated",
+       "data": {
+        "body": {
+         "id": "570000076853000001",
+         "email": "zora.weiss63@mail.example",
+         "firstName": "Zora",
+         "lastName": "Weiss",
+         "phone": "+49 30 4752564",
+         "mobile": "+49 151 3908936",
+         "homePhone": "+49 30 8880501",
+         "fax": "",
+         "dateOfBirth": "1976-02-09",
+         "mailingCountry": "Switzerland",
+         "mailingState": "Nordmark",
+         "mailingCity": "Rotenau",
+         "mailingStreet": "Ringstraße 5",
+         "mailingZip": "90095",
+         "klicktippId": "1036901",
+         "modifiedBy": "Integration Bot"
+        }
+       }
+      }
+     ],
+     "resultingState": {
+      "zoho": [
+       {
+        "id": "570000076853000001",
+        "email": "zora.weiss63@mail.example",
+        "first": "Zora",
+        "last": "Weiss",
+        "phone": "+49 30 4752564",
+        "mobile": "+49 151 3908936",
+        "homePhone": "+49 30 8880501",
+        "fax": "",
+        "dob": "1976-02-09",
+        "street": "Ringstraße 5",
+        "city": "Rotenau",
+        "state": "Nordmark",
+        "zip": "90095",
+        "country": "Switzerland",
+        "KlickTipp_ID": "1036901",
+        "Email_Opt_Out": true,
+        "tags": []
+       }
+      ],
+      "klicktipp": [
+       {
+        "id": "1036901",
+        "email": "zora.weiss63@mail.example",
+        "first": "Zora",
+        "last": "Weiss",
+        "phone": "+49 30 4752564",
+        "mobile": "+49 151 3908936",
+        "homePhone": "+49 30 8880501",
+        "fax": "",
+        "dob": "1976-02-09",
+        "street": "Ringstraße 5",
+        "city": "Rotenau",
+        "state": "Nordmark",
+        "zip": "90095",
+        "country": "Switzerland",
+        "status": "Pending",
+        "listId": "9002",
+        "tags": [
+         "9102"
+        ],
+        "field9301": "570000076853000001"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "title": "a subscriber tagged for sync in KlickTipp becomes a cross-linked Zoho contact",
+   "steps": [
+    {
+     "happens": [
+      {
+       "what": "a person creates a subscriber in KlickTipp and the automation tags it for sync",
+       "fields": {
+        "email": "wim.novak58@mail.example",
+        "first": "Wim",
+        "last": "Novak",
+        "phone": "+49 30 9243069",
+        "mobile": "+49 151 9170451",
+        "homePhone": "+49 30 0245335",
+        "fax": "",
+        "dob": "1980-11-19",
+        "street": "Mühlgasse 55",
+        "city": "Neustadt",
+        "state": "Südtal",
+        "zip": "20326",
+        "country": "Switzerland"
+       },
+       "contact": "a"
+      }
+     ],
+     "eventsDelivered": [
+      {
+       "trigger": "kt-tagged",
+       "data": {
+        "id": "691801",
+        "email": "wim.novak58@mail.example",
+        "status": "Subscribed",
+        "listId": "9001",
+        "tags": [
+         "9105"
+        ],
+        "fullname": "Wim Novak",
+        "fieldFirstName": "Wim",
+        "fieldLastName": "Novak",
+        "fieldPhone": "+49 30 9243069",
+        "fieldMobilePhone": "+49 151 9170451",
+        "fieldPrivatePhone": "+49 30 0245335",
+        "fieldFax": "",
+        "fieldBirthday": "343440000",
+        "fieldCountry": "Switzerland",
+        "fieldState": "Südtal",
+        "fieldCity": "Neustadt",
+        "fieldStreet1": "Mühlgasse 55",
+        "fieldZip": "20326",
+        "field9301": ""
+       }
+      },
+      {
+       "trigger": "zoho-created-or-updated",
+       "data": {
+        "body": {
+         "id": "570000031139000001",
+         "email": "wim.novak58@mail.example",
+         "firstName": "Wim",
+         "lastName": "Novak",
+         "phone": "+49 30 9243069",
+         "mobile": "+49 151 9170451",
+         "homePhone": "+49 30 0245335",
+         "fax": "",
+         "dateOfBirth": "1980-11-19",
+         "mailingCountry": "Switzerland",
+         "mailingState": "Südtal",
+         "mailingCity": "Neustadt",
+         "mailingStreet": "Mühlgasse 55",
+         "mailingZip": "20326",
+         "klicktippId": "691801",
+         "modifiedBy": "Integration Bot"
+        }
+       }
+      },
+      {
+       "trigger": "zoho-created-or-updated",
+       "data": {
+        "body": {
+         "id": "570000031139000001",
+         "email": "wim.novak58@mail.example",
+         "firstName": "Wim",
+         "lastName": "Novak",
+         "phone": "+49 30 9243069",
+         "mobile": "+49 151 9170451",
+         "homePhone": "+49 30 0245335",
+         "fax": "",
+         "dateOfBirth": "1980-11-19",
+         "mailingCountry": "Switzerland",
+         "mailingState": "Südtal",
+         "mailingCity": "Neustadt",
+         "mailingStreet": "Mühlgasse 55",
+         "mailingZip": "20326",
+         "klicktippId": "691801",
+         "modifiedBy": "Integration Bot"
+        }
+       }
+      }
+     ],
+     "resultingState": {
+      "zoho": [
+       {
+        "id": "570000031139000001",
+        "email": "wim.novak58@mail.example",
+        "first": "Wim",
+        "last": "Novak",
+        "phone": "+49 30 9243069",
+        "mobile": "+49 151 9170451",
+        "homePhone": "+49 30 0245335",
+        "fax": "",
+        "dob": "1980-11-19",
+        "street": "Mühlgasse 55",
+        "city": "Neustadt",
+        "state": "Südtal",
+        "zip": "20326",
+        "country": "Switzerland",
+        "KlickTipp_ID": "691801",
+        "Email_Opt_Out": false,
+        "tags": []
+       }
+      ],
+      "klicktipp": [
+       {
+        "id": "691801",
+        "email": "wim.novak58@mail.example",
+        "first": "Wim",
+        "last": "Novak",
+        "phone": "+49 30 9243069",
+        "mobile": "+49 151 9170451",
+        "homePhone": "+49 30 0245335",
+        "fax": "",
+        "dob": "1980-11-19",
+        "street": "Mühlgasse 55",
+        "city": "Neustadt",
+        "state": "Südtal",
+        "zip": "20326",
+        "country": "Switzerland",
+        "status": "Subscribed",
+        "listId": "9001",
+        "tags": [
+         "9105"
+        ],
+        "field9301": "570000031139000001"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "title": "unsubscribing in KlickTipp sets the Zoho opt-out and keeps both records",
+   "steps": [
+    {
+     "happens": [
+      {
+       "what": "a person creates a contact in Zoho CRM",
+       "fields": {
+        "email": "mira.ekstrom90@mail.example",
+        "first": "Mira",
+        "last": "Ekström",
+        "phone": "+49 30 5017325",
+        "mobile": "+49 151 7094024",
+        "homePhone": "",
+        "fax": "",
+        "dob": "1982-04-27",
+        "street": "Gartenallee 65",
+        "city": "Brunnfeld",
+        "state": "Nordmark",
+        "zip": "60680",
+        "country": "Austria"
+       },
+       "contact": "a"
+      }
+     ],
+     "eventsDelivered": [
+      {
+       "trigger": "zoho-created-or-updated",
+       "data": {
+        "body": {
+         "id": "570000016377000001",
+         "email": "mira.ekstrom90@mail.example",
+         "firstName": "Mira",
+         "lastName": "Ekström",
+         "phone": "+49 30 5017325",
+         "mobile": "+49 151 7094024",
+         "homePhone": "",
+         "fax": "",
+         "dateOfBirth": "1982-04-27",
+         "mailingCountry": "Austria",
+         "mailingState": "Nordmark",
+         "mailingCity": "Brunnfeld",
+         "mailingStreet": "Gartenallee 65",
+         "mailingZip": "60680",
+         "klicktippId": "",
+         "modifiedBy": "Mara Lindqvist"
+        }
+       }
+      },
+      {
+       "trigger": "zoho-created-or-updated",
+       "data": {
+        "body": {
+         "id": "570000016377000001",
+         "email": "mira.ekstrom90@mail.example",
+         "firstName": "Mira",
+         "lastName": "Ekström",
+         "phone": "+49 30 5017325",
+         "mobile": "+49 151 7094024",
+         "homePhone": "",
+         "fax": "",
+         "dateOfBirth": "1982-04-27",
+         "mailingCountry": "Austria",
+         "mailingState": "Nordmark",
+         "mailingCity": "Brunnfeld",
+         "mailingStreet": "Gartenallee 65",
+         "mailingZip": "60680",
+         "klicktippId": "806801",
+         "modifiedBy": "Integration Bot"
+        }
+       }
+      }
+     ],
+     "resultingState": {
+      "zoho": [
+       {
+        "id": "570000016377000001",
+        "email": "mira.ekstrom90@mail.example",
+        "first": "Mira",
+        "last": "Ekström",
+        "phone": "+49 30 5017325",
+        "mobile": "+49 151 7094024",
+        "homePhone": "",
+        "fax": "",
+        "dob": "1982-04-27",
+        "street": "Gartenallee 65",
+        "city": "Brunnfeld",
+        "state": "Nordmark",
+        "zip": "60680",
+        "country": "Austria",
+        "KlickTipp_ID": "806801",
+        "Email_Opt_Out": false,
+        "tags": []
+       }
+      ],
+      "klicktipp": [
+       {
+        "id": "806801",
+        "email": "mira.ekstrom90@mail.example",
+        "first": "Mira",
+        "last": "Ekström",
+        "phone": "+49 30 5017325",
+        "mobile": "+49 151 7094024",
+        "homePhone": "",
+        "fax": "",
+        "dob": "1982-04-27",
+        "street": "Gartenallee 65",
+        "city": "Brunnfeld",
+        "state": "Nordmark",
+        "zip": "60680",
+        "country": "Austria",
+        "status": "Subscribed",
+        "listId": "9001",
+        "tags": [
+         "9101"
+        ],
+        "field9301": "570000016377000001"
+       }
+      ]
+     }
+    },
+    {
+     "happens": [
+      {
+       "what": "a person unsubscribes a subscriber in KlickTipp and the automation tags it for sync",
+       "contact": "a"
+      }
+     ],
+     "eventsDelivered": [
+      {
+       "trigger": "kt-tagged",
+       "data": {
+        "id": "806801",
+        "email": "mira.ekstrom90@mail.example",
+        "status": "Unsubscribed",
+        "listId": "9001",
+        "tags": [
+         "9101",
+         "9105"
+        ],
+        "fullname": "Mira Ekström",
+        "fieldFirstName": "Mira",
+        "fieldLastName": "Ekström",
+        "fieldPhone": "+49 30 5017325",
+        "fieldMobilePhone": "+49 151 7094024",
+        "fieldPrivatePhone": "",
+        "fieldFax": "",
+        "fieldBirthday": "388713600",
+        "fieldCountry": "Austria",
+        "fieldState": "Nordmark",
+        "fieldCity": "Brunnfeld",
+        "fieldStreet1": "Gartenallee 65",
+        "fieldZip": "60680",
+        "field9301": "570000016377000001"
+       }
+      },
+      {
+       "trigger": "zoho-created-or-updated",
+       "data": {
+        "body": {
+         "id": "570000016377000001",
+         "email": "mira.ekstrom90@mail.example",
+         "firstName": "Mira",
+         "lastName": "Ekström",
+         "phone": "+49 30 5017325",
+         "mobile": "+49 151 7094024",
+         "homePhone": "",
+         "fax": "",
+         "dateOfBirth": "1982-04-27",
+         "mailingCountry": "Austria",
+         "mailingState": "Nordmark",
+         "mailingCity": "Brunnfeld",
+         "mailingStreet": "Gartenallee 65",
+         "mailingZip": "60680",
+         "klicktippId": "806801",
+         "modifiedBy": "Integration Bot"
+        }
+       }
+      },
+      {
+       "trigger": "zoho-created-or-updated",
+       "data": {
+        "body": {
+         "id": "570000016377000001",
+         "email": "mira.ekstrom90@mail.example",
+         "firstName": "Mira",
+         "lastName": "Ekström",
+         "phone": "+49 30 5017325",
+         "mobile": "+49 151 7094024",
+         "homePhone": "",
+         "fax": "",
+         "dateOfBirth": "1982-04-27",
+         "mailingCountry": "Austria",
+         "mailingState": "Nordmark",
+         "mailingCity": "Brunnfeld",
+         "mailingStreet": "Gartenallee 65",
+         "mailingZip": "60680",
+         "klicktippId": "806801",
+         "modifiedBy": "Integration Bot"
+        }
+       }
+      }
+     ],
+     "resultingState": {
+      "zoho": [
+       {
+        "id": "570000016377000001",
+        "email": "mira.ekstrom90@mail.example",
+        "first": "Mira",
+        "last": "Ekström",
+        "phone": "+49 30 5017325",
+        "mobile": "+49 151 7094024",
+        "homePhone": "",
+        "fax": "",
+        "dob": "1982-04-27",
+        "street": "Gartenallee 65",
+        "city": "Brunnfeld",
+        "state": "Nordmark",
+        "zip": "60680",
+        "country": "Austria",
+        "KlickTipp_ID": "806801",
+        "Email_Opt_Out": true,
+        "tags": []
+       }
+      ],
+      "klicktipp": [
+       {
+        "id": "806801",
+        "email": "mira.ekstrom90@mail.example",
+        "first": "Mira",
+        "last": "Ekström",
+        "phone": "+49 30 5017325",
+        "mobile": "+49 151 7094024",
+        "homePhone": "",
+        "fax": "",
+        "dob": "1982-04-27",
+        "street": "Gartenallee 65",
+        "city": "Brunnfeld",
+        "state": "Nordmark",
+        "zip": "60680",
+        "country": "Austria",
+        "status": "Unsubscribed",
+        "listId": "9001",
+        "tags": [
+         "9101",
+         "9105"
+        ],
+        "field9301": "570000016377000001"
+       }
+      ]
+     }
+    }
+   ]
+  }
+ ]
+}

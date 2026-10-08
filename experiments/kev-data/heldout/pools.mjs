@@ -188,8 +188,8 @@ export function lintEntry(poolName, label, entry, { systems, nondeciding = false
     else if (!X8_KINDS[tags.K].includes(tags.V)) e(`X8 K=${tags.K} needs V=${X8_KINDS[tags.K].join('|')}`);
     if (tags.K === 'status' && !placeholdersOf(text).includes('token')) e('X8 status lines name the marker {token}');
   } else if (pool.kind === 'x5') {
-    const want = label === 'pair' ? 3 : 2;
-    if (fields.length !== want) e(`X5 ${label} entry needs ${want} fields (text${label === 'pair' ? '@@assumption-that-holds@@assumption-that-is-violated' : '@@assumption'})`);
+    const wants = label === 'pair' ? [1, 3] : label === 'bank' ? [1] : [1, 2];
+    if (!wants.includes(fields.length)) e(`X5 ${label} entry needs ${wants.join(' or ')} field(s) (text${label === 'pair' ? '[@@assumption-that-holds@@assumption-that-is-violated]' : label === 'bank' ? '' : '[@@assumption]'}; without assumptions the assumption bank supplies them)`);
     for (const f of fields) checkPh(f);
     if (!X5_KINDS[tags.K]) e(`X5 entry needs K=${Object.keys(X5_KINDS).join('|')}`);
     else if (!X5_KINDS[tags.K].includes(tags.V)) e(`X5 K=${tags.K} needs V=${X5_KINDS[tags.K].join('|')}`);
@@ -197,6 +197,9 @@ export function lintEntry(poolName, label, entry, { systems, nondeciding = false
       if (!X5_KINDS[tags.K]?.includes(tags.W) || tags.W === tags.V) e('X5 pair needs W=<a different value of the same kind> (the violated assumption states W)');
       if (!placeholdersOf(fields[0]).includes('S')) e('X5 pair text names {S}');
       for (const f of fields.slice(1)) if (!placeholdersOf(f).includes('S')) e('X5 assumptions name {S}');
+    } else if (label === 'bank') {
+      if (!placeholdersOf(fields[0]).includes('S')) e('X5 assumptions name {S}');
+      if (tags.K === 'status' && !placeholdersOf(fields[0]).includes('token')) e('X5 status assumptions name the marker {token}');
     } else {
       if (!NS_KINDS.includes(tags.ns)) e(`X5 not_stated entry needs ns=${NS_KINDS.join('|')}`);
       if (fields[1] && !placeholdersOf(fields[1]).includes('S')) e('X5 assumptions name {S}');

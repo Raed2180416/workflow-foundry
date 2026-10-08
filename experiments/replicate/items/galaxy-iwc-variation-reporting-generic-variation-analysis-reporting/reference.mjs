@@ -26,7 +26,7 @@ export const COMBINED_HEADER = ['Sample', 'POS', 'FILTER', 'REF', 'ALT', 'DP', '
 
 // Deliberate faults used by controls.mjs (mutation testing). Default: faithful.
 export const MUTATIONS = ['af-boundary-inclusive', 'no-dp-alt-term', 'first-sample-only', 'no-recalc-swap', 'text-sort-pos',
-  'ignore-upstream-filter', 'one-row-per-effect', 'unsorted-combined'];
+  'ignore-upstream-filter', 'one-row-per-effect', 'unsorted-combined', 'dp-boundary-inclusive'];
 
 const bytewise = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 const tsv = (header, rows) => [header, ...rows].map(r => r.join('\t')).join('\n') + '\n';
@@ -75,7 +75,7 @@ export function failsThresholds(r, p, mutation) {
   const [, , a2, a3] = r.info.get('DP4').split(',').map(Number);
   const alt = a2 + a3;
   const lowAlt = mutation === 'af-boundary-inclusive' ? alt <= p.af * dp : alt < p.af * dp;
-  const lowDp = dp < p.dp;
+  const lowDp = mutation === 'dp-boundary-inclusive' ? dp <= p.dp : dp < p.dp;
   const lowAltDepth = mutation === 'no-dp-alt-term' ? false : af * dp < p.dp_alt - 0.5;
   return lowAlt || lowDp || lowAltDepth;
 }

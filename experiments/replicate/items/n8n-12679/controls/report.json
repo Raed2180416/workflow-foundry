@@ -1,0 +1,678 @@
+{
+ "item": {
+  "id": "n8n:12679",
+  "safeId": "n8n-12679",
+  "title": "Sync contacts two-way between Zoho CRM and KlickTipp",
+  "url": "https://n8n.io/workflows/12679",
+  "rawSha256": "e007cdb5b21493078a941883f27eabe8a6f9c4bb19adb32cebcc096634ece9c1"
+ },
+ "harness": "0.1.0",
+ "seeds": 20,
+ "status": "development/diagnostic; not a sealed evaluation",
+ "controls": {
+  "faithful-transcription": {
+   "variant": "T2",
+   "byDifficulty": {
+    "d1": {
+     "seeds": 5,
+     "pass": 5,
+     "meanCalls": 142
+    },
+    "d2": {
+     "seeds": 5,
+     "pass": 5,
+     "meanCalls": 162
+    },
+    "d3": {
+     "seeds": 20,
+     "pass": 20,
+     "meanCalls": 188
+    },
+    "d4": {
+     "seeds": 5,
+     "pass": 5,
+     "meanCalls": 222
+    },
+    "d5": {
+     "seeds": 5,
+     "pass": 5,
+     "meanCalls": 261
+    }
+   },
+   "onT3": {
+    "seeds": 20,
+    "corePass": 20,
+    "probesFailedBySeedCount": {
+     "P1": 20,
+     "P2": 20,
+     "P3": 20,
+     "P4": 20
+    },
+    "costPass": 20
+   }
+  },
+  "improved": {
+   "variant": "T3",
+   "byDifficulty": {
+    "d1": {
+     "seeds": 5,
+     "pass": 5,
+     "meanCalls": 114,
+     "meanRatioToTranscription": 0.801
+    },
+    "d2": {
+     "seeds": 5,
+     "pass": 5,
+     "meanCalls": 128,
+     "meanRatioToTranscription": 0.789
+    },
+    "d3": {
+     "seeds": 20,
+     "pass": 20,
+     "meanCalls": 144,
+     "meanRatioToTranscription": 0.77
+    },
+    "d4": {
+     "seeds": 5,
+     "pass": 5,
+     "meanCalls": 166,
+     "meanRatioToTranscription": 0.749
+    },
+    "d5": {
+     "seeds": 5,
+     "pass": 5,
+     "meanCalls": 193,
+     "meanRatioToTranscription": 0.739
+    }
+   }
+  },
+  "bad": {
+   "empty": {
+    "describe": "do-nothing: every event is acknowledged and nothing is called",
+    "seeds": 20,
+    "passedOracle": 0,
+    "meanScore": 0,
+    "expectedCodes": [
+     "MISSING_ZOHO",
+     "MISSING_KT"
+    ],
+    "expectedCodesHit": [
+     20,
+     20
+    ],
+    "codesBySeedCount": {
+     "MISSING_KT": 20,
+     "MISSING_ZOHO": 20,
+     "EXTRA_ZOHO": 15,
+     "EXTRA_KT": 13,
+     "FIELD_MISMATCH:zoho.first": 14,
+     "FIELD_MISMATCH:zoho.last": 6,
+     "FIELD_MISMATCH:zoho.phone": 11,
+     "FIELD_MISMATCH:zoho.mobile": 11,
+     "FIELD_MISMATCH:zoho.homePhone": 5,
+     "FIELD_MISMATCH:zoho.fax": 4,
+     "FIELD_MISMATCH:zoho.dob": 6,
+     "FIELD_MISMATCH:zoho.street": 12,
+     "FIELD_MISMATCH:zoho.city": 6,
+     "FIELD_MISMATCH:zoho.state": 6,
+     "FIELD_MISMATCH:zoho.zip": 6,
+     "FIELD_MISMATCH:zoho.country": 6,
+     "SEGMENT_MISMATCH:zoho": 8,
+     "LINK_BROKEN": 11,
+     "OPTOUT_MISMATCH": 4,
+     "FIELD_MISMATCH:klicktipp.fax": 10,
+     "FIELD_MISMATCH:klicktipp.city": 11,
+     "FIELD_MISMATCH:klicktipp.last": 11,
+     "FIELD_MISMATCH:klicktipp.first": 8,
+     "FIELD_MISMATCH:klicktipp.phone": 8,
+     "FIELD_MISMATCH:klicktipp.mobile": 8,
+     "FIELD_MISMATCH:klicktipp.dob": 8,
+     "FIELD_MISMATCH:klicktipp.street": 8,
+     "FIELD_MISMATCH:klicktipp.state": 8,
+     "FIELD_MISMATCH:klicktipp.zip": 10,
+     "TAG_MISSING:created": 6,
+     "SEGMENT_MISMATCH:klicktipp": 7,
+     "FIELD_MISMATCH:klicktipp.homePhone": 8,
+     "FIELD_MISMATCH:klicktipp.country": 5,
+     "STATUS_WRONG": 4,
+     "LIST_WRONG": 1,
+     "TAG_MISSING:createdViaForm": 1,
+     "DUP_KT": 1,
+     "DUP_ZOHO": 1
+    }
+   },
+   "shuffled-or-corrupted": {
+    "describe": "the correct call sequence with its actions shuffled",
+    "seeds": 20,
+    "passedOracle": 0,
+    "meanScore": 0,
+    "expectedCodes": [],
+    "expectedCodesHit": [],
+    "codesBySeedCount": {
+     "MISSING_KT": 20,
+     "EXTRA_ZOHO": 20,
+     "MISSING_ZOHO": 20,
+     "EXTRA_KT": 20,
+     "LINK_BROKEN": 19,
+     "ECHO_WRITE": 18,
+     "SEGMENT_MISMATCH:zoho": 13,
+     "FIELD_MISMATCH:zoho.first": 15,
+     "FIELD_MISMATCH:zoho.last": 5,
+     "FIELD_MISMATCH:zoho.phone": 11,
+     "FIELD_MISMATCH:zoho.mobile": 13,
+     "FIELD_MISMATCH:zoho.homePhone": 5,
+     "FIELD_MISMATCH:zoho.fax": 3,
+     "FIELD_MISMATCH:zoho.dob": 5,
+     "FIELD_MISMATCH:zoho.street": 13,
+     "FIELD_MISMATCH:zoho.city": 5,
+     "FIELD_MISMATCH:zoho.state": 5,
+     "FIELD_MISMATCH:zoho.zip": 5,
+     "FIELD_MISMATCH:zoho.country": 5,
+     "OPTOUT_MISMATCH": 8,
+     "FIELD_MISMATCH:klicktipp.fax": 12,
+     "FIELD_MISMATCH:klicktipp.city": 14,
+     "FIELD_MISMATCH:klicktipp.last": 11,
+     "FIELD_MISMATCH:klicktipp.first": 10,
+     "FIELD_MISMATCH:klicktipp.phone": 13,
+     "FIELD_MISMATCH:klicktipp.mobile": 10,
+     "FIELD_MISMATCH:klicktipp.dob": 9,
+     "FIELD_MISMATCH:klicktipp.street": 10,
+     "FIELD_MISMATCH:klicktipp.state": 9,
+     "FIELD_MISMATCH:klicktipp.zip": 11,
+     "TAG_MISSING:created": 5,
+     "SEGMENT_MISMATCH:klicktipp": 13,
+     "DUP_ZOHO": 3,
+     "ID_UNSTABLE": 1,
+     "FIELD_MISMATCH:klicktipp.homePhone": 8,
+     "FIELD_MISMATCH:klicktipp.country": 6,
+     "STATUS_WRONG": 4,
+     "LIST_WRONG": 2,
+     "TAG_MISSING:createdViaForm": 1,
+     "DUP_KT": 2
+    }
+   },
+   "plausible-but-wrong": {
+    "describe": "works except that every Zoho edit forces Email_Opt_Out=false, silently undoing a KlickTipp unsubscribe",
+    "seeds": 20,
+    "passedOracle": 0,
+    "meanScore": 0.9,
+    "expectedCodes": [
+     "OPTOUT_MISMATCH"
+    ],
+    "expectedCodesHit": [
+     20
+    ],
+    "codesBySeedCount": {
+     "OPTOUT_MISMATCH": 20
+    }
+   },
+   "no-ui-user-guard": {
+    "describe": "the loop guard is missing: the integration reacts to its own Zoho writes",
+    "seeds": 20,
+    "passedOracle": 0,
+    "meanScore": 0,
+    "expectedCodes": [
+     "ECHO_LOOP"
+    ],
+    "expectedCodesHit": [
+     20
+    ],
+    "codesBySeedCount": {
+     "ECHO_LOOP": 20,
+     "ECHO_WRITE": 20
+    }
+   },
+   "single-and-double-opt-in-swapped": {
+    "describe": "Zoho create/update uses the double opt-in list and web-form submissions the single opt-in list",
+    "seeds": 20,
+    "passedOracle": 0,
+    "meanScore": 0.333,
+    "expectedCodes": [
+     "LIST_WRONG"
+    ],
+    "expectedCodesHit": [
+     20
+    ],
+    "codesBySeedCount": {
+     "STATUS_WRONG": 20,
+     "LIST_WRONG": 20,
+     "TAG_MISSING:created": 20,
+     "OPTOUT_MISMATCH": 20,
+     "TAG_MISSING:createdViaForm": 20
+    }
+   },
+   "zoho-delete-not-propagated": {
+    "describe": "a contact deleted in Zoho keeps its KlickTipp subscriber",
+    "seeds": 20,
+    "passedOracle": 0,
+    "meanScore": 0.877,
+    "expectedCodes": [
+     "EXTRA_KT"
+    ],
+    "expectedCodesHit": [
+     20
+    ],
+    "codesBySeedCount": {
+     "EXTRA_KT": 20,
+     "SEGMENT_MISMATCH:klicktipp": 12,
+     "STATUS_WRONG": 6,
+     "OPTOUT_MISMATCH": 6,
+     "DUP_KT": 5,
+     "FIELD_MISMATCH:klicktipp.first": 5,
+     "FIELD_MISMATCH:klicktipp.last": 5,
+     "FIELD_MISMATCH:klicktipp.phone": 5,
+     "FIELD_MISMATCH:klicktipp.mobile": 5,
+     "FIELD_MISMATCH:klicktipp.homePhone": 5,
+     "FIELD_MISMATCH:klicktipp.dob": 5,
+     "FIELD_MISMATCH:klicktipp.street": 5,
+     "FIELD_MISMATCH:klicktipp.state": 4,
+     "FIELD_MISMATCH:klicktipp.zip": 5,
+     "FIELD_MISMATCH:klicktipp.country": 4,
+     "SEGMENT_MISMATCH:zoho": 7,
+     "LINK_BROKEN": 5,
+     "LIST_WRONG": 4,
+     "FIELD_MISMATCH:klicktipp.fax": 4,
+     "FIELD_MISMATCH:klicktipp.city": 4,
+     "DUP_ZOHO": 3,
+     "FIELD_MISMATCH:zoho.phone": 2,
+     "FIELD_MISMATCH:zoho.street": 1,
+     "DUP_CREATE": 3,
+     "FIELD_MISMATCH:zoho.first": 2,
+     "FIELD_MISMATCH:zoho.mobile": 1,
+     "EXTRA_ZOHO": 1
+    }
+   },
+   "klicktipp-delete-not-propagated": {
+    "describe": "a subscriber deleted in KlickTipp keeps its Zoho contact",
+    "seeds": 20,
+    "passedOracle": 0,
+    "meanScore": 0.887,
+    "expectedCodes": [
+     "EXTRA_ZOHO"
+    ],
+    "expectedCodesHit": [
+     20
+    ],
+    "codesBySeedCount": {
+     "EXTRA_ZOHO": 20,
+     "DUP_ZOHO": 9,
+     "FIELD_MISMATCH:zoho.first": 8,
+     "FIELD_MISMATCH:zoho.last": 9,
+     "FIELD_MISMATCH:zoho.phone": 9,
+     "FIELD_MISMATCH:zoho.mobile": 9,
+     "FIELD_MISMATCH:zoho.homePhone": 9,
+     "FIELD_MISMATCH:zoho.fax": 6,
+     "FIELD_MISMATCH:zoho.dob": 9,
+     "FIELD_MISMATCH:zoho.street": 9,
+     "FIELD_MISMATCH:zoho.city": 9,
+     "FIELD_MISMATCH:zoho.state": 9,
+     "FIELD_MISMATCH:zoho.zip": 9,
+     "FIELD_MISMATCH:zoho.country": 7,
+     "SEGMENT_MISMATCH:zoho": 6,
+     "LINK_BROKEN": 9,
+     "OPTOUT_MISMATCH": 3,
+     "FIELD_MISMATCH:klicktipp.fax": 1,
+     "FIELD_MISMATCH:klicktipp.city": 2,
+     "DUP_CREATE": 6,
+     "FIELD_MISMATCH:klicktipp.zip": 1,
+     "ID_UNSTABLE": 2
+    }
+   },
+   "ids-linked-one-way": {
+    "describe": "the cross-link ids are never written back (Zoho KlickTipp_ID and the subscriber Zoho-id field stay empty on one side)",
+    "seeds": 20,
+    "passedOracle": 0,
+    "meanScore": 0,
+    "expectedCodes": [
+     "LINK_BROKEN"
+    ],
+    "expectedCodesHit": [
+     20
+    ],
+    "codesBySeedCount": {
+     "LINK_BROKEN": 20,
+     "ID_UNSTABLE": 20,
+     "EXTRA_KT": 20,
+     "EXTRA_ZOHO": 20,
+     "OPTOUT_MISMATCH": 20,
+     "DUP_ZOHO": 19,
+     "FIELD_MISMATCH:zoho.first": 14,
+     "FIELD_MISMATCH:zoho.phone": 15,
+     "FIELD_MISMATCH:zoho.mobile": 15,
+     "FIELD_MISMATCH:zoho.street": 16,
+     "SEGMENT_MISMATCH:zoho": 11,
+     "FIELD_MISMATCH:klicktipp.first": 6,
+     "FIELD_MISMATCH:klicktipp.mobile": 6,
+     "FIELD_MISMATCH:klicktipp.street": 5,
+     "DUP_CREATE": 15,
+     "FIELD_MISMATCH:zoho.last": 9,
+     "FIELD_MISMATCH:zoho.homePhone": 9,
+     "FIELD_MISMATCH:zoho.dob": 8,
+     "FIELD_MISMATCH:zoho.city": 8,
+     "FIELD_MISMATCH:zoho.state": 8,
+     "FIELD_MISMATCH:zoho.zip": 8,
+     "FIELD_MISMATCH:klicktipp.phone": 4,
+     "FIELD_MISMATCH:zoho.fax": 6,
+     "SEGMENT_MISMATCH:klicktipp": 6,
+     "FIELD_MISMATCH:zoho.country": 2,
+     "DUP_KT": 2,
+     "FIELD_MISMATCH:klicktipp.last": 2,
+     "FIELD_MISMATCH:klicktipp.homePhone": 2,
+     "FIELD_MISMATCH:klicktipp.fax": 2,
+     "FIELD_MISMATCH:klicktipp.dob": 2,
+     "FIELD_MISMATCH:klicktipp.city": 2,
+     "FIELD_MISMATCH:klicktipp.state": 1,
+     "FIELD_MISMATCH:klicktipp.zip": 2,
+     "STATUS_WRONG": 2,
+     "LIST_WRONG": 2,
+     "TAG_MISSING:createdViaForm": 1,
+     "FIELD_MISMATCH:klicktipp.country": 1
+    }
+   },
+   "duplicate-on-every-edit": {
+    "describe": "a KlickTipp edit always creates a new Zoho contact instead of updating the linked one",
+    "seeds": 20,
+    "passedOracle": 0,
+    "meanScore": 0.667,
+    "expectedCodes": [
+     "DUP_CREATE"
+    ],
+    "expectedCodesHit": [
+     20
+    ],
+    "codesBySeedCount": {
+     "DUP_ZOHO": 20,
+     "LINK_BROKEN": 20,
+     "OPTOUT_MISMATCH": 20,
+     "DUP_CREATE": 20,
+     "ID_UNSTABLE": 20,
+     "EXTRA_ZOHO": 20,
+     "FIELD_MISMATCH:zoho.first": 19,
+     "FIELD_MISMATCH:zoho.phone": 17,
+     "FIELD_MISMATCH:zoho.mobile": 15,
+     "FIELD_MISMATCH:zoho.street": 18,
+     "SEGMENT_MISMATCH:zoho": 12,
+     "FIELD_MISMATCH:klicktipp.first": 8,
+     "FIELD_MISMATCH:klicktipp.mobile": 6,
+     "FIELD_MISMATCH:klicktipp.street": 4,
+     "FIELD_MISMATCH:zoho.last": 7,
+     "FIELD_MISMATCH:zoho.homePhone": 7,
+     "FIELD_MISMATCH:zoho.fax": 5,
+     "FIELD_MISMATCH:zoho.dob": 7,
+     "FIELD_MISMATCH:zoho.zip": 6,
+     "FIELD_MISMATCH:zoho.country": 5,
+     "FIELD_MISMATCH:klicktipp.phone": 3,
+     "FIELD_MISMATCH:zoho.city": 6,
+     "FIELD_MISMATCH:zoho.state": 5,
+     "MISSING_KT": 1,
+     "EXTRA_KT": 1
+    }
+   },
+   "segments-not-synced": {
+    "describe": "segment tags are never carried over in either direction",
+    "seeds": 20,
+    "passedOracle": 0,
+    "meanScore": 0.8,
+    "expectedCodes": [
+     "SEGMENT_MISMATCH:klicktipp",
+     "SEGMENT_MISMATCH:zoho"
+    ],
+    "expectedCodesHit": [
+     20,
+     20
+    ],
+    "codesBySeedCount": {
+     "SEGMENT_MISMATCH:klicktipp": 20,
+     "SEGMENT_MISMATCH:zoho": 20
+    }
+   },
+   "activation-tag-echo": {
+    "describe": "every KlickTipp subscriber the integration touches gets the activation tag, so KlickTipp posts it back",
+    "seeds": 20,
+    "passedOracle": 0,
+    "meanScore": 0.333,
+    "expectedCodes": [
+     "ECHO_WRITE"
+    ],
+    "expectedCodesHit": [
+     20
+    ],
+    "codesBySeedCount": {
+     "ECHO_WRITE": 20
+    }
+   },
+   "replayed-example-trace": {
+    "describe": "overfit: submits the call trace that solved the worked examples, for a task with different data",
+    "seeds": 20,
+    "passedOracle": 0,
+    "meanScore": 0,
+    "expectedCodes": [],
+    "expectedCodesHit": [],
+    "codesBySeedCount": {
+     "MISSING_KT": 20,
+     "EXTRA_KT": 20,
+     "MISSING_ZOHO": 20,
+     "EXTRA_ZOHO": 20,
+     "FIELD_MISMATCH:zoho.first": 13,
+     "FIELD_MISMATCH:zoho.last": 6,
+     "FIELD_MISMATCH:zoho.phone": 11,
+     "FIELD_MISMATCH:zoho.mobile": 11,
+     "FIELD_MISMATCH:zoho.homePhone": 5,
+     "FIELD_MISMATCH:zoho.fax": 4,
+     "FIELD_MISMATCH:zoho.dob": 6,
+     "FIELD_MISMATCH:zoho.street": 12,
+     "FIELD_MISMATCH:zoho.city": 6,
+     "FIELD_MISMATCH:zoho.state": 6,
+     "FIELD_MISMATCH:zoho.zip": 6,
+     "FIELD_MISMATCH:zoho.country": 6,
+     "SEGMENT_MISMATCH:zoho": 8,
+     "LINK_BROKEN": 11,
+     "OPTOUT_MISMATCH": 3,
+     "FIELD_MISMATCH:klicktipp.fax": 10,
+     "FIELD_MISMATCH:klicktipp.city": 11,
+     "FIELD_MISMATCH:klicktipp.last": 11,
+     "ECHO_WRITE": 16,
+     "FIELD_MISMATCH:klicktipp.first": 8,
+     "FIELD_MISMATCH:klicktipp.phone": 8,
+     "FIELD_MISMATCH:klicktipp.mobile": 8,
+     "FIELD_MISMATCH:klicktipp.dob": 8,
+     "FIELD_MISMATCH:klicktipp.street": 8,
+     "FIELD_MISMATCH:klicktipp.state": 8,
+     "FIELD_MISMATCH:klicktipp.zip": 10,
+     "TAG_MISSING:created": 6,
+     "SEGMENT_MISMATCH:klicktipp": 7,
+     "FIELD_MISMATCH:klicktipp.homePhone": 8,
+     "FIELD_MISMATCH:klicktipp.country": 5,
+     "STATUS_WRONG": 3,
+     "LIST_WRONG": 1,
+     "TAG_MISSING:createdViaForm": 1,
+     "DUP_KT": 1,
+     "DUP_ZOHO": 1
+    }
+   }
+  },
+  "original": {
+   "available": true,
+   "sha256": "e007cdb5b21493078a941883f27eabe8a6f9c4bb19adb32cebcc096634ece9c1",
+   "expressions": {
+    "total": 110,
+    "byKind": {
+     "special": 7,
+     "path": 97,
+     "node-path": 6
+    },
+    "unreviewed": 0
+   },
+   "binding": {
+    "count": 8,
+    "usage": [
+     1,
+     1,
+     1,
+     1,
+     2,
+     2,
+     13,
+     2
+    ]
+   },
+   "alias": {
+    "seeds": 20,
+    "corePass": 20,
+    "coreFailedBySeedCount": {},
+    "probesFailedBySeedCount": {
+     "P1": 20,
+     "P2": 20,
+     "P3": 20,
+     "P4": 20
+    },
+    "meanExternalCalls": 188,
+    "meanFailedCalls": 4.5,
+    "nodeErrorsAcrossSeeds": {
+     "Delete contact in KlickTipp: HTTP 404 {\"error\":\"SUBSCRIBER_NOT_FOUND\",\"message\":": 50,
+     "Create Contact with SOI: HTTP 400 {\"error\":\"INVALID_EMAIL\",\"message\":\"a valid em": 20,
+     "Create a contact in Zoho: HTTP 400 {\"data\":[{\"code\":\"MANDATORY_NOT_FOUND\",\"messa": 20
+    }
+   },
+   "raw": {
+    "seeds": 20,
+    "corePass": 0,
+    "coreFailedBySeedCount": {
+     "S13": 20,
+     "S15": 20
+    },
+    "probesFailedBySeedCount": {
+     "P1": 20,
+     "P2": 20,
+     "P3": 20,
+     "P4": 20
+    },
+    "meanExternalCalls": 183,
+    "meanFailedCalls": 13.1,
+    "nodeErrorsAcrossSeeds": {
+     "Delete contact in KlickTipp: HTTP 404 {\"error\":\"SUBSCRIBER_NOT_FOUND\",\"message\":": 50,
+     "Create Contact with SOI: HTTP 400 {\"error\":\"INVALID_EMAIL\",\"message\":\"a valid em": 20,
+     "Create a contact in Zoho: HTTP 400 {\"data\":[{\"code\":\"MANDATORY_NOT_FOUND\",\"messa": 20,
+     "Tag contact in KlickTipp: HTTP 404 {\"error\":\"SUBSCRIBER_NOT_FOUND\",\"message\":\"no": 98,
+     "Tag contact in KlickTipp1: HTTP 404 {\"error\":\"SUBSCRIBER_NOT_FOUND\",\"message\":\"n": 74
+    }
+   },
+   "traceIdenticalToTranscription": {
+    "identical": 40,
+    "of": 40,
+    "firstDiff": null
+   },
+   "mutants": {
+    "no-ui-user-guard": {
+     "describe": "both \"only process changes via UI users\" filters removed (the author warns this causes a loop)",
+     "passedOracle": 0,
+     "codesBySeedCount": {
+      "ECHO_LOOP": 20,
+      "ECHO_WRITE": 20
+     }
+    },
+    "single-and-double-opt-in-swapped": {
+     "describe": "the SOI and DOI nodes exchange their list and tag ids",
+     "passedOracle": 0,
+     "codesBySeedCount": {
+      "STATUS_WRONG": 20,
+      "LIST_WRONG": 20,
+      "TAG_MISSING:created": 20,
+      "OPTOUT_MISMATCH": 20,
+      "TAG_MISSING:createdViaForm": 20
+     }
+    },
+    "zoho-delete-not-propagated": {
+     "describe": "Zoho deletions no longer reach KlickTipp",
+     "passedOracle": 0,
+     "codesBySeedCount": {
+      "EXTRA_KT": 20,
+      "SEGMENT_MISMATCH:klicktipp": 12,
+      "STATUS_WRONG": 6,
+      "OPTOUT_MISMATCH": 6,
+      "DUP_KT": 5,
+      "FIELD_MISMATCH:klicktipp.first": 5,
+      "FIELD_MISMATCH:klicktipp.last": 5,
+      "FIELD_MISMATCH:klicktipp.phone": 5,
+      "FIELD_MISMATCH:klicktipp.mobile": 5,
+      "FIELD_MISMATCH:klicktipp.homePhone": 5,
+      "FIELD_MISMATCH:klicktipp.dob": 5,
+      "FIELD_MISMATCH:klicktipp.street": 5,
+      "FIELD_MISMATCH:klicktipp.state": 4,
+      "FIELD_MISMATCH:klicktipp.zip": 5,
+      "FIELD_MISMATCH:klicktipp.country": 4,
+      "SEGMENT_MISMATCH:zoho": 7,
+      "LINK_BROKEN": 5,
+      "LIST_WRONG": 4,
+      "FIELD_MISMATCH:klicktipp.fax": 4,
+      "FIELD_MISMATCH:klicktipp.city": 4,
+      "DUP_ZOHO": 3,
+      "FIELD_MISMATCH:zoho.phone": 2,
+      "FIELD_MISMATCH:zoho.street": 1,
+      "DUP_CREATE": 3,
+      "FIELD_MISMATCH:zoho.first": 2,
+      "FIELD_MISMATCH:zoho.mobile": 1,
+      "EXTRA_ZOHO": 1
+     }
+    },
+    "klicktipp-delete-not-propagated": {
+     "describe": "KlickTipp deletions no longer reach Zoho",
+     "passedOracle": 0,
+     "codesBySeedCount": {
+      "EXTRA_ZOHO": 20,
+      "DUP_ZOHO": 9,
+      "FIELD_MISMATCH:zoho.first": 8,
+      "FIELD_MISMATCH:zoho.last": 9,
+      "FIELD_MISMATCH:zoho.phone": 9,
+      "FIELD_MISMATCH:zoho.mobile": 9,
+      "FIELD_MISMATCH:zoho.homePhone": 9,
+      "FIELD_MISMATCH:zoho.fax": 6,
+      "FIELD_MISMATCH:zoho.dob": 9,
+      "FIELD_MISMATCH:zoho.street": 9,
+      "FIELD_MISMATCH:zoho.city": 9,
+      "FIELD_MISMATCH:zoho.state": 9,
+      "FIELD_MISMATCH:zoho.zip": 9,
+      "FIELD_MISMATCH:zoho.country": 7,
+      "SEGMENT_MISMATCH:zoho": 6,
+      "LINK_BROKEN": 9,
+      "OPTOUT_MISMATCH": 3,
+      "FIELD_MISMATCH:klicktipp.fax": 1,
+      "FIELD_MISMATCH:klicktipp.city": 2,
+      "DUP_CREATE": 6,
+      "FIELD_MISMATCH:klicktipp.zip": 1,
+      "ID_UNSTABLE": 2
+     }
+    },
+    "zoho-id-not-saved-in-klicktipp": {
+     "describe": "after creating a Zoho contact from KlickTipp the Zoho id is not written back to the subscriber",
+     "passedOracle": 0,
+     "codesBySeedCount": {
+      "LINK_BROKEN": 20,
+      "ID_UNSTABLE": 20,
+      "EXTRA_ZOHO": 20,
+      "SEGMENT_MISMATCH:zoho": 20,
+      "DUP_ZOHO": 19,
+      "FIELD_MISMATCH:zoho.first": 14,
+      "FIELD_MISMATCH:zoho.phone": 15,
+      "OPTOUT_MISMATCH": 12,
+      "FIELD_MISMATCH:zoho.mobile": 15,
+      "FIELD_MISMATCH:zoho.street": 17,
+      "FIELD_MISMATCH:klicktipp.first": 5,
+      "FIELD_MISMATCH:klicktipp.mobile": 4,
+      "FIELD_MISMATCH:klicktipp.street": 3,
+      "DUP_CREATE": 18,
+      "FIELD_MISMATCH:zoho.last": 9,
+      "FIELD_MISMATCH:zoho.homePhone": 9,
+      "FIELD_MISMATCH:zoho.dob": 9,
+      "FIELD_MISMATCH:zoho.city": 9,
+      "FIELD_MISMATCH:zoho.state": 8,
+      "FIELD_MISMATCH:zoho.zip": 8,
+      "FIELD_MISMATCH:klicktipp.phone": 3,
+      "FIELD_MISMATCH:zoho.fax": 6,
+      "FIELD_MISMATCH:zoho.country": 4
+     }
+    }
+   }
+  }
+ }
+}

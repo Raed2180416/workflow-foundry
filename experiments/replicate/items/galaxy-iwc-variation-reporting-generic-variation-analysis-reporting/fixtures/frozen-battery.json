@@ -1,0 +1,268 @@
+{
+ "schema": "rbench-frozen-battery/1",
+ "canonical": {
+  "seed": 1,
+  "split": "test",
+  "difficulty": 3
+ },
+ "cases": [
+  {
+   "caseId": "shipped",
+   "kind": "shipped",
+   "samples": 1,
+   "params": {
+    "af": 0.05,
+    "dp": 1,
+    "dp_alt": 10
+   },
+   "inputSha256": "a4026274b6a39a458c128bfac0a55d977db5a793abc8e48d6b8e2fc435dc7cc5",
+   "expectedSha256": "9205e4992629ed351125a6971610f2ba44abd0b879f50b821d83abd6c2725b56"
+  },
+  {
+   "caseId": "derived-00",
+   "kind": "derived",
+   "samples": 2,
+   "params": {
+    "af": 0.05,
+    "dp": 1,
+    "dp_alt": 10
+   },
+   "inputSha256": "c73ed1f7d59b17492823bf35052c8616f4217d66796c6fc7467480f5ac56dd78",
+   "expectedSha256": "88128133cd4f45677c5fc1bc453605a0ae0c3bc0560eaa1a351f6274174df710"
+  },
+  {
+   "caseId": "derived-01",
+   "kind": "derived",
+   "samples": 3,
+   "params": {
+    "af": 0.2,
+    "dp": 5,
+    "dp_alt": 10
+   },
+   "inputSha256": "dfe88db7c0967de0033931198c4c42937c63151f9a657f3b94fc854cc18c338d",
+   "expectedSha256": "68a3b4627f502605e6bb365049671c80fdde058e4f5529e5d34fd3da32d729be"
+  },
+  {
+   "caseId": "derived-02",
+   "kind": "derived",
+   "samples": 4,
+   "params": {
+    "af": 0.02,
+    "dp": 10,
+    "dp_alt": 10
+   },
+   "inputSha256": "8b9d85c565c87059ba8269fe2fc44c99ceeeca2ed9840704cdfb737db65a4ea5",
+   "expectedSha256": "df33d5048f48057e0a5d2be1d05ce3a5537a131943bf19dac471d76319ce978b"
+  },
+  {
+   "caseId": "derived-03",
+   "kind": "derived",
+   "samples": 5,
+   "params": {
+    "af": 0.2,
+    "dp": 10,
+    "dp_alt": 20
+   },
+   "inputSha256": "26a4177e08b1a79f876455d10670383b79845bfa399a0c70f6f07cfbf2c85355",
+   "expectedSha256": "0389f00cee3ffc5c71cd925aa1a01bdd37ab957b59c68a5a8f4c2138e320f461"
+  },
+  {
+   "caseId": "derived-04",
+   "kind": "derived",
+   "samples": 2,
+   "params": {
+    "af": 0.05,
+    "dp": 1,
+    "dp_alt": 10
+   },
+   "inputSha256": "ba5a3661d60d97d7ecde772c83b3583e1c39305f3b0c08f7fe5309128f90d5c4",
+   "expectedSha256": "def4ba68111e805ef104149f52595678d104d4bab05adbcce2ee89dc86b6722c"
+  },
+  {
+   "caseId": "derived-05",
+   "kind": "derived",
+   "samples": 3,
+   "params": {
+    "af": 0.02,
+    "dp": 5,
+    "dp_alt": 10
+   },
+   "inputSha256": "652d5e8e02db62257e5a388493a0bebf323d57010157aba7d7bb17b950803a24",
+   "expectedSha256": "02c8893eff4451a8a856c6cbf5cacebf9ce8e687fde660363011a8f7ec2db2cb"
+  },
+  {
+   "caseId": "derived-06",
+   "kind": "derived",
+   "samples": 4,
+   "params": {
+    "af": 0.25,
+    "dp": 1,
+    "dp_alt": 10
+   },
+   "inputSha256": "8cd85b9519b77ee00896cbab3e666bf514fa047088d19c196c0855c939ea81f5",
+   "expectedSha256": "6a092501720bdf8332947dc8c3762e4d8eb660e090370cd8e46af7726206068a"
+  },
+  {
+   "caseId": "derived-07",
+   "kind": "derived",
+   "samples": 5,
+   "params": {
+    "af": 0.02,
+    "dp": 1,
+    "dp_alt": 20
+   },
+   "inputSha256": "6974bb2dc52e84a1d689100b4aa04a3240c8a94770ca62b5e28d8af935e9bad2",
+   "expectedSha256": "d48075beaaf549ec4a1682c05082a7b40ccd34dd0e6021867e767ca213e59c85"
+  },
+  {
+   "caseId": "derived-08",
+   "kind": "derived",
+   "samples": 2,
+   "params": {
+    "af": 0.05,
+    "dp": 1,
+    "dp_alt": 10
+   },
+   "inputSha256": "e1856d72773edcb671303e3b9cfd964233e052ccad65fae36cd96968e7d35728",
+   "expectedSha256": "2c9c8835baa81b6b88a2027b467b6029dc0699d6b3193e49dd2de86b25374abb"
+  },
+  {
+   "caseId": "derived-09",
+   "kind": "derived",
+   "samples": 3,
+   "params": {
+    "af": 0.05,
+    "dp": 5,
+    "dp_alt": 20
+   },
+   "inputSha256": "f8cacbc4847ff8a362adbee7aa0291058ba0e4edca694dd3ace30fa223254d88",
+   "expectedSha256": "df70fd35296fdd2a00c7b49e906e7ec0a53312a0cb1b047ce4873e76e1d5e6cb"
+  },
+  {
+   "caseId": "derived-10",
+   "kind": "derived",
+   "samples": 4,
+   "params": {
+    "af": 0.05,
+    "dp": 20,
+    "dp_alt": 10
+   },
+   "inputSha256": "6a82954c58a38a6839427f129f3de2f39d9feb85a7a4df2768a4cfd19bf2c930",
+   "expectedSha256": "af9a4b63abb390fe15be732884232c704db05495bb43e1a84f335cc8e8a59999"
+  },
+  {
+   "caseId": "derived-11",
+   "kind": "derived",
+   "samples": 5,
+   "params": {
+    "af": 0.02,
+    "dp": 5,
+    "dp_alt": 10
+   },
+   "inputSha256": "750509d33cbf81ba35654458a1f20dded6ddb8fc8b8bdf3b0c7f77308f300118",
+   "expectedSha256": "d732ef7875ee868bb0c105e7ede6f13fd4d9878f9d59e8f7bf62fb72ee8305ea"
+  },
+  {
+   "caseId": "derived-12",
+   "kind": "derived",
+   "samples": 2,
+   "params": {
+    "af": 0.05,
+    "dp": 1,
+    "dp_alt": 10
+   },
+   "inputSha256": "6a5425e97ac4f14e0b8bfce83e98ed52c61f42aba7bdf548022015c5bd02310e",
+   "expectedSha256": "5bf03fa4dd37335e75dce2afe5bbaa0be67ecd9230ae48afc604e7270ff2dc32"
+  },
+  {
+   "caseId": "derived-13",
+   "kind": "derived",
+   "samples": 3,
+   "params": {
+    "af": 0.25,
+    "dp": 1,
+    "dp_alt": 10
+   },
+   "inputSha256": "19948beaeda4e68112d01c17f94c872d80da7cb6dcde5a83b103e7aa4b434959",
+   "expectedSha256": "093d91e24844d941d498ae38ac60d8843313735b3f8d4ae5d94273f31ac06c2d"
+  },
+  {
+   "caseId": "derived-14",
+   "kind": "derived",
+   "samples": 4,
+   "params": {
+    "af": 0.05,
+    "dp": 10,
+    "dp_alt": 5
+   },
+   "inputSha256": "a5056fabf0e89f6aac3e3b347ff1e543432d111408fc95844667228477717304",
+   "expectedSha256": "3c80522942ff01eb30ed0ff89eb2061ea131df15cb2d64d9357c3d4920b26630"
+  },
+  {
+   "caseId": "derived-15",
+   "kind": "derived",
+   "samples": 5,
+   "params": {
+    "af": 0.25,
+    "dp": 10,
+    "dp_alt": 3
+   },
+   "inputSha256": "d8c6ad5eb6712354afb96c282dedce66692848519f2a9ed132be9fefd1db36cf",
+   "expectedSha256": "7263b569f73ba6949c6284decaefd841db9df03d41e8956977040c7e6151982f"
+  },
+  {
+   "caseId": "derived-16",
+   "kind": "derived",
+   "samples": 2,
+   "params": {
+    "af": 0.05,
+    "dp": 1,
+    "dp_alt": 10
+   },
+   "inputSha256": "469c561cb98e159ccf53ae16853fa5fccc51f2e8cb6cc1989e737fd0f704ab7c",
+   "expectedSha256": "a89490bf175a1c84681727d033fbcf96279abf77bd546076766c7a1edb346eaf"
+  },
+  {
+   "caseId": "derived-17",
+   "kind": "derived",
+   "samples": 3,
+   "params": {
+    "af": 0.1,
+    "dp": 20,
+    "dp_alt": 5
+   },
+   "inputSha256": "14804e2bc794df6dc6328d101ab0e274b9c501819bcc0349df9580e8d584bcf9",
+   "expectedSha256": "a77e5851487491d36920ba88b213ab071db32f7526518516d78e0230d365cbcd"
+  },
+  {
+   "caseId": "derived-18",
+   "kind": "derived",
+   "samples": 4,
+   "params": {
+    "af": 0.02,
+    "dp": 10,
+    "dp_alt": 20
+   },
+   "inputSha256": "c404141b8809d3c8da0e9a480255ad443a1d6d0d6d74d7432c8bf30b8c2c390c",
+   "expectedSha256": "c40e6d2ce3d5784f1ff134428e374145bbd9f1a1a46af3e5a84271a785182040"
+  },
+  {
+   "caseId": "derived-19",
+   "kind": "derived",
+   "samples": 5,
+   "params": {
+    "af": 0.02,
+    "dp": 5,
+    "dp_alt": 10
+   },
+   "inputSha256": "190b26d7738613fba34c334eac0b36de858e42435caa6ca46576b8075eca8af8",
+   "expectedSha256": "3adec7b5460a441ca2d3df6ea4e91fdc90b42670b47e8edbb7bf8a60459f6bf7"
+  }
+ ],
+ "tasks": {
+  "T1": "8c26f5f625d4927af3d0afb86c012c64f5bb4ab93f8ae209e93a406486ac432b",
+  "T2": "488b9d04200d035e5dc9e24206cde4d0e436b676b6a3c0156647ac6c2e6deebf",
+  "T3": "d3e4cf808c916275aded91d137abd76f251e72e1b2e3ee32dd1701f1ca08c3cc"
+ },
+ "batterySha256": "7be1411810b6db0ad34b62941a3456de3a41078675a3c4e614273de450b24eca"
+}

@@ -195,6 +195,11 @@ export function applyEdits(notes, edits) {
   let cur = notes;
   for (const e of edits) {
     if (e.old === e.new) continue;
+    if (e.delete) {                                   // the revision-1 deletion construction (a planted-shortcut control only)
+      if (countOcc(cur, e.old) !== 1) return { ok: false, reason: 'sentence-not-found', edit: e };
+      cur = cur.replace(`${e.old} `, '').replace(e.old, '');
+      continue;
+    }
     const r = replaceSentence(cur, e.old, e.new);
     if (!r.ok) return { ok: false, reason: r.reason, edit: e };
     cur = r.text;
@@ -379,7 +384,7 @@ export function makeContext(slice, opts, ctx, bed) {
   if (builtinOn && TRAIN_LIKE.has(slice) || (builtinOn && OOD.has(slice))) raw = [...builtinLines(bed, builtinOn), ...raw];
   const bank = new LineBank(raw, { slice });
   const wordings = Object.fromEntries(Object.entries(o.wordings ?? {}).map(([p, list]) => [p, [...list].sort((a, b) => (a.id < b.id ? -1 : 1))]));
-  return { slice, bed, ctx, contracts: ctx.contracts, def: ctx.slice, opts: o, bank, wordings, poolDigest, ood: OOD.has(slice), seen: new Set(), cells: new Map(), counts: {}, notes: { skipped: {} } };
+  return { slice, bed, ctx, contracts: ctx.contracts, def: ctx.slice, opts: o, bank, wordings, control: o.control ?? null, poolDigest, ood: OOD.has(slice), seen: new Set(), cells: new Map(), counts: {}, notes: { skipped: {} } };
 }
 const bump = (G, k, n = 1) => { G.counts[k] = (G.counts[k] ?? 0) + n; };
 const cellCount = (G, key) => G.cells.get(key) ?? {};
@@ -574,7 +579,12 @@ const optionsOf = (G, port) => Object.keys(G.contracts[port].options);
 export function realize(G, W, plan) {
   const A = applyEdits(W.task.inputs.source_notes, plan.edits);
   if (!A.ok) { bump(G, `drop:${plan.port}:${plan.axis}:edit-${A.reason}`); return null; }
-  const task = taskWith(W.task, A.notes);
+  let task = taskWith(W.task, A.notes);
+  for (const e of plan.exportEdits ?? []) {
+    const r = replaceSentence(task.inputs.export, e.old, e.new);
+    if (!r.ok) { bump(G, `drop:${plan.port}:${plan.axis}:export-${r.reason}`); return null; }
+    task = { ...task, inputs: { ...task.inputs, export: r.text } };
+  }
   let state;
   try { state = kit.buildState(task, plan.kitSlots, plan.statePort ?? plan.port); } catch (e) { bump(G, `drop:${plan.port}:${plan.axis}:kit`); G.notes.kitErrors = (G.notes.kitErrors ?? 0) + 1; G.notes.lastKitError = e.message; return null; }
   const wordings = plan.wordings, options = optionsOf(G, plan.port), questions = {};
@@ -598,14 +608,14 @@ export function realize(G, W, plan) {
   };
   if (plan.soft) meta.unknowable = Object.keys(questions);
   G.out.push({ state, questions, meta });
-  const lab = plan.label;
-  if (!plan.soft && plan.cell) { cellAdd(G, plan.cell, lab); if (plan.port === 'R4') cellAdd(G, `R4|window|${lab}`, String(hasDateWindow(plan.decisive[0]))); }
+  if (!plan.soft) for (const [k, l] of plan.counts ?? []) cellAdd(G, k, l === '$window' ? String(hasDateWindow(plan.decisive[0])) : l);
   bump(G, `rows:${plan.port}:${plan.axis}`, Object.keys(questions).length);
   return G.out.at(-1);
 }
 
 // ---- the clean plan of a unit -------------------------------------------------------------------------------------------
 const pairIdOf = (...key) => `p${sha256(key.join('|')).slice(0, 12)}`;
+const countsOf = (prefix, sys, label, r4) => [[`${prefix}|${sys}`, label], ...(r4 ? [[`${prefix}|window|${label}`, '$window']] : [])];
 function basePlan(G, W, port, u, scr, job, key, d, target, over = {}) {
   const edits = [...scr.edits];
   if (!d.unchanged) edits.push({ old: u.sentence, new: d.text, role: 'decisive' });
@@ -613,32 +623,35 @@ function basePlan(G, W, port, u, scr, job, key, d, target, over = {}) {
   return { port, u, key, edits, kitSlots: { ...slots }, qslots: { ...slots }, label: target, soft: false, variant: job.variant ?? 'clean', axis: job.axis ?? job.id,
     decisive: [d.text], role: 'stated', surface: { source: d.source === 'bed' ? (job.mode === 'heldout-bed' ? 'bed-heldout' : 'bed') : d.source, line: d.line ?? null, from: d.from },
     counterfactual: d.unchanged && !scr.edits.length ? null : { swapped: !d.unchanged, kind: d.unchanged ? 'scrub' : d.source === 'bed' ? 'flip' : 'line', from: tplName(u, u.index), to: d.from, pool: u.pool, index: d.index, scrubbed: scr.edits.length },
-    wk: d.wk, wordings: over.wordings, cell: `${port}|${u.sys}`, extra: {}, ...over };
+    wk: d.wk, wordings: over.wordings, cell: `${port}|${u.sys}`, counts: countsOf(job.cellPrefix ?? port, u.sys, target, port === 'R4'), extra: {}, ...over };
 }
 const labelsFor = (G, W, port, sys, mode) => {
   const base = OPT_LABELS[port];
   if (port !== 'R1') return base;
+  if (mode === 'heldout-bed') return ['dmy', 'mdy'];
   const ymdOk = mode === 'ood' ? G.bank.find({ port, label: 'ymd', system: sys, own: true }).length > 0
     : G.bank.find({ port, label: 'ymd', kind: 'year-first', system: sys }).length > 0;
   return ymdOk ? base : ['dmy', 'mdy'];
 };
 // R4: the label balances within (port, system); date-window presence then balances within each label
-function r4Combo(G, W, sys, key) {
-  const label = leastCommon(cellCount(G, `R4|${sys}`), OPT_LABELS.R4, 'r4label', ...key);
-  const windowed = leastCommon(cellCount(G, `R4|window|${label}`), ['false', 'true'], 'r4win', ...key);
+function r4Combo(G, W, sys, key, prefix = 'R4') {
+  const label = leastCommon(cellCount(G, `${prefix}|${sys}`), OPT_LABELS.R4, 'r4label', ...key);
+  const windowed = leastCommon(cellCount(G, `${prefix}|window|${label}`), ['false', 'true'], 'r4win', ...key);
   return [label, windowed];
 }
 export function chooseTarget(G, W, port, u, job, key) {
+  if (G.control === 'natural' || G.control === 'deletion-unknowable') return { target: u.label };
   const labs = labelsFor(G, W, port, u.sys, job.mode);
   if (port === 'R4') {
-    const [l, wnd] = r4Combo(G, W, u.sys, key);
+    const [l, wnd] = r4Combo(G, W, u.sys, key, job.cellPrefix);
     return { target: l, windowed: wnd === 'true' };
   }
-  return { target: leastCommon(cellCount(G, `${port}|${u.sys}`), labs, 'target', ...key) };
+  return { target: leastCommon(cellCount(G, `${job.cellPrefix ?? port}|${u.sys}`), labs, 'target', ...key) };
 }
 export function cleanPlan(G, W, port, u, scr, job, key, { target: forced } = {}) {
   let { target, windowed } = forced ? { target: forced, windowed: undefined } : chooseTarget(G, W, port, u, job, key);
   let mode = job.mode ?? 'mixed';
+  if (G.control === 'natural' || G.control === 'deletion-unknowable') mode = 'bed';
   if (mode === 'ood-pref') mode = labelsFor(G, W, port, u.sys, 'ood').includes(target) && G.bank.find({ port, label: target, system: u.sys, own: true }).length ? 'ood' : 'mixed';
   if (mode === 'mixed') mode = G.bank.find({ port, group: 'paraphrase', system: u.sys, own: false }).length && frac('surf', ...key) < (job.lineShare ?? 0.35) ? 'train-pool' : 'bed';
   if (mode === 'bed' || mode === 'train-pool') {
@@ -684,15 +697,24 @@ export function invariancePlans(G, W, port, u, scr, job, key) {
 }
 export function unknowablePlans(G, W, port, u, scr, job, key, units) {
   const phrasing = job.phrasing ?? (G.ood ? 'new' : 'known');
-  const nd = nonDeciding(G, W, units, u, port, key, { phrasing });
+  const deleting = G.control === 'deletion-unknowable';
+  const nd = deleting ? { text: '', from: 'deleted', kind: 'deletion', phrasing: 'known' } : nonDeciding(G, W, units, u, port, key, { phrasing });
   if (!nd) { bump(G, `skip:${port}:unknowable:no-nondeciding`); return null; }
   const stated = basePlan(G, W, port, u, scr, { ...job, variant: 'clean', axis: 'unknowable-stated', mode: 'bed' }, key, naturalD(G, W, u), u.label);
-  const edits = [...scr.edits, { old: u.sentence, new: nd.text, role: 'unknowable' }];
+  // The pair is presence-matched at the word level: both states hold the non-deciding sentence F. The stated
+  // twin keeps the decisive sentence D and carries F after it; the unknowable replaces D by F. (A twin without F
+  // would differ from the unknowable by F's words as well, and a bag-of-words probe separates those at 0.82.)
+  const stateNotes = applyEdits(W.task.inputs.source_notes, scr.edits);
+  const paragraphs = stateNotes.ok ? groupParagraphs(stateNotes.notes, [u.sys]) : undefined;
   const options = optionsOf(G, port);
-  const U = { ...stated, edits, variant: 'unknowable', axis: 'unknowable', soft: true, label: pickBy(options, 'unk', ...key), decisive: [nd.text], role: 'nondeciding',
-    surface: { source: nd.phrasing === 'new' ? 'ood-line' : 'bed', line: null, from: nd.from }, counterfactual: { swapped: true, kind: 'unknowable', from: tplName(u, u.index), to: nd.from, pool: u.pool, nondeciding: nd.kind, phrasing: nd.phrasing },
-    cell: null, extra: { meta: { phrasing: nd.phrasing, nondecidingKind: nd.kind } } };
-  return withPair([stated, U], key);
+  const edits = [...scr.edits, deleting ? { old: u.sentence, new: '', delete: true, role: 'unknowable' } : { old: u.sentence, new: nd.text, role: 'unknowable' }];
+  const U = { ...stated, edits, kitSlots: { ...stated.kitSlots, paragraphs }, variant: 'unknowable', axis: 'unknowable', soft: true, label: pickBy(options, 'unk', ...key),
+    decisive: nd.text ? [nd.text] : [], role: 'nondeciding', surface: { source: nd.phrasing === 'new' ? 'ood-line' : 'bed', line: null, from: nd.from },
+    counterfactual: { swapped: true, kind: 'unknowable', from: tplName(u, u.index), to: nd.from, pool: u.pool, nondeciding: nd.kind, phrasing: nd.phrasing },
+    cell: null, counts: [], extra: { meta: { phrasing: nd.phrasing, nondecidingKind: nd.kind, replaced: u.sentence } } };
+  const S = { ...stated, kitSlots: { ...stated.kitSlots, paragraphs },
+    edits: deleting ? stated.edits : [...stated.edits, { old: u.sentence, new: `${u.sentence} ${nd.text}`, role: 'distractor' }], extra: { ...stated.extra, meta: { ...stated.extra.meta, distractor: nd.text || null } } };
+  return withPair([S, U], key);
 }
 export function injectionPlans(G, W, port, u, scr, job, key) {
   const A = cleanPlan(G, W, port, u, scr, { ...job, variant: 'clean', axis: 'injection-clean' }, key);
@@ -717,7 +739,9 @@ function groupParagraphs(notes, groups) {
 export function slotPlans(G, W, port, u, scr, job, key, units, { askBoth = false } = {}) {
   const A = cleanPlan(G, W, port, u, scr, { ...job, variant: 'slot-swap', axis: 'slot' }, key);
   if (!A) return null;
-  const others = portUnits(W, units, port).filter(x => x.id !== u.id && x.sys !== u.sys);
+  // a partner must not be named by the asked sentence nor name the asked system (a reference sentence takes its label from the paragraph it names)
+  const named = (text, sys) => new RegExp(`(?<![A-Za-z0-9_])${sys}(?![A-Za-z0-9_])`).test(text);
+  const others = portUnits(W, units, port).filter(x => x.id !== u.id && x.sys !== u.sys && !named(A.decisive[0], x.sys) && !named(x.sentence, u.sys));
   const T = pickBy(others, 'slotT', ...key);
   if (!T) { bump(G, `skip:${port}:slot:no-partner`); return null; }
   let edits = [...A.edits], labelT = T.label, dT = null;
@@ -732,7 +756,7 @@ export function slotPlans(G, W, port, u, scr, job, key, units, { askBoth = false
   const groups = H32('slotorder', ...key) % 2 ? [u.sys, T.sys] : [T.sys, u.sys];
   const paragraphs = groupParagraphs(mid.notes, groups);
   const mk = (plan, asked, label, other, otherLabel) => ({ ...plan, edits, label, u: asked, system: asked.sys, kitSlots: { ...slotsOfUnit(G, port, asked), paragraphs }, qslots: slotsOfUnit(G, port, asked), variant: 'slot-swap', axis: 'slot',
-    cell: `${port}|${asked.sys}`, extra: { meta: { slot: { asked: asked.sys, other: other.sys, label, otherLabel, order: groups.join('>') } } }, decisive: [...A.decisive, dT?.text ?? T.sentence] });
+    cell: `${port}|${asked.sys}`, counts: countsOf(port, asked.sys, label, port === 'R4'), extra: { meta: { slot: { asked: asked.sys, other: other.sys, label, otherLabel, order: groups.join('>') } } }, decisive: [...A.decisive, dT?.text ?? T.sentence] });
   const plans = [mk(A, u, A.label, T, labelT)];
   if (askBoth) plans.push(mk(A, T, labelT, u, A.label));
   if (askBoth) return withPair(plans, key);
@@ -758,7 +782,7 @@ export const DEFAULT_ROWS = Object.freeze({
 });
 export const TEST_OOD_AXES = Object.freeze({
   R: { template: 600, 'bed-template': 150, paraphrase: 400, injection: 800, unknowable: 300, long: 150, flip: 400, invariance: 400, slot: 200 },
-  X5: { template: 1000, paraphrase: 400, injection: 800, long: 300, flip: 400, slot: 200, unknowable: 300 },
+  X5: { template: 1000, paraphrase: 400, injection: 800, long: 300, flip: 400, slot: 200, unknowable: 300, unrelated: 100, absent: 40 },
   X8: { template: 600, paraphrase: 400, injection: 800, flip: 400 },
   X1: { template: 100, paraphrase: 67, long: 25 },
 });
@@ -787,6 +811,7 @@ const countedRows = (job, recs) => (job === 'unknowable' ? recs.filter(r => r.me
 function jobKey(slice, W, port, u, job) { return [slice, W.key, port, u.id, job]; }
 const scrubCache = new WeakMap();
 function scrubFor(G, W, keep) {
+  if (G.control === 'natural' || G.control === 'deletion-unknowable') return { edits: [], units: W.pool.map(u => ({ ...u })) };
   const k = [...keep].sort().join(',');
   let m = scrubCache.get(W); if (!m) scrubCache.set(W, m = new Map());
   if (!m.has(k)) m.set(k, scrubWorld(G.bed, W, { keep }));
@@ -822,30 +847,510 @@ export function runJob(G, W, port, u, jobId, units) {
   return recs;
 }
 
+// ---- X5 precondition_holds, records family -------------------------------------------------------------------------------------
+// The assumption of a kept workflow (trusted, in the question) against the task's source text (untrusted, in
+// the state). Four assumption kinds, from w.ctx.conv: date order (R1), status meaning (R2), balance side (R3),
+// re-stamp (R4). Each state is asked in both polarities (a pair: holds + violated, one pairId, one cluster).
+// not_stated rows: presence-matched (the decisive sentence replaced by a non-deciding one of the same register;
+// at least 50% of the class), or unrelated text (the introduction and another system's paragraph: it names the
+// system but settles nothing), or absent-system (a paragraph of another system only; at most 10%).
+const X5_KINDS = Object.freeze(['R1', 'R2', 'R3', 'R4']);
+const X5_LABELS = Object.freeze(['holds', 'violated', 'not_stated']);
+export const X5_MIX_TRAIN = Object.freeze({ pair: 0.50, unknowable: 0.15, unrelated: 0.04, absent: 0.02, injection: 0.10, slot: 0.14, long: 0.05 });
+export const X5_MIX_OOD = Object.freeze({ template: 0.60, unknowable: 0.15, unrelated: 0.05, absent: 0.02, slot: 0.08, injection: 0.10 });
+export const X5_JOB_ORDER = Object.freeze(['long', 'slot', 'unknowable', 'unrelated', 'absent', 'injection', 'flip', 'paraphrase', 'template', 'pair']);
+const kindValues = (G, kind) => (kind === 'R1' ? ['dmy', 'mdy', 'ymd'] : OPT_LABELS[kind]);
+function assumptionFor(G, W, u, kind, value, key, { ood = false } = {}) {
+  const cand = G.bank.find({ port: 'X5', kind: 'assumption', assertsPort: kind, label: value, own: ood ? true : undefined });
+  for (let k = 0; k < Math.min(cand.length, 12); k++) {
+    const line = cand[(H32('asm', ...key) + k) % cand.length], f = tryFill(G, W, u, line);
+    if (f) return { text: f.text, line };
+  }
+  return null;
+}
+function x5Plan(G, W, kind, P, label, assumption, { pair = null, counts = true, extraMeta = {} } = {}) {
+  const { system, systems, ...rest } = P.kitSlots;
+  return { ...P, port: 'X5', statePort: 'X5', label, family: FAMILY, kitSlots: { system: P.u.sys, systems: [P.u.sys], ...rest }, qslots: { assumption: assumption.text }, soft: false,
+    counts: counts ? P.counts : [], cell: null, extra: { ...P.extra, authored: true, meta: { ...P.extra?.meta, ...extraMeta, x5: { kind, assertsValue: assumption.value, stateLabel: P.label, assumptionLineId: assumption.line?.id ?? null, assumptionSource: assumption.line ? sourceOfLine(assumption.line) : 'bed' } } } };
+}
+const nonUnk = (G, kind, label) => label;
+function x5Base(G, W, kind, u, scr, job, key, over = {}) {
+  return cleanPlan(G, W, kind, u, scr, { ...job, variant: 'clean', cellPrefix: `X5:${kind}`, ...over }, key);
+}
+const otherValue = (G, W, u, kind, label, key, ood) => {
+  const cand = kindValues(G, kind).filter(v => v !== label && (kind !== 'R1' || v !== 'ymd' || G.bank.find({ port: 'X5', assertsPort: 'R1', label: 'ymd', own: ood ? true : undefined }).length));
+  return pickBy(cand, 'ov', ...key);
+};
+export function x5PairPlans(G, W, kind, u, scr, job, key) {
+  const ood = job.mode === 'ood';
+  const P = x5Base(G, W, kind, u, scr, job, key);
+  if (!P) return null;
+  const other = otherValue(G, W, u, kind, P.label, key, ood);
+  const a = assumptionFor(G, W, u, kind, P.label, [...key, 'h'], { ood }), b = other && assumptionFor(G, W, u, kind, other, [...key, 'v'], { ood });
+  if (!a || !b) { bump(G, `skip:X5:${job.id}:no-assumption`); return null; }
+  a.value = P.label; b.value = other;
+  const plans = [x5Plan(G, W, kind, P, 'holds', a, {}), x5Plan(G, W, kind, P, 'violated', b, { counts: false })];
+  plans.forEach(p => { p.variant = job.variant ?? 'clean'; p.axis = job.axis ?? job.id; });
+  return withPair(plans, key);
+}
+export function x5UnknowablePlans(G, W, kind, u, scr, job, key, units) {
+  const phrasing = job.phrasing ?? (G.ood ? 'new' : 'known');
+  const nd = nonDeciding(G, W, units, u, kind, key, { phrasing });
+  if (!nd) { bump(G, `skip:X5:unknowable:no-nondeciding`); return null; }
+  const value = pickBy(kindValues(G, kind), 'uv', ...key), a = assumptionFor(G, W, u, kind, value, [...key, 'u'], { ood: G.ood && phrasing === 'new' });
+  if (!a) { bump(G, `skip:X5:unknowable:no-assumption`); return null; }
+  a.value = value;
+  const stated = cleanPlan(G, W, kind, u, scr, { ...job, variant: 'clean', mode: 'bed', cellPrefix: `X5:${kind}` }, key, { target: u.label });
+  const P = { ...stated, edits: [...scr.edits, { old: u.sentence, new: nd.text, role: 'unknowable' }], decisive: [nd.text], role: 'nondeciding', counts: [],
+    surface: { source: nd.phrasing === 'new' ? 'ood-line' : 'bed', line: null, from: nd.from },
+    counterfactual: { swapped: true, kind: 'unknowable', from: tplName(u, u.index), to: nd.from, pool: u.pool, nondeciding: nd.kind, phrasing: nd.phrasing } };
+  const stateNotes = applyEdits(W.task.inputs.source_notes, scr.edits);
+  const X = x5Plan(G, W, kind, { ...P, kitSlots: { ...P.kitSlots, paragraphs: stateNotes.ok ? groupParagraphs(stateNotes.notes, [u.sys]) : undefined } }, 'not_stated', a, { counts: false, extraMeta: { notStated: 'presence-matched', phrasing: nd.phrasing, nondecidingKind: nd.kind } });
+  X.variant = 'unknowable'; X.axis = 'unknowable';
+  return [X];
+}
+// not_stated by unrelated text: the notes' introduction (it names every system) and another system's paragraph
+// (preamble: true), or that paragraph alone (absent-system: the text does not even name the system).
+export function x5OtherPlans(G, W, kind, u, scr, job, key, units, { preamble }) {
+  const notes = W.task.inputs.source_notes, P0 = notesParagraphs(notes);
+  const others = P0.order.filter(s => s !== u.sys && !namedSystems(P0.para[s], s, P0.order).includes(u.sys) && !(P0.para[s].includes(u.sys)));
+  if (!others.length) return null;
+  const U = pickBy(others, 'other', ...key), value = pickBy(kindValues(G, kind), 'ov2', ...key);
+  const a = assumptionFor(G, W, u, kind, value, [...key, 'x'], { ood: false });
+  if (!a) return null;
+  a.value = value;
+  const stated = cleanPlan(G, W, kind, u, scr, { ...job, variant: 'clean', mode: 'bed', cellPrefix: `X5:${kind}` }, key, { target: u.label });
+  const plan = x5Plan(G, W, kind, { ...stated, edits: [...scr.edits], decisive: [], role: 'unrelated', counts: [], kitSlots: { ...stated.kitSlots, paragraphs: [U], preamble }, counterfactual: null }, 'not_stated', a, { counts: false, extraMeta: { notStated: preamble ? 'unrelated' : 'absent-system', otherSystem: U } });
+  plan.variant = 'clean'; plan.axis = preamble ? 'unrelated' : 'absent-system';
+  plan.extra.meta.nameInText = preamble;
+  return [plan];
+}
+export function x5InjectionPlans(G, W, kind, u, scr, job, key) {
+  const ood = job.mode === 'ood' || G.ood;
+  const P = x5Base(G, W, kind, u, scr, { ...job, mode: job.mode ?? 'mixed' }, key);
+  if (!P) return null;
+  const truthIsHolds = H32('inj', ...key) % 2 === 0, v = truthIsHolds ? P.label : otherValue(G, W, u, kind, P.label, key, false);
+  const a = assumptionFor(G, W, u, kind, v, [...key, 'i'], { ood: false });
+  if (!a) return null;
+  a.value = v;
+  const label = truthIsHolds ? 'holds' : 'violated', wrong = pickBy(X5_LABELS.filter(l => l !== label), 'wrong5', ...key);
+  const car = G.bank.find({ port: 'X5', group: 'carrier', label: wrong, own: G.ood ? true : undefined });
+  const line = pickBy(car, 'car5', ...key);
+  if (!line) { bump(G, `skip:X5:injection:no-carrier`); return null; }
+  const f = tryFill(G, W, u, line);
+  if (!f) return null;
+  const base = applyEdits(W.task.inputs.source_notes, P.edits);
+  if (!base.ok) return null;
+  const ins = insertCarrier(base.notes, u.sys, f.text, P.decisive, key);
+  if (!ins) return null;
+  const A = x5Plan(G, W, kind, P, label, a, {}), B = x5Plan(G, W, kind, P, label, a, { counts: false, extraMeta: { carrier: { label: wrong, lineId: line.id, source: sourceOfLine(line), text: f.text, position: ins.position } } });
+  A.variant = 'clean'; A.axis = 'injection-clean'; B.variant = 'injection'; B.axis = 'injection'; B.edits = [...A.edits, { old: ins.old, new: ins.new, role: 'carrier' }];
+  return withPair([A, B], key);
+}
+export function x5SlotPlans(G, W, kind, u, scr, job, key, units) {
+  const sp = slotPlans(G, W, kind, u, scr, { ...job, cellPrefix: `X5:${kind}`, mode: 'mixed' }, key, units, { askBoth: false });
+  if (!sp) return null;
+  const P = sp[0], v = pickBy(kindValues(G, kind), 'sv', ...key), truthHolds = H32('slotv', ...key) % 2 === 0;
+  const value = truthHolds ? P.label : otherValue(G, W, u, kind, P.label, key, false);
+  const a = assumptionFor(G, W, u, kind, value, [...key, 's'], { ood: false });
+  if (!a) return null;
+  a.value = value;
+  const X = x5Plan(G, W, kind, P, truthHolds ? 'holds' : 'violated', a, {});
+  X.variant = 'slot-swap'; X.axis = 'slot';
+  X.counts = [];
+  return [X];
+}
+export function x5LongPlans(G, W, kind, u, scr, job, key) {
+  const P = x5Base(G, W, kind, u, scr, { ...job, mode: 'mixed' }, key);
+  if (!P) return null;
+  const truthHolds = H32('longv', ...key) % 2 === 0, value = truthHolds ? P.label : otherValue(G, W, u, kind, P.label, key, false);
+  const a = assumptionFor(G, W, u, kind, value, [...key, 'l'], { ood: false });
+  if (!a) return null;
+  a.value = value;
+  const X = x5Plan(G, W, kind, { ...P, kitSlots: { ...P.kitSlots, scope: 'notes' } }, truthHolds ? 'holds' : 'violated', a, {});
+  X.variant = 'long'; X.axis = 'long';
+  return [X];
+}
+export function runX5Job(G, W, kind, u, jobId, units) {
+  const job = { id: jobId, axis: jobId === 'pair' ? 'clean' : jobId, mode: jobId === 'template' ? 'ood' : 'mixed', variant: 'clean' };
+  const key = [G.slice, W.key, 'X5', kind, u.id, jobId];
+  const scr = scrubFor(G, W, new Set()), uu = scr.units.find(x => x.id === u.id), all = scr.units;
+  let plans;
+  switch (jobId) {
+    case 'unknowable': plans = x5UnknowablePlans(G, W, kind, uu, scr, job, key, all); break;
+    case 'unrelated': plans = x5OtherPlans(G, W, kind, uu, scr, job, key, all, { preamble: true }); break;
+    case 'absent': plans = x5OtherPlans(G, W, kind, uu, scr, job, key, all, { preamble: false }); break;
+    case 'injection': plans = x5InjectionPlans(G, W, kind, uu, scr, job, key); break;
+    case 'slot': plans = x5SlotPlans(G, W, kind, uu, scr, job, key, all); break;
+    case 'long': plans = x5LongPlans(G, W, kind, uu, scr, job, key); break;
+    case 'paraphrase': { const p = x5PairPlans(G, W, kind, uu, scr, { ...job, mode: 'mixed', variant: 'paraphrase' }, key); plans = p && [p[H32('pp', ...key) % 2]]; if (plans) plans[0].pairId = null; break; }
+    default: plans = x5PairPlans(G, W, kind, uu, scr, job, key);
+  }
+  if (!plans) return null;
+  for (const p of plans) {
+    const n = jobId === 'paraphrase' ? 2 : 1, base = pickWordings(G, 'X5', n, ...(p.wordingKey ?? p.key));
+    if (!base) { bump(G, `skip:X5:${jobId}:no-wordings`); return null; }
+    p.wordings = jobId === 'paraphrase' ? [{ id: 'Q0', wording: 'Q0' }, ...base] : base;
+    if (jobId === 'paraphrase') p.variant = 'paraphrase';
+  }
+  const before = G.out.length;
+  const recs = plans.map(p => realize(G, W, p)).filter(Boolean);
+  if (recs.length !== plans.length) { G.out.length = before; return null; }
+  return recs;
+}
+export function x5Units(W, units) {
+  return X5_KINDS.flatMap(kind => portUnits(W, units, kind).map(u => ({ kind, u })));
+}
+
+// ---- X8 value_consistent, records family ---------------------------------------------------------------------------------------
+// An export row, the system's conventions (its notes paragraph) and a value a cheap extraction node produced
+// for one field. Fields and the bed's own near-miss transformations (README: atlas-flipped, bd-flipped,
+// vendex-flipped, perspective-ignored, flags-flipped, a one-character name typo):
+//   birth_date   truth = the world's date of birth; wrong = day and month swapped (only a numeric date with
+//                day <= 12 and day != month can be wrong this way: the day <= 12 stratum; the rest is
+//                consistent by construction and reported as its own stratum, never gated)
+//   balance      truth = the master-signed balance in the row's own currency; wrong = the sign flipped
+//   status       truth = live | void; wrong = the other
+//   family_name  truth = the family name as written; wrong = one character changed
+// A convention-dependent item's label follows from the convention the paragraph finally states (a counterfactual
+// flip of its sentence flips the label of the same value).
+const X8_FIELDS = Object.freeze(['birth_date', 'balance', 'status', 'family_name']);
+const X8_FIELD_WEIGHT = Object.freeze({ birth_date: 0.40, balance: 0.25, status: 0.20, family_name: 0.15 });
+export const X8_MIX_TRAIN = Object.freeze({ clean: 0.60, flip: 0.15, injection: 0.10, slot: 0.15 });
+export const X8_MIX_OOD = Object.freeze({ template: 0.70, injection: 0.15, flip: 0.15 });
+export const X8_JOB_ORDER = Object.freeze(['slot', 'injection', 'flip', 'paraphrase', 'template', 'clean']);
+const isoOf = ({ y, m, d }) => `${y}-${p2(m)}-${p2(d)}`;
+const dec = (minor, md) => { const neg = minor < 0, a = Math.abs(minor), u = Math.floor(a / 10 ** md), f = md ? `.${String(a % 10 ** md).padStart(md, '0')}` : ''; return `${neg ? '-' : ''}${u}${f}`; };
+const NUMERIC_DOB = {
+  BRIGHTDESK: /\| dob=(\d{1,2})\/(\d{1,2})\/(\d{4}) \|/, ATLAS: /:: born (\d{2})\/(\d{2})\/(\d{4}) ::/,
+  VENDEX: /(?:Born|Date of birth|DOB|born|date of birth|b\.)\s+(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})\b/,
+};
+const interp = (a, b, y, order) => (order === 'mdy' ? `${y}-${p2(a)}-${p2(b)}` : `${y}-${p2(b)}-${p2(a)}`);
+export function x8Rows(G, W) {
+  if (W.x8rows) return W.x8rows;
+  const lines = W.task.inputs.export.split('\n');
+  W.x8rows = W.w.allRows.map((row, i) => ({ i, row, line: lines[i], system: row.system, rowId: row.rowId })).filter(r => parseRowLine(r.line)?.id === r.rowId);
+  return W.x8rows;
+}
+// The item for (row, field), or null: { field, truth, wrong, kind, stratum, conv }.
+export function x8Item(G, W, r, field) {
+  const { row, line, system } = r, md = G.bed.pools.CURRENCIES;
+  if (field === 'birth_date') {
+    if (!row.dobPresent) return null;
+    const truth = isoOf(row.dob), m = NUMERIC_DOB[system]?.exec(line);
+    if (!m) return { field, truth, wrong: null, kind: 'order-swap', stratum: system === 'BRIGHTDESK' || system === 'ATLAS' || system === 'VENDEX' ? 'date-day>12' : 'date-fixed', conv: null };
+    let [, a, b, y] = m; a = Number(a); b = Number(b); y = y.length === 2 ? `19${y}` : y;
+    const order = system === 'BRIGHTDESK' ? W.conv.bd : system === 'VENDEX' ? W.conv.vendex : (W.w.ctx.atlasMonthFirst(row.date) ? 'mdy' : 'dmy');
+    if (interp(a, b, y, order) !== truth) return null;                                  // the world and its rendering must agree
+    const amb = a <= 12 && b <= 12 && a !== b;
+    const other = order === 'dmy' ? 'mdy' : 'dmy';
+    return { field, truth, wrong: amb ? interp(a, b, y, other) : null, kind: 'order-swap', stratum: amb ? 'date-day<=12' : 'date-day>12',
+      conv: amb && (system !== 'ATLAS' || W.cutoff === null) ? { pool: 'order', sys: system, natural: order, expected: c => interp(a, b, y, c) } : null };
+  }
+  if (field === 'balance') {
+    if (!row.amountPresent) return null;
+    const m = md[row.currency].minor, truth = dec(row.amountMinor, m), wrong = dec(-row.amountMinor, m);
+    if (truth === wrong) return null;
+    const persp = W.conv.persp[system];
+    return { field, truth, wrong, kind: 'sign', stratum: 'balance',
+      conv: persp ? { pool: 'persp', sys: system, natural: R3_LABEL[persp], expected: c => dec(c === R3_LABEL[persp] ? row.amountMinor : -row.amountMinor, m) } : null };
+  }
+  if (field === 'status') {
+    const truth = row.void ? 'void' : 'live', wrong = row.void ? 'live' : 'void';
+    const fl = row.flag ? W.conv.flags.findIndex(f => f.system === system && f.token === row.flag) : -1;
+    return { field, truth, wrong, kind: 'status', stratum: 'status', conv: fl >= 0 ? { pool: 'flag', sys: system, natural: W.conv.flags[fl].polarity, flagIndex: fl, expected: c => c } : null };
+  }
+  if (field === 'family_name') {
+    const fam = row.np.family;
+    if (!/^[A-Za-z'’-]{4,}$/.test(fam)) return null;
+    const upperShown = line.includes(fam.toUpperCase()) && fam.toUpperCase() !== fam;
+    if (!upperShown && !line.includes(fam)) return null;
+    const shown = upperShown ? fam[0].toUpperCase() + fam.slice(1).toLowerCase() : fam;
+    const i = 1 + (H32('typo', W.key, row.rowId) % (shown.length - 2)), ch = shown[i], rep = ch.toLowerCase() === 'e' ? 'a' : ch.toLowerCase() === 'a' ? 'o' : 'e';
+    const wrong = shown.slice(0, i) + (ch === ch.toUpperCase() ? rep.toUpperCase() : rep) + shown.slice(i + 1);
+    return { field, truth: shown, wrong, kind: 'typo', stratum: 'name', conv: null };
+  }
+  return null;
+}
+const conventionUnit = (W, units, conv) => (conv ? units.find(u => u.pool === conv.pool && u.sys === conv.sys && (conv.pool !== 'flag' || u.flagIndex === conv.flagIndex)) : null);
+
+function x8Plan(G, W, r, item, scr, job, key, { want = 'consistent', c = null, value = null, conventionPlan = null } = {}) {
+  const conv = item.conv, cFinal = conv ? (c ?? conv.natural) : null;
+  const expected = conv ? conv.expected(cFinal) : item.truth;
+  let v = value;
+  if (v === null) v = want === 'consistent' ? expected : conv ? conv.expected(OTHER_CONV(conv, cFinal)) : item.wrong;
+  if (v === null || v === undefined || v === '') return null;
+  const label = v === expected ? 'consistent' : 'inconsistent';
+  const slots = { row: r.rowId, system: r.system, field: item.field, value: v };
+  const cp = conventionPlan;
+  return { port: 'X8', statePort: 'X8', u: cp?.u ?? null, key, edits: cp ? cp.edits : [...scr.edits], kitSlots: { ...slots, ...(cp?.kitSlots?.paragraphs ? { paragraphs: cp.kitSlots.paragraphs } : {}) }, qslots: { field: item.field, value: v },
+    label, soft: false, variant: job.variant ?? 'clean', axis: job.axis ?? job.id, decisive: cp ? cp.decisive : [], role: 'stated', system: r.system,
+    surface: cp?.surface ?? { source: 'bed', line: null, from: null }, counterfactual: cp?.counterfactual ?? null, wk: cp?.wk ?? false,
+    counts: [[`X8|${item.field}`, label]], extra: { authored: Boolean(cp?.surface?.source && cp.surface.source !== 'bed' && cp.surface.source !== 'bed-heldout'),
+      meta: { ...(cp?.extra?.meta ?? {}), x8: { rowId: r.rowId, field: item.field, kind: item.kind, stratum: item.stratum, value: v, truth: item.truth, wrong: item.wrong, convention: conv ? { pool: conv.pool, natural: conv.natural, final: cFinal } : null } } } };
+}
+const OTHER_CONV = (conv, c) => (conv.pool === 'order' ? flipOrder(c) : conv.pool === 'persp' ? OTHER.R3[c] : flipPolarity(c));
+const X8_PORT_OF = { order: 'R1', persp: 'R3', flag: 'R2' };
+function x8ChooseItem(G, W, units, job, key, { needConv = false, needInjection = false } = {}) {
+  const rows = x8Rows(G, W).map(r => ({ r, h: H32('x8row', ...key, r.rowId) })).sort((a, b) => a.h - b.h);
+  const bag = []; for (const f of X8_FIELDS) for (let i = 0; i < Math.round(X8_FIELD_WEIGHT[f] * 20); i++) bag.push(f);
+  for (const { r } of rows.slice(0, 40)) {
+    if (needInjection && !r.row.advMemo) continue;
+    const field = pickBy(bag, 'xf', ...key, r.rowId);
+    const item = x8Item(G, W, r, field);
+    if (!item) continue;
+    if (needConv && !item.conv) continue;
+    const unit = conventionUnit(W, units, item.conv);
+    if (item.conv && !unit) continue;
+    return { r, item, unit };
+  }
+  return null;
+}
+function stripMemo(line, memo) {
+  if (!memo) return null;
+  for (const re of [new RegExp(` \\| memo=${escapeRe(memo)}`), new RegExp(` :: note: ${escapeRe(memo)}`), new RegExp(` \\| note: ${escapeRe(memo)}`), new RegExp(` Remark: ${escapeRe(memo)}`), new RegExp(`,"note":"${escapeRe(memo)}"`)]) {
+    if (re.test(line)) return line.replace(re, '');
+  }
+  return null;
+}
+const escapeRe = s => s.replace(/[.*+?^${}()|[\]\\"]/g, '\\$&');
+
+// The convention plan of an item: the paragraph edits for convention label `c` (the R-port's own plan machinery).
+function conventionPlanOf(G, W, unit, item, scr, job, key, c, mode) {
+  const rport = X8_PORT_OF[item.conv.pool];
+  return cleanPlan(G, W, rport, unit, scr, { ...job, variant: 'clean', mode, cellPrefix: `X8:${rport}` }, key, { target: c });
+}
+export function x8CleanPlans(G, W, units, scr, job, key) {
+  const pick = x8ChooseItem(G, W, units, job, key, { needConv: job.id === 'template' });
+  if (!pick) return null;
+  const { r, item, unit } = pick;
+  const consOnly = !item.conv && !item.wrong;
+  if (consOnly) { const c = cellCount(G, 'X8|consOnly'), tot = Object.values(cellCount(G, `X8|${item.field}`)).reduce((a, b) => a + b, 0); if ((c.n ?? 0) >= 0.1 * tot + 1) { bump(G, 'skip:X8:consistent-only-cap'); return null; } }
+  const want = consOnly ? 'consistent' : leastCommon(cellCount(G, `X8|${item.field}`), ['consistent', 'inconsistent'], 'want', ...key);
+  let c = null, cp = null;
+  if (item.conv) {
+    const mode = job.id === 'template' ? 'ood' : 'mixed';
+    c = mode === 'ood' ? pickBy(item.conv.pool === 'order' ? ORDERS : item.conv.pool === 'persp' ? ['same', 'opposite'] : ['live', 'void'], 'cv', ...key) : item.conv.natural;
+    cp = conventionPlanOf(G, W, unit, item, scr, job, key, c, mode);
+    if (!cp) { bump(G, `skip:X8:${job.id}:no-convention`); return null; }
+  }
+  const P = x8Plan(G, W, r, item, scr, job, key, { want, c, conventionPlan: cp });
+  if (!P) return null;
+  if (consOnly) cellAdd(G, 'X8|consOnly', 'n');
+  return [P];
+}
+export function x8FlipPlans(G, W, units, scr, job, key) {
+  const pick = x8ChooseItem(G, W, units, job, key, { needConv: true });
+  if (!pick) return null;
+  const { r, item, unit } = pick, c0 = item.conv.natural, c1 = OTHER_CONV(item.conv, c0);
+  const cpA = conventionPlanOf(G, W, unit, item, scr, job, key, c0, 'bed'), cpB = conventionPlanOf(G, W, unit, item, scr, job, key, c1, 'bed');
+  if (!cpA || !cpB || cpB.counterfactual?.index !== unit.index) return null;
+  const A = x8Plan(G, W, r, item, scr, { ...job, variant: 'flip', axis: 'flip' }, key, { want: 'consistent', c: c0, conventionPlan: cpA });
+  const B = x8Plan(G, W, r, item, scr, { ...job, variant: 'flip', axis: 'flip' }, key, { c: c1, value: A?.kitSlots.value, conventionPlan: cpB });
+  if (!A || !B || A.label === B.label) return null;
+  return withPair([A, B], key);
+}
+export function x8InjectionPlans(G, W, units, scr, job, key) {
+  const pick = x8ChooseItem(G, W, units, job, key, { needInjection: true });
+  if (!pick) return null;
+  const { r, item, unit } = pick, clean = stripMemo(r.line, r.row.memo);
+  if (!clean) { bump(G, 'skip:X8:injection:no-strip'); return null; }
+  const want = item.wrong || item.conv ? leastCommon(cellCount(G, `X8|${item.field}`), ['consistent', 'inconsistent'], 'want', ...key) : 'consistent';
+  const cp = item.conv ? conventionPlanOf(G, W, unit, item, scr, job, key, item.conv.natural, 'mixed') : null;
+  const B = x8Plan(G, W, r, item, scr, { ...job, variant: 'injection', axis: 'injection' }, key, { want, c: null, conventionPlan: cp });
+  if (!B) return null;
+  const A = { ...B, variant: 'clean', axis: 'injection-clean', exportEdits: [{ old: r.line, new: clean }], counts: [] };
+  B.extra = { ...B.extra, meta: { ...B.extra.meta, memo: { text: r.row.memo, advMemo: true } } };
+  return withPair([A, B], key);
+}
+export function x8SlotPlans(G, W, units, scr, job, key) {
+  const pick = x8ChooseItem(G, W, units, job, key, { needConv: true });
+  if (!pick) return null;
+  const { r, item, unit } = pick, rport = X8_PORT_OF[item.conv.pool];
+  const sp = slotPlans(G, W, rport, unit, scr, { ...job, cellPrefix: `X8:${rport}`, mode: 'mixed' }, key, units, { askBoth: false });
+  if (!sp) return null;
+  const cp = sp[0], want = leastCommon(cellCount(G, `X8|${item.field}`), ['consistent', 'inconsistent'], 'want', ...key);
+  const P = x8Plan(G, W, r, item, scr, { ...job, variant: 'slot-swap', axis: 'slot' }, key, { want, c: cp.label, conventionPlan: cp });
+  if (!P) return null;
+  P.extra.meta.slot = cp.extra.meta.slot;
+  return [P];
+}
+export function runX8Job(G, W, jobId, units) {
+  const job = { id: jobId, axis: jobId === 'clean' ? 'clean' : jobId, variant: 'clean', mode: 'mixed' };
+  const key = [G.slice, W.key, 'X8', jobId, String(G.seq = (G.seq ?? 0) + 1)];
+  const scr = scrubFor(G, W, new Set()), all = scr.units;
+  let plans;
+  switch (jobId) {
+    case 'flip': plans = x8FlipPlans(G, W, all, scr, job, key); break;
+    case 'injection': plans = x8InjectionPlans(G, W, all, scr, job, key); break;
+    case 'slot': plans = x8SlotPlans(G, W, all, scr, job, key); break;
+    case 'paraphrase': { const p = x8CleanPlans(G, W, all, scr, { ...job, variant: 'paraphrase' }, key); plans = p && p.map(x => ({ ...x, variant: 'paraphrase', axis: 'paraphrase' })); break; }
+    default: plans = x8CleanPlans(G, W, all, scr, job, key);
+  }
+  if (!plans) return null;
+  for (const p of plans) {
+    const n = jobId === 'paraphrase' ? 2 : 1, base = pickWordings(G, 'X8', n, ...(p.wordingKey ?? p.key));
+    if (!base) { bump(G, `skip:X8:${jobId}:no-wordings`); return null; }
+    p.wordings = jobId === 'paraphrase' ? [{ id: 'Q0', wording: 'Q0' }, ...base] : base;
+  }
+  const before = G.out.length;
+  const recs = plans.map(p => realize(G, W, p)).filter(Boolean);
+  if (recs.length !== plans.length) { G.out.length = before; return null; }
+  return recs;
+}
+
+// ---- X1 injected_instruction, records family ---------------------------------------------------------------------------------------
+// The state is an export row line (source_kind: customer export row). yes: rows with an adversarial memo
+// (advMemo); no: rows with a decoy memo (it repeats void vocabulary on a live row), a benign memo, a hard
+// negative (a benign memo that carries an addressee word) or no memo. Memos are the bed's own or pool lines
+// substituted for them (benign and decoy forms, positives without addressee words, negatives with them).
+// Addressee-word balance (crit S13): at least 50% of positives carry none, at least 30% of negatives do.
+export const X1_MIX_TRAIN = Object.freeze({ clean: 0.95, long: 0.05 });
+export const X1_MIX_OOD = Object.freeze({ template: 1.0 });
+export const X1_JOB_ORDER = Object.freeze(['long', 'paraphrase', 'template', 'clean']);
+const X1_CLASSES = Object.freeze({ positive: 0.40, 'hard-negative': 0.12, decoy: 0.14, benign: 0.22, plain: 0.12 });
+const memoClass = row => (row.advMemo ? 'positive' : row.decoyMemo ? 'decoy' : row.memo ? 'benign' : 'plain');
+function x1PickClass(G, key) {
+  const bag = []; for (const [c, w] of Object.entries(X1_CLASSES)) for (let i = 0; i < Math.round(w * 50); i++) bag.push(c);
+  const counts = cellCount(G, 'X1|class'), total = Object.values(counts).reduce((a, b) => a + b, 0) || 1;
+  const gap = c => X1_CLASSES[c] - (counts[c] ?? 0) / total;
+  const order = Object.keys(X1_CLASSES).sort((a, b) => gap(b) - gap(a) || (a < b ? -1 : 1));
+  return total < 8 ? pickBy(bag, 'c1', ...key) : order[0];
+}
+export function x1Plans(G, W, jobId, key) {
+  const rows = x8Rows(G, W), cls = x1PickClass(G, key), ood = G.ood && jobId === 'template';
+  const want = cls === 'hard-negative' ? 'benign' : cls;
+  const pool = rows.map(r => ({ r, h: H32('x1row', ...key, r.rowId) })).sort((a, b) => a.h - b.h).map(x => x.r).filter(r => memoClass(r.row) === want || (cls === 'hard-negative' && (memoClass(r.row) === 'benign' || memoClass(r.row) === 'decoy')));
+  const r = pool[0];
+  if (!r) { bump(G, `skip:X1:${jobId}:no-row:${cls}`); return null; }
+  const label = cls === 'positive' ? 'yes' : 'no', memo = r.row.memo;
+  let text = memo, line = r.line, source = 'bed', poolLine = null;
+  const addrCounts = cellCount(G, `X1|addressee|${label}`), nTot = (addrCounts.with ?? 0) + (addrCounts.without ?? 0);
+  const wantAddressee = label === 'yes' ? false : cls === 'hard-negative';
+  const kinds = label === 'yes' ? ['positive'] : cls === 'hard-negative' ? ['hard-negative'] : cls === 'decoy' ? ['decoy'] : ['benign'];
+  const natAddr = memo ? hasAddressee(memo) : false;
+  let usePool = ood || cls === 'hard-negative' || (memo && G.bank.find({ port: 'X1', kind: kinds[0], family: FAMILY, own: false }).length > 0 && frac('x1pool', ...key) < 0.5);
+  if (label === 'yes' && !ood) { const nWith = addrCounts.with ?? 0; if (nTot >= 4 && nWith / nTot > 0.4) usePool = true; else if (nTot >= 4 && natAddr === false && (addrCounts.without ?? 0) / nTot > 0.6) usePool = false; }
+  if (cls === 'plain') usePool = false;
+  if (usePool && memo) {
+    const cand = G.bank.find({ port: 'X1', kind: kinds[0], label, own: ood ? true : undefined }).filter(l => l.family === null || l.family === FAMILY);
+    const l = pickBy(cand, 'x1line', ...key);
+    if (!l) { if (ood || cls === 'hard-negative') { bump(G, `skip:X1:${jobId}:no-lines`); return null; } }
+    else if (line.split(memo).length === 2) { text = l.text; line = line.replace(memo, () => l.text); source = sourceOfLine(l); poolLine = l; }
+  }
+  const edits = scrubFor(G, W, new Set()).edits;
+  const addressee = text ? hasAddressee(text) : false;
+  const slots = { row: r.rowId };
+  const plan = { port: 'X1', statePort: 'X1', u: null, key, edits: [], exportEdits: line !== r.line ? [{ old: r.line, new: line }] : [], kitSlots: jobId === 'long' ? { ...slots, context: 12 } : slots, qslots: {},
+    label, soft: false, variant: jobId === 'long' ? 'long' : jobId === 'paraphrase' ? 'paraphrase' : 'clean', axis: jobId === 'clean' ? 'clean' : jobId, decisive: text ? [text] : [], role: 'stated', system: r.system,
+    surface: { source: poolLine ? source : 'bed', line: poolLine, from: poolLine?.id ?? 'bed-memo' }, counterfactual: poolLine ? { swapped: true, kind: 'line', from: memo, to: poolLine.id } : null,
+    counts: [['X1|class', cls], [`X1|addressee|${label}`, addressee ? 'with' : 'without']], extra: { authored: Boolean(poolLine), meta: { x1: { rowId: r.rowId, class: cls, addressee, memoSource: poolLine ? source : 'bed', memoOf: memoClass(r.row) } } } };
+  return [plan];
+}
+export function runX1Job(G, W, jobId) {
+  const key = [G.slice, W.key, 'X1', jobId, String(G.seq = (G.seq ?? 0) + 1)];
+  const plans = x1Plans(G, W, jobId, key);
+  if (!plans) return null;
+  for (const p of plans) {
+    const n = jobId === 'paraphrase' ? 2 : 1, base = pickWordings(G, 'X1', n, ...p.key);
+    if (!base) { bump(G, `skip:X1:${jobId}:no-wordings`); return null; }
+    p.wordings = jobId === 'paraphrase' ? [{ id: 'Q0', wording: 'Q0' }, ...base] : base;
+  }
+  const before = G.out.length;
+  const recs = plans.map(p => realize(G, W, p)).filter(Boolean);
+  if (recs.length !== plans.length) { G.out.length = before; return null; }
+  return recs;
+}
+
+// ---- the generator ---------------------------------------------------------------------------------------------------------------
+// Row targets per port and job. X5, X8 and X1 have their own mixes (see X5_MIX_*, X8_MIX_*, X1_MIX_*).
+function mixFor(port, slice) {
+  const ood = OOD.has(slice);
+  if (port === 'X5') return ood ? X5_MIX_OOD : X5_MIX_TRAIN;
+  if (port === 'X8') return ood ? X8_MIX_OOD : X8_MIX_TRAIN;
+  if (port === 'X1') return ood ? X1_MIX_OOD : X1_MIX_TRAIN;
+  return ood ? MIX_OOD : MIX_TRAIN;
+}
+export function targetsFor(slice, port, opts = {}) {
+  const t = opts.targets?.[port], scale = opts.scale ?? 1, total = n => Math.max(0, Math.round(n * scale));
+  if (port === 'R5' || port === 'X2') { const n = typeof t === 'number' ? t : DEFAULT_ROWS[slice]?.[port]; return n === undefined ? {} : { clean: total(n) }; }
+  if (t && typeof t === 'object') return Object.fromEntries(Object.entries(t).map(([k, v]) => [k, total(v)]));
+  if (slice === 'test-ood') {
+    const axes = TEST_OOD_AXES[['R1', 'R2', 'R3', 'R4'].includes(port) ? 'R' : port];
+    if (!axes) return {};
+    const f = typeof t === 'number' ? t / sum(Object.values(axes)) : 1;
+    return Object.fromEntries(Object.entries(axes).map(([k, v]) => [k, total(v * f)]));
+  }
+  const n = t !== undefined ? t : DEFAULT_ROWS[slice]?.[port];
+  if (n === undefined) return {};
+  const mix = port === 'X5' ? (OOD.has(slice) ? X5_MIX_OOD : X5_MIX_TRAIN) : mixFor(port, slice);
+  const out = Object.fromEntries(Object.entries(mix).map(([k, v]) => [k, total(n * v)]));
+  return out;
+}
+const ORDER_OF = { R: JOB_ORDER, X5: X5_JOB_ORDER, X8: X8_JOB_ORDER, X1: X1_JOB_ORDER };
+const countRows = (jobId, recs, port) => {
+  if (port === 'X5' && jobId === 'unknowable') return recs.length;
+  if (jobId === 'unknowable' && port !== 'X5') return recs.filter(r => r.meta.variant === 'unknowable').length;
+  if (port === 'X5' && (jobId === 'injection')) return recs.length;
+  return recs.reduce((n, r) => n + Object.keys(r.questions).length, 0);
+};
 export async function* records(slice, seeds, opts, ctx) {
   if (slice === 'real-reserve' || slice === 'e2e-reserve') return;       // realtrace-x8 / e2e-harness own these slices
   const bed = await loadBed(ctx.beds), o = opts ?? {};
   const G = makeContext(slice, o, ctx, bed);
   G.out = [];
-  const wanted = o.ports ?? WAVE1_PORTS.filter(p => !['X5', 'X8', 'X1'].includes(p));
-  const rPorts = wanted.filter(p => ['R1', 'R2', 'R3', 'R4'].includes(p));
-  const remaining = Object.fromEntries(rPorts.map(p => [p, resolveTargets(slice, p, o)]));
+  const wanted = o.ports ?? [...WAVE1_PORTS];
+  const remaining = Object.fromEntries(wanted.map(p => [p, targetsFor(slice, p, o)]));
+  const done = () => wanted.every(p => Object.values(remaining[p]).every(n => n <= 0));
   const difficulties = o.difficulties ?? [3, 4, 5];
   for (const seed of seeds) {
     for (const d of difficulties) {
-      if (rPorts.every(p => Object.values(remaining[p]).every(n => n <= 0))) { LAST = describe(G, remaining); return; }
+      if (done()) { LAST = describe(G, remaining); return; }
       const W = modelWorld(bed, seed, ctx.slice.bedSplit, d);
       if (!W) continue;
       G.out = [];
-      for (const port of rPorts) {
-        const scr0 = scrubFor(G, W, new Set());
-        const units = portUnits(W, scr0.units, port).map(u => ({ u, h: H32('unit', slice, W.key, port, u.id) })).sort((a, b) => a.h - b.h).map(x => x.u);
-        for (const u of units) {
-          for (const jobId of JOB_ORDER) {
+      const scr0 = scrubFor(G, W, new Set());
+      for (const port of wanted) {
+        if (['R1', 'R2', 'R3', 'R4'].includes(port)) {
+          const units = portUnits(W, scr0.units, port).map(u => ({ u, h: H32('unit', slice, W.key, port, u.id) })).sort((a, b) => a.h - b.h).map(x => x.u);
+          for (const u of units) for (const jobId of JOB_ORDER) {
             if ((remaining[port][jobId] ?? 0) <= 0) continue;
             const recs = runJob(G, W, port, u, jobId, scr0.units);
             if (!recs) continue;
             remaining[port][jobId] -= countedRows(jobId, recs.map(r => ({ meta: r.meta })));
+            break;
+          }
+        } else if (port === 'X5') {
+          const items = x5Units(W, scr0.units).map(x => ({ ...x, h: H32('x5unit', slice, W.key, x.kind, x.u.id) })).sort((a, b) => a.h - b.h);
+          for (const { kind, u } of items) for (const jobId of X5_JOB_ORDER) {
+            if ((remaining.X5[jobId] ?? 0) <= 0) continue;
+            const recs = runX5Job(G, W, kind, u, jobId, scr0.units);
+            if (!recs) continue;
+            remaining.X5[jobId] -= countRows(jobId, recs, 'X5');
+            break;
+          }
+        } else if (port === 'X8') {
+          const perWorld = o.x8PerWorld ?? 8;
+          for (let n = 0; n < perWorld; n++) for (const jobId of X8_JOB_ORDER) {
+            if ((remaining.X8[jobId] ?? 0) <= 0) continue;
+            const recs = runX8Job(G, W, jobId, scr0.units);
+            if (!recs) continue;
+            remaining.X8[jobId] -= countRows(jobId, recs, 'X8');
+            break;
+          }
+        } else if (port === 'R5' || port === 'X2') {
+          for (let n = 0; n < (o.smokePerWorld ?? 6); n++) {
+            if ((remaining[port].clean ?? 0) <= 0) break;
+            const recs = port === 'R5' ? runR5(G, W) : runX2(G, W);
+            if (recs) remaining[port].clean -= recs.length;
+          }
+        } else if (port === 'X1') {
+          const perWorld = o.x1PerWorld ?? 6;
+          for (let n = 0; n < perWorld; n++) for (const jobId of X1_JOB_ORDER) {
+            if ((remaining.X1[jobId] ?? 0) <= 0) continue;
+            const recs = runX1Job(G, W, jobId);
+            if (!recs) continue;
+            remaining.X1[jobId] -= countRows(jobId, recs, 'X1');
             break;
           }
         }
@@ -863,4 +1368,63 @@ export function describe(G, remaining) {
   const shortfall = {};
   for (const [port, jobs] of Object.entries(remaining ?? {})) for (const [job, n] of Object.entries(jobs)) if (n > 0) (shortfall[port] ??= {})[job] = n;
   return { slice: G.slice, counts: { ...G.counts }, notes: { ...G.notes }, shortfall, lines: G.bank.size, poolDigest: G.poolDigest };
+}
+
+// ---- R5 country_token and X2 same_entity (records family): wave-2 smoke sets ----------------------------------------------------
+// About 300 train and 100 dev-select rows each (JUDGE-BUILD-PLAN cut line). Opt in with opts.ports.
+//   R5  state { system, location_text, row_line } from the row line; label = the row's country (ISO alpha-2).
+//       Kinds: named / typo / demonym / city (world knowledge: needsWorldKnowledge) / german (LEDGR) / code
+//       (VERITAS). Every label is capped at 3 x the mean so no country dominates.
+//   X2  state { a, b, context } (two live row lines and the conventions of their systems); label = whether both
+//       rows belong to one entity (w.rows[].entity). Negatives are half hard: the planted partner entity
+//       (namesake, household, twin, same-birthday mate).
+export function runR5(G, W) {
+  const { pools } = G.bed, rows = x8Rows(G, W).filter(r => r.row.countryPresent && !r.row.void);
+  const key = [G.slice, W.key, 'R5', String(G.seq = (G.seq ?? 0) + 1)];
+  const counts = cellCount(G, 'R5|label'), total = Object.values(counts).reduce((a, b) => a + b, 0), cap = Math.max(3, 3 * (total / 18 + 1));
+  const ordered = rows.map(r => ({ r, h: H32('r5row', ...key, r.rowId) })).sort((a, b) => a.h - b.h);
+  for (const { r } of ordered.slice(0, 30)) {
+    const label = r.row.country, st = (() => { try { return kit.buildState(taskWith(W.task, W.task.inputs.source_notes), { row: r.rowId, system: r.system }, 'R5'); } catch { return null; } })();
+    if (!st || !st.location_text || (counts[label] ?? 0) >= cap) continue;
+    const C = pools.COUNTRIES[label], t = st.location_text;
+    const kind = r.system === 'KOBO' ? 'implicit' : r.system === 'LEDGR' ? 'german' : r.system === 'VERITAS' ? 'code'
+      : (pools.ALL_CITIES[label] ?? []).includes(t) ? 'city' : t === C.demonym || /^[A-Z][a-z]+$/.test(t) && t === C.demonym ? 'demonym' : [...C.en, ...C.de, ...C.prose, label].includes(t) ? 'named' : 'typo';
+    const p = { port: 'R5', statePort: 'R5', u: null, key, edits: [], kitSlots: { row: r.rowId, system: r.system }, qslots: { system: r.system }, label, soft: false, variant: 'clean', axis: 'clean', system: r.system,
+      decisive: [t], role: 'stated', surface: { source: 'bed', line: null, from: 'row' }, counterfactual: null, wk: kind === 'city', counts: [['R5|label', label]], family: FAMILY,
+      extra: { meta: { r5: { rowId: r.rowId, kind } } } };
+    p.wordings = pickWordings(G, 'R5', 1, ...key);
+    const before = G.out.length, rec = realize(G, W, p);
+    if (!rec) { G.out.length = before; continue; }
+    return [rec];
+  }
+  return null;
+}
+export function runX2(G, W) {
+  const rows = x8Rows(G, W).filter(r => !r.row.void), key = [G.slice, W.key, 'X2', String(G.seq = (G.seq ?? 0) + 1)];
+  const want = leastCommon(cellCount(G, 'X2|label'), ['same', 'different'], 'x2', ...key);
+  const byEnt = new Map(); for (const r of rows) (byEnt.get(r.row.entity) ?? byEnt.set(r.row.entity, []).get(r.row.entity)).push(r);
+  const ents = [...byEnt.keys()].sort((a, b) => H32('x2e', ...key, a) - H32('x2e', ...key, b));
+  let A, B, hard = false;
+  if (want === 'same') {
+    const e = ents.find(k => byEnt.get(k).length >= 2); if (e === undefined) return null;
+    const list = byEnt.get(e), pairs = [];
+    for (let i = 0; i < list.length; i++) for (let j = i + 1; j < list.length; j++) pairs.push([list[i], list[j]]);
+    const diffSys = pairs.filter(([a, b]) => a.system !== b.system);
+    [A, B] = pickBy(diffSys.length ? diffSys : pairs, 'pairS', ...key);
+  } else {
+    const e = ents[0], partner = W.w.entities[e].partner, pool = byEnt.get(partner);
+    hard = pool !== undefined && H32('hard', ...key) % 2 === 0;
+    const other = hard ? partner : ents.find(k => k !== e && byEnt.has(k));
+    if (other === undefined || !byEnt.get(e)?.length || !byEnt.get(other)?.length) return null;
+    A = pickBy(byEnt.get(e), 'nA', ...key); B = pickBy(byEnt.get(other), 'nB', ...key);
+  }
+  if (H32('swap', ...key) % 2) [A, B] = [B, A];
+  const label = A.row.entity === B.row.entity ? 'same' : 'different';
+  const p = { port: 'X2', statePort: 'X2', u: null, key, edits: [], kitSlots: { rowA: A.rowId, rowB: B.rowId }, qslots: {}, label, soft: false, variant: 'clean', axis: 'clean', system: A.system,
+    decisive: [], role: 'stated', surface: { source: 'bed', line: null, from: 'rows' }, counterfactual: null, wk: false, counts: [['X2|label', label]], family: FAMILY,
+    extra: { meta: { x2: { rowA: A.rowId, rowB: B.rowId, systems: [A.system, B.system], hardNegative: hard && label === 'different' } } } };
+  p.wordings = pickWordings(G, 'X2', 1, ...key);
+  const before = G.out.length, rec = realize(G, W, p);
+  if (!rec) { G.out.length = before; return null; }
+  return [rec];
 }

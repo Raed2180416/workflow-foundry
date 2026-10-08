@@ -169,7 +169,7 @@ export function screen(candidates, { templates, bedStrings = [], thresholds = TH
     const reasons = [], extra = {};
     const text = c.text;
     const multi = c.port === 'X1' ? 3 : 1;
-    for (const p of shapeProblems(text, { maxSentences: multi, minChars: c.port === 'X1' ? 8 : 12, maxChars: c.port === 'X1' ? 600 : 480 })) reasons.push(`shape:${p}`);
+    for (const p of shapeProblems(text, { maxSentences: multi, minChars: c.port === 'X1' ? 8 : 12, maxChars: c.port === 'X1' ? 600 : 480, requireTerminal: c.port !== 'X1' })) reasons.push(`shape:${p}`);
     const slots = slotsOf(text);
     if (c.expectSlots) {
       if (slots.length !== c.expectSlots.length || slots.some((s, i) => s !== c.expectSlots[i])) { reasons.push('slots'); extra.slots = { got: slots, want: c.expectSlots }; }

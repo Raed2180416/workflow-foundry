@@ -64,7 +64,7 @@ export const prepGrams = list => list.map(x => (typeof x === 'string' ? { text: 
 
 // ---- shape --------------------------------------------------------------------------------------
 const CONTROL = /[\u0000-\u0008\u000b-\u001f\u007f\u2028\u2029]/;
-export function shapeProblems(text, { maxSentences = 1, minChars = 12, maxChars = 480 } = {}) {
+export function shapeProblems(text, { maxSentences = 1, minChars = 12, maxChars = 480, requireTerminal = true } = {}) {
   const out = [], t = String(text);
   if (typeof text !== 'string' || !t.trim()) return ['empty'];
   if (t !== t.normalize('NFC')) out.push('not-nfc');
@@ -73,7 +73,7 @@ export function shapeProblems(text, { maxSentences = 1, minChars = 12, maxChars 
   if (t.length < minChars) out.push('too-short'); if (t.length > maxChars) out.push('too-long');
   if (/<<|>>|\|/.test(t)) out.push('dsl-leftover');
   if (/\be\.g\.|\bi\.e\.|\betc\./i.test(t)) out.push('abbreviation-splits-sentence');
-  if (!/[.!?"”')\]]$/.test(t)) out.push('no-terminal-punctuation');
+  if (requireTerminal && !/[.!?"”')\]]$/.test(t)) out.push('no-terminal-punctuation');
   const open = (t.match(/\{/g) ?? []).length, close = (t.match(/\}/g) ?? []).length;
   if (open !== close) out.push('unbalanced-braces');
   const n = sentences(t.replace(PLACEHOLDER_RE, 'X')).length;

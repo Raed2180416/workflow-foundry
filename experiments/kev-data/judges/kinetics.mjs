@@ -283,7 +283,9 @@ export function buildX3(task, slots) {
   if (!m) throw fail('KIT_SLOT', `no message ${slots.message}`);
   const owner = slots.fact_owner ?? factOwner(p, m).owner;
   const context = threadContext(p, m).map(c => `${c.author}: ${c.text}`);
-  return { message: m.text, author: slots.author ?? m.author, fact_owner: owner, thread_context: slots.thread_context ?? context };
+  // slots.authority === false leaves author and fact_owner out (authority stays in code; see the README note on the metadata-only ceiling)
+  if (slots.authority === false) return { message: m.text, thread_context: context };
+  return { message: m.text, author: slots.author ?? m.author, fact_owner: owner, thread_context: context };
 }
 
 // X8 value_consistent: { source_line, conventions, field, extracted_value } for a tabular sheet row
@@ -373,13 +375,13 @@ export function buildX1(task, slots) {
     if (!m) throw fail('KIT_SLOT', `no message ${slots.message}`);
     if (!slots.long) return { source_kind: KIND_OF_CHANNEL[m.channel], text: m.text };
     const d = p.byId[m.doc];
-    return { source_kind: m.channel === 'chat' ? 'lab chat export' : 'notebook', text: windowLines(d.lines, m.line, slots.maxChars ?? 6000).text };
+    return { source_kind: m.channel === 'chat' ? 'lab chat export' : 'notebook', text: windowLines(d.lines, m.line, slots.maxChars ?? 5000).text };
   }
   const d = p.byId[need(slots, 'document')], i = need(slots, 'line');
   const line = d.lines[i];
   if (line === undefined) throw fail('KIT_SLOT', `no line ${i} in ${d.id}`);
   if (!slots.long) return { source_kind: 'notebook line', text: line };
-  return { source_kind: 'notebook', text: windowLines(d.lines, i, slots.maxChars ?? 6000).text };
+  return { source_kind: 'notebook', text: windowLines(d.lines, i, slots.maxChars ?? 5000).text };
 }
 
 // ---- X5 precondition_holds: { source_text } ---------------------------------------------------------
@@ -397,7 +399,7 @@ export function sheetWindow(sheet, { rows = 5 } = {}) {
 }
 export function buildX5(task, slots) {
   const p = parsed(task);
-  if (slots.sop) { const d = p.byId[slots.sop]; return { source_text: d.lines.slice(0, slots.lines ?? 3).join('\n') }; }
+  if (slots.sop) { const d = p.byId[slots.sop]; return { source_text: d.lines.filter(l => l.trim()).slice(0, slots.lines ?? 2).join('\n') }; }
   return { source_text: sheetWindow(sheetById(p, need(slots, 'document')), { rows: slots.rows ?? 5 }) };
 }
 
@@ -414,6 +416,7 @@ export const DOC_TYPE = Object.freeze({ sop: 'standard operating procedure', not
 // a person's role as the task shows it: "Dr." names the principal investigator, a notebook author is a technician
 export function roleOfPerson(p, name) {
   if (/^Dr\./.test(name)) return 'principal investigator';
+  if (p.docs.some(d => d.kind === 'instrument' && d.author === name)) return 'instrument';
   if (p.sheets.some(s => s.author === name)) return 'technician';
   return 'group member';
 }
@@ -423,18 +426,24 @@ const sectionLines = (doc, n) => {
   const end = doc.lines.findIndex((l, i) => i > at && l.startsWith('## '));
   return doc.lines.slice(at + 1, end < 0 ? undefined : end).filter(l => l.trim());
 };
+// Statements on the same topic, each as "[document type, date] text": the other SOP revision's section, or the
+// other record of the same well (the reader's raw export against a hand transcription). Dates and document types
+// are what tells a superseded statement from the one that replaces it.
+const tagged = (d, line) => `[${DOC_TYPE[d.kind] ?? d.kind}, ${d.date}] ${line}`;
 export function relatedStatements(p, doc, i) {
   const line = doc.lines[i];
   if (doc.kind === 'sop') {
     const sec = [...doc.lines.slice(0, i + 1)].reverse().find(l => l.startsWith('## '))?.match(/^## (\d+) /)?.[1];
     const other = p.docs.find(d => d.kind === 'sop' && d.id !== doc.id);
-    return sec && other ? sectionLines(other, sec).slice(0, 2) : [];
+    return sec && other ? sectionLines(other, sec).slice(0, 2).map(l => tagged(other, l)) : [];
   }
   const id = /\b[A-Z]{2}-\d{4}\b/.exec(line)?.[0];
   if (id && (doc.kind === 'notebook' || doc.kind === 'instrument')) {
-    const other = p.docs.find(d => d.id !== doc.id && (d.kind === 'notebook' || d.kind === 'instrument') && (doc.kind === 'notebook' ? d.kind === 'instrument' : d.kind === 'notebook') && d.lines.some(l => !/^Addendum \(/.test(l) && l.includes(id) && rowId(sheetFormat(d.title) ?? 'rawexport', l) === id || (d.kind === 'instrument' && new RegExp(`\\s${id}\\s`).test(l))));
-    const hit = other?.lines.find(l => !/^Addendum \(/.test(l) && (l.includes(`| ${id} |`) || l.startsWith(`${id},`) || l.startsWith(`${id};`) || new RegExp(`\\s${id}\\s`).test(l)));
-    return hit ? [hit] : [];
+    const want = doc.kind === 'notebook' ? 'instrument' : 'notebook';
+    for (const d of p.docs.filter(x => x.kind === want && x.id !== doc.id)) {
+      const hit = d.lines.find(l => !/^Addendum \(/.test(l) && (l.includes(`| ${id} |`) || l.startsWith(`${id},`) || l.startsWith(`${id};`) || new RegExp(`^\\S+\\s+\\S+\\s+${id}\\s`).test(l) || new RegExp(`^[A-H]\\d{2}\\s+${id}\\s`).test(l)));
+      if (hit) return [tagged(d, hit)];
+    }
   }
   return [];
 }
