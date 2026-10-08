@@ -17,7 +17,7 @@ import { createDefaultRegistry } from '../src/capabilities.mjs';
 import { validateWorkflow } from '../src/validate.mjs';
 import { verifyRun } from '../src/verify-run.mjs';
 import { canonical, digest } from '../src/data.mjs';
-import { MATERIALIZE, STATE_BYTES, STATE_LIMITS } from '../src/run-rows.mjs';
+import { MATERIALIZE, ROWS_VERSION, STATE_BYTES, STATE_ITEMS, STATE_LIMITS } from '../src/run-rows.mjs';
 
 const fixture = JSON.parse(readFileSync(new URL('./fixtures/store-rows/legacy-run.json', import.meta.url), 'utf8'));
 const scratch = t => { const dir = mkdtempSync(path.join(tmpdir(), 'foundry-rows-')); t.after(() => rmSync(dir, { recursive: true, force: true })); return dir; };
@@ -64,10 +64,10 @@ function legacyWorkspace(t) {
 }
 const record = JSON.parse(fixture.runBody);
 
-test('legacy: a workspace written by the whole-run store opens (its runs table gains rev and bytes) and loads the record exactly as stored', t => {
+test('legacy: a workspace written by the whole-run store opens (its runs table gains rev, bytes and items) and loads the record exactly as stored', t => {
   const { store } = legacyWorkspace(t);
-  assert.deepEqual(store.db.prepare('PRAGMA table_info(runs)').all().map(c => c.name), ['id', 'body', 'rev', 'bytes']);
-  assert.equal(store.db.prepare('PRAGMA user_version').get().user_version, 2);
+  assert.deepEqual(store.db.prepare('PRAGMA table_info(runs)').all().map(c => c.name), ['id', 'body', 'rev', 'bytes', 'items']);
+  assert.equal(store.db.prepare('PRAGMA user_version').get().user_version, ROWS_VERSION);
   assert.deepEqual(store.run(fixture.runId), record, 'the record is returned as it was written');
   assert.equal(count(store, 'run_nodes', fixture.runId), 0, 'reading does not migrate');
   assert.deepEqual(store.rows.header(fixture.runId), Object.fromEntries(Object.entries(record).filter(([key]) => !['input', 'nodes', 'outputs', 'frames'].includes(key))));
@@ -321,7 +321,7 @@ test('compare-and-swap: a row or header that changed under an update is not over
 test('bounds: each row, the header and the whole run have a byte bound; a refused update changes nothing', t => {
   const { store, run } = environment(t, chain(1));
   const was = () => store.db.prepare('SELECT COUNT(*) AS n FROM events WHERE run_id=?').get(run.id).n;
-  assert.deepEqual(Object.keys(STATE_LIMITS).sort(), ['budgetBytes', 'frameBytes', 'headerBytes', 'inputBytes', 'nodeOutputBytes', 'nodeStateBytes', 'totalBytes']);
+  assert.deepEqual(Object.keys(STATE_LIMITS).sort(), ['budgetBytes', 'budgetItems', 'finalBytes', 'finalItems', 'frameBytes', 'headerBytes', 'inputBytes', 'nodeOutputBytes', 'nodeStateBytes', 'totalBytes', 'totalItems']);
   assert.equal(STATE_LIMITS.budgetBytes, 10 * 1024 * 1024); assert.equal(STATE_LIMITS.totalBytes, 12 * 1024 * 1024);
   const refused = (mutate, what) => { const events = was(); assert.throws(() => store.updateRun(run.id, mutate, { type: 'probe.big' }), { code: 'DATA_LIMIT' }, what); assert.equal(was(), events, `${what}: no event`); };
   store.limits.nodeOutputBytes = 1000; refused(r => { r.outputs.big = { text: 'x'.repeat(2000) }; }, 'an output over its row bound');

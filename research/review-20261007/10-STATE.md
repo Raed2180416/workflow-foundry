@@ -40,9 +40,9 @@ as described. `research/review-20261007/STAGE1-ENGINE.md` does not exist [M].
   "32 pass, 5 of them wrong" to "32 unverified" [M]. No false pass is left, and no true pass either. Turning
   `unverified` into an honest `pass` needs oracle discovery during construction, and nothing of it is built.
 - **Auto-heal exists and its first live run happened tonight.** It found the cause of all three inspected failures
-  offline, at $0 [D]. In the live run so far, Haiku and then the stronger models proposed no fix that survived the
-  checks (both incidents "exhausted"); only a mechanical "add the missing gate" patch was promoted [M]. That proves
-  plumbing, not a fix rate.
+  offline, at $0 [D]. In tonight's live runs so far, Haiku and then Sonnet and Opus proposed 12 defect fixes and the
+  code checks refused all 12; only mechanical "add the missing gate" patches were promoted, on two incidents [M].
+  That proves the plumbing, not a fix rate.
 - **The biggest open questions are the same three as this morning:** does a cheap builder work on families it has
   never seen (C0 sealed), is there anything for a router to route (RX1), and does any of it hold on tasks Claude did
   not write (R-bench, your tasks, external benchmarks).
@@ -75,6 +75,9 @@ as described. `research/review-20261007/STAGE1-ENGINE.md` does not exist [M].
 **Five consequences the moment these land.**
 1. **Nothing built so far is a valid E1 artifact.** All five workflows fail the strict lint [M]. C0 sealed and CX3 must
    build fresh, and P1's result cannot be re-run on E1 as `pass` without a new workflow version (heal or rebuild).
+   Tonight's heal campaign promoted exactly such a lint-debt version of records-v3 in its own lineage (§3.9); a gate of
+   that kind rejected only 4 of the bed's 14 bad controls when the heal design tested it [D heal DESIGN B.4], so a
+   lint-clean workflow is not yet a well-checked one.
 2. **Costs reset.** The flags cut a trivial Haiku call's reported cost by about 41–42% [M]. Every comparison across the
    landing must recompute cost from journaled tokens at one price table (R3), or compare only within one engine.
 3. **E1 is still not reached by landing alone** [I from the synthesis §5 bump list]. Still open: the sink-field label
@@ -205,7 +208,7 @@ Matching reject codes to rounds uses the order of `result.reasons` against the s
 matching is the only inference. Spend: $1.32 over both campaigns at 21:40 (run 1: H-cfx $0.75, H-rec $0.21, H-p1 rising;
 the cap is $8). A Haiku round costs about $0.002, a Sonnet round $0.024–0.067, an Opus round $0.05–0.08.
 
-What this shows [I]: the loop runs live end to end, the code gates refuse every bad patch they were shown, and the
+What this shows [I]: the loop runs live end to end, the code gates refused every defect patch they were shown, and the
 mechanical lint-debt repairs promote. No *defect* fix survived on any incident, from any model class. In run 1 every
 Haiku round produced an invalid operation; after the edit to `live.mjs` Haiku's operations were valid and were then
 rejected on substance, like the stronger models'. All incidents are on inspected test seeds (the runs say so
