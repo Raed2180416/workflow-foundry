@@ -11,6 +11,8 @@
 //   runTests(file, {pattern})     node --test on one file in a child process (TAP parsed)
 //   seededDefect({file, pattern, mutations})   control run (unmutated copy) must pass, mutant must fail
 //   checkRecords(records, {slice})             the build's record checks, for a group's own records
+//   emptyHeldout()                explicit empty held-out material ({wordings, registry}) for builds whose
+//                                 test needs none (buildKev refuses a build without held-out material)
 import { spawnSync, execFileSync } from 'node:child_process';
 import childProcess from 'node:child_process';
 import fs, { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
@@ -20,6 +22,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { REPO_ROOT, KEV_DATA, loadSpec } from './contracts.mjs';
 import { freezeBeds, frozenBeds } from './pin.mjs';
+import { SpanRegistry, WordingGuard } from './leakage.mjs';
 import { checkRecord } from '../build.mjs';
 
 export { REPO_ROOT, KEV_DATA };
@@ -140,3 +143,4 @@ export function checkRecords(records, { slice, spec = loadSpec(), wordings = nul
   return errors;
 }
 export const here = url => path.dirname(fileURLToPath(url));
+export const emptyHeldout = () => ({ wordings: new WordingGuard([]), registry: new SpanRegistry() });

@@ -78,7 +78,7 @@ code { font-size: .88em; background: var(--panel2); padding: 0 .3em; border-radi
 .card.group::before { content: ""; position: absolute; inset: 5px -5px -5px 5px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel2); z-index: -1; }
 .card .body { display: grid; gap: 3px; min-width: 0; flex: 1; }
 .card .head { display: flex; align-items: center; gap: 6px; min-width: 0; }
-.card .label { font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.card .label { font-weight: 650; flex: 1; min-width: 0; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; line-height: 1.25; }
 .card .count { font-size: .75rem; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 0 7px; white-space: nowrap; }
 .card .line { font-size: .8rem; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.4em; overflow-wrap: anywhere; }
 .card .chips { display: flex; flex-wrap: wrap; gap: 3px 5px; font-size: .72rem; color: var(--muted); }
@@ -98,7 +98,7 @@ code { font-size: .88em; background: var(--panel2); padding: 0 .3em; border-radi
 .f-slate { --c: var(--slate); } .f-pink { --c: var(--pink); } .f-green { --c: var(--green); } .f-red { --c: var(--red); }
 
 /* the dot */
-.dot { --c: var(--neutral); width: 22px; height: 22px; flex: none; overflow: visible; margin-top: 1px; }
+.dot { width: 22px; height: 22px; flex: none; overflow: visible; margin-top: 1px; }
 .dot .core { fill: var(--c); stroke: var(--c); stroke-width: 1; transform-box: fill-box; transform-origin: center; }
 .dot .ring { fill: none; stroke: var(--c); stroke-width: 1.6; opacity: 0; transform-box: fill-box; transform-origin: center; }
 .dot .glyph { fill: none; stroke: var(--on); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }

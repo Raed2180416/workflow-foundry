@@ -31,7 +31,13 @@ const JACCARD_MIN = 0.8;
 // Date and time separated by T, minutes required, seconds and fractions optional, Z or +hh:mm (RFC 3339 also
 // allows lower-case t and z, which are accepted and upper-cased before parsing).
 const ISO_RE = /^\d{4}-\d{2}-\d{2}[Tt]\d{2}:\d{2}(:\d{2}(\.\d{1,6})?)?([Zz]|[+-]\d{2}:\d{2})$/;
-const parseIso = text => (ISO_RE.test(text) ? Date.parse(text.toUpperCase()) : NaN);
+// v4.2 (second audit 2, O-6): the calendar fields must exist (V8 rolls 2026-02-30 over to March 2 and 24:00 over to the
+// next day; such strings are not real instants as written).
+const realDate = text => {
+  const [y, mo, d, h] = [text.slice(0, 4), text.slice(5, 7), text.slice(8, 10), text.slice(11, 13)].map(Number);
+  return mo >= 1 && mo <= 12 && d >= 1 && d <= new Date(Date.UTC(y, mo, 0)).getUTCDate() && h <= 23;
+};
+const parseIso = text => (ISO_RE.test(text) && realDate(text) ? Date.parse(text.toUpperCase()) : NaN);
 
 export function generate({ seed, split = 'dev', difficulty = 3 } = {}) {
   return build(seed, split, difficulty).task;
@@ -225,6 +231,16 @@ export const badControls = [
       const blip = t.herrings.blips.find(b => b.svc === t.root_service);
       const iso = new Date(Date.parse(t.first_bad_timestamp) - 1000 * (blip ? t.T - blip.t : 300)).toISOString().replace('.000Z', 'Z');
       return { ...referenceSolve(task), first_bad_timestamp: iso };
+    },
+  },
+  {
+    // Near miss (v4.2): follows the rival story (d3+): the service with the sustained anomaly of the rival class, and that
+    // class; time and blast radius exact. Below d3 (no rival) the first blip outside the root, else the noisy job.
+    name: 'follow-rival',
+    make(task) {
+      const t = truthOf(task);
+      const other = t.herrings.rival || t.herrings.blips.find(b => b.svc !== t.root_service) || { svc: t.noisy[0], cls: SIBLING_CLASS[t.fault_class] };
+      return { ...referenceSolve(task), root_service: other.svc, fault_class: other.cls };
     },
   },
   {

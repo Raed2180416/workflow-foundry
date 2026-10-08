@@ -9,9 +9,14 @@
 //                .foundry/kev-data/frozen/<pin hex>/, verified file by file against the pin. Builds
 //                import beds only from it. A frozen copy records the diff hash it was made under; a
 //                later run whose diff hash differs is refused (a bed edit between two builds).
+//   drift record <root>/.foundry/kev-data/drift/<pin hex>.json: the diff hash of the first build of a
+//                pin in this repository, checked by every build whatever its outRoot (BED_DRIFT).
+//   symlinks     never followed: a link is hashed as its target text (as git stores it), and a link
+//                whose target leaves the allow-list (beds/sealed/, another bed, an absolute path) is
+//                refused (BED_SYMLINK); the frozen copy resolves real paths inside itself only.
 import { spawnSync, execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { lstatSync, mkdirSync, readFileSync, readdirSync, readlinkSync, realpathSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -28,6 +33,23 @@ export function allowListed(rel) {
 }
 function assertAllowListed(rel) {
   if (!allowListed(rel)) { const e = new Error(`BED_PATH: ${rel} is not under the bed allow-list`); e.code = 'BED_PATH'; throw e; }
+}
+const failCode = (code, message, details) => { const e = new Error(`${code}: ${message}`); e.code = code; if (details) e.details = details; return e; };
+// A symlink at allow-listed `rel` with link text `target` must stay inside the allow-list (decided on
+// the text alone: nothing at the target is opened or stat'ed).
+function assertLinkInside(rel, target) {
+  const t = String(target);
+  const resolved = path.posix.normalize(path.posix.join(path.posix.dirname(rel), t));
+  if (path.posix.isAbsolute(t) || !allowListed(resolved)) throw failCode('BED_SYMLINK', `${rel} is a symlink to ${t}, outside the bed allow-list`);
+}
+// Content hash of a working-tree path without following symlinks: a link hashes as its target text.
+// Returns null when the path does not exist.
+function worktreeHash(root, rel) {
+  const abs = path.join(root, rel), st = lstatSync(abs, { throwIfNoEntry: false });
+  if (!st) return null;
+  if (st.isSymbolicLink()) { const t = readlinkSync(abs); assertLinkInside(rel, t); return sha(Buffer.from(t)); }
+  if (!st.isFile()) return null;
+  return sha(readFileSync(abs));
 }
 
 function git(root, args, { input, encoding = 'utf8' } = {}) {
@@ -75,6 +97,7 @@ export function bedPin(root, { commit = 'HEAD' } = {}) {
   const versions = {};
   for (const f of files) {
     const buf = blobs.get(f.oid); f.sha256 = sha(buf); f.bytes = buf.length;
+    if (f.mode === '120000') assertLinkInside(f.path, buf.toString('utf8'));
     if (f.path.endsWith('.mjs')) { const m = VERSION_RE.exec(buf.toString('utf8')); if (m) versions[f.path] = m[1]; }
   }
   const pinHex = sha(files.map(f => `${f.path}\0${f.mode}\0${f.sha256}\n`).join(''));
@@ -86,9 +109,8 @@ export function worktreeDiff(root, pinInfo) {
   const known = new Map(pinInfo.files.map(f => [f.path, f]));
   const changed = [];
   for (const f of pinInfo.files) {
-    const abs = path.join(root, f.path);
-    if (!existsSync(abs)) { changed.push({ path: f.path, status: 'deleted', sha256: null }); continue; }
-    const h = sha(readFileSync(abs));
+    const h = worktreeHash(root, f.path);
+    if (h === null) { changed.push({ path: f.path, status: 'deleted', sha256: null }); continue; }
     if (h !== f.sha256) changed.push({ path: f.path, status: 'modified', sha256: h });
   }
   for (const spec of pathspecs()) {
@@ -96,8 +118,7 @@ export function worktreeDiff(root, pinInfo) {
     for (const p of out.split('\0').filter(Boolean)) {
       if (known.has(p)) continue;
       assertAllowListed(p);
-      const abs = path.join(root, p);
-      changed.push({ path: p, status: 'added', sha256: existsSync(abs) ? sha(readFileSync(abs)) : null });
+      changed.push({ path: p, status: 'added', sha256: worktreeHash(root, p) });
     }
   }
   changed.sort((a, b) => (a.path < b.path ? -1 : 1));
@@ -115,7 +136,7 @@ export function freezeBeds(root, { outRoot = path.join(root, '.foundry', 'kev-da
   if (expectPin && expectPin !== info.pin) { const e = new Error(`PIN_MISMATCH: beds pin ${info.pin}, expected ${expectPin}`); e.code = 'PIN_MISMATCH'; throw e; }
   const diff = worktreeDiff(root, info);
   const dir = path.join(frozenRoot(outRoot), info.pinHex), manifestPath = path.join(dir, 'FROZEN.json');
-  if (existsSync(manifestPath)) {
+  if (lstatSync(manifestPath, { throwIfNoEntry: false })) {
     const m = JSON.parse(readFileSync(manifestPath, 'utf8'));
     if (m.pin !== info.pin) throw new Error(`FROZEN_CORRUPT: ${manifestPath} names pin ${m.pin}`);
     if (m.diffHash !== diff.diffHash) {
@@ -140,7 +161,8 @@ export function freezeBeds(root, { outRoot = path.join(root, '.foundry', 'kev-da
   return { ...info, diffHash: diff.diffHash, clean: diff.clean, changed: diff.changed, dir, created: true };
 }
 
-// Every file of the frozen copy matches the pin, and nothing else is there.
+// Every file of the frozen copy matches the pin, and nothing else is there. Symlinks are compared by
+// their link text and never followed.
 export function verifyFrozen(dir, info) {
   const want = new Map(info.files.map(f => [f.path, f.sha256]));
   const seen = [];
@@ -152,20 +174,46 @@ export function verifyFrozen(dir, info) {
     }
   };
   walk('');
+  const hashOf = p => { const abs = path.join(dir, p); return lstatSync(abs).isSymbolicLink() ? sha(Buffer.from(readlinkSync(abs))) : sha(readFileSync(abs)); };
   const extra = seen.filter(p => !want.has(p)), missing = [...want.keys()].filter(p => !seen.includes(p));
-  const wrong = seen.filter(p => want.has(p) && sha(readFileSync(path.join(dir, p))) !== want.get(p));
+  const wrong = seen.filter(p => want.has(p) && hashOf(p) !== want.get(p));
   if (extra.length || missing.length || wrong.length) throw new Error(`FROZEN_MISMATCH: extra ${extra.length}, missing ${missing.length}, changed ${wrong.length} (${[...extra, ...missing, ...wrong].slice(0, 3).join(', ')})`);
   return true;
 }
 
-// Bed access for generators: resolve and import allow-listed paths from the frozen copy only.
+// The repository-level drift record (§2.1: "a build refuses to run if the diff hash changed since the
+// previous night's build"), independent of the build's outRoot: the first build of a pin records its
+// working-tree diff hash; a later build of the same pin with another diff hash is refused.
+export const driftRecordPath = (root, pinHex) => path.join(root, '.foundry', 'kev-data', 'drift', `${pinHex}.json`);
+export function checkDriftRecord(root, frozen) {
+  const file = driftRecordPath(root, frozen.pinHex);
+  const st = lstatSync(file, { throwIfNoEntry: false });
+  if (st) {
+    const m = JSON.parse(readFileSync(file, 'utf8'));
+    if (m.pin !== frozen.pin) throw failCode('FROZEN_CORRUPT', `${file} names pin ${m.pin}`);
+    if (m.diffHash !== frozen.diffHash) throw failCode('BED_DRIFT', `the working-tree diff of the pinned beds changed since the first build of this pin (${m.diffHash} -> ${frozen.diffHash}); commit or revert the bed edits, then build against the new pin`,
+      { was: m.diffHash, now: frozen.diffHash, changed: (frozen.changed ?? []).map(c => `${c.status} ${c.path}`), record: file });
+    return { file, created: false };
+  }
+  mkdirSync(path.dirname(file), { recursive: true });
+  const tmp = `${file}.tmp-${process.pid}`;
+  writeFileSync(tmp, JSON.stringify({ pin: frozen.pin, diffHash: frozen.diffHash, clean: frozen.clean, changed: (frozen.changed ?? []).map(c => `${c.status} ${c.path}`) }, null, 2) + '\n');
+  renameSync(tmp, file);
+  return { file, created: true };
+}
+
+// Bed access for generators: resolve and import allow-listed paths from the frozen copy only. The real
+// path (symlinks resolved) must stay inside the copy and under the allow-list.
 export function frozenBeds(frozen) {
   const dir = path.resolve(frozen.dir);
   const resolve = rel => {
     assertAllowListed(rel);
     const abs = path.resolve(dir, rel);
     if (!abs.startsWith(dir + path.sep)) throw new Error(`BED_PATH: ${rel} escapes the frozen copy`);
-    if (!existsSync(abs) || !statSync(abs).isFile()) throw new Error(`BED_PATH: ${rel} is not in the frozen copy ${frozen.pin}`);
+    let real;
+    try { real = realpathSync(abs); } catch { throw new Error(`BED_PATH: ${rel} is not in the frozen copy ${frozen.pin}`); }
+    const realDir = realpathSync(dir);
+    if (!real.startsWith(realDir + path.sep) || !allowListed(path.relative(realDir, real)) || !lstatSync(real).isFile()) throw new Error(`BED_PATH: ${rel} resolves outside the frozen copy's allow-listed files`);
     return abs;
   };
   return Object.freeze({ dir, pin: frozen.pin, commit: frozen.commit, path: resolve, import: rel => import(pathToFileURL(resolve(rel)).href), read: rel => readFileSync(resolve(rel), 'utf8') });

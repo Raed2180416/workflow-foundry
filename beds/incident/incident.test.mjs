@@ -6,13 +6,16 @@ import { estimateTokens, sha256 } from '../lib/canonical.mjs';
 import { hashSeed } from '../lib/rng.mjs';
 import { family, outputSchema, generate, oracle, referenceSolve, badControls, validateOutput, PASS_RULE } from './index.mjs';
 import { build, KNOBS, renderPrompt, VERSION } from './gen.mjs';
-import { FAULT_CLASSES, FAULTS, SECONDARY, ONSET_ALT, CALLEE_LINES, DECOY, NOTES, NOTE_MIXED, SIBLING_CLASS } from './catalog.mjs';
+import { FAULT_CLASSES, FAULTS, SECONDARY, ONSET_ALT, CALLEE_LINES, DECOY, NOTES, NOTE_MIXED, SIBLING_CLASS, DESCRIBE, STRAY, RIVAL_MORE } from './catalog.mjs';
 import { heuristics } from './baseline.mjs';
 import { blameChainSolve, adaptedSolve, strongSolve } from './attack.mjs';
 import { heuristicSolve, noteSolve } from './heuristic.mjs';
 import { adaptedHeuristicSolve } from './heuristic2.mjs';
 import { fourthHeuristicSolve } from './heuristic4.mjs';
 import { ceilingHeuristicSolve } from './heuristic-ceiling.mjs';
+import { cascadeHeuristicSolve } from './heuristic5.mjs';
+import { tenthBudgetSolve } from './heuristic6.mjs';
+import { eighthHeuristicSolve } from './heuristic-ceiling2.mjs';
 
 const DIFFS = [1, 2, 3, 4, 5];
 const SEEDS = Array.from({ length: 20 }, (_, i) => i);
@@ -42,7 +45,7 @@ test('interface: family metadata, portable output schema, exports', async () => 
   assert.equal(family.id, 'incident');
   assert.equal(family.kind, 'oneshot');
   assert.equal(family.version, VERSION);
-  assert.equal(VERSION, '3.0.0');
+  assert.equal(VERSION, '4.2.0');
   assert.ok(family.version && family.description && family.domain);
   assert.deepEqual(nonPortableKeys(outputSchema), []);
   // Cross-check with the runtime's own portability checker when it is present in this checkout.
@@ -53,7 +56,7 @@ test('interface: family metadata, portable output schema, exports', async () => 
   assert.equal(typeof generate, 'function');
   assert.equal(typeof oracle, 'function');
   assert.equal(typeof referenceSolve, 'function');
-  for (const name of ['empty', 'shuffled-or-corrupted', 'plausible-but-wrong']) assert.ok(badControls.some(c => c.name === name), name);
+  for (const name of ['empty', 'shuffled-or-corrupted', 'plausible-but-wrong', 'follow-rival']) assert.ok(badControls.some(c => c.name === name), name);
 });
 
 test('determinism: identical calls give byte-identical tasks; seed and split change the task', () => {
@@ -126,7 +129,7 @@ test('controls: referenceSolve passes 30/30 seeds at d1, d3, d5 (dev 0-29 and te
 });
 
 test('controls: every bad control fails 30/30 seeds at d1, d3, d5 (dev and test) and 20/20 at d2, d4', () => {
-  assert.ok(badControls.length >= 9);
+  assert.ok(badControls.length >= 10);
   for (const difficulty of DIFFS) for (const split of ['dev', 'test']) for (const seed of (difficulty % 2 ? SEEDS30 : SEEDS).map(s => (split === 'test' ? 5000 + s : s))) {
     const task = generate({ seed, split, difficulty });
     for (const control of badControls) {
@@ -160,6 +163,10 @@ test('oracle rejects schema-invalid output and enforces the exact pass rule', ()
     { ...good, first_bad_timestamp: good.first_bad_timestamp.replace('Z', '') },
     { ...good, first_bad_timestamp: good.first_bad_timestamp.replace('T', ' ') },
     { ...good, first_bad_timestamp: good.first_bad_timestamp.slice(0, 10) },
+    // v4.2 (O-6): calendar fields that do not exist (V8 rolls them over to another day).
+    { ...good, first_bad_timestamp: '2026-02-30T10:00:00Z' },
+    { ...good, first_bad_timestamp: `${good.first_bad_timestamp.slice(0, 10)}T24:00:00Z` },
+    { ...good, first_bad_timestamp: '2026-13-01T00:00:00Z' },
     { ...good, impacted_services: [] },
     { ...good, impacted_services: 'all' },
     { ...good, impacted_services: [1, 2] },
@@ -438,12 +445,15 @@ test('regression (v3 traps stay solvable): every optional call documented, dated
     const { task, truth } = build(seed, 'dev', difficulty);
     const sys = task.inputs.system;
     n++;
-    // (1) Every soft edge has a note naming both services that states its current behaviour; a dated pair's
-    // later note is the one that matches the truth.
+    // (1) Every soft edge has a note naming both services (by name, or from d3 by what they provide, which the
+    // overview resolves uniquely) that states its current behaviour; a dated pair's later note matches the truth.
+    const what = new Map([...sys.matchAll(/(\S+) \(team \S+\) provides ([^;.]+)/g)].map(m => [m[1], m[2]]));
+    for (const w of what.values()) assert.equal([...what.values()].filter(x => x === w).length, 1, `${task.id}: '${w}' names two services`);
+    const mentions = (text, svc) => text.includes(svc) || (what.has(svc) && DESCRIBE.some(f => text.includes(f(what.get(svc)))));
     for (const [from, to, , provider] of truth.softEdges) {
       const docs = truth.edgeDocs.filter(d => d.from === from && d.to === to);
-      assert.ok(docs.length >= 1 && docs.every(d => sys.includes(d.text) && d.text.includes(from) && d.text.includes(to)), `${task.id}: soft edge ${from}->${to} undocumented`);
-      if (provider) assert.ok(docs.some(d => d.kind === 'provider' && d.text.includes(provider)), `${task.id}: provider ${provider} of ${from}->${to} undocumented`);
+      assert.ok(docs.length >= 1 && docs.every(d => sys.includes(d.text) && mentions(d.text, from) && mentions(d.text, to)), `${task.id}: soft edge ${from}->${to} undocumented`);
+      if (provider) assert.ok(docs.some(d => d.kind === 'provider' && mentions(d.text, provider)), `${task.id}: provider ${provider} of ${from}->${to} undocumented`);
     }
     for (const [from, to, now] of truth.revised) {
       const docs = truth.edgeDocs.filter(d => d.from === from && d.to === to && d.kind.startsWith('dated'));
@@ -472,8 +482,8 @@ test('regression (v3 traps stay solvable): every optional call documented, dated
       assert.ok(viaTable || viaProse, `${task.id}: anonymous ${anon} has no documented impacted callee`);
       assert.ok(truth.impacted_services.includes(anon));
     }
-    // (4) Decoys are healthy: not impacted, no dependency failures, no 5xx in their own request lines, and their
-    // loud lines start shortly before T.
+    // (4) Decoys are healthy: not impacted, no dependency failures, no 5xx in their own request lines. (v4.1: their
+    // loud lines start at any time; v3-v4.0 started them T - 30..300 s, a clock.)
     const byId = byIdOf(task);
     for (const d of truth.herrings.decoys) {
       assert.ok(!truth.impacted_services.includes(d.svc), `${task.id}: decoy ${d.svc} is impacted`);
@@ -481,24 +491,38 @@ test('regression (v3 traps stay solvable): every optional call documented, dated
       assert.ok(!lines.some(l => l.tag === 'dep'), `${task.id}: decoy logs dependency failures`);
       // HTTP status positions only (v2's pattern also matched counts such as "expired 596 keys").
       assert.ok(lines.filter(l => l.tag === 'bg').every(l => !/(status=|-> |(GET|POST|PUT|DELETE) \/\S* )5\d\d\b/.test(msgOf(byId.get(l.id)))), `${task.id}: decoy serves 5xx`);
-      assert.ok(d.t < truth.T && d.t >= truth.T - 300, `${task.id}: decoy timing`);
     }
+    // (4b) v4.2: the rival service keeps serving: its own request lines never fail, it is never the root, its class
+    // differs from the truth, and its sustained lines never recover.
+    const rv = truth.herrings.rival;
+    assert.ok(rv && rv.svc !== truth.root_service && rv.cls !== truth.fault_class && rv.n >= 5, `${task.id}: rival`);
+    assert.ok(truth.linesBySvc[rv.svc].filter(l => l.tag === 'bg').every(l => !/(status=|-> |(GET|POST|PUT|DELETE) \/\S* )5\d\d\b/.test(msgOf(byId.get(l.id)))), `${task.id}: rival serves 5xx`);
+    assert.equal(truth.linesBySvc[rv.svc].filter(l => l.tag === 'rival').length, rv.n, `${task.id}: rival line count`);
     // (5) Fault-wording lines of the root (consequences, repeats, partial recoveries) never precede the onset;
     // every blip, in any service, ends with its recovery line.
     for (const l of truth.linesBySvc[truth.root_service].filter(x => x.tag === 'root')) assert.ok(l.t >= truth.T);
     for (const b of truth.herrings.blips.filter(x => x.end !== undefined)) assert.ok(b.end > b.t);
     // (6) Gradual faults (disk, pool) start as a trend well before they turn fatal; cache and config symptoms lag.
-    if (['disk_full', 'connection_pool_exhaustion'].includes(truth.fault_class)) assert.ok(truth.symFrom - truth.T >= 90, `${task.id}: lead too short`);
-    if (truth.fault_class === 'poisoned_cache') assert.ok(truth.symFrom - truth.T >= 70, `${task.id}: cache symptoms too early`);
-    if (truth.fault_class === 'bad_config_deploy') assert.ok(truth.symFrom - truth.T >= 30, `${task.id}: config symptoms too early`);
+    // (v4 knobs: lead 60-600 s, cache lag 45-600 s, config lag 20-480 s from d3; v3 asserted 90/70/30.)
+    const K = KNOBS[difficulty];
+    if (['disk_full', 'connection_pool_exhaustion'].includes(truth.fault_class)) assert.ok(truth.symFrom - truth.T >= K.lead[0], `${task.id}: lead too short`);
+    if (truth.fault_class === 'poisoned_cache') assert.ok(truth.symFrom - truth.T >= K.cacheLag[0], `${task.id}: cache symptoms too early`);
+    if (truth.fault_class === 'bad_config_deploy') assert.ok(truth.symFrom - truth.T >= K.configLag[0], `${task.id}: config symptoms too early`);
     // (7) Large clock skew is the only case where a clock-skew root uses certificate words at onset.
     if (truth.fault_class === 'clock_skew' && !truth.bigSkew) assert.ok(!/x509|certificate/i.test(msgOf(byId.get(truth.onsetId))));
   }
   assert.ok(withDegraded / n >= 0.35, `only ${withDegraded}/${n} d3+ tasks have a caller that falls back`);
 });
 
-test('regression (audit v3): onset rules — canary releases, per-pod echoes, stats keep running after T', () => {
-  let canaries = 0, echoes = 0, stats = 0, statsOnsets = 0, configs = 0;
+// Per-class stats forms (BASELINE in catalog.mjs). From d3 the root has no stats series of its fault's kind (v4,
+// second audit round 1: in v3 that series switched from normal to abnormal values at T and dated the fault).
+const STATS_OF = {
+  connection_pool_exhaustion: /pool '\S+' stats:/, certificate_expiry: /TLS listener :\d+: \d+ handshakes/, bad_config_deploy: /config watch: no changes \(release/,
+  disk_full: /disk usage \d+% on/, dns_resolution_failure: /lookups\/min/, memory_leak_oom: /heap after gc \d+% \(pause/, clock_skew: /ntp offset -?\d+ms$/,
+  upstream_rate_limiting: /quota usage \d+%/, poisoned_cache: /hit ratio 0\.\d+, \d+ entries/,
+};
+test('regression (audit v3, v4): onset rules — canary releases, per-pod echoes; no stats series of the fault kind in the root from d3', () => {
+  let canaries = 0, echoes = 0, configs = 0, checked = 0;
   for (const difficulty of [3, 4, 5]) for (let seed = 0; seed < 60; seed++) {
     const { task, truth } = build(seed, 'dev', difficulty);
     const byId = byIdOf(task);
@@ -510,44 +534,110 @@ test('regression (audit v3): onset rules — canary releases, per-pod echoes, st
         canaries++;
         const promote = rootMsgs.find(l => /promoting the canary/.test(l.msg));
         assert.ok(promote && promote.t - truth.T >= 70 && promote.t - truth.T <= 160, `${task.id}: canary promotion 70-160 s after the onset`);
-        // Before the promotion has reached every pod, the stats lines still report the old release.
-        const newVer = /release (\S+?);|by (\S+) \(canary\)|running (\S+) as/.exec(onset).slice(1).find(Boolean);
-        assert.ok(newVer && rootMsgs.some(l => l.t > promote.t && l.msg.includes(newVer)), `${task.id}: new release ${newVer} visible after the promotion`);
-        assert.ok(rootMsgs.filter(l => l.t > truth.T && l.t < promote.t && /config watch: no changes/.test(l.msg)).every(l => !l.msg.includes(newVer)), `${task.id}: stats report the canary release too early`);
       }
       if (rootMsgs.some(l => /pod \S+ loaded configuration bundle/.test(l.msg) && l.t > truth.T)) echoes++;
     }
     if (truth.fault_class === 'poisoned_cache') {
       const snap = /(snap-[0-9a-f]+)/.exec(onset)[1];
-      assert.ok(rootMsgs.filter(l => l.t > truth.T && l.msg.includes(snap) && /refill|warm-up/.test(l.msg)).length >= 1, `${task.id}: replicas echo the bad snapshot`);
+      assert.ok(rootMsgs.filter(l => l.t > truth.T && l.msg.includes(snap) && l.tag === 'root').length >= 1, `${task.id}: replicas echo the bad snapshot`);
     }
-    // The root's periodic stats lines run on after T (v2 stopped them at T, which dated the fault).
-    if (truth.idsByTag.baseline?.length && !['bad_config_deploy', 'poisoned_cache'].includes(truth.fault_class)) {
-      stats++;
-      assert.ok(rootMsgs.some(l => l.t > truth.T + 30 && (l.tag === 'root' || l.tag === 'bg') && /stats:|disk usage|heap after gc|handshakes\/min|lookups\/min|ntp offset|quota usage/.test(l.msg)), `${task.id}: root stats stop at T`);
-    }
-    if (/stats:|^(\[\w+\] |\w+ |\w: |level=\w+ msg=")?(disk usage|heap after gc|TLS listener|resolver|ntp offset)|quota usage/.test(onset)) statsOnsets++;
-  }
-  assert.ok(configs >= 10 && canaries >= 3 && echoes >= 5, `config tasks ${configs}, canary onsets ${canaries}, per-pod echoes ${echoes}`);
-  assert.ok(stats >= 40 && statsOnsets >= 20, `stats ${stats}, stats-form onsets ${statsOnsets}`);
-});
-
-test('regression: gradual onsets are the first abnormal value after same-vocabulary baselines', () => {
-  let checked = 0;
-  for (const difficulty of [3, 4, 5]) for (let seed = 0; seed < 60 && checked < 12; seed++) {
-    const { task, truth } = build(seed, 'dev', difficulty);
-    if (truth.fault_class !== 'disk_full') continue;
-    const byId = byIdOf(task);
-    const pct = id => Number((/(\d+)% on|usage on \S+ jumped to (\d+)%|at (\d+)%|usage (\d+)%/.exec(msgOf(byId.get(id))) || []).slice(1).find(Boolean));
-    const base = truth.linesBySvc[truth.root_service].filter(l => l.tag === 'baseline' && l.t < truth.T && /disk usage \d+% on/.test(msgOf(byId.get(l.id))));
-    assert.ok(base.length >= 3, `${task.id}: baseline usage lines before T`);
-    const vals = base.map(l => pct(l.id));
-    assert.ok(Math.max(...vals) - Math.min(...vals) <= 2, `${task.id}: baseline is steady`);
-    const onset = pct(truth.onsetId);
-    assert.ok(!Number.isFinite(onset) || onset >= Math.max(...vals) + 2, `${task.id}: onset value ${onset} is not clearly above the baseline ${vals}`);
+    // The onset is never a stats-form line from d3, and the root logs no stats series of its fault's kind.
+    assert.ok(!STATS_OF[truth.fault_class].test(onset), `${task.id}: stats-form onset`);
+    // (Trend steps of a gradual fault may use the stats wording; they are fault lines, tagged 'root'.)
+    const series = rootMsgs.filter(l => ['baseline', 'bg'].includes(l.tag) && STATS_OF[truth.fault_class].test(l.msg));
+    assert.equal(series.length, 0, `${task.id}: the root logs a ${truth.fault_class} stats series: ${series[0]?.msg}`);
     checked++;
   }
-  assert.ok(checked >= 5);
+  assert.ok(checked === 180 && configs >= 10 && canaries >= 3 && echoes >= 5, `config tasks ${configs}, canary onsets ${canaries}, per-pod echoes ${echoes}`);
+});
+
+// v4: gradual faults (pool, disk) start as a worded trend at T and turn fatal later; the onset is the root's first
+// fault-tagged line and comes at least K.lead[0] s before the first fatal symptom. (v3 checked the onset against the
+// root's own stats baseline, which v4 removed from d3.)
+test('regression: gradual onsets are the first fault line, a worded trend well before the fatal phase', () => {
+  let checked = 0;
+  for (const difficulty of [3, 4, 5]) for (let seed = 0; seed < 120 && checked < 30; seed++) {
+    const { task, truth } = build(seed, 'dev', difficulty);
+    if (!['disk_full', 'connection_pool_exhaustion'].includes(truth.fault_class)) continue;
+    const fault = truth.linesBySvc[truth.root_service].filter(l => l.tag === 'root' || l.tag === 'onset');
+    assert.equal(fault[0].id, truth.onsetId, `${task.id}: a fault line precedes the onset`);
+    assert.ok(truth.symFrom - truth.T >= KNOBS[difficulty].lead[0], `${task.id}: fatal phase too early`);
+    const onset = msgOf(byIdOf(task).get(truth.onsetId));
+    assert.ok(/\d/.test(onset) && !/ENOSPC|errno 28|no space left|timed out|timeout/i.test(onset), `${task.id}: onset is not a trend line: ${onset}`);
+    checked++;
+  }
+  assert.ok(checked >= 20);
+});
+
+// Second audit, pass 2 (AUDIT.md F-29): the root's herring kit (its blip, its stray, its lookalikes, the same-class
+// blip in a neighbour) carried only the true class, so the class with most blips was the true class in 80% of d3 tasks
+// (unique majority) and a keyword vote over the whole log named it in 43-57% (short keyword lists) to 74% (catalog
+// phrases) without finding the root. v4.2 mirrors the kit for a rival class in a rival service.
+const VOTE = {
+  connection_pool_exhaustion: /\bpool\b|acquire|borrow|checked out|in use|slots/, certificate_expiry: /cert|x509|\btls\b|handshake|\bleaf\b|notafter|validity/,
+  bad_config_deploy: /release|rollout|config|canary|\bbuild\b|panic|no route|deploy|setting/, disk_full: /disk|volume|enospc|no space|errno 28|read-only|\bfull\b|gib|fsync/,
+  dns_resolution_failure: /\bdns\b|resolv|lookup|look up|eai_again|servfail|nameserver|no such host/, memory_leak_oom: /heap|memory|\boom|\bgc\b|\brss\b|mib|old gen|old space|allocation/,
+  clock_skew: /clock|\bntp\b|skew|drift|time source|not yet valid|\bttl\b|issued|ahead/, upstream_rate_limiting: /429|quota|rate.limit|throttl|too many requests|budget|slow down/,
+  poisoned_cache: /cache|refill|snapshot|checksum|missing field|warm-up|integrity|digest/,
+};
+test('regression (second audit 2, F-29): no class prior from herring majorities or a whole-log keyword vote; the rival story is complete', () => {
+  for (const difficulty of [3, 5]) {
+    const N = 100;
+    let blipMajority = 0, vote = 0, rivalWins = 0;
+    for (let i = 0; i < N; i++) {
+      const { task, truth } = build(5000 + i, 'test', difficulty);
+      const counts = {};
+      for (const b of truth.herrings.blips) counts[b.cls] = (counts[b.cls] || 0) + 1;
+      const top = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+      if (top[0][0] === truth.fault_class && (top.length === 1 || top[1][1] < top[0][1])) blipMajority++;
+      const v = {};
+      for (const line of logLines(task)) {
+        const msg = msgOf(line).toLowerCase();
+        if (!/error|warn|^e:|^w:/.test(msg.slice(0, 25))) continue;
+        for (const [k, re] of Object.entries(VOTE)) if (re.test(msg)) v[k] = (v[k] || 0) + 1;
+      }
+      const best = Object.entries(v).sort((a, b) => b[1] - a[1])[0]?.[0];
+      if (best === truth.fault_class) vote++;
+      if (best === truth.herrings.rival.cls) rivalWins++;
+      // The rival kit: a blip of its class in the rival service or a third service, and its own sustained lines.
+      assert.ok(truth.herrings.blips.some(b => b.cls === truth.herrings.rival.cls && b.svc !== truth.root_service), `${task.id}: rival blip`);
+      assert.ok(truth.linesBySvc[truth.herrings.rival.svc].some(l => l.tag === 'rival'), `${task.id}: rival lines`);
+    }
+    assert.ok(blipMajority / N <= 0.35, `d${difficulty}: the true class is the unique blip majority in ${blipMajority}/${N} (v4.1: 80% at d3)`);
+    assert.ok(vote / N <= 0.42, `d${difficulty}: a whole-log keyword vote names the true class in ${vote}/${N} (v4.1: 57% at d3)`);
+    assert.ok(rivalWins / N >= 0.15, `d${difficulty}: the rival class wins the vote in only ${rivalWins}/${N}`);
+  }
+  // Rival lines carry no class ids, verdicts or benign qualifiers (only the cascade and the resource name tell).
+  for (const [k, pool] of Object.entries(RIVAL_MORE)) {
+    assert.ok(STRAY[k], k);
+    for (const f of pool) {
+      const [, msg] = f({}, { int: a => a, pick: l => l[0], chance: () => false }, { pool: 'p', max: 4, db: 'd', host: 'h', port: 1, exp: 'e', comp: 'c', v1: 'v1', v2: 'v2', vol: '/v', v: 90, writer: 'w', proc: 'x (pid 1)', peer: 'n', ext: 'E', q: 60, ns: 'n', snap: 's' });
+      assert.ok(!FAULT_CLASSES.some(c => msg.includes(c)) && !/harmless|unrelated|ignore|test|staging/.test(msg), msg);
+    }
+  }
+});
+
+// Second audit, pass 2 (F-30): herring timing must not date T. v4.1 echoed only blips that ended before T - 60 s, so
+// "the last 'answering again' line + 3 min" was within 60 s of T in 43% of d3 tasks (49% at d5); the same-class blip
+// came before T - 240 s (33%). A uniform guess over T's range scores about 25%.
+test('regression (second audit 2, F-30): herring clocks do not date T (echoes, same-class blip, decoys, deploys, rival)', () => {
+  const N = 200, offsets = {};
+  const add = (k, v) => { if (Number.isFinite(v)) (offsets[k] ||= []).push(v); };
+  for (let i = 0; i < N; i++) {
+    const { truth } = build(5000 + i, 'test', 3);
+    const h = truth.herrings, T = truth.T;
+    const tagTimes = tag => Object.entries(truth.linesBySvc).filter(([svc]) => svc !== truth.root_service).flatMap(([, ls]) => ls.filter(l => l.tag === tag).map(l => l.t));
+    add('echo.last', T - Math.max(...tagTimes('echo')));
+    add('blip-same.start', T - (h.blips.find(b => b.svc !== truth.root_service && b.cls === truth.fault_class)?.t ?? NaN));
+    add('decoy.start', T - Math.min(...h.decoys.map(x => x.t)));
+    add('deploy.first', T - Math.min(...tagTimes('deploy')));
+    add('rival.start', T - h.rival.t);
+  }
+  for (const [k, xs] of Object.entries(offsets)) {
+    let best = 0;
+    for (let o = -1800; o <= 1800; o += 10) best = Math.max(best, xs.filter(x => Math.abs(x - o) <= 60).length);
+    assert.ok(best / xs.length <= 0.3, `${k}: a constant offset dates T within 60 s in ${best}/${xs.length}`);
+  }
 });
 
 test('the root is rarely the service with the most ERROR lines', () => {
@@ -615,20 +705,25 @@ test('paraphrase pools are used from d3 (notes are not a single fixed template)'
 // the 30 held-out seeds (test split, 5000-5029) at difficulty 3 and 5. The attacker files are fixtures; the
 // compliant ones stay within 40 non-comment lines. The over-budget ceiling attacker is a tripwire (< 50%).
 test('surface-statistics and adversarial scripts pass < 20% at difficulty 3 and 5 on held-out seeds (bed needs judgment)', t => {
-  for (const file of ['heuristic.mjs', 'heuristic2.mjs', 'heuristic4.mjs']) assert.ok(codeLines(file) <= 40, `${file} has ${codeLines(file)} code lines`);
-  const scripts = { ...heuristics, blameChain: blameChainSolve, adapted: adaptedSolve, strong: strongSolve, A1: heuristicSolve, A1note: noteSolve, A2: adaptedHeuristicSolve, A4: fourthHeuristicSolve };
+  // Second audit, pass 2: A12 (heuristic5.mjs, generic, written from scratch) and A10 (heuristic6.mjs, the strongest
+  // compliant catalog-aware attacker of the interrupted first attempt) join the compliant set; ceiling2
+  // (heuristic-ceiling2.mjs, 44 code lines) is the v4 over-budget tripwire. On v4.1 (test seeds 5000-5029) A10 passed
+  // 5/30 at d3, ceiling2 6/30 at d5 and that attempt's 47-line ceiling 6/30 at d3.
+  for (const file of ['heuristic.mjs', 'heuristic2.mjs', 'heuristic4.mjs', 'heuristic5.mjs', 'heuristic6.mjs']) assert.ok(codeLines(file) <= 40, `${file} has ${codeLines(file)} code lines`);
+  const scripts = { ...heuristics, blameChain: blameChainSolve, adapted: adaptedSolve, strong: strongSolve, A1: heuristicSolve, A1note: noteSolve, A2: adaptedHeuristicSolve, A4: fourthHeuristicSolve, A12: cascadeHeuristicSolve, A10: tenthBudgetSolve };
+  const ceilings = { ceiling: ceilingHeuristicSolve, ceiling2: eighthHeuristicSolve };
   const report = [];
   for (const difficulty of [1, 3, 5]) {
-    const passes = Object.fromEntries([...Object.keys(scripts), 'ceiling'].map(k => [k, 0]));
+    const passes = Object.fromEntries([...Object.keys(scripts), ...Object.keys(ceilings)].map(k => [k, 0]));
     for (const seed of TEST30) {
       const task = generate({ seed, split: 'test', difficulty });
-      for (const [name, h] of Object.entries(scripts)) if (oracle(task, h(task)).pass) passes[name]++;
-      if (oracle(task, ceilingHeuristicSolve(task)).pass) passes.ceiling++;
+      // (A crashing script answers nothing; the v4 attackers assume d3+ structure and may throw on d1 tasks.)
+      for (const [name, h] of Object.entries({ ...scripts, ...ceilings })) { let out = {}; try { out = h(task); } catch { /* no answer */ } if (oracle(task, out).pass) passes[name]++; }
     }
     report.push(`d${difficulty} ${JSON.stringify(passes)}`);
     if (difficulty >= 3) {
       for (const name of Object.keys(scripts)) assert.ok(passes[name] / TEST30.length < 0.2, `d${difficulty} ${name} passes ${passes[name]}/${TEST30.length}`);
-      assert.ok(passes.ceiling / TEST30.length < 0.5, `d${difficulty} over-budget ceiling attacker passes ${passes.ceiling}/${TEST30.length}`);
+      for (const name of Object.keys(ceilings)) assert.ok(passes[name] / TEST30.length < 0.35, `d${difficulty} over-budget ${name} attacker passes ${passes[name]}/${TEST30.length}`);
     }
   }
   t.diagnostic(`script passes of ${TEST30.length} held-out seeds: ${report.join('; ')}`);

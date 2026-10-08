@@ -1847,3 +1847,43 @@ export const STRAY_REC = {
   upstream_rate_limiting: [(c, r, o) => ['INFO', `${o.ext} calls succeeding again`]],
   poisoned_cache: [(c, r, o) => ['INFO', `'${o.ns}' consistent again after the repair job`]],
 };
+
+// ================================================================ v4.2, second audit, pass 2 (2026-10-08)
+// Sustained symptoms of the rival anomaly (F-29): an unrelated resource `o` of a non-root service keeps misbehaving
+// for the rest of the window. Same resource names as STRAY; no class ids, no verdicts, no hint that it is harmless
+// (only the cascade and the resource name tell). For the event classes these follow the one STRAY event line.
+export const RIVAL_MORE = {
+  connection_pool_exhaustion: [
+    (c, r, o) => ['WARN', `'${o.pool}': ${r.int(3, 40)} borrowers gave up waiting for a connection (max ${o.max})`],
+    (c, r, o) => ['WARN', `pool '${o.pool}' still saturated (${o.max}/${o.max} in use); ${r.int(5, 60)} borrowers queued for ${o.db}`],
+  ],
+  certificate_expiry: [
+    (c, r, o) => ['WARN', `handshake for ${o.host} on :${o.port} rejected: certificate expired at ${o.exp}`],
+    (c, r, o) => ['ERROR', `${r.int(3, 90)} TLS sessions to ${o.host} refused in the last minute (expired leaf)`],
+  ],
+  bad_config_deploy: [
+    (c, r, o) => ['ERROR', `${o.comp} ${o.v2} rejects its configuration (value of '${r.pick(['listeners.0.port', 'sampling.rate', 'buffer.max_bytes', 'routes[3].match'])}' is invalid); running on built-in defaults`],
+    (c, r, o) => ['WARN', `${o.comp} restarted again (exit 2: invalid configuration since ${o.v2}), restart #${r.int(2, 30)}`],
+    (c, r, o) => ['ERROR', `panic in ${o.comp} ${o.v2}: missing section '${r.pick(['exporters', 'upstreams', 'filters', 'sinks'])}' in its config`],
+  ],
+  disk_full: [
+    (c, r, o) => ['ERROR', `write to ${o.vol} failed: no space left on device (${o.writer})`],
+    (c, r, o) => ['WARN', `${o.vol} at ${Math.min(100, o.v + r.int(1, 3))}%; ${o.writer} keeps writing`],
+  ],
+  memory_leak_oom: [
+    (c, r, o) => ['ERROR', `${o.proc} killed by the kernel (memory cgroup limit reached); restarting it`],
+    (c, r, o) => ['WARN', `${o.proc}: resident memory still climbing (${r.int(500, 1400)} MiB, +${r.int(10, 60)} MiB/min)`],
+  ],
+  clock_skew: [
+    (c, r, o) => ['WARN', `source ${o.peer} still ${r.int(2, 40)}s off the other sources; excluded from selection`],
+    (c, r, o) => ['WARN', `${o.peer} keeps answering with a time ${r.int(2, 40)}s ahead of its peers`],
+  ],
+  upstream_rate_limiting: [
+    (c, r, o) => ['WARN', `${o.ext}: ${r.int(5, 200)} requests rejected with 429 in the last minute (quota ${o.q}/min)`],
+    (c, r, o) => ['WARN', `backing off from ${o.ext} for ${r.int(10, 60)}s: request quota exhausted`],
+  ],
+  poisoned_cache: [
+    (c, r, o) => ['WARN', `${r.int(20, 900)} entries in '${o.ns}' fail checksum verification since the load of ${o.snap}`],
+    (c, r, o) => ['WARN', `'${o.ns}' entries from ${o.snap} are missing field '${r.pick(['id', 'version', 'payload', 'updated_at'])}'; readers skip them`],
+  ],
+};

@@ -3,9 +3,9 @@
 // toSystemOneQuestion from src/judgment.mjs, reached through the port-kit interface
 // (experiments/kev-data/judges/kit.mjs questionFromContract), which the runtime uses too.
 import { toSystemOneQuestion } from '../../../src/judgment.mjs';
-import { questionFromContract, fillWording, slotNames, contractOptions, LIMITS } from '../judges/kit.mjs';
+import { questionFromContract, fillWording, slotNames, contractOptions, LIMITS, companionContract, contractFor, judgmentRequest } from '../judges/kit.mjs';
 
-export { toSystemOneQuestion, fillWording, slotNames, contractOptions, LIMITS };
+export { toSystemOneQuestion, fillWording, slotNames, contractOptions, LIMITS, companionContract, contractFor, judgmentRequest };
 export const renderQuestion = questionFromContract;
 
 // A labelled training/evaluation question: the rendered question plus its label (one of the
@@ -38,21 +38,31 @@ export const portOfQuestionId = qid => String(qid).split('~')[0];
 export function questionContract(qid, contracts) {
   const base = portOfQuestionId(qid);
   if (contracts?.[base]) return { port: base, reportId: base, contract: contracts[base], companion: false };
-  const parent = Object.values(contracts ?? {}).find(c => c?.companion?.id === base);
-  if (!parent) return null;
-  const cc = parent.companion;
-  return { port: parent.id, reportId: base, companion: true,
-    contract: { id: cc.id, wordings: cc.wordings, options: cc.options, criteria: cc.criteria ?? [], unknowable: 'n/a', ledgerOnly: parent.ledgerOnly ?? false } };
+  const contract = contractFor(contracts, base);
+  if (!contract) return null;
+  return { port: contract.companionOf, reportId: base, companion: true, contract };
 }
 
-// A regex that matches any filling of a wording template (slots match any non-empty text without
-// braces), with whitespace normalised. Used to check that an instruction was rendered from an
-// allowed wording, and that no held-out wording reaches another slice.
+// A regex that matches a filling of a wording template, with whitespace normalised. Without slot specs
+// a slot matches any non-empty text without braces (used to find held-out wordings in any filling).
+// With a contract's slots, a slot with values matches only one of its values and a maxChars slot at
+// most that many characters; a slot used twice must repeat its filling.
 const escapeRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 export const normalizeWs = s => String(s).replace(/\s+/g, ' ').trim();
-export function wordingPattern(template) {
-  const parts = normalizeWs(template).split(/\{[A-Za-z_][A-Za-z0-9_]*\}/);
-  return new RegExp(`^${parts.map(escapeRe).join('[^{}]+?')}$`, 's');
+export function wordingPattern(template, slotSpecs = null) {
+  const text = normalizeWs(template), seen = new Set();
+  let out = '', last = 0;
+  for (const m of text.matchAll(/\{([A-Za-z_][A-Za-z0-9_]*)\}/g)) {
+    out += escapeRe(text.slice(last, m.index)); last = m.index + m[0].length;
+    const name = m[1], spec = slotSpecs?.[name];
+    if (!slotSpecs) { out += '[^{}]+?'; continue; }
+    if (seen.has(name)) { out += `\\k<${name}>`; continue; }
+    seen.add(name);
+    if (!spec) out += `(?<${name}>(?!))`;                                         // undeclared slot: never matches
+    else if (spec.values?.length) out += `(?<${name}>${[...new Set(spec.values.map(normalizeWs))].sort((a, b) => b.length - a.length).map(escapeRe).join('|')})`;
+    else out += `(?<${name}>[^{}]{1,${Number.isInteger(spec.maxChars) ? spec.maxChars : 4000}}?)`;
+  }
+  return new RegExp(`^${out}${escapeRe(text.slice(last))}$`, 's');
 }
 // The question part of System One instructions (before the criteria block).
 export const questionOf = instructions => String(instructions).split('\nCriteria:\n')[0];

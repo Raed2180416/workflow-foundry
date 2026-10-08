@@ -8,6 +8,7 @@
 import { FORBIDDEN_STATE_KEYS, findForbiddenKeys } from '../judges/kit.mjs';
 import { canonical, sentences, sha256, skeleton, skeletonText, tagged } from './hash.mjs';
 import { normalizeWs, questionOf, wordingPattern } from './render.mjs';
+import { contractMasks, loadSpec } from './contracts.mjs';
 
 export { FORBIDDEN_STATE_KEYS, findForbiddenKeys };
 
@@ -53,12 +54,28 @@ export function leaksInto(entrySlice, slice) {
   return true;
 }
 
+// The default skeleton masks: the frozen contracts' name and marker slot values (the records systems).
+let defaultMasksMemo = null;
+export function defaultMasks() { return (defaultMasksMemo ??= Object.freeze(contractMasks(loadSpec().contracts))); }
+const sortedUnion = (...lists) => [...new Set(lists.flat().filter(t => typeof t === 'string' && t.trim()))].sort();
+const normMasks = m => ({ names: sortedUnion(m?.names ?? []), markers: sortedUnion(m?.markers ?? []) });
+// Does mask set `outer` hold every name and marker of `inner`?
+export const coversMasks = (outer, inner) => inner.names.every(n => outer.names.includes(n)) && inner.markers.every(n => outer.markers.includes(n));
+
 // The span-skeleton registry. Entries hold the skeleton hash of a held-out span (one sentence, or
 // a window of consecutive sentences), never its text, plus where it came from. scan() computes the
 // skeleton of every window of 1..maxSentences consecutive sentences of every string in a state.
+// The registry carries its own masks (default: the frozen contracts' system names, defaultMasks()),
+// stored in its JSON and applied on both sides: add() and every scan union them with the call's
+// names and markers, so an entry and the state it leaks into are masked alike.
 export class SpanRegistry {
-  #entries = new Map(); #maxSentences = 1;
-  constructor(entries = []) { for (const e of entries) this.#insert(e); }
+  #entries = new Map(); #maxSentences = 1; #masks;
+  constructor(entries = [], { masks } = {}) {
+    this.#masks = Object.freeze(normMasks(masks ?? defaultMasks()));
+    for (const e of entries) this.#insert(e);
+  }
+  get masks() { return { names: [...this.#masks.names], markers: [...this.#masks.markers] }; }
+  #with(names = [], markers = []) { return { names: sortedUnion(this.#masks.names, names), markers: sortedUnion(this.#masks.markers, markers) }; }
   #insert(e) {
     if (!/^sha256:[0-9a-f]{64}$/.test(e.hash)) throw new Error('registry entry needs a sha256 skeleton hash');
     const list = this.#entries.get(e.hash) ?? [];
@@ -69,7 +86,7 @@ export class SpanRegistry {
   // span: held-out text; names/markers: the masks of its world (or of the pool's slot fillers).
   add(span, { slice, source = null, port = null, kind = 'span', names = [], markers = [] } = {}) {
     const n = sentences(span).length || 1;
-    const hash = skeleton(sentences(span).join(' '), { names, markers });
+    const hash = skeleton(sentences(span).join(' '), this.#with(names, markers));
     this.#insert({ hash, sentences: n, slice, source, port, kind });
     return hash;
   }
@@ -77,17 +94,18 @@ export class SpanRegistry {
   get maxSentences() { return this.#maxSentences; }
   has(hash) { return this.#entries.has(hash); }
   entries() { return [...this.#entries.values()].flat(); }
-  toJSON() { return { version: 1, entries: this.entries().sort((a, b) => a.hash < b.hash ? -1 : a.hash > b.hash ? 1 : 0) }; }
+  toJSON() { return { version: 1, masks: this.masks, entries: this.entries().sort((a, b) => a.hash < b.hash ? -1 : a.hash > b.hash ? 1 : 0) }; }
   // Content digest (recorded in build manifests and build ids).
   get digest() { return tagged(sha256(canonical(this.toJSON()))); }
-  static fromJSON(obj) { if (obj?.version !== 1) throw new Error('unknown registry version'); return new SpanRegistry(obj.entries); }
+  // A registry written without masks keeps none (the build then refuses it: REGISTRY_MASKS).
+  static fromJSON(obj) { if (obj?.version !== 1) throw new Error('unknown registry version'); return new SpanRegistry(obj.entries, { masks: obj.masks ?? { names: [], markers: [] } }); }
 
   scanText(text, { names = [], markers = [] } = {}) {
-    const sents = sentences(text), hits = [];
+    const sents = sentences(text), hits = [], masks = this.#with(names, markers);
     for (let i = 0; i < sents.length; i++) {
       for (let k = 1; k <= this.#maxSentences && i + k <= sents.length; k++) {
         const window = sents.slice(i, i + k).join(' ');
-        const hash = skeleton(window, { names, markers });
+        const hash = skeleton(window, masks);
         const found = this.#entries.get(hash);
         if (found) for (const entry of found) if (entry.sentences === k) hits.push({ sentence: window, index: i, count: k, hash, entry });
       }

@@ -2,7 +2,8 @@
 // Export one recorded Foundry run as "run-view" JSON for tools/run-view/index.html (a read-only run inspector).
 //
 //   node tools/run-view/export-run.mjs --workspace DIR [--run RUN_ID|latest] [--journal FILE] [--results FILE.jsonl]
-//        [--out run.json] [--bundle run.html] [--max-string 3000] [--max-prompt 40000] [--no-redact]
+//        [--out run.json] [--bundle run.html] [--hints view-hints.json] [--label TEXT] [--max-string 3000] [--max-prompt 40000] [--no-redact]
+//   node tools/run-view/export-run.mjs --from-json run.json --bundle run.html     (re-bundle an export into one self-contained file)
 //   node tools/run-view/export-run.mjs --db FILE.sqlite ...      (instead of --workspace DIR; DIR/.foundry/foundry.sqlite)
 //
 // Read-only: SQLite files are opened with { readOnly: true } and nothing is written but --out / --bundle (mode 0600).
@@ -90,11 +91,17 @@ function journalRows(db, runId) {
 }
 const parseJson = text => { try { return text == null ? null : JSON.parse(text); } catch { return null; } };
 
-function callOf(row, scrubber, maxPrompt) {
+// The prompt is bound to the chain: the context.compiled event (chain-hashed) carries receipt.promptHash, and a journal row names its receipt. The reply is not
+// bound (the model.called event carries no response hash), so only the prompt can be checked. `expectedPromptHash` is null when no compiled event matches.
+export function promptCheck(request, expectedPromptHash) {
+  if (!expectedPromptHash || typeof request?.prompt !== 'string') return null;
+  return digest({ system: request.system, prompt: request.prompt, schema: request.schema }) === expectedPromptHash;
+}
+export function callOf(row, scrubber, maxPrompt = 40000, expectedPromptHash = null) {
   const request = parseJson(row.request) ?? {}, response = parseJson(row.response) ?? {};
   const { scrub, walk } = scrubber;
   return {
-    id: row.id, nodeKey: row.node_key, attempt: row.attempt, sampleIndex: row.sample_index, modelId: row.model_id, provider: row.provider,
+    id: row.id, promptVerified: promptCheck(request, expectedPromptHash), nodeKey: row.node_key, attempt: row.attempt, sampleIndex: row.sample_index, modelId: row.model_id, provider: row.provider,
     engineVersion: row.engine_version, decoding: parseJson(row.decoding), receiptHash: row.receipt_hash, promptHash: row.prompt_hash, ok: row.ok === 1, errorCode: row.error_code,
     inputTokens: row.input_tokens, outputTokens: row.output_tokens, cacheReadTokens: row.cache_read_tokens ?? null, cacheWriteTokens: row.cache_write_tokens ?? null,
     costUsd: row.cost_usd, imputedUsd: row.imputed_usd, latencyMs: row.latency_ms, createdAt: row.created_at, mode: request.mode ?? null,
@@ -112,25 +119,47 @@ function callOf(row, scrubber, maxPrompt) {
 
 // ------------------------------------------------------------------------------------------------------------- the fold
 const OUTPUT_INLINE_BYTES = 2000;
+// One chain event in the form the page receives: the chain hashes dropped (a 16-hex marker kept), a large output left out (fetched on demand).
+export function slimEvent(event, scrubber) {
+  const { previousHash, hash, output, ...rest } = event;
+  const slim = { ...rest, h: hash.slice(0, 16) };
+  let full;
+  if (output !== undefined) {
+    const bytes = Buffer.byteLength(canonical(output));
+    slim.outputBytes = bytes;
+    if (bytes <= OUTPUT_INLINE_BYTES) slim.output = scrubber.walk(output, 600); else full = scrubber.walk(output, 3000);
+  }
+  return { slim: scrubber.walk(slim, 1500), full };
+}
+export function runHeader(run, workflow, { executionActive } = {}) {
+  const { policy, owner } = run;
+  return {
+    id: run.id, status: run.status, workflowId: run.workflowId, workflowHash: run.workflowHash, createdAt: run.createdAt, updatedAt: run.updatedAt, deadline: run.deadline,
+    steps: run.steps, cost: run.cost, modelMode: run.modelMode ?? null, assignment: run.assignment ?? {}, resumeCount: run.resumeCount ?? 0, error: run.error ?? null,
+    verdict: run.verdict ?? null, engineHash: run.engineHash?.slice(0, 16) ?? null, eventHead: run.eventHead ? { seq: run.eventHead.seq, hash: run.eventHead.hash.slice(0, 16) } : null,
+    budget: { maxCost: Math.min(policy?.maxCost ?? Infinity, workflow.budget?.maxCost ?? Infinity), maxSteps: Math.min(policy?.maxSteps ?? Infinity, workflow.budget?.maxSteps ?? Infinity), maxConcurrency: Math.min(policy?.maxConcurrency ?? Infinity, workflow.budget?.maxConcurrency ?? Infinity) },
+    independentTaskVerified: false, executionActive: executionActive ?? !!owner
+  };
+}
+export function decisionsOf(db, runId, scrubber) {
+  return db.prepare('SELECT body FROM decisions WHERE run_id=? ORDER BY rowid').all(runId).map(r => scrubber.walk(parseJson(r.body), 800))
+    .map(d => ({ id: d.id, kind: d.kind, at: d.at, rationale: d.rationale, action: d.action, costUsd: d.costUsd, features: d.features }));
+}
 export function foldRun({ db, journalDb = null, run, workflow, results = [], source = {}, scrubber, maxPrompt = 40000 }) {
   const chain = verifyChain(db, run);
   if (!chain.ok) throw new Error(`Refusing to export: ${chain.reason}`);
   const rows = [...journalRows(journalDb ?? db, run.id)];
+  const promptHashOfReceipt = new Map(chain.events.filter(e => e.type === 'context.compiled' && e.receiptHash).map(e => [e.receiptHash, e.receipt?.promptHash]));
   const calls = {};
-  for (const row of rows) calls[row.id] = callOf(row, scrubber, maxPrompt);
+  for (const row of rows) calls[row.id] = callOf(row, scrubber, maxPrompt, promptHashOfReceipt.get(row.receipt_hash) ?? null);
 
   const outputs = {}, events = [];
   const compiledAt = new Map();                           // nodeKey -> last context.compiled {at, seq}
   const derived = [];
   for (const event of chain.events) {
-    const { previousHash, hash, output, ...rest } = event;
-    const slim = { ...rest, h: hash.slice(0, 16) };
-    if (output !== undefined) {
-      const bytes = Buffer.byteLength(canonical(output));
-      slim.outputBytes = bytes;
-      if (bytes <= OUTPUT_INLINE_BYTES) slim.output = scrubber.walk(output, 600); else outputs[event.seq] = scrubber.walk(output, 3000);
-    }
-    events.push(scrubber.walk(slim, 1500));
+    const { slim, full } = slimEvent(event, scrubber);
+    if (full !== undefined) outputs[event.seq] = full;
+    events.push(slim);
     if (event.type === 'context.compiled') compiledAt.set(event.nodeKey, { at: event.at, seq: event.seq });
     if (event.type === 'model.called' && event.journalId != null && Number.isFinite(event.latencyMs)) {
       const start = compiledAt.get(event.nodeKey);
@@ -141,24 +170,17 @@ export function foldRun({ db, journalDb = null, run, workflow, results = [], sou
   }
   const timeline = [...events, ...derived].sort((a, b) => a.at - b.at || a.seq - b.seq);
 
-  const decisions = db.prepare('SELECT body FROM decisions WHERE run_id=? ORDER BY rowid').all(run.id).map(r => scrubber.walk(parseJson(r.body), 800))
-    .map(d => ({ id: d.id, kind: d.kind, at: d.at, rationale: d.rationale, action: d.action, costUsd: d.costUsd, features: d.features }));
+  const decisions = decisionsOf(db, run.id, scrubber);
 
   const referenced = new Set(events.filter(e => e.journalId != null).map(e => e.journalId));
   const orphans = Object.keys(calls).filter(id => !referenced.has(Number(id))).length;
-  const { policy, extra, owner, ...publicRun } = run;
   const clipWorkflow = scrubber.walk(workflow, 2500);
   return {
     schema: SCHEMA, exportedAt: new Date().toISOString(), source,
-    run: {
-      id: run.id, status: run.status, workflowId: run.workflowId, workflowHash: run.workflowHash, createdAt: run.createdAt, updatedAt: run.updatedAt, deadline: run.deadline,
-      steps: run.steps, cost: run.cost, modelMode: run.modelMode ?? null, assignment: run.assignment ?? {}, resumeCount: run.resumeCount ?? 0, error: run.error ?? null,
-      verdict: run.verdict ?? null, engineHash: run.engineHash?.slice(0, 16) ?? null, eventHead: run.eventHead ? { seq: run.eventHead.seq, hash: run.eventHead.hash.slice(0, 16) } : null,
-      budget: { maxCost: Math.min(policy?.maxCost ?? Infinity, workflow.budget?.maxCost ?? Infinity), maxSteps: Math.min(policy?.maxSteps ?? Infinity, workflow.budget?.maxSteps ?? Infinity), maxConcurrency: Math.min(policy?.maxConcurrency ?? Infinity, workflow.budget?.maxConcurrency ?? Infinity) },
-      independentTaskVerified: false, executionActive: !!owner
-    },
+    run: runHeader(run, workflow),
     workflow: clipWorkflow, events: timeline, outputs, calls, decisions, external: results,
-    integrity: { chainVerified: true, verifiedAt: 'export', events: chain.count, head: chain.head.slice(0, 16), journalRows: rows.length, journalOrphans: orphans, derivedEvents: derived.length },
+    integrity: { chainVerified: true, verifiedAt: 'export', events: chain.count, head: chain.head.slice(0, 16), journalRows: rows.length, journalOrphans: orphans, derivedEvents: derived.length,
+      promptsVerified: Object.values(calls).filter(c => c.promptVerified === true).length, promptsMismatched: Object.values(calls).filter(c => c.promptVerified === false).length, promptsUnchecked: Object.values(calls).filter(c => c.promptVerified === null).length },
     truncation: { maxPrompt, clippedStrings: scrubber.stats.clippedStrings, clippedChars: scrubber.stats.clippedChars },
     redaction: { enabled: scrubber.redact, redactions: scrubber.stats.redactions, kinds: scrubber.stats.redactionKinds },
     notice: 'Contains prompts, model replies and corpus text. Treat like the workspace it came from.'
@@ -185,6 +207,21 @@ export function readResults(file, runId) {
   return out;
 }
 
+// Authored view hints: a sidecar of labels and groups. They only change how nodes are named and folded on screen; they are not part of the
+// workflow hash and carry no authority. Shape is checked here and again by the page (which treats them as untrusted text).
+export function readHints(file) {
+  const raw = JSON.parse(readFileSync(file, 'utf8')), hints = {};
+  if (raw.labels !== undefined) {
+    if (!raw.labels || typeof raw.labels !== 'object' || Array.isArray(raw.labels) || !Object.values(raw.labels).every(v => typeof v === 'string' && v.length <= 60)) throw new Error('hints.labels must map node ids to strings of at most 60 characters');
+    hints.labels = raw.labels;
+  }
+  if (raw.groups !== undefined) {
+    if (!Array.isArray(raw.groups) || !raw.groups.every(g => g && typeof g.label === 'string' && g.label.length <= 60 && Array.isArray(g.members) && g.members.every(m => typeof m === 'string'))) throw new Error('hints.groups must be [{label, members: [nodeId]}]');
+    hints.groups = raw.groups.map(g => ({ label: g.label, members: g.members }));
+  }
+  return hints;
+}
+
 // ------------------------------------------------------------------------------------------------------ bundle (one file)
 export function bundleHtml(data, dir = here) {
   const html = readFileSync(path.join(dir, 'index.html'), 'utf8'), css = readFileSync(path.join(dir, 'run-view.css'), 'utf8'), js = readFileSync(path.join(dir, 'run-view.js'), 'utf8');
@@ -202,8 +239,15 @@ export function bundleHtml(data, dir = here) {
 function main() {
   const { values: a } = parseArgs({ options: {
     workspace: { type: 'string' }, db: { type: 'string' }, run: { type: 'string', default: 'latest' }, journal: { type: 'string' }, results: { type: 'string' },
-    out: { type: 'string' }, bundle: { type: 'string' }, 'max-string': { type: 'string', default: '3000' }, 'max-prompt': { type: 'string', default: '40000' }, 'no-redact': { type: 'boolean', default: false }
+    out: { type: 'string' }, bundle: { type: 'string' }, hints: { type: 'string' }, label: { type: 'string' }, 'from-json': { type: 'string' }, 'max-string': { type: 'string', default: '3000' }, 'max-prompt': { type: 'string', default: '40000' }, 'no-redact': { type: 'boolean', default: false }
   } });
+  if (a['from-json']) {                       // re-bundle an existing export into one self-contained html file (no database needed)
+    if (!a.bundle) { console.error('--from-json needs --bundle OUT.html'); process.exit(2); }
+    const data = JSON.parse(readFileSync(a['from-json'], 'utf8'));
+    if (data.schema !== SCHEMA) { console.error(`Not a ${SCHEMA} file`); process.exit(2); }
+    writeFileSync(a.bundle, bundleHtml(data), { mode: 0o600 }); chmodSync(a.bundle, 0o600);
+    console.log(JSON.stringify({ bundle: a.bundle, bytes: readFileSync(a.bundle).length })); return;
+  }
   const dbFile = a.db ?? (a.workspace ? path.join(a.workspace, '.foundry', 'foundry.sqlite') : null);
   if (!dbFile || !existsSync(dbFile)) { console.error('Need --workspace DIR (containing .foundry/foundry.sqlite) or --db FILE'); process.exit(2); }
   if (!a.out && !a.bundle) { console.error('Need --out FILE.json and/or --bundle FILE.html'); process.exit(2); }
@@ -217,8 +261,11 @@ function main() {
   const workflow = JSON.parse(wfRow.body);
   if (digest(workflow) !== run.workflowHash) { console.error('Stored workflow does not match its hash; refusing to export'); process.exit(2); }
   const scrubber = makeScrubber({ redact: !a['no-redact'], maxString: Number(a['max-string']) });
+  const results = readResults(a.results, run.id);
+  const label = a.label ?? (results[0] ? [results[0].experiment, results[0].arm, results[0].taskKey].filter(Boolean).join(' · ') : null);
   const data = foldRun({ db, journalDb, run, workflow, scrubber, maxPrompt: Number(a['max-prompt']),
-    results: readResults(a.results, run.id), source: { workspace: path.basename(path.resolve(a.workspace ?? path.dirname(path.dirname(dbFile)))), journal: a.journal ? path.basename(a.journal) : 'workspace', exporter: 'tools/run-view/export-run.mjs' } });
+    results, source: { ...(label ? { label } : {}), workspace: path.basename(path.resolve(a.workspace ?? path.dirname(path.dirname(dbFile)))), journal: a.journal ? path.basename(a.journal) : 'workspace', exporter: 'tools/run-view/export-run.mjs' } });
+  if (a.hints) data.viewHints = readHints(a.hints);
   if (a.out) { writeFileSync(a.out, JSON.stringify(data), { mode: 0o600 }); chmodSync(a.out, 0o600); }
   if (a.bundle) { writeFileSync(a.bundle, bundleHtml(data), { mode: 0o600 }); chmodSync(a.bundle, 0o600); }
   const bytes = a.out ? readFileSync(a.out).length : readFileSync(a.bundle).length;

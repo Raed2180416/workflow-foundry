@@ -18,7 +18,8 @@ function fmtDur(ms) {
   const s = Math.round(ms / 1000);
   return `${Math.floor(s / 60)} m ${String(s % 60).padStart(2, '0')} s`;
 }
-const fmtClock = ms => { const s = Math.max(0, Math.floor(ms / 1000)); return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; };
+// mm:ss for runs of ten seconds or more; seconds with one decimal for short ones (a 0.5 s run must not read 00:00 / 00:00).
+const fmtClock = (ms, total = ms) => { if (total < 10000) return `${(Math.max(0, ms) / 1000).toFixed(1)} s`; const s = Math.max(0, Math.floor(ms / 1000)); return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; };
 const humanize = id => { const s = String(id).replace(/[_-]+/g, ' ').trim(); return s ? s[0].toUpperCase() + s.slice(1) : String(id); };
 const genericId = id => /^(n|t|s|step|node|task|item)?[-_]?\d+$/i.test(id) || id.length < 3;
 
@@ -97,6 +98,7 @@ function parseKey(nodeKey) {
   return String(nodeKey).split('/').slice(1).map(part => { const m = /^(.*?)(?::(\d+))?$/.exec(part); return { id: m[1], idx: m[2] === undefined ? null : Number(m[2]) }; });
 }
 const segText = s => s.id + (s.idx === null ? '' : `:${s.idx}`);
+const nodeKeyOf = inst => inst.key;
 // Container node keys above a node, outermost first: the map/loop nodes whose frames hold it.
 function containerKeys(segs) {
   const out = [];
@@ -112,7 +114,9 @@ function defOf(workflow, nodeKey) {
 // ======================================================================================================== CORE: the reducer
 const newAgg = () => ({ calls: 0, costUsd: 0, escalations: 0, checkFails: 0, retries: 0, failedItems: 0, envFaults: 0, models: {} });
 class RunModel {
-  constructor(data) { this.data = data; this.workflow = data.workflow; this.reset(); }
+  // dispatchKnown: recorded exports carry a dispatch event reconstructed from the journal; a live feed does not (the runtime emits none), so a compiled
+  // context is shown as waiting for the model, which covers both the concurrency queue and the call in flight.
+  constructor(data, { dispatchKnown = true } = {}) { this.data = data; this.workflow = data.workflow; this.dispatchKnown = dispatchKnown; this.reset(); }
   reset() {
     this.insts = new Map();
     this.items = new Map();
@@ -136,7 +140,14 @@ class RunModel {
   }
   bump(inst, field, n = 1) { inst.agg[field] += n; for (const a of inst.ancestors) a.agg[field] += n; }
   bumpModel(inst, id) { if (!id) return; inst.agg.models[id] = (inst.agg.models[id] ?? 0) + 1; for (const a of inst.ancestors) a.agg.models[id] = (a.agg.models[id] ?? 0) + 1; }
-  note(inst, text, at) { inst.note = text; inst.noteAt = at; for (const a of inst.ancestors) { a.note = `${humanize(inst.segs[inst.segs.length - 1].id)}: ${text}`; a.noteAt = at; } }
+  note(inst, text, at) {
+    inst.note = text; inst.noteAt = at;
+    for (const a of inst.ancestors) {
+      const at_ = inst.segs[a.segs.length - 1]?.idx, def = defOf(this.workflow, a.key), unit = def?.kind === 'loop' ? 'Iteration' : 'Item';
+      const leaf = (def?.body?.nodes?.length ?? 0) > 1 || inst.segs.length > a.segs.length ? ` · ${humanize(inst.segs[inst.segs.length - 1].id)}` : '';
+      a.note = `${at_ === null || at_ === undefined ? '' : `${unit} ${at_}${leaf}: `}${text}`; a.noteAt = at;
+    }
+  }
   touch(inst) { this.dirty.add(inst.top); this.dirtyKeys.add(inst.key); for (const a of inst.ancestors) this.dirtyKeys.add(a.key); }
 
   stateOfInst(inst) {
@@ -190,7 +201,7 @@ class RunModel {
     run.events++; run.now = ev.at; run.firstAt ??= ev.at;
     const t = ev.type;
     if (t.startsWith('run.')) { this.applyRun(ev); return; }
-    if (t === 'runner.acquired') return;
+    if (t === 'runner.acquired') { run.status = 'running'; run.resumes = (run.resumes ?? 0) + 1; return; }
     if (t === 'frame.created') return this.frameCreated(ev);
     if (!ev.nodeKey) return;
     const inst = this.inst(ev.nodeKey);
@@ -200,18 +211,19 @@ class RunModel {
         inst.kind = ev.kind ?? inst.kind; inst.status = 'running'; inst.attempts++; inst.startedAt ??= ev.at; inst.phase = null;
         if (t === 'tool.intent') inst.tool = ev.tool ?? null;
         if (ev.wakeAt) inst.wakeAt = ev.wakeAt;
-        if ((inst.kind === 'map' || inst.kind === 'loop') && !inst.cont) inst.cont = { inst, items: new Map(), itemCounts: {}, failedItems: 0, total: Number.isFinite(ev.count) ? ev.count : null };
+        if ((inst.kind === 'map' || inst.kind === 'loop') && !inst.cont) inst.cont = { inst, items: new Map(), itemCounts: {}, failedItems: 0, total: Number.isFinite(ev.count) ? ev.count : null, loop: inst.kind === 'loop', max: defOf(this.workflow, nodeKeyOf(inst))?.maxIterations ?? defOf(this.workflow, nodeKeyOf(inst))?.maxItems ?? null };
         run.steps++; run.cost += ev.reservedCost ?? 0;
         break;
       }
       case 'context.compiled':
-        inst.status = 'running'; inst.phase = 'queued'; inst.compiledAt = ev.at; inst.callStartAt = null; inst.modelId = ev.modelId; inst.modelClass = ev.modelClass;
+        inst.status = 'running'; inst.phase = this.dispatchKnown ? 'queued' : 'calling'; inst.compiledAt = ev.at; inst.callStartAt = this.dispatchKnown ? null : ev.at; inst.blind = !this.dispatchKnown; inst.modelId = ev.modelId; inst.modelClass = ev.modelClass;
         inst.receipt = ev.receipt; inst.escalations = Math.max(inst.escalations, ev.escalations ?? 0); break;
       case 'model.dispatched': inst.phase = 'calling'; inst.callStartAt = ev.at; break;
       case 'model.called': case 'node.recovered_from_journal': {
-        const cost = ev.costUsd ?? 0;
-        if (ev.journalId != null) inst.calls.push(ev.journalId);
-        inst.costUsd += cost; run.cost += cost; run.calls++; this.bump(inst, 'calls'); this.bump(inst, 'costUsd', cost); this.bumpModel(inst, ev.modelId);
+        // The runtime charges one journal row once (chargeModel: "already charged before a crash"), but still emits the event again.
+        const again = ev.journalId != null && inst.calls.includes(ev.journalId), cost = again ? 0 : (ev.costUsd ?? 0);
+        if (ev.journalId != null && !again) inst.calls.push(ev.journalId);
+        inst.costUsd += cost; run.cost += cost; if (!again) { run.calls++; this.bump(inst, 'calls'); this.bumpModel(inst, ev.modelId); } this.bump(inst, 'costUsd', cost);
         inst.callStartAt ??= ev.at - (ev.latencyMs ?? 0);
         inst.phase = ev.ok ? 'checking' : 'errored';
         if (!ev.ok) this.note(inst, `Call failed: ${ev.errorCode}`, ev.at);
@@ -235,6 +247,7 @@ class RunModel {
         if (ev.modelId) inst.modelId = ev.modelId;
         if (inst.kind === 'verify' && ev.output && ev.output.pass === false) inst.verifyFalse = true;
         if (inst.cont && Number.isFinite(ev.failedItems)) inst.cont.failedItems = Math.max(inst.cont.failedItems, ev.failedItems);
+        if (inst.cont && inst.kind === 'loop') { const last = Math.max(-1, ...[...inst.cont.items.values()].map(i => i.idx)); if (last >= 0) this.closeIteration(inst, last, ev.at); }
         break;
       case 'node.handled_error': inst.status = 'handled_error'; inst.phase = null; inst.endedAt = ev.at; inst.outputSeq = ev.seq; if (ev.output !== undefined) inst.output = ev.output; break;
       case 'node.failed':
@@ -276,11 +289,18 @@ class RunModel {
     if (!last || last.idx === null) return;
     const contKey = ['root', ...segs.slice(0, -1).map(segText), last.id].join('/');
     const cinst = this.inst(contKey);
-    if (!cinst.cont) cinst.cont = { inst: cinst, items: new Map(), itemCounts: {}, failedItems: 0, total: null };
+    if (!cinst.cont) { const def = defOf(this.workflow, contKey); cinst.kind ??= def?.kind ?? null; cinst.cont = { inst: cinst, items: new Map(), itemCounts: {}, failedItems: 0, total: null, loop: def?.kind === 'loop', max: def?.maxIterations ?? def?.maxItems ?? null }; }
     const item = { key: ev.frameKey, idx: last.idx, cont: cinst.cont, counts: {}, state: 'queued', result: null, startedAt: ev.at, endedAt: null, error: null, leaves: [] };
     this.items.set(ev.frameKey, item); cinst.cont.items.set(ev.frameKey, item);
     cinst.cont.itemCounts.queued = (cinst.cont.itemCounts.queued ?? 0) + 1;
+    // A loop writes no per-iteration result event (only map does). An iteration is over when the next one starts.
+    if (cinst.kind === 'loop' && last.idx > 0) this.closeIteration(cinst, last.idx - 1, ev.at);
     this.refresh(cinst);
+  }
+  closeIteration(cinst, idx, at) {
+    const item = cinst.cont.items.get(`${cinst.key}:${idx}`);
+    if (!item || item.result) return;
+    item.result = 'completed'; item.endedAt = at; this.refreshItem(item);
   }
   itemResult(ev, contInst) {
     const item = this.items.get(`${ev.nodeKey}:${ev.index}`);
@@ -295,13 +315,19 @@ class RunModel {
 // ======================================================================================================== CORE: lines
 // Live lines are templates over typed event fields (codes, ids, numbers, durations). Model-written text is never put here.
 function instLine(inst, now) {
+  const fresh = inst.note && now - inst.noteAt < 7000;
+  if (fresh && ['escalated', 'checkfailed', 'retrying'].includes(inst.state)) return inst.note;
+  const base = instLineBase(inst, now);
+  // A retry or resample returns the node to "asking the model" within a millisecond; keep the reason on screen beside what is happening now.
+  return fresh && ['queued', 'calling', 'running'].includes(inst.state) ? `${inst.note}. ${base}` : base;
+}
+function instLineBase(inst, now) {
   const age = since => fmtDur(Math.max(0, now - (since ?? now)));
   const m = shortModel(inst.modelId);
-  if (inst.note && now - inst.noteAt < 7000 && ['escalated', 'checkfailed', 'retrying'].includes(inst.state)) return inst.note;
   switch (inst.state) {
     case 'idle': return 'Not started';
     case 'queued': return inst.compiledAt ? `Context ready, waiting for a model slot (${age(inst.compiledAt)})` : 'Queued';
-    case 'calling': return `Asking ${m} (${age(inst.callStartAt ?? inst.compiledAt)})`;
+    case 'calling': return inst.blind ? `Context ready, waiting on ${m} (${age(inst.callStartAt ?? inst.compiledAt)})` : `Asking ${m} (${age(inst.callStartAt ?? inst.compiledAt)})`;
     case 'escalated': return inst.phase === 'queued' || inst.phase === 'calling' || inst.phase === 'escalated' ? `Escalated: asking ${m} (${age(inst.callStartAt ?? inst.compiledAt)})` : `Escalated to ${m}`;
     case 'running':
       if (inst.kind === 'code') return `Running code in the sandbox (${age(inst.startedAt)})`;
@@ -315,7 +341,7 @@ function instLine(inst, now) {
     case 'needsyou': return inst.status === 'awaiting_approval' ? `Needs your approval: ${inst.tool ?? 'an operation'}` : `Waiting for your answer: ${clip(inst.question, 70)}`;
     case 'done': case 'handled': {
       const dur = (inst.endedAt ?? now) - (inst.startedAt ?? inst.endedAt ?? now);
-      if (inst.cont) return `Done: ${inst.cont.items.size} item${inst.cont.items.size === 1 ? '' : 's'}${inst.cont.failedItems ? `, ${inst.cont.failedItems} failed (collected)` : ''}`;
+      if (inst.cont) return contSummary(inst.cont, true, null, now);
       return `Done in ${fmtDur(dur)}${inst.costUsd ? ` for ${fmtCost(inst.costUsd)}` : ''}${inst.escalations ? `, escalated ${inst.escalations}x` : ''}`;
     }
     case 'failed': return `Failed: ${inst.error?.code ?? 'error'}${classifyError(inst.error?.code) === 'budget' ? ' (budget stop)' : ''}`;
@@ -327,12 +353,32 @@ function instLine(inst, now) {
   }
 }
 
+// One line for a map or loop container. Counts come from the item frames the runtime created, never from model text.
+function contCounts(c) {
+  let ok = 0, bad = 0, live = 0, queued = 0;
+  for (const it of c.items.values()) { if (it.result === 'failed') bad++; else if (it.result === 'completed') ok++; else if (it.state === 'queued') queued++; else live++; }
+  return { ok, bad, live, queued, seen: c.items.size };
+}
+function contSummary(c, finished, recent, now) {
+  const k = contCounts(c), tail = recent ? `. ${recent}` : '';
+  if (c.loop) {
+    if (finished) return `${k.seen} iteration${k.seen === 1 ? '' : 's'}${k.bad ? `, ${k.bad} failed` : ''}`;
+    return `Iteration ${Math.max(1, k.seen)}${c.max ? ` of at most ${c.max}` : ''}${tail}`;
+  }
+  const total = Math.max(c.total ?? 0, k.seen);
+  if (finished) return total === 0 ? 'Nothing to do: 0 items' : `${total} item${total === 1 ? '' : 's'}: ${k.ok} done${k.bad ? `, ${k.bad} failed (collected)` : ''}`;
+  return `${k.ok + k.bad} of ${c.total ?? `${k.seen}+`} finished${k.live ? `, ${k.live} active` : ''}${k.bad ? `, ${k.bad} failed` : ''}${tail}`;
+}
+
 // ======================================================================================================== CORE: semantic graph
+const MAX_CARDS = 24, MAX_STAGES = 12;
 const isDet = n => n.kind === 'code' || n.kind === 'assert';
 const isContainer = n => n.kind === 'map' || n.kind === 'loop';
 const isModelish = n => n.kind === 'agent' || (n.kind === 'verify' && n.method === 'agent') || isContainer(n);
 const ROLE_ORDER = ['judge', 'check', 'map', 'loop', 'tool', 'human', 'wait', 'code', 'assert'];
 const roleOf = n => n.kind === 'agent' ? 'judge' : n.kind === 'verify' ? 'check' : n.kind === 'task' ? 'tool' : n.kind;
+// The IR's own `role` field on agent nodes (schemas/workflow.schema.json), in plain words.
+const ROLE_VERB = { classify: 'sorts into categories', route: 'chooses a path', extract: 'reads and extracts', judge: 'makes a judgement', generate: 'writes', synthesis: 'combines findings', code_edit: 'edits code', plan: 'plans', verify: 'checks another step' };
 
 // needs minus the edges implied by other paths (transitive reduction): what a reader needs to see.
 function reduceNeeds(nodes) {
@@ -398,9 +444,19 @@ function buildSemantic(workflow, { level = 1, hints = null } = {}) {
       buckets.get(key).push(gid);
     }
     for (const gids of buckets.values()) if (gids.length >= 3) for (const g of gids.slice(1)) merge(gids[0], g, 'fan');
+    // R5: still more than MAX_CARDS cards (a very large graph): fold by dependency depth into at most MAX_STAGES stages, an overview and nothing more.
+    // Authored groups stay as they are; the stage card shows how many of its steps are done, active, failed or waiting.
+    const gids = [...new Set(group.values())];
+    if (gids.length > MAX_CARDS) {
+      const { pred: p } = groupEdges(), depth = new Map();
+      const dep = g => { if (depth.has(g)) return depth.get(g); depth.set(g, 0); const d = Math.max(-1, ...[...p.get(g)].map(dep)) + 1; depth.set(g, d); return d; };
+      gids.forEach(dep);
+      const k = Math.max(1, Math.ceil((Math.max(...depth.values()) + 1) / MAX_STAGES)), firstOf = new Map();
+      for (const g of gids) { if (reasons.get(g) === 'authored') continue; const b = Math.floor(depth.get(g) / k); if (!firstOf.has(b)) firstOf.set(b, g); else merge(firstOf.get(b), g, 'band'); }
+    }
   }
   const { pred } = groupEdges();
-  const out = [];
+  const out = []; let stageNo = 0;
   for (const gid of [...new Set(group.values())].sort((a, b) => order.get(a) - order.get(b))) {
     const ms = membersOf(gid).sort((a, b) => order.get(a.id) - order.get(b.id)), why = reasons.get(gid) ?? 'single';
     const hint = (hints?.groups ?? []).find(g => (g.members ?? []).includes(ms[0].id));
@@ -411,9 +467,10 @@ function buildSemantic(workflow, { level = 1, hints = null } = {}) {
     else if (ms.length === 1) { label = authored ?? labelOf(ms[0]); sub = ms[0].description ?? ''; }
     else if (why === 'chain') { label = ms.length > 2 ? `${labelOf(ms[0])} → … → ${labelOf(ms[ms.length - 1])}` : `${labelOf(ms[0])} → ${labelOf(ms[1])}`; sub = ms.map(m => m.description).filter(Boolean).join('. '); }
     else if (why === 'prep') { const main = ms.find(m => !isDet(m)) ?? ms[0]; label = labelOf(main); sub = `Includes: ${ms.filter(m => m !== main).map(labelOf).join(', ')}`; }
+    else if (why === 'band') { label = `Stage ${++stageNo}`; sub = `${ms.slice(0, 4).map(labelOf).join(' · ')}${ms.length > 4 ? ` · +${ms.length - 4} more` : ''}`; }
     else { label = `${ms.length} parallel ${ms.every(m => m.kind === 'map') ? 'reads' : 'judgements'}`; sub = ms.map(labelOf).join(' · '); }
     const roles = ms.map(roleOf), role = ROLE_ORDER.find(r => roles.includes(r)) ?? roles[0];
-    out.push({ id: ms.length === 1 ? ms[0].id : `g:${ms[0].id}`, label, sub: clip(sub, 140), role, why, members: ms.map(m => m.id), kinds: ms.map(m => m.kind),
+    out.push({ id: ms.length === 1 ? ms[0].id : `g:${ms[0].id}`, label, sub: clip(sub, 140), role, verb: ms.length === 1 ? (ROLE_VERB[ms[0].role] ?? null) : null, why, members: ms.map(m => m.id), kinds: ms.map(m => m.kind),
       container: ms.some(isContainer), hasModel: ms.some(isModelish), needs: [...pred.get(gid)].map(g => (membersOf(g).length === 1 ? membersOf(g)[0].id : `g:${membersOf(g).sort((a, b) => order.get(a.id) - order.get(b.id))[0].id}`)) });
   }
   const rawTo = new Map();
@@ -442,25 +499,26 @@ const semAgg = (model, sem) => {
 };
 function semState(model, sem) { return combineStates(sem.members.map(m => model.insts.get(`root/${m}`)?.state ?? 'idle')); }
 function semLine(model, sem, now) {
+  if (sem.why === 'band') {
+    const p = semProgress(model, sem), live = [...sem.members].map(m => model.insts.get(`root/${m}`)).filter(i => i && ACTIVE.has(i.state)).slice(0, 1)[0];
+    return `${p.done} of ${p.total} steps done${p.active ? `, ${p.active} active` : ''}${p.failed ? `, ${p.failed} failed` : ''}${live && p.active ? `. ${humanize(live.segs[live.segs.length - 1].id)}: ${instLine(live, now)}` : ''}`;
+  }
   const members = sem.members.map(m => ({ id: m, inst: model.insts.get(`root/${m}`) })).filter(m => m.inst);
   if (!members.length) return 'Not started';
   const state = semState(model, sem);
   const active = members.find(m => ACTIVE.has(m.inst.state) || m.inst.state === 'failed' || m.inst.state === 'envfault');
   const focus = active ?? members[members.length - 1];
   const i = focus.inst;
-  if (i.cont) {
-    const c = i.cont, total = c.total ?? c.items.size;
-    if ((i.state === 'done' || i.state === 'handled') && total === 0) return 'Nothing to do: 0 items';
-    const done = [...c.items.values()].filter(it => it.result).length;
-    if (i.state === 'done' || i.state === 'handled') return `${done} of ${total} done${c.failedItems ? `, ${c.failedItems} failed (collected)` : ''}`;
-    const recent = i.note && now - i.noteAt < 7000 ? `. ${i.note}` : '';
-    const live = [...c.items.values()].filter(it => !it.result && it.state !== 'queued').length;
-    return `${done} of ${c.total ?? `${c.items.size}+`} done${live ? `, ${live} active` : ''}${c.failedItems ? `, ${c.failedItems} failed` : ''}${recent}`;
-  }
+  if (i.cont) return contSummary(i.cont, i.state === 'done' || i.state === 'handled', i.note && now - i.noteAt < 7000 ? i.note : null, now);
   const text = instLine(i, now);
   return sem.members.length > 1 && active ? `${humanize(focus.id)}: ${text}` : (sem.members.length > 1 && state === 'done' ? `${members.length} of ${sem.members.length} parts done` : text);
 }
 function semProgress(model, sem) {
+  if (sem.why === 'band') {                       // a stage: progress over its steps (a step is done when finished or skipped)
+    const p = { total: sem.members.length, done: 0, active: 0, failed: 0, queued: 0 };
+    for (const m of sem.members) { const st = model.insts.get(`root/${m}`)?.state ?? 'idle'; if (['done', 'handled', 'skipped'].includes(st)) p.done++; else if (['failed', 'envfault', 'uncertain', 'cancelled'].includes(st)) p.failed++; else if (st === 'idle') p.queued++; else p.active++; }
+    return p;
+  }
   const cont = sem.members.map(m => model.insts.get(`root/${m}`)?.cont).filter(Boolean);
   if (!cont.length) return null;
   const p = { total: 0, done: 0, active: 0, failed: 0, queued: 0 };
@@ -483,7 +541,7 @@ function buildTimeline(events, { compress = true, maxGap = 2000, dwell = 1200 } 
     if (i > 0) {
       const gap = events[i].at - events[i - 1].at;
       let step = compress ? Math.min(gap, maxGap) : gap;
-      if (NOTABLE.has(events[i - 1].type)) step = Math.max(step, dwell);
+      if (compress && NOTABLE.has(events[i - 1].type)) step = Math.max(step, dwell);     // unchecked = recorded time, unaltered
       v += step;
     }
     times[i] = v;
@@ -500,7 +558,7 @@ function realAt(events, tl, idx, pos) {
   return e.at + (span > 0 ? Math.min(1, Math.max(0, (pos - tl.times[idx]) / span)) : 0) * (next.at - e.at);
 }
 
-root.RunViewCore = { RunModel, buildSemantic, layoutRanks, buildTimeline, realAt, parseKey, containerKeys, defOf, reduceNeeds, classifyError, combineStates, sanitizeDisplay, instLine, semLine, semState, semAgg, semProgress,
+root.RunViewCore = { MAX_CARDS, MAX_STAGES, ROLE_VERB, RunModel, buildSemantic, layoutRanks, buildTimeline, realAt, parseKey, containerKeys, defOf, reduceNeeds, classifyError, combineStates, sanitizeDisplay, instLine, semLine, semState, semAgg, semProgress,
   STATES, PRIORITY, ACTIVE, NOTABLE, shortModel, fmtCost, fmtDur, fmtClock, humanize, clip };
 
 // ============================================================================================================= UI
@@ -510,7 +568,8 @@ function startUI() {
 const C = root.RunViewCore, { STATES, fmtCost, fmtDur, fmtClock, shortModel, humanize, clip, sanitizeDisplay } = C;
 const $ = id => document.getElementById(id);
 const SVGNS = 'http://www.w3.org/2000/svg';
-const app = { data: null, model: null, tl: null, sem: null, cols: [], level: 1, cards: new Map(), idx: -1, pos: 0, playing: false, speed: 1, last: 0, compress: true,
+const live = { on: false, following: false, es: null, token: null, runId: null, lastAt: 0, lastArrival: 0, connected: false, ended: false, integrity: null, loading: new Set(), tickTimer: 0, batches: 0, lagMs: [] };
+const app = { live: false, remote: false, data: null, model: null, tl: null, sem: null, cols: [], level: 1, cards: new Map(), idx: -1, pos: 0, playing: false, speed: 1, last: 0, compress: true,
   trail: null, semId: null, raf: 0, renderQueued: false, lastStates: new Map(), announceAt: 0, pending: [], filter: 'all', waffle: null, perf: { applies: 0, applyMs: 0, renders: 0, renderMs: 0, maxRenderMs: 0 } };
 
 // Element builders. Values from a run only ever become text nodes or a fixed set of attribute values chosen here.
@@ -569,25 +628,37 @@ const roleIcon = role => s('svg', { class: 'icon-role', viewBox: '0 0 16 16', 'a
 
 // ------------------------------------------------------------------------------------------------ loading
 const SCHEMA = 'foundry-run-view/1';
-function load(data) {
+function load(data, { live: isLive = false } = {}) {
   if (!data || data.schema !== SCHEMA || !Array.isArray(data.events) || !data.workflow?.nodes) throw new Error(`Not a ${SCHEMA} file`);
+  if (!isLive) closeLive();
   pause();
-  app.data = data; app.model = new C.RunModel(data); app.idx = -1; app.pos = 0; app.trail = null; app.semId = null; app.lastStates.clear();
+  app.live = isLive;
+  app.data = data; app.model = new C.RunModel(data, { dispatchKnown: !isLive }); app.idx = -1; app.pos = 0; app.trail = null; app.semId = null; app.lastStates.clear();
   app.tl = C.buildTimeline(data.events, { compress: app.compress });
   $('empty').hidden = true; $('graph').hidden = false; $('legend').hidden = false; $('player').hidden = false; $('summary').hidden = false;
+  if (!app.levelChosen) {            // until the reader moves the slider: Simple when the Normal view would still need more than ten cards
+    app.level = C.buildSemantic(data.workflow, { level: 1, hints: data.viewHints ?? null }).nodes.length > 10 ? 0 : 1;
+    $('detail').value = String(2 - app.level); $('detail-label').textContent = ['Raw', 'Normal', 'Simple'][2 - app.level];
+  }
   const wf = data.workflow;
   $('title').textContent = wf.title ?? wf.id;
-  $('subtitle').textContent = `${wf.id} v${wf.version} · run ${data.run.id.slice(0, 8)} · ${data.source?.workspace ?? ''} · exported ${data.exportedAt?.slice(0, 19).replace('T', ' ') ?? ''} UTC`;
+  $('subtitle').textContent = `${wf.id} v${wf.version} · run ${data.run.id.slice(0, 8)} · ${data.source?.label ?? data.source?.workspace ?? ''} · ${isLive ? 'live from the workspace' : `exported ${data.exportedAt?.slice(0, 19).replace('T', ' ') ?? ''} UTC`}`;
   document.title = `${wf.title ?? wf.id} · Foundry run view`;
   drawTicks(); buildGraph(); buildLegend(); closeDrawer(true); updatePlayer();
+  if (isLive) return;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches, params = new URLSearchParams(location.search);
   if (params.get('autoplay') === '0' || reduce) seek(params.get('autoplay') === '0' ? 0 : app.tl.dur); else play();
 }
 async function loadFromPage() {
   const embedded = document.getElementById('run-data');
   if (embedded) return load(JSON.parse(embedded.textContent));
-  const param = new URLSearchParams(location.search).get('data');
+  const params = new URLSearchParams(location.search), param = params.get('data');
   const http = /^https?:$/.test(location.protocol);
+  const token = new URLSearchParams(location.hash.slice(1)).get('t');
+  if (token && http && !param) {
+    live.token = token; history.replaceState(null, '', location.pathname + location.search);        // the token never stays in the address bar or the history
+    return params.get('run') ? startLive(params.get('run')) : showPicker();
+  }
   // Only a relative path on this origin can be fetched; an absolute URL is refused.
   if (param && http && !/^[a-z][a-z0-9+.-]*:|^\/\//i.test(param)) {
     const res = await fetch(param, { cache: 'no-store' });
@@ -601,6 +672,90 @@ function readFile(file) {
   reader.onerror = () => showError('Could not read that file');
   reader.readAsText(file);
 }
+// ------------------------------------------------------------------------------------------------ live feed (serve.mjs)
+const api = path => `${path}${path.includes('?') ? '&' : '?'}t=${encodeURIComponent(live.token ?? '')}`;
+async function getJson(path) {
+  const res = await fetch(api(path), { cache: 'no-store' });
+  if (!res.ok) throw new Error(res.status === 403 ? 'The server refused the token. Open the address printed by serve.mjs again.' : `HTTP ${res.status} for ${path.split('?')[0]}`);
+  return res.json();
+}
+async function showPicker() {
+  try {
+    const runs = await getJson('/api/runs');
+    const empty = $('empty'); empty.hidden = false;
+    empty.replaceChildren(h('h2', null, 'Open a run from this workspace'), h('p', { class: 'muted' }, 'A finished run replays from its recorded events; a running one is followed live.'),
+      h('div', { class: 'rows' }, runs.length ? runs.map(r => h('button', { class: 'row', type: 'button', onclick: () => startLive(r.id) }, dotSvg({ succeeded: 'done', failed: 'failed', cancelled: 'cancelled', waiting: 'waiting', awaiting_human: 'needsyou', awaiting_approval: 'needsyou', uncertain: 'uncertain' }[r.status] ?? 'running'),
+        h('span', { class: 'r1' }, r.title), h('span', { class: 'r2' }, `${r.status} · ${r.events} events · ${fmtCost(r.cost)} · ${new Date(r.updatedAt).toISOString().slice(0, 19).replace('T', ' ')} UTC`))) : h('p', { class: 'muted' }, 'No runs in this workspace yet.')));
+  } catch (error) { showError(error.message); }
+}
+function closeLive() { app.remote = false; if (live.es) live.es.close(); Object.assign(live, { on: false, following: false, es: null, connected: false, ended: false, integrity: null, tickTimer: 0 }); live.loading.clear(); }
+async function startLive(runId) {
+  try {
+    closeLive();
+    const view = await getJson(`/api/runs/${encodeURIComponent(runId)}/view`);
+    const data = { ...view, events: [], outputs: {}, calls: {}, external: [] };
+    load(data, { live: true });
+    Object.assign(live, { on: true, following: true, runId, lastAt: 0, lastArrival: performance.now(), batches: 0, lagMs: [] });
+    app.remote = true; app.playing = true; setPlayLabel();
+    const es = live.es = new EventSource(api(`/api/runs/${encodeURIComponent(runId)}/stream`));
+    es.addEventListener('open', () => { live.connected = true; scheduleRender(); });
+    es.addEventListener('batch', e => onBatch(JSON.parse(e.data)));
+    // After `end` or `integrity` the server closes the stream itself; closing here first would abort an in-flight request. The error that follows the
+    // server's close is where the browser's automatic reconnect is switched off.
+    es.addEventListener('end', () => { live.ended = true; settleLive(); });
+    es.addEventListener('integrity', e => { live.integrity = JSON.parse(e.data); settleLive(); });
+    es.onerror = () => { if (live.ended || live.integrity) es.close(); else live.connected = false; scheduleRender(); };
+  } catch (error) { showError(error.message); }
+}
+function onBatch(evs) {
+  if (!evs.length) return;
+  const arrived = Date.now(), d = app.data;
+  for (const ev of evs) d.events.push(ev);
+  live.lastArrival = performance.now(); live.lastAt = evs[evs.length - 1].at; live.batches++;
+  if (live.lagMs.length < 5000) live.lagMs.push(arrived - evs[evs.length - 1].at);         // commit to browser, same machine clock: a measurement hook
+  app.tl = C.buildTimeline(d.events, { compress: app.compress });
+  if (live.following) {
+    for (const ev of evs) app.model.apply(ev);
+    app.idx = d.events.length - 1; app.pos = app.tl.dur; scheduleRender();
+  } else scheduleRender();
+  updatePlayer();
+  if (!live.tickTimer) live.tickTimer = setTimeout(() => { live.tickTimer = 0; if (app.data) drawTicks(); }, 400);
+}
+// The run ended (or the chain broke): what was collected is now a recording. Following stops, and Play replays it from the start.
+function settleLive() {
+  if (live.following && app.live) { app.pos = app.tl.dur; }
+  app.live = false; live.following = false; app.playing = false; setPlayLabel(); scheduleRender(); updatePlayer();
+}
+const isEnded = () => ['succeeded', 'failed', 'cancelled'].includes(app.model.run.status);
+function liveNow() { return live.lastAt + (isEnded() ? 0 : performance.now() - live.lastArrival); }
+function followLive() {
+  const d = app.data;
+  live.following = true; app.playing = true;
+  while (app.idx < d.events.length - 1) app.model.apply(d.events[++app.idx]);
+  app.tl = C.buildTimeline(d.events, { compress: app.compress }); app.pos = app.tl.dur; app.pending = [];
+  renderAll(); updatePlayer();
+}
+// A transcript opened in live mode reads the journal row or the event output on demand; the feed itself carries neither.
+function getCall(id) {
+  const calls = app.data.calls ?? (app.data.calls = {});
+  if (calls[id] !== undefined) return calls[id] ?? undefined;
+  if (app.remote && live.runId && !live.loading.has(`c${id}`)) {
+    live.loading.add(`c${id}`);
+    getJson(`/api/runs/${encodeURIComponent(live.runId)}/call/${id}`).then(row => { calls[id] = row; }).catch(() => { calls[id] = null; }).finally(() => { live.loading.delete(`c${id}`); refreshDrawer(true); });
+  }
+  return undefined;
+}
+function getOutput(ev) {
+  if (ev.output !== undefined) return ev.output;
+  const outs = app.data.outputs ?? (app.data.outputs = {});
+  if (outs[ev.seq] !== undefined) return outs[ev.seq] ?? undefined;
+  if (app.remote && live.runId && ev.outputBytes && !live.loading.has(`o${ev.seq}`)) {
+    live.loading.add(`o${ev.seq}`);
+    getJson(`/api/runs/${encodeURIComponent(live.runId)}/output/${ev.seq}`).then(v => { outs[ev.seq] = v; }).catch(() => { outs[ev.seq] = null; }).finally(() => { live.loading.delete(`o${ev.seq}`); refreshDrawer(true); });
+  }
+  return undefined;
+}
+const isLoading = key => live.loading.has(key);
 function showError(message) { $('empty').hidden = false; $('empty').replaceChildren(h('h2', null, 'Could not open that run'), h('p', { role: 'alert' }, message)); }
 
 // ------------------------------------------------------------------------------------------------ graph
@@ -621,7 +776,7 @@ function buildGraph() {
 function makeCard(sem) {
   const dot = dotSvg('idle'), count = h('span', { class: 'count' }), line = h('span', { class: 'line' }), chips = h('span', { class: 'chips' });
   const bar = s('svg', { class: 'bar-seg', viewBox: '0 0 100 5', preserveAspectRatio: 'none', 'aria-hidden': 'true', focusable: 'false' });
-  const el = h('button', { class: 'card', type: 'button', 'data-id': sem.id, 'aria-pressed': 'false', onclick: () => selectSem(sem.id) },
+  const el = h('button', { class: 'card', type: 'button', 'data-id': sem.id, 'aria-pressed': 'false', title: sem.sub ? `${sem.label}. ${sem.sub}` : sem.label, onclick: () => selectSem(sem.id) },
     dot, h('span', { class: 'body' }, h('span', { class: 'head' }, roleIcon(sem.role), h('span', { class: 'label' }, sem.label), count), line, chips, bar));
   bar.hidden = true;
   return { sem, el, dot, count, line, chips, bar, cache: {} };
@@ -654,7 +809,7 @@ function updateCard(card, now) {
     if (prog && prog.total) { let x = 0; for (const [cls, n] of [['done', prog.done], ['failed', prog.failed], ['active', prog.active], ['queued', prog.queued]]) { if (!n) continue; const w = n / prog.total * 100; card.bar.append(s('rect', { class: `seg-${cls}`, x, y: 0, width: w, height: 5 })); x += w; } }
     c.prog = pkey;
   }
-  const label = `${sem.label}. ${def.label}. ${line}.${count ? ` ${count}.` : ''} ${ROLE_NAMES[sem.role] ?? sem.role}.`;
+  const label = `${sem.label}. ${def.label}. ${line}.${count ? ` ${count}.` : ''} ${sem.verb ?? ROLE_NAMES[sem.role] ?? sem.role}.`;
   if (c.aria !== label) { card.el.setAttribute('aria-label', label); c.aria = label; }
   card.el.setAttribute('aria-pressed', app.semId === sem.id ? 'true' : 'false');
   return state;
@@ -691,7 +846,7 @@ function buildLegend() {
 }
 
 // ------------------------------------------------------------------------------------------------ rendering
-const nowReal = () => C.realAt(app.data.events, app.tl, app.idx, app.pos);
+const nowReal = () => app.live && live.following && live.lastAt ? liveNow() : C.realAt(app.data.events, app.tl, app.idx, app.pos);
 function renderAll() {
   if (!app.model) return;
   const t0 = performance.now(), now = nowReal();
@@ -728,27 +883,32 @@ function renderSummary(now) {
   const status = run.status === 'ready' ? 'ready' : run.status;
   const stateName = { ready: 'Starting', running: 'Running', succeeded: 'Succeeded locally', failed: 'Failed', cancelled: 'Cancelled', waiting: 'Waiting', awaiting_human: 'Needs an answer', awaiting_approval: 'Needs approval', uncertain: 'Uncertain effect' }[status] ?? status;
   const dotState = { succeeded: 'done', failed: 'failed', cancelled: 'cancelled', waiting: 'waiting', awaiting_human: 'needsyou', awaiting_approval: 'needsyou', uncertain: 'uncertain' }[status] ?? 'running';
-  const elapsed = Math.max(0, now - (run.firstAt ?? now)), total = d.events[d.events.length - 1].at - d.events[0].at;
-  const key = [status, fmtCost(run.cost), run.calls, run.escalations, run.checkFails, run.verdict ? 1 : 0, Math.floor(elapsed / 100)].join('|');
+  const elapsed = Math.max(0, now - (run.firstAt ?? now)), total = d.events.length ? d.events[d.events.length - 1].at - d.events[0].at : 0;
+  const waiting = d.events.length - 1 - app.idx;
+  const quiet = app.remote && live.following && live.lastAt && !live.ended && !isEnded() ? Math.max(0, Date.now() - live.lastAt) : 0;   // wall clock: the event times and this page share one machine in the local setup
+  const key = [status, fmtCost(run.cost), run.calls, run.escalations, run.checkFails, run.verdict ? 1 : 0, Math.floor(elapsed / 100), app.remote ? [live.connected, live.following, live.ended, live.integrity ? 1 : 0, waiting, quiet >= 10000 ? Math.floor(quiet / 5000) : 0].join() : ''].join('|');
   if (box.dataset.key === key) return;
   box.dataset.key = key;
   const pills = [];
   const sd = dotSvg(dotState); sd.classList.add('mini');
   pills.push(h('span', { class: 'pill', title: 'Run status from the runtime. Succeeded means the workflow\'s own acceptance checks held. It is not task verification.' }, sd, h('strong', null, stateName)));
+  if (app.remote) pills.push(h('span', { class: `pill ${live.integrity ? 'bad' : live.connected || live.ended ? 'good' : 'warn'}`, title: 'Events stream from the workspace store as the runtime commits them; each row is chain-checked on arrival.' },
+    live.integrity ? `Stream stopped: ${live.integrity.reason}` : live.ended ? 'Live feed ended with the run' : !live.connected ? 'Connecting or reconnecting…' : live.following ? 'Live' : `Live view paused, ${waiting} new event${waiting === 1 ? '' : 's'} waiting`));
+  if (quiet >= 10000) pills.push(h('span', { class: 'pill warn', title: 'A model call can take minutes. If the runner process has died, the run also looks like this: nothing is written and the nodes keep their last state.' }, `No event for ${fmtDur(quiet)}`));
   if (run.verdict) pills.push(h('span', { class: 'pill' }, `Verdict: ${run.verdict.verdict}`, h('span', { class: 'muted' }, `(${run.verdict.authority}; does not establish completion)`)));
   const ext = d.external ?? [];
   if (status === 'succeeded' || status === 'failed' || status === 'cancelled') {
     if (ext.length) for (const e of ext) pills.push(h('span', { class: `pill ${e.pass ? 'good' : 'bad'}`, title: `${e.source}, ${e.taskKey}. ${e.split} split: development evidence, not held-out.` }, h('strong', null, e.pass ? 'Independent oracle passed' : 'Independent oracle FAILED'), `score ${e.score?.toFixed?.(4) ?? e.score} (${e.split} split)`));
     else pills.push(h('span', { class: 'pill warn' }, h('strong', null, 'No independent verification attached')));
   }
-  pills.push(h('span', { class: 'pill' }, 'Recorded time ', h('strong', null, `${fmtClock(elapsed)} / ${fmtClock(total)}`)));
+  pills.push(h('span', { class: 'pill' }, 'Recorded time ', h('strong', null, `${fmtClock(elapsed, total)} / ${fmtClock(total)}`)));
   const cap = d.run.budget?.maxCost;
   pills.push(h('span', { class: 'pill meter' }, 'Spend ', h('strong', null, fmtCost(run.cost)), Number.isFinite(cap) ? [h('progress', { max: cap, value: Math.min(cap, run.cost), 'aria-label': 'Spend against the run cost cap' }), h('span', { class: 'muted' }, `cap ${fmtCost(cap)}`)] : null));
   pills.push(h('span', { class: 'pill' }, h('strong', null, run.calls), ' model calls'));
   if (run.escalations) pills.push(h('span', { class: 'pill warn' }, h('strong', null, run.escalations), ' escalations'));
   if (run.checkFails) pills.push(h('span', { class: 'pill warn' }, h('strong', null, run.checkFails), ' check failures'));
   const i = d.integrity;
-  pills.push(h('span', { class: 'pill', title: `Hash chain of ${i.events} events verified when exported; head ${i.head}. ${i.derivedEvents} dispatch events were reconstructed from journal latency.` }, 'Chain verified at export'));
+  pills.push(h('span', { class: 'pill', title: app.remote ? 'Each streamed event is checked against the hash the previous one carried.' : `Hash chain of ${i.events} events verified when exported; head ${i.head}. ${i.derivedEvents} dispatch events were reconstructed from journal latency.` }, app.remote ? 'Chain checked as it streams' : 'Chain verified at export'));
   box.replaceChildren(...pills);
 }
 
@@ -791,18 +951,22 @@ function frame(t) {
 }
 function play() {
   if (!app.data) return;
+  if (app.live) { followLive(); return; }
   if (app.pos >= app.tl.dur) { app.model.reset(); app.idx = -1; app.pos = 0; app.lastStates.clear(); renderAll(); }
   app.playing = true; app.last = performance.now(); app.raf = requestAnimationFrame(frame); setPlayLabel();
 }
-function pause() { app.playing = false; cancelAnimationFrame(app.raf); setPlayLabel(); }
-function setPlayLabel() { const b = $('play'); b.textContent = app.playing ? 'Pause' : (app.data && app.pos >= app.tl.dur ? 'Replay' : 'Play'); b.setAttribute('aria-label', app.playing ? 'Pause' : 'Play'); }
+function pause() { app.playing = false; if (app.live) live.following = false; cancelAnimationFrame(app.raf); setPlayLabel(); }
+function setPlayLabel() {
+  const b = $('play'), l = app.live, text = app.playing ? (l ? 'Pause live' : 'Pause') : (l ? 'Follow live' : (app.data && app.pos >= app.tl.dur ? 'Replay' : 'Play'));
+  b.textContent = text; b.setAttribute('aria-label', text);
+}
 function updatePlayer() {
   if (!app.data) return;
   const sc = $('scrub'), dur = app.tl.dur || 1;
   sc.max = 1000; sc.value = Math.round(app.pos / dur * 1000);
-  const real = nowReal() - app.data.events[0].at, total = app.data.events[app.data.events.length - 1].at - app.data.events[0].at;
-  sc.setAttribute('aria-valuetext', `${fmtClock(real)} of ${fmtClock(total)} recorded time`);
-  $('clock').textContent = `${fmtClock(real)} / ${fmtClock(total)}`;
+  const evs = app.data.events, real = evs.length ? nowReal() - evs[0].at : 0, total = evs.length ? evs[evs.length - 1].at - evs[0].at : 0;
+  sc.setAttribute('aria-valuetext', `${fmtClock(real, total)} of ${fmtClock(total)} recorded time`);
+  $('clock').textContent = `${fmtClock(real, total)} / ${fmtClock(total)}`;
   $('evcount').textContent = `${app.idx + 1} / ${app.data.events.length} events`;
   setPlayLabel();
 }
@@ -828,6 +992,8 @@ function selectSem(id) {
   for (const c of app.cards.values()) c.el.setAttribute('aria-pressed', c.sem.id === id ? 'true' : 'false');
   autoDescend(); refreshDrawer(true);
   $('drawer').scrollTop = 0;
+  const head = $('drawer').querySelector('h2');           // announce the panel and put keyboard users in it; Escape returns to the card
+  if (head) { head.setAttribute('tabindex', '-1'); head.focus({ preventScroll: true }); }
 }
 function closeDrawer(silent) {
   const had = app.semId; app.semId = null; app.trail = null; $('drawer').hidden = true; $('drawer').replaceChildren();
@@ -847,7 +1013,7 @@ function autoDescend() {
 const stateOfKey = key => { const m = app.model; return m.insts.get(key)?.state ?? m.items.get(key)?.state ?? 'idle'; };
 function crumbLabel(key) {
   const m = app.model, it = m.items.get(key);
-  if (it) return `item ${it.idx}`;
+  if (it) return `${it.cont.loop ? 'iteration' : 'item'} ${it.idx}`;
   const seg = C.parseKey(key).pop();
   return humanize(seg.id) + (seg.idx !== null ? ` ${seg.idx}` : '');
 }
@@ -862,19 +1028,23 @@ function refreshDrawer(force) {
     if (!touched.some(k => watch.has(k) || app.trail.some(t => k.startsWith(`${t}/`) || k.startsWith(`${t}:`)))) { updateWaffle(); return; }
   }
   const keepScroll = dr.scrollTop, open = new Set([...dr.querySelectorAll('details[open]')].map(d => d.dataset.k).filter(Boolean));
+  // A live update rebuilds the drawer. Keyboard focus inside it is put back on the control at the same position, so reading is not interrupted.
+  const focusables = () => [...dr.querySelectorAll('button, summary')], at = dr.contains(document.activeElement) ? focusables().indexOf(document.activeElement) : -1;
   dr.hidden = false; dr.replaceChildren(drawerContent(sem, open));
   dr.scrollTop = force ? dr.scrollTop : keepScroll;
+  if (at >= 0) { const list = focusables(); list[Math.min(at, list.length - 1)]?.focus({ preventScroll: true }); }
   requestAnimationFrame(drawEdges);
 }
 function drawerContent(sem, open) {
   const m = app.model, now = nowReal(), state = C.semState(m, sem), def = STATES[state];
   const frag = document.createDocumentFragment();
-  frag.append(h('header', { class: 'dh' }, dotSvg(state), h('div', { class: 't' }, h('h2', null, sem.label), h('p', { class: 'muted' }, `${def.label} · ${ROLE_NAMES[sem.role] ?? sem.role}${sem.members.length > 1 ? ` · ${sem.members.length} workflow nodes` : ''}`)),
+  frag.append(h('header', { class: 'dh' }, dotSvg(state), h('div', { class: 't' }, h('h2', null, sem.label), h('p', { class: 'muted' }, `${def.label} · ${sem.verb ?? ROLE_NAMES[sem.role] ?? sem.role}${sem.members.length > 1 ? ` · ${sem.members.length} workflow nodes` : ''}`)),
     h('button', { class: 'btn small', type: 'button', onclick: () => closeDrawer(false) }, 'Close')));
   // breadcrumbs
   const crumbs = h('nav', { class: 'crumbs', 'aria-label': 'Where you are in this node' });
   crumbs.append(h('button', { type: 'button', onclick: () => { app.trail = sem.members.length === 1 ? [`root/${sem.members[0]}`] : []; refreshDrawer(true); } }, sem.label));
   app.trail.forEach((key, i) => {
+    if (i === 0 && sem.members.length === 1) return;          // the card's own label already names this node
     crumbs.append('›');
     if (i === app.trail.length - 1) crumbs.append(h('span', { class: 'cur', 'aria-current': 'location' }, crumbLabel(key)));
     else crumbs.append(h('button', { type: 'button', onclick: () => { app.trail = app.trail.slice(0, i + 1); refreshDrawer(true); } }, crumbLabel(key)));
@@ -895,10 +1065,11 @@ function drawerContent(sem, open) {
 }
 function partsList(sem) {
   const m = app.model, list = h('div', { class: 'rows' });
-  for (const id of sem.members) {
+  for (const id of sem.members.slice(0, 200)) {
     const inst = m.insts.get(`root/${id}`), st = inst?.state ?? 'idle';
     list.append(h('button', { class: 'row', type: 'button', onclick: () => { app.trail = [`root/${id}`]; autoDescend(); refreshDrawer(true); } }, dotSvg(st), h('span', { class: 'r1' }, humanize(id)), h('span', { class: 'r2' }, inst ? C.instLine(inst, nowReal()) : 'Not started')));
   }
+  if (sem.members.length > 200) list.append(h('p', { class: 'note' }, `Showing the first 200 of ${sem.members.length} steps. Use Detail: Normal or Raw to see the rest as cards.`));
   return list;
 }
 function itemLeaves(item) {
@@ -907,7 +1078,7 @@ function itemLeaves(item) {
     const inst = m.insts.get(key);
     list.append(h('button', { class: 'row', type: 'button', onclick: () => { app.trail = [...app.trail, key]; refreshDrawer(true); } }, dotSvg(inst.state), h('span', { class: 'r1' }, humanize(C.parseKey(key).pop().id)), h('span', { class: 'r2' }, C.instLine(inst, nowReal()))));
   }
-  return h('div', null, h('h3', null, `Item ${item.idx}: ${STATES[item.state].label}`), list.children.length ? list : h('p', { class: 'muted' }, 'No node of this item has started yet.'));
+  return h('div', null, h('h3', null, `${item.cont.loop ? 'Iteration' : 'Item'} ${item.idx}: ${STATES[item.state].label}`), list.children.length ? list : h('p', { class: 'muted' }, 'No node of this item has started yet.'));
 }
 function itemSummary(item) {
   const m = app.model; let cost = 0, esc = 0, models = new Set(), start = Infinity, end = 0, fail = null;
@@ -920,7 +1091,7 @@ const FILTERS = [['all', 'All', () => true], ['active', 'Active', it => ['callin
 function itemsPanel(inst) {
   const m = app.model, c = inst.cont, items = [...c.items.values()].sort((a, b) => a.idx - b.idx);
   const wrap = h('div', null, factsFor(inst, nowReal()));
-  wrap.append(h('h3', null, `Items (${items.length}${c.total && c.total > items.length ? ` of ${c.total}` : ''})`));
+  wrap.append(h('h3', null, `${c.loop ? 'Iterations' : 'Items'} (${items.length}${c.total && c.total > items.length ? ` of ${c.total}` : ''}${c.loop && c.max ? `, at most ${c.max}` : ''})`));
   const filters = h('div', { class: 'filters', role: 'group', 'aria-label': 'Filter items' });
   for (const [id, label, test] of FILTERS) {
     const n = items.filter(test).length;
@@ -933,7 +1104,7 @@ function itemsPanel(inst) {
     const rects = new Map();
     items.forEach((it, i) => {
       const r = s('rect', { class: `cell s-${it.state}`, x: (i % cols) * cell, y: Math.floor(i / cols) * cell, width: cell, height: cell, 'data-k': it.key });
-      r.addEventListener('mouseenter', () => { tip.textContent = `Item ${it.idx}: ${itemSummary(it)}`; });
+      r.addEventListener('mouseenter', () => { tip.textContent = `${c.loop ? 'Iteration' : 'Item'} ${it.idx}: ${itemSummary(it)}`; });
       r.addEventListener('click', () => { app.trail = [...app.trail, it.key]; autoDescend(); refreshDrawer(true); });
       rects.set(it.key, r); svgEl.append(r);
     });
@@ -942,7 +1113,7 @@ function itemsPanel(inst) {
   } else app.waffle = null;
   const test = FILTERS.find(f => f[0] === app.filter)[2], shown = items.filter(test), cap = 60;
   const list = h('div', { class: 'rows' });
-  for (const it of shown.slice(0, cap)) list.append(h('button', { class: 'row', type: 'button', onclick: () => { app.trail = [...app.trail, it.key]; autoDescend(); refreshDrawer(true); } }, dotSvg(it.state), h('span', { class: 'r1' }, `Item ${it.idx}`), h('span', { class: 'r2' }, itemSummary(it))));
+  for (const it of shown.slice(0, cap)) list.append(h('button', { class: 'row', type: 'button', onclick: () => { app.trail = [...app.trail, it.key]; autoDescend(); refreshDrawer(true); } }, dotSvg(it.state), h('span', { class: 'r1' }, `${c.loop ? 'Iteration' : 'Item'} ${it.idx}`), h('span', { class: 'r2' }, itemSummary(it))));
   wrap.append(shown.length ? list : h('p', { class: 'muted' }, 'No items match this filter.'));
   if (shown.length > cap) wrap.append(h('p', { class: 'note' }, `Showing the first ${cap} of ${shown.length}. Use the overview or a narrower filter.`));
   return wrap;
@@ -997,7 +1168,7 @@ function turn(kind, who, ev, ...body) {
   return h('section', { class: `turn t-${kind}` }, h('div', { class: 'th' }, h('span', { class: 'who' }, who), ev ? h('time', null, rel(ev)) : null), h('div', { class: 'tb' }, ...body));
 }
 function chipRow(items) { return h('div', { class: 'chips' }, items.filter(Boolean).map(([cls, t]) => h('span', { class: `chip ${cls ?? ''}` }, t))); }
-function outputOf(ev) { return ev.output !== undefined ? ev.output : app.data.outputs?.[ev.seq]; }
+const outputOf = getOutput;
 function transcript(inst, open) {
   const d = app.data, wrap = h('div'), def = C.defOf(d.workflow, inst.key);
   const decisions = (d.decisions ?? []).filter(x => x.features?.nodeKey === inst.key);
@@ -1044,20 +1215,21 @@ function contextTurn(ev) {
     h('p', { class: 'note' }, 'Labels starting with "untrusted" mean the text derives from task data. It is fenced as data in the prompt and cannot grant authority.'));
 }
 function promptTurn(ev, journalId, open) {
-  const call = app.data.calls?.[journalId];
-  if (!call) return turn('prompt', 'Prompt (not in this export)', ev, h('p', { class: 'muted' }, 'The journal row for this call is not included.'));
+  const call = getCall(journalId);
+  if (!call) return turn('prompt', isLoading(`c${journalId}`) ? 'Prompt (loading from the journal)' : 'Prompt (not in this export)', ev, h('p', { class: 'muted' }, isLoading(`c${journalId}`) ? 'Reading the journal row for this call.' : 'The journal row for this call is not included.'));
   return turn('prompt', `Prompt sent to ${shortModel(call.modelId)}`, ev,
-    chipRow([['', `attempt ${call.attempt}`], ['', `sample ${call.sampleIndex}`], ['', `mode ${call.mode ?? '?'}`], call.decoding ? ['', `reasoning ${call.decoding.reasoning ?? 'default'}`] : null, ['', `prompt ${String(call.promptHash).slice(0, 12)}`]]),
+    chipRow([['', `attempt ${call.attempt}`], ['', `sample ${call.sampleIndex}`], ['', `mode ${call.mode ?? '?'}`], call.decoding ? ['', `reasoning ${call.decoding.reasoning ?? 'default'}`] : null, ['', `prompt ${String(call.promptHash).slice(0, 12)}`],
+      call.promptVerified === true ? ['green', 'prompt matches the chain receipt'] : call.promptVerified === false ? ['red', 'PROMPT DOES NOT MATCH the chain receipt'] : ['amber', 'prompt not checkable against the chain']]),
     details(`sys:${journalId}`, `System prompt (${call.system?.length ?? 0} characters)`, open, [codeBlock(call.system ?? '')]),
     h('p', { class: 'muted' }, 'User prompt (data blocks are fenced; the context receipt above is the authoritative list of inputs):'), codeBlock(call.prompt ?? '', 2500),
     call.schema ? details(`schema:${journalId}`, 'Required output schema', open, [codeBlock(call.schema)]) : null);
 }
 function replyTurn(ev, open) {
-  const call = app.data.calls?.[ev.journalId], u = ev.usage ?? call?.usage ?? {};
+  const call = getCall(ev.journalId), u = ev.usage ?? call?.usage ?? {};
   const who = ev.ok === false ? `Model call failed: ${ev.errorCode}` : `Reply from ${shortModel(ev.modelId)}`;
   return turn(ev.ok === false ? 'error' : 'reply', who, ev,
     chipRow([['', `${fmtDur(ev.latencyMs)}`], ['', `in ${u.inputTokens ?? '?'} / out ${u.outputTokens ?? '?'}`], u.cacheReadTokens ? ['', `cache read ${u.cacheReadTokens}`] : null, u.cacheWriteTokens ? ['', `cache write ${u.cacheWriteTokens}`] : null, ['', fmtCost(ev.costUsd)],
-      ev.replayed ? ['amber', 'replayed from journal'] : ['', 'live call'], call?.costBasis ? ['', `cost basis ${call.costBasis}`] : null, ev.finishReason ? ['', `finish ${ev.finishReason}`] : null, call?.costUnknown ? ['amber', 'cost unknown'] : null]),
+      ['amber', 'reply: journal row, not bound to the chain'], ev.replayed ? ['amber', 'replayed from journal'] : ['', 'live call'], call?.costBasis ? ['', `cost basis ${call.costBasis}`] : null, ev.finishReason ? ['', `finish ${ev.finishReason}`] : null, call?.costUnknown ? ['amber', 'cost unknown'] : null]),
     call?.value !== undefined && call?.value !== null ? [h('p', { class: 'muted' }, 'Typed value (parsed against the required schema). Model output is untrusted data:'), codeBlock(call.value)] : null,
     call?.reply ? details(`raw:${ev.journalId}`, 'Raw reply text', open, [codeBlock(call.reply)]) : null);
 }
@@ -1073,7 +1245,7 @@ function outputTurn(ev, inst, def, open) {
   const note = def?.checks?.length && inst.kind === 'agent' ? `All ${def.checks.length} output checks held.` : null;
   return turn(failedChecks ? 'check' : 'output', failedChecks ? 'Completed, but the verifier returned pass = false' : (inst.cont ? 'Completed' : 'Final output'), ev,
     chipRow([['', `output ${String(ev.outputHash).slice(0, 12)}`], ['', `${ev.outputBytes ?? '?'} bytes`], [/^untrusted/.test(label) ? 'untrusted' : '', `label ${label}`], ev.escalations ? ['violet', `escalated ${ev.escalations}x`] : null]), note ? h('p', null, note) : null,
-    out === undefined ? h('p', { class: 'muted' }, 'Output not included in this export.') : codeBlock(out));
+    out === undefined ? h('p', { class: 'muted' }, ev.outputBytes && app.remote ? 'Loading the output from the store.' : 'Output not included in this export.') : codeBlock(out));
 }
 function errorTurn(ev) {
   const code = ev.error?.code, kind = C.classifyError(code);
@@ -1082,7 +1254,7 @@ function errorTurn(ev) {
   return turn('error', `Failed: ${code}`, ev, h('p', null, sanitizeDisplay(ev.error?.message ?? '').text), why ? h('p', { class: 'note' }, why) : null);
 }
 function receipts(inst) {
-  const calls = inst.calls.map(id => app.data.calls?.[id]).filter(Boolean);
+  const calls = inst.calls.map(id => getCall(id)).filter(Boolean);
   const wrap = h('div');
   if (calls.length) wrap.append(h('table', { class: 't' }, h('thead', null, h('tr', null, ['Journal', 'Model', 'Provider / engine', 'Receipt', 'Cost'].map(x => h('th', null, x)))),
     h('tbody', null, calls.map(c => h('tr', null, h('td', null, c.id), h('td', null, shortModel(c.modelId)), h('td', null, `${c.provider ?? ''} ${c.engineVersion ?? ''}`), h('td', null, String(c.receiptHash).slice(0, 12)), h('td', null, fmtCost(c.costUsd)))))));
@@ -1114,15 +1286,16 @@ $('compress').addEventListener('change', e => {
   drawTicks(); gotoIndex(app.idx);
 });
 $('detail').addEventListener('input', e => {
-  app.level = 2 - Number(e.target.value); // slider right = simpler: 0 raw -> level 2, 1 normal -> level 1, 2 simple -> level 0
+  app.levelChosen = true; app.level = 2 - Number(e.target.value); // slider right = simpler: 0 raw -> level 2, 1 normal -> level 1, 2 simple -> level 0
   $('detail-label').textContent = ['Raw', 'Normal', 'Simple'][Number(e.target.value)];
   e.target.setAttribute('aria-valuetext', $('detail-label').textContent);
   if (app.data) { const keep = app.trail?.[0]?.replace('root/', '').split(/[:/]/)[0]; buildGraph(); const id = keep && app.sem.rawTo.get(keep); if (id) { selectSem(id); } else closeDrawer(true); }
 });
 $('detail').value = 1; $('detail-label').textContent = 'Normal'; $('detail').setAttribute('aria-valuetext', 'Normal');
 addEventListener('keydown', e => {
-  if (e.target.closest?.('input, select, textarea') || e.ctrlKey || e.metaKey || e.altKey || !app.data) return;
-  if (e.key === 'Escape' && app.semId) { closeDrawer(false); return; }
+  if (e.ctrlKey || e.metaKey || e.altKey || !app.data) return;
+  if (e.key === 'Escape' && app.semId) { closeDrawer(false); return; }          // from anywhere, including the sliders
+  if (e.target.closest?.('input, select, textarea')) return;
   if (e.key === 'p') { e.preventDefault(); $('play').click(); }
   else if (e.key === ',') $('step-back').click(); else if (e.key === '.') $('step').click(); else if (e.key === '[') $('prev-note').click(); else if (e.key === ']') $('next-note').click();
   else if (e.target.classList?.contains('card') && ['ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(e.key)) moveFocus(e);
@@ -1135,14 +1308,14 @@ function moveFocus(e) {
   e.preventDefault(); app.cards.get(app.cols[ci][ri])?.el.focus();
 }
 new ResizeObserver(() => requestAnimationFrame(drawEdges)).observe($('graph'));
-setInterval(() => { if (app.data && app.playing && !document.hidden) { const now = nowReal(); for (const card of app.cards.values()) if (C.ACTIVE.has(card.cache.state)) { const line = C.semLine(app.model, card.sem, now); if (line !== card.cache.line) { card.line.textContent = line; card.cache.line = line; } } } }, 250);
+setInterval(() => { if (app.data && (app.playing || (app.live && live.following)) && !document.hidden) { const now = nowReal(); if (app.remote) renderSummary(now); for (const card of app.cards.values()) if (C.ACTIVE.has(card.cache.state)) { const line = C.semLine(app.model, card.sem, now); if (line !== card.cache.line) { card.line.textContent = line; card.cache.line = line; } } } }, 250);
 
 // A hatch pattern for the environment-fault dot (the one fill that is not a flat colour).
 const defs = s('svg', { width: 0, height: 0, 'aria-hidden': 'true', focusable: 'false', class: 'sr-only' }, s('defs', null, s('pattern', { id: 'hatch', width: 5, height: 5, patternUnits: 'userSpaceOnUse', patternTransform: 'rotate(45)' }, s('rect', { class: 'hatch-bg', width: 5, height: 5 }), s('line', { class: 'hatch-line', x1: 0, y1: 0, x2: 0, y2: 5 }))));
 document.body.append(defs);
 
 // A narrow test hook; it reads and drives the same state the controls do.
-root.RunView = { app, load, seek, seekIndex, play, pause, selectSem, closeDrawer, setSpeed: v => { app.speed = v; $('speed').value = String(v); }, renderAll,
+root.RunView = { app, live, closeLive, load, startLive, followLive, seek, seekIndex, play, pause, selectSem, closeDrawer, setSpeed: v => { app.speed = v; $('speed').value = String(v); }, renderAll,
   state: () => ({ idx: app.idx, pos: app.pos, dur: app.tl?.dur, playing: app.playing, perf: { ...app.perf }, cards: [...app.cards.values()].map(c => ({ id: c.sem.id, label: c.sem.label, state: c.cache.state, line: c.cache.line })), run: { ...app.model?.run } }) };
 loadFromPage().catch(error => showError(error.message));
 }

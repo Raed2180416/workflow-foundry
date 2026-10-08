@@ -9,11 +9,15 @@
 //                 so Kev's per-question report is per port
 //   _meta.id      lib/hash.mjs recordId: a hash of state, questions and meta (stable across rebuilds)
 //   _meta.source  "unknowable" for presence-matched unknowables of soft-target ports (kev.benchmark
-//                 scores them on confidence only), in every slice; absent otherwise (Kev's default
-//                 source applies). In train such a question must carry its soft target.
-//                 An X5 unknowable is a labelled class (not_stated), so it keeps the default source.
+//                 scores them on confidence only) in evaluation files: every slice but train (§2.5).
+//                 Train files never carry it (Kev keeps unknowable an eval-only source); a training
+//                 unknowable question carries its soft target instead. Kev's source is per record, so
+//                 an evaluation record with soft-target unknowables carries only those questions.
+//                 The unknowable questions are meta.unknowable (default: the only question of a
+//                 variant: 'unknowable' record). An X5 unknowable is a labelled class (not_stated),
+//                 so it keeps the default source.
 //
-//   node experiments/kev-data/export-kev.mjs <factory-records.jsonl> <out.jsonl> --slice <slice>
+//   node experiments/kev-data/export-kev.mjs <factory-records.jsonl> <out.jsonl> --slice <slice>   (slice required)
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -28,6 +32,14 @@ const QUESTION_KEYS = Object.freeze(['type', 'instructions', 'criteria', 'label'
 const fail = (code, message, details) => { const e = new Error(`${code}: ${message}`); e.code = code; if (details) e.details = details; return e; };
 export const metaFileOf = file => file.replace(/\.jsonl$/, '') + '.meta.jsonl';
 export const softTargetPort = contract => typeof contract?.unknowable === 'string' && contract.unknowable.startsWith('soft-target');
+export const TRAIN_SLICE = 'train';
+// The unknowable questions of a record (§2.5): meta.unknowable, or the only question of a
+// variant: 'unknowable' record. A multi-question unknowable record must list them (build check).
+export function unknowableQuestions(record) {
+  const meta = record?.meta ?? {}, qids = Object.keys(record?.questions ?? {});
+  if (Array.isArray(meta.unknowable)) return meta.unknowable.filter(q => qids.includes(q));
+  return meta.variant === 'unknowable' && qids.length === 1 ? qids : [];
+}
 
 // One factory record -> { kev, meta } (kev is the Kev line, meta the sidecar line).
 export function toKevRecord(record, { contracts, slice = null, guard = null } = {}) {
@@ -36,8 +48,10 @@ export function toKevRecord(record, { contracts, slice = null, guard = null } = 
   // JSON round-trip: the id is computed on exactly what the files hold (undefined fields dropped).
   const { state, questions, meta = {} } = JSON.parse(JSON.stringify({ state: record.state, questions: record.questions, meta: record.meta ?? {} }));
   if (!questions || typeof questions !== 'object' || !Object.keys(questions).length) throw fail('EXPORT_RECORD', 'a record needs at least one question');
-  const unknowable = meta.variant === 'unknowable';
-  const out = {}, plain = {}; let softUnknowable = false;
+  if (typeof slice !== 'string' || !slice) throw fail('EXPORT_SLICE', 'the slice is required (train files and evaluation files mark unknowables differently)');
+  if (meta.variant === 'unknowable' && !Array.isArray(meta.unknowable) && Object.keys(questions).length > 1) throw fail('EXPORT_UNKNOWABLE', 'a multi-question unknowable record lists its unknowable questions in meta.unknowable');
+  const unknowable = new Set(unknowableQuestions({ questions, meta })), training = slice === TRAIN_SLICE;
+  const out = {}, plain = {}; let softUnknowable = 0;
   for (const [qid, q] of Object.entries(questions)) {
     const qc = questionContract(qid, contracts);
     if (!qc) throw fail('EXPORT_PORT', `question ${qid}: no frozen contract for it`);
@@ -51,17 +65,20 @@ export function toKevRecord(record, { contracts, slice = null, guard = null } = 
       const leaks = guard.check(q.instructions, slice);
       if (leaks.length) throw fail('HELDOUT_WORDING', `question ${qid} in ${slice} uses held-out wording ${leaks.map(l => `${l.port}/${l.id} (${l.slice})`).join(', ')}`);
     }
-    if (unknowable && softTargetPort(contract)) {
-      softUnknowable = true;
-      if (slice === 'train' && (q.target === undefined || q.target === null)) throw fail('EXPORT_UNKNOWABLE', `question ${qid}: a training unknowable of a soft-target port needs a target (lib/render.mjs uniformTarget)`);
+    if (unknowable.has(qid) && softTargetPort(contract)) {
+      softUnknowable++;
+      if (training && (q.target === undefined || q.target === null)) throw fail('EXPORT_UNKNOWABLE', `question ${qid}: a training unknowable of a soft-target port needs a target (lib/render.mjs uniformTarget)`);
     }
     const pq = { type: q.type, instructions: q.instructions, criteria: q.criteria, label: q.label };
     if (q.target !== undefined && q.target !== null) pq.target = q.target;
     plain[qid] = pq;
     out[qid] = { ...pq, src: `${SRC_PREFIX}${reportId}` };
   }
+  if (softUnknowable && !training && softUnknowable !== Object.keys(questions).length) {
+    throw fail('EXPORT_UNKNOWABLE', `an evaluation record marked unknowable carries other questions too (${Object.keys(questions).filter(q => !unknowable.has(q)).join(', ') || 'non-soft-target unknowables'}); Kev's source is per record, so split it`);
+  }
   const id = recordId({ state, questions: plain, meta });
-  const _meta = softUnknowable ? { id, source: UNKNOWABLE_SOURCE } : { id };
+  const _meta = softUnknowable && !training ? { id, source: UNKNOWABLE_SOURCE } : { id };
   return { kev: { state, questions: out, _meta }, meta: { id, meta } };
 }
 
@@ -105,7 +122,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const args = process.argv.slice(2), at = args.indexOf('--slice');
   const slice = at >= 0 ? args.splice(at, 2)[1] : null;
   const [input, output] = args;
-  if (!input || !output) { console.error('usage: node experiments/kev-data/export-kev.mjs <factory-records.jsonl> <out.jsonl> [--slice <slice>]'); process.exit(2); }
+  if (!input || !output || !slice) { console.error('usage: node experiments/kev-data/export-kev.mjs <factory-records.jsonl> <out.jsonl> --slice <slice>'); process.exit(2); }
   const r = exportKev(readJsonl(input), { file: path.resolve(output), slice });
   console.log(JSON.stringify(r, null, 2));
 }

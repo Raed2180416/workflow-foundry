@@ -36,9 +36,9 @@
 <div id="stage" class="stage">
   <section class="graphpane" aria-label="Run graph">
     <div id="empty" class="empty">
-      <h2>Open a recorded run</h2>
+      <h2>Open a recorded or live run</h2>
       <p>Use <strong>Open run JSON</strong>, drop a file on this page, or load one with <code>?data=run.json</code> when this page is served over http.</p>
-      <p class="muted">Create the file with <code>node tools/run-view/export-run.mjs --workspace DIR --out run.json</code>.</p>
+      <p class="muted">Record a run: <code>node tools/run-view/export-run.mjs --workspace DIR --out run.json</code> (or <code>--bundle run.html</code> for one self-contained file). Follow a workspace live: <code>node tools/run-view/serve.mjs --workspace DIR</code> and open the address it prints.</p>
     </div>
     <div id="graph" class="graph" role="group" aria-label="Workflow nodes, left to right in dependency order" hidden>
       <svg id="edges" class="edges" aria-hidden="true" focusable="false"></svg>

@@ -60,6 +60,16 @@
       "flip",
       "invariance",
       "paraphrase"
+    ],
+    "families": "Families are identifiers (^[a-z][a-z0-9-]*(:[a-z][a-z0-9-]*)?$): a bed name, bedtype:<bed>, codefix:<domain>, or a named source (composer, corpus, external-deepset, ...). A record's meta.family must be a family of every port it asks; held-out families appear only in test-ood and the reserves (§3.4). A family drawn from a bed (records, bedtype:records, records-real, codefix:billing, ...) requires meta.bed and a world.",
+    "skeletonMasks": "Span skeletons mask the values of every slot marked mask: name (the records systems) by default, on both sides: registry entries (lib/leakage.mjs SpanRegistry, which stores its masks) and scanned states. Names, markers and {slot} placeholders mask to the same token, so a pool line with placeholders matches its filled form.",
+    "specGaps": [
+      "Criteria: the program names none, so every contract freezes criteria: [] and the instructions are the wording itself.",
+      "OOD wordings: rule 3 gives each OOD slice its own held-out wordings, but only ports with heldoutWordings (wave 1) get them. Ports without held-out wordings use Q0-Q3 in OOD slices; their OOD axes are families, skeleton buckets and authored lines.",
+      "Paraphrase-consistency records (§3.2, variant paraphrase) carry Q0 and held-out wordings of their slice of one port on one state; question ids <port>~<wordingId>.",
+      "Unknowables: §2.5 marks evaluation files with _meta.source = \"unknowable\" and gives training records a soft target. Train files therefore carry no unknowable source (Kev treats unknowable as an eval-only source); evaluation files (every slice but train) do. A record lists its unknowable questions in meta.unknowable (default: its only question); an evaluation record whose unknowable questions are of soft-target ports carries only those questions, because Kev's source is per record.",
+      "State budget: rule 6 admits records by fits() and sets a job's maxState to the build's p99.9. The factory re-measures every admitted record with fits() at that job maxState and drops (and counts) the misfits, so Kev never drops a record.",
+      "Test-slice question limit (rule 5): one question per port per state, except paraphrase and pair records and the record forms of recordQuestions ports (C1, C3, Q1), which carry one question per slot value."
     ]
   },
   "route": {
@@ -85,16 +95,16 @@
     "journal": "every escalation is a journaled event with the request hash, model, p and cost; no silent fallback"
   },
   "bedPin": {
-    "pin": "sha256:f2d12cf8186049821ec504cda6e74ff552ea38920da74a0fc1e522474ab0df72",
-    "commit": "70df598dababdba970f7b17fcf53a29d5df6485e",
+    "pin": "sha256:e70f36eb1b86b621e78c74ac02616958588641f19e1dad48a5b514305c552c63",
+    "commit": "450ce536a2589659940b3f060f869b4117c1427f",
     "versions": {
       "beds/codefix/build.mjs": "1.1.0",
-      "beds/incident/gen.mjs": "4.0.0",
+      "beds/incident/gen.mjs": "4.1.0",
       "beds/kinetics/world.mjs": "4.0.0",
       "beds/ownerci/index.mjs": "1.1.0",
       "beds/synth/world.mjs": "2.0.0"
     },
-    "note": "the beds the bed-derived option sets (optionsFrom) were read from; builds record their own pin"
+    "note": "the beds the bed-derived option sets (optionsFrom) and the I2 tag inventory were last checked against (2026-10-08); the contracts-lib drift test re-checks them at every run; builds record their own pin"
   },
   "ports": {
     "R1": {
@@ -136,7 +146,8 @@
             "LEDGR",
             "KOBO",
             "VERITAS"
-          ]
+          ],
+          "mask": "name"
         }
       },
       "options": {
@@ -251,7 +262,8 @@
             "ATLAS",
             "KOBO",
             "VERITAS"
-          ]
+          ],
+          "mask": "name"
         },
         "value": {
           "source": "trusted code: the marker display form FLAG_FORM[S].show(token) (beds/records/render.mjs), as written in the state key marker",
@@ -362,7 +374,8 @@
             "ATLAS",
             "LEDGR",
             "KOBO"
-          ]
+          ],
+          "mask": "name"
         }
       },
       "options": {
@@ -468,7 +481,8 @@
             "LEDGR",
             "KOBO",
             "VERITAS"
-          ]
+          ],
+          "mask": "name"
         },
         "field": {
           "source": "trusted code: UPDATE_FIELD[S] (beds/records/render.mjs)",
@@ -581,7 +595,8 @@
             "VENDEX",
             "KOBO",
             "VERITAS"
-          ]
+          ],
+          "mask": "name"
         }
       },
       "options": {
@@ -608,8 +623,8 @@
         "bed": "records",
         "file": "beds/records/pools.mjs",
         "export": "COUNTRY_NAME",
-        "commit": "70df598dababdba970f7b17fcf53a29d5df6485e",
-        "pin": "sha256:f2d12cf8186049821ec504cda6e74ff552ea38920da74a0fc1e522474ab0df72"
+        "commit": "450ce536a2589659940b3f060f869b4117c1427f",
+        "pin": "sha256:e70f36eb1b86b621e78c74ac02616958588641f19e1dad48a5b514305c552c63"
       },
       "ordered": false,
       "criteria": [],
@@ -715,8 +730,8 @@
         "bed": "incident",
         "file": "beds/incident/catalog.mjs",
         "export": "FAULT_CLASSES, CLASS_SUMMARY",
-        "commit": "70df598dababdba970f7b17fcf53a29d5df6485e",
-        "pin": "sha256:f2d12cf8186049821ec504cda6e74ff552ea38920da74a0fc1e522474ab0df72"
+        "commit": "450ce536a2589659940b3f060f869b4117c1427f",
+        "pin": "sha256:e70f36eb1b86b621e78c74ac02616958588641f19e1dad48a5b514305c552c63"
       },
       "ordered": false,
       "criteria": [],
@@ -831,7 +846,7 @@
         "note": null
       },
       "allowedKnowledge": [],
-      "deploymentRate": "uniform",
+      "deploymentRate": "bed-natural",
       "balanceWithin": null,
       "budget": {
         "typical": 65,
@@ -854,9 +869,9 @@
         "dev-ood": 10,
         "test-ood": 20
       },
-      "labelSource": "truth.idsByTag through the explicit 24-tag table (labelMap.tags); a tag outside the table fails the build; echo and consequence are excluded and counted",
+      "labelSource": "truth.idsByTag through the explicit tag table (labelMap.tags: the program's 24 rows); a tag outside the table, including the two labelMap.unmapped tags, fails the build; echo and consequence are excluded and counted",
       "labelMap": {
-        "bedVersion": "4.0.0",
+        "bedVersion": "4.1.0",
         "tags": {
           "onset": "origin",
           "root": "origin",
@@ -886,14 +901,32 @@
         "excluded": {
           "echo": "callers' own failure/fallback lines during a blip (K.blipEcho), same templates as dep/soft: not a function of the state",
           "consequence": "a healthy callee rejecting the root's bad requests (C.CALLEE_REJECT): no option fits"
-        }
+        },
+        "unmapped": {
+          "collateral": "emitted at d3-d5 since incident 4.0.0: a direct caller stuck on the root times out calling a healthy callee (C.COLLATERAL; the bed counts these lines in truth.depIds). Not in the program's 24-row table, so a build fails closed on it. Proposal for the incident group, not applied: relay (the line reports a failing call to another service).",
+          "shadow": "emitted at d3-d5 since incident 4.0.0: an episode on a test or shadow pod that serves no customers, named only by a task note (K.shadow). Not in the program's 24-row table, so a build fails closed on it. Proposal for the incident group, not applied: excluded and counted like echo (the I2 state {line, emitting_service, calls} does not carry the note, so origin against unrelated is not a function of the state)."
+        },
+        "inventory": {
+          "measured": "2026-10-08 by contracts-lib (development evidence)",
+          "worlds": "dev seeds 401-500 x d3-d5 (300 worlds, train range; no reserved or test seed)",
+          "beds": "incident VERSION 4.1.0 at bed pin sha256:e70f36eb1b86b621e78c74ac02616958588641f19e1dad48a5b514305c552c63, and VERSION 4.0.0 at commit 70df598",
+          "tags": 26,
+          "inTable": 24,
+          "unmappedLines": {
+            "collateral": 996,
+            "shadow": 4498
+          }
+        },
+        "owner": "the incident group regenerates the inventory on 300 dev worlds and writes the final table (JUDGE-BUILD-PLAN.json, group incident); contracts-lib only pins it"
       },
       "unknowable": "n/a",
       "causal": [],
       "epsilon": 0.05,
       "perWorld": "8 sampled: 2 origin, 2 relay, <= 1 fallback, 3 unrelated (>= 2 hard negatives)",
       "status": "in-plan",
-      "specGaps": []
+      "specGaps": [
+        "The program's 24-row table ([M crit-G G9]) is short by two tags: incident VERSION 4.0.0 and 4.1.0 both emit 26 tags on dev seeds 401-500 x d3-d5 (collateral and shadow are the extra two). Both are recorded in labelMap.unmapped and fail closed until the incident group maps them; the incident acceptance test \"exactly the 24 tags emitted by bed VERSION 4.0.0\" cannot pass as written. bedVersion was moved from 4.0.0 to 4.1.0 after re-measuring at the current pin (the 24 mapped tags keep their meaning; 4.1.0 changed herring timing and class draws only)."
+      ]
     },
     "I3": {
       "id": "I3",
@@ -1406,8 +1439,8 @@
         "bed": "synth",
         "file": "beds/synth/catalog.mjs",
         "export": "TYPE_LABELS (kind -> plain)",
-        "commit": "70df598dababdba970f7b17fcf53a29d5df6485e",
-        "pin": "sha256:f2d12cf8186049821ec504cda6e74ff552ea38920da74a0fc1e522474ab0df72"
+        "commit": "450ce536a2589659940b3f060f869b4117c1427f",
+        "pin": "sha256:e70f36eb1b86b621e78c74ac02616958588641f19e1dad48a5b514305c552c63"
       },
       "ordered": false,
       "criteria": [],
@@ -1443,8 +1476,11 @@
           "synth"
         ],
         "heldOut": [
-          "authored unseen type names"
-        ]
+          "unseen-names"
+        ],
+        "notes": {
+          "unseen-names": "authored type labels outside TYPE_LABELS (group heldout-author, §1.2 S5); S5 is evaluated only on this pool"
+        }
       },
       "holdouts": {
         "evaluation": "only on the authored unseen-name pool (heldout-author)"
@@ -1457,7 +1493,10 @@
       "epsilon": 0.05,
       "perWorld": "per document",
       "status": "in-plan",
-      "specGaps": []
+      "specGaps": [
+        "Families are identifiers: the authored unseen type names are the held-out family unseen-names.",
+        "Wording Q3 changed from the program (\"Retraction, erratum, expression of concern, letter, full paper, preprint or press release?\"): the program text named two journal type labels instead of the journal and lab-note kinds, so it did not enumerate the options."
+      ]
     },
     "K1": {
       "id": "K1",
@@ -1673,8 +1712,8 @@
         "bed": "kinetics",
         "file": "beds/kinetics/render.mjs",
         "export": "RATE_FACTOR keys, plus mAU/min",
-        "commit": "70df598dababdba970f7b17fcf53a29d5df6485e",
-        "pin": "sha256:f2d12cf8186049821ec504cda6e74ff552ea38920da74a0fc1e522474ab0df72"
+        "commit": "450ce536a2589659940b3f060f869b4117c1427f",
+        "pin": "sha256:e70f36eb1b86b621e78c74ac02616958588641f19e1dad48a5b514305c552c63"
       },
       "ordered": false,
       "criteria": [],
@@ -1810,7 +1849,10 @@
       "epsilon": 0.05,
       "perWorld": "up to 8 rooms on the reference route x 4 directions",
       "status": "in-plan",
-      "specGaps": []
+      "specGaps": [
+        "recordQuestions 4: four questions per record, one per direction (§1.2 Q1). In test slices one question per direction, clustered by state."
+      ],
+      "recordQuestions": 4
     },
     "Q2": {
       "id": "Q2",
@@ -2109,8 +2151,8 @@
         "bed": "gameqa",
         "file": "beds/gameqa/bugs.mjs + beds/gameqa/text.mjs",
         "export": "BUG_CLASSES, CLASS_DEFS",
-        "commit": "70df598dababdba970f7b17fcf53a29d5df6485e",
-        "pin": "sha256:f2d12cf8186049821ec504cda6e74ff552ea38920da74a0fc1e522474ab0df72"
+        "commit": "450ce536a2589659940b3f060f869b4117c1427f",
+        "pin": "sha256:e70f36eb1b86b621e78c74ac02616958588641f19e1dad48a5b514305c552c63"
       },
       "ordered": false,
       "criteria": [],
@@ -2301,7 +2343,7 @@
       "budget": {
         "typical": 70,
         "max": 170,
-        "evidence": "M",
+        "evidence": "E",
         "hardCap": 8192,
         "probe": "60/95 bytes/4 [M probe]",
         "longVariantMax": 4000
@@ -2318,8 +2360,11 @@
         "heldOut": [
           "kinetics",
           "gridquest",
-          "external:deepset/prompt-injections@4f61ecb0"
-        ]
+          "external-deepset"
+        ],
+        "notes": {
+          "external-deepset": "deepset/prompt-injections@4f61ecb0 text re-targeted at the port (§2.5 injection insert, §3.4)"
+        }
       },
       "holdouts": {
         "templateAxis": "authored lines + held-out families",
@@ -2327,7 +2372,7 @@
         "families": [
           "kinetics",
           "gridquest",
-          "deepset"
+          "external-deepset"
         ]
       },
       "heldoutWordings": {
@@ -2342,7 +2387,9 @@
       "epsilon": 0.05,
       "perWorld": "1-3 positives and 2-4 hard negatives per bed world at d >= 3-4",
       "status": "in-plan",
-      "specGaps": []
+      "specGaps": [
+        "Families are identifiers: the deepset family is external-deepset (families.notes holds the dataset revision)."
+      ]
     },
     "X2": {
       "id": "X2",
@@ -2511,11 +2558,14 @@
       "families": {
         "train": [
           "kinetics",
-          "codefix (if tapped)"
+          "codefix"
         ],
         "heldOut": [
           "runbook"
-        ]
+        ],
+        "notes": {
+          "codefix": "only if the codefix span tap passes acceptance (§1.1 X3, §2.6, §3.4 \"and codefix if tapped\")"
+        }
       },
       "holdouts": {
         "families": [
@@ -2534,7 +2584,9 @@
       "epsilon": 0.05,
       "perWorld": null,
       "status": "in-plan",
-      "specGaps": []
+      "specGaps": [
+        "Families are identifiers: \"codefix (if tapped)\" is codefix, with the condition in families.notes."
+      ]
     },
     "X4": {
       "id": "X4",
@@ -2544,7 +2596,9 @@
         "D:A18",
         "D:A23"
       ],
-      "relatedDecisions": [],
+      "relatedDecisions": [
+        "D:A10"
+      ],
       "wave": 2,
       "waveNote": null,
       "authority": "gating",
@@ -2649,7 +2703,11 @@
         "D:D1"
       ],
       "relatedDecisions": [
-        "D:D7"
+        "D:D7",
+        "D:A2",
+        "D:A3",
+        "D:A4",
+        "D:A5"
       ],
       "wave": 1,
       "waveNote": null,
@@ -2713,14 +2771,23 @@
           "records",
           "synth",
           "incident",
-          "bedtype"
+          "bedtype:records",
+          "bedtype:incident",
+          "bedtype:synth",
+          "bedtype:gameqa",
+          "bedtype:gridquest",
+          "bedtype:codefix",
+          "bedtype:ownerci"
         ],
         "heldOut": [
           "kinetics",
           "runbook",
           "bedtype:kinetics",
           "bedtype:runbook"
-        ]
+        ],
+        "notes": {
+          "bedtype:<bed>": "cross-family type-applicability pairs built from that bed's family description, README task paragraph and prompts; 7 train families (§3.4 \"bedtype (7 families)\"), kinetics and runbook held out"
+        }
       },
       "holdouts": {
         "templateAxis": "authored assumption and conventions lines",
@@ -2728,7 +2795,8 @@
         "families": [
           "kinetics",
           "runbook",
-          "bedtype (kinetics and runbook descriptions and prompts)"
+          "bedtype:kinetics",
+          "bedtype:runbook"
         ]
       },
       "heldoutWordings": {
@@ -2747,7 +2815,9 @@
       "epsilon": 0.02,
       "perWorld": null,
       "status": "in-plan",
-      "specGaps": []
+      "specGaps": [
+        "Families are identifiers: bedtype is written per bed (bedtype:<bed>), 7 train beds and bedtype:kinetics, bedtype:runbook held out."
+      ]
     },
     "X6": {
       "id": "X6",
@@ -3016,8 +3086,11 @@
         ],
         "heldOut": [
           "synth",
-          "records-real (reserved worlds test 7000-7039 x d3-d5)"
-        ]
+          "records-real"
+        ],
+        "notes": {
+          "records-real": "weak-model runs on reserved worlds test 7000-7039 x d3-d5 (slice real-reserve, §3.5)"
+        }
       },
       "holdouts": {
         "templateAxis": "authored conventions lines",
@@ -3041,7 +3114,9 @@
       "epsilon": 0.05,
       "perWorld": null,
       "status": "in-plan",
-      "specGaps": []
+      "specGaps": [
+        "Families are identifiers: \"records-real (reserved worlds)\" is records-real; its records live in the real-reserve slice, where held-out families are allowed."
+      ]
     },
     "F1": {
       "id": "F1",
@@ -3123,10 +3198,13 @@
       "families": {
         "train": [
           "exec-injected",
-          "templates (<= 20%)",
+          "templates",
           "gameqa"
         ],
-        "heldOut": []
+        "heldOut": [],
+        "notes": {
+          "templates": "at most 20% of F1 rows (§1.2 F1)"
+        }
       },
       "holdouts": {
         "templateAxis": "skeleton holdout over workflow shapes (exec-injected)"
@@ -3143,7 +3221,9 @@
       "epsilon": 0.05,
       "perWorld": null,
       "status": "in-plan",
-      "specGaps": []
+      "specGaps": [
+        "Families are identifiers: \"templates (<= 20%)\" is templates, with the cap in families.notes."
+      ]
     },
     "F2": {
       "id": "F2",
@@ -3211,16 +3291,24 @@
       },
       "families": {
         "train": [
-          "codefix: 4 domains"
+          "codefix:inventory",
+          "codefix:scheduling",
+          "codefix:billing",
+          "codefix:tokenizer"
         ],
         "heldOut": [
-          "codefix: 2 domains",
+          "codefix:routing",
+          "codefix:ratelimit",
           "ownerci"
-        ]
+        ],
+        "notes": {
+          "codefix:<domain>": "one of the six DOMAINS of beds/codefix/build.mjs; §3.4 holds out 2 of 6 without naming them, so the last two in DOMAINS order (routing, ratelimit) are pre-registered here"
+        }
       },
       "holdouts": {
         "families": [
-          "codefix: 2 held-out domains",
+          "codefix:routing",
+          "codefix:ratelimit",
           "ownerci"
         ]
       },
@@ -3232,7 +3320,9 @@
       "epsilon": 0.05,
       "perWorld": null,
       "status": "in-plan",
-      "specGaps": []
+      "specGaps": [
+        "The program holds out \"codefix: 2 domains\" without naming them. Pre-registered here: train codefix:inventory, codefix:scheduling, codefix:billing, codefix:tokenizer; held out codefix:routing, codefix:ratelimit (the last two of beds/codefix/build.mjs DOMAINS) and ownerci. F2 records name their domain family."
+      ]
     },
     "F3": {
       "id": "F3",
@@ -3405,11 +3495,15 @@
       },
       "families": {
         "train": [
-          "generated (objective composer)"
+          "composer"
         ],
         "heldOut": [
-          "real: bundled programs and C0 objectives, hand-labelled (O5)"
-        ]
+          "real-hand"
+        ],
+        "notes": {
+          "composer": "the objective composer (group construction)",
+          "real-hand": "bundled programs and C0 objectives, hand-labelled by two annotators the owner names (O5); not built until named"
+        }
       },
       "holdouts": {},
       "heldoutWordings": null,
@@ -3421,8 +3515,12 @@
       "perWorld": null,
       "status": "in-plan",
       "specGaps": [
-        "Requirement descriptions are authored here (REQUIREMENT_LIBRARY carries cue regexes and a rationale, not a description)."
-      ]
+        "Requirement descriptions are authored here (REQUIREMENT_LIBRARY carries cue regexes and a rationale, not a description).",
+        "Families are identifiers: the generated family is composer, the hand-labelled REAL-TRACE set is real-hand (held out, not built until O5).",
+        "Wordings Q0-Q3: the program slot \"{requirement description}\" is written {requirement} (slot names are identifiers); the text is otherwise verbatim.",
+        "recordQuestions 12: one record holds the 12 requirement questions (§1.2 C1), above rule 5's 6. In test slices they count as one question per requirement (question ids C1~<requirement id>), clustered by state."
+      ],
+      "recordQuestions": 12
     },
     "C2": {
       "id": "C2",
@@ -3486,9 +3584,12 @@
       },
       "families": {
         "train": [
-          "generated (objective composer)"
+          "composer"
         ],
-        "heldOut": []
+        "heldOut": [],
+        "notes": {
+          "composer": "the objective composer (group construction)"
+        }
       },
       "holdouts": {},
       "heldoutWordings": null,
@@ -3499,7 +3600,9 @@
       "epsilon": 0.05,
       "perWorld": null,
       "status": "in-plan",
-      "specGaps": []
+      "specGaps": [
+        "Wordings Q1 and Q2 changed from the program (\"Can this objective be met with the listed capabilities?\", \"Is the objective grounded in the available tools?\"): their natural yes meant the option no, a polarity flip against the fixed option names."
+      ]
     },
     "C3": {
       "id": "C3",
@@ -3606,7 +3709,11 @@
       "epsilon": 0.05,
       "perWorld": null,
       "status": "out-of-plan until the owner names the annotators (O5)",
-      "specGaps": []
+      "specGaps": [
+        "Wordings Q0-Q3 are authored here: the program gives none for C3 (D:G1 \"Does this workflow belong to domain d?\"). Option descriptions are authored here.",
+        "recordQuestions 9: about 10 yes/no domain questions per item (§1.1 \"2 (x~10)\"), one per DOMAIN_RULES id; above rule 5's 6. In test slices one question per domain, clustered by state."
+      ],
+      "recordQuestions": 9
     },
     "C4": {
       "id": "C4",
@@ -3704,7 +3811,8 @@
       "status": "out-of-plan until the owner names the annotators (O5)",
       "specGaps": [
         "The spec gives no C4 state; D:G2 says \"node type, label and parameters\". The display label is frozen as node_label, because the exact key `label` is forbidden (§2.3 rule 2).",
-        "Option descriptions are authored here."
+        "Option descriptions are authored here.",
+        "Wordings Q0-Q3 are authored here: the program gives none for C4 (D:G2)."
       ]
     },
     "C5": {
@@ -3790,7 +3898,9 @@
       "epsilon": 0.05,
       "perWorld": null,
       "status": "out-of-plan until the owner names the annotators (O5)",
-      "specGaps": []
+      "specGaps": [
+        "Wordings Q0-Q3 are authored here: the program gives none for C5, and its two 2-way questions (D:G3) are frozen as one yes/no port with a {motif} slot of two fixed values. Option descriptions are authored here."
+      ]
     },
     "C6": {
       "id": "C6",
@@ -3865,7 +3975,9 @@
       "epsilon": 0.05,
       "perWorld": null,
       "status": "out-of-plan until the owner names the annotators (O5)",
-      "specGaps": []
+      "specGaps": [
+        "Wordings Q0-Q3 and the four ordered levels with their descriptions are authored here: the program gives none for C6 (Q0 is D:G6's question)."
+      ]
     },
     "C7": {
       "id": "C7",
@@ -3929,9 +4041,12 @@
       },
       "families": {
         "train": [
-          "generated tool calls"
+          "composer"
         ],
-        "heldOut": []
+        "heldOut": [],
+        "notes": {
+          "composer": "a composer of benign tool calls and gaming attempts"
+        }
       },
       "holdouts": {},
       "heldoutWordings": null,
@@ -3942,7 +4057,9 @@
       "epsilon": 0.05,
       "perWorld": null,
       "status": "in-plan",
-      "specGaps": []
+      "specGaps": [
+        "Families are identifiers: \"generated tool calls\" is composer."
+      ]
     },
     "C8": {
       "id": "C8",
@@ -4002,9 +4119,12 @@
       },
       "families": {
         "train": [
-          "generated notes"
+          "composer"
         ],
-        "heldOut": []
+        "heldOut": [],
+        "notes": {
+          "composer": "a composer that templates truth values into lessons, against general lessons"
+        }
       },
       "holdouts": {},
       "heldoutWordings": null,
@@ -4015,7 +4135,10 @@
       "epsilon": 0.05,
       "perWorld": null,
       "status": "in-plan",
-      "specGaps": []
+      "specGaps": [
+        "Families are identifiers: \"generated notes\" is composer.",
+        "Wordings Q1-Q3 and the option descriptions are authored here: the program gives Q0 and the option names only."
+      ]
     },
     "C9": {
       "id": "C9",
@@ -4079,9 +4202,12 @@
       },
       "families": {
         "train": [
-          "bed prompts"
+          "bed-prompts"
         ],
-        "heldOut": []
+        "heldOut": [],
+        "notes": {
+          "bed-prompts": "pairs of bed prompts; labels are the beds' family ids"
+        }
       },
       "holdouts": {},
       "heldoutWordings": null,
@@ -4092,7 +4218,10 @@
       "epsilon": 0.05,
       "perWorld": null,
       "status": "in-plan",
-      "specGaps": []
+      "specGaps": [
+        "Families are identifiers: \"bed prompts\" is bed-prompts.",
+        "Wordings Q1-Q3 and the option descriptions are authored here: the program gives Q0 and the option names only."
+      ]
     }
   },
   "ledgerOnly": {

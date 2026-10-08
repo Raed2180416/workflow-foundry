@@ -5,7 +5,7 @@ import { rng } from '../lib/rng.mjs';
 import { estimateTokens } from '../lib/canonical.mjs';
 import * as C from './catalog.mjs';
 
-export const VERSION = '4.1.0';
+export const VERSION = '4.2.0';
 export const WINDOW = 1800; // seconds of logs per task
 const MAX_ATTEMPTS = 64; // from this attempt on the soft preferences (Jaccard, fallback callers) are dropped;
 // structural validity (topology size, eligible root candidates) is never relaxed
@@ -18,12 +18,12 @@ const MAX_ATTEMPTS = 64; // from this attempt on the soft preferences (Jaccard, 
 // noted in AUDIT.md). Round 2 also raised decoyBlip 0.5 -> 0.8 and decoyBelowRoot 0.3 -> 0.5, round 4 onsetMore 0.5 -> 0.6, round 5 quiet [0.3, 1] -> [0.15, 0.9], strayOthers [1, 2] -> [2, 3], revised 2 -> 3, mixedNotes 0.5 -> 0.7
 // and (d3 only) added 1 -> 2, stale 1 -> 2.
 const BASE = { anchors: 1, minRootCands: 1, wrap: 0, chronic: 0, pods: false, soft: 0, deploy: 0, blipRoot: false, blipSame: false, benignHard: false, added: 0, stale: 0, proseAliases: 0, mislead: 0, notice: false, inject: false, legacySource: false, noisyNote: false, hypothesis: false, addresses: false };
-const HARD = { strayRec: 0.6, echoOnlyRec: 0.4, prevNear: true, consequence: 0.8, dialect: true, shadow: [1, 2], onsetX: true, lookalikeGen: true, strayGen: true, describe: 0.4, partialMore: true, nearLookalike: 0.75, lookalikeMore: true, anonDirect: 0.7, anonCollateral: true, nearHerrings: 0.8, canaryNoVer: 0.5, cacheOtherNs: 0.6, tRange: [480, 960], latent: [5, 600], leakPace: [10, 75], rootStats: false, blipStats: 0.7, collateral: [0.2, 0.45], onsetDirect: 0.4, certLead: [75, 240], stray: 0.65, strayOthers: [2, 3], blipEcho: 0.8, onsetMore: 0.6, recoverMore: true, longBlips: true, lookalikeOthers: 0.85, siblingOnset: 0.2, anonMax: 3, decoyBlip: 0.8, partialRec: true, statsOnset: 0, statsAfter: true, provider: 0.4, canary: 0.6, podEcho: true, revised: 3, stale: 1, onsetRepeat: 0.25, quiet: [0.15, 0.9], blipOnset: 0.85, recoverAlt: 0.7, decoyBelowRoot: 0.5, paraphrase: true, lookalikes: true, configLag: [20, 480], anon: 0.8, mixedNotes: 0.7, silentSoft: 0.5, softErr: 0.6, warnSev: 0.3, mention: 0.03, mentionErr: 0.4, decoy: 1, secondary: [0.35, 0.65], lead: [60, 600], cacheLag: [45, 600], blipNear: true, nearPrecursor: 0.8, ticketSubset: true, hardNotes: 2, renewHerring: true, baselines: 3, wantSoft: 0.5, bigSkew: 0.6 };
-const EASY = { strayRec: 0, echoOnlyRec: 0, prevNear: false, consequence: 0, dialect: false, shadow: null, onsetX: false, lookalikeGen: false, strayGen: false, describe: 0, partialMore: false, nearLookalike: 0, lookalikeMore: false, anonDirect: 0, anonCollateral: false, nearHerrings: 0, canaryNoVer: 0, cacheOtherNs: 0, tRange: [540, 1020], latent: null, leakPace: null, rootStats: true, blipStats: 0, collateral: null, onsetDirect: 0, certLead: [5, 45], stray: 0, strayOthers: [0, 0], blipEcho: 0, onsetMore: 0, recoverMore: false, longBlips: false, lookalikeOthers: 0, siblingOnset: 0, anonMax: 1, decoyBlip: 0, partialRec: false, statsOnset: 0, statsAfter: false, provider: 0, canary: 0, podEcho: false, revised: 0, stale: 0, onsetRepeat: 0, quiet: [1, 1], blipOnset: 0, recoverAlt: 0, decoyBelowRoot: 1, paraphrase: false, lookalikes: false, configLag: null, anon: 0, mixedNotes: 0, silentSoft: 0, softErr: 0, warnSev: 0, mention: 0.01, mentionErr: 0, decoy: 0, secondary: [0, 0], lead: [15, 40], cacheLag: [3, 25], blipNear: false, nearPrecursor: 0, ticketSubset: false, hardNotes: 0, renewHerring: false, baselines: 0, wantSoft: 0, bigSkew: 0 };
+const HARD = { rival: true, strayRec: 0.6, echoOnlyRec: 0.4, prevNear: true, consequence: 0.8, dialect: true, shadow: [1, 2], onsetX: true, lookalikeGen: true, strayGen: true, describe: 0.4, partialMore: true, nearLookalike: 0.75, lookalikeMore: true, anonDirect: 0.7, anonCollateral: true, nearHerrings: 0.8, canaryNoVer: 0.5, cacheOtherNs: 0.6, tRange: [480, 960], latent: [5, 600], leakPace: [10, 75], rootStats: false, blipStats: 0.7, collateral: [0.2, 0.45], onsetDirect: 0.4, certLead: [75, 240], stray: 0.65, strayOthers: [2, 3], blipEcho: 0.8, onsetMore: 0.6, recoverMore: true, longBlips: true, lookalikeOthers: 0.85, siblingOnset: 0.2, anonMax: 3, decoyBlip: 0.8, partialRec: true, statsOnset: 0, statsAfter: true, provider: 0.4, canary: 0.6, podEcho: true, revised: 3, stale: 1, onsetRepeat: 0.25, quiet: [0.15, 0.9], blipOnset: 0.85, recoverAlt: 0.7, decoyBelowRoot: 0.5, paraphrase: true, lookalikes: true, configLag: [20, 480], anon: 0.8, mixedNotes: 0.7, silentSoft: 0.5, softErr: 0.6, warnSev: 0.3, mention: 0.03, mentionErr: 0.4, decoy: 1, secondary: [0.35, 0.65], lead: [60, 600], cacheLag: [45, 600], blipNear: true, nearPrecursor: 0.8, ticketSubset: true, hardNotes: 2, renewHerring: true, baselines: 3, wantSoft: 0.5, bigSkew: 0.6 };
+const EASY = { rival: false, strayRec: 0, echoOnlyRec: 0, prevNear: false, consequence: 0, dialect: false, shadow: null, onsetX: false, lookalikeGen: false, strayGen: false, describe: 0, partialMore: false, nearLookalike: 0, lookalikeMore: false, anonDirect: 0, anonCollateral: false, nearHerrings: 0, canaryNoVer: 0, cacheOtherNs: 0, tRange: [540, 1020], latent: null, leakPace: null, rootStats: true, blipStats: 0, collateral: null, onsetDirect: 0, certLead: [5, 45], stray: 0, strayOthers: [0, 0], blipEcho: 0, onsetMore: 0, recoverMore: false, longBlips: false, lookalikeOthers: 0, siblingOnset: 0, anonMax: 1, decoyBlip: 0, partialRec: false, statsOnset: 0, statsAfter: false, provider: 0, canary: 0, podEcho: false, revised: 0, stale: 0, onsetRepeat: 0, quiet: [1, 1], blipOnset: 0, recoverAlt: 0, decoyBelowRoot: 1, paraphrase: false, lookalikes: false, configLag: null, anon: 0, mixedNotes: 0, silentSoft: 0, softErr: 0, warnSev: 0, mention: 0.01, mentionErr: 0, decoy: 0, secondary: [0, 0], lead: [15, 40], cacheLag: [3, 25], blipNear: false, nearPrecursor: 0, ticketSubset: false, hardNotes: 0, renewHerring: false, baselines: 0, wantSoft: 0, bigSkew: 0 };
 export const KNOBS = {
   1: { ...BASE, ...EASY, anchors: 1, services: 6, batch: 1, lines: 300, bg: 0.78, styles: ['plain'], refs: ['name'], blipOther: 1, noisyNote: true },
   2: { ...BASE, ...EASY, anchors: 2, services: 8, batch: 1, lines: 400, bg: 0.78, wrap: 0.15, styles: ['plain', 'bracket', 'kv'], refs: ['name', 'name', 'host'], soft: 0.4, deploy: 1, blipSame: true, blipOther: 1, noisyNote: true, mention: 0.015, secondary: [0.1, 0.2] },
-  3: { ...BASE, ...HARD, anchors: 2, minRootCands: 2, decoy: 2, services: 11, batch: 1, lines: 420, bg: 0.38, wrap: 0.3, chronic: 1, styles: ['plain', 'bracket', 'kv', 'json', 'short'], refs: ['name', 'host', 'legacy'], pods: true, soft: 0.5, deploy: 1, blipRoot: true, blipSame: true, blipOther: 2, benignHard: true, added: 2, stale: 2 },
+  3: { ...BASE, ...HARD, anchors: 2, minRootCands: 2, decoy: 2, services: 11, batch: 1, lines: 420, bg: 0.32, wrap: 0.3, chronic: 1, styles: ['plain', 'bracket', 'kv', 'json', 'short'], refs: ['name', 'host', 'legacy'], pods: true, soft: 0.5, deploy: 1, blipRoot: true, blipSame: true, blipOther: 2, benignHard: true, added: 2, stale: 2 },
   4: { ...BASE, ...HARD, anchors: 3, minRootCands: 2, decoy: 2, services: 14, batch: 2, lines: 1600, bg: 0.7, wrap: 0.35, chronic: 1, styles: ['plain', 'bracket', 'kv', 'json', 'short'], refs: ['name', 'host', 'legacy', 'ip'], pods: true, soft: 0.45, deploy: 1, blipRoot: true, blipSame: true, blipOther: 2, benignHard: true, added: 1, stale: 1, proseAliases: 2, mislead: 1, hypothesis: true, addresses: true, warnSev: 0.35, baselines: 4 },
   5: { ...BASE, ...HARD, anchors: 3, minRootCands: 2, services: 18, batch: 2, lines: 4000, bg: 0.72, wrap: 0.35, chronic: 2, styles: ['plain', 'bracket', 'kv', 'json', 'short'], refs: ['name', 'host', 'legacy', 'ip'], pods: true, soft: 0.45, deploy: 2, blipRoot: true, blipSame: true, blipOther: 4, benignHard: true, added: 2, proseAliases: 3, mislead: 1, notice: true, inject: true, legacySource: true, hypothesis: true, addresses: true, warnSev: 0.4, softErr: 0.7, decoy: 2, hardNotes: 3, baselines: 5, revised: 3, stale: 2 },
 };
@@ -873,7 +873,9 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
     }
     // v4 (second audit): a second resource of the same kind reports in the same form (d3+); the root's stray
     // resource turns abnormal at its stray line. In v3 the root's only stats series had exactly one change, at T.
-    if (K.stray && C.STRAY_STATS[klass]) {
+    // v4.2 (second audit 2): only while the root keeps a stats series of its own (d1-d2 have no strays; from d3 the
+    // root has none), so from d3 this second series was noise that mirrored nothing in the root (about 1K tokens).
+    if (K.stray && K.rootStats && C.STRAY_STATS[klass]) {
       const sr = s === root && rootStray ? rootStray : null;
       const o = sr ? sr.o : strayOther(s, klass, 0, rn);
       for (let t = rn.int(5, 120); t < WINDOW; t += rn.int(90, 180)) emit(t, s, C.STRAY_STATS[klass](ctxFor(s, t, rn), rn, o, Boolean(sr && t >= sr.t)), sr && t >= sr.t ? 'stray' : 'baseline');
@@ -917,7 +919,14 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
       emit(tb, s, klass === 'clock_skew' ? ['INFO', `ntp offset ${rh.int(150, 480)}ms`] : C.BASELINE_AFTER[klass](cb, rh, v).slice(0, 2), tag);
     }
     const recover = K.recoverAlt && rh.chance(K.recoverAlt) ? rh.pick([...C.RECOVER_ALT[klass], ...(K.recoverMore ? C.RECOVER_MORE[klass] : [])]) : P.recover;
-    const echoEdges = s.callers.filter(e => S[e.from].kind !== 'batch'), canEcho = K.blipEcho && echoEdges.length && t0 + offs.end + 45 < T - 15;
+    // v4.2 (second audit 2, F-30): any blip outside the root may be echoed by its callers, whenever it happens,
+    // as long as neither the service nor the echoing caller is failing or falling back because of the real fault
+    // by then. In v4.1 only blips that ended before T - 60 s were echoed, so "the last 'answering again' line +
+    // 3 minutes" dated T in 43% of d3 tasks (49% at d5) against a 25% base rate.
+    const tEnd = t0 + offs.end;
+    const calm = k => !(impacted.has(k) && impacted.get(k) <= tEnd + 45) && !(degraded.has(k) && degraded.get(k) <= tEnd + 45);
+    const echoEdges = s.callers.filter(e => S[e.from].kind !== 'batch' && calm(e.from));
+    const canEcho = K.blipEcho && echoEdges.length && (s === root ? tEnd + 45 < T - 15 : calm(s.key) && tEnd + 45 < WINDOW);
     // v4 round 5: the root's own blip sometimes ends without a line of its own (K.echoOnlyRec): only its callers
     // say that their calls succeed again (and its request lines are normal again).
     const echoOnly = s === root && klass === cls && canEcho && K.echoOnlyRec && rh.chance(K.echoOnlyRec);
@@ -971,10 +980,50 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   const herringFree = list => list.filter(x => !collateralTo.has(x.key));
   const near = (list, rr) => { const c = coCallees.filter(x => list.includes(x)), all = herringFree(list).length ? herringFree(list) : list; return K.nearHerrings && c.length && rr.chance(K.nearHerrings) ? rr.pick(c) : rr.pick(all); };
   const sameHosts = nonRoot.filter(s => cls !== 'upstream_rate_limiting' || s.ext);
+  let sameSvc = null;
   if (K.blipSame && sameHosts.length) {
     const s = near(sameHosts, rh);
+    sameSvc = s;
     // v3 (audit): other services' blips may open with onset wording too (v2: only the root ever logged it).
-    herrings.blips.push({ svc: s.name, cls, t: blip(s, cls, rh.int(30, T - 240), 'blip-same', null, Boolean(K.blipOnset && C.BLIP_ONSET[cls] && rh.chance(K.blipOnset))) });
+    // v4.2 (second audit 2, F-30): at any time (v3-v4.1: before T - 240 s, which dated T in 33% of d3 tasks, base 25%).
+    herrings.blips.push({ svc: s.name, cls, t: blip(s, cls, rh.int(30, WINDOW - 300), 'blip-same', null, Boolean(K.blipOnset && C.BLIP_ONSET[cls] && rh.chance(K.blipOnset))) });
+  }
+  // v4.2 (second audit 2, F-29): a rival class. The root's herring kit (its own blip, a stray of its fault's kind,
+  // lookalikes, the same-class blip in a neighbour) all carry the true class, and nothing of comparable weight
+  // carried any other single class, so a vote over the whole log's fault vocabulary named the true class in 74% of
+  // d3 tasks without finding the root. Now a non-root service R carries the same kit for one other class h: a blip
+  // shortly before its own episode, lookalikes, a blip of class h in a third service, and a sustained, never
+  // recovering anomaly of class h in another resource of R (an unrelated pool, volume, hostname, process, time
+  // source, provider, component or namespace), about as many lines as the root's own fault. R keeps serving and
+  // nothing fails because of it; the episode starts at a random time.
+  herrings.rival = null;
+  if (K.rival) {
+    const rv = r.fork('rival');
+    const hostable = s => classesFor(s).filter(x => x !== cls && C.STRAY[x]);
+    const hosts = herringFree(nonRoot).filter(s => s.kind === 'svc' && s !== sameSvc && hostable(s).length);
+    if (hosts.length) {
+      const R = near(hosts, rv), h = rv.pick(hostable(R)), tR = rv.int(240, WINDOW - 300);
+      const offs = blipOffsets(), lim = tR - 60;
+      if (lim - offs.end > 30) {
+        const t0 = rv.int(Math.max(30, lim - 420), lim - offs.end);
+        herrings.blips.push({ svc: R.name, cls: h, t: blip(R, h, t0, 'blip-rival', offs, Boolean(K.blipOnset && C.BLIP_ONSET[h] && rv.chance(K.blipOnset))), end: t0 + offs.end });
+      }
+      const looks = [rv.int(30, Math.max(31, tR - 400)), rv.int(Math.max(30, tR - 300), Math.max(31, tR - 60)), ...Array.from({ length: rv.int(0, 1) }, () => rv.int(30, Math.max(31, tR - 60))), ...Array.from({ length: rv.int(1, 2) }, () => rv.int(Math.min(WINDOW - 1, tR + 60), WINDOW - 1))];
+      if (K.nearLookalike && rv.chance(K.nearLookalike)) looks.push(rv.int(Math.max(30, tR - 200), Math.max(31, tR - 15)));
+      for (const t of looks) emit(t, R, rv.pick(lookPool(h))(ctxFor(R, t, rv), rv), 'lookalike');
+      const o = strayOther(R, h, tR, rv), nRootFault = events.filter(ev => ev.s === root.key && (ev.tag === 'root' || ev.tag === 'onset')).length;
+      const n = Math.min(36, Math.max(5, Math.round(nRootFault * rv.float(1.0, 1.7))));
+      emit(tR, R, rv.pick(C.STRAY[h])(ctxFor(R, tR, rv), rv, o), 'rival');
+      const more = ['bad_config_deploy', 'poisoned_cache'].includes(h) ? C.RIVAL_MORE[h] : [...C.STRAY[h], ...C.RIVAL_MORE[h]];
+      for (let i = 1; i < n; i++) { const t = rv.int(tR + 20, WINDOW - 1); emit(t, R, rv.pick(more)(ctxFor(R, t, rv), rv, o), 'rival'); }
+      const thirds = herringFree(nonRoot).filter(x => x !== R && x !== sameSvc && (h !== 'upstream_rate_limiting' || x.ext));
+      let third = null;
+      if (thirds.length) {
+        third = near(thirds, rv);
+        herrings.blips.push({ svc: third.name, cls: h, t: blip(third, h, rv.int(30, WINDOW - 300), 'blip-rival', null, Boolean(K.blipOnset && C.BLIP_ONSET[h] && rv.chance(K.blipOnset))) });
+      }
+      herrings.rival = { svc: R.name, cls: h, t: tR, n, third: third ? third.name : null };
+    }
   }
   for (let i = 0; i < K.blipOther; i++) {
     const s = rh.pick(K.nearHerrings && herringFree(nonRoot).length ? herringFree(nonRoot) : nonRoot.length ? nonRoot : serving);
@@ -1006,11 +1055,14 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
     const tD = rh.int(60, WINDOW - 600);
     // v3 (audit): about as loud as the root's own WARN/ERROR lines (v2: a fixed 14-22 at d3).
     const rootLoud = events.filter(ev => ev.s === root.key && (ev.level === 'WARN' || ev.level === 'ERROR')).length;
-    const n = Math.max(Math.round(rh.int(14, 22) * Math.max(1, K.lines / 600)), Math.round(rootLoud * rh.float(0.5, 1.0)));
+    // v4.2 (second audit 2): 0.4-0.8 of the root's loudness, at least 10-16 lines (v3-v4.1: 0.5-1.0 and 14-22); the
+    // rival anomaly (F-29) now also makes another service loud, and d3 had grown to 18K tokens.
+    const n = Math.max(Math.round(rh.int(10, 16) * Math.max(1, K.lines / 600)), Math.round(rootLoud * rh.float(0.4, 0.8)));
     const pool = C.DECOY[s.kind] || C.DECOY.svc;
     // Half of the decoy lines are benign-valued warnings in some class's vocabulary, so the decoy also "looks like" a
     // fault class to keyword matching. v4.1 (S-2): any class (v3/v4.0 excluded the true class, a class prior).
-    const vocab = rh.pick(C.FAULT_CLASSES);
+    // v4.2 (F-29): the rival class (if any) with p 0.5, so the decoys' vocabulary also leans towards the second story.
+    const vocab = herrings.rival && rh.chance(0.5) ? herrings.rival.cls : rh.pick(C.FAULT_CLASSES);
     for (let i = 0; i < n; i++) {
       const t = i === 0 ? tD : rh.int(tD, WINDOW - 1);
       emit(t, s, (i % 2 ? rh.pick(C.CHRONIC[vocab]) : rh.pick(pool))(ctxFor(s, t, rh), rh), 'decoy');
@@ -1257,9 +1309,11 @@ function buildAttempt(seed, split, difficulty, cls, attempt, last) {
   for (const s of order) {
     if (s === gateway) continue;
     const proseCalls = s.callees.filter(e => tableEdges.find(x => x.from === e.from && x.to === e.to).inTable);
-    let sentence = `${s.name} (team ${s.team}) provides ${s.role.what}`;
-    if (proseCalls.length && rs.chance(0.5)) sentence += `; it relies on ${listText(proseCalls.map(e => `${S[e.to].name} for ${S[e.to].role.what}`))}`;
-    if (s.ext) sentence += `${proseCalls.length ? ',' : ';'} and it calls ${s.ext.name}, an external ${s.ext.what}`;
+    let sentence = `${s.name} (team ${s.team}) provides ${s.role.what}`, relies = false;
+    if (proseCalls.length && rs.chance(0.5)) { sentence += `; it relies on ${listText(proseCalls.map(e => `${S[e.to].name} for ${S[e.to].role.what}`))}`; relies = true; }
+    // v4.2 (D-4): a comma only after a 'relies on' clause (v4.1 also used it when that clause was skipped, so "provides
+    // X, and it calls Y" made the provided thing ambiguous for the notes that name a service by what it provides).
+    if (s.ext) sentence += `${relies ? ',' : ';'} and it calls ${s.ext.name}, an external ${s.ext.what}`;
     if (s.kind === 'batch') sentence += '; it runs as a background job and serves no customer requests';
     prose.push(`${sentence}.`);
   }

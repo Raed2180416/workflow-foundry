@@ -1,8 +1,9 @@
 // Coverage script (JUDGE-PROGRAM.md §1.5; §10 contracts-lib acceptance): every inventory decision
 // D:A0-D:H6 of 02-decision-inventory.md appears exactly once in the §1.5 coverage map, the totals are
 // 47 mapped, 18 deferred and 35 excluded, the deferred set equals the §1.3 table, the excluded set
-// equals the §1.4 table, and every mapped decision is the decision of at least one frozen port in
-// spec/ports.json (and every port's decision is mapped to it).
+// equals the §1.4 table, every mapped decision is the decision of at least one frozen port in
+// spec/ports.json, every port's decision is mapped to it, and every port §1.5 names for a decision lists
+// it (as a decision or a related decision).
 //   node experiments/kev-data/lib/coverage.mjs        prints the summary; exit 1 on any error
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -52,7 +53,8 @@ export function parseCoverageMap(programText) {
     if (text.startsWith('→')) {
       const rest = text.slice(1).trim();
       if (/^excluded\b/.test(rest)) status = 'excluded';
-      else { status = 'mapped'; targets = [...new Set([...rest.matchAll(/\b([RISKQXFC]\d)\b/g)].map(m => m[1]))]; }
+      // "Q1 (notice kind) by code" names a question of the decision that code decides, not port Q1.
+      else { status = 'mapped'; targets = [...new Set([...rest.replace(/\b[A-Z]\d\s*\([^)]*\)\s*by code\b/g, '').matchAll(/\b([RISKQXFC]\d)\b/g)].map(m => m[1]))]; }
     } else if (/^deferred\b/.test(text)) status = 'deferred';
     else if (/^(excluded\b|governance \(excluded\))/.test(text)) status = 'excluded';
     else status = 'unparsed';
@@ -97,6 +99,13 @@ export function coverage({ programText = readFileSync(PROGRAM, 'utf8'), inventor
     else if (!seen.get(d)[0].targets.includes(p.id)) errors.push(`${p.id} lists ${d}, but §1.5 maps ${d} to ${seen.get(d)[0].targets.join(', ')}`);
   }
   for (const l of Object.values(spec.ledgerOnly)) for (const d of l.decisions) if (status(d) !== 'deferred') errors.push(`${l.id} (ledger-only) lists ${d}, which is not deferred`);
+  // every port §1.5 names for a decision lists it, as a decision or a related decision
+  for (const s of statements) if (s.status === 'mapped') for (const t of s.targets) {
+    const p = spec.ports[t];
+    if (!p) errors.push(`${s.id}: §1.5 names ${t}, which is not a frozen port`);
+    else if (!p.decisions.includes(s.id) && !(p.relatedDecisions ?? []).includes(s.id)) errors.push(`${t} does not list ${s.id}, which §1.5 maps to it`);
+  }
+  for (const c of [...ports, ...Object.values(spec.ledgerOnly)]) for (const d of c.relatedDecisions ?? []) if (!inv.includes(d)) errors.push(`${c.id} relates to ${d}, which is not an inventory decision`);
   return { ok: errors.length === 0, totals, stated, inventory: inv.length, errors,
     byStatus: Object.fromEntries(['mapped', 'deferred', 'excluded'].map(st => [st, inv.filter(id => status(id) === st)])) };
 }

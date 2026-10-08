@@ -1,7 +1,8 @@
 // The frozen port contracts (spec/ports.json, JUDGE-PROGRAM.md §1, §2.1): loading, hashing and the
 // acceptance checks (42 ports + 3 ledger-only contracts; Q0-Q3; 2-64 options; <= 32 criteria;
 // questions <= 4,000 characters with every slot at its longest; field provenance for every state
-// key; deploymentRate; allowedKnowledge; real-token budgets).
+// key; deploymentRate; allowedKnowledge; real-token budgets; label maps that name offered options,
+// with tag tables pinned to a bed version).
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -9,6 +10,7 @@ import { FORBIDDEN_STATE_KEYS, LIMITS, slotNames } from '../judges/kit.mjs';
 import { renderQuestion } from './render.mjs';
 import { DEPLOYMENT_RATES } from './balance.mjs';
 import { sha256, tagged } from './hash.mjs';
+import { BEDS } from './registry.mjs';
 
 export const KEV_DATA = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 export const REPO_ROOT = path.resolve(KEV_DATA, '..', '..');
@@ -20,10 +22,57 @@ export const PORT_IDS = Object.freeze(['R1', 'R2', 'R3', 'R4', 'R5', 'I1', 'I2',
 export const LEDGER_IDS = Object.freeze(['L1', 'L2', 'L3']);
 export const WAVE1 = Object.freeze(['R1', 'R2', 'R3', 'R4', 'I1', 'I2', 'S2', 'Q4', 'X1', 'X3', 'X5', 'X8', 'F1']);
 
+// Deep-frozen: generators receive the contracts through the build context and must not be able to
+// change what the build validates against (a generator that needs a variant works on a copy).
+export function deepFreeze(value) {
+  if (value && typeof value === 'object' && !Object.isFrozen(value)) { Object.freeze(value); for (const v of Object.values(value)) deepFreeze(v); }
+  return value;
+}
 export function loadSpec(file = SPEC_PATH) {
   const bytes = readFileSync(file);
-  const spec = JSON.parse(bytes.toString('utf8'));
-  return { spec, hash: tagged(sha256(bytes)), file, contracts: { ...spec.ports, ...spec.ledgerOnly } };
+  const spec = deepFreeze(JSON.parse(bytes.toString('utf8')));
+  return Object.freeze({ spec, hash: tagged(sha256(bytes)), file, contracts: Object.freeze({ ...spec.ports, ...spec.ledgerOnly }) });
+}
+
+// The span-skeleton masks every build applies by default (§2.3 rule 7, §3.3): the values of every
+// slot marked mask: 'name' (the records systems) or mask: 'marker'. Sorted, so the registry digest
+// does not depend on contract order.
+export function contractMasks(contracts) {
+  const names = new Set(), markers = new Set();
+  for (const c of Object.values(contracts ?? {})) for (const s of Object.values(c?.slots ?? {})) {
+    if (s.mask === 'name') for (const v of s.values ?? []) names.add(v);
+    if (s.mask === 'marker') for (const v of s.values ?? []) markers.add(v);
+  }
+  return { names: [...names].sort(), markers: [...markers].sort() };
+}
+
+// Families (§3.4): identifiers, a bed name, bedtype:<bed>, <bed>:<qualifier> or a named source.
+export const FAMILY_ID = /^[a-z][a-z0-9-]*(?::[a-z][a-z0-9-]*)?$/;
+// The bed a family is drawn from, or null: records, bedtype:records, records-real and codefix:billing
+// are drawn from a bed (their records need meta.bed and a world); composer, corpus are not.
+export function familyBed(family) {
+  if (typeof family !== 'string') return null;
+  const base = family.replace(/^bedtype:/, '').split(':')[0].replace(/-real$/, '');
+  return BEDS.includes(base) ? base : null;
+}
+
+// Fail-closed label lookup (§2.3 rule 1): bed truth -> option through the contract's label map.
+//   tag table ({bedVersion, tags, excluded, unmapped}): tags[t] -> option; an excluded tag (null) returns
+//   { excluded: reason }; any other tag (unmapped, unknown) throws LABEL_UNMAPPED. Pass bedVersion to
+//   also refuse a table pinned to another bed version (LABEL_BED_VERSION).
+//   plain map ({recv: 'same'}): map[t] must name an offered option, otherwise LABEL_UNMAPPED.
+export function mapLabel(contract, truth, { bedVersion } = {}) {
+  const fail = (code, m) => { const e = new Error(`${code}: ${contract?.id}: ${m}`); e.code = code; return e; };
+  const lm = contract?.labelMap, options = contract?.options ? Object.keys(contract.options) : null;
+  if (!lm) throw fail('LABEL_UNMAPPED', 'the contract has no label map');
+  if (lm.tags) {
+    if (bedVersion !== undefined && bedVersion !== lm.bedVersion) throw fail('LABEL_BED_VERSION', `the tag table is pinned to bed version ${lm.bedVersion}, the bed is ${bedVersion}`);
+    if (!Object.hasOwn(lm.tags, truth)) throw fail('LABEL_UNMAPPED', `tag ${JSON.stringify(truth)} is not in the table${lm.unmapped && Object.hasOwn(lm.unmapped, truth) ? ' (recorded as unmapped)' : ''}`);
+    const v = lm.tags[truth];
+    return v === null ? { excluded: lm.excluded?.[truth] ?? 'excluded' } : { label: v };
+  }
+  if (!LABEL_MAP_META.has(truth) && Object.hasOwn(lm, truth) && typeof lm[truth] === 'string' && (!options || options.includes(lm[truth]))) return { label: lm[truth] };
+  throw fail('LABEL_UNMAPPED', `truth value ${JSON.stringify(truth)} has no option in the label map`);
 }
 
 const nonEmpty = s => typeof s === 'string' && s.trim().length > 0;
@@ -61,6 +110,7 @@ function checkCommon(id, c, errors, { ledger }) {
   for (const [name, s] of Object.entries(c.slots ?? {})) {
     if (!nonEmpty(s.source)) err(`slot ${name} needs a trusted source`);
     if (!(s.values?.length || Number.isInteger(s.maxChars))) err(`slot ${name} needs values or maxChars`);
+    if (s.mask !== undefined && !(['name', 'marker'].includes(s.mask) && s.values?.length)) err(`slot ${name}: mask must be name or marker, on a slot with values`);
   }
   if (c.options) {
     const names = Object.keys(c.options);
@@ -100,6 +150,25 @@ function checkCommon(id, c, errors, { ledger }) {
   }
 }
 
+// A label map sends bed truth values to options. Plain entries ({recv: 'same'}) and a tag table
+// ({bedVersion, tags: {tag: option | null}, excluded: {tag: reason}, unmapped: {tag: note}}) must name
+// offered options; a null (excluded) tag needs its reason; an unmapped tag is not in the table, so a
+// build fails closed on it.
+const LABEL_MAP_META = new Set(['bedVersion', 'tags', 'excluded', 'unmapped', 'inventory', 'owner', 'exclude']);
+function checkLabelMap(c, err) {
+  const lm = c.labelMap, options = c.options ? Object.keys(c.options) : null;
+  if (!options) return;
+  for (const [k, v] of Object.entries(lm)) if (!LABEL_MAP_META.has(k) && typeof v === 'string' && !options.includes(v)) err(`labelMap ${k} -> ${v} is not an option`);
+  if (!lm.tags) return;
+  if (!/^\d+\.\d+\.\d+$/.test(lm.bedVersion ?? '')) err('a tag table is pinned to a bed version (labelMap.bedVersion)');
+  for (const [tag, v] of Object.entries(lm.tags)) {
+    if (v === null) { if (!nonEmpty(lm.excluded?.[tag])) err(`labelMap tag ${tag} is excluded without a reason`); }
+    else if (!options.includes(v)) err(`labelMap tag ${tag} -> ${v} is not an option`);
+  }
+  for (const tag of Object.keys(lm.excluded ?? {})) if (lm.tags[tag] !== null) err(`labelMap excluded tag ${tag} must map to null`);
+  for (const tag of Object.keys(lm.unmapped ?? {})) if (Object.hasOwn(lm.tags, tag)) err(`labelMap unmapped tag ${tag} is also in the table`);
+}
+
 export function validateSpec(spec) {
   const errors = [];
   const ports = spec?.ports ?? {}, ledger = spec?.ledgerOnly ?? {};
@@ -116,10 +185,19 @@ export function validateSpec(spec) {
     const b = c.budget;
     if (!b || !Number.isInteger(b.typical) || !Number.isInteger(b.max) || b.typical <= 0 || b.typical > b.max || b.max > (b.hardCap ?? 8192) || !['M', 'E'].includes(b.evidence)) err('budget must be {typical <= max <= hardCap, evidence M|E} in real tokens');
     if (!Array.isArray(c.families?.train) || !c.families.train.length || !Array.isArray(c.families?.heldOut)) err('families must list train and heldOut');
+    else {
+      const all = [...c.families.train, ...c.families.heldOut];
+      for (const f of all) if (!FAMILY_ID.test(f)) err(`family ${JSON.stringify(f)} is not an identifier (put qualifiers in families.notes)`);
+      if (new Set(all).size !== all.length) err('a family is listed twice (train and heldOut are disjoint)');
+      for (const k of Object.keys(c.families.notes ?? {})) if (!all.includes(k) && !/^[a-z][a-z0-9-]*:<[a-z]+>$/.test(k)) err(`families.notes names ${k}, which is not a family`);
+    }
+    if (c.recordQuestions !== undefined && !(Number.isInteger(c.recordQuestions) && c.recordQuestions >= 2 && c.recordQuestions <= LIMITS.maxOptions)) err('recordQuestions must be an integer 2-64');
+    if (c.optionsFrom?.commit && (c.optionsFrom.commit !== spec?.bedPin?.commit || c.optionsFrom.pin !== spec?.bedPin?.pin)) err('optionsFrom must name the pin of spec.bedPin (re-check the option set, then re-pin both)');
     if (!nonEmpty(c.labelSource)) err('labelSource is required (labels never come from an LLM)');
     if (!(c.epsilon > 0 && c.epsilon <= 0.2)) err('epsilon out of range');
     if (!c.use || !nonEmpty(c.use.consumer) || !c.use.terminal?.kind) err('use needs a consumer and a terminal route');
     if (c.wave === 1 && !(c.heldoutWordings?.['calib-ood'] === 10 && c.heldoutWordings?.['dev-ood'] === 10 && c.heldoutWordings?.['test-ood'] === 20)) err('wave-1 ports take 10/10/20 held-out wordings');
+    if (c.labelMap) checkLabelMap(c, err);
   }
   for (const [id, c] of Object.entries(ledger)) {
     checkCommon(id, c, errors, { ledger: true });

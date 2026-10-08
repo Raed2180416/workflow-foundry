@@ -28,9 +28,12 @@ export const normalizeSpan = text => String(text).normalize('NFC').replace(/\s+/
 export const spanHash = text => tagged(sha256(normalizeSpan(text)));
 
 // ---- Skeletons -------------------------------------------------------------------------------
-// skeletonText masks, in this order: quoted strings, the world's own names and markers (passed by
-// the caller: system, entity, service and person names; status markers), timestamps and dates,
-// hex runs, digit runs; then lowercases and collapses whitespace. The rest is the surface form.
+// skeletonText masks, in this order: quoted strings, {slot} placeholders, the world's own names and
+// markers (passed by the caller: system, entity, service and person names; status markers),
+// timestamps and dates, hex runs, digit runs; then lowercases and collapses whitespace. The rest is
+// the surface form. Placeholders, names and markers all mask to <n>, so a pool line written with
+// placeholders ("Treat every {S} balance as ...") has the skeleton of its filled form ("Treat every
+// KOBO balance as ...") whenever the filling is a masked name or marker.
 const MONTHS = 'January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec';
 const QUOTED = /"[^"\n]{0,400}"|“[^”\n]{0,400}”|„[^“”\n]{0,400}[“”]|«[^»\n]{0,400}»|`[^`\n]{0,400}`/g;
 const TIMES = [
@@ -40,6 +43,7 @@ const TIMES = [
   new RegExp(`\\b(?:${MONTHS})\\.?\\s+\\d{1,2}(?:st|nd|rd|th)?(?:,?\\s+\\d{4})?\\b`, 'gi'),        // March 14, 2024
   /\b\d{1,2}:\d{2}(?::\d{2}(?:[.,]\d+)?)?\b/g,                                                   // clock times
 ];
+const PLACEHOLDER = /\{[A-Za-z_][A-Za-z0-9_]*\}/g;
 const HEX = /\b0x[0-9a-f]+\b|\b(?=[0-9a-f]*\d)(?=[0-9a-f]*[a-f])[0-9a-f]{6,}\b/gi;
 const DIGITS = /\d+(?:[.,]\d+)*/g;
 const escapeRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -49,9 +53,9 @@ const termRe = terms => {
 };
 
 export function skeletonText(text, { names = [], markers = [] } = {}) {
-  let s = String(text).normalize('NFC').replace(QUOTED, ' <q> ');
+  let s = String(text).normalize('NFC').replace(QUOTED, ' <q> ').replace(PLACEHOLDER, ' <n> ');
   const nameRe = termRe(names), markerRe = termRe(markers);
-  if (markerRe) s = s.replace(markerRe, ' <m> ');
+  if (markerRe) s = s.replace(markerRe, ' <n> ');
   if (nameRe) s = s.replace(nameRe, ' <n> ');
   for (const re of TIMES) s = s.replace(re, ' <t> ');
   s = s.replace(HEX, ' <h> ').replace(DIGITS, ' <d> ');
