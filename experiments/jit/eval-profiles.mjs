@@ -18,7 +18,12 @@
 // would have re-routed and the silent misses among them. Each policy runs with every feature ('all') and without the
 // size features ('no-size': array lengths, string lengths, line counts), to separate "more input" from "different input".
 //
-// CLI: node experiments/jit/eval-profiles.mjs <runDir> [--warmup 3] [--json] [--out file.json]
+// N-version mode (--nversion <file>, the probe in research/jit-20261008/nversion-records-dev.json): each compiled solver
+// there ran on every task of the stream, including tasks outside its domain. Each solver gets its version profile (the
+// trace pool it was compiled from, found through its arm's rows) and every task is checked against it; the question is
+// D9's: of the tasks a solver answered wrongly, how many would its own profile have refused?
+//
+// CLI: node experiments/jit/eval-profiles.mjs <runDir> [--warmup 3] [--nversion file.json] [--json] [--out file.json]
 import path from 'node:path';
 import { existsSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -132,6 +137,64 @@ export async function evaluateRun(runDir, { warmup = 3, families } = {}) {
   return result;
 }
 
+const REPO = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
+export function versionPoolTasks(rows, versionDir) {
+  const R = [...new Map(rows.map(r => [r.idx, r])).values()].sort((a, b) => a.idx - b.idx);
+  const at = R.find(r => r.stateAfter?.version?.dir === versionDir);
+  if (!at) return null;
+  const adoptedAt = at.stateAfter.version.adoptedAt, before = R.filter(r => r.idx < adoptedAt).at(-1);
+  const byIdx = new Map(R.map(r => [r.idx, r.taskKey]));
+  return { version: at.stateAfter.version.n, adoptedAt, taskKeys: (before?.stateAfter?.traces ?? []).map(t => byIdx.get(t.idx)).filter(Boolean) };
+}
+
+export async function evaluateNVersion(nvFile, runDir, { ignore = [] } = {}) {
+  const { readFileSync } = await import('node:fs');
+  const { makeTasks } = await import('../lib/beds.mjs');
+  const nv = JSON.parse(readFileSync(nvFile, 'utf8'));
+  const arms = loadArms(runDir), cache = new Map();
+  const taskOfKey = async key => {
+    if (cache.has(key)) return cache.get(key);
+    const k = parseTaskKey(key);
+    if (!k || k.split !== 'dev') throw new Error(`eval-profiles: ${key} is not on the dev split`);
+    const [t] = await makeTasks(k.familyId, { split: k.split, seeds: [k.seed], difficulty: k.difficulty });
+    const v = { prompt: t.task.prompt, inputs: t.task.inputs, ...(t.task.files ? { files: t.task.files } : {}) };
+    cache.set(key, v); return v;
+  };
+  const out = [];
+  for (const [name, solverPath] of Object.entries(nv.summary?.solvers ?? {})) {
+    const abs = path.resolve(REPO, solverPath), versionDir = path.relative(path.dirname(path.dirname(path.dirname(abs))), path.dirname(abs));
+    const arm = arms.find(a => abs.startsWith(a.dir + path.sep));
+    const pool = arm ? versionPoolTasks(arm.rows, versionDir) : null;
+    if (!pool || !pool.taskKeys.length) { out.push({ name, solverPath, problem: 'version pool not found in the run' }); continue; }
+    const prof = learnProfile(await Promise.all(pool.taskKeys.map(taskOfKey)));
+    const per = [];
+    for (const row of nv.rows ?? []) {
+      const run = row.runs?.[name];
+      if (!run) continue;
+      const c = checkProfile(prof, await taskOfKey(row.taskKey), { ignore });
+      per.push({ taskKey: row.taskKey, difficulty: row.difficulty, inPool: pool.taskKeys.includes(row.taskKey), status: run.status, pass: run.pass, novel: c.novel,
+        reasons: c.reasons.slice(0, 3).map(x => `${x.feature}${x.path ? `@${x.path}` : ''}`) });
+    }
+    const ans = per.filter(x => x.status === 'ok' && !x.inPool), wrong = ans.filter(x => x.pass === false), right = ans.filter(x => x.pass === true), ref = per.filter(x => x.status !== 'ok' && !x.inPool);
+    out.push({ name, solverPath, version: pool.version, adoptedAt: pool.adoptedAt, pool: pool.taskKeys,
+      answered: ans.length, wrong: wrong.length, wrongNovel: wrong.filter(x => x.novel).length, right: right.length, rightNovel: right.filter(x => x.novel).length,
+      refused: ref.length, refusedNovel: ref.filter(x => x.novel).length, perTask: per });
+  }
+  return { nvFile, evidence: 'development / diagnostic (dev split; tasks in a solver\'s own compile pool are left out of its counts)', solvers: out };
+}
+
+export function renderNVersion(res) {
+  const L = ['', `## Version profiles on the N-version probe (${path.basename(res.nvFile)})`, '', res.evidence, '',
+    '| solver | v (adopted at) | pool | answered: wrong novel / wrong | answered: right novel / right | refused (deopt/crash): novel / refused | top reasons on wrong answers |', '|---|---|---|---|---|---|---|'];
+  for (const s of res.solvers) {
+    if (s.problem) { L.push(`| ${s.name} | – | – | ${s.problem} | | | |`); continue; }
+    const tops = {};
+    for (const x of s.perTask.filter(x => x.status === 'ok' && x.pass === false && !x.inPool)) for (const r of x.reasons) tops[r] = (tops[r] ?? 0) + 1;
+    L.push(`| ${s.name} | v${s.version} (${s.adoptedAt}) | ${s.pool.length} | ${s.wrongNovel}/${s.wrong} | ${s.rightNovel}/${s.right} | ${s.refusedNovel}/${s.refused} | ${Object.entries(tops).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, v]) => `${k} ${v}`).join(', ') || '–'} |`);
+  }
+  return L.join('\n');
+}
+
 export function renderEval(res) {
   const short = s => String(s).replace(/^static:.*\/([^/]+)\/solve\.mjs$/, 'static:$1');
   const pct = x => (x == null ? '–' : `${(100 * x).toFixed(0)}%`);
@@ -148,10 +211,18 @@ export function renderEval(res) {
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const args = process.argv.slice(2), dir = args.find(a => !a.startsWith('--') && !/^\d+$/.test(a));
+  const args = process.argv.slice(2), dir = args.find((a, i) => !a.startsWith('--') && !/^\d+$/.test(a) && !['--nversion', '--out', '--warmup'].includes(args[i - 1]));
   const val = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
   if (!dir || !existsSync(dir)) { console.error('usage: node experiments/jit/eval-profiles.mjs <runDir> [--warmup 3] [--json] [--out file.json]'); process.exit(2); }
   const res = await evaluateRun(path.resolve(dir), { warmup: Number(val('--warmup', 3)) });
+  if (val('--nversion')) {
+    res.nversion = await evaluateNVersion(path.resolve(val('--nversion')), path.resolve(dir));
+    res.nversionNoSize = await evaluateNVersion(path.resolve(val('--nversion')), path.resolve(dir), { ignore: SIZE_FEATURES });
+  }
   if (val('--out')) writeFileSync(val('--out'), JSON.stringify(res, null, 1));
-  console.log(args.includes('--json') ? JSON.stringify(res, null, 1) : renderEval(res));
+  if (args.includes('--json')) console.log(JSON.stringify(res, null, 1));
+  else {
+    console.log(renderEval(res));
+    if (res.nversion) console.log(renderNVersion(res.nversion), '\n\nWithout size features:', renderNVersion(res.nversionNoSize));
+  }
 }
