@@ -36,6 +36,7 @@ const HELDOUT = path.join(REPO_ROOT, '.foundry', 'kev-data', 'heldout'), POOLS =
 const { contracts } = loadSpec();
 const readJsonl = f => (existsSync(f) ? readFileSync(f, 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l)) : []);
 const portOf = qid => qid.split('~')[0].replace(/_present$/, '');
+const maskNames = (text, { names = [], markers = [] } = {}) => [...names, ...markers].filter(Boolean).sort((a, b) => b.length - a.length).reduce((acc, n) => acc.split(n).join('<n>'), text).toLowerCase();
 const firstQ = r => Object.values(r.questions)[0];
 const isSoft = q => q.target !== undefined && q.target !== null;
 
@@ -180,10 +181,14 @@ for (const b of builds) {
         s1 = { n: sample.length, decided, agree, coverage: sample.length ? decided / sample.length : null, accuracyDecided: decided ? agree / decided : null, agreementAll: sample.length ? agree / sample.length : null, reasons };
       }
       // step 2
-      const groups = new Map(), exact = new Map(), add = (m, key, l) => (m.get(key) ?? m.set(key, new Set()).get(key)).add(l);
+      // gate key (as the group tests): the world's names and markers masked (entity identity removed); the full lib/hash skeleton
+      // (digits, dates, quoted strings masked too) is diagnostic only: it merges rows whose label sits in a number (X8 values, Q4
+      // thresholds, R1 example dates, K2 conditions), which the state does tell apart
+      const groups = new Map(), named = new Map(), exact = new Map(), add = (m, key, l) => (m.get(key) ?? m.set(key, new Set()).get(key)).add(l);
       for (const x of hard) {
         const m = x.r.meta.masks ?? { names: [], markers: [] };
         add(groups, `${skeleton(renderState(x.r.state), m)}||${x.q.instructions}`, x.q.label);
+        add(named, maskNames(`${renderState(x.r.state)}||${x.q.instructions}`, m), x.q.label);
         add(exact, `${canonical(x.r.state)}||${x.q.instructions}`, x.q.label);
       }
       const multi = mm => [...mm.values()].filter(v => v.size > 1).length;
@@ -194,7 +199,7 @@ for (const b of builds) {
       const labels = {}, forms = {};
       for (const x of rows) { labels[x.q.label] = (labels[x.q.label] ?? 0) + 1; (forms[x.q.label] ??= new Set()).add(x.r.meta.formId ?? sha256(skeleton(renderState(x.r.state), x.r.meta.masks ?? {}))); }
       os.ports[k] = { rows: rows.length, soft: rows.length - hard.length, labels, formsPerLabel: Object.fromEntries(Object.entries(forms).map(([l, s]) => [l, s.size])),
-        step1: s1, step2: { groups: groups.size, maskedMultiLabel: multi(groups), maskedShare: groups.size ? multi(groups) / groups.size : 0, exactMultiLabel: multi(exact) },
+        step1: s1, step2: { groups: named.size, nameMaskedMultiLabel: multi(named), nameMaskedShare: named.size ? multi(named) / named.size : 0, skeletonGroups: groups.size, skeletonMultiLabel: multi(groups), skeletonShare: groups.size ? multi(groups) / groups.size : 0, exactMultiLabel: multi(exact) },
         step3: { undeclaredKeys: [...undeclared] } };
     }
   }
