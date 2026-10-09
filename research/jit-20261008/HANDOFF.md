@@ -57,7 +57,8 @@ Read, in order:
 
   Compiled runs cost about $0.04 each. Compiles cost 54% at 24 tasks.
 - **Kinetics.** Much harder for the JIT: Haiku compiles are often rejected, and Opus fallback compiles cost $3–7. The arms
-  were still running at handoff. See `handoff/runs/jit/jit-dev-kinetics-1/`.
+  were still running at handoff. See `handoff/runs/jit/jit-dev-kinetics-1/`. *(2026-10-09, laptop: that directory never
+  reached git and was lost with the container; the surviving kinetics numbers are DEV-NOTES D13–D14.)*
 - **Failure modes found** (all logged in DEV-NOTES):
   - silent under-merging near the identity threshold (D1);
   - the weak-demonstrator trap (D2);
