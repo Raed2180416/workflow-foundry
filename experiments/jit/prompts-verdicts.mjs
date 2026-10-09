@@ -1,6 +1,6 @@
 // prompts-verdicts.mjs (S0-6, opt-in): builder prompt text for acceptanceIds 'structured' (acceptance.mjs). Kept out of
-// prompts.mjs, whose prompt versions are pinned by arm-hash tests; nothing imports this yet. To use it, append
-// VERDICTS_PROMPT_TEXT to the builder prompt only when compile.acceptanceIds is 'structured', and record
+// prompts.mjs, whose prompt versions are pinned by arm-hash tests; prompts.mjs imports it for acceptanceIds 'structured'. It appends
+// VERDICTS_PROMPT_TEXT to the builder prompt only when compile.acceptanceIds is 'structured' and records
 // VERDICTS_PROMPT_VERSION in the compile record, so default prompts and their hashes stay unchanged.
 export const VERDICTS_PROMPT_VERSION = 'verdicts-1';
 

@@ -3,6 +3,9 @@
 //   static:<solve.mjs>            a fixed compiled script; deopt/crash/timeout/invalid -> claude-haiku-5-5 interpreter
 //   jit:<interpreter>/<compiler>  warmup -> compile -> run compiled; deopt -> interpret + recompile; shadows,
 //                                 adjudication by majority, regressions, reject-if-worse, one Opus fallback per compile
+// Work layout (outside the repo): <workRoot>/<experiment>/<armSlug>/ holds compiled runs and compile/ builds;
+// <workRoot>/<experiment>/w/<id> holds every interpreter-family session (agent, fallback, shadow, adjudicator) with an
+// arm- and role-neutral name (see sessionIdOf); the 'interpret' event and trace file record the path.
 // Every arm writes only its own directory (results.jsonl, events.jsonl, faults.jsonl, journal.sqlite, traces/,
 // versions/, regressions/), so arms can run as separate processes and resume independently. The bed oracle scores the
 // delivered answer only; nothing it says ever reaches an interpreter, a compiler or the JIT state.
@@ -583,12 +586,20 @@ function lockArm(dir) {
 }
 
 // ---------------------------------------------------------------------------------------------- one arm
+// Interpreter-family sessions (agent, fallback, shadow, adjudicator) run in <workRoot>/<experiment>/w/<id>. The model sees
+// that path (pwd, tool paths), so it must not name the arm or the role: <id> is 12 hex chars of
+// sha256(`${armHash}:${idx}:${role}:${rand}`). The mapping lives in the 'interpret' event (workdir, relative to workRoot,
+// beside traceId and role), in the trace file (workdirRel) and in trace.json inside the session directory.
+export const SESSION_DIR = 'w';
+export const sessionIdOf = (armHash, idx, role, rand) => sha(`${armHash}:${idx}:${role}:${rand}`).slice(0, 12);
+
 class ArmRun {
   constructor({ arm, config, runDir, workRoot, deps, log, budget, binary, host = hostTracker() }) {
-    Object.assign(this, { arm, config, deps, log, budget, binary, host, runDir });
+    Object.assign(this, { arm, config, deps, log, budget, binary, host, runDir, workRoot });
     this.exportErrors = [];
     this.p = armPaths(runDir, arm.slug);
-    this.work = path.join(workRoot, config.experiment, arm.slug);
+    this.work = path.join(workRoot, config.experiment, arm.slug);   // compiled runs and compile/ builds (not model-read session dirs)
+    this.sessions = path.join(workRoot, config.experiment, SESSION_DIR);   // interpreter-family sessions: arm- and role-neutral (sessionIdOf)
     for (const d of [this.p.dir, this.p.traces, this.p.versions, this.p.regressions]) mkdirSync(d, { recursive: true });
     this.rows = new Map();
     for (const r of readJsonl(this.p.results)) {
@@ -695,13 +706,14 @@ class ArmRun {
   async interpret(tr, t, role, model) {
     return this.retrying(tr, role, async attempt => {
       const traceId = `i${String(t.idx).padStart(3, '0')}-${role}-${randomUUID().slice(0, 6)}`;
-      const workdir = path.join(this.work, traceId);
+      const workdir = path.join(this.sessions, sessionIdOf(this.arm.hash, t.idx, role, randomUUID().slice(0, 8)));
+      const workdirRel = path.relative(this.workRoot, workdir);
       rmSync(workdir, { recursive: true, force: true }); mkdirSync(workdir, { recursive: true });
       const trace = await this.deps.interpret({ task: t.task, familyId: this.config.familyId, outputSchema: this.outputSchema, model, budgetUsd: this.config.agentBudgetUsd,
         timeoutMs: this.config.agentMinutes * 60 * 1000, workdir, effort: this.config.agentEffort, traceId, ...(this.binary ? { binary: this.binary } : {}) });
-      writeFileSync(path.join(this.p.traces, `${trace.traceId}.json`), JSON.stringify(trace));
+      writeFileSync(path.join(this.p.traces, `${trace.traceId}.json`), JSON.stringify({ ...trace, workdirRel }));
       tr.spend(role, trace.costUsd ?? 0, trace.costUnknown);
-      tr.ev('interpret', { role, model, traceId: trace.traceId, answer: trace.answer != null, error: trace.error?.code ?? null, costUsd: trace.costUsd ?? 0, attempt,
+      tr.ev('interpret', { role, model, traceId: trace.traceId, workdir: workdirRel, answer: trace.answer != null, error: trace.error?.code ?? null, costUsd: trace.costUsd ?? 0, attempt,
         nestedModelAttempts: trace.nestedModelAttempts ?? 0, hiddenPathAttempts: trace.hiddenPathAttempts ?? 0 });
       return trace;
     }, trace => ENV_FAULTS.has(trace?.error?.code));

@@ -28,7 +28,7 @@ function fakeDeps(plan, hooks = {}) {
     async interpret(a) {
       const idx = a.task.seed - 1, role = a.traceId.split('-')[1];
       const n = calls.interpret.filter(c => c.idx === idx && c.role === role).length;
-      calls.interpret.push({ idx, role, model: a.model, traceId: a.traceId });
+      calls.interpret.push({ idx, role, model: a.model, traceId: a.traceId, workdir: a.workdir });
       calls.active++; calls.maxActive = Math.max(calls.maxActive, calls.active);
       await new Promise(r => setTimeout(r, 2));
       calls.active--;
@@ -333,6 +333,38 @@ test('a host check with budget deopts is re-run once at twice checkUsd before ac
   assert.equal(rows[2].delivered, 'compiled');
   const rec = JSON.parse(readFileSync(path.join(root, 'runs/recheck/jit-claude-sonnet-5-5--claude-haiku-5-5/versions/v1-haiku55/compile.json'), 'utf8'));
   assert.equal(rec.checkTraces.accepted, true); assert.equal(rec.checkTraces.recheck.firstCheck.deoptKinds.budget, 2);
+});
+
+// Row 23: the model sees its working directory, so no session path may name the arm, the model or the role.
+test('interpreter-family sessions run in neutral workdirs: no arm slug, model id or role word; distinct; recoverable from the interpret event and the trace file', async t => {
+  const root = tmp(t), work = path.join(root, 'work');
+  const { deps, calls } = fakeDeps(FLAG_PLAN);
+  const config = { ...FLAG_CONFIG, experiment: 'neutral-exp', arms: ['agent:claude-haiku-5-5', ...FLAG_CONFIG.arms] };
+  const res = await runStream({ config, deps, runRoot: path.join(root, 'runs'), workRoot: work, log: () => {} });
+  assert.ok(res.arms.every(a => a.errors.length === 0), JSON.stringify(res.arms));
+  const roles = new Set(calls.interpret.map(c => c.role));
+  assert.ok(['interpreter', 'shadow', 'adjudicator'].every(r => roles.has(r)), `roles seen: ${[...roles]}`);
+  const dirs = calls.interpret.map(c => c.workdir);
+  assert.equal(new Set(dirs).size, dirs.length, 'every session gets its own directory');
+  const slugs = res.arms.map(a => a.slug);
+  for (const d of dirs) {
+    const rel = path.relative(work, d);
+    assert.match(rel, /^neutral-exp\/w\/[0-9a-f]{12}$/, rel);
+    for (const bad of [...slugs, 'claude', 'haiku', 'sonnet', 'opus', 'interpreter', 'shadow', 'adjudicator', 'agent', 'jit', 'static', 'fallback']) assert.ok(!d.slice(work.length).toLowerCase().includes(bad), `${d} names "${bad}"`);
+  }
+  // the first interpreter and the first shadow of the same task get different ids and nothing in common but the directory
+  const [i0, s0] = [calls.interpret.find(c => c.role === 'interpreter' && c.idx === 0), calls.interpret.find(c => c.role === 'shadow' && c.idx === 2)];
+  assert.notEqual(i0.workdir, s0.workdir);
+  // recoverable: every interpret event records the relative workdir; so does the trace file
+  const evs = res.rows.flatMap(r => r.events.filter(e => e.kind === 'interpret'));
+  assert.equal(evs.length, calls.interpret.length);
+  for (const e of evs) {
+    assert.ok(e.workdir && !path.isAbsolute(e.workdir), 'relative workdir in the event');
+    assert.ok(dirs.includes(path.join(work, e.workdir)));
+    const slug = res.rows.find(r => r.events.includes(e)).armSlug;
+    const tf = JSON.parse(readFileSync(path.join(root, 'runs/neutral-exp', slug, 'traces', `${e.traceId}.json`), 'utf8'));
+    assert.equal(tf.workdirRel, e.workdir);
+  }
 });
 
 // ---- the stream through the real interpret() and runCompiled(): stand-in CLI in each workdir, scripted gateway ----
