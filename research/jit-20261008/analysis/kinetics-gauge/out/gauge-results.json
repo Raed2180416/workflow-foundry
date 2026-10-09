@@ -1,0 +1,3849 @@
+{
+ "generated": "2026-10-09",
+ "seeds": [
+  201,
+  202,
+  203,
+  204,
+  205,
+  206,
+  207,
+  208,
+  209,
+  210,
+  211,
+  212,
+  213,
+  214,
+  215,
+  216,
+  217,
+  218,
+  219,
+  220,
+  221,
+  222,
+  223,
+  224
+ ],
+ "relTols": [
+  0.001,
+  0.002,
+  0.005,
+  0.01,
+  0.02,
+  0.05
+ ],
+ "fineRelTols": [
+  1e-9,
+  1e-8,
+  1e-7,
+  0.000001,
+  0.00001,
+  0.0001
+ ],
+ "meta": [
+  {
+   "seed": 201,
+   "difficulty": 4,
+   "nConds": 7,
+   "nWells": 234,
+   "nExcluded": 9,
+   "dose": true,
+   "orc": {
+    "A": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "B": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ref": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:means": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:wls": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:hanes": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:lb": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    },
+    "var:eadie": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round2sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round3sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round4sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ctl:empty": {
+     "pass": false,
+     "score": 0,
+     "evaluatorValid": true
+    },
+    "ctl:shuffled-or-corrupted": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:keep-outliers": {
+     "pass": false,
+     "score": 0.75,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:over-exclude-decoys": {
+     "pass": false,
+     "score": 0.8571,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-units": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-corrections": {
+     "pass": false,
+     "score": 0.4643,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:one-exclusion-missed": {
+     "pass": false,
+     "score": 0.9722,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:apply-rejected-claims": {
+     "pass": false,
+     "score": 0.6786,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-dose": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:exclude-by-residual": {
+     "pass": false,
+     "score": 0.7727,
+     "evaluatorValid": true
+    },
+    "ctl:near-miss:km-12pct": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    }
+   },
+   "truthRelErrMax": 0.0481,
+   "truthRelErrMedian": 0.0156
+  },
+  {
+   "seed": 202,
+   "difficulty": 4,
+   "nConds": 7,
+   "nWells": 207,
+   "nExcluded": 9,
+   "dose": true,
+   "orc": {
+    "A": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "B": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ref": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:means": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:wls": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:hanes": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:lb": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    },
+    "var:eadie": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round2sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round3sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round4sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ctl:empty": {
+     "pass": false,
+     "score": 0,
+     "evaluatorValid": true
+    },
+    "ctl:shuffled-or-corrupted": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:keep-outliers": {
+     "pass": false,
+     "score": 0.5357,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:over-exclude-decoys": {
+     "pass": false,
+     "score": 0.8625,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-units": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-corrections": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:one-exclusion-missed": {
+     "pass": false,
+     "score": 0.9722,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:apply-rejected-claims": {
+     "pass": false,
+     "score": 0.6786,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-dose": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:exclude-by-residual": {
+     "pass": false,
+     "score": 0.7955,
+     "evaluatorValid": true
+    },
+    "ctl:near-miss:km-12pct": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    }
+   },
+   "truthRelErrMax": 0.0473,
+   "truthRelErrMedian": 0.007299999999999999
+  },
+  {
+   "seed": 203,
+   "difficulty": 4,
+   "nConds": 7,
+   "nWells": 225,
+   "nExcluded": 9,
+   "dose": true,
+   "orc": {
+    "A": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "B": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ref": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:means": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:wls": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:hanes": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:lb": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:eadie": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round2sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round3sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round4sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ctl:empty": {
+     "pass": false,
+     "score": 0,
+     "evaluatorValid": true
+    },
+    "ctl:shuffled-or-corrupted": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:keep-outliers": {
+     "pass": false,
+     "score": 0.75,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:over-exclude-decoys": {
+     "pass": false,
+     "score": 0.8571,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-units": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-corrections": {
+     "pass": false,
+     "score": 0.3571,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:one-exclusion-missed": {
+     "pass": false,
+     "score": 0.9722,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:apply-rejected-claims": {
+     "pass": false,
+     "score": 0.6786,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-dose": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:exclude-by-residual": {
+     "pass": false,
+     "score": 0.7727,
+     "evaluatorValid": true
+    },
+    "ctl:near-miss:km-12pct": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    }
+   },
+   "truthRelErrMax": 0.0482,
+   "truthRelErrMedian": 0.014950000000000001
+  },
+  {
+   "seed": 204,
+   "difficulty": 4,
+   "nConds": 7,
+   "nWells": 225,
+   "nExcluded": 10,
+   "dose": true,
+   "orc": {
+    "A": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "B": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ref": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:means": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:wls": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    },
+    "var:hanes": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:lb": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    },
+    "var:eadie": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    },
+    "var:round2sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round3sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round4sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ctl:empty": {
+     "pass": false,
+     "score": 0,
+     "evaluatorValid": true
+    },
+    "ctl:shuffled-or-corrupted": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:keep-outliers": {
+     "pass": false,
+     "score": 0.6429,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:over-exclude-decoys": {
+     "pass": false,
+     "score": 0.8636,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-units": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-corrections": {
+     "pass": false,
+     "score": 0.3571,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:one-exclusion-missed": {
+     "pass": false,
+     "score": 0.975,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:apply-rejected-claims": {
+     "pass": false,
+     "score": 0.7857,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-dose": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:exclude-by-residual": {
+     "pass": false,
+     "score": 0.8125,
+     "evaluatorValid": true
+    },
+    "ctl:near-miss:km-12pct": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    }
+   },
+   "truthRelErrMax": 0.049,
+   "truthRelErrMedian": 0.018099999999999998
+  },
+  {
+   "seed": 205,
+   "difficulty": 4,
+   "nConds": 7,
+   "nWells": 225,
+   "nExcluded": 9,
+   "dose": true,
+   "orc": {
+    "A": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "B": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ref": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:means": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:wls": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    },
+    "var:hanes": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:lb": {
+     "pass": false,
+     "score": 0.7857,
+     "evaluatorValid": true
+    },
+    "var:eadie": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    },
+    "var:round2sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round3sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round4sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ctl:empty": {
+     "pass": false,
+     "score": 0,
+     "evaluatorValid": true
+    },
+    "ctl:shuffled-or-corrupted": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:keep-outliers": {
+     "pass": false,
+     "score": 0.75,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:over-exclude-decoys": {
+     "pass": false,
+     "score": 0.8571,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-units": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-corrections": {
+     "pass": false,
+     "score": 0.3571,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:one-exclusion-missed": {
+     "pass": false,
+     "score": 0.9722,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:apply-rejected-claims": {
+     "pass": false,
+     "score": 0.7857,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-dose": {
+     "pass": false,
+     "score": 0.7857,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:exclude-by-residual": {
+     "pass": false,
+     "score": 0.7727,
+     "evaluatorValid": true
+    },
+    "ctl:near-miss:km-12pct": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    }
+   },
+   "truthRelErrMax": 0.0423,
+   "truthRelErrMedian": 0.0144
+  },
+  {
+   "seed": 206,
+   "difficulty": 4,
+   "nConds": 7,
+   "nWells": 216,
+   "nExcluded": 9,
+   "dose": true,
+   "orc": {
+    "A": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "B": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ref": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:means": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:wls": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:hanes": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:lb": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:eadie": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    },
+    "var:round2sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round3sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round4sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ctl:empty": {
+     "pass": false,
+     "score": 0,
+     "evaluatorValid": true
+    },
+    "ctl:shuffled-or-corrupted": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:keep-outliers": {
+     "pass": false,
+     "score": 0.75,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:over-exclude-decoys": {
+     "pass": false,
+     "score": 0.8571,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-units": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-corrections": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:one-exclusion-missed": {
+     "pass": false,
+     "score": 0.9722,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:apply-rejected-claims": {
+     "pass": false,
+     "score": 0.6786,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-dose": {
+     "pass": false,
+     "score": 0.7857,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:exclude-by-residual": {
+     "pass": false,
+     "score": 0.7727,
+     "evaluatorValid": true
+    },
+    "ctl:near-miss:km-12pct": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    }
+   },
+   "truthRelErrMax": 0.0463,
+   "truthRelErrMedian": 0.009600000000000001
+  },
+  {
+   "seed": 207,
+   "difficulty": 4,
+   "nConds": 7,
+   "nWells": 225,
+   "nExcluded": 10,
+   "dose": true,
+   "orc": {
+    "A": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "B": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ref": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:means": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:wls": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:hanes": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:lb": {
+     "pass": false,
+     "score": 0.7857,
+     "evaluatorValid": true
+    },
+    "var:eadie": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round2sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round3sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round4sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ctl:empty": {
+     "pass": false,
+     "score": 0,
+     "evaluatorValid": true
+    },
+    "ctl:shuffled-or-corrupted": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:keep-outliers": {
+     "pass": false,
+     "score": 0.5357,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:over-exclude-decoys": {
+     "pass": false,
+     "score": 0.8636,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-units": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-corrections": {
+     "pass": false,
+     "score": 0.5714,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:one-exclusion-missed": {
+     "pass": false,
+     "score": 0.8679,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:apply-rejected-claims": {
+     "pass": false,
+     "score": 0.7857,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-dose": {
+     "pass": false,
+     "score": 0.7857,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:exclude-by-residual": {
+     "pass": false,
+     "score": 0.8125,
+     "evaluatorValid": true
+    },
+    "ctl:near-miss:km-12pct": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    }
+   },
+   "truthRelErrMax": 0.0405,
+   "truthRelErrMedian": 0.0088
+  },
+  {
+   "seed": 208,
+   "difficulty": 4,
+   "nConds": 7,
+   "nWells": 207,
+   "nExcluded": 10,
+   "dose": true,
+   "orc": {
+    "A": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "B": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ref": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:means": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:wls": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:hanes": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:lb": {
+     "pass": false,
+     "score": 0.6786,
+     "evaluatorValid": true
+    },
+    "var:eadie": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    },
+    "var:round2sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round3sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round4sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ctl:empty": {
+     "pass": false,
+     "score": 0,
+     "evaluatorValid": true
+    },
+    "ctl:shuffled-or-corrupted": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:keep-outliers": {
+     "pass": false,
+     "score": 0.75,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:over-exclude-decoys": {
+     "pass": false,
+     "score": 0.8636,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-units": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-corrections": {
+     "pass": false,
+     "score": 0.3571,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:one-exclusion-missed": {
+     "pass": false,
+     "score": 0.975,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:apply-rejected-claims": {
+     "pass": false,
+     "score": 0.7857,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-dose": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:exclude-by-residual": {
+     "pass": false,
+     "score": 0.8125,
+     "evaluatorValid": true
+    },
+    "ctl:near-miss:km-12pct": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    }
+   },
+   "truthRelErrMax": 0.0475,
+   "truthRelErrMedian": 0.013600000000000001
+  },
+  {
+   "seed": 209,
+   "difficulty": 4,
+   "nConds": 7,
+   "nWells": 225,
+   "nExcluded": 9,
+   "dose": true,
+   "orc": {
+    "A": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "B": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ref": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:means": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:wls": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:hanes": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:lb": {
+     "pass": false,
+     "score": 0.6786,
+     "evaluatorValid": true
+    },
+    "var:eadie": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    },
+    "var:round2sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round3sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round4sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ctl:empty": {
+     "pass": false,
+     "score": 0,
+     "evaluatorValid": true
+    },
+    "ctl:shuffled-or-corrupted": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:keep-outliers": {
+     "pass": false,
+     "score": 0.6429,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:over-exclude-decoys": {
+     "pass": false,
+     "score": 0.8571,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-units": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-corrections": {
+     "pass": false,
+     "score": 0.4643,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:one-exclusion-missed": {
+     "pass": false,
+     "score": 0.9722,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:apply-rejected-claims": {
+     "pass": false,
+     "score": 0.6786,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-dose": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:exclude-by-residual": {
+     "pass": false,
+     "score": 0.7955,
+     "evaluatorValid": true
+    },
+    "ctl:near-miss:km-12pct": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    }
+   },
+   "truthRelErrMax": 0.0359,
+   "truthRelErrMedian": 0.00995
+  },
+  {
+   "seed": 210,
+   "difficulty": 4,
+   "nConds": 7,
+   "nWells": 207,
+   "nExcluded": 10,
+   "dose": true,
+   "orc": {
+    "A": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "B": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ref": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:means": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:wls": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:hanes": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:lb": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    },
+    "var:eadie": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    },
+    "var:round2sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round3sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round4sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ctl:empty": {
+     "pass": false,
+     "score": 0,
+     "evaluatorValid": true
+    },
+    "ctl:shuffled-or-corrupted": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:keep-outliers": {
+     "pass": false,
+     "score": 0.6429,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:over-exclude-decoys": {
+     "pass": false,
+     "score": 0.869,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-units": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-corrections": {
+     "pass": false,
+     "score": 0.3571,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:one-exclusion-missed": {
+     "pass": false,
+     "score": 0.975,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:apply-rejected-claims": {
+     "pass": false,
+     "score": 0.7857,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-dose": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:exclude-by-residual": {
+     "pass": false,
+     "score": 0.7917,
+     "evaluatorValid": true
+    },
+    "ctl:near-miss:km-12pct": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    }
+   },
+   "truthRelErrMax": 0.0493,
+   "truthRelErrMedian": 0.018250000000000002
+  },
+  {
+   "seed": 211,
+   "difficulty": 4,
+   "nConds": 7,
+   "nWells": 225,
+   "nExcluded": 10,
+   "dose": true,
+   "orc": {
+    "A": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "B": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ref": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:means": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:wls": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:hanes": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:lb": {
+     "pass": false,
+     "score": 0.7857,
+     "evaluatorValid": true
+    },
+    "var:eadie": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    },
+    "var:round2sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round3sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round4sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ctl:empty": {
+     "pass": false,
+     "score": 0,
+     "evaluatorValid": true
+    },
+    "ctl:shuffled-or-corrupted": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:keep-outliers": {
+     "pass": false,
+     "score": 0.6429,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:over-exclude-decoys": {
+     "pass": false,
+     "score": 0.8636,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-units": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-corrections": {
+     "pass": false,
+     "score": 0.4643,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:one-exclusion-missed": {
+     "pass": false,
+     "score": 0.975,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:apply-rejected-claims": {
+     "pass": false,
+     "score": 0.7857,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-dose": {
+     "pass": false,
+     "score": 0.7857,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:exclude-by-residual": {
+     "pass": false,
+     "score": 0.7917,
+     "evaluatorValid": true
+    },
+    "ctl:near-miss:km-12pct": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    }
+   },
+   "truthRelErrMax": 0.0348,
+   "truthRelErrMedian": 0.015050000000000001
+  },
+  {
+   "seed": 212,
+   "difficulty": 4,
+   "nConds": 7,
+   "nWells": 216,
+   "nExcluded": 10,
+   "dose": true,
+   "orc": {
+    "A": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "B": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ref": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:means": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:wls": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    },
+    "var:hanes": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:lb": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:eadie": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round2sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round3sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round4sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ctl:empty": {
+     "pass": false,
+     "score": 0,
+     "evaluatorValid": true
+    },
+    "ctl:shuffled-or-corrupted": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:keep-outliers": {
+     "pass": false,
+     "score": 0.6429,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:over-exclude-decoys": {
+     "pass": false,
+     "score": 0.869,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-units": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-corrections": {
+     "pass": false,
+     "score": 0.5714,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:one-exclusion-missed": {
+     "pass": false,
+     "score": 0.975,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:apply-rejected-claims": {
+     "pass": false,
+     "score": 0.6786,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-dose": {
+     "pass": false,
+     "score": 0.7857,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:exclude-by-residual": {
+     "pass": false,
+     "score": 0.7917,
+     "evaluatorValid": true
+    },
+    "ctl:near-miss:km-12pct": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    }
+   },
+   "truthRelErrMax": 0.0408,
+   "truthRelErrMedian": 0.0169
+  },
+  {
+   "seed": 213,
+   "difficulty": 4,
+   "nConds": 7,
+   "nWells": 216,
+   "nExcluded": 10,
+   "dose": true,
+   "orc": {
+    "A": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "B": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ref": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:means": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:wls": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:hanes": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:lb": {
+     "pass": false,
+     "score": 0.4643,
+     "evaluatorValid": true
+    },
+    "var:eadie": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round2sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round3sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round4sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ctl:empty": {
+     "pass": false,
+     "score": 0,
+     "evaluatorValid": true
+    },
+    "ctl:shuffled-or-corrupted": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:keep-outliers": {
+     "pass": false,
+     "score": 0.3214,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:over-exclude-decoys": {
+     "pass": false,
+     "score": 0.869,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-units": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-corrections": {
+     "pass": false,
+     "score": 0.3571,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:one-exclusion-missed": {
+     "pass": false,
+     "score": 0.8679,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:apply-rejected-claims": {
+     "pass": false,
+     "score": 0.6786,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-dose": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:exclude-by-residual": {
+     "pass": false,
+     "score": 0.8125,
+     "evaluatorValid": true
+    },
+    "ctl:near-miss:km-12pct": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    }
+   },
+   "truthRelErrMax": 0.049,
+   "truthRelErrMedian": 0.01675
+  },
+  {
+   "seed": 214,
+   "difficulty": 4,
+   "nConds": 7,
+   "nWells": 216,
+   "nExcluded": 9,
+   "dose": true,
+   "orc": {
+    "A": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "B": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ref": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:means": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:wls": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    },
+    "var:hanes": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:lb": {
+     "pass": false,
+     "score": 0.7857,
+     "evaluatorValid": true
+    },
+    "var:eadie": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    },
+    "var:round2sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round3sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round4sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ctl:empty": {
+     "pass": false,
+     "score": 0,
+     "evaluatorValid": true
+    },
+    "ctl:shuffled-or-corrupted": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:keep-outliers": {
+     "pass": false,
+     "score": 0.5357,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:over-exclude-decoys": {
+     "pass": false,
+     "score": 0.8625,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-units": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-corrections": {
+     "pass": false,
+     "score": 0.4643,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:one-exclusion-missed": {
+     "pass": false,
+     "score": 0.9722,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:apply-rejected-claims": {
+     "pass": false,
+     "score": 0.7857,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-dose": {
+     "pass": false,
+     "score": 0.7857,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:exclude-by-residual": {
+     "pass": false,
+     "score": 0.7955,
+     "evaluatorValid": true
+    },
+    "ctl:near-miss:km-12pct": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    }
+   },
+   "truthRelErrMax": 0.0441,
+   "truthRelErrMedian": 0.012150000000000001
+  },
+  {
+   "seed": 215,
+   "difficulty": 4,
+   "nConds": 7,
+   "nWells": 225,
+   "nExcluded": 10,
+   "dose": true,
+   "orc": {
+    "A": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "B": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ref": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:means": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:wls": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:hanes": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:lb": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    },
+    "var:eadie": {
+     "pass": false,
+     "score": 0.7857,
+     "evaluatorValid": true
+    },
+    "var:round2sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round3sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round4sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ctl:empty": {
+     "pass": false,
+     "score": 0,
+     "evaluatorValid": true
+    },
+    "ctl:shuffled-or-corrupted": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:keep-outliers": {
+     "pass": false,
+     "score": 0.4286,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:over-exclude-decoys": {
+     "pass": false,
+     "score": 0.869,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-units": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-corrections": {
+     "pass": false,
+     "score": 0.4643,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:one-exclusion-missed": {
+     "pass": false,
+     "score": 0.975,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:apply-rejected-claims": {
+     "pass": false,
+     "score": 0.7857,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-dose": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:exclude-by-residual": {
+     "pass": false,
+     "score": 0.8077,
+     "evaluatorValid": true
+    },
+    "ctl:near-miss:km-12pct": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    }
+   },
+   "truthRelErrMax": 0.0476,
+   "truthRelErrMedian": 0.01885
+  },
+  {
+   "seed": 216,
+   "difficulty": 4,
+   "nConds": 7,
+   "nWells": 216,
+   "nExcluded": 10,
+   "dose": true,
+   "orc": {
+    "A": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "B": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ref": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:means": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:wls": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    },
+    "var:hanes": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:lb": {
+     "pass": false,
+     "score": 0.7857,
+     "evaluatorValid": true
+    },
+    "var:eadie": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round2sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round3sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round4sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ctl:empty": {
+     "pass": false,
+     "score": 0,
+     "evaluatorValid": true
+    },
+    "ctl:shuffled-or-corrupted": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:keep-outliers": {
+     "pass": false,
+     "score": 0.6429,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:over-exclude-decoys": {
+     "pass": false,
+     "score": 0.869,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-units": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-corrections": {
+     "pass": false,
+     "score": 0.5714,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:one-exclusion-missed": {
+     "pass": false,
+     "score": 0.975,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:apply-rejected-claims": {
+     "pass": false,
+     "score": 0.6786,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-dose": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:exclude-by-residual": {
+     "pass": false,
+     "score": 0.7917,
+     "evaluatorValid": true
+    },
+    "ctl:near-miss:km-12pct": {
+     "pass": false,
+     "score": 0.8929,
+     "evaluatorValid": true
+    }
+   },
+   "truthRelErrMax": 0.0491,
+   "truthRelErrMedian": 0.01435
+  },
+  {
+   "seed": 217,
+   "difficulty": 5,
+   "nConds": 8,
+   "nWells": 300,
+   "nExcluded": 12,
+   "dose": true,
+   "orc": {
+    "A": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "B": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ref": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:means": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:wls": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:hanes": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:lb": {
+     "pass": false,
+     "score": 0.7188,
+     "evaluatorValid": true
+    },
+    "var:eadie": {
+     "pass": false,
+     "score": 0.9063,
+     "evaluatorValid": true
+    },
+    "var:round2sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round3sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round4sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ctl:empty": {
+     "pass": false,
+     "score": 0,
+     "evaluatorValid": true
+    },
+    "ctl:shuffled-or-corrupted": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:keep-outliers": {
+     "pass": false,
+     "score": 0.1875,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:over-exclude-decoys": {
+     "pass": false,
+     "score": 0.87,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-units": {
+     "pass": false,
+     "score": 0
+    },
+    "ctl:plausible-but-wrong:ignore-corrections": {
+     "pass": false,
+     "score": 0.4375,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:one-exclusion-missed": {
+     "pass": false,
+     "score": 0.6979,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:apply-rejected-claims": {
+     "pass": false,
+     "score": 0.625,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-dose": {
+     "pass": false,
+     "score": 0.9063,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:exclude-by-residual": {
+     "pass": false,
+     "score": 0.8214,
+     "evaluatorValid": true
+    },
+    "ctl:near-miss:km-12pct": {
+     "pass": false,
+     "score": 0.9063,
+     "evaluatorValid": true
+    }
+   },
+   "truthRelErrMax": 0.0365,
+   "truthRelErrMedian": 0.0108
+  },
+  {
+   "seed": 218,
+   "difficulty": 5,
+   "nConds": 8,
+   "nWells": 280,
+   "nExcluded": 11,
+   "dose": true,
+   "orc": {
+    "A": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "B": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ref": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:means": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:wls": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:hanes": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:lb": {
+     "pass": false,
+     "score": 0.9063,
+     "evaluatorValid": true
+    },
+    "var:eadie": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round2sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round3sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round4sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ctl:empty": {
+     "pass": false,
+     "score": 0,
+     "evaluatorValid": true
+    },
+    "ctl:shuffled-or-corrupted": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:keep-outliers": {
+     "pass": false,
+     "score": 0.5625,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:over-exclude-decoys": {
+     "pass": false,
+     "score": 0.86,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-units": {
+     "pass": false,
+     "score": 0
+    },
+    "ctl:plausible-but-wrong:ignore-corrections": {
+     "pass": false,
+     "score": 0.3438,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:one-exclusion-missed": {
+     "pass": false,
+     "score": 0.9773,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:apply-rejected-claims": {
+     "pass": false,
+     "score": 0.4375,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-dose": {
+     "pass": false,
+     "score": 0.8125,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:exclude-by-residual": {
+     "pass": false,
+     "score": 0.8077,
+     "evaluatorValid": true
+    },
+    "ctl:near-miss:km-12pct": {
+     "pass": false,
+     "score": 0.9063,
+     "evaluatorValid": true
+    }
+   },
+   "truthRelErrMax": 0.046,
+   "truthRelErrMedian": 0.0154
+  },
+  {
+   "seed": 219,
+   "difficulty": 5,
+   "nConds": 8,
+   "nWells": 270,
+   "nExcluded": 11,
+   "dose": true,
+   "orc": {
+    "A": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "B": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ref": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:means": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:wls": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:hanes": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:lb": {
+     "pass": false,
+     "score": 0.9063,
+     "evaluatorValid": true
+    },
+    "var:eadie": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round2sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round3sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round4sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ctl:empty": {
+     "pass": false,
+     "score": 0,
+     "evaluatorValid": true
+    },
+    "ctl:shuffled-or-corrupted": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:keep-outliers": {
+     "pass": false,
+     "score": 0.6563,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:over-exclude-decoys": {
+     "pass": false,
+     "score": 0.86,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-units": {
+     "pass": false,
+     "score": 0
+    },
+    "ctl:plausible-but-wrong:ignore-corrections": {
+     "pass": false,
+     "score": 0.5313,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:one-exclusion-missed": {
+     "pass": false,
+     "score": 0.9773,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:apply-rejected-claims": {
+     "pass": false,
+     "score": 0.4375,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-dose": {
+     "pass": false,
+     "score": 0.9063,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:exclude-by-residual": {
+     "pass": false,
+     "score": 0.8077,
+     "evaluatorValid": true
+    },
+    "ctl:near-miss:km-12pct": {
+     "pass": false,
+     "score": 0.9063,
+     "evaluatorValid": true
+    }
+   },
+   "truthRelErrMax": 0.0424,
+   "truthRelErrMedian": 0.0102
+  },
+  {
+   "seed": 220,
+   "difficulty": 5,
+   "nConds": 8,
+   "nWells": 270,
+   "nExcluded": 12,
+   "dose": true,
+   "orc": {
+    "A": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "B": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ref": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:means": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:wls": {
+     "pass": false,
+     "score": 0.9063,
+     "evaluatorValid": true
+    },
+    "var:hanes": {
+     "pass": false,
+     "score": 0.9063,
+     "evaluatorValid": true
+    },
+    "var:lb": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:eadie": {
+     "pass": false,
+     "score": 0.9063,
+     "evaluatorValid": true
+    },
+    "var:round2sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round3sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round4sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ctl:empty": {
+     "pass": false,
+     "score": 0,
+     "evaluatorValid": true
+    },
+    "ctl:shuffled-or-corrupted": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:keep-outliers": {
+     "pass": false,
+     "score": 0.4688,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:over-exclude-decoys": {
+     "pass": false,
+     "score": 0.87,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-units": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-corrections": {
+     "pass": false,
+     "score": 0.4375,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:one-exclusion-missed": {
+     "pass": false,
+     "score": 0.9792,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:apply-rejected-claims": {
+     "pass": false,
+     "score": 0.4375,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-dose": {
+     "pass": false,
+     "score": 0.9063,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:exclude-by-residual": {
+     "pass": false,
+     "score": 0.8167,
+     "evaluatorValid": true
+    },
+    "ctl:near-miss:km-12pct": {
+     "pass": false,
+     "score": 0.9063,
+     "evaluatorValid": true
+    }
+   },
+   "truthRelErrMax": 0.0401,
+   "truthRelErrMedian": 0.01205
+  },
+  {
+   "seed": 221,
+   "difficulty": 5,
+   "nConds": 8,
+   "nWells": 270,
+   "nExcluded": 12,
+   "dose": true,
+   "orc": {
+    "A": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "B": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ref": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:means": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:wls": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:hanes": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:lb": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:eadie": {
+     "pass": false,
+     "score": 0.9063,
+     "evaluatorValid": true
+    },
+    "var:round2sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round3sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round4sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ctl:empty": {
+     "pass": false,
+     "score": 0,
+     "evaluatorValid": true
+    },
+    "ctl:shuffled-or-corrupted": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:keep-outliers": {
+     "pass": false,
+     "score": 0.6563,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:over-exclude-decoys": {
+     "pass": false,
+     "score": 0.87,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-units": {
+     "pass": false,
+     "score": 0
+    },
+    "ctl:plausible-but-wrong:ignore-corrections": {
+     "pass": false,
+     "score": 0.4375,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:one-exclusion-missed": {
+     "pass": false,
+     "score": 0.9792,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:apply-rejected-claims": {
+     "pass": false,
+     "score": 0.3438,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-dose": {
+     "pass": false,
+     "score": 0.8125,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:exclude-by-residual": {
+     "pass": false,
+     "score": 0.8214,
+     "evaluatorValid": true
+    },
+    "ctl:near-miss:km-12pct": {
+     "pass": false,
+     "score": 0.9063,
+     "evaluatorValid": true
+    }
+   },
+   "truthRelErrMax": 0.0442,
+   "truthRelErrMedian": 0.0201
+  },
+  {
+   "seed": 222,
+   "difficulty": 5,
+   "nConds": 8,
+   "nWells": 280,
+   "nExcluded": 10,
+   "dose": true,
+   "orc": {
+    "A": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "B": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ref": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:means": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:wls": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:hanes": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:lb": {
+     "pass": false,
+     "score": 0.8125,
+     "evaluatorValid": true
+    },
+    "var:eadie": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round2sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round3sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round4sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ctl:empty": {
+     "pass": false,
+     "score": 0,
+     "evaluatorValid": true
+    },
+    "ctl:shuffled-or-corrupted": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:keep-outliers": {
+     "pass": false,
+     "score": 0.75,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:over-exclude-decoys": {
+     "pass": false,
+     "score": 0.8587,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-units": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-corrections": {
+     "pass": false,
+     "score": 0.3438,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:one-exclusion-missed": {
+     "pass": false,
+     "score": 0.975,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:apply-rejected-claims": {
+     "pass": false,
+     "score": 0.3438,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-dose": {
+     "pass": false,
+     "score": 0.7188,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:exclude-by-residual": {
+     "pass": false,
+     "score": 0.7917,
+     "evaluatorValid": true
+    },
+    "ctl:near-miss:km-12pct": {
+     "pass": false,
+     "score": 0.9063,
+     "evaluatorValid": true
+    }
+   },
+   "truthRelErrMax": 0.0449,
+   "truthRelErrMedian": 0.0068
+  },
+  {
+   "seed": 223,
+   "difficulty": 5,
+   "nConds": 8,
+   "nWells": 280,
+   "nExcluded": 12,
+   "dose": true,
+   "orc": {
+    "A": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "B": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ref": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:means": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:wls": {
+     "pass": false,
+     "score": 0.9063,
+     "evaluatorValid": true
+    },
+    "var:hanes": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:lb": {
+     "pass": false,
+     "score": 0.9063,
+     "evaluatorValid": true
+    },
+    "var:eadie": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round2sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round3sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round4sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ctl:empty": {
+     "pass": false,
+     "score": 0,
+     "evaluatorValid": true
+    },
+    "ctl:shuffled-or-corrupted": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:keep-outliers": {
+     "pass": false,
+     "score": 0.5625,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:over-exclude-decoys": {
+     "pass": false,
+     "score": 0.87,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-units": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-corrections": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:one-exclusion-missed": {
+     "pass": false,
+     "score": 0.9792,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:apply-rejected-claims": {
+     "pass": false,
+     "score": 0.5313,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-dose": {
+     "pass": false,
+     "score": 0.9063,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:exclude-by-residual": {
+     "pass": false,
+     "score": 0.8214,
+     "evaluatorValid": true
+    },
+    "ctl:near-miss:km-12pct": {
+     "pass": false,
+     "score": 0.9063,
+     "evaluatorValid": true
+    }
+   },
+   "truthRelErrMax": 0.0453,
+   "truthRelErrMedian": 0.0099
+  },
+  {
+   "seed": 224,
+   "difficulty": 5,
+   "nConds": 8,
+   "nWells": 270,
+   "nExcluded": 10,
+   "dose": true,
+   "orc": {
+    "A": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "B": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ref": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:means": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:wls": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:hanes": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:lb": {
+     "pass": false,
+     "score": 0.8125,
+     "evaluatorValid": true
+    },
+    "var:eadie": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round2sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round3sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "var:round4sf": {
+     "pass": true,
+     "score": 1,
+     "evaluatorValid": true
+    },
+    "ctl:empty": {
+     "pass": false,
+     "score": 0,
+     "evaluatorValid": true
+    },
+    "ctl:shuffled-or-corrupted": {
+     "pass": false,
+     "score": 0.25,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:keep-outliers": {
+     "pass": false,
+     "score": 0.5625,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:over-exclude-decoys": {
+     "pass": false,
+     "score": 0.85,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-units": {
+     "pass": false,
+     "score": 0
+    },
+    "ctl:plausible-but-wrong:ignore-corrections": {
+     "pass": false,
+     "score": 0.3438,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:one-exclusion-missed": {
+     "pass": false,
+     "score": 0.975,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:apply-rejected-claims": {
+     "pass": false,
+     "score": 0.5313,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:ignore-dose": {
+     "pass": false,
+     "score": 0.9063,
+     "evaluatorValid": true
+    },
+    "ctl:plausible-but-wrong:exclude-by-residual": {
+     "pass": false,
+     "score": 0.7917,
+     "evaluatorValid": true
+    },
+    "ctl:near-miss:km-12pct": {
+     "pass": false,
+     "score": 0.9063,
+     "evaluatorValid": true
+    }
+   },
+   "truthRelErrMax": 0.0356,
+   "truthRelErrMedian": 0.0143
+  }
+ ],
+ "variantPassRate": {
+  "A": 24,
+  "B": 24,
+  "ref": 24,
+  "var:means": 24,
+  "var:wls": 17,
+  "var:hanes": 23,
+  "var:lb": 5,
+  "var:eadie": 12,
+  "var:round2sf": 24,
+  "var:round3sf": 24,
+  "var:round4sf": 24
+ },
+ "ccTable": [
+  {
+   "kind": "sop:A-vs-B",
+   "n": 24,
+   "allSetSame": true,
+   "maxSymQ": [
+    1.2874510708754135e-9,
+    3.5580278852962295e-9,
+    5.2636748131793535e-9,
+    7.268886340971375e-9
+   ],
+   "vmaxMaxQ": [
+    2.2175022330274709e-10,
+    9.741425621536664e-10,
+    2.0115384330667817e-9
+   ],
+   "kmMaxQ": [
+    1.2874510708754135e-9,
+    3.558027897955833e-9,
+    7.268886393808083e-9
+   ],
+   "falseDisagree": {
+    "1e-9": 1,
+    "1e-8": 0,
+    "1e-7": 0,
+    "0.000001": 0,
+    "0.00001": 0,
+    "0.0001": 0,
+    "0.001": 0,
+    "0.002": 0,
+    "0.005": 0,
+    "0.01": 0,
+    "0.02": 0,
+    "0.05": 0
+   }
+  },
+  {
+   "kind": "sop:A-vs-bedfit",
+   "n": 24,
+   "allSetSame": true,
+   "maxSymQ": [
+    1.69046014233725e-9,
+    5.925354190230091e-9,
+    8.239538384051337e-9,
+    1.006024011865015e-8
+   ],
+   "vmaxMaxQ": [
+    4.285149400188698e-10,
+    1.4411677810313879e-9,
+    2.3489115081959445e-9
+   ],
+   "kmMaxQ": [
+    1.69046014233725e-9,
+    5.9253542068842525e-9,
+    1.006024021985858e-8
+   ],
+   "falseDisagree": {
+    "1e-9": 1,
+    "1e-8": 0.041666666666666664,
+    "1e-7": 0,
+    "0.000001": 0,
+    "0.00001": 0,
+    "0.0001": 0,
+    "0.001": 0,
+    "0.002": 0,
+    "0.005": 0,
+    "0.01": 0,
+    "0.02": 0,
+    "0.05": 0
+   }
+  },
+  {
+   "kind": "sop:B-vs-bedfit",
+   "n": 24,
+   "allSetSame": true,
+   "maxSymQ": [
+    3.108585336863423e-9,
+    6.3802565011274494e-9,
+    9.172011668169509e-9,
+    9.928966126273261e-9
+   ],
+   "vmaxMaxQ": [
+    7.030790455403452e-10,
+    1.626635050612555e-9,
+    2.932561740516235e-9
+   ],
+   "kmMaxQ": [
+    3.108585346526726e-9,
+    6.380256522858953e-9,
+    9.928966224857631e-9
+   ],
+   "falseDisagree": {
+    "1e-9": 1,
+    "1e-8": 0,
+    "1e-7": 0,
+    "0.000001": 0,
+    "0.00001": 0,
+    "0.0001": 0,
+    "0.001": 0,
+    "0.002": 0,
+    "0.005": 0,
+    "0.01": 0,
+    "0.02": 0,
+    "0.05": 0
+   }
+  },
+  {
+   "kind": "nonsop:A-vs-means",
+   "n": 24,
+   "allSetSame": true,
+   "maxSymQ": [
+    0.0033907683645415954,
+    0.008572776257204958,
+    0.014122972576754276,
+    0.038895744365315676
+   ],
+   "vmaxMaxQ": [
+    0.0005164779304917466,
+    0.003532348398171293,
+    0.00835678949652885
+   ],
+   "kmMaxQ": [
+    0.0033907683645415954,
+    0.008610082113602776,
+    0.038895744365315676
+   ],
+   "falseDisagree": {
+    "1e-9": 1,
+    "1e-8": 1,
+    "1e-7": 1,
+    "0.000001": 1,
+    "0.00001": 1,
+    "0.0001": 1,
+    "0.001": 1,
+    "0.002": 1,
+    "0.005": 0.9583333333333334,
+    "0.01": 0.375,
+    "0.02": 0.041666666666666664,
+    "0.05": 0
+   }
+  },
+  {
+   "kind": "nonsop:A-vs-wls",
+   "n": 17,
+   "allSetSame": true,
+   "maxSymQ": [
+    0.030614924512724063,
+    0.05419882568256294,
+    0.07971246939973095,
+    0.10570935474243447
+   ],
+   "vmaxMaxQ": [
+    0.008522194034228079,
+    0.015258675936133323,
+    0.03535664890247202
+   ],
+   "kmMaxQ": [
+    0.0315817989020875,
+    0.05730467158880088,
+    0.11820469698862723
+   ],
+   "falseDisagree": {
+    "1e-9": 1,
+    "1e-8": 1,
+    "1e-7": 1,
+    "0.000001": 1,
+    "0.00001": 1,
+    "0.0001": 1,
+    "0.001": 1,
+    "0.002": 1,
+    "0.005": 1,
+    "0.01": 1,
+    "0.02": 1,
+    "0.05": 0.7058823529411765
+   }
+  },
+  {
+   "kind": "nonsop:A-vs-hanes",
+   "n": 23,
+   "allSetSame": true,
+   "maxSymQ": [
+    0.014581055320201826,
+    0.043211650161812366,
+    0.05975793806829927,
+    0.0818243876586464
+   ],
+   "vmaxMaxQ": [
+    0.005272939485639078,
+    0.013895906945312588,
+    0.024417200836611926
+   ],
+   "kmMaxQ": [
+    0.014796808402074906,
+    0.04470094795308081,
+    0.0818243876586464
+   ],
+   "falseDisagree": {
+    "1e-9": 1,
+    "1e-8": 1,
+    "1e-7": 1,
+    "0.000001": 1,
+    "0.00001": 1,
+    "0.0001": 1,
+    "0.001": 1,
+    "0.002": 1,
+    "0.005": 1,
+    "0.01": 1,
+    "0.02": 0.9565217391304348,
+    "0.05": 0.34782608695652173
+   }
+  },
+  {
+   "kind": "nonsop:A-vs-eadie",
+   "n": 12,
+   "allSetSame": true,
+   "maxSymQ": [
+    0.02363793201870057,
+    0.038617204385694714,
+    0.07426771373981914,
+    0.08975153816432627
+   ],
+   "vmaxMaxQ": [
+    0.011109255327726181,
+    0.01659318783733683,
+    0.02882380535341544
+   ],
+   "kmMaxQ": [
+    0.02363793201870057,
+    0.038617204385694714,
+    0.08975153816432627
+   ],
+   "falseDisagree": {
+    "1e-9": 1,
+    "1e-8": 1,
+    "1e-7": 1,
+    "0.000001": 1,
+    "0.00001": 1,
+    "0.0001": 1,
+    "0.001": 1,
+    "0.002": 1,
+    "0.005": 1,
+    "0.01": 1,
+    "0.02": 1,
+    "0.05": 0.25
+   }
+  },
+  {
+   "kind": "round:A-vs-2sf",
+   "n": 24,
+   "allSetSame": true,
+   "maxSymQ": [
+    0.014287789861406325,
+    0.026644723000238076,
+    0.035256262550385144,
+    0.036682684226699964
+   ],
+   "vmaxMaxQ": [
+    0.005458275133355178,
+    0.018947737547218395,
+    0.03574837110475241
+   ],
+   "kmMaxQ": [
+    0.01247370556724423,
+    0.023597607802387496,
+    0.038079544119118264
+   ],
+   "falseDisagree": {
+    "1e-9": 1,
+    "1e-8": 1,
+    "1e-7": 1,
+    "0.000001": 1,
+    "0.00001": 1,
+    "0.0001": 1,
+    "0.001": 1,
+    "0.002": 1,
+    "0.005": 1,
+    "0.01": 1,
+    "0.02": 0.8333333333333334,
+    "0.05": 0
+   }
+  },
+  {
+   "kind": "round:A-vs-3sf",
+   "n": 24,
+   "allSetSame": true,
+   "maxSymQ": [
+    0.00102691729176882,
+    0.0029441307262386236,
+    0.004139043203909098,
+    0.004819994658251919
+   ],
+   "vmaxMaxQ": [
+    0.0005753435880916637,
+    0.0020263035764959644,
+    0.004819994658251919
+   ],
+   "kmMaxQ": [
+    0.0009261097344847058,
+    0.002755127620217202,
+    0.004670015796428057
+   ],
+   "falseDisagree": {
+    "1e-9": 1,
+    "1e-8": 1,
+    "1e-7": 1,
+    "0.000001": 1,
+    "0.00001": 1,
+    "0.0001": 1,
+    "0.001": 1,
+    "0.002": 0.8333333333333334,
+    "0.005": 0,
+    "0.01": 0,
+    "0.02": 0,
+    "0.05": 0
+   }
+  },
+  {
+   "kind": "round:A-vs-4sf",
+   "n": 24,
+   "allSetSame": true,
+   "maxSymQ": [
+    0.00016533512520167727,
+    0.00026049448411021616,
+    0.00040162405238580365,
+    0.0004769817778972286
+   ],
+   "vmaxMaxQ": [
+    0.00004926756736379961,
+    0.00015327669428540536,
+    0.0003603017586734295
+   ],
+   "kmMaxQ": [
+    0.0000970998685581291,
+    0.0002460612473525126,
+    0.0004772093980843561
+   ],
+   "falseDisagree": {
+    "1e-9": 1,
+    "1e-8": 1,
+    "1e-7": 1,
+    "0.000001": 1,
+    "0.00001": 1,
+    "0.0001": 1,
+    "0.001": 0,
+    "0.002": 0,
+    "0.005": 0,
+    "0.01": 0,
+    "0.02": 0,
+    "0.05": 0
+   }
+  },
+  {
+   "kind": "nonsop:A-vs-lb",
+   "n": 5,
+   "allSetSame": true,
+   "maxSymQ": [
+    0.04210037901085887,
+    0.07652664201464253,
+    0.07994149012196425,
+    0.08042812981458836
+   ],
+   "vmaxMaxQ": [
+    0.03659596703359062,
+    0.05134972887033591,
+    0.05966960007590743
+   ],
+   "kmMaxQ": [
+    0.04395072102375968,
+    0.08042812981458836,
+    0.08602576293465483
+   ],
+   "falseDisagree": {
+    "1e-9": 1,
+    "1e-8": 1,
+    "1e-7": 1,
+    "0.000001": 1,
+    "0.00001": 1,
+    "0.0001": 1,
+    "0.001": 1,
+    "0.002": 1,
+    "0.005": 1,
+    "0.01": 1,
+    "0.02": 1,
+    "0.05": 0.8
+   }
+  }
+ ],
+ "ctlTable": [
+  {
+   "name": "empty",
+   "n": 24,
+   "passedOracle": 0,
+   "exclusionSetDiffers": 24,
+   "maxSymQ_all": [
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "sameSetN": 0,
+   "maxSymQ_sameSet": null,
+   "vmaxMaxMedian_sameSet": null,
+   "kmMaxMedian_sameSet": null,
+   "notFarFromCorrect": 0,
+   "falseAgree": {
+    "0.001": 0,
+    "0.002": 0,
+    "0.005": 0,
+    "0.01": 0,
+    "0.02": 0,
+    "0.05": 0
+   }
+  },
+  {
+   "name": "shuffled-or-corrupted",
+   "n": 24,
+   "passedOracle": 0,
+   "exclusionSetDiffers": 0,
+   "maxSymQ_all": [
+    0.6779230623702035,
+    0.7005675322458518,
+    0.8504659438737907,
+    0.9227821245019424,
+    0.9474703145256416
+   ],
+   "sameSetN": 24,
+   "maxSymQ_sameSet": [
+    0.6779230623702035,
+    0.7005675322458518,
+    0.8504659438737907,
+    0.9227821245019424,
+    0.9474703145256416
+   ],
+   "vmaxMaxMedian_sameSet": 1.1299916494284679,
+   "kmMaxMedian_sameSet": 3.7356025217840276,
+   "notFarFromCorrect": 0,
+   "falseAgree": {
+    "0.001": 0,
+    "0.002": 0,
+    "0.005": 0,
+    "0.01": 0,
+    "0.02": 0,
+    "0.05": 0
+   }
+  },
+  {
+   "name": "plausible-but-wrong:keep-outliers",
+   "n": 24,
+   "passedOracle": 0,
+   "exclusionSetDiffers": 24,
+   "maxSymQ_all": [
+    0.029802411346422454,
+    0.052434806892608425,
+    0.09935991213079026,
+    0.267064714128431,
+    0.3255198452857151
+   ],
+   "sameSetN": 0,
+   "maxSymQ_sameSet": null,
+   "vmaxMaxMedian_sameSet": null,
+   "kmMaxMedian_sameSet": null,
+   "notFarFromCorrect": 0,
+   "falseAgree": {
+    "0.001": 0,
+    "0.002": 0,
+    "0.005": 0,
+    "0.01": 0,
+    "0.02": 0,
+    "0.05": 0
+   }
+  },
+  {
+   "name": "plausible-but-wrong:over-exclude-decoys",
+   "n": 24,
+   "passedOracle": 0,
+   "exclusionSetDiffers": 24,
+   "maxSymQ_all": [
+    1.69046014233725e-9,
+    3.0950410160338254e-9,
+    5.925354190230091e-9,
+    8.239538384051337e-9,
+    1.006024011865015e-8
+   ],
+   "sameSetN": 0,
+   "maxSymQ_sameSet": null,
+   "vmaxMaxMedian_sameSet": null,
+   "kmMaxMedian_sameSet": null,
+   "notFarFromCorrect": 0,
+   "falseAgree": {
+    "0.001": 0,
+    "0.002": 0,
+    "0.005": 0,
+    "0.01": 0,
+    "0.02": 0,
+    "0.05": 0
+   }
+  },
+  {
+   "name": "plausible-but-wrong:ignore-units",
+   "n": 24,
+   "passedOracle": 0,
+   "exclusionSetDiffers": 0,
+   "maxSymQ_all": [
+    0.9995215750835075,
+    0.999947170731482,
+    0.999997508893997,
+    1.0353793564701481,
+    1.0860478925939474
+   ],
+   "sameSetN": 24,
+   "maxSymQ_sameSet": [
+    0.9995215750835075,
+    0.999947170731482,
+    0.999997508893997,
+    1.0353793564701481,
+    1.0860478925939474
+   ],
+   "vmaxMaxMedian_sameSet": 13450.597996653793,
+   "kmMaxMedian_sameSet": 3122.57002452135,
+   "notFarFromCorrect": 0,
+   "falseAgree": {
+    "0.001": 0,
+    "0.002": 0,
+    "0.005": 0,
+    "0.01": 0,
+    "0.02": 0,
+    "0.05": 0
+   }
+  },
+  {
+   "name": "plausible-but-wrong:ignore-corrections",
+   "n": 24,
+   "passedOracle": 0,
+   "exclusionSetDiffers": 0,
+   "maxSymQ_all": [
+    0.9515987317461416,
+    0.970118642333831,
+    0.9991039684581688,
+    0.9999170191704463,
+    0.9999271742057726
+   ],
+   "sameSetN": 24,
+   "maxSymQ_sameSet": [
+    0.9515987317461416,
+    0.970118642333831,
+    0.9991039684581688,
+    0.9999170191704463,
+    0.9999271742057726
+   ],
+   "vmaxMaxMedian_sameSet": 28.018007421647194,
+   "kmMaxMedian_sameSet": 42.557470220850796,
+   "notFarFromCorrect": 0,
+   "falseAgree": {
+    "0.001": 0,
+    "0.002": 0,
+    "0.005": 0,
+    "0.01": 0,
+    "0.02": 0,
+    "0.05": 0
+   }
+  },
+  {
+   "name": "plausible-but-wrong:one-exclusion-missed",
+   "n": 24,
+   "passedOracle": 0,
+   "exclusionSetDiffers": 24,
+   "maxSymQ_all": [
+    0.00000946900703226647,
+    0.0001768448772974147,
+    0.005916849834543319,
+    0.12476883886751912,
+    0.22320907854324515
+   ],
+   "sameSetN": 0,
+   "maxSymQ_sameSet": null,
+   "vmaxMaxMedian_sameSet": null,
+   "kmMaxMedian_sameSet": null,
+   "notFarFromCorrect": 0,
+   "falseAgree": {
+    "0.001": 0,
+    "0.002": 0,
+    "0.005": 0,
+    "0.01": 0,
+    "0.02": 0,
+    "0.05": 0
+   }
+  },
+  {
+   "name": "plausible-but-wrong:apply-rejected-claims",
+   "n": 24,
+   "passedOracle": 0,
+   "exclusionSetDiffers": 0,
+   "maxSymQ_all": [
+    0.1341993334461556,
+    0.19634923237587645,
+    0.42315993731680956,
+    0.9947125987471438,
+    0.9998991968322675
+   ],
+   "sameSetN": 24,
+   "maxSymQ_sameSet": [
+    0.1341993334461556,
+    0.19634923237587645,
+    0.42315993731680956,
+    0.9947125987471438,
+    0.9998991968322675
+   ],
+   "vmaxMaxMedian_sameSet": 0.20329615680278545,
+   "kmMaxMedian_sameSet": 0.4330357111130826,
+   "notFarFromCorrect": 2,
+   "falseAgree": {
+    "0.001": 0,
+    "0.002": 0,
+    "0.005": 0,
+    "0.01": 0,
+    "0.02": 0,
+    "0.05": 0
+   }
+  },
+  {
+   "name": "plausible-but-wrong:ignore-dose",
+   "n": 24,
+   "passedOracle": 0,
+   "exclusionSetDiffers": 0,
+   "maxSymQ_all": [
+    0.49999999882554425,
+    0.49999999938543416,
+    0.5000000003314913,
+    0.7515898113064219,
+    0.7618588239676967
+   ],
+   "sameSetN": 24,
+   "maxSymQ_sameSet": [
+    0.49999999882554425,
+    0.49999999938543416,
+    0.5000000003314913,
+    0.7515898113064219,
+    0.7618588239676967
+   ],
+   "vmaxMaxMedian_sameSet": 0.9999999988839063,
+   "kmMaxMedian_sameSet": 8.143873077725815e-9,
+   "notFarFromCorrect": 0,
+   "falseAgree": {
+    "0.001": 0,
+    "0.002": 0,
+    "0.005": 0,
+    "0.01": 0,
+    "0.02": 0,
+    "0.05": 0
+   }
+  },
+  {
+   "name": "plausible-but-wrong:exclude-by-residual",
+   "n": 24,
+   "passedOracle": 0,
+   "exclusionSetDiffers": 24,
+   "maxSymQ_all": [
+    0.007634795952134769,
+    0.013845881907200472,
+    0.020477133330131393,
+    0.04182803278210677,
+    0.051414558943807386
+   ],
+   "sameSetN": 0,
+   "maxSymQ_sameSet": null,
+   "vmaxMaxMedian_sameSet": null,
+   "kmMaxMedian_sameSet": null,
+   "notFarFromCorrect": 0,
+   "falseAgree": {
+    "0.001": 0,
+    "0.002": 0,
+    "0.005": 0,
+    "0.01": 0,
+    "0.02": 0,
+    "0.05": 0
+   }
+  },
+  {
+   "name": "near-miss:km-12pct",
+   "n": 24,
+   "passedOracle": 0,
+   "exclusionSetDiffers": 0,
+   "maxSymQ_all": [
+    0.06775950970153266,
+    0.08570872509217639,
+    0.1189909546144735,
+    0.14975919592550327,
+    0.15117108426625567
+   ],
+   "sameSetN": 24,
+   "maxSymQ_sameSet": [
+    0.06775950970153266,
+    0.08570872509217639,
+    0.1189909546144735,
+    0.14975919592550327,
+    0.15117108426625567
+   ],
+   "vmaxMaxMedian_sameSet": 1.4411677810313879e-9,
+   "kmMaxMedian_sameSet": 0.1350731118915436,
+   "notFarFromCorrect": 21,
+   "falseAgree": {
+    "0.001": 0,
+    "0.002": 0,
+    "0.005": 0,
+    "0.01": 0,
+    "0.02": 0,
+    "0.05": 0
+   }
+  }
+ ],
+ "falseAgreePBW": {
+  "0.001": 0,
+  "0.002": 0,
+  "0.005": 0,
+  "0.01": 0,
+  "0.02": 0,
+  "0.05": 0
+ },
+ "falseAgreeAll": {
+  "0.001": 0,
+  "0.002": 0,
+  "0.005": 0,
+  "0.01": 0,
+  "0.02": 0,
+  "0.05": 0
+ },
+ "falseAgreeNear": {
+  "0.001": 0,
+  "0.002": 0,
+  "0.005": 0,
+  "0.01": 0,
+  "0.02": 0,
+  "0.05": 0
+ },
+ "numbersOnly": {
+  "0.001": 0.15104166666666666,
+  "0.002": 0.16145833333333334,
+  "0.005": 0.1875,
+  "0.01": 0.21354166666666666,
+  "0.02": 0.28125,
+  "0.05": 0.3697916666666667
+ },
+ "claim": {
+  "pbwPairs": 192,
+  "setDiffers": 96,
+  "sameSetPairs": 96,
+  "sameSetAnd_ge15": 94,
+  "sameSetAnd_lt15": 2,
+  "sameSetAnd_lt05": 0,
+  "sameSetAnd_lt02": 0,
+  "setDiffersOr_ge15": 190
+ },
+ "row37": {
+  "0.001": {
+   "correctCorrect_nonSop": {
+    "pairs": 153,
+    "disagree": 129,
+    "vanishAfterSharedRefit": 129
+   },
+   "correctWrong_pbw": {
+    "pairs": 192,
+    "disagree": 192,
+    "vanishAfterSharedRefit": 96
+   }
+  },
+  "0.005": {
+   "correctCorrect_nonSop": {
+    "pairs": 153,
+    "disagree": 104,
+    "vanishAfterSharedRefit": 104
+   },
+   "correctWrong_pbw": {
+    "pairs": 192,
+    "disagree": 192,
+    "vanishAfterSharedRefit": 96
+   }
+  },
+  "0.01": {
+   "correctCorrect_nonSop": {
+    "pairs": 153,
+    "disagree": 90,
+    "vanishAfterSharedRefit": 90
+   },
+   "correctWrong_pbw": {
+    "pairs": 192,
+    "disagree": 192,
+    "vanishAfterSharedRefit": 96
+   }
+  },
+  "0.02": {
+   "correctCorrect_nonSop": {
+    "pairs": 153,
+    "disagree": 77,
+    "vanishAfterSharedRefit": 77
+   },
+   "correctWrong_pbw": {
+    "pairs": 192,
+    "disagree": 192,
+    "vanishAfterSharedRefit": 96
+   }
+  },
+  "0.05": {
+   "correctCorrect_nonSop": {
+    "pairs": 153,
+    "disagree": 27,
+    "vanishAfterSharedRefit": 27
+   },
+   "correctWrong_pbw": {
+    "pairs": 192,
+    "disagree": 192,
+    "vanishAfterSharedRefit": 96
+   }
+  }
+ },
+ "loose": {
+  "0.05": {
+   "falseDisagree_sopFitters": 0,
+   "falseDisagree_nonSop_passers": 0.17647058823529413,
+   "falseAgree_pbw": 0,
+   "falseAgree_nearMiss12": 0,
+   "falseAgree_pbw_numbersOnly": 0.3697916666666667
+  },
+  "0.08": {
+   "falseDisagree_sopFitters": 0,
+   "falseDisagree_nonSop_passers": 0.032679738562091505,
+   "falseAgree_pbw": 0,
+   "falseAgree_nearMiss12": 0.08333333333333333,
+   "falseAgree_pbw_numbersOnly": 0.4010416666666667
+  },
+  "0.1": {
+   "falseDisagree_sopFitters": 0,
+   "falseDisagree_nonSop_passers": 0.006535947712418301,
+   "falseAgree_pbw": 0,
+   "falseAgree_nearMiss12": 0.25,
+   "falseAgree_pbw_numbersOnly": 0.421875
+  },
+  "0.15": {
+   "falseDisagree_sopFitters": 0,
+   "falseDisagree_nonSop_passers": 0,
+   "falseAgree_pbw": 0.010416666666666666,
+   "falseAgree_nearMiss12": 0.875,
+   "falseAgree_pbw_numbersOnly": 0.4479166666666667
+  },
+  "0.2": {
+   "falseDisagree_sopFitters": 0,
+   "falseDisagree_nonSop_passers": 0,
+   "falseAgree_pbw": 0.015625,
+   "falseAgree_nearMiss12": 1,
+   "falseAgree_pbw_numbersOnly": 0.4895833333333333
+  }
+ },
+ "minDist": {
+  "empty": null,
+  "shuffled-or-corrupted": 0.6779230623702035,
+  "plausible-but-wrong:keep-outliers": null,
+  "plausible-but-wrong:over-exclude-decoys": null,
+  "plausible-but-wrong:ignore-units": 0.9995215750835075,
+  "plausible-but-wrong:ignore-corrections": 0.9515987317461416,
+  "plausible-but-wrong:one-exclusion-missed": null,
+  "plausible-but-wrong:apply-rejected-claims": 0.1341993334461556,
+  "plausible-but-wrong:ignore-dose": 0.49999999882554425,
+  "plausible-but-wrong:exclude-by-residual": null,
+  "near-miss:km-12pct": 0.06775950970153266
+ },
+ "passersWorstCase": 0.18181818181818182
+}

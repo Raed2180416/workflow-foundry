@@ -1,0 +1,24 @@
+// Prints the README tables (markdown) from out/gauge-results.json.
+import fs from 'node:fs'; import path from 'node:path'; import { fileURLToPath } from 'node:url';
+const r = JSON.parse(fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'out', 'gauge-results.json')));
+const pc = x => (x == null ? '–' : (100 * x).toFixed(x < 0.001 && x > 0 ? 2 : 1) + '%');
+const e = x => (x == null ? '–' : x.toExponential(1));
+const f3 = x => (x == null ? '–' : x.toFixed(3));
+console.log('### Correct-correct: spread and false-disagreement\n');
+console.log('| pair (answer A = SOP fitter A) | n | median / max spread (|Δ|/max, worst number per pair) | max |Δvmax|/vmax | max |Δkm|/km | ' + r.relTols.map(t => `FD@${t}`).join(' | ') + ' |');
+console.log('|---|---|---|---|---|' + r.relTols.map(() => '---|').join(''));
+for (const t of r.ccTable) console.log(`| ${t.kind} | ${t.n} | ${e(t.maxSymQ[1])} / ${e(t.maxSymQ[3])} | ${e(t.vmaxMaxQ[2])} | ${e(t.kmMaxQ[2])} | ` + r.relTols.map(x => pc(t.falseDisagree[x])).join(' | ') + ' |');
+console.log('\n### Fine relTol (fitter noise floor)\n');
+console.log('| pair | ' + r.fineRelTols.join(' | ') + ' |\n|---|' + r.fineRelTols.map(() => '---|').join(''));
+for (const t of r.ccTable.filter(t => t.kind.startsWith('sop:'))) console.log(`| ${t.kind} | ` + r.fineRelTols.map(x => pc(t.falseDisagree[x])).join(' | ') + ' |');
+console.log('\n### Variant oracle pass counts (of 24)\n'); console.log(JSON.stringify(r.variantPassRate));
+console.log('\n### Controls\n');
+console.log('| control | n | oracle pass | exclusion set differs | same-set: min / median / max distance (|Δ|/max) | FA@' + r.relTols.join(' | FA@') + ' |');
+console.log('|---|---|---|---|---|' + r.relTols.map(() => '---|').join(''));
+for (const t of r.ctlTable) console.log(`| ${t.name.replace('plausible-but-wrong:', 'pbw:')} | ${t.n} | ${t.passedOracle} | ${t.exclusionSetDiffers}/${t.n} | ${t.maxSymQ_sameSet ? `${f3(t.maxSymQ_sameSet[0])} / ${f3(t.maxSymQ_sameSet[2])} / ${f3(t.maxSymQ_sameSet[4])}` : '(set differs)'} | ` + r.relTols.map(x => pc(t.falseAgree[x])).join(' | ') + ' |');
+console.log('\nall-controls-distance (incl. set-differing):'); for (const t of r.ctlTable) console.log(`${t.name}: q0/.1/.5/.9/1 = ${t.maxSymQ_all.map(f3).join(' ')}; vmax med(sameSet)=${f3(t.vmaxMaxMedian_sameSet)} km med=${f3(t.kmMaxMedian_sameSet)}`);
+console.log('\nclaim', JSON.stringify(r.claim)); console.log('FA pbw', JSON.stringify(r.falseAgreePBW), 'numbersOnly', JSON.stringify(r.numbersOnly));
+console.log('\nloose', JSON.stringify(r.loose)); console.log('minDist', JSON.stringify(r.minDist));
+console.log('\nrow37', JSON.stringify(r.row37));
+const m = r.meta; console.log('\ntruth rel err (reference-quality fit vs generating truth): max', Math.max(...m.map(x => x.truthRelErrMax)), 'median of per-task max', m.map(x => x.truthRelErrMax).sort((a, b) => a - b)[12]);
+console.log('conds', m.map(x => x.nConds).join(','), 'excl', m.map(x => x.nExcluded).join(','), 'dose', m.filter(x => x.dose).length);

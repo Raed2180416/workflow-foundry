@@ -1,0 +1,233 @@
+{
+ "seed": "kev-independence-v1-20261009",
+ "population": 1181,
+ "jevWrongPopulation": 267,
+ "n": 120,
+ "jevWrong": 65,
+ "plan": [
+  {
+   "port": "interactive:Q1",
+   "kind": "wrong",
+   "N": 18,
+   "quota": 2,
+   "taken": 2
+  },
+  {
+   "port": "interactive:Q1",
+   "kind": "right",
+   "N": 82,
+   "quota": 2,
+   "taken": 2
+  },
+  {
+   "port": "interactive:Q2",
+   "kind": "wrong",
+   "N": 9,
+   "quota": 2,
+   "taken": 2
+  },
+  {
+   "port": "interactive:Q2",
+   "kind": "right",
+   "N": 91,
+   "quota": 2,
+   "taken": 2
+  },
+  {
+   "port": "interactive:Q4",
+   "kind": "wrong",
+   "N": 5,
+   "quota": 2,
+   "taken": 2
+  },
+  {
+   "port": "interactive:Q4",
+   "kind": "right",
+   "N": 97,
+   "quota": 2,
+   "taken": 2
+  },
+  {
+   "port": "interactive:Q5",
+   "kind": "wrong",
+   "N": 16,
+   "quota": 2,
+   "taken": 2
+  },
+  {
+   "port": "interactive:Q5",
+   "kind": "right",
+   "N": 36,
+   "quota": 2,
+   "taken": 2
+  },
+  {
+   "port": "interactive:Q6",
+   "kind": "wrong",
+   "N": 4,
+   "quota": 2,
+   "taken": 2
+  },
+  {
+   "port": "interactive:Q6",
+   "kind": "right",
+   "N": 72,
+   "quota": 2,
+   "taken": 2
+  },
+  {
+   "port": "interactive:X1",
+   "kind": "wrong",
+   "N": 8,
+   "quota": 2,
+   "taken": 2
+  },
+  {
+   "port": "interactive:X1",
+   "kind": "right",
+   "N": 24,
+   "quota": 2,
+   "taken": 2
+  },
+  {
+   "port": "interactive:X6",
+   "kind": "wrong",
+   "N": 52,
+   "quota": 14,
+   "taken": 14
+  },
+  {
+   "port": "interactive:X6",
+   "kind": "right",
+   "N": 48,
+   "quota": 10,
+   "taken": 10
+  },
+  {
+   "port": "kinetics:K1",
+   "kind": "wrong",
+   "N": 14,
+   "quota": 2,
+   "taken": 2
+  },
+  {
+   "port": "kinetics:K1",
+   "kind": "right",
+   "N": 83,
+   "quota": 2,
+   "taken": 2
+  },
+  {
+   "port": "kinetics:K2",
+   "kind": "wrong",
+   "N": 0,
+   "quota": 0,
+   "taken": 0
+  },
+  {
+   "port": "kinetics:K2",
+   "kind": "right",
+   "N": 10,
+   "quota": 2,
+   "taken": 2
+  },
+  {
+   "port": "kinetics:K3",
+   "kind": "wrong",
+   "N": 0,
+   "quota": 0,
+   "taken": 0
+  },
+  {
+   "port": "kinetics:K3",
+   "kind": "right",
+   "N": 12,
+   "quota": 2,
+   "taken": 2
+  },
+  {
+   "port": "kinetics:X3",
+   "kind": "wrong",
+   "N": 86,
+   "quota": 17,
+   "taken": 17
+  },
+  {
+   "port": "kinetics:X3",
+   "kind": "right",
+   "N": 114,
+   "quota": 11,
+   "taken": 11
+  },
+  {
+   "port": "kinetics:X4",
+   "kind": "wrong",
+   "N": 12,
+   "quota": 2,
+   "taken": 2
+  },
+  {
+   "port": "kinetics:X4",
+   "kind": "right",
+   "N": 30,
+   "quota": 2,
+   "taken": 2
+  },
+  {
+   "port": "kinetics:X8",
+   "kind": "wrong",
+   "N": 22,
+   "quota": 2,
+   "taken": 2
+  },
+  {
+   "port": "kinetics:X8",
+   "kind": "right",
+   "N": 78,
+   "quota": 2,
+   "taken": 2
+  },
+  {
+   "port": "runbook:Q4",
+   "kind": "wrong",
+   "N": 3,
+   "quota": 2,
+   "taken": 2
+  },
+  {
+   "port": "runbook:Q4",
+   "kind": "right",
+   "N": 97,
+   "quota": 2,
+   "taken": 2
+  },
+  {
+   "port": "runbook:X1",
+   "kind": "wrong",
+   "N": 3,
+   "quota": 2,
+   "taken": 2
+  },
+  {
+   "port": "runbook:X1",
+   "kind": "right",
+   "N": 24,
+   "quota": 2,
+   "taken": 2
+  },
+  {
+   "port": "runbook:X4",
+   "kind": "wrong",
+   "N": 15,
+   "quota": 12,
+   "taken": 12
+  },
+  {
+   "port": "runbook:X4",
+   "kind": "right",
+   "N": 16,
+   "quota": 8,
+   "taken": 8
+  }
+ ]
+}
