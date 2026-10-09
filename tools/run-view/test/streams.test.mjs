@@ -157,7 +157,7 @@ test('export: one self-contained html (hashed CSP, connect-src none, no URL), a 
   assert.equal(scripts.length, 2); assert.equal(styles.length, 2);
   for (const x of [...scripts, ...styles]) assert.ok(csp.includes(sha(x)), 'every inline script and style is hashed in the CSP');
   assert.ok(!/unsafe-inline|unsafe-eval/.test(csp));
-  const evil = JSON.parse(JSON.stringify(data)); evil.experiments[0].name = '</script><img src=x onerror=alert(1)><!-- ';
+  const evil = JSON.parse(JSON.stringify(data)); evil.experiments[0].name = '</script><img src=x onerror=alert(1)><!--\u2028';
   assert.deepEqual(JSON.parse(/<script id="streams-data" type="application\/json">([\s\S]*?)<\/script>/.exec(bundleStreamsHtml(evil))[1]), evil);
   assert.deepEqual(outputsFor('/x/a.json'), { html: null, json: '/x/a.json' });
   assert.deepEqual(outputsFor('/x/a.html', '/y/b.json'), { html: '/x/a.html', json: '/y/b.json' });
@@ -203,7 +203,7 @@ test('browser: charts, lanes, details, versions and the summary render from the 
   await page.goto(`${pathToFileURL(file).href}#/exp/jit-fix-1`);
   await page.waitForSelector('svg.lanes');
   assert.equal(await page.locator('svg.chart').count(), 2);
-  assert.equal(await page.locator('svg.chart path.ln').count(), 4, 'one line per arm');
+  assert.equal(await page.locator('svg.chart').first().locator('path.ln').count(), 4, 'one line per arm');
   assert.equal(await page.locator('svg.lanes .hit').count(), 4 * 10, 'one cell per planned task per arm');
   assert.equal(await page.locator('svg.lanes .cell.open').count(), 2, 'two open tasks');
   // chart keyboard reading
