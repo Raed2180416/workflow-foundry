@@ -203,7 +203,8 @@ const MUTATORS = new Set(['push', 'pop', 'shift', 'unshift', 'splice', 'sort', '
 
 // The array literal an identifier is bound to: exactly one `const NAME = [ ... ]` and no other way NAME could be bound or
 // changed (another declaration, an assignment, a parameter, a destructuring, an import, a mutating method).
-function resolveBinding(src, toks, match, name) {
+function resolveBinding(src, toks, match, name, opener = '[') {
+  const what = opener === '[' ? 'an array literal' : 'an object literal';
   const decls = [], other = [];
   toks.forEach((t, k) => {
     if (t.type !== 'ident' || t.value !== name) return;
@@ -233,9 +234,10 @@ function resolveBinding(src, toks, match, name) {
   if (other.length) return { error: `${name} is ${other.join('; ')}` };
   const { k, kw } = decls[0];
   if (kw !== 'const') return { error: `${name} is declared with ${kw}, not const` };
-  if (!isP(toks[k + 1], '=') || !isP(toks[k + 2], '[')) return { error: `${name} (line ${lineOf(src, toks[k].start)}) is not bound to an array literal: ${src.slice(toks[k].start, toks[Math.min(k + 8, toks.length - 1)].end).replace(/\s+/g, ' ')}` };
+  if (!isP(toks[k + 1], '=') || !isP(toks[k + 2], opener)) return { error: `${name} (line ${lineOf(src, toks[k].start)}) is not bound to ${what}: ${src.slice(toks[k].start, toks[Math.min(k + 8, toks.length - 1)].end).replace(/\s+/g, ' ')}` };
   const close = match.get(k + 2), after = toks[close + 1];
-  if (after && !isP(after, ';') && !isP(after, ',') && lineOf(src, after.start) === lineOf(src, toks[close].end)) return { error: `${name} is bound to an expression that continues after its array literal (${after.value})` };
+  if (after && !isP(after, ';') && !isP(after, ',') && lineOf(src, after.start) === lineOf(src, toks[close].end)) return { error: `${name} is bound to an expression that continues after ${what} (${after.value})` };
+  if (opener === '{') return { name, line: lineOf(src, toks[k].start), props: parseProps(toks, match, k + 2, close) };
   const elems = splitTop(toks, match, k + 2, close);
   const values = elems.every(([a, b]) => b - a === 1 && toks[a].type === 'str') ? elems.map(([a]) => strValue(toks[a])) : null;
   return { name, line: lineOf(src, toks[k].start), text: src.slice(toks[k + 2].start, toks[close].end), values };
@@ -282,11 +284,17 @@ export function findJudges(source) {
       const props = parseProps(toks, match, opt[0], opt[1] - 1);
       const tiersProps = props.map((p, i) => ({ ...p, i })).filter(p => p.key === 'tiers');
       const unsafe = props.filter(p => p.kind === 'computed' || p.kind === 'unknown');
-      const lastSpread = props.map(p => p.kind).lastIndexOf('spread');
+      // A spread after tiers is safe only when it is a const bound once to an object literal with no tiers, spread or computed key.
+      const spreadRisk = props.filter((p, i) => p.kind === 'spread' && i > (tiersProps[0]?.i ?? Infinity)).find(p => {
+        const [a, b] = p.range;
+        if (b - a !== 2 || toks[a + 1].type !== 'ident') return true;
+        const bound = resolveBinding(source, toks, match, toks[a + 1].value, '{');
+        return !!bound.error || bound.props.some(q => q.key === 'tiers' || ['spread', 'computed', 'unknown'].includes(q.kind));
+      });
       if (unsafe.length) site.error = `judge ${site.nameText} (line ${line}) has a computed or unparsed option key, which could be tiers`;
       else if (tiersProps.length !== 1) site.error = `judge ${site.nameText} (line ${line}) has ${tiersProps.length} tiers properties`;
       else if (tiersProps[0].kind === 'method') site.error = `judge ${site.nameText} (line ${line}): tiers is a method`;
-      else if (lastSpread > tiersProps[0].i) site.error = `judge ${site.nameText} (line ${line}): a spread after tiers could override it`;
+      else if (spreadRisk) site.error = `judge ${site.nameText} (line ${line}): the spread ${source.slice(toks[spreadRisk.range[0]].start, toks[spreadRisk.range[1] - 1].end)} after tiers could override it`;
       else {
         site.tiers = tiersOf(source, toks, match, tiersProps[0]);
         if (site.tiers.error) site.error = `judge ${site.nameText} (line ${line}): ${site.tiers.error}`;

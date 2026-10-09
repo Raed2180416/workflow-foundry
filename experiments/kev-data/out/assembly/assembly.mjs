@@ -134,7 +134,9 @@ export function recordsLines(dir, slice, contracts, counts = {}) {
     for (const u of surface(dir, 'X1', slice)) {
       if (u.role !== 'decisive') continue;
       if (/\{[A-Za-z_][A-Za-z0-9_]*\}/.test(u.text)) { c('drop:X1:slot'); continue; }
-      const kind = u.label === 'yes' ? 'positive' : hasAddressee(u.text) ? 'hard-negative' : 'benign';
+      // the store labels X1 lines yes/no only; records' class mix also draws decoys (a 'no' memo that looks like a marker): the
+      // negatives without an addressee word are split benign/decoy by a hash of the line id, so no class starves the OOD slice
+      const kind = u.label === 'yes' ? 'positive' : hasAddressee(u.text) ? 'hard-negative' : parseInt(sha(`x1class|${u.id}`).slice(0, 8), 16) % 2 ? 'decoy' : 'benign';
       push({ id: u.id, port: 'X1', group: 'authored', kind, label: u.label, family: null, role: kind, addressee: hasAddressee(u.text), sourceKind: u.sourceKind ?? null, text: u.text, filter: u.status });
     }
     return out;

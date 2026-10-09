@@ -130,6 +130,15 @@ export class Store {
     });
     return run;
   }
+  /** The cancel request recorded in a run's header (Runtime.requestCancel), or null. A point read of the one field, cheap enough to poll. */
+  cancelRequest(id) {
+    const row = this.rows.stmt("SELECT json_extract(body,'$.cancelRequest') AS request FROM runs WHERE id=?").get(id);
+    return row?.request ? JSON.parse(row.request) : null;
+  }
+  /** The ids of every run that has not reached a final status (succeeded, failed, cancelled), oldest first: what is running, parked or uncertain. */
+  openRunIds() {
+    return this.rows.stmt("SELECT id FROM runs WHERE json_extract(body,'$.status') NOT IN ('succeeded','failed','cancelled') ORDER BY rowid").all().map(row => row.id);
+  }
   /** The whole run record: header, input, nodes, outputs and frames. Reads every row of the run; the runtime's hot path uses `store.rows` instead. */
   run(id) { return this.rows.run(id); }
   runs() { return this.db.prepare('SELECT id FROM runs ORDER BY rowid DESC LIMIT 100').all().map(r => this.rows.run(r.id)); }
