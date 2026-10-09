@@ -46,3 +46,19 @@ Nothing here is a claim. Each entry gives the observation, the mechanism and the
 - Observation: Opus-arm v2 was recompiled to fix the over-strict `vendex-entries` check (D3). In the N-version probe it never deopted (24/24 answered, 15 correct). On the d4 drift tasks it answered and failed 5 of 7. Its predecessor v1 and the other solvers refused most d4 tasks. In the live stream, v2's first d4 task was wrong and a shadow caught it (adjudicated, regression recorded).
 - Mechanism: reject-if-worse compares only old labelled cases, so it cannot see a guard that has been widened.
 - Consequence: a recompile also has to replay every input on which the previous version deopted, and every guard-triggering input in the trace pool. Each must either still deopt or now match the interpreter's answer. Otherwise the version is rejected. A recompile must not silently widen the input domain.
+
+**D10. The records dev stream for the Sonnet-interpreter / Haiku-compiler JIT is complete (K = 1, dev seeds, directional only).**
+
+| arm | pass | d3 | d4 (drift) | total $ | $/success |
+|---|---|---|---|---|---|
+| Opus agent, every task | 24/24 | 16/16 | 8/8 | 13.54 | 0.564 |
+| **JIT Sonnet → Haiku** | **22/24** | 14/16 | 8/8 | 8.99 | **0.409** |
+| Sonnet agent, every task | 13/24 | 5/16 | 8/8 | 7.05 | 0.543 |
+| Haiku agent, every task | 15/24 | 9/16 | 6/8 | 2.46 | 0.164 |
+| static C0 solver (oracle-scored probes) | 16/24 | 14/16 | 2/8 | 1.21 | 0.076 |
+
+- Delivered by: compiled code 19 times (17 pass) and the interpreter 5 times (5 pass, warmup plus 2 drift deopts). There were 4 shadows, 2 disagreements and 2 adjudications, and both adjudications sided with the correct compiled answer. 1 recompile followed the 2 drift deopts; the Haiku attempt was rejected and the Opus fallback was adopted.
+- Cost: compiles $4.83 (54%: builder 2.25, builder's test runs through the gateway 2.16, host check 0.42), interpreter 1.46, shadows and adjudication 1.81, compiled runs 0.89. A pure compiled run costs **$0.0425** (11/13 pass).
+- Reading: the JIT beats its own interpreter by 9 successes, at 1.27× the Sonnet agent's cost and 0.75× its cost per success. The gap to the Opus agent (22 vs 24) is inside the noise band. Its cost is 66% of the Opus agent's.
+- At 24 tasks the one-time compile cost dominates. Steady state is about $0.04 per task plus the shadow rate × about $0.3. Against the Opus agent that pays back after about 10 tasks; against the Sonnet agent, after about 25–30.
+- Biggest cost lever: the builder's own test runs went through an Opus-only `rules` judge ($2.16). Tier-down (D6) and tolerant checks (D7) cut that directly.
