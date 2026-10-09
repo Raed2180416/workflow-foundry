@@ -156,7 +156,7 @@ export function sliceOpts(group, slice, opts, ctx) {
     case 'kinetics': return base;
     case 'runbook': {
       const trainPool = readJsonl(path.join(ctx.poolsDir, 'X1.jsonl')).filter(l => l.family === 'runbook');
-      const own = ood ? surface(dir, 'X1', slice).filter(u => u.role === 'decisive').map(u => ({ id: u.id, text: u.text, label: u.label, sourceKind: u.sourceKind ?? null, slice, family: 'runbook', filter: u.status })) : [];
+      const own = ood ? surface(dir, 'X1', slice).filter(u => u.role === 'decisive').map(u => ({ id: u.id, text: u.text, label: u.label, sourceKind: RUNBOOK_SOURCE_KIND[u.sourceKind] ?? 'text', slice, family: 'runbook', filter: u.status })) : [];
       base.lines = [...trainPool, ...own];
       if (ood) {
         const car = carriersOf(dir, 'Q4', slice);
@@ -177,6 +177,8 @@ export function sliceOpts(group, slice, opts, ctx) {
     default: throw new Error(`no assembly for group ${group}`);
   }
 }
+// the held-out store's short source kinds (heldout/pools.mjs X1_KINDS) -> the runbook kit's source_kind vocabulary ('text' otherwise)
+const RUNBOOK_SOURCE_KIND = Object.freeze({ log: 'log line', ticket: 'ticket comment', comment: 'ticket comment' });
 const readJsonl = f => (existsSync(f) ? readFileSync(f, 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l)) : []);
 
 // ---- the wrapper ------------------------------------------------------------------------------------------------------------------

@@ -161,24 +161,21 @@ const lineText = (src, line) => src.split('\n')[line - 1];
 // A judge's name as a pattern: literal parts kept, every computed part a '*'. 'vendex-' + i and `vendex-${i}` -> 'vendex-*'.
 function namePattern(toks, match, [a, b]) {
   if (b <= a) return '*';
-  const parts = [];
-  const wrapO = toks.length, all = toks;   // split on top-level '+' within [a, b)
+  const ranges = [];   // operands of the top-level '+' within [a, b)
   let s = a;
-  const ranges = [];
   for (let k = a; k < b; k++) {
-    if (all[k].type === 'punct' && '([{'.includes(all[k].value)) { k = match.get(k); continue; }
-    if (isP(all[k], '+')) { ranges.push([s, k]); s = k + 1; }
+    if (toks[k].type === 'punct' && '([{'.includes(toks[k].value)) { k = match.get(k); continue; }
+    if (isP(toks[k], '+')) { ranges.push([s, k]); s = k + 1; }
   }
   ranges.push([s, b]);
-  void wrapO;
-  for (const [x, y] of ranges) {
-    if (y - x !== 1) { parts.push('*'); continue; }
-    const t = all[x];
-    if (t.type === 'str') parts.push(strValue(t).replaceAll('*', '\\*'));
-    else if (t.type === 'tmpl') parts.push(t.quasis.map(q => decodeStr(q).replaceAll('*', '\\*')).join('*'));
-    else if (t.type === 'num') parts.push(t.value);
-    else parts.push('*');
-  }
+  const parts = ranges.map(([x, y]) => {
+    const t = toks[x];
+    if (y - x !== 1) return '*';
+    if (t.type === 'str') return strValue(t).replaceAll('*', '\\*');
+    if (t.type === 'tmpl') return t.quasis.map(q => decodeStr(q).replaceAll('*', '\\*')).join('*');
+    if (t.type === 'num') return t.value;
+    return '*';
+  });
   return parts.join('').replace(/(?<!\\)\*+/g, '*');
 }
 const globRe = pattern => new RegExp('^' + pattern.split(/(?<!\\)\*/).map(p => p.replaceAll('\\*', '*').replace(/[.+?^${}()|[\]\\]/g, '\\$&')).join('.*') + '$', 's');
@@ -201,6 +198,7 @@ function parseProps(toks, match, o, c) {
     return { kind: 'unknown', range: [a, b] };
   });
 }
+const CONTROL = new Set(['if', 'while', 'for', 'switch', 'with', 'return', 'typeof', 'await', 'yield']);
 const MUTATORS = new Set(['push', 'pop', 'shift', 'unshift', 'splice', 'sort', 'reverse', 'fill', 'copyWithin', 'length']);
 
 // The array literal an identifier is bound to: exactly one `const NAME = [ ... ]` and no other way NAME could be bound or
@@ -216,14 +214,14 @@ function resolveBinding(src, toks, match, name) {
     if (isP(prev, '++') || isP(prev, '--')) { other.push(`updated at line ${lineOf(src, t.start)}`); return; }
     if (isP(next, '=>')) { other.push(`an arrow parameter at line ${lineOf(src, t.start)}`); return; }
     if ((isP(next, '.') && MUTATORS.has(toks[k + 2]?.value)) || (isP(next, '[') && isP(toks[match.get(k + 1) + 1], '='))) { other.push(`mutated at line ${lineOf(src, t.start)}`); return; }
-    // inside a parameter list ( ... ) => / function f( ... ) { or a destructuring { ... } = / [ ... ] =
+    // a parameter (arrow, function, method or catch binding) or a destructuring pattern
+    const follows = ',)=}]'.split('');
     for (const [o, c] of match) {
       if (o >= c || o > k || c < k) continue;
       const open = toks[o].value, after = toks[c + 1], before = toks[o - 1];
-      const params = open === '(' && (isP(after, '=>') || (isP(after, '{') && (before?.value === 'function' || toks[o - 2]?.value === 'function' || before?.type === 'ident' && !['if', 'while', 'for', 'switch', 'catch', 'with'].includes(before.value) && isP(toks[match.get(c + 1) + 1] ?? null, ';') === false && false)));
+      const params = open === '(' && (isP(after, '=>') || (isP(after, '{') && before?.type === 'ident' && !CONTROL.has(before.value)));
       const pattern = (open === '{' || open === '[') && (isP(after, '=') || ['const', 'let', 'var'].includes(before?.value));
-      const shorthandOrKey = isP(toks[k + 1], ',') || isP(toks[k + 1], '}') || isP(toks[k + 1], ':') || isP(toks[k + 1], '=') || isP(toks[k + 1], ']');
-      if ((params && (isP(toks[k + 1], ',') || isP(toks[k + 1], ')') || isP(toks[k + 1], '='))) || (pattern && shorthandOrKey)) { other.push(`bound by a parameter or destructuring at line ${lineOf(src, t.start)}`); return; }
+      if ((params || pattern) && follows.some(f => isP(next, f))) { other.push(`bound by a parameter or destructuring at line ${lineOf(src, t.start)}`); return; }
     }
   });
   // import { NAME } / import NAME from
@@ -401,10 +399,8 @@ const unorderedCanon = v => (Array.isArray(v) ? `[${v.map(unorderedCanon).sort()
 export function compareTask(original, variant, { pattern, oldTiers = null, newTiers = null } = {}) {
   const both = original?.status === 'ok' && variant?.status === 'ok';
   const cmp = both ? compare(variant.output, original.output, { maxDiffs: 5 }) : null;
-  const js = r => (r ? judgeStats(r.trace, pattern, null) : null);
   const jo = original ? judgeStats(original.trace, pattern, Array.isArray(oldTiers) && oldTiers.every(x => typeof x === 'string') ? oldTiers : null) : null;
   const jv = variant ? judgeStats(variant.trace, pattern, newTiers) : null;
-  void js;
   return {
     statuses: { original: original?.status ?? null, variant: variant?.status ?? null }, bothOk: both,
     exact: both ? canonical(original.output) === canonical(variant.output) : null,
@@ -517,11 +513,12 @@ export function compiledDirs(armDir, { sha256 = null, allTasks = false } = {}) {
     const rec = { idx: Number(m[1]), dir, name, sha256: dsha, sameVersion: sha256 != null && dsha === sha256, mtimeMs: statSync(dir).mtimeMs };
     if (!rec.sameVersion && !allTasks) continue;
     const prev = byIdx.get(rec.idx);
-    if (!prev || [rec.sameVersion, rec.mtimeMs] > [prev.sameVersion, prev.mtimeMs] || (rec.sameVersion && !prev.sameVersion) || (rec.sameVersion === prev.sameVersion && rec.mtimeMs > prev.mtimeMs)) byIdx.set(rec.idx, rec);
+    if (!prev || (rec.sameVersion && !prev.sameVersion) || (rec.sameVersion === prev.sameVersion && rec.mtimeMs > prev.mtimeMs)) byIdx.set(rec.idx, rec);
   }
   return [...byIdx.values()].sort((a, b) => a.idx - b.idx);
 }
 
+const DEP_KEYS = ['runCompiled', 'createModelPort', 'makeTasks', 'score', 'loadFamily', 'validateOutput', 'policyIds'];
 async function liveDeps() {
   const beds = await import('../lib/beds.mjs');
   const { loadPolicy } = await import('../../src/models/policy.mjs');
@@ -552,7 +549,7 @@ export async function tierdownE2E({ armDir, version, judge, tiers, limit = null,
   assertDev({ split: def.split, where: `arm ${arm.spec ?? slug}` });
   const familyId = def.familyId;
   if (!familyId) fail('NO_ARM_RECORD', `${armFile} names no familyId`);
-  const deps = { ...(Object.keys(injected).length >= 6 ? {} : await liveDeps()), ...injected };
+  const deps = { ...(DEP_KEYS.every(k => k in injected) ? {} : await liveDeps()), ...injected };
   const unknown = tierList.filter(t => !deps.policyIds.includes(t));
   if (unknown.length) fail('BAD_TIERS', `not in the owner model policy: ${unknown.join(', ')}`);
   const ver = resolveVersion({ armDir, runArmDir, version });
