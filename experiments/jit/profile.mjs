@@ -23,7 +23,7 @@
 //   shape signature ("Ab9-9" style), and an enum value set while the path stays low-cardinality and repetitive;
 //   for strings with >= PARAMS.linesMin non-empty lines a line-count range and a set of line-format signatures
 //   ('LEDGR~;:9¦A¦A¦9.9¦...': the leading word, the field delimiter and a coarse class per field); for strings with
-//   >= PARAMS.proseMinWords words a vocabulary (lower-cased letter words of 3+ letters);
+//   >= PARAMS.proseMinWords words a vocabulary (lower-case-initial words of 3+ letters; capitalised words are names);
 // - the prompt: sentence skeletons with numbers, quoted text and the task's own short input values masked.
 //
 // Set features (classes, shape signatures, line signatures, vocabulary, prompt sentences) are document-frequency maps
@@ -158,6 +158,9 @@ export function lineShape(line) {
 export const lineSig = line => lineShape(line).sig;
 
 export const wordsOf = s => String(s).toLowerCase().match(/\p{L}{3,}/gu) ?? [];
+// Vocabulary words: lower-case-initial words of 3+ letters. Capitalised words (names, places, products, sentence starts)
+// are entity-like and change with every task, so they are left out of the vocabulary.
+export const vocabOf = s => (String(s).match(/(?<![\p{L}\p{N}])\p{Ll}\p{L}{2,}/gu) ?? []).map(w => w.toLowerCase());
 const linesOf = s => String(s).split(/\r?\n/).map(l => l.trim()).filter(Boolean);
 
 // Prompt skeleton sentences: the task's own short input values (longest first), quoted text and numbers masked.
@@ -197,7 +200,7 @@ function observe(task) {
       }
       if (lines.length >= PARAMS.linesMin) { o.lineCounts.push(lines.length); for (const l of lines) { const ls = lineShape(l); o.lineSigs.add(ls.sig); o.lineFams.add(ls.family); } }
       const words = wordsOf(v);
-      if (words.length >= PARAMS.proseMinWords) for (const w of words) o.vocab.add(w);
+      if (words.length >= PARAMS.proseMinWords) for (const w of vocabOf(v)) o.vocab.add(w);
     } else if (ty === 'array') { o.alens.push(v.length); for (const x of v) walk(x, `${p}[]`, depth + 1); }
     else if (ty === 'object') {
       const keys = Object.keys(v);
