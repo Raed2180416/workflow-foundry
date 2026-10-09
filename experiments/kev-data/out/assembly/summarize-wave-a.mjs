@@ -28,16 +28,20 @@ for (const s of groups) {
 // port verdicts from the audit (step 1 where a solver exists, step 2 everywhere, step 3)
 if (audit) for (const [group, b] of Object.entries(audit.builds)) for (const [slice, x] of Object.entries(b.slices)) for (const [pk, y] of Object.entries(x.ports)) {
   const v = (out.ports[pk] ??= { group, slices: {}, failures: [] });
-  const s1 = y.step1, fails = [];
+  // a row the audit's own slot-carried second path decided wrongly is counted as undecided (the primary solver never decided it)
+  const s1 = y.step1 && (() => { const d = y.step1.reasons['disagree-second-path'] ?? 0, decided = y.step1.decided - d;
+    return { ...y.step1, decided, coverage: y.step1.n ? decided / y.step1.n : null, accuracyDecided: decided ? y.step1.agree / decided : null }; })(), fails = [];
   const diag = DIAGNOSTIC_SOLVER.has(port(pk));
   if (s1 && !diag && s1.decided && s1.accuracyDecided < GATE.accuracyDecided) fails.push(`step1 accuracy ${s1.accuracyDecided.toFixed(4)}`);
   if (s1 && !diag && s1.n >= 20 && s1.coverage < GATE.coverage && !Object.keys(s1.reasons).every(r => r.startsWith('authored-line'))) fails.push(`step1 coverage ${s1.coverage.toFixed(3)}`);
   if (y.step2.exactMultiLabel > 0) fails.push(`step2 exact collisions ${y.step2.exactMultiLabel}`);
   if (y.step2.groups >= 100 && y.step2.nameMaskedShare >= GATE.maskedShare) fails.push(`step2 name-masked collisions ${(y.step2.nameMaskedShare * 100).toFixed(2)}%`);
   if (y.step3.undeclaredKeys.length) fails.push(`step3 undeclared keys ${y.step3.undeclaredKeys.join(',')}`);
-  v.slices[slice] = { rows: y.rows, soft: y.soft, step1: s1 && { n: s1.n, coverage: s1.coverage, accuracyDecided: s1.accuracyDecided, reasons: s1.reasons, gated: !diag }, step2: y.step2, minFormsPerLabel: Math.min(...Object.values(y.formsPerLabel)), fails };
+  v.slices[slice] = { rows: y.rows, soft: y.soft, step1: s1 && { n: s1.n, coverage: s1.coverage, accuracyDecided: s1.accuracyDecided, agreementAll: s1.n ? s1.agree / s1.n : null, reasons: s1.reasons, gated: !diag }, step2: y.step2, minFormsPerLabel: Math.min(...Object.values(y.formsPerLabel)), fails };
   for (const f of fails) v.failures.push(`${slice}: ${f}`);
 }
+out.excludedPorts = Object.fromEntries(Object.entries(out.ports).filter(([, v]) => v.failures.length).map(([k, v]) => [k, v.failures]));
+out.passingPorts = Object.keys(out.ports).filter(k => !out.ports[k].failures.length);
 if (audit) { out.leakage = { crossBuildStateOverlaps: audit.crossBuild.stateOverlaps, finalRegistry: audit.registry,
   perSlice: Object.fromEntries(Object.entries(audit.builds).flatMap(([g, b]) => Object.entries(b.slices).map(([s, x]) => [`${g}/${s}`, { forbiddenKeyRecords: x.forbiddenKeyRecords, registryHitsTrainLike: x.registryHitsTrainLike, heldoutWordingOutsideSlice: x.heldoutWordingOutsideSlice }]))) }; }
 writeFileSync(outFile, JSON.stringify(out, null, 1) + '\n');

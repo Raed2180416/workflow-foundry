@@ -4,8 +4,8 @@
 // offline replay helpers in eval-profiles.mjs (evaluateArm, outcomeOf, parseTaskKey) on synthetic rows.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { learnProfile, checkProfile, widenProfile, emptyProfile, goodTuring, rateThreshold, shapeOf, classOf, lineSig, lineShape, promptSentences, SIZE_FEATURES, PROFILE_SCHEMA, PARAMS, describeProfile } from '../profile.mjs';
-import { evaluateArm, outcomeOf, parseTaskKey, summarize, counterfactual, interpreterModelOf, makePriceOf } from '../eval-profiles.mjs';
+import { learnProfile, checkProfile, widenProfile, emptyProfile, goodTuring, rateThreshold, shapeOf, classOf, lineSig, lineShape, promptSentences, SIZE_FEATURES, PROFILE_SCHEMA, PARAMS, describeProfile, ordinalOf } from '../profile.mjs';
+import { evaluateArm, outcomeOf, parseTaskKey, summarize, counterfactual, interpreterModelOf, makePriceOf, makePairedOf, avoidableUsdOf, paramsOf, gridPoints, streamChecks, scoreChecks, tuneCrossFamily } from '../eval-profiles.mjs';
 
 // Deterministic PRNG (mulberry32).
 const rng = seed => () => { seed |= 0; seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
@@ -204,4 +204,78 @@ test('eval-profiles: baseline policy widens only on baseline-difficulty tasks; d
   const priceOf = makePriceOf([agent, jit], jit);
   assert.deepEqual([priceOf(4).usd, priceOf(4).passRate, priceOf(4).source], [0.30000000000000004, 0.5, 'agent:m d4']);
   assert.equal(priceOf(5).source, 'own interpreter rows');
+});
+
+// ---------------------------------------------------------------------------------------------- review 2026-10-09
+// A study with numbered documents and conditions (D1..Dn, C1..Cm) and a categorical kind per document.
+function mkStudy(seed, { docs = 6, conds = 4, kinds = ['sop', 'notebook', 'memo'] } = {}) {
+  const r = rng(seed), pick = xs => xs[Math.floor(r() * xs.length)];
+  return { prompt: 'Fit every condition. Return JSON only.', inputs: {
+    conditions: Array.from({ length: conds }, (_, i) => ({ condition_id: `C${i + 1}`, ph: 6 + Math.round(r() * 20) / 10 })),
+    documents: Array.from({ length: docs }, (_, i) => ({ doc_id: `D${i + 1}`, kind: i < kinds.length ? kinds[i] : pick(kinds) })) } };
+}
+
+test('an unseen member of a numbered id series is a size feature (enum-ordinal); a new category is content (enum)', () => {
+  assert.deepEqual(ordinalOf('D13'), { key: 'D#', n: 13 });
+  assert.equal(ordinalOf('sop'), null);
+  assert.ok(SIZE_FEATURES.includes('enum-ordinal'));
+  const prof = learnProfile(Array.from({ length: 6 }, (_, i) => mkStudy(100 + i)));
+  assert.equal(checkProfile(prof, mkStudy(200)).novel, false);
+  // more documents and conditions: D7, D8 and C5 continue the series -> enum-ordinal (plus the array lengths)
+  const bigger = checkProfile(prof, mkStudy(201, { docs: 8, conds: 5 }));
+  assert.ok(features(bigger).includes('enum-ordinal'), JSON.stringify(bigger.reasons));
+  assert.ok(!features(bigger).includes('enum'));
+  assert.equal(checkProfile(prof, mkStudy(201, { docs: 8, conds: 5 }), { ignore: SIZE_FEATURES }).novel, false, 'without size, more items of the same kinds is not novel');
+  // a new document kind is content, and survives the size ablation
+  const kind = checkProfile(prof, mkStudy(202, { kinds: ['sop', 'notebook', 'memo', 'whiteboard'], docs: 6 }), { ignore: SIZE_FEATURES });
+  assert.ok(kind.novel && features(kind).includes('enum'), JSON.stringify(kind.reasons));
+});
+
+test('observation is cached per task object and independent of params; a profile checks with its own params', () => {
+  const tr = train(5), t = mkTask(9001, { qty: 400 });
+  const prof = learnProfile(tr), a = checkProfile(prof, t), b = checkProfile(prof, t);
+  assert.deepEqual(a, b);
+  assert.deepEqual(checkProfile(prof, structuredClone(t)), a, 'a fresh copy of the task gives the same verdict');
+  const wide = paramsOf({ 'numMargin.span': 100, 'numMargin.rel': 100 });
+  assert.equal(wide.numMargin.span, 100); assert.equal(wide.rate.k, PARAMS.rate.k);
+  assert.ok(features(a).includes('number-range'));
+  assert.ok(!features(checkProfile({ ...prof, params: wide }, t)).includes('number-range'), 'wider numeric margin from the profile params');
+  assert.deepEqual(learnProfile(tr, wide).paths, prof.paths, 'aggregation does not depend on params');
+  assert.equal(gridPoints({ a: [1, 2], b: [3, 4, 5] }).length, 6);
+});
+
+test('cross-family tuning selects on the train stream only and scores the choice on the test stream', () => {
+  // family A: drift is a bigger export; family B: drift is a qty scale shift (number range)
+  const rowsOf = (n, drift) => Array.from({ length: n }, (_, i) => ({ idx: i, difficulty: i >= drift ? 4 : 3, taskKey: `x:dev:d${i >= drift ? 4 : 3}:s${i}` }));
+  const A = Array.from({ length: 14 }, (_, i) => mkTask(1000 + i, i >= 11 ? { rows: 120 } : {}));
+  const B = Array.from({ length: 14 }, (_, i) => mkTask(2000 + i, i >= 11 ? { qty: 70 } : {}));
+  const cA = streamChecks(rowsOf(14, 11), r => A[r.idx], { warmup: 8 }), cB = streamChecks(rowsOf(14, 11), r => B[r.idx], { warmup: 8 });
+  assert.equal(cA.frozen.length, 6); assert.equal(cA.frozen.filter(c => c.drift).length, 3);
+  const sA = scoreChecks(cA, PARAMS);
+  assert.equal(sA.per.frozen.drift, '3/3'); assert.equal(sA.per.frozen.normal, '0/3');
+  const grid = { 'numMargin.span': [0.5, 4], 'numMargin.rel': [0.25, 4] };
+  const res = tuneCrossFamily([{ family: 'A', checks: cA }, { family: 'B', checks: cB }], { grid });
+  assert.equal(res.length, 2);
+  const aToB = res.find(r => r.train === 'A');
+  // on A every point is tied (the numeric margin does not matter), so the tie-break keeps PARAMS, which also works on B
+  assert.equal(aToB.tiedAtTrainOptimum, 4);
+  assert.deepEqual(aToB.selected.point, { 'numMargin.span': 0.5, 'numMargin.rel': 0.25 });
+  assert.equal(aToB.selected.test.j, aToB.defaults.test.j);
+  assert.deepEqual(aToB.selected.test, scoreChecks(cB, paramsOf(aToB.selected.point)), 'the test score is the train-selected point re-scored on B');
+});
+
+test('counterfactual: net of avoidable compiled/shadow cost, and the paired same-task reading', () => {
+  assert.equal(avoidableUsdOf({ costUsd: 1, costBreakdown: { compiled: 0.01, shadow: 0.5, compileBuilder: 0.4 } }), 0.51);
+  assert.equal(avoidableUsdOf({ costUsd: 0.2 }), 0.2);
+  const v = [
+    { idx: 5, taskKey: 'k5', difficulty: 4, outcome: 'silent-miss', novel: true, costUsd: 0.4, avoidableUsd: 0.01 },
+    { idx: 6, taskKey: 'k6', difficulty: 4, outcome: 'compiled-pass', novel: true, costUsd: 0.01, avoidableUsd: 0.01 },
+    { idx: 7, taskKey: 'k7', difficulty: 4, outcome: 'compiled-pass', novel: false, costUsd: 0.01, avoidableUsd: 0.01 },
+  ];
+  const agent = { meta: { spec: 'agent:m' }, rows: [{ taskKey: 'k5', costUsd: 0.3, pass: true }, { taskKey: 'k6', costUsd: 0.2, pass: false }] };
+  const arm = { meta: { spec: 'jit:m/h' }, rows: [] };
+  const c = counterfactual(v, () => ({ usd: 0.25, passRate: 0.5 }), makePairedOf([agent, arm], arm));
+  assert.equal(c.addedInterpreterUsd, 0.5); assert.equal(c.avoidableUsd, 0.02); assert.equal(c.netAddedUsd, 0.48);
+  assert.deepEqual(c.paired, { n: 2, missing: 0, addedUsd: 0.5, netAddedUsd: 0.48, passesGained: 1, passesLost: 1, netPasses: 0 });
+  assert.equal(makePairedOf([arm], arm), null, 'no agent arm of the interpreter model: no paired reading');
 });

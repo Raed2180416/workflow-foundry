@@ -3,11 +3,12 @@
 // rates, silent compiled misses, shadow disagreement, cost per task, each over a sliding window, and time-to-durable.
 // It reads only the files stream.mjs writes (results.jsonl rows and events.jsonl lines of one arm directory).
 //
-//   computeDurability(rows, events, { window = 6, minSuccess = 0.8, kind }) -> summary (JSON)
-//   CLI: node experiments/jit/durability.mjs <runDir> [--window 6] [--min-success 0.8] [--series] [--json]
+//   computeDurability(rows, events, { window = 6, minSuccess = 0.8, minShadows = 1, kind }) -> summary (JSON)
+//   CLI: node experiments/jit/durability.mjs <runDir> [--window 6] [--min-success 0.8] [--min-shadows 1] [--series] [--json]
 //
-// Definitions (rows sorted by idx, one per idx, the last one kept; "position" p is the row's place in that order, so a
-// gap in idx is skipped, never counted as a task):
+// Definitions (rows sorted by idx, one per idx, the last one kept; "position" p is the row's place in that order; an idx
+// missing between the first and the last row (a task the stream never finished) is a position with no version and no
+// success, so it breaks every window it falls in and can never be skipped to look durable; totals.missingRows counts them):
 // - version in force at a row: row.version (the compiled version that ran or would have run); for a static arm the
 //   constant 'static'; null for warmup, agent rows and JIT rows with no version yet.
 // - version change: two consecutive rows with non-null, different versions; the change is at the later row's idx.
@@ -24,7 +25,12 @@
 // - window: the W rows ending at a position (fewer at the start); every rate is null when its denominator is 0.
 // - time-to-durable: position p is a durable start when p + W <= N, the version in force is the same non-null value on
 //   all of rows p..p+W-1, and the share of those W rows that were *delivered by compiled code and passed* is >= S
-//   (oracle view; the system view uses "compiled status ok and no shadow disagreement" instead of the oracle's pass).
+//   (oracle view). The system view uses "compiled status ok and no shadow disagreement" instead of the oracle's pass, and
+//   also needs at least minShadows answered shadows inside the window, with an agreeing share >= S among them (the only
+//   sampled evidence the system has about correctness; unshadowed compiled rows only show that nothing deopted): without that a solver that is never checked (a
+//   static solver, or a JIT whose shadow rate was turned down) is "durable" by construction, and a stopping rule that
+//   lowers the shadow rate once durable would confirm itself (review 2026-10-09). systemUnchecked is the old view (no
+//   shadow requirement), kept to show that gap.
 //   Durable starts of one version at consecutive positions form an episode {fromIdx, confirmedIdx (the row at which the
 //   first window closes, when the claim becomes knowable), untilIdx (last row covered), version}. timeToDurable is the
 //   first episode's fromIdx, with tasksToConfirm (rows through confirmedIdx) and usdToConfirm (cumulative $ through it);
@@ -36,7 +42,7 @@ import path from 'node:path';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-export const DEFAULTS = Object.freeze({ window: 6, minSuccess: 0.8 });
+export const DEFAULTS = Object.freeze({ window: 6, minSuccess: 0.8, minShadows: 1 });
 const r4 = x => (x == null || !Number.isFinite(x) ? null : Math.round(x * 1e4) / 1e4);
 const rate = (a, b) => (b ? r4(a / b) : null);
 const has = (r, kind) => (r.events ?? []).some(e => e.kind === kind);
@@ -44,22 +50,31 @@ export const readJsonl = f => (existsSync(f) ? readFileSync(f, 'utf8').split('\n
 
 export function computeDurability(rows, events = [], opts = {}) {
   const W = Math.max(1, Math.floor(opts.window ?? DEFAULTS.window)), S = opts.minSuccess ?? DEFAULTS.minSuccess;
+  const minShadows = Math.max(0, Math.floor(opts.minShadows ?? DEFAULTS.minShadows));
   const byIdx = new Map();
   for (const r of rows ?? []) if (r && Number.isInteger(r.idx)) byIdx.set(r.idx, r);
-  const R = [...byIdx.values()].sort((a, b) => a.idx - b.idx), N = R.length;
-  const kind = opts.kind ?? R[0]?.kind ?? null;
-  const verOf = r => r.version ?? (kind === 'static' ? 'static' : null);
+  const present = [...byIdx.values()].sort((a, b) => a.idx - b.idx);
+  // Missing idx between the first and last row: placeholders with no version, no delivery and no cost.
+  const R = [];
+  for (const r of present) {
+    const prev = R.at(-1);
+    if (prev) for (let i = prev.idx + 1; i < r.idx; i++) R.push({ idx: i, missing: true, version: null, events: [] });
+    R.push(r);
+  }
+  const N = R.length, missingRows = R.filter(r => r.missing).length;
+  const kind = opts.kind ?? present[0]?.kind ?? null;
+  const verOf = r => (r.missing ? null : r.version ?? (kind === 'static' ? 'static' : null));
 
   // Per-row facts.
   const F = R.map(r => {
     const shadows = (r.events ?? []).filter(e => e.kind === 'shadow' && (e.agree === true || e.agree === false));
     const attempted = r.compiledStatus != null;
     return {
-      idx: r.idx, version: verOf(r), costUsd: Number(r.costUsd) || 0, attempted, deopt: attempted && r.compiledStatus !== 'ok',
+      idx: r.idx, missing: !!r.missing, version: verOf(r), costUsd: Number(r.costUsd) || 0, attempted, deopt: attempted && r.compiledStatus !== 'ok',
       deoptKind: attempted && r.compiledStatus !== 'ok' ? (r.compiledStatus === 'deopt' ? r.deoptKind ?? 'unknown' : r.compiledStatus) : null,
       compiledDelivered: r.delivered === 'compiled', pass: !!r.pass,
       silentMiss: r.delivered === 'compiled' && !r.pass, caughtMiss: r.delivered !== 'compiled' && r.compiledPass === false, overruled: r.delivered === 'adjudicated',
-      shadows: shadows.length, disagree: (r.events ?? []).filter(e => e.kind === 'disagree').length,
+      shadows: shadows.length, agreed: shadows.filter(e => e.agree === true).length, disagree: (r.events ?? []).filter(e => e.kind === 'disagree').length,
       oracleOk: r.delivered === 'compiled' && !!r.pass, systemOk: attempted && r.compiledStatus === 'ok' && !has(r, 'disagree'),
     };
   });
@@ -95,11 +110,12 @@ export function computeDurability(rows, events = [], opts = {}) {
   // Durable episodes.
   let cum = 0;
   const cumUsd = F.map(f => (cum += f.costUsd));
-  const episodesOf = okKey => {
+  const episodesOf = (okKey, needShadows = 0) => {
     const out = [];
     for (let p = 0; p + W <= N; p++) {
       const w = F.slice(p, p + W), v = w[0].version;
-      const durable = v != null && w.every(x => x.version === v) && sum(w, x => x[okKey]) / W >= S;
+      const sh = w.reduce((s, x) => s + x.shadows, 0), agreed = w.reduce((s, x) => s + x.agreed, 0);
+      const durable = v != null && w.every(x => x.version === v) && sum(w, x => x[okKey]) / W >= S && (!needShadows || (sh >= needShadows && agreed / sh >= S));
       if (!durable) continue;
       const last = out.at(-1);
       if (last && last.version === v && last.lastStart === p - 1) { last.lastStart = p; last.untilIdx = F[p + W - 1].idx; continue; }
@@ -107,12 +123,13 @@ export function computeDurability(rows, events = [], opts = {}) {
     }
     return out.map(({ lastStart, ...e }) => e);
   };
-  const durableView = okKey => {
-    const episodes = episodesOf(okKey), e0 = episodes[0] ?? null;
+  const durableViewUnchecked = okKey => episodesOf(okKey).length > 0;
+  const durableView = (okKey, needShadows = 0) => {
+    const episodes = episodesOf(okKey, needShadows), e0 = episodes[0] ?? null;
     return {
       timeToDurable: e0 ? e0.fromIdx : null, confirmedIdx: e0?.confirmedIdx ?? null, tasksToConfirm: e0?.tasksToConfirm ?? null, usdToConfirm: e0?.usdToConfirm ?? null,
       version: e0?.version ?? null, holdsToEnd: !!episodes.length && episodes.at(-1).untilIdx === F[N - 1].idx, relapses: Math.max(0, episodes.length - 1), episodes,
-      note: episodes.length ? null : 'never durable',
+      note: episodes.length ? null : needShadows && durableViewUnchecked(okKey) ? `never durable with >= ${needShadows} answered shadow(s) per window` : 'never durable',
     };
   };
 
@@ -123,20 +140,20 @@ export function computeDurability(rows, events = [], opts = {}) {
   const unbilledUsd = (events ?? []).filter(e => e?.kind === 'spend' && !billed.has(e.id)).reduce((s, e) => s + (Number(e.costUsd) || 0), 0);
   const rowsUsd = F.reduce((s, f) => s + f.costUsd, 0);
   return {
-    arm: R[0]?.arm ?? null, kind, tasks: N, params: { window: W, minSuccess: S },
+    arm: present[0]?.arm ?? null, kind, tasks: present.length, params: { window: W, minSuccess: S, minShadows },
     versions: {
       firstAdoptedIdx: first, count: spans.length, changes: changes.length, changeList: changes, spans, tasksBetweenChanges,
       meanTasksBetweenChanges: spans.length ? r4(tasksBetweenChanges.reduce((a, b) => a + b, 0) / spans.length) : null,
       compiles: count('compile'), recompiles: count('recompile'), rejected: count('rejected'), compileFailed: count('compile-failed'),
     },
     totals: {
-      compiledAttempts: att.length, deopts: sum(att, f => f.deopt), deoptsByKind, deoptRate: rate(sum(att, f => f.deopt), att.length), guardRate: rate(sum(att, f => f.deoptKind === 'guard'), att.length),
+      missingRows, compiledAttempts: att.length, deopts: sum(att, f => f.deopt), deoptsByKind, deoptRate: rate(sum(att, f => f.deopt), att.length), guardRate: rate(sum(att, f => f.deoptKind === 'guard'), att.length),
       compiledDeliveries: del.length, silentMisses: sum(del, f => f.silentMiss), silentMissRate: rate(sum(del, f => f.silentMiss), del.length), caughtMisses: sum(F, f => f.caughtMiss), overruled: sum(F, f => f.overruled),
       shadowsAnswered, disagreements: F.reduce((s, f) => s + f.disagree, 0), disagreeRate: rate(F.reduce((s, f) => s + f.disagree, 0), shadowsAnswered),
-      rowsUsd: r4(rowsUsd), unbilledUsd: r4(unbilledUsd), usdPerTask: N ? r4((rowsUsd + unbilledUsd) / N) : null,
+      rowsUsd: r4(rowsUsd), unbilledUsd: r4(unbilledUsd), usdPerTask: present.length ? r4((rowsUsd + unbilledUsd) / present.length) : null,
       lastWindowUsdPerTask: windows.at(-1)?.usdPerTask ?? null,
     },
-    durable: { oracle: durableView('oracleOk'), system: durableView('systemOk') },
+    durable: { oracle: durableView('oracleOk'), system: durableView('systemOk', minShadows), systemUnchecked: durableView('systemOk') },
     windows,
   };
 }
@@ -163,13 +180,13 @@ const usd = x => (x == null ? '–' : `$${x.toFixed(3)}`);
 export function renderTable(results, { series = false } = {}) {
   const short = s => String(s).replace(/^static:.*\/([^/]+)\/solve\.mjs$/, 'static:$1');
   const p = results[0]?.params ?? DEFAULTS;
-  const L = [`window W=${p.window}, durable needs one version for W rows with >= ${p.minSuccess} of them delivered by compiled code and passing (oracle view) or compiled ok with no shadow disagreement (system view)`, '',
-    '| arm | n | versions (changes) | rows per version | deopt rate (guard) | silent-miss rate (n) | overruled (caught) | disagree rate | $/task (last window) | durable: oracle from / confirmed / holds | durable: system from / confirmed / holds |',
-    '|---|---|---|---|---|---|---|---|---|---|---|'];
+  const L = [`window W=${p.window}, durable needs one version for W rows with >= ${p.minSuccess} of them delivered by compiled code and passing (oracle view) or compiled ok with no shadow disagreement (system view, which also needs >= ${p.minShadows ?? DEFAULTS.minShadows} answered shadow(s) in the window; "unchecked" drops that)`, '',
+    '| arm | n | versions (changes) | rows per version | deopt rate (guard) | silent-miss rate (n) | overruled (caught) | disagree rate | $/task (last window) | durable: oracle from / confirmed / holds | durable: system from / confirmed / holds | system, unchecked |',
+    '|---|---|---|---|---|---|---|---|---|---|---|---|'];
   const dv = d => (d.timeToDurable == null ? 'never' : `${d.timeToDurable} / ${d.confirmedIdx} (${usd(d.usdToConfirm)}) / ${d.holdsToEnd ? 'yes' : 'no'}${d.relapses ? `, ${d.relapses} relapse(s)` : ''}`);
   for (const a of results) {
     const t = a.totals, v = a.versions;
-    L.push(`| ${short(a.spec ?? a.arm)} | ${a.tasks} | ${v.count} (${v.changes}) | ${v.tasksBetweenChanges.join(', ') || '–'} | ${pct(t.deoptRate)} (${pct(t.guardRate)}) | ${pct(t.silentMissRate)} (${t.silentMisses}/${t.compiledDeliveries}) | ${t.overruled} (${t.caughtMisses}) | ${pct(t.disagreeRate)} (${t.disagreements}/${t.shadowsAnswered}) | ${usd(t.usdPerTask)} (${usd(t.lastWindowUsdPerTask)}) | ${dv(a.durable.oracle)} | ${dv(a.durable.system)} |`);
+    L.push(`| ${short(a.spec ?? a.arm)} | ${a.tasks} | ${v.count} (${v.changes}) | ${v.tasksBetweenChanges.join(', ') || '–'} | ${pct(t.deoptRate)} (${pct(t.guardRate)}) | ${pct(t.silentMissRate)} (${t.silentMisses}/${t.compiledDeliveries}) | ${t.overruled} (${t.caughtMisses}) | ${pct(t.disagreeRate)} (${t.disagreements}/${t.shadowsAnswered}) | ${usd(t.usdPerTask)} (${usd(t.lastWindowUsdPerTask)}) | ${dv(a.durable.oracle)} | ${dv(a.durable.system)} | ${dv(a.durable.systemUnchecked)} |`);
   }
   if (series) for (const a of results) {
     L.push('', `### ${short(a.spec ?? a.arm)}`, '', '| idx | deopt | guard | silent miss | disagree | compiled success | system ok | $/task |', '|---|---|---|---|---|---|---|---|');
@@ -181,7 +198,7 @@ export function renderTable(results, { series = false } = {}) {
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const args = process.argv.slice(2), dir = args.find(a => !a.startsWith('--') && !/^\d/.test(a));
   const val = (k, d) => { const i = args.indexOf(k); return i >= 0 ? Number(args[i + 1]) : d; };
-  if (!dir || !existsSync(dir)) { console.error('usage: node experiments/jit/durability.mjs <runDir> [--window 6] [--min-success 0.8] [--series] [--json]'); process.exit(2); }
-  const res = durabilityOfRun(path.resolve(dir), { window: val('--window', DEFAULTS.window), minSuccess: val('--min-success', DEFAULTS.minSuccess) });
+  if (!dir || !existsSync(dir)) { console.error('usage: node experiments/jit/durability.mjs <runDir> [--window 6] [--min-success 0.8] [--min-shadows 1] [--series] [--json]'); process.exit(2); }
+  const res = durabilityOfRun(path.resolve(dir), { window: val('--window', DEFAULTS.window), minSuccess: val('--min-success', DEFAULTS.minSuccess), minShadows: val('--min-shadows', DEFAULTS.minShadows) });
   console.log(args.includes('--json') ? JSON.stringify(res, null, 1) : renderTable(res, { series: args.includes('--series') }));
 }

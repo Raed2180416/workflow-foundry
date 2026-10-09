@@ -175,7 +175,7 @@ for (const b of builds) {
         for (const x of sample) {
           let o; try { o = solver({ state: x.r.state, questions: { [x.qid]: x.q }, meta: x.r.meta }, slice); } catch (e) { o = { label: null, reason: `throws:${e.code ?? 'error'}` }; }
           if (o?.label === null || o?.label === undefined) { const why = String(o?.reason ?? o?.rule ?? 'undecided').slice(0, 40); reasons[why] = (reasons[why] ?? 0) + 1; continue; }
-          decided++; if (o.label === x.q.label) agree++; else reasons['disagree'] = (reasons['disagree'] ?? 0) + 1;
+          decided++; if (o.label === x.q.label) agree++; else { const k = o.reason === 'second-path:slot-carried' ? 'disagree-second-path' : 'disagree'; reasons[k] = (reasons[k] ?? 0) + 1; }
           if (o.reason === 'second-path:slot-carried') reasons['decided-by-second-path'] = (reasons['decided-by-second-path'] ?? 0) + 1;
         }
         s1 = { n: sample.length, decided, agree, coverage: sample.length ? decided / sample.length : null, accuracyDecided: decided ? agree / decided : null, agreementAll: sample.length ? agree / sample.length : null, reasons };

@@ -102,12 +102,39 @@ test('a static solver is durable to itself while the oracle sees it fail (D5)', 
   const d = computeDurability(rows, [], { window: 4, minSuccess: 0.75 });
   assert.equal(d.kind, 'static');
   assert.equal(d.versions.count, 1, "static rows run the constant version 'static'");
-  assert.equal(d.durable.system.timeToDurable, 0);
-  assert.equal(d.durable.system.holdsToEnd, true, 'no deopt, no shadow: the system never notices');
+  assert.equal(d.durable.systemUnchecked.timeToDurable, 0);
+  assert.equal(d.durable.systemUnchecked.holdsToEnd, true, 'no deopt, no shadow: the unchecked system view never notices');
+  // the system view needs an answered shadow in every window, so an unchecked solver is never durable to it
+  assert.equal(d.durable.system.timeToDurable, null);
+  assert.match(d.durable.system.note, /never durable with >= 1 answered shadow/);
   assert.equal(d.durable.oracle.timeToDurable, 0);
   assert.equal(d.durable.oracle.holdsToEnd, false, 'the oracle sees the drift');
   assert.equal(d.durable.oracle.episodes[0].untilIdx, 8, 'the last window with >= 3/4 compiled passes ends at idx 8');
   close(d.totals.silentMissRate, 6 / 14, 'silent misses');
+});
+
+test('system view needs shadow evidence in the window; missing rows break windows (review 2026-10-09)', () => {
+  //            0123456789012
+  const vers = [null, null, null, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
+  // agreeing shadows at 6 and 10: every window of 4 starting at 3..9 holds one of them, so the system view is durable
+  // from 3; the same arm with no shadow at all is never durable to the system
+  const checked = computeDurability(rowsOf('WWWPPPSPPPSPP', vers), [], { window: 4, minSuccess: 0.75 });
+  assert.equal(checked.durable.system.timeToDurable, 3);
+  assert.deepEqual(checked.durable.system.episodes.map(e => [e.fromIdx, e.untilIdx]), [[3, 12]]);
+  const unchecked = computeDurability(rowsOf('WWWPPPPPPPPPP', vers), [], { window: 4, minSuccess: 0.75 });
+  assert.equal(unchecked.durable.system.timeToDurable, null, 'no shadow ever: not durable to the system');
+  assert.equal(unchecked.durable.systemUnchecked.timeToDurable, 3);
+  assert.equal(unchecked.durable.oracle.timeToDurable, 3, 'the oracle view does not need shadows');
+  const loose = computeDurability(rowsOf('WWWPPPPPPPPPP', vers), [], { window: 4, minSuccess: 0.75, minShadows: 0 });
+  assert.equal(loose.durable.system.timeToDurable, 3, 'minShadows 0 restores the unchecked view');
+  // a missing idx (task never finished) is a position with no version: it breaks every window over it
+  const rows = rowsOf('WWWPPPPPPPPPP', vers).filter(r => r.idx !== 7);
+  const gap = computeDurability(rows, [], { window: 4, minSuccess: 0.75 });
+  assert.equal(gap.tasks, 12);
+  assert.equal(gap.totals.missingRows, 1);
+  assert.deepEqual(gap.durable.oracle.episodes.map(e => [e.fromIdx, e.untilIdx]), [[3, 6], [8, 12]]);
+  assert.equal(gap.durable.oracle.relapses, 1);
+  assert.deepEqual(gap.windows.map(w => w.idx), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
 });
 
 test('rows are deduplicated by idx (last wins) and sorted; unbilled spend counts toward $/task', () => {
@@ -118,7 +145,7 @@ test('rows are deduplicated by idx (last wins) and sorted; unbilled spend counts
   assert.equal(d.totals.silentMisses, 1, 'the later duplicate row wins');
   close(d.totals.unbilledUsd, 0.25, 'only spend not in a row');
   close(d.totals.usdPerTask, (1.5 + 0.02 + 0.25) / 5, '$/task includes unbilled spend');
-  assert.deepEqual(d.params, { window: DEFAULTS.window, minSuccess: DEFAULTS.minSuccess });
+  assert.deepEqual(d.params, { window: DEFAULTS.window, minSuccess: DEFAULTS.minSuccess, minShadows: DEFAULTS.minShadows });
 });
 
 test('run directory loader, table and CLI', t => {

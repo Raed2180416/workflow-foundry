@@ -69,7 +69,9 @@ export function reapChildren(store, runId, { table, selfPid = process.pid, kill 
   const reaped = [];
   for (const row of rows) {
     const leader = byPid.get(row.pid), members = table.some(p => p.pgid === row.pgid && p.state !== 'Z');
-    const ours = leader && leader.state !== 'Z' ? (row.start == null || leader.start === row.start) : members;
+    // A live leader is the recorded process only if its start time is the recorded one; with no start time on file it cannot be told apart
+    // from a process that reused the pid, so it is left alone.
+    const ours = leader && leader.state !== 'Z' ? (row.start != null && leader.start === row.start) : members;
     let killed = false;
     if (ours && !protectedGroups.has(row.pgid) && !protectedPids.has(row.pid)) killed = kill(-row.pgid, 'SIGKILL') || kill(row.pid, 'SIGKILL');
     reaped.push({ pid: row.pid, kind: row.kind, killed });

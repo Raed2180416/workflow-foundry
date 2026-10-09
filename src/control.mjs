@@ -66,6 +66,8 @@ const stillThere = (table, plan) => table.some(p => p.state !== 'Z' && (p.pid ==
  */
 export async function killOwnerTree(owner, { selfPid = process.pid } = {}) {
   const report = { pid: owner.pid, killed: false, groups: [], pids: [] };
+  // Without the start time the run recorded, the pid cannot be told apart from a process that reused it: never signal it.
+  if (!owner.processStart) return { ...report, skipped: 'the run recorded no start time for its owner, so the process cannot be identified' };
   const current = processStartStamp(owner.pid);
   if (!ownerAlive(owner) || (owner.processStart && current && owner.processStart !== current)) return { ...report, killed: true, skipped: 'the owner process is gone' };
   let plan = escalationPlan(processTable(), owner.pid, selfPid);
@@ -180,7 +182,10 @@ export async function cancelRun(foundry, runId, { actor = 'cli', reason = '', gr
       // owner left running (src/children.mjs), then close the run here.
       orphans.push(...reapChildren(store, runId).filter(child => child.killed));
       try { runtime.closeCancelled(runId, { actor, reason, journalDb }); }
-      catch (error) { if (!['RUN_BUSY', 'RUN_CLOSED', 'RUN_UNCERTAIN'].includes(error.code)) throw error; }
+      catch (error) {
+        if (!['RUN_BUSY', 'RUN_CLOSED', 'RUN_UNCERTAIN'].includes(error.code)) throw error;
+        await delay(POLL_MS); // refused (a new owner took it, or it closed meanwhile): look again, never in a synchronous loop
+      }
       continue;
     }
     if (Date.now() >= deadline) {
@@ -208,7 +213,7 @@ export async function cancelRun(foundry, runId, { actor = 'cli', reason = '', gr
 
 /**
  * Stop everything in this workspace: cancel every run that has not reached a final status. Executing runs are asked to stop (and killed with
- * their process trees after the grace period unless `escalate` is false); runs parked on a timer, a human or an approval, and runs whose owner
+ * their process trees after the grace period unless `escalate` is false or graceMs is 0); runs parked on a timer, a human or an approval, and runs whose owner
  * died, are closed here. Closing parked runs also ends their timers, so a later `foundry tick` or `serve` does not restart them. Runs that
  * are `uncertain` are left as they are (nothing is executing; cancelling does not settle the effect). `executingOnly` leaves the parked runs
  * alone. Never signals this process or its ancestors. Always resolves with a report; runs that could not be stopped are in `failed`/`results`.
@@ -222,7 +227,9 @@ export async function stopAll(foundry, { actor = 'cli', reason = '', graceMs = 1
     else targets.push(id);
   }
   // Every cancel writes its request and aborts what this process executes before its first wait, so the requests are all out before any waiting.
-  const settled = await Promise.allSettled(targets.map(id => cancelRun(foundry, id, { actor, reason, graceMs, force: escalate, journalDb, escalations })));
+  // A grace of 0 asks and does not wait, as for `cancel`: it never kills an owner that was given no time at all to see the request and stop
+  // cleanly (a SIGKILL turns every effect it had in flight into one of unknown outcome).
+  const settled = await Promise.allSettled(targets.map(id => cancelRun(foundry, id, { actor, reason, graceMs, force: escalate && graceMs > 0, journalDb, escalations })));
   const results = [], failed = [];
   settled.forEach((entry, i) => { if (entry.status === 'fulfilled') results.push(entry.value); else failed.push({ runId: targets[i], error: errorData(entry.reason) }); });
   // Process groups still on file for runs that nothing executes any more (a run that ended, or whose owner died and which was not open

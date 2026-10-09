@@ -309,7 +309,10 @@ test('a run whose owner died is closed by cancel: nodes it left running are sett
     assert.equal(final.status, 'cancelled');
     assert.equal(final.error.message, 'Run cancelled by test: then the owner died');
     assert.equal(p.state.started.length, 0, 'no node ran');
-    assert.equal(final.nodes.step.status, 'pending', 'the interrupted call was put back by recovery and never re-run');
+    // No crash recovery for a run whose cancellation stands: the call the dead owner left running is settled as `foundry cancel` settles it.
+    assert.deepEqual([final.nodes.step.status, final.nodes.step.error.code], ['failed', 'CANCELLED'], 'the interrupted call is settled, never re-run');
+    assert.deepEqual(p.other.store.events(run.id).filter(e => e.swept).map(e => [e.type, e.nodeKey]), [['node.failed', 'root/step']]);
+    assert.equal(p.types(run.id).includes('node.recovered'), false, 'recovery did not put it back');
     assert.equal(p.types(run.id).filter(type => type === 'cancel.requested').length, 1);
     p.verified(run.id);
     // ...and another cancel of the finished run is the no-op.
@@ -581,6 +584,8 @@ test('reaping what a dead owner left: a recorded group is killed only if it is s
   assert.deepEqual(reap([row(40, '100', 'process')], [...idle, proc(41, 1, 40, '101')]).calls, [[-40, 'SIGKILL']]);
   // A leader that exited but was not reaped yet (a zombie) with a live member.
   assert.deepEqual(reap([row(40, '100')], [...idle, proc(40, 1, 40, '100', 'Z'), proc(41, 1, 40, '101')]).calls, [[-40, 'SIGKILL']]);
+  // A live leader whose start time was not recorded cannot be told apart from a process that reused the pid: left alone.
+  assert.deepEqual(reap([row(40, null)], [...idle, proc(40, 30, 40, '100'), proc(41, 40, 40, '101')]).calls, []);
   // Never this process's own group or an ancestor's, whatever the file says.
   assert.deepEqual(reap([row(10, '2'), row(20, '3')], idle).calls, []);
   // Nothing on file: nothing to do.
@@ -625,6 +630,14 @@ test('HTTP: POST /api/runs/:id/cancel records a durable request for a run anothe
   const post = async (url, body = {}) => { const response = await fetch(`${server.origin}${url}`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-foundry-token': token }, body: JSON.stringify(body) }); return { status: response.status, body: await response.json() }; };
   assert.equal((await p.owner.startRun(parked.id)).status, 'awaiting_human');
   assert.equal((await p.owner.startRun(finished.id)).status, 'succeeded');
+  // The control endpoints are mutating routes: no token, a wrong token or another origin is refused before anything is recorded.
+  const bare = async (url, headers = {}) => (await fetch(`${server.origin}${url}`, { method: 'POST', headers: { 'content-type': 'application/json', ...headers }, body: '{}' })).status;
+  assert.equal(await bare('/api/stop-all'), 403, 'no token');
+  assert.equal(await bare(`/api/runs/${parked.id}/cancel`, { 'x-foundry-token': 'f'.repeat(64) }), 403, 'a wrong token');
+  assert.equal(await bare('/api/stop-all', { 'x-foundry-token': token, origin: 'http://evil.example' }), 403, 'another origin');
+  assert.equal(await bare(`/api/runs/${parked.id}/cancel`, { 'x-foundry-token': token, 'sec-fetch-site': 'cross-site' }), 403, 'a cross-site request');
+  assert.equal(p.other.store.rows.header(parked.id).cancelRequest, undefined, 'nothing was recorded');
+  assert.equal(p.other.store.rows.header(parked.id).status, 'awaiting_human');
   const toolRun = p.owner.startRun(tool.id);
   assert.ok(await until(() => p.state.started.includes('slow')));
 
@@ -654,4 +667,138 @@ test('HTTP: POST /api/runs/:id/cancel records a durable request for a run anothe
   assert.equal((await second).status, 'cancelled');
   assert.equal(p.other.store.rows.header(others[1].id).status, 'cancelled');
   assert.equal((await post(`/api/runs/${tool.id}/cancel`)).body.noop, true);
+});
+
+// ---- Review regressions (adversarial review of cancel/stop-all, 2026-10-09) --------------------------------------------------------------
+
+test('a cancel that lands while the run is pausing (a question, a timer) is honoured when the owner parks it, never left standing; a run that finished first keeps its result', { timeout: 60000 }, async t => {
+  // The owner looks for a request when it takes the run and then only every minute here. The request lands while a tool runs (one that does
+  // not watch its signal, so nothing aborts it); the tool then ends and the flow pauses. The canceller did not wait ('requested', as the UI
+  // and `--grace 0` do), and a parked run has no owner to see the request: before the fix the run stayed parked with it unanswered.
+  const p = pair(t, { ownerOptions: { cancelPollMs: 60000 } });
+  const asking = p.create(base([task('gate', 'probe.deaf'), { ...human('ask'), needs: ['gate'] }], [exists(ref('nodes.ask'))], { id: 'RaceAsk' }));
+  const pausing = p.create(base([task('gate', 'probe.deaf'), { id: 'pause', kind: 'wait', needs: ['gate'], description: 'Pause for an hour', delayMs: 3600000 }], [exists(ref('nodes.pause'))], { id: 'RaceWait' }));
+  const finishing = p.create(base([task('gate', 'probe.deaf')], [done('gate')], { id: 'RaceDone' }));
+  const finals = {};
+  for (const run of [asking, pausing, finishing]) {
+    const running = p.owner.startRun(run.id);
+    assert.ok(await until(() => p.state.release.has('gate')));
+    const report = await p.other.cancel(run.id, { actor: 'ui', reason: 'stop it', graceMs: 0 });
+    assert.equal(report.outcome, 'requested', report.message);
+    p.state.release.get('gate')(); p.state.release.delete('gate');
+    finals[run.workflowId] = await running;
+    p.verified(run.id);
+  }
+  for (const run of [asking, pausing]) {
+    const final = finals[run.workflowId], events = p.other.store.events(run.id);
+    assert.deepEqual([final.status, final.verdict.verdict, final.error.code, final.error.message, final.owner], ['cancelled', 'inconclusive', 'CANCELLED', 'Run cancelled by ui: stop it', null], run.workflowId);
+    assert.deepEqual(events.slice(-2).map(e => e.type), ['run.verdict', 'run.stopped']);
+    assert.equal(events.at(-1).cancel.actor, 'ui');
+    assert.equal(final.nodes.gate.status, 'completed', 'the tool that ended on its own keeps its result');
+  }
+  assert.equal(finals.RaceAsk.nodes.ask.status, 'awaiting_human', 'the question is left open, unanswered');
+  assert.throws(() => p.other.runtime.answer(asking.id, 'root/ask', true), error => error.code === 'RUN_CLOSED');
+  assert.deepEqual(p.other.store.timers(pausing.id), [], 'the timer is gone: no tick restarts the run');
+  assert.equal((await p.other.tick({ now: Date.now() + 2 * 3600000 })).due, 0);
+  // Finished first: the result stands, the request stays in the record, and cancelling again is the no-op.
+  assert.equal(finals.RaceDone.status, 'succeeded');
+  assert.equal(p.other.store.rows.header(finishing.id).cancelRequest.actor, 'ui');
+  assert.equal((await p.other.cancel(finishing.id)).outcome, 'already-finished');
+});
+
+test('a run whose cancellation was requested takes no answer or approval, even before it is closed; taking it over runs nothing', { timeout: 60000 }, async t => {
+  const p = pair(t);
+  const asking = p.create(base([human()], [exists(ref('nodes.ask'))], { id: 'NoAnswer' }));
+  const gated = p.create(base([task('write', 'probe.gated')], [done('write')], { id: 'NoApproval' }));
+  assert.equal((await p.owner.startRun(asking.id)).status, 'awaiting_human');
+  assert.equal((await p.owner.startRun(gated.id)).status, 'awaiting_approval');
+  const approvalId = Object.keys(p.other.store.rows.header(gated.id).approvals)[0];
+  // The canceller recorded its requests and died before it closed the runs.
+  for (const run of [asking, gated]) assert.equal(p.other.runtime.requestCancel(run.id, { actor: 'test' }).created, true);
+  const heads = [asking, gated].map(run => p.other.store.rows.header(run.id).eventHead);
+  assert.throws(() => p.other.runtime.answer(asking.id, 'root/ask', true), error => error.code === 'RUN_CLOSED' && /Cancellation of this run was requested by test/.test(error.message));
+  assert.throws(() => p.other.runtime.approve(gated.id, approvalId, true, 'user'), error => error.code === 'RUN_CLOSED');
+  assert.throws(() => p.other.runtime.approve(gated.id, approvalId, false, 'user'), error => error.code === 'RUN_CLOSED', 'a rejection would close it as cancelled for another reason');
+  assert.deepEqual([asking, gated].map(run => p.other.store.rows.header(run.id).eventHead), heads, 'nothing was written');
+  assert.equal((await p.owner.startRun(asking.id)).status, 'cancelled', 'a resume closes it without running anything');
+  assert.equal((await p.other.cancel(gated.id)).outcome, 'cancelled');
+  assert.equal(p.state.started.length, 0);
+  for (const run of [asking, gated]) p.verified(run.id);
+});
+
+test('a cancellation that ended uncertain is not taken over again: resume returns it unchanged and writes nothing', { timeout: 60000 }, async t => {
+  const p = pair(t);
+  const run = p.create(base([hold('slow'), task('send', 'probe.effect', { hold: true })], [done('slow')]));
+  const running = p.owner.startRun(run.id);
+  assert.ok(await until(() => p.state.started.length === 2));
+  assert.equal((await p.other.cancel(run.id, { actor: 'test', graceMs: 20000 })).outcome, 'uncertain');
+  assert.equal((await running).status, 'uncertain');
+  const before = p.other.store.rows.header(run.id).eventHead;
+  const again = await p.owner.startRun(run.id);
+  assert.deepEqual([again.status, again.owner], ['uncertain', null]);
+  assert.deepEqual(p.other.store.rows.header(run.id).eventHead, before, 'no runner.acquired, no second seal');
+  assert.equal((await p.other.cancel(run.id)).noop, true);
+  p.verified(run.id);
+});
+
+test('a run closed by a canceller while an execution was starting is returned closed by that execution, not thrown as an error', { timeout: 60000 }, async t => {
+  const p = pair(t);
+  const run = p.create(base([task('a', 'probe.step')], [done('a')], { id: 'StartRace' }));
+  const rows = p.owner.store.rows, original = rows.mismatchedRows;
+  // The last check before the execution takes the run: the canceller closes it right then (as `stop-all` can while `foundry run` starts).
+  rows.mismatchedRows = function (id) { p.other.runtime.closeCancelled(id, { actor: 'test' }); return original.call(this, id); };
+  t.after(() => { rows.mismatchedRows = original; });
+  const final = await p.owner.startRun(run.id);
+  assert.equal(final.status, 'cancelled');
+  assert.equal(p.state.started.length, 0);
+  assert.equal(p.types(run.id).includes('runner.acquired'), false, 'it never took the run');
+  p.verified(run.id);
+});
+
+test('settling what a dead owner left running: an idempotent effect is uncertain whether `cancel` or `resume` finishes, and the effects recorded at dispatch count', { timeout: 60000 }, async t => {
+  const p = pair(t);
+  for (const finish of ['cancel', 'resume']) {
+    const run = p.create(base([task('write', 'probe.gated')], [done('write')], { id: `Idempotent${finish}` }));
+    await crash(p.owner, run.id, { write: { kind: 'task', tool: 'probe.gated', effects: 'idempotent' } });
+    p.other.runtime.requestCancel(run.id, { actor: 'test' });
+    const status = finish === 'cancel' ? (await p.other.cancel(run.id)).status : (await p.owner.startRun(run.id)).status;
+    assert.equal(status, 'uncertain', finish);
+    assert.equal(p.other.store.rows.nodeState(run.id, 'root', 'write').status, 'uncertain', finish);
+    p.verified(run.id);
+  }
+  // The registry now says the tool has no effect, but it was dispatched as non-idempotent (its tool.intent recorded that): still uncertain.
+  const drifted = p.create(base([task('send', 'probe.step')], [done('send')], { id: 'EffectsRecorded' }));
+  await crash(p.owner, drifted.id, { send: { kind: 'task', tool: 'probe.step', effects: 'non-idempotent' } });
+  assert.equal((await p.other.cancel(drifted.id)).outcome, 'uncertain');
+  p.verified(drifted.id);
+});
+
+test('an owner that exited but that its parent has not reaped (a zombie) is dead: its run is closed at once', { timeout: 60000 }, async t => {
+  const { spawn } = await import('node:child_process');
+  const { processStartStamp } = await import('../src/runtime.mjs');
+  // `true` exits at once; its parent then becomes `sleep`, which never waits for it: a zombie until sleep ends.
+  const parent = spawn('sh', ['-c', 'true & exec sleep 30'], { stdio: 'ignore' });
+  t.after(() => { try { parent.kill('SIGKILL'); } catch {} });
+  const zombie = await until(() => processes().find(x => x.ppid === parent.pid && x.state === 'Z')?.pid, 10000);
+  assert.ok(zombie, 'a zombie exists');
+  const p = pair(t);
+  const run = p.create(base([hold('lost')], [done('lost')], { id: 'ZombieOwner' }));
+  p.owner.store.updateRun(run.id, r => { r.status = 'running'; r.owner = { token: 'zombie', pid: zombie, processStart: processStartStamp(zombie), acquiredAt: Date.now() }; },
+    { type: 'runner.acquired', token: 'zombie' }, { result: 'header' });
+  const report = await p.other.cancel(run.id, { actor: 'test', graceMs: 5000 });
+  assert.equal(report.outcome, 'cancelled', report.message);
+  assert.ok(report.waitedMs < 2000, 'no grace period for a dead owner');
+  p.verified(run.id);
+});
+
+test('the escalation never signals an owner it cannot identify: no start time on file means no signal', { timeout: 30000 }, async t => {
+  const { spawn } = await import('node:child_process');
+  const { killOwnerTree } = await import('../src/control.mjs');
+  const child = spawn('sleep', ['30'], { stdio: 'ignore' });
+  t.after(() => { try { child.kill('SIGKILL'); } catch {} });
+  assert.ok(await until(() => processes().some(x => x.pid === child.pid)));
+  const report = await killOwnerTree({ pid: child.pid, processStart: null });
+  assert.match(report.skipped, /cannot be identified/);
+  assert.equal(report.killed, false);
+  assert.ok(processes().some(x => x.pid === child.pid && x.state !== 'Z'), 'still running');
 });

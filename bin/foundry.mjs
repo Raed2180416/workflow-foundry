@@ -184,7 +184,8 @@ const usage = `Workflow Foundry 0.1.0 — experimental, source/evidence qualifie
 `       --force killed with everything below it. Exit 0 stopped or nothing to stop, 2 an effect of unknown outcome, 3 not stopped)\n` +
 `  foundry stop-all [--reason TEXT] [--grace SECONDS] [--executing-only] [--journal FILE] --workspace PATH\n` +
 `      (cancel every run of the workspace that has not finished, executing or parked on a timer, a human or an approval, so no timer restarts\n` +
-`       it; an owner that does not stop within --grace is killed with its process tree; never signals itself or its ancestors)\n` +
+`       it; an owner that does not stop within --grace is killed with its process tree, never with --grace 0, which only asks; never signals\n` +
+`       itself or its ancestors)\n` +
 `  foundry migrate-store --workspace PATH  (split run records written by the earlier whole-run store into per-node rows; they also load, and migrate on their first write, without this)\n` +
 `  foundry resume RUN_ID [--policy MODEL_POLICY.json] [--append-anchor FILE] --workspace PATH\n` +
 `  foundry tick [--policy MODEL_POLICY.json] --workspace PATH  (resume runs whose wait timers are due)\n` +

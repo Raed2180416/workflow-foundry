@@ -144,26 +144,37 @@ goes through the store, never through a signal alone:
    consumed, `model.cancelled`), sandboxes and model CLIs are killed with their process groups, a capability that ignores its
    signal is abandoned after `cancelGraceMs` (2 s; a task whose capability has effects then ends `uncertain`). The owner then
    writes the verdict itself: status `cancelled`, verdict `inconclusive`, code `CANCELLED`, final events `run.verdict`,
-   `run.stopped` (carrying the request). A run executing in the process that cancels it is aborted at once.
+   `run.stopped` (carrying the request). A run executing in the process that cancels it is aborted at once. A request that
+   lands after the owner last looked, while its flow is pausing the run (a question, a timer, an approval), is honoured in the
+   update that would have parked it: the run is closed as cancelled instead of parked with the request unanswered (a parked
+   run has no owner to see it, and a canceller that does not wait, the UI or `--grace 0`, has already returned). A run that
+   finished first keeps its result. A run taken over (`resume`, `tick`) with its request already standing runs nothing, not
+   even crash recovery: what an earlier owner left running is settled as in 3, so `resume` and `cancel` finish it alike.
 3. **Nothing executes it.** A run parked on a timer, a question or an approval, a run never started, and a run whose owner
    died (before or after the abort) are closed by the canceller in one update (`Runtime.closeCancelled`): the same verdict,
-   with the nodes the dead owner left `running` settled (`uncertain` for a task whose capability has effects, otherwise
-   `failed` with the cancellation) and the wait timers cleared by the seal. A live owner refuses this (`RUN_BUSY`).
+   with the nodes the dead owner left `running` settled (`uncertain` for a task whose capability has effects, by the registry
+   or by the effects its `tool.intent` recorded; otherwise `failed` with the cancellation) and the wait timers cleared by the
+   seal. A live owner refuses this (`RUN_BUSY`). An owner that has exited but that its parent has not reaped (a zombie) is dead.
 4. **An owner that does not answer.** After `--grace` seconds (default 10) `cancel` reports it (exit 3); with `--force`, and
    always in stop-all, the owner is frozen (SIGSTOP), every process below it is killed (sandboxes and model CLIs by process
    group), the owner is killed (SIGKILL), and the run is closed as in 3. The owner is identified by the pid and start time its
-   run recorded, never by name; this process, its ancestors and their process groups are never signalled (`escalationPlan`).
+   run recorded, never by name (no recorded start time, no signal); this process, its ancestors and their process groups are
+   never signalled (`escalationPlan`). `stop-all --grace 0` only asks, as `cancel --grace 0` does: no owner is killed without
+   having had time to see the request.
 5. **What a killed owner leaves behind.** The process groups of sandboxes and model CLIs are recorded in `run_children`
    while they run (`src/children.mjs`, called from `src/sandbox.mjs` and `src/process.mjs`), so a group whose owner was
    killed from outside can still be found: `cancel` and `stop-all` stop what a dead owner left, and so does a run taken over
    by `resume` (a `children.reaped` event). A recorded group is killed only if its leader is still the recorded process (pid
-   and start time) or its members remain.
+   and start time) or its members remain. Over HTTP no owner process is signalled; only such groups of dead owners are stopped.
 
 `stop-all` cancels every run of the workspace that has not finished: executing runs and parked ones (so no timer restarts them
 later); `--executing-only` leaves the parked ones alone. `uncertain` runs are left as they are. One run that cannot be closed
 (a broken chain, a journal in another database without `--journal FILE`) is reported and does not stop the others. A stopped
-run is final: `resume`, `answer` and `approve` refuse it. Exit codes: 0 stopped or nothing to stop, 2 a run stopped with an
-effect of unknown outcome (listed in `effectsUnknown`), 3 not stopped; `foundry run` and `resume` exit 3 for a run that was cancelled.
+run is final: `answer` and `approve` refuse a run once its cancellation is requested (before it is closed too), and `resume`
+returns a cancelled run, or one whose cancellation stopped `uncertain`, unchanged. Exit codes: 0 stopped or nothing to stop, 2 a
+run stopped with an effect of unknown outcome (listed in `effectsUnknown`), 3 not stopped; `foundry run` and `resume` exit 3 for a
+run that was cancelled. Known gap: a model call the owner journaled but had not yet charged when it died is not charged by the
+close (the run's cost leaves it out; verify-run warns `JOURNAL_ROW_UNREFERENCED`).
 Not covered: runs of `foundry trial` (isolated stores), and the processes of a capability that spawns its own (only sandboxes
 and model CLIs are recorded). Tests: `tests/cancel.test.mjs` (library, two handles on one workspace), `tests/cli-cancel.test.mjs`
 (separate processes, signals, process groups).

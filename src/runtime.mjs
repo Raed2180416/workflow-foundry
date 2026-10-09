@@ -30,9 +30,16 @@ const startStamp = pid => {
   try { return readFileSync(`/proc/${pid}/stat`, 'utf8').split(') ')[1].split(' ')[19]; }
   catch { return null; }
 };
+// The state letter of a process (field 3 of /proc/PID/stat), or null.
+const stateOf = pid => {
+  try { const text = readFileSync(`/proc/${pid}/stat`, 'utf8'); return text.slice(text.lastIndexOf(')') + 2).split(' ')[0] ?? null; }
+  catch { return null; }
+};
 function alive(owner) {
   try { process.kill(owner.pid, 0); }
   catch (error) { return error.code !== 'ESRCH'; }
+  // An owner that exited but that its parent has not reaped yet (a zombie) still answers signal 0, but it can no longer write: it is dead.
+  if (['Z', 'X'].includes(stateOf(owner.pid))) return false;
   const current = startStamp(owner.pid);
   return !owner.processStart || !current || current === owner.processStart;
 }
@@ -126,7 +133,9 @@ function sweepRunning(rows, registry, run, runId, error) {
   const events = [];
   for (const { frameKey, nodeId, state } of rows.withStatus(runId, 'running')) {
     const nodeKey = `${frameKey}/${nodeId}`, capability = state.kind === 'task' ? registry.get(state.tool) : null;
-    const uncertain = state.kind === 'task' && (!capability || capability.effects !== 'none');
+    // The effects the task was dispatched with (its tool.intent recorded them) count as well as the registry's: a registry that changed since
+    // (or a canceller that lacks the run's components) must not turn an effect that may have happened into a plain failure.
+    const uncertain = state.kind === 'task' && (!capability || capability.effects !== 'none' || (state.effects !== undefined && state.effects !== 'none'));
     const node = frameOf(run, frameKey).nodes[nodeId];
     node.status = uncertain ? 'uncertain' : 'failed'; node.error = error;
     events.push(uncertain ? { type: 'effect.uncertain', nodeKey, error, cancellationConfirmed: false, swept: true } : { type: 'node.failed', nodeKey, error, swept: true });
@@ -153,6 +162,10 @@ function forgedAnswers(workflow, run, log) {
 // one, the run is never resumed, answered or approved again, whatever its record says (an edited status cannot reopen it).
 const closingSeal = events => events.find(e => e.type === 'run.verdict' && e.verdict !== 'uncertain') ?? null;
 const closedError = (seal, status) => new FoundryError('RUN_CLOSED', `The run's chain closed it with a final verdict (${seal.verdict}) at event ${seal.seq}, but its record says ${status}: the record was edited. A closed run is never reopened.`, { seq: seal.seq });
+// A run whose cancellation was requested (Runtime.requestCancel) takes no answer or approval: it is closed, or about to be, and never resumed.
+const cancelRequested = run => run.cancelRequest ? new FoundryError('RUN_CLOSED', `Cancellation of this run was requested by ${run.cancelRequest.actor}; it takes no answer or approval`, { status: run.status, cancelRequest: run.cancelRequest.id }) : null;
+// The statuses a run parks in (nothing executes it until a timer, a person or an approval resumes it).
+const PARKED = new Set(['waiting', 'awaiting_human', 'awaiting_approval']);
 const policyDefaults = registry => ({
   allowedCapabilities: registry.list().filter(c => c.risk === 'low').map(c => c.name),
   maxSteps: 5000, maxConcurrency: 4, maxDurationMs: 3600000, maxCost: 0, maxResumes: 1000
@@ -275,10 +288,13 @@ export class Runtime {
     if (finished.has(run.status)) throw new FoundryError('RUN_CLOSED', 'A terminal run cannot accept answers');
     const closed = closingSeal(this.store.events(runId));
     if (closed) throw closedError(closed, run.status);
+    if (cancelRequested(run)) throw cancelRequested(run);
     const state = this.store.rows.nodeState(runId, ...splitKey(nodeKey));
     if (!state || state.status !== 'awaiting_human') throw new FoundryError('NO_QUESTION', 'No pending question exists at this node');
     validateData(state.answerSchema, answer, 'human answer');
     return this.store.updateRun(runId, r => {
+      if (finished.has(r.status)) throw new FoundryError('RUN_CLOSED', 'A terminal run cannot accept answers');
+      if (cancelRequested(r)) throw cancelRequested(r);
       const current = locateNode(r, nodeKey);
       if (current.state.status !== 'awaiting_human') throw new FoundryError('ANSWER_CONFLICT', 'This question was already answered');
       current.state.status = 'completed'; current.state.completedAt = Date.now();
@@ -291,6 +307,7 @@ export class Runtime {
       if (finished.has(r.status)) throw new FoundryError('RUN_CLOSED', 'The run is already terminal');
       const closed = closingSeal(this.store.events(runId));
       if (closed) throw closedError(closed, r.status);
+      if (cancelRequested(r)) throw cancelRequested(r);
       const approval = r.approvals[approvalId];
       if (!approval || approval.status !== 'pending') throw new FoundryError('APPROVAL_CONFLICT', 'No matching pending approval');
       // What the approver is shown is the record's copy of the request; it must be the request the chain holds (tool, arguments, and the
@@ -504,6 +521,9 @@ class Invocation {
       if (run.registryHash !== this.registry.hash()) throw new FoundryError('CAPABILITY_DRIFT', 'Capabilities changed since run creation');
       const log = this.store.events(this.runId); // Verify the chain before trusting a checkpoint.
       if (finished.has(run.status)) return run;
+      // A cancellation that stopped with an effect of unknown outcome is settled too: nothing of the run executes again (taking it over would
+      // only append another uncertain seal). The effect itself is still the owner's to check.
+      if (run.status === 'uncertain' && run.cancelRequest) return run;
       for (const e of log) if (Number.isInteger(e.dispatch) && e.dispatch > this.dispatched) this.dispatched = e.dispatch;
       const closed = closingSeal(log);
       if (closed) throw closedError(closed, run.status);
@@ -521,20 +541,30 @@ class Invocation {
       // The node rows' status and label columns decide what runs and what taint a reference inherits; they must still repeat the node states.
       const mismatched = this.rows.mismatchedRows(this.runId);
       if (mismatched.length) throw new FoundryError('CHECKPOINT_TAMPERED', `The run's node rows were edited (${mismatched.slice(0, 3).map(m => `${m.nodeKey}: ${m.reason}`).join('; ')}), so the run is not resumed`, { nodeKeys: mismatched.map(m => m.nodeKey) });
-      this.store.updateRun(this.runId, r => {
-        // The checks above read the run before this commit; a run another process closed in between (a cancel) is not reopened.
-        if (finished.has(r.status)) throw new FoundryError('RUN_CLOSED', `The run is already ${r.status}; it was closed while this execution was starting`, { status: r.status });
-        if (r.owner && alive(r.owner)) throw new FoundryError('RUN_BUSY', 'Another live runner owns this run');
-        if ((r.resumeCount ?? 0) >= (r.policy.maxResumes ?? 1000)) throw new FoundryError('RESUME_BUDGET', 'Run resume budget exhausted');
-        r.resumeCount = (r.resumeCount ?? 0) + 1;
-        r.owner = { token: this.token, pid: process.pid, processStart: startStamp(process.pid), acquiredAt: Date.now() };
-        r.status = 'running';
-      }, { type: 'runner.acquired', token: this.token }, { result: 'header' });
+      try {
+        this.store.updateRun(this.runId, r => {
+          // The checks above read the run before this commit; a run another process closed in between (a cancel) is not reopened.
+          if (finished.has(r.status) || (r.status === 'uncertain' && r.cancelRequest)) throw new FoundryError('RUN_CLOSED', `The run is already ${r.status}; it was closed while this execution was starting`, { status: r.status, closedWhileStarting: true });
+          if (r.owner && alive(r.owner)) throw new FoundryError('RUN_BUSY', 'Another live runner owns this run');
+          if ((r.resumeCount ?? 0) >= (r.policy.maxResumes ?? 1000)) throw new FoundryError('RESUME_BUDGET', 'Run resume budget exhausted');
+          r.resumeCount = (r.resumeCount ?? 0) + 1;
+          r.owner = { token: this.token, pid: process.pid, processStart: startStamp(process.pid), acquiredAt: Date.now() };
+          r.status = 'running';
+        }, { type: 'runner.acquired', token: this.token }, { result: 'header' });
+      } catch (error) {
+        // Closed (cancelled) by another process while this execution was starting: the result is the closed run, as when it was closed before.
+        if (error.details?.closedWhileStarting) return this.current();
+        throw error;
+      }
       owned = true;
       // Process groups an earlier owner of this run left running (it was killed) are stopped before this execution starts its own.
       const stale = reapChildren(this.store, this.runId).filter(child => child.killed);
       if (stale.length) this.update(() => {}, { type: 'children.reaped', children: stale.map(({ pid, kind }) => ({ pid, kind })) });
       this.watchCancel();
+      // A run taken over with its cancellation already requested (it was parked, or its owner died after the abort and before the verdict) runs
+      // nothing, not even crash recovery: the nodes an earlier owner left running are settled by the cancellation below (sweepRunning), exactly
+      // as a canceller closing the run would settle them, so `foundry resume` and `foundry cancel` finish such a run the same way.
+      if (this.cancelRequest) throw new FoundryError('CANCELLED', 'Execution was cancelled before it started');
       if (Date.now() >= run.deadline) throw new FoundryError('DEADLINE', 'Run deadline exhausted before resume');
       this.semaphore = new Semaphore(Math.min(run.policy.maxConcurrency, this.workflow.budget.maxConcurrency));
       this.recover();
@@ -544,7 +574,17 @@ class Invocation {
       if (this.rows.anyWithStatus(this.runId, 'awaiting_approval')) status = 'awaiting_approval';
       if (this.rows.anyWithStatus(this.runId, 'uncertain')) status = 'uncertain';
       if (status === 'succeeded' && Date.now() >= this.head().deadline) throw new FoundryError('DEADLINE', 'Run deadline exhausted before completion was committed');
-      return this.update(r => { r.status = status; r.owner = null; seal(r, this.workflow, this.store); }, r => [...(r.verdict ? [this.runtime.verdictEvent(r)] : []), { type: `run.${status}` }], { result: 'run', final: true });
+      // A cancel request recorded after this execution last looked for one (it polls) while the flow was pausing the run is honoured here, in
+      // the same update: the run is closed as cancelled instead of being parked with the request unanswered (a parked run has no owner to see
+      // it, so a canceller that did not wait, the UI or `--grace 0`, would never have it carried out). A run that finished, or that holds an
+      // effect of unknown outcome, keeps its status.
+      let stopped = null;
+      return this.update(r => {
+        stopped = PARKED.has(status) && r.cancelRequest ? r.cancelRequest : null;
+        r.status = stopped ? 'cancelled' : status;
+        if (stopped) r.error = errorData(cancelError(stopped));
+        r.owner = null; seal(r, this.workflow, this.store);
+      }, r => [...(r.verdict ? [this.runtime.verdictEvent(r)] : []), stopped ? { type: 'run.stopped', error: r.error, cancel: stopped } : { type: `run.${status}` }], { result: 'run', final: true });
     } catch (error) {
       this.abort.abort();
       if (!owned) throw error;

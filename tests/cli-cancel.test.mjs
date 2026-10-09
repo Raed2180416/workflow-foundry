@@ -313,6 +313,11 @@ test('stop-all escalates by default: an owner that does not answer is killed wit
   const record = await until(() => runOf(store, 'StopStuck'));
   owner.child.kill('SIGSTOP');
   assert.ok(await until(() => processes().find(p => p.pid === owner.child.pid)?.state === 'T'));
+  // --grace 0 asks and returns, as for `cancel`: it never kills an owner that was given no time to see the request.
+  const asked = await run(['stop-all', '--grace', '0', '--workspace', workspace]);
+  assert.equal(asked.status, 0, asked.stderr);
+  assert.deepEqual([asked.json().summary.pending, asked.json().killed.length], [1, 0]);
+  assert.ok(isRunning(owner.child.pid) && groupMembers(group).length >= 2, 'nothing was killed with --grace 0');
   const stopped = await run(['stop-all', '--grace', '0.4', '--workspace', workspace]);
   assert.equal(stopped.status, 0, stopped.stderr);
   const result = stopped.json();

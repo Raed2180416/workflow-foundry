@@ -56,6 +56,10 @@
 // A reason's ratio is rate/threshold for set features and 1 + excess/margin (or 1 + unseen share) for hard ones; the
 // task is novel when any ratio exceeds 1, and score is the largest ratio (0 when nothing was measured).
 // Deterministic: no clock, no randomness, keys sorted; JSON-serialisable (no Maps or Sets inside a profile).
+// Provenance (review 2026-10-09): no code path names a family, but the delimiter list (DELIMS), the lexical/format split
+// and the capitalised-word rule were written while reading the records and kinetics dev tasks, and PARAMS were set on
+// the same dev streams. eval-profiles.mjs --tune re-selects PARAMS across families; the design choices themselves can
+// only be tested on a family nobody looked at.
 
 export const PROFILE_SCHEMA = 'jit-profile/1';
 export const PARAMS = Object.freeze({
@@ -184,7 +188,16 @@ export function promptSentences(prompt, inputValues = []) {
 }
 
 // ------------------------------------------------------------------------------------------------ observation
-// One task's per-path aggregates (Sets inside; never stored as they are).
+// One task's per-path aggregates (Sets inside; never stored as they are). Observation depends only on the task and the
+// fixed observation constants, never on a profile's params, so it is cached per task object (read-only for callers; a
+// task object must not be mutated after it was first observed).
+const OBS = new WeakMap();
+function observeCached(task) {
+  if (!task || typeof task !== 'object') return observe(task);
+  let o = OBS.get(task);
+  if (!o) { o = observe(task); OBS.set(task, o); }
+  return o;
+}
 function observe(task) {
   const t = taskView(task);
   const paths = new Map(), shortValues = new Set();
@@ -255,7 +268,7 @@ export function emptyProfile(params = PARAMS) {
 export function widenProfile(profile, task) {
   const p = profile ? structuredClone(profile) : emptyProfile();
   if (p.schema !== PROFILE_SCHEMA) throw new Error(`profile: unsupported schema ${p.schema}`);
-  const obs = observe(task);
+  const obs = observeCached(task);
   p.n += 1;
   addDf(p.prompt, obs.prompt);
   for (const [path, o] of obs.paths) {
@@ -299,15 +312,19 @@ const isLexical = s => !!s.classes && Object.keys(s.classes.df).every(c => LEXIC
 const parentOf = path => { const m = /^(.*?)(\[\]|\{\}|\.[^.[\]{}]+)$/.exec(path); return m ? m[1] : null; };
 
 // Size features (how much input, not what kind): an ablation can ignore them (checkProfile opts.ignore) to see what the
-// content features alone detect.
-export const SIZE_FEATURES = Object.freeze(['array-length', 'map-size', 'string-length', 'line-count']);
+// content features alone detect. 'enum-ordinal' is an unseen member of a numbered id series (one more document, one more
+// condition): it moves with item counts, so it belongs here (review 2026-10-09: without it the kinetics d5 "content"
+// signal was doc ids D13-D15 and condition C8, i.e. 15 documents instead of 12 and 8 conditions instead of 7).
+export const SIZE_FEATURES = Object.freeze(['array-length', 'map-size', 'string-length', 'line-count', 'enum-ordinal']);
+// A numbered-series value: non-digit prefix, one digit run, non-digit suffix ('D13' -> series 'D#', 13).
+export const ordinalOf = v => { const m = /^(\D*?)(\d+)(\D*)$/.exec(String(v)); return m ? { key: `${m[1]}#${m[3]}`, n: Number(m[2]) } : null; };
 
 // opts.ignore: feature names left out of the verdict, the reasons, near and score.
 export function checkProfile(profile, task, opts = {}) {
   const ignore = new Set(opts.ignore ?? []);
   if (!profile || profile.schema !== PROFILE_SCHEMA) throw new Error('checkProfile: not a profile');
   const P = { ...PARAMS, ...profile.params }, ex = P.caps?.examples ?? 4;
-  const obs = observe(task), checks = [];
+  const obs = observeCached(task), checks = [];
   if (!profile.n) return { novel: true, score: 2, reasons: [{ feature: 'empty-profile', path: null, ratio: 2 }], near: [], n: 0 };
   const setCheck = (feature, path, m, items) => {
     if (!m || m.capped || !items.size) return;
@@ -345,8 +362,15 @@ export function checkProfile(profile, task, opts = {}) {
     setCheck('map-keys', path, s.keys, o.keys);
     const en = enumOf(s, P);
     if (en && o.values.size) {
+      // An unseen value that only continues a numbered series the enum already holds (D12 seen, D13 now; C7 seen, C8
+      // now) says how many items the task has, not what kind: it is reported as 'enum-ordinal', a size feature, so a
+      // size ablation cannot pass count drift through the enum check.
+      const keys = [...en].map(v => ordinalOf(v)?.key).filter(Boolean), series = new Set(keys.filter((k, i) => keys.indexOf(k) !== i));   // >= 2 members
       const unseen = [...o.values.keys()].filter(v => !en.has(v));
-      if (unseen.length) checks.push({ feature: 'enum', path, unseen: unseen.slice(0, ex), seen: [...en].sort().slice(0, 12), ratio: r3(1 + unseen.length / o.values.size) });
+      const ordinal = unseen.filter(v => series.has(ordinalOf(v)?.key)), content = unseen.filter(v => !series.has(ordinalOf(v)?.key));
+      const seen = [...en].sort().slice(0, 12);
+      if (content.length) checks.push({ feature: 'enum', path, unseen: content.slice(0, ex), seen, ratio: r3(1 + content.length / o.values.size) });
+      if (ordinal.length) checks.push({ feature: 'enum-ordinal', path, unseen: ordinal.slice(0, ex), seen, ratio: r3(1 + ordinal.length / o.values.size) });
     }
   }
   // Paths every profiled task had, absent now (top-most only: the parent is present in this task).
