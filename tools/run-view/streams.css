@@ -89,7 +89,8 @@ svg.lanes .hit.pinned .ring { stroke: var(--accent); stroke-width: 2.5; }
 .detail ol.ev .k { font-weight: 650; }
 
 /* versions */
-svg.vtl { display: block; width: 100%; height: auto; }
+svg.vtl { display: block; max-width: 100%; height: auto; }
+.vtl-wrap { overflow-x: auto; }
 svg.vtl text { font-family: inherit; fill: var(--muted); font-size: 10px; }
 svg.vtl text.vl { fill: var(--text); font-size: 10.5px; }
 svg.vtl .band { fill: var(--blue); fill-opacity: .22; stroke: var(--blue); stroke-width: 1; }
@@ -101,7 +102,7 @@ svg.vtl .at.adopted { fill: var(--green); stroke: var(--green); }
 svg.vtl .at.rejected { fill: var(--panel); stroke: var(--amber); stroke-width: 2; }
 svg.vtl .at.not-chosen, svg.vtl .at.pending, svg.vtl .at.writing { fill: var(--panel); stroke: var(--slate); stroke-width: 2; }
 svg.vtl .at.failed, svg.vtl .at.voided { fill: var(--panel); stroke: var(--red); stroke-width: 2; }
-table.t td .sub { display: block; color: var(--faint); font-size: .74rem; }
+table.t td .sub, table.t th .sub { display: block; color: var(--faint); font-size: .74rem; font-weight: 400; }
 table.t.ver td { min-width: 70px; }
 table.t.ver td.why, table.t.ver td.chk { min-width: 180px; }
 pre.notes { margin: 6px 0 0; padding: 8px; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; font-size: .76rem; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 280px; overflow: auto; }

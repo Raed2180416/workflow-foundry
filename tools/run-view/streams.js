@@ -101,7 +101,7 @@ function axisOf(max, integer) {
 }
 function lineChart(E, spec) {
   const n = Math.max(1, E.taskCount), arms = E.arms, labels = arms.length <= 4;
-  const W = 520, Hh = 236, m = { l: 48, r: labels ? 128 : 16, t: 12, b: 32 }, pw = W - m.l - m.r, ph = Hh - m.t - m.b;
+  const W = 560, Hh = 236, m = { l: 48, r: labels ? 168 : 16, t: 12, b: 32 }, pw = W - m.l - m.r, ph = Hh - m.t - m.b;
   const done = a => a.summary.curve.filter(p => p.done);
   const max = Math.max(0, ...arms.flatMap(a => done(a).map(spec.val)));
   const ax = axisOf(spec.integer ? Math.max(max, ...arms.map(a => a.rows.length)) : max, spec.integer);
@@ -357,10 +357,16 @@ function showDetail(ai, i, pinned) {
 
 // ------------------------------------------------------------------------------------------------------------------ versions
 function versionTimeline(E, a) {
-  const n = Math.max(1, E.taskCount), W = 900, m = { l: 20, r: 20 }, pw = W - m.l - m.r, x = i => m.l + (i / n) * pw;
-  const atIdx = new Map(); for (const v of a.versions) { const k = v.attemptIdx ?? -1; atIdx.set(k, (atIdx.get(k) ?? 0) + 1); }
-  const rowsH = Math.max(1, ...atIdx.values()) * 16, Ht = 34 + rowsH + 22;
-  const svg = s('svg', { class: 'vtl', viewBox: `0 0 ${W} ${Ht}`, role: 'img', 'aria-label': `Version timeline of ${a.label}: ${a.versions.map(v => `${v.dir} ${v.status}${v.attemptIdx != null ? ` at task ${v.attemptIdx}` : ''}`).join('; ') || 'no compile yet'}` });
+  const n = Math.max(1, E.taskCount), W = Math.max(520, n * 38 + 40), m = { l: 20, r: 20 }, pw = W - m.l - m.r, x = i => m.l + (i / n) * pw;
+  // attempt markers with their labels, packed into rows so no two labels overlap (a label is about 5.6 px a character)
+  const rowsEnd = [], placed = [];
+  for (const v of [...a.versions].filter(v => v.attemptIdx != null).sort((p, q) => p.attemptIdx - q.attemptIdx)) {
+    const cx = x(v.attemptIdx), label = `${v.dir} ${v.status}`, w = 14 + label.length * 5.6;
+    let r = rowsEnd.findIndex(end => end < cx - 7); if (r < 0) { r = rowsEnd.length; rowsEnd.push(0); }
+    rowsEnd[r] = cx + w; placed.push({ v, cx, cy: 42 + r * 16, label });
+  }
+  const Ht = 34 + Math.max(1, rowsEnd.length) * 16 + 22;
+  const svg = s('svg', { class: 'vtl', width: W, height: Ht, viewBox: `0 0 ${W} ${Ht}`, role: 'img', 'aria-label': `Version timeline of ${a.label}: ${a.versions.map(v => `${v.dir} ${v.status}${v.attemptIdx != null ? ` before task ${v.attemptIdx}` : ''}`).join('; ') || 'no compile yet'}` });
   const adopted = a.versions.filter(v => v.status === 'adopted' && v.adoptedAt != null).sort((p, q) => p.adoptedAt - q.adoptedAt);
   const lastDone = a.rows.length ? a.rows.at(-1).idx + 1 : 0;
   adopted.forEach((v, k) => {
@@ -368,19 +374,12 @@ function versionTimeline(E, a) {
     svg.append(s('rect', { class: `band${k % 2 ? ' alt' : ''}`, x: x(v.adoptedAt), y: 6, width: Math.max(3, x(end) - x(v.adoptedAt)), height: 20, rx: 3 }, s('title', null, `${v.dir} served tasks ${v.adoptedAt}–${end - 1}`)),
       s('text', { class: 'vl', x: x(v.adoptedAt) + 5, y: 20 }, `v${v.version} · ${model(v.builderModel)}`));
   });
-  const used = new Map();
-  for (const v of a.versions) {
-    if (v.attemptIdx == null) continue;
-    const k = used.get(v.attemptIdx) ?? 0; used.set(v.attemptIdx, k + 1);
-    const cx = x(v.attemptIdx), cy = 40 + k * 16;
-    svg.append(s('path', { class: `at ${v.status.replace(/ /g, '-')}`, d: `M${cx} ${cy - 5} L${cx + 5} ${cy} L${cx} ${cy + 5} L${cx - 5} ${cy} Z` }, s('title', null, `${v.dir}: ${v.status}`)),
-      s('text', { x: cx + 8, y: cy + 3.5 }, `${v.dir} ${v.status}`));
-  }
+  for (const { v, cx, cy, label } of placed) svg.append(s('path', { class: `at ${v.status.replace(/ /g, '-')}`, d: `M${cx} ${cy - 5} L${cx + 5} ${cy} L${cx} ${cy + 5} L${cx - 5} ${cy} Z` }, s('title', null, `${v.dir}: ${v.status}`)), s('text', { x: cx + 8, y: cy + 3.5 }, label));
   const ay = Ht - 16;
   svg.append(s('line', { class: 'axis', x1: m.l, x2: m.l + pw, y1: ay, y2: ay }));
-  const every = n <= 30 ? (n <= 12 ? 1 : 4) : 10;
+  const every = n <= 30 ? (n <= 12 ? 1 : 2) : 10;
   for (let i = 0; i <= n; i += every) svg.append(s('line', { class: 'tick', x1: x(i), x2: x(i), y1: ay, y2: ay + 4 }), s('text', { x: x(i), y: ay + 13, 'text-anchor': 'middle' }, String(i)));
-  return svg;
+  return h('div', { class: 'vtl-wrap' }, svg);
 }
 function whyText(v) {
   const base = pick(REASON, v.reason, v.reason ?? 'unknown');
