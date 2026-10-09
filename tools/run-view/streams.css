@@ -115,3 +115,7 @@ pre.notes { margin: 6px 0 0; padding: 8px; background: var(--bg); border: 1px so
   svg.chart .ln, svg.key line { stroke: CanvasText; }
   svg.lanes .cell { stroke: CanvasText; }
 }
+/* tables keep readable columns and scroll inside their wrapper on a narrow screen (the page itself never scrolls sideways) */
+section.block .tablewrap > table.t { min-width: 720px; }
+section.block .tablewrap > table.t.ver { min-width: 1040px; }
+.readout table { min-width: 520px; }
