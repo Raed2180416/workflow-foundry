@@ -110,3 +110,5 @@ After S0-1, S0-2, S0-5, S0-6 and S0-7 land, and before R0:
 
 Any later change to `src/`, `policy/`, `schemas/`, `bin/`, `skills/`, `web/`, `package*.json`, `node_modules` or
 `experiments/jit/` before the held-out run voids the stamp.
+
+- 2026-10-09 (step-0 integration commit): `experiments/jit/flow-v2.mjs` sha256 is now `5dde46668c10c338074ee4a1ec1115632f18ddca4773a71024b4b6ee18fb5223` (S0-2 override hook; pinned in `compile.test.mjs`), and the `experiments/jit` tree is `ad854b61b293e59aebd5fff46b57f5a837291759` (S0-6 wiring, replay export keys, `jit.replayJournal`, `jit.shadowFloor`, `armSpendStopUsd`, R0 configs). Not a re-stamp: §5 still applies.

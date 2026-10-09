@@ -97,3 +97,23 @@ test('an unknown promptVersion is refused', () => {
   assert.equal(promptVersionOf({}), 1); assert.equal(promptVersionOf({ promptVersion: 2 }), 2);
   for (const bad of [0, 5, '2', 1.5, 'v2']) assert.throws(() => builderPrompt('compile', { ...A, promptVersion: bad }), /promptVersion must be one of 1, 2, 3, 4/);
 });
+
+// S0-6 (opt-in): acceptanceIds 'structured' appends the verdicts.json instructions; any other value moves no pinned text.
+import { VERDICTS_PROMPT_TEXT, VERDICTS_PROMPT_VERSION, verdictsPromptVersionOf } from '../prompts.mjs';
+test('acceptanceIds: the pinned v1 and v2 texts are unchanged for exact, lenient or unset; structured appends the verdicts.json text to any version, keeping every line', () => {
+  for (const [name, opts] of [['A', A], ['B', B]]) for (const kind of ['compile', 'recompile']) for (const ids of [undefined, 'exact', 'lenient']) {
+    assert.equal(sha(builderPrompt(kind, { ...opts, acceptanceIds: ids })), FROZEN[kind + name], `v1 ${kind} ${name} ${ids}`);
+    assert.equal(sha(builderPrompt(kind, { ...opts, promptVersion: 2, acceptanceIds: ids })), FROZEN_V2[kind + name], `v2 ${kind} ${name} ${ids}`);
+    for (const v of [3, 4]) assert.equal(builderPrompt(kind, { ...opts, promptVersion: v, ...V21, acceptanceIds: ids }), builderPrompt(kind, { ...opts, promptVersion: v, ...V21 }), `v${v} ${ids}`);
+  }
+  assert.equal(verdictsPromptVersionOf({ acceptanceIds: 'structured' }), VERDICTS_PROMPT_VERSION); assert.equal(VERDICTS_PROMPT_VERSION, 'verdicts-1');
+  for (const ids of [undefined, 'exact', 'lenient']) assert.equal(verdictsPromptVersionOf({ acceptanceIds: ids }), null);
+  for (const v of [1, 2, 3, 4]) for (const kind of ['compile', 'recompile']) {
+    const base = builderPrompt(kind, { ...A, promptVersion: v, ...(v >= 3 ? V21 : {}) }), s = builderPrompt(kind, { ...A, promptVersion: v, ...(v >= 3 ? V21 : {}), acceptanceIds: 'structured' });
+    assert.ok(s.includes(VERDICTS_PROMPT_TEXT.trim()), `v${v} ${kind}: the verdicts text`);
+    assert.equal(s.length - base.length, VERDICTS_PROMPT_TEXT.trim().length + 1, 'appended, nothing else');
+    const lines = s.split('\n'); let at = 0;
+    for (const line of base.split('\n')) { const i = lines.indexOf(line, at); assert.ok(i >= at, `v${v} ${kind}: line kept in order: ${line}`); at = i + 1; }
+    assert.ok(s.indexOf('Per-case verdicts (required)') < s.indexOf('You have about'), 'before the time and BUILD-NOTES paragraph');
+  }
+});

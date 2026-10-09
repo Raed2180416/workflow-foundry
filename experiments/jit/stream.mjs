@@ -19,7 +19,8 @@ import { ENV_FAULTS, metEnvFault } from '../lib/runner.mjs';
 import { createModelPort as createModelPortSync } from '../lib/models.mjs';
 import { promptVersionOf, flowFileOf } from './prompts.mjs';
 import { tolerantEqual, tolerance } from './compare.mjs';
-import { judgeAcceptance, acceptanceModeOf, minPartialOf, caseTasks, applyRefusals } from './acceptance.mjs';
+import { judgeAcceptance, acceptanceModeOf, minPartialOf, caseTasks, applyRefusals, acceptanceIdsOf, readVerdicts, VERDICTS_FILE } from './acceptance.mjs';
+import { requestDigestOf, looseDigestOf } from './run-compiled.mjs';
 import { assertSeedsAllowed, defaultPurpose, loadLedger } from './seeds.mjs';
 
 const REPO = path.resolve(fileURLToPath(new URL('../..', import.meta.url))), HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -37,7 +38,8 @@ const TOL_KEYS = ['relTol', 'absTol', 'tolerantKeys', 'allowLooseTolerance'];
 const tolOf = c => Object.fromEntries(TOL_KEYS.filter(k => c?.[k] != null).map(k => [k, c[k]]));
 // v2 options (opt-in, never in the defaults above, so a v1 config keeps its arm hash):
 //   jit.shadowOnFlags (default false): also shadow a compiled ok run that raised uncertainty flags (flow.flag); shadow
-//     events and rows then carry the reason ('schedule' | 'flag' | 'schedule+flag'). jit.shadowEvery 0 = no scheduled
+//     events and rows then carry the reason ('schedule' | 'flag' | 'schedule+flag'; 'floor' | 'flag' | 'floor+flag' with
+//     jit.shadowFloor, below). jit.shadowEvery 0 = no scheduled
 //     shadows (flag-only when shadowOnFlags is on).
 //   compile.promptVersion (default 1): the builder prompt text (prompts.mjs) and the SDK version (flowFileOf: version 2
 //     builds, checks and runs on flow-v2.mjs); applies to the fallback compiler too (compile.fallback.promptVersion is refused).
@@ -74,8 +76,28 @@ const tolOf = c => Object.fromEntries(TOL_KEYS.filter(k => c?.[k] != null).map(k
 //   idempotently after every result row, every fault, at the end of each arm and by resume-streams.mjs.
 // Every result row also carries host: the in-flight task count of this process, os.loadavg(), free memory and the
 // wall-clock start and end (S0-7; additive).
+// Step-0 integration options (opt-in; dropped at their defaults, so no hash moves):
+//   compile.acceptanceIds 'exact' (default) | 'lenient' | 'structured' and compile.allowSharedExplanation (default false;
+//     needs compile.acceptance 'strict'): acceptance.mjs's S0-6 options, passed to every compile attempt and to the recheck
+//     (which reads verdicts.json for 'structured'); 'structured' also gives the builder the verdicts.json instructions
+//     (prompts.mjs). A version's verdicts.json is kept beside its BUILD-NOTES.md. Set, they define a new JIT arm.
+//   jit.replayJournal (default unset): an exported journal.jsonl ('{slug}' = the arm slug) that JIT arms' gateway calls
+//     are answered from first, at $0, with live calls for misses (replayPort below). Set, it defines a new JIT arm.
+//   armSpendStopUsd (default unset; not hashed): {<arm spec>: dollars}, a per-arm spend stop beside spendStopUsd.
+//   _blocked (any value): the config is refused until it is removed; an explicit null tolerance is refused too.
+//   jit.shadowFloor (number in [0, 1]; default unset: the shadowEvery schedule): on every compiled ok, a seeded draw
+//     u = shadowDrawOf(jit.shadowSeed, idx) shadows the row iff u < shadowFloor; it replaces the periodic schedule, so
+//     jit.shadowEvery with it is refused. Flag-triggered shadows (shadowOnFlags) still fire. jit.shadowSeed (default
+//     config.seed, else config.experiment) is written into the normalized config, so the draws are part of the arm hash.
+//     Rows: shadowPropensity on every compiled ok row (1 flagged, shadowFloor under the floor, null under shadowEvery),
+//     shadowDraw (floor only) and shadowReason 'floor' | 'flag' | 'floor+flag'. For stats.mjs's IPW estimator a compiled
+//     row is {verified: it had a shadow, propensity: shadowPropensity, wrong: the shadow disagreed and the adjudicator
+//     sided against the compiled answer (delivered 'adjudicated')}. The export copies rows verbatim.
 
 const sha = s => createHash('sha256').update(s).digest('hex');
+// The shadow-floor draw for task idx: u in [0, 1) from sha256(`${seed}:${idx}:shadow`) (52 bits), so a resume or a replay
+// of the same stream draws the same u, whatever ran before; every JIT arm of a stream shares the draw for a task.
+export const shadowDrawOf = (seed, idx) => parseInt(sha(`${seed}:${idx}:shadow`).slice(0, 13), 16) / 2 ** 52;
 const readJsonl = f => (existsSync(f) ? readFileSync(f, 'utf8').split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean) : []);
 const round = x => Math.round(x * 1e6) / 1e6;
 const uniq = xs => [...new Set(xs)];
@@ -109,11 +131,28 @@ function normalizePersist(p, experiment) {
   return { commitDir, maxBodyBytes };
 }
 
+// armSpendStopUsd (opt-in, not hashed): {<arm spec>: dollars}; an arm stops starting tasks once its own recorded spend
+// exceeds its cap, as spendStopUsd stops every arm of the process. Unset: no per-arm cap.
+function armCapsOf(raw) {
+  const caps = raw.armSpendStopUsd;
+  if (caps == null) return null;
+  if (typeof caps !== 'object' || Array.isArray(caps)) throw new Error('config.armSpendStopUsd must be an object {<arm spec>: dollars}');
+  for (const [spec, usd] of Object.entries(caps)) {
+    if (!raw.arms.includes(spec)) throw new Error(`config.armSpendStopUsd: ${spec} is not one of config.arms`);
+    if (typeof usd !== 'number' || !Number.isFinite(usd) || usd <= 0) throw new Error(`config.armSpendStopUsd.${spec} must be a positive number of dollars`);
+  }
+  return { ...caps };
+}
+
 export function normalizeConfig(raw, { ledger = null } = {}) {
   for (const k of ['experiment', 'familyId', 'split']) if (typeof raw?.[k] !== 'string' || !raw[k]) throw new Error(`config.${k} is required`);
   if (!/^[\w.-]+$/.test(raw.experiment)) throw new Error('config.experiment must match [\\w.-]+');
   if (!Array.isArray(raw.segments) || !raw.segments.length) throw new Error('config.segments must be a non-empty list');
   if (!Array.isArray(raw.arms) || !raw.arms.length) throw new Error('config.arms must be a non-empty list');
+  // A config parked on an open decision (e.g. a tolerance still to be measured) says so in _blocked and never runs.
+  if (raw._blocked != null) throw new Error(`config ${raw.experiment} is blocked: ${raw._blocked}`);
+  // compare.mjs tolerance() reads a null tolerance as its default; here an explicit null is an unset placeholder, refused.
+  for (const part of ['jit', 'compile']) for (const k of TOL_KEYS) if (raw[part] && k in raw[part] && raw[part][k] === null) throw new Error(`config.${part}.${k} is null: set a value (a null tolerance is a placeholder, not the default)`);
   const segments = raw.segments.map(s => ({ difficulty: Number(s.difficulty ?? 3), seeds: seedList(s.seeds) }));
   // SPEC §6.4: held-out streams use fresh test seeds >= 7001 (5001-5006 and 6001-6004 are burned).
   if (raw.split === 'test' && segments.some(s => s.seeds.some(x => x < 7001))) throw new Error('test-split streams must use fresh seeds >= 7001');
@@ -126,6 +165,15 @@ export function normalizeConfig(raw, { ledger = null } = {}) {
   const jit = { ...DEFAULT_JIT, ...(raw.jit ?? {}) };
   if (jit.shadowEvery != null && jit.shadowEvery !== false && !(Number.isInteger(jit.shadowEvery) && jit.shadowEvery >= 0)) throw new Error('config.jit.shadowEvery must be an integer >= 0 (0: no scheduled shadows)');
   if (jit.shadowOnFlags != null && typeof jit.shadowOnFlags !== 'boolean') throw new Error('config.jit.shadowOnFlags must be true or false');
+  // Shadow floor (opt-in; PREREG-stream §2): a seeded Bernoulli(shadowFloor) draw per compiled ok replaces the schedule.
+  if (jit.shadowFloor != null) {
+    if (typeof jit.shadowFloor !== 'number' || !Number.isFinite(jit.shadowFloor) || jit.shadowFloor < 0 || jit.shadowFloor > 1) throw new Error('config.jit.shadowFloor must be a number in [0, 1]');
+    if (raw.jit?.shadowEvery != null) throw new Error('config.jit.shadowEvery and jit.shadowFloor together: the floor replaces the periodic schedule; leave shadowEvery out');
+    delete jit.shadowEvery;
+    if (jit.shadowSeed != null && typeof jit.shadowSeed !== 'string' && !Number.isInteger(jit.shadowSeed)) throw new Error('config.jit.shadowSeed must be a string or an integer');
+    jit.shadowSeed = String(jit.shadowSeed ?? raw.seed ?? raw.experiment);
+  } else if (jit.shadowSeed != null) throw new Error('config.jit.shadowSeed needs jit.shadowFloor');
+  else delete jit.shadowFloor;
   if (!jit.shadowOnFlags) delete jit.shadowOnFlags;
   // v2.2 (DEV-NOTES D9, opt-in): a recompile must keep every refusal it cannot handle; see doCompile and acceptance.mjs applyRefusals.
   if (jit.preserveRefusals != null && typeof jit.preserveRefusals !== 'boolean') throw new Error('config.jit.preserveRefusals must be true or false');
@@ -133,6 +181,9 @@ export function normalizeConfig(raw, { ledger = null } = {}) {
   // S0-6 (opt-in): adopt only versions the acceptance check accepted.
   if (jit.adoptRequiresAcceptance != null && typeof jit.adoptRequiresAcceptance !== 'boolean') throw new Error('config.jit.adoptRequiresAcceptance must be true or false');
   if (!jit.adoptRequiresAcceptance) delete jit.adoptRequiresAcceptance;
+  // Integration (opt-in): answer gateway model calls from an exported journal first ($0 replays; run-compiled.mjs createMemoPort).
+  if (jit.replayJournal != null && (typeof jit.replayJournal !== 'string' || !jit.replayJournal.trim())) throw new Error('config.jit.replayJournal must be the path of an exported journal.jsonl');
+  if (jit.replayJournal == null) delete jit.replayJournal;
   if (jit.compare != null && !JIT_COMPARE_MODES.includes(jit.compare)) throw new Error(`config.jit.compare must be one of ${JIT_COMPARE_MODES.join(', ')}`);
   if (jit.compare === 'tolerant') { delete jit.allowLooseTolerance; Object.assign(jit, tolerance(raw.jit)); }
   else if (TOL_KEYS.some(k => jit[k] != null)) throw new Error('config.jit.relTol, absTol, tolerantKeys and allowLooseTolerance need jit.compare \'tolerant\'');
@@ -140,7 +191,7 @@ export function normalizeConfig(raw, { ledger = null } = {}) {
   const compile = { ...DEFAULT_COMPILE, ...(raw.compile ?? {}), fallback: { ...DEFAULT_COMPILE.fallback, ...(raw.compile?.fallback ?? {}) } };
   if (compile.promptVersion != null) compile.promptVersion = promptVersionOf(compile);
   if (raw.compile?.fallback && 'promptVersion' in raw.compile.fallback) throw new Error('config.compile.fallback.promptVersion is not supported: compile.promptVersion applies to the fallback compiler too');
-  for (const k of ['compare', ...TOL_KEYS, 'acceptance', 'minPartial']) if (raw.compile?.fallback && k in raw.compile.fallback) throw new Error(`config.compile.fallback.${k} is not supported: compile.${k} applies to the fallback compiler too`);
+  for (const k of ['compare', ...TOL_KEYS, 'acceptance', 'minPartial', 'acceptanceIds', 'allowSharedExplanation']) if (raw.compile?.fallback && k in raw.compile.fallback) throw new Error(`config.compile.fallback.${k} is not supported: compile.${k} applies to the fallback compiler too`);
   if (compile.promptVersion == null || compile.promptVersion === 1) delete compile.promptVersion;
   // A tolerant stream stores shadow answers (fitted numbers) as regression cases, which a canonical host check would then
   // require digit for digit: so a tolerant jit.compare makes the host check tolerant too, and refuses an explicit canonical.
@@ -158,12 +209,20 @@ export function normalizeConfig(raw, { ledger = null } = {}) {
   if (compile.acceptance === 'strict') compile.minPartial = minPartialOf(compile.minPartial);
   else if (compile.minPartial != null) throw new Error('config.compile.minPartial needs compile.acceptance \'strict\'');
   else { delete compile.acceptance; delete compile.minPartial; }
+  // S0-6 (opt-in): how BUILD-NOTES.md names cases ('exact' default | 'lenient' | 'structured': verdicts.json), and the
+  // shared-text exception (strict acceptance only). Dropped at their defaults, so no hash moves.
+  compile.acceptanceIds = acceptanceIdsOf(compile.acceptanceIds);
+  if (compile.acceptanceIds === 'exact') delete compile.acceptanceIds;
+  if (compile.allowSharedExplanation != null && typeof compile.allowSharedExplanation !== 'boolean') throw new Error('config.compile.allowSharedExplanation must be true or false');
+  if (compile.allowSharedExplanation && compile.acceptance !== 'strict') throw new Error('config.compile.allowSharedExplanation needs compile.acceptance \'strict\'');
+  if (!compile.allowSharedExplanation) delete compile.allowSharedExplanation;
+  const armSpendStopUsd = armCapsOf(raw);
   return {
     ...raw, segments, jit, compile,
     perTaskUsd: raw.perTaskUsd ?? 1, agentBudgetUsd: raw.agentBudgetUsd ?? 1, agentMinutes: raw.agentMinutes ?? 15, agentEffort: raw.agentEffort ?? null,
     compiledMinutes: raw.compiledMinutes ?? 20, concurrency: raw.concurrency ?? 3, staticFallback: raw.staticFallback ?? STATIC_FALLBACK,
     gatewayModels: raw.gatewayModels ?? [...POLICY_MODELS], spendStopUsd: raw.spendStopUsd ?? null,
-    ...(persist ? { persist } : {}),
+    ...(persist ? { persist } : {}), ...(armSpendStopUsd ? { armSpendStopUsd } : {}),
   };
 }
 
@@ -245,7 +304,7 @@ const compactCheck = ct => (ct ? { exact: ct.exact ?? null, exactRate: ct.exactR
   regressions: ct.regressions ?? null, regressionsPassed: ct.regressionsPassed ?? null, clean: ct.clean ?? null, unexplained: ct.unexplained ?? null,
   accepted: ct.accepted ?? null, error: ct.error ?? null, recheck: ct.recheck ?? null,
   ...(ct.compare ? { compare: ct.compare, canonicalExact: ct.canonicalExact ?? null } : {}), ...(ct.acceptance ? { acceptance: ct.acceptance } : {}),
-  ...(ct.refusalCheck ? { refusalCheck: ct.refusalCheck } : {}),
+  ...(ct.refusalCheck ? { refusalCheck: ct.refusalCheck } : {}), ...(ct.ids ? { ids: ct.ids } : {}),
   perCase: perCaseList(ct).map(e => ({ id: e.id ?? null, ref: caseId(e), kind: e.kind ?? null, status: e.status ?? null, exact: caseExact(e) === 1, partial: e.partial ?? null })) } : null);
 const caseExact = e => (typeof e?.exact === 'boolean' ? (e.exact ? 1 : 0) : typeof e?.exact === 'number' ? (e.exact >= 1 ? 1 : 0) : e?.status === 'exact' ? 1 : 0);
 const perCaseList = ct => (Array.isArray(ct?.perCase) ? ct.perCase : ct?.perCase && typeof ct.perCase === 'object' ? Object.entries(ct.perCase).map(([id, v]) => ({ id, ...(typeof v === 'object' ? v : { exact: v }) })) : []);
@@ -280,11 +339,16 @@ export const worseOnOld = (newCt, oldCt) => rejectReason(newCt, oldCt) != null;
 // checkTraces from a hostCheck() result, by compile.mjs's rule (acceptance.mjs): by default accepted = clean and every diff
 // case named in BUILD-NOTES.md; opts.acceptance 'strict' (with opts.minPartial, opts.traces and opts.regressions, the case
 // inputs) applies the strict rule; opts.compare (the comparison object) is recorded as compile.mjs records it.
-export function checkFromSummary(check, workdir, regressions = 0, opts = {}) {
+// S0-6, as compile.mjs: opts.ids ('lenient' | 'structured'; for 'structured' the verdicts.json beside BUILD-NOTES.md is
+// read) and opts.allowSharedExplanation (strict only). Unset, the verdict is what it was.
+export async function checkFromSummary(check, workdir, regressions = 0, opts = {}) {
   const { summary: s, refusalCheck } = applyRefusals(check?.summary ?? null, opts.refusals ?? []);
   const notesFile = workdir ? path.join(workdir, 'BUILD-NOTES.md') : null;
   const notes = notesFile && existsSync(notesFile) ? readFileSync(notesFile, 'utf8') : null;
-  const judged = judgeAcceptance({ summary: s, notes, mode: opts.acceptance ?? 'named', minPartial: opts.minPartial, tasks: caseTasks(opts.traces ?? [], opts.regressions ?? []) });
+  const ids = acceptanceIdsOf(opts.ids);
+  const verdicts = ids === 'structured' && workdir ? await readVerdicts(workdir) : undefined;
+  const judged = judgeAcceptance({ summary: s, notes, mode: opts.acceptance ?? 'named', minPartial: opts.minPartial, tasks: caseTasks(opts.traces ?? [], opts.regressions ?? []),
+    ...(ids !== 'exact' ? { ids } : {}), ...(opts.allowSharedExplanation ? { allowSharedExplanation: true } : {}), ...(verdicts !== undefined ? { verdicts } : {}) });
   const verdict = refusalCheck ? { ...judged, accepted: judged.accepted && refusalCheck.ok } : judged;
   const unexplained = verdict.unexplained;
   return {
@@ -294,7 +358,7 @@ export function checkFromSummary(check, workdir, regressions = 0, opts = {}) {
     accepted: verdict.accepted, costUsd: check?.costUsd ?? 0, calls: check?.calls ?? 0, unknownCalls: check?.unknownCalls ?? 0, refusals: check?.refusals ?? {},
     durationMs: check?.durationMs ?? null, error: check?.error ?? null,
     ...(opts.compare ? { compare: opts.compare, canonicalExact: s?.canonicalExact ?? null } : {}), ...(verdict.acceptance ? { acceptance: verdict.acceptance } : {}),
-    ...(refusalCheck ? { refusalCheck } : {}),
+    ...(refusalCheck ? { refusalCheck } : {}), ...(verdict.ids ? { ids: verdict.ids } : {}),
   };
 }
 
@@ -332,6 +396,11 @@ const copyTree = (src, dst, changed, tag) => { for (const f of listFiles(src)) i
 // Every model-call row of a journal.sqlite as JSON lines: ids, keys, model, tokens, cost, latency, and the request and
 // response as {sha256, bytes, body} (sha256 of the stored canonical JSON text), or {sha256, bytes, path} with the body
 // in bodies/<sha256>.json when it is larger than maxBodyBytes.
+// Replay keys (run-compiled.mjs createMemoPort): requestDigest = requestDigestOf({modelId, system, prompt, schema, decoding})
+// with the decoding the caller requested, when the row's request records it (request.decoding); a ModelPort row today
+// keeps only the provider's effective decoding (maxTokens erased), so otherwise the row carries requestDigestLoose
+// (looseDigestOf: model, prompt, schema and reasoning level) instead, which the memo port serves by its loose key, also
+// when the request body itself stays in bodies/. Rows without request text (a replayed call) carry neither.
 export function journalToJsonl(file, { maxBodyBytes = DEFAULT_MAX_BODY_BYTES, bodies = new Map() } = {}) {
   if (!existsSync(file)) return null;
   const db = new DatabaseSync(file);
@@ -348,12 +417,22 @@ export function journalToJsonl(file, { maxBodyBytes = DEFAULT_MAX_BODY_BYTES, bo
     bodies.set(digest, text);
     return { sha256: digest, bytes, path: `bodies/${digest}.json` };
   };
+  const keys = r => {
+    let req;
+    try { req = r.request == null ? null : JSON.parse(r.request); } catch { req = null; }
+    if (!req || typeof req.prompt !== 'string') return {};
+    const q = { modelId: r.model_id, system: req.system ?? '', prompt: req.prompt, schema: req.schema };
+    // null fields are unset (a normalized decoding), as tools/model.mjs omits them.
+    if (req.decoding && typeof req.decoding === 'object') return { requestDigest: requestDigestOf({ ...q, decoding: Object.fromEntries(Object.entries(req.decoding).filter(([, v]) => v != null)) }) };
+    const effective = r.decoding == null ? null : JSON.parse(r.decoding);
+    return { requestDigestLoose: looseDigestOf({ ...q, reasoning: effective?.reasoning }) };
+  };
   return rows.map(r => JSON.stringify({
     id: r.id, replayKey: r.replay_key, runId: r.run_id, nodeKey: r.node_key, attempt: r.attempt, sampleIndex: r.sample_index, modelId: r.model_id, provider: r.provider,
     engineVersion: r.engine_version, decoding: r.decoding == null ? null : JSON.parse(r.decoding), receiptHash: r.receipt_hash, promptHash: r.prompt_hash,
     ok: r.ok === 1, errorCode: r.error_code, inputTokens: r.input_tokens, outputTokens: r.output_tokens, cacheReadTokens: r.cache_read_tokens ?? null,
     cacheWriteTokens: r.cache_write_tokens ?? null, costUsd: r.cost_usd, imputedUsd: r.imputed_usd, latencyMs: r.latency_ms, createdAt: r.created_at,
-    request: body(r.request), response: body(r.response),
+    request: body(r.request), response: body(r.response), ...keys(r),
   }) + '\n').join('');
 }
 
@@ -525,6 +604,8 @@ class ArmRun {
       if (e.kind === 'spend' && !billed.has(e.id)) { if (!this.unbilled.has(e.idx)) this.unbilled.set(e.idx, []); this.unbilled.get(e.idx).push(e); }
       if (e.kind === 'compile-attempt' && e.key) this.compileDone.set(e.key, e);
     }
+    // This arm's own recorded spend (rows and unbilled attempts), for config.armSpendStopUsd.
+    this.spent = [...this.rows.values()].reduce((s, r) => s + (r.costUsd ?? 0), 0) + [...this.unbilled.values()].flat().reduce((s, e) => s + e.costUsd, 0);
     // Last: a refused resume above takes no lock. Then this arm's definition, beside its rows (a per-arm file).
     this.unlock = lockArm(this.p.dir);
     writeFileSync(path.join(this.p.dir, 'arm.json'), JSON.stringify({ experiment: config.experiment, spec: arm.spec, slug: arm.slug, kind: arm.kind, hash: arm.hash, def: arm.def }, null, 1));
@@ -551,6 +632,8 @@ class ArmRun {
 
   begin(t) {
     if (this.config.spendStopUsd != null && this.budget.spent > this.config.spendStopUsd) throw new SpendStop(`spend stop: $${this.budget.spent.toFixed(2)} > $${this.config.spendStopUsd}`);
+    const cap = this.config.armSpendStopUsd?.[this.arm.spec];
+    if (cap != null && this.spent > cap) throw new SpendStop(`arm spend stop: ${this.arm.spec} $${this.spent.toFixed(2)} > $${cap}`);
     const run = this;
     this.host.exit(this.hostKey(t.idx));   // a leftover of an attempt that threw before its row
     this.host.enter(this.hostKey(t.idx));
@@ -561,7 +644,7 @@ class ArmRun {
         const id = `${t.idx}-${component}-${randomUUID().slice(0, 8)}`, costUsd = round(Number(usd) || 0);
         run.event(t.idx, 'spend', { id, component, costUsd, costUnknown: !!unknown });
         this.breakdown[component] = round((this.breakdown[component] ?? 0) + costUsd); this.spendIds.push(id); this.costUnknown ||= !!unknown;
-        run.budget.spent += costUsd;
+        run.budget.spent += costUsd; run.spent += costUsd;
       },
     };
   }
@@ -633,7 +716,7 @@ class ArmRun {
         ...(this.flowPath ? { flowPath: this.flowPath } : {}) });
       tr.spend('compiled', rc.costUsd ?? 0, rc.costUnknown);
       tr.ev('compiled', { version, status: rc.status, deoptKind: rc.deopt?.kind ?? null, costUsd: rc.costUsd ?? 0, attempt, error: rc.error?.code ?? null,
-        ...(rc.flags?.count ? { flags: rc.flags.count } : {}) });
+        ...(rc.flags?.count ? { flags: rc.flags.count } : {}), ...(rc.meta?.memo ? { memo: { requests: rc.meta.memo.requests, hits: rc.meta.memo.hits, reused: rc.meta.memo.reused, live: rc.meta.memo.live } } : {}) });
       return rc;
     }, rc => rc?.status !== 'ok' && metEnvFault(rc));
   }
@@ -665,7 +748,8 @@ class JitRun extends ArmRun {
   // v2.1 compile options, only when set (a default arm passes exactly what it passed before).
   get compileOpts() {
     const c = this.config.compile;
-    return { ...(c.compare ? { compare: c.compare, ...tolOf(c) } : {}), ...(c.acceptance ? { acceptance: c.acceptance, minPartial: c.minPartial } : {}) };
+    return { ...(c.compare ? { compare: c.compare, ...tolOf(c) } : {}), ...(c.acceptance ? { acceptance: c.acceptance, minPartial: c.minPartial } : {}),
+      ...(c.acceptanceIds ? { acceptanceIds: c.acceptanceIds } : {}), ...(c.allowSharedExplanation ? { allowSharedExplanation: true } : {}) };
   }
   get compareOf() { const c = this.config.compile; return c.compare === 'tolerant' ? { mode: 'tolerant', ...tolOf(c) } : null; }
 
@@ -710,13 +794,16 @@ class JitRun extends ArmRun {
         ...(this.compareOf ? { compare: this.compareOf } : {}) });
       recheckUsd = rc.costUsd ?? 0;
       tr.spend('compileCheck', recheckUsd, (rc.unknownCalls ?? 0) > 0);
-      const how = this.config.compile.acceptance || this.compareOf || inputs.refusals?.length ? { acceptance: this.config.compile.acceptance, minPartial: this.config.compile.minPartial, compare: this.compareOf,
-        traces: inputs.traces, regressions: inputs.regressions, ...(inputs.refusals?.length ? { refusals: inputs.refusals } : {}) } : {};
-      rec.checkTraces = { ...checkFromSummary(rc, res.workdir, inputs.regressions.length, how), recheck: { capUsd, firstCheck: compactCheck(rec.checkTraces) } };
+      const C = this.config.compile;
+      const how = C.acceptance || this.compareOf || inputs.refusals?.length || C.acceptanceIds || C.allowSharedExplanation ? { acceptance: C.acceptance, minPartial: C.minPartial, compare: this.compareOf,
+        traces: inputs.traces, regressions: inputs.regressions, ...(inputs.refusals?.length ? { refusals: inputs.refusals } : {}),
+        ...(C.acceptanceIds ? { ids: C.acceptanceIds } : {}), ...(C.allowSharedExplanation ? { allowSharedExplanation: true } : {}) } : {};
+      rec.checkTraces = { ...(await checkFromSummary(rc, res.workdir, inputs.regressions.length, how)), recheck: { capUsd, firstCheck: compactCheck(rec.checkTraces) } };
     }
     mkdirSync(vdir, { recursive: true });
     if (hasSolve) copyFileSync(res.solvePath, path.join(vdir, 'solve.mjs'));
     if (res.workdir && existsSync(path.join(res.workdir, 'BUILD-NOTES.md'))) copyFileSync(path.join(res.workdir, 'BUILD-NOTES.md'), path.join(vdir, 'BUILD-NOTES.md'));
+    if (res.workdir && existsSync(path.join(res.workdir, VERDICTS_FILE))) copyFileSync(path.join(res.workdir, VERDICTS_FILE), path.join(vdir, VERDICTS_FILE));   // S0-6 'structured'
     writeFileSync(path.join(vdir, 'compile.json'), JSON.stringify({ ...rec, inputs: { traceIds: inputs.traces.map(x => x.traceId), regressionIds: inputs.regressions.map(x => x.regressionId), previousSha: inputs.previous ? sha(inputs.previous) : null } }, null, 1));
     const result = { version: n, builderModel, hasSolve, solveSha: hasSolve ? sha(readFileSync(path.join(vdir, 'solve.mjs'))) : null, checkTraces: compactCheck(rec.checkTraces),
       nestedModelAttempts: rec.nestedModelAttempts ?? 0, hiddenPathAttempts: rec.hiddenPathAttempts ?? 0,
@@ -766,7 +853,7 @@ class JitRun extends ArmRun {
     // S0-6: the adoption decision and the acceptance verdict, logged whatever the rule (jit.adoptRequiresAcceptance).
     const rule = this.config.jit.adoptRequiresAcceptance ? 'requires-acceptance' : 'any-usable';
     const adoption = (adopted, extra = {}) => tr.ev('adoption', { version: n, builderModel: best.builderModel, adopted, accepted: ok(best), rule, keep: adopted ? null : state.version?.n ?? null,
-      clean: !!best.checkTraces?.clean, exactRate: exactOf(best.checkTraces), ...extra });
+      clean: !!best.checkTraces?.clean, exactRate: exactOf(best.checkTraces), ...(this.config.compile.acceptanceIds ? { acceptanceIds: this.config.compile.acceptanceIds } : {}), ...extra });
     if (why) {
       adoption(false, { reason: 'rejected' });
       tr.ev('rejected', { version: n, keep: state.version?.n ?? null, why, ...(state.version ? exactOnOld(best.checkTraces, state.version.checkTraces) : {}), newExactRate: exactOf(best.checkTraces),
@@ -824,10 +911,17 @@ class JitRun extends ArmRun {
     const extra = {};
     const flags = rc.flags?.count ?? 0;
     if (flags > 0) extra.flags = { count: flags, names: rc.flags.names ?? [] };
-    // Scheduled shadows (every shadowEvery-th compiled ok) and, opt-in, flag-triggered ones (the run raised flags).
-    const scheduled = !!(J.shadowEvery && state.compiledOks % J.shadowEvery === 0), flagged = !!(J.shadowOnFlags && flags > 0);
+    // Scheduled shadows (every shadowEvery-th compiled ok, or with jit.shadowFloor a seeded draw u < shadowFloor) and,
+    // opt-in, flag-triggered ones (the run raised flags). Every compiled ok row records shadowPropensity, the probability
+    // it was shadowed: 1 when flagged (a forced verification), shadowFloor under the floor, null under a periodic schedule
+    // (not a sample with a known propensity); with the floor, also shadowDraw (u, 6 dp).
+    const floor = J.shadowFloor != null, u = floor ? shadowDrawOf(J.shadowSeed, t.idx) : null;
+    const scheduled = floor ? u < J.shadowFloor : !!(J.shadowEvery && state.compiledOks % J.shadowEvery === 0), flagged = !!(J.shadowOnFlags && flags > 0);
+    extra.shadowPropensity = flagged ? 1 : floor ? J.shadowFloor : null;
+    if (floor) extra.shadowDraw = round(u);
     if (scheduled || flagged) {
-      const reason = J.shadowOnFlags ? (scheduled && flagged ? 'schedule+flag' : scheduled ? 'schedule' : 'flag') : null;
+      const reason = floor ? (scheduled && flagged ? 'floor+flag' : scheduled ? 'floor' : 'flag')
+        : J.shadowOnFlags ? (scheduled && flagged ? 'schedule+flag' : scheduled ? 'schedule' : 'flag') : null;
       // Tolerant arms: did the tolerant agreement with the compiled answer also hold under canonical JSON? (a diagnostic)
       const canon = ans => (J.compare === 'tolerant' ? { canonicalAgree: sameAnswer(ans, rc.output) } : {});
       const why = reason ? { reason } : {};
@@ -889,7 +983,8 @@ export async function runStream({ config: rawConfig, arms: filters = null, runRo
     const plan = { experiment: config.experiment, runDir, workRoot: path.join(workRoot, config.experiment), familyId: config.familyId, split: config.split,
       tasks: tasks.map(t => `#${t.idx} ${t.taskKey} ${t.taskHash?.slice(0, 12)}`),
       arms: arms.map(a => ({ spec: a.spec, slug: a.slug, hash: a.hash, models: a.models, done: readJsonl(armPaths(runDir, a.slug).results).filter(r => r.experiment === config.experiment).length })),
-      caps: { perTaskUsd: config.perTaskUsd, agentBudgetUsd: config.agentBudgetUsd, agentMinutes: config.agentMinutes, compile: config.compile, jit: config.jit, spendStopUsd: config.spendStopUsd },
+      caps: { perTaskUsd: config.perTaskUsd, agentBudgetUsd: config.agentBudgetUsd, agentMinutes: config.agentMinutes, compile: config.compile, jit: config.jit, spendStopUsd: config.spendStopUsd,
+        ...(config.armSpendStopUsd ? { armSpendStopUsd: config.armSpendStopUsd } : {}) },
       worstCaseUsd: Object.fromEntries(arms.map(a => [a.spec, worstCase(a, config, tasks.length)])) };
     log(JSON.stringify(plan, null, 1));
     return { runDir, plan, arms: [], rows: [] };
@@ -906,7 +1001,7 @@ export async function runStream({ config: rawConfig, arms: filters = null, runRo
       const run = new R({ arm, config, runDir, workRoot, deps, log, budget, binary, host });
       runs.push(run);
       run.outputSchema = outputSchema;
-      budget.spent += [...run.rows.values()].reduce((s, r) => s + (r.costUsd ?? 0), 0) + [...run.unbilled.values()].flat().reduce((s, e) => s + e.costUsd, 0);
+      budget.spent += run.spent;
     }
     return await driveArms({ runs, tasks, config, deps, log, runDir });
   } finally { for (const run of runs) run.unlock?.(); }
@@ -917,6 +1012,8 @@ async function driveArms({ runs, tasks, config, deps, log, runDir }) {
     for (const [idx, r] of run.rows) if (tasks[idx] && r.taskHash !== tasks[idx].taskHash) throw new Error(`${run.arm.slug}: recorded task #${idx} (${r.taskKey}) differs from the config's: use a new experiment name`);
     // One journal per arm directory (SQLite contention between arm processes); agent arms need no gateway.
     if (run.arm.kind !== 'agent') run.port = deps.createModelPort({ journalFile: run.p.journal, allowedModels: run.arm.models, concurrency: { 'claude-cli': 16 } }).port;
+    // jit.replayJournal (opt-in): JIT arms answer gateway calls from that exported journal first, live only on a miss.
+    if (run.arm.kind === 'jit' && config.jit.replayJournal) run.port = await replayPort(config.jit.replayJournal, run.arm.slug, run.port, deps);
   }
   const status = new Map(runs.map(r => [r.arm.slug, { spec: r.arm.spec, slug: r.arm.slug, done: 0, faults: 0, errors: [] }]));
   const note = (run, error) => {
@@ -953,6 +1050,17 @@ async function driveArms({ runs, tasks, config, deps, log, runDir }) {
   // S0-1: a last export of every arm (faults and harness errors leave no row), and its failures as arm errors.
   for (const run of runs) { run.exportNow(); status.get(run.arm.slug).errors.push(...run.exportErrors); }
   return { runDir, arms: [...status.values()], rows: runs.flatMap(r => [...r.rows.values()]) };
+}
+
+// jit.replayJournal: a journal.jsonl as the S0-1 export writes it (journalToJsonl; '{slug}' is replaced by the arm slug,
+// a relative path is taken from the repository), served by run-compiled.mjs createMemoPort with the arm's live port for
+// misses. Memo hits cost $0; misses are live calls and are journaled as usual. The builder sessions are not replayed.
+export function replayJournalPath(template, slug) { return path.resolve(REPO, template.replaceAll('{slug}', slug)); }
+async function replayPort(template, slug, live, deps) {
+  const file = replayJournalPath(template, slug);
+  if (!existsSync(file)) throw new Error(`jit.replayJournal: ${file} does not exist`);
+  const create = deps.createMemoPort ?? (await import('./run-compiled.mjs')).createMemoPort;
+  return create({ journal: file, live });
 }
 
 // Worst-case dollars per arm at the configured caps (planning only; real spend is measured).

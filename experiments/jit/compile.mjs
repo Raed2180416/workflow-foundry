@@ -14,7 +14,7 @@ import { runSandboxed } from '../../src/executors/sandboxed-command.mjs';
 import { loadFamily } from '../lib/beds.mjs';
 import { startServices, Ledger } from '../lib/services.mjs';
 import { MODEL_TOOL, BUDGET_TOOL, taskFiles } from '../c0/construct.mjs';
-import { builderPrompt, promptVersionOf, flowFileOf } from './prompts.mjs';
+import { builderPrompt, promptVersionOf, flowFileOf, verdictsPromptVersionOf } from './prompts.mjs';
 import { tolerance } from './compare.mjs';
 import { judgeAcceptance, acceptanceModeOf, minPartialOf, caseTasks, applyRefusals, acceptanceIdsOf, readVerdicts } from './acceptance.mjs';
 
@@ -197,7 +197,8 @@ export async function compile({ familyId, traces, previous = null, regressions =
   const files = compileFiles({ outputSchema: fam.outputSchema, traces, regressions, previous, gateway: { url: svc.url, token: svc.token }, promptVersion, compare: cmp });
   const kind = previous ? 'recompile' : 'compile';
   const prompt = builderPrompt(kind, { traces: traces.length, regressions: regressions.length, minutes, gatewayUsd, perTaskUsd, models, promptVersion, ...(refusals.length ? { refusals } : {}),
-    ...(cmp ? { compare: cmp.mode, relTol: cmp.relTol, absTol: cmp.absTol, ...(cmp.tolerantKeys ? { tolerantKeys: cmp.tolerantKeys } : {}) } : {}), ...(acceptance === 'strict' ? { acceptance, minPartial } : {}) });
+    ...(cmp ? { compare: cmp.mode, relTol: cmp.relTol, absTol: cmp.absTol, ...(cmp.tolerantKeys ? { tolerantKeys: cmp.tolerantKeys } : {}) } : {}), ...(acceptance === 'strict' ? { acceptance, minPartial } : {}),
+    ...(acceptanceIds === 'structured' ? { acceptanceIds } : {}) });
   const started = Date.now();
   let r;
   try {
@@ -244,6 +245,7 @@ export async function compile({ familyId, traces, previous = null, regressions =
     builderModel, builderEffort, policyHash: modelPort.policyHash ?? null, models, runId: svc.runId, flowSha256: sha(flowToolOf(promptVersion)), checkToolSha256: sha(CHECK_TOOL),
     promptVersion, ...(cmp ? { compare: cmp, compareToolSha256: sha(COMPARE_TOOL) } : {}), ...(acceptance === 'strict' ? { acceptance: { mode: acceptance, minPartial } } : {}),
     ...(acceptanceIds !== 'exact' ? { acceptanceIds } : {}), ...(allowSharedExplanation ? { allowSharedExplanation: true } : {}),
+    ...(verdictsPromptVersionOf({ acceptanceIds }) ? { verdictsPromptVersion: verdictsPromptVersionOf({ acceptanceIds }) } : {}),
     promptSha256: sha(prompt), artifact: solveSource == null ? null : 'solve.mjs', artifactSha256,
     builderCostUsd, builderCostReportedUsd: r.costUsd ?? null, builderCostUnknown: !!r.costUnknown, builderCostUpperUsd: r.costUpperUsd ?? null, builderBudgetUsd,
     builderUsage: r.usage ?? null, builderStreamUsage: r.streamUsage ?? null, builderSessionId: r.sessionId ?? null,

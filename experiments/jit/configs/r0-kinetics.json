@@ -1,0 +1,97 @@
+{
+ "experiment": "jit-r0-kinetics",
+ "_blocked": "relTol TBD: row 2 Stage B",
+ "_note": "BLOCKER-SYNTHESIS row 9 (R0-K): kinetics dev run under the HANDOFF section 3 config, O/H first, on fresh kinetics dev seeds 225-248. No static kinetics solver exists, so there is no static arm. Set jit.relTol from row 2 Stage B and remove _blocked before running.",
+ "familyId": "kinetics",
+ "split": "dev",
+ "seedPurpose": "jit-r0",
+ "segments": [
+  {
+   "difficulty": 4,
+   "seeds": [
+    225,
+    226,
+    227,
+    228,
+    229,
+    230,
+    231,
+    232,
+    233,
+    234,
+    235,
+    236,
+    237,
+    238,
+    239,
+    240
+   ]
+  },
+  {
+   "difficulty": 5,
+   "seeds": [
+    241,
+    242,
+    243,
+    244,
+    245,
+    246,
+    247,
+    248
+   ]
+  }
+ ],
+ "arms": [
+  "jit:claude-opus-5-5/claude-haiku-5-5",
+  "agent:claude-haiku-5-5"
+ ],
+ "jit": {
+  "warmup": 3,
+  "shadowFloor": 0.25,
+  "shadowOnFlags": true,
+  "recompileOnDeopts": 2,
+  "maxTraces": 8,
+  "compilerFallback": "claude-opus-5-5",
+  "maxFallbacks": 2,
+  "compare": "tolerant",
+  "relTol": null,
+  "absTol": 1e-9,
+  "tolerantKeys": [
+   "vmax",
+   "km"
+  ],
+  "preserveRefusals": true
+ },
+ "compile": {
+  "builderEffort": "high",
+  "builderBudgetUsd": 3,
+  "gatewayUsd": 1.5,
+  "checkUsd": 1.5,
+  "minutes": 30,
+  "fallback": {
+   "builderEffort": "high",
+   "builderBudgetUsd": 8,
+   "gatewayUsd": 1.5,
+   "checkUsd": 1.5,
+   "minutes": 45
+  },
+  "acceptance": "strict",
+  "minPartial": 0.9,
+  "promptVersion": 4,
+  "acceptanceIds": "exact"
+ },
+ "perTaskUsd": 1,
+ "agentBudgetUsd": 2,
+ "agentMinutes": 15,
+ "compiledMinutes": 20,
+ "staticFallback": "claude-haiku-5-5",
+ "concurrency": 2,
+ "spendStopUsd": 30,
+ "armSpendStopUsd": {
+  "jit:claude-opus-5-5/claude-haiku-5-5": 25,
+  "agent:claude-haiku-5-5": 5
+ },
+ "persist": {
+  "commitDir": true
+ }
+}

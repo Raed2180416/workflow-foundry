@@ -50,11 +50,12 @@ function fakeDeps(plan, hooks = {}) {
       const callNo = calls.compile.length + 1;
       calls.compile.push({ builderModel: a.builderModel, label: a.label, traceIds: a.traces.map(t => t.traceId), regressionIds: a.regressions.map(r => r.regressionId),
         previous: a.previous, models: a.models, budget: a.builderBudgetUsd, minutes: a.minutes, regressionExpected: a.regressions.map(r => r.expected), promptVersion: a.promptVersion,
-        compare: a.compare, relTol: a.relTol, absTol: a.absTol, acceptance: a.acceptance, minPartial: a.minPartial });
+        compare: a.compare, relTol: a.relTol, absTol: a.absTol, acceptance: a.acceptance, minPartial: a.minPartial, acceptanceIds: a.acceptanceIds, allowSharedExplanation: a.allowSharedExplanation });
       hooks.compile?.(callNo);
       const workdir = path.join(a.workRoot, a.label); mkdirSync(workdir, { recursive: true });
       const solvePath = path.join(workdir, 'solve.mjs'); writeFileSync(solvePath, `// ${a.label}\n`);
       if (plan.notes) writeFileSync(path.join(workdir, 'BUILD-NOTES.md'), plan.notes(callNo, a));
+      for (const [f, text] of Object.entries(plan.files?.(callNo, a) ?? {})) writeFileSync(path.join(workdir, f), text);
       const checkTraces = plan.checks(callNo, a);
       return { record: { checkTraces, promptVersion: a.promptVersion ?? 1, builderCostUsd: 1, gatewayCostUsd: 0.5, checkCostUsd: 0.25, constructionCostUsd: 1.5, compileCostUsd: 1.75, nestedModelAttempts: 0,
         builderError: plan.builderError?.(callNo) ?? null }, workdir, solvePath };
@@ -943,5 +944,248 @@ test('S0-6 adoption rule: default adopts a usable version that was not accepted 
     const h = hashes({ ...raw, jit: { ...raw.jit, adoptRequiresAcceptance: true } });
     const jitArm = Object.keys(want).find(a => a.startsWith('jit:'));
     assert.notEqual(h[jitArm], want[jitArm]); assert.equal(h['agent:claude-haiku-5-5'], want['agent:claude-haiku-5-5']);
+  }
+});
+
+// ---------------------------------------------------------------------------------------------- step-0 integration
+import { looseDigestOf, requestDigestOf } from '../run-compiled.mjs';
+import { replayJournalPath, shadowDrawOf } from '../stream.mjs';
+const loadConfig = name => JSON.parse(readFileSync(new URL(`../configs/${name}.json`, import.meta.url), 'utf8'));
+const jitArmOf = want => Object.keys(want).find(a => a.startsWith('jit:'));
+
+test('S0-6 wiring: compile.acceptanceIds and allowSharedExplanation are validated, dropped at their defaults (no hash moves), set they define a new JIT arm and reach every compile', async t => {
+  const strict = { promptVersion: 4, acceptance: 'strict' };
+  assert.equal('acceptanceIds' in normalizeConfig({ ...CONFIG, compile: { acceptanceIds: 'exact' } }).compile, false);
+  assert.equal('allowSharedExplanation' in normalizeConfig({ ...CONFIG, compile: { ...strict, allowSharedExplanation: false } }).compile, false);
+  assert.equal(normalizeConfig({ ...CONFIG, compile: { acceptanceIds: 'lenient' } }).compile.acceptanceIds, 'lenient', 'named acceptance takes ids too');
+  assert.equal(normalizeConfig({ ...CONFIG, compile: { ...strict, allowSharedExplanation: true } }).compile.allowSharedExplanation, true);
+  assert.throws(() => normalizeConfig({ ...CONFIG, compile: { acceptanceIds: 'fuzzy' } }), /acceptanceIds must be one of exact, lenient, structured/);
+  assert.throws(() => normalizeConfig({ ...CONFIG, compile: { allowSharedExplanation: true } }), /allowSharedExplanation needs compile.acceptance 'strict'/);
+  assert.throws(() => normalizeConfig({ ...CONFIG, compile: { ...strict, allowSharedExplanation: 'yes' } }), /allowSharedExplanation must be true or false/);
+  for (const k of ['acceptanceIds', 'allowSharedExplanation']) assert.throws(() => normalizeConfig({ ...CONFIG, compile: { fallback: { [k]: 'x' } } }), new RegExp(`fallback.${k} is not supported`));
+  for (const [name, want] of Object.entries(V1_HASHES)) {
+    const raw = loadConfig(name), jitArm = jitArmOf(want);
+    assert.deepEqual(hashes({ ...raw, compile: { ...raw.compile, acceptanceIds: 'exact' } }), want, `${name}: explicit default ids move no hash`);
+    const seen = new Set([want[jitArm]]);
+    for (const compile of [{ acceptanceIds: 'lenient' }, { acceptanceIds: 'structured' }, { ...strict }, { ...strict, allowSharedExplanation: true }]) {
+      const h = hashes({ ...raw, compile: { ...raw.compile, ...compile } });
+      assert.ok(!seen.has(h[jitArm]), `${name} ${JSON.stringify(compile)}: a new JIT arm`); seen.add(h[jitArm]);
+      assert.equal(h['agent:claude-haiku-5-5'], want['agent:claude-haiku-5-5']);
+    }
+  }
+  // passed to every compile attempt (the Opus fallback too) only when set
+  const root = tmp(t), run = async (compile, experiment) => {
+    const { deps, calls } = fakeDeps({ compiled: () => ({ status: 'ok' }), checks: (n, a) => perCase(a, () => 'exact', { explained: n > 1 }) });
+    await runStream({ config: { ...CONFIG, experiment, segments: [{ difficulty: 3, seeds: [1, 2, 3] }], jit: { ...CONFIG.jit, shadowEvery: 0 }, compile }, deps,
+      runRoot: path.join(root, 'runs'), workRoot: path.join(root, 'work'), log: () => {} });
+    return calls.compile;
+  };
+  const set = await run({ ...strict, acceptanceIds: 'structured', allowSharedExplanation: true }, 'ids-set');
+  assert.ok(set.length >= 1 && set.every(c => c.acceptanceIds === 'structured' && c.allowSharedExplanation === true));
+  const unset = await run({ ...strict, acceptanceIds: 'exact' }, 'ids-unset');
+  assert.ok(unset.every(c => c.acceptanceIds === undefined && c.allowSharedExplanation === undefined), 'a default arm passes neither');
+});
+
+test('S0-6 wiring on the recheck: structured ids read verdicts.json, allowSharedExplanation admits shared quotes, verdicts.json is kept with the version, the adoption event names the ids', async t => {
+  const root = tmp(t);
+  // Two traces, both diffs; every task shares its prompt, so each verdict's quote is shared text.
+  const verdicts = JSON.stringify([{ case: 'trace-0', verdict: 'disagree', reason: 'The task says "Report the seed as v." and the agent did not.' },
+    { case: 'trace-1', verdict: 'disagree', reason: 'The task says "Seeds are positive integers." and the agent wrote zero.' }]);
+  const run = async (experiment, compile) => {
+    const plan = { compiled: () => ({ status: 'ok' }), checks: (n, a) => ({ ...perCase(a, () => 'deopt'), deoptKinds: { budget: 1 } }), notes: () => '# Notes\nNothing per case here.\n', files: () => ({ 'verdicts.json': verdicts }) };
+    const { deps, calls } = fakeDeps(plan);
+    const make = deps.makeTasks;
+    deps.makeTasks = async (...args) => (await make(...args)).map(x => ({ ...x, task: { ...x.task, prompt: 'Report the seed as v.\nSeeds are positive integers.' } }));
+    const rechecks = [];
+    deps.recheck = async a => { rechecks.push(a); return { summary: { exact: 0, exactRate: 0, partial: 0.95, clean: true, deoptKinds: {},
+      perCase: a.traces.map((x, i) => ({ id: `trace-${i}`, ref: x.traceId, kind: 'trace', status: 'diff', exact: false, partial: 0.95 })) }, costUsd: 0.1 }; };
+    const config = { ...CONFIG, experiment, segments: [{ difficulty: 3, seeds: [1, 2, 3] }], jit: { ...CONFIG.jit, warmup: 2, shadowEvery: 0, compilerFallback: null }, compile };
+    const res = await runStream({ config, deps, runRoot: path.join(root, 'runs'), workRoot: path.join(root, 'work'), log: () => {} });
+    assert.deepEqual(res.arms.map(a => a.errors), [[]]);
+    const vdir = path.join(root, `runs/${experiment}/${FLAG_SLUG}/versions/v1-haiku55`);
+    const events = readJsonl(armPaths(path.join(root, 'runs', experiment), FLAG_SLUG).events);
+    return { rechecks, calls, ct: JSON.parse(readFileSync(path.join(vdir, 'compile.json'), 'utf8')).checkTraces, vdir, adoption: events.find(e => e.kind === 'adoption') };
+  };
+  const strict = { promptVersion: 4, acceptance: 'strict' };
+  const shared = await run('ids-shared', { ...strict, acceptanceIds: 'structured', allowSharedExplanation: true });
+  assert.equal(shared.rechecks.length, 1);
+  assert.equal(shared.ct.accepted, true, JSON.stringify(shared.ct.acceptance));
+  assert.deepEqual(shared.ct.acceptance.ids, { mode: 'structured', source: 'verdicts', valid: true, verdicts: 2, malformed: 0 }, 'strict records the ids under acceptance');
+  assert.equal(shared.ct.acceptance.allowSharedExplanation, true);
+  assert.equal(readFileSync(path.join(shared.vdir, 'verdicts.json'), 'utf8'), verdicts, 'verdicts.json is kept beside BUILD-NOTES.md');
+  assert.deepEqual([shared.adoption.adopted, shared.adoption.accepted, shared.adoption.acceptanceIds], [true, true, 'structured']);
+  // Without the shared-text exception the same verdicts explain nothing (each quote is in every task).
+  const noShared = await run('ids-noshared', { ...strict, acceptanceIds: 'structured' });
+  assert.equal(noShared.ct.accepted, false); assert.deepEqual(noShared.ct.unexplained.sort(), ['trace-0', 'trace-1']);
+  assert.deepEqual([noShared.adoption.accepted, noShared.adoption.acceptanceIds], [false, 'structured']);
+  // Default ids: the prose rule (the notes name no case); no ids record, no acceptanceIds on the adoption event.
+  const plain = await run('ids-default', { ...strict });
+  assert.equal(plain.ct.accepted, false); assert.equal('ids' in plain.ct.acceptance, false); assert.equal('ids' in plain.ct, false); assert.equal('acceptanceIds' in plain.adoption, false);
+  assert.equal(existsSync(path.join(plain.vdir, 'verdicts.json')), true, 'a verdicts.json the builder left is kept whatever the ids');
+});
+
+test('armSpendStopUsd: an arm stops at its own cap while the others run on; validation; never hashed', async t => {
+  const root = tmp(t);
+  const { deps } = fakeDeps({ compiled: () => ({ status: 'ok' }), checks: () => null });
+  const config = { ...CONFIG, experiment: 'caps', segments: [{ difficulty: 3, seeds: '1..6' }], arms: ['agent:claude-haiku-5-5', 'agent:claude-opus-5-5'], concurrency: 1,
+    armSpendStopUsd: { 'agent:claude-haiku-5-5': 0.25 } };
+  const res = await runStream({ config, deps, runRoot: path.join(root, 'runs'), workRoot: path.join(root, 'work'), log: () => {} });
+  const by = spec => res.rows.filter(r => r.arm === spec);
+  assert.equal(by('agent:claude-haiku-5-5').length, 3, '$0.10 a task: the 4th start sees $0.30 > $0.25');
+  assert.equal(by('agent:claude-opus-5-5').length, 6);
+  const haiku = res.arms.find(a => a.spec === 'agent:claude-haiku-5-5');
+  assert.ok(haiku.errors.length && haiku.errors.every(e => /^arm spend stop: agent:claude-haiku-5-5 \$0\.30 > \$0\.25$/.test(e)), JSON.stringify(haiku.errors));
+  assert.deepEqual(res.arms.find(a => a.spec === 'agent:claude-opus-5-5').errors, []);
+  // a resume counts the arm's recorded spend: it stops at once
+  const again = await runStream({ config, deps, runRoot: path.join(root, 'runs'), workRoot: path.join(root, 'work'), log: () => {} });
+  assert.equal(again.rows.filter(r => r.arm === 'agent:claude-haiku-5-5').length, 3);
+  assert.throws(() => normalizeConfig({ ...CONFIG, armSpendStopUsd: { 'agent:claude-haiku-5-5': 1 } }), /agent:claude-haiku-5-5 is not one of config.arms/);
+  assert.throws(() => normalizeConfig({ ...CONFIG, armSpendStopUsd: { [CONFIG.arms[0]]: 0 } }), /must be a positive number of dollars/);
+  assert.throws(() => normalizeConfig({ ...CONFIG, armSpendStopUsd: [1] }), /armSpendStopUsd must be an object/);
+  assert.equal('armSpendStopUsd' in normalizeConfig(CONFIG), false, 'unset: no key');
+  for (const [name, want] of Object.entries(V1_HASHES)) {
+    const raw = loadConfig(name);
+    assert.deepEqual(hashes({ ...raw, armSpendStopUsd: Object.fromEntries(raw.arms.map(a => [a, 1])) }), want, `${name}: per-arm caps move no hash`);
+  }
+});
+
+test('_blocked and null tolerances are refused; the R0 configs: records validates (seeds 225-248 fresh for jit-r0), kinetics is blocked until relTol is set', () => {
+  assert.throws(() => normalizeConfig({ ...CONFIG, _blocked: 'waiting on X' }), /config jit-fake is blocked: waiting on X/);
+  assert.throws(() => normalizeConfig({ ...CONFIG, jit: { ...CONFIG.jit, compare: 'tolerant', relTol: null } }), /config.jit.relTol is null/);
+  assert.throws(() => normalizeConfig({ ...CONFIG, compile: { compare: 'tolerant', absTol: null } }), /config.compile.absTol is null/);
+  // R0 (BLOCKER-SYNTHESIS row 8)
+  const rec = loadConfig('r0-records'), c = normalizeConfig(rec);
+  for (const s of c.segments) assert.doesNotThrow(() => assertSeedsAllowed({ bed: 'records', split: 'dev', seeds: s.seeds, purpose: 'jit-r0' }));
+  assert.deepEqual(c.segments.map(s => [s.difficulty, s.seeds.length, s.seeds[0], s.seeds.at(-1)]), [[3, 16, 225, 240], [4, 8, 241, 248]]);
+  assert.deepEqual(c.jit, { warmup: 3, shadowFloor: 0.25, shadowSeed: 'jit-r0-records', shadowOnFlags: true, recompileOnDeopts: 2, maxTraces: 8, compilerFallback: 'claude-opus-5-5', maxFallbacks: 2,
+    compare: 'unordered', preserveRefusals: true });
+  const { fallback, ...comp } = c.compile;
+  assert.deepEqual(comp, { builderEffort: 'high', builderBudgetUsd: 3, gatewayUsd: 1.5, checkUsd: 1.5, minutes: 30, compare: 'tolerant', relTol: 0, absTol: 0, acceptance: 'strict', minPartial: 0.9, promptVersion: 4 });
+  assert.deepEqual(c.armSpendStopUsd, { 'jit:claude-sonnet-5-5/claude-haiku-5-5': 12, 'jit:claude-opus-5-5/claude-haiku-5-5': 10, 'jit:claude-haiku-5-5/claude-haiku-5-5': 6, 'agent:claude-haiku-5-5': 4,
+    'static:research/construction-20261006/artifacts/B1-haiku-records-k1/solve.mjs': 2 });
+  assert.equal(c.spendStopUsd, 40); assert.equal(c.persist.commitDir, path.join(REPO_ROOT, 'research/jit-20261008/runs/jit-r0-records'));
+  assert.equal(c.seedPurpose, 'jit-r0'); assert.equal(c.experiment, 'jit-r0-records');
+  for (const a of c.arms) assert.ok(existsSync(parseArm(a, c, { policyIds: [...POLICY_MODELS] }).scriptPath ?? REPO_ROOT), `${a}: script exists`);
+  // its JIT arms are new arms (not a second lineage of the dev runs)
+  const r0h = hashes(rec), devh = V1_HASHES['dev-records-1'];
+  for (const a of rec.arms.filter(x => x.startsWith('jit:'))) assert.notEqual(r0h[a], devh[a]);
+  // R0-K (row 9): refused while blocked, then for the null relTol; validates once relTol is set
+  const kin = loadConfig('r0-kinetics');
+  assert.equal(kin.jit.relTol, null); assert.equal(kin._blocked, 'relTol TBD: row 2 Stage B');
+  assert.throws(() => normalizeConfig(kin), /is blocked: relTol TBD: row 2 Stage B/);
+  const { _blocked, ...open } = kin;
+  assert.throws(() => normalizeConfig(open), /config.jit.relTol is null/);
+  const k = normalizeConfig({ ...open, jit: { ...open.jit, relTol: 0.01 } });
+  assert.deepEqual(k.arms, ['jit:claude-opus-5-5/claude-haiku-5-5', 'agent:claude-haiku-5-5'], 'O/H first; no static kinetics solver exists');
+  assert.deepEqual([k.jit.compare, k.jit.relTol, k.jit.absTol, k.jit.tolerantKeys], ['tolerant', 0.01, 1e-9, ['km', 'vmax']]);
+  assert.deepEqual([k.jit.shadowFloor, k.jit.shadowSeed, 'shadowEvery' in k.jit, k.jit.shadowOnFlags], [0.25, 'jit-r0-kinetics', false, true]);
+  assert.deepEqual([k.compile.compare, k.compile.relTol, k.compile.tolerantKeys, k.compile.acceptance, k.compile.promptVersion], ['tolerant', 0.01, ['km', 'vmax'], 'strict', 4], 'compile follows jit');
+  assert.deepEqual(k.segments.map(s => [s.difficulty, s.seeds[0], s.seeds.at(-1)]), [[4, 225, 240], [5, 241, 248]]);
+  assert.equal(k.spendStopUsd, 30);
+});
+
+test('jit.replayJournal: JIT arms get a memo port over the exported journal (live port for misses); compiled events carry memo counts; unset changes nothing; a missing file is an arm error', async t => {
+  const root = tmp(t);
+  const jdir = path.join(root, 'exp', SLUG); mkdirSync(jdir, { recursive: true });
+  writeFileSync(path.join(jdir, 'journal.jsonl'), JSON.stringify({ requestDigest: 'a'.repeat(64), model: 'claude-haiku-5-5', response: { ok: true, value: { x: 1 } } }) + '\n');
+  const run = async (jit, experiment) => {
+    const { deps } = fakeDeps({ compiled: () => ({ status: 'ok' }), checks: (n, a) => perCase(a, () => 'exact') });
+    const ports = [], inner = deps.runCompiled;
+    deps.runCompiled = async a => { ports.push(a.modelPort); const r = await inner(a); return a.modelPort.memo ? { ...r, meta: { ...r.meta, memo: { requests: 2, hits: 2, looseHits: 0, reused: 0, misses: 0, live: 0 } } } : r; };
+    const res = await runStream({ config: { ...CONFIG, experiment, segments: [{ difficulty: 3, seeds: [1, 2, 3] }], jit: { ...CONFIG.jit, shadowEvery: 0, ...jit } }, deps,
+      runRoot: path.join(root, 'runs'), workRoot: path.join(root, 'work'), log: () => {} });
+    return { res, ports };
+  };
+  const tpl = path.join(root, 'exp/{slug}/journal.jsonl');
+  assert.equal(replayJournalPath(tpl, SLUG), path.join(jdir, 'journal.jsonl'));
+  const memo = await run({ replayJournal: tpl }, 'replay-on');
+  assert.deepEqual(memo.res.arms.map(a => a.errors), [[]]);
+  assert.ok(memo.ports.length && memo.ports.every(p => p.memo && p.memo.strict === false && p.memo.reuse === true), 'a fall-through memo port');
+  assert.deepEqual(memo.ports[0].memo.stats().journalRows, 1);
+  const ev = memo.res.rows.flatMap(r => r.events).find(e => e.kind === 'compiled');
+  assert.deepEqual(ev.memo, { requests: 2, hits: 2, reused: 0, live: 0 });
+  const plain = await run({}, 'replay-off');
+  assert.ok(plain.ports.every(p => p.fake === true && !p.memo), 'unset: the live port itself');
+  assert.equal('memo' in plain.res.rows.flatMap(r => r.events).find(e => e.kind === 'compiled'), false);
+  const missing = await run({ replayJournal: path.join(root, 'nope/{slug}.jsonl') }, 'replay-missing').catch(e => e);
+  assert.match(String(missing.message ?? missing), /jit.replayJournal: .*nope\/jit-claude-sonnet-5-5--claude-haiku-5-5.jsonl does not exist/);
+  // validation and hashes: unset or null moves nothing, set defines a new JIT arm
+  assert.throws(() => normalizeConfig({ ...CONFIG, jit: { ...CONFIG.jit, replayJournal: 3 } }), /replayJournal must be the path/);
+  assert.equal('replayJournal' in normalizeConfig({ ...CONFIG, jit: { ...CONFIG.jit, replayJournal: null } }).jit, false);
+  for (const [name, want] of Object.entries(V1_HASHES)) {
+    const raw = loadConfig(name), h = hashes({ ...raw, jit: { ...raw.jit, replayJournal: 'x/{slug}.jsonl' } });
+    assert.notEqual(h[jitArmOf(want)], want[jitArmOf(want)]); assert.equal(h['agent:claude-haiku-5-5'], want['agent:claude-haiku-5-5']);
+  }
+});
+
+test('journalToJsonl replay keys: requestDigest from a recorded requested decoding (nulls unset), else requestDigestLoose; none for a row without request text', () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'jit-keys-')); try {
+    const file = path.join(dir, 'journal.sqlite'), db = new DatabaseSync(file), j = new Journal(db);
+    const schema = { type: 'object', properties: { label: { type: 'string' } }, required: ['label'] };
+    const base = { runId: 'r', attempt: 0, sampleIndex: 0, modelId: 'claude-haiku-5-5', provider: 'claude-cli', ok: true, response: { value: { label: 'a' } } };
+    j.record({ ...base, replayKey: 'k1', nodeKey: 'n1', request: { system: 's', prompt: 'p', schema, mode: 'live', salt: 'x' },
+      decoding: { reasoning: 'low', effort: 'low', thinkingTokens: 1024, maxTokens: 'provider-default', temperature: 'provider-default' } });
+    j.record({ ...base, replayKey: 'k2', nodeKey: 'n2', request: { system: '', prompt: 'q', schema, decoding: { maxTokens: 300, reasoning: 'none', temperature: null } } });
+    j.record({ ...base, replayKey: 'k3', nodeKey: 'n3', request: { mode: 'replay', salt: 'x', replayOf: 1 } });
+    db.close();
+    const rows = journalToJsonl(file).trim().split('\n').map(l => JSON.parse(l));
+    assert.equal(rows[0].requestDigestLoose, looseDigestOf({ modelId: 'claude-haiku-5-5', system: 's', prompt: 'p', schema, reasoning: 'low' })); assert.equal('requestDigest' in rows[0], false);
+    assert.equal(rows[1].requestDigest, requestDigestOf({ modelId: 'claude-haiku-5-5', system: '', prompt: 'q', schema, decoding: { maxTokens: 300, reasoning: 'none' } }));
+    assert.equal('requestDigestLoose' in rows[1], false);
+    assert.equal('requestDigest' in rows[2] || 'requestDigestLoose' in rows[2], false);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('jit.shadowFloor: seeded Bernoulli shadows replace the schedule; same seed, same draws; flags force a shadow (propensity 1); every compiled ok row logs its propensity', async t => {
+  const root = tmp(t);
+  // Compiled answers are right except at idx 7; idx 9 and 11 raise a flag.
+  const plan = { compiled: (v, idx) => (idx === 7 ? { status: 'ok', output: { v: -1 } } : [9, 11].includes(idx) ? { status: 'ok', flags: { count: 1, names: ['weak'] } } : { status: 'ok' }),
+    checks: (n, a) => perCase(a, () => 'exact') };
+  const run = async (experiment, jit, extra = {}) => {
+    const { deps } = fakeDeps(plan);
+    const res = await runStream({ config: { ...CONFIG, experiment, segments: [{ difficulty: 3, seeds: '1..24' }], jit: { warmup: 2, recompileOnDeopts: 2, maxTraces: 8, compilerFallback: 'claude-opus-5-5', ...jit }, ...extra },
+      deps, runRoot: path.join(root, 'runs'), workRoot: path.join(root, 'work'), log: () => {} });
+    assert.deepEqual(res.arms.map(a => a.errors), [[]]);
+    return [...res.rows].sort((a, b) => a.idx - b.idx);
+  };
+  const floor = { shadowFloor: 0.25, shadowOnFlags: true };
+  const a = await run('floor-a', floor, { seed: 'S1' }), b = await run('floor-b', floor, { seed: 'S1' }), c = await run('floor-c', floor, { seed: 'S2' });
+  const view = rows => rows.filter(r => r.compiledStatus === 'ok').map(r => [r.idx, r.shadowDraw, r.shadowPropensity, r.shadowReason ?? null]);
+  assert.deepEqual(view(a), view(b), 'same seed: same draws, same shadows (the experiment name does not enter)');
+  assert.notDeepEqual(view(a).map(x => x[1]), view(c).map(x => x[1]), 'another seed: other draws');
+  const ok = a.filter(r => r.compiledStatus === 'ok');
+  assert.equal(ok.length, 22);
+  for (const r of ok) {
+    assert.equal(r.shadowDraw, Math.round(shadowDrawOf('S1', r.idx) * 1e6) / 1e6);
+    const flagged = [9, 11].includes(r.idx), drawn = shadowDrawOf('S1', r.idx) < 0.25, shadowed = r.events.some(e => e.kind === 'shadow');
+    assert.equal(shadowed, flagged || drawn, `#${r.idx}: shadowed iff flagged or u < 0.25`);
+    assert.equal(r.shadowPropensity, flagged ? 1 : 0.25);
+    assert.equal(r.shadowReason, shadowed ? (flagged && drawn ? 'floor+flag' : flagged ? 'flag' : 'floor') : undefined);
+    if (shadowed) assert.equal(r.events.find(e => e.kind === 'shadow').reason, r.shadowReason);
+  }
+  assert.ok(ok.some(r => r.shadowReason === 'floor') && ok.some(r => !r.shadowReason), 'some drawn, some not');
+  assert.ok(a.filter(r => r.compiledStatus !== 'ok').every(r => !('shadowPropensity' in r)), 'only compiled ok rows carry a propensity');
+  // The stats.mjs IPW input is derivable from the rows (and the export carries them verbatim).
+  const ipw = ok.map(r => ({ verified: r.events.some(e => e.kind === 'shadow'), propensity: r.shadowPropensity, wrong: r.delivered === 'adjudicated' }));
+  assert.ok(ipw.every(x => x.propensity > 0));
+  const exported = readJsonl(path.join(root, 'runs/floor-a/export', SLUG, 'results.jsonl'));
+  assert.deepEqual(exported.map(r => [r.idx, r.shadowPropensity, r.shadowDraw, r.shadowReason]), a.map(r => [r.idx, r.shadowPropensity, r.shadowDraw, r.shadowReason]));
+  // Periodic schedule: propensity null (not a sample), 1 when flagged; no draw.
+  const sched = await run('sched', { shadowEvery: 4, shadowOnFlags: true });
+  for (const r of sched.filter(x => x.compiledStatus === 'ok')) { assert.equal(r.shadowPropensity, [9, 11].includes(r.idx) ? 1 : null); assert.equal('shadowDraw' in r, false); }
+  // Validation and hashes.
+  assert.throws(() => normalizeConfig({ ...CONFIG, jit: { ...CONFIG.jit, shadowFloor: 0.25 } }), /shadowEvery and jit.shadowFloor together/);
+  for (const bad of [-0.1, 1.5, '0.25', NaN]) assert.throws(() => normalizeConfig({ ...CONFIG, jit: { shadowFloor: bad } }), /shadowFloor must be a number in \[0, 1\]/);
+  assert.throws(() => normalizeConfig({ ...CONFIG, jit: { shadowSeed: 'x' } }), /shadowSeed needs jit.shadowFloor/);
+  const n = normalizeConfig({ ...CONFIG, jit: { shadowFloor: 0.25 } });
+  assert.deepEqual([n.jit.shadowFloor, n.jit.shadowSeed, 'shadowEvery' in n.jit], [0.25, 'jit-fake', false], 'the seed defaults to the experiment');
+  assert.equal(normalizeConfig({ ...CONFIG, seed: 7, jit: { shadowFloor: 0.25 } }).jit.shadowSeed, '7');
+  assert.equal(normalizeConfig({ ...CONFIG, seed: 7, jit: { shadowFloor: 0.25, shadowSeed: 'own' } }).jit.shadowSeed, 'own');
+  assert.equal('shadowFloor' in normalizeConfig(CONFIG).jit, false);
+  for (const [name, want] of Object.entries(V1_HASHES)) {
+    const raw = loadConfig(name), { shadowEvery, ...rest } = raw.jit;
+    const h = hashes({ ...raw, jit: { ...rest, shadowFloor: 0.25 } }), h2 = hashes({ ...raw, seed: 'other', jit: { ...rest, shadowFloor: 0.25 } });
+    assert.notEqual(h[jitArmOf(want)], want[jitArmOf(want)]); assert.notEqual(h2[jitArmOf(want)], h[jitArmOf(want)], 'the seed is hashed');
+    assert.equal(h['agent:claude-haiku-5-5'], want['agent:claude-haiku-5-5']);
   }
 });

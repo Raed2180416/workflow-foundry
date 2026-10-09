@@ -1,0 +1,99 @@
+{
+ "experiment": "jit-r0-records",
+ "_note": "BLOCKER-SYNTHESIS row 8 (R0): a dev rehearsal of the HANDOFF section 3 config on fresh records dev seeds 225-248. Not a second lineage of the lost dev runs.",
+ "familyId": "records",
+ "split": "dev",
+ "seedPurpose": "jit-r0",
+ "segments": [
+  {
+   "difficulty": 3,
+   "seeds": [
+    225,
+    226,
+    227,
+    228,
+    229,
+    230,
+    231,
+    232,
+    233,
+    234,
+    235,
+    236,
+    237,
+    238,
+    239,
+    240
+   ]
+  },
+  {
+   "difficulty": 4,
+   "seeds": [
+    241,
+    242,
+    243,
+    244,
+    245,
+    246,
+    247,
+    248
+   ]
+  }
+ ],
+ "arms": [
+  "agent:claude-haiku-5-5",
+  "static:research/construction-20261006/artifacts/B1-haiku-records-k1/solve.mjs",
+  "jit:claude-sonnet-5-5/claude-haiku-5-5",
+  "jit:claude-opus-5-5/claude-haiku-5-5",
+  "jit:claude-haiku-5-5/claude-haiku-5-5"
+ ],
+ "jit": {
+  "warmup": 3,
+  "shadowFloor": 0.25,
+  "shadowOnFlags": true,
+  "recompileOnDeopts": 2,
+  "maxTraces": 8,
+  "compilerFallback": "claude-opus-5-5",
+  "maxFallbacks": 2,
+  "compare": "unordered",
+  "preserveRefusals": true
+ },
+ "compile": {
+  "builderEffort": "high",
+  "builderBudgetUsd": 3,
+  "gatewayUsd": 1.5,
+  "checkUsd": 1.5,
+  "minutes": 30,
+  "fallback": {
+   "builderEffort": "high",
+   "builderBudgetUsd": 8,
+   "gatewayUsd": 1.5,
+   "checkUsd": 1.5,
+   "minutes": 45
+  },
+  "compare": "tolerant",
+  "relTol": 0,
+  "absTol": 0,
+  "acceptance": "strict",
+  "minPartial": 0.9,
+  "promptVersion": 4,
+  "acceptanceIds": "exact"
+ },
+ "perTaskUsd": 1,
+ "agentBudgetUsd": 2,
+ "agentMinutes": 15,
+ "compiledMinutes": 20,
+ "staticFallback": "claude-haiku-5-5",
+ "concurrency": 2,
+ "spendStopUsd": 40,
+ "armSpendStopUsd": {
+  "jit:claude-sonnet-5-5/claude-haiku-5-5": 12,
+  "jit:claude-opus-5-5/claude-haiku-5-5": 10,
+  "jit:claude-haiku-5-5/claude-haiku-5-5": 6,
+  "agent:claude-haiku-5-5": 4,
+  "static:research/construction-20261006/artifacts/B1-haiku-records-k1/solve.mjs": 2
+ },
+ "persist": {
+  "commitDir": true
+ }
+}

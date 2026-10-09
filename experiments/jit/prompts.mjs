@@ -14,6 +14,13 @@
 // (D3); quotes in BUILD-NOTES.md verbatim from the case's task. Two parts follow the compile options: with
 // opts.acceptance 'strict' it states the strict rule (opts.minPartial, default 0.9), and with opts.compare 'tolerant' it
 // says how check-traces compares (opts.relTol, opts.absTol). Version 3 runs on flow-v2.mjs, like version 2.
+// opts.acceptanceIds 'structured' (S0-6, opt-in, any version): the verdicts.json instructions (prompts-verdicts.mjs) are
+// appended to the finishing rules; compile.mjs then records verdictsPromptVersion. Any other value leaves the text as it was.
+import { VERDICTS_PROMPT_TEXT, VERDICTS_PROMPT_VERSION } from './prompts-verdicts.mjs';
+export { VERDICTS_PROMPT_TEXT, VERDICTS_PROMPT_VERSION };
+export const verdictsPromptVersionOf = opts => (opts?.acceptanceIds === 'structured' ? VERDICTS_PROMPT_VERSION : null);
+const verdictsPart = opts => (verdictsPromptVersionOf(opts) ? `\n${VERDICTS_PROMPT_TEXT.trim()}` : '');
+
 export const PROMPT_VERSIONS = Object.freeze([1, 2, 3, 4]);
 export const FLOW_FILES = Object.freeze({ 1: 'flow.mjs', 2: 'flow-v2.mjs', 3: 'flow-v2.mjs', 4: 'flow-v2.mjs' });
 export function promptVersionOf(opts) {
@@ -108,7 +115,7 @@ Quote what is specific to that case: text that every case's task shares (the com
 and each case needs its own quote (one sentence cannot explain two cases).` : ''}${promptVersionOf(opts) >= 3 && opts.acceptance === 'strict' ? `
 Acceptance is checked by code after you finish: no crash, deopt or timeout, and every regression case passes; a mean
 partial agreement of at least ${opts.minPartial ?? 0.9} over the traces, or at least one exact trace; and for every case that still
-differs, a note naming it with a quote that occurs verbatim in that case's task. Otherwise the compile is not accepted.` : ''}
+differs, a note naming it with a quote that occurs verbatim in that case's task. Otherwise the compile is not accepted.` : ''}${verdictsPart(opts)}
 
 You have about ${minutes} minutes; deliver a working solve.mjs early and improve it. Finish by writing ./BUILD-NOTES.md
 (at most 300 words): the procedure in code, each judge and its tiers, the guards and invariants, the check-traces

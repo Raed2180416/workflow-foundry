@@ -71,9 +71,13 @@ export function memoRowOf(row, { dir = null } = {}) {
   if (!row || typeof row !== 'object') return null;
   const model = row.model ?? row.modelId ?? null, response = bodyOf(row.response, dir) ?? {}, request = bodyOf(row.request, dir);
   const digest = typeof row.requestDigest === 'string' ? row.requestDigest : null;
-  const loose = !digest && model && request && typeof request.prompt === 'string'
-    ? looseDigestOf({ model, system: request.system, prompt: request.prompt, schema: request.schema, reasoning: row.decoding?.reasoning ?? request.decoding?.reasoning }) : null;
+  // An exported row's requestDigestLoose (stream.mjs journalToJsonl) serves even when its request body is not at hand.
+  const loose = digest ? null : model && request && typeof request.prompt === 'string'
+    ? looseDigestOf({ model, system: request.system, prompt: request.prompt, schema: request.schema, reasoning: row.decoding?.reasoning ?? request.decoding?.reasoning })
+    : typeof row.requestDigestLoose === 'string' ? row.requestDigestLoose : null;
   if (!digest && !loose) return null;
+  // A response body that is in a file that is not there: nothing to serve.
+  if (row.response && typeof row.response === 'object' && typeof row.response.sha256 === 'string' && 'path' in row.response && bodyOf(row.response, dir) == null) return null;
   const error = response.error ?? (row.errorCode ? { code: row.errorCode } : null);
   const ok = typeof row.ok === 'boolean' ? row.ok : typeof response.ok === 'boolean' ? response.ok : !error && response.value !== undefined;
   if (!ok && !REPLAYABLE_ERRORS.includes(error?.code)) return null;

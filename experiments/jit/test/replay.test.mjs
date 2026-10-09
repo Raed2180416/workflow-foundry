@@ -179,3 +179,31 @@ test('end to end: a live run journaled by ModelPort, exported as JSONL rows (jou
   assert.deepEqual([again.stats.requests, again.stats.hits, again.stats.looseHits, again.stats.misses], [2, 2, 2, 0]); assert.equal(again.verdict.replayable, true);
   assert.deepEqual(JSON.parse(readFileSync(path.join(root, 'replay', '.solve.stdout'), 'utf8')), first.output, 'the replay reproduces the live answer');
 });
+
+// Integration: the S0-1 export (stream.mjs journalToJsonl, from a journal.sqlite file) is what replays read.
+import { journalToJsonl } from '../stream.mjs';
+test('end to end through the S0-1 export: a live run journaled to journal.sqlite, exported by journalToJsonl, replays at $0 with 100% coverage; also from the committed mirror (no request bodies)', { skip }, async t => {
+  const { root, solvePath, wd } = setup(t);
+  const dbFile = path.join(root, 'journal.sqlite'), db = new DatabaseSync(dbFile);
+  const live = new ModelPort({ policy, journal: new Journal(db), providers: { 'claude-cli': new ScriptedProvider(({ prompt }) => ({ value: { label: `L(${prompt})` }, costUsd: 0.02 })) } });
+  const first = await runCompiled({ solvePath, task: TASK, modelPort: live, perTaskUsd: 0.5, timeoutMs: 30000, workdir: wd('live'), outputSchema: OUT, allowedModels: MODELS, flowPath: FLOW_V2, label: 'live' });
+  assert.equal(first.status, 'ok', JSON.stringify(first.error)); assert.equal(first.costUsd, 0.04);
+  db.close();
+  const rows = journalToJsonl(dbFile).trim().split('\n').map(l => JSON.parse(l));
+  assert.equal(rows.length, 2);
+  // ModelPort rows keep the effective decoding only, so the export carries the loose key, never a guessed exact digest.
+  assert.ok(rows.every(r => typeof r.requestDigestLoose === 'string' && !('requestDigest' in r)));
+  const jf = path.join(root, 'export.jsonl'); writeFileSync(jf, rows.map(r => JSON.stringify(r)).join('\n') + '\n');
+  const again = await replayCoverage({ journal: jf, solvePath, task: TASK, outputSchema: OUT, workdir: wd('replay'), timeoutMs: 30000 });
+  assert.equal(again.run.status, 'ok'); assert.equal(again.run.costUsd, 0);
+  assert.deepEqual([again.stats.requests, again.stats.hits, again.stats.misses, again.stats.coverage], [2, 2, 0, 1]); assert.equal(again.verdict.replayable, true);
+  assert.deepEqual(JSON.parse(readFileSync(path.join(root, 'replay', '.solve.stdout'), 'utf8')), first.output, 'the replay reproduces the live answer');
+  // The committed mirror leaves bodies above maxBodyBytes out: request bodies (schema, provider request) are the big ones.
+  const maxResp = Math.max(...rows.map(r => r.response.bytes)), minReq = Math.min(...rows.map(r => r.request.bytes));
+  assert.ok(maxResp < minReq, `responses (${maxResp} B) are smaller than requests (${minReq} B)`);
+  const mirrored = journalToJsonl(dbFile, { maxBodyBytes: maxResp }).trim().split('\n').map(l => JSON.parse(l));
+  assert.ok(mirrored.every(r => r.request.path && !('body' in r.request) && 'body' in r.response));
+  const mf = path.join(wd('mirror'), 'journal.jsonl'); writeFileSync(mf, mirrored.map(r => JSON.stringify(r)).join('\n') + '\n');   // no bodies/ beside it
+  const fromMirror = await replayCoverage({ journal: mf, solvePath, task: TASK, outputSchema: OUT, workdir: wd('replay2'), timeoutMs: 30000 });
+  assert.equal(fromMirror.run.status, 'ok'); assert.equal(fromMirror.stats.coverage, 1); assert.equal(fromMirror.run.costUsd, 0);
+});

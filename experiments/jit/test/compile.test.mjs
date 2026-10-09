@@ -343,6 +343,9 @@ test('acceptanceIds structured: compile reads the builder\'s verdicts.json; leni
   const yes = await compile({ ...opts, label: 'vs', acceptanceIds: 'structured', runner: runnerWith(fake({ notes, verdicts: [{ case: 'trace-2', verdict: 'disagree', reason: 'promptChars is the prompt length' }] })) });
   assert.equal(yes.record.checkTraces.accepted, true); assert.equal(yes.record.acceptanceIds, 'structured');
   assert.deepEqual(yes.record.checkTraces.ids, { mode: 'structured', source: 'verdicts', valid: true, verdicts: 1, malformed: 0 });
+  // The builder was asked for verdicts.json (prompts.mjs), and the record says which text asked.
+  assert.equal(yes.record.verdictsPromptVersion, 'verdicts-1');
+  assert.match(readFileSync(path.join(yes.workdir, '.seen-prompt.txt'), 'utf8'), /Per-case verdicts \(required\)/);
   const no = await compile({ ...opts, label: 'vs2', acceptanceIds: 'structured', runner: runnerWith(fake({ notes, verdicts: [{ case: 'trace-2', verdict: 'agree', reason: 'the agent is right' }] })) });
   assert.equal(no.record.checkTraces.accepted, false); assert.deepEqual(no.record.checkTraces.unexplained, ['trace-2']);
   // "Trace-2" (capital T) in the prose: exact ids reject it, lenient ids accept it.
@@ -350,6 +353,10 @@ test('acceptanceIds structured: compile reads the builder\'s verdicts.json; leni
   assert.equal(exact.record.checkTraces.accepted, false); assert.equal('acceptanceIds' in exact.record, false); assert.equal('ids' in exact.record.checkTraces, false);
   const lenient = await compile({ ...opts, label: 'vl', acceptanceIds: 'lenient', runner: runnerWith(fake({ notes })) });
   assert.equal(lenient.record.checkTraces.accepted, true); assert.deepEqual(lenient.record.checkTraces.ids, { mode: 'lenient', source: 'prose' });
+  for (const r of [exact, lenient]) {
+    assert.equal('verdictsPromptVersion' in r.record, false);
+    assert.doesNotMatch(readFileSync(path.join(r.workdir, '.seen-prompt.txt'), 'utf8'), /verdicts\.json/);
+  }
   await assert.rejects(compile({ ...opts, label: 'vx', acceptanceIds: 'fuzzy' }), /acceptanceIds must be one of/);
   await assert.rejects(compile({ ...opts, label: 'vy', allowSharedExplanation: true }), /allowSharedExplanation needs acceptance 'strict'/);
 });
