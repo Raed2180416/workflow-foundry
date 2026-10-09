@@ -1,0 +1,99 @@
+{
+  "schema": "kev-data/served-rows@1",
+  "started_at": "2026-10-09T09:34:41.338Z",
+  "path": "jev",
+  "input": {
+    "file": "runbook-dev-select-e431400e7d8b.jsonl",
+    "sha256": "e431400e7d8b7502ba329b22e06ae505b0821da012cbed4587a69078a2160f53",
+    "records": 10,
+    "questions": 10
+  },
+  "rows": {
+    "file": "/var/tmp/foundry-work/kev/j1/jev/smoke/runbook-10.jsonl",
+    "sha256": "864d61cbda733995540be5fbb7f3ddc2f62dbc5472512e663d808bddcb656cea",
+    "n": 10,
+    "raw": "/var/tmp/foundry-work/kev/j1/jev/smoke/runbook-10.raw.jsonl"
+  },
+  "served": {
+    "endpoint": "https://api.typesafe.ai",
+    "requested_model": "jev-latest",
+    "identity": {
+      "mode": "per-response",
+      "run": "jev-1.13.0",
+      "versions": {
+        "jev-1.13.0": 10
+      }
+    },
+    "identity_after": null,
+    "same_model": true,
+    "expected_run": null,
+    "identity_from": "response",
+    "versions": {
+      "jev-1.13.0": 10
+    },
+    "reread_versions": {},
+    "model_changed": false
+  },
+  "concurrency": 2,
+  "repeat": 1,
+  "retry": {
+    "max": 6,
+    "base_ms": 2000,
+    "cap_ms": 60000
+  },
+  "max_request_bytes": null,
+  "coverage": {
+    "requested_records": 10,
+    "requested_questions": 10,
+    "evaluated_records": 10,
+    "evaluated_questions": 10,
+    "rejected_records": 0,
+    "failed_records": 0,
+    "truncated_records": 0
+  },
+  "rejected": [],
+  "failed": [],
+  "truncated": [],
+  "faults": {
+    "n": 0,
+    "by_code": {},
+    "list": []
+  },
+  "usage": {
+    "requests": 10,
+    "input_tokens": 4264,
+    "output_tokens": 352,
+    "missing_usage": 0,
+    "scope": "every scored record in the rows file, one request each; not the re-read or retried attempts (see requests and faults)"
+  },
+  "requests": {
+    "ledger": "/var/tmp/foundry-work/kev/j1/jev/requests.jsonl",
+    "cap": 1400,
+    "count_after": 10
+  },
+  "reread": null,
+  "timing": {
+    "wall_seconds": 2.19,
+    "requests": 10,
+    "seconds_per_request": 0.2191,
+    "requests_per_second": 4.564,
+    "wall_ms": {
+      "median": 309.84,
+      "p90": 783.941,
+      "p95": 826.681,
+      "mean": 421.091,
+      "max": 826.681
+    },
+    "server_latency_ms": null,
+    "overhead_ms": null,
+    "rtt_ms": null,
+    "input_tokens_per_request": {
+      "median": 428,
+      "p90": 475,
+      "p95": 478,
+      "mean": 426.4,
+      "max": 478
+    }
+  },
+  "valid": true
+}
