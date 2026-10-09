@@ -29,3 +29,11 @@ Nothing here is a claim. Each entry gives the observation, the mechanism and the
 **D6. Leaf agreement under-counts semantically equal judge outputs.**
 - Observation: the Sonnet arm's `rules` judge is Opus-only and makes up about 90% of compiled cost. When it was replayed on Haiku and Sonnet, every decision matched except the marker representation (`"env":"sandbox"` vs `sandbox`). Leaf agreement was 0.966, under the 0.98 bar.
 - Consequence: screen a tier-down end to end. Swap the judge's tier inside the compiled solver and compare final answers and dev-oracle scores (`tierdown-e2e`, being built).
+
+**D7. Exact answer comparison breaks shadows and compile checks on numeric families.**
+- Observation: on kinetics task 6, an Opus shadow disagreed with the compiled answer, and the Opus adjudicator gave no majority (`unresolved`). The compiled answer passed the oracle, so $1.13 went on a check that could not have concluded. Kinetics answers are fitted `vmax`/`km` numbers, and two correct independent fits almost never agree to the last digit. `check-traces` compares exactly as well, so a correct kinetics solver can score 0 exact matches against its traces. That inflated the kinetics compile "diffs" and would make D4's stricter acceptance reject good solvers.
+- Consequence (v2.1): use tolerant comparison everywhere answers are compared without an oracle: shadows, adjudication, `check-traces` and tier-down. Numbers match within a relative tolerance and arrays match as multisets. The tolerance is a property of the task family, chosen from the bed README's stated precision and never read from oracle code.
+
+**D8. Agreement between independently compiled solvers looks like a strong oracle-free signal (N-version probe, partial).**
+- Observation: records dev seeds 201–210, four compiled solvers. Every task where all solvers gave the identical answer (3/3) was correct. Every task with a failing solver showed disagreement. Two correct solvers can still differ (s203), so the probe also needs tolerant agreement.
+- Consequence: N-version voting at a few cents per variant is a candidate verification layer: trust agreement, escalate disagreement. To be finalised with full counts.
