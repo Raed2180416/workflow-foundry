@@ -1,0 +1,6125 @@
+{
+ "generated": "2026-10-09",
+ "corpus": "research/corpus-20261006/items.jsonl",
+ "items": 1559,
+ "platformCount": 49,
+ "budget": 5,
+ "catalogSize": 54,
+ "coverage": {
+  "full": {
+   "refused": 35,
+   "flat": 1281,
+   "hier": 243,
+   "uncovered": 0
+  },
+  "noL1": {
+   "refused": 35,
+   "flat": 233,
+   "hier": 0,
+   "uncovered": 1291
+  },
+  "thirdPartyFull": {
+   "refused": 35,
+   "flat": 1271,
+   "hier": 243,
+   "uncovered": 0
+  },
+  "thirdPartyItems": 1549,
+  "flatAtBudget": {
+   "1": 546,
+   "2": 796,
+   "3": 994,
+   "5": 1281,
+   "8": 1468,
+   "12": 1511
+  },
+  "byCluster": {
+   "automation": {
+    "items": 395,
+    "refused": 2,
+    "flat": 262,
+    "hier": 131,
+    "uncovered": 0,
+    "firstSliceDecided": 27
+   },
+   "orchestration": {
+    "items": 396,
+    "refused": 0,
+    "flat": 392,
+    "hier": 4,
+    "uncovered": 0,
+    "firstSliceDecided": 138
+   },
+   "science": {
+    "items": 278,
+    "refused": 0,
+    "flat": 276,
+    "hier": 2,
+    "uncovered": 0,
+    "firstSliceDecided": 123
+   },
+   "consumer-creative": {
+    "items": 273,
+    "refused": 0,
+    "flat": 197,
+    "hier": 76,
+    "uncovered": 0,
+    "firstSliceDecided": 16
+   },
+   "agentic": {
+    "items": 207,
+    "refused": 33,
+    "flat": 144,
+    "hier": 30,
+    "uncovered": 0,
+    "firstSliceDecided": 12
+   },
+   "first-party": {
+    "items": 10,
+    "refused": 0,
+    "flat": 10,
+    "hier": 0,
+    "uncovered": 0,
+    "firstSliceDecided": 0
+   }
+  },
+  "firstSlice": {
+   "patterns": [
+    "P01",
+    "P03",
+    "P07",
+    "P08",
+    "P09",
+    "P12",
+    "P13",
+    "P15",
+    "P16",
+    "P17",
+    "P20",
+    "P54"
+   ],
+   "items": {
+    "refused": 35,
+    "flat": 316,
+    "hier": 0,
+    "uncovered": 1208
+   },
+   "controlNodes": {
+    "all": 24603,
+    "l0": 6867,
+    "firstSlice": 4490
+   }
+  }
+ },
+ "defaultRuleNodes": {
+  "n": 391,
+  "of": 24603
+ },
+ "rewrites": {
+  "n": 6,
+  "ids": [
+   "agno:agno/cookbook/03_teams/21_state/nested_shared_state.py#shopping-meal-nested-teams",
+   "claude-code-workflows:claude-session/workflows/scripts/phase0-unblock-wf_1095386b-893.js",
+   "google-adk:adk-samples/contrib/python/brand-aligned-presentations/app/agent.py",
+   "google-adk:adk-samples/contrib/python/small-business-loan-agent/app/agent.py",
+   "llamaindex-workflows:llama_index/docs/examples/agent/agents_as_tools.ipynb",
+   "strands:samples/python/01-learn/11-swarm/swarm.ipynb#four-peer-swarm"
+  ]
+ },
+ "patternsPerItem": {
+  "0": 233,
+  "1": 313,
+  "2": 250,
+  "3": 198,
+  "4": 161,
+  "5": 126,
+  "6": 98,
+  "7": 52,
+  "8": 37,
+  "9": 16,
+  "10": 18,
+  "11": 7,
+  "12": 2,
+  "13": 7,
+  "14": 4,
+  "15": 2
+ },
+ "curve": [
+  {
+   "k": 1,
+   "add": "P37",
+   "gain": 45,
+   "decided": 278,
+   "flat": 278,
+   "hier": 0
+  },
+  {
+   "k": 2,
+   "add": "P54",
+   "gain": 41,
+   "decided": 319,
+   "flat": 319,
+   "hier": 0
+  },
+  {
+   "k": 3,
+   "add": "P56",
+   "gain": 50,
+   "decided": 369,
+   "flat": 369,
+   "hier": 0
+  },
+  {
+   "k": 4,
+   "add": "P36",
+   "gain": 26,
+   "decided": 395,
+   "flat": 395,
+   "hier": 0
+  },
+  {
+   "k": 5,
+   "add": "P27",
+   "gain": 29,
+   "decided": 424,
+   "flat": 424,
+   "hier": 0
+  },
+  {
+   "k": 6,
+   "add": "P29",
+   "gain": 30,
+   "decided": 454,
+   "flat": 454,
+   "hier": 0
+  },
+  {
+   "k": 7,
+   "add": "P26",
+   "gain": 46,
+   "decided": 500,
+   "flat": 500,
+   "hier": 0
+  },
+  {
+   "k": 8,
+   "add": "P08",
+   "gain": 43,
+   "decided": 543,
+   "flat": 543,
+   "hier": 0
+  },
+  {
+   "k": 9,
+   "add": "P38",
+   "gain": 36,
+   "decided": 579,
+   "flat": 579,
+   "hier": 0
+  },
+  {
+   "k": 10,
+   "add": "P14",
+   "gain": 27,
+   "decided": 606,
+   "flat": 606,
+   "hier": 0
+  },
+  {
+   "k": 11,
+   "add": "P21",
+   "gain": 24,
+   "decided": 630,
+   "flat": 630,
+   "hier": 0
+  },
+  {
+   "k": 12,
+   "add": "P06",
+   "gain": 23,
+   "decided": 653,
+   "flat": 653,
+   "hier": 0
+  },
+  {
+   "k": 13,
+   "add": "P05",
+   "gain": 33,
+   "decided": 686,
+   "flat": 686,
+   "hier": 0
+  },
+  {
+   "k": 14,
+   "add": "P04",
+   "gain": 25,
+   "decided": 711,
+   "flat": 711,
+   "hier": 0
+  },
+  {
+   "k": 15,
+   "add": "P07",
+   "gain": 26,
+   "decided": 737,
+   "flat": 734,
+   "hier": 3
+  },
+  {
+   "k": 16,
+   "add": "P34",
+   "gain": 24,
+   "decided": 761,
+   "flat": 758,
+   "hier": 3
+  },
+  {
+   "k": 17,
+   "add": "P33",
+   "gain": 26,
+   "decided": 787,
+   "flat": 782,
+   "hier": 5
+  },
+  {
+   "k": 18,
+   "add": "P40",
+   "gain": 32,
+   "decided": 819,
+   "flat": 804,
+   "hier": 15
+  },
+  {
+   "k": 19,
+   "add": "P12",
+   "gain": 26,
+   "decided": 845,
+   "flat": 827,
+   "hier": 18
+  },
+  {
+   "k": 20,
+   "add": "P03",
+   "gain": 28,
+   "decided": 873,
+   "flat": 852,
+   "hier": 21
+  },
+  {
+   "k": 21,
+   "add": "P43",
+   "gain": 20,
+   "decided": 893,
+   "flat": 872,
+   "hier": 21
+  },
+  {
+   "k": 22,
+   "add": "P42",
+   "gain": 28,
+   "decided": 921,
+   "flat": 894,
+   "hier": 27
+  },
+  {
+   "k": 23,
+   "add": "P45",
+   "gain": 57,
+   "decided": 978,
+   "flat": 930,
+   "hier": 48
+  },
+  {
+   "k": 24,
+   "add": "P20",
+   "gain": 39,
+   "decided": 1017,
+   "flat": 963,
+   "hier": 54
+  },
+  {
+   "k": 25,
+   "add": "P13",
+   "gain": 38,
+   "decided": 1055,
+   "flat": 990,
+   "hier": 65
+  },
+  {
+   "k": 26,
+   "add": "P25",
+   "gain": 22,
+   "decided": 1077,
+   "flat": 996,
+   "hier": 81
+  },
+  {
+   "k": 27,
+   "add": "P44",
+   "gain": 28,
+   "decided": 1105,
+   "flat": 1012,
+   "hier": 93
+  },
+  {
+   "k": 28,
+   "add": "P28",
+   "gain": 22,
+   "decided": 1127,
+   "flat": 1025,
+   "hier": 102
+  },
+  {
+   "k": 29,
+   "add": "P46",
+   "gain": 23,
+   "decided": 1150,
+   "flat": 1034,
+   "hier": 116
+  },
+  {
+   "k": 30,
+   "add": "P19",
+   "gain": 24,
+   "decided": 1174,
+   "flat": 1057,
+   "hier": 117
+  },
+  {
+   "k": 31,
+   "add": "P47",
+   "gain": 26,
+   "decided": 1200,
+   "flat": 1081,
+   "hier": 119
+  },
+  {
+   "k": 32,
+   "add": "P53",
+   "gain": 26,
+   "decided": 1226,
+   "flat": 1094,
+   "hier": 132
+  },
+  {
+   "k": 33,
+   "add": "P32",
+   "gain": 24,
+   "decided": 1250,
+   "flat": 1114,
+   "hier": 136
+  },
+  {
+   "k": 34,
+   "add": "P10",
+   "gain": 32,
+   "decided": 1282,
+   "flat": 1139,
+   "hier": 143
+  },
+  {
+   "k": 35,
+   "add": "P55",
+   "gain": 81,
+   "decided": 1363,
+   "flat": 1173,
+   "hier": 190
+  },
+  {
+   "k": 36,
+   "add": "P39",
+   "gain": 23,
+   "decided": 1386,
+   "flat": 1193,
+   "hier": 193
+  },
+  {
+   "k": 37,
+   "add": "P51",
+   "gain": 24,
+   "decided": 1410,
+   "flat": 1212,
+   "hier": 198
+  },
+  {
+   "k": 38,
+   "add": "P09",
+   "gain": 17,
+   "decided": 1427,
+   "flat": 1221,
+   "hier": 206
+  },
+  {
+   "k": 39,
+   "add": "P15",
+   "gain": 16,
+   "decided": 1443,
+   "flat": 1230,
+   "hier": 213
+  },
+  {
+   "k": 40,
+   "add": "P41",
+   "gain": 28,
+   "decided": 1471,
+   "flat": 1254,
+   "hier": 217
+  },
+  {
+   "k": 41,
+   "add": "P35",
+   "gain": 14,
+   "decided": 1485,
+   "flat": 1263,
+   "hier": 222
+  },
+  {
+   "k": 42,
+   "add": "P57",
+   "gain": 11,
+   "decided": 1496,
+   "flat": 1268,
+   "hier": 228
+  },
+  {
+   "k": 43,
+   "add": "P22",
+   "gain": 10,
+   "decided": 1506,
+   "flat": 1268,
+   "hier": 238
+  },
+  {
+   "k": 44,
+   "add": "P31",
+   "gain": 9,
+   "decided": 1515,
+   "flat": 1275,
+   "hier": 240
+  },
+  {
+   "k": 45,
+   "add": "P48",
+   "gain": 6,
+   "decided": 1521,
+   "flat": 1278,
+   "hier": 243
+  },
+  {
+   "k": 46,
+   "add": "P50",
+   "gain": 3,
+   "decided": 1524,
+   "flat": 1281,
+   "hier": 243
+  },
+  {
+   "k": 47,
+   "add": "P23",
+   "gain": 0,
+   "decided": 1524,
+   "flat": 1281,
+   "hier": 243
+  }
+ ],
+ "refusals": {
+  "unsupported:interactive-dashboard-state": {
+   "n": 2,
+   "platforms": {
+    "node-red": 2
+   }
+  },
+  "unsupported:by-design-group-chat": {
+   "n": 13,
+   "platforms": {
+    "ag2": 3,
+    "autogen": 3,
+    "inngest-agentkit": 1,
+    "langgraph": 1,
+    "metagpt": 1,
+    "semantic-kernel": 4
+   }
+  },
+  "unsupported:by-design-full-history-handoff": {
+   "n": 20,
+   "platforms": {
+    "ag2": 1,
+    "autogen": 3,
+    "google-adk": 3,
+    "haystack": 1,
+    "langgraph": 3,
+    "llamaindex-workflows": 1,
+    "openai-agents": 4,
+    "openai-swarm": 3,
+    "semantic-kernel": 1
+   }
+  }
+ },
+ "hierExamples": [
+  {
+   "id": "n8n:7962",
+   "plat": "n8n",
+   "n": 108,
+   "patterns": 14
+  },
+  {
+   "id": "n8n:11772",
+   "plat": "n8n",
+   "n": 58,
+   "patterns": 14
+  },
+  {
+   "id": "n8n:12533",
+   "plat": "n8n",
+   "n": 139,
+   "patterns": 15
+  },
+  {
+   "id": "n8n:3891",
+   "plat": "n8n",
+   "n": 97,
+   "patterns": 14
+  },
+  {
+   "id": "n8n:4341",
+   "plat": "n8n",
+   "n": 96,
+   "patterns": 14
+  },
+  {
+   "id": "n8n:6158",
+   "plat": "n8n",
+   "n": 112,
+   "patterns": 13
+  },
+  {
+   "id": "n8n:13115",
+   "plat": "n8n",
+   "n": 88,
+   "patterns": 12
+  },
+  {
+   "id": "n8n:19735",
+   "plat": "n8n",
+   "n": 56,
+   "patterns": 15
+  },
+  {
+   "id": "n8n:20421",
+   "plat": "n8n",
+   "n": 306,
+   "patterns": 13
+  },
+  {
+   "id": "n8n:7961",
+   "plat": "n8n",
+   "n": 209,
+   "patterns": 13
+  },
+  {
+   "id": "n8n:12285",
+   "plat": "n8n",
+   "n": 58,
+   "patterns": 13
+  },
+  {
+   "id": "n8n:2982",
+   "plat": "n8n",
+   "n": 35,
+   "patterns": 13
+  }
+ ],
+ "patterns": [
+  {
+   "id": "P01",
+   "name": "linear pipeline with typed hand-offs",
+   "family": "spine",
+   "items": 758,
+   "viaNode": 0,
+   "viaToken": 0,
+   "viaPlumbing": 758,
+   "oracle": 239,
+   "platforms": {
+    "activepieces": 10,
+    "dify": 29,
+    "flowise": 5,
+    "langflow": 1,
+    "n8n": 115,
+    "node-red": 33,
+    "zapier": 6,
+    "airflow": 54,
+    "argo": 7,
+    "dagster": 4,
+    "github-actions": 78,
+    "gitlab-ci": 2,
+    "kubeflow": 4,
+    "prefect": 7,
+    "tekton": 2,
+    "temporal": 5,
+    "cwl": 40,
+    "galaxy": 58,
+    "nextflow": 19,
+    "nf-core": 67,
+    "snakemake": 32,
+    "wdl": 26,
+    "apple-shortcuts": 65,
+    "comfyui": 49,
+    "home-assistant": 30,
+    "ifttt": 2,
+    "inngest-agentkit": 2,
+    "langgraph": 1,
+    "llamaindex-workflows": 1,
+    "mastra": 2,
+    "pydantic-graph": 1,
+    "smolagents": 1
+   },
+   "clusters": {
+    "automation": 199,
+    "orchestration": 163,
+    "science": 242,
+    "consumer-creative": 146,
+    "agentic": 8
+   },
+   "examples": [
+    "airflow:apache-airflow-providers-akeyless/tests/system/akeyless/example_dag_akeyless#example_akeyless [oracle]",
+    "tekton:v1/pipelineruns/pipelinerun-using-different-subpaths-of-workspace [oracle]",
+    "galaxy:iwc/clinicalmp-database-generation/iwc-clinicalmp-database-generation [oracle]",
+    "dagster:quickstart_etl [oracle]"
+   ],
+   "edge": {},
+   "nPlatforms": 32
+  },
+  {
+   "id": "P02",
+   "name": "fetch -> transform -> write (sync / ETL)",
+   "family": "spine",
+   "items": 348,
+   "viaNode": 0,
+   "viaToken": 0,
+   "viaPlumbing": 348,
+   "oracle": 57,
+   "platforms": {
+    "activepieces": 17,
+    "dify": 5,
+    "langflow": 3,
+    "n8n": 72,
+    "node-red": 16,
+    "zapier": 15,
+    "airflow": 6,
+    "dagster": 1,
+    "github-actions": 56,
+    "cwl": 3,
+    "nextflow": 6,
+    "nf-core": 20,
+    "snakemake": 6,
+    "apple-shortcuts": 64,
+    "comfyui": 44,
+    "home-assistant": 1,
+    "ifttt": 2,
+    "autogen": 1,
+    "crewai": 1,
+    "dspy": 1,
+    "inngest-agentkit": 2,
+    "mastra": 1,
+    "openai-swarm": 1,
+    "pydantic-graph": 1,
+    "smolagents": 3
+   },
+   "clusters": {
+    "automation": 128,
+    "orchestration": 63,
+    "science": 35,
+    "consumer-creative": 111,
+    "agentic": 11
+   },
+   "examples": [
+    "dspy:dspy/docs/docs/tutorials/customer_service_agent/index.ipynb#airline-react-agent [oracle]",
+    "smolagents:smolagents/examples/open_deep_research/run_gaia.py#gaia-batch-team-reformulator [oracle]",
+    "openai-swarm:swarm/examples/customer_service_streaming/src/swarm/engines/local_engine.py#local-planner-engine [oracle]",
+    "airflow:apache-airflow-providers-amazon/tests/system/amazon/aws/example_emr_eks#example_emr_eks [oracle]"
+   ],
+   "edge": {},
+   "nPlatforms": 25
+  },
+  {
+   "id": "P37",
+   "name": "webhook -> validate -> act -> respond",
+   "family": "trigger",
+   "items": 282,
+   "viaNode": 235,
+   "viaToken": 47,
+   "viaPlumbing": 0,
+   "oracle": 22,
+   "platforms": {
+    "activepieces": 8,
+    "flowise": 21,
+    "langflow": 23,
+    "n8n": 65,
+    "node-red": 11,
+    "zapier": 23,
+    "github-actions": 72,
+    "gitlab-ci": 41,
+    "home-assistant": 2,
+    "ifttt": 3,
+    "anthropic": 2,
+    "dspy": 1,
+    "google-adk": 1,
+    "mastra": 3,
+    "pydantic-graph": 1,
+    "semantic-kernel": 1,
+    "smolagents": 2,
+    "strands": 2
+   },
+   "clusters": {
+    "automation": 151,
+    "orchestration": 113,
+    "consumer-creative": 5,
+    "agentic": 13
+   },
+   "examples": [
+    "mastra:mastra/templates/template-customer-refund-agent/src/mastra/agents/support-supervisor.ts [oracle]",
+    "google-adk:adk-samples/core/python/ambient-expense-agent/expense_agent/agent.py [oracle]",
+    "dspy:dspy/docs/docs/tutorials/output_refinement/best-of-n-and-refine.md#refine-factuality-judge [oracle]",
+    "strands:samples/python/07-ux-demos/human-in-the-loop-approval-agent/src/main.py [oracle]"
+   ],
+   "edge": {
+    "notify (slack/email/chat)": 8,
+    "cache": 9,
+    "state store / memory": 9,
+    "backoff/delay between tries": 2,
+    "validate / schema": 66,
+    "timeout": 12,
+    "continue-on-error / fail-fast off": 18,
+    "cancel": 7,
+    "approve / reject": 2,
+    "retry": 7,
+    "default / fallback value": 3,
+    "pagination / cursor": 1
+   },
+   "edgeEx": {
+    "notify (slack/email/chat)": [
+     "activepieces:zSMIK2YM89m6LyKXRqUPR",
+     "n8n:12264"
+    ],
+    "cache": [
+     "flowise:agentflows-agentic-rag",
+     "flowise:agentflows-essay-writing-grading"
+    ],
+    "state store / memory": [
+     "flowise:agentflows-agentic-rag",
+     "flowise:agentflows-essay-writing-grading"
+    ],
+    "backoff/delay between tries": [
+     "zapier:289d9556c621",
+     "zapier:88fc70d2ce09"
+    ],
+    "validate / schema": [
+     "github-actions:DZakh/sury/.github/workflows/ci.yml",
+     "github-actions:GitoxideLabs/gitoxide/.github/workflows/release.yml"
+    ],
+    "timeout": [
+     "github-actions:Lightning-AI/pytorch-lightning/.github/workflows/ci-pytorch_test-slow.yml",
+     "github-actions:PhilDL/react-router-gospel-stack/.github/workflows/deploy.yml"
+    ],
+    "continue-on-error / fail-fast off": [
+     "github-actions:Lightning-AI/pytorch-lightning/.github/workflows/ci-pytorch_test-slow.yml",
+     "github-actions:MODFLOW-ORG/modflow6/.github/workflows/ci.yml"
+    ],
+    "cancel": [
+     "github-actions:PhilDL/react-router-gospel-stack/.github/workflows/deploy.yml",
+     "github-actions:realm/realm-dotnet/.github/workflows/pr.yml"
+    ],
+    "approve / reject": [
+     "github-actions:opensearch-project/ml-commons/.github/workflows/CI-workflow.yml",
+     "pydantic-graph:pydantic-ai/examples/pydantic_ai_examples/slack_lead_qualifier"
+    ],
+    "retry": [
+     "gitlab-ci:gitlab.com/dependabot-gitlab/dependabot",
+     "gitlab-ci:gitlab.com/gitlab-org/charts/gitlab"
+    ],
+    "default / fallback value": [
+     "home-assistant:CCOSTAN/Home-AssistantConfig/config/packages/maintenance_log.yaml#automation/1",
+     "pydantic-graph:pydantic-ai/examples/pydantic_ai_examples/slack_lead_qualifier"
+    ],
+    "pagination / cursor": [
+     "anthropic:claude-cookbooks/managed_agents/sre_incident_responder.ipynb"
+    ]
+   },
+   "nPlatforms": 18
+  },
+  {
+   "id": "P38",
+   "name": "event -> guard -> act (automation rule)",
+   "family": "trigger",
+   "items": 252,
+   "viaNode": 207,
+   "viaToken": 45,
+   "viaPlumbing": 0,
+   "oracle": 16,
+   "platforms": {
+    "activepieces": 20,
+    "n8n": 63,
+    "node-red": 34,
+    "zapier": 21,
+    "airflow": 3,
+    "dagster": 1,
+    "github-actions": 2,
+    "prefect": 1,
+    "home-assistant": 70,
+    "ifttt": 7,
+    "ag2": 4,
+    "agno": 3,
+    "autogen": 7,
+    "crewai": 4,
+    "dspy": 1,
+    "google-adk": 1,
+    "inngest-agentkit": 5,
+    "semantic-kernel": 4,
+    "smolagents": 1
+   },
+   "clusters": {
+    "automation": 138,
+    "orchestration": 7,
+    "consumer-creative": 77,
+    "agentic": 30
+   },
+   "examples": [
+    "airflow:apache-airflow-providers-apache-kafka/tests/system/apache/kafka/example_dag_message_queue_trigger#example_kafka_watcher_2 [oracle]",
+    "dagster:docs_projects/project_ask_ai_dagster [oracle]",
+    "dspy:dspy/docs/docs/tutorials/dataframe_rlm/cohort_analysis/cohort_analysis_demo.ipynb#rlm-cohort-analysis [oracle]",
+    "n8n:4428 [oracle]"
+   ],
+   "edge": {
+    "notify (slack/email/chat)": 52,
+    "approve / reject": 2,
+    "state store / memory": 70,
+    "lock / concurrency": 5,
+    "pagination / cursor": 2,
+    "batch / chunk size": 3,
+    "backoff/delay between tries": 10,
+    "validate / schema": 4,
+    "default / fallback value": 10,
+    "checksum / integrity": 2,
+    "cancel": 2,
+    "retry": 2,
+    "cache": 3
+   },
+   "edgeEx": {
+    "notify (slack/email/chat)": [
+     "activepieces:3AzxIABbHE7PBCsBZfP3m",
+     "activepieces:8Vm5nLR5NRINOFw5e1rdk"
+    ],
+    "approve / reject": [
+     "activepieces:8Vm5nLR5NRINOFw5e1rdk",
+     "activepieces:M9UrOgu8uStPIaf0jijwI"
+    ],
+    "state store / memory": [
+     "activepieces:OZH5az2RIrvLKCr0bL47g",
+     "node-red:2e10a76fd27fe09e7baa7b3262727d41"
+    ],
+    "lock / concurrency": [
+     "activepieces:UslzViNdWBKKKprQuIA64",
+     "home-assistant:CCOSTAN/Home-AssistantConfig/config/packages/llmvision.yaml#automation/1"
+    ],
+    "pagination / cursor": [
+     "activepieces:UslzViNdWBKKKprQuIA64",
+     "google-adk:adk-python/contributing/samples/adk_team/adk_documentation/adk_release_analyzer/agent.py"
+    ],
+    "batch / chunk size": [
+     "n8n:6158",
+     "n8n:8200"
+    ],
+    "backoff/delay between tries": [
+     "node-red:31e21b0cf37a57315adb8095b1ed967a",
+     "home-assistant:CCOSTAN/Home-AssistantConfig/config/automation/Timed_Triggers/sunset_turn_on.yaml#0"
+    ],
+    "validate / schema": [
+     "github-actions:billabear/billabear/.github/workflows/main.yaml",
+     "github-actions:canboat/canboatjs/.github/workflows/test_canboat_changes.yml"
+    ],
+    "default / fallback value": [
+     "home-assistant:CCOSTAN/Home-AssistantConfig/config/packages/maintenance_log.yaml#automation/1",
+     "home-assistant:TheFes/HA-configuration/blueprints/automation/TheFes/telegram_command.yaml#0"
+    ],
+    "checksum / integrity": [
+     "agno:agno/cookbook/03_teams/02_modes/route/03_with_fallback.py#dev-help-router-fallback",
+     "inngest-agentkit:agent-kit/examples/deep-research/inngest/functions/deep-research.ts"
+    ],
+    "cancel": [
+     "autogen:autogen/python/docs/src/user-guide/core-user-guide/cookbook/tool-use-with-intervention.ipynb#user-approval-for-tool-execution",
+     "inngest-agentkit:agent-kit/examples/mem0-memory/multi-agent.ts"
+    ],
+    "retry": [
+     "autogen:autogen/python/samples/agentchat_chess_game/main.py#llm-vs-human-or-random-game-loop",
+     "inngest-agentkit:agent-kit/examples/swebench/inngest.ts#plan-then-edit-network"
+    ],
+    "cache": [
+     "autogen:autogen/python/samples/core_async_human_in_the_loop/main.py#scheduling-assistant-slow-human",
+     "autogen:autogen/python/samples/core_chess_game/main.py#two-llm-players-shared-board"
+    ]
+   },
+   "nPlatforms": 19
+  },
+  {
+   "id": "P08",
+   "name": "guard -> act (filter before an effect)",
+   "family": "branch",
+   "items": 229,
+   "viaNode": 229,
+   "viaToken": 0,
+   "viaPlumbing": 0,
+   "oracle": 53,
+   "platforms": {
+    "activepieces": 1,
+    "n8n": 41,
+    "node-red": 6,
+    "zapier": 18,
+    "airflow": 2,
+    "galaxy": 26,
+    "nextflow": 8,
+    "nf-core": 23,
+    "apple-shortcuts": 32,
+    "comfyui": 7,
+    "home-assistant": 62,
+    "crewai": 1,
+    "openai-agents": 1,
+    "pydantic-graph": 1
+   },
+   "clusters": {
+    "automation": 66,
+    "orchestration": 2,
+    "science": 57,
+    "consumer-creative": 101,
+    "agentic": 3
+   },
+   "examples": [
+    "airflow:apache-airflow-providers-amazon/tests/system/amazon/aws/example_bedrock#example_bedrock [oracle]",
+    "galaxy:iwc/multiplex-tissue-microarray-analysis/multiplex-tma [oracle]",
+    "nf-core:scrnaseq@4.2.0 [oracle]",
+    "nextflow:workflowhub/462 [oracle]"
+   ],
+   "edge": {
+    "notify (slack/email/chat)": 35,
+    "batch / chunk size": 24,
+    "pagination / cursor": 1,
+    "state store / memory": 40,
+    "dedupe / duplicate": 7,
+    "backoff/delay between tries": 14,
+    "cancel": 3,
+    "lock / concurrency": 11,
+    "checksum / integrity": 5,
+    "validate / schema": 13,
+    "cache": 1,
+    "default / fallback value": 5,
+    "timeout": 5,
+    "retry": 2
+   },
+   "edgeEx": {
+    "notify (slack/email/chat)": [
+     "n8n:10550",
+     "n8n:11138"
+    ],
+    "batch / chunk size": [
+     "n8n:11382",
+     "n8n:16586"
+    ],
+    "pagination / cursor": [
+     "n8n:12285"
+    ],
+    "state store / memory": [
+     "n8n:18427",
+     "node-red:2e10a76fd27fe09e7baa7b3262727d41"
+    ],
+    "dedupe / duplicate": [
+     "n8n:2658",
+     "n8n:9100"
+    ],
+    "backoff/delay between tries": [
+     "node-red:126c5409396061f1c3dfb21b215d4ae7",
+     "node-red:f37879ba8806713478e34c1f613af7f2"
+    ],
+    "cancel": [
+     "node-red:126c5409396061f1c3dfb21b215d4ae7",
+     "home-assistant:forum-688273"
+    ],
+    "lock / concurrency": [
+     "zapier:71b121303b32",
+     "zapier:d02a43a61e9e"
+    ],
+    "checksum / integrity": [
+     "galaxy:iwc/clinicalmp-discovery/iwc-clinicalmp-discovery-workflow",
+     "apple-shortcuts:workflowllm-seed-10229"
+    ],
+    "validate / schema": [
+     "nextflow:workflowhub/2239",
+     "nextflow:workflowhub/452"
+    ],
+    "cache": [
+     "nf-core:taxprofiler@2.0.1"
+    ],
+    "default / fallback value": [
+     "home-assistant:CCOSTAN/Home-AssistantConfig/config/automation/Timed_Triggers/sunset_turn_on.yaml#0",
+     "home-assistant:dannytsang/homeassistant-config/packages/home.yaml#script/lock_house"
+    ],
+    "timeout": [
+     "home-assistant:TheFes/HA-configuration/packages/00-general/voice_satellite/soundbar_and_tv_on_voice_command.yaml#automation/0",
+     "home-assistant:forum-509992"
+    ],
+    "retry": [
+     "crewai:crewAI-examples/notebooks/Coding%20Assistant/coding_assistant_eval.ipynb#llm-code-generate-exec-check-fix",
+     "openai-agents:openai-agents-python/examples/financial_research_agent/manager.py"
+    ]
+   },
+   "nPlatforms": 14
+  },
+  {
+   "id": "P18",
+   "name": "best-of-N / sectioning with a verifier",
+   "family": "fan",
+   "items": 225,
+   "viaNode": 0,
+   "viaToken": 0,
+   "viaPlumbing": 225,
+   "oracle": 51,
+   "platforms": {
+    "activepieces": 6,
+    "coze": 2,
+    "dify": 8,
+    "flowise": 5,
+    "langflow": 1,
+    "n8n": 55,
+    "zapier": 1,
+    "airflow": 3,
+    "dagster": 2,
+    "nextflow": 3,
+    "nf-core": 7,
+    "snakemake": 2,
+    "wdl": 5,
+    "apple-shortcuts": 1,
+    "comfyui": 49,
+    "ag2": 2,
+    "agno": 4,
+    "anthropic": 3,
+    "autogen": 3,
+    "burr": 1,
+    "camel": 3,
+    "claude-code-workflows": 7,
+    "crewai": 5,
+    "dspy": 3,
+    "google-adk": 8,
+    "inngest-agentkit": 5,
+    "langgraph": 1,
+    "llamaindex-workflows": 1,
+    "mastra": 3,
+    "metagpt": 3,
+    "openai-agents": 8,
+    "pydantic-graph": 4,
+    "semantic-kernel": 3,
+    "smolagents": 3,
+    "strands": 5
+   },
+   "clusters": {
+    "automation": 78,
+    "orchestration": 5,
+    "science": 17,
+    "consumer-creative": 50,
+    "agentic": 68,
+    "first-party": 7
+   },
+   "examples": [
+    "coze:subworkflow-top-workflow [oracle]",
+    "pydantic-graph:pydantic-ai/docs/deferred-tools.md#tool_requires_approval [oracle]",
+    "dagster:docs_projects/project_ask_ai_dagster [oracle]",
+    "camel:camel/examples/ai_society/role_playing.py#specified-task-user-assistant-dialogue [oracle]"
+   ],
+   "edge": {},
+   "nPlatforms": 35
+  },
+  {
+   "id": "P54",
+   "name": "decompose into called sub-workflows (call by hash)",
+   "family": "compose",
+   "items": 221,
+   "viaNode": 196,
+   "viaToken": 25,
+   "viaPlumbing": 0,
+   "oracle": 11,
+   "platforms": {
+    "coze": 5,
+    "n8n": 10,
+    "node-red": 7,
+    "zapier": 3,
+    "airflow": 1,
+    "argo": 10,
+    "dagster": 1,
+    "github-actions": 11,
+    "gitlab-ci": 10,
+    "prefect": 3,
+    "temporal": 4,
+    "cwl": 18,
+    "snakemake": 2,
+    "apple-shortcuts": 60,
+    "comfyui": 28,
+    "home-assistant": 43,
+    "burr": 1,
+    "google-adk": 1,
+    "mastra": 1,
+    "pydantic-graph": 1,
+    "semantic-kernel": 1
+   },
+   "clusters": {
+    "automation": 25,
+    "orchestration": 40,
+    "science": 20,
+    "consumer-creative": 131,
+    "agentic": 5
+   },
+   "examples": [
+    "airflow:apache-airflow-providers-openlineage/tests/system/openlineage/example_openlineage_trigger_dag_deferrable#openlineage_trigger_dag_deferrable [oracle]",
+    "temporal:samples-go/pso [oracle]",
+    "coze:copy-to-app-main [oracle]",
+    "google-adk:adk-python/contributing/samples/workflows/nested_workflow/agent.py [oracle]"
+   ],
+   "edge": {
+    "notify (slack/email/chat)": 28,
+    "backoff/delay between tries": 14,
+    "batch / chunk size": 10,
+    "cancel": 39,
+    "validate / schema": 10,
+    "approve / reject": 3,
+    "timeout": 7,
+    "continue-on-error / fail-fast off": 2,
+    "cache": 2,
+    "retry": 2,
+    "pagination / cursor": 10,
+    "checksum / integrity": 6,
+    "default / fallback value": 10,
+    "state store / memory": 24,
+    "lock / concurrency": 2
+   },
+   "edgeEx": {
+    "notify (slack/email/chat)": [
+     "n8n:13115",
+     "zapier:cc752ab51755"
+    ],
+    "backoff/delay between tries": [
+     "node-red:5203cdf15000bd64d1da800a005bab55",
+     "apple-shortcuts:icloud-0f8a1267edde48efa50de6a35a8bcdbd"
+    ],
+    "batch / chunk size": [
+     "zapier:77aa08af5769",
+     "comfyui:Comfy-Org-workflow_templates-templates-templates-1_click_multiple_character_angles-v1.0.json"
+    ],
+    "cancel": [
+     "airflow:apache-airflow-providers-openlineage/tests/system/openlineage/example_openlineage_trigger_dag_deferrable#openlineage_trigger_dag_deferrable",
+     "github-actions:opsmill/infrahub/.github/workflows/ci.yml"
+    ],
+    "validate / schema": [
+     "github-actions:kyverno/kyverno/.github/workflows/release.yaml",
+     "github-actions:opsmill/infrahub/.github/workflows/ci.yml"
+    ],
+    "approve / reject": [
+     "github-actions:opensearch-project/ml-commons/.github/workflows/CI-workflow.yml",
+     "pydantic-graph:pydantic-ai/examples/pydantic_ai_examples/slack_lead_qualifier"
+    ],
+    "timeout": [
+     "github-actions:opsmill/infrahub/.github/workflows/ci.yml",
+     "github-actions:realm/realm-dotnet/.github/workflows/pr.yml"
+    ],
+    "continue-on-error / fail-fast off": [
+     "github-actions:opsmill/infrahub/.github/workflows/ci.yml",
+     "github-actions:oxy-hq/oxy/.github/workflows/public-nightly-build.yml"
+    ],
+    "cache": [
+     "github-actions:pyvista/pyvista/.github/workflows/docs.yml",
+     "comfyui:Comfy-Org-workflow_templates-templates-video_wan_animate2_distilled.json"
+    ],
+    "retry": [
+     "gitlab-ci:gitlab.com/gitlab-org/gitlab",
+     "gitlab-ci:gitlab.com/gitlab-org/gitlab-runner"
+    ],
+    "pagination / cursor": [
+     "gitlab-ci:gitlab.com/gitlab-org/gitlab",
+     "apple-shortcuts:icloud-a11bc672b88044bc8cf795f2e0956103"
+    ],
+    "checksum / integrity": [
+     "apple-shortcuts:workflowllm-seed-00061",
+     "apple-shortcuts:workflowllm-seed-00823"
+    ],
+    "default / fallback value": [
+     "comfyui:jakechai-ComfyUI-JakeUpgrade-Workflow-ComfyUI-Main-img2mesh-JK_workflow_img2mesh_Hunyuan3DWrapper.json",
+     "home-assistant:CCOSTAN/Home-AssistantConfig/config/packages/maintenance_log.yaml#automation/1"
+    ],
+    "state store / memory": [
+     "home-assistant:CCOSTAN/Home-AssistantConfig/config/automation/Speech/garbage_day_garage.yaml#0",
+     "home-assistant:CCOSTAN/Home-AssistantConfig/config/packages/docker_infrastructure.yaml#script/docker_container_repairs_sync"
+    ],
+    "lock / concurrency": [
+     "google-adk:adk-python/contributing/samples/workflows/nested_workflow/agent.py",
+     "mastra:mastra/examples/agent/src/mastra/dynamic-workflows/daily-standup-digest.json"
+    ]
+   },
+   "nPlatforms": 21
+  },
+  {
+   "id": "P27",
+   "name": "error route -> notify / cleanup (error workflow)",
+   "family": "failure",
+   "items": 215,
+   "viaNode": 174,
+   "viaToken": 41,
+   "viaPlumbing": 0,
+   "oracle": 108,
+   "platforms": {
+    "activepieces": 9,
+    "dify": 2,
+    "n8n": 45,
+    "node-red": 4,
+    "airflow": 1,
+    "argo": 8,
+    "dagster": 2,
+    "github-actions": 36,
+    "gitlab-ci": 3,
+    "kubeflow": 1,
+    "tekton": 10,
+    "galaxy": 4,
+    "nextflow": 6,
+    "nf-core": 60,
+    "snakemake": 11,
+    "anthropic": 1,
+    "dspy": 1,
+    "inngest-agentkit": 1,
+    "llamaindex-workflows": 1,
+    "mastra": 1,
+    "openai-agents": 3,
+    "pydantic-graph": 1,
+    "smolagents": 3,
+    "strands": 1
+   },
+   "clusters": {
+    "automation": 60,
+    "orchestration": 61,
+    "science": 81,
+    "agentic": 13
+   },
+   "examples": [
+    "tekton:v1/pipelineruns/pipelinerun-with-final-results [oracle]",
+    "airflow:apache-airflow-providers-openlineage/tests/system/openlineage/example_openlineage_custom_operator_failure_dag#openlineage_custom_operator_failure_dag [oracle]",
+    "kubeflow:valid/failing/pipeline_with_multiple_exit_handlers [oracle]",
+    "strands:tools/src/strands_tools/workflow.py [oracle]"
+   ],
+   "edge": {
+    "cancel": 19,
+    "notify (slack/email/chat)": 9,
+    "batch / chunk size": 2,
+    "backoff/delay between tries": 1,
+    "cache": 7,
+    "state store / memory": 13,
+    "continue-on-error / fail-fast off": 10,
+    "validate / schema": 19,
+    "checksum / integrity": 2,
+    "default / fallback value": 2,
+    "lock / concurrency": 4,
+    "approve / reject": 2,
+    "pagination / cursor": 2,
+    "timeout": 5,
+    "retry": 8,
+    "rate limit / throttle": 1
+   },
+   "edgeEx": {
+    "cancel": [
+     "n8n:11493",
+     "n8n:11772"
+    ],
+    "notify (slack/email/chat)": [
+     "n8n:11807",
+     "n8n:12264"
+    ],
+    "batch / chunk size": [
+     "n8n:18746",
+     "inngest-agentkit:agent-kit/examples/use-agent/inngest/sql-agents/network.ts"
+    ],
+    "backoff/delay between tries": [
+     "node-red:0cc3b1d4f7e159800c01c650c30752ae"
+    ],
+    "cache": [
+     "argo:ci-workflowtemplate",
+     "github-actions:aws/s2n-quic/.github/workflows/ci.yml"
+    ],
+    "state store / memory": [
+     "argo:ci-workflowtemplate",
+     "argo:daemoned-stateful-set-with-service"
+    ],
+    "continue-on-error / fail-fast off": [
+     "github-actions:MODFLOW-ORG/modflow6/.github/workflows/ci.yml",
+     "github-actions:aws/s2n-quic/.github/workflows/ci.yml"
+    ],
+    "validate / schema": [
+     "github-actions:MODFLOW-ORG/modflow6/.github/workflows/ci.yml",
+     "github-actions:aio-libs/multidict/.github/workflows/ci.yml"
+    ],
+    "checksum / integrity": [
+     "github-actions:aws/s2n-quic/.github/workflows/ci.yml",
+     "github-actions:protonemedia/laravel-splade/.github/workflows/run-table-tests.yml"
+    ],
+    "default / fallback value": [
+     "github-actions:bytecodealliance/wasmtime/.github/workflows/main.yml",
+     "mastra:mastra/templates/template-security-incident-triage/src/mastra/workflows/security-incident-workflow.ts"
+    ],
+    "lock / concurrency": [
+     "github-actions:bytecodealliance/wasmtime/.github/workflows/main.yml",
+     "mastra:mastra/templates/template-security-incident-triage/src/mastra/workflows/security-incident-workflow.ts"
+    ],
+    "approve / reject": [
+     "github-actions:bytecodealliance/wasmtime/.github/workflows/main.yml",
+     "mastra:mastra/templates/template-security-incident-triage/src/mastra/workflows/security-incident-workflow.ts"
+    ],
+    "pagination / cursor": [
+     "github-actions:bytecodealliance/wasmtime/.github/workflows/main.yml",
+     "github-actions:firedrakeproject/firedrake/.github/workflows/core.yml"
+    ],
+    "timeout": [
+     "github-actions:kubeflow/pipelines/.github/workflows/ai-analyzer.lock.yml",
+     "github-actions:opsmill/infrahub/.github/workflows/ci.yml"
+    ],
+    "retry": [
+     "github-actions:protonemedia/laravel-splade/.github/workflows/run-table-tests.yml",
+     "gitlab-ci:gitlab.com/gitlab-org/gitlab"
+    ],
+    "rate limit / throttle": [
+     "strands:tools/src/strands_tools/workflow.py"
+    ]
+   },
+   "nPlatforms": 24
+  },
+  {
+   "id": "P05",
+   "name": "prompt chain with typed hand-offs",
+   "family": "spine",
+   "items": 212,
+   "viaNode": 212,
+   "viaToken": 0,
+   "viaPlumbing": 0,
+   "oracle": 42,
+   "platforms": {
+    "activepieces": 2,
+    "dify": 19,
+    "flowise": 37,
+    "langflow": 7,
+    "n8n": 94,
+    "airflow": 9,
+    "dagster": 5,
+    "github-actions": 1,
+    "temporal": 1,
+    "galaxy": 1,
+    "nextflow": 5,
+    "nf-core": 6,
+    "snakemake": 3,
+    "wdl": 4,
+    "apple-shortcuts": 2,
+    "anthropic": 1,
+    "autogen": 1,
+    "crewai": 3,
+    "dspy": 1,
+    "google-adk": 2,
+    "langgraph": 3,
+    "mastra": 1,
+    "metagpt": 1,
+    "openai-agents": 2,
+    "pydantic-graph": 1
+   },
+   "clusters": {
+    "automation": 159,
+    "orchestration": 16,
+    "science": 19,
+    "consumer-creative": 2,
+    "agentic": 16
+   },
+   "examples": [
+    "dagster:docs_projects/project_prompt_eng [oracle]",
+    "temporal:samples-python/langfuse_tracing/ticket_triage [oracle]",
+    "airflow:apache-airflow-providers-amazon/tests/system/amazon/aws/example_bedrock_batch_inference#example_bedrock_batch_inference [oracle]",
+    "google-adk:adk-python/contributing/samples/workflows/nested_workflow/agent.py [oracle]"
+   ],
+   "edge": {
+    "default / fallback value": 7,
+    "state store / memory": 13,
+    "notify (slack/email/chat)": 7,
+    "batch / chunk size": 6,
+    "cache": 1,
+    "cancel": 3,
+    "validate / schema": 4,
+    "timeout": 1,
+    "retry": 2,
+    "checksum / integrity": 4,
+    "pagination / cursor": 1,
+    "lock / concurrency": 3,
+    "approve / reject": 1
+   },
+   "edgeEx": {
+    "default / fallback value": [
+     "dify:mkt-1b5493cc-7099-4ef0-8990-21e73a7f85a1",
+     "dify:mkt-431dd20f-f47e-4e60-afba-2c45c93dea17"
+    ],
+    "state store / memory": [
+     "dify:repo-18f3bd03-524d-4d7a-8374-b30dbe7c69d5",
+     "n8n:11605"
+    ],
+    "notify (slack/email/chat)": [
+     "dify:repo-e9d92058-7d20-4904-892f-75d90bef7587",
+     "n8n:14008"
+    ],
+    "batch / chunk size": [
+     "n8n:12694",
+     "airflow:apache-airflow-providers-amazon/tests/system/amazon/aws/example_bedrock_batch_inference#example_bedrock_batch_inference"
+    ],
+    "cache": [
+     "n8n:6003"
+    ],
+    "cancel": [
+     "airflow:apache-airflow-providers-amazon/tests/system/amazon/aws/example_bedrock_batch_inference#example_bedrock_batch_inference",
+     "airflow:apache-airflow-providers-google/tests/system/google/cloud/gen_ai/example_gen_ai_gemini_batch_api#gen_ai_gemini_batch_api"
+    ],
+    "validate / schema": [
+     "airflow:apache-airflow-providers-common-ai/src/airflow/providers/common/ai/example_dags/example_aip_progress_tracker#example_aip_progress_tracker",
+     "nextflow:workflowhub/1960"
+    ],
+    "timeout": [
+     "airflow:apache-airflow-providers-google/tests/system/google/cloud/vertex_ai/example_vertex_ai_agent_engine#vertex_ai_agent_engine_operations"
+    ],
+    "retry": [
+     "temporal:samples-python/langfuse_tracing/ticket_triage",
+     "langgraph:langgraph/docs/docs/tutorials/reflexion/reflexion.ipynb"
+    ],
+    "checksum / integrity": [
+     "wdl:github.com/PacificBiosciences/HiFi-human-WGS-WDL/HiFi-human-WGS-WDL-family:main",
+     "wdl:github.com/PacificBiosciences/HiFi-human-WGS-WDL/HiFi-human-WGS-WDL-singleton:main"
+    ],
+    "pagination / cursor": [
+     "google-adk:adk-python/contributing/samples/multi_agent/multi_agent_loop_config/root_agent.yaml"
+    ],
+    "lock / concurrency": [
+     "google-adk:adk-python/contributing/samples/workflows/nested_workflow/agent.py",
+     "mastra:mastra/examples/agent/src/mastra/dynamic-workflows/daily-standup-digest.json"
+    ],
+    "approve / reject": [
+     "openai-agents:openai-agents-python/examples/agent_patterns/deterministic.py"
+    ]
+   },
+   "nPlatforms": 25
+  },
+  {
+   "id": "P45",
+   "name": "capped tool loop (agent node + parent-side verify)",
+   "family": "agentic",
+   "items": 209,
+   "viaNode": 201,
+   "viaToken": 8,
+   "viaPlumbing": 0,
+   "oracle": 44,
+   "platforms": {
+    "activepieces": 1,
+    "dify": 1,
+    "flowise": 20,
+    "langflow": 13,
+    "n8n": 64,
+    "ag2": 1,
+    "agno": 8,
+    "anthropic": 7,
+    "autogen": 3,
+    "burr": 3,
+    "camel": 2,
+    "claude-code-workflows": 10,
+    "crewai": 7,
+    "dspy": 3,
+    "google-adk": 9,
+    "haystack": 4,
+    "inngest-agentkit": 3,
+    "langgraph": 8,
+    "llamaindex-workflows": 5,
+    "mastra": 4,
+    "openai-agents": 8,
+    "openai-swarm": 2,
+    "pydantic-graph": 6,
+    "semantic-kernel": 2,
+    "smolagents": 6,
+    "strands": 9
+   },
+   "clusters": {
+    "automation": 99,
+    "agentic": 100,
+    "first-party": 10
+   },
+   "examples": [
+    "langgraph:memory-agent/src/memory_agent/graph.py [oracle]",
+    "openai-swarm:swarm/examples/weather_agent/agents.py#weather-tool-loop-stream [oracle]",
+    "pydantic-graph:pydantic-ai/docs/deferred-tools.md#tool_requires_approval [oracle]",
+    "google-adk:adk-python/contributing/samples/live/workflow/agent.py [oracle]"
+   ],
+   "edge": {
+    "notify (slack/email/chat)": 27,
+    "default / fallback value": 31,
+    "validate / schema": 39,
+    "pagination / cursor": 16,
+    "cache": 66,
+    "state store / memory": 116,
+    "batch / chunk size": 12,
+    "cancel": 23,
+    "approve / reject": 22,
+    "lock / concurrency": 26,
+    "checksum / integrity": 18,
+    "retry": 12,
+    "timeout": 7,
+    "dedupe / duplicate": 3,
+    "rate limit / throttle": 1
+   },
+   "edgeEx": {
+    "notify (slack/email/chat)": [
+     "activepieces:71gZO0fNzDjf7Zn4uPAlU",
+     "flowise:agentflowsv2-human-in-the-loop"
+    ],
+    "default / fallback value": [
+     "dify:mkt-af77d983-99a2-4872-9e89-65e6980a3895",
+     "agno:agno/cookbook/04_workflows/05_conditional_branching/selector_media_pipeline.py#image-or-video-pipeline-router"
+    ],
+    "validate / schema": [
+     "flowise:agentflowsv2-deep-research-with-multi-turn-conversations",
+     "ag2:ag2/notebook/agentchat_nestedchat.ipynb#writer-critic-nested-chat-with-tool"
+    ],
+    "pagination / cursor": [
+     "flowise:agentflowsv2-deep-research-with-multi-turn-conversations",
+     "flowise:agentflowsv2-deep-research-with-subagents"
+    ],
+    "cache": [
+     "flowise:chatflows-conversational-agent",
+     "flowise:chatflows-multiple-documents-qn-a"
+    ],
+    "state store / memory": [
+     "flowise:chatflows-conversational-agent",
+     "flowise:chatflows-multiple-documents-qn-a"
+    ],
+    "batch / chunk size": [
+     "n8n:10156",
+     "n8n:13119"
+    ],
+    "cancel": [
+     "ag2:ag2/notebook/agentchat_nestedchat.ipynb#writer-critic-nested-chat-with-tool",
+     "agno:agno/cookbook/04_workflows/03_loop_execution/loop_with_parallel.py#research-loop-parallel-then-content"
+    ],
+    "approve / reject": [
+     "ag2:ag2/notebook/agentchat_nestedchat.ipynb#writer-critic-nested-chat-with-tool",
+     "agno:agno/cookbook/04_workflows/08_human_in_the_loop/dual_level_hitl/09_multi_step_mixed_hitl.py#project-plan-mixed-hitl"
+    ],
+    "lock / concurrency": [
+     "agno:agno/cookbook/03_teams/02_modes/broadcast/03_research_sweep.py#research-sweep-broadcast",
+     "agno:agno/cookbook/03_teams/02_modes/tasks/09_custom_tools.py#financial-advisory-task-board"
+    ],
+    "checksum / integrity": [
+     "agno:agno/cookbook/03_teams/21_state/nested_shared_state.py#shopping-meal-nested-teams",
+     "burr:burr/examples/multi-agent-collaboration/hamilton/application.py"
+    ],
+    "retry": [
+     "agno:agno/cookbook/04_workflows/08_human_in_the_loop/dual_level_hitl/09_multi_step_mixed_hitl.py#project-plan-mixed-hitl",
+     "camel:camel/examples/workforce/hackathon_judges.py#auto-decompose-judge-panel"
+    ],
+    "timeout": [
+     "anthropic:claude-cookbooks/claude_agent_sdk/03_The_site_reliability_agent.ipynb",
+     "dspy:dspy/docs/docs/tutorials/tool_use/index.ipynb#toolhop-runtime-tool-set"
+    ],
+    "dedupe / duplicate": [
+     "claude-code-workflows:claude-session/workflows/scripts/workflow-corpus-acquisition-wf_c6d2acc2-f96.js",
+     "google-adk:adk-python/contributing/samples/adk_team/adk_documentation/adk_release_analyzer/agent.py"
+    ],
+    "rate limit / throttle": [
+     "strands:tools/src/strands_tools/workflow.py"
+    ]
+   },
+   "nPlatforms": 26
+  },
+  {
+   "id": "P07",
+   "name": "router by kind (judged classify, then dispatch)",
+   "family": "branch",
+   "items": 193,
+   "viaNode": 193,
+   "viaToken": 0,
+   "viaPlumbing": 0,
+   "oracle": 35,
+   "platforms": {
+    "activepieces": 9,
+    "coze": 1,
+    "dify": 23,
+    "flowise": 12,
+    "n8n": 57,
+    "zapier": 3,
+    "airflow": 1,
+    "dagster": 1,
+    "nextflow": 1,
+    "nf-core": 4,
+    "apple-shortcuts": 4,
+    "comfyui": 10,
+    "home-assistant": 1,
+    "ag2": 2,
+    "agno": 3,
+    "anthropic": 3,
+    "autogen": 2,
+    "burr": 5,
+    "camel": 2,
+    "crewai": 4,
+    "dspy": 6,
+    "google-adk": 4,
+    "haystack": 3,
+    "inngest-agentkit": 6,
+    "langgraph": 2,
+    "llamaindex-workflows": 5,
+    "mastra": 4,
+    "metagpt": 2,
+    "openai-agents": 3,
+    "pydantic-graph": 2,
+    "semantic-kernel": 3,
+    "strands": 5
+   },
+   "clusters": {
+    "automation": 105,
+    "orchestration": 2,
+    "science": 5,
+    "consumer-creative": 15,
+    "agentic": 66
+   },
+   "examples": [
+    "pydantic-graph:pydantic-ai/docs/graph.md#genai_email_feedback [oracle]",
+    "coze:query-types-llm-intent-http-nodes [oracle]",
+    "strands:sdk-python/site/docs/examples/python/graph_loops_example.py [oracle]",
+    "google-adk:adk-python/contributing/samples/workflows/request_input/agent.py [oracle]"
+   ],
+   "edge": {
+    "notify (slack/email/chat)": 25,
+    "state store / memory": 45,
+    "default / fallback value": 32,
+    "validate / schema": 28,
+    "pagination / cursor": 9,
+    "cache": 13,
+    "batch / chunk size": 14,
+    "dedupe / duplicate": 4,
+    "retry": 14,
+    "backoff/delay between tries": 1,
+    "rate limit / throttle": 1,
+    "lock / concurrency": 10,
+    "approve / reject": 12,
+    "cancel": 12,
+    "checksum / integrity": 6,
+    "timeout": 2
+   },
+   "edgeEx": {
+    "notify (slack/email/chat)": [
+     "activepieces:3AzxIABbHE7PBCsBZfP3m",
+     "activepieces:b5KWB4fzJtRoyYLC5RZaP"
+    ],
+    "state store / memory": [
+     "activepieces:OZH5az2RIrvLKCr0bL47g",
+     "dify:mkt-431dd20f-f47e-4e60-afba-2c45c93dea17"
+    ],
+    "default / fallback value": [
+     "dify:mkt-1b5493cc-7099-4ef0-8990-21e73a7f85a1",
+     "dify:mkt-431dd20f-f47e-4e60-afba-2c45c93dea17"
+    ],
+    "validate / schema": [
+     "flowise:agentflowsv2-agentic-rag",
+     "flowise:agentflowsv2-deep-research-with-multi-turn-conversations"
+    ],
+    "pagination / cursor": [
+     "flowise:agentflowsv2-deep-research-with-multi-turn-conversations",
+     "flowise:agentflowsv2-deep-research-with-subagents"
+    ],
+    "cache": [
+     "n8n:10850",
+     "n8n:11138"
+    ],
+    "batch / chunk size": [
+     "n8n:12177",
+     "n8n:2658"
+    ],
+    "dedupe / duplicate": [
+     "n8n:2658",
+     "google-adk:adk-python/contributing/samples/adk_team/adk_documentation/adk_release_analyzer/agent.py"
+    ],
+    "retry": [
+     "airflow:apache-airflow-providers-common-ai/src/airflow/providers/common/ai/example_dags/example_llm_retry_policy#example_llm_retry_policy",
+     "agno:agno/cookbook/03_teams/02_modes/route/03_with_fallback.py#dev-help-router-fallback"
+    ],
+    "backoff/delay between tries": [
+     "airflow:apache-airflow-providers-common-ai/src/airflow/providers/common/ai/example_dags/example_llm_retry_policy#example_llm_retry_policy"
+    ],
+    "rate limit / throttle": [
+     "airflow:apache-airflow-providers-common-ai/src/airflow/providers/common/ai/example_dags/example_llm_retry_policy#example_llm_retry_policy"
+    ],
+    "lock / concurrency": [
+     "nf-core:bacass@2.6.0",
+     "camel:camel/examples/workforce/hackathon_judges.py#auto-decompose-judge-panel"
+    ],
+    "approve / reject": [
+     "ag2:ag2/notebook/agentchat_groupchat_customized.ipynb#research-team-custom-speaker-function",
+     "agno:agno/cookbook/04_workflows/08_human_in_the_loop/output_review/05_full_review_cycle.py#output-review-approve-reject-cancel"
+    ],
+    "cancel": [
+     "agno:agno/cookbook/03_teams/02_modes/route/03_with_fallback.py#dev-help-router-fallback",
+     "agno:agno/cookbook/04_workflows/08_human_in_the_loop/output_review/05_full_review_cycle.py#output-review-approve-reject-cancel"
+    ],
+    "checksum / integrity": [
+     "agno:agno/cookbook/03_teams/02_modes/route/03_with_fallback.py#dev-help-router-fallback",
+     "inngest-agentkit:agent-kit/examples/deep-research/inngest/functions/deep-research.ts"
+    ],
+    "timeout": [
+     "metagpt:MetaGPT/examples/di/machine_learning.py#data-interpreter-plan-and-act",
+     "semantic-kernel:semantic-kernel/python/samples/getting_started_with_agents/multi_agent_orchestration/step1a_concurrent_structured_outputs.py#parallel-article-analysts-structured-merge"
+    ]
+   },
+   "nPlatforms": 32
+  },
+  {
+   "id": "P06",
+   "name": "retrieve -> generate (untrusted context)",
+   "family": "spine",
+   "items": 172,
+   "viaNode": 172,
+   "viaToken": 0,
+   "viaPlumbing": 0,
+   "oracle": 36,
+   "platforms": {
+    "activepieces": 15,
+    "dify": 22,
+    "flowise": 16,
+    "langflow": 7,
+    "n8n": 60,
+    "zapier": 3,
+    "airflow": 14,
+    "dagster": 2,
+    "github-actions": 1,
+    "temporal": 1,
+    "nextflow": 4,
+    "nf-core": 5,
+    "snakemake": 2,
+    "wdl": 4,
+    "ag2": 1,
+    "autogen": 1,
+    "burr": 1,
+    "crewai": 2,
+    "dspy": 1,
+    "haystack": 3,
+    "langgraph": 1,
+    "llamaindex-workflows": 2,
+    "mastra": 1,
+    "metagpt": 1,
+    "semantic-kernel": 1,
+    "smolagents": 1
+   },
+   "clusters": {
+    "automation": 123,
+    "orchestration": 18,
+    "science": 15,
+    "agentic": 16
+   },
+   "examples": [
+    "temporal:samples-python/langfuse_tracing/ticket_triage [oracle]",
+    "dagster:docs_projects/project_dagster_modal_pipes [oracle]",
+    "airflow:apache-airflow-providers-weaviate/tests/system/weaviate/example_weaviate_without_vectorizer_dag#example_weaviate_without_vectorizer_dag [oracle]",
+    "smolagents:smolagents/examples/open_deep_research/run_gaia.py#gaia-batch-team-reformulator [oracle]"
+   ],
+   "edge": {
+    "approve / reject": 4,
+    "notify (slack/email/chat)": 18,
+    "backoff/delay between tries": 1,
+    "state store / memory": 63,
+    "pagination / cursor": 2,
+    "default / fallback value": 3,
+    "validate / schema": 13,
+    "cache": 6,
+    "batch / chunk size": 6,
+    "cancel": 9,
+    "retry": 1,
+    "lock / concurrency": 5,
+    "checksum / integrity": 1
+   },
+   "edgeEx": {
+    "approve / reject": [
+     "activepieces:8Vm5nLR5NRINOFw5e1rdk",
+     "activepieces:M9UrOgu8uStPIaf0jijwI"
+    ],
+    "notify (slack/email/chat)": [
+     "activepieces:8Vm5nLR5NRINOFw5e1rdk",
+     "activepieces:GzlQwuSKib7oRw0vJ3rmh"
+    ],
+    "backoff/delay between tries": [
+     "activepieces:GzlQwuSKib7oRw0vJ3rmh"
+    ],
+    "state store / memory": [
+     "activepieces:OZH5az2RIrvLKCr0bL47g",
+     "activepieces:WSuSdjnA1rdJmIkfisphJ"
+    ],
+    "pagination / cursor": [
+     "activepieces:nZgzgfWU00LN2bFHmAS72",
+     "n8n:10550"
+    ],
+    "default / fallback value": [
+     "dify:mkt-fa1fa604-be00-4081-991d-5b1bffb74d27",
+     "ag2:ag2/autogen/agents/experimental/reasoning/reasoning_agent.py#tree-of-thought-beam-and-mcts-search"
+    ],
+    "validate / schema": [
+     "flowise:agentflowsv2-agentic-rag",
+     "n8n:4428"
+    ],
+    "cache": [
+     "flowise:chatflows-context-chat-engine",
+     "flowise:chatflows-conversation-chain"
+    ],
+    "batch / chunk size": [
+     "langflow:content-aggregator",
+     "n8n:8200"
+    ],
+    "cancel": [
+     "airflow:apache-airflow-providers-amazon/tests/system/amazon/aws/example_bedrock_batch_inference#example_bedrock_batch_inference",
+     "airflow:apache-airflow-providers-weaviate/tests/system/weaviate/example_weaviate_cohere#example_weaviate_cohere"
+    ],
+    "retry": [
+     "temporal:samples-python/langfuse_tracing/ticket_triage"
+    ],
+    "lock / concurrency": [
+     "nf-core:proteinfold@2.0.0",
+     "ag2:ag2/autogen/agents/experimental/reasoning/reasoning_agent.py#tree-of-thought-beam-and-mcts-search"
+    ],
+    "checksum / integrity": [
+     "wdl:github.com/shadizaheri/HiFi-human-WGS-WDL/HiFi_human_WGS_WDL_main:main"
+    ]
+   },
+   "nPlatforms": 26
+  },
+  {
+   "id": "P36",
+   "name": "scheduled batch (schedule -> read -> process -> write)",
+   "family": "trigger",
+   "items": 164,
+   "viaNode": 160,
+   "viaToken": 4,
+   "viaPlumbing": 0,
+   "oracle": 21,
+   "platforms": {
+    "activepieces": 15,
+    "dify": 2,
+    "n8n": 59,
+    "node-red": 24,
+    "zapier": 2,
+    "airflow": 5,
+    "argo": 1,
+    "dagster": 10,
+    "github-actions": 20,
+    "gitlab-ci": 1,
+    "prefect": 2,
+    "home-assistant": 17,
+    "ifttt": 4,
+    "pydantic-graph": 1,
+    "strands": 1
+   },
+   "clusters": {
+    "automation": 102,
+    "orchestration": 39,
+    "consumer-creative": 21,
+    "agentic": 2
+   },
+   "examples": [
+    "airflow:apache-airflow-providers-openlineage/tests/system/openlineage/example_openlineage_schedule_delta_trigger_timetable_dag#openlineage_schedule_delta_trigger_timetable_dag [oracle]",
+    "dagster:assets_modern_data_stack [oracle]",
+    "n8n:17901 [oracle]",
+    "prefect:prefect/docs/v3/how-to-guides/deployments/create-deployments.mdx"
+   ],
+   "edge": {
+    "notify (slack/email/chat)": 4,
+    "lock / concurrency": 5,
+    "pagination / cursor": 2,
+    "batch / chunk size": 2,
+    "backoff/delay between tries": 2,
+    "state store / memory": 12,
+    "validate / schema": 22,
+    "default / fallback value": 3,
+    "dedupe / duplicate": 1,
+    "continue-on-error / fail-fast off": 6,
+    "timeout": 3,
+    "cache": 2,
+    "cancel": 2
+   },
+   "edgeEx": {
+    "notify (slack/email/chat)": [
+     "n8n:11807",
+     "n8n:3891"
+    ],
+    "lock / concurrency": [
+     "n8n:17541",
+     "node-red:8b1159fd47b7f34ace103bdd46912b62"
+    ],
+    "pagination / cursor": [
+     "n8n:18407",
+     "dagster:ingestion-patterns"
+    ],
+    "batch / chunk size": [
+     "n8n:18754",
+     "dagster:docs_projects/project_mini"
+    ],
+    "backoff/delay between tries": [
+     "node-red:0c124990674bef5112d0e09d8e8f9d7e",
+     "node-red:0cc3b1d4f7e159800c01c650c30752ae"
+    ],
+    "state store / memory": [
+     "node-red:1b013cda55a8252806e6d23aa2e0a2e0",
+     "node-red:f37879ba8806713478e34c1f613af7f2"
+    ],
+    "validate / schema": [
+     "dagster:airlift-migration-tutorial",
+     "dagster:docs_projects/project_mini"
+    ],
+    "default / fallback value": [
+     "dagster:ingestion-patterns",
+     "home-assistant:forum-258664"
+    ],
+    "dedupe / duplicate": [
+     "dagster:snowflake_cortex"
+    ],
+    "continue-on-error / fail-fast off": [
+     "github-actions:Netflix/OpenVPCal/.github/workflows/main.yml",
+     "github-actions:aio-libs/multidict/.github/workflows/ci.yml"
+    ],
+    "timeout": [
+     "github-actions:agadmator-library/agadmator-library.github.io/.github/workflows/load-new-videos.yml",
+     "github-actions:aio-libs/multidict/.github/workflows/ci.yml"
+    ],
+    "cache": [
+     "github-actions:pyvista/pyvista/.github/workflows/docs.yml",
+     "strands:samples/python/01-learn/18-self-improving-agents/code/step-04-ambient/agent.py#ambient-scheduler"
+    ],
+    "cancel": [
+     "pydantic-graph:pydantic-ai/examples/pydantic_ai_examples/slack_lead_qualifier",
+     "strands:samples/python/01-learn/18-self-improving-agents/code/step-04-ambient/agent.py#ambient-scheduler"
+    ]
+   },
+   "nPlatforms": 15
+  },
+  {
+   "id": "P42",
+   "name": "cross-run state: seen-set / cursor / counter",
+   "family": "state",
+   "items": 157,
+   "viaNode": 0,
+   "viaToken": 157,
+   "viaPlumbing": 0,
+   "oracle": 17,
+   "platforms": {
+    "activepieces": 14,
+    "dify": 14,
+    "flowise": 14,
+    "langflow": 4,
+    "n8n": 56,
+    "node-red": 24,
+    "zapier": 7,
+    "agno": 3,
+    "burr": 1,
+    "crewai": 2,
+    "inngest-agentkit": 2,
+    "langgraph": 2,
+    "llamaindex-workflows": 2,
+    "mastra": 2,
+    "metagpt": 1,
+    "openai-agents": 2,
+    "openai-swarm": 1,
+    "pydantic-graph": 2,
+    "strands": 4
+   },
+   "clusters": {
+    "automation": 133,
+    "agentic": 24
+   },
+   "examples": [
+    "langgraph:memory-agent/src/memory_agent/graph.py [oracle]",
+    "openai-swarm:swarm/examples/weather_agent/agents.py#weather-tool-loop-stream [oracle]",
+    "mastra:mastra/templates/template-customer-refund-agent/src/mastra/agents/support-supervisor.ts [oracle]",
+    "strands:tools/src/strands_tools/workflow.py [oracle]"
+   ],
+   "edge": {},
+   "nPlatforms": 19
+  },
+  {
+   "id": "P17",
+   "name": "reconcile two sources (join, diff, classify discrepancies)",
+   "family": "fan",
+   "items": 147,
+   "viaNode": 0,
+   "viaToken": 0,
+   "viaPlumbing": 147,
+   "oracle": 35,
+   "platforms": {
+    "activepieces": 11,
+    "dify": 1,
+    "flowise": 1,
+    "n8n": 28,
+    "node-red": 3,
+    "zapier": 11,
+    "github-actions": 1,
+    "galaxy": 1,
+    "nextflow": 5,
+    "nf-core": 18,
+    "snakemake": 4,
+    "apple-shortcuts": 34,
+    "comfyui": 17,
+    "home-assistant": 1,
+    "agno": 2,
+    "crewai": 1,
+    "dspy": 1,
+    "google-adk": 2,
+    "haystack": 1,
+    "inngest-agentkit": 1,
+    "mastra": 1,
+    "pydantic-graph": 1,
+    "strands": 1
+   },
+   "clusters": {
+    "automation": 55,
+    "orchestration": 1,
+    "science": 28,
+    "consumer-creative": 52,
+    "agentic": 11
+   },
+   "examples": [
+    "mastra:mastra/templates/template-customer-refund-agent/src/mastra/agents/support-supervisor.ts [oracle]",
+    "strands:samples/python/07-ux-demos/human-in-the-loop-approval-agent/src/main.py [oracle]",
+    "dspy:dspy/docs/docs/tutorials/customer_service_agent/index.ipynb#airline-react-agent [oracle]",
+    "google-adk:adk-samples/contrib/python/small-business-loan-agent/app/agent.py [oracle]"
+   ],
+   "edge": {},
+   "nPlatforms": 23
+  },
+  {
+   "id": "P20",
+   "name": "generate -> verify -> retry (bounded)",
+   "family": "loop",
+   "items": 144,
+   "viaNode": 144,
+   "viaToken": 0,
+   "viaPlumbing": 0,
+   "oracle": 30,
+   "platforms": {
+    "activepieces": 9,
+    "dify": 2,
+    "flowise": 9,
+    "n8n": 16,
+    "apple-shortcuts": 2,
+    "comfyui": 2,
+    "home-assistant": 1,
+    "ag2": 3,
+    "agno": 6,
+    "anthropic": 5,
+    "autogen": 2,
+    "burr": 8,
+    "camel": 3,
+    "crewai": 5,
+    "dspy": 7,
+    "google-adk": 5,
+    "haystack": 5,
+    "inngest-agentkit": 6,
+    "langgraph": 13,
+    "llamaindex-workflows": 7,
+    "mastra": 3,
+    "metagpt": 3,
+    "openai-agents": 5,
+    "openai-swarm": 1,
+    "pydantic-graph": 4,
+    "semantic-kernel": 3,
+    "smolagents": 2,
+    "strands": 7
+   },
+   "clusters": {
+    "automation": 36,
+    "consumer-creative": 5,
+    "agentic": 103
+   },
+   "examples": [
+    "langgraph:memory-agent/src/memory_agent/graph.py [oracle]",
+    "pydantic-graph:pydantic-ai/docs/graph.md#genai_email_feedback [oracle]",
+    "strands:sdk-python/site/docs/examples/python/graph_loops_example.py [oracle]",
+    "camel:camel/examples/ai_society/role_playing.py#specified-task-user-assistant-dialogue [oracle]"
+   ],
+   "edge": {
+    "notify (slack/email/chat)": 11,
+    "state store / memory": 58,
+    "default / fallback value": 35,
+    "validate / schema": 42,
+    "pagination / cursor": 13,
+    "cache": 16,
+    "checksum / integrity": 7,
+    "batch / chunk size": 7,
+    "lock / concurrency": 24,
+    "approve / reject": 21,
+    "cancel": 30,
+    "retry": 21,
+    "timeout": 2,
+    "dedupe / duplicate": 1
+   },
+   "edgeEx": {
+    "notify (slack/email/chat)": [
+     "activepieces:WSuSdjnA1rdJmIkfisphJ",
+     "activepieces:iw58B4xeZqvYJJhTy91W6"
+    ],
+    "state store / memory": [
+     "activepieces:WSuSdjnA1rdJmIkfisphJ",
+     "activepieces:iw58B4xeZqvYJJhTy91W6"
+    ],
+    "default / fallback value": [
+     "dify:mkt-22fd4d00-f178-4c95-89d6-2e45370aa8d2",
+     "ag2:ag2/autogen/agents/experimental/reasoning/reasoning_agent.py#tree-of-thought-beam-and-mcts-search"
+    ],
+    "validate / schema": [
+     "flowise:agentflowsv2-agentic-rag",
+     "flowise:agentflowsv2-deep-research-with-multi-turn-conversations"
+    ],
+    "pagination / cursor": [
+     "flowise:agentflowsv2-agentic-rag",
+     "flowise:agentflowsv2-deep-research-with-multi-turn-conversations"
+    ],
+    "cache": [
+     "n8n:12120",
+     "n8n:5682"
+    ],
+    "checksum / integrity": [
+     "apple-shortcuts:workflowllm-seed-00030",
+     "burr:burr/examples/multi-agent-collaboration/hamilton/application.py"
+    ],
+    "batch / chunk size": [
+     "comfyui:jakechai-ComfyUI-JakeUpgrade-Workflow-ComfyUI-Main-img2mesh-JK_workflow_img2mesh_Hunyuan3DWrapper.json",
+     "comfyui:jakechai-ComfyUI-JakeUpgrade-Workflow-ComfyUI-Main-imgen-JK_workflow_imgen_SD3.json"
+    ],
+    "lock / concurrency": [
+     "ag2:ag2/autogen/agents/experimental/reasoning/reasoning_agent.py#tree-of-thought-beam-and-mcts-search",
+     "ag2:ag2/notebook/agentchat_groupchat_customized.ipynb#research-team-custom-speaker-function"
+    ],
+    "approve / reject": [
+     "ag2:ag2/notebook/agentchat_groupchat_customized.ipynb#research-team-custom-speaker-function",
+     "agno:agno/cookbook/04_workflows/08_human_in_the_loop/dual_level_hitl/09_multi_step_mixed_hitl.py#project-plan-mixed-hitl"
+    ],
+    "cancel": [
+     "ag2:ag2/notebook/agentchat_nestedchat.ipynb#writer-critic-nested-chat-with-tool",
+     "agno:agno/cookbook/03_teams/02_modes/tasks/09_custom_tools.py#financial-advisory-task-board"
+    ],
+    "retry": [
+     "agno:agno/cookbook/03_teams/21_state/nested_shared_state.py#shopping-meal-nested-teams",
+     "agno:agno/cookbook/04_workflows/08_human_in_the_loop/dual_level_hitl/09_multi_step_mixed_hitl.py#project-plan-mixed-hitl"
+    ],
+    "timeout": [
+     "haystack:haystack-cookbook/notebooks/computer_use_agent_with_skills.ipynb",
+     "metagpt:MetaGPT/metagpt/roles/engineer.py#fixed-sop-software-team"
+    ],
+    "dedupe / duplicate": [
+     "inngest-agentkit:agent-kit/examples/deep-research/inngest/functions/deep-research.ts"
+    ]
+   },
+   "nPlatforms": 28
+  },
+  {
+   "id": "P32",
+   "name": "approval gate before an effect (timeout routing)",
+   "family": "human",
+   "items": 135,
+   "viaNode": 135,
+   "viaToken": 0,
+   "viaPlumbing": 0,
+   "oracle": 15,
+   "platforms": {
+    "activepieces": 3,
+    "dify": 1,
+    "n8n": 12,
+    "airflow": 8,
+    "argo": 2,
+    "gitlab-ci": 30,
+    "apple-shortcuts": 55,
+    "ag2": 1,
+    "agno": 2,
+    "anthropic": 2,
+    "autogen": 1,
+    "camel": 2,
+    "dspy": 1,
+    "google-adk": 3,
+    "haystack": 1,
+    "llamaindex-workflows": 1,
+    "mastra": 3,
+    "metagpt": 1,
+    "openai-agents": 1,
+    "openai-swarm": 1,
+    "pydantic-graph": 1,
+    "semantic-kernel": 1,
+    "smolagents": 1,
+    "strands": 1
+   },
+   "clusters": {
+    "automation": 16,
+    "orchestration": 40,
+    "consumer-creative": 55,
+    "agentic": 24
+   },
+   "examples": [
+    "pydantic-graph:pydantic-ai/docs/deferred-tools.md#tool_requires_approval [oracle]",
+    "airflow:apache-airflow-providers-openlineage/tests/system/openlineage/example_openlineage_hitl_dag#openlineage_hitl_dag [oracle]",
+    "google-adk:adk-python/contributing/samples/workflows/agent_in_workflow/agent.py [oracle]",
+    "openai-agents:openai-agents-python/examples/agent_patterns/agents_as_tools_conditional.py [oracle]"
+   ],
+   "edge": {
+    "approve / reject": 32,
+    "notify (slack/email/chat)": 25,
+    "batch / chunk size": 1,
+    "cancel": 18,
+    "retry": 7,
+    "validate / schema": 7,
+    "cache": 2,
+    "checksum / integrity": 5,
+    "pagination / cursor": 1,
+    "backoff/delay between tries": 1,
+    "default / fallback value": 9,
+    "state store / memory": 9,
+    "lock / concurrency": 7
+   },
+   "edgeEx": {
+    "approve / reject": [
+     "activepieces:71gZO0fNzDjf7Zn4uPAlU",
+     "activepieces:8Vm5nLR5NRINOFw5e1rdk"
+    ],
+    "notify (slack/email/chat)": [
+     "activepieces:8Vm5nLR5NRINOFw5e1rdk",
+     "activepieces:M9UrOgu8uStPIaf0jijwI"
+    ],
+    "batch / chunk size": [
+     "n8n:8398"
+    ],
+    "cancel": [
+     "airflow:apache-airflow-providers-openlineage/tests/system/openlineage/example_openlineage_hitl_dag#openlineage_hitl_dag",
+     "gitlab-ci:gitlab-org/gitlab/lib/gitlab/ci/templates/5-Minute-Production-App.gitlab-ci.yml"
+    ],
+    "retry": [
+     "gitlab-ci:gitlab.com/gitlab-org/charts/gitlab",
+     "gitlab-ci:gitlab.com/gitlab-org/gitlab"
+    ],
+    "validate / schema": [
+     "gitlab-ci:gitlab.com/gitlab-org/omnibus-gitlab",
+     "anthropic:claude-cookbooks/claude_agent_sdk/03_The_site_reliability_agent.ipynb"
+    ],
+    "cache": [
+     "gitlab-ci:gitlab.com/gitlab-org/omnibus-gitlab",
+     "smolagents:smolagents/examples/plan_customization/plan_customization.py#plan-approval-interrupt"
+    ],
+    "checksum / integrity": [
+     "apple-shortcuts:icloud-91c8083b64754776acd2f197161e915a",
+     "apple-shortcuts:workflowllm-seed-00061"
+    ],
+    "pagination / cursor": [
+     "apple-shortcuts:icloud-cae075d04b884beea44df7b67fd5aabb"
+    ],
+    "backoff/delay between tries": [
+     "apple-shortcuts:workflowllm-seed-07479"
+    ],
+    "default / fallback value": [
+     "ag2:ag2/notebook/agentchat_groupchat_customized.ipynb#research-team-custom-speaker-function",
+     "agno:agno/cookbook/04_workflows/08_human_in_the_loop/dual_level_hitl/09_multi_step_mixed_hitl.py#project-plan-mixed-hitl"
+    ],
+    "state store / memory": [
+     "agno:agno/cookbook/04_workflows/08_human_in_the_loop/output_review/05_full_review_cycle.py#output-review-approve-reject-cancel",
+     "dspy:dspy/docs/docs/tutorials/ai_text_game/index.md#mystic-realm-game-loop"
+    ],
+    "lock / concurrency": [
+     "camel:camel/examples/workforce/hackathon_judges.py#auto-decompose-judge-panel",
+     "camel:camel/examples/workforce/pipeline_workflow_example.py#fork-join-literature-pipeline"
+    ]
+   },
+   "nPlatforms": 24
+  },
+  {
+   "id": "P21",
+   "name": "poll until ready (wait + check, timeout)",
+   "family": "loop",
+   "items": 120,
+   "viaNode": 120,
+   "viaToken": 0,
+   "viaPlumbing": 0,
+   "oracle": 41,
+   "platforms": {
+    "n8n": 32,
+    "node-red": 12,
+    "zapier": 1,
+    "airflow": 29,
+    "temporal": 10,
+    "apple-shortcuts": 13,
+    "home-assistant": 21,
+    "crewai": 1,
+    "openai-swarm": 1
+   },
+   "clusters": {
+    "automation": 45,
+    "orchestration": 39,
+    "consumer-creative": 34,
+    "agentic": 2
+   },
+   "examples": [
+    "airflow:apache-airflow-providers-airbyte/tests/system/airbyte/example_airbyte_trigger_job#example_airbyte_operator [oracle]",
+    "temporal:samples-go/shoppingcart [oracle]",
+    "n8n:10850 [oracle]",
+    "openai-swarm:swarm/examples/customer_service_streaming/src/swarm/engines/assistants_engine.py#assistants-api-engine"
+   ],
+   "edge": {
+    "notify (slack/email/chat)": 16,
+    "batch / chunk size": 26,
+    "state store / memory": 31,
+    "pagination / cursor": 1,
+    "cancel": 11,
+    "backoff/delay between tries": 36,
+    "lock / concurrency": 4,
+    "timeout": 10,
+    "retry": 1,
+    "checksum / integrity": 1,
+    "default / fallback value": 2,
+    "validate / schema": 1
+   },
+   "edgeEx": {
+    "notify (slack/email/chat)": [
+     "n8n:10850",
+     "n8n:11138"
+    ],
+    "batch / chunk size": [
+     "n8n:11772",
+     "n8n:12120"
+    ],
+    "state store / memory": [
+     "n8n:12177",
+     "n8n:13500"
+    ],
+    "pagination / cursor": [
+     "n8n:18407"
+    ],
+    "cancel": [
+     "n8n:18746",
+     "n8n:4086"
+    ],
+    "backoff/delay between tries": [
+     "node-red:01276f61d719d0692d43353e6f696b98",
+     "node-red:03fb3e10dded33d788f0990f4915f2c1"
+    ],
+    "lock / concurrency": [
+     "airflow:apache-airflow-providers-amazon/tests/system/amazon/aws/example_batch#example_batch",
+     "home-assistant:forum-730391"
+    ],
+    "timeout": [
+     "airflow:apache-airflow-providers-amazon/tests/system/amazon/aws/example_redshift_s3_transfers#example_redshift_s3_transfers",
+     "airflow:apache-airflow-providers-amazon/tests/system/amazon/aws/example_s3_to_sql#example_s3_to_sql"
+    ],
+    "retry": [
+     "temporal:samples-python/polling/periodic_sequence"
+    ],
+    "checksum / integrity": [
+     "home-assistant:CCOSTAN/Home-AssistantConfig/config/packages/tesla_model_y.yaml#script/tesla_home_charge_protect"
+    ],
+    "default / fallback value": [
+     "home-assistant:SgtBatten/HA_blueprints/Frigate_Camera_Notifications/Beta.yaml#0",
+     "home-assistant:TheFes/HA-configuration/packages/00-general/light/light_transition.yaml#script/transition_lights_perform_transition"
+    ],
+    "validate / schema": [
+     "crewai:crewAI-examples/integrations/CrewAI-LangGraph/src/graph.py#email-poll-draft-loop"
+    ]
+   },
+   "nPlatforms": 9
+  },
+  {
+   "id": "P34",
+   "name": "durable delay / debounce -> re-check -> act",
+   "family": "async",
+   "items": 118,
+   "viaNode": 91,
+   "viaToken": 27,
+   "viaPlumbing": 0,
+   "oracle": 3,
+   "platforms": {
+    "activepieces": 3,
+    "node-red": 21,
+    "zapier": 8,
+    "argo": 1,
+    "gitlab-ci": 2,
+    "prefect": 1,
+    "temporal": 7,
+    "apple-shortcuts": 22,
+    "home-assistant": 51,
+    "ifttt": 1,
+    "inngest-agentkit": 1
+   },
+   "clusters": {
+    "automation": 32,
+    "orchestration": 11,
+    "consumer-creative": 74,
+    "agentic": 1
+   },
+   "examples": [
+    "temporal:samples-python/hello/hello_query [oracle]",
+    "prefect:prefect/examples/ai_database_cleanup_with_approval.py",
+    "argo:suspend-template",
+    "apple-shortcuts:workflowllm-seed-02912"
+   ],
+   "edge": {
+    "backoff/delay between tries": 79,
+    "notify (slack/email/chat)": 10,
+    "state store / memory": 14,
+    "lock / concurrency": 3,
+    "batch / chunk size": 2,
+    "approve / reject": 1,
+    "cancel": 5,
+    "default / fallback value": 1
+   },
+   "edgeEx": {
+    "backoff/delay between tries": [
+     "activepieces:1TPst6qx7bNcQ2jV2ZZ61",
+     "activepieces:GzlQwuSKib7oRw0vJ3rmh"
+    ],
+    "notify (slack/email/chat)": [
+     "activepieces:GzlQwuSKib7oRw0vJ3rmh",
+     "zapier:d02a43a61e9e"
+    ],
+    "state store / memory": [
+     "node-red:31e21b0cf37a57315adb8095b1ed967a",
+     "node-red:f37879ba8806713478e34c1f613af7f2"
+    ],
+    "lock / concurrency": [
+     "node-red:8b1159fd47b7f34ace103bdd46912b62",
+     "zapier:71b121303b32"
+    ],
+    "batch / chunk size": [
+     "zapier:289d9556c621",
+     "zapier:cc752ab51755"
+    ],
+    "approve / reject": [
+     "argo:suspend-template"
+    ],
+    "cancel": [
+     "apple-shortcuts:icloud-91c8083b64754776acd2f197161e915a",
+     "apple-shortcuts:icloud-bdc17b3b31c74c868695b848f3dbc1ff"
+    ],
+    "default / fallback value": [
+     "home-assistant:forum-413705"
+    ]
+   },
+   "nPlatforms": 11
+  },
+  {
+   "id": "P12",
+   "name": "map -> code reduce (for-each, typed coverage)",
+   "family": "fan",
+   "items": 112,
+   "viaNode": 112,
+   "viaToken": 0,
+   "viaPlumbing": 0,
+   "oracle": 9,
+   "platforms": {
+    "activepieces": 13,
+    "coze": 5,
+    "dify": 9,
+    "flowise": 1,
+    "n8n": 22,
+    "node-red": 5,
+    "zapier": 1,
+    "argo": 3,
+    "apple-shortcuts": 41,
+    "comfyui": 1,
+    "home-assistant": 10,
+    "haystack": 1
+   },
+   "clusters": {
+    "automation": 56,
+    "orchestration": 3,
+    "consumer-creative": 52,
+    "agentic": 1
+   },
+   "examples": [
+    "coze:app-variables-for-sub-process [oracle]",
+    "n8n:13500 [oracle]",
+    "argo:coinflip-recursive",
+    "dify:repo-5efb98d7-176b-419c-b6ef-50767391ab62"
+   ],
+   "edge": {
+    "notify (slack/email/chat)": 12,
+    "state store / memory": 19,
+    "pagination / cursor": 2,
+    "batch / chunk size": 23,
+    "default / fallback value": 2,
+    "dedupe / duplicate": 1,
+    "backoff/delay between tries": 5,
+    "cancel": 6,
+    "cache": 1
+   },
+   "edgeEx": {
+    "notify (slack/email/chat)": [
+     "activepieces:7U0dddyyomgbyMHJxjKzt",
+     "activepieces:gPWR7RDqutQ5GmloCrfl9"
+    ],
+    "state store / memory": [
+     "activepieces:OZH5az2RIrvLKCr0bL47g",
+     "activepieces:auR0JMrF3FcaqZjxTIc9x"
+    ],
+    "pagination / cursor": [
+     "activepieces:UslzViNdWBKKKprQuIA64",
+     "apple-shortcuts:icloud-d011d2cfe7ef41a2b5100ac1e2717b45"
+    ],
+    "batch / chunk size": [
+     "coze:httprequester-http-implicit-dependencies",
+     "n8n:10156"
+    ],
+    "default / fallback value": [
+     "dify:mkt-7a7961ac-8cf1-4b29-9db6-a3b87ce6f33a",
+     "home-assistant:forum-681056"
+    ],
+    "dedupe / duplicate": [
+     "n8n:11382"
+    ],
+    "backoff/delay between tries": [
+     "apple-shortcuts:icloud-91c8083b64754776acd2f197161e915a",
+     "apple-shortcuts:icloud-bdc17b3b31c74c868695b848f3dbc1ff"
+    ],
+    "cancel": [
+     "apple-shortcuts:icloud-91c8083b64754776acd2f197161e915a",
+     "apple-shortcuts:icloud-bdc17b3b31c74c868695b848f3dbc1ff"
+    ],
+    "cache": [
+     "haystack:haystack-cookbook/notebooks/query_decomposition.ipynb"
+    ]
+   },
+   "nPlatforms": 12
+  },
+  {
+   "id": "P29",
+   "name": "finally / completion hook (teardown always runs)",
+   "family": "failure",
+   "items": 112,
+   "viaNode": 39,
+   "viaToken": 73,
+   "viaPlumbing": 0,
+   "oracle": 89,
+   "platforms": {
+    "airflow": 8,
+    "github-actions": 18,
+    "gitlab-ci": 2,
+    "kubeflow": 1,
+    "tekton": 10,
+    "nextflow": 7,
+    "nf-core": 64,
+    "snakemake": 1,
+    "mastra": 1
+   },
+   "clusters": {
+    "orchestration": 39,
+    "science": 72,
+    "agentic": 1
+   },
+   "examples": [
+    "airflow:apache-airflow-providers-pinecone/tests/system/pinecone/example_create_pod_index#example_pinecone_create_pod_index [oracle]",
+    "tekton:v1/pipelineruns/pipelinerun-with-final-results [oracle]",
+    "kubeflow:valid/failing/pipeline_with_multiple_exit_handlers [oracle]",
+    "nf-core:neutronstar@1.0.0 [oracle]"
+   ],
+   "edge": {
+    "state store / memory": 4,
+    "cancel": 8,
+    "batch / chunk size": 1,
+    "continue-on-error / fail-fast off": 5,
+    "validate / schema": 10,
+    "timeout": 4,
+    "default / fallback value": 1,
+    "cache": 2,
+    "lock / concurrency": 1,
+    "retry": 1
+   },
+   "edgeEx": {
+    "state store / memory": [
+     "airflow:apache-airflow-providers-edge3/src/airflow/providers/edge3/example_dags/integration_test#integration_test",
+     "airflow:apache-airflow-providers-edge3/src/airflow/providers/edge3/example_dags/win_test#win_test"
+    ],
+    "cancel": [
+     "airflow:apache-airflow-providers-weaviate/tests/system/weaviate/example_weaviate_operator#example_weaviate_using_operator",
+     "github-actions:PhilDL/react-router-gospel-stack/.github/workflows/deploy.yml"
+    ],
+    "batch / chunk size": [
+     "airflow:apache-airflow-providers-weaviate/tests/system/weaviate/example_weaviate_using_hook#example_weaviate_dag_using_hook"
+    ],
+    "continue-on-error / fail-fast off": [
+     "github-actions:Netflix/OpenVPCal/.github/workflows/main.yml",
+     "github-actions:kubeflow/pipelines/.github/workflows/ai-analyzer.lock.yml"
+    ],
+    "validate / schema": [
+     "github-actions:Netflix/OpenVPCal/.github/workflows/main.yml",
+     "github-actions:aio-libs/multidict/.github/workflows/ci.yml"
+    ],
+    "timeout": [
+     "github-actions:kubeflow/pipelines/.github/workflows/ai-analyzer.lock.yml",
+     "github-actions:opsmill/infrahub/.github/workflows/ci.yml"
+    ],
+    "default / fallback value": [
+     "github-actions:kubeflow/pipelines/.github/workflows/ai-analyzer.lock.yml"
+    ],
+    "cache": [
+     "github-actions:kubeflow/pipelines/.github/workflows/ai-analyzer.lock.yml",
+     "github-actions:quarkslab/quokka/.github/workflows/build.yml"
+    ],
+    "lock / concurrency": [
+     "github-actions:opsmill/infrahub/.github/workflows/ci.yml"
+    ],
+    "retry": [
+     "gitlab-ci:gitlab.com/gitlab-org/gitlab"
+    ]
+   },
+   "nPlatforms": 9
+  },
+  {
+   "id": "P10",
+   "name": "human menu dispatch (choice -> branches, optional repeat)",
+   "family": "branch",
+   "items": 108,
+   "viaNode": 108,
+   "viaToken": 0,
+   "viaPlumbing": 0,
+   "oracle": 7,
+   "platforms": {
+    "activepieces": 5,
+    "coze": 1,
+    "dify": 1,
+    "n8n": 9,
+    "apple-shortcuts": 76,
+    "home-assistant": 6,
+    "burr": 1,
+    "crewai": 3,
+    "dspy": 1,
+    "mastra": 1,
+    "openai-swarm": 1,
+    "pydantic-graph": 2,
+    "strands": 1
+   },
+   "clusters": {
+    "automation": 16,
+    "consumer-creative": 82,
+    "agentic": 10
+   },
+   "examples": [
+    "coze:batch-batch-with-inner-interrupt [oracle]",
+    "pydantic-graph:pydantic-ai/docs/graph.md#vending_machine [oracle]",
+    "strands:samples/python/07-ux-demos/human-in-the-loop-approval-agent/src/main.py [oracle]",
+    "openai-swarm:swarm/examples/customer_service_streaming/src/swarm/engines/local_engine.py#local-planner-engine [oracle]"
+   ],
+   "edge": {
+    "notify (slack/email/chat)": 57,
+    "approve / reject": 5,
+    "batch / chunk size": 3,
+    "default / fallback value": 7,
+    "state store / memory": 20,
+    "backoff/delay between tries": 12,
+    "cancel": 32,
+    "pagination / cursor": 22,
+    "validate / schema": 3,
+    "checksum / integrity": 21,
+    "lock / concurrency": 4,
+    "timeout": 4
+   },
+   "edgeEx": {
+    "notify (slack/email/chat)": [
+     "activepieces:3AzxIABbHE7PBCsBZfP3m",
+     "activepieces:b5KWB4fzJtRoyYLC5RZaP"
+    ],
+    "approve / reject": [
+     "activepieces:71gZO0fNzDjf7Zn4uPAlU",
+     "crewai:crewAI/docs/edge/en/learn/human-feedback-in-flows.mdx#review-gate-llm-collapse-lessons"
+    ],
+    "batch / chunk size": [
+     "coze:batch-batch-with-inner-interrupt",
+     "n8n:8398"
+    ],
+    "default / fallback value": [
+     "dify:mkt-58a8b461-1a92-4b1a-8682-2430b6a5f13a",
+     "home-assistant:dannytsang/homeassistant-config/packages/home.yaml#script/lock_house"
+    ],
+    "state store / memory": [
+     "apple-shortcuts:icloud-0f8a1267edde48efa50de6a35a8bcdbd",
+     "apple-shortcuts:icloud-5cbc20665bb94f1b9c0dc9c2be03b924"
+    ],
+    "backoff/delay between tries": [
+     "apple-shortcuts:icloud-4fb3ce50d8ca4495977a809623a30e46",
+     "apple-shortcuts:icloud-6ba47bd9ab264078895bb556c5b30204"
+    ],
+    "cancel": [
+     "apple-shortcuts:icloud-6ba47bd9ab264078895bb556c5b30204",
+     "apple-shortcuts:icloud-7ec28ab7f447419c8f492fc3b7f6df1e"
+    ],
+    "pagination / cursor": [
+     "apple-shortcuts:icloud-6ba47bd9ab264078895bb556c5b30204",
+     "apple-shortcuts:icloud-7ec28ab7f447419c8f492fc3b7f6df1e"
+    ],
+    "validate / schema": [
+     "apple-shortcuts:icloud-919d43698cb6499a90118e70445bf389",
+     "mastra:mastra/templates/template-kyc-customer-onboarding/src/mastra/workflows/durable-kyc-onboarding.ts"
+    ],
+    "checksum / integrity": [
+     "apple-shortcuts:icloud-919d43698cb6499a90118e70445bf389",
+     "apple-shortcuts:icloud-91c8083b64754776acd2f197161e915a"
+    ],
+    "lock / concurrency": [
+     "apple-shortcuts:workflowllm-seed-00194",
+     "apple-shortcuts:workflowllm-seed-00459"
+    ],
+    "timeout": [
+     "home-assistant:TheFes/HA-configuration/blueprints/automation/TheFes/mobile_app_alert.yaml#0",
+     "home-assistant:TheFes/HA-configuration/blueprints/automation/TheFes/telegram_command.yaml#0"
+    ]
+   },
+   "nPlatforms": 13
+  },
+  {
+   "id": "P33",
+   "name": "wait for signal / external event (with timeout)",
+   "family": "async",
+   "items": 108,
+   "viaNode": 92,
+   "viaToken": 16,
+   "viaPlumbing": 0,
+   "oracle": 24,
+   "platforms": {
+    "n8n": 35,
+    "airflow": 2,
+    "prefect": 1,
+    "temporal": 18,
+    "apple-shortcuts": 13,
+    "home-assistant": 39
+   },
+   "clusters": {
+    "automation": 35,
+    "orchestration": 21,
+    "consumer-creative": 52
+   },
+   "examples": [
+    "temporal:samples-go/reqrespactivity [oracle]",
+    "airflow:apache-airflow-providers-google/tests/system/google/cloud/storage_transfer/example_cloud_storage_transfer_service_gcp#example_gcp_transfer [oracle]",
+    "n8n:3840 [oracle]",
+    "prefect:prefect/docs/v3/advanced/use-custom-event-grammar.mdx"
+   ],
+   "edge": {
+    "notify (slack/email/chat)": 14,
+    "batch / chunk size": 1,
+    "retry": 1,
+    "approve / reject": 6,
+    "backoff/delay between tries": 25,
+    "cancel": 4,
+    "pagination / cursor": 1,
+    "timeout": 20,
+    "state store / memory": 23,
+    "default / fallback value": 2,
+    "lock / concurrency": 1
+   },
+   "edgeEx": {
+    "notify (slack/email/chat)": [
+     "n8n:10665",
+     "n8n:13748"
+    ],
+    "batch / chunk size": [
+     "n8n:12694"
+    ],
+    "retry": [
+     "temporal:samples-python/langfuse_tracing/ticket_triage"
+    ],
+    "approve / reject": [
+     "temporal:samples-python/langfuse_tracing/ticket_triage",
+     "temporal:samples-python/langgraph_plugin"
+    ],
+    "backoff/delay between tries": [
+     "apple-shortcuts:workflowllm-seed-00653",
+     "apple-shortcuts:workflowllm-seed-00823"
+    ],
+    "cancel": [
+     "apple-shortcuts:workflowllm-seed-00653",
+     "apple-shortcuts:workflowllm-seed-06333"
+    ],
+    "pagination / cursor": [
+     "apple-shortcuts:workflowllm-seed-05009"
+    ],
+    "timeout": [
+     "home-assistant:CCOSTAN/Home-AssistantConfig/config/automation/Speech/announcements.yaml#0",
+     "home-assistant:CCOSTAN/Home-AssistantConfig/config/automation/Timed_Triggers/sunset_turn_on.yaml#0"
+    ],
+    "state store / memory": [
+     "home-assistant:CCOSTAN/Home-AssistantConfig/config/automation/Timed_Triggers/sunset_turn_on.yaml#0",
+     "home-assistant:TheFes/HA-configuration/blueprints/automation/TheFes/telegram_command.yaml#0"
+    ],
+    "default / fallback value": [
+     "home-assistant:dannytsang/homeassistant-config/packages/home.yaml#script/lock_house",
+     "home-assistant:forum-509992"
+    ],
+    "lock / concurrency": [
+     "home-assistant:forum-459281"
+    ]
+   },
+   "nPlatforms": 6
+  },
+  {
+   "id": "P03",
+   "name": "extract -> normalise -> validate (model reading, code parsing)",
+   "family": "spine",
+   "items": 106,
+   "viaNode": 106,
+   "viaToken": 0,
+   "viaPlumbing": 0,
+   "oracle": 22,
+   "platforms": {
+    "activepieces": 3,
+    "dify": 23,
+    "langflow": 3,
+    "n8n": 44,
+    "airflow": 6,
+    "galaxy": 1,
+    "nextflow": 4,
+    "nf-core": 6,
+    "snakemake": 4,
+    "apple-shortcuts": 3,
+    "anthropic": 1,
+    "autogen": 1,
+    "camel": 1,
+    "crewai": 1,
+    "dspy": 2,
+    "google-adk": 1,
+    "haystack": 1,
+    "mastra": 1
+   },
+   "clusters": {
+    "automation": 73,
+    "orchestration": 6,
+    "science": 15,
+    "consumer-creative": 3,
+    "agentic": 9
+   },
+   "examples": [
+    "camel:camel/examples/ai_society/role_playing.py#specified-task-user-assistant-dialogue [oracle]",
+    "google-adk:adk-python/contributing/samples/workflows/nested_workflow/agent.py [oracle]",
+    "dspy:dspy/docs/docs/tutorials/dataframe_rlm/cohort_analysis/cohort_analysis_demo.ipynb#rlm-cohort-analysis [oracle]",
+    "airflow:apache-airflow-providers-amazon/tests/system/amazon/aws/example_sagemaker_endpoint#example_sagemaker_endpoint [oracle]"
+   ],
+   "edge": {
+    "default / fallback value": 9,
+    "state store / memory": 10,
+    "notify (slack/email/chat)": 6,
+    "batch / chunk size": 4,
+    "cache": 4,
+    "validate / schema": 4,
+    "lock / concurrency": 4,
+    "checksum / integrity": 1,
+    "cancel": 1
+   },
+   "edgeEx": {
+    "default / fallback value": [
+     "dify:mkt-0fc0bb5c-635f-45f7-ac9a-44ba61dbf8ef",
+     "dify:mkt-431dd20f-f47e-4e60-afba-2c45c93dea17"
+    ],
+    "state store / memory": [
+     "dify:mkt-ba55055e-e212-4ae1-8e05-b7dde6ec7268",
+     "dify:repo-e9d92058-7d20-4904-892f-75d90bef7587"
+    ],
+    "notify (slack/email/chat)": [
+     "dify:repo-e9d92058-7d20-4904-892f-75d90bef7587",
+     "n8n:12004"
+    ],
+    "batch / chunk size": [
+     "n8n:11382",
+     "n8n:2658"
+    ],
+    "cache": [
+     "n8n:12694",
+     "n8n:6003"
+    ],
+    "validate / schema": [
+     "airflow:apache-airflow-providers-common-ai/src/airflow/providers/common/ai/example_dags/example_aip_progress_tracker#example_aip_progress_tracker",
+     "nextflow:workflowhub/1960"
+    ],
+    "lock / concurrency": [
+     "nextflow:workflowhub/140",
+     "anthropic:claude-cookbooks/patterns/agents/orchestrator_workers.ipynb"
+    ],
+    "checksum / integrity": [
+     "nf-core:methylong@2.0.0"
+    ],
+    "cancel": [
+     "google-adk:adk-python/contributing/samples/workflows/nested_workflow/agent.py"
+    ]
+   },
+   "nPlatforms": 18
+  },
+  {
+   "id": "P43",
+   "name": "conversational session (turn with bounded memory)",
+   "family": "state",
+   "items": 104,
+   "viaNode": 10,
+   "viaToken": 94,
+   "viaPlumbing": 0,
+   "oracle": 11,
+   "platforms": {
+    "dify": 20,
+    "flowise": 21,
+    "langflow": 23,
+    "n8n": 14,
+    "ag2": 1,
+    "agno": 3,
+    "burr": 2,
+    "google-adk": 6,
+    "inngest-agentkit": 1,
+    "langgraph": 2,
+    "llamaindex-workflows": 2,
+    "mastra": 2,
+    "openai-agents": 3,
+    "openai-swarm": 1,
+    "strands": 3
+   },
+   "clusters": {
+    "automation": 78,
+    "agentic": 26
+   },
+   "examples": [
+    "langgraph:memory-agent/src/memory_agent/graph.py [oracle]",
+    "openai-swarm:swarm/examples/weather_agent/agents.py#weather-tool-loop-stream [oracle]",
+    "google-adk:adk-python/contributing/samples/workflows/agent_in_workflow/agent.py [oracle]",
+    "mastra:mastra/templates/template-customer-refund-agent/src/mastra/agents/support-supervisor.ts [oracle]"
+   ],
+   "edge": {
+    "notify (slack/email/chat)": 1,
+    "batch / chunk size": 1,
+    "state store / memory": 3,
+    "approve / reject": 3,
+    "validate / schema": 1,
+    "cancel": 2
+   },
+   "edgeEx": {
+    "notify (slack/email/chat)": [
+     "n8n:14080"
+    ],
+    "batch / chunk size": [
+     "burr:burr/examples/streaming-overview/application.py"
+    ],
+    "state store / memory": [
+     "burr:burr/examples/streaming-overview/application.py",
+     "google-adk:adk-samples/contrib/python/brand-aligned-presentations/app/agent.py"
+    ],
+    "approve / reject": [
+     "google-adk:adk-python/contributing/samples/adk_team/adk_documentation/adk_release_analyzer/agent.py",
+     "google-adk:adk-samples/contrib/python/small-business-loan-agent/app/agent.py"
+    ],
+    "validate / schema": [
+     "google-adk:adk-python/contributing/samples/workflows/agent_in_workflow/agent.py"
+    ],
+    "cancel": [
+     "google-adk:adk-samples/contrib/python/brand-aligned-presentations/app/agent.py",
+     "google-adk:adk-samples/contrib/python/small-business-loan-agent/app/agent.py"
+    ]
+   },
+   "nPlatforms": 15
+  },
+  {
+   "id": "P14",
+   "name": "scatter -> parallel branches -> gather",
+   "family": "fan",
+   "items": 102,
+   "viaNode": 102,
+   "viaToken": 0,
+   "viaPlumbing": 0,
+   "oracle": 25,
+   "platforms": {
+    "dify": 1,
+    "n8n": 41,
+    "node-red": 6,
+    "zapier": 1,
+    "airflow": 1,
+    "galaxy": 27,
+    "comfyui": 1,
+    "ag2": 1,
+    "agno": 1,
+    "anthropic": 4,
+    "autogen": 1,
+    "claude-code-workflows": 8,
+    "crewai": 1,
+    "dspy": 1,
+    "google-adk": 1,
+    "haystack": 1,
+    "langgraph": 1,
+    "llamaindex-workflows": 2,
+    "openai-agents": 1,
+    "semantic-kernel": 1
+   },
+   "clusters": {
+    "automation": 49,
+    "orchestration": 1,
+    "science": 27,
+    "consumer-creative": 1,
+    "agentic": 16,
+    "first-party": 8
+   },
+   "examples": [
+    "galaxy:iwc/lncRNAs-annotation/Galaxy-Workflow-lncRNAs_annotation_workflow [oracle]",
+    "google-adk:adk-python/contributing/samples/workflows/nested_workflow/agent.py [oracle]",
+    "dspy:dspy/docs/docs/tutorials/output_refinement/best-of-n-and-refine.md#refine-factuality-judge [oracle]",
+    "haystack:haystack-core-integrations/integrations/agent_pack/src/haystack_integrations/agent_pack/deep_research/agent.py#deep-research-agent [oracle]"
+   ],
+   "edge": {
+    "state store / memory": 10,
+    "batch / chunk size": 2,
+    "notify (slack/email/chat)": 2,
+    "pagination / cursor": 3,
+    "dedupe / duplicate": 3,
+    "checksum / integrity": 1,
+    "lock / concurrency": 5,
+    "validate / schema": 6,
+    "cache": 2,
+    "approve / reject": 3,
+    "retry": 2,
+    "cancel": 1
+   },
+   "edgeEx": {
+    "state store / memory": [
+     "dify:repo-9c0cd31f-4b62-4005-adf5-e3888d08654a",
+     "n8n:12686"
+    ],
+    "batch / chunk size": [
+     "n8n:11382",
+     "n8n:2982"
+    ],
+    "notify (slack/email/chat)": [
+     "n8n:12686",
+     "n8n:2982"
+    ],
+    "pagination / cursor": [
+     "n8n:18407",
+     "n8n:2504"
+    ],
+    "dedupe / duplicate": [
+     "galaxy:iwc/clinicalmp-discovery/iwc-clinicalmp-discovery-workflow",
+     "galaxy:workflowhub/1601"
+    ],
+    "checksum / integrity": [
+     "galaxy:workflowhub/1189"
+    ],
+    "lock / concurrency": [
+     "agno:agno/cookbook/04_workflows/03_loop_execution/loop_with_parallel.py#research-loop-parallel-then-content",
+     "claude-code-workflows:claude-session/workflows/scripts/phase0-unblock-wf_1095386b-893.js"
+    ],
+    "validate / schema": [
+     "claude-code-workflows:claude-session/workflows/scripts/c0-preflight-wf_d35b46dd-974.js",
+     "claude-code-workflows:claude-session/workflows/scripts/kev-analysis-wf_df1c3e5c-f13.js"
+    ],
+    "cache": [
+     "claude-code-workflows:claude-session/workflows/scripts/kev-analysis-wf_df1c3e5c-f13.js",
+     "dspy:dspy/docs/docs/tutorials/output_refinement/best-of-n-and-refine.md#refine-factuality-judge"
+    ],
+    "approve / reject": [
+     "claude-code-workflows:claude-session/workflows/scripts/kev-judge-program-design-wf_0a785d94-93f.js",
+     "claude-code-workflows:claude-session/workflows/scripts/laptop-bridge-wf_c491d61b-2c7.js"
+    ],
+    "retry": [
+     "claude-code-workflows:claude-session/workflows/scripts/laptop-bridge-wf_c491d61b-2c7.js",
+     "dspy:dspy/docs/docs/tutorials/output_refinement/best-of-n-and-refine.md#refine-factuality-judge"
+    ],
+    "cancel": [
+     "dspy:dspy/docs/docs/tutorials/output_refinement/best-of-n-and-refine.md#refine-factuality-judge"
+    ]
+   },
+   "nPlatforms": 20
+  },
+  {
+   "id": "P26",
+   "name": "retry with backoff / adaptive retry",
+   "family": "failure",
+   "items": 96,
+   "viaNode": 0,
+   "viaToken": 96,
+   "viaPlumbing": 0,
+   "oracle": 90,
+   "platforms": {
+    "nextflow": 16,
+    "nf-core": 72,
+    "snakemake": 6,
+    "camel": 2
+   },
+   "clusters": {
+    "science": 94,
+    "agentic": 2
+   },
+   "examples": [
+    "nf-core:neutronstar@1.0.0 [oracle]",
+    "nextflow:workflowhub/1871 [oracle]",
+    "snakemake:friendsofstrandseq/mosaicatcher-pipeline@v2.5.1 [oracle]",
+    "camel:camel/examples/workforce/pipeline_workflow_example.py#fork-join-literature-pipeline"
+   ],
+   "edge": {},
+   "nPlatforms": 4
+  },
+  {
+   "id": "P55",
+   "name": "ask -> validate -> use (human input as untrusted data)",
+   "family": "human",
+   "items": 91,
+   "viaNode": 91,
+   "viaToken": 0,
+   "viaPlumbing": 0,
+   "oracle": 12,
+   "platforms": {
+    "coze": 7,
+    "dify": 1,
+    "flowise": 1,
+    "n8n": 6,
+    "apple-shortcuts": 62,
+    "comfyui": 2,
+    "agno": 1,
+    "autogen": 2,
+    "crewai": 2,
+    "dspy": 1,
+    "mastra": 2,
+    "metagpt": 1,
+    "openai-agents": 1,
+    "pydantic-graph": 1,
+    "smolagents": 1
+   },
+   "clusters": {
+    "automation": 15,
+    "consumer-creative": 64,
+    "agentic": 12
+   },
+   "examples": [
+    "coze:function-call-tool-workflow-3 [oracle]",
+    "openai-agents:openai-agents-js/examples/live/delegation.ts [oracle]",
+    "mastra:mastra/templates/template-kyc-customer-onboarding/src/mastra/workflows/durable-kyc-onboarding.ts [oracle]",
+    "n8n:3066 [oracle]"
+   ],
+   "edge": {
+    "batch / chunk size": 2,
+    "notify (slack/email/chat)": 18,
+    "pagination / cursor": 16,
+    "checksum / integrity": 7,
+    "cancel": 9,
+    "validate / schema": 4,
+    "backoff/delay between tries": 1,
+    "state store / memory": 7,
+    "default / fallback value": 1,
+    "cache": 2,
+    "lock / concurrency": 1,
+    "approve / reject": 1
+   },
+   "edgeEx": {
+    "batch / chunk size": [
+     "coze:batch-batch-with-inner-interrupt",
+     "pydantic-graph:pydantic-ai/examples/pydantic_ai_examples/realtime_handoff.py"
+    ],
+    "notify (slack/email/chat)": [
+     "flowise:agentflowsv2-human-in-the-loop",
+     "n8n:12285"
+    ],
+    "pagination / cursor": [
+     "flowise:agentflowsv2-human-in-the-loop",
+     "apple-shortcuts:icloud-0f8a1267edde48efa50de6a35a8bcdbd"
+    ],
+    "checksum / integrity": [
+     "apple-shortcuts:workflowllm-seed-00061",
+     "apple-shortcuts:workflowllm-seed-00601"
+    ],
+    "cancel": [
+     "apple-shortcuts:workflowllm-seed-00194",
+     "apple-shortcuts:workflowllm-seed-00601"
+    ],
+    "validate / schema": [
+     "apple-shortcuts:workflowllm-seed-02079",
+     "comfyui:TTPlanetPig-Comfyui_TTP_Toolset-examples-smart_tile_qwen_sam_loop_example_v2.json"
+    ],
+    "backoff/delay between tries": [
+     "apple-shortcuts:workflowllm-seed-07479"
+    ],
+    "state store / memory": [
+     "apple-shortcuts:workflowllm-seed-08029",
+     "apple-shortcuts:workflowllm-seed-09631"
+    ],
+    "default / fallback value": [
+     "agno:agno/cookbook/04_workflows/08_human_in_the_loop/dual_level_hitl/09_multi_step_mixed_hitl.py#project-plan-mixed-hitl"
+    ],
+    "cache": [
+     "autogen:autogen/python/samples/core_async_human_in_the_loop/main.py#scheduling-assistant-slow-human",
+     "smolagents:smolagents/examples/plan_customization/plan_customization.py#plan-approval-interrupt"
+    ],
+    "lock / concurrency": [
+     "smolagents:smolagents/examples/plan_customization/plan_customization.py#plan-approval-interrupt"
+    ],
+    "approve / reject": [
+     "smolagents:smolagents/examples/plan_customization/plan_customization.py#plan-approval-interrupt"
+    ]
+   },
+   "nPlatforms": 15
+  },
+  {
+   "id": "P41",
+   "name": "build -> test -> gate -> release (CI stage barrier)",
+   "family": "trigger",
+   "items": 88,
+   "viaNode": 28,
+   "viaToken": 0,
+   "viaPlumbing": 60,
+   "oracle": 0,
+   "platforms": {
+    "github-actions": 59,
+    "gitlab-ci": 29
+   },
+   "clusters": {
+    "orchestration": 88
+   },
+   "examples": [
+    "github-actions:ankorstore/yokai/.github/workflows/generate-ci.yml",
+    "gitlab-ci:gitlab-org/gitlab/lib/gitlab/ci/templates/Python.gitlab-ci.yml"
+   ],
+   "edge": {
+    "cancel": 8,
+    "backoff/delay between tries": 2,
+    "default / fallback value": 1,
+    "validate / schema": 2,
+    "retry": 5,
+    "approve / reject": 1,
+    "notify (slack/email/chat)": 2,
+    "pagination / cursor": 2,
+    "cache": 1
+   },
+   "edgeEx": {
+    "cancel": [
+     "gitlab-ci:gitlab-org/gitlab/lib/gitlab/ci/templates/5-Minute-Production-App.gitlab-ci.yml",
+     "gitlab-ci:gitlab-org/gitlab/lib/gitlab/ci/templates/AWS/Deploy-ECS.gitlab-ci.yml"
+    ],
+    "backoff/delay between tries": [
+     "gitlab-ci:gitlab-org/gitlab/lib/gitlab/ci/templates/Auto-DevOps.gitlab-ci.yml",
+     "gitlab-ci:gitlab-org/gitlab/lib/gitlab/ci/templates/Jobs/Deploy.gitlab-ci.yml"
+    ],
+    "default / fallback value": [
+     "gitlab-ci:gitlab-org/gitlab/lib/gitlab/ci/templates/Auto-DevOps.gitlab-ci.yml"
+    ],
+    "validate / schema": [
+     "gitlab-ci:gitlab.com/AOMediaCodec/SVT-AV1",
+     "gitlab-ci:gitlab.com/gitlab-com/runbooks"
+    ],
+    "retry": [
+     "gitlab-ci:gitlab.com/dependabot-gitlab/dependabot",
+     "gitlab-ci:gitlab.com/gitlab-org/charts/gitlab"
+    ],
+    "approve / reject": [
+     "gitlab-ci:gitlab.com/gitlab-org/charts/gitlab"
+    ],
+    "notify (slack/email/chat)": [
+     "gitlab-ci:gitlab.com/gitlab-org/gitlab",
+     "gitlab-ci:gitlab.com/gitlab-org/omnibus-gitlab"
+    ],
+    "pagination / cursor": [
+     "gitlab-ci:gitlab.com/gitlab-org/gitlab",
+     "gitlab-ci:gitlab.com/gitlab-org/gitlab-ui"
+    ],
+    "cache": [
+     "gitlab-ci:gitlab.com/gitlab-org/omnibus-gitlab"
+    ]
+   },
+   "nPlatforms": 2
+  },
+  {
+   "id": "P04",
+   "name": "draft -> check -> deliver (generated content before an effect)",
+   "family": "spine",
+   "items": 75,
+   "viaNode": 75,
+   "viaToken": 0,
+   "viaPlumbing": 0,
+   "oracle": 19,
+   "platforms": {
+    "activepieces": 4,
+    "coze": 3,
+    "dify": 7,
+    "flowise": 1,
+    "langflow": 10,
+    "n8n": 21,
+    "zapier": 1,
+    "airflow": 2,
+    "dagster": 2,
+    "github-actions": 1,
+    "galaxy": 5,
+    "nextflow": 1,
+    "nf-core": 5,
+    "snakemake": 1,
+    "wdl": 3,
+    "home-assistant": 1,
+    "ifttt": 5,
+    "crewai": 1,
+    "openai-agents": 1
+   },
+   "clusters": {
+    "automation": 47,
+    "orchestration": 5,
+    "science": 15,
+    "consumer-creative": 6,
+    "agentic": 2
+   },
+   "examples": [
+    "coze:copy-to-app-main2 [oracle]",
+    "dagster:docs_projects/project_dagster_modal_pipes [oracle]",
+    "airflow:apache-airflow-providers-google/tests/system/google/cloud/vertex_ai/example_vertex_ai_agent_engine#vertex_ai_agent_engine_operations [oracle]",
+    "galaxy:iwc/dna-seq-classification-lstm/dna-seq-classification-lstm [oracle]"
+   ],
+   "edge": {
+    "notify (slack/email/chat)": 16,
+    "default / fallback value": 1,
+    "batch / chunk size": 3,
+    "cache": 3,
+    "state store / memory": 6,
+    "approve / reject": 2,
+    "timeout": 1,
+    "checksum / integrity": 3,
+    "backoff/delay between tries": 1,
+    "validate / schema": 1
+   },
+   "edgeEx": {
+    "notify (slack/email/chat)": [
+     "activepieces:S0tI31TsQZvtNg5BDH1Tq",
+     "activepieces:auR0JMrF3FcaqZjxTIc9x"
+    ],
+    "default / fallback value": [
+     "dify:mkt-fa1fa604-be00-4081-991d-5b1bffb74d27"
+    ],
+    "batch / chunk size": [
+     "n8n:12120",
+     "galaxy:iwc/giraffe-deep-variant-pangenome-calling/Pangenome-Variant-Calling-using-VG-Giraffe-and-Google-DeepVariant"
+    ],
+    "cache": [
+     "n8n:12120",
+     "n8n:2504"
+    ],
+    "state store / memory": [
+     "n8n:12120",
+     "n8n:13717"
+    ],
+    "approve / reject": [
+     "airflow:apache-airflow-providers-common-ai/src/airflow/providers/common/ai/example_dags/example_llm_survey_agentic#example_llm_survey_agentic",
+     "crewai:crewAI-examples/flows/lead-score-flow/src/lead_score_flow/main.py#score-leads-human-review-emails"
+    ],
+    "timeout": [
+     "airflow:apache-airflow-providers-google/tests/system/google/cloud/vertex_ai/example_vertex_ai_agent_engine#vertex_ai_agent_engine_operations"
+    ],
+    "checksum / integrity": [
+     "wdl:github.com/PacificBiosciences/HiFi-human-WGS-WDL/HiFi-human-WGS-WDL-family:main",
+     "wdl:github.com/PacificBiosciences/HiFi-human-WGS-WDL/HiFi-human-WGS-WDL-singleton:main"
+    ],
+    "backoff/delay between tries": [
+     "home-assistant:jazzyisj/home-assistant-config/automations/presence/someone_arrives_home.yaml#0"
+    ],
+    "validate / schema": [
+     "openai-agents:openai-agents-python/examples/agent_patterns/streaming_guardrails.py"
+    ]
+   },
+   "nPlatforms": 19
+  },
+  {
+   "id": "P56",
+   "name": "media generation chain (tool bindings)",
+   "family": "spine",
+   "items": 68,
+   "viaNode": 68,
+   "viaToken": 0,
+   "viaPlumbing": 0,
+   "oracle": 1,
+   "platforms": {
+    "nf-core": 1,
+    "comfyui": 67
+   },
+   "clusters": {
+    "science": 1,
+    "consumer-creative": 67
+   },
+   "examples": [
+    "nf-core:spatialaxe@1.0.1 [oracle]",
+    "comfyui:Comfy-Org-workflow_templates-templates-api_openai_gpt_image_25_sunburst_image_edit.json"
+   ],
+   "edge": {
+    "notify (slack/email/chat)": 1,
+    "validate / schema": 18,
+    "batch / chunk size": 21,
+    "lock / concurrency": 1,
+    "cache": 6,
+    "checksum / integrity": 1,
+    "default / fallback value": 3
+   },
+   "edgeEx": {
+    "notify (slack/email/chat)": [
+     "nf-core:spatialaxe@1.0.1"
+    ],
+    "validate / schema": [
+     "comfyui:Comfy-Org-workflow_templates-blueprints-video_segmentation_sam3.json",
+     "comfyui:Comfy-Org-workflow_templates-templates-audio_stable_audio_example.json"
+    ],
+    "batch / chunk size": [
+     "comfyui:Comfy-Org-workflow_templates-templates-image_chrono_edit_14B.json",
+     "comfyui:Comfy-Org-workflow_templates-templates-templates-sprite_sheet.json"
+    ],
+    "lock / concurrency": [
+     "comfyui:Cseti-ComfyUI-Workflows-wan-2.2-vace-endless-extension-wan2.2-vace-endless-extension.json"
+    ],
+    "cache": [
+     "comfyui:Cseti-ComfyUI-Workflows-wan-2.2-vace-endless-extension-wan2.2-vace-endless-extension.json",
+     "comfyui:kijai-ComfyUI-WanVideoWrapper-example_workflows-LongCatAvatar_audio_image_to_video_example_01.json"
+    ],
+    "checksum / integrity": [
+     "comfyui:TTPlanetPig-Comfyui_TTP_Toolset-examples-8mega_pixel_super_upscale_for_flux_ver2.json"
+    ],
+    "default / fallback value": [
+     "comfyui:jakechai-ComfyUI-JakeUpgrade-Workflow-ComfyUI-API-dev-JK-API-Imgen-SD15.json",
+     "comfyui:jakechai-ComfyUI-JakeUpgrade-Workflow-ComfyUI-Main-img2mesh-JK_workflow_img2mesh_Hunyuan3DWrapper.json"
+    ]
+   },
+   "nPlatforms": 2
+  },
+  {
+   "id": "P13",
+   "name": "batched extract (map with a judge body, id echo)",
+   "family": "fan",
+   "items": 66,
+   "viaNode": 66,
+   "viaToken": 0,
+   "viaPlumbing": 0,
+   "oracle": 6,
+   "platforms": {
+    "activepieces": 11,
+    "dify": 12,
+    "flowise": 2,
+    "langflow": 1,
+    "n8n": 12,
+    "comfyui": 1,
+    "home-assistant": 1,
+    "agno": 1,
+    "anthropic": 3,
+    "claude-code-workflows": 2,
+    "crewai": 3,
+    "dspy": 5,
+    "google-adk": 3,
+    "haystack": 1,
+    "langgraph": 2,
+    "mastra": 2,
+    "openai-agents": 3,
+    "smolagents": 1
+   },
+   "clusters": {
+    "automation": 38,
+    "consumer-creative": 2,
+    "agentic": 24,
+    "first-party": 2
+   },
+   "examples": [
+    "dspy:dspy/docs/docs/tutorials/output_refinement/best-of-n-and-refine.md#refine-factuality-judge [oracle]",
+    "google-adk:adk-samples/contrib/python/on-brand-genmedia/app/agent.py [oracle]",
+    "smolagents:smolagents/examples/smolagents_benchmark/run.py#benchmark-agent-type-switch [oracle]",
+    "n8n:10156 [oracle]"
+   ],
+   "edge": {
+    "default / fallback value": 7,
+    "state store / memory": 17,
+    "notify (slack/email/chat)": 7,
+    "batch / chunk size": 14,
+    "lock / concurrency": 6,
+    "cancel": 4,
+    "pagination / cursor": 5,
+    "checksum / integrity": 3,
+    "validate / schema": 6,
+    "approve / reject": 1,
+    "dedupe / duplicate": 3,
+    "retry": 1,
+    "cache": 2
+   },
+   "edgeEx": {
+    "default / fallback value": [
+     "activepieces:07OX2PJBTt6TGnEOIJa8b",
+     "activepieces:MTHquL6XgPoQ6oGPhr4JH"
+    ],
+    "state store / memory": [
+     "activepieces:P4MZLep45DFk4lilR7QOW",
+     "activepieces:WSuSdjnA1rdJmIkfisphJ"
+    ],
+    "notify (slack/email/chat)": [
+     "activepieces:S0tI31TsQZvtNg5BDH1Tq",
+     "activepieces:WSuSdjnA1rdJmIkfisphJ"
+    ],
+    "batch / chunk size": [
+     "n8n:10156",
+     "n8n:11382"
+    ],
+    "lock / concurrency": [
+     "agno:agno/cookbook/04_workflows/03_loop_execution/loop_with_parallel.py#research-loop-parallel-then-content",
+     "anthropic:claude-cookbooks/patterns/agents/orchestrator_workers.ipynb"
+    ],
+    "cancel": [
+     "agno:agno/cookbook/04_workflows/03_loop_execution/loop_with_parallel.py#research-loop-parallel-then-content",
+     "dspy:dspy/docs/docs/tutorials/tool_use/index.ipynb#toolhop-runtime-tool-set"
+    ],
+    "pagination / cursor": [
+     "anthropic:claude-cookbooks/managed_agents/CMA_plan_big_execute_small.ipynb",
+     "dspy:dspy/docs/docs/tutorials/multihop_search/index.ipynb#hop-multihop-retrieval"
+    ],
+    "checksum / integrity": [
+     "anthropic:claude-cookbooks/patterns/agents/basic_workflows.ipynb#parallelization",
+     "anthropic:claude-cookbooks/patterns/agents/orchestrator_workers.ipynb"
+    ],
+    "validate / schema": [
+     "crewai:crewAI-examples/crews/landing_page_generator/src/landing_page_generator/crew.py#idea-to-landing-page-three-crews",
+     "dspy:dspy/docs/docs/tutorials/games/index.ipynb#alfworld-action-loop"
+    ],
+    "approve / reject": [
+     "crewai:crewAI-examples/flows/lead-score-flow/src/lead_score_flow/main.py#score-leads-human-review-emails"
+    ],
+    "dedupe / duplicate": [
+     "dspy:dspy/docs/docs/tutorials/multihop_search/index.ipynb#hop-multihop-retrieval",
+     "dspy:dspy/docs/docs/tutorials/program_of_thought/index.ipynb#multihop-pot"
+    ],
+    "retry": [
+     "dspy:dspy/docs/docs/tutorials/output_refinement/best-of-n-and-refine.md#refine-factuality-judge"
+    ],
+    "cache": [
+     "dspy:dspy/docs/docs/tutorials/output_refinement/best-of-n-and-refine.md#refine-factuality-judge",
+     "haystack:haystack-cookbook/notebooks/query_decomposition.ipynb"
+    ]
+   },
+   "nPlatforms": 18
+  },
+  {
+   "id": "P40",
+   "name": "run admission policy (single / queue / restart / parallel)",
+   "family": "trigger",
+   "items": 56,
+   "viaNode": 0,
+   "viaToken": 56,
+   "viaPlumbing": 0,
+   "oracle": 0,
+   "platforms": {
+    "home-assistant": 56
+   },
+   "clusters": {
+    "consumer-creative": 56
+   },
+   "examples": [
+    "home-assistant:CCOSTAN/Home-AssistantConfig/config/script/speech_engine.yaml#speech_engine"
+   ],
+   "edge": {},
+   "nPlatforms": 1
+  },
+  {
+   "id": "P53",
+   "name": "sub-workflow per item (map over call)",
+   "family": "compose",
+   "items": 53,
+   "viaNode": 53,
+   "viaToken": 0,
+   "viaPlumbing": 0,
+   "oracle": 8,
+   "platforms": {
+    "activepieces": 1,
+    "coze": 1,
+    "n8n": 6,
+    "node-red": 1,
+    "prefect": 1,
+    "temporal": 1,
+    "apple-shortcuts": 21,
+    "comfyui": 3,
+    "home-assistant": 5,
+    "ag2": 1,
+    "agno": 1,
+    "burr": 1,
+    "dspy": 1,
+    "haystack": 1,
+    "inngest-agentkit": 1,
+    "llamaindex-workflows": 2,
+    "mastra": 1,
+    "pydantic-graph": 2,
+    "smolagents": 1,
+    "strands": 1
+   },
+   "clusters": {
+    "automation": 9,
+    "orchestration": 2,
+    "consumer-creative": 29,
+    "agentic": 13
+   },
+   "examples": [
+    "temporal:samples-python/polling/periodic_sequence [oracle]",
+    "coze:subworkflow-bottom-workflow [oracle]",
+    "dspy:dspy/docs/docs/tutorials/dataframe_rlm/cohort_analysis/cohort_analysis_demo.ipynb#rlm-cohort-analysis [oracle]",
+    "smolagents:smolagents/examples/open_deep_research/run_gaia.py#gaia-batch-team-reformulator [oracle]"
+   ],
+   "edge": {
+    "state store / memory": 9,
+    "batch / chunk size": 6,
+    "dedupe / duplicate": 1,
+    "retry": 3,
+    "cache": 2,
+    "cancel": 9,
+    "notify (slack/email/chat)": 3,
+    "checksum / integrity": 4,
+    "validate / schema": 6,
+    "default / fallback value": 3,
+    "backoff/delay between tries": 1,
+    "timeout": 2,
+    "lock / concurrency": 3,
+    "pagination / cursor": 2
+   },
+   "edgeEx": {
+    "state store / memory": [
+     "activepieces:OZH5az2RIrvLKCr0bL47g",
+     "coze:subworkflow-bottom-workflow"
+    ],
+    "batch / chunk size": [
+     "n8n:12533",
+     "n8n:3288"
+    ],
+    "dedupe / duplicate": [
+     "n8n:3288"
+    ],
+    "retry": [
+     "prefect:prefect-recipes/flows-advanced/merge_dependabot_pull_requests.py",
+     "agno:agno/cookbook/03_teams/21_state/nested_shared_state.py#shopping-meal-nested-teams"
+    ],
+    "cache": [
+     "prefect:prefect-recipes/flows-advanced/merge_dependabot_pull_requests.py",
+     "inngest-agentkit:agent-kit/examples/mem0-memory/multi-agent.ts"
+    ],
+    "cancel": [
+     "apple-shortcuts:icloud-91c8083b64754776acd2f197161e915a",
+     "apple-shortcuts:icloud-a11bc672b88044bc8cf795f2e0956103"
+    ],
+    "notify (slack/email/chat)": [
+     "apple-shortcuts:icloud-91c8083b64754776acd2f197161e915a",
+     "apple-shortcuts:icloud-d62e5f697e3e42588f6c7325ca28f3a1"
+    ],
+    "checksum / integrity": [
+     "apple-shortcuts:workflowllm-seed-11473",
+     "agno:agno/cookbook/03_teams/21_state/nested_shared_state.py#shopping-meal-nested-teams"
+    ],
+    "validate / schema": [
+     "comfyui:jakechai-ComfyUI-JakeUpgrade-Workflow-ComfyUI-Main-img2mesh-JK_workflow_img2mesh_Hunyuan3DWrapper.json",
+     "comfyui:jakechai-ComfyUI-JakeUpgrade-Workflow-ComfyUI-Main-imgen-JK_workflow_imgen_SD3.json"
+    ],
+    "default / fallback value": [
+     "comfyui:jakechai-ComfyUI-JakeUpgrade-Workflow-ComfyUI-Main-imgen-JK_workflow_imgen_SD3.json",
+     "haystack:haystack-core-integrations/integrations/agent_pack/src/haystack_integrations/agent_pack/deep_research/agent.py#deep-research-agent"
+    ],
+    "backoff/delay between tries": [
+     "home-assistant:CCOSTAN/Home-AssistantConfig/config/packages/powerwall.yaml#automation/4"
+    ],
+    "timeout": [
+     "home-assistant:jazzyisj/home-assistant-config/automations/alarm/alarm_announcements.yaml#0",
+     "strands:samples/python/02-deploy/04-agentcore-multi-agent/01-a2a-orchestration/orchestrator/agent.py"
+    ],
+    "lock / concurrency": [
+     "dspy:dspy/docs/docs/tutorials/dataframe_rlm/cohort_analysis/cohort_analysis_demo.ipynb#rlm-cohort-analysis",
+     "haystack:haystack-core-integrations/integrations/agent_pack/src/haystack_integrations/agent_pack/deep_research/agent.py#deep-research-agent"
+    ],
+    "pagination / cursor": [
+     "haystack:haystack-core-integrations/integrations/agent_pack/src/haystack_integrations/agent_pack/deep_research/agent.py#deep-research-agent",
+     "pydantic-graph:pydantic-ai/examples/pydantic_ai_examples/flight_booking.py"
+    ]
+   },
+   "nPlatforms": 20
+  },
+  {
+   "id": "P46",
+   "name": "supervisor -> agents as typed tools",
+   "family": "agentic",
+   "items": 52,
+   "viaNode": 41,
+   "viaToken": 11,
+   "viaPlumbing": 0,
+   "oracle": 16,
+   "platforms": {
+    "n8n": 21,
+    "agno": 4,
+    "anthropic": 2,
+    "crewai": 2,
+    "dspy": 1,
+    "google-adk": 4,
+    "haystack": 1,
+    "llamaindex-workflows": 1,
+    "mastra": 2,
+    "openai-agents": 5,
+    "pydantic-graph": 4,
+    "smolagents": 2,
+    "strands": 3
+   },
+   "clusters": {
+    "automation": 21,
+    "agentic": 31
+   },
+   "examples": [
+    "mastra:mastra/templates/template-customer-refund-agent/src/mastra/agents/support-supervisor.ts [oracle]",
+    "openai-agents:openai-agents-python/examples/agent_patterns/agents_as_tools_conditional.py [oracle]",
+    "dspy:dspy/docs/docs/tutorials/dataframe_rlm/cohort_analysis/cohort_analysis_demo.ipynb#rlm-cohort-analysis [oracle]",
+    "smolagents:smolagents/examples/open_deep_research/run_gaia.py#gaia-batch-team-reformulator [oracle]"
+   ],
+   "edge": {
+    "lock / concurrency": 6,
+    "state store / memory": 14,
+    "default / fallback value": 5,
+    "batch / chunk size": 1,
+    "cancel": 5,
+    "validate / schema": 6,
+    "retry": 3,
+    "notify (slack/email/chat)": 1,
+    "pagination / cursor": 1,
+    "approve / reject": 4,
+    "cache": 5,
+    "checksum / integrity": 1
+   },
+   "edgeEx": {
+    "lock / concurrency": [
+     "agno:agno/cookbook/03_teams/02_modes/broadcast/03_research_sweep.py#research-sweep-broadcast",
+     "agno:agno/cookbook/03_teams/02_modes/tasks/09_custom_tools.py#financial-advisory-task-board"
+    ],
+    "state store / memory": [
+     "agno:agno/cookbook/03_teams/02_modes/broadcast/03_research_sweep.py#research-sweep-broadcast",
+     "agno:agno/cookbook/03_teams/02_modes/tasks/09_custom_tools.py#financial-advisory-task-board"
+    ],
+    "default / fallback value": [
+     "agno:agno/cookbook/03_teams/02_modes/tasks/09_custom_tools.py#financial-advisory-task-board",
+     "mastra:mastra/templates/template-security-incident-triage/src/mastra/workflows/security-incident-workflow.ts"
+    ],
+    "batch / chunk size": [
+     "agno:agno/cookbook/03_teams/02_modes/tasks/09_custom_tools.py#financial-advisory-task-board"
+    ],
+    "cancel": [
+     "agno:agno/cookbook/03_teams/02_modes/tasks/09_custom_tools.py#financial-advisory-task-board",
+     "google-adk:adk-samples/contrib/python/brand-aligned-presentations/app/agent.py"
+    ],
+    "validate / schema": [
+     "agno:agno/cookbook/03_teams/02_modes/tasks/09_custom_tools.py#financial-advisory-task-board",
+     "google-adk:adk-samples/contrib/python/small-business-loan-agent/app/agent.py"
+    ],
+    "retry": [
+     "agno:agno/cookbook/03_teams/21_state/nested_shared_state.py#shopping-meal-nested-teams",
+     "mastra:mastra/templates/template-security-incident-triage/src/mastra/workflows/security-incident-workflow.ts"
+    ],
+    "notify (slack/email/chat)": [
+     "agno:agno/cookbook/03_teams/21_state/nested_shared_state.py#shopping-meal-nested-teams"
+    ],
+    "pagination / cursor": [
+     "anthropic:claude-cookbooks/managed_agents/CMA_plan_big_execute_small.ipynb"
+    ],
+    "approve / reject": [
+     "google-adk:adk-samples/contrib/python/brand-aligned-presentations/app/agent.py",
+     "google-adk:adk-samples/contrib/python/small-business-loan-agent/app/agent.py"
+    ],
+    "cache": [
+     "google-adk:adk-samples/contrib/python/brand-aligned-presentations/app/agent.py",
+     "mastra:mastra/templates/template-customer-refund-agent/src/mastra/agents/support-supervisor.ts"
+    ],
+    "checksum / integrity": [
+     "pydantic-graph:pydantic-ai/docs/harness/step-persistence.md#continue_and_fork"
+    ]
+   },
+   "nPlatforms": 13
+  },
+  {
+   "id": "P25",
+   "name": "bounded state machine (cycles with several entries)",
+   "family": "loop",
+   "items": 49,
+   "viaNode": 8,
+   "viaToken": 41,
+   "viaPlumbing": 0,
+   "oracle": 11,
+   "platforms": {
+    "n8n": 30,
+    "node-red": 16,
+    "langgraph": 1,
+    "pydantic-graph": 1,
+    "smolagents": 1
+   },
+   "clusters": {
+    "automation": 46,
+    "agentic": 3
+   },
+   "examples": [
+    "pydantic-graph:pydantic-ai/docs/graph.md#vending_machine [oracle]",
+    "smolagents:smolagents/examples/open_deep_research/run_gaia.py#gaia-batch-team-reformulator [oracle]",
+    "n8n:8398 [oracle]",
+    "langgraph:langgraph/docs/docs/tutorials/rag/langgraph_adaptive_rag.ipynb"
+   ],
+   "edge": {
+    "state store / memory": 2,
+    "default / fallback value": 1,
+    "lock / concurrency": 1
+   },
+   "edgeEx": {
+    "state store / memory": [
+     "node-red:d0f137bc6323fd8200b8221cea22d713",
+     "pydantic-graph:pydantic-ai/docs/graph.md#vending_machine"
+    ],
+    "default / fallback value": [
+     "pydantic-graph:pydantic-ai/docs/graph.md#vending_machine"
+    ],
+    "lock / concurrency": [
+     "smolagents:smolagents/examples/open_deep_research/run_gaia.py#gaia-batch-team-reformulator"
+    ]
+   },
+   "nPlatforms": 5
+  },
+  {
+   "id": "P51",
+   "name": "summarise-map-reduce / context compaction",
+   "family": "agentic",
+   "items": 47,
+   "viaNode": 22,
+   "viaToken": 2,
+   "viaPlumbing": 23,
+   "oracle": 8,
+   "platforms": {
+    "activepieces": 5,
+    "flowise": 2,
+    "n8n": 2,
+    "dagster": 1,
+    "ifttt": 1,
+    "ag2": 3,
+    "agno": 3,
+    "anthropic": 1,
+    "autogen": 2,
+    "burr": 1,
+    "camel": 2,
+    "crewai": 3,
+    "dspy": 1,
+    "google-adk": 3,
+    "haystack": 2,
+    "inngest-agentkit": 2,
+    "mastra": 2,
+    "metagpt": 3,
+    "openai-agents": 3,
+    "pydantic-graph": 2,
+    "smolagents": 1,
+    "strands": 2
+   },
+   "clusters": {
+    "automation": 9,
+    "orchestration": 1,
+    "consumer-creative": 1,
+    "agentic": 36
+   },
+   "examples": [
+    "mastra:mastra/templates/template-customer-refund-agent/src/mastra/agents/support-supervisor.ts [oracle]",
+    "haystack:haystack/haystack/hooks/compaction/hooks.py#summarization-compaction [oracle]",
+    "strands:samples/python/07-ux-demos/human-in-the-loop-approval-agent/src/main.py [oracle]",
+    "dspy:dspy/docs/docs/tutorials/customer_service_agent/index.ipynb#airline-react-agent [oracle]"
+   ],
+   "edge": {
+    "notify (slack/email/chat)": 1,
+    "default / fallback value": 5,
+    "retry": 1,
+    "cancel": 2,
+    "approve / reject": 1,
+    "lock / concurrency": 2,
+    "state store / memory": 4,
+    "pagination / cursor": 1,
+    "dedupe / duplicate": 1,
+    "validate / schema": 2,
+    "checksum / integrity": 1,
+    "timeout": 1,
+    "cache": 1
+   },
+   "edgeEx": {
+    "notify (slack/email/chat)": [
+     "ifttt:x2XTiBpK"
+    ],
+    "default / fallback value": [
+     "ag2:ag2/autogen/agents/experimental/reasoning/reasoning_agent.py#tree-of-thought-beam-and-mcts-search",
+     "burr:burr/examples/deep-researcher/application.py"
+    ],
+    "retry": [
+     "agno:agno/cookbook/04_workflows/08_human_in_the_loop/output_review/05_full_review_cycle.py#output-review-approve-reject-cancel"
+    ],
+    "cancel": [
+     "agno:agno/cookbook/04_workflows/08_human_in_the_loop/output_review/05_full_review_cycle.py#output-review-approve-reject-cancel",
+     "inngest-agentkit:agent-kit/examples/use-agent/inngest/sql-agents/network.ts"
+    ],
+    "approve / reject": [
+     "agno:agno/cookbook/04_workflows/08_human_in_the_loop/output_review/05_full_review_cycle.py#output-review-approve-reject-cancel"
+    ],
+    "lock / concurrency": [
+     "burr:burr/examples/deep-researcher/application.py",
+     "metagpt:MetaGPT/examples/di/machine_learning.py#data-interpreter-plan-and-act"
+    ],
+    "state store / memory": [
+     "burr:burr/examples/deep-researcher/application.py",
+     "inngest-agentkit:agent-kit/examples/use-agent/inngest/sql-agents/network.ts"
+    ],
+    "pagination / cursor": [
+     "haystack:haystack-core-integrations/integrations/agent_pack/src/haystack_integrations/agent_pack/deep_research/agent.py#deep-research-agent"
+    ],
+    "dedupe / duplicate": [
+     "inngest-agentkit:agent-kit/examples/use-agent/inngest/sql-agents/network.ts"
+    ],
+    "validate / schema": [
+     "inngest-agentkit:agent-kit/examples/use-agent/inngest/sql-agents/network.ts",
+     "metagpt:MetaGPT/examples/di/machine_learning.py#data-interpreter-plan-and-act"
+    ],
+    "checksum / integrity": [
+     "inngest-agentkit:agent-kit/examples/use-agent/inngest/sql-agents/network.ts"
+    ],
+    "timeout": [
+     "metagpt:MetaGPT/examples/di/machine_learning.py#data-interpreter-plan-and-act"
+    ],
+    "cache": [
+     "openai-agents:openai-agents-python/examples/memory/compaction_session_example.py"
+    ]
+   },
+   "nPlatforms": 22
+  },
+  {
+   "id": "P28",
+   "name": "fallback on error (alternative path, rejoin)",
+   "family": "failure",
+   "items": 44,
+   "viaNode": 44,
+   "viaToken": 0,
+   "viaPlumbing": 0,
+   "oracle": 12,
+   "platforms": {
+    "dify": 4,
+    "n8n": 17,
+    "node-red": 2,
+    "argo": 2,
+    "github-actions": 2,
+    "gitlab-ci": 1,
+    "kubeflow": 1,
+    "anthropic": 2,
+    "autogen": 1,
+    "dspy": 7,
+    "google-adk": 1,
+    "openai-agents": 1,
+    "pydantic-graph": 2,
+    "strands": 1
+   },
+   "clusters": {
+    "automation": 23,
+    "orchestration": 6,
+    "agentic": 15
+   },
+   "examples": [
+    "kubeflow:valid/pipeline_as_exit_task [oracle]",
+    "strands:samples/python/05-technical-use-cases/steering/library-book-renewal-agent/src/library_agent_demo/agents/workflow_agent.py [oracle]",
+    "dspy:dspy/docs/docs/tutorials/output_refinement/best-of-n-and-refine.md#refine-factuality-judge [oracle]",
+    "google-adk:adk-samples/contrib/python/small-business-loan-agent/app/agent.py [oracle]"
+   ],
+   "edge": {
+    "default / fallback value": 4,
+    "cache": 3,
+    "state store / memory": 7,
+    "notify (slack/email/chat)": 10,
+    "batch / chunk size": 5,
+    "pagination / cursor": 1,
+    "backoff/delay between tries": 1,
+    "validate / schema": 7,
+    "approve / reject": 2,
+    "lock / concurrency": 3,
+    "cancel": 4,
+    "checksum / integrity": 1,
+    "retry": 2,
+    "timeout": 1
+   },
+   "edgeEx": {
+    "default / fallback value": [
+     "dify:mkt-6c7b54a5-17f0-4eac-97a2-5d8cb51be381",
+     "dify:mkt-89b63325-acec-4965-ae17-2013ef6f0029"
+    ],
+    "cache": [
+     "dify:mkt-6c7b54a5-17f0-4eac-97a2-5d8cb51be381",
+     "dspy:dspy/docs/docs/tutorials/customer_service_agent/index.ipynb#airline-react-agent"
+    ],
+    "state store / memory": [
+     "dify:mkt-6c7b54a5-17f0-4eac-97a2-5d8cb51be381",
+     "dify:mkt-89b63325-acec-4965-ae17-2013ef6f0029"
+    ],
+    "notify (slack/email/chat)": [
+     "n8n:10143",
+     "n8n:18399"
+    ],
+    "batch / chunk size": [
+     "n8n:11382",
+     "n8n:13119"
+    ],
+    "pagination / cursor": [
+     "n8n:18407"
+    ],
+    "backoff/delay between tries": [
+     "node-red:2e10a76fd27fe09e7baa7b3262727d41"
+    ],
+    "validate / schema": [
+     "github-actions:jhumanj/opnform/.github/workflows/laravel.yml",
+     "anthropic:claude-cookbooks/claude_agent_sdk/03_The_site_reliability_agent.ipynb"
+    ],
+    "approve / reject": [
+     "anthropic:claude-agent-sdk-python/examples/tool_permission_callback.py",
+     "google-adk:adk-samples/contrib/python/small-business-loan-agent/app/agent.py"
+    ],
+    "lock / concurrency": [
+     "anthropic:claude-cookbooks/claude_agent_sdk/03_The_site_reliability_agent.ipynb",
+     "dspy:dspy/docs/docs/tutorials/dataframe_rlm/cohort_analysis/cohort_analysis_demo.ipynb#rlm-cohort-analysis"
+    ],
+    "cancel": [
+     "autogen:autogen/python/docs/src/user-guide/core-user-guide/cookbook/tool-use-with-intervention.ipynb#user-approval-for-tool-execution",
+     "dspy:dspy/docs/docs/tutorials/program_of_thought/index.ipynb#multihop-pot"
+    ],
+    "checksum / integrity": [
+     "dspy:dspy/docs/docs/tutorials/dataframe_rlm/cohort_analysis/cohort_analysis_demo.ipynb#rlm-cohort-analysis"
+    ],
+    "retry": [
+     "dspy:dspy/docs/docs/tutorials/output_refinement/best-of-n-and-refine.md#refine-factuality-judge",
+     "strands:samples/python/05-technical-use-cases/steering/library-book-renewal-agent/src/library_agent_demo/agents/workflow_agent.py"
+    ],
+    "timeout": [
+     "dspy:dspy/docs/docs/tutorials/tool_use/index.ipynb#toolhop-runtime-tool-set"
+    ]
+   },
+   "nPlatforms": 14
+  },
+  {
+   "id": "P47",
+   "name": "model-written code in a sandbox -> run -> check",
+   "family": "agentic",
+   "items": 41,
+   "viaNode": 10,
+   "viaToken": 31,
+   "viaPlumbing": 0,
+   "oracle": 8,
+   "platforms": {
+    "ag2": 3,
+    "anthropic": 2,
+    "autogen": 2,
+    "burr": 1,
+    "camel": 2,
+    "claude-code-workflows": 10,
+    "crewai": 1,
+    "dspy": 2,
+    "haystack": 1,
+    "inngest-agentkit": 1,
+    "langgraph": 2,
+    "llamaindex-workflows": 1,
+    "metagpt": 2,
+    "openai-agents": 2,
+    "pydantic-graph": 1,
+    "smolagents": 6,
+    "strands": 2
+   },
+   "clusters": {
+    "agentic": 31,
+    "first-party": 10
+   },
+   "examples": [
+    "langgraph:langgraph/docs/docs/tutorials/code_assistant/langgraph_code_assistant.ipynb [oracle]",
+    "openai-agents:openai-agents-js/examples/sandbox/memory-multi-agent-multiturn.ts [oracle]",
+    "dspy:dspy/docs/docs/tutorials/dataframe_rlm/cohort_analysis/cohort_analysis_demo.ipynb#rlm-cohort-analysis [oracle]",
+    "metagpt:MetaGPT/examples/di/machine_learning.py#data-interpreter-plan-and-act [oracle]"
+   ],
+   "edge": {
+    "lock / concurrency": 6,
+    "default / fallback value": 6,
+    "approve / reject": 1,
+    "retry": 3,
+    "validate / schema": 5,
+    "pagination / cursor": 1,
+    "state store / memory": 6,
+    "cancel": 3,
+    "timeout": 2,
+    "cache": 1
+   },
+   "edgeEx": {
+    "lock / concurrency": [
+     "ag2:ag2/autogen/agents/experimental/reasoning/reasoning_agent.py#tree-of-thought-beam-and-mcts-search",
+     "ag2:ag2/notebook/agentchat_groupchat_customized.ipynb#research-team-custom-speaker-function"
+    ],
+    "default / fallback value": [
+     "ag2:ag2/notebook/agentchat_groupchat_customized.ipynb#research-team-custom-speaker-function",
+     "ag2:ag2/notebook/agentchats_sequential_chats.ipynb#financial-research-then-blog-post-chat-chain"
+    ],
+    "approve / reject": [
+     "ag2:ag2/notebook/agentchat_groupchat_customized.ipynb#research-team-custom-speaker-function"
+    ],
+    "retry": [
+     "crewai:crewAI-examples/notebooks/Coding%20Assistant/coding_assistant_eval.ipynb#llm-code-generate-exec-check-fix",
+     "langgraph:langgraph/docs/docs/tutorials/code_assistant/langgraph_code_assistant.ipynb"
+    ],
+    "validate / schema": [
+     "crewai:crewAI-examples/notebooks/Coding%20Assistant/coding_assistant_eval.ipynb#llm-code-generate-exec-check-fix",
+     "dspy:dspy/docs/docs/tutorials/program_of_thought/index.ipynb#multihop-pot"
+    ],
+    "pagination / cursor": [
+     "crewai:crewAI-examples/notebooks/Coding%20Assistant/coding_assistant_eval.ipynb#llm-code-generate-exec-check-fix"
+    ],
+    "state store / memory": [
+     "crewai:crewAI-examples/notebooks/Coding%20Assistant/coding_assistant_eval.ipynb#llm-code-generate-exec-check-fix",
+     "dspy:dspy/docs/docs/tutorials/dataframe_rlm/cohort_analysis/cohort_analysis_demo.ipynb#rlm-cohort-analysis"
+    ],
+    "cancel": [
+     "dspy:dspy/docs/docs/tutorials/program_of_thought/index.ipynb#multihop-pot",
+     "inngest-agentkit:agent-kit/examples/e2b-csv-contacts-importer/src/inngest/agent.ts"
+    ],
+    "timeout": [
+     "metagpt:MetaGPT/examples/di/machine_learning.py#data-interpreter-plan-and-act",
+     "metagpt:MetaGPT/metagpt/roles/engineer.py#fixed-sop-software-team"
+    ],
+    "cache": [
+     "metagpt:MetaGPT/examples/di/machine_learning.py#data-interpreter-plan-and-act"
+    ]
+   },
+   "nPlatforms": 17
+  },
+  {
+   "id": "P44",
+   "name": "bounded stream consumer / partial outputs",
+   "family": "state",
+   "items": 39,
+   "viaNode": 0,
+   "viaToken": 39,
+   "viaPlumbing": 0,
+   "oracle": 2,
+   "platforms": {
+    "node-red": 28,
+    "burr": 1,
+    "google-adk": 1,
+    "inngest-agentkit": 2,
+    "llamaindex-workflows": 2,
+    "openai-agents": 2,
+    "pydantic-graph": 1,
+    "strands": 2
+   },
+   "clusters": {
+    "automation": 28,
+    "agentic": 11
+   },
+   "examples": [
+    "google-adk:adk-python/contributing/samples/live/workflow/agent.py [oracle]",
+    "openai-agents:openai-agents-js/examples/live/delegation.ts [oracle]",
+    "pydantic-graph:pydantic-ai/examples/pydantic_ai_examples/realtime_handoff.py",
+    "strands:samples/python/02-deploy/04-agentcore-multi-agent/01-a2a-orchestration/orchestrator/agent.py"
+   ],
+   "edge": {},
+   "nPlatforms": 8
+  },
+  {
+   "id": "P19",
+   "name": "planned fan-out (wide) / bounded expansion (plan)",
+   "family": "fan",
+   "items": 33,
+   "viaNode": 0,
+   "viaToken": 33,
+   "viaPlumbing": 0,
+   "oracle": 17,
+   "platforms": {
+    "snakemake": 17,
+    "agno": 2,
+    "anthropic": 2,
+    "camel": 2,
+    "claude-code-workflows": 1,
+    "dspy": 1,
+    "google-adk": 2,
+    "langgraph": 1,
+    "llamaindex-workflows": 1,
+    "openai-agents": 1,
+    "pydantic-graph": 1,
+    "strands": 2
+   },
+   "clusters": {
+    "science": 17,
+    "agentic": 15,
+    "first-party": 1
+   },
+   "examples": [
+    "strands:samples/python/01-learn/11-swarm/swarm.ipynb#four-peer-swarm [oracle]",
+    "dspy:dspy/docs/docs/tutorials/dataframe_rlm/cohort_analysis/cohort_analysis_demo.ipynb#rlm-cohort-analysis [oracle]",
+    "google-adk:adk-samples/contrib/python/brand-aligned-presentations/app/agent.py [oracle]",
+    "snakemake:snakemake-workflows/dna-seq-gatk-variant-calling@v2.1.1 [oracle]"
+   ],
+   "edge": {},
+   "nPlatforms": 12
+  },
+  {
+   "id": "P15",
+   "name": "fan-in aggregate / report",
+   "family": "fan",
+   "items": 32,
+   "viaNode": 32,
+   "viaToken": 0,
+   "viaPlumbing": 0,
+   "oracle": 3,
+   "platforms": {
+    "n8n": 7,
+    "node-red": 1,
+    "gitlab-ci": 21,
+    "galaxy": 2,
+    "claude-code-workflows": 1
+   },
+   "clusters": {
+    "automation": 8,
+    "orchestration": 21,
+    "science": 2,
+    "first-party": 1
+   },
+   "examples": [
+    "n8n:12472 [oracle]",
+    "gitlab-ci:gitlab-org/gitlab/lib/gitlab/ci/templates/Jobs/Deploy.gitlab-ci.yml",
+    "galaxy:workflowhub/251",
+    "claude-code-workflows:claude-session/workflows/scripts/bed-audits-wf_037c2944-bb3.js"
+   ],
+   "edge": {
+    "batch / chunk size": 1,
+    "backoff/delay between tries": 2,
+    "default / fallback value": 2,
+    "retry": 5,
+    "validate / schema": 1
+   },
+   "edgeEx": {
+    "batch / chunk size": [
+     "n8n:11382"
+    ],
+    "backoff/delay between tries": [
+     "gitlab-ci:gitlab-org/gitlab/lib/gitlab/ci/templates/Auto-DevOps.gitlab-ci.yml",
+     "gitlab-ci:gitlab-org/gitlab/lib/gitlab/ci/templates/Jobs/Deploy.gitlab-ci.yml"
+    ],
+    "default / fallback value": [
+     "gitlab-ci:gitlab-org/gitlab/lib/gitlab/ci/templates/Auto-DevOps.gitlab-ci.yml",
+     "claude-code-workflows:claude-session/workflows/scripts/bed-audits-wf_037c2944-bb3.js"
+    ],
+    "retry": [
+     "gitlab-ci:gitlab.com/gitlab-org/gitlab",
+     "gitlab-ci:gitlab.com/gitlab-org/gitlab-development-kit"
+    ],
+    "validate / schema": [
+     "gitlab-ci:gitlab.com/gitlab-org/omnibus-gitlab"
+    ]
+   },
+   "nPlatforms": 5
+  },
+  {
+   "id": "P39",
+   "name": "poll -> diff -> notify (cursor in state)",
+   "family": "trigger",
+   "items": 26,
+   "viaNode": 25,
+   "viaToken": 1,
+   "viaPlumbing": 0,
+   "oracle": 11,
+   "platforms": {
+    "n8n": 4,
+    "dagster": 9,
+    "ifttt": 11,
+    "crewai": 1,
+    "strands": 1
+   },
+   "clusters": {
+    "automation": 4,
+    "orchestration": 9,
+    "consumer-creative": 11,
+    "agentic": 2
+   },
+   "examples": [
+    "dagster:docs_projects/project_dagster_modal_pipes [oracle]",
+    "n8n:12858 [oracle]",
+    "strands:samples/python/01-learn/18-self-improving-agents/code/step-04-ambient/agent.py#ambient-scheduler",
+    "ifttt:A52utMhX"
+   ],
+   "edge": {
+    "lock / concurrency": 3,
+    "batch / chunk size": 1,
+    "validate / schema": 3,
+    "notify (slack/email/chat)": 4,
+    "default / fallback value": 1,
+    "pagination / cursor": 1,
+    "state store / memory": 3,
+    "dedupe / duplicate": 1,
+    "backoff/delay between tries": 1,
+    "cancel": 1,
+    "cache": 1
+   },
+   "edgeEx": {
+    "lock / concurrency": [
+     "dagster:assets_dynamic_partitions",
+     "dagster:docs_projects/project_mini"
+    ],
+    "batch / chunk size": [
+     "dagster:docs_projects/project_mini"
+    ],
+    "validate / schema": [
+     "dagster:docs_projects/project_mini",
+     "dagster:ingestion-patterns"
+    ],
+    "notify (slack/email/chat)": [
+     "dagster:docs_projects/project_multi_workspace_databricks",
+     "ifttt:HSNX8c5H"
+    ],
+    "default / fallback value": [
+     "dagster:ingestion-patterns"
+    ],
+    "pagination / cursor": [
+     "dagster:ingestion-patterns"
+    ],
+    "state store / memory": [
+     "dagster:ingestion-patterns",
+     "dagster:snowflake_cortex"
+    ],
+    "dedupe / duplicate": [
+     "dagster:snowflake_cortex"
+    ],
+    "backoff/delay between tries": [
+     "ifttt:sWsnPMfd"
+    ],
+    "cancel": [
+     "strands:samples/python/01-learn/18-self-improving-agents/code/step-04-ambient/agent.py#ambient-scheduler"
+    ],
+    "cache": [
+     "strands:samples/python/01-learn/18-self-improving-agents/code/step-04-ambient/agent.py#ambient-scheduler"
+    ]
+   },
+   "nPlatforms": 5
+  },
+  {
+   "id": "P09",
+   "name": "judge -> confidence gate -> review queue (escalate, never guess)",
+   "family": "branch",
+   "items": 20,
+   "viaNode": 20,
+   "viaToken": 0,
+   "viaPlumbing": 0,
+   "oracle": 0,
+   "platforms": {
+    "activepieces": 4,
+    "dify": 3,
+    "n8n": 3,
+    "apple-shortcuts": 4,
+    "anthropic": 1,
+    "autogen": 1,
+    "langgraph": 1,
+    "pydantic-graph": 1,
+    "semantic-kernel": 1,
+    "strands": 1
+   },
+   "clusters": {
+    "automation": 10,
+    "consumer-creative": 4,
+    "agentic": 6
+   },
+   "examples": [
+    "langgraph:langgraph/docs/docs/how-tos/human_in_the_loop/wait-user-input.ipynb#ask-human-agent",
+    "semantic-kernel:semantic-kernel/dotnet/samples/GettingStartedWithProcesses/Step02/Step02b_AccountOpening.cs#account-opening-form-agent-and-subprocesses",
+    "strands:samples/python/01-learn/13-human-in-the-loop/strands_hitl.ipynb#hook-approval-with-persistent-trust",
+    "autogen:autogen/python/samples/agentchat_chess_game/main.py#llm-vs-human-or-random-game-loop"
+   ],
+   "edge": {
+    "notify (slack/email/chat)": 4,
+    "default / fallback value": 2,
+    "state store / memory": 3,
+    "cancel": 3,
+    "lock / concurrency": 1,
+    "approve / reject": 1,
+    "validate / schema": 1
+   },
+   "edgeEx": {
+    "notify (slack/email/chat)": [
+     "activepieces:b5KWB4fzJtRoyYLC5RZaP",
+     "activepieces:gSsyKGwN5eqYe8SXyGM0X"
+    ],
+    "default / fallback value": [
+     "dify:mkt-b450ab90-0038-434e-8483-054ff12dd92e",
+     "strands:samples/python/01-learn/13-human-in-the-loop/strands_hitl.ipynb#hook-approval-with-persistent-trust"
+    ],
+    "state store / memory": [
+     "dify:mkt-b450ab90-0038-434e-8483-054ff12dd92e",
+     "semantic-kernel:semantic-kernel/dotnet/samples/GettingStartedWithProcesses/Step02/Step02b_AccountOpening.cs#account-opening-form-agent-and-subprocesses"
+    ],
+    "cancel": [
+     "apple-shortcuts:workflowllm-seed-00030",
+     "semantic-kernel:semantic-kernel/dotnet/samples/GettingStartedWithProcesses/Step02/Step02b_AccountOpening.cs#account-opening-form-agent-and-subprocesses"
+    ],
+    "lock / concurrency": [
+     "anthropic:claude-agent-sdk-python/examples/tool_permission_callback.py"
+    ],
+    "approve / reject": [
+     "anthropic:claude-agent-sdk-python/examples/tool_permission_callback.py"
+    ],
+    "validate / schema": [
+     "langgraph:langgraph/docs/docs/how-tos/human_in_the_loop/wait-user-input.ipynb#ask-human-agent"
+    ]
+   },
+   "nPlatforms": 10
+  },
+  {
+   "id": "P57",
+   "name": "caller-supplied action list (typed plan fragment)",
+   "family": "compose",
+   "items": 20,
+   "viaNode": 0,
+   "viaToken": 20,
+   "viaPlumbing": 0,
+   "oracle": 0,
+   "platforms": {
+    "home-assistant": 19,
+    "dspy": 1
+   },
+   "clusters": {
+    "consumer-creative": 19,
+    "agentic": 1
+   },
+   "examples": [
+    "dspy:dspy/docs/docs/tutorials/tool_use/index.ipynb#toolhop-runtime-tool-set",
+    "home-assistant:Burningstone91/smart-home-setup/home-assistant/blueprints/automation/custom/hue_dimmer_light.yaml#0"
+   ],
+   "edge": {},
+   "nPlatforms": 2
+  },
+  {
+   "id": "P16",
+   "name": "dedupe by identity (blocking + pairwise judge + union-find)",
+   "family": "fan",
+   "items": 18,
+   "viaNode": 0,
+   "viaToken": 0,
+   "viaPlumbing": 18,
+   "oracle": 6,
+   "platforms": {
+    "n8n": 7,
+    "dagster": 2,
+    "github-actions": 1,
+    "claude-code-workflows": 1,
+    "dspy": 2,
+    "google-adk": 2,
+    "inngest-agentkit": 3
+   },
+   "clusters": {
+    "automation": 7,
+    "orchestration": 3,
+    "first-party": 1,
+    "agentic": 7
+   },
+   "examples": [
+    "google-adk:adk-samples/contrib/python/on-brand-genmedia/app/agent.py [oracle]",
+    "dspy:dspy/docs/docs/tutorials/program_of_thought/index.ipynb#multihop-pot [oracle]",
+    "dagster:snowflake_cortex [oracle]",
+    "n8n:2658 [oracle]"
+   ],
+   "edge": {},
+   "nPlatforms": 7
+  },
+  {
+   "id": "P35",
+   "name": "interrupt -> resume inside an agent node",
+   "family": "async",
+   "items": 15,
+   "viaNode": 0,
+   "viaToken": 15,
+   "viaPlumbing": 0,
+   "oracle": 5,
+   "platforms": {
+    "agno": 1,
+    "anthropic": 2,
+    "autogen": 1,
+    "camel": 2,
+    "google-adk": 2,
+    "haystack": 1,
+    "langgraph": 1,
+    "mastra": 1,
+    "openai-agents": 1,
+    "pydantic-graph": 1,
+    "smolagents": 1,
+    "strands": 1
+   },
+   "clusters": {
+    "agentic": 15
+   },
+   "examples": [
+    "pydantic-graph:pydantic-ai/docs/deferred-tools.md#tool_requires_approval [oracle]",
+    "google-adk:adk-python/contributing/samples/live/workflow/agent.py [oracle]",
+    "openai-agents:openai-agents-python/examples/agent_patterns/agents_as_tools_conditional.py [oracle]",
+    "mastra:mastra/templates/template-customer-refund-agent/src/mastra/workflows/resolve-support-case.ts [oracle]"
+   ],
+   "edge": {},
+   "nPlatforms": 12
+  },
+  {
+   "id": "P50",
+   "name": "evidence -> hypothesis -> check (diagnosis) / env session",
+   "family": "agentic",
+   "items": 12,
+   "viaNode": 0,
+   "viaToken": 3,
+   "viaPlumbing": 9,
+   "oracle": 2,
+   "platforms": {
+    "camel": 2,
+    "dspy": 1,
+    "google-adk": 1,
+    "inngest-agentkit": 1,
+    "langgraph": 1,
+    "mastra": 1,
+    "metagpt": 1,
+    "openai-agents": 1,
+    "pydantic-graph": 2,
+    "smolagents": 1
+   },
+   "clusters": {
+    "agentic": 12
+   },
+   "examples": [
+    "mastra:mastra/templates/template-customer-refund-agent/src/mastra/agents/support-supervisor.ts [oracle]",
+    "metagpt:MetaGPT/examples/di/machine_learning.py#data-interpreter-plan-and-act [oracle]",
+    "pydantic-graph:pydantic-ai/examples/pydantic_ai_examples/medical_agent_delegation.py",
+    "smolagents:smolagents/docs/source/en/examples/web_browser.md#helium-screenshot-agent"
+   ],
+   "edge": {},
+   "nPlatforms": 10
+  },
+  {
+   "id": "P22",
+   "name": "loop until condition / dry (convergence cap)",
+   "family": "loop",
+   "items": 10,
+   "viaNode": 10,
+   "viaToken": 0,
+   "viaPlumbing": 0,
+   "oracle": 0,
+   "platforms": {
+    "home-assistant": 10
+   },
+   "clusters": {
+    "consumer-creative": 10
+   },
+   "examples": [
+    "home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/xiaomi_wxcjkg11lm/xiaomi_wxcjkg11lm.yaml#0"
+   ],
+   "edge": {
+    "default / fallback value": 1,
+    "state store / memory": 1
+   },
+   "edgeEx": {
+    "default / fallback value": [
+     "home-assistant:forum-413705"
+    ],
+    "state store / memory": [
+     "home-assistant:forum-730391"
+    ]
+   },
+   "nPlatforms": 1
+  },
+  {
+   "id": "P31",
+   "name": "checkpoint -> resume / continue-as-new",
+   "family": "failure",
+   "items": 9,
+   "viaNode": 5,
+   "viaToken": 4,
+   "viaPlumbing": 0,
+   "oracle": 3,
+   "platforms": {
+    "temporal": 4,
+    "agno": 1,
+    "burr": 1,
+    "crewai": 1,
+    "langgraph": 1,
+    "pydantic-graph": 1
+   },
+   "clusters": {
+    "orchestration": 4,
+    "agentic": 5
+   },
+   "examples": [
+    "temporal:samples-go/pso [oracle]",
+    "langgraph:langgraph/docs/docs/tutorials/get-started/6-time-travel.md",
+    "agno:agno/cookbook/03_teams/25_time_travel/01_continue_from.py#team-run-rewind-and-fork",
+    "burr:burr/examples/multi-agent-collaboration/hamilton/application.py"
+   ],
+   "edge": {
+    "state store / memory": 1
+   },
+   "edgeEx": {
+    "state store / memory": [
+     "crewai:crewAI/docs/edge/en/guides/flows/first-flow.mdx#guide-creator-flow"
+    ]
+   },
+   "nPlatforms": 6
+  },
+  {
+   "id": "P49",
+   "name": "verify panel (independent verifiers vote)",
+   "family": "agentic",
+   "items": 8,
+   "viaNode": 0,
+   "viaToken": 0,
+   "viaPlumbing": 8,
+   "oracle": 3,
+   "platforms": {
+    "anthropic": 1,
+    "camel": 1,
+    "claude-code-workflows": 2,
+    "google-adk": 1,
+    "langgraph": 1,
+    "mastra": 1,
+    "strands": 1
+   },
+   "clusters": {
+    "agentic": 6,
+    "first-party": 2
+   },
+   "examples": [
+    "google-adk:adk-python/contributing/samples/live/workflow/agent.py [oracle]",
+    "strands:samples/python/05-technical-use-cases/steering/library-book-renewal-agent/src/library_agent_demo/agents/steering_agent.py [oracle]",
+    "mastra:mastra/templates/template-security-incident-triage/src/mastra/workflows/security-incident-workflow.ts [oracle]",
+    "anthropic:claude-cookbooks/patterns/agents/evaluator_optimizer.ipynb"
+   ],
+   "edge": {},
+   "nPlatforms": 7
+  },
+  {
+   "id": "P30",
+   "name": "saga: steps with compensation",
+   "family": "failure",
+   "items": 7,
+   "viaNode": 0,
+   "viaToken": 0,
+   "viaPlumbing": 7,
+   "oracle": 4,
+   "platforms": {
+    "nextflow": 1,
+    "nf-core": 1,
+    "wdl": 4,
+    "haystack": 1
+   },
+   "clusters": {
+    "science": 6,
+    "agentic": 1
+   },
+   "examples": [
+    "wdl:broadinstitute/warp/pipelines/wdl/reprocessing/cram_to_unmapped_bams/CramToUnmappedBams.wdl [oracle]",
+    "nf-core:raredisease@3.1.2 [oracle]",
+    "nextflow:workflowhub/1864",
+    "haystack:haystack-cookbook/notebooks/github_pr_creator_agent.ipynb"
+   ],
+   "edge": {},
+   "nPlatforms": 4
+  },
+  {
+   "id": "P48",
+   "name": "guardrail tripwire (parallel check aborts)",
+   "family": "agentic",
+   "items": 6,
+   "viaNode": 0,
+   "viaToken": 6,
+   "viaPlumbing": 0,
+   "oracle": 2,
+   "platforms": {
+    "anthropic": 2,
+    "google-adk": 1,
+    "openai-agents": 2,
+    "strands": 1
+   },
+   "clusters": {
+    "agentic": 6
+   },
+   "examples": [
+    "strands:samples/python/05-technical-use-cases/steering/library-book-renewal-agent/src/library_agent_demo/agents/steering_agent.py [oracle]",
+    "google-adk:adk-samples/contrib/python/small-business-loan-agent/app/agent.py [oracle]",
+    "openai-agents:openai-agents-python/examples/agent_patterns/input_guardrails.py",
+    "anthropic:claude-cookbooks/claude_agent_sdk/03_The_site_reliability_agent.ipynb"
+   ],
+   "edge": {},
+   "nPlatforms": 4
+  },
+  {
+   "id": "P23",
+   "name": "paginate with a cursor",
+   "family": "loop",
+   "items": 0,
+   "viaNode": 0,
+   "viaToken": 0,
+   "viaPlumbing": 0,
+   "oracle": 0,
+   "platforms": {},
+   "clusters": {},
+   "examples": [],
+   "edge": {},
+   "nPlatforms": 0
+  }
+ ],
+ "platforms": [
+  {
+   "plat": "ag2",
+   "cl": "agentic",
+   "items": 8,
+   "refused": 4,
+   "flat": 3,
+   "hier": 1,
+   "uncovered": 0,
+   "l0only": 0,
+   "medianPatterns": 5,
+   "maxPatterns": 6
+  },
+  {
+   "plat": "agno",
+   "cl": "agentic",
+   "items": 10,
+   "refused": 0,
+   "flat": 8,
+   "hier": 2,
+   "uncovered": 0,
+   "l0only": 0,
+   "medianPatterns": 4,
+   "maxPatterns": 8
+  },
+  {
+   "plat": "anthropic",
+   "cl": "agentic",
+   "items": 12,
+   "refused": 0,
+   "flat": 8,
+   "hier": 4,
+   "uncovered": 0,
+   "l0only": 0,
+   "medianPatterns": 3,
+   "maxPatterns": 6
+  },
+  {
+   "plat": "autogen",
+   "cl": "agentic",
+   "items": 14,
+   "refused": 6,
+   "flat": 7,
+   "hier": 1,
+   "uncovered": 0,
+   "l0only": 0,
+   "medianPatterns": 3,
+   "maxPatterns": 6
+  },
+  {
+   "plat": "burr",
+   "cl": "agentic",
+   "items": 8,
+   "refused": 0,
+   "flat": 8,
+   "hier": 0,
+   "uncovered": 0,
+   "l0only": 0,
+   "medianPatterns": 3,
+   "maxPatterns": 5
+  },
+  {
+   "plat": "camel",
+   "cl": "agentic",
+   "items": 3,
+   "refused": 0,
+   "flat": 1,
+   "hier": 2,
+   "uncovered": 0,
+   "l0only": 0,
+   "medianPatterns": 8,
+   "maxPatterns": 8
+  },
+  {
+   "plat": "crewai",
+   "cl": "agentic",
+   "items": 13,
+   "refused": 0,
+   "flat": 13,
+   "hier": 0,
+   "uncovered": 0,
+   "l0only": 0,
+   "medianPatterns": 4,
+   "maxPatterns": 5
+  },
+  {
+   "plat": "dspy",
+   "cl": "agentic",
+   "items": 10,
+   "refused": 0,
+   "flat": 7,
+   "hier": 3,
+   "uncovered": 0,
+   "l0only": 0,
+   "medianPatterns": 4,
+   "maxPatterns": 10
+  },
+  {
+   "plat": "google-adk",
+   "cl": "agentic",
+   "items": 15,
+   "refused": 3,
+   "flat": 10,
+   "hier": 2,
+   "uncovered": 0,
+   "l0only": 0,
+   "medianPatterns": 3,
+   "maxPatterns": 7
+  },
+  {
+   "plat": "haystack",
+   "cl": "agentic",
+   "items": 8,
+   "refused": 1,
+   "flat": 6,
+   "hier": 1,
+   "uncovered": 0,
+   "l0only": 0,
+   "medianPatterns": 3,
+   "maxPatterns": 8
+  },
+  {
+   "plat": "inngest-agentkit",
+   "cl": "agentic",
+   "items": 7,
+   "refused": 1,
+   "flat": 4,
+   "hier": 2,
+   "uncovered": 0,
+   "l0only": 0,
+   "medianPatterns": 4,
+   "maxPatterns": 8
+  },
+  {
+   "plat": "langgraph",
+   "cl": "agentic",
+   "items": 18,
+   "refused": 4,
+   "flat": 14,
+   "hier": 0,
+   "uncovered": 0,
+   "l0only": 0,
+   "medianPatterns": 3,
+   "maxPatterns": 5
+  },
+  {
+   "plat": "llamaindex-workflows",
+   "cl": "agentic",
+   "items": 10,
+   "refused": 1,
+   "flat": 9,
+   "hier": 0,
+   "uncovered": 0,
+   "l0only": 0,
+   "medianPatterns": 4,
+   "maxPatterns": 5
+  },
+  {
+   "plat": "mastra",
+   "cl": "agentic",
+   "items": 8,
+   "refused": 0,
+   "flat": 5,
+   "hier": 3,
+   "uncovered": 0,
+   "l0only": 0,
+   "medianPatterns": 5,
+   "maxPatterns": 6
+  },
+  {
+   "plat": "metagpt",
+   "cl": "agentic",
+   "items": 4,
+   "refused": 1,
+   "flat": 3,
+   "hier": 0,
+   "uncovered": 0,
+   "l0only": 0,
+   "medianPatterns": 5,
+   "maxPatterns": 5
+  },
+  {
+   "plat": "openai-agents",
+   "cl": "agentic",
+   "items": 18,
+   "refused": 4,
+   "flat": 12,
+   "hier": 2,
+   "uncovered": 0,
+   "l0only": 0,
+   "medianPatterns": 3,
+   "maxPatterns": 7
+  },
+  {
+   "plat": "openai-swarm",
+   "cl": "agentic",
+   "items": 6,
+   "refused": 3,
+   "flat": 3,
+   "hier": 0,
+   "uncovered": 0,
+   "l0only": 0,
+   "medianPatterns": 3,
+   "maxPatterns": 3
+  },
+  {
+   "plat": "pydantic-graph",
+   "cl": "agentic",
+   "items": 9,
+   "refused": 0,
+   "flat": 6,
+   "hier": 3,
+   "uncovered": 0,
+   "l0only": 0,
+   "medianPatterns": 5,
+   "maxPatterns": 6
+  },
+  {
+   "plat": "semantic-kernel",
+   "cl": "agentic",
+   "items": 9,
+   "refused": 5,
+   "flat": 4,
+   "hier": 0,
+   "uncovered": 0,
+   "l0only": 0,
+   "medianPatterns": 4,
+   "maxPatterns": 5
+  },
+  {
+   "plat": "smolagents",
+   "cl": "agentic",
+   "items": 6,
+   "refused": 0,
+   "flat": 4,
+   "hier": 2,
+   "uncovered": 0,
+   "l0only": 0,
+   "medianPatterns": 4,
+   "maxPatterns": 8
+  },
+  {
+   "plat": "strands",
+   "cl": "agentic",
+   "items": 11,
+   "refused": 0,
+   "flat": 9,
+   "hier": 2,
+   "uncovered": 0,
+   "l0only": 0,
+   "medianPatterns": 5,
+   "maxPatterns": 7
+  },
+  {
+   "plat": "activepieces",
+   "cl": "automation",
+   "items": 40,
+   "refused": 0,
+   "flat": 34,
+   "hier": 6,
+   "uncovered": 0,
+   "l0only": 0,
+   "medianPatterns": 4,
+   "maxPatterns": 7
+  },
+  {
+   "plat": "coze",
+   "cl": "automation",
+   "items": 22,
+   "refused": 0,
+   "flat": 22,
+   "hier": 0,
+   "uncovered": 0,
+   "l0only": 3,
+   "medianPatterns": 1,
+   "maxPatterns": 2
+  },
+  {
+   "plat": "dify",
+   "cl": "automation",
+   "items": 50,
+   "refused": 0,
+   "flat": 45,
+   "hier": 5,
+   "uncovered": 0,
+   "l0only": 2,
+   "medianPatterns": 3,
+   "maxPatterns": 7
+  },
+  {
+   "plat": "flowise",
+   "cl": "automation",
+   "items": 51,
+   "refused": 0,
+   "flat": 44,
+   "hier": 7,
+   "uncovered": 0,
+   "l0only": 0,
+   "medianPatterns": 3,
+   "maxPatterns": 7
+  },
+  {
+   "plat": "langflow",
+   "cl": "automation",
+   "items": 27,
+   "refused": 0,
+   "flat": 27,
+   "hier": 0,
+   "uncovered": 0,
+   "l0only": 0,
+   "medianPatterns": 4,
+   "maxPatterns": 5
+  },
+  {
+   "plat": "n8n",
+   "cl": "automation",
+   "items": 135,
+   "refused": 0,
+   "flat": 41,
+   "hier": 94,
+   "uncovered": 0,
+   "l0only": 4,
+   "medianPatterns": 7,
+   "maxPatterns": 15
+  },
+  {
+   "plat": "node-red",
+   "cl": "automation",
+   "items": 45,
+   "refused": 2,
+   "flat": 27,
+   "hier": 16,
+   "uncovered": 0,
+   "l0only": 2,
+   "medianPatterns": 5,
+   "maxPatterns": 11
+  },
+  {
+   "plat": "zapier",
+   "cl": "automation",
+   "items": 25,
+   "refused": 0,
+   "flat": 22,
+   "hier": 3,
+   "uncovered": 0,
+   "l0only": 0,
+   "medianPatterns": 4,
+   "maxPatterns": 6
+  },
+  {
+   "plat": "apple-shortcuts",
+   "cl": "consumer-creative",
+   "items": 79,
+   "refused": 0,
+   "flat": 36,
+   "hier": 43,
+   "uncovered": 0,
+   "l0only": 2,
+   "medianPatterns": 6,
+   "maxPatterns": 11
+  },
+  {
+   "plat": "comfyui",
+   "cl": "consumer-creative",
+   "items": 73,
+   "refused": 0,
+   "flat": 72,
+   "hier": 1,
+   "uncovered": 0,
+   "l0only": 6,
+   "medianPatterns": 1,
+   "maxPatterns": 6
+  },
+  {
+   "plat": "home-assistant",
+   "cl": "consumer-creative",
+   "items": 96,
+   "refused": 0,
+   "flat": 64,
+   "hier": 32,
+   "uncovered": 0,
+   "l0only": 1,
+   "medianPatterns": 4,
+   "maxPatterns": 9
+  },
+  {
+   "plat": "ifttt",
+   "cl": "consumer-creative",
+   "items": 25,
+   "refused": 0,
+   "flat": 25,
+   "hier": 0,
+   "uncovered": 0,
+   "l0only": 0,
+   "medianPatterns": 1,
+   "maxPatterns": 2
+  },
+  {
+   "plat": "claude-code-workflows",
+   "cl": "first-party",
+   "items": 10,
+   "refused": 0,
+   "flat": 10,
+   "hier": 0,
+   "uncovered": 0,
+   "l0only": 0,
+   "medianPatterns": 3,
+   "maxPatterns": 4
+  },
+  {
+   "plat": "airflow",
+   "cl": "orchestration",
+   "items": 88,
+   "refused": 0,
+   "flat": 88,
+   "hier": 0,
+   "uncovered": 0,
+   "l0only": 30,
+   "medianPatterns": 1,
+   "maxPatterns": 5
+  },
+  {
+   "plat": "argo",
+   "cl": "orchestration",
+   "items": 55,
+   "refused": 0,
+   "flat": 55,
+   "hier": 0,
+   "uncovered": 0,
+   "l0only": 29,
+   "medianPatterns": 0,
+   "maxPatterns": 2
+  },
+  {
+   "plat": "dagster",
+   "cl": "orchestration",
+   "items": 25,
+   "refused": 0,
+   "flat": 25,
+   "hier": 0,
+   "uncovered": 0,
+   "l0only": 6,
+   "medianPatterns": 1,
+   "maxPatterns": 5
+  },
+  {
+   "plat": "github-actions",
+   "cl": "orchestration",
+   "items": 85,
+   "refused": 0,
+   "flat": 85,
+   "hier": 0,
+   "uncovered": 0,
+   "l0only": 2,
+   "medianPatterns": 2,
+   "maxPatterns": 5
+  },
+  {
+   "plat": "gitlab-ci",
+   "cl": "orchestration",
+   "items": 41,
+   "refused": 0,
+   "flat": 37,
+   "hier": 4,
+   "uncovered": 0,
+   "l0only": 0,
+   "medianPatterns": 3,
+   "maxPatterns": 7
+  },
+  {
+   "plat": "kubeflow",
+   "cl": "orchestration",
+   "items": 30,
+   "refused": 0,
+   "flat": 30,
+   "hier": 0,
+   "uncovered": 0,
+   "l0only": 28,
+   "medianPatterns": 0,
+   "maxPatterns": 2
+  },
+  {
+   "plat": "prefect",
+   "cl": "orchestration",
+   "items": 18,
+   "refused": 0,
+   "flat": 18,
+   "hier": 0,
+   "uncovered": 0,
+   "l0only": 11,
+   "medianPatterns": 0,
+   "maxPatterns": 2
+  },
+  {
+   "plat": "tekton",
+   "cl": "orchestration",
+   "items": 20,
+   "refused": 0,
+   "flat": 20,
+   "hier": 0,
+   "uncovered": 0,
+   "l0only": 10,
+   "medianPatterns": 0,
+   "maxPatterns": 2
+  },
+  {
+   "plat": "temporal",
+   "cl": "orchestration",
+   "items": 34,
+   "refused": 0,
+   "flat": 34,
+   "hier": 0,
+   "uncovered": 0,
+   "l0only": 5,
+   "medianPatterns": 1,
+   "maxPatterns": 3
+  },
+  {
+   "plat": "cwl",
+   "cl": "science",
+   "items": 45,
+   "refused": 0,
+   "flat": 45,
+   "hier": 0,
+   "uncovered": 0,
+   "l0only": 27,
+   "medianPatterns": 0,
+   "maxPatterns": 1
+  },
+  {
+   "plat": "galaxy",
+   "cl": "science",
+   "items": 60,
+   "refused": 0,
+   "flat": 60,
+   "hier": 0,
+   "uncovered": 0,
+   "l0only": 16,
+   "medianPatterns": 1,
+   "maxPatterns": 3
+  },
+  {
+   "plat": "nextflow",
+   "cl": "science",
+   "items": 25,
+   "refused": 0,
+   "flat": 25,
+   "hier": 0,
+   "uncovered": 0,
+   "l0only": 6,
+   "medianPatterns": 2,
+   "maxPatterns": 5
+  },
+  {
+   "plat": "nf-core",
+   "cl": "science",
+   "items": 72,
+   "refused": 0,
+   "flat": 70,
+   "hier": 2,
+   "uncovered": 0,
+   "l0only": 0,
+   "medianPatterns": 3,
+   "maxPatterns": 7
+  },
+  {
+   "plat": "snakemake",
+   "cl": "science",
+   "items": 40,
+   "refused": 0,
+   "flat": 40,
+   "hier": 0,
+   "uncovered": 0,
+   "l0only": 14,
+   "medianPatterns": 1,
+   "maxPatterns": 4
+  },
+  {
+   "plat": "wdl",
+   "cl": "science",
+   "items": 36,
+   "refused": 0,
+   "flat": 36,
+   "hier": 0,
+   "uncovered": 0,
+   "l0only": 29,
+   "medianPatterns": 0,
+   "maxPatterns": 2
+  }
+ ],
+ "rules": [
+  {
+   "rule": "condition:code-branch",
+   "p": "L0:if",
+   "items": 352,
+   "nodes": 3053
+  },
+  {
+   "rule": "human:menu",
+   "p": "P10",
+   "items": 84,
+   "nodes": 1652
+  },
+  {
+   "rule": "subworkflow:call",
+   "p": "P54",
+   "items": 196,
+   "nodes": 1608
+  },
+  {
+   "rule": "condition:human-then-branch",
+   "p": "P10",
+   "items": 80,
+   "nodes": 1234
+  },
+  {
+   "rule": "human:output-display",
+   "p": "L0:notify",
+   "items": 68,
+   "nodes": 1179
+  },
+  {
+   "rule": "model:media-model",
+   "p": "P56",
+   "items": 68,
+   "nodes": 1154
+  },
+  {
+   "rule": "condition:guard-before-effect",
+   "p": "P08",
+   "items": 229,
+   "nodes": 991
+  },
+  {
+   "rule": "trigger:trigger-as-input",
+   "p": "L0:input",
+   "items": 442,
+   "nodes": 919
+  },
+  {
+   "rule": "trigger:trigger-event",
+   "p": "P38",
+   "items": 207,
+   "nodes": 909
+  },
+  {
+   "rule": "condition:code-guard",
+   "p": "L0:guard",
+   "items": 138,
+   "nodes": 873
+  },
+  {
+   "rule": "human:ask-input",
+   "p": "P55",
+   "items": 80,
+   "nodes": 833
+  },
+  {
+   "rule": "model:model-chain",
+   "p": "P05",
+   "items": 212,
+   "nodes": 625
+  },
+  {
+   "rule": "wait:wait-in-loop-or-sensor",
+   "p": "P21",
+   "items": 119,
+   "nodes": 588
+  },
+  {
+   "rule": "trigger:trigger-schedule",
+   "p": "P36",
+   "items": 160,
+   "nodes": 583
+  },
+  {
+   "rule": "human:approval-typed",
+   "p": "P32",
+   "items": 67,
+   "nodes": 537
+  },
+  {
+   "rule": "model:agent-with-tools",
+   "p": "P45",
+   "items": 201,
+   "nodes": 535
+  },
+  {
+   "rule": "condition:code-branch-in-loop-body",
+   "p": "L0:if",
+   "items": 73,
+   "nodes": 459
+  },
+  {
+   "rule": "condition:menu-in-loop-body",
+   "p": "P10",
+   "items": 37,
+   "nodes": 457
+  },
+  {
+   "rule": "wait:wait-for-event",
+   "p": "P33",
+   "items": 80,
+   "nodes": 405
+  },
+  {
+   "rule": "human:human-gate-before-effect",
+   "p": "P32",
+   "items": 70,
+   "nodes": 384
+  },
+  {
+   "rule": "trigger:trigger-webhook",
+   "p": "P37",
+   "items": 235,
+   "nodes": 377
+  },
+  {
+   "rule": "condition:cycle-with-model",
+   "p": "P20",
+   "items": 88,
+   "nodes": 370
+  },
+  {
+   "rule": "model:classify-then-route",
+   "p": "P07",
+   "items": 153,
+   "nodes": 357
+  },
+  {
+   "rule": "loop:for-each(default)",
+   "p": "P12",
+   "items": 112,
+   "nodes": 315
+  },
+  {
+   "rule": "condition:loop-exit",
+   "p": "P13",
+   "items": 81,
+   "nodes": 282
+  },
+  {
+   "rule": "model:read-then-model",
+   "p": "P06",
+   "items": 126,
+   "nodes": 230
+  },
+  {
+   "rule": "merge:branch-reconverge",
+   "p": "L0:join",
+   "items": 61,
+   "nodes": 227
+  },
+  {
+   "rule": "condition:trigger-guard",
+   "p": "P38",
+   "items": 103,
+   "nodes": 221
+  },
+  {
+   "rule": "error-handler:finally",
+   "p": "P29",
+   "items": 39,
+   "nodes": 215
+  },
+  {
+   "rule": "loop:loop-with-wait",
+   "p": "P21",
+   "items": 67,
+   "nodes": 214
+  },
+  {
+   "rule": "model:model-then-code",
+   "p": "P03",
+   "items": 106,
+   "nodes": 203
+  },
+  {
+   "rule": "merge:gather",
+   "p": "P14",
+   "items": 102,
+   "nodes": 184
+  },
+  {
+   "rule": "code:error-edge-to-handler",
+   "p": "P27",
+   "items": 54,
+   "nodes": 183
+  },
+  {
+   "rule": "wait:durable-delay",
+   "p": "P34",
+   "items": 80,
+   "nodes": 171
+  },
+  {
+   "rule": "error-handler:error-route",
+   "p": "P27",
+   "items": 127,
+   "nodes": 170
+  },
+  {
+   "rule": "condition:judged-branch",
+   "p": "P07",
+   "items": 91,
+   "nodes": 160
+  },
+  {
+   "rule": "model:single-judgment",
+   "p": "L0:judge",
+   "items": 93,
+   "nodes": 157
+  },
+  {
+   "rule": "model:embedding-retrieval",
+   "p": "P06",
+   "items": 68,
+   "nodes": 128
+  },
+  {
+   "rule": "loop:interactive-repeat",
+   "p": "P10",
+   "items": 49,
+   "nodes": 126
+  },
+  {
+   "rule": "model:model-then-effect",
+   "p": "P04",
+   "items": 75,
+   "nodes": 109
+  },
+  {
+   "rule": "subworkflow:call-per-item",
+   "p": "P53",
+   "items": 53,
+   "nodes": 106
+  },
+  {
+   "rule": "model:model-in-check-cycle",
+   "p": "P20",
+   "items": 53,
+   "nodes": 100
+  },
+  {
+   "rule": "condition:cycle-with-wait",
+   "p": "P21",
+   "items": 17,
+   "nodes": 91
+  },
+  {
+   "rule": "loop:map-with-judge-body",
+   "p": "P13",
+   "items": 66,
+   "nodes": 89
+  },
+  {
+   "rule": "merge:ci-stage-barrier",
+   "p": "P41",
+   "items": 28,
+   "nodes": 80
+  },
+  {
+   "rule": "action:error-edge-to-alternative",
+   "p": "P28",
+   "items": 23,
+   "nodes": 78
+  },
+  {
+   "rule": "condition:judged-branch-in-loop-body",
+   "p": "P07",
+   "items": 39,
+   "nodes": 63
+  },
+  {
+   "rule": "subworkflow:workflow-as-tool",
+   "p": "P46",
+   "items": 22,
+   "nodes": 62
+  },
+  {
+   "rule": "merge:wide-fan-in",
+   "p": "P15",
+   "items": 32,
+   "nodes": 59
+  },
+  {
+   "rule": "error-handler:error-route(default)",
+   "p": "P27",
+   "items": 22,
+   "nodes": 50
+  },
+  {
+   "rule": "wait:delay-then-recheck",
+   "p": "P34",
+   "items": 26,
+   "nodes": 49
+  },
+  {
+   "rule": "action:error-edge-to-handler",
+   "p": "P27",
+   "items": 18,
+   "nodes": 44
+  },
+  {
+   "rule": "loop:model-loop-with-check",
+   "p": "P20",
+   "items": 29,
+   "nodes": 41
+  },
+  {
+   "rule": "model:supervisor-agent",
+   "p": "P46",
+   "items": 19,
+   "nodes": 35
+  },
+  {
+   "rule": "human:judge-gate-then-human",
+   "p": "P09",
+   "items": 20,
+   "nodes": 33
+  },
+  {
+   "rule": "trigger:trigger-poll",
+   "p": "P39",
+   "items": 25,
+   "nodes": 32
+  },
+  {
+   "rule": "loop:loop-until",
+   "p": "P22",
+   "items": 10,
+   "nodes": 29
+  },
+  {
+   "rule": "condition:unstructured-cycle",
+   "p": "P25",
+   "items": 7,
+   "nodes": 27
+  },
+  {
+   "rule": "human:ask-input(default)",
+   "p": "P55",
+   "items": 21,
+   "nodes": 26
+  },
+  {
+   "rule": "model:summariser",
+   "p": "P51",
+   "items": 22,
+   "nodes": 25
+  },
+  {
+   "rule": "model:code-writing-model",
+   "p": "P47",
+   "items": 10,
+   "nodes": 23
+  },
+  {
+   "rule": "human:human-as-signal",
+   "p": "P33",
+   "items": 14,
+   "nodes": 21
+  },
+  {
+   "rule": "error-handler:handler-rejoins",
+   "p": "P28",
+   "items": 15,
+   "nodes": 17
+  },
+  {
+   "rule": "human:chat-turn",
+   "p": "P43",
+   "items": 10,
+   "nodes": 13
+  },
+  {
+   "rule": "loop:loop-over-call",
+   "p": "P53",
+   "items": 10,
+   "nodes": 11
+  },
+  {
+   "rule": "code:error-edge-to-alternative",
+   "p": "P28",
+   "items": 8,
+   "nodes": 10
+  },
+  {
+   "rule": "loop:continue-as-new",
+   "p": "P31",
+   "items": 5,
+   "nodes": 6
+  },
+  {
+   "rule": "transform:error-edge-to-alternative",
+   "p": "P28",
+   "items": 3,
+   "nodes": 4
+  },
+  {
+   "rule": "condition:cycle-human-menu-machine",
+   "p": "P25",
+   "items": 1,
+   "nodes": 2
+  }
+ ],
+ "clusters": {
+  "theta": 0.35,
+  "nodeRange": [
+   5,
+   40
+  ],
+  "items": 776,
+  "pairs": 300700,
+  "computed": 54115,
+  "familiesGe3": 19,
+  "crossPlatformGe3": 3,
+  "families": [
+   {
+    "size": 17,
+    "platforms": 4,
+    "platformCounts": {
+     "cwl": 8,
+     "galaxy": 1,
+     "snakemake": 2,
+     "wdl": 6
+    },
+    "oracle": 7,
+    "topPatterns": [
+     "P01 15/17",
+     "P05 2/17",
+     "P04 2/17",
+     "P18 2/17"
+    ],
+    "sample": [
+     "cwl:Barski-lab/workflows/devel/xenbase/xenbase-rnaseq-pe.cwl",
+     "cwl:kids-first/kf-alignment-workflow/workflows-deprecated/kfdrc_alignment_wf.cwl",
+     "cwl:mskcc/ACCESS-Pipeline/workflows/ACCESS_variants.cwl"
+    ]
+   },
+   {
+    "size": 7,
+    "platforms": 3,
+    "platformCounts": {
+     "airflow": 1,
+     "argo": 5,
+     "tekton": 1
+    },
+    "oracle": 1,
+    "topPatterns": [
+     "P01 4/7",
+     "P28 2/7",
+     "P27 1/7"
+    ],
+    "sample": [
+     "airflow:apache-airflow/example_dags/example_python_decorator#example_python_decorator",
+     "argo:ci-workflowtemplate",
+     "argo:conditionals-complex"
+    ]
+   },
+   {
+    "size": 5,
+    "platforms": 3,
+    "platformCounts": {
+     "cwl": 1,
+     "galaxy": 1,
+     "wdl": 3
+    },
+    "oracle": 4,
+    "topPatterns": [
+     "P01 1/5",
+     "P30 1/5"
+    ],
+    "sample": [
+     "cwl:workflowhub/549",
+     "galaxy:iwc/cutandrun/cutandrun",
+     "wdl:broadinstitute/warp/pipelines/wdl/glimpse/low_pass_imputation/Glimpse2LowPassImputationBatch.wdl"
+    ]
+   },
+   {
+    "size": 13,
+    "platforms": 2,
+    "platformCounts": {
+     "airflow": 11,
+     "temporal": 2
+    },
+    "oracle": 13,
+    "topPatterns": [
+     "P01 13/13",
+     "P21 5/13",
+     "P33 2/13"
+    ],
+    "sample": [
+     "airflow:apache-airflow-providers-amazon/tests/system/amazon/aws/example_s3_to_sql#example_s3_to_sql",
+     "airflow:apache-airflow-providers-google/tests/system/google/cloud/cloud_memorystore/example_cloud_memorystore_redis#cloud_memorystore_redis",
+     "airflow:apache-airflow-providers-google/tests/system/google/cloud/cloud_sql/example_cloud_sql#cloudsql"
+    ]
+   },
+   {
+    "size": 11,
+    "platforms": 2,
+    "platformCounts": {
+     "argo": 1,
+     "kubeflow": 10
+    },
+    "oracle": 10,
+    "topPatterns": [
+     "P01 2/11"
+    ],
+    "sample": [
+     "argo:parameter-aggregation-dag",
+     "kubeflow:valid/artifacts_complex",
+     "kubeflow:valid/collected_artifacts"
+    ]
+   },
+   {
+    "size": 9,
+    "platforms": 2,
+    "platformCounts": {
+     "airflow": 1,
+     "github-actions": 8
+    },
+    "oracle": 0,
+    "topPatterns": [
+     "P01 9/9",
+     "P37 6/9",
+     "P02 5/9",
+     "P36 2/9"
+    ],
+    "sample": [
+     "airflow:apache-airflow-providers-common-sql/src/airflow/providers/common/sql/example_dags/example_analytics#example_analytics",
+     "github-actions:ch-robinson/dotnet-avro/.github/workflows/docs.yml",
+     "github-actions:nextcloud/circles/.github/workflows/lint-php-cs.yml"
+    ]
+   },
+   {
+    "size": 3,
+    "platforms": 2,
+    "platformCounts": {
+     "nextflow": 2,
+     "nf-core": 1
+    },
+    "oracle": 3,
+    "topPatterns": [
+     "P26 3/3",
+     "P01 2/3",
+     "P05 1/3",
+     "P27 1/3"
+    ],
+    "sample": [
+     "nextflow:workflowhub/444",
+     "nextflow:workflowhub/683",
+     "nf-core:stableexpression@v1.0.0"
+    ]
+   },
+   {
+    "size": 6,
+    "platforms": 1,
+    "platformCounts": {
+     "langflow": 6
+    },
+    "oracle": 0,
+    "topPatterns": [
+     "P37 5/6",
+     "P43 5/6",
+     "P45 4/6",
+     "P05 4/6"
+    ],
+    "sample": [
+     "langflow:blog-writer",
+     "langflow:deep-research-agent",
+     "langflow:instagram-copywriter"
+    ]
+   },
+   {
+    "size": 5,
+    "platforms": 1,
+    "platformCounts": {
+     "cwl": 5
+    },
+    "oracle": 0,
+    "topPatterns": [
+     "P54 5/5",
+     "P01 4/5"
+    ],
+    "sample": [
+     "cwl:workflowhub/1868",
+     "cwl:workflowhub/254",
+     "cwl:workflowhub/367"
+    ]
+   },
+   {
+    "size": 4,
+    "platforms": 1,
+    "platformCounts": {
+     "flowise": 4
+    },
+    "oracle": 0,
+    "topPatterns": [
+     "P05 4/4",
+     "P45 4/4",
+     "P06 3/4"
+    ],
+    "sample": [
+     "flowise:agentflows-customer-support-team-agents",
+     "flowise:agentflows-lead-outreach",
+     "flowise:agentflows-portfolio-management-team"
+    ]
+   },
+   {
+    "size": 4,
+    "platforms": 1,
+    "platformCounts": {
+     "flowise": 4
+    },
+    "oracle": 0,
+    "topPatterns": [
+     "P06 4/4",
+     "P05 4/4",
+     "P01 4/4",
+     "P42 1/4"
+    ],
+    "sample": [
+     "flowise:chatflows-context-chat-engine",
+     "flowise:chatflows-conversational-retrieval-qa-chain",
+     "flowise:chatflows-github-docs-qn-a"
+    ]
+   },
+   {
+    "size": 4,
+    "platforms": 1,
+    "platformCounts": {
+     "langflow": 4
+    },
+    "oracle": 0,
+    "topPatterns": [
+     "P45 4/4",
+     "P37 4/4",
+     "P43 4/4",
+     "P42 2/4"
+    ],
+    "sample": [
+     "langflow:custom-component-generator",
+     "langflow:price-deal-finder",
+     "langflow:simple-agent"
+    ]
+   },
+   {
+    "size": 4,
+    "platforms": 1,
+    "platformCounts": {
+     "wdl": 4
+    },
+    "oracle": 4,
+    "topPatterns": [
+     "P01 3/4"
+    ],
+    "sample": [
+     "wdl:broadinstitute/warp/beta-pipelines/broad/somatic/single_sample/targeted/TargetedSomaticSingleSample.wdl",
+     "wdl:broadinstitute/warp/pipelines/wdl/dna_seq/germline/single_sample/exome/ExomeGermlineSingleSample.wdl",
+     "wdl:broadinstitute/warp/pipelines/wdl/dna_seq/germline/single_sample/ugwgs/UltimaGenomicsWholeGenomeGermline.wdl"
+    ]
+   },
+   {
+    "size": 4,
+    "platforms": 1,
+    "platformCounts": {
+     "comfyui": 4
+    },
+    "oracle": 0,
+    "topPatterns": [
+     "P56 4/4",
+     "P18 4/4",
+     "P01 1/4"
+    ],
+    "sample": [
+     "comfyui:Comfy-Org-workflow_templates-templates-audio_stable_audio_example.json",
+     "comfyui:scraed-LanPaint-example_workflows-SDXL_EncodeDecode_Inpaint.json",
+     "comfyui:welltop-cn-ComfyUI-TeaCache-examples-hidream_i1_fast.json"
+    ]
+   },
+   {
+    "size": 4,
+    "platforms": 1,
+    "platformCounts": {
+     "home-assistant": 4
+    },
+    "oracle": 0,
+    "topPatterns": [
+     "P08 4/4",
+     "P34 4/4",
+     "P36 2/4",
+     "P38 2/4"
+    ],
+    "sample": [
+     "home-assistant:geekofweek/homeassistant/old_ha_setup/automation/roomba.yaml#14",
+     "home-assistant:geekofweek/homeassistant/old_ha_setup/automation/roomba.yaml#18",
+     "home-assistant:geekofweek/homeassistant/old_ha_setup/automation/roomba.yaml#2"
+    ]
+   },
+   {
+    "size": 3,
+    "platforms": 1,
+    "platformCounts": {
+     "flowise": 3
+    },
+    "oracle": 0,
+    "topPatterns": [
+     "P05 3/3",
+     "P45 3/3",
+     "P42 3/3"
+    ],
+    "sample": [
+     "flowise:chatflows-conversational-agent",
+     "flowise:chatflows-re-act-agent",
+     "flowise:chatflows-tool-agent"
+    ]
+   },
+   {
+    "size": 3,
+    "platforms": 1,
+    "platformCounts": {
+     "airflow": 3
+    },
+    "oracle": 3,
+    "topPatterns": [
+     "P21 3/3",
+     "P01 3/3"
+    ],
+    "sample": [
+     "airflow:apache-airflow-providers-amazon/tests/system/amazon/aws/example_athena#example_athena",
+     "airflow:apache-airflow-providers-amazon/tests/system/amazon/aws/example_glue_data_quality#example_glue_data_quality",
+     "airflow:apache-airflow-providers-amazon/tests/system/amazon/aws/example_glue_data_quality_with_recommendation#example_glue_data_quality_with_recommendation"
+    ]
+   },
+   {
+    "size": 3,
+    "platforms": 1,
+    "platformCounts": {
+     "github-actions": 3
+    },
+    "oracle": 0,
+    "topPatterns": [
+     "P37 3/3",
+     "P36 3/3",
+     "P01 3/3",
+     "P02 3/3"
+    ],
+    "sample": [
+     "github-actions:aio-libs/multidict/.github/workflows/ci.yml",
+     "github-actions:aio-libs/yarl/.github/workflows/ci.yml",
+     "github-actions:oxy-hq/oxy/.github/workflows/public-nightly-build.yml"
+    ]
+   },
+   {
+    "size": 3,
+    "platforms": 1,
+    "platformCounts": {
+     "claude-code-workflows": 3
+    },
+    "oracle": 0,
+    "topPatterns": [
+     "P45 3/3",
+     "P14 3/3",
+     "P47 3/3",
+     "P18 3/3"
+    ],
+    "sample": [
+     "claude-code-workflows:claude-session/workflows/scripts/c0-preflight-wf_d35b46dd-974.js",
+     "claude-code-workflows:claude-session/workflows/scripts/design-review-c-wf_1ab0b3e4-a4d.js",
+     "claude-code-workflows:claude-session/workflows/scripts/phase0-unblock-wf_1095386b-893.js"
+    ]
+   }
+  ]
+ }
+}
