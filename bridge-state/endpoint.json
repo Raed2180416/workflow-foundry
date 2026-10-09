@@ -1,12 +1,12 @@
 {
   "schema": "foundry-bridge/endpoint@1",
-  "state": "up",
-  "url": "https://biotechnology-certain-shots-managing.trycloudflare.com",
+  "state": "stopped",
+  "url": null,
   "tunnelSource": "cloudflared-metrics",
-  "tunnelReadyConnections": 1,
+  "tunnelReadyConnections": null,
   "daemonVersion": "0.2.0",
   "startedAt": "2026-10-08T07:57:27.826Z",
-  "heartbeatAt": "2026-10-09T08:55:44.243Z",
+  "heartbeatAt": "2026-10-09T08:56:17.832Z",
   "gpu": {
     "name": "NVIDIA GeForce RTX 4060 Laptop GPU",
     "memoryTotalMiB": 8188,
