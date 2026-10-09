@@ -712,3 +712,149 @@ zero-support patterns (P23, P30) changes nothing: the ceiling stays at 97.8%, an
 45 effective patterns. Dropping the three platform-specific patterns as well (P40, P41, P56) lowers the ceiling to
 **88.0%**, because those items then have no owner. So P40, P41 and P56 stay in L1 until an L3 binding or L4 family is
 shown to take over their items. The coverage claim uses the catalog as it stands: 47 patterns used, 90% at 37.
+
+## 7. Composition and buildability matrix (all 54 entries)
+
+Every pattern is a composition of L0 constructs; numbers refer to the rows of `L0-VOCABULARY.md`. **Tier** says what
+must exist before the constructor may emit the pattern as runnable code:
+- **S**: solver only, on flow-v2/v3 as built (L0 rows 1–11). Arm (g) on W-bed can use these today.
+- **IR**: needs an envelope node that today's engine IR runs (rows 15–18, 20 fixed, 21–22 partial).
+- **HOST**: the trigger is owned by the host harness (cron, webhook server, event bus) and reaches Foundry as a call
+  with an input (HARNESS-INTEGRATION §1); Foundry builds only the solver behind it [I: an adoption choice, not built].
+- **D**: needs a flow-v3 primitive that is designed but not built (rows 12–14).
+- **N**: needs an engine node that is not built (rows 19, 20 adaptive, 23–30).
+
+Rung = the first W-bed rung (W-BED §3) whose reference workflow exercises the pattern; "—" = no rung.
+
+| id | L0 constructs composed (rows) | tier | rung | note |
+|---|---|---|---|---|
+| P01 | 1, 2, 3, 5, 9 (11 for stages > 8) | S | R1 | spine of every rung |
+| P02 | 15 read → 2 → 15 write (27 for resume) | IR | — | idempotency key on the write is an L3 binding field |
+| P03 | 1, 2, 3, 4, 5, 6 | S | R1 | conventions-once (review-05 §3.3) is its special case |
+| P04 | 3 → 2 / 3 → (16) → 15 | S + IR | R0 (draft only) | delivery is an effect; the solver returns the draft |
+| P05 | 3 × n, 5 | S | R2 | one decision per judge |
+| P06 | 2 (or 15 retrieve) → 3 with quote check | S / IR | — | retrieval tool is L3 |
+| P07 | 6, 3, 10, 11 | S | R2 | |
+| P08 | 2, 8, 4, 5 | S | R2, R3 | |
+| P09 | 6, 3 (samples ≥ 3), 7 | S | R2 | `flow.flagged` accessor proposed (L0 changes note) |
+| P10 | 17, 10 | IR | — | |
+| P12 | 4, 6, 5, 9 | S | R3 | |
+| P13 | 6, 3, 5 | S | R1, R3 | |
+| P14 | 6 over fixed branches, 10 (join) | S | R3 | |
+| P15 | 2, 5, 4, 9 | S | R3 | |
+| P16 | 2, 6, 3, 7, 5 | S | R1 | |
+| P17 | 2, 6, 3, 5 | S | R1, R3 | |
+| P18 | 6, 3, 2 | S | R6 | selector must be code |
+| P19 | 13 / 14 | D | R6 | |
+| P20 | 10 (bounded for), 3, 2, 4 | S | R1–R3 | |
+| P21 | 10, 15, 18, 4 | IR (≤ 1 h) / N | R7 (parked) | durable wait beyond 1 h is N |
+| P22 | 10, 2, 5 | S | — | |
+| P23 | 15 + 27 | N | — | fold into the L3 binding (§6) |
+| P25 | 10, 3 (enum) | S | — | transition table is code |
+| P26 | 20 | IR (fixed) / N (adaptive) | R8 f2 | |
+| P27 | 21, 15 | IR partial | R8 | dedicated error edge is N |
+| P28 | 21, alternative, 7 | IR partial | R8 | |
+| P29 | 22 | IR partial / N | — | true always-run is N |
+| P30 | 15 + 23 | N | R7 (parked) | zero genuine support |
+| P31 | 11 idempotency memo (child-granular resume) / 27 | S partial / N | R4 | `call-host.mjs` memo already serves a repeated child at $0 |
+| P32 | 16, 15 | IR | R7 (parked) | timeout routing is N |
+| P33 | 19 | N | R7 (parked) | |
+| P34 | 18, 2, 15 | IR (≤ 1 h) / N | — | |
+| P35 | 12, 17 | D + IR | R5 | |
+| P36 | 25 → solver → 15 | HOST | — | |
+| P37 | 24 → solver → 15 | HOST | — | |
+| P38 | 26 → solver → 15 | HOST | — | |
+| P39 | 26, 27 | N | — | the cursor is P42 |
+| P40 | 28 | N | — | |
+| P41 | 15, 16, 10 | IR | — | L4 family candidate |
+| P42 | 27 | N | — | |
+| P43 | 29 | N | — | |
+| P44 | 30 | N | — | |
+| P45 | 12 | D | R5 | |
+| P46 | 3, 11 (12 for agent children), 10 | S (D with agents) | R4, R5 | |
+| P47 | 12, 15 (sandbox) | D | R5 | |
+| P48 | 6, 4 | S | — | |
+| P49 | 6, 3 (several tiers), 2 (vote) | S | R6 | independence unmeasured |
+| P50 | 10, 2, 3 | S | — | |
+| P51 | 6, 3, 3, 5 | S | — | |
+| P53 | 6, 11 | S | R4 | |
+| P54 | 11 | S | R4 | |
+| P55 | 17, 2, 10 | IR | — | |
+| P56 | 15 chain | IR | — | mostly L3 |
+| P57 | 14 | D | — | |
+
+**What can be built now, as a number** [M-c, `tools/render-evidence.mjs`, table in `out/pattern-evidence.md`]. An
+item is buildable at a tier if every L1 pattern it needs is at that tier or below:
+
+| tier (cumulative) | items | share of 1,559 |
+|---|---|---|
+| S: solver on flow-v2/v3 today | 419 | 26.9% |
+| + IR: engine envelope today | 755 | 48.4% |
+| + HOST: host-owned triggers | 1,022 | 65.6% |
+| + D: designed flow-v3 (`agent`, `wide`, `plan`) | 1,150 | 73.8% |
+| + N: unbuilt engine nodes | 1,524 | 97.8% |
+
+The 97.8% ceiling of §0 is reached only with engine nodes that do not exist. The single most valuable unbuilt node is
+**`state`** (P42 blocks 157 items), then `wait.signal` (P33, 108) and `session` (P43, 104); `admission` (P40, 56) and
+`stream` (P44, 39) follow. This is the input to BUILD-ORDER's engine column. W-bed arm (g) needs only tier S, which is
+why the first slice (§4) is all S.
+
+## 8. Evidence record per pattern
+
+The per-pattern evidence table (grade, node / token / idiom support, oracle-bearing count, platforms, top mined edge
+keywords with their share of the pattern's items, companion patterns by lift, two example items) is generated, not hand
+copied: `out/pattern-evidence.md`, from `tools/render-evidence.mjs` [M-c]. The grade is a rule:
+
+| grade | rule | patterns |
+|---|---|---|
+| A | ≥ 50 items detected by a control node or verdict token, on ≥ 10 platforms | 24: P03–P08, P10, P12–P14, P20, P27, P32, P34, P36–P38, P42, P43, P45, P46, P53–P55 |
+| B | ≥ 15 detected items, on ≥ 4 platforms | 14: P09, P15, P19, P21, P25, P26, P28, P29, P33, P35, P39, P44, P47, P51 |
+| C | detected below B, or support-only (keyword / shape detector, precision unmeasured) | 14: P01, P02, P16, P17, P18, P22, P31, P40, P41, P48, P49, P50, P56, P57 |
+| D | zero genuine support | 2: P23, P30 |
+
+Three things the table shows that the cards above do not:
+- **Companions are the retrieval prior.** Patterns that the same items need together, by lift: P10 → P55 (×10.5, 68
+  items) and P32 (×7.1); P27 → P29 (×6.3, 99 items) and P26 (×5.0); P45 → P46 (×7.2, 51 items); P03 → P05 (×5.1);
+  P07 → P09 (×5.1) and P20 (×4.0). LIBRARY.md §4.3 uses these as the "expand together" hint: when the ranker picks
+  one, its top companion is offered as the next candidate rather than retrieved from scratch.
+- **Edge keywords concentrate where effects and agents are.** P45 (state 56%, cache 32%), P34 (backoff 67%), P10
+  (notify 53%, cancel 30%), P20 (state 40%, validate 29%). Patterns in science DAGs carry almost none, consistent with §2.4.
+- **The grade is not the oracle count.** P09 is grade B with 0 oracle-bearing items, P26 is B with 90. LIBRARY-TESTS L1
+  draws its executable sample by oracle-bearing items, so P09's checklist is untested by the corpus and is tested on
+  W-bed R2 instead.
+
+The keyword classes are coarse regexes (`EDGE_KW` in `tools/pattern-census.mjs`; for example `else` counts as
+"default / fallback" and `check` as "validate"). A keyword count says *a corpus author wrote about this edge*, not that
+the item handles it. Checklist lines therefore cite items, and the hand audit (LIBRARY-TESTS L1) samples them.
+
+## 9. The universal checklist (applies to every pattern; the composition checker enforces it)
+
+These come up under so many patterns that they are not repeated per card. Each has a code the composition checker
+(LIBRARY.md §6) emits; codes marked *review-05* are the construction lint proposals of
+`research/review-20261007/05-router-constructor.md` §3.6.
+
+| code | rule | mined from / why |
+|---|---|---|
+| `JUDGE_NO_CHECK` | a judge whose answer cites the input has a code `check` (quote present, id echoed) | P03, P07, P13 cards; FRONTIER-GAPS S1: no check fired on ≥ 21 wrong compiled outputs [M] |
+| `ENUM_NO_NONE` | every judged enum has a no-match / undecidable member | P07 `kw default 32`; J1 negative results 1–2: options that are never chosen [M] |
+| `BRANCH_ON_TEXT` | control flow reads a model answer only through an enum | PRINCIPLES P9; THESIS P9 |
+| `UNBOUNDED` | every loop, retry, map, wait and fan-out has a literal cap | L0 refusals; P20, P21, P22 cards |
+| `VERIFY_NOT_GATING` *review-05* | the pattern's verifier or invariant gates the output | O4: 7 of 7 F artifacts had existence-only acceptance [M] |
+| `NO_CONSERVATION` | a pattern that transforms a collection carries a count or sum invariant | P01, P08, P12, P15, P16, P17 |
+| `SILENT_DROP` | dropped, defaulted or fallen-back items are reported with a reason code or a flag | review-02 §5 must-not-allow list; P08, P28 |
+| `EFFECT_IN_SOLVER` | no effect inside a solver; effects are returned as an effect plan for the envelope | FRONTIER-GAPS H2 option 2 [M]; W-BED §3.7 |
+| `MAP_NO_ECHO_CHECK` *review-05* | a judge inside a map echoes the item id | P12, P13 |
+| `REASONING_ON_EXTRACTION` *review-05* | no chain-of-thought field in an extraction schema | RESEARCH.md:112 (thinking made Haiku worse on extraction) [M] |
+| `ONE_WRITER` | each state key, file or effect target has exactly one writer in the composed tree | P07, P42; THESIS P8 |
+| `CREDENTIAL_LITERAL` | credentials only as env-var names through an L3 binding | L0 refusals; owner rule |
+
+## 10. Status of this catalog
+
+Complete as a first catalog: 54 entries, 12 full cards (§4), 42 compact cards (§5), low-support candidates marked (§6),
+composition and tier per pattern (§7), evidence per pattern (§8). Not done, and owned by LIBRARY-TESTS:
+- the 60-item hand audit of the census rules (L1-a);
+- keyword precision for the support-only detectors (P01, P02, P16, P17, P18, P49; L1-a);
+- full cards (slot tables, three fixtures each) for the 42 compact entries. They are written when a rung or a user task
+  first retrieves the pattern, not in advance (BUILD-ORDER §2: a card nobody retrieves is the utility problem in
+  miniature);
+- executable coverage on the 438 oracle-bearing items (L1-b).

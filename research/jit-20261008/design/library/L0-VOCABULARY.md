@@ -1,5 +1,14 @@
 # L0: the closed vocabulary card (the constructor's prompt, verbatim; budget at most 3,000 tokens)
 
+> **Changes since draft (2026-10-09, after L1 was finished).** No construct added or removed; the count stays 30.
+> (1) The census labels `L0:notify` (1,179 nodes, "output display") and `L0:join` (227) are not separate constructs:
+> display is `done` (row 9) and a notification is `effect` (row 15) through an L3 binding; `join` is row 10.
+> (2) P23 paginate has no node support, so pagination is an L3 binding capability (`pagination: {cursorPath, maxPages}`),
+> not a construct. (3) `flag` (row 7) gains a proposed read accessor, `flow.flagged(name, id)`, which P09 needs; until it
+> exists P09 reads `autoFlag` events from the trace. (4) `call` (row 11) is also the only checkpoint the solver layer
+> has: the call host's idempotency memo serves a repeated child at $0, which is P31's resume at child granularity.
+> This block sits outside the prompt budget; the card itself starts below.
+
 *Library design, 2026-10-09. L0 is the closed vocabulary that the Haiku constructor writes in. It is fixed in the
 compiler prompt and is not retrieved. Every L1 pattern, L2 component and L4 instance is built only from these 30
 constructs, and anything outside this list is refused. The census rule table (`out/pattern-census.md`, last table)
