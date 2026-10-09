@@ -1,0 +1,2459 @@
+{
+ "schema": "l1-catalog/1",
+ "generated": "2026-10-09",
+ "generatedBy": "experiments/library/tools/build-catalog.mjs",
+ "patterns": [
+  {
+   "id": "P01",
+   "layer": "L1",
+   "name": "linear pipeline with typed hand-offs",
+   "short": "linear-pipeline-with-typed-hand-offs",
+   "gist": null,
+   "family": "spine",
+   "tier": "S",
+   "tierRaw": "S",
+   "rung": "R1",
+   "constructs": [
+    1,
+    2,
+    3,
+    5,
+    9,
+    11
+   ],
+   "support": {
+    "items": 758,
+    "viaNode": 0,
+    "viaToken": 0,
+    "viaPlumbing": 758,
+    "oracle": 239,
+    "platforms": 32,
+    "grade": "C"
+   },
+   "companions": [],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Does the task consist of stages where each stage's output is the next stage's only input?"
+    }
+   ]
+  },
+  {
+   "id": "P02",
+   "layer": "L1",
+   "name": "fetch -> transform -> write (sync / ETL)",
+   "short": "fetch-transform-write",
+   "gist": "sync / ETL",
+   "family": "spine",
+   "tier": "IR",
+   "tierRaw": "IR",
+   "rung": null,
+   "constructs": [
+    15,
+    2,
+    27
+   ],
+   "support": {
+    "items": 348,
+    "viaNode": 0,
+    "viaToken": 0,
+    "viaPlumbing": 348,
+    "oracle": 57,
+    "platforms": 25,
+    "grade": "C"
+   },
+   "companions": [],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Does the task move data from one system to another with a transformation?"
+    }
+   ]
+  },
+  {
+   "id": "P03",
+   "layer": "L1",
+   "name": "extract -> normalise -> validate (model reading, code parsing)",
+   "short": "extract-normalise-validate",
+   "gist": "model reading, code parsing",
+   "family": "spine",
+   "tier": "S",
+   "tierRaw": "S",
+   "rung": "R1",
+   "constructs": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+   ],
+   "support": {
+    "items": 106,
+    "viaNode": 106,
+    "viaToken": 0,
+    "viaPlumbing": 0,
+    "oracle": 22,
+    "platforms": 18,
+    "grade": "A"
+   },
+   "companions": [
+    {
+     "id": "P05",
+     "lift": 5.1,
+     "n": 75
+    },
+    {
+     "id": "P25",
+     "lift": 3.8,
+     "n": 13
+    },
+    {
+     "id": "P13",
+     "lift": 3.7,
+     "n": 17
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Must values be read out of free text or of documents with differing layouts before any calculation?"
+    }
+   ]
+  },
+  {
+   "id": "P04",
+   "layer": "L1",
+   "name": "draft -> check -> deliver (generated content before an effect)",
+   "short": "draft-check-deliver",
+   "gist": "generated content before an effect",
+   "family": "spine",
+   "tier": "S",
+   "tierRaw": "S + IR",
+   "rung": "R0 (draft only)",
+   "constructs": [
+    3,
+    2,
+    16,
+    15
+   ],
+   "support": {
+    "items": 75,
+    "viaNode": 75,
+    "viaToken": 0,
+    "viaPlumbing": 0,
+    "oracle": 19,
+    "platforms": 19,
+    "grade": "A"
+   },
+   "companions": [
+    {
+     "id": "P05",
+     "lift": 3.3,
+     "n": 34
+    },
+    {
+     "id": "P06",
+     "lift": 3,
+     "n": 25
+    },
+    {
+     "id": "P43",
+     "lift": 2.9,
+     "n": 15
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Is generated text sent or published to someone?"
+    }
+   ]
+  },
+  {
+   "id": "P05",
+   "layer": "L1",
+   "name": "prompt chain with typed hand-offs",
+   "short": "prompt-chain-with-typed-hand-offs",
+   "gist": null,
+   "family": "spine",
+   "tier": "S",
+   "tierRaw": "S",
+   "rung": "R2",
+   "constructs": [
+    3,
+    5
+   ],
+   "support": {
+    "items": 212,
+    "viaNode": 212,
+    "viaToken": 0,
+    "viaPlumbing": 0,
+    "oracle": 42,
+    "platforms": 25,
+    "grade": "A"
+   },
+   "companions": [
+    {
+     "id": "P03",
+     "lift": 5.1,
+     "n": 75
+    },
+    {
+     "id": "P06",
+     "lift": 3.7,
+     "n": 89
+    },
+    {
+     "id": "P25",
+     "lift": 3.5,
+     "n": 24
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Does the task need several model steps, each refining the previous step's typed output?"
+    }
+   ]
+  },
+  {
+   "id": "P06",
+   "layer": "L1",
+   "name": "retrieve -> generate (untrusted context)",
+   "short": "retrieve-generate",
+   "gist": "untrusted context",
+   "family": "spine",
+   "tier": "S",
+   "tierRaw": "S / IR",
+   "rung": null,
+   "constructs": [
+    2,
+    15,
+    3
+   ],
+   "support": {
+    "items": 172,
+    "viaNode": 172,
+    "viaToken": 0,
+    "viaPlumbing": 0,
+    "oracle": 36,
+    "platforms": 26,
+    "grade": "A"
+   },
+   "companions": [
+    {
+     "id": "P05",
+     "lift": 3.7,
+     "n": 89
+    },
+    {
+     "id": "P42",
+     "lift": 3.4,
+     "n": 61
+    },
+    {
+     "id": "P04",
+     "lift": 3,
+     "n": 25
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Must the answer be grounded in documents fetched at run time?"
+    }
+   ]
+  },
+  {
+   "id": "P07",
+   "layer": "L1",
+   "name": "router by kind (judged classify, then dispatch)",
+   "short": "router-by-kind",
+   "gist": "judged classify, then dispatch",
+   "family": "branch",
+   "tier": "S",
+   "tierRaw": "S",
+   "rung": "R2",
+   "constructs": [
+    6,
+    3,
+    10,
+    11
+   ],
+   "support": {
+    "items": 193,
+    "viaNode": 193,
+    "viaToken": 0,
+    "viaPlumbing": 0,
+    "oracle": 35,
+    "platforms": 32,
+    "grade": "A"
+   },
+   "companions": [
+    {
+     "id": "P09",
+     "lift": 5.1,
+     "n": 13
+    },
+    {
+     "id": "P20",
+     "lift": 4,
+     "n": 73
+    },
+    {
+     "id": "P25",
+     "lift": 3.2,
+     "n": 20
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Does each input item need different handling depending on a category that is not given as a field?"
+    }
+   ]
+  },
+  {
+   "id": "P08",
+   "layer": "L1",
+   "name": "guard -> act (filter before an effect)",
+   "short": "guard-act",
+   "gist": "filter before an effect",
+   "family": "branch",
+   "tier": "S",
+   "tierRaw": "S",
+   "rung": "R2, R3",
+   "constructs": [
+    2,
+    8,
+    4,
+    5
+   ],
+   "support": {
+    "items": 229,
+    "viaNode": 229,
+    "viaToken": 0,
+    "viaPlumbing": 0,
+    "oracle": 53,
+    "platforms": 14,
+    "grade": "A"
+   },
+   "companions": [
+    {
+     "id": "P22",
+     "lift": 6.7,
+     "n": 10
+    },
+    {
+     "id": "P57",
+     "lift": 4.7,
+     "n": 14
+    },
+    {
+     "id": "P40",
+     "lift": 4.4,
+     "n": 37
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Should some inputs be dropped or stopped before any action is taken, by a rule that code can check?"
+    }
+   ]
+  },
+  {
+   "id": "P09",
+   "layer": "L1",
+   "name": "judge -> confidence gate -> review queue (escalate, never guess)",
+   "short": "judge-confidence-gate-review-queue",
+   "gist": "escalate, never guess",
+   "family": "branch",
+   "tier": "S",
+   "tierRaw": "S",
+   "rung": "R2",
+   "constructs": [
+    6,
+    3,
+    7
+   ],
+   "support": {
+    "items": 20,
+    "viaNode": 20,
+    "viaToken": 0,
+    "viaPlumbing": 0,
+    "oracle": 0,
+    "platforms": 10,
+    "grade": "B"
+   },
+   "companions": [
+    {
+     "id": "P10",
+     "lift": 7.1,
+     "n": 10
+    },
+    {
+     "id": "P07",
+     "lift": 5.1,
+     "n": 13
+    },
+    {
+     "id": "P20",
+     "lift": 4.8,
+     "n": 9
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Can some inputs be genuinely undecidable from their content, so that a wrong automatic decision costs\n  more than a human look?"
+    }
+   ]
+  },
+  {
+   "id": "P10",
+   "layer": "L1",
+   "name": "human menu dispatch (choice -> branches, optional repeat)",
+   "short": "human-menu-dispatch",
+   "gist": "choice > branches, optional repeat",
+   "family": "branch",
+   "tier": "IR",
+   "tierRaw": "IR",
+   "rung": null,
+   "constructs": [
+    17,
+    10
+   ],
+   "support": {
+    "items": 108,
+    "viaNode": 108,
+    "viaToken": 0,
+    "viaPlumbing": 0,
+    "oracle": 7,
+    "platforms": 13,
+    "grade": "A"
+   },
+   "companions": [
+    {
+     "id": "P55",
+     "lift": 10.5,
+     "n": 68
+    },
+    {
+     "id": "P32",
+     "lift": 7.1,
+     "n": 68
+    },
+    {
+     "id": "P09",
+     "lift": 7.1,
+     "n": 10
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Does a person pick one of several actions, possibly repeatedly?"
+    }
+   ]
+  },
+  {
+   "id": "P12",
+   "layer": "L1",
+   "name": "map -> code reduce (for-each, typed coverage)",
+   "short": "map-code-reduce",
+   "gist": "for-each, typed coverage",
+   "family": "fan",
+   "tier": "S",
+   "tierRaw": "S",
+   "rung": "R3",
+   "constructs": [
+    4,
+    6,
+    5,
+    9
+   ],
+   "support": {
+    "items": 112,
+    "viaNode": 112,
+    "viaToken": 0,
+    "viaPlumbing": 0,
+    "oracle": 9,
+    "platforms": 12,
+    "grade": "A"
+   },
+   "companions": [
+    {
+     "id": "P10",
+     "lift": 5.8,
+     "n": 46
+    },
+    {
+     "id": "P55",
+     "lift": 5.1,
+     "n": 34
+    },
+    {
+     "id": "P53",
+     "lift": 4.9,
+     "n": 19
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Is the same per-item work applied to a list whose length is only known at run time?"
+    }
+   ]
+  },
+  {
+   "id": "P13",
+   "layer": "L1",
+   "name": "batched extract (map with a judge body, id echo)",
+   "short": "batched-extract",
+   "gist": "map with a judge body, id echo",
+   "family": "fan",
+   "tier": "S",
+   "tierRaw": "S",
+   "rung": "R1, R3",
+   "constructs": [
+    6,
+    3,
+    5
+   ],
+   "support": {
+    "items": 66,
+    "viaNode": 66,
+    "viaToken": 0,
+    "viaPlumbing": 0,
+    "oracle": 6,
+    "platforms": 18,
+    "grade": "A"
+   },
+   "companions": [
+    {
+     "id": "P03",
+     "lift": 3.7,
+     "n": 17
+    },
+    {
+     "id": "P28",
+     "lift": 3.7,
+     "n": 7
+    },
+    {
+     "id": "P20",
+     "lift": 3.5,
+     "n": 22
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Must many separate text items each be read by a model, with one small typed result per item?"
+    }
+   ]
+  },
+  {
+   "id": "P14",
+   "layer": "L1",
+   "name": "scatter -> parallel branches -> gather",
+   "short": "scatter-parallel-branches-gather",
+   "gist": null,
+   "family": "fan",
+   "tier": "S",
+   "tierRaw": "S",
+   "rung": "R3",
+   "constructs": [
+    6,
+    10
+   ],
+   "support": {
+    "items": 102,
+    "viaNode": 102,
+    "viaToken": 0,
+    "viaPlumbing": 0,
+    "oracle": 25,
+    "platforms": 20,
+    "grade": "A"
+   },
+   "companions": [
+    {
+     "id": "P25",
+     "lift": 3.7,
+     "n": 12
+    },
+    {
+     "id": "P47",
+     "lift": 3.6,
+     "n": 10
+    },
+    {
+     "id": "P15",
+     "lift": 3.3,
+     "n": 7
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Are there several independent analyses of the same input to combine?"
+    }
+   ]
+  },
+  {
+   "id": "P15",
+   "layer": "L1",
+   "name": "fan-in aggregate / report",
+   "short": "fan-in-aggregate-report",
+   "gist": null,
+   "family": "fan",
+   "tier": "S",
+   "tierRaw": "S",
+   "rung": "R3",
+   "constructs": [
+    2,
+    5,
+    4,
+    9
+   ],
+   "support": {
+    "items": 32,
+    "viaNode": 32,
+    "viaToken": 0,
+    "viaPlumbing": 0,
+    "oracle": 3,
+    "platforms": 5,
+    "grade": "B"
+   },
+   "companions": [
+    {
+     "id": "P41",
+     "lift": 27.2,
+     "n": 16
+    },
+    {
+     "id": "P32",
+     "lift": 5.6,
+     "n": 16
+    },
+    {
+     "id": "P37",
+     "lift": 4.2,
+     "n": 25
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Must results from many branches or items be combined into one total or report with checkable identities?"
+    }
+   ]
+  },
+  {
+   "id": "P16",
+   "layer": "L1",
+   "name": "dedupe by identity (blocking + pairwise judge + union-find)",
+   "short": "dedupe-by-identity",
+   "gist": "blocking + pairwise judge + union-find",
+   "family": "fan",
+   "tier": "S",
+   "tierRaw": "S",
+   "rung": "R1",
+   "constructs": [
+    2,
+    6,
+    3,
+    7,
+    5
+   ],
+   "support": {
+    "items": 18,
+    "viaNode": 0,
+    "viaToken": 0,
+    "viaPlumbing": 18,
+    "oracle": 6,
+    "platforms": 7,
+    "grade": "C"
+   },
+   "companions": [],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Can the same real-world entity appear more than once with different spellings or ids?"
+    }
+   ]
+  },
+  {
+   "id": "P17",
+   "layer": "L1",
+   "name": "reconcile two sources (join, diff, classify discrepancies)",
+   "short": "reconcile-two-sources",
+   "gist": "join, diff, classify discrepancies",
+   "family": "fan",
+   "tier": "S",
+   "tierRaw": "S",
+   "rung": "R1, R3",
+   "constructs": [
+    2,
+    6,
+    3,
+    5
+   ],
+   "support": {
+    "items": 147,
+    "viaNode": 0,
+    "viaToken": 0,
+    "viaPlumbing": 147,
+    "oracle": 35,
+    "platforms": 23,
+    "grade": "C"
+   },
+   "companions": [],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Must two record sets that describe the same things be matched and their differences explained?"
+    }
+   ]
+  },
+  {
+   "id": "P18",
+   "layer": "L1",
+   "name": "best-of-N / sectioning with a verifier",
+   "short": "best-of-n-sectioning-with-a-verifier",
+   "gist": null,
+   "family": "fan",
+   "tier": "S",
+   "tierRaw": "S",
+   "rung": "R6",
+   "constructs": [
+    6,
+    3,
+    2
+   ],
+   "support": {
+    "items": 225,
+    "viaNode": 0,
+    "viaToken": 0,
+    "viaPlumbing": 225,
+    "oracle": 51,
+    "platforms": 35,
+    "grade": "C"
+   },
+   "companions": [],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Would generating several candidates and picking by a check beat one attempt?"
+    }
+   ]
+  },
+  {
+   "id": "P19",
+   "layer": "L1",
+   "name": "planned fan-out (wide) / bounded expansion (plan)",
+   "short": "planned-fan-out",
+   "gist": "wide",
+   "family": "fan",
+   "tier": "D",
+   "tierRaw": "D",
+   "rung": "R6",
+   "constructs": [
+    13,
+    14
+   ],
+   "support": {
+    "items": 33,
+    "viaNode": 0,
+    "viaToken": 33,
+    "viaPlumbing": 0,
+    "oracle": 17,
+    "platforms": 12,
+    "grade": "B"
+   },
+   "companions": [
+    {
+     "id": "P46",
+     "lift": 8,
+     "n": 9
+    },
+    {
+     "id": "P47",
+     "lift": 6.8,
+     "n": 6
+    },
+    {
+     "id": "P20",
+     "lift": 3.2,
+     "n": 10
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Is the list of subtasks itself unknown until a model reads the input?"
+    }
+   ]
+  },
+  {
+   "id": "P20",
+   "layer": "L1",
+   "name": "generate -> verify -> retry (bounded)",
+   "short": "generate-verify-retry",
+   "gist": "bounded",
+   "family": "loop",
+   "tier": "S",
+   "tierRaw": "S",
+   "rung": "R1–R3",
+   "constructs": [
+    10,
+    3,
+    2,
+    4
+   ],
+   "support": {
+    "items": 144,
+    "viaNode": 144,
+    "viaToken": 0,
+    "viaPlumbing": 0,
+    "oracle": 30,
+    "platforms": 28,
+    "grade": "A"
+   },
+   "companions": [
+    {
+     "id": "P48",
+     "lift": 10.6,
+     "n": 6
+    },
+    {
+     "id": "P35",
+     "lift": 7.1,
+     "n": 10
+    },
+    {
+     "id": "P51",
+     "lift": 6.2,
+     "n": 14
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Is there a check that code (or a separate verifier) can run on a generated result, so that a failed\n  result can be regenerated?"
+    }
+   ]
+  },
+  {
+   "id": "P21",
+   "layer": "L1",
+   "name": "poll until ready (wait + check, timeout)",
+   "short": "poll-until-ready",
+   "gist": "wait + check, timeout",
+   "family": "loop",
+   "tier": "IR",
+   "tierRaw": "IR (≤ 1 h) / N",
+   "rung": "R7 (parked)",
+   "constructs": [
+    10,
+    15,
+    18,
+    4
+   ],
+   "support": {
+    "items": 120,
+    "viaNode": 120,
+    "viaToken": 0,
+    "viaPlumbing": 0,
+    "oracle": 41,
+    "platforms": 9,
+    "grade": "B"
+   },
+   "companions": [
+    {
+     "id": "P25",
+     "lift": 8,
+     "n": 31
+    },
+    {
+     "id": "P33",
+     "lift": 5.1,
+     "n": 43
+    },
+    {
+     "id": "P57",
+     "lift": 4.4,
+     "n": 7
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Must the workflow wait for an external job to finish by checking it repeatedly?"
+    }
+   ]
+  },
+  {
+   "id": "P22",
+   "layer": "L1",
+   "name": "loop until condition / dry (convergence cap)",
+   "short": "loop-until-condition-dry",
+   "gist": "convergence cap",
+   "family": "loop",
+   "tier": "S",
+   "tierRaw": "S",
+   "rung": null,
+   "constructs": [
+    10,
+    2,
+    5
+   ],
+   "support": {
+    "items": 10,
+    "viaNode": 10,
+    "viaToken": 0,
+    "viaPlumbing": 0,
+    "oracle": 0,
+    "platforms": 1,
+    "grade": "C"
+   },
+   "companions": [
+    {
+     "id": "P57",
+     "lift": 68.6,
+     "n": 9
+    },
+    {
+     "id": "P40",
+     "lift": 24.5,
+     "n": 9
+    },
+    {
+     "id": "P34",
+     "lift": 12.9,
+     "n": 10
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Must a step repeat until a measurable condition holds?"
+    }
+   ]
+  },
+  {
+   "id": "P23",
+   "layer": "L1",
+   "name": "paginate with a cursor",
+   "short": "paginate-with-a-cursor",
+   "gist": null,
+   "family": "loop",
+   "tier": "N",
+   "tierRaw": "N",
+   "rung": null,
+   "constructs": [
+    15,
+    27
+   ],
+   "support": {
+    "items": 0,
+    "viaNode": 0,
+    "viaToken": 0,
+    "viaPlumbing": 0,
+    "oracle": 0,
+    "platforms": 0,
+    "grade": "D"
+   },
+   "companions": [],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Does a source return results in pages?"
+    }
+   ]
+  },
+  {
+   "id": "P25",
+   "layer": "L1",
+   "name": "bounded state machine (cycles with several entries)",
+   "short": "bounded-state-machine",
+   "gist": "cycles with several entries",
+   "family": "loop",
+   "tier": "S",
+   "tierRaw": "S",
+   "rung": null,
+   "constructs": [
+    10,
+    3
+   ],
+   "support": {
+    "items": 49,
+    "viaNode": 8,
+    "viaToken": 41,
+    "viaPlumbing": 0,
+    "oracle": 11,
+    "platforms": 5,
+    "grade": "B"
+   },
+   "companions": [
+    {
+     "id": "P21",
+     "lift": 8,
+     "n": 31
+    },
+    {
+     "id": "P44",
+     "lift": 8,
+     "n": 10
+    },
+    {
+     "id": "P42",
+     "lift": 5.2,
+     "n": 26
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Does the process move between named states, re-entering some?"
+    }
+   ]
+  },
+  {
+   "id": "P26",
+   "layer": "L1",
+   "name": "retry with backoff / adaptive retry",
+   "short": "retry-with-backoff-adaptive-retry",
+   "gist": null,
+   "family": "failure",
+   "tier": "IR",
+   "tierRaw": "IR (fixed) / N (adaptive)",
+   "rung": "R8 f2",
+   "constructs": [
+    20
+   ],
+   "support": {
+    "items": 96,
+    "viaNode": 0,
+    "viaToken": 96,
+    "viaPlumbing": 0,
+    "oracle": 90,
+    "platforms": 4,
+    "grade": "B"
+   },
+   "companions": [
+    {
+     "id": "P29",
+     "lift": 10.2,
+     "n": 72
+    },
+    {
+     "id": "P27",
+     "lift": 5,
+     "n": 68
+    },
+    {
+     "id": "P19",
+     "lift": 2.9,
+     "n": 6
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Can a step fail transiently, or because it needs more resources?"
+    }
+   ]
+  },
+  {
+   "id": "P27",
+   "layer": "L1",
+   "name": "error route -> notify / cleanup (error workflow)",
+   "short": "error-route-notify-cleanup",
+   "gist": "error workflow",
+   "family": "failure",
+   "tier": "IR",
+   "tierRaw": "IR partial",
+   "rung": "R8",
+   "constructs": [
+    21,
+    15
+   ],
+   "support": {
+    "items": 215,
+    "viaNode": 174,
+    "viaToken": 41,
+    "viaPlumbing": 0,
+    "oracle": 108,
+    "platforms": 24,
+    "grade": "A"
+   },
+   "companions": [
+    {
+     "id": "P29",
+     "lift": 6.3,
+     "n": 99
+    },
+    {
+     "id": "P26",
+     "lift": 5,
+     "n": 68
+    },
+    {
+     "id": "P19",
+     "lift": 2.1,
+     "n": 10
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Must failures be reported or cleaned up rather than just stopping?"
+    }
+   ]
+  },
+  {
+   "id": "P28",
+   "layer": "L1",
+   "name": "fallback on error (alternative path, rejoin)",
+   "short": "fallback-on-error",
+   "gist": "alternative path, rejoin",
+   "family": "failure",
+   "tier": "IR",
+   "tierRaw": "IR partial",
+   "rung": "R8",
+   "constructs": [
+    21,
+    7
+   ],
+   "support": {
+    "items": 44,
+    "viaNode": 44,
+    "viaToken": 0,
+    "viaPlumbing": 0,
+    "oracle": 12,
+    "platforms": 14,
+    "grade": "B"
+   },
+   "companions": [
+    {
+     "id": "P46",
+     "lift": 6,
+     "n": 9
+    },
+    {
+     "id": "P13",
+     "lift": 3.7,
+     "n": 7
+    },
+    {
+     "id": "P25",
+     "lift": 3.5,
+     "n": 5
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Is there an acceptable alternative when the main path fails?"
+    }
+   ]
+  },
+  {
+   "id": "P29",
+   "layer": "L1",
+   "name": "finally / completion hook (teardown always runs)",
+   "short": "finally-completion-hook",
+   "gist": "teardown always runs",
+   "family": "failure",
+   "tier": "IR",
+   "tierRaw": "IR partial / N",
+   "rung": null,
+   "constructs": [
+    22
+   ],
+   "support": {
+    "items": 112,
+    "viaNode": 39,
+    "viaToken": 73,
+    "viaPlumbing": 0,
+    "oracle": 89,
+    "platforms": 9,
+    "grade": "B"
+   },
+   "companions": [
+    {
+     "id": "P26",
+     "lift": 10.2,
+     "n": 72
+    },
+    {
+     "id": "P27",
+     "lift": 6.3,
+     "n": 99
+    },
+    {
+     "id": "P08",
+     "lift": 1.4,
+     "n": 24
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Is there cleanup that must run however the workflow ends?"
+    }
+   ]
+  },
+  {
+   "id": "P30",
+   "layer": "L1",
+   "name": "saga: steps with compensation",
+   "short": "saga-steps-with-compensation",
+   "gist": null,
+   "family": "failure",
+   "tier": "N",
+   "tierRaw": "N",
+   "rung": "R7 (parked)",
+   "constructs": [
+    15,
+    23
+   ],
+   "support": {
+    "items": 7,
+    "viaNode": 0,
+    "viaToken": 0,
+    "viaPlumbing": 7,
+    "oracle": 4,
+    "platforms": 4,
+    "grade": "D"
+   },
+   "companions": [],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "If a later step fails, must earlier completed actions be undone?"
+    }
+   ]
+  },
+  {
+   "id": "P31",
+   "layer": "L1",
+   "name": "checkpoint -> resume / continue-as-new",
+   "short": "checkpoint-resume-continue-as-new",
+   "gist": null,
+   "family": "failure",
+   "tier": "S",
+   "tierRaw": "S partial / N",
+   "rung": "R4",
+   "constructs": [
+    11,
+    27
+   ],
+   "support": {
+    "items": 9,
+    "viaNode": 5,
+    "viaToken": 4,
+    "viaPlumbing": 0,
+    "oracle": 3,
+    "platforms": 6,
+    "grade": "C"
+   },
+   "companions": [],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Is the run long enough that it must survive restarts?"
+    }
+   ]
+  },
+  {
+   "id": "P32",
+   "layer": "L1",
+   "name": "approval gate before an effect (timeout routing)",
+   "short": "approval-gate-before-an-effect",
+   "gist": "timeout routing",
+   "family": "human",
+   "tier": "IR",
+   "tierRaw": "IR",
+   "rung": "R7 (parked)",
+   "constructs": [
+    16,
+    15
+   ],
+   "support": {
+    "items": 135,
+    "viaNode": 135,
+    "viaToken": 0,
+    "viaPlumbing": 0,
+    "oracle": 15,
+    "platforms": 24,
+    "grade": "A"
+   },
+   "companions": [
+    {
+     "id": "P41",
+     "lift": 9.7,
+     "n": 24
+    },
+    {
+     "id": "P35",
+     "lift": 8.3,
+     "n": 11
+    },
+    {
+     "id": "P55",
+     "lift": 7.3,
+     "n": 59
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Should a person approve before an irreversible action?"
+    }
+   ]
+  },
+  {
+   "id": "P33",
+   "layer": "L1",
+   "name": "wait for signal / external event (with timeout)",
+   "short": "wait-for-signal-external-event",
+   "gist": "with timeout",
+   "family": "async",
+   "tier": "N",
+   "tierRaw": "N",
+   "rung": "R7 (parked)",
+   "constructs": [
+    19
+   ],
+   "support": {
+    "items": 108,
+    "viaNode": 92,
+    "viaToken": 16,
+    "viaPlumbing": 0,
+    "oracle": 24,
+    "platforms": 6,
+    "grade": "B"
+   },
+   "companions": [
+    {
+     "id": "P40",
+     "lift": 7.1,
+     "n": 28
+    },
+    {
+     "id": "P57",
+     "lift": 5.6,
+     "n": 8
+    },
+    {
+     "id": "P21",
+     "lift": 5.1,
+     "n": 43
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Must the workflow pause until an outside event or reply arrives?"
+    }
+   ]
+  },
+  {
+   "id": "P34",
+   "layer": "L1",
+   "name": "durable delay / debounce -> re-check -> act",
+   "short": "durable-delay-debounce-re-check-act",
+   "gist": null,
+   "family": "async",
+   "tier": "IR",
+   "tierRaw": "IR (≤ 1 h) / N",
+   "rung": null,
+   "constructs": [
+    18,
+    2,
+    15
+   ],
+   "support": {
+    "items": 118,
+    "viaNode": 91,
+    "viaToken": 27,
+    "viaPlumbing": 0,
+    "oracle": 3,
+    "platforms": 11,
+    "grade": "A"
+   },
+   "companions": [
+    {
+     "id": "P22",
+     "lift": 12.9,
+     "n": 10
+    },
+    {
+     "id": "P57",
+     "lift": 9.7,
+     "n": 15
+    },
+    {
+     "id": "P40",
+     "lift": 7.8,
+     "n": 34
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Should the action happen only if a condition still holds after a delay?"
+    }
+   ]
+  },
+  {
+   "id": "P35",
+   "layer": "L1",
+   "name": "interrupt -> resume inside an agent node",
+   "short": "interrupt-resume-inside-an-agent-node",
+   "gist": null,
+   "family": "async",
+   "tier": "D",
+   "tierRaw": "D + IR",
+   "rung": "R5",
+   "constructs": [
+    12,
+    17
+   ],
+   "support": {
+    "items": 15,
+    "viaNode": 0,
+    "viaToken": 15,
+    "viaPlumbing": 0,
+    "oracle": 5,
+    "platforms": 12,
+    "grade": "B"
+   },
+   "companions": [
+    {
+     "id": "P47",
+     "lift": 12.4,
+     "n": 5
+    },
+    {
+     "id": "P32",
+     "lift": 8.3,
+     "n": 11
+    },
+    {
+     "id": "P45",
+     "lift": 7.3,
+     "n": 15
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Must an agent stop for human input mid-task?"
+    }
+   ]
+  },
+  {
+   "id": "P36",
+   "layer": "L1",
+   "name": "scheduled batch (schedule -> read -> process -> write)",
+   "short": "scheduled-batch",
+   "gist": "schedule > read > process > write",
+   "family": "trigger",
+   "tier": "HOST",
+   "tierRaw": "HOST",
+   "rung": null,
+   "constructs": [
+    25,
+    15
+   ],
+   "support": {
+    "items": 164,
+    "viaNode": 160,
+    "viaToken": 4,
+    "viaPlumbing": 0,
+    "oracle": 21,
+    "platforms": 15,
+    "grade": "A"
+   },
+   "companions": [
+    {
+     "id": "P44",
+     "lift": 4.3,
+     "n": 18
+    },
+    {
+     "id": "P25",
+     "lift": 3.8,
+     "n": 20
+    },
+    {
+     "id": "P39",
+     "lift": 2.9,
+     "n": 8
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Does the task run on a timetable over the data that arrived since the last run?"
+    }
+   ]
+  },
+  {
+   "id": "P37",
+   "layer": "L1",
+   "name": "webhook -> validate -> act -> respond",
+   "short": "webhook-validate-act-respond",
+   "gist": null,
+   "family": "trigger",
+   "tier": "HOST",
+   "tierRaw": "HOST",
+   "rung": null,
+   "constructs": [
+    24,
+    15
+   ],
+   "support": {
+    "items": 282,
+    "viaNode": 235,
+    "viaToken": 47,
+    "viaPlumbing": 0,
+    "oracle": 22,
+    "platforms": 18,
+    "grade": "A"
+   },
+   "companions": [
+    {
+     "id": "P41",
+     "lift": 5.4,
+     "n": 28
+    },
+    {
+     "id": "P15",
+     "lift": 4.2,
+     "n": 25
+    },
+    {
+     "id": "P43",
+     "lift": 3,
+     "n": 58
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Is the workflow started by an incoming request that needs a reply?"
+    }
+   ]
+  },
+  {
+   "id": "P38",
+   "layer": "L1",
+   "name": "event -> guard -> act (automation rule)",
+   "short": "event-guard-act",
+   "gist": "automation rule",
+   "family": "trigger",
+   "tier": "HOST",
+   "tierRaw": "HOST",
+   "rung": null,
+   "constructs": [
+    26,
+    15
+   ],
+   "support": {
+    "items": 252,
+    "viaNode": 207,
+    "viaToken": 45,
+    "viaPlumbing": 0,
+    "oracle": 16,
+    "platforms": 19,
+    "grade": "A"
+   },
+   "companions": [
+    {
+     "id": "P22",
+     "lift": 6,
+     "n": 10
+    },
+    {
+     "id": "P57",
+     "lift": 5.1,
+     "n": 17
+    },
+    {
+     "id": "P40",
+     "lift": 5,
+     "n": 46
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Is the workflow a rule: when this happens, if that holds, do this?"
+    }
+   ]
+  },
+  {
+   "id": "P39",
+   "layer": "L1",
+   "name": "poll -> diff -> notify (cursor in state)",
+   "short": "poll-diff-notify",
+   "gist": "cursor in state",
+   "family": "trigger",
+   "tier": "N",
+   "tierRaw": "N",
+   "rung": null,
+   "constructs": [
+    26,
+    27
+   ],
+   "support": {
+    "items": 26,
+    "viaNode": 25,
+    "viaToken": 1,
+    "viaPlumbing": 0,
+    "oracle": 11,
+    "platforms": 5,
+    "grade": "B"
+   },
+   "companions": [
+    {
+     "id": "P36",
+     "lift": 2.9,
+     "n": 8
+    },
+    {
+     "id": "P07",
+     "lift": 1.5,
+     "n": 5
+    },
+    {
+     "id": "P05",
+     "lift": 1.4,
+     "n": 5
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Must changes in an outside source be detected by comparing against the last check?"
+    }
+   ]
+  },
+  {
+   "id": "P40",
+   "layer": "L1",
+   "name": "run admission policy (single / queue / restart / parallel)",
+   "short": "run-admission-policy",
+   "gist": "single / queue / restart / parallel",
+   "family": "trigger",
+   "tier": "N",
+   "tierRaw": "N",
+   "rung": null,
+   "constructs": [
+    28
+   ],
+   "support": {
+    "items": 56,
+    "viaNode": 0,
+    "viaToken": 56,
+    "viaPlumbing": 0,
+    "oracle": 0,
+    "platforms": 1,
+    "grade": "C"
+   },
+   "companions": [
+    {
+     "id": "P22",
+     "lift": 24.5,
+     "n": 9
+    },
+    {
+     "id": "P57",
+     "lift": 15,
+     "n": 11
+    },
+    {
+     "id": "P34",
+     "lift": 7.8,
+     "n": 34
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "What should happen when a new run starts while one is still running?"
+    }
+   ]
+  },
+  {
+   "id": "P41",
+   "layer": "L1",
+   "name": "build -> test -> gate -> release (CI stage barrier)",
+   "short": "build-test-gate-release",
+   "gist": "CI stage barrier",
+   "family": "trigger",
+   "tier": "IR",
+   "tierRaw": "IR",
+   "rung": null,
+   "constructs": [
+    15,
+    16,
+    10
+   ],
+   "support": {
+    "items": 88,
+    "viaNode": 28,
+    "viaToken": 0,
+    "viaPlumbing": 60,
+    "oracle": 0,
+    "platforms": 2,
+    "grade": "C"
+   },
+   "companions": [
+    {
+     "id": "P15",
+     "lift": 27.2,
+     "n": 16
+    },
+    {
+     "id": "P32",
+     "lift": 9.7,
+     "n": 24
+    },
+    {
+     "id": "P37",
+     "lift": 5.4,
+     "n": 28
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Is this a CI/CD pipeline?"
+    }
+   ]
+  },
+  {
+   "id": "P42",
+   "layer": "L1",
+   "name": "cross-run state: seen-set / cursor / counter",
+   "short": "cross-run-state-seen-set-cursor-counter",
+   "gist": null,
+   "family": "state",
+   "tier": "N",
+   "tierRaw": "N",
+   "rung": null,
+   "constructs": [
+    27
+   ],
+   "support": {
+    "items": 157,
+    "viaNode": 0,
+    "viaToken": 157,
+    "viaPlumbing": 0,
+    "oracle": 17,
+    "platforms": 19,
+    "grade": "A"
+   },
+   "companions": [
+    {
+     "id": "P25",
+     "lift": 5.2,
+     "n": 26
+    },
+    {
+     "id": "P44",
+     "lift": 5,
+     "n": 20
+    },
+    {
+     "id": "P43",
+     "lift": 4.9,
+     "n": 53
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Must the workflow remember something between runs?"
+    }
+   ]
+  },
+  {
+   "id": "P43",
+   "layer": "L1",
+   "name": "conversational session (turn with bounded memory)",
+   "short": "conversational-session",
+   "gist": "turn with bounded memory",
+   "family": "state",
+   "tier": "N",
+   "tierRaw": "N",
+   "rung": null,
+   "constructs": [
+    29
+   ],
+   "support": {
+    "items": 104,
+    "viaNode": 10,
+    "viaToken": 94,
+    "viaPlumbing": 0,
+    "oracle": 11,
+    "platforms": 15,
+    "grade": "A"
+   },
+   "companions": [
+    {
+     "id": "P42",
+     "lift": 4.9,
+     "n": 53
+    },
+    {
+     "id": "P46",
+     "lift": 3.9,
+     "n": 14
+    },
+    {
+     "id": "P45",
+     "lift": 3.7,
+     "n": 53
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Is each run one turn of a continuing conversation?"
+    }
+   ]
+  },
+  {
+   "id": "P44",
+   "layer": "L1",
+   "name": "bounded stream consumer / partial outputs",
+   "short": "bounded-stream-consumer-partial-outputs",
+   "gist": null,
+   "family": "state",
+   "tier": "N",
+   "tierRaw": "N",
+   "rung": null,
+   "constructs": [
+    30
+   ],
+   "support": {
+    "items": 39,
+    "viaNode": 0,
+    "viaToken": 39,
+    "viaPlumbing": 0,
+    "oracle": 2,
+    "platforms": 8,
+    "grade": "B"
+   },
+   "companions": [
+    {
+     "id": "P25",
+     "lift": 8,
+     "n": 10
+    },
+    {
+     "id": "P42",
+     "lift": 5,
+     "n": 20
+    },
+    {
+     "id": "P38",
+     "lift": 4.7,
+     "n": 30
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Does input arrive as a continuous stream?"
+    }
+   ]
+  },
+  {
+   "id": "P45",
+   "layer": "L1",
+   "name": "capped tool loop (agent node + parent-side verify)",
+   "short": "capped-tool-loop",
+   "gist": "agent node + parent-side verify",
+   "family": "agentic",
+   "tier": "D",
+   "tierRaw": "D",
+   "rung": "R5",
+   "constructs": [
+    12
+   ],
+   "support": {
+    "items": 209,
+    "viaNode": 201,
+    "viaToken": 8,
+    "viaPlumbing": 0,
+    "oracle": 44,
+    "platforms": 26,
+    "grade": "A"
+   },
+   "companions": [
+    {
+     "id": "P35",
+     "lift": 7.3,
+     "n": 15
+    },
+    {
+     "id": "P46",
+     "lift": 7.2,
+     "n": 51
+    },
+    {
+     "id": "P47",
+     "lift": 5.5,
+     "n": 31
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Must a model use tools in an open-ended loop to finish part of the task?"
+    }
+   ]
+  },
+  {
+   "id": "P46",
+   "layer": "L1",
+   "name": "supervisor -> agents as typed tools",
+   "short": "supervisor-agents-as-typed-tools",
+   "gist": null,
+   "family": "agentic",
+   "tier": "S",
+   "tierRaw": "S (D with agents)",
+   "rung": "R4, R5",
+   "constructs": [
+    3,
+    11,
+    12,
+    10
+   ],
+   "support": {
+    "items": 52,
+    "viaNode": 41,
+    "viaToken": 11,
+    "viaPlumbing": 0,
+    "oracle": 16,
+    "platforms": 13,
+    "grade": "A"
+   },
+   "companions": [
+    {
+     "id": "P19",
+     "lift": 8,
+     "n": 9
+    },
+    {
+     "id": "P45",
+     "lift": 7.2,
+     "n": 51
+    },
+    {
+     "id": "P28",
+     "lift": 6,
+     "n": 9
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Must a coordinator delegate subtasks to specialised workers and combine them?"
+    }
+   ]
+  },
+  {
+   "id": "P47",
+   "layer": "L1",
+   "name": "model-written code in a sandbox -> run -> check",
+   "short": "model-written-code-in-a-sandbox-run-check",
+   "gist": null,
+   "family": "agentic",
+   "tier": "D",
+   "tierRaw": "D",
+   "rung": "R5",
+   "constructs": [
+    12,
+    15
+   ],
+   "support": {
+    "items": 41,
+    "viaNode": 10,
+    "viaToken": 31,
+    "viaPlumbing": 0,
+    "oracle": 8,
+    "platforms": 17,
+    "grade": "B"
+   },
+   "companions": [
+    {
+     "id": "P35",
+     "lift": 12.4,
+     "n": 5
+    },
+    {
+     "id": "P19",
+     "lift": 6.8,
+     "n": 6
+    },
+    {
+     "id": "P45",
+     "lift": 5.5,
+     "n": 31
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Is the most reliable route for the model to write and run code?"
+    }
+   ]
+  },
+  {
+   "id": "P48",
+   "layer": "L1",
+   "name": "guardrail tripwire (parallel check aborts)",
+   "short": "guardrail-tripwire",
+   "gist": "parallel check aborts",
+   "family": "agentic",
+   "tier": "S",
+   "tierRaw": "S",
+   "rung": null,
+   "constructs": [
+    6,
+    4
+   ],
+   "support": {
+    "items": 6,
+    "viaNode": 0,
+    "viaToken": 6,
+    "viaPlumbing": 0,
+    "oracle": 2,
+    "platforms": 4,
+    "grade": "C"
+   },
+   "companions": [
+    {
+     "id": "P20",
+     "lift": 10.6,
+     "n": 6
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Must output be blocked if a parallel safety check trips?"
+    }
+   ]
+  },
+  {
+   "id": "P49",
+   "layer": "L1",
+   "name": "verify panel (independent verifiers vote)",
+   "short": "verify-panel",
+   "gist": "independent verifiers vote",
+   "family": "agentic",
+   "tier": "S",
+   "tierRaw": "S",
+   "rung": "R6",
+   "constructs": [
+    6,
+    3,
+    2
+   ],
+   "support": {
+    "items": 8,
+    "viaNode": 0,
+    "viaToken": 0,
+    "viaPlumbing": 8,
+    "oracle": 3,
+    "platforms": 7,
+    "grade": "C"
+   },
+   "companions": [],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Is a single verifier's judgement not trustworthy enough?"
+    }
+   ]
+  },
+  {
+   "id": "P50",
+   "layer": "L1",
+   "name": "evidence -> hypothesis -> check (diagnosis) / env session",
+   "short": "evidence-hypothesis-check",
+   "gist": "diagnosis",
+   "family": "agentic",
+   "tier": "S",
+   "tierRaw": "S",
+   "rung": null,
+   "constructs": [
+    10,
+    2,
+    3
+   ],
+   "support": {
+    "items": 12,
+    "viaNode": 0,
+    "viaToken": 3,
+    "viaPlumbing": 9,
+    "oracle": 2,
+    "platforms": 10,
+    "grade": "C"
+   },
+   "companions": [],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Must the task diagnose a cause by forming and testing hypotheses?"
+    }
+   ]
+  },
+  {
+   "id": "P51",
+   "layer": "L1",
+   "name": "summarise-map-reduce / context compaction",
+   "short": "summarise-map-reduce-context-compaction",
+   "gist": null,
+   "family": "agentic",
+   "tier": "S",
+   "tierRaw": "S",
+   "rung": null,
+   "constructs": [
+    6,
+    3,
+    5
+   ],
+   "support": {
+    "items": 47,
+    "viaNode": 22,
+    "viaToken": 2,
+    "viaPlumbing": 23,
+    "oracle": 8,
+    "platforms": 22,
+    "grade": "B"
+   },
+   "companions": [
+    {
+     "id": "P20",
+     "lift": 6.2,
+     "n": 14
+    },
+    {
+     "id": "P07",
+     "lift": 3,
+     "n": 9
+    },
+    {
+     "id": "P36",
+     "lift": 1.9,
+     "n": 5
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Is the input too long for one read and needs condensing?"
+    }
+   ]
+  },
+  {
+   "id": "P53",
+   "layer": "L1",
+   "name": "sub-workflow per item (map over call)",
+   "short": "sub-workflow-per-item",
+   "gist": "map over call",
+   "family": "compose",
+   "tier": "S",
+   "tierRaw": "S",
+   "rung": "R4",
+   "constructs": [
+    6,
+    11
+   ],
+   "support": {
+    "items": 53,
+    "viaNode": 53,
+    "viaToken": 0,
+    "viaPlumbing": 0,
+    "oracle": 8,
+    "platforms": 20,
+    "grade": "A"
+   },
+   "companions": [
+    {
+     "id": "P55",
+     "lift": 7,
+     "n": 22
+    },
+    {
+     "id": "P10",
+     "lift": 6.1,
+     "n": 23
+    },
+    {
+     "id": "P46",
+     "lift": 5.5,
+     "n": 10
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Must a whole stored sub-workflow run once per item?"
+    }
+   ]
+  },
+  {
+   "id": "P54",
+   "layer": "L1",
+   "name": "decompose into called sub-workflows (call by hash)",
+   "short": "decompose-into-called-sub-workflows",
+   "gist": "call by hash",
+   "family": "compose",
+   "tier": "S",
+   "tierRaw": "S",
+   "rung": "R4",
+   "constructs": [
+    11
+   ],
+   "support": {
+    "items": 221,
+    "viaNode": 196,
+    "viaToken": 25,
+    "viaPlumbing": 0,
+    "oracle": 11,
+    "platforms": 21,
+    "grade": "A"
+   },
+   "companions": [
+    {
+     "id": "P10",
+     "lift": 4.2,
+     "n": 65
+    },
+    {
+     "id": "P55",
+     "lift": 4,
+     "n": 53
+    },
+    {
+     "id": "P40",
+     "lift": 3.6,
+     "n": 29
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Is part of this task a self-contained job with its own inputs and outputs that has been solved before,\n  or could be solved once and reused?"
+    }
+   ]
+  },
+  {
+   "id": "P55",
+   "layer": "L1",
+   "name": "ask -> validate -> use (human input as untrusted data)",
+   "short": "ask-validate-use",
+   "gist": "human input as untrusted data",
+   "family": "human",
+   "tier": "IR",
+   "tierRaw": "IR",
+   "rung": null,
+   "constructs": [
+    17,
+    2,
+    10
+   ],
+   "support": {
+    "items": 91,
+    "viaNode": 91,
+    "viaToken": 0,
+    "viaPlumbing": 0,
+    "oracle": 12,
+    "platforms": 15,
+    "grade": "A"
+   },
+   "companions": [
+    {
+     "id": "P10",
+     "lift": 10.5,
+     "n": 68
+    },
+    {
+     "id": "P32",
+     "lift": 7.3,
+     "n": 59
+    },
+    {
+     "id": "P53",
+     "lift": 7,
+     "n": 22
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Must the workflow ask a person for a value before continuing?"
+    }
+   ]
+  },
+  {
+   "id": "P56",
+   "layer": "L1",
+   "name": "media generation chain (tool bindings)",
+   "short": "media-generation-chain",
+   "gist": "tool bindings",
+   "family": "spine",
+   "tier": "IR",
+   "tierRaw": "IR",
+   "rung": null,
+   "constructs": [
+    15
+   ],
+   "support": {
+    "items": 68,
+    "viaNode": 68,
+    "viaToken": 0,
+    "viaPlumbing": 0,
+    "oracle": 1,
+    "platforms": 2,
+    "grade": "C"
+   },
+   "companions": [
+    {
+     "id": "P54",
+     "lift": 2.8,
+     "n": 28
+    },
+    {
+     "id": "P07",
+     "lift": 1.2,
+     "n": 10
+    },
+    {
+     "id": "P08",
+     "lift": 0.7,
+     "n": 7
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Is the task generating or editing images, audio or video?"
+    }
+   ]
+  },
+  {
+   "id": "P57",
+   "layer": "L1",
+   "name": "caller-supplied action list (typed plan fragment)",
+   "short": "caller-supplied-action-list",
+   "gist": "typed plan fragment",
+   "family": "compose",
+   "tier": "D",
+   "tierRaw": "D",
+   "rung": null,
+   "constructs": [
+    14
+   ],
+   "support": {
+    "items": 20,
+    "viaNode": 0,
+    "viaToken": 20,
+    "viaPlumbing": 0,
+    "oracle": 0,
+    "platforms": 2,
+    "grade": "C"
+   },
+   "companions": [
+    {
+     "id": "P22",
+     "lift": 68.6,
+     "n": 9
+    },
+    {
+     "id": "P40",
+     "lift": 15,
+     "n": 11
+    },
+    {
+     "id": "P34",
+     "lift": 9.7,
+     "n": 15
+    }
+   ],
+   "when": [
+    {
+     "id": "J1",
+     "type": "noul",
+     "instructions": "Does the caller pass the list of actions to perform as input?"
+    }
+   ]
+  }
+ ]
+}
