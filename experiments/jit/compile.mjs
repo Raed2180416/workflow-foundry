@@ -14,10 +14,14 @@ import { runSandboxed } from '../../src/executors/sandboxed-command.mjs';
 import { loadFamily } from '../lib/beds.mjs';
 import { startServices, Ledger } from '../lib/services.mjs';
 import { MODEL_TOOL, BUDGET_TOOL, taskFiles } from '../c0/construct.mjs';
-import { builderPrompt, promptVersionOf } from './prompts.mjs';
+import { builderPrompt, promptVersionOf, flowFileOf } from './prompts.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
+// The SDK the builder reads and the host check runs follows the prompt version (prompts.mjs flowFileOf): FLOW_TOOL is
+// version 1 (flow.mjs, frozen), FLOW_TOOL_V2 adds flow.flag. Execution (run-compiled.mjs) gets the same file from stream.mjs.
 export const FLOW_TOOL = readFileSync(path.join(here, 'flow.mjs'), 'utf8');
+export const FLOW_TOOL_V2 = readFileSync(path.join(here, 'flow-v2.mjs'), 'utf8');
+export const flowToolOf = promptVersion => (flowFileOf({ promptVersion }) === 'flow.mjs' ? FLOW_TOOL : FLOW_TOOL_V2);
 export const CHECK_TOOL = readFileSync(path.join(here, 'check-traces.mjs'), 'utf8');
 export const SCRIPTS_CAP = 40 * 1024, COMMANDS_CAP = 15 * 1024, COMMAND_CHARS = 200;
 
@@ -92,12 +96,12 @@ export function caseFiles(traces, regressions = []) {
 }
 
 // The builder's whole workdir (SPEC §3.2).
-export function compileFiles({ outputSchema, traces, regressions = [], previous = null, gateway }) {
+export function compileFiles({ outputSchema, traces, regressions = [], previous = null, gateway, promptVersion = 1 }) {
   return {
     ...caseFiles(traces, regressions),
     'output-schema.json': JSON.stringify(outputSchema, null, 1),
     ...(previous ? { 'solve.mjs': previous } : {}),
-    'tools/model.mjs': MODEL_TOOL, 'tools/gateway.json': JSON.stringify(gateway), 'tools/flow.mjs': FLOW_TOOL,
+    'tools/model.mjs': MODEL_TOOL, 'tools/gateway.json': JSON.stringify(gateway), 'tools/flow.mjs': flowToolOf(promptVersion),
     'tools/run-solver': JIT_RUN_SOLVER, 'tools/check-traces.mjs': CHECK_TOOL, 'tools/budget.mjs': BUDGET_TOOL,
   };
 }
@@ -107,13 +111,15 @@ const writeAll = (dir, files) => {
 };
 
 // Independent acceptance measurement: check-traces over every case, in the execution sandbox, on its own ledger.
-export async function hostCheck({ dir, solveSource, traces, regressions = [], modelPort, models, capUsd, label, timeoutMs = 30 * 60 * 1000, caseSeconds = 600, jobs = 3 }) {
+export async function hostCheck({ dir, solveSource, traces, regressions = [], modelPort, models, capUsd, label, timeoutMs = 30 * 60 * 1000, caseSeconds = 600, jobs = 3,
+  promptVersion = 1 }) {
+  const flowTool = flowToolOf(promptVersion);   // an unknown prompt version fails here, before anything is started
   rmSync(dir, { recursive: true, force: true }); mkdirSync(path.join(dir, 'tools'), { recursive: true });
   const ledger = new Ledger({ capUsd, label: `${label}:check` });
   const svc = await startServices({ modelPort, ledger, scoreLimit: 0, runId: `jit-check:${label}:${randomUUID()}`, allowedModels: models, socketDir: path.join(dir, 'tools') });
   let r = null, error = null;
   try {
-    writeAll(dir, { ...caseFiles(traces, regressions), 'solve.mjs': solveSource, 'tools/model.mjs': MODEL_TOOL, 'tools/flow.mjs': FLOW_TOOL,
+    writeAll(dir, { ...caseFiles(traces, regressions), 'solve.mjs': solveSource, 'tools/model.mjs': MODEL_TOOL, 'tools/flow.mjs': flowTool,
       'tools/check-traces.mjs': CHECK_TOOL, 'tools/gateway.json': JSON.stringify({ socket: 'gw.sock', token: svc.token }) });
     r = await runSandboxed({ command: 'node', args: ['tools/check-traces.mjs', '--jobs', String(jobs), '--timeout', String(caseSeconds)], workdir: dir, timeoutMs, network: false });
   } catch (e) {
@@ -149,7 +155,7 @@ export async function compile({ familyId, traces, previous = null, regressions =
   const ledger = new Ledger({ capUsd: gatewayUsd, label });
   // No familyId and no probes: the gateway has no score route and no env route in this session.
   const svc = await startServices({ modelPort, ledger, scoreLimit: 0, runId: `compile:${label}:${randomUUID()}`, allowedModels: models });
-  const files = compileFiles({ outputSchema: fam.outputSchema, traces, regressions, previous, gateway: { url: svc.url, token: svc.token } });
+  const files = compileFiles({ outputSchema: fam.outputSchema, traces, regressions, previous, gateway: { url: svc.url, token: svc.token }, promptVersion });
   const kind = previous ? 'recompile' : 'compile';
   const prompt = builderPrompt(kind, { traces: traces.length, regressions: regressions.length, minutes, gatewayUsd, perTaskUsd, models, promptVersion });
   const started = Date.now();
@@ -167,7 +173,7 @@ export async function compile({ familyId, traces, previous = null, regressions =
   const solvePath = path.join(workdir, 'solve.mjs'), solveSource = existsSync(solvePath) ? readFileSync(solvePath, 'utf8') : null;
   const notes = existsSync(path.join(workdir, 'BUILD-NOTES.md')) ? readFileSync(path.join(workdir, 'BUILD-NOTES.md'), 'utf8') : null;
   const check = solveSource
-    ? await hostCheck({ dir: path.join(workdir, '.host-check'), solveSource, traces, regressions, modelPort, models, capUsd: checkUsd, label, timeoutMs: checkMinutes * 60 * 1000, caseSeconds: checkCaseSeconds })
+    ? await hostCheck({ dir: path.join(workdir, '.host-check'), solveSource, traces, regressions, modelPort, models, capUsd: checkUsd, label, timeoutMs: checkMinutes * 60 * 1000, caseSeconds: checkCaseSeconds, promptVersion })
     : { summary: null, error: { code: 'NO_ARTIFACT' }, costUsd: 0, calls: 0, unknownCalls: 0, refusals: {}, durationMs: null };
   const s = check.summary;
   // A disagreement with an agent answer is acceptable only when BUILD-NOTES.md names that case (SPEC addendum 4).
@@ -186,7 +192,7 @@ export async function compile({ familyId, traces, previous = null, regressions =
   const record = {
     arm: 'jit-compile', kind, familyId, label, version, parentSha, changed: artifactSha256 !== parentSha,
     traceIds: traces.map(t => t.traceId ?? null), regressionIds: regressions.map(x => x.caseId ?? null),
-    builderModel, builderEffort, policyHash: modelPort.policyHash ?? null, models, runId: svc.runId, flowSha256: sha(FLOW_TOOL), checkToolSha256: sha(CHECK_TOOL),
+    builderModel, builderEffort, policyHash: modelPort.policyHash ?? null, models, runId: svc.runId, flowSha256: sha(flowToolOf(promptVersion)), checkToolSha256: sha(CHECK_TOOL),
     promptVersion, promptSha256: sha(prompt), artifact: solveSource == null ? null : 'solve.mjs', artifactSha256,
     builderCostUsd, builderCostReportedUsd: r.costUsd ?? null, builderCostUnknown: !!r.costUnknown, builderCostUpperUsd: r.costUpperUsd ?? null, builderBudgetUsd,
     builderUsage: r.usage ?? null, builderStreamUsage: r.streamUsage ?? null, builderSessionId: r.sessionId ?? null,

@@ -14,11 +14,8 @@
 //   flow.guard('known-systems', cond, detail);     // falsy: this input is outside what the solver was compiled for -> deopt
 //   flow.invariant('rows-conserved', cond, detail);   // falsy: the solver's own result broke a property every trace had -> deopt
 //   const out = await flow.map(items, async (x, i) => ..., { concurrency: 4 });
-//   flow.flag('weak-name-match', { name, score });   // this run took a decision on weak evidence (trace only; never a deopt)
 //   flow.done(answer);                             // prints the final JSON line on stdout; call exactly once
 //
-// createFlow({ autoFlag: true }) (opt-in, default false) also flags 'judge-escalated:<name>' when a judge escalated past
-// its first tier or its samples vote was not unanimous. Flags never change the output or the exit code.
 // Exit codes: 0 after done(); 75 = deopt (./deopt.json {kind: guard|invariant|judge|budget, name, detail}); anything else
 // is a crash (an uncaught exception exits 1). Every event is one JSON line in ./trace.jsonl: {at, kind, name, ...}.
 import { readFileSync, writeFileSync, appendFileSync, rmSync } from 'node:fs';
@@ -26,7 +23,7 @@ import { createHash } from 'node:crypto';
 import { callModel } from './model.mjs';
 
 export const DEOPT_EXIT = 75;
-const MAX_EVENTS = 5000, MAX_TEXT = 64 * 1024, HEAD_TEXT = 2048, MAX_FLAG_NAMES = 50;
+const MAX_EVENTS = 5000, MAX_TEXT = 64 * 1024, HEAD_TEXT = 2048;
 const TRACE = 'trace.jsonl', DEOPT = 'deopt.json';
 const CALLS = new URL('./calls.jsonl', import.meta.url);   // model.mjs appends one line per call (with its costUsd) here
 
@@ -49,11 +46,11 @@ const keepText = (field, text, into) => {
 
 let created = false;
 
-export function createFlow({ budgetUsd = 0.5, autoFlag = false } = {}) {
+export function createFlow({ budgetUsd = 0.5 } = {}) {
   if (created) throw new Error('createFlow() may be called once per process');
   created = true;
   const state = { started: Date.now(), spentUsd: 0, calls: 0, unknownCostCalls: 0, events: 0, dropped: 0, done: false, deopted: false,
-    guards: {}, invariants: {}, judges: 0, flags: 0, flagNames: [], task: undefined };
+    guards: {}, invariants: {}, judges: 0, task: undefined };
   // A fresh trace per run; a stale deopt.json from an earlier run in the same directory must not be read as this run's.
   try { writeFileSync(TRACE, ''); rmSync(DEOPT, { force: true }); } catch {}
   let seen = 0;   // bytes of calls.jsonl already charged
@@ -65,20 +62,7 @@ export function createFlow({ budgetUsd = 0.5, autoFlag = false } = {}) {
     try { appendFileSync(TRACE, JSON.stringify({ at: new Date().toISOString(), ...e }) + '\n'); } catch {}
   }
   const totals = () => ({ spentUsd: usd(state.spentUsd), calls: state.calls, unknownCostCalls: state.unknownCostCalls, judges: state.judges,
-    guards: state.guards, invariants: state.invariants, ms: Date.now() - state.started, ...(state.dropped ? { droppedEvents: state.dropped } : {}),
-    ...(state.flags ? { flags: state.flags, flagNames: state.flagNames } : {}) });
-
-  // An uncertainty mark (a decision taken on weak evidence). It is counted in the totals and traced; it never throws,
-  // and never changes the output or the exit code.
-  function flag(name, detail, extra = {}) {
-    try {
-      const n = String(name ?? 'flag').slice(0, 200);
-      state.flags++;
-      if (!state.flagNames.includes(n) && state.flagNames.length < MAX_FLAG_NAMES) state.flagNames.push(n);
-      let d; try { d = clip(typeof detail === 'function' ? detail() : detail); } catch (e) { d = { unserializable: short(e, 200) }; }
-      event({ kind: 'flag', name: n, detail: d, ...extra });
-    } catch {}
-  }
+    guards: state.guards, invariants: state.invariants, ms: Date.now() - state.started, ...(state.dropped ? { droppedEvents: state.dropped } : {}) });
 
   function deopt(kind, name, detail) {
     state.deopted = true;
@@ -182,10 +166,6 @@ export function createFlow({ budgetUsd = 0.5, autoFlag = false } = {}) {
           state.judges++;
           const value = ranked[0][0];
           record({ ok: true, tier: model, escalations: k, value, agreement: ranked[0].length / samples });
-          if (autoFlag && (k > 0 || ranked[0].length < samples)) {
-            flag(`judge-escalated:${name}`, { reason: k > 0 ? 'escalated' : 'split-vote', tier: model, escalations: k, agreement: ranked[0].length / samples,
-              ...(samples > 1 ? { votes: ranked.map(g => g.length) } : {}) }, { auto: true });
-          }
           return value;
         }
         const bad = results.find(r => r.problem || r.error), first = bad ? (bad.problem ?? bad.error) : null;
@@ -213,10 +193,6 @@ export function createFlow({ budgetUsd = 0.5, autoFlag = false } = {}) {
 
     // A free-form trace event (what the solver decided and why), e.g. flow.note('systems', { names }).
     note(name, data) { event({ kind: 'note', name, data: clip(data) }); },
-
-    // This run took a decision on weak evidence (a near-threshold fuzzy match, a value inferred from one weak cue): the
-    // harness may shadow it with the interpreter. Trace and totals only, e.g. flow.flag('weak-name-match', { name, score }).
-    flag(name, detail) { flag(name, detail); },
 
     spent() { return { spentUsd: usd(state.spentUsd), calls: state.calls, budgetUsd }; },
 

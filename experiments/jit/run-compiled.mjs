@@ -12,16 +12,20 @@ import { loadFamily } from '../lib/beds.mjs';
 import { validateOutput } from './interpret.mjs';
 
 export const DEOPT_EXIT = 75, MAX_TRACE_EVENTS = 5000;
+// DEFAULT_FLOW is the version-1 SDK (frozen); a prompt-version-2 arm passes flowPath = FLOW_V2 (stream.mjs, prompts.mjs flowFileOf).
 export const DEFAULT_FLOW = path.resolve(new URL('./flow.mjs', import.meta.url).pathname);
+export const FLOW_V2 = path.resolve(new URL('./flow-v2.mjs', import.meta.url).pathname);
+export const MAX_FLAG_NAMES = 50;   // as flow-v2.mjs caps flagNames on its totals
 
 const parseLines = text => text.split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
 // Uncertainty flags the solver raised (flow.flag, or a judge auto-flag): {count, names}. The totals on the final
 // done/deopt/crash event are authoritative (they also count flags past the trace's event cap); without one (a timeout,
-// a killed script) the flag events themselves are counted.
+// a killed script) the flag events themselves are counted. Pass the whole trace: runCompiled calls it before the cap below
+// cuts the trace, since flow.mjs writes its final totals line after MAX_TRACE_EVENTS events. Names are capped at 50.
 export function flagsOf(trace) {
   const events = (trace ?? []).filter(e => e?.kind === 'flag');
   const totals = [...(trace ?? [])].reverse().find(e => ['done', 'deopt', 'crash'].includes(e?.kind) && typeof e.flags === 'number');
-  const names = [...new Set([...(Array.isArray(totals?.flagNames) ? totals.flagNames : []), ...events.map(e => String(e.name))])];
+  const names = [...new Set([...(Array.isArray(totals?.flagNames) ? totals.flagNames : []), ...events.map(e => String(e.name))])].slice(0, MAX_FLAG_NAMES);
   return { count: Math.max(totals?.flags ?? 0, events.length), names };
 }
 const lastJsonLine = stdout => {
@@ -51,7 +55,8 @@ export async function runCompiled({ solvePath, task, modelPort, perTaskUsd = 1, 
     r = { code: null, stdout: '', stderr: String(error.message ?? error), timedOut: false, sandboxReady: false, durationMs: 0, thrown: error.code ?? 'SANDBOX_UNAVAILABLE' };
   } finally { await svc.close(); }   // settles in-flight gateway calls, so the ledger read below is complete
   writeFileSync(path.join(workdir, '.solve.stdout'), r.stdout); writeFileSync(path.join(workdir, '.solve.stderr'), r.stderr);
-  const trace = existsSync(path.join(workdir, 'trace.jsonl')) ? parseLines(readFileSync(path.join(workdir, 'trace.jsonl'), 'utf8')).slice(0, MAX_TRACE_EVENTS) : [];
+  const fullTrace = existsSync(path.join(workdir, 'trace.jsonl')) ? parseLines(readFileSync(path.join(workdir, 'trace.jsonl'), 'utf8')) : [];
+  const trace = fullTrace.slice(0, MAX_TRACE_EVENTS), flags = flagsOf(fullTrace);   // flags before the cut: the totals line is last
   let deopt = null;
   if (existsSync(path.join(workdir, 'deopt.json'))) { try { deopt = JSON.parse(readFileSync(path.join(workdir, 'deopt.json'), 'utf8')); } catch { deopt = { kind: 'unknown', detail: 'deopt.json is not JSON' }; } }
   let status, output = null, error = null, schemaErrors = null;
@@ -69,7 +74,7 @@ export async function runCompiled({ solvePath, task, modelPort, perTaskUsd = 1, 
   // A call whose spend could not be observed is charged at its bound (unbounded: the per-task cap), never $0.
   const unknownUsd = ledger.unknownCalls > 0 ? (ledger.unknownUpperUsd ?? perTaskUsd) : 0;
   return {
-    status, output, deopt, trace, flags: flagsOf(trace), costUsd: ledger.spentUsd + unknownUsd, costUnknown: ledger.unknownCalls > 0, imputedUsd: ledger.imputedUsd, latencyMs: r.durationMs, error,
+    status, output, deopt, trace, flags, costUsd: ledger.spentUsd + unknownUsd, costUnknown: ledger.unknownCalls > 0, imputedUsd: ledger.imputedUsd, latencyMs: r.durationMs, error,
     meta: { exitCode: r.code, calls: ledger.calls, errors: ledger.errors, refusals: ledger.refusals, unknownCalls: ledger.unknownCalls, unknownUpperUsd: ledger.unknownUpperUsd,
       spentUsd: ledger.spentUsd, overshootUsd: Math.max(0, ledger.spentUsd - perTaskUsd), schemaErrors, stderrTail: r.stderr.slice(-400),
       solveSha256: createHash('sha256').update(source).digest('hex'), flow: !!(flowPath && existsSync(flowPath)) },

@@ -8,9 +8,10 @@ import { spawn } from 'node:child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, copyFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 import { MODEL_TOOL } from '../../c0/construct.mjs';
 
-const FLOW = new URL('../flow.mjs', import.meta.url).pathname;
+const FLOW = new URL('../flow.mjs', import.meta.url).pathname, FLOW_V2 = new URL('../flow-v2.mjs', import.meta.url).pathname;
 const HAIKU = 'claude-haiku-5-5', SONNET = 'claude-sonnet-5-5';
 const TOKEN = 'test-token';
 
@@ -34,10 +35,10 @@ test.after(() => server.close());
 
 const ok = (value, costUsd = 0.01) => ({ body: { ok: true, value, costUsd, spentUsd: 0 } });
 
-async function run(t, source, { task = { prompt: 'p', inputs: { xs: [1, 2, 3, 4, 5] } }, on } = {}) {
+async function run(t, source, { task = { prompt: 'p', inputs: { xs: [1, 2, 3, 4, 5] } }, on, flow = FLOW } = {}) {
   const dir = mkdtempSync(path.join(tmpdir(), 'jit-flow-')); t.after(() => rmSync(dir, { recursive: true, force: true }));
   mkdirSync(path.join(dir, 'tools'));
-  writeFileSync(path.join(dir, 'tools/model.mjs'), MODEL_TOOL); copyFileSync(FLOW, path.join(dir, 'tools/flow.mjs'));
+  writeFileSync(path.join(dir, 'tools/model.mjs'), MODEL_TOOL); copyFileSync(flow, path.join(dir, 'tools/flow.mjs'));
   writeFileSync(path.join(dir, 'tools/gateway.json'), JSON.stringify({ url, token: TOKEN }));
   writeFileSync(path.join(dir, 'task.json'), JSON.stringify(task));
   writeFileSync(path.join(dir, 'solve.mjs'), `import { createFlow } from './tools/flow.mjs';\n${source}`);
@@ -201,9 +202,47 @@ flow.done(out.map(v => v.i));`, { on: async b => { const i = Number(b.prompt.spl
   assert.equal(r.trace.at(-1).spentUsd, 0.021); assert.equal(r.trace.at(-1).calls, 6);
 });
 
-// ---- JIT v2: uncertainty flags (opt-in) ----
+// ---- JIT v2: uncertainty flags (opt-in), in flow-v2.mjs; flow.mjs (version 1) is frozen ----
+const runV2 = (t, source, opts = {}) => run(t, source, { ...opts, flow: FLOW_V2 });
+const sha256 = file => createHash('sha256').update(readFileSync(file)).digest('hex');
+
+test('flow.mjs (version 1) is frozen at the bytes the live v1 streams record (compile.json flowSha256); flow-v2.mjs is separate', () => {
+  assert.equal(sha256(FLOW), '3c11eb2a40709987092dc3f58c250eaf66050e00fa2c1927437c3d3069a01e1b');
+  assert.equal(readFileSync(FLOW, 'utf8').includes('flag'), false, 'version 1 documents no flags');
+  assert.notEqual(sha256(FLOW_V2), sha256(FLOW));
+});
+
+// A solver that never flags: the same trace (minus timestamps and durations), stdout, exit code and deopt.json under both.
+const strip = e => { const { at, ms, ...rest } = e; return rest; };
+const EQUIV = {
+  done: `const flow = createFlow({ budgetUsd: 1 });
+const task = flow.input();
+const xs = flow.step('parse', () => task.inputs.xs);
+flow.guard('has-rows', xs.length > 0, { n: xs.length }); flow.invariant('small', xs.every(x => x < 10));
+flow.note('seen', { n: xs.length });
+const text = 'hello world', schema = ${JSON.stringify(SCHEMA)};
+const a = await flow.judge('esc', { tiers: ['${HAIKU}', '${SONNET}'], prompt: 'esc', schema, check: v => text.includes(v.quote) ? null : 'no' });
+const b = await flow.judge('vote', { tiers: ['${HAIKU}'], prompt: 'vote', schema, samples: 3 });
+const m = await flow.map(xs, async x => x * 2, { concurrency: 2 });
+flow.done({ a, b, m });`,
+  deopt: `const flow = createFlow(); flow.input(); flow.step('s', () => 1); flow.guard('never', false, { why: 'test' }); flow.done(1);`,
+  noDone: `const flow = createFlow(); flow.input(); flow.note('n', 1);`,
+};
+const equivOn = b => (b.prompt === 'esc' ? ok({ quote: b.model === HAIKU ? 'nope' : 'hello' }, 0.01) : ok({ quote: 'x' }, 0.001));
+for (const [name, src] of Object.entries(EQUIV)) {
+  test(`flow-v2.mjs without flags behaves exactly as flow.mjs: ${name}`, async t => {
+    const voteOn = () => { let n = 0; return b => (b.prompt === 'vote' ? ok({ quote: n++ === 1 ? 'y' : 'x' }, 0.001) : equivOn(b)); };
+    const v1 = await run(t, src, { on: voteOn() }), v2 = await runV2(t, src, { on: voteOn() });
+    assert.equal(v1.code, { done: 0, deopt: 75, noDone: 1 }[name], v1.stderr); assert.equal(v2.code, v1.code); assert.equal(v2.stdout, v1.stdout);
+    if (name === 'done') assert.deepEqual(v1.trace.filter(e => e.kind === 'judge').map(e => [e.escalations, e.agreement]), [[1, 1], [0, 2 / 3]], 'an escalation and a split vote ran');
+    assert.deepEqual(v2.trace.map(strip), v1.trace.map(strip));
+    assert.deepEqual(v2.deopt && strip(v2.deopt), v1.deopt && strip(v1.deopt));
+    assert.equal(v2.trace.filter(e => e.kind === 'flag').length, 0);
+  });
+}
+
 test('flow.flag: a flag event and the totals count flags; the output and the exit code are unchanged; bad input never throws', async t => {
-  const r = await run(t, `const flow = createFlow({ budgetUsd: 1 });
+  const r = await runV2(t, `const flow = createFlow({ budgetUsd: 1 });
 const task = flow.input();
 flow.flag('weak-name-match', { name: 'Acme Corp', best: 'ACME', score: 0.81 });
 flow.flag('weak-name-match', () => ({ name: 'Globex', score: 0.79 }));
@@ -222,7 +261,7 @@ flow.done({ n: task.inputs.xs.length });`);
 });
 
 test('flags are counted in the totals of a deopt too, and a flag never turns a deopt into an answer', async t => {
-  const r = await run(t, `const flow = createFlow();
+  const r = await runV2(t, `const flow = createFlow();
 flow.flag('weak-cue', { cue: 'x' });
 flow.guard('known', false, { unseen: 1 });
 flow.done('never');`);
@@ -232,17 +271,17 @@ flow.done('never');`);
 });
 
 test('default (no autoFlag): an escalated judge and a split vote emit no flag events, and the totals carry no flag fields', async t => {
-  const r = await run(t, judgeSrc(), { on: b => (b.model === HAIKU ? ok({ quote: 'nope' }) : ok({ quote: 'hello' })) });
+  const r = await runV2(t, judgeSrc(), { on: b => (b.model === HAIKU ? ok({ quote: 'nope' }) : ok({ quote: 'hello' })) });
   assert.equal(r.code, 0, r.stderr); assert.equal(r.trace.find(e => e.kind === 'judge').escalations, 1);
   assert.equal(r.trace.filter(e => e.kind === 'flag').length, 0);
   assert.equal('flags' in r.trace.at(-1), false); assert.equal('flagNames' in r.trace.at(-1), false);
-  const split = await run(t, judgeSrc(', samples: 3'), { on: (b, n) => ok({ quote: n === 2 ? 'world' : 'hello' }, 0.001) });
+  const split = await runV2(t, judgeSrc(', samples: 3'), { on: (b, n) => ok({ quote: n === 2 ? 'world' : 'hello' }, 0.001) });
   assert.equal(split.code, 0, split.stderr); assert.equal(split.trace.filter(e => e.kind === 'flag').length, 0);
 });
 
 const autoSrc = (opts = '') => judgeSrc(opts).replace('createFlow({ budgetUsd: 1 })', 'createFlow({ budgetUsd: 1, autoFlag: true })');
 test('autoFlag: a judge that escalated past its first tier flags judge-escalated:<name>; the answer is the same', async t => {
-  const r = await run(t, autoSrc(), { on: b => (b.model === HAIKU ? ok({ quote: 'nope' }, 0.01) : ok({ quote: 'hello' }, 0.05)) });
+  const r = await runV2(t, autoSrc(), { on: b => (b.model === HAIKU ? ok({ quote: 'nope' }, 0.01) : ok({ quote: 'hello' }, 0.05)) });
   assert.equal(r.code, 0, r.stderr); assert.deepEqual(r.output, { quote: 'hello' });
   const f = r.trace.filter(e => e.kind === 'flag');
   assert.equal(f.length, 1); assert.equal(f[0].name, 'judge-escalated:find-quote'); assert.equal(f[0].auto, true);
@@ -252,18 +291,23 @@ test('autoFlag: a judge that escalated past its first tier flags judge-escalated
 });
 
 test('autoFlag: a non-unanimous samples vote flags (split-vote); a unanimous first-tier judge does not', async t => {
-  const split = await run(t, autoSrc(', samples: 3'), { on: (b, n) => ok({ quote: n === 2 ? 'world' : 'hello' }, 0.001) });
+  const split = await runV2(t, autoSrc(', samples: 3'), { on: (b, n) => ok({ quote: n === 2 ? 'world' : 'hello' }, 0.001) });
   assert.equal(split.code, 0, split.stderr); assert.deepEqual(split.output, { quote: 'hello' });
   const f = split.trace.filter(e => e.kind === 'flag');
   assert.equal(f.length, 1); assert.equal(f[0].name, 'judge-escalated:find-quote');
   assert.equal(f[0].detail.reason, 'split-vote'); assert.equal(f[0].detail.escalations, 0); assert.deepEqual(f[0].detail.votes, [2, 1]);
-  const clean = await run(t, autoSrc(', samples: 3'), { on: () => ok({ quote: 'hello' }, 0.001) });
+  const clean = await runV2(t, autoSrc(', samples: 3'), { on: () => ok({ quote: 'hello' }, 0.001) });
   assert.equal(clean.code, 0, clean.stderr); assert.equal(clean.trace.filter(e => e.kind === 'flag').length, 0); assert.equal('flags' in clean.trace.at(-1), false);
-  const one = await run(t, autoSrc(), { on: () => ok({ quote: 'world' }) });
+  const one = await runV2(t, autoSrc(), { on: () => ok({ quote: 'world' }) });
   assert.equal(one.trace.filter(e => e.kind === 'flag').length, 0);
+  // valid samples agree but one failed its check: flagged, labelled failed-sample (not split-vote)
+  const failed = await runV2(t, autoSrc(', samples: 3'), { on: (b, n) => ok({ quote: n === 2 ? 'nope' : 'hello' }, 0.001) });
+  assert.equal(failed.code, 0, failed.stderr); assert.deepEqual(failed.output, { quote: 'hello' });
+  const ff = failed.trace.filter(e => e.kind === 'flag');
+  assert.equal(ff.length, 1); assert.equal(ff[0].detail.reason, 'failed-sample'); assert.deepEqual(ff[0].detail.votes, [2]);
 });
 
 test('autoFlag: a judge that exhausts its tiers still deopts (no flag stands in for a checked value)', async t => {
-  const r = await run(t, autoSrc(), { on: () => ok({ quote: 'nope' }) });
+  const r = await runV2(t, autoSrc(), { on: () => ok({ quote: 'nope' }) });
   assert.equal(r.code, 75); assert.equal(r.deopt.kind, 'judge'); assert.equal(r.trace.filter(e => e.kind === 'flag').length, 0);
 });

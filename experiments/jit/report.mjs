@@ -29,30 +29,46 @@ export function loadRun(runDir) {
   return arms.sort((a, b) => (a.meta.spec ?? a.meta.slug).localeCompare(b.meta.spec ?? b.meta.slug));
 }
 
-// Uncertainty flags (JIT v2, opt-in): compiled runs that raised flow.flag flags, and the shadows they triggered
-// (row.shadowReason 'flag' | 'schedule+flag', with jit.shadowOnFlags) against the scheduled ones. A flag's precision is the
-// share of its answered shadows that disagreed with the compiled answer; the scheduled shadows' rate is the base rate.
-// The oracle columns (pass among flagged vs unflagged compiled runs) are the experimenter's view, never the system's.
-// null when the arm has neither flags nor shadow reasons (every v1 run), so v1 reports are unchanged.
-export function flagSummary(rows) {
-  const flagged = rows.filter(r => (r.flags?.count ?? 0) > 0), withReason = rows.filter(r => r.shadowReason);
-  if (!flagged.length && !withReason.length) return null;
+// Uncertainty flags (JIT v2, opt-in). Shadows are grouped by why they ran: row.shadowReason ('schedule' | 'flag' |
+// 'schedule+flag', with jit.shadowOnFlags), or 'schedule' for a shadowed row without one (shadowOnFlags off: every shadow
+// is a scheduled one). Measured against the shadow (the system's own view, no oracle):
+// - flag rate: flagged runs / compiled ok runs;
+// - the scheduled sample (unbiased: every shadowEvery-th compiled ok run, flagged or not), split into flagged and unflagged
+//   runs; the unflagged disagreement rate is the base rate, and recall = flagged disagreements / all its disagreements;
+// - precision: the disagreement rate of the flag-triggered shadows (reason 'flag' or 'schedule+flag');
+// - the cost of the extra shadows flags caused (reason 'flag' only: shadow + adjudicator dollars).
+// The oracle columns (pass among flagged vs unflagged compiled runs) are the experimenter's view, never the system's; they
+// score the compiled answer (row.compiledPass where an adjudicated answer replaced it), not the delivered one.
+// null when the arm is not a v2 arm (opts.enabled) and has neither flags nor shadow reasons, so v1 reports are unchanged.
+export function flagSummary(rows, { enabled = false } = {}) {
+  const isFlagged = r => (r.flags?.count ?? 0) > 0;
+  const flagged = rows.filter(isFlagged);
+  if (!enabled && !flagged.length && !rows.some(r => r.shadowReason)) return null;
+  const has = (r, kind) => (r.events ?? []).some(e => e.kind === kind);
+  const reasonOf = r => r.shadowReason ?? (has(r, 'shadow') || has(r, 'shadow-fault') ? 'schedule' : null);
   const shadowOf = r => (r.events ?? []).find(e => e.kind === 'shadow');
-  const group = pick => {
-    const rs = withReason.filter(pick), answered = rs.filter(r => shadowOf(r) && shadowOf(r).agree != null);
-    const disagreements = rs.filter(r => (r.events ?? []).some(e => e.kind === 'disagree')).length;
-    return { shadows: rs.filter(r => shadowOf(r)).length, answered: answered.length, disagreements,
-      regressions: rs.filter(r => (r.events ?? []).some(e => e.kind === 'regression')).length, disagreeRate: answered.length ? r4(disagreements / answered.length) : null };
+  const group = rs => {
+    const answered = rs.filter(r => shadowOf(r) && shadowOf(r).agree != null), disagreements = rs.filter(r => has(r, 'disagree')).length;
+    return { shadows: rs.filter(r => shadowOf(r)).length, answered: answered.length, disagreements, regressions: rs.filter(r => has(r, 'regression')).length,
+      disagreeRate: answered.length ? r4(disagreements / answered.length) : null,
+      costUsd: r4(rs.reduce((s, r) => s + (r.costBreakdown?.shadow ?? 0) + (r.costBreakdown?.adjudicator ?? 0), 0)) };
   };
   const byName = {};
   for (const r of flagged) for (const n of r.flags.names ?? []) byName[n] = (byName[n] ?? 0) + 1;
-  const compiledOk = rows.filter(r => r.compiledStatus === 'ok'), unflagged = compiledOk.filter(r => !((r.flags?.count ?? 0) > 0));
-  const flagTriggered = group(r => /flag/.test(r.shadowReason));
+  const compiledOk = rows.filter(r => r.compiledStatus === 'ok'), unflagged = compiledOk.filter(r => !isFlagged(r));
+  const sched = rows.filter(r => /schedule/.test(reasonOf(r) ?? '')), flagTriggered = group(rows.filter(r => /flag/.test(reasonOf(r) ?? '')));
+  const scheduled = { ...group(sched), flagged: group(sched.filter(isFlagged)), unflagged: group(sched.filter(r => !isFlagged(r))) };
+  const compiledPass = r => (r.delivered === 'compiled' ? !!r.pass : r.compiledPass);   // undefined: not scored (no compiledPass)
+  const oracleOf = rs => ({ runs: rs.length, compiledPass: rs.filter(r => compiledPass(r) === true).length, scored: rs.filter(r => compiledPass(r) !== undefined).length,
+    notDelivered: rs.filter(r => r.delivered !== 'compiled').length });
+  const flagOnly = rows.filter(r => reasonOf(r) === 'flag');
   return {
     flaggedRuns: flagged.length, flagsRaised: flagged.reduce((s, r) => s + r.flags.count, 0), runsByFlagName: byName,
-    scheduled: group(r => /schedule/.test(r.shadowReason)), flagTriggered, flagOnly: withReason.filter(r => r.shadowReason === 'flag').length,
-    flagPrecision: flagTriggered.disagreeRate,
-    oracle: { flaggedPass: flagged.filter(r => r.pass).length, flagged: flagged.length, unflaggedCompiledPass: unflagged.filter(r => r.pass).length, unflaggedCompiled: unflagged.length },
+    compiledOk: compiledOk.length, flagRate: compiledOk.length ? r4(flagged.length / compiledOk.length) : null,
+    scheduled, baseRate: scheduled.unflagged.disagreeRate,
+    recall: scheduled.disagreements ? r4(scheduled.flagged.disagreements / scheduled.disagreements) : null,
+    flagTriggered, flagPrecision: flagTriggered.disagreeRate, flagOnly: flagOnly.length, flagOnlyCostUsd: group(flagOnly).costUsd,
+    oracle: { flagged: oracleOf(flagged), unflagged: oracleOf(unflagged) },
   };
 }
 
@@ -99,7 +115,8 @@ export function summarizeArm({ meta, rows, events, faults }) {
     versions: [...new Set(rows.map(r => r.version).filter(v => v != null))],
     curve,
   };
-  const flags = flagSummary(rows);
+  // A v2 arm (arm.json def: jit.shadowOnFlags or compile.promptVersion >= 2) always gets a summary, so one that never flags shows 0.
+  const flags = flagSummary(rows, { enabled: !!(meta.def?.jit?.shadowOnFlags || (meta.def?.compile?.promptVersion ?? 1) >= 2) });
   if (flags) out.flags = flags;
   return out;
 }
@@ -163,12 +180,14 @@ export function renderMarkdown(rep) {
   const flagged = rep.arms.filter(a => a.flags);
   if (flagged.length) {
     const rate = g => `${g.disagreements}/${g.answered}${g.answered ? ` (${pct(g.disagreeRate)})` : ''}`;
+    const cell = k => String(k).replace(/[|\r\n]/g, ' ');   // flag names come from the solver
+    const oracle = o => `${o.compiledPass}/${o.scored}${o.scored < o.runs ? ` (${o.runs - o.scored} unscored)` : ''}`;
     L.push('', '## Uncertainty flags and flag-triggered shadows', '',
-      'A flag-triggered shadow ran because the compiled run raised flow.flag flags (jit.shadowOnFlags); a run both scheduled and flagged counts in both columns. Precision of flags = disagreements among the answered flag-triggered shadows; the scheduled rate is the base rate. The oracle column is the experimenter\'s view only.', '',
-      '| arm | flagged runs (flags) | scheduled shadows | scheduled disagree | flag-triggered shadows (flag-only) | flag-triggered disagree (precision) | regressions from flags | oracle pass: flagged / unflagged compiled | flags by name (runs) |', '|---|---|---|---|---|---|---|---|---|');
+      'Shadows are grouped by why they ran: scheduled (every shadowEvery-th compiled ok run, flagged or not, so an unbiased sample) or flag-triggered (jit.shadowOnFlags); a run both scheduled and flagged counts in both. Disagreement is with the shadow, not the oracle. Base rate = disagreement rate of unflagged runs in the scheduled sample; recall = share of the scheduled disagreements whose run was flagged; precision = disagreement rate of the flag-triggered shadows. Flag-only shadows are the extra ones flags caused (their shadow and adjudicator dollars). The oracle column is the experimenter\'s view only: the compiled answer\'s pass rate (compiledPass where an adjudicated answer replaced it). Prompt version 2 also sends near-threshold cases to a judge (item 6), so a gap between a v1 and a v2 arm mixes that change with flags; compare flagged and unflagged runs within an arm.', '',
+      '| arm | flagged runs / compiled ok (flag rate), flags | scheduled shadows | scheduled disagree: flagged / unflagged (base rate) | recall of flags | flag-triggered shadows (flag-only, $) | flag-triggered disagree (precision) | regressions from flags | oracle, compiled answer: flagged / unflagged | flags by name (runs) |', '|---|---|---|---|---|---|---|---|---|---|');
     for (const a of flagged) {
-      const f = a.flags;
-      L.push(`| ${short(a.spec)} | ${f.flaggedRuns} (${f.flagsRaised}) | ${f.scheduled.shadows} | ${rate(f.scheduled)} | ${f.flagTriggered.shadows} (${f.flagOnly}) | ${rate(f.flagTriggered)} | ${f.flagTriggered.regressions} | ${f.oracle.flaggedPass}/${f.oracle.flagged}, ${f.oracle.unflaggedCompiledPass}/${f.oracle.unflaggedCompiled} | ${Object.entries(f.runsByFlagName).map(([k, v]) => `${k} ${v}`).join(', ') || '–'} |`);
+      const f = a.flags, noSample = !f.scheduled.answered;
+      L.push(`| ${short(a.spec)} | ${f.flaggedRuns}/${f.compiledOk} (${pct(f.flagRate)}), ${f.flagsRaised} | ${f.scheduled.shadows} | ${noSample ? 'no base rate, recall not measurable (no answered scheduled shadow)' : `${rate(f.scheduled.flagged)} / ${rate(f.scheduled.unflagged)}`} | ${f.recall == null ? '–' : pct(f.recall)} | ${f.flagTriggered.shadows} (${f.flagOnly}, ${usd(f.flagOnlyCostUsd)}) | ${rate(f.flagTriggered)} | ${f.flagTriggered.regressions} | ${oracle(f.oracle.flagged)}, ${oracle(f.oracle.unflagged)} | ${Object.entries(f.runsByFlagName).map(([k, v]) => `${cell(k)} ${v}`).join(', ') || '–'} |`);
     }
   }
   const agents = rep.arms.filter(a => a.kind === 'agent');

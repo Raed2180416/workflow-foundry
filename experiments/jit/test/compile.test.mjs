@@ -17,7 +17,7 @@ import { subsetPolicy } from '../../lib/models.mjs';
 import { makeTasks, loadFamily } from '../../lib/beds.mjs';
 import { canonical } from '../../../beds/lib/canonical.mjs';
 import { MODEL_TOOL, BUDGET_TOOL } from '../../c0/construct.mjs';
-import { compile, agentWork, caseFiles, FLOW_TOOL, CHECK_TOOL, JIT_RUN_SOLVER, SCRIPTS_CAP, COMMANDS_CAP } from '../compile.mjs';
+import { compile, agentWork, caseFiles, compileFiles, hostCheck, FLOW_TOOL, FLOW_TOOL_V2, flowToolOf, CHECK_TOOL, JIT_RUN_SOLVER, SCRIPTS_CAP, COMMANDS_CAP } from '../compile.mjs';
 
 const root = path.resolve(new URL('../../..', import.meta.url).pathname);
 const MODELS = ['claude-haiku-5-5', 'claude-sonnet-5-5'];
@@ -169,6 +169,7 @@ test('compile assembles the traces workdir, runs the builder, and measures accep
   assert.ok(Math.abs(record.compileCostUsd - (0.42 + 0.006 + 0.012)) < 1e-9); assert.ok(Math.abs(record.constructionCostUsd - 0.426) < 1e-9);
   assert.equal(record.nestedModelAttempts, 0); assert.equal(record.hiddenPathAttempts, 1); assert.deepEqual(record.outsidePaths, ['/home/user/workflow-foundry/beds/records/index.mjs']);
   assert.match(record.notes, /trace-2/); assert.equal(record.policyHash, portOf().policyHash);
+  assert.equal(record.flowSha256, '3c11eb2a40709987092dc3f58c250eaf66050e00fa2c1927437c3d3069a01e1b', 'version 1: the frozen flow.mjs the live streams record');
   assert.deepEqual(JSON.parse(readFileSync(path.join(workdir, 'compile.json'), 'utf8')), JSON.parse(JSON.stringify(record)));
 
   // Acceptance was measured on pristine labels and tools: the planted check-traces, flow.mjs and trace-2 label changed nothing.
@@ -224,14 +225,29 @@ test('a builder that leaves no solve.mjs gets a record with no artifact and no c
   assert.equal(record.promptVersion, 1, 'the default prompt version is recorded');
 });
 
-test('promptVersion: passed through to the builder prompt and recorded; an unknown version fails before anything starts', { skip }, async t => {
+test('the SDK follows the prompt version: flow.mjs (frozen) for 1, flow-v2.mjs for 2; an unknown version is refused', async () => {
+  assert.equal(flowToolOf(1), FLOW_TOOL); assert.equal(flowToolOf(undefined), FLOW_TOOL); assert.equal(flowToolOf(2), FLOW_TOOL_V2);
+  assert.equal(FLOW_TOOL.includes('flow.flag'), false); assert.ok(FLOW_TOOL_V2.includes('flow.flag'));
+  assert.equal(sha(FLOW_TOOL), '3c11eb2a40709987092dc3f58c250eaf66050e00fa2c1927437c3d3069a01e1b');
+  const { traces } = await fixture();
+  const args = { outputSchema: {}, traces: traces.slice(0, 1), gateway: {} };
+  assert.equal(compileFiles(args)['tools/flow.mjs'], FLOW_TOOL); assert.equal(compileFiles({ ...args, promptVersion: 2 })['tools/flow.mjs'], FLOW_TOOL_V2);
+  assert.throws(() => flowToolOf(3), /promptVersion must be one of 1, 2/);
+  await assert.rejects(hostCheck({ dir: '/nonexistent/x', solveSource: '', traces: [], promptVersion: 3 }), /promptVersion must be one of 1, 2/);
+});
+
+test('promptVersion: passed through to the builder prompt and recorded; version 2 builds and checks on flow-v2.mjs; an unknown version fails before anything starts', { skip }, async t => {
   const workRoot = mkdtempSync(path.join(tmpdir(), 'jit-pv-')); t.after(() => rmSync(workRoot, { recursive: true, force: true }));
   const { traces } = await fixture();
   const { record, workdir } = await compile({ familyId: 'records', traces: traces.slice(0, 1), modelPort: portOf(), workRoot, label: 'v1', models: MODELS, promptVersion: 2,
-    runner: runnerWith(fake({ writeSolve: false, notes: 'gave up' })) });
+    runner: runnerWith(fake({ notes: 'ok' })) });
   const prompt = readFileSync(path.join(workdir, '.seen-prompt.txt'), 'utf8');
   assert.match(prompt, /flow\.flag\(name, detail\)/); assert.match(prompt, /autoFlag: true/);
   assert.equal(record.promptVersion, 2); assert.equal(record.promptSha256, sha(prompt));
+  const seen = JSON.parse(readFileSync(path.join(workdir, '.seen-files.json'), 'utf8'));
+  assert.equal(seen['tools/flow.mjs'], sha(FLOW_TOOL_V2), 'the builder reads the version-2 SDK');
+  assert.equal(readFileSync(path.join(workdir, '.host-check/tools/flow.mjs'), 'utf8'), FLOW_TOOL_V2, 'the host check runs it');
+  assert.equal(record.flowSha256, sha(FLOW_TOOL_V2)); assert.equal(record.checkTraces.error, null, JSON.stringify(record.checkTraces.error));
   let ran = false;
   await assert.rejects(compile({ familyId: 'records', traces: traces.slice(0, 1), modelPort: portOf(), workRoot, label: 'v9', models: MODELS, promptVersion: 3,
     runner: async () => { ran = true; return {}; } }), /promptVersion must be one of 1, 2/);

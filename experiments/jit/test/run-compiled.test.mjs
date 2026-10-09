@@ -13,7 +13,7 @@ import { Journal } from '../../../src/journal.mjs';
 import { ScriptedProvider } from '../../../src/models/providers/scripted.mjs';
 import { subsetPolicy } from '../../lib/models.mjs';
 import { MODEL_TOOL } from '../../c0/construct.mjs';
-import { runCompiled, DEFAULT_FLOW, flagsOf } from '../run-compiled.mjs';
+import { runCompiled, DEFAULT_FLOW, FLOW_V2, flagsOf, MAX_TRACE_EVENTS } from '../run-compiled.mjs';
 
 const skip = sandboxAvailable() ? false : 'no user namespaces';
 const MODELS = ['claude-haiku-5-5', 'claude-sonnet-5-5', 'claude-opus-5-5'];
@@ -60,6 +60,12 @@ console.log(JSON.stringify({ records: [{ model: readFileSync('./tools/model.mjs'
   flagged: `import { createFlow } from './tools/flow.mjs';
 const flow = createFlow(); const task = flow.input();
 flow.flag('weak-name-match', { score: 0.8 }); flow.flag('weak-name-match', { score: 0.7 }); flow.flag('default-used');
+flow.done({ records: task.inputs.rows.map(id => ({ id })) });`,
+  // flags raised after the trace's event cap: only the final totals line counts them
+  capped: `import { createFlow } from './tools/flow.mjs';
+const flow = createFlow(); const task = flow.input();
+for (let i = 0; i < 5000; i++) flow.step('s', () => i);
+flow.flag('weak-name-match', { i: 1 }); flow.flag('weak-name-match', { i: 2 });
 flow.done({ records: task.inputs.rows.map(id => ({ id })) });`,
 };
 
@@ -129,12 +135,20 @@ test('the real flow.mjs (builder A), when present: a guard deopts with exit 75',
   assert.deepEqual(ok.flags, { count: 0, names: [] }, 'a run that raised no flag reports none');
 });
 
-test('flags: runCompiled returns the count and names of the uncertainty flags in the trace (real flow.mjs); the answer is unchanged', { skip }, async t => {
-  const { r } = await run(t, 'flagged', { flowPath: DEFAULT_FLOW });
+test('flags: runCompiled returns the count and names of the uncertainty flags in the trace (real flow-v2.mjs); the answer is unchanged', { skip }, async t => {
+  const { r } = await run(t, 'flagged', { flowPath: FLOW_V2 });
   assert.equal(r.status, 'ok', JSON.stringify(r.meta)); assert.deepEqual(r.output, { records: [{ id: 1 }, { id: 2 }, { id: 3 }] });
   assert.deepEqual(r.flags, { count: 3, names: ['weak-name-match', 'default-used'] });
   const { r: fixture } = await run(t, 'deopt');
   assert.deepEqual(fixture.flags, { count: 0, names: [] }, 'a flow without flag support reports zero flags');
+});
+
+test('flags past the trace event cap: counted from the final totals line, which the cap would cut; the trace stays capped', { skip }, async t => {
+  const { r, workdir } = await run(t, 'capped', { flowPath: FLOW_V2 });
+  assert.equal(r.status, 'ok', JSON.stringify(r.meta));
+  assert.equal(readFileSync(path.join(workdir, 'trace.jsonl'), 'utf8').trim().split('\n').length, MAX_TRACE_EVENTS + 1, 'flow writes the totals line after the cap');
+  assert.equal(r.trace.length, MAX_TRACE_EVENTS); assert.equal(r.trace.some(e => e.kind === 'done'), false);
+  assert.deepEqual(r.flags, { count: 2, names: ['weak-name-match'] });
 });
 
 test('flagsOf: the final totals win (they count flags past the event cap); without totals the flag events are counted', () => {
@@ -143,4 +157,8 @@ test('flagsOf: the final totals win (they count flags past the event cap); witho
   assert.deepEqual(flagsOf([{ kind: 'flag', name: 'a' }, { kind: 'done', flags: 7, flagNames: ['a', 'c'] }]), { count: 7, names: ['a', 'c'] });
   assert.deepEqual(flagsOf([{ kind: 'flag', name: 'x' }, { kind: 'crash', name: 'uncaught', flags: 1, flagNames: ['x'] }]), { count: 1, names: ['x'] });
   assert.deepEqual(flagsOf([{ kind: 'done', spentUsd: 0 }]), { count: 0, names: [] });
+  const many = Array.from({ length: 300 }, (_, i) => ({ kind: 'flag', name: `weak-match:${i}` }));
+  const f = flagsOf(many);
+  assert.equal(f.count, 300); assert.equal(f.names.length, 50, 'names are capped at 50, as flow-v2.mjs caps flagNames');
+  assert.equal(flagsOf([...many, { kind: 'done', flags: 300, flagNames: many.slice(0, 50).map(e => e.name) }]).names.length, 50);
 });

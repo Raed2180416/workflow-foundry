@@ -15,9 +15,9 @@ import { canonical } from '../../beds/lib/canonical.mjs';
 import { loadPolicy } from '../../src/models/policy.mjs';
 import { ENV_FAULTS, metEnvFault } from '../lib/runner.mjs';
 import { createModelPort as createModelPortSync } from '../lib/models.mjs';
-import { promptVersionOf } from './prompts.mjs';
+import { promptVersionOf, flowFileOf } from './prompts.mjs';
 
-const REPO = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
+const REPO = path.resolve(fileURLToPath(new URL('../..', import.meta.url))), HERE = path.dirname(fileURLToPath(import.meta.url));
 export const RUN_ROOT = path.join(REPO, 'experiments/runs/jit'), WORK_ROOT = '/var/tmp/foundry-work/jit';
 export const POLICY_MODELS = Object.freeze(['claude-haiku-5-5', 'claude-sonnet-5-5', 'claude-opus-5-5']);
 export const DEFAULT_JIT = Object.freeze({ warmup: 3, shadowEvery: 4, recompileOnDeopts: 2, maxTraces: 8, compilerFallback: 'claude-opus-5-5', maxFallbacks: null, compare: 'canonical' });
@@ -30,7 +30,10 @@ const STATIC_FALLBACK = 'claude-haiku-5-5';
 //   jit.shadowOnFlags (default false): also shadow a compiled ok run that raised uncertainty flags (flow.flag); shadow
 //     events and rows then carry the reason ('schedule' | 'flag' | 'schedule+flag'). jit.shadowEvery 0 = no scheduled
 //     shadows (flag-only when shadowOnFlags is on).
-//   compile.promptVersion (default 1): the builder prompt text (prompts.mjs); applies to the fallback compiler too.
+//   compile.promptVersion (default 1): the builder prompt text (prompts.mjs) and the SDK version (flowFileOf: version 2
+//     builds, checks and runs on flow-v2.mjs); applies to the fallback compiler too (compile.fallback.promptVersion is refused).
+//     With shadowOnFlags or promptVersion 2, a row whose compiled answer was not delivered also records compiledPass (the
+//     oracle on the compiled answer; the experimenter's view for report.mjs, never read by the JIT state).
 // Set to their defaults they are dropped from the normalized config, so writing them out explicitly changes no hash.
 
 const sha = s => createHash('sha256').update(s).digest('hex');
@@ -61,6 +64,7 @@ export function normalizeConfig(raw) {
   if (!jit.shadowOnFlags) delete jit.shadowOnFlags;
   const compile = { ...DEFAULT_COMPILE, ...(raw.compile ?? {}), fallback: { ...DEFAULT_COMPILE.fallback, ...(raw.compile?.fallback ?? {}) } };
   if (compile.promptVersion != null) compile.promptVersion = promptVersionOf(compile);
+  if (raw.compile?.fallback && 'promptVersion' in raw.compile.fallback) throw new Error('config.compile.fallback.promptVersion is not supported: compile.promptVersion applies to the fallback compiler too');
   if (compile.promptVersion == null || compile.promptVersion === 1) delete compile.promptVersion;
   return {
     ...raw, segments, jit, compile,
@@ -205,8 +209,8 @@ async function liveDeps() {
     runCompiled: async a => (await import('./run-compiled.mjs')).runCompiled(a),
     compile: async a => (await import('./compile.mjs')).compile(a),
     // compile.mjs's host acceptance check again, on the solve.mjs the builder left, at a higher cap.
-    recheck: async ({ workdir, solvePath, traces, regressions, modelPort, models, capUsd, label }) => (await import('./compile.mjs')).hostCheck({
-      dir: path.join(workdir, '.host-check-recheck'), solveSource: readFileSync(solvePath, 'utf8'), traces, regressions, modelPort, models, capUsd, label }),
+    recheck: async ({ workdir, solvePath, traces, regressions, modelPort, models, capUsd, label, promptVersion }) => (await import('./compile.mjs')).hostCheck({
+      dir: path.join(workdir, '.host-check-recheck'), solveSource: readFileSync(solvePath, 'utf8'), traces, regressions, modelPort, models, capUsd, label, promptVersion }),
     createModelPort: a => createModelPortSync(a),
     score: beds.score, makeTasks: beds.makeTasks, loadFamily: beds.loadFamily,
   };
@@ -340,7 +344,8 @@ class ArmRun {
       const workdir = path.join(this.work, `i${String(t.idx).padStart(3, '0')}-compiled-${randomUUID().slice(0, 6)}`);
       rmSync(workdir, { recursive: true, force: true }); mkdirSync(workdir, { recursive: true });
       const rc = await this.deps.runCompiled({ solvePath, task: t.task, modelPort: this.port, perTaskUsd: this.config.perTaskUsd, timeoutMs: this.config.compiledMinutes * 60 * 1000,
-        workdir, familyId: this.config.familyId, outputSchema: this.outputSchema, allowedModels: this.arm.models, label: `${this.config.experiment}:${this.arm.slug}:${t.idx}:v${version ?? 0}` });
+        workdir, familyId: this.config.familyId, outputSchema: this.outputSchema, allowedModels: this.arm.models, label: `${this.config.experiment}:${this.arm.slug}:${t.idx}:v${version ?? 0}`,
+        ...(this.flowPath ? { flowPath: this.flowPath } : {}) });
       tr.spend('compiled', rc.costUsd ?? 0, rc.costUnknown);
       tr.ev('compiled', { version, status: rc.status, deoptKind: rc.deopt?.kind ?? null, costUsd: rc.costUsd ?? 0, attempt, error: rc.error?.code ?? null,
         ...(rc.flags?.count ? { flags: rc.flags.count } : {}) });
@@ -369,6 +374,10 @@ class ArmRun {
 const freshState = () => ({ traces: [], regressions: [], version: null, versionsCount: 0, deoptsSinceCompile: 0, compiledOks: 0, pendingCompile: 'initial', fallbacksUsed: 0 });
 
 class JitRun extends ArmRun {
+  // Prompt version 2 solvers run on flow-v2.mjs; version 1 keeps run-compiled's default (flow.mjs, frozen), passing nothing.
+  get flowPath() { const v = this.config.compile.promptVersion; return v && v >= 2 ? path.join(HERE, flowFileOf({ promptVersion: v })) : null; }
+  get v2() { return !!(this.config.jit.shadowOnFlags || (this.config.compile.promptVersion ?? 1) >= 2); }
+
   addTrace(state, trace, t, role, kind) {
     if (trace?.answer == null) return false;   // the compiler distils answers, not failures
     state.traces.push({ traceId: trace.traceId, idx: t.idx, seq: state.traces.length, role, kind });
@@ -406,7 +415,7 @@ class JitRun extends ArmRun {
       const capUsd = 2 * (settings.checkUsd ?? settings.gatewayUsd);
       tr.ev('recheck', { version: n, builderModel, reason: 'budget deopts in the host check', budgetDeopts: rec.checkTraces.deoptKinds.budget, capUsd });
       const rc = await this.deps.recheck({ workdir: res.workdir, solvePath: res.solvePath, traces: inputs.traces, regressions: inputs.regressions, modelPort: this.port, models: this.arm.models,
-        capUsd, label: `v${n}-${tag}-recheck` });
+        capUsd, label: `v${n}-${tag}-recheck`, ...(this.config.compile.promptVersion ? { promptVersion: this.config.compile.promptVersion } : {}) });
       recheckUsd = rc.costUsd ?? 0;
       tr.spend('compileCheck', recheckUsd, (rc.unknownCalls ?? 0) > 0);
       rec.checkTraces = { ...checkFromSummary(rc, res.workdir, inputs.regressions.length), recheck: { capUsd, firstCheck: compactCheck(rec.checkTraces) } };
@@ -538,6 +547,9 @@ class JitRun extends ArmRun {
         } else { tr.ev('adjudicate', { version, outcome: 'none' }); tr.ev('unresolved', { version }); }
       }
     }
+    // The experimenter's view (v2 arms only, so v1 rows are unchanged): did the compiled answer itself pass, when another
+    // answer was delivered? report.mjs compares flagged and unflagged compiled runs on it. Row only; no JIT state reads it.
+    if (this.v2 && delivered !== 'compiled') extra.compiledPass = !!(await this.deps.score(this.config.familyId, t.task, rc.output))?.pass;
     return this.finish(tr, t, { delivered, output, version, compiledStatus: 'ok', extra, stateAfter: structuredClone(state) });
   }
 }

@@ -6,12 +6,17 @@
 // opts.promptVersion (default 1) selects the text. Version 1 is frozen: live streams record its hash, so it must not change.
 // Version 2 adds three short rules: near-threshold cases of a code heuristic go to a narrow batched judge; decisions on
 // weak evidence call flow.flag; createFlow({ budgetUsd, autoFlag: true }).
+// The SDK follows the prompt version: version 1 builds and runs on flow.mjs (frozen; live v1 streams record its hash),
+// version 2 on flow-v2.mjs (flow.mjs plus flow.flag and autoFlag). Either is copied in as tools/flow.mjs.
 export const PROMPT_VERSIONS = Object.freeze([1, 2]);
+export const FLOW_FILES = Object.freeze({ 1: 'flow.mjs', 2: 'flow-v2.mjs' });
 export function promptVersionOf(opts) {
   const v = opts?.promptVersion ?? 1;
   if (!PROMPT_VERSIONS.includes(v)) throw new Error(`builder prompt: promptVersion must be one of ${PROMPT_VERSIONS.join(', ')}, got ${JSON.stringify(v)}`);
   return v;
 }
+// The SDK file (in experiments/jit/) for a prompt version: what the builder reads, the host check runs and execution runs.
+export const flowFileOf = opts => FLOW_FILES[promptVersionOf(opts)];
 
 const range = (dir, n) => (n === 1 ? `${dir}-0/` : `${dir}-0 .. ${dir.split('/').pop()}-${n - 1}/`);
 const cases = ({ traces, regressions }) => `Inputs:
@@ -41,8 +46,7 @@ const method = opts => { const { models, perTaskUsd } = opts; return `How to com
    clear cases in code and send only the near-threshold candidates to one narrow flow.judge, batched, with a check code can
    verify (e.g. the chosen id is one of the candidates offered). Do not tune a cutoff until it fits the traces.
 7. Call flow.flag(name, detail) for every decision taken on weak evidence: a near-threshold match, a value inferred from
-   one weak cue, a default used because nothing matched. A flag never changes the answer; it asks the harness to check that
-   run against the agent.` : ''}`; };
+   one weak cue, a default used because nothing matched. A flag never changes the answer; it marks the run for checking.` : ''}`; };
 
 const sdk = opts => { const { models, perTaskUsd } = opts, v2 = promptVersionOf(opts) >= 2; return `Write ./solve.mjs: one Node 24 ESM file, no npm packages, run as  node solve.mjs task.json . At run time it gets only
 tools/model.mjs and tools/flow.mjs beside it, no network except model calls through flow.judge,
