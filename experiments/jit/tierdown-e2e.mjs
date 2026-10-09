@@ -407,6 +407,9 @@ export function readArchived(dir, { validate = null } = {}) {
     try { deopt = JSON.parse(readFileSync(path.join(dir, 'deopt.json'), 'utf8')); } catch { deopt = { kind: 'unknown' }; }
   } else if (trace.some(e => e.kind === 'crash')) status = 'crash';
   else if (existsSync(path.join(dir, '.solve.stdout'))) {
+    // ok/invalid need exit 0, and flow.mjs exits 0 only after done(): without a done event the run timed out or was
+    // killed, and a JSON line it printed earlier is not its answer. Not reusable.
+    if (!trace.some(e => e.kind === 'done')) return null;
     output = lastJsonLine(readFileSync(path.join(dir, '.solve.stdout'), 'utf8'));
     if (output == null) status = 'invalid';
     else status = !validate || validate(output) ? 'ok' : 'invalid';
@@ -659,7 +662,10 @@ export async function tierdownE2E({ armDir, version, judge, tiers, limit = null,
     for (const t of tasks) {
       if (t.skipped) { report.tasks.push({ idx: t.idx, taskKey: t.taskKey, dir: t.dir, skipped: t.skipped }); continue; }
       if (spent >= cap) { report.stopped ??= `cap $${cap} reached before task #${t.idx}`; report.tasks.push({ idx: t.idx, taskKey: t.taskKey, dir: t.dir, skipped: 'cap reached' }); continue; }
-      let orig = !rerunOriginal && t.sameVersion ? readArchived(t.dir, { validate }) : null;
+      let orig = !rerunOriginal && t.sameVersion ? readArchived(t.dir, { validate }) : null, archivedRejected = null;
+      if (!rerunOriginal && t.sameVersion && !orig) archivedRejected = 'the archived run left no readable result (no done, deopt or crash)';
+      // The archived directory must be the run the stream recorded for this idx; otherwise rerun the original.
+      if (orig && t.recordedStatus && orig.status !== t.recordedStatus) { archivedRejected = `archived status ${orig.status} is not the recorded compiledStatus ${t.recordedStatus}`; orig = null; }
       if (!orig) orig = await runOne(t, 'original', originalPath);
       const vari = orig ? await runOne(t, 'variant', variantPath) : null;
       if (!orig || !vari) report.stopped ??= `cap $${cap} reached at task #${t.idx}`;
@@ -668,6 +674,7 @@ export async function tierdownE2E({ armDir, version, judge, tiers, limit = null,
       const strip = r => (r ? { status: r.status, source: r.source, dir: r.dir, costUsd: r.costUsd, costUnknown: r.costUnknown, deopt: r.deopt ? { kind: r.deopt.kind, name: r.deopt.name } : null,
         error: r.error?.code ?? null, perTaskUsd: r.perTaskUsd ?? null } : null);
       report.tasks.push({ idx: t.idx, taskKey: t.taskKey, seed: t.key.seed, difficulty: t.key.difficulty, dir: t.dir, recordedStatus: t.recordedStatus, originalSource: orig?.source ?? null,
+        ...(archivedRejected ? { archivedRejected } : {}),
         original: strip(orig), variant: strip(vari), compare: orig && vari ? compareTask(orig, vari, { pattern: rw.pattern, oldTiers: rw.oldTiers, newTiers: rw.newTiers, otherPatterns: rw.otherPatterns }) : null,
         oracle: { original: oracle.original && { pass: !!oracle.original.pass, score: oracle.original.score ?? null }, variant: oracle.variant && { pass: !!oracle.variant.pass, score: oracle.variant.score ?? null } } });
     }
