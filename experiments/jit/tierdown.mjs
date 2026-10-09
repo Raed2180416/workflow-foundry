@@ -7,13 +7,14 @@
 // oracle. As distill.mjs says, it is a screening signal only: an assignment must be confirmed end to end on a stream.
 //
 //   node experiments/jit/tierdown.mjs <dir> [--json]                      profile every judge (no model calls)
-//   node experiments/jit/tierdown.mjs <dir> --live --cap-usd 2 [--judge <name>] [--threshold 0.98]
+//   node experiments/jit/tierdown.mjs <dir> --live --cap-usd 2 [--judge <name>] [--threshold 0.98] [--tolerant [--rel-tol r] [--abs-tol a]]
 //   node experiments/jit/tierdown.mjs <dir> --kev <out.jsonl> --judge <name>
 import { readFileSync, readdirSync, statSync, writeFileSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { canonical } from '../../src/data.mjs';
 import { searchNode, leafAgreement } from '../lib/distill.mjs';
+import { tolerantAgreement } from './compare.mjs';
 
 // Cheapest first. Only ids from policy/models.json; local generative models are parked (owner decision), and Kev is
 // reached through training/benchmark jobs on the laptop bridge, not through this ladder.
@@ -71,7 +72,11 @@ export function stripEvidence(v, ignore = EVIDENCE_KEY) {
   if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v).filter(([k]) => !ignore.test(k)).map(([k, x]) => [k, stripEvidence(x, ignore)]));
   return v;
 }
-export const decisionAgreement = (ref, cand) => leafAgreement(stripEvidence(ref), stripEvidence(cand));
+// tol (opt-in, JIT v2.1): { relTol, absTol } scores with compare.mjs tolerantAgreement instead (numbers within tolerance,
+// strings trimmed, arrays as multisets, items paired optimally); without it, distill.mjs leafAgreement as before.
+export const decisionAgreement = (ref, cand, tol = null) => (tol
+  ? tolerantAgreement(stripEvidence(cand), stripEvidence(ref), { relTol: tol.relTol, absTol: tol.absTol, maxDiffs: 0 }).partial
+  : leafAgreement(stripEvidence(ref), stripEvidence(cand)));
 
 // Re-try one judge on every ladder model cheaper than its modal tier, cheapest first.
 export async function tierDownJudge({ calls, modelPort, runId, threshold = 0.98, rounds = [4, 8, 16], log = () => {}, agreement = decisionAgreement }) {
@@ -112,16 +117,18 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   } else if (flag('--live')) {
     const { createModelPort } = await import('../lib/models.mjs');
     const cap = Number(opt('--cap-usd') ?? 2), threshold = Number(opt('--threshold') ?? 0.98);
+    const tol = flag('--tolerant') ? { relTol: Number(opt('--rel-tol') ?? 0.01), absTol: Number(opt('--abs-tol') ?? 1e-9) } : null;
+    const agreement = tol ? (r, c) => decisionAgreement(r, c, tol) : decisionAgreement;
     const { port, db } = createModelPort({ journalFile: path.join(root, 'tierdown.journal.sqlite'), allowedModels: [...LADDER] });
     let spent = 0;
     const metered = { call: async req => { if (spent >= cap) throw new Error(`tier-down cap $${cap} reached`); const r = await port.call(req); spent += r.costUsd ?? 0; return r; } };
     const results = [];
     for (const n of names) {
-      try { results.push(await tierDownJudge({ calls: judges.get(n), modelPort: metered, runId: `tierdown:${path.basename(root)}`, threshold, log: console.error })); }
+      try { results.push(await tierDownJudge({ calls: judges.get(n), modelPort: metered, runId: `tierdown:${path.basename(root)}`, threshold, log: console.error, agreement })); }
       catch (e) { results.push({ ...profileJudge(judges.get(n)), error: String(e.message ?? e) }); if (spent >= cap) break; }
     }
     db.close();
-    writeFileSync(path.join(root, 'tierdown.json'), JSON.stringify({ spentUsd: spent, capUsd: cap, threshold, results }, null, 1));
+    writeFileSync(path.join(root, 'tierdown.json'), JSON.stringify({ spentUsd: spent, capUsd: cap, threshold, ...(tol ? { compare: { mode: 'tolerant', ...tol } } : {}), results }, null, 1));
     console.log(JSON.stringify({ spentUsd: spent, judges: results.map(r => ({ name: r.name, modalTier: r.modalTier, assigned: r.assigned ?? null, error: r.error })) }));
   } else {
     const profiles = names.map(n => profileJudge(judges.get(n)));

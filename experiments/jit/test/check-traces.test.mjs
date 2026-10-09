@@ -140,3 +140,61 @@ test('--only and --max select cases; a partial run is never clean; a missing sol
   const none = await check(dir);
   assert.equal(none.code, 2); assert.equal(none.agg.error, 'no solve.mjs');
 });
+
+// ---- JIT v2.1 (opt-in): tolerant comparison. Fitted numbers differ in the last digits; canonical JSON calls that a diff. ----
+const FIT_SOLVE = `import { createFlow } from './tools/flow.mjs';
+const flow = createFlow({ budgetUsd: 1 });
+const { k } = flow.input().inputs;
+flow.done({ fits: [{ s: 'B', vmax: 3.31 * k }, { s: 'A', vmax: 4.0213 * k, km: 0.512 }] });
+`;
+async function fitSetup(t, { withCompare = true, defaults = null } = {}) {
+  const dir = mkdtempSync(path.join(tmpdir(), 'jit-ct-tol-')); t.after(() => rmSync(dir, { recursive: true, force: true }));
+  mkdirSync(path.join(dir, 'tools'));
+  writeFileSync(path.join(dir, 'tools/model.mjs'), MODEL_TOOL);
+  copyFileSync(path.join(here, '../flow.mjs'), path.join(dir, 'tools/flow.mjs'));
+  copyFileSync(path.join(here, '../check-traces.mjs'), path.join(dir, 'tools/check-traces.mjs'));
+  if (withCompare) copyFileSync(path.join(here, '../compare.mjs'), path.join(dir, 'tools/compare.mjs'));
+  if (defaults) writeFileSync(path.join(dir, 'tools/check-traces.json'), JSON.stringify(defaults));
+  writeFileSync(path.join(dir, 'tools/gateway.json'), JSON.stringify({ socket: 'gw.sock', token: 'tk' }));
+  writeFileSync(path.join(dir, 'solve.mjs'), FIT_SOLVE);
+  const labels = [[1, { fits: [{ s: 'A', vmax: 4.0198, km: 0.5101 }, { s: 'B', vmax: 3.3 }] }],     // within 1%: tolerant exact
+    [1, { fits: [{ s: 'A', vmax: 4.0213, km: 0.512 }, { s: 'B', vmax: 3.31 }] }],                  // canonical exact too (order aside)
+    [2, { fits: [{ s: 'A', vmax: 8.0426, km: 0.9 }, { s: 'B', vmax: 6.62 }] }]];                   // km really differs
+  labels.forEach(([k, label], i) => {
+    const files = { ...taskFiles({ prompt: `fit ${i}`, inputs: { k } }, `traces/trace-${i}/`), [`traces/trace-${i}/agent-answer.json`]: JSON.stringify(label) };
+    for (const [rel, content] of Object.entries(files)) { mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true }); writeFileSync(path.join(dir, rel), content); }
+  });
+  return dir;
+}
+
+test('check-traces --tolerant: near-equal fitted numbers in permuted arrays are exact; a real difference stays a diff; canonical is unchanged', async t => {
+  const dir = await fitSetup(t);
+  const canon = await check(dir);
+  assert.equal(canon.code, 0, canon.stderr);
+  assert.deepEqual(canon.agg.perCase.map(c => c.status), ['diff', 'diff', 'diff'], 'canonical: order and last digits both count');
+  assert.equal('compare' in canon.agg, false); assert.equal('canonicalExact' in canon.agg.perCase[0], false); assert.doesNotMatch(canon.stdout, /comparison: tolerant/);
+  const tol = await check(dir, ['--tolerant']);
+  assert.equal(tol.code, 0, tol.stderr);
+  const by = Object.fromEntries(tol.agg.perCase.map(c => [c.id, c]));
+  assert.deepEqual([by['trace-0'].status, by['trace-1'].status, by['trace-2'].status], ['exact', 'exact', 'diff']);
+  assert.deepEqual([by['trace-0'].canonicalExact, by['trace-1'].canonicalExact], [false, false], 'trace-1 differs canonically only by order');
+  assert.ok(Math.abs(by['trace-2'].partial - 4 / 5) < 1e-9); assert.deepEqual(by['trace-2'].diffs, [{ path: '$.fits[0].km', got: '0.512', want: '0.9' }]);
+  assert.deepEqual(tol.agg.compare, { mode: 'tolerant', relTol: 0.01, absTol: 1e-9 }); assert.equal(tol.agg.exact, 2); assert.equal(tol.agg.canonicalExact, 0); assert.equal(tol.agg.clean, true);
+  assert.match(tol.stdout, /comparison: tolerant .*0\/3 also exact under canonical JSON/);
+  const tight = await check(dir, ['--tolerant', '--rel-tol', '0.0001']);
+  assert.deepEqual(tight.agg.perCase.map(c => c.status), ['diff', 'exact', 'diff']);
+});
+
+test('check-traces: check-traces.json beside the tool makes tolerant the default; --exact restores canonical; tolerant without compare.mjs fails loudly', async t => {
+  const dir = await fitSetup(t, { defaults: { compare: 'tolerant', relTol: 0.01, absTol: 1e-9 } });
+  const r = await check(dir);
+  assert.equal(r.agg.compare.mode, 'tolerant'); assert.equal(r.agg.exact, 2);
+  assert.equal('compare' in (await check(dir, ['--exact'])).agg, false);
+  const bare = await fitSetup(t, { withCompare: false });
+  const b = await new Promise(resolve => {
+    const child = spawn(process.execPath, ['tools/check-traces.mjs', '--tolerant'], { cwd: bare, stdio: ['ignore', 'pipe', 'pipe'] });
+    let stderr = ''; child.stderr.on('data', d => { stderr += d; }); child.stdout.resume();
+    child.on('close', code => resolve({ code, stderr }));
+  });
+  assert.notEqual(b.code, 0); assert.match(b.stderr, /tolerant comparison needs compare\.mjs beside check-traces\.mjs/);
+});

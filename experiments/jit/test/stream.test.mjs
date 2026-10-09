@@ -49,10 +49,12 @@ function fakeDeps(plan, hooks = {}) {
     async compile(a) {
       const callNo = calls.compile.length + 1;
       calls.compile.push({ builderModel: a.builderModel, label: a.label, traceIds: a.traces.map(t => t.traceId), regressionIds: a.regressions.map(r => r.regressionId),
-        previous: a.previous, models: a.models, budget: a.builderBudgetUsd, minutes: a.minutes, regressionExpected: a.regressions.map(r => r.expected), promptVersion: a.promptVersion });
+        previous: a.previous, models: a.models, budget: a.builderBudgetUsd, minutes: a.minutes, regressionExpected: a.regressions.map(r => r.expected), promptVersion: a.promptVersion,
+        compare: a.compare, relTol: a.relTol, absTol: a.absTol, acceptance: a.acceptance, minPartial: a.minPartial });
       hooks.compile?.(callNo);
       const workdir = path.join(a.workRoot, a.label); mkdirSync(workdir, { recursive: true });
       const solvePath = path.join(workdir, 'solve.mjs'); writeFileSync(solvePath, `// ${a.label}\n`);
+      if (plan.notes) writeFileSync(path.join(workdir, 'BUILD-NOTES.md'), plan.notes(callNo, a));
       const checkTraces = plan.checks(callNo, a);
       return { record: { checkTraces, promptVersion: a.promptVersion ?? 1, builderCostUsd: 1, gatewayCostUsd: 0.5, checkCostUsd: 0.25, constructionCostUsd: 1.5, compileCostUsd: 1.75, nestedModelAttempts: 0,
         builderError: plan.builderError?.(callNo) ?? null }, workdir, solvePath };
@@ -418,7 +420,7 @@ test('v2 defaults: the live v1 configs keep their arm hashes; v2 options at thei
   assert.throws(() => normalizeConfig({ ...CONFIG, jit: { shadowEvery: -1 } }), /shadowEvery must be an integer >= 0/);
   assert.throws(() => normalizeConfig({ ...CONFIG, jit: { shadowEvery: 1.5 } }), /shadowEvery must be an integer >= 0/);
   assert.throws(() => normalizeConfig({ ...CONFIG, jit: { shadowOnFlags: 'yes' } }), /shadowOnFlags must be true or false/);
-  assert.throws(() => normalizeConfig({ ...CONFIG, compile: { promptVersion: 3 } }), /promptVersion must be one of 1, 2/);
+  assert.throws(() => normalizeConfig({ ...CONFIG, compile: { promptVersion: 4 } }), /promptVersion must be one of 1, 2, 3/);
   assert.throws(() => normalizeConfig({ ...CONFIG, compile: { fallback: { promptVersion: 3 } } }), /compile\.fallback\.promptVersion is not supported/);
   assert.throws(() => normalizeConfig({ ...CONFIG, compile: { promptVersion: 2, fallback: { promptVersion: 2 } } }), /compile\.fallback\.promptVersion is not supported/);
   assert.equal(normalizeConfig({ ...CONFIG, jit: { shadowEvery: 0, shadowOnFlags: true } }).jit.shadowOnFlags, true);
@@ -573,4 +575,128 @@ test('compile.promptVersion 2 reaches every compile attempt (the Opus fallback t
   assert.equal('flags' in buildReport(path.join(root, 'runs/jit-pv1')).arms[0], false);
   const ev1 = readJsonl(armPaths(path.join(root, 'runs/jit-pv1'), FLAG_SLUG).events).filter(e => e.kind === 'compile-attempt');
   assert.ok(ev1.every(e => !('promptVersion' in e.result)));
+});
+
+// ---- JIT v2.1 (opt-in): tolerant shadows/adjudication, compile.compare, strict acceptance, prompt v3 ----
+test('v2.1 defaults: the live configs keep their arm hashes with the v2.1 options written out at their defaults; set, each defines a new arm', () => {
+  for (const [name, want] of Object.entries(V1_HASHES)) {
+    const raw = JSON.parse(readFileSync(new URL(`../configs/${name}.json`, import.meta.url), 'utf8'));
+    const explicit = { ...raw, compile: { ...raw.compile, compare: 'canonical', acceptance: 'named', promptVersion: 1 } };
+    assert.deepEqual(hashes(explicit), want, `${name}: explicit v2.1 defaults change no hash`);
+    const c = normalizeConfig(explicit);
+    for (const k of ['compare', 'relTol', 'absTol', 'acceptance', 'minPartial', 'promptVersion']) assert.equal(k in c.compile, false, `compile.${k} dropped at its default`);
+    assert.equal('relTol' in c.jit, false); assert.equal('absTol' in c.jit, false); assert.equal(c.jit.compare, 'unordered', 'the live configs\' own setting is kept');
+    const jitArm = Object.keys(want).find(a => a.startsWith('jit:'));
+    const variants = { tolerantShadows: { jit: { ...raw.jit, compare: 'tolerant' } }, tolerantCompile: { compile: { ...raw.compile, compare: 'tolerant' } },
+      strict: { compile: { ...raw.compile, acceptance: 'strict' } }, v3: { compile: { ...raw.compile, promptVersion: 3 } } };
+    const seen = new Set([want[jitArm]]);
+    for (const [k, v] of Object.entries(variants)) {
+      const h = hashes({ ...raw, ...v });
+      assert.ok(!seen.has(h[jitArm]), `${name}: ${k} defines a new arm`); seen.add(h[jitArm]);
+      assert.equal(h['agent:claude-haiku-5-5'], want['agent:claude-haiku-5-5'], `${k}: agent arms do not hash jit/compile options`);
+    }
+    // Tolerances at their defaults hash the same written out or not; a different tolerance is a different arm.
+    assert.deepEqual(hashes({ ...raw, jit: { ...raw.jit, compare: 'tolerant', relTol: 0.01, absTol: 1e-9 } }), hashes({ ...raw, ...variants.tolerantShadows }));
+    assert.notDeepEqual(hashes({ ...raw, jit: { ...raw.jit, compare: 'tolerant', relTol: 0.02 } }), hashes({ ...raw, ...variants.tolerantShadows }));
+    assert.deepEqual(hashes({ ...raw, compile: { ...raw.compile, acceptance: 'strict', minPartial: 0.9 } }), hashes({ ...raw, ...variants.strict }));
+  }
+});
+
+test('v2.1 config validation and normalisation', () => {
+  const n = x => normalizeConfig({ ...CONFIG, ...x });
+  assert.deepEqual(n({ jit: { compare: 'tolerant' } }).jit, { ...n({ jit: {} }).jit, compare: 'tolerant', relTol: 0.01, absTol: 1e-9 });
+  assert.equal(n({ jit: { compare: 'tolerant', relTol: 0.05 }, compile: { compare: 'tolerant' } }).compile.relTol, 0.05, 'compile inherits the shadow tolerance');
+  assert.equal(n({ jit: { compare: 'tolerant', relTol: 0.05 }, compile: { compare: 'tolerant', relTol: 0.2 } }).compile.relTol, 0.2);
+  assert.deepEqual(['compare', 'relTol', 'absTol'].map(k => n({ compile: { compare: 'tolerant' } }).compile[k]), ['tolerant', 0.01, 1e-9]);
+  assert.deepEqual([n({ compile: { acceptance: 'strict' } }).compile.acceptance, n({ compile: { acceptance: 'strict' } }).compile.minPartial], ['strict', 0.9]);
+  assert.equal(n({ compile: { promptVersion: 3 } }).compile.promptVersion, 3);
+  for (const [bad, re] of [[{ jit: { compare: 'fuzzy' } }, /jit\.compare must be one of canonical, unordered, tolerant/], [{ jit: { relTol: 0.1 } }, /jit\.relTol and config\.jit\.absTol need jit\.compare 'tolerant'/],
+    [{ jit: { compare: 'tolerant', relTol: -1 } }, /relTol must be a finite number >= 0/], [{ compile: { compare: 'unordered' } }, /compile\.compare must be canonical or tolerant/],
+    [{ compile: { absTol: 0.1 } }, /compile\.relTol and config\.compile\.absTol need compile\.compare 'tolerant'/], [{ compile: { minPartial: 0.8 } }, /minPartial needs compile\.acceptance 'strict'/],
+    [{ compile: { acceptance: 'lenient' } }, /acceptance must be one of named, strict/], [{ compile: { acceptance: 'strict', minPartial: 2 } }, /minPartial must be a number in \[0, 1\]/],
+    ...['compare', 'relTol', 'absTol', 'acceptance', 'minPartial'].map(k => [{ compile: { fallback: { [k]: 1 } } }, new RegExp(`compile\\.fallback\\.${k} is not supported`)])]) {
+    assert.throws(() => n(bad), re, JSON.stringify(bad));
+  }
+});
+
+test('sameAnswer tolerant: numbers within tolerance, arrays as multisets; canonical and unordered unchanged', () => {
+  assert.equal(sameAnswer({ fit: [1.0, 2] }, { fit: [2.01, 1.004] }, 'tolerant'), true);
+  assert.equal(sameAnswer({ fit: [1.0, 2] }, { fit: [2.01, 1.004] }, 'tolerant', { relTol: 0.001 }), false);
+  assert.equal(sameAnswer({ fit: [1.0, 2] }, { fit: [2.01, 1.004] }, 'unordered'), false); assert.equal(sameAnswer({ fit: [1, 2] }, { fit: [2, 1] }), false);
+  assert.equal(sameAnswer(null, null, 'tolerant'), false, 'a missing answer never votes');
+  assert.equal(sameAnswer({ name: ' Anouk' }, { name: 'Anook' }, 'tolerant'), false, 'strings are only trimmed');
+});
+
+// Warmup 1, then compiled runs at idx 1..3, every one shadowed. The compiled fit is 1.0, every shadow and adjudicator says
+// 1.004 (a refit): one answer within 1%.
+const TOL_PLAN = {
+  interpret: (idx, role) => (role === 'interpreter' ? undefined : { v: idx + 1, fit: 1.004 }),
+  compiled: (version, idx) => ({ status: 'ok', output: { v: idx + 1, fit: 1.0 } }),
+  checks: (n, a) => ({ ...perCase(a, () => 'exact'), labeled: a.traces.length, compare: { mode: 'tolerant', relTol: 0.01, absTol: 1e-9 }, canonicalExact: 0,
+    acceptance: { mode: 'strict', compare: 'tolerant', criteria: { clean: { ok: true }, agreement: { ok: true, partial: 1, minPartial: 0.9, partialOk: true, exactTraces: a.traces.length, exactOk: true }, explained: { ok: true, cases: [] } },
+      passed: ['clean', 'agreement', 'explained'], failed: [] } }),
+};
+const TOL_CONFIG = { ...CONFIG, experiment: 'jit-tol', segments: [{ difficulty: 3, seeds: '1..4' }], jit: { ...CONFIG.jit, warmup: 1, shadowEvery: 1, compare: 'tolerant' },
+  compile: { compare: 'tolerant', acceptance: 'strict', promptVersion: 3 } };
+
+test('jit.compare tolerant: refit shadows agree within tolerance (canonicalAgree false), no adjudication; canonical shadows would buy a regression per task', async t => {
+  const root = tmp(t);
+  const { deps, calls } = fakeDeps(TOL_PLAN);
+  const res = await runStream({ config: TOL_CONFIG, deps, runRoot: path.join(root, 'runs'), workRoot: path.join(root, 'work'), log: () => {} });
+  assert.deepEqual(res.arms.map(a => a.errors), [[]]);
+  const rows = [...res.rows].sort((a, b) => a.idx - b.idx);
+  for (const i of [1, 2, 3]) {
+    assert.deepEqual(rows[i].events.find(e => e.kind === 'shadow'), { kind: 'shadow', version: 1, agree: true, canonicalAgree: false });
+    assert.equal(rows[i].delivered, 'compiled');
+  }
+  assert.equal(calls.interpret.filter(c => c.role === 'adjudicator').length, 0); assert.equal(calls.compile.length, 1, 'no regression, no recompile');
+  // The v2.1 compile options reach the compiler; the solver runs on flow-v2.mjs (prompt v3).
+  assert.deepEqual(['compare', 'relTol', 'absTol', 'acceptance', 'minPartial', 'promptVersion'].map(k => calls.compile[0][k]), ['tolerant', 0.01, 1e-9, 'strict', 0.9, 3]);
+  assert.ok(calls.runCompiled.every(c => c.flowPath === fileURLToPath(new URL('../flow-v2.mjs', import.meta.url))));
+  const ev = readJsonl(armPaths(path.join(root, 'runs/jit-tol'), FLAG_SLUG).events).find(e => e.kind === 'compile-attempt');
+  assert.deepEqual(ev.result.checkTraces.compare, { mode: 'tolerant', relTol: 0.01, absTol: 1e-9 }); assert.deepEqual(ev.result.checkTraces.acceptance.failed, []);
+  // The report shows the comparison and acceptance per compile (non-default only).
+  const rep = buildReport(path.join(root, 'runs/jit-tol')), cs = rep.arms[0].compileSettings;
+  assert.deepEqual(cs.config, { compileCompare: { mode: 'tolerant', relTol: 0.01, absTol: 1e-9 }, acceptance: 'strict', minPartial: 0.9, jitCompare: { mode: 'tolerant', relTol: 0.01, absTol: 1e-9 } });
+  assert.deepEqual(cs.shadows, { tolerant: 3, agreeTolerantOnly: 3 });
+  assert.equal(cs.attempts.length, 1); assert.deepEqual(cs.attempts[0].acceptance.passed, ['clean', 'agreement', 'explained']); assert.equal(cs.attempts[0].canonicalExact, 0);
+  const md = renderMarkdown(rep);
+  assert.match(md, /## Comparison and acceptance \(non-default\)/);
+  assert.match(md, /compile comparison tolerant \(rel 0\.01, abs 1e-9\), acceptance strict \(minPartial 0\.9\), shadow comparison tolerant \(rel 0\.01, abs 1e-9\); tolerant shadows 3, of which agreeing only within tolerance 3\./);
+  assert.match(md, /\| jit:claude-sonnet-5-5\/claude-haiku-5-5 \| 1 \| v1 \(claude-haiku-5-5\) \| tolerant \(rel 0\.01, abs 1e-9\) \| 1\/1 \(0\) \| 0\.9 \| strict \(trace partial 1 vs 0\.9, exact traces 1\) \| clean, agreement, explained \| – \| – \| yes \|/);
+  // Control: the same world under the default comparison disagrees on every shadow, and the adjudicator (also 1.004)
+  // outvotes the compiled answer: a regression and a recompile on each.
+  const { deps: d2, calls: c2 } = fakeDeps({ ...TOL_PLAN, checks: (n, a) => perCase(a, () => 'exact') });   // a default compile records neither
+  const ctl = await runStream({ config: { ...TOL_CONFIG, experiment: 'jit-canon', jit: { ...CONFIG.jit, warmup: 1, shadowEvery: 1 }, compile: {} }, deps: d2, runRoot: path.join(root, 'runs'), workRoot: path.join(root, 'work'), log: () => {} });
+  const crow = [...ctl.rows].sort((a, b) => a.idx - b.idx);
+  assert.deepEqual(crow.slice(1).map(r => r.delivered), ['adjudicated', 'adjudicated', 'adjudicated']);
+  assert.ok(crow.every(r => r.events.filter(e => e.kind === 'shadow').every(e => !('canonicalAgree' in e))), 'default shadow events are unchanged');
+  assert.ok(c2.compile.every(c => c.compare === undefined && c.acceptance === undefined && c.relTol === undefined), 'a default arm passes no v2.1 option');
+  const crep = buildReport(path.join(root, 'runs/jit-canon'));
+  assert.equal('compileSettings' in crep.arms[0], false); assert.doesNotMatch(renderMarkdown(crep), /Comparison and acceptance/);
+});
+
+test('strict acceptance on a recheck: the verdict uses the case\'s own task text; a paraphrase is not accepted and buys the Opus fallback', async t => {
+  const root = tmp(t);
+  const run = async (experiment, notes) => {
+    const plan = { compiled: () => ({ status: 'ok' }), checks: (n, a) => ({ ...perCase(a, () => 'deopt'), deoptKinds: { budget: 1 } }), notes: () => notes };
+    const { deps, calls } = fakeDeps(plan);
+    const make = deps.makeTasks;
+    deps.makeTasks = async (...args) => (await make(...args)).map(x => ({ ...x, task: { ...x.task, prompt: 'Report the seed as v.\nSeeds are positive integers.' } }));
+    const rechecks = [];
+    deps.recheck = async a => { rechecks.push(a); return { summary: { exact: 0, exactRate: 0, partial: 0.95, clean: true, deoptKinds: {}, compare: { mode: 'tolerant' },
+      perCase: a.traces.map((x, i) => ({ id: `trace-${i}`, ref: x.traceId, kind: 'trace', status: 'diff', exact: false, partial: 0.95 })) }, costUsd: 0.1 }; };
+    const config = { ...CONFIG, experiment, segments: [{ difficulty: 3, seeds: [1, 2] }], jit: { ...CONFIG.jit, warmup: 1, shadowEvery: 0 }, compile: { compare: 'tolerant', acceptance: 'strict' } };
+    await runStream({ config, deps, runRoot: path.join(root, 'runs'), workRoot: path.join(root, 'work'), log: () => {} });
+    const rec = JSON.parse(readFileSync(path.join(root, `runs/${experiment}/${FLAG_SLUG}/versions/v1-haiku55/compile.json`), 'utf8'));
+    return { rechecks, calls, ct: rec.checkTraces };
+  };
+  const good = await run('strict-ok', '## trace-0\nThe task says "Report the seed as v." and the agent wrote w.\n');
+  assert.deepEqual(good.rechecks[0].compare, { mode: 'tolerant', relTol: 0.01, absTol: 1e-9 }, 'the recheck compares as the compile did');
+  assert.equal(good.ct.accepted, true); assert.deepEqual(good.ct.acceptance.passed, ['clean', 'agreement', 'explained']);
+  assert.equal(good.ct.acceptance.criteria.explained.cases[0].verified, 'Report the seed as v.'); assert.deepEqual(good.ct.compare, { mode: 'tolerant', relTol: 0.01, absTol: 1e-9 });
+  assert.equal(good.calls.compile.length, 1, 'accepted: no fallback');
+  const bad = await run('strict-para', '## trace-0\nThe task wants the seed reported as v.\n');
+  assert.equal(bad.ct.accepted, false); assert.deepEqual(bad.ct.acceptance.failed, ['explained']); assert.deepEqual(bad.ct.unexplained, ['trace-0']);
+  assert.deepEqual(bad.calls.compile.map(c => c.builderModel), ['claude-haiku-5-5', 'claude-opus-5-5'], 'not accepted: the Opus fallback runs');
 });

@@ -68,3 +68,12 @@ test('decision agreement ignores evidence fields', async () => {
   assert.deepEqual(stripEvidence(a), { systems: [{ name: 'LEDGR', order: 'DMY' }] });
   assert.ok(decisionAgreement(a, { systems: [{ name: 'LEDGR', order: 'MDY', quote: 'z' }] }) < 1);
 });
+
+test('decisionAgreement with a tolerance (v2.1, opt-in): fitted numbers within tolerance agree, items pair as a multiset; without one, unchanged', async () => {
+  const { decisionAgreement } = await import('../tierdown.mjs');
+  const ref = { fits: [{ s: 'A', vmax: 4.0198, quote: 'x' }, { s: 'B', vmax: 3.3 }] }, cand = { fits: [{ s: 'B', vmax: 3.31 }, { s: 'A', vmax: 4.0213, quote: 'other' }] };
+  assert.ok(decisionAgreement(ref, cand) < 0.5, 'default: positional, exact numbers');
+  assert.equal(decisionAgreement(ref, cand, { relTol: 0.01, absTol: 1e-9 }), 1);
+  assert.equal(decisionAgreement(ref, cand, { relTol: 0.0001, absTol: 0 }), 0.5, 'the names still pair; the vmax leaves do not');
+  assert.equal(decisionAgreement({ v: 5 }, { v: -5 }, { relTol: 0.5, absTol: 0 }), 0, 'a sign flip is a difference (|a-b| = 10 > 0.5 x 5)');
+});

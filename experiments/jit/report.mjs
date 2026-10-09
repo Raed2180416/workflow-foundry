@@ -72,6 +72,31 @@ export function flagSummary(rows, { enabled = false } = {}) {
   };
 }
 
+// JIT v2.1 (opt-in): per compile attempt, the comparison its host check used and its acceptance rule and criteria, from the
+// compile-attempt events (compactCheck carries checkTraces.compare and checkTraces.acceptance only when non-default) and
+// the arm definition. Shadows of a tolerant arm (jit.compare 'tolerant') also count the agreements that held only
+// tolerantly (canonicalAgree false). null when the arm uses neither option, so default reports are unchanged.
+export function compileSettings({ meta, rows, events }) {
+  const def = meta.def ?? {}, dc = def.compile ?? {}, dj = def.jit ?? {};
+  const attempts = events.filter(e => e.kind === 'compile-attempt' && e.result).map(e => ({ idx: e.idx, ...e.result }))
+    .filter(a => a.checkTraces?.compare || a.checkTraces?.acceptance);
+  const shadows = rows.flatMap(r => (r.events ?? []).filter(e => e.kind === 'shadow' && 'canonicalAgree' in e));
+  const configured = dc.compare === 'tolerant' || dc.acceptance === 'strict' || dj.compare === 'tolerant';
+  if (!configured && !attempts.length && !shadows.length) return null;
+  const tol = o => (o?.compare === 'tolerant' || o?.mode === 'tolerant' ? { mode: 'tolerant', relTol: o.relTol ?? null, absTol: o.absTol ?? null } : { mode: o?.compare ?? o?.mode ?? 'canonical' });
+  return {
+    config: { compileCompare: tol(dc), acceptance: dc.acceptance ?? 'named', ...(dc.acceptance === 'strict' ? { minPartial: dc.minPartial ?? null } : {}), jitCompare: tol(dj) },
+    attempts: attempts.map(a => {
+      const ct = a.checkTraces, acc = ct.acceptance;
+      return { idx: a.idx, version: a.version, builderModel: a.builderModel, compare: ct.compare ?? { mode: 'canonical' }, exact: ct.exact, labeled: ct.labeled,
+        canonicalExact: ct.canonicalExact ?? null, partial: ct.partial, clean: ct.clean, accepted: ct.accepted, unexplained: ct.unexplained ?? [],
+        acceptance: acc ? { mode: acc.mode, minPartial: acc.criteria?.agreement?.minPartial ?? null, tracePartial: acc.criteria?.agreement?.partial ?? null,
+          exactTraces: acc.criteria?.agreement?.exactTraces ?? null, passed: acc.passed ?? [], failed: acc.failed ?? [] } : { mode: 'named' } };
+    }),
+    shadows: shadows.length ? { tolerant: shadows.length, agreeTolerantOnly: shadows.filter(e => e.agree === true && e.canonicalAgree === false).length } : null,
+  };
+}
+
 export function summarizeArm({ meta, rows, events, faults }) {
   const spec = meta.spec ?? rows[0]?.arm ?? meta.slug, kind = meta.kind ?? rows[0]?.kind ?? spec.split(':')[0];
   const n = rows.length, successes = rows.filter(r => r.pass).length;
@@ -118,6 +143,8 @@ export function summarizeArm({ meta, rows, events, faults }) {
   // A v2 arm (arm.json def: jit.shadowOnFlags or compile.promptVersion >= 2) always gets a summary, so one that never flags shows 0.
   const flags = flagSummary(rows, { enabled: !!(meta.def?.jit?.shadowOnFlags || (meta.def?.compile?.promptVersion ?? 1) >= 2) });
   if (flags) out.flags = flags;
+  const settings = compileSettings({ meta, rows, events });
+  if (settings) out.compileSettings = settings;
   return out;
 }
 
@@ -188,6 +215,25 @@ export function renderMarkdown(rep) {
     for (const a of flagged) {
       const f = a.flags, noSample = !f.scheduled.answered;
       L.push(`| ${short(a.spec)} | ${f.flaggedRuns}/${f.compiledOk} (${pct(f.flagRate)}), ${f.flagsRaised} | ${f.scheduled.shadows} | ${noSample ? 'no base rate, recall not measurable (no answered scheduled shadow)' : `${rate(f.scheduled.flagged)} / ${rate(f.scheduled.unflagged)}`} | ${f.recall == null ? '–' : pct(f.recall)} | ${f.flagTriggered.shadows} (${f.flagOnly}, ${usd(f.flagOnlyCostUsd)}) | ${rate(f.flagTriggered)} | ${f.flagTriggered.regressions} | ${oracle(f.oracle.flagged)}, ${oracle(f.oracle.unflagged)} | ${Object.entries(f.runsByFlagName).map(([k, v]) => `${cell(k)} ${v}`).join(', ') || '–'} |`);
+    }
+  }
+  const tuned = rep.arms.filter(a => a.compileSettings);
+  if (tuned.length) {
+    const cmp = c => (c?.mode === 'tolerant' ? `tolerant (rel ${c.relTol}, abs ${c.absTol})` : c?.mode ?? 'canonical');
+    L.push('', '## Comparison and acceptance (non-default)', '',
+      'Shown only for arms with compile.compare, compile.acceptance or jit.compare set. Exact and partial are under the compile\'s comparison; canonical exact is the same cases under canonical JSON. Strict acceptance: clean, then (trace mean partial >= minPartial or one exact trace), then every diff case explained by a quote verbatim from its own task.', '');
+    for (const a of tuned) {
+      const s = a.compileSettings;
+      L.push(`- ${short(a.spec)}: compile comparison ${cmp(s.config.compileCompare)}, acceptance ${s.config.acceptance}${s.config.minPartial != null ? ` (minPartial ${s.config.minPartial})` : ''}, shadow comparison ${cmp(s.config.jitCompare)}`
+        + (s.shadows ? `; tolerant shadows ${s.shadows.tolerant}, of which agreeing only within tolerance ${s.shadows.agreeTolerantOnly}` : '') + '.');
+    }
+    const att = tuned.flatMap(a => a.compileSettings.attempts.map(x => ({ a, x })));
+    if (att.length) {
+      L.push('', '| arm | idx | version (builder) | comparison | exact / labelled (canonical exact) | mean partial | acceptance | passed | failed | unexplained | accepted |', '|---|---|---|---|---|---|---|---|---|---|---|');
+      for (const { a, x } of att) {
+        const acc = x.acceptance;
+        L.push(`| ${short(a.spec)} | ${x.idx} | v${x.version} (${x.builderModel}) | ${cmp(x.compare)} | ${x.exact ?? '–'}/${x.labeled ?? '–'}${x.canonicalExact != null ? ` (${x.canonicalExact})` : ''} | ${x.partial ?? '–'} | ${acc.mode}${acc.mode === 'strict' ? ` (trace partial ${acc.tracePartial ?? '–'} vs ${acc.minPartial}, exact traces ${acc.exactTraces})` : ''} | ${acc.passed?.join(', ') || '–'} | ${acc.failed?.join(', ') || '–'} | ${x.unexplained.join(', ') || '–'} | ${x.accepted ? 'yes' : 'no'} |`);
+      }
     }
   }
   const agents = rep.arms.filter(a => a.kind === 'agent');

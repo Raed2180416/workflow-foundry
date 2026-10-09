@@ -42,8 +42,48 @@ test('promptVersion 2 adds the threshold, flag and autoFlag guidance and keeps e
   }
 });
 
+// sha256 of the v2 text, taken from the code before promptVersion 3 existed (commit 39623bf).
+const FROZEN_V2 = { compileA: '01aa9afb72dfc83d75adc8505dc6c5c666b578b366507d0a1ecec2217020794b', compileB: '0adfeeb2ae3548a877a677c7be13c6be6bc2bce10335bbe8062f54afd78bb92e',
+  recompileA: 'ba874cbf1e799dcd9dcd24e32a6a506601ec7e965ed7fea01e1c25382d287229', recompileB: '9feac13ba9cff5e288b315423ca011a2e232a5c9f0cd885328fbf15c83664303' };
+const V21 = { compare: 'tolerant', relTol: 0.02, absTol: 1e-6, acceptance: 'strict', minPartial: 0.85 };
+
+test('v2.1: prompt versions 1 and 2 stay byte-identical, also when the v2.1 compile options are passed', () => {
+  for (const [name, opts] of [['A', A], ['B', B]]) for (const kind of ['compile', 'recompile']) {
+    assert.equal(sha(builderPrompt(kind, { ...opts, promptVersion: 2 })), FROZEN_V2[kind + name], `v2 ${kind} ${name}`);
+    assert.equal(sha(builderPrompt(kind, { ...opts, promptVersion: 2, ...V21 })), FROZEN_V2[kind + name], `v2 ${kind} ${name} ignores the v2.1 options`);
+    assert.equal(sha(builderPrompt(kind, { ...opts, ...V21 })), FROZEN[kind + name], `v1 ${kind} ${name} ignores the v2.1 options`);
+  }
+});
+
+test('promptVersion 3 is the v2 text plus inserted lines (every v2 line kept, in order): near-miss scan, deopt calibration, verbatim quotes', () => {
+  const inOrder = (small, big, label) => {
+    const lines = big.split('\n');
+    let at = 0;
+    for (const line of small.split('\n')) { const i = lines.indexOf(line, at); assert.ok(i >= at, `${label}: v2 line kept in order: ${line}`); at = i + 1; }
+  };
+  for (const opts of [A, B]) for (const kind of ['compile', 'recompile']) for (const extra of [{}, V21]) {
+    const v2 = builderPrompt(kind, { ...opts, promptVersion: 2 }), v3 = builderPrompt(kind, { ...opts, promptVersion: 3, ...extra });
+    inOrder(v2, v3, `${kind} ${JSON.stringify(extra)}`);
+    assert.ok(v3.length > v2.length);
+    // (a) near-miss groups after grouping -> narrow same-entity judge with a verifiable check, flagged
+    assert.match(v3, /After any grouping, dedup, merge or clustering step, scan the result for near-miss groups/);
+    assert.match(v3, /share a secondary\s+attribute/); assert.match(v3, /same-entity flow\.judge/); assert.match(v3, /check code can verify/); assert.match(v3, /flow\.flag every such pair/);
+    // (c) quotes verbatim from the task
+    assert.match(v3, /Quote verbatim: put the deciding sentence in double quotes, copied from that case's prompt\.md or inputs\.json/);
+    // (b) only in a recompile: read the deopts; calibrate or guard; never loosen silently
+    const b = /Read the deopts before you change code[\s\S]*calibrate the\s+check[\s\S]*earlier flow\.guard[\s\S]*Never loosen or drop a check silently: each changed check gets a line in\s+BUILD-NOTES\.md/;
+    if (kind === 'recompile') assert.match(v3, b); else assert.doesNotMatch(v3, /Read the deopts/);
+    // The strict rule and the tolerant comparison are stated only when the compile uses them.
+    if (extra.acceptance) assert.match(v3, /Acceptance is checked by code after you finish[\s\S]*at least 0\.85 over the traces, or at least one exact trace[\s\S]*occurs verbatim in that case's task/);
+    else assert.doesNotMatch(v3, /Acceptance is checked by code/);
+    if (extra.compare) assert.match(v3, /check-traces compares numbers within a tolerance \(relative 0\.02, absolute 0\.000001\)/);
+    else assert.doesNotMatch(v3, /within a tolerance/);
+    assert.ok(v3.length - v2.length < (kind === 'recompile' ? 2600 : 1900), `v3 stays concise (+${v3.length - v2.length} chars)`);
+  }
+});
+
 test('an unknown promptVersion is refused', () => {
-  assert.deepEqual([...PROMPT_VERSIONS], [1, 2]);
+  assert.deepEqual([...PROMPT_VERSIONS], [1, 2, 3]);
   assert.equal(promptVersionOf({}), 1); assert.equal(promptVersionOf({ promptVersion: 2 }), 2);
-  for (const bad of [0, 3, '2', 1.5, 'v2']) assert.throws(() => builderPrompt('compile', { ...A, promptVersion: bad }), /promptVersion must be one of 1, 2/);
+  for (const bad of [0, 4, '2', 1.5, 'v2']) assert.throws(() => builderPrompt('compile', { ...A, promptVersion: bad }), /promptVersion must be one of 1, 2, 3/);
 });

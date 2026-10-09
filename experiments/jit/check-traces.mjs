@@ -6,6 +6,9 @@
 // is kept under --out (default .check/). Model calls are real and cost money: use --only and --max while iterating.
 // The output is compared with agent-answer.json (or expected.json) by a generic deep diff on canonical JSON. It prints
 // a table, then one aggregate JSON line (always the last stdout line).
+// Opt-in (JIT v2.1): --tolerant [--rel-tol r] [--abs-tol a] compares with ./compare.mjs (numbers within tolerance, strings
+// trimmed, arrays as multisets) instead; a check-traces.json beside this file ({"compare":"tolerant","relTol":..,"absTol":..})
+// makes that the default here, and --exact restores canonical comparison. Without either, nothing changes.
 import { readFileSync, writeFileSync, existsSync, mkdirSync, rmSync, cpSync, copyFileSync, readdirSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import path from 'node:path';
@@ -104,7 +107,16 @@ function gatewayFor(toolsDir, runTools) {
   return cfg.socket ? { ...cfg, socket: path.relative(runTools, path.resolve(toolsDir, cfg.socket)) } : cfg;
 }
 
-export async function runCase(c, { root, out, toolsDir, timeoutMs }) {
+// Tolerant comparison (opt-in): compare.mjs is loaded only then, so a canonical run needs nothing beside this file.
+async function tolerantCompare(output, label, cmp) {
+  let mod;
+  try { mod = await import(new URL('./compare.mjs', import.meta.url).href); }
+  catch (e) { throw new Error(`tolerant comparison needs compare.mjs beside check-traces.mjs (${e.message})`); }
+  const d = mod.tolerantAgreement(output, label, { relTol: cmp.relTol, absTol: cmp.absTol });
+  return { ...d, canonicalExact: compare(output, label, { maxDiffs: 0 }).exact };
+}
+
+export async function runCase(c, { root, out, toolsDir, timeoutMs, cmp = null }) {
   const dir = path.resolve(out, c.id), tools = path.join(dir, 'tools');
   rmSync(dir, { recursive: true, force: true }); mkdirSync(tools, { recursive: true });
   for (const f of TASK_FILES) if (existsSync(path.join(c.dir, f))) cpSync(path.join(c.dir, f), path.join(dir, f), { recursive: true });
@@ -137,13 +149,14 @@ export async function runCase(c, { root, out, toolsDir, timeoutMs }) {
   try { output = JSON.parse(stdout.trim().split('\n').filter(Boolean).at(-1)); } catch { return { ...base, status: 'crash', note: 'exit 0 but the last stdout line is not JSON' }; }
   const label = readJson(c.labelFile);
   if (!label.ok || label.value === null) return { ...base, status: 'unlabeled', note: `no usable ${path.basename(c.labelFile)}` };
-  const d = compare(output, label.value);
+  const d = cmp?.mode === 'tolerant' ? await tolerantCompare(output, label.value, cmp) : compare(output, label.value);
   return { ...base, status: d.exact ? 'exact' : 'diff', exact: d.exact, partial: Math.round(d.partial * 1000) / 1000,
+    ...(cmp?.mode === 'tolerant' ? { canonicalExact: d.canonicalExact, ...(d.approx ? { approx: d.approx } : {}) } : {}),
     diffs: d.diffs.slice(0, 5).map(x => ({ path: x.path, got: short(x.got, 120), want: short(x.want, 120) })),
     ...(d.exact ? {} : { note: d.diffs.slice(0, 2).map(x => `${x.path}: got ${short(x.got, 40)} want ${short(x.want, 40)}`).join('; ') + (d.diffs.length > 2 ? `; +${d.diffs.length - 2} more` : '') }) };
 }
 
-export function aggregate(perCase, { total }) {
+export function aggregate(perCase, { total, cmp = null }) {
   const labeled = perCase.filter(c => c.status !== 'unlabeled');
   const count = s => perCase.filter(c => c.status === s).length;
   const deoptKinds = {};
@@ -159,6 +172,8 @@ export function aggregate(perCase, { total }) {
     // Disagreements with agent answers are a diagnostic; each must be explained in BUILD-NOTES.md.
     clean: complete && crashes + timeouts + deopts === 0 && regs.every(c => c.status === 'exact'),
     costUsd: Math.round(perCase.reduce((s, c) => s + c.costUsd, 0) * 1e6) / 1e6,
+    // Tolerant runs only: the comparison used, and how many cases are also exact under canonical JSON (a diagnostic).
+    ...(cmp?.mode === 'tolerant' ? { compare: { mode: 'tolerant', relTol: cmp.relTol, absTol: cmp.absTol }, canonicalExact: perCase.filter(c => c.canonicalExact).length } : {}),
     perCase,
   };
 }
@@ -179,14 +194,36 @@ export function parseArgs(argv) {
     else if (a === '--jobs') { o.jobs = Math.max(1, Number(v) || 1); i++; }
     else if (a === '--timeout') { o.timeout = Number(v); i++; }
     else if (a === '--out') { o.out = v; i++; }
+    else if (a === '--tolerant') o.compare = 'tolerant';
+    else if (a === '--exact') o.compare = 'canonical';
+    else if (a === '--rel-tol' || a === '--abs-tol') {
+      const x = Number(v);
+      if (v == null || !Number.isFinite(x) || x < 0) throw new Error(`${a} needs a finite number >= 0`);
+      o[a === '--rel-tol' ? 'relTol' : 'absTol'] = x; i++;
+    }
     else throw new Error(`unknown option ${a}`);
   }
   return o;
 }
 
+// The comparison for a run: the options, else check-traces.json beside this file, else canonical (null).
+export function comparisonOf(o, defaults = null) {
+  const mode = o.compare ?? defaults?.compare ?? 'canonical';
+  if (mode !== 'tolerant') {
+    if (o.relTol != null || o.absTol != null) throw new Error('--rel-tol and --abs-tol need --tolerant');
+    return null;
+  }
+  const relTol = o.relTol ?? defaults?.relTol ?? 0.01, absTol = o.absTol ?? defaults?.absTol ?? 1e-9;
+  for (const [k, x] of [['relTol', relTol], ['absTol', absTol]]) if (typeof x !== 'number' || !Number.isFinite(x) || x < 0) throw new Error(`${k} must be a finite number >= 0`);
+  return { mode: 'tolerant', relTol, absTol };
+}
+const readDefaults = toolsDir => { const f = path.join(toolsDir, 'check-traces.json'); return existsSync(f) ? JSON.parse(readFileSync(f, 'utf8')) : null; };
+
 export async function main(argv = process.argv.slice(2), { root = process.cwd(), toolsDir = path.dirname(fileURLToPath(import.meta.url)) } = {}) {
   let o;
-  try { o = parseArgs(argv); } catch (e) { console.error(`${e.message}\nusage: node tools/check-traces.mjs [--only 0,3,case-1] [--max n] [--jobs n] [--timeout s] [--out dir]`); return 2; }
+  let cmp;
+  try { o = parseArgs(argv); cmp = comparisonOf(o, readDefaults(toolsDir)); }
+  catch (e) { console.error(`${e.message}\nusage: node tools/check-traces.mjs [--only 0,3,case-1] [--max n] [--jobs n] [--timeout s] [--out dir] [--tolerant [--rel-tol r] [--abs-tol a] | --exact]`); return 2; }
   if (!existsSync(path.join(root, 'solve.mjs'))) { console.error('no ./solve.mjs to check'); console.log(JSON.stringify({ error: 'no solve.mjs', cases: 0 })); return 2; }
   const all = listCases(root);
   let cases = o.only ? all.filter(c => o.only.includes(c.id)) : all;
@@ -194,10 +231,12 @@ export async function main(argv = process.argv.slice(2), { root = process.cwd(),
   const perCase = new Array(cases.length);
   let next = 0;
   await Promise.all(Array.from({ length: Math.min(o.jobs, cases.length) }, async () => {
-    while (next < cases.length) { const i = next++; perCase[i] = await runCase(cases[i], { root, out: path.resolve(root, o.out), toolsDir, timeoutMs: o.timeout * 1000 }); }
+    while (next < cases.length) { const i = next++; perCase[i] = await runCase(cases[i], { root, out: path.resolve(root, o.out), toolsDir, timeoutMs: o.timeout * 1000, cmp }); }
   }));
-  const agg = aggregate(perCase, { total: all.length });
+  const agg = aggregate(perCase, { total: all.length, cmp });
   console.log(table(perCase));
+  if (cmp) console.log(`comparison: tolerant (numbers within max(absTol ${cmp.absTol}, relTol ${cmp.relTol} x the larger magnitude), strings trimmed, arrays as multisets); `
+    + `${agg.canonicalExact}/${agg.labeled} also exact under canonical JSON`);
   console.log(`${agg.exact}/${agg.labeled} exact, mean partial ${agg.partial == null ? '-' : Math.round(agg.partial * 100) + '%'}, ${agg.deopts} deopt, ${agg.crashes} crash, ${agg.timeouts} timeout; `
     + `regressions ${agg.regressionsPassed}/${agg.regressions}; $${agg.costUsd}${agg.complete ? '' : ` (ran ${agg.cases} of ${agg.total} cases)`}; run dirs in ${o.out}/`);
   console.log(JSON.stringify(agg));

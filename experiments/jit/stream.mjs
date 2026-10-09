@@ -16,6 +16,8 @@ import { loadPolicy } from '../../src/models/policy.mjs';
 import { ENV_FAULTS, metEnvFault } from '../lib/runner.mjs';
 import { createModelPort as createModelPortSync } from '../lib/models.mjs';
 import { promptVersionOf, flowFileOf } from './prompts.mjs';
+import { tolerantEqual, tolerance } from './compare.mjs';
+import { judgeAcceptance, acceptanceModeOf, minPartialOf, caseTasks } from './acceptance.mjs';
 
 const REPO = path.resolve(fileURLToPath(new URL('../..', import.meta.url))), HERE = path.dirname(fileURLToPath(import.meta.url));
 export const RUN_ROOT = path.join(REPO, 'experiments/runs/jit'), WORK_ROOT = '/var/tmp/foundry-work/jit';
@@ -26,6 +28,7 @@ export const DEFAULT_JIT = Object.freeze({ warmup: 3, shadowEvery: 4, recompileO
 export const DEFAULT_COMPILE = Object.freeze({ builderEffort: 'high', builderBudgetUsd: 3, gatewayUsd: 1.5, checkUsd: 1.5, minutes: 30,
   fallback: Object.freeze({ builderEffort: 'high', builderBudgetUsd: 8, gatewayUsd: 1.5, checkUsd: 1.5, minutes: 45 }) });
 const STATIC_FALLBACK = 'claude-haiku-5-5';
+export const JIT_COMPARE_MODES = Object.freeze(['canonical', 'unordered', 'tolerant']);
 // v2 options (opt-in, never in the defaults above, so a v1 config keeps its arm hash):
 //   jit.shadowOnFlags (default false): also shadow a compiled ok run that raised uncertainty flags (flow.flag); shadow
 //     events and rows then carry the reason ('schedule' | 'flag' | 'schedule+flag'). jit.shadowEvery 0 = no scheduled
@@ -34,6 +37,15 @@ const STATIC_FALLBACK = 'claude-haiku-5-5';
 //     builds, checks and runs on flow-v2.mjs); applies to the fallback compiler too (compile.fallback.promptVersion is refused).
 //     With shadowOnFlags or promptVersion 2, a row whose compiled answer was not delivered also records compiledPass (the
 //     oracle on the compiled answer; the experimenter's view for report.mjs, never read by the JIT state).
+// v2.1 options (opt-in, same rule: at their defaults they leave the normalized config, so no hash moves):
+//   jit.compare 'tolerant' (default 'canonical'; 'unordered' as before): shadows and adjudication compare answers with
+//     compare.mjs tolerantEqual, at jit.relTol (default 0.01) and jit.absTol (default 1e-9), written into the normalized
+//     config so the hash is the same whether or not they are spelled out. Shadow events then also say canonicalAgree.
+//   compile.compare 'tolerant' (default 'canonical'), compile.relTol / compile.absTol (default: jit's when jit.compare is
+//     'tolerant', else 0.01 / 1e-9): the host check (and the builder's own check-traces) compare tolerantly.
+//   compile.acceptance 'strict' (default 'named'), compile.minPartial (default 0.9): acceptance.mjs's strict rule.
+//   compile.promptVersion 3: prompt v3 (prompts.mjs) on flow-v2.mjs.
+//   None of the compile options can be set on compile.fallback: they apply to the fallback compiler too.
 // Set to their defaults they are dropped from the normalized config, so writing them out explicitly changes no hash.
 
 const sha = s => createHash('sha256').update(s).digest('hex');
@@ -62,10 +74,24 @@ export function normalizeConfig(raw) {
   if (jit.shadowEvery != null && jit.shadowEvery !== false && !(Number.isInteger(jit.shadowEvery) && jit.shadowEvery >= 0)) throw new Error('config.jit.shadowEvery must be an integer >= 0 (0: no scheduled shadows)');
   if (jit.shadowOnFlags != null && typeof jit.shadowOnFlags !== 'boolean') throw new Error('config.jit.shadowOnFlags must be true or false');
   if (!jit.shadowOnFlags) delete jit.shadowOnFlags;
+  if (jit.compare != null && !JIT_COMPARE_MODES.includes(jit.compare)) throw new Error(`config.jit.compare must be one of ${JIT_COMPARE_MODES.join(', ')}`);
+  if (jit.compare === 'tolerant') Object.assign(jit, tolerance(jit));
+  else if (jit.relTol != null || jit.absTol != null) throw new Error('config.jit.relTol and config.jit.absTol need jit.compare \'tolerant\'');
+  else { delete jit.relTol; delete jit.absTol; }
   const compile = { ...DEFAULT_COMPILE, ...(raw.compile ?? {}), fallback: { ...DEFAULT_COMPILE.fallback, ...(raw.compile?.fallback ?? {}) } };
   if (compile.promptVersion != null) compile.promptVersion = promptVersionOf(compile);
   if (raw.compile?.fallback && 'promptVersion' in raw.compile.fallback) throw new Error('config.compile.fallback.promptVersion is not supported: compile.promptVersion applies to the fallback compiler too');
+  for (const k of ['compare', 'relTol', 'absTol', 'acceptance', 'minPartial']) if (raw.compile?.fallback && k in raw.compile.fallback) throw new Error(`config.compile.fallback.${k} is not supported: compile.${k} applies to the fallback compiler too`);
   if (compile.promptVersion == null || compile.promptVersion === 1) delete compile.promptVersion;
+  compile.compare ??= 'canonical';
+  if (!['canonical', 'tolerant'].includes(compile.compare)) throw new Error('config.compile.compare must be canonical or tolerant');
+  if (compile.compare === 'tolerant') Object.assign(compile, tolerance({ relTol: compile.relTol ?? (jit.compare === 'tolerant' ? jit.relTol : undefined), absTol: compile.absTol ?? (jit.compare === 'tolerant' ? jit.absTol : undefined) }));
+  else if (compile.relTol != null || compile.absTol != null) throw new Error('config.compile.relTol and config.compile.absTol need compile.compare \'tolerant\'');
+  else { delete compile.compare; delete compile.relTol; delete compile.absTol; }
+  compile.acceptance = acceptanceModeOf(compile.acceptance);
+  if (compile.acceptance === 'strict') compile.minPartial = minPartialOf(compile.minPartial);
+  else if (compile.minPartial != null) throw new Error('config.compile.minPartial needs compile.acceptance \'strict\'');
+  else { delete compile.acceptance; delete compile.minPartial; }
   return {
     ...raw, segments, jit, compile,
     perTaskUsd: raw.perTaskUsd ?? 1, agentBudgetUsd: raw.agentBudgetUsd ?? 1, agentMinutes: raw.agentMinutes ?? 15, agentEffort: raw.agentEffort ?? null,
@@ -108,9 +134,11 @@ export function parseArm(spec, config, { policyIds = null } = {}) {
 export const matchArm = (arm, filters) => !filters?.length || filters.some(f => f === arm.spec || f === arm.slug || f === arm.kind);
 
 // ---------------------------------------------------------------------------------------------- JIT helpers
-// SPEC §6.2: answers are compared as canonical JSON. 'unordered' (opt-in) treats every array as a multiset.
-export function sameAnswer(a, b, mode = 'canonical') {
+// SPEC §6.2: answers are compared as canonical JSON. 'unordered' (opt-in) treats every array as a multiset. 'tolerant'
+// (opt-in, v2.1) is compare.mjs tolerantEqual at tol.relTol / tol.absTol (defaults 0.01 / 1e-9): arrays as multisets too.
+export function sameAnswer(a, b, mode = 'canonical', tol = {}) {
   if (a == null || b == null) return false;
+  if (mode === 'tolerant') return tolerantEqual(a, b, { relTol: tol?.relTol, absTol: tol?.absTol });
   if (mode === 'unordered') {
     const norm = v => Array.isArray(v) ? v.map(norm).sort((x, y) => (canonical(x) < canonical(y) ? -1 : canonical(x) > canonical(y) ? 1 : 0))
       : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, norm(x)])) : v;
@@ -137,6 +165,7 @@ const compactCheck = ct => (ct ? { exact: ct.exact ?? null, exactRate: ct.exactR
   timeouts: ct.timeouts ?? null, deoptKinds: ct.deoptKinds ?? null, cases: ct.cases ?? null, labeled: ct.labeled ?? null, diffs: ct.diffs ?? null,
   regressions: ct.regressions ?? null, regressionsPassed: ct.regressionsPassed ?? null, clean: ct.clean ?? null, unexplained: ct.unexplained ?? null,
   accepted: ct.accepted ?? null, error: ct.error ?? null, recheck: ct.recheck ?? null,
+  ...(ct.compare ? { compare: ct.compare, canonicalExact: ct.canonicalExact ?? null } : {}), ...(ct.acceptance ? { acceptance: ct.acceptance } : {}),
   perCase: perCaseList(ct).map(e => ({ id: e.id ?? null, ref: caseId(e), kind: e.kind ?? null, status: e.status ?? null, exact: caseExact(e) === 1, partial: e.partial ?? null })) } : null);
 const caseExact = e => (typeof e?.exact === 'boolean' ? (e.exact ? 1 : 0) : typeof e?.exact === 'number' ? (e.exact >= 1 ? 1 : 0) : e?.status === 'exact' ? 1 : 0);
 const perCaseList = ct => (Array.isArray(ct?.perCase) ? ct.perCase : ct?.perCase && typeof ct.perCase === 'object' ? Object.entries(ct.perCase).map(([id, v]) => ({ id, ...(typeof v === 'object' ? v : { exact: v }) })) : []);
@@ -168,18 +197,22 @@ export function rejectReason(newCt, oldCt) {
 }
 export const worseOnOld = (newCt, oldCt) => rejectReason(newCt, oldCt) != null;
 
-// checkTraces from a hostCheck() result, by compile.mjs's rule: accepted = clean and every diff case named in BUILD-NOTES.md.
-export function checkFromSummary(check, workdir, regressions = 0) {
+// checkTraces from a hostCheck() result, by compile.mjs's rule (acceptance.mjs): by default accepted = clean and every diff
+// case named in BUILD-NOTES.md; opts.acceptance 'strict' (with opts.minPartial, opts.traces and opts.regressions, the case
+// inputs) applies the strict rule; opts.compare (the comparison object) is recorded as compile.mjs records it.
+export function checkFromSummary(check, workdir, regressions = 0, opts = {}) {
   const s = check?.summary ?? null;
   const notesFile = workdir ? path.join(workdir, 'BUILD-NOTES.md') : null;
   const notes = notesFile && existsSync(notesFile) ? readFileSync(notesFile, 'utf8') : null;
-  const unexplained = (s?.perCase ?? []).filter(c => c.status === 'diff' && !new RegExp(`\\b${c.id}\\b`).test(notes ?? '')).map(c => c.id);
+  const verdict = judgeAcceptance({ summary: s, notes, mode: opts.acceptance ?? 'named', minPartial: opts.minPartial, tasks: caseTasks(opts.traces ?? [], opts.regressions ?? []) });
+  const unexplained = verdict.unexplained;
   return {
     exact: s?.exact ?? 0, partial: s?.partial ?? null, deopts: s?.deopts ?? 0, crashes: s?.crashes ?? 0, perCase: s?.perCase ?? [],
     cases: s?.cases ?? 0, labeled: s?.labeled ?? 0, exactRate: s?.exactRate ?? null, diffs: s?.diffs ?? 0, deoptKinds: s?.deoptKinds ?? {}, timeouts: s?.timeouts ?? 0,
     regressions: s?.regressions ?? regressions, regressionsPassed: s?.regressionsPassed ?? 0, clean: !!s?.clean, unexplained,
-    accepted: !!s?.clean && unexplained.length === 0, costUsd: check?.costUsd ?? 0, calls: check?.calls ?? 0, unknownCalls: check?.unknownCalls ?? 0, refusals: check?.refusals ?? {},
+    accepted: verdict.accepted, costUsd: check?.costUsd ?? 0, calls: check?.calls ?? 0, unknownCalls: check?.unknownCalls ?? 0, refusals: check?.refusals ?? {},
     durationMs: check?.durationMs ?? null, error: check?.error ?? null,
+    ...(opts.compare ? { compare: opts.compare, canonicalExact: s?.canonicalExact ?? null } : {}), ...(verdict.acceptance ? { acceptance: verdict.acceptance } : {}),
   };
 }
 
@@ -209,8 +242,8 @@ async function liveDeps() {
     runCompiled: async a => (await import('./run-compiled.mjs')).runCompiled(a),
     compile: async a => (await import('./compile.mjs')).compile(a),
     // compile.mjs's host acceptance check again, on the solve.mjs the builder left, at a higher cap.
-    recheck: async ({ workdir, solvePath, traces, regressions, modelPort, models, capUsd, label, promptVersion }) => (await import('./compile.mjs')).hostCheck({
-      dir: path.join(workdir, '.host-check-recheck'), solveSource: readFileSync(solvePath, 'utf8'), traces, regressions, modelPort, models, capUsd, label, promptVersion }),
+    recheck: async ({ workdir, solvePath, traces, regressions, modelPort, models, capUsd, label, promptVersion, compare }) => (await import('./compile.mjs')).hostCheck({
+      dir: path.join(workdir, '.host-check-recheck'), solveSource: readFileSync(solvePath, 'utf8'), traces, regressions, modelPort, models, capUsd, label, promptVersion, compare }),
     createModelPort: a => createModelPortSync(a),
     score: beds.score, makeTasks: beds.makeTasks, loadFamily: beds.loadFamily,
   };
@@ -377,6 +410,12 @@ class JitRun extends ArmRun {
   // Prompt version 2 solvers run on flow-v2.mjs; version 1 keeps run-compiled's default (flow.mjs, frozen), passing nothing.
   get flowPath() { const v = this.config.compile.promptVersion; return v && v >= 2 ? path.join(HERE, flowFileOf({ promptVersion: v })) : null; }
   get v2() { return !!(this.config.jit.shadowOnFlags || (this.config.compile.promptVersion ?? 1) >= 2); }
+  // v2.1 compile options, only when set (a default arm passes exactly what it passed before).
+  get compileOpts() {
+    const c = this.config.compile;
+    return { ...(c.compare ? { compare: c.compare, relTol: c.relTol, absTol: c.absTol } : {}), ...(c.acceptance ? { acceptance: c.acceptance, minPartial: c.minPartial } : {}) };
+  }
+  get compareOf() { const c = this.config.compile; return c.compare === 'tolerant' ? { mode: 'tolerant', relTol: c.relTol, absTol: c.absTol } : null; }
 
   addTrace(state, trace, t, role, kind) {
     if (trace?.answer == null) return false;   // the compiler distils answers, not failures
@@ -399,7 +438,7 @@ class JitRun extends ArmRun {
       const r = await this.deps.compile({ familyId: this.config.familyId, traces: inputs.traces, previous: inputs.previous, regressions: inputs.regressions, builderModel,
         builderEffort: settings.builderEffort, builderBudgetUsd: settings.builderBudgetUsd, gatewayUsd: settings.gatewayUsd, checkUsd: settings.checkUsd ?? settings.gatewayUsd,
         minutes: settings.minutes, perTaskUsd: this.config.perTaskUsd, ...(this.config.compile.promptVersion ? { promptVersion: this.config.compile.promptVersion } : {}),
-        modelPort: this.port, workRoot: path.join(this.work, 'compile'), label: `v${n}-${tag}${attempt ? `-r${attempt}` : ''}`, models: this.arm.models, version: n });
+        ...this.compileOpts, modelPort: this.port, workRoot: path.join(this.work, 'compile'), label: `v${n}-${tag}${attempt ? `-r${attempt}` : ''}`, models: this.arm.models, version: n });
       const rec = r.record ?? {};
       // Every dollar of the compile: the builder session, its gateway calls, and the host acceptance check.
       tr.spend('compileBuilder', rec.builderCostUsd ?? 0, rec.builderCostUnknown);
@@ -415,10 +454,13 @@ class JitRun extends ArmRun {
       const capUsd = 2 * (settings.checkUsd ?? settings.gatewayUsd);
       tr.ev('recheck', { version: n, builderModel, reason: 'budget deopts in the host check', budgetDeopts: rec.checkTraces.deoptKinds.budget, capUsd });
       const rc = await this.deps.recheck({ workdir: res.workdir, solvePath: res.solvePath, traces: inputs.traces, regressions: inputs.regressions, modelPort: this.port, models: this.arm.models,
-        capUsd, label: `v${n}-${tag}-recheck`, ...(this.config.compile.promptVersion ? { promptVersion: this.config.compile.promptVersion } : {}) });
+        capUsd, label: `v${n}-${tag}-recheck`, ...(this.config.compile.promptVersion ? { promptVersion: this.config.compile.promptVersion } : {}),
+        ...(this.compareOf ? { compare: this.compareOf } : {}) });
       recheckUsd = rc.costUsd ?? 0;
       tr.spend('compileCheck', recheckUsd, (rc.unknownCalls ?? 0) > 0);
-      rec.checkTraces = { ...checkFromSummary(rc, res.workdir, inputs.regressions.length), recheck: { capUsd, firstCheck: compactCheck(rec.checkTraces) } };
+      const how = this.config.compile.acceptance || this.compareOf ? { acceptance: this.config.compile.acceptance, minPartial: this.config.compile.minPartial, compare: this.compareOf,
+        traces: inputs.traces, regressions: inputs.regressions } : {};
+      rec.checkTraces = { ...checkFromSummary(rc, res.workdir, inputs.regressions.length, how), recheck: { capUsd, firstCheck: compactCheck(rec.checkTraces) } };
     }
     mkdirSync(vdir, { recursive: true });
     if (hasSolve) copyFileSync(res.solvePath, path.join(vdir, 'solve.mjs'));
@@ -518,6 +560,8 @@ class JitRun extends ArmRun {
     const scheduled = !!(J.shadowEvery && state.compiledOks % J.shadowEvery === 0), flagged = !!(J.shadowOnFlags && flags > 0);
     if (scheduled || flagged) {
       const reason = J.shadowOnFlags ? (scheduled && flagged ? 'schedule+flag' : scheduled ? 'schedule' : 'flag') : null;
+      // Tolerant arms: did the tolerant agreement with the compiled answer also hold under canonical JSON? (a diagnostic)
+      const canon = ans => (J.compare === 'tolerant' ? { canonicalAgree: sameAnswer(ans, rc.output) } : {});
       const why = reason ? { reason } : {};
       if (reason) extra.shadowReason = reason;
       // Shadow: the arm's interpreter on the same task, fresh session; it never sees the compiled answer.
@@ -526,15 +570,15 @@ class JitRun extends ArmRun {
       catch (e) { if (e.code !== 'ENV_FAULT') throw e; this.fault(t, e); tr.ev('shadow-fault', why); }
       if (s1) extra.shadowTraceId = s1.traceId;
       if (s1 && s1.answer == null) tr.ev('shadow', { version, agree: null, note: 'shadow gave no answer', ...why });
-      else if (s1 && sameAnswer(s1.answer, rc.output, J.compare)) { tr.ev('shadow', { version, agree: true, ...why }); this.addTrace(state, s1, t, 'shadow', 'shadow'); }
+      else if (s1 && sameAnswer(s1.answer, rc.output, J.compare, J)) { tr.ev('shadow', { version, agree: true, ...why, ...canon(s1.answer) }); this.addTrace(state, s1, t, 'shadow', 'shadow'); }
       else if (s1) {
         tr.ev('shadow', { version, agree: false, ...why }); tr.ev('disagree', { version });
         let s2 = null;
         try { s2 = await this.interpret(tr, t, 'adjudicator', model); }
         catch (e) { if (e.code !== 'ENV_FAULT') throw e; this.fault(t, e); tr.ev('adjudicator-fault'); }
         if (s2) extra.adjudicatorTraceId = s2.traceId;
-        if (s2 && sameAnswer(s2.answer, rc.output, J.compare)) tr.ev('adjudicate', { version, outcome: 'compiled' });
-        else if (s2 && sameAnswer(s2.answer, s1.answer, J.compare)) {
+        if (s2 && sameAnswer(s2.answer, rc.output, J.compare, J)) tr.ev('adjudicate', { version, outcome: 'compiled', ...canon(s2.answer) });
+        else if (s2 && sameAnswer(s2.answer, s1.answer, J.compare, J)) {
           // Compiled answer in the minority: deliver the majority, keep the case (never the oracle's verdict).
           delivered = 'adjudicated'; output = s1.answer;
           const regressionId = `reg-${String(t.idx).padStart(3, '0')}-${randomUUID().slice(0, 6)}`;

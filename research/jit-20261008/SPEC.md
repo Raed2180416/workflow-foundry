@@ -224,3 +224,39 @@ Write `report.md` and `report.json`. With K=1 per stream, any gap under 3 points
    - every remaining disagreement explained.
 
    check-traces agreement is recorded as a diagnostic.
+
+## Addendum v2.1 (2026-10-09): tolerant comparison, strict acceptance, prompt v3
+
+All opt-in. At their defaults the options leave the normalized config, so the dev configs keep their arm hashes, prompt
+v1 and v2 keep their text, and `flow.mjs` / `flow-v2.mjs` are unchanged (tests pin all three). DEV-NOTES D1, D3 and D4
+motivate them.
+
+- **`experiments/jit/compare.mjs`** is the one definition of a tolerant match:
+  - Numbers are equal when |a-b| ≤ max(absTol, relTol·max(|a|,|b|)) (defaults 0.01 and 1e-9).
+  - Strings are trimmed. Objects compare by keys.
+  - Arrays are multisets, matched by real bipartite matching. Tolerance is not transitive, so greedy pairing is not safe.
+  - Above 40,000 item pairs it falls back to a sound greedy pass. A match that pass finds is never wrong, but it can miss one.
+  - `tolerantAgreement` gives partial agreement, pairing items with an optimal assignment.
+- **`jit.compare: 'tolerant'`** (with `jit.relTol` and `jit.absTol`) applies to shadows and adjudication. Shadow events
+  also record `canonicalAgree`.
+- **`compile.compare: 'tolerant'`** (with `compile.relTol` and `compile.absTol`, which default to jit's) makes the host
+  check run `check-traces --tolerant`. The builder's own check-traces does the same through `tools/check-traces.json`.
+  The record gains `compare` and `canonicalExact`.
+- **`compile.acceptance: 'strict'`** (with `compile.minPartial`, default 0.9) lives in `acceptance.mjs`. A compile is
+  accepted only if all three hold:
+  1. The check is clean.
+  2. The mean partial over the labelled traces is at least minPartial, or at least one trace is exact.
+  3. Every diff case is explained by a note that names it and quotes at least 12 characters that occur verbatim
+     (whitespace-normalised) in that case's prompt, inputs or files.
+
+  The record lists which criteria passed and which failed.
+- **`compile.promptVersion: 3`** is the v2 text with lines inserted:
+  - a near-miss scan after any grouping step, sent to a same-entity judge and flagged;
+  - in a recompile, read the deopts, then calibrate the failing check or make it an earlier guard, never loosening it
+    silently;
+  - quotes copied verbatim;
+  - the strict rule and the tolerance stated when the compile uses them.
+
+  It runs on `flow-v2.mjs`.
+- **`report.mjs`** shows the comparison and acceptance per compile attempt, only for arms that set these options.
+  `tierdown.mjs --tolerant` scores decisions with `tolerantAgreement`.
