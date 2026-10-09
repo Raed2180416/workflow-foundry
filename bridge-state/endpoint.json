@@ -6,7 +6,7 @@
   "tunnelReadyConnections": 1,
   "daemonVersion": "0.2.0",
   "startedAt": "2026-10-08T07:57:27.826Z",
-  "heartbeatAt": "2026-10-09T07:23:58.446Z",
+  "heartbeatAt": "2026-10-09T07:39:15.956Z",
   "gpu": {
     "name": "NVIDIA GeForce RTX 4060 Laptop GPU",
     "memoryTotalMiB": 8188,
