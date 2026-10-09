@@ -264,3 +264,118 @@ Code = `runCode` (Python), which reports booleans.
    Mask `/dev/nvidia*` in the executor unless a run needs it.
 5. **Host logs (low).** `/var/log/journal` is readable as a directory. Journal files were not tested. Consider adding
    `/var/log` to `DEFAULT_HIDDEN`.
+
+## 6. Fix (2026-10-09, engine lane, owner's blanket permission of 2026-10-09)
+
+*Appended after the probe; §0–§5 are unchanged. Code: `src/executors/claude-code.mjs` only (`src/sandbox.mjs` needed no
+change: `runCode` already had an allow-list environment, an allow-list root and five `/dev` nodes). Tests:
+`tests/executor-sandbox.test.mjs`, one allow-list line in `tests/models-policy.test.mjs`. The construction-kit hash
+changes; see ENGINE-FREEZE.md.*
+
+**6.1 Environment (§5.1): allow-list.** `runClaudeCode` now builds its environment with `executorEnv()`; the host
+environment no longer passes through the `SCRUBBED_ENV` deny-list. Kept from the host, each for a stated reason in
+`EXECUTOR_ENV_ALLOWED`:
+- `PATH`, `LANG`, `LC_ALL`, `LC_*`, `TERM`, `USER`, `LOGNAME`;
+- `CLAUDE_CODE_OAUTH_TOKEN` (the owner-provisioned CLI auth);
+- the policy's closed `childEnv` list (`CHILD_ENV_ALLOWED`: `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`,
+  `FORCE_PROMPT_CACHING_5M`, `DISABLE_TELEMETRY`, `DISABLE_ERROR_REPORTING`, `DISABLE_AUTOUPDATER`);
+- TLS trust and egress routing for hosts that only have a proxy (the cloud): `NODE_EXTRA_CA_CERTS`,
+  `NODE_USE_SYSTEM_CA`, `HTTPS_PROXY`, `HTTP_PROXY`, `NO_PROXY` and their lower-case forms. None of the proxy
+  variables is set on this laptop.
+
+The executor sets `TMPDIR=/tmp` and `HOME`. `HOME` must lie in a hidden root; otherwise the session is refused
+(`SANDBOX_ENV`). No host `FOUNDRY_*` variable passes. The gateway pair (`FOUNDRY_MODEL_GATEWAY_URL`,
+`FOUNDRY_MODEL_GATEWAY_TOKEN`, C0 arm F) arrives only as explicit `extraEnv`, carrying a token the host-side gateway
+minted for that session. `extraEnv` is still checked against `SCRUBBED_ENV`. It is also refused for any other
+credential-like name (`token|key|secret|pass|auth|cred`, except `FOUNDRY_MODEL_GATEWAY_TOKEN`) and for `HOME`.
+Dropped: everything else, including `ANTHROPIC_BASE_URL`, `XDG_*`, `DBUS_SESSION_BUS_ADDRESS`, `DISPLAY` and the
+parent session's `CLAUDE_CODE_*`.
+
+**6.2 Re-run of the env and device parts.** The probe workdir `arm-own/i000-probe` was used, with the §1 `p` helper
+lines in `probe-env-dev.sh` left there. Only names and counts were printed.
+- "before" rebuilds the pre-fix construction: `scrubEnv()` plus `TMPDIR`, keepRo `~/.local/bin` and
+  `~/.local/share/claude`, the host `/dev`, and `/var/log` not hidden.
+- "after" is `runClaudeCode` itself, with the probe script as `binary`.
+
+| check | host | before | after |
+|---|---|---|---|
+| credential-like env names | 28 | **27** | **0**. `CLAUDE_CODE_OAUTH_TOKEN` is unset in this session; when set it is the only one |
+| env names in total | 154 | 154 | 21: the allow-list hits, `TMPDIR`, `HOME`, the probe's own `PROBE_OUT`, and `PWD`, `SHLVL`, `_` set by `sh` |
+| `/dev` entries | 240 | 240 (host devtmpfs) | 13: `fd full null ptmx pts random shm stderr stdin stdout tty urandom zero` |
+| `/dev/nvidia0` exists / writable | 0 / 0 | 0 / 0 | **1 / 1** (absent) |
+| `/dev/dri`, `/dev/nvme0n1` | present | present (nvme not readable) | absent |
+| `/var/log/journal` exists / readable | 0 / 0 | 0 / 0 | **1 / 1**: `/var/log` is an empty tmpfs (0 entries, host 29) |
+| `$HOME/.local/bin` entries | 402 | 402 | **1** (`claude`) |
+| `claude --version` inside | — | 2.1.295 | 2.1.295 (the narrowed keep is enough to start the CLI) |
+| `id -u` inside / `mount -t tmpfs` | — | 0, mount allowed (pre-fix) | 1000, "must be superuser" (§6.5) |
+
+The "before" column uses the current `sandboxScript`, so its uid row was measured as 1000. The pre-fix code ran the
+program as uid 0.
+
+The new test `live executor: only allow-listed variable names …` seeds a fake laptop-shaped environment and never reads
+the real one. The fake holds 15 `<SERVICE>_API_KEY_An` names, `ANTHROPIC_API_KEY`, `GH_TOKEN`, `AWS_SECRET_ACCESS_KEY`,
+a `*_PASSWORD`, a `*_CREDENTIALS`, the parent session's tokens and the host's own gateway token. Through
+`runClaudeCode`, only `CLAUDE_CODE_OAUTH_TOKEN` and the explicit per-session `FOUNDRY_MODEL_GATEWAY_TOKEN` survive the
+probe's name pattern.
+
+**6.3 keepRo (§5.3).** `DEFAULT_KEEP_RO` is now `/root/.ccr`, `/home/claude/.claude/remote` (cloud) and
+`binaryKeeps(['claude', 'node'])`. `binaryKeeps` covers the first `claude` and `node` on `PATH`, each symlink on the way,
+and the resolved real file. On this laptop that is `~/.local/bin/claude` (a symlink) and
+`~/.local/share/claude/versions/2.1.295`. `/usr/bin/node` sits outside every hidden root, so no step is needed for it.
+`maskSteps` now takes files and symlinks:
+- a kept file inside a hidden root is bound read-only at its own path;
+- a kept symlink inside a hidden root is recreated, pointing at the canonical path of its target;
+- a file or symlink outside every hidden root is left alone, so no `: >` ever touches a host file.
+
+Gone: `~/.local/bin` as a directory, with its other 401 entries, the other CLI versions, and `/root/.local`.
+
+**6.4 Devices and logs (§5.4, §5.5).**
+- `maskSteps` replaces `/dev` with a fresh tmpfs, remounted read-only and `nosuid`. It holds bind mounts of `null`,
+  `zero`, `full`, `random`, `urandom` and `tty` (`DEFAULT_DEVICES`), the `fd`/`stdin`/`stdout`/`stderr` links, a
+  private `/dev/shm` (tmpfs, mode 1777) and a new `devpts` instance (`newinstance`, own ptys, `/dev/ptmx` linked to it).
+- A read-only mount does not stop writes to device nodes. That is why the probe found `/dev/nvidia0` writable under
+  the read-only remount.
+- `devices: null` keeps the old inherited `/dev`; nothing uses it.
+- `/var/log` is in `DEFAULT_HIDDEN`.
+- `runSandboxed` uses `maskSteps` and `sandboxScript`, so it gets the same `/dev`, `/var/log` and uid changes without
+  any change to its own file.
+
+**6.5 Uid drop (live smoke `bb81aff`).** Claude CLI 2.1.295 refuses `--permission-mode bypassPermissions` when
+`getuid()` is 0, which is the case under `--map-root-user`. The outer namespace is unchanged (`UNSHARE_ARGS`), because
+the mount steps need namespace root. The program is now exec'd as
+`unshare --user --map-user=<host uid> --map-group=<host gid> <binary> …`. The nested user namespace does not own the
+mount namespace:
+- the session runs as uid 1000;
+- `mount`, `umount` of a mask, and `unshare --map-root-user mount …` all fail (live test);
+- the private home and `/tmp` masks stay writable.
+
+`sandboxAvailable()` probes that nested shape. `IS_SANDBOX` and `CLAUDE_CODE_BUBBLEWRAP` are not used.
+
+**6.6 Accounting.** A session that emitted no stream event (no `system/init`, which precedes the first model call) is
+booked at $0 with `costUnknown: false`. That covers a sandbox that never got ready and a CLI that bailed at startup (the
+smoke's `EXECUTOR_PROTOCOL` case, earlier imputed at the full budget). A session killed after emitting events is still
+charged its budget bound (R5 test unchanged).
+
+**6.7 Network (§5.2): not changed; channel narrowed.**
+- `runClaudeCode` and `runSandboxed({ network: true })` still share the host network namespace. The CLI must reach
+  `api.anthropic.com`, and the C0 F-arm builder must reach the host-side model gateway on loopback. A private netns
+  needs an egress proxy, which is open as THESIS D10, so none was added.
+- Loopback services stay reachable: Ollama 11434, PostgreSQL 5432/5433, and 8765, 3000, 7331 and 631. The abstract
+  unix sockets do too.
+- What changed is the credential half of the channel. The builder holds no third-party API key, so it cannot pay for
+  or authenticate to a non-Claude model API over that network. Unauthenticated local services (Ollama) remain
+  callable.
+- `nestedModelUses` still detects only `claude` CLI and Anthropic API or SDK use. A call to Ollama or another
+  endpoint would not be counted. Until D10 lands, a run should not start while a loopback model server is listening, or
+  its transcripts need a scan for non-Claude endpoints.
+- `runSandboxed({ network: false })` and `runCode` remain fully cut off.
+
+**6.8 Tests** (`node --test --max-old-space-size=1024 --test-concurrency=1`):
+- `tests/executor-sandbox.test.mjs`: 15/15, live, nothing skipped. Six tests are new: the allow-list, `binaryKeeps`
+  on a fake tree, `/dev` steps, the uid drop and probe shape, the probe re-run through `runClaudeCode`, and the
+  startup-bail accounting. One more new live test covers `runSandboxed` with a kept link.
+- `tests/*.test.mjs`: 1003 tests, 984 pass, 0 fail, 19 skipped (gated).
+- The executor-using `experiments/jit` and `experiments/lib` tests: 105/105.
+- `experiments/kev-data/test/failures-code.test.mjs` fails (20 tests) with `SANDBOX_UNAVAILABLE … /proc/sys/fs/binfmt_misc`.
+  That failure comes from the frozen `880c6b9` `runCode` copy under `.foundry/kev-data/frozen-src`, which predates
+  the locked-flag fix. It is unrelated to this change.
