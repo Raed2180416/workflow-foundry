@@ -6,9 +6,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { generate, oracle, referenceSolve, badControls, _internals } from '../../../../beds/kinetics/index.mjs';
-import { tolerantEqual } from '../../../../experiments/jit/compare.mjs';
 import { fitA, fitB, SOP_FITTERS, VARIANT_FITTERS, fitAnswer, sigfig } from './fitters.mjs';
 import { retainedPoints, refitAnswer } from './refit.mjs';
+// dist(), same(), quant() and TK live in metric.mjs (shared with stage-b-analyze.mjs); re-exported here.
+import { TK, same, dist, quant } from './metric.mjs';
+export { TK, same, dist, quant };
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const outDir = process.argv[2] ?? path.join(here, 'out');
@@ -19,31 +21,8 @@ if (SEEDS.some(s => s < 201 || s > 224)) throw new Error('seed guard: kinetics d
 const diffOf = s => (s <= 216 ? 4 : 5);
 const RELTOLS = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05];
 const FINE_RELTOLS = [1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4];            // how small can relTol go before fitter noise matters
-const TK = ['vmax', 'km'];
 const LOOSE_RELTOLS = [0.08, 0.10, 0.15, 0.20];                          // above compare.mjs MAX_REL_TOL 0.05: allowLooseTolerance (README precision 0.08, prompt +-10%)
-const same = (a, b, relTol) => tolerantEqual(a, b, { relTol, absTol: 1e-9, tolerantKeys: TK, ...(relTol > 0.05 ? { allowLooseTolerance: true } : {}) });
 
-// per-answer distance, as compare.mjs measures it: |a-b| / max(|a|,|b|) per number; also relative to a (the "correct" one)
-function dist(a, b) {
-  const mb = new Map(b.conditions.map(c => [c.condition_id, c]));
-  let maxSym = 0, maxRel = 0, nBad = 0, perCond = [];
-  for (const c of a.conditions) {
-    const o = mb.get(c.condition_id);
-    if (!o) { maxSym = Infinity; maxRel = Infinity; nBad++; continue; }
-    for (const k of TK) {
-      const d = Math.abs(c[k] - o[k]);
-      const sym = d / Math.max(Math.abs(c[k]), Math.abs(o[k]), 1e-300), rel = d / Math.abs(c[k]);
-      maxSym = Math.max(maxSym, sym); maxRel = Math.max(maxRel, rel);
-      perCond.push({ id: c.condition_id, k, sym, rel });
-    }
-  }
-  const sa = new Set(a.excluded_samples), sb = new Set(b.excluded_samples);
-  const setSame = sa.size === sb.size && [...sa].every(x => sb.has(x));
-  const vmaxMax = Math.max(0, ...perCond.filter(p => p.k === 'vmax').map(p => p.rel));
-  const kmMax = Math.max(0, ...perCond.filter(p => p.k === 'km').map(p => p.rel));
-  return { maxSym, maxRel, vmaxMax, kmMax, setSame, nOnlyIn: [...sa].filter(x => !sb.has(x)).length + [...sb].filter(x => !sa.has(x)).length, perCond };
-}
-const quant = (xs, q) => { if (!xs.length) return null; const s = [...xs].sort((a, b) => a - b), i = (s.length - 1) * q, lo = Math.floor(i), hi = Math.ceil(i); return s[lo] + (s[hi] - s[lo]) * (i - lo); };
 const rate = (n, d) => (d ? n / d : null);
 
 const rows = [];            // one record per (seed, answer-name)

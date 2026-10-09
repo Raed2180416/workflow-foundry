@@ -185,3 +185,103 @@ Reading:
   and Lineweaver–Burk fail it on 7, 12 and 19 seeds.
 - Fitter noise floor 1e-8 is the optimiser tolerance, not a property of the data. A solver with a looser stopping rule (for
   example scipy `curve_fit` defaults, ~1e-8) lands in the same range.
+
+## Stage B driver
+
+*Added 2026-10-09. Built and tested at $0 with a stub interpreter; the live run waits on the laptop sandbox fix (the CLI's
+root check under `unshare --map-root-user`, `SMOKE-laptop-20261009`).*
+
+| file | what |
+|---|---|
+| `stage-b.mjs` | Resumable driver: N sandboxed agent interpretations per kinetics dev seed, oracle-scored, one row per session. |
+| `stage-b-analyze.mjs` | Items 1–4 above from `sessions.jsonl`: writes `STAGE-B.md` and `stage-b.json` next to it. |
+| `metric.mjs` | `dist()`, `same()`, `quant()`, `TK`, moved verbatim out of `gauge.mjs`, which now imports and re-exports them. `gauge.mjs` runs its experiment on import, so the analysis imports `metric.mjs`, not `gauge.mjs`. After the move, `gauge.mjs`'s stdout and all four `out/` files, and `tables.mjs`'s output, are byte-identical to the committed ones. |
+| `stage-b.test.mjs` | `node --max-old-space-size=1024 --test stage-b.test.mjs`: plan, resume, stub labelling, environment-fault retry, spend stop, token check, cause helpers. Stub and scripted fakes only, no model call. |
+
+### What the driver does
+
+- **Tasks, as the stream builds them.** Seeds and difficulties are read from `experiments/jit/configs/dev-kinetics-1.json`
+  (d4 for 201–216, d5 for 217–224). Tasks come from `experiments/lib/beds.mjs` `makeTasks`, so `taskKey` and `taskHash`
+  (`sha256(canonical(task))`) are the stream's. Seeds outside 201–224 are refused, and the seed ledger is checked with
+  `assertSeedsAllowed` (purpose `jit-dev`), as `normalizeConfig` checks it. The two sessions of a seed run next to each
+  other, so a spend stop leaves complete pairs for the first seeds.
+- **Session.** `interpret({ task, familyId: 'kinetics', outputSchema, model, budgetUsd: cap, timeoutMs, workdir, effort,
+  traceId })` from `experiments/jit/interpret.mjs`. This is the call `stream.mjs` makes: B0 instructions, `answer.json`
+  contract, bed `outputSchema`, effort `agentEffort` (unset, null), timeout `agentMinutes` (15 min). The model must be
+  listed in `policy/models.json` under `claude-cli`; the default is `claude-haiku-5-5`.
+- **Verdict, as the stream scores it.** No answer means fail with score 0. Otherwise `beds.mjs score('kinetics', task,
+  answer)`, which is the bed `oracle()`.
+- **Environment faults** (`ENV_FAULTS` of `experiments/lib/runner.mjs`) are not outcomes, the same rule the stream
+  applies. The driver retries once inline and writes the attempt to `faults.jsonl`, not `sessions.jsonl`, so a restart
+  retries it again. After `--max-env-faults` (default 3) sessions in a row end in faults, the run stops; this covers the
+  root-check failure.
+- **Spend.** `--cap` (default **$0.45**) is the CLI's `--max-budget-usd` for each session. `--spend-stop` (default
+  **$5.00**) is checked against the actual ledger before each session starts. Actual cost is the CLI-reported cost. A
+  cost-unknown session counts as $0 when its stream shows zero tokens; the smoke's root-check failure was booked at the
+  full cap but never reached the API. Any other cost-unknown session counts at the full cap. In-flight sessions finish, so
+  the worst-case total is spend-stop + 2 × cap = **$5.90**. `ledger.jsonl` keeps both booked and actual cost for every
+  attempt.
+- Concurrency is 2 at most (the `--concurrency` value is clamped). `--dry-run` prints the plan with task hashes and stops.
+
+### Run it (live)
+
+The token comes from the environment; the driver checks only that `CLAUDE_CODE_OAUTH_TOKEN` is set and never reads or
+prints it.
+
+```sh
+cd /home/raed/projects/workflow-foundry
+env -i PATH="$PATH" HOME="$HOME" TMPDIR=/tmp LANG=C.UTF-8 TERM=dumb CLAUDE_CODE_OAUTH_TOKEN="<from the environment>" \
+  /opt/node24/bin/node --max-old-space-size=1024 research/jit-20261008/analysis/kinetics-gauge/stage-b.mjs \
+  --seeds 201-224 --n 2 --cap 0.45 --spend-stop 5
+/opt/node24/bin/node --max-old-space-size=1024 research/jit-20261008/analysis/kinetics-gauge/stage-b-analyze.mjs
+```
+
+Re-running the same command resumes: (seed, session) pairs already in `sessions.jsonl` are skipped. Exit code 3 means
+the run stopped early (spend stop or a fault streak); the summary line says which. Run `--dry-run` first.
+
+**Expected cost.** 48 sessions. The earlier kinetics Haiku agent stream cost $2.10 for 24 tasks ($0.088 per session,
+FRONTIER-GAPS §0, before the 2026-10-08 CLI flags), so the expected total is about **$4.2**. The records smoke booked
+$0.05–0.45 per session, which gives a range of $2.4 to the $5 stop. The worst case with every session at cap ($21.60) is
+cut off by the spend stop. If the stop triggers, the last seeds (d5) are the ones missing; raise `--spend-stop` and rerun
+to finish them. The stream's own agent cap is $2 (`agentBudgetUsd`), so a session that hits the $0.45 cap
+(`EXECUTOR_BUDGET`) stopped earlier than it would have in the stream. The analysis lists error codes.
+
+### What it writes
+
+Under `--out`: `out/stage-b/` for live runs, `out/stage-b-stub/` with `--stub` (git-ignored).
+
+- `run.json`: mode, model, caps, config. A restart with a different mode or model is refused.
+- `sessions.jsonl`: one row per finished session. Fields: seed, difficulty, taskKey, taskHash, session, attempt,
+  model, cap, answer (parsed `answer.json` or null), answerValid, oracle (pass, score, reason, set exact/missing/extra,
+  per-condition errors), costUsd, costUnknown, actualUsd, streamUsage, durationMs, error code and message, turns, tools,
+  tracePath, workdir.
+- `ledger.jsonl`: every attempt. `faults.jsonl`: environment-fault attempts. `traces/<s…-k…-a…>.json`: a copy of each
+  attempt's `trace.json`.
+- Session workdirs (`trace.json`, CLI transcript, agent files) go in `--work`. The default for live runs is
+  `/var/tmp/foundry-work/kinetics-stage-b/<hash of --out>/`, under the executor's `WORK_ROOT`, on disk and never
+  auto-cleaned. Stub runs use `<out>/sessions/`.
+
+### Analysis outputs (`STAGE-B.md`, `stage-b.json`)
+
+1. Correct–correct pairs (both sessions of a seed pass): the spread distribution and FD@{0.001, 0.005, 0.01, 0.02, 0.05,
+   0.1} with exact exclusion sets. Rows: all pairs, same and different set, d4 and d5, and per number (Vmax and Km,
+   inhibitor-free and inhibitor conditions, per condition id). All schema-valid pairs are also split by exclusion set.
+2. Wrong agent answers. For each: what the oracle fails on, set equality, distance to the reference and to the nearest
+   passing agent answer, error to the truth, and region (set differs / same set < 0.05 / 0.05–0.134 / ≥ 0.134). The
+   Stage A control table sits beside them.
+3. A cause for each correct–correct disagreement, from per-answer explanation on the shared points with the answer's own
+   set: SOP fit up to the printed digits, a named non-SOP estimator, a loose optimiser (≤ 1e-3), or other. Causes are
+   counted per relTol, with the share that vanishes after the shared refit (row 37) and the row 37 caveat.
+4. Oracle-passing answers: distance to the reference and error to the generating truth, beside the reference's own
+   error.
+
+Every table states its n. The report says that 24 seeds × 2 is dev calibration, not a freeze (FG §4.1, O1).
+
+### Stub run (2026-10-09, driver test only, not agent data)
+
+`stage-b.mjs --stub` then `stage-b-analyze.mjs out/stage-b-stub`: 48/48 sessions recorded, fake cost $0.48. The resume
+test ran 20 sessions, then 28. The stub's answers are the reference perturbed (noise ±0.8%, 3 s.f. rounding, Hanes–Woolf,
+replicate means) plus a planted wrong answer every 7th session. Results: 43/48 pass, 19 correct–correct pairs, 5 wrong
+answers. Every analysis section rendered, and the per-answer classifier picked out the planted estimators
+(`estimator:hanes`, `estimator:means`, `sop-rounded-*`). These numbers describe the stub, not Haiku; the output directory
+carries `STUB-DATA-NOT-LIVE.txt`, and its report says so in its title.
