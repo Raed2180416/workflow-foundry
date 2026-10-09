@@ -1,0 +1,82 @@
+{
+ "about": "Upper bounds on JIT interpreter-role spend that same-model agent draws could replace. They assume request equivalence (equivalence-check.json) and that enough replicate agent draws exist per (task, model).",
+ "rows": [
+  {
+   "arm": "records O/H",
+   "totalUsd": 7.53,
+   "shareableUsd": 5.15,
+   "share": 68.4,
+   "sameModelAgent": "Opus agent",
+   "roleDraws": null,
+   "usdPerRoleDraw": null,
+   "agentUsdPerTask": 0.56,
+   "src": "DEV-NOTES D12 cost line"
+  },
+  {
+   "arm": "records S/H",
+   "totalUsd": 8.99,
+   "shareableUsd": 3.27,
+   "share": 36.4,
+   "sameModelAgent": "Sonnet agent",
+   "roleDraws": 11,
+   "usdPerRoleDraw": 0.3,
+   "agentUsdPerTask": 0.29,
+   "src": "DEV-NOTES D10 cost line and delivery line"
+  },
+  {
+   "arm": "records H/H (dossier snapshot)",
+   "totalUsd": 5.79,
+   "shareableUsd": 0.81,
+   "share": 14,
+   "sameModelAgent": "Haiku agent",
+   "roleDraws": null,
+   "usdPerRoleDraw": null,
+   "agentUsdPerTask": 0.1,
+   "src": "dossier 9 §B10.1: $0.81 = 14% (total implied; raw rows lost)"
+  },
+  {
+   "arm": "kinetics S/H (dossier snapshot)",
+   "totalUsd": 18.8,
+   "shareableUsd": 1.88,
+   "share": 10,
+   "sameModelAgent": "Sonnet agent",
+   "roleDraws": null,
+   "usdPerRoleDraw": null,
+   "agentUsdPerTask": 0.31,
+   "src": "dossier 9 §B10.1: $1.88 = 10% (total implied; raw rows lost)"
+  },
+  {
+   "arm": "kinetics O/H (17 of 24 tasks)",
+   "totalUsd": 17.82,
+   "shareableUsd": 0,
+   "share": 0,
+   "sameModelAgent": null,
+   "roleDraws": null,
+   "usdPerRoleDraw": null,
+   "agentUsdPerTask": null,
+   "src": "no Opus agent arm in kinetics"
+  }
+ ],
+ "recordsStream": {
+  "totalUsd": 46.57,
+  "shareableUsd": 9.23,
+  "share": 19.8
+ },
+ "coverage": {
+  "PREREG-stream §2 (draft)": {
+   "H/H": "pool exists",
+   "S/H": "pool exists",
+   "O/H": "pool exists"
+  },
+  "HANDOFF §5.2 held-out list": {
+   "S/H": "no same-model agent arm: nothing to share",
+   "O/H": "pool exists",
+   "H/H": "pool exists"
+  },
+  "BLOCKER-SYNTHESIS row 8 (R0)": {
+   "S/H": "no same-model agent arm: nothing to share",
+   "O/H": "no same-model agent arm: nothing to share",
+   "H/H": "pool exists"
+  }
+ }
+}

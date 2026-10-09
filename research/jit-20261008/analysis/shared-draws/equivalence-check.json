@@ -1,0 +1,207 @@
+{
+ "about": "Row 23 equivalence check: what the Claude CLI receives from stream.mjs agent arms vs JIT interpreter roles (same task, same model). Stand-in CLI; $0; no model calls.",
+ "code": {
+  "experiments/jit/stream.mjs": {
+   "sha256": "4221dbc73559122c",
+   "head": "bb81aff",
+   "dirty": true
+  },
+  "experiments/jit/interpret.mjs": {
+   "sha256": "549c8f3da14f39d3",
+   "head": "bb81aff",
+   "dirty": false
+  },
+  "experiments/lib/arms/b0-agent.mjs": {
+   "sha256": "2b72f932ac109387",
+   "head": "bb81aff",
+   "dirty": false
+  },
+  "src/executors/claude-code.mjs": {
+   "sha256": "60eb32f5b28ee0da",
+   "head": "bb81aff",
+   "dirty": true
+  }
+ },
+ "model": "claude-sonnet-5-5",
+ "argv": [
+  "-p",
+  "--model",
+  "claude-sonnet-5-5",
+  "--output-format",
+  "stream-json",
+  "--verbose",
+  "--no-session-persistence",
+  "--safe-mode",
+  "--strict-mcp-config",
+  "--mcp-config",
+  "{\"mcpServers\":{}}",
+  "--disable-slash-commands",
+  "--tools",
+  "Bash,Read,Write,Edit,Glob,Grep",
+  "--permission-mode",
+  "bypassPermissions",
+  "--max-budget-usd",
+  "2"
+ ],
+ "promptSha256": "20da1c688786230d",
+ "files": [
+  {
+   "file": "./files/notes.txt",
+   "sha256": "1b16b1df538ba12d"
+  },
+  {
+   "file": "./inputs.json",
+   "sha256": "2e80b1839a36dfdf"
+  }
+ ],
+ "sessions": [
+  {
+   "arm": "agent-claude-sonnet-5-5",
+   "idx": 0,
+   "role": "interpreter",
+   "cwdTemplate": "<workRoot>/shared-draws-equiv/agent-claude-sonnet-5-5/i000-interpreter-<rand6>",
+   "promptSha256": "20da1c688786230d",
+   "argvSha256": "37dcf734efca2a6a",
+   "filesSha256": "7c8f9d45e90fbbdf"
+  },
+  {
+   "arm": "agent-claude-sonnet-5-5",
+   "idx": 1,
+   "role": "interpreter",
+   "cwdTemplate": "<workRoot>/shared-draws-equiv/agent-claude-sonnet-5-5/i001-interpreter-<rand6>",
+   "promptSha256": "20da1c688786230d",
+   "argvSha256": "37dcf734efca2a6a",
+   "filesSha256": "7c8f9d45e90fbbdf"
+  },
+  {
+   "arm": "jit-claude-sonnet-5-5--claude-haiku-5-5",
+   "idx": 0,
+   "role": "interpreter",
+   "cwdTemplate": "<workRoot>/shared-draws-equiv/jit-claude-sonnet-5-5--claude-haiku-5-5/i000-interpreter-<rand6>",
+   "promptSha256": "20da1c688786230d",
+   "argvSha256": "37dcf734efca2a6a",
+   "filesSha256": "7c8f9d45e90fbbdf"
+  },
+  {
+   "arm": "jit-claude-sonnet-5-5--claude-haiku-5-5",
+   "idx": 1,
+   "role": "shadow",
+   "cwdTemplate": "<workRoot>/shared-draws-equiv/jit-claude-sonnet-5-5--claude-haiku-5-5/i001-shadow-<rand6>",
+   "promptSha256": "20da1c688786230d",
+   "argvSha256": "37dcf734efca2a6a",
+   "filesSha256": "7c8f9d45e90fbbdf"
+  },
+  {
+   "arm": "jit-claude-sonnet-5-5--claude-haiku-5-5",
+   "idx": 1,
+   "role": "adjudicator",
+   "cwdTemplate": "<workRoot>/shared-draws-equiv/jit-claude-sonnet-5-5--claude-haiku-5-5/i001-adjudicator-<rand6>",
+   "promptSha256": "20da1c688786230d",
+   "argvSha256": "37dcf734efca2a6a",
+   "filesSha256": "7c8f9d45e90fbbdf"
+  }
+ ],
+ "interpretArgs": [
+  {
+   "task": "synthetic:dev:d3:9901",
+   "role": "interpreter",
+   "differ": [
+    "traceId",
+    "workdir"
+   ],
+   "same": [
+    "budgetUsd",
+    "effort",
+    "familyId",
+    "model",
+    "outputSchema",
+    "task",
+    "timeoutMs"
+   ]
+  },
+  {
+   "task": "synthetic:dev:d3:9902",
+   "role": "shadow",
+   "differ": [
+    "traceId",
+    "workdir"
+   ],
+   "same": [
+    "budgetUsd",
+    "effort",
+    "familyId",
+    "model",
+    "outputSchema",
+    "task",
+    "timeoutMs"
+   ]
+  },
+  {
+   "task": "synthetic:dev:d3:9902",
+   "role": "adjudicator",
+   "differ": [
+    "traceId",
+    "workdir"
+   ],
+   "same": [
+    "budgetUsd",
+    "effort",
+    "familyId",
+    "model",
+    "outputSchema",
+    "task",
+    "timeoutMs"
+   ]
+  }
+ ],
+ "comparisons": [
+  {
+   "idx": 0,
+   "jitRole": "interpreter",
+   "same": {
+    "argv": true,
+    "prompt": true,
+    "files": true,
+    "model": true,
+    "effort": true,
+    "budgetUsd": true,
+    "taskSha256": true,
+    "cwd": false
+   },
+   "agentCwd": "<workRoot>/shared-draws-equiv/agent-claude-sonnet-5-5/i000-interpreter-<rand6>",
+   "jitCwd": "<workRoot>/shared-draws-equiv/jit-claude-sonnet-5-5--claude-haiku-5-5/i000-interpreter-<rand6>"
+  },
+  {
+   "idx": 1,
+   "jitRole": "shadow",
+   "same": {
+    "argv": true,
+    "prompt": true,
+    "files": true,
+    "model": true,
+    "effort": true,
+    "budgetUsd": true,
+    "taskSha256": true,
+    "cwd": false
+   },
+   "agentCwd": "<workRoot>/shared-draws-equiv/agent-claude-sonnet-5-5/i001-interpreter-<rand6>",
+   "jitCwd": "<workRoot>/shared-draws-equiv/jit-claude-sonnet-5-5--claude-haiku-5-5/i001-shadow-<rand6>"
+  },
+  {
+   "idx": 1,
+   "jitRole": "adjudicator",
+   "same": {
+    "argv": true,
+    "prompt": true,
+    "files": true,
+    "model": true,
+    "effort": true,
+    "budgetUsd": true,
+    "taskSha256": true,
+    "cwd": false
+   },
+   "agentCwd": "<workRoot>/shared-draws-equiv/agent-claude-sonnet-5-5/i001-interpreter-<rand6>",
+   "jitCwd": "<workRoot>/shared-draws-equiv/jit-claude-sonnet-5-5--claude-haiku-5-5/i001-adjudicator-<rand6>"
+  }
+ ]
+}

@@ -1,0 +1,1525 @@
+{
+ "about": "Router replay on committed arm totals (BLOCKER-SYNTHESIS row 29). Dev, K=1, 24 tasks; per-task rows lost.",
+ "resamples": 4000,
+ "families": {
+  "records": {
+   "fixed": [
+    {
+     "arm": "Haiku agent",
+     "kind": "agent",
+     "pass": 15,
+     "cost": 2.46
+    },
+    {
+     "arm": "Sonnet agent",
+     "kind": "agent",
+     "pass": 13,
+     "cost": 7.05
+    },
+    {
+     "arm": "Opus agent",
+     "kind": "agent",
+     "pass": 24,
+     "cost": 13.54
+    },
+    {
+     "arm": "JIT H/H (19 tasks, scaled)",
+     "kind": "jit",
+     "pass": 13.333,
+     "cost": 4.093
+    },
+    {
+     "arm": "JIT S/H",
+     "kind": "jit",
+     "pass": 22,
+     "cost": 8.99
+    },
+    {
+     "arm": "JIT O/H",
+     "kind": "jit",
+     "pass": 18,
+     "cost": 7.53
+    },
+    {
+     "arm": "static C0 (build cost excluded)",
+     "kind": "static",
+     "pass": 16,
+     "cost": 1.21
+    }
+   ],
+   "v0": [
+    {
+     "policy": "v0 H s=0",
+     "decision": "interpret every task",
+     "pass": 15,
+     "cost": 2.46,
+     "reasons": [
+      "t2: compile not worth it: 22 expected × ($0.102 − $0.050) = $1.15 < 1.0 × $3.00"
+     ]
+    },
+    {
+     "policy": "v0 H s=0.5",
+     "decision": "interpret every task",
+     "pass": 15,
+     "cost": 2.46,
+     "reasons": [
+      "t4: compile not worth it: 20 expected × ($0.102 − $0.050) = $1.05 < 2.0 × $3.00"
+     ]
+    },
+    {
+     "policy": "v0 H s=1",
+     "decision": "interpret every task",
+     "pass": 15,
+     "cost": 2.46,
+     "reasons": [
+      "t5: compile not worth it: 19 expected × ($0.102 − $0.050) = $1.00 < 3.0 × $3.00"
+     ]
+    },
+    {
+     "policy": "v0 S s=0",
+     "decision": "compile at task 2",
+     "pass": 20.875,
+     "cost": 9.231,
+     "reasons": [
+      "t2: expected savings $5.36 ≥ 1.0 × compile $3.00"
+     ]
+    },
+    {
+     "policy": "v0 S s=0.5",
+     "decision": "interpret every task",
+     "pass": 13,
+     "cost": 7.05,
+     "reasons": [
+      "t4: compile not worth it: 20 expected × ($0.294 − $0.050) = $4.88 < 2.0 × $3.00"
+     ]
+    },
+    {
+     "policy": "v0 S s=1",
+     "decision": "interpret every task",
+     "pass": 13,
+     "cost": 7.05,
+     "reasons": [
+      "t5: compile not worth it: 19 expected × ($0.294 − $0.050) = $4.63 < 3.0 × $3.00"
+     ]
+    },
+    {
+     "policy": "v0 O s=0",
+     "decision": "compile at task 2",
+     "pass": 18.5,
+     "cost": 8.203,
+     "reasons": [
+      "t2: expected savings $11.31 ≥ 1.0 × compile $3.00"
+     ]
+    },
+    {
+     "policy": "v0 O s=0.5",
+     "decision": "compile at task 4",
+     "pass": 19,
+     "cost": 8.877,
+     "reasons": [
+      "t4: expected savings $10.28 ≥ 2.0 × compile $3.00"
+     ]
+    },
+    {
+     "policy": "v0 O s=1",
+     "decision": "compile at task 5",
+     "pass": 19.25,
+     "cost": 9.213,
+     "reasons": [
+      "t5: expected savings $9.77 ≥ 3.0 × compile $3.00"
+     ]
+    }
+   ],
+   "byV": [
+    {
+     "V": 0.1,
+     "bestFixed": {
+      "arm": "static C0 (build cost excluded)",
+      "nv": 0.39
+     },
+     "bestAgent": {
+      "arm": "Haiku agent",
+      "nv": -0.96
+     },
+     "bestJit": {
+      "arm": "JIT H/H (19 tasks, scaled)",
+      "nv": -2.759
+     },
+     "bestV0": {
+      "policy": "v0 H s=0",
+      "decision": "interpret every task",
+      "nv": -0.96
+     },
+     "v0All": [
+      {
+       "policy": "v0 H s=0",
+       "nv": -0.96
+      },
+      {
+       "policy": "v0 H s=0.5",
+       "nv": -0.96
+      },
+      {
+       "policy": "v0 H s=1",
+       "nv": -0.96
+      },
+      {
+       "policy": "v0 S s=0",
+       "nv": -7.143
+      },
+      {
+       "policy": "v0 S s=0.5",
+       "nv": -5.75
+      },
+      {
+       "policy": "v0 S s=1",
+       "nv": -5.75
+      },
+      {
+       "policy": "v0 O s=0",
+       "nv": -6.353
+      },
+      {
+       "policy": "v0 O s=0.5",
+       "nv": -6.977
+      },
+      {
+       "policy": "v0 O s=1",
+       "nv": -7.288
+      }
+     ],
+     "clairvoyant": {
+      "nv": -0.96,
+      "pass": 15,
+      "cost": 2.46,
+      "policy": "agent H"
+     },
+     "v1": [
+      {
+       "V": 0.1,
+       "lambda": 0.25,
+       "prior": "inherit",
+       "feedback": "oracle",
+       "nv": -0.958,
+       "regretBestFixed": 1.348,
+       "regretBestAgent": -0.002,
+       "regretBestJit": -1.801,
+       "regretBestV0": -0.002,
+       "pBeatsAgentAndJit": 0.423,
+       "pBuys": 0
+      },
+      {
+       "V": 0.1,
+       "lambda": 0.25,
+       "prior": "inherit",
+       "feedback": "none",
+       "nv": -0.959,
+       "regretBestFixed": 1.349,
+       "regretBestAgent": -0.001,
+       "regretBestJit": -1.801,
+       "regretBestV0": -0.001,
+       "pBeatsAgentAndJit": 0.419,
+       "pBuys": 0
+      },
+      {
+       "V": 0.1,
+       "lambda": 0.25,
+       "prior": "uniform",
+       "feedback": "oracle",
+       "nv": -0.954,
+       "regretBestFixed": 1.344,
+       "regretBestAgent": -0.006,
+       "regretBestJit": -1.805,
+       "regretBestV0": -0.006,
+       "pBeatsAgentAndJit": 0.428,
+       "pBuys": 0
+      },
+      {
+       "V": 0.1,
+       "lambda": 0.25,
+       "prior": "uniform",
+       "feedback": "none",
+       "nv": -0.958,
+       "regretBestFixed": 1.348,
+       "regretBestAgent": -0.002,
+       "regretBestJit": -1.802,
+       "regretBestV0": -0.002,
+       "pBeatsAgentAndJit": 0.426,
+       "pBuys": 0
+      },
+      {
+       "V": 0.1,
+       "lambda": 0.5,
+       "prior": "inherit",
+       "feedback": "oracle",
+       "nv": -0.957,
+       "regretBestFixed": 1.347,
+       "regretBestAgent": -0.003,
+       "regretBestJit": -1.802,
+       "regretBestV0": -0.003,
+       "pBeatsAgentAndJit": 0.425,
+       "pBuys": 0
+      },
+      {
+       "V": 0.1,
+       "lambda": 0.5,
+       "prior": "inherit",
+       "feedback": "none",
+       "nv": -0.951,
+       "regretBestFixed": 1.341,
+       "regretBestAgent": -0.009,
+       "regretBestJit": -1.808,
+       "regretBestV0": -0.009,
+       "pBeatsAgentAndJit": 0.439,
+       "pBuys": 0
+      },
+      {
+       "V": 0.1,
+       "lambda": 0.5,
+       "prior": "uniform",
+       "feedback": "oracle",
+       "nv": -0.963,
+       "regretBestFixed": 1.353,
+       "regretBestAgent": 0.003,
+       "regretBestJit": -1.796,
+       "regretBestV0": 0.003,
+       "pBeatsAgentAndJit": 0.419,
+       "pBuys": 0
+      },
+      {
+       "V": 0.1,
+       "lambda": 0.5,
+       "prior": "uniform",
+       "feedback": "none",
+       "nv": -0.963,
+       "regretBestFixed": 1.353,
+       "regretBestAgent": 0.003,
+       "regretBestJit": -1.797,
+       "regretBestV0": 0.003,
+       "pBeatsAgentAndJit": 0.417,
+       "pBuys": 0
+      },
+      {
+       "V": 0.1,
+       "lambda": 1,
+       "prior": "inherit",
+       "feedback": "oracle",
+       "nv": -0.961,
+       "regretBestFixed": 1.351,
+       "regretBestAgent": 0.001,
+       "regretBestJit": -1.799,
+       "regretBestV0": 0.001,
+       "pBeatsAgentAndJit": 0.413,
+       "pBuys": 0
+      },
+      {
+       "V": 0.1,
+       "lambda": 1,
+       "prior": "inherit",
+       "feedback": "none",
+       "nv": -0.959,
+       "regretBestFixed": 1.349,
+       "regretBestAgent": -0.001,
+       "regretBestJit": -1.801,
+       "regretBestV0": -0.001,
+       "pBeatsAgentAndJit": 0.428,
+       "pBuys": 0
+      },
+      {
+       "V": 0.1,
+       "lambda": 1,
+       "prior": "uniform",
+       "feedback": "oracle",
+       "nv": -0.956,
+       "regretBestFixed": 1.346,
+       "regretBestAgent": -0.004,
+       "regretBestJit": -1.804,
+       "regretBestV0": -0.004,
+       "pBeatsAgentAndJit": 0.419,
+       "pBuys": 0
+      },
+      {
+       "V": 0.1,
+       "lambda": 1,
+       "prior": "uniform",
+       "feedback": "none",
+       "nv": -0.96,
+       "regretBestFixed": 1.35,
+       "regretBestAgent": 0,
+       "regretBestJit": -1.799,
+       "regretBestV0": 0,
+       "pBeatsAgentAndJit": 0.408,
+       "pBuys": 0
+      }
+     ]
+    },
+    {
+     "V": 1,
+     "bestFixed": {
+      "arm": "static C0 (build cost excluded)",
+      "nv": 14.79
+     },
+     "bestAgent": {
+      "arm": "Haiku agent",
+      "nv": 12.54
+     },
+     "bestJit": {
+      "arm": "JIT S/H",
+      "nv": 13.01
+     },
+     "bestV0": {
+      "policy": "v0 H s=0",
+      "decision": "interpret every task",
+      "nv": 12.54
+     },
+     "v0All": [
+      {
+       "policy": "v0 H s=0",
+       "nv": 12.54
+      },
+      {
+       "policy": "v0 H s=0.5",
+       "nv": 12.54
+      },
+      {
+       "policy": "v0 H s=1",
+       "nv": 12.54
+      },
+      {
+       "policy": "v0 S s=0",
+       "nv": 11.644
+      },
+      {
+       "policy": "v0 S s=0.5",
+       "nv": 5.95
+      },
+      {
+       "policy": "v0 S s=1",
+       "nv": 5.95
+      },
+      {
+       "policy": "v0 O s=0",
+       "nv": 10.297
+      },
+      {
+       "policy": "v0 O s=0.5",
+       "nv": 10.123
+      },
+      {
+       "policy": "v0 O s=1",
+       "nv": 10.037
+      }
+     ],
+     "clairvoyant": {
+      "nv": 13.01,
+      "pass": 17,
+      "cost": 3.99,
+      "policy": "agent H until task 16, then agent S"
+     },
+     "v1": [
+      {
+       "V": 1,
+       "lambda": 0.25,
+       "prior": "inherit",
+       "feedback": "oracle",
+       "nv": 10.64,
+       "regretBestFixed": 4.15,
+       "regretBestAgent": 1.9,
+       "regretBestJit": 2.37,
+       "regretBestV0": 1.9,
+       "pBeatsAgentAndJit": 0.219,
+       "pBuys": 0.219
+      },
+      {
+       "V": 1,
+       "lambda": 0.25,
+       "prior": "inherit",
+       "feedback": "none",
+       "nv": 12.601,
+       "regretBestFixed": 2.189,
+       "regretBestAgent": -0.061,
+       "regretBestJit": 0.409,
+       "regretBestV0": -0.061,
+       "pBeatsAgentAndJit": 0.433,
+       "pBuys": 0
+      },
+      {
+       "V": 1,
+       "lambda": 0.25,
+       "prior": "uniform",
+       "feedback": "oracle",
+       "nv": 10.555,
+       "regretBestFixed": 4.235,
+       "regretBestAgent": 1.985,
+       "regretBestJit": 2.455,
+       "regretBestV0": 1.985,
+       "pBeatsAgentAndJit": 0.214,
+       "pBuys": 0.214
+      },
+      {
+       "V": 1,
+       "lambda": 0.25,
+       "prior": "uniform",
+       "feedback": "none",
+       "nv": 12.558,
+       "regretBestFixed": 2.232,
+       "regretBestAgent": -0.018,
+       "regretBestJit": 0.452,
+       "regretBestV0": -0.018,
+       "pBeatsAgentAndJit": 0.423,
+       "pBuys": 0
+      },
+      {
+       "V": 1,
+       "lambda": 0.5,
+       "prior": "inherit",
+       "feedback": "oracle",
+       "nv": 10.641,
+       "regretBestFixed": 4.149,
+       "regretBestAgent": 1.899,
+       "regretBestJit": 2.369,
+       "regretBestV0": 1.899,
+       "pBeatsAgentAndJit": 0.225,
+       "pBuys": 0.187
+      },
+      {
+       "V": 1,
+       "lambda": 0.5,
+       "prior": "inherit",
+       "feedback": "none",
+       "nv": 12.553,
+       "regretBestFixed": 2.237,
+       "regretBestAgent": -0.013,
+       "regretBestJit": 0.457,
+       "regretBestV0": -0.013,
+       "pBeatsAgentAndJit": 0.427,
+       "pBuys": 0
+      },
+      {
+       "V": 1,
+       "lambda": 0.5,
+       "prior": "uniform",
+       "feedback": "oracle",
+       "nv": 10.735,
+       "regretBestFixed": 4.055,
+       "regretBestAgent": 1.805,
+       "regretBestJit": 2.275,
+       "regretBestV0": 1.805,
+       "pBeatsAgentAndJit": 0.22,
+       "pBuys": 0.124
+      },
+      {
+       "V": 1,
+       "lambda": 0.5,
+       "prior": "uniform",
+       "feedback": "none",
+       "nv": 12.53,
+       "regretBestFixed": 2.26,
+       "regretBestAgent": 0.01,
+       "regretBestJit": 0.48,
+       "regretBestV0": 0.01,
+       "pBeatsAgentAndJit": 0.421,
+       "pBuys": 0
+      },
+      {
+       "V": 1,
+       "lambda": 1,
+       "prior": "inherit",
+       "feedback": "oracle",
+       "nv": 10.586,
+       "regretBestFixed": 4.204,
+       "regretBestAgent": 1.954,
+       "regretBestJit": 2.424,
+       "regretBestV0": 1.954,
+       "pBeatsAgentAndJit": 0.229,
+       "pBuys": 0.217
+      },
+      {
+       "V": 1,
+       "lambda": 1,
+       "prior": "inherit",
+       "feedback": "none",
+       "nv": 12.571,
+       "regretBestFixed": 2.219,
+       "regretBestAgent": -0.031,
+       "regretBestJit": 0.439,
+       "regretBestV0": -0.031,
+       "pBeatsAgentAndJit": 0.426,
+       "pBuys": 0
+      },
+      {
+       "V": 1,
+       "lambda": 1,
+       "prior": "uniform",
+       "feedback": "oracle",
+       "nv": 10.957,
+       "regretBestFixed": 3.833,
+       "regretBestAgent": 1.583,
+       "regretBestJit": 2.053,
+       "regretBestV0": 1.583,
+       "pBeatsAgentAndJit": 0.234,
+       "pBuys": 0.05
+      },
+      {
+       "V": 1,
+       "lambda": 1,
+       "prior": "uniform",
+       "feedback": "none",
+       "nv": 12.526,
+       "regretBestFixed": 2.264,
+       "regretBestAgent": 0.014,
+       "regretBestJit": 0.484,
+       "regretBestV0": 0.014,
+       "pBeatsAgentAndJit": 0.413,
+       "pBuys": 0
+      }
+     ]
+    },
+    {
+     "V": 10,
+     "bestFixed": {
+      "arm": "Opus agent",
+      "nv": 226.46
+     },
+     "bestAgent": {
+      "arm": "Opus agent",
+      "nv": 226.46
+     },
+     "bestJit": {
+      "arm": "JIT S/H",
+      "nv": 211.01
+     },
+     "bestV0": {
+      "policy": "v0 S s=0",
+      "decision": "compile at task 2",
+      "nv": 199.519
+     },
+     "v0All": [
+      {
+       "policy": "v0 H s=0",
+       "nv": 147.54
+      },
+      {
+       "policy": "v0 H s=0.5",
+       "nv": 147.54
+      },
+      {
+       "policy": "v0 H s=1",
+       "nv": 147.54
+      },
+      {
+       "policy": "v0 S s=0",
+       "nv": 199.519
+      },
+      {
+       "policy": "v0 S s=0.5",
+       "nv": 122.95
+      },
+      {
+       "policy": "v0 S s=1",
+       "nv": 122.95
+      },
+      {
+       "policy": "v0 O s=0",
+       "nv": 176.797
+      },
+      {
+       "policy": "v0 O s=0.5",
+       "nv": 181.123
+      },
+      {
+       "policy": "v0 O s=1",
+       "nv": 183.287
+      }
+     ],
+     "clairvoyant": {
+      "nv": 228.623,
+      "pass": 24,
+      "cost": 11.376666666666665,
+      "policy": "agent O until task 16, then agent S"
+     },
+     "v1": [
+      {
+       "V": 10,
+       "lambda": 0.25,
+       "prior": "inherit",
+       "feedback": "oracle",
+       "nv": 183.798,
+       "regretBestFixed": 42.662,
+       "regretBestAgent": 42.662,
+       "regretBestJit": 27.212,
+       "regretBestV0": 15.721,
+       "pBeatsAgentAndJit": 0,
+       "pBuys": 0.971
+      },
+      {
+       "V": 10,
+       "lambda": 0.25,
+       "prior": "inherit",
+       "feedback": "none",
+       "nv": 147.805,
+       "regretBestFixed": 78.655,
+       "regretBestAgent": 78.655,
+       "regretBestJit": 63.205,
+       "regretBestV0": 51.714,
+       "pBeatsAgentAndJit": 0,
+       "pBuys": 0
+      },
+      {
+       "V": 10,
+       "lambda": 0.25,
+       "prior": "uniform",
+       "feedback": "oracle",
+       "nv": 196.825,
+       "regretBestFixed": 29.635,
+       "regretBestAgent": 29.635,
+       "regretBestJit": 14.185,
+       "regretBestV0": 2.694,
+       "pBeatsAgentAndJit": 0.004,
+       "pBuys": 0.02
+      },
+      {
+       "V": 10,
+       "lambda": 0.25,
+       "prior": "uniform",
+       "feedback": "none",
+       "nv": 147.55,
+       "regretBestFixed": 78.91,
+       "regretBestAgent": 78.91,
+       "regretBestJit": 63.46,
+       "regretBestV0": 51.969,
+       "pBeatsAgentAndJit": 0,
+       "pBuys": 0
+      },
+      {
+       "V": 10,
+       "lambda": 0.5,
+       "prior": "inherit",
+       "feedback": "oracle",
+       "nv": 184.591,
+       "regretBestFixed": 41.869,
+       "regretBestAgent": 41.869,
+       "regretBestJit": 26.419,
+       "regretBestV0": 14.928,
+       "pBeatsAgentAndJit": 0.001,
+       "pBuys": 0.944
+      },
+      {
+       "V": 10,
+       "lambda": 0.5,
+       "prior": "inherit",
+       "feedback": "none",
+       "nv": 147.872,
+       "regretBestFixed": 78.588,
+       "regretBestAgent": 78.588,
+       "regretBestJit": 63.138,
+       "regretBestV0": 51.647,
+       "pBeatsAgentAndJit": 0.001,
+       "pBuys": 0
+      },
+      {
+       "V": 10,
+       "lambda": 0.5,
+       "prior": "uniform",
+       "feedback": "oracle",
+       "nv": 196.742,
+       "regretBestFixed": 29.718,
+       "regretBestAgent": 29.718,
+       "regretBestJit": 14.268,
+       "regretBestV0": 2.777,
+       "pBeatsAgentAndJit": 0.004,
+       "pBuys": 0.008
+      },
+      {
+       "V": 10,
+       "lambda": 0.5,
+       "prior": "uniform",
+       "feedback": "none",
+       "nv": 148.15,
+       "regretBestFixed": 78.31,
+       "regretBestAgent": 78.31,
+       "regretBestJit": 62.86,
+       "regretBestV0": 51.369,
+       "pBeatsAgentAndJit": 0,
+       "pBuys": 0
+      },
+      {
+       "V": 10,
+       "lambda": 1,
+       "prior": "inherit",
+       "feedback": "oracle",
+       "nv": 185.543,
+       "regretBestFixed": 40.917,
+       "regretBestAgent": 40.917,
+       "regretBestJit": 25.467,
+       "regretBestV0": 13.977,
+       "pBeatsAgentAndJit": 0.001,
+       "pBuys": 0.977
+      },
+      {
+       "V": 10,
+       "lambda": 1,
+       "prior": "inherit",
+       "feedback": "none",
+       "nv": 147.217,
+       "regretBestFixed": 79.243,
+       "regretBestAgent": 79.243,
+       "regretBestJit": 63.793,
+       "regretBestV0": 52.302,
+       "pBeatsAgentAndJit": 0,
+       "pBuys": 0
+      },
+      {
+       "V": 10,
+       "lambda": 1,
+       "prior": "uniform",
+       "feedback": "oracle",
+       "nv": 196.719,
+       "regretBestFixed": 29.741,
+       "regretBestAgent": 29.741,
+       "regretBestJit": 14.291,
+       "regretBestV0": 2.8,
+       "pBeatsAgentAndJit": 0.004,
+       "pBuys": 0.003
+      },
+      {
+       "V": 10,
+       "lambda": 1,
+       "prior": "uniform",
+       "feedback": "none",
+       "nv": 147.85,
+       "regretBestFixed": 78.61,
+       "regretBestAgent": 78.61,
+       "regretBestJit": 63.16,
+       "regretBestV0": 51.669,
+       "pBeatsAgentAndJit": 0.001,
+       "pBuys": 0
+      }
+     ]
+    }
+   ]
+  },
+  "kinetics": {
+   "fixed": [
+    {
+     "arm": "Haiku agent",
+     "kind": "agent",
+     "pass": 17,
+     "cost": 2.1
+    },
+    {
+     "arm": "Sonnet agent",
+     "kind": "agent",
+     "pass": 17,
+     "cost": 7.4
+    },
+    {
+     "arm": "JIT H/H (12 tasks)",
+     "kind": "jit",
+     "pass": 16,
+     "cost": 14.55
+    },
+    {
+     "arm": "JIT S/H (8 tasks)",
+     "kind": "jit",
+     "pass": 12,
+     "cost": 18.89
+    },
+    {
+     "arm": "JIT O/H (17 tasks)",
+     "kind": "jit",
+     "pass": 21.176,
+     "cost": 20.398
+    }
+   ],
+   "v0": [
+    {
+     "policy": "v0 H s=0",
+     "decision": "interpret every task",
+     "pass": 17,
+     "cost": 2.1,
+     "reasons": [
+      "t2: compile not worth it: 22 expected × ($0.088 − $0.050) = $0.83 < 1.0 × $3.00"
+     ]
+    },
+    {
+     "policy": "v0 H s=0.5",
+     "decision": "interpret every task",
+     "pass": 17,
+     "cost": 2.1,
+     "reasons": [
+      "t4: compile not worth it: 20 expected × ($0.088 − $0.050) = $0.75 < 2.0 × $3.00"
+     ]
+    },
+    {
+     "policy": "v0 H s=1",
+     "decision": "interpret every task",
+     "pass": 17,
+     "cost": 2.1,
+     "reasons": [
+      "t5: compile not worth it: 19 expected × ($0.088 − $0.050) = $0.71 < 3.0 × $3.00"
+     ]
+    },
+    {
+     "policy": "v0 S s=0",
+     "decision": "compile at task 2",
+     "pass": 12.417,
+     "cost": 19.094,
+     "reasons": [
+      "t2: expected savings $5.68 ≥ 1.0 × compile $3.00"
+     ]
+    },
+    {
+     "policy": "v0 S s=0.5",
+     "decision": "interpret every task",
+     "pass": 17,
+     "cost": 7.4,
+     "reasons": [
+      "t4: compile not worth it: 20 expected × ($0.308 − $0.050) = $5.17 < 2.0 × $3.00"
+     ]
+    },
+    {
+     "policy": "v0 S s=1",
+     "decision": "interpret every task",
+     "pass": 17,
+     "cost": 7.4,
+     "reasons": [
+      "t5: compile not worth it: 19 expected × ($0.308 − $0.050) = $4.91 < 3.0 × $3.00"
+     ]
+    }
+   ],
+   "byV": [
+    {
+     "V": 0.1,
+     "bestFixed": {
+      "arm": "Haiku agent",
+      "nv": -0.4
+     },
+     "bestAgent": {
+      "arm": "Haiku agent",
+      "nv": -0.4
+     },
+     "bestJit": {
+      "arm": "JIT H/H (12 tasks)",
+      "nv": -12.95
+     },
+     "bestV0": {
+      "policy": "v0 H s=0",
+      "decision": "interpret every task",
+      "nv": -0.4
+     },
+     "v0All": [
+      {
+       "policy": "v0 H s=0",
+       "nv": -0.4
+      },
+      {
+       "policy": "v0 H s=0.5",
+       "nv": -0.4
+      },
+      {
+       "policy": "v0 H s=1",
+       "nv": -0.4
+      },
+      {
+       "policy": "v0 S s=0",
+       "nv": -17.852
+      },
+      {
+       "policy": "v0 S s=0.5",
+       "nv": -5.7
+      },
+      {
+       "policy": "v0 S s=1",
+       "nv": -5.7
+      }
+     ],
+     "clairvoyant": {
+      "nv": -0.4,
+      "pass": 17.000000000000004,
+      "cost": 2.1,
+      "policy": "agent H"
+     },
+     "v1": [
+      {
+       "V": 0.1,
+       "lambda": 0.25,
+       "prior": "inherit",
+       "feedback": "oracle",
+       "nv": -0.405,
+       "regretBestFixed": 0.005,
+       "regretBestAgent": 0.005,
+       "regretBestJit": -12.545,
+       "regretBestV0": 0.005,
+       "pBeatsAgentAndJit": 0.596,
+       "pBuys": 0
+      },
+      {
+       "V": 0.1,
+       "lambda": 0.25,
+       "prior": "inherit",
+       "feedback": "none",
+       "nv": -0.404,
+       "regretBestFixed": 0.004,
+       "regretBestAgent": 0.004,
+       "regretBestJit": -12.546,
+       "regretBestV0": 0.004,
+       "pBeatsAgentAndJit": 0.597,
+       "pBuys": 0
+      },
+      {
+       "V": 0.1,
+       "lambda": 0.25,
+       "prior": "uniform",
+       "feedback": "oracle",
+       "nv": -0.397,
+       "regretBestFixed": -0.003,
+       "regretBestAgent": -0.003,
+       "regretBestJit": -12.553,
+       "regretBestV0": -0.003,
+       "pBeatsAgentAndJit": 0.609,
+       "pBuys": 0
+      },
+      {
+       "V": 0.1,
+       "lambda": 0.25,
+       "prior": "uniform",
+       "feedback": "none",
+       "nv": -0.397,
+       "regretBestFixed": -0.003,
+       "regretBestAgent": -0.003,
+       "regretBestJit": -12.553,
+       "regretBestV0": -0.003,
+       "pBeatsAgentAndJit": 0.604,
+       "pBuys": 0
+      },
+      {
+       "V": 0.1,
+       "lambda": 0.5,
+       "prior": "inherit",
+       "feedback": "oracle",
+       "nv": -0.398,
+       "regretBestFixed": -0.002,
+       "regretBestAgent": -0.002,
+       "regretBestJit": -12.552,
+       "regretBestV0": -0.002,
+       "pBeatsAgentAndJit": 0.602,
+       "pBuys": 0
+      },
+      {
+       "V": 0.1,
+       "lambda": 0.5,
+       "prior": "inherit",
+       "feedback": "none",
+       "nv": -0.401,
+       "regretBestFixed": 0.001,
+       "regretBestAgent": 0.001,
+       "regretBestJit": -12.549,
+       "regretBestV0": 0.001,
+       "pBeatsAgentAndJit": 0.59,
+       "pBuys": 0
+      },
+      {
+       "V": 0.1,
+       "lambda": 0.5,
+       "prior": "uniform",
+       "feedback": "oracle",
+       "nv": -0.401,
+       "regretBestFixed": 0.001,
+       "regretBestAgent": 0.001,
+       "regretBestJit": -12.549,
+       "regretBestV0": 0.001,
+       "pBeatsAgentAndJit": 0.598,
+       "pBuys": 0
+      },
+      {
+       "V": 0.1,
+       "lambda": 0.5,
+       "prior": "uniform",
+       "feedback": "none",
+       "nv": -0.401,
+       "regretBestFixed": 0.001,
+       "regretBestAgent": 0.001,
+       "regretBestJit": -12.549,
+       "regretBestV0": 0.001,
+       "pBeatsAgentAndJit": 0.598,
+       "pBuys": 0
+      },
+      {
+       "V": 0.1,
+       "lambda": 1,
+       "prior": "inherit",
+       "feedback": "oracle",
+       "nv": -0.397,
+       "regretBestFixed": -0.003,
+       "regretBestAgent": -0.003,
+       "regretBestJit": -12.553,
+       "regretBestV0": -0.003,
+       "pBeatsAgentAndJit": 0.604,
+       "pBuys": 0
+      },
+      {
+       "V": 0.1,
+       "lambda": 1,
+       "prior": "inherit",
+       "feedback": "none",
+       "nv": -0.4,
+       "regretBestFixed": 0,
+       "regretBestAgent": 0,
+       "regretBestJit": -12.55,
+       "regretBestV0": 0,
+       "pBeatsAgentAndJit": 0.606,
+       "pBuys": 0
+      },
+      {
+       "V": 0.1,
+       "lambda": 1,
+       "prior": "uniform",
+       "feedback": "oracle",
+       "nv": -0.406,
+       "regretBestFixed": 0.006,
+       "regretBestAgent": 0.006,
+       "regretBestJit": -12.544,
+       "regretBestV0": 0.006,
+       "pBeatsAgentAndJit": 0.592,
+       "pBuys": 0
+      },
+      {
+       "V": 0.1,
+       "lambda": 1,
+       "prior": "uniform",
+       "feedback": "none",
+       "nv": -0.395,
+       "regretBestFixed": -0.005,
+       "regretBestAgent": -0.005,
+       "regretBestJit": -12.555,
+       "regretBestV0": -0.005,
+       "pBeatsAgentAndJit": 0.608,
+       "pBuys": 0
+      }
+     ]
+    },
+    {
+     "V": 1,
+     "bestFixed": {
+      "arm": "Haiku agent",
+      "nv": 14.9
+     },
+     "bestAgent": {
+      "arm": "Haiku agent",
+      "nv": 14.9
+     },
+     "bestJit": {
+      "arm": "JIT H/H (12 tasks)",
+      "nv": 1.45
+     },
+     "bestV0": {
+      "policy": "v0 H s=0",
+      "decision": "interpret every task",
+      "nv": 14.9
+     },
+     "v0All": [
+      {
+       "policy": "v0 H s=0",
+       "nv": 14.9
+      },
+      {
+       "policy": "v0 H s=0.5",
+       "nv": 14.9
+      },
+      {
+       "policy": "v0 H s=1",
+       "nv": 14.9
+      },
+      {
+       "policy": "v0 S s=0",
+       "nv": -6.677
+      },
+      {
+       "policy": "v0 S s=0.5",
+       "nv": 9.6
+      },
+      {
+       "policy": "v0 S s=1",
+       "nv": 9.6
+      }
+     ],
+     "clairvoyant": {
+      "nv": 14.9,
+      "pass": 17.000000000000004,
+      "cost": 2.1,
+      "policy": "agent H"
+     },
+     "v1": [
+      {
+       "V": 1,
+       "lambda": 0.25,
+       "prior": "inherit",
+       "feedback": "oracle",
+       "nv": 13.767,
+       "regretBestFixed": 1.133,
+       "regretBestAgent": 1.133,
+       "regretBestJit": -12.317,
+       "regretBestV0": 1.133,
+       "pBeatsAgentAndJit": 0.335,
+       "pBuys": 0
+      },
+      {
+       "V": 1,
+       "lambda": 0.25,
+       "prior": "inherit",
+       "feedback": "none",
+       "nv": 14.922,
+       "regretBestFixed": -0.022,
+       "regretBestAgent": -0.022,
+       "regretBestJit": -13.472,
+       "regretBestV0": -0.022,
+       "pBeatsAgentAndJit": 0.418,
+       "pBuys": 0
+      },
+      {
+       "V": 1,
+       "lambda": 0.25,
+       "prior": "uniform",
+       "feedback": "oracle",
+       "nv": 13.762,
+       "regretBestFixed": 1.138,
+       "regretBestAgent": 1.138,
+       "regretBestJit": -12.312,
+       "regretBestV0": 1.138,
+       "pBeatsAgentAndJit": 0.339,
+       "pBuys": 0
+      },
+      {
+       "V": 1,
+       "lambda": 0.25,
+       "prior": "uniform",
+       "feedback": "none",
+       "nv": 14.884,
+       "regretBestFixed": 0.016,
+       "regretBestAgent": 0.016,
+       "regretBestJit": -13.434,
+       "regretBestV0": 0.016,
+       "pBeatsAgentAndJit": 0.424,
+       "pBuys": 0
+      },
+      {
+       "V": 1,
+       "lambda": 0.5,
+       "prior": "inherit",
+       "feedback": "oracle",
+       "nv": 13.715,
+       "regretBestFixed": 1.185,
+       "regretBestAgent": 1.185,
+       "regretBestJit": -12.265,
+       "regretBestV0": 1.185,
+       "pBeatsAgentAndJit": 0.336,
+       "pBuys": 0
+      },
+      {
+       "V": 1,
+       "lambda": 0.5,
+       "prior": "inherit",
+       "feedback": "none",
+       "nv": 14.895,
+       "regretBestFixed": 0.005,
+       "regretBestAgent": 0.005,
+       "regretBestJit": -13.445,
+       "regretBestV0": 0.005,
+       "pBeatsAgentAndJit": 0.415,
+       "pBuys": 0
+      },
+      {
+       "V": 1,
+       "lambda": 0.5,
+       "prior": "uniform",
+       "feedback": "oracle",
+       "nv": 13.712,
+       "regretBestFixed": 1.188,
+       "regretBestAgent": 1.188,
+       "regretBestJit": -12.262,
+       "regretBestV0": 1.188,
+       "pBeatsAgentAndJit": 0.328,
+       "pBuys": 0
+      },
+      {
+       "V": 1,
+       "lambda": 0.5,
+       "prior": "uniform",
+       "feedback": "none",
+       "nv": 14.929,
+       "regretBestFixed": -0.029,
+       "regretBestAgent": -0.029,
+       "regretBestJit": -13.479,
+       "regretBestV0": -0.029,
+       "pBeatsAgentAndJit": 0.43,
+       "pBuys": 0
+      },
+      {
+       "V": 1,
+       "lambda": 1,
+       "prior": "inherit",
+       "feedback": "oracle",
+       "nv": 13.74,
+       "regretBestFixed": 1.16,
+       "regretBestAgent": 1.16,
+       "regretBestJit": -12.29,
+       "regretBestV0": 1.16,
+       "pBeatsAgentAndJit": 0.335,
+       "pBuys": 0
+      },
+      {
+       "V": 1,
+       "lambda": 1,
+       "prior": "inherit",
+       "feedback": "none",
+       "nv": 14.913,
+       "regretBestFixed": -0.013,
+       "regretBestAgent": -0.013,
+       "regretBestJit": -13.463,
+       "regretBestV0": -0.013,
+       "pBeatsAgentAndJit": 0.416,
+       "pBuys": 0
+      },
+      {
+       "V": 1,
+       "lambda": 1,
+       "prior": "uniform",
+       "feedback": "oracle",
+       "nv": 13.75,
+       "regretBestFixed": 1.15,
+       "regretBestAgent": 1.15,
+       "regretBestJit": -12.3,
+       "regretBestV0": 1.15,
+       "pBeatsAgentAndJit": 0.326,
+       "pBuys": 0
+      },
+      {
+       "V": 1,
+       "lambda": 1,
+       "prior": "uniform",
+       "feedback": "none",
+       "nv": 14.962,
+       "regretBestFixed": -0.062,
+       "regretBestAgent": -0.062,
+       "regretBestJit": -13.512,
+       "regretBestV0": -0.062,
+       "pBeatsAgentAndJit": 0.439,
+       "pBuys": 0
+      }
+     ]
+    },
+    {
+     "V": 10,
+     "bestFixed": {
+      "arm": "JIT O/H (17 tasks)",
+      "nv": 191.367
+     },
+     "bestAgent": {
+      "arm": "Haiku agent",
+      "nv": 167.9
+     },
+     "bestJit": {
+      "arm": "JIT O/H (17 tasks)",
+      "nv": 191.367
+     },
+     "bestV0": {
+      "policy": "v0 H s=0",
+      "decision": "interpret every task",
+      "nv": 167.9
+     },
+     "v0All": [
+      {
+       "policy": "v0 H s=0",
+       "nv": 167.9
+      },
+      {
+       "policy": "v0 H s=0.5",
+       "nv": 167.9
+      },
+      {
+       "policy": "v0 H s=1",
+       "nv": 167.9
+      },
+      {
+       "policy": "v0 S s=0",
+       "nv": 105.072
+      },
+      {
+       "policy": "v0 S s=0.5",
+       "nv": 162.6
+      },
+      {
+       "policy": "v0 S s=1",
+       "nv": 162.6
+      }
+     ],
+     "clairvoyant": {
+      "nv": 167.9,
+      "pass": 17.000000000000004,
+      "cost": 2.1,
+      "policy": "agent H"
+     },
+     "v1": [
+      {
+       "V": 10,
+       "lambda": 0.25,
+       "prior": "inherit",
+       "feedback": "oracle",
+       "nv": 165.981,
+       "regretBestFixed": 25.387,
+       "regretBestAgent": 1.919,
+       "regretBestJit": 25.387,
+       "regretBestV0": 1.919,
+       "pBeatsAgentAndJit": 0.135,
+       "pBuys": 0
+      },
+      {
+       "V": 10,
+       "lambda": 0.25,
+       "prior": "inherit",
+       "feedback": "none",
+       "nv": 168.235,
+       "regretBestFixed": 23.132,
+       "regretBestAgent": -0.335,
+       "regretBestJit": 23.132,
+       "regretBestV0": -0.335,
+       "pBeatsAgentAndJit": 0.135,
+       "pBuys": 0
+      },
+      {
+       "V": 10,
+       "lambda": 0.25,
+       "prior": "uniform",
+       "feedback": "oracle",
+       "nv": 165.041,
+       "regretBestFixed": 26.326,
+       "regretBestAgent": 2.859,
+       "regretBestJit": 26.326,
+       "regretBestV0": 2.859,
+       "pBeatsAgentAndJit": 0.127,
+       "pBuys": 0.023
+      },
+      {
+       "V": 10,
+       "lambda": 0.25,
+       "prior": "uniform",
+       "feedback": "none",
+       "nv": 167.7,
+       "regretBestFixed": 23.667,
+       "regretBestAgent": 0.2,
+       "regretBestJit": 23.667,
+       "regretBestV0": 0.2,
+       "pBeatsAgentAndJit": 0.125,
+       "pBuys": 0
+      },
+      {
+       "V": 10,
+       "lambda": 0.5,
+       "prior": "inherit",
+       "feedback": "oracle",
+       "nv": 165.191,
+       "regretBestFixed": 26.176,
+       "regretBestAgent": 2.709,
+       "regretBestJit": 26.176,
+       "regretBestV0": 2.709,
+       "pBeatsAgentAndJit": 0.136,
+       "pBuys": 0
+      },
+      {
+       "V": 10,
+       "lambda": 0.5,
+       "prior": "inherit",
+       "feedback": "none",
+       "nv": 168.025,
+       "regretBestFixed": 23.342,
+       "regretBestAgent": -0.125,
+       "regretBestJit": 23.342,
+       "regretBestV0": -0.125,
+       "pBeatsAgentAndJit": 0.137,
+       "pBuys": 0
+      },
+      {
+       "V": 10,
+       "lambda": 0.5,
+       "prior": "uniform",
+       "feedback": "oracle",
+       "nv": 165.245,
+       "regretBestFixed": 26.122,
+       "regretBestAgent": 2.655,
+       "regretBestJit": 26.122,
+       "regretBestV0": 2.655,
+       "pBeatsAgentAndJit": 0.132,
+       "pBuys": 0.011
+      },
+      {
+       "V": 10,
+       "lambda": 0.5,
+       "prior": "uniform",
+       "feedback": "none",
+       "nv": 167.313,
+       "regretBestFixed": 24.055,
+       "regretBestAgent": 0.587,
+       "regretBestJit": 24.055,
+       "regretBestV0": 0.587,
+       "pBeatsAgentAndJit": 0.126,
+       "pBuys": 0
+      },
+      {
+       "V": 10,
+       "lambda": 1,
+       "prior": "inherit",
+       "feedback": "oracle",
+       "nv": 165.261,
+       "regretBestFixed": 26.106,
+       "regretBestAgent": 2.639,
+       "regretBestJit": 26.106,
+       "regretBestV0": 2.639,
+       "pBeatsAgentAndJit": 0.122,
+       "pBuys": 0
+      },
+      {
+       "V": 10,
+       "lambda": 1,
+       "prior": "inherit",
+       "feedback": "none",
+       "nv": 167.378,
+       "regretBestFixed": 23.99,
+       "regretBestAgent": 0.522,
+       "regretBestJit": 23.99,
+       "regretBestV0": 0.522,
+       "pBeatsAgentAndJit": 0.125,
+       "pBuys": 0
+      },
+      {
+       "V": 10,
+       "lambda": 1,
+       "prior": "uniform",
+       "feedback": "oracle",
+       "nv": 165.195,
+       "regretBestFixed": 26.172,
+       "regretBestAgent": 2.705,
+       "regretBestJit": 26.172,
+       "regretBestV0": 2.705,
+       "pBeatsAgentAndJit": 0.128,
+       "pBuys": 0.003
+      },
+      {
+       "V": 10,
+       "lambda": 1,
+       "prior": "uniform",
+       "feedback": "none",
+       "nv": 167.983,
+       "regretBestFixed": 23.385,
+       "regretBestAgent": -0.083,
+       "regretBestJit": 23.385,
+       "regretBestV0": -0.083,
+       "pBeatsAgentAndJit": 0.127,
+       "pBuys": 0
+      }
+     ]
+    }
+   ]
+  }
+ }
+}
