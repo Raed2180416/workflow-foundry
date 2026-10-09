@@ -188,7 +188,11 @@ for (const b of builds) {
       for (const x of hard) {
         const m = x.r.meta.masks ?? { names: [], markers: [] };
         add(groups, `${skeleton(renderState(x.r.state), m)}||${x.q.instructions}`, x.q.label);
-        add(named, maskNames(`${renderState(x.r.state)}||${x.q.instructions}`, m), x.q.label);
+        // the question (trusted slots: the asked system, the assumption) stays unmasked (§2.7 step 2: skeleton(state) + question + slots);
+        // Q4 gridquest/gameqa use the interactive group's role-aware key (solve/Q4.mjs relationalText: a name becomes its role, so a
+        // same-name drift item is not merged with its control)
+        const sk = port === 'Q4' && (fam === 'gridquest' || fam === 'gameqa') ? SQ.relationalText(x.r.state, m.names ?? []) : maskNames(renderState(x.r.state), m);
+        add(named, `${sk}||${x.q.instructions}`, x.q.label);
         add(exact, `${canonical(x.r.state)}||${x.q.instructions}`, x.q.label);
       }
       const multi = mm => [...mm.values()].filter(v => v.size > 1).length;
