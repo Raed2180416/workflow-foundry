@@ -89,6 +89,7 @@ export async function killOwnerTree(owner, { selfPid = process.pid } = {}) {
     kill();
     await delay(20);
   }
+  send(owner.pid, 'SIGCONT'); // never leave a frozen owner behind
   return { ...report, groups: [...all.groups], pids: [...all.pids], skipped: 'some processes survived SIGKILL (not permitted to signal them, or an uninterruptible wait)' };
 }
 
@@ -234,7 +235,7 @@ export async function stopAll(foundry, { actor = 'cli', reason = '', graceMs = 1
     for (const child of reapChildren(store, id)) if (child.killed) strays.push({ runId: id, pid: child.pid, kind: child.kind });
   }
   const count = outcome => results.filter(r => r.outcome === outcome).length;
-  const killed = [...escalations.values()].length ? (await Promise.all(escalations.values())) : [];
+  const escalated = await Promise.all(escalations.values()), killed = escalated.filter(k => k.killed && !k.skipped);
   const summary = { requested: targets.length, cancelled: count('cancelled'), uncertain: count('uncertain'), alreadyFinished: count('already-finished'), notStopped: count('not-stopped'), pending: count('requested'), failed: failed.length, skipped: skipped.length, strays: strays.length };
   const lines = [`${summary.cancelled} of ${targets.length} run${targets.length === 1 ? '' : 's'} cancelled`];
   if (summary.uncertain) lines.push(`${summary.uncertain} stopped with an effect of unknown outcome`);
@@ -245,8 +246,10 @@ export async function stopAll(foundry, { actor = 'cli', reason = '', graceMs = 1
   if (skipped.length) lines.push(`${skipped.length} left alone`);
   const orphaned = results.reduce((sum, r) => sum + (r.orphans?.length ?? 0), 0) + strays.length;
   if (orphaned) lines.push(`stopped ${orphaned} process group${orphaned === 1 ? '' : 's'} that dead owners had left running`);
-  if (killed.length) lines.push(`killed ${killed.length} owner process${killed.length === 1 ? '' : 'es'} (${killed.map(k => `pid ${k.pid}${k.skipped ? `, ${k.skipped}` : ''}`).join('; ')}) with everything below ${killed.length === 1 ? 'it' : 'them'}`);
-  return { workspace: store.workspace, at: Date.now(), reason, summary, results, failed, skipped, strays, killed, message: `${lines.join('; ')}.` };
+  if (killed.length) lines.push(`killed ${killed.length} owner process${killed.length === 1 ? '' : 'es'} (${killed.map(k => `pid ${k.pid}`).join(', ')}) with everything below ${killed.length === 1 ? 'it' : 'them'}`);
+  const survivors = escalated.filter(k => !k.killed || k.skipped).filter(k => !/gone|exited/.test(k.skipped ?? ''));
+  if (survivors.length) lines.push(`could not kill ${survivors.map(k => `pid ${k.pid} (${k.skipped})`).join(', ')}`);
+  return { workspace: store.workspace, at: Date.now(), reason, summary, results, failed, skipped, strays, killed, ...(escalated.length !== killed.length ? { escalations: escalated } : {}), message: `${lines.join('; ')}.` };
 }
 /** The process exit code a cancel or stop-all report maps to: 0 stopped (or nothing to stop), 2 an effect of unknown outcome, 3 not stopped. */
 export function exitCodeOf(result) {
