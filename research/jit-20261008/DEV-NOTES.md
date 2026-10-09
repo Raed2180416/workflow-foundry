@@ -70,3 +70,12 @@ Nothing here is a claim. Each entry gives the observation, the mechanism and the
   - Field-level screening (D6) had found the cheaper tiers agreeing on nearly every decision leaf.
 - Mechanism: `rules` is one global, per-task reading (date orders, void markers, sign flips) that conditions every row. A cheap tier that gets 95% of its fields right still breaks the task. Leaf agreement weighs every field equally, but end-to-end success does not.
 - Consequence: tier-down targets low-leverage per-item judgments (one row, one entity, one quote). High-leverage global judgments keep the strong tier or use k-sample agreement. The strict lint already flags a single global-configuration read without k-sample agreement. Leverage can be measured: the number of downstream output leaves that depend on the judgment.
+
+**D12. The Opus-interpreter / Haiku-compiler records arm is complete: 18/24 (d3 12/16, d4 6/8), $7.53, $0.418/success.**
+- Delivered by: compiled 18 (12 pass), interpreter 5 (5 pass), adjudicated 1 (1 pass).
+- Cost: interpreter $2.31, compiles $2.07, shadows $2.20, adjudicator $0.64, compiled runs $0.31 (about $0.017 per run).
+- It did worse than the Sonnet-interpreter arm (22/24), even though Opus is the stronger demonstrator. Two causes: its v1 judge check was over-strict (D3), and its v2 heal widened a guard (D9), which led to 5 silent compiled misses on d4 and under-merging misses on d3 (D1).
+- Reading: with one compile lineage per arm (K = 1), compile variance and what each heal does dominate interpreter strength. Three things follow:
+  - the held-out round needs K ≥ 2 streams per arm;
+  - the v2.2 domain-preservation check (D9) is required;
+  - compile ensembles (several Haiku compiles, voting or disagreement-triggered shadows, D8) are a direct way to reduce lineage variance.
