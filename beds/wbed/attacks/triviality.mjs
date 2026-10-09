@@ -3,7 +3,7 @@
 // script never calls a model and never starts `claude`. It prints the plan (12 attack seeds x 2 efforts x one Haiku
 // call per rung), the expected cost, the gate, and the exact call shape the coordinator runs with the owner's token.
 //
-//   node beds/wbed/attacks/triviality.mjs [--rung r0|r1|r2|r3|all] [--difficulty 3] [--seeds 379-390] [--efforts none,medium]
+//   node beds/wbed/attacks/triviality.mjs [--rung r0|r1|r2|r3|r4|all] [--difficulty 3] [--seeds 379-390] [--efforts none,medium]
 //                                         [--stub empty|reference|<control name>] [--emit DIR] [--json]
 //
 //   (default)  dry run: plan, sizes, cost, gate, call shapes
@@ -35,6 +35,8 @@ export const RUNGS = {
     necessity: 'the best workflow without the judged branch: one handler for every document kind (bed necessityControls one-handler:*, no-escalation, review-everything) must fail >= 50% of attack seeds' },
   r3: { family: 'wbed-r3', expect: 'fail', gate: ONE_CALL_GATE,
     necessity: 'the best workflow without fan-out/fan-in: one sequential context (size: >= 32K tokens inline at d4, >= 60K at d5) and a reducer-less fan-in (bed necessityControls) must fail >= 50% of attack seeds' },
+  r4: { family: 'wbed-r4', expect: 'fail', gate: ONE_CALL_GATE,
+    necessity: 'none by design (W-BED §2.4 item 3: nesting never changes correctness); R4 is measured on construction cost through reuse (curriculum CUR - ISO, bed scoreReuse)' },
 };
 export const MODEL = 'claude-haiku-5-5';
 export const ATTACK_SEEDS = Array.from({ length: 12 }, (_, i) => 379 + i); // W-BED §8 wbed-attack (dev 379-390)
