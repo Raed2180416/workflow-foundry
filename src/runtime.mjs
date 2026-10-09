@@ -238,13 +238,15 @@ export class Runtime {
    * owner left `running` (sweepRunning), seals the cancelled verdict and writes the terminal event; timers are cleared by the seal. A live owner
    * refuses it (RUN_BUSY): that run is stopped through requestCancel, by its owner. The engine, capability-registry and model-policy bindings
    * that a resume checks are not checked: closing a run is not running it, and a run an engine change stranded must still be closable.
-   * `journalDb`: the database holding the run's model journal, for the seal (default: this runtime's ModelPort journal, else the workspace's;
-   * a run that journaled elsewhere needs it passed, or JOURNAL_EXTERNAL).
+   * `journalDb`: the database holding the model journal of a run that journaled outside the workspace (its birth event says `external`), for
+   * the seal (default: this runtime's ModelPort journal; without either, JOURNAL_EXTERNAL). A run that journaled in the workspace is sealed
+   * against the workspace whatever is passed.
    */
   closeCancelled(runId, { actor = 'user', reason = '', journalDb } = {}) {
     const probe = this.store.rows.header(runId); // NOT_FOUND
     const { workflow } = this.store.workflow(probe.workflowHash);
-    const journal = journalDb ?? this.models?.journal?.db ?? (this.store.events(runId)[0]?.journal === 'external' ? null : this.store.db);
+    // Sealed against the journal the run used: the workspace's, unless its birth event says another database holds it (as verify-run reads it).
+    const journal = this.store.events(runId)[0]?.journal === 'external' ? (journalDb ?? this.models?.journal?.db ?? null) : this.store.db;
     if (!journal) throw new FoundryError('JOURNAL_EXTERNAL', 'This run journaled its model calls in another database; pass that journal so the cancelled verdict can be sealed against it (--journal FILE)');
     const request = { id: randomUUID(), at: Date.now(), actor: String(actor).slice(0, 40), reason: String(reason ?? '').slice(0, 500), pid: process.pid };
     let created = false, swept = [], made = request;

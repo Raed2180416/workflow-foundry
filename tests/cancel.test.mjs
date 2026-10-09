@@ -513,17 +513,22 @@ test('a run that journals its model calls elsewhere is closed by a canceller onl
   await assert.rejects(p.other.cancel(victim.id), error => error.code === 'CORRUPT_EVENTS');
   assert.equal(p.other.store.rows.header(victim.id).cancelRequest, undefined);
 
-  const result = await p.other.stopAll({ actor: 'test' });
+  const result = await p.other.stopAll({ actor: 'test', executingOnly: false, graceMs: 1000 });
   assert.deepEqual(result.results.map(r => [r.runId, r.outcome]), [[plain.id, 'cancelled']], 'the healthy run was stopped');
   assert.deepEqual(result.failed.map(f => [f.runId, f.error.code]).sort(), [[remote.id, 'JOURNAL_EXTERNAL'], [victim.id, 'CORRUPT_EVENTS']].sort());
   assert.equal(exitCodeOf(result), 3);
   assert.match(result.message, /1 of 3 runs cancelled; 2 could not be cancelled/);
 
+  // Given the other journal, the run that needs it is sealed against it; a run that journaled in the workspace is sealed against the workspace.
   const report = await p.other.cancel(remote.id, { actor: 'test', journalDb: external });
   assert.equal(report.outcome, 'cancelled', report.message);
   const verified = verifyRun(p.other.store, remote.id, { journalDb: external });
   assert.equal(verified.ok, true, JSON.stringify(verified.findings));
   p.verified(plain.id);
+  const again = p.create(pause('JournalHereThree'));
+  assert.equal((await p.owner.startRun(again.id)).status, 'waiting');
+  assert.equal((await p.other.cancel(again.id, { actor: 'test', journalDb: external })).outcome, 'cancelled');
+  p.verified(again.id);
 });
 
 test('escalation targets: the owner\'s sandboxes and model CLIs by process group, never this process, its ancestors or any group they are in', () => {
