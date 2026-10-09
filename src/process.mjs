@@ -1,6 +1,7 @@
 import { spawn } from 'node:child_process';
 import { StringDecoder } from 'node:string_decoder';
 import { FoundryError } from './data.mjs';
+import { trackChild } from './children.mjs';
 
 /** Bounded argv-only subprocess. No shell parsing or inherited credential env. */
 export async function runProcess(command, args, { cwd, env, input = '', timeoutMs = 60000, signal, maxBytes = 4 * 1024 * 1024 } = {}) {
@@ -11,6 +12,7 @@ export async function runProcess(command, args, { cwd, env, input = '', timeoutM
   if (signal?.aborted) throw new FoundryError('CANCELLED', 'Subprocess was cancelled before launch');
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, { cwd, env, shell: false, detached: process.platform !== 'win32', stdio: ['pipe', 'pipe', 'pipe'] });
+    const untrack = trackChild(child, 'process'); // recorded with the run executing it (src/children.mjs), so a killed owner's child can be found and stopped
     let stdout = '', stderr = '', bytes = 0, failure = null, killTimer;
     const decoders = { stdout: new StringDecoder('utf8'), stderr: new StringDecoder('utf8') };
     const startedAt = Date.now();
@@ -34,7 +36,7 @@ export async function runProcess(command, args, { cwd, env, input = '', timeoutM
     child.stdin.on('error', error => { if (error.code !== 'EPIPE') stop(error); });
     child.once('error', error => { failure = new FoundryError('PROCESS_LAUNCH', error.message); });
     child.once('close', (code, terminationSignal) => {
-      clearTimeout(timer); clearTimeout(killTimer); signal?.removeEventListener('abort', abort);
+      clearTimeout(timer); clearTimeout(killTimer); signal?.removeEventListener('abort', abort); untrack();
       stdout += decoders.stdout.end(); stderr += decoders.stderr.end();
       if (failure) kill();
       const result = { command, args, code, signal: terminationSignal, stdout, stderr, elapsedMs: Date.now() - startedAt };

@@ -15,10 +15,11 @@
 // outcome in flight (a task whose capability has effects) stops as `uncertain` instead, as any interrupted effect does, and the report lists it.
 // Every step is a compare-and-swap update with its chain events, so a crash at any point leaves a consistent, verifiable run (and another
 // `foundry cancel`, or `foundry resume`, finishes the job).
-import { readdirSync, readFileSync } from 'node:fs';
 import { setTimeout as delay } from 'node:timers/promises';
 import { errorData } from './data.mjs';
 import { ownerAlive, processStartStamp } from './runtime.mjs';
+import { ancestorsOf, processTable, reapChildren } from './children.mjs';
+export { ancestorsOf, processTable };
 
 const FINAL = new Set(['succeeded', 'failed', 'cancelled']);
 const LIST_LIMIT = 50;
@@ -27,26 +28,6 @@ const KILL_WAIT_MS = 3000;
 
 // ---- processes -------------------------------------------------------------------------------------------------------------------------
 
-/** [{pid, ppid, pgid, state, start}] for every process (Linux /proc); empty where /proc is not available. */
-export function processTable(root = '/proc') {
-  let names;
-  try { names = readdirSync(root); } catch { return []; }
-  const table = [];
-  for (const name of names) {
-    if (!/^[0-9]+$/.test(name)) continue;
-    try {
-      const text = readFileSync(`${root}/${name}/stat`, 'utf8'), rest = text.slice(text.lastIndexOf(')') + 2).split(' ');
-      table.push({ pid: Number(name), state: rest[0], ppid: Number(rest[1]), pgid: Number(rest[2]), start: rest[19] });
-    } catch { /* exited while scanning */ }
-  }
-  return table;
-}
-/** `pid` and its ancestors, nearest first. */
-export function ancestorsOf(table, pid) {
-  const byPid = new Map(table.map(p => [p.pid, p])), found = [];
-  for (let at = pid, seen = new Set(); at > 0 && byPid.has(at) && !seen.has(at); at = byPid.get(at).ppid) { seen.add(at); found.push(at); }
-  return found.length ? found : [pid];
-}
 /** Every live descendant of `pid` (children, their children ...), zombies excluded. */
 export function descendantsOf(table, pid) {
   const children = new Map();

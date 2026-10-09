@@ -51,6 +51,7 @@ export class Store {
       CREATE INDEX IF NOT EXISTS decisions_run ON decisions(run_id);
       CREATE TABLE IF NOT EXISTS timers(run_id TEXT NOT NULL, node_key TEXT NOT NULL, wake_at INTEGER NOT NULL, PRIMARY KEY(run_id,node_key));
       CREATE INDEX IF NOT EXISTS timers_due ON timers(wake_at);
+      CREATE TABLE IF NOT EXISTS run_children(run_id TEXT NOT NULL, pid INTEGER NOT NULL, pgid INTEGER NOT NULL, start TEXT, kind TEXT NOT NULL, at INTEGER NOT NULL, PRIMARY KEY(run_id,pid));
     `);
     // Run state is per-node rows (src/run-rows.mjs). `limits` are the state bounds; an instance may lower them (tests do).
     installRunTables(this.db);
@@ -135,6 +136,14 @@ export class Store {
     const row = this.rows.stmt("SELECT json_extract(body,'$.cancelRequest') AS request FROM runs WHERE id=?").get(id);
     return row?.request ? JSON.parse(row.request) : null;
   }
+  // The process groups a run has started and that have not ended (src/children.mjs): recorded as they start, forgotten as they end, so the ones a
+  // dead owner left behind can be found.
+  recordChild(runId, { pid, pgid, start = null, kind }) { this.rows.stmt('INSERT OR REPLACE INTO run_children(run_id,pid,pgid,start,kind,at) VALUES(?,?,?,?,?,?)').run(runId, pid, pgid, start, kind, Date.now()); }
+  forgetChild(runId, pid) { this.rows.stmt('DELETE FROM run_children WHERE run_id=? AND pid=?').run(runId, pid); }
+  forgetChildren(runId) { this.rows.stmt('DELETE FROM run_children WHERE run_id=?').run(runId); }
+  children(runId) { return this.rows.stmt('SELECT pid,pgid,start,kind,at FROM run_children WHERE run_id=? ORDER BY at,pid').all(runId).map(row => ({ ...row })); }
+  /** The ids of runs that have recorded process groups still on file. */
+  childRunIds() { return this.rows.stmt('SELECT DISTINCT run_id FROM run_children ORDER BY run_id').all().map(row => row.run_id); }
   /** The ids of every run that has not reached a final status (succeeded, failed, cancelled), oldest first: what is running, parked or uncertain. */
   openRunIds() {
     return this.rows.stmt("SELECT id FROM runs WHERE json_extract(body,'$.status') NOT IN ('succeeded','failed','cancelled') ORDER BY rowid").all().map(row => row.id);

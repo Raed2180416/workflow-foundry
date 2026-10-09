@@ -1,6 +1,7 @@
 import { spawn } from 'node:child_process';
 import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import { checkData, FoundryError } from './data.mjs';
+import { trackChild } from './children.mjs';
 
 // DESIGN §1.2. Code runs in fresh user+net+mount+pid namespaces: every inherited mount is
 // remounted read-only, the environment holds PATH only, and source plus input arrive on stdin.
@@ -158,6 +159,7 @@ export async function runCode({ lang, source, input = null, timeoutMs = 10000, m
     let child;
     try { child = spawn(unshareBinary, argv, { cwd: '/', env: { PATH: SAFE_PATH }, shell: false, detached: true, stdio: ['pipe', 'pipe', 'pipe'], ...identity }); }
     catch (error) { reject(new FoundryError('SANDBOX_UNAVAILABLE', `Sandbox launch failed: ${error.message}`)); return; }
+    const untrack = trackChild(child, 'sandbox'); // recorded with the run executing it (src/children.mjs), so a killed owner's sandbox can be found and stopped
     const stdout = [], stderr = [];
     let stdoutBytes = 0, stderrBytes = 0, failure = null;
     const limit = maxOutputBytes + RESULT.length + 2;
@@ -177,11 +179,11 @@ export async function runCode({ lang, source, input = null, timeoutMs = 10000, m
     });
     child.stdin.on('error', () => {});
     child.once('error', error => {
-      clearTimeout(timer); signal?.removeEventListener('abort', abort);
+      clearTimeout(timer); signal?.removeEventListener('abort', abort); untrack();
       reject(new FoundryError('SANDBOX_UNAVAILABLE', `Sandbox launch failed: ${error.message}`));
     });
     child.once('close', (code, terminationSignal) => {
-      clearTimeout(timer); signal?.removeEventListener('abort', abort);
+      clearTimeout(timer); signal?.removeEventListener('abort', abort); untrack();
       const elapsedMs = Date.now() - startedAt;
       const errText = Buffer.concat(stderr).toString('utf8'), ready = errText.startsWith(READY);
       const userErr = ready ? errText.slice(READY.length) : errText;

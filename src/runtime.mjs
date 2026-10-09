@@ -9,6 +9,7 @@ import { engineHash } from './engine.mjs';
 import { compileContext, contextInputs, inheritedLabel, joinLabels } from './context.mjs';
 import { verdictOf } from './verdict.mjs';
 import { runCode } from './sandbox.mjs';
+import { childScope, reapChildren } from './children.mjs';
 import { classIndex, modelById, modelsForClass, nextClass, validatePolicy } from './models/policy.mjs';
 import { MODES } from './models/port.mjs';
 import { AUDIT, identityChanges, journalSeal } from './audit.mjs';
@@ -351,6 +352,8 @@ class Invocation {
     this.userCancelled = false; this.replaySources = new Map();
     // The durable cancel request that stopped this execution (Runtime.requestCancel), once seen, and the timer that looks for it.
     this.cancelRequest = null; this.cancelTimer = null;
+    // Where the process groups this execution starts (sandboxes, model CLIs) are recorded while they run (src/children.mjs).
+    this.children = { add: child => this.store.recordChild(this.runId, child), remove: pid => this.store.forgetChild(this.runId, pid) };
     // The scheduler's dispatch counter (run-wide; execute() continues it from the chain) and the number each dispatched node is still to
     // record on its first event (eventNode).
     this.dispatched = 0; this.dispatchMark = new Map();
@@ -526,6 +529,9 @@ class Invocation {
         r.status = 'running';
       }, { type: 'runner.acquired', token: this.token }, { result: 'header' });
       owned = true;
+      // Process groups an earlier owner of this run left running (it was killed) are stopped before this execution starts its own.
+      const stale = reapChildren(this.store, this.runId).filter(child => child.killed);
+      if (stale.length) this.update(() => {}, { type: 'children.reaped', children: stale.map(({ pid, kind }) => ({ pid, kind })) });
       this.watchCancel();
       if (Date.now() >= run.deadline) throw new FoundryError('DEADLINE', 'Run deadline exhausted before resume');
       this.semaphore = new Semaphore(Math.min(run.policy.maxConcurrency, this.workflow.budget.maxConcurrency));
@@ -901,10 +907,10 @@ class Invocation {
       await this.semaphore.take(signal);
       let result;
       try {
-        result = await models.call({ runId: this.runId, nodeKey, attempt, sampleIndex, modelId: entry.id, system: compiled.system, prompt: compiled.prompt, schema: returns,
+        result = await childScope.run(this.children, () => models.call({ runId: this.runId, nodeKey, attempt, sampleIndex, modelId: entry.id, system: compiled.system, prompt: compiled.prompt, schema: returns,
           decoding: node.decoding ?? {}, receiptHash: compiled.receiptHash, signal: stop.signal, mode: run.modelMode ?? 'live', salt: run.sampleSalt ?? this.runId,
           // Default per-call timeout: the ModelPort's own (300 s by default, the same as a B1 script's gateway calls).
-          timeoutMs: node.timeoutMs ?? (Number.isInteger(models.timeoutMs) ? models.timeoutMs : 120000) });
+          timeoutMs: node.timeoutMs ?? (Number.isInteger(models.timeoutMs) ? models.timeoutMs : 120000) }));
       } catch (error) {
         // A cancelled call is journaled with what it consumed; charge that before the cancellation propagates.
         const spent = error.code === 'CANCELLED' ? error.details : null;
@@ -1055,7 +1061,7 @@ class Invocation {
   async sandboxed(spec) {
     const signal = this.signal(), stop = this.untilDeadline(signal);
     await this.semaphore.take(signal);
-    try { return (await this.runtime.codeRunner({ ...spec, timeoutMs: Math.min(spec.timeoutMs, 600000), signal: stop.signal })).value; }
+    try { return (await childScope.run(this.children, () => this.runtime.codeRunner({ ...spec, timeoutMs: Math.min(spec.timeoutMs, 600000), signal: stop.signal }))).value; }
     catch (error) { throw stop.reached() ? deadlineStop('code') : error; }
     finally { this.semaphore.release(); }
   }
