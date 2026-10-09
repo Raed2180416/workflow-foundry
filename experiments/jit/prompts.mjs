@@ -2,6 +2,16 @@
 // traces, one for a recompile (the previous solve.mjs plus new traces and regression cases). Kept short and concrete:
 // cheap builders follow short prompts better. The agent answers in the traces are noisy pseudo-labels (a Haiku agent
 // solves a hard family about half the time), so the task's own text is the authority and agreement is a diagnostic.
+//
+// opts.promptVersion (default 1) selects the text. Version 1 is frozen: live streams record its hash, so it must not change.
+// Version 2 adds three short rules: near-threshold cases of a code heuristic go to a narrow batched judge; decisions on
+// weak evidence call flow.flag; createFlow({ budgetUsd, autoFlag: true }).
+export const PROMPT_VERSIONS = Object.freeze([1, 2]);
+export function promptVersionOf(opts) {
+  const v = opts?.promptVersion ?? 1;
+  if (!PROMPT_VERSIONS.includes(v)) throw new Error(`builder prompt: promptVersion must be one of ${PROMPT_VERSIONS.join(', ')}, got ${JSON.stringify(v)}`);
+  return v;
+}
 
 const range = (dir, n) => (n === 1 ? `${dir}-0/` : `${dir}-0 .. ${dir.split('/').pop()}-${n - 1}/`);
 const cases = ({ traces, regressions }) => `Inputs:
@@ -12,7 +22,7 @@ const cases = ({ traces, regressions }) => `Inputs:
   agent runs after the compiled solver got it wrong. Every regression case must pass.` : ''}
 - output-schema.json: the answer format.`;
 
-const method = ({ models, perTaskUsd }) => `How to compile:
+const method = opts => { const { models, perTaskUsd } = opts; return `How to compile:
 1. The task text is the authority: its prompt, spec and notes say what is right. The agent answers are evidence of formats,
    procedure and typical judgments, NOT ground truth: agents slip (a cheap one is wrong about half the time on hard tasks).
 2. Put all deterministic procedure in code: parsing, normalisation, lookups, arithmetic, conversion, matching, merging,
@@ -26,24 +36,31 @@ const method = ({ models, perTaskUsd }) => `How to compile:
    uniqueness, round-trips (flow.invariant). A failed guard hands the task back to the agent; that beats a wrong answer.
    Never guard on values that change from task to task.
 5. No answers or literals copied from the traces: new tasks have different data. The model budget per task is $${perTaskUsd};
-   aim far below it (no model call for anything code can do).`;
+   aim far below it (no model call for anything code can do).${promptVersionOf(opts) >= 2 ? `
+6. Where code uses a heuristic threshold (fuzzy name or typo matching, a similarity cutoff, a tolerance window), decide the
+   clear cases in code and send only the near-threshold candidates to one narrow flow.judge, batched, with a check code can
+   verify (e.g. the chosen id is one of the candidates offered). Do not tune a cutoff until it fits the traces.
+7. Call flow.flag(name, detail) for every decision taken on weak evidence: a near-threshold match, a value inferred from
+   one weak cue, a default used because nothing matched. A flag never changes the answer; it asks the harness to check that
+   run against the agent.` : ''}`; };
 
-const sdk = ({ models, perTaskUsd }) => `Write ./solve.mjs: one Node 24 ESM file, no npm packages, run as  node solve.mjs task.json . At run time it gets only
+const sdk = opts => { const { models, perTaskUsd } = opts, v2 = promptVersionOf(opts) >= 2; return `Write ./solve.mjs: one Node 24 ESM file, no npm packages, run as  node solve.mjs task.json . At run time it gets only
 tools/model.mjs and tools/flow.mjs beside it, no network except model calls through flow.judge,
 PATH=/opt/node24/bin:/usr/local/bin:/usr/bin:/bin and HOME = the task directory. Write it on the SDK in tools/flow.mjs
 (read it; do not edit anything in tools/):
   import { createFlow } from './tools/flow.mjs';
-  const flow = createFlow({ budgetUsd: ${perTaskUsd} });
+  const flow = createFlow({ budgetUsd: ${perTaskUsd}${v2 ? ', autoFlag: true' : ''} });${v2 ? '   // autoFlag: an escalated or split judge flags the run' : ''}
   const task = flow.input();                                         // {prompt, inputs, files?}
   const rows = flow.step('parse-rows', () => parseRows(task.inputs));
   const v = await flow.judge('row-status', { tiers: ['${models[0]}'${models[1] ? `, '${models[1]}'` : ''}], system, prompt, schema,
     check: v => (text.includes(v.quote) ? null : 'quote not in text') });   // returns only a checked value, else deopts
   flow.guard('known-columns', cols.every(c => KNOWN.has(c)), { cols });
   flow.invariant('rows-conserved', kept.length + dropped.length === rows.length, { kept: kept.length });
-  const out = await flow.map(batches, async b => judgeBatch(b), { concurrency: 4 });
+  const out = await flow.map(batches, async b => judgeBatch(b), { concurrency: 4 });${v2 ? `
+  if (best.score < CLEAR) flow.flag('weak-name-match', { name, best: best.id, score: best.score });   // trace only` : ''}
   flow.done(answer);                                                 // exactly once, at the end
 Schemas use only type, properties, required, additionalProperties, items, enum, const, minimum, maximum, minItems,
-maxItems, minLength, maxLength.`;
+maxItems, minLength, maxLength.`; };
 
 const testing = ({ gatewayUsd }) => `Test (model calls cost real money from a $${gatewayUsd} build budget; node tools/budget.mjs shows the spend):
   node --check solve.mjs

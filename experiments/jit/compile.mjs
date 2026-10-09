@@ -14,7 +14,7 @@ import { runSandboxed } from '../../src/executors/sandboxed-command.mjs';
 import { loadFamily } from '../lib/beds.mjs';
 import { startServices, Ledger } from '../lib/services.mjs';
 import { MODEL_TOOL, BUDGET_TOOL, taskFiles } from '../c0/construct.mjs';
-import { builderPrompt } from './prompts.mjs';
+import { builderPrompt, promptVersionOf } from './prompts.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const FLOW_TOOL = readFileSync(path.join(here, 'flow.mjs'), 'utf8');
@@ -135,8 +135,9 @@ export async function hostCheck({ dir, solveSource, traces, regressions = [], mo
 // runner: the session runner (tests wrap runClaudeCode to plant a stand-in CLI binary in the workdir).
 export async function compile({ familyId, traces, previous = null, regressions = [], builderModel = 'claude-haiku-5-5', builderEffort = 'high', builderBudgetUsd = 3,
   gatewayUsd = 1.5, minutes = 30, perTaskUsd = 1, modelPort, workRoot, label, models, version = 1, checkUsd = gatewayUsd, checkMinutes = 30, checkCaseSeconds = 600,
-  runner = runClaudeCode }) {
+  promptVersion = 1, runner = runClaudeCode }) {
   if (!Array.isArray(traces) || !traces.length) throw new Error('compile: at least one trace is required');
+  promptVersion = promptVersionOf({ promptVersion });   // an unknown prompt version fails here, before anything is started
   if (!label || /[/\\]|^\.\.?$/.test(label)) throw new Error(`compile: label must be a plain directory name, got ${label}`);
   // The port must hold exactly the session's models: the gateway allow-list and execution then agree.
   const portIds = modelPort.policy.models.map(m => m.id);
@@ -150,7 +151,7 @@ export async function compile({ familyId, traces, previous = null, regressions =
   const svc = await startServices({ modelPort, ledger, scoreLimit: 0, runId: `compile:${label}:${randomUUID()}`, allowedModels: models });
   const files = compileFiles({ outputSchema: fam.outputSchema, traces, regressions, previous, gateway: { url: svc.url, token: svc.token } });
   const kind = previous ? 'recompile' : 'compile';
-  const prompt = builderPrompt(kind, { traces: traces.length, regressions: regressions.length, minutes, gatewayUsd, perTaskUsd, models });
+  const prompt = builderPrompt(kind, { traces: traces.length, regressions: regressions.length, minutes, gatewayUsd, perTaskUsd, models, promptVersion });
   const started = Date.now();
   let r;
   try {
@@ -186,7 +187,7 @@ export async function compile({ familyId, traces, previous = null, regressions =
     arm: 'jit-compile', kind, familyId, label, version, parentSha, changed: artifactSha256 !== parentSha,
     traceIds: traces.map(t => t.traceId ?? null), regressionIds: regressions.map(x => x.caseId ?? null),
     builderModel, builderEffort, policyHash: modelPort.policyHash ?? null, models, runId: svc.runId, flowSha256: sha(FLOW_TOOL), checkToolSha256: sha(CHECK_TOOL),
-    promptSha256: sha(prompt), artifact: solveSource == null ? null : 'solve.mjs', artifactSha256,
+    promptVersion, promptSha256: sha(prompt), artifact: solveSource == null ? null : 'solve.mjs', artifactSha256,
     builderCostUsd, builderCostReportedUsd: r.costUsd ?? null, builderCostUnknown: !!r.costUnknown, builderCostUpperUsd: r.costUpperUsd ?? null, builderBudgetUsd,
     builderUsage: r.usage ?? null, builderStreamUsage: r.streamUsage ?? null, builderSessionId: r.sessionId ?? null,
     gatewayCostUsd: ledger.spentUsd, gatewayCapUsd: ledger.capUsd, gatewayOvershootUsd: Math.max(0, ledger.spentUsd - ledger.capUsd), gatewayCalls: ledger.calls, gatewayErrors: ledger.errors,

@@ -200,3 +200,70 @@ flow.done(out.map(v => v.i));`, { on: async b => { const i = Number(b.prompt.spl
   for (const j of judges) assert.equal(j.costUsd, (j.value.i + 1) / 1000, `judge ${j.prompt} charged its own call`);
   assert.equal(r.trace.at(-1).spentUsd, 0.021); assert.equal(r.trace.at(-1).calls, 6);
 });
+
+// ---- JIT v2: uncertainty flags (opt-in) ----
+test('flow.flag: a flag event and the totals count flags; the output and the exit code are unchanged; bad input never throws', async t => {
+  const r = await run(t, `const flow = createFlow({ budgetUsd: 1 });
+const task = flow.input();
+flow.flag('weak-name-match', { name: 'Acme Corp', best: 'ACME', score: 0.81 });
+flow.flag('weak-name-match', () => ({ name: 'Globex', score: 0.79 }));
+flow.flag('default-used');
+flow.flag(undefined, { circular: (() => { const o = {}; o.o = o; return o; })() });
+flow.done({ n: task.inputs.xs.length });`);
+  assert.equal(r.code, 0, r.stderr); assert.deepEqual(r.output, { n: 5 }); assert.equal(r.deopt, null);
+  const flags = r.trace.filter(e => e.kind === 'flag');
+  assert.deepEqual(flags.map(e => e.name), ['weak-name-match', 'weak-name-match', 'default-used', 'flag']);
+  assert.deepEqual(flags[0].detail, { name: 'Acme Corp', best: 'ACME', score: 0.81 }); assert.deepEqual(flags[1].detail, { name: 'Globex', score: 0.79 });
+  assert.equal(flags[2].detail, null); assert.equal(flags[0].auto, undefined);
+  assert.match(flags[3].detail.unserializable, /circular/i, 'a detail that cannot be serialised is replaced, and nothing broke');
+  const done = r.trace.at(-1);
+  assert.equal(done.kind, 'done'); assert.equal(done.flags, 4);
+  assert.deepEqual(done.flagNames, ['weak-name-match', 'default-used', 'flag']);
+});
+
+test('flags are counted in the totals of a deopt too, and a flag never turns a deopt into an answer', async t => {
+  const r = await run(t, `const flow = createFlow();
+flow.flag('weak-cue', { cue: 'x' });
+flow.guard('known', false, { unseen: 1 });
+flow.done('never');`);
+  assert.equal(r.code, 75); assert.equal(r.deopt.kind, 'guard');
+  const d = r.trace.at(-1);
+  assert.equal(d.kind, 'deopt'); assert.equal(d.flags, 1); assert.deepEqual(d.flagNames, ['weak-cue']);
+});
+
+test('default (no autoFlag): an escalated judge and a split vote emit no flag events, and the totals carry no flag fields', async t => {
+  const r = await run(t, judgeSrc(), { on: b => (b.model === HAIKU ? ok({ quote: 'nope' }) : ok({ quote: 'hello' })) });
+  assert.equal(r.code, 0, r.stderr); assert.equal(r.trace.find(e => e.kind === 'judge').escalations, 1);
+  assert.equal(r.trace.filter(e => e.kind === 'flag').length, 0);
+  assert.equal('flags' in r.trace.at(-1), false); assert.equal('flagNames' in r.trace.at(-1), false);
+  const split = await run(t, judgeSrc(', samples: 3'), { on: (b, n) => ok({ quote: n === 2 ? 'world' : 'hello' }, 0.001) });
+  assert.equal(split.code, 0, split.stderr); assert.equal(split.trace.filter(e => e.kind === 'flag').length, 0);
+});
+
+const autoSrc = (opts = '') => judgeSrc(opts).replace('createFlow({ budgetUsd: 1 })', 'createFlow({ budgetUsd: 1, autoFlag: true })');
+test('autoFlag: a judge that escalated past its first tier flags judge-escalated:<name>; the answer is the same', async t => {
+  const r = await run(t, autoSrc(), { on: b => (b.model === HAIKU ? ok({ quote: 'nope' }, 0.01) : ok({ quote: 'hello' }, 0.05)) });
+  assert.equal(r.code, 0, r.stderr); assert.deepEqual(r.output, { quote: 'hello' });
+  const f = r.trace.filter(e => e.kind === 'flag');
+  assert.equal(f.length, 1); assert.equal(f[0].name, 'judge-escalated:find-quote'); assert.equal(f[0].auto, true);
+  assert.deepEqual(f[0].detail, { reason: 'escalated', tier: SONNET, escalations: 1, agreement: 1 });
+  assert.ok(r.trace.findIndex(e => e.kind === 'judge') < r.trace.findIndex(e => e.kind === 'flag'), 'the judge event first, then its flag');
+  assert.equal(r.trace.at(-1).flags, 1); assert.deepEqual(r.trace.at(-1).flagNames, ['judge-escalated:find-quote']);
+});
+
+test('autoFlag: a non-unanimous samples vote flags (split-vote); a unanimous first-tier judge does not', async t => {
+  const split = await run(t, autoSrc(', samples: 3'), { on: (b, n) => ok({ quote: n === 2 ? 'world' : 'hello' }, 0.001) });
+  assert.equal(split.code, 0, split.stderr); assert.deepEqual(split.output, { quote: 'hello' });
+  const f = split.trace.filter(e => e.kind === 'flag');
+  assert.equal(f.length, 1); assert.equal(f[0].name, 'judge-escalated:find-quote');
+  assert.equal(f[0].detail.reason, 'split-vote'); assert.equal(f[0].detail.escalations, 0); assert.deepEqual(f[0].detail.votes, [2, 1]);
+  const clean = await run(t, autoSrc(', samples: 3'), { on: () => ok({ quote: 'hello' }, 0.001) });
+  assert.equal(clean.code, 0, clean.stderr); assert.equal(clean.trace.filter(e => e.kind === 'flag').length, 0); assert.equal('flags' in clean.trace.at(-1), false);
+  const one = await run(t, autoSrc(), { on: () => ok({ quote: 'world' }) });
+  assert.equal(one.trace.filter(e => e.kind === 'flag').length, 0);
+});
+
+test('autoFlag: a judge that exhausts its tiers still deopts (no flag stands in for a checked value)', async t => {
+  const r = await run(t, autoSrc(), { on: () => ok({ quote: 'nope' }) });
+  assert.equal(r.code, 75); assert.equal(r.deopt.kind, 'judge'); assert.equal(r.trace.filter(e => e.kind === 'flag').length, 0);
+});

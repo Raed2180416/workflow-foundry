@@ -29,6 +29,33 @@ export function loadRun(runDir) {
   return arms.sort((a, b) => (a.meta.spec ?? a.meta.slug).localeCompare(b.meta.spec ?? b.meta.slug));
 }
 
+// Uncertainty flags (JIT v2, opt-in): compiled runs that raised flow.flag flags, and the shadows they triggered
+// (row.shadowReason 'flag' | 'schedule+flag', with jit.shadowOnFlags) against the scheduled ones. A flag's precision is the
+// share of its answered shadows that disagreed with the compiled answer; the scheduled shadows' rate is the base rate.
+// The oracle columns (pass among flagged vs unflagged compiled runs) are the experimenter's view, never the system's.
+// null when the arm has neither flags nor shadow reasons (every v1 run), so v1 reports are unchanged.
+export function flagSummary(rows) {
+  const flagged = rows.filter(r => (r.flags?.count ?? 0) > 0), withReason = rows.filter(r => r.shadowReason);
+  if (!flagged.length && !withReason.length) return null;
+  const shadowOf = r => (r.events ?? []).find(e => e.kind === 'shadow');
+  const group = pick => {
+    const rs = withReason.filter(pick), answered = rs.filter(r => shadowOf(r) && shadowOf(r).agree != null);
+    const disagreements = rs.filter(r => (r.events ?? []).some(e => e.kind === 'disagree')).length;
+    return { shadows: rs.filter(r => shadowOf(r)).length, answered: answered.length, disagreements,
+      regressions: rs.filter(r => (r.events ?? []).some(e => e.kind === 'regression')).length, disagreeRate: answered.length ? r4(disagreements / answered.length) : null };
+  };
+  const byName = {};
+  for (const r of flagged) for (const n of r.flags.names ?? []) byName[n] = (byName[n] ?? 0) + 1;
+  const compiledOk = rows.filter(r => r.compiledStatus === 'ok'), unflagged = compiledOk.filter(r => !((r.flags?.count ?? 0) > 0));
+  const flagTriggered = group(r => /flag/.test(r.shadowReason));
+  return {
+    flaggedRuns: flagged.length, flagsRaised: flagged.reduce((s, r) => s + r.flags.count, 0), runsByFlagName: byName,
+    scheduled: group(r => /schedule/.test(r.shadowReason)), flagTriggered, flagOnly: withReason.filter(r => r.shadowReason === 'flag').length,
+    flagPrecision: flagTriggered.disagreeRate,
+    oracle: { flaggedPass: flagged.filter(r => r.pass).length, flagged: flagged.length, unflaggedCompiledPass: unflagged.filter(r => r.pass).length, unflaggedCompiled: unflagged.length },
+  };
+}
+
 export function summarizeArm({ meta, rows, events, faults }) {
   const spec = meta.spec ?? rows[0]?.arm ?? meta.slug, kind = meta.kind ?? rows[0]?.kind ?? spec.split(':')[0];
   const n = rows.length, successes = rows.filter(r => r.pass).length;
@@ -50,7 +77,7 @@ export function summarizeArm({ meta, rows, events, faults }) {
   const breakdown = {};
   for (const r of rows) for (const [k, v] of Object.entries(r.costBreakdown ?? {})) breakdown[k] = r4((breakdown[k] ?? 0) + v);
   const ci = wilson(successes, n);
-  return {
+  const out = {
     spec, slug: meta.slug ?? rows[0]?.armSlug, kind, tasks: n, successes, successRate: n ? successes / n : null, ci: { lo: r4(ci.lo), hi: r4(ci.hi) },
     totalUsd: r4(totalUsd), rowsUsd: r4(rowsUsd), unbilledUsd: r4(unbilledUsd), usdPerSuccess: successes ? r4(totalUsd / successes) : null, usdPerTask: n ? r4(totalUsd / n) : null,
     costUnknownRows: rows.filter(r => r.costUnknown).length, costBreakdown: breakdown,
@@ -72,6 +99,9 @@ export function summarizeArm({ meta, rows, events, faults }) {
     versions: [...new Set(rows.map(r => r.version).filter(v => v != null))],
     curve,
   };
+  const flags = flagSummary(rows);
+  if (flags) out.flags = flags;
+  return out;
 }
 
 // Break-even against a reference arm: the first index from which this arm's cumulative cost stays at or below the
@@ -128,6 +158,17 @@ export function renderMarkdown(rep) {
     for (const a of jit) {
       const c = a.counts;
       L.push(`| ${short(a.spec)} | ${c.compiles} (${c.recompiles}) | ${c.compileAttempts} / ${c.fallbackCompiles} | ${c.rejected} | ${c.compileFailed} | ${Object.entries(c.deoptsByKind).map(([k, v]) => `${k} ${v}`).join(', ') || '0'} | ${c.crashes} | ${c.timeouts} | ${c.invalid} | ${c.shadows} | ${c.disagreements} | ${Object.entries(c.adjudications).map(([k, v]) => `${k} ${v}`).join(', ') || '0'} | ${c.regressions} | ${c.unresolved} | ${c.faults} |`);
+    }
+  }
+  const flagged = rep.arms.filter(a => a.flags);
+  if (flagged.length) {
+    const rate = g => `${g.disagreements}/${g.answered}${g.answered ? ` (${pct(g.disagreeRate)})` : ''}`;
+    L.push('', '## Uncertainty flags and flag-triggered shadows', '',
+      'A flag-triggered shadow ran because the compiled run raised flow.flag flags (jit.shadowOnFlags); a run both scheduled and flagged counts in both columns. Precision of flags = disagreements among the answered flag-triggered shadows; the scheduled rate is the base rate. The oracle column is the experimenter\'s view only.', '',
+      '| arm | flagged runs (flags) | scheduled shadows | scheduled disagree | flag-triggered shadows (flag-only) | flag-triggered disagree (precision) | regressions from flags | oracle pass: flagged / unflagged compiled | flags by name (runs) |', '|---|---|---|---|---|---|---|---|---|');
+    for (const a of flagged) {
+      const f = a.flags;
+      L.push(`| ${short(a.spec)} | ${f.flaggedRuns} (${f.flagsRaised}) | ${f.scheduled.shadows} | ${rate(f.scheduled)} | ${f.flagTriggered.shadows} (${f.flagOnly}) | ${rate(f.flagTriggered)} | ${f.flagTriggered.regressions} | ${f.oracle.flaggedPass}/${f.oracle.flagged}, ${f.oracle.unflaggedCompiledPass}/${f.oracle.unflaggedCompiled} | ${Object.entries(f.runsByFlagName).map(([k, v]) => `${k} ${v}`).join(', ') || '–'} |`);
     }
   }
   const agents = rep.arms.filter(a => a.kind === 'agent');

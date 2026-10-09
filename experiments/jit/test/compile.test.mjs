@@ -221,4 +221,19 @@ test('a builder that leaves no solve.mjs gets a record with no artifact and no c
   assert.equal(solvePath, null); assert.equal(record.artifact, null); assert.equal(record.checkTraces.error.code, 'NO_ARTIFACT'); assert.equal(record.checkCostUsd, 0);
   assert.equal(record.checkTraces.accepted, false); assert.equal(existsSync(path.join(workdir, '.host-check')), false);
   assert.match(readFileSync(path.join(workdir, '.seen-prompt.txt'), 'utf8'), /solved 1 task of one recurring family/);
+  assert.equal(record.promptVersion, 1, 'the default prompt version is recorded');
+});
+
+test('promptVersion: passed through to the builder prompt and recorded; an unknown version fails before anything starts', { skip }, async t => {
+  const workRoot = mkdtempSync(path.join(tmpdir(), 'jit-pv-')); t.after(() => rmSync(workRoot, { recursive: true, force: true }));
+  const { traces } = await fixture();
+  const { record, workdir } = await compile({ familyId: 'records', traces: traces.slice(0, 1), modelPort: portOf(), workRoot, label: 'v1', models: MODELS, promptVersion: 2,
+    runner: runnerWith(fake({ writeSolve: false, notes: 'gave up' })) });
+  const prompt = readFileSync(path.join(workdir, '.seen-prompt.txt'), 'utf8');
+  assert.match(prompt, /flow\.flag\(name, detail\)/); assert.match(prompt, /autoFlag: true/);
+  assert.equal(record.promptVersion, 2); assert.equal(record.promptSha256, sha(prompt));
+  let ran = false;
+  await assert.rejects(compile({ familyId: 'records', traces: traces.slice(0, 1), modelPort: portOf(), workRoot, label: 'v9', models: MODELS, promptVersion: 3,
+    runner: async () => { ran = true; return {}; } }), /promptVersion must be one of 1, 2/);
+  assert.equal(ran, false); assert.equal(existsSync(path.join(workRoot, 'v9')), false);
 });

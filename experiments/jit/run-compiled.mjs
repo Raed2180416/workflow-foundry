@@ -15,6 +15,15 @@ export const DEOPT_EXIT = 75, MAX_TRACE_EVENTS = 5000;
 export const DEFAULT_FLOW = path.resolve(new URL('./flow.mjs', import.meta.url).pathname);
 
 const parseLines = text => text.split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
+// Uncertainty flags the solver raised (flow.flag, or a judge auto-flag): {count, names}. The totals on the final
+// done/deopt/crash event are authoritative (they also count flags past the trace's event cap); without one (a timeout,
+// a killed script) the flag events themselves are counted.
+export function flagsOf(trace) {
+  const events = (trace ?? []).filter(e => e?.kind === 'flag');
+  const totals = [...(trace ?? [])].reverse().find(e => ['done', 'deopt', 'crash'].includes(e?.kind) && typeof e.flags === 'number');
+  const names = [...new Set([...(Array.isArray(totals?.flagNames) ? totals.flagNames : []), ...events.map(e => String(e.name))])];
+  return { count: Math.max(totals?.flags ?? 0, events.length), names };
+}
 const lastJsonLine = stdout => {
   try { return JSON.parse(stdout.trim().split('\n').filter(Boolean).at(-1) ?? 'null'); } catch { try { return JSON.parse(stdout); } catch { return null; } }
 };
@@ -60,7 +69,7 @@ export async function runCompiled({ solvePath, task, modelPort, perTaskUsd = 1, 
   // A call whose spend could not be observed is charged at its bound (unbounded: the per-task cap), never $0.
   const unknownUsd = ledger.unknownCalls > 0 ? (ledger.unknownUpperUsd ?? perTaskUsd) : 0;
   return {
-    status, output, deopt, trace, costUsd: ledger.spentUsd + unknownUsd, costUnknown: ledger.unknownCalls > 0, imputedUsd: ledger.imputedUsd, latencyMs: r.durationMs, error,
+    status, output, deopt, trace, flags: flagsOf(trace), costUsd: ledger.spentUsd + unknownUsd, costUnknown: ledger.unknownCalls > 0, imputedUsd: ledger.imputedUsd, latencyMs: r.durationMs, error,
     meta: { exitCode: r.code, calls: ledger.calls, errors: ledger.errors, refusals: ledger.refusals, unknownCalls: ledger.unknownCalls, unknownUpperUsd: ledger.unknownUpperUsd,
       spentUsd: ledger.spentUsd, overshootUsd: Math.max(0, ledger.spentUsd - perTaskUsd), schemaErrors, stderrTail: r.stderr.slice(-400),
       solveSha256: createHash('sha256').update(source).digest('hex'), flow: !!(flowPath && existsSync(flowPath)) },

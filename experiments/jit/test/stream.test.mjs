@@ -43,17 +43,17 @@ function fakeDeps(plan, hooks = {}) {
       hooks.runCompiled?.(idx, version);
       const r = plan.compiled(version, idx) ?? { status: 'ok' };
       return { status: r.status, output: r.status === 'ok' ? (r.output ?? TRUTH(a.task.seed)) : null, deopt: r.deopt ?? null, trace: [], costUsd: 0.01, costUnknown: false, latencyMs: 1,
-        error: r.error ? { code: r.error } : null, meta: { errors: r.metaErrors ?? {} } };
+        error: r.error ? { code: r.error } : null, meta: { errors: r.metaErrors ?? {} }, ...(r.flags ? { flags: r.flags } : {}) };
     },
     async compile(a) {
       const callNo = calls.compile.length + 1;
       calls.compile.push({ builderModel: a.builderModel, label: a.label, traceIds: a.traces.map(t => t.traceId), regressionIds: a.regressions.map(r => r.regressionId),
-        previous: a.previous, models: a.models, budget: a.builderBudgetUsd, minutes: a.minutes, regressionExpected: a.regressions.map(r => r.expected) });
+        previous: a.previous, models: a.models, budget: a.builderBudgetUsd, minutes: a.minutes, regressionExpected: a.regressions.map(r => r.expected), promptVersion: a.promptVersion });
       hooks.compile?.(callNo);
       const workdir = path.join(a.workRoot, a.label); mkdirSync(workdir, { recursive: true });
       const solvePath = path.join(workdir, 'solve.mjs'); writeFileSync(solvePath, `// ${a.label}\n`);
       const checkTraces = plan.checks(callNo, a);
-      return { record: { checkTraces, builderCostUsd: 1, gatewayCostUsd: 0.5, checkCostUsd: 0.25, constructionCostUsd: 1.5, compileCostUsd: 1.75, nestedModelAttempts: 0,
+      return { record: { checkTraces, promptVersion: a.promptVersion ?? 1, builderCostUsd: 1, gatewayCostUsd: 0.5, checkCostUsd: 0.25, constructionCostUsd: 1.5, compileCostUsd: 1.75, nestedModelAttempts: 0,
         builderError: plan.builderError?.(callNo) ?? null }, workdir, solvePath };
     },
   };
@@ -386,4 +386,167 @@ console.log(JSON.stringify({ records: [{ id: seed }] }));`);
   assert.ok(ag.every(r => r.pass)); close(ag.reduce((s, r) => s + r.costUsd, 0), 4 * 0.05, 'agent');
   const trace = JSON.parse(readFileSync(path.join(root, 'runs/live-shape/agent-claude-haiku-5-5/traces', `${ag[0].traceId}.json`), 'utf8'));
   assert.deepEqual(trace.scripts.map(s => s.path), ['work.py']); assert.deepEqual(trace.commands, ['python3 work.py']);
+});
+
+// ---- JIT v2 (opt-in): uncertainty flags, flag-triggered shadows, shadowEvery 0, compile.promptVersion ----
+import { renderMarkdown } from '../report.mjs';
+
+// Arm hashes of the live v1 dev configs, taken from the code before the v2 options existed (commit 59938e5).
+const V1_HASHES = {
+  'dev-records-1': { 'agent:claude-haiku-5-5': '838a9040ccea77e5', 'agent:claude-sonnet-5-5': 'd5f76da861452d98', 'agent:claude-opus-5-5': 'e83c0b59e1d5681e',
+    'static:research/construction-20261006/artifacts/B1-haiku-records-k1/solve.mjs': 'ca4f763d5d03568e', 'jit:claude-haiku-5-5/claude-haiku-5-5': 'b1e7a0d2b8ae7d67',
+    'jit:claude-sonnet-5-5/claude-haiku-5-5': 'bba591195f4de46c', 'jit:claude-opus-5-5/claude-haiku-5-5': '2e70574b6dc900d5' },
+  'dev-kinetics-1': { 'agent:claude-haiku-5-5': '2e292709027b2786', 'agent:claude-sonnet-5-5': '17b451b20087e9a1', 'jit:claude-haiku-5-5/claude-haiku-5-5': 'd27d59e72f054502',
+    'jit:claude-sonnet-5-5/claude-haiku-5-5': 'eaabbde77c7bbf68', 'jit:claude-opus-5-5/claude-haiku-5-5': '930045b2ad53db51' },
+};
+const hashes = raw => { const c = normalizeConfig(raw); return Object.fromEntries(c.arms.map(a => [a, parseArm(a, c, { policyIds: [...POLICY_MODELS] }).hash])); };
+
+test('v2 defaults: the live v1 configs keep their arm hashes; v2 options at their defaults change nothing; set, they define a new arm', () => {
+  for (const [name, want] of Object.entries(V1_HASHES)) {
+    const raw = JSON.parse(readFileSync(new URL(`../configs/${name}.json`, import.meta.url), 'utf8'));
+    assert.deepEqual(hashes(raw), want, `${name}: arm hashes unchanged`);
+    const explicit = { ...raw, jit: { ...raw.jit, shadowOnFlags: false }, compile: { ...raw.compile, promptVersion: 1 } };
+    assert.deepEqual(hashes(explicit), want, `${name}: explicit defaults change no hash`);
+    const c = normalizeConfig(explicit);
+    assert.equal('shadowOnFlags' in c.jit, false); assert.equal('promptVersion' in c.compile, false);
+    const jitArm = Object.keys(want).find(a => a.startsWith('jit:'));
+    assert.notEqual(hashes({ ...raw, jit: { ...raw.jit, shadowOnFlags: true } })[jitArm], want[jitArm], 'shadowOnFlags defines a new arm');
+    assert.notEqual(hashes({ ...raw, compile: { ...raw.compile, promptVersion: 2 } })[jitArm], want[jitArm], 'promptVersion 2 defines a new arm');
+    assert.equal(hashes({ ...raw, jit: { ...raw.jit, shadowOnFlags: true } })['agent:claude-haiku-5-5'], want['agent:claude-haiku-5-5'], 'agent arms do not hash jit options');
+  }
+  assert.throws(() => normalizeConfig({ ...CONFIG, jit: { shadowEvery: -1 } }), /shadowEvery must be an integer >= 0/);
+  assert.throws(() => normalizeConfig({ ...CONFIG, jit: { shadowEvery: 1.5 } }), /shadowEvery must be an integer >= 0/);
+  assert.throws(() => normalizeConfig({ ...CONFIG, jit: { shadowOnFlags: 'yes' } }), /shadowOnFlags must be true or false/);
+  assert.throws(() => normalizeConfig({ ...CONFIG, compile: { promptVersion: 3 } }), /promptVersion must be one of 1, 2/);
+  assert.equal(normalizeConfig({ ...CONFIG, jit: { shadowEvery: 0, shadowOnFlags: true } }).jit.shadowOnFlags, true);
+});
+
+// Warmup 1, then compiled runs at idx 1..5. Flags at idx 2, 3, 5; idx 3's compiled answer is wrong; idx 5's shadow gives no
+// answer. The checks accept every compile.
+const FLAGS = { 2: { count: 1, names: ['weak-name-match'] }, 3: { count: 2, names: ['weak-name-match', 'judge-escalated:status'] }, 5: { count: 1, names: ['default-used'] } };
+const FLAG_PLAN = {
+  interpret: (idx, role) => (idx === 5 && role === 'shadow' ? null : undefined),
+  compiled: (version, idx) => ({ status: 'ok', ...(idx === 3 ? { output: { v: -1 } } : {}), ...(FLAGS[idx] ? { flags: FLAGS[idx] } : {}) }),
+  checks: (n, a) => perCase(a, () => 'exact'),
+};
+const FLAG_CONFIG = { ...CONFIG, experiment: 'jit-flags', segments: [{ difficulty: 3, seeds: '1..6' }], jit: { ...CONFIG.jit, warmup: 1, shadowEvery: 0, shadowOnFlags: true } };
+const FLAG_SLUG = 'jit-claude-sonnet-5-5--claude-haiku-5-5';
+
+function checkFlagScenario(rows, calls) {
+  const by = i => rows.find(r => r.idx === i);
+  assert.equal(rows.length, 6);
+  assert.deepEqual(rows.map(r => r.shadowReason ?? null), [null, null, 'flag', 'flag', null, 'flag'], 'shadowEvery 0: only flagged compiled runs are shadowed');
+  assert.deepEqual(by(2).events.find(e => e.kind === 'shadow'), { kind: 'shadow', version: 1, agree: true, reason: 'flag' });
+  assert.deepEqual(by(2).flags, FLAGS[2]); assert.equal(by(2).events.find(e => e.kind === 'compiled').flags, 1); assert.equal(by(2).delivered, 'compiled');
+  // the flagged wrong answer: the shadow disagrees, the adjudicator sides with it -> adjudicated, regression, recompile
+  assert.deepEqual(kinds(by(3)).filter(k => ['shadow', 'disagree', 'adjudicate', 'regression'].includes(k)), ['shadow', 'disagree', 'adjudicate', 'regression']);
+  assert.equal(by(3).delivered, 'adjudicated'); assert.equal(by(3).pass, true);
+  assert.ok(kinds(by(4)).includes('recompile')); assert.equal(by(4).version, 2); assert.equal(by(4).shadowReason, undefined);
+  assert.equal(calls.compile.length, 2); assert.deepEqual(calls.compile[1].regressionExpected, [{ v: 4 }]);
+  assert.deepEqual(by(5).events.find(e => e.kind === 'shadow'), { kind: 'shadow', version: 2, agree: null, note: 'shadow gave no answer', reason: 'flag' });
+  assert.equal(by(1).events.some(e => e.kind === 'shadow'), false); assert.equal('flags' in by(1), false); assert.equal('flags' in by(1).events.find(e => e.kind === 'compiled'), false);
+  assert.deepEqual(calls.interpret.map(c => [c.idx, c.role]).sort(), [[0, 'interpreter'], [2, 'shadow'], [3, 'adjudicator'], [3, 'shadow'], [5, 'shadow']]);
+  assert.equal(rows.filter(r => r.pass).length, 6);
+  // the flag shadows change no JIT state beyond what a scheduled shadow would: compiledOks counts compiled oks only
+  assert.equal(by(5).stateAfter.compiledOks, 5);
+}
+
+test('shadowOnFlags with shadowEvery 0: flag-only shadows (reason flag), adjudication and regression on a flagged wrong answer; costs exact; the report shows flag precision', async t => {
+  const root = tmp(t);
+  const { deps, calls } = fakeDeps(FLAG_PLAN);
+  const res = await runStream({ config: FLAG_CONFIG, deps, runRoot: path.join(root, 'runs'), workRoot: path.join(root, 'work'), log: () => {} });
+  assert.deepEqual(res.arms.map(a => a.errors), [[]]);
+  const rows = [...res.rows].sort((a, b) => a.idx - b.idx);
+  checkFlagScenario(rows, calls);
+  // 5 interpretations x $0.1, 5 compiled runs x $0.01, 2 compiles x $1.75
+  const total = rows.reduce((s, r) => s + r.costUsd, 0);
+  close(total, 5 * 0.1 + 5 * 0.01 + 2 * 1.75, 'total');
+  close(rows.reduce((s, r) => s + (r.costBreakdown.shadow ?? 0), 0), 0.3, 'shadow spend');
+  const p = armPaths(path.join(root, 'runs/jit-flags'), FLAG_SLUG);
+  close(readJsonl(p.events).filter(e => e.kind === 'spend').reduce((s, e) => s + e.costUsd, 0), total, 'events = rows');
+  const rep = buildReport(path.join(root, 'runs/jit-flags'));
+  const f = rep.arms[0].flags;
+  assert.equal(f.flaggedRuns, 3); assert.equal(f.flagsRaised, 4); assert.deepEqual(f.runsByFlagName, { 'weak-name-match': 2, 'judge-escalated:status': 1, 'default-used': 1 });
+  assert.deepEqual(f.scheduled, { shadows: 0, answered: 0, disagreements: 0, regressions: 0, disagreeRate: null });
+  assert.deepEqual(f.flagTriggered, { shadows: 3, answered: 2, disagreements: 1, regressions: 1, disagreeRate: 0.5 });
+  assert.equal(f.flagOnly, 3); assert.equal(f.flagPrecision, 0.5);
+  assert.deepEqual(f.oracle, { flaggedPass: 3, flagged: 3, unflaggedCompiledPass: 2, unflaggedCompiled: 2 });
+  assert.equal(rep.arms[0].counts.shadows, 3); assert.equal(rep.arms[0].counts.disagreements, 1);
+  const md = renderMarkdown(rep);
+  assert.match(md, /## Uncertainty flags and flag-triggered shadows/);
+  assert.match(md, /\| jit:claude-sonnet-5-5\/claude-haiku-5-5 \| 3 \(4\) \| 0 \| 0\/0 \| 3 \(3\) \| 1\/2 \(50\.0%\) \| 1 \| 3\/3, 2\/2 \|/);
+});
+
+test('shadowOnFlags with a schedule: rows record schedule, flag or schedule+flag; one shadow per row', async t => {
+  const root = tmp(t);
+  const flags = { 2: { count: 1, names: ['a'] }, 3: { count: 1, names: ['b'] } };
+  const { deps, calls } = fakeDeps({ compiled: (v, idx) => ({ status: 'ok', ...(flags[idx] ? { flags: flags[idx] } : {}) }), checks: (n, a) => perCase(a, () => 'exact') });
+  const config = { ...FLAG_CONFIG, experiment: 'jit-mixed', jit: { ...FLAG_CONFIG.jit, shadowEvery: 2 } };
+  const res = await runStream({ config, deps, runRoot: path.join(root, 'runs'), workRoot: path.join(root, 'work'), log: () => {} });
+  const rows = [...res.rows].sort((a, b) => a.idx - b.idx);
+  assert.deepEqual(rows.map(r => r.shadowReason ?? null), [null, null, 'schedule+flag', 'flag', 'schedule', null]);
+  assert.deepEqual(rows.map(r => r.events.filter(e => e.kind === 'shadow').map(e => e.reason)), [[], [], ['schedule+flag'], ['flag'], ['schedule'], []]);
+  assert.equal(calls.interpret.filter(c => c.role === 'shadow').length, 3);
+  const f = buildReport(path.join(root, 'runs/jit-mixed')).arms[0].flags;
+  assert.equal(f.scheduled.shadows, 2); assert.equal(f.flagTriggered.shadows, 2); assert.equal(f.flagOnly, 1); assert.equal(f.flagPrecision, 0);
+});
+
+test('without shadowOnFlags, flags never trigger a shadow and shadow events carry no reason (v1 behaviour); shadowEvery 0 means no shadows', async t => {
+  const root = tmp(t);
+  const { deps, calls } = fakeDeps(FLAG_PLAN);
+  const v1 = { ...FLAG_CONFIG, experiment: 'jit-noflags', jit: { ...CONFIG.jit, warmup: 1, shadowEvery: 0 } };
+  const res = await runStream({ config: v1, deps, runRoot: path.join(root, 'runs'), workRoot: path.join(root, 'work'), log: () => {} });
+  const rows = [...res.rows].sort((a, b) => a.idx - b.idx);
+  assert.equal(calls.interpret.filter(c => c.role !== 'interpreter').length, 0, 'no shadow, no adjudicator');
+  assert.ok(rows.every(r => !('shadowReason' in r)));
+  assert.equal(rows[3].delivered, 'compiled'); assert.equal(rows[3].pass, false, 'the flagged wrong answer goes out unchecked');
+  assert.deepEqual(rows[3].flags, FLAGS[3], 'flags are still recorded on the row');
+  const rep = buildReport(path.join(root, 'runs/jit-noflags'));
+  assert.equal(rep.arms[0].flags.flagTriggered.shadows, 0); assert.equal(rep.arms[0].flags.flaggedRuns, 3);
+  // a scheduled shadow keeps the v1 event shape exactly
+  const { deps: d2 } = fakeDeps(FLAG_PLAN);
+  const sched = await runStream({ config: { ...v1, experiment: 'jit-sched', jit: { ...v1.jit, shadowEvery: 2 } }, deps: d2, runRoot: path.join(root, 'runs'), workRoot: path.join(root, 'work'), log: () => {} });
+  const r2 = sched.rows.find(r => r.idx === 2);
+  assert.deepEqual(r2.events.find(e => e.kind === 'shadow'), { kind: 'shadow', version: 1, agree: true }); assert.equal('shadowReason' in r2, false);
+  // and a v1 run without any flags yields no flag summary in the report
+  const { deps: d3 } = fakeDeps({ compiled: () => ({ status: 'ok' }), checks: (n, a) => perCase(a, () => 'exact') });
+  await runStream({ config: { ...v1, experiment: 'jit-plain' }, deps: d3, runRoot: path.join(root, 'runs'), workRoot: path.join(root, 'work'), log: () => {} });
+  const plain = buildReport(path.join(root, 'runs/jit-plain'));
+  assert.equal('flags' in plain.arms[0], false); assert.doesNotMatch(renderMarkdown(plain), /Uncertainty flags/);
+});
+
+test('resume through a flag-triggered shadow: a crash in the adjudicator, then a resume, gives the same rows; the crashed attempt is billed', async t => {
+  const root = tmp(t);
+  const opts = { config: FLAG_CONFIG, runRoot: path.join(root, 'runs'), workRoot: path.join(root, 'work'), log: () => {} };
+  let crashed = false;
+  const { deps, calls } = fakeDeps(FLAG_PLAN, { interpret(idx, role) { if (idx === 3 && role === 'adjudicator' && !crashed) { crashed = true; throw new Error('process died (adjudicator)'); } } });
+  const r1 = await runStream({ ...opts, deps });
+  assert.match(r1.arms[0].errors[0], /process died \(adjudicator\)/); assert.equal(r1.rows.length, 3);
+  const r2 = await runStream({ ...opts, deps });
+  assert.deepEqual(r2.arms[0].errors, []); assert.equal(r2.arms[0].done, 3);
+  const rows = [...r2.rows].sort((a, b) => a.idx - b.idx);
+  calls.interpret = calls.interpret.filter((c, i, all) => !(c.idx === 3 && all.findIndex(x => x.idx === 3 && x.role === c.role) !== i));   // the retried idx-3 calls, once
+  checkFlagScenario(rows, calls);
+  close(rows[3].orphanUsd, 0.1 + 0.01, 'the crashed attempt\'s compiled run and shadow are billed to idx 3');
+  const total = rows.reduce((s, r) => s + r.costUsd, 0);
+  close(total, 5 * 0.1 + 5 * 0.01 + 2 * 1.75 + 0.11, 'total');
+  const p = armPaths(path.join(root, 'runs/jit-flags'), FLAG_SLUG);
+  close(readJsonl(p.events).filter(e => e.kind === 'spend').reduce((s, e) => s + e.costUsd, 0), total, 'events = rows');
+  assert.equal(readJsonl(p.results).length, 6, 'no row written twice');
+});
+
+test('compile.promptVersion 2 reaches every compile attempt (the Opus fallback too) and its result; absent, nothing is passed', async t => {
+  const root = tmp(t);
+  const plan = { compiled: () => ({ status: 'ok' }), checks: (n, a) => (n === 1 ? perCase(a, () => 'deopt') : perCase(a, () => 'exact')) };
+  const { deps, calls } = fakeDeps(plan);
+  const config = { ...CONFIG, experiment: 'jit-pv2', segments: [{ difficulty: 3, seeds: [1, 2, 3] }], jit: { ...CONFIG.jit, warmup: 1, shadowEvery: 0 }, compile: { promptVersion: 2 } };
+  await runStream({ config, deps, runRoot: path.join(root, 'runs'), workRoot: path.join(root, 'work'), log: () => {} });
+  assert.deepEqual(calls.compile.map(c => [c.builderModel, c.promptVersion]), [['claude-haiku-5-5', 2], ['claude-opus-5-5', 2]]);
+  const ev = readJsonl(armPaths(path.join(root, 'runs/jit-pv2'), FLAG_SLUG).events).filter(e => e.kind === 'compile-attempt');
+  assert.deepEqual(ev.map(e => e.result.promptVersion), [2, 2]);
+  const { deps: d1, calls: c1 } = fakeDeps(plan);
+  await runStream({ config: { ...config, experiment: 'jit-pv1', compile: {} }, deps: d1, runRoot: path.join(root, 'runs'), workRoot: path.join(root, 'work'), log: () => {} });
+  assert.deepEqual(c1.compile.map(c => c.promptVersion), [undefined, undefined]);
+  const ev1 = readJsonl(armPaths(path.join(root, 'runs/jit-pv1'), FLAG_SLUG).events).filter(e => e.kind === 'compile-attempt');
+  assert.ok(ev1.every(e => !('promptVersion' in e.result)));
 });

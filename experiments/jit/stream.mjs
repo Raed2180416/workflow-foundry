@@ -15,6 +15,7 @@ import { canonical } from '../../beds/lib/canonical.mjs';
 import { loadPolicy } from '../../src/models/policy.mjs';
 import { ENV_FAULTS, metEnvFault } from '../lib/runner.mjs';
 import { createModelPort as createModelPortSync } from '../lib/models.mjs';
+import { promptVersionOf } from './prompts.mjs';
 
 const REPO = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 export const RUN_ROOT = path.join(REPO, 'experiments/runs/jit'), WORK_ROOT = '/var/tmp/foundry-work/jit';
@@ -25,6 +26,12 @@ export const DEFAULT_JIT = Object.freeze({ warmup: 3, shadowEvery: 4, recompileO
 export const DEFAULT_COMPILE = Object.freeze({ builderEffort: 'high', builderBudgetUsd: 3, gatewayUsd: 1.5, checkUsd: 1.5, minutes: 30,
   fallback: Object.freeze({ builderEffort: 'high', builderBudgetUsd: 8, gatewayUsd: 1.5, checkUsd: 1.5, minutes: 45 }) });
 const STATIC_FALLBACK = 'claude-haiku-5-5';
+// v2 options (opt-in, never in the defaults above, so a v1 config keeps its arm hash):
+//   jit.shadowOnFlags (default false): also shadow a compiled ok run that raised uncertainty flags (flow.flag); shadow
+//     events and rows then carry the reason ('schedule' | 'flag' | 'schedule+flag'). jit.shadowEvery 0 = no scheduled
+//     shadows (flag-only when shadowOnFlags is on).
+//   compile.promptVersion (default 1): the builder prompt text (prompts.mjs); applies to the fallback compiler too.
+// Set to their defaults they are dropped from the normalized config, so writing them out explicitly changes no hash.
 
 const sha = s => createHash('sha256').update(s).digest('hex');
 const readJsonl = f => (existsSync(f) ? readFileSync(f, 'utf8').split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean) : []);
@@ -48,10 +55,15 @@ export function normalizeConfig(raw) {
   const segments = raw.segments.map(s => ({ difficulty: Number(s.difficulty ?? 3), seeds: seedList(s.seeds) }));
   // SPEC §6.4: held-out streams use fresh test seeds >= 7001 (5001-5006 and 6001-6004 are burned).
   if (raw.split === 'test' && segments.some(s => s.seeds.some(x => x < 7001))) throw new Error('test-split streams must use fresh seeds >= 7001');
+  const jit = { ...DEFAULT_JIT, ...(raw.jit ?? {}) };
+  if (jit.shadowEvery != null && jit.shadowEvery !== false && !(Number.isInteger(jit.shadowEvery) && jit.shadowEvery >= 0)) throw new Error('config.jit.shadowEvery must be an integer >= 0 (0: no scheduled shadows)');
+  if (jit.shadowOnFlags != null && typeof jit.shadowOnFlags !== 'boolean') throw new Error('config.jit.shadowOnFlags must be true or false');
+  if (!jit.shadowOnFlags) delete jit.shadowOnFlags;
+  const compile = { ...DEFAULT_COMPILE, ...(raw.compile ?? {}), fallback: { ...DEFAULT_COMPILE.fallback, ...(raw.compile?.fallback ?? {}) } };
+  if (compile.promptVersion != null) compile.promptVersion = promptVersionOf(compile);
+  if (compile.promptVersion == null || compile.promptVersion === 1) delete compile.promptVersion;
   return {
-    ...raw, segments,
-    jit: { ...DEFAULT_JIT, ...(raw.jit ?? {}) },
-    compile: { ...DEFAULT_COMPILE, ...(raw.compile ?? {}), fallback: { ...DEFAULT_COMPILE.fallback, ...(raw.compile?.fallback ?? {}) } },
+    ...raw, segments, jit, compile,
     perTaskUsd: raw.perTaskUsd ?? 1, agentBudgetUsd: raw.agentBudgetUsd ?? 1, agentMinutes: raw.agentMinutes ?? 15, agentEffort: raw.agentEffort ?? null,
     compiledMinutes: raw.compiledMinutes ?? 20, concurrency: raw.concurrency ?? 3, staticFallback: raw.staticFallback ?? STATIC_FALLBACK,
     gatewayModels: raw.gatewayModels ?? [...POLICY_MODELS], spendStopUsd: raw.spendStopUsd ?? null,
@@ -330,7 +342,8 @@ class ArmRun {
       const rc = await this.deps.runCompiled({ solvePath, task: t.task, modelPort: this.port, perTaskUsd: this.config.perTaskUsd, timeoutMs: this.config.compiledMinutes * 60 * 1000,
         workdir, familyId: this.config.familyId, outputSchema: this.outputSchema, allowedModels: this.arm.models, label: `${this.config.experiment}:${this.arm.slug}:${t.idx}:v${version ?? 0}` });
       tr.spend('compiled', rc.costUsd ?? 0, rc.costUnknown);
-      tr.ev('compiled', { version, status: rc.status, deoptKind: rc.deopt?.kind ?? null, costUsd: rc.costUsd ?? 0, attempt, error: rc.error?.code ?? null });
+      tr.ev('compiled', { version, status: rc.status, deoptKind: rc.deopt?.kind ?? null, costUsd: rc.costUsd ?? 0, attempt, error: rc.error?.code ?? null,
+        ...(rc.flags?.count ? { flags: rc.flags.count } : {}) });
       return rc;
     }, rc => rc?.status !== 'ok' && metEnvFault(rc));
   }
@@ -376,7 +389,7 @@ class JitRun extends ArmRun {
     const res = await this.retrying(tr, 'compile', async attempt => {
       const r = await this.deps.compile({ familyId: this.config.familyId, traces: inputs.traces, previous: inputs.previous, regressions: inputs.regressions, builderModel,
         builderEffort: settings.builderEffort, builderBudgetUsd: settings.builderBudgetUsd, gatewayUsd: settings.gatewayUsd, checkUsd: settings.checkUsd ?? settings.gatewayUsd,
-        minutes: settings.minutes, perTaskUsd: this.config.perTaskUsd,
+        minutes: settings.minutes, perTaskUsd: this.config.perTaskUsd, ...(this.config.compile.promptVersion ? { promptVersion: this.config.compile.promptVersion } : {}),
         modelPort: this.port, workRoot: path.join(this.work, 'compile'), label: `v${n}-${tag}${attempt ? `-r${attempt}` : ''}`, models: this.arm.models, version: n });
       const rec = r.record ?? {};
       // Every dollar of the compile: the builder session, its gateway calls, and the host acceptance check.
@@ -405,7 +418,8 @@ class JitRun extends ArmRun {
     const result = { version: n, builderModel, hasSolve, solveSha: hasSolve ? sha(readFileSync(path.join(vdir, 'solve.mjs'))) : null, checkTraces: compactCheck(rec.checkTraces),
       nestedModelAttempts: rec.nestedModelAttempts ?? 0, hiddenPathAttempts: rec.hiddenPathAttempts ?? 0,
       costUsd: (rec.compileCostUsd ?? (rec.builderCostUsd ?? 0) + (rec.gatewayCostUsd ?? 0) + (rec.checkCostUsd ?? 0)) + recheckUsd,
-      builderError: rec.builderError?.code ?? null, checkError: rec.checkTraces?.error?.code ?? null, builderAccepted: rec.checkTraces?.accepted ?? null };
+      builderError: rec.builderError?.code ?? null, checkError: rec.checkTraces?.error?.code ?? null, builderAccepted: rec.checkTraces?.accepted ?? null,
+      ...(this.config.compile.promptVersion ? { promptVersion: rec.promptVersion ?? this.config.compile.promptVersion } : {}) };
     const e = this.event(t.idx, 'compile-attempt', { key, result });
     this.compileDone.set(key, e);
     tr.events.push({ kind: 'compile-attempt', key, version: n, builderModel, exactRate: exactOf(result.checkTraces), accepted: accepted(result.checkTraces), clean: !!result.checkTraces?.clean,
@@ -489,16 +503,23 @@ class JitRun extends ArmRun {
     state.compiledOks++;
     let delivered = 'compiled', output = rc.output;
     const extra = {};
-    if (J.shadowEvery && state.compiledOks % J.shadowEvery === 0) {
+    const flags = rc.flags?.count ?? 0;
+    if (flags > 0) extra.flags = { count: flags, names: rc.flags.names ?? [] };
+    // Scheduled shadows (every shadowEvery-th compiled ok) and, opt-in, flag-triggered ones (the run raised flags).
+    const scheduled = !!(J.shadowEvery && state.compiledOks % J.shadowEvery === 0), flagged = !!(J.shadowOnFlags && flags > 0);
+    if (scheduled || flagged) {
+      const reason = J.shadowOnFlags ? (scheduled && flagged ? 'schedule+flag' : scheduled ? 'schedule' : 'flag') : null;
+      const why = reason ? { reason } : {};
+      if (reason) extra.shadowReason = reason;
       // Shadow: the arm's interpreter on the same task, fresh session; it never sees the compiled answer.
       let s1 = null;
       try { s1 = await this.interpret(tr, t, 'shadow', model); }
-      catch (e) { if (e.code !== 'ENV_FAULT') throw e; this.fault(t, e); tr.ev('shadow-fault'); }
+      catch (e) { if (e.code !== 'ENV_FAULT') throw e; this.fault(t, e); tr.ev('shadow-fault', why); }
       if (s1) extra.shadowTraceId = s1.traceId;
-      if (s1 && s1.answer == null) tr.ev('shadow', { version, agree: null, note: 'shadow gave no answer' });
-      else if (s1 && sameAnswer(s1.answer, rc.output, J.compare)) { tr.ev('shadow', { version, agree: true }); this.addTrace(state, s1, t, 'shadow', 'shadow'); }
+      if (s1 && s1.answer == null) tr.ev('shadow', { version, agree: null, note: 'shadow gave no answer', ...why });
+      else if (s1 && sameAnswer(s1.answer, rc.output, J.compare)) { tr.ev('shadow', { version, agree: true, ...why }); this.addTrace(state, s1, t, 'shadow', 'shadow'); }
       else if (s1) {
-        tr.ev('shadow', { version, agree: false }); tr.ev('disagree', { version });
+        tr.ev('shadow', { version, agree: false, ...why }); tr.ev('disagree', { version });
         let s2 = null;
         try { s2 = await this.interpret(tr, t, 'adjudicator', model); }
         catch (e) { if (e.code !== 'ENV_FAULT') throw e; this.fault(t, e); tr.ev('adjudicator-fault'); }
