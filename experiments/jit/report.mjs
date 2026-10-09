@@ -6,6 +6,7 @@ import path from 'node:path';
 import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { wilson } from '../lib/stats.mjs';
+import { pairRows, pairedComparison, envFaultCheck, DECISION_RULE, FLOOR_POINTS } from './stats.mjs';
 
 export const NOISE_SUCCESSES = 3;   // SPEC §7: with K=1 per stream, any gap under 3 points is noise
 const readJsonl = f => (existsSync(f) ? readFileSync(f, 'utf8').split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean) : []);
@@ -168,8 +169,19 @@ export function breakEven(a, ref) {
 }
 
 export function buildReport(runDir, { arms = loadRun(runDir) } = {}) {
-  const sums = arms.map(summarizeArm);
+  const sums = arms.map(a => summarizeArm(a));
   const agents = sums.filter(s => s.kind === 'agent');
+  // PREREG §6 env-fault rule and the paired comparison in both units (stats.mjs). One run directory is one stream, so a
+  // pair here is never a decision: `node experiments/jit/stats.mjs decide` applies the rule over K streams.
+  const planned = Math.max(0, ...arms.flatMap(a => a.rows.map(r => r.idx + 1)));
+  sums.forEach((s, i) => {
+    s.envFaults = envFaultCheck({ ...arms[i], planned, kind: s.kind });
+    s.paired = Object.fromEntries(sums.filter(a => a.kind === 'agent' && a !== s).map(a => {
+      const c = pairedComparison(pairRows(arms[i].rows, arms[sums.indexOf(a)].rows, { armX: s.spec, armY: a.spec, kindX: s.kind, kindY: a.kind }), { iterations: 2000, seed: `${s.spec}|${a.spec}` });
+      return [a.spec, { n: c.n, gapTasks: c.gapTasks, gapPoints: r4(c.gapPoints), taskRuleClears: !!c.taskRule, pointFloorClears: !!c.floorPoints, mcnemar: c.mcnemar,
+        ci: c.ci ? { lo: r4(c.ci.points.lo), hi: r4(c.ci.points.hi), deff: r4(c.ci.deff), excludesZero: c.ci.excludesZero } : null, verdict: 'directional, no decision (one stream)' }];
+    }));
+  });
   for (const s of sums) {
     s.breakEven = Object.fromEntries(agents.filter(a => a !== s).map(a => [a.spec, breakEven(s, a)]));
     s.vsAgents = Object.fromEntries(agents.filter(a => a !== s).map(a => {
@@ -182,7 +194,9 @@ export function buildReport(runDir, { arms = loadRun(runDir) } = {}) {
   return {
     experiment: rows0[0]?.experiment ?? path.basename(runDir), runDir, generatedAt: new Date().toISOString(), split,
     evidence: split === 'test' ? 'held-out stream (test split)' : 'development / diagnostic (not held-out evidence)',
-    noiseRule: `K=1 stream per arm: any success gap under ${NOISE_SUCCESSES} points (tasks) is noise; arms with different task counts are not compared.`,
+    noiseRule: `K=1 stream per arm: any success gap under ${NOISE_SUCCESSES} points (tasks) is noise; arms with different task counts are not compared.`
+      + ` This task rule is shown for continuity; the rule applied is the PREREG decision rule (${FLOOR_POINTS}-point floor + McNemar + clustered CI over K >= 2 streams, experiments/jit/stats.mjs).`,
+    decisionRule: DECISION_RULE,
     arms: sums,
   };
 }
@@ -243,6 +257,23 @@ export function renderMarkdown(rep) {
     for (const a of rep.arms) for (const [ref, be] of Object.entries(a.breakEven)) {
       const v = a.vsAgents[ref];
       L.push(`| ${short(a.spec)} | ${short(ref)} | ${v.successGap >= 0 ? '+' : ''}${v.successGap} | ${v.noise ? 'noise' : 'no'} | ${be.observedIdx ?? '–'} | ${be.projectedIdx ?? '–'} | ${usd(be.cumGapUsd)} |`);
+    }
+  }
+  const paired = rep.arms.filter(a => a.paired && Object.keys(a.paired).length);
+  if (paired.length) {
+    L.push('', '## Paired comparison, both units (this stream only)', '', `Decision rule (PREREG §4): ${rep.decisionRule ?? '–'} One run directory is one stream, so every row here is "directional, no decision"; \`node experiments/jit/stats.mjs decide <armX> <armY> <runDir>...\` applies the rule over K streams. Task rule = report.mjs NOISE_SUCCESSES (|gap| >= ${NOISE_SUCCESSES} tasks), shown, not applied. Point floor = ${FLOOR_POINTS} percentage points.`, '',
+      '| arm | vs | gap (tasks) | gap (points) | task rule | point floor | McNemar X-only / Y-only, p | 95% clustered CI (points; Deff) | verdict |', '|---|---|---|---|---|---|---|---|---|');
+    for (const a of paired) for (const [ref, c] of Object.entries(a.paired)) {
+      L.push(`| ${short(a.spec)} | ${short(ref)} | ${c.gapTasks >= 0 ? '+' : ''}${c.gapTasks} of ${c.n} | ${c.gapPoints == null ? '–' : c.gapPoints.toFixed(1)} | ${c.taskRuleClears ? 'clears' : 'noise'} | ${c.pointFloorClears ? 'clears' : 'below'} | ${c.mcnemar.xOnly} / ${c.mcnemar.yOnly}, ${c.mcnemar.p.toFixed(3)} | ${c.ci ? `${c.ci.lo.toFixed(1)} to ${c.ci.hi.toFixed(1)} (${c.ci.deff})` : '–'} | ${c.verdict} |`);
+    }
+  }
+  const ef = rep.arms.filter(a => a.envFaults);
+  if (ef.length) {
+    L.push('', '## Environment faults (PREREG §6 rule)', '', 'Impaired = planned tasks left unresolved by an env fault (no row; for a JIT arm, every task after the fault that stopped the stream) plus rows whose shadow or adjudicator faulted. Invalid when impaired / planned > 25%. Fault events are faults.jsonl lines (after the one in-place retry); transient = recovered retries; both are reported, neither decides.', '',
+      '| arm | planned | impaired (unresolved + degraded) | rate | fault events (by code) | transient retries | verdict |', '|---|---|---|---|---|---|---|');
+    for (const a of ef) {
+      const e = a.envFaults;
+      L.push(`| ${short(a.spec)} | ${e.planned} | ${e.impaired} (${e.unresolved.length} + ${e.degraded.length}) | ${pct(e.impairedRate)} | ${e.faultEvents}${e.faultEvents ? ` (${Object.entries(e.byCode).map(([k, v]) => `${k} ${v}`).join(', ')})` : ''}${e.stressed ? ', stressed' : ''} | ${e.transientRetries} | ${e.verdict} |`);
     }
   }
   const maxN = Math.max(0, ...rep.arms.map(a => a.curve.length));
