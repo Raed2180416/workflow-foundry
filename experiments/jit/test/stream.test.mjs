@@ -1081,7 +1081,7 @@ test('armSpendStopUsd: an arm stops at its own cap while the others run on; vali
   }
 });
 
-test('_blocked and null tolerances are refused; the R0 configs: records validates (seeds 225-248 fresh for jit-r0), kinetics is blocked until relTol is set', () => {
+test('_blocked and null tolerances are refused; the R0 configs: records validates (seeds 225-248 fresh for jit-r0), kinetics validates with relTol 0.05 from Stage B', () => {
   assert.throws(() => normalizeConfig({ ...CONFIG, _blocked: 'waiting on X' }), /config jit-fake is blocked: waiting on X/);
   assert.throws(() => normalizeConfig({ ...CONFIG, jit: { ...CONFIG.jit, compare: 'tolerant', relTol: null } }), /config.jit.relTol is null/);
   assert.throws(() => normalizeConfig({ ...CONFIG, compile: { compare: 'tolerant', absTol: null } }), /config.compile.absTol is null/);
@@ -1093,25 +1093,25 @@ test('_blocked and null tolerances are refused; the R0 configs: records validate
     compare: 'unordered', preserveRefusals: true });
   const { fallback, ...comp } = c.compile;
   assert.deepEqual(comp, { builderEffort: 'high', builderBudgetUsd: 3, gatewayUsd: 1.5, checkUsd: 1.5, minutes: 30, compare: 'tolerant', relTol: 0, absTol: 0, acceptance: 'strict', minPartial: 0.9, promptVersion: 4 });
-  assert.deepEqual(c.armSpendStopUsd, { 'jit:claude-sonnet-5-5/claude-haiku-5-5': 12, 'jit:claude-opus-5-5/claude-haiku-5-5': 10, 'jit:claude-haiku-5-5/claude-haiku-5-5': 6, 'agent:claude-haiku-5-5': 4,
-    'static:research/construction-20261006/artifacts/B1-haiku-records-k1/solve.mjs': 2 });
+  assert.deepEqual(c.armSpendStopUsd, { 'jit:claude-sonnet-5-5/claude-haiku-5-5': 12, 'jit:claude-opus-5-5/claude-haiku-5-5': 10, 'jit:claude-haiku-5-5/claude-haiku-5-5': 10, 'agent:claude-haiku-5-5': 4,
+    'static:research/construction-20261006/artifacts/B1-haiku-records-k1/solve.mjs': 2 }); // H/H 6 -> 10 for the rehearsal (e565cb3)
   assert.equal(c.spendStopUsd, 40); assert.equal(c.persist.commitDir, path.join(REPO_ROOT, 'research/jit-20261008/runs/jit-r0-records'));
   assert.equal(c.seedPurpose, 'jit-r0'); assert.equal(c.experiment, 'jit-r0-records');
   for (const a of c.arms) assert.ok(existsSync(parseArm(a, c, { policyIds: [...POLICY_MODELS] }).scriptPath ?? REPO_ROOT), `${a}: script exists`);
   // its JIT arms are new arms (not a second lineage of the dev runs)
   const r0h = hashes(rec), devh = V1_HASHES['dev-records-1'];
   for (const a of rec.arms.filter(x => x.startsWith('jit:'))) assert.notEqual(r0h[a], devh[a]);
-  // R0-K (row 9): refused while blocked, then for the null relTol; validates once relTol is set
+  // R0-K (row 9): unblocked on 2026-10-09 with relTol 0.05 from Stage B (ENGINE-FREEZE section 5); a blocked or null-relTol variant is still refused
   const kin = loadConfig('r0-kinetics');
-  assert.equal(kin.jit.relTol, null); assert.equal(kin._blocked, 'relTol TBD: row 2 Stage B');
-  assert.throws(() => normalizeConfig(kin), /is blocked: relTol TBD: row 2 Stage B/);
-  const { _blocked, ...open } = kin;
-  assert.throws(() => normalizeConfig(open), /config.jit.relTol is null/);
-  const k = normalizeConfig({ ...open, jit: { ...open.jit, relTol: 0.01 } });
+  assert.equal(kin.jit.relTol, 0.05); assert.equal('_blocked' in kin, false);
+  assert.throws(() => normalizeConfig({ ...kin, _blocked: 'relTol TBD: row 2 Stage B' }), /is blocked: relTol TBD: row 2 Stage B/);
+  assert.throws(() => normalizeConfig({ ...kin, jit: { ...kin.jit, relTol: null } }), /config.jit.relTol is null/);
+  const k = normalizeConfig(kin);
+  assert.deepEqual(hashes(kin), { 'jit:claude-opus-5-5/claude-haiku-5-5': '1fde4626b169c84c', 'agent:claude-haiku-5-5': '2e292709027b2786' }, 'R0-K arm hashes as stamped in ENGINE-FREEZE section 5');
   assert.deepEqual(k.arms, ['jit:claude-opus-5-5/claude-haiku-5-5', 'agent:claude-haiku-5-5'], 'O/H first; no static kinetics solver exists');
-  assert.deepEqual([k.jit.compare, k.jit.relTol, k.jit.absTol, k.jit.tolerantKeys], ['tolerant', 0.01, 1e-9, ['km', 'vmax']]);
+  assert.deepEqual([k.jit.compare, k.jit.relTol, k.jit.absTol, k.jit.tolerantKeys], ['tolerant', 0.05, 1e-9, ['km', 'vmax']]);
   assert.deepEqual([k.jit.shadowFloor, k.jit.shadowSeed, 'shadowEvery' in k.jit, k.jit.shadowOnFlags], [0.25, 'jit-r0-kinetics', false, true]);
-  assert.deepEqual([k.compile.compare, k.compile.relTol, k.compile.tolerantKeys, k.compile.acceptance, k.compile.promptVersion], ['tolerant', 0.01, ['km', 'vmax'], 'strict', 4], 'compile follows jit');
+  assert.deepEqual([k.compile.compare, k.compile.relTol, k.compile.tolerantKeys, k.compile.acceptance, k.compile.promptVersion], ['tolerant', 0.05, ['km', 'vmax'], 'strict', 4], 'compile follows jit');
   assert.deepEqual(k.segments.map(s => [s.difficulty, s.seeds[0], s.seeds.at(-1)]), [[4, 225, 240], [5, 241, 248]]);
   assert.equal(k.spendStopUsd, 30);
 });
