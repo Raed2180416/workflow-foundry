@@ -1,6 +1,6 @@
 # Workflow  (wf_da253fe6-f97)
 
-status: running (no final record yet); finished agents: 8
+status: running (no final record yet); finished agents: 9
 
 ## Script
 
@@ -2837,3 +2837,412 @@ All under `/home/user/workflow-foundry/`:
 - `research/review-20261007/02-ir-expressiveness.md`
 - `research/review-20261007/11-NEXT.md`
 - `README.md`
+
+## Agent result 9
+
+# Dossier: throughput under quota (B10 and scheduling on a 4-vCPU VM)
+
+*Evidence class: development and diagnostic only. Repo numbers marked **[repo]** were recomputed read-only at $0 on 2026-10-09 from `experiments/runs/jit/*/{results,faults}.jsonl` and `traces/`. Nothing below is claim-bearing. Tags: **[paper]**, **[practice/docs]**, **[inference]**. This builds on FRONTIER-GAPS without repeating it. FRONTIER-GAPS already has J3, J4, O6, the quota proxy per arm, D14, "Opus-heavy work off-peak" and RouteLLM's strong-model-percentage knob, and none of that is restated here.*
+
+---
+
+## Blocker B10: the account usage quota caps throughput
+
+### 1. Mechanism
+
+**Timeline [repo].**
+- 252 stream rows were written across 12 arms in two families.
+- The first row landed at 2026-10-08T23:37:03Z. By 23:47:23, 88 rows had landed, about $19 at list price in roughly 10 minutes. That was the peak burn rate.
+- Between 23:47 and 23:51, 74 faults were logged, 71 of them `MODEL_RATE_LIMIT`.
+- The next row landed at 02:54:24. That is a **187-minute gap**, which is the "about 3 h" figure in FRONTIER-GAPS J4.
+- Hour 03 then wrote 117 rows, so the work was queued and ready. Nothing ran in between.
+
+**The limit covers every model.** The faults hit the Haiku agent arms (19 fault rows in records, 20 in kinetics) as much as the Opus and Sonnet arms.
+- Claude Code's docs say the session and weekly limits on a subscription are "shared across all models, so the developer can't restore access by switching models" [practice/docs: Claude Code, *Manage costs*].
+- So during a lockout, cheap models buy no throughput at all. Before a lockout, they help only in proportion to their weight in the quota, and nobody has measured that weight.
+
+**Most of the demand comes from other tenants.** Orchestration consumes most of the quota, and experiments are a small share.
+- `research/review-20261007/10-STATE.md` §3.10 records 255 subagents at $1,820 list (Opus $1,142, Sonnet $678), against about $100 of experiment calls. That is about 20×.
+- On 10-08 alone, 138 agents spent $1,213 [repo].
+- The README records an earlier full stop, 2026-10-06 20:00 to 10-07 11:00, in which 14 agents failed. The 7-day meter has sat at `allowed_warning` until 2026-10-14 11:00 (`research/review-20261007/01-requirements.md` #20).
+- So the experiment streams stall because of load from orchestration in the same session.
+
+**The code treats exhaustion as an outside event.**
+- `MODEL_RATE_LIMIT` is classed as an environment fault (`experiments/lib/runner.mjs:19`, `src/verdict.mjs:16`).
+- `stream.mjs` retries once and then raises `EnvFault` (`stream.mjs:383-405`).
+- The flat pool keeps draining after that (`stream.mjs:703-708`). Every queued agent job starts a sandbox and a CLI process, fails, retries, and is written as a fault row. That is where the 19–20 fault rows per Haiku agent arm come from, all inside 4 minutes.
+- A JIT stream stops at its first fault (`stream.mjs:718`). Resuming is manual: `resume-streams.mjs` says it is "used after an environment stop".
+- There is no circuit breaker, no awareness of when the window resets, and no automatic resume.
+
+**A meter exists, but Foundry throws it away.**
+- Earlier agent transcripts carried rate-limit events with five-hour and seven-day utilisation:
+  - `research/core-20261006/diagnosis-workflow-agent.md:164`: up to 0.91 and 0.90, status `allowed_warning`;
+  - `research/construction-20261006/diagnosis/B0-haiku-records.md:72`: 7-day 0.51–0.52.
+- `src/executors/claude-code.mjs` asks for `stream-json` (line 145), but it parses only assistant `usage`, `result` and `init` events (lines 114–172).
+- The gateway provider runs `--output-format json` (`policy/models.json`), so it sees no meter at all.
+- The system therefore runs blind until the 429 arrives.
+
+**The stall also damages the measurements.**
+- The 187-minute stall outlives every cache TTL, so every resumed arm starts with a cold cache. That is J3's problem, now made concrete.
+- Arms resumed at different task indices and clock times, which adds a time-of-day confound between arms.
+- PREREG-stream:59 says "an arm whose environment faults exceed 25% of its tasks is reported as invalid". It does not say whether that means fault *events* or *unresolved* faults. Under the first reading, the records Haiku agent arm (19 fault events on 24 tasks) is invalid. Under the second, it is clean. The ambiguity needs resolving before the held-out run [inference].
+
+**The same interpretations are paid for twice.** This is new.
+- JIT roles `interpreter`, `shadow`, `adjudicator` and `fallback` all call the same `interpret()` as the `agent:<model>` arms (`stream.mjs:393-399` into `interpret.mjs` `b0Agent({id:'jit-interpreter', …})`). Task, budget, timeout and effort come from the same config.
+- A JIT arm's Opus interpretation of seed *s* is therefore a draw from the same distribution as the Opus agent arm's run on seed *s*, and it is bought again.
+- Upper bound on JIT spend that a same-model agent arm could have served [repo]:
+
+| arm | shareable spend | share of arm spend |
+|---|---|---|
+| records O/H | $5.16 of $7.53 | 69% |
+| records S/H | $3.27 of $8.99 | 36% |
+| records H/H | $0.81 | 14% |
+| kinetics S/H | $1.88 | 10% |
+| kinetics O/H | none | no Opus agent arm in kinetics |
+
+### 2. Ideological root
+
+The blocker exposes three linked beliefs:
+1. **The meter is dollars.**
+2. **Parallelism is free.** Concurrent work adds cost but not contention.
+3. **A 429 is an outage, not a signal.**
+
+All three come from building a measurement harness, not an economy.
+
+**Measured against the end-to-end vision:**
+- The vision's economic claim is that code and cheap models make most decisions, and frontier models demonstrate or adjudicate rarely.
+- Foundry's own development runs as "Opus or Sonnet agent every time": 20× orchestration, in the costliest arm shape. The quota stall is the thesis's argument turned on the system that builds it.
+- The vision also promises a cost/reliability slider, swarms, async work and replication of users' recurring workflows. A real subscription user shares one window across chat, Claude Code and Foundry. A Foundry that cannot pace itself under a shared, all-model, rolling window cannot serve "arbitrary recurring work" for that user [inference].
+
+**For the assumption to hold, one of these would have to be true:**
+- (a) Demand stays below the window's refill rate at all times.
+- (b) A lockout costs only the reset wait, with automatic resume and no harm to validity.
+- (c) Quota weight per model and token class tracks list dollars, so the dollar proxy is enough.
+
+None has been measured. (b) is already contradicted: the resume was manual, caches went cold, and arms drifted out of step in time.
+
+### 3. Frontier
+
+**Provider mechanics** [practice/docs]:
+- Anthropic's API rate limits use a **token bucket**: "capacity is continuously replenished up to your maximum limit, rather than being reset at fixed intervals". Short bursts can trip per-second enforcement of a per-minute limit.
+- Limits are **cache-aware**. For most models, `cache_read_input_tokens` do not count toward ITPM. 429s carry `retry-after`, and responses carry `anthropic-ratelimit-*-remaining/reset` headers.
+- The Batch API bills at 50%. Cache writes cost 1.25× (5-minute TTL) or 2× (1-hour TTL). Cache reads cost 0.1× [practice/docs, seen in search].
+- On subscriptions, Claude Code describes a rolling five-hour window plus a weekly window. `/usage` attributes usage to subagents and flags cache misses. An `autoContinueAtUsageLimit` setting waits for the reset and continues. The cache lifetime is "an hour on a subscription".
+- **Unavailable here:** there is no API key (README D1-aws; the credentials rule), so headers and the Batch API cannot be reached on this route. Only the CLI's stream events can be.
+
+**Fair sharing of LLM serving:**
+- **VTC** (Sheng et al., OSDI 2024) [paper] replaces per-client request limits with token-weighted fair queuing. It is work-conserving and bounds the service gap between backlogged clients to 2× a tight bound.
+- **QLM** (Patke et al., SoCC 2024) [paper] puts batch and interactive requests in one queue. A request-waiting-time estimator drives pulling, eviction and model swapping, reported at +40–90% SLO attainment.
+
+**Overload practice:**
+- **Google SRE, "Handling Overload"** [practice/docs]:
+  - client-side adaptive throttling: a client keeps sending until `requests` reaches K × `accepts` over 2 minutes, with K = 2 preferred, then rejects locally;
+  - four criticality classes, CRITICAL_PLUS down to SHEDDABLE;
+  - per-customer quotas that are deliberately oversubscribed.
+- **Brooker, "Exponential Backoff and Jitter"** [practice/docs]: full jitter cuts total work against synchronised retries.
+
+### 4. Niche verticals
+
+**(a) Ad-tech budget pacing.**
+- Agarwal, Ghosh, Wei, You (KDD 2014) [paper, abstract level]: in per-impression auctions, "high-performing advertisers exhaust their budgets early and leave the auction". Pacing spreads spend over the period using a forecast of supply.
+- That is our pattern exactly: a 10-minute burn, then 3 hours locked out.
+- **Mechanism:** a throttle probability per campaign makes cumulative spend follow a target curve up to the end of the period.
+- **Adaptation:**
+  - The target curve for the 5-hour window is u*(t) = u₀ + (1 − m − u₀)·(t − t₀)/(reset − t₀), where m is a reserve margin of about 0.1. The weekly curve is an outer constraint.
+  - Each arm gets a multiplicative pacing factor that falls while its meter-attributed burn is ahead of the curve.
+  - A SHEDDABLE job is admitted only while u(t) < u*(t).
+
+**(b) Carbon-aware temporal shifting.**
+- Radovanović et al., "Carbon-Aware Computing for Datacenters" (Google, 2021) [paper]: daily *Virtual Capacity Curves* cap hourly capacity for workloads that can be delayed but must finish within 24 hours. Search, YouTube and other serving traffic is never shifted.
+- **Adaptation:** a *quota capacity curve* for each window.
+  - Reserve capacity for owner-interactive work and in-flight preregistered runs.
+  - Shift work that can wait (review lanes, dossier sweeps like this one, Opus family generation for Bet B) into windows forecast to have headroom.
+- Weekly reset times differ by account, per the third-party guides found in search (unverified), so the curve should be keyed to the reset time the meter reports.
+
+**(c) SRE criticality with oversubscribed tenant quotas.** Each Foundry tenant gets a class and a quota share.
+
+| class | Foundry tenant |
+|---|---|
+| CRITICAL_PLUS | owner-interactive sessions |
+| CRITICAL | in-flight preregistered or held-out arms |
+| SHEDDABLE_PLUS | dev streams |
+| SHEDDABLE | reviews, sweeps, Kev data factories |
+
+- Shares may sum to more than 1, as the SRE text allows.
+- When the meter warns, shed by class, not first-in-first-out.
+
+**(d) FinOps unit economics and showback.**
+- The FinOps Framework's unit-economics capability [practice/docs, via Microsoft Learn and finops.org]: choose the business unit, map it to the services that support it, split shared costs by measured use, and report unit cost as a KPI.
+- **Adaptation:**
+  - The unit is one *accepted success*. Its cost is in quota units, not dollars.
+  - Orchestration (subagents, the main session) is the shared cost, split over the experiments it served.
+  - run-view shows quota per success for each workflow and each tenant.
+- This turns the 20× from an aside in 10-STATE into a line item someone is accountable for.
+
+**(e) Common random numbers from simulation methodology** [inference; textbook technique, no citation verified here].
+- Comparing simulated systems by driving them with the same random draws lowers the variance of the *difference*.
+- **Adaptation:** a *draw ledger*. JIT interpreter, shadow and adjudicator roles take an unused draw of the same (task, model, interpreter-config) from the agent arms instead of buying a new one.
+- This saves quota and also tightens paired comparisons. See experiment QE1.
+
+**(f) Cache economics.**
+- In the API, cached reads are exempt from ITPM. Whether the subscription meter discounts them is **unverified**.
+- Repo facts:
+  - the policy forces `FORCE_PROMPT_CACHING_5M=1` (cheaper list-price writes);
+  - the subscription default TTL is 1 h;
+  - "an identical request repeated still writes ~1,200 cache tokens and reads only the CLI's constant ~883" (`04-efficiency-rust.md:157`).
+- So Foundry's prompts have **no stable cacheable prefix** across calls.
+- **Adaptation:** order every builder, interpreter and judge prompt static-first (SDK docs, family spec, schema, then the variable task). Measure quota per call under a 5-minute versus 1-hour TTL only after the meter exists (QE2).
+
+### 5. Creative options
+
+1. **A quota governor in the port and executor.** This is a patch.
+   - Pacing curve, as in (a).
+   - Criticality classes, as in (c).
+   - SRE throttling: after K = 2 consecutive `MODEL_RATE_LIMIT`, park every SHEDDABLE job.
+   - Full-jitter backoff.
+   - Automatic resume at the meter's `resetsAt`.
+2. **Evaluation by shared draws.** This changes the problem.
+   - Evaluation cost becomes the cost of the *union* of draws, not Σ over arms.
+   - J2 already requires K ≥ 2 agent streams per arm. Those two draws per (task, model) then *are* the shadow and adjudicator pool for every JIT arm on that model. The K ≥ 2 requirement and the shadow budget become the same spend.
+3. **Run Foundry's own orchestration as Foundry streams.** This changes the problem.
+   - Dossier sweeps, review-of-review passes, hidden-path scans and audit packs recur constantly, and they are the 20×.
+   - Make them the first real-world stream: interpret with Opus once, compile the sweep and audit procedure, run Haiku and code, and shadow-sample with Opus.
+   - The quota blocker becomes the vision's first owner-relevant capability number: the share of orchestration decisions made by code or Haiku at equal review acceptance.
+4. **A shadow price on the slider.**
+   - The pacing controller keeps a Lagrange multiplier λ(t) on quota.
+   - The router (FRONTIER G1) prices an interpretation, shadow or compile as quota × λ(t). When the window runs ahead of its curve, λ rises, and the system automatically shadows less and interprets less.
+   - The slider stays a declared W (FRONTIER G4). λ is the live exchange rate.
+5. **Window anchoring.**
+   - If the 5-hour window starts at first use (third-party guides say so; unverified), a $0.0005 Haiku probe can open it deliberately so that its reset lands where heavy work will need the room [inference].
+
+### 6. Experiments, ranked
+
+**QE1. Shared-draw audit and design amendment.** $0, no quota, 2–3 h.
+- **Build:** `experiments/jit/audit/draws.mjs`.
+  - Over `traces/*.json`, test request equivalence: model, effort, `budgetUsd`, `timeoutMs`, `taskSha256`, interpreter id, CLI version and `policyVersion`. All are in the trace (`interpret.mjs:126-140`) or the arm config.
+  - Compute the share of JIT interpreter-role spend a same-model agent draw could replace.
+  - Tabulate pass rates of JIT-role draws against agent-arm draws on the same (task, model) pairs. This is descriptive, with small n.
+- **Metric:** replaceable spend and quota per arm. The upper bounds above are 69% for O/H and 36% for S/H.
+- **Baseline:** independent draws, as now.
+- **Preregistration:** the shared-draw design and a paired analysis must be written into the P10 PREREG-stream amendment *before* any held-out run, including the rule that the 2nd and 3rd draws per (task, model) come from K = 2–3 agent streams.
+- **Kill rule:** do not adopt if any config field differs, or if JIT-role and agent-arm draws on the same pairs differ by ≥ 3 passes (the noise band).
+- **Falsified if:** the requests are not equivalent (for example, JIT interpreters see extra context), or the draw distributions measurably differ.
+
+**QE2. Meter capture and a fitted quota weight per token class.** About $1–3, low quota, half a day.
+- **Build:**
+  - `experiments/lib/meter.mjs`, which pulls rate-limit events out of `stream-json` transcripts. Do it there first, because `src/` sits under frozen-kit discipline.
+  - `experiments/lib/quota-probe.mjs`: one Haiku `stream-json` call every 10 minutes, logging (t, five-hour utilisation, seven-day utilisation, reset time).
+  - Regress Δutilisation between probes on tokens by model × {input, output, cache write, cache read}. The token counts come from gateway journals plus `research/replicate-20261008/harness-cost.mjs` run over subagent transcripts.
+- **Metric:** mean absolute error of the Δu prediction on held-back intervals; weight ratios Opus:Sonnet:Haiku; the weight of a cache read.
+- **Baseline:** list dollars as the only predictor.
+- **Preregistration:** diagnostic only. Freeze the fitting procedure and the train/test split by time before reading results.
+- **Kill rule:** if `-p` sessions on this account emit no utilisation field, or its resolution is ≥ 1% per step against an expected Δu of a few % per interval, the meter cannot drive pacing. Fall back to AIMD driven by faults.
+- **Falsified if:** list dollars predict Δu within 20% of the fitted model. Then the dollar proxy in FRONTIER J4 is enough, which is the simpler answer.
+
+**QE3. Governor A/B across windows.** $0 simulation, then about $20–40 list, medium quota, 1–2 days of wall clock.
+- **Build:** `experiments/lib/quota-governor.mjs`:
+  - a token bucket in QE2 quota units;
+  - the pacing curve;
+  - classes;
+  - a breaker at K = 2;
+  - jittered auto-resume.
+  - Hook it into `stream.mjs`'s `pool()` and the JIT loop, and retire the manual `resume-streams.mjs`.
+- **Step 1, $0:** a discrete-event replay of the 10-08/09 load (252 stream rows plus subagent token timelines) under the governor and as it actually happened. Output: predicted stall minutes and finished tasks.
+- **Step 2, live:** ABAB across four consecutive 5-hour windows with identical queued dev work (records fresh dev seeds 249–272, Haiku agent plus JIT S/H). These seeds must not overlap P4b's 225–248.
+- **Metrics:**
+  - tasks finished per 10 h;
+  - stall minutes;
+  - outcome invariance: pass rates must sit within the noise band, because the governor should not change outcomes.
+- **Kill rule:** if the governed windows finish fewer tasks than the ungoverned ones.
+- **Falsified if:** automatic resume plus the breaker alone (arm C) captures ≥ 80% of the gain. Then pacing is unnecessary machinery.
+
+---
+
+## Blocker B10b: scheduling many concurrent streams and workflows on 4 vCPUs
+
+### 1. Mechanism
+
+**Per-call CPU is the fixed cost.**
+- One `claude -p` start costs about 0.85 core-seconds, and about 0.56–0.67 with the 2026-10-08 flags.
+- This VM tops out at 2.3 calls/s, or 3.4 with the flags. Throughput by concurrency: K=1 0.52, K=4 1.49, K=6 1.89, K=8 2.34 calls/s, sublinear past about K = 4–6 [repo: `research/review-20261007/04-efficiency-rust.md` lines 36–37, 160–161].
+
+**There is no admission control at machine level.**
+- `stream.mjs:693` builds one ModelPort per arm with `concurrency: {'claude-cli': 16}`. Flat agent jobs run at `config.concurrency` (3).
+- `resume-streams.mjs` starts every arm as its own detached process, so the semaphores are per process. Thirteen arms × 16 slots are "allowed".
+- On the same VM at the same time:
+  - other workflows' `node --test` suites (THESIS-JIT §3.3: "six node test processes and a heal trial at once");
+  - sandbox launches (about 200 ms of CPU each);
+  - the heal probe at load average about 8 (`heal-20261008/DESIGN.md:783`).
+- From in-flight intervals rebuilt from `at − latencyMs`, the peak was **19 concurrent task rows**, each possibly running several CLI children [repo].
+
+**Queueing amplifies this.**
+- Kingman's VUT approximation [paper: Kingman 1961, via secondary sources]: W_q ≈ (ρ/(1−ρ)) · ((c_a² + c_s²)/2) · E[S]. Waiting time explodes as ρ approaches 1, and bursty arrivals (whole stream batches starting together, then a resume surge) multiply it.
+- In Foundry, latency feeds hard timeouts (`agentMinutes` 15, `compiledMinutes` 20). `EXECUTOR_TIMEOUT` is **not** in `ENV_FAULTS` (`runner.mjs:19`), so CPU contention can become task *failures* charged to whichever arm ran long.
+- Descriptively [repo, confounded by task mix and arm]:
+
+| in-flight concurrency | rows | pass | median latency |
+|---|---|---|---|
+| ≤ 6 | 37 | 29/37 (78%) | 84 s |
+| ≥ 10 | 206 | 149/206 (72%) | 109 s |
+
+  The difference is not causal evidence, but nothing currently rules it out.
+- An earlier case: core REPORT row 2 scored timeouts as failures (b0ncall lost 42% of trials), and the cause was never measured.
+- `latencyMs` mixes service time with queueing time, so any feature built on latency (router inputs, durability's time-to-durable) is contaminated.
+- The rate-limit drain (B10) also spent CPU starting sessions that could not run.
+
+### 2. Ideological root
+
+**Assumption:** the VM is a neutral substrate, each workflow effectively owns the machine, and concurrency is a parameter local to each component.
+
+**Measured against the vision:** swarms, subagents, a board, async streams, many concurrent workflows, and reuse by *other programs*. That is a multi-tenant runtime. Foundry's runtime is single-tenant per process, with tenancy implied by the process boundary.
+
+**For the assumption to hold, one of these would have to be true:**
+- one Foundry process per machine;
+- every tool (CLI, node test runner, sandboxes) honours one shared limit;
+- the offered load stays below the knee at about K = 6.
+
+None holds today. The deeper error is the same as in B10: a capacity limit is treated as noise in the environment, when it is a resource the system itself must schedule.
+
+### 3. Frontier
+
+- **Adaptive concurrency limits.** Netflix `concurrency-limits` [practice/docs] applies TCP congestion-control ideas to find the largest in-flight limit before latency degrades, instead of hand-tuned caps.
+- **One queue for mixed work.** QLM [paper] puts batch and interactive work in a single queue, driven by a waiting-time estimate.
+- **Backfilling.** HPC batch schedulers fill holes in the machine without delaying the job at the head of the queue (Mu'alem and Feitelson, IEEE TPDS 2001) [paper]. Two counter-intuitive findings:
+  - EASY (aggressive) backfilling wins on SP2-typical workloads;
+  - backfilling did better when users *overestimated* runtimes.
+- **Cost-of-delay ordering.** Reinertsen's WSJF (cost of delay ÷ duration) beats FIFO, highest-value-first and shortest-job-first when delay costs and durations vary [practice/docs, secondary sources; book not opened].
+
+### 4. Niche verticals
+
+**(a) The GNU make jobserver.**
+- [practice/docs, via LLVM `Jobserver.h`, the Rust `jobslot` crate and GNU make `posixos.c`] A FIFO pre-loaded with one token per job slot. Every cooperating process, including nested and independent tools, reads a token to take a slot and writes it back to release it.
+- Each child has one implicit slot that it never returns. Clients must return tokens on every exit path. Discovery is through `MAKEFLAGS` (`--jobserver-auth=fifo:PATH`).
+- This is exactly the missing piece: limits that cross processes and tools without a daemon.
+- **Adaptation:** `.foundry/jobserver.fifo` holding N tokens, with N starting at 6 (the measured knee).
+  - ModelPort's `Semaphore.acquire` and `runClaudeCode` also take a token before spawning.
+  - The test runner wrapper passes `--test-concurrency` equal to the tokens it obtained.
+  - Leases time out so a crashed holder cannot deadlock the pool.
+
+**(b) HPC backfilling** [paper].
+- Opus agent sessions (median 108 s, maximum 182 s) and builder sessions are the "big jobs". Haiku gateway calls (about 1 s) are the backfill.
+- Under EASY, a short call may jump ahead only if it does not delay the reserved start of the job at the head of the queue.
+- Following the paper's estimate result, use generous runtime estimates taken from each role's p90 latency.
+
+**(c) Linux cgroup v2 CPU weights per criticality class** [inference; standard kernel feature, documentation not opened in this pass]. Run each class in its own slice with `cpu.weight`:
+
+| class | weight |
+|---|---|
+| owner-interactive | 1000 |
+| held-out arms | 400 |
+| dev arms | 100 |
+| tests and reviews | 25 |
+
+Contention then lands on SHEDDABLE work, not on timed experiment arms. This is the SRE criticality scheme from B10(c), applied to CPU.
+
+**(d) Lot sizing (job-shop setup costs)** [inference; economic-order-quantity reasoning, citation not verified].
+- When every job carries a fixed setup cost (0.85 core-seconds per CLI start), the optimal batch size balances setup cost against waiting cost.
+- **Adaptation:** a `flow.judgeBatch` path that sends B low-leverage per-item judgments in one call. That divides start-up CPU and request count by B.
+- D11's leverage rule limits which judgments can be batched. Global readings never are.
+
+**(e) WSJF on the cross-experiment queue.**
+- Order runnable work by expected decision value ÷ expected quota-and-CPU cost.
+- For example, FRONTIER §4.3's advice to finish kinetics O/H before S/H becomes a computed priority, not a note.
+
+### 5. Creative options
+
+1. **Host jobserver plus adaptive N.** This is a patch.
+   - The FIFO from (a), with N adjusted by AIMD on p90 latency of trivial probe calls: add 1 while latency stays flat, halve on a 1.5× jump.
+2. **A second worker node.** This changes the problem.
+   - Compiled solver runs, `check-traces`, test suites and $0 replays need no model quota. They can run on the owner's laptop over the existing Kev bridge, which already has a nonce journal and caps.
+   - The VM becomes the model-call node only.
+   - This needs owner sign-off on scope, and it keeps D10: no third-party text reaches executors.
+3. **Batched judgments.** As in (d). This changes the shape of the work, not the scheduler.
+4. **Timeouts as environment faults where contention is likely.**
+   - Record host load (`load1`, CPU busy share, number of `claude` children) on every row.
+   - Reclassify a timeout that happens under load above threshold T as an environment fault.
+   - Preregister T. It must not be chosen after seeing outcomes.
+
+### 6. Experiments, ranked
+
+**CE1. Contention-confound audit.** $0, no quota, 2 h.
+- **Build:** `experiments/jit/audit/contention.mjs`.
+  - Rebuild in-flight concurrency per row from `(at − latencyMs, at)` across *all* arms and families.
+  - Model pass and timeout against concurrency, stratified by arm × difficulty.
+  - Add `host:{load1, cpuBusy, claudeChildren}` to future rows. That is a `stream.mjs` `finish()` change, opt-in, so existing config hashes do not move.
+- **Metric:** odds ratio for timeout or failure at concurrency ≥ 10 versus ≤ 6, within strata.
+- **Baseline:** none. This is diagnostic.
+- **Kill rule:** none, because it is $0.
+- **Falsified if:** within strata, the odds ratio's CI includes 1 *and* no timeout rows sit at high concurrency. Then contention is not a validity threat for these families and CE2 is only a throughput fix.
+
+**CE2. Jobserver against per-process semaphores.** About $0.05 of trivial Haiku calls or a $0 stub CLI, about half a day.
+- **Build:** `experiments/lib/jobserver.mjs`, a token FIFO with leases. Wire it optionally into the ModelPort and `runClaudeCode`.
+- **Test:** reuse the b22 harness from `04-efficiency-rust` with 4 processes offering a total K of 4, 8, 16 and 32.
+  - Arm A: per-process semaphores.
+  - Arm B: jobserver at N = 6.
+  - Arm C: jobserver with AIMD.
+- **Metrics:** calls/s, p50/p95 latency, and the share of calls above a 30 s synthetic timeout.
+- **Preregistration:** freeze N, the AIMD constants and the load levels beforehand.
+- **Kill rule:** any token-leak deadlock in 1,000 calls.
+- **Falsified if:** B and C are within 10% of A on p95 at offered K ≥ 16. That would mean the CLI already back-pressures itself.
+
+**CE3. Batched low-leverage judgments.** About $1–2, low quota.
+- On archived records traces, replay the `vendex-entries` or same-entity judge with B = 1 against B = 10 using `tierdown-e2e.mjs`.
+- **Metrics:** end-to-end dev-oracle pass (analyst side only), CPU-seconds and quota per task.
+- **Kill rule:** end-to-end pass drops by ≥ 1 of 8 tasks.
+- **Falsified if:** batching changes decisions on any task where the per-item version was right.
+
+---
+
+## How the two blockers interact
+
+**One fault, two meters.** Both blockers come from one design fault: Foundry has **no scheduler for shared resources**, only local semaphores and an exception path. Quota and CPU are each a shared bucket that every tenant can drain. Neither is metered at the point of admission, and neither runs out in a way that is "environmental".
+
+**They amplify each other:**
+- CPU contention stretches session wall time. That raises the quota held per minute of useful work and pushes runs into timeouts that are then retried.
+- The quota cliff then turns into a resume surge. Thirteen detached arm processes and the queued agent jobs restart together. That bursty arrival is exactly what Kingman's variability term punishes, so the first minutes after a reset are CPU-saturated.
+- On the evidence side, the 3-hour stall plus uneven CPU load add timing and contention confounds that the preregistration does not model. That makes K = 1 dev comparisons even weaker than their sample size suggests.
+
+**One fix covers both.** A single admission layer carries two meters (quota units from QE2 and CPU tokens from CE2), one set of criticality classes, one pacing curve and one WSJF-ordered queue. It turns both blockers from stalls into prices.
+
+**The changes to the problem are what carry the vision forward:**
+- Shared draws cut quota per comparison and tighten paired analysis.
+- Compiling Foundry's own orchestration attacks the 20× directly, on the workload the owner actually runs. It is the closest thing the project has to the "real users' recurring workflows" in the e2e vision, and success there would be the first capability number measured in the currency that actually binds.
+
+---
+
+## Sources
+
+**[paper]**
+- Sheng et al., "Fairness in Serving Large Language Models", OSDI 2024. https://usenix.org/conference/osdi24/presentation/sheng and https://arxiv.org/abs/2401.00588v2 (seen in search)
+- Patke et al., "Queue Management for SLO-Oriented Large Language Model Serving" (QLM), SoCC 2024. https://arxiv.org/abs/2407.00047v2 (seen)
+- Mu'alem & Feitelson, "Utilization, Predictability, Workloads, and User Runtime Estimates in Scheduling the IBM SP2 with Backfilling", IEEE TPDS 12(6), 2001. https://www.cse.huji.ac.il/~feit/papers/SP2backfil01TPDS.pdf (seen)
+- Radovanović et al. (Google), "Carbon-Aware Computing for Datacenters", 2021. https://arxiv.org/abs/2106.11750 (seen)
+- Agarwal, Ghosh, Wei, You, "Budget Pacing for Targeted Online Advertisements at LinkedIn", KDD 2014. https://doi.org/10.1145/2623330.2623366 (seen; abstract level only)
+- Kingman, "The single server queue in heavy traffic", 1961, via https://en.wikipedia.org/wiki/Kingman%27s_formula (secondary)
+
+**[practice/docs]**
+- Anthropic, "Rate limits". https://platform.claude.com/docs/en/api/rate-limits (opened)
+- Claude Code, "Manage costs effectively". https://code.claude.com/docs/en/costs (opened)
+- Anthropic, batch processing and prompt caching docs. https://platform.claude.com/docs/en/build-with-claude/batch-processing and https://docs.claude.com/en/docs/build-with-claude/prompt-caching (seen in search)
+- Google SRE Book, "Handling Overload". https://sre.google/sre-book/handling-overload/ (opened)
+- Brooker, "Exponential Backoff and Jitter", AWS Architecture Blog. https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/ (seen)
+- Netflix, `concurrency-limits` and "Performance Under Load". https://netflixtechblog.medium.com/performance-under-load-3e6fa9a60581 (seen)
+- GNU make jobserver, via LLVM `Jobserver.h` (https://llvm.org/doxygen/Jobserver_8h_source.html) and GNU make `posixos.c` (https://gnu.googlesource.com/make/+/7d484017077089a/src/posixos.c) (seen; official manual section not opened)
+- FinOps unit economics. https://learn.microsoft.com/en-us/cloud-computing/finops/framework/quantify/unit-economics (seen)
+- Reinertsen WSJF, via https://blackswanfarming.com/wsjf-weighted-shortest-job-first/ (secondary; book not opened)
+
+**Unverified:** subscription window anchoring and weekly reset rules (third-party guides only); whether the subscription meter discounts cache reads; the common-random-numbers and lot-sizing textbook citations; cgroup `cpu.weight` documentation (not opened in this pass).
+
+**Repo files cited:**
+- `/home/user/workflow-foundry/experiments/jit/stream.mjs`
+- `/home/user/workflow-foundry/experiments/jit/interpret.mjs`
+- `/home/user/workflow-foundry/experiments/jit/resume-streams.mjs`
+- `/home/user/workflow-foundry/experiments/lib/runner.mjs`
+- `/home/user/workflow-foundry/src/executors/claude-code.mjs`
+- `/home/user/workflow-foundry/src/models/port.mjs`
+- `/home/user/workflow-foundry/policy/models.json`
+- `/home/user/workflow-foundry/research/review-20261007/10-STATE.md`
+- `/home/user/workflow-foundry/research/review-20261007/04-efficiency-rust.md`
+- `/home/user/workflow-foundry/research/core-20261006/diagnosis-workflow-agent.md`
+- `/home/user/workflow-foundry/research/jit-20261008/{THESIS-JIT,DEV-NOTES,FRONTIER-GAPS,PREREG-stream}.md`
+- `/home/user/workflow-foundry/experiments/runs/jit/jit-dev-{records,kinetics}-1/*/{results,faults}.jsonl`
