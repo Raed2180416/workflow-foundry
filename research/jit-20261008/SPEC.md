@@ -260,3 +260,34 @@ motivate them.
   It runs on `flow-v2.mjs`.
 - **`report.mjs`** shows the comparison and acceptance per compile attempt, only for arms that set these options.
   `tierdown.mjs --tolerant` scores decisions with `tolerantAgreement`.
+
+### v2.1 review fixes (2026-10-09)
+
+Two reviews of the v2.1 commit reproduced, at $0, two ways to pass the strict rule without an explanation and three ways
+the tolerance could make a wrong answer agree. All fixes stay opt-in; the defaults, the dev arm hashes, prompt v1/v2 and
+the flow files are unchanged.
+
+- **Integers are exact; tolerant keys.** Without a key list, two integers are compared exactly, so ids and row numbers
+  (records `entity_id`, `source_rows`) never match a neighbour. `tolerantKeys` (jit, compile, `check-traces
+  --tolerant-keys`, `tierdown --tolerant-keys`) limits tolerance to numbers under the listed keys (kinetics: `vmax`,
+  `km`); every other number is exact. Remaining limit: without a key list a non-integer amount (cents) is still tolerant,
+  so records should not use a relTol above 0.
+- **Bounds.** relTol > 0.05 or absTol > 1e-6 is refused unless `allowLooseTolerance: true`, which is then part of the arm
+  definition and the compile record. The kinetics oracle grades at 10% and its near-miss control is a Km 12% off.
+- **Strict quotes.** A quote is taken only from the prompt, string values of the inputs and task files (no longer the
+  serialised inputs JSON). It needs at least 3 words with letters. A quote that occurs in every other case's task
+  (the family boilerplate) explains no case. Each diff case needs its own distinct verified quote (a maximum matching of
+  cases to quotes). Strict acceptance needs `compile.promptVersion` 3, the only prompt that asks for verbatim quotes;
+  prompt v3 now says that shared text and reused quotes do not count.
+- **jit tolerant implies a tolerant host check.** Regression cases come from tolerant adjudications (fitted numbers),
+  so `compile.compare` follows `jit.compare: 'tolerant'` with its tolerance, and an explicit canonical is refused.
+- **The comparison is loaded before any solver runs.** `check-traces` imports `compare.mjs` at start, so a solver that
+  rewrites `tools/compare.mjs` cannot change the comparison during the check.
+- **Bounded work.** One comparison spends at most about 10^7 value comparisons (plus Kuhn and Hungarian steps, charged
+  before they run) before every array takes a linear fallback; a separate equal budget covers the fallback's cheap
+  assignment. 200 groups × 200 members now takes seconds instead of tens of minutes. Above the per-array cap,
+  key-equal items are paired first and the rest by an optimal assignment, so partial agreement is no longer below
+  canonical's. All fallbacks are lower bounds and are counted in `approx`.
+- **Prompt v3 at 0/0.** With relTol and absTol both 0 the prompt says numbers must match exactly (arrays still
+  unordered), instead of promising a tolerance. `compile.compare: 'tolerant'` at 0/0 is the order-insensitive exact
+  host check.

@@ -198,3 +198,35 @@ test('check-traces: check-traces.json beside the tool makes tolerant the default
   });
   assert.notEqual(b.code, 0); assert.match(b.stderr, /tolerant comparison needs compare\.mjs beside check-traces\.mjs/);
 });
+
+test('check-traces --tolerant loads compare.mjs before any solver runs: a solver that swaps it cannot fake agreement', async t => {
+  const dir = await fitSetup(t);
+  // The solver rewrites ../../tools/compare.mjs (the run directory is .check/<case>/) with a stub that calls everything exact.
+  writeFileSync(path.join(dir, 'solve.mjs'), `import { writeFileSync } from 'node:fs';
+writeFileSync('../../tools/compare.mjs', 'export const tolerance = o => o; export const tolerantAgreement = () => ({ exact: true, partial: 1, matched: 1, compared: 1, diffs: [], approx: 0 });\\n');
+console.log(JSON.stringify({ fits: [{ s: 'A', vmax: 999 }] }));
+`);
+  const r = await check(dir, ['--tolerant']);
+  assert.equal(r.code, 0, r.stderr);
+  assert.match(readFileSync(path.join(dir, 'tools/compare.mjs'), 'utf8'), /export const tolerantAgreement = \(\) =>/, 'the stub was written');
+  assert.deepEqual(r.agg.perCase.map(c => c.status), ['diff', 'diff', 'diff'], 'the comparison loaded before the first case is the one used');
+  assert.equal(r.agg.exact, 0);
+});
+
+test('check-traces --tolerant: bounds, tolerant keys and the integer rule reach the comparison and the aggregate', async t => {
+  const dir = await fitSetup(t);
+  const loose = await new Promise(resolve => {
+    const child = spawn(process.execPath, ['tools/check-traces.mjs', '--tolerant', '--rel-tol', '0.2'], { cwd: dir, stdio: ['ignore', 'pipe', 'pipe'] });
+    let stderr = ''; child.stderr.on('data', d => { stderr += d; }); child.stdout.resume();
+    child.on('close', code => resolve({ code, stderr }));
+  });
+  assert.equal(loose.code, 2); assert.match(loose.stderr, /looser than 0\.05/);
+  // Keys: only vmax is tolerant, so trace-0's km (0.512 vs 0.5101) is now a diff.
+  const keyed = await check(dir, ['--tolerant', '--tolerant-keys', 'vmax']);
+  assert.equal(keyed.code, 0, keyed.stderr);
+  assert.deepEqual(keyed.agg.perCase.map(c => c.status), ['diff', 'exact', 'diff']);
+  assert.deepEqual(keyed.agg.compare, { mode: 'tolerant', relTol: 0.01, absTol: 1e-9, tolerantKeys: ['vmax'] });
+  assert.match(keyed.stdout, /under keys vmax, other numbers exact/);
+  const file = await fitSetup(t, { defaults: { compare: 'tolerant', relTol: 0.01, absTol: 1e-9, tolerantKeys: ['vmax', 'km'] } });
+  assert.deepEqual((await check(file)).agg.perCase.map(c => c.status), ['exact', 'exact', 'diff'], 'keys from check-traces.json');
+});

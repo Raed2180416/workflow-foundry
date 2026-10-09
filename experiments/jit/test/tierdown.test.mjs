@@ -75,5 +75,8 @@ test('decisionAgreement with a tolerance (v2.1, opt-in): fitted numbers within t
   assert.ok(decisionAgreement(ref, cand) < 0.5, 'default: positional, exact numbers');
   assert.equal(decisionAgreement(ref, cand, { relTol: 0.01, absTol: 1e-9 }), 1);
   assert.equal(decisionAgreement(ref, cand, { relTol: 0.0001, absTol: 0 }), 0.5, 'the names still pair; the vmax leaves do not');
-  assert.equal(decisionAgreement({ v: 5 }, { v: -5 }, { relTol: 0.5, absTol: 0 }), 0, 'a sign flip is a difference (|a-b| = 10 > 0.5 x 5)');
+  assert.equal(decisionAgreement({ v: 5 }, { v: -5 }, { relTol: 0.5, absTol: 0, allowLooseTolerance: true }), 0, 'a sign flip is a difference (|a-b| = 10 > 0.5 x 5)');
+  assert.throws(() => decisionAgreement({ v: 5 }, { v: 5.1 }, { relTol: 0.5, absTol: 0 }), /looser than 0.05/, 'a loose tolerance must be asked for');
+  assert.equal(decisionAgreement({ id: 150, v: 4.0198 }, { id: 151, v: 4.0213 }, { relTol: 0.01, absTol: 0 }), 0.5, 'two integers are compared exactly');
+  assert.equal(decisionAgreement({ id: 150, v: 4.0198 }, { id: 150, v: 4.0213 }, { relTol: 0.01, absTol: 0, tolerantKeys: ['id'] }), 0.5, 'with tolerantKeys only the listed keys are tolerant');
 });

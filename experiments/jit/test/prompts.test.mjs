@@ -69,17 +69,27 @@ test('promptVersion 3 is the v2 text plus inserted lines (every v2 line kept, in
     assert.match(v3, /After any grouping, dedup, merge or clustering step, scan the result for near-miss groups/);
     assert.match(v3, /share a secondary\s+attribute/); assert.match(v3, /same-entity flow\.judge/); assert.match(v3, /check code can verify/); assert.match(v3, /flow\.flag every such pair/);
     // (c) quotes verbatim from the task
-    assert.match(v3, /Quote verbatim: put the deciding sentence in double quotes, copied from that case's prompt\.md or inputs\.json/);
+    assert.match(v3, /Quote verbatim: put the deciding sentence in double quotes, copied from that case's prompt\.md or a text value in inputs\.json/);
     // (b) only in a recompile: read the deopts; calibrate or guard; never loosen silently
     const b = /Read the deopts before you change code[\s\S]*calibrate the\s+check[\s\S]*earlier flow\.guard[\s\S]*Never loosen or drop a check silently: each changed check gets a line in\s+BUILD-NOTES\.md/;
     if (kind === 'recompile') assert.match(v3, b); else assert.doesNotMatch(v3, /Read the deopts/);
     // The strict rule and the tolerant comparison are stated only when the compile uses them.
+    if (extra.acceptance) assert.match(v3, /text that every case's task shares \(the common instructions\) explains no case,\s+and each case needs its own quote/);
+    else assert.doesNotMatch(v3, /explains no case/);
     if (extra.acceptance) assert.match(v3, /Acceptance is checked by code after you finish[\s\S]*at least 0\.85 over the traces, or at least one exact trace[\s\S]*occurs verbatim in that case's task/);
     else assert.doesNotMatch(v3, /Acceptance is checked by code/);
-    if (extra.compare) assert.match(v3, /check-traces compares numbers within a tolerance \(relative 0\.02, absolute 0\.000001\)/);
+    if (extra.compare) assert.match(v3, /check-traces compares numbers within a tolerance \(relative 0\.02, absolute 0\.000001; two integers exactly\)/);
     else assert.doesNotMatch(v3, /within a tolerance/);
     assert.ok(v3.length - v2.length < (kind === 'recompile' ? 2600 : 1900), `v3 stays concise (+${v3.length - v2.length} chars)`);
   }
+});
+
+test('prompt v3 states the comparison it is given: exact numbers at 0/0, the tolerant keys when listed', () => {
+  const v3 = extra => builderPrompt('compile', { ...A, promptVersion: 3, compare: 'tolerant', ...extra });
+  const zero = v3({ relTol: 0, absTol: 0 });
+  assert.match(zero, /Here check-traces trims strings and treats arrays as unordered; numbers must match exactly\./);
+  assert.doesNotMatch(zero, /need not match the agent's to the last digit/, 'no tolerance to promise at 0/0');
+  assert.match(v3({ relTol: 0.01, absTol: 1e-9, tolerantKeys: ['km', 'vmax'] }), /compares numbers under km, vmax within a tolerance \(relative 0\.01, absolute 1e-9\) and every other number exactly/);
 });
 
 test('an unknown promptVersion is refused', () => {

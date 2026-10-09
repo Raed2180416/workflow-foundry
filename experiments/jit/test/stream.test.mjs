@@ -588,7 +588,8 @@ test('v2.1 defaults: the live configs keep their arm hashes with the v2.1 option
     assert.equal('relTol' in c.jit, false); assert.equal('absTol' in c.jit, false); assert.equal(c.jit.compare, 'unordered', 'the live configs\' own setting is kept');
     const jitArm = Object.keys(want).find(a => a.startsWith('jit:'));
     const variants = { tolerantShadows: { jit: { ...raw.jit, compare: 'tolerant' } }, tolerantCompile: { compile: { ...raw.compile, compare: 'tolerant' } },
-      strict: { compile: { ...raw.compile, acceptance: 'strict' } }, v3: { compile: { ...raw.compile, promptVersion: 3 } } };
+      strict: { compile: { ...raw.compile, acceptance: 'strict', promptVersion: 3 } }, v3: { compile: { ...raw.compile, promptVersion: 3 } },
+      keyed: { jit: { ...raw.jit, compare: 'tolerant', tolerantKeys: ['vmax', 'km'] } } };
     const seen = new Set([want[jitArm]]);
     for (const [k, v] of Object.entries(variants)) {
       const h = hashes({ ...raw, ...v });
@@ -598,7 +599,9 @@ test('v2.1 defaults: the live configs keep their arm hashes with the v2.1 option
     // Tolerances at their defaults hash the same written out or not; a different tolerance is a different arm.
     assert.deepEqual(hashes({ ...raw, jit: { ...raw.jit, compare: 'tolerant', relTol: 0.01, absTol: 1e-9 } }), hashes({ ...raw, ...variants.tolerantShadows }));
     assert.notDeepEqual(hashes({ ...raw, jit: { ...raw.jit, compare: 'tolerant', relTol: 0.02 } }), hashes({ ...raw, ...variants.tolerantShadows }));
-    assert.deepEqual(hashes({ ...raw, compile: { ...raw.compile, acceptance: 'strict', minPartial: 0.9 } }), hashes({ ...raw, ...variants.strict }));
+    assert.deepEqual(hashes({ ...raw, compile: { ...raw.compile, acceptance: 'strict', promptVersion: 3, minPartial: 0.9 } }), hashes({ ...raw, ...variants.strict }));
+    assert.deepEqual(hashes({ ...raw, jit: { ...raw.jit, compare: 'tolerant', allowLooseTolerance: false } }), hashes({ ...raw, ...variants.tolerantShadows }), 'allowLooseTolerance false is the default');
+    assert.deepEqual(hashes({ ...raw, jit: { ...raw.jit, compare: 'tolerant', tolerantKeys: ['km', 'vmax', 'km'] } }), hashes({ ...raw, ...variants.keyed }), 'tolerantKeys are a set');
   }
 });
 
@@ -606,15 +609,30 @@ test('v2.1 config validation and normalisation', () => {
   const n = x => normalizeConfig({ ...CONFIG, ...x });
   assert.deepEqual(n({ jit: { compare: 'tolerant' } }).jit, { ...n({ jit: {} }).jit, compare: 'tolerant', relTol: 0.01, absTol: 1e-9 });
   assert.equal(n({ jit: { compare: 'tolerant', relTol: 0.05 }, compile: { compare: 'tolerant' } }).compile.relTol, 0.05, 'compile inherits the shadow tolerance');
-  assert.equal(n({ jit: { compare: 'tolerant', relTol: 0.05 }, compile: { compare: 'tolerant', relTol: 0.2 } }).compile.relTol, 0.2);
+  assert.equal(n({ jit: { compare: 'tolerant', relTol: 0.05 }, compile: { compare: 'tolerant', relTol: 0.02 } }).compile.relTol, 0.02);
   assert.deepEqual(['compare', 'relTol', 'absTol'].map(k => n({ compile: { compare: 'tolerant' } }).compile[k]), ['tolerant', 0.01, 1e-9]);
-  assert.deepEqual([n({ compile: { acceptance: 'strict' } }).compile.acceptance, n({ compile: { acceptance: 'strict' } }).compile.minPartial], ['strict', 0.9]);
+  const strict = n({ compile: { acceptance: 'strict', promptVersion: 3 } }).compile;
+  assert.deepEqual([strict.acceptance, strict.minPartial], ['strict', 0.9]);
+  // A tolerant stream makes the host check tolerant too (its regression cases come from tolerant adjudications), with
+  // the shadow tolerance, keys and loose flag; an explicit canonical host check is refused.
+  const inherit = n({ jit: { compare: 'tolerant', relTol: 0.02, tolerantKeys: ['vmax', 'km'] } });
+  assert.deepEqual(inherit.compile, { ...n({}).compile, compare: 'tolerant', relTol: 0.02, absTol: 1e-9, tolerantKeys: ['km', 'vmax'] });
+  assert.deepEqual(inherit.jit.tolerantKeys, ['km', 'vmax']);
+  assert.throws(() => n({ jit: { compare: 'tolerant' }, compile: { compare: 'canonical' } }), /compile\.compare 'canonical' with jit\.compare 'tolerant'/);
+  // Loose tolerances must be asked for, and the request is part of the arm.
+  assert.throws(() => n({ jit: { compare: 'tolerant', relTol: 0.1 } }), /looser than 0\.05/);
+  assert.throws(() => n({ compile: { compare: 'tolerant', absTol: 1e-3 } }), /looser than/);
+  const loose = n({ jit: { compare: 'tolerant', relTol: 0.1, allowLooseTolerance: true } });
+  assert.deepEqual([loose.jit.allowLooseTolerance, loose.compile.allowLooseTolerance, loose.compile.relTol], [true, true, 0.1]);
+  assert.equal('allowLooseTolerance' in n({ jit: { compare: 'tolerant', allowLooseTolerance: false } }).jit, false);
   assert.equal(n({ compile: { promptVersion: 3 } }).compile.promptVersion, 3);
-  for (const [bad, re] of [[{ jit: { compare: 'fuzzy' } }, /jit\.compare must be one of canonical, unordered, tolerant/], [{ jit: { relTol: 0.1 } }, /jit\.relTol and config\.jit\.absTol need jit\.compare 'tolerant'/],
+  for (const [bad, re] of [[{ jit: { compare: 'fuzzy' } }, /jit\.compare must be one of canonical, unordered, tolerant/], [{ jit: { relTol: 0.01 } }, /jit\.relTol, absTol, tolerantKeys and allowLooseTolerance need jit\.compare 'tolerant'/], [{ jit: { tolerantKeys: ['vmax'] } }, /need jit\.compare 'tolerant'/],
+    [{ jit: { compare: 'tolerant', tolerantKeys: 'vmax' } }, /tolerantKeys must be a non-empty list/], [{ compile: { acceptance: 'strict' } }, /acceptance 'strict' needs compile\.promptVersion 3/],
+    [{ compile: { acceptance: 'strict', promptVersion: 2 } }, /needs compile\.promptVersion 3/],
     [{ jit: { compare: 'tolerant', relTol: -1 } }, /relTol must be a finite number >= 0/], [{ compile: { compare: 'unordered' } }, /compile\.compare must be canonical or tolerant/],
-    [{ compile: { absTol: 0.1 } }, /compile\.relTol and config\.compile\.absTol need compile\.compare 'tolerant'/], [{ compile: { minPartial: 0.8 } }, /minPartial needs compile\.acceptance 'strict'/],
-    [{ compile: { acceptance: 'lenient' } }, /acceptance must be one of named, strict/], [{ compile: { acceptance: 'strict', minPartial: 2 } }, /minPartial must be a number in \[0, 1\]/],
-    ...['compare', 'relTol', 'absTol', 'acceptance', 'minPartial'].map(k => [{ compile: { fallback: { [k]: 1 } } }, new RegExp(`compile\\.fallback\\.${k} is not supported`)])]) {
+    [{ compile: { absTol: 1e-9 } }, /compile\.relTol, absTol, tolerantKeys and allowLooseTolerance need compile\.compare 'tolerant'/], [{ compile: { minPartial: 0.8 } }, /minPartial needs compile\.acceptance 'strict'/],
+    [{ compile: { acceptance: 'lenient' } }, /acceptance must be one of named, strict/], [{ compile: { acceptance: 'strict', promptVersion: 3, minPartial: 2 } }, /minPartial must be a number in \[0, 1\]/],
+    ...['compare', 'relTol', 'absTol', 'tolerantKeys', 'allowLooseTolerance', 'acceptance', 'minPartial'].map(k => [{ compile: { fallback: { [k]: 1 } } }, new RegExp(`compile\\.fallback\\.${k} is not supported`)])]) {
     assert.throws(() => n(bad), re, JSON.stringify(bad));
   }
 });
@@ -686,7 +704,7 @@ test('strict acceptance on a recheck: the verdict uses the case\'s own task text
     const rechecks = [];
     deps.recheck = async a => { rechecks.push(a); return { summary: { exact: 0, exactRate: 0, partial: 0.95, clean: true, deoptKinds: {}, compare: { mode: 'tolerant' },
       perCase: a.traces.map((x, i) => ({ id: `trace-${i}`, ref: x.traceId, kind: 'trace', status: 'diff', exact: false, partial: 0.95 })) }, costUsd: 0.1 }; };
-    const config = { ...CONFIG, experiment, segments: [{ difficulty: 3, seeds: [1, 2] }], jit: { ...CONFIG.jit, warmup: 1, shadowEvery: 0 }, compile: { compare: 'tolerant', acceptance: 'strict' } };
+    const config = { ...CONFIG, experiment, segments: [{ difficulty: 3, seeds: [1, 2] }], jit: { ...CONFIG.jit, warmup: 1, shadowEvery: 0 }, compile: { compare: 'tolerant', acceptance: 'strict', promptVersion: 3 } };
     await runStream({ config, deps, runRoot: path.join(root, 'runs'), workRoot: path.join(root, 'work'), log: () => {} });
     const rec = JSON.parse(readFileSync(path.join(root, `runs/${experiment}/${FLAG_SLUG}/versions/v1-haiku55/compile.json`), 'utf8'));
     return { rechecks, calls, ct: rec.checkTraces };

@@ -83,7 +83,8 @@ export function compileSettings({ meta, rows, events }) {
   const shadows = rows.flatMap(r => (r.events ?? []).filter(e => e.kind === 'shadow' && 'canonicalAgree' in e));
   const configured = dc.compare === 'tolerant' || dc.acceptance === 'strict' || dj.compare === 'tolerant';
   if (!configured && !attempts.length && !shadows.length) return null;
-  const tol = o => (o?.compare === 'tolerant' || o?.mode === 'tolerant' ? { mode: 'tolerant', relTol: o.relTol ?? null, absTol: o.absTol ?? null } : { mode: o?.compare ?? o?.mode ?? 'canonical' });
+  const tol = o => (o?.compare === 'tolerant' || o?.mode === 'tolerant' ? { mode: 'tolerant', relTol: o.relTol ?? null, absTol: o.absTol ?? null,
+    ...(o.tolerantKeys ? { tolerantKeys: o.tolerantKeys } : {}), ...(o.allowLooseTolerance ? { allowLooseTolerance: true } : {}) } : { mode: o?.compare ?? o?.mode ?? 'canonical' });
   return {
     config: { compileCompare: tol(dc), acceptance: dc.acceptance ?? 'named', ...(dc.acceptance === 'strict' ? { minPartial: dc.minPartial ?? null } : {}), jitCompare: tol(dj) },
     attempts: attempts.map(a => {
@@ -219,9 +220,9 @@ export function renderMarkdown(rep) {
   }
   const tuned = rep.arms.filter(a => a.compileSettings);
   if (tuned.length) {
-    const cmp = c => (c?.mode === 'tolerant' ? `tolerant (rel ${c.relTol}, abs ${c.absTol})` : c?.mode ?? 'canonical');
+    const cmp = c => (c?.mode === 'tolerant' ? `tolerant (rel ${c.relTol}, abs ${c.absTol}${c.tolerantKeys ? `, keys ${c.tolerantKeys.join(' ')}` : ''}${c.allowLooseTolerance ? ', loose allowed' : ''})` : c?.mode ?? 'canonical');
     L.push('', '## Comparison and acceptance (non-default)', '',
-      'Shown only for arms with compile.compare, compile.acceptance or jit.compare set. Exact and partial are under the compile\'s comparison; canonical exact is the same cases under canonical JSON. Strict acceptance: clean, then (trace mean partial >= minPartial or one exact trace), then every diff case explained by a quote verbatim from its own task.', '');
+      'Shown only for arms with compile.compare, compile.acceptance or jit.compare set. Exact and partial are under the compile\'s comparison; canonical exact is the same cases under canonical JSON. Strict acceptance: clean, then (trace mean partial >= minPartial or one exact trace), then every diff case explained by its own quote, verbatim from its own task and not shared by every other case\'s task.', '');
     for (const a of tuned) {
       const s = a.compileSettings;
       L.push(`- ${short(a.spec)}: compile comparison ${cmp(s.config.compileCompare)}, acceptance ${s.config.acceptance}${s.config.minPartial != null ? ` (minPartial ${s.config.minPartial})` : ''}, shadow comparison ${cmp(s.config.jitCompare)}`

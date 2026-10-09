@@ -29,18 +29,24 @@ export const CHECK_TOOL = readFileSync(path.join(here, 'check-traces.mjs'), 'utf
 // workdir gets tools/check-traces.json so its own runs compare as the host check does. A canonical compile adds neither.
 export const COMPARE_TOOL = readFileSync(path.join(here, 'compare.mjs'), 'utf8');
 export const COMPARE_MODES = Object.freeze(['canonical', 'tolerant']);
-// The comparison of a compile: null for canonical (the default), else { mode: 'tolerant', relTol, absTol }.
-export function comparisonOf({ compare, relTol, absTol } = {}) {
+// The comparison of a compile: null for canonical (the default), else { mode: 'tolerant', relTol, absTol[, tolerantKeys]
+// [, allowLooseTolerance] } (compare.mjs tolerance(): bounded unless allowLooseTolerance; integers exact unless keys listed).
+export function comparisonOf({ compare, relTol, absTol, tolerantKeys, allowLooseTolerance } = {}) {
   const mode = compare ?? 'canonical';
   if (!COMPARE_MODES.includes(mode)) throw new Error(`compile: compare must be one of ${COMPARE_MODES.join(', ')}, got ${JSON.stringify(compare)}`);
   if (mode === 'canonical') {
-    if (relTol != null || absTol != null) throw new Error('compile: relTol and absTol need compare \'tolerant\'');
+    if (relTol != null || absTol != null || tolerantKeys != null || allowLooseTolerance != null) throw new Error('compile: relTol, absTol, tolerantKeys and allowLooseTolerance need compare \'tolerant\'');
     return null;
   }
-  return { mode, ...tolerance({ relTol, absTol }) };
+  return { mode, ...tolerance({ relTol, absTol, tolerantKeys, allowLooseTolerance }) };
 }
 const compareFiles = cmp => (cmp ? { 'tools/compare.mjs': COMPARE_TOOL } : {});
-const compareArgs = cmp => (cmp ? ['--tolerant', '--rel-tol', String(cmp.relTol), '--abs-tol', String(cmp.absTol)] : []);
+const compareArgs = cmp => (cmp ? ['--tolerant', '--rel-tol', String(cmp.relTol), '--abs-tol', String(cmp.absTol),
+  ...(cmp.tolerantKeys ? ['--tolerant-keys', cmp.tolerantKeys.join(',')] : []), ...(cmp.allowLooseTolerance ? ['--allow-loose-tolerance'] : [])] : []);
+const compareJson = cmp => JSON.stringify({ compare: cmp.mode, relTol: cmp.relTol, absTol: cmp.absTol, ...(cmp.tolerantKeys ? { tolerantKeys: cmp.tolerantKeys } : {}),
+  ...(cmp.allowLooseTolerance ? { allowLooseTolerance: true } : {}) });
+// Strict acceptance asks for verbatim double-quoted task sentences, which only prompt version 3 tells the builder to write.
+export const STRICT_MIN_PROMPT_VERSION = 3;
 export const SCRIPTS_CAP = 40 * 1024, COMMANDS_CAP = 15 * 1024, COMMAND_CHARS = 200;
 
 // C0's run-solver, plus tools/flow.mjs, and copying only the task files of a case (never its label or the agent's work).
@@ -122,7 +128,7 @@ export function compileFiles({ outputSchema, traces, regressions = [], previous 
     ...(previous ? { 'solve.mjs': previous } : {}),
     'tools/model.mjs': MODEL_TOOL, 'tools/gateway.json': JSON.stringify(gateway), 'tools/flow.mjs': flowToolOf(promptVersion),
     'tools/run-solver': JIT_RUN_SOLVER, 'tools/check-traces.mjs': CHECK_TOOL, 'tools/budget.mjs': BUDGET_TOOL,
-    ...compareFiles(cmp), ...(cmp ? { 'tools/check-traces.json': JSON.stringify({ compare: cmp.mode, relTol: cmp.relTol, absTol: cmp.absTol }) } : {}),
+    ...compareFiles(cmp), ...(cmp ? { 'tools/check-traces.json': compareJson(cmp) } : {}),
   };
 }
 
@@ -162,12 +168,13 @@ export async function hostCheck({ dir, solveSource, traces, regressions = [], mo
 // runner: the session runner (tests wrap runClaudeCode to plant a stand-in CLI binary in the workdir).
 export async function compile({ familyId, traces, previous = null, regressions = [], builderModel = 'claude-haiku-5-5', builderEffort = 'high', builderBudgetUsd = 3,
   gatewayUsd = 1.5, minutes = 30, perTaskUsd = 1, modelPort, workRoot, label, models, version = 1, checkUsd = gatewayUsd, checkMinutes = 30, checkCaseSeconds = 600,
-  promptVersion = 1, compare = 'canonical', relTol, absTol, acceptance = 'named', minPartial, runner = runClaudeCode }) {
+  promptVersion = 1, compare = 'canonical', relTol, absTol, tolerantKeys, allowLooseTolerance, acceptance = 'named', minPartial, runner = runClaudeCode }) {
   if (!Array.isArray(traces) || !traces.length) throw new Error('compile: at least one trace is required');
   promptVersion = promptVersionOf({ promptVersion });   // an unknown prompt version fails here, before anything is started
   // JIT v2.1 options (opt-in; at their defaults nothing below changes): the check's comparison and the acceptance rule.
-  const cmp = comparisonOf({ compare, relTol, absTol });
+  const cmp = comparisonOf({ compare, relTol, absTol, tolerantKeys, allowLooseTolerance });
   acceptance = acceptanceModeOf(acceptance);
+  if (acceptance === 'strict' && promptVersion < STRICT_MIN_PROMPT_VERSION) throw new Error(`compile: acceptance 'strict' needs promptVersion >= ${STRICT_MIN_PROMPT_VERSION} (earlier prompts never ask for verbatim quotes)`);
   if (acceptance !== 'strict' && minPartial != null) throw new Error('compile: minPartial needs acceptance \'strict\'');
   if (acceptance === 'strict') minPartial = minPartialOf(minPartial);
   if (!label || /[/\\]|^\.\.?$/.test(label)) throw new Error(`compile: label must be a plain directory name, got ${label}`);
@@ -184,7 +191,7 @@ export async function compile({ familyId, traces, previous = null, regressions =
   const files = compileFiles({ outputSchema: fam.outputSchema, traces, regressions, previous, gateway: { url: svc.url, token: svc.token }, promptVersion, compare: cmp });
   const kind = previous ? 'recompile' : 'compile';
   const prompt = builderPrompt(kind, { traces: traces.length, regressions: regressions.length, minutes, gatewayUsd, perTaskUsd, models, promptVersion,
-    ...(cmp ? { compare: cmp.mode, relTol: cmp.relTol, absTol: cmp.absTol } : {}), ...(acceptance === 'strict' ? { acceptance, minPartial } : {}) });
+    ...(cmp ? { compare: cmp.mode, relTol: cmp.relTol, absTol: cmp.absTol, ...(cmp.tolerantKeys ? { tolerantKeys: cmp.tolerantKeys } : {}) } : {}), ...(acceptance === 'strict' ? { acceptance, minPartial } : {}) });
   const started = Date.now();
   let r;
   try {

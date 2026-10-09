@@ -7,14 +7,14 @@
 // oracle. As distill.mjs says, it is a screening signal only: an assignment must be confirmed end to end on a stream.
 //
 //   node experiments/jit/tierdown.mjs <dir> [--json]                      profile every judge (no model calls)
-//   node experiments/jit/tierdown.mjs <dir> --live --cap-usd 2 [--judge <name>] [--threshold 0.98] [--tolerant [--rel-tol r] [--abs-tol a]]
+//   node experiments/jit/tierdown.mjs <dir> --live --cap-usd 2 [--judge <name>] [--threshold 0.98] [--tolerant [--rel-tol r] [--abs-tol a] [--tolerant-keys k1,k2] [--allow-loose-tolerance]]
 //   node experiments/jit/tierdown.mjs <dir> --kev <out.jsonl> --judge <name>
 import { readFileSync, readdirSync, statSync, writeFileSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { canonical } from '../../src/data.mjs';
 import { searchNode, leafAgreement } from '../lib/distill.mjs';
-import { tolerantAgreement } from './compare.mjs';
+import { tolerantAgreement, tolerance } from './compare.mjs';
 
 // Cheapest first. Only ids from policy/models.json; local generative models are parked (owner decision), and Kev is
 // reached through training/benchmark jobs on the laptop bridge, not through this ladder.
@@ -72,10 +72,11 @@ export function stripEvidence(v, ignore = EVIDENCE_KEY) {
   if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v).filter(([k]) => !ignore.test(k)).map(([k, x]) => [k, stripEvidence(x, ignore)]));
   return v;
 }
-// tol (opt-in, JIT v2.1): { relTol, absTol } scores with compare.mjs tolerantAgreement instead (numbers within tolerance,
-// strings trimmed, arrays as multisets, items paired optimally); without it, distill.mjs leafAgreement as before.
+// tol (opt-in, JIT v2.1): { relTol, absTol[, tolerantKeys][, allowLooseTolerance] } scores with compare.mjs
+// tolerantAgreement instead (numbers within tolerance, two integers exactly unless keys are listed, strings trimmed, arrays
+// as multisets, items paired optimally); without it, distill.mjs leafAgreement as before.
 export const decisionAgreement = (ref, cand, tol = null) => (tol
-  ? tolerantAgreement(stripEvidence(cand), stripEvidence(ref), { relTol: tol.relTol, absTol: tol.absTol, maxDiffs: 0 }).partial
+  ? tolerantAgreement(stripEvidence(cand), stripEvidence(ref), { relTol: tol.relTol, absTol: tol.absTol, tolerantKeys: tol.tolerantKeys, allowLooseTolerance: tol.allowLooseTolerance, maxDiffs: 0 }).partial
   : leafAgreement(stripEvidence(ref), stripEvidence(cand)));
 
 // Re-try one judge on every ladder model cheaper than its modal tier, cheapest first.
@@ -117,7 +118,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   } else if (flag('--live')) {
     const { createModelPort } = await import('../lib/models.mjs');
     const cap = Number(opt('--cap-usd') ?? 2), threshold = Number(opt('--threshold') ?? 0.98);
-    const tol = flag('--tolerant') ? { relTol: Number(opt('--rel-tol') ?? 0.01), absTol: Number(opt('--abs-tol') ?? 1e-9) } : null;
+    const tol = flag('--tolerant') ? tolerance({ relTol: Number(opt('--rel-tol') ?? 0.01), absTol: Number(opt('--abs-tol') ?? 1e-9),
+      tolerantKeys: opt('--tolerant-keys')?.split(',').map(k => k.trim()).filter(Boolean), ...(flag('--allow-loose-tolerance') ? { allowLooseTolerance: true } : {}) }) : null;
     const agreement = tol ? (r, c) => decisionAgreement(r, c, tol) : decisionAgreement;
     const { port, db } = createModelPort({ journalFile: path.join(root, 'tierdown.journal.sqlite'), allowedModels: [...LADDER] });
     let spent = 0;

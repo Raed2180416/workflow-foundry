@@ -83,16 +83,29 @@ const testing = opts => { const { gatewayUsd } = opts; return `Test (model calls
   node tools/check-traces.mjs --only 0,2       the listed cases; the full run checks every case
 check-traces runs solve.mjs on each case and diffs its answer against agent-answer.json / expected.json. Use --only while
 fixing one case. When your answer differs from an agent answer, decide from the task text which one is right. Do not
-force agreement with an answer the text contradicts.${promptVersionOf(opts) >= 3 && opts.compare === 'tolerant' ? `
-Here check-traces compares numbers within a tolerance (relative ${opts.relTol ?? 0.01}, absolute ${opts.absTol ?? 1e-9}), trims strings and
-treats arrays as unordered: a fitted number need not match the agent's to the last digit, and a real difference still shows.` : ''}`; };
+force agreement with an answer the text contradicts.${promptVersionOf(opts) >= 3 && opts.compare === 'tolerant' ? tolerantLine(opts) : ''}`; };
+
+// Prompt v3, tolerant compiles only: what the check's comparison forgives. With relTol and absTol both 0 it forgives no
+// number; tolerantKeys names the only fields whose numbers it forgives; otherwise two integers are still compared exactly.
+const tolerantLine = opts => {
+  const rel = opts.relTol ?? 0.01, abs = opts.absTol ?? 1e-9;
+  if (rel === 0 && abs === 0) return `
+Here check-traces trims strings and treats arrays as unordered; numbers must match exactly.`;
+  const where = opts.tolerantKeys?.length ? `numbers under ${opts.tolerantKeys.join(', ')} within a tolerance (relative ${rel}, absolute ${abs}) and every other number exactly`
+    : `numbers within a tolerance (relative ${rel}, absolute ${abs}; two integers exactly)`;
+  return `
+Here check-traces compares ${where}, trims strings and
+treats arrays as unordered: a fitted number need not match the agent's to the last digit, and a real difference still shows.`;
+};
 
 const finish = opts => { const { minutes } = opts; return `Done when the full  node tools/check-traces.mjs  (run it before finishing) shows no crash, no deopt and no timeout
 on any case, every regression case passes, and each remaining disagreement is explained in BUILD-NOTES.md: name the case
 (e.g. trace-3), the field, and quote the task sentence that decides it. If you cannot get there, keep the best version
 and say why.${promptVersionOf(opts) >= 3 ? `
-Quote verbatim: put the deciding sentence in double quotes, copied from that case's prompt.md or inputs.json (whitespace
+Quote verbatim: put the deciding sentence in double quotes, copied from that case's prompt.md or a text value in inputs.json (whitespace
 aside), in the same note as the case name. A paraphrase, a summary or a sentence from another case does not count.` : ''}${promptVersionOf(opts) >= 3 && opts.acceptance === 'strict' ? `
+Quote what is specific to that case: text that every case's task shares (the common instructions) explains no case,
+and each case needs its own quote (one sentence cannot explain two cases).` : ''}${promptVersionOf(opts) >= 3 && opts.acceptance === 'strict' ? `
 Acceptance is checked by code after you finish: no crash, deopt or timeout, and every regression case passes; a mean
 partial agreement of at least ${opts.minPartial ?? 0.9} over the traces, or at least one exact trace; and for every case that still
 differs, a note naming it with a quote that occurs verbatim in that case's task. Otherwise the compile is not accepted.` : ''}

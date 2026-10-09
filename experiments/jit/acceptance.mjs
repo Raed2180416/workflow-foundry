@@ -13,15 +13,22 @@
 //      comparison (tolerant when compile.compare is 'tolerant', which strict acceptance is meant to run with);
 //   3. explained: every diff case (trace or regression) is explained in BUILD-NOTES.md by a note block that names the case
 //      and quotes, in double quotes (straight, curly or « »), or as a > blockquote, a passage of at least MIN_QUOTE_CHARS
-//      characters that occurs verbatim, whitespace-normalised, in THAT case's task: prompt.md, inputs.json (its text and every
-//      string inside it) or a task file. A trailing . , ; : may be dropped and a leading or trailing ellipsis is ignored;
-//      nothing else is forgiven (case, wording, elisions). Verified by code, here.
+//      characters and MIN_QUOTE_WORDS words (with letters) that occurs verbatim, whitespace-normalised, in THAT case's task:
+//      prompt.md, a string inside inputs.json, or a task file (not the serialised JSON text, whose syntax fragments would
+//      otherwise count). A trailing . , ; : may be dropped and a leading or trailing ellipsis is ignored; nothing else is
+//      forgiven (case, wording, elisions). Two more rules stop one sentence from explaining everything:
+//      - shared text does not count: a quote that also occurs in the task of every other case (the family's boilerplate,
+//        e.g. the records prompt is the same for every seed) explains no case, when there is any other case;
+//      - one quote per case: each diff case needs its own verified quote, distinct from the quotes credited to the other
+//        diff cases (a maximum bipartite matching of cases to their verified quotes).
+//      Verified by code, here.
 // Note blocks: BUILD-NOTES.md split at blank lines, list items (a deeper-indented item stays with its parent), headings
 // and table rows; a heading-only block joins the block after it, and a blockquote-only block joins the block before it.
 // The result records which criterion passed or failed.
 export const ACCEPTANCE_MODES = Object.freeze(['named', 'strict']);
 export const DEFAULT_MIN_PARTIAL = 0.9;
 export const MIN_QUOTE_CHARS = 12;
+export const MIN_QUOTE_WORDS = 3;
 
 export function acceptanceModeOf(v) {
   const m = v ?? 'named';
@@ -79,37 +86,67 @@ export function quotesIn(block) {
   return out.filter(Boolean);
 }
 
-// The text a quote may come from: the task as the solver receives it.
+// The text a quote may come from: the task as the solver receives it (the prompt, every string inside the inputs, and
+// the task files), never the serialised inputs JSON.
 export function taskTexts(task) {
   if (!task) return [];
   const strings = [];
   const walk = v => { if (typeof v === 'string') strings.push(v); else if (v && typeof v === 'object') for (const x of Object.values(v)) walk(x); };
   walk(task.inputs);
-  return [String(task.prompt ?? ''), JSON.stringify(task.inputs ?? {}, null, 1), ...strings, ...Object.values(task.files ?? {}).map(String)].map(normWs).filter(Boolean);
+  return [String(task.prompt ?? ''), ...strings, ...Object.values(task.files ?? {}).map(String)].map(normWs).filter(Boolean);
 }
 
-export function quoteOccurs(quote, texts, { minQuoteChars = MIN_QUOTE_CHARS } = {}) {
+const words = q => q.split(' ').filter(w => /\p{L}/u.test(w)).length;
+export function quoteOccurs(quote, texts, { minQuoteChars = MIN_QUOTE_CHARS, minQuoteWords = MIN_QUOTE_WORDS } = {}) {
   let q = normWs(quote).replace(/^(?:\.\.\.|…)\s*/, '').replace(/\s*(?:\.\.\.|…)$/, '');
-  if (q.length < minQuoteChars) return false;
+  if (q.length < minQuoteChars || words(q) < minQuoteWords) return false;
   if (texts.some(t => t.includes(q))) return true;
   const trimmed = q.replace(/[.,;:]$/, '');
   return trimmed !== q && trimmed.length >= minQuoteChars && texts.some(t => t.includes(trimmed));
 }
 
-// One diff case: is it explained by a verbatim quote from its own task?
+// One diff case: the quotes in the note blocks that name it, which of them occur verbatim in its own task (candidates),
+// and which of those are shared with every other case's task (otherTexts: the texts of the other cases' tasks) and so
+// explain nothing. verified is the first candidate; judgeAcceptance then requires distinct quotes across cases.
 export function explainCase(id, notes, task, opts = {}) {
   const blocks = noteBlocks(notes).filter(b => mentions(b, id));
   const quotes = [...new Set(blocks.flatMap(quotesIn))];
-  const texts = taskTexts(task);
-  const verified = quotes.find(q => quoteOccurs(q, texts, opts)) ?? null;
+  const texts = taskTexts(task), others = (opts.otherTexts ?? []).filter(t => t.length);
+  const occurring = quotes.filter(q => quoteOccurs(q, texts, opts));
+  const shared = others.length ? occurring.filter(q => others.every(t => quoteOccurs(q, t, opts))) : [];
+  const candidates = occurring.filter(q => !shared.includes(q));
+  const verified = candidates[0] ?? null;
   const reason = verified ? null : !task ? 'no task text for this case' : !blocks.length ? 'not named in BUILD-NOTES.md' : !quotes.length ? 'named, but nothing quoted'
+    : shared.length ? 'its only verbatim quotes occur in every other case\'s task too (shared text explains no case)'
     : 'no quote occurs verbatim in this case\'s prompt or inputs';
-  return { id, mentioned: blocks.length > 0, quotes: quotes.slice(0, 5).map(q => (q.length > 200 ? q.slice(0, 199) + '…' : q)), verified, ok: !!verified, reason };
+  const cut = q => (q.length > 200 ? q.slice(0, 199) + '…' : q);
+  return { id, mentioned: blocks.length > 0, quotes: quotes.slice(0, 5).map(cut), verified, ok: !!verified, reason, candidates, ...(shared.length ? { shared: shared.slice(0, 5).map(cut) } : {}) };
+}
+
+// Distinct quotes: a maximum matching of cases to their candidate quotes (Kuhn's augmenting paths).
+function distinctQuotes(cases) {
+  const owner = new Map();   // quote -> index of the case it is credited to
+  const tryCase = (i, seen) => {
+    for (const q of cases[i].candidates) {
+      if (seen.has(q)) continue;
+      seen.add(q);
+      if (!owner.has(q) || tryCase(owner.get(q), seen)) { owner.set(q, i); return true; }
+    }
+    return false;
+  };
+  cases.forEach((_, i) => tryCase(i, new Set()));
+  const credited = new Map([...owner].map(([q, i]) => [i, q]));
+  return cases.map((c, i) => {
+    const { candidates, ...rest } = c;
+    if (!c.ok) return rest;
+    if (credited.has(i)) return { ...rest, verified: credited.get(i) };
+    return { ...rest, verified: null, ok: false, reason: 'its verbatim quotes are already credited to other cases (one distinct quote per case)' };
+  });
 }
 
 // The verdict. summary: check-traces' aggregate (perCase with id, kind, status, partial). tasks: { [case id]: task }.
 // Returns { unexplained, accepted } and, for 'strict', acceptance: the criteria and which passed or failed.
-export function judgeAcceptance({ summary, notes, mode = 'named', minPartial, tasks = {}, minQuoteChars = MIN_QUOTE_CHARS }) {
+export function judgeAcceptance({ summary, notes, mode = 'named', minPartial, tasks = {}, minQuoteChars = MIN_QUOTE_CHARS, minQuoteWords = MIN_QUOTE_WORDS }) {
   mode = acceptanceModeOf(mode);
   const perCase = summary?.perCase ?? [], clean = !!summary?.clean;
   if (mode === 'named') { const unexplained = namedUnexplained(perCase, notes); return { unexplained, accepted: clean && unexplained.length === 0 }; }
@@ -118,7 +155,10 @@ export function judgeAcceptance({ summary, notes, mode = 'named', minPartial, ta
   const partial = traces.length ? Math.round((traces.reduce((s, c) => s + (c.partial ?? 0), 0) / traces.length) * 1000) / 1000 : null;
   const exactTraces = traces.filter(c => c.status === 'exact').length;
   const partialOk = partial != null && partial >= minPartial, exactOk = exactTraces >= 1;
-  const cases = perCase.filter(c => c.status === 'diff').map(c => explainCase(c.id, notes, tasks[c.id], { minQuoteChars }));
+  // Every case's task text (labelled or not, trace or regression): what "shared with every other case" is measured against.
+  const textsOf = Object.fromEntries(Object.entries(tasks).filter(([, t]) => t).map(([id, t]) => [id, taskTexts(t)]));
+  const cases = distinctQuotes(perCase.filter(c => c.status === 'diff').map(c => explainCase(c.id, notes, tasks[c.id],
+    { minQuoteChars, minQuoteWords, otherTexts: Object.entries(textsOf).filter(([id]) => id !== c.id).map(([, t]) => t) })));
   const unexplained = cases.filter(c => !c.ok).map(c => c.id);
   const criteria = {
     clean: { ok: clean },
@@ -127,7 +167,7 @@ export function judgeAcceptance({ summary, notes, mode = 'named', minPartial, ta
   };
   const passed = Object.keys(criteria).filter(k => criteria[k].ok), failed = Object.keys(criteria).filter(k => !criteria[k].ok);
   return { unexplained, accepted: failed.length === 0,
-    acceptance: { mode, compare: summary?.compare?.mode ?? 'canonical', minQuoteChars, criteria, passed, failed } };
+    acceptance: { mode, compare: summary?.compare?.mode ?? 'canonical', minQuoteChars, minQuoteWords, criteria, passed, failed } };
 }
 
 // Case id -> task, as check-traces numbers them: regressions/case-<i>, traces/trace-<i>.

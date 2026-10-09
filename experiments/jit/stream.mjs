@@ -29,6 +29,9 @@ export const DEFAULT_COMPILE = Object.freeze({ builderEffort: 'high', builderBud
   fallback: Object.freeze({ builderEffort: 'high', builderBudgetUsd: 8, gatewayUsd: 1.5, checkUsd: 1.5, minutes: 45 }) });
 const STATIC_FALLBACK = 'claude-haiku-5-5';
 export const JIT_COMPARE_MODES = Object.freeze(['canonical', 'unordered', 'tolerant']);
+const TOL_KEYS = ['relTol', 'absTol', 'tolerantKeys', 'allowLooseTolerance'];
+// The tolerance fields of a normalized jit or compile config (compare.mjs tolerance() options).
+const tolOf = c => Object.fromEntries(TOL_KEYS.filter(k => c?.[k] != null).map(k => [k, c[k]]));
 // v2 options (opt-in, never in the defaults above, so a v1 config keeps its arm hash):
 //   jit.shadowOnFlags (default false): also shadow a compiled ok run that raised uncertainty flags (flow.flag); shadow
 //     events and rows then carry the reason ('schedule' | 'flag' | 'schedule+flag'). jit.shadowEvery 0 = no scheduled
@@ -41,9 +44,14 @@ export const JIT_COMPARE_MODES = Object.freeze(['canonical', 'unordered', 'toler
 //   jit.compare 'tolerant' (default 'canonical'; 'unordered' as before): shadows and adjudication compare answers with
 //     compare.mjs tolerantEqual, at jit.relTol (default 0.01) and jit.absTol (default 1e-9), written into the normalized
 //     config so the hash is the same whether or not they are spelled out. Shadow events then also say canonicalAgree.
-//   compile.compare 'tolerant' (default 'canonical'), compile.relTol / compile.absTol (default: jit's when jit.compare is
-//     'tolerant', else 0.01 / 1e-9): the host check (and the builder's own check-traces) compare tolerantly.
-//   compile.acceptance 'strict' (default 'named'), compile.minPartial (default 0.9): acceptance.mjs's strict rule.
+//     jit.tolerantKeys (e.g. ['vmax', 'km']) limits tolerance to numbers under those keys (all others exact); without it two
+//     integers are still compared exactly. relTol > 0.05 or absTol > 1e-6 is refused unless jit.allowLooseTolerance: true.
+//   compile.compare 'tolerant' (default 'canonical', or 'tolerant' when jit.compare is 'tolerant': regression cases come
+//     from tolerant adjudications, so an explicit canonical is then refused), compile.relTol / absTol / tolerantKeys /
+//     allowLooseTolerance (default: jit's when jit.compare is 'tolerant', else 0.01 / 1e-9 / none / false): the host check
+//     (and the builder's own check-traces) compare tolerantly.
+//   compile.acceptance 'strict' (default 'named'; needs compile.promptVersion 3), compile.minPartial (default 0.9):
+//     acceptance.mjs's strict rule.
 //   compile.promptVersion 3: prompt v3 (prompts.mjs) on flow-v2.mjs.
 //   None of the compile options can be set on compile.fallback: they apply to the fallback compiler too.
 // Set to their defaults they are dropped from the normalized config, so writing them out explicitly changes no hash.
@@ -75,20 +83,27 @@ export function normalizeConfig(raw) {
   if (jit.shadowOnFlags != null && typeof jit.shadowOnFlags !== 'boolean') throw new Error('config.jit.shadowOnFlags must be true or false');
   if (!jit.shadowOnFlags) delete jit.shadowOnFlags;
   if (jit.compare != null && !JIT_COMPARE_MODES.includes(jit.compare)) throw new Error(`config.jit.compare must be one of ${JIT_COMPARE_MODES.join(', ')}`);
-  if (jit.compare === 'tolerant') Object.assign(jit, tolerance(jit));
-  else if (jit.relTol != null || jit.absTol != null) throw new Error('config.jit.relTol and config.jit.absTol need jit.compare \'tolerant\'');
-  else { delete jit.relTol; delete jit.absTol; }
+  if (jit.compare === 'tolerant') { delete jit.allowLooseTolerance; Object.assign(jit, tolerance(raw.jit)); }
+  else if (TOL_KEYS.some(k => jit[k] != null)) throw new Error('config.jit.relTol, absTol, tolerantKeys and allowLooseTolerance need jit.compare \'tolerant\'');
+  else for (const k of TOL_KEYS) delete jit[k];
   const compile = { ...DEFAULT_COMPILE, ...(raw.compile ?? {}), fallback: { ...DEFAULT_COMPILE.fallback, ...(raw.compile?.fallback ?? {}) } };
   if (compile.promptVersion != null) compile.promptVersion = promptVersionOf(compile);
   if (raw.compile?.fallback && 'promptVersion' in raw.compile.fallback) throw new Error('config.compile.fallback.promptVersion is not supported: compile.promptVersion applies to the fallback compiler too');
-  for (const k of ['compare', 'relTol', 'absTol', 'acceptance', 'minPartial']) if (raw.compile?.fallback && k in raw.compile.fallback) throw new Error(`config.compile.fallback.${k} is not supported: compile.${k} applies to the fallback compiler too`);
+  for (const k of ['compare', ...TOL_KEYS, 'acceptance', 'minPartial']) if (raw.compile?.fallback && k in raw.compile.fallback) throw new Error(`config.compile.fallback.${k} is not supported: compile.${k} applies to the fallback compiler too`);
   if (compile.promptVersion == null || compile.promptVersion === 1) delete compile.promptVersion;
-  compile.compare ??= 'canonical';
+  // A tolerant stream stores shadow answers (fitted numbers) as regression cases, which a canonical host check would then
+  // require digit for digit: so a tolerant jit.compare makes the host check tolerant too, and refuses an explicit canonical.
+  if (jit.compare === 'tolerant' && compile.compare === 'canonical') throw new Error('config.compile.compare \'canonical\' with jit.compare \'tolerant\': regression cases taken from tolerant adjudications would have to match to the last digit; leave compile.compare unset (it follows jit) or set it \'tolerant\'');
+  compile.compare ??= jit.compare === 'tolerant' ? 'tolerant' : 'canonical';
   if (!['canonical', 'tolerant'].includes(compile.compare)) throw new Error('config.compile.compare must be canonical or tolerant');
-  if (compile.compare === 'tolerant') Object.assign(compile, tolerance({ relTol: compile.relTol ?? (jit.compare === 'tolerant' ? jit.relTol : undefined), absTol: compile.absTol ?? (jit.compare === 'tolerant' ? jit.absTol : undefined) }));
-  else if (compile.relTol != null || compile.absTol != null) throw new Error('config.compile.relTol and config.compile.absTol need compile.compare \'tolerant\'');
-  else { delete compile.compare; delete compile.relTol; delete compile.absTol; }
+  if (compile.compare === 'tolerant') {
+    const from = jit.compare === 'tolerant' ? jit : {}, t = Object.fromEntries(TOL_KEYS.map(k => [k, compile[k] ?? from[k]]));
+    for (const k of TOL_KEYS) delete compile[k];
+    Object.assign(compile, tolerance(t));
+  } else if (TOL_KEYS.some(k => compile[k] != null)) throw new Error('config.compile.relTol, absTol, tolerantKeys and allowLooseTolerance need compile.compare \'tolerant\'');
+  else { delete compile.compare; for (const k of TOL_KEYS) delete compile[k]; }
   compile.acceptance = acceptanceModeOf(compile.acceptance);
+  if (compile.acceptance === 'strict' && (compile.promptVersion ?? 1) < 3) throw new Error('config.compile.acceptance \'strict\' needs compile.promptVersion 3 (earlier prompts never ask for verbatim quotes)');
   if (compile.acceptance === 'strict') compile.minPartial = minPartialOf(compile.minPartial);
   else if (compile.minPartial != null) throw new Error('config.compile.minPartial needs compile.acceptance \'strict\'');
   else { delete compile.acceptance; delete compile.minPartial; }
@@ -138,7 +153,7 @@ export const matchArm = (arm, filters) => !filters?.length || filters.some(f => 
 // (opt-in, v2.1) is compare.mjs tolerantEqual at tol.relTol / tol.absTol (defaults 0.01 / 1e-9): arrays as multisets too.
 export function sameAnswer(a, b, mode = 'canonical', tol = {}) {
   if (a == null || b == null) return false;
-  if (mode === 'tolerant') return tolerantEqual(a, b, { relTol: tol?.relTol, absTol: tol?.absTol });
+  if (mode === 'tolerant') return tolerantEqual(a, b, tolOf(tol));
   if (mode === 'unordered') {
     const norm = v => Array.isArray(v) ? v.map(norm).sort((x, y) => (canonical(x) < canonical(y) ? -1 : canonical(x) > canonical(y) ? 1 : 0))
       : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, norm(x)])) : v;
@@ -413,9 +428,9 @@ class JitRun extends ArmRun {
   // v2.1 compile options, only when set (a default arm passes exactly what it passed before).
   get compileOpts() {
     const c = this.config.compile;
-    return { ...(c.compare ? { compare: c.compare, relTol: c.relTol, absTol: c.absTol } : {}), ...(c.acceptance ? { acceptance: c.acceptance, minPartial: c.minPartial } : {}) };
+    return { ...(c.compare ? { compare: c.compare, ...tolOf(c) } : {}), ...(c.acceptance ? { acceptance: c.acceptance, minPartial: c.minPartial } : {}) };
   }
-  get compareOf() { const c = this.config.compile; return c.compare === 'tolerant' ? { mode: 'tolerant', relTol: c.relTol, absTol: c.absTol } : null; }
+  get compareOf() { const c = this.config.compile; return c.compare === 'tolerant' ? { mode: 'tolerant', ...tolOf(c) } : null; }
 
   addTrace(state, trace, t, role, kind) {
     if (trace?.answer == null) return false;   // the compiler distils answers, not failures

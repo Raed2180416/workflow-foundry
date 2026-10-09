@@ -16,6 +16,7 @@ import { runClaudeCode, sandboxAvailable } from '../../../src/executors/claude-c
 import { subsetPolicy } from '../../lib/models.mjs';
 import { makeTasks, loadFamily } from '../../lib/beds.mjs';
 import { canonical } from '../../../beds/lib/canonical.mjs';
+import { taskTexts } from '../acceptance.mjs';
 import { MODEL_TOOL, BUDGET_TOOL } from '../../c0/construct.mjs';
 import { compile, agentWork, caseFiles, compileFiles, hostCheck, FLOW_TOOL, FLOW_TOOL_V2, flowToolOf, CHECK_TOOL, COMPARE_TOOL, comparisonOf, JIT_RUN_SOLVER, SCRIPTS_CAP, COMMANDS_CAP } from '../compile.mjs';
 
@@ -261,17 +262,27 @@ test('v2.1 options are validated before anything starts; the default workdir and
   const port = portOf(), { traces } = await fixture();
   const base = { familyId: 'records', traces: traces.slice(0, 1), modelPort: port, workRoot: '/nonexistent', label: 'x', models: MODELS, runner: async () => { throw new Error('ran'); } };
   await assert.rejects(compile({ ...base, compare: 'fuzzy' }), /compare must be one of canonical, tolerant/);
-  await assert.rejects(compile({ ...base, relTol: 0.1 }), /relTol and absTol need compare 'tolerant'/);
+  await assert.rejects(compile({ ...base, relTol: 0.01 }), /relTol, absTol, tolerantKeys and allowLooseTolerance need compare 'tolerant'/);
+  await assert.rejects(compile({ ...base, tolerantKeys: ['vmax'] }), /need compare 'tolerant'/);
+  await assert.rejects(compile({ ...base, compare: 'tolerant', relTol: 0.1 }), /looser than 0.05/, 'a tolerance looser than the bound is refused');
+  await assert.rejects(compile({ ...base, compare: 'tolerant', absTol: 0.01 }), /looser than/);
+  await assert.rejects(compile({ ...base, compare: 'tolerant', tolerantKeys: [] }), /tolerantKeys must be a non-empty list/);
+  await assert.rejects(compile({ ...base, acceptance: 'strict' }), /acceptance 'strict' needs promptVersion >= 3/, 'v1/v2 prompts never ask for verbatim quotes');
+  await assert.rejects(compile({ ...base, acceptance: 'strict', promptVersion: 2 }), /needs promptVersion >= 3/);
   await assert.rejects(compile({ ...base, compare: 'tolerant', relTol: -1 }), /relTol must be a finite number >= 0/);
   await assert.rejects(compile({ ...base, acceptance: 'lenient' }), /acceptance must be one of named, strict/);
   await assert.rejects(compile({ ...base, minPartial: 0.8 }), /minPartial needs acceptance 'strict'/);
-  await assert.rejects(compile({ ...base, acceptance: 'strict', minPartial: 1.2 }), /minPartial must be a number in \[0, 1\]/);
+  await assert.rejects(compile({ ...base, acceptance: 'strict', promptVersion: 3, minPartial: 1.2 }), /minPartial must be a number in \[0, 1\]/);
   const args = { outputSchema: {}, traces: traces.slice(0, 1), gateway: {} };
   assert.equal('tools/compare.mjs' in compileFiles(args), false); assert.equal('tools/check-traces.json' in compileFiles(args), false);
   const tol = compileFiles({ ...args, compare: 'tolerant' });
   assert.equal(tol['tools/compare.mjs'], COMPARE_TOOL); assert.deepEqual(JSON.parse(tol['tools/check-traces.json']), { compare: 'tolerant', relTol: 0.01, absTol: 1e-9 });
   assert.equal(compileFiles({ ...args, promptVersion: 3 })['tools/flow.mjs'], FLOW_TOOL_V2, 'prompt version 3 builds on flow-v2.mjs');
   assert.equal(comparisonOf({}), null); assert.deepEqual(comparisonOf({ compare: 'tolerant', relTol: 0.05 }), { mode: 'tolerant', relTol: 0.05, absTol: 1e-9 });
+  // Keys and an explicit loose tolerance travel to the builder's check-traces.json (and the host check's arguments).
+  const keyed = comparisonOf({ compare: 'tolerant', tolerantKeys: ['vmax', 'km'], relTol: 0.2, allowLooseTolerance: true });
+  assert.deepEqual(keyed, { mode: 'tolerant', relTol: 0.2, absTol: 1e-9, tolerantKeys: ['km', 'vmax'], allowLooseTolerance: true });
+  assert.deepEqual(JSON.parse(compileFiles({ ...args, compare: keyed })['tools/check-traces.json']), { compare: 'tolerant', relTol: 0.2, absTol: 1e-9, tolerantKeys: ['km', 'vmax'], allowLooseTolerance: true });
 });
 
 test('flow.mjs and flow-v2.mjs are unchanged by v2.1; prompt version 3 runs on flow-v2.mjs', () => {
@@ -283,8 +294,13 @@ test('flow.mjs and flow-v2.mjs are unchanged by v2.1; prompt version 3 runs on f
 test('compare tolerant + acceptance strict + prompt v3: the builder and the host check compare tolerantly; a verbatim quote from the case\'s task is accepted, a paraphrase is not', { skip }, async t => {
   const workRoot = mkdtempSync(path.join(tmpdir(), 'jit-v21-')); t.after(() => rmSync(workRoot, { recursive: true, force: true }));
   const { tasks, traces } = await fixture();
-  const line = tasks[2].prompt.split('\n').map(s => s.trim()).find(l => l.length >= 30 && !/["“”«»`]/.test(l));
-  assert.ok(line, 'a quotable line in trace-2\'s prompt');
+  // A line specific to trace-2's task: the records prompt is the same for every seed, so its lines are shared text that
+  // explains no case under the strict rule; a line of trace-2's own inputs is not.
+  const others = [tasks[0], tasks[1]].map(taskTexts);
+  const own = taskTexts(tasks[2]).flatMap(t => t.split(/(?<=[.!?])\s+/)).map(s => s.trim());
+  const line = own.find(l => l.length >= 30 && l.split(' ').length >= 4 && !/["“”«»`>]/.test(l) && !others.every(o => o.some(x => x.includes(l))));
+  assert.ok(line, 'a quotable sentence specific to trace-2\'s task');
+  const shared = tasks[2].prompt.split('\n').map(s => s.trim()).find(l => l.length >= 30 && !/["“”«»`]/.test(l) && others.every(o => o.some(x => x.includes(l))));
   const opts = { familyId: 'records', traces, modelPort: portOf(), workRoot, models: MODELS, compare: 'tolerant', acceptance: 'strict', promptVersion: 3 };
   const { record, workdir } = await compile({ ...opts, label: 'v1', runner: runnerWith(fake({ notes: `- trace-2, promptChars: the agent miscounted; the prompt reads "${line}" and solve.mjs measures it.` })) });
   // The builder saw compare.mjs and the defaults file beside check-traces, and its own check ran tolerantly.
@@ -292,7 +308,7 @@ test('compare tolerant + acceptance strict + prompt v3: the builder and the host
   assert.equal(seen['tools/compare.mjs'], sha(COMPARE_TOOL)); assert.ok(seen['tools/check-traces.json']);
   assert.match(readFileSync(path.join(workdir, '.builder-check.txt'), 'utf8'), /comparison: tolerant/);
   const prompt = readFileSync(path.join(workdir, '.seen-prompt.txt'), 'utf8');
-  assert.match(prompt, /near-miss groups/); assert.match(prompt, /Quote verbatim/); assert.match(prompt, /Acceptance is checked by code/); assert.match(prompt, /within a tolerance \(relative 0\.01, absolute 1e-9\)/);
+  assert.match(prompt, /near-miss groups/); assert.match(prompt, /Quote verbatim/); assert.match(prompt, /Acceptance is checked by code/); assert.match(prompt, /within a tolerance \(relative 0\.01, absolute 1e-9; two integers exactly\)/);
   assert.equal(record.promptSha256, sha(prompt)); assert.equal(record.promptVersion, 3); assert.equal(record.flowSha256, sha(FLOW_TOOL_V2));
   // The host check ran the pristine compare.mjs with --tolerant, on its own copies.
   assert.equal(readFileSync(path.join(workdir, '.host-check/tools/compare.mjs'), 'utf8'), COMPARE_TOOL);
@@ -309,5 +325,9 @@ test('compare tolerant + acceptance strict + prompt v3: the builder and the host
   const para = await compile({ ...opts, label: 'v1b', runner: runnerWith(fake({ notes: '- trace-2, promptChars: "the agent counted the characters wrongly here".' })) });
   assert.equal(para.record.checkTraces.accepted, false); assert.deepEqual(para.record.checkTraces.acceptance.failed, ['explained']);
   assert.deepEqual(para.record.checkTraces.unexplained, ['trace-2']);
+  // A sentence of the shared family prompt is verbatim in trace-2's task, but also in every other case's: it explains nothing.
+  const boiler = await compile({ ...opts, label: 'v1c', runner: runnerWith(fake({ notes: `- trace-2: the prompt reads "${shared}".` })) });
+  assert.equal(boiler.record.checkTraces.accepted, false); assert.deepEqual(boiler.record.checkTraces.acceptance.failed, ['explained']);
+  assert.match(boiler.record.checkTraces.acceptance.criteria.explained.cases[0].reason, /occur in every other case's task too/);
   assert.equal(para.record.checkTraces.clean, true, 'clean, and named: the default rule would have accepted it');
 });
