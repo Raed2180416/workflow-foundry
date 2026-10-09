@@ -144,3 +144,21 @@ E1 is stamped (§0). If anything below changes after this stamp and before the h
 
 Any later change to `src/`, `policy/`, `schemas/`, `bin/`, `skills/`, `web/`, `package*.json`, `node_modules` or
 `experiments/jit/` before the held-out run voids the stamp.
+
+## 5. E1 re-verification before the R0 launch (2026-10-09 21:15 IST, HEAD `e565cb3`)
+
+Run per R0-RUNBOOK G1 on a clean tree (`git status --porcelain src policy schemas bin skills package.json package-lock.json
+web experiments/jit experiments/lib` empty).
+
+| item | value now | vs E1 |
+|---|---|---|
+| kit hash | `a572eeee1ac237aa` | equal |
+| `src` tree | `5bacd257e4a54c0a680dae60b42f997f1ab66de1` | equal (no `src/` commit since `587946e`) |
+| `experiments/lib` tree | `6c414274c0bdb3a2f1da2db47cb4c45bff6a5586` | equal |
+| `experiments/jit/flow-v2.mjs` sha256 | `5dde4666…5223` | equal |
+| `experiments/jit` tree | `dd39a70f19801c5a7867d4ee9946da306a15d79f` | **moved twice**: `0050e1c` (flow-v3 slice 1: five new files, `flow-v3.mjs`, `call-host.mjs`, three tests; nothing existing touched) and `e565cb3` (configs only: `r0-kinetics.json` unblocked with `relTol 0.05`; `r0-records.json` `armSpendStopUsd` for `jit:claude-haiku-5-5/claude-haiku-5-5` 6 → 10 for the rehearsal). No file the R0 stream executes changed |
+| R0 arm hashes (`r0-records.json`, after `e565cb3`) | `838a9040ccea77e5` agent, `ca4f763d5d03568e` static, `3b9dc642498f5df8` S/H, `333aabf59174c46d` O/H, `2559d6a68fc7e8a3` H/H | equal to §1 (the per-arm spend cap is not in the arm hash) |
+| **R0-K arm hashes** (`r0-kinetics.json`, now unblocked) | `1fde4626b169c84c` `jit:claude-opus-5-5/claude-haiku-5-5`, `2e292709027b2786` `agent:claude-haiku-5-5` | new (the config was `_blocked` at E1). `jit.compare: tolerant`, `relTol 0.05`, `absTol 1e-9`, `tolerantKeys [vmax, km]`; the exclusion set is compared exactly |
+| relTol basis | Stage B (`analysis/kinetics-gauge/out/stage-b/STAGE-B.md`, 45 of 48 sessions at stamping; the last 3 were refilling): 13 correct–correct pairs, 0 disagree at 0.05 (2 disagree at ≤ 0.02, both d5, non-convergence, vanish after the shared refit); 13/13 wrong answers differ in the exclusion set; closest same-set Stage A control 0.134 | the Stage A candidate stands; dev calibration (FG §4.1 O1 applies to the PREREG freeze) |
+| quota (G5) | 5h 0.32, 7d 0.53 at 21:03 IST | — |
+| RAM (G6) | 3 GB available + 14 GB swap free; the owner's three Kev training processes hold ~3.3 GB. Stage B ran two sandboxed sessions under the same load without faults. Proceeding at concurrency 2 is a deviation from the 4 GB line, recorded here | — |
