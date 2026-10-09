@@ -57,7 +57,7 @@ export const PARAMS = Object.freeze({
   numMargin: Object.freeze({ span: 0.25, rel: 0.1 }),
   countMargin: Object.freeze({ span: 0.25, rel: 0.15, abs: 1 }),
   caps: Object.freeze({ df: 20000, values: 64, promptValues: 200, examples: 4 }),
-  fieldMax: 12, fieldsMax: 24, headMax: 24, sentenceMax: 160,
+  fieldMax: 12, fieldsMax: 24, fieldLenMax: 32, headMax: 24, sentenceMax: 160,
 });
 
 // ------------------------------------------------------------------------------------------------ small helpers
@@ -122,20 +122,35 @@ const tryJson = s => { try { return JSON.parse(s); } catch { return undefined; }
 // Line-format signature: the leading word (literal when it is letters only), then JSON key shape, or the field delimiter
 // and a coarse class per field (a 'key=' label, '_' empty, A letters, A9 mixed, or the shape of a non-letter field), or
 // '~text' for an undelimited line.
-export function lineSig(line) {
+// lineFamily is the coarse form: the leading word, then 'json:<key count>', '<delimiter>:<field count>' or 'text'.
+export function lineShape(line) {
   const t = line.trim();
-  if (/^[[{]/.test(t)) { const v = tryJson(t); if (v !== undefined) return `json:${jsonShape(v)}`; }
+  if (/^[[{]/.test(t)) {
+    const v = tryJson(t);
+    if (v !== undefined) return { sig: `json:${jsonShape(v)}`, family: `json:${v && typeof v === 'object' ? Object.keys(v).length : typeOf(v)}` };
+  }
   const m = /^[^\s\p{P}\p{S}]+/u.exec(t);
   const tok = m ? m[0] : '';
   const head = /^\p{L}+$/u.test(tok) ? tok.slice(0, PARAMS.headMax) : shapeOf(tok || t.slice(0, 1));
   const rest = t.slice(tok.length).trim();
-  if (rest.startsWith('{')) { const v = tryJson(rest); if (v !== undefined) return `${head}~json:${jsonShape(v)}`; }
-  const d = DELIMS.find(([s]) => t.split(s).length - 1 >= 2);
-  if (!d) return `${head}~text`;
+  if (rest.startsWith('{')) {
+    const v = tryJson(rest);
+    if (v !== undefined) return { sig: `${head}~json:${jsonShape(v)}`, family: `${head}~json:${v && typeof v === 'object' ? Object.keys(v).length : typeOf(v)}` };
+  }
+  // A delimiter counts when it occurs at least twice and the fields it cuts are short (median <= fieldLenMax chars), so
+  // prose sentences with commas or semicolons stay 'text' instead of splitting into a different field count every line.
+  const d = DELIMS.find(([s]) => {
+    const parts = t.split(s);
+    if (parts.length < 3) return false;
+    const lens = parts.map(x => x.trim().length).sort((a, b) => a - b);
+    return lens[Math.floor(lens.length / 2)] <= PARAMS.fieldLenMax;
+  });
+  if (!d) return { sig: `${head}~text`, family: `${head}~text` };
   const fields = t.split(d[0]).map(fieldClass);
   const shown = fields.slice(0, PARAMS.fieldsMax).join('¦');
-  return `${head}~${d[1]}:${shown}${fields.length > PARAMS.fieldsMax ? `¦+${fields.length - PARAMS.fieldsMax}` : ''}`;
+  return { sig: `${head}~${d[1]}:${shown}${fields.length > PARAMS.fieldsMax ? `¦+${fields.length - PARAMS.fieldsMax}` : ''}`, family: `${head}~${d[1]}:${fields.length}` };
 }
+export const lineSig = line => lineShape(line).sig;
 
 export const wordsOf = s => String(s).toLowerCase().match(/\p{L}{3,}/gu) ?? [];
 const linesOf = s => String(s).split(/\r?\n/).map(l => l.trim()).filter(Boolean);
@@ -159,7 +174,7 @@ function observe(task) {
   const t = taskView(task);
   const paths = new Map(), shortValues = new Set();
   const at = p => {
-    if (!paths.has(p)) paths.set(p, { types: new Set(), nums: [], ints: true, alens: [], slens: [], lineCounts: [], classes: new Set(), sigs: new Set(), values: new Map(), lineSigs: new Set(), vocab: new Set(), keys: new Set() });
+    if (!paths.has(p)) paths.set(p, { types: new Set(), nums: [], ints: true, alens: [], slens: [], lineCounts: [], classes: new Set(), sigs: new Set(), values: new Map(), lineSigs: new Set(), lineFams: new Set(), vocab: new Set(), keys: new Set() });
     return paths.get(p);
   };
   const walk = (v, p, depth) => {
@@ -175,7 +190,7 @@ function observe(task) {
         if (v.length <= PARAMS.enumMaxLen) o.values.set(v, (o.values.get(v) ?? 0) + 1);
         if (v.trim().length >= 3 && v.length <= 64) shortValues.add(v.trim());
       }
-      if (lines.length >= PARAMS.linesMin) { o.lineCounts.push(lines.length); for (const l of lines) o.lineSigs.add(lineSig(l)); }
+      if (lines.length >= PARAMS.linesMin) { o.lineCounts.push(lines.length); for (const l of lines) { const ls = lineShape(l); o.lineSigs.add(ls.sig); o.lineFams.add(ls.family); } }
       const words = wordsOf(v);
       if (words.length >= PARAMS.proseMinWords) for (const w of words) o.vocab.add(w);
     } else if (ty === 'array') { o.alens.push(v.length); for (const x of v) walk(x, `${p}[]`, depth + 1); }
@@ -236,7 +251,7 @@ export function widenProfile(profile, task) {
     if (o.alens.length) s.alen = mergeRange(s.alen, range(o.alens));
     if (o.slens.length) s.slen = mergeRange(s.slen, range(o.slens));
     if (o.lineCounts.length) s.lines = mergeRange(s.lines, range(o.lineCounts));
-    for (const [k, set] of [['classes', o.classes], ['sigs', o.sigs], ['lineSigs', o.lineSigs], ['vocab', o.vocab], ['keys', o.keys]]) {
+    for (const [k, set] of [['classes', o.classes], ['sigs', o.sigs], ['lineSigs', o.lineSigs], ['lineFams', o.lineFams], ['vocab', o.vocab], ['keys', o.keys]]) {
       if (!set.size) continue;
       s[k] ??= emptyDf(); addDf(s[k], set);
     }
@@ -297,6 +312,7 @@ export function checkProfile(profile, task) {
     rangeCheck('line-count', path, s.lines, o.lineCounts, r => countMargin(r, P.countMargin));
     setCheck('pattern-class', path, s.classes, o.classes);
     setCheck('shape', path, s.sigs, o.sigs);
+    setCheck('line-family', path, s.lineFams, o.lineFams);
     setCheck('line-format', path, s.lineSigs, o.lineSigs);
     setCheck('vocabulary', path, s.vocab, o.vocab);
     setCheck('map-keys', path, s.keys, o.keys);
@@ -326,7 +342,7 @@ export function describeProfile(profile) {
     if (s.num) bits.push(`num ${s.num.min}..${s.num.max}${s.int ? ' int' : ''}`);
     if (s.alen) bits.push(`len ${s.alen.min}..${s.alen.max}`);
     if (s.lines) bits.push(`lines ${s.lines.min}..${s.lines.max}`);
-    for (const k of ['classes', 'sigs', 'lineSigs', 'vocab']) if (s[k]) bits.push(`${k} ${Object.keys(s[k].df).length} (thr ${r3(rateThreshold(s[k], profile.params.rate))}${s[k].capped ? ', capped' : ''})`);
+    for (const k of ['classes', 'sigs', 'lineFams', 'lineSigs', 'vocab']) if (s[k]) bits.push(`${k} ${Object.keys(s[k].df).length} (thr ${r3(rateThreshold(s[k], profile.params.rate))}${s[k].capped ? ', capped' : ''})`);
     const en = enumOf(s, { ...PARAMS, ...profile.params });
     if (en) bits.push(`enum {${[...en].sort().join(', ')}}`);
     L.push(`  ${path}: ${bits.join('; ')}`);
