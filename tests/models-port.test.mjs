@@ -77,6 +77,24 @@ test('a resample changes the replay key: it is a new candidate, never a cached h
   assert.equal(journal.get(defaultSalt.journalId).request.salt, 'run-x', 'salt defaults to the runId');
 });
 
+test('journal row: request.decoding is the decoding as requested (maxTokens kept, no defaults filled); decoding column stays the effective one; replayed rows add none', async () => {
+  const journal = journalOf(), port = portOf({ journal, mode: 'replay-or-live', salt: 'trial:0' });
+  const live = await port.call(req({ modelId: HAIKU, decoding: { maxTokens: 300, reasoning: 'low' } }));
+  const row = journal.get(live.journalId);
+  assert.deepEqual(row.request.decoding, { maxTokens: 300, reasoning: 'low' });
+  assert.equal(row.decoding.maxTokens, 'provider-default', 'the decoding column is the provider effective decoding, unchanged');
+  assert.equal(row.decoding.reasoning, 'low');
+  assert.deepEqual([row.request.system, row.request.prompt, row.request.schema, row.request.mode, row.request.salt], ['You classify sentiment.', 'I love this product', schema, 'replay-or-live', 'trial:0']);
+  // A request without a decoding journals {}: defaults are not filled in, so the memo digest of the same request matches.
+  const bare = await port.call(req({ modelId: HAIKU, nodeKey: 'bare', decoding: undefined }));
+  assert.deepEqual(journal.get(bare.journalId).request.decoding, {});
+  assert.equal(journal.get(bare.journalId).decoding.reasoning, 'none');
+  // A replayed call records its own provenance row, with no request text.
+  const again = await port.call(req({ runId: 'run-2', modelId: HAIKU, decoding: { maxTokens: 300, reasoning: 'low' } }));
+  assert.equal(again.replayed, true);
+  assert.ok(!('decoding' in journal.get(again.journalId).request) && journal.get(again.journalId).request.replayOf === live.journalId);
+});
+
 test('schema-invalid, non-JSON, truncated and refused outputs are classified and journaled', async () => {
   const journal = journalOf();
   const outputs = {

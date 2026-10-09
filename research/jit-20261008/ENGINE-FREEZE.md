@@ -5,6 +5,7 @@
 > - Any change to `src/`, `policy/`, `schemas/`, `bin/` or `skills/` does. So do `web/`, `package.json` and
 >   `node_modules`, which are also in the kit allow-list.
 > - 2026-10-09: src changed in `b018f5d` (executor sandbox fix, ISOLATION-PROBE-laptop §6). Re-stamp the kit hash before E1: it was `94c3360e18e2d0d3` and is `fb4154deec675f2a` on that tree.
+> - 2026-10-09: src changed again in the S0-2 commit "journal requested decoding for exact replay digests" (`src/models/port.mjs`: the ModelPort journals `request.decoding`, the decoding as requested). The re-stamp must come after it. The kit hash is `a572eeee1ac237aa` on that tree (it was `fb4154deec675f2a` after `b018f5d`).
 
 *Stamped 2026-10-09 on the owner's laptop. The source is the committed tree at HEAD. Rule: ROADMAP §6 rule 13, "no
 comparative run starts on an engine that is still changing", and §4.3. Requested by

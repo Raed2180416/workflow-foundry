@@ -191,12 +191,12 @@ test('end to end through the S0-1 export: a live run journaled to journal.sqlite
   db.close();
   const rows = journalToJsonl(dbFile).trim().split('\n').map(l => JSON.parse(l));
   assert.equal(rows.length, 2);
-  // ModelPort rows keep the effective decoding only, so the export carries the loose key, never a guessed exact digest.
-  assert.ok(rows.every(r => typeof r.requestDigestLoose === 'string' && !('requestDigest' in r)));
+  // ModelPort rows journal the requested decoding (request.decoding), so the export carries the exact digest, not the loose key.
+  assert.ok(rows.every(r => typeof r.requestDigest === 'string' && !('requestDigestLoose' in r)));
   const jf = path.join(root, 'export.jsonl'); writeFileSync(jf, rows.map(r => JSON.stringify(r)).join('\n') + '\n');
   const again = await replayCoverage({ journal: jf, solvePath, task: TASK, outputSchema: OUT, workdir: wd('replay'), timeoutMs: 30000 });
   assert.equal(again.run.status, 'ok'); assert.equal(again.run.costUsd, 0);
-  assert.deepEqual([again.stats.requests, again.stats.hits, again.stats.misses, again.stats.coverage], [2, 2, 0, 1]); assert.equal(again.verdict.replayable, true);
+  assert.deepEqual([again.stats.requests, again.stats.hits, again.stats.looseHits, again.stats.misses, again.stats.coverage], [2, 2, 0, 0, 1], 'served by the exact digest, none by the loose key'); assert.equal(again.verdict.replayable, true);
   assert.deepEqual(JSON.parse(readFileSync(path.join(root, 'replay', '.solve.stdout'), 'utf8')), first.output, 'the replay reproduces the live answer');
   // The committed mirror leaves bodies above maxBodyBytes out: request bodies (schema, provider request) are the big ones.
   const maxResp = Math.max(...rows.map(r => r.response.bytes)), minReq = Math.min(...rows.map(r => r.request.bytes));
@@ -206,4 +206,14 @@ test('end to end through the S0-1 export: a live run journaled to journal.sqlite
   const mf = path.join(wd('mirror'), 'journal.jsonl'); writeFileSync(mf, mirrored.map(r => JSON.stringify(r)).join('\n') + '\n');   // no bodies/ beside it
   const fromMirror = await replayCoverage({ journal: mf, solvePath, task: TASK, outputSchema: OUT, workdir: wd('replay2'), timeoutMs: 30000 });
   assert.equal(fromMirror.run.status, 'ok'); assert.equal(fromMirror.stats.coverage, 1); assert.equal(fromMirror.run.costUsd, 0);
+  assert.equal(fromMirror.stats.looseHits, 0, 'the mirror serves by the exact digest too');
+  // An old journal (rows without request.decoding, as exported before this field) still replays by the loose key.
+  const oldDb = new DatabaseSync(dbFile);
+  for (const r of oldDb.prepare('SELECT id, request FROM model_calls').all()) { const q = JSON.parse(r.request); delete q.decoding; oldDb.prepare('UPDATE model_calls SET request = ? WHERE id = ?').run(JSON.stringify(q), r.id); }
+  oldDb.close();
+  const oldRows = journalToJsonl(dbFile).trim().split('\n').map(l => JSON.parse(l));
+  assert.ok(oldRows.every(r => typeof r.requestDigestLoose === 'string' && !('requestDigest' in r)));
+  const of = path.join(root, 'old.jsonl'); writeFileSync(of, oldRows.map(r => JSON.stringify(r)).join('\n') + '\n');
+  const oldReplay = await replayCoverage({ journal: of, solvePath, task: TASK, outputSchema: OUT, workdir: wd('replay-old'), timeoutMs: 30000 });
+  assert.deepEqual([oldReplay.run.status, oldReplay.stats.hits, oldReplay.stats.looseHits, oldReplay.stats.misses], ['ok', 2, 2, 0]);
 });

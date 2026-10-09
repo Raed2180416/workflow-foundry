@@ -159,7 +159,8 @@ export class ModelPort {
     if (typeof salt !== 'string') throw new FoundryError('MODEL_REQUEST', 'salt must be a string');
     const timeoutMs = req.timeoutMs ?? this.timeoutMs;
     if (!Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 3600000) throw new FoundryError('MODEL_REQUEST', 'timeoutMs must be 1..3600000');
-    return { runId, nodeKey, attempt, sampleIndex, modelId, system, prompt, schema, receiptHash, mode, salt, timeoutMs, decoding: normalizeDecoding(req.decoding ?? {}), signal: req.signal };
+    return { runId, nodeKey, attempt, sampleIndex, modelId, system, prompt, schema, receiptHash, mode, salt, timeoutMs, decoding: normalizeDecoding(req.decoding ?? {}),
+      requestedDecoding: plain(req.decoding ?? {}), signal: req.signal };
   }
 
   #decoding(entry, config, requested) {
@@ -242,7 +243,9 @@ export class ModelPort {
     const response = { value: ok ? value : undefined, rejectedValue: !ok && value !== undefined ? value : undefined, text: raw?.text ?? failure?.text ?? null,
       usage, finishReason, error: error ?? undefined, meta: raw?.meta ?? failure?.meta ?? undefined, ...spend };
     const journalId = this.journal.record({ ...base, provider: entry.provider, engineVersion,
-      request: plain({ system: req.system, prompt: req.prompt, schema: req.schema, mode: req.mode, salt: req.salt, providerRequest: raw?.request ?? failure?.request }),
+      // request.decoding is the decoding exactly as the caller requested it (maxTokens kept); the row's decoding column is the
+      // provider's effective one (maxTokens erased). With system, prompt and schema it is the memo port's exact request digest.
+      request: plain({ system: req.system, prompt: req.prompt, schema: req.schema, decoding: req.requestedDecoding, mode: req.mode, salt: req.salt, providerRequest: raw?.request ?? failure?.request }),
       response: plain(response), ok, errorCode: error?.code, inputTokens: usage.inputTokens, outputTokens: usage.outputTokens,
       cacheReadTokens: usage.cacheReadTokens, cacheWriteTokens: usage.cacheWriteTokens, costUsd, imputedUsd, latencyMs });
     // The journaled spend of a cancelled call travels with the cancellation, so the caller can still charge it.
