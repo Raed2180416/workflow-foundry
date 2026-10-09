@@ -4,6 +4,7 @@
 > - `experiments/` changes do not alter the kit hash.
 > - Any change to `src/`, `policy/`, `schemas/`, `bin/` or `skills/` does. So do `web/`, `package.json` and
 >   `node_modules`, which are also in the kit allow-list.
+> - 2026-10-09: src changed in `b018f5d` (executor sandbox fix, ISOLATION-PROBE-laptop §6). Re-stamp the kit hash before E1: it was `94c3360e18e2d0d3` and is `fb4154deec675f2a` on that tree.
 
 *Stamped 2026-10-09 on the owner's laptop. The source is the committed tree at HEAD. Rule: ROADMAP §6 rule 13, "no
 comparative run starts on an engine that is still changing", and §4.3. Requested by
