@@ -5,6 +5,7 @@
 // without repository credentials or the parent session's identity. Its output is labelled `executor:claude-code`.
 import { spawn, spawnSync } from 'node:child_process';
 import { mkdirSync, writeFileSync, readFileSync, existsSync, lstatSync } from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { FoundryError } from '../data.mjs';
 
@@ -16,11 +17,18 @@ export const WORK_ROOT = '/var/tmp/foundry-work', KIT_ROOT = '/opt/foundry-kit';
 // Hiding all of /root also keeps a builder from planting configuration (~/.claude.json, ~/.bashrc) for host sessions.
 // Not all of /home: the CLI's managed login needs a path there (live-tested 2026-10-07: hiding /home fails auth).
 export const DEFAULT_HIDDEN = Object.freeze(['/home/user', '/home/claude', '/home/ubuntu', '/root', '/tmp', '/var/tmp', '/mnt', '/run', '/srv', '/media', '/old_root', '/dev/shm',
-  '/opt/corpus', '/opt/models', '/opt/hf-cache', '/opt/kev-venv', '/opt/llamacpp', '/opt/rclone', '/opt/rclone-attach', '/opt/env-runner', WORK_ROOT, KIT_ROOT]);
+  '/opt/corpus', '/opt/models', '/opt/hf-cache', '/opt/kev-venv', '/opt/llamacpp', '/opt/rclone', '/opt/rclone-attach', '/opt/env-runner', WORK_ROOT, KIT_ROOT,
+  // Any other host (the owner's laptop): the invoking user's home holds the repository, oracles, sibling projects, the
+  // CLI login and every session transcript (~/.claude), SSH and git credentials. The names above are the cloud's.
+  ...(['/', '/root'].includes(os.homedir()) ? [] : [os.homedir()])]);
 // Kept visible, read-only, inside a hidden path: the proxy CA bundle (NODE_EXTRA_CA_CERTS) and user-local binaries (node).
 // /home/claude/.claude/remote holds the CLI's managed login (live-tested 2026-10-07: hiding it fails auth); the rest of
 // that account directory (.ssh, .npm, .gitconfig, other .claude state) is hidden.
-export const DEFAULT_KEEP_RO = Object.freeze(['/root/.ccr', '/root/.local', '/home/claude/.claude/remote']);
+export const DEFAULT_KEEP_RO = Object.freeze(['/root/.ccr', '/root/.local', '/home/claude/.claude/remote',
+  // Other hosts: the user-local claude binary (~/.local/bin/claude links into ~/.local/share/claude). Not ~/.claude:
+  // there the login sits beside every session transcript, so a builder authenticates with CLAUDE_CODE_OAUTH_TOKEN
+  // from the environment instead (owner-provisioned; it is not in SCRUBBED_ENV).
+  ...(['/', '/root'].includes(os.homedir()) ? [] : [path.join(os.homedir(), '.local/bin'), path.join(os.homedir(), '.local/share/claude')])]);
 export const DEFAULT_TOOLS = ['Bash', 'Read', 'Write', 'Edit', 'Glob', 'Grep'];
 // Repository credentials, plus the parent Claude session's identity, sockets and tuning (else every nested CLI runs
 // as the parent session, shares its scratchpad and gets ~530 extra prompt tokens). Model access keeps the CLI's own
@@ -85,7 +93,15 @@ export function maskSteps({ workdir, kitDir = null, hidden = DEFAULT_HIDDEN, kee
   keeps.forEach((k, i) => steps.push(`mkdir ${shellQuote(`${stage}/k${i}`)}`, `mount --rbind ${shellQuote(k)} ${shellQuote(`${stage}/k${i}`)}`));
   // /sys stays as inherited: the CLI's Bash tool clones each command into a cgroup under /sys/fs/cgroup (EROFS otherwise).
   const skip = `${stage}|${stage}/*|/proc|/proc/*|/sys|/sys/*`;
-  steps.push(`for mp in $(awk '{print $5}' /proc/self/mountinfo | sort -u); do case "$mp" in *\\\\*) echo "foundry-executor: unsupported mount point name" >&2; exit 97;; ${skip}) continue;; esac; mount -o remount,bind,ro "$mp"; done`);
+  // Inside a user namespace a remount must keep the mount's locked flags (nosuid, nodev, noexec and the atime mode) or
+  // it fails with EPERM (e.g. a strictatime /tmp on a desktop host). nsfs mounts (namespace handles such as
+  // /run/docker/netns/*) cannot be remounted and hold no file data. For stacked mounts only the top one (the last
+  // mountinfo line) is addressable by path. A remount that still fails is tolerated only when the mount point cannot
+  // be reached by path at all (e.g. container overlays under a root-only /var/lib/docker: the executor runs with the
+  // same host uid, so it cannot reach them either) or lies under a hidden root, which step 3 covers with an empty
+  // tmpfs; anywhere else the sandbox fails closed.
+  const tolerated = roots.filter(p => p !== stage).flatMap(p => [shellQuote(p), `${shellQuote(p)}/*`]).join('|') || "''";
+  steps.push(`while read -r mp opts fs; do case "$mp" in *\\\\*) echo "foundry-executor: unsupported mount point name" >&2; exit 97;; ${skip}) continue;; esac; [ "$fs" = nsfs ] && continue; keep=; for f in nosuid nodev noexec noatime nodiratime relatime; do case ",$opts," in *",$f,"*) keep="$keep,$f";; esac; done; case ",$opts," in *,noatime,*|*,relatime,*) ;; *) keep="$keep,strictatime";; esac; mount -o "remount,bind,ro$keep" "$mp" 2>/dev/null || [ ! -e "$mp" ] || case "$mp" in ${tolerated}) ;; *) echo "foundry-executor: cannot make $mp read-only" >&2; exit 1;; esac; done <<FOUNDRY_MOUNTS\n$(awk '{for(i=7;i<=NF;i++)if($i=="-"){m[$5]=$6" "$(i+1);break}} END{for(k in m)print k, m[k]}' /proc/self/mountinfo)\nFOUNDRY_MOUNTS`);
   for (const p of roots) if (p !== stage) steps.push(`mount -t tmpfs -o mode=0755 foundry-hidden ${shellQuote(p)}`);
   keeps.forEach((k, i) => steps.push(`mkdir -p ${shellQuote(k)}`, `mount --move ${shellQuote(`${stage}/k${i}`)} ${shellQuote(k)}`));
   for (const k of ro) steps.push(`mount -o remount,bind,ro ${shellQuote(k)}`);
@@ -151,7 +167,8 @@ export async function runClaudeCode({
   const script = sandboxScript(maskSteps({ workdir, kitDir, hidden, keepRo }), workdir, [binary, ...args]);
   // Extra variables for the whole session (C0: the model gateway, so even a direct call of the kit's CLI is policed).
   for (const k of Object.keys(extraEnv)) if (SCRUBBED_ENV.test(k)) throw new FoundryError('SANDBOX_ENV', `refusing to pass credential variable ${k}`);
-  const env = { ...scrubEnv(), ...extraEnv };
+  // TMPDIR: a host value may point into a hidden path (mktemp then fails inside); /tmp is the session's private tmpfs.
+  const env = { ...scrubEnv(), TMPDIR: '/tmp', ...extraEnv };
   const started = Date.now();
   const child = spawn('unshare', [...UNSHARE_ARGS, 'sh', '-c', script], { env, stdio: ['pipe', 'pipe', 'pipe'], detached: true });
   let stdout = '', stderr = '', timedOut = false;

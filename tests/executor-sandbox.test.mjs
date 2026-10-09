@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, chmodSync, rmSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import http from 'node:http';
+import os from 'node:os';
 import path from 'node:path';
 import {
   maskSteps, scrubEnv, nestedModelUses, sessionError, streamUsageOf, splitReady, runClaudeCode, sandboxAvailable,
@@ -37,7 +38,7 @@ test('maskSteps keeps the workdir writable and the kit read-only inside hidden r
   const steps = maskSteps({ workdir: work, kitDir: kit, hidden: [root] });
   const text = steps.join('\n');
   assert.match(steps[0], /^mount -t tmpfs .* '\/mnt'$/, 'a private staging tmpfs comes first');
-  assert.ok(steps.indexOf(steps.find(s => s.startsWith('for mp in'))) > steps.findIndex(s => s.startsWith('mount --rbind')), 'kept paths are copied before the host is made read-only');
+  assert.ok(steps.indexOf(steps.find(s => s.startsWith('while read -r mp'))) > steps.findIndex(s => s.startsWith('mount --rbind')), 'kept paths are copied before the host is made read-only');
   assert.match(text, new RegExp(`mount --move '/mnt/k0' '${work}'`)); assert.match(text, new RegExp(`mount --move '/mnt/k1' '${kit}'`));
   assert.match(text, new RegExp(`mount -o remount,bind,ro '${kit}'`)); assert.doesNotMatch(text, new RegExp(`remount,bind,ro '${work}'`));
   assert.ok(tmpfsTargets(steps).includes(root));
@@ -48,7 +49,13 @@ test('maskSteps keeps the workdir writable and the kit read-only inside hidden r
   assert.throws(() => maskSteps({ workdir: work, kitDir: path.join(work, 'kit') }), { code: 'EXECUTOR_PATH' }, 'kept paths may not nest');
   assert.throws(() => maskSteps({ workdir: '/proc/self' }), { code: 'EXECUTOR_PATH' });
   assert.ok(DEFAULT_HIDDEN.includes(KIT_ROOT) && DEFAULT_HIDDEN.includes('/root') && DEFAULT_HIDDEN.includes('/tmp') && DEFAULT_HIDDEN.includes('/home/user'));
-  assert.deepEqual([...DEFAULT_KEEP_RO], ['/root/.ccr', '/root/.local', '/home/claude/.claude/remote']);
+  assert.deepEqual(DEFAULT_KEEP_RO.slice(0, 3), ['/root/.ccr', '/root/.local', '/home/claude/.claude/remote']);
+  // Any other host: the invoking user's home is hidden; only the user-local claude binary stays visible (never ~/.claude).
+  const home = os.homedir();
+  if (!['/', '/root'].includes(home)) {
+    assert.ok(DEFAULT_HIDDEN.includes(home), 'the invoking user\'s home is hidden');
+    assert.deepEqual(DEFAULT_KEEP_RO.slice(3), [path.join(home, '.local/bin'), path.join(home, '.local/share/claude')]);
+  } else assert.equal(DEFAULT_KEEP_RO.length, 3);
   // C0 gate 2026-10-07: the account directories are hidden (only the CLI login stays, read-only) and sysfs is read-only.
   assert.ok(DEFAULT_HIDDEN.includes('/home/claude') && DEFAULT_HIDDEN.includes('/home/ubuntu'));
   assert.equal(maskSteps({ workdir: work }).at(-1), 'mount -o remount,bind,ro /sys');

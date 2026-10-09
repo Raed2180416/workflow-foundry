@@ -48,12 +48,24 @@ const first = candidates => candidates.find(file => existsSync(file));
 // Mount points with escaped names cannot be addressed reliably from sh, so they make the
 // sandbox unavailable instead of staying writable. The host /tmp (never visible inside) is the
 // staging mount point for the new root; $2 is the interpreter binary, bound at its own path.
+// Remounts keep each mount's locked flags (nosuid, nodev, noexec, atime mode), which a user namespace cannot drop.
+// nsfs handles are skipped; a remount that still fails is fatal only under VISIBLE_PATHS, since nothing else is
+// reachable after pivot_root (for stacked mounts only the top one, the last mountinfo line, is addressable).
 const SETUP = `set -eu
 inner="$1"; shift
-for mp in $(awk '{print $5}' /proc/self/mountinfo); do
+while read -r mp opts fs; do
   case "$mp" in *\\\\*) echo "foundry-sandbox: unsupported mount point name" >&2; exit 97;; esac
-  if mountpoint -q "$mp"; then mount -o remount,bind,ro "$mp"; fi
-done
+  mountpoint -q "$mp" || continue
+  [ "$fs" = nsfs ] && continue
+  keep=
+  for f in nosuid nodev noexec noatime nodiratime relatime; do case ",$opts," in *",$f,"*) keep="$keep,$f";; esac; done
+  case ",$opts," in *,noatime,*|*,relatime,*) ;; *) keep="$keep,strictatime";; esac
+  mount -o "remount,bind,ro$keep" "$mp" 2>/dev/null || [ ! -e "$mp" ] || case "$mp" in
+    ${VISIBLE_PATHS.flatMap(p => [`'${p}'`, `'${p}'/*`]).join('|')}) echo "foundry-sandbox: cannot make $mp read-only" >&2; exit 1;;
+  esac
+done <<FOUNDRY_MOUNTS
+$(awk '{for(i=7;i<=NF;i++)if($i=="-"){m[$5]=$6" "$(i+1);break}} END{for(k in m)print k, m[k]}' /proc/self/mountinfo)
+FOUNDRY_MOUNTS
 mount -t tmpfs -o rw,nosuid,nodev,size=1m,nr_inodes=1024,mode=0755 foundry-root /tmp
 cd /tmp
 mkdir old proc dev etc
