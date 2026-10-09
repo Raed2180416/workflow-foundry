@@ -27,3 +27,5 @@ export async function exitedPid() {
   await new Promise(resolve => child.once('exit', resolve));
   return child.pid;
 }
+/** The command line of a process (arguments joined by spaces), or '' when it is gone. */
+export const cmdline = pid => { try { return readFileSync(`/proc/${pid}/cmdline`, 'utf8').replaceAll('\0', ' '); } catch { return ''; } };

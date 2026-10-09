@@ -128,6 +128,45 @@ and kills those groups), report the interrupted runs on stderr and exit 130/143 
 would, so each run stays resumable (`tests/cli-interrupt.test.mjs`). A SIGKILL of the CLI
 still leaves them running until they end by themselves: the sandbox sets no CPU-time limit.
 
+## Cancel and stop-all
+
+`foundry cancel RUN` and `foundry stop-all` (`src/control.mjs`; `POST /api/runs/:id/cancel` and `/api/stop-all` over HTTP)
+stop runs whichever process executes them. The CLI that cancels is rarely the process that runs the work, so cancellation
+goes through the store, never through a signal alone:
+
+1. **Request.** `Runtime.requestCancel` writes `cancelRequest` into the run header and a `cancel.requested` event in one
+   compare-and-swap update. It is durable and idempotent (the first request stands). A run that has already succeeded,
+   failed or been cancelled refuses it (`RUN_CLOSED`): cancelling it is a no-op with a message, and nothing is written. An
+   `uncertain` run is not executing, so there is nothing to stop either.
+2. **The owner stops itself.** An execution looks for the request every `cancelPollMs` (250 ms) and when it takes ownership
+   of a run. It aborts exactly as it does for a caller's signal: model calls are cancelled (journaled with what they
+   consumed, `model.cancelled`), sandboxes and model CLIs are killed with their process groups, a capability that ignores its
+   signal is abandoned after `cancelGraceMs` (2 s; a task whose capability has effects then ends `uncertain`). The owner then
+   writes the verdict itself: status `cancelled`, verdict `inconclusive`, code `CANCELLED`, final events `run.verdict`,
+   `run.stopped` (carrying the request). A run executing in the process that cancels it is aborted at once.
+3. **Nothing executes it.** A run parked on a timer, a question or an approval, a run never started, and a run whose owner
+   died (before or after the abort) are closed by the canceller in one update (`Runtime.closeCancelled`): the same verdict,
+   with the nodes the dead owner left `running` settled (`uncertain` for a task whose capability has effects, otherwise
+   `failed` with the cancellation) and the wait timers cleared by the seal. A live owner refuses this (`RUN_BUSY`).
+4. **An owner that does not answer.** After `--grace` seconds (default 10) `cancel` reports it (exit 3); with `--force`, and
+   always in stop-all, the owner is frozen (SIGSTOP), every process below it is killed (sandboxes and model CLIs by process
+   group), the owner is killed (SIGKILL), and the run is closed as in 3. The owner is identified by the pid and start time its
+   run recorded, never by name; this process, its ancestors and their process groups are never signalled (`escalationPlan`).
+5. **What a killed owner leaves behind.** The process groups of sandboxes and model CLIs are recorded in `run_children`
+   while they run (`src/children.mjs`, called from `src/sandbox.mjs` and `src/process.mjs`), so a group whose owner was
+   killed from outside can still be found: `cancel` and `stop-all` stop what a dead owner left, and so does a run taken over
+   by `resume` (a `children.reaped` event). A recorded group is killed only if its leader is still the recorded process (pid
+   and start time) or its members remain.
+
+`stop-all` cancels every run of the workspace that has not finished: executing runs and parked ones (so no timer restarts them
+later); `--executing-only` leaves the parked ones alone. `uncertain` runs are left as they are. One run that cannot be closed
+(a broken chain, a journal in another database without `--journal FILE`) is reported and does not stop the others. A stopped
+run is final: `resume`, `answer` and `approve` refuse it. Exit codes: 0 stopped or nothing to stop, 2 a run stopped with an
+effect of unknown outcome (listed in `effectsUnknown`), 3 not stopped; `foundry run` and `resume` exit 3 for a run that was cancelled.
+Not covered: runs of `foundry trial` (isolated stores), and the processes of a capability that spawns its own (only sandboxes
+and model CLIs are recorded). Tests: `tests/cancel.test.mjs` (library, two handles on one workspace), `tests/cli-cancel.test.mjs`
+(separate processes, signals, process groups).
+
 ## Run state
 
 A run is stored as rows (`src/run-rows.mjs`), not as one JSON blob: `runs.body` is the run

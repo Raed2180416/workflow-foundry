@@ -2,7 +2,7 @@
 // POST /api/runs/:id/cancel and /api/stop-all. The CLI that cancels is usually not the process that executes the run, so cancellation is
 // durable and goes through the store, never through a signal alone:
 //
-//   1. requestCancel (src/runtime.mjs) records `cancelRequest` and a `run.cancel_requested` event in one compare-and-swap update.
+//   1. requestCancel (src/runtime.mjs) records `cancelRequest` and a `cancel.requested` event in one compare-and-swap update.
 //   2. The process executing the run sees it (its Invocation polls the header; a run resumed later sees it on taking ownership), aborts its
 //      model calls and sandboxes, which kills their process groups, and writes the cancelled verdict itself. A run in this process is aborted
 //      at once, without waiting for the poll.
@@ -235,11 +235,12 @@ export async function stopAll(foundry, { actor = 'cli', reason = '', graceMs = 1
   }
   const count = outcome => results.filter(r => r.outcome === outcome).length;
   const killed = [...escalations.values()].length ? (await Promise.all(escalations.values())) : [];
-  const summary = { requested: targets.length, cancelled: count('cancelled'), uncertain: count('uncertain'), alreadyFinished: count('already-finished'), notStopped: count('not-stopped') + count('requested'), failed: failed.length, skipped: skipped.length, strays: strays.length };
+  const summary = { requested: targets.length, cancelled: count('cancelled'), uncertain: count('uncertain'), alreadyFinished: count('already-finished'), notStopped: count('not-stopped'), pending: count('requested'), failed: failed.length, skipped: skipped.length, strays: strays.length };
   const lines = [`${summary.cancelled} of ${targets.length} run${targets.length === 1 ? '' : 's'} cancelled`];
   if (summary.uncertain) lines.push(`${summary.uncertain} stopped with an effect of unknown outcome`);
   if (summary.alreadyFinished) lines.push(`${summary.alreadyFinished} finished on their own`);
-  if (summary.notStopped) lines.push(`${summary.notStopped} not stopped yet (the owner is still alive)`);
+  if (summary.notStopped) lines.push(`${summary.notStopped} not stopped within the grace period (the owner is still alive)`);
+  if (summary.pending) lines.push(`${summary.pending} asked to stop (their owners record the verdict when they have aborted their work)`);
   if (failed.length) lines.push(`${failed.length} could not be cancelled (${failed.slice(0, 3).map(f => `${f.runId}: ${f.error.code}`).join(', ')})`);
   if (skipped.length) lines.push(`${skipped.length} left alone`);
   const orphaned = results.reduce((sum, r) => sum + (r.orphans?.length ?? 0), 0) + strays.length;

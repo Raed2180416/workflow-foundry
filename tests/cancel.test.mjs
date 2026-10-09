@@ -123,7 +123,7 @@ test('cancel mid-model-call: the call is aborted and journaled, the owner record
   assert.equal(p.provider.active, 0, 'the provider call ended');
   assert.equal(p.owner.active.size, 0);
   const types = p.types(run.id);
-  assert.equal(types.filter(type => type === 'run.cancel_requested').length, 1);
+  assert.equal(types.filter(type => type === 'cancel.requested').length, 1);
   assert.ok(types.includes('model.cancelled'), 'the aborted call is charged to the run');
   assert.deepEqual(types.slice(-2), ['run.verdict', 'run.stopped']);
   const stopped = p.other.store.events(run.id).at(-1);
@@ -265,7 +265,7 @@ test('cancel closes a run that nothing executes: parked on a timer, a question o
     const header = p.other.store.rows.header(run.id);
     assert.deepEqual([header.status, header.verdict.verdict, header.owner], ['cancelled', 'inconclusive', null]);
     assert.deepEqual(p.types(run.id).slice(-2), ['run.verdict', 'run.stopped']);
-    assert.equal(p.types(run.id).filter(type => type === 'run.cancel_requested').length, 1);
+    assert.equal(p.types(run.id).filter(type => type === 'cancel.requested').length, 1);
     p.verified(run.id);
   }
 });
@@ -310,7 +310,7 @@ test('a run whose owner died is closed by cancel: nodes it left running are sett
     assert.equal(final.error.message, 'Run cancelled by test: then the owner died');
     assert.equal(p.state.started.length, 0, 'no node ran');
     assert.equal(final.nodes.step.status, 'pending', 'the interrupted call was put back by recovery and never re-run');
-    assert.equal(p.types(run.id).filter(type => type === 'run.cancel_requested').length, 1);
+    assert.equal(p.types(run.id).filter(type => type === 'cancel.requested').length, 1);
     p.verified(run.id);
     // ...and another cancel of the finished run is the no-op.
     assert.equal((await p.other.cancel(run.id)).outcome, 'already-finished');
@@ -325,7 +325,7 @@ test('requests are durable, idempotent and compare-and-swap: the first request s
   assert.throws(() => p.other.runtime.closeCancelled(run.id, { actor: 'test' }), error => error.code === 'RUN_BUSY', 'a live owner refuses an outside close');
   const [first, second] = await Promise.all([p.other.cancel(run.id, { actor: 'first', reason: 'one' }), p.other.cancel(run.id, { actor: 'second', reason: 'two' })]);
   assert.deepEqual([first.outcome, second.outcome], ['cancelled', 'cancelled']);
-  assert.equal(p.types(run.id).filter(type => type === 'run.cancel_requested').length, 1);
+  assert.equal(p.types(run.id).filter(type => type === 'cancel.requested').length, 1);
   assert.deepEqual([first.cancel.actor, second.cancel.actor], ['first', 'first'], 'the first request stands');
   assert.equal((await running).error.message, 'Run cancelled by first: one');
   assert.throws(() => p.other.runtime.requestCancel(run.id), error => error.code === 'RUN_CLOSED');
@@ -386,7 +386,7 @@ test('stop-all: every run that has not finished is cancelled whatever it is doin
   for (const run of [model, tool, parked, asking, fresh, crashed]) {
     const header = p.other.store.rows.header(run.id);
     assert.deepEqual([header.status, header.verdict.verdict, header.owner], ['cancelled', 'inconclusive', null], run.workflowId);
-    assert.equal(p.types(run.id).filter(type => type === 'run.cancel_requested').length, 1);
+    assert.equal(p.types(run.id).filter(type => type === 'cancel.requested').length, 1);
     p.verified(run.id);
   }
   assert.equal(p.other.store.rows.header(finished.id).status, 'succeeded');
@@ -416,6 +416,21 @@ test('stop-all with executingOnly leaves parked and never-started runs alone', {
   assert.equal(p.other.store.rows.header(parked.id).status, 'waiting');
   assert.equal(p.other.store.timers(parked.id).length, 1, 'its timer is untouched');
   assert.equal(p.other.store.rows.header(fresh.id).status, 'ready');
+});
+
+test('zero grace: stop-all asks the owners and returns at once; the runs they execute record their own verdicts; exit code 0', { timeout: 60000 }, async t => {
+  const p = pair(t);
+  const tool = p.create(base([hold('slow')], [done('slow')], { id: 'AskTool' }));
+  const parked = p.create(base([human()], [exists(ref('nodes.ask'))], { id: 'AskParked' }));
+  assert.equal((await p.owner.startRun(parked.id)).status, 'awaiting_human');
+  const running = p.owner.startRun(tool.id);
+  assert.ok(await until(() => p.state.started.includes('slow')));
+  const result = await p.other.stopAll({ actor: 'test', graceMs: 0, escalate: false });
+  assert.deepEqual([result.summary.cancelled, result.summary.pending, result.summary.notStopped], [1, 1, 0]);
+  assert.deepEqual(result.results.map(r => [r.workflowId, r.outcome]).sort(), [['AskParked', 'cancelled'], ['AskTool', 'requested']]);
+  assert.match(result.message, /1 asked to stop/);
+  assert.equal(exitCodeOf(result), 0);
+  assert.equal((await running).status, 'cancelled');
 });
 
 test('a live owner that does not stop within the grace period is reported, not touched, unless forced; this process is never killed', { timeout: 60000 }, async t => {

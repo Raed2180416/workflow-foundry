@@ -20,7 +20,7 @@ import { Journal } from '../src/journal.mjs';
 import { ScriptedProvider } from '../src/models/providers/scripted.mjs';
 import { sandboxStatus } from '../src/sandbox.mjs';
 import { startOf } from '../src/children.mjs';
-import { groupMembers, isRunning, processes, until } from './support/processes.mjs';
+import { cmdline, groupMembers, isRunning, processes, until } from './support/processes.mjs';
 
 const cli = new URL('../bin/foundry.mjs', import.meta.url).pathname;
 const policyFile = new URL('../policy/models.json', import.meta.url).pathname;
@@ -76,7 +76,10 @@ async function sandboxGroup(t, owner) {
   const group = await until(() => processes().find(p => p.ppid === owner.child.pid && p.pgid === p.pid)?.pid, 30000);
   assert.ok(group, `the sandbox started: ${owner.err()}`);
   t.after(() => { try { process.kill(-group, 'SIGKILL'); } catch {} });
-  assert.ok(await until(() => groupMembers(group).length >= 2, 30000), 'the code is running inside the sandbox');
+  // The sandbox's setup shells come first (their arguments name the runner too); the JS runner (node --permission) is exec'd after the sandbox said it was ready, and only
+  // from then on does the group survive the loss of its owner (before that, writing the ready line to a closed pipe kills it).
+  const runner = pid => { const [program, ...rest] = cmdline(pid).split(' '); return program.endsWith('node') && rest.includes('--permission'); };
+  assert.ok(await until(() => groupMembers(group).some(p => runner(p.pid)), 30000), 'the code is running inside the sandbox');
   return group;
 }
 const gone = async group => (await until(() => groupMembers(group).length === 0, 10000)) === true || groupMembers(group).length === 0;
@@ -106,7 +109,7 @@ test('foundry cancel stops a run executed by another process: sandbox killed, ca
   assert.equal(status, 3, owner.err());
   const printed = owner.json();
   assert.deepEqual([printed.status, printed.verdict.verdict, printed.error.code], ['cancelled', 'inconclusive', 'CANCELLED']);
-  assert.deepEqual(printed.events.map(e => e.type).filter(type => type.startsWith('run.')), ['run.created', 'run.cancel_requested', 'run.verdict', 'run.stopped']);
+  assert.deepEqual(printed.events.map(e => e.type).filter(type => type.startsWith('run.') || type === 'cancel.requested'), ['run.created', 'cancel.requested', 'run.verdict', 'run.stopped']);
   assert.equal(printed.events.at(-1).closedBy, undefined, 'the owner wrote the verdict, not the canceller');
   const verified = await verify(workspace, record.id);
   assert.equal(verified.status, 'cancelled');
@@ -197,7 +200,7 @@ test('crash between the abort and the verdict write: the store stays consistent,
       const final = store.rows.header(created.id);
       assert.deepEqual([final.status, final.verdict.verdict, final.owner], ['cancelled', 'inconclusive', null]);
       const events = store.events(created.id);
-      assert.equal(events.filter(e => e.type === 'run.cancel_requested').length, 1);
+      assert.equal(events.filter(e => e.type === 'cancel.requested').length, 1);
       assert.deepEqual(events.slice(-2).map(e => e.type), ['run.verdict', 'run.stopped']);
       if (finish === 'cancel') assert.equal(events.at(-1).closedBy, 'canceller');
       assert.equal((await verify(workspace, created.id)).status, 'cancelled');

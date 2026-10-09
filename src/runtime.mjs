@@ -213,7 +213,7 @@ export class Runtime {
   // The run.verdict chain event, sealed against the journal this runtime's ModelPort writes to (which may not be the store's database).
   verdictEvent(run, journalDb = this.models?.journal?.db) { return { type: 'run.verdict', ...run.verdict, ...this.store.sealBinding(run.id, run, journalDb) }; }
   /**
-   * Record that a run is to be cancelled: `cancelRequest` in the run header plus a `run.cancel_requested` chain event, in one compare-and-swap
+   * Record that a run is to be cancelled: `cancelRequest` in the run header plus a `cancel.requested` chain event, in one compare-and-swap
    * update (so a request and the run's own writes serialize, and a run that finished first refuses it with RUN_CLOSED). It is durable and
    * idempotent: the first request stands (`created: false` returns it). Whichever process executes the run sees it (Invocation.watchCancel
    * polls for it, and a run resumed later sees it when it takes ownership), aborts its model calls and sandboxes and records the cancelled
@@ -229,7 +229,7 @@ export class Runtime {
       if (closed) throw closedError(closed, r.status);
       if (r.cancelRequest) return;
       r.cancelRequest = request; created = true;
-    }, () => created ? { type: 'run.cancel_requested', requestId: request.id, actor: request.actor, reason: request.reason, requestedByPid: request.pid } : [], { result: 'header' });
+    }, () => created ? { type: 'cancel.requested', requestId: request.id, actor: request.actor, reason: request.reason, requestedByPid: request.pid } : [], { result: 'header' });
     return { created, request: header.cancelRequest, status: header.status };
   }
   /**
@@ -259,7 +259,7 @@ export class Runtime {
       swept = sweepRunning(this.store.rows, this.registry, r, runId, error);
       r.status = swept.some(e => e.type === 'effect.uncertain') || this.store.rows.anyWithStatus(runId, 'uncertain') ? 'uncertain' : 'cancelled';
       r.error = error; r.owner = null; seal(r, workflow, this.store);
-    }, r => [...(created ? [{ type: 'run.cancel_requested', requestId: request.id, actor: request.actor, reason: request.reason, requestedByPid: request.pid }] : []), ...swept,
+    }, r => [...(created ? [{ type: 'cancel.requested', requestId: request.id, actor: request.actor, reason: request.reason, requestedByPid: request.pid }] : []), ...swept,
       ...(r.verdict ? [this.verdictEvent(r, journal)] : []), { type: 'run.stopped', error: r.error, cancel: made, closedBy: 'canceller' }], { result: 'header', final: true });
     return { status: header.status, verdict: header.verdict ?? null, error: header.error, request: made, swept: swept.map(e => ({ nodeKey: e.nodeKey, type: e.type })) };
   }

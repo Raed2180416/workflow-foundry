@@ -65,7 +65,7 @@ export async function serveHttp(foundry, { port = 4177, host = '127.0.0.1', tick
         // Cancel every run that has not finished; an executing run is asked to stop and records its own verdict. Nothing is killed over HTTP.
         if (parts.length === 2 && parts[1] === 'stop-all') {
           const result = await foundry.stopAll({ actor: 'ui', reason: typeof data.reason === 'string' ? data.reason : '', graceMs: 0, escalate: false, executingOnly: data.executingOnly === true });
-          return json(result.summary.notStopped ? 202 : 200, result);
+          return json(result.summary.notStopped || result.summary.pending ? 202 : 200, result);
         }
         if (parts.length === 4 && parts[1] === 'generation' && parts[3] === 'cancel') {
           if (!foundry.generator) throw new FoundryError('GENERATOR_UNAVAILABLE', 'No model provider is enabled in this server');

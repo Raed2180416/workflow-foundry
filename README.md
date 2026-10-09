@@ -46,8 +46,9 @@ sealed or claim-bearing result.*
   ([synthesis §5](research/review-20261007/00-SYNTHESIS.md); THESIS D16). Its first
   engineering step is the stage-1 engine bump: the store rewrite first, acceptance that must
   gate, taint, hash-chain binding, and `foundry cancel` plus stop-all. That work started on
-  2026-10-08 and has not landed. It ends in a named engine freeze, E1, before any new
-  comparative run.
+  2026-10-08; `foundry cancel` and `foundry stop-all` landed on 2026-10-09 (see "Cancel and
+  stop-all" in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)). It ends in a named engine
+  freeze, E1, before any new comparative run.
 
 Every phase still ends with a capability number against a simple baseline and a
 `research/<topic>-<date>/REPORT.md`.
@@ -407,7 +408,7 @@ propose/apply and export. The repair walkthrough is in
 
 | Path | What it is |
 |---|---|
-| `bin/foundry.mjs` | CLI entry point (`doctor`, `run`, `serve`, `mcp`, `install`, `generate`, `outcome-*`, …). |
+| `bin/foundry.mjs` | CLI entry point (`doctor`, `run`, `cancel`, `stop-all`, `serve`, `mcp`, `install`, `generate`, `outcome-*`, …). |
 | `src/` | Runtime, store, validator, capabilities, MCP and HTTP servers, generator, providers, construction and outcome modules. Overview: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). |
 | `schemas/workflow.schema.json` | The workflow IR contract. |
 | `policy/models.json` | Owner model policy: the only source of model ids, classes, prices and the spend rule. |
