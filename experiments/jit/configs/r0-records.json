@@ -89,7 +89,7 @@
  "armSpendStopUsd": {
   "jit:claude-sonnet-5-5/claude-haiku-5-5": 12,
   "jit:claude-opus-5-5/claude-haiku-5-5": 10,
-  "jit:claude-haiku-5-5/claude-haiku-5-5": 6,
+  "jit:claude-haiku-5-5/claude-haiku-5-5": 10,
   "agent:claude-haiku-5-5": 4,
   "static:research/construction-20261006/artifacts/B1-haiku-records-k1/solve.mjs": 2
  },

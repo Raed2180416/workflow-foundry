@@ -1,7 +1,6 @@
 {
  "experiment": "jit-r0-kinetics",
- "_blocked": "relTol TBD: row 2 Stage B",
- "_note": "BLOCKER-SYNTHESIS row 9 (R0-K): kinetics dev run under the HANDOFF section 3 config, O/H first, on fresh kinetics dev seeds 225-248. No static kinetics solver exists, so there is no static arm. Set jit.relTol from row 2 Stage B and remove _blocked before running.",
+ "_note": "BLOCKER-SYNTHESIS row 9 (R0-K): kinetics dev run under the HANDOFF section 3 config, O/H first, on fresh kinetics dev seeds 225-248. No static kinetics solver exists, so there is no static arm. jit.relTol 0.05 set 2026-10-09 21:10 IST from Stage B (analysis/kinetics-gauge/out/stage-b/STAGE-B.md): 0 of 13 correct-correct pairs disagree at 0.05, all 13 wrong answers differ in the exclusion set (compared exactly), closest same-set control 0.134; the Stage A candidate stands (dev calibration, FG section 4.1 O1 applies to the PREREG freeze).",
  "familyId": "kinetics",
  "split": "dev",
  "seedPurpose": "jit-r0",
@@ -54,8 +53,8 @@
   "compilerFallback": "claude-opus-5-5",
   "maxFallbacks": 2,
   "compare": "tolerant",
-  "relTol": null,
-  "absTol": 1e-9,
+  "relTol": 0.05,
+  "absTol": 1e-09,
   "tolerantKeys": [
    "vmax",
    "km"
