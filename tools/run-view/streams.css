@@ -8,7 +8,7 @@
 :root[data-theme="light"] {
   --s0: #2a78d6; --s1: #eb6834; --s2: #1baf7a; --s3: #eda100; --s4: #e87ba4; --s5: #008300; --s6: #4a3aa7; --s7: #e34948;
 }
-.c0 { --sc: var(--s0); } .c1 { --sc: var(--s1); } .c2 { --sc: var(--s2); } .c3 { --sc: var(--s3); } .c4 { --sc: var(--s4); } .c5 { --sc: var(--s5); } .c6 { --sc: var(--s6); } .c7 { --sc: var(--s7); }
+.c0 { --sc: var(--s0); } .c1 { --sc: var(--s1); } .c2 { --sc: var(--s2); } .c3 { --sc: var(--s3); } .c4 { --sc: var(--s4); } .c5 { --sc: var(--s5); } .c6 { --sc: var(--s6); } .c7 { --sc: var(--s7); } .cx { --sc: var(--neutral); }
 
 .exphead { display: grid; gap: 6px; margin-bottom: 10px; }
 .exphead .meta { font-size: .82rem; color: var(--muted); overflow-wrap: anywhere; }
