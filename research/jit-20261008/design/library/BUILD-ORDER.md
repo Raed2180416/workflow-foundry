@@ -109,3 +109,58 @@ it is listed, not scheduled. In the host-harness deployment, triggers (P36–P38
    which L5 measures.
 7. **Buildable ≠ explained.** 48.4% of corpus items are buildable on today's engine (L1-PATTERNS §7) [M-c]. "Replaces
    n8n" is a claim about the solver half for now; the envelope half waits on §5.
+
+## Implementation status
+
+Steps 1–4 of §1 are built in `experiments/library/` (2026-10-09; commits 88473c7, f22f1a3, 82bd36f, 85e5229 on
+`claude/intelligent-hamilton-vg1f9a`). They cost $0: no model or Jev calls, no network, and nothing under `src/`,
+`experiments/jit/` or `experiments/lib/` changed. Tests: `node --test --test-concurrency=2 experiments/library/test/*.test.mjs`
+runs 63 tests, all green.
+
+| step | files | tests |
+|---|---|---|
+| 1 store and index | `store.mjs` (registry, revocations, evidence, judgments and index JSONL; the §7.1 states and transitions; verify-before-store and keep gates; circuit breaker; requalify; retire), `index.mjs` (code-generated index lines ≤ 30 tokens, `shape/1` features, `buildIndex`), `cards.mjs`, `schema.mjs` (validation through `src/validate.mjs`; conservative subsumption), `tokens.mjs`, `tools/build-catalog.mjs` → `cards/catalog.json` (54 entries), `tools/calibrate-tokens.mjs` → `fixtures/token-calibration.json` | T1 4, T8 7, counter 3 (14) |
+| 2 L0 and caps | `context.mjs`: the §5.2 cap table as code; `assemblePrompt` refuses with `CONTEXT_OVER_CLASS_BUDGET` (or `CONTEXT_PART_NOT_ALLOWED`) and never truncates; `l0Card()` | T2 partial 4 |
+| 3 cards | `cards/P01 P03 P07 P08 P09 P12 P13 P15 P16 P17 P20 P54/{card.json, skeleton.mjs, fixtures/{positive,no-match,drift}.json}`, `skeletons/helpers.mjs`, `assemble.mjs` (typed slot checks, `fn:pure` lint, `solve.mjs` assembly), `run.mjs` ($0 runner) | T4 17 (all 36 fixtures pass; every drift fixture deopts with its expected kind and name) |
+| 4 checker | `check.mjs` (`checkTree` / `checkSolver`) | T3 28: the clean reference tree and the 12 card examples fire nothing; 24 mutants cover all 18 codes and each fires exactly its own code |
+
+**Token counter (it replaces T1's chars/3.5).** No Claude tokenizer is available offline. The counter was fitted on
+1,243 real Haiku 5.5 calls, using total input tokens from three local journals and a per-journal intercept for CLI
+overhead of about 990–998 tokens. The fit is tokens ≈ 0.94·letter-runs + 0.22·letters + 0.87·digits + 0.61·punctuation,
+with rmse 18.7; a chars-only fit gives 2.73 chars/token with rmse 37.8. `countTokens` uses (1.0, 0.22, 0.9, 0.65) × 1.15
+as an upper bound. On those calls it undercounts 1 of 1,243, and its ratio to the measured count has min 0.98, median
+1.19 and max 1.27. chars/3.5 undercounts nearly every call (median 0.74, min 0.54), so it is not a safe cap check.
+
+**Findings that need an owner decision.**
+- The L0 card does not fit its S6 allocation. As written (the "Changes since draft" block excluded) it measures 3,643
+  tokens (point estimate 3,167) against 3,000. The compact form measures 3,406 (2,962). S6 refuses it. Either cut the card
+  by about 650 tokens or raise the S6 L0 allocation to about 3,700, which still keeps S6 under 8,000 (asserted in T2).
+- Index lines of ≤ 30 tokens hold only an id, a name and a 2–4 word gist. The LIBRARY §4.1 example line measures 62
+  tokens. `fitLine` drops fields by priority (gist, tier, grade, family, version, slots, support) and never truncates
+  silently.
+- The expanded cards fit: 309–642 tokens against 1,200. `expandedCard()` renders the card head, J questions, slots and
+  checklist; it leaves out the skeleton and the worked example.
+
+**Deviations and stubs.**
+- The runner is a plain child process over the real flow-v3 SDK, `startServices` gateway and `createCallHost` in stub
+  mode. This is the arrangement of part 1 of `flow-v3-call.test.mjs`, not the B1 sandbox. Judges are answered by the
+  `tools/flow-override.mjs` hook. The model port throws `NO_LIVE_MODEL`, so an unanswered judge deopts and costs nothing
+  (tested).
+- S8 is allocated 2,000 tokens for "the slot only". §5.2 leaves that cell blank; the 2,000 comes from §5.1.
+- PROFILE_UNREACHABLE: §6 requires `onDeopt: 'interpret-child'`, which flow-v3 slice 1 does not have. The checker accepts
+  the slice-1 fallback `onRefuse: 'value'`, where the caller handles the refusal (P54 `ON_REFUSE`).
+- CALL_TYPE is shown statically where a site declares its argument type: P54 `ARG`/`READS`, and in P01 the previous
+  stage's `out`. P54 arguments are also computed from sample tasks and validated against the contract and profile. P07
+  map handlers declare no argument type. They are listed as `unchecked` and left to the host's run-time `input-schema`
+  check, not passed.
+- Some cards add slots or guards that L1-PATTERNS §4 does not list:
+  - P03: `ROW_SCHEMA`, `CONCURRENCY`
+  - P16: a `blockable` guard
+  - P17: `AMOUNT`, `CONCURRENCY`, a `unique-ids` guard
+  - P54: `ARG`, `READS`, `CONCURRENCY`
+  - P01: judge stages take an optional `merge`
+  - P08: `MIN_KEEP` is optional
+- P12 `BODY` is fn only.
+- P09 votes in code, because the SDK has no `flow.flagged`.
+- The registry implements the full §7.1 state set, a superset of the call host's shadow / kept / revoked.
+- Steps 5–10 are not started.
