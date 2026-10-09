@@ -2,10 +2,14 @@
 //
 // A JIT compiles a solver from the tasks its interpreter has solved. The solver's own guards are written by the
 // compiler, and a heal can widen them (DEV-NOTES D9); a static solver has none at all (D5). A profile is a second,
-// independent fence around the compiled domain: it is learned only from the tasks the stream has accepted (warmup,
-// fallback and shadow traces), it is checked before a compiled run at $0 (no model call, no oracle, no solver code),
-// and only a task the interpreter has handled ever widens it. A novel task can then be routed to the interpreter, or
-// run compiled with a forced shadow, instead of trusting compiled code on inputs it never saw.
+// independent fence around the compiled domain: it is learned only from tasks the stream has accepted (the traces a
+// version was compiled from), it is checked before a compiled run at $0 (no model call, no oracle, no solver code), and
+// it should widen only when the solver's domain does: a recompile from a pool holding the task, or an independent check
+// (an agreeing shadow) confirming the solver on it. Widening on every interpretation makes the profile follow the stream
+// instead of the solver, and it then waves later drifted tasks through (eval-profiles.mjs, policy 'interp'). A novel task
+// can be routed to the interpreter, or run compiled with a forced shadow, instead of trusting compiled code on inputs it
+// never saw. Profiles see input shape, not meaning: a drift that only changes what the same-shaped text means is
+// invisible here and is left to shadows, invariants and judge checks.
 //
 //   learnProfile(tasks)          -> profile   (tasks: task.json objects {prompt, inputs, files?}, or trace records {task})
 //   checkProfile(profile, task, {ignore?}) -> {novel, score, reasons, near, n}
@@ -22,7 +26,8 @@
 // - strings: length range with a margin; for short single-line strings a pattern class (date-iso, phone, id, ...) and a
 //   shape signature ("Ab9-9" style), and an enum value set while the path stays low-cardinality and repetitive;
 //   for strings with >= PARAMS.linesMin non-empty lines a line-count range and a set of line-format signatures
-//   ('LEDGR~;:9¦A¦A¦9.9¦...': the leading word, the field delimiter and a coarse class per field); for strings with
+//   ('LEDGR~semi:A¦9¦A¦A¦9.9¦...': the leading word, the field delimiter and a coarse class per field) and line families
+//   ('LEDGR~semi:10': leading word, delimiter, field count); for strings with
 //   >= PARAMS.proseMinWords words a vocabulary (lower-case-initial words of 3+ letters; capitalised words are names);
 // - the prompt: sentence skeletons with numbers, quoted text and the task's own short input values masked.
 //
@@ -34,7 +39,8 @@
 // an export) gets a loose threshold; a field that repeats (the line formats of a dialect) gets a tight one. With one
 // training task GT = 1, so the threshold is the loose max: few tasks give a lenient profile, never a jumpy one.
 //
-// Thresholds and margins (all in PARAMS, recorded in the profile so a check uses the profile's own values):
+// Thresholds and margins (PARAMS; rate, margins, enum and caps are recorded in the profile and a check uses the profile's
+// own values; the observation constants (shortMax, linesMin, field limits ...) are fixed by the schema version):
 // - number range: [min − m, max + m], m = max(span·numMargin.span, max(|min|,|max|)·numMargin.rel, 1e-9);
 // - counts (array lengths, string lengths, line counts): m = max(countMargin.abs, ceil(span·countMargin.span),
 //   ceil(max·countMargin.rel));
@@ -296,13 +302,13 @@ const parentOf = path => { const m = /^(.*?)(\[\]|\{\}|\.[^.[\]{}]+)$/.exec(path
 // content features alone detect.
 export const SIZE_FEATURES = Object.freeze(['array-length', 'map-size', 'string-length', 'line-count']);
 
-// opts.ignore: feature names to leave out of the verdict (they are still not computed into score).
+// opts.ignore: feature names left out of the verdict, the reasons, near and score.
 export function checkProfile(profile, task, opts = {}) {
   const ignore = new Set(opts.ignore ?? []);
   if (!profile || profile.schema !== PROFILE_SCHEMA) throw new Error('checkProfile: not a profile');
   const P = { ...PARAMS, ...profile.params }, ex = P.caps?.examples ?? 4;
   const obs = observe(task), checks = [];
-  if (!profile.n) return { novel: true, score: Infinity, reasons: [{ feature: 'empty-profile', path: null, ratio: Infinity }], near: [], n: 0 };
+  if (!profile.n) return { novel: true, score: 2, reasons: [{ feature: 'empty-profile', path: null, ratio: 2 }], near: [], n: 0 };
   const setCheck = (feature, path, m, items) => {
     if (!m || m.capped || !items.size) return;
     const unseen = [...items].filter(it => !Object.hasOwn(m.df, it)), rate = unseen.length / items.size, threshold = rateThreshold(m, P.rate);
