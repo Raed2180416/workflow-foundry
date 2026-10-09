@@ -332,7 +332,7 @@ test('requests are durable, idempotent and compare-and-swap: the first request s
   p.verified(run.id);
 });
 
-test('cancelling a run by the owner\'s own Foundry also works (the in-process abort), and a three-deep tree stops with its question left open', { skip: false, timeout: 60000 }, async t => {
+test('cancelling a run by the owner\'s own Foundry also works (the in-process abort), and a three-deep tree stops with its question left open', { timeout: 60000 }, async t => {
   const p = pair(t);
   // root: a human question (left open) and a map of two items, each running a loop whose body holds a tool: map -> loop -> task.
   const tree = base([human('q'), {
