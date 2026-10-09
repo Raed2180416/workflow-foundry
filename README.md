@@ -49,6 +49,14 @@ sealed or claim-bearing result.*
   2026-10-08; `foundry cancel` and `foundry stop-all` landed on 2026-10-09 (see "Cancel and
   stop-all" in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)). It ends in a named engine
   freeze, E1, before any new comparative run.
+- **2026-10-09: the cloud session ended** (usage limit); work continues on the owner's laptop. Stream run data, journals and
+  the Kev held-out material were lost with the container (`research/jit-20261008/HANDOFF.md`). The two in-flight workflows
+  were finished by hand:
+  - blocker dossiers → [synthesis](research/jit-20261008/BLOCKER-SYNTHESIS.md), revised after its
+    [critique](research/jit-20261008/BLOCKER-SYNTHESIS-CRITIQUE.md): one ranking of the experiments, a revised
+    HANDOFF §5 order and owner questions Q1–Q6;
+  - Kev J1 → **J1 on Jev** ([dev report](research/judge-20261009/J1-JEV-DEV.md)): the owner moved the judge
+    program from Kev training to hosted Jev.
 
 Every phase still ends with a capability number against a simple baseline and a
 `research/<topic>-<date>/REPORT.md`.
@@ -86,7 +94,7 @@ Every phase still ends with a capability number against a simple baseline and a
 | Corpus and R-bench | [Workflow corpus](research/corpus-20261006/COVERAGE.md): 1,342 items from 27 platforms. Agent-framework slice: 220 items from 22 framework sources (08:45), being integrated now. R-bench: a 30-item shortlist ([selection](research/replicate-20261008/SELECTION.md)); the pilot (`experiments/replicate/`) is in progress, with no oracle frozen yet | `research/corpus-20261006/`, `research/replicate-20261008/` |
 | Beds | 9 Tier-A families and 4 sealed families. The sealed families have never been used. Audited: records 3.0.0, incident 4.2.0, synth 3.0.0, kinetics 4.0.0, gridquest 2.0.0, ownerci 1.1.0 and codefix 1.1.0 (partial). Not audited: gameqa, runbook | `beds/*/AUDIT.md` |
 | 3 Cheap execution (C1) | Assignment search is built. Its design still names Haiku 4.5 and needs the Haiku 5.5 update ([C0 dev report §6.4](research/construction-20261006/REPORT-dev.md)) | [design draft](research/distill-20261007/DESIGN.md) |
-| 4 Typed judgments | The Kev engine, laptop bridge and contracts library are built; nothing is trained. Kev dataset building continues (`experiments/kev-data/`). Wave-A datasets (9 groups) built and adversarially reviewed (340/341 tests); wave B (incident, synth) in progress. Laptop training is approved (owner, 2026-10-08) once the datasets pass review, with the Kev-vs-Haiku-5.5 comparison as the promotion gate (THESIS D13 as superseded) | `src/judgment.mjs`, [Kev research](research/kev-20261007/) |
+| 4 Typed judgments | **2026-10-09: Jev replaces Kev** (owner direction; Kev J2 training is parked). Hosted Jev (`jev-latest`, served `jev-1.13.0`) is in the policy as a judgment model, scored through `score-served.mjs --jev`. **J1 on Jev done** on the three surviving dev-select files: 1,106 records, 0 faults, 0/60 re-read flips (dev, K=1, diagnostic). Jev is strong on most interactive and runbook ports, weak on interactive X6, runbook X4 and kinetics X3; the in-family probe beats it on kinetics X3/X4. The wave-A builds and held-out material were lost with the cloud container; only kinetics rebuilt hash-exact. J2 is a [draft prereg](research/judge-20261009/PREREG-J2-draft.md) with ten prerequisites | `src/judgment.mjs`, [J1 on Jev](research/judge-20261009/J1-JEV-DEV.md), [Kev research](research/kev-20261007/) |
 | 5–6 | Not started. `call` (IR stage S1) and the `wide` operator are planned for week 6 of the plan | see [ROADMAP §5](docs/ROADMAP.md) |
 
 **Layers of the vision** (moved from synthesis §2 and updated; [M] measured, [D] documented):
@@ -322,7 +330,10 @@ $560–825 at list price (synthesis §5).
 | D1-cap | The spend cap is blank. Current rule: pause before any single experiment estimated over $500; self-imposed session soft cap $1,500 (list price). | Confirm or set a cap. | No (work continues under the rule) |
 | D1-aws | `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` exist in the environment with no stated purpose. They are not used as a model route. | Say whether they are meant for Bedrock; otherwise leave unused. | No |
 | OpenCode | Verify OpenCode v2.0.23 locally and add its (version, sha256, evidence) to `OPENCODE_V2_ALLOWLIST`. | Do it when convenient; cloud runs skip those tests. | No |
-| D7 | No `TYPESAFE_API_KEY`: hosted Jev is unavailable. Kev (open weights on Hugging Face) will be used for the typed-judgment engine on CPU. | Provision the key if hosted Jev should be compared. | No |
+| D7 | **Resolved 2026-10-09:** the owner's `TYPESAFE_API_KEY` is exported in their interactive bash; Jev runs read it only as `FOUNDRY_SYSTEMONE_API_KEY` from the environment, launched through `bash -ic`. Jev replaces Kev for the judge program. | None. | No |
+| Heal-kit drift (2026-10-09) | Adding Jev to `policy/models.json` (38f74fd) makes the heal kit's `policyDrift` gate report blocking drift on `judgmentModels` and `providers.typesafe-systemone`. Nothing is blocked today because the frozen kit is absent on the laptop. | Choose one: re-freeze the kit policy; a proved judgment-only exemption like `childEnv` (no frozen-kit file names those keys); or move Jev out of the policy file. Decide before the engine-freeze record. | Heal replays only |
+| Blocker synthesis Q1–Q5 (2026-10-09) | Held-out JIT seeds 8001–8024 / 8101–8124 with a per-bed ledger; R0 records rehearsal of the §3 config ($25–40); R0-K kinetics O/H re-run (~$25); a dev-calibrated kinetics tolerance (O1); Jev scope and credit cap. | Yes to each, as recommended in [BLOCKER-SYNTHESIS §7](research/jit-20261008/BLOCKER-SYNTHESIS.md). | R0/R0-K gate the held-out freeze |
+| J2 prerequisites (2026-10-09) | Re-author the held-out material; a re-read validity rule for Jev's 2-decimal output (the current \|Δp\| < 0.01 rule fails at 0.03–0.07 while argmax never flips); pin the Jev version. | See [PREREG-J2-draft](research/judge-20261009/PREREG-J2-draft.md). | J2 only |
 | PR #1 | Phase 0 is in [PR #1](https://github.com/Raed2180416/workflow-foundry/pull/1). The session's permission policy does not let the agent merge without review, so later phases stack on the same branch as separate commits. | Review and merge when convenient. | No |
 | Haiku 5.5 (noted) | 2026-10-07: Anthropic replaced Haiku 4.5 with Haiku 5.5 (`claude-haiku-5-5`, $0.10/$0.50 per MTok, 20x below Sonnet 5.5). Added to the policy as the first class-M model; CLI route verified (typed call ~1.5 s, ~$0.0005 vs Haiku 4.5 ~6-10 s, ~$0.004). Experiments switch their weak model to Haiku 5.5 before any pre-registration is frozen. | None needed. | No |
 | Local models (decided) | 2026-10-07: local *generative* models (Qwen/Granite via llama.cpp) are parked: 268 s per call and 0.38–0.80 agreement on this 4-core CPU ([negative result](docs/RESEARCH.md)). Haiku 5.5 is the cheap executor and first-rung constructor; Kev is the candidate local typed-judgment engine, kept per port only where it beats Haiku 5.5 and rules. C1's open-weight half is not measured here. | A GPU (any 16–24 GB card) would reopen the open-weight lane. | No |
