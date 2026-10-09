@@ -1,0 +1,31 @@
+51|P32|n|anchors are file pickers and an ask; no approval gate before an effect is visible
+51|P10|y|14 menus and repeat menus (35 'human-then-branch' anchors are file picker plus if)
+51|P55|p|5 Ask-for-input nodes are right; the other 9 anchors are documentpicker file reads
+51|P08|p|a single If guards an effect
+51|P54|y|7 run-another-shortcut
+51|P34|y|delay nodes
+51|P12|y|repeat-with-each loops over calendar events
+51|P01|n|three consecutive device-detail queries are not a pipeline
+51|P02|n|device details, hash, create folder is not a sync
+51|P17|n|device-detail reads are not two record sets
+52|P13|p|pipeline() map over 8 families with agent bodies, not a typed extraction
+52|P45|y|builder and auditor subagents
+52|P14|p|result array of independent audits; P14 fits loosely
+52|P47|y|builders write generators, oracles and tests
+52|P12|m|literal list of 8 families mapped; detector chose P13
+52|P01|m|build then audit per family
+53|P10|y|repeat with a 4-option menu
+53|P55|y|ask-for-input nodes
+54|P20|n|speak/act cycles inside a game loop are not generate-verify-retry
+54|P51|y|Reflect rereads history and writes per-player notes
+54|P55|p|optional human seat reads a typed line
+54|P42|y|persisted experience store across games
+54|P18|n|moderator parse after player actions is not best-of-N
+54|P25|m|19-step scripted table with a win check; detector chose P20 for the cycle
+54|P12|m|per-player actions in a round
+54|P06|M|RetrieveExperiences vector search feeds Speak and Hunt; the read-then-model rule did not fire
+55|P01|y|make_chunks, process_chunk, merge_chunks chain
+55|P12|M|chunk scatter has no rule (WDL tasks are action nodes)
+55|P15|m|merge tasks gather the shard outputs
+56|P56|y|ComfyUI text-to-image
+56|P18|n|single sampler; text encoders feeding one node

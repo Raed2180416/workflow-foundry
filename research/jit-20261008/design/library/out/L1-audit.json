@@ -1,0 +1,3843 @@
+{
+ "meta": {
+  "task": "L1-a hand audit + detector precision",
+  "drawSeed": 20261009,
+  "hitSeed": 20261010,
+  "bootstrapSeed": 20261011,
+  "prng": "mulberry32",
+  "labelsSha256": "e0f2ff3d59eba411b460d47387765316c7aabe6072c4b993b6ca660e32301d0e",
+  "items": 60,
+  "drawOrderRecorded": true,
+  "blindProtocol": "labels were written and timestamped (labelledAt) from the corpus item summary with ir hidden before the census rows for these items were opened; four rows were revised before the census was opened (revisedAt, revisionNote); strata were built from the census pattern count by design (draw.mjs)",
+  "consistencyProblems": []
+ },
+ "coverage": {
+  "censusClaim": {
+   "explained": 1524,
+   "of": 1559,
+   "share": 0.978,
+   "note": "census: every non-refused item is explained (tautology, L1-PATTERNS 1.4); only the 35 refusals are unexplained"
+  },
+  "headlineStrict": {
+   "label": "explained = yes only (partly counts 0), the 60 labels as recorded",
+   "n": 60,
+   "postStratified": 0.884,
+   "kishNeff": 40.3,
+   "wilson95KishNeff": [
+    0.75,
+    0.951
+   ],
+   "stratifiedBootstrap95": [
+    0.828,
+    0.944
+   ],
+   "unweighted": 0.917,
+   "unweightedWilson95": [
+    0.819,
+    0.964
+   ]
+  },
+  "lenient": {
+   "label": "explained = yes or partly",
+   "n": 60,
+   "postStratified": 0.901,
+   "kishNeff": 40.3,
+   "wilson95KishNeff": [
+    0.772,
+    0.961
+   ],
+   "stratifiedBootstrap95": [
+    0.863,
+    0.979
+   ],
+   "unweighted": 0.933,
+   "unweightedWilson95": [
+    0.841,
+    0.974
+   ]
+  },
+  "sensitivityDashboardsExplained": {
+   "label": "the labelled dashboard-state refusals (medium confidence) counted as explained",
+   "n": 60,
+   "postStratified": 0.961,
+   "kishNeff": 40.3,
+   "wilson95KishNeff": [
+    0.852,
+    0.991
+   ],
+   "stratifiedBootstrap95": [
+    0.926,
+    0.979
+   ],
+   "unweighted": 0.95,
+   "unweightedWilson95": [
+    0.863,
+    0.983
+   ]
+  },
+  "populationCalibratedDashboards": {
+   "label": "dashboard rule applied at population level: every unrefused Node-RED item with >= 20 UI widgets counted as unexplained, the rest estimated from the sample (strict)",
+   "dashboardItemsExtra": 14,
+   "nonDashboardPopulation": 1545,
+   "sampleItemsUsed": 58,
+   "postStratifiedWithinNonD": 0.961,
+   "kishNeff": 30.9,
+   "coverage": 0.952,
+   "wilson95KishNeff": [
+    0.821,
+    0.983
+   ],
+   "stratifiedBootstrap95": [
+    0.917,
+    0.97
+   ]
+  },
+  "dashboardEvidence": {
+   "sampleItems": [
+    {
+     "drawOrder": 17,
+     "id": "node-red:1a43db3395478c8c30f18144f9eada82",
+     "widgets": 37,
+     "nodes": 205,
+     "censusStatus": "flat"
+    },
+    {
+     "drawOrder": 49,
+     "id": "node-red:2078efb84e380d70c958ef6796fcae8b",
+     "widgets": 95,
+     "nodes": 300,
+     "censusStatus": "flat"
+    }
+   ],
+   "populationNodeRed": {
+    "ui>=10": {
+     "nodeRedItems": 45,
+     "withWidgets": 19,
+     "censusRefused": 2,
+     "explainedByCensus": 17
+    },
+    "ui>=20": {
+     "nodeRedItems": 45,
+     "withWidgets": 16,
+     "censusRefused": 2,
+     "explainedByCensus": 14
+    },
+    "ui>=30": {
+     "nodeRedItems": 45,
+     "withWidgets": 15,
+     "censusRefused": 1,
+     "explainedByCensus": 14
+    }
+   },
+   "automationCSampleSize": 3,
+   "automationCPopulation": 181,
+   "nodeRedItemsInAutomationC": 24
+  }
+ },
+ "itemLevel": {
+  "explainedAgreementStrict": {
+   "agree": 57,
+   "of": 60,
+   "share": 0.95
+  },
+  "explainedAgreementLenient": {
+   "agree": 58,
+   "of": 60,
+   "share": 0.967
+  },
+  "table": {
+   "bothExplained": 55,
+   "bothUnexplained": 2,
+   "censusExplainedBlindNot": 3,
+   "censusRefusedBlindExplained": 0
+  },
+  "partlyItems": [
+   54
+  ],
+  "patternSetExactMatch": 6,
+  "meanJaccardDetectorVsBlind": 0.396,
+  "itemsWithAnyDetectorPairAdjudicatedNo": 36,
+  "itemsWithAnyBlindOnlyPattern": 36
+ },
+ "l0Agreement": {
+  "if": {
+   "bothYes": 10,
+   "blindOnly": 20,
+   "detectorOnly": 0,
+   "bothNo": 30,
+   "agreement": 0.667,
+   "kappa": 0.333
+  },
+  "guard": {
+   "bothYes": 1,
+   "blindOnly": 9,
+   "detectorOnly": 3,
+   "bothNo": 47,
+   "agreement": 0.8,
+   "kappa": 0.053
+  },
+  "judge": {
+   "bothYes": 2,
+   "blindOnly": 11,
+   "detectorOnly": 1,
+   "bothNo": 46,
+   "agreement": 0.8,
+   "kappa": 0.184
+  },
+  "input": {
+   "bothYes": 21,
+   "blindOnly": 39,
+   "detectorOnly": 0,
+   "bothNo": 0,
+   "agreement": 0.35,
+   "kappa": 0
+  }
+ },
+ "rulePrecision": {
+  "all": {
+   "pairs": 222,
+   "yes": 119,
+   "partly": 49,
+   "no": 54,
+   "items": 53,
+   "precision": 0.646,
+   "wilson95": [
+    0.582,
+    0.706
+   ],
+   "clusterBootstrap95": [
+    0.61,
+    0.685
+   ],
+   "weightedPrecision": 0.653
+  },
+  "nodeRuleAndToken": {
+   "pairs": 168,
+   "yes": 100,
+   "partly": 46,
+   "no": 22,
+   "items": 50,
+   "precision": 0.732,
+   "wilson95": [
+    0.661,
+    0.793
+   ],
+   "clusterBootstrap95": [
+    0.689,
+    0.778
+   ],
+   "weightedPrecision": 0.719
+  },
+  "supportOnlyPlumbing": {
+   "pairs": 54,
+   "yes": 19,
+   "partly": 3,
+   "no": 32,
+   "items": 37,
+   "precision": 0.38,
+   "wilson95": [
+    0.262,
+    0.513
+   ],
+   "clusterBootstrap95": [
+    0.261,
+    0.508
+   ],
+   "weightedPrecision": 0.465
+  },
+  "decisionL1a": {
+   "rule": "rule precision (yes + partly/2) >= 0.85 with Wilson lower bound >= 0.75; detector with precision < 0.5 removed; falsifier precision < 0.75",
+   "allPairs": {
+    "pairs": 222,
+    "yes": 119,
+    "partly": 49,
+    "no": 54,
+    "items": 53,
+    "precision": 0.646,
+    "wilson95": [
+     0.582,
+     0.706
+    ],
+    "clusterBootstrap95": [
+     0.61,
+     0.685
+    ],
+    "weightedPrecision": 0.653,
+    "pass": false
+   },
+   "nodeRuleAndToken": {
+    "pairs": 168,
+    "yes": 100,
+    "partly": 46,
+    "no": 22,
+    "items": 50,
+    "precision": 0.732,
+    "wilson95": [
+     0.661,
+     0.793
+    ],
+    "clusterBootstrap95": [
+     0.689,
+     0.778
+    ],
+    "weightedPrecision": 0.719,
+    "pass": false
+   },
+   "supportOnly": {
+    "pairs": 54,
+    "yes": 19,
+    "partly": 3,
+    "no": 32,
+    "items": 37,
+    "precision": 0.38,
+    "wilson95": [
+     0.262,
+     0.513
+    ],
+    "clusterBootstrap95": [
+     0.261,
+     0.508
+    ],
+    "weightedPrecision": 0.465,
+    "pass": false
+   }
+  }
+ },
+ "recall": {
+  "blindPairs": 165,
+  "detectedOfBlind": 100,
+  "recallVsBlind": 0.606,
+  "recallVsBlindWilson95": [
+   0.53,
+   0.677
+  ],
+  "adjudicatedTruth": 208.5,
+  "recallAdjudicated": 0.688,
+  "missedSubstituted": 39,
+  "missedNoRule": 26
+ },
+ "perPattern": [
+  {
+   "pattern": "P01",
+   "detectorPairs": 20,
+   "yes": 15,
+   "partly": 1,
+   "no": 4,
+   "precisionAdjudicated": 0.775,
+   "precisionBlind": 0.35,
+   "blindLabelPairs": 16,
+   "detectorMissedOfBlind": 9,
+   "missedSubstituted": 7,
+   "missedNoRule": 2,
+   "recallBlind": 0.438,
+   "recallAdjudicated": 0.633
+  },
+  {
+   "pattern": "P02",
+   "detectorPairs": 8,
+   "yes": 1,
+   "partly": 0,
+   "no": 7,
+   "precisionAdjudicated": 0.125,
+   "precisionBlind": 0.125,
+   "blindLabelPairs": 2,
+   "detectorMissedOfBlind": 1,
+   "missedSubstituted": 1,
+   "missedNoRule": 0,
+   "recallBlind": 0.5,
+   "recallAdjudicated": 0.5
+  },
+  {
+   "pattern": "P03",
+   "detectorPairs": 2,
+   "yes": 0,
+   "partly": 1,
+   "no": 1,
+   "precisionAdjudicated": 0.25,
+   "precisionBlind": 0,
+   "blindLabelPairs": 0,
+   "detectorMissedOfBlind": 0,
+   "missedSubstituted": 0,
+   "missedNoRule": 0,
+   "recallBlind": null,
+   "recallAdjudicated": 1
+  },
+  {
+   "pattern": "P04",
+   "detectorPairs": 3,
+   "yes": 1,
+   "partly": 1,
+   "no": 1,
+   "precisionAdjudicated": 0.5,
+   "precisionBlind": 0.333,
+   "blindLabelPairs": 2,
+   "detectorMissedOfBlind": 1,
+   "missedSubstituted": 0,
+   "missedNoRule": 1,
+   "recallBlind": 0.5,
+   "recallAdjudicated": 0.6
+  },
+  {
+   "pattern": "P05",
+   "detectorPairs": 6,
+   "yes": 4,
+   "partly": 0,
+   "no": 2,
+   "precisionAdjudicated": 0.667,
+   "precisionBlind": 0.667,
+   "blindLabelPairs": 5,
+   "detectorMissedOfBlind": 1,
+   "missedSubstituted": 1,
+   "missedNoRule": 0,
+   "recallBlind": 0.8,
+   "recallAdjudicated": 0.8
+  },
+  {
+   "pattern": "P06",
+   "detectorPairs": 4,
+   "yes": 2,
+   "partly": 1,
+   "no": 1,
+   "precisionAdjudicated": 0.625,
+   "precisionBlind": 0.25,
+   "blindLabelPairs": 3,
+   "detectorMissedOfBlind": 2,
+   "missedSubstituted": 0,
+   "missedNoRule": 2,
+   "recallBlind": 0.333,
+   "recallAdjudicated": 0.556
+  },
+  {
+   "pattern": "P07",
+   "detectorPairs": 3,
+   "yes": 2,
+   "partly": 0,
+   "no": 1,
+   "precisionAdjudicated": 0.667,
+   "precisionBlind": 0.667,
+   "blindLabelPairs": 2,
+   "detectorMissedOfBlind": 0,
+   "missedSubstituted": 0,
+   "missedNoRule": 0,
+   "recallBlind": 1,
+   "recallAdjudicated": 1
+  },
+  {
+   "pattern": "P08",
+   "detectorPairs": 7,
+   "yes": 0,
+   "partly": 7,
+   "no": 0,
+   "precisionAdjudicated": 0.5,
+   "precisionBlind": 0.429,
+   "blindLabelPairs": 11,
+   "detectorMissedOfBlind": 8,
+   "missedSubstituted": 4,
+   "missedNoRule": 4,
+   "recallBlind": 0.273,
+   "recallAdjudicated": 0.304
+  },
+  {
+   "pattern": "P09",
+   "detectorPairs": 1,
+   "yes": 0,
+   "partly": 1,
+   "no": 0,
+   "precisionAdjudicated": 0.5,
+   "precisionBlind": 0,
+   "blindLabelPairs": 0,
+   "detectorMissedOfBlind": 0,
+   "missedSubstituted": 0,
+   "missedNoRule": 0,
+   "recallBlind": null,
+   "recallAdjudicated": 1
+  },
+  {
+   "pattern": "P10",
+   "detectorPairs": 5,
+   "yes": 4,
+   "partly": 1,
+   "no": 0,
+   "precisionAdjudicated": 0.9,
+   "precisionBlind": 0.8,
+   "blindLabelPairs": 4,
+   "detectorMissedOfBlind": 0,
+   "missedSubstituted": 0,
+   "missedNoRule": 0,
+   "recallBlind": 1,
+   "recallAdjudicated": 1
+  },
+  {
+   "pattern": "P12",
+   "detectorPairs": 4,
+   "yes": 2,
+   "partly": 2,
+   "no": 0,
+   "precisionAdjudicated": 0.75,
+   "precisionBlind": 0.75,
+   "blindLabelPairs": 16,
+   "detectorMissedOfBlind": 13,
+   "missedSubstituted": 7,
+   "missedNoRule": 6,
+   "recallBlind": 0.188,
+   "recallAdjudicated": 0.188
+  },
+  {
+   "pattern": "P13",
+   "detectorPairs": 4,
+   "yes": 1,
+   "partly": 2,
+   "no": 1,
+   "precisionAdjudicated": 0.5,
+   "precisionBlind": 0.25,
+   "blindLabelPairs": 1,
+   "detectorMissedOfBlind": 0,
+   "missedSubstituted": 0,
+   "missedNoRule": 0,
+   "recallBlind": 1,
+   "recallAdjudicated": 1
+  },
+  {
+   "pattern": "P14",
+   "detectorPairs": 10,
+   "yes": 9,
+   "partly": 1,
+   "no": 0,
+   "precisionAdjudicated": 0.95,
+   "precisionBlind": 0.7,
+   "blindLabelPairs": 9,
+   "detectorMissedOfBlind": 2,
+   "missedSubstituted": 2,
+   "missedNoRule": 0,
+   "recallBlind": 0.778,
+   "recallAdjudicated": 0.826
+  },
+  {
+   "pattern": "P15",
+   "detectorPairs": 4,
+   "yes": 0,
+   "partly": 1,
+   "no": 3,
+   "precisionAdjudicated": 0.125,
+   "precisionBlind": 0,
+   "blindLabelPairs": 5,
+   "detectorMissedOfBlind": 5,
+   "missedSubstituted": 3,
+   "missedNoRule": 2,
+   "recallBlind": 0,
+   "recallAdjudicated": 0.091
+  },
+  {
+   "pattern": "P16",
+   "detectorPairs": 1,
+   "yes": 0,
+   "partly": 1,
+   "no": 0,
+   "precisionAdjudicated": 0.5,
+   "precisionBlind": 0,
+   "blindLabelPairs": 0,
+   "detectorMissedOfBlind": 0,
+   "missedSubstituted": 0,
+   "missedNoRule": 0,
+   "recallBlind": null,
+   "recallAdjudicated": 1
+  },
+  {
+   "pattern": "P17",
+   "detectorPairs": 4,
+   "yes": 0,
+   "partly": 0,
+   "no": 4,
+   "precisionAdjudicated": 0,
+   "precisionBlind": 0,
+   "blindLabelPairs": 0,
+   "detectorMissedOfBlind": 0,
+   "missedSubstituted": 0,
+   "missedNoRule": 0,
+   "recallBlind": null,
+   "recallAdjudicated": null
+  },
+  {
+   "pattern": "P18",
+   "detectorPairs": 16,
+   "yes": 0,
+   "partly": 0,
+   "no": 16,
+   "precisionAdjudicated": 0,
+   "precisionBlind": 0,
+   "blindLabelPairs": 0,
+   "detectorMissedOfBlind": 0,
+   "missedSubstituted": 0,
+   "missedNoRule": 0,
+   "recallBlind": null,
+   "recallAdjudicated": null
+  },
+  {
+   "pattern": "P19",
+   "detectorPairs": 1,
+   "yes": 0,
+   "partly": 1,
+   "no": 0,
+   "precisionAdjudicated": 0.5,
+   "precisionBlind": 0,
+   "blindLabelPairs": 0,
+   "detectorMissedOfBlind": 0,
+   "missedSubstituted": 0,
+   "missedNoRule": 0,
+   "recallBlind": null,
+   "recallAdjudicated": 1
+  },
+  {
+   "pattern": "P20",
+   "detectorPairs": 6,
+   "yes": 2,
+   "partly": 0,
+   "no": 4,
+   "precisionAdjudicated": 0.333,
+   "precisionBlind": 0.333,
+   "blindLabelPairs": 2,
+   "detectorMissedOfBlind": 0,
+   "missedSubstituted": 0,
+   "missedNoRule": 0,
+   "recallBlind": 1,
+   "recallAdjudicated": 1
+  },
+  {
+   "pattern": "P21",
+   "detectorPairs": 3,
+   "yes": 2,
+   "partly": 0,
+   "no": 1,
+   "precisionAdjudicated": 0.667,
+   "precisionBlind": 0.333,
+   "blindLabelPairs": 1,
+   "detectorMissedOfBlind": 0,
+   "missedSubstituted": 0,
+   "missedNoRule": 0,
+   "recallBlind": 1,
+   "recallAdjudicated": 1
+  },
+  {
+   "pattern": "P25",
+   "detectorPairs": 2,
+   "yes": 2,
+   "partly": 0,
+   "no": 0,
+   "precisionAdjudicated": 1,
+   "precisionBlind": 0.5,
+   "blindLabelPairs": 2,
+   "detectorMissedOfBlind": 1,
+   "missedSubstituted": 1,
+   "missedNoRule": 0,
+   "recallBlind": 0.5,
+   "recallAdjudicated": 0.667
+  },
+  {
+   "pattern": "P26",
+   "detectorPairs": 4,
+   "yes": 4,
+   "partly": 0,
+   "no": 0,
+   "precisionAdjudicated": 1,
+   "precisionBlind": 0,
+   "blindLabelPairs": 2,
+   "detectorMissedOfBlind": 2,
+   "missedSubstituted": 0,
+   "missedNoRule": 2,
+   "recallBlind": 0,
+   "recallAdjudicated": 0.667
+  },
+  {
+   "pattern": "P27",
+   "detectorPairs": 9,
+   "yes": 6,
+   "partly": 3,
+   "no": 0,
+   "precisionAdjudicated": 0.833,
+   "precisionBlind": 0.667,
+   "blindLabelPairs": 6,
+   "detectorMissedOfBlind": 0,
+   "missedSubstituted": 0,
+   "missedNoRule": 0,
+   "recallBlind": 1,
+   "recallAdjudicated": 1
+  },
+  {
+   "pattern": "P28",
+   "detectorPairs": 1,
+   "yes": 0,
+   "partly": 1,
+   "no": 0,
+   "precisionAdjudicated": 0.5,
+   "precisionBlind": 0,
+   "blindLabelPairs": 1,
+   "detectorMissedOfBlind": 1,
+   "missedSubstituted": 0,
+   "missedNoRule": 1,
+   "recallBlind": 0,
+   "recallAdjudicated": 0.333
+  },
+  {
+   "pattern": "P29",
+   "detectorPairs": 7,
+   "yes": 6,
+   "partly": 1,
+   "no": 0,
+   "precisionAdjudicated": 0.929,
+   "precisionBlind": 0.714,
+   "blindLabelPairs": 6,
+   "detectorMissedOfBlind": 1,
+   "missedSubstituted": 0,
+   "missedNoRule": 1,
+   "recallBlind": 0.833,
+   "recallAdjudicated": 0.867
+  },
+  {
+   "pattern": "P32",
+   "detectorPairs": 4,
+   "yes": 2,
+   "partly": 1,
+   "no": 1,
+   "precisionAdjudicated": 0.625,
+   "precisionBlind": 0.75,
+   "blindLabelPairs": 5,
+   "detectorMissedOfBlind": 2,
+   "missedSubstituted": 1,
+   "missedNoRule": 1,
+   "recallBlind": 0.6,
+   "recallAdjudicated": 0.556
+  },
+  {
+   "pattern": "P33",
+   "detectorPairs": 2,
+   "yes": 0,
+   "partly": 1,
+   "no": 1,
+   "precisionAdjudicated": 0.25,
+   "precisionBlind": 0.5,
+   "blindLabelPairs": 1,
+   "detectorMissedOfBlind": 0,
+   "missedSubstituted": 0,
+   "missedNoRule": 0,
+   "recallBlind": 1,
+   "recallAdjudicated": 1
+  },
+  {
+   "pattern": "P34",
+   "detectorPairs": 4,
+   "yes": 4,
+   "partly": 0,
+   "no": 0,
+   "precisionAdjudicated": 1,
+   "precisionBlind": 0.75,
+   "blindLabelPairs": 4,
+   "detectorMissedOfBlind": 1,
+   "missedSubstituted": 0,
+   "missedNoRule": 1,
+   "recallBlind": 0.75,
+   "recallAdjudicated": 0.8
+  },
+  {
+   "pattern": "P35",
+   "detectorPairs": 2,
+   "yes": 2,
+   "partly": 0,
+   "no": 0,
+   "precisionAdjudicated": 1,
+   "precisionBlind": 0.5,
+   "blindLabelPairs": 1,
+   "detectorMissedOfBlind": 0,
+   "missedSubstituted": 0,
+   "missedNoRule": 0,
+   "recallBlind": 1,
+   "recallAdjudicated": 1
+  },
+  {
+   "pattern": "P36",
+   "detectorPairs": 2,
+   "yes": 2,
+   "partly": 0,
+   "no": 0,
+   "precisionAdjudicated": 1,
+   "precisionBlind": 1,
+   "blindLabelPairs": 2,
+   "detectorMissedOfBlind": 0,
+   "missedSubstituted": 0,
+   "missedNoRule": 0,
+   "recallBlind": 1,
+   "recallAdjudicated": 1
+  },
+  {
+   "pattern": "P37",
+   "detectorPairs": 7,
+   "yes": 1,
+   "partly": 5,
+   "no": 1,
+   "precisionAdjudicated": 0.5,
+   "precisionBlind": 0.143,
+   "blindLabelPairs": 2,
+   "detectorMissedOfBlind": 1,
+   "missedSubstituted": 1,
+   "missedNoRule": 0,
+   "recallBlind": 0.5,
+   "recallAdjudicated": 0.778
+  },
+  {
+   "pattern": "P38",
+   "detectorPairs": 8,
+   "yes": 2,
+   "partly": 4,
+   "no": 2,
+   "precisionAdjudicated": 0.5,
+   "precisionBlind": 0.5,
+   "blindLabelPairs": 9,
+   "detectorMissedOfBlind": 5,
+   "missedSubstituted": 5,
+   "missedNoRule": 0,
+   "recallBlind": 0.444,
+   "recallAdjudicated": 0.444
+  },
+  {
+   "pattern": "P40",
+   "detectorPairs": 1,
+   "yes": 1,
+   "partly": 0,
+   "no": 0,
+   "precisionAdjudicated": 1,
+   "precisionBlind": 0,
+   "blindLabelPairs": 0,
+   "detectorMissedOfBlind": 0,
+   "missedSubstituted": 0,
+   "missedNoRule": 0,
+   "recallBlind": null,
+   "recallAdjudicated": 1
+  },
+  {
+   "pattern": "P41",
+   "detectorPairs": 5,
+   "yes": 5,
+   "partly": 0,
+   "no": 0,
+   "precisionAdjudicated": 1,
+   "precisionBlind": 1,
+   "blindLabelPairs": 5,
+   "detectorMissedOfBlind": 0,
+   "missedSubstituted": 0,
+   "missedNoRule": 0,
+   "recallBlind": 1,
+   "recallAdjudicated": 1
+  },
+  {
+   "pattern": "P42",
+   "detectorPairs": 5,
+   "yes": 3,
+   "partly": 2,
+   "no": 0,
+   "precisionAdjudicated": 0.8,
+   "precisionBlind": 0.2,
+   "blindLabelPairs": 1,
+   "detectorMissedOfBlind": 0,
+   "missedSubstituted": 0,
+   "missedNoRule": 0,
+   "recallBlind": 1,
+   "recallAdjudicated": 1
+  },
+  {
+   "pattern": "P43",
+   "detectorPairs": 1,
+   "yes": 1,
+   "partly": 0,
+   "no": 0,
+   "precisionAdjudicated": 1,
+   "precisionBlind": 1,
+   "blindLabelPairs": 2,
+   "detectorMissedOfBlind": 1,
+   "missedSubstituted": 1,
+   "missedNoRule": 0,
+   "recallBlind": 0.5,
+   "recallAdjudicated": 0.5
+  },
+  {
+   "pattern": "P44",
+   "detectorPairs": 1,
+   "yes": 0,
+   "partly": 1,
+   "no": 0,
+   "precisionAdjudicated": 0.5,
+   "precisionBlind": 0,
+   "blindLabelPairs": 0,
+   "detectorMissedOfBlind": 0,
+   "missedSubstituted": 0,
+   "missedNoRule": 0,
+   "recallBlind": null,
+   "recallAdjudicated": 1
+  },
+  {
+   "pattern": "P45",
+   "detectorPairs": 12,
+   "yes": 12,
+   "partly": 0,
+   "no": 0,
+   "precisionAdjudicated": 1,
+   "precisionBlind": 1,
+   "blindLabelPairs": 13,
+   "detectorMissedOfBlind": 1,
+   "missedSubstituted": 1,
+   "missedNoRule": 0,
+   "recallBlind": 0.923,
+   "recallAdjudicated": 0.923
+  },
+  {
+   "pattern": "P47",
+   "detectorPairs": 11,
+   "yes": 7,
+   "partly": 3,
+   "no": 1,
+   "precisionAdjudicated": 0.773,
+   "precisionBlind": 0,
+   "blindLabelPairs": 1,
+   "detectorMissedOfBlind": 1,
+   "missedSubstituted": 1,
+   "missedNoRule": 0,
+   "recallBlind": 0,
+   "recallAdjudicated": 0.895
+  },
+  {
+   "pattern": "P48",
+   "detectorPairs": 1,
+   "yes": 0,
+   "partly": 1,
+   "no": 0,
+   "precisionAdjudicated": 0.5,
+   "precisionBlind": 0,
+   "blindLabelPairs": 0,
+   "detectorMissedOfBlind": 0,
+   "missedSubstituted": 0,
+   "missedNoRule": 0,
+   "recallBlind": null,
+   "recallAdjudicated": 1
+  },
+  {
+   "pattern": "P49",
+   "detectorPairs": 2,
+   "yes": 0,
+   "partly": 1,
+   "no": 1,
+   "precisionAdjudicated": 0.25,
+   "precisionBlind": 0,
+   "blindLabelPairs": 0,
+   "detectorMissedOfBlind": 0,
+   "missedSubstituted": 0,
+   "missedNoRule": 0,
+   "recallBlind": null,
+   "recallAdjudicated": 1
+  },
+  {
+   "pattern": "P51",
+   "detectorPairs": 2,
+   "yes": 2,
+   "partly": 0,
+   "no": 0,
+   "precisionAdjudicated": 1,
+   "precisionBlind": 1,
+   "blindLabelPairs": 2,
+   "detectorMissedOfBlind": 0,
+   "missedSubstituted": 0,
+   "missedNoRule": 0,
+   "recallBlind": 1,
+   "recallAdjudicated": 1
+  },
+  {
+   "pattern": "P53",
+   "detectorPairs": 1,
+   "yes": 0,
+   "partly": 0,
+   "no": 1,
+   "precisionAdjudicated": 0,
+   "precisionBlind": 0,
+   "blindLabelPairs": 0,
+   "detectorMissedOfBlind": 0,
+   "missedSubstituted": 0,
+   "missedNoRule": 0,
+   "recallBlind": null,
+   "recallAdjudicated": null
+  },
+  {
+   "pattern": "P54",
+   "detectorPairs": 7,
+   "yes": 6,
+   "partly": 1,
+   "no": 0,
+   "precisionAdjudicated": 0.929,
+   "precisionBlind": 1,
+   "blindLabelPairs": 10,
+   "detectorMissedOfBlind": 3,
+   "missedSubstituted": 0,
+   "missedNoRule": 3,
+   "recallBlind": 0.7,
+   "recallAdjudicated": 0.684
+  },
+  {
+   "pattern": "P55",
+   "detectorPairs": 5,
+   "yes": 2,
+   "partly": 3,
+   "no": 0,
+   "precisionAdjudicated": 0.7,
+   "precisionBlind": 0.8,
+   "blindLabelPairs": 7,
+   "detectorMissedOfBlind": 3,
+   "missedSubstituted": 3,
+   "missedNoRule": 0,
+   "recallBlind": 0.571,
+   "recallAdjudicated": 0.538
+  },
+  {
+   "pattern": "P56",
+   "detectorPairs": 4,
+   "yes": 4,
+   "partly": 0,
+   "no": 0,
+   "precisionAdjudicated": 1,
+   "precisionBlind": 1,
+   "blindLabelPairs": 4,
+   "detectorMissedOfBlind": 0,
+   "missedSubstituted": 0,
+   "missedNoRule": 0,
+   "recallBlind": 1,
+   "recallAdjudicated": 1
+  }
+ ],
+ "refusedItemsOutsidePatternRecall": [
+  {
+   "drawOrder": 42,
+   "id": "ag2:ag2/website/docs/user-guide/advanced-concepts/orchestration/group-chat/guardrails.mdx#support-agent-input-output-guardrails-group-chat",
+   "blindPatterns": [
+    "P48"
+   ]
+  },
+  {
+   "drawOrder": 44,
+   "id": "openai-swarm:swarm/examples/airline/configs/agents.py#airline-triage-network",
+   "blindPatterns": [
+    "P46",
+    "P45",
+    "P43"
+   ]
+  }
+ ],
+ "detectorHits": {
+  "table": {
+   "P01": {
+    "population": 758,
+    "groups": [
+     "five-most-frequent",
+     "support-only-20"
+    ],
+    "all": {
+     "judged": 20,
+     "yes": 9,
+     "partly": 9,
+     "no": 2,
+     "precision": 0.675,
+     "wilson95": [
+      0.457,
+      0.837
+     ],
+     "strictPrecision": 0.45
+    },
+    "first10": {
+     "judged": 10,
+     "yes": 5,
+     "partly": 4,
+     "no": 1,
+     "precision": 0.7,
+     "wilson95": [
+      0.397,
+      0.892
+     ],
+     "strictPrecision": 0.5
+    },
+    "exhaustive": false
+   },
+   "P02": {
+    "population": 348,
+    "groups": [
+     "five-most-frequent",
+     "support-only-20"
+    ],
+    "all": {
+     "judged": 20,
+     "yes": 3,
+     "partly": 3,
+     "no": 14,
+     "precision": 0.225,
+     "wilson95": [
+      0.096,
+      0.443
+     ],
+     "strictPrecision": 0.15
+    },
+    "first10": {
+     "judged": 10,
+     "yes": 2,
+     "partly": 2,
+     "no": 6,
+     "precision": 0.3,
+     "wilson95": [
+      0.108,
+      0.603
+     ],
+     "strictPrecision": 0.2
+    },
+    "exhaustive": false
+   },
+   "P37": {
+    "population": 282,
+    "groups": [
+     "five-most-frequent"
+    ],
+    "all": {
+     "judged": 10,
+     "yes": 2,
+     "partly": 8,
+     "no": 0,
+     "precision": 0.6,
+     "wilson95": [
+      0.313,
+      0.832
+     ],
+     "strictPrecision": 0.2
+    },
+    "first10": {
+     "judged": 10,
+     "yes": 2,
+     "partly": 8,
+     "no": 0,
+     "precision": 0.6,
+     "wilson95": [
+      0.313,
+      0.832
+     ],
+     "strictPrecision": 0.2
+    },
+    "exhaustive": false
+   },
+   "P38": {
+    "population": 252,
+    "groups": [
+     "five-most-frequent"
+    ],
+    "all": {
+     "judged": 10,
+     "yes": 8,
+     "partly": 0,
+     "no": 2,
+     "precision": 0.8,
+     "wilson95": [
+      0.49,
+      0.943
+     ],
+     "strictPrecision": 0.8
+    },
+    "first10": {
+     "judged": 10,
+     "yes": 8,
+     "partly": 0,
+     "no": 2,
+     "precision": 0.8,
+     "wilson95": [
+      0.49,
+      0.943
+     ],
+     "strictPrecision": 0.8
+    },
+    "exhaustive": false
+   },
+   "P08": {
+    "population": 229,
+    "groups": [
+     "five-most-frequent"
+    ],
+    "all": {
+     "judged": 10,
+     "yes": 7,
+     "partly": 2,
+     "no": 1,
+     "precision": 0.8,
+     "wilson95": [
+      0.49,
+      0.943
+     ],
+     "strictPrecision": 0.7
+    },
+    "first10": {
+     "judged": 10,
+     "yes": 7,
+     "partly": 2,
+     "no": 1,
+     "precision": 0.8,
+     "wilson95": [
+      0.49,
+      0.943
+     ],
+     "strictPrecision": 0.7
+    },
+    "exhaustive": false
+   },
+   "P48": {
+    "population": 6,
+    "groups": [
+     "five-rarest-nonzero"
+    ],
+    "all": {
+     "judged": 6,
+     "yes": 2,
+     "partly": 4,
+     "no": 0,
+     "precision": 0.667,
+     "wilson95": [
+      0.3,
+      0.903
+     ],
+     "strictPrecision": 0.333
+    },
+    "first10": {
+     "judged": 6,
+     "yes": 2,
+     "partly": 4,
+     "no": 0,
+     "precision": 0.667,
+     "wilson95": [
+      0.3,
+      0.903
+     ],
+     "strictPrecision": 0.333
+    },
+    "exhaustive": true
+   },
+   "P30": {
+    "population": 7,
+    "groups": [
+     "five-rarest-nonzero"
+    ],
+    "all": {
+     "judged": 7,
+     "yes": 0,
+     "partly": 0,
+     "no": 7,
+     "precision": 0,
+     "wilson95": [
+      0,
+      0.354
+     ],
+     "strictPrecision": 0
+    },
+    "first10": {
+     "judged": 7,
+     "yes": 0,
+     "partly": 0,
+     "no": 7,
+     "precision": 0,
+     "wilson95": [
+      0,
+      0.354
+     ],
+     "strictPrecision": 0
+    },
+    "exhaustive": true
+   },
+   "P49": {
+    "population": 8,
+    "groups": [
+     "five-rarest-nonzero",
+     "support-only-20"
+    ],
+    "all": {
+     "judged": 8,
+     "yes": 1,
+     "partly": 3,
+     "no": 4,
+     "precision": 0.313,
+     "wilson95": [
+      0.102,
+      0.644
+     ],
+     "strictPrecision": 0.125
+    },
+    "first10": {
+     "judged": 8,
+     "yes": 1,
+     "partly": 3,
+     "no": 4,
+     "precision": 0.313,
+     "wilson95": [
+      0.102,
+      0.644
+     ],
+     "strictPrecision": 0.125
+    },
+    "exhaustive": true
+   },
+   "P31": {
+    "population": 9,
+    "groups": [
+     "five-rarest-nonzero"
+    ],
+    "all": {
+     "judged": 9,
+     "yes": 7,
+     "partly": 1,
+     "no": 1,
+     "precision": 0.833,
+     "wilson95": [
+      0.507,
+      0.961
+     ],
+     "strictPrecision": 0.778
+    },
+    "first10": {
+     "judged": 9,
+     "yes": 7,
+     "partly": 1,
+     "no": 1,
+     "precision": 0.833,
+     "wilson95": [
+      0.507,
+      0.961
+     ],
+     "strictPrecision": 0.778
+    },
+    "exhaustive": true
+   },
+   "P22": {
+    "population": 10,
+    "groups": [
+     "five-rarest-nonzero"
+    ],
+    "all": {
+     "judged": 10,
+     "yes": 10,
+     "partly": 0,
+     "no": 0,
+     "precision": 1,
+     "wilson95": [
+      0.722,
+      1
+     ],
+     "strictPrecision": 1
+    },
+    "first10": {
+     "judged": 10,
+     "yes": 10,
+     "partly": 0,
+     "no": 0,
+     "precision": 1,
+     "wilson95": [
+      0.722,
+      1
+     ],
+     "strictPrecision": 1
+    },
+    "exhaustive": true
+   },
+   "P16": {
+    "population": 18,
+    "groups": [
+     "support-only-20"
+    ],
+    "all": {
+     "judged": 18,
+     "yes": 1,
+     "partly": 9,
+     "no": 8,
+     "precision": 0.306,
+     "wilson95": [
+      0.144,
+      0.536
+     ],
+     "strictPrecision": 0.056
+    },
+    "first10": {
+     "judged": 10,
+     "yes": 0,
+     "partly": 5,
+     "no": 5,
+     "precision": 0.25,
+     "wilson95": [
+      0.081,
+      0.558
+     ],
+     "strictPrecision": 0
+    },
+    "exhaustive": true
+   },
+   "P17": {
+    "population": 147,
+    "groups": [
+     "support-only-20"
+    ],
+    "all": {
+     "judged": 20,
+     "yes": 0,
+     "partly": 3,
+     "no": 17,
+     "precision": 0.075,
+     "wilson95": [
+      0.018,
+      0.269
+     ],
+     "strictPrecision": 0
+    },
+    "first10": {
+     "judged": 10,
+     "yes": 0,
+     "partly": 1,
+     "no": 9,
+     "precision": 0.05,
+     "wilson95": [
+      0.005,
+      0.345
+     ],
+     "strictPrecision": 0
+    },
+    "exhaustive": false
+   },
+   "P18": {
+    "population": 225,
+    "groups": [
+     "support-only-20"
+    ],
+    "all": {
+     "judged": 20,
+     "yes": 2,
+     "partly": 3,
+     "no": 15,
+     "precision": 0.175,
+     "wilson95": [
+      0.066,
+      0.389
+     ],
+     "strictPrecision": 0.1
+    },
+    "first10": {
+     "judged": 10,
+     "yes": 2,
+     "partly": 1,
+     "no": 7,
+     "precision": 0.25,
+     "wilson95": [
+      0.081,
+      0.558
+     ],
+     "strictPrecision": 0.2
+    },
+    "exhaustive": false
+   }
+  },
+  "patternsBelow50": [
+   {
+    "pattern": "P02",
+    "precision": 0.225,
+    "judged": 20
+   },
+   {
+    "pattern": "P30",
+    "precision": 0,
+    "judged": 7
+   },
+   {
+    "pattern": "P49",
+    "precision": 0.313,
+    "judged": 8
+   },
+   {
+    "pattern": "P16",
+    "precision": 0.306,
+    "judged": 18
+   },
+   {
+    "pattern": "P17",
+    "precision": 0.075,
+    "judged": 20
+   },
+   {
+    "pattern": "P18",
+    "precision": 0.175,
+    "judged": 20
+   }
+  ],
+  "removalCheck": {
+   "removedDetectors": [
+    "P02",
+    "P30",
+    "P49",
+    "P16",
+    "P17",
+    "P18"
+   ],
+   "itemsWithRemovedPatternInNeeds": 0,
+   "byPattern": {},
+   "note": "census status (flat/hier/refused) and the 5-pattern budget are computed from needs; patterns in needs that are removed would change the budget bucket"
+  },
+  "zeroHitPatterns": [
+   "P11",
+   "P23",
+   "P24",
+   "P52"
+  ],
+  "populationCounts": {
+   "P01": 758,
+   "P02": 348,
+   "P37": 282,
+   "P38": 252,
+   "P08": 229,
+   "P18": 225,
+   "P54": 221,
+   "P27": 215,
+   "P05": 212,
+   "P45": 209,
+   "P07": 193,
+   "P06": 172
+  }
+ },
+ "disagreementCounts": {
+  "detector-only": 122,
+  "both-assigned-but-adjudicated-partly": 11,
+  "blind-only-detector-substituted": 39,
+  "blind-only-detector-no-rule": 26,
+  "item-explained": 3
+ },
+ "disagreements": [
+  {
+   "type": "detector-only",
+   "drawOrder": 1,
+   "id": "n8n:4428",
+   "pattern": "P38",
+   "adjudicated": "n",
+   "reason": "evaluationTrigger feeds dataset rows to a test harness; not an event rule"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 1,
+   "id": "n8n:4428",
+   "pattern": "P06",
+   "adjudicated": "p",
+   "reason": "downloaded document is read then summarised; read-then-generate shape but no retrieval or citation"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 1,
+   "id": "n8n:4428",
+   "pattern": "P01",
+   "adjudicated": "y",
+   "reason": "webhook-set-download-extract chain of three plumbing stages exists; blind label omitted it"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 2,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/workflow-corpus-acquisition-wf_c6d2acc2-f96.js",
+   "pattern": "P13",
+   "adjudicated": "p",
+   "reason": "parallel map whose body is a research agent, not a batched typed extraction"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 2,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/workflow-corpus-acquisition-wf_c6d2acc2-f96.js",
+   "pattern": "P14",
+   "adjudicated": "y",
+   "reason": "barrier gathers the four branch results"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 2,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/workflow-corpus-acquisition-wf_c6d2acc2-f96.js",
+   "pattern": "P47",
+   "adjudicated": "p",
+   "reason": "agents write converter and checker scripts, incidental to the task"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 2,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/workflow-corpus-acquisition-wf_c6d2acc2-f96.js",
+   "pattern": "P16",
+   "adjudicated": "p",
+   "reason": "merge agent de-duplicates part files by script; keyword hit, skeleton only loosely fits"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 4,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/kev-judge-program-design-wf_0a785d94-93f.js",
+   "pattern": "P47",
+   "adjudicated": "n",
+   "reason": "agents write documents and critiques; no code-execution step is the point"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 4,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/kev-judge-program-design-wf_0a785d94-93f.js",
+   "pattern": "P18",
+   "adjudicated": "n",
+   "reason": "two different critics, not best-of-N candidates of one task"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 5,
+   "id": "apple-shortcuts:workflowllm-seed-00459",
+   "pattern": "P08",
+   "adjudicated": "p",
+   "reason": "one If gates an effect; the other ifs are branches"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 5,
+   "id": "apple-shortcuts:workflowllm-seed-00459",
+   "pattern": "P01",
+   "adjudicated": "n",
+   "reason": "three unrelated variable-setup transforms, not a pipeline"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 5,
+   "id": "apple-shortcuts:workflowllm-seed-00459",
+   "pattern": "P02",
+   "adjudicated": "n",
+   "reason": "web page fetch then image detect then run shortcut; not a sync/ETL"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 7,
+   "id": "nextflow:workflowhub/1030",
+   "pattern": "P04",
+   "adjudicated": "n",
+   "reason": "fgbio consensus caller is a bioinformatics tool tagged category model by the normaliser, not generated text"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 7,
+   "id": "nextflow:workflowhub/1030",
+   "pattern": "P07",
+   "adjudicated": "n",
+   "reason": "deepvariant is a variant caller tagged model; there is no judged classification"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 7,
+   "id": "nextflow:workflowhub/1030",
+   "pattern": "P29",
+   "adjudicated": "y",
+   "reason": "token completion-hook; Sarek has onComplete notifications (features list service:email, im-webhook), not visible as a node"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 7,
+   "id": "nextflow:workflowhub/1030",
+   "pattern": "P26",
+   "adjudicated": "y",
+   "reason": "token adaptive-retry; nf-core errorStrategy with resource escalation, not visible as a node"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 7,
+   "id": "nextflow:workflowhub/1030",
+   "pattern": "P02",
+   "adjudicated": "n",
+   "reason": "every pipeline reads and writes files; not a sync between systems"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 8,
+   "id": "gitlab-ci:gitlab.com/nvidia/container-images/cuda",
+   "pattern": "P37",
+   "adjudicated": "p",
+   "reason": "push pipeline source is an event, so P38 fits better than webhook-respond"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 8,
+   "id": "gitlab-ci:gitlab.com/nvidia/container-images/cuda",
+   "pattern": "P15",
+   "adjudicated": "n",
+   "reason": "stage barrier is ordering, not an aggregate of results"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 8,
+   "id": "gitlab-ci:gitlab.com/nvidia/container-images/cuda",
+   "pattern": "P29",
+   "adjudicated": "p",
+   "reason": "cleanup_failure jobs run only on failure (P27 fits better than always-run finally)"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 10,
+   "id": "comfyui:Jonseed-ComfyUI-Detail-Daemon-example_workflows-Z-Image-txt2img-DetailDaemon.json",
+   "pattern": "P18",
+   "adjudicated": "n",
+   "reason": "three KSampler variants feed different decoders and saves; nothing selects among candidates"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 11,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/laptop-bridge-wf_c491d61b-2c7.js",
+   "pattern": "P47",
+   "adjudicated": "y",
+   "reason": "builder writes and tests code; attacker writes and runs attack scripts"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 11,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/laptop-bridge-wf_c491d61b-2c7.js",
+   "pattern": "P18",
+   "adjudicated": "n",
+   "reason": "barrier over attack and e2e testers is not best-of-N"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 11,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/laptop-bridge-wf_c491d61b-2c7.js",
+   "pattern": "P49",
+   "adjudicated": "n",
+   "reason": "fixer reads two different reports; no independent verifiers voting"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 12,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/phase0-unblock-wf_1095386b-893.js",
+   "pattern": "P19",
+   "adjudicated": "p",
+   "reason": "shared-scratchpad token: disjoint workstreams over one working tree; the rewrite to wide is applicable but nothing is planned by a model"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 12,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/phase0-unblock-wf_1095386b-893.js",
+   "pattern": "P47",
+   "adjudicated": "p",
+   "reason": "probe and installer scripts are written and run, incidental"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 12,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/phase0-unblock-wf_1095386b-893.js",
+   "pattern": "P18",
+   "adjudicated": "n",
+   "reason": "barrier over three different workstreams is not best-of-N"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 15,
+   "id": "flowise:chatflows-local-qn-a",
+   "pattern": "P05",
+   "adjudicated": "n",
+   "reason": "chat model node is a component of the QA chain, not a second chained model step"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 15,
+   "id": "flowise:chatflows-local-qn-a",
+   "pattern": "P01",
+   "adjudicated": "y",
+   "reason": "text file, splitter, vector-store ingest chain"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 17,
+   "id": "node-red:1a43db3395478c8c30f18144f9eada82",
+   "pattern": "P37",
+   "adjudicated": "n",
+   "reason": "ui_form is a dashboard form widget; regex /form/ matched it as a webhook"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 17,
+   "id": "node-red:1a43db3395478c8c30f18144f9eada82",
+   "pattern": "P44",
+   "adjudicated": "p",
+   "reason": "stream token is the converter's blanket Node-RED note (long-lived message program); no explicit stream node"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 17,
+   "id": "node-red:1a43db3395478c8c30f18144f9eada82",
+   "pattern": "P42",
+   "adjudicated": "y",
+   "reason": "converter notes: flow/global context persistent state"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 17,
+   "id": "node-red:1a43db3395478c8c30f18144f9eada82",
+   "pattern": "P01",
+   "adjudicated": "n",
+   "reason": "function, function, debug chain; debug output is not a pipeline stage"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 20,
+   "id": "nf-core:proteogenomicsdb@1.0.0",
+   "pattern": "P26",
+   "adjudicated": "y",
+   "reason": "token adaptive-retry (nf-core errorStrategy); not visible as a node"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 20,
+   "id": "nf-core:proteogenomicsdb@1.0.0",
+   "pattern": "P01",
+   "adjudicated": "y",
+   "reason": "vcf download, check, proteinDB chain"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 20,
+   "id": "nf-core:proteogenomicsdb@1.0.0",
+   "pattern": "P17",
+   "adjudicated": "n",
+   "reason": "merge_proteindbs gathers 11 inputs; this is fan-in, not reconciliation of two sources"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 22,
+   "id": "activepieces:S0tI31TsQZvtNg5BDH1Tq",
+   "pattern": "P38",
+   "adjudicated": "p",
+   "reason": "MCP tool call with reply is a request/response trigger (P37 fits better)"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 22,
+   "id": "activepieces:S0tI31TsQZvtNg5BDH1Tq",
+   "pattern": "P04",
+   "adjudicated": "p",
+   "reason": "askAi output is stored in a table, not delivered to a person"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 22,
+   "id": "activepieces:S0tI31TsQZvtNg5BDH1Tq",
+   "pattern": "P06",
+   "adjudicated": "y",
+   "reason": "AI summaries over records fetched from calendar, mail and tables"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 22,
+   "id": "activepieces:S0tI31TsQZvtNg5BDH1Tq",
+   "pattern": "P27",
+   "adjudicated": "p",
+   "reason": "error-branch token; no handler node is visible"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 22,
+   "id": "activepieces:S0tI31TsQZvtNg5BDH1Tq",
+   "pattern": "P42",
+   "adjudicated": "p",
+   "reason": "Activepieces Tables are a persistent store, but records are created and deleted within the run"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 22,
+   "id": "activepieces:S0tI31TsQZvtNg5BDH1Tq",
+   "pattern": "P18",
+   "adjudicated": "n",
+   "reason": "reply node after two askAi steps is not best-of-N"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 23,
+   "id": "crewai:crewAI/lib/crewai/src/crewai/flow/templates/flow_definition_example.yaml#research-review-model-router-followup",
+   "pattern": "P38",
+   "adjudicated": "n",
+   "reason": "flow kickoff from a YAML definition is a manual start, not an event rule"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 23,
+   "id": "crewai:crewAI/lib/crewai/src/crewai/flow/templates/flow_definition_example.yaml#research-review-model-router-followup",
+   "pattern": "P06",
+   "adjudicated": "n",
+   "reason": "reviewer and writer read the crew output, not retrieved documents"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 24,
+   "id": "github-actions:Lightning-AI/pytorch-lightning/.github/workflows/ci-pytorch_test-slow.yml",
+   "pattern": "P37",
+   "adjudicated": "p",
+   "reason": "push and pull_request are events; P38 fits better than webhook-respond"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 24,
+   "id": "github-actions:Lightning-AI/pytorch-lightning/.github/workflows/ci-pytorch_test-slow.yml",
+   "pattern": "P01",
+   "adjudicated": "y",
+   "reason": "changed files, skip decision, setup, build chain"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 24,
+   "id": "github-actions:Lightning-AI/pytorch-lightning/.github/workflows/ci-pytorch_test-slow.yml",
+   "pattern": "P02",
+   "adjudicated": "n",
+   "reason": "setup, cache and install steps are not a data sync"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 25,
+   "id": "openai-agents:openai-agents-python/examples/memory/compaction_session_example.py",
+   "pattern": "P13",
+   "adjudicated": "n",
+   "reason": "scripted for-loop over questions with a chat agent body; not a batched typed extraction"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 25,
+   "id": "openai-agents:openai-agents-python/examples/memory/compaction_session_example.py",
+   "pattern": "P20",
+   "adjudicated": "n",
+   "reason": "the cycle is a compaction trigger on the session, not generate-verify-retry"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 25,
+   "id": "openai-agents:openai-agents-python/examples/memory/compaction_session_example.py",
+   "pattern": "P42",
+   "adjudicated": "p",
+   "reason": "session store holds turns across the loop; in-memory, so cross-run only if the session is reused"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 25,
+   "id": "openai-agents:openai-agents-python/examples/memory/compaction_session_example.py",
+   "pattern": "P18",
+   "adjudicated": "n",
+   "reason": "session node is not a best-of-N"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 26,
+   "id": "n8n:18122",
+   "pattern": "P38",
+   "adjudicated": "p",
+   "reason": "errorTrigger is an event, but P27 already owns it"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 26,
+   "id": "n8n:18122",
+   "pattern": "P01",
+   "adjudicated": "y",
+   "reason": "set, code, post chain"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 27,
+   "id": "nf-core:scrnaseq@4.2.0",
+   "pattern": "P03",
+   "adjudicated": "n",
+   "reason": "cellbender removebackground is a tool tagged model, not a model reading text"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 27,
+   "id": "nf-core:scrnaseq@4.2.0",
+   "pattern": "P26",
+   "adjudicated": "y",
+   "reason": "token adaptive-retry (nf-core errorStrategy)"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 28,
+   "id": "nextflow:workflowhub/813",
+   "pattern": "P26",
+   "adjudicated": "y",
+   "reason": "token adaptive-retry"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 29,
+   "id": "home-assistant:forum-871550",
+   "pattern": "P21",
+   "adjudicated": "n",
+   "reason": "repeat-count blink loops with delays are not poll-until-ready"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 29,
+   "id": "home-assistant:forum-871550",
+   "pattern": "P40",
+   "adjudicated": "y",
+   "reason": "run-concurrency-policy token (mode field)"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 31,
+   "id": "haystack:haystack-cookbook/notebooks/computer_use_agent_with_skills.ipynb",
+   "pattern": "P20",
+   "adjudicated": "n",
+   "reason": "router conditions inside a tool loop are not generate-verify-retry"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 31,
+   "id": "haystack:haystack-cookbook/notebooks/computer_use_agent_with_skills.ipynb",
+   "pattern": "P47",
+   "adjudicated": "y",
+   "reason": "model-written shell commands are run"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 31,
+   "id": "haystack:haystack-cookbook/notebooks/computer_use_agent_with_skills.ipynb",
+   "pattern": "P17",
+   "adjudicated": "n",
+   "reason": "agent with two read tools is not reconciliation"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 32,
+   "id": "gitlab-ci:gitlab.com/gitlab-org/gitlab-development-kit",
+   "pattern": "P37",
+   "adjudicated": "p",
+   "reason": "push pipeline source is an event (P38)"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 32,
+   "id": "gitlab-ci:gitlab.com/gitlab-org/gitlab-development-kit",
+   "pattern": "P15",
+   "adjudicated": "n",
+   "reason": "stage barriers order stages, no aggregate"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 33,
+   "id": "gitlab-ci:gitlab.com/postgres-ai/database-lab",
+   "pattern": "P37",
+   "adjudicated": "p",
+   "reason": "push pipeline source is an event (P38)"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 33,
+   "id": "gitlab-ci:gitlab.com/postgres-ai/database-lab",
+   "pattern": "P15",
+   "adjudicated": "n",
+   "reason": "stage barriers order stages, no aggregate"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 34,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/bed-audits-wf_037c2944-bb3.js",
+   "pattern": "P15",
+   "adjudicated": "p",
+   "reason": "barrier collects five reports into one array; fan-in report with no identity check"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 34,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/bed-audits-wf_037c2944-bb3.js",
+   "pattern": "P47",
+   "adjudicated": "p",
+   "reason": "auditors edit generators and run tests, incidental"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 34,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/bed-audits-wf_037c2944-bb3.js",
+   "pattern": "P18",
+   "adjudicated": "n",
+   "reason": "barrier over lanes is not best-of-N"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 35,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/design-review-c-wf_1ab0b3e4-a4d.js",
+   "pattern": "P47",
+   "adjudicated": "y",
+   "reason": "agents write benchmark scripts and a prototype and test them headless"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 35,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/design-review-c-wf_1ab0b3e4-a4d.js",
+   "pattern": "P18",
+   "adjudicated": "n",
+   "reason": "barrier over unrelated lanes is not best-of-N"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 37,
+   "id": "comfyui:Comfy-Org-workflow_templates-templates-audio_stable_audio_example.json",
+   "pattern": "P18",
+   "adjudicated": "n",
+   "reason": "single sampler; the plumbing rule fired on text encoders feeding one node"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 38,
+   "id": "galaxy:iwc/hi-c-contact-map-for-assembly-manual-curation/hi-c-map-for-assembly-manual-curation",
+   "pattern": "P08",
+   "adjudicated": "p",
+   "reason": "Filter tools select CDS and telomere rows; data filtering steps rather than a guard before an effect"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 39,
+   "id": "github-actions:quarkslab/quokka/.github/workflows/build.yml",
+   "pattern": "P37",
+   "adjudicated": "p",
+   "reason": "push and pull_request are events (P38)"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 39,
+   "id": "github-actions:quarkslab/quokka/.github/workflows/build.yml",
+   "pattern": "P27",
+   "adjudicated": "p",
+   "reason": "the handler nodes are always() stats and job-if steps; cleanup-on-failure rather than a failure route"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 39,
+   "id": "github-actions:quarkslab/quokka/.github/workflows/build.yml",
+   "pattern": "P01",
+   "adjudicated": "y",
+   "reason": "cache, setup, configure, build chain"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 39,
+   "id": "github-actions:quarkslab/quokka/.github/workflows/build.yml",
+   "pattern": "P02",
+   "adjudicated": "n",
+   "reason": "restore, fetch and save an SDK cache is caching, not a sync"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 40,
+   "id": "galaxy:workflowhub/607",
+   "pattern": "P08",
+   "adjudicated": "p",
+   "reason": "collection and row filter tools; data filtering steps"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 40,
+   "id": "galaxy:workflowhub/607",
+   "pattern": "P14",
+   "adjudicated": "y",
+   "reason": "merge collections gather parallel branches"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 41,
+   "id": "openai-agents:openai-agents-python/examples/agent_patterns/llm_as_a_judge.py",
+   "pattern": "P18",
+   "adjudicated": "n",
+   "reason": "generator and evaluator are not N candidates"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 43,
+   "id": "pydantic-graph:pydantic-ai/docs/graph.md#vending_machine",
+   "pattern": "P10",
+   "adjudicated": "p",
+   "reason": "prompts for coin and product feed a state machine rather than a menu of actions"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 45,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/kev-build-contracts-wf_dd485f40-503.js",
+   "pattern": "P47",
+   "adjudicated": "y",
+   "reason": "builder writes and tests code, reviewer seeds defects in tests"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 46,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/kev-analysis-wf_df1c3e5c-f13.js",
+   "pattern": "P47",
+   "adjudicated": "y",
+   "reason": "probe and fine-tune feasibility scripts are written and run"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 46,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/kev-analysis-wf_df1c3e5c-f13.js",
+   "pattern": "P18",
+   "adjudicated": "n",
+   "reason": "barrier over unrelated surveys is not best-of-N"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 46,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/kev-analysis-wf_df1c3e5c-f13.js",
+   "pattern": "P49",
+   "adjudicated": "p",
+   "reason": "refuter and completeness critic both review the analysis; panel without a vote"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 47,
+   "id": "apple-shortcuts:icloud-6ba47bd9ab264078895bb556c5b30204",
+   "pattern": "P12",
+   "adjudicated": "p",
+   "reason": "one repeat-count loop"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 47,
+   "id": "apple-shortcuts:icloud-6ba47bd9ab264078895bb556c5b30204",
+   "pattern": "P53",
+   "adjudicated": "n",
+   "reason": "final Run another shortcut node is not per item"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 47,
+   "id": "apple-shortcuts:icloud-6ba47bd9ab264078895bb556c5b30204",
+   "pattern": "P01",
+   "adjudicated": "y",
+   "reason": "gettext, url, HTTP GET chain"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 47,
+   "id": "apple-shortcuts:icloud-6ba47bd9ab264078895bb556c5b30204",
+   "pattern": "P02",
+   "adjudicated": "n",
+   "reason": "getmyworkflows then url then run shortcut is not a sync"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 47,
+   "id": "apple-shortcuts:icloud-6ba47bd9ab264078895bb556c5b30204",
+   "pattern": "P17",
+   "adjudicated": "n",
+   "reason": "battery, weather properties are not two record sets to reconcile"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 48,
+   "id": "comfyui:TTPlanetPig-Comfyui_TTP_Toolset-examples-LTX_2_First_Last_I2V_TTP_v1-.json",
+   "pattern": "P01",
+   "adjudicated": "p",
+   "reason": "image size and scale utility chain inside a DAG"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 48,
+   "id": "comfyui:TTPlanetPig-Comfyui_TTP_Toolset-examples-LTX_2_First_Last_I2V_TTP_v1-.json",
+   "pattern": "P02",
+   "adjudicated": "n",
+   "reason": "load image, resize, combine video is not a sync between systems"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 48,
+   "id": "comfyui:TTPlanetPig-Comfyui_TTP_Toolset-examples-LTX_2_First_Last_I2V_TTP_v1-.json",
+   "pattern": "P18",
+   "adjudicated": "n",
+   "reason": "two decoders feed one combine node; no candidates compared"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 49,
+   "id": "node-red:2078efb84e380d70c958ef6796fcae8b",
+   "pattern": "P21",
+   "adjudicated": "y",
+   "reason": "switch with delay cycle is a poll-until loop (converter notes)"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 49,
+   "id": "node-red:2078efb84e380d70c958ef6796fcae8b",
+   "pattern": "P25",
+   "adjudicated": "y",
+   "reason": "five back-edges outside loop constructs"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 49,
+   "id": "node-red:2078efb84e380d70c958ef6796fcae8b",
+   "pattern": "P34",
+   "adjudicated": "y",
+   "reason": "delay node"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 49,
+   "id": "node-red:2078efb84e380d70c958ef6796fcae8b",
+   "pattern": "P42",
+   "adjudicated": "y",
+   "reason": "converter notes: flow/global context persistent state"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 49,
+   "id": "node-red:2078efb84e380d70c958ef6796fcae8b",
+   "pattern": "P01",
+   "adjudicated": "n",
+   "reason": "function chain inside UI handlers"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 50,
+   "id": "tekton:v1/pipelineruns/beta/pipelinerun-with-matrix",
+   "pattern": "P27",
+   "adjudicated": "p",
+   "reason": "error edges lead to the finally task, so P29 describes it and P27 only loosely"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 51,
+   "id": "apple-shortcuts:workflowllm-seed-07479",
+   "pattern": "P32",
+   "adjudicated": "n",
+   "reason": "anchors are file pickers and an ask; no approval gate before an effect is visible"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 51,
+   "id": "apple-shortcuts:workflowllm-seed-07479",
+   "pattern": "P08",
+   "adjudicated": "p",
+   "reason": "a single If guards an effect"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 51,
+   "id": "apple-shortcuts:workflowllm-seed-07479",
+   "pattern": "P01",
+   "adjudicated": "n",
+   "reason": "three consecutive device-detail queries are not a pipeline"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 51,
+   "id": "apple-shortcuts:workflowllm-seed-07479",
+   "pattern": "P02",
+   "adjudicated": "n",
+   "reason": "device details, hash, create folder is not a sync"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 51,
+   "id": "apple-shortcuts:workflowllm-seed-07479",
+   "pattern": "P17",
+   "adjudicated": "n",
+   "reason": "device-detail reads are not two record sets"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 52,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/beds-tier-a-wf_7c3e2774-94f.js",
+   "pattern": "P13",
+   "adjudicated": "p",
+   "reason": "pipeline() map over 8 families with agent bodies, not a typed extraction"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 52,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/beds-tier-a-wf_7c3e2774-94f.js",
+   "pattern": "P14",
+   "adjudicated": "p",
+   "reason": "result array of independent audits; P14 fits loosely"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 52,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/beds-tier-a-wf_7c3e2774-94f.js",
+   "pattern": "P47",
+   "adjudicated": "y",
+   "reason": "builders write generators, oracles and tests"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 54,
+   "id": "metagpt:MetaGPT/examples/werewolf_game/start_game.py#moderator-driven-werewolf-game",
+   "pattern": "P20",
+   "adjudicated": "n",
+   "reason": "speak/act cycles inside a game loop are not generate-verify-retry"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 54,
+   "id": "metagpt:MetaGPT/examples/werewolf_game/start_game.py#moderator-driven-werewolf-game",
+   "pattern": "P55",
+   "adjudicated": "p",
+   "reason": "optional human seat reads a typed line"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 54,
+   "id": "metagpt:MetaGPT/examples/werewolf_game/start_game.py#moderator-driven-werewolf-game",
+   "pattern": "P18",
+   "adjudicated": "n",
+   "reason": "moderator parse after player actions is not best-of-N"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 56,
+   "id": "comfyui:xxyQwQ-ComfyBench-dataset-benchmark-workflow-001.json",
+   "pattern": "P18",
+   "adjudicated": "n",
+   "reason": "single sampler; text encoders feeding one node"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 57,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/c0-preflight-wf_d35b46dd-974.js",
+   "pattern": "P47",
+   "adjudicated": "y",
+   "reason": "agents write drivers and execute live sessions and artefacts"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 57,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/c0-preflight-wf_d35b46dd-974.js",
+   "pattern": "P18",
+   "adjudicated": "n",
+   "reason": "barrier over smokes and a review is not best-of-N"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 58,
+   "id": "anthropic:claude-agent-sdk-python/examples/tool_permission_callback.py",
+   "pattern": "P20",
+   "adjudicated": "n",
+   "reason": "callback inside a tool loop is not generate-verify-retry"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 58,
+   "id": "anthropic:claude-agent-sdk-python/examples/tool_permission_callback.py",
+   "pattern": "P09",
+   "adjudicated": "p",
+   "reason": "rule callback then human prompt for undecided calls has the escalate shape, but the decider is code, not a judge"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 58,
+   "id": "anthropic:claude-agent-sdk-python/examples/tool_permission_callback.py",
+   "pattern": "P28",
+   "adjudicated": "p",
+   "reason": "denial text is returned to the model and the run continues; a fallback path of sorts"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 58,
+   "id": "anthropic:claude-agent-sdk-python/examples/tool_permission_callback.py",
+   "pattern": "P35",
+   "adjudicated": "y",
+   "reason": "interrupt-resume token"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 58,
+   "id": "anthropic:claude-agent-sdk-python/examples/tool_permission_callback.py",
+   "pattern": "P48",
+   "adjudicated": "p",
+   "reason": "permission callback blocks calls inline rather than as a parallel tripwire"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 59,
+   "id": "flowise:chatflows-sql-db-chain",
+   "pattern": "P05",
+   "adjudicated": "n",
+   "reason": "ChatOpenAI feeds SqlDatabaseChain; one model plus a chain wrapper, not a prompt chain"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 60,
+   "id": "n8n:3840",
+   "pattern": "P03",
+   "adjudicated": "p",
+   "reason": "structured parser then set; an extraction-like step but not reading documents"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 60,
+   "id": "n8n:3840",
+   "pattern": "P33",
+   "adjudicated": "n",
+   "reason": "wait resume=timeInterval is a delay, the regex matched 'resume'"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 60,
+   "id": "n8n:3840",
+   "pattern": "P01",
+   "adjudicated": "y",
+   "reason": "http, set, graph api chain"
+  },
+  {
+   "type": "detector-only",
+   "drawOrder": 60,
+   "id": "n8n:3840",
+   "pattern": "P18",
+   "adjudicated": "n",
+   "reason": "model nodes are provider sub-nodes of chains"
+  },
+  {
+   "type": "both-assigned-but-adjudicated-partly",
+   "drawOrder": 5,
+   "id": "apple-shortcuts:workflowllm-seed-00459",
+   "pattern": "P55",
+   "adjudicated": "p",
+   "reason": "Ask-for-input nodes exist (11) but the anchors shown are barcode and photo capture"
+  },
+  {
+   "type": "both-assigned-but-adjudicated-partly",
+   "drawOrder": 7,
+   "id": "nextflow:workflowhub/1030",
+   "pattern": "P08",
+   "adjudicated": "p",
+   "reason": "channel .branch routes streams by field (interval or not); closer to L0 if than to a filter-before-effect"
+  },
+  {
+   "type": "both-assigned-but-adjudicated-partly",
+   "drawOrder": 8,
+   "id": "gitlab-ci:gitlab.com/nvidia/container-images/cuda",
+   "pattern": "P54",
+   "adjudicated": "p",
+   "reason": "flow-size token (901 jobs); trigger-stage jobs may be child pipelines but the summaries do not say so"
+  },
+  {
+   "type": "both-assigned-but-adjudicated-partly",
+   "drawOrder": 17,
+   "id": "node-red:1a43db3395478c8c30f18144f9eada82",
+   "pattern": "P38",
+   "adjudicated": "p",
+   "reason": "dashboard widget events trigger handlers; closer to a UI event than an automation event rule"
+  },
+  {
+   "type": "both-assigned-but-adjudicated-partly",
+   "drawOrder": 27,
+   "id": "nf-core:scrnaseq@4.2.0",
+   "pattern": "P08",
+   "adjudicated": "p",
+   "reason": "channel .branch routes by protocol; closer to L0 if"
+  },
+  {
+   "type": "both-assigned-but-adjudicated-partly",
+   "drawOrder": 28,
+   "id": "nextflow:workflowhub/813",
+   "pattern": "P08",
+   "adjudicated": "p",
+   "reason": "channel .branch operators route streams, closer to L0 if"
+  },
+  {
+   "type": "both-assigned-but-adjudicated-partly",
+   "drawOrder": 29,
+   "id": "home-assistant:forum-871550",
+   "pattern": "P33",
+   "adjudicated": "p",
+   "reason": "4 wait_for_trigger nodes are right, but the rule also assigned 9 plain delay nodes to P33"
+  },
+  {
+   "type": "both-assigned-but-adjudicated-partly",
+   "drawOrder": 29,
+   "id": "home-assistant:forum-871550",
+   "pattern": "P12",
+   "adjudicated": "p",
+   "reason": "repeat-count loops and one for_each; bounded loops rather than map-reduce"
+  },
+  {
+   "type": "both-assigned-but-adjudicated-partly",
+   "drawOrder": 47,
+   "id": "apple-shortcuts:icloud-6ba47bd9ab264078895bb556c5b30204",
+   "pattern": "P32",
+   "adjudicated": "p",
+   "reason": "an alert then a branch precedes some effects; a confirm gate is plausible but only one anchor"
+  },
+  {
+   "type": "both-assigned-but-adjudicated-partly",
+   "drawOrder": 49,
+   "id": "node-red:2078efb84e380d70c958ef6796fcae8b",
+   "pattern": "P38",
+   "adjudicated": "p",
+   "reason": "ui_text_input and ui_button widget events; dashboard rather than automation rule"
+  },
+  {
+   "type": "both-assigned-but-adjudicated-partly",
+   "drawOrder": 51,
+   "id": "apple-shortcuts:workflowllm-seed-07479",
+   "pattern": "P55",
+   "adjudicated": "p",
+   "reason": "5 Ask-for-input nodes are right; the other 9 anchors are documentpicker file reads"
+  },
+  {
+   "type": "blind-only-detector-substituted",
+   "drawOrder": 2,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/workflow-corpus-acquisition-wf_c6d2acc2-f96.js",
+   "pattern": "P12",
+   "adjudicated": "m",
+   "reason": "literal table mapped to workers; P13 and P12 are both defensible for this loop"
+  },
+  {
+   "type": "blind-only-detector-substituted",
+   "drawOrder": 2,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/workflow-corpus-acquisition-wf_c6d2acc2-f96.js",
+   "pattern": "P15",
+   "adjudicated": "m",
+   "reason": "merge agent combines the four reports; detector chose P14 for the barrier"
+  },
+  {
+   "type": "blind-only-detector-no-rule",
+   "drawOrder": 3,
+   "id": "airflow:apache-airflow-providers-amazon/tests/system/amazon/aws/example_eks_with_nodegroups#example_eks_with_nodegroups",
+   "pattern": "P29",
+   "adjudicated": "M",
+   "reason": "trigger_rule=all_done teardown chain; node categories are wait/action so the error-handler rule cannot see it"
+  },
+  {
+   "type": "blind-only-detector-no-rule",
+   "drawOrder": 3,
+   "id": "airflow:apache-airflow-providers-amazon/tests/system/amazon/aws/example_eks_with_nodegroups#example_eks_with_nodegroups",
+   "pattern": "P01",
+   "adjudicated": "M",
+   "reason": "setup, wait, pod, teardown chain; chain nodes are wait/code categories so the plumbing detector misses it"
+  },
+  {
+   "type": "blind-only-detector-substituted",
+   "drawOrder": 4,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/kev-judge-program-design-wf_0a785d94-93f.js",
+   "pattern": "P01",
+   "adjudicated": "m",
+   "reason": "design, critics, revise is a staged chain; P14 already captures the middle"
+  },
+  {
+   "type": "blind-only-detector-substituted",
+   "drawOrder": 5,
+   "id": "apple-shortcuts:workflowllm-seed-00459",
+   "pattern": "P32",
+   "adjudicated": "m",
+   "reason": "alert plus two-option menu precede payment actions; plausible but not visible in the summary"
+  },
+  {
+   "type": "blind-only-detector-substituted",
+   "drawOrder": 6,
+   "id": "coze:query-types-llm-intent-http-nodes",
+   "pattern": "P01",
+   "adjudicated": "m",
+   "reason": "entry, code, intent, http chain; the model node breaks the plumbing-only chain rule"
+  },
+  {
+   "type": "blind-only-detector-no-rule",
+   "drawOrder": 7,
+   "id": "nextflow:workflowhub/1030",
+   "pattern": "P54",
+   "adjudicated": "M",
+   "reason": "features report 90 subworkflows but the graph is flattened, so the subworkflow rule has no node"
+  },
+  {
+   "type": "blind-only-detector-substituted",
+   "drawOrder": 7,
+   "id": "nextflow:workflowhub/1030",
+   "pattern": "P12",
+   "adjudicated": "m",
+   "reason": "per-sample and per-interval scatter is implicit in channels"
+  },
+  {
+   "type": "blind-only-detector-substituted",
+   "drawOrder": 7,
+   "id": "nextflow:workflowhub/1030",
+   "pattern": "P14",
+   "adjudicated": "m",
+   "reason": "scatter to callers then gather is implicit in channels"
+  },
+  {
+   "type": "blind-only-detector-substituted",
+   "drawOrder": 8,
+   "id": "gitlab-ci:gitlab.com/nvidia/container-images/cuda",
+   "pattern": "P38",
+   "adjudicated": "m",
+   "reason": "push source with rules; detector chose P37"
+  },
+  {
+   "type": "blind-only-detector-substituted",
+   "drawOrder": 8,
+   "id": "gitlab-ci:gitlab.com/nvidia/container-images/cuda",
+   "pattern": "P08",
+   "adjudicated": "m",
+   "reason": "rules on every job are guards before effects; detector has no rule for CI job rules"
+  },
+  {
+   "type": "blind-only-detector-substituted",
+   "drawOrder": 11,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/laptop-bridge-wf_c491d61b-2c7.js",
+   "pattern": "P01",
+   "adjudicated": "m",
+   "reason": "build, parallel checks, fix, verify chain; P14 covers the middle"
+  },
+  {
+   "type": "blind-only-detector-substituted",
+   "drawOrder": 14,
+   "id": "airflow:apache-airflow-providers-common-ai/src/airflow/providers/common/ai/example_dags/example_agent#example_agent_structured_output",
+   "pattern": "P45",
+   "adjudicated": "m",
+   "reason": "single agent operator; P45 only if the agent has tools, which the summary does not show"
+  },
+  {
+   "type": "blind-only-detector-substituted",
+   "drawOrder": 15,
+   "id": "flowise:chatflows-local-qn-a",
+   "pattern": "P43",
+   "adjudicated": "m",
+   "reason": "conversational retrieval chain implies chat memory, not visible in the summaries"
+  },
+  {
+   "type": "blind-only-detector-no-rule",
+   "drawOrder": 16,
+   "id": "galaxy:iwc/annotation-maker/Genome_annotation_with_maker_short",
+   "pattern": "P01",
+   "adjudicated": "M",
+   "reason": "maker feeds gffread then busco; the chain rule requires out-degree 1, so a branching spine is missed"
+  },
+  {
+   "type": "blind-only-detector-substituted",
+   "drawOrder": 17,
+   "id": "node-red:1a43db3395478c8c30f18144f9eada82",
+   "pattern": "P55",
+   "adjudicated": "m",
+   "reason": "ui_form inputs are ask-validate-use, detector read them as webhooks"
+  },
+  {
+   "type": "blind-only-detector-no-rule",
+   "drawOrder": 18,
+   "id": "cwl:EBI-Metagenomics/pipeline-v5/workflows/amplicon-wf--v.5-cond.cwl",
+   "pattern": "P12",
+   "adjudicated": "M",
+   "reason": "steps tagged [scatter] have no rule in the detector (action nodes are not control nodes)"
+  },
+  {
+   "type": "blind-only-detector-no-rule",
+   "drawOrder": 18,
+   "id": "cwl:EBI-Metagenomics/pipeline-v5/workflows/amplicon-wf--v.5-cond.cwl",
+   "pattern": "P08",
+   "adjudicated": "M",
+   "reason": "steps tagged [when] have no rule in the detector"
+  },
+  {
+   "type": "blind-only-detector-no-rule",
+   "drawOrder": 19,
+   "id": "langgraph:langgraph/docs/docs/tutorials/reflexion/reflexion.ipynb",
+   "pattern": "P06",
+   "adjudicated": "M",
+   "reason": "search tool node feeds the revisor; the tool node has effects external so the read-then-model rule did not fire"
+  },
+  {
+   "type": "blind-only-detector-no-rule",
+   "drawOrder": 20,
+   "id": "nf-core:proteogenomicsdb@1.0.0",
+   "pattern": "P08",
+   "adjudicated": "M",
+   "reason": "processes tagged when: have no rule (action nodes are not control nodes)"
+  },
+  {
+   "type": "blind-only-detector-no-rule",
+   "drawOrder": 20,
+   "id": "nf-core:proteogenomicsdb@1.0.0",
+   "pattern": "P15",
+   "adjudicated": "M",
+   "reason": "merge_proteindbs has 11 predecessors; the wide-fan-in rule needs a merge-category node"
+  },
+  {
+   "type": "blind-only-detector-substituted",
+   "drawOrder": 20,
+   "id": "nf-core:proteogenomicsdb@1.0.0",
+   "pattern": "P02",
+   "adjudicated": "m",
+   "reason": "downloads, conversions, merged database written out; ETL-like but not a sync between systems"
+  },
+  {
+   "type": "blind-only-detector-substituted",
+   "drawOrder": 22,
+   "id": "activepieces:S0tI31TsQZvtNg5BDH1Tq",
+   "pattern": "P37",
+   "adjudicated": "m",
+   "reason": "MCP tool trigger with reply_to_mcp_client; detector chose P38"
+  },
+  {
+   "type": "blind-only-detector-substituted",
+   "drawOrder": 22,
+   "id": "activepieces:S0tI31TsQZvtNg5BDH1Tq",
+   "pattern": "P05",
+   "adjudicated": "m",
+   "reason": "three askAi steps in sequence; detector chose P06 and P04"
+  },
+  {
+   "type": "blind-only-detector-substituted",
+   "drawOrder": 24,
+   "id": "github-actions:Lightning-AI/pytorch-lightning/.github/workflows/ci-pytorch_test-slow.yml",
+   "pattern": "P38",
+   "adjudicated": "m",
+   "reason": "push/PR event with job-if guards; detector chose P37"
+  },
+  {
+   "type": "blind-only-detector-no-rule",
+   "drawOrder": 24,
+   "id": "github-actions:Lightning-AI/pytorch-lightning/.github/workflows/ci-pytorch_test-slow.yml",
+   "pattern": "P08",
+   "adjudicated": "M",
+   "reason": "skip decision and step-level ifs; no detector rule for step ifs"
+  },
+  {
+   "type": "blind-only-detector-no-rule",
+   "drawOrder": 24,
+   "id": "github-actions:Lightning-AI/pytorch-lightning/.github/workflows/ci-pytorch_test-slow.yml",
+   "pattern": "P12",
+   "adjudicated": "M",
+   "reason": "job matrix is in the summary only"
+  },
+  {
+   "type": "blind-only-detector-no-rule",
+   "drawOrder": 26,
+   "id": "n8n:18122",
+   "pattern": "P28",
+   "adjudicated": "M",
+   "reason": "second branch posts to Discord after the Slack post; the handler-rejoins rule did not fire"
+  },
+  {
+   "type": "blind-only-detector-substituted",
+   "drawOrder": 27,
+   "id": "nf-core:scrnaseq@4.2.0",
+   "pattern": "P12",
+   "adjudicated": "m",
+   "reason": "per-sample channels are implicit"
+  },
+  {
+   "type": "blind-only-detector-no-rule",
+   "drawOrder": 27,
+   "id": "nf-core:scrnaseq@4.2.0",
+   "pattern": "P15",
+   "adjudicated": "M",
+   "reason": "multiqc gathers all samples; no merge-category node, so the fan-in rule missed it"
+  },
+  {
+   "type": "blind-only-detector-no-rule",
+   "drawOrder": 27,
+   "id": "nf-core:scrnaseq@4.2.0",
+   "pattern": "P54",
+   "adjudicated": "M",
+   "reason": "features report 17 subworkflows but the graph is flat"
+  },
+  {
+   "type": "blind-only-detector-substituted",
+   "drawOrder": 28,
+   "id": "nextflow:workflowhub/813",
+   "pattern": "P12",
+   "adjudicated": "m",
+   "reason": "per-sample channels implicit"
+  },
+  {
+   "type": "blind-only-detector-no-rule",
+   "drawOrder": 28,
+   "id": "nextflow:workflowhub/813",
+   "pattern": "P54",
+   "adjudicated": "M",
+   "reason": "features report 32 subworkflows but the graph is flat"
+  },
+  {
+   "type": "blind-only-detector-substituted",
+   "drawOrder": 32,
+   "id": "gitlab-ci:gitlab.com/gitlab-org/gitlab-development-kit",
+   "pattern": "P38",
+   "adjudicated": "m",
+   "reason": "push source with rules; detector chose P37"
+  },
+  {
+   "type": "blind-only-detector-substituted",
+   "drawOrder": 32,
+   "id": "gitlab-ci:gitlab.com/gitlab-org/gitlab-development-kit",
+   "pattern": "P08",
+   "adjudicated": "m",
+   "reason": "rules on every job; no detector rule for job rules"
+  },
+  {
+   "type": "blind-only-detector-no-rule",
+   "drawOrder": 32,
+   "id": "gitlab-ci:gitlab.com/gitlab-org/gitlab-development-kit",
+   "pattern": "P12",
+   "adjudicated": "M",
+   "reason": "jobs tagged parallel:matrix; the tag is in the summary only"
+  },
+  {
+   "type": "blind-only-detector-no-rule",
+   "drawOrder": 32,
+   "id": "gitlab-ci:gitlab.com/gitlab-org/gitlab-development-kit",
+   "pattern": "P26",
+   "adjudicated": "M",
+   "reason": "jobs tagged retry; the tag is in the summary only"
+  },
+  {
+   "type": "blind-only-detector-substituted",
+   "drawOrder": 33,
+   "id": "gitlab-ci:gitlab.com/postgres-ai/database-lab",
+   "pattern": "P38",
+   "adjudicated": "m",
+   "reason": "push source with rules; detector chose P37"
+  },
+  {
+   "type": "blind-only-detector-substituted",
+   "drawOrder": 33,
+   "id": "gitlab-ci:gitlab.com/postgres-ai/database-lab",
+   "pattern": "P08",
+   "adjudicated": "m",
+   "reason": "rules on 80 test jobs; no detector rule for job rules"
+  },
+  {
+   "type": "blind-only-detector-substituted",
+   "drawOrder": 34,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/bed-audits-wf_037c2944-bb3.js",
+   "pattern": "P14",
+   "adjudicated": "m",
+   "reason": "two parallel lanes then gather; detector chose P15"
+  },
+  {
+   "type": "blind-only-detector-substituted",
+   "drawOrder": 34,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/bed-audits-wf_037c2944-bb3.js",
+   "pattern": "P01",
+   "adjudicated": "m",
+   "reason": "each lane walks beds in sequence"
+  },
+  {
+   "type": "blind-only-detector-substituted",
+   "drawOrder": 39,
+   "id": "github-actions:quarkslab/quokka/.github/workflows/build.yml",
+   "pattern": "P38",
+   "adjudicated": "m",
+   "reason": "push/PR event with job-if guards; detector chose P37"
+  },
+  {
+   "type": "blind-only-detector-no-rule",
+   "drawOrder": 39,
+   "id": "github-actions:quarkslab/quokka/.github/workflows/build.yml",
+   "pattern": "P12",
+   "adjudicated": "M",
+   "reason": "job matrix is in the summary only"
+  },
+  {
+   "type": "blind-only-detector-no-rule",
+   "drawOrder": 39,
+   "id": "github-actions:quarkslab/quokka/.github/workflows/build.yml",
+   "pattern": "P08",
+   "adjudicated": "M",
+   "reason": "step ifs on cache hits; no detector rule for step ifs"
+  },
+  {
+   "type": "blind-only-detector-substituted",
+   "drawOrder": 40,
+   "id": "galaxy:workflowhub/607",
+   "pattern": "P12",
+   "adjudicated": "m",
+   "reason": "collection mapping per sample is implicit"
+  },
+  {
+   "type": "blind-only-detector-substituted",
+   "drawOrder": 40,
+   "id": "galaxy:workflowhub/607",
+   "pattern": "P15",
+   "adjudicated": "m",
+   "reason": "collapse collections builds the combined MAF; detector chose P14"
+  },
+  {
+   "type": "blind-only-detector-substituted",
+   "drawOrder": 43,
+   "id": "pydantic-graph:pydantic-ai/docs/graph.md#vending_machine",
+   "pattern": "P55",
+   "adjudicated": "m",
+   "reason": "console prompts for coin and product are ask-use; the rule saw 'select' and chose menu"
+  },
+  {
+   "type": "blind-only-detector-substituted",
+   "drawOrder": 45,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/kev-build-contracts-wf_dd485f40-503.js",
+   "pattern": "P01",
+   "adjudicated": "m",
+   "reason": "builder, reviewer, fixer chain of three model-category agent nodes; the plumbing chain rule needs plumbing-category nodes"
+  },
+  {
+   "type": "blind-only-detector-substituted",
+   "drawOrder": 46,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/kev-analysis-wf_df1c3e5c-f13.js",
+   "pattern": "P01",
+   "adjudicated": "m",
+   "reason": "survey, synthesise, critique, revise chain"
+  },
+  {
+   "type": "blind-only-detector-substituted",
+   "drawOrder": 49,
+   "id": "node-red:2078efb84e380d70c958ef6796fcae8b",
+   "pattern": "P55",
+   "adjudicated": "m",
+   "reason": "ui_text_input widgets are ask-use; the rule saw them as event triggers"
+  },
+  {
+   "type": "blind-only-detector-no-rule",
+   "drawOrder": 50,
+   "id": "tekton:v1/pipelineruns/beta/pipelinerun-with-matrix",
+   "pattern": "P12",
+   "adjudicated": "M",
+   "reason": "matrix fan-out is in the summary only"
+  },
+  {
+   "type": "blind-only-detector-no-rule",
+   "drawOrder": 50,
+   "id": "tekton:v1/pipelineruns/beta/pipelinerun-with-matrix",
+   "pattern": "P26",
+   "adjudicated": "M",
+   "reason": "retries=1 is in the summary only"
+  },
+  {
+   "type": "blind-only-detector-substituted",
+   "drawOrder": 52,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/beds-tier-a-wf_7c3e2774-94f.js",
+   "pattern": "P12",
+   "adjudicated": "m",
+   "reason": "literal list of 8 families mapped; detector chose P13"
+  },
+  {
+   "type": "blind-only-detector-substituted",
+   "drawOrder": 52,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/beds-tier-a-wf_7c3e2774-94f.js",
+   "pattern": "P01",
+   "adjudicated": "m",
+   "reason": "build then audit per family"
+  },
+  {
+   "type": "blind-only-detector-substituted",
+   "drawOrder": 54,
+   "id": "metagpt:MetaGPT/examples/werewolf_game/start_game.py#moderator-driven-werewolf-game",
+   "pattern": "P25",
+   "adjudicated": "m",
+   "reason": "19-step scripted table with a win check; detector chose P20 for the cycle"
+  },
+  {
+   "type": "blind-only-detector-substituted",
+   "drawOrder": 54,
+   "id": "metagpt:MetaGPT/examples/werewolf_game/start_game.py#moderator-driven-werewolf-game",
+   "pattern": "P12",
+   "adjudicated": "m",
+   "reason": "per-player actions in a round"
+  },
+  {
+   "type": "blind-only-detector-no-rule",
+   "drawOrder": 54,
+   "id": "metagpt:MetaGPT/examples/werewolf_game/start_game.py#moderator-driven-werewolf-game",
+   "pattern": "P06",
+   "adjudicated": "M",
+   "reason": "RetrieveExperiences vector search feeds Speak and Hunt; the read-then-model rule did not fire"
+  },
+  {
+   "type": "blind-only-detector-no-rule",
+   "drawOrder": 55,
+   "id": "wdl:github.com/MethodsDev/LongReadAlignmentAssembler/LRAA-cell_cluster_guided:main",
+   "pattern": "P12",
+   "adjudicated": "M",
+   "reason": "chunk scatter has no rule (WDL tasks are action nodes)"
+  },
+  {
+   "type": "blind-only-detector-substituted",
+   "drawOrder": 55,
+   "id": "wdl:github.com/MethodsDev/LongReadAlignmentAssembler/LRAA-cell_cluster_guided:main",
+   "pattern": "P15",
+   "adjudicated": "m",
+   "reason": "merge tasks gather the shard outputs"
+  },
+  {
+   "type": "blind-only-detector-no-rule",
+   "drawOrder": 58,
+   "id": "anthropic:claude-agent-sdk-python/examples/tool_permission_callback.py",
+   "pattern": "P32",
+   "adjudicated": "M",
+   "reason": "human prompt 'Allow this tool?' is an approval gate; the rule needs words like approve, confirm"
+  },
+  {
+   "type": "blind-only-detector-substituted",
+   "drawOrder": 58,
+   "id": "anthropic:claude-agent-sdk-python/examples/tool_permission_callback.py",
+   "pattern": "P08",
+   "adjudicated": "m",
+   "reason": "deny rules for system paths and dangerous bash are code filters before an effect"
+  },
+  {
+   "type": "blind-only-detector-substituted",
+   "drawOrder": 59,
+   "id": "flowise:chatflows-sql-db-chain",
+   "pattern": "P47",
+   "adjudicated": "m",
+   "reason": "SQL chain generates a query and runs it; P06 with a SQL retriever is equally defensible"
+  },
+  {
+   "type": "blind-only-detector-no-rule",
+   "drawOrder": 60,
+   "id": "n8n:3840",
+   "pattern": "P34",
+   "adjudicated": "M",
+   "reason": "timed wait before publishing; misread as a signal wait"
+  },
+  {
+   "type": "blind-only-detector-no-rule",
+   "drawOrder": 60,
+   "id": "n8n:3840",
+   "pattern": "P04",
+   "adjudicated": "M",
+   "reason": "AI content then Instagram publish; the draft-deliver rule needs a model node followed by an effect within two hops"
+  },
+  {
+   "type": "item-explained",
+   "drawOrder": 17,
+   "id": "node-red:1a43db3395478c8c30f18144f9eada82",
+   "pattern": null,
+   "adjudicated": "no",
+   "reason": "Node-RED digital annealer with dashboard. Logic could be extracted as solver (subflows), but the item as a whole is a UI app. Judged under the section 2.5 dashboard refusal."
+  },
+  {
+   "type": "item-explained",
+   "drawOrder": 49,
+   "id": "node-red:2078efb84e380d70c958ef6796fcae8b",
+   "pattern": null,
+   "adjudicated": "no",
+   "reason": "Node-RED Stellar Horizon SDK dashboard. Same treatment as item 17."
+  },
+  {
+   "type": "item-explained",
+   "drawOrder": 54,
+   "id": "metagpt:MetaGPT/examples/werewolf_game/start_game.py#moderator-driven-werewolf-game",
+   "pattern": null,
+   "adjudicated": "partly",
+   "reason": "MetaGPT werewolf: code moderator steps a 19-step table; model players reflect, retrieve experiences, speak or act; win check ends the game."
+  }
+ ],
+ "perItem": [
+  {
+   "drawOrder": 1,
+   "id": "n8n:4428",
+   "cluster": "automation",
+   "stratum": "B",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 2,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/workflow-corpus-acquisition-wf_c6d2acc2-f96.js",
+   "cluster": "first-party",
+   "stratum": "B",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 3,
+   "id": "airflow:apache-airflow-providers-amazon/tests/system/amazon/aws/example_eks_with_nodegroups#example_eks_with_nodegroups",
+   "cluster": "orchestration",
+   "stratum": "A",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 4,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/kev-judge-program-design-wf_0a785d94-93f.js",
+   "cluster": "first-party",
+   "stratum": "B",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 5,
+   "id": "apple-shortcuts:workflowllm-seed-00459",
+   "cluster": "consumer-creative",
+   "stratum": "B",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 6,
+   "id": "coze:query-types-llm-intent-http-nodes",
+   "cluster": "automation",
+   "stratum": "A",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 7,
+   "id": "nextflow:workflowhub/1030",
+   "cluster": "science",
+   "stratum": "C",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 8,
+   "id": "gitlab-ci:gitlab.com/nvidia/container-images/cuda",
+   "cluster": "orchestration",
+   "stratum": "C",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 9,
+   "id": "dagster:tutorial_notebook_assets",
+   "cluster": "orchestration",
+   "stratum": "A",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 10,
+   "id": "comfyui:Jonseed-ComfyUI-Detail-Daemon-example_workflows-Z-Image-txt2img-DetailDaemon.json",
+   "cluster": "consumer-creative",
+   "stratum": "A",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 11,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/laptop-bridge-wf_c491d61b-2c7.js",
+   "cluster": "first-party",
+   "stratum": "B",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 12,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/phase0-unblock-wf_1095386b-893.js",
+   "cluster": "first-party",
+   "stratum": "B",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 13,
+   "id": "prefect:prefect/docs/v3/advanced/form-building.mdx",
+   "cluster": "orchestration",
+   "stratum": "A",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 14,
+   "id": "airflow:apache-airflow-providers-common-ai/src/airflow/providers/common/ai/example_dags/example_agent#example_agent_structured_output",
+   "cluster": "orchestration",
+   "stratum": "A",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 15,
+   "id": "flowise:chatflows-local-qn-a",
+   "cluster": "automation",
+   "stratum": "B",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 16,
+   "id": "galaxy:iwc/annotation-maker/Genome_annotation_with_maker_short",
+   "cluster": "science",
+   "stratum": "A",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 17,
+   "id": "node-red:1a43db3395478c8c30f18144f9eada82",
+   "cluster": "automation",
+   "stratum": "C",
+   "censusExplained": true,
+   "blind": "no",
+   "strict": false,
+   "lenient": false,
+   "refusal": "interactive-dashboard-state",
+   "refusalConfidence": "medium"
+  },
+  {
+   "drawOrder": 18,
+   "id": "cwl:EBI-Metagenomics/pipeline-v5/workflows/amplicon-wf--v.5-cond.cwl",
+   "cluster": "science",
+   "stratum": "A",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 19,
+   "id": "langgraph:langgraph/docs/docs/tutorials/reflexion/reflexion.ipynb",
+   "cluster": "agentic",
+   "stratum": "B",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 20,
+   "id": "nf-core:proteogenomicsdb@1.0.0",
+   "cluster": "science",
+   "stratum": "B",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 21,
+   "id": "ifttt:vJmvEaAG",
+   "cluster": "consumer-creative",
+   "stratum": "B",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 22,
+   "id": "activepieces:S0tI31TsQZvtNg5BDH1Tq",
+   "cluster": "automation",
+   "stratum": "C",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 23,
+   "id": "crewai:crewAI/lib/crewai/src/crewai/flow/templates/flow_definition_example.yaml#research-review-model-router-followup",
+   "cluster": "agentic",
+   "stratum": "B",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 24,
+   "id": "github-actions:Lightning-AI/pytorch-lightning/.github/workflows/ci-pytorch_test-slow.yml",
+   "cluster": "orchestration",
+   "stratum": "B",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 25,
+   "id": "openai-agents:openai-agents-python/examples/memory/compaction_session_example.py",
+   "cluster": "agentic",
+   "stratum": "C",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 26,
+   "id": "n8n:18122",
+   "cluster": "automation",
+   "stratum": "B",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 27,
+   "id": "nf-core:scrnaseq@4.2.0",
+   "cluster": "science",
+   "stratum": "C",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 28,
+   "id": "nextflow:workflowhub/813",
+   "cluster": "science",
+   "stratum": "B",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 29,
+   "id": "home-assistant:forum-871550",
+   "cluster": "consumer-creative",
+   "stratum": "C",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 30,
+   "id": "galaxy:iwc/Mitogenome-assembly-VGP0/Mitogenome-Assembly-VGP0",
+   "cluster": "science",
+   "stratum": "A",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 31,
+   "id": "haystack:haystack-cookbook/notebooks/computer_use_agent_with_skills.ipynb",
+   "cluster": "agentic",
+   "stratum": "C",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 32,
+   "id": "gitlab-ci:gitlab.com/gitlab-org/gitlab-development-kit",
+   "cluster": "orchestration",
+   "stratum": "C",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 33,
+   "id": "gitlab-ci:gitlab.com/postgres-ai/database-lab",
+   "cluster": "orchestration",
+   "stratum": "B",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 34,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/bed-audits-wf_037c2944-bb3.js",
+   "cluster": "first-party",
+   "stratum": "B",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 35,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/design-review-c-wf_1ab0b3e4-a4d.js",
+   "cluster": "first-party",
+   "stratum": "B",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 36,
+   "id": "node-red:29fd01f8a62fec86d875ecbd68001cb0",
+   "cluster": "automation",
+   "stratum": "A",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 37,
+   "id": "comfyui:Comfy-Org-workflow_templates-templates-audio_stable_audio_example.json",
+   "cluster": "consumer-creative",
+   "stratum": "A",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 38,
+   "id": "galaxy:iwc/hi-c-contact-map-for-assembly-manual-curation/hi-c-map-for-assembly-manual-curation",
+   "cluster": "science",
+   "stratum": "B",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 39,
+   "id": "github-actions:quarkslab/quokka/.github/workflows/build.yml",
+   "cluster": "orchestration",
+   "stratum": "B",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 40,
+   "id": "galaxy:workflowhub/607",
+   "cluster": "science",
+   "stratum": "B",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 41,
+   "id": "openai-agents:openai-agents-python/examples/agent_patterns/llm_as_a_judge.py",
+   "cluster": "agentic",
+   "stratum": "A",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 42,
+   "id": "ag2:ag2/website/docs/user-guide/advanced-concepts/orchestration/group-chat/guardrails.mdx#support-agent-input-output-guardrails-group-chat",
+   "cluster": "agentic",
+   "stratum": "R",
+   "censusExplained": false,
+   "blind": "no",
+   "strict": false,
+   "lenient": false,
+   "refusal": "group-chat",
+   "refusalConfidence": "high"
+  },
+  {
+   "drawOrder": 43,
+   "id": "pydantic-graph:pydantic-ai/docs/graph.md#vending_machine",
+   "cluster": "agentic",
+   "stratum": "B",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 44,
+   "id": "openai-swarm:swarm/examples/airline/configs/agents.py#airline-triage-network",
+   "cluster": "agentic",
+   "stratum": "R",
+   "censusExplained": false,
+   "blind": "no",
+   "strict": false,
+   "lenient": false,
+   "refusal": "full-history-handoff",
+   "refusalConfidence": "high"
+  },
+  {
+   "drawOrder": 45,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/kev-build-contracts-wf_dd485f40-503.js",
+   "cluster": "first-party",
+   "stratum": "B",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 46,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/kev-analysis-wf_df1c3e5c-f13.js",
+   "cluster": "first-party",
+   "stratum": "B",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 47,
+   "id": "apple-shortcuts:icloud-6ba47bd9ab264078895bb556c5b30204",
+   "cluster": "consumer-creative",
+   "stratum": "C",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 48,
+   "id": "comfyui:TTPlanetPig-Comfyui_TTP_Toolset-examples-LTX_2_First_Last_I2V_TTP_v1-.json",
+   "cluster": "consumer-creative",
+   "stratum": "B",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 49,
+   "id": "node-red:2078efb84e380d70c958ef6796fcae8b",
+   "cluster": "automation",
+   "stratum": "C",
+   "censusExplained": true,
+   "blind": "no",
+   "strict": false,
+   "lenient": false,
+   "refusal": "interactive-dashboard-state",
+   "refusalConfidence": "medium"
+  },
+  {
+   "drawOrder": 50,
+   "id": "tekton:v1/pipelineruns/beta/pipelinerun-with-matrix",
+   "cluster": "orchestration",
+   "stratum": "B",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 51,
+   "id": "apple-shortcuts:workflowllm-seed-07479",
+   "cluster": "consumer-creative",
+   "stratum": "C",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 52,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/beds-tier-a-wf_7c3e2774-94f.js",
+   "cluster": "first-party",
+   "stratum": "B",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 53,
+   "id": "apple-shortcuts:workflowllm-seed-05668",
+   "cluster": "consumer-creative",
+   "stratum": "B",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 54,
+   "id": "metagpt:MetaGPT/examples/werewolf_game/start_game.py#moderator-driven-werewolf-game",
+   "cluster": "agentic",
+   "stratum": "B",
+   "censusExplained": true,
+   "blind": "partly",
+   "strict": false,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": "low"
+  },
+  {
+   "drawOrder": 55,
+   "id": "wdl:github.com/MethodsDev/LongReadAlignmentAssembler/LRAA-cell_cluster_guided:main",
+   "cluster": "science",
+   "stratum": "A",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 56,
+   "id": "comfyui:xxyQwQ-ComfyBench-dataset-benchmark-workflow-001.json",
+   "cluster": "consumer-creative",
+   "stratum": "A",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 57,
+   "id": "claude-code-workflows:claude-session/workflows/scripts/c0-preflight-wf_d35b46dd-974.js",
+   "cluster": "first-party",
+   "stratum": "B",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 58,
+   "id": "anthropic:claude-agent-sdk-python/examples/tool_permission_callback.py",
+   "cluster": "agentic",
+   "stratum": "C",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 59,
+   "id": "flowise:chatflows-sql-db-chain",
+   "cluster": "automation",
+   "stratum": "A",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  },
+  {
+   "drawOrder": 60,
+   "id": "n8n:3840",
+   "cluster": "automation",
+   "stratum": "B",
+   "censusExplained": true,
+   "blind": "yes",
+   "strict": true,
+   "lenient": true,
+   "refusal": null,
+   "refusalConfidence": null
+  }
+ ]
+}

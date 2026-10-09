@@ -1,0 +1,36 @@
+19|P05|y|responder then revisor with typed outputs
+19|P20|y|cycle with model nodes and a counted cap
+19|P06|M|search tool node feeds the revisor; the tool node has effects external so the read-then-model rule did not fire
+20|P27|y|workflow.onError hook
+20|P29|y|completion email node and completion-hook token
+20|P26|y|token adaptive-retry (nf-core errorStrategy); not visible as a node
+20|P01|y|vcf download, check, proteinDB chain
+20|P17|n|merge_proteindbs gathers 11 inputs; this is fan-in, not reconciliation of two sources
+20|P08|M|processes tagged when: have no rule (action nodes are not control nodes)
+20|P15|M|merge_proteindbs has 11 predecessors; the wide-fan-in rule needs a merge-category node
+20|P02|m|downloads, conversions, merged database written out; ETL-like but not a sync between systems
+21|P38|y|new note event
+21|P04|y|AI outline then create document, no check
+22|P38|p|MCP tool call with reply is a request/response trigger (P37 fits better)
+22|P13|y|loop over emails with an AI step and table write
+22|P04|p|askAi output is stored in a table, not delivered to a person
+22|P06|y|AI summaries over records fetched from calendar, mail and tables
+22|P12|y|cleanup loop over items
+22|P27|p|error-branch token; no handler node is visible
+22|P42|p|Activepieces Tables are a persistent store, but records are created and deleted within the run
+22|P02|y|calendar and mail fetched, transformed, written to tables and replied
+22|P18|n|reply node after two askAi steps is not best-of-N
+22|P37|m|MCP tool trigger with reply_to_mcp_client; detector chose P38
+22|P05|m|three askAi steps in sequence; detector chose P06 and P04
+23|P38|n|flow kickoff from a YAML definition is a manual start, not an event rule
+23|P05|y|research agent then reviewer
+23|P06|n|reviewer and writer read the crew output, not retrieved documents
+23|P07|y|router agent then conditional
+24|P37|p|push and pull_request are events; P38 fits better than webhook-respond
+24|P27|y|upload-on-failure step
+24|P01|y|changed files, skip decision, setup, build chain
+24|P02|n|setup, cache and install steps are not a data sync
+24|P41|y|CI test job on push/PR
+24|P38|m|push/PR event with job-if guards; detector chose P37
+24|P08|M|skip decision and step-level ifs; no detector rule for step ifs
+24|P12|M|job matrix is in the summary only

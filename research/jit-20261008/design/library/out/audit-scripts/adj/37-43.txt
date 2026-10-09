@@ -1,0 +1,24 @@
+37|P56|y|ComfyUI audio generation chain
+37|P18|n|single sampler; the plumbing rule fired on text encoders feeding one node
+38|P14|y|text concatenation gathers parallel track outputs
+38|P08|p|Filter tools select CDS and telomere rows; data filtering steps rather than a guard before an effect
+38|P01|y|extract identifiers, count, cut chain
+39|P37|p|push and pull_request are events (P38)
+39|P27|p|the handler nodes are always() stats and job-if steps; cleanup-on-failure rather than a failure route
+39|P29|y|always() ccache stats steps
+39|P01|y|cache, setup, configure, build chain
+39|P02|n|restore, fetch and save an SDK cache is caching, not a sync
+39|P41|y|build, test, release-on-tag jobs
+39|P38|m|push/PR event with job-if guards; detector chose P37
+39|P12|M|job matrix is in the summary only
+39|P08|M|step ifs on cache hits; no detector rule for step ifs
+40|P08|p|collection and row filter tools; data filtering steps
+40|P14|y|merge collections gather parallel branches
+40|P01|y|text file, build list, relabel chain
+40|P12|m|collection mapping per sample is implicit
+40|P15|m|collapse collections builds the combined MAF; detector chose P14
+41|P20|y|generator, typed evaluator, loop until pass
+41|P18|n|generator and evaluator are not N candidates
+43|P10|p|prompts for coin and product feed a state machine rather than a menu of actions
+43|P25|y|states with re-entry, token unstructured-cycle
+43|P55|m|console prompts for coin and product are ask-use; the rule saw 'select' and chose menu

@@ -1,0 +1,22 @@
+57|P45|y|tool-using subagents
+57|P14|y|barrier over smokes and review
+57|P47|y|agents write drivers and execute live sessions and artefacts
+57|P18|n|barrier over smokes and a review is not best-of-N
+58|P45|y|agent loop with tools
+58|P20|n|callback inside a tool loop is not generate-verify-retry
+58|P09|p|rule callback then human prompt for undecided calls has the escalate shape, but the decider is code, not a judge
+58|P28|p|denial text is returned to the model and the run continues; a fallback path of sorts
+58|P35|y|interrupt-resume token
+58|P48|p|permission callback blocks calls inline rather than as a parallel tripwire
+58|P32|M|human prompt 'Allow this tool?' is an approval gate; the rule needs words like approve, confirm
+58|P08|m|deny rules for system paths and dangerous bash are code filters before an effect
+59|P05|n|ChatOpenAI feeds SqlDatabaseChain; one model plus a chain wrapper, not a prompt chain
+59|P47|m|SQL chain generates a query and runs it; P06 with a SQL retriever is equally defensible
+60|P36|y|schedule trigger
+60|P05|y|three chained Gemini steps
+60|P03|p|structured parser then set; an extraction-like step but not reading documents
+60|P33|n|wait resume=timeInterval is a delay, the regex matched 'resume'
+60|P01|y|http, set, graph api chain
+60|P18|n|model nodes are provider sub-nodes of chains
+60|P34|M|timed wait before publishing; misread as a signal wait
+60|P04|M|AI content then Instagram publish; the draft-deliver rule needs a model node followed by an effect within two hops

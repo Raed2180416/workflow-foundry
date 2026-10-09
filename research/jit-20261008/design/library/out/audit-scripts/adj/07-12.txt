@@ -1,0 +1,32 @@
+7|P04|n|fgbio consensus caller is a bioinformatics tool tagged category model by the normaliser, not generated text
+7|P08|p|channel .branch routes streams by field (interval or not); closer to L0 if than to a filter-before-effect
+7|P07|n|deepvariant is a variant caller tagged model; there is no judged classification
+7|P29|y|token completion-hook; Sarek has onComplete notifications (features list service:email, im-webhook), not visible as a node
+7|P26|y|token adaptive-retry; nf-core errorStrategy with resource escalation, not visible as a node
+7|P01|y|tabix, bcftools annotate, tabix chain
+7|P02|n|every pipeline reads and writes files; not a sync between systems
+7|P54|M|features report 90 subworkflows but the graph is flattened, so the subworkflow rule has no node
+7|P12|m|per-sample and per-interval scatter is implicit in channels
+7|P14|m|scatter to callers then gather is implicit in channels
+8|P37|p|push pipeline source is an event, so P38 fits better than webhook-respond
+8|P41|y|stage barriers prepare, trigger, cuda, test, scan, deploy
+8|P15|n|stage barrier is ordering, not an aggregate of results
+8|P29|p|cleanup_failure jobs run only on failure (P27 fits better than always-run finally)
+8|P54|p|flow-size token (901 jobs); trigger-stage jobs may be child pipelines but the summaries do not say so
+8|P27|y|on_failure cleanup jobs
+8|P38|m|push source with rules; detector chose P37
+8|P08|m|rules on every job are guards before effects; detector has no rule for CI job rules
+9|none|y|no pattern assigned, none needed
+10|P56|y|ComfyUI diffusion chain
+10|P18|n|three KSampler variants feed different decoders and saves; nothing selects among candidates
+11|P45|y|tool-using subagents
+11|P14|y|barrier over attack and e2e
+11|P47|y|builder writes and tests code; attacker writes and runs attack scripts
+11|P18|n|barrier over attack and e2e testers is not best-of-N
+11|P49|n|fixer reads two different reports; no independent verifiers voting
+11|P01|m|build, parallel checks, fix, verify chain; P14 covers the middle
+12|P45|y|tool-using subagents
+12|P14|y|barrier over three workstreams
+12|P19|p|shared-scratchpad token: disjoint workstreams over one working tree; the rewrite to wide is applicable but nothing is planned by a model
+12|P47|p|probe and installer scripts are written and run, incidental
+12|P18|n|barrier over three different workstreams is not best-of-N

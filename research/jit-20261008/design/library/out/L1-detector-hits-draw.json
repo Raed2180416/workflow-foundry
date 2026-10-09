@@ -1,0 +1,240 @@
+{
+ "seed": 20261010,
+ "prng": "mulberry32",
+ "method": "hits per pattern = items whose detector set (control-node needs, token needs, or support-only plumbing) contains the pattern, ids sorted, Fisher-Yates with one shared PRNG stream visiting patterns in the listed order, first k taken (k = min(population, requested))",
+ "draw": {
+  "P37": {
+   "population": 282,
+   "ids": [
+    "n8n:8646",
+    "node-red:fdf99cabf52814efb4d8494e45909b30",
+    "gitlab-ci:gitlab.com/postgres-ai/database-lab",
+    "github-actions:GitoxideLabs/gitoxide/.github/workflows/release.yml",
+    "github-actions:aio-libs/yarl/.github/workflows/ci.yml",
+    "zapier:cc752ab51755",
+    "github-actions:korlibs/korge/.github/workflows/TEST.yml",
+    "github-actions:mun-lang/mun/.github/workflows/ci.yml",
+    "langflow:image-sentiment-analysis",
+    "gitlab-ci:gitlab-org/gitlab/lib/gitlab/ci/templates/Jobs/CF-Provision.gitlab-ci.yml"
+   ]
+  },
+  "P38": {
+   "population": 252,
+   "ids": [
+    "home-assistant:dannytsang/homeassistant-config/packages/integrations/energy/octopus_energy.yaml#automation/0",
+    "semantic-kernel:semantic-kernel/python/samples/getting_started_with_agents/multi_agent_orchestration/step1a_concurrent_structured_outputs.py#parallel-article-analysts-structured-merge",
+    "home-assistant:jazzyisj/home-assistant-config/automations/zwave/zwave_keypress_events.yaml#0",
+    "zapier:d30d17597226",
+    "n8n:7763",
+    "node-red:5203cdf15000bd64d1da800a005bab55",
+    "node-red:ecedddbabd5cb5d6c9a829382d0f229b",
+    "autogen:autogen/python/samples/core_chess_game/main.py#two-llm-players-shared-board",
+    "home-assistant:CCOSTAN/Home-AssistantConfig/config/packages/powerwall.yaml#automation/4",
+    "zapier:63ca298d2d18"
+   ]
+  },
+  "P08": {
+   "population": 229,
+   "ids": [
+    "apple-shortcuts:workflowllm-seed-06338",
+    "home-assistant:TheFes/HA-configuration/packages/00-general/voice_satellite/soundbar_and_tv_on_voice_command.yaml#automation/0",
+    "home-assistant:forum-526274",
+    "apple-shortcuts:workflowllm-seed-00077",
+    "comfyui:jakechai-ComfyUI-JakeUpgrade-Workflow-ComfyUI-Main-imgen-mGPU-JK_workflow_imgen_QWen_ModelSheet_adv_mGPU.json",
+    "apple-shortcuts:icloud-ecfa7ec13f744d2aae362f22da29b4ba",
+    "home-assistant:TheFes/HA-configuration/blueprints/automation/TheFes/mobile_app_alert.yaml#0",
+    "n8n:19217",
+    "nf-core:rnastructurome@1.0.0",
+    "home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/ikea_e2001_e2002/ikea_e2001_e2002.yaml#0"
+   ]
+  },
+  "P01": {
+   "population": 758,
+   "ids": [
+    "nf-core:phaseimpute@1.1.0",
+    "galaxy:workflowhub/1685",
+    "cwl:ncbi/pgap/pgap.cwl",
+    "airflow:apache-airflow-providers-amazon/tests/system/amazon/aws/example_s3#example_s3",
+    "nf-core:genomeqc@1.0.1",
+    "apple-shortcuts:workflowllm-seed-05992",
+    "flowise:chatflows-github-docs-qn-a",
+    "home-assistant:TheFes/HA-configuration/blueprints/automation/TheFes/telegram_command.yaml#0",
+    "comfyui:Cseti-ComfyUI-Workflows-wan-2.2-vace-endless-extension-wan2.2-vace-endless-extension.json",
+    "dify:mkt-ba55055e-e212-4ae1-8e05-b7dde6ec7268",
+    "home-assistant:CCOSTAN/Home-AssistantConfig/config/packages/tesla_model_y.yaml#script/tesla_home_charge_protect",
+    "n8n:19431",
+    "airflow:apache-airflow-providers-google/tests/system/google/cloud/bigquery/example_bigquery_to_postgres#bigquery_to_postgres",
+    "mastra:mastra/templates/template-github-review-agent/src/mastra/workflows/pr-review-workflow.ts",
+    "n8n:14080",
+    "node-red:66973abc3ff9875516a417df69a67e19",
+    "node-red:e36b06bc36312d057c0541414d4f87f5",
+    "airflow:apache-airflow-providers-amazon/tests/system/amazon/aws/example_datasync#example_datasync",
+    "n8n:7962",
+    "n8n:11797"
+   ]
+  },
+  "P02": {
+   "population": 348,
+   "ids": [
+    "apple-shortcuts:icloud-cae075d04b884beea44df7b67fd5aabb",
+    "apple-shortcuts:icloud-a11bc672b88044bc8cf795f2e0956103",
+    "n8n:18427",
+    "n8n:11386",
+    "airflow:apache-airflow-providers-amazon/tests/system/amazon/aws/example_sagemaker#example_sagemaker",
+    "comfyui:kijai-ComfyUI-WanVideoWrapper-example_workflows-LongCatAvatar_audio_image_to_video_example_01.json",
+    "nextflow:workflowhub/2246",
+    "n8n:11805",
+    "github-actions:dbt-labs/dbt-adapters/.github/workflows/_integration-tests.yml",
+    "n8n:19900",
+    "snakemake:niekwit/cut_and_run@v0.5.0",
+    "n8n:12462",
+    "nf-core:riboseq@2.0.0",
+    "apple-shortcuts:icloud-d62e5f697e3e42588f6c7325ca28f3a1",
+    "github-actions:intel/compile-time-init-build/.github/workflows/unit_tests.yml",
+    "github-actions:jhumanj/opnform/.github/workflows/laravel.yml",
+    "apple-shortcuts:workflowllm-seed-00364",
+    "comfyui:TTPlanetPig-Comfyui_TTP_Toolset-examples-LTX_2_First_Last_Middle_Frame_control_v1_sub.json",
+    "n8n:4086",
+    "nf-core:mag@5.5.0"
+   ]
+  },
+  "P17": {
+   "population": 147,
+   "ids": [
+    "apple-shortcuts:icloud-a11bc672b88044bc8cf795f2e0956103",
+    "google-adk:adk-samples/core/python/deep-search/app/agent.py",
+    "apple-shortcuts:workflowllm-seed-00714",
+    "n8n:9200",
+    "n8n:13115",
+    "nf-core:pathogensurveillance@1.1.0",
+    "apple-shortcuts:icloud-d011d2cfe7ef41a2b5100ac1e2717b45",
+    "n8n:19217",
+    "nf-core:tumourevo@1.0.0",
+    "apple-shortcuts:workflowllm-seed-10752",
+    "comfyui:WASasquatch-was-node-suite-comfyui-docs-workflows-affine-krea2.json",
+    "zapier:88fc70d2ce09",
+    "apple-shortcuts:icloud-cae075d04b884beea44df7b67fd5aabb",
+    "n8n:19735",
+    "zapier:cc87cfbdd916",
+    "n8n:19463",
+    "n8n:19723",
+    "inngest-agentkit:agent-kit/examples/swebench/inngest.ts#plan-then-edit-network",
+    "apple-shortcuts:workflowllm-seed-11475",
+    "comfyui:scraed-LanPaint-example_workflows-Flux2_Klein_EncodeDecode_Inpaint.json"
+   ]
+  },
+  "P18": {
+   "population": 225,
+   "ids": [
+    "google-adk:adk-samples/contrib/python/small-business-loan-agent/app/agent.py",
+    "n8n:8582",
+    "smolagents:smolagents/examples/open_deep_research/run_gaia.py#gaia-batch-team-reformulator",
+    "anthropic:claude-cookbooks/patterns/agents/evaluator_optimizer.ipynb",
+    "autogen:autogen/python/docs/src/user-guide/agentchat-user-guide/graph-flow.ipynb#conditional-loop-filtered-summary",
+    "inngest-agentkit:agent-kit/examples/use-agent/inngest/sql-agents/network.ts",
+    "comfyui:Comfy-Org-workflow_templates-templates-template_rob_split_stack_qwen_multi_wan22.json",
+    "openai-agents:openai-agents-python/examples/agent_patterns/parallelization.py",
+    "n8n:11382",
+    "semantic-kernel:semantic-kernel/python/samples/getting_started_with_agents/multi_agent_orchestration/step1a_concurrent_structured_outputs.py#parallel-article-analysts-structured-merge",
+    "activepieces:S0tI31TsQZvtNg5BDH1Tq",
+    "flowise:chatflows-context-chat-engine",
+    "dify:repo-e9d92058-7d20-4904-892f-75d90bef7587",
+    "langgraph:langgraph/docs/docs/tutorials/rag/langgraph_adaptive_rag.ipynb",
+    "comfyui:jakechai-ComfyUI-JakeUpgrade-Workflow-ComfyUI-Main-video-FramePack-JK_workflow_Video-FramePack.json",
+    "google-adk:adk-python/contributing/samples/patterns/workflow_triage/agent.py",
+    "comfyui:TTPlanetPig-Comfyui_TTP_Toolset-examples-smart_tile_qwen_sam_loop_example_v2.json",
+    "agno:agno/cookbook/04_workflows/03_loop_execution/loop_with_parallel.py#research-loop-parallel-then-content",
+    "comfyui:kijai-ComfyUI-WanVideoWrapper-example_workflows-wanvideo_1_3B_VACE_examples_03.json",
+    "n8n:10156"
+   ]
+  },
+  "P16": {
+   "population": 18,
+   "ids": [
+    "n8n:3891",
+    "dagster:data-quality-patterns",
+    "dspy:dspy/docs/docs/tutorials/program_of_thought/index.ipynb#multihop-pot",
+    "inngest-agentkit:agent-kit/examples/use-agent/inngest/sql-agents/network.ts",
+    "n8n:3288",
+    "github-actions:argoproj/argo-workflows/.github/workflows/ci-build.yaml",
+    "google-adk:adk-samples/contrib/python/on-brand-genmedia/app/agent.py",
+    "claude-code-workflows:claude-session/workflows/scripts/workflow-corpus-acquisition-wf_c6d2acc2-f96.js",
+    "n8n:17387",
+    "inngest-agentkit:agent-kit/examples/mem0-memory/multi-agent.ts",
+    "n8n:9100",
+    "n8n:11807",
+    "dagster:snowflake_cortex",
+    "google-adk:adk-python/contributing/samples/adk_team/adk_documentation/adk_release_analyzer/agent.py",
+    "inngest-agentkit:agent-kit/examples/deep-research/inngest/functions/deep-research.ts",
+    "n8n:2658",
+    "n8n:11382",
+    "dspy:dspy/docs/docs/tutorials/multihop_search/index.ipynb#hop-multihop-retrieval"
+   ]
+  },
+  "P49": {
+   "population": 8,
+   "ids": [
+    "claude-code-workflows:claude-session/workflows/scripts/laptop-bridge-wf_c491d61b-2c7.js",
+    "strands:samples/python/05-technical-use-cases/steering/library-book-renewal-agent/src/library_agent_demo/agents/steering_agent.py",
+    "mastra:mastra/templates/template-security-incident-triage/src/mastra/workflows/security-incident-workflow.ts",
+    "camel:camel/examples/workforce/hackathon_judges.py#auto-decompose-judge-panel",
+    "google-adk:adk-python/contributing/samples/live/workflow/agent.py",
+    "langgraph:langgraph/docs/docs/tutorials/rag/langgraph_adaptive_rag.ipynb",
+    "anthropic:claude-cookbooks/patterns/agents/evaluator_optimizer.ipynb",
+    "claude-code-workflows:claude-session/workflows/scripts/kev-analysis-wf_df1c3e5c-f13.js"
+   ]
+  },
+  "P48": {
+   "population": 6,
+   "ids": [
+    "strands:samples/python/05-technical-use-cases/steering/library-book-renewal-agent/src/library_agent_demo/agents/steering_agent.py",
+    "openai-agents:openai-agents-python/examples/agent_patterns/streaming_guardrails.py",
+    "anthropic:claude-cookbooks/claude_agent_sdk/03_The_site_reliability_agent.ipynb",
+    "openai-agents:openai-agents-python/examples/agent_patterns/input_guardrails.py",
+    "anthropic:claude-agent-sdk-python/examples/tool_permission_callback.py",
+    "google-adk:adk-samples/contrib/python/small-business-loan-agent/app/agent.py"
+   ]
+  },
+  "P30": {
+   "population": 7,
+   "ids": [
+    "nf-core:raredisease@3.1.2",
+    "nextflow:workflowhub/1864",
+    "wdl:broadinstitute/warp/pipelines/wdl/reprocessing/wgs/WholeGenomeReprocessing.wdl",
+    "wdl:broadinstitute/warp/pipelines/wdl/reprocessing/cram_to_unmapped_bams/CramToUnmappedBams.wdl",
+    "wdl:broadinstitute/warp/pipelines/wdl/reprocessing/exome/ExomeReprocessing.wdl",
+    "haystack:haystack-cookbook/notebooks/github_pr_creator_agent.ipynb",
+    "wdl:github.com/malariagen/pipelines/MalariaVector_ShortReadAlignmentAndGenotyping:master"
+   ]
+  },
+  "P31": {
+   "population": 9,
+   "ids": [
+    "langgraph:langgraph/docs/docs/tutorials/get-started/6-time-travel.md",
+    "temporal:samples-go/temporal-fixtures",
+    "agno:agno/cookbook/03_teams/25_time_travel/01_continue_from.py#team-run-rewind-and-fork",
+    "temporal:samples-python/langgraph_plugin",
+    "temporal:samples-python/polling/periodic_sequence",
+    "crewai:crewAI/docs/edge/en/guides/flows/first-flow.mdx#guide-creator-flow",
+    "pydantic-graph:pydantic-ai/docs/harness/step-persistence.md#continue_and_fork",
+    "temporal:samples-go/pso",
+    "burr:burr/examples/multi-agent-collaboration/hamilton/application.py"
+   ]
+  },
+  "P22": {
+   "population": 10,
+   "ids": [
+    "home-assistant:forum-413705",
+    "home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/xiaomi_wxcjkg13lm/xiaomi_wxcjkg13lm.yaml#0",
+    "home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/ikea_e2001_e2002/ikea_e2001_e2002.yaml#0",
+    "home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/ikea_e2123/ikea_e2123.yaml#0",
+    "home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/osram_ac025xx00nj/osram_ac025xx00nj.yaml#0",
+    "home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/xiaomi_wxcjkg11lm/xiaomi_wxcjkg11lm.yaml#0",
+    "home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/xiaomi_wxcjkg12lm/xiaomi_wxcjkg12lm.yaml#0",
+    "home-assistant:forum-730391",
+    "home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/ikea_e1524_e1810/ikea_e1524_e1810.yaml#0",
+    "home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/ikea_e1743/ikea_e1743.yaml#0"
+   ]
+  }
+ }
+}

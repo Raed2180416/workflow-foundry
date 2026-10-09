@@ -1,0 +1,17 @@
+13|none|y|no pattern assigned, none needed
+14|P45|m|single agent operator; P45 only if the agent has tools, which the summary does not show
+15|P06|y|embeddings, vector store and retrieval QA chain
+15|P05|n|chat model node is a component of the QA chain, not a second chained model step
+15|P01|y|text file, splitter, vector-store ingest chain
+15|P43|m|conversational retrieval chain implies chat memory, not visible in the summaries
+16|P01|M|maker feeds gffread then busco; the chain rule requires out-degree 1, so a branching spine is missed
+17|P37|n|ui_form is a dashboard form widget; regex /form/ matched it as a webhook
+17|P38|p|dashboard widget events trigger handlers; closer to a UI event than an automation event rule
+17|P54|y|25 subflow instances
+17|P44|p|stream token is the converter's blanket Node-RED note (long-lived message program); no explicit stream node
+17|P42|y|converter notes: flow/global context persistent state
+17|P01|n|function, function, debug chain; debug output is not a pipeline stage
+17|P55|m|ui_form inputs are ask-validate-use, detector read them as webhooks
+18|P01|y|fastp, seqprep, gunzip chain
+18|P12|M|steps tagged [scatter] have no rule in the detector (action nodes are not control nodes)
+18|P08|M|steps tagged [when] have no rule in the detector

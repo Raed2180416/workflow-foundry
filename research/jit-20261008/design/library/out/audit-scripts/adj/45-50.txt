@@ -1,0 +1,35 @@
+45|P45|y|tool-using subagents
+45|P47|y|builder writes and tests code, reviewer seeds defects in tests
+46|P45|y|tool-using subagents
+46|P14|y|barriers over surveys and critics
+46|P47|y|probe and fine-tune feasibility scripts are written and run
+46|P18|n|barrier over unrelated surveys is not best-of-N
+46|P49|p|refuter and completeness critic both review the analysis; panel without a vote
+46|P01|m|survey, synthesise, critique, revise chain
+47|P32|p|an alert then a branch precedes some effects; a confirm gate is plausible but only one anchor
+47|P10|y|menus of 13, 44 and 52 options
+47|P54|y|29 run-another-shortcut
+47|P55|y|ask-for-input nodes
+47|P12|p|one repeat-count loop
+47|P34|y|delay nodes
+47|P53|n|final Run another shortcut node is not per item
+47|P01|y|gettext, url, HTTP GET chain
+47|P02|n|getmyworkflows then url then run shortcut is not a sync
+47|P17|n|battery, weather properties are not two record sets to reconcile
+48|P54|y|subgraph instance
+48|P56|y|LTX video chain
+48|P01|p|image size and scale utility chain inside a DAG
+48|P02|n|load image, resize, combine video is not a sync between systems
+48|P18|n|two decoders feed one combine node; no candidates compared
+49|P38|p|ui_text_input and ui_button widget events; dashboard rather than automation rule
+49|P21|y|switch with delay cycle is a poll-until loop (converter notes)
+49|P25|y|five back-edges outside loop constructs
+49|P34|y|delay node
+49|P42|y|converter notes: flow/global context persistent state
+49|P01|n|function chain inside UI handlers
+49|P55|m|ui_text_input widgets are ask-use; the rule saw them as event triggers
+50|P27|p|error edges lead to the finally task, so P29 describes it and P27 only loosely
+50|P29|y|finally task
+50|P12|M|matrix fan-out is in the summary only
+50|P26|M|retries=1 is in the summary only
+45|P01|m|builder, reviewer, fixer chain of three model-category agent nodes; the plumbing chain rule needs plumbing-category nodes

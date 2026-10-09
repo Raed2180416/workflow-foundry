@@ -1,0 +1,538 @@
+{
+ "seed": 20261009,
+ "prng": "mulberry32",
+ "method": "per stratum: ids sorted lexicographically, Fisher-Yates with the shared PRNG stream, first k taken; strata visited in ALLOC order; then the 60 shuffled once for review order",
+ "strata": "cluster x {A: 0-1 distinct L1 patterns, B: 2-4, C: 5+, R: census-refused (agentic only; automation refused merged into A)}",
+ "frameSizes": {
+  "automation|C": 181,
+  "automation|B": 157,
+  "automation|A": 57,
+  "orchestration|A": 258,
+  "orchestration|B": 124,
+  "orchestration|C": 14,
+  "science|A": 159,
+  "science|B": 104,
+  "science|C": 15,
+  "consumer-creative|C": 99,
+  "consumer-creative|B": 105,
+  "consumer-creative|A": 69,
+  "agentic|R": 33,
+  "agentic|C": 60,
+  "agentic|B": 109,
+  "agentic|A": 5,
+  "first-party|B": 10
+ },
+ "alloc": {
+  "automation": {
+   "A": 3,
+   "B": 4,
+   "C": 3
+  },
+  "orchestration": {
+   "A": 4,
+   "B": 4,
+   "C": 2
+  },
+  "science": {
+   "A": 4,
+   "B": 4,
+   "C": 2
+  },
+  "consumer-creative": {
+   "A": 3,
+   "B": 4,
+   "C": 3
+  },
+  "agentic": {
+   "R": 2,
+   "A": 1,
+   "B": 4,
+   "C": 3
+  },
+  "first-party": {
+   "B": 10
+  }
+ },
+ "items": [
+  {
+   "id": "n8n:4428",
+   "cluster": "automation",
+   "stratum": "B",
+   "stratumSize": 157,
+   "stratumSample": 4,
+   "drawOrder": 1
+  },
+  {
+   "id": "claude-code-workflows:claude-session/workflows/scripts/workflow-corpus-acquisition-wf_c6d2acc2-f96.js",
+   "cluster": "first-party",
+   "stratum": "B",
+   "stratumSize": 10,
+   "stratumSample": 10,
+   "drawOrder": 2
+  },
+  {
+   "id": "airflow:apache-airflow-providers-amazon/tests/system/amazon/aws/example_eks_with_nodegroups#example_eks_with_nodegroups",
+   "cluster": "orchestration",
+   "stratum": "A",
+   "stratumSize": 258,
+   "stratumSample": 4,
+   "drawOrder": 3
+  },
+  {
+   "id": "claude-code-workflows:claude-session/workflows/scripts/kev-judge-program-design-wf_0a785d94-93f.js",
+   "cluster": "first-party",
+   "stratum": "B",
+   "stratumSize": 10,
+   "stratumSample": 10,
+   "drawOrder": 4
+  },
+  {
+   "id": "apple-shortcuts:workflowllm-seed-00459",
+   "cluster": "consumer-creative",
+   "stratum": "B",
+   "stratumSize": 105,
+   "stratumSample": 4,
+   "drawOrder": 5
+  },
+  {
+   "id": "coze:query-types-llm-intent-http-nodes",
+   "cluster": "automation",
+   "stratum": "A",
+   "stratumSize": 57,
+   "stratumSample": 3,
+   "drawOrder": 6
+  },
+  {
+   "id": "nextflow:workflowhub/1030",
+   "cluster": "science",
+   "stratum": "C",
+   "stratumSize": 15,
+   "stratumSample": 2,
+   "drawOrder": 7
+  },
+  {
+   "id": "gitlab-ci:gitlab.com/nvidia/container-images/cuda",
+   "cluster": "orchestration",
+   "stratum": "C",
+   "stratumSize": 14,
+   "stratumSample": 2,
+   "drawOrder": 8
+  },
+  {
+   "id": "dagster:tutorial_notebook_assets",
+   "cluster": "orchestration",
+   "stratum": "A",
+   "stratumSize": 258,
+   "stratumSample": 4,
+   "drawOrder": 9
+  },
+  {
+   "id": "comfyui:Jonseed-ComfyUI-Detail-Daemon-example_workflows-Z-Image-txt2img-DetailDaemon.json",
+   "cluster": "consumer-creative",
+   "stratum": "A",
+   "stratumSize": 69,
+   "stratumSample": 3,
+   "drawOrder": 10
+  },
+  {
+   "id": "claude-code-workflows:claude-session/workflows/scripts/laptop-bridge-wf_c491d61b-2c7.js",
+   "cluster": "first-party",
+   "stratum": "B",
+   "stratumSize": 10,
+   "stratumSample": 10,
+   "drawOrder": 11
+  },
+  {
+   "id": "claude-code-workflows:claude-session/workflows/scripts/phase0-unblock-wf_1095386b-893.js",
+   "cluster": "first-party",
+   "stratum": "B",
+   "stratumSize": 10,
+   "stratumSample": 10,
+   "drawOrder": 12
+  },
+  {
+   "id": "prefect:prefect/docs/v3/advanced/form-building.mdx",
+   "cluster": "orchestration",
+   "stratum": "A",
+   "stratumSize": 258,
+   "stratumSample": 4,
+   "drawOrder": 13
+  },
+  {
+   "id": "airflow:apache-airflow-providers-common-ai/src/airflow/providers/common/ai/example_dags/example_agent#example_agent_structured_output",
+   "cluster": "orchestration",
+   "stratum": "A",
+   "stratumSize": 258,
+   "stratumSample": 4,
+   "drawOrder": 14
+  },
+  {
+   "id": "flowise:chatflows-local-qn-a",
+   "cluster": "automation",
+   "stratum": "B",
+   "stratumSize": 157,
+   "stratumSample": 4,
+   "drawOrder": 15
+  },
+  {
+   "id": "galaxy:iwc/annotation-maker/Genome_annotation_with_maker_short",
+   "cluster": "science",
+   "stratum": "A",
+   "stratumSize": 159,
+   "stratumSample": 4,
+   "drawOrder": 16
+  },
+  {
+   "id": "node-red:1a43db3395478c8c30f18144f9eada82",
+   "cluster": "automation",
+   "stratum": "C",
+   "stratumSize": 181,
+   "stratumSample": 3,
+   "drawOrder": 17
+  },
+  {
+   "id": "cwl:EBI-Metagenomics/pipeline-v5/workflows/amplicon-wf--v.5-cond.cwl",
+   "cluster": "science",
+   "stratum": "A",
+   "stratumSize": 159,
+   "stratumSample": 4,
+   "drawOrder": 18
+  },
+  {
+   "id": "langgraph:langgraph/docs/docs/tutorials/reflexion/reflexion.ipynb",
+   "cluster": "agentic",
+   "stratum": "B",
+   "stratumSize": 109,
+   "stratumSample": 4,
+   "drawOrder": 19
+  },
+  {
+   "id": "nf-core:proteogenomicsdb@1.0.0",
+   "cluster": "science",
+   "stratum": "B",
+   "stratumSize": 104,
+   "stratumSample": 4,
+   "drawOrder": 20
+  },
+  {
+   "id": "ifttt:vJmvEaAG",
+   "cluster": "consumer-creative",
+   "stratum": "B",
+   "stratumSize": 105,
+   "stratumSample": 4,
+   "drawOrder": 21
+  },
+  {
+   "id": "activepieces:S0tI31TsQZvtNg5BDH1Tq",
+   "cluster": "automation",
+   "stratum": "C",
+   "stratumSize": 181,
+   "stratumSample": 3,
+   "drawOrder": 22
+  },
+  {
+   "id": "crewai:crewAI/lib/crewai/src/crewai/flow/templates/flow_definition_example.yaml#research-review-model-router-followup",
+   "cluster": "agentic",
+   "stratum": "B",
+   "stratumSize": 109,
+   "stratumSample": 4,
+   "drawOrder": 23
+  },
+  {
+   "id": "github-actions:Lightning-AI/pytorch-lightning/.github/workflows/ci-pytorch_test-slow.yml",
+   "cluster": "orchestration",
+   "stratum": "B",
+   "stratumSize": 124,
+   "stratumSample": 4,
+   "drawOrder": 24
+  },
+  {
+   "id": "openai-agents:openai-agents-python/examples/memory/compaction_session_example.py",
+   "cluster": "agentic",
+   "stratum": "C",
+   "stratumSize": 60,
+   "stratumSample": 3,
+   "drawOrder": 25
+  },
+  {
+   "id": "n8n:18122",
+   "cluster": "automation",
+   "stratum": "B",
+   "stratumSize": 157,
+   "stratumSample": 4,
+   "drawOrder": 26
+  },
+  {
+   "id": "nf-core:scrnaseq@4.2.0",
+   "cluster": "science",
+   "stratum": "C",
+   "stratumSize": 15,
+   "stratumSample": 2,
+   "drawOrder": 27
+  },
+  {
+   "id": "nextflow:workflowhub/813",
+   "cluster": "science",
+   "stratum": "B",
+   "stratumSize": 104,
+   "stratumSample": 4,
+   "drawOrder": 28
+  },
+  {
+   "id": "home-assistant:forum-871550",
+   "cluster": "consumer-creative",
+   "stratum": "C",
+   "stratumSize": 99,
+   "stratumSample": 3,
+   "drawOrder": 29
+  },
+  {
+   "id": "galaxy:iwc/Mitogenome-assembly-VGP0/Mitogenome-Assembly-VGP0",
+   "cluster": "science",
+   "stratum": "A",
+   "stratumSize": 159,
+   "stratumSample": 4,
+   "drawOrder": 30
+  },
+  {
+   "id": "haystack:haystack-cookbook/notebooks/computer_use_agent_with_skills.ipynb",
+   "cluster": "agentic",
+   "stratum": "C",
+   "stratumSize": 60,
+   "stratumSample": 3,
+   "drawOrder": 31
+  },
+  {
+   "id": "gitlab-ci:gitlab.com/gitlab-org/gitlab-development-kit",
+   "cluster": "orchestration",
+   "stratum": "C",
+   "stratumSize": 14,
+   "stratumSample": 2,
+   "drawOrder": 32
+  },
+  {
+   "id": "gitlab-ci:gitlab.com/postgres-ai/database-lab",
+   "cluster": "orchestration",
+   "stratum": "B",
+   "stratumSize": 124,
+   "stratumSample": 4,
+   "drawOrder": 33
+  },
+  {
+   "id": "claude-code-workflows:claude-session/workflows/scripts/bed-audits-wf_037c2944-bb3.js",
+   "cluster": "first-party",
+   "stratum": "B",
+   "stratumSize": 10,
+   "stratumSample": 10,
+   "drawOrder": 34
+  },
+  {
+   "id": "claude-code-workflows:claude-session/workflows/scripts/design-review-c-wf_1ab0b3e4-a4d.js",
+   "cluster": "first-party",
+   "stratum": "B",
+   "stratumSize": 10,
+   "stratumSample": 10,
+   "drawOrder": 35
+  },
+  {
+   "id": "node-red:29fd01f8a62fec86d875ecbd68001cb0",
+   "cluster": "automation",
+   "stratum": "A",
+   "stratumSize": 57,
+   "stratumSample": 3,
+   "drawOrder": 36
+  },
+  {
+   "id": "comfyui:Comfy-Org-workflow_templates-templates-audio_stable_audio_example.json",
+   "cluster": "consumer-creative",
+   "stratum": "A",
+   "stratumSize": 69,
+   "stratumSample": 3,
+   "drawOrder": 37
+  },
+  {
+   "id": "galaxy:iwc/hi-c-contact-map-for-assembly-manual-curation/hi-c-map-for-assembly-manual-curation",
+   "cluster": "science",
+   "stratum": "B",
+   "stratumSize": 104,
+   "stratumSample": 4,
+   "drawOrder": 38
+  },
+  {
+   "id": "github-actions:quarkslab/quokka/.github/workflows/build.yml",
+   "cluster": "orchestration",
+   "stratum": "B",
+   "stratumSize": 124,
+   "stratumSample": 4,
+   "drawOrder": 39
+  },
+  {
+   "id": "galaxy:workflowhub/607",
+   "cluster": "science",
+   "stratum": "B",
+   "stratumSize": 104,
+   "stratumSample": 4,
+   "drawOrder": 40
+  },
+  {
+   "id": "openai-agents:openai-agents-python/examples/agent_patterns/llm_as_a_judge.py",
+   "cluster": "agentic",
+   "stratum": "A",
+   "stratumSize": 5,
+   "stratumSample": 1,
+   "drawOrder": 41
+  },
+  {
+   "id": "ag2:ag2/website/docs/user-guide/advanced-concepts/orchestration/group-chat/guardrails.mdx#support-agent-input-output-guardrails-group-chat",
+   "cluster": "agentic",
+   "stratum": "R",
+   "stratumSize": 33,
+   "stratumSample": 2,
+   "drawOrder": 42
+  },
+  {
+   "id": "pydantic-graph:pydantic-ai/docs/graph.md#vending_machine",
+   "cluster": "agentic",
+   "stratum": "B",
+   "stratumSize": 109,
+   "stratumSample": 4,
+   "drawOrder": 43
+  },
+  {
+   "id": "openai-swarm:swarm/examples/airline/configs/agents.py#airline-triage-network",
+   "cluster": "agentic",
+   "stratum": "R",
+   "stratumSize": 33,
+   "stratumSample": 2,
+   "drawOrder": 44
+  },
+  {
+   "id": "claude-code-workflows:claude-session/workflows/scripts/kev-build-contracts-wf_dd485f40-503.js",
+   "cluster": "first-party",
+   "stratum": "B",
+   "stratumSize": 10,
+   "stratumSample": 10,
+   "drawOrder": 45
+  },
+  {
+   "id": "claude-code-workflows:claude-session/workflows/scripts/kev-analysis-wf_df1c3e5c-f13.js",
+   "cluster": "first-party",
+   "stratum": "B",
+   "stratumSize": 10,
+   "stratumSample": 10,
+   "drawOrder": 46
+  },
+  {
+   "id": "apple-shortcuts:icloud-6ba47bd9ab264078895bb556c5b30204",
+   "cluster": "consumer-creative",
+   "stratum": "C",
+   "stratumSize": 99,
+   "stratumSample": 3,
+   "drawOrder": 47
+  },
+  {
+   "id": "comfyui:TTPlanetPig-Comfyui_TTP_Toolset-examples-LTX_2_First_Last_I2V_TTP_v1-.json",
+   "cluster": "consumer-creative",
+   "stratum": "B",
+   "stratumSize": 105,
+   "stratumSample": 4,
+   "drawOrder": 48
+  },
+  {
+   "id": "node-red:2078efb84e380d70c958ef6796fcae8b",
+   "cluster": "automation",
+   "stratum": "C",
+   "stratumSize": 181,
+   "stratumSample": 3,
+   "drawOrder": 49
+  },
+  {
+   "id": "tekton:v1/pipelineruns/beta/pipelinerun-with-matrix",
+   "cluster": "orchestration",
+   "stratum": "B",
+   "stratumSize": 124,
+   "stratumSample": 4,
+   "drawOrder": 50
+  },
+  {
+   "id": "apple-shortcuts:workflowllm-seed-07479",
+   "cluster": "consumer-creative",
+   "stratum": "C",
+   "stratumSize": 99,
+   "stratumSample": 3,
+   "drawOrder": 51
+  },
+  {
+   "id": "claude-code-workflows:claude-session/workflows/scripts/beds-tier-a-wf_7c3e2774-94f.js",
+   "cluster": "first-party",
+   "stratum": "B",
+   "stratumSize": 10,
+   "stratumSample": 10,
+   "drawOrder": 52
+  },
+  {
+   "id": "apple-shortcuts:workflowllm-seed-05668",
+   "cluster": "consumer-creative",
+   "stratum": "B",
+   "stratumSize": 105,
+   "stratumSample": 4,
+   "drawOrder": 53
+  },
+  {
+   "id": "metagpt:MetaGPT/examples/werewolf_game/start_game.py#moderator-driven-werewolf-game",
+   "cluster": "agentic",
+   "stratum": "B",
+   "stratumSize": 109,
+   "stratumSample": 4,
+   "drawOrder": 54
+  },
+  {
+   "id": "wdl:github.com/MethodsDev/LongReadAlignmentAssembler/LRAA-cell_cluster_guided:main",
+   "cluster": "science",
+   "stratum": "A",
+   "stratumSize": 159,
+   "stratumSample": 4,
+   "drawOrder": 55
+  },
+  {
+   "id": "comfyui:xxyQwQ-ComfyBench-dataset-benchmark-workflow-001.json",
+   "cluster": "consumer-creative",
+   "stratum": "A",
+   "stratumSize": 69,
+   "stratumSample": 3,
+   "drawOrder": 56
+  },
+  {
+   "id": "claude-code-workflows:claude-session/workflows/scripts/c0-preflight-wf_d35b46dd-974.js",
+   "cluster": "first-party",
+   "stratum": "B",
+   "stratumSize": 10,
+   "stratumSample": 10,
+   "drawOrder": 57
+  },
+  {
+   "id": "anthropic:claude-agent-sdk-python/examples/tool_permission_callback.py",
+   "cluster": "agentic",
+   "stratum": "C",
+   "stratumSize": 60,
+   "stratumSample": 3,
+   "drawOrder": 58
+  },
+  {
+   "id": "flowise:chatflows-sql-db-chain",
+   "cluster": "automation",
+   "stratum": "A",
+   "stratumSize": 57,
+   "stratumSample": 3,
+   "drawOrder": 59
+  },
+  {
+   "id": "n8n:3840",
+   "cluster": "automation",
+   "stratum": "B",
+   "stratumSize": 157,
+   "stratumSample": 4,
+   "drawOrder": 60
+  }
+ ]
+}

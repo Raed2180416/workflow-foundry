@@ -1,0 +1,29 @@
+1|P05|y|chain of two LLM chains (summary then metric judge); anchors are the chat-model sub-nodes but the idiom holds
+1|P38|n|evaluationTrigger feeds dataset rows to a test harness; not an event rule
+1|P06|p|downloaded document is read then summarised; read-then-generate shape but no retrieval or citation
+1|P37|y|webhook trigger
+1|P01|y|webhook-set-download-extract chain of three plumbing stages exists; blind label omitted it
+2|P13|p|parallel map whose body is a research agent, not a batched typed extraction
+2|P45|y|tool-using subagents
+2|P14|y|barrier gathers the four branch results
+2|P47|p|agents write converter and checker scripts, incidental to the task
+2|P16|p|merge agent de-duplicates part files by script; keyword hit, skeleton only loosely fits
+2|P12|m|literal table mapped to workers; P13 and P12 are both defensible for this loop
+2|P15|m|merge agent combines the four reports; detector chose P14 for the barrier
+3|P21|y|six state sensors
+3|P29|M|trigger_rule=all_done teardown chain; node categories are wait/action so the error-handler rule cannot see it
+3|P01|M|setup, wait, pod, teardown chain; chain nodes are wait/code categories so the plumbing detector misses it
+4|P45|y|tool-using subagents
+4|P14|y|barrier over two critics
+4|P47|n|agents write documents and critiques; no code-execution step is the point
+4|P18|n|two different critics, not best-of-N candidates of one task
+4|P01|m|design, critics, revise is a staged chain; P14 already captures the middle
+5|P10|y|nested menus
+5|P54|y|26 run-another-shortcut
+5|P55|p|Ask-for-input nodes exist (11) but the anchors shown are barcode and photo capture
+5|P08|p|one If gates an effect; the other ifs are branches
+5|P01|n|three unrelated variable-setup transforms, not a pipeline
+5|P02|n|web page fetch then image detect then run shortcut; not a sync/ETL
+5|P32|m|alert plus two-option menu precede payment actions; plausible but not visible in the summary
+6|P07|y|IntentDetector then branch
+6|P01|m|entry, code, intent, http chain; the model node breaks the plumbing-only chain rule

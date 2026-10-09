@@ -1,0 +1,168 @@
+{"pattern":"P37","k":1,"id":"n8n:8646","verdict":"y","reason":"n8n formTrigger: incoming HTTP form request starts the run and gets a response page"}
+{"pattern":"P37","k":2,"id":"node-red:fdf99cabf52814efb4d8494e45909b30","verdict":"y","reason":"http in GET/POST endpoints (the modbus-read anchor is not a webhook but the http-in anchors are)"}
+{"pattern":"P37","k":3,"id":"gitlab-ci:gitlab.com/postgres-ai/database-lab","verdict":"p","reason":"GitLab push pipeline source is an event, not a request needing a reply"}
+{"pattern":"P37","k":4,"id":"github-actions:GitoxideLabs/gitoxide/.github/workflows/release.yml","verdict":"p","reason":"GitHub push-tag event, no reply"}
+{"pattern":"P37","k":5,"id":"github-actions:aio-libs/yarl/.github/workflows/ci.yml","verdict":"p","reason":"GitHub push/pull_request events, no reply"}
+{"pattern":"P37","k":6,"id":"zapier:cc752ab51755","verdict":"p","reason":"Zapier sub-zap start (called by another zap); request/response in spirit but not an HTTP webhook"}
+{"pattern":"P37","k":7,"id":"github-actions:korlibs/korge/.github/workflows/TEST.yml","verdict":"p","reason":"GitHub push/pull_request events, no reply"}
+{"pattern":"P37","k":8,"id":"github-actions:mun-lang/mun/.github/workflows/ci.yml","verdict":"p","reason":"GitHub push/pull_request events, no reply"}
+{"pattern":"P37","k":9,"id":"langflow:image-sentiment-analysis","verdict":"p","reason":"token only: Langflow flow exposed through the API run endpoint; no trigger node visible"}
+{"pattern":"P37","k":10,"id":"gitlab-ci:gitlab-org/gitlab/lib/gitlab/ci/templates/Jobs/CF-Provision.gitlab-ci.yml","verdict":"p","reason":"GitLab push pipeline source, 2-node template"}
+{"pattern":"P38","k":1,"id":"home-assistant:dannytsang/homeassistant-config/packages/integrations/energy/octopus_energy.yaml#automation/0","verdict":"y","reason":"HA state trigger with conditions then actions"}
+{"pattern":"P38","k":2,"id":"semantic-kernel:semantic-kernel/python/samples/getting_started_with_agents/multi_agent_orchestration/step1a_concurrent_structured_outputs.py#parallel-article-analysts-structured-merge","verdict":"n","reason":"orchestration start message, not an event rule"}
+{"pattern":"P38","k":3,"id":"home-assistant:jazzyisj/home-assistant-config/automations/zwave/zwave_keypress_events.yaml#0","verdict":"y","reason":"HA event triggers"}
+{"pattern":"P38","k":4,"id":"zapier:d30d17597226","verdict":"y","reason":"Zapier trigger then actions"}
+{"pattern":"P38","k":5,"id":"n8n:7763","verdict":"y","reason":"WhatsApp and Drive triggers"}
+{"pattern":"P38","k":6,"id":"node-red:5203cdf15000bd64d1da800a005bab55","verdict":"y","reason":"MQTT subscribe event"}
+{"pattern":"P38","k":7,"id":"node-red:ecedddbabd5cb5d6c9a829382d0f229b","verdict":"y","reason":"MQTT in events"}
+{"pattern":"P38","k":8,"id":"autogen:autogen/python/samples/core_chess_game/main.py#two-llm-players-shared-board","verdict":"n","reason":"system message that starts a chess game, not an event rule"}
+{"pattern":"P38","k":9,"id":"home-assistant:CCOSTAN/Home-AssistantConfig/config/packages/powerwall.yaml#automation/4","verdict":"y","reason":"HA state trigger"}
+{"pattern":"P38","k":10,"id":"zapier:63ca298d2d18","verdict":"y","reason":"Zapier trigger then actions"}
+{"pattern":"P08","k":1,"id":"apple-shortcuts:workflowllm-seed-06338","verdict":"y","reason":"single-branch If gating an action"}
+{"pattern":"P08","k":2,"id":"home-assistant:TheFes/HA-configuration/packages/00-general/voice_satellite/soundbar_and_tv_on_voice_command.yaml#automation/0","verdict":"y","reason":"template condition gates the action"}
+{"pattern":"P08","k":3,"id":"home-assistant:forum-526274","verdict":"y","reason":"or-condition and choose guard actions"}
+{"pattern":"P08","k":4,"id":"apple-shortcuts:workflowllm-seed-00077","verdict":"y","reason":"four single-branch Ifs"}
+{"pattern":"P08","k":5,"id":"comfyui:jakechai-ComfyUI-JakeUpgrade-Workflow-ComfyUI-Main-imgen-mGPU-JK_workflow_imgen_QWen_ModelSheet_adv_mGPU.json","verdict":"n","reason":"ImpactSwitch selects between inputs; not a guard before an effect"}
+{"pattern":"P08","k":6,"id":"apple-shortcuts:icloud-ecfa7ec13f744d2aae362f22da29b4ba","verdict":"y","reason":"single-branch If"}
+{"pattern":"P08","k":7,"id":"home-assistant:TheFes/HA-configuration/blueprints/automation/TheFes/mobile_app_alert.yaml#0","verdict":"y","reason":"template condition guards the alert"}
+{"pattern":"P08","k":8,"id":"n8n:19217","verdict":"y","reason":"two Ifs in a support-agent flow gate escalation"}
+{"pattern":"P08","k":9,"id":"nf-core:rnastructurome@1.0.0","verdict":"p","reason":"channel .branch splits streams by a field, closer to L0 if"}
+{"pattern":"P08","k":10,"id":"home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/ikea_e2001_e2002/ikea_e2001_e2002.yaml#0","verdict":"p","reason":"16 choose nodes map button events to actions (a dispatch table), not guards"}
+{"pattern":"P01","k":1,"id":"nf-core:phaseimpute@1.1.0","verdict":"y","reason":"bamchrextract, reheader, index"}
+{"pattern":"P01","k":2,"id":"galaxy:workflowhub/1685","verdict":"y","reason":"StringTie, StringTie merge, GffCompare"}
+{"pattern":"P01","k":3,"id":"cwl:ncbi/pgap/pgap.cwl","verdict":"y","reason":"expression tool, splitter, prepare entries"}
+{"pattern":"P01","k":4,"id":"airflow:apache-airflow-providers-amazon/tests/system/amazon/aws/example_s3#example_s3","verdict":"p","reason":"S3 bucket creates and tagging in sequence; control order, no data hand-off"}
+{"pattern":"P01","k":5,"id":"nf-core:genomeqc@1.0.1","verdict":"p","reason":"meryl, merqury, then the completion email node (not a stage)"}
+{"pattern":"P01","k":6,"id":"apple-shortcuts:workflowllm-seed-05992","verdict":"n","reason":"three unrelated device-state lookups"}
+{"pattern":"P01","k":7,"id":"flowise:chatflows-github-docs-qn-a","verdict":"y","reason":"splitter, document loader, vector store ingest"}
+{"pattern":"P01","k":8,"id":"home-assistant:TheFes/HA-configuration/blueprints/automation/TheFes/telegram_command.yaml#0","verdict":"p","reason":"set variables, send message, stop: trivial sequence"}
+{"pattern":"P01","k":9,"id":"comfyui:Cseti-ComfyUI-Workflows-wan-2.2-vace-endless-extension-wan2.2-vace-endless-extension.json","verdict":"y","reason":"LoRA select, model loader, block swap"}
+{"pattern":"P01","k":10,"id":"dify:mkt-ba55055e-e212-4ae1-8e05-b7dde6ec7268","verdict":"p","reason":"code, md-to-docx, end"}
+{"pattern":"P01","k":11,"id":"home-assistant:CCOSTAN/Home-AssistantConfig/config/packages/tesla_model_y.yaml#script/tesla_home_charge_protect","verdict":"p","reason":"set variables and two state writes in sequence"}
+{"pattern":"P01","k":12,"id":"n8n:19431","verdict":"y","reason":"code, enrich, set"}
+{"pattern":"P01","k":13,"id":"airflow:apache-airflow-providers-google/tests/system/google/cloud/bigquery/example_bigquery_to_postgres#bigquery_to_postgres","verdict":"p","reason":"create dataset, create table, bash: control order"}
+{"pattern":"P01","k":14,"id":"mastra:mastra/templates/template-github-review-agent/src/mastra/workflows/pr-review-workflow.ts","verdict":"y","reason":"PR metadata, filter, fetch contents"}
+{"pattern":"P01","k":15,"id":"n8n:14080","verdict":"p","reason":"folder, move, code"}
+{"pattern":"P01","k":16,"id":"node-red:66973abc3ff9875516a417df69a67e19","verdict":"n","reason":"function, function, debug"}
+{"pattern":"P01","k":17,"id":"node-red:e36b06bc36312d057c0541414d4f87f5","verdict":"p","reason":"function, ui_list, change"}
+{"pattern":"P01","k":18,"id":"airflow:apache-airflow-providers-amazon/tests/system/amazon/aws/example_datasync#example_datasync","verdict":"p","reason":"bucket creates then a location task: control order"}
+{"pattern":"P01","k":19,"id":"n8n:7962","verdict":"y","reason":"resize, post, post"}
+{"pattern":"P01","k":20,"id":"n8n:11797","verdict":"y","reason":"set, YouTube get, set"}
+{"pattern":"P02","k":1,"id":"apple-shortcuts:icloud-cae075d04b884beea44df7b67fd5aabb","verdict":"n","reason":"HTTP GET, number, run shortcut in a utilities menu app"}
+{"pattern":"P02","k":2,"id":"apple-shortcuts:icloud-a11bc672b88044bc8cf795f2e0956103","verdict":"n","reason":"HTTP GET, dictionary, open URL"}
+{"pattern":"P02","k":3,"id":"n8n:18427","verdict":"y","reason":"Notion pages transformed and inserted into a vector store"}
+{"pattern":"P02","k":4,"id":"n8n:11386","verdict":"y","reason":"fetch article, aggregate, post to platforms"}
+{"pattern":"P02","k":5,"id":"airflow:apache-airflow-providers-amazon/tests/system/amazon/aws/example_sagemaker#example_sagemaker","verdict":"n","reason":"SageMaker job, sensor and a validation task; ML job steps, not a sync"}
+{"pattern":"P02","k":6,"id":"comfyui:kijai-ComfyUI-WanVideoWrapper-example_workflows-LongCatAvatar_audio_image_to_video_example_01.json","verdict":"n","reason":"load audio, trim, combine video; local media processing"}
+{"pattern":"P02","k":7,"id":"nextflow:workflowhub/2246","verdict":"n","reason":"samplesheet parse, multiMap, falco; analysis pipeline"}
+{"pattern":"P02","k":8,"id":"n8n:11805","verdict":"p","reason":"Shopify fetch then email send; fetch-notify, not a sync"}
+{"pattern":"P02","k":9,"id":"github-actions:dbt-labs/dbt-adapters/.github/workflows/_integration-tests.yml","verdict":"n","reason":"checkout, set env, install: CI setup"}
+{"pattern":"P02","k":10,"id":"n8n:19900","verdict":"p","reason":"Redis get, code, Telegram reply: chat bot memory read"}
+{"pattern":"P02","k":11,"id":"snakemake:niekwit/cut_and_run@v0.5.0","verdict":"n","reason":"snakemake wrapper rules; analysis pipeline"}
+{"pattern":"P02","k":12,"id":"n8n:12462","verdict":"y","reason":"fetch image, process, store in Drive"}
+{"pattern":"P02","k":13,"id":"nf-core:riboseq@2.0.0","verdict":"n","reason":"samplesheet and analysis modules"}
+{"pattern":"P02","k":14,"id":"apple-shortcuts:icloud-d62e5f697e3e42588f6c7325ca28f3a1","verdict":"n","reason":"HTTP GET, detect text, run shortcut"}
+{"pattern":"P02","k":15,"id":"github-actions:intel/compile-time-init-build/.github/workflows/unit_tests.yml","verdict":"n","reason":"cache restore, configure, cache save"}
+{"pattern":"P02","k":16,"id":"github-actions:jhumanj/opnform/.github/workflows/laravel.yml","verdict":"n","reason":"checkout, run, cache"}
+{"pattern":"P02","k":17,"id":"apple-shortcuts:workflowllm-seed-00364","verdict":"n","reason":"ip lookup, random number, create folder"}
+{"pattern":"P02","k":18,"id":"comfyui:TTPlanetPig-Comfyui_TTP_Toolset-examples-LTX_2_First_Last_Middle_Frame_control_v1_sub.json","verdict":"n","reason":"load image, resize, combine video"}
+{"pattern":"P02","k":19,"id":"n8n:4086","verdict":"p","reason":"Supabase read, aggregate, HTTP post inside a chat agent"}
+{"pattern":"P02","k":20,"id":"nf-core:mag@5.5.0","verdict":"n","reason":"samplesheet and analysis modules"}
+{"pattern":"P17","k":1,"id":"apple-shortcuts:icloud-a11bc672b88044bc8cf795f2e0956103","verdict":"n","reason":"web page reads in a utility shortcut"}
+{"pattern":"P17","k":2,"id":"google-adk:adk-samples/core/python/deep-search/app/agent.py","verdict":"n","reason":"search passes merged into a research context, not a reconciliation"}
+{"pattern":"P17","k":3,"id":"apple-shortcuts:workflowllm-seed-00714","verdict":"n","reason":"web reads then alert"}
+{"pattern":"P17","k":4,"id":"n8n:9200","verdict":"n","reason":"merge of polled HTTP statuses"}
+{"pattern":"P17","k":5,"id":"n8n:13115","verdict":"p","reason":"compares invoice spending against a budget"}
+{"pattern":"P17","k":6,"id":"nf-core:pathogensurveillance@1.1.0","verdict":"n","reason":"assembly parsing in a genomics pipeline"}
+{"pattern":"P17","k":7,"id":"apple-shortcuts:icloud-d011d2cfe7ef41a2b5100ac1e2717b45","verdict":"n","reason":"wifi and ip checks then If"}
+{"pattern":"P17","k":8,"id":"n8n:19217","verdict":"n","reason":"agent with two vector-store tools"}
+{"pattern":"P17","k":9,"id":"nf-core:tumourevo@1.0.0","verdict":"n","reason":"VEP annotation modules"}
+{"pattern":"P17","k":10,"id":"apple-shortcuts:workflowllm-seed-10752","verdict":"n","reason":"API reads in a Shazam shortcut"}
+{"pattern":"P17","k":11,"id":"comfyui:WASasquatch-was-node-suite-comfyui-docs-workflows-affine-krea2.json","verdict":"n","reason":"model loaders feeding a sampler"}
+{"pattern":"P17","k":12,"id":"zapier:88fc70d2ce09","verdict":"p","reason":"matches call transcripts to calendar events"}
+{"pattern":"P17","k":13,"id":"apple-shortcuts:icloud-cae075d04b884beea44df7b67fd5aabb","verdict":"n","reason":"device reads in a utilities shortcut"}
+{"pattern":"P17","k":14,"id":"n8n:19735","verdict":"n","reason":"fact-check posts; no two record sets"}
+{"pattern":"P17","k":15,"id":"zapier:cc87cfbdd916","verdict":"p","reason":"search CRM entry for a form entry then update: match and upsert"}
+{"pattern":"P17","k":16,"id":"n8n:19463","verdict":"n","reason":"agent with two HTTP tools"}
+{"pattern":"P17","k":17,"id":"n8n:19723","verdict":"n","reason":"download then audio analysis"}
+{"pattern":"P17","k":18,"id":"inngest-agentkit:agent-kit/examples/swebench/inngest.ts#plan-then-edit-network","verdict":"n","reason":"tool reads in a coding agent"}
+{"pattern":"P17","k":19,"id":"apple-shortcuts:workflowllm-seed-11475","verdict":"n","reason":"device reads in a config shortcut"}
+{"pattern":"P17","k":20,"id":"comfyui:scraed-LanPaint-example_workflows-Flux2_Klein_EncodeDecode_Inpaint.json","verdict":"n","reason":"model loaders in an inpaint graph"}
+{"pattern":"P18","k":1,"id":"google-adk:adk-samples/contrib/python/small-business-loan-agent/app/agent.py","verdict":"p","reason":"four specialist agents run as tools on different sections; sectioning with no verifier"}
+{"pattern":"P18","k":2,"id":"n8n:8582","verdict":"n","reason":"agentTool sub-agents under a supervisor (P46)"}
+{"pattern":"P18","k":3,"id":"smolagents:smolagents/examples/open_deep_research/run_gaia.py#gaia-batch-team-reformulator","verdict":"n","reason":"caption and inspect tools feeding a question builder"}
+{"pattern":"P18","k":4,"id":"anthropic:claude-cookbooks/patterns/agents/evaluator_optimizer.ipynb","verdict":"n","reason":"generator and judge loop (P20), not N candidates"}
+{"pattern":"P18","k":5,"id":"autogen:autogen/python/docs/src/user-guide/agentchat-user-guide/graph-flow.ipynb#conditional-loop-filtered-summary","verdict":"n","reason":"generator, reviewer, summariser loop"}
+{"pattern":"P18","k":6,"id":"inngest-agentkit:agent-kit/examples/use-agent/inngest/sql-agents/network.ts","verdict":"n","reason":"router sequence of three agents"}
+{"pattern":"P18","k":7,"id":"comfyui:Comfy-Org-workflow_templates-templates-template_rob_split_stack_qwen_multi_wan22.json","verdict":"n","reason":"text encoders feeding one node"}
+{"pattern":"P18","k":8,"id":"openai-agents:openai-agents-python/examples/agent_patterns/parallelization.py","verdict":"y","reason":"three concurrent translations then pick the best"}
+{"pattern":"P18","k":9,"id":"n8n:11382","verdict":"n","reason":"provider sub-nodes of one chain"}
+{"pattern":"P18","k":10,"id":"semantic-kernel:semantic-kernel/python/samples/getting_started_with_agents/multi_agent_orchestration/step1a_concurrent_structured_outputs.py#parallel-article-analysts-structured-merge","verdict":"y","reason":"three parallel analysts (themes, sentiment, entities) merged; sectioning"}
+{"pattern":"P18","k":11,"id":"activepieces:S0tI31TsQZvtNg5BDH1Tq","verdict":"n","reason":"reply after two askAi steps"}
+{"pattern":"P18","k":12,"id":"flowise:chatflows-context-chat-engine","verdict":"n","reason":"retriever, chat model, embedding feeding one engine"}
+{"pattern":"P18","k":13,"id":"dify:repo-e9d92058-7d20-4904-892f-75d90bef7587","verdict":"n","reason":"two exclusive LLM branches and an aggregator"}
+{"pattern":"P18","k":14,"id":"langgraph:langgraph/docs/docs/tutorials/rag/langgraph_adaptive_rag.ipynb","verdict":"n","reason":"router, retriever, rewriter"}
+{"pattern":"P18","k":15,"id":"comfyui:jakechai-ComfyUI-JakeUpgrade-Workflow-ComfyUI-Main-video-FramePack-JK_workflow_Video-FramePack.json","verdict":"n","reason":"conditioning encoders feeding one sampler"}
+{"pattern":"P18","k":16,"id":"google-adk:adk-python/contributing/samples/patterns/workflow_triage/agent.py","verdict":"p","reason":"workers on different asks run in parallel then a summariser; sectioning without verifier"}
+{"pattern":"P18","k":17,"id":"comfyui:TTPlanetPig-Comfyui_TTP_Toolset-examples-smart_tile_qwen_sam_loop_example_v2.json","verdict":"n","reason":"encoders feeding one sampler"}
+{"pattern":"P18","k":18,"id":"agno:agno/cookbook/04_workflows/03_loop_execution/loop_with_parallel.py#research-loop-parallel-then-content","verdict":"p","reason":"parallel research and analysis steps joined; sectioning without verifier"}
+{"pattern":"P18","k":19,"id":"comfyui:kijai-ComfyUI-WanVideoWrapper-example_workflows-wanvideo_1_3B_VACE_examples_03.json","verdict":"n","reason":"muted sampler inputs"}
+{"pattern":"P18","k":20,"id":"n8n:10156","verdict":"n","reason":"agent with agentTool sub-agents"}
+{"pattern":"P16","k":1,"id":"n8n:3891","verdict":"p","reason":"exact-key removeDuplicates node (card routes exact keys to L0 step)"}
+{"pattern":"P16","k":2,"id":"dagster:data-quality-patterns","verdict":"p","reason":"data-quality example with duplicate customers; plausible identity dedupe but keyword-level"}
+{"pattern":"P16","k":3,"id":"dspy:dspy/docs/docs/tutorials/program_of_thought/index.ipynb#multihop-pot","verdict":"p","reason":"exact repeat removal of passages"}
+{"pattern":"P16","k":4,"id":"inngest-agentkit:agent-kit/examples/use-agent/inngest/sql-agents/network.ts","verdict":"n","reason":"history append; keyword matched unrelated text"}
+{"pattern":"P16","k":5,"id":"n8n:3288","verdict":"n","reason":"removeItemsSeenInPreviousExecutions is a seen-set (P42), not identity resolution"}
+{"pattern":"P16","k":6,"id":"github-actions:argoproj/argo-workflows/.github/workflows/ci-build.yaml","verdict":"n","reason":"npm dependency deduplicate command"}
+{"pattern":"P16","k":7,"id":"google-adk:adk-samples/contrib/python/on-brand-genmedia/app/agent.py","verdict":"n","reason":"unique id generation"}
+{"pattern":"P16","k":8,"id":"claude-code-workflows:claude-session/workflows/scripts/workflow-corpus-acquisition-wf_c6d2acc2-f96.js","verdict":"p","reason":"merge agent de-duplicates workflow items by script; real need but not the card skeleton"}
+{"pattern":"P16","k":9,"id":"n8n:17387","verdict":"p","reason":"exact-key removeDuplicates on links"}
+{"pattern":"P16","k":10,"id":"inngest-agentkit:agent-kit/examples/mem0-memory/multi-agent.ts","verdict":"n","reason":"memory search keyword"}
+{"pattern":"P16","k":11,"id":"n8n:9100","verdict":"p","reason":"exact-key removeDuplicates on posts"}
+{"pattern":"P16","k":12,"id":"n8n:11807","verdict":"n","reason":"seen-in-previous-executions (P42)"}
+{"pattern":"P16","k":13,"id":"dagster:snowflake_cortex","verdict":"n","reason":"unique keyword in ingest description"}
+{"pattern":"P16","k":14,"id":"google-adk:adk-python/contributing/samples/adk_team/adk_documentation/adk_release_analyzer/agent.py","verdict":"y","reason":"agent orders and de-duplicates recommendations by meaning"}
+{"pattern":"P16","k":15,"id":"inngest-agentkit:agent-kit/examples/deep-research/inngest/functions/deep-research.ts","verdict":"p","reason":"unique-source collection by URL"}
+{"pattern":"P16","k":16,"id":"n8n:2658","verdict":"p","reason":"exact-key removeDuplicates twice"}
+{"pattern":"P16","k":17,"id":"n8n:11382","verdict":"p","reason":"removeDuplicates on leads"}
+{"pattern":"P16","k":18,"id":"dspy:dspy/docs/docs/tutorials/multihop_search/index.ipynb#hop-multihop-retrieval","verdict":"n","reason":"list(set(titles)) exact repeat removal"}
+{"pattern":"P49","k":1,"id":"claude-code-workflows:claude-session/workflows/scripts/laptop-bridge-wf_c491d61b-2c7.js","verdict":"n","reason":"fixer reads two different reports; no verifier vote"}
+{"pattern":"P49","k":2,"id":"strands:samples/python/05-technical-use-cases/steering/library-book-renewal-agent/src/library_agent_demo/agents/steering_agent.py","verdict":"n","reason":"steering judges check different properties of one agent, not a panel on one output"}
+{"pattern":"P49","k":3,"id":"mastra:mastra/templates/template-security-incident-triage/src/mastra/workflows/security-incident-workflow.ts","verdict":"p","reason":"parallel supervised investigators with specialist validators; no vote"}
+{"pattern":"P49","k":4,"id":"camel:camel/examples/workforce/hackathon_judges.py#auto-decompose-judge-panel","verdict":"y","reason":"four persona judges score the same project and the opinions are compiled"}
+{"pattern":"P49","k":5,"id":"google-adk:adk-python/contributing/samples/live/workflow/agent.py","verdict":"n","reason":"voice stages in sequence"}
+{"pattern":"P49","k":6,"id":"langgraph:langgraph/docs/docs/tutorials/rag/langgraph_adaptive_rag.ipynb","verdict":"p","reason":"two graders (grounding, answers question) in sequence; different properties, no vote"}
+{"pattern":"P49","k":7,"id":"anthropic:claude-cookbooks/patterns/agents/evaluator_optimizer.ipynb","verdict":"n","reason":"a single evaluator"}
+{"pattern":"P49","k":8,"id":"claude-code-workflows:claude-session/workflows/scripts/kev-analysis-wf_df1c3e5c-f13.js","verdict":"p","reason":"refuter and completeness critic review one analysis; no vote"}
+{"pattern":"P48","k":1,"id":"strands:samples/python/05-technical-use-cases/steering/library-book-renewal-agent/src/library_agent_demo/agents/steering_agent.py","verdict":"p","reason":"steering handlers guide or cancel tool calls inline, not a parallel tripwire"}
+{"pattern":"P48","k":2,"id":"openai-agents:openai-agents-python/examples/agent_patterns/streaming_guardrails.py","verdict":"y","reason":"background checker aborts the stream when it fails"}
+{"pattern":"P48","k":3,"id":"anthropic:claude-cookbooks/claude_agent_sdk/03_The_site_reliability_agent.ipynb","verdict":"p","reason":"read-only investigation then remediation behind permission hooks"}
+{"pattern":"P48","k":4,"id":"openai-agents:openai-agents-python/examples/agent_patterns/input_guardrails.py","verdict":"y","reason":"classifier agent runs in parallel with the support agent and trips the run"}
+{"pattern":"P48","k":5,"id":"anthropic:claude-agent-sdk-python/examples/tool_permission_callback.py","verdict":"p","reason":"permission callback blocks calls inline"}
+{"pattern":"P48","k":6,"id":"google-adk:adk-samples/contrib/python/small-business-loan-agent/app/agent.py","verdict":"p","reason":"hooks around specialist agent tools; gating by user approval"}
+{"pattern":"P30","k":1,"id":"nf-core:raredisease@3.1.2","verdict":"n","reason":"gatk4 RevertSam (undo of alignment flags), not a saga"}
+{"pattern":"P30","k":2,"id":"nextflow:workflowhub/1864","verdict":"n","reason":"REVERTSAM process"}
+{"pattern":"P30","k":3,"id":"wdl:broadinstitute/warp/pipelines/wdl/reprocessing/wgs/WholeGenomeReprocessing.wdl","verdict":"n","reason":"RevertSam task"}
+{"pattern":"P30","k":4,"id":"wdl:broadinstitute/warp/pipelines/wdl/reprocessing/cram_to_unmapped_bams/CramToUnmappedBams.wdl","verdict":"n","reason":"RevertSam task"}
+{"pattern":"P30","k":5,"id":"wdl:broadinstitute/warp/pipelines/wdl/reprocessing/exome/ExomeReprocessing.wdl","verdict":"n","reason":"RevertSam task"}
+{"pattern":"P30","k":6,"id":"haystack:haystack-cookbook/notebooks/github_pr_creator_agent.ipynb","verdict":"n","reason":"GitHubFileEditorTool has an undo action but there is no compensation of completed steps"}
+{"pattern":"P30","k":7,"id":"wdl:github.com/malariagen/pipelines/MalariaVector_ShortReadAlignmentAndGenotyping:master","verdict":"n","reason":"RevertSam task"}
+{"pattern":"P31","k":1,"id":"langgraph:langgraph/docs/docs/tutorials/get-started/6-time-travel.md","verdict":"y","reason":"checkpoint time travel to an earlier state"}
+{"pattern":"P31","k":2,"id":"temporal:samples-go/temporal-fixtures","verdict":"y","reason":"continue_as_new"}
+{"pattern":"P31","k":3,"id":"agno:agno/cookbook/03_teams/25_time_travel/01_continue_from.py#team-run-rewind-and-fork","verdict":"y","reason":"persisted team run continued, rewound and forked"}
+{"pattern":"P31","k":4,"id":"temporal:samples-python/langgraph_plugin","verdict":"y","reason":"continue-as-new"}
+{"pattern":"P31","k":5,"id":"temporal:samples-python/polling/periodic_sequence","verdict":"y","reason":"continue-as-new in a periodic loop"}
+{"pattern":"P31","k":6,"id":"crewai:crewAI/docs/edge/en/guides/flows/first-flow.mdx#guide-creator-flow","verdict":"n","reason":"the regex /\\bcan\\b/ matched the word 'can' in a loop description"}
+{"pattern":"P31","k":7,"id":"pydantic-graph:pydantic-ai/docs/harness/step-persistence.md#continue_and_fork","verdict":"y","reason":"step persistence with continue and fork"}
+{"pattern":"P31","k":8,"id":"temporal:samples-go/pso","verdict":"y","reason":"continue_as_new in the PSO sample"}
+{"pattern":"P31","k":9,"id":"burr:burr/examples/multi-agent-collaboration/hamilton/application.py","verdict":"p","reason":"checkpoint-rewind token; Burr persistence is plausible but not visible"}
+{"pattern":"P22","k":1,"id":"home-assistant:forum-413705","verdict":"y","reason":"repeat while loop (hold-to-dim) until the condition clears"}
+{"pattern":"P22","k":2,"id":"home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/xiaomi_wxcjkg13lm/xiaomi_wxcjkg13lm.yaml#0","verdict":"y","reason":"repeat-while loops"}
+{"pattern":"P22","k":3,"id":"home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/ikea_e2001_e2002/ikea_e2001_e2002.yaml#0","verdict":"y","reason":"repeat-while loops"}
+{"pattern":"P22","k":4,"id":"home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/ikea_e2123/ikea_e2123.yaml#0","verdict":"y","reason":"repeat-while loops"}
+{"pattern":"P22","k":5,"id":"home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/osram_ac025xx00nj/osram_ac025xx00nj.yaml#0","verdict":"y","reason":"repeat-while loops"}
+{"pattern":"P22","k":6,"id":"home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/xiaomi_wxcjkg11lm/xiaomi_wxcjkg11lm.yaml#0","verdict":"y","reason":"repeat-while loops"}
+{"pattern":"P22","k":7,"id":"home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/xiaomi_wxcjkg12lm/xiaomi_wxcjkg12lm.yaml#0","verdict":"y","reason":"repeat-while loops"}
+{"pattern":"P22","k":8,"id":"home-assistant:forum-730391","verdict":"y","reason":"repeat-while gate loop"}
+{"pattern":"P22","k":9,"id":"home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/ikea_e1524_e1810/ikea_e1524_e1810.yaml#0","verdict":"y","reason":"repeat-while loops"}
+{"pattern":"P22","k":10,"id":"home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/ikea_e1743/ikea_e1743.yaml#0","verdict":"y","reason":"repeat-while loops"}

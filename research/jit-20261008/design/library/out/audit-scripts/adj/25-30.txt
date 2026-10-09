@@ -1,0 +1,33 @@
+25|P13|n|scripted for-loop over questions with a chat agent body; not a batched typed extraction
+25|P20|n|the cycle is a compaction trigger on the session, not generate-verify-retry
+25|P51|y|compaction calls
+25|P43|y|chat-session token; session stored between turns
+25|P42|p|session store holds turns across the loop; in-memory, so cross-run only if the session is reused
+25|P18|n|session node is not a best-of-N
+26|P27|y|errorTrigger notification workflow
+26|P38|p|errorTrigger is an event, but P27 already owns it
+26|P01|y|set, code, post chain
+26|P28|M|second branch posts to Discord after the Slack post; the handler-rejoins rule did not fire
+27|P08|p|channel .branch routes by protocol; closer to L0 if
+27|P03|n|cellbender removebackground is a tool tagged model, not a model reading text
+27|P27|y|onError hook
+27|P29|y|completion email
+27|P26|y|token adaptive-retry (nf-core errorStrategy)
+27|P12|m|per-sample channels are implicit
+27|P15|M|multiqc gathers all samples; no merge-category node, so the fan-in rule missed it
+27|P54|M|features report 17 subworkflows but the graph is flat
+28|P08|p|channel .branch operators route streams, closer to L0 if
+28|P27|y|onError hook
+28|P29|y|completion email and webhook
+28|P26|y|token adaptive-retry
+28|P01|y|multiMap, process, multiMap chain
+28|P12|m|per-sample channels implicit
+28|P54|M|features report 32 subworkflows but the graph is flat
+29|P36|y|time trigger
+29|P38|y|sun and state triggers
+29|P33|p|4 wait_for_trigger nodes are right, but the rule also assigned 9 plain delay nodes to P33
+29|P21|n|repeat-count blink loops with delays are not poll-until-ready
+29|P12|p|repeat-count loops and one for_each; bounded loops rather than map-reduce
+29|P34|y|25 delays
+29|P40|y|run-concurrency-policy token (mode field)
+30|P01|y|mitohifi chain

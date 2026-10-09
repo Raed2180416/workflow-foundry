@@ -1,0 +1,168 @@
+P37|1|y|n8n formTrigger: incoming HTTP form request starts the run and gets a response page
+P37|2|y|http in GET/POST endpoints (the modbus-read anchor is not a webhook but the http-in anchors are)
+P37|3|p|GitLab push pipeline source is an event, not a request needing a reply
+P37|4|p|GitHub push-tag event, no reply
+P37|5|p|GitHub push/pull_request events, no reply
+P37|6|p|Zapier sub-zap start (called by another zap); request/response in spirit but not an HTTP webhook
+P37|7|p|GitHub push/pull_request events, no reply
+P37|8|p|GitHub push/pull_request events, no reply
+P37|9|p|token only: Langflow flow exposed through the API run endpoint; no trigger node visible
+P37|10|p|GitLab push pipeline source, 2-node template
+P38|1|y|HA state trigger with conditions then actions
+P38|2|n|orchestration start message, not an event rule
+P38|3|y|HA event triggers
+P38|4|y|Zapier trigger then actions
+P38|5|y|WhatsApp and Drive triggers
+P38|6|y|MQTT subscribe event
+P38|7|y|MQTT in events
+P38|8|n|system message that starts a chess game, not an event rule
+P38|9|y|HA state trigger
+P38|10|y|Zapier trigger then actions
+P08|1|y|single-branch If gating an action
+P08|2|y|template condition gates the action
+P08|3|y|or-condition and choose guard actions
+P08|4|y|four single-branch Ifs
+P08|5|n|ImpactSwitch selects between inputs; not a guard before an effect
+P08|6|y|single-branch If
+P08|7|y|template condition guards the alert
+P08|8|y|two Ifs in a support-agent flow gate escalation
+P08|9|p|channel .branch splits streams by a field, closer to L0 if
+P08|10|p|16 choose nodes map button events to actions (a dispatch table), not guards
+P01|1|y|bamchrextract, reheader, index
+P01|2|y|StringTie, StringTie merge, GffCompare
+P01|3|y|expression tool, splitter, prepare entries
+P01|4|p|S3 bucket creates and tagging in sequence; control order, no data hand-off
+P01|5|p|meryl, merqury, then the completion email node (not a stage)
+P01|6|n|three unrelated device-state lookups
+P01|7|y|splitter, document loader, vector store ingest
+P01|8|p|set variables, send message, stop: trivial sequence
+P01|9|y|LoRA select, model loader, block swap
+P01|10|p|code, md-to-docx, end
+P01|11|p|set variables and two state writes in sequence
+P01|12|y|code, enrich, set
+P01|13|p|create dataset, create table, bash: control order
+P01|14|y|PR metadata, filter, fetch contents
+P01|15|p|folder, move, code
+P01|16|n|function, function, debug
+P01|17|p|function, ui_list, change
+P01|18|p|bucket creates then a location task: control order
+P01|19|y|resize, post, post
+P01|20|y|set, YouTube get, set
+P02|1|n|HTTP GET, number, run shortcut in a utilities menu app
+P02|2|n|HTTP GET, dictionary, open URL
+P02|3|y|Notion pages transformed and inserted into a vector store
+P02|4|y|fetch article, aggregate, post to platforms
+P02|5|n|SageMaker job, sensor and a validation task; ML job steps, not a sync
+P02|6|n|load audio, trim, combine video; local media processing
+P02|7|n|samplesheet parse, multiMap, falco; analysis pipeline
+P02|8|p|Shopify fetch then email send; fetch-notify, not a sync
+P02|9|n|checkout, set env, install: CI setup
+P02|10|p|Redis get, code, Telegram reply: chat bot memory read
+P02|11|n|snakemake wrapper rules; analysis pipeline
+P02|12|y|fetch image, process, store in Drive
+P02|13|n|samplesheet and analysis modules
+P02|14|n|HTTP GET, detect text, run shortcut
+P02|15|n|cache restore, configure, cache save
+P02|16|n|checkout, run, cache
+P02|17|n|ip lookup, random number, create folder
+P02|18|n|load image, resize, combine video
+P02|19|p|Supabase read, aggregate, HTTP post inside a chat agent
+P02|20|n|samplesheet and analysis modules
+P17|1|n|web page reads in a utility shortcut
+P17|2|n|search passes merged into a research context, not a reconciliation
+P17|3|n|web reads then alert
+P17|4|n|merge of polled HTTP statuses
+P17|5|p|compares invoice spending against a budget
+P17|6|n|assembly parsing in a genomics pipeline
+P17|7|n|wifi and ip checks then If
+P17|8|n|agent with two vector-store tools
+P17|9|n|VEP annotation modules
+P17|10|n|API reads in a Shazam shortcut
+P17|11|n|model loaders feeding a sampler
+P17|12|p|matches call transcripts to calendar events
+P17|13|n|device reads in a utilities shortcut
+P17|14|n|fact-check posts; no two record sets
+P17|15|p|search CRM entry for a form entry then update: match and upsert
+P17|16|n|agent with two HTTP tools
+P17|17|n|download then audio analysis
+P17|18|n|tool reads in a coding agent
+P17|19|n|device reads in a config shortcut
+P17|20|n|model loaders in an inpaint graph
+P18|1|p|four specialist agents run as tools on different sections; sectioning with no verifier
+P18|2|n|agentTool sub-agents under a supervisor (P46)
+P18|3|n|caption and inspect tools feeding a question builder
+P18|4|n|generator and judge loop (P20), not N candidates
+P18|5|n|generator, reviewer, summariser loop
+P18|6|n|router sequence of three agents
+P18|7|n|text encoders feeding one node
+P18|8|y|three concurrent translations then pick the best
+P18|9|n|provider sub-nodes of one chain
+P18|10|y|three parallel analysts (themes, sentiment, entities) merged; sectioning
+P18|11|n|reply after two askAi steps
+P18|12|n|retriever, chat model, embedding feeding one engine
+P18|13|n|two exclusive LLM branches and an aggregator
+P18|14|n|router, retriever, rewriter
+P18|15|n|conditioning encoders feeding one sampler
+P18|16|p|workers on different asks run in parallel then a summariser; sectioning without verifier
+P18|17|n|encoders feeding one sampler
+P18|18|p|parallel research and analysis steps joined; sectioning without verifier
+P18|19|n|muted sampler inputs
+P18|20|n|agent with agentTool sub-agents
+P16|1|p|exact-key removeDuplicates node (card routes exact keys to L0 step)
+P16|2|p|data-quality example with duplicate customers; plausible identity dedupe but keyword-level
+P16|3|p|exact repeat removal of passages
+P16|4|n|history append; keyword matched unrelated text
+P16|5|n|removeItemsSeenInPreviousExecutions is a seen-set (P42), not identity resolution
+P16|6|n|npm dependency deduplicate command
+P16|7|n|unique id generation
+P16|8|p|merge agent de-duplicates workflow items by script; real need but not the card skeleton
+P16|9|p|exact-key removeDuplicates on links
+P16|10|n|memory search keyword
+P16|11|p|exact-key removeDuplicates on posts
+P16|12|n|seen-in-previous-executions (P42)
+P16|13|n|unique keyword in ingest description
+P16|14|y|agent orders and de-duplicates recommendations by meaning
+P16|15|p|unique-source collection by URL
+P16|16|p|exact-key removeDuplicates twice
+P16|17|p|removeDuplicates on leads
+P16|18|n|list(set(titles)) exact repeat removal
+P49|1|n|fixer reads two different reports; no verifier vote
+P49|2|n|steering judges check different properties of one agent, not a panel on one output
+P49|3|p|parallel supervised investigators with specialist validators; no vote
+P49|4|y|four persona judges score the same project and the opinions are compiled
+P49|5|n|voice stages in sequence
+P49|6|p|two graders (grounding, answers question) in sequence; different properties, no vote
+P49|7|n|a single evaluator
+P49|8|p|refuter and completeness critic review one analysis; no vote
+P48|1|p|steering handlers guide or cancel tool calls inline, not a parallel tripwire
+P48|2|y|background checker aborts the stream when it fails
+P48|3|p|read-only investigation then remediation behind permission hooks
+P48|4|y|classifier agent runs in parallel with the support agent and trips the run
+P48|5|p|permission callback blocks calls inline
+P48|6|p|hooks around specialist agent tools; gating by user approval
+P30|1|n|gatk4 RevertSam (undo of alignment flags), not a saga
+P30|2|n|REVERTSAM process
+P30|3|n|RevertSam task
+P30|4|n|RevertSam task
+P30|5|n|RevertSam task
+P30|6|n|GitHubFileEditorTool has an undo action but there is no compensation of completed steps
+P30|7|n|RevertSam task
+P31|1|y|checkpoint time travel to an earlier state
+P31|2|y|continue_as_new
+P31|3|y|persisted team run continued, rewound and forked
+P31|4|y|continue-as-new
+P31|5|y|continue-as-new in a periodic loop
+P31|6|n|the regex /\bcan\b/ matched the word 'can' in a loop description
+P31|7|y|step persistence with continue and fork
+P31|8|y|continue_as_new in the PSO sample
+P31|9|p|checkpoint-rewind token; Burr persistence is plausible but not visible
+P22|1|y|repeat while loop (hold-to-dim) until the condition clears
+P22|2|y|repeat-while loops
+P22|3|y|repeat-while loops
+P22|4|y|repeat-while loops
+P22|5|y|repeat-while loops
+P22|6|y|repeat-while loops
+P22|7|y|repeat-while loops
+P22|8|y|repeat-while gate loop
+P22|9|y|repeat-while loops
+P22|10|y|repeat-while loops

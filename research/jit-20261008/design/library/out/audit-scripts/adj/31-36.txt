@@ -1,0 +1,31 @@
+31|P45|y|agent loop with skill and bash tools
+31|P20|n|router conditions inside a tool loop are not generate-verify-retry
+31|P32|y|per-call confirmation hook
+31|P35|y|interrupt-resume token (confirm, reject, modify)
+31|P47|y|model-written shell commands are run
+31|P17|n|agent with two read tools is not reconciliation
+32|P37|p|push pipeline source is an event (P38)
+32|P15|n|stage barriers order stages, no aggregate
+32|P54|y|child pipeline trigger job
+32|P32|y|when:manual jobs
+32|P41|y|stage barriers build, test, verify, deploy
+32|P38|m|push source with rules; detector chose P37
+32|P08|m|rules on every job; no detector rule for job rules
+32|P12|M|jobs tagged parallel:matrix; the tag is in the summary only
+32|P26|M|jobs tagged retry; the tag is in the summary only
+33|P37|p|push pipeline source is an event (P38)
+33|P15|n|stage barriers order stages, no aggregate
+33|P41|y|stages test, build-binary, e2e, publish
+33|P38|m|push source with rules; detector chose P37
+33|P08|m|rules on 80 test jobs; no detector rule for job rules
+34|P45|y|repo-editing subagents
+34|P15|p|barrier collects five reports into one array; fan-in report with no identity check
+34|P47|p|auditors edit generators and run tests, incidental
+34|P18|n|barrier over lanes is not best-of-N
+34|P14|m|two parallel lanes then gather; detector chose P15
+34|P01|m|each lane walks beds in sequence
+35|P45|y|tool-using subagents
+35|P14|y|three lanes then barrier
+35|P47|y|agents write benchmark scripts and a prototype and test them headless
+35|P18|n|barrier over unrelated lanes is not best-of-N
+36|none|y|no pattern assigned, none needed
