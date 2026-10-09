@@ -263,3 +263,80 @@ the JIT arms were still running.*
   - Both families: $44.30 over 21 compile records (dossier 7, D13).
   - Dossier 5 §B6.1's "kinetics compiles cost $3.2–8.1", cited to FG §0.1, is not traceable to that table
     (BLOCKER-SYNTHESIS §6.1).
+
+**D15. The laptop sandbox could not run a single builder session until 2026-10-09 ~11:00 UTC; it now does, and it is
+tighter than the cloud's.** Claude CLI 2.1.295 refuses `--permission-mode bypassPermissions` at uid 0, and
+`unshare --map-root-user` made every session uid 0, so the first live smoke (bb81aff) died in 0.8 s with
+`EXECUTOR_PROTOCOL`, $0 spent but **booked at the full $0.45 budget** (`costUnknown`). Two fixes in b018f5d
+(`src/executors/claude-code.mjs` only): the generated script now ends in `exec unshare --user --map-user=<host uid>
+--map-group=<host gid> claude …`, a nested user namespace that drops uid 0 *and* mount capability after the mount phase
+(`IS_SANDBOX`/`CLAUDE_CODE_BUBBLEWRAP` are not used; inside, `mount` fails even after a further `--map-root-user`); and
+`neverStarted = !result && !events.length`, so a CLI that emits no stream event costs $0 (under R0 the old rule would have
+imputed $2 per retried attempt toward `spendStopUsd` with nothing spent). Same commit: the executor environment is an
+allow-list (`executorEnv`), credential-like variable names inside the sandbox 27 → 0, variables 154 → 21, `/dev` 240 →
+13 entries on a private tmpfs (`/dev/nvidia0` gone), `/var/log` masked, `~/.local/bin` 402 → 1 (`claude`), kept
+binaries bound read-only by canonical path. Second smoke on the main tree: records s201 d3, Haiku, 8 turns, 7 tool
+calls, 245 s, **$0.052, oracle pass 0.998**, `costUnknown false`. Kit hash moved 94c3360e18e2d0d3 → fb4154deec675f2a
+(ENGINE-FREEZE re-stamp pending the last src change, S0-2 exact digests). Suites after the fix: core 1037 tests / 0 fail /
+19 env skips; JIT 210 / 0 fail / 1 todo. Separate observation: the account's 5-hour meter went 0.22 → 0.44 during the
+day with ~10 subagents and $1.4 of paid runs; subagent work on the owner's account, not the experiments, moved it.
+
+**D16. The tolerant comparator is non-transitive, so adjudication's event trail depends on check order (row 50,
+ec2d58d).** At relTol 0.01, L = 1.000 ≈ M = 1.009 ≈ H = 1.018 but L ≉ H. With compiled = L, shadow = H, adjudicator = M
+both checks hold; "adjudicator ≈ compiled" runs first, so the compiled answer wins and no regression is recorded; the
+reverse order would deliver the shadow's answer and record one. Across all 6 role assignments the *delivered* answer is
+always the compiled one; only whether the shadow "agreed" (and so joins the compile pool) changes.
+`experiments/jit/test/majority-order.test.mjs` pins the behaviour, with a `test.todo` for an order-independent rule.
+`nversion.mjs` groups by exact canonical key and is order-independent.
+
+**D17. Router wiring is parked: no v0 or v1 policy beats "agent every time" or a fixed JIT on either family (row 29,
+dev replay, K = 1).** Records, net value V × passes − $: at V = 1 the best agent (Haiku) gives 12.54, the best fixed JIT
+(S/H) 13.01, v0 in hindsight 12.54, v1 with free labels 10.55–10.96 (regret +1.6 to +2.5), v1 without labels ≈ 12.55 (it
+cannot see quality and always buys the cheapest arm). At V = 10 the Opus agent (226.5) beats every router (v1 183.8–196.8).
+Clairvoyant headroom over the best fixed choice is ≤ $2.16. Static C0 tops V ≤ 1 only because its build cost is
+excluded. Limits: arm totals only, outcomes assumed independent across arms, kinetics JIT arms extrapolated from 8–17
+tasks.
+
+**D18. Agent-arm and JIT-role sessions were byte-equivalent in every config-controlled field except the working
+directory, which named the arm and the role (row 23, ec2d58d → fixed in 3f80815).** Model, prompt (one sha across all
+five sessions), schema, argv, env, timeout and workdir files were identical; the cwd `agent-<model>/iNNN-interpreter-…`
+versus `jit-…/iNNN-shadow-…` was a systematic cue visible through `pwd` and absolute tool paths. Interpreter-family
+sessions now run in `<work>/<experiment>/w/<sha12>` (sha over armHash:idx:role:rand; no hash moved; the `interpret` event
+records `workdir`). Shared draws would replace at most 68% of records O/H spend, 36% S/H, 14% H/H, 10% kinetics S/H, 0%
+kinetics O/H (19.8% of the whole records dev stream), but **$0 is realisable under the current PREREG**: its two streams use
+different seed sets, so no (task, model) has a second agent draw. The bias rule if ever used: comparisons use the agent
+arm's own draw d0 only; a JIT role consumes d1/d2.
+
+**D19. Precedent on "same split signature" is not precedent on "same question" (row 28 certiorari pilot, $0, 10k
+resamples).** On the stream's own unresolved set (s205, s206, s208, s210, s224) four tasks share one split and different
+sides are right, so a precedent ruling harms ≈ 0.5 tasks per ruling even with a perfect human, and every policy fails the
+dossier rule (≥ 2 prevented misses at budget 2, harm ≤ 1). Adding the four "one lineage answered, the rest refused"
+cases (s217, s218, s220, s222) passes (+2.0–2.5 fixed per ruling) but only through that one structure, which code can
+route to the interpreter without a human (the D9 class). Unanimous-and-wrong (s214) and majority-wrong cases are
+invisible to any queue. Full version after R0 must match on decision units, not split signatures.
+
+**D20. C0 rerun on regenerated dev 201–224: 15/24 (d3 13/16, d4 2/8), $1.18, versus D5's 16/24 (rows 3, 4, 7;
+ba29a07).** Failures: s207 a misread balance sign; s208 and s214 read BRIGHTDESK dates as DMY (they are MDY), splitting
+entities — so C0's s214 under-merge is an upstream date misread, not a name-distance near-miss, which bears on dossier 2
+E1's falsifier; d4 reads one ATLAS date order for both regimes (s222 an over-merge). **Row 3 Stage 1** (dossier 6 N3's
+date-order data check): on single-order leaves it was never wrong when it decided, 61/64 in sample and 63/64 out of
+sample (249–272), 0 wrong; it flags both of C0's wrong single-order reads and 9/62 correct ones; d4 ATLAS switches order
+at a dated cutoff, so one order per task is the wrong unit (4/8 agree as a whole, 13/14 and 14/14 split at the generator's
+cutoff). **Row 4** (double-entry entity-count gap): AUROC for oracle failure 0.874, 95% CI [0.706, 1.000], survives the
+< 0.7 kill rule, but difficulty alone gives 0.767 and within-difficulty 0.824; the DOB+phone blocking estimator alone is
+0.663 (fails); neither estimator is an accurate count (MAE 2.6 and 5.4). **Row 7** (AST guard diff, `astdiff.mjs`,
+acorn from Node's internals): 10/12 mutants flagged (deletions 4/5, widenings 6/7), 0/10 refactors, survives; misses two
+plain-boolean edits; $0 replay from the journal shows 9/12 mutants are output-identical on these 24 tasks (the diff
+catches 8 of those 9) and the phone-linking mutant the diff misses drops passes 15 → 6. Mutants were hand-written by the
+tool's author; the false-alarm rate on real recompiles is unmeasured (the archived JIT version pairs are lost).
+
+**D21. Replication prerequisites (rows 17 and 33, 21e9b5c): the conformance evaluator works at τ = 1 only; the corpus
+has too few oracle-bearing variant families.** Row 17, effect-log conformance on the 5 pilots: tier I (per-item
+"not a difference" declarations, 19–33 lines each, oracle-like work) detects 17/18 wrong classes and accepts 10/11 correct
+ones, i.e. oracle v2 plus one miss (the n8n:12679 Berlin-midnight birthdays); tier G (generic normalisation) rejects every
+correct class on two items; τ = 0.95 or "90% of cases exact" accepts wrong classes; the forged model tape (n8n:20281) is
+invisible to any effect log. Kill rule does not fire. Row 33, census of 1,559 corpus items over 49 platforms: 67
+variant families of ≥ 2, 18 of ≥ 3, and only 4 with ≥ 3 oracle-bearing members (WDL warp, Airflow Amazon system tests,
+Kubeflow, Galaxy VGP); no cell reaches 10, so **the kill rule fires**; none of the 5 pilots sits in an oracle family. The
+corpus is still the natural source of hand-curated complex workflows for the structural (W-bed) programme, as reference
+graphs rather than as replication families.

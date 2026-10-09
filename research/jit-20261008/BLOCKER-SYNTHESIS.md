@@ -747,3 +747,36 @@ All ten must-fix items were checked against their cited files and accepted. None
   so that 225–248 stay untouched for R0's capability numbers.
 - **The kinetics dev config.** V7 says `configs/dev-kinetics-1.json` has no `compare`. It has `jit.compare: 'unordered'`, but no
   `compile.compare` or `compile.acceptance`. This does not change the critique's point.
+
+### 8.1 Laptop landing, 2026-10-09 (main session; all on `claude/intelligent-hamilton-vg1f9a`)
+
+| item | status | where |
+|---|---|---|
+| S0-1 export, S0-5 seed ledger, S0-6 adoption rule, S0-7 host-load | landed | 6020c14 |
+| S0-2 override hook, salt-free memo port, replay coverage; exact `requestDigest` | landed; exact digests in progress (port.mjs) | 74eb3ae, 40a7426 |
+| S0-3 isolation probe → env allow-list, private `/dev`, uid drop; CLI root check | landed; live smoke passed ($0.052, oracle 0.998) | b018f5d, DEV-NOTES D15, SMOKE-laptop-20261009.md |
+| S0-4 engine freeze | draft; re-stamp after the last src change | ENGINE-FREEZE.md |
+| S0-6 acceptance ids / verdicts prompt / `allowSharedExplanation` wired; `jit.replayJournal`; per-arm caps | landed | 40a7426 |
+| Q6 heal-kit drift exemptions | landed | e8d7a53 |
+| row 1 stats instrument; row 5 verification-policy simulator → `jit.shadowFloor` 0.25 with logged propensity | landed | 07d122d, 40a7426 |
+| row 2 Stage A (0.05 with exact exclusion sets); Stage B driver; Stage B live | A landed; B running (48 Haiku sessions, $5 stop) | 5b56a15, ee688db |
+| row 3 Stage 1, row 4 (AUROC 0.874, survives), row 7 (10/12, 0/10, survives) | landed | ba29a07, D20 |
+| row 6 quota meter | landed; 5h 0.44 / 7d 0.34 at 11:18 UTC | 94f396c |
+| row 17 (no fire), row 33 (**fires**) | landed | 21e9b5c, D21 |
+| row 18 Jev independence | landed, negative | 5b56a15 |
+| row 23 shared draws → neutral workdirs | landed; realisable saving $0 | ec2d58d, 3f80815, D18 |
+| row 28 certiorari pilot | landed; Q1 fails, Q2 only via the D9 class | ec2d58d, D19 |
+| row 29 router replay | landed, negative; router parked | ec2d58d, D17 |
+| row 50 adjudication order | landed; non-transitive, todo | ec2d58d, D16 |
+| row 8 R0 configs + runbook | configs validate; runbook with seven $0 gates | 40a7426, ac84c75 |
+
+### 8.2 Direction correction from the owner (2026-10-09)
+
+The owner restated the thesis: Foundry is a way to JIT-construct **micro-harnesses and complex workflows** that humans
+normally hand-curate (nesting, nodes with their own sub-agents, swarms as in Kimi's agent swarm and Claude Code's
+Workflow tool), test whether **Haiku can build them cheaply**, run them against worst-case scenarios, and watch them
+evolve, reuse and self-heal as the work gets more complex. The stream programme above is substrate and economics for
+one flat unit; it is not the thesis test. A structural bed (the **W-bed complexity ladder**, `design/W-BED.md`), the
+`flow-v3` primitives (`call`, `agent`, `wide`, `plan`; `design/FLOW-V3.md`), a prior-art primitive table
+(`design/PRIOR-ART-SWARMS.md`) and a Prime Agent principle extraction (`analysis/prime-agent/`) are in flight. R0 is
+reduced to the Haiku-agent vs H/H-JIT pair as an engine rehearsal; the remaining budget goes to the first W-bed rungs.
