@@ -1,0 +1,887 @@
+{
+ "summary": {
+  "familyId": "records",
+  "solvers": {
+   "opusV1": "experiments/runs/jit/jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5/versions/v1-haiku55/solve.mjs",
+   "opusV2": "experiments/runs/jit/jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5/versions/v2-haiku55/solve.mjs",
+   "sonnetV1": "experiments/runs/jit/jit-dev-records-1/jit-claude-sonnet-5-5--claude-haiku-5-5/versions/v1-haiku55/solve.mjs",
+   "haikuV1": "experiments/runs/jit/jit-dev-records-1/jit-claude-haiku-5-5--claude-haiku-5-5/versions/v1-haiku55/solve.mjs"
+  },
+  "spentUsd": 2.5043947000000006,
+  "tasks": 24,
+  "perSolver": {
+   "opusV1": {
+    "ok": 9,
+    "pass": 6,
+    "deoptOrCrash": 15
+   },
+   "opusV2": {
+    "ok": 24,
+    "pass": 15,
+    "deoptOrCrash": 0
+   },
+   "sonnetV1": {
+    "ok": 20,
+    "pass": 16,
+    "deoptOrCrash": 4
+   },
+   "haikuV1": {
+    "ok": 14,
+    "pass": 6,
+    "deoptOrCrash": 10
+   }
+  },
+  "unanimous": {
+   "n": 7,
+   "pass": 6
+  },
+  "disagree": {
+   "n": 13,
+   "majorityPass": 6,
+   "anyPass": 11,
+   "noMajority": 5
+  }
+ },
+ "rows": [
+  {
+   "taskKey": "records:dev:d3:s201",
+   "difficulty": 3,
+   "ok": 4,
+   "distinct": 1,
+   "unanimous": true,
+   "majorityPass": true,
+   "anyPass": true,
+   "runs": {
+    "haikuV1": {
+     "status": "ok",
+     "pass": true,
+     "score": 1,
+     "costUsd": 0.0034436399999999995
+    },
+    "opusV1": {
+     "status": "ok",
+     "pass": true,
+     "score": 1,
+     "costUsd": 0.003801335
+    },
+    "sonnetV1": {
+     "status": "ok",
+     "pass": true,
+     "score": 1,
+     "costUsd": 0.042285905000000006
+    },
+    "opusV2": {
+     "status": "ok",
+     "pass": true,
+     "score": 1,
+     "costUsd": 0.00589063
+    }
+   }
+  },
+  {
+   "taskKey": "records:dev:d3:s202",
+   "difficulty": 3,
+   "ok": 4,
+   "distinct": 1,
+   "unanimous": true,
+   "majorityPass": true,
+   "anyPass": true,
+   "runs": {
+    "haikuV1": {
+     "status": "ok",
+     "pass": true,
+     "score": 1,
+     "costUsd": 0.00358589
+    },
+    "sonnetV1": {
+     "status": "ok",
+     "pass": true,
+     "score": 1,
+     "costUsd": 0.037201745
+    },
+    "opusV1": {
+     "status": "ok",
+     "pass": true,
+     "score": 1,
+     "costUsd": 0.004073525
+    },
+    "opusV2": {
+     "status": "ok",
+     "pass": true,
+     "score": 1,
+     "costUsd": 0.007071905
+    }
+   }
+  },
+  {
+   "taskKey": "records:dev:d3:s203",
+   "difficulty": 3,
+   "ok": 4,
+   "distinct": 2,
+   "unanimous": false,
+   "majorityPass": true,
+   "anyPass": true,
+   "runs": {
+    "haikuV1": {
+     "status": "ok",
+     "pass": true,
+     "score": 1,
+     "costUsd": 0.002262015
+    },
+    "opusV1": {
+     "status": "ok",
+     "pass": true,
+     "score": 1,
+     "costUsd": 0.0035279499999999997
+    },
+    "sonnetV1": {
+     "status": "ok",
+     "pass": true,
+     "score": 1,
+     "costUsd": 0.046049139999999995
+    },
+    "opusV2": {
+     "status": "ok",
+     "pass": true,
+     "score": 1,
+     "costUsd": 0.006806675
+    }
+   }
+  },
+  {
+   "taskKey": "records:dev:d3:s204",
+   "difficulty": 3,
+   "ok": 3,
+   "distinct": 2,
+   "unanimous": false,
+   "majorityPass": true,
+   "anyPass": true,
+   "runs": {
+    "sonnetV1": {
+     "status": "ok",
+     "pass": true,
+     "score": 1,
+     "costUsd": 0.038151029999999996
+    },
+    "opusV1": {
+     "status": "ok",
+     "pass": false,
+     "score": 0.911688,
+     "costUsd": 0.0033380799999999998
+    },
+    "opusV2": {
+     "status": "ok",
+     "pass": true,
+     "score": 1,
+     "costUsd": 0.008745205
+    },
+    "haikuV1": {
+     "status": "deopt",
+     "pass": null,
+     "score": null,
+     "costUsd": 0.078532345
+    }
+   }
+  },
+  {
+   "taskKey": "records:dev:d3:s205",
+   "difficulty": 3,
+   "ok": 3,
+   "distinct": 3,
+   "unanimous": false,
+   "majorityPass": null,
+   "anyPass": true,
+   "runs": {
+    "haikuV1": {
+     "status": "ok",
+     "pass": false,
+     "score": 0.944568,
+     "costUsd": 0.003404825
+    },
+    "sonnetV1": {
+     "status": "ok",
+     "pass": false,
+     "score": 0.924043,
+     "costUsd": 0.03874196000000001
+    },
+    "opusV2": {
+     "status": "ok",
+     "pass": true,
+     "score": 1,
+     "costUsd": 0.008553515
+    },
+    "opusV1": {
+     "status": "deopt",
+     "pass": null,
+     "score": null,
+     "costUsd": 0.058277554999999995
+    }
+   }
+  },
+  {
+   "taskKey": "records:dev:d3:s206",
+   "difficulty": 3,
+   "ok": 3,
+   "distinct": 3,
+   "unanimous": false,
+   "majorityPass": null,
+   "anyPass": true,
+   "runs": {
+    "sonnetV1": {
+     "status": "ok",
+     "pass": true,
+     "score": 1,
+     "costUsd": 0.03892146
+    },
+    "opusV1": {
+     "status": "deopt",
+     "pass": null,
+     "score": null,
+     "costUsd": 0.06338155999999999
+    },
+    "opusV2": {
+     "status": "ok",
+     "pass": true,
+     "score": 1,
+     "costUsd": 0.009510880000000001
+    },
+    "haikuV1": {
+     "status": "ok",
+     "pass": false,
+     "score": 0.984568,
+     "costUsd": 0.0039938249999999995
+    }
+   }
+  },
+  {
+   "taskKey": "records:dev:d3:s207",
+   "difficulty": 3,
+   "ok": 4,
+   "distinct": 2,
+   "unanimous": false,
+   "majorityPass": true,
+   "anyPass": true,
+   "runs": {
+    "haikuV1": {
+     "status": "ok",
+     "pass": false,
+     "score": 0.967213,
+     "costUsd": 0.0035529499999999996
+    },
+    "sonnetV1": {
+     "status": "ok",
+     "pass": true,
+     "score": 1,
+     "costUsd": 0.021285975000000006
+    },
+    "opusV1": {
+     "status": "ok",
+     "pass": true,
+     "score": 1,
+     "costUsd": 0.003961205
+    },
+    "opusV2": {
+     "status": "ok",
+     "pass": true,
+     "score": 1,
+     "costUsd": 0.008406
+    }
+   }
+  },
+  {
+   "taskKey": "records:dev:d3:s208",
+   "difficulty": 3,
+   "ok": 3,
+   "distinct": 3,
+   "unanimous": false,
+   "majorityPass": null,
+   "anyPass": true,
+   "runs": {
+    "haikuV1": {
+     "status": "ok",
+     "pass": false,
+     "score": 0.76609,
+     "costUsd": 0.003396265
+    },
+    "sonnetV1": {
+     "status": "ok",
+     "pass": true,
+     "score": 1,
+     "costUsd": 0.046836655
+    },
+    "opusV1": {
+     "status": "deopt",
+     "pass": null,
+     "score": null,
+     "costUsd": 0.04341281
+    },
+    "opusV2": {
+     "status": "ok",
+     "pass": false,
+     "score": 0.96398,
+     "costUsd": 0.11969288499999998
+    }
+   }
+  },
+  {
+   "taskKey": "records:dev:d3:s209",
+   "difficulty": 3,
+   "ok": 3,
+   "distinct": 1,
+   "unanimous": true,
+   "majorityPass": true,
+   "anyPass": true,
+   "runs": {
+    "haikuV1": {
+     "status": "ok",
+     "pass": true,
+     "score": 1,
+     "costUsd": 0.00352414
+    },
+    "sonnetV1": {
+     "status": "ok",
+     "pass": true,
+     "score": 1,
+     "costUsd": 0.03837921
+    },
+    "opusV2": {
+     "status": "ok",
+     "pass": true,
+     "score": 1,
+     "costUsd": 0.00839608
+    },
+    "opusV1": {
+     "status": "deopt",
+     "pass": null,
+     "score": null,
+     "costUsd": 0.05606331
+    }
+   }
+  },
+  {
+   "taskKey": "records:dev:d3:s210",
+   "difficulty": 3,
+   "ok": 3,
+   "distinct": 3,
+   "unanimous": false,
+   "majorityPass": null,
+   "anyPass": true,
+   "runs": {
+    "haikuV1": {
+     "status": "ok",
+     "pass": false,
+     "score": 0.97893,
+     "costUsd": 0.0036548899999999996
+    },
+    "sonnetV1": {
+     "status": "ok",
+     "pass": true,
+     "score": 0.99841,
+     "costUsd": 0.038759835
+    },
+    "opusV2": {
+     "status": "ok",
+     "pass": true,
+     "score": 1,
+     "costUsd": 0.008149725
+    },
+    "opusV1": {
+     "status": "deopt",
+     "pass": null,
+     "score": null,
+     "costUsd": 0.05722006
+    }
+   }
+  },
+  {
+   "taskKey": "records:dev:d3:s211",
+   "difficulty": 3,
+   "ok": 2,
+   "distinct": 1,
+   "unanimous": true,
+   "majorityPass": true,
+   "anyPass": true,
+   "runs": {
+    "haikuV1": {
+     "status": "deopt",
+     "pass": null,
+     "score": null,
+     "costUsd": 0.004930945
+    },
+    "sonnetV1": {
+     "status": "ok",
+     "pass": true,
+     "score": 1,
+     "costUsd": 0.037225734999999996
+    },
+    "opusV2": {
+     "status": "ok",
+     "pass": true,
+     "score": 1,
+     "costUsd": 0.008221125000000001
+    },
+    "opusV1": {
+     "status": "deopt",
+     "pass": null,
+     "score": null,
+     "costUsd": 0.06750543500000002
+    }
+   }
+  },
+  {
+   "taskKey": "records:dev:d3:s212",
+   "difficulty": 3,
+   "ok": 3,
+   "distinct": 2,
+   "unanimous": false,
+   "majorityPass": false,
+   "anyPass": true,
+   "runs": {
+    "haikuV1": {
+     "status": "deopt",
+     "pass": null,
+     "score": null,
+     "costUsd": 0.004088595
+    },
+    "sonnetV1": {
+     "status": "ok",
+     "pass": true,
+     "score": 1,
+     "costUsd": 0.038133280000000006
+    },
+    "opusV1": {
+     "status": "ok",
+     "pass": false,
+     "score": 0.723044,
+     "costUsd": 0.003585705
+    },
+    "opusV2": {
+     "status": "ok",
+     "pass": false,
+     "score": 0.723044,
+     "costUsd": 0.00822342
+    }
+   }
+  },
+  {
+   "taskKey": "records:dev:d3:s213",
+   "difficulty": 3,
+   "ok": 3,
+   "distinct": 2,
+   "unanimous": false,
+   "majorityPass": true,
+   "anyPass": true,
+   "runs": {
+    "haikuV1": {
+     "status": "deopt",
+     "pass": null,
+     "score": null,
+     "costUsd": 0.003833395
+    },
+    "sonnetV1": {
+     "status": "ok",
+     "pass": true,
+     "score": 0.998211,
+     "costUsd": 0.03522746
+    },
+    "opusV1": {
+     "status": "ok",
+     "pass": true,
+     "score": 1,
+     "costUsd": 0.004185454999999999
+    },
+    "opusV2": {
+     "status": "ok",
+     "pass": true,
+     "score": 1,
+     "costUsd": 0.00806049
+    }
+   }
+  },
+  {
+   "taskKey": "records:dev:d3:s214",
+   "difficulty": 3,
+   "ok": 3,
+   "distinct": 1,
+   "unanimous": true,
+   "majorityPass": false,
+   "anyPass": false,
+   "runs": {
+    "haikuV1": {
+     "status": "deopt",
+     "pass": null,
+     "score": null,
+     "costUsd": 0.004084765
+    },
+    "sonnetV1": {
+     "status": "ok",
+     "pass": false,
+     "score": 0.892067,
+     "costUsd": 0.039205584999999994
+    },
+    "opusV1": {
+     "status": "ok",
+     "pass": false,
+     "score": 0.892067,
+     "costUsd": 0.004177685
+    },
+    "opusV2": {
+     "status": "ok",
+     "pass": false,
+     "score": 0.892067,
+     "costUsd": 0.00811987
+    }
+   }
+  },
+  {
+   "taskKey": "records:dev:d3:s215",
+   "difficulty": 3,
+   "ok": 4,
+   "distinct": 1,
+   "unanimous": true,
+   "majorityPass": true,
+   "anyPass": true,
+   "runs": {
+    "haikuV1": {
+     "status": "ok",
+     "pass": true,
+     "score": 1,
+     "costUsd": 0.003926819999999999
+    },
+    "opusV1": {
+     "status": "ok",
+     "pass": true,
+     "score": 1,
+     "costUsd": 0.003938079999999999
+    },
+    "sonnetV1": {
+     "status": "ok",
+     "pass": true,
+     "score": 1,
+     "costUsd": 0.04183839000000002
+    },
+    "opusV2": {
+     "status": "ok",
+     "pass": true,
+     "score": 1,
+     "costUsd": 0.0074030350000000005
+    }
+   }
+  },
+  {
+   "taskKey": "records:dev:d3:s216",
+   "difficulty": 3,
+   "ok": 3,
+   "distinct": 2,
+   "unanimous": false,
+   "majorityPass": true,
+   "anyPass": true,
+   "runs": {
+    "haikuV1": {
+     "status": "ok",
+     "pass": false,
+     "score": 0.958015,
+     "costUsd": 0.003994515
+    },
+    "sonnetV1": {
+     "status": "ok",
+     "pass": true,
+     "score": 1,
+     "costUsd": 0.038433709999999996
+    },
+    "opusV2": {
+     "status": "ok",
+     "pass": true,
+     "score": 1,
+     "costUsd": 0.00699209
+    },
+    "opusV1": {
+     "status": "deopt",
+     "pass": null,
+     "score": null,
+     "costUsd": 0.05885380500000001
+    }
+   }
+  },
+  {
+   "taskKey": "records:dev:d4:s217",
+   "difficulty": 4,
+   "ok": 1,
+   "distinct": 1,
+   "unanimous": false,
+   "majorityPass": false,
+   "anyPass": false,
+   "runs": {
+    "haikuV1": {
+     "status": "deopt",
+     "pass": null,
+     "score": null,
+     "costUsd": 0.004518375
+    },
+    "sonnetV1": {
+     "status": "deopt",
+     "pass": null,
+     "score": null,
+     "costUsd": 0.039635824999999986
+    },
+    "opusV2": {
+     "status": "ok",
+     "pass": false,
+     "score": 0.911555,
+     "costUsd": 0.00706964
+    },
+    "opusV1": {
+     "status": "deopt",
+     "pass": null,
+     "score": null,
+     "costUsd": 0.066265555
+    }
+   }
+  },
+  {
+   "taskKey": "records:dev:d4:s218",
+   "difficulty": 4,
+   "ok": 1,
+   "distinct": 1,
+   "unanimous": false,
+   "majorityPass": false,
+   "anyPass": false,
+   "runs": {
+    "haikuV1": {
+     "status": "deopt",
+     "pass": null,
+     "score": null,
+     "costUsd": 0.004618515
+    },
+    "sonnetV1": {
+     "status": "deopt",
+     "pass": null,
+     "score": null,
+     "costUsd": 0.040295665
+    },
+    "opusV2": {
+     "status": "ok",
+     "pass": false,
+     "score": 0.73289,
+     "costUsd": 0.00987509
+    },
+    "opusV1": {
+     "status": "deopt",
+     "pass": null,
+     "score": null,
+     "costUsd": 0.072022685
+    }
+   }
+  },
+  {
+   "taskKey": "records:dev:d4:s219",
+   "difficulty": 4,
+   "ok": 3,
+   "distinct": 2,
+   "unanimous": false,
+   "majorityPass": true,
+   "anyPass": true,
+   "runs": {
+    "haikuV1": {
+     "status": "ok",
+     "pass": false,
+     "score": 0.945106,
+     "costUsd": 0.009079625000000001
+    },
+    "sonnetV1": {
+     "status": "ok",
+     "pass": true,
+     "score": 0.968248,
+     "costUsd": 0.05324348500000001
+    },
+    "opusV1": {
+     "status": "deopt",
+     "pass": null,
+     "score": null,
+     "costUsd": 0.084861435
+    },
+    "opusV2": {
+     "status": "ok",
+     "pass": true,
+     "score": 0.968248,
+     "costUsd": 0.011467710000000002
+    }
+   }
+  },
+  {
+   "taskKey": "records:dev:d4:s220",
+   "difficulty": 4,
+   "ok": 1,
+   "distinct": 1,
+   "unanimous": false,
+   "majorityPass": false,
+   "anyPass": false,
+   "runs": {
+    "haikuV1": {
+     "status": "deopt",
+     "pass": null,
+     "score": null,
+     "costUsd": 0.0046603750000000005
+    },
+    "sonnetV1": {
+     "status": "deopt",
+     "pass": null,
+     "score": null,
+     "costUsd": 0.04276338999999999
+    },
+    "opusV2": {
+     "status": "ok",
+     "pass": false,
+     "score": 0.846683,
+     "costUsd": 0.010333385000000002
+    },
+    "opusV1": {
+     "status": "deopt",
+     "pass": null,
+     "score": null,
+     "costUsd": 0.07768218500000001
+    }
+   }
+  },
+  {
+   "taskKey": "records:dev:d4:s221",
+   "difficulty": 4,
+   "ok": 3,
+   "distinct": 1,
+   "unanimous": true,
+   "majorityPass": true,
+   "anyPass": true,
+   "runs": {
+    "haikuV1": {
+     "status": "ok",
+     "pass": true,
+     "score": 0.961866,
+     "costUsd": 0.007319310000000001
+    },
+    "sonnetV1": {
+     "status": "ok",
+     "pass": true,
+     "score": 0.961866,
+     "costUsd": 0.04923778000000001
+    },
+    "opusV2": {
+     "status": "ok",
+     "pass": true,
+     "score": 0.961866,
+     "costUsd": 0.009485185
+    },
+    "opusV1": {
+     "status": "deopt",
+     "pass": null,
+     "score": null,
+     "costUsd": 0.072588685
+    }
+   }
+  },
+  {
+   "taskKey": "records:dev:d4:s222",
+   "difficulty": 4,
+   "ok": 1,
+   "distinct": 1,
+   "unanimous": false,
+   "majorityPass": false,
+   "anyPass": false,
+   "runs": {
+    "haikuV1": {
+     "status": "deopt",
+     "pass": null,
+     "score": null,
+     "costUsd": 0.0050735699999999995
+    },
+    "sonnetV1": {
+     "status": "deopt",
+     "pass": null,
+     "score": null,
+     "costUsd": 0.043481944999999994
+    },
+    "opusV2": {
+     "status": "ok",
+     "pass": false,
+     "score": 0.924819,
+     "costUsd": 0.01021647
+    },
+    "opusV1": {
+     "status": "deopt",
+     "pass": null,
+     "score": null,
+     "costUsd": 0.07166308
+    }
+   }
+  },
+  {
+   "taskKey": "records:dev:d4:s223",
+   "difficulty": 4,
+   "ok": 3,
+   "distinct": 2,
+   "unanimous": false,
+   "majorityPass": false,
+   "anyPass": false,
+   "runs": {
+    "haikuV1": {
+     "status": "ok",
+     "pass": false,
+     "score": 0.710466,
+     "costUsd": 0.0043764400000000005
+    },
+    "sonnetV1": {
+     "status": "ok",
+     "pass": false,
+     "score": 0.710466,
+     "costUsd": 0.041486765
+    },
+    "opusV2": {
+     "status": "ok",
+     "pass": false,
+     "score": 0.823383,
+     "costUsd": 0.0108673
+    },
+    "opusV1": {
+     "status": "deopt",
+     "pass": null,
+     "score": null,
+     "costUsd": 0.06330258
+    }
+   }
+  },
+  {
+   "taskKey": "records:dev:d4:s224",
+   "difficulty": 4,
+   "ok": 2,
+   "distinct": 2,
+   "unanimous": false,
+   "majorityPass": null,
+   "anyPass": false,
+   "runs": {
+    "haikuV1": {
+     "status": "deopt",
+     "pass": null,
+     "score": null,
+     "costUsd": 0.007657550000000001
+    },
+    "sonnetV1": {
+     "status": "ok",
+     "pass": false,
+     "score": 0.913682,
+     "costUsd": 0.044257445
+    },
+    "opusV2": {
+     "status": "ok",
+     "pass": false,
+     "score": 0.922663,
+     "costUsd": 0.012558595000000002
+    },
+    "opusV1": {
+     "status": "deopt",
+     "pass": null,
+     "score": null,
+     "costUsd": 0.08399508
+    }
+   }
+  }
+ ]
+}

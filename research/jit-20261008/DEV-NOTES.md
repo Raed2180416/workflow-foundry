@@ -34,6 +34,15 @@ Nothing here is a claim. Each entry gives the observation, the mechanism and the
 - Observation: on kinetics task 6, an Opus shadow disagreed with the compiled answer, and the Opus adjudicator gave no majority (`unresolved`). The compiled answer passed the oracle, so $1.13 went on a check that could not have concluded. Kinetics answers are fitted `vmax`/`km` numbers, and two correct independent fits almost never agree to the last digit. `check-traces` compares exactly as well, so a correct kinetics solver can score 0 exact matches against its traces. That inflated the kinetics compile "diffs" and would make D4's stricter acceptance reject good solvers.
 - Consequence (v2.1): use tolerant comparison everywhere answers are compared without an oracle: shadows, adjudication, `check-traces` and tier-down. Numbers match within a relative tolerance and arrays match as multisets. The tolerance is a property of the task family, chosen from the bed README's stated precision and never read from oracle code.
 
-**D8. Agreement between independently compiled solvers looks like a strong oracle-free signal (N-version probe, partial).**
-- Observation: records dev seeds 201–210, four compiled solvers. Every task where all solvers gave the identical answer (3/3) was correct. Every task with a failing solver showed disagreement. Two correct solvers can still differ (s203), so the probe also needs tolerant agreement.
-- Consequence: N-version voting at a few cents per variant is a candidate verification layer: trust agreement, escalate disagreement. To be finalised with full counts.
+**D8. Agreement between independently compiled solvers is a useful but imperfect oracle-free signal (N-version probe, final).**
+- Observation: [nversion-records-dev.json](nversion-records-dev.json) ran four compiled records solvers (Opus-arm v1 and v2, Sonnet-arm v1, Haiku-arm v1) on all 24 dev tasks for $2.50. The comparison was exact, with arrays treated as multisets.
+  - Unanimous: 7 tasks, 6 correct (86%), against a 64% compiled base rate (43 of 67 answers).
+  - One unanimous answer was wrong in all three solvers (s214, under-merging). This is a common-mode failure, the classic N-version result: versions that implement the same spec interpretation fail together.
+  - Disagreeing: 13 tasks. The majority was right on 6, at least one solver was right on 11, and 5 had no majority.
+  - On 4 tasks only one solver answered, because the others refused; that answer was wrong all 4 times.
+- Consequence: run cheap variants and send any disagreement to the interpreter. Disagreement is an efficient trigger, since 11 of 13 disagreements contained a correct answer. Unanimity cannot stand in for checking (common mode). Code-versus-agent disagreement is more independent than code-versus-code because the two decide differently.
+
+**D9. A heal can remove the ability to refuse, which turns deopts into silent failures on drift.**
+- Observation: Opus-arm v2 was recompiled to fix the over-strict `vendex-entries` check (D3). In the N-version probe it never deopted (24/24 answered, 15 correct). On the d4 drift tasks it answered and failed 5 of 7. Its predecessor v1 and the other solvers refused most d4 tasks. In the live stream, v2's first d4 task was wrong and a shadow caught it (adjudicated, regression recorded).
+- Mechanism: reject-if-worse compares only old labelled cases, so it cannot see a guard that has been widened.
+- Consequence: a recompile also has to replay every input on which the previous version deopted, and every guard-triggering input in the trace pool. Each must either still deopt or now match the interpreter's answer. Otherwise the version is rejected. A recompile must not silently widen the input domain.
