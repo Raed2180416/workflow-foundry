@@ -72,6 +72,9 @@ The JS-level `interpret()` arguments differ only in `traceId` and `workdir`. The
 
 ## 3. Design
 
+**Landed (item 1 only): 3f80815.** Interpreter-family sessions (agent, fallback, shadow, adjudicator) now run in `<workRoot>/<experiment>/w/<id>`, with `<id>` = first 12 hex of sha256(`armHash:idx:role:rand`).
+The arm and role are recoverable from the `interpret` event (`workdir`, relative to workRoot) and the trace file (`workdirRel`); arm hashes did not move. Items 2 and 3 are still open.
+
 **What must be made identical** (all in `stream.mjs`'s interpret call or the config; nothing in `interpret.mjs`):
 1. **A neutral working directory** for every interpreter-family session in every arm, for example
    `<workRoot>/draws/<drawKey16>/d<k>`, with no arm slug and no role word. The arm and role go in the trace and the
