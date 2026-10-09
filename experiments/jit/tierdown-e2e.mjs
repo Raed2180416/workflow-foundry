@@ -450,7 +450,7 @@ export function summarize(rows) {
       judgeUsd: round(sum(c.map(x => x.judgeUsd[s]))), meanJudgeUsd: round(mean(c.map(x => x.judgeUsd[s] ?? 0))),
       totalUsd: round(sum(c.map(x => x.costUsd[s]))), meanTotalUsd: round(mean(c.map(x => x.costUsd[s] ?? 0))),
       judgeCalls: sum(c.map(x => x.judge[s]?.calls ?? 0)), tiersUsed: c.reduce((m, x) => { for (const [k, v] of Object.entries(x.judge[s]?.tiersUsed ?? {})) m[k] = (m[k] ?? 0) + v; return m; }, {}),
-      offListTiers: sum(c.map(x => x.judge[s]?.offList ?? 0)),
+      offListTiers: sum(c.map(x => x.judge[s]?.offList ?? 0)), ambiguousEvents: sum(c.map(x => x.judge[s]?.ambiguous ?? 0)),
       oracle: scored.length ? { n: scored.length, pass: scored.filter(o => o.pass).length, passRate: round(scored.filter(o => o.pass).length / scored.length), meanScore: round(mean(scored.map(o => o.score ?? 0))) } : null,
     };
   };
@@ -498,6 +498,8 @@ export function markdown(report) {
     `| judge tiers used | ${JSON.stringify(s.original.tiersUsed)} | ${JSON.stringify(s.variant.tiersUsed)} |`, '',
     `Answer agreement: exact ${s.exact}/${s.bothOk} where both ran ok (${s.exactUnordered} ignoring array order), ${s.exact}/${s.compared} of all compared; mean partial ${s.meanPartialBothOk ?? '-'}. ` +
     `Transitions ${JSON.stringify(s.transitions)}. Oracle flips: pass->fail ${s.delta.passToFail}, fail->pass ${s.delta.failToPass}; mean score delta ${s.delta.meanScore ?? '-'}; judge $ delta ${fmt$(s.delta.judgeUsd)}; run $ delta ${fmt$(s.delta.totalUsd)}.`);
+  if (s.compared && !s.variant.judgeCalls) out.push('', `WARNING: judge ${rw.pattern} made no call in any variant run: the comparison says nothing about its tiers.`);
+  if (s.original.ambiguousEvents || s.variant.ambiguousEvents) out.push('', `NOTE: ${s.original.ambiguousEvents + s.variant.ambiguousEvents} judge event(s) also match another call site's name and were not attributed to ${rw.pattern}.`);
   if (s.variant.offListTiers) out.push('', `WARNING: the variant tried ${s.variant.offListTiers} tier(s) outside the new list for this judge: the rewrite did not take effect as intended.`);
   return out.join('\n') + '\n';
 }

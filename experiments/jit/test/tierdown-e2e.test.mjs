@@ -126,6 +126,10 @@ test('refusals: anything that cannot be located unambiguously is refused, never 
     [j("'g'", '{ tiers: T }'), 'g', 'BAD_TIERS', null, ['Not A Model!']],
     [j("'g'", '{ tiers: T }'), 'g', 'SAME_TIERS', null, [HAIKU]],
     [j("'g'", '{ tiers: T '), 'g', 'PARSE', /unclosed|unbalanced/],
+    // judge reached through a string is a call the scan cannot see: its (computed) name could be the target
+    [j("'g'", '{ tiers: T }') + `await flow['judge'](n, { tiers: T });`, 'g', 'UNRECOGNIZED_JUDGE_USE', /'judge'/],
+    [j("'g'", '{ tiers: T }') + 'await flow[`judge`](n, { tiers: T });', 'g', 'UNRECOGNIZED_JUDGE_USE', /`judge`/],
+    [`const k = "judge";\n` + j("'g'", '{ tiers: T }') + `await flow[k](n, { tiers: T });`, 'g', 'UNRECOGNIZED_JUDGE_USE', /"judge"/],
   ];
   for (const [body, name, code, re, tiers = [SONNET]] of cases) refuses(() => rewriteJudgeTiers(base + body, name, tiers), code, re);
   // a spread after tiers of a const object literal without tiers is safe (kinetics opus v1: { tiers: [...], ...judgeArgs })
@@ -134,6 +138,20 @@ test('refusals: anything that cannot be located unambiguously is refused, never 
   // an unrelated judge with a dynamic tiers expression does not block a rewrite of a well-formed one
   const ok = rewriteJudgeTiers(base + j("'g'", `{ tiers: T }`) + j("'h'", `{ tiers: big ? T : T }`), 'g', [SONNET]);
   assert.equal(ok.diff.length, 1);
+  // a judge literally named 'judge' is still a name argument, not a hidden call
+  assert.equal(rewriteJudgeTiers(base + j("'judge'", '{ tiers: T }'), 'judge', [SONNET]).diff.length, 1);
+});
+
+test('judge cost attribution: a templated target does not absorb the events of another call site whose name it also matches', () => {
+  const src = `const flow = createFlow();\nfor (const i of xs) await flow.judge('v-' + i, { tiers: ['${OPUS}'] });\nawait flow.judge('v-total', { tiers: ['${OPUS}'] });\n`;
+  const r = rewriteJudgeTiers(src, 'v-0', [HAIKU]);
+  assert.equal(r.pattern, 'v-*'); assert.deepEqual(r.otherPatterns, ['v-total']);
+  assert.ok(r.source.includes(`flow.judge('v-total', { tiers: ['${OPUS}'] })`), 'v-total untouched');
+  const trace = [ev('v-0', 0.001, HAIKU), ev('v-1', 0.002, HAIKU), ev('v-total', 0.5, OPUS)];
+  const st = judgeStats(trace, r.pattern, [HAIKU], r.otherPatterns);
+  assert.equal(st.calls, 2); assert.equal(st.costUsd, 0.003); assert.equal(st.offList, 0); assert.equal(st.ambiguous, 1);
+  const c = compareTask({ status: 'ok', output: {}, trace }, { status: 'ok', output: {}, trace }, { pattern: r.pattern, newTiers: [HAIKU], otherPatterns: r.otherPatterns });
+  assert.equal(c.judgeUsd.variant, 0.003); assert.equal(c.judge.variant.offList, 0);
 });
 
 // ---------------------------------------------------------------------------------------------- comparison math
@@ -190,14 +208,14 @@ const taskOf = seed => ({ id: `fake:dev:d3:${seed}`, seed, prompt: `task ${seed}
 const view = task => JSON.stringify({ prompt: task.prompt, inputs: task.inputs });
 const outOf = (seed, label) => ({ records: taskOf(seed).inputs.rows.map(id => ({ id, label, kind: 'std' })) });
 
-function fixtureArm(t, { split = 'dev', keys = null } = {}) {
+function fixtureArm(t, { split = 'dev', keys = null, statuses = {}, def: defExtra = {} } = {}) {
   const root = tmp(t);
   const armDir = path.join(root, 'work', EXP, SLUG), runDir = path.join(root, 'runs', EXP, SLUG);
   mkdirSync(path.join(runDir, 'versions', 'v1-haiku55'), { recursive: true });
   writeFileSync(path.join(runDir, 'versions', 'v1-haiku55', 'solve.mjs'), SOLVE);
   writeFileSync(path.join(runDir, 'arm.json'), JSON.stringify({ experiment: EXP, spec: 'jit:claude-sonnet-5-5/claude-haiku-5-5', slug: SLUG, kind: 'jit',
-    def: { familyId: 'fake', split, perTaskUsd: 1, models: [HAIKU, OPUS, SONNET], compiledMinutes: 1 } }));
-  const rows = [3, 4, 5].map(idx => ({ experiment: EXP, idx, taskKey: keys?.[idx] ?? `fake:${split}:d3:s${200 + idx}`, taskHash: `h${200 + idx}`, compiledStatus: idx === 4 ? 'deopt' : 'ok' }));
+    def: { familyId: 'fake', split, perTaskUsd: 1, models: [HAIKU, OPUS, SONNET], compiledMinutes: 1, ...defExtra } }));
+  const rows = [3, 4, 5].map(idx => ({ experiment: EXP, idx, taskKey: keys?.[idx] ?? `fake:${split}:d3:s${200 + idx}`, taskHash: `h${200 + idx}`, compiledStatus: statuses[idx] ?? (idx === 4 ? 'deopt' : 'ok') }));
   writeFileSync(path.join(runDir, 'results.jsonl'), rows.map(r => JSON.stringify(r)).join('\n') + '\n');
   const dir = (name, idx, solve, files) => {
     const d = path.join(armDir, name); mkdirSync(path.join(d, 'tools'), { recursive: true });
@@ -218,7 +236,7 @@ function fixtureArm(t, { split = 'dev', keys = null } = {}) {
   return { root, armDir, runDir, workRoot: path.join(root, 'out') };
 }
 
-function fakeDeps({ runCost = 0.002, onRun = () => {} } = {}) {
+function fakeDeps({ runCost = 0.002, onRun = () => {}, run = null } = {}) {
   const calls = { runCompiled: [], makeTasks: [], port: null };
   const deps = {
     policyIds: [...MODELS], validateOutput: (schema, out) => ({ valid: Array.isArray(out?.records) }),
@@ -228,8 +246,9 @@ function fakeDeps({ runCost = 0.002, onRun = () => {} } = {}) {
     createModelPort: async a => { calls.port = a; return { port: { call: async () => ({ ok: true }) }, db: { close() { calls.closed = true; } } }; },
     async runCompiled(a) {
       const src = readFileSync(a.solvePath, 'utf8'), variant = src.includes(`tiers: ['${HAIKU}', '${SONNET}'], system: \`sys`);
-      calls.runCompiled.push({ variant, perTaskUsd: a.perTaskUsd, workdir: a.workdir, allowedModels: a.allowedModels, idx: a.task.seed - 200 });
+      calls.runCompiled.push({ variant, perTaskUsd: a.perTaskUsd, workdir: a.workdir, allowedModels: a.allowedModels, idx: a.task.seed - 200, flowPath: a.flowPath ?? null });
       onRun(a);
+      if (run) return run(a, variant);
       return { status: 'ok', output: outOf(a.task.seed, variant ? 'std' : 'vip'), deopt: null, costUsd: runCost, costUnknown: false,
         trace: variant ? [ev('alpha', 0.0005, HAIKU), ev('beta-0', 0.001, HAIKU)] : [ev('alpha', 0.03, OPUS)] };
     },
@@ -295,13 +314,61 @@ test('test split: a test arm, or any test-split task row, is refused before a ta
   }
 });
 
+test('archived reuse needs the recorded status; a run the cap cut short is excluded, not counted as a deopt', async t => {
+  // #3's archived dir reads ok but the stream recorded a deopt for #3: that dir is not the recorded run -> rerun the original
+  let f = fixtureArm(t, { statuses: { 3: 'deopt' } }), x = fakeDeps();
+  let r = await tierdownE2E({ armDir: f.armDir, version: 'v1-haiku55', judge: 'alpha', tiers: NEW, runRoot: path.join(f.root, 'runs'), workRoot: f.workRoot, label: 'mismatch', limit: 1 }, x.deps);
+  assert.deepEqual(x.calls.runCompiled.map(c => [c.idx, c.variant]), [[3, false], [3, true]]);
+  assert.equal(r.tasks[0].originalSource, 'fresh'); assert.match(r.tasks[0].archivedRejected, /archived status ok is not the recorded compiledStatus deopt/);
+  // under a budget below the arm's per-task budget, a variant that deopts on budget is the cap's doing: excluded
+  f = fixtureArm(t);
+  x = fakeDeps({ run: (a, variant) => (a.perTaskUsd < 1
+    ? { status: 'deopt', output: null, deopt: { kind: 'budget', name: 'alpha' }, trace: [], costUsd: a.perTaskUsd, meta: { refusals: { GATEWAY_BUDGET: 1 } } }
+    : { status: 'ok', output: outOf(a.task.seed, variant ? 'std' : 'vip'), trace: [], costUsd: 0.002 }) });
+  r = await tierdownE2E({ armDir: f.armDir, version: 'v1-haiku55', judge: 'alpha', tiers: NEW, runRoot: path.join(f.root, 'runs'), workRoot: f.workRoot, label: 'trunc', capUsd: 1.001, rerunOriginal: true }, x.deps);
+  assert.deepEqual(x.calls.runCompiled.map(c => [c.idx, c.variant, Math.round(c.perTaskUsd * 1e6) / 1e6]), [[3, false, 1], [3, true, 0.999]]);
+  assert.equal(r.tasks[0].skipped, 'cap reached during the run: excluded'); assert.equal(r.tasks[0].compare, undefined);
+  assert.equal(r.summary.compared, 0); assert.deepEqual(r.summary.transitions, {});
+  assert.equal(r.spentUsd, 1.001); assert.match(r.stopped, /cap \$1\.001 reached at task #3/);
+  // the cap wrapper counts the calls of the run in progress: a run whose calls reach the cap gets no further call
+  f = fixtureArm(t);
+  x = fakeDeps({ run: async (a, variant) => {
+    const got = [];
+    for (let i = 0; i < 5; i++) { try { got.push(await a.modelPort.call({ i })); } catch (e) { got.push(e.code); } }
+    return { status: got.includes('CAP') ? 'deopt' : 'ok', output: outOf(a.task.seed, 'vip'), trace: [], costUsd: got.filter(g => g !== 'CAP').length * 0.01, got };
+  } });
+  x.deps.createModelPort = async () => ({ port: { call: async () => ({ ok: true, costUsd: 0.01 }) }, db: null });
+  r = await tierdownE2E({ armDir: f.armDir, version: 'v1-haiku55', judge: 'alpha', tiers: NEW, runRoot: path.join(f.root, 'runs'), workRoot: f.workRoot, label: 'live', capUsd: 0.03, rerunOriginal: true }, x.deps);
+  assert.equal(r.spentUsd, 0.03, 'three calls, then the wrapper refuses');
+  assert.equal(r.tasks[0].skipped, 'cap reached during the run: excluded'); assert.equal(r.summary.compared, 0);
+});
+
+test('prompt version 2 arms run on flow-v2.mjs; bad numbers, labels, a foreign run record and sealed beds are refused', async t => {
+  let f = fixtureArm(t, { def: { compile: { promptVersion: 2 } } }), x = fakeDeps();
+  await tierdownE2E({ armDir: f.armDir, version: 'v1-haiku55', judge: 'alpha', tiers: NEW, runRoot: path.join(f.root, 'runs'), workRoot: f.workRoot, label: 'v2', limit: 1 }, x.deps);
+  assert.match(x.calls.runCompiled[0].flowPath, /experiments\/jit\/flow-v2\.mjs$/);
+  f = fixtureArm(t); x = fakeDeps();
+  await tierdownE2E({ armDir: f.armDir, version: 'v1-haiku55', judge: 'alpha', tiers: NEW, runRoot: path.join(f.root, 'runs'), workRoot: f.workRoot, label: 'v1', limit: 1 }, x.deps);
+  assert.equal(x.calls.runCompiled[0].flowPath, null);
+  const go = o => tierdownE2E({ armDir: f.armDir, version: 'v1-haiku55', judge: 'alpha', tiers: NEW, runRoot: path.join(f.root, 'runs'), workRoot: f.workRoot, label: 'bad', ...o }, fakeDeps().deps);
+  for (const o of [{ perTaskUsd: 'abc' }, { minutes: NaN }, { limit: 'x' }, { perTaskUsd: -1 }, { label: '..' }, { label: 'a/b' }]) await refusesAsync(go(o), 'USAGE');
+  const other = fixtureArm(t);
+  writeFileSync(path.join(other.runDir, 'arm.json'), JSON.stringify({ experiment: EXP, slug: 'jit-other', def: { familyId: 'fake', split: 'dev', perTaskUsd: 1, models: MODELS } }));
+  await refusesAsync(go({ runArmDir: other.runDir }), 'ARM_MISMATCH');
+  const sealed = fixtureArm(t, { def: { familyId: 'sealed-1' } });
+  await refusesAsync(tierdownE2E({ armDir: sealed.armDir, version: 'v1-haiku55', judge: 'alpha', tiers: NEW, runRoot: path.join(sealed.root, 'runs'), workRoot: sealed.workRoot }, fakeDeps().deps), 'TEST_SPLIT');
+});
+
 test('readArchived: ok, deopt, crash, invalid, and unreadable directories', t => {
   const root = tmp(t);
   const mk = (name, files) => { const d = path.join(root, name); mkdirSync(path.join(d, 'tools'), { recursive: true }); for (const [f, c] of Object.entries(files)) writeFileSync(path.join(d, f), c); return d; };
   const validate = o => Array.isArray(o?.records);
-  assert.equal(readArchived(mk('ok', { '.solve.stdout': 'x\n{"records":[]}\n', 'tools/calls.jsonl': '{"ok":true,"costUsd":0.01}\n{"ok":true}\n' }), { validate }).status, 'ok');
+  const done = '{"kind":"done","name":"done","spentUsd":0.01}\n';
+  assert.equal(readArchived(mk('ok', { '.solve.stdout': 'x\n{"records":[]}\n', 'trace.jsonl': done, 'tools/calls.jsonl': '{"ok":true,"costUsd":0.01}\n{"ok":true}\n' }), { validate }).status, 'ok');
   assert.equal(readArchived(path.join(root, 'ok'), { validate }).costUnknown, true);
-  assert.equal(readArchived(mk('inv', { '.solve.stdout': '{"rows":[]}\n' }), { validate }).status, 'invalid');
+  assert.equal(readArchived(mk('inv', { '.solve.stdout': '{"rows":[]}\n', 'trace.jsonl': done }), { validate }).status, 'invalid');
+  // a run that timed out (or was killed) after printing a schema-valid JSON line never called done(): not reusable
+  assert.equal(readArchived(mk('timeout', { '.solve.stdout': '{"records":[]}\n', 'trace.jsonl': '{"kind":"judge","name":"a"}\n' }), { validate }), null);
   assert.equal(readArchived(mk('crash', { 'trace.jsonl': '{"kind":"crash","name":"uncaught","spentUsd":0.2}\n' }), { validate }).costUsd, 0.2);
   assert.equal(readArchived(mk('dz', { 'deopt.json': '{"kind":"guard","name":"g"}' })).deopt.name, 'g');
   assert.equal(readArchived(mk('none', {})), null);

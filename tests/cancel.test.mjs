@@ -62,20 +62,26 @@ function probes() {
     registry.register({ name, description: 'Synthetic cancellation probe', version: '1', implementation: `cancel-test/${name}`, inputSchema: {}, outputSchema: {}, effects, risk: 'low',
       requiresApproval: false, maxTimeoutMs: 120000, cancellation: 'cooperative', cost: 0, execute, ...extra });
   }
+  // probe.deaf / probe.deaf-effect never look at their signal: they settle only when the test releases them.
+  state.release = new Map();
+  for (const [name, effects] of [['probe.deaf', 'none'], ['probe.deaf-effect', 'non-idempotent']]) {
+    registry.register({ name, description: 'Synthetic probe that ignores cancellation', version: '1', implementation: `cancel-test/${name}`, inputSchema: {}, outputSchema: {}, effects, risk: 'low',
+      requiresApproval: false, maxTimeoutMs: 120000, cancellation: 'none', cost: 0, execute: args => { state.started.push(args.id); return new Promise(resolve => { state.release.set(args.id, () => resolve({ id: args.id })); }); } });
+  }
   return { registry, state };
 }
 // An owner and a canceller on one fresh workspace.
-function pair(t, { script } = {}) {
+function pair(t, { script, ownerOptions = {} } = {}) {
   const root = mkdtempSync(path.join(tmpdir(), 'foundry-cancel-'));
   const provider = new ScriptedProvider(script ?? (() => { throw new Error('no model call expected'); }));
   const { registry, state } = probes();
   const opened = [];
   const open = (options = {}) => {
-    const foundry = new Foundry(root, { registry, modelPolicy: loaded, cancelPollMs: 15, policy: { maxCost: 5 }, ...options });
+    const foundry = new Foundry(root, { registry, modelPolicy: loaded, cancelPollMs: 15, cancelGraceMs: 150, policy: { maxCost: 5 }, ...options });
     opened.push(foundry);
     return foundry;
   };
-  const owner = open({ models: store => new ModelPort({ policy: loaded.policy, providers: { 'llama-server': provider, 'claude-cli': provider }, journal: new Journal(store) }) });
+  const owner = open({ models: store => new ModelPort({ policy: loaded.policy, providers: { 'llama-server': provider, 'claude-cli': provider }, journal: new Journal(store) }), ...ownerOptions });
   const other = open();
   t.after(async () => {
     // A failed assertion must not leave an execution hanging: abort what is still active, then close.
@@ -166,7 +172,7 @@ test('cancel mid-tool: a tool without effects is stopped (cancelled); one with a
     assert.equal(report.outcome, 'uncertain', report.message);
     assert.equal(report.status, 'uncertain');
     assert.equal(report.verdict, 'uncertain');
-    assert.deepEqual(report.effectsUnknown.items.map(x => [x.nodeKey, x.tool, x.effects]), [['root/send', 'probe.effect', undefined].slice(0, 2).concat(report.effectsUnknown.items[0].effects)]);
+    assert.deepEqual(report.effectsUnknown.items.map(x => [x.nodeKey, x.tool, x.effects]), [['root/send', 'probe.effect', 'non-idempotent']]);
     assert.match(report.message, /1 effect of unknown outcome \(root\/send probe\.effect\)/);
     assert.equal(exitCodeOf(report), 2);
     assert.equal((await running).status, 'uncertain');
@@ -246,7 +252,6 @@ test('cancel closes a run that nothing executes: parked on a timer, a question o
   for (const run of [waiting, asking, gated, ready]) {
     const header = p.other.store.rows.header(run.id);
     assert.deepEqual([header.status, header.verdict.verdict, header.owner], ['cancelled', 'inconclusive', null]);
-    assert.deepEqual(p.types(run.id).slice(-3), ['run.cancel_requested', 'run.verdict', 'run.stopped'].slice(-3).length === 3 ? p.types(run.id).slice(-3) : []);
     assert.deepEqual(p.types(run.id).slice(-2), ['run.verdict', 'run.stopped']);
     assert.equal(p.types(run.id).filter(type => type === 'run.cancel_requested').length, 1);
     p.verified(run.id);
@@ -265,7 +270,7 @@ test('a run whose owner died is closed by cancel: nodes it left running are sett
     assert.deepEqual([header.nodes.spin.status, header.nodes.spin.error.code, header.nodes.wait.status], ['failed', 'CANCELLED', 'failed']);
     const swept = p.other.store.events(run.id).filter(e => e.swept);
     assert.deepEqual(swept.map(e => [e.type, e.nodeKey]), [['node.failed', 'root/spin'], ['node.failed', 'root/wait']]);
-    assert.deepEqual(p.types(run.id).slice(-3), ['run.verdict', 'run.stopped'].length ? [p.types(run.id).at(-3), 'run.verdict', 'run.stopped'] : []);
+    assert.deepEqual(p.types(run.id).slice(-2), ['run.verdict', 'run.stopped']);
     assert.equal(p.state.started.length, 0);
     p.verified(run.id);
   });
@@ -292,7 +297,7 @@ test('a run whose owner died is closed by cancel: nodes it left running are sett
     assert.equal(final.status, 'cancelled');
     assert.equal(final.error.message, 'Run cancelled by test: then the owner died');
     assert.equal(p.state.started.length, 0, 'no node ran');
-    assert.equal(final.nodes.step.status, 'failed');
+    assert.equal(final.nodes.step.status, 'pending', 'the interrupted call was put back by recovery and never re-run');
     assert.equal(p.types(run.id).filter(type => type === 'run.cancel_requested').length, 1);
     p.verified(run.id);
     // ...and another cancel of the finished run is the no-op.
@@ -402,13 +407,11 @@ test('stop-all with executingOnly leaves parked and never-started runs alone', {
 });
 
 test('a live owner that does not stop within the grace period is reported, not touched, unless forced; this process is never killed', { timeout: 60000 }, async t => {
-  // The owner is this very process (a second Foundry in it) and ignores the request: a tool that never settles and never looks at its signal.
-  const p = pair(t);
+  // The owner is this very process (a second Foundry in it) and cannot be stopped: its code runner ignores the signal until the test releases it.
   let release;
-  p.registry.register({ name: 'probe.deaf', description: 'Ignores cancellation', version: '1', implementation: 'cancel-test/probe.deaf', inputSchema: {}, outputSchema: {}, effects: 'none', risk: 'low',
-    requiresApproval: false, maxTimeoutMs: 120000, cancellation: 'none', cost: 0, execute: () => new Promise(resolve => { release = resolve; }) });
-  const run = p.create(base([task('deaf', 'probe.deaf')], [done('deaf')], { id: 'Deaf' }));
-  p.owner.save(base([task('deaf', 'probe.deaf')], [done('deaf')], { id: 'Deaf' }));
+  const p = pair(t, { ownerOptions: { codeRunner: () => new Promise(resolve => { release = () => resolve({ value: { ok: true } }); }) } });
+  t.after(() => release?.());
+  const run = p.create(base([code('spin')], [eq(ref('nodes.spin.ok'), true)], { id: 'Stuck' }));
   const running = p.owner.startRun(run.id);
   assert.ok(await until(() => release !== undefined));
   const report = await p.other.cancel(run.id, { actor: 'test', graceMs: 300 });
@@ -417,35 +420,71 @@ test('a live owner that does not stop within the grace period is reported, not t
   assert.equal(exitCodeOf(report), 3);
   assert.match(report.message, /had not stopped after 0\.\d s/);
   assert.match(report.message, /foundry cancel .* --force/);
+  assert.equal(report.cancel.actor, 'test', 'the request is recorded and stands');
   const forced = await p.other.cancel(run.id, { actor: 'test', graceMs: 100, force: true });
   assert.equal(forced.outcome, 'not-stopped', 'the owner is this process: it is never signalled');
   assert.match(forced.escalation.skipped, /this process or one of its ancestors/);
   assert.equal(process.kill(process.pid, 0), true, 'still alive');
   // Zero grace: the request is recorded and the owner asked to stop, without waiting.
   assert.equal((await p.other.cancel(run.id, { actor: 'test', graceMs: 0 })).outcome, 'requested');
-  release({ id: 'deaf' }); // the tool finally settles; the run then sees the request
+  release(); // the code finally returns; the run then sees the request
   const final = await running;
   assert.equal(final.status, 'cancelled', JSON.stringify(final.error));
+  p.verified(run.id);
+});
+
+test('a capability that ignores its abort signal is abandoned after the grace period: no effect: cancelled; a non-idempotent effect: uncertain', { timeout: 60000 }, async t => {
+  await t.test('no effects', async t => {
+    const p = pair(t);
+    const run = p.create(base([task('deaf', 'probe.deaf')], [done('deaf')]));
+    const running = p.owner.startRun(run.id);
+    assert.ok(await until(() => p.state.release.has('deaf')));
+    const started = Date.now();
+    const report = await p.other.cancel(run.id, { actor: 'test', graceMs: 20000 });
+    assert.equal(report.outcome, 'cancelled', report.message);
+    assert.ok(Date.now() - started < 10000, 'it did not wait for the tool\'s own timeout (two minutes)');
+    assert.equal((await running).status, 'cancelled');
+    p.state.release.get('deaf')(); // the abandoned call settles late: nothing records it
+    await new Promise(resolve => setTimeout(resolve, 50));
+    assert.equal(p.other.store.run(run.id).nodes.deaf.status, 'failed');
+    p.verified(run.id);
+  });
+  await t.test('a non-idempotent effect', async t => {
+    const p = pair(t);
+    const run = p.create(base([task('send', 'probe.deaf-effect')], [done('send')]));
+    const running = p.owner.startRun(run.id);
+    assert.ok(await until(() => p.state.release.has('send')));
+    const report = await p.other.cancel(run.id, { actor: 'test', graceMs: 20000 });
+    assert.equal(report.outcome, 'uncertain', report.message);
+    assert.deepEqual(report.effectsUnknown.items.map(x => x.nodeKey), ['root/send']);
+    assert.equal((await running).status, 'uncertain');
+    const event = p.other.store.events(run.id).find(e => e.type === 'effect.uncertain');
+    assert.equal(event.cancellationConfirmed, false, 'the tool never confirmed that it stopped');
+    p.state.release.get('send')();
+    p.verified(run.id);
+  });
 });
 
 test('escalation targets: the owner\'s sandboxes and model CLIs by process group, never this process, its ancestors or any group they are in', () => {
   const p = (pid, ppid, pgid, state = 'S') => ({ pid, ppid, pgid, state });
-  // init(1) > shell(10, group 10) > tester(20, group 10: this process) ; shell > owner(30, group 10) > sandbox(40, group 40) > inner(41, 40), model CLI(50, group 50) > helper(51, 50),
-  // owner's thread-like child in its own group (60, group 30) ; unrelated process (99, group 99)
-  const table = [p(1, 0, 1), p(10, 1, 10), p(20, 10, 10), p(30, 10, 10), p(40, 30, 40), p(41, 40, 40), p(50, 30, 50), p(51, 50, 50), p(60, 30, 30), p(99, 1, 99)];
+  // init(1) > shell(10, group 10) > tester(20, group 10: this process); shell > owner(30, leads group 30) > sandbox(40, group 40) > inner(41, 40);
+  // owner > model CLI(50, group 50) > helper(51, 50); owner > a child in the owner's own group (60, group 30); unrelated process (99).
+  const table = [p(1, 0, 1), p(10, 1, 10), p(20, 10, 10), p(30, 10, 30), p(40, 30, 40), p(41, 40, 40), p(50, 30, 50), p(51, 50, 50), p(60, 30, 30), p(99, 1, 99)];
   assert.deepEqual(ancestorsOf(table, 20), [20, 10, 1]);
   assert.deepEqual(descendantsOf(table, 30).map(x => x.pid).sort((a, b) => a - b), [40, 41, 50, 51, 60]);
   assert.deepEqual(escalationPlan(table, 30, 20), { owner: 30, groups: [40, 50], pids: [60] }, 'groups for the detached trees, pids for what shares the owner\'s group');
-  // The owner shares a group with this process (both were started from one shell): that group is never signalled.
-  assert.ok(!escalationPlan(table, 30, 20).groups.includes(10));
-  // This process is below the owner (it was started by the owner): its own group and itself are left out.
-  const nested = [...table, p(70, 30, 70), p(71, 70, 70)];
-  assert.deepEqual(escalationPlan(nested, 30, 71), { owner: 30, groups: [40, 50], pids: [60] }, 'the group of a descendant that is this process is protected, and so is this process');
+  // The owner shares a group with this process (both started from one shell): that group is never signalled, its members below the owner are killed by pid.
+  const shared = [p(1, 0, 1), p(10, 1, 10), p(20, 10, 10), p(31, 10, 10), p(40, 31, 40), p(61, 31, 10), p(62, 61, 62)];
+  assert.deepEqual(escalationPlan(shared, 31, 20), { owner: 31, groups: [40, 62], pids: [61] });
+  // This process is below the owner (the owner started it): the owner is one of its ancestors, so nothing is signalled; a sibling subtree is fine.
+  const nested = [...table, p(70, 30, 70), p(71, 70, 70), p(72, 71, 72)];
+  assert.match(escalationPlan(nested, 30, 71).skipped, /this process or one of its ancestors/);
+  assert.deepEqual(escalationPlan(nested, 30, 99), { owner: 30, groups: [40, 50, 70, 72], pids: [60] });
   // The owner is this process or an ancestor of it: nothing is signalled.
   assert.match(escalationPlan(table, 20, 20).skipped, /this process or one of its ancestors/);
   assert.match(escalationPlan(table, 10, 20).skipped, /this process or one of its ancestors/);
   assert.match(escalationPlan(table, 12345, 20).skipped, /already exited/);
-  assert.match(escalationPlan([...table.filter(x => x.pid !== 30), p(30, 10, 10, 'Z')], 30, 20).skipped, /already exited/);
+  assert.match(escalationPlan([...table.filter(x => x.pid !== 30), p(30, 10, 30, 'Z')], 30, 20).skipped, /already exited/);
   // Zombies below the owner are not targets.
   assert.deepEqual(escalationPlan([...table.filter(x => x.pid !== 51), p(51, 50, 50, 'Z')], 30, 20), { owner: 30, groups: [40, 50], pids: [60] });
 });
