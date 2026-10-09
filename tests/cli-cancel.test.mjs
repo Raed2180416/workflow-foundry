@@ -407,7 +407,7 @@ test('an owner killed with SIGKILL leaves its sandbox running: cancel stops the 
   assert.equal(cancelled.status, 0, cancelled.stderr);
   const report = cancelled.json();
   assert.equal(report.outcome, 'cancelled', report.message);
-  assert.deepEqual(report.orphans, [{ pid: group, kind: 'sandbox', killed: true }]);
+  assert.deepEqual(report.orphans, [{ pid: group, kind: 'sandbox', killed: true }], cancelled.stdout);
   assert.match(report.message, /Stopped 1 process group its dead owner had left running \(sandbox\)/);
   assert.ok(await gone(group), 'the orphaned sandbox is stopped');
   assert.deepEqual(store.children(record.id), [], 'and forgotten');
