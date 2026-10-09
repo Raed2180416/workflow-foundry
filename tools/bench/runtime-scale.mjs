@@ -92,7 +92,7 @@ if (!process.env.MICRO_ONLY) {
   console.log(['scenario'.padEnd(12), 'n'.padStart(5), 'wall ms (min..p50)'.padEnd(22), 'cpu ms p50'.padEnd(11), 'wall ms/node'.padEnd(13), 'cpu ms/node'.padEnd(12), 'events'.padStart(6), 'stateKiB'.padStart(8), 'rssMB'.padStart(6), 'status'].join(' '));
   for (const [name, build] of Object.entries(scenarios)) {
     if (only && !only.includes(name)) continue;
-    for (const n of sizes[name].filter(size => !wanted || wanted.includes(size)).concat(wanted?.filter(size => !sizes[name].includes(size)) ?? [])) {
+    for (const n of sizes[name].filter(size => !wanted || wanted.includes(size))) {
       const walls = [], cpus = []; let last = null, status = '';
       for (let r = 0; r < (n >= 1000 ? Math.min(REPS, 2) : REPS); r++) {
         const { wf, input } = build(n), h = make(wf, input);
