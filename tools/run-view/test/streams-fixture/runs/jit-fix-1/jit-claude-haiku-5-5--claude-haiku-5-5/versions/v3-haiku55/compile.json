@@ -1,0 +1,139 @@
+{
+ "arm": "jit-compile",
+ "kind": "recompile",
+ "familyId": "records",
+ "label": "v3-x",
+ "version": 3,
+ "parentSha": "b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2",
+ "changed": true,
+ "traceIds": [
+  "i000-interpreter-abc0",
+  "i001-interpreter-abc1",
+  "i002-interpreter-abc2"
+ ],
+ "regressionIds": [
+  "reg-006-aaaaaa"
+ ],
+ "builderModel": "claude-haiku-5-5",
+ "builderEffort": "high",
+ "artifact": "solve.mjs",
+ "artifactSha256": "d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4",
+ "builderCostUsd": 0.9,
+ "builderCostUnknown": false,
+ "builderBudgetUsd": 3,
+ "gatewayCostUsd": 0.1,
+ "gatewayCapUsd": 1.5,
+ "checkCostUsd": 0.3,
+ "constructionCostUsd": 1,
+ "compileCostUsd": 1.3,
+ "startedAt": "2026-10-08T10:14:00.000Z",
+ "durationMs": 600000,
+ "builderMs": 500000,
+ "minutes": 30,
+ "turns": 41,
+ "toolUses": 57,
+ "builderError": null,
+ "checkTraces": {
+  "exact": 6,
+  "partial": 0.93,
+  "deopts": 0,
+  "crashes": 0,
+  "perCase": [
+   {
+    "id": "case-0",
+    "ref": "reg-006-aaaaaa",
+    "kind": "regression",
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "diffs": []
+   },
+   {
+    "id": "trace-1",
+    "ref": "i001-interpreter-abc1",
+    "kind": "trace",
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "diffs": []
+   },
+   {
+    "id": "trace-2",
+    "ref": "i002-interpreter-abc2",
+    "kind": "trace",
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "diffs": []
+   },
+   {
+    "id": "trace-3",
+    "ref": "i003-interpreter-abc3",
+    "kind": "trace",
+    "status": "diff",
+    "exact": false,
+    "partial": 0.8,
+    "diffs": [
+     {
+      "path": "$.records[0].given_name",
+      "got": "HIDDEN-TRUTH-MARKER",
+      "want": "Ann"
+     }
+    ]
+   },
+   {
+    "id": "trace-4",
+    "ref": "i004-interpreter-abc4",
+    "kind": "trace",
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "diffs": []
+   },
+   {
+    "id": "trace-5",
+    "ref": "i005-interpreter-abc5",
+    "kind": "trace",
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "diffs": []
+   },
+   {
+    "id": "trace-6",
+    "ref": "i006-interpreter-abc6",
+    "kind": "trace",
+    "status": "exact",
+    "exact": true,
+    "partial": 1,
+    "diffs": []
+   }
+  ],
+  "cases": 7,
+  "labeled": 7,
+  "exactRate": 0.857,
+  "diffs": 1,
+  "deoptKinds": {},
+  "timeouts": 0,
+  "regressions": 1,
+  "regressionsPassed": 1,
+  "clean": true,
+  "unexplained": [],
+  "accepted": true,
+  "costUsd": 0.3,
+  "calls": 12,
+  "unknownCalls": 0,
+  "refusals": {},
+  "durationMs": 90000,
+  "error": null
+ },
+ "notes": null,
+ "hiddenPathAttempts": 0,
+ "outsidePaths": [],
+ "nestedModelAttempts": 0,
+ "inputs": {
+  "traceIds": [],
+  "regressionIds": [],
+  "previousSha": "b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2"
+ }
+}

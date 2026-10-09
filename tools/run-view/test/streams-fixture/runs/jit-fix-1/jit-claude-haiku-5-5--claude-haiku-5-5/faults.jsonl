@@ -1,0 +1,1 @@
+{"experiment":"jit-fix-1","arm":"jit:claude-haiku-5-5/claude-haiku-5-5","idx":5,"taskKey":"records:dev:d3:s106","component":"compiled","error":{"code":"MODEL_RATE_LIMIT","message":"x"},"metaErrors":null,"builderError":null,"at":"2026-10-08T10:10:00.000Z"}

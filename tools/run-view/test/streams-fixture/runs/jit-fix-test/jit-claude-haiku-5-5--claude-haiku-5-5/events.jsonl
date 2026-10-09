@@ -1,0 +1,4 @@
+{"at":"2026-10-08T10:00:00.000Z","arm":"jit:claude-haiku-5-5/claude-haiku-5-5","idx":0,"kind":"spend","id":"0-interpreter-00001000","component":"interpreter","costUsd":0.5,"costUnknown":false}
+{"at":"2026-10-08T10:00:01.000Z","arm":"jit:claude-haiku-5-5/claude-haiku-5-5","idx":0,"kind":"interpret","role":"interpreter","model":"claude-haiku-5-5","traceId":"i000-interpreter-abc0","answer":true,"error":null,"costUsd":0.5,"attempt":0,"nestedModelAttempts":0,"hiddenPathAttempts":0}
+{"at":"2026-10-08T10:02:00.000Z","arm":"jit:claude-haiku-5-5/claude-haiku-5-5","idx":1,"kind":"spend","id":"1-interpreter-00001010","component":"interpreter","costUsd":0.5,"costUnknown":false}
+{"at":"2026-10-08T10:02:01.000Z","arm":"jit:claude-haiku-5-5/claude-haiku-5-5","idx":1,"kind":"interpret","role":"interpreter","model":"claude-haiku-5-5","traceId":"i001-interpreter-abc1","answer":true,"error":null,"costUsd":0.5,"attempt":0,"nestedModelAttempts":0,"hiddenPathAttempts":0}

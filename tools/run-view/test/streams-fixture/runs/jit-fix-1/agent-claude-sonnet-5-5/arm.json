@@ -1,0 +1,19 @@
+{
+ "experiment": "jit-fix-1",
+ "spec": "agent:claude-sonnet-5-5",
+ "slug": "agent-claude-sonnet-5-5",
+ "kind": "agent",
+ "hash": "agent-cl00000000",
+ "def": {
+  "spec": "agent:claude-sonnet-5-5",
+  "familyId": "records",
+  "split": "dev",
+  "perTaskUsd": 1,
+  "agentBudgetUsd": 2,
+  "models": [
+   "claude-haiku-5-5",
+   "claude-opus-5-5",
+   "claude-sonnet-5-5"
+  ]
+ }
+}

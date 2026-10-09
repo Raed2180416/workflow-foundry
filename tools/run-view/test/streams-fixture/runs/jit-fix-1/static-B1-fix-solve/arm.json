@@ -1,0 +1,21 @@
+{
+ "experiment": "jit-fix-1",
+ "spec": "static:research/fixture/B1-fix/solve.mjs",
+ "slug": "static-B1-fix-solve",
+ "kind": "static",
+ "hash": "static-B00000000",
+ "def": {
+  "spec": "static:research/fixture/B1-fix/solve.mjs",
+  "familyId": "records",
+  "split": "dev",
+  "perTaskUsd": 1,
+  "agentBudgetUsd": 2,
+  "models": [
+   "claude-haiku-5-5",
+   "claude-opus-5-5",
+   "claude-sonnet-5-5"
+  ],
+  "scriptSha": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+  "fallback": "claude-haiku-5-5"
+ }
+}

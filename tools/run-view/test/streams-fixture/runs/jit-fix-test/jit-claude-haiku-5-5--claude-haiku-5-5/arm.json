@@ -1,0 +1,22 @@
+{
+ "experiment": "jit-fix-test",
+ "spec": "jit:claude-haiku-5-5/claude-haiku-5-5",
+ "slug": "jit-claude-haiku-5-5--claude-haiku-5-5",
+ "kind": "jit",
+ "hash": "jit-clau00000000",
+ "def": {
+  "spec": "jit:claude-haiku-5-5/claude-haiku-5-5",
+  "familyId": "records",
+  "split": "test",
+  "perTaskUsd": 1,
+  "agentBudgetUsd": 2,
+  "models": [
+   "claude-haiku-5-5",
+   "claude-opus-5-5",
+   "claude-sonnet-5-5"
+  ],
+  "jit": {
+   "warmup": 1
+  }
+ }
+}

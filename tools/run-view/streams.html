@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<meta name="description" content="Read-only view of JIT stream experiments: cumulative cost and successes by task, per-arm lanes, compiled versions and the report.mjs summary.">
+<!--CSP-->
+<title>JIT streams</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="history.css">
+<link rel="stylesheet" href="streams.css">
+</head>
+<body>
+<a class="skip-link" href="#view">Skip to the content</a>
+<header class="bar">
+  <div class="brand"><span class="mark" aria-hidden="true">W</span><span>JIT streams <small>read-only</small></span></div>
+  <nav id="tabs" class="tabs" aria-label="Experiments"></nav>
+  <div class="actions">
+    <button id="open" type="button" class="btn">Open streams file</button>
+    <input id="file" type="file" accept=".json,application/json" hidden>
+    <button id="theme" type="button" class="btn">Light theme</button>
+  </div>
+</header>
+<div id="source" class="source muted" role="note"></div>
+<main id="view" tabindex="-1"><p class="empty">Loading the streams.</p></main>
+<div id="live" class="sr-only" role="status" aria-live="polite"></div>
+<noscript><p class="empty">JavaScript is required to browse the streams.</p></noscript>
+<!--DATA-->
+<script src="history-core.js"></script>
+<script src="streams.js"></script>
+</body>
+</html>
