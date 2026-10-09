@@ -126,7 +126,8 @@ a signal. `foundry run`, `resume`, `tick` and `trial` therefore handle SIGINT an
 they abort every execution they own (the abort reaches each node's signal synchronously
 and kills those groups), report the interrupted runs on stderr and exit 130/143 as a crash
 would, so each run stays resumable (`tests/cli-interrupt.test.mjs`). A SIGKILL of the CLI
-still leaves them running until they end by themselves: the sandbox sets no CPU-time limit.
+still leaves them running (the sandbox sets no CPU-time limit) until `foundry cancel`, `stop-all` or
+`resume` finds them on file and stops them ("Cancel and stop-all" below).
 
 ## Cancel and stop-all
 
