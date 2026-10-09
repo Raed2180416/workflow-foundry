@@ -1,0 +1,7851 @@
+{
+ "schema": "kev-j1/jev-analysis@1",
+ "generatedAt": "2026-10-09T09:56:53.165Z",
+ "status": "DEVELOPMENT EVIDENCE, DIAGNOSTIC ONLY: dev-select (in-family), one read (K = 1), stock hosted Jev with raw probabilities (no calib-OOD fit exists); no comparative claim before a J2 pre-registration",
+ "bootstrap": {
+  "B": 4000,
+  "note": "kinetics: two-way form x world (verified rebuilt sidecar); interactive, runbook: one-way over records (no trustworthy sidecar), so their intervals are form-unclustered and likely too narrow"
+ },
+ "noiseRule": "differences with |estimate| < 0.03 on acc, bacc, macroF1 are flagged noise",
+ "groups": {
+  "interactive": {
+   "devSha256": "9459e2fce44872aa5d0ae0a29587b13b125081f3d73f7afe71aa4a1d3eac32f7",
+   "verified": false,
+   "clusters": "record only (no trustworthy sidecar): CIs form-unclustered, likely too narrow",
+   "n": 562,
+   "records": 487,
+   "versions": {
+    "jev-1.13.0": 562
+   },
+   "rawSumOff": [
+    0.99,
+    0.99,
+    0.99,
+    0.99,
+    0.99
+   ],
+   "ties": 2,
+   "choiceNotArgmax": 1,
+   "report": {
+    "valid": false,
+    "coverage": {
+     "requested_records": 487,
+     "requested_questions": 562,
+     "evaluated_records": 487,
+     "evaluated_questions": 562,
+     "rejected_records": 0,
+     "failed_records": 0,
+     "truncated_records": 0
+    },
+    "faults": 0,
+    "usage": {
+     "requests": 487,
+     "input_tokens": 258284,
+     "output_tokens": 26138,
+     "missing_usage": 0,
+     "scope": "every scored record in the rows file, one request each; not the re-read or retried attempts (see requests and faults)"
+    }
+   },
+   "ports": {
+    "Q1~east": {
+     "n": 25,
+     "labels": {
+      "yes": 0.6,
+      "no": 0.4
+     },
+     "jev": {
+      "n": 25,
+      "clusters": "record",
+      "records": 25,
+      "acc": {
+       "est": 0.72,
+       "lo": 0.52,
+       "hi": 0.88
+      },
+      "bacc": {
+       "est": 0.7333,
+       "lo": 0.5439,
+       "hi": 0.9
+      },
+      "macroF1": {
+       "est": 0.7182,
+       "lo": 0.513,
+       "hi": 0.8792
+      },
+      "brier": {
+       "est": 0.439,
+       "lo": 0.1982,
+       "hi": 0.7034
+      },
+      "bssUniform": {
+       "est": 0.122,
+       "lo": -0.4075,
+       "hi": 0.6019
+      }
+     },
+     "bssReferences": {
+      "uniform": 0.122,
+      "calibInPrior": null,
+      "devPriorLEAKY": 0.0854,
+      "calibOodPrior": "unavailable (calib-ood lost with the held-out material)"
+     },
+     "diagnostics": {
+      "meanMaxP": 0.8696,
+      "overconfidence": 0.1496,
+      "ece15EqualMass": {
+       "ece": 0.2648,
+       "reliability": 0.18,
+       "resolution": 0.1616,
+       "uncertainty": 0.2016,
+       "diagram": [
+        {
+         "n": 2,
+         "conf": 0.61,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 0.665,
+         "acc": 0.5
+        },
+        {
+         "n": 1,
+         "conf": 0.69,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 0.715,
+         "acc": 0.5
+        },
+        {
+         "n": 2,
+         "conf": 0.81,
+         "acc": 0
+        },
+        {
+         "n": 1,
+         "conf": 0.86,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 0.915,
+         "acc": 0
+        },
+        {
+         "n": 2,
+         "conf": 0.965,
+         "acc": 1
+        },
+        {
+         "n": 1,
+         "conf": 0.97,
+         "acc": 0
+        },
+        {
+         "n": 2,
+         "conf": 0.97,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 0.98,
+         "acc": 1
+        },
+        {
+         "n": 1,
+         "conf": 0.98,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 0.99,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 1,
+         "conf": 1,
+         "acc": 1
+        }
+       ]
+      },
+      "ece10EqualWidth": {
+       "ece": 0.2104,
+       "reliability": 0.0656,
+       "resolution": 0.0477,
+       "uncertainty": 0.2016,
+       "diagram": [
+        {
+         "n": 5,
+         "conf": 0.648,
+         "acc": 0.8
+        },
+        {
+         "n": 3,
+         "conf": 0.7333,
+         "acc": 0.3333
+        },
+        {
+         "n": 3,
+         "conf": 0.86,
+         "acc": 0.3333
+        },
+        {
+         "n": 14,
+         "conf": 0.98,
+         "acc": 0.8571
+        }
+       ]
+      },
+      "eceGate": "diagnostic only: n = 25 < 500",
+      "hardOneShare": 0.12,
+      "hardOneErrors": 0,
+      "coverageAt5InSample": {
+       "coverage": 0.32,
+       "risk": 0,
+       "tau": 0.98,
+       "accepted": 8,
+       "note": "threshold fitted on these same rows: optimistic, not the §6.1 RISK (which needs a calib-OOD threshold)"
+      },
+      "jevConfidenceVsMaxP": {
+       "meanAbsDiff": 0.1304,
+       "pearson": 1
+      },
+      "confusion": {
+       "yes": {
+        "yes": 10,
+        "no": 5
+       },
+       "no": {
+        "no": 8,
+        "yes": 2
+       }
+      }
+     },
+     "compare": {
+      "devMajority": {
+       "leaky": true,
+       "n": 25,
+       "clusters": "record",
+       "acc": {
+        "est": 0.12,
+        "lo": -0.16,
+        "hi": 0.4,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.2333,
+        "lo": 0.0357,
+        "hi": 0.4,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.3432,
+        "lo": 0.1098,
+        "hi": 0.5379,
+        "noise": false
+       }
+      },
+      "devPrior": {
+       "leaky": true,
+       "n": 25,
+       "clusters": "record",
+       "acc": {
+        "est": 0.12,
+        "lo": -0.16,
+        "hi": 0.4,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.2333,
+        "lo": 0.0357,
+        "hi": 0.4,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.3432,
+        "lo": 0.1098,
+        "hi": 0.5379,
+        "noise": false
+       },
+       "brier": {
+        "est": -0.041,
+        "lo": -0.2966,
+        "hi": 0.2395
+       },
+       "bssUniform": {
+        "est": 0.082,
+        "lo": -0.4814,
+        "hi": 0.5905
+       }
+      }
+     },
+     "haiku": {
+      "n": 2,
+      "faults": 0,
+      "items": [
+       {
+        "recId": "kd_76447690f8b03f0e30247754",
+        "qid": "Q1~east",
+        "label": "no",
+        "haiku": "no",
+        "haikuConfidence": 0.93,
+        "jev": "no",
+        "jevMaxP": 0.98
+       },
+       {
+        "recId": "kd_4478a44140ca18d87130dd40",
+        "qid": "Q1~east",
+        "label": "yes",
+        "haiku": "yes",
+        "haikuConfidence": 0.8,
+        "jev": "yes",
+        "jevMaxP": 0.6
+       }
+      ],
+      "note": "two items per port by design: anecdote, no per-port metric"
+     }
+    },
+    "Q1~north": {
+     "n": 25,
+     "labels": {
+      "yes": 0.64,
+      "no": 0.36
+     },
+     "jev": {
+      "n": 25,
+      "clusters": "record",
+      "records": 25,
+      "acc": {
+       "est": 0.8,
+       "lo": 0.64,
+       "hi": 0.96
+      },
+      "bacc": {
+       "est": 0.7951,
+       "lo": 0.6146,
+       "hi": 0.95
+      },
+      "macroF1": {
+       "est": 0.7878,
+       "lo": 0.5989,
+       "hi": 0.948
+      },
+      "brier": {
+       "est": 0.2504,
+       "lo": 0.0928,
+       "hi": 0.4395
+      },
+      "bssUniform": {
+       "est": 0.4991,
+       "lo": 0.1195,
+       "hi": 0.8142
+      }
+     },
+     "bssReferences": {
+      "uniform": 0.4991,
+      "calibInPrior": null,
+      "devPriorLEAKY": 0.4566,
+      "calibOodPrior": "unavailable (calib-ood lost with the held-out material)"
+     },
+     "diagnostics": {
+      "meanMaxP": 0.8692,
+      "overconfidence": 0.0692,
+      "ece15EqualMass": {
+       "ece": 0.15,
+       "reliability": 0.0659,
+       "resolution": 0.1,
+       "uncertainty": 0.16,
+       "diagram": [
+        {
+         "n": 2,
+         "conf": 0.55,
+         "acc": 0.5
+        },
+        {
+         "n": 2,
+         "conf": 0.685,
+         "acc": 0.5
+        },
+        {
+         "n": 1,
+         "conf": 0.73,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 0.74,
+         "acc": 0
+        },
+        {
+         "n": 2,
+         "conf": 0.825,
+         "acc": 1
+        },
+        {
+         "n": 1,
+         "conf": 0.84,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 0.895,
+         "acc": 0.5
+        },
+        {
+         "n": 2,
+         "conf": 0.945,
+         "acc": 1
+        },
+        {
+         "n": 1,
+         "conf": 0.97,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 0.98,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 0.99,
+         "acc": 1
+        },
+        {
+         "n": 1,
+         "conf": 0.99,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 0.99,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 1,
+         "conf": 1,
+         "acc": 1
+        }
+       ]
+      },
+      "ece10EqualWidth": {
+       "ece": 0.1196,
+       "reliability": 0.0317,
+       "resolution": 0.0629,
+       "uncertainty": 0.16,
+       "diagram": [
+        {
+         "n": 2,
+         "conf": 0.55,
+         "acc": 0.5
+        },
+        {
+         "n": 1,
+         "conf": 0.67,
+         "acc": 0
+        },
+        {
+         "n": 4,
+         "conf": 0.7275,
+         "acc": 0.5
+        },
+        {
+         "n": 4,
+         "conf": 0.8425,
+         "acc": 1
+        },
+        {
+         "n": 14,
+         "conf": 0.9771,
+         "acc": 0.9286
+        }
+       ]
+      },
+      "eceGate": "diagnostic only: n = 25 < 500",
+      "hardOneShare": 0.12,
+      "hardOneErrors": 0,
+      "coverageAt5InSample": {
+       "coverage": 0.52,
+       "risk": 0,
+       "tau": 0.93,
+       "accepted": 13,
+       "note": "threshold fitted on these same rows: optimistic, not the §6.1 RISK (which needs a calib-OOD threshold)"
+      },
+      "jevConfidenceVsMaxP": {
+       "meanAbsDiff": 0.1308,
+       "pearson": 1
+      },
+      "confusion": {
+       "yes": {
+        "yes": 13,
+        "no": 3
+       },
+       "no": {
+        "no": 7,
+        "yes": 2
+       }
+      }
+     },
+     "compare": {
+      "devMajority": {
+       "leaky": true,
+       "n": 25,
+       "clusters": "record",
+       "acc": {
+        "est": 0.16,
+        "lo": -0.08,
+        "hi": 0.4,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.2951,
+        "lo": 0.1032,
+        "hi": 0.4474,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.3975,
+        "lo": 0.1671,
+        "hi": 0.5673,
+        "noise": false
+       }
+      },
+      "devPrior": {
+       "leaky": true,
+       "n": 25,
+       "clusters": "record",
+       "acc": {
+        "est": 0.16,
+        "lo": -0.08,
+        "hi": 0.4,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.2951,
+        "lo": 0.1032,
+        "hi": 0.4474,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.3975,
+        "lo": 0.1671,
+        "hi": 0.5673,
+        "noise": false
+       },
+       "brier": {
+        "est": -0.2104,
+        "lo": -0.3878,
+        "hi": -0.0094
+       },
+       "bssUniform": {
+        "est": 0.4207,
+        "lo": 0.018,
+        "hi": 0.7754
+       }
+      }
+     },
+     "haiku": {
+      "n": 2,
+      "faults": 0,
+      "items": [
+       {
+        "recId": "kd_1305b85d8bc1bd518535b29f",
+        "qid": "Q1~north",
+        "label": "yes",
+        "haiku": "yes",
+        "haikuConfidence": 0.6,
+        "jev": "no",
+        "jevMaxP": 0.67
+       },
+       {
+        "recId": "kd_9e8afb42576b155c0c76db3a",
+        "qid": "Q1~north",
+        "label": "no",
+        "haiku": "no",
+        "haikuConfidence": 0.95,
+        "jev": "no",
+        "jevMaxP": 0.96
+       }
+      ],
+      "note": "two items per port by design: anecdote, no per-port metric"
+     }
+    },
+    "Q1~south": {
+     "n": 25,
+     "labels": {
+      "no": 0.4,
+      "yes": 0.6
+     },
+     "jev": {
+      "n": 25,
+      "clusters": "record",
+      "records": 25,
+      "acc": {
+       "est": 0.88,
+       "lo": 0.76,
+       "hi": 1
+      },
+      "bacc": {
+       "est": 0.8833,
+       "lo": 0.7333,
+       "hi": 1
+      },
+      "macroF1": {
+       "est": 0.8768,
+       "lo": 0.7182,
+       "hi": 1
+      },
+      "brier": {
+       "est": 0.1093,
+       "lo": 0.022,
+       "hi": 0.2212
+      },
+      "bssUniform": {
+       "est": 0.7814,
+       "lo": 0.5561,
+       "hi": 0.9559
+      }
+     },
+     "bssReferences": {
+      "uniform": 0.7814,
+      "calibInPrior": null,
+      "devPriorLEAKY": 0.7723,
+      "calibOodPrior": "unavailable (calib-ood lost with the held-out material)"
+     },
+     "diagnostics": {
+      "meanMaxP": 0.8928,
+      "overconfidence": 0.0128,
+      "ece15EqualMass": {
+       "ece": 0.112,
+       "reliability": 0.035,
+       "resolution": 0.0856,
+       "uncertainty": 0.1056,
+       "diagram": [
+        {
+         "n": 2,
+         "conf": 0.555,
+         "acc": 0
+        },
+        {
+         "n": 2,
+         "conf": 0.725,
+         "acc": 0.5
+        },
+        {
+         "n": 1,
+         "conf": 0.8,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 0.835,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 0.87,
+         "acc": 1
+        },
+        {
+         "n": 1,
+         "conf": 0.88,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 0.935,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 0.96,
+         "acc": 1
+        },
+        {
+         "n": 1,
+         "conf": 0.97,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 0.98,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 0.985,
+         "acc": 1
+        },
+        {
+         "n": 1,
+         "conf": 0.99,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 0.995,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 1,
+         "conf": 1,
+         "acc": 1
+        }
+       ]
+      },
+      "ece10EqualWidth": {
+       "ece": 0.112,
+       "reliability": 0.0345,
+       "resolution": 0.0856,
+       "uncertainty": 0.1056,
+       "diagram": [
+        {
+         "n": 2,
+         "conf": 0.555,
+         "acc": 0
+        },
+        {
+         "n": 2,
+         "conf": 0.725,
+         "acc": 0.5
+        },
+        {
+         "n": 6,
+         "conf": 0.8483,
+         "acc": 1
+        },
+        {
+         "n": 15,
+         "conf": 0.978,
+         "acc": 1
+        }
+       ]
+      },
+      "eceGate": "diagnostic only: n = 25 < 500",
+      "hardOneShare": 0.16,
+      "hardOneErrors": 0,
+      "coverageAt5InSample": {
+       "coverage": 0.92,
+       "risk": 0.0435,
+       "tau": 0.72,
+       "accepted": 23,
+       "note": "threshold fitted on these same rows: optimistic, not the §6.1 RISK (which needs a calib-OOD threshold)"
+      },
+      "jevConfidenceVsMaxP": {
+       "meanAbsDiff": 0.1072,
+       "pearson": 1
+      },
+      "confusion": {
+       "no": {
+        "no": 9,
+        "yes": 1
+       },
+       "yes": {
+        "yes": 13,
+        "no": 2
+       }
+      }
+     },
+     "compare": {
+      "devMajority": {
+       "leaky": true,
+       "n": 25,
+       "clusters": "record",
+       "acc": {
+        "est": 0.28,
+        "lo": 0.04,
+        "hi": 0.52,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.3833,
+        "lo": 0.2326,
+        "hi": 0.5,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.5018,
+        "lo": 0.3242,
+        "hi": 0.6485,
+        "noise": false
+       }
+      },
+      "devPrior": {
+       "leaky": true,
+       "n": 25,
+       "clusters": "record",
+       "acc": {
+        "est": 0.28,
+        "lo": 0.04,
+        "hi": 0.52,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.3833,
+        "lo": 0.2326,
+        "hi": 0.5,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.5018,
+        "lo": 0.3242,
+        "hi": 0.6485,
+        "noise": false
+       },
+       "brier": {
+        "est": -0.3707,
+        "lo": -0.4895,
+        "hi": -0.2416
+       },
+       "bssUniform": {
+        "est": 0.7414,
+        "lo": 0.4833,
+        "hi": 0.9784
+       }
+      }
+     },
+     "haiku": {
+      "n": 2,
+      "faults": 0,
+      "items": [
+       {
+        "recId": "kd_76447690f8b03f0e30247754",
+        "qid": "Q1~south",
+        "label": "yes",
+        "haiku": "yes",
+        "haikuConfidence": 0.75,
+        "jev": "yes",
+        "jevMaxP": 0.73
+       },
+       {
+        "recId": "kd_601309877432f80068f8826f",
+        "qid": "Q1~south",
+        "label": "no",
+        "haiku": "no",
+        "haikuConfidence": 0.95,
+        "jev": "no",
+        "jevMaxP": 0.92
+       }
+      ],
+      "note": "two items per port by design: anecdote, no per-port metric"
+     }
+    },
+    "Q1~west": {
+     "n": 25,
+     "labels": {
+      "yes": 0.56,
+      "no": 0.44
+     },
+     "jev": {
+      "n": 25,
+      "clusters": "record",
+      "records": 25,
+      "acc": {
+       "est": 0.88,
+       "lo": 0.72,
+       "hi": 1
+      },
+      "bacc": {
+       "est": 0.8636,
+       "lo": 0.7143,
+       "hi": 1
+      },
+      "macroF1": {
+       "est": 0.8727,
+       "lo": 0.7029,
+       "hi": 1
+      },
+      "brier": {
+       "est": 0.164,
+       "lo": 0.0653,
+       "hi": 0.2857
+      },
+      "bssUniform": {
+       "est": 0.672,
+       "lo": 0.4271,
+       "hi": 0.8692
+      }
+     },
+     "bssReferences": {
+      "uniform": 0.672,
+      "calibInPrior": null,
+      "devPriorLEAKY": 0.6672,
+      "calibOodPrior": "unavailable (calib-ood lost with the held-out material)"
+     },
+     "diagnostics": {
+      "meanMaxP": 0.8452,
+      "overconfidence": -0.0348,
+      "ece15EqualMass": {
+       "ece": 0.1356,
+       "reliability": 0.0456,
+       "resolution": 0.0656,
+       "uncertainty": 0.1056,
+       "diagram": [
+        {
+         "n": 2,
+         "conf": 0.53,
+         "acc": 0.5
+        },
+        {
+         "n": 2,
+         "conf": 0.605,
+         "acc": 1
+        },
+        {
+         "n": 1,
+         "conf": 0.66,
+         "acc": 0
+        },
+        {
+         "n": 2,
+         "conf": 0.72,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 0.77,
+         "acc": 0.5
+        },
+        {
+         "n": 1,
+         "conf": 0.82,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 0.855,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 0.93,
+         "acc": 1
+        },
+        {
+         "n": 1,
+         "conf": 0.96,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 0.975,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 0.985,
+         "acc": 1
+        },
+        {
+         "n": 1,
+         "conf": 0.99,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 0.99,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 0.99,
+         "acc": 1
+        },
+        {
+         "n": 1,
+         "conf": 1,
+         "acc": 1
+        }
+       ]
+      },
+      "ece10EqualWidth": {
+       "ece": 0.058,
+       "reliability": 0.0062,
+       "resolution": 0.0256,
+       "uncertainty": 0.1056,
+       "diagram": [
+        {
+         "n": 3,
+         "conf": 0.5433,
+         "acc": 0.6667
+        },
+        {
+         "n": 3,
+         "conf": 0.6633,
+         "acc": 0.6667
+        },
+        {
+         "n": 3,
+         "conf": 0.7633,
+         "acc": 0.6667
+        },
+        {
+         "n": 3,
+         "conf": 0.8433,
+         "acc": 1
+        },
+        {
+         "n": 13,
+         "conf": 0.9762,
+         "acc": 1
+        }
+       ]
+      },
+      "eceGate": "diagnostic only: n = 25 < 500",
+      "hardOneShare": 0.04,
+      "hardOneErrors": 0,
+      "coverageAt5InSample": {
+       "coverage": 0.8,
+       "risk": 0.05,
+       "tau": 0.69,
+       "accepted": 20,
+       "note": "threshold fitted on these same rows: optimistic, not the §6.1 RISK (which needs a calib-OOD threshold)"
+      },
+      "jevConfidenceVsMaxP": {
+       "meanAbsDiff": 0.1548,
+       "pearson": 1
+      },
+      "confusion": {
+       "yes": {
+        "yes": 14
+       },
+       "no": {
+        "no": 8,
+        "yes": 3
+       }
+      }
+     },
+     "compare": {
+      "devMajority": {
+       "leaky": true,
+       "n": 25,
+       "clusters": "record",
+       "acc": {
+        "est": 0.32,
+        "lo": 0.16,
+        "hi": 0.52,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.3636,
+        "lo": 0.2143,
+        "hi": 0.5,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.5137,
+        "lo": 0.346,
+        "hi": 0.6357,
+        "noise": false
+       }
+      },
+      "devPrior": {
+       "leaky": true,
+       "n": 25,
+       "clusters": "record",
+       "acc": {
+        "est": 0.32,
+        "lo": 0.16,
+        "hi": 0.52,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.3636,
+        "lo": 0.2143,
+        "hi": 0.5,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.5137,
+        "lo": 0.346,
+        "hi": 0.6357,
+        "noise": false
+       },
+       "brier": {
+        "est": -0.3288,
+        "lo": -0.4262,
+        "hi": -0.2191
+       },
+       "bssUniform": {
+        "est": 0.6576,
+        "lo": 0.4375,
+        "hi": 0.8521
+       }
+      }
+     },
+     "haiku": {
+      "n": 2,
+      "faults": 0,
+      "items": [
+       {
+        "recId": "kd_6087856a1a2e9876b6aa0974",
+        "qid": "Q1~west",
+        "label": "no",
+        "haiku": "no",
+        "haikuConfidence": 0.85,
+        "jev": "no",
+        "jevMaxP": 0.69
+       },
+       {
+        "recId": "kd_25932048f0f868eba7352c02",
+        "qid": "Q1~west",
+        "label": "no",
+        "haiku": "no",
+        "haikuConfidence": 0.85,
+        "jev": "no",
+        "jevMaxP": 0.92
+       }
+      ],
+      "note": "two items per port by design: anecdote, no per-port metric"
+     }
+    },
+    "Q2": {
+     "n": 100,
+     "labels": {
+      "cued": 0.61,
+      "plain": 0.39
+     },
+     "jev": {
+      "n": 100,
+      "clusters": "record",
+      "records": 100,
+      "acc": {
+       "est": 0.91,
+       "lo": 0.85,
+       "hi": 0.96
+      },
+      "bacc": {
+       "est": 0.8846,
+       "lo": 0.8158,
+       "hi": 0.9474
+      },
+      "macroF1": {
+       "est": 0.9004,
+       "lo": 0.8333,
+       "hi": 0.9566
+      },
+      "brier": {
+       "est": 0.179,
+       "lo": 0.0966,
+       "hi": 0.2702
+      },
+      "bssUniform": {
+       "est": 0.6419,
+       "lo": 0.4592,
+       "hi": 0.8066
+      }
+     },
+     "bssReferences": {
+      "uniform": 0.6419,
+      "calibInPrior": null,
+      "devPriorLEAKY": 0.6238,
+      "calibOodPrior": "unavailable (calib-ood lost with the held-out material)"
+     },
+     "diagnostics": {
+      "meanMaxP": 0.9149,
+      "overconfidence": 0.0049,
+      "ece15EqualMass": {
+       "ece": 0.0919,
+       "reliability": 0.0247,
+       "resolution": 0.0176,
+       "uncertainty": 0.0819,
+       "diagram": [
+        {
+         "n": 7,
+         "conf": 0.5586,
+         "acc": 1
+        },
+        {
+         "n": 7,
+         "conf": 0.7186,
+         "acc": 0.5714
+        },
+        {
+         "n": 6,
+         "conf": 0.805,
+         "acc": 0.8333
+        },
+        {
+         "n": 7,
+         "conf": 0.8729,
+         "acc": 0.8571
+        },
+        {
+         "n": 7,
+         "conf": 0.92,
+         "acc": 1
+        },
+        {
+         "n": 6,
+         "conf": 0.94,
+         "acc": 1
+        },
+        {
+         "n": 7,
+         "conf": 0.9657,
+         "acc": 0.8571
+        },
+        {
+         "n": 7,
+         "conf": 0.9786,
+         "acc": 1
+        },
+        {
+         "n": 6,
+         "conf": 0.99,
+         "acc": 0.6667
+        },
+        {
+         "n": 7,
+         "conf": 0.9971,
+         "acc": 1
+        },
+        {
+         "n": 7,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 6,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 7,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 7,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 6,
+         "conf": 1,
+         "acc": 0.8333
+        }
+       ]
+      },
+      "ece10EqualWidth": {
+       "ece": 0.0549,
+       "reliability": 0.0123,
+       "resolution": 0.0061,
+       "uncertainty": 0.0819,
+       "diagram": [
+        {
+         "n": 5,
+         "conf": 0.526,
+         "acc": 1
+        },
+        {
+         "n": 3,
+         "conf": 0.6433,
+         "acc": 0.6667
+        },
+        {
+         "n": 8,
+         "conf": 0.7425,
+         "acc": 0.75
+        },
+        {
+         "n": 11,
+         "conf": 0.8527,
+         "acc": 0.8182
+        },
+        {
+         "n": 73,
+         "conf": 0.981,
+         "acc": 0.9452
+        }
+       ]
+      },
+      "eceGate": "diagnostic only: n = 100 < 500",
+      "hardOneShare": 0.38,
+      "hardOneErrors": 1,
+      "coverageAt5InSample": {
+       "coverage": 0.38,
+       "risk": 0.0263,
+       "tau": 1,
+       "accepted": 38,
+       "note": "threshold fitted on these same rows: optimistic, not the §6.1 RISK (which needs a calib-OOD threshold)"
+      },
+      "jevConfidenceVsMaxP": {
+       "meanAbsDiff": 0.0851,
+       "pearson": 1
+      },
+      "confusion": {
+       "cued": {
+        "cued": 61
+       },
+       "plain": {
+        "plain": 30,
+        "cued": 9
+       }
+      }
+     },
+     "compare": {
+      "devMajority": {
+       "leaky": true,
+       "n": 100,
+       "clusters": "record",
+       "acc": {
+        "est": 0.3,
+        "lo": 0.21,
+        "hi": 0.39,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.3846,
+        "lo": 0.3143,
+        "hi": 0.4474,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.5215,
+        "lo": 0.448,
+        "hi": 0.5807,
+        "noise": false
+       }
+      },
+      "devPrior": {
+       "leaky": true,
+       "n": 100,
+       "clusters": "record",
+       "acc": {
+        "est": 0.3,
+        "lo": 0.21,
+        "hi": 0.39,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.3846,
+        "lo": 0.3143,
+        "hi": 0.4474,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.5215,
+        "lo": 0.448,
+        "hi": 0.5807,
+        "noise": false
+       },
+       "brier": {
+        "est": -0.2968,
+        "lo": -0.369,
+        "hi": -0.2131
+       },
+       "bssUniform": {
+        "est": 0.5935,
+        "lo": 0.4256,
+        "hi": 0.7377
+       }
+      }
+     },
+     "haiku": {
+      "n": 2,
+      "faults": 0,
+      "items": [
+       {
+        "recId": "kd_2630aa299787d7198956980e",
+        "qid": "Q2",
+        "label": "plain",
+        "haiku": "plain",
+        "haikuConfidence": 0.6,
+        "jev": "cued",
+        "jevMaxP": 0.65
+       },
+       {
+        "recId": "kd_90ed8512e16cae79609810e5",
+        "qid": "Q2",
+        "label": "cued",
+        "haiku": "cued",
+        "haikuConfidence": 0.9,
+        "jev": "cued",
+        "jevMaxP": 0.97
+       }
+      ],
+      "note": "two items per port by design: anecdote, no per-port metric"
+     }
+    },
+    "Q4": {
+     "n": 102,
+     "labels": {
+      "drifted": 0.49019607843137253,
+      "as_expected": 0.5098039215686274
+     },
+     "jev": {
+      "n": 102,
+      "clusters": "record",
+      "records": 102,
+      "acc": {
+       "est": 0.951,
+       "lo": 0.902,
+       "hi": 0.9902
+      },
+      "bacc": {
+       "est": 0.9504,
+       "lo": 0.9027,
+       "hi": 0.9898
+      },
+      "macroF1": {
+       "est": 0.9509,
+       "lo": 0.9016,
+       "hi": 0.9901
+      },
+      "brier": {
+       "est": 0.0794,
+       "lo": 0.0256,
+       "hi": 0.1464
+      },
+      "bssUniform": {
+       "est": 0.8413,
+       "lo": 0.7072,
+       "hi": 0.9487
+      }
+     },
+     "bssReferences": {
+      "uniform": 0.8413,
+      "calibInPrior": null,
+      "devPriorLEAKY": 0.8411,
+      "calibOodPrior": "unavailable (calib-ood lost with the held-out material)"
+     },
+     "diagnostics": {
+      "meanMaxP": 0.9559,
+      "overconfidence": 0.0049,
+      "ece15EqualMass": {
+       "ece": 0.0429,
+       "reliability": 0.0059,
+       "resolution": 0.0102,
+       "uncertainty": 0.0466,
+       "diagram": [
+        {
+         "n": 7,
+         "conf": 0.7229,
+         "acc": 0.8571
+        },
+        {
+         "n": 7,
+         "conf": 0.8557,
+         "acc": 0.7143
+        },
+        {
+         "n": 7,
+         "conf": 0.9214,
+         "acc": 0.7143
+        },
+        {
+         "n": 7,
+         "conf": 0.9457,
+         "acc": 1
+        },
+        {
+         "n": 6,
+         "conf": 0.9667,
+         "acc": 1
+        },
+        {
+         "n": 7,
+         "conf": 0.9786,
+         "acc": 1
+        },
+        {
+         "n": 7,
+         "conf": 0.9871,
+         "acc": 1
+        },
+        {
+         "n": 7,
+         "conf": 0.99,
+         "acc": 1
+        },
+        {
+         "n": 7,
+         "conf": 0.99,
+         "acc": 1
+        },
+        {
+         "n": 6,
+         "conf": 0.9933,
+         "acc": 1
+        },
+        {
+         "n": 7,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 7,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 7,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 7,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 6,
+         "conf": 1,
+         "acc": 1
+        }
+       ]
+      },
+      "ece10EqualWidth": {
+       "ece": 0.0186,
+       "reliability": 0.0021,
+       "resolution": 0.0073,
+       "uncertainty": 0.0466,
+       "diagram": [
+        {
+         "n": 2,
+         "conf": 0.58,
+         "acc": 0.5
+        },
+        {
+         "n": 3,
+         "conf": 0.7667,
+         "acc": 1
+        },
+        {
+         "n": 9,
+         "conf": 0.8433,
+         "acc": 0.7778
+        },
+        {
+         "n": 88,
+         "conf": 0.9824,
+         "acc": 0.9773
+        }
+       ]
+      },
+      "eceGate": "diagnostic only: n = 102 < 500",
+      "hardOneShare": 0.3529,
+      "hardOneErrors": 0,
+      "coverageAt5InSample": {
+       "coverage": 1,
+       "risk": 0.049,
+       "tau": 0.57,
+       "accepted": 102,
+       "note": "threshold fitted on these same rows: optimistic, not the §6.1 RISK (which needs a calib-OOD threshold)"
+      },
+      "jevConfidenceVsMaxP": {
+       "meanAbsDiff": 0.0441,
+       "pearson": 1
+      },
+      "confusion": {
+       "drifted": {
+        "as_expected": 4,
+        "drifted": 46
+       },
+       "as_expected": {
+        "as_expected": 51,
+        "drifted": 1
+       }
+      }
+     },
+     "compare": {
+      "devMajority": {
+       "leaky": true,
+       "n": 102,
+       "clusters": "record",
+       "acc": {
+        "est": 0.4412,
+        "lo": 0.3431,
+        "hi": 0.5392,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.4504,
+        "lo": 0.4049,
+        "hi": 0.4898,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.6132,
+        "lo": 0.5559,
+        "hi": 0.6689,
+        "noise": false
+       }
+      },
+      "devPrior": {
+       "leaky": true,
+       "n": 102,
+       "clusters": "record",
+       "acc": {
+        "est": 0.4412,
+        "lo": 0.3431,
+        "hi": 0.5392,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.4504,
+        "lo": 0.4049,
+        "hi": 0.4898,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.6132,
+        "lo": 0.5559,
+        "hi": 0.6689,
+        "noise": false
+       },
+       "brier": {
+        "est": -0.4204,
+        "lo": -0.4731,
+        "hi": -0.3573
+       },
+       "bssUniform": {
+        "est": 0.8409,
+        "lo": 0.7144,
+        "hi": 0.946
+       }
+      }
+     },
+     "haiku": {
+      "n": 2,
+      "faults": 0,
+      "items": [
+       {
+        "recId": "kd_8a4dfa82ab30b29cdf09920d",
+        "qid": "Q4",
+        "label": "drifted",
+        "haiku": "drifted",
+        "haikuConfidence": 0.96,
+        "jev": "drifted",
+        "jevMaxP": 1
+       },
+       {
+        "recId": "kd_49fd57c69a102dac5262ea48",
+        "qid": "Q4",
+        "label": "as_expected",
+        "haiku": "as_expected",
+        "haikuConfidence": 0.95,
+        "jev": "as_expected",
+        "jevMaxP": 0.99
+       }
+      ],
+      "note": "two items per port by design: anecdote, no per-port metric"
+     }
+    },
+    "Q5": {
+     "n": 52,
+     "labels": {
+      "wall_clip": 0.19230769230769232,
+      "enemy_ai": 0.17307692307692307,
+      "crash": 0.09615384615384616,
+      "softlock": 0.07692307692307693,
+      "integer_overflow": 0.1346153846153846,
+      "shop_rounding": 0.038461538461538464,
+      "item_duplication": 0.11538461538461539,
+      "door_without_key": 0.057692307692307696,
+      "render_mismatch": 0.07692307692307693,
+      "transition_inventory_loss": 0.038461538461538464
+     },
+     "jev": {
+      "n": 52,
+      "clusters": "record",
+      "records": 52,
+      "acc": {
+       "est": 0.6923,
+       "lo": 0.5577,
+       "hi": 0.8077
+      },
+      "bacc": {
+       "est": 0.7615,
+       "lo": 0.6852,
+       "hi": 0.8302
+      },
+      "macroF1": {
+       "est": 0.6854,
+       "lo": 0.5685,
+       "hi": 0.7852
+      },
+      "brier": {
+       "est": 0.425,
+       "lo": 0.2713,
+       "hi": 0.5888
+      },
+      "bssUniform": {
+       "est": 0.5278,
+       "lo": 0.3457,
+       "hi": 0.6984
+      }
+     },
+     "bssReferences": {
+      "uniform": 0.5278,
+      "calibInPrior": null,
+      "devPriorLEAKY": 0.5139,
+      "calibOodPrior": "unavailable (calib-ood lost with the held-out material)"
+     },
+     "diagnostics": {
+      "meanMaxP": 0.7893,
+      "overconfidence": 0.097,
+      "ece15EqualMass": {
+       "ece": 0.2332,
+       "reliability": 0.1132,
+       "resolution": 0.1393,
+       "uncertainty": 0.213,
+       "diagram": [
+        {
+         "n": 4,
+         "conf": 0.385,
+         "acc": 0
+        },
+        {
+         "n": 3,
+         "conf": 0.4667,
+         "acc": 1
+        },
+        {
+         "n": 4,
+         "conf": 0.4825,
+         "acc": 0.5
+        },
+        {
+         "n": 3,
+         "conf": 0.5667,
+         "acc": 0.3333
+        },
+        {
+         "n": 4,
+         "conf": 0.6317,
+         "acc": 0.25
+        },
+        {
+         "n": 3,
+         "conf": 0.73,
+         "acc": 1
+        },
+        {
+         "n": 4,
+         "conf": 0.842,
+         "acc": 1
+        },
+        {
+         "n": 3,
+         "conf": 0.9267,
+         "acc": 1
+        },
+        {
+         "n": 4,
+         "conf": 0.9525,
+         "acc": 1
+        },
+        {
+         "n": 3,
+         "conf": 0.9667,
+         "acc": 0
+        },
+        {
+         "n": 4,
+         "conf": 0.98,
+         "acc": 0.75
+        },
+        {
+         "n": 3,
+         "conf": 0.9933,
+         "acc": 1
+        },
+        {
+         "n": 4,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 3,
+         "conf": 1,
+         "acc": 0.6667
+        },
+        {
+         "n": 3,
+         "conf": 1,
+         "acc": 1
+        }
+       ]
+      },
+      "ece10EqualWidth": {
+       "ece": 0.1621,
+       "reliability": 0.0311,
+       "resolution": 0.0597,
+       "uncertainty": 0.213,
+       "diagram": [
+        {
+         "n": 2,
+         "conf": 0.355,
+         "acc": 0
+        },
+        {
+         "n": 8,
+         "conf": 0.4563,
+         "acc": 0.5
+        },
+        {
+         "n": 3,
+         "conf": 0.5333,
+         "acc": 0.3333
+        },
+        {
+         "n": 5,
+         "conf": 0.6273,
+         "acc": 0.4
+        },
+        {
+         "n": 4,
+         "conf": 0.7425,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 0.8441,
+         "acc": 1
+        },
+        {
+         "n": 28,
+         "conf": 0.9746,
+         "acc": 0.8214
+        }
+       ]
+      },
+      "eceGate": "diagnostic only: n = 52 < 500",
+      "hardOneShare": 0.2115,
+      "hardOneErrors": 1,
+      "coverageAt5InSample": {
+       "coverage": 0,
+       "risk": null,
+       "tau": null,
+       "accepted": 0,
+       "note": "threshold fitted on these same rows: optimistic, not the §6.1 RISK (which needs a calib-OOD threshold)"
+      },
+      "jevConfidenceVsMaxP": {
+       "meanAbsDiff": 0.0234,
+       "pearson": 0.9999
+      },
+      "confusion": {
+       "wall_clip": {
+        "wall_clip": 10
+       },
+       "enemy_ai": {
+        "enemy_ai": 2,
+        "wall_clip": 3,
+        "render_mismatch": 4
+       },
+       "crash": {
+        "crash": 5
+       },
+       "softlock": {
+        "render_mismatch": 3,
+        "softlock": 1
+       },
+       "integer_overflow": {
+        "shop_rounding": 4,
+        "integer_overflow": 1,
+        "render_mismatch": 2
+       },
+       "shop_rounding": {
+        "shop_rounding": 2
+       },
+       "item_duplication": {
+        "item_duplication": 6
+       },
+       "door_without_key": {
+        "door_without_key": 3
+       },
+       "render_mismatch": {
+        "render_mismatch": 4
+       },
+       "transition_inventory_loss": {
+        "transition_inventory_loss": 2
+       }
+      }
+     },
+     "compare": {
+      "devMajority": {
+       "leaky": true,
+       "n": 52,
+       "clusters": "record",
+       "acc": {
+        "est": 0.5,
+        "lo": 0.3654,
+        "hi": 0.6346,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.6615,
+        "lo": 0.5682,
+        "hi": 0.7333,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.6531,
+        "lo": 0.5364,
+        "hi": 0.7495,
+        "noise": false
+       }
+      },
+      "devPrior": {
+       "leaky": true,
+       "n": 52,
+       "clusters": "record",
+       "acc": {
+        "est": 0.5,
+        "lo": 0.3654,
+        "hi": 0.6346,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.6615,
+        "lo": 0.5682,
+        "hi": 0.7333,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.6531,
+        "lo": 0.5364,
+        "hi": 0.7495,
+        "noise": false
+       },
+       "brier": {
+        "est": -0.4493,
+        "lo": -0.6039,
+        "hi": -0.2809
+       },
+       "bssUniform": {
+        "est": 0.4992,
+        "lo": 0.3114,
+        "hi": 0.6704
+       }
+      }
+     },
+     "haiku": {
+      "n": 2,
+      "faults": 0,
+      "items": [
+       {
+        "recId": "kd_10ae6c371f2f7bcfa84c4339",
+        "qid": "Q5",
+        "label": "enemy_ai",
+        "haiku": "enemy_ai",
+        "haikuConfidence": 0.62,
+        "jev": "render_mismatch",
+        "jevMaxP": 0.42
+       },
+       {
+        "recId": "kd_b48c9eeb219fc5bf54c532a2",
+        "qid": "Q5",
+        "label": "integer_overflow",
+        "haiku": "integer_overflow",
+        "haikuConfidence": 0.8,
+        "jev": "render_mismatch",
+        "jevMaxP": 1
+       }
+      ],
+      "note": "two items per port by design: anecdote, no per-port metric"
+     }
+    },
+    "Q6": {
+     "n": 76,
+     "labels": {
+      "defect": 0.6710526315789473,
+      "designed": 0.32894736842105265
+     },
+     "jev": {
+      "n": 76,
+      "clusters": "record",
+      "records": 76,
+      "acc": {
+       "est": 0.9474,
+       "lo": 0.8947,
+       "hi": 0.9868
+      },
+      "bacc": {
+       "est": 0.92,
+       "lo": 0.84,
+       "hi": 0.9821
+      },
+      "macroF1": {
+       "est": 0.9377,
+       "lo": 0.8684,
+       "hi": 0.9858
+      },
+      "brier": {
+       "est": 0.0794,
+       "lo": 0.0368,
+       "hi": 0.1324
+      },
+      "bssUniform": {
+       "est": 0.8412,
+       "lo": 0.7348,
+       "hi": 0.9264
+      }
+     },
+     "bssReferences": {
+      "uniform": 0.8412,
+      "calibInPrior": null,
+      "devPriorLEAKY": 0.8202,
+      "calibOodPrior": "unavailable (calib-ood lost with the held-out material)"
+     },
+     "diagnostics": {
+      "meanMaxP": 0.9184,
+      "overconfidence": -0.0289,
+      "ece15EqualMass": {
+       "ece": 0.04,
+       "reliability": 0.0072,
+       "resolution": 0.0196,
+       "uncertainty": 0.0499,
+       "diagram": [
+        {
+         "n": 6,
+         "conf": 0.55,
+         "acc": 0.5
+        },
+        {
+         "n": 5,
+         "conf": 0.69,
+         "acc": 1
+        },
+        {
+         "n": 5,
+         "conf": 0.824,
+         "acc": 0.8
+        },
+        {
+         "n": 5,
+         "conf": 0.924,
+         "acc": 1
+        },
+        {
+         "n": 5,
+         "conf": 0.954,
+         "acc": 1
+        },
+        {
+         "n": 5,
+         "conf": 0.968,
+         "acc": 1
+        },
+        {
+         "n": 5,
+         "conf": 0.976,
+         "acc": 1
+        },
+        {
+         "n": 5,
+         "conf": 0.984,
+         "acc": 1
+        },
+        {
+         "n": 5,
+         "conf": 0.99,
+         "acc": 1
+        },
+        {
+         "n": 5,
+         "conf": 0.99,
+         "acc": 1
+        },
+        {
+         "n": 5,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 5,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 5,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 5,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 5,
+         "conf": 1,
+         "acc": 1
+        }
+       ]
+      },
+      "ece10EqualWidth": {
+       "ece": 0.04,
+       "reliability": 0.0069,
+       "resolution": 0.0196,
+       "uncertainty": 0.0499,
+       "diagram": [
+        {
+         "n": 6,
+         "conf": 0.55,
+         "acc": 0.5
+        },
+        {
+         "n": 3,
+         "conf": 0.6633,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 0.73,
+         "acc": 1
+        },
+        {
+         "n": 5,
+         "conf": 0.824,
+         "acc": 0.8
+        },
+        {
+         "n": 60,
+         "conf": 0.9822,
+         "acc": 1
+        }
+       ]
+      },
+      "eceGate": "diagnostic only: n = 76 < 500",
+      "hardOneShare": 0.3289,
+      "hardOneErrors": 0,
+      "coverageAt5InSample": {
+       "coverage": 0.9474,
+       "risk": 0.0417,
+       "tau": 0.58,
+       "accepted": 72,
+       "note": "threshold fitted on these same rows: optimistic, not the §6.1 RISK (which needs a calib-OOD threshold)"
+      },
+      "jevConfidenceVsMaxP": {
+       "meanAbsDiff": 0.0816,
+       "pearson": 1
+      },
+      "confusion": {
+       "defect": {
+        "defect": 51
+       },
+       "designed": {
+        "designed": 21,
+        "defect": 4
+       }
+      }
+     },
+     "compare": {
+      "devMajority": {
+       "leaky": true,
+       "n": 76,
+       "clusters": "record",
+       "acc": {
+        "est": 0.2763,
+        "lo": 0.1711,
+        "hi": 0.3816,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.42,
+        "lo": 0.3421,
+        "hi": 0.4815,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.5361,
+        "lo": 0.4621,
+        "hi": 0.5984,
+        "noise": false
+       }
+      },
+      "devPrior": {
+       "leaky": true,
+       "n": 76,
+       "clusters": "record",
+       "acc": {
+        "est": 0.2763,
+        "lo": 0.1711,
+        "hi": 0.3816,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.42,
+        "lo": 0.3421,
+        "hi": 0.4815,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.5361,
+        "lo": 0.4621,
+        "hi": 0.5984,
+        "noise": false
+       },
+       "brier": {
+        "est": -0.3621,
+        "lo": -0.435,
+        "hi": -0.2911
+       },
+       "bssUniform": {
+        "est": 0.7241,
+        "lo": 0.5823,
+        "hi": 0.8694
+       }
+      }
+     },
+     "haiku": {
+      "n": 2,
+      "faults": 0,
+      "items": [
+       {
+        "recId": "kd_94c7c5b45d778a7e12d991b0",
+        "qid": "Q6",
+        "label": "defect",
+        "haiku": "defect",
+        "haikuConfidence": 0.92,
+        "jev": "defect",
+        "jevMaxP": 0.81
+       },
+       {
+        "recId": "kd_b607a779ef2211d9a0aa9c27",
+        "qid": "Q6",
+        "label": "defect",
+        "haiku": "defect",
+        "haikuConfidence": 0.93,
+        "jev": "defect",
+        "jevMaxP": 0.96
+       }
+      ],
+      "note": "two items per port by design: anecdote, no per-port metric"
+     }
+    },
+    "X1": {
+     "n": 32,
+     "labels": {
+      "yes": 0.4375,
+      "no": 0.5625
+     },
+     "jev": {
+      "n": 32,
+      "clusters": "record",
+      "records": 32,
+      "acc": {
+       "est": 0.75,
+       "lo": 0.5938,
+       "hi": 0.875
+      },
+      "bacc": {
+       "est": 0.7619,
+       "lo": 0.6071,
+       "hi": 0.9008
+      },
+      "macroF1": {
+       "est": 0.75,
+       "lo": 0.5836,
+       "hi": 0.875
+      },
+      "brier": {
+       "est": 0.3296,
+       "lo": 0.1442,
+       "hi": 0.5395
+      },
+      "bssUniform": {
+       "est": 0.3408,
+       "lo": -0.0796,
+       "hi": 0.7114
+      }
+     },
+     "bssReferences": {
+      "uniform": 0.3408,
+      "calibInPrior": null,
+      "devPriorLEAKY": 0.3304,
+      "calibOodPrior": "unavailable (calib-ood lost with the held-out material)"
+     },
+     "diagnostics": {
+      "meanMaxP": 0.9181,
+      "overconfidence": 0.1681,
+      "ece15EqualMass": {
+       "ece": 0.185,
+       "reliability": 0.114,
+       "resolution": 0.1354,
+       "uncertainty": 0.1875,
+       "diagram": [
+        {
+         "n": 3,
+         "conf": 0.61,
+         "acc": 0.3333
+        },
+        {
+         "n": 2,
+         "conf": 0.79,
+         "acc": 0
+        },
+        {
+         "n": 2,
+         "conf": 0.84,
+         "acc": 0.5
+        },
+        {
+         "n": 2,
+         "conf": 0.87,
+         "acc": 0.5
+        },
+        {
+         "n": 2,
+         "conf": 0.91,
+         "acc": 0
+        },
+        {
+         "n": 2,
+         "conf": 0.94,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 0.975,
+         "acc": 1
+        },
+        {
+         "n": 3,
+         "conf": 0.9833,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 0.99,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 0.99,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 0.995,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 1,
+         "acc": 1
+        }
+       ]
+      },
+      "ece10EqualWidth": {
+       "ece": 0.1681,
+       "reliability": 0.0796,
+       "resolution": 0.1004,
+       "uncertainty": 0.1875,
+       "diagram": [
+        {
+         "n": 1,
+         "conf": 0.52,
+         "acc": 0
+        },
+        {
+         "n": 2,
+         "conf": 0.655,
+         "acc": 0.5
+        },
+        {
+         "n": 1,
+         "conf": 0.76,
+         "acc": 0
+        },
+        {
+         "n": 6,
+         "conf": 0.855,
+         "acc": 0.3333
+        },
+        {
+         "n": 22,
+         "conf": 0.9845,
+         "acc": 0.9545
+        }
+       ]
+      },
+      "eceGate": "diagnostic only: n = 32 < 500",
+      "hardOneShare": 0.2813,
+      "hardOneErrors": 0,
+      "coverageAt5InSample": {
+       "coverage": 0.6875,
+       "risk": 0.0455,
+       "tau": 0.93,
+       "accepted": 22,
+       "note": "threshold fitted on these same rows: optimistic, not the §6.1 RISK (which needs a calib-OOD threshold)"
+      },
+      "jevConfidenceVsMaxP": {
+       "meanAbsDiff": 0.0819,
+       "pearson": 1
+      },
+      "confusion": {
+       "yes": {
+        "no": 2,
+        "yes": 12
+       },
+       "no": {
+        "no": 12,
+        "yes": 6
+       }
+      }
+     },
+     "compare": {
+      "devMajority": {
+       "leaky": true,
+       "n": 32,
+       "clusters": "record",
+       "acc": {
+        "est": 0.1875,
+        "lo": -0.0625,
+        "hi": 0.4375,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.2619,
+        "lo": 0.1093,
+        "hi": 0.4,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.39,
+        "lo": 0.2085,
+        "hi": 0.5623,
+        "noise": false
+       }
+      },
+      "devPrior": {
+       "leaky": true,
+       "n": 32,
+       "clusters": "record",
+       "acc": {
+        "est": 0.1875,
+        "lo": -0.0625,
+        "hi": 0.4375,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.2619,
+        "lo": 0.1093,
+        "hi": 0.4,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.39,
+        "lo": 0.2085,
+        "hi": 0.5623,
+        "noise": false
+       },
+       "brier": {
+        "est": -0.1626,
+        "lo": -0.3601,
+        "hi": 0.0521
+       },
+       "bssUniform": {
+        "est": 0.3252,
+        "lo": -0.1053,
+        "hi": 0.7199
+       }
+      }
+     },
+     "haiku": {
+      "n": 2,
+      "faults": 0,
+      "items": [
+       {
+        "recId": "kd_f611286974ff6dceca6b7557",
+        "qid": "X1",
+        "label": "no",
+        "haiku": "no",
+        "haikuConfidence": 0.97,
+        "jev": "no",
+        "jevMaxP": 1
+       },
+       {
+        "recId": "kd_a3264c017ed95a089fe39712",
+        "qid": "X1",
+        "label": "yes",
+        "haiku": "yes",
+        "haikuConfidence": 0.97,
+        "jev": "yes",
+        "jevMaxP": 0.99
+       }
+      ],
+      "note": "two items per port by design: anecdote, no per-port metric"
+     }
+    },
+    "X6": {
+     "n": 100,
+     "labels": {
+      "designed": 0.29,
+      "noise": 0.21,
+      "lead": 0.17,
+      "stale": 0.17,
+      "instruction": 0.02,
+      "duplicate": 0.14
+     },
+     "jev": {
+      "n": 100,
+      "clusters": "record",
+      "records": 100,
+      "acc": {
+       "est": 0.48,
+       "lo": 0.38,
+       "hi": 0.58
+      },
+      "bacc": {
+       "est": 0.5917,
+       "lo": 0.4811,
+       "hi": 0.6431
+      },
+      "macroF1": {
+       "est": 0.5404,
+       "lo": 0.4164,
+       "hi": 0.5921
+      },
+      "brier": {
+       "est": 0.8518,
+       "lo": 0.6899,
+       "hi": 1.0173
+      },
+      "bssUniform": {
+       "est": -0.0221,
+       "lo": -0.2209,
+       "hi": 0.1714
+      }
+     },
+     "bssReferences": {
+      "uniform": -0.0221,
+      "calibInPrior": null,
+      "devPriorLEAKY": -0.0728,
+      "calibOodPrior": "unavailable (calib-ood lost with the held-out material)"
+     },
+     "diagnostics": {
+      "meanMaxP": 0.8724,
+      "overconfidence": 0.3924,
+      "ece15EqualMass": {
+       "ece": 0.3924,
+       "reliability": 0.1978,
+       "resolution": 0.0413,
+       "uncertainty": 0.2496,
+       "diagram": [
+        {
+         "n": 7,
+         "conf": 0.4971,
+         "acc": 0.4286
+        },
+        {
+         "n": 7,
+         "conf": 0.6071,
+         "acc": 0.2857
+        },
+        {
+         "n": 6,
+         "conf": 0.7167,
+         "acc": 0.3333
+        },
+        {
+         "n": 7,
+         "conf": 0.8069,
+         "acc": 0.2857
+        },
+        {
+         "n": 7,
+         "conf": 0.8643,
+         "acc": 0.5714
+        },
+        {
+         "n": 6,
+         "conf": 0.8983,
+         "acc": 0.6667
+        },
+        {
+         "n": 7,
+         "conf": 0.9157,
+         "acc": 0.4286
+        },
+        {
+         "n": 7,
+         "conf": 0.9341,
+         "acc": 0.7143
+        },
+        {
+         "n": 6,
+         "conf": 0.9483,
+         "acc": 0
+        },
+        {
+         "n": 7,
+         "conf": 0.9671,
+         "acc": 0.7143
+        },
+        {
+         "n": 7,
+         "conf": 0.9786,
+         "acc": 0.5714
+        },
+        {
+         "n": 6,
+         "conf": 0.9867,
+         "acc": 0.8333
+        },
+        {
+         "n": 7,
+         "conf": 0.9914,
+         "acc": 0.4286
+        },
+        {
+         "n": 7,
+         "conf": 1,
+         "acc": 0.5714
+        },
+        {
+         "n": 6,
+         "conf": 1,
+         "acc": 0.3333
+        }
+       ]
+      },
+      "ece10EqualWidth": {
+       "ece": 0.3924,
+       "reliability": 0.1682,
+       "resolution": 0.0104,
+       "uncertainty": 0.2496,
+       "diagram": [
+        {
+         "n": 2,
+         "conf": 0.4,
+         "acc": 0
+        },
+        {
+         "n": 8,
+         "conf": 0.5563,
+         "acc": 0.5
+        },
+        {
+         "n": 5,
+         "conf": 0.626,
+         "acc": 0.4
+        },
+        {
+         "n": 8,
+         "conf": 0.7513,
+         "acc": 0.25
+        },
+        {
+         "n": 13,
+         "conf": 0.8537,
+         "acc": 0.5385
+        },
+        {
+         "n": 64,
+         "conf": 0.9648,
+         "acc": 0.5156
+        }
+       ]
+      },
+      "eceGate": "diagnostic only: n = 100 < 500",
+      "hardOneShare": 0.14,
+      "hardOneErrors": 7,
+      "coverageAt5InSample": {
+       "coverage": 0,
+       "risk": null,
+       "tau": null,
+       "accepted": 0,
+       "note": "threshold fitted on these same rows: optimistic, not the §6.1 RISK (which needs a calib-OOD threshold)"
+      },
+      "jevConfidenceVsMaxP": {
+       "meanAbsDiff": 0.0255,
+       "pearson": 0.9999
+      },
+      "confusion": {
+       "designed": {
+        "lead": 29
+       },
+       "noise": {
+        "noise": 15,
+        "lead": 6
+       },
+       "lead": {
+        "lead": 16,
+        "duplicate": 1
+       },
+       "stale": {
+        "stale": 14,
+        "lead": 3
+       },
+       "instruction": {
+        "instruction": 2
+       },
+       "duplicate": {
+        "lead": 13,
+        "duplicate": 1
+       }
+      }
+     },
+     "compare": {
+      "devMajority": {
+       "leaky": true,
+       "n": 100,
+       "clusters": "record",
+       "acc": {
+        "est": 0.19,
+        "lo": 0.02,
+        "hi": 0.36,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.4251,
+        "lo": 0.2802,
+        "hi": 0.4771,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.4655,
+        "lo": 0.3196,
+        "hi": 0.525,
+        "noise": false
+       }
+      },
+      "devPrior": {
+       "leaky": true,
+       "n": 100,
+       "clusters": "record",
+       "acc": {
+        "est": 0.19,
+        "lo": 0.02,
+        "hi": 0.36,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.4251,
+        "lo": 0.2802,
+        "hi": 0.4771,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.4655,
+        "lo": 0.3196,
+        "hi": 0.525,
+        "noise": false
+       },
+       "brier": {
+        "est": 0.0578,
+        "lo": -0.1258,
+        "hi": 0.2358
+       },
+       "bssUniform": {
+        "est": -0.0693,
+        "lo": -0.2845,
+        "hi": 0.1508
+       }
+      }
+     },
+     "haiku": {
+      "n": 2,
+      "faults": 0,
+      "items": [
+       {
+        "recId": "kd_0618b886b7e53b98c6589bea",
+        "qid": "X6",
+        "label": "duplicate",
+        "haiku": "lead",
+        "haikuConfidence": 0.72,
+        "jev": "lead",
+        "jevMaxP": 0.86
+       },
+       {
+        "recId": "kd_8b45d88f0c7239d8222af5bf",
+        "qid": "X6",
+        "label": "duplicate",
+        "haiku": "noise",
+        "haikuConfidence": 0.55,
+        "jev": "lead",
+        "jevMaxP": 0.62
+       }
+      ],
+      "note": "two items per port by design: anecdote, no per-port metric"
+     }
+    }
+   },
+   "reread": {
+    "n": 20,
+    "argmaxFlips": 0,
+    "maxAbsDp": 0.06,
+    "meanMaxAbsDp": 0.0145,
+    "identical": 9,
+    "under001": 9,
+    "atLeast001": 11,
+    "usage": {
+     "input_tokens": 10183,
+     "output_tokens": 1037
+    },
+    "reportAgree": false,
+    "reportStable": true,
+    "rule": "run validity needs every re-read |dp| < 0.01 (unchanged); Jev answers in 2-decimal steps"
+   },
+   "diagnostics": {
+    "meanMaxP": 0.8957,
+    "overconfidence": 0.095,
+    "ece15EqualMass": {
+     "ece": 0.0965,
+     "reliability": 0.0142,
+     "resolution": 0.0247,
+     "uncertainty": 0.1596,
+     "diagram": [
+      {
+       "n": 38,
+       "conf": 0.5034,
+       "acc": 0.5
+      },
+      {
+       "n": 37,
+       "conf": 0.6415,
+       "acc": 0.5405
+      },
+      {
+       "n": 38,
+       "conf": 0.755,
+       "acc": 0.6579
+      },
+      {
+       "n": 37,
+       "conf": 0.8348,
+       "acc": 0.6216
+      },
+      {
+       "n": 38,
+       "conf": 0.8932,
+       "acc": 0.7368
+      },
+      {
+       "n": 37,
+       "conf": 0.9297,
+       "acc": 0.8378
+      },
+      {
+       "n": 38,
+       "conf": 0.9539,
+       "acc": 0.7632
+      },
+      {
+       "n": 37,
+       "conf": 0.9708,
+       "acc": 0.8649
+      },
+      {
+       "n": 38,
+       "conf": 0.98,
+       "acc": 0.9211
+      },
+      {
+       "n": 37,
+       "conf": 0.9895,
+       "acc": 1
+      },
+      {
+       "n": 38,
+       "conf": 0.99,
+       "acc": 0.8158
+      },
+      {
+       "n": 37,
+       "conf": 0.9986,
+       "acc": 1
+      },
+      {
+       "n": 38,
+       "conf": 1,
+       "acc": 1
+      },
+      {
+       "n": 37,
+       "conf": 1,
+       "acc": 0.8378
+      },
+      {
+       "n": 37,
+       "conf": 1,
+       "acc": 0.9189
+      }
+     ]
+    },
+    "ece10EqualWidth": {
+     "ece": 0.095,
+     "reliability": 0.01,
+     "resolution": 0.0192,
+     "uncertainty": 0.1596,
+     "diagram": [
+      {
+       "n": 2,
+       "conf": 0.355,
+       "acc": 0
+      },
+      {
+       "n": 10,
+       "conf": 0.445,
+       "acc": 0.4
+      },
+      {
+       "n": 32,
+       "conf": 0.5469,
+       "acc": 0.5313
+      },
+      {
+       "n": 27,
+       "conf": 0.6443,
+       "acc": 0.5926
+      },
+      {
+       "n": 38,
+       "conf": 0.7445,
+       "acc": 0.6053
+      },
+      {
+       "n": 62,
+       "conf": 0.848,
+       "acc": 0.7258
+      },
+      {
+       "n": 391,
+       "conf": 0.9781,
+       "acc": 0.8824
+      }
+     ]
+    },
+    "eceGate": "n >= 500: the §6.2 gate would apply on an OOD axis; this is dev, so still diagnostic",
+    "hardOneShare": 0.2562,
+    "hardOneErrors": 9,
+    "coverageAt5InSample": {
+     "coverage": 0,
+     "risk": null,
+     "tau": null,
+     "accepted": 0,
+     "note": "threshold fitted on these same rows: optimistic, not the §6.1 RISK (which needs a calib-OOD threshold)"
+    },
+    "jevConfidenceVsMaxP": {
+     "meanAbsDiff": 0.0688,
+     "pearson": 0.9491
+    },
+    "confusion": {
+     "drifted": {
+      "as_expected": 4,
+      "drifted": 46
+     },
+     "as_expected": {
+      "as_expected": 51,
+      "drifted": 1
+     },
+     "yes": {
+      "no": 12,
+      "yes": 62
+     },
+     "no": {
+      "no": 44,
+      "yes": 14
+     },
+     "wall_clip": {
+      "wall_clip": 10
+     },
+     "enemy_ai": {
+      "enemy_ai": 2,
+      "wall_clip": 3,
+      "render_mismatch": 4
+     },
+     "crash": {
+      "crash": 5
+     },
+     "defect": {
+      "defect": 51
+     },
+     "designed": {
+      "designed": 21,
+      "lead": 29,
+      "defect": 4
+     },
+     "noise": {
+      "noise": 15,
+      "lead": 6
+     },
+     "lead": {
+      "lead": 16,
+      "duplicate": 1
+     },
+     "stale": {
+      "stale": 14,
+      "lead": 3
+     },
+     "instruction": {
+      "instruction": 2
+     },
+     "softlock": {
+      "render_mismatch": 3,
+      "softlock": 1
+     },
+     "integer_overflow": {
+      "shop_rounding": 4,
+      "integer_overflow": 1,
+      "render_mismatch": 2
+     },
+     "cued": {
+      "cued": 61
+     },
+     "plain": {
+      "plain": 30,
+      "cued": 9
+     },
+     "duplicate": {
+      "lead": 13,
+      "duplicate": 1
+     },
+     "shop_rounding": {
+      "shop_rounding": 2
+     },
+     "item_duplication": {
+      "item_duplication": 6
+     },
+     "door_without_key": {
+      "door_without_key": 3
+     },
+     "render_mismatch": {
+      "render_mismatch": 4
+     },
+     "transition_inventory_loss": {
+      "transition_inventory_loss": 2
+     }
+    }
+   },
+   "labelPosition": {
+    "0": {
+     "n": 226,
+     "acc": 0.8274
+    },
+    "1": {
+     "n": 230,
+     "acc": 0.8696
+    },
+    "2": {
+     "n": 26,
+     "acc": 0.4231
+    },
+    "3": {
+     "n": 24,
+     "acc": 0.7083
+    },
+    "4": {
+     "n": 20,
+     "acc": 0.65
+    },
+    "5": {
+     "n": 17,
+     "acc": 0.5882
+    },
+    "6": {
+     "n": 7,
+     "acc": 0.5714
+    },
+    "7": {
+     "n": 5,
+     "acc": 0.8
+    },
+    "8": {
+     "n": 3,
+     "acc": 0.6667
+    },
+    "9": {
+     "n": 4,
+     "acc": 0.5
+    }
+   },
+   "mostConfidentErrors": [
+    {
+     "recId": "kd_2805858ae1847043e18b0e09",
+     "qid": "X6",
+     "portKey": "X6",
+     "label": "designed",
+     "pred": "lead",
+     "maxP": 1,
+     "jevConfidence": 1,
+     "p": {
+      "stale": 0,
+      "duplicate": 0,
+      "designed": 0,
+      "instruction": 0,
+      "noise": 0,
+      "lead": 1
+     }
+    },
+    {
+     "recId": "kd_685f078c24ccd56e7722737b",
+     "qid": "X6",
+     "portKey": "X6",
+     "label": "designed",
+     "pred": "lead",
+     "maxP": 1,
+     "jevConfidence": 1,
+     "p": {
+      "duplicate": 0,
+      "stale": 0,
+      "noise": 0,
+      "instruction": 0,
+      "lead": 1,
+      "designed": 0
+     }
+    },
+    {
+     "recId": "kd_a4d6827da38f9b0e943ad0c2",
+     "qid": "Q2",
+     "portKey": "Q2",
+     "label": "plain",
+     "pred": "cued",
+     "maxP": 1,
+     "jevConfidence": 1,
+     "p": {
+      "cued": 1,
+      "plain": 0
+     }
+    },
+    {
+     "recId": "kd_b48c9eeb219fc5bf54c532a2",
+     "qid": "Q5",
+     "portKey": "Q5",
+     "label": "integer_overflow",
+     "pred": "render_mismatch",
+     "maxP": 1,
+     "jevConfidence": 1,
+     "p": {
+      "wall_clip": 0,
+      "transition_inventory_loss": 0,
+      "item_duplication": 0,
+      "door_without_key": 0,
+      "softlock": 0,
+      "render_mismatch": 1,
+      "integer_overflow": 0,
+      "shop_rounding": 0,
+      "enemy_ai": 0,
+      "crash": 0
+     }
+    },
+    {
+     "recId": "kd_b5ebceb0c3c74fdbd5e4ec71",
+     "qid": "X6",
+     "portKey": "X6",
+     "label": "designed",
+     "pred": "lead",
+     "maxP": 1,
+     "jevConfidence": 1,
+     "p": {
+      "noise": 0,
+      "duplicate": 0,
+      "stale": 0,
+      "instruction": 0,
+      "designed": 0,
+      "lead": 1
+     }
+    },
+    {
+     "recId": "kd_d1ae0b2d9132eb2a31c03f91",
+     "qid": "X6",
+     "portKey": "X6",
+     "label": "designed",
+     "pred": "lead",
+     "maxP": 1,
+     "jevConfidence": 1,
+     "p": {
+      "noise": 0,
+      "stale": 0,
+      "instruction": 0,
+      "designed": 0,
+      "lead": 1,
+      "duplicate": 0
+     }
+    },
+    {
+     "recId": "kd_d1b582eeaf06db433ade87a9",
+     "qid": "X6",
+     "portKey": "X6",
+     "label": "designed",
+     "pred": "lead",
+     "maxP": 1,
+     "jevConfidence": 1,
+     "p": {
+      "stale": 0,
+      "instruction": 0,
+      "lead": 1,
+      "duplicate": 0,
+      "designed": 0,
+      "noise": 0
+     }
+    },
+    {
+     "recId": "kd_f2a9d5cb696a3c716752e01a",
+     "qid": "X6",
+     "portKey": "X6",
+     "label": "designed",
+     "pred": "lead",
+     "maxP": 1,
+     "jevConfidence": 1,
+     "p": {
+      "designed": 0,
+      "noise": 0,
+      "duplicate": 0,
+      "stale": 0,
+      "lead": 1,
+      "instruction": 0
+     }
+    },
+    {
+     "recId": "kd_f2af63a441ec0a11e4adb417",
+     "qid": "X6",
+     "portKey": "X6",
+     "label": "designed",
+     "pred": "lead",
+     "maxP": 1,
+     "jevConfidence": 1,
+     "p": {
+      "designed": 0,
+      "noise": 0,
+      "duplicate": 0,
+      "lead": 1,
+      "instruction": 0,
+      "stale": 0
+     }
+    },
+    {
+     "recId": "kd_0b96314428d0602e470cd806",
+     "qid": "X6",
+     "portKey": "X6",
+     "label": "designed",
+     "pred": "lead",
+     "maxP": 0.99,
+     "jevConfidence": 0.99,
+     "p": {
+      "duplicate": 0.01,
+      "lead": 0.99,
+      "designed": 0,
+      "stale": 0,
+      "instruction": 0,
+      "noise": 0
+     }
+    },
+    {
+     "recId": "kd_0d504270e8950e612d22260c",
+     "qid": "Q2",
+     "portKey": "Q2",
+     "label": "plain",
+     "pred": "cued",
+     "maxP": 0.99,
+     "jevConfidence": 0.98,
+     "p": {
+      "plain": 0.01,
+      "cued": 0.99
+     }
+    },
+    {
+     "recId": "kd_31c38e6da6b580ce2a8558c4",
+     "qid": "X6",
+     "portKey": "X6",
+     "label": "designed",
+     "pred": "lead",
+     "maxP": 0.99,
+     "jevConfidence": 0.99,
+     "p": {
+      "instruction": 0,
+      "duplicate": 0,
+      "noise": 0,
+      "lead": 0.99,
+      "stale": 0.01,
+      "designed": 0
+     }
+    },
+    {
+     "recId": "kd_3950ebaee995176e55532807",
+     "qid": "X6",
+     "portKey": "X6",
+     "label": "designed",
+     "pred": "lead",
+     "maxP": 0.99,
+     "jevConfidence": 0.99,
+     "p": {
+      "noise": 0,
+      "duplicate": 0,
+      "instruction": 0,
+      "lead": 0.99,
+      "designed": 0,
+      "stale": 0.01
+     }
+    },
+    {
+     "recId": "kd_4a7884e5c84fb6022cd715c3",
+     "qid": "X6",
+     "portKey": "X6",
+     "label": "designed",
+     "pred": "lead",
+     "maxP": 0.99,
+     "jevConfidence": 0.99,
+     "p": {
+      "designed": 0,
+      "lead": 0.99,
+      "duplicate": 0,
+      "stale": 0.01,
+      "instruction": 0,
+      "noise": 0
+     }
+    },
+    {
+     "recId": "kd_9e0d00c9dca4474a61e13d3d",
+     "qid": "Q2",
+     "portKey": "Q2",
+     "label": "plain",
+     "pred": "cued",
+     "maxP": 0.99,
+     "jevConfidence": 0.98,
+     "p": {
+      "plain": 0.01,
+      "cued": 0.99
+     }
+    },
+    {
+     "recId": "kd_ca0a588819964889c34fc441",
+     "qid": "X6",
+     "portKey": "X6",
+     "label": "designed",
+     "pred": "lead",
+     "maxP": 0.99,
+     "jevConfidence": 0.99,
+     "p": {
+      "noise": 0,
+      "lead": 0.99,
+      "duplicate": 0,
+      "designed": 0,
+      "stale": 0.01,
+      "instruction": 0
+     }
+    },
+    {
+     "recId": "kd_0b39cbd5cfbb33086597507f",
+     "qid": "X6",
+     "portKey": "X6",
+     "label": "designed",
+     "pred": "lead",
+     "maxP": 0.98,
+     "jevConfidence": 0.98,
+     "p": {
+      "stale": 0.02,
+      "lead": 0.98,
+      "noise": 0,
+      "instruction": 0,
+      "duplicate": 0,
+      "designed": 0
+     }
+    },
+    {
+     "recId": "kd_3eb511bffed4714668e8f10c",
+     "qid": "Q5",
+     "portKey": "Q5",
+     "label": "integer_overflow",
+     "pred": "shop_rounding",
+     "maxP": 0.98,
+     "jevConfidence": 0.98,
+     "p": {
+      "crash": 0,
+      "softlock": 0,
+      "wall_clip": 0,
+      "render_mismatch": 0,
+      "transition_inventory_loss": 0.01,
+      "item_duplication": 0,
+      "shop_rounding": 0.98,
+      "door_without_key": 0,
+      "integer_overflow": 0.01,
+      "enemy_ai": 0
+     }
+    },
+    {
+     "recId": "kd_f5f67a9a2d1725ab18b2fae3",
+     "qid": "X6",
+     "portKey": "X6",
+     "label": "designed",
+     "pred": "lead",
+     "maxP": 0.98,
+     "jevConfidence": 0.98,
+     "p": {
+      "stale": 0,
+      "duplicate": 0.02,
+      "instruction": 0,
+      "noise": 0,
+      "designed": 0,
+      "lead": 0.98
+     }
+    },
+    {
+     "recId": "kd_f789be25dfb6b327cd54115a",
+     "qid": "X6",
+     "portKey": "X6",
+     "label": "duplicate",
+     "pred": "lead",
+     "maxP": 0.98,
+     "jevConfidence": 0.98,
+     "p": {
+      "lead": 0.98,
+      "noise": 0,
+      "stale": 0.01,
+      "duplicate": 0.01,
+      "designed": 0,
+      "instruction": 0
+     }
+    }
+   ],
+   "summary": {
+    "macroBacc": 0.8145,
+    "pooledAcc": 0.8007,
+    "macroChanceBacc": 0.4267,
+    "macroDevMajorityAccLEAKY": 0.5236
+   }
+  },
+  "kinetics": {
+   "devSha256": "d1d34f6fa6adc40a0a621b00185b697f361600cf42ad339e2a3a7b98c67c40a6",
+   "verified": true,
+   "clusters": "form x world (rebuilt sidecar, verified)",
+   "n": 461,
+   "records": 461,
+   "versions": {
+    "jev-1.13.0": 461
+   },
+   "rawSumOff": [
+    0.99,
+    0.99,
+    0.99,
+    0.99
+   ],
+   "ties": 0,
+   "choiceNotArgmax": 0,
+   "report": {
+    "valid": false,
+    "coverage": {
+     "requested_records": 461,
+     "requested_questions": 461,
+     "evaluated_records": 461,
+     "evaluated_questions": 461,
+     "rejected_records": 0,
+     "failed_records": 0,
+     "truncated_records": 0
+    },
+    "faults": 0,
+    "usage": {
+     "requests": 461,
+     "input_tokens": 222079,
+     "output_tokens": 24819,
+     "missing_usage": 0,
+     "scope": "every scored record in the rows file, one request each; not the re-read or retried attempts (see requests and faults)"
+    }
+   },
+   "ports": {
+    "K1:kinetics": {
+     "n": 97,
+     "labels": {
+      "bubble": 0.2268041237113402,
+      "none": 0.5773195876288659,
+      "reader_saturation": 0.07216494845360824,
+      "pipetting_error": 0.07216494845360824,
+      "temperature_deviation": 0.05154639175257732
+     },
+     "jev": {
+      "n": 97,
+      "clusters": "form x world",
+      "forms": 73,
+      "worlds": 53,
+      "acc": {
+       "est": 0.8557,
+       "lo": 0.7075,
+       "hi": 0.9583
+      },
+      "bacc": {
+       "est": 0.9136,
+       "lo": 0.7438,
+       "hi": 0.9828
+      },
+      "macroF1": {
+       "est": 0.8517,
+       "lo": 0.6307,
+       "hi": 0.9621
+      },
+      "brier": {
+       "est": 0.236,
+       "lo": 0.0963,
+       "hi": 0.4439
+      },
+      "bssUniform": {
+       "est": 0.705,
+       "lo": 0.4435,
+       "hi": 0.8795
+      }
+     },
+     "bssReferences": {
+      "uniform": 0.705,
+      "calibInPrior": null,
+      "devPriorLEAKY": 0.6081,
+      "calibOodPrior": "unavailable (calib-ood lost with the held-out material)"
+     },
+     "diagnostics": {
+      "meanMaxP": 0.8861,
+      "overconfidence": 0.0304,
+      "ece15EqualMass": {
+       "ece": 0.0799,
+       "reliability": 0.012,
+       "resolution": 0.0194,
+       "uncertainty": 0.1235,
+       "diagram": [
+        {
+         "n": 7,
+         "conf": 0.5486,
+         "acc": 0.7143
+        },
+        {
+         "n": 6,
+         "conf": 0.6667,
+         "acc": 0.6667
+        },
+        {
+         "n": 7,
+         "conf": 0.7229,
+         "acc": 0.5714
+        },
+        {
+         "n": 6,
+         "conf": 0.7917,
+         "acc": 0.8333
+        },
+        {
+         "n": 7,
+         "conf": 0.8614,
+         "acc": 1
+        },
+        {
+         "n": 6,
+         "conf": 0.8867,
+         "acc": 0.8333
+        },
+        {
+         "n": 7,
+         "conf": 0.9314,
+         "acc": 0.7143
+        },
+        {
+         "n": 6,
+         "conf": 0.9517,
+         "acc": 0.8333
+        },
+        {
+         "n": 7,
+         "conf": 0.9729,
+         "acc": 0.8571
+        },
+        {
+         "n": 6,
+         "conf": 0.9883,
+         "acc": 0.8333
+        },
+        {
+         "n": 7,
+         "conf": 0.9971,
+         "acc": 1
+        },
+        {
+         "n": 6,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 7,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 6,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 6,
+         "conf": 1,
+         "acc": 1
+        }
+       ]
+      },
+      "ece10EqualWidth": {
+       "ece": 0.0844,
+       "reliability": 0.0116,
+       "resolution": 0.0175,
+       "uncertainty": 0.1235,
+       "diagram": [
+        {
+         "n": 2,
+         "conf": 0.475,
+         "acc": 0.5
+        },
+        {
+         "n": 3,
+         "conf": 0.5533,
+         "acc": 1
+        },
+        {
+         "n": 10,
+         "conf": 0.661,
+         "acc": 0.6
+        },
+        {
+         "n": 8,
+         "conf": 0.7513,
+         "acc": 0.625
+        },
+        {
+         "n": 16,
+         "conf": 0.8606,
+         "acc": 0.9375
+        },
+        {
+         "n": 58,
+         "conf": 0.9819,
+         "acc": 0.9138
+        }
+       ]
+      },
+      "eceGate": "diagnostic only: n = 97 < 500",
+      "hardOneShare": 0.3093,
+      "hardOneErrors": 0,
+      "coverageAt5InSample": {
+       "coverage": 0.4845,
+       "risk": 0.0426,
+       "tau": 0.96,
+       "accepted": 47,
+       "note": "threshold fitted on these same rows: optimistic, not the §6.1 RISK (which needs a calib-OOD threshold)"
+      },
+      "jevConfidenceVsMaxP": {
+       "meanAbsDiff": 0.0291,
+       "pearson": 0.9999
+      },
+      "confusion": {
+       "bubble": {
+        "bubble": 22
+       },
+       "none": {
+        "none": 43,
+        "bubble": 7,
+        "pipetting_error": 3,
+        "reader_saturation": 3
+       },
+       "reader_saturation": {
+        "reader_saturation": 7
+       },
+       "pipetting_error": {
+        "pipetting_error": 7
+       },
+       "temperature_deviation": {
+        "temperature_deviation": 4,
+        "none": 1
+       }
+      }
+     },
+     "compare": {
+      "trainMajority": {
+       "leaky": false,
+       "n": 97,
+       "clusters": "form x world",
+       "acc": {
+        "est": 0.2784,
+        "lo": 0.0326,
+        "hi": 0.5333,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.7136,
+        "lo": 0.5395,
+        "hi": 0.7829,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.7053,
+        "lo": 0.4716,
+        "hi": 0.8276,
+        "noise": false
+       }
+      },
+      "trainPrior": {
+       "leaky": false,
+       "n": 97,
+       "clusters": "form x world",
+       "acc": {
+        "est": 0.2784,
+        "lo": 0.0326,
+        "hi": 0.5333,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.7136,
+        "lo": 0.5395,
+        "hi": 0.7829,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.7053,
+        "lo": 0.4716,
+        "hi": 0.8276,
+        "noise": false
+       },
+       "brier": {
+        "est": -0.3692,
+        "lo": -0.6009,
+        "hi": -0.1018
+       },
+       "bssUniform": {
+        "est": 0.4614,
+        "lo": 0.1266,
+        "hi": 0.7509
+       }
+      },
+      "probe": {
+       "leaky": false,
+       "n": 97,
+       "clusters": "form x world",
+       "acc": {
+        "est": -0.0103,
+        "lo": -0.1786,
+        "hi": 0.1538,
+        "noise": true
+       },
+       "bacc": {
+        "est": 0.1405,
+        "lo": -0.1025,
+        "hi": 0.3208,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.0647,
+        "lo": -0.2076,
+        "hi": 0.2634,
+        "noise": false
+       },
+       "brier": {
+        "est": 0.0377,
+        "lo": -0.1956,
+        "hi": 0.2685
+       },
+       "bssUniform": {
+        "est": -0.0471,
+        "lo": -0.3358,
+        "hi": 0.2443
+       }
+      },
+      "devMajority": {
+       "leaky": true,
+       "n": 97,
+       "clusters": "form x world",
+       "acc": {
+        "est": 0.2784,
+        "lo": 0.0326,
+        "hi": 0.5333,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.7136,
+        "lo": 0.5395,
+        "hi": 0.7829,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.7053,
+        "lo": 0.4716,
+        "hi": 0.8276,
+        "noise": false
+       }
+      },
+      "devPrior": {
+       "leaky": true,
+       "n": 97,
+       "clusters": "form x world",
+       "acc": {
+        "est": 0.2784,
+        "lo": 0.0326,
+        "hi": 0.5333,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.7136,
+        "lo": 0.5395,
+        "hi": 0.7829,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.7053,
+        "lo": 0.4716,
+        "hi": 0.8276,
+        "noise": false
+       },
+       "brier": {
+        "est": -0.3662,
+        "lo": -0.6151,
+        "hi": -0.0903
+       },
+       "bssUniform": {
+        "est": 0.4577,
+        "lo": 0.1129,
+        "hi": 0.7686
+       }
+      }
+     },
+     "haiku": {
+      "n": 2,
+      "faults": 0,
+      "items": [
+       {
+        "recId": "kd_13ff97e1c0b8671f1cc62ece",
+        "qid": "K1",
+        "label": "bubble",
+        "haiku": "bubble",
+        "haikuConfidence": 0.97,
+        "jev": "bubble",
+        "jevMaxP": 1
+       },
+       {
+        "recId": "kd_05e926f1e48f41c64b4702e1",
+        "qid": "K1",
+        "label": "reader_saturation",
+        "haiku": "reader_saturation",
+        "haikuConfidence": 0.9,
+        "jev": "reader_saturation",
+        "jevMaxP": 0.96
+       }
+      ],
+      "note": "two items per port by design: anecdote, no per-port metric"
+     }
+    },
+    "K2:kinetics": {
+     "n": 10,
+     "labels": {
+      "C3": 0.2,
+      "C4": 0.4,
+      "C2": 0.1,
+      "C6": 0.1,
+      "C7": 0.1,
+      "C8": 0.1
+     },
+     "jev": {
+      "n": 10,
+      "clusters": "form x world",
+      "forms": 6,
+      "worlds": 10,
+      "acc": {
+       "est": 1,
+       "lo": 1,
+       "hi": 1
+      },
+      "bacc": {
+       "est": 1,
+       "lo": 1,
+       "hi": 1
+      },
+      "macroF1": {
+       "est": 1,
+       "lo": 1,
+       "hi": 1
+      },
+      "brier": {
+       "est": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "bssUniform": {
+       "est": 1,
+       "lo": 1,
+       "hi": 1
+      }
+     },
+     "bssReferences": {
+      "uniform": 1,
+      "calibInPrior": null,
+      "devPriorLEAKY": 1,
+      "calibOodPrior": "unavailable (calib-ood lost with the held-out material)"
+     },
+     "diagnostics": {
+      "meanMaxP": 1,
+      "overconfidence": 0,
+      "ece15EqualMass": {
+       "ece": 0,
+       "reliability": 0,
+       "resolution": 0,
+       "uncertainty": 0,
+       "diagram": [
+        {
+         "n": 1,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 1,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 1,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 1,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 1,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 1,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 1,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 1,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 1,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 1,
+         "conf": 1,
+         "acc": 1
+        }
+       ]
+      },
+      "ece10EqualWidth": {
+       "ece": 0,
+       "reliability": 0,
+       "resolution": 0,
+       "uncertainty": 0,
+       "diagram": [
+        {
+         "n": 10,
+         "conf": 1,
+         "acc": 1
+        }
+       ]
+      },
+      "eceGate": "diagnostic only: n = 10 < 500",
+      "hardOneShare": 1,
+      "hardOneErrors": 0,
+      "coverageAt5InSample": {
+       "coverage": 1,
+       "risk": 0,
+       "tau": 1,
+       "accepted": 10,
+       "note": "threshold fitted on these same rows: optimistic, not the §6.1 RISK (which needs a calib-OOD threshold)"
+      },
+      "jevConfidenceVsMaxP": {
+       "meanAbsDiff": 0,
+       "pearson": null
+      },
+      "confusion": {
+       "C3": {
+        "C3": 2
+       },
+       "C4": {
+        "C4": 4
+       },
+       "C2": {
+        "C2": 1
+       },
+       "C6": {
+        "C6": 1
+       },
+       "C7": {
+        "C7": 1
+       },
+       "C8": {
+        "C8": 1
+       }
+      }
+     },
+     "compare": {
+      "trainMajority": {
+       "leaky": false,
+       "n": 10,
+       "clusters": "form x world",
+       "acc": {
+        "est": 1,
+        "lo": 1,
+        "hi": 1,
+        "noise": false
+       },
+       "bacc": {
+        "est": 1,
+        "lo": 1,
+        "hi": 1,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 1,
+        "lo": 1,
+        "hi": 1,
+        "noise": false
+       }
+      },
+      "trainPrior": {
+       "leaky": false,
+       "n": 10,
+       "clusters": "form x world",
+       "acc": {
+        "est": 1,
+        "lo": 1,
+        "hi": 1,
+        "noise": false
+       },
+       "bacc": {
+        "est": 1,
+        "lo": 1,
+        "hi": 1,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 1,
+        "lo": 1,
+        "hi": 1,
+        "noise": false
+       },
+       "brier": {
+        "est": -0.9065,
+        "lo": -1.0299,
+        "hi": -0.8011
+       },
+       "bssUniform": {
+        "est": 1.0584,
+        "lo": 0.9458,
+        "hi": 1.1854
+       }
+      },
+      "probe": {
+       "leaky": false,
+       "n": 10,
+       "clusters": "form x world",
+       "acc": {
+        "est": 0.9,
+        "lo": 0.6,
+        "hi": 1,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.9583,
+        "lo": 0.7,
+        "hi": 1,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.9333,
+        "lo": 0.6667,
+        "hi": 1,
+        "noise": false
+       },
+       "brier": {
+        "est": -1.0318,
+        "lo": -1.1926,
+        "hi": -0.8465
+       },
+       "bssUniform": {
+        "est": 1.2048,
+        "lo": 0.9828,
+        "hi": 1.389
+       }
+      },
+      "devMajority": {
+       "leaky": true,
+       "n": 10,
+       "clusters": "form x world",
+       "acc": {
+        "est": 0.6,
+        "lo": 0,
+        "hi": 1,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.8333,
+        "lo": 0,
+        "hi": 1,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.9048,
+        "lo": 0,
+        "hi": 1,
+        "noise": false
+       }
+      },
+      "devPrior": {
+       "leaky": true,
+       "n": 10,
+       "clusters": "form x world",
+       "acc": {
+        "est": 0.6,
+        "lo": 0,
+        "hi": 1,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.8333,
+        "lo": 0,
+        "hi": 1,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.9048,
+        "lo": 0,
+        "hi": 1,
+        "noise": false
+       },
+       "brier": {
+        "est": -0.7697,
+        "lo": -1.0644,
+        "hi": -0.44
+       },
+       "bssUniform": {
+        "est": 0.8987,
+        "lo": 0.5029,
+        "hi": 1.2593
+       }
+      }
+     },
+     "haiku": {
+      "n": 2,
+      "faults": 0,
+      "items": [
+       {
+        "recId": "kd_530219d7c7111996246dd884",
+        "qid": "K2",
+        "label": "C4",
+        "haiku": "C4",
+        "haikuConfidence": 0.97,
+        "jev": "C4",
+        "jevMaxP": 1
+       },
+       {
+        "recId": "kd_87084e04f515e5fada016ea3",
+        "qid": "K2",
+        "label": "C6",
+        "haiku": "C6",
+        "haikuConfidence": 0.97,
+        "jev": "C6",
+        "jevMaxP": 1
+       }
+      ],
+      "note": "two items per port by design: anecdote, no per-port metric"
+     }
+    },
+    "K3:kinetics": {
+     "n": 12,
+     "labels": {
+      "uM/min": 0.16666666666666666,
+      "nM/min": 0.4166666666666667,
+      "nM/s": 0.25,
+      "mM/min": 0.08333333333333333,
+      "uM/s": 0.08333333333333333
+     },
+     "jev": {
+      "n": 12,
+      "clusters": "form x world",
+      "forms": 12,
+      "worlds": 12,
+      "acc": {
+       "est": 1,
+       "lo": 1,
+       "hi": 1
+      },
+      "bacc": {
+       "est": 1,
+       "lo": 1,
+       "hi": 1
+      },
+      "macroF1": {
+       "est": 1,
+       "lo": 1,
+       "hi": 1
+      },
+      "brier": {
+       "est": 0.0025,
+       "lo": 0,
+       "hi": 0.0115
+      },
+      "bssUniform": {
+       "est": 0.9971,
+       "lo": 0.9865,
+       "hi": 1
+      }
+     },
+     "bssReferences": {
+      "uniform": 0.9971,
+      "calibInPrior": null,
+      "devPriorLEAKY": 0.9965,
+      "calibOodPrior": "unavailable (calib-ood lost with the held-out material)"
+     },
+     "diagnostics": {
+      "meanMaxP": 0.985,
+      "overconfidence": -0.015,
+      "ece15EqualMass": {
+       "ece": 0.015,
+       "reliability": 0.0014,
+       "resolution": 0,
+       "uncertainty": 0,
+       "diagram": [
+        {
+         "n": 1,
+         "conf": 0.88,
+         "acc": 1
+        },
+        {
+         "n": 1,
+         "conf": 0.95,
+         "acc": 1
+        },
+        {
+         "n": 1,
+         "conf": 0.99,
+         "acc": 1
+        },
+        {
+         "n": 1,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 1,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 1,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 1,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 1,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 1,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 1,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 1,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 1,
+         "conf": 1,
+         "acc": 1
+        }
+       ]
+      },
+      "ece10EqualWidth": {
+       "ece": 0.015,
+       "reliability": 0.0012,
+       "resolution": 0,
+       "uncertainty": 0,
+       "diagram": [
+        {
+         "n": 1,
+         "conf": 0.88,
+         "acc": 1
+        },
+        {
+         "n": 11,
+         "conf": 0.9945,
+         "acc": 1
+        }
+       ]
+      },
+      "eceGate": "diagnostic only: n = 12 < 500",
+      "hardOneShare": 0.75,
+      "hardOneErrors": 0,
+      "coverageAt5InSample": {
+       "coverage": 1,
+       "risk": 0,
+       "tau": 0.88,
+       "accepted": 12,
+       "note": "threshold fitted on these same rows: optimistic, not the §6.1 RISK (which needs a calib-OOD threshold)"
+      },
+      "jevConfidenceVsMaxP": {
+       "meanAbsDiff": 0.0025,
+       "pearson": 0.9999
+      },
+      "confusion": {
+       "uM/min": {
+        "uM/min": 2
+       },
+       "nM/min": {
+        "nM/min": 5
+       },
+       "nM/s": {
+        "nM/s": 3
+       },
+       "mM/min": {
+        "mM/min": 1
+       },
+       "uM/s": {
+        "uM/s": 1
+       }
+      }
+     },
+     "compare": {
+      "trainMajority": {
+       "leaky": false,
+       "n": 12,
+       "clusters": "form x world",
+       "acc": {
+        "est": 0.8333,
+        "lo": 0.4,
+        "hi": 1,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.8,
+        "lo": 0.5,
+        "hi": 1,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.9429,
+        "lo": 0.7143,
+        "hi": 1,
+        "noise": false
+       }
+      },
+      "trainPrior": {
+       "leaky": false,
+       "n": 12,
+       "clusters": "form x world",
+       "acc": {
+        "est": 0.8333,
+        "lo": 0.4,
+        "hi": 1,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.8,
+        "lo": 0.5,
+        "hi": 1,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.9429,
+        "lo": 0.7143,
+        "hi": 1,
+        "noise": false
+       },
+       "brier": {
+        "est": -0.8441,
+        "lo": -0.9748,
+        "hi": -0.6505
+       },
+       "bssUniform": {
+        "est": 0.9847,
+        "lo": 0.7582,
+        "hi": 1.1373
+       }
+      },
+      "probe": {
+       "leaky": false,
+       "n": 12,
+       "clusters": "form x world",
+       "acc": {
+        "est": 0.6667,
+        "lo": 0.2,
+        "hi": 1,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.7533,
+        "lo": 0.2286,
+        "hi": 1,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.7644,
+        "lo": 0.2143,
+        "hi": 1,
+        "noise": false
+       },
+       "brier": {
+        "est": -0.6657,
+        "lo": -0.9961,
+        "hi": -0.3212
+       },
+       "bssUniform": {
+        "est": 0.7767,
+        "lo": 0.3727,
+        "hi": 1.1616
+       }
+      },
+      "devMajority": {
+       "leaky": true,
+       "n": 12,
+       "clusters": "form x world",
+       "acc": {
+        "est": 0.5833,
+        "lo": 0.1111,
+        "hi": 1,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.8,
+        "lo": 0.5,
+        "hi": 1,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.8824,
+        "lo": 0.5313,
+        "hi": 1,
+        "noise": false
+       }
+      },
+      "devPrior": {
+       "leaky": true,
+       "n": 12,
+       "clusters": "form x world",
+       "acc": {
+        "est": 0.5833,
+        "lo": 0.1111,
+        "hi": 1,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.8,
+        "lo": 0.5,
+        "hi": 1,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.8824,
+        "lo": 0.5313,
+        "hi": 1,
+        "noise": false
+       },
+       "brier": {
+        "est": -0.7197,
+        "lo": -0.9721,
+        "hi": -0.4889
+       },
+       "bssUniform": {
+        "est": 0.8397,
+        "lo": 0.57,
+        "hi": 1.1333
+       }
+      }
+     },
+     "haiku": {
+      "n": 2,
+      "faults": 0,
+      "items": [
+       {
+        "recId": "kd_dde9e83125501bd8a667c2a0",
+        "qid": "K3",
+        "label": "uM/min",
+        "haiku": "uM/min",
+        "haikuConfidence": 0.72,
+        "jev": "uM/min",
+        "jevMaxP": 0.95
+       },
+       {
+        "recId": "kd_601441cfb04ce85c830309fc",
+        "qid": "K3",
+        "label": "nM/s",
+        "haiku": "nM/s",
+        "haikuConfidence": 0.85,
+        "jev": "nM/s",
+        "jevMaxP": 1
+       }
+      ],
+      "note": "two items per port by design: anecdote, no per-port metric"
+     }
+    },
+    "X3:kinetics": {
+     "n": 200,
+     "labels": {
+      "retracts": 0.095,
+      "proposes": 0.285,
+      "mentions": 0.24,
+      "confirms": 0.15,
+      "changes": 0.23
+     },
+     "jev": {
+      "n": 200,
+      "clusters": "form x world",
+      "forms": 140,
+      "worlds": 90,
+      "acc": {
+       "est": 0.57,
+       "lo": 0.4319,
+       "hi": 0.7031
+      },
+      "bacc": {
+       "est": 0.6085,
+       "lo": 0.4748,
+       "hi": 0.7368
+      },
+      "macroF1": {
+       "est": 0.6336,
+       "lo": 0.5003,
+       "hi": 0.7421
+      },
+      "brier": {
+       "est": 0.5595,
+       "lo": 0.3992,
+       "hi": 0.7321
+      },
+      "bssUniform": {
+       "est": 0.3006,
+       "lo": 0.0847,
+       "hi": 0.5004
+      }
+     },
+     "bssReferences": {
+      "uniform": 0.3006,
+      "calibInPrior": 0.2881,
+      "devPriorLEAKY": 0.2797,
+      "calibOodPrior": "unavailable (calib-ood lost with the held-out material)"
+     },
+     "diagnostics": {
+      "meanMaxP": 0.7738,
+      "overconfidence": 0.2038,
+      "ece15EqualMass": {
+       "ece": 0.2066,
+       "reliability": 0.0683,
+       "resolution": 0.0617,
+       "uncertainty": 0.2451,
+       "diagram": [
+        {
+         "n": 14,
+         "conf": 0.4457,
+         "acc": 0.3571
+        },
+        {
+         "n": 13,
+         "conf": 0.5146,
+         "acc": 0.3077
+        },
+        {
+         "n": 13,
+         "conf": 0.5477,
+         "acc": 0.3846
+        },
+        {
+         "n": 14,
+         "conf": 0.6043,
+         "acc": 0.5714
+        },
+        {
+         "n": 13,
+         "conf": 0.6577,
+         "acc": 0.3846
+        },
+        {
+         "n": 13,
+         "conf": 0.7,
+         "acc": 0.5385
+        },
+        {
+         "n": 14,
+         "conf": 0.7421,
+         "acc": 0.2143
+        },
+        {
+         "n": 13,
+         "conf": 0.7999,
+         "acc": 0.5385
+        },
+        {
+         "n": 13,
+         "conf": 0.8454,
+         "acc": 0.3077
+        },
+        {
+         "n": 14,
+         "conf": 0.8979,
+         "acc": 0.6429
+        },
+        {
+         "n": 13,
+         "conf": 0.9345,
+         "acc": 0.6154
+        },
+        {
+         "n": 13,
+         "conf": 0.9623,
+         "acc": 0.7692
+        },
+        {
+         "n": 14,
+         "conf": 0.98,
+         "acc": 1
+        },
+        {
+         "n": 13,
+         "conf": 0.9908,
+         "acc": 0.9231
+        },
+        {
+         "n": 13,
+         "conf": 1,
+         "acc": 1
+        }
+       ]
+      },
+      "ece10EqualWidth": {
+       "ece": 0.2038,
+       "reliability": 0.0542,
+       "resolution": 0.0426,
+       "uncertainty": 0.2451,
+       "diagram": [
+        {
+         "n": 2,
+         "conf": 0.355,
+         "acc": 0
+        },
+        {
+         "n": 13,
+         "conf": 0.4623,
+         "acc": 0.3846
+        },
+        {
+         "n": 31,
+         "conf": 0.5432,
+         "acc": 0.4194
+        },
+        {
+         "n": 24,
+         "conf": 0.6475,
+         "acc": 0.4583
+        },
+        {
+         "n": 29,
+         "conf": 0.7355,
+         "acc": 0.4138
+        },
+        {
+         "n": 28,
+         "conf": 0.8467,
+         "acc": 0.4286
+        },
+        {
+         "n": 73,
+         "conf": 0.9675,
+         "acc": 0.8356
+        }
+       ]
+      },
+      "eceGate": "diagnostic only: n = 200 < 500",
+      "hardOneShare": 0.07,
+      "hardOneErrors": 0,
+      "coverageAt5InSample": {
+       "coverage": 0.22,
+       "risk": 0.0227,
+       "tau": 0.97,
+       "accepted": 44,
+       "note": "threshold fitted on these same rows: optimistic, not the §6.1 RISK (which needs a calib-OOD threshold)"
+      },
+      "jevConfidenceVsMaxP": {
+       "meanAbsDiff": 0.0573,
+       "pearson": 0.9999
+      },
+      "confusion": {
+       "retracts": {
+        "retracts": 16,
+        "changes": 3
+       },
+       "proposes": {
+        "proposes": 29,
+        "mentions": 28
+       },
+       "mentions": {
+        "changes": 26,
+        "mentions": 19,
+        "confirms": 3
+       },
+       "confirms": {
+        "confirms": 18,
+        "changes": 12
+       },
+       "changes": {
+        "changes": 32,
+        "proposes": 3,
+        "mentions": 11
+       }
+      }
+     },
+     "compare": {
+      "trainMajority": {
+       "leaky": false,
+       "n": 200,
+       "clusters": "form x world",
+       "acc": {
+        "est": 0.285,
+        "lo": 0.0619,
+        "hi": 0.4789,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.4085,
+        "lo": 0.2738,
+        "hi": 0.5404,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.5449,
+        "lo": 0.4057,
+        "hi": 0.6641,
+        "noise": false
+       }
+      },
+      "trainPrior": {
+       "leaky": false,
+       "n": 200,
+       "clusters": "form x world",
+       "acc": {
+        "est": 0.285,
+        "lo": 0.0619,
+        "hi": 0.4789,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.4085,
+        "lo": 0.2738,
+        "hi": 0.5404,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.5449,
+        "lo": 0.4057,
+        "hi": 0.6641,
+        "noise": false
+       },
+       "brier": {
+        "est": -0.2301,
+        "lo": -0.4071,
+        "hi": -0.0385
+       },
+       "bssUniform": {
+        "est": 0.2876,
+        "lo": 0.047,
+        "hi": 0.5085
+       }
+      },
+      "calibInPrior": {
+       "leaky": false,
+       "n": 200,
+       "clusters": "form x world",
+       "acc": {
+        "est": 0.285,
+        "lo": 0.0619,
+        "hi": 0.4789,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.4085,
+        "lo": 0.2738,
+        "hi": 0.5404,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.5449,
+        "lo": 0.4057,
+        "hi": 0.6641,
+        "noise": false
+       },
+       "brier": {
+        "est": -0.2263,
+        "lo": -0.3964,
+        "hi": -0.0376
+       },
+       "bssUniform": {
+        "est": 0.2829,
+        "lo": 0.0467,
+        "hi": 0.4955
+       }
+      },
+      "probe": {
+       "leaky": false,
+       "n": 200,
+       "clusters": "form x world",
+       "acc": {
+        "est": -0.365,
+        "lo": -0.51,
+        "hi": -0.2234,
+        "noise": false
+       },
+       "bacc": {
+        "est": -0.3216,
+        "lo": -0.4635,
+        "hi": -0.1657,
+        "noise": false
+       },
+       "macroF1": {
+        "est": -0.3029,
+        "lo": -0.4438,
+        "hi": -0.167,
+        "noise": false
+       },
+       "brier": {
+        "est": 0.4538,
+        "lo": 0.2818,
+        "hi": 0.6292
+       },
+       "bssUniform": {
+        "est": -0.5672,
+        "lo": -0.7866,
+        "hi": -0.3537
+       }
+      },
+      "devMajority": {
+       "leaky": true,
+       "n": 200,
+       "clusters": "form x world",
+       "acc": {
+        "est": 0.285,
+        "lo": 0.0619,
+        "hi": 0.4789,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.4085,
+        "lo": 0.2738,
+        "hi": 0.5404,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.5449,
+        "lo": 0.4057,
+        "hi": 0.6641,
+        "noise": false
+       }
+      },
+      "devPrior": {
+       "leaky": true,
+       "n": 200,
+       "clusters": "form x world",
+       "acc": {
+        "est": 0.285,
+        "lo": 0.0619,
+        "hi": 0.4789,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.4085,
+        "lo": 0.2738,
+        "hi": 0.5404,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.5449,
+        "lo": 0.4057,
+        "hi": 0.6641,
+        "noise": false
+       },
+       "brier": {
+        "est": -0.2172,
+        "lo": -0.3936,
+        "hi": -0.02
+       },
+       "bssUniform": {
+        "est": 0.2715,
+        "lo": 0.0248,
+        "hi": 0.4909
+       }
+      }
+     },
+     "haiku": {
+      "n": 2,
+      "faults": 0,
+      "items": [
+       {
+        "recId": "kd_d44b6d67a2d2365349089b17",
+        "qid": "X3",
+        "label": "changes",
+        "haiku": "mentions",
+        "haikuConfidence": 0.55,
+        "jev": "proposes",
+        "jevMaxP": 0.38
+       },
+       {
+        "recId": "kd_c32322c3984dfeee9a104ec1",
+        "qid": "X3",
+        "label": "changes",
+        "haiku": "changes",
+        "haikuConfidence": 0.55,
+        "jev": "changes",
+        "jevMaxP": 0.84
+       }
+      ],
+      "note": "two items per port by design: anecdote, no per-port metric"
+     }
+    },
+    "X4:kinetics": {
+     "n": 42,
+     "labels": {
+      "superseded": 0.2857142857142857,
+      "informal": 0.16666666666666666,
+      "out_of_scope": 0.2619047619047619,
+      "binding": 0.2857142857142857
+     },
+     "jev": {
+      "n": 42,
+      "clusters": "form x world",
+      "forms": 32,
+      "worlds": 21,
+      "acc": {
+       "est": 0.7143,
+       "lo": 0.4375,
+       "hi": 0.92
+      },
+      "bacc": {
+       "est": 0.7424,
+       "lo": 0.55,
+       "hi": 0.9075
+      },
+      "macroF1": {
+       "est": 0.7361,
+       "lo": 0.4554,
+       "hi": 0.9081
+      },
+      "brier": {
+       "est": 0.4031,
+       "lo": 0.1734,
+       "hi": 0.6991
+      },
+      "bssUniform": {
+       "est": 0.4626,
+       "lo": 0.0676,
+       "hi": 0.7685
+      }
+     },
+     "bssReferences": {
+      "uniform": 0.4626,
+      "calibInPrior": null,
+      "devPriorLEAKY": 0.4556,
+      "calibOodPrior": "unavailable (calib-ood lost with the held-out material)"
+     },
+     "diagnostics": {
+      "meanMaxP": 0.7616,
+      "overconfidence": 0.0473,
+      "ece15EqualMass": {
+       "ece": 0.1746,
+       "reliability": 0.0695,
+       "resolution": 0.0969,
+       "uncertainty": 0.2041,
+       "diagram": [
+        {
+         "n": 3,
+         "conf": 0.44,
+         "acc": 0.6667
+        },
+        {
+         "n": 3,
+         "conf": 0.5067,
+         "acc": 0.3333
+        },
+        {
+         "n": 3,
+         "conf": 0.5652,
+         "acc": 0.6667
+        },
+        {
+         "n": 3,
+         "conf": 0.6433,
+         "acc": 0.6667
+        },
+        {
+         "n": 2,
+         "conf": 0.665,
+         "acc": 1
+        },
+        {
+         "n": 3,
+         "conf": 0.69,
+         "acc": 0.6667
+        },
+        {
+         "n": 3,
+         "conf": 0.7133,
+         "acc": 0
+        },
+        {
+         "n": 3,
+         "conf": 0.7367,
+         "acc": 0.3333
+        },
+        {
+         "n": 3,
+         "conf": 0.7933,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 0.86,
+         "acc": 0.5
+        },
+        {
+         "n": 3,
+         "conf": 0.9367,
+         "acc": 1
+        },
+        {
+         "n": 3,
+         "conf": 0.98,
+         "acc": 1
+        },
+        {
+         "n": 3,
+         "conf": 0.9867,
+         "acc": 1
+        },
+        {
+         "n": 3,
+         "conf": 0.99,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 0.995,
+         "acc": 1
+        }
+       ]
+      },
+      "ece10EqualWidth": {
+       "ece": 0.1503,
+       "reliability": 0.0438,
+       "resolution": 0.0678,
+       "uncertainty": 0.2041,
+       "diagram": [
+        {
+         "n": 4,
+         "conf": 0.4475,
+         "acc": 0.5
+        },
+        {
+         "n": 5,
+         "conf": 0.5491,
+         "acc": 0.6
+        },
+        {
+         "n": 7,
+         "conf": 0.6614,
+         "acc": 0.8571
+        },
+        {
+         "n": 9,
+         "conf": 0.7333,
+         "acc": 0.3333
+        },
+        {
+         "n": 3,
+         "conf": 0.85,
+         "acc": 0.6667
+        },
+        {
+         "n": 14,
+         "conf": 0.9764,
+         "acc": 1
+        }
+       ]
+      },
+      "eceGate": "diagnostic only: n = 42 < 500",
+      "hardOneShare": 0.0238,
+      "hardOneErrors": 0,
+      "coverageAt5InSample": {
+       "coverage": 0.4762,
+       "risk": 0.05,
+       "tau": 0.75,
+       "accepted": 20,
+       "note": "threshold fitted on these same rows: optimistic, not the §6.1 RISK (which needs a calib-OOD threshold)"
+      },
+      "jevConfidenceVsMaxP": {
+       "meanAbsDiff": 0.0799,
+       "pearson": 0.9999
+      },
+      "confusion": {
+       "superseded": {
+        "binding": 8,
+        "superseded": 4
+       },
+       "informal": {
+        "informal": 7
+       },
+       "out_of_scope": {
+        "binding": 4,
+        "out_of_scope": 7
+       },
+       "binding": {
+        "binding": 12
+       }
+      }
+     },
+     "compare": {
+      "trainMajority": {
+       "leaky": false,
+       "n": 42,
+       "clusters": "form x world",
+       "acc": {
+        "est": 0.4286,
+        "lo": 0.1667,
+        "hi": 0.6977,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.4924,
+        "lo": 0.2857,
+        "hi": 0.6615,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.625,
+        "lo": 0.3505,
+        "hi": 0.7895,
+        "noise": false
+       }
+      },
+      "trainPrior": {
+       "leaky": false,
+       "n": 42,
+       "clusters": "form x world",
+       "acc": {
+        "est": 0.4286,
+        "lo": 0.1667,
+        "hi": 0.6977,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.4924,
+        "lo": 0.2857,
+        "hi": 0.6615,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.625,
+        "lo": 0.3505,
+        "hi": 0.7895,
+        "noise": false
+       },
+       "brier": {
+        "est": -0.3394,
+        "lo": -0.5696,
+        "hi": -0.0238
+       },
+       "bssUniform": {
+        "est": 0.4526,
+        "lo": 0.0311,
+        "hi": 0.7585
+       }
+      },
+      "probe": {
+       "leaky": false,
+       "n": 42,
+       "clusters": "form x world",
+       "acc": {
+        "est": -0.2619,
+        "lo": -0.5517,
+        "hi": -0.0377,
+        "noise": false
+       },
+       "bacc": {
+        "est": -0.2367,
+        "lo": -0.4432,
+        "hi": -0.0375,
+        "noise": false
+       },
+       "macroF1": {
+        "est": -0.243,
+        "lo": -0.5302,
+        "hi": -0.0354,
+        "noise": false
+       },
+       "brier": {
+        "est": 0.358,
+        "lo": 0.0913,
+        "hi": 0.6809
+       },
+       "bssUniform": {
+        "est": -0.4774,
+        "lo": -0.9092,
+        "hi": -0.1229
+       }
+      },
+      "devMajority": {
+       "leaky": true,
+       "n": 42,
+       "clusters": "form x world",
+       "acc": {
+        "est": 0.4286,
+        "lo": 0.1667,
+        "hi": 0.6977,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.4924,
+        "lo": 0.2857,
+        "hi": 0.6615,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.625,
+        "lo": 0.3505,
+        "hi": 0.7895,
+        "noise": false
+       }
+      },
+      "devPrior": {
+       "leaky": true,
+       "n": 42,
+       "clusters": "form x world",
+       "acc": {
+        "est": 0.4286,
+        "lo": 0.1667,
+        "hi": 0.6977,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.4924,
+        "lo": 0.2857,
+        "hi": 0.6615,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.625,
+        "lo": 0.3505,
+        "hi": 0.7895,
+        "noise": false
+       },
+       "brier": {
+        "est": -0.3373,
+        "lo": -0.583,
+        "hi": -0.0094
+       },
+       "bssUniform": {
+        "est": 0.4497,
+        "lo": 0.0115,
+        "hi": 0.7771
+       }
+      }
+     },
+     "haiku": {
+      "n": 2,
+      "faults": 0,
+      "items": [
+       {
+        "recId": "kd_2d8a87205be2912fd8fd0270",
+        "qid": "X4",
+        "label": "superseded",
+        "haiku": "informal",
+        "haikuConfidence": 0.45,
+        "jev": "binding",
+        "jevMaxP": 0.64
+       },
+       {
+        "recId": "kd_dc48a4eccefa7e7b198c2d1f",
+        "qid": "X4",
+        "label": "out_of_scope",
+        "haiku": "binding",
+        "haikuConfidence": 0.6,
+        "jev": "binding",
+        "jevMaxP": 0.72
+       }
+      ],
+      "note": "two items per port by design: anecdote, no per-port metric"
+     }
+    },
+    "X8:kinetics": {
+     "n": 100,
+     "labels": {
+      "inconsistent": 0.45,
+      "consistent": 0.55
+     },
+     "jev": {
+      "n": 100,
+      "clusters": "form x world",
+      "forms": 41,
+      "worlds": 50,
+      "acc": {
+       "est": 0.78,
+       "lo": 0.6607,
+       "hi": 0.8953
+      },
+      "bacc": {
+       "est": 0.7737,
+       "lo": 0.6448,
+       "hi": 0.8906
+      },
+      "macroF1": {
+       "est": 0.7756,
+       "lo": 0.6433,
+       "hi": 0.8896
+      },
+      "brier": {
+       "est": 0.28,
+       "lo": 0.1943,
+       "hi": 0.3726
+      },
+      "bssUniform": {
+       "est": 0.44,
+       "lo": 0.2547,
+       "hi": 0.6112
+      }
+     },
+     "bssReferences": {
+      "uniform": 0.44,
+      "calibInPrior": 0.435,
+      "devPriorLEAKY": 0.4343,
+      "calibOodPrior": "unavailable (calib-ood lost with the held-out material)"
+     },
+     "diagnostics": {
+      "meanMaxP": 0.7528,
+      "overconfidence": -0.0272,
+      "ece15EqualMass": {
+       "ece": 0.093,
+       "reliability": 0.0139,
+       "resolution": 0.0454,
+       "uncertainty": 0.1716,
+       "diagram": [
+        {
+         "n": 7,
+         "conf": 0.5186,
+         "acc": 0.2857
+        },
+        {
+         "n": 7,
+         "conf": 0.5414,
+         "acc": 0.5714
+        },
+        {
+         "n": 6,
+         "conf": 0.5783,
+         "acc": 0.5
+        },
+        {
+         "n": 7,
+         "conf": 0.6029,
+         "acc": 0.7143
+        },
+        {
+         "n": 7,
+         "conf": 0.6286,
+         "acc": 0.7143
+        },
+        {
+         "n": 6,
+         "conf": 0.6483,
+         "acc": 0.8333
+        },
+        {
+         "n": 7,
+         "conf": 0.6929,
+         "acc": 0.5714
+        },
+        {
+         "n": 7,
+         "conf": 0.7186,
+         "acc": 0.8571
+        },
+        {
+         "n": 6,
+         "conf": 0.7617,
+         "acc": 1
+        },
+        {
+         "n": 7,
+         "conf": 0.8271,
+         "acc": 0.8571
+        },
+        {
+         "n": 7,
+         "conf": 0.9057,
+         "acc": 0.8571
+        },
+        {
+         "n": 6,
+         "conf": 0.95,
+         "acc": 1
+        },
+        {
+         "n": 7,
+         "conf": 0.9686,
+         "acc": 1
+        },
+        {
+         "n": 7,
+         "conf": 0.9786,
+         "acc": 1
+        },
+        {
+         "n": 6,
+         "conf": 0.995,
+         "acc": 1
+        }
+       ]
+      },
+      "ece10EqualWidth": {
+       "ece": 0.0796,
+       "reliability": 0.0083,
+       "resolution": 0.0369,
+       "uncertainty": 0.1716,
+       "diagram": [
+        {
+         "n": 20,
+         "conf": 0.5445,
+         "acc": 0.45
+        },
+        {
+         "n": 23,
+         "conf": 0.633,
+         "acc": 0.7826
+        },
+        {
+         "n": 18,
+         "conf": 0.7328,
+         "acc": 0.7778
+        },
+        {
+         "n": 8,
+         "conf": 0.8413,
+         "acc": 0.75
+        },
+        {
+         "n": 31,
+         "conf": 0.9648,
+         "acc": 1
+        }
+       ]
+      },
+      "eceGate": "diagnostic only: n = 100 < 500",
+      "hardOneShare": 0.03,
+      "hardOneErrors": 0,
+      "coverageAt5InSample": {
+       "coverage": 0.48,
+       "risk": 0.0417,
+       "tau": 0.73,
+       "accepted": 48,
+       "note": "threshold fitted on these same rows: optimistic, not the §6.1 RISK (which needs a calib-OOD threshold)"
+      },
+      "jevConfidenceVsMaxP": {
+       "meanAbsDiff": 0.2472,
+       "pearson": 1
+      },
+      "confusion": {
+       "inconsistent": {
+        "inconsistent": 32,
+        "consistent": 13
+       },
+       "consistent": {
+        "consistent": 46,
+        "inconsistent": 9
+       }
+      }
+     },
+     "compare": {
+      "trainMajority": {
+       "leaky": false,
+       "n": 100,
+       "clusters": "form x world",
+       "acc": {
+        "est": 0.23,
+        "lo": 0.0481,
+        "hi": 0.4365,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.2737,
+        "lo": 0.1432,
+        "hi": 0.3918,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.4208,
+        "lo": 0.2647,
+        "hi": 0.5619,
+        "noise": false
+       }
+      },
+      "trainPrior": {
+       "leaky": false,
+       "n": 100,
+       "clusters": "form x world",
+       "acc": {
+        "est": 0.35,
+        "lo": 0.1488,
+        "hi": 0.5377,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.3465,
+        "lo": 0.1264,
+        "hi": 0.5367,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.3484,
+        "lo": 0.1345,
+        "hi": 0.542,
+        "noise": false
+       },
+       "brier": {
+        "est": -0.22,
+        "lo": -0.3109,
+        "hi": -0.1244
+       },
+       "bssUniform": {
+        "est": 0.44,
+        "lo": 0.2487,
+        "hi": 0.6213
+       }
+      },
+      "calibInPrior": {
+       "leaky": false,
+       "n": 100,
+       "clusters": "form x world",
+       "acc": {
+        "est": 0.23,
+        "lo": 0.0481,
+        "hi": 0.4365,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.2737,
+        "lo": 0.1432,
+        "hi": 0.3918,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.4208,
+        "lo": 0.2647,
+        "hi": 0.5619,
+        "noise": false
+       },
+       "brier": {
+        "est": -0.2155,
+        "lo": -0.3094,
+        "hi": -0.1162
+       },
+       "bssUniform": {
+        "est": 0.4311,
+        "lo": 0.2323,
+        "hi": 0.6184
+       }
+      },
+      "probe": {
+       "leaky": false,
+       "n": 100,
+       "clusters": "form x world",
+       "acc": {
+        "est": 0.22,
+        "lo": 0.0536,
+        "hi": 0.4057,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.2202,
+        "lo": 0.0348,
+        "hi": 0.4048,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.222,
+        "lo": 0.0532,
+        "hi": 0.4157,
+        "noise": false
+       },
+       "brier": {
+        "est": -0.2302,
+        "lo": -0.3462,
+        "hi": -0.115
+       },
+       "bssUniform": {
+        "est": 0.4603,
+        "lo": 0.2292,
+        "hi": 0.6917
+       }
+      },
+      "devMajority": {
+       "leaky": true,
+       "n": 100,
+       "clusters": "form x world",
+       "acc": {
+        "est": 0.23,
+        "lo": 0.0481,
+        "hi": 0.4365,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.2737,
+        "lo": 0.1432,
+        "hi": 0.3918,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.4208,
+        "lo": 0.2647,
+        "hi": 0.5619,
+        "noise": false
+       }
+      },
+      "devPrior": {
+       "leaky": true,
+       "n": 100,
+       "clusters": "form x world",
+       "acc": {
+        "est": 0.23,
+        "lo": 0.0481,
+        "hi": 0.4365,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.2737,
+        "lo": 0.1432,
+        "hi": 0.3918,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.4208,
+        "lo": 0.2647,
+        "hi": 0.5619,
+        "noise": false
+       },
+       "brier": {
+        "est": -0.215,
+        "lo": -0.3137,
+        "hi": -0.1113
+       },
+       "bssUniform": {
+        "est": 0.43,
+        "lo": 0.222,
+        "hi": 0.627
+       }
+      }
+     },
+     "haiku": {
+      "n": 2,
+      "faults": 0,
+      "items": [
+       {
+        "recId": "kd_103a060688bced517b3f47bd",
+        "qid": "X8",
+        "label": "inconsistent",
+        "haiku": "inconsistent",
+        "haikuConfidence": 0.88,
+        "jev": "consistent",
+        "jevMaxP": 0.57
+       },
+       {
+        "recId": "kd_7d1fbeb210ee4ef018c8db66",
+        "qid": "X8",
+        "label": "inconsistent",
+        "haiku": "inconsistent",
+        "haikuConfidence": 0.97,
+        "jev": "consistent",
+        "jevMaxP": 0.55
+       }
+      ],
+      "note": "two items per port by design: anecdote, no per-port metric"
+     }
+    }
+   },
+   "reread": {
+    "n": 20,
+    "argmaxFlips": 0,
+    "maxAbsDp": 0.07,
+    "meanMaxAbsDp": 0.021,
+    "identical": 6,
+    "under001": 6,
+    "atLeast001": 14,
+    "usage": {
+     "input_tokens": 9255,
+     "output_tokens": 1108
+    },
+    "reportAgree": false,
+    "reportStable": true,
+    "rule": "run validity needs every re-read |dp| < 0.01 (unchanged); Jev answers in 2-decimal steps"
+   },
+   "diagnostics": {
+    "meanMaxP": 0.8022,
+    "overconfidence": 0.0928,
+    "ece15EqualMass": {
+     "ece": 0.0993,
+     "reliability": 0.0187,
+     "resolution": 0.045,
+     "uncertainty": 0.2062,
+     "diagram": [
+      {
+       "n": 31,
+       "conf": 0.47,
+       "acc": 0.3871
+      },
+      {
+       "n": 31,
+       "conf": 0.5365,
+       "acc": 0.3871
+      },
+      {
+       "n": 31,
+       "conf": 0.5889,
+       "acc": 0.6129
+      },
+      {
+       "n": 30,
+       "conf": 0.6417,
+       "acc": 0.6667
+      },
+      {
+       "n": 31,
+       "conf": 0.6848,
+       "acc": 0.5806
+      },
+      {
+       "n": 31,
+       "conf": 0.7242,
+       "acc": 0.4516
+      },
+      {
+       "n": 31,
+       "conf": 0.778,
+       "acc": 0.7097
+      },
+      {
+       "n": 30,
+       "conf": 0.8437,
+       "acc": 0.5333
+      },
+      {
+       "n": 31,
+       "conf": 0.8942,
+       "acc": 0.6774
+      },
+      {
+       "n": 31,
+       "conf": 0.9403,
+       "acc": 0.8387
+      },
+      {
+       "n": 31,
+       "conf": 0.9648,
+       "acc": 0.9032
+      },
+      {
+       "n": 30,
+       "conf": 0.982,
+       "acc": 0.9667
+      },
+      {
+       "n": 31,
+       "conf": 0.9919,
+       "acc": 0.9355
+      },
+      {
+       "n": 31,
+       "conf": 1,
+       "acc": 1
+      },
+      {
+       "n": 30,
+       "conf": 1,
+       "acc": 1
+      }
+     ]
+    },
+    "ece10EqualWidth": {
+     "ece": 0.0928,
+     "reliability": 0.0139,
+     "resolution": 0.0361,
+     "uncertainty": 0.2062,
+     "diagram": [
+      {
+       "n": 2,
+       "conf": 0.355,
+       "acc": 0
+      },
+      {
+       "n": 19,
+       "conf": 0.4605,
+       "acc": 0.4211
+      },
+      {
+       "n": 59,
+       "conf": 0.5447,
+       "acc": 0.4746
+      },
+      {
+       "n": 64,
+       "conf": 0.6459,
+       "acc": 0.6406
+      },
+      {
+       "n": 64,
+       "conf": 0.7364,
+       "acc": 0.5313
+      },
+      {
+       "n": 56,
+       "conf": 0.8507,
+       "acc": 0.6429
+      },
+      {
+       "n": 197,
+       "conf": 0.9751,
+       "acc": 0.9137
+      }
+     ]
+    },
+    "eceGate": "diagnostic only: n = 461 < 500",
+    "hardOneShare": 0.1453,
+    "hardOneErrors": 0,
+    "coverageAt5InSample": {
+     "coverage": 0.3557,
+     "risk": 0.0427,
+     "tau": 0.9400000000000001,
+     "accepted": 164,
+     "note": "threshold fitted on these same rows: optimistic, not the §6.1 RISK (which needs a calib-OOD threshold)"
+    },
+    "jevConfidenceVsMaxP": {
+     "meanAbsDiff": 0.092,
+     "pearson": 0.9485
+    },
+    "confusion": {
+     "retracts": {
+      "retracts": 16,
+      "changes": 3
+     },
+     "proposes": {
+      "proposes": 29,
+      "mentions": 28
+     },
+     "inconsistent": {
+      "inconsistent": 32,
+      "consistent": 13
+     },
+     "consistent": {
+      "consistent": 46,
+      "inconsistent": 9
+     },
+     "mentions": {
+      "changes": 26,
+      "mentions": 19,
+      "confirms": 3
+     },
+     "confirms": {
+      "confirms": 18,
+      "changes": 12
+     },
+     "bubble": {
+      "bubble": 22
+     },
+     "none": {
+      "none": 43,
+      "bubble": 7,
+      "pipetting_error": 3,
+      "reader_saturation": 3
+     },
+     "changes": {
+      "changes": 32,
+      "proposes": 3,
+      "mentions": 11
+     },
+     "superseded": {
+      "binding": 8,
+      "superseded": 4
+     },
+     "informal": {
+      "informal": 7
+     },
+     "out_of_scope": {
+      "binding": 4,
+      "out_of_scope": 7
+     },
+     "C3": {
+      "C3": 2
+     },
+     "uM/min": {
+      "uM/min": 2
+     },
+     "reader_saturation": {
+      "reader_saturation": 7
+     },
+     "pipetting_error": {
+      "pipetting_error": 7
+     },
+     "binding": {
+      "binding": 12
+     },
+     "C4": {
+      "C4": 4
+     },
+     "temperature_deviation": {
+      "temperature_deviation": 4,
+      "none": 1
+     },
+     "nM/min": {
+      "nM/min": 5
+     },
+     "C2": {
+      "C2": 1
+     },
+     "nM/s": {
+      "nM/s": 3
+     },
+     "C6": {
+      "C6": 1
+     },
+     "C7": {
+      "C7": 1
+     },
+     "mM/min": {
+      "mM/min": 1
+     },
+     "uM/s": {
+      "uM/s": 1
+     },
+     "C8": {
+      "C8": 1
+     }
+    }
+   },
+   "labelPosition": {
+    "0": {
+     "n": 106,
+     "acc": 0.717
+    },
+    "1": {
+     "n": 138,
+     "acc": 0.7464
+    },
+    "2": {
+     "n": 78,
+     "acc": 0.6154
+    },
+    "3": {
+     "n": 77,
+     "acc": 0.7403
+    },
+    "4": {
+     "n": 57,
+     "acc": 0.6667
+    },
+    "5": {
+     "n": 3,
+     "acc": 1
+    },
+    "6": {
+     "n": 2,
+     "acc": 1
+    }
+   },
+   "mostConfidentErrors": [
+    {
+     "recId": "kd_9f84e38e572830a486e2c77c",
+     "qid": "K1",
+     "portKey": "K1:kinetics",
+     "label": "none",
+     "pred": "reader_saturation",
+     "maxP": 0.99,
+     "jevConfidence": 0.99,
+     "p": {
+      "none": 0.01,
+      "temperature_deviation": 0,
+      "pipetting_error": 0,
+      "reader_saturation": 0.99,
+      "bubble": 0
+     }
+    },
+    {
+     "recId": "kd_cf5e7a1833bb629f8f941b56",
+     "qid": "X3",
+     "portKey": "X3:kinetics",
+     "label": "changes",
+     "pred": "mentions",
+     "maxP": 0.99,
+     "jevConfidence": 0.99,
+     "p": {
+      "retracts": 0,
+      "proposes": 0,
+      "changes": 0.01,
+      "confirms": 0,
+      "mentions": 0.99
+     }
+    },
+    {
+     "recId": "kd_5a98497a736b8d77f55fe140",
+     "qid": "K1",
+     "portKey": "K1:kinetics",
+     "label": "none",
+     "pred": "bubble",
+     "maxP": 0.98,
+     "jevConfidence": 0.97,
+     "p": {
+      "temperature_deviation": 0,
+      "none": 0.01,
+      "pipetting_error": 0.01,
+      "bubble": 0.98,
+      "reader_saturation": 0
+     }
+    },
+    {
+     "recId": "kd_6dc433c8b621adf737246801",
+     "qid": "X3",
+     "portKey": "X3:kinetics",
+     "label": "proposes",
+     "pred": "mentions",
+     "maxP": 0.96,
+     "jevConfidence": 0.95,
+     "p": {
+      "retracts": 0,
+      "confirms": 0,
+      "proposes": 0.04,
+      "mentions": 0.96,
+      "changes": 0
+     }
+    },
+    {
+     "recId": "kd_92dcbd5097e5f4b675406a80",
+     "qid": "X3",
+     "portKey": "X3:kinetics",
+     "label": "mentions",
+     "pred": "changes",
+     "maxP": 0.96,
+     "jevConfidence": 0.95,
+     "p": {
+      "retracts": 0.03,
+      "proposes": 0,
+      "mentions": 0,
+      "confirms": 0.01,
+      "changes": 0.96
+     }
+    },
+    {
+     "recId": "kd_c03800aedf4c323fce77bbeb",
+     "qid": "X3",
+     "portKey": "X3:kinetics",
+     "label": "changes",
+     "pred": "mentions",
+     "maxP": 0.96,
+     "jevConfidence": 0.95,
+     "p": {
+      "proposes": 0,
+      "confirms": 0,
+      "retracts": 0,
+      "mentions": 0.96,
+      "changes": 0.04
+     }
+    },
+    {
+     "recId": "kd_682da677bd23590657c86c63",
+     "qid": "K1",
+     "portKey": "K1:kinetics",
+     "label": "none",
+     "pred": "bubble",
+     "maxP": 0.95,
+     "jevConfidence": 0.94,
+     "p": {
+      "pipetting_error": 0,
+      "reader_saturation": 0,
+      "temperature_deviation": 0,
+      "none": 0.05,
+      "bubble": 0.95
+     }
+    },
+    {
+     "recId": "kd_03bd3adb64dd041b54fba530",
+     "qid": "X3",
+     "portKey": "X3:kinetics",
+     "label": "mentions",
+     "pred": "changes",
+     "maxP": 0.94,
+     "jevConfidence": 0.92,
+     "p": {
+      "changes": 0.94,
+      "retracts": 0.05,
+      "proposes": 0,
+      "confirms": 0.01,
+      "mentions": 0
+     }
+    },
+    {
+     "recId": "kd_9ef923768fdb4eb7dbe94c27",
+     "qid": "K1",
+     "portKey": "K1:kinetics",
+     "label": "none",
+     "pred": "reader_saturation",
+     "maxP": 0.94,
+     "jevConfidence": 0.92,
+     "p": {
+      "pipetting_error": 0,
+      "reader_saturation": 0.94,
+      "bubble": 0,
+      "none": 0.06,
+      "temperature_deviation": 0
+     }
+    },
+    {
+     "recId": "kd_adf34ffd7b3ad68563694a1c",
+     "qid": "X3",
+     "portKey": "X3:kinetics",
+     "label": "proposes",
+     "pred": "mentions",
+     "maxP": 0.9394,
+     "jevConfidence": 0.91,
+     "p": {
+      "proposes": 0.0202,
+      "changes": 0.0303,
+      "confirms": 0.0101,
+      "retracts": 0,
+      "mentions": 0.9394
+     }
+    },
+    {
+     "recId": "kd_34bc6e434301b00700fb0a3d",
+     "qid": "X3",
+     "portKey": "X3:kinetics",
+     "label": "proposes",
+     "pred": "mentions",
+     "maxP": 0.93,
+     "jevConfidence": 0.91,
+     "p": {
+      "mentions": 0.93,
+      "changes": 0.01,
+      "proposes": 0.05,
+      "confirms": 0.01,
+      "retracts": 0
+     }
+    },
+    {
+     "recId": "kd_3e81ab1ad26607e44f8bd1ee",
+     "qid": "X3",
+     "portKey": "X3:kinetics",
+     "label": "proposes",
+     "pred": "mentions",
+     "maxP": 0.92,
+     "jevConfidence": 0.9,
+     "p": {
+      "retracts": 0,
+      "mentions": 0.92,
+      "confirms": 0.03,
+      "proposes": 0.04,
+      "changes": 0.01
+     }
+    },
+    {
+     "recId": "kd_bde4689af248382555d8d50d",
+     "qid": "X3",
+     "portKey": "X3:kinetics",
+     "label": "proposes",
+     "pred": "mentions",
+     "maxP": 0.92,
+     "jevConfidence": 0.9,
+     "p": {
+      "confirms": 0.01,
+      "retracts": 0,
+      "mentions": 0.92,
+      "proposes": 0.06,
+      "changes": 0.01
+     }
+    },
+    {
+     "recId": "kd_e4d8dbb2b66170e731da8984",
+     "qid": "X3",
+     "portKey": "X3:kinetics",
+     "label": "mentions",
+     "pred": "changes",
+     "maxP": 0.91,
+     "jevConfidence": 0.89,
+     "p": {
+      "mentions": 0.01,
+      "proposes": 0.01,
+      "retracts": 0.06,
+      "changes": 0.91,
+      "confirms": 0.01
+     }
+    },
+    {
+     "recId": "kd_06effb8e74f4f6a2c9723fc8",
+     "qid": "X3",
+     "portKey": "X3:kinetics",
+     "label": "proposes",
+     "pred": "mentions",
+     "maxP": 0.9,
+     "jevConfidence": 0.87,
+     "p": {
+      "retracts": 0,
+      "changes": 0.01,
+      "mentions": 0.9,
+      "confirms": 0.03,
+      "proposes": 0.06
+     }
+    },
+    {
+     "recId": "kd_5fac2e55c5f8211411bd19c0",
+     "qid": "X3",
+     "portKey": "X3:kinetics",
+     "label": "changes",
+     "pred": "proposes",
+     "maxP": 0.9,
+     "jevConfidence": 0.87,
+     "p": {
+      "mentions": 0,
+      "confirms": 0,
+      "changes": 0.1,
+      "proposes": 0.9,
+      "retracts": 0
+     }
+    },
+    {
+     "recId": "kd_faf3d13df486d509cf18205c",
+     "qid": "K1",
+     "portKey": "K1:kinetics",
+     "label": "none",
+     "pred": "bubble",
+     "maxP": 0.9,
+     "jevConfidence": 0.87,
+     "p": {
+      "pipetting_error": 0,
+      "bubble": 0.9,
+      "reader_saturation": 0,
+      "none": 0.1,
+      "temperature_deviation": 0
+     }
+    },
+    {
+     "recId": "kd_c500c81cba5ffef6f4395133",
+     "qid": "X3",
+     "portKey": "X3:kinetics",
+     "label": "proposes",
+     "pred": "mentions",
+     "maxP": 0.89,
+     "jevConfidence": 0.86,
+     "p": {
+      "proposes": 0.09,
+      "retracts": 0,
+      "changes": 0,
+      "confirms": 0.02,
+      "mentions": 0.89
+     }
+    },
+    {
+     "recId": "kd_bb96f0cd233b3022b466ec9b",
+     "qid": "K1",
+     "portKey": "K1:kinetics",
+     "label": "none",
+     "pred": "bubble",
+     "maxP": 0.88,
+     "jevConfidence": 0.85,
+     "p": {
+      "pipetting_error": 0,
+      "bubble": 0.88,
+      "reader_saturation": 0,
+      "temperature_deviation": 0,
+      "none": 0.12
+     }
+    },
+    {
+     "recId": "kd_c41d03841f0005534a1deed7",
+     "qid": "X3",
+     "portKey": "X3:kinetics",
+     "label": "proposes",
+     "pred": "mentions",
+     "maxP": 0.88,
+     "jevConfidence": 0.85,
+     "p": {
+      "confirms": 0.04,
+      "changes": 0,
+      "retracts": 0,
+      "proposes": 0.08,
+      "mentions": 0.88
+     }
+    }
+   ],
+   "summary": {
+    "macroBacc": 0.8397,
+    "pooledAcc": 0.7093,
+    "macroChanceBacc": 0.2401,
+    "macroDevMajorityAccLEAKY": 0.4191
+   }
+  },
+  "runbook": {
+   "devSha256": "e431400e7d8b7502ba329b22e06ae505b0821da012cbed4587a69078a2160f53",
+   "verified": false,
+   "clusters": "record only (no trustworthy sidecar): CIs form-unclustered, likely too narrow",
+   "n": 158,
+   "records": 158,
+   "versions": {
+    "jev-1.13.0": 158
+   },
+   "rawSumOff": [
+    0.99
+   ],
+   "ties": 0,
+   "choiceNotArgmax": 0,
+   "report": {
+    "valid": false,
+    "coverage": {
+     "requested_records": 158,
+     "requested_questions": 158,
+     "evaluated_records": 158,
+     "evaluated_questions": 158,
+     "rejected_records": 0,
+     "failed_records": 0,
+     "truncated_records": 0
+    },
+    "faults": 0,
+    "usage": {
+     "requests": 158,
+     "input_tokens": 71126,
+     "output_tokens": 6169,
+     "missing_usage": 0,
+     "scope": "every scored record in the rows file, one request each; not the re-read or retried attempts (see requests and faults)"
+    }
+   },
+   "ports": {
+    "Q4": {
+     "n": 100,
+     "labels": {
+      "as_expected": 0.48,
+      "drifted": 0.52
+     },
+     "jev": {
+      "n": 100,
+      "clusters": "record",
+      "records": 100,
+      "acc": {
+       "est": 0.97,
+       "lo": 0.93,
+       "hi": 1
+      },
+      "bacc": {
+       "est": 0.9688,
+       "lo": 0.9302,
+       "hi": 1
+      },
+      "macroF1": {
+       "est": 0.9699,
+       "lo": 0.93,
+       "hi": 1
+      },
+      "brier": {
+       "est": 0.0432,
+       "lo": 0.0047,
+       "hi": 0.0953
+      },
+      "bssUniform": {
+       "est": 0.9135,
+       "lo": 0.8092,
+       "hi": 0.9906
+      }
+     },
+     "bssReferences": {
+      "uniform": 0.9135,
+      "calibInPrior": null,
+      "devPriorLEAKY": 0.9135,
+      "calibOodPrior": "unavailable (calib-ood lost with the held-out material)"
+     },
+     "diagnostics": {
+      "meanMaxP": 0.9814,
+      "overconfidence": 0.0114,
+      "ece15EqualMass": {
+       "ece": 0.02,
+       "reliability": 0.002,
+       "resolution": 0.0062,
+       "uncertainty": 0.0291,
+       "diagram": [
+        {
+         "n": 7,
+         "conf": 0.7957,
+         "acc": 0.7143
+        },
+        {
+         "n": 7,
+         "conf": 0.9729,
+         "acc": 1
+        },
+        {
+         "n": 6,
+         "conf": 0.985,
+         "acc": 1
+        },
+        {
+         "n": 7,
+         "conf": 0.99,
+         "acc": 1
+        },
+        {
+         "n": 7,
+         "conf": 0.99,
+         "acc": 1
+        },
+        {
+         "n": 6,
+         "conf": 0.9983,
+         "acc": 1
+        },
+        {
+         "n": 7,
+         "conf": 1,
+         "acc": 0.8571
+        },
+        {
+         "n": 7,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 6,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 7,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 7,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 6,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 7,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 7,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 6,
+         "conf": 1,
+         "acc": 1
+        }
+       ]
+      },
+      "ece10EqualWidth": {
+       "ece": 0.0142,
+       "reliability": 0.0064,
+       "resolution": 0.0142,
+       "uncertainty": 0.0291,
+       "diagram": [
+        {
+         "n": 2,
+         "conf": 0.57,
+         "acc": 0.5
+        },
+        {
+         "n": 1,
+         "conf": 0.78,
+         "acc": 0
+        },
+        {
+         "n": 1,
+         "conf": 0.86,
+         "acc": 1
+        },
+        {
+         "n": 96,
+         "conf": 0.9933,
+         "acc": 0.9896
+        }
+       ]
+      },
+      "eceGate": "diagnostic only: n = 100 < 500",
+      "hardOneShare": 0.65,
+      "hardOneErrors": 1,
+      "coverageAt5InSample": {
+       "coverage": 1,
+       "risk": 0.03,
+       "tau": 0.57,
+       "accepted": 100,
+       "note": "threshold fitted on these same rows: optimistic, not the §6.1 RISK (which needs a calib-OOD threshold)"
+      },
+      "jevConfidenceVsMaxP": {
+       "meanAbsDiff": 0.0186,
+       "pearson": 1
+      },
+      "confusion": {
+       "as_expected": {
+        "as_expected": 45,
+        "drifted": 3
+       },
+       "drifted": {
+        "drifted": 52
+       }
+      }
+     },
+     "compare": {
+      "devMajority": {
+       "leaky": true,
+       "n": 100,
+       "clusters": "record",
+       "acc": {
+        "est": 0.45,
+        "lo": 0.35,
+        "hi": 0.55,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.4688,
+        "lo": 0.4314,
+        "hi": 0.5,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.6277,
+        "lo": 0.5782,
+        "hi": 0.6796,
+        "noise": false
+       }
+      },
+      "devPrior": {
+       "leaky": true,
+       "n": 100,
+       "clusters": "record",
+       "acc": {
+        "est": 0.45,
+        "lo": 0.35,
+        "hi": 0.55,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.4688,
+        "lo": 0.4314,
+        "hi": 0.5,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.6277,
+        "lo": 0.5782,
+        "hi": 0.6796,
+        "noise": false
+       },
+       "brier": {
+        "est": -0.456,
+        "lo": -0.4947,
+        "hi": -0.4037
+       },
+       "bssUniform": {
+        "est": 0.9119,
+        "lo": 0.8072,
+        "hi": 0.9893
+       }
+      }
+     },
+     "haiku": {
+      "n": 2,
+      "faults": 0,
+      "items": [
+       {
+        "recId": "kd_0e05314e2d3abad48857bfec",
+        "qid": "Q4",
+        "label": "as_expected",
+        "haiku": "drifted",
+        "haikuConfidence": 0.58,
+        "jev": "as_expected",
+        "jevMaxP": 0.86
+       },
+       {
+        "recId": "kd_e1357bf681d4c412a1e6e095",
+        "qid": "Q4",
+        "label": "drifted",
+        "haiku": "drifted",
+        "haikuConfidence": 0.97,
+        "jev": "drifted",
+        "jevMaxP": 1
+       }
+      ],
+      "note": "two items per port by design: anecdote, no per-port metric"
+     }
+    },
+    "X1": {
+     "n": 27,
+     "labels": {
+      "yes": 0.37037037037037035,
+      "no": 0.6296296296296297
+     },
+     "jev": {
+      "n": 27,
+      "clusters": "record",
+      "records": 27,
+      "acc": {
+       "est": 0.8889,
+       "lo": 0.7407,
+       "hi": 1
+      },
+      "bacc": {
+       "est": 0.8912,
+       "lo": 0.75,
+       "hi": 1
+      },
+      "macroF1": {
+       "est": 0.8831,
+       "lo": 0.7349,
+       "hi": 1
+      },
+      "brier": {
+       "est": 0.1795,
+       "lo": 0.004,
+       "hi": 0.3902
+      },
+      "bssUniform": {
+       "est": 0.641,
+       "lo": 0.2191,
+       "hi": 0.992
+      }
+     },
+     "bssReferences": {
+      "uniform": 0.641,
+      "calibInPrior": null,
+      "devPriorLEAKY": 0.6151,
+      "calibOodPrior": "unavailable (calib-ood lost with the held-out material)"
+     },
+     "diagnostics": {
+      "meanMaxP": 0.97,
+      "overconfidence": 0.0811,
+      "ece15EqualMass": {
+       "ece": 0.0967,
+       "reliability": 0.0369,
+       "resolution": 0.0432,
+       "uncertainty": 0.0988,
+       "diagram": [
+        {
+         "n": 2,
+         "conf": 0.81,
+         "acc": 0.5
+        },
+        {
+         "n": 2,
+         "conf": 0.905,
+         "acc": 0.5
+        },
+        {
+         "n": 2,
+         "conf": 0.965,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 0.97,
+         "acc": 1
+        },
+        {
+         "n": 1,
+         "conf": 0.97,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 0.985,
+         "acc": 0.5
+        },
+        {
+         "n": 2,
+         "conf": 0.99,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 0.99,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 0.995,
+         "acc": 1
+        },
+        {
+         "n": 1,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 1,
+         "acc": 1
+        },
+        {
+         "n": 1,
+         "conf": 1,
+         "acc": 1
+        }
+       ]
+      },
+      "ece10EqualWidth": {
+       "ece": 0.0967,
+       "reliability": 0.0547,
+       "resolution": 0.0633,
+       "uncertainty": 0.0988,
+       "diagram": [
+        {
+         "n": 1,
+         "conf": 0.79,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 0.84,
+         "acc": 0
+        },
+        {
+         "n": 24,
+         "conf": 0.9883,
+         "acc": 0.9583
+        }
+       ]
+      },
+      "eceGate": "diagnostic only: n = 27 < 500",
+      "hardOneShare": 0.4074,
+      "hardOneErrors": 0,
+      "coverageAt5InSample": {
+       "coverage": 0.8889,
+       "risk": 0.0417,
+       "tau": 0.96,
+       "accepted": 24,
+       "note": "threshold fitted on these same rows: optimistic, not the §6.1 RISK (which needs a calib-OOD threshold)"
+      },
+      "jevConfidenceVsMaxP": {
+       "meanAbsDiff": 0.03,
+       "pearson": 1
+      },
+      "confusion": {
+       "yes": {
+        "yes": 9,
+        "no": 1
+       },
+       "no": {
+        "no": 15,
+        "yes": 2
+       }
+      }
+     },
+     "compare": {
+      "devMajority": {
+       "leaky": true,
+       "n": 27,
+       "clusters": "record",
+       "acc": {
+        "est": 0.2593,
+        "lo": 0.037,
+        "hi": 0.4815,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.3912,
+        "lo": 0.2529,
+        "hi": 0.5,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.4968,
+        "lo": 0.3203,
+        "hi": 0.6378,
+        "noise": false
+       }
+      },
+      "devPrior": {
+       "leaky": true,
+       "n": 27,
+       "clusters": "record",
+       "acc": {
+        "est": 0.2593,
+        "lo": 0.037,
+        "hi": 0.4815,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.3912,
+        "lo": 0.2529,
+        "hi": 0.5,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.4968,
+        "lo": 0.3203,
+        "hi": 0.6378,
+        "noise": false
+       },
+       "brier": {
+        "est": -0.2869,
+        "lo": -0.4871,
+        "hi": -0.0571
+       },
+       "bssUniform": {
+        "est": 0.5738,
+        "lo": 0.1139,
+        "hi": 0.9725
+       }
+      }
+     },
+     "haiku": {
+      "n": 2,
+      "faults": 0,
+      "items": [
+       {
+        "recId": "kd_842fa3867f3ed042e139e3bd",
+        "qid": "X1",
+        "label": "no",
+        "haiku": "no",
+        "haikuConfidence": 0.95,
+        "jev": "no",
+        "jevMaxP": 1
+       },
+       {
+        "recId": "kd_206554d9291d843309c77a8d",
+        "qid": "X1",
+        "label": "no",
+        "haiku": "no",
+        "haikuConfidence": 0.95,
+        "jev": "no",
+        "jevMaxP": 1
+       }
+      ],
+      "note": "two items per port by design: anecdote, no per-port metric"
+     }
+    },
+    "X4": {
+     "n": 31,
+     "labels": {
+      "superseded": 0.3225806451612903,
+      "informal": 0.1935483870967742,
+      "out_of_scope": 0.3870967741935484,
+      "binding": 0.0967741935483871
+     },
+     "jev": {
+      "n": 31,
+      "clusters": "record",
+      "records": 31,
+      "acc": {
+       "est": 0.5161,
+       "lo": 0.3548,
+       "hi": 0.6774
+      },
+      "bacc": {
+       "est": 0.675,
+       "lo": 0.5625,
+       "hi": 0.75
+      },
+      "macroF1": {
+       "est": 0.4725,
+       "lo": 0.3388,
+       "hi": 0.5852
+      },
+      "brier": {
+       "est": 0.8191,
+       "lo": 0.5652,
+       "hi": 1.0626
+      },
+      "bssUniform": {
+       "est": -0.0921,
+       "lo": -0.4171,
+       "hi": 0.2462
+      }
+     },
+     "bssReferences": {
+      "uniform": -0.0921,
+      "calibInPrior": null,
+      "devPriorLEAKY": -0.1713,
+      "calibOodPrior": "unavailable (calib-ood lost with the held-out material)"
+     },
+     "diagnostics": {
+      "meanMaxP": 0.7341,
+      "overconfidence": 0.2179,
+      "ece15EqualMass": {
+       "ece": 0.2605,
+       "reliability": 0.1331,
+       "resolution": 0.0669,
+       "uncertainty": 0.2497,
+       "diagram": [
+        {
+         "n": 3,
+         "conf": 0.45,
+         "acc": 0.6667
+        },
+        {
+         "n": 2,
+         "conf": 0.505,
+         "acc": 0.5
+        },
+        {
+         "n": 2,
+         "conf": 0.53,
+         "acc": 0.5
+        },
+        {
+         "n": 2,
+         "conf": 0.5628,
+         "acc": 0.5
+        },
+        {
+         "n": 2,
+         "conf": 0.615,
+         "acc": 0.5
+        },
+        {
+         "n": 2,
+         "conf": 0.655,
+         "acc": 0
+        },
+        {
+         "n": 2,
+         "conf": 0.69,
+         "acc": 0.5
+        },
+        {
+         "n": 2,
+         "conf": 0.745,
+         "acc": 0.5
+        },
+        {
+         "n": 2,
+         "conf": 0.78,
+         "acc": 0.5
+        },
+        {
+         "n": 2,
+         "conf": 0.805,
+         "acc": 0.5
+        },
+        {
+         "n": 2,
+         "conf": 0.9,
+         "acc": 0.5
+        },
+        {
+         "n": 2,
+         "conf": 0.945,
+         "acc": 0
+        },
+        {
+         "n": 2,
+         "conf": 0.975,
+         "acc": 0.5
+        },
+        {
+         "n": 2,
+         "conf": 0.995,
+         "acc": 1
+        },
+        {
+         "n": 2,
+         "conf": 1,
+         "acc": 1
+        }
+       ]
+      },
+      "ece10EqualWidth": {
+       "ece": 0.2921,
+       "reliability": 0.1199,
+       "resolution": 0.0352,
+       "uncertainty": 0.2497,
+       "diagram": [
+        {
+         "n": 2,
+         "conf": 0.425,
+         "acc": 1
+        },
+        {
+         "n": 8,
+         "conf": 0.5357,
+         "acc": 0.5
+        },
+        {
+         "n": 4,
+         "conf": 0.655,
+         "acc": 0.25
+        },
+        {
+         "n": 6,
+         "conf": 0.7583,
+         "acc": 0.5
+        },
+        {
+         "n": 1,
+         "conf": 0.82,
+         "acc": 0
+        },
+        {
+         "n": 10,
+         "conf": 0.963,
+         "acc": 0.6
+        }
+       ]
+      },
+      "eceGate": "diagnostic only: n = 31 < 500",
+      "hardOneShare": 0.0968,
+      "hardOneErrors": 0,
+      "coverageAt5InSample": {
+       "coverage": 0.1613,
+       "risk": 0,
+       "tau": 0.98,
+       "accepted": 5,
+       "note": "threshold fitted on these same rows: optimistic, not the §6.1 RISK (which needs a calib-OOD threshold)"
+      },
+      "jevConfidenceVsMaxP": {
+       "meanAbsDiff": 0.0892,
+       "pearson": 0.9999
+      },
+      "confusion": {
+       "superseded": {
+        "superseded": 7,
+        "binding": 1,
+        "informal": 2
+       },
+       "informal": {
+        "informal": 6
+       },
+       "out_of_scope": {
+        "binding": 8,
+        "informal": 4
+       },
+       "binding": {
+        "binding": 3
+       }
+      }
+     },
+     "compare": {
+      "devMajority": {
+       "leaky": true,
+       "n": 31,
+       "clusters": "record",
+       "acc": {
+        "est": 0.129,
+        "lo": -0.2258,
+        "hi": 0.4516,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.425,
+        "lo": 0.2333,
+        "hi": 0.5,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.333,
+        "lo": 0.1695,
+        "hi": 0.4772,
+        "noise": false
+       }
+      },
+      "devPrior": {
+       "leaky": true,
+       "n": 31,
+       "clusters": "record",
+       "acc": {
+        "est": 0.129,
+        "lo": -0.2258,
+        "hi": 0.4516,
+        "noise": false
+       },
+       "bacc": {
+        "est": 0.425,
+        "lo": 0.2333,
+        "hi": 0.5,
+        "noise": false
+       },
+       "macroF1": {
+        "est": 0.333,
+        "lo": 0.1695,
+        "hi": 0.4772,
+        "noise": false
+       },
+       "brier": {
+        "est": 0.1198,
+        "lo": -0.18,
+        "hi": 0.4362
+       },
+       "bssUniform": {
+        "est": -0.1598,
+        "lo": -0.582,
+        "hi": 0.2388
+       }
+      }
+     },
+     "haiku": {
+      "n": 2,
+      "faults": 0,
+      "items": [
+       {
+        "recId": "kd_1fe784e4b4ef34428da4e911",
+        "qid": "X4",
+        "label": "superseded",
+        "haiku": "informal",
+        "haikuConfidence": 0.8,
+        "jev": "informal",
+        "jevMaxP": 0.94
+       },
+       {
+        "recId": "kd_05aafb1ca27c4b7f25ee954d",
+        "qid": "X4",
+        "label": "out_of_scope",
+        "haiku": "informal",
+        "haikuConfidence": 0.6,
+        "jev": "informal",
+        "jevMaxP": 0.51
+       }
+      ],
+      "note": "two items per port by design: anecdote, no per-port metric"
+     }
+    }
+   },
+   "reread": {
+    "n": 20,
+    "argmaxFlips": 0,
+    "maxAbsDp": 0.03,
+    "meanMaxAbsDp": 0.0065,
+    "identical": 14,
+    "under001": 14,
+    "atLeast001": 6,
+    "usage": {
+     "input_tokens": 9408,
+     "output_tokens": 771
+    },
+    "reportAgree": false,
+    "reportStable": true,
+    "rule": "run validity needs every re-read |dp| < 0.01 (unchanged); Jev answers in 2-decimal steps"
+   },
+   "diagnostics": {
+    "meanMaxP": 0.9309,
+    "overconfidence": 0.0638,
+    "ece15EqualMass": {
+     "ece": 0.0712,
+     "reliability": 0.0164,
+     "resolution": 0.0405,
+     "uncertainty": 0.1152,
+     "diagram": [
+      {
+       "n": 11,
+       "conf": 0.5169,
+       "acc": 0.5455
+      },
+      {
+       "n": 11,
+       "conf": 0.7045,
+       "acc": 0.3636
+      },
+      {
+       "n": 10,
+       "conf": 0.858,
+       "acc": 0.6
+      },
+      {
+       "n": 11,
+       "conf": 0.9609,
+       "acc": 0.8182
+      },
+      {
+       "n": 10,
+       "conf": 0.977,
+       "acc": 0.8
+      },
+      {
+       "n": 11,
+       "conf": 0.9891,
+       "acc": 1
+      },
+      {
+       "n": 10,
+       "conf": 0.99,
+       "acc": 1
+      },
+      {
+       "n": 11,
+       "conf": 0.9955,
+       "acc": 1
+      },
+      {
+       "n": 10,
+       "conf": 1,
+       "acc": 0.9
+      },
+      {
+       "n": 11,
+       "conf": 1,
+       "acc": 1
+      },
+      {
+       "n": 10,
+       "conf": 1,
+       "acc": 1
+      },
+      {
+       "n": 11,
+       "conf": 1,
+       "acc": 1
+      },
+      {
+       "n": 10,
+       "conf": 1,
+       "acc": 1
+      },
+      {
+       "n": 11,
+       "conf": 1,
+       "acc": 1
+      },
+      {
+       "n": 10,
+       "conf": 1,
+       "acc": 1
+      }
+     ]
+    },
+    "ece10EqualWidth": {
+     "ece": 0.0784,
+     "reliability": 0.0219,
+     "resolution": 0.041,
+     "uncertainty": 0.1152,
+     "diagram": [
+      {
+       "n": 2,
+       "conf": 0.425,
+       "acc": 1
+      },
+      {
+       "n": 10,
+       "conf": 0.5426,
+       "acc": 0.5
+      },
+      {
+       "n": 4,
+       "conf": 0.655,
+       "acc": 0.25
+      },
+      {
+       "n": 8,
+       "conf": 0.765,
+       "acc": 0.5
+      },
+      {
+       "n": 4,
+       "conf": 0.84,
+       "acc": 0.25
+      },
+      {
+       "n": 130,
+       "conf": 0.9901,
+       "acc": 0.9538
+      }
+     ]
+    },
+    "eceGate": "diagnostic only: n = 158 < 500",
+    "hardOneShare": 0.5,
+    "hardOneErrors": 1,
+    "coverageAt5InSample": {
+     "coverage": 0.8291,
+     "risk": 0.0458,
+     "tau": 0.86,
+     "accepted": 131,
+     "note": "threshold fitted on these same rows: optimistic, not the §6.1 RISK (which needs a calib-OOD threshold)"
+    },
+    "jevConfidenceVsMaxP": {
+     "meanAbsDiff": 0.0344,
+     "pearson": 0.9836
+    },
+    "confusion": {
+     "as_expected": {
+      "as_expected": 45,
+      "drifted": 3
+     },
+     "drifted": {
+      "drifted": 52
+     },
+     "yes": {
+      "yes": 9,
+      "no": 1
+     },
+     "no": {
+      "no": 15,
+      "yes": 2
+     },
+     "superseded": {
+      "superseded": 7,
+      "binding": 1,
+      "informal": 2
+     },
+     "informal": {
+      "informal": 6
+     },
+     "out_of_scope": {
+      "binding": 8,
+      "informal": 4
+     },
+     "binding": {
+      "binding": 3
+     }
+    }
+   },
+   "labelPosition": {
+    "0": {
+     "n": 57,
+     "acc": 0.8772
+    },
+    "1": {
+     "n": 89,
+     "acc": 0.9101
+    },
+    "2": {
+     "n": 6,
+     "acc": 0.3333
+    },
+    "3": {
+     "n": 6,
+     "acc": 0.6667
+    }
+   },
+   "mostConfidentErrors": [
+    {
+     "recId": "kd_12413745b029f765cf9c7963",
+     "qid": "Q4",
+     "portKey": "Q4",
+     "label": "as_expected",
+     "pred": "drifted",
+     "maxP": 1,
+     "jevConfidence": 1,
+     "p": {
+      "as_expected": 0,
+      "drifted": 1
+     }
+    },
+    {
+     "recId": "kd_eeeaed33e2180fd8626110f9",
+     "qid": "X1",
+     "portKey": "X1",
+     "label": "no",
+     "pred": "yes",
+     "maxP": 0.98,
+     "jevConfidence": 0.96,
+     "p": {
+      "yes": 0.98,
+      "no": 0.02
+     }
+    },
+    {
+     "recId": "kd_e0671c76e4e4c5b23c4e2ac3",
+     "qid": "X4",
+     "portKey": "X4",
+     "label": "out_of_scope",
+     "pred": "binding",
+     "maxP": 0.97,
+     "jevConfidence": 0.96,
+     "p": {
+      "out_of_scope": 0,
+      "informal": 0.02,
+      "superseded": 0.01,
+      "binding": 0.97
+     }
+    },
+    {
+     "recId": "kd_02b15c8aebeeaa969fea52d0",
+     "qid": "X4",
+     "portKey": "X4",
+     "label": "out_of_scope",
+     "pred": "binding",
+     "maxP": 0.95,
+     "jevConfidence": 0.93,
+     "p": {
+      "superseded": 0.01,
+      "informal": 0.04,
+      "out_of_scope": 0,
+      "binding": 0.95
+     }
+    },
+    {
+     "recId": "kd_1fe784e4b4ef34428da4e911",
+     "qid": "X4",
+     "portKey": "X4",
+     "label": "superseded",
+     "pred": "informal",
+     "maxP": 0.94,
+     "jevConfidence": 0.92,
+     "p": {
+      "informal": 0.94,
+      "superseded": 0.06,
+      "out_of_scope": 0,
+      "binding": 0
+     }
+    },
+    {
+     "recId": "kd_830f98bb63a6ab96432125f4",
+     "qid": "X4",
+     "portKey": "X4",
+     "label": "superseded",
+     "pred": "informal",
+     "maxP": 0.9,
+     "jevConfidence": 0.87,
+     "p": {
+      "out_of_scope": 0.01,
+      "informal": 0.9,
+      "superseded": 0.09,
+      "binding": 0
+     }
+    },
+    {
+     "recId": "kd_e0aae3e80eb8a2824ac2e08c",
+     "qid": "X1",
+     "portKey": "X1",
+     "label": "yes",
+     "pred": "no",
+     "maxP": 0.85,
+     "jevConfidence": 0.7,
+     "p": {
+      "yes": 0.15,
+      "no": 0.85
+     }
+    },
+    {
+     "recId": "kd_5ed25f941de7897fbcdb69bc",
+     "qid": "X1",
+     "portKey": "X1",
+     "label": "no",
+     "pred": "yes",
+     "maxP": 0.83,
+     "jevConfidence": 0.66,
+     "p": {
+      "yes": 0.83,
+      "no": 0.17
+     }
+    },
+    {
+     "recId": "kd_ac563476d445355ade2f60b1",
+     "qid": "X4",
+     "portKey": "X4",
+     "label": "out_of_scope",
+     "pred": "binding",
+     "maxP": 0.82,
+     "jevConfidence": 0.76,
+     "p": {
+      "out_of_scope": 0.01,
+      "informal": 0.17,
+      "superseded": 0,
+      "binding": 0.82
+     }
+    },
+    {
+     "recId": "kd_2e4a0e02263649377f66f853",
+     "qid": "Q4",
+     "portKey": "Q4",
+     "label": "as_expected",
+     "pred": "drifted",
+     "maxP": 0.78,
+     "jevConfidence": 0.56,
+     "p": {
+      "drifted": 0.78,
+      "as_expected": 0.22
+     }
+    },
+    {
+     "recId": "kd_c8a6c610ddb2004865365775",
+     "qid": "X4",
+     "portKey": "X4",
+     "label": "out_of_scope",
+     "pred": "binding",
+     "maxP": 0.78,
+     "jevConfidence": 0.71,
+     "p": {
+      "binding": 0.78,
+      "out_of_scope": 0.04,
+      "informal": 0.17,
+      "superseded": 0.01
+     }
+    },
+    {
+     "recId": "kd_6875ce48f7b5a3ab98052a65",
+     "qid": "X4",
+     "portKey": "X4",
+     "label": "out_of_scope",
+     "pred": "binding",
+     "maxP": 0.71,
+     "jevConfidence": 0.61,
+     "p": {
+      "binding": 0.71,
+      "out_of_scope": 0.05,
+      "informal": 0.23,
+      "superseded": 0.01
+     }
+    },
+    {
+     "recId": "kd_b78f4468131c198c2f8d7d2b",
+     "qid": "X4",
+     "portKey": "X4",
+     "label": "out_of_scope",
+     "pred": "binding",
+     "maxP": 0.71,
+     "jevConfidence": 0.61,
+     "p": {
+      "superseded": 0,
+      "out_of_scope": 0.04,
+      "binding": 0.71,
+      "informal": 0.25
+     }
+    },
+    {
+     "recId": "kd_bbdf7551fee8d8b8e63acc2c",
+     "qid": "X4",
+     "portKey": "X4",
+     "label": "out_of_scope",
+     "pred": "informal",
+     "maxP": 0.66,
+     "jevConfidence": 0.55,
+     "p": {
+      "binding": 0.32,
+      "superseded": 0.01,
+      "informal": 0.66,
+      "out_of_scope": 0.01
+     }
+    },
+    {
+     "recId": "kd_060d64662ce16fce166298b0",
+     "qid": "X4",
+     "portKey": "X4",
+     "label": "out_of_scope",
+     "pred": "binding",
+     "maxP": 0.65,
+     "jevConfidence": 0.53,
+     "p": {
+      "superseded": 0,
+      "out_of_scope": 0,
+      "binding": 0.65,
+      "informal": 0.35
+     }
+    },
+    {
+     "recId": "kd_09d047a45c85a3b5b33a30fa",
+     "qid": "X4",
+     "portKey": "X4",
+     "label": "out_of_scope",
+     "pred": "binding",
+     "maxP": 0.64,
+     "jevConfidence": 0.52,
+     "p": {
+      "out_of_scope": 0.06,
+      "informal": 0.29,
+      "superseded": 0.01,
+      "binding": 0.64
+     }
+    },
+    {
+     "recId": "kd_dad4d50e8d311b6638aac790",
+     "qid": "Q4",
+     "portKey": "Q4",
+     "label": "as_expected",
+     "pred": "drifted",
+     "maxP": 0.57,
+     "jevConfidence": 0.14,
+     "p": {
+      "as_expected": 0.43,
+      "drifted": 0.57
+     }
+    },
+    {
+     "recId": "kd_cbf13505a4fabcb6b587121e",
+     "qid": "X4",
+     "portKey": "X4",
+     "label": "out_of_scope",
+     "pred": "informal",
+     "maxP": 0.56,
+     "jevConfidence": 0.41,
+     "p": {
+      "out_of_scope": 0.03,
+      "informal": 0.56,
+      "superseded": 0,
+      "binding": 0.41
+     }
+    },
+    {
+     "recId": "kd_1fb94667166d6516915652fa",
+     "qid": "X4",
+     "portKey": "X4",
+     "label": "out_of_scope",
+     "pred": "informal",
+     "maxP": 0.53,
+     "jevConfidence": 0.37,
+     "p": {
+      "superseded": 0,
+      "informal": 0.53,
+      "out_of_scope": 0.01,
+      "binding": 0.46
+     }
+    },
+    {
+     "recId": "kd_05aafb1ca27c4b7f25ee954d",
+     "qid": "X4",
+     "portKey": "X4",
+     "label": "out_of_scope",
+     "pred": "informal",
+     "maxP": 0.51,
+     "jevConfidence": 0.35,
+     "p": {
+      "binding": 0.38,
+      "informal": 0.51,
+      "superseded": 0.01,
+      "out_of_scope": 0.1
+     }
+    }
+   ],
+   "summary": {
+    "macroBacc": 0.845,
+    "pooledAcc": 0.8671,
+    "macroChanceBacc": 0.4167,
+    "macroDevMajorityAccLEAKY": 0.5122
+   }
+  }
+ },
+ "haiku": {
+  "model": [
+   "claude-haiku-5-5"
+  ],
+  "rows": 38,
+  "ok": 38,
+  "faults": 0,
+  "faultCodes": {},
+  "costUsdListPrice": 0.0118,
+  "pooled": {
+   "n": 38,
+   "jev": {
+    "n": 38,
+    "clusters": "record",
+    "records": 37,
+    "acc": [
+     0.6579,
+     0.5,
+     0.8108
+    ],
+    "bacc": [
+     0.6125,
+     0.4792,
+     0.7333
+    ],
+    "macroF1": [
+     0.6066,
+     0.4692,
+     0.7295
+    ],
+    "brier": [
+     0.3939,
+     0.2254,
+     0.5858
+    ],
+    "bssUniform": [
+     0.3792,
+     0.0979,
+     0.6368
+    ]
+   },
+   "haiku": {
+    "n": 38,
+    "clusters": "record",
+    "records": 37,
+    "acc": [
+     0.7895,
+     0.65,
+     0.9189
+    ],
+    "bacc": [
+     0.8,
+     0.6667,
+     0.8769
+    ],
+    "macroF1": [
+     0.8067,
+     0.6599,
+     0.875
+    ],
+    "brier": [
+     0.2992,
+     0.1392,
+     0.4809
+    ],
+    "bssUniform": [
+     0.5285,
+     0.2641,
+     0.7737
+    ]
+   },
+   "jevMinusHaiku": {
+    "n": 38,
+    "clusters": "record",
+    "acc": {
+     "est": -0.1316,
+     "lo": -0.2703,
+     "hi": 0,
+     "noise": false
+    },
+    "bacc": {
+     "est": -0.1875,
+     "lo": -0.2821,
+     "hi": -0.033,
+     "noise": false
+    },
+    "macroF1": {
+     "est": -0.2001,
+     "lo": -0.2956,
+     "hi": -0.0188,
+     "noise": false
+    },
+    "brier": {
+     "est": 0.0947,
+     "lo": -0.0582,
+     "hi": 0.2494
+    },
+    "bssUniform": {
+     "est": -0.1493,
+     "lo": -0.3858,
+     "hi": 0.0886
+    }
+   },
+   "note": "pooled across ports and groups, one-way record bootstrap; acc and Brier are the readable rows (bacc / macro-F1 mix label sets across ports)"
+  }
+ },
+ "smokeVsJ1": {
+  "n": 10,
+  "argmaxFlips": 0,
+  "maxAbsDp": 0.01,
+  "meanMaxAbsDp": 0.001,
+  "identical": 9,
+  "versions": [
+   "jev-1.13.0"
+  ]
+ },
+ "jev": {
+  "requested": "jev-latest",
+  "versions": {
+   "jev-1.13.0": 1181
+  },
+  "requestsLedger": 1176,
+  "requestsByTag": {
+   "score": 1116,
+   "reread": 60
+  },
+  "usage": {
+   "smoke": {
+    "input_tokens": 4264,
+    "output_tokens": 352
+   },
+   "J1 interactive": {
+    "input_tokens": 258284,
+    "output_tokens": 26138
+   },
+   "re-read interactive": {
+    "input_tokens": 10183,
+    "output_tokens": 1037
+   },
+   "J1 kinetics": {
+    "input_tokens": 222079,
+    "output_tokens": 24819
+   },
+   "re-read kinetics": {
+    "input_tokens": 9255,
+    "output_tokens": 1108
+   },
+   "J1 runbook": {
+    "input_tokens": 71126,
+    "output_tokens": 6169
+   },
+   "re-read runbook": {
+    "input_tokens": 9408,
+    "output_tokens": 771
+   },
+   "total": {
+    "input_tokens": 584599,
+    "output_tokens": 60394
+   }
+  },
+  "costEstimateUsd": {
+   "inputOnly": 0.0246,
+   "note": "at the policy price inputPerMTok 0.042 (second-hand, unverified; output price unknown, so not included). The owner's TypeSafe account shows the billed figure"
+  }
+ },
+ "validity": {
+  "interactive": {
+   "valid": false,
+   "why": "re-read |dp| reached 0.06 (rule: every |dp| < 0.01); coverage complete, nothing rejected, one version"
+  },
+  "kinetics": {
+   "valid": false,
+   "why": "re-read |dp| reached 0.07 (rule: every |dp| < 0.01); coverage complete, nothing rejected, one version"
+  },
+  "runbook": {
+   "valid": false,
+   "why": "re-read |dp| reached 0.03 (rule: every |dp| < 0.01); coverage complete, nothing rejected, one version"
+  }
+ }
+}

@@ -1,0 +1,331 @@
+{
+ "schema": "kev-j1/sources@1",
+ "generatedAt": "2026-10-09T09:44:55.990Z",
+ "manifest": "experiments/kev-data/out/wave-a-manifest.json",
+ "inputs": "/var/tmp/foundry-work/kev/j1/inputs",
+ "rebuildRoot": "/var/tmp/foundry-work/kev/builds-rebuild",
+ "groups": {
+  "interactive": {
+   "group": "interactive",
+   "devFile": "/var/tmp/foundry-work/kev/j1/inputs/interactive-dev-select-9459e2fce448.jsonl",
+   "devSha256": "9459e2fce44872aa5d0ae0a29587b13b125081f3d73f7afe71aa4a1d3eac32f7",
+   "rebuild": {
+    "dir": "/var/tmp/foundry-work/kev/builds-rebuild/kd-ebc92259bb8eadac",
+    "buildId": "kd-ebc92259bb8eadac",
+    "manifestBuildId": "kd-b75fbe30ad81c032",
+    "jobMaxState": 384,
+    "manifestJobMaxState": 384,
+    "devSelectIdentical": false,
+    "lineDiff": {
+     "identicalLines": 466,
+     "inputLines": 487,
+     "rebuiltLines": 487,
+     "onlyInInput": {
+      "X1": 21
+     },
+     "onlyInRebuild": {
+      "X1": 21
+     }
+    },
+    "slices": {
+     "train": {
+      "records": 2480,
+      "manifestRecords": 2496,
+      "kevSha256": "13a704520ccf46e66217688ecf2c9755106096dc007b0082d26bd8e1b88f89c7",
+      "manifestKevSha256": "ca7c9147cea62646f521d1ce4e348b5a016e1e13c65e8414a5dde00902ede627",
+      "kevMatch": false,
+      "metaMatch": false,
+      "dropped": {
+       "state-in-dev-select": {
+        "Q6": 53,
+        "X1": 2,
+        "Q2": 1
+       },
+       "state-in-calib-in": {
+        "X1": 3
+       },
+       "duplicate": {
+        "X1": 14,
+        "Q6": 12,
+        "Q2": 1
+       },
+       "misfit-job-max-state": {
+        "X1": 1
+       }
+      },
+      "manifestDropped": {
+       "state-in-dev-select": {
+        "Q6": 53,
+        "Q2": 1
+       },
+       "duplicate": {
+        "X1": 2,
+        "Q6": 12,
+        "Q2": 1
+       },
+       "state-in-test-in": {
+        "X1": 1
+       },
+       "misfit-job-max-state": {
+        "X1": 1
+       }
+      }
+     },
+     "calib-in": {
+      "records": 196,
+      "manifestRecords": 198,
+      "kevSha256": "79ca47f37807f59fdeb455c08b105b38bfa893e48d86f7c9120318f136168ebb",
+      "manifestKevSha256": "38fe8439fc962a143fe9b91d4e77ea15228d229068228e3a96400551e758af34",
+      "kevMatch": false,
+      "metaMatch": false,
+      "dropped": {
+       "duplicate": {
+        "X1": 2
+       },
+       "state-in-dev-select": {
+        "X1": 1
+       },
+       "misfit-job-max-state": {
+        "X1": 1
+       }
+      },
+      "manifestDropped": {
+       "duplicate": {
+        "X1": 1
+       },
+       "misfit-job-max-state": {
+        "X1": 1
+       }
+      }
+     },
+     "dev-select": {
+      "records": 487,
+      "manifestRecords": 487,
+      "kevSha256": "d8994dcbd733ffe568d958200450f6fbe504918db4c5d1040c233bf225b4604a",
+      "manifestKevSha256": "9459e2fce44872aa5d0ae0a29587b13b125081f3d73f7afe71aa4a1d3eac32f7",
+      "kevMatch": false,
+      "metaMatch": false,
+      "dropped": {
+       "duplicate": {
+        "Q6": 5
+       },
+       "misfit-job-max-state": {
+        "X1": 1
+       }
+      },
+      "manifestDropped": {
+       "duplicate": {
+        "Q6": 5
+       },
+       "misfit-job-max-state": {
+        "X1": 1
+       }
+      }
+     }
+    }
+   },
+   "verified": false,
+   "meta": null,
+   "trainDir": null,
+   "clusters": "record only (no trustworthy sidecar): CIs form-unclustered, likely too narrow"
+  },
+  "kinetics": {
+   "group": "kinetics",
+   "devFile": "/var/tmp/foundry-work/kev/j1/inputs/kinetics-dev-select-d1d34f6fa6ad.jsonl",
+   "devSha256": "d1d34f6fa6adc40a0a621b00185b697f361600cf42ad339e2a3a7b98c67c40a6",
+   "rebuild": {
+    "dir": "/var/tmp/foundry-work/kev/builds-rebuild/kd-653788d17645d1fc",
+    "buildId": "kd-653788d17645d1fc",
+    "manifestBuildId": "kd-066639ecd1eed9f9",
+    "jobMaxState": 393,
+    "manifestJobMaxState": 2056,
+    "devSelectIdentical": true,
+    "lineDiff": null,
+    "slices": {
+     "train": {
+      "records": 4023,
+      "manifestRecords": 4026,
+      "kevSha256": "ce1636f5e1e10e9c7778336228bc87579697e436f12bde98e37e03e9608f9cf3",
+      "manifestKevSha256": "ee18cf2df32de61c664c6d826b3d384219d3f141b7c9059441d12a3ff54c03dc",
+      "kevMatch": false,
+      "metaMatch": false,
+      "dropped": {
+       "state-in-dev-select": {
+        "K1": 31
+       },
+       "duplicate": {
+        "K1": 5,
+        "X4": 1
+       },
+       "state-in-calib-in": {
+        "X3": 1
+       },
+       "misfit-job-max-state": {
+        "K3": 4
+       }
+      },
+      "manifestDropped": {
+       "state-in-dev-select": {
+        "K1": 31
+       },
+       "state-in-test-in": {
+        "X3": 1
+       },
+       "duplicate": {
+        "K1": 5,
+        "X4": 1
+       },
+       "state-in-calib-in": {
+        "X3": 1
+       }
+      }
+     },
+     "calib-in": {
+      "records": 450,
+      "manifestRecords": 450,
+      "kevSha256": "73540b52da4799c287d1bab2e8d4c15c68ae60d1df155dd83b66a276fabdbff4",
+      "manifestKevSha256": "73540b52da4799c287d1bab2e8d4c15c68ae60d1df155dd83b66a276fabdbff4",
+      "kevMatch": true,
+      "metaMatch": true,
+      "dropped": {},
+      "manifestDropped": {}
+     },
+     "dev-select": {
+      "records": 461,
+      "manifestRecords": 461,
+      "kevSha256": "d1d34f6fa6adc40a0a621b00185b697f361600cf42ad339e2a3a7b98c67c40a6",
+      "manifestKevSha256": "d1d34f6fa6adc40a0a621b00185b697f361600cf42ad339e2a3a7b98c67c40a6",
+      "kevMatch": true,
+      "metaMatch": true,
+      "dropped": {
+       "duplicate": {
+        "K1": 3
+       }
+      },
+      "manifestDropped": {
+       "duplicate": {
+        "K1": 3
+       }
+      }
+     }
+    }
+   },
+   "verified": true,
+   "meta": "/var/tmp/foundry-work/kev/builds-rebuild/kd-653788d17645d1fc/kev/dev-select.meta.jsonl",
+   "trainDir": "/var/tmp/foundry-work/kev/builds-rebuild/kd-653788d17645d1fc/kev",
+   "clusters": "form x world (rebuilt sidecar, verified)"
+  },
+  "runbook": {
+   "group": "runbook",
+   "devFile": "/var/tmp/foundry-work/kev/j1/inputs/runbook-dev-select-e431400e7d8b.jsonl",
+   "devSha256": "e431400e7d8b7502ba329b22e06ae505b0821da012cbed4587a69078a2160f53",
+   "rebuild": {
+    "dir": "/var/tmp/foundry-work/kev/builds-rebuild/kd-ca33b934faf330b3",
+    "buildId": "kd-ca33b934faf330b3",
+    "manifestBuildId": "kd-0b31edcda341fe60",
+    "jobMaxState": 384,
+    "manifestJobMaxState": 1721,
+    "devSelectIdentical": false,
+    "lineDiff": {
+     "identicalLines": 147,
+     "inputLines": 158,
+     "rebuiltLines": 164,
+     "onlyInInput": {
+      "X1": 11
+     },
+     "onlyInRebuild": {
+      "X1": 17
+     }
+    },
+    "slices": {
+     "train": {
+      "records": 1432,
+      "manifestRecords": 1349,
+      "kevSha256": "ac232188e6c3194aba81d761016a89ba5fff23da15c80ebfc051babecd48285b",
+      "manifestKevSha256": "bd8cafb63eb0a59047468f3ff549af6549a7973dd38507e1d757591bb38057c0",
+      "kevMatch": false,
+      "metaMatch": false,
+      "dropped": {
+       "duplicate": {
+        "X1": 4,
+        "X4": 19
+       },
+       "state-in-dev-select": {
+        "X1": 4,
+        "X4": 122
+       },
+       "state-in-calib-in": {
+        "X1": 10
+       }
+      },
+      "manifestDropped": {
+       "state-in-test-in": {
+        "X1": 65
+       },
+       "state-in-dev-select": {
+        "X1": 20,
+        "X4": 122
+       },
+       "state-in-calib-in": {
+        "X1": 8
+       },
+       "duplicate": {
+        "X1": 8,
+        "X4": 19
+       }
+      }
+     },
+     "calib-in": {
+      "records": 197,
+      "manifestRecords": 183,
+      "kevSha256": "172ef0b32e3b23749fa7a4d195c4316695a7b200159a9c8ca864f79e5531dbd5",
+      "manifestKevSha256": "491e8f030cc55ac55d1958219c0606a3ca031460ed0ddccbe68fb7c2c7d3f141",
+      "kevMatch": false,
+      "metaMatch": false,
+      "dropped": {
+       "state-in-dev-select": {
+        "X1": 2
+       },
+       "duplicate": {
+        "X1": 1
+       }
+      },
+      "manifestDropped": {
+       "state-in-test-in": {
+        "X1": 11
+       },
+       "state-in-dev-select": {
+        "X1": 6
+       }
+      }
+     },
+     "dev-select": {
+      "records": 164,
+      "manifestRecords": 158,
+      "kevSha256": "9d8ed0164640e00e4c03d10f3672c5cd819dd916accc030853f02eed05046ecd",
+      "manifestKevSha256": "e431400e7d8b7502ba329b22e06ae505b0821da012cbed4587a69078a2160f53",
+      "kevMatch": false,
+      "metaMatch": false,
+      "dropped": {
+       "duplicate": {
+        "X4": 3
+       }
+      },
+      "manifestDropped": {
+       "state-in-test-in": {
+        "X1": 6
+       },
+       "duplicate": {
+        "X4": 3
+       }
+      }
+     }
+    }
+   },
+   "verified": false,
+   "meta": null,
+   "trainDir": null,
+   "clusters": "record only (no trustworthy sidecar): CIs form-unclustered, likely too narrow"
+  }
+ }
+}
