@@ -59,7 +59,7 @@ export const PARAMS = Object.freeze({
   linesMin: 3, proseMinWords: 12,
   mapKeys: 32,
   rate: Object.freeze({ k: 2, slack: 0.02, min: 0.05, max: 0.5 }),
-  numMargin: Object.freeze({ span: 0.25, rel: 0.1 }),
+  numMargin: Object.freeze({ span: 0.5, rel: 0.25 }),   // wide: a few tasks under-sample a range; this flags scale shifts
   countMargin: Object.freeze({ span: 0.25, rel: 0.15, abs: 1 }),
   caps: Object.freeze({ df: 20000, values: 64, promptValues: 200, examples: 4 }),
   fieldMax: 12, fieldsMax: 24, fieldLenMax: 32, fieldWordsMax: 3, headMax: 24, sentenceMax: 160,

@@ -116,12 +116,13 @@ test('a format path changing class is novel; a free-text path changing shape is 
 
 test('numeric margins: inside the margin is fine, beyond it is novel; non-integers on an integer path are novel', () => {
   const t = q => ({ prompt: 'p', inputs: { q } });
-  const prof = learnProfile([t(10), t(20), t(30)]);   // span 20: margin max(5, 3) = 5
-  assert.equal(checkProfile(prof, t(34)).novel, false);
-  assert.equal(checkProfile(prof, t(6)).novel, false);
-  const hi = checkProfile(prof, t(40));
+  const prof = learnProfile([t(10), t(20), t(30)]);   // span 20: margin max(20·0.5, 30·0.25) = 10
+  assert.equal(checkProfile(prof, t(39)).novel, false);
+  assert.equal(checkProfile(prof, t(1)).novel, false);
+  const hi = checkProfile(prof, t(45));
   assert.ok(hi.novel && hi.reasons[0].feature === 'number-range');
-  assert.equal(hi.reasons[0].ratio, 2);   // excess 5 over a margin of 5
+  assert.equal(hi.reasons[0].ratio, 1.5);   // excess 5 over a margin of 10
+  assert.ok(checkProfile(prof, t(-1)).novel);
   assert.ok(features(checkProfile(prof, t(20.5))).includes('non-integer'));
 });
 
