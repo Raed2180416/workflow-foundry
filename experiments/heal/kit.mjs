@@ -54,34 +54,58 @@ const freeze = v => { if (v && typeof v === 'object') { for (const c of Object.v
 // agrees with the frozen kit" is therefore judged on what can change a model choice or a replay, not on bytes:
 //   - `policyVersion` and `notes` are prose (a bumped version or a new note changes no call);
 //   - a provider key that no file of the frozen kit mentions cannot change a call the kit makes. Today that is `childEnv`, which the
-//     engine lane added to claude-cli on 2026-10-08 for the `claude -p` child environment. The exemption is proved, not assumed: it
-//     lapses as soon as any kit source mentions the key.
-// Anything else (a model id, class, price, digest, decoding, provider invocation, class order, escalation) is blocking drift.
+//     engine lane added to claude-cli on 2026-10-08 for the `claude -p` child environment.
+//   - a top-level policy key that no file of the frozen kit mentions (today `judgmentModels`, added with Jev on 2026-10-09, 38f74fd);
+//   - a whole provider entry whose name no file of the frozen kit mentions AND that no `models[]` entry (live or frozen) names as its
+//     provider (today `typesafe-systemone`, Jev's systemone-http provider). The second condition matters: the kit looks a generative
+//     model's provider up by the name in `models[].provider`, so a provider can be read without its name appearing in any source.
+// Each exemption is proved, not assumed: it holds only while no file of the frozen kit's src/ contains the string (experiments/lib/
+// models.mjs is outside the kit and does not count), and it lapses the moment one does. Each one is reported in `ignored` with its
+// proof. This is the owner's Q6 decision of 2026-10-09 (research/heal-20261008/DESIGN.md, note of that date); it is reversible by
+// emptying the two lists below.
+// Anything else (a model id, class, price, digest, decoding, provider invocation, class order, escalation, a generative model added
+// to models[]) is blocking drift.
 // The run itself always uses the kit's own policy of record (below), so its policy hash, its replay keys and its call costs stay
 // those of the recorded runs (the 2026-10-08 flags lower the reported cost per call; synthesis rule R3 makes those costs incomparable).
 export const PROSE_FIELDS = Object.freeze(['policyVersion', 'notes']);
 export const PROVIDER_KEYS_UNREAD_BY_KIT = Object.freeze(['childEnv']);
+export const TOP_LEVEL_KEYS_UNREAD_BY_KIT = Object.freeze(['judgmentModels']);
+export const PROVIDERS_UNREAD_BY_KIT = Object.freeze(['typesafe-systemone']);
 const stable = v => JSON.stringify(v, (_, x) => (x && typeof x === 'object' && !Array.isArray(x) ? Object.fromEntries(Object.keys(x).sort().map(k => [k, x[k]])) : x));
 const diffPaths = (a, b, at = '') => {
   const obj = x => x !== null && typeof x === 'object' && !Array.isArray(x);
   if (obj(a) && obj(b)) return [...new Set([...Object.keys(a), ...Object.keys(b)])].sort().flatMap(k => diffPaths(a[k], b[k], at ? `${at}.${k}` : k));
   return stable(a) === stable(b) ? [] : [at || '(root)'];
 };
+const unmentioned = (kitSources, s) => !kitSources.some(text => text.includes(s));
+const proof = s => `no kit source mentions "${s}"`;
 export function policyDrift(live, frozen, { kitSources = [] } = {}) {
   const L = structuredClone(live), F = structuredClone(frozen), ignored = [];
   for (const k of PROSE_FIELDS) { if (stable(L[k]) !== stable(F[k])) ignored.push(k); delete L[k]; delete F[k]; }
   for (const key of PROVIDER_KEYS_UNREAD_BY_KIT) {
-    if (kitSources.some(text => text.includes(key))) continue;      // the kit reads it: any difference stays blocking
+    if (!unmentioned(kitSources, key)) continue;                     // the kit reads it: any difference stays blocking
     for (const name of new Set([...Object.keys(L.providers ?? {}), ...Object.keys(F.providers ?? {})])) {
       const a = L.providers?.[name], b = F.providers?.[name];
-      if (stable(a?.[key]) !== stable(b?.[key])) ignored.push(`providers.${name}.${key}`);
+      if (stable(a?.[key]) !== stable(b?.[key])) ignored.push(`providers.${name}.${key}: ${proof(key)}`);
       if (a) delete a[key]; if (b) delete b[key];
     }
+  }
+  for (const key of TOP_LEVEL_KEYS_UNREAD_BY_KIT) {
+    if (!unmentioned(kitSources, key)) continue;
+    if (stable(L[key]) !== stable(F[key])) ignored.push(`${key}: ${proof(key)}`);
+    delete L[key]; delete F[key];
+  }
+  const namedByModels = new Set([...(L.models ?? []), ...(F.models ?? [])].map(m => m?.provider));
+  for (const name of PROVIDERS_UNREAD_BY_KIT) {
+    if (!unmentioned(kitSources, name) || namedByModels.has(name)) continue;
+    if (stable(L.providers?.[name]) !== stable(F.providers?.[name])) ignored.push(`providers.${name}: ${proof(name)}; no models[] entry names it`);
+    if (L.providers) delete L.providers[name]; if (F.providers) delete F.providers[name];
   }
   const blocking = diffPaths(L, F);
   return { bytesIdentical: false, blocking, ignored, ok: blocking.length === 0 };
 }
-const kitSourceTexts = kitDir => walk(path.join(kitDir, 'src')).filter(f => /\.(mjs|js|json)$/.test(f)).map(f => readFileSync(f, 'utf8'));
+// Every file of the frozen kit's src/ (not only .mjs: the proof is "no file contains the string").
+export const kitSourceTexts = kitDir => walk(path.join(kitDir, 'src')).map(f => readFileSync(f, 'utf8'));
 
 let cached;
 export async function loadKit({ kitDir = KIT_DIR, pins = readPins(), verify = true } = {}) {

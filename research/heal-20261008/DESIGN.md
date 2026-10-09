@@ -1055,3 +1055,45 @@ pointer at the top of B.5. Read-only paths and git state were not touched. Live 
 not a false alarm (conservative). The brief gives the proposer the localised flip (BRIGHTDESK MDY -> DMY), i.e. the dev oracle's answer
 for that field, by design (§7.5); rule 3 only matches the literal enum value, so "BRIGHTDESK is day-first" would pass the scanner and
 only V7's stratum would catch it. The H-p1 v3 head stays promoted; the H-rec and H-p1 lint-debt heads stay promoted (they fix nothing).
+
+---
+
+### Note 2026-10-09: Q6, a proved judgment-only exemption in the policyDrift gate
+
+**Decision.** The owner delegated BLOCKER-SYNTHESIS Q6 with full permissions on 2026-10-09, and the recommended option was
+taken. It is reversible.
+- Commit `38f74fd` added Jev to the owner policy (`judgmentModels`, `providers.typesafe-systemone`), and since then the
+  `policyDrift` gate in `experiments/heal/kit.mjs` has blocked.
+- It now treats two entries as **proved unread**, the same way it already treated `providers.*.childEnv`:
+  - the top-level key `judgmentModels`;
+  - the whole provider entry `providers.typesafe-systemone`.
+- Each is exempt only while **no file of the frozen kit's `src/`** (`880c6b9`) contains its string.
+  `experiments/lib/models.mjs` is outside the kit and does not count.
+- The provider has one more condition: no `models[]` entry, live or frozen, may name it. This is because the kit resolves a
+  generative model's provider by that name, without the name appearing in any source.
+- Each exemption is reported in `ignored` with its proof, for example `judgmentModels: no kit source mentions
+  "judgmentModels"`.
+- Everything else still blocks, including a generative model added to `models[]`. The exemption lapses the moment a kit
+  source mentions the key or the name.
+
+**The proof today.** The frozen `src/` does have a `SystemOneClient` (`src/judgment.mjs`). It is configured from
+`FOUNDRY_SYSTEMONE_URL` and the caller, never from the policy file, and neither string occurs in any of its 44 files.
+
+**What does not change.**
+- Replays, counterfactuals and verification still run under the kit's **policy of record**: `fe63f99b…`, policyVersion
+  `2026-10-07.1`. Their policy hash, replay keys and call costs are those of the recorded C0 and P1 runs.
+- The live owner file (`cfe79728…`) is only compared, never loaded.
+
+**Tests.** In `test/kit-gate.test.mjs`:
+- The Jev policy at `38f74fd` against the frozen policy gives `ok: true`, with the two proved entries plus prose and
+  `childEnv` in `ignored`.
+- These cases block:
+  - a new generative model;
+  - a generative model routed through `typesafe-systemone`;
+  - a kit source that mentions `judgmentModels` or `typesafe-systemone`.
+- The frozen kit for these tests comes from git (`freezeSrc`, `git archive 880c6b9`, checked blob by blob against
+  `pins.json`), so they run without `/opt/foundry-kit`.
+
+**How to reverse.** Empty `TOP_LEVEL_KEYS_UNREAD_BY_KIT` and `PROVIDERS_UNREAD_BY_KIT`.
+
+**Nothing here touches heal proposal `p-a3336190-r4`.** It is not approved, and it must not be self-approved.
