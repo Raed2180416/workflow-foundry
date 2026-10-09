@@ -1,7 +1,8 @@
 // Hosted Claude models through the headless `claude -p` CLI (DESIGN §2). One structured
 // judgment per call: no tools, no MCP, no session, an empty throwaway cwd, a per-call USD cap.
 // The CLI authenticates with its own managed login, so the environment is inherited (minus
-// repository credentials) and is never logged.
+// repository credentials and the CLI's decoding variables) and is never logged; the journal
+// records only the closed-list and cache-tier variables the child saw (childEnvRecord).
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -21,6 +22,15 @@ const RATE = /\b(429|529)\b|overloaded|rate.?limit|usage limit|hit your (usage )
 const versions = new Map();
 
 const fail = (code, message, extra = {}) => Object.assign(new FoundryError(code, message), extra);
+// Wait for a shared promise (the per-binary version probe), but stop waiting when this caller's signal aborts. The probe keeps
+// running for other callers; it is bounded by its own timeout.
+const untilAborted = (promise, signal) => !signal ? promise : new Promise((resolve, reject) => {
+  const cancelled = () => fail('CANCELLED', 'claude CLI call cancelled before launch');
+  if (signal.aborted) { promise.catch(() => {}); reject(cancelled()); return; }
+  const onAbort = () => reject(cancelled());
+  signal.addEventListener('abort', onAbort, { once: true });
+  promise.then(v => { signal.removeEventListener('abort', onAbort); resolve(v); }, e => { signal.removeEventListener('abort', onAbort); reject(e); });
+});
 const finishOf = stop => ({ end_turn: 'stop', tool_use: 'stop', stop_sequence: 'stop', max_tokens: 'length', refusal: 'refusal' })[stop] ?? (stop ?? null);
 // Exact id, or the same id with a dated snapshot suffix (claude-haiku-4-5 ~ claude-haiku-4-5-20251001).
 const dated = (a, b) => a.length === b.length + 9 && a.startsWith(`${b}-`) && /^\d{8}$/.test(a.slice(b.length + 1));
@@ -30,8 +40,19 @@ const usageOf = u => u && ({ inputTokens: u.input_tokens ?? 0, outputTokens: u.o
 // max tokens are not controllable here, so any requested value becomes the provider default.
 export const claudeCliDecoding = DECODING_BY_KIND['claude-cli'];
 
+// CLI variables that change the decoding: the replay key hashes the decoding this provider applies through its flags
+// (claudeCliDecoding: --effort, MAX_THINKING_TOKENS, provider-default max tokens and temperature), so an inherited value would make
+// the key false. Observed in the claude 2.1.295 binary: "CLAUDE_CODE_EFFORT_LEVEL overrides effort for this session" (over --effort);
+// CLAUDE_CODE_MAX_OUTPUT_TOKENS sets the output cap; CLAUDE_CODE_EXTRA_BODY merges fields into the API request; the others switch
+// thinking or set a temperature. Removed from the child, like CLAUDE_EFFORT and MAX_THINKING_TOKENS (SCRUBBED_ENV) before them.
+const DECODING_ENV = /^(CLAUDE_CODE_EFFORT_LEVEL|CLAUDE_CODE_ALWAYS_ENABLE_EFFORT|CLAUDE_CODE_MAX_OUTPUT_TOKENS|CLAUDE_CODE_EXTRA_BODY|CLAUDE_CODE_DISABLE_THINKING|CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING|DISABLE_INTERLEAVED_THINKING|CLAUDE_CODE_AUTO_MODE_TEMPERATURE)$/;
+// CLI variables outside the closed list that also set the prompt-cache tier or switch caching off (observed in the same binary next to
+// FORCE_PROMPT_CACHING_5M). They do not change the decoding, so they pass through; when the child inherits one, the journal records it
+// next to the flags, because it can override what the flags do to the cost (childEnvRecord).
+const CACHE_TIER_ENV = /^(DISABLE_PROMPT_CACHING(_[A-Z]+)?|ENABLE_PROMPT_CACHING_1H(_BEDROCK)?|CLAUDE_CODE_(SUBAGENT_)?PROMPT_CACHE_TTL)$/;
+
 export function claudeEnv(env = process.env) {
-  return Object.fromEntries(Object.entries(env).filter(([k, v]) => typeof v === 'string' && !SCRUBBED.test(k)));
+  return Object.fromEntries(Object.entries(env).filter(([k, v]) => typeof v === 'string' && !SCRUBBED.test(k) && !DECODING_ENV.test(k)));
 }
 
 // Child-process tuning that applies when the policy's provider config has no `childEnv` block (research/review-20261007/
@@ -62,6 +83,8 @@ export function claudeChildEnv(env = process.env, childEnv = DEFAULT_CHILD_ENV, 
 export function childEnvRecord(childProcessEnv, block = {}) {
   const out = {};
   for (const name of CHILD_ENV_ALLOWED) if (Object.hasOwn(block, name) || Object.hasOwn(childProcessEnv, name)) out[name] = childProcessEnv[name] ?? null;
+  // An inherited cache-tier variable can override the cache flag, so it is on the record too (present only; values are tier settings).
+  for (const name of Object.keys(childProcessEnv).filter(n => CACHE_TIER_ENV.test(n)).sort()) out[name] = childProcessEnv[name];
   return out;
 }
 
@@ -99,7 +122,8 @@ export class ClaudeCliProvider {
     if (!config || config.kind !== 'claude-cli') throw new FoundryError('MODEL_POLICY_INVALID', `Policy has no claude-cli provider named ${providerName}`);
     if (config.invocation.some(a => a === '--fallback-model' || a.startsWith('--fallback-model='))) throw new FoundryError('MODEL_POLICY_INVALID', '--fallback-model is never passed');
     if (typeof maxBudgetUsd !== 'number' || !(maxBudgetUsd > 0 && maxBudgetUsd <= 25)) throw new FoundryError('MODEL_REQUEST', 'maxBudgetUsd must be in (0, 25]');
-    const block = childEnv === undefined ? validateChildEnv(config.childEnv ?? DEFAULT_CHILD_ENV, `provider ${providerName} childEnv`) : validateChildEnv(childEnv, 'childEnv');
+    // Only an absent block means "the default": an explicit null in a policy object that bypassed validatePolicy is refused, not defaulted.
+    const block = childEnv === undefined ? validateChildEnv(config.childEnv === undefined ? DEFAULT_CHILD_ENV : config.childEnv, `provider ${providerName} childEnv`) : validateChildEnv(childEnv, 'childEnv');
     Object.assign(this, { policy, providerName, binary: binary ?? config.binary, invocation: [...config.invocation], maxBudgetUsd, timeoutMs, env, maxOutputBytes, childEnv: Object.freeze({ ...block }) });
   }
 
@@ -126,8 +150,12 @@ export class ClaudeCliProvider {
   async complete({ modelEntry, system, prompt, schema, decoding = {}, signal, timeoutMs = this.timeoutMs }) {
     if (!modelEntry || !isPolicyModel(this.policy, modelEntry.id) || modelEntry.provider !== this.providerName) throw new FoundryError('MODEL_NOT_IN_POLICY', `Model ${modelEntry?.id} is not a ${this.providerName} model in the policy`);
     let engineVersion;
-    try { engineVersion = await this.engineVersion(); }
-    catch (error) { throw fail('MODEL_UNAVAILABLE', `claude CLI version probe failed: ${error.code ?? error.message}`); }
+    try { engineVersion = await untilAborted(this.engineVersion(), signal); }
+    catch (error) {
+      // A cancellation (or the port's deadline) while the shared version probe runs ends this call at once; no call was launched, so no spend.
+      if (error.code === 'CANCELLED') throw error;
+      throw fail('MODEL_UNAVAILABLE', `claude CLI version probe failed: ${error.code ?? error.message}`);
+    }
     const args = this.args({ modelEntry, system, schema, decoding }), applied = claudeCliDecoding(decoding);
     const childProcessEnv = claudeChildEnv(this.env, this.childEnv, applied.thinkingTokens);
     const request = { binary: path.basename(this.binary), args: args.map(a => a === system ? '<system>' : a), temperature: applied.temperature,

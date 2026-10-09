@@ -17,6 +17,8 @@ const { policy } = loadPolicy();
 const HAIKU = 'claude-haiku-5-5';
 const schema = { type: 'object', properties: { label: { type: 'string' } }, required: ['label'], additionalProperties: false };
 const NE = 'CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC', CACHE = 'FORCE_PROMPT_CACHING_5M';
+// Cache-tier variables outside the closed list (recorded when inherited); stripped from the test rig's base environment like the closed list.
+const CACHE_TIER = /^(DISABLE_PROMPT_CACHING(_[A-Z]+)?|ENABLE_PROMPT_CACHING_1H(_BEDROCK)?|CLAUDE_CODE_(SUBAGENT_)?PROMPT_CACHE_TTL)$/;
 
 const FAKE = String.raw`#!/usr/bin/env node
 const fs = require('node:fs');
@@ -26,7 +28,9 @@ let input = '';
 process.stdin.on('data', d => { input += d; });
 process.stdin.on('end', () => {
   const seen = {};
-  for (const k of ['CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC', 'FORCE_PROMPT_CACHING_5M', 'DISABLE_TELEMETRY', 'DISABLE_AUTOUPDATER', 'MAX_THINKING_TOKENS', 'GH_TOKEN']) seen[k] = process.env[k] ?? null;
+  for (const k of ['CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC', 'FORCE_PROMPT_CACHING_5M', 'DISABLE_TELEMETRY', 'DISABLE_AUTOUPDATER', 'MAX_THINKING_TOKENS', 'GH_TOKEN',
+    'CLAUDE_CODE_EFFORT_LEVEL', 'CLAUDE_CODE_MAX_OUTPUT_TOKENS', 'CLAUDE_CODE_EXTRA_BODY', 'CLAUDE_CODE_DISABLE_THINKING', 'DISABLE_PROMPT_CACHING', 'CLAUDE_CODE_PROMPT_CACHE_TTL']) seen[k] = process.env[k] ?? null;
+  seen.effort = argv[argv.indexOf('--effort') + 1];
   fs.appendFileSync(process.env.FAKE_CLAUDE_LOG, JSON.stringify(seen) + '\n');
   const model = argv[argv.indexOf('--model') + 1];
   process.stdout.write(JSON.stringify({ type: 'result', subtype: 'success', is_error: false, stop_reason: 'end_turn', total_cost_usd: 0.0001, structured_output: { label: 'x' },
@@ -41,7 +45,7 @@ function rig(t, { policy: pol = policy, ambient = {}, script = FAKE, ...options 
   writeFileSync(binary, script); chmodSync(binary, 0o755); writeFileSync(log, '');
   const env = { ...process.env, FAKE_CLAUDE_LOG: log, GH_TOKEN: 'placeholder', ...ambient };
   // Every closed-list variable comes from `ambient` only (the session running the tests may export some, e.g. DISABLE_AUTOUPDATER).
-  for (const k of CHILD_ENV_ALLOWED) if (!(k in ambient)) delete env[k];
+  for (const k of Object.keys(env)) if ((CHILD_ENV_ALLOWED.includes(k) || CACHE_TIER.test(k)) && !(k in ambient)) delete env[k];
   const provider = new ClaudeCliProvider({ policy: pol, binary, env, ...options });
   const journal = new Journal(new DatabaseSync(':memory:'));
   const port = new ModelPort({ policy: pol, journal, providers: { 'claude-cli': provider } });
@@ -222,4 +226,53 @@ test('the child environment never enters the replay key: existing journals keep 
 test('the flags do not change the decoding the provider reports', () => {
   const a = new ClaudeCliProvider({ policy }), b = new ClaudeCliProvider({ policy, childEnv: {} });
   for (const reasoning of ['none', 'low', 'medium', 'high']) assert.deepEqual(a.effectiveDecoding({ reasoning }), b.effectiveDecoding({ reasoning }));
+});
+
+// Review 2026-10-09: the claude 2.1.295 binary reads decoding variables from the environment ("CLAUDE_CODE_EFFORT_LEVEL overrides effort
+// for this session", over --effort). Inherited, they would make the replay key's decoding false; the child never sees them.
+test('inherited decoding variables never reach the child, so the decoding the key claims is the one applied', async t => {
+  const ambient = { CLAUDE_CODE_EFFORT_LEVEL: 'high', CLAUDE_CODE_MAX_OUTPUT_TOKENS: '64', CLAUDE_CODE_EXTRA_BODY: '{"temperature":1}', CLAUDE_CODE_DISABLE_THINKING: '1',
+    CLAUDE_CODE_ALWAYS_ENABLE_EFFORT: '1', CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING: '1', DISABLE_INTERLEAVED_THINKING: '1', CLAUDE_CODE_AUTO_MODE_TEMPERATURE: '1' };
+  const { call, seen, journal } = rig(t, { ambient });
+  const r = await call({ decoding: { reasoning: 'low' } });
+  const child = seen()[0];
+  for (const k of ['CLAUDE_CODE_EFFORT_LEVEL', 'CLAUDE_CODE_MAX_OUTPUT_TOKENS', 'CLAUDE_CODE_EXTRA_BODY', 'CLAUDE_CODE_DISABLE_THINKING']) assert.equal(child[k], null, k);
+  assert.equal(child.effort, 'low'); assert.equal(child.MAX_THINKING_TOKENS, '1024');
+  assert.deepEqual(journal.get(r.journalId).decoding, { reasoning: 'low', effort: 'low', thinkingTokens: 1024, maxTokens: 'provider-default', temperature: 'provider-default' });
+  const env = claudeChildEnv(ambient, {});
+  for (const k of Object.keys(ambient)) assert.equal(Object.hasOwn(env, k), false, `${k} is removed`);
+});
+
+test('an inherited cache-tier variable that can override the cache flag is on the journal record', async t => {
+  const { call, seen, journal } = rig(t, { ambient: { DISABLE_PROMPT_CACHING: '1', CLAUDE_CODE_PROMPT_CACHE_TTL: '1h' } });
+  const r = await call();
+  assert.equal(seen()[0].DISABLE_PROMPT_CACHING, '1', 'not a decoding variable: it passes through');
+  assert.deepEqual(journal.get(r.journalId).request.providerRequest.env, { [NE]: '1', [CACHE]: '1', CLAUDE_CODE_PROMPT_CACHE_TTL: '1h', DISABLE_PROMPT_CACHING: '1' });
+  assert.deepEqual(childEnvRecord({ PATH: '/bin', ENABLE_PROMPT_CACHING_1H: '1', DISABLE_PROMPT_CACHING_HAIKU: '1' }, {}), { DISABLE_PROMPT_CACHING_HAIKU: '1', ENABLE_PROMPT_CACHING_1H: '1' });
+});
+
+test('an explicit null block in a policy object that bypassed validatePolicy is refused, not defaulted', () => {
+  const pol = structuredClone(policy); pol.providers['claude-cli'].childEnv = null;
+  assert.throws(() => new ClaudeCliProvider({ policy: pol }), { code: 'MODEL_POLICY_INVALID' });
+});
+
+// The version probe is shared per binary and bounded by its own 30 s timeout; a caller cancelled while it runs must not wait for it.
+const SLOW_VERSION = String.raw`#!/usr/bin/env node
+if (process.argv[2] === '--version') { setTimeout(() => { console.log('9.9.9 (Claude Code)'); process.exit(0); }, 1500); }
+else { require('node:fs').appendFileSync(process.env.FAKE_CLAUDE_LOG, JSON.stringify({ launched: true }) + '\n'); process.exit(3); }
+`;
+test('a call cancelled during the version probe ends at once, launches nothing and records a cancelled row', { timeout: 15000 }, async t => {
+  const { call, seen, journal } = rig(t, { script: SLOW_VERSION });
+  const controller = new AbortController(), started = Date.now();
+  const pending = call({ signal: controller.signal });
+  setTimeout(() => controller.abort(), 100);
+  await assert.rejects(pending, error => {
+    assert.equal(error.code, 'CANCELLED');
+    assert.equal(journal.get(error.details.journalId).errorCode, 'CANCELLED');
+    assert.equal(journal.get(error.details.journalId).costUsd, 0, 'nothing was launched, so nothing was spent');
+    return true;
+  });
+  assert.ok(Date.now() - started < 1200, `cancelled in ${Date.now() - started} ms, before the probe finished`);
+  await new Promise(r => setTimeout(r, 1600));   // let the shared probe finish; the cancelled call never launches the CLI
+  assert.deepEqual(seen(), []);
 });
