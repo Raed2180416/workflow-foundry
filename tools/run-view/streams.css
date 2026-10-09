@@ -66,6 +66,7 @@ svg.lanes .cell.pass { fill: var(--green); fill-opacity: .26; stroke: var(--gree
 svg.lanes .cell.fail { fill: var(--red); fill-opacity: .3; stroke: var(--red); }
 svg.lanes .cell.todo { fill: none; stroke: var(--line-strong); stroke-dasharray: 2 3; }
 svg.lanes .cell.open { fill: var(--amber); fill-opacity: .12; stroke: var(--amber); stroke-dasharray: 4 2; }
+svg.lanes .cell.fault { fill: var(--red); fill-opacity: .08; stroke: var(--red); stroke-dasharray: 4 2; }
 svg.lanes .cl { font-weight: 700; font-size: 12px; }
 svg.lanes .pf { font-size: 9px; font-weight: 700; }
 svg.lanes .ic { font-size: 10px; fill: var(--muted); }

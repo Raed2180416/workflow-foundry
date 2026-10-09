@@ -166,7 +166,7 @@ function setIdx(i) {
     h('thead', null, h('tr', null, h('th', { scope: 'col' }, head), h('th', { scope: 'col' }, 'cum. $'), h('th', { scope: 'col' }, 'cum. successes'), h('th', { scope: 'col' }, 'this task'), h('th', { scope: 'col' }, 'task $'))),
     h('tbody', null, E.arms.map(a => {
       const p = a.summary.curve[i], r = a.byIdx.get(i);
-      const state = r ? `${r.pass ? '✓ pass' : '✕ fail'}, ${pick(DELIVERED, r.delivered, [r.delivered])[0]}` : a.openIdx.has(i) ? 'open' : 'not run';
+      const state = r ? `${r.pass ? '✓ pass' : '✕ fail'}, ${pick(DELIVERED, r.delivered, [r.delivered])[0]}` : a.openIdx.has(i) ? (stoppedByFault(a.openIdx.get(i)) ? 'stopped by a fault' : 'open') : 'not run';
       return h('tr', null, h('th', { scope: 'row' }, legendKey(a), ' ', a.label), h('td', { class: 'num' }, h('strong', null, p ? usd(p.cumUsd) : '–')), h('td', { class: 'num' }, h('strong', null, p ? String(p.cumSuccesses) : '–')),
         h('td', null, state), h('td', { class: 'num' }, r ? cost(r.costUsd) : '–'));
     })))));
@@ -205,12 +205,13 @@ function cellLabel(E, a, i) {
   if (a.openIdx.has(i)) { const k = a.openIdx.get(i).kinds; return `${where}: ${k.at(-1) === 'fault' ? 'stopped by an environment fault' : 'started'}, no row yet (${k.join(', ') || 'spend only'})`; }
   return `${where}: not run yet`;
 }
+const stoppedByFault = p => p?.kinds.at(-1) === 'fault';             // an open task whose last event is an environment fault: a resume retries it
 function laneStatus(E, a) {
-  const last = a.rows.at(-1), open = a.inProgress?.at(-1);
-  if (open) {
-    // an environment fault stops a JIT stream (a resume continues it at that task); the stream writes nothing after the fault until then
-    const f = open.kinds.at(-1) === 'fault' ? (a.faults ?? []).filter(x => x.idx === open.idx).at(-1) : null;
-    return f || open.kinds.at(-1) === 'fault' ? `stopped at ${open.idx}: fault${f ? ` in ${f.component} ${f.code ?? ''}` : ''}`.trim() : `task ${open.idx} open (no row yet)`;
+  const last = a.rows.at(-1), open = a.inProgress ?? [], stopped = open.filter(stoppedByFault), running = open.filter(p => !stoppedByFault(p));
+  if (running.length) return `task ${running.at(-1).idx} open (no row yet)${stopped.length ? `; ${stopped.length} stopped by faults` : ''}`;
+  if (stopped.length) {
+    const f = (a.faults ?? []).filter(x => stopped.some(p => p.idx === x.idx)).at(-1), what = f ? ` (${f.component} ${f.code ?? ''})`.replace(' )', ')') : '';
+    return stopped.length === 1 ? `stopped at ${stopped[0].idx} by a fault${what}` : `${stopped.length} tasks stopped by faults${what}`;
   }
   if (a.rows.length >= E.taskCount) return 'finished';
   const next = last ? last.idx + 1 : 0;
@@ -242,13 +243,13 @@ function lanesBlock(E) {
       s('text', { class: 'sub', x: 8, y: ly + 41 }, laneStatus(E, a)));
     const row = [];
     for (let i = 0; i < n; i++) {
-      const r = a.byIdx.get(i), x0 = X(i), state = r ? (r.pass ? 'pass' : 'fail') : a.openIdx.has(i) ? 'open' : 'todo';
+      const r = a.byIdx.get(i), x0 = X(i), state = r ? (r.pass ? 'pass' : 'fail') : a.openIdx.has(i) ? (stoppedByFault(a.openIdx.get(i)) ? 'fault' : 'open') : 'todo';
       const g = s('g', { class: 'hit', tabindex: -1, role: 'button', 'aria-label': cellLabel(E, a, i), 'data-a': ai, 'data-i': i });
       g.append(s('rect', { class: `cell ${state}`, x: x0, y: ly, width: CW, height: CH, rx: 3 }), s('rect', { class: 'ring', x: x0 - 2, y: ly - 2, width: CW + 4, height: CH + 4, rx: 4 }));
       if (r) g.append(s('text', { class: 'cl', x: x0 + 11, y: ly + 18, 'text-anchor': 'middle', 'aria-hidden': 'true' }, pick(DELIVERED, r.delivered, ['?'])[0]),
         s('text', { class: 'pf', x: x0 + CW - 3, y: ly + 10, 'text-anchor': 'end', 'aria-hidden': 'true' }, r.pass ? '✓' : '✕'));
-      else if (state === 'open') g.append(s('text', { class: 'cl', x: x0 + CW / 2, y: ly + 18, 'text-anchor': 'middle', 'aria-hidden': 'true' }, '…'));
-      const evs = r ? r.events : state === 'open' ? (a.events ?? []).filter(e => e.idx === i) : [];
+      else if (state === 'open' || state === 'fault') g.append(s('text', { class: 'cl', x: x0 + CW / 2, y: ly + 18, 'text-anchor': 'middle', 'aria-hidden': 'true' }, state === 'fault' ? 'ϟ' : '…'));
+      const evs = r ? r.events : state === 'open' ? (a.events ?? []).filter(e => e.idx === i) : [];   // (a fault-stopped cell already shows its glyph)
       const icons = iconsOf(evs), shown = icons.slice(0, 3);
       if (shown.length) g.append(s('text', { class: 'ic', x: x0 + CW / 2, y: ly + CH + 11, 'text-anchor': 'middle', 'aria-hidden': 'true' },
         ...shown.map(k => s('tspan', { class: `ic i-${ICON[k][1]}` }, ICON[k][0])), icons.length > 3 ? s('tspan', null, `+${icons.length - 3}`) : null));
@@ -281,7 +282,7 @@ function lanesBlock(E) {
     if (ev.key === 'Escape' && S.pinned) { ev.preventDefault(); unpin(); }
   });
   const key = h('div', { class: 'lanes-key', 'aria-label': 'Key' },
-    h('span', { class: 'k' }, badge('pass', 'good'), badge('fail', 'bad'), badge('open (no row yet)', 'warn'), badge('not run', 'slate')),
+    h('span', { class: 'k' }, badge('pass', 'good'), badge('fail', 'bad'), badge('open (no row yet)', 'warn'), badge('stopped by a fault (a resume retries it)', 'bad'), badge('not run', 'slate')),
     ...Object.entries(DELIVERED).map(([, [g, w]]) => h('span', { class: 'k' }, h('span', { class: 'g' }, g), w)),
     ...[...new Map(ICON_ORDER.map(k => [ICON[k][0] + ICON[k][1], k])).values()].map(k => h('span', { class: 'k' }, h('span', { class: 'g' }, ICON[k][0]), ICON[k][2])),
     h('span', { class: 'k' }, h('span', { class: 'g' }, 'v1'), 'band under a JIT lane: the version that served the task'));
@@ -335,7 +336,7 @@ function showDetail(ai, i, pinned) {
   const E = S.exp, a = E.arms[ai], r = a.byIdx.get(i), t = E.tasks[i], box = $('detail');
   if (!box) return;
   const head = h('div', { class: 'dt' }, h('h4', null, `${a.label} · task ${i}`), h('span', { class: 'muted' }, r?.taskKey ?? (t ? `d${t.difficulty ?? '?'} seed ${t.seed ?? '?'}` : '')),
-    r ? badge(r.pass ? 'pass' : 'fail', r.pass ? 'good' : 'bad') : a.openIdx.has(i) ? badge('open', 'warn') : badge('not run', 'slate'),
+    r ? badge(r.pass ? 'pass' : 'fail', r.pass ? 'good' : 'bad') : a.openIdx.has(i) ? (stoppedByFault(a.openIdx.get(i)) ? badge('stopped by a fault', 'bad') : badge('open', 'warn')) : badge('not run', 'slate'),
     r ? badge(`by ${pick(DELIVERED, r.delivered, [0, r.delivered])[1]}`, r.delivered === 'compiled' ? 'info' : r.delivered === 'adjudicated' ? 'violet' : 'slate') : null,
     r?.version != null ? badge(`v${r.version}`, 'info') : null, r?.compiledStatus && r.compiledStatus !== 'ok' ? badge(`compiled ${r.compiledStatus}${r.deoptKind && r.deoptKind !== r.compiledStatus ? ` (${r.deoptKind})` : ''}`, 'warn') : null,
     pinned ? h('button', { type: 'button', class: 'btn small', onclick: () => unpin() }, 'Unpin') : h('span', { class: 'faint' }, '(preview; click to pin)'));

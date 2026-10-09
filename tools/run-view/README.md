@@ -67,3 +67,20 @@ model CALLS, and a run that finished positively is not summarised as failed beca
 "summary only". Review findings and measurements: `research/review-20261007/06b-run-history.md`, section "Review (adversarial, 2026-10-08)".
 
 Not built: live mode (`serve.mjs --index`), an in-page summarise button, `foundry serve` integration (waits for the engine freeze), the builder transcript.
+
+## JIT streams: cost and success curves, per-arm lanes, compiled versions
+
+For the JIT stream experiments (`experiments/runs/jit/<experiment>/<arm>/`, layout in `research/jit-20261008/SPEC.md` §6.3). Read-only: it never writes into the run folders.
+The totals, curves, steady state and break-even figures come from `experiments/jit/report.mjs` (`loadRun`, `buildReport`, `renderMarkdown`) unchanged.
+
+| File | Role |
+|---|---|
+| `index-streams.mjs` | builds `foundry-jit-streams/1`: one record per experiment with each arm's rows (only the oracle's numeric fields), event log, open or fault-stopped tasks, compile attempts (`versions/`: outcome, reason and trigger, cost, host check, parent, BUILD-NOTES excerpt, withheld for held-out splits) and the report.mjs summary; the plan comes from `experiments/jit/configs/` |
+| `export-streams.mjs` | writes `streams-export.json` and one self-contained html (hashed CSP, `connect-src 'none'`) |
+| `streams.html`, `streams.css`, `streams.js` | the page (it also loads `history.css` and `history-core.js`): cumulative cost and success charts, lanes, version timeline, report.mjs summary |
+| `test/streams.test.mjs`, `test/streams-fixture/` | $0 tests on a synthetic stream tree, including a real-browser check |
+
+```sh
+node tools/run-view/export-streams.mjs --out /tmp/streams.html            # also writes /tmp/streams-export.json; --out x.json writes the JSON only
+node --test tools/run-view/test/streams.test.mjs
+```
