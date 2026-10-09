@@ -265,6 +265,16 @@ export function findJudges(source) {
   const sites = [], unrecognized = [];
   const nested = list => list.flatMap(t => (t.type === 'tmpl' ? t.exprs.flatMap(e => [...e, ...nested(e)]) : []));
   for (const t of nested(toks)) if (t.type === 'ident' && t.value === 'judge') unrecognized.push({ line: lineOf(source, t.start), text: 'judge inside a template literal expression' });
+  // `judge` spelled as a string ("flow['judge'](...)", `const k = 'judge'; flow[k](...)`) is a call this scan cannot see:
+  // refuse it, except as the literal name argument of a recognised judge call (flow.judge('judge', ...)).
+  const nameArgs = new Set();
+  toks.forEach((t, k) => { if (t.type === 'ident' && t.value === 'judge' && (isP(toks[k - 1], '.') || isP(toks[k - 1], '?.'))) nameArgs.add(k + (isP(toks[k + 1], '?.') ? 3 : 2)); });
+  const judgeString = t => (t.type === 'str' && strValue(t) === 'judge') || (t.type === 'tmpl' && !t.exprs.length && decodeStr(t.quasis[0] ?? '') === 'judge');
+  const strUse = (list, top) => list.forEach((t, k) => {
+    if (judgeString(t) && !(top && nameArgs.has(k) && (isP(list[k + 1], ',') || isP(list[k + 1], ')')))) unrecognized.push({ line: lineOf(source, t.start), text: `the string ${t.value} (a judge call this scan cannot see)` });
+    if (t.type === 'tmpl') t.exprs.forEach(e => strUse(e, false));
+  });
+  strUse(toks, true);
   toks.forEach((t, k) => {
     if (t.type !== 'ident' || t.value !== 'judge') return;
     const prev = toks[k - 1];
@@ -362,21 +372,26 @@ export function rewriteJudgeTiers(source, judge, tiers, { syntaxCheck = true } =
   }
   return { source: out, judge, pattern: patterns[0], scope: patterns[0].includes('*') ? `every instance of ${patterns[0]}` : 'one judge', sites: hits.map(s => ({ line: s.line, nameText: s.nameText, kind: s.tiers.kind })),
     oldTiers: oldTiers.length === 1 ? oldTiers[0] : oldTiers, newTiers: [...tiers], diff, unified, originalSha256: sha(source), variantSha256: sha(out),
-    otherJudges: found.sites.filter(s => !hitIdx.has(s.index)).map(s => ({ pattern: s.pattern, line: s.line, tiers: s.tiers?.values ?? s.tiers?.text ?? null })) };
+    otherJudges: found.sites.filter(s => !hitIdx.has(s.index)).map(s => ({ pattern: s.pattern, line: s.line, tiers: s.tiers?.values ?? s.tiers?.text ?? null })),
+    otherPatterns: [...new Set(found.sites.filter(s => !hitIdx.has(s.index)).map(s => s.pattern))] };
 }
 
 // ------------------------------------------------------------------------------------------------ records and comparison
 const readLines = file => (existsSync(file) ? readFileSync(file, 'utf8').split('\n').filter(Boolean).flatMap(l => { try { return [JSON.parse(l)]; } catch { return []; } }) : []);
 const lastJsonLine = text => { try { return JSON.parse(text.trim().split('\n').filter(Boolean).at(-1) ?? 'null'); } catch { return null; } };
 
-// The target judge's events in a trace: count, cost, tiers used, and whether every tier tried is in `allowed`.
-export function judgeStats(trace, pattern, allowed = null) {
-  const evs = (trace ?? []).filter(e => e?.kind === 'judge' && typeof e.name === 'string' && nameMatches(pattern, e.name));
+// The target judge's events in a trace: count, cost, tiers used, and whether every tier tried is in `allowed`. `exclude`:
+// the other call sites' name patterns; an event whose name one of them also matches (a templated target `v-*` and a
+// literal `v-total`) cannot be attributed to the target and is counted apart (ambiguous), never as the target's.
+export function judgeStats(trace, pattern, allowed = null, exclude = []) {
+  const named = (trace ?? []).filter(e => e?.kind === 'judge' && typeof e.name === 'string' && nameMatches(pattern, e.name));
+  const other = e => exclude.some(p => p !== pattern && nameMatches(p, e.name));
+  const evs = named.filter(e => !other(e)), ambiguous = named.length - evs.length;
   const tiersUsed = {};
   for (const e of evs) if (e.tier) tiersUsed[e.tier] = (tiersUsed[e.tier] ?? 0) + 1;
   const tried = evs.flatMap(e => (e.tiersTried ?? []).map(t => t.model));
   return { calls: evs.length, ok: evs.filter(e => e.ok).length, costUsd: round(sum(evs.map(e => e.costUsd))), tiersUsed, escalations: sum(evs.map(e => e.escalations ?? 0)),
-    offList: allowed ? tried.filter(m => !allowed.includes(m)).length : null };
+    offList: allowed ? tried.filter(m => !allowed.includes(m)).length : null, ...(ambiguous ? { ambiguous } : {}) };
 }
 
 // A compiled run as its archived directory left it (stream.mjs ArmRun.compiled): null when it cannot be read back.
@@ -404,11 +419,11 @@ const unorderedCanon = v => (Array.isArray(v) ? `[${v.map(unorderedCanon).sort()
   ? `{${Object.keys(v).filter(k => v[k] !== undefined).sort().map(k => `${JSON.stringify(k)}:${unorderedCanon(v[k])}`).join(',')}}` : canonical(v));
 
 // One task: original vs variant. Agreement is measured with the original as the reference, and only when both delivered.
-export function compareTask(original, variant, { pattern, oldTiers = null, newTiers = null } = {}) {
+export function compareTask(original, variant, { pattern, oldTiers = null, newTiers = null, otherPatterns = [] } = {}) {
   const both = original?.status === 'ok' && variant?.status === 'ok';
   const cmp = both ? compare(variant.output, original.output, { maxDiffs: 5 }) : null;
-  const jo = original ? judgeStats(original.trace, pattern, Array.isArray(oldTiers) && oldTiers.every(x => typeof x === 'string') ? oldTiers : null) : null;
-  const jv = variant ? judgeStats(variant.trace, pattern, newTiers) : null;
+  const jo = original ? judgeStats(original.trace, pattern, Array.isArray(oldTiers) && oldTiers.every(x => typeof x === 'string') ? oldTiers : null, otherPatterns) : null;
+  const jv = variant ? judgeStats(variant.trace, pattern, newTiers, otherPatterns) : null;
   return {
     statuses: { original: original?.status ?? null, variant: variant?.status ?? null }, bothOk: both,
     exact: both ? canonical(original.output) === canonical(variant.output) : null,
@@ -653,7 +668,7 @@ export async function tierdownE2E({ armDir, version, judge, tiers, limit = null,
       const strip = r => (r ? { status: r.status, source: r.source, dir: r.dir, costUsd: r.costUsd, costUnknown: r.costUnknown, deopt: r.deopt ? { kind: r.deopt.kind, name: r.deopt.name } : null,
         error: r.error?.code ?? null, perTaskUsd: r.perTaskUsd ?? null } : null);
       report.tasks.push({ idx: t.idx, taskKey: t.taskKey, seed: t.key.seed, difficulty: t.key.difficulty, dir: t.dir, recordedStatus: t.recordedStatus, originalSource: orig?.source ?? null,
-        original: strip(orig), variant: strip(vari), compare: orig && vari ? compareTask(orig, vari, { pattern: rw.pattern, oldTiers: rw.oldTiers, newTiers: rw.newTiers }) : null,
+        original: strip(orig), variant: strip(vari), compare: orig && vari ? compareTask(orig, vari, { pattern: rw.pattern, oldTiers: rw.oldTiers, newTiers: rw.newTiers, otherPatterns: rw.otherPatterns }) : null,
         oracle: { original: oracle.original && { pass: !!oracle.original.pass, score: oracle.original.score ?? null }, variant: oracle.variant && { pass: !!oracle.variant.pass, score: oracle.variant.score ?? null } } });
     }
   } finally { try { db?.close?.(); } catch {} }
