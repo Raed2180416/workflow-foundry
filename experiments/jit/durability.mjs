@@ -17,7 +17,8 @@
 //   crash, timeout, invalid; by kind from row.deoptKind). Guard fire: deoptKind 'guard'.
 // - silent miss (oracle-scored, the experimenter's view, never the system's): delivered 'compiled' and pass false: the
 //   system delivered compiled code's wrong answer with no signal. Rate = silent misses / compiled deliveries.
-//   Caught miss: compiledPass false on a row whose answer was not the compiled one (a shadow's adjudication replaced it).
+//   Overruled (system view): delivered 'adjudicated' (a shadow's majority replaced the compiled answer). Caught miss
+//   (oracle view, only where stream.mjs recorded compiledPass): an overruled row whose compiled answer was wrong.
 // - shadow disagreement: 'disagree' events / 'shadow' events with agree true or false (a shadow that gave no answer
 //   is not counted).
 // - window: the W rows ending at a position (fewer at the start); every rate is null when its denominator is 0.
@@ -57,7 +58,7 @@ export function computeDurability(rows, events = [], opts = {}) {
       idx: r.idx, version: verOf(r), costUsd: Number(r.costUsd) || 0, attempted, deopt: attempted && r.compiledStatus !== 'ok',
       deoptKind: attempted && r.compiledStatus !== 'ok' ? (r.compiledStatus === 'deopt' ? r.deoptKind ?? 'unknown' : r.compiledStatus) : null,
       compiledDelivered: r.delivered === 'compiled', pass: !!r.pass,
-      silentMiss: r.delivered === 'compiled' && !r.pass, caughtMiss: r.delivered !== 'compiled' && r.compiledPass === false,
+      silentMiss: r.delivered === 'compiled' && !r.pass, caughtMiss: r.delivered !== 'compiled' && r.compiledPass === false, overruled: r.delivered === 'adjudicated',
       shadows: shadows.length, disagree: (r.events ?? []).filter(e => e.kind === 'disagree').length,
       oracleOk: r.delivered === 'compiled' && !!r.pass, systemOk: attempted && r.compiledStatus === 'ok' && !has(r, 'disagree'),
     };
@@ -130,7 +131,7 @@ export function computeDurability(rows, events = [], opts = {}) {
     },
     totals: {
       compiledAttempts: att.length, deopts: sum(att, f => f.deopt), deoptsByKind, deoptRate: rate(sum(att, f => f.deopt), att.length), guardRate: rate(sum(att, f => f.deoptKind === 'guard'), att.length),
-      compiledDeliveries: del.length, silentMisses: sum(del, f => f.silentMiss), silentMissRate: rate(sum(del, f => f.silentMiss), del.length), caughtMisses: sum(F, f => f.caughtMiss),
+      compiledDeliveries: del.length, silentMisses: sum(del, f => f.silentMiss), silentMissRate: rate(sum(del, f => f.silentMiss), del.length), caughtMisses: sum(F, f => f.caughtMiss), overruled: sum(F, f => f.overruled),
       shadowsAnswered, disagreements: F.reduce((s, f) => s + f.disagree, 0), disagreeRate: rate(F.reduce((s, f) => s + f.disagree, 0), shadowsAnswered),
       rowsUsd: r4(rowsUsd), unbilledUsd: r4(unbilledUsd), usdPerTask: N ? r4((rowsUsd + unbilledUsd) / N) : null,
       lastWindowUsdPerTask: windows.at(-1)?.usdPerTask ?? null,
@@ -163,12 +164,12 @@ export function renderTable(results, { series = false } = {}) {
   const short = s => String(s).replace(/^static:.*\/([^/]+)\/solve\.mjs$/, 'static:$1');
   const p = results[0]?.params ?? DEFAULTS;
   const L = [`window W=${p.window}, durable needs one version for W rows with >= ${p.minSuccess} of them delivered by compiled code and passing (oracle view) or compiled ok with no shadow disagreement (system view)`, '',
-    '| arm | n | versions (changes) | rows per version | deopt rate (guard) | silent-miss rate (n) | caught | disagree rate | $/task (last window) | durable: oracle from / confirmed / holds | durable: system from / confirmed / holds |',
+    '| arm | n | versions (changes) | rows per version | deopt rate (guard) | silent-miss rate (n) | overruled (caught) | disagree rate | $/task (last window) | durable: oracle from / confirmed / holds | durable: system from / confirmed / holds |',
     '|---|---|---|---|---|---|---|---|---|---|---|'];
   const dv = d => (d.timeToDurable == null ? 'never' : `${d.timeToDurable} / ${d.confirmedIdx} (${usd(d.usdToConfirm)}) / ${d.holdsToEnd ? 'yes' : 'no'}${d.relapses ? `, ${d.relapses} relapse(s)` : ''}`);
   for (const a of results) {
     const t = a.totals, v = a.versions;
-    L.push(`| ${short(a.spec ?? a.arm)} | ${a.tasks} | ${v.count} (${v.changes}) | ${v.tasksBetweenChanges.join(', ') || '–'} | ${pct(t.deoptRate)} (${pct(t.guardRate)}) | ${pct(t.silentMissRate)} (${t.silentMisses}/${t.compiledDeliveries}) | ${t.caughtMisses} | ${pct(t.disagreeRate)} (${t.disagreements}/${t.shadowsAnswered}) | ${usd(t.usdPerTask)} (${usd(t.lastWindowUsdPerTask)}) | ${dv(a.durable.oracle)} | ${dv(a.durable.system)} |`);
+    L.push(`| ${short(a.spec ?? a.arm)} | ${a.tasks} | ${v.count} (${v.changes}) | ${v.tasksBetweenChanges.join(', ') || '–'} | ${pct(t.deoptRate)} (${pct(t.guardRate)}) | ${pct(t.silentMissRate)} (${t.silentMisses}/${t.compiledDeliveries}) | ${t.overruled} (${t.caughtMisses}) | ${pct(t.disagreeRate)} (${t.disagreements}/${t.shadowsAnswered}) | ${usd(t.usdPerTask)} (${usd(t.lastWindowUsdPerTask)}) | ${dv(a.durable.oracle)} | ${dv(a.durable.system)} |`);
   }
   if (series) for (const a of results) {
     L.push('', `### ${short(a.spec ?? a.arm)}`, '', '| idx | deopt | guard | silent miss | disagree | compiled success | system ok | $/task |', '|---|---|---|---|---|---|---|---|');
