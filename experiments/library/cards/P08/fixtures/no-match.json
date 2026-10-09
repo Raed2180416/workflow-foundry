@@ -1,0 +1,6 @@
+{
+  "name": "no-match",
+  "note": "The drop rule matches nothing: everything is kept and the drop list is empty (typed, not missing).",
+  "task": { "prompt": "Select the invoices that may be paid.", "inputs": { "invoices": [ { "id": "i1", "amountMinor": 100, "status": "approved" } ] } },
+  "expect": { "status": "ok", "output": { "keep": [ { "id": "i1", "amountMinor": 100, "status": "approved" } ], "drop": [] } }
+}

@@ -1,0 +1,7 @@
+{
+  "name": "drift",
+  "note": "Claims now arrive as scanned-form placeholders: the judge's quote is not in the claim text, its check fails on every tier, and the judge deopts rather than deciding unread input.",
+  "task": { "prompt": "Decide each expense claim.", "inputs": { "claims": [ { "id": "c5", "text": "[scanned form, see attachment 7]" } ] } },
+  "answers": { "decide": [ { "value": { "choice": "approve", "quote": "Taxi to the airport" } } ] },
+  "expect": { "status": "deopt", "deopt": { "kind": "judge", "name": "decide" } }
+}

@@ -33,3 +33,21 @@ export function loadL1(dir = CARDS_DIR) {
     return card ? { ...entry, ...card, catalog: entry, executable: true } : { ...entry, executable: false };
   });
 }
+
+// The expanded card an S6 fill call sees (LIBRARY §5.1–5.2: one card, ≤ 1,200 tokens): the card's head, the J questions,
+// every slot with its type, bounds and doc, and the checklist lines. Not the skeleton (the constructor fills slots, it
+// never edits structure) and not the worked example (the slot-group schema carries the shapes). `slots` narrows the slot
+// table to one slot group; the rest of the card stays.
+export function expandedCard(card, { slots = null } = {}) {
+  const bounds = d => [d.range ? `[${d.range.join(',')}]` : '', d.options ? `{${d.options.join('|')}}` : '', d.values ? `<${d.values.join('|')}>` : '',
+    d.params ? `(${d.params.join(', ')})` : '', d.fields ? `{${d.fields.join(', ')}}` : '', d.required ? '' : '?', d.default !== undefined ? ` = ${JSON.stringify(d.default)}` : ''].join('');
+  const shown = card.slots.filter(d => !slots || slots.includes(d.name));
+  return [
+    `${card.id} ${card.name} (${card.family}, tier ${card.tier}, v${card.version})`,
+    ...card.when.map(j => `${j.id} ${j.type}: ${j.instructions}${j.criteria ? ' [' + Object.keys(j.criteria).join(' | ') + ']' : ''}`),
+    'Slots:',
+    ...shown.map(d => `- ${d.name}: ${d.type}${bounds(d)}${d.doc ? ' — ' + d.doc : ''}`),
+    'Checklist:',
+    ...card.checklist.map(c => `- ${c.text}${c.code ? ' (' + c.code + ')' : ''}`),
+  ].join('\n');
+}

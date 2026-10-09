@@ -1,0 +1,7 @@
+{
+  "name": "no-match",
+  "note": "Items that state no amount: the typed null with an empty quote, still echoing every id.",
+  "task": { "prompt": "Extract the amount due of every invoice.", "inputs": { "invoices": [ { "id": "i4", "text": "Thank you for your order." }, { "id": "i5", "text": "See the attached PDF." } ] } },
+  "answers": { "read-batch": [ { "value": { "items": [ { "id": "i4", "amountMinor": null, "quote": "" }, { "id": "i5", "amountMinor": null, "quote": "" } ] } } ] },
+  "expect": { "status": "ok", "output": { "items": [ { "id": "i4", "amountMinor": null, "quote": "" }, { "id": "i5", "amountMinor": null, "quote": "" } ] } }
+}

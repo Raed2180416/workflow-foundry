@@ -1,0 +1,47 @@
+{
+  "id": "P03", "layer": "L1", "version": 1,
+  "name": "extract -> normalise -> validate (model reads, code parses)", "short": "extract-normalise-validate", "family": "spine", "tier": "S", "constructs": [1, 2, 3, 4, 5, 6],
+  "flow": { "version": 3, "autoFlag": false },
+  "fragment": { "in": "any (SOURCES reads it)", "out": { "type": "object", "required": ["rows", "review"], "properties": { "rows": { "type": "array" }, "review": { "type": "array", "items": { "type": "object", "required": ["id", "reason"] } } } } },
+  "slots": [
+    { "name": "SOURCES", "type": "path", "required": true, "doc": "list of sources {id, note, ...}" },
+    { "name": "PARSE", "type": "fn", "required": true, "params": ["source"], "doc": "source -> rows (code only)" },
+    { "name": "CONV_JUDGE", "type": "judge", "required": true, "doc": "reads the source's note: enum fields (each with none) and a quote" },
+    { "name": "NORMALISE", "type": "fn", "required": true, "params": ["row", "convention"] },
+    { "name": "ROW_SCHEMA", "type": "schema", "required": true },
+    { "name": "VALIDATE", "type": "fn", "required": true, "params": ["row"] },
+    { "name": "REJECT", "type": "choice", "options": ["deopt", "review"], "required": true, "default": "deopt" },
+    { "name": "CONCURRENCY", "type": "int", "range": [1, 8], "bound": true, "required": true, "default": 4 }
+  ],
+  "when": [
+    { "id": "J1", "type": "noul", "instructions": "Must values be read out of free text or of documents with differing layouts before any calculation?" },
+    { "id": "J2", "type": "choice", "instructions": "How do the inputs state their conventions (dates, units, currency)?", "criteria": { "fixed": "one convention, known in advance", "stated-per-source": "each source states its own convention in prose", "implicit": "it has to be inferred from the values", "none": "no conventions matter" } }
+  ],
+  "checklist": [
+    { "text": "Quote check on every reading judge.", "code": "JUDGE_NO_CHECK", "kw": { "class": "validate" }, "minedFrom": ["flowise:agentflowsv2-agentic-rag"], "enforcedBy": "skeleton" },
+    { "text": "Minor units for money; never floats.", "code": null },
+    { "text": "Default or fallback values must be explicit and flagged.", "code": "SILENT_DROP", "kw": { "class": "default", "n": 9 }, "minedFrom": ["dify:mkt-0fc0bb5c…", "dify:mkt-431dd20f…"], "enforcedBy": "rejected rows go to review with a reason, or deopt" },
+    { "text": "A batch or chunk size bounds each read.", "code": "UNBOUNDED", "kw": { "class": "batch", "n": 4 }, "minedFrom": ["n8n:11382", "n8n:2658"] },
+    { "text": "No chain-of-thought field in an extraction schema.", "code": "REASONING_ON_EXTRACTION" }
+  ],
+  "rules": [
+    { "code": "JUDGE_NO_CHECK", "judgeSlot": "CONV_JUDGE", "skeletonCheck": true },
+    { "code": "ENUM_NO_NONE", "judgeSlot": "CONV_JUDGE" },
+    { "code": "REASONING_ON_EXTRACTION", "judgeSlot": "CONV_JUDGE" },
+    { "code": "VERIFY_NOT_GATING", "fnSlot": "VALIDATE" }
+  ],
+  "minedFrom": ["google-adk:…workflows/nested_workflow", "dspy:…rlm-cohort-analysis", "airflow:…example_sagemaker_endpoint"],
+  "companions": [{ "id": "P05", "lift": 5.1, "n": 75 }, { "id": "P13", "lift": 3.7, "n": 17 }],
+  "tags": ["spine", "finance"],
+  "example": { "slots": {
+    "SOURCES": "inputs.sources",
+    "PARSE": "(src) => src.csv.trim().split('\\n').slice(1).map((l, i) => { const [date, amount] = l.split(','); return { id: src.id + ':' + (i + 1), date, amountMinor: Math.round(Number(amount) * 100) }; })",
+    "CONV_JUDGE": { "tiers": ["claude-haiku-5-5"], "system": "From the note only: in this export's numeric dates, does the day or the month come first? Quote the sentence that says so; answer none with an empty quote if the note does not say.",
+      "prompt": "(src) => src.note", "schema": { "type": "object", "required": ["order", "quote"], "additionalProperties": false, "properties": { "order": { "enum": ["DMY", "MDY", "none"] }, "quote": { "type": "string" } } } },
+    "NORMALISE": "(r, conv) => { const [a, b, y] = r.date.split('/').map(Number); const dm = conv.order === 'DMY' ? [a, b] : conv.order === 'MDY' ? [b, a] : null; return { ...r, date: dm ? y + '-' + String(dm[1]).padStart(2, '0') + '-' + String(dm[0]).padStart(2, '0') : null }; }",
+    "ROW_SCHEMA": { "type": "object", "required": ["id", "date", "amountMinor"], "properties": { "id": { "type": "string" }, "date": { "type": "string" }, "amountMinor": { "type": "integer" } } },
+    "VALIDATE": "(r) => { const [y, m, d] = r.date.split('-').map(Number); return y > 1900 && m >= 1 && m <= 12 && d >= 1 && d <= 31; }",
+    "REJECT": "deopt",
+    "CONCURRENCY": 2
+  } }
+}

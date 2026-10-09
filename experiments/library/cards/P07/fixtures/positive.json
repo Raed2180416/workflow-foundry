@@ -1,0 +1,17 @@
+{
+  "name": "positive",
+  "task": { "prompt": "Route each inbox message to its handler.", "inputs": { "messages": [
+    { "id": "m1", "subject": "Invoice INV-77", "body": "Please pay 120.00 EUR by Friday." },
+    { "id": "m2", "subject": "Your receipt", "body": "Receipt R-9 for your payment of 40.00 EUR." },
+    { "id": "m3", "subject": "Login broken", "body": "I cannot sign in since yesterday." } ] } },
+  "answers": { "kind": [
+    { "when": "Invoice INV-77", "value": { "kind": "invoice", "quote": "Please pay 120.00 EUR by Friday." } },
+    { "when": "Receipt R-9", "value": { "kind": "receipt", "quote": "Receipt R-9 for your payment" } },
+    { "when": "cannot sign in", "value": { "kind": "support", "quote": "I cannot sign in since yesterday." } } ] },
+  "children": [ { "name": "receipt-filer", "contract": { "input": { "type": "object", "required": ["id"] }, "output": { "type": "object", "required": ["filed"], "properties": { "filed": { "type": "boolean" } } } },
+    "respond": [ { "output": { "filed": true } } ] } ],
+  "expect": { "status": "ok", "calls": { "call-end": 1 }, "output": { "routed": [
+    { "id": "m1", "route": "invoice", "out": { "action": "pay-later", "ref": "m1" } },
+    { "id": "m2", "route": "receipt", "out": { "filed": true } },
+    { "id": "m3", "route": "support", "out": { "action": "ticket", "ref": "m3" } } ] } }
+}

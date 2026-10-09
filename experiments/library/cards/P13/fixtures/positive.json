@@ -1,0 +1,10 @@
+{
+  "name": "positive",
+  "task": { "prompt": "Extract the amount due of every invoice.", "inputs": { "invoices": [
+    { "id": "i1", "text": "Amount due: 120.00 EUR." }, { "id": "i2", "text": "Please remit 45.50 EUR within 30 days." }, { "id": "i3", "text": "Total 9.99 EUR." } ] } },
+  "answers": { "read-batch": [
+    { "when": "[i1]", "value": { "items": [ { "id": "i1", "amountMinor": 12000, "quote": "120.00 EUR" }, { "id": "i2", "amountMinor": 4550, "quote": "45.50 EUR" } ] } },
+    { "when": "[i3]", "value": { "items": [ { "id": "i3", "amountMinor": 999, "quote": "9.99 EUR" } ] } } ] },
+  "expect": { "status": "ok", "output": { "items": [
+    { "id": "i1", "amountMinor": 12000, "quote": "120.00 EUR" }, { "id": "i2", "amountMinor": 4550, "quote": "45.50 EUR" }, { "id": "i3", "amountMinor": 999, "quote": "9.99 EUR" } ] } }
+}

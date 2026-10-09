@@ -1,0 +1,7 @@
+{
+  "name": "no-match",
+  "note": "The note states no currency: the judge's none option flows through as a typed value; nothing is guessed.",
+  "task": { "prompt": "Total the payments export.", "inputs": { "csv": "id,amount\np1,1.00\n", "note": "Exported on Monday by the finance team." } },
+  "answers": { "currency": [ { "value": { "currency": "none", "quote": "" } } ] },
+  "expect": { "status": "ok", "output": { "currency": "none", "count": 1, "totalMinor": 100 } }
+}

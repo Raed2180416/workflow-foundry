@@ -1,0 +1,33 @@
+{
+  "id": "P15", "layer": "L1", "version": 1,
+  "name": "fan-in aggregate / report", "short": "fan-in-aggregate", "family": "fan", "tier": "S", "constructs": [2, 5, 4, 9],
+  "flow": { "version": 3, "autoFlag": false },
+  "fragment": { "in": "any (PARTS reads it)", "out": { "type": "object", "required": ["report", "failed"], "properties": { "report": { "type": "object" }, "failed": { "type": "array" } } } },
+  "slots": [
+    { "name": "PARTS", "type": "path", "required": true },
+    { "name": "KEY", "type": "fn", "required": true, "params": ["part"] },
+    { "name": "AGG", "type": "fn", "required": true, "params": ["parts"] },
+    { "name": "IDENTITY", "type": "fn", "required": true, "params": ["parts", "report"], "doc": "a sum or set identity that can fail" },
+    { "name": "QUORUM", "type": "number", "range": [0, 1], "required": true, "default": 1 }
+  ],
+  "when": [
+    { "id": "J1", "type": "noul", "instructions": "Must results from many branches or items be combined into one total or report with checkable identities?" },
+    { "id": "J2", "type": "choice", "instructions": "What must the combined result satisfy?", "criteria": { "sum-identity": "totals equal the sum of parts", "set-identity": "every input appears once", "none": "no checkable identity" } }
+  ],
+  "checklist": [
+    { "text": "A conservation identity in minor units (W-bed R3: sum adjusted = ledger difference).", "code": "VERIFY_NOT_GATING" },
+    { "text": "Behaviour on a failed branch is a quorum, not a silent skip.", "code": "SILENT_DROP", "kw": { "class": "default", "n": 2 }, "minedFrom": ["gitlab-ci:…Auto-DevOps", "gitlab-ci:…Jobs/Deploy"], "enforcedBy": "skeleton" },
+    { "text": "The reduce is code; a model-written summary of totals is refused.", "code": "BRANCH_ON_TEXT" }
+  ],
+  "rules": [ { "code": "VERIFY_NOT_GATING", "fnSlot": "IDENTITY" } ],
+  "minedFrom": ["n8n:12472", "gitlab-ci:…Jobs/Deploy.gitlab-ci.yml", "galaxy:workflowhub/251"],
+  "companions": [],
+  "tags": ["fan", "finance"],
+  "example": { "slots": {
+    "PARTS": "inputs.entities",
+    "KEY": "(p) => p.currency",
+    "AGG": "(ps) => ({ entities: ps.length, totalMinor: ps.reduce((n, p) => n + p.totalMinor, 0) })",
+    "IDENTITY": "(ps, report) => Object.values(report).reduce((n, g) => n + g.totalMinor, 0) === ps.reduce((n, p) => n + p.totalMinor, 0) && Object.values(report).reduce((n, g) => n + g.entities, 0) === ps.length",
+    "QUORUM": 0.75
+  } }
+}

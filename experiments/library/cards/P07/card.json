@@ -1,0 +1,44 @@
+{
+  "id": "P07", "layer": "L1", "version": 1,
+  "name": "router by kind (judged classify, then dispatch)", "short": "router-by-kind", "family": "branch", "tier": "S", "constructs": [6, 3, 10, 11],
+  "flow": { "version": 3, "autoFlag": false },
+  "fragment": { "in": "any (ITEMS reads it)", "out": { "type": "object", "required": ["routed"], "properties": { "routed": { "type": "array", "items": { "type": "object", "required": ["id", "route"], "properties": { "id": {}, "route": { "type": "string" } } } } } } },
+  "slots": [
+    { "name": "ITEMS", "type": "path", "required": true, "doc": "the list of items to route (each with an id)" },
+    { "name": "KINDS", "type": "enum", "required": true, "min": 1, "max": 12, "doc": "the closed list of kinds; 'none-of-these' is added by the skeleton" },
+    { "name": "CUE", "type": "fn", "required": true, "params": ["item"], "doc": "item -> the text the judge reads" },
+    { "name": "KIND_SPEC", "type": "judge", "required": true, "fields": ["tiers", "system"], "doc": "judge head: tiers (cheapest first) and instructions; prompt and schema are built by the skeleton" },
+    { "name": "HANDLERS", "type": "map", "required": true, "values": ["fn", "hash"], "keysFrom": "KINDS", "doc": "kind -> fn:pure handler, or an L2 hash called by flow.call" },
+    { "name": "ON_NONE", "type": "choice", "options": ["review", "ignore"], "required": true, "default": "review", "doc": "route for none-of-these" },
+    { "name": "CONCURRENCY", "type": "int", "range": [1, 8], "bound": true, "required": true, "default": 4 }
+  ],
+  "when": [
+    { "id": "J1", "type": "noul", "instructions": "Does each input item need different handling depending on a category that is not given as a field?" },
+    { "id": "J2", "type": "choice", "instructions": "What decides the category?", "criteria": { "field": "a field value (that is L0:if, not P07)", "prose": "cues in free text", "caller": "the caller states it", "none": "no category" } },
+    { "id": "J3", "type": "noul", "instructions": "Could some items fit none of the categories, or be genuinely ambiguous?", "adds": "P09" }
+  ],
+  "checklist": [
+    { "text": "A none-of-these option always.", "code": "ENUM_NO_NONE", "kw": { "class": "default", "n": 32 }, "minedFrom": ["dify:mkt-1b5493cc…"], "enforcedBy": "skeleton" },
+    { "text": "Every route is a closed enum; free-text labels are refused.", "code": "BRANCH_ON_TEXT", "enforcedBy": "skeleton" },
+    { "text": "An injection document routes to ignore or review, never to an effect handler.", "code": "EFFECT_IN_SOLVER", "enforcedBy": "fixture no-match" },
+    { "text": "Each item is routed exactly once (invariant); handlers that write shared state go through a single writer.", "code": "ONE_WRITER", "kw": { "class": "state", "n": 45 }, "minedFrom": ["activepieces:OZH5az2RIrvLKCr0bL47g"] },
+    { "text": "Notify handlers are effects and belong in the envelope.", "code": "EFFECT_IN_SOLVER", "kw": { "class": "notify", "n": 25 }, "minedFrom": ["activepieces:3AzxIABbHE7PBCsBZfP3m"] },
+    { "text": "The judge quotes the item it classifies.", "code": "JUDGE_NO_CHECK", "enforcedBy": "skeleton" }
+  ],
+  "rules": [
+    { "code": "JUDGE_NO_CHECK", "judgeSlot": "KIND_SPEC", "skeletonCheck": true },
+    { "code": "ENUM_NO_NONE", "judgeSlot": "KIND_SPEC", "skeletonNone": "none-of-these" },
+    { "code": "CALLS", "mapSlot": "HANDLERS", "budgetUsd": 0.05, "concurrencySlot": "CONCURRENCY" }
+  ],
+  "companions": [{ "id": "P09", "why": "J3: ambiguous items" }],
+  "tags": ["branch", "inbox"],
+  "example": { "slots": {
+    "ITEMS": "inputs.messages",
+    "KINDS": ["invoice", "receipt", "support"],
+    "CUE": "(m) => m.subject + '\\n' + m.body",
+    "KIND_SPEC": { "tiers": ["claude-haiku-5-5"], "system": "Classify the message by what it asks the reader to do. Answer with the kind and a verbatim quote from the message that decides it; answer none-of-these when no kind fits." },
+    "HANDLERS": { "invoice": "(m) => ({ action: 'pay-later', ref: m.id })", "receipt": "@child:receipt-filer", "support": "(m) => ({ action: 'ticket', ref: m.id })" },
+    "ON_NONE": "review",
+    "CONCURRENCY": 2
+  } }
+}

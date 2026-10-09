@@ -1,0 +1,42 @@
+{
+  "id": "P16", "layer": "L1", "version": 1,
+  "name": "dedupe by identity (blocking + pairwise judge + union-find)", "short": "dedupe-by-identity", "family": "fan", "tier": "S", "constructs": [2, 6, 3, 7, 5],
+  "flow": { "version": 3, "autoFlag": false },
+  "fragment": { "in": "any (ROWS reads it)", "out": { "type": "object", "required": ["clusters"], "properties": { "clusters": { "type": "array", "items": { "type": "array" } } } } },
+  "slots": [
+    { "name": "ROWS", "type": "path", "required": true },
+    { "name": "BLOCK", "type": "fn", "required": true, "params": ["row"] },
+    { "name": "SIM", "type": "fn", "required": true, "params": ["a", "b"] },
+    { "name": "BAND", "type": "numbers", "length": 2, "range": [0, 1], "ascending": true, "required": true, "doc": "[lo, hi): judge band; >= hi merges by code" },
+    { "name": "SAME", "type": "judge", "required": true, "doc": "schema {same: enum [same, different, unsure], quote}" },
+    { "name": "CONCURRENCY", "type": "int", "range": [1, 8], "bound": true, "required": true, "default": 4 }
+  ],
+  "when": [
+    { "id": "J1", "type": "noul", "instructions": "Can the same real-world entity appear more than once with different spellings or ids?" },
+    { "id": "J2", "type": "choice", "instructions": "How can duplicates be recognised?", "criteria": { "exact-key": "an exact key exists, which makes it L0:step", "fuzzy": "similar names or addresses", "needs-reading": "the text has to be read", "none": "no duplicates possible" } }
+  ],
+  "checklist": [
+    { "text": "A borderline band goes to a judge (FRONTIER-GAPS N4).", "code": null, "enforcedBy": "skeleton" },
+    { "text": "Transitivity: union-find, not pairwise output.", "code": null, "enforcedBy": "skeleton" },
+    { "text": "Rows are conserved.", "code": "NO_CONSERVATION", "enforcedBy": "skeleton invariant rows-conserved" },
+    { "text": "Large inputs need a blocking key.", "code": "UNBOUNDED", "enforcedBy": "guard blockable" }
+  ],
+  "rules": [
+    { "code": "JUDGE_NO_CHECK", "judgeSlot": "SAME" },
+    { "code": "ENUM_NO_NONE", "judgeSlot": "SAME" }
+  ],
+  "minedFrom": ["google-adk:…on-brand-genmedia", "dspy:…multihop-pot", "dagster:snowflake_cortex"],
+  "companions": [],
+  "tags": ["fan", "records"],
+  "example": { "slots": {
+    "ROWS": "inputs.customers",
+    "BLOCK": "(r) => String(r.name ?? '').toLowerCase().split(/\\s+/).filter(w => w.length > 2)",
+    "SIM": "(a, b) => { const A = new Set(a.name.toLowerCase().split(/\\s+/)), B = new Set(b.name.toLowerCase().split(/\\s+/)); const i = [...A].filter(w => B.has(w)).length; return i / (A.size + B.size - i); }",
+    "BAND": [0.3, 0.99],
+    "SAME": { "tiers": ["claude-haiku-5-5"], "system": "Are records A and B the same customer? Answer same, different or unsure, with a verbatim quote from A or B that decides it.",
+      "prompt": "(p) => 'A: ' + p.a.name + ' <' + p.a.email + '>\\nB: ' + p.b.name + ' <' + p.b.email + '>'",
+      "schema": { "type": "object", "required": ["same", "quote"], "additionalProperties": false, "properties": { "same": { "enum": ["same", "different", "unsure"] }, "quote": { "type": "string" } } },
+      "check": "(v, p) => v.same === 'unsure' || (v.quote && [p.a.name, p.a.email, p.b.name, p.b.email].join(' ').includes(v.quote)) ? null : 'quote not in pair'" },
+    "CONCURRENCY": 2
+  } }
+}

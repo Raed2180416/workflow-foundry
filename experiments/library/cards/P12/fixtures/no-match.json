@@ -1,0 +1,6 @@
+{
+  "name": "no-match",
+  "note": "An empty statement: no per-item work; the reduce still returns its typed zero.",
+  "task": { "prompt": "Total the statement lines per account.", "inputs": { "lines": [] } },
+  "expect": { "status": "ok", "output": { "count": 0, "totalMinor": 0, "byAccount": {} } }
+}

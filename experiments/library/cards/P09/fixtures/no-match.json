@@ -1,0 +1,15 @@
+{
+  "name": "no-match",
+  "note": "One claim is undecidable and one gets a split vote across the 3 samples: both go to the review queue with a quote; neither is guessed.",
+  "task": { "prompt": "Decide each expense claim.", "inputs": { "claims": [
+    { "id": "c3", "text": "Misc. 200 EUR." },
+    { "id": "c4", "text": "Dinner with a prospect and a friend, 120 EUR." } ] } },
+  "answers": { "decide": [
+    { "when": "Misc.", "value": { "choice": "undecidable", "quote": "" } },
+    { "when": "Dinner", "ordinal": 0, "value": { "choice": "approve", "quote": "Dinner with a prospect" } },
+    { "when": "Dinner", "ordinal": 1, "value": { "choice": "reject", "quote": "and a friend" } },
+    { "when": "Dinner", "value": { "choice": "approve", "quote": "Dinner with a prospect" } } ] },
+  "expect": { "status": "ok", "output": { "decided": [], "review_queue": [
+    { "id": "c3", "reason": "undecidable", "quote": "" },
+    { "id": "c4", "reason": "split-vote", "quote": "Dinner with a prospect" } ] } }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "drift",
+  "note": "The source renamed its statuses ('ok' instead of 'approved'): every invoice is dropped with a reason, and MIN_KEEP = 1 deopts instead of paying nothing silently.",
+  "task": { "prompt": "Select the invoices that may be paid.", "inputs": { "invoices": [ { "id": "i1", "amountMinor": 100, "status": "ok" }, { "id": "i2", "amountMinor": 200, "status": "ok" } ] } },
+  "expect": { "status": "deopt", "deopt": { "kind": "guard", "name": "enough-kept" } }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "positive",
+  "task": { "prompt": "Reconcile the ledger with the bank statement.", "inputs": {
+    "ledger": [ { "id": "t1", "amountMinor": 10000, "date": "2026-09-28" }, { "id": "t2", "amountMinor": 5000, "date": "2026-09-29" }, { "id": "t3", "amountMinor": 2000, "date": "2026-09-30", "memo": "posted after bank cut-off" } ],
+    "bank": [ { "id": "t1", "amountMinor": 10000 }, { "id": "t2", "amountMinor": 4950, "memo": "incl. wire fee 0.50" } ] } },
+  "answers": { "reason": [
+    { "when": "\"id\":\"t3\"", "value": { "reason": "timing", "quote": "posted after bank cut-off" } },
+    { "when": "wire fee", "value": { "reason": "fee", "quote": "wire fee 0.50" } } ] },
+  "expect": { "status": "ok", "output": { "adjustments": [ { "id": "t3", "reason": "timing", "amountMinor": 2000 }, { "id": "t2", "reason": "fee", "amountMinor": 50 } ], "unexplained": [] } }
+}

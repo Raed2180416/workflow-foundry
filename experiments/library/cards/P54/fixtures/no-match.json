@@ -1,0 +1,11 @@
+{
+  "name": "no-match",
+  "note": "One entity's lines carry a shape the child never saw (a currency and an FX rate per line): the call host refuses it outside-profile, it comes back as a value, is flagged, and COMBINE sends it to review instead of guessing.",
+  "task": { "prompt": "Close the month for each entity and give the group total.", "inputs": { "entities": [
+    { "code": "DE01", "lines": [ { "account": "4000", "amountMinor": 12000 }, { "account": "4000", "amountMinor": 3000 } ] },
+    { "code": "US01", "lines": [ { "account": "4000", "amountMinor": 990000000, "currency": "USD", "fxRate": "1.0841" }, { "account": "7900", "amountMinor": -15, "currency": "USD", "fxRate": "1.0841" } ] } ] } },
+  "children": [ { "name": "entity-close", "contract": { "input": { "type": "object", "required": ["entity", "lines"] }, "output": { "type": "object", "required": ["totalMinor"], "properties": { "totalMinor": { "type": "integer" } } } },
+    "profileInputs": [ { "entity": "DE01", "lines": [ { "account": "4000", "amountMinor": 12000 }, { "account": "4000", "amountMinor": 3000 } ] }, { "entity": "FR01", "lines": [ { "account": "4000", "amountMinor": 500 } ] }, { "entity": "NL01", "lines": [ { "account": "4100", "amountMinor": 7000 }, { "account": "4000", "amountMinor": 2500 } ] } ],
+    "respond": [ { "when": "\"DE01\"", "output": { "totalMinor": 15000 } }, { "when": "\"FR01\"", "output": { "totalMinor": 500 } } ] } ],
+  "expect": { "status": "ok", "flags": ["child-refused"], "calls": { "call-end": 1, "call-refused": 1 }, "output": { "entities": [ { "entity": "DE01", "totalMinor": 15000 }, { "entity": "US01", "review": "outside-profile" } ], "totalMinor": 15000 } }
+}

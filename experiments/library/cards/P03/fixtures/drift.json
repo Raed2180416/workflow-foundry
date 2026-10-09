@@ -1,0 +1,7 @@
+{
+  "name": "drift",
+  "note": "The note still says day first but the export changed to month-first dates (02/13/2026): normalised under the stated order the month is 13, validation fails, and REJECT = deopt stops the run.",
+  "task": { "prompt": "Normalise the bank export.", "inputs": { "sources": [ { "id": "s1", "note": "Dates are day first (DD/MM/YYYY).", "csv": "date,amount\n02/13/2026,10.00\n" } ] } },
+  "answers": { "convention": [ { "value": { "order": "DMY", "quote": "Dates are day first (DD/MM/YYYY)." } } ] },
+  "expect": { "status": "deopt", "deopt": { "kind": "guard", "name": "validated" } }
+}

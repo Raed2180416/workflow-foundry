@@ -1,0 +1,43 @@
+{
+  "id": "P13", "layer": "L1", "version": 1,
+  "name": "batched extract (map with a judge body, id echo)", "short": "batched-extract", "family": "fan", "tier": "S", "constructs": [6, 3, 5],
+  "flow": { "version": 3, "autoFlag": false },
+  "fragment": { "in": "any (ITEMS reads it)", "out": { "type": "object", "required": ["items"], "properties": { "items": { "type": "array", "items": { "type": "object", "required": ["id", "quote"] } } } } },
+  "slots": [
+    { "name": "ITEMS", "type": "path", "required": true },
+    { "name": "TEXT", "type": "fn", "required": true, "params": ["item"] },
+    { "name": "READ", "type": "judge", "required": true, "doc": "over one batch; schema {items: [{id, ...fields, quote}]}" },
+    { "name": "PACK", "type": "int", "range": [1, 20], "bound": true, "required": true, "default": 5 },
+    { "name": "CONCURRENCY", "type": "int", "range": [1, 8], "bound": true, "required": true, "default": 4 }
+  ],
+  "when": [
+    { "id": "J1", "type": "noul", "instructions": "Must many separate text items each be read by a model, with one small typed result per item?" },
+    { "id": "J2", "type": "choice", "instructions": "Can several items share one model call?", "criteria": { "one-per-call": "each item needs its own call", "batched": "small items can be packed", "none": "no model reading" } }
+  ],
+  "checklist": [
+    { "text": "Id echo plus quote check.", "code": "MAP_NO_ECHO_CHECK", "kw": { "class": "default", "n": 7 }, "minedFrom": ["activepieces:P4MZLep45DFk4lilR7QOW"], "enforcedBy": "skeleton check" },
+    { "text": "Bound the batch.", "code": "UNBOUNDED", "kw": { "class": "batch", "n": 14 }, "minedFrom": ["n8n:10156"], "enforcedBy": "PACK int[1,20]" },
+    { "text": "The loop exit is code, never 'the model says done'.", "code": "BRANCH_ON_TEXT", "enforcedBy": "skeleton" },
+    { "text": "Escalate a failed batch per item, not per batch.", "code": null },
+    { "text": "No chain-of-thought field in an extraction schema.", "code": "REASONING_ON_EXTRACTION" }
+  ],
+  "rules": [
+    { "code": "JUDGE_NO_CHECK", "judgeSlot": "READ", "skeletonCheck": true },
+    { "code": "MAP_NO_ECHO_CHECK", "judgeSlot": "READ", "echo": "items[].id" },
+    { "code": "REASONING_ON_EXTRACTION", "judgeSlot": "READ" },
+    { "code": "ENUM_NO_NONE", "judgeSlot": "READ" }
+  ],
+  "minedFrom": ["dspy:…refine-factuality-judge", "google-adk:…on-brand-genmedia", "smolagents:…benchmark-agent-type-switch", "n8n:10156"],
+  "companions": [],
+  "tags": ["fan", "documents"],
+  "example": { "slots": {
+    "ITEMS": "inputs.invoices",
+    "TEXT": "(it) => it.text",
+    "READ": { "tiers": ["claude-haiku-5-5"], "system": "For each invoice below, give its id, the amount due in minor units (null if none is stated) and a verbatim quote of the amount (empty if none).",
+      "prompt": "(batch) => batch.map(it => '[' + it.id + '] ' + it.text).join('\\n')",
+      "schema": { "type": "object", "required": ["items"], "properties": { "items": { "type": "array", "items": { "type": "object", "required": ["id", "amountMinor", "quote"], "additionalProperties": false,
+        "properties": { "id": { "type": "string" }, "amountMinor": { "type": ["integer", "null"] }, "quote": { "type": "string" } } } } } } },
+    "PACK": 2,
+    "CONCURRENCY": 2
+  } }
+}

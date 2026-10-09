@@ -1,0 +1,6 @@
+{
+  "name": "positive",
+  "task": { "prompt": "Report the group's closing totals per currency.", "inputs": { "entities": [
+    { "id": "de", "currency": "EUR", "totalMinor": 100000, "ok": true }, { "id": "fr", "currency": "EUR", "totalMinor": 25050, "ok": true }, { "id": "uk", "currency": "GBP", "totalMinor": 7000, "ok": true } ] } },
+  "expect": { "status": "ok", "output": { "report": { "EUR": { "entities": 2, "totalMinor": 125050 }, "GBP": { "entities": 1, "totalMinor": 7000 } }, "failed": [] } }
+}

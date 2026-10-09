@@ -1,0 +1,7 @@
+{
+  "name": "no-match",
+  "note": "No two rows share a blocking key: no pair, no judge call, every row its own cluster.",
+  "task": { "prompt": "Merge duplicate customers.", "inputs": { "customers": [ { "id": "c1", "name": "Acme GmbH", "email": "a@acme.de" }, { "id": "c4", "name": "Zeta Ltd", "email": "ops@zeta.co.uk" } ] } },
+  "answers": {},
+  "expect": { "status": "ok", "output": { "clusters": [ ["c1"], ["c4"] ] } }
+}

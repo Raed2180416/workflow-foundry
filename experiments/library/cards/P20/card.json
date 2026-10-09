@@ -1,0 +1,43 @@
+{
+  "id": "P20", "layer": "L1", "version": 1,
+  "name": "generate -> verify -> retry (bounded)", "short": "generate-verify-retry", "family": "loop", "tier": "S", "constructs": [10, 3, 2, 4],
+  "flow": { "version": 3, "autoFlag": false },
+  "fragment": { "in": "any (GEN reads it)", "out": { "type": "object", "required": ["result"], "properties": { "tries": { "type": "integer" }, "review": { "type": "object", "required": ["problem", "tries"] } } } },
+  "slots": [
+    { "name": "GEN", "type": "judge", "required": true, "doc": "prompt over {input, problem}" },
+    { "name": "VERIFY", "type": "fn", "required": true, "params": ["out", "input"], "role": "verifier", "doc": "null when the result is right, else the problem" },
+    { "name": "MAX_TRIES", "type": "int", "range": [1, 4], "bound": true, "required": true, "default": 3 },
+    { "name": "FEEDBACK", "type": "bool", "required": true, "default": true },
+    { "name": "ON_FAIL", "type": "choice", "options": ["deopt", "review"], "required": true, "default": "deopt" }
+  ],
+  "when": [
+    { "id": "J1", "type": "noul", "instructions": "Is there a check that code (or a separate verifier) can run on a generated result, so that a failed result can be regenerated?" },
+    { "id": "J2", "type": "choice", "instructions": "What verifies the result?", "criteria": { "code": "a code check", "tool-run": "running it (tests or a compiler)", "judge": "a separate judge", "none": "nothing can verify it" } }
+  ],
+  "checklist": [
+    { "text": "The verifier gates.", "code": "VERIFY_NOT_GATING" },
+    { "text": "The retry cap is a literal.", "code": "UNBOUNDED", "enforcedBy": "MAX_TRIES int[1,4]" },
+    { "text": "The problem is fed back as data, never as instructions.", "code": null, "enforcedBy": "skeleton" },
+    { "text": "Defaults on exhaustion are explicit.", "code": "SILENT_DROP", "kw": { "class": "default", "n": 35 }, "minedFrom": ["dify:mkt-22fd4d00…"], "enforcedBy": "ON_FAIL" },
+    { "text": "State across tries is local.", "code": "ONE_WRITER", "kw": { "class": "state", "n": 58 }, "minedFrom": ["activepieces:WSuSdjnA1rdJmIkfisphJ"] },
+    { "text": "Schema validation is the cheapest verifier.", "code": null, "kw": { "class": "validate", "n": 42 }, "minedFrom": ["flowise:agentflowsv2-agentic-rag"] },
+    { "text": "A judge verifying its own family is not independent; prefer a code verifier, P49 when only judges exist.", "code": null }
+  ],
+  "rules": [
+    { "code": "VERIFY_NOT_GATING", "fnSlot": "VERIFY", "constant": "null" },
+    { "code": "JUDGE_NO_CHECK", "judgeSlot": "GEN" },
+    { "code": "ENUM_NO_NONE", "judgeSlot": "GEN" }
+  ],
+  "minedFrom": ["langgraph:memory-agent", "pydantic-graph:…genai_email_feedback", "strands:…graph_loops_example"],
+  "companions": [],
+  "tags": ["loop", "finance"],
+  "example": { "slots": {
+    "GEN": { "tiers": ["claude-haiku-5-5"], "system": "Write the journal entry for the expense as debit and credit lines in minor units, using only accounts from the chart. If previousProblem is set, it describes what was wrong with your last entry.",
+      "prompt": "(c) => JSON.stringify({ expense: c.input.expense, chart: c.input.chart, previousProblem: c.problem })",
+      "schema": { "type": "object", "required": ["lines"], "properties": { "lines": { "type": "array", "items": { "type": "object", "required": ["account", "debitMinor", "creditMinor"], "properties": { "account": { "type": "string" }, "debitMinor": { "type": "integer" }, "creditMinor": { "type": "integer" } } } } } } },
+    "VERIFY": "(out, x) => { const d = out.lines.reduce((n, l) => n + l.debitMinor, 0), c = out.lines.reduce((n, l) => n + l.creditMinor, 0); if (d !== c) return 'unbalanced: debits ' + d + ', credits ' + c; const bad = out.lines.find(l => !x.chart.includes(l.account)); return bad ? 'unknown account ' + bad.account : null; }",
+    "MAX_TRIES": 3,
+    "FEEDBACK": true,
+    "ON_FAIL": "deopt"
+  } }
+}

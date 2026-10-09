@@ -1,0 +1,7 @@
+{
+  "name": "drift",
+  "note": "The bank export now splits one transfer into two lines with the same id: a duplicate on one side must go through P16 first, so the guard deopts.",
+  "task": { "prompt": "Reconcile the ledger with the bank statement.", "inputs": { "ledger": [ { "id": "t1", "amountMinor": 10000 } ], "bank": [ { "id": "t1", "amountMinor": 6000 }, { "id": "t1", "amountMinor": 4000 } ] } },
+  "answers": {},
+  "expect": { "status": "deopt", "deopt": { "kind": "guard", "name": "unique-ids" } }
+}

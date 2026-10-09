@@ -1,0 +1,6 @@
+{
+  "name": "no-match",
+  "note": "No branches to combine: the report is empty and the identity holds (0 = 0); nothing is invented.",
+  "task": { "prompt": "Report the group's closing totals per currency.", "inputs": { "entities": [] } },
+  "expect": { "status": "ok", "output": { "report": {}, "failed": [] } }
+}

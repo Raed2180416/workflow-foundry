@@ -1,0 +1,10 @@
+{
+  "name": "drift",
+  "note": "The export changed amounts to decimal strings; the part input no longer meets ARG and the arg-typed invariant deopts before any call.",
+  "task": { "prompt": "Close the month for each entity and give the group total.", "inputs": { "entities": [
+    { "code": "DE01", "lines": [ { "account": "4000", "amountMinor": "120.00" } ] } ] } },
+  "children": [ { "name": "entity-close", "contract": { "input": { "type": "object", "required": ["entity", "lines"] }, "output": { "type": "object", "required": ["totalMinor"], "properties": { "totalMinor": { "type": "integer" } } } },
+    "profileInputs": [ { "entity": "DE01", "lines": [ { "account": "4000", "amountMinor": 12000 }, { "account": "4000", "amountMinor": 3000 } ] }, { "entity": "FR01", "lines": [ { "account": "4000", "amountMinor": 500 } ] }, { "entity": "NL01", "lines": [ { "account": "4100", "amountMinor": 7000 }, { "account": "4000", "amountMinor": 2500 } ] } ],
+    "respond": [ { "when": "\"DE01\"", "output": { "totalMinor": 15000 } }, { "when": "\"FR01\"", "output": { "totalMinor": 500 } } ] } ],
+  "expect": { "status": "deopt", "deopt": { "kind": "invariant", "name": "arg-typed" }, "calls": { "call-end": 0 } }
+}

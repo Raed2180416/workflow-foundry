@@ -1,0 +1,35 @@
+{
+  "id": "P12", "layer": "L1", "version": 1,
+  "name": "map -> code reduce (for-each with typed coverage)", "short": "map-code-reduce", "family": "fan", "tier": "S", "constructs": [4, 6, 5, 9],
+  "flow": { "version": 3, "autoFlag": false },
+  "fragment": { "in": "any (ITEMS reads it)", "out": null },
+  "slots": [
+    { "name": "ITEMS", "type": "path", "required": true },
+    { "name": "BODY", "type": "fn", "required": true, "params": ["item"], "doc": "per-item code; a reading body is P13, a sub-workflow body is P53" },
+    { "name": "REDUCE", "type": "fn", "required": true, "params": ["results"] },
+    { "name": "MAX_ITEMS", "type": "int", "range": [1, 1000], "bound": true, "required": true, "default": 1000 },
+    { "name": "CONCURRENCY", "type": "int", "range": [1, 16], "bound": true, "required": true, "default": 4 }
+  ],
+  "when": [
+    { "id": "J1", "type": "noul", "instructions": "Is the same per-item work applied to a list whose length is only known at run time?" },
+    { "id": "J2", "type": "choice", "instructions": "Does each item's work need code, reading, or a whole sub-workflow?", "criteria": { "code": "code only", "reading": "reading text (P13)", "sub-workflow": "a whole sub-workflow (P53)", "none": "no per-item work" } }
+  ],
+  "checklist": [
+    { "text": "A maximum item count (IR maxItems <= 1000); above it, chunk via P53.", "code": "UNBOUNDED", "enforcedBy": "guard bounded" },
+    { "text": "Echo the item id.", "code": "MAP_NO_ECHO_CHECK", "enforcedBy": "skeleton invariant ids-echoed" },
+    { "text": "Batch or chunk.", "code": "UNBOUNDED", "kw": { "class": "batch", "n": 23 }, "minedFrom": ["coze:httprequester-http-implicit-dependencies", "n8n:10156"] },
+    { "text": "Pagination of the source list happens in the envelope (L3 binding) before the map.", "code": "EFFECT_IN_SOLVER", "kw": { "class": "pagination" }, "minedFrom": ["activepieces:UslzViNdWBKKKprQuIA64"] },
+    { "text": "map stays fail-fast; partial results with typed coverage are wide (P19).", "code": null }
+  ],
+  "rules": [ { "code": "NO_CONSERVATION", "enforcedBy": "skeleton invariant one-per-item" } ],
+  "minedFrom": ["coze:app-variables-for-sub-process", "n8n:13500", "argo:coinflip-recursive"],
+  "companions": [],
+  "tags": ["fan", "finance"],
+  "example": { "slots": {
+    "ITEMS": "inputs.lines",
+    "BODY": "(l) => ({ account: l.account, amountMinor: Math.round(Number(l.amount) * 100) })",
+    "REDUCE": "(rs) => ({ count: rs.length, totalMinor: rs.reduce((n, r) => n + r.amountMinor, 0), byAccount: rs.reduce((m, r) => ({ ...m, [r.account]: (m[r.account] ?? 0) + r.amountMinor }), {}) })",
+    "MAX_ITEMS": 5,
+    "CONCURRENCY": 4
+  } }
+}

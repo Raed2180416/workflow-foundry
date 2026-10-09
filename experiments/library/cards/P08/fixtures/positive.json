@@ -1,0 +1,11 @@
+{
+  "name": "positive",
+  "task": { "prompt": "Select the invoices that may be paid.", "inputs": { "invoices": [
+    { "id": "i1", "amountMinor": 12000, "status": "approved" },
+    { "id": "i2", "amountMinor": 0, "status": "approved" },
+    { "id": "i3", "amountMinor": 500, "status": "draft" },
+    { "id": "i4", "amountMinor": 900, "status": "approved" } ] } },
+  "expect": { "status": "ok", "output": {
+    "keep": [ { "id": "i1", "amountMinor": 12000, "status": "approved" }, { "id": "i4", "amountMinor": 900, "status": "approved" } ],
+    "drop": [ { "id": "i2", "reason": "non-positive" }, { "id": "i3", "reason": "not-approved:draft" } ] } }
+}

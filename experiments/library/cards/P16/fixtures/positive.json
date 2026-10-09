@@ -1,0 +1,10 @@
+{
+  "name": "positive",
+  "task": { "prompt": "Merge duplicate customers.", "inputs": { "customers": [
+    { "id": "c1", "name": "Acme GmbH", "email": "a@acme.de" }, { "id": "c2", "name": "ACME GmbH", "email": "billing@acme.de" },
+    { "id": "c3", "name": "Acme GmbH Berlin", "email": "a@acme.de" }, { "id": "c4", "name": "Zeta Ltd", "email": "ops@zeta.co.uk" } ] } },
+  "answers": { "same-entity": [
+    { "when": "A: Acme GmbH <a@acme.de>\nB: Acme GmbH Berlin", "value": { "same": "same", "quote": "a@acme.de" } },
+    { "when": "A: ACME GmbH", "value": { "same": "unsure", "quote": "" } } ] },
+  "expect": { "status": "ok", "flags": ["weak-merge"], "output": { "clusters": [ ["c1", "c2", "c3"], ["c4"] ] } }
+}

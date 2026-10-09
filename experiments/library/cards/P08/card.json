@@ -1,0 +1,35 @@
+{
+  "id": "P08", "layer": "L1", "version": 1,
+  "name": "guard -> act (filter before an effect)", "short": "guard-act", "family": "branch", "tier": "S", "constructs": [2, 8, 4, 5],
+  "flow": { "version": 3, "autoFlag": false },
+  "fragment": { "in": "any (ITEMS reads it)", "out": { "type": "object", "required": ["keep", "drop"], "properties": { "keep": { "type": "array" }, "drop": { "type": "array", "items": { "type": "object", "required": ["id", "reason"], "properties": { "reason": { "type": "string" } } } } } } },
+  "slots": [
+    { "name": "ITEMS", "type": "path", "required": true },
+    { "name": "KEEP", "type": "fn", "required": true, "params": ["item"], "doc": "item -> true, or a reason-code string; never false" },
+    { "name": "ON_DROP", "type": "choice", "options": ["note", "flag", "deopt"], "required": true, "default": "note" },
+    { "name": "MIN_KEEP", "type": "int", "range": [0, 100000], "required": false }
+  ],
+  "when": [
+    { "id": "J1", "type": "noul", "instructions": "Should some inputs be dropped or stopped before any action is taken, by a rule that code can check?" },
+    { "id": "J2", "type": "choice", "instructions": "Is the filter condition computable, or does it need reading?", "criteria": { "code": "computable from fields", "judged": "it needs reading text, which makes it P07 or P09", "none": "there is no filter" } }
+  ],
+  "checklist": [
+    { "text": "Dropped items are reported with a reason code, never silently.", "code": "SILENT_DROP", "minedFrom": ["review-20261007/02 §5 must-not-allow"] },
+    { "text": "The filter reads only code values; a judged filter is P07 or P09.", "code": "BRANCH_ON_TEXT" },
+    { "text": "Dedupe state across runs is P42, not a local set.", "code": "ONE_WRITER", "kw": { "class": "state", "n": 40 }, "minedFrom": ["n8n:18427", "node-red:2e10a76f…"] },
+    { "text": "Batch size and delay between effects belong in the L3 binding (rate limit), not in the filter.", "code": "EFFECT_IN_SOLVER", "kw": { "class": "batch", "n": 24 }, "minedFrom": ["n8n:11382"] }
+  ],
+  "rules": [
+    { "code": "SILENT_DROP", "fnSlot": "KEEP", "forbidReturn": "false" },
+    { "code": "NO_CONSERVATION", "enforcedBy": "skeleton invariant partition" }
+  ],
+  "minedFrom": ["airflow:…example_bedrock", "galaxy:iwc/multiplex-tma", "nf-core:scrnaseq@4.2.0", "nextflow:workflowhub/462"],
+  "companions": [],
+  "tags": ["branch", "finance"],
+  "example": { "slots": {
+    "ITEMS": "inputs.invoices",
+    "KEEP": "(inv) => !Number.isInteger(inv.amountMinor) ? 'no-amount' : inv.amountMinor <= 0 ? 'non-positive' : !['approved'].includes(inv.status) ? 'not-approved:' + inv.status : true",
+    "ON_DROP": "note",
+    "MIN_KEEP": 1
+  } }
+}

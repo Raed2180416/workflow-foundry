@@ -1,0 +1,10 @@
+{
+  "name": "positive",
+  "task": { "prompt": "Decide each expense claim.", "inputs": { "claims": [
+    { "id": "c1", "text": "Train ticket to the client site, 45 EUR, receipt attached." },
+    { "id": "c2", "text": "Personal gym membership, 60 EUR." } ] } },
+  "answers": { "decide": [
+    { "when": "Train ticket", "value": { "choice": "approve", "quote": "Train ticket to the client site" } },
+    { "when": "gym membership", "value": { "choice": "reject", "quote": "Personal gym membership" } } ] },
+  "expect": { "status": "ok", "output": { "decided": [ { "id": "c1", "choice": "approve" }, { "id": "c2", "choice": "reject" } ], "review_queue": [] } }
+}

@@ -1,0 +1,28 @@
+{
+ "name": "drift",
+ "note": "The export now carries the currency inside the amount column ('12.50 EUR'): the parse stage's output fails its schema (amountMinor is not an integer), so the hand-off invariant deopts.",
+ "task": {
+  "prompt": "Total the payments export.",
+  "inputs": {
+   "csv": "id,amount\np1,12.50 EUR\n",
+   "note": "Amounts in EUR."
+  }
+ },
+ "answers": {
+  "currency": [
+   {
+    "value": {
+     "currency": "EUR",
+     "quote": "Amounts in EUR."
+    }
+   }
+  ]
+ },
+ "expect": {
+  "status": "deopt",
+  "deopt": {
+   "kind": "invariant",
+   "name": "parse-typed"
+  }
+ }
+}

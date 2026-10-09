@@ -1,0 +1,45 @@
+{
+  "id": "P54", "layer": "L1", "version": 1,
+  "name": "compose: call a library item per part", "short": "compose-call", "family": "compose", "tier": "M", "constructs": [12, 6, 3],
+  "flow": { "version": 3, "autoFlag": false },
+  "fragment": { "in": "any (PARTS reads it)", "out": null },
+  "slots": [
+    { "name": "PARTS", "type": "fn", "required": true, "params": ["task", "x"], "doc": "the parts to hand to the child: [{key, input}]" },
+    { "name": "REF", "type": "hash", "required": true, "doc": "the child's library hash, a literal (MUTABLE_TARGET otherwise)" },
+    { "name": "CHILD_BUDGET", "type": "usd", "required": true, "default": 0.05 },
+    { "name": "ON_REFUSE", "type": "choice", "options": ["deopt", "value"], "required": true, "default": "deopt", "doc": "value: a refused part comes back as {refused} and is flagged" },
+    { "name": "COMBINE", "type": "fn", "required": true, "params": ["kids", "parts"], "doc": "child outputs (or {refused} / {deopt}) -> the fragment output" },
+    { "name": "ARG", "type": "schema", "required": true, "doc": "what every part input is; must be accepted by the child's contract.input (CALL_TYPE)" },
+    { "name": "READS", "type": "schema", "required": false, "doc": "what COMBINE reads of a child output; must be implied by the child's contract.output (CALL_TYPE)" },
+    { "name": "CONCURRENCY", "type": "int", "range": [1, 4], "bound": true, "required": true, "default": 2 }
+  ],
+  "when": [
+    { "id": "J1", "type": "noul", "instructions": "Does the task contain several parts that each need the same sub-job, and does the library hold an item that does that sub-job?" },
+    { "id": "J2", "type": "choice", "instructions": "How do the parts relate to the library item?", "criteria": { "same-shape": "each part is the item's input as it stands", "adapt": "each part needs a pure reshaping first", "partial": "the item covers only some parts", "none": "no item fits" } }
+  ],
+  "checklist": [
+    { "text": "The call target is a literal hash.", "code": "MUTABLE_TARGET", "enforcedBy": "REF hash slot" },
+    { "text": "What is passed meets the child's input contract; what is read is in its output contract.", "code": "CALL_TYPE", "enforcedBy": "ARG / READS" },
+    { "text": "Child budgets times concurrency stay below the parent's.", "code": "BUDGET_TREE" },
+    { "text": "A child that may see inputs outside its profile needs a fallback.", "code": "PROFILE_UNREACHABLE", "enforcedBy": "ON_REFUSE" },
+    { "text": "Children are pure; effects run once, in the parent's envelope.", "code": "EFFECT_IN_SOLVER" },
+    { "text": "No path calls back into an ancestor.", "code": "RECURSION" },
+    { "text": "Depth 3 at most.", "code": "DEPTH" }
+  ],
+  "rules": [
+    { "code": "CALLS", "hashSlot": "REF", "budgetSlot": "CHILD_BUDGET", "concurrencySlot": "CONCURRENCY", "argSlot": "ARG", "readsSlot": "READS", "onRefuseSlot": "ON_REFUSE" }
+  ],
+  "minedFrom": ["n8n:execute-workflow", "langgraph:subgraphs", "dify:workflow-as-tool"],
+  "companions": [{ "id": "P15", "why": "a quorum over the parts that came back" }],
+  "tags": ["compose", "finance"],
+  "example": { "slots": {
+    "PARTS": "(task, x) => x.entities.map(e => ({ key: e.code, input: { entity: e.code, lines: e.lines } }))",
+    "REF": "@child:entity-close",
+    "CHILD_BUDGET": 0.05,
+    "ON_REFUSE": "value",
+    "COMBINE": "(kids, parts) => ({ entities: parts.map((p, i) => kids[i].refused || kids[i].deopt ? { entity: p.key, review: kids[i].refused || kids[i].deopt.kind } : { entity: p.key, totalMinor: kids[i].totalMinor }), totalMinor: kids.reduce((n, k) => n + (k.totalMinor || 0), 0) })",
+    "ARG": { "type": "object", "required": ["entity", "lines"], "properties": { "entity": { "type": "string" }, "lines": { "type": "array", "items": { "type": "object", "required": ["account", "amountMinor"], "properties": { "account": { "type": "string" }, "amountMinor": { "type": "integer" } } } } } },
+    "READS": { "type": "object", "required": ["totalMinor"], "properties": { "totalMinor": { "type": "integer" } } },
+    "CONCURRENCY": 2
+  } }
+}

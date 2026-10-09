@@ -1,0 +1,10 @@
+{
+  "name": "drift",
+  "note": "The chart of accounts changed (6100 retired for 6150); the generator keeps writing 6100, verification fails on every try, and the verified guard deopts.",
+  "task": { "prompt": "Book the expense.", "inputs": { "expense": "Office chairs, 300.00 EUR, paid from the bank account.", "chart": ["6150", "1200"] } },
+  "answers": {
+    "gen#0": [ { "value": { "lines": [ { "account": "6100", "debitMinor": 30000, "creditMinor": 0 }, { "account": "1200", "debitMinor": 0, "creditMinor": 30000 } ] } } ],
+    "gen#1": [ { "value": { "lines": [ { "account": "6100", "debitMinor": 30000, "creditMinor": 0 }, { "account": "1200", "debitMinor": 0, "creditMinor": 30000 } ] } } ],
+    "gen#2": [ { "value": { "lines": [ { "account": "6100", "debitMinor": 30000, "creditMinor": 0 }, { "account": "1200", "debitMinor": 0, "creditMinor": 30000 } ] } } ] },
+  "expect": { "status": "deopt", "deopt": { "kind": "guard", "name": "verified" } }
+}

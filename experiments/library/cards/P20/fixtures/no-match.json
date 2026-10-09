@@ -1,0 +1,11 @@
+{
+  "name": "no-match",
+  "note": "Nothing the generator produces verifies within the cap: with ON_FAIL = review the run returns no result and a review item with the last problem; nothing unverified is passed on.",
+  "slots": { "ON_FAIL": "review" },
+  "task": { "prompt": "Book the expense.", "inputs": { "expense": "Something, amount unclear.", "chart": ["6100", "1200"] } },
+  "answers": {
+    "gen#0": [ { "value": { "lines": [ { "account": "6100", "debitMinor": 100, "creditMinor": 0 } ] } } ],
+    "gen#1": [ { "value": { "lines": [ { "account": "6100", "debitMinor": 100, "creditMinor": 0 } ] } } ],
+    "gen#2": [ { "value": { "lines": [ { "account": "6100", "debitMinor": 100, "creditMinor": 0 } ] } } ] },
+  "expect": { "status": "ok", "output": { "result": null, "review": { "problem": "unbalanced: debits 100, credits 0", "tries": 3 } } }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "positive",
+  "task": { "prompt": "Total the statement lines per account.", "inputs": { "lines": [
+    { "id": "l1", "account": "4000", "amount": "10.10" }, { "id": "l2", "account": "4000", "amount": "0.90" }, { "id": "l3", "account": "5100", "amount": "3.00" } ] } },
+  "expect": { "status": "ok", "output": { "count": 3, "totalMinor": 1400, "byAccount": { "4000": 1100, "5100": 300 } } }
+}

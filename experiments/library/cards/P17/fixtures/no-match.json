@@ -1,0 +1,7 @@
+{
+  "name": "no-match",
+  "note": "Everything matches to the cent: no differences, no judge call, an empty (typed) adjustment list.",
+  "task": { "prompt": "Reconcile the ledger with the bank statement.", "inputs": { "ledger": [ { "id": "t1", "amountMinor": 10000 } ], "bank": [ { "id": "t1", "amountMinor": 10000 } ] } },
+  "answers": {},
+  "expect": { "status": "ok", "output": { "adjustments": [], "unexplained": [] } }
+}

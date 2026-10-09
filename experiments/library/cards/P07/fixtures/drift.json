@@ -1,0 +1,10 @@
+{
+  "name": "drift",
+  "note": "The export now repeats message ids (a threading change): routing each item exactly once cannot hold, so the invariant deopts.",
+  "task": { "prompt": "Route each inbox message to its handler.", "inputs": { "messages": [
+    { "id": "m1", "subject": "Invoice INV-79", "body": "Please pay 10.00 EUR." },
+    { "id": "m1", "subject": "Re: Invoice INV-79", "body": "Reminder: please pay 10.00 EUR." } ] } },
+  "answers": { "kind": [ { "value": { "kind": "invoice", "quote": "pay 10.00 EUR" } } ] },
+  "children": [ { "name": "receipt-filer", "contract": { "output": { "type": "object", "required": ["filed"] } }, "respond": [ { "output": { "filed": true } } ] } ],
+  "expect": { "status": "deopt", "deopt": { "kind": "invariant", "name": "routed-once" } }
+}

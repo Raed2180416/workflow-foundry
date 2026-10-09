@@ -1,0 +1,8 @@
+{
+  "name": "no-match",
+  "note": "A source's note states no convention: the judge answers none, no date is guessed, and the rows go to review with a reason (REJECT = review instance).",
+  "slots": { "REJECT": "review" },
+  "task": { "prompt": "Normalise the bank export.", "inputs": { "sources": [ { "id": "s1", "note": "Exported nightly by the bank.", "csv": "date,amount\n03/02/2026,10.00\n" } ] } },
+  "answers": { "convention": [ { "value": { "order": "none", "quote": "" } } ] },
+  "expect": { "status": "ok", "output": { "rows": [], "review": [ { "id": "s1:1", "reason": "invalid" } ] } }
+}

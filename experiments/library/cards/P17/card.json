@@ -1,0 +1,47 @@
+{
+  "id": "P17", "layer": "L1", "version": 1,
+  "name": "reconcile two sources (join, diff, classify discrepancies)", "short": "reconcile-two-sources", "family": "fan", "tier": "S", "constructs": [2, 6, 3, 5],
+  "flow": { "version": 3, "autoFlag": false },
+  "fragment": { "in": "any (LEFT, RIGHT read it)", "out": { "type": "object", "required": ["adjustments", "unexplained"], "properties": {
+    "adjustments": { "type": "array", "items": { "type": "object", "required": ["id", "reason", "amountMinor"], "properties": { "amountMinor": { "type": "integer" } } } }, "unexplained": { "type": "array" } } } },
+  "slots": [
+    { "name": "LEFT", "type": "path", "required": true },
+    { "name": "RIGHT", "type": "path", "required": true },
+    { "name": "MATCH", "type": "fn", "required": true, "params": ["left", "right"] },
+    { "name": "AMOUNT", "type": "fn", "required": true, "params": ["row"], "doc": "row -> integer minor units" },
+    { "name": "REASONS", "type": "enum", "required": true, "min": 2, "max": 12, "doc": "must include 'unexplained'" },
+    { "name": "EXPLAIN", "type": "judge", "required": true, "fields": ["tiers", "system", "prompt"], "doc": "prompt over one difference {side, id, row, delta}; schema built by the skeleton" },
+    { "name": "ADJUST", "type": "fn", "required": true, "params": ["matched", "diffs", "why"], "control": true, "reads": { "why": "judge:EXPLAIN[]" } },
+    { "name": "CONCURRENCY", "type": "int", "range": [1, 8], "bound": true, "required": true, "default": 8 }
+  ],
+  "when": [
+    { "id": "J1", "type": "noul", "instructions": "Must two record sets that describe the same things be matched and their differences explained?" },
+    { "id": "J2", "type": "choice", "instructions": "How do records match?", "criteria": { "shared-id": "by a shared id", "fuzzy-fields": "by fuzzy fields (with P16)", "amounts-and-dates": "by amounts and dates", "none": "nothing to match" } }
+  ],
+  "checklist": [
+    { "text": "'unexplained' is always a reason.", "code": "ENUM_NO_NONE" },
+    { "text": "The difference identity holds exactly.", "code": "NO_CONSERVATION", "enforcedBy": "skeleton invariant explains-difference" },
+    { "text": "Timing and FX reasons need the dates and quotes in the judge state.", "code": "JUDGE_NO_CHECK" },
+    { "text": "A duplicate on one side goes to P16 first.", "code": null, "enforcedBy": "guard unique-ids" }
+  ],
+  "rules": [
+    { "code": "ENUM_NO_NONE", "enumSlot": "REASONS", "mustInclude": "unexplained" },
+    { "code": "JUDGE_NO_CHECK", "judgeSlot": "EXPLAIN", "skeletonSchema": { "properties": { "quote": { "type": "string" } } } },
+    { "code": "BRANCH_ON_TEXT", "fnSlot": "ADJUST", "reads": { "why": "EXPLAIN" }, "textFields": ["quote"] }
+  ],
+  "minedFrom": ["mastra:…support-supervisor (weak)"],
+  "companions": [{ "id": "P16", "why": "duplicates on one side" }],
+  "tags": ["fan", "finance"],
+  "example": { "slots": {
+    "LEFT": "inputs.ledger",
+    "RIGHT": "inputs.bank",
+    "MATCH": "(L, R) => { const byId = new Map(R.map(b => [b.id, b])); return { matched: L.filter(l => byId.has(l.id)).map(l => ({ left: l, right: byId.get(l.id) })), onlyLeft: L.filter(l => !byId.has(l.id)), onlyRight: R.filter(b => !L.some(l => l.id === b.id)) }; }",
+    "AMOUNT": "(r) => r.amountMinor",
+    "REASONS": ["timing", "fee", "fx", "unexplained"],
+    "EXPLAIN": { "tiers": ["claude-haiku-5-5"], "system": "Why do the ledger and the bank differ on this entry? Answer timing, fee, fx or unexplained, with a verbatim quote from the entry that shows it.",
+      "prompt": "(d) => JSON.stringify({ side: d.side, delta: d.delta, entry: d.row })",
+      "check": "(v, d) => v.reason === 'unexplained' || (v.quote && JSON.stringify(d.row).includes(v.quote)) ? null : 'quote not in entry'" },
+    "ADJUST": "(matched, diffs, why) => diffs.map((d, i) => ({ id: d.id, reason: why[i].reason, amountMinor: d.delta }))",
+    "CONCURRENCY": 4
+  } }
+}

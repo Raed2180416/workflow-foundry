@@ -1,0 +1,8 @@
+{
+  "name": "drift",
+  "note": "Half of the entity closes failed upstream: below the 0.75 quorum the guard deopts instead of reporting a partial group total as the group total.",
+  "task": { "prompt": "Report the group's closing totals per currency.", "inputs": { "entities": [
+    { "id": "de", "currency": "EUR", "totalMinor": 100, "ok": true }, { "id": "fr", "currency": "EUR", "ok": false },
+    { "id": "uk", "currency": "GBP", "ok": false }, { "id": "it", "currency": "EUR", "totalMinor": 5, "ok": true } ] } },
+  "expect": { "status": "deopt", "deopt": { "kind": "guard", "name": "quorum" } }
+}

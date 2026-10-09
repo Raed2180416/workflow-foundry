@@ -1,0 +1,8 @@
+{
+  "name": "positive",
+  "task": { "prompt": "Book the expense.", "inputs": { "expense": "Office chairs, 300.00 EUR, paid from the bank account.", "chart": ["6100", "1200"] } },
+  "answers": {
+    "gen#0": [ { "value": { "lines": [ { "account": "6100", "debitMinor": 30000, "creditMinor": 0 }, { "account": "1200", "debitMinor": 0, "creditMinor": 3000 } ] } } ],
+    "gen#1": [ { "when": "unbalanced: debits 30000, credits 3000", "value": { "lines": [ { "account": "6100", "debitMinor": 30000, "creditMinor": 0 }, { "account": "1200", "debitMinor": 0, "creditMinor": 30000 } ] } } ] },
+  "expect": { "status": "ok", "output": { "result": { "lines": [ { "account": "6100", "debitMinor": 30000, "creditMinor": 0 }, { "account": "1200", "debitMinor": 0, "creditMinor": 30000 } ] }, "tries": 2 } }
+}

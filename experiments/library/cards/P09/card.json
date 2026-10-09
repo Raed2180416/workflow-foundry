@@ -1,0 +1,44 @@
+{
+  "id": "P09", "layer": "L1", "version": 1,
+  "name": "judge -> confidence gate -> review queue (escalate, never guess)", "short": "judge-gate-review-queue", "family": "branch", "tier": "S", "constructs": [6, 3, 7],
+  "flow": { "version": 3, "autoFlag": true },
+  "fragment": { "in": "any (ITEMS reads it)", "out": { "type": "object", "required": ["decided", "review_queue"], "properties": {
+    "decided": { "type": "array", "items": { "type": "object", "required": ["id", "choice"] } },
+    "review_queue": { "type": "array", "items": { "type": "object", "required": ["id", "reason", "quote"], "properties": { "quote": { "type": "string" } } } } } } },
+  "slots": [
+    { "name": "ITEMS", "type": "path", "required": true },
+    { "name": "DECIDE", "type": "judge", "required": true, "doc": "schema {choice: enum incl. undecidable, quote}" },
+    { "name": "SAMPLES", "type": "int", "range": [2, 5], "bound": true, "required": true, "default": 3 },
+    { "name": "AGREE", "type": "fn", "required": true, "params": ["votes"], "reads": { "votes": "judge:DECIDE[]" }, "control": true, "doc": "votes -> bool; enum fields only" },
+    { "name": "QUEUE_REASON", "type": "enum", "required": true, "default": ["undecidable", "split-vote"] },
+    { "name": "CONCURRENCY", "type": "int", "range": [1, 8], "bound": true, "required": true, "default": 4 }
+  ],
+  "when": [
+    { "id": "J1", "type": "noul", "instructions": "Can some inputs be genuinely undecidable from their content, so that a wrong automatic decision costs more than a human look?" },
+    { "id": "J2", "type": "choice", "instructions": "Who resolves an undecided item?", "criteria": { "human-queue": "a review list is returned", "stronger-model": "escalate tiers", "none": "every item must be decided automatically" } }
+  ],
+  "checklist": [
+    { "text": "Both errors count: escalating a decidable item is an error, and so is deciding an undecidable one.", "code": null },
+    { "text": "An undecidable option exists in the judge schema.", "code": "ENUM_NO_NONE" },
+    { "text": "Persistent trust is a P42 state entry with expiry.", "code": "ONE_WRITER", "minedFrom": ["strands:…13-human-in-the-loop…hook-approval-with-persistent-trust"] },
+    { "text": "The queue carries a quote; a human never sees a bare id.", "code": "JUDGE_NO_CHECK" }
+  ],
+  "rules": [
+    { "code": "JUDGE_NO_CHECK", "judgeSlot": "DECIDE" },
+    { "code": "ENUM_NO_NONE", "judgeSlot": "DECIDE" },
+    { "code": "BRANCH_ON_TEXT", "fnSlot": "AGREE", "reads": { "votes": "DECIDE" } }
+  ],
+  "minedFrom": ["langgraph:…wait-user-input#ask-human-agent", "semantic-kernel:…Step02b_AccountOpening", "autogen:…agentchat_chess_game"],
+  "companions": [],
+  "tags": ["branch", "inbox"],
+  "example": { "slots": {
+    "ITEMS": "inputs.claims",
+    "DECIDE": { "tiers": ["claude-haiku-5-5"], "system": "Is this expense claim within policy? Answer approve or reject with a verbatim quote of the decisive sentence; answer undecidable when the claim does not say enough.",
+      "prompt": "(c) => c.text", "schema": { "type": "object", "required": ["choice", "quote"], "additionalProperties": false, "properties": { "choice": { "enum": ["approve", "reject", "undecidable"] }, "quote": { "type": "string" } } },
+      "check": "(v, c) => v.choice === 'undecidable' || (v.quote && c.text.includes(v.quote)) ? null : 'quote not in claim'" },
+    "SAMPLES": 3,
+    "AGREE": "(votes) => votes.every(v => v.choice === votes[0].choice)",
+    "QUEUE_REASON": ["undecidable", "split-vote"],
+    "CONCURRENCY": 2
+  } }
+}

@@ -1,0 +1,7 @@
+{
+  "name": "drift",
+  "note": "A new source sends customers without names (email only): such a row has no blocking key, so the guard deopts instead of leaving it unmatched.",
+  "task": { "prompt": "Merge duplicate customers.", "inputs": { "customers": [ { "id": "c1", "name": "Acme GmbH", "email": "a@acme.de" }, { "id": "c9", "name": "", "email": "a@acme.de" } ] } },
+  "answers": {},
+  "expect": { "status": "deopt", "deopt": { "kind": "guard", "name": "blockable" } }
+}

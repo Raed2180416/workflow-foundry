@@ -1,0 +1,8 @@
+{
+  "name": "drift",
+  "note": "The statement grew past the compiled bound (MAX_ITEMS = 5): the guard deopts instead of mapping an unbounded list (above the bound: chunk via P53).",
+  "task": { "prompt": "Total the statement lines per account.", "inputs": { "lines": [
+    { "id": "l1", "account": "4000", "amount": "1" }, { "id": "l2", "account": "4000", "amount": "1" }, { "id": "l3", "account": "4000", "amount": "1" },
+    { "id": "l4", "account": "4000", "amount": "1" }, { "id": "l5", "account": "4000", "amount": "1" }, { "id": "l6", "account": "4000", "amount": "1" } ] } },
+  "expect": { "status": "deopt", "deopt": { "kind": "guard", "name": "bounded" } }
+}

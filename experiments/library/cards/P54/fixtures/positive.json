@@ -1,0 +1,10 @@
+{
+  "name": "positive",
+  "task": { "prompt": "Close the month for each entity and give the group total.", "inputs": { "entities": [
+    { "code": "DE01", "lines": [ { "account": "4000", "amountMinor": 12000 }, { "account": "4000", "amountMinor": 3000 } ] },
+    { "code": "FR01", "lines": [ { "account": "4000", "amountMinor": 500 } ] } ] } },
+  "children": [ { "name": "entity-close", "contract": { "input": { "type": "object", "required": ["entity", "lines"] }, "output": { "type": "object", "required": ["totalMinor"], "properties": { "totalMinor": { "type": "integer" } } } },
+    "profileInputs": [ { "entity": "DE01", "lines": [ { "account": "4000", "amountMinor": 12000 }, { "account": "4000", "amountMinor": 3000 } ] }, { "entity": "FR01", "lines": [ { "account": "4000", "amountMinor": 500 } ] }, { "entity": "NL01", "lines": [ { "account": "4100", "amountMinor": 7000 }, { "account": "4000", "amountMinor": 2500 } ] } ],
+    "respond": [ { "when": "\"DE01\"", "output": { "totalMinor": 15000 } }, { "when": "\"FR01\"", "output": { "totalMinor": 500 } } ] } ],
+  "expect": { "status": "ok", "calls": { "call-end": 2 }, "output": { "entities": [ { "entity": "DE01", "totalMinor": 15000 }, { "entity": "FR01", "totalMinor": 500 } ], "totalMinor": 15500 } }
+}

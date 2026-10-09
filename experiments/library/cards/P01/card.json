@@ -1,0 +1,281 @@
+{
+ "id": "P01",
+ "layer": "L1",
+ "version": 1,
+ "name": "linear pipeline with typed hand-offs",
+ "short": "linear-pipeline",
+ "family": "spine",
+ "tier": "S",
+ "constructs": [
+  1,
+  2,
+  3,
+  5,
+  9,
+  11
+ ],
+ "flow": {
+  "version": 3,
+  "autoFlag": false
+ },
+ "fragment": {
+  "in": "any (the first stage reads it)",
+  "out": null
+ },
+ "slots": [
+  {
+   "name": "STAGES",
+   "type": "list",
+   "required": true,
+   "min": 2,
+   "max": 8,
+   "bound": true,
+   "doc": "2..8 stages in order; each output must satisfy its out schema",
+   "item": {
+    "name": {
+     "type": "name",
+     "required": true
+    },
+    "kind": {
+     "type": "choice",
+     "options": [
+      "step",
+      "judge",
+      "call"
+     ],
+     "required": true
+    },
+    "fn": {
+     "type": "fn",
+     "params": [
+      "v"
+     ],
+     "requiredWhen": {
+      "kind": "step"
+     }
+    },
+    "spec": {
+     "type": "judge",
+     "requiredWhen": {
+      "kind": "judge"
+     }
+    },
+    "merge": {
+     "type": "fn",
+     "params": [
+      "prev",
+      "judged"
+     ]
+    },
+    "hash": {
+     "type": "hash",
+     "requiredWhen": {
+      "kind": "call"
+     }
+    },
+    "budgetUsd": {
+     "type": "usd",
+     "requiredWhen": {
+      "kind": "call"
+     }
+    },
+    "out": {
+     "type": "schema",
+     "required": true
+    }
+   }
+  },
+  {
+   "name": "CONSERVE",
+   "type": "fn",
+   "required": false,
+   "params": [
+    "input",
+    "output"
+   ],
+   "doc": "a count or sum identity from input to output"
+  }
+ ],
+ "when": [
+  {
+   "id": "J1",
+   "type": "noul",
+   "instructions": "Does the task consist of stages where each stage's output is the next stage's only input?"
+  },
+  {
+   "id": "J2",
+   "type": "choice",
+   "instructions": "What does the work look like?",
+   "criteria": {
+    "one-pass": "one transformation",
+    "stages": "an ordered sequence of distinct transformations",
+    "per-item": "the same work repeated per item",
+    "none": "none of these"
+   }
+  }
+ ],
+ "checklist": [
+  {
+   "text": "Every hand-off has a schema; no stage reads an earlier stage's raw input unless the schema says so.",
+   "code": "CALL_TYPE",
+   "enforcedBy": "skeleton invariant <stage>-typed"
+  },
+  {
+   "text": "At least one conservation invariant from input to output (the C0 lesson).",
+   "code": "NO_CONSERVATION"
+  },
+  {
+   "text": "Stages over 8 split into a P54 call.",
+   "code": "UNBOUNDED",
+   "enforcedBy": "slot bound"
+  }
+ ],
+ "rules": [
+  {
+   "code": "NO_CONSERVATION",
+   "requireSlot": "CONSERVE"
+  },
+  {
+   "code": "VERIFY_NOT_GATING",
+   "fnSlot": "CONSERVE"
+  },
+  {
+   "code": "CALLS",
+   "listSlot": "STAGES",
+   "kind": "call",
+   "argFromPrevOut": true
+  }
+ ],
+ "minedFrom": [
+  "airflow:…example_dag_akeyless",
+  "tekton:…pipelinerun-using-different-subpaths-of-workspace",
+  "galaxy:iwc/clinicalmp-database-generation",
+  "dagster:quickstart_etl"
+ ],
+ "companions": [],
+ "tags": [
+  "spine"
+ ],
+ "example": {
+  "slots": {
+   "STAGES": [
+    {
+     "name": "parse",
+     "kind": "step",
+     "fn": "(v) => ({ note: v.note, rows: v.csv.trim().split('\\n').slice(1).map(l => { const [id, amount] = l.split(','); return { id, amountMinor: Math.round(Number(amount) * 100) }; }) })",
+     "out": {
+      "type": "object",
+      "required": [
+       "rows",
+       "note"
+      ],
+      "properties": {
+       "rows": {
+        "type": "array",
+        "items": {
+         "type": "object",
+         "required": [
+          "id",
+          "amountMinor"
+         ],
+         "properties": {
+          "id": {
+           "type": "string"
+          },
+          "amountMinor": {
+           "type": "integer"
+          }
+         }
+        }
+       },
+       "note": {
+        "type": "string"
+       }
+      }
+     }
+    },
+    {
+     "name": "currency",
+     "kind": "judge",
+     "spec": {
+      "tiers": [
+       "claude-haiku-5-5"
+      ],
+      "system": "Which currency are the amounts in? Answer from the note only, with a verbatim quote; answer none when the note does not say.",
+      "prompt": "(v) => v.note",
+      "schema": {
+       "type": "object",
+       "required": [
+        "currency",
+        "quote"
+       ],
+       "properties": {
+        "currency": {
+         "enum": [
+          "EUR",
+          "USD",
+          "GBP",
+          "none"
+         ]
+        },
+        "quote": {
+         "type": "string"
+        }
+       }
+      },
+      "check": "(c, v) => c.currency === 'none' || (c.quote && v.note.includes(c.quote)) ? null : 'quote not in note'"
+     },
+     "merge": "(prev, c) => ({ ...prev, currency: c.currency })",
+     "out": {
+      "type": "object",
+      "required": [
+       "rows",
+       "currency"
+      ],
+      "properties": {
+       "currency": {
+        "enum": [
+         "EUR",
+         "USD",
+         "GBP",
+         "none"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "name": "total",
+     "kind": "step",
+     "fn": "(v) => ({ currency: v.currency, count: v.rows.length, totalMinor: v.rows.reduce((n, r) => n + r.amountMinor, 0) })",
+     "out": {
+      "type": "object",
+      "required": [
+       "currency",
+       "count",
+       "totalMinor"
+      ],
+      "properties": {
+       "count": {
+        "type": "integer"
+       },
+       "totalMinor": {
+        "type": "integer"
+       },
+       "currency": {
+        "enum": [
+         "EUR",
+         "USD",
+         "GBP",
+         "none"
+        ]
+       }
+      },
+      "additionalProperties": false
+     }
+    }
+   ],
+   "CONSERVE": "(input, out) => out.count === input.csv.trim().split('\\n').length - 1"
+  }
+ }
+}
