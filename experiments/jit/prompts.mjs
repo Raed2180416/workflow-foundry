@@ -14,8 +14,8 @@
 // (D3); quotes in BUILD-NOTES.md verbatim from the case's task. Two parts follow the compile options: with
 // opts.acceptance 'strict' it states the strict rule (opts.minPartial, default 0.9), and with opts.compare 'tolerant' it
 // says how check-traces compares (opts.relTol, opts.absTol). Version 3 runs on flow-v2.mjs, like version 2.
-export const PROMPT_VERSIONS = Object.freeze([1, 2, 3]);
-export const FLOW_FILES = Object.freeze({ 1: 'flow.mjs', 2: 'flow-v2.mjs', 3: 'flow-v2.mjs' });
+export const PROMPT_VERSIONS = Object.freeze([1, 2, 3, 4]);
+export const FLOW_FILES = Object.freeze({ 1: 'flow.mjs', 2: 'flow-v2.mjs', 3: 'flow-v2.mjs', 4: 'flow-v2.mjs' });
 export function promptVersionOf(opts) {
   const v = opts?.promptVersion ?? 1;
   if (!PROMPT_VERSIONS.includes(v)) throw new Error(`builder prompt: promptVersion must be one of ${PROMPT_VERSIONS.join(', ')}, got ${JSON.stringify(v)}`);
@@ -122,14 +122,28 @@ Distil its work into code: a solver that does the same work on new tasks of that
   cases(opts), method(opts), sdk(opts), testing(opts), finish(opts)].join('\n\n');
 }
 
-export function recompilePrompt(opts) {
-  return [`This is a compile-from-traces job: a recompile. ./solve.mjs is the current solver, distilled from earlier traces of an agent's work.
+// Prompt v4 (DEV-NOTES D9): the v1-v3 recompile text asks for no deopt on the new cases, which pushed a heal to widen a
+// guard over inputs it could not handle, turning refusals into silent wrong answers on drift. v4 lets a refusal stand:
+// on the cases that came from a refusal, the new solver either matches the agent's answer or keeps refusing.
+const refusalCases = opts => (opts.refusals?.length ? ` These cases came from inputs the current solver refused: ${opts.refusals.join(', ')}.` : '');
+const recompileHead = opts => (promptVersionOf(opts) >= 4 ? `This is a compile-from-traces job: a recompile. ./solve.mjs is the current solver, distilled from earlier traces of an agent's work.
+On some new tasks it deopted (a guard, invariant or judge check stopped it), crashed, or gave an answer that was settled as
+wrong (regressions/). Those tasks are now among the traces and the regression cases.${refusalCases(opts)}
+Change solve.mjs minimally: every regression case must pass, no case may crash, and every case that passed before must
+still pass. For a case that came from a refusal, there are exactly two acceptable outcomes: your answer matches the
+agent's answer, or the solver still refuses it (a deopt). Handle the new shape only if you can reproduce the agent's
+answer on it; otherwise keep (or tighten) the guard so the input still deopts. A refused input that now gets a different
+answer is the worst outcome: it turns a safe hand-back into a silent wrong answer, and the version is rejected for it.
+Never widen a guard further than the traces you can reproduce. Run  node tools/check-traces.mjs  first to see where it stands.` : `This is a compile-from-traces job: a recompile. ./solve.mjs is the current solver, distilled from earlier traces of an agent's work.
 On some new tasks it deopted (a guard, invariant or judge check stopped it), crashed, or gave an answer that was settled as
 wrong (regressions/). Those tasks are now among the traces and the regression cases.
 Change solve.mjs minimally: the new cases must run without a deopt or crash, every regression case must pass, and every
 case that passed before must still pass. Run  node tools/check-traces.mjs  first to see where it stands. When a guard
 stopped a shape that the new traces show is legitimate, widen that guard (and handle the shape) rather than delete it;
-keep the guards that still mark inputs no trace has shown.`,
+keep the guards that still mark inputs no trace has shown.`);
+
+export function recompilePrompt(opts) {
+  return [recompileHead(opts),
   ...(promptVersionOf(opts) >= 3 ? [`Read the deopts before you change code. check-traces keeps each case's run directory under .check/<case>/: deopt.json
 says which guard, invariant or judge stopped it, and for a judge its detail.tiersTried gives each tier's check problem.
 A judge whose check failed on every tier for one kind of input is miscalibrated there, not unlucky. Either calibrate the

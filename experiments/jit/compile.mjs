@@ -16,7 +16,7 @@ import { startServices, Ledger } from '../lib/services.mjs';
 import { MODEL_TOOL, BUDGET_TOOL, taskFiles } from '../c0/construct.mjs';
 import { builderPrompt, promptVersionOf, flowFileOf } from './prompts.mjs';
 import { tolerance } from './compare.mjs';
-import { judgeAcceptance, acceptanceModeOf, minPartialOf, caseTasks } from './acceptance.mjs';
+import { judgeAcceptance, acceptanceModeOf, minPartialOf, caseTasks, applyRefusals } from './acceptance.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 // The SDK the builder reads and the host check runs follows the prompt version (prompts.mjs flowFileOf): FLOW_TOOL is
@@ -168,8 +168,10 @@ export async function hostCheck({ dir, solveSource, traces, regressions = [], mo
 // runner: the session runner (tests wrap runClaudeCode to plant a stand-in CLI binary in the workdir).
 export async function compile({ familyId, traces, previous = null, regressions = [], builderModel = 'claude-haiku-5-5', builderEffort = 'high', builderBudgetUsd = 3,
   gatewayUsd = 1.5, minutes = 30, perTaskUsd = 1, modelPort, workRoot, label, models, version = 1, checkUsd = gatewayUsd, checkMinutes = 30, checkCaseSeconds = 600,
-  promptVersion = 1, compare = 'canonical', relTol, absTol, tolerantKeys, allowLooseTolerance, acceptance = 'named', minPartial, runner = runClaudeCode }) {
+  promptVersion = 1, compare = 'canonical', relTol, absTol, tolerantKeys, allowLooseTolerance, acceptance = 'named', minPartial, refusals = [], runner = runClaudeCode }) {
   if (!Array.isArray(traces) || !traces.length) throw new Error('compile: at least one trace is required');
+  // JIT v2.2 (opt-in): check-traces case ids (trace-<i>) whose input the current solver refused; see acceptance.mjs applyRefusals.
+  if (!Array.isArray(refusals) || refusals.some(id => !/^trace-\d+$/.test(id) || Number(id.slice(6)) >= traces.length)) throw new Error('compile: refusals must be trace-<i> ids of the given traces');
   promptVersion = promptVersionOf({ promptVersion });   // an unknown prompt version fails here, before anything is started
   // JIT v2.1 options (opt-in; at their defaults nothing below changes): the check's comparison and the acceptance rule.
   const cmp = comparisonOf({ compare, relTol, absTol, tolerantKeys, allowLooseTolerance });
@@ -190,7 +192,7 @@ export async function compile({ familyId, traces, previous = null, regressions =
   const svc = await startServices({ modelPort, ledger, scoreLimit: 0, runId: `compile:${label}:${randomUUID()}`, allowedModels: models });
   const files = compileFiles({ outputSchema: fam.outputSchema, traces, regressions, previous, gateway: { url: svc.url, token: svc.token }, promptVersion, compare: cmp });
   const kind = previous ? 'recompile' : 'compile';
-  const prompt = builderPrompt(kind, { traces: traces.length, regressions: regressions.length, minutes, gatewayUsd, perTaskUsd, models, promptVersion,
+  const prompt = builderPrompt(kind, { traces: traces.length, regressions: regressions.length, minutes, gatewayUsd, perTaskUsd, models, promptVersion, ...(refusals.length ? { refusals } : {}),
     ...(cmp ? { compare: cmp.mode, relTol: cmp.relTol, absTol: cmp.absTol, ...(cmp.tolerantKeys ? { tolerantKeys: cmp.tolerantKeys } : {}) } : {}), ...(acceptance === 'strict' ? { acceptance, minPartial } : {}) });
   const started = Date.now();
   let r;
@@ -209,10 +211,12 @@ export async function compile({ familyId, traces, previous = null, regressions =
   const check = solveSource
     ? await hostCheck({ dir: path.join(workdir, '.host-check'), solveSource, traces, regressions, modelPort, models, capUsd: checkUsd, label, timeoutMs: checkMinutes * 60 * 1000, caseSeconds: checkCaseSeconds, promptVersion, compare: cmp })
     : { summary: null, error: { code: 'NO_ARTIFACT' }, costUsd: 0, calls: 0, unknownCalls: 0, refusals: {}, durationMs: null };
-  const s = check.summary;
+  // v2.2: on refusal cases a deopt is acceptable and a different answer is not (applyRefusals); without refusals s is the summary.
+  const { summary: s, refusalCheck } = applyRefusals(check.summary, refusals);
   // A disagreement with an agent answer is acceptable only when BUILD-NOTES.md names that case (SPEC addendum 4); with
   // acceptance 'strict', also a minimum agreement and a verbatim quote from that case's task (acceptance.mjs).
-  const verdict = judgeAcceptance({ summary: s, notes, mode: acceptance, minPartial, tasks: caseTasks(traces, regressions) });
+  const judged = judgeAcceptance({ summary: s, notes, mode: acceptance, minPartial, tasks: caseTasks(traces, regressions) });
+  const verdict = refusalCheck ? { ...judged, accepted: judged.accepted && refusalCheck.ok } : judged;
   const unexplained = verdict.unexplained;
   const checkTraces = {
     exact: s?.exact ?? 0, partial: s?.partial ?? null, deopts: s?.deopts ?? 0, crashes: s?.crashes ?? 0, perCase: s?.perCase ?? [],
@@ -223,6 +227,7 @@ export async function compile({ familyId, traces, previous = null, regressions =
     // Non-default only (so a default record is unchanged): the comparison asked for, the canonical-exact diagnostic, and the
     // strict acceptance criteria (which passed, which failed).
     ...(cmp ? { compare: cmp, canonicalExact: s?.canonicalExact ?? null } : {}), ...(verdict.acceptance ? { acceptance: verdict.acceptance } : {}),
+    ...(refusalCheck ? { refusalCheck } : {}),
   };
   const builderCostUsd = r.costUsd ?? r.costUpperUsd;   // unknown builder spend is charged at its bound, never $0
   // (/tmp is private to the sandbox, so it is not listed.)

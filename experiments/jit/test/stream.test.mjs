@@ -420,7 +420,7 @@ test('v2 defaults: the live v1 configs keep their arm hashes; v2 options at thei
   assert.throws(() => normalizeConfig({ ...CONFIG, jit: { shadowEvery: -1 } }), /shadowEvery must be an integer >= 0/);
   assert.throws(() => normalizeConfig({ ...CONFIG, jit: { shadowEvery: 1.5 } }), /shadowEvery must be an integer >= 0/);
   assert.throws(() => normalizeConfig({ ...CONFIG, jit: { shadowOnFlags: 'yes' } }), /shadowOnFlags must be true or false/);
-  assert.throws(() => normalizeConfig({ ...CONFIG, compile: { promptVersion: 4 } }), /promptVersion must be one of 1, 2, 3/);
+  assert.throws(() => normalizeConfig({ ...CONFIG, compile: { promptVersion: 5 } }), /promptVersion must be one of 1, 2, 3, 4/);
   assert.throws(() => normalizeConfig({ ...CONFIG, compile: { fallback: { promptVersion: 3 } } }), /compile\.fallback\.promptVersion is not supported/);
   assert.throws(() => normalizeConfig({ ...CONFIG, compile: { promptVersion: 2, fallback: { promptVersion: 2 } } }), /compile\.fallback\.promptVersion is not supported/);
   assert.equal(normalizeConfig({ ...CONFIG, jit: { shadowEvery: 0, shadowOnFlags: true } }).jit.shadowOnFlags, true);

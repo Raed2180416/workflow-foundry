@@ -175,3 +175,27 @@ export const caseTasks = (traces = [], regressions = []) => ({
   ...Object.fromEntries(traces.map((t, i) => [`trace-${i}`, t?.task ?? null])),
   ...Object.fromEntries(regressions.map((r, i) => [`case-${i}`, r?.task ?? null])),
 });
+
+// JIT v2.2 (DEV-NOTES D9): domain preservation on recompile. A case whose input the current solver refused (a deopt that
+// handed the task to the interpreter) has exactly two acceptable outcomes under the new solver: an exact match with the
+// agent's answer (the shape is now handled) or a deopt (the refusal is kept). A different answer ('diff') turns a safe
+// hand-back into a silent wrong answer: the refusal is lost and the version must be rejected. So is a refusal case the
+// check did not run, or one that crashed or timed out. Deopts on refusal cases do not count against clean. refusalIds are
+// check-traces case ids (trace-<i>). Returns the summary judgeAcceptance should see and the refusal record (null when none).
+export function applyRefusals(summary, refusalIds = []) {
+  if (!summary || !refusalIds?.length) return { summary, refusalCheck: null };
+  const ids = [...new Set(refusalIds)], per = summary.perCase ?? [], byId = new Map(per.map(c => [c.id, c]));
+  const kept = [], handled = [], lost = [], missing = [], failed = [];
+  for (const id of ids) {
+    const c = byId.get(id);
+    if (!c) missing.push(id); else if (c.status === 'deopt') kept.push(id); else if (c.status === 'exact') handled.push(id);
+    else if (c.status === 'diff') lost.push(id); else failed.push(id);
+  }
+  const keptSet = new Set(kept), deopts = Math.max(0, Number(summary.deopts ?? 0) - kept.length);
+  const regressionsOk = Number(summary.regressionsPassed ?? 0) >= Number(summary.regressions ?? 0);
+  const clean = !!summary.clean || (summary.complete !== false && Number(summary.crashes ?? 0) === 0 && Number(summary.timeouts ?? 0) === 0 && deopts === 0 && regressionsOk);
+  return {
+    summary: { ...summary, perCase: per.filter(c => !keptSet.has(c.id)), deopts, clean },
+    refusalCheck: { cases: ids, kept, handled, lost, missing, failed, ok: lost.length === 0 && missing.length === 0 && failed.length === 0 },
+  };
+}

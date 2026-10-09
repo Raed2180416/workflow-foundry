@@ -17,7 +17,7 @@ import { ENV_FAULTS, metEnvFault } from '../lib/runner.mjs';
 import { createModelPort as createModelPortSync } from '../lib/models.mjs';
 import { promptVersionOf, flowFileOf } from './prompts.mjs';
 import { tolerantEqual, tolerance } from './compare.mjs';
-import { judgeAcceptance, acceptanceModeOf, minPartialOf, caseTasks } from './acceptance.mjs';
+import { judgeAcceptance, acceptanceModeOf, minPartialOf, caseTasks, applyRefusals } from './acceptance.mjs';
 
 const REPO = path.resolve(fileURLToPath(new URL('../..', import.meta.url))), HERE = path.dirname(fileURLToPath(import.meta.url));
 export const RUN_ROOT = path.join(REPO, 'experiments/runs/jit'), WORK_ROOT = '/var/tmp/foundry-work/jit';
@@ -82,6 +82,9 @@ export function normalizeConfig(raw) {
   if (jit.shadowEvery != null && jit.shadowEvery !== false && !(Number.isInteger(jit.shadowEvery) && jit.shadowEvery >= 0)) throw new Error('config.jit.shadowEvery must be an integer >= 0 (0: no scheduled shadows)');
   if (jit.shadowOnFlags != null && typeof jit.shadowOnFlags !== 'boolean') throw new Error('config.jit.shadowOnFlags must be true or false');
   if (!jit.shadowOnFlags) delete jit.shadowOnFlags;
+  // v2.2 (DEV-NOTES D9, opt-in): a recompile must keep every refusal it cannot handle; see doCompile and acceptance.mjs applyRefusals.
+  if (jit.preserveRefusals != null && typeof jit.preserveRefusals !== 'boolean') throw new Error('config.jit.preserveRefusals must be true or false');
+  if (!jit.preserveRefusals) delete jit.preserveRefusals;
   if (jit.compare != null && !JIT_COMPARE_MODES.includes(jit.compare)) throw new Error(`config.jit.compare must be one of ${JIT_COMPARE_MODES.join(', ')}`);
   if (jit.compare === 'tolerant') { delete jit.allowLooseTolerance; Object.assign(jit, tolerance(raw.jit)); }
   else if (TOL_KEYS.some(k => jit[k] != null)) throw new Error('config.jit.relTol, absTol, tolerantKeys and allowLooseTolerance need jit.compare \'tolerant\'');
@@ -172,6 +175,18 @@ export function selectTraces(pool, max) {
   return picked.sort((a, b) => b.idx - a.idx || b.seq - a.seq);
 }
 
+// v2.2: the trace-pool entries that came from a refusal (a compiled deopt handed to the interpreter). Crashes, timeouts and
+// invalid outputs are failures to fix, not refusals.
+export const REFUSAL_KINDS = Object.freeze(new Set(['guard', 'invariant', 'judge', 'budget', 'unknown']));
+export const refusalPool = pool => pool.filter(x => x.role === 'fallback' && REFUSAL_KINDS.has(x.kind));
+// Every refusal trace joins the compile (up to `extra` beyond maxTraces, newest first), so the check can see whether each
+// refusal is kept, handled, or lost.
+export function withRefusals(picked, pool, extra = 8) {
+  const out = [...picked], have = new Set(picked.map(x => x.traceId));
+  for (const r of [...refusalPool(pool)].sort((a, b) => b.idx - a.idx || b.seq - a.seq)) if (!have.has(r.traceId) && out.length < picked.length + extra) { out.push(r); have.add(r.traceId); }
+  return out;
+}
+
 // check-traces records (compile.mjs): {exact (count), exactRate, partial, deopts, crashes, regressions, regressionsPassed,
 // perCase: [{id: 'trace-<i>'|'case-<i>', ref: traceId|caseId, kind: 'trace'|'regression', status: exact|diff|deopt|crash|
 // timeout|unlabeled, exact?, partial?}]}. Cases are matched across compiles by ref (the positional id changes).
@@ -181,6 +196,7 @@ const compactCheck = ct => (ct ? { exact: ct.exact ?? null, exactRate: ct.exactR
   regressions: ct.regressions ?? null, regressionsPassed: ct.regressionsPassed ?? null, clean: ct.clean ?? null, unexplained: ct.unexplained ?? null,
   accepted: ct.accepted ?? null, error: ct.error ?? null, recheck: ct.recheck ?? null,
   ...(ct.compare ? { compare: ct.compare, canonicalExact: ct.canonicalExact ?? null } : {}), ...(ct.acceptance ? { acceptance: ct.acceptance } : {}),
+  ...(ct.refusalCheck ? { refusalCheck: ct.refusalCheck } : {}),
   perCase: perCaseList(ct).map(e => ({ id: e.id ?? null, ref: caseId(e), kind: e.kind ?? null, status: e.status ?? null, exact: caseExact(e) === 1, partial: e.partial ?? null })) } : null);
 const caseExact = e => (typeof e?.exact === 'boolean' ? (e.exact ? 1 : 0) : typeof e?.exact === 'number' ? (e.exact >= 1 ? 1 : 0) : e?.status === 'exact' ? 1 : 0);
 const perCaseList = ct => (Array.isArray(ct?.perCase) ? ct.perCase : ct?.perCase && typeof ct.perCase === 'object' ? Object.entries(ct.perCase).map(([id, v]) => ({ id, ...(typeof v === 'object' ? v : { exact: v }) })) : []);
@@ -216,10 +232,11 @@ export const worseOnOld = (newCt, oldCt) => rejectReason(newCt, oldCt) != null;
 // case named in BUILD-NOTES.md; opts.acceptance 'strict' (with opts.minPartial, opts.traces and opts.regressions, the case
 // inputs) applies the strict rule; opts.compare (the comparison object) is recorded as compile.mjs records it.
 export function checkFromSummary(check, workdir, regressions = 0, opts = {}) {
-  const s = check?.summary ?? null;
+  const { summary: s, refusalCheck } = applyRefusals(check?.summary ?? null, opts.refusals ?? []);
   const notesFile = workdir ? path.join(workdir, 'BUILD-NOTES.md') : null;
   const notes = notesFile && existsSync(notesFile) ? readFileSync(notesFile, 'utf8') : null;
-  const verdict = judgeAcceptance({ summary: s, notes, mode: opts.acceptance ?? 'named', minPartial: opts.minPartial, tasks: caseTasks(opts.traces ?? [], opts.regressions ?? []) });
+  const judged = judgeAcceptance({ summary: s, notes, mode: opts.acceptance ?? 'named', minPartial: opts.minPartial, tasks: caseTasks(opts.traces ?? [], opts.regressions ?? []) });
+  const verdict = refusalCheck ? { ...judged, accepted: judged.accepted && refusalCheck.ok } : judged;
   const unexplained = verdict.unexplained;
   return {
     exact: s?.exact ?? 0, partial: s?.partial ?? null, deopts: s?.deopts ?? 0, crashes: s?.crashes ?? 0, perCase: s?.perCase ?? [],
@@ -228,6 +245,7 @@ export function checkFromSummary(check, workdir, regressions = 0, opts = {}) {
     accepted: verdict.accepted, costUsd: check?.costUsd ?? 0, calls: check?.calls ?? 0, unknownCalls: check?.unknownCalls ?? 0, refusals: check?.refusals ?? {},
     durationMs: check?.durationMs ?? null, error: check?.error ?? null,
     ...(opts.compare ? { compare: opts.compare, canonicalExact: s?.canonicalExact ?? null } : {}), ...(verdict.acceptance ? { acceptance: verdict.acceptance } : {}),
+    ...(refusalCheck ? { refusalCheck } : {}),
   };
 }
 
@@ -453,7 +471,7 @@ class JitRun extends ArmRun {
       const r = await this.deps.compile({ familyId: this.config.familyId, traces: inputs.traces, previous: inputs.previous, regressions: inputs.regressions, builderModel,
         builderEffort: settings.builderEffort, builderBudgetUsd: settings.builderBudgetUsd, gatewayUsd: settings.gatewayUsd, checkUsd: settings.checkUsd ?? settings.gatewayUsd,
         minutes: settings.minutes, perTaskUsd: this.config.perTaskUsd, ...(this.config.compile.promptVersion ? { promptVersion: this.config.compile.promptVersion } : {}),
-        ...this.compileOpts, modelPort: this.port, workRoot: path.join(this.work, 'compile'), label: `v${n}-${tag}${attempt ? `-r${attempt}` : ''}`, models: this.arm.models, version: n });
+        ...this.compileOpts, ...(inputs.refusals?.length ? { refusals: inputs.refusals } : {}), modelPort: this.port, workRoot: path.join(this.work, 'compile'), label: `v${n}-${tag}${attempt ? `-r${attempt}` : ''}`, models: this.arm.models, version: n });
       const rec = r.record ?? {};
       // Every dollar of the compile: the builder session, its gateway calls, and the host acceptance check.
       tr.spend('compileBuilder', rec.builderCostUsd ?? 0, rec.builderCostUnknown);
@@ -473,8 +491,8 @@ class JitRun extends ArmRun {
         ...(this.compareOf ? { compare: this.compareOf } : {}) });
       recheckUsd = rc.costUsd ?? 0;
       tr.spend('compileCheck', recheckUsd, (rc.unknownCalls ?? 0) > 0);
-      const how = this.config.compile.acceptance || this.compareOf ? { acceptance: this.config.compile.acceptance, minPartial: this.config.compile.minPartial, compare: this.compareOf,
-        traces: inputs.traces, regressions: inputs.regressions } : {};
+      const how = this.config.compile.acceptance || this.compareOf || inputs.refusals?.length ? { acceptance: this.config.compile.acceptance, minPartial: this.config.compile.minPartial, compare: this.compareOf,
+        traces: inputs.traces, regressions: inputs.regressions, ...(inputs.refusals?.length ? { refusals: inputs.refusals } : {}) } : {};
       rec.checkTraces = { ...checkFromSummary(rc, res.workdir, inputs.regressions.length, how), recheck: { capUsd, firstCheck: compactCheck(rec.checkTraces) } };
     }
     mkdirSync(vdir, { recursive: true });
@@ -497,10 +515,15 @@ class JitRun extends ArmRun {
     const pool = state.traces.map(x => ({ ...x }));
     if (!pool.length) { tr.ev('compile-skipped', { reason: 'no usable trace yet' }); return; }
     const n = state.versionsCount + 1;
-    const traces = selectTraces(pool, this.config.jit.maxTraces).map(x => this.loadTrace(x.traceId));
+    const picked = selectTraces(pool, this.config.jit.maxTraces), chosen = this.config.jit.preserveRefusals ? withRefusals(picked, pool) : picked;
+    const traces = chosen.map(x => this.loadTrace(x.traceId));
+    // v2.2: the positional case ids (trace-<i>, in compile order) of the refusal traces in this compile.
+    const refusalIds = new Set(this.config.jit.preserveRefusals ? refusalPool(pool).map(x => x.traceId) : []);
+    const refusals = chosen.map((x, i) => (refusalIds.has(x.traceId) ? `trace-${i}` : null)).filter(Boolean);
     const regressions = state.regressions.map(id => JSON.parse(readFileSync(path.join(this.p.regressions, `${id}.json`), 'utf8')));
     const previous = state.version ? readFileSync(path.join(this.p.dir, state.version.dir, 'solve.mjs'), 'utf8') : null;
-    const inputs = { traces, regressions, previous, hash: sha(canonical({ t: traces.map(x => x.traceId), r: state.regressions, p: previous ? sha(previous) : null })).slice(0, 12) };
+    const inputs = { traces, regressions, previous, ...(refusals.length ? { refusals } : {}),
+      hash: sha(canonical({ t: traces.map(x => x.traceId), r: state.regressions, p: previous ? sha(previous) : null, ...(refusals.length ? { f: refusals } : {}) })).slice(0, 12) };
     const reason = state.pendingCompile;
     const ok = a => a.hasSolve && a.nestedModelAttempts === 0 && accepted(a.checkTraces);
     const attempts = [await this.compileAttempt(tr, t, state, n, this.arm.compiler, this.config.compile, inputs)];
@@ -517,10 +540,14 @@ class JitRun extends ArmRun {
     const rank = a => [ok(a) ? 1 : 0, a.checkTraces?.clean ? 1 : 0, exactOf(a.checkTraces), Number(a.checkTraces?.partial ?? 0)];
     const best = usable.reverse().sort((a, b) => { const x = rank(a), y = rank(b); return y[0] - x[0] || y[1] - x[1] || y[2] - x[2] || y[3] - x[3]; })[0];
     if (!best) { tr.ev('compile-failed', { version: n, reason, attempts: attempts.map(a => a.builderModel) }); return; }
-    const why = state.version ? rejectReason(best.checkTraces, state.version.checkTraces) : null;
+    // v2.2: a version that answers a refused input differently from the agent (or never ran it) is rejected outright.
+    const lost = best.checkTraces?.refusalCheck && !best.checkTraces.refusalCheck.ok ? best.checkTraces.refusalCheck : null;
+    const why = lost ? `refusal lost (${[...lost.lost, ...lost.missing, ...lost.failed].join(', ')})`
+      : state.version ? rejectReason(best.checkTraces, state.version.checkTraces) : null;
     if (why) {
-      tr.ev('rejected', { version: n, keep: state.version.n, why, ...exactOnOld(best.checkTraces, state.version.checkTraces), newExactRate: exactOf(best.checkTraces),
-        oldExactRate: exactOf(state.version.checkTraces), builderModel: best.builderModel });
+      tr.ev('rejected', { version: n, keep: state.version?.n ?? null, why, ...(state.version ? exactOnOld(best.checkTraces, state.version.checkTraces) : {}), newExactRate: exactOf(best.checkTraces),
+        ...(lost ? { refusalCheck: lost } : {}),
+        oldExactRate: state.version ? exactOf(state.version.checkTraces) : null, builderModel: best.builderModel });
       return;
     }
     const kind = state.version ? 'recompile' : 'compile';
