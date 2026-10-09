@@ -374,3 +374,29 @@ executor; G5 5h 0.32 / 7d 0.53; **G6 deviation**: 3 GB available + 14 GB swap fr
 processes (~3.3 GB) running — Stage B ran two sandboxed sessions under the same load without a fault, so R0 proceeds at
 concurrency 2; G7 dirs present. R0 pair (`agent:claude-haiku-5-5`, `jit:claude-haiku-5-5/claude-haiku-5-5`) started
 21:14 IST from `r0-launch.sh` under `env -i`; log `/var/tmp/foundry-work/r0-records-live.log`.
+
+**D24. Pause 2026-10-09 night (owner: "pause all work after the immediate work, the deep analysis and the plans; we
+resume next week"): R0 records pair final, W-bed R5, the L1-a/L6-a audit (both fail), library steps 1–4, prior art.**
+State and plan: `PAUSE-20261009.md` (read first on resume). **R0 records pair** (`agent:claude-haiku-5-5` vs
+`jit:claude-haiku-5-5/claude-haiku-5-5`, dev seeds 225–248, launched 21:14 IST, concurrency 2, no environment faults):
+STOPPED BY THE OWNER at 23:1x IST (pause): agent arm finished 24/24 (14 pass); the JIT arm stopped at 12/24 (9 pass, one compiled miss on s231 at $1.69, no environment faults), so there is NO paired read, no export and no ledger flip (seeds 225-248 stay fresh). Resume with experiments/jit/resume-streams.mjs per R0-RUNBOOK; the run data is intact in /var/tmp/foundry-work/runs/jit-r0-records/. Nothing here is evidence. **W-bed R5** ("legacy dump", c3c4025): R4's group with one subsidiary's invoices replaced by a
+legacy dump in one of 11 formats in three tiers (dev, wild, novel; novel only at d5 and split-specific); 34 controls;
+the necessity control (dev-format parsers only) fails 14/20 at d2–d4 and 20/20 at d5; the verify predicate (trailer
+with count, row-id sum, per-currency totals and code-point hash totals) has 0 misses in 1,100 + 400 wrong decodes, 16/1,100
+without the hash totals; W-bed suite 127/127 (re-verified r5.test 25/25); eight deviations and eight engine needs for the
+agent node recorded (W-BED-R5-NOTES §9–10; the engine needs are now in the slice 2 brief). **L1-a / L6-a audit**
+(`design/library/AUDIT-L1.md`, 0d9d329, single auditor, fixed seeds): L0 + L1 explain **88.4%** of the corpus on 60
+stratified hand labels (Wilson 75.0–95.1, Kish n 40.3), not 97.8% (which counted "not refused"); 96.1% if Node-RED
+dashboard apps count as explained (owner decision); rule precision 0.73 (bar 0.85, falsifier < 0.75 met), all pairs 0.65,
+recall 0.61; six support-only detectors below 0.5 precision (P02, P16, P17, P18, P30, P49) to remove, P37 mostly CI
+push/PR starts (P38); L6-a 6/21 recorded failure causes named (28.6%), 15 lines proposed. Both negatives are in
+PROOF-LEDGER D1/D9 and §H; the L1 revision is step 4 of the resume plan, before J1. **Library steps 1–4**
+(`experiments/library/`, 88473c7, f22f1a3, 7a11979, 297c3f6, c278c31): store/index/cards/schema/tokens, the §5.2 cap
+table as code (`assemblePrompt` refuses, never truncates), 12 cards with 36 fixtures through the real flow-v3 SDK and
+call host in stub mode at $0, the composition checker (24 mutants, 18 codes); 63/63 tests (re-verified). Token bound
+fitted on 1,243 real Haiku calls; **the L0 card measures 3,643 tokens against its 3,000 S6 allocation** (owner: cut
+~650 or raise to ~3,700). **Prior art**: Anthropic's Managed Agents dynamic workflows decomposed
+(`design/PRIOR-ART-MANAGED-AGENTS-DW.md`, e3660a4): one clash (frontier open program per task vs cheap closed-vocabulary
+composition with evidence-gated reuse), arm (c′) proposed as the construction baseline (PROOF-LEDGER J4), bed R3′ (J5),
+four engine mechanisms adopted into slice 2. Commit trailers of four agent commits were rewritten to the Fable 5.1 line
+before the push (trees unchanged). At the pause nothing runs: no stream, no cron, no Monitor, no agents.
