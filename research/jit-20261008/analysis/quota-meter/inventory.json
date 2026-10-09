@@ -1,0 +1,876 @@
+{
+ "filesScanned": 36,
+ "secretHits": [],
+ "fields": [
+  {
+   "id": "assistant :: .message.container",
+   "files": 29,
+   "example": null
+  },
+  {
+   "id": "assistant :: .message.content[].text",
+   "files": 29,
+   "example": "ok"
+  },
+  {
+   "id": "assistant :: .message.content[].type",
+   "files": 29,
+   "example": "text"
+  },
+  {
+   "id": "assistant :: .message.context_management",
+   "files": 29,
+   "example": null
+  },
+  {
+   "id": "assistant :: .message.diagnostics",
+   "files": 29,
+   "example": null
+  },
+  {
+   "id": "assistant :: .message.id",
+   "files": 29,
+   "example": "msg_011CfrWXgvNN1ukAWz5FtPxU"
+  },
+  {
+   "id": "assistant :: .message.input_transformations[]",
+   "files": 29,
+   "example": []
+  },
+  {
+   "id": "assistant :: .message.model",
+   "files": 29,
+   "example": "claude-haiku-5-5"
+  },
+  {
+   "id": "assistant :: .message.role",
+   "files": 29,
+   "example": "assistant"
+  },
+  {
+   "id": "assistant :: .message.stop_details",
+   "files": 29,
+   "example": null
+  },
+  {
+   "id": "assistant :: .message.stop_reason",
+   "files": 29,
+   "example": null
+  },
+  {
+   "id": "assistant :: .message.stop_sequence",
+   "files": 29,
+   "example": null
+  },
+  {
+   "id": "assistant :: .message.type",
+   "files": 29,
+   "example": "message"
+  },
+  {
+   "id": "assistant :: .message.usage.cache_creation_input_tokens",
+   "files": 29,
+   "example": 2484
+  },
+  {
+   "id": "assistant :: .message.usage.cache_creation.ephemeral_1h_input_tokens",
+   "files": 29,
+   "example": 0
+  },
+  {
+   "id": "assistant :: .message.usage.cache_creation.ephemeral_5m_input_tokens",
+   "files": 29,
+   "example": 2484
+  },
+  {
+   "id": "assistant :: .message.usage.cache_read_input_tokens",
+   "files": 29,
+   "example": 0
+  },
+  {
+   "id": "assistant :: .message.usage.inference_geo",
+   "files": 29,
+   "example": "global"
+  },
+  {
+   "id": "assistant :: .message.usage.input_tokens",
+   "files": 29,
+   "example": 2
+  },
+  {
+   "id": "assistant :: .message.usage.output_tokens",
+   "files": 29,
+   "example": 4
+  },
+  {
+   "id": "assistant :: .message.usage.service_tier",
+   "files": 29,
+   "example": "standard"
+  },
+  {
+   "id": "assistant :: .parent_tool_use_id",
+   "files": 29,
+   "example": null
+  },
+  {
+   "id": "assistant :: .request_id",
+   "files": 29,
+   "example": "req_011CfrWXgHAQTsNcy3F2Qr7t"
+  },
+  {
+   "id": "assistant :: .session_id",
+   "files": 29,
+   "example": "0afa131b-e6d5-494a-aa79-94a6c1b744b6"
+  },
+  {
+   "id": "assistant :: .timestamp",
+   "files": 29,
+   "example": "2026-10-09T10:31:46.918Z"
+  },
+  {
+   "id": "assistant :: .type",
+   "files": 29,
+   "example": "assistant"
+  },
+  {
+   "id": "assistant :: .uuid",
+   "files": 29,
+   "example": "4c01c318-8189-4464-8b3c-ed5fd4e908fd"
+  },
+  {
+   "id": "rate_limit_event :: .rate_limit_info.isUsingOverage",
+   "files": 29,
+   "example": false
+  },
+  {
+   "id": "rate_limit_event :: .rate_limit_info.overageDisabledReason",
+   "files": 29,
+   "example": "org_level_disabled"
+  },
+  {
+   "id": "rate_limit_event :: .rate_limit_info.overageStatus",
+   "files": 29,
+   "example": "rejected"
+  },
+  {
+   "id": "rate_limit_event :: .rate_limit_info.rateLimitType",
+   "files": 29,
+   "example": "five_hour"
+  },
+  {
+   "id": "rate_limit_event :: .rate_limit_info.resetsAt",
+   "files": 29,
+   "example": 1791556200
+  },
+  {
+   "id": "rate_limit_event :: .rate_limit_info.status",
+   "files": 29,
+   "example": "allowed"
+  },
+  {
+   "id": "rate_limit_event :: .rate_limit_info.unifiedWindows.five_hour.resetsAt",
+   "files": 29,
+   "example": 1791556200
+  },
+  {
+   "id": "rate_limit_event :: .rate_limit_info.unifiedWindows.five_hour.utilization",
+   "files": 29,
+   "example": 0.22
+  },
+  {
+   "id": "rate_limit_event :: .rate_limit_info.unifiedWindows.seven_day.resetsAt",
+   "files": 29,
+   "example": 1791939600
+  },
+  {
+   "id": "rate_limit_event :: .rate_limit_info.unifiedWindows.seven_day.utilization",
+   "files": 29,
+   "example": 0.29
+  },
+  {
+   "id": "rate_limit_event :: .session_id",
+   "files": 29,
+   "example": "0afa131b-e6d5-494a-aa79-94a6c1b744b6"
+  },
+  {
+   "id": "rate_limit_event :: .type",
+   "files": 29,
+   "example": "rate_limit_event"
+  },
+  {
+   "id": "rate_limit_event :: .uuid",
+   "files": 29,
+   "example": "2008ad01-363c-40b0-9dba-7dc509ac383f"
+  },
+  {
+   "id": "result/success :: .api_error_status",
+   "files": 30,
+   "example": null
+  },
+  {
+   "id": "result/success :: .duration_api_ms",
+   "files": 30,
+   "example": 961
+  },
+  {
+   "id": "result/success :: .duration_ms",
+   "files": 30,
+   "example": 1017
+  },
+  {
+   "id": "result/success :: .fast_mode_disabled_reason",
+   "files": 30,
+   "example": "sdk_opt_in_required"
+  },
+  {
+   "id": "result/success :: .fast_mode_state",
+   "files": 30,
+   "example": "off"
+  },
+  {
+   "id": "result/success :: .first_content_frame_ms",
+   "files": 30,
+   "example": 1001
+  },
+  {
+   "id": "result/success :: .is_error",
+   "files": 30,
+   "example": false
+  },
+  {
+   "id": "result/success :: .modelUsage.claude-haiku-5-5.cacheCreationInputTokens",
+   "files": 28,
+   "example": 2484
+  },
+  {
+   "id": "result/success :: .modelUsage.claude-haiku-5-5.cacheReadInputTokens",
+   "files": 28,
+   "example": 0
+  },
+  {
+   "id": "result/success :: .modelUsage.claude-haiku-5-5.canonicalModel",
+   "files": 28,
+   "example": "claude-haiku-5-5"
+  },
+  {
+   "id": "result/success :: .modelUsage.claude-haiku-5-5.contextWindow",
+   "files": 28,
+   "example": 1000000
+  },
+  {
+   "id": "result/success :: .modelUsage.claude-haiku-5-5.costBasis",
+   "files": 28,
+   "example": "list"
+  },
+  {
+   "id": "result/success :: .modelUsage.claude-haiku-5-5.costUSD",
+   "files": 28,
+   "example": 0.0003127
+  },
+  {
+   "id": "result/success :: .modelUsage.claude-haiku-5-5.inputTokens",
+   "files": 28,
+   "example": 2
+  },
+  {
+   "id": "result/success :: .modelUsage.claude-haiku-5-5.maxOutputTokens",
+   "files": 28,
+   "example": 128000
+  },
+  {
+   "id": "result/success :: .modelUsage.claude-haiku-5-5.outputTokens",
+   "files": 28,
+   "example": 4
+  },
+  {
+   "id": "result/success :: .modelUsage.claude-haiku-5-5.provider",
+   "files": 28,
+   "example": "firstParty"
+  },
+  {
+   "id": "result/success :: .modelUsage.claude-haiku-5-5.thinkingTokens",
+   "files": 28,
+   "example": 0
+  },
+  {
+   "id": "result/success :: .modelUsage.claude-haiku-5-5.webSearchRequests",
+   "files": 28,
+   "example": 0
+  },
+  {
+   "id": "result/success :: .modelUsage.claude-opus-5-5.cacheCreationInputTokens",
+   "files": 1,
+   "example": 1702
+  },
+  {
+   "id": "result/success :: .modelUsage.claude-opus-5-5.cacheReadInputTokens",
+   "files": 1,
+   "example": 0
+  },
+  {
+   "id": "result/success :: .modelUsage.claude-opus-5-5.canonicalModel",
+   "files": 1,
+   "example": "claude-opus-5-5"
+  },
+  {
+   "id": "result/success :: .modelUsage.claude-opus-5-5.contextWindow",
+   "files": 1,
+   "example": 1000000
+  },
+  {
+   "id": "result/success :: .modelUsage.claude-opus-5-5.costBasis",
+   "files": 1,
+   "example": "list"
+  },
+  {
+   "id": "result/success :: .modelUsage.claude-opus-5-5.costUSD",
+   "files": 1,
+   "example": 0.008598
+  },
+  {
+   "id": "result/success :: .modelUsage.claude-opus-5-5.inputTokens",
+   "files": 1,
+   "example": 2
+  },
+  {
+   "id": "result/success :: .modelUsage.claude-opus-5-5.maxOutputTokens",
+   "files": 1,
+   "example": 128000
+  },
+  {
+   "id": "result/success :: .modelUsage.claude-opus-5-5.outputTokens",
+   "files": 1,
+   "example": 4
+  },
+  {
+   "id": "result/success :: .modelUsage.claude-opus-5-5.provider",
+   "files": 1,
+   "example": "firstParty"
+  },
+  {
+   "id": "result/success :: .modelUsage.claude-opus-5-5.thinkingTokens",
+   "files": 1,
+   "example": 0
+  },
+  {
+   "id": "result/success :: .modelUsage.claude-opus-5-5.webSearchRequests",
+   "files": 1,
+   "example": 0
+  },
+  {
+   "id": "result/success :: .modelUsage.claude-sonnet-5-5.cacheCreationInputTokens",
+   "files": 1,
+   "example": 1706
+  },
+  {
+   "id": "result/success :: .modelUsage.claude-sonnet-5-5.cacheReadInputTokens",
+   "files": 1,
+   "example": 0
+  },
+  {
+   "id": "result/success :: .modelUsage.claude-sonnet-5-5.canonicalModel",
+   "files": 1,
+   "example": "claude-sonnet-5-5"
+  },
+  {
+   "id": "result/success :: .modelUsage.claude-sonnet-5-5.contextWindow",
+   "files": 1,
+   "example": 1000000
+  },
+  {
+   "id": "result/success :: .modelUsage.claude-sonnet-5-5.costBasis",
+   "files": 1,
+   "example": "list"
+  },
+  {
+   "id": "result/success :: .modelUsage.claude-sonnet-5-5.costUSD",
+   "files": 1,
+   "example": 0.0043089999999999995
+  },
+  {
+   "id": "result/success :: .modelUsage.claude-sonnet-5-5.inputTokens",
+   "files": 1,
+   "example": 2
+  },
+  {
+   "id": "result/success :: .modelUsage.claude-sonnet-5-5.maxOutputTokens",
+   "files": 1,
+   "example": 128000
+  },
+  {
+   "id": "result/success :: .modelUsage.claude-sonnet-5-5.outputTokens",
+   "files": 1,
+   "example": 4
+  },
+  {
+   "id": "result/success :: .modelUsage.claude-sonnet-5-5.provider",
+   "files": 1,
+   "example": "firstParty"
+  },
+  {
+   "id": "result/success :: .modelUsage.claude-sonnet-5-5.thinkingTokens",
+   "files": 1,
+   "example": 0
+  },
+  {
+   "id": "result/success :: .modelUsage.claude-sonnet-5-5.webSearchRequests",
+   "files": 1,
+   "example": 0
+  },
+  {
+   "id": "result/success :: .num_turns",
+   "files": 30,
+   "example": 1
+  },
+  {
+   "id": "result/success :: .permission_denials[]",
+   "files": 30,
+   "example": []
+  },
+  {
+   "id": "result/success :: .queued_turn_count",
+   "files": 30,
+   "example": 0
+  },
+  {
+   "id": "result/success :: .result",
+   "files": 30,
+   "example": "ok"
+  },
+  {
+   "id": "result/success :: .result_index",
+   "files": 30,
+   "example": 0
+  },
+  {
+   "id": "result/success :: .safety_stops",
+   "files": 30,
+   "example": 0
+  },
+  {
+   "id": "result/success :: .session_id",
+   "files": 30,
+   "example": "0afa131b-e6d5-494a-aa79-94a6c1b744b6"
+  },
+  {
+   "id": "result/success :: .stop_reason",
+   "files": 30,
+   "example": "end_turn"
+  },
+  {
+   "id": "result/success :: .subagent_stats.completed",
+   "files": 30,
+   "example": 0
+  },
+  {
+   "id": "result/success :: .subagent_stats.failed",
+   "files": 30,
+   "example": 0
+  },
+  {
+   "id": "result/success :: .subagent_stats.killed.parent",
+   "files": 30,
+   "example": 0
+  },
+  {
+   "id": "result/success :: .subagent_stats.killed.system",
+   "files": 30,
+   "example": 0
+  },
+  {
+   "id": "result/success :: .subagent_stats.killed.user",
+   "files": 30,
+   "example": 0
+  },
+  {
+   "id": "result/success :: .subagent_stats.max_depth",
+   "files": 30,
+   "example": 0
+  },
+  {
+   "id": "result/success :: .subagent_stats.refused.budget",
+   "files": 30,
+   "example": 0
+  },
+  {
+   "id": "result/success :: .subagent_stats.refused.concurrency_limit",
+   "files": 30,
+   "example": 0
+  },
+  {
+   "id": "result/success :: .subagent_stats.refused.depth_limit",
+   "files": 30,
+   "example": 0
+  },
+  {
+   "id": "result/success :: .subagent_stats.requested.background",
+   "files": 30,
+   "example": 0
+  },
+  {
+   "id": "result/success :: .subagent_stats.requested.foreground",
+   "files": 30,
+   "example": 0
+  },
+  {
+   "id": "result/success :: .subagent_stats.requested.unset",
+   "files": 30,
+   "example": 0
+  },
+  {
+   "id": "result/success :: .subagent_stats.spawned",
+   "files": 30,
+   "example": 0
+  },
+  {
+   "id": "result/success :: .subagent_stats.spawned_by_subagents",
+   "files": 30,
+   "example": 0
+  },
+  {
+   "id": "result/success :: .subagent_stats.started_in_background",
+   "files": 30,
+   "example": 0
+  },
+  {
+   "id": "result/success :: .subtype",
+   "files": 30,
+   "example": "success"
+  },
+  {
+   "id": "result/success :: .terminal_reason",
+   "files": 30,
+   "example": "completed"
+  },
+  {
+   "id": "result/success :: .time_to_request_ms",
+   "files": 30,
+   "example": 60
+  },
+  {
+   "id": "result/success :: .total_cost_usd",
+   "files": 30,
+   "example": 0.0003127
+  },
+  {
+   "id": "result/success :: .ttft_ms",
+   "files": 30,
+   "example": 1002
+  },
+  {
+   "id": "result/success :: .ttft_stream_ms",
+   "files": 30,
+   "example": 1000
+  },
+  {
+   "id": "result/success :: .type",
+   "files": 30,
+   "example": "result"
+  },
+  {
+   "id": "result/success :: .usage.cache_creation_input_tokens",
+   "files": 30,
+   "example": 2484
+  },
+  {
+   "id": "result/success :: .usage.cache_creation.ephemeral_1h_input_tokens",
+   "files": 30,
+   "example": 0
+  },
+  {
+   "id": "result/success :: .usage.cache_creation.ephemeral_5m_input_tokens",
+   "files": 30,
+   "example": 2484
+  },
+  {
+   "id": "result/success :: .usage.cache_read_input_tokens",
+   "files": 30,
+   "example": 0
+  },
+  {
+   "id": "result/success :: .usage.fallback_credit",
+   "files": 30,
+   "example": null
+  },
+  {
+   "id": "result/success :: .usage.inference_geo",
+   "files": 30,
+   "example": "global"
+  },
+  {
+   "id": "result/success :: .usage.input_tokens",
+   "files": 30,
+   "example": 2
+  },
+  {
+   "id": "result/success :: .usage.iterations[]",
+   "files": 29,
+   "example": []
+  },
+  {
+   "id": "result/success :: .usage.iterations[].cache_creation_input_tokens",
+   "files": 1,
+   "example": 2242
+  },
+  {
+   "id": "result/success :: .usage.iterations[].cache_creation.ephemeral_1h_input_tokens",
+   "files": 1,
+   "example": 2242
+  },
+  {
+   "id": "result/success :: .usage.iterations[].cache_creation.ephemeral_5m_input_tokens",
+   "files": 1,
+   "example": 0
+  },
+  {
+   "id": "result/success :: .usage.iterations[].cache_read_input_tokens",
+   "files": 1,
+   "example": 535
+  },
+  {
+   "id": "result/success :: .usage.iterations[].input_tokens",
+   "files": 1,
+   "example": 2
+  },
+  {
+   "id": "result/success :: .usage.iterations[].output_tokens",
+   "files": 1,
+   "example": 4
+  },
+  {
+   "id": "result/success :: .usage.iterations[].type",
+   "files": 1,
+   "example": "message"
+  },
+  {
+   "id": "result/success :: .usage.output_tokens",
+   "files": 30,
+   "example": 4
+  },
+  {
+   "id": "result/success :: .usage.output_tokens_details.thinking_tokens",
+   "files": 30,
+   "example": 0
+  },
+  {
+   "id": "result/success :: .usage.server_tool_use.web_fetch_requests",
+   "files": 30,
+   "example": 0
+  },
+  {
+   "id": "result/success :: .usage.server_tool_use.web_search_requests",
+   "files": 30,
+   "example": 0
+  },
+  {
+   "id": "result/success :: .usage.service_tier",
+   "files": 30,
+   "example": "standard"
+  },
+  {
+   "id": "result/success :: .usage.speed",
+   "files": 30,
+   "example": "standard"
+  },
+  {
+   "id": "result/success :: .uuid",
+   "files": 30,
+   "example": "6f83c11c-ecf1-4ad4-970d-e8508ebb2b4a"
+  },
+  {
+   "id": "system/init :: .agents[]",
+   "files": 29,
+   "example": "claude"
+  },
+  {
+   "id": "system/init :: .analytics_disabled",
+   "files": 29,
+   "example": true
+  },
+  {
+   "id": "system/init :: .apiKeySource",
+   "files": 29,
+   "example": "none"
+  },
+  {
+   "id": "system/init :: .capabilities[]",
+   "files": 29,
+   "example": "interrupt_receipt_v1"
+  },
+  {
+   "id": "system/init :: .claude_code_version",
+   "files": 29,
+   "example": "2.1.295"
+  },
+  {
+   "id": "system/init :: .cwd",
+   "files": 29,
+   "example": "/var/tmp/qm-cwd"
+  },
+  {
+   "id": "system/init :: .fast_mode_disabled_reason",
+   "files": 29,
+   "example": "sdk_opt_in_required"
+  },
+  {
+   "id": "system/init :: .fast_mode_state",
+   "files": 29,
+   "example": "off"
+  },
+  {
+   "id": "system/init :: .mcp_servers[]",
+   "files": 29,
+   "example": []
+  },
+  {
+   "id": "system/init :: .messaging_socket_path",
+   "files": 29,
+   "example": "/run/user/1000/cc-socks/1539241.sock"
+  },
+  {
+   "id": "system/init :: .model",
+   "files": 29,
+   "example": "claude-haiku-5-5"
+  },
+  {
+   "id": "system/init :: .output_style",
+   "files": 29,
+   "example": "default"
+  },
+  {
+   "id": "system/init :: .per_turn_effort_active",
+   "files": 29,
+   "example": true
+  },
+  {
+   "id": "system/init :: .permissionMode",
+   "files": 29,
+   "example": "auto"
+  },
+  {
+   "id": "system/init :: .plugins[].name",
+   "files": 29,
+   "example": "cc-plugin-agents-md"
+  },
+  {
+   "id": "system/init :: .plugins[].path",
+   "files": 29,
+   "example": "builtin"
+  },
+  {
+   "id": "system/init :: .plugins[].source",
+   "files": 29,
+   "example": "cc-plugin-agents-md@builtin"
+  },
+  {
+   "id": "system/init :: .product_feedback_disabled",
+   "files": 29,
+   "example": true
+  },
+  {
+   "id": "system/init :: .session_id",
+   "files": 29,
+   "example": "0afa131b-e6d5-494a-aa79-94a6c1b744b6"
+  },
+  {
+   "id": "system/init :: .skills[]",
+   "files": 29,
+   "example": []
+  },
+  {
+   "id": "system/init :: .slash_commands[]",
+   "files": 29,
+   "example": []
+  },
+  {
+   "id": "system/init :: .subtype",
+   "files": 29,
+   "example": "init"
+  },
+  {
+   "id": "system/init :: .tools[]",
+   "files": 29,
+   "example": []
+  },
+  {
+   "id": "system/init :: .type",
+   "files": 29,
+   "example": "system"
+  },
+  {
+   "id": "system/init :: .uuid",
+   "files": 29,
+   "example": "6661061a-646a-4c64-b1b6-b46a741855dc"
+  },
+  {
+   "id": "system/init :: .view_mode",
+   "files": 29,
+   "example": "default"
+  },
+  {
+   "id": "system/post_turn_summary :: .needs_action",
+   "files": 1,
+   "example": ""
+  },
+  {
+   "id": "system/post_turn_summary :: .session_id",
+   "files": 1,
+   "example": "0afa131b-e6d5-494a-aa79-94a6c1b744b6"
+  },
+  {
+   "id": "system/post_turn_summary :: .status_category",
+   "files": 1,
+   "example": "review_ready"
+  },
+  {
+   "id": "system/post_turn_summary :: .status_detail",
+   "files": 1,
+   "example": "ok"
+  },
+  {
+   "id": "system/post_turn_summary :: .subtype",
+   "files": 1,
+   "example": "post_turn_summary"
+  },
+  {
+   "id": "system/post_turn_summary :: .summarizes_uuid",
+   "files": 1,
+   "example": "4c01c318-8189-4464-8b3c-ed5fd4e908fd"
+  },
+  {
+   "id": "system/post_turn_summary :: .type",
+   "files": 1,
+   "example": "system"
+  },
+  {
+   "id": "system/post_turn_summary :: .uuid",
+   "files": 1,
+   "example": "81e326b2-350e-4dc1-8f08-4ef81ffd970e"
+  },
+  {
+   "id": "system/ui_invalidate :: .event",
+   "files": 28,
+   "example": "ui.render"
+  },
+  {
+   "id": "system/ui_invalidate :: .session_id",
+   "files": 28,
+   "example": "0afa131b-e6d5-494a-aa79-94a6c1b744b6"
+  },
+  {
+   "id": "system/ui_invalidate :: .subtype",
+   "files": 28,
+   "example": "ui_invalidate"
+  },
+  {
+   "id": "system/ui_invalidate :: .type",
+   "files": 28,
+   "example": "system"
+  },
+  {
+   "id": "system/ui_invalidate :: .uuid",
+   "files": 28,
+   "example": "d4469e70-12e0-448f-87ee-5f21b17dcacc"
+  }
+ ]
+}
