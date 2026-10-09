@@ -19,11 +19,13 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { loadSurface, loadWordings, loadCities, prefillHeldoutSlots } from '../../heldout/surface.mjs';
 import { hasAddressee } from '../../ports/records-notes.mjs';
+import { stateHash } from '../../lib/hash.mjs';
 
 const sha = s => createHash('sha256').update(s).digest('hex');
 export const DEV_STATUSES = Object.freeze(['admitted', 'pending-filter', 'carrier']);
 export const OOD = new Set(['calib-ood', 'dev-ood', 'test-ood']);
 const TRAIN_LIKE = new Set(['train', 'calib-in', 'dev-select']);
+const TEST = new Set(['test-in', 'test-ood']);
 const FORBIDDEN_PREFILL = /\{(?:S2|city|country)\}/;
 
 // shared state of one process (the driver sets it before each build)
@@ -189,7 +191,7 @@ const rowsByPort = r => { const m = {}; for (const q of Object.keys(r.questions)
 export async function* wrap(inner, group, slice, seeds, opts, ctx, { onFirst = null } = {}) {
   const o = sliceOpts(group, slice, opts ?? {}, ctx);
   if (onFirst && !STATE[`first|${group}`]) { STATE[`first|${group}`] = true; await onFirst(ctx); }
-  const quota = QUOTAS[group]?.[slice] ?? null, used = {}, pairsKept = new Set(), reg = STATE.registry;
+  const quota = QUOTAS[group]?.[slice] ?? null, used = {}, pairsKept = new Set(), reg = STATE.registry, askedInSlice = new Set();
   const keyOf = (port, fam) => (quota && quota[`${port}:${fam}`] !== undefined ? `${port}:${fam}` : port);
   const full = () => quota && Object.entries(quota).every(([k, n]) => (used[k] ?? 0) >= n);
   for await (const r of inner.records(slice, seeds, o, ctx)) {
@@ -198,6 +200,14 @@ export async function* wrap(inner, group, slice, seeds, opts, ctx, { onFirst = n
       const keys = Object.keys(rows).map(p => keyOf(p, fam));
       const room = keys.every(k => quota[k] === undefined || (used[k] ?? 0) < quota[k]);
       if (!room && !(pair && pairsKept.has(pair))) { bump(group, slice, 'cap-skipped'); if (full()) break; continue; }
+    }
+    // rule 5 in test slices: one question per port per state, across records too (build.mjs refuses a second one). World-independent
+    // states (a message or a line that recurs in several worlds) repeat over 1,000 test seeds; the repeat is dropped and counted here,
+    // as interactive.mjs does itself. Paraphrase and pair records are clustered by state and exempt (as in build.mjs).
+    if (TEST.has(slice) && r.meta?.variant !== 'paraphrase' && !pair) {
+      const sh = stateHash(r.state), keys = Object.keys(rows).map(p => `${sh}|${p}`);
+      if (keys.some(k => askedInSlice.has(k))) { bump(group, slice, `repeat-state-dropped:${Object.keys(rows).join('+')}`); continue; }
+      for (const k of keys) askedInSlice.add(k);
     }
     // rule 7: a train-like or OOD state that carries a registered span is dropped and counted (re-rendering is the generator's)
     if (reg && (TRAIN_LIKE.has(slice) || OOD.has(slice))) {

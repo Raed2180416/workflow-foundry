@@ -19,6 +19,7 @@ import { ModelPort } from '../src/models/port.mjs';
 import { Journal } from '../src/journal.mjs';
 import { ScriptedProvider } from '../src/models/providers/scripted.mjs';
 import { sandboxStatus } from '../src/sandbox.mjs';
+import { startOf } from '../src/children.mjs';
 import { groupMembers, isRunning, processes, until } from './support/processes.mjs';
 
 const cli = new URL('../bin/foundry.mjs', import.meta.url).pathname;
@@ -387,4 +388,104 @@ test('--journal: a run that journaled its model calls in another database is clo
   const verified = await run(['verify-run', created.id, '--journal', journalFile, '--workspace', workspace]);
   assert.equal(verified.status, 0, verified.stdout.slice(0, 2000));
   assert.equal(verified.json().status, 'cancelled');
+});
+
+// A killed owner cannot clean up after itself: its sandbox keeps running, a busy loop with no CPU limit. The groups a run starts are on file
+// (table run_children) while they run, so the next `cancel`, `stop-all` or `resume` can find and stop them.
+test('an owner killed with SIGKILL leaves its sandbox running: cancel stops the group found on file, then closes the run', { skip, timeout: 120000 }, async t => {
+  const { workspace, write } = scratch(t);
+  const owner = launch(t, ['run', write('wf.json', spinning('OrphanCancel')), '--workspace', workspace]);
+  const group = await sandboxGroup(t, owner);
+  const store = await openStore(t, workspace);
+  const record = await until(() => runOf(store, 'OrphanCancel'));
+  assert.deepEqual(store.children(record.id).map(c => [c.pid, c.pgid, c.kind]), [[group, group, 'sandbox']], 'the sandbox is on file with the run');
+  owner.child.kill('SIGKILL');
+  assert.equal((await owner.exited).signal, 'SIGKILL');
+  assert.ok(groupMembers(group).length >= 2, 'the sandbox outlived its owner: the leftover the file exists for');
+  assert.equal(store.rows.header(record.id).status, 'running');
+  const cancelled = await run(['cancel', record.id, '--workspace', workspace]);
+  assert.equal(cancelled.status, 0, cancelled.stderr);
+  const report = cancelled.json();
+  assert.equal(report.outcome, 'cancelled', report.message);
+  assert.deepEqual(report.orphans, [{ pid: group, kind: 'sandbox', killed: true }]);
+  assert.match(report.message, /Stopped 1 process group its dead owner had left running \(sandbox\)/);
+  assert.ok(await gone(group), 'the orphaned sandbox is stopped');
+  assert.deepEqual(store.children(record.id), [], 'and forgotten');
+  assert.equal(store.run(record.id).nodes.spin.status, 'failed');
+  await verify(workspace, record.id);
+});
+
+test('a run resumed after its owner was killed first stops what that owner left running, and says so on its chain', { skip, timeout: 120000 }, async t => {
+  const { workspace, write } = scratch(t);
+  const first = launch(t, ['run', write('wf.json', spinning('OrphanResume')), '--workspace', workspace]);
+  const oldGroup = await sandboxGroup(t, first);
+  const store = await openStore(t, workspace);
+  const record = await until(() => runOf(store, 'OrphanResume'));
+  first.child.kill('SIGKILL');
+  await first.exited;
+  assert.ok(groupMembers(oldGroup).length >= 2);
+  const second = launch(t, ['resume', record.id, '--workspace', workspace]);
+  const newGroup = await sandboxGroup(t, second);
+  assert.notEqual(newGroup, oldGroup);
+  assert.ok(await gone(oldGroup), 'the earlier owner\'s sandbox was stopped when the run was taken over');
+  const reaped = (await until(() => store.events(record.id).find(e => e.type === 'children.reaped')));
+  assert.deepEqual(reaped.children, [{ pid: oldGroup, kind: 'sandbox' }]);
+  assert.deepEqual(store.children(record.id).map(c => c.pid), [newGroup], 'only the new sandbox is on file');
+  const cancelled = await run(['cancel', record.id, '--workspace', workspace]);
+  assert.equal(cancelled.json().outcome, 'cancelled');
+  assert.equal((await second.exited).status, 3);
+  assert.ok(await gone(newGroup));
+  await verify(workspace, record.id);
+});
+
+test('stop-all also stops what dead owners left behind, a model CLI and its helper included, and process groups still on file for runs that ended', { skip, timeout: 180000 }, async t => {
+  const { workspace, write } = scratch(t);
+  // A model call in flight: a fake `claude` that ignores SIGTERM and has a helper in its group, then its owner is killed.
+  const fake = write('claude', String.raw`#!/usr/bin/env node
+const fs = require('node:fs'), { spawn } = require('node:child_process');
+if (process.argv[2] === '--version') { console.log('9.9.9 (Claude Code)'); process.exit(0); }
+process.on('SIGTERM', () => {});
+const helper = spawn(process.execPath, ['-e', "process.on('SIGTERM', () => {}); setInterval(() => {}, 1000);"], { stdio: 'ignore' });
+process.stdin.resume();
+process.stdin.on('end', () => { fs.appendFileSync(process.env.FAKE_CLAUDE_LOG, JSON.stringify({ pid: process.pid, helper: helper.pid }) + '\n'); setInterval(() => {}, 1000); });
+`);
+  chmodSync(fake, 0o755);
+  const log = write('claude.log', '');
+  const policy = JSON.parse(readFileSync(policyFile, 'utf8'));
+  policy.providers['claude-cli'].binary = fake;
+  const policyPath = write('policy.json', policy);
+  const model = policy.models.find(m => m.class === 'M').id;
+  const wf = workflow('OrphanModel', [{ id: 'ask', kind: 'agent', needs: [], description: 'Extract the amount', role: 'extract', instructions: 'Return the amount.',
+    context: { inputs: [{ name: 'raw', ref: 'input.raw', render: 'text' }] }, model: { id: model },
+    returns: { type: 'object', additionalProperties: false, required: ['amount'], properties: { amount: { type: 'number' } } }, checks: [{ op: 'gte', left: { $ref: 'output.amount' }, right: 0 }] }],
+  [{ op: 'exists', value: { $ref: 'nodes.ask.amount' } }]);
+  const owner = launch(t, ['run', write('wf.json', wf), '--input', '{"raw":"five dollars"}', '--policy', policyPath, '--max-cost', '1', '--workspace', workspace], { FAKE_CLAUDE_LOG: log });
+  const pids = await until(() => readFileSync(log, 'utf8').trim().split('\n').filter(Boolean).map(JSON.parse)[0], 30000);
+  assert.ok(pids, `the fake model CLI is running a call: ${owner.err()}`);
+  t.after(() => { for (const pid of [pids.pid, pids.helper]) try { process.kill(pid, 'SIGKILL'); } catch {} });
+  const store = await openStore(t, workspace);
+  const record = await until(() => runOf(store, 'OrphanModel'));
+  assert.deepEqual(store.children(record.id).map(c => [c.pid, c.kind]), [[pids.pid, 'process']]);
+  owner.child.kill('SIGKILL');
+  await owner.exited;
+  assert.ok(isRunning(pids.pid) && isRunning(pids.helper), 'the model CLI and its helper outlived the owner');
+  // A run that ended but still has a process group on file (a record that was never forgotten), pointing at a real process of this test.
+  assert.equal((await run(['run', write('f.json', workflow('OrphanDone', [{ id: 'a', kind: 'assert', needs: [], description: 'Nothing to hold', checks: [{ op: 'eq', left: 1, right: 1 }] }], [{ op: 'exists', value: { $ref: 'nodes.a' } }])), '--workspace', workspace])).json().status, 'succeeded');
+  const sleeper = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], { detached: true, stdio: 'ignore' });
+  t.after(() => { try { process.kill(-sleeper.pid, 'SIGKILL'); } catch {} });
+  const done = runOf(store, 'OrphanDone');
+  store.recordChild(done.id, { pid: sleeper.pid, pgid: sleeper.pid, start: startOf(sleeper.pid), kind: 'process' });
+  assert.ok(isRunning(sleeper.pid));
+
+  const stopped = await run(['stop-all', '--workspace', workspace]);
+  assert.equal(stopped.status, 0, stopped.stderr);
+  const result = stopped.json();
+  assert.equal(result.summary.cancelled, 1);
+  assert.deepEqual(result.results[0].orphans, [{ pid: pids.pid, kind: 'process', killed: true }]);
+  assert.deepEqual(result.strays, [{ runId: done.id, pid: sleeper.pid, kind: 'process' }]);
+  assert.match(result.message, /stopped 2 process groups that dead owners had left running/);
+  assert.ok(await until(() => !isRunning(pids.pid) && !isRunning(pids.helper) && !isRunning(sleeper.pid), 10000), 'the model CLI, its helper and the stray are all gone');
+  assert.deepEqual(store.childRunIds(), []);
+  assert.equal(store.rows.header(record.id).status, 'cancelled');
+  await verify(workspace, record.id);
 });

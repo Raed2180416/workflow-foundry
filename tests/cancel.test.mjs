@@ -142,12 +142,23 @@ test('cancel mid-sandbox: the sandboxed code and its process group are killed, t
   t.after(() => { try { process.kill(-group, 'SIGKILL'); } catch {} });
   assert.ok(group, 'the sandbox started');
   assert.ok(await until(() => groupMembers(group).length >= 2, 30000), 'the code is running inside the sandbox');
+  // The group is on file with the run while it runs (src/children.mjs), so a killed owner's sandbox could be found.
+  assert.deepEqual(p.other.store.children(run.id).map(c => [c.pid, c.pgid, c.kind]), [[group, group, 'sandbox']]);
   const report = await p.other.cancel(run.id, { actor: 'test', graceMs: 30000 });
   assert.equal(report.outcome, 'cancelled', report.message);
   assert.deepEqual(report.stopped.items, [{ nodeKey: 'root/spin', kind: 'code' }]);
   assert.equal((await running).status, 'cancelled');
   assert.ok(await until(() => groupMembers(group).length === 0, 10000), `no process of the sandbox group is left: ${JSON.stringify(groupMembers(group))}`);
+  assert.deepEqual(p.other.store.children(run.id), [], 'and off the file');
   p.verified(run.id);
+});
+
+test('a sandbox that ends on its own leaves nothing on file', { skip: noSandbox, timeout: 90000 }, async t => {
+  const p = pair(t);
+  const run = p.create(base([code('quick', 1)], [eq(ref('nodes.quick.ok'), true)]));
+  assert.equal((await p.owner.startRun(run.id)).status, 'succeeded');
+  assert.deepEqual(p.other.store.children(run.id), []);
+  assert.deepEqual(p.other.store.childRunIds(), []);
 });
 
 test('cancel mid-tool: a tool without effects is stopped (cancelled); one with a non-idempotent effect leaves the run uncertain and is listed', { timeout: 60000 }, async t => {
@@ -522,6 +533,39 @@ test('escalation targets: the owner\'s sandboxes and model CLIs by process group
   assert.match(escalationPlan([...table.filter(x => x.pid !== 30), p(30, 10, 30, 'Z')], 30, 20).skipped, /already exited/);
   // Zombies below the owner are not targets.
   assert.deepEqual(escalationPlan([...table.filter(x => x.pid !== 51), p(51, 50, 50, 'Z')], 30, 20), { owner: 30, groups: [40, 50], pids: [60] });
+});
+
+test('reaping what a dead owner left: a recorded group is killed only if it is still the recorded one, and never this process\'s own', async t => {
+  const { reapChildren } = await import('../src/children.mjs');
+  const p = pair(t);
+  const run = p.create(base([task('a', 'probe.step')], [done('a')]));
+  const row = (pid, start, kind = 'sandbox') => ({ pid, pgid: pid, start, kind });
+  const proc = (pid, ppid, pgid, start, state = 'S') => ({ pid, ppid, pgid, start, state });
+  const reap = (rows, table, selfPid = 20) => {
+    p.other.store.forgetChildren(run.id);
+    for (const r of rows) p.other.store.recordChild(run.id, r);
+    const calls = [];
+    const reaped = reapChildren(p.other.store, run.id, { table, selfPid, kill: (target, signal) => { calls.push([target, signal]); return true; } });
+    assert.deepEqual(p.other.store.children(run.id), [], 'the rows are forgotten whatever happened');
+    return { reaped, calls };
+  };
+  const idle = [proc(1, 0, 1, '1'), proc(10, 1, 10, '2'), proc(20, 10, 10, '3')];
+  // The leader is the recorded process: its group is killed.
+  assert.deepEqual(reap([row(40, '100')], [...idle, proc(40, 30, 40, '100'), proc(41, 40, 40, '101')]).calls, [[-40, 'SIGKILL']]);
+  // The leader's pid now belongs to another process (reused): that group is not the recorded one.
+  const reused = reap([row(40, '100')], [...idle, proc(40, 1, 40, '999')]);
+  assert.deepEqual([reused.calls, reused.reaped], [[], [{ pid: 40, kind: 'sandbox', killed: false }]]);
+  // The leader is gone and nothing of the group remains: nothing to kill.
+  assert.deepEqual(reap([row(40, '100')], idle).calls, []);
+  // The leader is gone but members remain (a helper that outlived it): the kernel does not reuse a group id while it has members, so they are the recorded group's.
+  assert.deepEqual(reap([row(40, '100', 'process')], [...idle, proc(41, 1, 40, '101')]).calls, [[-40, 'SIGKILL']]);
+  // A leader that exited but was not reaped yet (a zombie) with a live member.
+  assert.deepEqual(reap([row(40, '100')], [...idle, proc(40, 1, 40, '100', 'Z'), proc(41, 1, 40, '101')]).calls, [[-40, 'SIGKILL']]);
+  // Never this process's own group or an ancestor's, whatever the file says.
+  assert.deepEqual(reap([row(10, '2'), row(20, '3')], idle).calls, []);
+  // Nothing on file: nothing to do.
+  p.other.store.forgetChildren(run.id);
+  assert.deepEqual(reapChildren(p.other.store, run.id, { kill: () => { throw new Error('nothing to kill'); } }), []);
 });
 
 test('exit codes: 0 stopped or nothing to stop, 2 an effect of unknown outcome, 3 not stopped', () => {
