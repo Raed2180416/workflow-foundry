@@ -62,7 +62,7 @@ export const PARAMS = Object.freeze({
   numMargin: Object.freeze({ span: 0.25, rel: 0.1 }),
   countMargin: Object.freeze({ span: 0.25, rel: 0.15, abs: 1 }),
   caps: Object.freeze({ df: 20000, values: 64, promptValues: 200, examples: 4 }),
-  fieldMax: 12, fieldsMax: 24, fieldLenMax: 32, headMax: 24, sentenceMax: 160,
+  fieldMax: 12, fieldsMax: 24, fieldLenMax: 32, fieldWordsMax: 3, headMax: 24, sentenceMax: 160,
 });
 
 // ------------------------------------------------------------------------------------------------ small helpers
@@ -142,13 +142,14 @@ export function lineShape(line) {
     const v = tryJson(rest);
     if (v !== undefined) return { sig: `${head}~json:${jsonShape(v)}`, family: `${head}~json:${v && typeof v === 'object' ? Object.keys(v).length : typeOf(v)}` };
   }
-  // A delimiter counts when it occurs at least twice and the fields it cuts are short (median <= fieldLenMax chars), so
-  // prose sentences with commas or semicolons stay 'text' instead of splitting into a different field count every line.
+  // A delimiter counts when it occurs at least twice and the fields it cuts are short (median <= fieldLenMax chars and
+  // <= fieldWordsMax words), so prose with commas or semicolons stays 'text' instead of splitting into a different field
+  // count every line.
+  const median = xs => xs.sort((a, b) => a - b)[Math.floor(xs.length / 2)];
   const d = DELIMS.find(([s]) => {
     const parts = t.split(s);
     if (parts.length < 3) return false;
-    const lens = parts.map(x => x.trim().length).sort((a, b) => a - b);
-    return lens[Math.floor(lens.length / 2)] <= PARAMS.fieldLenMax;
+    return median(parts.map(x => x.trim().length)) <= PARAMS.fieldLenMax && median(parts.map(x => x.trim().split(/\s+/).filter(Boolean).length)) <= PARAMS.fieldWordsMax;
   });
   if (!d) return { sig: `${head}~text`, family: `${head}~text` };
   const fields = t.split(d[0]).map(fieldClass);

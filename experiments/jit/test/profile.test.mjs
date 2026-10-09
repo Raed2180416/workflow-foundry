@@ -47,7 +47,8 @@ test('helpers: shapes, classes, line signatures, prompt skeleton, Good-Turing', 
   assert.equal(classOf('Benoît'), 'word');
   assert.equal(classOf('12'), 'int');
   assert.equal(classOf('27 Jan 1977'), 'date-text');
-  assert.equal(lineSig('ALPHA | id=1 | name=Ka Lo | dob=2001-01-01'), 'ALPHA~pipe:ALPHA id=¦name=¦dob=');
+  assert.equal(lineSig('ALPHA | id=1 | name=Ka Lo | dob=2001-01-01'), 'ALPHA~pipe:A¦id=¦name=¦dob=');
+  assert.equal(lineSig('ALPHA row=1 | name=Ka Lo | dob=2001-01-01'), 'ALPHA~pipe:ALPHA row=¦name=¦dob=');
   assert.equal(lineShape('BETA;1;Kalo;2001-01-01;12.50').family, 'BETA~semi:5');
   assert.equal(lineShape('VERITAS {"row":1,"x":"a"}').sig, 'VERITAS~json:{row:n,x:s}');
   // prose with commas stays text: its fields are long
