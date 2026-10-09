@@ -9,66 +9,360 @@
   "cleanTestFromSource": "BLOCKER-SYNTHESIS C2: no code reserves or uses test seeds >= 7200 for any bed"
  },
  "purposes": {
-  "jit-dev": { "split": "dev", "fresh": false, "about": "JIT dev streams and dev diagnostics (stream.mjs default on the dev split)" },
-  "jit-r0": { "split": "dev", "fresh": true, "about": "R0 / R0-K dev rehearsals of the HANDOFF section 3 config (BLOCKER-SYNTHESIS rows 8 and 9)" },
-  "jit-oos": { "split": "dev", "fresh": true, "about": "out-of-sample dev scoring (BLOCKER-SYNTHESIS row 3 stage 1; FG P4b)" },
-  "jit-heldout": { "split": "test", "fresh": true, "heldout": true, "about": "held-out JIT streams (stream.mjs default on the test split)" },
-  "kev-probe": { "split": "dev", "fresh": false, "about": "Kev probe datasets and pilots (registry probe-pilot)" },
-  "kev-real-reserve": { "split": "test", "fresh": false, "about": "Kev X8-real axis and X8 end-to-end (registry real-reserve)" },
-  "kev-e2e-reserve": { "split": "test", "fresh": false, "about": "Kev X5 end-to-end reuse gate (registry e2e-reserve)" }
+  "jit-dev": {
+   "split": "dev",
+   "fresh": false,
+   "about": "JIT dev streams and dev diagnostics (stream.mjs default on the dev split)"
+  },
+  "jit-r0": {
+   "split": "dev",
+   "fresh": true,
+   "about": "R0 / R0-K dev rehearsals of the HANDOFF section 3 config (BLOCKER-SYNTHESIS rows 8 and 9)"
+  },
+  "jit-oos": {
+   "split": "dev",
+   "fresh": true,
+   "about": "out-of-sample dev scoring (BLOCKER-SYNTHESIS row 3 stage 1; FG P4b)"
+  },
+  "jit-heldout": {
+   "split": "test",
+   "fresh": true,
+   "heldout": true,
+   "about": "held-out JIT streams (stream.mjs default on the test split)"
+  },
+  "kev-probe": {
+   "split": "dev",
+   "fresh": false,
+   "about": "Kev probe datasets and pilots (registry probe-pilot)"
+  },
+  "kev-real-reserve": {
+   "split": "test",
+   "fresh": false,
+   "about": "Kev X8-real axis and X8 end-to-end (registry real-reserve)"
+  },
+  "kev-e2e-reserve": {
+   "split": "test",
+   "fresh": false,
+   "about": "Kev X5 end-to-end reuse gate (registry e2e-reserve)"
+  }
  },
  "ranges": [
-  { "id": "kev-probe-pilot", "beds": ["*"], "split": "dev", "from": 1, "to": 400, "status": "reserved", "owner": "kev",
-    "allow": ["kev-probe", "jit-dev", "jit-r0", "jit-oos"],
-    "use": "Kev registry probe-pilot: kept out of every Kev train, calib and eval slice. Not an exclusive claim: JIT dev streams run inside it (201-224)",
-    "source": "experiments/kev-data/lib/registry.mjs RESERVATIONS probe-pilot; experiments/kev-data/README.md:31" },
-  { "id": "kev-real-reserve", "beds": ["*"], "split": "test", "from": 7000, "to": 7039, "status": "reserved", "owner": "kev",
-    "allow": ["kev-real-reserve"],
-    "use": "Kev real-trace reserve (X8-real, d3-d5). A reservation, not use: nothing generated or read for records or kinetics",
-    "source": "experiments/kev-data/lib/registry.mjs RESERVATIONS real-reserve; experiments/kev-data/README.md:232,307; BLOCKER-SYNTHESIS C2" },
-  { "id": "kev-e2e-reserve", "beds": ["*"], "split": "test", "from": 7040, "to": 7199, "status": "reserved", "owner": "kev",
-    "allow": ["kev-e2e-reserve"],
-    "use": "Kev end-to-end reserve (X5 gate, section 8.3). A reservation, not use",
-    "source": "experiments/kev-data/lib/registry.mjs RESERVATIONS e2e-reserve; experiments/kev-data/README.md:232,307; BLOCKER-SYNTHESIS C2" },
-  { "id": "synth-audit-unseen", "beds": ["synth"], "split": "test", "from": 7000, "to": 7099, "status": "used", "owner": "synth-audit",
-    "allow": null,
-    "use": "synth v3.0.0 audit: unseen seeds generated and scored once with the final fixtures",
-    "source": "beds/synth/AUDIT.md:15,134" },
-  { "id": "synth-audit-tuning", "beds": ["synth"], "split": "test", "from": 5000, "to": 5099, "status": "used", "owner": "synth-audit",
-    "allow": null,
-    "use": "synth audit: attackers and generator changes repeatedly checked on these seeds (development numbers)",
-    "source": "beds/synth/AUDIT.md:13,15,125" },
-  { "id": "jit-burned-5001", "beds": ["*"], "split": "test", "from": 5001, "to": 5006, "status": "burned", "owner": "jit",
-    "allow": null,
-    "use": "burned for held-out JIT use",
-    "source": "research/jit-20261008/SPEC.md:191 (section 6.4); PREREG-stream.md section 1" },
-  { "id": "jit-burned-6001", "beds": ["*"], "split": "test", "from": 6001, "to": 6004, "status": "burned", "owner": "jit",
-    "allow": null,
-    "use": "burned for held-out JIT use",
-    "source": "research/jit-20261008/SPEC.md:191 (section 6.4); PREREG-stream.md section 1" },
-  { "id": "jit-dev-streams", "beds": ["records", "kinetics"], "split": "dev", "from": 201, "to": 224, "status": "used", "owner": "jit",
-    "allow": null,
-    "use": "jit-dev-records-1 (d3 201-216, d4 217-224) and jit-dev-kinetics-1 (d4 201-216, d5 217-224); used to diagnose and tune the JIT, dev-only",
-    "source": "experiments/jit/configs/dev-records-1.json, dev-kinetics-1.json; FRONTIER-GAPS P14" },
-  { "id": "jit-r0-fresh", "beds": ["records", "kinetics"], "split": "dev", "from": 225, "to": 248, "status": "fresh", "owner": "jit",
-    "allow": ["jit-r0"],
-    "use": "R0 (records, 16 d3 + 8 d4) and R0-K (kinetics, 16 d4 + 8 d5); never used to tune v2.x",
-    "source": "BLOCKER-SYNTHESIS rows 8 and 9; FRONTIER-GAPS section 4.1 and P2 item 3" },
-  { "id": "jit-oos-fresh", "beds": ["records", "kinetics"], "split": "dev", "from": 249, "to": 272, "status": "fresh", "owner": "jit",
-    "allow": ["jit-oos"],
-    "use": "out-of-sample dev scoring: row 3 stage 1 (records); FG P2 reserves 249-272 without naming a bed, so kinetics is held too",
-    "source": "BLOCKER-SYNTHESIS row 3; FRONTIER-GAPS P2 item 3, P4b" },
-  { "id": "jit-heldout-a", "beds": ["*"], "split": "test", "from": 8001, "to": 8024, "status": "reserved", "owner": "jit",
-    "allow": ["jit-heldout"],
-    "use": "held-out JIT stream A, per family (moved from 7001-7024)",
-    "source": "BLOCKER-SYNTHESIS C2, Q1 and S0-5; PREREG-stream.md section 1 (one-line edit pending)" },
-  { "id": "jit-heldout-b", "beds": ["*"], "split": "test", "from": 8101, "to": 8124, "status": "reserved", "owner": "jit",
-    "allow": ["jit-heldout"],
-    "use": "held-out JIT stream B, per family (moved from 7101-7124)",
-    "source": "BLOCKER-SYNTHESIS C2, Q1 and S0-5; PREREG-stream.md section 1 (one-line edit pending)" },
-  { "id": "test-clean", "beds": ["*"], "split": "test", "from": 7200, "to": null, "status": "clean", "owner": null,
-    "allow": null,
-    "use": "test seeds >= 7200 are clean for every bed (ranges above inside it still apply)",
-    "source": "BLOCKER-SYNTHESIS C2 and M1" }
+  {
+   "id": "kev-probe-pilot",
+   "beds": [
+    "*"
+   ],
+   "split": "dev",
+   "from": 1,
+   "to": 400,
+   "status": "reserved",
+   "owner": "kev",
+   "allow": [
+    "kev-probe",
+    "jit-dev",
+    "jit-r0",
+    "jit-oos"
+   ],
+   "use": "Kev registry probe-pilot: kept out of every Kev train, calib and eval slice. Not an exclusive claim: JIT dev streams run inside it (201-224)",
+   "source": "experiments/kev-data/lib/registry.mjs RESERVATIONS probe-pilot; experiments/kev-data/README.md:31"
+  },
+  {
+   "id": "kev-real-reserve",
+   "beds": [
+    "*"
+   ],
+   "split": "test",
+   "from": 7000,
+   "to": 7039,
+   "status": "reserved",
+   "owner": "kev",
+   "allow": [
+    "kev-real-reserve"
+   ],
+   "use": "Kev real-trace reserve (X8-real, d3-d5). A reservation, not use: nothing generated or read for records or kinetics",
+   "source": "experiments/kev-data/lib/registry.mjs RESERVATIONS real-reserve; experiments/kev-data/README.md:232,307; BLOCKER-SYNTHESIS C2"
+  },
+  {
+   "id": "kev-e2e-reserve",
+   "beds": [
+    "*"
+   ],
+   "split": "test",
+   "from": 7040,
+   "to": 7199,
+   "status": "reserved",
+   "owner": "kev",
+   "allow": [
+    "kev-e2e-reserve"
+   ],
+   "use": "Kev end-to-end reserve (X5 gate, section 8.3). A reservation, not use",
+   "source": "experiments/kev-data/lib/registry.mjs RESERVATIONS e2e-reserve; experiments/kev-data/README.md:232,307; BLOCKER-SYNTHESIS C2"
+  },
+  {
+   "id": "synth-audit-unseen",
+   "beds": [
+    "synth"
+   ],
+   "split": "test",
+   "from": 7000,
+   "to": 7099,
+   "status": "used",
+   "owner": "synth-audit",
+   "allow": null,
+   "use": "synth v3.0.0 audit: unseen seeds generated and scored once with the final fixtures",
+   "source": "beds/synth/AUDIT.md:15,134"
+  },
+  {
+   "id": "synth-audit-tuning",
+   "beds": [
+    "synth"
+   ],
+   "split": "test",
+   "from": 5000,
+   "to": 5099,
+   "status": "used",
+   "owner": "synth-audit",
+   "allow": null,
+   "use": "synth audit: attackers and generator changes repeatedly checked on these seeds (development numbers)",
+   "source": "beds/synth/AUDIT.md:13,15,125"
+  },
+  {
+   "id": "jit-burned-5001",
+   "beds": [
+    "*"
+   ],
+   "split": "test",
+   "from": 5001,
+   "to": 5006,
+   "status": "burned",
+   "owner": "jit",
+   "allow": null,
+   "use": "burned for held-out JIT use",
+   "source": "research/jit-20261008/SPEC.md:191 (section 6.4); PREREG-stream.md section 1"
+  },
+  {
+   "id": "jit-burned-6001",
+   "beds": [
+    "*"
+   ],
+   "split": "test",
+   "from": 6001,
+   "to": 6004,
+   "status": "burned",
+   "owner": "jit",
+   "allow": null,
+   "use": "burned for held-out JIT use",
+   "source": "research/jit-20261008/SPEC.md:191 (section 6.4); PREREG-stream.md section 1"
+  },
+  {
+   "id": "jit-dev-streams",
+   "beds": [
+    "records",
+    "kinetics"
+   ],
+   "split": "dev",
+   "from": 201,
+   "to": 224,
+   "status": "used",
+   "owner": "jit",
+   "allow": null,
+   "use": "jit-dev-records-1 (d3 201-216, d4 217-224) and jit-dev-kinetics-1 (d4 201-216, d5 217-224); used to diagnose and tune the JIT, dev-only",
+   "source": "experiments/jit/configs/dev-records-1.json, dev-kinetics-1.json; FRONTIER-GAPS P14"
+  },
+  {
+   "id": "jit-r0-fresh",
+   "beds": [
+    "records",
+    "kinetics"
+   ],
+   "split": "dev",
+   "from": 225,
+   "to": 248,
+   "status": "fresh",
+   "owner": "jit",
+   "allow": [
+    "jit-r0"
+   ],
+   "use": "R0 (records, 16 d3 + 8 d4) and R0-K (kinetics, 16 d4 + 8 d5); never used to tune v2.x",
+   "source": "BLOCKER-SYNTHESIS rows 8 and 9; FRONTIER-GAPS section 4.1 and P2 item 3"
+  },
+  {
+   "id": "jit-oos-fresh",
+   "beds": [
+    "records",
+    "kinetics"
+   ],
+   "split": "dev",
+   "from": 249,
+   "to": 272,
+   "status": "fresh",
+   "owner": "jit",
+   "allow": [
+    "jit-oos"
+   ],
+   "use": "out-of-sample dev scoring: row 3 stage 1 (records); FG P2 reserves 249-272 without naming a bed, so kinetics is held too",
+   "source": "BLOCKER-SYNTHESIS row 3; FRONTIER-GAPS P2 item 3, P4b"
+  },
+  {
+   "id": "jit-heldout-a",
+   "beds": [
+    "*"
+   ],
+   "split": "test",
+   "from": 8001,
+   "to": 8024,
+   "status": "reserved",
+   "owner": "jit",
+   "allow": [
+    "jit-heldout"
+   ],
+   "use": "held-out JIT stream A, per family (moved from 7001-7024)",
+   "source": "BLOCKER-SYNTHESIS C2, Q1 and S0-5; PREREG-stream.md section 1 (one-line edit pending)"
+  },
+  {
+   "id": "jit-heldout-b",
+   "beds": [
+    "*"
+   ],
+   "split": "test",
+   "from": 8101,
+   "to": 8124,
+   "status": "reserved",
+   "owner": "jit",
+   "allow": [
+    "jit-heldout"
+   ],
+   "use": "held-out JIT stream B, per family (moved from 7101-7124)",
+   "source": "BLOCKER-SYNTHESIS C2, Q1 and S0-5; PREREG-stream.md section 1 (one-line edit pending)"
+  },
+  {
+   "id": "test-clean",
+   "beds": [
+    "*"
+   ],
+   "split": "test",
+   "from": 7200,
+   "to": null,
+   "status": "clean",
+   "owner": null,
+   "allow": null,
+   "use": "test seeds >= 7200 are clean for every bed (ranges above inside it still apply)",
+   "source": "BLOCKER-SYNTHESIS C2 and M1"
+  },
+  {
+   "id": "wbed-dev",
+   "beds": [
+    "wbed-r0",
+    "wbed-r1",
+    "wbed-r2",
+    "wbed-r3",
+    "wbed-r4",
+    "wbed-r5",
+    "wbed-r6",
+    "wbed-rh"
+   ],
+   "split": "dev",
+   "from": 301,
+   "to": 390,
+   "status": "fresh",
+   "owner": "wbed",
+   "allow": [
+    "jit-dev"
+   ],
+   "use": "W-bed dev streams, triviality/necessity attacks (379-390) and reference-workflow fixtures (W-BED.md section 8). Inside the Kev probe-pilot reservation, which allows jit-dev, as the JIT dev streams are",
+   "source": "research/jit-20261008/design/W-BED.md section 8"
+  },
+  {
+   "id": "wbed-heldout-a",
+   "beds": [
+    "wbed-r0",
+    "wbed-r1",
+    "wbed-r2",
+    "wbed-r3",
+    "wbed-r4",
+    "wbed-r5",
+    "wbed-r6",
+    "wbed-rh"
+   ],
+   "split": "test",
+   "from": 8201,
+   "to": 8224,
+   "status": "reserved",
+   "owner": "wbed",
+   "allow": [
+    "jit-heldout"
+   ],
+   "use": "held-out W-bed stream A, per rung",
+   "source": "research/jit-20261008/design/W-BED.md section 8"
+  },
+  {
+   "id": "wbed-heldout-b",
+   "beds": [
+    "wbed-r0",
+    "wbed-r1",
+    "wbed-r2",
+    "wbed-r3",
+    "wbed-r4",
+    "wbed-r5",
+    "wbed-r6",
+    "wbed-rh"
+   ],
+   "split": "test",
+   "from": 8301,
+   "to": 8324,
+   "status": "reserved",
+   "owner": "wbed",
+   "allow": [
+    "jit-heldout"
+   ],
+   "use": "held-out W-bed stream B, per rung",
+   "source": "research/jit-20261008/design/W-BED.md section 8"
+  },
+  {
+   "id": "wbed-heldout-c",
+   "beds": [
+    "wbed-r0",
+    "wbed-r1",
+    "wbed-r2",
+    "wbed-r3",
+    "wbed-r4",
+    "wbed-r5",
+    "wbed-r6",
+    "wbed-rh"
+   ],
+   "split": "test",
+   "from": 8401,
+   "to": 8424,
+   "status": "reserved",
+   "owner": "wbed",
+   "allow": [
+    "jit-heldout"
+   ],
+   "use": "held-out W-bed stream C, per rung",
+   "source": "research/jit-20261008/design/W-BED.md section 8"
+  },
+  {
+   "id": "wbed-heldout-d",
+   "beds": [
+    "wbed-r0",
+    "wbed-r1",
+    "wbed-r2",
+    "wbed-r3",
+    "wbed-r4",
+    "wbed-r5",
+    "wbed-r6",
+    "wbed-rh"
+   ],
+   "split": "test",
+   "from": 8501,
+   "to": 8524,
+   "status": "reserved",
+   "owner": "wbed",
+   "allow": [
+    "jit-heldout"
+   ],
+   "use": "held-out W-bed stream D, per rung",
+   "source": "research/jit-20261008/design/W-BED.md section 8"
+  }
  ]
 }
