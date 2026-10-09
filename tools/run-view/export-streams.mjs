@@ -6,20 +6,21 @@
 //        [--experiment NAME ...] [--notes-chars 1200] [--allow-heldout-notes]
 //
 // --out PATH   an .html path writes the page with the data inlined, and the JSON beside it as streams-export.json (or at --json-out);
-//              a .json path writes the JSON only. Default: the session scratchpad's streams.html (DEFAULT_OUT below).
+//              a .json path writes the JSON only. Default: <os tmpdir>/foundry-streams.html (DEFAULT_OUT below).
 // Reads the stream folders only (index-streams.mjs); never writes into them. Security as export-history.mjs: a meta Content-Security-Policy with script and
 // style HASHES and connect-src 'none'; the data block escapes `<` (and U+2028/9), so no text from a run can close the block or open markup. Files are mode 0600:
 // they hold builder notes about the traced tasks.
 import { readFileSync, writeFileSync, chmodSync, mkdirSync, statSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
+import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { performance } from 'node:perf_hooks';
 import { buildStreams, DEFAULT_ROOT, DEFAULT_CONFIGS } from './index-streams.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-export const DEFAULT_OUT = '/tmp/claude-0/-home-user-workflow-foundry/d3c9fb19-46ab-5a0c-bfdd-4f8b7871088a/scratchpad/streams.html';
+export const DEFAULT_OUT = path.join(tmpdir(), 'foundry-streams.html');
 const sha256b64 = text => createHash('sha256').update(text).digest('base64');
 
 /** The page with its data inlined. Replacer functions, not replacement strings: the scripts contain `$&`-style sequences. */
