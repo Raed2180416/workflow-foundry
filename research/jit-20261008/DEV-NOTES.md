@@ -352,7 +352,7 @@ slot), not dollars, so R3/R6 designs should batch judgments for wall time, not f
 `/var/tmp/foundry-work/overhead-probe/journal.sqlite` (not committed).
 
 **D23. Stage B (kinetics comparator gauge, live): relTol 0.05 stands; every wrong Haiku answer differs in the exclusion
-set; R0 launched 2026-10-09 21:35 IST.** 48 sandboxed Haiku sessions on the 24 kinetics dev seeds 201–224 (n = 2;
+set; R0 launched 2026-10-09 21:14 IST.** 48 sandboxed Haiku sessions on the 24 kinetics dev seeds 201–224 (n = 2;
 `analysis/kinetics-gauge/out/stage-b/STAGE-B.md`, $4.49 actual over 55 attempts, 7 environment faults — 5 `MODEL_RATE_LIMIT`
 at the owner's usage limit around 18:20 IST, 2 `EXECUTOR_PROTOCOL` — all resolved by the 21:12 refill, which skipped the 45
 recorded sessions): 35/48 pass the oracle (d4 24/32, d5 11/16); 15 correct–correct pairs, **0 disagree at relTol 0.05**
@@ -373,4 +373,4 @@ the flip follows validation and is split per bed (records used, kinetics fresh f
 executor; G5 5h 0.32 / 7d 0.53; **G6 deviation**: 3 GB available + 14 GB swap free with the owner's three Kev training
 processes (~3.3 GB) running — Stage B ran two sandboxed sessions under the same load without a fault, so R0 proceeds at
 concurrency 2; G7 dirs present. R0 pair (`agent:claude-haiku-5-5`, `jit:claude-haiku-5-5/claude-haiku-5-5`) started
-21:35 IST from `r0-launch.sh` under `env -i`; log `/var/tmp/foundry-work/r0-records-live.log`.
+21:14 IST from `r0-launch.sh` under `env -i`; log `/var/tmp/foundry-work/r0-records-live.log`.
