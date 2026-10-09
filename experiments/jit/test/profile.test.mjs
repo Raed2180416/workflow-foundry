@@ -5,7 +5,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { learnProfile, checkProfile, widenProfile, emptyProfile, goodTuring, rateThreshold, shapeOf, classOf, lineSig, lineShape, promptSentences, SIZE_FEATURES, PROFILE_SCHEMA, PARAMS, describeProfile } from '../profile.mjs';
-import { evaluateArm, outcomeOf, parseTaskKey, summarize } from '../eval-profiles.mjs';
+import { evaluateArm, outcomeOf, parseTaskKey, summarize, counterfactual, interpreterModelOf, makePriceOf } from '../eval-profiles.mjs';
 
 // Deterministic PRNG (mulberry32).
 const rng = seed => () => { seed |= 0; seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
@@ -163,7 +163,7 @@ test('eval-profiles: task keys, outcomes and a replayed arm', () => {
   const tasks = [...Array.from({ length: 9 }, (_, i) => mkTask(3000 + i)), ...Array.from({ length: 4 }, (_, i) => mkTask(3100 + i, { rows: 120, newDialect: 10 }))];
   const rows = tasks.map((_, i) => ({ idx: i, taskKey: `fam:dev:d${i < 9 ? 3 : 4}:s${i}`, difficulty: i < 9 ? 3 : 4, kind: 'static', compiledStatus: 'ok', delivered: 'compiled', pass: i < 9 }));
   const res = evaluateArm(rows, r => tasks[r.idx], { warmup: 3, kind: 'static' });
-  assert.deepEqual(Object.keys(res.policies), ['frozen', 'interp']);
+  assert.deepEqual(Object.keys(res.policies), ['frozen', 'baseline', 'interp']);
   const s = res.policies.frozen.summary;
   assert.equal(s.checked, 10);
   assert.equal(s.silentMisses, 4);
@@ -176,7 +176,32 @@ test('eval-profiles: task keys, outcomes and a replayed arm', () => {
   const jitRows = rows.map((r, i) => ({ ...r, kind: 'jit', version: i >= 3 ? 1 : null, compiledStatus: i >= 3 ? 'ok' : null, delivered: i >= 3 ? 'compiled' : 'interpreter',
     stateAfter: { traces: [0, 1, 2].filter(q => q <= i).map(q => ({ idx: q })), version: i >= 3 ? { n: 1, adoptedAt: 3 } : null } }));
   const jit = evaluateArm(jitRows, r => tasks[r.idx], { warmup: 3, kind: 'jit' });
-  assert.deepEqual(Object.keys(jit.policies), ['frozen', 'interp', 'version']);
+  assert.deepEqual(Object.keys(jit.policies), ['frozen', 'baseline', 'interp', 'version']);
   assert.equal(jit.policies.version.summary.silentMissesNovel, 4);
   assert.equal(summarize([{ skipped: 'no task' }]).checked, 0);
+});
+
+test('eval-profiles: baseline policy widens only on baseline-difficulty tasks; deopt-on-novelty counterfactual and prices', () => {
+  // 3 warmup + 3 d3 + 3 drifted d4 rows; the baseline fence widens on d3 only, so every d4 row stays novel.
+  const tasks = [...Array.from({ length: 6 }, (_, i) => mkTask(3000 + i)), ...Array.from({ length: 3 }, (_, i) => mkTask(3100 + i, { rows: 120, newDialect: 10 }))];
+  const rows = tasks.map((_, i) => ({ idx: i, taskKey: `fam:dev:d${i < 6 ? 3 : 4}:s${i}`, difficulty: i < 6 ? 3 : 4, kind: 'static', compiledStatus: 'ok', delivered: 'compiled', pass: i < 6 || i === 8, costUsd: 0.05 }));
+  const res = evaluateArm(rows, r => tasks[r.idx], { warmup: 3, kind: 'static' });
+  const b = res.policies.baseline.summary;
+  assert.equal(b.byDifficulty.d4.novel, 3);
+  assert.equal(b.byDifficulty.d3.novel, 0);
+  // interp never widens on a static arm (nothing interpreted), so it equals frozen here.
+  assert.deepEqual(res.policies.interp.summary.byDifficulty, res.policies.frozen.summary.byDifficulty);
+  const c = counterfactual(res.policies.baseline.verdicts, d => ({ usd: d === 4 ? 0.5 : 0.1, passRate: 0.75 }));
+  assert.equal(c.caught, 2); assert.equal(c.silentMisses, 2);
+  assert.equal(c.correctRerouted, 1); assert.equal(c.compiledPasses, 4);
+  assert.equal(c.addedInterpreterUsd, 1.5);
+  assert.equal(c.expectedPassesGained, 1.5); assert.equal(c.expectedPassesLost, 0.25); assert.equal(c.expectedNetPasses, 1.25);
+  // Interpreter model and price lookup: agent arm of the same model by difficulty, else own interpreter rows.
+  assert.equal(interpreterModelOf({ spec: 'jit:claude-opus-5-5/claude-haiku-5-5' }), 'claude-opus-5-5');
+  assert.equal(interpreterModelOf({ spec: 'static:x/solve.mjs', def: { fallback: 'claude-haiku-5-5' } }), 'claude-haiku-5-5');
+  const agent = { meta: { spec: 'agent:m' }, rows: [{ difficulty: 4, costUsd: 0.2, pass: true }, { difficulty: 4, costUsd: 0.4, pass: false }] };
+  const jit = { meta: { spec: 'jit:m/h' }, rows: [{ difficulty: 3, compiledStatus: null, delivered: 'interpreter', costUsd: 1, pass: true }] };
+  const priceOf = makePriceOf([agent, jit], jit);
+  assert.deepEqual([priceOf(4).usd, priceOf(4).passRate, priceOf(4).source], [0.30000000000000004, 0.5, 'agent:m d4']);
+  assert.equal(priceOf(5).source, 'own interpreter rows');
 });
