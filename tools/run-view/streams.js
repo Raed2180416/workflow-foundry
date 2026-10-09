@@ -417,7 +417,7 @@ function versionsBlock(E) {
             h('td', null, badge(v.status, pick(OUTCOME, v.status, 'slate')), h('span', { class: 'sub' }, v.status === 'adopted' ? `as ${v.adoptedAs} at task ${v.adoptedAt}` : v.status === 'rejected' ? `${v.rejectedWhy ?? ''}${v.keptVersion != null ? `; kept v${v.keptVersion}` : ''}` : v.status === 'not chosen' && v.chosen ? `${model(v.chosen)} attempt chosen` : v.status === 'writing' ? 'compile.json not written yet' : ''),
               v.nestedModelAttempts || v.hiddenPathAttempts ? h('span', { class: 'sub' }, `integrity: nested model ${v.nestedModelAttempts}, hidden path ${v.hiddenPathAttempts}`) : null),
             h('td', null, v.parent ?? '–'),
-            h('td', null, !v.notes ? '–' : v.notes.withheld ? h('span', { class: 'muted' }, v.notes.withheld) : h('details', null, h('summary', null, `${v.notes.source} (${v.notes.chars} chars)`), h('pre', { class: 'notes' }, v.notes.excerpt))))))))) : null);
+            h('td', null, !v.notes ? '–' : v.notes.withheld ? h('span', { class: 'muted' }, v.notes.withheld) : h('details', null, h('summary', null, `${v.notes.source} (${v.notes.chars} chars)`), h('pre', { class: 'notes' }, v.notes.excerpt)))))))) : null);
     }));
 }
 
