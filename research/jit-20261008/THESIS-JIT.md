@@ -208,7 +208,20 @@ The dev evidence (DEV-NOTES D1–D12) shows that ten assumptions in §2 need rev
 4. **Guards are learned by the runtime, not authored by the compiler** (type feedback). An automatic input profile is recorded from accepted traces and enforced before compiled code runs. It widens only on interpreter confirmation. With that rule, domain preservation (D9) holds by construction. Being tested offline (`profile.mjs`).
 5. **Spec first, then compile.** Kinetics fails on semantics, not syntax: implicit exclusions and acceptable numeric variance. A strong model writes the explicit decisions, rules, tolerances and tests once, and the cheap compiler targets them. The spec's tests become acceptance.
 6. **The currency is quota.** The subscription usage limit, not dollars, stalled the work. Code and Kev on the laptop cost no quota. The objective is the share of decisions made by code or Kev.
-7. **The unit of compilation is the sub-procedure.** Identity resolution, parsing, unit conversion and notification recur across the corpus. Compile, guard and heal them as modules. The heal localiser picks the module, and modules are reused across families (C2).
+7. **Reuse and composition are different things.** (The owner corrected an earlier draft that blurred them, 2026-10-09.)
+   - **Reuse** (C2) means a workflow that has proven durable in one program is reused as-is by another program, as an asset with a contract. It is safe only with an applicability check. The runtime-learned input profile (item 4) records the domain where the workflow has been proven. A new caller's input inside that domain runs the proven workflow; outside it, the workflow refuses and the router interprets or compiles a variant. A reusable workflow carries:
+     - a typed input/output contract;
+     - its profile;
+     - its evidence record (durability, silent-miss rate);
+     - its version.
+   - Reuse is measured by four quantities:
+     - correct reuse;
+     - wrong reuse (reused outside its domain, and wrong);
+     - missed reuse (refused although it would have been right);
+     - savings over re-interpreting.
+
+     Test: offer the records solver proven in the dev stream to a second program whose tasks partly overlap its domain.
+   - **Composition** means building workflows from compiled sub-procedures (identity resolution, parsing, unit conversion, notification) that are guarded and healed as modules. The heal localiser picks the module. It is a separate lever: it makes healing local, and it gives reuse finer-grained units.
 8. **Durability is a metric.** Measure:
    - version churn;
    - guard-fire rate over time;
