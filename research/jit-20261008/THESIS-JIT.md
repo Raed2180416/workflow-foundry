@@ -189,3 +189,36 @@ Correction applied from now on:
   are too few for Kev.
 - Local open-weight generative models (owner decision).
 - Rust.
+
+## 6. Second-order reframings from the dev streams (2026-10-09, main session)
+
+The dev evidence (DEV-NOTES D1–D12) shows that ten assumptions in §2 need revising. Each item gives the evidence, then the change.
+
+1. **A workflow is a portfolio, not a single program.** One compile lineage scored 22/24 and another 18/24 on the same setup (D12). Compiled variants also fail in common mode (D8).
+   - Keep several cheap compiles, each with a reliability record built from shadows.
+   - Trust agreement only as far as it has been earned.
+   - Escalate disagreement.
+2. **Verify decisions, not answers.** Silent misses are a few explicit decisions (D1). Compiled code exposes its decisions, so the strong model can be asked about only the borderline ones. That costs about 1/50 of a full shadow and yields Kev labels.
+3. **Three roles, not one interpreter.**
+   - Demonstrator: produces traces, used rarely.
+   - Adjudicator: the strongest model, asked narrow questions.
+   - Executor: code plus cheap judges.
+
+   D2 (the weak interpreter trap) and the Sonnet agent's 13/24 show that full re-solving by the interpreter is a weak oracle.
+4. **Guards are learned by the runtime, not authored by the compiler** (type feedback). An automatic input profile is recorded from accepted traces and enforced before compiled code runs. It widens only on interpreter confirmation. With that rule, domain preservation (D9) holds by construction. Being tested offline (`profile.mjs`).
+5. **Spec first, then compile.** Kinetics fails on semantics, not syntax: implicit exclusions and acceptable numeric variance. A strong model writes the explicit decisions, rules, tolerances and tests once, and the cheap compiler targets them. The spec's tests become acceptance.
+6. **The currency is quota.** The subscription usage limit, not dollars, stalled the work. Code and Kev on the laptop cost no quota. The objective is the share of decisions made by code or Kev.
+7. **The unit of compilation is the sub-procedure.** Identity resolution, parsing, unit conversion and notification recur across the corpus. Compile, guard and heal them as modules. The heal localiser picks the module, and modules are reused across families (C2).
+8. **Durability is a metric.** Measure:
+   - version churn;
+   - guard-fire rate over time;
+   - silent misses per 100 tasks;
+   - time-to-durable.
+
+   Being added (`durability.mjs`).
+9. **Swarms, boards and humans fit as the adjudication layer.**
+   - Swarms explore.
+   - The board is the shared decision ledger.
+   - Subagents are targeted checkers.
+   - The human is the final adjudicator for unresolved cases, as one setting on the owner's slider.
+10. **The compiler improves itself.** Diagnoses become compiler prompt and SDK changes (D1–D12 became v2.1/v3 by hand). Automate it: propose changes from the diagnosis log, evaluate them by replaying past compiles offline, and adopt one only if it does better on held-out compile histories.
