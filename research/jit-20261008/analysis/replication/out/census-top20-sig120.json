@@ -1,0 +1,638 @@
+[
+ {
+  "rank": 1,
+  "size": 11,
+  "platforms": {
+   "apple-shortcuts": 11
+  },
+  "oracleKinds": {
+   "none": 11
+  },
+  "oracleBearing": 0,
+  "nodesMinMedMax": [
+   234,
+   249,
+   295
+  ],
+  "diameter": 0.32,
+  "pairsAtTheta": 15,
+  "pairsLineageRelaxed": 0,
+  "pairsNotLinked": 0,
+  "approxDistance": true,
+  "sampleIds": [
+   "apple-shortcuts:workflowllm-seed-00061",
+   "apple-shortcuts:workflowllm-seed-00575",
+   "apple-shortcuts:workflowllm-seed-00601",
+   "apple-shortcuts:workflowllm-seed-00712"
+  ],
+  "sampleTitles": [
+   "File Explorer",
+   "RoutineHub • PassVault",
+   "RoutineHub • Pro AI"
+  ]
+ },
+ {
+  "rank": 2,
+  "size": 9,
+  "platforms": {
+   "apple-shortcuts": 9
+  },
+  "oracleKinds": {
+   "none": 9
+  },
+  "oracleBearing": 0,
+  "nodesMinMedMax": [
+   210,
+   269,
+   332
+  ],
+  "diameter": 0.411,
+  "pairsAtTheta": 11,
+  "pairsLineageRelaxed": 0,
+  "pairsNotLinked": 0,
+  "approxDistance": true,
+  "sampleIds": [
+   "apple-shortcuts:icloud-7ec28ab7f447419c8f492fc3b7f6df1e",
+   "apple-shortcuts:icloud-91c8083b64754776acd2f197161e915a",
+   "apple-shortcuts:icloud-bdc17b3b31c74c868695b848f3dbc1ff",
+   "apple-shortcuts:icloud-d62e5f697e3e42588f6c7325ca28f3a1"
+  ],
+  "sampleTitles": [
+   "Swing Updater",
+   "#ddr Text Font Converter",
+   "Games’Reminders"
+  ]
+ },
+ {
+  "rank": 3,
+  "size": 7,
+  "platforms": {
+   "nf-core": 7
+  },
+  "oracleKinds": {
+   "test-profile": 3,
+   "output-equivalence": 4
+  },
+  "oracleBearing": 7,
+  "nodesMinMedMax": [
+   65,
+   120,
+   191
+  ],
+  "diameter": 1,
+  "pairsAtTheta": 12,
+  "pairsLineageRelaxed": 0,
+  "pairsNotLinked": 0,
+  "approxDistance": true,
+  "sampleIds": [
+   "nf-core:cutandrun@3.2.2",
+   "nf-core:eager@2.5.3",
+   "nf-core:genomeassembler@2.0.0",
+   "nf-core:hadge@1.0.0"
+  ],
+  "sampleTitles": [
+   "nf-core/cutandrun 3.2.2",
+   "nf-core/eager 2.5.3",
+   "nf-core/genomeassembler 2.0.0"
+  ]
+ },
+ {
+  "rank": 4,
+  "size": 7,
+  "platforms": {
+   "home-assistant": 7
+  },
+  "oracleKinds": {
+   "none": 7
+  },
+  "oracleBearing": 0,
+  "nodesMinMedMax": [
+   50,
+   101,
+   138
+  ],
+  "diameter": 0.588,
+  "pairsAtTheta": 7,
+  "pairsLineageRelaxed": 2,
+  "pairsNotLinked": 0,
+  "approxDistance": true,
+  "sampleIds": [
+   "home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/ikea_e1524_e1810/ikea_e",
+   "home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/ikea_e2001_e2002/ikea_e",
+   "home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/ikea_e2123/ikea_e2123.y",
+   "home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/osram_ac025xx00nj/osram"
+  ],
+  "sampleTitles": [
+   "Controller - IKEA E1524/E1810 TRÅDFRI Wireless 5-Button Remote",
+   "Controller - IKEA E2001/E2002 STYRBAR Remote control",
+   "Controller - IKEA E2123 SYMFONISK sound remote, gen 2"
+  ]
+ },
+ {
+  "rank": 5,
+  "size": 6,
+  "platforms": {
+   "github-actions": 6
+  },
+  "oracleKinds": {
+   "none": 6
+  },
+  "oracleBearing": 0,
+  "nodesMinMedMax": [
+   66,
+   134,
+   146
+  ],
+  "diameter": 0.83,
+  "pairsAtTheta": 6,
+  "pairsLineageRelaxed": 0,
+  "pairsNotLinked": 0,
+  "approxDistance": true,
+  "sampleIds": [
+   "github-actions:MODFLOW-ORG/modflow6/.github/workflows/ci.yml",
+   "github-actions:billabear/billabear/.github/workflows/main.yaml",
+   "github-actions:elastio/bon/.github/workflows/ci.yml",
+   "github-actions:facebook/flow/.github/workflows/build_and_test.yml"
+  ],
+  "sampleTitles": [
+   "MODFLOW 6 continuous integration",
+   "PHP test",
+   "ci"
+  ]
+ },
+ {
+  "rank": 6,
+  "size": 5,
+  "platforms": {
+   "nf-core": 5
+  },
+  "oracleKinds": {
+   "output-equivalence": 5
+  },
+  "oracleBearing": 5,
+  "nodesMinMedMax": [
+   135,
+   184,
+   244
+  ],
+  "diameter": 0.336,
+  "pairsAtTheta": 8,
+  "pairsLineageRelaxed": 0,
+  "pairsNotLinked": 0,
+  "approxDistance": true,
+  "sampleIds": [
+   "nf-core:ampliseq@2.18.0",
+   "nf-core:mag@5.5.0",
+   "nf-core:rnadnavar@1.0.0",
+   "nf-core:rnaseq@3.27.0"
+  ],
+  "sampleTitles": [
+   "nf-core/ampliseq 2.18.0",
+   "nf-core/mag 5.5.0",
+   "nf-core/rnadnavar 1.0.0"
+  ]
+ },
+ {
+  "rank": 7,
+  "size": 5,
+  "platforms": {
+   "cwl": 5
+  },
+  "oracleKinds": {
+   "none": 5
+  },
+  "oracleBearing": 0,
+  "nodesMinMedMax": [
+   27,
+   42,
+   53
+  ],
+  "diameter": 0.508,
+  "pairsAtTheta": 4,
+  "pairsLineageRelaxed": 1,
+  "pairsNotLinked": 0,
+  "approxDistance": false,
+  "sampleIds": [
+   "cwl:workflowhub/524",
+   "cwl:workflowhub/525",
+   "cwl:workflowhub/526",
+   "cwl:workflowhub/527"
+  ],
+  "sampleTitles": [
+   "CWL-based RNA-Seq workflow (WorkflowHub #524)",
+   "CWL-based ChIP-Seq workflow (WorkflowHub #525)",
+   "CWL-based (multi-sample) workflow for germline variant calling (Workfl"
+  ]
+ },
+ {
+  "rank": 8,
+  "size": 4,
+  "platforms": {
+   "nf-core": 4
+  },
+  "oracleKinds": {
+   "output-equivalence": 3,
+   "test-profile": 1
+  },
+  "oracleBearing": 4,
+  "nodesMinMedMax": [
+   103,
+   163,
+   285
+  ],
+  "diameter": 0.347,
+  "pairsAtTheta": 4,
+  "pairsLineageRelaxed": 0,
+  "pairsNotLinked": 0,
+  "approxDistance": true,
+  "sampleIds": [
+   "nf-core:methylong@2.0.0",
+   "nf-core:nascent@2.3.0",
+   "nf-core:proteinfold@2.0.0",
+   "nf-core:viralrecon@3.0.0"
+  ],
+  "sampleTitles": [
+   "nf-core/methylong 2.0.0",
+   "nf-core/nascent 2.3.0",
+   "nf-core/proteinfold 2.0.0"
+  ]
+ },
+ {
+  "rank": 9,
+  "size": 4,
+  "platforms": {
+   "wdl": 4
+  },
+  "oracleKinds": {
+   "output-equivalence": 4
+  },
+  "oracleBearing": 4,
+  "nodesMinMedMax": [
+   39,
+   46,
+   47
+  ],
+  "diameter": 0.174,
+  "pairsAtTheta": 6,
+  "pairsLineageRelaxed": 0,
+  "pairsNotLinked": 0,
+  "approxDistance": false,
+  "sampleIds": [
+   "wdl:broadinstitute/warp/pipelines/wdl/dna_seq/germline/single_sample/exome/ExomeGermlineSi",
+   "wdl:broadinstitute/warp/pipelines/wdl/dna_seq/germline/single_sample/wgs/WholeGenomeGermli",
+   "wdl:broadinstitute/warp/pipelines/wdl/reprocessing/exome/ExomeReprocessing.wdl",
+   "wdl:broadinstitute/warp/pipelines/wdl/reprocessing/wgs/WholeGenomeReprocessing.wdl"
+  ],
+  "sampleTitles": [
+   "ExomeGermlineSingleSample (broadinstitute/warp)",
+   "WholeGenomeGermlineSingleSample (broadinstitute/warp)",
+   "ExomeReprocessing (broadinstitute/warp)"
+  ]
+ },
+ {
+  "rank": 10,
+  "size": 4,
+  "platforms": {
+   "langflow": 4
+  },
+  "oracleKinds": {
+   "none": 4
+  },
+  "oracleBearing": 0,
+  "nodesMinMedMax": [
+   5,
+   5,
+   6
+  ],
+  "diameter": 0.222,
+  "pairsAtTheta": 6,
+  "pairsLineageRelaxed": 0,
+  "pairsNotLinked": 0,
+  "approxDistance": false,
+  "sampleIds": [
+   "langflow:custom-component-generator",
+   "langflow:price-deal-finder",
+   "langflow:simple-agent",
+   "langflow:social-media-agent"
+  ],
+  "sampleTitles": [
+   "Custom Component Generator",
+   "Price Deal Finder",
+   "Simple Agent"
+  ]
+ },
+ {
+  "rank": 11,
+  "size": 4,
+  "platforms": {
+   "apple-shortcuts": 4
+  },
+  "oracleKinds": {
+   "none": 4
+  },
+  "oracleBearing": 0,
+  "nodesMinMedMax": [
+   209,
+   268,
+   291
+  ],
+  "diameter": 0.277,
+  "pairsAtTheta": 3,
+  "pairsLineageRelaxed": 0,
+  "pairsNotLinked": 0,
+  "approxDistance": true,
+  "sampleIds": [
+   "apple-shortcuts:workflowllm-seed-00364",
+   "apple-shortcuts:workflowllm-seed-00459",
+   "apple-shortcuts:workflowllm-seed-10817",
+   "apple-shortcuts:workflowllm-seed-11475"
+  ],
+  "sampleTitles": [
+   "RoutineHub • GamePigeon Scoreboard Tracker",
+   "RoutineHub • iUtilities - 1",
+   "RoutineHub • Shortcut Notification Service"
+  ]
+ },
+ {
+  "rank": 12,
+  "size": 4,
+  "platforms": {
+   "home-assistant": 4
+  },
+  "oracleKinds": {
+   "none": 4
+  },
+  "oracleBearing": 0,
+  "nodesMinMedMax": [
+   16,
+   17,
+   19
+  ],
+  "diameter": 0.443,
+  "pairsAtTheta": 2,
+  "pairsLineageRelaxed": 2,
+  "pairsNotLinked": 0,
+  "approxDistance": false,
+  "sampleIds": [
+   "home-assistant:geekofweek/homeassistant/old_ha_setup/automation/roomba.yaml#14",
+   "home-assistant:geekofweek/homeassistant/old_ha_setup/automation/roomba.yaml#18",
+   "home-assistant:geekofweek/homeassistant/old_ha_setup/automation/roomba.yaml#2",
+   "home-assistant:geekofweek/homeassistant/old_ha_setup/automation/roomba.yaml#8"
+  ],
+  "sampleTitles": [
+   "Roomba - Run Basement Roomba Partial Clean",
+   "Roomba - Run Upstairs Roomba when USER2 Leaves",
+   "Roomba - Run Main Floor Roomba Weekdays Partial Clean"
+  ]
+ },
+ {
+  "rank": 13,
+  "size": 3,
+  "platforms": {
+   "airflow": 3
+  },
+  "oracleKinds": {
+   "test-profile": 3
+  },
+  "oracleBearing": 3,
+  "nodesMinMedMax": [
+   12,
+   12,
+   13
+  ],
+  "diameter": 0.312,
+  "pairsAtTheta": 2,
+  "pairsLineageRelaxed": 0,
+  "pairsNotLinked": 0,
+  "approxDistance": false,
+  "sampleIds": [
+   "airflow:apache-airflow-providers-amazon/tests/system/amazon/aws/example_athena#example_ath",
+   "airflow:apache-airflow-providers-amazon/tests/system/amazon/aws/example_glue_data_quality#",
+   "airflow:apache-airflow-providers-amazon/tests/system/amazon/aws/example_glue_data_quality_"
+  ],
+  "sampleTitles": [
+   "example_athena (provider:amazon)",
+   "example_glue_data_quality (provider:amazon)",
+   "example_glue_data_quality_with_recommendation (provider:amazon)"
+  ]
+ },
+ {
+  "rank": 14,
+  "size": 3,
+  "platforms": {
+   "kubeflow": 3
+  },
+  "oracleKinds": {
+   "output-equivalence": 3
+  },
+  "oracleBearing": 3,
+  "nodesMinMedMax": [
+   7,
+   7,
+   8
+  ],
+  "diameter": 0.387,
+  "pairsAtTheta": 2,
+  "pairsLineageRelaxed": 1,
+  "pairsNotLinked": 0,
+  "approxDistance": false,
+  "sampleIds": [
+   "kubeflow:valid/critical/flip_coin",
+   "kubeflow:valid/essential/pipeline_with_nested_conditions",
+   "kubeflow:valid/essential/pipeline_with_nested_conditions_yaml"
+  ],
+  "sampleTitles": [
+   "conditional-execution-pipeline (KFP compiled pipeline)",
+   "nested-conditions-pipeline (KFP compiled pipeline)",
+   "pipeline-with-nested-conditions-yaml (KFP compiled pipeline)"
+  ]
+ },
+ {
+  "rank": 15,
+  "size": 3,
+  "platforms": {
+   "galaxy": 3
+  },
+  "oracleKinds": {
+   "test-profile": 3
+  },
+  "oracleBearing": 3,
+  "nodesMinMedMax": [
+   56,
+   63,
+   65
+  ],
+  "diameter": 0.256,
+  "pairsAtTheta": 2,
+  "pairsLineageRelaxed": 0,
+  "pairsNotLinked": 0,
+  "approxDistance": false,
+  "sampleIds": [
+   "galaxy:iwc/Assembly-Hifi-Trio-phasing-VGP5/Assembly-Hifi-Trio-phasing-VGP5",
+   "galaxy:iwc/Assembly-Hifi-only-VGP3/Assembly-Hifi-only-VGP3",
+   "galaxy:iwc/Purge-duplicates-one-haplotype-VGP6b/Purging-duplicates-one-haplotype-VGP6b"
+  ],
+  "sampleTitles": [
+   "Genome Assembly with Pacbio Hifi reads and Trio data for phasing - VGP",
+   "Genome Assembly from Hifi reads - VGP3 (IWC VGP-assembly-v2, v0.3.7)",
+   "Purging duplicates in one haplotype VGP6b (IWC VGP-assembly-v2, v0.8.5"
+  ]
+ },
+ {
+  "rank": 16,
+  "size": 3,
+  "platforms": {
+   "nextflow": 3
+  },
+  "oracleKinds": {
+   "test-profile": 3
+  },
+  "oracleBearing": 3,
+  "nodesMinMedMax": [
+   142,
+   148,
+   167
+  ],
+  "diameter": 0.394,
+  "pairsAtTheta": 0,
+  "pairsLineageRelaxed": 2,
+  "pairsNotLinked": 0,
+  "approxDistance": true,
+  "sampleIds": [
+   "nextflow:workflowhub/2239",
+   "nextflow:workflowhub/668",
+   "nextflow:workflowhub/813"
+  ],
+  "sampleTitles": [
+   "sanger-tol/ascc (WorkflowHub #2239)",
+   "sanger-tol/treeval v1.0 - Ancient Atlantis (WorkflowHub #668)",
+   "sanger-tol/treeval (WorkflowHub #813)"
+  ]
+ },
+ {
+  "rank": 17,
+  "size": 3,
+  "platforms": {
+   "snakemake": 3
+  },
+  "oracleKinds": {
+   "test-profile": 2,
+   "output-equivalence": 1
+  },
+  "oracleBearing": 3,
+  "nodesMinMedMax": [
+   60,
+   170,
+   207
+  ],
+  "diameter": 0.241,
+  "pairsAtTheta": 3,
+  "pairsLineageRelaxed": 0,
+  "pairsNotLinked": 0,
+  "approxDistance": true,
+  "sampleIds": [
+   "snakemake:IKIM-Essen/uncovar@v1.1.1",
+   "snakemake:friendsofstrandseq/mosaicatcher-pipeline@v2.5.1",
+   "snakemake:workflowhub/1900"
+  ],
+  "sampleTitles": [
+   "IKIM-Essen/uncovar v1.1.1",
+   "friendsofstrandseq/mosaicatcher-pipeline v2.5.1",
+   "workflowhub/1900"
+  ]
+ },
+ {
+  "rank": 18,
+  "size": 3,
+  "platforms": {
+   "temporal": 3
+  },
+  "oracleKinds": {
+   "none": 1,
+   "test-profile": 2
+  },
+  "oracleBearing": 2,
+  "nodesMinMedMax": [
+   15,
+   17,
+   23
+  ],
+  "diameter": 0.457,
+  "pairsAtTheta": 1,
+  "pairsLineageRelaxed": 1,
+  "pairsNotLinked": 0,
+  "approxDistance": false,
+  "sampleIds": [
+   "temporal:samples-go/nexus-messaging",
+   "temporal:samples-python/nexus_messaging",
+   "temporal:samples-python/nexus_messaging_temporal_operation"
+  ],
+  "sampleTitles": [
+   "nexus-messaging (Temporal Go sample)",
+   "nexus_messaging (Temporal Python sample)",
+   "nexus_messaging_temporal_operation (Temporal Python sample)"
+  ]
+ },
+ {
+  "rank": 19,
+  "size": 3,
+  "platforms": {
+   "flowise": 3
+  },
+  "oracleKinds": {
+   "none": 3
+  },
+  "oracleBearing": 0,
+  "nodesMinMedMax": [
+   5,
+   5,
+   5
+  ],
+  "diameter": 0.089,
+  "pairsAtTheta": 3,
+  "pairsLineageRelaxed": 0,
+  "pairsNotLinked": 0,
+  "approxDistance": false,
+  "sampleIds": [
+   "flowise:chatflows-conversational-agent",
+   "flowise:chatflows-re-act-agent",
+   "flowise:chatflows-tool-agent"
+  ],
+  "sampleTitles": [
+   "Conversational Agent",
+   "ReAct Agent",
+   "Tool Agent"
+  ]
+ },
+ {
+  "rank": 20,
+  "size": 3,
+  "platforms": {
+   "flowise": 3
+  },
+  "oracleKinds": {
+   "none": 3
+  },
+  "oracleBearing": 0,
+  "nodesMinMedMax": [
+   6,
+   6,
+   7
+  ],
+  "diameter": 0.277,
+  "pairsAtTheta": 2,
+  "pairsLineageRelaxed": 0,
+  "pairsNotLinked": 0,
+  "approxDistance": false,
+  "sampleIds": [
+   "flowise:chatflows-conversational-retrieval-qa-chain",
+   "flowise:chatflows-github-docs-qn-a",
+   "flowise:chatflows-local-qn-a"
+  ],
+  "sampleTitles": [
+   "Conversational Retrieval QA Chain",
+   "Github Docs QnA",
+   "Local QnA"
+  ]
+ }
+]

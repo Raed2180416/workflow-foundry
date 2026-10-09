@@ -1,0 +1,68 @@
+family	size	oracleBearing	platforms	diameter	sampleIds
+1	5	0	cwl:5	0.508	cwl:workflowhub/524 | cwl:workflowhub/525 | cwl:workflowhub/526
+2	4	4	wdl:4	0.174	wdl:broadinstitute/warp/pipelines/wdl/dna_seq/germline/single_sample/exome/ExomeGermlineSi | wdl:broadinstitute/warp/pipelines/wdl/dna_seq/germline/single_sample/wgs/WholeGenomeGermli | wdl:broadinstitute/warp/pipelines/wdl/reprocessing/exome/ExomeReprocessing.wdl
+3	4	0	langflow:4	0.222	langflow:custom-component-generator | langflow:price-deal-finder | langflow:simple-agent
+4	4	0	home-assistant:4	0.443	home-assistant:geekofweek/homeassistant/old_ha_setup/automation/roomba.yaml#14 | home-assistant:geekofweek/homeassistant/old_ha_setup/automation/roomba.yaml#18 | home-assistant:geekofweek/homeassistant/old_ha_setup/automation/roomba.yaml#2
+5	3	3	airflow:3	0.312	airflow:apache-airflow-providers-amazon/tests/system/amazon/aws/example_athena#example_ath | airflow:apache-airflow-providers-amazon/tests/system/amazon/aws/example_glue_data_quality# | airflow:apache-airflow-providers-amazon/tests/system/amazon/aws/example_glue_data_quality_
+6	3	3	kubeflow:3	0.387	kubeflow:valid/critical/flip_coin | kubeflow:valid/essential/pipeline_with_nested_conditions | kubeflow:valid/essential/pipeline_with_nested_conditions_yaml
+7	3	3	galaxy:3	0.256	galaxy:iwc/Assembly-Hifi-Trio-phasing-VGP5/Assembly-Hifi-Trio-phasing-VGP5 | galaxy:iwc/Assembly-Hifi-only-VGP3/Assembly-Hifi-only-VGP3 | galaxy:iwc/Purge-duplicates-one-haplotype-VGP6b/Purging-duplicates-one-haplotype-VGP6b
+8	3	2	temporal:3	0.457	temporal:samples-go/nexus-messaging | temporal:samples-python/nexus_messaging | temporal:samples-python/nexus_messaging_temporal_operation
+9	3	0	flowise:3	0.089	flowise:chatflows-conversational-agent | flowise:chatflows-re-act-agent | flowise:chatflows-tool-agent
+10	3	0	flowise:3	0.277	flowise:chatflows-conversational-retrieval-qa-chain | flowise:chatflows-github-docs-qn-a | flowise:chatflows-local-qn-a
+11	3	0	node-red:3	0.075	node-red:1f1c0dde4ff193e5c14d5b99442a7d00 | node-red:e36b06bc36312d057c0541414d4f87f5 | node-red:eebfe0f84c34d0b9cce62f4f65f4fa4e
+12	3	0	github-actions:3	0.292	github-actions:paulmarisoumary/discord-bot/.github/workflows/runner-update-and-reload-bot. | github-actions:shafthq/shaft_engine/.github/workflows/update-selenium-grid-versions.yml | github-actions:wukongdaily/AutoBuildImmortalWrt/.github/workflows/build-QEMU-arm64-24.10.0
+13	3	0	cwl:3	0.421	cwl:EBI-Metagenomics/pipeline-v5/workflows/amplicon-wf--v.5-cond.cwl | cwl:EBI-Metagenomics/pipeline-v5/workflows/assembly-wf--v.5-cond.cwl | cwl:EBI-Metagenomics/pipeline-v5/workflows/raw-reads-wf--v.5-cond.cwl
+14	3	0	apple-shortcuts:3	0.314	apple-shortcuts:icloud-0f8a1267edde48efa50de6a35a8bcdbd | apple-shortcuts:icloud-5cbc20665bb94f1b9c0dc9c2be03b924 | apple-shortcuts:icloud-c7a36dd4f2c64fe8be80a8a7512c653a
+15	3	0	home-assistant:3	0.342	home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/ikea_e1524_e1810/ikea_e | home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/ikea_e2001_e2002/ikea_e | home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/osram_ac025xx00nj/osram
+16	3	0	home-assistant:3	0.641	home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/xiaomi_wxcjkg11lm/xiaom | home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/xiaomi_wxcjkg12lm/xiaom | home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/xiaomi_wxcjkg13lm/xiaom
+17	3	0	home-assistant:3	0.367	home-assistant:forum-481048 | home-assistant:forum-509992 | home-assistant:forum-527354
+18	3	0	claude-code-workflows:3	0.215	claude-code-workflows:claude-session/workflows/scripts/c0-preflight-wf_d35b46dd-974.js | claude-code-workflows:claude-session/workflows/scripts/design-review-c-wf_1ab0b3e4-a4d.js | claude-code-workflows:claude-session/workflows/scripts/phase0-unblock-wf_1095386b-893.js
+19	2	2	coze:2	0.222	coze:loop-selector-variable-assign-text-processor | coze:subworkflow-bottom-workflow
+20	2	2	n8n:2	0.215	n8n:12834 | n8n:12858
+21	2	2	airflow:2	0.133	airflow:apache-airflow-providers-google/tests/system/google/cloud/dataplex/example_dataple | airflow:apache-airflow-providers-google/tests/system/google/cloud/dataplex/example_dataple
+22	2	2	airflow:2	0.419	airflow:apache-airflow-providers-google/tests/system/google/cloud/storage_transfer/example | airflow:apache-airflow-providers-google/tests/system/google/cloud/storage_transfer/example
+23	2	2	airflow:2	0.057	airflow:apache-airflow-providers-teradata/tests/system/teradata/example_azure_blob_to_tera | airflow:apache-airflow-providers-teradata/tests/system/teradata/example_s3_to_teradata_tra
+24	2	2	kubeflow:2	0.313	kubeflow:valid/artifacts_complex | kubeflow:valid/parameters_complex
+25	2	2	kubeflow:2	0.182	kubeflow:valid/critical/collected_parameters | kubeflow:valid/if_elif_else_with_oneof_parameters
+26	2	2	galaxy:2	0.022	galaxy:iwc/rnaseq-pe/rnaseq-pe | galaxy:iwc/rnaseq-sr/rnaseq-sr
+27	2	2	nextflow:2	0.494	nextflow:workflowhub/668 | nextflow:workflowhub/813
+28	2	1	n8n:2	0.098	n8n:10850 | n8n:11138
+29	2	0	activepieces:2	0.014	activepieces:07OX2PJBTt6TGnEOIJa8b | activepieces:MTHquL6XgPoQ6oGPhr4JH
+30	2	0	activepieces:2	0.029	activepieces:1TPst6qx7bNcQ2jV2ZZ61 | activepieces:reyAuPXF9PI57KuPqQqxg
+31	2	0	activepieces:2	0.022	activepieces:3AzxIABbHE7PBCsBZfP3m | activepieces:kNDQDoRZzdel4PtcmjBCh
+32	2	0	activepieces:2	0.027	activepieces:4EogKQgXUDqf92CgxvjOC | activepieces:TumPYmIvdFx7jRFWOiyjJ
+33	2	0	activepieces:2	0.011	activepieces:8Vm5nLR5NRINOFw5e1rdk | activepieces:M9UrOgu8uStPIaf0jijwI
+34	2	0	activepieces:2	0.011	activepieces:P4MZLep45DFk4lilR7QOW | activepieces:loR4YF4CGSq4v8zbugGlh
+35	2	0	activepieces:2	0.034	activepieces:S0tI31TsQZvtNg5BDH1Tq | activepieces:zAUwFEPQFv1sblFP0rPYp
+36	2	0	activepieces:2	0.017	activepieces:WSuSdjnA1rdJmIkfisphJ | activepieces:iw58B4xeZqvYJJhTy91W6
+37	2	0	activepieces:2	0.014	activepieces:b5KWB4fzJtRoyYLC5RZaP | activepieces:gSsyKGwN5eqYe8SXyGM0X
+38	2	0	dify:2	0	dify:mkt-19c465b2-4aa9-439d-8b6d-023adcd65491 | dify:repo-d9f6b733-e35d-4a40-9f38-ca7bbfa009f7
+39	2	0	flowise:2	0.036	flowise:chatflows-image-generation | flowise:chatflows-prompt-chaining
+40	2	0	langflow:2	0.2	langflow:blog-writer | langflow:instagram-copywriter
+41	2	0	langflow:2	0	langflow:document-q-a | langflow:vector-store-rag
+42	2	0	n8n:2	0.05	n8n:6299 | n8n:6518
+43	2	0	airflow:2	0.13	airflow:apache-airflow-providers-common-ai/src/airflow/providers/common/ai/example_dags/ex | airflow:apache-airflow-providers-common-ai/src/airflow/providers/common/ai/example_dags/ex
+44	2	0	airflow:2	0.14	airflow:apache-airflow-providers-edge3/src/airflow/providers/edge3/example_dags/integratio | airflow:apache-airflow-providers-edge3/src/airflow/providers/edge3/example_dags/win_test#w
+45	2	0	argo:2	0	argo:cluster-workflow-template/clustertemplates#3 | argo:workflow-template/templates#3
+46	2	0	argo:2	0.176	argo:dag-continue-on-fail | argo:dag-enhanced-depends
+47	2	0	argo:2	0.189	argo:dag-nested | argo:parallelism-nested-dag
+48	2	0	github-actions:2	0.214	github-actions:MODFLOW-ORG/modflow6/.github/workflows/ci.yml | github-actions:zilliztech/milvus-backup/.github/workflows/main.yaml
+49	2	0	github-actions:2	0.173	github-actions:aio-libs/multidict/.github/workflows/ci.yml | github-actions:aio-libs/yarl/.github/workflows/ci.yml
+50	2	0	github-actions:2	0.428	github-actions:argoproj/argo-workflows/.github/workflows/release.yaml | github-actions:cdklabs/cdk-watchful/.github/workflows/release.yml
+51	2	0	github-actions:2	0.162	github-actions:benfred/py-spy/.github/workflows/build.yml | github-actions:jrprice/oclgrind/.github/workflows/ci.yml
+52	2	0	cwl:2	0.005	cwl:Barski-lab/workflows/devel/miraldi/atacseq-pe-bowtie2.cwl | cwl:Barski-lab/workflows/devel/miraldi/atacseq-pe-star.cwl
+53	2	0	cwl:2	0.098	cwl:ncbi/pgap/pgap.cwl | cwl:ncbi/pgap/wf_pgap_simple.cwl
+54	2	0	galaxy:2	0.209	galaxy:workflowhub/1103 | galaxy:workflowhub/1104
+55	2	0	galaxy:2	0.283	galaxy:workflowhub/472 | galaxy:workflowhub/482
+56	2	0	galaxy:2	0.085	galaxy:workflowhub/607 | galaxy:workflowhub/629
+57	2	0	apple-shortcuts:2	0.247	apple-shortcuts:icloud-919d43698cb6499a90118e70445bf389 | apple-shortcuts:icloud-ecfa7ec13f744d2aae362f22da29b4ba
+58	2	0	apple-shortcuts:2	0.233	apple-shortcuts:icloud-91c8083b64754776acd2f197161e915a | apple-shortcuts:icloud-bdc17b3b31c74c868695b848f3dbc1ff
+59	2	0	apple-shortcuts:2	0.216	apple-shortcuts:icloud-9a6c3b0215e44f80afd2c62dd58f4a8d | apple-shortcuts:icloud-a11bc672b88044bc8cf795f2e0956103
+60	2	0	apple-shortcuts:2	0.191	apple-shortcuts:workflowllm-seed-09631 | apple-shortcuts:workflowllm-seed-09632
+61	2	0	comfyui:2	0.247	comfyui:Comfy-Org-workflow_templates-templates-audio_stable_audio_example.json | comfyui:xxyQwQ-ComfyBench-dataset-benchmark-workflow-001.json
+62	2	0	comfyui:2	0.171	comfyui:Cseti-ComfyUI-Workflows-ltx-2.3-ic-lora-crossview-warp-ltx2.3-ic-lora-crossview-wa | comfyui:Cseti-ComfyUI-Workflows-ltx-2.3-ic-lora-crossview-warp-v2-ltx2.3-ic-lora-crossview
+63	2	0	comfyui:2	0.174	comfyui:TTPlanetPig-Comfyui_TTP_Toolset-examples-LTX_2_First_Last_I2V_TTP_v1-.json | comfyui:TTPlanetPig-Comfyui_TTP_Toolset-examples-LTX_2_First_Last_Middle_Frame_control_v1_
+64	2	0	comfyui:2	0.081	comfyui:jakechai-ComfyUI-JakeUpgrade-Workflow-ComfyUI-API-dev-JK-API-Imgen-QWen.json | comfyui:jakechai-ComfyUI-JakeUpgrade-Workflow-ComfyUI-API-dev-JK-API-Imgen-SD15.json
+65	2	0	home-assistant:2	0.232	home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/ikea_e2213/ikea_e2213.y | home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/tuya_ERS-10TZBVK-AA/tuy
+66	2	0	home-assistant:2	0.319	home-assistant:geekofweek/homeassistant/old_ha_setup/automation/roomba.yaml#23 | home-assistant:geekofweek/homeassistant/old_ha_setup/automation/roomba.yaml#24
+67	2	0	camel:2	0.172	camel:camel/examples/workforce/hackathon_judges.py#auto-decompose-judge-panel | camel:camel/examples/workforce/pipeline_workflow_example.py#fork-join-literature-pipeline

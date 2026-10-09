@@ -1,0 +1,6127 @@
+{
+ "generated": "2026-10-09",
+ "meta": {
+  "galaxy": {
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ],
+   "tiers": {
+    "G": "G",
+    "I": "I:galaxy (sorted tables as bags + sortedness predicate)"
+   },
+   "logUnit": "table row of the 4 published tables, per evaluation job",
+   "oracleExpectedConsistency": null
+  },
+  "n8n12679": {
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ],
+   "tiers": {
+    "G": "G",
+    "I": "I:n8n12679 (net effect per person and system; birthday as a date)"
+   },
+   "logUnit": "state delta of an effective write, per person",
+   "oracleExpectedConsistency": null
+  },
+  "n8n20281": {
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ],
+   "tiers": {
+    "G": "G",
+    "I": "I:n8n20281 (facts)"
+   },
+   "logUnit": "committed external effect, ordered per mail",
+   "oracleExpectedConsistency": null
+  },
+  "ha": {
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+   ],
+   "tiers": {
+    "G": "G",
+    "I": "I:ha"
+   },
+   "logUnit": "successful service call (virtual seconds)",
+   "oracleExpectedConsistency": {
+    "seeds": 10,
+    "acceptedI": 10,
+    "minFitness": 1,
+    "minPrecision": 1
+   }
+  },
+  "gha": {
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27
+   ],
+   "tiers": {
+    "G": "G",
+    "I": "I:gha (labels set; PR text and failure message as contract facts)"
+   },
+   "logUnit": "run status / versions / file line edit / PR operation / PR text",
+   "oracleExpectedConsistency": null
+  }
+ },
+ "totals": {
+  "oracle_v1": {
+   "misclassified_29": 29,
+   "note": "by construction: the 18 wrong classes passed v1 and the 11 correct designs were rejected by v1 (dossier 7)"
+  },
+  "oracle_v2": {
+   "wrong_detected": 17,
+   "wrong_total": 18,
+   "correct_accepted": 11,
+   "correct_total": 11,
+   "misclassified_29": 1,
+   "residual_detected": 0,
+   "residual_total": 5,
+   "misclassified_34": 6
+  },
+  "conformance_G_tau1": {
+   "wrong_detected": 17,
+   "wrong_total": 18,
+   "correct_accepted": 0,
+   "correct_total": 11,
+   "misclassified_29": 12,
+   "residual_detected": 4,
+   "residual_total": 5,
+   "misclassified_34": 13
+  },
+  "conformance_I_tau1": {
+   "wrong_detected": 17,
+   "wrong_total": 18,
+   "correct_accepted": 10,
+   "correct_total": 11,
+   "misclassified_29": 2,
+   "residual_detected": 0,
+   "residual_total": 5,
+   "misclassified_34": 7
+  },
+  "conformance_I_tau095": {
+   "wrong_detected": 14,
+   "wrong_total": 18,
+   "correct_accepted": 10,
+   "correct_total": 11,
+   "misclassified_29": 5,
+   "residual_detected": 0,
+   "residual_total": 5,
+   "misclassified_34": 10
+  },
+  "conformance_I_share90": {
+   "wrong_detected": 13,
+   "wrong_total": 18,
+   "correct_accepted": 11,
+   "correct_total": 11,
+   "misclassified_29": 5,
+   "residual_detected": 0,
+   "residual_total": 5,
+   "misclassified_34": 10
+  }
+ },
+ "perDesign": {
+  "v2": {
+   "designs": 192,
+   "misclassified": 7,
+   "falseAccept": 7,
+   "falseReject": 0
+  },
+  "G": {
+   "designs": 192,
+   "misclassified": 27,
+   "falseAccept": 4,
+   "falseReject": 23
+  },
+  "I": {
+   "designs": 192,
+   "misclassified": 9,
+   "falseAccept": 8,
+   "falseReject": 1
+  }
+ },
+ "perAdapter": {
+  "galaxy": {
+   "designs": 34,
+   "seeds": 5,
+   "misclassifiedVsLabel": {
+    "v2": 1,
+    "G": 3,
+    "I": 1
+   },
+   "verdictAgreementWithV2": {
+    "G": 30,
+    "I": 34
+   },
+   "spearman_v2score_vs_F1": {
+    "G": 0.6076,
+    "I": 0.6119
+   },
+   "kendall_v2score_vs_F1": {
+    "G": 0.4909,
+    "I": 0.4795
+   },
+   "auc_F1_predicts_truth": {
+    "G": 0.969,
+    "I": 0.9828
+   },
+   "auc_F1_predicts_v2_accept": {
+    "G": 0.9762,
+    "I": 1
+   }
+  },
+  "n8n12679": {
+   "designs": 42,
+   "seeds": 5,
+   "misclassifiedVsLabel": {
+    "v2": 0,
+    "G": 3,
+    "I": 2
+   },
+   "verdictAgreementWithV2": {
+    "G": 39,
+    "I": 40
+   },
+   "spearman_v2score_vs_F1": {
+    "G": 0.6619,
+    "I": 0.837
+   },
+   "kendall_v2score_vs_F1": {
+    "G": 0.602,
+    "I": 0.8087
+   },
+   "auc_F1_predicts_truth": {
+    "G": 0.5513,
+    "I": 0.9829
+   },
+   "auc_F1_predicts_v2_accept": {
+    "G": 0.5513,
+    "I": 0.9829
+   }
+  },
+  "n8n20281": {
+   "designs": 45,
+   "seeds": 5,
+   "misclassifiedVsLabel": {
+    "v2": 3,
+    "G": 6,
+    "I": 3
+   },
+   "verdictAgreementWithV2": {
+    "G": 42,
+    "I": 45
+   },
+   "spearman_v2score_vs_F1": {
+    "G": 0.7035,
+    "I": 0.8319
+   },
+   "kendall_v2score_vs_F1": {
+    "G": 0.597,
+    "I": 0.6832
+   },
+   "auc_F1_predicts_truth": {
+    "G": 0.7348,
+    "I": 0.9634
+   },
+   "auc_F1_predicts_v2_accept": {
+    "G": 0.8759,
+    "I": 1
+   }
+  },
+  "ha": {
+   "designs": 45,
+   "seeds": 10,
+   "misclassifiedVsLabel": {
+    "v2": 0,
+    "G": 7,
+    "I": 0
+   },
+   "verdictAgreementWithV2": {
+    "G": 38,
+    "I": 45
+   },
+   "spearman_v2score_vs_F1": {
+    "G": 0.6081,
+    "I": 0.8862
+   },
+   "kendall_v2score_vs_F1": {
+    "G": 0.4795,
+    "I": 0.7535
+   },
+   "auc_F1_predicts_truth": {
+    "G": 0.7196,
+    "I": 1
+   },
+   "auc_F1_predicts_v2_accept": {
+    "G": 0.7196,
+    "I": 1
+   }
+  },
+  "gha": {
+   "designs": 26,
+   "seeds": 28,
+   "misclassifiedVsLabel": {
+    "v2": 3,
+    "G": 8,
+    "I": 3
+   },
+   "verdictAgreementWithV2": {
+    "G": 15,
+    "I": 26
+   },
+   "spearman_v2score_vs_F1": {
+    "G": 0.8213,
+    "I": 0.9627
+   },
+   "kendall_v2score_vs_F1": {
+    "G": 0.7234,
+    "I": 0.882
+   },
+   "auc_F1_predicts_truth": {
+    "G": 0.8399,
+    "I": 0.9118
+   },
+   "auc_F1_predicts_v2_accept": {
+    "G": 0.881,
+    "I": 1
+   }
+  }
+ },
+ "pooled": {
+  "designs": 188,
+  "spearman": {
+   "G": 0.3939,
+   "I": 0.6493
+  },
+  "kendall": {
+   "G": 0.3011,
+   "I": 0.5257
+  }
+ },
+ "sizes": {
+  "galaxy": {
+   "normalisationLoc": 19,
+   "adapterLoc": 52,
+   "normalisationSha256": "307c14f8e1703086c3adca9b88231244ff52466bd2110f0388bdc40828f9eee1",
+   "adapterSha256": "482d819186929fd87e4ef0373f6601af17e142f7f6bcfb136ee013772f586a91"
+  },
+  "n8n12679": {
+   "normalisationLoc": 21,
+   "adapterLoc": 129,
+   "normalisationSha256": "86e6e62d6037dbb3a2c10982f1ccc9a6a0ec382e85742805280dde8ae551847e",
+   "adapterSha256": "d78c21b1a772b158fc8be3e025c1293f8d3dd0e866f323a781246b7a3a231776"
+  },
+  "n8n20281": {
+   "normalisationLoc": 33,
+   "adapterLoc": 61,
+   "normalisationSha256": "1eedb0c0ed4ac4b8cc6d62c12d05678419d487a668bb8824b00af7adc8731bd5",
+   "adapterSha256": "334ec5ccb3312db3002ab18e2c329a35f2b7e390480f261b1eb996096fa3a304"
+  },
+  "ha": {
+   "normalisationLoc": 24,
+   "adapterLoc": 56,
+   "normalisationSha256": "4282e15716ccb85e74642403cef7acb637a2ba6d3198f643eb0439e7f8e74382",
+   "adapterSha256": "ef2ab7d13a18ba825fcf434ff835bd884b76036f8b974e16a1f2e7636e94dbe4"
+  },
+  "gha": {
+   "normalisationLoc": 25,
+   "adapterLoc": 70,
+   "normalisationSha256": "dead60cac3eb39a646a6d2f3f02c578bd66efba07aa64fb2fb773fcd9b333a1d",
+   "adapterSha256": "dca12fa769292fb4f0e075714a8b433186c1ba369d62ffaa1fcbbae0ac52e002"
+  },
+  "evaluator": {
+   "loc": 167,
+   "sha256": "34187857c8f2e7a3b537c448393c0f1047f04fddc0e8ee993f0e921829c9df44"
+  }
+ },
+ "classes": [
+  {
+   "cls": "GX-W1",
+   "platform": "Galaxy",
+   "kind": "class-wrong",
+   "decidedBy": "battery",
+   "designs": 1,
+   "example": "W1 skips the DP>=1 prefilter",
+   "seedsPerDesign": 5,
+   "v2": "rejected",
+   "G": "rejected",
+   "I": "rejected",
+   "I_tau95": "accepted",
+   "I_share90": "rejected",
+   "I_f1": 0.9981,
+   "G_f1": 0.9963,
+   "v2Assumed": false,
+   "v2_ok": true,
+   "G_ok": true,
+   "I_ok": true,
+   "I95_ok": false,
+   "Ish_ok": true
+  },
+  {
+   "cls": "GX-W2",
+   "platform": "Galaxy",
+   "kind": "class-wrong",
+   "decidedBy": "battery",
+   "designs": 1,
+   "example": "W2 by-variant report grouped by POS",
+   "seedsPerDesign": 5,
+   "v2": "rejected",
+   "G": "rejected",
+   "I": "rejected",
+   "I_tau95": "accepted",
+   "I_share90": "rejected",
+   "I_f1": 0.998,
+   "G_f1": 0.9969,
+   "v2Assumed": false,
+   "v2_ok": true,
+   "G_ok": true,
+   "I_ok": true,
+   "I95_ok": false,
+   "Ish_ok": true
+  },
+  {
+   "cls": "GX-W3",
+   "platform": "Galaxy",
+   "kind": "class-wrong",
+   "decidedBy": "battery",
+   "designs": 1,
+   "example": "W3 countunique per position hard-coded to 1",
+   "seedsPerDesign": 5,
+   "v2": "rejected",
+   "G": "rejected",
+   "I": "rejected",
+   "I_tau95": "accepted",
+   "I_share90": "rejected",
+   "I_f1": 0.9959,
+   "G_f1": 0.9951,
+   "v2Assumed": false,
+   "v2_ok": true,
+   "G_ok": true,
+   "I_ok": true,
+   "I95_ok": false,
+   "Ish_ok": true
+  },
+  {
+   "cls": "GX-W4",
+   "platform": "Galaxy",
+   "kind": "class-wrong",
+   "decidedBy": "battery",
+   "designs": 1,
+   "example": "W4 AF threshold label printed with 2 decimals",
+   "seedsPerDesign": 5,
+   "v2": "rejected",
+   "G": "rejected",
+   "I": "rejected",
+   "I_tau95": "rejected",
+   "I_share90": "rejected",
+   "I_f1": 0.8107,
+   "G_f1": 0.8083,
+   "v2Assumed": false,
+   "v2_ok": true,
+   "G_ok": true,
+   "I_ok": true,
+   "I95_ok": true,
+   "Ish_ok": true
+  },
+  {
+   "cls": "HA-W1",
+   "platform": "Home Assistant",
+   "kind": "class-wrong",
+   "decidedBy": "battery",
+   "designs": 1,
+   "example": "W1 naive-debounce",
+   "seedsPerDesign": 10,
+   "v2": "rejected",
+   "G": "rejected",
+   "I": "rejected",
+   "I_tau95": "rejected",
+   "I_share90": "accepted",
+   "I_f1": 0.9814,
+   "G_f1": 0.756,
+   "v2Assumed": false,
+   "v2_ok": true,
+   "G_ok": true,
+   "I_ok": true,
+   "I95_ok": true,
+   "Ish_ok": false
+  },
+  {
+   "cls": "HA-W2",
+   "platform": "Home Assistant",
+   "kind": "class-wrong",
+   "decidedBy": "battery",
+   "designs": 1,
+   "example": "W2 start-gate-from-memory",
+   "seedsPerDesign": 10,
+   "v2": "rejected",
+   "G": "rejected",
+   "I": "rejected",
+   "I_tau95": "rejected",
+   "I_share90": "accepted",
+   "I_f1": 0.9867,
+   "G_f1": 0.76,
+   "v2Assumed": false,
+   "v2_ok": true,
+   "G_ok": true,
+   "I_ok": true,
+   "I95_ok": true,
+   "Ish_ok": false
+  },
+  {
+   "cls": "N12-W1",
+   "platform": "n8n:12679",
+   "kind": "class-wrong",
+   "decidedBy": "battery",
+   "designs": 23,
+   "example": "W1 forgets first KT->Zoho",
+   "seedsPerDesign": 5,
+   "v2": "rejected",
+   "G": "rejected",
+   "I": "rejected",
+   "I_tau95": "rejected",
+   "I_share90": "mixed(15/23 accepted)",
+   "I_f1": 0.9726,
+   "G_f1": 0.9826,
+   "v2Assumed": false,
+   "v2_ok": true,
+   "G_ok": true,
+   "I_ok": true,
+   "I95_ok": true,
+   "Ish_ok": false
+  },
+  {
+   "cls": "N12-W2",
+   "platform": "n8n:12679",
+   "kind": "class-wrong",
+   "decidedBy": "battery",
+   "designs": 1,
+   "example": "W2 empty-values-never-written",
+   "seedsPerDesign": 5,
+   "v2": "rejected",
+   "G": "rejected",
+   "I": "rejected",
+   "I_tau95": "rejected",
+   "I_share90": "rejected",
+   "I_f1": 0.7815,
+   "G_f1": 0.8578,
+   "v2Assumed": false,
+   "v2_ok": true,
+   "G_ok": true,
+   "I_ok": true,
+   "I95_ok": true,
+   "Ish_ok": true
+  },
+  {
+   "cls": "N12-W3",
+   "platform": "n8n:12679",
+   "kind": "class-wrong",
+   "decidedBy": "battery",
+   "designs": 1,
+   "example": "W3 case-sensitive-zoho-segment-tags",
+   "seedsPerDesign": 5,
+   "v2": "rejected",
+   "G": "rejected",
+   "I": "rejected",
+   "I_tau95": "rejected",
+   "I_share90": "accepted",
+   "I_f1": 0.9503,
+   "G_f1": 0.9749,
+   "v2Assumed": false,
+   "v2_ok": true,
+   "G_ok": true,
+   "I_ok": true,
+   "I95_ok": true,
+   "Ish_ok": false
+  },
+  {
+   "cls": "N12-W4",
+   "platform": "n8n:12679",
+   "kind": "class-wrong",
+   "decidedBy": "battery",
+   "designs": 1,
+   "example": "W4 kt-segments-to-zoho-on-create-only",
+   "seedsPerDesign": 5,
+   "v2": "rejected",
+   "G": "rejected",
+   "I": "rejected",
+   "I_tau95": "rejected",
+   "I_share90": "rejected",
+   "I_f1": 0.9734,
+   "G_f1": 0.991,
+   "v2Assumed": false,
+   "v2_ok": true,
+   "G_ok": true,
+   "I_ok": true,
+   "I95_ok": true,
+   "Ish_ok": true
+  },
+  {
+   "cls": "N12-W5",
+   "platform": "n8n:12679",
+   "kind": "class-wrong",
+   "decidedBy": "battery",
+   "designs": 1,
+   "example": "W5 form-tag-on-every-new-subscriber",
+   "seedsPerDesign": 5,
+   "v2": "rejected",
+   "G": "rejected",
+   "I": "rejected",
+   "I_tau95": "rejected",
+   "I_share90": "rejected",
+   "I_f1": 0.7186,
+   "G_f1": 0.7412,
+   "v2Assumed": false,
+   "v2_ok": true,
+   "G_ok": true,
+   "I_ok": true,
+   "I95_ok": true,
+   "Ish_ok": true
+  },
+  {
+   "cls": "N12-W6",
+   "platform": "n8n:12679",
+   "kind": "class-wrong",
+   "decidedBy": "battery",
+   "designs": 1,
+   "example": "W6 bookkeeping-tag-on-every-zoho-contact",
+   "seedsPerDesign": 5,
+   "v2": "rejected",
+   "G": "rejected",
+   "I": "rejected",
+   "I_tau95": "rejected",
+   "I_share90": "rejected",
+   "I_f1": 0.553,
+   "G_f1": 0.8041,
+   "v2Assumed": false,
+   "v2_ok": true,
+   "G_ok": true,
+   "I_ok": true,
+   "I95_ok": true,
+   "Ish_ok": true
+  },
+  {
+   "cls": "N20-W1",
+   "platform": "n8n:20281",
+   "kind": "class-wrong",
+   "decidedBy": "harness (prompt)",
+   "designs": 1,
+   "example": "W1 ref-only-prompt (T3)",
+   "seedsPerDesign": 5,
+   "v2": "rejected",
+   "G": "rejected",
+   "I": "rejected",
+   "I_tau95": "rejected",
+   "I_share90": "rejected",
+   "I_f1": 0.0722,
+   "G_f1": 0.0637,
+   "v2Assumed": false,
+   "v2_ok": true,
+   "G_ok": true,
+   "I_ok": true,
+   "I95_ok": true,
+   "Ish_ok": true
+  },
+  {
+   "cls": "N20-W2",
+   "platform": "n8n:20281",
+   "kind": "class-wrong",
+   "decidedBy": "harness (cost accounting)",
+   "designs": 1,
+   "example": "W2 forged-modelTape (T3)",
+   "seedsPerDesign": 5,
+   "v2": "accepted",
+   "G": "accepted",
+   "I": "accepted",
+   "I_tau95": "accepted",
+   "I_share90": "accepted",
+   "I_f1": 1,
+   "G_f1": 1,
+   "v2Assumed": false,
+   "v2_ok": false,
+   "G_ok": false,
+   "I_ok": false,
+   "I95_ok": false,
+   "Ish_ok": false
+  },
+  {
+   "cls": "N20-W3",
+   "platform": "n8n:20281",
+   "kind": "class-wrong",
+   "decidedBy": "battery",
+   "designs": 1,
+   "example": "W3 drop-critical",
+   "seedsPerDesign": 5,
+   "v2": "rejected",
+   "G": "rejected",
+   "I": "rejected",
+   "I_tau95": "rejected",
+   "I_share90": "rejected",
+   "I_f1": 0.9307,
+   "G_f1": 0.4333,
+   "v2Assumed": false,
+   "v2_ok": true,
+   "G_ok": true,
+   "I_ok": true,
+   "I95_ok": true,
+   "Ish_ok": true
+  },
+  {
+   "cls": "N20-W4",
+   "platform": "n8n:20281",
+   "kind": "class-wrong",
+   "decidedBy": "battery",
+   "designs": 1,
+   "example": "W4 notify-before-create",
+   "seedsPerDesign": 5,
+   "v2": "rejected",
+   "G": "rejected",
+   "I": "rejected",
+   "I_tau95": "rejected",
+   "I_share90": "rejected",
+   "I_f1": 0.8826,
+   "G_f1": 0.8826,
+   "v2Assumed": false,
+   "v2_ok": true,
+   "G_ok": true,
+   "I_ok": true,
+   "I95_ok": true,
+   "Ish_ok": true
+  },
+  {
+   "cls": "N20-W5",
+   "platform": "n8n:20281",
+   "kind": "class-wrong",
+   "decidedBy": "battery",
+   "designs": 1,
+   "example": "W5 mention-dodge-critical (T3)",
+   "seedsPerDesign": 5,
+   "v2": "rejected",
+   "G": "rejected",
+   "I": "rejected",
+   "I_tau95": "rejected",
+   "I_share90": "rejected",
+   "I_f1": 0.9902,
+   "G_f1": 0.9837,
+   "v2Assumed": false,
+   "v2_ok": true,
+   "G_ok": true,
+   "I_ok": true,
+   "I95_ok": true,
+   "Ish_ok": true
+  },
+  {
+   "cls": "N20-W6",
+   "platform": "n8n:20281",
+   "kind": "class-wrong",
+   "decidedBy": "battery",
+   "designs": 1,
+   "example": "W6 probe-dodge (T3)",
+   "seedsPerDesign": 5,
+   "v2": "rejected",
+   "G": "rejected",
+   "I": "rejected",
+   "I_tau95": "rejected",
+   "I_share90": "rejected",
+   "I_f1": 0.8998,
+   "G_f1": 0.1596,
+   "v2Assumed": false,
+   "v2_ok": true,
+   "G_ok": true,
+   "I_ok": true,
+   "I95_ok": true,
+   "Ish_ok": true
+  },
+  {
+   "cls": "GX-C1",
+   "platform": "Galaxy",
+   "kind": "class-correct",
+   "decidedBy": "expected-log",
+   "designs": 1,
+   "example": "C1 multi-effect record keeps the highest-impact effect",
+   "seedsPerDesign": 5,
+   "v2": "accepted",
+   "G": "rejected",
+   "I": "accepted",
+   "I_tau95": "accepted",
+   "I_share90": "accepted",
+   "I_f1": 1,
+   "G_f1": 0.9982,
+   "v2Assumed": false,
+   "v2_ok": true,
+   "G_ok": false,
+   "I_ok": true,
+   "I95_ok": true,
+   "Ish_ok": true
+  },
+  {
+   "cls": "GHA-C1",
+   "platform": "GitHub Actions",
+   "kind": "class-correct",
+   "decidedBy": "comparison",
+   "designs": 3,
+   "example": "pr-text-new-then-old",
+   "seedsPerDesign": 28,
+   "v2": "accepted",
+   "G": "rejected",
+   "I": "accepted",
+   "I_tau95": "accepted",
+   "I_share90": "accepted",
+   "I_f1": 1,
+   "G_f1": 0.8299,
+   "v2Assumed": false,
+   "v2_ok": true,
+   "G_ok": false,
+   "I_ok": true,
+   "I95_ok": true,
+   "Ish_ok": true
+  },
+  {
+   "cls": "GHA-C2",
+   "platform": "GitHub Actions",
+   "kind": "class-correct",
+   "decidedBy": "comparison",
+   "designs": 1,
+   "example": "failed-with-leftovers",
+   "seedsPerDesign": 28,
+   "v2": "accepted",
+   "G": "rejected",
+   "I": "accepted",
+   "I_tau95": "accepted",
+   "I_share90": "accepted",
+   "I_f1": 1,
+   "G_f1": 0.8299,
+   "v2Assumed": false,
+   "v2_ok": true,
+   "G_ok": false,
+   "I_ok": true,
+   "I95_ok": true,
+   "Ish_ok": true
+  },
+  {
+   "cls": "GHA-C3",
+   "platform": "GitHub Actions",
+   "kind": "class-correct",
+   "decidedBy": "comparison",
+   "designs": 1,
+   "example": "labels-twice",
+   "seedsPerDesign": 28,
+   "v2": "accepted",
+   "G": "rejected",
+   "I": "accepted",
+   "I_tau95": "accepted",
+   "I_share90": "accepted",
+   "I_f1": 1,
+   "G_f1": 0.8299,
+   "v2Assumed": false,
+   "v2_ok": true,
+   "G_ok": false,
+   "I_ok": true,
+   "I95_ok": true,
+   "Ish_ok": true
+  },
+  {
+   "cls": "HA-C1",
+   "platform": "Home Assistant",
+   "kind": "class-correct",
+   "decidedBy": "comparison",
+   "designs": 1,
+   "example": "C1 buttons-reversed",
+   "seedsPerDesign": 10,
+   "v2": "accepted",
+   "G": "rejected",
+   "I": "accepted",
+   "I_tau95": "accepted",
+   "I_share90": "accepted",
+   "I_f1": 1,
+   "G_f1": 0.7703,
+   "v2Assumed": true,
+   "v2_ok": true,
+   "G_ok": false,
+   "I_ok": true,
+   "I95_ok": true,
+   "Ish_ok": true
+  },
+  {
+   "cls": "HA-C2",
+   "platform": "Home Assistant",
+   "kind": "class-correct",
+   "decidedBy": "comparison",
+   "designs": 1,
+   "example": "C2 typographic-apostrophe",
+   "seedsPerDesign": 10,
+   "v2": "accepted",
+   "G": "rejected",
+   "I": "accepted",
+   "I_tau95": "accepted",
+   "I_share90": "accepted",
+   "I_f1": 1,
+   "G_f1": 0.7703,
+   "v2Assumed": true,
+   "v2_ok": true,
+   "G_ok": false,
+   "I_ok": true,
+   "I95_ok": true,
+   "Ish_ok": true
+  },
+  {
+   "cls": "HA-C3",
+   "platform": "Home Assistant",
+   "kind": "class-correct",
+   "decidedBy": "environment",
+   "designs": 1,
+   "example": "C3 last_changed-debounce",
+   "seedsPerDesign": 10,
+   "v2": "accepted",
+   "G": "rejected",
+   "I": "accepted",
+   "I_tau95": "accepted",
+   "I_share90": "accepted",
+   "I_f1": 1,
+   "G_f1": 0.7703,
+   "v2Assumed": false,
+   "v2_ok": true,
+   "G_ok": false,
+   "I_ok": true,
+   "I95_ok": true,
+   "Ish_ok": true
+  },
+  {
+   "cls": "HA-C4",
+   "platform": "Home Assistant",
+   "kind": "class-correct",
+   "decidedBy": "expected-log",
+   "designs": 1,
+   "example": "C4 skip-round-condition-scope",
+   "seedsPerDesign": 10,
+   "v2": "accepted",
+   "G": "rejected",
+   "I": "accepted",
+   "I_tau95": "accepted",
+   "I_share90": "accepted",
+   "I_f1": 1,
+   "G_f1": 0.7703,
+   "v2Assumed": false,
+   "v2_ok": true,
+   "G_ok": false,
+   "I_ok": true,
+   "I95_ok": true,
+   "Ish_ok": true
+  },
+  {
+   "cls": "N12-C1",
+   "platform": "n8n:12679",
+   "kind": "class-correct",
+   "decidedBy": "comparison",
+   "designs": 1,
+   "example": "C1 berlin-midnight-birthdays (alternative design)",
+   "seedsPerDesign": 5,
+   "v2": "accepted",
+   "G": "rejected",
+   "I": "rejected",
+   "I_tau95": "rejected",
+   "I_share90": "accepted",
+   "I_f1": 0.9868,
+   "G_f1": 0.7847,
+   "v2Assumed": false,
+   "v2_ok": true,
+   "G_ok": false,
+   "I_ok": false,
+   "I95_ok": false,
+   "Ish_ok": true
+  },
+  {
+   "cls": "N20-C1",
+   "platform": "n8n:20281",
+   "kind": "class-correct",
+   "decidedBy": "comparison",
+   "designs": 1,
+   "example": "C1 review-names-sender-by-display-name",
+   "seedsPerDesign": 5,
+   "v2": "accepted",
+   "G": "rejected",
+   "I": "accepted",
+   "I_tau95": "accepted",
+   "I_share90": "accepted",
+   "I_f1": 1,
+   "G_f1": 0.9583,
+   "v2Assumed": true,
+   "v2_ok": true,
+   "G_ok": false,
+   "I_ok": true,
+   "I95_ok": true,
+   "Ish_ok": true
+  },
+  {
+   "cls": "N20-C2",
+   "platform": "n8n:20281",
+   "kind": "class-correct",
+   "decidedBy": "comparison",
+   "designs": 1,
+   "example": "C2 here-ping-on-critical-follow-up",
+   "seedsPerDesign": 5,
+   "v2": "accepted",
+   "G": "rejected",
+   "I": "accepted",
+   "I_tau95": "accepted",
+   "I_share90": "accepted",
+   "I_f1": 1,
+   "G_f1": 0.9962,
+   "v2Assumed": true,
+   "v2_ok": true,
+   "G_ok": false,
+   "I_ok": true,
+   "I95_ok": true,
+   "Ish_ok": true
+  },
+  {
+   "cls": "GX-R1",
+   "platform": "Galaxy",
+   "kind": "class-residual",
+   "decidedBy": "battery",
+   "designs": 1,
+   "example": "R1 Math.round instead of Python round at exact ties",
+   "seedsPerDesign": 5,
+   "v2": "accepted",
+   "G": "rejected",
+   "I": "accepted",
+   "I_tau95": "accepted",
+   "I_share90": "accepted",
+   "I_f1": 1,
+   "G_f1": 0.9982,
+   "v2Assumed": false,
+   "v2_ok": false,
+   "G_ok": true,
+   "I_ok": false,
+   "I95_ok": false,
+   "Ish_ok": false
+  },
+  {
+   "cls": "GHA-R1",
+   "platform": "GitHub Actions",
+   "kind": "class-residual",
+   "decidedBy": "comparison",
+   "designs": 1,
+   "example": "LIMIT-catch-all-misleading-message",
+   "seedsPerDesign": 28,
+   "v2": "accepted",
+   "G": "rejected",
+   "I": "accepted",
+   "I_tau95": "accepted",
+   "I_share90": "accepted",
+   "I_f1": 1,
+   "G_f1": 0.8299,
+   "v2Assumed": false,
+   "v2_ok": false,
+   "G_ok": true,
+   "I_ok": false,
+   "I95_ok": false,
+   "Ish_ok": false
+  },
+  {
+   "cls": "GHA-R2",
+   "platform": "GitHub Actions",
+   "kind": "class-residual",
+   "decidedBy": "battery",
+   "designs": 1,
+   "example": "LIMIT-reads-commented-lines-takes-max",
+   "seedsPerDesign": 28,
+   "v2": "accepted",
+   "G": "rejected",
+   "I": "accepted",
+   "I_tau95": "accepted",
+   "I_share90": "accepted",
+   "I_f1": 1,
+   "G_f1": 0.8299,
+   "v2Assumed": false,
+   "v2_ok": false,
+   "G_ok": true,
+   "I_ok": false,
+   "I95_ok": false,
+   "Ish_ok": false
+  },
+  {
+   "cls": "GHA-R3",
+   "platform": "GitHub Actions",
+   "kind": "class-residual",
+   "decidedBy": "comparison",
+   "designs": 1,
+   "example": "LIMIT-stuffed-pr-text",
+   "seedsPerDesign": 28,
+   "v2": "accepted",
+   "G": "rejected",
+   "I": "accepted",
+   "I_tau95": "accepted",
+   "I_share90": "accepted",
+   "I_f1": 1,
+   "G_f1": 0.8299,
+   "v2Assumed": false,
+   "v2_ok": false,
+   "G_ok": true,
+   "I_ok": false,
+   "I95_ok": false,
+   "Ish_ok": false
+  },
+  {
+   "cls": "N20-R1",
+   "platform": "n8n:20281",
+   "kind": "class-residual",
+   "decidedBy": "harness (answers not in effects)",
+   "designs": 1,
+   "example": "R1 memorised-answers (no model calls)",
+   "seedsPerDesign": 5,
+   "v2": "accepted",
+   "G": "accepted",
+   "I": "accepted",
+   "I_tau95": "accepted",
+   "I_share90": "accepted",
+   "I_f1": 1,
+   "G_f1": 1,
+   "v2Assumed": false,
+   "v2_ok": false,
+   "G_ok": false,
+   "I_ok": false,
+   "I95_ok": false,
+   "Ish_ok": false
+  }
+ ],
+ "designs": [
+  {
+   "adapter": "galaxy",
+   "id": "galaxy/independent faithful (second implementation)",
+   "cls": null,
+   "kind": "reference",
+   "truthAccept": true,
+   "seeds": 5,
+   "errors": 0,
+   "v2": true,
+   "v2Assumed": false,
+   "v2score": 1,
+   "G": {
+    "accept": false,
+    "f": 0.9982,
+    "p": 0.9982,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": true,
+    "accept95": true,
+    "share90": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 5
+   }
+  },
+  {
+   "adapter": "galaxy",
+   "id": "galaxy/reference.mjs",
+   "cls": null,
+   "kind": "reference",
+   "truthAccept": true,
+   "seeds": 5,
+   "errors": 0,
+   "v2": true,
+   "v2Assumed": false,
+   "v2score": 1,
+   "G": {
+    "accept": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 5
+   },
+   "I": {
+    "accept": true,
+    "accept95": true,
+    "share90": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 5
+   }
+  },
+  {
+   "adapter": "galaxy",
+   "id": "galaxy/original (shipped tables + .ga emulator)",
+   "cls": null,
+   "kind": "reference",
+   "truthAccept": true,
+   "seeds": 5,
+   "errors": 0,
+   "v2": true,
+   "v2Assumed": false,
+   "v2score": 1,
+   "G": {
+    "accept": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 5
+   },
+   "I": {
+    "accept": true,
+    "accept95": true,
+    "share90": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 5
+   }
+  },
+  {
+   "adapter": "galaxy",
+   "id": "galaxy/W1 skips the DP>=1 prefilter",
+   "cls": "GX-W1",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.0476,
+   "G": {
+    "accept": false,
+    "f": 0.9982,
+    "p": 0.9944,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": true,
+    "share90": false,
+    "f": 1,
+    "p": 0.9962,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "galaxy",
+   "id": "galaxy/W2 by-variant report grouped by POS",
+   "cls": "GX-W2",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.0476,
+   "G": {
+    "accept": false,
+    "f": 0.9962,
+    "p": 0.9975,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": true,
+    "share90": false,
+    "f": 0.9973,
+    "p": 0.9986,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "galaxy",
+   "id": "galaxy/W3 countunique per position hard-coded to 1",
+   "cls": "GX-W3",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.0476,
+   "G": {
+    "accept": false,
+    "f": 0.9951,
+    "p": 0.9951,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": true,
+    "share90": false,
+    "f": 0.9959,
+    "p": 0.9959,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "galaxy",
+   "id": "galaxy/W4 AF threshold label printed with 2 decimals",
+   "cls": "GX-W4",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.7143,
+   "G": {
+    "accept": false,
+    "f": 0.8083,
+    "p": 0.8083,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.8107,
+    "p": 0.8107,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "galaxy",
+   "id": "galaxy/C1 multi-effect record keeps the highest-impact effect",
+   "cls": "GX-C1",
+   "kind": "class-correct",
+   "truthAccept": true,
+   "seeds": 5,
+   "errors": 0,
+   "v2": true,
+   "v2Assumed": false,
+   "v2score": 1,
+   "G": {
+    "accept": false,
+    "f": 0.9982,
+    "p": 0.9982,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": true,
+    "accept95": true,
+    "share90": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 5
+   }
+  },
+  {
+   "adapter": "galaxy",
+   "id": "galaxy/R1 Math.round instead of Python round at exact ties",
+   "cls": "GX-R1",
+   "kind": "class-residual",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": true,
+   "v2Assumed": false,
+   "v2score": 1,
+   "G": {
+    "accept": false,
+    "f": 0.9982,
+    "p": 0.9982,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": true,
+    "accept95": true,
+    "share90": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 5
+   }
+  },
+  {
+   "adapter": "galaxy",
+   "id": "galaxy/min/max over PASS rows only",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.0476,
+   "G": {
+    "accept": false,
+    "f": 0.9762,
+    "p": 0.9762,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": true,
+    "share90": false,
+    "f": 0.978,
+    "p": 0.978,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "galaxy",
+   "id": "galaxy/countunique over PASS rows only",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.0476,
+   "G": {
+    "accept": false,
+    "f": 0.9667,
+    "p": 0.9667,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.9686,
+    "p": 0.9686,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "galaxy",
+   "id": "galaxy/combined table keeps PASS rows only",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.0476,
+   "G": {
+    "accept": false,
+    "f": 0.9434,
+    "p": 0.9981,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.9454,
+    "p": 1,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "galaxy",
+   "id": "galaxy/combined table sorted POS-first",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.0476,
+   "G": {
+    "accept": false,
+    "f": 0.905,
+    "p": 0.905,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": true,
+    "share90": false,
+    "f": 0.9987,
+    "p": 0.9987,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "galaxy",
+   "id": "galaxy/min/max printed raw (same text on these values)",
+   "cls": null,
+   "kind": "control-correct",
+   "truthAccept": true,
+   "seeds": 5,
+   "errors": 0,
+   "v2": true,
+   "v2Assumed": false,
+   "v2score": 1,
+   "G": {
+    "accept": false,
+    "f": 0.9982,
+    "p": 0.9982,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": true,
+    "accept95": true,
+    "share90": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 5
+   }
+  },
+  {
+   "adapter": "galaxy",
+   "id": "galaxy/mutation:af-boundary-inclusive",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.0476,
+   "G": {
+    "accept": false,
+    "f": 0.9932,
+    "p": 0.996,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": true,
+    "share90": false,
+    "f": 0.9932,
+    "p": 0.9961,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "galaxy",
+   "id": "galaxy/mutation:no-dp-alt-term",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.0286,
+   "G": {
+    "accept": false,
+    "f": 0.6156,
+    "p": 0.5756,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.6167,
+    "p": 0.5766,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "galaxy",
+   "id": "galaxy/mutation:first-sample-only",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.0476,
+   "G": {
+    "accept": false,
+    "f": 0.5868,
+    "p": 0.9371,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.5879,
+    "p": 0.9374,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "galaxy",
+   "id": "galaxy/mutation:no-recalc-swap",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0,
+   "G": {
+    "accept": false,
+    "f": 0.6713,
+    "p": 0.6713,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.6722,
+    "p": 0.6722,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "galaxy",
+   "id": "galaxy/mutation:text-sort-pos",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0,
+   "G": {
+    "accept": false,
+    "f": 0.9733,
+    "p": 0.9733,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": true,
+    "share90": false,
+    "f": 0.9986,
+    "p": 0.9986,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "galaxy",
+   "id": "galaxy/mutation:ignore-upstream-filter",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0,
+   "G": {
+    "accept": false,
+    "f": 0.5847,
+    "p": 0.5724,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.5858,
+    "p": 0.5735,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "galaxy",
+   "id": "galaxy/mutation:one-row-per-effect",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.5238,
+   "G": {
+    "accept": false,
+    "f": 0.9807,
+    "p": 0.9008,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.9808,
+    "p": 0.9011,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "galaxy",
+   "id": "galaxy/mutation:unsorted-combined",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.0476,
+   "G": {
+    "accept": false,
+    "f": 0.9099,
+    "p": 0.9099,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": true,
+    "share90": false,
+    "f": 0.9987,
+    "p": 0.9987,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "galaxy",
+   "id": "galaxy/mutation:dp-boundary-inclusive",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.7524,
+   "G": {
+    "accept": false,
+    "f": 0.9861,
+    "p": 0.991,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.9862,
+    "p": 0.991,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "galaxy",
+   "id": "galaxy/mutation:no-dp-prefilter",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.0476,
+   "G": {
+    "accept": false,
+    "f": 1,
+    "p": 0.9962,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": true,
+    "share90": false,
+    "f": 1,
+    "p": 0.9962,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "galaxy",
+   "id": "galaxy/mutation:variant-key-pos",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.0476,
+   "G": {
+    "accept": false,
+    "f": 0.9973,
+    "p": 0.9986,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": true,
+    "share90": false,
+    "f": 0.9973,
+    "p": 0.9986,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "galaxy",
+   "id": "galaxy/mutation:combined-stats-by-variant",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.0476,
+   "G": {
+    "accept": false,
+    "f": 0.9958,
+    "p": 0.9958,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": true,
+    "share90": false,
+    "f": 0.9959,
+    "p": 0.9959,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "galaxy",
+   "id": "galaxy/bad empty",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0,
+   "G": {
+    "accept": false,
+    "f": 0,
+    "p": 1,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0,
+    "p": 1,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "galaxy",
+   "id": "galaxy/bad do-nothing (right headers, no rows)",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0,
+   "G": {
+    "accept": false,
+    "f": 0.0087,
+    "p": 1,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.0087,
+    "p": 1,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "galaxy",
+   "id": "galaxy/bad echo-input (the first VCF as every table)",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0,
+   "G": {
+    "accept": false,
+    "f": 0,
+    "p": 0,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.0014,
+    "p": 0.0016,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "galaxy",
+   "id": "galaxy/bad shipped-case-only (hard-coded answer, nothing for derived cases)",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.0476,
+   "G": {
+    "accept": false,
+    "f": 0.0939,
+    "p": 1,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.0938,
+    "p": 1,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "galaxy",
+   "id": "galaxy/bad shuffled-rows",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0,
+   "G": {
+    "accept": false,
+    "f": 0.1544,
+    "p": 0.1544,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.332,
+    "p": 0.332,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "galaxy",
+   "id": "galaxy/bad one-corrupted-cell",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0,
+   "G": {
+    "accept": false,
+    "f": 0.9986,
+    "p": 0.9986,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": true,
+    "share90": false,
+    "f": 0.9986,
+    "p": 0.9986,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "galaxy",
+   "id": "galaxy/bad dedupe-filter-label (changes published FILTER text)",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.7143,
+   "G": {
+    "accept": false,
+    "f": 0.8712,
+    "p": 0.8712,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.8716,
+    "p": 0.8716,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "galaxy",
+   "id": "galaxy/bad crlf-line-endings-and-no-header",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0,
+   "G": {
+    "accept": false,
+    "f": 0.9826,
+    "p": 0.9912,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": true,
+    "share90": false,
+    "f": 0.9827,
+    "p": 0.9913,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/faithful",
+   "cls": null,
+   "kind": "reference",
+   "truthAccept": true,
+   "seeds": 5,
+   "errors": 0,
+   "v2": true,
+   "v2Assumed": false,
+   "v2score": 1,
+   "G": {
+    "accept": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 5
+   },
+   "I": {
+    "accept": true,
+    "accept95": true,
+    "share90": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 5
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/improved (live-record design)",
+   "cls": null,
+   "kind": "control-correct",
+   "truthAccept": true,
+   "seeds": 5,
+   "errors": 0,
+   "v2": true,
+   "v2Assumed": false,
+   "v2score": 1,
+   "G": {
+    "accept": false,
+    "f": 0.9645,
+    "p": 1,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": true,
+    "accept95": true,
+    "share90": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 5
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/W1 forgets first KT->Zoho",
+   "cls": "N12-W1",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.88,
+   "G": {
+    "accept": false,
+    "f": 0.9723,
+    "p": 0.9723,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.9567,
+    "p": 0.9567,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/W1 forgets first Zoho->KT",
+   "cls": "N12-W1",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9333,
+   "G": {
+    "accept": false,
+    "f": 0.9901,
+    "p": 0.9901,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": true,
+    "f": 0.9834,
+    "p": 0.9834,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/W1 forgets last KT->Zoho",
+   "cls": "N12-W1",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9333,
+   "G": {
+    "accept": false,
+    "f": 0.9901,
+    "p": 0.9901,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": true,
+    "f": 0.9834,
+    "p": 0.9834,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/W1 forgets phone KT->Zoho",
+   "cls": "N12-W1",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.8,
+   "G": {
+    "accept": false,
+    "f": 0.9545,
+    "p": 0.9641,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.9369,
+    "p": 0.9369,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/W1 forgets phone Zoho->KT",
+   "cls": "N12-W1",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.7333,
+   "G": {
+    "accept": false,
+    "f": 0.9546,
+    "p": 0.9584,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.9239,
+    "p": 0.9239,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/W1 forgets mobile KT->Zoho",
+   "cls": "N12-W1",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.88,
+   "G": {
+    "accept": false,
+    "f": 0.9724,
+    "p": 0.9724,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.9604,
+    "p": 0.9604,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/W1 forgets mobile Zoho->KT",
+   "cls": "N12-W1",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9333,
+   "G": {
+    "accept": false,
+    "f": 0.9901,
+    "p": 0.9901,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": true,
+    "f": 0.9834,
+    "p": 0.9834,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/W1 forgets homePhone KT->Zoho",
+   "cls": "N12-W1",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9333,
+   "G": {
+    "accept": false,
+    "f": 0.9901,
+    "p": 0.9901,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": true,
+    "f": 0.9834,
+    "p": 0.9834,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/W1 forgets homePhone Zoho->KT",
+   "cls": "N12-W1",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9333,
+   "G": {
+    "accept": false,
+    "f": 0.9901,
+    "p": 0.9901,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": true,
+    "f": 0.9834,
+    "p": 0.9834,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/W1 forgets fax KT->Zoho",
+   "cls": "N12-W1",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9333,
+   "G": {
+    "accept": false,
+    "f": 0.9901,
+    "p": 0.9901,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": true,
+    "f": 0.9834,
+    "p": 0.9834,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/W1 forgets fax Zoho->KT",
+   "cls": "N12-W1",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.8933,
+   "G": {
+    "accept": false,
+    "f": 0.9802,
+    "p": 0.9783,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.9702,
+    "p": 0.9702,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/W1 forgets dob KT->Zoho",
+   "cls": "N12-W1",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9333,
+   "G": {
+    "accept": false,
+    "f": 0.9901,
+    "p": 0.9901,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": true,
+    "f": 0.9834,
+    "p": 0.9834,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/W1 forgets dob Zoho->KT",
+   "cls": "N12-W1",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9333,
+   "G": {
+    "accept": false,
+    "f": 0.9901,
+    "p": 0.9901,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": true,
+    "f": 0.9834,
+    "p": 0.9834,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/W1 forgets street KT->Zoho",
+   "cls": "N12-W1",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.8933,
+   "G": {
+    "accept": false,
+    "f": 0.9802,
+    "p": 0.9802,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.9702,
+    "p": 0.9702,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/W1 forgets street Zoho->KT",
+   "cls": "N12-W1",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9333,
+   "G": {
+    "accept": false,
+    "f": 0.9901,
+    "p": 0.9901,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": true,
+    "f": 0.9834,
+    "p": 0.9834,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/W1 forgets city KT->Zoho",
+   "cls": "N12-W1",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9333,
+   "G": {
+    "accept": false,
+    "f": 0.9901,
+    "p": 0.9901,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": true,
+    "f": 0.9834,
+    "p": 0.9834,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/W1 forgets city Zoho->KT",
+   "cls": "N12-W1",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.8,
+   "G": {
+    "accept": false,
+    "f": 0.9584,
+    "p": 0.9491,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.9368,
+    "p": 0.9368,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/W1 forgets state KT->Zoho",
+   "cls": "N12-W1",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9333,
+   "G": {
+    "accept": false,
+    "f": 0.9901,
+    "p": 0.9901,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": true,
+    "f": 0.9834,
+    "p": 0.9834,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/W1 forgets state Zoho->KT",
+   "cls": "N12-W1",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9333,
+   "G": {
+    "accept": false,
+    "f": 0.9901,
+    "p": 0.9901,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": true,
+    "f": 0.9834,
+    "p": 0.9834,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/W1 forgets zip KT->Zoho",
+   "cls": "N12-W1",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9333,
+   "G": {
+    "accept": false,
+    "f": 0.9901,
+    "p": 0.9901,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": true,
+    "f": 0.9834,
+    "p": 0.9834,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/W1 forgets zip Zoho->KT",
+   "cls": "N12-W1",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.88,
+   "G": {
+    "accept": false,
+    "f": 0.9763,
+    "p": 0.9744,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.9636,
+    "p": 0.9636,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/W1 forgets country KT->Zoho",
+   "cls": "N12-W1",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9333,
+   "G": {
+    "accept": false,
+    "f": 0.9901,
+    "p": 0.9901,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": true,
+    "f": 0.9834,
+    "p": 0.9834,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/W1 forgets country Zoho->KT",
+   "cls": "N12-W1",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9333,
+   "G": {
+    "accept": false,
+    "f": 0.9901,
+    "p": 0.9901,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": true,
+    "f": 0.9834,
+    "p": 0.9834,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/W2 empty-values-never-written",
+   "cls": "N12-W2",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.8667,
+   "G": {
+    "accept": false,
+    "f": 0.8578,
+    "p": 0.8578,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.7815,
+    "p": 0.7815,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/W3 case-sensitive-zoho-segment-tags",
+   "cls": "N12-W3",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9333,
+   "G": {
+    "accept": false,
+    "f": 0.9605,
+    "p": 0.9898,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": true,
+    "f": 0.9503,
+    "p": 0.9503,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/W4 kt-segments-to-zoho-on-create-only",
+   "cls": "N12-W4",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9067,
+   "G": {
+    "accept": false,
+    "f": 0.9822,
+    "p": 1,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.9734,
+    "p": 0.9734,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/W5 form-tag-on-every-new-subscriber",
+   "cls": "N12-W5",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.4667,
+   "G": {
+    "accept": false,
+    "f": 0.7412,
+    "p": 0.7412,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.7186,
+    "p": 0.7186,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/W6 bookkeeping-tag-on-every-zoho-contact",
+   "cls": "N12-W6",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0,
+   "G": {
+    "accept": false,
+    "f": 0.9209,
+    "p": 0.7136,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.553,
+    "p": 0.553,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/C1 berlin-midnight-birthdays (alternative design)",
+   "cls": "N12-C1",
+   "kind": "class-correct",
+   "truthAccept": true,
+   "seeds": 5,
+   "errors": 0,
+   "v2": true,
+   "v2Assumed": false,
+   "v2score": 1,
+   "G": {
+    "accept": false,
+    "f": 0.7708,
+    "p": 0.7992,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": true,
+    "f": 0.9868,
+    "p": 0.9868,
+    "seedsAccepted": 1
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/bad empty",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0,
+   "G": {
+    "accept": false,
+    "f": 0,
+    "p": 1,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0,
+    "p": 1,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/bad plausible-but-wrong",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.8933,
+   "G": {
+    "accept": false,
+    "f": 1,
+    "p": 0.9883,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.9801,
+    "p": 0.9801,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/bad no-ui-user-guard",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0,
+   "G": {
+    "accept": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 5
+   },
+   "I": {
+    "accept": true,
+    "accept95": true,
+    "share90": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 5
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/bad single-and-double-opt-in-swapped",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.3333,
+   "G": {
+    "accept": false,
+    "f": 0.7412,
+    "p": 0.7186,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.6722,
+    "p": 0.6722,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/bad zoho-delete-not-propagated",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.8667,
+   "G": {
+    "accept": false,
+    "f": 0.9625,
+    "p": 0.9819,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.9703,
+    "p": 0.9866,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/bad klicktipp-delete-not-propagated",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.8667,
+   "G": {
+    "accept": false,
+    "f": 0.9546,
+    "p": 1,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.9438,
+    "p": 0.9794,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/bad ids-linked-one-way",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0,
+   "G": {
+    "accept": false,
+    "f": 0.5773,
+    "p": 0.7935,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.4206,
+    "p": 0.666,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/bad duplicate-on-every-edit",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.6,
+   "G": {
+    "accept": false,
+    "f": 0.9111,
+    "p": 0.8313,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.8675,
+    "p": 0.8562,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/bad segments-not-synced",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.8,
+   "G": {
+    "accept": false,
+    "f": 0.8301,
+    "p": 1,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.7845,
+    "p": 0.7871,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/bad activation-tag-echo",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.3333,
+   "G": {
+    "accept": false,
+    "f": 0.917,
+    "p": 0.7683,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.6854,
+    "p": 0.6854,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n12679",
+   "id": "n8n12679/bad replayed-example-trace",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0,
+   "G": {
+    "accept": false,
+    "f": 0,
+    "p": 0,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0,
+    "p": 0,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/faithful",
+   "cls": null,
+   "kind": "reference",
+   "truthAccept": true,
+   "seeds": 5,
+   "errors": 0,
+   "v2": true,
+   "v2Assumed": false,
+   "v2score": 1,
+   "G": {
+    "accept": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 5
+   },
+   "I": {
+    "accept": true,
+    "accept95": true,
+    "share90": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 5
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/improved (T2 core)",
+   "cls": null,
+   "kind": "control-correct",
+   "truthAccept": true,
+   "seeds": 5,
+   "errors": 0,
+   "v2": true,
+   "v2Assumed": false,
+   "v2score": 1,
+   "G": {
+    "accept": false,
+    "f": 0.178,
+    "p": 0.178,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": true,
+    "accept95": true,
+    "share90": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 5
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/W1 ref-only-prompt (T3)",
+   "cls": "N20-W1",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.5027,
+   "G": {
+    "accept": false,
+    "f": 0.049,
+    "p": 0.0909,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.0556,
+    "p": 0.103,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/W2 forged-modelTape (T3)",
+   "cls": "N20-W2",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": true,
+   "v2Assumed": false,
+   "v2score": 1,
+   "G": {
+    "accept": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 5
+   },
+   "I": {
+    "accept": true,
+    "accept95": true,
+    "share90": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 5
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/W3 drop-critical",
+   "cls": "N20-W3",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.985,
+   "G": {
+    "accept": false,
+    "f": 0.4144,
+    "p": 0.4539,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.8902,
+    "p": 0.9751,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/W4 notify-before-create",
+   "cls": "N20-W4",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9225,
+   "G": {
+    "accept": false,
+    "f": 0.8826,
+    "p": 0.8826,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.8826,
+    "p": 0.8826,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/W5 mention-dodge-critical (T3)",
+   "cls": "N20-W5",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9714,
+   "G": {
+    "accept": false,
+    "f": 0.9837,
+    "p": 0.9837,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.9902,
+    "p": 0.9902,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/W6 probe-dodge (T3)",
+   "cls": "N20-W6",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.7143,
+   "G": {
+    "accept": false,
+    "f": 0.1536,
+    "p": 0.1661,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.866,
+    "p": 0.9364,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/C1 review-names-sender-by-display-name",
+   "cls": "N20-C1",
+   "kind": "class-correct",
+   "truthAccept": true,
+   "seeds": 5,
+   "errors": 0,
+   "v2": true,
+   "v2Assumed": true,
+   "v2score": null,
+   "G": {
+    "accept": false,
+    "f": 0.9583,
+    "p": 0.9583,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": true,
+    "accept95": true,
+    "share90": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 5
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/C2 here-ping-on-critical-follow-up",
+   "cls": "N20-C2",
+   "kind": "class-correct",
+   "truthAccept": true,
+   "seeds": 5,
+   "errors": 0,
+   "v2": true,
+   "v2Assumed": true,
+   "v2score": null,
+   "G": {
+    "accept": false,
+    "f": 0.9962,
+    "p": 0.9962,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": true,
+    "accept95": true,
+    "share90": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 5
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/R1 memorised-answers (no model calls)",
+   "cls": "N20-R1",
+   "kind": "class-residual",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": true,
+   "v2Assumed": false,
+   "v2score": 1,
+   "G": {
+    "accept": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 5
+   },
+   "I": {
+    "accept": true,
+    "accept95": true,
+    "share90": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 5
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/bad empty",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0,
+   "G": {
+    "accept": false,
+    "f": 0,
+    "p": 1,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0,
+    "p": 1,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/bad do-nothing",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0,
+   "G": {
+    "accept": false,
+    "f": 0,
+    "p": 1,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0,
+    "p": 1,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/bad everything-bug",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.7966,
+   "G": {
+    "accept": false,
+    "f": 0.4432,
+    "p": 0.4432,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.6667,
+    "p": 0.6667,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/bad no-dedupe",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9625,
+   "G": {
+    "accept": false,
+    "f": 0.2235,
+    "p": 0.2115,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.7727,
+    "p": 0.7312,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/bad ack-wrong-mode",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.92,
+   "G": {
+    "accept": false,
+    "f": 0.7576,
+    "p": 0.7576,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.7576,
+    "p": 0.7576,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/bad reply-all",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": true,
+   "v2Assumed": false,
+   "v2score": 1,
+   "G": {
+    "accept": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 5
+   },
+   "I": {
+    "accept": true,
+    "accept95": true,
+    "share90": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 5
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/bad ack-follow-ups",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9625,
+   "G": {
+    "accept": false,
+    "f": 0.9432,
+    "p": 0.8925,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.9432,
+    "p": 0.8925,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/bad wrong-channel",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.925,
+   "G": {
+    "accept": false,
+    "f": 0.8864,
+    "p": 0.8864,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.8864,
+    "p": 0.8864,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/bad no-audit",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.4,
+   "G": {
+    "accept": false,
+    "f": 0.697,
+    "p": 1,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.697,
+    "p": 1,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/bad filter-disabled",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9625,
+   "G": {
+    "accept": false,
+    "f": 0.9432,
+    "p": 0.8925,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.9432,
+    "p": 0.8925,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/bad low-threshold",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.8139,
+   "G": {
+    "accept": false,
+    "f": 0.3629,
+    "p": 0.3338,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.9318,
+    "p": 0.8571,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/bad review-everything",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.64,
+   "G": {
+    "accept": false,
+    "f": 0.0644,
+    "p": 0.1232,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.0909,
+    "p": 0.1739,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/bad audit-wrong-ids",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.5361,
+   "G": {
+    "accept": false,
+    "f": 0.697,
+    "p": 0.697,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.697,
+    "p": 0.697,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/bad priority-shift",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.7848,
+   "G": {
+    "accept": false,
+    "f": 0.3371,
+    "p": 0.3371,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.5985,
+    "p": 0.5985,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/bad no-teams",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.8825,
+   "G": {
+    "accept": false,
+    "f": 0.822,
+    "p": 1,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.822,
+    "p": 1,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/bad broadcast-everything",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.8575,
+   "G": {
+    "accept": false,
+    "f": 0.7803,
+    "p": 0.7803,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.8371,
+    "p": 0.8371,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/bad comment-misrouted",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.8825,
+   "G": {
+    "accept": false,
+    "f": 0.1667,
+    "p": 0.1897,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.1667,
+    "p": 0.1897,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/bad comment-without-the-mail",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9625,
+   "G": {
+    "accept": false,
+    "f": 0.9432,
+    "p": 0.9432,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.9432,
+    "p": 0.9432,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/bad double-comment",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9625,
+   "G": {
+    "accept": false,
+    "f": 1,
+    "p": 0.9462,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 1,
+    "p": 0.9462,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/bad double-create",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9075,
+   "G": {
+    "accept": false,
+    "f": 0.322,
+    "p": 0.2872,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 1,
+    "p": 0.8919,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/bad no-create",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.7576,
+   "G": {
+    "accept": false,
+    "f": 0.3182,
+    "p": 0.3621,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.3182,
+    "p": 0.3621,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/bad wrong-issue-type",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.95,
+   "G": {
+    "accept": false,
+    "f": 0.9242,
+    "p": 0.9242,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.9242,
+    "p": 0.9242,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/bad no-thread-label",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9075,
+   "G": {
+    "accept": false,
+    "f": 0.5576,
+    "p": 0.5472,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.803,
+    "p": 0.7881,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/bad slack-without-ticket",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.8825,
+   "G": {
+    "accept": false,
+    "f": 0.822,
+    "p": 0.822,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.822,
+    "p": 0.822,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/bad slack-twice",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.855,
+   "G": {
+    "accept": false,
+    "f": 1,
+    "p": 0.8199,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 1,
+    "p": 0.8199,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/bad teams-without-ticket",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.8825,
+   "G": {
+    "accept": false,
+    "f": 0.822,
+    "p": 0.822,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.822,
+    "p": 0.822,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/bad no-ack",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.92,
+   "G": {
+    "accept": false,
+    "f": 0.8788,
+    "p": 1,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.8788,
+    "p": 1,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/bad ack-without-reference",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.92,
+   "G": {
+    "accept": false,
+    "f": 0.8788,
+    "p": 0.8788,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.8788,
+    "p": 0.8788,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/bad draft-outside-thread",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.955,
+   "G": {
+    "accept": false,
+    "f": 0.9318,
+    "p": 0.9318,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.9318,
+    "p": 0.9318,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/bad invalid-audit",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9034,
+   "G": {
+    "accept": false,
+    "f": 0.9318,
+    "p": 0.9318,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.9318,
+    "p": 0.9318,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/bad duplicate-audit",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.8,
+   "G": {
+    "accept": false,
+    "f": 1,
+    "p": 0.7674,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 1,
+    "p": 0.7674,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/bad audit-without-ticket",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.8825,
+   "G": {
+    "accept": false,
+    "f": 0.822,
+    "p": 0.822,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.822,
+    "p": 0.822,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/bad filtered-as-customer",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9625,
+   "G": {
+    "accept": false,
+    "f": 0.9432,
+    "p": 0.9432,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.9432,
+    "p": 0.9432,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "n8n20281",
+   "id": "n8n20281/bad call-storm",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 5,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0,
+   "G": {
+    "accept": false,
+    "f": 0,
+    "p": 1,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0,
+    "p": 1,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/faithful",
+   "cls": null,
+   "kind": "reference",
+   "truthAccept": true,
+   "seeds": 10,
+   "errors": 0,
+   "v2": true,
+   "v2Assumed": false,
+   "v2score": 1,
+   "G": {
+    "accept": false,
+    "f": 0.7703,
+    "p": 0.7703,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": true,
+    "accept95": true,
+    "share90": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 10
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/original-executed",
+   "cls": null,
+   "kind": "reference",
+   "truthAccept": true,
+   "seeds": 10,
+   "errors": 0,
+   "v2": true,
+   "v2Assumed": false,
+   "v2score": 1,
+   "G": {
+    "accept": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 10
+   },
+   "I": {
+    "accept": true,
+    "accept95": true,
+    "share90": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 10
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/improved",
+   "cls": null,
+   "kind": "control-correct",
+   "truthAccept": true,
+   "seeds": 10,
+   "errors": 0,
+   "v2": true,
+   "v2Assumed": false,
+   "v2score": 1,
+   "G": {
+    "accept": false,
+    "f": 0.7703,
+    "p": 0.7703,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": true,
+    "accept95": true,
+    "share90": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 10
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/alternative-design",
+   "cls": null,
+   "kind": "control-correct",
+   "truthAccept": true,
+   "seeds": 10,
+   "errors": 0,
+   "v2": true,
+   "v2Assumed": false,
+   "v2score": 1,
+   "G": {
+    "accept": false,
+    "f": 0.5,
+    "p": 0.5,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": true,
+    "accept95": true,
+    "share90": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 10
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/W1 naive-debounce",
+   "cls": "HA-W1",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 10,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9333,
+   "G": {
+    "accept": false,
+    "f": 0.7703,
+    "p": 0.7422,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": true,
+    "f": 1,
+    "p": 0.9636,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/W2 start-gate-from-memory",
+   "cls": "HA-W2",
+   "kind": "class-wrong",
+   "truthAccept": false,
+   "seeds": 10,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9333,
+   "G": {
+    "accept": false,
+    "f": 0.7703,
+    "p": 0.75,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": true,
+    "f": 1,
+    "p": 0.9737,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/C1 buttons-reversed",
+   "cls": "HA-C1",
+   "kind": "class-correct",
+   "truthAccept": true,
+   "seeds": 10,
+   "errors": 0,
+   "v2": true,
+   "v2Assumed": true,
+   "v2score": null,
+   "G": {
+    "accept": false,
+    "f": 0.7703,
+    "p": 0.7703,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": true,
+    "accept95": true,
+    "share90": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 10
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/C2 typographic-apostrophe",
+   "cls": "HA-C2",
+   "kind": "class-correct",
+   "truthAccept": true,
+   "seeds": 10,
+   "errors": 0,
+   "v2": true,
+   "v2Assumed": true,
+   "v2score": null,
+   "G": {
+    "accept": false,
+    "f": 0.7703,
+    "p": 0.7703,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": true,
+    "accept95": true,
+    "share90": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 10
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/C3 last_changed-debounce",
+   "cls": "HA-C3",
+   "kind": "class-correct",
+   "truthAccept": true,
+   "seeds": 10,
+   "errors": 0,
+   "v2": true,
+   "v2Assumed": false,
+   "v2score": 1,
+   "G": {
+    "accept": false,
+    "f": 0.7703,
+    "p": 0.7703,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": true,
+    "accept95": true,
+    "share90": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 10
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/C4 skip-round-condition-scope",
+   "cls": "HA-C4",
+   "kind": "class-correct",
+   "truthAccept": true,
+   "seeds": 10,
+   "errors": 0,
+   "v2": true,
+   "v2Assumed": false,
+   "v2score": 1,
+   "G": {
+    "accept": false,
+    "f": 0.7703,
+    "p": 0.7703,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": true,
+    "accept95": true,
+    "share90": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 10
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/bad empty",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 10,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.1333,
+   "G": {
+    "accept": false,
+    "f": 0,
+    "p": 1,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0,
+    "p": 1,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/bad do-nothing",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 10,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.1333,
+   "G": {
+    "accept": false,
+    "f": 0,
+    "p": 1,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0,
+    "p": 1,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/bad shuffled-or-corrupted",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 10,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.0133,
+   "G": {
+    "accept": false,
+    "f": 0.0041,
+    "p": 0.0061,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.0081,
+    "p": 0.0118,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/bad plausible-but-wrong",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 10,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.34,
+   "G": {
+    "accept": false,
+    "f": 0.6351,
+    "p": 0.6177,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.8649,
+    "p": 0.8411,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/bad no-debounce",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 10,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.0667,
+   "G": {
+    "accept": false,
+    "f": 0.0811,
+    "p": 0.0781,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.0811,
+    "p": 0.0781,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/bad weekday-ignored",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 10,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.8667,
+   "G": {
+    "accept": false,
+    "f": 0.7703,
+    "p": 0.7037,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 1,
+    "p": 0.9136,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/bad weekday-at-door-open",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 10,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9333,
+   "G": {
+    "accept": false,
+    "f": 0.7162,
+    "p": 0.7681,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": true,
+    "f": 0.9324,
+    "p": 1,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/bad no-weekday-recheck-in-loop",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 10,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9333,
+   "G": {
+    "accept": false,
+    "f": 0.7703,
+    "p": 0.75,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": true,
+    "f": 1,
+    "p": 0.9737,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/bad no-door-recheck",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 10,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.8,
+   "G": {
+    "accept": false,
+    "f": 0.7703,
+    "p": 0.7037,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 1,
+    "p": 0.9136,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/bad no-timer-recheck",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 10,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9333,
+   "G": {
+    "accept": false,
+    "f": 0.7703,
+    "p": 0.75,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": true,
+    "f": 1,
+    "p": 0.9737,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/bad no-snooze-gate-at-start",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 10,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.7333,
+   "G": {
+    "accept": false,
+    "f": 0.7703,
+    "p": 0.6951,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 1,
+    "p": 0.9024,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/bad stop-for-good",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 10,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9333,
+   "G": {
+    "accept": false,
+    "f": 0.7568,
+    "p": 0.7671,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": true,
+    "f": 0.9865,
+    "p": 1,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/bad no-restart",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 10,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9333,
+   "G": {
+    "accept": false,
+    "f": 0.7703,
+    "p": 0.7403,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": true,
+    "f": 1,
+    "p": 0.961,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/bad single-mode",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 10,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9333,
+   "G": {
+    "accept": false,
+    "f": 0.7162,
+    "p": 0.7361,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": true,
+    "f": 0.9324,
+    "p": 0.9583,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/bad snooze-ignored-by-sequence",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 10,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.8,
+   "G": {
+    "accept": false,
+    "f": 0.7703,
+    "p": 0.7215,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 1,
+    "p": 0.9367,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/bad snooze-without-timer",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 10,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.8,
+   "G": {
+    "accept": false,
+    "f": 0.7297,
+    "p": 0.6279,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.9595,
+    "p": 0.8256,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/bad snooze-without-logbook",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 10,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.8,
+   "G": {
+    "accept": false,
+    "f": 0.7297,
+    "p": 0.7606,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.9595,
+    "p": 1,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/bad snooze-always-30m",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 10,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9333,
+   "G": {
+    "accept": false,
+    "f": 0.7568,
+    "p": 0.7089,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": true,
+    "f": 0.9865,
+    "p": 0.9241,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/bad any-action-snoozes",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 10,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0,
+   "G": {
+    "accept": false,
+    "f": 0.4486,
+    "p": 0.2936,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.6216,
+    "p": 0.4069,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/bad prefix-action-snoozes",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 10,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9333,
+   "G": {
+    "accept": false,
+    "f": 0.7568,
+    "p": 0.7467,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": true,
+    "f": 0.9865,
+    "p": 0.9733,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/bad recycling-always",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 10,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.8667,
+   "G": {
+    "accept": false,
+    "f": 0.6216,
+    "p": 0.6216,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.8108,
+    "p": 0.8108,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/bad recycling-never",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 10,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.2667,
+   "G": {
+    "accept": false,
+    "f": 0.2297,
+    "p": 0.2297,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.2703,
+    "p": 0.2703,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/bad no-push",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 10,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.1333,
+   "G": {
+    "accept": false,
+    "f": 0.6892,
+    "p": 0.7727,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.6892,
+    "p": 0.7727,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/bad no-inside-speech",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 10,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.1333,
+   "G": {
+    "accept": false,
+    "f": 0.5405,
+    "p": 0.7018,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.7703,
+    "p": 1,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/bad no-announcements",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 10,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.2667,
+   "G": {
+    "accept": false,
+    "f": 0.3108,
+    "p": 0.575,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.5405,
+    "p": 1,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/mutant no-debounce",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 10,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.0667,
+   "G": {
+    "accept": false,
+    "f": 0.0811,
+    "p": 0.0781,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.0811,
+    "p": 0.0781,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/mutant announces-on-any-day",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 10,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.8667,
+   "G": {
+    "accept": false,
+    "f": 1,
+    "p": 0.9136,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 1,
+    "p": 0.9136,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/mutant no-door-check-in-loop",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 10,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.8,
+   "G": {
+    "accept": false,
+    "f": 1,
+    "p": 0.9136,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 1,
+    "p": 0.9136,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/mutant no-timer-check-in-loop",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 10,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9333,
+   "G": {
+    "accept": false,
+    "f": 1,
+    "p": 0.9737,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": true,
+    "f": 1,
+    "p": 0.9737,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/mutant mode-single",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 10,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.8,
+   "G": {
+    "accept": false,
+    "f": 0.8784,
+    "p": 0.8025,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.8784,
+    "p": 0.8025,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/mutant delays-as-absolute-offsets",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 10,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.34,
+   "G": {
+    "accept": false,
+    "f": 0.8649,
+    "p": 0.8411,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.8649,
+    "p": 0.8411,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/mutant recycling-always",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 10,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.8667,
+   "G": {
+    "accept": false,
+    "f": 0.8108,
+    "p": 0.8108,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.8108,
+    "p": 0.8108,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/mutant snooze-2h-is-30m",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 10,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9333,
+   "G": {
+    "accept": false,
+    "f": 0.9865,
+    "p": 0.9241,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": true,
+    "f": 0.9865,
+    "p": 0.9241,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/mutant snooze-not-logged",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 10,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.8,
+   "G": {
+    "accept": false,
+    "f": 0.9595,
+    "p": 1,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.9595,
+    "p": 1,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "ha",
+   "id": "ha/mutant stop-on-failed-check",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 10,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9333,
+   "G": {
+    "accept": false,
+    "f": 0.9865,
+    "p": 1,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": true,
+    "f": 0.9865,
+    "p": 1,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "gha",
+   "id": "gha/reference (solveImproved)",
+   "cls": null,
+   "kind": "reference",
+   "truthAccept": true,
+   "seeds": 28,
+   "errors": 0,
+   "v2": true,
+   "v2Assumed": false,
+   "v2score": 1,
+   "G": {
+    "accept": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 28
+   },
+   "I": {
+    "accept": true,
+    "accept95": true,
+    "share90": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 28
+   }
+  },
+  {
+   "adapter": "gha",
+   "id": "gha/faithful transcription of the original (T2 judged on intent)",
+   "cls": null,
+   "kind": "control-unlabelled",
+   "truthAccept": true,
+   "seeds": 28,
+   "errors": 0,
+   "v2": true,
+   "v2Assumed": false,
+   "v2score": 1,
+   "G": {
+    "accept": false,
+    "f": 0.9464,
+    "p": 0.9464,
+    "seedsAccepted": 25
+   },
+   "I": {
+    "accept": true,
+    "accept95": true,
+    "share90": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 28
+   }
+  },
+  {
+   "adapter": "gha",
+   "id": "gha/independent-correct",
+   "cls": null,
+   "kind": "control-correct",
+   "truthAccept": true,
+   "seeds": 28,
+   "errors": 0,
+   "v2": true,
+   "v2Assumed": false,
+   "v2score": 1,
+   "G": {
+    "accept": false,
+    "f": 0.8299,
+    "p": 0.8299,
+    "seedsAccepted": 7
+   },
+   "I": {
+    "accept": true,
+    "accept95": true,
+    "share90": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 28
+   }
+  },
+  {
+   "adapter": "gha",
+   "id": "gha/pr-text-new-then-old",
+   "cls": "GHA-C1",
+   "kind": "class-correct",
+   "truthAccept": true,
+   "seeds": 28,
+   "errors": 0,
+   "v2": true,
+   "v2Assumed": false,
+   "v2score": 1,
+   "G": {
+    "accept": false,
+    "f": 0.8299,
+    "p": 0.8299,
+    "seedsAccepted": 7
+   },
+   "I": {
+    "accept": true,
+    "accept95": true,
+    "share90": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 28
+   }
+  },
+  {
+   "adapter": "gha",
+   "id": "gha/pr-text-block",
+   "cls": "GHA-C1",
+   "kind": "class-correct",
+   "truthAccept": true,
+   "seeds": 28,
+   "errors": 0,
+   "v2": true,
+   "v2Assumed": false,
+   "v2score": 1,
+   "G": {
+    "accept": false,
+    "f": 0.8299,
+    "p": 0.8299,
+    "seedsAccepted": 7
+   },
+   "I": {
+    "accept": true,
+    "accept95": true,
+    "share90": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 28
+   }
+  },
+  {
+   "adapter": "gha",
+   "id": "gha/pr-text-table-new-first",
+   "cls": "GHA-C1",
+   "kind": "class-correct",
+   "truthAccept": true,
+   "seeds": 28,
+   "errors": 0,
+   "v2": true,
+   "v2Assumed": false,
+   "v2score": 1,
+   "G": {
+    "accept": false,
+    "f": 0.8299,
+    "p": 0.8299,
+    "seedsAccepted": 7
+   },
+   "I": {
+    "accept": true,
+    "accept95": true,
+    "share90": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 28
+   }
+  },
+  {
+   "adapter": "gha",
+   "id": "gha/labels-twice",
+   "cls": "GHA-C3",
+   "kind": "class-correct",
+   "truthAccept": true,
+   "seeds": 28,
+   "errors": 0,
+   "v2": true,
+   "v2Assumed": false,
+   "v2score": 1,
+   "G": {
+    "accept": false,
+    "f": 0.8299,
+    "p": 0.8299,
+    "seedsAccepted": 7
+   },
+   "I": {
+    "accept": true,
+    "accept95": true,
+    "share90": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 28
+   }
+  },
+  {
+   "adapter": "gha",
+   "id": "gha/failed-with-leftovers",
+   "cls": "GHA-C2",
+   "kind": "class-correct",
+   "truthAccept": true,
+   "seeds": 28,
+   "errors": 0,
+   "v2": true,
+   "v2Assumed": false,
+   "v2score": 1,
+   "G": {
+    "accept": false,
+    "f": 0.8299,
+    "p": 0.8299,
+    "seedsAccepted": 7
+   },
+   "I": {
+    "accept": true,
+    "accept95": true,
+    "share90": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 28
+   }
+  },
+  {
+   "adapter": "gha",
+   "id": "gha/no-downgrade",
+   "cls": null,
+   "kind": "control-correct",
+   "truthAccept": true,
+   "seeds": 28,
+   "errors": 0,
+   "v2": true,
+   "v2Assumed": false,
+   "v2score": 1,
+   "G": {
+    "accept": false,
+    "f": 0.8299,
+    "p": 0.8299,
+    "seedsAccepted": 7
+   },
+   "I": {
+    "accept": true,
+    "accept95": true,
+    "share90": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 28
+   }
+  },
+  {
+   "adapter": "gha",
+   "id": "gha/reads-last-reference-line",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 28,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9694,
+   "G": {
+    "accept": false,
+    "f": 0.8014,
+    "p": 0.8014,
+    "seedsAccepted": 7
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.9524,
+    "p": 0.9524,
+    "seedsAccepted": 25
+   }
+  },
+  {
+   "adapter": "gha",
+   "id": "gha/no-prerelease-rule",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 28,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.8755,
+   "G": {
+    "accept": false,
+    "f": 0.7296,
+    "p": 0.7296,
+    "seedsAccepted": 6
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.8461,
+    "p": 0.8461,
+    "seedsAccepted": 22
+   }
+  },
+  {
+   "adapter": "gha",
+   "id": "gha/pr-text-backwards",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 28,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9081,
+   "G": {
+    "accept": false,
+    "f": 0.8299,
+    "p": 0.8299,
+    "seedsAccepted": 7
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.8835,
+    "p": 0.8835,
+    "seedsAccepted": 10
+   }
+  },
+  {
+   "adapter": "gha",
+   "id": "gha/catch-all-message-reference-only",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 28,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9786,
+   "G": {
+    "accept": false,
+    "f": 0.8299,
+    "p": 0.8299,
+    "seedsAccepted": 7
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.9464,
+    "p": 0.9464,
+    "seedsAccepted": 25
+   }
+  },
+  {
+   "adapter": "gha",
+   "id": "gha/LIMIT-catch-all-misleading-message",
+   "cls": "GHA-R1",
+   "kind": "class-residual",
+   "truthAccept": false,
+   "seeds": 28,
+   "errors": 0,
+   "v2": true,
+   "v2Assumed": false,
+   "v2score": 1,
+   "G": {
+    "accept": false,
+    "f": 0.8299,
+    "p": 0.8299,
+    "seedsAccepted": 7
+   },
+   "I": {
+    "accept": true,
+    "accept95": true,
+    "share90": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 28
+   }
+  },
+  {
+   "adapter": "gha",
+   "id": "gha/LIMIT-reads-commented-lines-takes-max",
+   "cls": "GHA-R2",
+   "kind": "class-residual",
+   "truthAccept": false,
+   "seeds": 28,
+   "errors": 0,
+   "v2": true,
+   "v2Assumed": false,
+   "v2score": 1,
+   "G": {
+    "accept": false,
+    "f": 0.8299,
+    "p": 0.8299,
+    "seedsAccepted": 7
+   },
+   "I": {
+    "accept": true,
+    "accept95": true,
+    "share90": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 28
+   }
+  },
+  {
+   "adapter": "gha",
+   "id": "gha/LIMIT-stuffed-pr-text",
+   "cls": "GHA-R3",
+   "kind": "class-residual",
+   "truthAccept": false,
+   "seeds": 28,
+   "errors": 0,
+   "v2": true,
+   "v2Assumed": false,
+   "v2score": 1,
+   "G": {
+    "accept": false,
+    "f": 0.8299,
+    "p": 0.8299,
+    "seedsAccepted": 7
+   },
+   "I": {
+    "accept": true,
+    "accept95": true,
+    "share90": true,
+    "f": 1,
+    "p": 1,
+    "seedsAccepted": 28
+   }
+  },
+  {
+   "adapter": "gha",
+   "id": "gha/bad do-nothing",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 28,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.327,
+   "G": {
+    "accept": false,
+    "f": 0.1839,
+    "p": 0.1895,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.1839,
+    "p": 0.1895,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "gha",
+   "id": "gha/bad corrupted",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 28,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.7898,
+   "G": {
+    "accept": false,
+    "f": 0.679,
+    "p": 0.6295,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.679,
+    "p": 0.6295,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "gha",
+   "id": "gha/bad shuffled-file",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 18,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.9286,
+   "G": {
+    "accept": false,
+    "f": 0.8624,
+    "p": 0.1359,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.8624,
+    "p": 0.1359,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "gha",
+   "id": "gha/bad only-chrome-updated",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 14,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.75,
+   "G": {
+    "accept": false,
+    "f": 0.5248,
+    "p": 0.852,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.5248,
+    "p": 0.852,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "gha",
+   "id": "gha/bad wrong-branch",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 18,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.4047,
+   "G": {
+    "accept": false,
+    "f": 0.2229,
+    "p": 0.4913,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.2229,
+    "p": 0.4913,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "gha",
+   "id": "gha/bad versions-misreported",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 25,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.8926,
+   "G": {
+    "accept": false,
+    "f": 0.8308,
+    "p": 0.8308,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.8308,
+    "p": 0.8308,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "gha",
+   "id": "gha/bad empty",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 28,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0,
+   "G": {
+    "accept": false,
+    "f": 0,
+    "p": 0,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0,
+    "p": 0,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "gha",
+   "id": "gha/bad pr-without-change",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 7,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.4,
+   "G": {
+    "accept": false,
+    "f": 0.4571,
+    "p": 0.2041,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.6286,
+    "p": 0.3265,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "gha",
+   "id": "gha/bad prerelease-filter-dropped",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 6,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.419,
+   "G": {
+    "accept": false,
+    "f": 0.2302,
+    "p": 0.2302,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0.2817,
+    "p": 0.2817,
+    "seedsAccepted": 0
+   }
+  },
+  {
+   "adapter": "gha",
+   "id": "gha/bad error-swallowed",
+   "cls": null,
+   "kind": "control-wrong",
+   "truthAccept": false,
+   "seeds": 3,
+   "errors": 0,
+   "v2": false,
+   "v2Assumed": false,
+   "v2score": 0.4,
+   "G": {
+    "accept": false,
+    "f": 0,
+    "p": 0,
+    "seedsAccepted": 0
+   },
+   "I": {
+    "accept": false,
+    "accept95": false,
+    "share90": false,
+    "f": 0,
+    "p": 0,
+    "seedsAccepted": 0
+   }
+  }
+ ]
+}

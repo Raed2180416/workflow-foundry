@@ -1,0 +1,1455 @@
+{
+ "generatedBy": "research/jit-20261008/analysis/replication/census/census.mjs",
+ "corpus": "research/corpus-20261006/items.jsonl",
+ "items": 1559,
+ "seconds": 639.9,
+ "parameters": {
+  "thetas": [
+   0.15,
+   0.25,
+   0.35
+  ],
+  "primaryTheta": 0.25,
+  "minNodes": 5,
+  "lineageRelaxedThreshold": "2 x theta",
+  "largeGraphNodes": 400,
+  "lbCap": 0.7,
+  "nodeSubCost": "label equal 0; same category+effects 0.4; same category 0.8; else 1",
+  "edgeProfileCost": "0.5 x L1 over (direction, kind, neighbour category) multisets",
+  "distance": "bipartite assignment upper bound / max(nodes+edges)"
+ },
+ "metadataScan": {
+  "explicitLineageHits": 3,
+  "hits": [
+   "nf-core:scnanoseq@1.3.0",
+   "langgraph:langgraph/docs/docs/tutorials/customer-support/customer-support.ipynb#part-4-specialized-workflows",
+   "langgraph:langgraph/docs/docs/tutorials/get-started/6-time-travel.md"
+  ],
+  "note": "phrase scan over title, description, oracle and IR notes; none of the schema fields records a fork or template parent"
+ },
+ "pairs": {
+  "withinPlatformPairs": 44259,
+  "prunedByLowerBound": 12137,
+  "assignmentDistances": 23430,
+  "signatureDistances": 361,
+  "lineageLinkedPairs": 141
+ },
+ "smallGraphsExcluded": {
+  "under5Nodes": 240,
+  "ofWhichWithOracle": 77
+ },
+ "oracleKindCounts": {
+  "none": 1121,
+  "test-profile": 277,
+  "mocked-execution": 53,
+  "output-equivalence": 108
+ },
+ "platformProfile": {
+  "activepieces": {
+   "items": 40,
+   "oracle": 0,
+   "small": 4,
+   "inPrimaryFamGe3": 0
+  },
+  "coze": {
+   "items": 22,
+   "oracle": 22,
+   "small": 6,
+   "inPrimaryFamGe3": 0
+  },
+  "dify": {
+   "items": 50,
+   "oracle": 0,
+   "small": 5,
+   "inPrimaryFamGe3": 0
+  },
+  "flowise": {
+   "items": 51,
+   "oracle": 0,
+   "small": 17,
+   "inPrimaryFamGe3": 6
+  },
+  "langflow": {
+   "items": 27,
+   "oracle": 0,
+   "small": 9,
+   "inPrimaryFamGe3": 4
+  },
+  "n8n": {
+   "items": 135,
+   "oracle": 25,
+   "small": 2,
+   "inPrimaryFamGe3": 0
+  },
+  "node-red": {
+   "items": 45,
+   "oracle": 0,
+   "small": 0,
+   "inPrimaryFamGe3": 3
+  },
+  "zapier": {
+   "items": 25,
+   "oracle": 0,
+   "small": 3,
+   "inPrimaryFamGe3": 0
+  },
+  "airflow": {
+   "items": 88,
+   "oracle": 69,
+   "small": 19,
+   "inPrimaryFamGe3": 3
+  },
+  "argo": {
+   "items": 55,
+   "oracle": 6,
+   "small": 35,
+   "inPrimaryFamGe3": 0
+  },
+  "dagster": {
+   "items": 25,
+   "oracle": 24,
+   "small": 7,
+   "inPrimaryFamGe3": 0
+  },
+  "github-actions": {
+   "items": 85,
+   "oracle": 0,
+   "small": 10,
+   "inPrimaryFamGe3": 3
+  },
+  "gitlab-ci": {
+   "items": 41,
+   "oracle": 0,
+   "small": 3,
+   "inPrimaryFamGe3": 0
+  },
+  "kubeflow": {
+   "items": 30,
+   "oracle": 27,
+   "small": 15,
+   "inPrimaryFamGe3": 3
+  },
+  "prefect": {
+   "items": 18,
+   "oracle": 0,
+   "small": 17,
+   "inPrimaryFamGe3": 0
+  },
+  "tekton": {
+   "items": 20,
+   "oracle": 20,
+   "small": 15,
+   "inPrimaryFamGe3": 0
+  },
+  "temporal": {
+   "items": 34,
+   "oracle": 21,
+   "small": 21,
+   "inPrimaryFamGe3": 3
+  },
+  "cwl": {
+   "items": 45,
+   "oracle": 2,
+   "small": 3,
+   "inPrimaryFamGe3": 8
+  },
+  "galaxy": {
+   "items": 60,
+   "oracle": 34,
+   "small": 1,
+   "inPrimaryFamGe3": 3
+  },
+  "nextflow": {
+   "items": 25,
+   "oracle": 17,
+   "small": 0,
+   "inPrimaryFamGe3": 0
+  },
+  "nf-core": {
+   "items": 72,
+   "oracle": 72,
+   "small": 0,
+   "inPrimaryFamGe3": 0
+  },
+  "snakemake": {
+   "items": 40,
+   "oracle": 30,
+   "small": 0,
+   "inPrimaryFamGe3": 0
+  },
+  "wdl": {
+   "items": 36,
+   "oracle": 21,
+   "small": 3,
+   "inPrimaryFamGe3": 4
+  },
+  "apple-shortcuts": {
+   "items": 79,
+   "oracle": 0,
+   "small": 1,
+   "inPrimaryFamGe3": 3
+  },
+  "comfyui": {
+   "items": 73,
+   "oracle": 0,
+   "small": 1,
+   "inPrimaryFamGe3": 0
+  },
+  "home-assistant": {
+   "items": 96,
+   "oracle": 0,
+   "small": 8,
+   "inPrimaryFamGe3": 13
+  },
+  "ifttt": {
+   "items": 25,
+   "oracle": 0,
+   "small": 25,
+   "inPrimaryFamGe3": 0
+  },
+  "ag2": {
+   "items": 8,
+   "oracle": 0,
+   "small": 0,
+   "inPrimaryFamGe3": 0
+  },
+  "agno": {
+   "items": 10,
+   "oracle": 0,
+   "small": 0,
+   "inPrimaryFamGe3": 0
+  },
+  "anthropic": {
+   "items": 12,
+   "oracle": 0,
+   "small": 2,
+   "inPrimaryFamGe3": 0
+  },
+  "autogen": {
+   "items": 14,
+   "oracle": 0,
+   "small": 0,
+   "inPrimaryFamGe3": 0
+  },
+  "burr": {
+   "items": 8,
+   "oracle": 0,
+   "small": 0,
+   "inPrimaryFamGe3": 0
+  },
+  "camel": {
+   "items": 3,
+   "oracle": 1,
+   "small": 0,
+   "inPrimaryFamGe3": 0
+  },
+  "claude-code-workflows": {
+   "items": 10,
+   "oracle": 0,
+   "small": 1,
+   "inPrimaryFamGe3": 3
+  },
+  "crewai": {
+   "items": 13,
+   "oracle": 0,
+   "small": 0,
+   "inPrimaryFamGe3": 0
+  },
+  "dspy": {
+   "items": 10,
+   "oracle": 4,
+   "small": 0,
+   "inPrimaryFamGe3": 0
+  },
+  "google-adk": {
+   "items": 15,
+   "oracle": 9,
+   "small": 0,
+   "inPrimaryFamGe3": 0
+  },
+  "haystack": {
+   "items": 8,
+   "oracle": 2,
+   "small": 0,
+   "inPrimaryFamGe3": 0
+  },
+  "inngest-agentkit": {
+   "items": 7,
+   "oracle": 0,
+   "small": 0,
+   "inPrimaryFamGe3": 0
+  },
+  "langgraph": {
+   "items": 18,
+   "oracle": 6,
+   "small": 4,
+   "inPrimaryFamGe3": 0
+  },
+  "llamaindex-workflows": {
+   "items": 10,
+   "oracle": 0,
+   "small": 0,
+   "inPrimaryFamGe3": 0
+  },
+  "mastra": {
+   "items": 8,
+   "oracle": 4,
+   "small": 0,
+   "inPrimaryFamGe3": 0
+  },
+  "metagpt": {
+   "items": 4,
+   "oracle": 3,
+   "small": 0,
+   "inPrimaryFamGe3": 0
+  },
+  "openai-agents": {
+   "items": 18,
+   "oracle": 4,
+   "small": 2,
+   "inPrimaryFamGe3": 0
+  },
+  "openai-swarm": {
+   "items": 6,
+   "oracle": 4,
+   "small": 0,
+   "inPrimaryFamGe3": 0
+  },
+  "pydantic-graph": {
+   "items": 9,
+   "oracle": 3,
+   "small": 1,
+   "inPrimaryFamGe3": 0
+  },
+  "semantic-kernel": {
+   "items": 9,
+   "oracle": 0,
+   "small": 0,
+   "inPrimaryFamGe3": 0
+  },
+  "smolagents": {
+   "items": 6,
+   "oracle": 2,
+   "small": 0,
+   "inPrimaryFamGe3": 0
+  },
+  "strands": {
+   "items": 11,
+   "oracle": 6,
+   "small": 0,
+   "inPrimaryFamGe3": 0
+  }
+ },
+ "results": {
+  "0.15": {
+   "F_L lineage only": {
+    "single": {
+     "families_ge2": 62,
+     "families_ge3": 17,
+     "items_in_families_ge3": 71,
+     "max_size": 9,
+     "size_distribution": {
+      "2": 45,
+      "3": 9,
+      "4": 3,
+      "5-9": 5,
+      "10-19": 0,
+      "20+": 0
+     },
+     "ge3_with_ge3_oracle_members": 8,
+     "ge3_all_members_oracle": 7,
+     "ge3_any_member_oracle": 9,
+     "ge3_with_ge2_oracle_members": 9
+    },
+    "complete": null
+   },
+   "F_S structure only": {
+    "single": {
+     "families_ge2": 33,
+     "families_ge3": 3,
+     "items_in_families_ge3": 10,
+     "max_size": 4,
+     "size_distribution": {
+      "2": 30,
+      "3": 2,
+      "4": 1,
+      "5-9": 0,
+      "10-19": 0,
+      "20+": 0
+     },
+     "ge3_with_ge3_oracle_members": 1,
+     "ge3_all_members_oracle": 1,
+     "ge3_any_member_oracle": 1,
+     "ge3_with_ge2_oracle_members": 1
+    },
+    "complete": {
+     "families_ge2": 34,
+     "families_ge3": 2,
+     "items_in_families_ge3": 6,
+     "max_size": 3,
+     "size_distribution": {
+      "2": 32,
+      "3": 2,
+      "4": 0,
+      "5-9": 0,
+      "10-19": 0,
+      "20+": 0
+     },
+     "ge3_with_ge3_oracle_members": 0,
+     "ge3_all_members_oracle": 0,
+     "ge3_any_member_oracle": 0,
+     "ge3_with_ge2_oracle_members": 0
+    }
+   },
+   "F_LS lineage+structure (primary)": {
+    "single": {
+     "families_ge2": 39,
+     "families_ge3": 5,
+     "items_in_families_ge3": 16,
+     "max_size": 4,
+     "size_distribution": {
+      "2": 34,
+      "3": 4,
+      "4": 1,
+      "5-9": 0,
+      "10-19": 0,
+      "20+": 0
+     },
+     "ge3_with_ge3_oracle_members": 1,
+     "ge3_all_members_oracle": 1,
+     "ge3_any_member_oracle": 1,
+     "ge3_with_ge2_oracle_members": 1
+    },
+    "complete": {
+     "families_ge2": 40,
+     "families_ge3": 2,
+     "items_in_families_ge3": 6,
+     "max_size": 3,
+     "size_distribution": {
+      "2": 38,
+      "3": 2,
+      "4": 0,
+      "5-9": 0,
+      "10-19": 0,
+      "20+": 0
+     },
+     "ge3_with_ge3_oracle_members": 0,
+     "ge3_all_members_oracle": 0,
+     "ge3_any_member_oracle": 0,
+     "ge3_with_ge2_oracle_members": 0
+    }
+   }
+  },
+  "0.25": {
+   "F_L lineage only": {
+    "single": {
+     "families_ge2": 62,
+     "families_ge3": 17,
+     "items_in_families_ge3": 71,
+     "max_size": 9,
+     "size_distribution": {
+      "2": 45,
+      "3": 9,
+      "4": 3,
+      "5-9": 5,
+      "10-19": 0,
+      "20+": 0
+     },
+     "ge3_with_ge3_oracle_members": 8,
+     "ge3_all_members_oracle": 7,
+     "ge3_any_member_oracle": 9,
+     "ge3_with_ge2_oracle_members": 9
+    },
+    "complete": null
+   },
+   "F_S structure only": {
+    "single": {
+     "families_ge2": 61,
+     "families_ge3": 15,
+     "items_in_families_ge3": 47,
+     "max_size": 4,
+     "size_distribution": {
+      "2": 46,
+      "3": 13,
+      "4": 2,
+      "5-9": 0,
+      "10-19": 0,
+      "20+": 0
+     },
+     "ge3_with_ge3_oracle_members": 4,
+     "ge3_all_members_oracle": 4,
+     "ge3_any_member_oracle": 4,
+     "ge3_with_ge2_oracle_members": 4
+    },
+    "complete": {
+     "families_ge2": 61,
+     "families_ge3": 6,
+     "items_in_families_ge3": 20,
+     "max_size": 4,
+     "size_distribution": {
+      "2": 55,
+      "3": 4,
+      "4": 2,
+      "5-9": 0,
+      "10-19": 0,
+      "20+": 0
+     },
+     "ge3_with_ge3_oracle_members": 1,
+     "ge3_all_members_oracle": 1,
+     "ge3_any_member_oracle": 1,
+     "ge3_with_ge2_oracle_members": 1
+    }
+   },
+   "F_LS lineage+structure (primary)": {
+    "single": {
+     "families_ge2": 67,
+     "families_ge3": 18,
+     "items_in_families_ge3": 59,
+     "max_size": 5,
+     "size_distribution": {
+      "2": 49,
+      "3": 14,
+      "4": 3,
+      "5-9": 1,
+      "10-19": 0,
+      "20+": 0
+     },
+     "ge3_with_ge3_oracle_members": 4,
+     "ge3_all_members_oracle": 4,
+     "ge3_any_member_oracle": 5,
+     "ge3_with_ge2_oracle_members": 5
+    },
+    "complete": {
+     "families_ge2": 68,
+     "families_ge3": 9,
+     "items_in_families_ge3": 29,
+     "max_size": 4,
+     "size_distribution": {
+      "2": 59,
+      "3": 7,
+      "4": 2,
+      "5-9": 0,
+      "10-19": 0,
+      "20+": 0
+     },
+     "ge3_with_ge3_oracle_members": 2,
+     "ge3_all_members_oracle": 2,
+     "ge3_any_member_oracle": 2,
+     "ge3_with_ge2_oracle_members": 2
+    }
+   }
+  },
+  "0.35": {
+   "F_L lineage only": {
+    "single": {
+     "families_ge2": 62,
+     "families_ge3": 17,
+     "items_in_families_ge3": 71,
+     "max_size": 9,
+     "size_distribution": {
+      "2": 45,
+      "3": 9,
+      "4": 3,
+      "5-9": 5,
+      "10-19": 0,
+      "20+": 0
+     },
+     "ge3_with_ge3_oracle_members": 8,
+     "ge3_all_members_oracle": 7,
+     "ge3_any_member_oracle": 9,
+     "ge3_with_ge2_oracle_members": 9
+    },
+    "complete": null
+   },
+   "F_S structure only": {
+    "single": {
+     "families_ge2": 86,
+     "families_ge3": 26,
+     "items_in_families_ge3": 126,
+     "max_size": 19,
+     "size_distribution": {
+      "2": 60,
+      "3": 16,
+      "4": 2,
+      "5-9": 5,
+      "10-19": 3,
+      "20+": 0
+     },
+     "ge3_with_ge3_oracle_members": 5,
+     "ge3_all_members_oracle": 5,
+     "ge3_any_member_oracle": 5,
+     "ge3_with_ge2_oracle_members": 5
+    },
+    "complete": {
+     "families_ge2": 95,
+     "families_ge3": 22,
+     "items_in_families_ge3": 72,
+     "max_size": 4,
+     "size_distribution": {
+      "2": 73,
+      "3": 16,
+      "4": 6,
+      "5-9": 0,
+      "10-19": 0,
+      "20+": 0
+     },
+     "ge3_with_ge3_oracle_members": 5,
+     "ge3_all_members_oracle": 5,
+     "ge3_any_member_oracle": 5,
+     "ge3_with_ge2_oracle_members": 5
+    }
+   },
+   "F_LS lineage+structure (primary)": {
+    "single": {
+     "families_ge2": 95,
+     "families_ge3": 28,
+     "items_in_families_ge3": 142,
+     "max_size": 19,
+     "size_distribution": {
+      "2": 67,
+      "3": 17,
+      "4": 2,
+      "5-9": 6,
+      "10-19": 3,
+      "20+": 0
+     },
+     "ge3_with_ge3_oracle_members": 5,
+     "ge3_all_members_oracle": 5,
+     "ge3_any_member_oracle": 6,
+     "ge3_with_ge2_oracle_members": 6
+    },
+    "complete": {
+     "families_ge2": 108,
+     "families_ge3": 25,
+     "items_in_families_ge3": 82,
+     "max_size": 4,
+     "size_distribution": {
+      "2": 83,
+      "3": 18,
+      "4": 7,
+      "5-9": 0,
+      "10-19": 0,
+      "20+": 0
+     },
+     "ge3_with_ge3_oracle_members": 6,
+     "ge3_all_members_oracle": 6,
+     "ge3_any_member_oracle": 6,
+     "ge3_with_ge2_oracle_members": 6
+    }
+   }
+  }
+ },
+ "top20": [
+  {
+   "rank": 1,
+   "size": 5,
+   "platforms": {
+    "cwl": 5
+   },
+   "oracleKinds": {
+    "none": 5
+   },
+   "oracleBearing": 0,
+   "nodesMinMedMax": [
+    27,
+    42,
+    53
+   ],
+   "diameter": 0.508,
+   "pairsAtTheta": 4,
+   "pairsLineageRelaxed": 1,
+   "pairsNotLinked": 0,
+   "approxDistance": false,
+   "sampleIds": [
+    "cwl:workflowhub/524",
+    "cwl:workflowhub/525",
+    "cwl:workflowhub/526",
+    "cwl:workflowhub/527"
+   ],
+   "sampleTitles": [
+    "CWL-based RNA-Seq workflow (WorkflowHub #524)",
+    "CWL-based ChIP-Seq workflow (WorkflowHub #525)",
+    "CWL-based (multi-sample) workflow for germline variant calling (Workfl"
+   ]
+  },
+  {
+   "rank": 2,
+   "size": 4,
+   "platforms": {
+    "wdl": 4
+   },
+   "oracleKinds": {
+    "output-equivalence": 4
+   },
+   "oracleBearing": 4,
+   "nodesMinMedMax": [
+    39,
+    46,
+    47
+   ],
+   "diameter": 0.174,
+   "pairsAtTheta": 6,
+   "pairsLineageRelaxed": 0,
+   "pairsNotLinked": 0,
+   "approxDistance": false,
+   "sampleIds": [
+    "wdl:broadinstitute/warp/pipelines/wdl/dna_seq/germline/single_sample/exome/ExomeGermlineSi",
+    "wdl:broadinstitute/warp/pipelines/wdl/dna_seq/germline/single_sample/wgs/WholeGenomeGermli",
+    "wdl:broadinstitute/warp/pipelines/wdl/reprocessing/exome/ExomeReprocessing.wdl",
+    "wdl:broadinstitute/warp/pipelines/wdl/reprocessing/wgs/WholeGenomeReprocessing.wdl"
+   ],
+   "sampleTitles": [
+    "ExomeGermlineSingleSample (broadinstitute/warp)",
+    "WholeGenomeGermlineSingleSample (broadinstitute/warp)",
+    "ExomeReprocessing (broadinstitute/warp)"
+   ]
+  },
+  {
+   "rank": 3,
+   "size": 4,
+   "platforms": {
+    "langflow": 4
+   },
+   "oracleKinds": {
+    "none": 4
+   },
+   "oracleBearing": 0,
+   "nodesMinMedMax": [
+    5,
+    5,
+    6
+   ],
+   "diameter": 0.222,
+   "pairsAtTheta": 6,
+   "pairsLineageRelaxed": 0,
+   "pairsNotLinked": 0,
+   "approxDistance": false,
+   "sampleIds": [
+    "langflow:custom-component-generator",
+    "langflow:price-deal-finder",
+    "langflow:simple-agent",
+    "langflow:social-media-agent"
+   ],
+   "sampleTitles": [
+    "Custom Component Generator",
+    "Price Deal Finder",
+    "Simple Agent"
+   ]
+  },
+  {
+   "rank": 4,
+   "size": 4,
+   "platforms": {
+    "home-assistant": 4
+   },
+   "oracleKinds": {
+    "none": 4
+   },
+   "oracleBearing": 0,
+   "nodesMinMedMax": [
+    16,
+    17,
+    19
+   ],
+   "diameter": 0.443,
+   "pairsAtTheta": 2,
+   "pairsLineageRelaxed": 2,
+   "pairsNotLinked": 0,
+   "approxDistance": false,
+   "sampleIds": [
+    "home-assistant:geekofweek/homeassistant/old_ha_setup/automation/roomba.yaml#14",
+    "home-assistant:geekofweek/homeassistant/old_ha_setup/automation/roomba.yaml#18",
+    "home-assistant:geekofweek/homeassistant/old_ha_setup/automation/roomba.yaml#2",
+    "home-assistant:geekofweek/homeassistant/old_ha_setup/automation/roomba.yaml#8"
+   ],
+   "sampleTitles": [
+    "Roomba - Run Basement Roomba Partial Clean",
+    "Roomba - Run Upstairs Roomba when USER2 Leaves",
+    "Roomba - Run Main Floor Roomba Weekdays Partial Clean"
+   ]
+  },
+  {
+   "rank": 5,
+   "size": 3,
+   "platforms": {
+    "airflow": 3
+   },
+   "oracleKinds": {
+    "test-profile": 3
+   },
+   "oracleBearing": 3,
+   "nodesMinMedMax": [
+    12,
+    12,
+    13
+   ],
+   "diameter": 0.312,
+   "pairsAtTheta": 2,
+   "pairsLineageRelaxed": 0,
+   "pairsNotLinked": 0,
+   "approxDistance": false,
+   "sampleIds": [
+    "airflow:apache-airflow-providers-amazon/tests/system/amazon/aws/example_athena#example_ath",
+    "airflow:apache-airflow-providers-amazon/tests/system/amazon/aws/example_glue_data_quality#",
+    "airflow:apache-airflow-providers-amazon/tests/system/amazon/aws/example_glue_data_quality_"
+   ],
+   "sampleTitles": [
+    "example_athena (provider:amazon)",
+    "example_glue_data_quality (provider:amazon)",
+    "example_glue_data_quality_with_recommendation (provider:amazon)"
+   ]
+  },
+  {
+   "rank": 6,
+   "size": 3,
+   "platforms": {
+    "kubeflow": 3
+   },
+   "oracleKinds": {
+    "output-equivalence": 3
+   },
+   "oracleBearing": 3,
+   "nodesMinMedMax": [
+    7,
+    7,
+    8
+   ],
+   "diameter": 0.387,
+   "pairsAtTheta": 2,
+   "pairsLineageRelaxed": 1,
+   "pairsNotLinked": 0,
+   "approxDistance": false,
+   "sampleIds": [
+    "kubeflow:valid/critical/flip_coin",
+    "kubeflow:valid/essential/pipeline_with_nested_conditions",
+    "kubeflow:valid/essential/pipeline_with_nested_conditions_yaml"
+   ],
+   "sampleTitles": [
+    "conditional-execution-pipeline (KFP compiled pipeline)",
+    "nested-conditions-pipeline (KFP compiled pipeline)",
+    "pipeline-with-nested-conditions-yaml (KFP compiled pipeline)"
+   ]
+  },
+  {
+   "rank": 7,
+   "size": 3,
+   "platforms": {
+    "galaxy": 3
+   },
+   "oracleKinds": {
+    "test-profile": 3
+   },
+   "oracleBearing": 3,
+   "nodesMinMedMax": [
+    56,
+    63,
+    65
+   ],
+   "diameter": 0.256,
+   "pairsAtTheta": 2,
+   "pairsLineageRelaxed": 0,
+   "pairsNotLinked": 0,
+   "approxDistance": false,
+   "sampleIds": [
+    "galaxy:iwc/Assembly-Hifi-Trio-phasing-VGP5/Assembly-Hifi-Trio-phasing-VGP5",
+    "galaxy:iwc/Assembly-Hifi-only-VGP3/Assembly-Hifi-only-VGP3",
+    "galaxy:iwc/Purge-duplicates-one-haplotype-VGP6b/Purging-duplicates-one-haplotype-VGP6b"
+   ],
+   "sampleTitles": [
+    "Genome Assembly with Pacbio Hifi reads and Trio data for phasing - VGP",
+    "Genome Assembly from Hifi reads - VGP3 (IWC VGP-assembly-v2, v0.3.7)",
+    "Purging duplicates in one haplotype VGP6b (IWC VGP-assembly-v2, v0.8.5"
+   ]
+  },
+  {
+   "rank": 8,
+   "size": 3,
+   "platforms": {
+    "temporal": 3
+   },
+   "oracleKinds": {
+    "none": 1,
+    "test-profile": 2
+   },
+   "oracleBearing": 2,
+   "nodesMinMedMax": [
+    15,
+    17,
+    23
+   ],
+   "diameter": 0.457,
+   "pairsAtTheta": 1,
+   "pairsLineageRelaxed": 1,
+   "pairsNotLinked": 0,
+   "approxDistance": false,
+   "sampleIds": [
+    "temporal:samples-go/nexus-messaging",
+    "temporal:samples-python/nexus_messaging",
+    "temporal:samples-python/nexus_messaging_temporal_operation"
+   ],
+   "sampleTitles": [
+    "nexus-messaging (Temporal Go sample)",
+    "nexus_messaging (Temporal Python sample)",
+    "nexus_messaging_temporal_operation (Temporal Python sample)"
+   ]
+  },
+  {
+   "rank": 9,
+   "size": 3,
+   "platforms": {
+    "flowise": 3
+   },
+   "oracleKinds": {
+    "none": 3
+   },
+   "oracleBearing": 0,
+   "nodesMinMedMax": [
+    5,
+    5,
+    5
+   ],
+   "diameter": 0.089,
+   "pairsAtTheta": 3,
+   "pairsLineageRelaxed": 0,
+   "pairsNotLinked": 0,
+   "approxDistance": false,
+   "sampleIds": [
+    "flowise:chatflows-conversational-agent",
+    "flowise:chatflows-re-act-agent",
+    "flowise:chatflows-tool-agent"
+   ],
+   "sampleTitles": [
+    "Conversational Agent",
+    "ReAct Agent",
+    "Tool Agent"
+   ]
+  },
+  {
+   "rank": 10,
+   "size": 3,
+   "platforms": {
+    "flowise": 3
+   },
+   "oracleKinds": {
+    "none": 3
+   },
+   "oracleBearing": 0,
+   "nodesMinMedMax": [
+    6,
+    6,
+    7
+   ],
+   "diameter": 0.277,
+   "pairsAtTheta": 2,
+   "pairsLineageRelaxed": 0,
+   "pairsNotLinked": 0,
+   "approxDistance": false,
+   "sampleIds": [
+    "flowise:chatflows-conversational-retrieval-qa-chain",
+    "flowise:chatflows-github-docs-qn-a",
+    "flowise:chatflows-local-qn-a"
+   ],
+   "sampleTitles": [
+    "Conversational Retrieval QA Chain",
+    "Github Docs QnA",
+    "Local QnA"
+   ]
+  },
+  {
+   "rank": 11,
+   "size": 3,
+   "platforms": {
+    "node-red": 3
+   },
+   "oracleKinds": {
+    "none": 3
+   },
+   "oracleBearing": 0,
+   "nodesMinMedMax": [
+    142,
+    146,
+    149
+   ],
+   "diameter": 0.075,
+   "pairsAtTheta": 3,
+   "pairsLineageRelaxed": 0,
+   "pairsNotLinked": 0,
+   "approxDistance": false,
+   "sampleIds": [
+    "node-red:1f1c0dde4ff193e5c14d5b99442a7d00",
+    "node-red:e36b06bc36312d057c0541414d4f87f5",
+    "node-red:eebfe0f84c34d0b9cce62f4f65f4fa4e"
+   ],
+   "sampleTitles": [
+    "Z2M Admin Panel",
+    "Zigbee2mqtt admin (improved and reordered)",
+    "Z2M Admin with OTA"
+   ]
+  },
+  {
+   "rank": 12,
+   "size": 3,
+   "platforms": {
+    "github-actions": 3
+   },
+   "oracleKinds": {
+    "none": 3
+   },
+   "oracleBearing": 0,
+   "nodesMinMedMax": [
+    7,
+    7,
+    8
+   ],
+   "diameter": 0.292,
+   "pairsAtTheta": 2,
+   "pairsLineageRelaxed": 0,
+   "pairsNotLinked": 0,
+   "approxDistance": false,
+   "sampleIds": [
+    "github-actions:paulmarisoumary/discord-bot/.github/workflows/runner-update-and-reload-bot.",
+    "github-actions:shafthq/shaft_engine/.github/workflows/update-selenium-grid-versions.yml",
+    "github-actions:wukongdaily/AutoBuildImmortalWrt/.github/workflows/build-QEMU-arm64-24.10.0"
+   ],
+   "sampleTitles": [
+    "Update files & Reload bot on Linux server",
+    "Update Selenium Grid Docker Versions",
+    "wukongdaily/AutoBuildImmortalWrt/.github/workflows/build-QEMU-arm64-24"
+   ]
+  },
+  {
+   "rank": 13,
+   "size": 3,
+   "platforms": {
+    "cwl": 3
+   },
+   "oracleKinds": {
+    "none": 3
+   },
+   "oracleBearing": 0,
+   "nodesMinMedMax": [
+    82,
+    84,
+    115
+   ],
+   "diameter": 0.421,
+   "pairsAtTheta": 1,
+   "pairsLineageRelaxed": 2,
+   "pairsNotLinked": 0,
+   "approxDistance": false,
+   "sampleIds": [
+    "cwl:EBI-Metagenomics/pipeline-v5/workflows/amplicon-wf--v.5-cond.cwl",
+    "cwl:EBI-Metagenomics/pipeline-v5/workflows/assembly-wf--v.5-cond.cwl",
+    "cwl:EBI-Metagenomics/pipeline-v5/workflows/raw-reads-wf--v.5-cond.cwl"
+   ],
+   "sampleTitles": [
+    "amplicon-wf--v.5-cond.cwl (EBI-Metagenomics/pipeline-v5)",
+    "assembly-wf--v.5-cond.cwl (EBI-Metagenomics/pipeline-v5)",
+    "raw-reads-wf--v.5-cond.cwl (EBI-Metagenomics/pipeline-v5)"
+   ]
+  },
+  {
+   "rank": 14,
+   "size": 3,
+   "platforms": {
+    "apple-shortcuts": 3
+   },
+   "oracleKinds": {
+    "none": 3
+   },
+   "oracleBearing": 0,
+   "nodesMinMedMax": [
+    212,
+    252,
+    298
+   ],
+   "diameter": 0.314,
+   "pairsAtTheta": 2,
+   "pairsLineageRelaxed": 0,
+   "pairsNotLinked": 0,
+   "approxDistance": false,
+   "sampleIds": [
+    "apple-shortcuts:icloud-0f8a1267edde48efa50de6a35a8bcdbd",
+    "apple-shortcuts:icloud-5cbc20665bb94f1b9c0dc9c2be03b924",
+    "apple-shortcuts:icloud-c7a36dd4f2c64fe8be80a8a7512c653a"
+   ],
+   "sampleTitles": [
+    "Main17.0",
+    "Main11.0",
+    "Main20.0"
+   ]
+  },
+  {
+   "rank": 15,
+   "size": 3,
+   "platforms": {
+    "home-assistant": 3
+   },
+   "oracleKinds": {
+    "none": 3
+   },
+   "oracleBearing": 0,
+   "nodesMinMedMax": [
+    79,
+    101,
+    120
+   ],
+   "diameter": 0.342,
+   "pairsAtTheta": 2,
+   "pairsLineageRelaxed": 0,
+   "pairsNotLinked": 0,
+   "approxDistance": false,
+   "sampleIds": [
+    "home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/ikea_e1524_e1810/ikea_e",
+    "home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/ikea_e2001_e2002/ikea_e",
+    "home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/osram_ac025xx00nj/osram"
+   ],
+   "sampleTitles": [
+    "Controller - IKEA E1524/E1810 TRÅDFRI Wireless 5-Button Remote",
+    "Controller - IKEA E2001/E2002 STYRBAR Remote control",
+    "Controller - OSRAM AC025XX00NJ SMART+ Switch Mini"
+   ]
+  },
+  {
+   "rank": 16,
+   "size": 3,
+   "platforms": {
+    "home-assistant": 3
+   },
+   "oracleKinds": {
+    "none": 3
+   },
+   "oracleBearing": 0,
+   "nodesMinMedMax": [
+    50,
+    94,
+    138
+   ],
+   "diameter": 0.641,
+   "pairsAtTheta": 0,
+   "pairsLineageRelaxed": 2,
+   "pairsNotLinked": 0,
+   "approxDistance": false,
+   "sampleIds": [
+    "home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/xiaomi_wxcjkg11lm/xiaom",
+    "home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/xiaomi_wxcjkg12lm/xiaom",
+    "home-assistant:EPMatt/awesome-ha-blueprints/blueprints/controllers/xiaomi_wxcjkg13lm/xiaom"
+   ],
+   "sampleTitles": [
+    "Controller - Xiaomi WXCJKG11LM Aqara Opple 2 button remote",
+    "Controller - Xiaomi WXCJKG12LM Aqara Opple 4 button remote",
+    "Controller - Xiaomi WXCJKG13LM Aqara Opple 6 button remote"
+   ]
+  },
+  {
+   "rank": 17,
+   "size": 3,
+   "platforms": {
+    "home-assistant": 3
+   },
+   "oracleKinds": {
+    "none": 3
+   },
+   "oracleBearing": 0,
+   "nodesMinMedMax": [
+    544,
+    690,
+    919
+   ],
+   "diameter": 0.367,
+   "pairsAtTheta": 2,
+   "pairsLineageRelaxed": 0,
+   "pairsNotLinked": 0,
+   "approxDistance": true,
+   "sampleIds": [
+    "home-assistant:forum-481048",
+    "home-assistant:forum-509992",
+    "home-assistant:forum-527354"
+   ],
+   "sampleTitles": [
+    "Sensor Light",
+    "Bathroom Humidity Exhaust Fan",
+    "Smart Light"
+   ]
+  },
+  {
+   "rank": 18,
+   "size": 3,
+   "platforms": {
+    "claude-code-workflows": 3
+   },
+   "oracleKinds": {
+    "none": 3
+   },
+   "oracleBearing": 0,
+   "nodesMinMedMax": [
+    5,
+    6,
+    6
+   ],
+   "diameter": 0.215,
+   "pairsAtTheta": 3,
+   "pairsLineageRelaxed": 0,
+   "pairsNotLinked": 0,
+   "approxDistance": false,
+   "sampleIds": [
+    "claude-code-workflows:claude-session/workflows/scripts/c0-preflight-wf_d35b46dd-974.js",
+    "claude-code-workflows:claude-session/workflows/scripts/design-review-c-wf_1ab0b3e4-a4d.js",
+    "claude-code-workflows:claude-session/workflows/scripts/phase0-unblock-wf_1095386b-893.js"
+   ],
+   "sampleTitles": [
+    "Preflight: two live construction smokes and a harness review in parall",
+    "Three independent design-review lanes in parallel: efficiency study, r",
+    "Three disjoint workstreams in parallel, then a read-only verifier over"
+   ]
+  },
+  {
+   "rank": 19,
+   "size": 2,
+   "platforms": {
+    "coze": 2
+   },
+   "oracleKinds": {
+    "test-profile": 2
+   },
+   "oracleBearing": 2,
+   "nodesMinMedMax": [
+    8,
+    9,
+    9
+   ],
+   "diameter": 0.222,
+   "pairsAtTheta": 1,
+   "pairsLineageRelaxed": 0,
+   "pairsNotLinked": 0,
+   "approxDistance": false,
+   "sampleIds": [
+    "coze:loop-selector-variable-assign-text-processor",
+    "coze:subworkflow-bottom-workflow"
+   ],
+   "sampleTitles": [
+    "Coze Studio canvas fixture: loop_selector_variable_assign_text_process",
+    "Coze Studio canvas fixture: subworkflow/bottom_workflow"
+   ]
+  },
+  {
+   "rank": 20,
+   "size": 2,
+   "platforms": {
+    "n8n": 2
+   },
+   "oracleKinds": {
+    "mocked-execution": 2
+   },
+   "oracleBearing": 2,
+   "nodesMinMedMax": [
+    42,
+    46,
+    46
+   ],
+   "diameter": 0.215,
+   "pairsAtTheta": 1,
+   "pairsLineageRelaxed": 0,
+   "pairsNotLinked": 0,
+   "approxDistance": false,
+   "sampleIds": [
+    "n8n:12834",
+    "n8n:12858"
+   ],
+   "sampleTitles": [
+    "💅 AI Agents Generate Content & Automate Posting for Beauty Salon Soci",
+    "💾 Generate Blog Posts on Autopilot with GPT‑5, Tavily and WordPress"
+   ]
+  }
+ ],
+ "eligibleFamilies": [
+  {
+   "rank": 1,
+   "size": 4,
+   "platforms": {
+    "wdl": 4
+   },
+   "oracleKinds": {
+    "output-equivalence": 4
+   },
+   "oracleBearing": 4,
+   "nodesMinMedMax": [
+    39,
+    46,
+    47
+   ],
+   "diameter": 0.174,
+   "pairsAtTheta": 6,
+   "pairsLineageRelaxed": 0,
+   "pairsNotLinked": 0,
+   "approxDistance": false,
+   "sampleIds": [
+    "wdl:broadinstitute/warp/pipelines/wdl/dna_seq/germline/single_sample/exome/ExomeGermlineSi",
+    "wdl:broadinstitute/warp/pipelines/wdl/dna_seq/germline/single_sample/wgs/WholeGenomeGermli",
+    "wdl:broadinstitute/warp/pipelines/wdl/reprocessing/exome/ExomeReprocessing.wdl",
+    "wdl:broadinstitute/warp/pipelines/wdl/reprocessing/wgs/WholeGenomeReprocessing.wdl"
+   ],
+   "sampleTitles": [
+    "ExomeGermlineSingleSample (broadinstitute/warp)",
+    "WholeGenomeGermlineSingleSample (broadinstitute/warp)",
+    "ExomeReprocessing (broadinstitute/warp)"
+   ]
+  },
+  {
+   "rank": 2,
+   "size": 3,
+   "platforms": {
+    "airflow": 3
+   },
+   "oracleKinds": {
+    "test-profile": 3
+   },
+   "oracleBearing": 3,
+   "nodesMinMedMax": [
+    12,
+    12,
+    13
+   ],
+   "diameter": 0.312,
+   "pairsAtTheta": 2,
+   "pairsLineageRelaxed": 0,
+   "pairsNotLinked": 0,
+   "approxDistance": false,
+   "sampleIds": [
+    "airflow:apache-airflow-providers-amazon/tests/system/amazon/aws/example_athena#example_ath",
+    "airflow:apache-airflow-providers-amazon/tests/system/amazon/aws/example_glue_data_quality#",
+    "airflow:apache-airflow-providers-amazon/tests/system/amazon/aws/example_glue_data_quality_"
+   ],
+   "sampleTitles": [
+    "example_athena (provider:amazon)",
+    "example_glue_data_quality (provider:amazon)",
+    "example_glue_data_quality_with_recommendation (provider:amazon)"
+   ]
+  },
+  {
+   "rank": 3,
+   "size": 3,
+   "platforms": {
+    "kubeflow": 3
+   },
+   "oracleKinds": {
+    "output-equivalence": 3
+   },
+   "oracleBearing": 3,
+   "nodesMinMedMax": [
+    7,
+    7,
+    8
+   ],
+   "diameter": 0.387,
+   "pairsAtTheta": 2,
+   "pairsLineageRelaxed": 1,
+   "pairsNotLinked": 0,
+   "approxDistance": false,
+   "sampleIds": [
+    "kubeflow:valid/critical/flip_coin",
+    "kubeflow:valid/essential/pipeline_with_nested_conditions",
+    "kubeflow:valid/essential/pipeline_with_nested_conditions_yaml"
+   ],
+   "sampleTitles": [
+    "conditional-execution-pipeline (KFP compiled pipeline)",
+    "nested-conditions-pipeline (KFP compiled pipeline)",
+    "pipeline-with-nested-conditions-yaml (KFP compiled pipeline)"
+   ]
+  },
+  {
+   "rank": 4,
+   "size": 3,
+   "platforms": {
+    "galaxy": 3
+   },
+   "oracleKinds": {
+    "test-profile": 3
+   },
+   "oracleBearing": 3,
+   "nodesMinMedMax": [
+    56,
+    63,
+    65
+   ],
+   "diameter": 0.256,
+   "pairsAtTheta": 2,
+   "pairsLineageRelaxed": 0,
+   "pairsNotLinked": 0,
+   "approxDistance": false,
+   "sampleIds": [
+    "galaxy:iwc/Assembly-Hifi-Trio-phasing-VGP5/Assembly-Hifi-Trio-phasing-VGP5",
+    "galaxy:iwc/Assembly-Hifi-only-VGP3/Assembly-Hifi-only-VGP3",
+    "galaxy:iwc/Purge-duplicates-one-haplotype-VGP6b/Purging-duplicates-one-haplotype-VGP6b"
+   ],
+   "sampleTitles": [
+    "Genome Assembly with Pacbio Hifi reads and Trio data for phasing - VGP",
+    "Genome Assembly from Hifi reads - VGP3 (IWC VGP-assembly-v2, v0.3.7)",
+    "Purging duplicates in one haplotype VGP6b (IWC VGP-assembly-v2, v0.8.5"
+   ]
+  }
+ ],
+ "pilots": [
+  {
+   "id": "n8n:12679",
+   "found": true,
+   "nodes": 38,
+   "oracle": "none",
+   "familySize": 1,
+   "familyOracleBearing": 0,
+   "familyPlatforms": [
+    "n8n"
+   ]
+  },
+  {
+   "id": "n8n:20281",
+   "found": true,
+   "nodes": 48,
+   "oracle": "none",
+   "familySize": 1,
+   "familyOracleBearing": 0,
+   "familyPlatforms": [
+    "n8n"
+   ]
+  },
+  {
+   "id": "home-assistant:CCOSTAN/Home-AssistantConfig/config/automation/Speech/garbage_day_garage.yaml#0",
+   "found": true,
+   "nodes": 20,
+   "oracle": "none",
+   "familySize": 1,
+   "familyOracleBearing": 0,
+   "familyPlatforms": [
+    "home-assistant"
+   ]
+  },
+  {
+   "id": "galaxy:iwc/variation-reporting/Generic-variation-analysis-reporting",
+   "found": true,
+   "nodes": 31,
+   "oracle": "output-equivalence",
+   "familySize": 1,
+   "familyOracleBearing": 1,
+   "familyPlatforms": [
+    "galaxy"
+   ]
+  },
+  {
+   "id": "github-actions:shafthq/shaft_engine/.github/workflows/update-selenium-grid-versions.yml",
+   "found": true,
+   "nodes": 8,
+   "oracle": "none",
+   "familySize": 3,
+   "familyOracleBearing": 0,
+   "familyPlatforms": [
+    "github-actions"
+   ]
+  }
+ ],
+ "killRule": {
+  "text": "fewer than 10 families with >=3 variants and shipped oracles",
+  "primaryDefinition": "F_LS single linkage, theta 0.25, >=3 members with an oracle",
+  "count": 4,
+  "fires": true
+ }
+}

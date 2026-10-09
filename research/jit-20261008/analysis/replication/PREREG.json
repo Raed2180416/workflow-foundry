@@ -1,0 +1,54 @@
+{
+ "note": "Frozen after the dev-seed iteration described in README \"Honest limits\": the I-tier normalisations were developed while looking at dev seeds 0-27 results, so every figure is in-sample for the declared normalisation. No held-out seed (>= 7001) was run.",
+ "frozenOn": "2026-10-09",
+ "acceptanceRule": "a design is accepted iff, on every evaluation case of a battery, fitness >= tau and precision >= tau; a design is accepted overall iff accepted on every seed it was run on",
+ "tau": 1,
+ "tauSensitivities": [
+  0.95,
+  "share-of-cases-exact >= 0.9"
+ ],
+ "alignment": "per case and stream: bag matching with time tolerance for timestamped streams, longest-common-subsequence for untimed streams (order mode auto / bag / seq declared per tier); unit-cost log and model moves",
+ "fitness": "matched / |expected|",
+ "precision": "matched / |observed|",
+ "tiers": {
+  "G": "item-agnostic: text normalisation only (quotes, whitespace), +-1 s where timed, raw keys",
+  "I": "item-declared normalisation, one file per item under normalisation/"
+ },
+ "seeds": {
+  "galaxy": "0-4",
+  "n8n12679": "0-4",
+  "n8n20281": "0-4",
+  "ha": "0-9",
+  "gha": "0-27"
+ },
+ "census": {
+  "thetas": [
+   0.15,
+   0.25,
+   0.35
+  ],
+  "primaryTheta": 0.25,
+  "minNodes": 5,
+  "lineageRelaxed": "2 x theta",
+  "primaryOracleCriterion": ">=3 members with oracle.kind != none"
+ },
+ "killRules": {
+  "row17": "evaluator misclassifies more designs than oracle v1 (29), or cannot express a pilot's effects",
+  "row33": "fewer than 10 families with >=3 variants and shipped oracles"
+ },
+ "sha256": {
+  "lib/conformance.mjs": "34187857c8f2e7a3b537c448393c0f1047f04fddc0e8ee993f0e921829c9df44",
+  "normalisation/galaxy.mjs": "307c14f8e1703086c3adca9b88231244ff52466bd2110f0388bdc40828f9eee1",
+  "adapters/galaxy.mjs": "482d819186929fd87e4ef0373f6601af17e142f7f6bcfb136ee013772f586a91",
+  "normalisation/n8n12679.mjs": "86e6e62d6037dbb3a2c10982f1ccc9a6a0ec382e85742805280dde8ae551847e",
+  "adapters/n8n12679.mjs": "d78c21b1a772b158fc8be3e025c1293f8d3dd0e866f323a781246b7a3a231776",
+  "normalisation/n8n20281.mjs": "1eedb0c0ed4ac4b8cc6d62c12d05678419d487a668bb8824b00af7adc8731bd5",
+  "adapters/n8n20281.mjs": "334ec5ccb3312db3002ab18e2c329a35f2b7e390480f261b1eb996096fa3a304",
+  "normalisation/ha.mjs": "4282e15716ccb85e74642403cef7acb637a2ba6d3198f643eb0439e7f8e74382",
+  "adapters/ha.mjs": "ef2ab7d13a18ba825fcf434ff835bd884b76036f8b974e16a1f2e7636e94dbe4",
+  "normalisation/gha.mjs": "dead60cac3eb39a646a6d2f3f02c578bd66efba07aa64fb2fb773fcd9b333a1d",
+  "adapters/gha.mjs": "dca12fa769292fb4f0e075714a8b433186c1ba369d62ffaa1fcbbae0ac52e002",
+  "census/lib.mjs": "9c97c0202b674f4f4815fd23ca6d833d70aaefcce6c7344582acaada8f0b0b7b",
+  "census/census.mjs": "191e9a0cdae317b4047445b0da3986eede8be515fcfda82d00711d1dd4974786"
+ }
+}
