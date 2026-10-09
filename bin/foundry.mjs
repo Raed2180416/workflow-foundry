@@ -10,6 +10,7 @@ import { install, uninstall } from '../src/install.mjs';
 import { claudeHookResult } from '../src/hooks.mjs';
 import { errorData, FoundryError, checkData } from '../src/data.mjs';
 import { anchorInWorkspace, appendAnchor } from '../src/audit.mjs';
+import { exitCodeOf } from '../src/control.mjs';
 
 // --append-anchor: append to the chained anchor file (src/audit.mjs); an unreadable or locked file is reported, not thrown.
 function anchorTo(file, anchor) {
@@ -36,6 +37,7 @@ const definitions = {
   , 'tick-interval': { type: 'string' }
   , strict: { type: 'boolean' }, 'fail-on': { type: 'string' }
   , 'check-anchors': { type: 'string' }, 'append-anchor': { type: 'string' }, 'expect-head': { type: 'string' }, 'require-bound': { type: 'boolean' }, journal: { type: 'string' }
+  , reason: { type: 'string' }, grace: { type: 'string' }, force: { type: 'boolean' }, 'executing-only': { type: 'boolean' }
 };
 // Ctrl-C or SIGTERM while a command executes runs in this process. The command stops as a crash would (each run stays resumable with
 // `foundry resume RUN`; a non-idempotent effect that was in flight is recorded uncertain on resume), but it first aborts every execution
@@ -58,12 +60,16 @@ function checkModelArguments(command, args) {
   const misplaced = [...runOnly.filter(name => args[name] !== undefined && command !== 'run'),
     ...(args.policy !== undefined && !modelCommands.has(command) && command !== 'validate' && command !== 'lint' ? ['policy'] : []), ...(args['tick-interval'] !== undefined && command !== 'serve' ? ['tick-interval'] : []),
     ...(args.strict !== undefined && command !== 'validate' ? ['strict'] : []), ...(args['fail-on'] !== undefined && command !== 'lint' ? ['fail-on'] : []),
-    ...['check-anchors', 'expect-head', 'require-bound', 'journal'].filter(name => args[name] !== undefined && command !== 'verify-run'),
+    ...['check-anchors', 'expect-head', 'require-bound'].filter(name => args[name] !== undefined && command !== 'verify-run'),
+    ...(args.journal !== undefined && !['verify-run', 'cancel', 'stop-all'].includes(command) ? ['journal'] : []),
+    ...['reason', 'grace'].filter(name => args[name] !== undefined && !['cancel', 'stop-all'].includes(command)),
+    ...(args.force !== undefined && command !== 'cancel' ? ['force'] : []), ...(args['executing-only'] !== undefined && command !== 'stop-all' ? ['executing-only'] : []),
     ...(args['append-anchor'] !== undefined && !['verify-run', 'run', 'resume'].includes(command) ? ['append-anchor'] : [])];
   if (misplaced.length) throw new FoundryError('CLI_ARGUMENT', `--${misplaced[0]} is not supported by ${command}. Use --help.`);
   if (args['max-cost'] !== undefined && !/^(0|[1-9][0-9]{0,6})(\.[0-9]{1,6})?$/.test(args['max-cost'])) throw new FoundryError('CLI_ARGUMENT', '--max-cost must be a non-negative decimal number of USD');
   if (args['fail-on'] !== undefined && !['error', 'warning'].includes(args['fail-on'])) throw new FoundryError('CLI_ARGUMENT', '--fail-on must be error or warning');
   if (args['tick-interval'] !== undefined && !/^(0|[1-9][0-9]{0,4})$/.test(args['tick-interval'])) throw new FoundryError('CLI_ARGUMENT', '--tick-interval must be a whole number of seconds (0 turns the timer scan off)');
+  if (args.grace !== undefined && !/^(0|[1-9][0-9]{0,3})(\.[0-9]{1,3})?$/.test(args.grace)) throw new FoundryError('CLI_ARGUMENT', '--grace must be a number of seconds from 0 to 9999 (0 does not wait)');
 }
 // The host (this CLI), never Foundry itself, wires a ModelPort: the owner policy, a journal in the workspace
 // store and the policy's providers. A run in replay mode registers no provider, so it cannot reach a live model.
@@ -172,6 +178,13 @@ const usage = `Workflow Foundry 0.1.0 — experimental, source/evidence qualifie
 `  foundry inspect RUN_ID --workspace PATH  (the run, its verified events and its chain-head anchor)\n` +
 `  foundry verify-run RUN_ID --workspace PATH [--check-anchors FILE] [--append-anchor FILE] [--expect-head SEQ:HASH] [--require-bound] [--journal FILE]\n` +
 `      (recompute what the run's hash chain binds: journal rows, decisions, verdict inputs, transcripts; exit 1 on any edit)\n` +
+`  foundry cancel RUN_ID [--reason TEXT] [--grace SECONDS] [--force] [--journal FILE] --workspace PATH\n` +
+`      (stop a run, whichever process executes it: its model calls and sandboxes are aborted and the cancelled verdict is recorded; the run is\n` +
+`       closed, never resumed. A run that has finished is left alone. After --grace seconds (default 10) a live owner is reported, or with\n` +
+`       --force killed with everything below it. Exit 0 stopped or nothing to stop, 2 an effect of unknown outcome, 3 not stopped)\n` +
+`  foundry stop-all [--reason TEXT] [--grace SECONDS] [--executing-only] [--journal FILE] --workspace PATH\n` +
+`      (cancel every run of the workspace that has not finished, executing or parked on a timer, a human or an approval, so no timer restarts\n` +
+`       it; an owner that does not stop within --grace is killed with its process tree; never signals itself or its ancestors)\n` +
 `  foundry migrate-store --workspace PATH  (split run records written by the earlier whole-run store into per-node rows; they also load, and migrate on their first write, without this)\n` +
 `  foundry resume RUN_ID [--policy MODEL_POLICY.json] [--append-anchor FILE] --workspace PATH\n` +
 `  foundry tick [--policy MODEL_POLICY.json] --workspace PATH  (resume runs whose wait timers are due)\n` +
@@ -293,6 +306,12 @@ async function main() {
     } finally { store.close(); journal?.close(); }
     return;
   }
+  if (command === 'cancel' || command === 'stop-all') {
+    if (positionals.length !== (command === 'cancel' ? 2 : 1) || (command === 'cancel' && !item?.trim())) throw new FoundryError('CLI_ARGUMENT', command === 'cancel' ? 'cancel requires exactly one RUN_ID. Use --help.' : 'stop-all takes no argument besides its options. Use --help.');
+    // Never create a workspace just to find nothing to stop in it.
+    if (!existsSync(path.join(workspace, '.foundry', 'foundry.sqlite'))) throw new FoundryError('NO_STATE', 'No Foundry state in this workspace; pass --workspace PATH');
+    if (args.journal !== undefined && !existsSync(args.journal)) throw new FoundryError('JOURNAL_FILE', `Journal database not found: ${args.journal}`);
+  }
   const components = args.components ? await loadComponents(args.components) : null;
   const registry = components?.registry ?? createDefaultRegistry();
   let foundry, persistent = false;
@@ -342,6 +361,17 @@ async function main() {
     foundry = new Foundry(workspace, { registry, ...(host ? { modelPolicy: host.modelPolicy, models: host.models } : {}), ...(maxCost === undefined ? {} : { policy: { maxCost } }) });
     const halt = new AbortController();
     if (executing.has(command)) interruptOnSignal(foundry, halt);
+    // Control surface (src/control.mjs). The run's own process records its cancelled verdict; a run nothing executes is closed here.
+    if (command === 'cancel' || command === 'stop-all') {
+      let journalDb;
+      try {
+        if (args.journal !== undefined) { const { DatabaseSync } = await import('node:sqlite'); journalDb = new DatabaseSync(path.resolve(args.journal), { readOnly: true }); }
+        const options = { actor: 'cli', reason: args.reason ?? '', graceMs: Math.round(Number(args.grace ?? 10) * 1000), ...(journalDb ? { journalDb } : {}) };
+        const result = command === 'cancel' ? await foundry.cancel(item, { ...options, force: !!args.force }) : await foundry.stopAll({ ...options, executingOnly: !!args['executing-only'] });
+        print(result); process.exitCode = exitCodeOf(result);
+      } finally { journalDb?.close(); }
+      return;
+    }
     // Ordinary routes retain their existing behavior for ordinary requests.
     // Outcome descendants require the coordinator's live evidence checks.
     if (['propose', 'apply', 'prompt', 'generate'].includes(command) && !args['outcome-repair']) {
@@ -479,6 +509,7 @@ async function main() {
       print({ ...foundry.publicRun(result), events: log, anchor, ...(anchored ? { anchored } : {}) });
       if (result.status === 'failed' || anchored?.error) process.exitCode = 1;
       else if (result.status === 'uncertain') process.exitCode = 2;
+      else if (result.status === 'cancelled') process.exitCode = 3; // stopped by `foundry cancel` or stop-all: the run is closed, not completed
       return;
     }
     throw new FoundryError('COMMAND', `Unknown command: ${command}. Use --help.`);

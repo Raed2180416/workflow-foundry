@@ -9,6 +9,7 @@ import { requireWorkflow, validateWorkflow, workflowSchema } from './validate.mj
 import { checkData, clone, digest, errorData, FoundryError } from './data.mjs';
 import { TrialRunner } from './trials.mjs';
 import { loadPolicy } from './models/policy.mjs';
+import { cancelRun, stopAll } from './control.mjs';
 
 export const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const skillRoot = path.join(packageRoot, 'skills');
@@ -124,6 +125,12 @@ export class Foundry {
     if (!active) throw new FoundryError('NOT_ACTIVE', 'This server does not own an active execution of that run');
     active.controller.abort(); return { id, cancellationRequested: true, completed: false };
   }
+  // Cancel one run, whichever process executes it (src/control.mjs): a durable request in the store, the owner aborts and records the cancelled
+  // verdict, a run nothing executes is closed here; `force` kills an owner that does not stop within graceMs. cancelRun above is only the
+  // synchronous in-process abort.
+  cancel(id, options = {}) { return cancelRun(this, id, options); }
+  // Cancel every run that has not reached a final status (src/control.mjs).
+  stopAll(options = {}) { return stopAll(this, options); }
   designContext({ requestId, task, domain, includeSkills = true } = {}) {
     if (requestId && task) throw new FoundryError('DESIGN_INPUT', 'Use an existing request or a new task, not both');
     const request = requestId ? this.store.request(requestId) : null;

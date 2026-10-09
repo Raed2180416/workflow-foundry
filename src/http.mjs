@@ -62,6 +62,11 @@ export async function serveHttp(foundry, { port = 4177, host = '127.0.0.1', tick
         }
         if (parts.length === 2 && parts[1] === 'repair-requests') return json(201, foundry.requestRepair({ requestId: data.requestId, failedRunId: data.failedRunId, expectedHash: data.expectedHash, diagnostic: data.diagnostic ?? '' }));
         if (parts.length === 2 && parts[1] === 'delivery') return json(200, foundry.delivery({ requestId: data.requestId, proposalId: data.proposalId, runId: data.runId }));
+        // Cancel every run that has not finished; an executing run is asked to stop and records its own verdict. Nothing is killed over HTTP.
+        if (parts.length === 2 && parts[1] === 'stop-all') {
+          const result = await foundry.stopAll({ actor: 'ui', reason: typeof data.reason === 'string' ? data.reason : '', graceMs: 0, escalate: false, executingOnly: data.executingOnly === true });
+          return json(result.summary.notStopped ? 202 : 200, result);
+        }
         if (parts.length === 4 && parts[1] === 'generation' && parts[3] === 'cancel') {
           if (!foundry.generator) throw new FoundryError('GENERATOR_UNAVAILABLE', 'No model provider is enabled in this server');
           foundry.generator.cancel(parts[2]); return json(202, { id: parts[2], cancellationRequested: true });
@@ -84,7 +89,13 @@ export async function serveHttp(foundry, { port = 4177, host = '127.0.0.1', tick
             return json(202, foundry.inspectRun(parts[2]));
           }
           if (parts[3] === 'resume') { foundry.startRun(parts[2]).catch(error => console.error(error.message)); return json(202, { id: parts[2], resumeRequested: true }); }
-          if (parts[3] === 'cancel') return json(202, foundry.cancelRun(parts[2]));
+          // Durable cancellation (src/control.mjs): works for a run another process executes, closes a run nothing executes, and is a clear
+          // no-op for one that has finished. It does not wait for the owner (graceMs 0) or kill anything over HTTP: the owner records the
+          // cancelled verdict when it has aborted its work, and the page's refresh shows it.
+          if (parts[3] === 'cancel') {
+            const result = await foundry.cancel(parts[2], { actor: 'ui', reason: typeof data.reason === 'string' ? data.reason : '', graceMs: 0 });
+            return json(result.noop || ['cancelled', 'uncertain'].includes(result.outcome) ? 200 : 202, { id: parts[2], cancellationRequested: !result.noop, completed: result.outcome !== 'requested', ...result });
+          }
         }
       }
       if (req.method === 'GET' && ['/', '/index.html', '/app.js', '/style.css'].includes(url.pathname)) {
