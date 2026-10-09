@@ -216,7 +216,7 @@ in the task text [M: design].
 
 ### 4.3 Candidate generation (code; at most 20 candidates; $0)
 
-1. **Hard filters.** Tier available on this host (§L1 §7), scope (L4 only from the same project), status ∈ {kept,
+1. **Hard filters.** Tier available on this host (L1-PATTERNS §7), scope (L4 only from the same project), status ∈ {kept,
    shadow} for L2/L4, not revoked, effect classes allowed by the host's capability policy (ROADMAP §2.8 filters).
 2. **Feature rules.** Each card's tags against `shape/1`: a pattern enters if any tag fires.
 3. **BM25** over index lines + card `when[].instructions` + (L2/L4) `taskTemplate`, against the TaskSpec. Embedding
