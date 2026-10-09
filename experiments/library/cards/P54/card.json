@@ -27,7 +27,7 @@
     { "text": "Depth 3 at most.", "code": "DEPTH" }
   ],
   "rules": [
-    { "code": "CALLS", "hashSlot": "REF", "budgetSlot": "CHILD_BUDGET", "concurrencySlot": "CONCURRENCY", "argSlot": "ARG", "readsSlot": "READS", "onRefuseSlot": "ON_REFUSE" }
+    { "code": "CALLS", "hashSlot": "REF", "argsSlot": "PARTS", "budgetSlot": "CHILD_BUDGET", "concurrencySlot": "CONCURRENCY", "argSlot": "ARG", "readsSlot": "READS", "onRefuseSlot": "ON_REFUSE" }
   ],
   "minedFrom": ["n8n:execute-workflow", "langgraph:subgraphs", "dify:workflow-as-tool"],
   "companions": [{ "id": "P15", "why": "a quorum over the parts that came back" }],
