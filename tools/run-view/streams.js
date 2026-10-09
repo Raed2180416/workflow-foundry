@@ -202,12 +202,16 @@ const iconsOf = events => {
 function cellLabel(E, a, i) {
   const r = a.byIdx.get(i), t = E.tasks[i], where = `${a.label}, task ${i}${t ? ` (d${t.difficulty ?? '?'} seed ${t.seed ?? '?'})` : ''}`;
   if (r) return `${where}: ${r.pass ? 'pass' : 'fail'}, delivered by ${pick(DELIVERED, r.delivered, [0, r.delivered])[1]}${r.version != null ? ` v${r.version}` : ''}, ${cost(r.costUsd)}${iconsOf(r.events).length ? `; ${iconsOf(r.events).map(k => ICON[k][2]).join('; ')}` : ''}`;
-  if (a.openIdx.has(i)) return `${where}: started, no row yet (${a.openIdx.get(i).kinds.join(', ') || 'spend only'})`;
+  if (a.openIdx.has(i)) { const k = a.openIdx.get(i).kinds; return `${where}: ${k.at(-1) === 'fault' ? 'stopped by an environment fault' : 'started'}, no row yet (${k.join(', ') || 'spend only'})`; }
   return `${where}: not run yet`;
 }
 function laneStatus(E, a) {
   const last = a.rows.at(-1), open = a.inProgress?.at(-1);
-  if (open) return `task ${open.idx} open (no row yet)`;
+  if (open) {
+    // an environment fault stops a JIT stream (a resume continues it at that task); the stream writes nothing after the fault until then
+    const f = open.kinds.at(-1) === 'fault' ? (a.faults ?? []).filter(x => x.idx === open.idx).at(-1) : null;
+    return f || open.kinds.at(-1) === 'fault' ? `stopped at ${open.idx}: fault${f ? ` in ${f.component} ${f.code ?? ''}` : ''}`.trim() : `task ${open.idx} open (no row yet)`;
+  }
   if (a.rows.length >= E.taskCount) return 'finished';
   const next = last ? last.idx + 1 : 0;
   if (a.kind === 'jit' && last?.state?.pendingCompile && next >= (a.def?.jit?.warmup ?? 0)) return `next ${next}: compiles first (${last.state.pendingCompile})`;
