@@ -683,7 +683,9 @@ export async function tierdownE2E({ armDir, version, judge, tiers, limit = null,
     spent += rc.costUsd ?? 0;
     // A run the session cap cut short (a budget below the arm's per-task budget that the gateway refused or that did not
     // deliver, or a call the cap wrapper refused) is not a measurement of the solver: it is excluded from the comparison.
-    const truncated = capRefused > refusedBefore || (budget < fullBudget - 1e-9 && (rc.status !== 'ok' || (rc.meta?.refusals?.GATEWAY_BUDGET ?? 0) > 0));
+    // Only a budget-shaped stop counts as cut short by the cap: a refusal at the gateway or a flow budget deopt. A guard,
+    // invariant or judge deopt (or a crash) under a reduced budget is the variant's own outcome and is compared like any other.
+    const truncated = capRefused > refusedBefore || (budget < fullBudget - 1e-9 && ((rc.meta?.refusals?.GATEWAY_BUDGET ?? 0) > 0 || rc.deopt?.kind === 'budget'));
     log(`#${t.idx} ${side}: ${rc.status}${truncated ? ' (cut short by the cap)' : ''} $${(rc.costUsd ?? 0).toFixed(4)} (spent $${spent.toFixed(4)} of $${cap})`);
     return { status: rc.status, output: rc.output ?? null, deopt: rc.deopt ?? null, trace: rc.trace ?? [], costUsd: round(rc.costUsd ?? 0), costUnknown: !!rc.costUnknown, source: 'fresh', dir: workdir,
       perTaskUsd: budget, error: rc.error ?? null, truncated };

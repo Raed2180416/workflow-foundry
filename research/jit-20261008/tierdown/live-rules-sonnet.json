@@ -1,0 +1,910 @@
+{
+ "kind": "tierdown-e2e",
+ "at": "2026-10-09T03:47:11.841Z",
+ "label": "live-rules-sonnet",
+ "outDir": "/var/tmp/foundry-work/jit/tierdown-e2e/live-rules-sonnet",
+ "arm": {
+  "experiment": "jit-dev-records-1",
+  "slug": "jit-claude-sonnet-5-5--claude-haiku-5-5",
+  "spec": "jit:claude-sonnet-5-5/claude-haiku-5-5",
+  "familyId": "records",
+  "split": "dev",
+  "workDir": "/var/tmp/foundry-work/jit/jit-dev-records-1/jit-claude-sonnet-5-5--claude-haiku-5-5",
+  "runDir": "/home/user/workflow-foundry/experiments/runs/jit/jit-dev-records-1/jit-claude-sonnet-5-5--claude-haiku-5-5"
+ },
+ "version": {
+  "name": "v1-haiku55",
+  "path": "/home/user/workflow-foundry/experiments/runs/jit/jit-dev-records-1/jit-claude-sonnet-5-5--claude-haiku-5-5/versions/v1-haiku55/solve.mjs",
+  "sha256": "3d8d9cc29cd915a1d6abeca009f3eb51e644e6d9c8684d9279e4bbdd2e2054e8",
+  "note": null
+ },
+ "rewrite": {
+  "judge": "rules",
+  "pattern": "rules",
+  "scope": "one judge",
+  "sites": [
+   {
+    "line": 293,
+    "nameText": "'rules'",
+    "kind": "literal"
+   }
+  ],
+  "oldTiers": [
+   "claude-opus-5-5"
+  ],
+  "newTiers": [
+   "claude-sonnet-5-5"
+  ],
+  "diff": [
+   {
+    "line": 294,
+    "before": "  tiers: ['claude-opus-5-5'], system: RULES_SYSTEM, prompt: RULES_PROMPT, schema: rulesSchema,",
+    "after": "  tiers: ['claude-sonnet-5-5'], system: RULES_SYSTEM, prompt: RULES_PROMPT, schema: rulesSchema,",
+    "was": "['claude-opus-5-5']",
+    "wasValues": [
+     "claude-opus-5-5"
+    ],
+    "binding": null
+   }
+  ],
+  "unified": "@@ line 294 @@\n-  tiers: ['claude-opus-5-5'], system: RULES_SYSTEM, prompt: RULES_PROMPT, schema: rulesSchema,\n+  tiers: ['claude-sonnet-5-5'], system: RULES_SYSTEM, prompt: RULES_PROMPT, schema: rulesSchema,",
+  "originalSha256": "3d8d9cc29cd915a1d6abeca009f3eb51e644e6d9c8684d9279e4bbdd2e2054e8",
+  "variantSha256": "a2a1a87b65c11cec3fef73ecc7296bd06453079a5e8a8e48084d6f2693fd549a",
+  "otherJudges": [
+   {
+    "pattern": "countries",
+    "line": 319,
+    "tiers": [
+     "claude-haiku-5-5",
+     "claude-opus-5-5"
+    ]
+   },
+   {
+    "pattern": "vendex-*",
+    "line": 387,
+    "tiers": [
+     "claude-haiku-5-5",
+     "claude-opus-5-5"
+    ]
+   }
+  ],
+  "otherPatterns": [
+   "countries",
+   "vendex-*"
+  ]
+ },
+ "options": {
+  "judge": "rules",
+  "tiers": [
+   "claude-sonnet-5-5"
+  ],
+  "limit": 8,
+  "capUsd": 0.75,
+  "rerunOriginal": false,
+  "allTasks": false,
+  "dry": false
+ },
+ "spentUsd": 0.193131,
+ "stopped": null,
+ "tasks": [
+  {
+   "idx": 3,
+   "taskKey": "records:dev:d3:s204",
+   "seed": 204,
+   "difficulty": 3,
+   "dir": "/var/tmp/foundry-work/jit/jit-dev-records-1/jit-claude-sonnet-5-5--claude-haiku-5-5/i003-compiled-a4e65e",
+   "recordedStatus": "ok",
+   "originalSource": "archived",
+   "original": {
+    "status": "ok",
+    "source": "archived",
+    "dir": "/var/tmp/foundry-work/jit/jit-dev-records-1/jit-claude-sonnet-5-5--claude-haiku-5-5/i003-compiled-a4e65e",
+    "costUsd": 0.038022,
+    "costUnknown": false,
+    "deopt": null,
+    "error": null,
+    "perTaskUsd": null
+   },
+   "variant": {
+    "status": "ok",
+    "source": "fresh",
+    "dir": "/var/tmp/foundry-work/jit/tierdown-e2e/live-rules-sonnet/runs/i003-variant",
+    "costUsd": 0.024275,
+    "costUnknown": false,
+    "deopt": null,
+    "error": null,
+    "perTaskUsd": 0.75
+   },
+   "compare": {
+    "statuses": {
+     "original": "ok",
+     "variant": "ok"
+    },
+    "bothOk": true,
+    "exact": true,
+    "exactUnordered": true,
+    "partial": 1,
+    "diffs": [],
+    "judge": {
+     "original": {
+      "calls": 1,
+      "ok": 1,
+      "costUsd": 0.034218,
+      "tiersUsed": {
+       "claude-opus-5-5": 1
+      },
+      "escalations": 0,
+      "offList": 0
+     },
+     "variant": {
+      "calls": 1,
+      "ok": 1,
+      "costUsd": 0.021889,
+      "tiersUsed": {
+       "claude-sonnet-5-5": 1
+      },
+      "escalations": 0,
+      "offList": 0
+     }
+    },
+    "costUsd": {
+     "original": 0.038022,
+     "variant": 0.024275
+    },
+    "judgeUsd": {
+     "original": 0.034218,
+     "variant": 0.021889
+    }
+   },
+   "oracle": {
+    "original": {
+     "pass": true,
+     "score": 1
+    },
+    "variant": {
+     "pass": true,
+     "score": 1
+    }
+   }
+  },
+  {
+   "idx": 4,
+   "taskKey": "records:dev:d3:s205",
+   "seed": 205,
+   "difficulty": 3,
+   "dir": "/var/tmp/foundry-work/jit/jit-dev-records-1/jit-claude-sonnet-5-5--claude-haiku-5-5/i004-compiled-77ab0c",
+   "recordedStatus": "ok",
+   "originalSource": "archived",
+   "original": {
+    "status": "ok",
+    "source": "archived",
+    "dir": "/var/tmp/foundry-work/jit/jit-dev-records-1/jit-claude-sonnet-5-5--claude-haiku-5-5/i004-compiled-77ab0c",
+    "costUsd": 0.038949,
+    "costUnknown": false,
+    "deopt": null,
+    "error": null,
+    "perTaskUsd": null
+   },
+   "variant": {
+    "status": "ok",
+    "source": "fresh",
+    "dir": "/var/tmp/foundry-work/jit/tierdown-e2e/live-rules-sonnet/runs/i004-variant",
+    "costUsd": 0.018719,
+    "costUnknown": false,
+    "deopt": null,
+    "error": null,
+    "perTaskUsd": 0.725724735
+   },
+   "compare": {
+    "statuses": {
+     "original": "ok",
+     "variant": "ok"
+    },
+    "bothOk": true,
+    "exact": true,
+    "exactUnordered": true,
+    "partial": 1,
+    "diffs": [],
+    "judge": {
+     "original": {
+      "calls": 1,
+      "ok": 1,
+      "costUsd": 0.034143,
+      "tiersUsed": {
+       "claude-opus-5-5": 1
+      },
+      "escalations": 0,
+      "offList": 0
+     },
+     "variant": {
+      "calls": 1,
+      "ok": 1,
+      "costUsd": 0.015279,
+      "tiersUsed": {
+       "claude-sonnet-5-5": 1
+      },
+      "escalations": 0,
+      "offList": 0
+     }
+    },
+    "costUsd": {
+     "original": 0.038949,
+     "variant": 0.018719
+    },
+    "judgeUsd": {
+     "original": 0.034143,
+     "variant": 0.015279
+    }
+   },
+   "oracle": {
+    "original": {
+     "pass": false,
+     "score": 0.924043
+    },
+    "variant": {
+     "pass": false,
+     "score": 0.924043
+    }
+   }
+  },
+  {
+   "idx": 5,
+   "taskKey": "records:dev:d3:s206",
+   "seed": 206,
+   "difficulty": 3,
+   "dir": "/var/tmp/foundry-work/jit/jit-dev-records-1/jit-claude-sonnet-5-5--claude-haiku-5-5/i005-compiled-12edaa",
+   "recordedStatus": "ok",
+   "originalSource": "archived",
+   "original": {
+    "status": "ok",
+    "source": "archived",
+    "dir": "/var/tmp/foundry-work/jit/jit-dev-records-1/jit-claude-sonnet-5-5--claude-haiku-5-5/i005-compiled-12edaa",
+    "costUsd": 0.039549,
+    "costUnknown": false,
+    "deopt": null,
+    "error": null,
+    "perTaskUsd": null
+   },
+   "variant": {
+    "status": "ok",
+    "source": "fresh",
+    "dir": "/var/tmp/foundry-work/jit/tierdown-e2e/live-rules-sonnet/runs/i005-variant",
+    "costUsd": 0.055293,
+    "costUnknown": false,
+    "deopt": null,
+    "error": null,
+    "perTaskUsd": 0.707005325
+   },
+   "compare": {
+    "statuses": {
+     "original": "ok",
+     "variant": "ok"
+    },
+    "bothOk": true,
+    "exact": false,
+    "exactUnordered": false,
+    "partial": 0.973558,
+    "diffs": [
+     {
+      "path": "$.records[10].entity_id",
+      "got": 1018,
+      "want": 2251
+     },
+     {
+      "path": "$.records[10].source_rows[got 0]",
+      "got": 1018,
+      "want": "<not expected>"
+     },
+     {
+      "path": "$.records[10].amount_usd",
+      "got": 624.93,
+      "want": -4576.73
+     },
+     {
+      "path": "$.records[got 31]",
+      "got": {
+       "entity_id": 5561,
+       "source_rows": [
+        5561
+       ],
+       "given_name": "Ethan",
+       "family_name": "Hartwell",
+       "birth_date": "2001-07-18",
+       "country": "IE",
+       "phone_e164": "+35312769782",
+       "amount_usd": 49812.78
+      },
+      "want": "<not expected>"
+     }
+    ],
+    "judge": {
+     "original": {
+      "calls": 1,
+      "ok": 1,
+      "costUsd": 0.034588,
+      "tiersUsed": {
+       "claude-opus-5-5": 1
+      },
+      "escalations": 0,
+      "offList": 0
+     },
+     "variant": {
+      "calls": 1,
+      "ok": 1,
+      "costUsd": 0.014789,
+      "tiersUsed": {
+       "claude-sonnet-5-5": 1
+      },
+      "escalations": 0,
+      "offList": 0
+     }
+    },
+    "costUsd": {
+     "original": 0.039549,
+     "variant": 0.055293
+    },
+    "judgeUsd": {
+     "original": 0.034588,
+     "variant": 0.014789
+    }
+   },
+   "oracle": {
+    "original": {
+     "pass": true,
+     "score": 1
+    },
+    "variant": {
+     "pass": false,
+     "score": 0.948258
+    }
+   }
+  },
+  {
+   "idx": 6,
+   "taskKey": "records:dev:d3:s207",
+   "seed": 207,
+   "difficulty": 3,
+   "dir": "/var/tmp/foundry-work/jit/jit-dev-records-1/jit-claude-sonnet-5-5--claude-haiku-5-5/i006-compiled-078a1a",
+   "recordedStatus": "ok",
+   "originalSource": "archived",
+   "original": {
+    "status": "ok",
+    "source": "archived",
+    "dir": "/var/tmp/foundry-work/jit/jit-dev-records-1/jit-claude-sonnet-5-5--claude-haiku-5-5/i006-compiled-078a1a",
+    "costUsd": 0.037855,
+    "costUnknown": false,
+    "deopt": null,
+    "error": null,
+    "perTaskUsd": null
+   },
+   "variant": {
+    "status": "ok",
+    "source": "fresh",
+    "dir": "/var/tmp/foundry-work/jit/tierdown-e2e/live-rules-sonnet/runs/i006-variant",
+    "costUsd": 0.017883,
+    "costUnknown": false,
+    "deopt": null,
+    "error": null,
+    "perTaskUsd": 0.65171262
+   },
+   "compare": {
+    "statuses": {
+     "original": "ok",
+     "variant": "ok"
+    },
+    "bothOk": true,
+    "exact": false,
+    "exactUnordered": false,
+    "partial": 0.907781,
+    "diffs": [
+     {
+      "path": "$.records[9].birth_date",
+      "got": "1974-10-06",
+      "want": "1974-06-10"
+     },
+     {
+      "path": "$.records[13].source_rows[1]",
+      "got": "<missing>",
+      "want": 2862
+     },
+     {
+      "path": "$.records[13].amount_usd",
+      "got": 475.3,
+      "want": 3200
+     },
+     {
+      "path": "$.records[25].birth_date",
+      "got": "1965-12-05",
+      "want": "1965-05-12"
+     },
+     {
+      "path": "$.records[26].entity_id",
+      "got": 2862,
+      "want": 4482
+     }
+    ],
+    "judge": {
+     "original": {
+      "calls": 1,
+      "ok": 1,
+      "costUsd": 0.033738,
+      "tiersUsed": {
+       "claude-opus-5-5": 1
+      },
+      "escalations": 0,
+      "offList": 0
+     },
+     "variant": {
+      "calls": 1,
+      "ok": 1,
+      "costUsd": 0.015084,
+      "tiersUsed": {
+       "claude-sonnet-5-5": 1
+      },
+      "escalations": 0,
+      "offList": 0
+     }
+    },
+    "costUsd": {
+     "original": 0.037855,
+     "variant": 0.017883
+    },
+    "judgeUsd": {
+     "original": 0.033738,
+     "variant": 0.015084
+    }
+   },
+   "oracle": {
+    "original": {
+     "pass": true,
+     "score": 1
+    },
+    "variant": {
+     "pass": false,
+     "score": 0.90174
+    }
+   }
+  },
+  {
+   "idx": 7,
+   "taskKey": "records:dev:d3:s208",
+   "seed": 208,
+   "difficulty": 3,
+   "dir": "/var/tmp/foundry-work/jit/jit-dev-records-1/jit-claude-sonnet-5-5--claude-haiku-5-5/i007-compiled-7a0fc4",
+   "recordedStatus": "ok",
+   "originalSource": "archived",
+   "original": {
+    "status": "ok",
+    "source": "archived",
+    "dir": "/var/tmp/foundry-work/jit/jit-dev-records-1/jit-claude-sonnet-5-5--claude-haiku-5-5/i007-compiled-7a0fc4",
+    "costUsd": 0.037659,
+    "costUnknown": false,
+    "deopt": null,
+    "error": null,
+    "perTaskUsd": null
+   },
+   "variant": {
+    "status": "ok",
+    "source": "fresh",
+    "dir": "/var/tmp/foundry-work/jit/tierdown-e2e/live-rules-sonnet/runs/i007-variant",
+    "costUsd": 0.02053,
+    "costUnknown": false,
+    "deopt": null,
+    "error": null,
+    "perTaskUsd": 0.63382942
+   },
+   "compare": {
+    "statuses": {
+     "original": "ok",
+     "variant": "ok"
+    },
+    "bothOk": true,
+    "exact": false,
+    "exactUnordered": false,
+    "partial": 0.8475,
+    "diffs": [
+     {
+      "path": "$.records[4].source_rows[2]",
+      "got": "<missing>",
+      "want": 7768
+     },
+     {
+      "path": "$.records[5].source_rows[1]",
+      "got": "<missing>",
+      "want": 2657
+     },
+     {
+      "path": "$.records[6].source_rows[got 2]",
+      "got": 7466,
+      "want": "<not expected>"
+     },
+     {
+      "path": "$.records[9].source_rows[1]",
+      "got": "<missing>",
+      "want": 2524
+     },
+     {
+      "path": "$.records[14].source_rows[1]",
+      "got": "<missing>",
+      "want": 4078
+     }
+    ],
+    "judge": {
+     "original": {
+      "calls": 1,
+      "ok": 1,
+      "costUsd": 0.034148,
+      "tiersUsed": {
+       "claude-opus-5-5": 1
+      },
+      "escalations": 0,
+      "offList": 0
+     },
+     "variant": {
+      "calls": 1,
+      "ok": 1,
+      "costUsd": 0.018049,
+      "tiersUsed": {
+       "claude-sonnet-5-5": 1
+      },
+      "escalations": 0,
+      "offList": 0
+     }
+    },
+    "costUsd": {
+     "original": 0.037659,
+     "variant": 0.02053
+    },
+    "judgeUsd": {
+     "original": 0.034148,
+     "variant": 0.018049
+    }
+   },
+   "oracle": {
+    "original": {
+     "pass": true,
+     "score": 1
+    },
+    "variant": {
+     "pass": false,
+     "score": 0.775683
+    }
+   }
+  },
+  {
+   "idx": 8,
+   "taskKey": "records:dev:d3:s209",
+   "seed": 209,
+   "difficulty": 3,
+   "dir": "/var/tmp/foundry-work/jit/jit-dev-records-1/jit-claude-sonnet-5-5--claude-haiku-5-5/i008-compiled-eaa198",
+   "recordedStatus": "ok",
+   "originalSource": "archived",
+   "original": {
+    "status": "ok",
+    "source": "archived",
+    "dir": "/var/tmp/foundry-work/jit/jit-dev-records-1/jit-claude-sonnet-5-5--claude-haiku-5-5/i008-compiled-eaa198",
+    "costUsd": 0.039149,
+    "costUnknown": false,
+    "deopt": null,
+    "error": null,
+    "perTaskUsd": null
+   },
+   "variant": {
+    "status": "ok",
+    "source": "fresh",
+    "dir": "/var/tmp/foundry-work/jit/tierdown-e2e/live-rules-sonnet/runs/i008-variant",
+    "costUsd": 0.018664,
+    "costUnknown": false,
+    "deopt": null,
+    "error": null,
+    "perTaskUsd": 0.61329967
+   },
+   "compare": {
+    "statuses": {
+     "original": "ok",
+     "variant": "ok"
+    },
+    "bothOk": true,
+    "exact": false,
+    "exactUnordered": false,
+    "partial": 0.97416,
+    "diffs": [
+     {
+      "path": "$.records[33].entity_id",
+      "got": 7294,
+      "want": 7185
+     },
+     {
+      "path": "$.records[33].source_rows[0]",
+      "got": "<missing>",
+      "want": 7185
+     },
+     {
+      "path": "$.records[got 33]",
+      "got": {
+       "entity_id": 7185,
+       "source_rows": [
+        7185
+       ],
+       "given_name": "Matthias",
+       "family_name": "Krueger",
+       "birth_date": null,
+       "country": null,
+       "phone_e164": null,
+       "amount_usd": 8900
+      },
+      "want": "<not expected>"
+     }
+    ],
+    "judge": {
+     "original": {
+      "calls": 1,
+      "ok": 1,
+      "costUsd": 0.033873,
+      "tiersUsed": {
+       "claude-opus-5-5": 1
+      },
+      "escalations": 0,
+      "offList": 0
+     },
+     "variant": {
+      "calls": 1,
+      "ok": 1,
+      "costUsd": 0.015141,
+      "tiersUsed": {
+       "claude-sonnet-5-5": 1
+      },
+      "escalations": 0,
+      "offList": 0
+     }
+    },
+    "costUsd": {
+     "original": 0.039149,
+     "variant": 0.018664
+    },
+    "judgeUsd": {
+     "original": 0.033873,
+     "variant": 0.015141
+    }
+   },
+   "oracle": {
+    "original": {
+     "pass": true,
+     "score": 1
+    },
+    "variant": {
+     "pass": false,
+     "score": 0.964054
+    }
+   }
+  },
+  {
+   "idx": 9,
+   "taskKey": "records:dev:d3:s210",
+   "seed": 210,
+   "difficulty": 3,
+   "dir": "/var/tmp/foundry-work/jit/jit-dev-records-1/jit-claude-sonnet-5-5--claude-haiku-5-5/i009-compiled-31c62a",
+   "recordedStatus": "ok",
+   "originalSource": "archived",
+   "original": {
+    "status": "ok",
+    "source": "archived",
+    "dir": "/var/tmp/foundry-work/jit/jit-dev-records-1/jit-claude-sonnet-5-5--claude-haiku-5-5/i009-compiled-31c62a",
+    "costUsd": 0.038488,
+    "costUnknown": false,
+    "deopt": null,
+    "error": null,
+    "perTaskUsd": null
+   },
+   "variant": {
+    "status": "ok",
+    "source": "fresh",
+    "dir": "/var/tmp/foundry-work/jit/tierdown-e2e/live-rules-sonnet/runs/i009-variant",
+    "costUsd": 0.018542,
+    "costUnknown": false,
+    "deopt": null,
+    "error": null,
+    "perTaskUsd": 0.594636035
+   },
+   "compare": {
+    "statuses": {
+     "original": "ok",
+     "variant": "ok"
+    },
+    "bothOk": true,
+    "exact": false,
+    "exactUnordered": false,
+    "partial": 0.997455,
+    "diffs": [
+     {
+      "path": "$.records[25].birth_date",
+      "got": "1968-04-05",
+      "want": null
+     }
+    ],
+    "judge": {
+     "original": {
+      "calls": 1,
+      "ok": 1,
+      "costUsd": 0.033508,
+      "tiersUsed": {
+       "claude-opus-5-5": 1
+      },
+      "escalations": 0,
+      "offList": 0
+     },
+     "variant": {
+      "calls": 1,
+      "ok": 1,
+      "costUsd": 0.015186,
+      "tiersUsed": {
+       "claude-sonnet-5-5": 1
+      },
+      "escalations": 0,
+      "offList": 0
+     }
+    },
+    "costUsd": {
+     "original": 0.038488,
+     "variant": 0.018542
+    },
+    "judgeUsd": {
+     "original": 0.033508,
+     "variant": 0.015186
+    }
+   },
+   "oracle": {
+    "original": {
+     "pass": true,
+     "score": 0.99841
+    },
+    "variant": {
+     "pass": true,
+     "score": 1
+    }
+   }
+  },
+  {
+   "idx": 10,
+   "taskKey": "records:dev:d3:s211",
+   "seed": 211,
+   "difficulty": 3,
+   "dir": "/var/tmp/foundry-work/jit/jit-dev-records-1/jit-claude-sonnet-5-5--claude-haiku-5-5/i010-compiled-db918d",
+   "recordedStatus": "ok",
+   "originalSource": "archived",
+   "original": {
+    "status": "ok",
+    "source": "archived",
+    "dir": "/var/tmp/foundry-work/jit/jit-dev-records-1/jit-claude-sonnet-5-5--claude-haiku-5-5/i010-compiled-db918d",
+    "costUsd": 0.039313,
+    "costUnknown": false,
+    "deopt": null,
+    "error": null,
+    "perTaskUsd": null
+   },
+   "variant": {
+    "status": "ok",
+    "source": "fresh",
+    "dir": "/var/tmp/foundry-work/jit/tierdown-e2e/live-rules-sonnet/runs/i010-variant",
+    "costUsd": 0.019225,
+    "costUnknown": false,
+    "deopt": null,
+    "error": null,
+    "perTaskUsd": 0.576093535
+   },
+   "compare": {
+    "statuses": {
+     "original": "ok",
+     "variant": "ok"
+    },
+    "bothOk": true,
+    "exact": true,
+    "exactUnordered": true,
+    "partial": 1,
+    "diffs": [],
+    "judge": {
+     "original": {
+      "calls": 1,
+      "ok": 1,
+      "costUsd": 0.033873,
+      "tiersUsed": {
+       "claude-opus-5-5": 1
+      },
+      "escalations": 0,
+      "offList": 0
+     },
+     "variant": {
+      "calls": 1,
+      "ok": 1,
+      "costUsd": 0.015354,
+      "tiersUsed": {
+       "claude-sonnet-5-5": 1
+      },
+      "escalations": 0,
+      "offList": 0
+     }
+    },
+    "costUsd": {
+     "original": 0.039313,
+     "variant": 0.019225
+    },
+    "judgeUsd": {
+     "original": 0.033873,
+     "variant": 0.015354
+    }
+   },
+   "oracle": {
+    "original": {
+     "pass": true,
+     "score": 1
+    },
+    "variant": {
+     "pass": true,
+     "score": 1
+    }
+   }
+  }
+ ],
+ "summary": {
+  "tasks": 8,
+  "compared": 8,
+  "bothOk": 8,
+  "exact": 3,
+  "exactUnordered": 3,
+  "exactRateBothOk": 0.375,
+  "exactRateAll": 0.375,
+  "meanPartialBothOk": 0.962557,
+  "transitions": {
+   "ok->ok": 8
+  },
+  "original": {
+   "statuses": {
+    "ok": 8
+   },
+   "judgeUsd": 0.272089,
+   "meanJudgeUsd": 0.034011,
+   "totalUsd": 0.308984,
+   "meanTotalUsd": 0.038623,
+   "judgeCalls": 8,
+   "tiersUsed": {
+    "claude-opus-5-5": 8
+   },
+   "offListTiers": 0,
+   "ambiguousEvents": 0,
+   "oracle": {
+    "n": 8,
+    "pass": 7,
+    "passRate": 0.875,
+    "meanScore": 0.990307
+   }
+  },
+  "variant": {
+   "statuses": {
+    "ok": 8
+   },
+   "judgeUsd": 0.130771,
+   "meanJudgeUsd": 0.016346,
+   "totalUsd": 0.193131,
+   "meanTotalUsd": 0.024141,
+   "judgeCalls": 8,
+   "tiersUsed": {
+    "claude-sonnet-5-5": 8
+   },
+   "offListTiers": 0,
+   "ambiguousEvents": 0,
+   "oracle": {
+    "n": 8,
+    "pass": 3,
+    "passRate": 0.375,
+    "meanScore": 0.939222
+   }
+  },
+  "delta": {
+   "judgeUsd": -0.141318,
+   "totalUsd": -0.115853,
+   "meanScore": -0.051084,
+   "passToFail": 4,
+   "failToPass": 0
+  }
+ }
+}

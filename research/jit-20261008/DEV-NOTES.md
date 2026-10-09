@@ -62,3 +62,11 @@ Nothing here is a claim. Each entry gives the observation, the mechanism and the
 - Reading: the JIT beats its own interpreter by 9 successes, at 1.27× the Sonnet agent's cost and 0.75× its cost per success. The gap to the Opus agent (22 vs 24) is inside the noise band. Its cost is 66% of the Opus agent's.
 - At 24 tasks the one-time compile cost dominates. Steady state is about $0.04 per task plus the shadow rate × about $0.3. Against the Opus agent that pays back after about 10 tasks; against the Sonnet agent, after about 25–30.
 - Biggest cost lever: the builder's own test runs went through an Opus-only `rules` judge ($2.16). Tier-down (D6) and tolerant checks (D7) cut that directly.
+
+**D11. Tiering down a high-leverage judge breaks the solver even though its decisions mostly agree (end-to-end screen).**
+- Observation ([tierdown/](tierdown/)): records Sonnet arm v1, judge `rules`, 8 archived dev tasks i003–i010. The originals were the reused Opus runs.
+  - Haiku in place of Opus: 5/8 oracle pass vs 7/8, exact final-answer agreement 5/8, cost $0.0061 vs $0.0386 per task. Of the 3 Haiku tasks lost against Opus, 1 was a wrong answer and 1 an invariant deopt. The second deopt was mislabelled "cap reached" by the tool, now fixed.
+  - Sonnet in place of Opus: 3/8 pass, exact agreement 3/8, $0.0241 per task.
+  - Field-level screening (D6) had found the cheaper tiers agreeing on nearly every decision leaf.
+- Mechanism: `rules` is one global, per-task reading (date orders, void markers, sign flips) that conditions every row. A cheap tier that gets 95% of its fields right still breaks the task. Leaf agreement weighs every field equally, but end-to-end success does not.
+- Consequence: tier-down targets low-leverage per-item judgments (one row, one entity, one quote). High-leverage global judgments keep the strong tier or use k-sample agreement. The strict lint already flags a single global-configuration read without k-sample agreement. Leverage can be measured: the number of downstream output leaves that depend on the judgment.
