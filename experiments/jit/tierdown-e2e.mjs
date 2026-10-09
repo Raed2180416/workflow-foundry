@@ -7,8 +7,14 @@
 // literals), every `<x>.judge(name, { ... tiers: ... })` call site is located, and only the target sites' `tiers`
 // expression is replaced by an array literal. A tiers expression that is neither an array literal nor a const bound once
 // to an array literal, an options argument that is not an object literal, a dynamic judge name, a spread that could
-// override tiers, or any other use of `judge` is refused. The variant is re-parsed and `node --check`ed, and every other
-// judge site must come out byte-identical.
+// override tiers, or any other use of `judge` (including the string 'judge', as in flow['judge'](...)) is refused. The
+// variant is re-parsed and `node --check`ed, and every other judge site must come out byte-identical. A templated target
+// (`v-${i}` -> v-*) is costed only on trace events no other call site's name also matches.
+//
+// Cap: each run's gateway budget is min(per-task budget, what is left of --cap-usd), and a wrapper on the model port
+// refuses calls once finished runs plus the current run's calls reach the cap. A run the cap cut short is excluded from
+// the comparison (never counted as a deopt). An archived original is reused only when its trace has a final event and
+// its status is the one the stream recorded for that idx. Prompt-version-2 arms run on flow-v2.mjs as in the stream.
 //
 //   node experiments/jit/tierdown-e2e.mjs --arm-dir D --version v1-haiku55 --judge rules --tiers claude-haiku-5-5,claude-sonnet-5-5
 //        [--limit 8] [--cap-usd 1] [--label name] [--rerun-original] [--all-tasks] [--dry] [--force]

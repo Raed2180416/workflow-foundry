@@ -549,9 +549,9 @@ class Invocation {
         if (this.userCancelled) swept = sweepRunning(this.rows, this.registry, r, this.runId, errorData(reported));
         r.status = swept.some(e => e.type === 'effect.uncertain') || this.rows.anyWithStatus(this.runId, 'uncertain') ? 'uncertain' : (this.userCancelled || error.code === 'CANCELLED' ? 'cancelled' : 'failed');
         r.error = errorData(reported); r.owner = null; seal(r, this.workflow, this.store);
-        // Fault injection is explicit, only available to trusted test callers: the process dies after the cancellation was seen and
-        // its processes were killed, before the verdict is written.
-        if (this.userCancelled && r.extra?.crashBeforeCancelVerdict === true) process.kill(process.pid, 'SIGKILL');
+        // Fault injection is explicit, only available to trusted test callers: the process dies after the cancellation was seen and its
+        // processes were killed, before the verdict is written. The value is the execution (resume count) that dies, so a resume survives.
+        if (this.userCancelled && r.extra?.crashBeforeCancelVerdict === r.resumeCount) process.kill(process.pid, 'SIGKILL');
       }, r => [...swept, ...(r.verdict ? [this.runtime.verdictEvent(r)] : []), { type: 'run.stopped', error: errorData(reported), ...(request ? { cancel: request } : {}) }], { result: 'run', final: true });
     } finally { clearInterval(this.cancelTimer); this.outerSignal?.removeEventListener('abort', this.onAbort); }
   }
