@@ -58,12 +58,69 @@ const recordsSc = slice => {
 };
 const facts = await loadBedFacts(beds, { names: ALL_BEDS });
 const corpus = ALL_BEDS.flatMap(b => facts[b].texts.map(t => ({ bed: b, text: t.text })));
+// Second path for slot-carried train-pool lines (pools/README.md: the two labels of 18 templates share their words and the label
+// sits in the filling). The records solver's line regex wildcards {ex}, {city_*}, {live_ref}/{void_ref}, so both twins match and it
+// reports a conflict. Here a slot-carried line matches only if its filling is consistent with its label: the example date read in the
+// line's order means the stated day and month, the team city's country uses that order, the referenced flag form is the system's own.
+const MONTHS = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
+const escRe = t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+function slotAwareLabels(sc, P, port, S, token) {
+  const labels = new Set(), F = sc.render.FLAG_FORM?.[S];
+  for (const line of sc.lines) {
+    if (!line.slotCarried || line.port !== port || (line.system && line.system !== S) || !line.label) continue;
+    let out = '', last = 0; const groups = [];
+    for (const m of String(line.text).matchAll(/\{([A-Za-z_][A-Za-z0-9_]*)\}/g)) {
+      out += escRe(line.text.slice(last, m.index)); last = m.index + m[0].length;
+      const n = m[1];
+      if (n === 'S') out += escRe(S);
+      else if (n === 'token') out += token ? escRe(token) : '[^\\n]+?';
+      else if (n === 'ex') { out += '(\\d{1,4})/(\\d{1,2})/(\\d{1,4})'; groups.push('a', 'b', 'c'); }
+      else if (n === 'ex_long') { out += '(\\d{1,2}) ([A-Z][a-z]+) \\d{4}'; groups.push('ld', 'lm'); }
+      else if (n === 'month') { out += '([A-Z][a-z]+)'; groups.push('lm'); }
+      else if (n === 'day') { out += '(\\d{1,2})'; groups.push('ld'); }
+      else if (n === 'city_us' || n === 'city_eu' || n === 'server') { out += '([A-Z][A-Za-z .\'-]*?)'; groups.push('city'); }
+      else if (n === 'live_ref' || n === 'void_ref') { out += '([^\\n]+?)'; groups.push(n); }
+      else if (n === 'year') out += '\\d{4}';
+      else if (n === 'w0' || n === 'w1' || n === 'field') out += '[^\\n]+?';
+      else out += '[^\\n]+?';
+    }
+    const m = new RegExp(out + escRe(line.text.slice(last))).exec(P);
+    if (!m) continue;
+    const g = {}; groups.forEach((k, i) => { g[k] = m[i + 1]; });
+    let ok = true;
+    if (g.a !== undefined) {
+      const L = line.order ?? line.label, a = Number(g.a), b = Number(g.b), c = Number(g.c);
+      const [day, month] = L === 'ymd' ? [c, b] : L === 'dmy' ? [a, b] : [b, a];
+      if (L === 'ymd' && String(g.a).length !== 4) ok = false;
+      if (L !== 'ymd' && a === b) ok = false;
+      if (g.lm !== undefined && MONTHS.indexOf(String(g.lm).toLowerCase()) + 1 !== month) ok = false;
+      if (g.ld !== undefined && Number(g.ld) !== day) ok = false;
+      if (g.lm === undefined && g.ld === undefined) ok = false;
+    }
+    if (g.city !== undefined && sc.cityOrder.get(g.city.trim()) !== line.label) ok = false;
+    if (g.live_ref !== undefined && (!F || g.live_ref !== F.live)) ok = false;
+    if (g.void_ref !== undefined && (!F || g.void_ref !== F.void)) ok = false;
+    if (ok) labels.add(line.label);
+  }
+  return labels;
+}
+const withSecondPath = (solve, port) => (r, s) => {
+  const o = solve({ state: r.state, question: firstQ(r) }, recordsSc(s));
+  if (o.label !== null || !String(o.reason ?? '').startsWith('conflict')) return o;
+  const sc = recordsSc(s), noSlot = { ...sc, lines: sc.lines.filter(l => !l.slotCarried), cache: new Map() };
+  const base = solve({ state: r.state, question: firstQ(r) }, noSlot);
+  const P = String(r.state.source_note ?? '').split(/\n\s*\n/).map(b => b.trim()).find(b => b.startsWith(`${r.state.system}. `)) ?? '';
+  const sl = slotAwareLabels(sc, P, port, r.state.system, r.state.marker);
+  const all = new Set([...sl, ...(base.label ? [base.label] : [])]);
+  return all.size === 1 ? { label: [...all][0], reason: 'second-path:slot-carried' } : { label: null, reason: `${o.reason}+second-path:${[...all].join('/') || 'none'}` };
+};
 const SOLVERS = {
-  R1: (r, s) => R1.solve({ state: r.state, question: firstQ(r) }, recordsSc(s)), R2: (r, s) => R2.solve({ state: r.state, question: firstQ(r) }, recordsSc(s)),
-  R3: (r, s) => R3.solve({ state: r.state, question: firstQ(r) }, recordsSc(s)), R4: (r, s) => R4.solve({ state: r.state, question: firstQ(r) }, recordsSc(s)),
+  R1: withSecondPath(R1.solve, 'R1'), R2: withSecondPath(R2.solve, 'R2'), R3: withSecondPath(R3.solve, 'R3'), R4: withSecondPath(R4.solve, 'R4'),
   'X3:kinetics': r => SK.solveX3(r.state), 'X8:kinetics': r => SK.solveX8(r.state), 'K2:kinetics': r => SK.solveK2(r.state), 'K3:kinetics': r => SK.solveK3(r.state), 'X4:kinetics': r => SK.solveX4(r.state),
   'X1:kinetics': r => SK.solveX1(r.state),
-  'Q4:runbook': r => SR.solveQ4(r.state), 'X1:runbook': r => SR.solveX1(r.state),
+  'Q4:runbook': r => SR.solveQ4(r.state),
+  // authored pool / held-out lines carry the label of their brief (two-model filter pending); the bed-frame solver reads bed rows only
+  'X1:runbook': r => (r.meta.surface?.source === 'bed' ? SR.solveX1(r.state) : { label: null, reason: `authored-line:${r.meta.surface?.source}` }),
   'Q4:gridquest': r => SQ.solveQ4(r.state), 'Q4:gameqa': r => SQ.solveQ4(r.state),
   F1: r => SF.solveF1(r.state), 'X1:codefix': r => SF.solveX1Codefix(r.state, { pool: poolLines.filter(l => l.port === 'X1' && l.family === 'codefix') }),
   'X5:bedtype:records': null,
@@ -118,6 +175,7 @@ for (const b of builds) {
           let o; try { o = solver({ state: x.r.state, questions: { [x.qid]: x.q }, meta: x.r.meta }, slice); } catch (e) { o = { label: null, reason: `throws:${e.code ?? 'error'}` }; }
           if (o?.label === null || o?.label === undefined) { const why = String(o?.reason ?? o?.rule ?? 'undecided').slice(0, 40); reasons[why] = (reasons[why] ?? 0) + 1; continue; }
           decided++; if (o.label === x.q.label) agree++; else reasons['disagree'] = (reasons['disagree'] ?? 0) + 1;
+          if (o.reason === 'second-path:slot-carried') reasons['decided-by-second-path'] = (reasons['decided-by-second-path'] ?? 0) + 1;
         }
         s1 = { n: sample.length, decided, agree, coverage: sample.length ? decided / sample.length : null, accuracyDecided: decided ? agree / decided : null, agreementAll: sample.length ? agree / sample.length : null, reasons };
       }

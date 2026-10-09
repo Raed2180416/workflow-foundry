@@ -60,7 +60,7 @@ const send = (target, signal) => { try { process.kill(target, signal); return tr
  * to another process means the recorded group is gone, and nothing is signalled. Never signals this process, its ancestors or their groups.
  * -> [{pid, kind, killed}] (`killed`: a group was signalled; false when nothing of it was left)
  */
-export function reapChildren(store, runId, { table, selfPid = process.pid } = {}) {
+export function reapChildren(store, runId, { table, selfPid = process.pid, kill = send } = {}) {
   const rows = store.children(runId);
   if (!rows.length) return [];
   table ??= processTable();
@@ -71,7 +71,7 @@ export function reapChildren(store, runId, { table, selfPid = process.pid } = {}
     const leader = byPid.get(row.pid), members = table.some(p => p.pgid === row.pgid && p.state !== 'Z');
     const ours = leader && leader.state !== 'Z' ? (row.start == null || leader.start === row.start) : members;
     let killed = false;
-    if (ours && !protectedGroups.has(row.pgid) && !protectedPids.has(row.pid)) killed = send(-row.pgid, 'SIGKILL') || send(row.pid, 'SIGKILL');
+    if (ours && !protectedGroups.has(row.pgid) && !protectedPids.has(row.pid)) killed = kill(-row.pgid, 'SIGKILL') || kill(row.pid, 'SIGKILL');
     reaped.push({ pid: row.pid, kind: row.kind, killed });
   }
   store.forgetChildren(runId);
