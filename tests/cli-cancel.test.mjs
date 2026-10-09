@@ -83,8 +83,8 @@ const verify = async (workspace, runId) => {
 test('foundry cancel stops a run executed by another process: sandbox killed, cancelled verdict recorded by the owner, owner exits 3, chain verifies', { skip, timeout: 120000 }, async t => {
   const { workspace, write } = scratch(t);
   const owner = launch(t, ['run', write('wf.json', spinning('CancelSandbox')), '--workspace', workspace]);
-  const store = await openStore(t, workspace);
   const group = await sandboxGroup(t, owner);
+  const store = await openStore(t, workspace);
   const record = await until(() => runOf(store, 'CancelSandbox'));
   const cancelled = await run(['cancel', record.id, '--reason', 'owner said stop', '--workspace', workspace]);
   assert.equal(cancelled.status, 0, cancelled.stderr);
@@ -202,8 +202,8 @@ test('crash between the abort and the verdict write: the store stays consistent,
 test('SIGTERM leaves a resumable run; an explicit cancel then closes it for good', { skip, timeout: 120000 }, async t => {
   const { workspace, write } = scratch(t);
   const owner = launch(t, ['run', write('wf.json', spinning('CancelAfterTerm')), '--workspace', workspace]);
-  const store = await openStore(t, workspace);
   const group = await sandboxGroup(t, owner);
+  const store = await openStore(t, workspace);
   const record = await until(() => runOf(store, 'CancelAfterTerm'));
   owner.child.kill('SIGTERM');
   assert.equal((await owner.exited).status, 143);
@@ -221,9 +221,10 @@ test('SIGTERM leaves a resumable run; an explicit cancel then closes it for good
 test('foundry stop-all: executing runs of several processes, a run parked on a timer and one waiting for a person are all cancelled; nothing is left running or scheduled', { skip, timeout: 180000 }, async t => {
   const { workspace, write } = scratch(t);
   const first = launch(t, ['run', write('a.json', spinning('StopAllA')), '--workspace', workspace]);
+  const groups = [await sandboxGroup(t, first)];
   const store = await openStore(t, workspace);
   const second = launch(t, ['run', write('b.json', spinning('StopAllB')), '--workspace', workspace]);
-  const groups = [await sandboxGroup(t, first), await sandboxGroup(t, second)];
+  groups.push(await sandboxGroup(t, second));
   // Parked runs: each `run` command parks the run and exits.
   assert.equal((await run(['run', write('w.json', parked.wait('StopAllWait')), '--workspace', workspace])).json().status, 'waiting');
   assert.equal((await run(['run', write('h.json', parked.human('StopAllHuman')), '--workspace', workspace])).json().status, 'awaiting_human');
@@ -262,8 +263,8 @@ test('foundry stop-all: executing runs of several processes, a run parked on a t
 test('an owner that does not answer (stopped with SIGSTOP): cancel reports it and exit 3; --force kills it and its sandbox, closes the run, leaves nothing running', { skip, timeout: 180000 }, async t => {
   const { workspace, write } = scratch(t);
   const owner = launch(t, ['run', write('wf.json', spinning('CancelStuck')), '--workspace', workspace]);
-  const store = await openStore(t, workspace);
   const group = await sandboxGroup(t, owner);
+  const store = await openStore(t, workspace);
   const record = await until(() => runOf(store, 'CancelStuck'));
   owner.child.kill('SIGSTOP');
   assert.ok(await until(() => processes().find(p => p.pid === owner.child.pid)?.state === 'T'), 'the owner is stopped');
@@ -298,8 +299,8 @@ test('an owner that does not answer (stopped with SIGSTOP): cancel reports it an
 test('stop-all escalates by default: an owner that does not answer is killed with its sandbox, and the run is closed', { skip, timeout: 180000 }, async t => {
   const { workspace, write } = scratch(t);
   const owner = launch(t, ['run', write('wf.json', spinning('StopStuck')), '--workspace', workspace]);
-  const store = await openStore(t, workspace);
   const group = await sandboxGroup(t, owner);
+  const store = await openStore(t, workspace);
   const record = await until(() => runOf(store, 'StopStuck'));
   owner.child.kill('SIGSTOP');
   assert.ok(await until(() => processes().find(p => p.pid === owner.child.pid)?.state === 'T'));
