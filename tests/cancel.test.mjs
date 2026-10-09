@@ -6,6 +6,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync } from 'node:fs';
+import { DatabaseSync } from 'node:sqlite';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { Foundry } from '../src/foundry.mjs';
@@ -463,6 +464,40 @@ test('a capability that ignores its abort signal is abandoned after the grace pe
     p.state.release.get('send')();
     p.verified(run.id);
   });
+});
+
+test('a run that journals its model calls elsewhere is closed by a canceller only with that journal; one broken run does not stop the others; a broken chain is refused', { timeout: 60000 }, async t => {
+  const p = pair(t);
+  const external = new DatabaseSync(':memory:');
+  t.after(() => external.close());
+  const elsewhere = p.open({ models: () => new ModelPort({ policy: loaded.policy, providers: { 'llama-server': p.provider, 'claude-cli': p.provider }, journal: new Journal(external) }) });
+  const pause = id => base([{ id: 'pause', kind: 'wait', needs: [], description: 'Pause for an hour', delayMs: 3600000 }], [exists(ref('nodes.pause'))], { id });
+  const wf = pause('JournalElsewhere');
+  elsewhere.save(wf);
+  const remote = elsewhere.createRun(wf.id), plain = p.create(pause('JournalHere')), victim = p.create(pause('ChainBroken'));
+  for (const run of [remote, plain, victim]) assert.equal((await p.owner.startRun(run.id)).status, 'waiting');
+  assert.equal(p.other.store.events(remote.id)[0].journal, 'external', 'the birth event says where the journal is');
+  p.other.store.db.prepare('DELETE FROM events WHERE run_id=? AND seq=(SELECT MAX(seq) FROM events WHERE run_id=?)').run(victim.id, victim.id);
+
+  // Without the journal the seal cannot be made; the request is recorded and the run stays as it was.
+  await assert.rejects(p.other.cancel(remote.id), error => error.code === 'JOURNAL_EXTERNAL' && /--journal FILE/.test(error.message));
+  assert.equal(p.other.store.rows.header(remote.id).status, 'waiting');
+  assert.equal(p.other.store.rows.header(remote.id).cancelRequest.actor, 'cli');
+  // A broken chain is not appended to: nothing is written.
+  await assert.rejects(p.other.cancel(victim.id), error => error.code === 'CORRUPT_EVENTS');
+  assert.equal(p.other.store.rows.header(victim.id).cancelRequest, undefined);
+
+  const result = await p.other.stopAll({ actor: 'test' });
+  assert.deepEqual(result.results.map(r => [r.runId, r.outcome]), [[plain.id, 'cancelled']], 'the healthy run was stopped');
+  assert.deepEqual(result.failed.map(f => [f.runId, f.error.code]).sort(), [[remote.id, 'JOURNAL_EXTERNAL'], [victim.id, 'CORRUPT_EVENTS']].sort());
+  assert.equal(exitCodeOf(result), 3);
+  assert.match(result.message, /1 of 3 runs cancelled; 2 could not be cancelled/);
+
+  const report = await p.other.cancel(remote.id, { actor: 'test', journalDb: external });
+  assert.equal(report.outcome, 'cancelled', report.message);
+  const verified = verifyRun(p.other.store, remote.id, { journalDb: external });
+  assert.equal(verified.ok, true, JSON.stringify(verified.findings));
+  p.verified(plain.id);
 });
 
 test('escalation targets: the owner\'s sandboxes and model CLIs by process group, never this process, its ancestors or any group they are in', () => {
