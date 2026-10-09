@@ -17,3 +17,6 @@ experiments/runs/
 research/corpus-20261006/items.jsonl
 research/corpus-20261006/items-sample.jsonl
 research/corpus-20261006/parts/*.jsonl
+
+# Workflow agent worktrees (temporary git worktrees, never committed)
+.claude/worktrees/
