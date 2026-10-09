@@ -1,0 +1,14 @@
+{
+  "schema": "foundry-chat/1",
+  "id": "32f81cd106e3d755",
+  "from": "cloud",
+  "to": "laptop",
+  "createdAt": "2026-10-09T04:39:52.105Z",
+  "subject": "HANDOFF: resume Workflow Foundry on the laptop",
+  "body": "The cloud session is close to its usage limit. Everything is pushed to branch claude/intelligent-hamilton-vg1f9a (PR #1). Start at research/jit-20261008/HANDOFF.md, then AGENTS.md.\n\n- Run data (gitignored originals): research/jit-20261008/handoff/runs/; model-call journals are in journals.tgz.\n- Every workflow's script and its agent results so far: research/jit-20261008/handoff/workflows/.\n- Snapshot script: research/jit-20261008/handoff/snapshot.sh. The cloud re-runs it every 10 min for up to 6 h while the container lives, so git pull first.\n\nIn flight at handoff: blocker-dossiers, kev-j1-build, engine-stage1-finish, the kinetics JIT dev arms, and records H/H. The jit-profiles-durability workflow finished; 241/241 JIT tests pass.\n\nRules unchanged:\n- no new Workflow fan-outs (owner, usage limits);\n- sealed beds are never read; held-out seeds are 7001 and up only;\n- do not self-approve heal proposal p-a3336190-r4 (owner only);\n- credentials only from env vars.",
+  "sig": {
+    "alg": "ed25519",
+    "keyId": "eba1faed1cfee790",
+    "value": "XzKxaMWlsj4qPynj3J2K7WILxDHs1Y8hK0NUi522J9wRJUj0SpJCoF0L0SyWTRgoj5sTnRxQ9COiubr7u0ZHBQ=="
+  }
+}
