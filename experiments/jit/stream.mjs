@@ -8,9 +8,11 @@
 // delivered answer only; nothing it says ever reaches an interpreter, a compiler or the JIT state.
 // CLI: node experiments/jit/stream.mjs --config <file> [--arms a,b] [--dry] [--run-root dir] [--work-root dir]
 import path from 'node:path';
-import { existsSync, readFileSync, writeFileSync, mkdirSync, appendFileSync, rmSync, copyFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync, appendFileSync, rmSync, copyFileSync, readdirSync, statSync, renameSync } from 'node:fs';
 import { createHash, randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import os from 'node:os';
+import { DatabaseSync } from 'node:sqlite';
 import { canonical } from '../../beds/lib/canonical.mjs';
 import { loadPolicy } from '../../src/models/policy.mjs';
 import { ENV_FAULTS, metEnvFault } from '../lib/runner.mjs';
@@ -18,6 +20,7 @@ import { createModelPort as createModelPortSync } from '../lib/models.mjs';
 import { promptVersionOf, flowFileOf } from './prompts.mjs';
 import { tolerantEqual, tolerance } from './compare.mjs';
 import { judgeAcceptance, acceptanceModeOf, minPartialOf, caseTasks, applyRefusals } from './acceptance.mjs';
+import { assertSeedsAllowed, defaultPurpose, loadLedger } from './seeds.mjs';
 
 const REPO = path.resolve(fileURLToPath(new URL('../..', import.meta.url))), HERE = path.dirname(fileURLToPath(import.meta.url));
 export const RUN_ROOT = path.join(REPO, 'experiments/runs/jit'), WORK_ROOT = '/var/tmp/foundry-work/jit';
@@ -55,6 +58,22 @@ const tolOf = c => Object.fromEntries(TOL_KEYS.filter(k => c?.[k] != null).map(k
 //   compile.promptVersion 3: prompt v3 (prompts.mjs) on flow-v2.mjs.
 //   None of the compile options can be set on compile.fallback: they apply to the fallback compiler too.
 // Set to their defaults they are dropped from the normalized config, so writing them out explicitly changes no hash.
+// Step-0 options (BLOCKER-SYNTHESIS S0-1, S0-5, S0-6):
+//   seedPurpose (default 'jit-heldout' on the test split, 'jit-dev' otherwise): the purpose the seed ledger
+//     (research/jit-20261008/SEED-LEDGER.json, seeds.mjs) checks every segment's seeds against. Not hashed.
+//   jit.adoptRequiresAcceptance (default false: today's rule, a usable version is adopted even with accepted: false): when
+//     true, a version the acceptance check did not accept is never adopted (the current version, if any, is kept). Either
+//     way an 'adoption' event records the verdict. Dropped at false, so no hash moves; true defines a new arm.
+//   persist.commitDir (default unset: no mirror): every export (below) is also mirrored into this committed directory
+//     (relative to the repository; '{experiment}' is replaced by config.experiment; true means DEFAULT_COMMIT_DIR).
+//     persist.maxBodyBytes (default 262144): journal request/response bodies above it are written to bodies/<sha256>.json
+//     in the local export (never mirrored) and the row keeps the digest and that path. Not hashed.
+//   The export itself always runs: <runDir>/export/<arm>/ holds results.jsonl, events.jsonl, faults.jsonl, arm.json,
+//   journal.jsonl (every model-call row of journal.sqlite), solvers/ (every versions/<v>/ solve.mjs, BUILD-NOTES.md and
+//   compile.json), traces/ and regressions/; <runDir>/export/MANIFEST.json has a sha256 per file. It is rewritten
+//   idempotently after every result row, every fault, at the end of each arm and by resume-streams.mjs.
+// Every result row also carries host: the in-flight task count of this process, os.loadavg(), free memory and the
+// wall-clock start and end (S0-7; additive).
 
 const sha = s => createHash('sha256').update(s).digest('hex');
 const readJsonl = f => (existsSync(f) ? readFileSync(f, 'utf8').split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean) : []);
@@ -70,7 +89,27 @@ function seedList(seeds) {
   throw new Error(`segment seeds must be a list, "a..b" or {from,to}: ${JSON.stringify(seeds)}`);
 }
 
-export function normalizeConfig(raw) {
+export const DEFAULT_COMMIT_DIR = 'research/jit-20261008/runs/{experiment}';
+export const DEFAULT_MAX_BODY_BYTES = 256 * 1024;
+// persist options of a raw config, normalized (commitDir absolute); null when the config has none.
+export const persistOf = (raw, { commit = false } = {}) => normalizePersist(commit && raw.persist?.commitDir == null ? { ...(raw.persist ?? {}), commitDir: true } : raw.persist, raw.experiment);
+function normalizePersist(p, experiment) {
+  if (p == null) return null;
+  if (typeof p !== 'object' || Array.isArray(p)) throw new Error('config.persist must be an object');
+  for (const k of Object.keys(p)) if (!['commitDir', 'maxBodyBytes'].includes(k)) throw new Error(`config.persist.${k} is not supported (commitDir, maxBodyBytes)`);
+  let commitDir = p.commitDir === true ? DEFAULT_COMMIT_DIR : p.commitDir === false ? null : p.commitDir ?? null;
+  if (commitDir != null) {
+    if (typeof commitDir !== 'string' || !commitDir.trim()) throw new Error('config.persist.commitDir must be a path, true (the default directory) or false');
+    const abs = path.resolve(REPO, commitDir.replaceAll('{experiment}', experiment)), ignored = path.join(REPO, 'experiments/runs');
+    if (abs === ignored || abs.startsWith(ignored + path.sep)) throw new Error(`config.persist.commitDir must not be under experiments/runs/ (gitignored): ${commitDir}`);
+    commitDir = abs;
+  }
+  const maxBodyBytes = p.maxBodyBytes ?? DEFAULT_MAX_BODY_BYTES;
+  if (!Number.isInteger(maxBodyBytes) || maxBodyBytes < 1) throw new Error('config.persist.maxBodyBytes must be a positive integer');
+  return { commitDir, maxBodyBytes };
+}
+
+export function normalizeConfig(raw, { ledger = null } = {}) {
   for (const k of ['experiment', 'familyId', 'split']) if (typeof raw?.[k] !== 'string' || !raw[k]) throw new Error(`config.${k} is required`);
   if (!/^[\w.-]+$/.test(raw.experiment)) throw new Error('config.experiment must match [\\w.-]+');
   if (!Array.isArray(raw.segments) || !raw.segments.length) throw new Error('config.segments must be a non-empty list');
@@ -78,6 +117,12 @@ export function normalizeConfig(raw) {
   const segments = raw.segments.map(s => ({ difficulty: Number(s.difficulty ?? 3), seeds: seedList(s.seeds) }));
   // SPEC §6.4: held-out streams use fresh test seeds >= 7001 (5001-5006 and 6001-6004 are burned).
   if (raw.split === 'test' && segments.some(s => s.seeds.some(x => x < 7001))) throw new Error('test-split streams must use fresh seeds >= 7001');
+  // S0-5: the per-(bed, split) seed ledger (seeds.mjs): reserved-by-other ranges, used ranges for a fresh purpose, and
+  // held-out seeds below 8001 are refused.
+  if (raw.seedPurpose != null && typeof raw.seedPurpose !== 'string') throw new Error('config.seedPurpose must be a ledger purpose name');
+  const L = ledger ?? loadLedger();
+  for (const s of segments) assertSeedsAllowed({ bed: raw.familyId, split: raw.split, seeds: s.seeds, purpose: raw.seedPurpose ?? defaultPurpose(raw.split), ledger: L });
+  const persist = normalizePersist(raw.persist, raw.experiment);
   const jit = { ...DEFAULT_JIT, ...(raw.jit ?? {}) };
   if (jit.shadowEvery != null && jit.shadowEvery !== false && !(Number.isInteger(jit.shadowEvery) && jit.shadowEvery >= 0)) throw new Error('config.jit.shadowEvery must be an integer >= 0 (0: no scheduled shadows)');
   if (jit.shadowOnFlags != null && typeof jit.shadowOnFlags !== 'boolean') throw new Error('config.jit.shadowOnFlags must be true or false');
@@ -85,6 +130,9 @@ export function normalizeConfig(raw) {
   // v2.2 (DEV-NOTES D9, opt-in): a recompile must keep every refusal it cannot handle; see doCompile and acceptance.mjs applyRefusals.
   if (jit.preserveRefusals != null && typeof jit.preserveRefusals !== 'boolean') throw new Error('config.jit.preserveRefusals must be true or false');
   if (!jit.preserveRefusals) delete jit.preserveRefusals;
+  // S0-6 (opt-in): adopt only versions the acceptance check accepted.
+  if (jit.adoptRequiresAcceptance != null && typeof jit.adoptRequiresAcceptance !== 'boolean') throw new Error('config.jit.adoptRequiresAcceptance must be true or false');
+  if (!jit.adoptRequiresAcceptance) delete jit.adoptRequiresAcceptance;
   if (jit.compare != null && !JIT_COMPARE_MODES.includes(jit.compare)) throw new Error(`config.jit.compare must be one of ${JIT_COMPARE_MODES.join(', ')}`);
   if (jit.compare === 'tolerant') { delete jit.allowLooseTolerance; Object.assign(jit, tolerance(raw.jit)); }
   else if (TOL_KEYS.some(k => jit[k] != null)) throw new Error('config.jit.relTol, absTol, tolerantKeys and allowLooseTolerance need jit.compare \'tolerant\'');
@@ -115,6 +163,7 @@ export function normalizeConfig(raw) {
     perTaskUsd: raw.perTaskUsd ?? 1, agentBudgetUsd: raw.agentBudgetUsd ?? 1, agentMinutes: raw.agentMinutes ?? 15, agentEffort: raw.agentEffort ?? null,
     compiledMinutes: raw.compiledMinutes ?? 20, concurrency: raw.concurrency ?? 3, staticFallback: raw.staticFallback ?? STATIC_FALLBACK,
     gatewayModels: raw.gatewayModels ?? [...POLICY_MODELS], spendStopUsd: raw.spendStopUsd ?? null,
+    ...(persist ? { persist } : {}),
   };
 }
 
@@ -256,6 +305,155 @@ export const armPaths = (runDir, slug) => {
     traces: path.join(dir, 'traces'), versions: path.join(dir, 'versions'), regressions: path.join(dir, 'regressions') };
 };
 
+// ---------------------------------------------------------------------------------------------- S0-1: durable text export
+// <runDir>/export/ mirrors every arm directory as text: no SQLite (the journal becomes journal.jsonl), no tarballs. Every
+// file is rewritten only when its bytes change, and MANIFEST.json carries no clock, so a re-export of unchanged data
+// changes nothing. Arms run as separate processes, so the export holds <export>/.lock while it writes.
+export const EXPORT_SCHEMA = 'jit-export/1';
+const EXPORT_SKIP = new Set(['export', 'logs']);
+const sleepSync = ms => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+
+function writeIfChanged(file, data) {
+  const buf = Buffer.isBuffer(data) ? data : Buffer.from(data);
+  if (existsSync(file) && readFileSync(file).equals(buf)) return false;
+  mkdirSync(path.dirname(file), { recursive: true });
+  const tmp = `${file}.tmp-${process.pid}`;
+  writeFileSync(tmp, buf); renameSync(tmp, file);
+  return true;
+}
+// Regular files under dir (relative, '/'-separated, sorted); names starting with '.' (locks, scratch) are skipped.
+function listFiles(dir, rel = '') {
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir, { withFileTypes: true }).filter(d => !d.name.startsWith('.') && !d.name.includes('.tmp-')).sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0))
+    .flatMap(d => (d.isDirectory() ? listFiles(path.join(dir, d.name), `${rel}${d.name}/`) : d.isFile() ? [`${rel}${d.name}`] : []));
+}
+const copyTree = (src, dst, changed, tag) => { for (const f of listFiles(src)) if (writeIfChanged(path.join(dst, f), readFileSync(path.join(src, f)))) changed.push(`${tag}/${f}`); };
+
+// Every model-call row of a journal.sqlite as JSON lines: ids, keys, model, tokens, cost, latency, and the request and
+// response as {sha256, bytes, body} (sha256 of the stored canonical JSON text), or {sha256, bytes, path} with the body
+// in bodies/<sha256>.json when it is larger than maxBodyBytes.
+export function journalToJsonl(file, { maxBodyBytes = DEFAULT_MAX_BODY_BYTES, bodies = new Map() } = {}) {
+  if (!existsSync(file)) return null;
+  const db = new DatabaseSync(file);
+  let rows;
+  try {
+    db.exec('PRAGMA busy_timeout=5000;');
+    const has = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='model_calls'").get();
+    rows = has ? db.prepare('SELECT * FROM model_calls ORDER BY id').all() : [];
+  } finally { db.close(); }
+  const body = text => {
+    if (text == null) return null;
+    const bytes = Buffer.byteLength(text), digest = sha(text);
+    if (bytes <= maxBodyBytes) return { sha256: digest, bytes, body: JSON.parse(text) };
+    bodies.set(digest, text);
+    return { sha256: digest, bytes, path: `bodies/${digest}.json` };
+  };
+  return rows.map(r => JSON.stringify({
+    id: r.id, replayKey: r.replay_key, runId: r.run_id, nodeKey: r.node_key, attempt: r.attempt, sampleIndex: r.sample_index, modelId: r.model_id, provider: r.provider,
+    engineVersion: r.engine_version, decoding: r.decoding == null ? null : JSON.parse(r.decoding), receiptHash: r.receipt_hash, promptHash: r.prompt_hash,
+    ok: r.ok === 1, errorCode: r.error_code, inputTokens: r.input_tokens, outputTokens: r.output_tokens, cacheReadTokens: r.cache_read_tokens ?? null,
+    cacheWriteTokens: r.cache_write_tokens ?? null, costUsd: r.cost_usd, imputedUsd: r.imputed_usd, latencyMs: r.latency_ms, createdAt: r.created_at,
+    request: body(r.request), response: body(r.response),
+  }) + '\n').join('');
+}
+
+function exportArm(armDir, outDir, slug, { maxBodyBytes, changed }) {
+  for (const f of ['results.jsonl', 'events.jsonl', 'faults.jsonl', 'arm.json']) {
+    const src = path.join(armDir, f);
+    if (existsSync(src) && writeIfChanged(path.join(outDir, f), readFileSync(src))) changed.push(`${slug}/${f}`);
+  }
+  const bodies = new Map(), journal = journalToJsonl(path.join(armDir, 'journal.sqlite'), { maxBodyBytes, bodies });
+  if (journal != null && writeIfChanged(path.join(outDir, 'journal.jsonl'), journal)) changed.push(`${slug}/journal.jsonl`);
+  for (const [digest, text] of bodies) if (writeIfChanged(path.join(outDir, 'bodies', `${digest}.json`), text)) changed.push(`${slug}/bodies/${digest}.json`);
+  copyTree(path.join(armDir, 'versions'), path.join(outDir, 'solvers'), changed, `${slug}/solvers`);
+  copyTree(path.join(armDir, 'traces'), path.join(outDir, 'traces'), changed, `${slug}/traces`);
+  copyTree(path.join(armDir, 'regressions'), path.join(outDir, 'regressions'), changed, `${slug}/regressions`);
+}
+
+function lockExport(dir, waitMs = 60000) {
+  const file = path.join(dir, '.lock'), until = Date.now() + waitMs;
+  for (;;) {
+    try { writeFileSync(file, String(process.pid), { flag: 'wx' }); return () => rmSync(file, { force: true }); }
+    catch (e) {
+      if (e.code !== 'EEXIST') throw e;
+      const pid = Number(readFileSync(file, 'utf8'));
+      // The export is synchronous, so a lock with this pid is a leftover of this process; a dead owner's lock is taken over.
+      if (pid && (pid === process.pid || !alive(pid))) { rmSync(file, { force: true }); continue; }
+      if (Date.now() > until) throw new Error(`export ${dir} is locked by process ${pid || '?'}`);
+      sleepSync(50);
+    }
+  }
+}
+
+// A bodies/ file (journal bodies above the cap) stays in the local export: listed in the manifest as local, never mirrored.
+const isLocalOnly = rel => rel.split('/')[1] === 'bodies';
+const hashCache = new Map();
+function fileSha(file) {
+  const st = statSync(file), c = hashCache.get(file);
+  if (c && c.size === st.size && c.mtimeMs === st.mtimeMs) return c.sha256;
+  const digest = sha(readFileSync(file));
+  hashCache.set(file, { size: st.size, mtimeMs: st.mtimeMs, sha256: digest });
+  return digest;
+}
+export const armDirsOf = runDir => (existsSync(runDir) ? readdirSync(runDir, { withFileTypes: true })
+  .filter(d => d.isDirectory() && !EXPORT_SKIP.has(d.name) && (existsSync(path.join(runDir, d.name, 'results.jsonl')) || existsSync(path.join(runDir, d.name, 'arm.json'))))
+  .map(d => d.name).sort() : []);
+
+// exportRun(runDir, {arms, commitDir, maxBodyBytes}) -> {exportDir, manifest, changed, commitDir, mirrored}. arms: the arm
+// slugs to refresh (default: every arm directory); the manifest always covers the whole export. With commitDir, every
+// non-local file and MANIFEST.json are mirrored there, and the mirror is verified against the manifest.
+export function exportRun(runDir, { arms = null, commitDir = null, maxBodyBytes = DEFAULT_MAX_BODY_BYTES } = {}) {
+  const exportDir = path.join(runDir, 'export');
+  mkdirSync(exportDir, { recursive: true });
+  const unlock = lockExport(exportDir);
+  try {
+    const changed = [];
+    for (const slug of arms ?? armDirsOf(runDir)) exportArm(path.join(runDir, slug), path.join(exportDir, slug), slug, { maxBodyBytes, changed });
+    const files = {};
+    for (const rel of listFiles(exportDir)) if (rel !== 'MANIFEST.json') {
+      const f = path.join(exportDir, rel);
+      files[rel] = { sha256: fileSha(f), bytes: statSync(f).size, ...(isLocalOnly(rel) ? { local: true } : {}) };
+    }
+    const manifest = { schema: EXPORT_SCHEMA, experiment: path.basename(runDir), files };
+    const text = JSON.stringify(manifest, null, 1) + '\n';
+    if (writeIfChanged(path.join(exportDir, 'MANIFEST.json'), text)) changed.push('MANIFEST.json');
+    let mirrored = null;
+    if (commitDir) {
+      mirrored = [];
+      for (const [rel, m] of Object.entries(files)) {
+        if (m.local) continue;
+        const dst = path.join(commitDir, rel);
+        if (writeIfChanged(dst, readFileSync(path.join(exportDir, rel)))) mirrored.push(rel);
+        if (fileSha(dst) !== m.sha256) throw new Error(`export mirror ${dst}: sha256 differs from the manifest`);
+      }
+      if (writeIfChanged(path.join(commitDir, 'MANIFEST.json'), text)) mirrored.push('MANIFEST.json');
+    }
+    return { exportDir, manifest, changed, commitDir, mirrored };
+  } finally { unlock(); }
+}
+
+// S0-7: in-flight tasks of this process (every arm), sampled with the host load at the start and end of each row.
+export function hostTracker() {
+  const active = new Map();
+  const sample = () => ({ loadAvg: os.loadavg().map(round), freeMemMb: Math.round(os.freemem() / 2 ** 20) });
+  return {
+    enter(key) {
+      const e = { inFlightStart: active.size + 1, inFlightMax: active.size + 1, startedAt: new Date().toISOString(), start: sample() };
+      active.set(key, e);
+      for (const x of active.values()) x.inFlightMax = Math.max(x.inFlightMax, active.size);
+      return e;
+    },
+    exit(key) {
+      const e = active.get(key);
+      if (!e) return null;
+      active.delete(key);
+      return { inFlightStart: e.inFlightStart, inFlightMax: e.inFlightMax, inFlightEnd: active.size + 1, cpus: os.cpus().length, startedAt: e.startedAt, endedAt: new Date().toISOString(),
+        loadAvgStart: e.start.loadAvg, freeMemMbStart: e.start.freeMemMb, ...(({ loadAvg, freeMemMb }) => ({ loadAvgEnd: loadAvg, freeMemMbEnd: freeMemMb }))(sample()) };
+    },
+    get inFlight() { return active.size; },
+  };
+}
+
 // The fault class of a component result: its own error, a builder session's error, or a model call it made.
 const faultCode = r => r?.error?.code ?? r?.record?.builderError?.code ?? (Object.keys(r?.meta?.errors ?? {}).join(',') || null);
 class EnvFault extends Error {
@@ -307,8 +505,9 @@ function lockArm(dir) {
 
 // ---------------------------------------------------------------------------------------------- one arm
 class ArmRun {
-  constructor({ arm, config, runDir, workRoot, deps, log, budget, binary }) {
-    Object.assign(this, { arm, config, deps, log, budget, binary });
+  constructor({ arm, config, runDir, workRoot, deps, log, budget, binary, host = hostTracker() }) {
+    Object.assign(this, { arm, config, deps, log, budget, binary, host, runDir });
+    this.exportErrors = [];
     this.p = armPaths(runDir, arm.slug);
     this.work = path.join(workRoot, config.experiment, arm.slug);
     for (const d of [this.p.dir, this.p.traces, this.p.versions, this.p.regressions]) mkdirSync(d, { recursive: true });
@@ -331,6 +530,19 @@ class ArmRun {
     writeFileSync(path.join(this.p.dir, 'arm.json'), JSON.stringify({ experiment: config.experiment, spec: arm.spec, slug: arm.slug, kind: arm.kind, hash: arm.hash, def: arm.def }, null, 1));
   }
 
+  // S0-1: refresh this arm's export (and the mirror, with persist.commitDir). A failure never ends the stream (its data is
+  // still in the arm directory and a resume re-exports), but it is logged and reported as an arm error.
+  exportNow() {
+    try { return exportRun(this.runDir, { arms: [this.arm.slug], commitDir: this.config.persist?.commitDir ?? null, maxBodyBytes: this.config.persist?.maxBodyBytes ?? DEFAULT_MAX_BODY_BYTES }); }
+    catch (e) {
+      const msg = `export: ${e.message}`;
+      if (!this.exportErrors.includes(msg)) this.exportErrors.push(msg);
+      this.log(`${this.arm.slug}: EXPORT FAILED ${e.message}`);
+      return null;
+    }
+  }
+  hostKey(idx) { return `${this.arm.slug}#${idx}`; }
+
   event(idx, kind, data = {}) {
     const e = { at: new Date().toISOString(), arm: this.arm.spec, idx, kind, ...data };
     appendFileSync(this.p.events, JSON.stringify(e) + '\n');
@@ -340,6 +552,8 @@ class ArmRun {
   begin(t) {
     if (this.config.spendStopUsd != null && this.budget.spent > this.config.spendStopUsd) throw new SpendStop(`spend stop: $${this.budget.spent.toFixed(2)} > $${this.config.spendStopUsd}`);
     const run = this;
+    this.host.exit(this.hostKey(t.idx));   // a leftover of an attempt that threw before its row
+    this.host.enter(this.hostKey(t.idx));
     return {
       idx: t.idx, events: [], breakdown: {}, spendIds: [], costUnknown: false, started: Date.now(),
       ev(kind, data = {}) { const e = run.event(t.idx, kind, data); const { at, arm, idx, ...compact } = e; this.events.push(compact); return compact; },
@@ -367,8 +581,11 @@ class ArmRun {
       oracleDetails: verdict.details ? JSON.stringify(verdict.details).slice(0, 2000) : null, spendIds: tr.spendIds, ...extra,
       ...(stateAfter ? { stateAfter } : {}), at: new Date().toISOString(),
     };
+    const host = this.host.exit(this.hostKey(t.idx));
+    if (host) row.host = host;
     appendFileSync(this.p.results, JSON.stringify(row) + '\n');
     this.rows.set(t.idx, row);
+    this.exportNow();
     this.log(`${this.arm.slug} #${t.idx} ${t.taskKey}: ${row.pass ? 'PASS' : 'fail'} score=${row.score} by=${delivered}${version ? ` v${version}` : ''} $${row.costUsd.toFixed(4)}`);
     return row;
   }
@@ -377,6 +594,8 @@ class ArmRun {
     appendFileSync(this.p.faults, JSON.stringify({ experiment: this.config.experiment, arm: this.arm.spec, idx: t.idx, taskKey: t.taskKey, component: err.component,
       error: err.result?.error ?? null, metaErrors: err.result?.meta?.errors ?? null, builderError: err.result?.record?.builderError ?? null, at: new Date().toISOString() }) + '\n');
     this.event(t.idx, 'fault', { component: err.component, code: faultCode(err.result) });
+    this.host.exit(this.hostKey(t.idx));
+    this.exportNow();
     this.log(`${this.arm.slug} #${t.idx}: ENV FAULT in ${err.component} (not recorded as an outcome; a resume retries it)`);
   }
 
@@ -544,12 +763,19 @@ class JitRun extends ArmRun {
     const lost = best.checkTraces?.refusalCheck && !best.checkTraces.refusalCheck.ok ? best.checkTraces.refusalCheck : null;
     const why = lost ? `refusal lost (${[...lost.lost, ...lost.missing, ...lost.failed].join(', ')})`
       : state.version ? rejectReason(best.checkTraces, state.version.checkTraces) : null;
+    // S0-6: the adoption decision and the acceptance verdict, logged whatever the rule (jit.adoptRequiresAcceptance).
+    const rule = this.config.jit.adoptRequiresAcceptance ? 'requires-acceptance' : 'any-usable';
+    const adoption = (adopted, extra = {}) => tr.ev('adoption', { version: n, builderModel: best.builderModel, adopted, accepted: ok(best), rule, keep: adopted ? null : state.version?.n ?? null,
+      clean: !!best.checkTraces?.clean, exactRate: exactOf(best.checkTraces), ...extra });
     if (why) {
+      adoption(false, { reason: 'rejected' });
       tr.ev('rejected', { version: n, keep: state.version?.n ?? null, why, ...(state.version ? exactOnOld(best.checkTraces, state.version.checkTraces) : {}), newExactRate: exactOf(best.checkTraces),
         ...(lost ? { refusalCheck: lost } : {}),
         oldExactRate: state.version ? exactOf(state.version.checkTraces) : null, builderModel: best.builderModel });
       return;
     }
+    if (this.config.jit.adoptRequiresAcceptance && !ok(best)) { adoption(false, { reason: 'not accepted' }); return; }
+    adoption(true);
     const kind = state.version ? 'recompile' : 'compile';
     state.version = { n, dir: path.relative(this.p.dir, best.dir), sha: best.solveSha, builderModel: best.builderModel, checkTraces: best.checkTraces, adoptedAt: t.idx, accepted: ok(best) };
     tr.ev(kind, { version: n, reason, builderModel: best.builderModel, exactRate: exactOf(best.checkTraces), accepted: ok(best), clean: !!best.checkTraces?.clean,
@@ -672,12 +898,12 @@ export async function runStream({ config: rawConfig, arms: filters = null, runRo
   const fam = deps.loadFamily ? await deps.loadFamily(config.familyId) : null;
   const outputSchema = deps.outputSchema ?? fam?.outputSchema ?? null;
   // Spend already recorded by these arms (for the optional spend stop).
-  const budget = { spent: 0 };
+  const budget = { spent: 0 }, host = hostTracker();
   const runs = [];
   try {
     for (const arm of arms) {
       const R = arm.kind === 'jit' ? JitRun : ArmRun;
-      const run = new R({ arm, config, runDir, workRoot, deps, log, budget, binary });
+      const run = new R({ arm, config, runDir, workRoot, deps, log, budget, binary, host });
       runs.push(run);
       run.outputSchema = outputSchema;
       budget.spent += [...run.rows.values()].reduce((s, r) => s + (r.costUsd ?? 0), 0) + [...run.unbilled.values()].flat().reduce((s, e) => s + e.costUsd, 0);
@@ -705,7 +931,7 @@ async function driveArms({ runs, tasks, config, deps, log, runDir }) {
   const flatDone = pool(jobs, config.concurrency, async ([run, t]) => {
     const s = status.get(run.arm.slug);
     try { await run.runTask(t); s.done++; }
-    catch (error) { if (error.code === 'ENV_FAULT') { run.fault(t, error); s.faults++; } else note(run, error); }
+    catch (error) { run.host.exit(run.hostKey(t.idx)); if (error.code === 'ENV_FAULT') { run.fault(t, error); s.faults++; } else note(run, error); }
   });
   // JIT arms: sequential, in stream order; state comes from the last finished row.
   const streams = runs.filter(r => r.arm.kind === 'jit').map(async run => {
@@ -716,6 +942,7 @@ async function driveArms({ runs, tasks, config, deps, log, runDir }) {
       if (prior) { state = structuredClone(prior.stateAfter ?? state); continue; }
       try { await run.runJitTask(t, state); s.done++; }
       catch (error) {
+        run.host.exit(run.hostKey(t.idx));
         if (error.code === 'ENV_FAULT') { run.fault(t, error); s.faults++; log(`${run.arm.slug}: stream stops at #${t.idx} (resume continues it here)`); }
         else note(run, error);
         return;
@@ -723,6 +950,8 @@ async function driveArms({ runs, tasks, config, deps, log, runDir }) {
     }
   });
   await Promise.all([flatDone, ...streams]);
+  // S0-1: a last export of every arm (faults and harness errors leave no row), and its failures as arm errors.
+  for (const run of runs) { run.exportNow(); status.get(run.arm.slug).errors.push(...run.exportErrors); }
   return { runDir, arms: [...status.values()], rows: runs.flatMap(r => [...r.rows.values()]) };
 }
 

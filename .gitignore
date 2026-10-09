@@ -20,3 +20,9 @@ research/corpus-20261006/parts/*.jsonl
 
 # Workflow agent worktrees (temporary git worktrees, never committed)
 .claude/worktrees/
+
+# Committed stream-run exports (BLOCKER-SYNTHESIS S0-1; stream.mjs persist.commitDir, default
+# research/jit-20261008/runs/<experiment>/): text only (JSONL, solvers, MANIFEST.json), never ignored by the patterns
+# above. The raw run directories under experiments/runs/ (SQLite journals, scratch) stay ignored.
+!research/*/runs/
+!research/*/runs/**

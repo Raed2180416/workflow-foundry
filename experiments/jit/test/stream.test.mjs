@@ -170,7 +170,7 @@ test('JIT state machine: warmup, compile with Opus fallback, shadows, deopt/cras
   const spends = readJsonl(p.events).filter(e => e.kind === 'spend');
   close(spends.reduce((s, e) => s + e.costUsd, 0), total, 'events = rows');
   // the arm wrote only its own directory (arms run as separate processes)
-  assert.deepEqual(readdirSync(path.join(root, 'runs/jit-fake')), ['jit-claude-sonnet-5-5--claude-haiku-5-5']);
+  assert.deepEqual(readdirSync(path.join(root, 'runs/jit-fake')).sort(), ['export', 'jit-claude-sonnet-5-5--claude-haiku-5-5'], 'the arm directory and the S0-1 text export');
   assert.deepEqual(readdirSync(p.dir).sort(), ['arm.json', 'events.jsonl', 'regressions', 'results.jsonl', 'traces', 'versions'], 'and the lock is released');
   assert.deepEqual(readdirSync(p.versions).sort(), ['v1-haiku55', 'v1-opus55', 'v2-haiku55', 'v3-haiku55']);
   assert.equal(readdirSync(p.regressions).length, 1);
@@ -255,7 +255,7 @@ test('agent and static arms: concurrency cap, static deopt/crash fall back to th
   assert.equal(st[0].delivered, 'compiled'); assert.equal(st[0].version, null);
   assert.deepEqual(calls.interpret.filter(c => c.role === 'fallback').map(c => c.model), ['claude-haiku-5-5', 'claude-haiku-5-5']);
   assert.ok(calls.runCompiled.every(c => c.solve === '// static\n'));
-  assert.deepEqual(readdirSync(path.join(root, 'runs/flat')).sort(), ['agent-claude-haiku-5-5', 'agent-claude-opus-5-5', 'static-B1-x-solve']);
+  assert.deepEqual(readdirSync(path.join(root, 'runs/flat')).sort(), ['agent-claude-haiku-5-5', 'agent-claude-opus-5-5', 'export', 'static-B1-x-solve']);
   // --arms filter: a second process on one arm finds its rows done and runs nothing
   const before = calls.interpret.length;
   const again = await runStream({ config, deps, arms: ['agent-claude-opus-5-5'], runRoot: path.join(root, 'runs'), workRoot: path.join(root, 'work'), log: () => {} });
@@ -717,4 +717,231 @@ test('strict acceptance on a recheck: the verdict uses the case\'s own task text
   const bad = await run('strict-para', '## trace-0\nThe task wants the seed reported as v.\n');
   assert.equal(bad.ct.accepted, false); assert.deepEqual(bad.ct.acceptance.failed, ['explained']); assert.deepEqual(bad.ct.unexplained, ['trace-0']);
   assert.deepEqual(bad.calls.compile.map(c => c.builderModel), ['claude-haiku-5-5', 'claude-opus-5-5'], 'not accepted: the Opus fallback runs');
+});
+
+// ---------------------------------------------------------------------------------------------- step 0 (BLOCKER-SYNTHESIS §2.0)
+import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+import { exportRun, journalToJsonl, DEFAULT_COMMIT_DIR, hostTracker } from '../stream.mjs';
+import { assertSeedsAllowed, seedRefusals, loadLedger, validateLedger, defaultPurpose } from '../seeds.mjs';
+import { RESERVATIONS } from '../../kev-data/lib/registry.mjs';
+
+const REPO_ROOT = path.resolve(fileURLToPath(new URL('../../..', import.meta.url)));
+const SLUG = 'jit-claude-sonnet-5-5--claude-haiku-5-5';
+const sha256 = b => createHash('sha256').update(b).digest('hex');
+const walkFiles = (d, rel = '') => readdirSync(d, { withFileTypes: true }).flatMap(e => (e.isDirectory() ? walkFiles(path.join(d, e.name), `${rel}${e.name}/`) : [`${rel}${e.name}`]));
+// A real journal.sqlite (src/journal.mjs) with a small call and one whose response is larger than the body cap.
+function seedJournal(file) {
+  mkdirSync(path.dirname(file), { recursive: true });
+  const db = new DatabaseSync(file), j = new Journal(db);
+  j.record({ replayKey: 'rk-1', runId: 'run-1', nodeKey: 'n1', attempt: 0, sampleIndex: 0, modelId: 'claude-haiku-5-5', provider: 'claude-cli', request: { prompt: 'hello' },
+    response: { text: 'small' }, ok: true, inputTokens: 10, outputTokens: 2, costUsd: 0.001, latencyMs: 5, promptHash: 'ph1' });
+  j.record({ replayKey: 'rk-2', runId: 'run-1', nodeKey: 'n2', attempt: 0, sampleIndex: 0, modelId: 'claude-opus-5-5', provider: 'claude-cli', request: { prompt: 'big' },
+    response: { text: 'x'.repeat(5000) }, ok: true, inputTokens: 20, outputTokens: 900, costUsd: 0.05, latencyMs: 9 });
+  j.record({ replayKey: 'rk-3', runId: 'run-1', nodeKey: 'n3', attempt: 0, modelId: 'claude-haiku-5-5', request: { prompt: 'p' }, ok: false, errorCode: 'MODEL_RATE_LIMIT' });
+  db.close();
+}
+
+test('S0-1 export: every arm file as text under <run>/export, the journal as JSONL (big bodies by digest), solvers, a sha256 manifest; idempotent', async t => {
+  const root = tmp(t), runDir = path.join(root, 'runs/jit-fake');
+  const { deps } = fakeDeps(PLAN);
+  const res = await runStream({ config: CONFIG, deps, runRoot: path.join(root, 'runs'), workRoot: path.join(root, 'work'), log: () => {} });
+  assert.deepEqual(res.arms.map(a => a.errors), [[]]);
+  const p = armPaths(runDir, SLUG), ex = path.join(runDir, 'export', SLUG);
+  for (const f of ['results.jsonl', 'events.jsonl', 'arm.json']) assert.ok(readFileSync(path.join(ex, f)).equals(readFileSync(path.join(p.dir, f))), `${f} byte-identical`);
+  assert.deepEqual(readdirSync(path.join(ex, 'solvers')).sort(), ['v1-haiku55', 'v1-opus55', 'v2-haiku55', 'v3-haiku55'], 'every compiled version');
+  for (const v of readdirSync(p.versions)) for (const f of readdirSync(path.join(p.versions, v))) assert.ok(readFileSync(path.join(ex, 'solvers', v, f)).equals(readFileSync(path.join(p.versions, v, f))), `${v}/${f}`);
+  assert.equal(readdirSync(path.join(ex, 'traces')).length, readdirSync(p.traces).length); assert.equal(readdirSync(path.join(ex, 'regressions')).length, 1);
+  // the manifest: sha256 and size of every file in the export, nothing else
+  const manifestText = readFileSync(path.join(runDir, 'export/MANIFEST.json'), 'utf8'), m = JSON.parse(manifestText);
+  assert.equal(m.schema, 'jit-export/1'); assert.equal(m.experiment, 'jit-fake');
+  assert.deepEqual(Object.keys(m.files).sort(), walkFiles(path.join(runDir, 'export')).filter(f => f !== 'MANIFEST.json').sort());
+  for (const [rel, f] of Object.entries(m.files)) { const b = readFileSync(path.join(runDir, 'export', rel)); assert.equal(f.sha256, sha256(b), rel); assert.equal(f.bytes, b.length, rel); }
+  // the journal: every model-call row, bodies inline under the cap, digest + local path above it
+  seedJournal(p.journal);
+  const r2 = exportRun(runDir, { maxBodyBytes: 1000 });
+  assert.ok(r2.changed.includes(`${SLUG}/journal.jsonl`)); assert.equal(r2.mirrored, null, 'no commitDir, no mirror');
+  const jl = readJsonl(path.join(ex, 'journal.jsonl'));
+  assert.deepEqual(jl.map(r => [r.id, r.replayKey, r.modelId, r.ok, r.costUsd, r.inputTokens, r.outputTokens]),
+    [[1, 'rk-1', 'claude-haiku-5-5', true, 0.001, 10, 2], [2, 'rk-2', 'claude-opus-5-5', true, 0.05, 20, 900], [3, 'rk-3', 'claude-haiku-5-5', false, 0, null, null]]);
+  assert.deepEqual(jl[0].request.body, { prompt: 'hello' }); assert.deepEqual(jl[0].response.body, { text: 'small' }); assert.equal(jl[0].promptHash, 'ph1');
+  assert.equal(jl[0].response.sha256, sha256(JSON.stringify({ text: 'small' })), 'the digest of the stored canonical text');
+  assert.equal(jl[1].response.body, undefined); assert.equal(jl[1].response.path, `bodies/${jl[1].response.sha256}.json`);
+  assert.equal(sha256(readFileSync(path.join(ex, jl[1].response.path))), jl[1].response.sha256, 'the externalised body matches its digest');
+  assert.equal(jl[2].errorCode, 'MODEL_RATE_LIMIT'); assert.equal(jl[2].response, null);
+  const m2 = JSON.parse(readFileSync(path.join(runDir, 'export/MANIFEST.json'), 'utf8'));
+  assert.equal(m2.files[`${SLUG}/${jl[1].response.path}`].local, true, 'big bodies stay local');
+  assert.equal(m2.files[`${SLUG}/journal.jsonl`].local, undefined);
+  // idempotent: a second export changes no byte
+  const before = readFileSync(path.join(runDir, 'export/MANIFEST.json'));
+  const r3 = exportRun(runDir, { maxBodyBytes: 1000 });
+  assert.deepEqual(r3.changed, []); assert.ok(readFileSync(path.join(runDir, 'export/MANIFEST.json')).equals(before));
+  assert.equal(existsSync(path.join(runDir, 'export/.lock')), false, 'the export lock is released');
+  assert.notEqual(manifestText, before.toString(), 'the journal joined the manifest');
+  // journalToJsonl on a missing journal: nothing to export
+  assert.equal(journalToJsonl(path.join(root, 'none.sqlite')), null);
+  // the export is the arm layout, so the report reads it like the run directory
+  assert.equal(buildReport(path.join(runDir, 'export')).arms[0].successes, buildReport(runDir).arms[0].successes);
+});
+
+test('S0-1 export after every row: a crash mid-stream leaves the finished rows exported; a live export lock is waited for, a dead one taken over', async t => {
+  const root = tmp(t), runDir = path.join(root, 'runs/jit-fake');
+  let n = 0;
+  const { deps } = fakeDeps(PLAN, { interpret(idx, role) { if (idx === 5 && role === 'interpreter' && !n++) throw new Error('process died'); } });
+  const r1 = await runStream({ config: CONFIG, deps, runRoot: path.join(root, 'runs'), workRoot: path.join(root, 'work'), log: () => {} });
+  assert.equal(r1.rows.length, 5);
+  assert.equal(readJsonl(path.join(runDir, 'export', SLUG, 'results.jsonl')).length, 5, 'every finished row is in the export');
+  // a lock held by a dead process is taken over
+  writeFileSync(path.join(runDir, 'export/.lock'), '999999999');
+  assert.deepEqual(exportRun(runDir).changed, []);
+  assert.equal(existsSync(path.join(runDir, 'export/.lock')), false);
+});
+
+test('S0-1 persist.commitDir: the export is mirrored (big bodies excepted) with the same manifest; validation; no arm hash moves; unset, no mirror', async t => {
+  const root = tmp(t), runDir = path.join(root, 'runs/jit-fake'), commitDir = path.join(root, 'committed/{experiment}');
+  const config = { ...CONFIG, persist: { commitDir, maxBodyBytes: 1000 } };
+  const c = normalizeConfig(config);
+  assert.deepEqual(c.persist, { commitDir: path.join(root, 'committed/jit-fake'), maxBodyBytes: 1000 });
+  assert.equal('persist' in normalizeConfig(CONFIG), false, 'unset: no persist key');
+  assert.equal(normalizeConfig({ ...CONFIG, persist: { commitDir: true } }).persist.commitDir, path.join(REPO_ROOT, DEFAULT_COMMIT_DIR.replace('{experiment}', 'jit-fake')));
+  assert.equal(normalizeConfig({ ...CONFIG, persist: { commitDir: false } }).persist.commitDir, null);
+  assert.throws(() => normalizeConfig({ ...CONFIG, persist: { commitDir: 'experiments/runs/jit/x' } }), /must not be under experiments\/runs/);
+  assert.throws(() => normalizeConfig({ ...CONFIG, persist: { dir: 'x' } }), /persist.dir is not supported/);
+  assert.throws(() => normalizeConfig({ ...CONFIG, persist: { maxBodyBytes: 0 } }), /maxBodyBytes must be a positive integer/);
+  assert.throws(() => normalizeConfig({ ...CONFIG, persist: 'yes' }), /persist must be an object/);
+  const { deps } = fakeDeps(PLAN);
+  seedJournal(armPaths(runDir, SLUG).journal);
+  const res = await runStream({ config, deps, runRoot: path.join(root, 'runs'), workRoot: path.join(root, 'work'), log: () => {} });
+  assert.deepEqual(res.arms.map(a => a.errors), [[]]);
+  const mirror = path.join(root, 'committed/jit-fake'), m = JSON.parse(readFileSync(path.join(mirror, 'MANIFEST.json'), 'utf8'));
+  assert.ok(readFileSync(path.join(mirror, 'MANIFEST.json')).equals(readFileSync(path.join(runDir, 'export/MANIFEST.json'))), 'one manifest for both');
+  const local = Object.keys(m.files).filter(f => m.files[f].local);
+  assert.equal(local.length, 1, 'the one big body');
+  assert.deepEqual(walkFiles(mirror).sort(), ['MANIFEST.json', ...Object.keys(m.files).filter(f => !m.files[f].local)].sort(), 'every non-local file, nothing else');
+  for (const f of walkFiles(mirror)) if (f !== 'MANIFEST.json') assert.equal(sha256(readFileSync(path.join(mirror, f))), m.files[f].sha256, f);
+  // resume-streams.mjs re-exports (and mirrors) before anything else; --export-only prints the mirror and launches nothing
+  const cfgFile = path.join(root, 'cfg.json'); writeFileSync(cfgFile, JSON.stringify(config));
+  rmSync(path.join(mirror, `${SLUG}/results.jsonl`));
+  const r = spawnSync(process.execPath, [path.join(REPO_ROOT, 'experiments/jit/resume-streams.mjs'), '--export-only', '--run-root', path.join(root, 'runs'), cfgFile], { encoding: 'utf8' });
+  assert.equal(r.status, 0, r.stderr);
+  assert.deepEqual(r.stdout.trim().split('\n').map(l => path.resolve(REPO_ROOT, l)), [mirror]);
+  assert.match(r.stderr, /jit-fake export: \d+ files, 0 changed; mirror .* \(1 changed\)/);
+  assert.ok(existsSync(path.join(mirror, `${SLUG}/results.jsonl`)), 'the mirror is repaired');
+  // the persist options never enter an arm hash
+  for (const [name, want] of Object.entries(V1_HASHES)) {
+    const raw = JSON.parse(readFileSync(new URL(`../configs/${name}.json`, import.meta.url), 'utf8'));
+    assert.deepEqual(hashes({ ...raw, persist: { commitDir: true, maxBodyBytes: 10 } }), want, `${name}: persist changes no hash`);
+  }
+});
+
+test('S0-5 seed ledger: Kev reserves, used and burned ranges, fresh R0 / out-of-sample ranges and held-out seeds below 8001 are refused; the dev configs validate', () => {
+  const L = loadLedger(), ok = (bed, split, seeds, purpose) => assert.doesNotThrow(() => assertSeedsAllowed({ bed, split, seeds, purpose, ledger: L }), `${bed}:${split} ${seeds} ${purpose}`);
+  const no = (bed, split, seed, purpose, re) => {
+    assert.throws(() => assertSeedsAllowed({ bed, split, seeds: [seed], purpose, ledger: L }), e => e.code === 'SEED_REFUSED' && re.test(e.message), `${bed}:${split}:s${seed} ${purpose}`);
+  };
+  assert.equal(defaultPurpose('test'), 'jit-heldout'); assert.equal(defaultPurpose('dev'), 'jit-dev');
+  ok('records', 'dev', Array.from({ length: 24 }, (_, i) => 201 + i), 'jit-dev');
+  ok('kinetics', 'dev', Array.from({ length: 24 }, (_, i) => 201 + i), 'jit-dev');
+  ok('records', 'dev', Array.from({ length: 24 }, (_, i) => 225 + i), 'jit-r0');
+  ok('kinetics', 'dev', [225, 248], 'jit-r0');
+  ok('records', 'dev', [249, 272], 'jit-oos');
+  ok('records', 'test', [8001, 8024, 8101, 8124, 9000], 'jit-heldout');
+  ok('fake', 'dev', [1, 12], 'jit-dev');
+  // fresh ranges are reserved for their own use
+  no('records', 'dev', 225, 'jit-dev', /jit-r0-fresh .*reserved for jit-r0/);
+  no('records', 'dev', 260, 'jit-r0', /jit-oos-fresh .*reserved for jit-oos/);
+  // used ranges for a purpose that needs fresh seeds
+  no('records', 'dev', 201, 'jit-r0', /jit-dev-streams is used and jit-r0 needs fresh seeds/);
+  no('kinetics', 'dev', 224, 'jit-oos', /jit-dev-streams is used/);
+  // held-out: below 8001, Kev's reserves, burned seeds, synth's used test seeds
+  no('records', 'test', 7300, 'jit-heldout', /held-out seeds must be >= 8001/);
+  no('records', 'test', 7001, 'jit-heldout', /held-out seeds must be >= 8001.*kev-real-reserve .*reserved for kev-real-reserve/);
+  no('kinetics', 'test', 7101, 'jit-heldout', /kev-e2e-reserve .*reserved for kev-e2e-reserve/);
+  no('records', 'test', 5003, 'jit-heldout', /jit-burned-5001 is burned/);
+  no('synth', 'test', 7050, 'jit-heldout', /synth-audit-unseen is used/);
+  // purposes: unknown, or on the wrong split
+  no('records', 'dev', 201, 'jit-whatever', /unknown purpose jit-whatever/);
+  no('records', 'dev', 8001, 'jit-heldout', /jit-heldout is for the test split, not dev/);
+  assert.deepEqual(seedRefusals(L, { bed: 'records', split: 'test', seed: 8001, purpose: 'jit-heldout' }), []);
+  // the ledger is validated
+  assert.throws(() => validateLedger({ ...L, ranges: [...L.ranges, { ...L.ranges[0] }] }), /repeated/);
+  assert.throws(() => validateLedger({ ...L, ranges: [{ ...L.ranges[0], id: 'z', status: 'maybe' }] }), /status must be one of/);
+  assert.throws(() => validateLedger({ ...L, ranges: [{ ...L.ranges[0], id: 'z', allow: ['nope'] }] }), /allow must be null or a list of known purposes/);
+  assert.throws(() => validateLedger({ ...L, ranges: [{ ...L.ranges[0], id: 'z', source: '' }] }), /source is required/);
+  // the ledger's Kev ranges are the registry's reservations
+  const kev = L.ranges.filter(r => r.owner === 'kev').map(r => [r.id.replace(/^kev-/, ''), r.split, r.from, r.to]).sort();
+  assert.deepEqual(kev, RESERVATIONS.map(r => [r.id, r.bedSplit, r.seeds[0], r.seeds[1]]).sort());
+});
+
+test('S0-5 stream config validation: the ledger refuses through normalizeConfig (seedPurpose), the >= 7001 rule stays, the live dev configs still validate', () => {
+  for (const name of ['dev-records-1', 'dev-kinetics-1']) assert.doesNotThrow(() => normalizeConfig(JSON.parse(readFileSync(new URL(`../configs/${name}.json`, import.meta.url), 'utf8'))), name);
+  const base = { ...CONFIG, familyId: 'records' };
+  assert.throws(() => normalizeConfig({ ...base, split: 'test', segments: [{ seeds: [6001] }] }), /fresh seeds >= 7001/);
+  assert.throws(() => normalizeConfig({ ...base, split: 'test', segments: [{ seeds: '7001..7024' }] }), e => e.code === 'SEED_REFUSED' && /held-out seeds must be >= 8001/.test(e.message));
+  assert.doesNotThrow(() => normalizeConfig({ ...base, split: 'test', segments: [{ difficulty: 3, seeds: '8001..8016' }, { difficulty: 4, seeds: '8017..8024' }] }));
+  assert.throws(() => normalizeConfig({ ...base, segments: [{ seeds: '225..248' }] }), /reserved for jit-r0/, 'a dev stream cannot take R0\'s seeds');
+  assert.doesNotThrow(() => normalizeConfig({ ...base, seedPurpose: 'jit-r0', segments: [{ difficulty: 3, seeds: '225..240' }, { difficulty: 4, seeds: '241..248' }] }));
+  assert.throws(() => normalizeConfig({ ...base, seedPurpose: 'jit-r0', segments: [{ seeds: '201..224' }] }), /used and jit-r0 needs fresh seeds/);
+  assert.throws(() => normalizeConfig({ ...base, seedPurpose: 7 }), /seedPurpose must be a ledger purpose name/);
+  // seedPurpose is not hashed
+  const c = normalizeConfig({ ...base, seedPurpose: 'jit-dev' }), c0 = normalizeConfig(base);
+  assert.equal(parseArm(CONFIG.arms[0], c, { policyIds: [...POLICY_MODELS] }).hash, parseArm(CONFIG.arms[0], c0, { policyIds: [...POLICY_MODELS] }).hash);
+});
+
+test('S0-7 host load: every row records in-flight tasks, load average, free memory and wall-clock start/end (additive)', async t => {
+  const root = tmp(t);
+  const { deps } = fakeDeps({ compiled: () => ({ status: 'ok' }), checks: () => null });
+  const config = { ...CONFIG, experiment: 'flat', segments: [{ difficulty: 3, seeds: '1..6' }], arms: ['agent:claude-haiku-5-5', 'agent:claude-opus-5-5'], concurrency: 2 };
+  const res = await runStream({ config, deps, runRoot: path.join(root, 'runs'), workRoot: path.join(root, 'work'), log: () => {} });
+  assert.equal(res.rows.length, 12);
+  for (const r of res.rows) {
+    const h = r.host;
+    assert.ok(h.inFlightStart >= 1 && h.inFlightStart <= 2 && h.inFlightMax >= h.inFlightStart && h.inFlightMax <= 2 && h.inFlightEnd >= 1, JSON.stringify(h));
+    assert.equal(h.loadAvgStart.length, 3); assert.equal(h.loadAvgEnd.length, 3); assert.ok(h.freeMemMbStart > 0 && h.freeMemMbEnd > 0); assert.ok(h.cpus >= 1);
+    assert.ok(Date.parse(h.startedAt) <= Date.parse(h.endedAt));
+  }
+  assert.ok(res.rows.some(r => r.host.inFlightMax === 2), 'two tasks overlapped under concurrency 2');
+  // the tracker itself: max in flight is seen by every overlapping task; an unknown key exits as null
+  const h = hostTracker(); h.enter('a'); h.enter('b'); const b = h.exit('b'); h.enter('c'); const a = h.exit('a'); h.exit('c');
+  assert.equal(b.inFlightStart, 2); assert.equal(a.inFlightMax, 2); assert.equal(a.inFlightStart, 1); assert.equal(h.exit('zz'), null); assert.equal(h.inFlight, 0);
+});
+
+test('S0-6 adoption rule: default adopts a usable version that was not accepted (logged); jit.adoptRequiresAcceptance keeps it out; hashes', async t => {
+  // Every compile is clean but leaves an unexplained diff: usable, never accepted (so the Opus fallback runs too).
+  const plan = { compiled: () => ({ status: 'ok' }), checks: (n, a) => perCase(a, (c, i) => (i === 0 ? 'diff' : 'exact'), { explained: false }) };
+  const base = { ...CONFIG, segments: [{ difficulty: 3, seeds: '1..6' }], jit: { ...CONFIG.jit, shadowEvery: 0 } };
+  const root = tmp(t), run = async (config, name) => {
+    const { deps, calls } = fakeDeps(plan);
+    const res = await runStream({ config: { ...config, experiment: name }, deps, runRoot: path.join(root, 'runs'), workRoot: path.join(root, 'work'), log: () => {} });
+    assert.deepEqual(res.arms.map(a => a.errors), [[]]);
+    return { rows: [...res.rows].sort((a, b) => a.idx - b.idx), calls, events: readJsonl(armPaths(path.join(root, 'runs', name), SLUG).events) };
+  };
+  const d = await run(base, 'adopt-default');
+  const ad = d.events.filter(e => e.kind === 'adoption');
+  assert.equal(ad.length, 1);
+  assert.deepEqual({ ...ad[0], at: undefined }, { at: undefined, arm: base.arms[0], idx: 2, kind: 'adoption', version: 1, builderModel: 'claude-opus-5-5', adopted: true, accepted: false,
+    rule: 'any-usable', keep: null, clean: true, exactRate: ad[0].exactRate });
+  assert.equal(d.rows[2].delivered, 'compiled'); assert.equal(d.rows[2].stateAfter.version.accepted, false);
+  assert.ok(d.rows.slice(2).every(r => r.delivered === 'compiled'), 'today\'s rule: the unaccepted version runs');
+  const s = await run({ ...base, jit: { ...base.jit, adoptRequiresAcceptance: true } }, 'adopt-strict');
+  const as = s.events.filter(e => e.kind === 'adoption');
+  assert.ok(as.length >= 1 && as.every(e => e.adopted === false && e.accepted === false && e.rule === 'requires-acceptance' && e.reason === 'not accepted' && e.keep === null));
+  assert.ok(s.rows.every(r => r.delivered === 'interpreter' && r.version === null), 'no version is ever adopted');
+  assert.ok(s.rows.slice(2).every(r => r.stateAfter.version === null));
+  assert.ok(s.calls.compile.length > d.calls.compile.length, 'the stream keeps trying to compile after no-version deopts');
+  // a rejected recompile logs adoption false with the reason (the PLAN scenario's v3)
+  const { deps } = fakeDeps(PLAN);
+  const res = await runStream({ config: { ...CONFIG, experiment: 'adopt-plan' }, deps, runRoot: path.join(root, 'runs'), workRoot: path.join(root, 'work'), log: () => {} });
+  const pe = res.rows.flatMap(r => r.events.filter(e => e.kind === 'adoption').map(e => ({ idx: r.idx, ...e })));
+  assert.deepEqual(pe.map(e => [e.idx, e.version, e.adopted, e.accepted, e.reason ?? null, e.keep]), [[2, 1, true, true, null, null], [6, 2, true, true, null, null], [8, 3, false, true, 'rejected', 2]]);
+  // config: boolean only; false is the default and moves no hash; true defines a new JIT arm (agent arms unchanged)
+  assert.throws(() => normalizeConfig({ ...CONFIG, jit: { adoptRequiresAcceptance: 'yes' } }), /adoptRequiresAcceptance must be true or false/);
+  assert.equal('adoptRequiresAcceptance' in normalizeConfig({ ...CONFIG, jit: { ...CONFIG.jit, adoptRequiresAcceptance: false } }).jit, false);
+  for (const [name, want] of Object.entries(V1_HASHES)) {
+    const raw = JSON.parse(readFileSync(new URL(`../configs/${name}.json`, import.meta.url), 'utf8'));
+    assert.deepEqual(hashes({ ...raw, jit: { ...raw.jit, adoptRequiresAcceptance: false } }), want, `${name}: the default changes no hash`);
+    const h = hashes({ ...raw, jit: { ...raw.jit, adoptRequiresAcceptance: true } });
+    const jitArm = Object.keys(want).find(a => a.startsWith('jit:'));
+    assert.notEqual(h[jitArm], want[jitArm]); assert.equal(h['agent:claude-haiku-5-5'], want['agent:claude-haiku-5-5']);
+  }
 });
