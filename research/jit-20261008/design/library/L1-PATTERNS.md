@@ -27,6 +27,9 @@ are assigned too. Results [M-c]:
 - **L0 alone explains 233 items (14.9%).** These are mostly linear science and orchestration DAGs.
 - **Whole-workflow templates do not transfer across platforms.** At θ = 0.35, 776 structures form 19 families of 3 or
   more items, and only 3 of those families span 3 or more platforms (§2.6). The reusable unit is the idiom, not the workflow.
+- **What is buildable today is much less than what is explained.** Only 419 items (26.9%) need nothing beyond solver
+  constructs that exist (flow-v2/v3); 755 (48.4%) with today's engine envelope; 1,022 (65.6%) if the host harness owns
+  triggers. The rest wait on unbuilt engine nodes, led by cross-run `state` (157 items blocked) (§7).
 
 ## 1. Method, definitions, caveats (read before quoting any number)
 
