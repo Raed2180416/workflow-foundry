@@ -59,3 +59,12 @@ test('Kev export emits one classification question per enum field', () => {
   assert.deepEqual(recs[0].questions.meaning.criteria, ['void', 'live']);
   assert.equal(new Set(recs.map(r => r._meta.id)).size, 9);
 });
+
+test('decision agreement ignores evidence fields', async () => {
+  const { decisionAgreement, stripEvidence } = await import('../tierdown.mjs');
+  const a = { systems: [{ name: 'LEDGR', order: 'DMY', quote: 'Datum ist TT.MM.' }], reason: 'x' };
+  const b = { systems: [{ name: 'LEDGR', order: 'DMY', quote: 'Datum: TT.MM.JJJJ' }], reason: 'y' };
+  assert.equal(decisionAgreement(a, b), 1);
+  assert.deepEqual(stripEvidence(a), { systems: [{ name: 'LEDGR', order: 'DMY' }] });
+  assert.ok(decisionAgreement(a, { systems: [{ name: 'LEDGR', order: 'MDY', quote: 'z' }] }) < 1);
+});

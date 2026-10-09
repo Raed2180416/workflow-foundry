@@ -13,7 +13,7 @@ import { readFileSync, readdirSync, statSync, writeFileSync, mkdirSync } from 'n
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { canonical } from '../../src/data.mjs';
-import { searchNode } from '../lib/distill.mjs';
+import { searchNode, leafAgreement } from '../lib/distill.mjs';
 
 // Cheapest first. Only ids from policy/models.json; local generative models are parked (owner decision), and Kev is
 // reached through training/benchmark jobs on the laptop bridge, not through this ladder.
@@ -63,13 +63,23 @@ export function profileJudge(calls) {
   };
 }
 
+// Evidence fields (verbatim quotes, free-text reasons) are how a judge shows its work, not what it decides: two models can
+// quote the same sentence differently and agree on every decision. Agreement is scored on decision leaves only.
+export const EVIDENCE_KEY = /^(quote|quotes|evidence|reason|reasons|rationale|note|notes|explanation|span|spans|source_text|why)$/i;
+export function stripEvidence(v, ignore = EVIDENCE_KEY) {
+  if (Array.isArray(v)) return v.map(x => stripEvidence(x, ignore));
+  if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v).filter(([k]) => !ignore.test(k)).map(([k, x]) => [k, stripEvidence(x, ignore)]));
+  return v;
+}
+export const decisionAgreement = (ref, cand) => leafAgreement(stripEvidence(ref), stripEvidence(cand));
+
 // Re-try one judge on every ladder model cheaper than its modal tier, cheapest first.
-export async function tierDownJudge({ calls, modelPort, runId, threshold = 0.98, rounds = [4, 8, 16], log = () => {} }) {
+export async function tierDownJudge({ calls, modelPort, runId, threshold = 0.98, rounds = [4, 8, 16], log = () => {}, agreement = decisionAgreement }) {
   const prof = profileJudge(calls), at = LADDER.indexOf(prof.modalTier);
   const candidates = at > 0 ? LADDER.slice(0, at) : [];
   if (!candidates.length) return { ...prof, candidates: [], assigned: null, reason: at === 0 ? 'already at the cheapest hosted tier' : 'modal tier not on the ladder' };
   const replayable = calls.filter(c => !c.truncated && c.prompt && c.schema);
-  const r = await searchNode({ node: prof.name, calls: replayable, candidates, modelPort, runId, threshold, rounds, log });
+  const r = await searchNode({ node: prof.name, calls: replayable, candidates, modelPort, runId, threshold, rounds, log, agreement });
   return { ...prof, candidates: r.candidates.map(({ samples, ...c }) => c), assigned: r.assigned, sampleSize: r.sampleSize, threshold };
 }
 
