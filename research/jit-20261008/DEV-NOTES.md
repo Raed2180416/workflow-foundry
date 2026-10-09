@@ -340,3 +340,13 @@ variant families of ≥ 2, 18 of ≥ 3, and only 4 with ≥ 3 oracle-bearing mem
 Kubeflow, Galaxy VGP); no cell reaches 10, so **the kill rule fires**; none of the 5 pilots sits in an oracle family. The
 corpus is still the natural source of hand-curated complex workflows for the structural (W-bed) programme, as reference
 graphs rather than as replication families.
+
+**D22. A tiny Haiku judge call through the `claude-cli` ModelPort costs about $0.00011 and takes 1.4 s (20-call probe,
+2026-10-09 12:40 UTC, $0.0022 total).** 20 live classification calls (4-way document kind, ~60-token prompt, 50-token
+cap, portable schema) via `createModelPort` → `port.call` on the host's own login: 20/20 ok, mean $0.000110 per call
+(range 0.000173–0.000175 for the first three, i.e. list price of the CLI's ~2.5K-token system prompt as a cache write
+plus the question), mean latency 1,430 ms, 29 s wall at concurrency 2. This answers W-BED-R2R3-NOTES §7's open question:
+the feared "$0.03 per call" overhead does not exist; a per-document or per-item judge map over 50 items costs about
+$0.006, not $1.2–1.9. The binding constraint for fan-out is **latency** (1.4 s per call, serialised per concurrency
+slot), not dollars, so R3/R6 designs should batch judgments for wall time, not for cost. Journal:
+`/var/tmp/foundry-work/overhead-probe/journal.sqlite` (not committed).

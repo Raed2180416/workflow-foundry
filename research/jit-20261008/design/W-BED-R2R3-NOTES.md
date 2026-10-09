@@ -178,3 +178,7 @@ judgment test, not a size test.
   start at d4.
 - Whether the R2 undecidable templates are undecidable for a strong reader too (Sonnet/Opus review of U1–U3 samples,
   cost ≈ $0.5) [I].
+
+**Addendum (coordinator, 2026-10-09 12:40 UTC).** The per-call overhead question in §7 is answered by a live 20-call
+probe (DEV-NOTES D22): about $0.00011 and 1.4 s per tiny Haiku judge call through the claude-cli ModelPort. Per-item
+judge maps are cheap in dollars; batching matters for wall time only.
