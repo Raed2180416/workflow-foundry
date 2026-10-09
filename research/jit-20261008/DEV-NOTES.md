@@ -350,3 +350,27 @@ the feared "$0.03 per call" overhead does not exist; a per-document or per-item 
 $0.006, not $1.2–1.9. The binding constraint for fan-out is **latency** (1.4 s per call, serialised per concurrency
 slot), not dollars, so R3/R6 designs should batch judgments for wall time, not for cost. Journal:
 `/var/tmp/foundry-work/overhead-probe/journal.sqlite` (not committed).
+
+**D23. Stage B (kinetics comparator gauge, live): relTol 0.05 stands; every wrong Haiku answer differs in the exclusion
+set; R0 launched 2026-10-09 21:35 IST.** 48 sandboxed Haiku sessions on the 24 kinetics dev seeds 201–224 (n = 2;
+`analysis/kinetics-gauge/out/stage-b/STAGE-B.md`, $4.49 actual over 55 attempts, 7 environment faults — 5 `MODEL_RATE_LIMIT`
+at the owner's usage limit around 18:20 IST, 2 `EXECUTOR_PROTOCOL` — all resolved by the 21:12 refill, which skipped the 45
+recorded sessions): 35/48 pass the oracle (d4 24/32, d5 11/16); 15 correct–correct pairs, **0 disagree at relTol 0.05**
+(2 disagree at every t ≤ 0.02, both d5, cause "non-convergence/other", gone after the shared refit); 13/13 schema-valid
+wrong answers differ from the reference in the exclusion set (0 same-set wrong answers at any distance), so with the set
+compared exactly no wrong answer is a false agreement at 0.05; the closest same-set Stage A control stays 0.134. Decision:
+`r0-kinetics.json` unblocked at `relTol 0.05` (`e565cb3`; arm hashes `1fde4626b169c84c` O/H, `2e292709027b2786` agent,
+ENGINE-FREEZE §5). This is dev calibration under FG §4.1: the PREREG freeze adopts 0.05 either as the README precision
+fallback or by O1; nothing here tightens it. Side findings: (i) passing answers sit 3.5–8.2% from the generating truth
+(oracle box ±10%) while the reference sits within 4.9%, so a passing answer can be 3.8e-2 from the reference — the slack
+the tolerance has to cover is reference-vs-agent, not agent-vs-agent; (ii) 29/48 answers are SOP fits printed at 4–6
+significant figures, 3 are loose-optimiser fits (2 of them wrong), none used a non-SOP estimator. **R0 gates** (R0-RUNBOOK
+§0) at launch: G1 re-verified (ENGINE-FREEZE §5: kit `a572eeee1ac237aa`, `src` and `experiments/lib` trees equal, `experiments/jit`
+moved only by flow-v3 files, configs and test pins); G2 main 1038/0 fail, JIT 247 with one flow-v3 compat flake under load
+(order-sensitive stderr comparison of concurrent judge lines; not in the R0 kit; fix queued); **G3 corrected**: the ledger
+purpose `jit-r0` has `fresh: true`, so flipping 225–248 to `used` before launch makes `normalizeConfig` refuse the config —
+the flip follows validation and is split per bed (records used, kinetics fresh for R0-K); G4 the 16:xx smoke on this
+executor; G5 5h 0.32 / 7d 0.53; **G6 deviation**: 3 GB available + 14 GB swap free with the owner's three Kev training
+processes (~3.3 GB) running — Stage B ran two sandboxed sessions under the same load without a fault, so R0 proceeds at
+concurrency 2; G7 dirs present. R0 pair (`agent:claude-haiku-5-5`, `jit:claude-haiku-5-5/claude-haiku-5-5`) started
+21:35 IST from `r0-launch.sh` under `env -i`; log `/var/tmp/foundry-work/r0-records-live.log`.

@@ -1,0 +1,15 @@
+{
+ "mode": "live",
+ "model": "claude-haiku-5-5",
+ "policyVersion": "2026-10-09.1",
+ "family": "kinetics",
+ "config": "experiments/jit/configs/dev-kinetics-1.json",
+ "n": 2,
+ "capUsd": 0.45,
+ "spendStopUsd": 5,
+ "workDir": "/var/tmp/foundry-work/kinetics-stage-b/f8ea6bdbc8",
+ "timeoutMs": 900000,
+ "effort": null,
+ "concurrency": 2,
+ "created": "2026-10-09T11:13:32.619Z"
+}
