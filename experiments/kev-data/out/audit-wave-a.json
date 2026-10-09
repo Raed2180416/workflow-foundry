@@ -1,0 +1,7378 @@
+{
+ "generatedBy": "experiments/kev-data/out/assembly/audit-wave-a.mjs",
+ "builds": {
+  "construction-crossfamily": {
+   "buildId": "kd-d6e318eda0d2e986",
+   "slices": {
+    "train": {
+     "records": 1700,
+     "ports": {
+      "C1:composer": {
+       "rows": 25,
+       "soft": 0,
+       "labels": {
+        "yes": 10,
+        "no": 15
+       },
+       "formsPerLabel": {
+        "yes": 10,
+        "no": 15
+       },
+       "step1": null,
+       "step2": {
+        "groups": 25,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 25,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "C2:composer": {
+       "rows": 300,
+       "soft": 0,
+       "labels": {
+        "yes": 135,
+        "no": 165
+       },
+       "formsPerLabel": {
+        "yes": 135,
+        "no": 165
+       },
+       "step1": null,
+       "step2": {
+        "groups": 300,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 300,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "C7:composer": {
+       "rows": 300,
+       "soft": 0,
+       "labels": {
+        "gaming": 150,
+        "legitimate": 150
+       },
+       "formsPerLabel": {
+        "gaming": 35,
+        "legitimate": 13
+       },
+       "step1": null,
+       "step2": {
+        "groups": 300,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 218,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "C8:composer": {
+       "rows": 300,
+       "soft": 0,
+       "labels": {
+        "leaky": 150,
+        "general": 150
+       },
+       "formsPerLabel": {
+        "leaky": 150,
+        "general": 150
+       },
+       "step1": null,
+       "step2": {
+        "groups": 300,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 300,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "C9:bed-prompts": {
+       "rows": 293,
+       "soft": 0,
+       "labels": {
+        "same": 149,
+        "different": 144
+       },
+       "formsPerLabel": {
+        "same": 143,
+        "different": 136
+       },
+       "step1": null,
+       "step2": {
+        "groups": 293,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 291,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:codefix": {
+       "rows": 71,
+       "soft": 0,
+       "labels": {
+        "holds": 27,
+        "violated": 28,
+        "not_stated": 16
+       },
+       "formsPerLabel": {
+        "holds": 26,
+        "violated": 26,
+        "not_stated": 15
+       },
+       "step1": {
+        "n": 71,
+        "decided": 71,
+        "agree": 71,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 70,
+        "nameMaskedMultiLabel": 1,
+        "nameMaskedShare": 0.014285714285714285,
+        "skeletonGroups": 70,
+        "skeletonMultiLabel": 1,
+        "skeletonShare": 0.014285714285714285,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:gameqa": {
+       "rows": 73,
+       "soft": 0,
+       "labels": {
+        "holds": 29,
+        "violated": 26,
+        "not_stated": 18
+       },
+       "formsPerLabel": {
+        "holds": 26,
+        "violated": 25,
+        "not_stated": 17
+       },
+       "step1": {
+        "n": 73,
+        "decided": 73,
+        "agree": 73,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 72,
+        "nameMaskedMultiLabel": 1,
+        "nameMaskedShare": 0.013888888888888888,
+        "skeletonGroups": 72,
+        "skeletonMultiLabel": 1,
+        "skeletonShare": 0.013888888888888888,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:gridquest": {
+       "rows": 71,
+       "soft": 0,
+       "labels": {
+        "holds": 26,
+        "violated": 29,
+        "not_stated": 16
+       },
+       "formsPerLabel": {
+        "holds": 25,
+        "violated": 27,
+        "not_stated": 15
+       },
+       "step1": {
+        "n": 71,
+        "decided": 71,
+        "agree": 71,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 71,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 71,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:incident": {
+       "rows": 63,
+       "soft": 0,
+       "labels": {
+        "holds": 22,
+        "violated": 27,
+        "not_stated": 14
+       },
+       "formsPerLabel": {
+        "holds": 21,
+        "violated": 25,
+        "not_stated": 13
+       },
+       "step1": {
+        "n": 63,
+        "decided": 63,
+        "agree": 63,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 63,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 63,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:ownerci": {
+       "rows": 69,
+       "soft": 0,
+       "labels": {
+        "holds": 27,
+        "violated": 28,
+        "not_stated": 14
+       },
+       "formsPerLabel": {
+        "holds": 23,
+        "violated": 26,
+        "not_stated": 13
+       },
+       "step1": {
+        "n": 69,
+        "decided": 69,
+        "agree": 69,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 67,
+        "nameMaskedMultiLabel": 2,
+        "nameMaskedShare": 0.029850746268656716,
+        "skeletonGroups": 67,
+        "skeletonMultiLabel": 2,
+        "skeletonShare": 0.029850746268656716,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:records": {
+       "rows": 71,
+       "soft": 0,
+       "labels": {
+        "holds": 29,
+        "violated": 24,
+        "not_stated": 18
+       },
+       "formsPerLabel": {
+        "holds": 27,
+        "violated": 24,
+        "not_stated": 17
+       },
+       "step1": {
+        "n": 71,
+        "decided": 71,
+        "agree": 71,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 69,
+        "nameMaskedMultiLabel": 2,
+        "nameMaskedShare": 0.028985507246376812,
+        "skeletonGroups": 69,
+        "skeletonMultiLabel": 2,
+        "skeletonShare": 0.028985507246376812,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:synth": {
+       "rows": 64,
+       "soft": 0,
+       "labels": {
+        "holds": 26,
+        "violated": 23,
+        "not_stated": 15
+       },
+       "formsPerLabel": {
+        "holds": 24,
+        "violated": 22,
+        "not_stated": 15
+       },
+       "step1": {
+        "n": 64,
+        "decided": 64,
+        "agree": 64,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 61,
+        "nameMaskedMultiLabel": 3,
+        "nameMaskedShare": 0.04918032786885246,
+        "skeletonGroups": 61,
+        "skeletonMultiLabel": 3,
+        "skeletonShare": 0.04918032786885246,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": 0,
+     "heldoutWordingOutsideSlice": 0
+    },
+    "calib-in": {
+     "records": 75,
+     "ports": {
+      "X5:bedtype:codefix": {
+       "rows": 20,
+       "soft": 0,
+       "labels": {
+        "holds": 7,
+        "violated": 9,
+        "not_stated": 4
+       },
+       "formsPerLabel": {
+        "holds": 7,
+        "violated": 8,
+        "not_stated": 4
+       },
+       "step1": {
+        "n": 20,
+        "decided": 20,
+        "agree": 20,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 19,
+        "nameMaskedMultiLabel": 1,
+        "nameMaskedShare": 0.05263157894736842,
+        "skeletonGroups": 19,
+        "skeletonMultiLabel": 1,
+        "skeletonShare": 0.05263157894736842,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:gameqa": {
+       "rows": 14,
+       "soft": 0,
+       "labels": {
+        "holds": 4,
+        "violated": 6,
+        "not_stated": 4
+       },
+       "formsPerLabel": {
+        "holds": 4,
+        "violated": 5,
+        "not_stated": 4
+       },
+       "step1": {
+        "n": 14,
+        "decided": 14,
+        "agree": 14,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 14,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 14,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:gridquest": {
+       "rows": 6,
+       "soft": 0,
+       "labels": {
+        "holds": 2,
+        "violated": 3,
+        "not_stated": 1
+       },
+       "formsPerLabel": {
+        "holds": 2,
+        "violated": 3,
+        "not_stated": 1
+       },
+       "step1": {
+        "n": 6,
+        "decided": 6,
+        "agree": 6,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 6,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 6,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:incident": {
+       "rows": 6,
+       "soft": 0,
+       "labels": {
+        "holds": 2,
+        "violated": 3,
+        "not_stated": 1
+       },
+       "formsPerLabel": {
+        "holds": 2,
+        "violated": 3,
+        "not_stated": 1
+       },
+       "step1": {
+        "n": 6,
+        "decided": 6,
+        "agree": 6,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 6,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 6,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:ownerci": {
+       "rows": 14,
+       "soft": 0,
+       "labels": {
+        "holds": 7,
+        "violated": 5,
+        "not_stated": 2
+       },
+       "formsPerLabel": {
+        "holds": 6,
+        "violated": 5,
+        "not_stated": 2
+       },
+       "step1": {
+        "n": 14,
+        "decided": 14,
+        "agree": 14,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 14,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 14,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:records": {
+       "rows": 7,
+       "soft": 0,
+       "labels": {
+        "holds": 3,
+        "violated": 2,
+        "not_stated": 2
+       },
+       "formsPerLabel": {
+        "holds": 3,
+        "violated": 2,
+        "not_stated": 2
+       },
+       "step1": {
+        "n": 7,
+        "decided": 7,
+        "agree": 7,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 7,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 7,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:synth": {
+       "rows": 8,
+       "soft": 0,
+       "labels": {
+        "holds": 3,
+        "violated": 2,
+        "not_stated": 3
+       },
+       "formsPerLabel": {
+        "holds": 3,
+        "violated": 2,
+        "not_stated": 3
+       },
+       "step1": {
+        "n": 8,
+        "decided": 8,
+        "agree": 8,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 8,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 8,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": 0,
+     "heldoutWordingOutsideSlice": 0
+    },
+    "calib-ood": {
+     "records": 250,
+     "ports": {
+      "X5:bedtype:codefix": {
+       "rows": 36,
+       "soft": 0,
+       "labels": {
+        "holds": 14,
+        "violated": 14,
+        "not_stated": 8
+       },
+       "formsPerLabel": {
+        "holds": 13,
+        "violated": 14,
+        "not_stated": 8
+       },
+       "step1": {
+        "n": 36,
+        "decided": 36,
+        "agree": 36,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 36,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 36,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:gameqa": {
+       "rows": 36,
+       "soft": 0,
+       "labels": {
+        "holds": 14,
+        "violated": 13,
+        "not_stated": 9
+       },
+       "formsPerLabel": {
+        "holds": 14,
+        "violated": 13,
+        "not_stated": 9
+       },
+       "step1": {
+        "n": 36,
+        "decided": 36,
+        "agree": 36,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 36,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 36,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:gridquest": {
+       "rows": 36,
+       "soft": 0,
+       "labels": {
+        "holds": 13,
+        "violated": 14,
+        "not_stated": 9
+       },
+       "formsPerLabel": {
+        "holds": 13,
+        "violated": 14,
+        "not_stated": 9
+       },
+       "step1": {
+        "n": 36,
+        "decided": 36,
+        "agree": 36,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 36,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 36,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:incident": {
+       "rows": 33,
+       "soft": 0,
+       "labels": {
+        "holds": 12,
+        "violated": 13,
+        "not_stated": 8
+       },
+       "formsPerLabel": {
+        "holds": 12,
+        "violated": 13,
+        "not_stated": 8
+       },
+       "step1": {
+        "n": 33,
+        "decided": 33,
+        "agree": 33,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 33,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 33,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:ownerci": {
+       "rows": 37,
+       "soft": 0,
+       "labels": {
+        "holds": 14,
+        "violated": 14,
+        "not_stated": 9
+       },
+       "formsPerLabel": {
+        "holds": 14,
+        "violated": 14,
+        "not_stated": 8
+       },
+       "step1": {
+        "n": 37,
+        "decided": 37,
+        "agree": 37,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 36,
+        "nameMaskedMultiLabel": 1,
+        "nameMaskedShare": 0.027777777777777776,
+        "skeletonGroups": 36,
+        "skeletonMultiLabel": 1,
+        "skeletonShare": 0.027777777777777776,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:records": {
+       "rows": 37,
+       "soft": 0,
+       "labels": {
+        "holds": 14,
+        "violated": 13,
+        "not_stated": 10
+       },
+       "formsPerLabel": {
+        "holds": 13,
+        "violated": 13,
+        "not_stated": 9
+       },
+       "step1": {
+        "n": 37,
+        "decided": 37,
+        "agree": 37,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 37,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 37,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:synth": {
+       "rows": 35,
+       "soft": 0,
+       "labels": {
+        "holds": 13,
+        "violated": 12,
+        "not_stated": 10
+       },
+       "formsPerLabel": {
+        "holds": 12,
+        "violated": 12,
+        "not_stated": 8
+       },
+       "step1": {
+        "n": 35,
+        "decided": 35,
+        "agree": 35,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 35,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 35,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": "n/a (rule 7 checks train, calib-in, dev-select; OOD slices were checked at build time)",
+     "heldoutWordingOutsideSlice": 0
+    },
+    "dev-select": {
+     "records": 459,
+     "ports": {
+      "C1:composer": {
+       "rows": 9,
+       "soft": 0,
+       "labels": {
+        "no": 3,
+        "yes": 6
+       },
+       "formsPerLabel": {
+        "no": 3,
+        "yes": 6
+       },
+       "step1": null,
+       "step2": {
+        "groups": 9,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 9,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "C2:composer": {
+       "rows": 100,
+       "soft": 0,
+       "labels": {
+        "yes": 45,
+        "no": 55
+       },
+       "formsPerLabel": {
+        "yes": 45,
+        "no": 55
+       },
+       "step1": null,
+       "step2": {
+        "groups": 100,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 100,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "C7:composer": {
+       "rows": 100,
+       "soft": 0,
+       "labels": {
+        "gaming": 50,
+        "legitimate": 50
+       },
+       "formsPerLabel": {
+        "gaming": 15,
+        "legitimate": 6
+       },
+       "step1": null,
+       "step2": {
+        "groups": 100,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 90,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "C8:composer": {
+       "rows": 100,
+       "soft": 0,
+       "labels": {
+        "leaky": 50,
+        "general": 50
+       },
+       "formsPerLabel": {
+        "leaky": 50,
+        "general": 50
+       },
+       "step1": null,
+       "step2": {
+        "groups": 100,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 100,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "C9:bed-prompts": {
+       "rows": 100,
+       "soft": 0,
+       "labels": {
+        "same": 50,
+        "different": 50
+       },
+       "formsPerLabel": {
+        "same": 50,
+        "different": 48
+       },
+       "step1": null,
+       "step2": {
+        "groups": 100,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 99,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:codefix": {
+       "rows": 15,
+       "soft": 0,
+       "labels": {
+        "holds": 6,
+        "violated": 7,
+        "not_stated": 2
+       },
+       "formsPerLabel": {
+        "holds": 6,
+        "violated": 6,
+        "not_stated": 2
+       },
+       "step1": {
+        "n": 15,
+        "decided": 15,
+        "agree": 15,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 15,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 15,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:gameqa": {
+       "rows": 8,
+       "soft": 0,
+       "labels": {
+        "holds": 3,
+        "violated": 2,
+        "not_stated": 3
+       },
+       "formsPerLabel": {
+        "holds": 3,
+        "violated": 2,
+        "not_stated": 3
+       },
+       "step1": {
+        "n": 8,
+        "decided": 8,
+        "agree": 8,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 7,
+        "nameMaskedMultiLabel": 1,
+        "nameMaskedShare": 0.14285714285714285,
+        "skeletonGroups": 7,
+        "skeletonMultiLabel": 1,
+        "skeletonShare": 0.14285714285714285,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:gridquest": {
+       "rows": 3,
+       "soft": 0,
+       "labels": {
+        "holds": 1,
+        "violated": 2
+       },
+       "formsPerLabel": {
+        "holds": 1,
+        "violated": 2
+       },
+       "step1": {
+        "n": 3,
+        "decided": 3,
+        "agree": 3,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 3,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 3,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:incident": {
+       "rows": 4,
+       "soft": 0,
+       "labels": {
+        "holds": 1,
+        "violated": 2,
+        "not_stated": 1
+       },
+       "formsPerLabel": {
+        "holds": 1,
+        "violated": 2,
+        "not_stated": 1
+       },
+       "step1": {
+        "n": 4,
+        "decided": 4,
+        "agree": 4,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 4,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 4,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:ownerci": {
+       "rows": 9,
+       "soft": 0,
+       "labels": {
+        "holds": 5,
+        "violated": 4
+       },
+       "formsPerLabel": {
+        "holds": 4,
+        "violated": 4
+       },
+       "step1": {
+        "n": 9,
+        "decided": 9,
+        "agree": 9,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 9,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 9,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:records": {
+       "rows": 5,
+       "soft": 0,
+       "labels": {
+        "holds": 2,
+        "violated": 1,
+        "not_stated": 2
+       },
+       "formsPerLabel": {
+        "holds": 2,
+        "violated": 1,
+        "not_stated": 2
+       },
+       "step1": {
+        "n": 5,
+        "decided": 5,
+        "agree": 5,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 4,
+        "nameMaskedMultiLabel": 1,
+        "nameMaskedShare": 0.25,
+        "skeletonGroups": 4,
+        "skeletonMultiLabel": 1,
+        "skeletonShare": 0.25,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:synth": {
+       "rows": 6,
+       "soft": 0,
+       "labels": {
+        "holds": 2,
+        "violated": 1,
+        "not_stated": 3
+       },
+       "formsPerLabel": {
+        "holds": 2,
+        "violated": 1,
+        "not_stated": 3
+       },
+       "step1": {
+        "n": 6,
+        "decided": 6,
+        "agree": 6,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 6,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 6,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": 0,
+     "heldoutWordingOutsideSlice": 0
+    },
+    "dev-ood": {
+     "records": 250,
+     "ports": {
+      "X5:bedtype:codefix": {
+       "rows": 36,
+       "soft": 0,
+       "labels": {
+        "holds": 14,
+        "violated": 14,
+        "not_stated": 8
+       },
+       "formsPerLabel": {
+        "holds": 14,
+        "violated": 13,
+        "not_stated": 8
+       },
+       "step1": {
+        "n": 36,
+        "decided": 36,
+        "agree": 36,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 36,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 36,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:gameqa": {
+       "rows": 36,
+       "soft": 0,
+       "labels": {
+        "holds": 14,
+        "violated": 13,
+        "not_stated": 9
+       },
+       "formsPerLabel": {
+        "holds": 14,
+        "violated": 13,
+        "not_stated": 8
+       },
+       "step1": {
+        "n": 36,
+        "decided": 36,
+        "agree": 36,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 36,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 36,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:gridquest": {
+       "rows": 36,
+       "soft": 0,
+       "labels": {
+        "holds": 13,
+        "violated": 14,
+        "not_stated": 9
+       },
+       "formsPerLabel": {
+        "holds": 13,
+        "violated": 14,
+        "not_stated": 7
+       },
+       "step1": {
+        "n": 36,
+        "decided": 36,
+        "agree": 36,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 36,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 36,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:incident": {
+       "rows": 33,
+       "soft": 0,
+       "labels": {
+        "holds": 12,
+        "violated": 13,
+        "not_stated": 8
+       },
+       "formsPerLabel": {
+        "holds": 12,
+        "violated": 13,
+        "not_stated": 8
+       },
+       "step1": {
+        "n": 33,
+        "decided": 33,
+        "agree": 33,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 33,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 33,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:ownerci": {
+       "rows": 37,
+       "soft": 0,
+       "labels": {
+        "holds": 14,
+        "violated": 14,
+        "not_stated": 9
+       },
+       "formsPerLabel": {
+        "holds": 13,
+        "violated": 14,
+        "not_stated": 9
+       },
+       "step1": {
+        "n": 37,
+        "decided": 37,
+        "agree": 37,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 36,
+        "nameMaskedMultiLabel": 1,
+        "nameMaskedShare": 0.027777777777777776,
+        "skeletonGroups": 36,
+        "skeletonMultiLabel": 1,
+        "skeletonShare": 0.027777777777777776,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:records": {
+       "rows": 37,
+       "soft": 0,
+       "labels": {
+        "holds": 14,
+        "violated": 13,
+        "not_stated": 10
+       },
+       "formsPerLabel": {
+        "holds": 13,
+        "violated": 13,
+        "not_stated": 10
+       },
+       "step1": {
+        "n": 37,
+        "decided": 37,
+        "agree": 37,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 37,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 37,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:synth": {
+       "rows": 35,
+       "soft": 0,
+       "labels": {
+        "holds": 13,
+        "violated": 12,
+        "not_stated": 10
+       },
+       "formsPerLabel": {
+        "holds": 13,
+        "violated": 12,
+        "not_stated": 9
+       },
+       "step1": {
+        "n": 35,
+        "decided": 35,
+        "agree": 35,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 35,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 35,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": "n/a (rule 7 checks train, calib-in, dev-select; OOD slices were checked at build time)",
+     "heldoutWordingOutsideSlice": 0
+    },
+    "test-in": {
+     "records": 125,
+     "ports": {
+      "X5:bedtype:codefix": {
+       "rows": 21,
+       "soft": 0,
+       "labels": {
+        "holds": 8,
+        "violated": 7,
+        "not_stated": 6
+       },
+       "formsPerLabel": {
+        "holds": 8,
+        "violated": 7,
+        "not_stated": 6
+       },
+       "step1": {
+        "n": 21,
+        "decided": 21,
+        "agree": 21,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 21,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 21,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:gameqa": {
+       "rows": 19,
+       "soft": 0,
+       "labels": {
+        "holds": 7,
+        "violated": 6,
+        "not_stated": 6
+       },
+       "formsPerLabel": {
+        "holds": 7,
+        "violated": 6,
+        "not_stated": 6
+       },
+       "step1": {
+        "n": 19,
+        "decided": 19,
+        "agree": 19,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 19,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 19,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:gridquest": {
+       "rows": 18,
+       "soft": 0,
+       "labels": {
+        "holds": 6,
+        "violated": 7,
+        "not_stated": 5
+       },
+       "formsPerLabel": {
+        "holds": 6,
+        "violated": 7,
+        "not_stated": 5
+       },
+       "step1": {
+        "n": 18,
+        "decided": 18,
+        "agree": 18,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 18,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 18,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:incident": {
+       "rows": 15,
+       "soft": 0,
+       "labels": {
+        "holds": 6,
+        "violated": 6,
+        "not_stated": 3
+       },
+       "formsPerLabel": {
+        "holds": 6,
+        "violated": 6,
+        "not_stated": 3
+       },
+       "step1": {
+        "n": 15,
+        "decided": 15,
+        "agree": 15,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 15,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 15,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:ownerci": {
+       "rows": 18,
+       "soft": 0,
+       "labels": {
+        "holds": 7,
+        "violated": 8,
+        "not_stated": 3
+       },
+       "formsPerLabel": {
+        "holds": 7,
+        "violated": 8,
+        "not_stated": 3
+       },
+       "step1": {
+        "n": 18,
+        "decided": 18,
+        "agree": 18,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 18,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 18,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:records": {
+       "rows": 18,
+       "soft": 0,
+       "labels": {
+        "holds": 7,
+        "violated": 6,
+        "not_stated": 5
+       },
+       "formsPerLabel": {
+        "holds": 7,
+        "violated": 6,
+        "not_stated": 5
+       },
+       "step1": {
+        "n": 18,
+        "decided": 18,
+        "agree": 18,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 18,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 18,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:synth": {
+       "rows": 16,
+       "soft": 0,
+       "labels": {
+        "holds": 6,
+        "violated": 6,
+        "not_stated": 4
+       },
+       "formsPerLabel": {
+        "holds": 6,
+        "violated": 6,
+        "not_stated": 4
+       },
+       "step1": {
+        "n": 16,
+        "decided": 16,
+        "agree": 16,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 16,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 16,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": "n/a (rule 7 checks train, calib-in, dev-select; OOD slices were checked at build time)",
+     "heldoutWordingOutsideSlice": 0
+    },
+    "test-ood": {
+     "records": 1304,
+     "ports": {
+      "X5:bedtype:codefix": {
+       "rows": 106,
+       "soft": 0,
+       "labels": {
+        "holds": 43,
+        "violated": 50,
+        "not_stated": 13
+       },
+       "formsPerLabel": {
+        "holds": 39,
+        "violated": 44,
+        "not_stated": 10
+       },
+       "step1": {
+        "n": 106,
+        "decided": 106,
+        "agree": 106,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 106,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 106,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:gameqa": {
+       "rows": 103,
+       "soft": 0,
+       "labels": {
+        "holds": 40,
+        "violated": 48,
+        "not_stated": 15
+       },
+       "formsPerLabel": {
+        "holds": 36,
+        "violated": 40,
+        "not_stated": 12
+       },
+       "step1": {
+        "n": 103,
+        "decided": 103,
+        "agree": 103,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 103,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 103,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:gridquest": {
+       "rows": 101,
+       "soft": 0,
+       "labels": {
+        "holds": 39,
+        "violated": 48,
+        "not_stated": 14
+       },
+       "formsPerLabel": {
+        "holds": 36,
+        "violated": 40,
+        "not_stated": 12
+       },
+       "step1": {
+        "n": 101,
+        "decided": 101,
+        "agree": 101,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 101,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 101,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:incident": {
+       "rows": 96,
+       "soft": 0,
+       "labels": {
+        "holds": 37,
+        "violated": 45,
+        "not_stated": 14
+       },
+       "formsPerLabel": {
+        "holds": 35,
+        "violated": 39,
+        "not_stated": 12
+       },
+       "step1": {
+        "n": 96,
+        "decided": 96,
+        "agree": 96,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 96,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 96,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:kinetics": {
+       "rows": 300,
+       "soft": 0,
+       "labels": {
+        "holds": 118,
+        "violated": 117,
+        "not_stated": 65
+       },
+       "formsPerLabel": {
+        "holds": 105,
+        "violated": 112,
+        "not_stated": 61
+       },
+       "step1": {
+        "n": 300,
+        "decided": 300,
+        "agree": 300,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 299,
+        "nameMaskedMultiLabel": 1,
+        "nameMaskedShare": 0.0033444816053511705,
+        "skeletonGroups": 299,
+        "skeletonMultiLabel": 1,
+        "skeletonShare": 0.0033444816053511705,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:ownerci": {
+       "rows": 102,
+       "soft": 0,
+       "labels": {
+        "holds": 39,
+        "violated": 48,
+        "not_stated": 15
+       },
+       "formsPerLabel": {
+        "holds": 37,
+        "violated": 42,
+        "not_stated": 12
+       },
+       "step1": {
+        "n": 102,
+        "decided": 102,
+        "agree": 102,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 102,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 102,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:records": {
+       "rows": 99,
+       "soft": 0,
+       "labels": {
+        "holds": 37,
+        "violated": 45,
+        "not_stated": 17
+       },
+       "formsPerLabel": {
+        "holds": 35,
+        "violated": 38,
+        "not_stated": 15
+       },
+       "step1": {
+        "n": 99,
+        "decided": 99,
+        "agree": 99,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 99,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 99,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:runbook": {
+       "rows": 300,
+       "soft": 0,
+       "labels": {
+        "holds": 118,
+        "violated": 117,
+        "not_stated": 65
+       },
+       "formsPerLabel": {
+        "holds": 108,
+        "violated": 111,
+        "not_stated": 64
+       },
+       "step1": {
+        "n": 300,
+        "decided": 300,
+        "agree": 300,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 299,
+        "nameMaskedMultiLabel": 1,
+        "nameMaskedShare": 0.0033444816053511705,
+        "skeletonGroups": 299,
+        "skeletonMultiLabel": 1,
+        "skeletonShare": 0.0033444816053511705,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:bedtype:synth": {
+       "rows": 97,
+       "soft": 0,
+       "labels": {
+        "holds": 38,
+        "violated": 44,
+        "not_stated": 15
+       },
+       "formsPerLabel": {
+        "holds": 33,
+        "violated": 38,
+        "not_stated": 13
+       },
+       "step1": {
+        "n": 97,
+        "decided": 97,
+        "agree": 97,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 97,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 97,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": "n/a (rule 7 checks train, calib-in, dev-select; OOD slices were checked at build time)",
+     "heldoutWordingOutsideSlice": 0
+    }
+   }
+  },
+  "failures-code": {
+   "buildId": "kd-12e1aac515c0dbcb",
+   "slices": {
+    "train": {
+     "records": 2483,
+     "ports": {
+      "F1:exec-injected": {
+       "rows": 1492,
+       "soft": 94,
+       "labels": {
+        "finding": 246,
+        "impossible": 252,
+        "variance": 229,
+        "flake": 256,
+        "defect": 258,
+        "env": 251
+       },
+       "formsPerLabel": {
+        "finding": 92,
+        "impossible": 139,
+        "variance": 90,
+        "flake": 144,
+        "defect": 154,
+        "env": 169
+       },
+       "step1": {
+        "n": 500,
+        "decided": 459,
+        "agree": 429,
+        "coverage": 0.918,
+        "accuracyDecided": 0.934640522875817,
+        "agreementAll": 0.858,
+        "reasons": {
+         "undecided": 41,
+         "disagree": 30
+        }
+       },
+       "step2": {
+        "groups": 1321,
+        "nameMaskedMultiLabel": 14,
+        "nameMaskedShare": 0.010598031794095382,
+        "skeletonGroups": 917,
+        "skeletonMultiLabel": 17,
+        "skeletonShare": 0.018538713195201745,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": [
+         "last_events",
+         "env_diff"
+        ]
+       }
+      },
+      "F1:gameqa": {
+       "rows": 106,
+       "soft": 0,
+       "labels": {
+        "finding": 106
+       },
+       "formsPerLabel": {
+        "finding": 2
+       },
+       "step1": {
+        "n": 106,
+        "decided": 106,
+        "agree": 106,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 106,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 53,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "F1:templates": {
+       "rows": 283,
+       "soft": 109,
+       "labels": {
+        "flake": 49,
+        "impossible": 45,
+        "env": 48,
+        "variance": 49,
+        "finding": 44,
+        "defect": 48
+       },
+       "formsPerLabel": {
+        "flake": 10,
+        "impossible": 5,
+        "env": 12,
+        "variance": 4,
+        "finding": 5,
+        "defect": 19
+       },
+       "step1": {
+        "n": 174,
+        "decided": 167,
+        "agree": 160,
+        "coverage": 0.9597701149425287,
+        "accuracyDecided": 0.9580838323353293,
+        "agreementAll": 0.9195402298850575,
+        "reasons": {
+         "disagree": 7,
+         "undecided": 7
+        }
+       },
+       "step2": {
+        "groups": 173,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 104,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "F2:codefix:billing": {
+       "rows": 66,
+       "soft": 0,
+       "labels": {
+        "prorate": 11,
+        "late_fee": 5,
+        "billable_days": 8,
+        "allocate_payment": 6,
+        "format_cents": 10,
+        "plan_change": 5,
+        "Invoice.add_line": 7,
+        "aging_buckets": 2,
+        "Invoice.amount_due": 4,
+        "period_charge": 8
+       },
+       "formsPerLabel": {
+        "prorate": 4,
+        "late_fee": 3,
+        "billable_days": 4,
+        "allocate_payment": 3,
+        "format_cents": 3,
+        "plan_change": 2,
+        "Invoice.add_line": 2,
+        "aging_buckets": 1,
+        "Invoice.amount_due": 1,
+        "period_charge": 4
+       },
+       "step1": null,
+       "step2": {
+        "groups": 66,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 65,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "F2:codefix:inventory": {
+       "rows": 52,
+       "soft": 0,
+       "labels": {
+        "Storeroom.transfer": 2,
+        "Storeroom.reserve": 1,
+        "StockLedger.__init__": 2,
+        "reorder_quantity": 2,
+        "count_sheet": 6,
+        "days_of_cover": 5,
+        "Warehouse.receive": 2,
+        "reconcile": 2,
+        "reorder_plan": 6,
+        "Depot.receive": 1,
+        "Storeroom.total_available": 1,
+        "LotQueue.expiring_within": 4,
+        "LotQueue.expire": 2,
+        "Storeroom.__init__": 2,
+        "StockLedger.hold": 3,
+        "LotQueue.pick": 3,
+        "Depot.transfer": 3,
+        "Warehouse.allocate": 1,
+        "Depot.restock": 1,
+        "Storeroom.allocate": 1,
+        "StockLedger.total_available": 1,
+        "Warehouse.__init__": 1
+       },
+       "formsPerLabel": {
+        "Storeroom.transfer": 2,
+        "Storeroom.reserve": 1,
+        "StockLedger.__init__": 2,
+        "reorder_quantity": 2,
+        "count_sheet": 1,
+        "days_of_cover": 1,
+        "Warehouse.receive": 2,
+        "reconcile": 2,
+        "reorder_plan": 2,
+        "Depot.receive": 1,
+        "Storeroom.total_available": 1,
+        "LotQueue.expiring_within": 1,
+        "LotQueue.expire": 1,
+        "Storeroom.__init__": 2,
+        "StockLedger.hold": 2,
+        "LotQueue.pick": 2,
+        "Depot.transfer": 1,
+        "Warehouse.allocate": 1,
+        "Depot.restock": 1,
+        "Storeroom.allocate": 1,
+        "StockLedger.total_available": 1,
+        "Warehouse.__init__": 1
+       },
+       "step1": null,
+       "step2": {
+        "groups": 52,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 52,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "F2:codefix:scheduling": {
+       "rows": 87,
+       "soft": 0,
+       "labels": {
+        "free_slots": 23,
+        "overlaps": 8,
+        "longest_idle": 10,
+        "parse_hhmm": 21,
+        "Planner.reschedule": 3,
+        "Planner.book": 3,
+        "BookingBook.reschedule": 3,
+        "peak_concurrency": 6,
+        "expand_weekly": 4,
+        "RoomCalendar.reschedule": 2,
+        "merge": 3,
+        "utilization": 1
+       },
+       "formsPerLabel": {
+        "free_slots": 4,
+        "overlaps": 6,
+        "longest_idle": 1,
+        "parse_hhmm": 8,
+        "Planner.reschedule": 1,
+        "Planner.book": 1,
+        "BookingBook.reschedule": 1,
+        "peak_concurrency": 1,
+        "expand_weekly": 1,
+        "RoomCalendar.reschedule": 1,
+        "merge": 2,
+        "utilization": 1
+       },
+       "step1": null,
+       "step2": {
+        "groups": 87,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 87,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "F2:codefix:tokenizer": {
+       "rows": 90,
+       "soft": 0,
+       "labels": {
+        "detokenize": 4,
+        "split_sentences": 15,
+        "ngrams": 13,
+        "tokenize": 24,
+        "top_tokens": 20,
+        "Vocabulary.decode": 4,
+        "Vocabulary.__init__": 7,
+        "wrap_words": 3
+       },
+       "formsPerLabel": {
+        "detokenize": 1,
+        "split_sentences": 3,
+        "ngrams": 5,
+        "tokenize": 9,
+        "top_tokens": 7,
+        "Vocabulary.decode": 1,
+        "Vocabulary.__init__": 1,
+        "wrap_words": 1
+       },
+       "step1": null,
+       "step2": {
+        "groups": 90,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 90,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X1:codefix": {
+       "rows": 307,
+       "soft": 0,
+       "labels": {
+        "yes": 106,
+        "no": 201
+       },
+       "formsPerLabel": {
+        "yes": 25,
+        "no": 176
+       },
+       "step1": {
+        "n": 307,
+        "decided": 307,
+        "agree": 307,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 278,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 233,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": 0,
+     "heldoutWordingOutsideSlice": 0
+    },
+    "calib-in": {
+     "records": 332,
+     "ports": {
+      "F1:exec-injected": {
+       "rows": 274,
+       "soft": 9,
+       "labels": {
+        "env": 46,
+        "defect": 47,
+        "finding": 45,
+        "flake": 46,
+        "impossible": 46,
+        "variance": 44
+       },
+       "formsPerLabel": {
+        "env": 39,
+        "defect": 42,
+        "finding": 20,
+        "flake": 36,
+        "impossible": 39,
+        "variance": 26
+       },
+       "step1": {
+        "n": 265,
+        "decided": 250,
+        "agree": 232,
+        "coverage": 0.9433962264150944,
+        "accuracyDecided": 0.928,
+        "agreementAll": 0.8754716981132076,
+        "reasons": {
+         "disagree": 18,
+         "undecided": 15
+        }
+       },
+       "step2": {
+        "groups": 262,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 213,
+        "skeletonMultiLabel": 3,
+        "skeletonShare": 0.014084507042253521,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": [
+         "last_events",
+         "env_diff"
+        ]
+       }
+      },
+      "F1:gameqa": {
+       "rows": 14,
+       "soft": 0,
+       "labels": {
+        "finding": 14
+       },
+       "formsPerLabel": {
+        "finding": 2
+       },
+       "step1": {
+        "n": 14,
+        "decided": 14,
+        "agree": 14,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 14,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 13,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X1:codefix": {
+       "rows": 44,
+       "soft": 0,
+       "labels": {
+        "no": 28,
+        "yes": 16
+       },
+       "formsPerLabel": {
+        "no": 27,
+        "yes": 9
+       },
+       "step1": {
+        "n": 44,
+        "decided": 44,
+        "agree": 44,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 44,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 41,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": 0,
+     "heldoutWordingOutsideSlice": 0
+    },
+    "calib-ood": {
+     "records": 590,
+     "ports": {
+      "F1:exec-injected": {
+       "rows": 490,
+       "soft": 15,
+       "labels": {
+        "finding": 80,
+        "defect": 82,
+        "flake": 84,
+        "variance": 78,
+        "impossible": 83,
+        "env": 83
+       },
+       "formsPerLabel": {
+        "finding": 57,
+        "defect": 46,
+        "flake": 36,
+        "variance": 39,
+        "impossible": 30,
+        "env": 53
+       },
+       "step1": {
+        "n": 475,
+        "decided": 435,
+        "agree": 400,
+        "coverage": 0.9157894736842105,
+        "accuracyDecided": 0.9195402298850575,
+        "agreementAll": 0.8421052631578947,
+        "reasons": {
+         "undecided": 40,
+         "disagree": 35
+        }
+       },
+       "step2": {
+        "groups": 469,
+        "nameMaskedMultiLabel": 1,
+        "nameMaskedShare": 0.0021321961620469083,
+        "skeletonGroups": 381,
+        "skeletonMultiLabel": 4,
+        "skeletonShare": 0.010498687664041995,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": [
+         "last_events",
+         "env_diff"
+        ]
+       }
+      },
+      "X1:codefix": {
+       "rows": 100,
+       "soft": 0,
+       "labels": {
+        "no": 60,
+        "yes": 40
+       },
+       "formsPerLabel": {
+        "no": 37,
+        "yes": 1
+       },
+       "step1": {
+        "n": 100,
+        "decided": 100,
+        "agree": 100,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 70,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 70,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": "n/a (rule 7 checks train, calib-in, dev-select; OOD slices were checked at build time)",
+     "heldoutWordingOutsideSlice": 0
+    },
+    "dev-select": {
+     "records": 327,
+     "ports": {
+      "F1:exec-injected": {
+       "rows": 189,
+       "soft": 7,
+       "labels": {
+        "impossible": 31,
+        "variance": 31,
+        "env": 32,
+        "finding": 31,
+        "flake": 32,
+        "defect": 32
+       },
+       "formsPerLabel": {
+        "impossible": 28,
+        "variance": 14,
+        "env": 32,
+        "finding": 21,
+        "flake": 30,
+        "defect": 28
+       },
+       "step1": {
+        "n": 182,
+        "decided": 168,
+        "agree": 159,
+        "coverage": 0.9230769230769231,
+        "accuracyDecided": 0.9464285714285714,
+        "agreementAll": 0.8736263736263736,
+        "reasons": {
+         "disagree": 9,
+         "undecided": 14
+        }
+       },
+       "step2": {
+        "groups": 179,
+        "nameMaskedMultiLabel": 1,
+        "nameMaskedShare": 0.00558659217877095,
+        "skeletonGroups": 154,
+        "skeletonMultiLabel": 3,
+        "skeletonShare": 0.01948051948051948,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": [
+         "last_events",
+         "env_diff"
+        ]
+       }
+      },
+      "F1:gameqa": {
+       "rows": 9,
+       "soft": 0,
+       "labels": {
+        "finding": 9
+       },
+       "formsPerLabel": {
+        "finding": 2
+       },
+       "step1": {
+        "n": 9,
+        "decided": 9,
+        "agree": 9,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 9,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 9,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "F2:codefix:billing": {
+       "rows": 20,
+       "soft": 0,
+       "labels": {
+        "late_fee": 4,
+        "Invoice.add_line": 2,
+        "Invoice.amount_due": 2,
+        "allocate_payment": 3,
+        "prorate": 6,
+        "period_charge": 2,
+        "plan_change": 1
+       },
+       "formsPerLabel": {
+        "late_fee": 2,
+        "Invoice.add_line": 1,
+        "Invoice.amount_due": 1,
+        "allocate_payment": 2,
+        "prorate": 3,
+        "period_charge": 1,
+        "plan_change": 1
+       },
+       "step1": null,
+       "step2": {
+        "groups": 20,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 20,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "F2:codefix:inventory": {
+       "rows": 35,
+       "soft": 0,
+       "labels": {
+        "reconcile": 4,
+        "reorder_quantity": 4,
+        "Depot.__init__": 2,
+        "count_sheet": 2,
+        "Depot.add_stock": 1,
+        "Storeroom.transfer": 1,
+        "Storeroom.receive": 1,
+        "StockLedger.__init__": 1,
+        "reorder_plan": 1,
+        "StockLedger.reserve": 2,
+        "StockLedger.transfer": 2,
+        "days_of_cover": 2,
+        "LotQueue.expiring_within": 2,
+        "Depot.total_available": 1,
+        "LotQueue.expire": 1,
+        "StockLedger.receive": 1,
+        "StockLedger.total_available": 2,
+        "LotQueue.pick": 1,
+        "StockLedger.add_stock": 1,
+        "StockLedger.allocate": 1,
+        "Warehouse.total_available": 2
+       },
+       "formsPerLabel": {
+        "reconcile": 2,
+        "reorder_quantity": 2,
+        "Depot.__init__": 2,
+        "count_sheet": 1,
+        "Depot.add_stock": 1,
+        "Storeroom.transfer": 1,
+        "Storeroom.receive": 1,
+        "StockLedger.__init__": 1,
+        "reorder_plan": 1,
+        "StockLedger.reserve": 2,
+        "StockLedger.transfer": 1,
+        "days_of_cover": 1,
+        "LotQueue.expiring_within": 1,
+        "Depot.total_available": 1,
+        "LotQueue.expire": 1,
+        "StockLedger.receive": 1,
+        "StockLedger.total_available": 1,
+        "LotQueue.pick": 1,
+        "StockLedger.add_stock": 1,
+        "StockLedger.allocate": 1,
+        "Warehouse.total_available": 2
+       },
+       "step1": null,
+       "step2": {
+        "groups": 35,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 35,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "F2:codefix:scheduling": {
+       "rows": 21,
+       "soft": 0,
+       "labels": {
+        "free_slots": 5,
+        "parse_hhmm": 10,
+        "overlaps": 1,
+        "expand_weekly": 1,
+        "RoomCalendar.reschedule": 1,
+        "longest_idle": 2,
+        "peak_concurrency": 1
+       },
+       "formsPerLabel": {
+        "free_slots": 3,
+        "parse_hhmm": 6,
+        "overlaps": 1,
+        "expand_weekly": 1,
+        "RoomCalendar.reschedule": 1,
+        "longest_idle": 1,
+        "peak_concurrency": 1
+       },
+       "step1": null,
+       "step2": {
+        "groups": 21,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 21,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "F2:codefix:tokenizer": {
+       "rows": 23,
+       "soft": 0,
+       "labels": {
+        "Vocabulary.decode": 3,
+        "split_sentences": 5,
+        "tokenize": 4,
+        "ngrams": 5,
+        "detokenize": 3,
+        "top_tokens": 2,
+        "wrap_words": 1
+       },
+       "formsPerLabel": {
+        "Vocabulary.decode": 1,
+        "split_sentences": 2,
+        "tokenize": 2,
+        "ngrams": 2,
+        "detokenize": 1,
+        "top_tokens": 1,
+        "wrap_words": 1
+       },
+       "step1": null,
+       "step2": {
+        "groups": 23,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 23,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X1:codefix": {
+       "rows": 30,
+       "soft": 0,
+       "labels": {
+        "yes": 11,
+        "no": 19
+       },
+       "formsPerLabel": {
+        "yes": 5,
+        "no": 19
+       },
+       "step1": {
+        "n": 30,
+        "decided": 30,
+        "agree": 30,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 30,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 27,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": 0,
+     "heldoutWordingOutsideSlice": 0
+    },
+    "dev-ood": {
+     "records": 658,
+     "ports": {
+      "F1:exec-injected": {
+       "rows": 597,
+       "soft": 51,
+       "labels": {
+        "finding": 99,
+        "variance": 99,
+        "env": 100,
+        "flake": 100,
+        "impossible": 99,
+        "defect": 100
+       },
+       "formsPerLabel": {
+        "finding": 39,
+        "variance": 47,
+        "env": 51,
+        "flake": 61,
+        "impossible": 51,
+        "defect": 43
+       },
+       "step1": {
+        "n": 500,
+        "decided": 467,
+        "agree": 431,
+        "coverage": 0.934,
+        "accuracyDecided": 0.9229122055674518,
+        "agreementAll": 0.862,
+        "reasons": {
+         "disagree": 36,
+         "undecided": 33
+        }
+       },
+       "step2": {
+        "groups": 539,
+        "nameMaskedMultiLabel": 3,
+        "nameMaskedShare": 0.0055658627087198514,
+        "skeletonGroups": 435,
+        "skeletonMultiLabel": 8,
+        "skeletonShare": 0.01839080459770115,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": [
+         "last_events",
+         "env_diff"
+        ]
+       }
+      },
+      "X1:codefix": {
+       "rows": 61,
+       "soft": 0,
+       "labels": {
+        "yes": 1,
+        "no": 60
+       },
+       "formsPerLabel": {
+        "yes": 1,
+        "no": 34
+       },
+       "step1": {
+        "n": 61,
+        "decided": 61,
+        "agree": 61,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 61,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 59,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": "n/a (rule 7 checks train, calib-in, dev-select; OOD slices were checked at build time)",
+     "heldoutWordingOutsideSlice": 0
+    },
+    "test-in": {
+     "records": 580,
+     "ports": {
+      "F1:exec-injected": {
+       "rows": 472,
+       "soft": 27,
+       "labels": {
+        "env": 79,
+        "impossible": 79,
+        "variance": 77,
+        "finding": 79,
+        "flake": 79,
+        "defect": 79
+       },
+       "formsPerLabel": {
+        "env": 65,
+        "impossible": 53,
+        "variance": 45,
+        "finding": 39,
+        "flake": 61,
+        "defect": 68
+       },
+       "step1": {
+        "n": 445,
+        "decided": 415,
+        "agree": 381,
+        "coverage": 0.9325842696629213,
+        "accuracyDecided": 0.9180722891566265,
+        "agreementAll": 0.8561797752808988,
+        "reasons": {
+         "disagree": 34,
+         "undecided": 30
+        }
+       },
+       "step2": {
+        "groups": 435,
+        "nameMaskedMultiLabel": 1,
+        "nameMaskedShare": 0.0022988505747126436,
+        "skeletonGroups": 328,
+        "skeletonMultiLabel": 7,
+        "skeletonShare": 0.021341463414634148,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": [
+         "last_events",
+         "env_diff"
+        ]
+       }
+      },
+      "F1:gameqa": {
+       "rows": 25,
+       "soft": 0,
+       "labels": {
+        "finding": 25
+       },
+       "formsPerLabel": {
+        "finding": 2
+       },
+       "step1": {
+        "n": 25,
+        "decided": 25,
+        "agree": 25,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 25,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 21,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X1:codefix": {
+       "rows": 83,
+       "soft": 0,
+       "labels": {
+        "no": 54,
+        "yes": 29
+       },
+       "formsPerLabel": {
+        "no": 48,
+        "yes": 4
+       },
+       "step1": {
+        "n": 83,
+        "decided": 83,
+        "agree": 83,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 76,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 65,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": "n/a (rule 7 checks train, calib-in, dev-select; OOD slices were checked at build time)",
+     "heldoutWordingOutsideSlice": 0
+    },
+    "test-ood": {
+     "records": 2012,
+     "ports": {
+      "F1:exec-injected": {
+       "rows": 1134,
+       "soft": 104,
+       "labels": {
+        "variance": 193,
+        "finding": 191,
+        "env": 186,
+        "defect": 185,
+        "impossible": 190,
+        "flake": 189
+       },
+       "formsPerLabel": {
+        "variance": 71,
+        "finding": 62,
+        "env": 105,
+        "defect": 101,
+        "impossible": 93,
+        "flake": 107
+       },
+       "step1": {
+        "n": 500,
+        "decided": 453,
+        "agree": 421,
+        "coverage": 0.906,
+        "accuracyDecided": 0.9293598233995585,
+        "agreementAll": 0.842,
+        "reasons": {
+         "undecided": 47,
+         "disagree": 32
+        }
+       },
+       "step2": {
+        "groups": 1023,
+        "nameMaskedMultiLabel": 1,
+        "nameMaskedShare": 0.0009775171065493646,
+        "skeletonGroups": 923,
+        "skeletonMultiLabel": 15,
+        "skeletonShare": 0.016251354279523293,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": [
+         "last_events",
+         "env_diff"
+        ]
+       }
+      },
+      "F2:codefix:ratelimit": {
+       "rows": 63,
+       "soft": 0,
+       "labels": {
+        "TokenBucket.allow": 36,
+        "SlidingLog.allow": 13,
+        "FixedWindow.reset_at": 14
+       },
+       "formsPerLabel": {
+        "TokenBucket.allow": 8,
+        "SlidingLog.allow": 2,
+        "FixedWindow.reset_at": 1
+       },
+       "step1": null,
+       "step2": {
+        "groups": 63,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 63,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "F2:codefix:routing": {
+       "rows": 19,
+       "soft": 0,
+       "labels": {
+        "within_hops": 6,
+        "detour_cost": 13
+       },
+       "formsPerLabel": {
+        "within_hops": 1,
+        "detour_cost": 1
+       },
+       "step1": null,
+       "step2": {
+        "groups": 19,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 19,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "Q6:codefix": {
+       "rows": 100,
+       "soft": 0,
+       "labels": {
+        "defect": 50,
+        "designed": 50
+       },
+       "formsPerLabel": {
+        "defect": 19,
+        "designed": 7
+       },
+       "step1": null,
+       "step2": {
+        "groups": 98,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 94,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X1:codefix": {
+       "rows": 646,
+       "soft": 0,
+       "labels": {
+        "no": 567,
+        "yes": 79
+       },
+       "formsPerLabel": {
+        "no": 232,
+        "yes": 2
+       },
+       "step1": {
+        "n": 500,
+        "decided": 500,
+        "agree": 500,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 640,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 538,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X6:codefix": {
+       "rows": 50,
+       "soft": 0,
+       "labels": {
+        "lead": 25,
+        "designed": 25
+       },
+       "formsPerLabel": {
+        "lead": 15,
+        "designed": 7
+       },
+       "step1": null,
+       "step2": {
+        "groups": 50,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 50,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": "n/a (rule 7 checks train, calib-in, dev-select; OOD slices were checked at build time)",
+     "heldoutWordingOutsideSlice": 0
+    }
+   }
+  },
+  "interactive": {
+   "buildId": "kd-b75fbe30ad81c032",
+   "slices": {
+    "train": {
+     "records": 2496,
+     "ports": {
+      "Q1:gridquest": {
+       "rows": 75,
+       "soft": 0,
+       "labels": {
+        "yes": 36,
+        "no": 39
+       },
+       "formsPerLabel": {
+        "yes": 36,
+        "no": 39
+       },
+       "step1": null,
+       "step2": {
+        "groups": 75,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 75,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "Q2:gridquest": {
+       "rows": 298,
+       "soft": 0,
+       "labels": {
+        "cued": 182,
+        "plain": 116
+       },
+       "formsPerLabel": {
+        "cued": 178,
+        "plain": 113
+       },
+       "step1": null,
+       "step2": {
+        "groups": 298,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 298,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "Q4:gridquest": {
+       "rows": 969,
+       "soft": 0,
+       "labels": {
+        "drifted": 510,
+        "as_expected": 459
+       },
+       "formsPerLabel": {
+        "drifted": 181,
+        "as_expected": 104
+       },
+       "step1": {
+        "n": 500,
+        "decided": 500,
+        "agree": 500,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 969,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 940,
+        "skeletonMultiLabel": 17,
+        "skeletonShare": 0.018085106382978722,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "Q5:gameqa": {
+       "rows": 300,
+       "soft": 0,
+       "labels": {
+        "item_duplication": 39,
+        "wall_clip": 62,
+        "crash": 38,
+        "integer_overflow": 46,
+        "door_without_key": 31,
+        "enemy_ai": 37,
+        "render_mismatch": 13,
+        "transition_inventory_loss": 11,
+        "softlock": 17,
+        "shop_rounding": 6
+       },
+       "formsPerLabel": {
+        "item_duplication": 2,
+        "wall_clip": 7,
+        "crash": 2,
+        "integer_overflow": 11,
+        "door_without_key": 5,
+        "enemy_ai": 4,
+        "render_mismatch": 5,
+        "transition_inventory_loss": 2,
+        "softlock": 2,
+        "shop_rounding": 6
+       },
+       "step1": null,
+       "step2": {
+        "groups": 300,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 294,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "Q6:gameqa": {
+       "rows": 235,
+       "soft": 0,
+       "labels": {
+        "defect": 151,
+        "designed": 84
+       },
+       "formsPerLabel": {
+        "defect": 64,
+        "designed": 28
+       },
+       "step1": null,
+       "step2": {
+        "groups": 213,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 207,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X1:gameqa": {
+       "rows": 319,
+       "soft": 0,
+       "labels": {
+        "yes": 133,
+        "no": 186
+       },
+       "formsPerLabel": {
+        "yes": 28,
+        "no": 97
+       },
+       "step1": null,
+       "step2": {
+        "groups": 319,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 316,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X6:gameqa": {
+       "rows": 300,
+       "soft": 0,
+       "labels": {
+        "designed": 74,
+        "lead": 47,
+        "stale": 79,
+        "noise": 58,
+        "instruction": 19,
+        "duplicate": 23
+       },
+       "formsPerLabel": {
+        "designed": 15,
+        "lead": 32,
+        "stale": 10,
+        "noise": 8,
+        "instruction": 6,
+        "duplicate": 16
+       },
+       "step1": null,
+       "step2": {
+        "groups": 300,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 300,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": 0,
+     "heldoutWordingOutsideSlice": 0
+    },
+    "calib-in": {
+     "records": 198,
+     "ports": {
+      "Q4:gridquest": {
+       "rows": 150,
+       "soft": 0,
+       "labels": {
+        "drifted": 77,
+        "as_expected": 73
+       },
+       "formsPerLabel": {
+        "drifted": 32,
+        "as_expected": 28
+       },
+       "step1": {
+        "n": 150,
+        "decided": 150,
+        "agree": 150,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 150,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 144,
+        "skeletonMultiLabel": 5,
+        "skeletonShare": 0.034722222222222224,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X1:gameqa": {
+       "rows": 48,
+       "soft": 0,
+       "labels": {
+        "yes": 21,
+        "no": 27
+       },
+       "formsPerLabel": {
+        "yes": 15,
+        "no": 18
+       },
+       "step1": null,
+       "step2": {
+        "groups": 48,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 48,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": 0,
+     "heldoutWordingOutsideSlice": 0
+    },
+    "calib-ood": {
+     "records": 350,
+     "ports": {
+      "Q4:gridquest": {
+       "rows": 250,
+       "soft": 0,
+       "labels": {
+        "drifted": 120,
+        "as_expected": 130
+       },
+       "formsPerLabel": {
+        "drifted": 47,
+        "as_expected": 26
+       },
+       "step1": {
+        "n": 250,
+        "decided": 250,
+        "agree": 250,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 250,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 246,
+        "skeletonMultiLabel": 3,
+        "skeletonShare": 0.012195121951219513,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X1:gameqa": {
+       "rows": 100,
+       "soft": 0,
+       "labels": {
+        "yes": 34,
+        "no": 66
+       },
+       "formsPerLabel": {
+        "yes": 23,
+        "no": 33
+       },
+       "step1": null,
+       "step2": {
+        "groups": 100,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 100,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": "n/a (rule 7 checks train, calib-in, dev-select; OOD slices were checked at build time)",
+     "heldoutWordingOutsideSlice": 0
+    },
+    "dev-select": {
+     "records": 487,
+     "ports": {
+      "Q1:gridquest": {
+       "rows": 25,
+       "soft": 0,
+       "labels": {
+        "yes": 16,
+        "no": 9
+       },
+       "formsPerLabel": {
+        "yes": 16,
+        "no": 9
+       },
+       "step1": null,
+       "step2": {
+        "groups": 25,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 25,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "Q2:gridquest": {
+       "rows": 100,
+       "soft": 0,
+       "labels": {
+        "cued": 61,
+        "plain": 39
+       },
+       "formsPerLabel": {
+        "cued": 59,
+        "plain": 38
+       },
+       "step1": null,
+       "step2": {
+        "groups": 100,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 100,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "Q4:gridquest": {
+       "rows": 102,
+       "soft": 0,
+       "labels": {
+        "drifted": 50,
+        "as_expected": 52
+       },
+       "formsPerLabel": {
+        "drifted": 23,
+        "as_expected": 16
+       },
+       "step1": {
+        "n": 102,
+        "decided": 102,
+        "agree": 102,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 102,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 100,
+        "skeletonMultiLabel": 1,
+        "skeletonShare": 0.01,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "Q5:gameqa": {
+       "rows": 52,
+       "soft": 0,
+       "labels": {
+        "wall_clip": 10,
+        "enemy_ai": 9,
+        "crash": 5,
+        "softlock": 4,
+        "integer_overflow": 7,
+        "shop_rounding": 2,
+        "item_duplication": 6,
+        "door_without_key": 3,
+        "render_mismatch": 4,
+        "transition_inventory_loss": 2
+       },
+       "formsPerLabel": {
+        "wall_clip": 2,
+        "enemy_ai": 3,
+        "crash": 2,
+        "softlock": 2,
+        "integer_overflow": 4,
+        "shop_rounding": 1,
+        "item_duplication": 2,
+        "door_without_key": 1,
+        "render_mismatch": 2,
+        "transition_inventory_loss": 1
+       },
+       "step1": null,
+       "step2": {
+        "groups": 52,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 52,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "Q6:gameqa": {
+       "rows": 76,
+       "soft": 0,
+       "labels": {
+        "defect": 51,
+        "designed": 25
+       },
+       "formsPerLabel": {
+        "defect": 32,
+        "designed": 11
+       },
+       "step1": null,
+       "step2": {
+        "groups": 76,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 74,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X1:gameqa": {
+       "rows": 32,
+       "soft": 0,
+       "labels": {
+        "yes": 14,
+        "no": 18
+       },
+       "formsPerLabel": {
+        "yes": 13,
+        "no": 14
+       },
+       "step1": null,
+       "step2": {
+        "groups": 32,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 32,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X6:gameqa": {
+       "rows": 100,
+       "soft": 0,
+       "labels": {
+        "designed": 29,
+        "noise": 21,
+        "lead": 17,
+        "stale": 17,
+        "instruction": 2,
+        "duplicate": 14
+       },
+       "formsPerLabel": {
+        "designed": 11,
+        "noise": 8,
+        "lead": 15,
+        "stale": 6,
+        "instruction": 2,
+        "duplicate": 8
+       },
+       "step1": null,
+       "step2": {
+        "groups": 100,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 100,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": 0,
+     "heldoutWordingOutsideSlice": 0
+    },
+    "dev-ood": {
+     "records": 400,
+     "ports": {
+      "Q4:gridquest": {
+       "rows": 300,
+       "soft": 0,
+       "labels": {
+        "drifted": 145,
+        "as_expected": 155
+       },
+       "formsPerLabel": {
+        "drifted": 33,
+        "as_expected": 24
+       },
+       "step1": {
+        "n": 300,
+        "decided": 300,
+        "agree": 300,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 299,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 299,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X1:gameqa": {
+       "rows": 100,
+       "soft": 0,
+       "labels": {
+        "yes": 34,
+        "no": 66
+       },
+       "formsPerLabel": {
+        "yes": 26,
+        "no": 39
+       },
+       "step1": null,
+       "step2": {
+        "groups": 100,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 100,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": "n/a (rule 7 checks train, calib-in, dev-select; OOD slices were checked at build time)",
+     "heldoutWordingOutsideSlice": 0
+    },
+    "test-in": {
+     "records": 333,
+     "ports": {
+      "Q4:gridquest": {
+       "rows": 250,
+       "soft": 0,
+       "labels": {
+        "drifted": 127,
+        "as_expected": 123
+       },
+       "formsPerLabel": {
+        "drifted": 57,
+        "as_expected": 45
+       },
+       "step1": {
+        "n": 250,
+        "decided": 250,
+        "agree": 250,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 250,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 243,
+        "skeletonMultiLabel": 5,
+        "skeletonShare": 0.0205761316872428,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X1:gameqa": {
+       "rows": 83,
+       "soft": 0,
+       "labels": {
+        "yes": 35,
+        "no": 48
+       },
+       "formsPerLabel": {
+        "yes": 20,
+        "no": 37
+       },
+       "step1": null,
+       "step2": {
+        "groups": 83,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 83,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": "n/a (rule 7 checks train, calib-in, dev-select; OOD slices were checked at build time)",
+     "heldoutWordingOutsideSlice": 0
+    },
+    "test-ood": {
+     "records": 2154,
+     "ports": {
+      "Q4:gameqa": {
+       "rows": 600,
+       "soft": 0,
+       "labels": {
+        "drifted": 300,
+        "as_expected": 300
+       },
+       "formsPerLabel": {
+        "drifted": 71,
+        "as_expected": 67
+       },
+       "step1": {
+        "n": 500,
+        "decided": 500,
+        "agree": 500,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 489,
+        "nameMaskedMultiLabel": 4,
+        "nameMaskedShare": 0.0081799591002045,
+        "skeletonGroups": 489,
+        "skeletonMultiLabel": 4,
+        "skeletonShare": 0.0081799591002045,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "Q4:gridquest": {
+       "rows": 844,
+       "soft": 0,
+       "labels": {
+        "drifted": 427,
+        "as_expected": 417
+       },
+       "formsPerLabel": {
+        "drifted": 103,
+        "as_expected": 42
+       },
+       "step1": {
+        "n": 500,
+        "decided": 500,
+        "agree": 500,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 844,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 841,
+        "skeletonMultiLabel": 3,
+        "skeletonShare": 0.0035671819262782403,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X1:gameqa": {
+       "rows": 150,
+       "soft": 0,
+       "labels": {
+        "yes": 53,
+        "no": 97
+       },
+       "formsPerLabel": {
+        "yes": 35,
+        "no": 55
+       },
+       "step1": null,
+       "step2": {
+        "groups": 150,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 150,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X1:gridquest": {
+       "rows": 460,
+       "soft": 0,
+       "labels": {
+        "yes": 236,
+        "no": 224
+       },
+       "formsPerLabel": {
+        "yes": 9,
+        "no": 194
+       },
+       "step1": null,
+       "step2": {
+        "groups": 459,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 459,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X2:gameqa": {
+       "rows": 100,
+       "soft": 0,
+       "labels": {
+        "different": 64,
+        "same": 36
+       },
+       "formsPerLabel": {
+        "different": 58,
+        "same": 23
+       },
+       "step1": null,
+       "step2": {
+        "groups": 100,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 100,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": "n/a (rule 7 checks train, calib-in, dev-select; OOD slices were checked at build time)",
+     "heldoutWordingOutsideSlice": 0
+    }
+   }
+  },
+  "kinetics": {
+   "buildId": "kd-066639ecd1eed9f9",
+   "slices": {
+    "train": {
+     "records": 4026,
+     "ports": {
+      "K1:kinetics": {
+       "rows": 264,
+       "soft": 0,
+       "labels": {
+        "pipetting_error": 14,
+        "none": 143,
+        "bubble": 67,
+        "temperature_deviation": 20,
+        "reader_saturation": 20
+       },
+       "formsPerLabel": {
+        "pipetting_error": 7,
+        "none": 92,
+        "bubble": 61,
+        "temperature_deviation": 13,
+        "reader_saturation": 11
+       },
+       "step1": null,
+       "step2": {
+        "groups": 227,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 223,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "K2:kinetics": {
+       "rows": 300,
+       "soft": 0,
+       "labels": {
+        "C2": 57,
+        "C4": 34,
+        "C5": 41,
+        "C3": 55,
+        "C1": 57,
+        "C6": 24,
+        "C7": 25,
+        "C8": 7
+       },
+       "formsPerLabel": {
+        "C2": 9,
+        "C4": 11,
+        "C5": 14,
+        "C3": 9,
+        "C1": 11,
+        "C6": 12,
+        "C7": 11,
+        "C8": 4
+       },
+       "step1": {
+        "n": 300,
+        "decided": 300,
+        "agree": 300,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 300,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 206,
+        "skeletonMultiLabel": 30,
+        "skeletonShare": 0.14563106796116504,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "K3:kinetics": {
+       "rows": 261,
+       "soft": 0,
+       "labels": {
+        "uM/min": 100,
+        "uM/s": 53,
+        "nM/s": 42,
+        "nM/min": 47,
+        "mM/min": 19
+       },
+       "formsPerLabel": {
+        "uM/min": 47,
+        "uM/s": 38,
+        "nM/s": 34,
+        "nM/min": 34,
+        "mM/min": 16
+       },
+       "step1": {
+        "n": 261,
+        "decided": 261,
+        "agree": 261,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 261,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 261,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X3:kinetics": {
+       "rows": 1934,
+       "soft": 0,
+       "labels": {
+        "changes": 356,
+        "mentions": 409,
+        "proposes": 516,
+        "retracts": 174,
+        "confirms": 479
+       },
+       "formsPerLabel": {
+        "changes": 130,
+        "mentions": 78,
+        "proposes": 199,
+        "retracts": 30,
+        "confirms": 112
+       },
+       "step1": {
+        "n": 500,
+        "decided": 500,
+        "agree": 500,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 1679,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 1420,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X4:kinetics": {
+       "rows": 299,
+       "soft": 0,
+       "labels": {
+        "binding": 85,
+        "out_of_scope": 75,
+        "superseded": 78,
+        "informal": 61
+       },
+       "formsPerLabel": {
+        "binding": 11,
+        "out_of_scope": 31,
+        "superseded": 53,
+        "informal": 55
+       },
+       "step1": {
+        "n": 299,
+        "decided": 299,
+        "agree": 299,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 299,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 211,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X8:kinetics": {
+       "rows": 968,
+       "soft": 0,
+       "labels": {
+        "inconsistent": 484,
+        "consistent": 484
+       },
+       "formsPerLabel": {
+        "inconsistent": 248,
+        "consistent": 244
+       },
+       "step1": {
+        "n": 500,
+        "decided": 500,
+        "agree": 500,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 968,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 935,
+        "skeletonMultiLabel": 18,
+        "skeletonShare": 0.019251336898395723,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": 0,
+     "heldoutWordingOutsideSlice": 0
+    },
+    "calib-in": {
+     "records": 450,
+     "ports": {
+      "X3:kinetics": {
+       "rows": 300,
+       "soft": 0,
+       "labels": {
+        "changes": 66,
+        "proposes": 77,
+        "confirms": 66,
+        "retracts": 35,
+        "mentions": 56
+       },
+       "formsPerLabel": {
+        "changes": 42,
+        "proposes": 61,
+        "confirms": 41,
+        "retracts": 15,
+        "mentions": 33
+       },
+       "step1": {
+        "n": 300,
+        "decided": 300,
+        "agree": 300,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 293,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 274,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X8:kinetics": {
+       "rows": 150,
+       "soft": 0,
+       "labels": {
+        "consistent": 80,
+        "inconsistent": 70
+       },
+       "formsPerLabel": {
+        "consistent": 53,
+        "inconsistent": 39
+       },
+       "step1": {
+        "n": 150,
+        "decided": 150,
+        "agree": 150,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 150,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 143,
+        "skeletonMultiLabel": 2,
+        "skeletonShare": 0.013986013986013986,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": 0,
+     "heldoutWordingOutsideSlice": 0
+    },
+    "calib-ood": {
+     "records": 750,
+     "ports": {
+      "X3:kinetics": {
+       "rows": 500,
+       "soft": 0,
+       "labels": {
+        "mentions": 184,
+        "changes": 177,
+        "proposes": 63,
+        "retracts": 64,
+        "confirms": 12
+       },
+       "formsPerLabel": {
+        "mentions": 32,
+        "changes": 103,
+        "proposes": 50,
+        "retracts": 9,
+        "confirms": 7
+       },
+       "step1": {
+        "n": 500,
+        "decided": 500,
+        "agree": 500,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 497,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 402,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X8:kinetics": {
+       "rows": 250,
+       "soft": 0,
+       "labels": {
+        "inconsistent": 129,
+        "consistent": 121
+       },
+       "formsPerLabel": {
+        "inconsistent": 8,
+        "consistent": 8
+       },
+       "step1": {
+        "n": 250,
+        "decided": 250,
+        "agree": 250,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 250,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 209,
+        "skeletonMultiLabel": 12,
+        "skeletonShare": 0.05741626794258373,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": "n/a (rule 7 checks train, calib-in, dev-select; OOD slices were checked at build time)",
+     "heldoutWordingOutsideSlice": 0
+    },
+    "dev-select": {
+     "records": 461,
+     "ports": {
+      "K1:kinetics": {
+       "rows": 97,
+       "soft": 0,
+       "labels": {
+        "bubble": 22,
+        "none": 56,
+        "reader_saturation": 7,
+        "pipetting_error": 7,
+        "temperature_deviation": 5
+       },
+       "formsPerLabel": {
+        "bubble": 21,
+        "none": 36,
+        "reader_saturation": 7,
+        "pipetting_error": 5,
+        "temperature_deviation": 4
+       },
+       "step1": null,
+       "step2": {
+        "groups": 84,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 84,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "K2:kinetics": {
+       "rows": 10,
+       "soft": 0,
+       "labels": {
+        "C3": 2,
+        "C4": 4,
+        "C2": 1,
+        "C6": 1,
+        "C7": 1,
+        "C8": 1
+       },
+       "formsPerLabel": {
+        "C3": 2,
+        "C4": 3,
+        "C2": 1,
+        "C6": 1,
+        "C7": 1,
+        "C8": 1
+       },
+       "step1": {
+        "n": 10,
+        "decided": 10,
+        "agree": 10,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 10,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 10,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "K3:kinetics": {
+       "rows": 12,
+       "soft": 0,
+       "labels": {
+        "uM/min": 2,
+        "nM/min": 5,
+        "nM/s": 3,
+        "mM/min": 1,
+        "uM/s": 1
+       },
+       "formsPerLabel": {
+        "uM/min": 2,
+        "nM/min": 5,
+        "nM/s": 3,
+        "mM/min": 1,
+        "uM/s": 1
+       },
+       "step1": {
+        "n": 12,
+        "decided": 12,
+        "agree": 12,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 12,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 12,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X3:kinetics": {
+       "rows": 200,
+       "soft": 0,
+       "labels": {
+        "retracts": 19,
+        "proposes": 57,
+        "mentions": 48,
+        "confirms": 30,
+        "changes": 46
+       },
+       "formsPerLabel": {
+        "retracts": 12,
+        "proposes": 42,
+        "mentions": 27,
+        "confirms": 24,
+        "changes": 35
+       },
+       "step1": {
+        "n": 200,
+        "decided": 200,
+        "agree": 200,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 195,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 182,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X4:kinetics": {
+       "rows": 42,
+       "soft": 0,
+       "labels": {
+        "superseded": 12,
+        "informal": 7,
+        "out_of_scope": 11,
+        "binding": 12
+       },
+       "formsPerLabel": {
+        "superseded": 10,
+        "informal": 6,
+        "out_of_scope": 10,
+        "binding": 7
+       },
+       "step1": {
+        "n": 42,
+        "decided": 42,
+        "agree": 42,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 42,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 38,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X8:kinetics": {
+       "rows": 100,
+       "soft": 0,
+       "labels": {
+        "inconsistent": 45,
+        "consistent": 55
+       },
+       "formsPerLabel": {
+        "inconsistent": 28,
+        "consistent": 32
+       },
+       "step1": {
+        "n": 100,
+        "decided": 100,
+        "agree": 100,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 100,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 98,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": 0,
+     "heldoutWordingOutsideSlice": 0
+    },
+    "dev-ood": {
+     "records": 900,
+     "ports": {
+      "X3:kinetics": {
+       "rows": 600,
+       "soft": 0,
+       "labels": {
+        "retracts": 17,
+        "proposes": 93,
+        "mentions": 237,
+        "changes": 212,
+        "confirms": 41
+       },
+       "formsPerLabel": {
+        "retracts": 5,
+        "proposes": 64,
+        "mentions": 37,
+        "changes": 140,
+        "confirms": 23
+       },
+       "step1": {
+        "n": 500,
+        "decided": 500,
+        "agree": 500,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 592,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 456,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X8:kinetics": {
+       "rows": 300,
+       "soft": 0,
+       "labels": {
+        "inconsistent": 151,
+        "consistent": 149
+       },
+       "formsPerLabel": {
+        "inconsistent": 14,
+        "consistent": 13
+       },
+       "step1": {
+        "n": 300,
+        "decided": 300,
+        "agree": 300,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 300,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 264,
+        "skeletonMultiLabel": 17,
+        "skeletonShare": 0.06439393939393939,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": "n/a (rule 7 checks train, calib-in, dev-select; OOD slices were checked at build time)",
+     "heldoutWordingOutsideSlice": 0
+    },
+    "test-in": {
+     "records": 750,
+     "ports": {
+      "X3:kinetics": {
+       "rows": 500,
+       "soft": 0,
+       "labels": {
+        "changes": 116,
+        "proposes": 99,
+        "retracts": 72,
+        "confirms": 120,
+        "mentions": 93
+       },
+       "formsPerLabel": {
+        "changes": 75,
+        "proposes": 81,
+        "retracts": 24,
+        "confirms": 67,
+        "mentions": 41
+       },
+       "step1": {
+        "n": 500,
+        "decided": 500,
+        "agree": 500,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 471,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 443,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X8:kinetics": {
+       "rows": 250,
+       "soft": 0,
+       "labels": {
+        "inconsistent": 138,
+        "consistent": 112
+       },
+       "formsPerLabel": {
+        "inconsistent": 89,
+        "consistent": 80
+       },
+       "step1": {
+        "n": 250,
+        "decided": 250,
+        "agree": 250,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 250,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 248,
+        "skeletonMultiLabel": 2,
+        "skeletonShare": 0.008064516129032258,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": "n/a (rule 7 checks train, calib-in, dev-select; OOD slices were checked at build time)",
+     "heldoutWordingOutsideSlice": 0
+    },
+    "test-ood": {
+     "records": 3915,
+     "ports": {
+      "X1:kinetics": {
+       "rows": 589,
+       "soft": 0,
+       "labels": {
+        "no": 560,
+        "yes": 29
+       },
+       "formsPerLabel": {
+        "no": 353,
+        "yes": 7
+       },
+       "step1": {
+        "n": 500,
+        "decided": 500,
+        "agree": 500,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 589,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 540,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X3:kinetics": {
+       "rows": 1734,
+       "soft": 0,
+       "labels": {
+        "proposes": 463,
+        "mentions": 433,
+        "changes": 717,
+        "confirms": 94,
+        "retracts": 27
+       },
+       "formsPerLabel": {
+        "proposes": 188,
+        "mentions": 83,
+        "changes": 438,
+        "confirms": 41,
+        "retracts": 6
+       },
+       "step1": {
+        "n": 500,
+        "decided": 500,
+        "agree": 500,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 1701,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 1413,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:kinetics": {
+       "rows": 600,
+       "soft": 0,
+       "labels": {
+        "not_stated": 180,
+        "holds": 210,
+        "violated": 210
+       },
+       "formsPerLabel": {
+        "not_stated": 57,
+        "holds": 72,
+        "violated": 72
+       },
+       "step1": null,
+       "step2": {
+        "groups": 600,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 599,
+        "skeletonMultiLabel": 1,
+        "skeletonShare": 0.001669449081803005,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X7:kinetics": {
+       "rows": 100,
+       "soft": 0,
+       "labels": {
+        "not_needed": 58,
+        "needed": 42
+       },
+       "formsPerLabel": {
+        "not_needed": 37,
+        "needed": 35
+       },
+       "step1": null,
+       "step2": {
+        "groups": 100,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 96,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X8:kinetics": {
+       "rows": 892,
+       "soft": 0,
+       "labels": {
+        "consistent": 421,
+        "inconsistent": 471
+       },
+       "formsPerLabel": {
+        "consistent": 62,
+        "inconsistent": 71
+       },
+       "step1": {
+        "n": 500,
+        "decided": 500,
+        "agree": 500,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 892,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 823,
+        "skeletonMultiLabel": 26,
+        "skeletonShare": 0.031591737545565005,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": "n/a (rule 7 checks train, calib-in, dev-select; OOD slices were checked at build time)",
+     "heldoutWordingOutsideSlice": 0
+    }
+   }
+  },
+  "records-notes": {
+   "buildId": "kd-f96cdf39cf05af26",
+   "slices": {
+    "train": {
+     "records": 4799,
+     "ports": {
+      "R1:records": {
+       "rows": 1182,
+       "soft": 65,
+       "labels": {
+        "ymd": 365,
+        "mdy": 409,
+        "dmy": 408
+       },
+       "formsPerLabel": {
+        "ymd": 206,
+        "mdy": 233,
+        "dmy": 235
+       },
+       "step1": {
+        "n": 500,
+        "decided": 497,
+        "agree": 497,
+        "coverage": 0.994,
+        "accuracyDecided": 1,
+        "agreementAll": 0.994,
+        "reasons": {
+         "decided-by-second-path": 37,
+         "conflict:dmy/mdy+second-path:dmy/mdy": 3
+        }
+       },
+       "step2": {
+        "groups": 1115,
+        "nameMaskedMultiLabel": 2,
+        "nameMaskedShare": 0.0017937219730941704,
+        "skeletonGroups": 1067,
+        "skeletonMultiLabel": 20,
+        "skeletonShare": 0.01874414245548266,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "R2:records": {
+       "rows": 621,
+       "soft": 32,
+       "labels": {
+        "void": 316,
+        "live": 305
+       },
+       "formsPerLabel": {
+        "void": 170,
+        "live": 153
+       },
+       "step1": {
+        "n": 500,
+        "decided": 500,
+        "agree": 500,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {
+         "decided-by-second-path": 23
+        }
+       },
+       "step2": {
+        "groups": 589,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 586,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "R3:records": {
+       "rows": 595,
+       "soft": 32,
+       "labels": {
+        "opposite": 305,
+        "same": 290
+       },
+       "formsPerLabel": {
+        "opposite": 139,
+        "same": 134
+       },
+       "step1": {
+        "n": 500,
+        "decided": 500,
+        "agree": 500,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 563,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 562,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "R4:records": {
+       "rows": 651,
+       "soft": 32,
+       "labels": {
+        "reliable": 317,
+        "restamped": 334
+       },
+       "formsPerLabel": {
+        "reliable": 230,
+        "restamped": 222
+       },
+       "step1": {
+        "n": 500,
+        "decided": 500,
+        "agree": 500,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 619,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 612,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X1:records": {
+       "rows": 319,
+       "soft": 0,
+       "labels": {
+        "yes": 129,
+        "no": 190
+       },
+       "formsPerLabel": {
+        "yes": 57,
+        "no": 93
+       },
+       "step1": null,
+       "step2": {
+        "groups": 319,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 277,
+        "skeletonMultiLabel": 10,
+        "skeletonShare": 0.036101083032490974,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:records": {
+       "rows": 461,
+       "soft": 0,
+       "labels": {
+        "violated": 176,
+        "holds": 214,
+        "not_stated": 71
+       },
+       "formsPerLabel": {
+        "violated": 149,
+        "holds": 169,
+        "not_stated": 43
+       },
+       "step1": null,
+       "step2": {
+        "groups": 460,
+        "nameMaskedMultiLabel": 1,
+        "nameMaskedShare": 0.002173913043478261,
+        "skeletonGroups": 460,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X8:records": {
+       "rows": 970,
+       "soft": 0,
+       "labels": {
+        "inconsistent": 453,
+        "consistent": 517
+       },
+       "formsPerLabel": {
+        "inconsistent": 175,
+        "consistent": 180
+       },
+       "step1": null,
+       "step2": {
+        "groups": 970,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 950,
+        "skeletonMultiLabel": 18,
+        "skeletonShare": 0.018947368421052633,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": 0,
+     "heldoutWordingOutsideSlice": 0
+    },
+    "calib-in": {
+     "records": 1410,
+     "ports": {
+      "R1:records": {
+       "rows": 261,
+       "soft": 15,
+       "labels": {
+        "ymd": 76,
+        "dmy": 92,
+        "mdy": 93
+       },
+       "formsPerLabel": {
+        "ymd": 62,
+        "dmy": 68,
+        "mdy": 68
+       },
+       "step1": {
+        "n": 246,
+        "decided": 243,
+        "agree": 242,
+        "coverage": 0.9878048780487805,
+        "accuracyDecided": 0.9958847736625515,
+        "agreementAll": 0.983739837398374,
+        "reasons": {
+         "disagree-second-path": 1,
+         "decided-by-second-path": 18,
+         "conflict:dmy/mdy+second-path:dmy/mdy": 2,
+         "conflict:dmy/mdy+second-path:none": 1
+        }
+       },
+       "step2": {
+        "groups": 246,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 233,
+        "skeletonMultiLabel": 4,
+        "skeletonShare": 0.017167381974248927,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "R2:records": {
+       "rows": 295,
+       "soft": 15,
+       "labels": {
+        "live": 148,
+        "void": 147
+       },
+       "formsPerLabel": {
+        "live": 85,
+        "void": 86
+       },
+       "step1": {
+        "n": 280,
+        "decided": 280,
+        "agree": 280,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {
+         "decided-by-second-path": 10
+        }
+       },
+       "step2": {
+        "groups": 280,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 279,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "R3:records": {
+       "rows": 276,
+       "soft": 15,
+       "labels": {
+        "same": 140,
+        "opposite": 136
+       },
+       "formsPerLabel": {
+        "same": 88,
+        "opposite": 76
+       },
+       "step1": {
+        "n": 261,
+        "decided": 261,
+        "agree": 261,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 261,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 260,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "R4:records": {
+       "rows": 301,
+       "soft": 15,
+       "labels": {
+        "restamped": 153,
+        "reliable": 148
+       },
+       "formsPerLabel": {
+        "restamped": 113,
+        "reliable": 121
+       },
+       "step1": {
+        "n": 286,
+        "decided": 286,
+        "agree": 286,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 286,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 283,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X1:records": {
+       "rows": 51,
+       "soft": 0,
+       "labels": {
+        "no": 31,
+        "yes": 20
+       },
+       "formsPerLabel": {
+        "no": 26,
+        "yes": 16
+       },
+       "step1": null,
+       "step2": {
+        "groups": 51,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 47,
+        "skeletonMultiLabel": 1,
+        "skeletonShare": 0.02127659574468085,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:records": {
+       "rows": 73,
+       "soft": 0,
+       "labels": {
+        "holds": 38,
+        "violated": 26,
+        "not_stated": 9
+       },
+       "formsPerLabel": {
+        "holds": 36,
+        "violated": 25,
+        "not_stated": 9
+       },
+       "step1": null,
+       "step2": {
+        "groups": 73,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 73,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X8:records": {
+       "rows": 153,
+       "soft": 0,
+       "labels": {
+        "consistent": 82,
+        "inconsistent": 71
+       },
+       "formsPerLabel": {
+        "consistent": 37,
+        "inconsistent": 34
+       },
+       "step1": null,
+       "step2": {
+        "groups": 153,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 153,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": 0,
+     "heldoutWordingOutsideSlice": 0
+    },
+    "calib-ood": {
+     "records": 2728,
+     "ports": {
+      "R1:records": {
+       "rows": 543,
+       "soft": 50,
+       "labels": {
+        "mdy": 188,
+        "dmy": 185,
+        "ymd": 170
+       },
+       "formsPerLabel": {
+        "mdy": 86,
+        "dmy": 86,
+        "ymd": 58
+       },
+       "step1": {
+        "n": 493,
+        "decided": 493,
+        "agree": 493,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 493,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 486,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "R2:records": {
+       "rows": 548,
+       "soft": 50,
+       "labels": {
+        "live": 272,
+        "void": 276
+       },
+       "formsPerLabel": {
+        "live": 157,
+        "void": 155
+       },
+       "step1": {
+        "n": 498,
+        "decided": 497,
+        "agree": 497,
+        "coverage": 0.9979919678714859,
+        "accuracyDecided": 1,
+        "agreementAll": 0.9979919678714859,
+        "reasons": {
+         "no-deciding-sentence": 1
+        }
+       },
+       "step2": {
+        "groups": 498,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 494,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "R3:records": {
+       "rows": 546,
+       "soft": 50,
+       "labels": {
+        "same": 274,
+        "opposite": 272
+       },
+       "formsPerLabel": {
+        "same": 78,
+        "opposite": 83
+       },
+       "step1": {
+        "n": 496,
+        "decided": 495,
+        "agree": 495,
+        "coverage": 0.9979838709677419,
+        "accuracyDecided": 1,
+        "agreementAll": 0.9979838709677419,
+        "reasons": {
+         "no-deciding-sentence": 1
+        }
+       },
+       "step2": {
+        "groups": 496,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 494,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "R4:records": {
+       "rows": 500,
+       "soft": 50,
+       "labels": {
+        "restamped": 248,
+        "reliable": 252
+       },
+       "formsPerLabel": {
+        "restamped": 115,
+        "reliable": 106
+       },
+       "step1": {
+        "n": 450,
+        "decided": 450,
+        "agree": 450,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 450,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 448,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X1:records": {
+       "rows": 100,
+       "soft": 0,
+       "labels": {
+        "yes": 40,
+        "no": 60
+       },
+       "formsPerLabel": {
+        "yes": 26,
+        "no": 31
+       },
+       "step1": null,
+       "step2": {
+        "groups": 100,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 94,
+        "skeletonMultiLabel": 3,
+        "skeletonShare": 0.031914893617021274,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:records": {
+       "rows": 240,
+       "soft": 0,
+       "labels": {
+        "violated": 100,
+        "holds": 108,
+        "not_stated": 32
+       },
+       "formsPerLabel": {
+        "violated": 85,
+        "holds": 100,
+        "not_stated": 12
+       },
+       "step1": null,
+       "step2": {
+        "groups": 240,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 239,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X8:records": {
+       "rows": 251,
+       "soft": 0,
+       "labels": {
+        "inconsistent": 116,
+        "consistent": 135
+       },
+       "formsPerLabel": {
+        "inconsistent": 90,
+        "consistent": 93
+       },
+       "step1": null,
+       "step2": {
+        "groups": 251,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 246,
+        "skeletonMultiLabel": 5,
+        "skeletonShare": 0.02032520325203252,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": "n/a (rule 7 checks train, calib-in, dev-select; OOD slices were checked at build time)",
+     "heldoutWordingOutsideSlice": 0
+    },
+    "dev-select": {
+     "records": 935,
+     "ports": {
+      "R1:records": {
+       "rows": 177,
+       "soft": 10,
+       "labels": {
+        "dmy": 56,
+        "ymd": 57,
+        "mdy": 64
+       },
+       "formsPerLabel": {
+        "dmy": 43,
+        "ymd": 50,
+        "mdy": 49
+       },
+       "step1": {
+        "n": 167,
+        "decided": 166,
+        "agree": 166,
+        "coverage": 0.9940119760479041,
+        "accuracyDecided": 1,
+        "agreementAll": 0.9940119760479041,
+        "reasons": {
+         "conflict:dmy/mdy+second-path:dmy/mdy": 1,
+         "decided-by-second-path": 19
+        }
+       },
+       "step2": {
+        "groups": 167,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 159,
+        "skeletonMultiLabel": 4,
+        "skeletonShare": 0.025157232704402517,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "R2:records": {
+       "rows": 196,
+       "soft": 10,
+       "labels": {
+        "void": 98,
+        "live": 98
+       },
+       "formsPerLabel": {
+        "void": 69,
+        "live": 65
+       },
+       "step1": {
+        "n": 186,
+        "decided": 186,
+        "agree": 186,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {
+         "decided-by-second-path": 9
+        }
+       },
+       "step2": {
+        "groups": 186,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 186,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "R3:records": {
+       "rows": 181,
+       "soft": 10,
+       "labels": {
+        "opposite": 91,
+        "same": 90
+       },
+       "formsPerLabel": {
+        "opposite": 51,
+        "same": 45
+       },
+       "step1": {
+        "n": 171,
+        "decided": 171,
+        "agree": 171,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 171,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 170,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "R4:records": {
+       "rows": 199,
+       "soft": 10,
+       "labels": {
+        "restamped": 101,
+        "reliable": 98
+       },
+       "formsPerLabel": {
+        "restamped": 77,
+        "reliable": 86
+       },
+       "step1": {
+        "n": 189,
+        "decided": 189,
+        "agree": 189,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 189,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 188,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X1:records": {
+       "rows": 32,
+       "soft": 0,
+       "labels": {
+        "no": 20,
+        "yes": 12
+       },
+       "formsPerLabel": {
+        "no": 17,
+        "yes": 11
+       },
+       "step1": null,
+       "step2": {
+        "groups": 32,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 30,
+        "skeletonMultiLabel": 1,
+        "skeletonShare": 0.03333333333333333,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:records": {
+       "rows": 49,
+       "soft": 0,
+       "labels": {
+        "violated": 20,
+        "holds": 23,
+        "not_stated": 6
+       },
+       "formsPerLabel": {
+        "violated": 18,
+        "holds": 22,
+        "not_stated": 6
+       },
+       "step1": null,
+       "step2": {
+        "groups": 49,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 48,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X8:records": {
+       "rows": 101,
+       "soft": 0,
+       "labels": {
+        "inconsistent": 48,
+        "consistent": 53
+       },
+       "formsPerLabel": {
+        "inconsistent": 22,
+        "consistent": 22
+       },
+       "step1": null,
+       "step2": {
+        "groups": 101,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 101,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": 0,
+     "heldoutWordingOutsideSlice": 0
+    },
+    "dev-ood": {
+     "records": 3270,
+     "ports": {
+      "R1:records": {
+       "rows": 660,
+       "soft": 60,
+       "labels": {
+        "mdy": 227,
+        "ymd": 213,
+        "dmy": 220
+       },
+       "formsPerLabel": {
+        "mdy": 117,
+        "ymd": 76,
+        "dmy": 111
+       },
+       "step1": {
+        "n": 500,
+        "decided": 497,
+        "agree": 497,
+        "coverage": 0.994,
+        "accuracyDecided": 1,
+        "agreementAll": 0.994,
+        "reasons": {
+         "no-deciding-sentence": 3
+        }
+       },
+       "step2": {
+        "groups": 600,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 597,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "R2:records": {
+       "rows": 660,
+       "soft": 60,
+       "labels": {
+        "void": 334,
+        "live": 326
+       },
+       "formsPerLabel": {
+        "void": 207,
+        "live": 211
+       },
+       "step1": {
+        "n": 500,
+        "decided": 499,
+        "agree": 499,
+        "coverage": 0.998,
+        "accuracyDecided": 1,
+        "agreementAll": 0.998,
+        "reasons": {
+         "no-deciding-sentence": 1
+        }
+       },
+       "step2": {
+        "groups": 600,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 598,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "R3:records": {
+       "rows": 652,
+       "soft": 60,
+       "labels": {
+        "same": 323,
+        "opposite": 329
+       },
+       "formsPerLabel": {
+        "same": 107,
+        "opposite": 105
+       },
+       "step1": {
+        "n": 500,
+        "decided": 499,
+        "agree": 499,
+        "coverage": 0.998,
+        "accuracyDecided": 1,
+        "agreementAll": 0.998,
+        "reasons": {
+         "no-deciding-sentence": 1
+        }
+       },
+       "step2": {
+        "groups": 592,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 587,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "R4:records": {
+       "rows": 652,
+       "soft": 60,
+       "labels": {
+        "restamped": 334,
+        "reliable": 318
+       },
+       "formsPerLabel": {
+        "restamped": 139,
+        "reliable": 123
+       },
+       "step1": {
+        "n": 500,
+        "decided": 500,
+        "agree": 500,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 592,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 591,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X1:records": {
+       "rows": 100,
+       "soft": 0,
+       "labels": {
+        "no": 60,
+        "yes": 40
+       },
+       "formsPerLabel": {
+        "no": 34,
+        "yes": 29
+       },
+       "step1": null,
+       "step2": {
+        "groups": 100,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 95,
+        "skeletonMultiLabel": 2,
+        "skeletonShare": 0.021052631578947368,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:records": {
+       "rows": 246,
+       "soft": 0,
+       "labels": {
+        "violated": 91,
+        "holds": 115,
+        "not_stated": 40
+       },
+       "formsPerLabel": {
+        "violated": 79,
+        "holds": 99,
+        "not_stated": 11
+       },
+       "step1": null,
+       "step2": {
+        "groups": 246,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 244,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X8:records": {
+       "rows": 300,
+       "soft": 0,
+       "labels": {
+        "consistent": 154,
+        "inconsistent": 146
+       },
+       "formsPerLabel": {
+        "consistent": 106,
+        "inconsistent": 113
+       },
+       "step1": null,
+       "step2": {
+        "groups": 300,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 300,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": "n/a (rule 7 checks train, calib-in, dev-select; OOD slices were checked at build time)",
+     "heldoutWordingOutsideSlice": 0
+    },
+    "test-in": {
+     "records": 2410,
+     "ports": {
+      "R1:records": {
+       "rows": 480,
+       "soft": 25,
+       "labels": {
+        "mdy": 165,
+        "dmy": 171,
+        "ymd": 144
+       },
+       "formsPerLabel": {
+        "mdy": 114,
+        "dmy": 120,
+        "ymd": 105
+       },
+       "step1": {
+        "n": 455,
+        "decided": 453,
+        "agree": 453,
+        "coverage": 0.9956043956043956,
+        "accuracyDecided": 1,
+        "agreementAll": 0.9956043956043956,
+        "reasons": {
+         "decided-by-second-path": 34,
+         "conflict:dmy/mdy+second-path:none": 1,
+         "conflict:dmy/mdy+second-path:dmy/mdy": 1
+        }
+       },
+       "step2": {
+        "groups": 454,
+        "nameMaskedMultiLabel": 1,
+        "nameMaskedShare": 0.0022026431718061676,
+        "skeletonGroups": 438,
+        "skeletonMultiLabel": 10,
+        "skeletonShare": 0.0228310502283105,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "R2:records": {
+       "rows": 491,
+       "soft": 25,
+       "labels": {
+        "void": 247,
+        "live": 244
+       },
+       "formsPerLabel": {
+        "void": 126,
+        "live": 139
+       },
+       "step1": {
+        "n": 466,
+        "decided": 466,
+        "agree": 466,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {
+         "decided-by-second-path": 17
+        }
+       },
+       "step2": {
+        "groups": 466,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 463,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "R3:records": {
+       "rows": 479,
+       "soft": 25,
+       "labels": {
+        "opposite": 236,
+        "same": 243
+       },
+       "formsPerLabel": {
+        "opposite": 115,
+        "same": 125
+       },
+       "step1": {
+        "n": 454,
+        "decided": 454,
+        "agree": 454,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 453,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 450,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "R4:records": {
+       "rows": 503,
+       "soft": 25,
+       "labels": {
+        "reliable": 245,
+        "restamped": 258
+       },
+       "formsPerLabel": {
+        "reliable": 188,
+        "restamped": 189
+       },
+       "step1": {
+        "n": 478,
+        "decided": 478,
+        "agree": 478,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 478,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 477,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X1:records": {
+       "rows": 82,
+       "soft": 0,
+       "labels": {
+        "no": 50,
+        "yes": 32
+       },
+       "formsPerLabel": {
+        "no": 35,
+        "yes": 26
+       },
+       "step1": null,
+       "step2": {
+        "groups": 82,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 74,
+        "skeletonMultiLabel": 2,
+        "skeletonShare": 0.02702702702702703,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:records": {
+       "rows": 123,
+       "soft": 0,
+       "labels": {
+        "holds": 60,
+        "violated": 44,
+        "not_stated": 19
+       },
+       "formsPerLabel": {
+        "holds": 55,
+        "violated": 41,
+        "not_stated": 14
+       },
+       "step1": null,
+       "step2": {
+        "groups": 123,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 121,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X8:records": {
+       "rows": 252,
+       "soft": 0,
+       "labels": {
+        "inconsistent": 116,
+        "consistent": 136
+       },
+       "formsPerLabel": {
+        "inconsistent": 54,
+        "consistent": 59
+       },
+       "step1": null,
+       "step2": {
+        "groups": 252,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 248,
+        "skeletonMultiLabel": 4,
+        "skeletonShare": 0.016129032258064516,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": "n/a (rule 7 checks train, calib-in, dev-select; OOD slices were checked at build time)",
+     "heldoutWordingOutsideSlice": 0
+    },
+    "test-ood": {
+     "records": 20193,
+     "ports": {
+      "R1:records": {
+       "rows": 3692,
+       "soft": 300,
+       "labels": {
+        "dmy": 1275,
+        "mdy": 1259,
+        "ymd": 1158
+       },
+       "formsPerLabel": {
+        "dmy": 379,
+        "mdy": 340,
+        "ymd": 331
+       },
+       "step1": {
+        "n": 500,
+        "decided": 495,
+        "agree": 494,
+        "coverage": 0.99,
+        "accuracyDecided": 0.997979797979798,
+        "agreementAll": 0.988,
+        "reasons": {
+         "conflict:dmy/mdy+second-path:dmy/mdy": 3,
+         "decided-by-second-path": 8,
+         "disagree-second-path": 1,
+         "no-deciding-sentence": 2
+        }
+       },
+       "step2": {
+        "groups": 3386,
+        "nameMaskedMultiLabel": 6,
+        "nameMaskedShare": 0.0017720023626698169,
+        "skeletonGroups": 3164,
+        "skeletonMultiLabel": 75,
+        "skeletonShare": 0.02370417193426043,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "R2:records": {
+       "rows": 3690,
+       "soft": 300,
+       "labels": {
+        "void": 1849,
+        "live": 1841
+       },
+       "formsPerLabel": {
+        "void": 463,
+        "live": 461
+       },
+       "step1": {
+        "n": 500,
+        "decided": 500,
+        "agree": 500,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {
+         "decided-by-second-path": 13
+        }
+       },
+       "step2": {
+        "groups": 3390,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 3364,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "R3:records": {
+       "rows": 3697,
+       "soft": 300,
+       "labels": {
+        "same": 1836,
+        "opposite": 1861
+       },
+       "formsPerLabel": {
+        "same": 305,
+        "opposite": 305
+       },
+       "step1": {
+        "n": 500,
+        "decided": 500,
+        "agree": 500,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 3390,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 3340,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "R4:records": {
+       "rows": 3689,
+       "soft": 300,
+       "labels": {
+        "reliable": 1816,
+        "restamped": 1873
+       },
+       "formsPerLabel": {
+        "reliable": 607,
+        "restamped": 610
+       },
+       "step1": {
+        "n": 500,
+        "decided": 500,
+        "agree": 500,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 3387,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 3315,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X1:records": {
+       "rows": 142,
+       "soft": 0,
+       "labels": {
+        "no": 85,
+        "yes": 57
+       },
+       "formsPerLabel": {
+        "no": 61,
+        "yes": 48
+       },
+       "step1": null,
+       "step2": {
+        "groups": 142,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 138,
+        "skeletonMultiLabel": 2,
+        "skeletonShare": 0.014492753623188406,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:records": {
+       "rows": 3350,
+       "soft": 0,
+       "labels": {
+        "holds": 1589,
+        "violated": 1436,
+        "not_stated": 325
+       },
+       "formsPerLabel": {
+        "holds": 941,
+        "violated": 946,
+        "not_stated": 34
+       },
+       "step1": null,
+       "step2": {
+        "groups": 3350,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 3308,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X8:records": {
+       "rows": 1933,
+       "soft": 0,
+       "labels": {
+        "inconsistent": 825,
+        "consistent": 1108
+       },
+       "formsPerLabel": {
+        "inconsistent": 360,
+        "consistent": 367
+       },
+       "step1": null,
+       "step2": {
+        "groups": 1933,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 1892,
+        "skeletonMultiLabel": 35,
+        "skeletonShare": 0.01849894291754757,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": "n/a (rule 7 checks train, calib-in, dev-select; OOD slices were checked at build time)",
+     "heldoutWordingOutsideSlice": 0
+    }
+   }
+  },
+  "runbook": {
+   "buildId": "kd-0b31edcda341fe60",
+   "slices": {
+    "train": {
+     "records": 1349,
+     "ports": {
+      "Q4:runbook": {
+       "rows": 968,
+       "soft": 28,
+       "labels": {
+        "drifted": 479,
+        "as_expected": 489
+       },
+       "formsPerLabel": {
+        "drifted": 190,
+        "as_expected": 186
+       },
+       "step1": {
+        "n": 500,
+        "decided": 500,
+        "agree": 500,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 909,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 812,
+        "skeletonMultiLabel": 7,
+        "skeletonShare": 0.008620689655172414,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X1:runbook": {
+       "rows": 222,
+       "soft": 0,
+       "labels": {
+        "no": 173,
+        "yes": 49
+       },
+       "formsPerLabel": {
+        "no": 107,
+        "yes": 6
+       },
+       "step1": {
+        "n": 222,
+        "decided": 188,
+        "agree": 188,
+        "coverage": 0.8468468468468469,
+        "accuracyDecided": 1,
+        "agreementAll": 0.8468468468468469,
+        "reasons": {
+         "authored-line:train-pool": 34
+        }
+       },
+       "step2": {
+        "groups": 214,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 181,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X4:runbook": {
+       "rows": 159,
+       "soft": 0,
+       "labels": {
+        "binding": 31,
+        "out_of_scope": 69,
+        "informal": 59
+       },
+       "formsPerLabel": {
+        "binding": 22,
+        "out_of_scope": 10,
+        "informal": 21
+       },
+       "step1": null,
+       "step2": {
+        "groups": 151,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 106,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": 0,
+     "heldoutWordingOutsideSlice": 0
+    },
+    "calib-in": {
+     "records": 183,
+     "ports": {
+      "Q4:runbook": {
+       "rows": 150,
+       "soft": 7,
+       "labels": {
+        "drifted": 76,
+        "as_expected": 74
+       },
+       "formsPerLabel": {
+        "drifted": 61,
+        "as_expected": 59
+       },
+       "step1": {
+        "n": 143,
+        "decided": 143,
+        "agree": 143,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 143,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 142,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X1:runbook": {
+       "rows": 33,
+       "soft": 0,
+       "labels": {
+        "no": 24,
+        "yes": 9
+       },
+       "formsPerLabel": {
+        "no": 20,
+        "yes": 4
+       },
+       "step1": {
+        "n": 33,
+        "decided": 24,
+        "agree": 24,
+        "coverage": 0.7272727272727273,
+        "accuracyDecided": 1,
+        "agreementAll": 0.7272727272727273,
+        "reasons": {
+         "authored-line:train-pool": 9
+        }
+       },
+       "step2": {
+        "groups": 33,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 29,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": 0,
+     "heldoutWordingOutsideSlice": 0
+    },
+    "calib-ood": {
+     "records": 342,
+     "ports": {
+      "Q4:runbook": {
+       "rows": 250,
+       "soft": 9,
+       "labels": {
+        "drifted": 123,
+        "as_expected": 127
+       },
+       "formsPerLabel": {
+        "drifted": 29,
+        "as_expected": 26
+       },
+       "step1": {
+        "n": 241,
+        "decided": 241,
+        "agree": 241,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 228,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 196,
+        "skeletonMultiLabel": 2,
+        "skeletonShare": 0.01020408163265306,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X1:runbook": {
+       "rows": 92,
+       "soft": 0,
+       "labels": {
+        "no": 72,
+        "yes": 20
+       },
+       "formsPerLabel": {
+        "no": 36,
+        "yes": 16
+       },
+       "step1": {
+        "n": 92,
+        "decided": 53,
+        "agree": 53,
+        "coverage": 0.5760869565217391,
+        "accuracyDecided": 1,
+        "agreementAll": 0.5760869565217391,
+        "reasons": {
+         "authored-line:ood-line": 39
+        }
+       },
+       "step2": {
+        "groups": 91,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 89,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": "n/a (rule 7 checks train, calib-in, dev-select; OOD slices were checked at build time)",
+     "heldoutWordingOutsideSlice": 0
+    },
+    "dev-select": {
+     "records": 158,
+     "ports": {
+      "Q4:runbook": {
+       "rows": 100,
+       "soft": 2,
+       "labels": {
+        "as_expected": 48,
+        "drifted": 52
+       },
+       "formsPerLabel": {
+        "as_expected": 42,
+        "drifted": 41
+       },
+       "step1": {
+        "n": 98,
+        "decided": 98,
+        "agree": 98,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 98,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 97,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X1:runbook": {
+       "rows": 27,
+       "soft": 0,
+       "labels": {
+        "yes": 10,
+        "no": 17
+       },
+       "formsPerLabel": {
+        "yes": 9,
+        "no": 17
+       },
+       "step1": {
+        "n": 27,
+        "decided": 16,
+        "agree": 16,
+        "coverage": 0.5925925925925926,
+        "accuracyDecided": 1,
+        "agreementAll": 0.5925925925925926,
+        "reasons": {
+         "authored-line:train-pool": 11
+        }
+       },
+       "step2": {
+        "groups": 27,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 27,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X4:runbook": {
+       "rows": 31,
+       "soft": 0,
+       "labels": {
+        "superseded": 10,
+        "informal": 6,
+        "out_of_scope": 12,
+        "binding": 3
+       },
+       "formsPerLabel": {
+        "superseded": 4,
+        "informal": 5,
+        "out_of_scope": 6,
+        "binding": 3
+       },
+       "step1": null,
+       "step2": {
+        "groups": 30,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 28,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": 0,
+     "heldoutWordingOutsideSlice": 0
+    },
+    "dev-ood": {
+     "records": 398,
+     "ports": {
+      "Q4:runbook": {
+       "rows": 300,
+       "soft": 9,
+       "labels": {
+        "drifted": 151,
+        "as_expected": 149
+       },
+       "formsPerLabel": {
+        "drifted": 40,
+        "as_expected": 37
+       },
+       "step1": {
+        "n": 291,
+        "decided": 291,
+        "agree": 291,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 281,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 253,
+        "skeletonMultiLabel": 2,
+        "skeletonShare": 0.007905138339920948,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X1:runbook": {
+       "rows": 98,
+       "soft": 0,
+       "labels": {
+        "no": 77,
+        "yes": 21
+       },
+       "formsPerLabel": {
+        "no": 47,
+        "yes": 19
+       },
+       "step1": {
+        "n": 98,
+        "decided": 56,
+        "agree": 56,
+        "coverage": 0.5714285714285714,
+        "accuracyDecided": 1,
+        "agreementAll": 0.5714285714285714,
+        "reasons": {
+         "authored-line:ood-line": 42
+        }
+       },
+       "step2": {
+        "groups": 97,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 97,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": "n/a (rule 7 checks train, calib-in, dev-select; OOD slices were checked at build time)",
+     "heldoutWordingOutsideSlice": 0
+    },
+    "test-in": {
+     "records": 333,
+     "ports": {
+      "Q4:runbook": {
+       "rows": 250,
+       "soft": 10,
+       "labels": {
+        "drifted": 119,
+        "as_expected": 131
+       },
+       "formsPerLabel": {
+        "drifted": 83,
+        "as_expected": 84
+       },
+       "step1": {
+        "n": 240,
+        "decided": 240,
+        "agree": 240,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 237,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 234,
+        "skeletonMultiLabel": 1,
+        "skeletonShare": 0.004273504273504274,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X1:runbook": {
+       "rows": 83,
+       "soft": 0,
+       "labels": {
+        "no": 53,
+        "yes": 30
+       },
+       "formsPerLabel": {
+        "no": 46,
+        "yes": 21
+       },
+       "step1": {
+        "n": 83,
+        "decided": 46,
+        "agree": 46,
+        "coverage": 0.5542168674698795,
+        "accuracyDecided": 1,
+        "agreementAll": 0.5542168674698795,
+        "reasons": {
+         "authored-line:train-pool": 37
+        }
+       },
+       "step2": {
+        "groups": 83,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 77,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": "n/a (rule 7 checks train, calib-in, dev-select; OOD slices were checked at build time)",
+     "heldoutWordingOutsideSlice": 0
+    },
+    "test-ood": {
+     "records": 2141,
+     "ports": {
+      "Q4:runbook": {
+       "rows": 862,
+       "soft": 51,
+       "labels": {
+        "as_expected": 450,
+        "drifted": 412
+       },
+       "formsPerLabel": {
+        "as_expected": 82,
+        "drifted": 88
+       },
+       "step1": {
+        "n": 500,
+        "decided": 500,
+        "agree": 500,
+        "coverage": 1,
+        "accuracyDecided": 1,
+        "agreementAll": 1,
+        "reasons": {}
+       },
+       "step2": {
+        "groups": 792,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 738,
+        "skeletonMultiLabel": 3,
+        "skeletonShare": 0.0040650406504065045,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X1:runbook": {
+       "rows": 189,
+       "soft": 0,
+       "labels": {
+        "no": 125,
+        "yes": 64
+       },
+       "formsPerLabel": {
+        "no": 94,
+        "yes": 41
+       },
+       "step1": {
+        "n": 189,
+        "decided": 109,
+        "agree": 109,
+        "coverage": 0.5767195767195767,
+        "accuracyDecided": 1,
+        "agreementAll": 0.5767195767195767,
+        "reasons": {
+         "authored-line:ood-line": 80
+        }
+       },
+       "step2": {
+        "groups": 183,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 183,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X3:runbook": {
+       "rows": 490,
+       "soft": 0,
+       "labels": {
+        "mentions": 125,
+        "changes": 110,
+        "confirms": 82,
+        "retracts": 67,
+        "proposes": 106
+       },
+       "formsPerLabel": {
+        "mentions": 16,
+        "changes": 45,
+        "confirms": 16,
+        "retracts": 3,
+        "proposes": 8
+       },
+       "step1": null,
+       "step2": {
+        "groups": 427,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 366,
+        "skeletonMultiLabel": 0,
+        "skeletonShare": 0,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      },
+      "X5:runbook": {
+       "rows": 600,
+       "soft": 0,
+       "labels": {
+        "not_stated": 156,
+        "holds": 222,
+        "violated": 222
+       },
+       "formsPerLabel": {
+        "not_stated": 34,
+        "holds": 28,
+        "violated": 28
+       },
+       "step1": null,
+       "step2": {
+        "groups": 600,
+        "nameMaskedMultiLabel": 0,
+        "nameMaskedShare": 0,
+        "skeletonGroups": 593,
+        "skeletonMultiLabel": 7,
+        "skeletonShare": 0.011804384485666104,
+        "exactMultiLabel": 0
+       },
+       "step3": {
+        "undeclaredKeys": []
+       }
+      }
+     },
+     "forbiddenKeyRecords": 0,
+     "registryHitsTrainLike": "n/a (rule 7 checks train, calib-in, dev-select; OOD slices were checked at build time)",
+     "heldoutWordingOutsideSlice": 0
+    }
+   }
+  }
+ },
+ "crossBuild": {
+  "stateOverlaps": {}
+ },
+ "registry": {
+  "n": 16880,
+  "digest": "sha256:d862d99c0e714309e022fed9620454fc3065a25e86ca6da474f11e069e1ebde9"
+ }
+}

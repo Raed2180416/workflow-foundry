@@ -1,6 +1,6 @@
 # Workflow  (wf_da253fe6-f97)
 
-status: running (no final record yet); finished agents: 7
+status: running (no final record yet); finished agents: 8
 
 ## Script
 
@@ -2465,3 +2465,375 @@ The coupling is productive in both directions:
 - `/home/user/workflow-foundry/experiments/runs/jit/*/*/versions/*/compile.json`
 - `/home/user/workflow-foundry/research/heal-20261008/DESIGN.md`
 - `/home/user/workflow-foundry/research/corpus-20261006/COVERAGE.md`
+
+## Agent result 8
+
+# Dossier: composition and control (B12 composition from guarded sub-modules; B13 interactive environments and game loops)
+
+*2026-10-09. Read-only pass; no live model calls; development evidence only. Tags: **[repo]** I measured it this pass from the cited file; **[doc]** it is documented in the cited repo file; **[paper]**, **[practice/docs]** and **[inference]** as the task requires. "Unverified" means I saw only an abstract or a secondary summary. The earlier sweep (`frontier:interactive-and-composition` and the synthesis in the workflow journal) already covers DAgger, options, Simplex and Neural Simplex, shielding, Voyager, ASI, SkillWeaver, AWM, Code as Policies, WorldCoder, PIRL, BALROG, Temporal and LangGraph. I cite those only to tell them apart from this dossier. Everything below is new to the sweep.*
+
+---
+
+## B12. Composition from guarded sub-modules
+
+### 1. Mechanism (repo evidence)
+
+- **No composition primitive exists anywhere in the JIT.**
+  - The SDK has only `createFlow`/`step`/`judge`/`guard`/`invariant`/`map`/`flag`/`done` (`experiments/jit/flow-v2.mjs`, 239 lines).
+  - The sandbox copies in only `solve.mjs`, `tools/model.mjs`, `tools/gateway.json` and the task files (`run-compiled.mjs:49`), so a solver cannot even import a sibling module.
+  - Across all 21 archived compiled solvers, **0 import anything** besides flow, model and `node:` modules [repo].
+  - The engine IR has "static nesting only (depth ≤ 6)" and no `call` (README layer table; `src/validate.mjs`) [doc]. Lane 2 counts **214 corpus items that need `subworkflow-call`, and for 102 it is the only blocker** (`research/review-20261007/02-ir-expressiveness.md` §A1) [doc].
+- **Every compile re-derives the same sub-procedures.** In the 10 records solver versions under `experiments/runs/jit/jit-dev-records-1/*/versions/`, `parseDate`, `osa`, `normPhone`, `namesMatch`, `linked`, `isoOf` and `parseLine` are each written **10/10 times**, and `parseMoney`/`partDist`/`splitName` 7/10 [repo]. The solvers are 311–629-line monoliths [repo].
+- **The error locus is a module that nobody guards.**
+  - Every silent records miss is an under-merge (D1; inventory F2).
+  - In S/H v1 the decision is a hard threshold, `namesMatch = partDist(g)+partDist(f) <= 1` plus `linked(...)` (`.../jit-claude-sonnet-5-5--claude-haiku-5-5/versions/v1-haiku55/solve.mjs:493-494`) [repo].
+  - The only checks near it are whole-output invariants (`rows-in-one-record`, `one-dob-per-person`, `entity-ids-unique`, lines 539–541). None can see a pair that was never merged.
+- **Common mode follows from shared module logic.** In the four-solver N-version probe, the one unanimous wrong answer (s214) was an under-merge (D8, `nversion-records-dev.json`) [doc]. Independently written monoliths still converge on the same identity heuristic.
+- **Healing has a global blast radius.**
+  - Recompile rewrites the whole program. The v2 heal fixed `vendex-entries` (D3) and silently removed refusals elsewhere: O/H v2 answered and failed 5/7 d4 tasks (D9) [doc].
+  - Heal's closed patch grammar "cannot iterate over array items" (heal DESIGN B.5) [doc], so neither repair path can make a *local* edit.
+- **Leverage is not contained.** One global `rules` judge conditions every row: D11 tier-down kept 95% of leaves but lost tasks, 5/8 vs 7/8 [doc]. Without module boundaries, leverage cannot be measured or capped.
+
+### 2. Ideological root
+
+The assumption is that **the unit of compilation, verification and healing is the task.** Traces are task-level (SPEC §4: answer + scripts + commands), acceptance is task-level (check-traces), shadows compare whole answers, and the input profile (`profile.mjs`) fences the *task* input. Composition needs contracts at *interior* boundaries. Traces never show those, because an interpreter's scripts have no stable interfaces.
+
+For the assumption to hold against the e2e vision, three things would all have to be true:
+1. Recurring tasks share no sub-procedures across families.
+2. Module defects are independent across compiles.
+3. Heals only ever touch one decision.
+
+The repo falsifies each one:
+- 10/10 helper duplication;
+- s214 common mode;
+- D9 collateral widening.
+
+A second root is that **contracts emerge from traces.** Task-level guards can be mined from inputs (type feedback), but a module contract also needs a *postcondition*, and nothing in an end-to-end answer labels whether a sub-step was right. THESIS-JIT §6.7 defines composition ("guarded and healed as modules; the heal localiser picks the module") without saying where module-level evidence comes from. That is the real blocker [inference].
+
+### 3. Frontier (cited)
+
+- **Test-constrained composition.**
+  - Parsel decomposes a task into hierarchical function descriptions, implements each with a code LLM and searches over *combinations* of implementations using tests. Reported gains: APPS pass rate >75% over prior direct sampling; HumanEval pass@1 67%→85% with generated tests (Zelikman et al., NeurIPS 2023) [paper].
+  - LLM4PLC makes the plan explicit as functions + variables + FSM states before it generates Structured Text, then checks with grammar checkers, compilers and SMV model checking; generation success 47%→72% (Fakih et al., ICSE-SEIP 2024) [paper].
+- **Library learning by refactoring.** ReGAL refactors existing programs into helper functions verified *by execution against the original outputs*, then prunes or edits over-specific helpers. CodeLlama-13B: +11.5 (LOGO), +26.1 (date understanding), +8.1 (TextCraft) absolute (Stengel-Eskin, Prasad, Bansal, ICML 2024) [paper]. *Date reasoning is one of its five domains, and dates are exactly the helper our solvers re-derive.*
+- **Sound use of approximate decompositions.** ChatHTN tries symbolic methods first, asks the LLM only when no method applies, and stays sound despite approximate LLM output. A follow-up learns verified LLM decompositions as reusable methods (Muñoz-Avila, Aha, Rizzo, 2025; follow-up unverified) [paper].
+- **Contracts and blame.** Findler & Felleisen made runtime-checked contracts at higher-order boundaries assign *blame* to the party that broke them (ICFP 2002) [paper]. Assume/guarantee contracts give an algebra for composing and refining components (Benveniste et al., *Contracts for System Design*, FnT EDA 2018) [paper].
+
+### 4. Niche verticals
+
+**(a) Robotics: sequential composition by funnels, skill chaining and behaviour trees.**
+- *How it was solved.* Burridge, Rizzi and Koditschek compose feedback controllers by *domains*: controller i may hand off to j only if i's goal set lies inside j's domain of attraction. The result is a partition of state space that funnels to the goal (IJRR 1999) [paper]. Skill chaining learns each skill so that it ends inside its successor's initiation set (Konidaris & Barto, NIPS 2009) [paper]. Colledanchise & Ögren show that behaviour trees generalise sequential composition, subsumption and decision trees, and that key properties (robustness, safety) carry over when trees are composed (IEEE T-RO 2017) [paper].
+- *Transferable mechanism.* A module is the pair (domain D, goal set G), not a function. Composition is legal when G_producer ⊆ D_consumer, and that is checkable before running.
+- *Adaptation for Foundry.*
+  - Every module carries two learned profiles: `profile.mjs` over its inputs (D) and the same learner over its outputs (G).
+  - At link time, `checkProfile(D_consumer, sample of G_producer)` must pass, or the link is refused and routed to interpreter or adapter.
+  - This is the reuse gate of THESIS §6.7 moved down to sub-module granularity. The same machinery serves reuse and composition, while each keeps its own definition.
+
+**(b) PLC and industrial control: IEC 61131-3 and IEC 61499 function blocks, adapters and permissives.**
+- *How it was solved.* IEC 61499 function blocks expose *event* and *data* ports. `WITH` constraints bind which data accompany which event. Composite blocks are networks of blocks, and adapter interfaces separate the specification from the implementation (IEC 61499 overview; Eclipse 4diac library docs) [practice/docs]. Interlocks are evaluated outside the logic they gate [inference from general practice; I did not open IEC 61511, unverified].
+- *Transferable mechanism.* Typed ports plus an adapter type: the caller binds to an interface, never to an implementation. Effects and data drops pass through permissive conditions that the module cannot override.
+- *Adaptation for Foundry.*
+  - `flow.module(name, {iface, version})`. The iface is the adapter: a JSON-schema in/out plus a `WITH`-style list of which inputs a decision may read.
+  - Data-dropping outputs (void rows, sign flips; inventory I3) need a host-evaluated permissive keyed to contract-declared rule ids, never to quoted note text.
+
+**(c) Supervisory control theory (modular).**
+- *How it was solved.* Ramadge & Wonham reduce supervision to the supremal controllable sublanguage of the legal language (SIAM J. Control Optim. 1987). Wonham & Ramadge give conditions under which a specification that is an intersection of component restrictions can be enforced by *modular* supervisors (MCSS 1988). Modular supervisors can *conflict*, meaning their composition blocks even though each alone does not [paper].
+- *Transferable mechanism.* Check nonconflict after composing.
+- *Adaptation for Foundry.* Each module's guard set is a local supervisor. After linking, replay the trace pool through every module's guards in sequence and count inputs that no path accepts (blocking). A composed workflow that refuses inputs the monolith answered correctly has conflicting guards. This is the composition analogue of D9, which concerned silent widening.
+
+**(d) Fault-tolerant control: analytical redundancy.**
+- *How it was solved.* Blanke, Kinnaert, Lunze and Staroswiecki use structural models to locate redundancy in a process and to test whether a fault is detectable and isolable (*Diagnosis and Fault-Tolerant Control*, 3rd ed., Springer 2015; details of the analytical-redundancy-relation treatment unverified) [paper].
+- *Transferable mechanism.* A residual is computed from redundant information. When residuals break, the *pattern* of broken residuals isolates which component failed.
+- *Adaptation for Foundry.* Give every module boundary residuals:
+  - money: Σamount conserved across currency conversion;
+  - phone: country-code prefix consistent with the resolved country;
+  - identity: no two entities share a phone and a DOB.
+
+  Then build a fault-signature matrix (module × residual), so a failed residual names a module with no oracle needed.
+
+**(e) Game AI: HTN method libraries (SHOP-style, applied in games).**
+- *Transferable mechanism.* Methods are guarded decompositions. If a method's precondition fails, the planner tries the next one. ChatHTN adds an LLM fallback when no method applies (above).
+- *Adaptation for Foundry.* Compiled modules become methods with preconditions, and the interpreter becomes the "no applicable method" case, scoped to one compound task, not the whole job.
+
+### 5. Creative options
+
+1. **Patch: contracted modules with blame.**
+   - `flow.module` + iface + pre/post contracts + residuals.
+   - A violation emits `deopt{kind:'contract', module, blame:'caller'|'callee'}`.
+   - Recompile then targets one module, and reject-if-worse runs *per module* on that module's recorded boundary inputs. That is a much sharper regression set than whole tasks.
+2. **Refactor, don't synthesise (the free oracle).**
+   - ReGAL's insight applied here: a *behaviour-preserving* refactor of an existing solver has an exact oracle, namely the old program on the same inputs.
+   - Mine the 21 archived solvers for shared helpers and require byte-identical outputs on every archived input before a helper enters the library. No hidden truth, no shadow, no interpreter.
+   - Module-level N-version then comes free: 10 implementations of `namesMatch` already exist.
+3. **Change the problem: composition as planning over funnels (GOAP/HTN), not program writing.**
+   - Modules declare preconditions and effects over typed facts (profiles). A generic code planner (A*, as in F.E.A.R.) composes a pipeline per task. The cheap model writes *modules and their contracts*, never the glue.
+   - Composition correctness becomes a reachability check, so "write a correct 600-line program" turns into "add one verified edge".
+4. **Change the problem: put N-version diversity at the module boundary, where answers are small.**
+   - Disagreement between whole tasks is noisy (D8: 5/13 with no majority).
+   - Disagreement on a *pair decision* ("same entity?") is binary and cheap to adjudicate narrowly. It turns §6.2 "verify decisions, not answers" into an architecture.
+
+### 6. Experiments (ranked)
+
+**E12-1. Module-level N-version census at $0 (3–4 h; first).**
+- *Build:* `experiments/jit/module-census.mjs`.
+  - Extract top-level function declarations, with their closure constants, from the 10 records `solve.mjs` versions by brace matching (no new dependencies). Load them in `node:vm` with `flow` stubbed.
+  - Harvest module inputs from the 24 dev tasks (`makeTasks`/`solverView`; task inputs only):
+    - every date string × each judge-settable `order` value;
+    - every phone × country;
+    - every candidate name pair within blocking distance.
+  - Run all 10 implementations of each module.
+- *Metric:*
+  - **Recall:** the share of the known silent misses (F1's 6; the D1 pairs `de Vreis`, `Anook`, `Bneoit N.`, `Sanne P.`) whose responsible module decision shows a cross-version disagreement. Scored analyst-side only.
+  - False-disagreement rate on decisions of passing tasks.
+  - Disagreement-set size per task, a proxy for adjudication cost.
+- *Baseline:* whole-task N-version (D8: 11/13 disagreements contained a right answer; 5 had no majority; s214 was unanimous-wrong).
+- *Preregistration:* diagnostic, dev split, declared as such. No system component reads the oracle.
+- *Cost:* $0 and zero quota.
+- *Kill rule:* if extraction fails on ≥3 of 10 versions, report that as the negative ("compiled monoliths are not decomposable post hoc") and move to E12-2's refactor-by-builder.
+- *Falsifier:* if recall on the known misses is <50%, or s214 is also unanimous at module level, then module-level diversity is no better than task-level, and the common mode sits in the *spec reading*, not the module.
+
+**E12-2. Behaviour-preserving refactor + one-module heal (about 1 day; second).**
+- *Build:*
+  - `experiments/jit/refactor.mjs`: a Haiku builder (policy ids only) refactors S/H v1, O/H v1 and H/H v1 into `lib/{dates,phones,money,identity}.mjs` + thin `solve.mjs`. `run-compiled.mjs` gets a `lib/` copy (backwards compatible; the `MODEL_TOOL` bytes stay unchanged).
+  - Acceptance: exact output equality with the monolith on all archived inputs, with judges served by a salt-free memo. That memo needs N2; until N2 exists, re-run live at about $0.004–0.04/task.
+  - Then apply the D1 fix *once*: a near-miss band → same-entity `flow.judge` + flag, inside `identity.mjs`. Relink all three solvers.
+- *Arms:* one-module fix relinked ×3 vs the existing whole-program recompile per arm (D10/D12 path).
+- *Metric:*
+  - dev pass (analyst-side) on seeds 201–224;
+  - **collateral change:** the count of non-identity output fields that differ, which should be 0;
+  - refusals preserved on the D9 inputs;
+  - fix $.
+- *Preregistration:* dev now. A PREREG with seeds ≥ 8000 (avoiding F13's 7000–7039 collision) before any held-out read, K ≥ 2 lineages.
+- *Cost:* about $3–8. Low quota (Haiku), plus one Opus fallback at most.
+- *Kill rule:* if refactor equivalence stays below 95% of archived inputs after 2 builder attempts, stop.
+- *Falsifier:* the module fix causes as much collateral change or refusal loss as a whole recompile.
+
+**E12-3. Blame accuracy on mutants ($0–1, 3 h; third).**
+- On E12-2's modular solver, inject 20 single-module mutants:
+  - threshold 1→0 or 1→2;
+  - DMY↔MDY;
+  - drop the E.164 prefix;
+  - swap the rounding mode.
+- Measure:
+  - detection by boundary contracts + residuals against today's whole-output invariants;
+  - blame accuracy (correct module named).
+- *Kill rule:* blame accuracy < 70%.
+- *Falsifier:* whole-output invariants detect as many mutants. In that case boundaries add no observability.
+
+---
+
+## B13. Interactive environments and game loops
+
+### 1. Mechanism (repo evidence)
+
+- **Compiled code cannot drive an environment.**
+  - `solve.mjs` is one-shot: `task.json` in, `flow.done` out, run with `network:false` and only the gateway socket (`run-compiled.mjs:46-52`).
+  - `flow` has no env primitive. The env port (`reset/step/observe/snapshot/restore`) is M13-ENV on the frozen E2 branch (`11-NEXT.md` rows M13-ENV, C5 pilot W6) [doc].
+- **The trace format cannot express a policy.** Traces are final answer + scripts + commands (SPEC §4), not (observation, action) pairs. The compiler has nothing to distil per step [doc].
+- **Whole-task deopt is not just expensive in gridquest; it breaks the environment's semantics.**
+  - The env has a **lifetime ledger that `reset()`/`restore()` never refund**.
+  - "a harness that hands the solver several envs … re-opens blind search" (`beds/gridquest/README.md`, Interface and Known limitations) [doc].
+  - SPEC §6.2's "on deopt: interpret" would therefore hand the interpreter either a depleted ledger or an illegal fresh env.
+- **Shadowing and adjudication are ill-defined.** Two solvers cannot act in one episode. A second env is a second ledger, and majority-of-answers needs re-runnable tasks [inference from the ledger semantics].
+- **Perception is the difficulty; control is codable** (`gridquest/README.md` diagnostics, dev/test per level):
+  - the certifying explorer, with perfect perception and no map, solves 30/30 at every level;
+  - `regexAgentV2` scores 0/1 at d4 and 0/0 at d5;
+  - the white-box `templateAwareAgent` scores 4/8 at d4;
+  - `snapshotSearch` scores 0 under the default ledger.
+
+  Episodes run to 8.5–13K tokens at d3 and 19–27K at d5 [doc].
+- **No LLM has run on gridquest yet.** gameqa is unaudited; `sealed-3` is unread [doc].
+- **Guards are learned from task inputs** (`profile.mjs` header: "profiles see input shape"). In an episode the input arrives over time, so a one-shot input fence cannot guard observation 37 [doc + inference].
+
+### 2. Ideological root
+
+The assumption is that **a task is a pure function from input to answer, and time is not part of the contract.** Every verification device we built depends on referential transparency:
+- check-traces re-runs;
+- shadows re-solve;
+- adjudication takes a majority of answers;
+- N-version compares outputs;
+- reject-if-worse replays old cases.
+
+Environments break this in three ways:
+1. Actions are irreversible (trap chutes, coupled switches).
+2. Budgets are consumed and never refunded.
+3. Error compounds over T steps (T²ε, covered by the prior sweep).
+
+For the assumption to hold, environments would need free reset, a refundable ledger, deterministic replay *and* short horizons. Gridquest grants the first and third (sealed snapshots, determinism class D0). It denies the second by design, and it is long-horizon.
+
+There is a deeper version of this root. **We located verification in answers. Environments locate it in transitions:** every step is a labelled example (s, a) → o, observable to the system without hidden truth. The JIT discards the densest oracle-free signal in the whole vision [inference].
+
+### 3. Frontier (cited)
+
+- **Program-level policies with debugging against training tasks.** Silver et al. have GPT-4 write Python *generalized plans* for PDDL domains from about 2 training tasks, with CoT summarisation and **automated debugging** against the training tasks. Debugging matters a great deal, and GPT-4 ≫ GPT-3.5 (AAAI 2024) [paper].
+- **Compile the world model, then plan.** Code World Models has an LLM translate rules and trajectories into an executable Python simulator. Unit tests are auto-generated from offline trajectories, MCTS/IS-MCTS plans on top, and it beats thinking-LLM baselines (Lehrach et al., DeepMind, ICLR 2026; figures unverified) [paper].
+- **Behaviour trees as the policy language at scale.** PORTAL generates BT-DSL policies with hybrid rule and neural nodes across thousands of 3D games. Feedback is dual (game metrics + VLM analysis), and online LLM latency is avoided (Xu et al., Tencent, 2025; abstract-level, numbers unverified) [paper]. BTGenBot fine-tunes ≤7B models to emit BTs and validates them statically, in simulation and on a robot (Izzo et al., 2024) [paper]; BTGenBot-2's 1B claims are unverified.
+- **FSM grounding with an LLM inside each state.** StateFlow separates process grounding (states and transitions) from sub-task solving. Over ReAct it reports +28% on ALFWorld and +13% on InterCode-SQL at about 3× and 5× lower cost (Wu et al., 2024) [paper].
+- **Self-verifying failure artefacts.** Delta debugging minimises a failing action sequence by automated re-runs (Mozilla: 95 user actions → 3) (Zeller & Hildebrandt, IEEE TSE 2002) [paper]. That is directly the gameqa output, "minimal reproducing action sequence".
+
+### 4. Niche verticals
+
+**(a) Behaviour trees and subsumption.**
+- *How it was solved.*
+  - BTs tick from the root every cycle. Fallback nodes try children in order, and RUNNING lets multi-step actions persist (Colledanchise & Ögren 2017) [paper].
+  - In Brooks' subsumption, higher layers *suppress* lower outputs while the lower layers keep running, and the lowest layer is never altered after it is debugged (IEEE J. Robotics & Automation 1986) [paper].
+- *Transferable mechanism.* Fallback is a scoped, per-tick deopt: only the failing subtree hands over, and control returns on the next tick when conditions hold again (native reverse switching). Subsumption gives a code safety layer that can veto *both* the compiled controller and the agent.
+- *Adaptation for Foundry.*
+  - The compiled artefact is `controller.mjs` exporting `tick(obs, mem) → {action} | {fallback: subtree}`.
+  - The agent is the Fallback child for one named subtree (`find-exit`, `which-key`), with a step cap. It is never a whole-episode restart.
+  - A layer-0 code supervisor (permissives, below) suppresses irreversible actions from either source.
+
+**(b) PLC scan cycle + ISA-88/PackML state model.**
+- *How it was solved.*
+  - The scan cycle is read inputs → evaluate → write outputs, with all state explicit in memory.
+  - ISA-88 phases go Running → Holding → Held → Restarting → Running. PackML (ISA-TR88.00.02) has Execute, Holding, Held, Unholding and others, and the OPC PackML analyser spec requires that Execute **sub-state be kept** while Held so execution resumes from a restart point (OPC Foundation PackML reference; secondary vendor notes) [practice/docs].
+- *Transferable mechanism.* A standard *handoff protocol with preserved sub-state*, plus separate acting and wait states, so a takeover is never half-done.
+- *Adaptation for Foundry.*
+  - `mem` must be JSON-serialisable (enforced). On deopt, the controller enters Holding: it writes `{snapshot, mem, subtree, stepIndex}`.
+  - The interpreter acts in Held *in the same env* (same ledger) and must end at a declared re-entry condition (Unholding) to hand back.
+  - These states go in the journal, so the UI's run-view shows a PackML-like timeline.
+
+**(c) Game AI: GOAP (F.E.A.R.).**
+- *How it was solved.* Orkin's soldiers have a 3-state FSM (Goto, Animate, UseSmartObject) and use A* over actions with preconditions and effects. They **replan** when the world contradicts the plan, for example a door slammed shut, fire through the window (GDC 2006) [paper/practice].
+- *Transferable mechanism.* Keep the controller generic and tiny. Put the domain into action schemas and a fact extractor, and make replanning on contradiction the default.
+- *Adaptation for Foundry.* This is gridquest exactly: the certifying explorer is already a code planner over a belief state.
+  - Compile the **fact extractor** (exits, keys, switches, one-way passages from prose) and the **action schemas** (`use key` requires holding the colour; `toggle` flips the named bridge).
+  - A* runs over facts. `flow.expect(predicted, observed)` triggers a replan first and a deopt only when replanning fails.
+
+**(d) Supervisory control theory + run-time assurance.**
+- *How it was solved.*
+  - SCT splits events into controllable and uncontrollable and disables controllable ones to keep behaviour legal *and nonblocking* (a marked state stays reachable) (Ramadge & Wonham 1987) [paper].
+  - ASTM F3269 run-time assurance bounds a complex function with a safety monitor, recovery functions and a switch, and places the certification burden on the **monitor** (ASTM store summary; CISPA papers) [practice/docs].
+- *Transferable mechanism.* Make nonblocking a permissive, and certify the monitor, not the controller.
+- *Adaptation for Foundry.*
+  - **Nonblocking permissive:** before a one-way move or a coupled-switch toggle, code checks on the belief map that the treasure frontier stays reachable. If it cannot show that, it holds and hands off.
+  - In gameqa, agent moves are controllable and crawler moves are not, so the supervisor is the dodge check.
+  - Promotion evidence is about the monitor (guards/expect): precision and lead time, not controller success alone.
+
+**(e) Fault-tolerant control.**
+- *Transferable mechanism.* The residual between a model's predicted observation and the actual one is a fault detector, and the lead time to unrecoverability is the figure of merit (Blanke et al.) [paper].
+- *Adaptation for Foundry.* `flow.expect` residuals, logged per step, give both a detector and the training signal for the perception judge.
+
+### 5. Creative options
+
+1. **Patch: an env port + `tick` controller + a PackML-style hold/unhold handoff in the same env.** This differs from the prior sweep's H1-a by its explicit sub-state protocol, scoped subtree fallback and nonblocking permissive.
+2. **Change the problem: compile the world model, not the policy.**
+   - Haiku compiles `world.mjs` (perception parser + transition predictor) from interpreter traces. A generic planner does control.
+   - Every observed step is a free, oracle-free test of `world.mjs`, so acceptance becomes next-observation accuracy on held-out *steps* of dev episodes. This is the dense label stream batch tasks never had.
+   - It also makes shadowing legal: the "shadow" runs in the compiled simulator, not in a second real env.
+3. **Change the problem: compile the verifier for exploration tasks (gameqa).** Exploration stays agentic. The compiled parts are the repro replayer and delta-debugging minimiser, which check every candidate bug in fresh envs. These outputs verify themselves, so agent noise costs only exploration budget.
+4. **Generalise the root: treat batch tasks as episodes of decisions.** Records' merge decisions become steps, and the near-miss band becomes the Fallback subtree. Batch-side "verify decisions" (§6.2) and interactive Fallback are then one mechanism (see the cluster section).
+
+### 6. Experiments (ranked)
+
+**E13-1. Handoff-protocol headroom at $0 (3–4 h; first, decides what to build).**
+- *Build:* `experiments/jit/env-handoff-sim.mjs` (analyst-side diagnostic; it imports `beds/gridquest/diagnostics.mjs`/`solver.mjs` and is never a system component).
+  - Controller stand-in: `regexAgentV2`, honest code-only perception.
+  - Resumer stand-ins:
+    - (i) `templateAwareAgent`, amnesiac and env-driven;
+    - (ii) an explorer-from-current-state upper bound (a `navigate` wrapper; oracle-side, upper bound only).
+- *Protocols:*
+  - P0: no fallback;
+  - P1: whole-task restart in a fresh env (today's SPEC semantics, illegal under the ledger; counterfactual);
+  - P2: restart in the same env with the residual ledger;
+  - P3: hold-and-resume at the first refuted expectation (snapshot + `mem` handed over);
+  - P4: P3 + a nonblocking permissive before one-way or coupled actions.
+- *Data:* 30 dev seeds × d3–d5.
+- *Metric:* pass rate, actions spent, and deopt lead time (steps between handoff and the last recoverable state).
+- *Preregistration:* diagnostic, dev split, stand-ins disclosed.
+- *Cost:* $0 and zero quota.
+- *Kill rule:* if P3 and P4 are within 3 points of P2 at every level with resumer (ii), mid-episode handoff buys nothing on gridquest. In that case skip the PackML machinery and build only the env port.
+- *Falsifier:* P2 ≈ P4, meaning the ledger rather than state preservation is what binds.
+
+**E13-2. World-model compile vs policy compile (about 1 day; second).**
+- *Build:*
+  - an env port (`experiments/jit/env-port.mjs`, host-side, routed like the gateway; the bed code stays out of the workdir per SPEC §3.2);
+  - `flow-v3` with `env`, `expect`, `tick`;
+  - trace records gain `steps:[{obs, action}]`.
+- *Arms on 12 dev tasks d3–d4:*
+  - Haiku agent;
+  - Sonnet agent;
+  - JIT-policy: Sonnet traces → Haiku compiles `controller.mjs` with Haiku perception judges;
+  - **JIT-world:** Sonnet traces → Haiku compiles `world.mjs` facts + schemas, played by a code A* planner (GOAP), with replan on `expect` and P4 handoff.
+- *Metrics:*
+  - levels per $ and quota per level;
+  - one-step prediction accuracy of `world.mjs` on held-out dev *steps*, which is environment-labelled and oracle-free;
+  - residual lead time before failure.
+- *Preregistration:* `PREREG-env.md` before any held-out read; seeds ≥ 8000 from a global ledger; K ≥ 3 streams; arms and kill rules frozen.
+- *Cost:* about $12–25. Quota is dominated by the Sonnet traces and agent arm, so run off-peak (F10: a 3 h stall).
+- *Kill rule:* JIT-world one-step accuracy <90% after one recompile, or levels/$ below the Haiku agent's.
+- *Falsifier:* JIT-policy ≥ JIT-world on success, so a world model brings no verification advantage.
+
+**E13-3. gameqa: compile the verifier (half a day after the gameqa audit; third).**
+- *Prerequisite:* gameqa is unaudited, so audit first (kill if the audit's triviality attack passes more than 20%).
+- *Arms:* Haiku agent alone vs Haiku agent + a compiled replay/ddmin verifier (code, $0 per check).
+- *Metric:* bugs passing the oracle per $, and false reports.
+- *Cost:* about $5–10.
+- *Falsifier:* the verifier arm's false-report rate is no better than the agent's.
+
+---
+
+## Cluster: how B12 and B13 interact
+
+The two blockers are one missing primitive seen along two axes. **B12 lacks a boundary in space** (a module edge with a contract), and **B13 lacks a boundary in time** (a tick, or a held state, with a handoff). Every niche field that solved one also solved the other with the same object:
+- Burridge's funnels and Konidaris' chains compose controllers *over time* by domain containment.
+- BTs are composition (subtrees) *and* reactive control (ticks).
+- PackML's held sub-state is a module boundary with preserved state.
+- SCT's modular supervisors raise the nonconflict question for both pipelines and plants.
+
+So Foundry should build **one** construct, a guarded region:
+
+```
+flow.region(name, {pre: profile/contract, post: contract + residuals, fallback, permissive, mem})
+```
+
+It serves as a sub-module boundary in batch work (blame, local heal, module N-version) and as a hold/unhold handoff in episodes (scoped deopt, same env, reverse switching). The domain-of-validity gate that THESIS §6.7 already assigns to *reuse* is the same check at every boundary. Reuse and composition stay distinct ideas that share one mechanism.
+
+The interaction is not only synergy:
+- Error compounds across composition depth and across time (T²ε). A chain of k regions each wrong at rate ε fails at about kε unless every boundary checks. Unchecked composition will look worse than the monolith, and **E12-3's blame accuracy is the gate for E13-2's controllers**.
+- Interactive environments supply the module-level labels that batch composition lacks: each step labels the perception module. **E13-2 is the cheapest source of evidence that boundary verification works at all**, and it can then justify the harder batch case.
+- Both blockers sit on frozen engine work (IR `call` S1 and M13-ENV on E2). Build both in `experiments/jit/` against `flow-v3`, at $0 first: E12-1 and E13-1 together cost no quota and decide which half of this design is worth a day.
+
+---
+
+### Sources
+- Brooks, "A Robust Layered Control System for a Mobile Robot", IEEE J. Robotics & Automation 2(1), 1986. https://ieeexplore.ieee.org/document/1087032 [paper]
+- Colledanchise & Ögren, "How Behavior Trees Modularize Hybrid Control Systems and Generalize Sequential Behavior Compositions, the Subsumption Architecture, and Decision Trees", IEEE T-RO 33(2), 2017; book arXiv: https://arxiv.org/pdf/1709.00084v2 [paper]
+- Burridge, Rizzi, Koditschek, "Sequential Composition of Dynamically Dexterous Robot Behaviors", IJRR 18(6), 1999. https://kodlab.seas.upenn.edu/sequential-composition-of-dynamically-dexterous-robot-behaviors/ [paper]
+- Konidaris & Barto, "Skill Discovery in Continuous RL Domains using Skill Chaining", NIPS 2009. https://all.cs.umass.edu/pubs/2009/konidaris_b_09d.pdf [paper]
+- Ramadge & Wonham, "Supervisory Control of a Class of Discrete Event Processes", SIAM J. Control Optim. 25(1), 1987; Wonham & Ramadge, "Modular Supervisory Control of Discrete-Event Systems", MCSS 1(1), 1988. https://collaborate.princeton.edu/en/publications/supervisory-control-of-a-class-of-discrete-event-processes/ ; https://collaborate.princeton.edu/en/publications/modular-supervisory-control-of-discrete-event-systems/ [paper]
+- Blanke, Kinnaert, Lunze, Staroswiecki, *Diagnosis and Fault-Tolerant Control*, 3rd ed., Springer 2015. https://www.springer.com/978-3-662-47942-1 [paper; ARR details unverified]
+- ASTM F3269-21 (run-time assurance). https://store.astm.org/f3269-21.html ; CISPA: https://finkbeiner.groups.cispa.de/publications/DFS21.pdf [practice/docs; standard text not read]
+- IEC 61499 overview https://en.wikipedia.org/wiki/IEC_61499 ; Eclipse 4diac LIB https://eclipse.dev/4diac/en_lib.php [practice/docs]
+- PackML / ISA-TR88.00.02 via OPC Foundation reference https://reference.opcfoundation.org/PackML/v101/docs/?r=10&t=2 ; ISA-88 phase states https://etechgroup.com/blog/general/part-3-of-3-understanding-s88-states [practice/docs]
+- Fakih et al., "LLM4PLC", ICSE-SEIP 2024. https://arxiv.org/html/2401.05443v1 [paper]
+- Orkin, "Three States and a Plan: The AI of F.E.A.R.", GDC 2006. https://pages.cs.wisc.edu/~dyer/cs540/handouts/gdc2006_orkin_jeff_fear.pdf [practice]
+- Muñoz-Avila, Aha, Rizzo, "ChatHTN", PMLR 288, 2025. https://arxiv.org/abs/2505.11814v1 [paper]
+- Findler & Felleisen, "Contracts for Higher-Order Functions", ICFP 2002. https://users.cs.northwestern.edu/~robby/pubs/papers/ho-contracts-techreport.pdf [paper]
+- Benveniste et al., *Contracts for System Design*, FnT EDA 12(2-3), 2018. https://nowpublishers.com/article/Details/EDA-053 [paper]
+- Zelikman et al., "Parsel", NeurIPS 2023. https://arxiv.org/abs/2212.10561v3 [paper]
+- Stengel-Eskin, Prasad, Bansal, "ReGAL", ICML 2024. https://arxiv.org/abs/2401.16467 [paper]
+- Silver et al., "Generalized Planning in PDDL Domains with Pretrained LLMs", AAAI 2024. https://arxiv.org/abs/2305.11014v2 [paper]
+- Lehrach et al., "Code World Models for General Game Playing", 2025/ICLR 2026. https://arxiv.org/abs/2510.04542v1 [paper; numbers unverified]
+- Xu et al., "Agents Play Thousands of 3D Video Games" (PORTAL), 2025. https://arxiv.org/abs/2503.13356v1 [paper; numbers unverified]
+- Izzo, Bardaro, Matteucci, "BTGenBot", 2024. https://arxiv.org/abs/2403.12761v2 ; BTGenBot-2 https://arxiv.org/html/2602.01870v1 [paper; BTGenBot-2 claims unverified]
+- Wu et al., "StateFlow", 2024. https://arxiv.org/abs/2403.11322v4 [paper]
+- Zeller & Hildebrandt, "Simplifying and Isolating Failure-Inducing Input", IEEE TSE 28(2), 2002. https://www.st.cs.uni-saarland.de/papers/tse2002/tse2002.pdf [paper]
+- Armstrong, PhD thesis 2003 (supervision trees). https://mirror.its.dal.ca/freebsd/distfiles/erlang-doc/r13/armstrong_thesis_2003.pdf [paper; I read about it but did not use it above]
+
+### Repo files cited
+All under `/home/user/workflow-foundry/`:
+- `experiments/jit/flow-v2.mjs`
+- `experiments/jit/run-compiled.mjs`
+- `experiments/jit/profile.mjs`
+- `experiments/runs/jit/jit-dev-records-1/*/versions/*/solve.mjs`
+- `research/jit-20261008/{THESIS-JIT,SPEC,DEV-NOTES}.md`
+- `research/jit-20261008/nversion-records-dev.json`
+- `research/jit-20261008/tierdown/live-rules-haiku.md`
+- `beds/gridquest/README.md`
+- `beds/gridquest/diagnostics.mjs`
+- `beds/gridquest/solver.mjs`
+- `beds/gameqa/README.md`
+- `research/review-20261007/02-ir-expressiveness.md`
+- `research/review-20261007/11-NEXT.md`
+- `README.md`
