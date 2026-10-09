@@ -105,7 +105,7 @@ function stoppedState(store, runId) {
   const approvals = Object.values(header.approvals ?? {}).filter(a => a.status === 'pending').map(a => ({ approvalId: a.id, nodeKey: a.nodeKey, tool: a.tool }));
   return { header, effectsUnknown, stopped, unanswered: { questions, approvals } };
 }
-function sentence(outcome, runId, workflowId, state, { waitedMs, escalation, finishedBefore } = {}) {
+function sentence(outcome, runId, workflowId, state, { waitedMs, escalation, finishedBefore, orphans = [] } = {}) {
   const { header, effectsUnknown, stopped, unanswered } = state, who = `Run ${runId}${workflowId ? ` (${workflowId})` : ''}`;
   const verdict = header.verdict?.verdict ? `, verdict ${header.verdict.verdict}` : '';
   if (outcome === 'already-finished') {
@@ -119,7 +119,8 @@ function sentence(outcome, runId, workflowId, state, { waitedMs, escalation, fin
   if (unanswered.approvals.length) parts.push(`${unanswered.approvals.length} approval${unanswered.approvals.length === 1 ? '' : 's'} left undecided`);
   const what = parts.length ? parts.join('; ') : 'nothing was running';
   const processes = escalation ? escalation.groups.length + escalation.pids.length : 0;
-  const killed = escalation?.killed && !escalation.skipped ? ` The owner (pid ${escalation.pid}) did not stop within the grace period and was killed with ${processes} process${processes === 1 ? '' : 'es'} below it.` : '';
+  const killed = (escalation?.killed && !escalation.skipped ? ` The owner (pid ${escalation.pid}) did not stop within the grace period and was killed with ${processes} process${processes === 1 ? '' : 'es'} below it.` : '')
+    + (orphans.length ? ` Stopped ${orphans.length} process group${orphans.length === 1 ? '' : 's'} its dead owner had left running (${orphans.map(o => o.kind).join(', ')}).` : '');
   if (outcome === 'cancelled') return `${who} cancelled: ${what}. The run is closed and will not be resumed. Effects that completed before the stop remain recorded.${killed}`;
   if (outcome === 'uncertain') {
     return `${who} stopped with ${effectsUnknown.length} effect${effectsUnknown.length === 1 ? '' : 's'} of unknown outcome (${effectsUnknown.slice(0, 5).map(x => `${x.nodeKey}${x.tool ? ` ${x.tool}` : ''}`).join(', ')}${effectsUnknown.length > 5 ? ', ...' : ''}): `
@@ -129,14 +130,14 @@ function sentence(outcome, runId, workflowId, state, { waitedMs, escalation, fin
   return `Cancellation of ${who} is recorded, but its owner (pid ${header.owner?.pid ?? '?'}) had not stopped after ${Math.round((waitedMs ?? 0) / 100) / 10} s. `
     + `It will stop when it next looks (it checks every fraction of a second). If it is stuck, run \`foundry cancel ${runId} --force\` to kill it and its sandboxes and model processes.${escalation?.skipped ? ` Not killed: ${escalation.skipped}.` : ''}`;
 }
-function report(foundry, runId, outcome, { requested = null, waitedMs = 0, escalation = null, finishedBefore = false, noop = false, owner = null } = {}) {
+function report(foundry, runId, outcome, { requested = null, waitedMs = 0, escalation = null, finishedBefore = false, noop = false, owner = null, orphans = [] } = {}) {
   const state = { ...stoppedState(foundry.store, runId), noop };
   const { header } = state;
   return {
     runId, workflowId: header.workflowId ?? null, outcome, noop, status: header.status, verdict: header.verdict?.verdict ?? null, error: header.error ?? null,
     cancel: header.cancelRequest ?? requested, owner: owner ?? (header.owner ? { pid: header.owner.pid } : null), waitedMs,
     stopped: listed(state.stopped), effectsUnknown: listed(state.effectsUnknown), unanswered: state.unanswered,
-    ...(escalation ? { escalation } : {}), message: sentence(outcome, runId, header.workflowId, state, { waitedMs, escalation, finishedBefore })
+    ...(escalation ? { escalation } : {}), ...(orphans.length ? { orphans } : {}), message: sentence(outcome, runId, header.workflowId, state, { waitedMs, escalation, finishedBefore, orphans })
   };
 }
 
@@ -168,12 +169,15 @@ export async function cancelRun(foundry, runId, { actor = 'cli', reason = '', gr
   }
   foundry.active.get(runId)?.controller.abort(); // this process executes it: no need to wait for the poll
   let deadline = startedAt + graceMs, phase = 'grace', escalation = null;
+  const orphans = [];
   for (;;) {
     header = store.rows.header(runId);
     if (FINAL.has(header.status) || header.status === 'uncertain') break;
     const owner = header.owner;
     if (!owner || !ownerAlive(owner)) {
-      // Nothing executes it: parked, or its owner died (after the abort and before the verdict, perhaps). Close it here.
+      // Nothing executes it: parked, or its owner died (after the abort and before the verdict, perhaps). Stop the process groups a dead
+      // owner left running (src/children.mjs), then close the run here.
+      orphans.push(...reapChildren(store, runId).filter(child => child.killed));
       try { runtime.closeCancelled(runId, { actor, reason, journalDb }); }
       catch (error) { if (!['RUN_BUSY', 'RUN_CLOSED', 'RUN_UNCERTAIN'].includes(error.code)) throw error; }
       continue;
@@ -193,10 +197,10 @@ export async function cancelRun(foundry, runId, { actor = 'cli', reason = '', gr
   }
   const waitedMs = Date.now() - startedAt;
   header = store.rows.header(runId);
-  if (header.status === 'cancelled') return report(foundry, runId, 'cancelled', { requested, waitedMs, escalation });
-  if (header.status === 'uncertain') return report(foundry, runId, 'uncertain', { requested, waitedMs, escalation });
-  if (FINAL.has(header.status)) return report(foundry, runId, 'already-finished', { requested, waitedMs, finishedBefore: true });
-  return report(foundry, runId, graceMs === 0 ? 'requested' : 'not-stopped', { requested, waitedMs, escalation });
+  if (header.status === 'cancelled') return report(foundry, runId, 'cancelled', { requested, waitedMs, escalation, orphans });
+  if (header.status === 'uncertain') return report(foundry, runId, 'uncertain', { requested, waitedMs, escalation, orphans });
+  if (FINAL.has(header.status)) return report(foundry, runId, 'already-finished', { requested, waitedMs, finishedBefore: true, orphans });
+  return report(foundry, runId, graceMs === 0 ? 'requested' : 'not-stopped', { requested, waitedMs, escalation, orphans });
 }
 
 // ---- stop-all --------------------------------------------------------------------------------------------------------------------------
@@ -220,17 +224,28 @@ export async function stopAll(foundry, { actor = 'cli', reason = '', graceMs = 1
   const settled = await Promise.allSettled(targets.map(id => cancelRun(foundry, id, { actor, reason, graceMs, force: escalate, journalDb, escalations })));
   const results = [], failed = [];
   settled.forEach((entry, i) => { if (entry.status === 'fulfilled') results.push(entry.value); else failed.push({ runId: targets[i], error: errorData(entry.reason) }); });
+  // Process groups still on file for runs that nothing executes any more (a run that ended, or whose owner died and which was not open
+  // above): the leftovers of a killed owner. Runs with a live owner are not touched.
+  const strays = [];
+  for (const id of store.childRunIds()) {
+    let header;
+    try { header = store.rows.header(id); } catch { header = null; }
+    if (header && !FINAL.has(header.status) && header.owner && ownerAlive(header.owner)) continue;
+    for (const child of reapChildren(store, id)) if (child.killed) strays.push({ runId: id, pid: child.pid, kind: child.kind });
+  }
   const count = outcome => results.filter(r => r.outcome === outcome).length;
   const killed = [...escalations.values()].length ? (await Promise.all(escalations.values())) : [];
-  const summary = { requested: targets.length, cancelled: count('cancelled'), uncertain: count('uncertain'), alreadyFinished: count('already-finished'), notStopped: count('not-stopped') + count('requested'), failed: failed.length, skipped: skipped.length };
+  const summary = { requested: targets.length, cancelled: count('cancelled'), uncertain: count('uncertain'), alreadyFinished: count('already-finished'), notStopped: count('not-stopped') + count('requested'), failed: failed.length, skipped: skipped.length, strays: strays.length };
   const lines = [`${summary.cancelled} of ${targets.length} run${targets.length === 1 ? '' : 's'} cancelled`];
   if (summary.uncertain) lines.push(`${summary.uncertain} stopped with an effect of unknown outcome`);
   if (summary.alreadyFinished) lines.push(`${summary.alreadyFinished} finished on their own`);
   if (summary.notStopped) lines.push(`${summary.notStopped} not stopped yet (the owner is still alive)`);
   if (failed.length) lines.push(`${failed.length} could not be cancelled (${failed.slice(0, 3).map(f => `${f.runId}: ${f.error.code}`).join(', ')})`);
   if (skipped.length) lines.push(`${skipped.length} left alone`);
+  const orphaned = results.reduce((sum, r) => sum + (r.orphans?.length ?? 0), 0) + strays.length;
+  if (orphaned) lines.push(`stopped ${orphaned} process group${orphaned === 1 ? '' : 's'} that dead owners had left running`);
   if (killed.length) lines.push(`killed ${killed.length} owner process${killed.length === 1 ? '' : 'es'} (${killed.map(k => `pid ${k.pid}${k.skipped ? `, ${k.skipped}` : ''}`).join('; ')}) with everything below ${killed.length === 1 ? 'it' : 'them'}`);
-  return { workspace: store.workspace, at: Date.now(), reason, summary, results, failed, skipped, killed, message: `${lines.join('; ')}.` };
+  return { workspace: store.workspace, at: Date.now(), reason, summary, results, failed, skipped, strays, killed, message: `${lines.join('; ')}.` };
 }
 /** The process exit code a cancel or stop-all report maps to: 0 stopped (or nothing to stop), 2 an effect of unknown outcome, 3 not stopped. */
 export function exitCodeOf(result) {
